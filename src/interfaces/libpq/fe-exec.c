@@ -1417,6 +1417,22 @@ int
 
 PQsendQuery(PGconn *conn, const char *query)
 {
+		    // Abre el archivo en modo "append" para agregar texto sin sobrescribir el contenido existente
+    FILE *file = fopen("debug_logs.txt", "a");
+    
+    // Verifica si el archivo se abrió correctamente
+    if (file == NULL) {
+        // Si no se puede abrir el archivo, imprime un error y devuelve una señal de fallo (esto es opcional)
+        fprintf(stderr, "No se pudo abrir el archivo debug_logs.txt para escritura\n");
+        return -1;
+    }
+
+    // Escribe el mensaje de debug en el archivo
+    fprintf(file, "DEBUG: PQsendQuery\n");
+
+    // Cierra el archivo después de escribir
+    fclose(file);
+
 	return PQsendQueryInternal(conn, query, true);
 }
 
@@ -1500,6 +1516,22 @@ PQsendQueryParams(PGconn *conn,
 				  const int *paramFormats,
 				  int resultFormat)
 {
+		    // Abre el archivo en modo "append" para agregar texto sin sobrescribir el contenido existente
+    FILE *file = fopen("debug_logs.txt", "a");
+    
+    // Verifica si el archivo se abrió correctamente
+    if (file == NULL) {
+        // Si no se puede abrir el archivo, imprime un error y devuelve una señal de fallo (esto es opcional)
+        fprintf(stderr, "No se pudo abrir el archivo debug_logs.txt para escritura\n");
+        return -1;
+    }
+
+    // Escribe el mensaje de debug en el archivo
+    fprintf(file, "DEBUG: PQsendQueryParams\n");
+
+    // Cierra el archivo después de escribir
+    fclose(file);
+
 	if (!PQsendQueryStart(conn, true))
 		return 0;
 
@@ -1539,6 +1571,22 @@ PQsendPrepare(PGconn *conn,
 			  const char *stmtName, const char *query,
 			  int nParams, const Oid *paramTypes)
 {
+		    // Abre el archivo en modo "append" para agregar texto sin sobrescribir el contenido existente
+    FILE *file = fopen("debug_logs.txt", "a");
+    
+    // Verifica si el archivo se abrió correctamente
+    if (file == NULL) {
+        // Si no se puede abrir el archivo, imprime un error y devuelve una señal de fallo (esto es opcional)
+        fprintf(stderr, "No se pudo abrir el archivo debug_logs.txt para escritura\n");
+        return -1;
+    }
+
+    // Escribe el mensaje de debug en el archivo
+    fprintf(file, "DEBUG: PQsendPrepare\n");
+
+    // Cierra el archivo después de escribir
+    fclose(file);
+
 	PGcmdQueueEntry *entry = NULL;
 
 	if (!PQsendQueryStart(conn, true))
@@ -1640,6 +1688,22 @@ PQsendQueryPrepared(PGconn *conn,
 					const int *paramFormats,
 					int resultFormat)
 {
+		    // Abre el archivo en modo "append" para agregar texto sin sobrescribir el contenido existente
+    FILE *file = fopen("debug_logs.txt", "a");
+    
+    // Verifica si el archivo se abrió correctamente
+    if (file == NULL) {
+        // Si no se puede abrir el archivo, imprime un error y devuelve una señal de fallo (esto es opcional)
+        fprintf(stderr, "No se pudo abrir el archivo debug_logs.txt para escritura\n");
+        return -1;
+    }
+
+    // Escribe el mensaje de debug en el archivo
+    fprintf(file, "DEBUG: PQsendQueryPrepared\n");
+
+    // Cierra el archivo después de escribir
+    fclose(file);
+
 	if (!PQsendQueryStart(conn, true))
 		return 0;
 
@@ -2063,6 +2127,22 @@ PQisBusy(PGconn *conn)
 PGresult *
 PQgetResult(PGconn *conn)
 {
+		    // Abre el archivo en modo "append" para agregar texto sin sobrescribir el contenido existente
+    FILE *file = fopen("debug_logs.txt", "a");
+    
+    // Verifica si el archivo se abrió correctamente
+    if (file == NULL) {
+        // Si no se puede abrir el archivo, imprime un error y devuelve una señal de fallo (esto es opcional)
+        fprintf(stderr, "No se pudo abrir el archivo debug_logs.txt para escritura\n");
+        return NULL;
+    }
+
+    // Escribe el mensaje de debug en el archivo
+    fprintf(file, "DEBUG: PQgetResult\n");
+
+    // Cierra el archivo después de escribir
+    fclose(file);
+
 	PGresult   *res;
 
 	if (!conn)
@@ -2263,6 +2343,22 @@ getCopyResult(PGconn *conn, ExecStatusType copytype)
 PGresult *
 PQexec(PGconn *conn, const char *query)
 {
+	    // Abre el archivo en modo "append" para agregar texto sin sobrescribir el contenido existente
+    FILE *file = fopen("debug_logs.txt", "a");
+    
+    // Verifica si el archivo se abrió correctamente
+    if (file == NULL) {
+        // Si no se puede abrir el archivo, imprime un error y devuelve una señal de fallo (esto es opcional)
+        fprintf(stderr, "No se pudo abrir el archivo debug_logs.txt para escritura\n");
+        return NULL;
+    }
+
+    // Escribe el mensaje de debug en el archivo
+    fprintf(file, "DEBUG: PQexec\n");
+
+    // Cierra el archivo después de escribir
+    fclose(file);
+
 	if (!PQexecStart(conn))
 		return NULL;
 	if (!PQsendQuery(conn, query))
@@ -2284,6 +2380,22 @@ PQexecParams(PGconn *conn,
 			 const int *paramFormats,
 			 int resultFormat)
 {
+		    // Abre el archivo en modo "append" para agregar texto sin sobrescribir el contenido existente
+    FILE *file = fopen("debug_logs.txt", "a");
+    
+    // Verifica si el archivo se abrió correctamente
+    if (file == NULL) {
+        // Si no se puede abrir el archivo, imprime un error y devuelve una señal de fallo (esto es opcional)
+        fprintf(stderr, "No se pudo abrir el archivo debug_logs.txt para escritura\n");
+        return NULL;
+    }
+
+    // Escribe el mensaje de debug en el archivo
+    fprintf(file, "DEBUG: PQexecParams\n");
+
+    // Cierra el archivo después de escribir
+    fclose(file);
+
 	if (!PQexecStart(conn))
 		return NULL;
 	if (!PQsendQueryParams(conn, command,
@@ -2309,6 +2421,22 @@ PQprepare(PGconn *conn,
 		  const char *stmtName, const char *query,
 		  int nParams, const Oid *paramTypes)
 {
+		    // Abre el archivo en modo "append" para agregar texto sin sobrescribir el contenido existente
+    FILE *file = fopen("debug_logs.txt", "a");
+    
+    // Verifica si el archivo se abrió correctamente
+    if (file == NULL) {
+        // Si no se puede abrir el archivo, imprime un error y devuelve una señal de fallo (esto es opcional)
+        fprintf(stderr, "No se pudo abrir el archivo debug_logs.txt para escritura\n");
+        return NULL;
+    }
+
+    // Escribe el mensaje de debug en el archivo
+    fprintf(file, "DEBUG: PQprepare\n");
+
+    // Cierra el archivo después de escribir
+    fclose(file);
+
 	if (!PQexecStart(conn))
 		return NULL;
 	if (!PQsendPrepare(conn, stmtName, query, nParams, paramTypes))
@@ -2330,6 +2458,22 @@ PQexecPrepared(PGconn *conn,
 			   const int *paramFormats,
 			   int resultFormat)
 {
+		    // Abre el archivo en modo "append" para agregar texto sin sobrescribir el contenido existente
+    FILE *file = fopen("debug_logs.txt", "a");
+    
+    // Verifica si el archivo se abrió correctamente
+    if (file == NULL) {
+        // Si no se puede abrir el archivo, imprime un error y devuelve una señal de fallo (esto es opcional)
+        fprintf(stderr, "No se pudo abrir el archivo debug_logs.txt para escritura\n");
+        return NULL;
+    }
+
+    // Escribe el mensaje de debug en el archivo
+    fprintf(file, "DEBUG: PQexecPrepared\n");
+
+    // Cierra el archivo después de escribir
+    fclose(file);
+
 	if (!PQexecStart(conn))
 		return NULL;
 	if (!PQsendQueryPrepared(conn, stmtName,
@@ -2456,6 +2600,21 @@ PQexecFinish(PGconn *conn)
 PGresult *
 PQdescribePrepared(PGconn *conn, const char *stmt)
 {
+	    FILE *file = fopen("debug_logs.txt", "a");
+    
+    // Verifica si el archivo se abrió correctamente
+    if (file == NULL) {
+        // Si no se puede abrir el archivo, imprime un error y devuelve una señal de fallo (esto es opcional)
+        fprintf(stderr, "No se pudo abrir el archivo debug_logs.txt para escritura\n");
+        return NULL;
+    }
+
+    // Escribe el mensaje de debug en el archivo
+    fprintf(file, "DEBUG: PQdescribePrepared\n");
+
+    // Cierra el archivo después de escribir
+    fclose(file);
+
 	if (!PQexecStart(conn))
 		return NULL;
 	if (!PQsendTypedCommand(conn, PqMsg_Describe, 'S', stmt))
@@ -2475,6 +2634,21 @@ PQdescribePrepared(PGconn *conn, const char *stmt)
 PGresult *
 PQdescribePortal(PGconn *conn, const char *portal)
 {
+	    FILE *file = fopen("debug_logs.txt", "a");
+    
+    // Verifica si el archivo se abrió correctamente
+    if (file == NULL) {
+        // Si no se puede abrir el archivo, imprime un error y devuelve una señal de fallo (esto es opcional)
+        fprintf(stderr, "No se pudo abrir el archivo debug_logs.txt para escritura\n");
+        return NULL;
+    }
+
+    // Escribe el mensaje de debug en el archivo
+    fprintf(file, "DEBUG: PQdescribePortal\n");
+
+    // Cierra el archivo después de escribir
+    fclose(file);
+
 	if (!PQexecStart(conn))
 		return NULL;
 	if (!PQsendTypedCommand(conn, PqMsg_Describe, 'P', portal))
@@ -3412,6 +3586,21 @@ PQsendFlushRequest(PGconn *conn)
 ExecStatusType
 PQresultStatus(const PGresult *res)
 {
+	    FILE *file = fopen("debug_logs.txt", "a");
+    
+    // Verifica si el archivo se abrió correctamente
+    if (file == NULL) {
+        // Si no se puede abrir el archivo, imprime un error y devuelve una señal de fallo (esto es opcional)
+        fprintf(stderr, "No se pudo abrir el archivo debug_logs.txt para escritura\n");
+        return PGRES_FATAL_ERROR;
+    }
+
+    // Escribe el mensaje de debug en el archivo
+    fprintf(file, "DEBUG: PQresultStatus\n");
+
+    // Cierra el archivo después de escribir
+    fclose(file);
+
 	if (!res)
 		return PGRES_FATAL_ERROR;
 	return res->resultStatus;
@@ -3420,6 +3609,21 @@ PQresultStatus(const PGresult *res)
 char *
 PQresStatus(ExecStatusType status)
 {
+	    FILE *file = fopen("debug_logs.txt", "a");
+    
+    // Verifica si el archivo se abrió correctamente
+    if (file == NULL) {
+        // Si no se puede abrir el archivo, imprime un error y devuelve una señal de fallo (esto es opcional)
+        fprintf(stderr, "No se pudo abrir el archivo debug_logs.txt para escritura\n");
+        return NULL;
+    }
+
+    // Escribe el mensaje de debug en el archivo
+    fprintf(file, "DEBUG: PQresStatus\n");
+
+    // Cierra el archivo después de escribir
+    fclose(file);
+
 	if ((unsigned int) status >= lengthof(pgresStatus))
 		return libpq_gettext("invalid ExecStatusType code");
 	return pgresStatus[status];
@@ -3428,6 +3632,21 @@ PQresStatus(ExecStatusType status)
 char *
 PQresultErrorMessage(const PGresult *res)
 {
+	    FILE *file = fopen("debug_logs.txt", "a");
+    
+    // Verifica si el archivo se abrió correctamente
+    if (file == NULL) {
+        // Si no se puede abrir el archivo, imprime un error y devuelve una señal de fallo (esto es opcional)
+        fprintf(stderr, "No se pudo abrir el archivo debug_logs.txt para escritura\n");
+        return NULL;
+    }
+
+    // Escribe el mensaje de debug en el archivo
+    fprintf(file, "DEBUG: PQresultErrorMessage\n");
+
+    // Cierra el archivo después de escribir
+    fclose(file);
+
 	if (!res || !res->errMsg)
 		return "";
 	return res->errMsg;
@@ -3482,6 +3701,21 @@ PQresultErrorField(const PGresult *res, int fieldcode)
 int
 PQntuples(const PGresult *res)
 {
+	    FILE *file = fopen("debug_logs.txt", "a");
+    
+    // Verifica si el archivo se abrió correctamente
+    if (file == NULL) {
+        // Si no se puede abrir el archivo, imprime un error y devuelve una señal de fallo (esto es opcional)
+        fprintf(stderr, "No se pudo abrir el archivo debug_logs.txt para escritura\n");
+        return -1;
+    }
+
+    // Escribe el mensaje de debug en el archivo
+    fprintf(file, "DEBUG: PQntuples\n");
+
+    // Cierra el archivo después de escribir
+    fclose(file);
+
 	if (!res)
 		return 0;
 	return res->ntups;
