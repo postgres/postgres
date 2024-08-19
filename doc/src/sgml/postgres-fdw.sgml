@@ -1096,7 +1096,10 @@ postgres=# SELECT postgres_fdw_disconnect_all();
   <para>
    <filename>postgres_fdw</filename> can be used with remote servers dating back
    to <productname>PostgreSQL</productname> 8.3.  Read-only capability is available
-   back to 8.1.  A limitation however is that <filename>postgres_fdw</filename>
+   back to 8.1.
+  </para>
+  <para>
+   A limitation however is that <filename>postgres_fdw</filename>
    generally assumes that immutable built-in functions and operators are
    safe to send to the remote server for execution, if they appear in a
    <literal>WHERE</literal> clause for a foreign table.  Thus, a built-in
@@ -1107,6 +1110,13 @@ postgres=# SELECT postgres_fdw_disconnect_all();
    reference in a sub-<literal>SELECT</literal> with <literal>OFFSET 0</literal> as an
    optimization fence, and placing the problematic function or operator
    outside the sub-<literal>SELECT</literal>.
+  </para>
+  <para>
+   Another limitation is that when executing <command>INSERT</command>
+   statements with an <literal>ON CONFLICT DO NOTHING</literal> clause on
+   a foreign table, the remote server must be running
+   <productname>PostgreSQL</productname> 9.5 or later,
+   as earlier versions do not support this feature.
   </para>
  </sect2>
 
