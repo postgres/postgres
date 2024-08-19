@@ -16,8 +16,8 @@ pub struct Client {
 
 impl Client {
     /// Creates a new Client node with the given port
-    pub fn new(ip: &str, port: &str) -> Self {
-        let config = get_router_config();
+    pub fn new(ip: &str, port: &str, config_path: Option<&str>) -> Self {
+        let config = get_router_config(config_path);
 
         for node in config.nodes {
             let node_ip = node.ip;

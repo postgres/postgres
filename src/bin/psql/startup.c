@@ -307,7 +307,7 @@ main(int argc, char *argv[])
 		values[7] = NULL;
 
 		// Creating the node instance
-		init_node_instance(nodeType, options.port);
+		init_node_instance(nodeType, options.port, NULL);
 
 		new_pass = false;
 		pset.db = PQconnectdbParams(keywords, values, true);

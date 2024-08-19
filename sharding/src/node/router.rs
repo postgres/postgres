@@ -34,8 +34,8 @@ pub struct Router {
 
 impl Router {
     /// Creates a new Router node with the given port
-    pub fn new(ip: &str, port: &str) -> Self {
-        let config = get_router_config();
+    pub fn new(ip: &str, port: &str, config_path: Option<&str>) -> Self {
+        let config = get_router_config(config_path);
 
         let mut shards: HashMap<String, PostgresClient> = HashMap::new();
         let mut comm_channels = Vec::new();
@@ -62,12 +62,12 @@ impl Router {
                             comm_channels.push(health_connection);
                         }
                         Err(e) => {
-                            println!("Failed to connect to port: {}", node_port);
+                            println!("Failed to connect to port: {}. Error: {:?}", node_port, e);
                         } // Do something here
                     }
                 }
                 Err(e) => {
-                    println!("Failed to connect to port: {}", node_port);
+                    println!("Failed to connect to port: {}. Error: {:?}", node_port, e);
                 } // Do something here
             }
         }
@@ -112,8 +112,8 @@ impl Router {
             }
             Err(e) => {
                 println!(
-                    "{color_red}Error establishing health connection with {}:{}{style_reset}",
-                    node_ip, port
+                    "{color_red}Error establishing health connection with {}:{}. Error: {:?}{style_reset}",
+                    node_ip, port, e
                 );
                 Err(e)
             }
@@ -158,7 +158,10 @@ impl NodeRole for Router {
         for shard in shards {
             if let Some(shard) = self.shards.lock().unwrap().get_mut(&shard) {
                 let rows = match shard.query(query, &[]) {
-                    Ok(rows) => rows,
+                    Ok(rows) => {
+                        println!("Query executed successfully: {:?}", rows);
+                        rows
+                    }
                     Err(e) => {
                         eprintln!("Failed to send the query to the shard: {:?}", e);
                         return false;
@@ -168,16 +171,16 @@ impl NodeRole for Router {
                 // TODO-SHARD: maybe this can be encapsulated inside another trait, with `.query` included
                 // TODO-SHARD: Send Update Message to Shard somehow
 
-                for row in rows {
-                    let id: i32 = row.get(0);
-                    let name: &str = row.get(1);
-                    let position: &str = row.get(2);
-                    let salary: Decimal = row.get(3);
-                    println!(
-                        "QUERY RESULT: id: {}, name: {}, position: {}, salary: {}",
-                        id, name, position, salary
-                    );
-                }
+                // for row in rows {
+                //     let id: i32 = row.get(0);
+                //     let name: &str = row.get(1);
+                //     let position: &str = row.get(2);
+                //     let salary: Decimal = row.get(3);
+                //     println!(
+                //         "QUERY RESULT: id: {}, name: {}, position: {}, salary: {}",
+                //         id, name, position, salary
+                //     );
+                // }
             } else {
                 eprintln!("Shard not found");
                 return false;
