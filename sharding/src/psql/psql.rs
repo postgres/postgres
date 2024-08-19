@@ -1,10 +1,7 @@
-use postgres::{Client, NoTls};
-use rust_decimal::prelude::Decimal;
 use std::ffi::CStr;
 extern crate users;
 use super::super::node::node::*;
 use inline_colorization::*;
-use users::get_current_username;
 
 #[no_mangle]
 pub extern "C" fn SendQueryToShard(query_data: *const i8) -> bool {

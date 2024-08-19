@@ -1,10 +1,8 @@
-use crate::utils::node_config::NodesConfig;
+use crate::node::client::Client;
 
 use super::router::Router;
 use super::shard::Shard;
-use std::cell::UnsafeCell;
 use std::ffi::CStr;
-use std::sync::{Arc, Mutex};
 
 // TODO-SHARD this file should be a more organized configuration file
 pub const FILE_PATH: &str = "ports.txt";
@@ -14,10 +12,12 @@ pub trait NodeRole {
     /// Sends a query to the shard group
     fn send_query(&mut self, query: &str) -> bool;
     fn accepts_insertions(&self) -> bool;
+    fn get_router_data(&self) -> (String, String);
 }
 
 #[repr(C)]
 pub enum NodeType {
+    Client,
     Router,
     Shard,
 }
@@ -77,6 +77,12 @@ pub extern "C" fn init_node_instance(node_type: NodeType, port: *const i8) {
                 println!("Sharding node initializing");
                 NODE_INSTANCE = Some(NodeInstance::new(Box::new(Shard::new(ip, node_port))));
                 println!("Sharding node initializes");
+            }
+
+            NodeType::Client => {
+                println!("Client node initializing");
+                NODE_INSTANCE = Some(NodeInstance::new(Box::new(Client::new(ip, node_port))));
+                println!("Client node initializes");
             }
         }
     }

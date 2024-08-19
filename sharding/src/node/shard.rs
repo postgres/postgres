@@ -1,6 +1,5 @@
 use inline_colorization::*;
-use postgres::config::Host::Tcp;
-use postgres::{Client, NoTls};
+use postgres::{Client as PostgresClient, NoTls};
 use std::net::{TcpListener, TcpStream};
 use std::sync::{Arc, RwLock};
 use std::{io, thread};
@@ -8,7 +7,6 @@ use std::{io, thread};
 extern crate users;
 use super::memory_manager::MemoryManager;
 use super::node::*;
-use crate::node::router::Channel;
 use crate::utils::node_config::get_shard_config;
 use rust_decimal::Decimal;
 use users::get_current_username;
@@ -17,12 +15,12 @@ use users::get_current_username;
 #[repr(C)]
 pub struct Shard<'a> {
     // router: Client,
-    backend: Client,
+    backend: PostgresClient,
     ip: &'a str,
     port: &'a str,
     listener: Arc<RwLock<TcpListener>>,
     router_stream: Arc<RwLock<Option<TcpStream>>>,
-    memory_manager: MemoryManager
+    memory_manager: MemoryManager,
 }
 
 impl<'a> Shard<'a> {
@@ -38,7 +36,7 @@ impl<'a> Shard<'a> {
         println!("Username found: {:?}", username);
         println!("Connecting to the database with port: {}", port);
 
-        let mut backend: Client = match Client::connect(
+        let backend: PostgresClient = match PostgresClient::connect(
             format!(
                 "host=127.0.0.1 port={} user={} dbname=template1",
                 port, username
@@ -52,14 +50,14 @@ impl<'a> Shard<'a> {
                 panic!("Failed to connect to the database");
             }
         };
-        let mut listener = Arc::new(RwLock::new(
+        let listener = Arc::new(RwLock::new(
             TcpListener::bind(format!("{}:{}", ip, port.parse::<u64>().unwrap() + 1000)).unwrap(),
         ));
-        let mut stream = Arc::new(RwLock::new(None));
-        let mut listener_clone = listener.clone();
-        let mut stream_clone = stream.clone();
+        let stream = Arc::new(RwLock::new(None));
+        let listener_clone = listener.clone();
+        let stream_clone = stream.clone();
 
-        let handle = thread::spawn(move || {
+        thread::spawn(move || {
             Self::accept_connections(listener_clone, stream_clone);
         });
 
@@ -68,8 +66,14 @@ impl<'a> Shard<'a> {
         let memory_threshold = config.memory_threshold;
         let memory_manager = MemoryManager::new(memory_threshold);
 
-        println!("{color_blue}[Shard] Available Memory: {:?} %{style_reset}", memory_manager.available_memory_perc);
-        println!("{color_blue}[Shard] Accepts Insertions: {:?}{style_reset}", memory_manager.accepts_insertions());
+        println!(
+            "{color_blue}[Shard] Available Memory: {:?} %{style_reset}",
+            memory_manager.available_memory_perc
+        );
+        println!(
+            "{color_blue}[Shard] Accepts Insertions: {:?}{style_reset}",
+            memory_manager.accepts_insertions()
+        );
 
         Shard {
             // router: clients,
@@ -78,7 +82,7 @@ impl<'a> Shard<'a> {
             port,
             listener,
             router_stream: stream.clone(),
-            memory_manager
+            memory_manager,
         }
     }
 
@@ -130,5 +134,9 @@ impl<'a> NodeRole for Shard<'a> {
 
     fn accepts_insertions(&self) -> bool {
         self.memory_manager.accepts_insertions()
+    }
+
+    fn get_router_data(&self) -> (String, String) {
+        (self.ip.to_string(), self.port.to_string())
     }
 }

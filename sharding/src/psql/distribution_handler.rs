@@ -1,7 +1,7 @@
 #![allow(non_upper_case_globals)]
 #![allow(non_camel_case_types)]
 #![allow(non_snake_case)]
-use postgres::{Client, NoTls};
+use postgres::{Client as PostgresClient, NoTls};
 extern crate users;
 use users::get_current_username;
 
@@ -14,7 +14,7 @@ enum NodeType {
 // It would be wize to implement this with a Singleton
 struct DistributionHandler {
     // This should hold the connection to each one of the shards
-    client: Client,
+    client: PostgresClient,
     // This should be a behavior interface from a trait, not enum
     nodeType: NodeType,
 }
@@ -28,7 +28,7 @@ impl DistributionHandler {
         }
     }
 
-    fn connect(port: &str) -> Client {
+    fn connect(port: &str) -> PostgresClient {
         // Connect to the database
         // get username dynamically
         let username = match get_current_username() {
@@ -37,7 +37,7 @@ impl DistributionHandler {
         };
         println!("Username found: {:?}", username);
 
-        match Client::connect(
+        match PostgresClient::connect(
             format!(
                 "host=127.0.0.1 port={} user={} dbname=template1",
                 port, username

@@ -172,6 +172,12 @@ main(int argc, char *argv[])
 					nodeType = Shard;
 					printf("Node Type: shard\n");
 				}
+				// If equals c or C (client)
+				else if (strcmp(argv[i+1],"c")==0 || strcmp(argv[i+1],"C")==0)
+				{
+					nodeType = Client;
+					printf("Node Type: client\n");
+				}
 				else
 				{
 					printf("Invalid Node Type\n");
