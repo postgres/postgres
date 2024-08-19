@@ -148,7 +148,7 @@
    </para>
 
    <para>
-    To create a new database, in this example named
+    To create a new database from the command line, in this example named
     <literal>mydb</literal>, you use the following command:
 <screen>
 <prompt>$</prompt> <userinput>createdb mydb</userinput>
