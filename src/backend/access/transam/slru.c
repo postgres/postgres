@@ -1532,7 +1532,7 @@ restart:
 	did_write = false;
 	for (int slotno = 0; slotno < shared->num_slots; slotno++)
 	{
-		int			pagesegno;
+		int64		pagesegno;
 		int			curbank = SlotGetBankNumber(slotno);
 
 		/*
