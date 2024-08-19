@@ -120,7 +120,7 @@ MultiXactIdToOffsetEntry(MultiXactId multi)
 	return multi % MULTIXACT_OFFSETS_PER_PAGE;
 }
 
-static inline int
+static inline int64
 MultiXactIdToOffsetSegment(MultiXactId multi)
 {
 	return MultiXactIdToOffsetPage(multi) / SLRU_PAGES_PER_SEGMENT;
@@ -174,7 +174,7 @@ MXOffsetToMemberPage(MultiXactOffset offset)
 	return offset / MULTIXACT_MEMBERS_PER_PAGE;
 }
 
-static inline int
+static inline int64
 MXOffsetToMemberSegment(MultiXactOffset offset)
 {
 	return MXOffsetToMemberPage(offset) / SLRU_PAGES_PER_SEGMENT;
@@ -3039,10 +3039,10 @@ SlruScanDirCbFindEarliest(SlruCtl ctl, char *filename, int64 segpage, void *data
 static void
 PerformMembersTruncation(MultiXactOffset oldestOffset, MultiXactOffset newOldestOffset)
 {
-	const int	maxsegment = MXOffsetToMemberSegment(MaxMultiXactOffset);
-	int			startsegment = MXOffsetToMemberSegment(oldestOffset);
-	int			endsegment = MXOffsetToMemberSegment(newOldestOffset);
-	int			segment = startsegment;
+	const int64 maxsegment = MXOffsetToMemberSegment(MaxMultiXactOffset);
+	int64		startsegment = MXOffsetToMemberSegment(oldestOffset);
+	int64		endsegment = MXOffsetToMemberSegment(newOldestOffset);
+	int64		segment = startsegment;
 
 	/*
 	 * Delete all the segments but the last one. The last segment can still
