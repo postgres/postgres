@@ -35,16 +35,26 @@ my $numcalls = $node->safe_psql('postgres',
 is($numcalls, '2', 'number of stats calls');
 my $fixedstats = $node->safe_psql('postgres',
 	"SELECT * FROM injection_points_stats_fixed();");
-is($fixedstats, '1|0|2', 'number of fixed stats');
+is($fixedstats, '1|0|2|0|0', 'fixed stats after some calls');
+
+# Loading and caching.
+$node->safe_psql(
+	'postgres', "
+SELECT injection_points_load('stats-notice');
+SELECT injection_points_cached('stats-notice');
+");
+$fixedstats = $node->safe_psql('postgres',
+	"SELECT * FROM injection_points_stats_fixed();");
+is($fixedstats, '1|0|2|1|1', 'fixed stats after loading and caching');
 
 # Restart the node cleanly, stats should still be around.
 $node->restart;
 $numcalls = $node->safe_psql('postgres',
 	"SELECT injection_points_stats_numcalls('stats-notice');");
-is($numcalls, '2', 'number of stats after clean restart');
+is($numcalls, '3', 'number of stats after clean restart');
 $fixedstats = $node->safe_psql('postgres',
 	"SELECT * FROM injection_points_stats_fixed();");
-is($fixedstats, '1|0|2', 'number of fixed stats after clean restart');
+is($fixedstats, '1|0|2|1|1', 'fixed stats after clean restart');
 
 # On crash the stats are gone.
 $node->stop('immediate');
@@ -54,6 +64,6 @@ $numcalls = $node->safe_psql('postgres',
 is($numcalls, '', 'number of stats after crash');
 $fixedstats = $node->safe_psql('postgres',
 	"SELECT * FROM injection_points_stats_fixed();");
-is($fixedstats, '0|0|0', 'number of fixed stats after crash');
+is($fixedstats, '0|0|0|0|0', 'fixed stats after crash');
 
 done_testing();

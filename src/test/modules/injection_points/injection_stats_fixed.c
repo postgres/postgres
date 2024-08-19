@@ -29,6 +29,8 @@ typedef struct PgStat_StatInjFixedEntry
 	PgStat_Counter numattach;	/* number of points attached */
 	PgStat_Counter numdetach;	/* number of points detached */
 	PgStat_Counter numrun;		/* number of points run */
+	PgStat_Counter numcached;	/* number of points cached */
+	PgStat_Counter numloaded;	/* number of points loaded */
 	TimestampTz stat_reset_timestamp;
 } PgStat_StatInjFixedEntry;
 
@@ -114,6 +116,8 @@ injection_stats_fixed_snapshot_cb(void)
 	FIXED_COMP(numattach);
 	FIXED_COMP(numdetach);
 	FIXED_COMP(numrun);
+	FIXED_COMP(numcached);
+	FIXED_COMP(numloaded);
 #undef FIXED_COMP
 }
 
@@ -135,7 +139,9 @@ pgstat_register_inj_fixed(void)
 void
 pgstat_report_inj_fixed(uint32 numattach,
 						uint32 numdetach,
-						uint32 numrun)
+						uint32 numrun,
+						uint32 numcached,
+						uint32 numloaded)
 {
 	PgStatShared_InjectionPointFixed *stats_shmem;
 
@@ -149,6 +155,8 @@ pgstat_report_inj_fixed(uint32 numattach,
 	stats_shmem->stats.numattach += numattach;
 	stats_shmem->stats.numdetach += numdetach;
 	stats_shmem->stats.numrun += numrun;
+	stats_shmem->stats.numcached += numcached;
+	stats_shmem->stats.numloaded += numloaded;
 	pgstat_end_changecount_write(&stats_shmem->changecount);
 }
 
@@ -160,8 +168,8 @@ Datum
 injection_points_stats_fixed(PG_FUNCTION_ARGS)
 {
 	TupleDesc	tupdesc;
-	Datum		values[3] = {0};
-	bool		nulls[3] = {0};
+	Datum		values[5] = {0};
+	bool		nulls[5] = {0};
 	PgStat_StatInjFixedEntry *stats;
 
 	if (!inj_fixed_loaded)
@@ -171,21 +179,29 @@ injection_points_stats_fixed(PG_FUNCTION_ARGS)
 	stats = pgstat_get_custom_snapshot_data(PGSTAT_KIND_INJECTION_FIXED);
 
 	/* Initialise attributes information in the tuple descriptor */
-	tupdesc = CreateTemplateTupleDesc(3);
+	tupdesc = CreateTemplateTupleDesc(5);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "numattach",
 					   INT8OID, -1, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 2, "numdetach",
 					   INT8OID, -1, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 3, "numrun",
 					   INT8OID, -1, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 4, "numcached",
+					   INT8OID, -1, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 5, "numloaded",
+					   INT8OID, -1, 0);
 	BlessTupleDesc(tupdesc);
 
 	values[0] = Int64GetDatum(stats->numattach);
 	values[1] = Int64GetDatum(stats->numdetach);
 	values[2] = Int64GetDatum(stats->numrun);
+	values[3] = Int64GetDatum(stats->numcached);
+	values[4] = Int64GetDatum(stats->numloaded);
 	nulls[0] = false;
 	nulls[1] = false;
 	nulls[2] = false;
+	nulls[3] = false;
+	nulls[4] = false;
 
 	/* Returns the record as Datum */
 	PG_RETURN_DATUM(HeapTupleGetDatum(heap_form_tuple(tupdesc, values, nulls)));

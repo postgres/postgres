@@ -25,6 +25,8 @@ extern void pgstat_report_inj(const char *name);
 extern void pgstat_register_inj_fixed(void);
 extern void pgstat_report_inj_fixed(uint32 numattach,
 									uint32 numdetach,
-									uint32 numrun);
+									uint32 numrun,
+									uint32 numcached,
+									uint32 numloaded);
 
 #endif

@@ -91,7 +91,9 @@ LANGUAGE C STRICT;
 -- Reports fixed-numbered statistics for injection points.
 CREATE FUNCTION injection_points_stats_fixed(OUT numattach int8,
    OUT numdetach int8,
-   OUT numrun int8)
+   OUT numrun int8,
+   OUT numcached int8,
+   OUT numloaded int8)
 RETURNS record
 AS 'MODULE_PATHNAME', 'injection_points_stats_fixed'
 LANGUAGE C STRICT;
