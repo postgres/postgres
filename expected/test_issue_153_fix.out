@@ -32,7 +32,7 @@ CREATE TABLE dept (
     deptno          NUMERIC(2) NOT NULL CONSTRAINT dept_pk PRIMARY KEY,
     dname           VARCHAR(14) CONSTRAINT dept_dname_uq UNIQUE,
     loc             VARCHAR(13)
-)using pg_tde_basic;
+)using tde_heap_basic;
 --
 --  Create the 'emp' table
 --
@@ -46,7 +46,7 @@ CREATE TABLE emp (
     comm            NUMERIC(7,2),
     deptno          NUMERIC(2) CONSTRAINT emp_ref_dept_fk
                         REFERENCES dept(deptno)
-)using pg_tde_basic;
+)using tde_heap_basic;
 --
 --  Create the 'jobhist' table
 --
@@ -65,7 +65,7 @@ CREATE TABLE jobhist (
     CONSTRAINT jobhist_ref_dept_fk FOREIGN KEY (deptno)
         REFERENCES dept (deptno) ON DELETE SET NULL,
     CONSTRAINT jobhist_date_chk CHECK (startdate <= enddate)
-)using pg_tde_basic;
+)using tde_heap_basic;
 --
 --  Create the 'salesemp' view
 --

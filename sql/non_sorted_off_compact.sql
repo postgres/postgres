@@ -10,7 +10,7 @@ CREATE TABLE sbtest1(
 	  id SERIAL,
 	  k INTEGER DEFAULT '0' NOT NULL,
 	  PRIMARY KEY (id)
-	) USING pg_tde_basic;
+	) USING tde_heap_basic;
 
 INSERT INTO sbtest1(k) VALUES
 (1),

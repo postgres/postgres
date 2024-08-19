@@ -19,16 +19,16 @@ CREATE TABLE test_enc(
 	  id SERIAL,
 	  k INTEGER DEFAULT '0' NOT NULL,
 	  PRIMARY KEY (id)
-	) USING pg_tde_basic;
+	) USING tde_heap_basic;
 CREATE TABLE test_norm(
 	  id SERIAL,
 	  k INTEGER DEFAULT '0' NOT NULL,
 	  PRIMARY KEY (id)
 	) USING heap;
 SELECT amname FROM pg_class INNER JOIN pg_am ON pg_am.oid = pg_class.relam WHERE relname = 'test_enc';
-    amname    
---------------
- pg_tde_basic
+     amname     
+----------------
+ tde_heap_basic
 (1 row)
 
 SELECT amname FROM pg_class INNER JOIN pg_am ON pg_am.oid = pg_class.relam WHERE relname = 'test_norm';
