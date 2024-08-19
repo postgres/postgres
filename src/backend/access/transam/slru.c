@@ -1184,7 +1184,7 @@ SlruSelectLRUPage(SlruCtl ctl, int64 pageno)
 		Assert(LWLockHeldByMe(SimpleLruGetBankLock(ctl, pageno)));
 
 		/* See if page already has a buffer assigned */
-		for (int slotno = 0; slotno < shared->num_slots; slotno++)
+		for (int slotno = bankstart; slotno < bankend; slotno++)
 		{
 			if (shared->page_status[slotno] != SLRU_PAGE_EMPTY &&
 				shared->page_number[slotno] == pageno)
