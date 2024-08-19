@@ -57,9 +57,10 @@ PostgreSQL documentation
   <para>
    After a successful run, the state of the target server is analogous to a
    fresh logical replication setup.  The main difference between the logical
-   replication setup and <application>pg_createsubscriber</application> is the
-   initial data copy.  It does only the synchronization phase, which ensures
-   each table is brought up to a synchronized state.
+   replication setup and <application>pg_createsubscriber</application> is how
+   the data synchronization is done. <application>pg_createsubscriber</application>
+   does not copy the initial table data. It does only the synchronization phase,
+   which ensures each table is brought up to a synchronized state.
   </para>
 
   <para>
