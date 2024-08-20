@@ -477,6 +477,11 @@ ExecInterpExpr(ExprState *state, ExprContext *econtext, bool *isnull)
 		&&CASE_EEOP_DOMAIN_TESTVAL,
 		&&CASE_EEOP_DOMAIN_NOTNULL,
 		&&CASE_EEOP_DOMAIN_CHECK,
+		&&CASE_EEOP_HASHDATUM_SET_INITVAL,
+		&&CASE_EEOP_HASHDATUM_FIRST,
+		&&CASE_EEOP_HASHDATUM_FIRST_STRICT,
+		&&CASE_EEOP_HASHDATUM_NEXT32,
+		&&CASE_EEOP_HASHDATUM_NEXT32_STRICT,
 		&&CASE_EEOP_CONVERT_ROWTYPE,
 		&&CASE_EEOP_SCALARARRAYOP,
 		&&CASE_EEOP_HASHED_SCALARARRAYOP,
@@ -1539,6 +1544,111 @@ ExecInterpExpr(ExprState *state, ExprContext *econtext, bool *isnull)
 		{
 			/* too complex for an inline implementation */
 			ExecEvalConstraintCheck(state, op);
+
+			EEO_NEXT();
+		}
+
+		EEO_CASE(EEOP_HASHDATUM_SET_INITVAL)
+		{
+			*op->resvalue = op->d.hashdatum_initvalue.init_value;
+			*op->resnull = false;
+
+			EEO_NEXT();
+		}
+
+		EEO_CASE(EEOP_HASHDATUM_FIRST)
+		{
+			FunctionCallInfo fcinfo = op->d.hashdatum.fcinfo_data;
+
+			/*
+			 * Save the Datum on non-null inputs, otherwise store 0 so that
+			 * subsequent NEXT32 operations combine with an initialized value.
+			 */
+			if (!fcinfo->args[0].isnull)
+				*op->resvalue = op->d.hashdatum.fn_addr(fcinfo);
+			else
+				*op->resvalue = (Datum) 0;
+
+			*op->resnull = false;
+
+			EEO_NEXT();
+		}
+
+		EEO_CASE(EEOP_HASHDATUM_FIRST_STRICT)
+		{
+			FunctionCallInfo fcinfo = op->d.hashdatum.fcinfo_data;
+
+			if (fcinfo->args[0].isnull)
+			{
+				/*
+				 * With strict we have the expression return NULL instead of
+				 * ignoring NULL input values.  We've nothing more to do after
+				 * finding a NULL.
+				 */
+				*op->resnull = true;
+				*op->resvalue = (Datum) 0;
+				EEO_JUMP(op->d.hashdatum.jumpdone);
+			}
+
+			/* execute the hash function and save the resulting value */
+			*op->resvalue = op->d.hashdatum.fn_addr(fcinfo);
+			*op->resnull = false;
+
+			EEO_NEXT();
+		}
+
+		EEO_CASE(EEOP_HASHDATUM_NEXT32)
+		{
+			FunctionCallInfo fcinfo = op->d.hashdatum.fcinfo_data;
+			uint32		existing_hash = DatumGetUInt32(*op->resvalue);
+
+			/* combine successive hash values by rotating */
+			existing_hash = pg_rotate_left32(existing_hash, 1);
+
+			/* leave the hash value alone on NULL inputs */
+			if (!fcinfo->args[0].isnull)
+			{
+				uint32		hashvalue;
+
+				/* execute hash func and combine with previous hash value */
+				hashvalue = DatumGetUInt32(op->d.hashdatum.fn_addr(fcinfo));
+				existing_hash = existing_hash ^ hashvalue;
+			}
+
+			*op->resvalue = UInt32GetDatum(existing_hash);
+			*op->resnull = false;
+
+			EEO_NEXT();
+		}
+
+		EEO_CASE(EEOP_HASHDATUM_NEXT32_STRICT)
+		{
+			FunctionCallInfo fcinfo = op->d.hashdatum.fcinfo_data;
+
+			if (fcinfo->args[0].isnull)
+			{
+				/*
+				 * With strict we have the expression return NULL instead of
+				 * ignoring NULL input values.  We've nothing more to do after
+				 * finding a NULL.
+				 */
+				*op->resnull = true;
+				*op->resvalue = (Datum) 0;
+				EEO_JUMP(op->d.hashdatum.jumpdone);
+			}
+			else
+			{
+				uint32		existing_hash = DatumGetUInt32(*op->resvalue);
+				uint32		hashvalue;
+
+				/* combine successive hash values by rotating */
+				existing_hash = pg_rotate_left32(existing_hash, 1);
+
+				/* execute hash func and combine with previous hash value */
+				hashvalue = DatumGetUInt32(op->d.hashdatum.fn_addr(fcinfo));
+				*op->resvalue = UInt32GetDatum(existing_hash ^ hashvalue);
+				*op->resnull = false;
+			}
 
 			EEO_NEXT();
 		}

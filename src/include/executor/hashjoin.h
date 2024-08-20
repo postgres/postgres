@@ -313,8 +313,6 @@ typedef struct HashJoinTableData
 		dsa_pointer_atomic *shared;
 	}			buckets;
 
-	bool		keepNulls;		/* true to store unmatchable NULL tuples */
-
 	bool		skewEnabled;	/* are we using skew optimization? */
 	HashSkewBucket **skewBucket;	/* hashtable of skew buckets */
 	int			skewBucketLen;	/* size of skewBucket array (a power of 2!) */
@@ -342,16 +340,6 @@ typedef struct HashJoinTableData
 	 */
 	BufFile   **innerBatchFile; /* buffered virtual temp file per batch */
 	BufFile   **outerBatchFile; /* buffered virtual temp file per batch */
-
-	/*
-	 * Info about the datatype-specific hash functions for the datatypes being
-	 * hashed. These are arrays of the same length as the number of hash join
-	 * clauses (hash keys).
-	 */
-	FmgrInfo   *outer_hashfunctions;	/* lookup data for hash functions */
-	FmgrInfo   *inner_hashfunctions;	/* lookup data for hash functions */
-	bool	   *hashStrict;		/* is each hash join operator strict? */
-	Oid		   *collations;
 
 	Size		spaceUsed;		/* memory space currently used by tuples */
 	Size		spaceAllowed;	/* upper limit for space used */

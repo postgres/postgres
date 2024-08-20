@@ -285,6 +285,13 @@ extern ExprState *ExecInitCheck(List *qual, PlanState *parent);
 extern List *ExecInitExprList(List *nodes, PlanState *parent);
 extern ExprState *ExecBuildAggTrans(AggState *aggstate, struct AggStatePerPhaseData *phase,
 									bool doSort, bool doHash, bool nullcheck);
+extern ExprState *ExecBuildHash32Expr(TupleDesc desc,
+									  const TupleTableSlotOps *ops,
+									  const Oid *hashfunc_oids,
+									  const List *collations,
+									  const List *hash_exprs,
+									  const bool *opstrict, PlanState *parent,
+									  uint32 init_value, bool keep_nulls);
 extern ExprState *ExecBuildGroupingEqual(TupleDesc ldesc, TupleDesc rdesc,
 										 const TupleTableSlotOps *lops, const TupleTableSlotOps *rops,
 										 int numCols,

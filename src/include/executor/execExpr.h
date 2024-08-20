@@ -235,6 +235,13 @@ typedef enum ExprEvalOp
 	/* evaluate a single domain CHECK constraint */
 	EEOP_DOMAIN_CHECK,
 
+	/* evaluation steps for hashing */
+	EEOP_HASHDATUM_SET_INITVAL,
+	EEOP_HASHDATUM_FIRST,
+	EEOP_HASHDATUM_FIRST_STRICT,
+	EEOP_HASHDATUM_NEXT32,
+	EEOP_HASHDATUM_NEXT32_STRICT,
+
 	/* evaluate assorted special-purpose expression types */
 	EEOP_CONVERT_ROWTYPE,
 	EEOP_SCALARARRAYOP,
@@ -557,6 +564,23 @@ typedef struct ExprEvalStep
 			Oid			resulttype;
 			ErrorSaveContext *escontext;
 		}			domaincheck;
+
+		/* for EEOP_HASH_SET_INITVAL */
+		struct
+		{
+			Datum		init_value;
+
+		}			hashdatum_initvalue;
+
+		/* for EEOP_HASHDATUM_(FIRST|NEXT32)[_STRICT] */
+		struct
+		{
+			FmgrInfo   *finfo;	/* function's lookup data */
+			FunctionCallInfo fcinfo_data;	/* arguments etc */
+			/* faster to access without additional indirection: */
+			PGFunction	fn_addr;	/* actual call address */
+			int			jumpdone;	/* jump here on null */
+		}			hashdatum;
 
 		/* for EEOP_CONVERT_ROWTYPE */
 		struct

@@ -3970,6 +3970,147 @@ ExecBuildAggTransCall(ExprState *state, AggState *aggstate,
 }
 
 /*
+ * Build an ExprState that calls the given hash function(s) on the given
+ * 'hash_exprs'.  When multiple expressions are present, the hash values
+ * returned by each hash function are combined to produce a single hash value.
+ *
+ * desc: tuple descriptor for the to-be-hashed expressions
+ * ops: TupleTableSlotOps for the TupleDesc
+ * hashfunc_oids: Oid for each hash function to call, one for each 'hash_expr'
+ * collations: collation to use when calling the hash function.
+ * hash_expr: list of expressions to hash the value of
+ * opstrict: array corresponding to the 'hashfunc_oids' to store op_strict()
+ * parent: PlanState node that the 'hash_exprs' will be evaluated at
+ * init_value: Normally 0, but can be set to other values to seed the hash
+ * with some other value.  Using non-zero is slightly less efficient but can
+ * be useful.
+ * keep_nulls: if true, evaluation of the returned ExprState will abort early
+ * returning NULL if the given hash function is strict and the Datum to hash
+ * is null.  When set to false, any NULL input Datums are skipped.
+ */
+ExprState *
+ExecBuildHash32Expr(TupleDesc desc, const TupleTableSlotOps *ops,
+					const Oid *hashfunc_oids, const List *collations,
+					const List *hash_exprs, const bool *opstrict,
+					PlanState *parent, uint32 init_value, bool keep_nulls)
+{
+	ExprState  *state = makeNode(ExprState);
+	ExprEvalStep scratch = {0};
+	List	   *adjust_jumps = NIL;
+	ListCell   *lc;
+	ListCell   *lc2;
+	intptr_t	strict_opcode;
+	intptr_t	opcode;
+
+	Assert(list_length(hash_exprs) == list_length(collations));
+
+	state->parent = parent;
+
+	/* Insert setup steps as needed. */
+	ExecCreateExprSetupSteps(state, (Node *) hash_exprs);
+
+	if (init_value == 0)
+	{
+		/*
+		 * No initial value, so we can assign the result of the hash function
+		 * for the first hash_expr without having to concern ourselves with
+		 * combining the result with any initial value.
+		 */
+		strict_opcode = EEOP_HASHDATUM_FIRST_STRICT;
+		opcode = EEOP_HASHDATUM_FIRST;
+	}
+	else
+	{
+		/* Set up operation to set the initial value. */
+		scratch.opcode = EEOP_HASHDATUM_SET_INITVAL;
+		scratch.d.hashdatum_initvalue.init_value = UInt32GetDatum(init_value);
+		scratch.resvalue = &state->resvalue;
+		scratch.resnull = &state->resnull;
+
+		ExprEvalPushStep(state, &scratch);
+
+		/*
+		 * When using an initial value use the NEXT32/NEXT32_STRICT ops as the
+		 * FIRST/FIRST_STRICT ops would overwrite the stored initial value.
+		 */
+		strict_opcode = EEOP_HASHDATUM_NEXT32_STRICT;
+		opcode = EEOP_HASHDATUM_NEXT32;
+	}
+
+	forboth(lc, hash_exprs, lc2, collations)
+	{
+		Expr	   *expr = (Expr *) lfirst(lc);
+		FmgrInfo   *finfo;
+		FunctionCallInfo fcinfo;
+		int			i = foreach_current_index(lc);
+		Oid			funcid;
+		Oid			inputcollid = lfirst_oid(lc2);
+
+		funcid = hashfunc_oids[i];
+
+		/* Allocate hash function lookup data. */
+		finfo = palloc0(sizeof(FmgrInfo));
+		fcinfo = palloc0(SizeForFunctionCallInfo(1));
+
+		fmgr_info(funcid, finfo);
+
+		/*
+		 * Build the steps to evaluate the hash function's argument have it so
+		 * the value of that is stored in the 0th argument of the hash func.
+		 */
+		ExecInitExprRec(expr,
+						state,
+						&fcinfo->args[0].value,
+						&fcinfo->args[0].isnull);
+
+		scratch.resvalue = &state->resvalue;
+		scratch.resnull = &state->resnull;
+
+		/* Initialize function call parameter structure too */
+		InitFunctionCallInfoData(*fcinfo, finfo, 1, inputcollid, NULL, NULL);
+
+		scratch.d.hashdatum.finfo = finfo;
+		scratch.d.hashdatum.fcinfo_data = fcinfo;
+		scratch.d.hashdatum.fn_addr = finfo->fn_addr;
+
+		scratch.opcode = opstrict[i] && !keep_nulls ? strict_opcode : opcode;
+		scratch.d.hashdatum.jumpdone = -1;
+
+		ExprEvalPushStep(state, &scratch);
+		adjust_jumps = lappend_int(adjust_jumps, state->steps_len - 1);
+
+		/*
+		 * For subsequent keys we must combine the hash value with the
+		 * previous hashes.
+		 */
+		strict_opcode = EEOP_HASHDATUM_NEXT32_STRICT;
+		opcode = EEOP_HASHDATUM_NEXT32;
+	}
+
+	/* adjust jump targets */
+	foreach(lc, adjust_jumps)
+	{
+		ExprEvalStep *as = &state->steps[lfirst_int(lc)];
+
+		Assert(as->opcode == EEOP_HASHDATUM_FIRST ||
+			   as->opcode == EEOP_HASHDATUM_FIRST_STRICT ||
+			   as->opcode == EEOP_HASHDATUM_NEXT32 ||
+			   as->opcode == EEOP_HASHDATUM_NEXT32_STRICT);
+		Assert(as->d.hashdatum.jumpdone == -1);
+		as->d.hashdatum.jumpdone = state->steps_len;
+	}
+
+	scratch.resvalue = NULL;
+	scratch.resnull = NULL;
+	scratch.opcode = EEOP_DONE;
+	ExprEvalPushStep(state, &scratch);
+
+	ExecReadyExpr(state);
+
+	return state;
+}
+
+/*
  * Build equality expression that can be evaluated using ExecQual(), returning
  * true if the expression context's inner/outer tuple are NOT DISTINCT. I.e
  * two nulls match, a null and a not-null don't match.
