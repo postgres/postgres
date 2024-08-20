@@ -90,4 +90,21 @@ impl PartialEq for Message {
     }
 }
 
-// TODO-SHARD implement tests
+#[cfg(test)]
+
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_message_to_string() {
+        let message = Message::new(MessageType::InitConnection, Some(0.5));
+        assert_eq!(message.to_string(), "INIT_CONNECTION 0.5\n");
+    }
+
+    #[test]
+    fn test_message_from_string() {
+        let message = Message::new(MessageType::InitConnection, Some(0.5));
+        let message_string = message.to_string();
+        assert_eq!(Message::from_string(&message_string).unwrap(), message);
+    }
+}
