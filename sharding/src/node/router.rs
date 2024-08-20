@@ -320,7 +320,7 @@ impl NodeRole for Router {
 
 impl Router {
     fn send_query_to_shard(&mut self, shard_id: String, query: &str, is_insert: bool) {
-        if let Some(mut shard) = self.clone().shards.lock().unwrap().get_mut(&shard_id) {
+        if let Some(shard) = self.clone().shards.lock().unwrap().get_mut(&shard_id) {
             let rows = match shard.query(query, &[]) {
                 Ok(rows) => rows,
                 Err(e) => {
