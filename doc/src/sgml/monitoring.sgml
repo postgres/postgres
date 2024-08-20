@@ -1665,7 +1665,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
      <row>
       <entry><literal>ProcArrayGroupUpdate</literal></entry>
       <entry>Waiting for the group leader to clear the transaction ID at
-       end of a parallel operation.</entry>
+       transaction end.</entry>
      </row>
      <row>
       <entry><literal>ProcSignalBarrier</literal></entry>
@@ -1713,7 +1713,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
      <row>
       <entry><literal>XactGroupUpdate</literal></entry>
       <entry>Waiting for the group leader to update transaction status at
-       end of a parallel operation.</entry>
+       transaction end.</entry>
      </row>
     </tbody>
    </tgroup>
