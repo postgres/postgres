@@ -201,6 +201,7 @@ static const struct f_smgr tde_smgr = {
 	.smgr_nblocks = mdnblocks,
 	.smgr_truncate = mdtruncate,
 	.smgr_immedsync = mdimmedsync,
+	.smgr_registersync = mdregistersync,
 };
 
 void RegisterStorageMgr()
