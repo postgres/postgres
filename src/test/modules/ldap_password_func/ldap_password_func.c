@@ -23,7 +23,6 @@
 PG_MODULE_MAGIC;
 
 void		_PG_init(void);
-void		_PG_fini(void);
 
 /* hook function */
 static char *rot13_passphrase(char *password);
@@ -35,12 +34,6 @@ void
 _PG_init(void)
 {
 	ldap_password_hook = rot13_passphrase;
-}
-
-void
-_PG_fini(void)
-{
-	/* do  nothing yet */
 }
 
 static char *
