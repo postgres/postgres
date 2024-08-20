@@ -25,7 +25,9 @@ CREATE [ { TEMPORARY | TEMP } | UNLOGGED ] SEQUENCE [ IF NOT EXISTS ] <replaceab
     [ AS <replaceable class="parameter">data_type</replaceable> ]
     [ INCREMENT [ BY ] <replaceable class="parameter">increment</replaceable> ]
     [ MINVALUE <replaceable class="parameter">minvalue</replaceable> | NO MINVALUE ] [ MAXVALUE <replaceable class="parameter">maxvalue</replaceable> | NO MAXVALUE ]
-    [ START [ WITH ] <replaceable class="parameter">start</replaceable> ] [ CACHE <replaceable class="parameter">cache</replaceable> ] [ [ NO ] CYCLE ]
+    [ [ NO ] CYCLE ]
+    [ START [ WITH ] <replaceable class="parameter">start</replaceable> ]
+    [ CACHE <replaceable class="parameter">cache</replaceable> ]
     [ OWNED BY { <replaceable class="parameter">table_name</replaceable>.<replaceable class="parameter">column_name</replaceable> | NONE } ]
 </synopsis>
  </refsynopsisdiv>
@@ -194,6 +196,31 @@ SELECT * FROM <replaceable>name</replaceable>;
    </varlistentry>
 
    <varlistentry>
+    <term><literal>CYCLE</literal></term>
+    <term><literal>NO CYCLE</literal></term>
+    <listitem>
+     <para>
+      The <literal>CYCLE</literal> option allows the sequence to wrap
+      around when the <replaceable
+      class="parameter">maxvalue</replaceable> or <replaceable
+      class="parameter">minvalue</replaceable> has been reached by an
+      ascending or descending sequence respectively. If the limit is
+      reached, the next number generated will be the <replaceable
+      class="parameter">minvalue</replaceable> or <replaceable
+      class="parameter">maxvalue</replaceable>, respectively.
+     </para>
+
+     <para>
+      If <literal>NO CYCLE</literal> is specified, any calls to
+      <function>nextval</function> after the sequence has reached its
+      maximum value will return an error.  If neither
+      <literal>CYCLE</literal> or <literal>NO CYCLE</literal> are
+      specified, <literal>NO CYCLE</literal> is the default.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
     <term><replaceable class="parameter">start</replaceable></term>
     <listitem>
      <para>
@@ -217,31 +244,6 @@ SELECT * FROM <replaceable>name</replaceable>;
       memory for faster access. The minimum value is 1 (only one value
       can be generated at a time, i.e., no cache), and this is also the
       default.
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term><literal>CYCLE</literal></term>
-    <term><literal>NO CYCLE</literal></term>
-    <listitem>
-     <para>
-      The <literal>CYCLE</literal> option allows the sequence to wrap
-      around when the <replaceable
-      class="parameter">maxvalue</replaceable> or <replaceable
-      class="parameter">minvalue</replaceable> has been reached by an
-      ascending or descending sequence respectively. If the limit is
-      reached, the next number generated will be the <replaceable
-      class="parameter">minvalue</replaceable> or <replaceable
-      class="parameter">maxvalue</replaceable>, respectively.
-     </para>
-
-     <para>
-      If <literal>NO CYCLE</literal> is specified, any calls to
-      <function>nextval</function> after the sequence has reached its
-      maximum value will return an error.  If neither
-      <literal>CYCLE</literal> or <literal>NO CYCLE</literal> are
-      specified, <literal>NO CYCLE</literal> is the default.
      </para>
     </listitem>
    </varlistentry>

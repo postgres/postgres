@@ -27,9 +27,10 @@ ALTER SEQUENCE [ IF EXISTS ] <replaceable class="parameter">name</replaceable>
     [ AS <replaceable class="parameter">data_type</replaceable> ]
     [ INCREMENT [ BY ] <replaceable class="parameter">increment</replaceable> ]
     [ MINVALUE <replaceable class="parameter">minvalue</replaceable> | NO MINVALUE ] [ MAXVALUE <replaceable class="parameter">maxvalue</replaceable> | NO MAXVALUE ]
+    [ [ NO ] CYCLE ]
     [ START [ WITH ] <replaceable class="parameter">start</replaceable> ]
     [ RESTART [ [ WITH ] <replaceable class="parameter">restart</replaceable> ] ]
-    [ CACHE <replaceable class="parameter">cache</replaceable> ] [ [ NO ] CYCLE ]
+    [ CACHE <replaceable class="parameter">cache</replaceable> ]
     [ OWNED BY { <replaceable class="parameter">table_name</replaceable>.<replaceable class="parameter">column_name</replaceable> | NONE } ]
 ALTER SEQUENCE [ IF EXISTS ] <replaceable class="parameter">name</replaceable> SET { LOGGED | UNLOGGED }
 ALTER SEQUENCE [ IF EXISTS ] <replaceable class="parameter">name</replaceable> OWNER TO { <replaceable class="parameter">new_owner</replaceable> | CURRENT_ROLE | CURRENT_USER | SESSION_USER }
@@ -155,6 +156,38 @@ ALTER SEQUENCE [ IF EXISTS ] <replaceable class="parameter">name</replaceable> S
      </varlistentry>
 
      <varlistentry>
+      <term><literal>CYCLE</literal></term>
+      <listitem>
+       <para>
+        The optional <literal>CYCLE</literal> key word can be used to enable
+        the sequence to wrap around when the
+        <replaceable class="parameter">maxvalue</replaceable> or
+        <replaceable class="parameter">minvalue</replaceable> has been
+        reached by
+        an ascending or descending sequence respectively. If the limit is
+        reached, the next number generated will be the
+        <replaceable class="parameter">minvalue</replaceable> or
+        <replaceable class="parameter">maxvalue</replaceable>,
+        respectively.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>NO CYCLE</literal></term>
+      <listitem>
+       <para>
+        If the optional <literal>NO CYCLE</literal> key word is
+        specified, any calls to <function>nextval</function> after the
+        sequence has reached its maximum value will return an error.
+        If neither <literal>CYCLE</literal> or <literal>NO
+        CYCLE</literal> are specified, the old cycle behavior will be
+        maintained.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><replaceable class="parameter">start</replaceable></term>
       <listitem>
        <para>
@@ -203,38 +236,6 @@ ALTER SEQUENCE [ IF EXISTS ] <replaceable class="parameter">name</replaceable> S
         faster access. The minimum value is 1 (only one value can be
         generated at a time, i.e., no cache).  If unspecified, the old
         cache value will be maintained.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><literal>CYCLE</literal></term>
-      <listitem>
-       <para>
-        The optional <literal>CYCLE</literal> key word can be used to enable
-        the sequence to wrap around when the
-        <replaceable class="parameter">maxvalue</replaceable> or
-        <replaceable class="parameter">minvalue</replaceable> has been
-        reached by
-        an ascending or descending sequence respectively. If the limit is
-        reached, the next number generated will be the
-        <replaceable class="parameter">minvalue</replaceable> or
-        <replaceable class="parameter">maxvalue</replaceable>,
-        respectively.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><literal>NO CYCLE</literal></term>
-      <listitem>
-       <para>
-        If the optional <literal>NO CYCLE</literal> key word is
-        specified, any calls to <function>nextval</function> after the
-        sequence has reached its maximum value will return an error.
-        If neither <literal>CYCLE</literal> or <literal>NO
-        CYCLE</literal> are specified, the old cycle behavior will be
-        maintained.
        </para>
       </listitem>
      </varlistentry>
