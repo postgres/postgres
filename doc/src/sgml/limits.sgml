@@ -135,4 +135,15 @@
   created tuples are internally marked as null in the tuple's null bitmap, the
   null bitmap also occupies space.
  </para>
+
+ <para>
+  Each table can store a theoretical maximum of 2^32 out-of-line values; see
+  <xref linkend="storage-toast" /> for a detailed discussion of out-of-line
+  storage. This limit arises from the use of a 32-bit OID to identify each
+  such value. The practical limit is significantly less than the theoretical
+  limit, because as the OID space fills up, finding an OID that is still free
+  can become expensive, in turn slowing down INSERT/UPDATE statements.
+  Typically, this is only an issue for tables containing many terabytes
+  of data; partitioning is a possible workaround.
+ </para>
 </appendix>
