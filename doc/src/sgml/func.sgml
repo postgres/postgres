@@ -16056,7 +16056,7 @@ table2-mapping
    which specifies the data type returned.  It must be one of <type>json</type>,
    <type>jsonb</type>, <type>bytea</type>, a character string type (<type>text</type>,
    <type>char</type>, or <type>varchar</type>), or a type
-   for which there is a cast from <type>json</type> to that type.
+   that can be cast to <type>json</type>.
    By default, the <type>json</type> type is returned.
   </para>
 
