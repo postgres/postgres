@@ -88,11 +88,6 @@ static bool ExecCheckPermissionsModified(Oid relOid, Oid userid,
 										 Bitmapset *modifiedCols,
 										 AclMode requiredPerms);
 static void ExecCheckXactReadOnly(PlannedStmt *plannedstmt);
-static char *ExecBuildSlotValueDescription(Oid reloid,
-										   TupleTableSlot *slot,
-										   TupleDesc tupdesc,
-										   Bitmapset *modifiedCols,
-										   int maxfieldlen);
 static void EvalPlanQualStart(EPQState *epqstate, Plan *planTree);
 
 /* end of local decls */
@@ -2210,7 +2205,7 @@ ExecWithCheckOptions(WCOKind kind, ResultRelInfo *resultRelInfo,
  * column involved, that subset will be returned with a key identifying which
  * columns they are.
  */
-static char *
+char *
 ExecBuildSlotValueDescription(Oid reloid,
 							  TupleTableSlot *slot,
 							  TupleDesc tupdesc,

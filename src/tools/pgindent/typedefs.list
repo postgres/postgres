@@ -467,6 +467,7 @@ ConditionVariableMinimallyPadded
 ConditionalStack
 ConfigData
 ConfigVariable
+ConflictType
 ConnCacheEntry
 ConnCacheKey
 ConnParams

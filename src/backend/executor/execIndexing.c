@@ -207,8 +207,9 @@ ExecOpenIndices(ResultRelInfo *resultRelInfo, bool speculative)
 		ii = BuildIndexInfo(indexDesc);
 
 		/*
-		 * If the indexes are to be used for speculative insertion, add extra
-		 * information required by unique index entries.
+		 * If the indexes are to be used for speculative insertion or conflict
+		 * detection in logical replication, add extra information required by
+		 * unique index entries.
 		 */
 		if (speculative && ii->ii_Unique)
 			BuildSpeculativeIndexInfo(indexDesc, ii);
@@ -519,14 +520,18 @@ ExecInsertIndexTuples(ResultRelInfo *resultRelInfo,
  *
  *		Note that this doesn't lock the values in any way, so it's
  *		possible that a conflicting tuple is inserted immediately
- *		after this returns.  But this can be used for a pre-check
- *		before insertion.
+ *		after this returns.  This can be used for either a pre-check
+ *		before insertion or a re-check after finding a conflict.
+ *
+ *		'tupleid' should be the TID of the tuple that has been recently
+ *		inserted (or can be invalid if we haven't inserted a new tuple yet).
+ *		This tuple will be excluded from conflict checking.
  * ----------------------------------------------------------------
  */
 bool
 ExecCheckIndexConstraints(ResultRelInfo *resultRelInfo, TupleTableSlot *slot,
 						  EState *estate, ItemPointer conflictTid,
-						  List *arbiterIndexes)
+						  ItemPointer tupleid, List *arbiterIndexes)
 {
 	int			i;
 	int			numIndices;
@@ -629,7 +634,7 @@ ExecCheckIndexConstraints(ResultRelInfo *resultRelInfo, TupleTableSlot *slot,
 
 		satisfiesConstraint =
 			check_exclusion_or_unique_constraint(heapRelation, indexRelation,
-												 indexInfo, &invalidItemPtr,
+												 indexInfo, tupleid,
 												 values, isnull, estate, false,
 												 CEOUC_WAIT, true,
 												 conflictTid);

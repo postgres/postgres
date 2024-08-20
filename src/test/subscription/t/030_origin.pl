@@ -27,9 +27,14 @@ my $stderr;
 my $node_A = PostgreSQL::Test::Cluster->new('node_A');
 $node_A->init(allows_streaming => 'logical');
 $node_A->start;
+
 # node_B
 my $node_B = PostgreSQL::Test::Cluster->new('node_B');
 $node_B->init(allows_streaming => 'logical');
+
+# Enable the track_commit_timestamp to detect the conflict when attempting to
+# update a row that was previously modified by a different origin.
+$node_B->append_conf('postgresql.conf', 'track_commit_timestamp = on');
 $node_B->start;
 
 # Create table on node_A
@@ -138,6 +143,48 @@ $result = $node_A->safe_psql('postgres', "SELECT * FROM tab ORDER BY 1;");
 is($result, qq(),
 	'Remote data originating from another node (not the publisher) is not replicated when origin parameter is none'
 );
+
+###############################################################################
+# Check that the conflict can be detected when attempting to update or
+# delete a row that was previously modified by a different source.
+###############################################################################
+
+$node_B->safe_psql('postgres', "DELETE FROM tab;");
+
+$node_A->safe_psql('postgres', "INSERT INTO tab VALUES (32);");
+
+$node_A->wait_for_catchup($subname_BA);
+$node_B->wait_for_catchup($subname_AB);
+
+$result = $node_B->safe_psql('postgres', "SELECT * FROM tab ORDER BY 1;");
+is($result, qq(32), 'The node_A data replicated to node_B');
+
+# The update should update the row on node B that was inserted by node A.
+$node_C->safe_psql('postgres', "UPDATE tab SET a = 33 WHERE a = 32;");
+
+$node_B->wait_for_log(
+	qr/conflict detected on relation "public.tab": conflict=update_differ.*\n.*DETAIL:.* Updating the row that was modified by a different origin ".*" in transaction [0-9]+ at .*\n.*Existing local tuple \(32\); remote tuple \(33\); replica identity \(a\)=\(32\)/
+);
+
+$node_B->safe_psql('postgres', "DELETE FROM tab;");
+$node_A->safe_psql('postgres', "INSERT INTO tab VALUES (33);");
+
+$node_A->wait_for_catchup($subname_BA);
+$node_B->wait_for_catchup($subname_AB);
+
+$result = $node_B->safe_psql('postgres', "SELECT * FROM tab ORDER BY 1;");
+is($result, qq(33), 'The node_A data replicated to node_B');
+
+# The delete should remove the row on node B that was inserted by node A.
+$node_C->safe_psql('postgres', "DELETE FROM tab WHERE a = 33;");
+
+$node_B->wait_for_log(
+	qr/conflict detected on relation "public.tab": conflict=delete_differ.*\n.*DETAIL:.* Deleting the row that was modified by a different origin ".*" in transaction [0-9]+ at .*\n.*Existing local tuple \(33\); replica identity \(a\)=\(33\)/
+);
+
+# The remaining tests no longer test conflict detection.
+$node_B->append_conf('postgresql.conf', 'track_commit_timestamp = off');
+$node_B->restart;
 
 ###############################################################################
 # Specifying origin = NONE indicates that the publisher should only replicate the

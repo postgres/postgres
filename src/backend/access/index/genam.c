@@ -154,8 +154,9 @@ IndexScanEnd(IndexScanDesc scan)
  *
  * Construct a string describing the contents of an index entry, in the
  * form "(key_name, ...)=(key_value, ...)".  This is currently used
- * for building unique-constraint and exclusion-constraint error messages,
- * so only key columns of the index are checked and printed.
+ * for building unique-constraint, exclusion-constraint error messages, and
+ * logical replication conflict error messages so only key columns of the index
+ * are checked and printed.
  *
  * Note that if the user does not have permissions to view all of the
  * columns involved then a NULL is returned.  Returning a partial key seems

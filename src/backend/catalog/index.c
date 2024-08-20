@@ -2631,8 +2631,9 @@ CompareIndexInfo(const IndexInfo *info1, const IndexInfo *info2,
  *			Add extra state to IndexInfo record
  *
  * For unique indexes, we usually don't want to add info to the IndexInfo for
- * checking uniqueness, since the B-Tree AM handles that directly.  However,
- * in the case of speculative insertion, additional support is required.
+ * checking uniqueness, since the B-Tree AM handles that directly.  However, in
+ * the case of speculative insertion and conflict detection in logical
+ * replication, additional support is required.
  *
  * Do this processing here rather than in BuildIndexInfo() to not incur the
  * overhead in the common non-speculative cases.

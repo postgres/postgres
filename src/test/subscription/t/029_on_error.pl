@@ -30,7 +30,7 @@ sub test_skip_lsn
 	# ERROR with its CONTEXT when retrieving this information.
 	my $contents = slurp_file($node_subscriber->logfile, $offset);
 	$contents =~
-	  qr/duplicate key value violates unique constraint "tbl_pkey".*\n.*DETAIL:.*\n.*CONTEXT:.* for replication target relation "public.tbl" in transaction \d+, finished at ([[:xdigit:]]+\/[[:xdigit:]]+)/m
+	  qr/conflict detected on relation "public.tbl".*\n.*DETAIL:.* Key already exists in unique index "tbl_pkey", modified by .*origin.* transaction \d+ at .*\n.*Key \(i\)=\(\d+\); existing local tuple .*; remote tuple .*\n.*CONTEXT:.* for replication target relation "public.tbl" in transaction \d+, finished at ([[:xdigit:]]+\/[[:xdigit:]]+)/m
 	  or die "could not get error-LSN";
 	my $lsn = $1;
 
@@ -83,6 +83,7 @@ $node_subscriber->append_conf(
 	'postgresql.conf',
 	qq[
 max_prepared_transactions = 10
+track_commit_timestamp = on
 ]);
 $node_subscriber->start;
 
@@ -93,6 +94,7 @@ $node_publisher->safe_psql(
 	'postgres',
 	qq[
 CREATE TABLE tbl (i INT, t BYTEA);
+ALTER TABLE tbl REPLICA IDENTITY FULL;
 INSERT INTO tbl VALUES (1, NULL);
 ]);
 $node_subscriber->safe_psql(
@@ -144,13 +146,14 @@ COMMIT;
 test_skip_lsn($node_publisher, $node_subscriber,
 	"(2, NULL)", "2", "test skipping transaction");
 
-# Test for PREPARE and COMMIT PREPARED. Insert the same data to tbl and
-# PREPARE the transaction, raising an error. Then skip the transaction.
+# Test for PREPARE and COMMIT PREPARED. Update the data and PREPARE the
+# transaction, raising an error on the subscriber due to violation of the
+# unique constraint on tbl. Then skip the transaction.
 $node_publisher->safe_psql(
 	'postgres',
 	qq[
 BEGIN;
-INSERT INTO tbl VALUES (1, NULL);
+UPDATE tbl SET i = 2;
 PREPARE TRANSACTION 'gtx';
 COMMIT PREPARED 'gtx';
 ]);

@@ -343,13 +343,6 @@ $result =
   $node_subscriber2->safe_psql('postgres', "SELECT a FROM tab1 ORDER BY 1");
 is($result, qq(), 'truncate of tab1 replicated');
 
-# Check that subscriber handles cases where update/delete target tuple
-# is missing.  We have to look for the DEBUG1 log messages about that,
-# so temporarily bump up the log verbosity.
-$node_subscriber1->append_conf('postgresql.conf',
-	"log_min_messages = debug1");
-$node_subscriber1->reload;
-
 $node_publisher->safe_psql('postgres',
 	"INSERT INTO tab1 VALUES (1, 'foo'), (4, 'bar'), (10, 'baz')");
 
@@ -372,21 +365,17 @@ $node_publisher->wait_for_catchup('sub2');
 
 my $logfile = slurp_file($node_subscriber1->logfile(), $log_location);
 ok( $logfile =~
-	  qr/logical replication did not find row to be updated in replication target relation's partition "tab1_2_2"/,
+	  qr/conflict detected on relation "public.tab1_2_2": conflict=update_missing.*\n.*DETAIL:.* Could not find the row to be updated.*\n.*Remote tuple \(null, 4, quux\); replica identity \(a\)=\(4\)/,
 	'update target row is missing in tab1_2_2');
 ok( $logfile =~
-	  qr/logical replication did not find row to be deleted in replication target relation "tab1_1"/,
+	  qr/conflict detected on relation "public.tab1_1": conflict=delete_missing.*\n.*DETAIL:.* Could not find the row to be deleted.*\n.*Replica identity \(a\)=\(1\)/,
 	'delete target row is missing in tab1_1');
 ok( $logfile =~
-	  qr/logical replication did not find row to be deleted in replication target relation "tab1_2_2"/,
+	  qr/conflict detected on relation "public.tab1_2_2": conflict=delete_missing.*\n.*DETAIL:.* Could not find the row to be deleted.*\n.*Replica identity \(a\)=\(4\)/,
 	'delete target row is missing in tab1_2_2');
 ok( $logfile =~
-	  qr/logical replication did not find row to be deleted in replication target relation "tab1_def"/,
+	  qr/conflict detected on relation "public.tab1_def": conflict=delete_missing.*\n.*DETAIL:.* Could not find the row to be deleted.*\n.*Replica identity \(a\)=\(10\)/,
 	'delete target row is missing in tab1_def');
-
-$node_subscriber1->append_conf('postgresql.conf',
-	"log_min_messages = warning");
-$node_subscriber1->reload;
 
 # Tests for replication using root table identity and schema
 
@@ -773,13 +762,6 @@ pub_tab2|3|yyy
 pub_tab2|5|zzz
 xxx_c|6|aaa), 'inserts into tab2 replicated');
 
-# Check that subscriber handles cases where update/delete target tuple
-# is missing.  We have to look for the DEBUG1 log messages about that,
-# so temporarily bump up the log verbosity.
-$node_subscriber1->append_conf('postgresql.conf',
-	"log_min_messages = debug1");
-$node_subscriber1->reload;
-
 $node_subscriber1->safe_psql('postgres', "DELETE FROM tab2");
 
 # Note that the current location of the log file is not grabbed immediately
@@ -796,15 +778,34 @@ $node_publisher->wait_for_catchup('sub2');
 
 $logfile = slurp_file($node_subscriber1->logfile(), $log_location);
 ok( $logfile =~
-	  qr/logical replication did not find row to be updated in replication target relation's partition "tab2_1"/,
+	  qr/conflict detected on relation "public.tab2_1": conflict=update_missing.*\n.*DETAIL:.* Could not find the row to be updated.*\n.*Remote tuple \(pub_tab2, quux, 5\); replica identity \(a\)=\(5\)/,
 	'update target row is missing in tab2_1');
 ok( $logfile =~
-	  qr/logical replication did not find row to be deleted in replication target relation "tab2_1"/,
+	  qr/conflict detected on relation "public.tab2_1": conflict=delete_missing.*\n.*DETAIL:.* Could not find the row to be deleted.*\n.*Replica identity \(a\)=\(1\)/,
 	'delete target row is missing in tab2_1');
 
+# Enable the track_commit_timestamp to detect the conflict when attempting
+# to update a row that was previously modified by a different origin.
 $node_subscriber1->append_conf('postgresql.conf',
-	"log_min_messages = warning");
-$node_subscriber1->reload;
+	'track_commit_timestamp = on');
+$node_subscriber1->restart;
+
+$node_subscriber1->safe_psql('postgres',
+	"INSERT INTO tab2 VALUES (3, 'yyy')");
+$node_publisher->safe_psql('postgres',
+	"UPDATE tab2 SET b = 'quux' WHERE a = 3");
+
+$node_publisher->wait_for_catchup('sub_viaroot');
+
+$logfile = slurp_file($node_subscriber1->logfile(), $log_location);
+ok( $logfile =~
+	  qr/conflict detected on relation "public.tab2_1": conflict=update_differ.*\n.*DETAIL:.* Updating the row that was modified locally in transaction [0-9]+ at .*\n.*Existing local tuple \(yyy, null, 3\); remote tuple \(pub_tab2, quux, 3\); replica identity \(a\)=\(3\)/,
+	'updating a tuple that was modified by a different origin');
+
+# The remaining tests no longer test conflict detection.
+$node_subscriber1->append_conf('postgresql.conf',
+	'track_commit_timestamp = off');
+$node_subscriber1->restart;
 
 # Test that replication continues to work correctly after altering the
 # partition of a partitioned target table.
