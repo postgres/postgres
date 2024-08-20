@@ -107,7 +107,7 @@ impl Shard {
             Ok((stream, addr)) => {
                 println!("New connection accepted from {}.", addr);
                 // let mut stream_guard = rw_stream.write().unwrap();
-                
+
                 self.router_stream = Arc::new(RwLock::new(Some(stream)));
 
                 // Start listening for incoming messages in a thread
@@ -157,7 +157,6 @@ impl Shard {
                 }
                 None => {
                     // Do nothing
-
                 }
             };
         }
@@ -186,7 +185,10 @@ impl Shard {
                 Some(response_string)
             }
             _ => {
-                eprintln!("Message type received: {:?}, not yet implemented", message.message_type);
+                eprintln!(
+                    "Message type received: {:?}, not yet implemented",
+                    message.message_type
+                );
                 None
             }
         }
@@ -211,17 +213,22 @@ impl Shard {
         }
         let memory_manager = self.memory_manager.as_ref().try_lock().unwrap();
         let memory_percentage = memory_manager.available_memory_perc;
-        let response_message = shard::Message::new(MessageType::MemoryUpdate, Some(memory_percentage));
+        let response_message =
+            shard::Message::new(MessageType::MemoryUpdate, Some(memory_percentage));
 
         response_message.to_string()
     }
-    
+
     fn update(&mut self) -> Result<(), io::Error> {
         self.memory_manager.as_ref().try_lock().unwrap().update()
     }
 
     fn accepts_insertions(&self) -> bool {
-        self.memory_manager.as_ref().try_lock().unwrap().accepts_insertions()
+        self.memory_manager
+            .as_ref()
+            .try_lock()
+            .unwrap()
+            .accepts_insertions()
     }
 
     fn get_insertion_response(&self) -> MessageType {

@@ -1,5 +1,9 @@
-use std::{cmp::Ordering, collections::BinaryHeap, sync::{Arc, Mutex}};
 use inline_colorization::*;
+use std::{
+    cmp::Ordering,
+    collections::BinaryHeap,
+    sync::{Arc, Mutex},
+};
 
 #[derive(Debug, Clone)]
 pub(crate) struct ShardManager {
@@ -32,11 +36,17 @@ impl ShardManager {
     }
 
     pub fn update_shard_memory(&mut self, memory: f64, shard_id: String) {
-        println!("{color_bright_green}Updating shard memory: {} to {}{style_reset}", shard_id, memory);
+        println!(
+            "{color_bright_green}Updating shard memory: {} to {}{style_reset}",
+            shard_id, memory
+        );
         self.pop();
         self.add_shard(memory, shard_id);
 
-        println!("{color_bright_green}Shard memory updated: {:?}{style_reset}", self.shards);
+        println!(
+            "{color_bright_green}Shard memory updated: {:?}{style_reset}",
+            self.shards
+        );
     }
 
     fn pop(&mut self) -> Option<String> {

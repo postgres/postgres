@@ -115,7 +115,11 @@ impl Router {
     }
 
     /// Sends the InitConnection message to the shard with the given shard id, initializing the communication with a handshake between the router and the shard. The shard will respond with a MemoryUpdate message, which will be handled by the router updating the shard's memory size in the ShardManager.
-    fn send_init_connection_message(&mut self, health_connection: Channel, node_port: &str) -> bool {
+    fn send_init_connection_message(
+        &mut self,
+        health_connection: Channel,
+        node_port: &str,
+    ) -> bool {
         // Send InitConnection Message to Shard and save shard to ShardManager
         let mut stream = health_connection.stream.as_ref().lock().unwrap();
         let update_message = Message::new(MessageType::InitConnection, None);
@@ -280,7 +284,7 @@ impl Router {
         let message = Message::new(MessageType::AskMemoryUpdate, None);
         stream.write(message.to_string().as_bytes()).unwrap();
         let mut response: [u8; 1024] = [0; 1024];
-        
+
         // Readn and handle message
         stream.read(&mut response).unwrap();
         let response_string = String::from_utf8_lossy(&response);

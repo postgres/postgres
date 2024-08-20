@@ -1,3 +1,4 @@
+use futures::future::ErrInto;
 use inline_colorization::*;
 use libc::statvfs;
 use std::ffi::CString;

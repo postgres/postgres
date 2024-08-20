@@ -32,7 +32,6 @@ pub fn get_router_config(config_file_path: Option<&str>) -> NodesConfig {
 }
 
 pub fn get_shard_config() -> LocalNode {
-
     let config_content = fs::read_to_string("../../../sharding/src/node/config/shard_config.yaml")
         .expect("Should have been able to read the file");
 
