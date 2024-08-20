@@ -2,6 +2,7 @@
 
 test_slru_sources = files(
   'test_slru.c',
+  'test_multixact.c',
 )
 
 if host_system == 'windows'
@@ -31,5 +32,13 @@ tests += {
     ],
     'regress_args': ['--temp-config', files('test_slru.conf')],
     'runningcheck': false,
+  },
+  'tap': {
+    'env': {
+       'enable_injection_points': get_option('injection_points') ? 'yes' : 'no',
+    },
+    'tests': [
+      't/001_multixact.pl'
+    ],
   },
 }

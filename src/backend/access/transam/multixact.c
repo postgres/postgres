@@ -88,6 +88,7 @@
 #include "storage/proc.h"
 #include "storage/procarray.h"
 #include "utils/fmgrprotos.h"
+#include "utils/injection_point.h"
 #include "utils/guc_hooks.h"
 #include "utils/memutils.h"
 
@@ -868,6 +869,8 @@ MultiXactIdCreateFromMembers(int nmembers, MultiXactMember *members)
 	 */
 	multi = GetNewMultiXactId(nmembers, &offset);
 
+	INJECTION_POINT("multixact-create-from-members");
+
 	/* Make an XLOG entry describing the new MXID. */
 	xlrec.mid = multi;
 	xlrec.moff = offset;
@@ -1479,6 +1482,8 @@ retry:
 			/* Corner case 2: next multixact is still being filled in */
 			LWLockRelease(lock);
 			CHECK_FOR_INTERRUPTS();
+
+			INJECTION_POINT("multixact-get-members-cv-sleep");
 
 			ConditionVariableSleep(&MultiXactState->nextoff_cv,
 								   WAIT_EVENT_MULTIXACT_CREATION);

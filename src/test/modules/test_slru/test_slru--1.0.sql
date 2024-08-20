@@ -19,3 +19,9 @@ CREATE OR REPLACE FUNCTION test_slru_page_truncate(bigint) RETURNS VOID
   AS 'MODULE_PATHNAME', 'test_slru_page_truncate' LANGUAGE C;
 CREATE OR REPLACE FUNCTION test_slru_delete_all() RETURNS VOID
   AS 'MODULE_PATHNAME', 'test_slru_delete_all' LANGUAGE C;
+
+
+CREATE OR REPLACE FUNCTION test_create_multixact() RETURNS xid
+  AS 'MODULE_PATHNAME', 'test_create_multixact' LANGUAGE C;
+CREATE OR REPLACE FUNCTION test_read_multixact(xid) RETURNS VOID
+  AS 'MODULE_PATHNAME', 'test_read_multixact'LANGUAGE C;
