@@ -829,11 +829,7 @@ AC_MSG_RESULT([$with_icu])
 AC_SUBST(with_icu)
 
 if test "$with_icu" = yes; then
-  PKG_CHECK_MODULES(ICU, icu-uc icu-i18n, [],
-    [AC_MSG_ERROR([ICU library not found
-If you have ICU already installed, see config.log for details on the
-failure.  It is possible the compiler isn't looking in the proper directory.
-Use --without-icu to disable ICU support.])])
+  PKG_CHECK_MODULES(ICU, icu-uc icu-i18n)
 fi
 
 #
