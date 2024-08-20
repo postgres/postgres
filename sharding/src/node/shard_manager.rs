@@ -14,9 +14,8 @@ impl ShardManager {
     }
 
     pub fn add_shard(&mut self, value: f64, shard_id: String) {
-        let inverted = value.powf(-1.0);
         let object = ShardManagerObject {
-            key: inverted,
+            key: value,
             value: shard_id,
         };
         println!("Adding shard: {:?}", object);
@@ -32,10 +31,10 @@ impl ShardManager {
         }
     }
 
-    pub fn update_shard_memory(&mut self, shard_id: &str, memory: f64) {
+    pub fn update_shard_memory(&mut self, memory: f64, shard_id: String) {
         println!("{color_bright_green}Updating shard memory: {} to {}{style_reset}", shard_id, memory);
         self.pop();
-        self.add_shard(memory, shard_id.to_string());
+        self.add_shard(memory, shard_id);
 
         println!("{color_bright_green}Shard memory updated: {:?}{style_reset}", self.shards);
     }
@@ -62,7 +61,7 @@ impl Ord for ShardManagerObject {
 
 impl PartialOrd for ShardManagerObject {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        other.key.partial_cmp(&self.key)
+        self.key.partial_cmp(&other.key)
     }
 }
 
@@ -77,7 +76,6 @@ impl Eq for ShardManagerObject {}
 #[cfg(test)]
 
 mod tests {
-    use crate::node::shard;
 
     use super::*;
 
@@ -115,7 +113,7 @@ mod tests {
         shard_manager.add_shard(4.0, "shard4".to_string());
         shard_manager.add_shard(5.0, "shard5".to_string());
 
-        shard_manager.update_shard_memory("shard3", 10.0);
+        shard_manager.update_shard_memory(10.0, "shard3".to_string());
 
         assert_eq!(shard_manager.peek(), Some("shard3".to_string()));
     }
@@ -129,7 +127,7 @@ mod tests {
         shard_manager.add_shard(4.0, "shard4".to_string());
         shard_manager.add_shard(5.0, "shard5".to_string());
 
-        shard_manager.update_shard_memory("shard5", 0.0);
+        shard_manager.update_shard_memory(0.0, "shard5".to_string());
 
         assert_eq!(shard_manager.peek(), Some("shard4".to_string()));
     }
@@ -143,7 +141,7 @@ mod tests {
         shard_manager.add_shard(4.0, "shard4".to_string());
         shard_manager.add_shard(5.0, "shard5".to_string());
 
-        shard_manager.update_shard_memory("shard5", 0.0);
+        shard_manager.update_shard_memory(0.0, "shard5".to_string());
         shard_manager.pop();
 
         assert_eq!(shard_manager.peek(), Some("shard3".to_string()));
