@@ -2,9 +2,6 @@ use super::router::Router;
 use super::shard::Shard;
 use std::ffi::CStr;
 
-// TODO-SHARD this file should be a more organized configuration file
-pub const FILE_PATH: &str = "ports.txt";
-
 /// The role of a node in the sharding system
 pub trait NodeRole {
     /// Sends a query to the shard group
