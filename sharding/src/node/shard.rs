@@ -173,8 +173,14 @@ impl Shard {
         };
 
         match message.message_type {
-            MessageType::InitConnection | MessageType::AskMemoryUpdate => {
-                println!("Received an InitConnection or AskMemoryUpdate message");
+            MessageType::InitConnection => {
+                println!("Received an InitConnection message");
+                let response_string = self.get_agreed_connection();
+                println!("Response created: {}", response_string);
+                Some(response_string)
+            }
+            MessageType::AskMemoryUpdate => {
+                println!("Received an AskMemoryUpdate message");
                 let response_string = self.get_memory_update_message();
                 println!("Response created: {}", response_string);
                 Some(response_string)
@@ -186,7 +192,23 @@ impl Shard {
         }
     }
 
-    fn get_memory_update_message (&self) -> String {
+    fn get_agreed_connection(&self) -> String {
+        let memory_manager = self.memory_manager.as_ref().try_lock().unwrap();
+        let memory_percentage = memory_manager.available_memory_perc;
+        let response_message = shard::Message::new(MessageType::Agreed, Some(memory_percentage));
+
+        response_message.to_string()
+    }
+
+    fn get_memory_update_message(&mut self) -> String {
+        match self.update() {
+            Ok(_) => {
+                println!("Memory updated successfully");
+            }
+            Err(e) => {
+                eprintln!("Failed to update memory: {:?}", e);
+            }
+        }
         let memory_manager = self.memory_manager.as_ref().try_lock().unwrap();
         let memory_percentage = memory_manager.available_memory_perc;
         let response_message = shard::Message::new(MessageType::MemoryUpdate, Some(memory_percentage));
@@ -194,7 +216,7 @@ impl Shard {
         response_message.to_string()
     }
     
-    pub fn update(&mut self) -> Result<(), io::Error> {
+    fn update(&mut self) -> Result<(), io::Error> {
         self.memory_manager.as_ref().try_lock().unwrap().update()
     }
 
