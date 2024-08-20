@@ -142,7 +142,7 @@ MULTIXACT_CREATION	"Waiting for a multixact creation to complete."
 PARALLEL_BITMAP_SCAN	"Waiting for parallel bitmap scan to become initialized."
 PARALLEL_CREATE_INDEX_SCAN	"Waiting for parallel <command>CREATE INDEX</command> workers to finish heap scan."
 PARALLEL_FINISH	"Waiting for parallel workers to finish computing."
-PROCARRAY_GROUP_UPDATE	"Waiting for the group leader to clear the transaction ID at end of a parallel operation."
+PROCARRAY_GROUP_UPDATE	"Waiting for the group leader to clear the transaction ID at transaction end."
 PROC_SIGNAL_BARRIER	"Waiting for a barrier event to be processed by all backends."
 PROMOTE	"Waiting for standby promotion."
 RECOVERY_CONFLICT_SNAPSHOT	"Waiting for recovery conflict resolution for a vacuum cleanup."
@@ -157,7 +157,7 @@ SYNC_REP	"Waiting for confirmation from a remote server during synchronous repli
 WAL_RECEIVER_EXIT	"Waiting for the WAL receiver to exit."
 WAL_RECEIVER_WAIT_START	"Waiting for startup process to send initial data for streaming replication."
 WAL_SUMMARY_READY	"Waiting for a new WAL summary to be generated."
-XACT_GROUP_UPDATE	"Waiting for the group leader to update transaction status at end of a parallel operation."
+XACT_GROUP_UPDATE	"Waiting for the group leader to update transaction status at transaction end."
 
 ABI_compatibility:
 
