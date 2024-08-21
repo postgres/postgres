@@ -27,11 +27,12 @@ extern int	compare_fractional_path_costs(Path *path1, Path *path2,
 										  double fraction);
 extern void set_cheapest(RelOptInfo *parent_rel);
 extern void add_path(RelOptInfo *parent_rel, Path *new_path);
-extern bool add_path_precheck(RelOptInfo *parent_rel,
+extern bool add_path_precheck(RelOptInfo *parent_rel, int disabled_nodes,
 							  Cost startup_cost, Cost total_cost,
 							  List *pathkeys, Relids required_outer);
 extern void add_partial_path(RelOptInfo *parent_rel, Path *new_path);
 extern bool add_partial_path_precheck(RelOptInfo *parent_rel,
+									  int disabled_nodes,
 									  Cost total_cost, List *pathkeys);
 
 extern Path *create_seqscan_path(PlannerInfo *root, RelOptInfo *rel,
@@ -124,7 +125,8 @@ extern Path *create_worktablescan_path(PlannerInfo *root, RelOptInfo *rel,
 									   Relids required_outer);
 extern ForeignPath *create_foreignscan_path(PlannerInfo *root, RelOptInfo *rel,
 											PathTarget *target,
-											double rows, Cost startup_cost, Cost total_cost,
+											double rows, int disabled_nodes,
+											Cost startup_cost, Cost total_cost,
 											List *pathkeys,
 											Relids required_outer,
 											Path *fdw_outerpath,
@@ -132,7 +134,8 @@ extern ForeignPath *create_foreignscan_path(PlannerInfo *root, RelOptInfo *rel,
 											List *fdw_private);
 extern ForeignPath *create_foreign_join_path(PlannerInfo *root, RelOptInfo *rel,
 											 PathTarget *target,
-											 double rows, Cost startup_cost, Cost total_cost,
+											 double rows, int disabled_nodes,
+											 Cost startup_cost, Cost total_cost,
 											 List *pathkeys,
 											 Relids required_outer,
 											 Path *fdw_outerpath,
@@ -140,7 +143,8 @@ extern ForeignPath *create_foreign_join_path(PlannerInfo *root, RelOptInfo *rel,
 											 List *fdw_private);
 extern ForeignPath *create_foreign_upper_path(PlannerInfo *root, RelOptInfo *rel,
 											  PathTarget *target,
-											  double rows, Cost startup_cost, Cost total_cost,
+											  double rows, int disabled_nodes,
+											  Cost startup_cost, Cost total_cost,
 											  List *pathkeys,
 											  Path *fdw_outerpath,
 											  List *fdw_restrictinfo,

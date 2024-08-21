@@ -538,15 +538,17 @@ explain (costs off)
 ------------------------------------------------------------
  Aggregate
    ->  Nested Loop
-         ->  Seq Scan on tenk2
-               Filter: (thousand = 0)
+         ->  Gather
+               Workers Planned: 4
+               ->  Parallel Seq Scan on tenk2
+                     Filter: (thousand = 0)
          ->  Gather
                Workers Planned: 4
                ->  Parallel Bitmap Heap Scan on tenk1
                      Recheck Cond: (hundred > 1)
                      ->  Bitmap Index Scan on tenk1_hundred
                            Index Cond: (hundred > 1)
-(10 rows)
+(12 rows)
 
 select count(*) from tenk1, tenk2 where tenk1.hundred > 1 and tenk2.thousand=0;
  count 

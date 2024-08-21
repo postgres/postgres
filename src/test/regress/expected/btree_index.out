@@ -332,11 +332,13 @@ select proname from pg_proc where proname ilike '00%foo' order by 1;
 
 explain (costs off)
 select proname from pg_proc where proname ilike 'ri%foo' order by 1;
-                           QUERY PLAN                            
------------------------------------------------------------------
- Index Only Scan using pg_proc_proname_args_nsp_index on pg_proc
-   Filter: (proname ~~* 'ri%foo'::text)
-(2 rows)
+                  QUERY PLAN                  
+----------------------------------------------
+ Sort
+   Sort Key: proname
+   ->  Seq Scan on pg_proc
+         Filter: (proname ~~* 'ri%foo'::text)
+(4 rows)
 
 reset enable_seqscan;
 reset enable_indexscan;

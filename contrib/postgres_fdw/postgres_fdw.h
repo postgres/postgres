@@ -62,6 +62,7 @@ typedef struct PgFdwRelationInfo
 	/* Estimated size and cost for a scan, join, or grouping/aggregation. */
 	double		rows;
 	int			width;
+	int			disabled_nodes;
 	Cost		startup_cost;
 	Cost		total_cost;
 

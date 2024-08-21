@@ -5452,6 +5452,7 @@ label_sort_with_costsize(PlannerInfo *root, Sort *plan, double limit_tuples)
 
 	cost_sort(&sort_path, root, NIL,
 			  lefttree->total_cost,
+			  0,				/* a Plan contains no count of disabled nodes */
 			  lefttree->plan_rows,
 			  lefttree->plan_width,
 			  0.0,
@@ -6546,6 +6547,7 @@ materialize_finished_plan(Plan *subplan)
 
 	/* Set cost data */
 	cost_material(&matpath,
+				  0,			/* a Plan contains no count of disabled nodes */
 				  subplan->startup_cost,
 				  subplan->total_cost,
 				  subplan->plan_rows,
