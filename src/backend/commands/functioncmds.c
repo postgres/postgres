@@ -1689,13 +1689,18 @@ CreateCast(CreateCastStmt *stmt)
 					 errmsg("source and target data types are not physically compatible")));
 
 		/*
-		 * We know that composite, enum and array types are never binary-
-		 * compatible with each other.  They all have OIDs embedded in them.
+		 * We know that composite, array, range and enum types are never
+		 * binary-compatible with each other.  They all have OIDs embedded in
+		 * them.
 		 *
 		 * Theoretically you could build a user-defined base type that is
-		 * binary-compatible with a composite, enum, or array type.  But we
-		 * disallow that too, as in practice such a cast is surely a mistake.
-		 * You can always work around that by writing a cast function.
+		 * binary-compatible with such a type.  But we disallow it anyway, as
+		 * in practice such a cast is surely a mistake.  You can always work
+		 * around that by writing a cast function.
+		 *
+		 * NOTE: if we ever have a kind of container type that doesn't need to
+		 * be rejected for this reason, we'd likely need to recursively apply
+		 * all of these same checks to the contained type(s).
 		 */
 		if (sourcetyptype == TYPTYPE_COMPOSITE ||
 			targettyptype == TYPTYPE_COMPOSITE)
@@ -1703,17 +1708,25 @@ CreateCast(CreateCastStmt *stmt)
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 					 errmsg("composite data types are not binary-compatible")));
 
-		if (sourcetyptype == TYPTYPE_ENUM ||
-			targettyptype == TYPTYPE_ENUM)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("enum data types are not binary-compatible")));
-
 		if (OidIsValid(get_element_type(sourcetypeid)) ||
 			OidIsValid(get_element_type(targettypeid)))
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 					 errmsg("array data types are not binary-compatible")));
+
+		if (sourcetyptype == TYPTYPE_RANGE ||
+			targettyptype == TYPTYPE_RANGE ||
+			sourcetyptype == TYPTYPE_MULTIRANGE ||
+			targettyptype == TYPTYPE_MULTIRANGE)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+					 errmsg("range data types are not binary-compatible")));
+
+		if (sourcetyptype == TYPTYPE_ENUM ||
+			targettyptype == TYPTYPE_ENUM)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+					 errmsg("enum data types are not binary-compatible")));
 
 		/*
 		 * We also disallow creating binary-compatibility casts involving
