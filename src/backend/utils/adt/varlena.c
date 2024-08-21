@@ -1922,16 +1922,16 @@ varstr_sortsupport(SortSupport ssup, Oid typid, Oid collid)
 		 * Unfortunately, it seems that abbreviation for non-C collations is
 		 * broken on many common platforms; see pg_strxfrm_enabled().
 		 *
-		 * Even apart from the risk of broken locales, it's possible that there
-		 * are platforms where the use of abbreviated keys should be disabled at
-		 * compile time.  Having only 4 byte datums could make worst-case
-		 * performance drastically more likely, for example.  Moreover, macOS's
-		 * strxfrm() implementation is known to not effectively concentrate a
-		 * significant amount of entropy from the original string in earlier
-		 * transformed blobs.  It's possible that other supported platforms are
-		 * similarly encumbered.  So, if we ever get past disabling this
-		 * categorically, we may still want or need to disable it for particular
-		 * platforms.
+		 * Even apart from the risk of broken locales, it's possible that
+		 * there are platforms where the use of abbreviated keys should be
+		 * disabled at compile time.  Having only 4 byte datums could make
+		 * worst-case performance drastically more likely, for example.
+		 * Moreover, macOS's strxfrm() implementation is known to not
+		 * effectively concentrate a significant amount of entropy from the
+		 * original string in earlier transformed blobs.  It's possible that
+		 * other supported platforms are similarly encumbered.  So, if we ever
+		 * get past disabling this categorically, we may still want or need to
+		 * disable it for particular platforms.
 		 */
 		if (!pg_strxfrm_enabled(locale))
 			abbreviate = false;
