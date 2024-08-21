@@ -12,7 +12,6 @@ use super::messages::message::{Message, MessageType};
 use super::node::*;
 use crate::node::shard;
 use crate::utils::node_config::get_shard_config;
-use rust_decimal::Decimal;
 use users::get_current_username;
 
 /// This struct represents the Shard node in the distributed system. It will communicate with the router
