@@ -7736,6 +7736,7 @@ ATExecSetNotNull(AlteredTableInfo *tab, Relation rel,
 				 const char *colName, LOCKMODE lockmode)
 {
 	HeapTuple	tuple;
+	Form_pg_attribute attTup;
 	AttrNumber	attnum;
 	Relation	attr_rel;
 	ObjectAddress address;
@@ -7753,7 +7754,8 @@ ATExecSetNotNull(AlteredTableInfo *tab, Relation rel,
 				 errmsg("column \"%s\" of relation \"%s\" does not exist",
 						colName, RelationGetRelationName(rel))));
 
-	attnum = ((Form_pg_attribute) GETSTRUCT(tuple))->attnum;
+	attTup = (Form_pg_attribute) GETSTRUCT(tuple);
+	attnum = attTup->attnum;
 
 	/* Prevent them from altering a system attribute */
 	if (attnum <= 0)
@@ -7765,9 +7767,9 @@ ATExecSetNotNull(AlteredTableInfo *tab, Relation rel,
 	/*
 	 * Okay, actually perform the catalog change ... if needed
 	 */
-	if (!((Form_pg_attribute) GETSTRUCT(tuple))->attnotnull)
+	if (!attTup->attnotnull)
 	{
-		((Form_pg_attribute) GETSTRUCT(tuple))->attnotnull = true;
+		attTup->attnotnull = true;
 
 		CatalogTupleUpdate(attr_rel, &tuple->t_self, tuple);
 
@@ -7777,8 +7779,7 @@ ATExecSetNotNull(AlteredTableInfo *tab, Relation rel,
 		 * this then we can skip that.  We needn't bother looking if we've
 		 * already found that we must verify some other not-null constraint.
 		 */
-		if (!tab->verify_new_notnull &&
-			!NotNullImpliedByRelConstraints(rel, (Form_pg_attribute) GETSTRUCT(tuple)))
+		if (!tab->verify_new_notnull && !NotNullImpliedByRelConstraints(rel, attTup))
 		{
 			/* Tell Phase 3 it needs to test the constraint */
 			tab->verify_new_notnull = true;
