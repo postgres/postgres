@@ -239,7 +239,7 @@ impl Shard {
 
 impl NodeRole for Shard {
     fn send_query(&mut self, query: &str) -> bool {
-        let rows = match self.backend.as_ref().try_lock().unwrap().query(query, &[]) {
+        match self.backend.as_ref().try_lock().unwrap().query(query, &[]) {
             Ok(rows) => rows,
             Err(e) => {
                 eprintln!("Failed to execute query: {:?}", e);
