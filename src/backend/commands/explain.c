@@ -1894,6 +1894,10 @@ ExplainNode(PlanState *planstate, List *ancestors,
 	if (es->format == EXPLAIN_FORMAT_TEXT)
 		appendStringInfoChar(es->str, '\n');
 
+	if (plan->disabled_nodes != 0)
+		ExplainPropertyInteger("Disabled Nodes", NULL, plan->disabled_nodes,
+							   es);
+
 	/* prepare per-worker general execution details */
 	if (es->workers_state && es->verbose)
 	{

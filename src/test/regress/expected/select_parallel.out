@@ -537,10 +537,14 @@ explain (costs off)
                          QUERY PLAN                         
 ------------------------------------------------------------
  Aggregate
+   Disabled Nodes: 1
    ->  Nested Loop
+         Disabled Nodes: 1
          ->  Gather
+               Disabled Nodes: 1
                Workers Planned: 4
                ->  Parallel Seq Scan on tenk2
+                     Disabled Nodes: 1
                      Filter: (thousand = 0)
          ->  Gather
                Workers Planned: 4
@@ -548,7 +552,7 @@ explain (costs off)
                      Recheck Cond: (hundred > 1)
                      ->  Bitmap Index Scan on tenk1_hundred
                            Index Cond: (hundred > 1)
-(12 rows)
+(16 rows)
 
 select count(*) from tenk1, tenk2 where tenk1.hundred > 1 and tenk2.thousand=0;
  count 

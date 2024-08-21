@@ -701,16 +701,19 @@ explain (costs off) select * from t left join (select * from (select * from t or
                    QUERY PLAN                   
 ------------------------------------------------
  Nested Loop Left Join
+   Disabled Nodes: 1
    Join Filter: (t_1.a = t.a)
    ->  Seq Scan on t
          Filter: (a = ANY ('{1,2}'::integer[]))
    ->  Incremental Sort
+         Disabled Nodes: 1
          Sort Key: t_1.a, t_1.b
          Presorted Key: t_1.a
          ->  Sort
+               Disabled Nodes: 1
                Sort Key: t_1.a
                ->  Seq Scan on t t_1
-(10 rows)
+(13 rows)
 
 select * from t left join (select * from (select * from t order by a) v order by a, b) s on s.a = t.a where t.a in (1, 2);
  a | b | a | b 

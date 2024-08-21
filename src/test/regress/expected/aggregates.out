@@ -2920,18 +2920,23 @@ GROUP BY c1.w, c1.z;
                      QUERY PLAN                      
 -----------------------------------------------------
  GroupAggregate
+   Disabled Nodes: 2
    Group Key: c1.w, c1.z
    ->  Sort
+         Disabled Nodes: 2
          Sort Key: c1.w, c1.z, c1.x, c1.y
          ->  Merge Join
+               Disabled Nodes: 2
                Merge Cond: (c1.x = c2.x)
                ->  Sort
                      Sort Key: c1.x
                      ->  Seq Scan on group_agg_pk c1
+                           Disabled Nodes: 1
                ->  Sort
                      Sort Key: c2.x
                      ->  Seq Scan on group_agg_pk c2
-(12 rows)
+                           Disabled Nodes: 1
+(17 rows)
 
 SELECT avg(c1.f ORDER BY c1.x, c1.y)
 FROM group_agg_pk c1 JOIN group_agg_pk c2 ON c1.x = c2.x
@@ -2953,19 +2958,24 @@ GROUP BY c1.y,c1.x,c2.x;
                      QUERY PLAN                      
 -----------------------------------------------------
  Group
+   Disabled Nodes: 2
    Group Key: c1.x, c1.y
    ->  Incremental Sort
+         Disabled Nodes: 2
          Sort Key: c1.x, c1.y
          Presorted Key: c1.x
          ->  Merge Join
+               Disabled Nodes: 2
                Merge Cond: (c1.x = c2.x)
                ->  Sort
                      Sort Key: c1.x
                      ->  Seq Scan on group_agg_pk c1
+                           Disabled Nodes: 1
                ->  Sort
                      Sort Key: c2.x
                      ->  Seq Scan on group_agg_pk c2
-(13 rows)
+                           Disabled Nodes: 1
+(18 rows)
 
 EXPLAIN (COSTS OFF)
 SELECT c1.y,c1.x FROM group_agg_pk c1
@@ -2975,19 +2985,24 @@ GROUP BY c1.y,c2.x,c1.x;
                      QUERY PLAN                      
 -----------------------------------------------------
  Group
+   Disabled Nodes: 2
    Group Key: c2.x, c1.y
    ->  Incremental Sort
+         Disabled Nodes: 2
          Sort Key: c2.x, c1.y
          Presorted Key: c2.x
          ->  Merge Join
+               Disabled Nodes: 2
                Merge Cond: (c1.x = c2.x)
                ->  Sort
                      Sort Key: c1.x
                      ->  Seq Scan on group_agg_pk c1
+                           Disabled Nodes: 1
                ->  Sort
                      Sort Key: c2.x
                      ->  Seq Scan on group_agg_pk c2
-(13 rows)
+                           Disabled Nodes: 1
+(18 rows)
 
 RESET enable_nestloop;
 RESET enable_hashjoin;

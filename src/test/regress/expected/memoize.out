@@ -333,14 +333,16 @@ SELECT * FROM strtest s1 INNER JOIN strtest s2 ON s1.n >= s2.n;', false);
                                  explain_memoize                                  
 ----------------------------------------------------------------------------------
  Nested Loop (actual rows=24 loops=N)
+   Disabled Nodes: 1
    ->  Seq Scan on strtest s1 (actual rows=6 loops=N)
+         Disabled Nodes: 1
    ->  Memoize (actual rows=4 loops=N)
          Cache Key: s1.n
          Cache Mode: binary
          Hits: 3  Misses: 3  Evictions: Zero  Overflows: 0  Memory Usage: NkB
          ->  Index Scan using strtest_n_idx on strtest s2 (actual rows=4 loops=N)
                Index Cond: (n <= s1.n)
-(8 rows)
+(10 rows)
 
 -- Ensure we get 3 hits and 3 misses
 SELECT explain_memoize('
@@ -348,14 +350,16 @@ SELECT * FROM strtest s1 INNER JOIN strtest s2 ON s1.t >= s2.t;', false);
                                  explain_memoize                                  
 ----------------------------------------------------------------------------------
  Nested Loop (actual rows=24 loops=N)
+   Disabled Nodes: 1
    ->  Seq Scan on strtest s1 (actual rows=6 loops=N)
+         Disabled Nodes: 1
    ->  Memoize (actual rows=4 loops=N)
          Cache Key: s1.t
          Cache Mode: binary
          Hits: 3  Misses: 3  Evictions: Zero  Overflows: 0  Memory Usage: NkB
          ->  Index Scan using strtest_t_idx on strtest s2 (actual rows=4 loops=N)
                Index Cond: (t <= s1.t)
-(8 rows)
+(10 rows)
 
 DROP TABLE strtest;
 -- Ensure memoize works with partitionwise join

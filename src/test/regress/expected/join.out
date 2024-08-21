@@ -8000,13 +8000,15 @@ SELECT t1.a FROM skip_fetch t1 LEFT JOIN skip_fetch t2 ON t2.a = 1 WHERE t2.a IS
                        QUERY PLAN                        
 ---------------------------------------------------------
  Nested Loop Anti Join
+   Disabled Nodes: 1
    ->  Seq Scan on skip_fetch t1
+         Disabled Nodes: 1
    ->  Materialize
          ->  Bitmap Heap Scan on skip_fetch t2
                Recheck Cond: (a = 1)
                ->  Bitmap Index Scan on skip_fetch_a_idx
                      Index Cond: (a = 1)
-(7 rows)
+(9 rows)
 
 SELECT t1.a FROM skip_fetch t1 LEFT JOIN skip_fetch t2 ON t2.a = 1 WHERE t2.a IS NULL;
  a 

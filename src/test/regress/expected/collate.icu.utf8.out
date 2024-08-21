@@ -989,8 +989,9 @@ select * from collate_test1 where b ilike 'abc';
           QUERY PLAN           
 -------------------------------
  Seq Scan on collate_test1
+   Disabled Nodes: 1
    Filter: (b ~~* 'abc'::text)
-(2 rows)
+(3 rows)
 
 select * from collate_test1 where b ilike 'abc';
  a |  b  
@@ -1004,8 +1005,9 @@ select * from collate_test1 where b ilike 'ABC';
           QUERY PLAN           
 -------------------------------
  Seq Scan on collate_test1
+   Disabled Nodes: 1
    Filter: (b ~~* 'ABC'::text)
-(2 rows)
+(3 rows)
 
 select * from collate_test1 where b ilike 'ABC';
  a |  b  

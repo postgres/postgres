@@ -2572,6 +2572,7 @@ create_minmaxagg_plan(PlannerInfo *root, MinMaxAggPath *best_path)
 								   0, NULL, NULL, NULL);
 
 		/* Must apply correct cost/width data to Limit node */
+		plan->disabled_nodes = mminfo->path->disabled_nodes;
 		plan->startup_cost = mminfo->path->startup_cost;
 		plan->total_cost = mminfo->pathcost;
 		plan->plan_rows = 1;
@@ -5404,6 +5405,7 @@ order_qual_clauses(PlannerInfo *root, List *clauses)
 static void
 copy_generic_path_info(Plan *dest, Path *src)
 {
+	dest->disabled_nodes = src->disabled_nodes;
 	dest->startup_cost = src->startup_cost;
 	dest->total_cost = src->total_cost;
 	dest->plan_rows = src->rows;
@@ -5419,6 +5421,7 @@ copy_generic_path_info(Plan *dest, Path *src)
 static void
 copy_plan_costsize(Plan *dest, Plan *src)
 {
+	dest->disabled_nodes = src->disabled_nodes;
 	dest->startup_cost = src->startup_cost;
 	dest->total_cost = src->total_cost;
 	dest->plan_rows = src->plan_rows;
@@ -5452,7 +5455,7 @@ label_sort_with_costsize(PlannerInfo *root, Sort *plan, double limit_tuples)
 
 	cost_sort(&sort_path, root, NIL,
 			  lefttree->total_cost,
-			  0,				/* a Plan contains no count of disabled nodes */
+			  plan->plan.disabled_nodes,
 			  lefttree->plan_rows,
 			  lefttree->plan_width,
 			  0.0,
@@ -6547,11 +6550,12 @@ materialize_finished_plan(Plan *subplan)
 
 	/* Set cost data */
 	cost_material(&matpath,
-				  0,			/* a Plan contains no count of disabled nodes */
+				  subplan->disabled_nodes,
 				  subplan->startup_cost,
 				  subplan->total_cost,
 				  subplan->plan_rows,
 				  subplan->plan_width);
+	matplan->disabled_nodes = subplan->disabled_nodes;
 	matplan->startup_cost = matpath.startup_cost + initplan_cost;
 	matplan->total_cost = matpath.total_cost + initplan_cost;
 	matplan->plan_rows = subplan->plan_rows;

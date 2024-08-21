@@ -1614,6 +1614,7 @@ explain (verbose, costs off) select * from matest0 order by 1-id;
                                QUERY PLAN                               
 ------------------------------------------------------------------------
  Merge Append
+   Disabled Nodes: 1
    Sort Key: ((1 - matest0.id))
    ->  Index Scan using matest0i on public.matest0 matest0_1
          Output: matest0_1.id, matest0_1.name, (1 - matest0_1.id)
@@ -1623,10 +1624,11 @@ explain (verbose, costs off) select * from matest0 order by 1-id;
          Output: matest0_3.id, matest0_3.name, ((1 - matest0_3.id))
          Sort Key: ((1 - matest0_3.id))
          ->  Seq Scan on public.matest2 matest0_3
+               Disabled Nodes: 1
                Output: matest0_3.id, matest0_3.name, (1 - matest0_3.id)
    ->  Index Scan using matest3i on public.matest3 matest0_4
          Output: matest0_4.id, matest0_4.name, (1 - matest0_4.id)
-(13 rows)
+(15 rows)
 
 select * from matest0 order by 1-id;
  id |  name  
