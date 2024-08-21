@@ -1,7 +1,6 @@
 use futures::lock::Mutex;
 use inline_colorization::*;
 use postgres::{Client, NoTls};
-use std::borrow::BorrowMut;
 use std::io::{Read, Write};
 use std::net::{TcpListener, TcpStream};
 use std::sync::{Arc, RwLock};
