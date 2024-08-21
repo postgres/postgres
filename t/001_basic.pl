@@ -45,10 +45,10 @@ ok($rt_value == 1, "Restart Server");
 $rt_value = $node->psql('postgres', "SELECT pg_tde_add_key_provider_file('file-vault','/tmp/pg_tde_test_keyring.per');", extra_params => ['-a']);
 $rt_value = $node->psql('postgres', "SELECT pg_tde_set_principal_key('test-db-principal-key','file-vault');", extra_params => ['-a']);
 
-$stdout = $node->safe_psql('postgres', 'CREATE TABLE test_enc(id SERIAL,k INTEGER,PRIMARY KEY (id)) USING pg_tde_basic;', extra_params => ['-a']);
+$stdout = $node->safe_psql('postgres', 'CREATE TABLE test_enc(id SERIAL,k VARCHAR(32),PRIMARY KEY (id)) USING pg_tde_basic;', extra_params => ['-a']);
 PGTDE::append_to_file($stdout);
 
-$stdout = $node->safe_psql('postgres', 'INSERT INTO test_enc (k) VALUES (5),(6);', extra_params => ['-a']);
+$stdout = $node->safe_psql('postgres', 'INSERT INTO test_enc (k) VALUES (\'foobar\'),(\'barfoo\');', extra_params => ['-a']);
 PGTDE::append_to_file($stdout);
 
 $stdout = $node->safe_psql('postgres', 'SELECT * FROM test_enc ORDER BY id ASC;', extra_params => ['-a']);
@@ -61,6 +61,19 @@ $rt_value = $node->start();
 
 $stdout = $node->safe_psql('postgres', 'SELECT * FROM test_enc ORDER BY id ASC;', extra_params => ['-a']);
 PGTDE::append_to_file($stdout);
+
+# Verify that we can't see the data in the file
+my $tablefile = $node->safe_psql('postgres', 'SHOW data_directory;');
+$tablefile .= '/';
+$tablefile .= $node->safe_psql('postgres', 'SELECT pg_relation_filepath(\'test_enc\');');
+
+my $strings = 'TABLEFILE FOUND: ';
+$strings .= `(ls  $tablefile >/dev/null && echo yes) || echo no`;
+PGTDE::append_to_file($strings);
+
+$strings = 'CONTAINS FOO (should be empty): ';
+$strings .= `strings $tablefile | grep foo`;
+PGTDE::append_to_file($strings);
 
 $stdout = $node->safe_psql('postgres', 'DROP TABLE test_enc;', extra_params => ['-a']);
 PGTDE::append_to_file($stdout);
