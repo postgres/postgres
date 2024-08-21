@@ -162,7 +162,7 @@ impl Shard {
     fn get_response_message(&mut self, message: &str) -> Option<String> {
         let message = match Message::from_string(&message) {
             Ok(message) => message,
-            Err(e) => {
+            Err(_e) => {
                 // eprintln!("Failed to parse message: {:?}", e);
                 return None;
             }
