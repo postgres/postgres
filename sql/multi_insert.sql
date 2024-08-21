@@ -10,7 +10,7 @@ CREATE TABLE albums (
     artist_id INTEGER,
     title TEXT NOT NULL,
     released DATE NOT NULL
-) USING pg_tde_basic;
+) USING tde_heap_basic;
 
 COPY albums FROM stdin CSV HEADER;
 album_id,artist_id,title,released
@@ -56,7 +56,7 @@ CREATE TABLE Towns (
    name TEXT NOT NULL,
    department VARCHAR(4) NOT NULL,
    UNIQUE (code, department)
-)  USING pg_tde_basic;
+)  USING tde_heap_basic;
 
 COPY towns (id, code, article, name, department) FROM stdin;
 1	001	some_text	Abergement-Clémenciat	01

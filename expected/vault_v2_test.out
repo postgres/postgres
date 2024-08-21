@@ -16,7 +16,7 @@ CREATE TABLE test_enc(
 	  id SERIAL,
 	  k INTEGER DEFAULT '0' NOT NULL,
 	  PRIMARY KEY (id)
-	) USING pg_tde_basic;
+	) USING tde_heap_basic;
 INSERT INTO test_enc (k) VALUES (1);
 INSERT INTO test_enc (k) VALUES (2);
 INSERT INTO test_enc (k) VALUES (3);

@@ -6,7 +6,7 @@ SELECT pg_tde_set_principal_key('test-db-principal-key','file-vault');
 --
 -- 2 -- Test triggers on a join view
 --
-SET default_table_access_method TO 'pg_tde_basic';
+SET default_table_access_method TO 'tde_heap_basic';
 
 DROP VIEW IF EXISTS city_view CASCADE;
 DROP TABLE IF exists country_table CASCADE;
@@ -16,7 +16,7 @@ DROP TABLE IF exists city_table cascade;
      country_id        serial primary key,
      country_name    text unique not null,
      continent        text not null
- ) using pg_tde_basic;
+ ) using tde_heap_basic;
  
  INSERT INTO country_table (country_name, continent)
      VALUES ('Japan', 'Asia'),
@@ -29,7 +29,7 @@ DROP TABLE IF exists city_table cascade;
      city_name    text not null,
      population    bigint, 
      country_id    int references country_table
- ) using pg_tde_basic;
+ ) using tde_heap_basic;
  
  CREATE VIEW city_view AS
      SELECT city_id, city_name, population, country_name, continent

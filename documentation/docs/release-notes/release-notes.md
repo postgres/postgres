@@ -6,7 +6,7 @@
 
 ## Beta (2024-06-30)
 
-With this version, the access method for `pg_tde` extension is renamed `pg_tde_basic`. Use this access method name to create tables. Find guidelines in [Test TDE](../test.md) tutorial.
+With this version, the access method for `pg_tde` extension is renamed `tde_heap_basic`. Use this access method name to create tables. Find guidelines in [Test TDE](../test.md) tutorial.
 
 The Beta version introduces the following bug fixes and improvements:
 

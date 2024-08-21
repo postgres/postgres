@@ -8,7 +8,7 @@ CREATE TABLE albums (
     artist VARCHAR(256),
     title TEXT NOT NULL,
     released DATE NOT NULL
-) USING pg_tde_basic;
+) USING tde_heap_basic;
 
 INSERT INTO albums (artist, title, released) VALUES
 			('Graindelavoix', 'Jisquin The Undead', '2021-06-12'),

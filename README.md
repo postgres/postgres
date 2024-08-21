@@ -76,7 +76,7 @@ FUNCTION pg_tde_set_principal_key (
 SELECT pg_tde_set_principal_key('my-principal-key','file');
 ```
 
-7. You are all set to create encrypted tables. For that, specify `USING pg_tde_basic` access method in the `CREATE TABLE` statement.
+7. You are all set to create encrypted tables. For that, specify `USING tde_heap_basic` access method in the `CREATE TABLE` statement.
 **For example**:
 ```sql
 CREATE TABLE albums (
@@ -84,7 +84,7 @@ CREATE TABLE albums (
     artist_id INTEGER,
     title TEXT NOT NULL,
     released DATE NOT NULL
-) USING pg_tde_basic;
+) USING tde_heap_basic;
 ```
 
 ## Build from source
@@ -166,7 +166,7 @@ The extension provides the following helper functions:
 
 ### pg_tde_is_encrypted(tablename)
 
-Returns `t` if the table is encrypted (uses the pg_tde_basic access method), or `f` otherwise.
+Returns `t` if the table is encrypted (uses the tde_heap_basic access method), or `f` otherwise.
 
 ## Base commit
 

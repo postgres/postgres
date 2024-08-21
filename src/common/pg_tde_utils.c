@@ -31,13 +31,13 @@
 Oid
 get_tde_basic_table_am_oid(void)
 {
-    return get_table_am_oid("pg_tde_basic", false);
+    return get_table_am_oid("tde_heap_basic", false);
 }
 
 Oid
 get_tde_table_am_oid(void)
 {
-    return get_table_am_oid("pg_tde", false);
+    return get_table_am_oid("tde_heap", false);
 }
 
 /*

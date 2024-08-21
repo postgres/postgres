@@ -129,7 +129,7 @@ SELECT EXISTS (
     SELECT 1
     FROM   pg_catalog.pg_class
     WHERE  relname = table_name
-    AND    relam = (SELECT oid FROM pg_catalog.pg_am WHERE amname = 'pg_tde_basic')
+    AND    relam = (SELECT oid FROM pg_catalog.pg_am WHERE amname = 'tde_heap_basic')
     )$$
 LANGUAGE SQL;
 
@@ -199,8 +199,8 @@ LANGUAGE SQL;
 CREATE FUNCTION pg_tde_version() RETURNS TEXT AS 'MODULE_PATHNAME' LANGUAGE C;
 
 -- Access method
-CREATE ACCESS METHOD pg_tde_basic TYPE TABLE HANDLER pg_tdeam_basic_handler;
-COMMENT ON ACCESS METHOD pg_tde_basic IS 'pg_tde table access method';
+CREATE ACCESS METHOD tde_heap_basic TYPE TABLE HANDLER pg_tdeam_basic_handler;
+COMMENT ON ACCESS METHOD tde_heap_basic IS 'pg_tde table access method';
 
 DO $$
 	BEGIN
@@ -210,8 +210,8 @@ DO $$
 		AS 'MODULE_PATHNAME'
 		LANGUAGE C;
 
-		CREATE ACCESS METHOD pg_tde TYPE TABLE HANDLER pg_tdeam_handler;
-		COMMENT ON ACCESS METHOD pg_tde IS 'pg_tde table access method';
+		CREATE ACCESS METHOD tde_heap TYPE TABLE HANDLER pg_tdeam_handler;
+		COMMENT ON ACCESS METHOD tde_heap IS 'tde_heap table access method';
 
 		CREATE OR REPLACE FUNCTION pg_tde_ddl_command_start_capture()
 		RETURNS event_trigger
