@@ -1,1 +1,3 @@
-memory_threshold: 5
+# Unavailable Memory Percentage should be set to a number between 0 and 100. For example, 5 means 5%.
+# This is the percentage of the total memory that is reserved for the system and other procedures and is not available for storing data.
+unavailable_memory_perc: 5
