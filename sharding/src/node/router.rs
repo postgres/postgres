@@ -1,6 +1,5 @@
 use postgres::{Client, NoTls};
 extern crate users;
-use crate::node;
 use crate::node::messages::message::{Message, MessageType};
 use crate::utils::queries::query_is_insert;
 
