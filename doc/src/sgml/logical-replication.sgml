@@ -1608,7 +1608,7 @@ test_sub=# SELECT * FROM t1 ORDER BY id;
        Updating a row that was previously modified by another origin.
        Note that this conflict can only be detected when
        <link linkend="guc-track-commit-timestamp"><varname>track_commit_timestamp</varname></link>
-       is enabled on the subscriber. Currenly, the update is always applied
+       is enabled on the subscriber. Currently, the update is always applied
        regardless of the origin of the local row.
       </para>
      </listitem>
@@ -1646,7 +1646,7 @@ test_sub=# SELECT * FROM t1 ORDER BY id;
        Deleting a row that was previously modified by another origin. Note that
        this conflict can only be detected when
        <link linkend="guc-track-commit-timestamp"><varname>track_commit_timestamp</varname></link>
-       is enabled on the subscriber. Currenly, the delete is always applied
+       is enabled on the subscriber. Currently, the delete is always applied
        regardless of the origin of the local row.
       </para>
      </listitem>
