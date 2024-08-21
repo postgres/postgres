@@ -10,7 +10,6 @@ extern crate users;
 use super::memory_manager::MemoryManager;
 use super::messages::message::{Message, MessageType};
 use super::node::*;
-use crate::node::router::Channel;
 use crate::node::{memory_manager, shard};
 use crate::utils::node_config::get_shard_config;
 use rust_decimal::Decimal;
