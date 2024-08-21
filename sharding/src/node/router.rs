@@ -5,7 +5,6 @@ use crate::utils::queries::query_is_insert;
 
 use super::node::*;
 use super::shard_manager::ShardManager;
-use super::{node::*, shard};
 use crate::utils::common::get_username_dinamically;
 use crate::utils::node_config::{get_router_config, Node};
 use inline_colorization::*;
