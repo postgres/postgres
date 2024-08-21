@@ -80,4 +80,7 @@ extern void cleanup_key_provider_info(Oid databaseId, Oid tablespaceId);
 extern void InitializeKeyProviderInfo(void);
 extern uint32 save_new_key_provider_info(KeyringProvideRecord *provider, Oid databaseId, Oid tablespaceId, bool recovery);
 extern uint32 redo_key_provider_info(KeyringProviderXLRecord *xlrec);
+
+extern bool ParseKeyringJSONOptions(ProviderType provider_type, void *out_opts,
+											char *in_buf, int buf_len);
 #endif /*TDE_KEYRING_H*/

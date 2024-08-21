@@ -44,6 +44,7 @@ src/keyring/keyring_vault.o \
 src/keyring/keyring_api.o \
 src/catalog/tde_global_space.o \
 src/catalog/tde_keyring.o \
+src/catalog/tde_keyring_parse_opts.o \
 src/catalog/tde_principal_key.o \
 src/common/pg_tde_shmem.o \
 src/common/pg_tde_utils.o \

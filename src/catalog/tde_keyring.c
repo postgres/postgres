@@ -40,21 +40,6 @@ PG_FUNCTION_INFO_V1(pg_tde_list_all_key_providers);
 Datum pg_tde_list_all_key_providers(PG_FUNCTION_ARGS);
 
 #define PG_TDE_KEYRING_FILENAME "pg_tde_keyrings"
-/*
- * These token must be exactly same as defined in
- * pg_tde_add_key_provider_vault_v2 SQL interface
- */
-#define VAULTV2_KEYRING_TOKEN_KEY "token"
-#define VAULTV2_KEYRING_URL_KEY "url"
-#define VAULTV2_KEYRING_MOUNT_PATH_KEY "mountPath"
-#define VAULTV2_KEYRING_CA_PATH_KEY "caPath"
-
-/*
- * These token must be exactly same as defined in
- * pg_tde_add_key_provider_file SQL interface
- */
-#define FILE_KEYRING_PATH_KEY "path"
-#define FILE_KEYRING_TYPE_KEY "type"
 #define PG_TDE_LIST_PROVIDERS_COLS 4
 
 typedef enum ProviderScanType
@@ -67,9 +52,9 @@ typedef enum ProviderScanType
 
 static List *scan_key_provider_file(ProviderScanType scanType, void *scanKey, Oid dbOid, Oid spcOid);
 
-static FileKeyring *load_file_keyring_provider_options(Datum keyring_options);
-static GenericKeyring *load_keyring_provider_options(ProviderType provider_type, Datum keyring_options);
-static VaultV2Keyring *load_vaultV2_keyring_provider_options(Datum keyring_options);
+static FileKeyring *load_file_keyring_provider_options(char *keyring_options);
+static GenericKeyring *load_keyring_provider_options(ProviderType provider_type, char *keyring_options);
+static VaultV2Keyring *load_vaultV2_keyring_provider_options(char *keyring_options);
 static void debug_print_kerying(GenericKeyring *keyring);
 static char *get_keyring_infofile_path(char *resPath, Oid dbOid, Oid spcOid);
 static void key_provider_startup_cleanup(int tde_tbl_count, XLogExtensionInstall *ext_info, bool redo, void *arg);
@@ -165,12 +150,9 @@ get_keyring_provider_typename(ProviderType p_type)
 
 static GenericKeyring *load_keyring_provider_from_record(KeyringProvideRecord *provider)
 {
-	Datum option_datum;
 	GenericKeyring *keyring = NULL;
 
-	option_datum = CStringGetTextDatum(provider->options);
-
-	keyring = load_keyring_provider_options(provider->provider_type, option_datum);
+	keyring = load_keyring_provider_options(provider->provider_type, provider->options);
 	if (keyring)
 	{
 		keyring->key_id = provider->provider_id;
@@ -222,7 +204,7 @@ GetKeyProviderByID(int provider_id, Oid dbOid, Oid spcOid)
 }
 
 static GenericKeyring *
-load_keyring_provider_options(ProviderType provider_type, Datum keyring_options)
+load_keyring_provider_options(ProviderType provider_type, char *keyring_options)
 {
 	switch (provider_type)
 	{
@@ -239,44 +221,55 @@ load_keyring_provider_options(ProviderType provider_type, Datum keyring_options)
 }
 
 static FileKeyring *
-load_file_keyring_provider_options(Datum keyring_options)
+load_file_keyring_provider_options(char *keyring_options)
 {
-	const char* file_path = extract_json_option_value(keyring_options, FILE_KEYRING_PATH_KEY);
-	FileKeyring *file_keyring = palloc0(sizeof(FileKeyring));
-	
-	if(file_path == NULL)
+	FileKeyring			*file_keyring = palloc0(sizeof(FileKeyring));
+
+	file_keyring->keyring.type = FILE_KEY_PROVIDER;
+
+	if (!ParseKeyringJSONOptions(FILE_KEY_PROVIDER, file_keyring, 
+										keyring_options, strlen(keyring_options)))
 	{
-		ereport(DEBUG2,
+		return NULL;
+	}
+
+	if(strlen(file_keyring->file_name) == 0)
+	{
+		ereport(WARNING,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("file path is missing in the keyring options")));
 		return NULL;
 	}
 
-	file_keyring->keyring.type = FILE_KEY_PROVIDER;
-	strncpy(file_keyring->file_name, file_path, sizeof(file_keyring->file_name));
 	return file_keyring;
 }
 
 static VaultV2Keyring *
-load_vaultV2_keyring_provider_options(Datum keyring_options)
+load_vaultV2_keyring_provider_options(char *keyring_options)
 {
-	VaultV2Keyring *vaultV2_keyring = palloc0(sizeof(VaultV2Keyring));
-	const char* token = extract_json_option_value(keyring_options, VAULTV2_KEYRING_TOKEN_KEY);
-	const char* url = extract_json_option_value(keyring_options, VAULTV2_KEYRING_URL_KEY);
-	const char* mount_path = extract_json_option_value(keyring_options, VAULTV2_KEYRING_MOUNT_PATH_KEY);
-	const char* ca_path = extract_json_option_value(keyring_options, VAULTV2_KEYRING_CA_PATH_KEY);
+	VaultV2Keyring	*vaultV2_keyring = palloc0(sizeof(VaultV2Keyring));
 
-	if(token == NULL || url == NULL || mount_path == NULL)
+	vaultV2_keyring->keyring.type = VAULT_V2_KEY_PROVIDER;
+
+	if (!ParseKeyringJSONOptions(VAULT_V2_KEY_PROVIDER, vaultV2_keyring, 
+									keyring_options, strlen(keyring_options)))
 	{
-		/* TODO: report error */
+		return NULL;
+	}
+	
+	if(strlen(vaultV2_keyring->vault_token) == 0 ||
+		strlen(vaultV2_keyring->vault_url) == 0 || 
+		strlen(vaultV2_keyring->vault_mount_path) == 0)
+	{
+		ereport(WARNING,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("missing in the keyring options:%s%s%s",
+							!vaultV2_keyring->vault_token ? " token" : "",
+							!vaultV2_keyring->vault_url ? " url" : "",
+							!vaultV2_keyring->vault_mount_path ? " mountPath" : "")));
 		return NULL;
 	}
 
-	vaultV2_keyring->keyring.type = VAULT_V2_KEY_PROVIDER;
-	strncpy(vaultV2_keyring->vault_token, token, sizeof(vaultV2_keyring->vault_token));
-	strncpy(vaultV2_keyring->vault_url, url, sizeof(vaultV2_keyring->vault_url));
-	strncpy(vaultV2_keyring->vault_mount_path, mount_path, sizeof(vaultV2_keyring->vault_mount_path));
-	strncpy(vaultV2_keyring->vault_ca_path, ca_path ? ca_path : "", sizeof(vaultV2_keyring->vault_ca_path));
 	return vaultV2_keyring;
 }
 

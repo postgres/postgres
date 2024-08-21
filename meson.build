@@ -46,6 +46,7 @@ pg_tde_sources = files(
 
         'src/catalog/tde_global_space.c',
         'src/catalog/tde_keyring.c',
+        'src/catalog/tde_keyring_parse_opts.c',
         'src/catalog/tde_principal_key.c',
         'src/common/pg_tde_shmem.c',
         'src/common/pg_tde_utils.c',
@@ -109,7 +110,9 @@ tests += {
       't/001_basic.pl',
       't/002_rotate_key.pl',
       't/003_remote_config.pl',
-      't/004_file_config.pl'
+      't/004_file_config.pl',
+      't/005_multiple_extensions.pl',
+      't/006_remote_vault_config.pl'
     ],
   },
 }

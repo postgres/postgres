@@ -57,6 +57,23 @@ AS $$
                             'caPath' VALUE COALESCE(vault_ca_path,'')));
 $$
 LANGUAGE SQL;
+CREATE OR REPLACE FUNCTION pg_tde_add_key_provider_vault_v2(provider_name VARCHAR(128),
+                                                        vault_token JSON,
+                                                        vault_url JSON,
+                                                        vault_mount_path JSON,
+                                                        vault_ca_path JSON)
+RETURNS INT
+AS $$
+-- JSON keys in the options must be matched to the keys in
+-- load_vaultV2_keyring_provider_options function.
+    SELECT pg_tde_add_key_provider('vault-v2', provider_name,
+                            json_object('type' VALUE 'vault-v2',
+                            'url' VALUE vault_url,
+                            'token' VALUE vault_token,
+                            'mountPath' VALUE vault_mount_path,
+                            'caPath' VALUE vault_ca_path));
+$$
+LANGUAGE SQL;
 
 CREATE FUNCTION pg_tde_list_all_key_providers
     (OUT id INT,
@@ -113,6 +130,25 @@ AS $$
                             'token' VALUE COALESCE(vault_token,''),
                             'mountPath' VALUE COALESCE(vault_mount_path,''),
                             'caPath' VALUE COALESCE(vault_ca_path,'')));
+$$
+LANGUAGE SQL;
+
+CREATE OR REPLACE FUNCTION pg_tde_add_key_provider_vault_v2(PG_TDE_GLOBAL, 
+														provider_name VARCHAR(128),
+                                                        vault_token JSON,
+                                                        vault_url JSON,
+                                                        vault_mount_path JSON,
+                                                        vault_ca_path JSON)
+RETURNS INT
+AS $$
+-- JSON keys in the options must be matched to the keys in
+-- load_vaultV2_keyring_provider_options function.
+    SELECT pg_tde_add_key_provider('PG_TDE_GLOBAL', 'vault-v2', provider_name,
+                            json_object('type' VALUE 'vault-v2',
+                            'url' VALUE vault_url,
+                            'token' VALUE vault_token,
+                            'mountPath' VALUE vault_mount_path,
+                            'caPath' VALUE vault_ca_path));
 $$
 LANGUAGE SQL;
 
