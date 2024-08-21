@@ -6,7 +6,6 @@ pub enum MessageType {
     InitConnection,
     AskMemoryUpdate,
     MemoryUpdate,
-    AskInsertionAcceptance,
     Agreed,
     Denied,
 }
@@ -45,7 +44,6 @@ impl Message {
             MessageType::InitConnection => "INIT_CONNECTION",
             MessageType::AskMemoryUpdate => "ASK_MEMORY_UPDATE",
             MessageType::MemoryUpdate => "MEMORY_UPDATE",
-            MessageType::AskInsertionAcceptance => "ASK_INSERTION_ACCEPTANCE",
             MessageType::Agreed => "AGREED",
             MessageType::Denied => "DENIED",
         });
@@ -68,7 +66,6 @@ impl Message {
             Some("INIT_CONNECTION") => MessageType::InitConnection,
             Some("ASK_MEMORY_UPDATE") => MessageType::AskMemoryUpdate,
             Some("MEMORY_UPDATE") => MessageType::MemoryUpdate,
-            Some("ASK_INSERTION_ACCEPTANCE") => MessageType::AskInsertionAcceptance,
             Some("AGREED") => MessageType::Agreed,
             Some("DENIED") => MessageType::Denied,
             _ => return Err("Invalid message type"),
