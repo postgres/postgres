@@ -20391,6 +20391,7 @@ createPartitionTable(RangeVar *newPartName, Relation modelRel,
 	tlc->options = CREATE_TABLE_LIKE_ALL &
 		~(CREATE_TABLE_LIKE_INDEXES | CREATE_TABLE_LIKE_IDENTITY | CREATE_TABLE_LIKE_STATISTICS);
 	tlc->relationOid = InvalidOid;
+	tlc->newRelationOid = InvalidOid;
 	createStmt->tableElts = lappend(createStmt->tableElts, tlc);
 
 	/* Need to make a wrapper PlannedStmt. */
@@ -20414,7 +20415,7 @@ createPartitionTable(RangeVar *newPartName, Relation modelRel,
 	 * Open the new partition with no lock, because we already have
 	 * AccessExclusiveLock placed there after creation.
 	 */
-	newRel = table_openrv(newPartName, NoLock);
+	newRel = table_open(tlc->newRelationOid, NoLock);
 
 	/*
 	 * We intended to create the partition with the same persistence as the
