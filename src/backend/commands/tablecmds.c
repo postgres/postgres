@@ -7028,6 +7028,7 @@ ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
 	Relation	pgclass,
 				attrdesc;
 	HeapTuple	reltup;
+	Form_pg_class relform;
 	Form_pg_attribute attribute;
 	int			newattnum;
 	char		relkind;
@@ -7161,10 +7162,11 @@ ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
 	reltup = SearchSysCacheCopy1(RELOID, ObjectIdGetDatum(myrelid));
 	if (!HeapTupleIsValid(reltup))
 		elog(ERROR, "cache lookup failed for relation %u", myrelid);
-	relkind = ((Form_pg_class) GETSTRUCT(reltup))->relkind;
+	relform = (Form_pg_class) GETSTRUCT(reltup);
+	relkind = relform->relkind;
 
 	/* Determine the new attribute's number */
-	newattnum = ((Form_pg_class) GETSTRUCT(reltup))->relnatts + 1;
+	newattnum = relform->relnatts + 1;
 	if (newattnum > MaxHeapAttributeNumber)
 		ereport(ERROR,
 				(errcode(ERRCODE_TOO_MANY_COLUMNS),
@@ -7193,7 +7195,7 @@ ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
 	/*
 	 * Update pg_class tuple as appropriate
 	 */
-	((Form_pg_class) GETSTRUCT(reltup))->relnatts = newattnum;
+	relform->relnatts = newattnum;
 
 	CatalogTupleUpdate(pgclass, &reltup->t_self, reltup);
 
