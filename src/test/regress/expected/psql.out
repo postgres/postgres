@@ -98,6 +98,53 @@ two | 2
    1 |   2
 (1 row)
 
+-- \parse (extended query protocol)
+\parse
+\parse: missing required argument
+SELECT 1 \parse ''
+SELECT 2 \parse stmt1
+SELECT $1 \parse stmt2
+SELECT $1, $2 \parse stmt3
+-- \bind_named (extended query protocol)
+\bind_named
+\bind_named: missing required argument
+\bind_named '' \g
+ ?column? 
+----------
+        1
+(1 row)
+
+\bind_named stmt1 \g
+ ?column? 
+----------
+        2
+(1 row)
+
+\bind_named stmt2 'foo' \g
+ ?column? 
+----------
+ foo
+(1 row)
+
+\bind_named stmt3 'foo' 'bar' \g
+ ?column? | ?column? 
+----------+----------
+ foo      | bar
+(1 row)
+
+-- \close (extended query protocol)
+\close
+\close: missing required argument
+\close ''
+\close stmt2
+\close stmt2
+SELECT name, statement FROM pg_prepared_statements ORDER BY name;
+ name  |   statement    
+-------+----------------
+ stmt1 | SELECT 2 
+ stmt3 | SELECT $1, $2 
+(2 rows)
+
 -- \bind (extended query protocol)
 SELECT 1 \bind \g
  ?column? 
@@ -129,6 +176,11 @@ ERROR:  cannot insert multiple commands into a prepared statement
 -- bind error
 SELECT $1, $2 \bind 'foo' \g
 ERROR:  bind message supplies 1 parameters, but prepared statement "" requires 2
+-- bind_named error
+\bind_named stmt2 'baz' \g
+ERROR:  prepared statement "stmt2" does not exist
+\bind_named stmt3 'baz' \g
+ERROR:  bind message supplies 1 parameters, but prepared statement "stmt3" requires 2
 -- \gset
 select 10 as test01, 20 as test02, 'Hello' as test03 \gset pref01_
 \echo :pref01_test01 :pref01_test02 :pref01_test03
@@ -4507,9 +4559,11 @@ bar 'bar' "bar"
 	\pset fieldsep | `nosuchcommand` :foo :'foo' :"foo"
 	\a
 	SELECT $1 \bind 1 \g
+	\bind_named stmt1 1 2 \g
 	\C arg1
 	\c arg1 arg2 arg3 arg4
 	\cd arg1
+	\close stmt1
 	\conninfo
 	\copy arg1 arg2 arg3 arg4 arg5 arg6
 	\copyright
@@ -4538,6 +4592,7 @@ invalid command \lo
 	\lo_list
 	\o arg1
 	\p
+	SELECT 1 \parse
 	\password arg1
 	\prompt arg1 arg2
 	\pset arg1 arg2

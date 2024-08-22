@@ -1274,15 +1274,28 @@ sendquery_cleanup:
 		pset.gsavepopt = NULL;
 	}
 
-	/* clean up after \bind */
-	if (pset.bind_flag)
+	/* clean up after extended protocol queries */
+	switch (pset.send_mode)
 	{
-		for (i = 0; i < pset.bind_nparams; i++)
-			free(pset.bind_params[i]);
-		free(pset.bind_params);
-		pset.bind_params = NULL;
-		pset.bind_flag = false;
+		case PSQL_SEND_EXTENDED_CLOSE:	/* \close */
+			free(pset.stmtName);
+			break;
+		case PSQL_SEND_EXTENDED_PARSE:	/* \parse */
+			free(pset.stmtName);
+			break;
+		case PSQL_SEND_EXTENDED_QUERY_PARAMS:	/* \bind */
+		case PSQL_SEND_EXTENDED_QUERY_PREPARED: /* \bind_named */
+			for (i = 0; i < pset.bind_nparams; i++)
+				free(pset.bind_params[i]);
+			free(pset.bind_params);
+			free(pset.stmtName);
+			pset.bind_params = NULL;
+			break;
+		case PSQL_SEND_QUERY:
+			break;
 	}
+	pset.stmtName = NULL;
+	pset.send_mode = PSQL_SEND_QUERY;
 
 	/* reset \gset trigger */
 	if (pset.gset_prefix)
@@ -1456,7 +1469,7 @@ ExecQueryAndProcessResults(const char *query,
 						   const printQueryOpt *opt, FILE *printQueryFout)
 {
 	bool		timing = pset.timing;
-	bool		success;
+	bool		success = false;
 	bool		return_early = false;
 	instr_time	before,
 				after;
@@ -1469,10 +1482,32 @@ ExecQueryAndProcessResults(const char *query,
 	else
 		INSTR_TIME_SET_ZERO(before);
 
-	if (pset.bind_flag)
-		success = PQsendQueryParams(pset.db, query, pset.bind_nparams, NULL, (const char *const *) pset.bind_params, NULL, NULL, 0);
-	else
-		success = PQsendQuery(pset.db, query);
+	switch (pset.send_mode)
+	{
+		case PSQL_SEND_EXTENDED_CLOSE:
+			success = PQsendClosePrepared(pset.db, pset.stmtName);
+			break;
+		case PSQL_SEND_EXTENDED_PARSE:
+			success = PQsendPrepare(pset.db, pset.stmtName, query, 0, NULL);
+			break;
+		case PSQL_SEND_EXTENDED_QUERY_PARAMS:
+			Assert(pset.stmtName == NULL);
+			success = PQsendQueryParams(pset.db, query,
+										pset.bind_nparams, NULL,
+										(const char *const *) pset.bind_params,
+										NULL, NULL, 0);
+			break;
+		case PSQL_SEND_EXTENDED_QUERY_PREPARED:
+			Assert(pset.stmtName != NULL);
+			success = PQsendQueryPrepared(pset.db, pset.stmtName,
+										  pset.bind_nparams,
+										  (const char *const *) pset.bind_params,
+										  NULL, NULL, 0);
+			break;
+		case PSQL_SEND_QUERY:
+			success = PQsendQuery(pset.db, query);
+			break;
+	}
 
 	if (!success)
 	{
