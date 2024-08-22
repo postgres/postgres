@@ -315,8 +315,7 @@ InjectionPointAttach(const char *name,
 			if (free_idx == -1)
 				free_idx = idx;
 		}
-
-		if (strcmp(entry->name, name) == 0)
+		else if (strcmp(entry->name, name) == 0)
 			elog(ERROR, "injection point \"%s\" already defined", name);
 	}
 	if (free_idx == -1)
