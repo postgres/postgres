@@ -754,6 +754,7 @@ typedef struct TableLikeClause
 	RangeVar   *relation;
 	bits32		options;		/* OR of TableLikeOption flags */
 	Oid			relationOid;	/* If table has been looked up, its OID */
+	Oid			newRelationOid; /* OID of newly created table */
 } TableLikeClause;
 
 typedef enum TableLikeOption
