@@ -30,14 +30,31 @@ extern "C"
 
 /*
  * These symbols may be used in compile-time #ifdef tests for the availability
- * of newer libpq features.
+ * of v14-and-newer libpq features.
  */
+/* Features added in PostgreSQL v14: */
 /* Indicates presence of PQenterPipelineMode and friends */
 #define LIBPQ_HAS_PIPELINING 1
 /* Indicates presence of PQsetTraceFlags; also new PQtrace output format */
 #define LIBPQ_HAS_TRACE_FLAGS 1
+
+/* Features added in PostgreSQL v15: */
 /* Indicates that PQsslAttribute(NULL, "library") is useful */
 #define LIBPQ_HAS_SSL_LIBRARY_DETECTION 1
+
+/* Features added in PostgreSQL v17: */
+/* Indicates presence of PGcancelConn typedef and associated routines */
+#define LIBPQ_HAS_ASYNC_CANCEL 1
+/* Indicates presence of PQchangePassword */
+#define LIBPQ_HAS_CHANGE_PASSWORD 1
+/* Indicates presence of PQsetChunkedRowsMode, PGRES_TUPLES_CHUNK */
+#define LIBPQ_HAS_CHUNK_MODE 1
+/* Indicates presence of PQclosePrepared, PQclosePortal, etc */
+#define LIBPQ_HAS_CLOSE_PREPARED 1
+/* Indicates presence of PQsendPipelineSync */
+#define LIBPQ_HAS_SEND_PIPELINE_SYNC 1
+/* Indicates presence of PQsocketPoll, PQgetCurrentTimeUSec */
+#define LIBPQ_HAS_SOCKET_POLL 1
 
 /*
  * Option flags for PQcopyResult
