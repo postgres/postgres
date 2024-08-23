@@ -91,7 +91,7 @@ pgstat_fetch_stat_injentry(const char *name)
 {
 	PgStat_StatInjEntry *entry = NULL;
 
-	if (!inj_stats_loaded)
+	if (!inj_stats_loaded || !inj_stats_enabled)
 		return NULL;
 
 	/* Compile the lookup key as a hash of the point name */
@@ -123,7 +123,7 @@ pgstat_create_inj(const char *name)
 	PgStatShared_InjectionPoint *shstatent;
 
 	/* leave if disabled */
-	if (!inj_stats_loaded)
+	if (!inj_stats_loaded || !inj_stats_enabled)
 		return;
 
 	entry_ref = pgstat_get_entry_ref_locked(PGSTAT_KIND_INJECTION, InvalidOid,
@@ -142,7 +142,7 @@ void
 pgstat_drop_inj(const char *name)
 {
 	/* leave if disabled */
-	if (!inj_stats_loaded)
+	if (!inj_stats_loaded || !inj_stats_enabled)
 		return;
 
 	if (!pgstat_drop_entry(PGSTAT_KIND_INJECTION, InvalidOid,
@@ -164,7 +164,7 @@ pgstat_report_inj(const char *name)
 	PgStat_StatInjEntry *statent;
 
 	/* leave if disabled */
-	if (!inj_stats_loaded)
+	if (!inj_stats_loaded || !inj_stats_enabled)
 		return;
 
 	entry_ref = pgstat_get_entry_ref_locked(PGSTAT_KIND_INJECTION, InvalidOid,

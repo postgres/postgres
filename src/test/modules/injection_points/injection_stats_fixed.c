@@ -146,7 +146,7 @@ pgstat_report_inj_fixed(uint32 numattach,
 	PgStatShared_InjectionPointFixed *stats_shmem;
 
 	/* leave if disabled */
-	if (!inj_fixed_loaded)
+	if (!inj_fixed_loaded || !inj_stats_enabled)
 		return;
 
 	stats_shmem = pgstat_get_custom_shmem_data(PGSTAT_KIND_INJECTION_FIXED);
@@ -172,7 +172,7 @@ injection_points_stats_fixed(PG_FUNCTION_ARGS)
 	bool		nulls[5] = {0};
 	PgStat_StatInjFixedEntry *stats;
 
-	if (!inj_fixed_loaded)
+	if (!inj_fixed_loaded || !inj_stats_enabled)
 		PG_RETURN_NULL();
 
 	pgstat_snapshot_fixed(PGSTAT_KIND_INJECTION_FIXED);

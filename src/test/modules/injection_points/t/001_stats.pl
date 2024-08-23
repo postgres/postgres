@@ -20,8 +20,11 @@ if ($ENV{enable_injection_points} ne 'yes')
 # Node initialization
 my $node = PostgreSQL::Test::Cluster->new('master');
 $node->init;
-$node->append_conf('postgresql.conf',
-	"shared_preload_libraries = 'injection_points'");
+$node->append_conf(
+	'postgresql.conf', qq(
+shared_preload_libraries = 'injection_points'
+injection_points.stats = true
+));
 $node->start;
 $node->safe_psql('postgres', 'CREATE EXTENSION injection_points;');
 

@@ -28,6 +28,7 @@
 #include "storage/lwlock.h"
 #include "storage/shmem.h"
 #include "utils/builtins.h"
+#include "utils/guc.h"
 #include "utils/injection_point.h"
 #include "utils/memutils.h"
 #include "utils/wait_event.h"
@@ -101,6 +102,15 @@ extern PGDLLEXPORT void injection_wait(const char *name,
 
 /* track if injection points attached in this process are linked to it */
 static bool injection_point_local = false;
+
+/*
+ * GUC variable
+ *
+ * This GUC is useful to control if statistics should be enabled or not
+ * during a test with injection points, like for example if a test relies
+ * on a callback run in a critical section where no allocation should happen.
+ */
+bool		inj_stats_enabled = false;
 
 /* Shared memory init callbacks */
 static shmem_request_hook_type prev_shmem_request_hook = NULL;
@@ -512,6 +522,19 @@ _PG_init(void)
 {
 	if (!process_shared_preload_libraries_in_progress)
 		return;
+
+	DefineCustomBoolVariable("injection_points.stats",
+							 "Enables statistics for injection points.",
+							 NULL,
+							 &inj_stats_enabled,
+							 false,
+							 PGC_POSTMASTER,
+							 0,
+							 NULL,
+							 NULL,
+							 NULL);
+
+	MarkGUCPrefixReserved("injection_points");
 
 	/* Shared memory initialization */
 	prev_shmem_request_hook = shmem_request_hook;
