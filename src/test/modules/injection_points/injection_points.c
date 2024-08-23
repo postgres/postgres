@@ -68,7 +68,12 @@ typedef struct InjectionPointCondition
  */
 static List *inj_list_local = NIL;
 
-/* Shared state information for injection points. */
+/*
+ * Shared state information for injection points.
+ *
+ * This state data can be initialized in two ways: dynamically with a DSM
+ * or when loading the module.
+ */
 typedef struct InjectionPointSharedState
 {
 	/* Protects access to other fields */
@@ -97,8 +102,13 @@ extern PGDLLEXPORT void injection_wait(const char *name,
 /* track if injection points attached in this process are linked to it */
 static bool injection_point_local = false;
 
+/* Shared memory init callbacks */
+static shmem_request_hook_type prev_shmem_request_hook = NULL;
+static shmem_startup_hook_type prev_shmem_startup_hook = NULL;
+
 /*
- * Callback for shared memory area initialization.
+ * Routine for shared memory area initialization, used as a callback
+ * when initializing dynamically with a DSM or when loading the module.
  */
 static void
 injection_point_init_state(void *ptr)
@@ -111,8 +121,48 @@ injection_point_init_state(void *ptr)
 	ConditionVariableInit(&state->wait_point);
 }
 
+/* Shared memory initialization when loading module */
+static void
+injection_shmem_request(void)
+{
+	Size		size;
+
+	if (prev_shmem_request_hook)
+		prev_shmem_request_hook();
+
+	size = MAXALIGN(sizeof(InjectionPointSharedState));
+	RequestAddinShmemSpace(size);
+}
+
+static void
+injection_shmem_startup(void)
+{
+	bool		found;
+
+	if (prev_shmem_startup_hook)
+		prev_shmem_startup_hook();
+
+	/* Create or attach to the shared memory state */
+	LWLockAcquire(AddinShmemInitLock, LW_EXCLUSIVE);
+
+	inj_state = ShmemInitStruct("injection_points",
+								sizeof(InjectionPointSharedState),
+								&found);
+
+	if (!found)
+	{
+		/*
+		 * First time through, so initialize.  This is shared with the dynamic
+		 * initialization using a DSM.
+		 */
+		injection_point_init_state(inj_state);
+	}
+
+	LWLockRelease(AddinShmemInitLock);
+}
+
 /*
- * Initialize shared memory area for this module.
+ * Initialize shared memory area for this module through DSM.
  */
 static void
 injection_init_shmem(void)
@@ -462,6 +512,12 @@ _PG_init(void)
 {
 	if (!process_shared_preload_libraries_in_progress)
 		return;
+
+	/* Shared memory initialization */
+	prev_shmem_request_hook = shmem_request_hook;
+	shmem_request_hook = injection_shmem_request;
+	prev_shmem_startup_hook = shmem_startup_hook;
+	shmem_startup_hook = injection_shmem_startup;
 
 	pgstat_register_inj();
 	pgstat_register_inj_fixed();
