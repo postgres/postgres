@@ -24,7 +24,7 @@ my ($node, $result);
 $node = PostgreSQL::Test::Cluster->new('mike');
 $node->init;
 $node->append_conf('postgresql.conf',
-	"shared_preload_libraries = 'test_slru'");
+	"shared_preload_libraries = 'test_slru,injection_points'");
 $node->start;
 $node->safe_psql('postgres', q(CREATE EXTENSION injection_points));
 $node->safe_psql('postgres', q(CREATE EXTENSION test_slru));
@@ -64,7 +64,6 @@ $node->safe_psql('postgres',
 $creator->query_until(
 	qr/start/, q{
 	\echo start
-	SELECT injection_points_load('multixact-create-from-members');
 	SELECT test_create_multixact();
 });
 

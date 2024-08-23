@@ -88,8 +88,8 @@
 #include "storage/proc.h"
 #include "storage/procarray.h"
 #include "utils/fmgrprotos.h"
-#include "utils/injection_point.h"
 #include "utils/guc_hooks.h"
+#include "utils/injection_point.h"
 #include "utils/memutils.h"
 
 
@@ -855,6 +855,9 @@ MultiXactIdCreateFromMembers(int nmembers, MultiXactMember *members)
 		}
 	}
 
+	/* Load the injection point before entering the critical section */
+	INJECTION_POINT_LOAD("multixact-create-from-members");
+
 	/*
 	 * Assign the MXID and offsets range to use, and make sure there is space
 	 * in the OFFSETs and MEMBERs files.  NB: this routine does
@@ -869,7 +872,7 @@ MultiXactIdCreateFromMembers(int nmembers, MultiXactMember *members)
 	 */
 	multi = GetNewMultiXactId(nmembers, &offset);
 
-	INJECTION_POINT("multixact-create-from-members");
+	INJECTION_POINT_CACHED("multixact-create-from-members");
 
 	/* Make an XLOG entry describing the new MXID. */
 	xlrec.mid = multi;
