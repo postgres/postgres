@@ -81,6 +81,7 @@ pqTraceFormatTimestamp(char *timestr, size_t ts_len)
 {
 	struct timeval tval;
 	time_t		now;
+	struct tm	tmbuf;
 
 	gettimeofday(&tval, NULL);
 
@@ -93,7 +94,7 @@ pqTraceFormatTimestamp(char *timestr, size_t ts_len)
 	now = tval.tv_sec;
 	strftime(timestr, ts_len,
 			 "%Y-%m-%d %H:%M:%S",
-			 localtime(&now));
+			 localtime_r(&now, &tmbuf));
 	/* append microseconds */
 	snprintf(timestr + strlen(timestr), ts_len - strlen(timestr),
 			 ".%06u", (unsigned int) (tval.tv_usec));

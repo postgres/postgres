@@ -129,11 +129,12 @@ timestamp2tm(timestamp dt, int *tzp, struct tm *tm, fsec_t *fsec, const char **t
 		if (IS_VALID_UTIME(tm->tm_year, tm->tm_mon, tm->tm_mday))
 		{
 #if defined(HAVE_STRUCT_TM_TM_ZONE) || defined(HAVE_INT_TIMEZONE)
+			struct tm	tmbuf;
 
 			utime = dt / USECS_PER_SEC +
 				((date0 - date2j(1970, 1, 1)) * INT64CONST(86400));
 
-			tx = localtime(&utime);
+			tx = localtime_r(&utime, &tmbuf);
 			tm->tm_year = tx->tm_year + 1900;
 			tm->tm_mon = tx->tm_mon + 1;
 			tm->tm_mday = tx->tm_mday;

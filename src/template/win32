@@ -1,5 +1,8 @@
 # src/template/win32
 
+# define before including <time.h> for getting localtime_r() etc. on MinGW
+CPPFLAGS="$CPPFLAGS -D_POSIX_C_SOURCE"
+
 # Extra CFLAGS for code that will go into a shared library
 CFLAGS_SL=""
 

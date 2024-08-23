@@ -268,6 +268,10 @@ elif host_system == 'windows'
   exesuffix = '.exe'
   dlsuffix = '.dll'
   library_path_var = ''
+  if cc.get_id() != 'msvc'
+    # define before including <time.h> for getting localtime_r() etc. on MinGW
+    cppflags += '-D_POSIX_C_SOURCE'
+  endif
 
   export_file_format = 'win'
   export_file_suffix = 'def'
