@@ -88,8 +88,9 @@ PostgreSQL documentation
      <term><option>--database=<replaceable class="parameter">dbname</replaceable></option></term>
      <listitem>
       <para>
-       The database name to create the subscription.  Multiple databases can
-       be selected by writing multiple <option>-d</option> switches.
+       The name of the database in which to create a subscription.  Multiple
+       databases can be selected by writing multiple <option>-d</option>
+       switches.
       </para>
      </listitem>
     </varlistentry>

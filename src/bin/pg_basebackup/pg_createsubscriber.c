@@ -195,13 +195,13 @@ cleanup_objects_atexit(void)
 				 */
 				if (dbinfo[i].made_publication)
 				{
-					pg_log_warning("publication \"%s\" in database \"%s\" on primary might be left behind",
+					pg_log_warning("publication \"%s\" created in database \"%s\" on primary was left behind",
 								   dbinfo[i].pubname, dbinfo[i].dbname);
-					pg_log_warning_hint("Consider dropping this publication before trying again.");
+					pg_log_warning_hint("Drop this publication before trying again.");
 				}
 				if (dbinfo[i].made_replslot)
 				{
-					pg_log_warning("replication slot \"%s\" in database \"%s\" on primary might be left behind",
+					pg_log_warning("replication slot \"%s\" created in database \"%s\" on primary was left behind",
 								   dbinfo[i].replslotname, dbinfo[i].dbname);
 					pg_log_warning_hint("Drop this replication slot soon to avoid retention of WAL files.");
 				}
@@ -221,14 +221,14 @@ usage(void)
 	printf(_("Usage:\n"));
 	printf(_("  %s [OPTION]...\n"), progname);
 	printf(_("\nOptions:\n"));
-	printf(_("  -d, --database=DBNAME           database to create a subscription\n"));
+	printf(_("  -d, --database=DBNAME           database in which to create a subscription\n"));
 	printf(_("  -D, --pgdata=DATADIR            location for the subscriber data directory\n"));
 	printf(_("  -n, --dry-run                   dry run, just show what would be done\n"));
 	printf(_("  -p, --subscriber-port=PORT      subscriber port number (default %s)\n"), DEFAULT_SUB_PORT);
 	printf(_("  -P, --publisher-server=CONNSTR  publisher connection string\n"));
 	printf(_("  -s, --socketdir=DIR             socket directory to use (default current dir.)\n"));
 	printf(_("  -t, --recovery-timeout=SECS     seconds to wait for recovery to end\n"));
-	printf(_("  -U, --subscriber-username=NAME  subscriber username\n"));
+	printf(_("  -U, --subscriber-username=NAME  user name for subscriber connection\n"));
 	printf(_("  -v, --verbose                   output verbose messages\n"));
 	printf(_("      --config-file=FILENAME      use specified main server configuration\n"
 			 "                                  file when running target cluster\n"));
@@ -670,7 +670,7 @@ modify_subscriber_sysid(const struct CreateSubscriberOptions *opt)
 		if (rc == 0)
 			pg_log_info("subscriber successfully changed the system identifier");
 		else
-			pg_fatal("subscriber failed to change system identifier: exit code: %d", rc);
+			pg_fatal("could not change system identifier of subscriber: %s", wait_result_to_str(rc));
 	}
 
 	pg_free(cf);
@@ -926,7 +926,7 @@ check_publisher(const struct LogicalRepInfo *dbinfo)
 
 	if (max_walsenders - cur_walsenders < num_dbs)
 	{
-		pg_log_error("publisher requires %d wal sender processes, but only %d remain",
+		pg_log_error("publisher requires %d WAL sender processes, but only %d remain",
 					 num_dbs, max_walsenders - cur_walsenders);
 		pg_log_error_hint("Increase the configuration parameter \"%s\" to at least %d.",
 						  "max_wal_senders", cur_walsenders + num_dbs);
@@ -935,7 +935,7 @@ check_publisher(const struct LogicalRepInfo *dbinfo)
 
 	if (max_prepared_transactions != 0)
 	{
-		pg_log_warning("two_phase option will not be enabled for slots");
+		pg_log_warning("two_phase option will not be enabled for replication slots");
 		pg_log_warning_detail("Subscriptions will be created with the two_phase option disabled.  "
 							  "Prepared transactions will be replicated at COMMIT PREPARED.");
 	}
@@ -1791,7 +1791,7 @@ set_replication_progress(PGconn *conn, const struct LogicalRepInfo *dbinfo, cons
 	 */
 	originname = psprintf("pg_%u", suboid);
 
-	pg_log_info("setting the replication progress (node name \"%s\" ; LSN %s) in database \"%s\"",
+	pg_log_info("setting the replication progress (node name \"%s\", LSN %s) in database \"%s\"",
 				originname, lsnstr, dbinfo->dbname);
 
 	resetPQExpBuffer(str);
@@ -1806,7 +1806,7 @@ set_replication_progress(PGconn *conn, const struct LogicalRepInfo *dbinfo, cons
 		res = PQexec(conn, str->data);
 		if (PQresultStatus(res) != PGRES_TUPLES_OK)
 		{
-			pg_log_error("could not set replication progress for the subscription \"%s\": %s",
+			pg_log_error("could not set replication progress for subscription \"%s\": %s",
 						 dbinfo->subname, PQresultErrorMessage(res));
 			disconnect_database(conn, true);
 		}
@@ -1963,7 +1963,7 @@ main(int argc, char **argv)
 				}
 				else
 				{
-					pg_log_error("duplicate database \"%s\"", optarg);
+					pg_log_error("database \"%s\" specified more than once", optarg);
 					exit(1);
 				}
 				break;
@@ -2004,7 +2004,7 @@ main(int argc, char **argv)
 				}
 				else
 				{
-					pg_log_error("duplicate publication \"%s\"", optarg);
+					pg_log_error("publication \"%s\" specified more than once", optarg);
 					exit(1);
 				}
 				break;
@@ -2016,7 +2016,7 @@ main(int argc, char **argv)
 				}
 				else
 				{
-					pg_log_error("duplicate replication slot \"%s\"", optarg);
+					pg_log_error("replication slot \"%s\" specified more than once", optarg);
 					exit(1);
 				}
 				break;
@@ -2028,7 +2028,7 @@ main(int argc, char **argv)
 				}
 				else
 				{
-					pg_log_error("duplicate subscription \"%s\"", optarg);
+					pg_log_error("subscription \"%s\" specified more than once", optarg);
 					exit(1);
 				}
 				break;
@@ -2106,7 +2106,7 @@ main(int argc, char **argv)
 			simple_string_list_append(&opt.database_names, dbname_conninfo);
 			num_dbs++;
 
-			pg_log_info("database \"%s\" was extracted from the publisher connection string",
+			pg_log_info("database name \"%s\" was extracted from the publisher connection string",
 						dbname_conninfo);
 		}
 		else
@@ -2121,23 +2121,23 @@ main(int argc, char **argv)
 	/* Number of object names must match number of databases */
 	if (num_pubs > 0 && num_pubs != num_dbs)
 	{
-		pg_log_error("wrong number of publication names");
-		pg_log_error_hint("Number of publication names (%d) must match number of database names (%d).",
-						  num_pubs, num_dbs);
+		pg_log_error("wrong number of publication names specified");
+		pg_log_error_detail("The number of specified publication names (%d) must match the number of specified database names (%d).",
+							num_pubs, num_dbs);
 		exit(1);
 	}
 	if (num_subs > 0 && num_subs != num_dbs)
 	{
-		pg_log_error("wrong number of subscription names");
-		pg_log_error_hint("Number of subscription names (%d) must match number of database names (%d).",
-						  num_subs, num_dbs);
+		pg_log_error("wrong number of subscription names specified");
+		pg_log_error_detail("The number of specified subscription names (%d) must match the number of specified database names (%d).",
+							num_subs, num_dbs);
 		exit(1);
 	}
 	if (num_replslots > 0 && num_replslots != num_dbs)
 	{
-		pg_log_error("wrong number of replication slot names");
-		pg_log_error_hint("Number of replication slot names (%d) must match number of database names (%d).",
-						  num_replslots, num_dbs);
+		pg_log_error("wrong number of replication slot names specified");
+		pg_log_error_detail("The number of specified replication slot names (%d) must match the number of specified database names (%d).",
+							num_replslots, num_dbs);
 		exit(1);
 	}
 
@@ -2178,8 +2178,8 @@ main(int argc, char **argv)
 	 */
 	if (stat(pidfile, &statbuf) == 0)
 	{
-		pg_log_error("standby is up and running");
-		pg_log_error_hint("Stop the standby and try again.");
+		pg_log_error("standby server is running");
+		pg_log_error_hint("Stop the standby server and try again.");
 		exit(1);
 	}
 
@@ -2188,7 +2188,7 @@ main(int argc, char **argv)
 	 * by command-line options). The goal is to avoid connections during the
 	 * transformation steps.
 	 */
-	pg_log_info("starting the standby with command-line options");
+	pg_log_info("starting the standby server with command-line options");
 	start_standby_server(&opt, true, false);
 
 	/* Check if the standby server is ready for logical replication */
