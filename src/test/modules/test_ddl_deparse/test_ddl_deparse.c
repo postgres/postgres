@@ -300,12 +300,6 @@ get_altertable_subcmdinfo(PG_FUNCTION_ARGS)
 			case AT_DetachPartitionFinalize:
 				strtype = "DETACH PARTITION ... FINALIZE";
 				break;
-			case AT_SplitPartition:
-				strtype = "SPLIT PARTITION";
-				break;
-			case AT_MergePartitions:
-				strtype = "MERGE PARTITIONS";
-				break;
 			case AT_AddIdentity:
 				strtype = "ADD IDENTITY";
 				break;

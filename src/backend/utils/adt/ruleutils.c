@@ -13296,21 +13296,3 @@ get_range_partbound_string(List *bound_datums)
 
 	return buf->data;
 }
-
-/*
- * get_list_partvalue_string
- *		A C string representation of one list partition value
- */
-char *
-get_list_partvalue_string(Const *val)
-{
-	deparse_context context;
-	StringInfo	buf = makeStringInfo();
-
-	memset(&context, 0, sizeof(deparse_context));
-	context.buf = buf;
-
-	get_const_expr(val, &context, -1);
-
-	return buf->data;
-}
