@@ -106,8 +106,6 @@ test: partition-key-update-1
 test: partition-key-update-2
 test: partition-key-update-3
 test: partition-key-update-4
-test: partition-merge
-test: partition-split
 test: plpgsql-toast
 test: cluster-conflict
 test: cluster-conflict-partition

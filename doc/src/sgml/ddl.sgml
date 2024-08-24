@@ -4355,44 +4355,6 @@ ALTER INDEX measurement_city_id_logdate_key
 ...
 </programlisting>
     </para>
-
-    <para>
-     There is also an option for merging multiple table partitions into
-     a single partition using the
-     <link linkend="sql-altertable-merge-partitions"><command>ALTER TABLE ... MERGE PARTITIONS</command></link>.
-     This feature simplifies the management of partitioned tables by allowing
-     users to combine partitions that are no longer needed as
-     separate entities.  It's important to note that this operation is not
-     supported for hash-partitioned tables and acquires an
-     <literal>ACCESS EXCLUSIVE</literal> lock, which could impact high-load
-     systems due to the lock's restrictive nature.  For example, we can
-     merge three monthly partitions into one quarter partition:
-<programlisting>
-ALTER TABLE measurement
-    MERGE PARTITIONS (measurement_y2006m01,
-                      measurement_y2006m02,
-                      measurement_y2006m03) INTO measurement_y2006q1;
-</programlisting>
-    </para>
-
-    <para>
-     Similarly to merging multiple table partitions, there is an option for
-     splitting a single partition into multiple using the
-     <link linkend="sql-altertable-split-partition"><command>ALTER TABLE ... SPLIT PARTITION</command></link>.
-     This feature could come in handy when one partition grows too big
-     and needs to be split into multiple.  It's important to note that
-     this operation is not supported for hash-partitioned tables and acquires
-     an <literal>ACCESS EXCLUSIVE</literal> lock, which could impact high-load
-     systems due to the lock's restrictive nature.  For example, we can split
-     the quarter partition back to monthly partitions:
-<programlisting>
-ALTER TABLE measurement SPLIT PARTITION measurement_y2006q1 INTO
-   (PARTITION measurement_y2006m01 FOR VALUES FROM ('2006-01-01') TO ('2006-02-01'),
-    PARTITION measurement_y2006m02 FOR VALUES FROM ('2006-02-01') TO ('2006-03-01'),
-    PARTITION measurement_y2006m03 FOR VALUES FROM ('2006-03-01') TO ('2006-04-01'));
-</programlisting>
-    </para>
-
    </sect3>
 
    <sect3 id="ddl-partitioning-declarative-limitations">
