@@ -1,4 +1,6 @@
-use std::fmt;
+use std::{fmt, str::FromStr};
+
+use crate::node;
 
 /// MessageType enum shows which command is being sent
 #[derive(Debug, PartialEq, Clone)]
@@ -9,6 +11,35 @@ pub enum MessageType {
     AskInsertionAcceptance,
     Agreed,
     Denied,
+    GetRouter,
+    RouterId,
+    NoRouterData,
+}
+
+#[derive(Clone)]
+pub struct NodeInfo {
+    pub ip: String,
+    pub port: String,
+}
+
+impl FromStr for NodeInfo {
+    type Err = &'static str;
+
+    fn from_str(input: &str) -> Result<NodeInfo, &'static str> {
+        let mut parts = input.split_whitespace();
+
+        let ip = match parts.next() {
+            Some(ip) => ip.to_string(),
+            None => return Err("Missing ip"),
+        };
+
+        let port = match parts.next() {
+            Some(port) => port.to_string(),
+            None => return Err("Missing port"),
+        };
+
+        Ok(NodeInfo { ip, port })
+    }
 }
 
 #[derive(Clone)]
@@ -16,6 +47,7 @@ pub enum MessageType {
 pub struct Message {
     pub message_type: MessageType,
     pub payload: Option<f64>,
+    pub node_info: Option<NodeInfo>,
 }
 
 /// Implementing Display for Message
@@ -30,10 +62,15 @@ impl fmt::Debug for Message {
 
 impl Message {
     /// Create a new Message
-    pub fn new(message_type: MessageType, payload: Option<f64>) -> Self {
+    pub fn new(
+        message_type: MessageType,
+        payload: Option<f64>,
+        node_info: Option<NodeInfo>,
+    ) -> Self {
         Message {
             message_type,
             payload,
+            node_info,
         }
     }
 
@@ -48,6 +85,9 @@ impl Message {
             MessageType::AskInsertionAcceptance => "ASK_INSERTION_ACCEPTANCE",
             MessageType::Agreed => "AGREED",
             MessageType::Denied => "DENIED",
+            MessageType::GetRouter => "GET_ROUTER",
+            MessageType::RouterId => "ROUTER_ID",
+            MessageType::NoRouterData => "NO_ROUTER_DATA",
         });
 
         result.push(' ');
@@ -71,6 +111,9 @@ impl Message {
             Some("ASK_INSERTION_ACCEPTANCE") => MessageType::AskInsertionAcceptance,
             Some("AGREED") => MessageType::Agreed,
             Some("DENIED") => MessageType::Denied,
+            Some("GET_ROUTER") => MessageType::GetRouter,
+            Some("ROUTER_ID") => MessageType::RouterId,
+            Some("NO_ROUTER_DATA") => MessageType::NoRouterData,
             _ => return Err("Invalid message type"),
         };
 
@@ -80,7 +123,13 @@ impl Message {
             None => return Err("Missing payload"),
         };
 
-        Ok(Message::new(message_type, payload))
+        let node_info = match parts.next() {
+            Some("None") => None,
+            Some(node_info) => Some(node_info.parse().unwrap()),
+            None => return Err("Missing node_info"),
+        };
+
+        Ok(Message::new(message_type, payload, node_info))
     }
 }
 
@@ -97,13 +146,13 @@ mod tests {
 
     #[test]
     fn test_message_to_string() {
-        let message = Message::new(MessageType::InitConnection, Some(0.5));
+        let message = Message::new(MessageType::InitConnection, Some(0.5), None);
         assert_eq!(message.to_string(), "INIT_CONNECTION 0.5\n");
     }
 
     #[test]
     fn test_message_from_string() {
-        let message = Message::new(MessageType::InitConnection, Some(0.5));
+        let message = Message::new(MessageType::InitConnection, Some(0.5), None);
         let message_string = message.to_string();
         assert_eq!(Message::from_string(&message_string).unwrap(), message);
     }

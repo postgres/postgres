@@ -1,6 +1,6 @@
 use postgres::{Client as PostgresClient, NoTls};
 extern crate users;
-use crate::node::messages::message::{Message, MessageType};
+use crate::node::messages::message::{Message, MessageType, NodeInfo};
 use crate::utils::queries::query_is_insert;
 
 use super::node::*;
@@ -45,7 +45,11 @@ impl Router {
     }
 
     /// Initializes the Router node with connections to the shards specified in the configuration file.
-    fn initialize_router_with_connections(ip: &str, port: &str, config_path: Option<&str>) -> Router {
+    fn initialize_router_with_connections(
+        ip: &str,
+        port: &str,
+        config_path: Option<&str>,
+    ) -> Router {
         let config = get_router_config(config_path);
         let shards: HashMap<String, PostgresClient> = HashMap::new();
         let comm_channels: HashMap<String, Channel> = HashMap::new();
@@ -120,7 +124,14 @@ impl Router {
     ) -> bool {
         // Send InitConnection Message to Shard and save shard to ShardManager
         let mut stream = health_connection.stream.as_ref().lock().unwrap();
-        let update_message = Message::new(MessageType::InitConnection, None);
+        let update_message = Message::new(
+            MessageType::InitConnection,
+            None,
+            Some(NodeInfo {
+                ip: self.ip.as_ref().to_string(),
+                port: self.port.as_ref().to_string(),
+            }),
+        );
 
         println!("Sending message to shard: {:?}", update_message);
 
@@ -279,7 +290,7 @@ impl Router {
         let mut stream = shard_comm_channel.stream.as_ref().lock().unwrap();
 
         // Write message
-        let message = Message::new(MessageType::AskMemoryUpdate, None);
+        let message = Message::new(MessageType::AskMemoryUpdate, None, None);
         stream.write(message.to_string().as_bytes()).unwrap();
         let mut response: [u8; 1024] = [0; 1024];
 
@@ -314,9 +325,11 @@ impl NodeRole for Router {
         }
         true
     }
-    
+}
+
+impl NetworkNode for Router {
     fn get_router_data(&self) -> (String, String) {
-        (self.ip.to_string(), self.port.to_string())
+        (self.ip.as_ref().to_string(), self.port.as_ref().to_string())
     }
 }
 

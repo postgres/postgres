@@ -8,6 +8,11 @@ use std::ffi::CStr;
 pub trait NodeRole {
     /// Sends a query to the shard group
     fn send_query(&mut self, query: &str) -> bool;
+}
+
+/// The role of a network node in the sharding system.
+/// Only shards and router implement this.
+pub trait NetworkNode {
     fn get_router_data(&self) -> (String, String);
 }
 
@@ -86,7 +91,11 @@ pub extern "C" fn init_node_instance(
             }
             NodeType::Client => {
                 println!("Client node initializing");
-                NODE_INSTANCE = Some(NodeInstance::new(Box::new(Client::new(ip, node_port, config_path))));
+                NODE_INSTANCE = Some(NodeInstance::new(Box::new(Client::new(
+                    ip,
+                    node_port,
+                    config_path,
+                ))));
                 println!("Client node initializes");
             }
         }

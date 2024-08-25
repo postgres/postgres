@@ -8,7 +8,7 @@ use std::{io, thread};
 
 extern crate users;
 use super::memory_manager::MemoryManager;
-use super::messages::message::{Message, MessageType};
+use super::messages::message::{Message, MessageType, NodeInfo};
 use super::node::*;
 use crate::node::shard;
 use crate::utils::node_config::get_shard_config;
@@ -25,6 +25,7 @@ pub struct Shard {
     listener: Arc<RwLock<TcpListener>>,
     router_stream: Arc<RwLock<Option<TcpStream>>>,
     memory_manager: Arc<Mutex<MemoryManager>>,
+    router_info: Option<NodeInfo>,
 }
 
 impl Shard {
@@ -81,6 +82,7 @@ impl Shard {
             listener: listener.clone(),
             router_stream: stream.clone(),
             memory_manager: Arc::new(Mutex::new(memory_manager)),
+            router_info: None,
         };
 
         let listener_clone = listener.clone();
@@ -170,6 +172,8 @@ impl Shard {
 
         match message.message_type {
             MessageType::InitConnection => {
+                let router_info = message.node_info.unwrap();
+                self.router_info = Some(router_info);
                 println!("Received an InitConnection message");
                 let response_string = self.get_agreed_connection();
                 println!("Response created: {}", response_string);
@@ -180,6 +184,22 @@ impl Shard {
                 let response_string = self.get_memory_update_message();
                 println!("Response created: {}", response_string);
                 Some(response_string)
+            }
+            MessageType::GetRouter => {
+                match &self.router_info {
+                    Some(router_info) => {
+                        let response_message = Message::new(
+                            MessageType::RouterId,
+                            None,
+                            Some(router_info.clone()),
+                        );
+                        Some(response_message.to_string())
+                    }
+                    None => {
+                        let response_message = Message::new(MessageType::NoRouterData, None, None);
+                        Some(response_message.to_string())
+                    }
+                }
             }
             _ => {
                 eprintln!(
@@ -194,7 +214,8 @@ impl Shard {
     fn get_agreed_connection(&self) -> String {
         let memory_manager = self.memory_manager.as_ref().try_lock().unwrap();
         let memory_percentage = memory_manager.available_memory_perc;
-        let response_message = shard::Message::new(MessageType::Agreed, Some(memory_percentage));
+        let response_message =
+            shard::Message::new(MessageType::Agreed, Some(memory_percentage), None);
 
         response_message.to_string()
     }
@@ -211,7 +232,7 @@ impl Shard {
         let memory_manager = self.memory_manager.as_ref().try_lock().unwrap();
         let memory_percentage = memory_manager.available_memory_perc;
         let response_message =
-            shard::Message::new(MessageType::MemoryUpdate, Some(memory_percentage));
+            shard::Message::new(MessageType::MemoryUpdate, Some(memory_percentage), None);
 
         response_message.to_string()
     }
@@ -260,7 +281,9 @@ impl NodeRole for Shard {
 
         true
     }
+}
 
+impl NetworkNode for Shard {
     fn get_router_data(&self) -> (String, String) {
         (self.ip.to_string(), self.port.to_string())
     }
