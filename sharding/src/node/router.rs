@@ -1,7 +1,7 @@
 use postgres::{Client as PostgresClient, NoTls};
 extern crate users;
 use crate::node::messages::message::{Message, MessageType, NodeInfo};
-use crate::utils::queries::query_is_insert;
+use crate::utils::queries::{query_affects_memory_state, query_is_insert};
 
 use super::node::*;
 use super::shard_manager::ShardManager;
@@ -11,7 +11,7 @@ use inline_colorization::*;
 use rust_decimal::Decimal;
 use std::collections::HashMap;
 use std::io::{Read, Write};
-use std::sync::{Arc, RwLock};
+use std::sync::{Arc, MutexGuard, RwLock};
 use std::{io, net::TcpStream, sync::Mutex};
 
 // use super::super::utils::sysinfo::print_available_memory;
@@ -257,55 +257,22 @@ impl Router {
         }
     }
 
-    /// Function that receives a query and checks for shards
-    /// with corresponding data
-    fn get_shards_for_query(&self, query: &str) -> (Vec<String>, bool) {
-        // If it's an INSERT query, return specific Shards.
+    /// Function that receives a query and checks for shards with corresponding data.
+    /// If the query is an INSERT query, it will return the specific shard that the query should be sent to.
+    /// If the query is not an INSERT query, it will return all shards.
+    /// The second return value is a boolean that indicates if the shards need to update their memory after the query is executed. This will be true if the query affects the memory state of the system.
+    fn get_shards_for_query(&mut self, query: &str) -> (Vec<String>, bool) {
         if query_is_insert(query) {
             println!("Query is INSERT");
-
             let shard = self.shard_manager.peek().unwrap();
-            println!(
-                "{color_bright_white}{style_bold}Returning shard: {}{style_reset}",
-                shard
-            );
-
-            // TODO-SHARD: ask shard if it accepts insertions. If it does, pop it from the ShardManager and then update it.
-            // If it doesn't, think of a way to handle this situation
-
             (vec![shard.clone()], true)
         } else {
             // Return all shards
-            println!("{color_bright_white}{style_bold}Returning all shards{style_reset}");
-            (self.shards.lock().unwrap().keys().cloned().collect(), false)
+            (
+                self.shards.lock().unwrap().keys().cloned().collect(),
+                query_affects_memory_state(query),
+            )
         }
-    }
-
-    /// Function that sends a message to the shard asking for a memory update. This must be called each time an insertion query is sent, and may be used to update the shard's memory size in the ShardManager in other circumstances.
-    fn ask_for_memory_update(&mut self, shard_id: String) {
-        // Get channel
-        let self_clone = self.clone();
-        let comm_channels = self_clone.comm_channels.read().unwrap();
-        let shard_comm_channel = comm_channels.get(&shard_id).unwrap();
-        let mut stream = shard_comm_channel.stream.as_ref().lock().unwrap();
-
-        // Write message
-        let message = Message::new(MessageType::AskMemoryUpdate, None, None);
-        stream.write(message.to_string().as_bytes()).unwrap();
-        let mut response: [u8; 1024] = [0; 1024];
-
-        // Readn and handle message
-        stream.read(&mut response).unwrap();
-        let response_string = String::from_utf8_lossy(&response);
-        let response_message = match Message::from_string(&response_string) {
-            Ok(message) => message,
-            Err(_) => {
-                eprintln!("Failed to parse message from shard");
-                // TODO-SHARD: handle this situation, should this try again? What happens if we can't update the shard's memory in the shard_manager?
-                return;
-            }
-        };
-        self.handle_response(response_message, shard_id.as_str());
     }
 }
 
@@ -333,8 +300,78 @@ impl NetworkNode for Router {
     }
 }
 
+// Communication with shards
 impl Router {
-    fn send_query_to_shard(&mut self, shard_id: String, query: &str, is_insert: bool) {
+    fn get_stream(&self, shard_id: &str) -> Option<Arc<Mutex<TcpStream>>> {
+        let comm_channels = match self.comm_channels.read() {
+            Ok(comm_channels) => comm_channels,
+            Err(_) => {
+                eprintln!("Failed to get comm channels");
+                return None;
+            }
+        };
+
+        let shard_comm_channel = match comm_channels.get(&shard_id.to_string()) {
+            Some(shard_comm_channel) => shard_comm_channel,
+            None => {
+                eprintln!("Failed to get comm channel for shard {}", shard_id);
+                return None;
+            }
+        };
+
+        Some(shard_comm_channel.stream.clone())
+    }
+
+    fn init_message_exchange(
+        &mut self,
+        message: Message,
+        writable_stream: &mut MutexGuard<TcpStream>,
+        shard_id: String,
+    ) -> bool {
+        writable_stream
+            .write(message.to_string().as_bytes())
+            .unwrap();
+        let mut response: [u8; 1024] = [0; 1024];
+
+        // Readn and handle message
+        writable_stream.read(&mut response).unwrap();
+        let response_string = String::from_utf8_lossy(&response);
+        let response_message = match Message::from_string(&response_string) {
+            Ok(message) => message,
+            Err(_) => {
+                eprintln!("Failed to parse message from shard");
+                // TODO-SHARD: handle this situation, should this try again? What happens if we can't update the shard's memory in the shard_manager?
+                return false;
+            }
+        };
+
+        self.handle_response(response_message, shard_id.as_str())
+    }
+
+    /// Function that sends a message to the shard asking for a memory update. This must be called each time an insertion query is sent, and may be used to update the shard's memory size in the ShardManager in other circumstances.
+    fn ask_for_memory_update(&mut self, shard_id: String) {
+        let stream = match self.get_stream(shard_id.as_str()) {
+            Some(stream) => stream,
+            None => {
+                eprintln!("Failed to get stream for shard {}", shard_id);
+                return;
+            }
+        };
+
+        let mut writable_stream = match stream.as_ref().try_lock() {
+            Ok(writable_stream) => writable_stream,
+            Err(_) => {
+                eprintln!("Failed to get writable stream for shard {}", shard_id);
+                return;
+            }
+        };
+
+        // Write message
+        let message = Message::new(MessageType::AskMemoryUpdate, None, None);
+        self.init_message_exchange(message, &mut writable_stream, shard_id);
+    }
+
+    fn send_query_to_shard(&mut self, shard_id: String, query: &str, update: bool) {
         if let Some(shard) = self.clone().shards.lock().unwrap().get_mut(&shard_id) {
             let rows = match shard.query(query, &[]) {
                 Ok(rows) => rows,
@@ -344,7 +381,7 @@ impl Router {
                 }
             };
 
-            if is_insert {
+            if update {
                 self.ask_for_memory_update(shard_id);
             }
 

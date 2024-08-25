@@ -61,16 +61,12 @@ impl Shard {
 
         // Initialize memory manager
         let config = get_shard_config();
-        let memory_threshold = config.memory_threshold;
-        let memory_manager = MemoryManager::new(memory_threshold);
+        let reserved_memory = config.unavailable_memory_perc;
+        let memory_manager = MemoryManager::new(reserved_memory);
 
         println!(
             "{color_blue}[Shard] Available Memory: {:?} %{style_reset}",
             memory_manager.available_memory_perc
-        );
-        println!(
-            "{color_blue}[Shard] Accepts Insertions: {:?}{style_reset}",
-            memory_manager.accepts_insertions()
         );
 
         let stream = Arc::new(RwLock::new(None));
@@ -104,7 +100,10 @@ impl Shard {
         let listener_guard = listener.read().unwrap();
         match listener_guard.accept() {
             Ok((stream, addr)) => {
-                println!("New connection accepted from {}.", addr);
+                println!(
+                    "{color_bright_green}New connection accepted from {}.{style_reset}",
+                    addr
+                );
                 // let mut stream_guard = rw_stream.write().unwrap();
 
                 self.router_stream = Arc::new(RwLock::new(Some(stream)));
@@ -174,33 +173,28 @@ impl Shard {
             MessageType::InitConnection => {
                 let router_info = message.node_info.unwrap();
                 self.router_info = Some(router_info);
-                println!("Received an InitConnection message");
+                println!("{color_bright_green}Received an InitConnection message{style_reset}");
                 let response_string = self.get_agreed_connection();
                 println!("Response created: {}", response_string);
                 Some(response_string)
             }
             MessageType::AskMemoryUpdate => {
-                println!("Received an AskMemoryUpdate message");
+                println!("{color_bright_green}Received an AskMemoryUpdate message{style_reset}");
                 let response_string = self.get_memory_update_message();
                 println!("Response created: {}", response_string);
                 Some(response_string)
             }
-            MessageType::GetRouter => {
-                match &self.router_info {
-                    Some(router_info) => {
-                        let response_message = Message::new(
-                            MessageType::RouterId,
-                            None,
-                            Some(router_info.clone()),
-                        );
-                        Some(response_message.to_string())
-                    }
-                    None => {
-                        let response_message = Message::new(MessageType::NoRouterData, None, None);
-                        Some(response_message.to_string())
-                    }
+            MessageType::GetRouter => match &self.router_info {
+                Some(router_info) => {
+                    let response_message =
+                        Message::new(MessageType::RouterId, None, Some(router_info.clone()));
+                    Some(response_message.to_string())
                 }
-            }
+                None => {
+                    let response_message = Message::new(MessageType::NoRouterData, None, None);
+                    Some(response_message.to_string())
+                }
+            },
             _ => {
                 eprintln!(
                     "Message type received: {:?}, not yet implemented",
@@ -239,22 +233,6 @@ impl Shard {
 
     fn update(&mut self) -> Result<(), io::Error> {
         self.memory_manager.as_ref().try_lock().unwrap().update()
-    }
-
-    fn accepts_insertions(&self) -> bool {
-        self.memory_manager
-            .as_ref()
-            .try_lock()
-            .unwrap()
-            .accepts_insertions()
-    }
-
-    fn get_insertion_response(&self) -> MessageType {
-        if self.accepts_insertions() {
-            MessageType::Agreed
-        } else {
-            MessageType::Denied
-        }
     }
 }
 
