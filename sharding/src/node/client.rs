@@ -1,17 +1,25 @@
+use inline_colorization::*;
 extern crate users;
+use postgres::Client as PostgresClient;
+use rust_decimal::Decimal;
+use std::{
+    io::{Read, Write},
+    net::TcpStream,
+    sync::{Arc, Mutex},
+};
+
 use crate::node::messages::message;
+use crate::utils::common::{connect_to_node, Channel};
 
 use super::super::utils::node_config::*;
 use super::node::*;
-use std::io::{Read, Write};
-use std::net::TcpStream;
-use std::sync::Arc;
 
 /// This struct represents the Client node in the distributed system.
 /// It finds the router and connects to it to send queries.
 #[repr(C)]
+#[derive(Clone)]
 pub struct Client {
-    router_stream: TcpStream,
+    router_postgres_client: Channel,
 }
 
 impl Client {
@@ -22,20 +30,28 @@ impl Client {
         let mut candidate_port = String::new();
 
         for node in config.nodes {
-            let node_ip = node.ip.clone();
-            let node_port = node.port.clone();
+            candidate_ip = node.ip.clone();
+            candidate_port =  (node.port.clone().parse::<u64>().unwrap() + 1000).to_string();
 
             // This shouldn't happen, but just in case
-            if (&node_ip == ip) && (&node_port == port) {
+            if (&candidate_ip == ip) && (&candidate_port == port) {
                 continue;
             }
 
-            candidate_ip = node_ip.clone();
-            candidate_port = node_port.clone();
+            println!(
+                "Trying to connect to the candidate at {}:{}",
+                candidate_ip, candidate_port
+            );
 
             let mut candidate_stream =
                 match TcpStream::connect(format!("{}:{}", candidate_ip, candidate_port)) {
-                    Ok(stream) => stream,
+                    Ok(stream) => {
+                        println!(
+                    "{color_bright_green}Health connection established with {}:{}{style_reset}",
+                    candidate_ip, candidate_port
+                );
+                        stream
+                    }
                     Err(e) => {
                         eprintln!("Failed to connect to the router: {:?}", e);
                         panic!("Failed to connect to the router");
@@ -43,6 +59,7 @@ impl Client {
                 };
 
             let message = message::Message::new(message::MessageType::GetRouter, None, None);
+            println!("Sending message: {:?}", message);
             candidate_stream
                 .write(message.to_string().as_bytes())
                 .unwrap();
@@ -55,20 +72,33 @@ impl Client {
             match candidate_stream.read(response) {
                 Ok(_) => {
                     let response_str = String::from_utf8_lossy(response);
+                    println!("Received response: {}", response_str);
                     let response_message = message::Message::from_string(&response_str).unwrap();
+
                     if response_message.message_type == message::MessageType::RouterId {
-                        let node_info = response_message.node_info.unwrap();
-                        let router_ip = node_info.ip.clone();
-                        let router_port = node_info.port.clone();
+                        let node_info: message::NodeInfo = response_message.node_info.unwrap();
+                        let node_ip = node_info.ip.clone();
+                        let node_port = node_info.port.clone();
                         let router_stream =
-                            match TcpStream::connect(format!("{}:{}", router_ip, router_port)) {
-                                Ok(stream) => stream,
+                            match TcpStream::connect(format!("{}:{}", node_ip, node_port)) {
+                                Ok(stream) => {
+                                    println!(
+                                        "{color_bright_green}Router stream {}:{}{style_reset}",
+                                        node_ip, port
+                                    );
+                                    stream
+                                }
                                 Err(e) => {
                                     eprintln!("Failed to connect to the router: {:?}", e);
                                     panic!("Failed to connect to the router");
                                 }
                             };
-                        return Client { router_stream };
+
+                        return Client {
+                            router_postgres_client: Channel {
+                                stream: Arc::new(Mutex::new(router_stream)),
+                            },
+                        };
                     }
                 }
                 Err(_e) => {
@@ -83,7 +113,8 @@ impl Client {
 
 impl NodeRole for Client {
     fn send_query(&mut self, query: &str) -> bool {
-        // TODO: Implement this
-        false
+        let mut router = self.router_postgres_client.stream.as_ref().lock().unwrap();
+        // TODO-SHARD send Query Msg and parse response as rows
+        return true;
     }
 }

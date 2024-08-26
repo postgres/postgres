@@ -1,11 +1,11 @@
-use postgres::{Client as PostgresClient, NoTls};
+use postgres::Client as PostgresClient;
 extern crate users;
 use crate::node::messages::message::{Message, MessageType, NodeInfo};
 use crate::utils::queries::{query_affects_memory_state, query_is_insert};
 
 use super::node::*;
 use super::shard_manager::ShardManager;
-use crate::utils::common::get_username_dinamically;
+use crate::utils::common::{connect_to_node, Channel};
 use crate::utils::node_config::{get_router_config, Node};
 use inline_colorization::*;
 use rust_decimal::Decimal;
@@ -15,11 +15,6 @@ use std::sync::{Arc, MutexGuard, RwLock};
 use std::{io, net::TcpStream, sync::Mutex};
 
 // use super::super::utils::sysinfo::print_available_memory;
-
-#[derive(Clone)]
-pub struct Channel {
-    stream: Arc<Mutex<TcpStream>>,
-}
 
 /// This struct represents the Router node in the distributed system. It has the responsibility of routing the queries to the appropriate shard or shards.
 #[repr(C)]
@@ -77,7 +72,7 @@ impl Router {
         let node_ip = node.ip;
         let node_port = node.port;
 
-        let shard_client = match Router::connect_to_node(&node_ip, &node_port) {
+        let shard_client = match connect_to_node(&node_ip, &node_port) {
             Ok(shard_client) => shard_client,
             Err(_) => {
                 println!("Failed to connect to port: {}", node_port);
@@ -216,24 +211,6 @@ impl Router {
         );
     }
 
-    /// Connects to the node with the given ip and port, returning a Client.
-    fn connect_to_node(ip: &str, port: &str) -> Result<PostgresClient, postgres::Error> {
-        // get username dynamically
-        let username = get_username_dinamically();
-
-        match PostgresClient::connect(
-            format!(
-                "host={} port={} user={} dbname=template1",
-                ip, port, username
-            )
-            .as_str(),
-            NoTls,
-        ) {
-            Ok(shard_client) => Ok(shard_client),
-            Err(e) => Err(e),
-        }
-    }
-
     /// Establishes a health connection with the node with the given ip and port, returning a Channel.
     fn get_shard_channel(node_ip: &str, node_port: &str) -> Result<Channel, io::Error> {
         let port = node_port.parse::<u64>().unwrap() + 1000;
@@ -291,12 +268,6 @@ impl NodeRole for Router {
             self.send_query_to_shard(shard_id, query, is_insert);
         }
         true
-    }
-}
-
-impl NetworkNode for Router {
-    fn get_router_data(&self) -> (String, String) {
-        (self.ip.as_ref().to_string(), self.port.as_ref().to_string())
     }
 }
 

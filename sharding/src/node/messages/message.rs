@@ -15,7 +15,7 @@ pub enum MessageType {
     NoRouterData,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct NodeInfo {
     pub ip: String,
     pub port: String,
@@ -25,7 +25,8 @@ impl FromStr for NodeInfo {
     type Err = &'static str;
 
     fn from_str(input: &str) -> Result<NodeInfo, &'static str> {
-        let mut parts = input.split_whitespace();
+        // split the input string by ':'
+        let mut parts = input.split(':');
 
         let ip = match parts.next() {
             Some(ip) => ip.to_string(),
@@ -55,6 +56,7 @@ impl fmt::Debug for Message {
         f.debug_struct("Message")
             .field("message_type", &self.message_type)
             .field("payload", &self.payload)
+            .field("node_info", &self.node_info)
             .finish()
     }
 }
@@ -95,6 +97,15 @@ impl Message {
             result.push_str("None");
         }
 
+        result.push(' ');
+        if let Some(node_info) = &self.node_info {
+            result.push_str(&node_info.ip);
+            result.push(':');
+            result.push_str(&node_info.port);
+        } else {
+            result.push_str("None");
+        }
+
         result + "\n"
     }
 
@@ -117,13 +128,13 @@ impl Message {
         let payload = match parts.next() {
             Some("None") => None,
             Some(payload) => Some(payload.parse().unwrap()),
-            None => return Err("Missing payload"),
+            None => None,
         };
 
         let node_info = match parts.next() {
             Some("None") => None,
             Some(node_info) => Some(node_info.parse().unwrap()),
-            None => return Err("Missing node_info"),
+            None => None,
         };
 
         Ok(Message::new(message_type, payload, node_info))
@@ -150,6 +161,22 @@ mod tests {
     #[test]
     fn test_message_from_string() {
         let message = Message::new(MessageType::InitConnection, Some(0.5), None);
+        let message_string = message.to_string();
+        assert_eq!(Message::from_string(&message_string).unwrap(), message);
+    }
+
+    #[test]
+    fn test_message_from_string_with_node_info() {
+        let node_info = NodeInfo {
+            ip: "1".to_string(),
+            port: "2".to_string(),
+        };
+
+        let message = Message::new(
+            MessageType::InitConnection,
+            Some(0.5),
+            Some(node_info.clone()),
+        );
         let message_string = message.to_string();
         assert_eq!(Message::from_string(&message_string).unwrap(), message);
     }

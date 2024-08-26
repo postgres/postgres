@@ -3,6 +3,8 @@ use crate::node::client::Client;
 use super::router::Router;
 use super::shard::Shard;
 use std::ffi::CStr;
+use std::sync::{Arc, Mutex, RwLock};
+use std::thread;
 
 /// The role of a node in the sharding system
 pub trait NodeRole {
@@ -10,13 +12,8 @@ pub trait NodeRole {
     fn send_query(&mut self, query: &str) -> bool;
 }
 
-/// The role of a network node in the sharding system.
-/// Only shards and router implement this.
-pub trait NetworkNode {
-    fn get_router_data(&self) -> (String, String);
-}
-
 #[repr(C)]
+#[derive(Debug)]
 pub enum NodeType {
     Client,
     Router,
@@ -75,6 +72,7 @@ pub extern "C" fn init_node_instance(
 
         let ip = "127.0.0.1";
 
+        println!("[DEBUG] Node type: {:?}", node_type);
         match node_type {
             NodeType::Router => {
                 NODE_INSTANCE = Some(NodeInstance::new(Box::new(Router::new(
@@ -86,7 +84,15 @@ pub extern "C" fn init_node_instance(
             }
             NodeType::Shard => {
                 println!("Sharding node initializing");
-                NODE_INSTANCE = Some(NodeInstance::new(Box::new(Shard::new(ip, node_port))));
+                let shard = Shard::new(ip, node_port);
+                NODE_INSTANCE = Some(NodeInstance::new(Box::new(shard.clone())));
+
+                let shared_shard = Arc::new(Mutex::new(shard));
+
+                let _handle = thread::spawn(move || {
+                    Shard::accept_connections(shared_shard);
+                });
+
                 println!("Sharding node initializes");
             }
             NodeType::Client => {
