@@ -12,7 +12,7 @@
 
 // TODO: implement proper IV
 // iv should be based on blocknum + relfile, available in the API
-static char iv[16] = {0,};
+static unsigned char iv[16] = {0,};
 
 static RelKeyData*
 tde_smgr_get_key(SMgrRelation reln)
@@ -20,6 +20,8 @@ tde_smgr_get_key(SMgrRelation reln)
 	// TODO: This recursion counter is a dirty hack until the metadata is in the catalog
 	// As otherwise we would call GetPrincipalKey recursively and deadlock
 	static int recursion = 0;
+	TdeCreateEvent *event;
+	RelKeyData *rkd;
 
 	if(IsCatalogRelationOid(reln->smgr_rlocator.locator.relNumber))
 	{
@@ -40,10 +42,10 @@ tde_smgr_get_key(SMgrRelation reln)
 		return NULL;
 	}
 
-	TdeCreateEvent* event = GetCurrentTdeCreateEvent();
+	event = GetCurrentTdeCreateEvent();
 
 	// see if we have a key for the relation, and return if yes
-	RelKeyData* rkd = GetRelationKey(reln->smgr_rlocator.locator);
+	rkd = GetRelationKey(reln->smgr_rlocator.locator);
 
 	if(rkd != NULL)
 	{
@@ -72,15 +74,11 @@ tde_smgr_get_key(SMgrRelation reln)
 	return NULL;
 }
 
-void
+static void
 tde_mdwritev(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 		 const void **buffers, BlockNumber nblocks, bool skipFsync)
 {
 	AesInit();
-	
-	char* local_blocks = malloc( BLCKSZ * (nblocks+1) );
-	char* local_blocks_aligned = (char*)TYPEALIGN(PG_IO_ALIGN_SIZE, local_blocks);
-	const void** local_buffers = malloc ( sizeof(void*) * nblocks );
 
 	RelKeyData* rkd = tde_smgr_get_key(reln);
 
@@ -90,31 +88,36 @@ tde_mdwritev(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 
 		return;
 	}
-
-	for(int i = 0; i  < nblocks; ++i )
+	else
 	{
-		local_buffers[i] = &local_blocks_aligned[i*BLCKSZ];	
-		int out_len = BLCKSZ;
-		AesEncrypt(rkd->internal_key.key, iv, ((char**)buffers)[i], BLCKSZ, local_buffers[i], &out_len);
+		char *local_blocks = palloc(BLCKSZ * (nblocks + 1));
+		char *local_blocks_aligned = (char *)TYPEALIGN(PG_IO_ALIGN_SIZE, local_blocks);
+		const void **local_buffers = palloc(sizeof(void *) * nblocks);
+
+		for(int i = 0; i  < nblocks; ++i )
+		{
+			int out_len = BLCKSZ;
+			local_buffers[i] = &local_blocks_aligned[i * BLCKSZ];
+			AesEncrypt(rkd->internal_key.key, iv, ((char**)buffers)[i], BLCKSZ, local_buffers[i], &out_len);
+		}
+
+		mdwritev(reln, forknum, blocknum,
+			local_buffers, nblocks, skipFsync);
+
+		pfree(local_blocks);
+		pfree(local_buffers);
 	}
-
-	mdwritev(reln, forknum, blocknum,
-		 local_buffers, nblocks, skipFsync);
-
-	free(local_blocks);
-	free(local_buffers);
 }
 
-void
+static void
 tde_mdextend(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 		 const void *buffer, bool skipFsync)
 {
-	AesInit();
-	
-	char* local_blocks = malloc( BLCKSZ * (1+1) );
-	char* local_blocks_aligned = (char*)TYPEALIGN(PG_IO_ALIGN_SIZE, local_blocks);
+	RelKeyData *rkd;
 
-	RelKeyData* rkd = tde_smgr_get_key(reln);
+	AesInit();
+
+	rkd = tde_smgr_get_key(reln);
 
 	if(rkd == NULL)
 	{
@@ -122,30 +125,35 @@ tde_mdextend(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 
 		return;
 	}
+	else
+	{
 
-	int out_len = BLCKSZ;
-	AesEncrypt(rkd->internal_key.key, iv, ((char*)buffer), BLCKSZ, local_blocks_aligned, &out_len);
+		char *local_blocks = palloc(BLCKSZ * (1 + 1));
+		char *local_blocks_aligned = (char *)TYPEALIGN(PG_IO_ALIGN_SIZE, local_blocks);
+		int out_len = BLCKSZ;
+		AesEncrypt(rkd->internal_key.key, iv, ((char*)buffer), BLCKSZ, local_blocks_aligned, &out_len);
 
-	mdextend(reln, forknum, blocknum, local_blocks_aligned, skipFsync);
+		mdextend(reln, forknum, blocknum, local_blocks_aligned, skipFsync);
 
-	
-	free(local_blocks);
+		pfree(local_blocks);
+	}
 }
 
-void
+static void
 tde_mdreadv(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 		void **buffers, BlockNumber nblocks)
 {
+	RelKeyData *rkd;
+	int out_len = BLCKSZ;
+
 	AesInit();
 
 	mdreadv(reln, forknum, blocknum, buffers, nblocks);
 
-	RelKeyData* rkd = tde_smgr_get_key(reln);
+	rkd = tde_smgr_get_key(reln);
 
 	if(rkd == NULL)
-	{
 		return;
-	}
 
 	for(int i = 0; i < nblocks; ++i)
 	{
@@ -163,21 +171,19 @@ tde_mdreadv(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 				break;
 			}
 		}
-		if(allZero) continue;
-
-		int out_len = BLCKSZ;
-		AesDecrypt(rkd->internal_key.key, iv, ((char**)buffers)[i], BLCKSZ, ((char**)buffers)[i], &out_len);
+		if(allZero)
+			continue;
+		AesDecrypt(rkd->internal_key.key, iv, ((char **)buffers)[i], BLCKSZ, ((char **)buffers)[i], &out_len);
 	}
 }
 
-void
+static void
 tde_mdcreate(SMgrRelation reln, ForkNumber forknum, bool isRedo)
 {
 	// This is the only function that gets called during actual CREATE TABLE/INDEX (EVENT TRIGGER)
 	// so we create the key here by loading it
 	// Later calls then decide to encrypt or not based on the existence of the key
-	 tde_smgr_get_key(reln);
-
+	tde_smgr_get_key(reln);
 	return mdcreate(reln, forknum, isRedo);
 }
 
@@ -204,7 +210,7 @@ static const struct f_smgr tde_smgr = {
 	.smgr_registersync = mdregistersync,
 };
 
-void RegisterStorageMgr()
+void RegisterStorageMgr(void)
 {
     tde_smgr_id = smgr_register(&tde_smgr, 0);
 
@@ -213,7 +219,7 @@ void RegisterStorageMgr()
 }
 
 #else
-void RegisterStorageMgr()
+void RegisterStorageMgr(void)
 {
 }
 #endif /* PERCONA_FORK */

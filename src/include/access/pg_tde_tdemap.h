@@ -27,19 +27,6 @@ typedef struct RelKeyData
     InternalKey     internal_key;
 } RelKeyData;
 
-/* Relation key cache.
- * 
- * TODO: For now it is just a linked list. Data can only be added w/o any
- * ability to remove or change it. Also consider usage of more efficient data
- * struct (hash map) in the shared memory(?) - currently allocated in the
- * TopMemoryContext of the process. 
- */
-typedef struct RelKey
-{
-    Oid     rel_id;
-    RelKeyData    *key;
-    struct RelKey *next;
-} RelKey;
 
 typedef struct XLogRelKey
 {
@@ -69,6 +56,6 @@ extern void pg_tde_set_db_file_paths(const RelFileLocator *rlocator, char *map_p
 
 const char * tde_sprint_key(InternalKey *k);
 
-extern void pg_tde_put_key_into_map(Oid rel_id, RelKeyData *key);
+extern RelKeyData *pg_tde_put_key_into_map(Oid rel_id, RelKeyData *key);
 
 #endif /*PG_TDE_MAP_H*/

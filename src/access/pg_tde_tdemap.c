@@ -79,6 +79,23 @@ typedef struct TDEMapFilePath
 	char keydata_path[MAXPGPATH];
 } TDEMapFilePath;
 
+/* Relation key cache.
+ *
+ * TODO: For now it is just a linked list. Data can only be added w/o any
+ * ability to remove or change it. Also consider usage of more efficient data
+ * struct (hash map) in the shared memory(?) - currently allocated in the
+ * TopMemoryContext of the process.
+ */
+typedef struct RelKey
+{
+	Oid rel_id;
+	RelKeyData key;
+	struct RelKey *next;
+} RelKey;
+
+/* Head of the key cache (linked list) */
+RelKey *tde_rel_key_map = NULL;
+
 static int pg_tde_open_file_basic(char *tde_filename, int fileFlags, bool ignore_missing);
 static int pg_tde_file_header_write(char *tde_filename, int fd, TDEPrincipalKeyInfo *principal_key_info, off_t *bytes_written);
 static int pg_tde_file_header_read(char *tde_filename, int fd, TDEFileHeader *fheader, bool *is_new_file, off_t *bytes_read);
@@ -149,12 +166,10 @@ pg_tde_create_key_map_entry(const RelFileLocator *newrlocator)
 	 * Add the encyrpted key to the key map data file structure.
 	 */
 	pg_tde_write_key_map_entry(newrlocator, enc_rel_key_data, &principal_key->keyInfo);
-
+	pfree(enc_rel_key_data);
 	return rel_key_data;
 }
 
-/* Head of the key cache (linked list) */
-RelKey *tde_rel_key_map = NULL;
 
 /*
  * Returns TDE key for a given relation.
@@ -166,13 +181,13 @@ GetRelationKey(RelFileLocator rel)
 {
 	RelKey		*curr;
 	RelKeyData *key;
-
 	Oid rel_id = rel.relNumber;
+
 	for (curr = tde_rel_key_map; curr != NULL; curr = curr->next)
 	{
 		if (curr->rel_id == rel_id)
 		{
-			return curr->key;
+			return &curr->key;
 		}
 	}
 
@@ -180,26 +195,30 @@ GetRelationKey(RelFileLocator rel)
 
 	if (key != NULL)
 	{
-		pg_tde_put_key_into_map(rel.relNumber, key);
+		RelKeyData* cached_key = pg_tde_put_key_into_map(rel.relNumber, key);
+		pfree(key);
+		return cached_key;
 	}
 
-	return key;
+	return key; /* returning NULL key */
 }
 
-void
-pg_tde_put_key_into_map(Oid rel_id, RelKeyData *key) {
-	RelKey		*new;
-	RelKey		*prev = NULL;
-
-	new = (RelKey *) MemoryContextAlloc(TopMemoryContext, sizeof(RelKey));
+RelKeyData *
+pg_tde_put_key_into_map(Oid rel_id, RelKeyData *key)
+{
+	RelKey		*new = (RelKey *) MemoryContextAlloc(TopMemoryContext, sizeof(RelKey));
 	new->rel_id = rel_id;
-	new->key = key;
+	memcpy(&new->key, key, sizeof(RelKeyData));
 	new->next = NULL;
 
-	if (prev == NULL)
+	if (tde_rel_key_map == NULL)
 		tde_rel_key_map = new;
 	else
-		prev->next = new;
+	{
+		new->next = tde_rel_key_map;
+		tde_rel_key_map = new;
+	}
+	return &new->key;
 }
 
 const char *
@@ -221,20 +240,14 @@ tde_sprint_key(InternalKey *k)
 RelKeyData *
 tde_create_rel_key(Oid rel_id, InternalKey *key, TDEPrincipalKeyInfo *principal_key_info)
 {
-	RelKeyData 	*rel_key_data;
-
-	rel_key_data = (RelKeyData *) MemoryContextAlloc(TopMemoryContext, sizeof(RelKeyData));
-
-	memcpy(&rel_key_data->principal_key_id, &principal_key_info->keyId, sizeof(TDEPrincipalKeyId));
-	memcpy(&rel_key_data->internal_key, key, sizeof(InternalKey));
-	rel_key_data->internal_key.ctx = NULL;
+	RelKeyData 	rel_key_data;
+	memcpy(&rel_key_data.principal_key_id, &principal_key_info->keyId, sizeof(TDEPrincipalKeyId));
+	memcpy(&rel_key_data.internal_key, key, sizeof(InternalKey));
+	rel_key_data.internal_key.ctx = NULL;
 
 	/* Add to the decrypted key to cache */
-	pg_tde_put_key_into_map(rel_id, rel_key_data);
-
-	return rel_key_data;
+	return pg_tde_put_key_into_map(rel_id, &rel_key_data);
 }
-
 /*
  * Encrypts a given key and returns the encrypted one.
  */
@@ -1030,7 +1043,7 @@ pg_tde_get_key_from_file(const RelFileLocator *rlocator)
 	LWLockRelease(lock_files);
 
 	rel_key_data = tde_decrypt_rel_key(principal_key, enc_rel_key_data, rlocator);
-
+	pfree(enc_rel_key_data);
 	return rel_key_data;
 }
 

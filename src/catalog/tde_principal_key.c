@@ -433,8 +433,15 @@ RotatePrincipalKey(TDEPrincipalKey *current_key, const char *new_key_name, const
     const keyInfo *keyInfo = NULL;
     GenericKeyring *keyring;
     bool    is_rotated;
+    MemoryContext keyRotateCtx;
+    MemoryContext oldCtx;
 
     Assert(current_key != NULL);
+
+    keyRotateCtx = AllocSetContextCreate(CurrentMemoryContext,
+                                         "TDE key rotation temporary context",
+                                         ALLOCSET_DEFAULT_SIZES);
+    oldCtx = MemoryContextSwitchTo(keyRotateCtx);
 
     /*
      * Let's set everything the same as the older principal key and
@@ -482,6 +489,9 @@ RotatePrincipalKey(TDEPrincipalKey *current_key, const char *new_key_name, const
         clear_principal_key_cache(current_key->keyInfo.databaseId);
         push_principal_key_to_cache(&new_principal_key);
     }
+
+    MemoryContextSwitchTo(oldCtx);
+    MemoryContextDelete(keyRotateCtx);
 
     return is_rotated;
 }

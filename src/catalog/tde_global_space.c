@@ -181,6 +181,7 @@ init_keys(void)
 
 	cache_internal_key(rel_key_data, TDE_INTERNAL_XLOG_KEY);
 	pfree(rel_key_data);
+	pfree(enc_rel_key_data);
 	pfree(mkey);
 }
 
