@@ -1540,10 +1540,10 @@ ReorderBufferCleanupTXN(ReorderBuffer *rb, ReorderBufferTXN *txn)
 		Assert(change->txn == txn);
 
 		/*
-		 * Instead of updating the memory counter for individual changes,
-		 * we sum up the size of memory to free so we can update the memory
-		 * counter all together below. This saves costs of maintaining
-		 * the max-heap.
+		 * Instead of updating the memory counter for individual changes, we
+		 * sum up the size of memory to free so we can update the memory
+		 * counter all together below. This saves costs of maintaining the
+		 * max-heap.
 		 */
 		mem_freed += ReorderBufferChangeSize(change);
 
@@ -1628,7 +1628,7 @@ static void
 ReorderBufferTruncateTXN(ReorderBuffer *rb, ReorderBufferTXN *txn, bool txn_prepared)
 {
 	dlist_mutable_iter iter;
-	Size	mem_freed = 0;
+	Size		mem_freed = 0;
 
 	/* cleanup subtransactions & their changes */
 	dlist_foreach_modify(iter, &txn->subtxns)
@@ -1662,10 +1662,10 @@ ReorderBufferTruncateTXN(ReorderBuffer *rb, ReorderBufferTXN *txn, bool txn_prep
 		dlist_delete(&change->node);
 
 		/*
-		 * Instead of updating the memory counter for individual changes,
-		 * we sum up the size of memory to free so we can update the memory
-		 * counter all together below. This saves costs of maintaining
-		 * the max-heap.
+		 * Instead of updating the memory counter for individual changes, we
+		 * sum up the size of memory to free so we can update the memory
+		 * counter all together below. This saves costs of maintaining the
+		 * max-heap.
 		 */
 		mem_freed += ReorderBufferChangeSize(change);
 
