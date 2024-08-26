@@ -1513,31 +1513,6 @@ Author: Daniel Gustafsson <dgustafsson@postgresql.org>
      </listitem>
 
 <!--
-Author: Alexander Korotkov <akorotkov@postgresql.org>
-2024-04-07 [1adf16b8f] Implement ALTER TABLE ... MERGE PARTITIONS ... command
--->
-
-     <listitem>
-      <para>
-      Allow partitions to be merged using <link
-      linkend="sql-altertable"><literal>ALTER TABLE ... MERGE
-      PARTITIONS</literal></link> (Dmitry Koval)
-      </para>
-     </listitem>
-
-<!--
-Author: Alexander Korotkov <akorotkov@postgresql.org>
-2024-04-07 [87c21bb94] Implement ALTER TABLE ... SPLIT PARTITION ... command
--->
-
-     <listitem>
-      <para>
-      Allow partitions to be split using <literal>ALTER TABLE ... SPLIT
-      PARTITION</literal> (Dmitry Koval)
-      </para>
-     </listitem>
-
-<!--
 Author: Peter Eisentraut <peter@eisentraut.org>
 2024-01-16 [699586315] Support identity columns in partitioned tables
 -->
