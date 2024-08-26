@@ -4091,7 +4091,7 @@ _bt_checkkeys_look_ahead(IndexScanDesc scan, BTReadPageState *pstate,
 	 */
 	if (!pstate->targetdistance)
 		pstate->targetdistance = LOOK_AHEAD_DEFAULT_DISTANCE;
-	else
+	else if (pstate->targetdistance < MaxIndexTuplesPerPage / 2)
 		pstate->targetdistance *= 2;
 
 	/* Don't read past the end (or before the start) of the page, though */
