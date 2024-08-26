@@ -117,7 +117,7 @@ command_checks_all(
 	[@pg_upgrade_cmd],
 	1,
 	[
-		qr/Your installation contains logical replication slots that can't be upgraded./
+		qr/Your installation contains logical replication slots that cannot be upgraded./
 	],
 	[qr//],
 	'run of pg_upgrade of old cluster with slots having unconsumed WAL records'
