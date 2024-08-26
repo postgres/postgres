@@ -342,7 +342,7 @@ check_for_data_types_usage(ClusterInfo *cluster, DataTypesUsageChecks *checks)
 	DataTypesUsageChecks *tmp = checks;
 	int			n_data_types_usage_checks = 0;
 
-	prep_status("Checking for data type usage");
+	prep_status("Checking data type usage");
 
 	/* Gather number of checks to perform */
 	while (tmp->status != NULL)
@@ -1756,7 +1756,7 @@ check_new_cluster_logical_replication_slots(void)
 	nslots_on_new = atoi(PQgetvalue(res, 0, 0));
 
 	if (nslots_on_new)
-		pg_fatal("Expected 0 logical replication slots but found %d.",
+		pg_fatal("expected 0 logical replication slots but found %d",
 				 nslots_on_new);
 
 	PQclear(res);
@@ -1771,7 +1771,7 @@ check_new_cluster_logical_replication_slots(void)
 	wal_level = PQgetvalue(res, 0, 0);
 
 	if (strcmp(wal_level, "logical") != 0)
-		pg_fatal("\"wal_level\" must be \"logical\", but is set to \"%s\"",
+		pg_fatal("\"wal_level\" must be \"logical\" but is set to \"%s\"",
 				 wal_level);
 
 	max_replication_slots = atoi(PQgetvalue(res, 1, 0));
@@ -1895,7 +1895,7 @@ check_old_cluster_for_valid_slots(void)
 		fclose(script);
 
 		pg_log(PG_REPORT, "fatal");
-		pg_fatal("Your installation contains logical replication slots that can't be upgraded.\n"
+		pg_fatal("Your installation contains logical replication slots that cannot be upgraded.\n"
 				 "You can remove invalid slots and/or consume the pending WAL for other slots,\n"
 				 "and then restart the upgrade.\n"
 				 "A list of the problematic slots is in the file:\n"

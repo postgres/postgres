@@ -827,13 +827,13 @@ print_slot_infos(LogicalSlotInfoArr *slot_arr)
 	if (slot_arr->nslots == 0)
 		return;
 
-	pg_log(PG_VERBOSE, "Logical replication slots within the database:");
+	pg_log(PG_VERBOSE, "Logical replication slots in the database:");
 
 	for (int slotnum = 0; slotnum < slot_arr->nslots; slotnum++)
 	{
 		LogicalSlotInfo *slot_info = &slot_arr->slots[slotnum];
 
-		pg_log(PG_VERBOSE, "slot_name: \"%s\", plugin: \"%s\", two_phase: %s",
+		pg_log(PG_VERBOSE, "slot name: \"%s\", output plugin: \"%s\", two_phase: %s",
 			   slot_info->slotname,
 			   slot_info->plugin,
 			   slot_info->two_phase ? "true" : "false");
