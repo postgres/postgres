@@ -1021,11 +1021,8 @@ CheckAndGetDbnameFromConninfo(void)
 	dbname = walrcv_get_dbname_from_conninfo(PrimaryConnInfo);
 	if (dbname == NULL)
 		ereport(ERROR,
-
-		/*
-		 * translator: dbname is a specific option; %s is a GUC variable name
-		 */
 				errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+		/* translator: dbname is a specific option; %s is a GUC variable name */
 				errmsg("slot synchronization requires dbname to be specified in %s",
 					   "primary_conninfo"));
 	return dbname;
@@ -1058,8 +1055,8 @@ ValidateSlotSyncParams(int elevel)
 	if (PrimarySlotName == NULL || *PrimarySlotName == '\0')
 	{
 		ereport(elevel,
-		/* translator: %s is a GUC variable name */
 				errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+		/* translator: %s is a GUC variable name */
 				errmsg("slot synchronization requires %s to be defined", "primary_slot_name"));
 		return false;
 	}
@@ -1072,8 +1069,8 @@ ValidateSlotSyncParams(int elevel)
 	if (!hot_standby_feedback)
 	{
 		ereport(elevel,
-		/* translator: %s is a GUC variable name */
 				errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+		/* translator: %s is a GUC variable name */
 				errmsg("slot synchronization requires %s to be enabled",
 					   "hot_standby_feedback"));
 		return false;
@@ -1086,8 +1083,8 @@ ValidateSlotSyncParams(int elevel)
 	if (PrimaryConnInfo == NULL || *PrimaryConnInfo == '\0')
 	{
 		ereport(elevel,
-		/* translator: %s is a GUC variable name */
 				errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+		/* translator: %s is a GUC variable name */
 				errmsg("slot synchronization requires %s to be defined",
 					   "primary_conninfo"));
 		return false;
