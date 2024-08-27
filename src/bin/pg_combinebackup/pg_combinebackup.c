@@ -337,7 +337,7 @@ main(int argc, char *argv[])
 		 * won't have the WAL ranges for the resulting manifest.
 		 */
 		if (manifests[n_prior_backups] == NULL)
-			pg_fatal("can't generate a manifest because no manifest is available for the final input backup");
+			pg_fatal("cannot generate a manifest because no manifest is available for the final input backup");
 	}
 	else
 		mwriter = NULL;
@@ -655,7 +655,7 @@ check_control_files(int n_backups, char **backup_dirs)
 	if (data_checksum_mismatch)
 	{
 		pg_log_warning("only some backups have checksums enabled");
-		pg_log_warning_hint("disable, and optionally reenable, checksums on the output directory to avoid failures");
+		pg_log_warning_hint("Disable, and optionally reenable, checksums on the output directory to avoid failures.");
 	}
 
 	return system_identifier;
@@ -766,9 +766,9 @@ help(const char *progname)
 	printf(_("  -o, --output=DIRECTORY    output directory\n"));
 	printf(_("  -T, --tablespace-mapping=OLDDIR=NEWDIR\n"
 			 "                            relocate tablespace in OLDDIR to NEWDIR\n"));
-	printf(_("      --clone               clone (reflink) instead of copying files\n"));
+	printf(_("      --clone               clone (reflink) files instead of copying\n"));
 	printf(_("      --copy                copy files (default)\n"));
-	printf(_("      --copy-file-range     copy using copy_file_range() syscall\n"));
+	printf(_("      --copy-file-range     copy using copy_file_range() system call\n"));
 	printf(_("      --manifest-checksums=SHA{224,256,384,512}|CRC32C|NONE\n"
 			 "                            use algorithm for manifest checksums\n"));
 	printf(_("      --no-manifest         suppress generation of backup manifest\n"));
@@ -1070,7 +1070,7 @@ process_directory_recursively(Oid tsoid,
 					 */
 					bmpath = psprintf("%s/%s", input_directory,
 									  "backup_manifest");
-					pg_log_warning("\"%s\" contains no entry for \"%s\"",
+					pg_log_warning("manifest file \"%s\" contains no entry for file \"%s\"",
 								   bmpath, manifest_path);
 					pfree(bmpath);
 				}

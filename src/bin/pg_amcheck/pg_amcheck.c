@@ -621,8 +621,8 @@ main(int argc, char *argv[])
 			 */
 			if ((vmaj == 1 && vmin < 4) || vmaj == 0)
 			{
-				pg_log_warning("--checkunique option is not supported by amcheck "
-							   "version \"%s\"", amcheck_version);
+				pg_log_warning("option %s is not supported by amcheck version %s",
+							   "--checkunique", amcheck_version);
 				dat->is_checkunique = false;
 			}
 			else
