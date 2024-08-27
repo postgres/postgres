@@ -81,7 +81,7 @@ PGTDE::append_to_file($stdout);
 $rt_value = $node->psql('postgres', "SELECT pg_tde_add_key_provider_vault_v2('vault-provider', json_object( 'type' VALUE 'remote', 'url' VALUE 'http://localhost:8888/token' ), json_object( 'type' VALUE 'remote', 'url' VALUE 'http://localhost:8888/url' ), to_json('secret'::text), NULL);", extra_params => ['-a']);
 $rt_value = $node->psql('postgres', "SELECT pg_tde_set_principal_key('test-db-principal-key','vault-provider');", extra_params => ['-a']);
 
-$stdout = $node->safe_psql('postgres', 'CREATE TABLE test_enc2(id SERIAL,k INTEGER,PRIMARY KEY (id)) USING pg_tde_basic;', extra_params => ['-a']);
+$stdout = $node->safe_psql('postgres', 'CREATE TABLE test_enc2(id SERIAL,k INTEGER,PRIMARY KEY (id)) USING tde_heap_basic;', extra_params => ['-a']);
 PGTDE::append_to_file($stdout);
 
 $stdout = $node->safe_psql('postgres', 'INSERT INTO test_enc2 (k) VALUES (5),(6);', extra_params => ['-a']);
