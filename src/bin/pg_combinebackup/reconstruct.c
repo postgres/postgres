@@ -449,7 +449,7 @@ make_incremental_rfile(char *filename)
 	/* Read and validate magic number. */
 	read_bytes(rf, &magic, sizeof(magic));
 	if (magic != INCREMENTAL_MAGIC)
-		pg_fatal("file \"%s\" has bad incremental magic number (0x%x not 0x%x)",
+		pg_fatal("file \"%s\" has bad incremental magic number (0x%x, expected 0x%x)",
 				 filename, magic, INCREMENTAL_MAGIC);
 
 	/* Read block count. */
