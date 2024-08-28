@@ -29,7 +29,7 @@ typedef struct TDEBufferHeapTupleTableSlot
 	 * such a case, since presumably base.tuple is pointing into the buffer.)
 	 */
 	Buffer		buffer;			/* tuple's buffer, or InvalidBuffer */
-    HeapTuple	decrypted_tuple;	/* decrypted tuple */
+	char		decrypted_buffer[BLCKSZ];
 } TDEBufferHeapTupleTableSlot;
 
 extern PGDLLIMPORT const TupleTableSlotOps TTSOpsTDEBufferHeapTuple;
@@ -44,7 +44,5 @@ extern TupleTableSlot *PGTdeExecStoreBufferHeapTuple(Relation rel,
                          HeapTuple tuple,
 						 TupleTableSlot *slot,
 						 Buffer buffer);
-
-extern void TdeSlotForgetDecryptedTuple(TupleTableSlot *slot);
 
 #endif /* PG_TDE_SLOT_H */

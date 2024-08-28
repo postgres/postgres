@@ -1188,7 +1188,6 @@ pg_tdeam_scan_analyze_next_tuple(TableScanDesc scan, TransactionId OldestXmin,
 	/* Now release the lock and pin on the page */
 	UnlockReleaseBuffer(hscan->rs_cbuf);
 	hscan->rs_cbuf = InvalidBuffer;
-	TdeSlotForgetDecryptedTuple(slot);
 	/* also prevent old slot contents from having pin on page */
 	ExecClearTuple(slot);
 
@@ -2504,16 +2503,6 @@ pg_tdeam_scan_sample_next_tuple(TableScanDesc scan, SampleScanState *scanstate,
 			 */
 			if (!pagemode)
 				LockBuffer(hscan->rs_cbuf, BUFFER_LOCK_UNLOCK);
-			/*
-			 * Hack:
-			 * The issue is that, The previous call that would have used the same
-			 * TupleTableSlot would have just deleted the memory context for the slot
-			 * and refrained from calling the clear slot function. So, the slot would
-			 * have the non NULL pointer to the decrypted tuple which is now invalid.
-			 * So, we need to explicitly clear the decrypted tuple pointer before
-			 * calling the clear slot function.
-			 */
-			TdeSlotForgetDecryptedTuple(slot);
 			ExecClearTuple(slot);
 			return false;
 		}
