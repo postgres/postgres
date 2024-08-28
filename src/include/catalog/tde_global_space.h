@@ -31,6 +31,5 @@
 }
 
 extern void TDEInitGlobalKeys(void);
-extern RelKeyData * TDEGetGlobalInternalKey(Oid obj_id);
 
 #endif							/* TDE_GLOBAL_CATALOG_H */

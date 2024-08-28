@@ -35,26 +35,11 @@
 #define DefaultKeyProvider GetKeyProviderByName(KEYRING_DEFAULT_NAME, \
 										GLOBAL_DATA_TDE_OID, GLOBALTABLESPACE_OID)
 
-typedef enum
-{
-	TDE_INTERNAL_XLOG_KEY,
-
-	/* must be last */
-	TDE_INTERNAL_KEYS_COUNT
-}			InternalKeyType;
-
-/* Since for the global tablespace, we always keep the Internal key in the memory
- * and read it from disk only once during the server start, we need no cache for
- * the principal key.
- */
-static RelKeyData * internal_keys_cache = NULL;
-
 static void init_keys(void);
 static void init_default_keyring(void);
 static TDEPrincipalKey * create_principal_key(const char *key_name,
 											  GenericKeyring * keyring, Oid dbOid,
 											  Oid spcOid);
-static void cache_internal_key(RelKeyData * ikey, InternalKeyType type);
 
 void
 TDEInitGlobalKeys(void)
@@ -73,46 +58,17 @@ TDEInitGlobalKeys(void)
 		RelKeyData *ikey;
 
 		ikey = pg_tde_get_key_from_file(&GLOBAL_SPACE_RLOCATOR(XLOG_TDE_OID));
-		cache_internal_key(ikey, TDE_INTERNAL_XLOG_KEY);
+
+		/*
+		* Internal Key should be in the TopMemmoryContext because of SSL contexts. This
+		* context is being initialized by OpenSSL with the pointer to the encryption
+		* context which is valid only for the current backend. So new backends have to
+		* inherit a cached key with NULL SSL connext and any changes to it have to remain
+		* local ot the backend.
+		* (see https://github.com/Percona-Lab/pg_tde/pull/214#discussion_r1648998317)
+		*/
+		pg_tde_put_key_into_map(XLOG_TDE_OID, ikey);
 	}
-}
-
-/*
- * Internal Key should be in the TopMemmoryContext because of SSL contexts. This
- * context is being initialized by OpenSSL with the pointer to the encryption
- * context which is valid only for the current backend. So new backends have to
- * inherit a cached key with NULL SSL connext and any changes to it have to remain
- * local ot the backend.
- * (see https://github.com/Percona-Lab/pg_tde/pull/214#discussion_r1648998317)
- */
-static void
-cache_internal_key(RelKeyData * ikey, InternalKeyType type)
-{
-	if (internal_keys_cache == NULL)
-	{
-		internal_keys_cache =
-			(RelKeyData *) MemoryContextAlloc(TopMemoryContext,
-											  sizeof(RelKeyData) * TDE_INTERNAL_KEYS_COUNT);
-	}
-	memcpy(internal_keys_cache + type, ikey, sizeof(RelKeyData));
-}
-
-
-RelKeyData *
-TDEGetGlobalInternalKey(Oid obj_id)
-{
-	InternalKeyType ktype;
-
-	Assert(internal_keys_cache != NULL);
-	switch (obj_id)
-	{
-		case XLOG_TDE_OID:
-			ktype = TDE_INTERNAL_XLOG_KEY;
-			break;
-		default:
-			elog(ERROR, "unknown internal key for Oid %u", obj_id);
-	}
-	return internal_keys_cache + ktype;
 }
 
 static void
@@ -147,8 +103,12 @@ init_default_keyring(void)
 /*
  * Create and store global space keys (principal and internal) and cache the
  * internal key.
- *
- * This function has to be run during the cluster start only, so no locks here.
+ * 
+ * Since we always keep an Internal key in the memory for the global tablespace 
+ * and read it from disk once, only during the server start, we need no cache for
+ * the principal key.
+ * 
+ * This function has to be run during the cluster start only, so no locks needed.
  */
 static void
 init_keys(void)
@@ -178,9 +138,6 @@ init_keys(void)
 	rel_key_data = tde_create_rel_key(rlocator->relNumber, &int_key, &mkey->keyInfo);
 	enc_rel_key_data = tde_encrypt_rel_key(mkey, rel_key_data, rlocator);
 	pg_tde_write_key_map_entry(rlocator, enc_rel_key_data, &mkey->keyInfo);
-
-	cache_internal_key(rel_key_data, TDE_INTERNAL_XLOG_KEY);
-	pfree(rel_key_data);
 	pfree(enc_rel_key_data);
 	pfree(mkey);
 }
