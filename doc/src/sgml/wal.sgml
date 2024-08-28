@@ -841,8 +841,8 @@
    The <xref linkend="guc-maintenance-io-concurrency"/> and
    <xref linkend="guc-wal-decode-buffer-size"/> settings limit prefetching
    concurrency and distance, respectively.  By default, it is set to
-   <literal>try</literal>, which enables the feature on systems where
-   <function>posix_fadvise</function> is available.
+   <literal>try</literal>, which enables the feature on systems that support
+   issuing read-ahead advice.
   </para>
  </sect1>
 

@@ -2068,40 +2068,59 @@ FileClose(File file)
 /*
  * FilePrefetch - initiate asynchronous read of a given range of the file.
  *
- * Currently the only implementation of this function is using posix_fadvise
- * which is the simplest standardized interface that accomplishes this.
- * We could add an implementation using libaio in the future; but note that
- * this API is inappropriate for libaio, which wants to have a buffer provided
- * to read into.
+ * Returns 0 on success, otherwise an errno error code (like posix_fadvise()).
+ *
+ * posix_fadvise() is the simplest standardized interface that accomplishes
+ * this.
  */
 int
 FilePrefetch(File file, off_t offset, off_t amount, uint32 wait_event_info)
 {
-#if defined(USE_POSIX_FADVISE) && defined(POSIX_FADV_WILLNEED)
-	int			returnCode;
-
 	Assert(FileIsValid(file));
 
 	DO_DB(elog(LOG, "FilePrefetch: %d (%s) " INT64_FORMAT " " INT64_FORMAT,
 			   file, VfdCache[file].fileName,
 			   (int64) offset, (int64) amount));
 
-	returnCode = FileAccess(file);
-	if (returnCode < 0)
-		return returnCode;
+#if defined(USE_POSIX_FADVISE) && defined(POSIX_FADV_WILLNEED)
+	{
+		int			returnCode;
+
+		returnCode = FileAccess(file);
+		if (returnCode < 0)
+			return returnCode;
 
 retry:
-	pgstat_report_wait_start(wait_event_info);
-	returnCode = posix_fadvise(VfdCache[file].fd, offset, amount,
-							   POSIX_FADV_WILLNEED);
-	pgstat_report_wait_end();
+		pgstat_report_wait_start(wait_event_info);
+		returnCode = posix_fadvise(VfdCache[file].fd, offset, amount,
+								   POSIX_FADV_WILLNEED);
+		pgstat_report_wait_end();
 
-	if (returnCode == EINTR)
-		goto retry;
+		if (returnCode == EINTR)
+			goto retry;
 
-	return returnCode;
+		return returnCode;
+	}
+#elif defined(__darwin__)
+	{
+		struct radvisory
+		{
+			off_t		ra_offset;	/* offset into the file */
+			int			ra_count;	/* size of the read     */
+		}			ra;
+		int			returnCode;
+
+		ra.ra_offset = offset;
+		ra.ra_count = amount;
+		pgstat_report_wait_start(wait_event_info);
+		returnCode = fcntl(VfdCache[file].fd, F_RDADVISE, &ra);
+		pgstat_report_wait_end();
+		if (returnCode != -1)
+			return 0;
+		else
+			return errno;
+	}
 #else
-	Assert(FileIsValid(file));
 	return 0;
 #endif
 }

@@ -2679,11 +2679,9 @@ include_dir 'conf.d'
         </para>
 
         <para>
-         Asynchronous I/O depends on an effective <function>posix_fadvise</function>
-         function, which some operating systems lack.  If the function is not
-         present then setting this parameter to anything but zero will result
-         in an error.  On some operating systems (e.g., Solaris), the function
-         is present but does not actually do anything.
+         Asynchronous I/O requires that the operating system supports issuing
+         read-ahead advice.  If there is no operating system support then
+         setting this parameter to anything but zero will result in an error.
         </para>
 
         <para>
@@ -3852,10 +3850,8 @@ include_dir 'conf.d'
         <literal>off</literal>, <literal>on</literal> and
         <literal>try</literal> (the default).  The setting
         <literal>try</literal> enables
-        prefetching only if the operating system provides the
-        <function>posix_fadvise</function> function, which is currently used
-        to implement prefetching.  Note that some operating systems provide the
-        function, but it doesn't do anything.
+        prefetching only if the operating system provides support for issuing
+        read-ahead advice.
        </para>
        <para>
         Prefetching blocks that will soon be needed can reduce I/O wait times
