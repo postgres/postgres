@@ -1,4 +1,4 @@
 [submodule "contrib/pg_tde"]
 	path = contrib/pg_tde
 	url = https://github.com/Percona-Lab/pg_tde.git
-	branch = smgr
+	branch = main
