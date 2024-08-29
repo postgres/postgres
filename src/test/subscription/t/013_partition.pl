@@ -799,7 +799,7 @@ $node_publisher->wait_for_catchup('sub_viaroot');
 
 $logfile = slurp_file($node_subscriber1->logfile(), $log_location);
 ok( $logfile =~
-	  qr/conflict detected on relation "public.tab2_1": conflict=update_differ.*\n.*DETAIL:.* Updating the row that was modified locally in transaction [0-9]+ at .*\n.*Existing local tuple \(yyy, null, 3\); remote tuple \(pub_tab2, quux, 3\); replica identity \(a\)=\(3\)/,
+	  qr/conflict detected on relation "public.tab2_1": conflict=update_origin_differs.*\n.*DETAIL:.* Updating the row that was modified locally in transaction [0-9]+ at .*\n.*Existing local tuple \(yyy, null, 3\); remote tuple \(pub_tab2, quux, 3\); replica identity \(a\)=\(3\)/,
 	'updating a tuple that was modified by a different origin');
 
 # The remaining tests no longer test conflict detection.

@@ -1599,7 +1599,7 @@ test_sub=# SELECT * FROM t1 ORDER BY id;
      </listitem>
     </varlistentry>
     <varlistentry>
-     <term><literal>update_differ</literal></term>
+     <term><literal>update_origin_differs</literal></term>
      <listitem>
       <para>
        Updating a row that was previously modified by another origin.
@@ -1637,7 +1637,7 @@ test_sub=# SELECT * FROM t1 ORDER BY id;
      </listitem>
     </varlistentry>
     <varlistentry>
-     <term><literal>delete_differ</literal></term>
+     <term><literal>delete_origin_differs</literal></term>
      <listitem>
       <para>
        Deleting a row that was previously modified by another origin. Note that
@@ -1723,7 +1723,7 @@ DETAIL:  <replaceable class="parameter">detailed_explanation</replaceable>.
         <para>
          The <literal>existing local tuple</literal> section includes the local
          tuple if its origin differs from the remote tuple for
-         <literal>update_differ</literal> or <literal>delete_differ</literal>
+         <literal>update_origin_differs</literal> or <literal>delete_origin_differs</literal>
          conflicts, or if the key value conflicts with the remote tuple for
          <literal>insert_exists</literal> or <literal>update_exists</literal>
          conflicts.

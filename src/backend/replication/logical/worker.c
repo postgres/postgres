@@ -2702,7 +2702,7 @@ apply_handle_update_internal(ApplyExecutionData *edata,
 			newslot = table_slot_create(localrel, &estate->es_tupleTable);
 			slot_store_data(newslot, relmapentry, newtup);
 
-			ReportApplyConflict(estate, relinfo, LOG, CT_UPDATE_DIFFER,
+			ReportApplyConflict(estate, relinfo, LOG, CT_UPDATE_ORIGIN_DIFFERS,
 								remoteslot, localslot, newslot,
 								InvalidOid, localxmin, localorigin, localts);
 		}
@@ -2868,7 +2868,7 @@ apply_handle_delete_internal(ApplyExecutionData *edata,
 		 */
 		if (GetTupleTransactionInfo(localslot, &localxmin, &localorigin, &localts) &&
 			localorigin != replorigin_session_origin)
-			ReportApplyConflict(estate, relinfo, LOG, CT_DELETE_DIFFER,
+			ReportApplyConflict(estate, relinfo, LOG, CT_DELETE_ORIGIN_DIFFERS,
 								remoteslot, localslot, NULL,
 								InvalidOid, localxmin, localorigin, localts);
 
@@ -3097,7 +3097,7 @@ apply_handle_tuple_routing(ApplyExecutionData *edata,
 					newslot = table_slot_create(partrel, &estate->es_tupleTable);
 					slot_store_data(newslot, part_entry, newtup);
 
-					ReportApplyConflict(estate, partrelinfo, LOG, CT_UPDATE_DIFFER,
+					ReportApplyConflict(estate, partrelinfo, LOG, CT_UPDATE_ORIGIN_DIFFERS,
 										remoteslot_part, localslot, newslot,
 										InvalidOid, localxmin, localorigin,
 										localts);

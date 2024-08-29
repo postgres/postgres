@@ -24,10 +24,10 @@
 
 static const char *const ConflictTypeNames[] = {
 	[CT_INSERT_EXISTS] = "insert_exists",
-	[CT_UPDATE_DIFFER] = "update_differ",
+	[CT_UPDATE_ORIGIN_DIFFERS] = "update_origin_differs",
 	[CT_UPDATE_EXISTS] = "update_exists",
 	[CT_UPDATE_MISSING] = "update_missing",
-	[CT_DELETE_DIFFER] = "delete_differ",
+	[CT_DELETE_ORIGIN_DIFFERS] = "delete_origin_differs",
 	[CT_DELETE_MISSING] = "delete_missing"
 };
 
@@ -167,9 +167,9 @@ errcode_apply_conflict(ConflictType type)
 		case CT_INSERT_EXISTS:
 		case CT_UPDATE_EXISTS:
 			return errcode(ERRCODE_UNIQUE_VIOLATION);
-		case CT_UPDATE_DIFFER:
+		case CT_UPDATE_ORIGIN_DIFFERS:
 		case CT_UPDATE_MISSING:
-		case CT_DELETE_DIFFER:
+		case CT_DELETE_ORIGIN_DIFFERS:
 		case CT_DELETE_MISSING:
 			return errcode(ERRCODE_T_R_SERIALIZATION_FAILURE);
 	}
@@ -237,7 +237,7 @@ errdetail_apply_conflict(EState *estate, ResultRelInfo *relinfo,
 
 			break;
 
-		case CT_UPDATE_DIFFER:
+		case CT_UPDATE_ORIGIN_DIFFERS:
 			if (localorigin == InvalidRepOriginId)
 				appendStringInfo(&err_detail, _("Updating the row that was modified locally in transaction %u at %s."),
 								 localxmin, timestamptz_to_str(localts));
@@ -256,7 +256,7 @@ errdetail_apply_conflict(EState *estate, ResultRelInfo *relinfo,
 			appendStringInfo(&err_detail, _("Could not find the row to be updated."));
 			break;
 
-		case CT_DELETE_DIFFER:
+		case CT_DELETE_ORIGIN_DIFFERS:
 			if (localorigin == InvalidRepOriginId)
 				appendStringInfo(&err_detail, _("Deleting the row that was modified locally in transaction %u at %s."),
 								 localxmin, timestamptz_to_str(localts));

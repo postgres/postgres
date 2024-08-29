@@ -21,7 +21,7 @@ typedef enum
 	CT_INSERT_EXISTS,
 
 	/* The row to be updated was modified by a different origin */
-	CT_UPDATE_DIFFER,
+	CT_UPDATE_ORIGIN_DIFFERS,
 
 	/* The updated row value violates unique constraint */
 	CT_UPDATE_EXISTS,
@@ -30,7 +30,7 @@ typedef enum
 	CT_UPDATE_MISSING,
 
 	/* The row to be deleted was modified by a different origin */
-	CT_DELETE_DIFFER,
+	CT_DELETE_ORIGIN_DIFFERS,
 
 	/* The row to be deleted is missing */
 	CT_DELETE_MISSING,
