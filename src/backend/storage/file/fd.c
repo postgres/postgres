@@ -2110,6 +2110,10 @@ retry:
 		}			ra;
 		int			returnCode;
 
+		returnCode = FileAccess(file);
+		if (returnCode < 0)
+			return returnCode;
+
 		ra.ra_offset = offset;
 		ra.ra_count = amount;
 		pgstat_report_wait_start(wait_event_info);
