@@ -373,6 +373,22 @@ ALTER TABLE tmp1 RENAME TO tx1;
 \d+ aliased_view_3
 \d+ aliased_view_4
 
+-- Test correct deparsing of ORDER BY when there is an output name conflict
+
+create view aliased_order_by as
+select x1 as x2, x2 as x1, x3 from tt1
+  order by x2;  -- this is interpreted per SQL92, so really ordering by x1
+
+\d+ aliased_order_by
+
+alter view aliased_order_by rename column x1 to x0;
+
+\d+ aliased_order_by
+
+alter view aliased_order_by rename column x3 to x1;
+
+\d+ aliased_order_by
+
 -- Test aliasing of joins
 
 create view view_of_joins as
