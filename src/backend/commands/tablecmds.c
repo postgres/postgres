@@ -590,7 +590,8 @@ static ObjectAddress ATExecClusterOn(Relation rel, const char *indexName,
 static void ATExecDropCluster(Relation rel, LOCKMODE lockmode);
 static void ATPrepSetAccessMethod(AlteredTableInfo *tab, Relation rel, const char *amname);
 static void ATExecSetAccessMethodNoStorage(Relation rel, Oid newAccessMethodId);
-static bool ATPrepChangePersistence(Relation rel, bool toLogged);
+static void ATPrepChangePersistence(AlteredTableInfo *tab, Relation rel,
+									bool toLogged);
 static void ATPrepSetTableSpace(AlteredTableInfo *tab, Relation rel,
 								const char *tablespacename, LOCKMODE lockmode);
 static void ATExecSetTableSpace(Oid tableOid, Oid newTableSpace, LOCKMODE lockmode);
@@ -4953,33 +4954,13 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 			pass = AT_PASS_MISC;
 			break;
 		case AT_SetLogged:		/* SET LOGGED */
-			ATSimplePermissions(cmd->subtype, rel, ATT_TABLE | ATT_SEQUENCE);
-			if (tab->chgPersistence)
-				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("cannot change persistence setting twice")));
-			tab->chgPersistence = ATPrepChangePersistence(rel, true);
-			/* force rewrite if necessary; see comment in ATRewriteTables */
-			if (tab->chgPersistence)
-			{
-				tab->rewrite |= AT_REWRITE_ALTER_PERSISTENCE;
-				tab->newrelpersistence = RELPERSISTENCE_PERMANENT;
-			}
-			pass = AT_PASS_MISC;
-			break;
 		case AT_SetUnLogged:	/* SET UNLOGGED */
 			ATSimplePermissions(cmd->subtype, rel, ATT_TABLE | ATT_SEQUENCE);
 			if (tab->chgPersistence)
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 						 errmsg("cannot change persistence setting twice")));
-			tab->chgPersistence = ATPrepChangePersistence(rel, false);
-			/* force rewrite if necessary; see comment in ATRewriteTables */
-			if (tab->chgPersistence)
-			{
-				tab->rewrite |= AT_REWRITE_ALTER_PERSISTENCE;
-				tab->newrelpersistence = RELPERSISTENCE_UNLOGGED;
-			}
+			ATPrepChangePersistence(tab, rel, cmd->subtype == AT_SetLogged);
 			pass = AT_PASS_MISC;
 			break;
 		case AT_DropOids:		/* SET WITHOUT OIDS */
@@ -16894,12 +16875,9 @@ ATExecSetCompression(Relation rel,
  * This verifies that we're not trying to change a temp table.  Also,
  * existing foreign key constraints are checked to avoid ending up with
  * permanent tables referencing unlogged tables.
- *
- * Return value is false if the operation is a no-op (in which case the
- * checks are skipped), otherwise true.
  */
-static bool
-ATPrepChangePersistence(Relation rel, bool toLogged)
+static void
+ATPrepChangePersistence(AlteredTableInfo *tab, Relation rel, bool toLogged)
 {
 	Relation	pg_constraint;
 	HeapTuple	tuple;
@@ -16923,12 +16901,12 @@ ATPrepChangePersistence(Relation rel, bool toLogged)
 		case RELPERSISTENCE_PERMANENT:
 			if (toLogged)
 				/* nothing to do */
-				return false;
+				return;
 			break;
 		case RELPERSISTENCE_UNLOGGED:
 			if (!toLogged)
 				/* nothing to do */
-				return false;
+				return;
 			break;
 	}
 
@@ -17011,7 +16989,13 @@ ATPrepChangePersistence(Relation rel, bool toLogged)
 
 	table_close(pg_constraint, AccessShareLock);
 
-	return true;
+	/* force rewrite if necessary; see comment in ATRewriteTables */
+	tab->rewrite |= AT_REWRITE_ALTER_PERSISTENCE;
+	if (toLogged)
+		tab->newrelpersistence = RELPERSISTENCE_PERMANENT;
+	else
+		tab->newrelpersistence = RELPERSISTENCE_UNLOGGED;
+	tab->chgPersistence = true;
 }
 
 /*
