@@ -701,10 +701,7 @@ ALTER SUBSCRIPTION
    <link linkend="sql-createsubscription-params-with-failover"><literal>failover</literal></link>
    parameter ensures a seamless transition of those subscriptions after the
    standby is promoted. They can continue subscribing to publications on the
-   new primary server without losing data. Note that in the case of
-   asynchronous replication, there remains a risk of data loss for transactions
-   committed on the former primary server but have yet to be replicated to the new
-   primary server.
+   new primary server.
   </para>
 
   <para>
@@ -791,7 +788,7 @@ test_standby=# SELECT slot_name, (synced AND NOT temporary AND NOT conflicting) 
    If all the slots are present on the standby server and the result
    (<literal>failover_ready</literal>) of the above SQL query is true, then
    existing subscriptions can continue subscribing to publications now on the
-   new primary server without losing data.
+   new primary server.
   </para>
 
  </sect1>
