@@ -1098,7 +1098,7 @@ CheckAlterSubOption(Subscription *sub, const char *option,
 	if (sub->enabled)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("cannot set %s for enabled subscription",
+				 errmsg("cannot set option \"%s\" for enabled subscription",
 						option)));
 
 	if (slot_needs_update)
@@ -1112,7 +1112,7 @@ CheckAlterSubOption(Subscription *sub, const char *option,
 		if (!sub->slotname)
 			ereport(ERROR,
 					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-					 errmsg("cannot set %s for a subscription that does not have a slot name",
+					 errmsg("cannot set option \"%s\" for a subscription that does not have a slot name",
 							option)));
 
 		/* The changed option of the slot can't be rolled back. */

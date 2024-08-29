@@ -740,24 +740,24 @@ CONTEXT:  COPY check_ign_err, line 2, column n: "a"
 -- want context for notices
 \set SHOW_CONTEXT always
 COPY check_ign_err FROM STDIN WITH (on_error ignore, log_verbosity verbose);
-NOTICE:  skipping row due to data type incompatibility at line 2 for column n: "a"
+NOTICE:  skipping row due to data type incompatibility at line 2 for column "n": "a"
 CONTEXT:  COPY check_ign_err
-NOTICE:  skipping row due to data type incompatibility at line 3 for column k: "3333333333"
+NOTICE:  skipping row due to data type incompatibility at line 3 for column "k": "3333333333"
 CONTEXT:  COPY check_ign_err
-NOTICE:  skipping row due to data type incompatibility at line 4 for column m: "{a, 4}"
+NOTICE:  skipping row due to data type incompatibility at line 4 for column "m": "{a, 4}"
 CONTEXT:  COPY check_ign_err
-NOTICE:  skipping row due to data type incompatibility at line 5 for column n: ""
+NOTICE:  skipping row due to data type incompatibility at line 5 for column "n": ""
 CONTEXT:  COPY check_ign_err
-NOTICE:  skipping row due to data type incompatibility at line 7 for column m: "a"
+NOTICE:  skipping row due to data type incompatibility at line 7 for column "m": "a"
 CONTEXT:  COPY check_ign_err
-NOTICE:  skipping row due to data type incompatibility at line 8 for column k: "a"
+NOTICE:  skipping row due to data type incompatibility at line 8 for column "k": "a"
 CONTEXT:  COPY check_ign_err
 NOTICE:  6 rows were skipped due to data type incompatibility
 -- tests for on_error option with log_verbosity and null constraint via domain
 CREATE DOMAIN dcheck_ign_err2 varchar(15) NOT NULL;
 CREATE TABLE check_ign_err2 (n int, m int[], k int, l dcheck_ign_err2);
 COPY check_ign_err2 FROM STDIN WITH (on_error ignore, log_verbosity verbose);
-NOTICE:  skipping row due to data type incompatibility at line 2 for column l: null input
+NOTICE:  skipping row due to data type incompatibility at line 2 for column "l": null input
 CONTEXT:  COPY check_ign_err2
 NOTICE:  1 row was skipped due to data type incompatibility
 -- reset context choice

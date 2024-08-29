@@ -1279,7 +1279,7 @@ MERGE INTO rw_view2 t
   WHEN MATCHED THEN UPDATE SET b = s.b
   WHEN NOT MATCHED AND s.a > 0 THEN INSERT VALUES (s.a, s.b); -- should fail
 ERROR:  cannot merge into view "rw_view2"
-DETAIL:  MERGE is not supported for views with INSTEAD OF triggers for some actions, but not others.
+DETAIL:  MERGE is not supported for views with INSTEAD OF triggers for some actions but not all.
 HINT:  To enable merging into the view, either provide a full set of INSTEAD OF triggers or drop the existing INSTEAD OF triggers.
 MERGE INTO rw_view2 t
   USING (SELECT x, 'R'||x FROM generate_series(0,3) x) AS s(a,b) ON t.a = s.a

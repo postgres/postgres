@@ -539,7 +539,7 @@ CreateDecodingContext(XLogRecPtr start_lsn,
 				errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				errmsg("cannot use replication slot \"%s\" for logical decoding",
 					   NameStr(slot->data.name)),
-				errdetail("This slot is being synchronized from the primary server."),
+				errdetail("This replication slot is being synchronized from the primary server."),
 				errhint("Specify another replication slot."));
 
 	/*

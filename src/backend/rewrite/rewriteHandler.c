@@ -3362,7 +3362,7 @@ rewriteTargetView(Query *parsetree, Relation view)
 						errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 						errmsg("cannot merge into view \"%s\"",
 							   RelationGetRelationName(view)),
-						errdetail("MERGE is not supported for views with INSTEAD OF triggers for some actions, but not others."),
+						errdetail("MERGE is not supported for views with INSTEAD OF triggers for some actions but not all."),
 						errhint("To enable merging into the view, either provide a full set of INSTEAD OF triggers or drop the existing INSTEAD OF triggers."));
 		}
 	}

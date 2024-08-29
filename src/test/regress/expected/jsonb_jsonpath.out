@@ -1906,7 +1906,7 @@ select jsonb_path_query('123', '$.bigint() * 2');
 
 -- Test .boolean()
 select jsonb_path_query('null', '$.boolean()');
-ERROR:  jsonpath item method .boolean() can only be applied to a bool, string, or numeric value
+ERROR:  jsonpath item method .boolean() can only be applied to a boolean, string, or numeric value
 select jsonb_path_query('null', '$.boolean()', silent => true);
  jsonb_path_query 
 ------------------
@@ -1918,9 +1918,9 @@ select jsonb_path_query('[]', '$.boolean()');
 (0 rows)
 
 select jsonb_path_query('[]', 'strict $.boolean()');
-ERROR:  jsonpath item method .boolean() can only be applied to a bool, string, or numeric value
+ERROR:  jsonpath item method .boolean() can only be applied to a boolean, string, or numeric value
 select jsonb_path_query('{}', '$.boolean()');
-ERROR:  jsonpath item method .boolean() can only be applied to a bool, string, or numeric value
+ERROR:  jsonpath item method .boolean() can only be applied to a boolean, string, or numeric value
 select jsonb_path_query('[]', 'strict $.boolean()', silent => true);
  jsonb_path_query 
 ------------------
@@ -2568,7 +2568,7 @@ select jsonb_path_query('12.3', '$.number() * 2');
 
 -- Test .string()
 select jsonb_path_query('null', '$.string()');
-ERROR:  jsonpath item method .string() can only be applied to a bool, string, numeric, or datetime value
+ERROR:  jsonpath item method .string() can only be applied to a boolean, string, numeric, or datetime value
 select jsonb_path_query('null', '$.string()', silent => true);
  jsonb_path_query 
 ------------------
@@ -2580,9 +2580,9 @@ select jsonb_path_query('[]', '$.string()');
 (0 rows)
 
 select jsonb_path_query('[]', 'strict $.string()');
-ERROR:  jsonpath item method .string() can only be applied to a bool, string, numeric, or datetime value
+ERROR:  jsonpath item method .string() can only be applied to a boolean, string, numeric, or datetime value
 select jsonb_path_query('{}', '$.string()');
-ERROR:  jsonpath item method .string() can only be applied to a bool, string, numeric, or datetime value
+ERROR:  jsonpath item method .string() can only be applied to a boolean, string, numeric, or datetime value
 select jsonb_path_query('[]', 'strict $.string()', silent => true);
  jsonb_path_query 
 ------------------

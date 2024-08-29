@@ -404,11 +404,11 @@ parse_output_parameters(List *options, PGOutputData *data)
 	if (!protocol_version_given)
 		ereport(ERROR,
 				errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				errmsg("proto_version option missing"));
+				errmsg("option \"%s\" missing", "proto_version"));
 	if (!publication_names_given)
 		ereport(ERROR,
 				errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				errmsg("publication_names option missing"));
+				errmsg("option \"%s\" missing", "publication_names"));
 }
 
 /*

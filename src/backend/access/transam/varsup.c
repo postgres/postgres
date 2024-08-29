@@ -153,14 +153,14 @@ GetNewTransactionId(bool isSubXact)
 			if (oldest_datname)
 				ereport(ERROR,
 						(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-						 errmsg("database is not accepting commands that assign new XIDs to avoid wraparound data loss in database \"%s\"",
+						 errmsg("database is not accepting commands that assign new transaction IDs to avoid wraparound data loss in database \"%s\"",
 								oldest_datname),
 						 errhint("Execute a database-wide VACUUM in that database.\n"
 								 "You might also need to commit or roll back old prepared transactions, or drop stale replication slots.")));
 			else
 				ereport(ERROR,
 						(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-						 errmsg("database is not accepting commands that assign new XIDs to avoid wraparound data loss in database with OID %u",
+						 errmsg("database is not accepting commands that assign new transaction IDs to avoid wraparound data loss in database with OID %u",
 								oldest_datoid),
 						 errhint("Execute a database-wide VACUUM in that database.\n"
 								 "You might also need to commit or roll back old prepared transactions, or drop stale replication slots.")));
@@ -175,7 +175,7 @@ GetNewTransactionId(bool isSubXact)
 						(errmsg("database \"%s\" must be vacuumed within %u transactions",
 								oldest_datname,
 								xidWrapLimit - xid),
-						 errhint("To avoid XID assignment failures, execute a database-wide VACUUM in that database.\n"
+						 errhint("To avoid transaction ID assignment failures, execute a database-wide VACUUM in that database.\n"
 								 "You might also need to commit or roll back old prepared transactions, or drop stale replication slots.")));
 			else
 				ereport(WARNING,

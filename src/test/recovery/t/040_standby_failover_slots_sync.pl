@@ -95,7 +95,7 @@ $subscriber1->safe_psql('postgres',
 # Disable failover for enabled subscription
 my ($result, $stdout, $stderr) = $subscriber1->psql('postgres',
 	"ALTER SUBSCRIPTION regress_mysub1 SET (failover = false)");
-ok( $stderr =~ /ERROR:  cannot set failover for enabled subscription/,
+ok( $stderr =~ /ERROR:  cannot set option "failover" for enabled subscription/,
 	"altering failover is not allowed for enabled subscription");
 
 ##################################################
@@ -280,7 +280,7 @@ $standby1->safe_psql('postgres', "SELECT pg_sync_replication_slots();");
 
 # Confirm that the invalidated slot has been dropped.
 $standby1->wait_for_log(
-	qr/dropped replication slot "lsub1_slot" of dbid [0-9]+/, $log_offset);
+	qr/dropped replication slot "lsub1_slot" of database with OID [0-9]+/, $log_offset);
 
 # Confirm that the logical slot has been re-created on the standby and is
 # flagged as 'synced'
@@ -335,7 +335,7 @@ $standby1->reload;
 ($result, $stdout, $stderr) =
   $standby1->psql('postgres', "SELECT pg_sync_replication_slots();");
 ok( $stderr =~
-	  /ERROR:  slot synchronization requires dbname to be specified in primary_conninfo/,
+	  /ERROR:  replication slot synchronization requires "dbname" to be specified in "primary_conninfo"/,
 	"cannot sync slots if dbname is not specified in primary_conninfo");
 
 # Add the dbname back to the primary_conninfo for further tests
@@ -526,10 +526,10 @@ $standby1->reload;
 # Confirm that slot sync worker acknowledge the GUC change and logs the msg
 # about wrong configuration.
 $standby1->wait_for_log(
-	qr/slot sync worker will restart because of a parameter change/,
+	qr/slot synchronization worker will restart because of a parameter change/,
 	$log_offset);
 $standby1->wait_for_log(
-	qr/slot synchronization requires hot_standby_feedback to be enabled/,
+	qr/slot synchronization requires "hot_standby_feedback" to be enabled/,
 	$log_offset);
 
 $log_offset = -s $standby1->logfile;
@@ -678,7 +678,7 @@ is($result, 't', "subscriber2 gets data from primary");
 # Wait until the primary server logs a warning indicating that it is waiting
 # for the sb1_slot to catch up.
 $primary->wait_for_log(
-	qr/replication slot \"sb1_slot\" specified in parameter synchronized_standby_slots does not have active_pid/,
+	qr/replication slot \"sb1_slot\" specified in parameter "synchronized_standby_slots" does not have active_pid/,
 	$offset);
 
 # The regress_mysub1 was enabled for failover so it doesn't get the data from
@@ -757,7 +757,7 @@ $back_q->query_until(
 # Wait until the primary server logs a warning indicating that it is waiting
 # for the sb1_slot to catch up.
 $primary->wait_for_log(
-	qr/replication slot \"sb1_slot\" specified in parameter synchronized_standby_slots does not have active_pid/,
+	qr/replication slot \"sb1_slot\" specified in parameter "synchronized_standby_slots" does not have active_pid/,
 	$offset);
 
 # Remove the standby from the synchronized_standby_slots list and reload the
@@ -798,7 +798,7 @@ $primary->safe_psql('postgres',
 # Wait until the primary server logs a warning indicating that it is waiting
 # for the sb1_slot to catch up.
 $primary->wait_for_log(
-	qr/replication slot \"sb1_slot\" specified in parameter synchronized_standby_slots does not have active_pid/,
+	qr/replication slot \"sb1_slot\" specified in parameter "synchronized_standby_slots" does not have active_pid/,
 	$offset);
 
 # The regress_mysub1 doesn't get the data from primary because the specified

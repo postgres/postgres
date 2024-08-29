@@ -981,7 +981,7 @@ $node2->command_fails_like(
 		"$tempdir" . '/diff_sysid', '--incremental',
 		"$backupdir" . '/backup_manifest'
 	],
-	qr/manifest system identifier is .*, but database system identifier is/,
+	qr/system identifier in backup manifest is .*, but database system identifier is/,
 	"pg_basebackup fails with different database system manifest");
 
 done_testing();

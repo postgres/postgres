@@ -648,7 +648,7 @@ AssignTransactionId(TransactionState s)
 	if (IsInParallelMode() || IsParallelWorker())
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TRANSACTION_STATE),
-				 errmsg("cannot assign XIDs during a parallel operation")));
+				 errmsg("cannot assign transaction IDs during a parallel operation")));
 
 	/*
 	 * Ensure parent(s) have XIDs, so that a child always has an XID later

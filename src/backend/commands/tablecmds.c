@@ -10713,7 +10713,7 @@ CloneFkReferencing(List **wqueue, Relation parentRel, Relation partRel)
 		if (fk->confrelid == RelationGetRelid(partRel))
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("can't attach table \"%s\" as a partition which is referenced by foreign key \"%s\"",
+					 errmsg("cannot attach table \"%s\" as a partition because it is referenced by foreign key \"%s\"",
 							RelationGetRelationName(partRel),
 							get_constraint_name(fk->conoid))));
 
