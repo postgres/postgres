@@ -987,7 +987,7 @@ NextCopyFrom(CopyFromState cstate, ExprContext *econtext,
 
 						attval = CopyLimitPrintoutLength(cstate->cur_attval);
 						ereport(NOTICE,
-								errmsg("skipping row due to data type incompatibility at line %llu for column %s: \"%s\"",
+								errmsg("skipping row due to data type incompatibility at line %llu for column \"%s\": \"%s\"",
 									   (unsigned long long) cstate->cur_lineno,
 									   cstate->cur_attname,
 									   attval));
@@ -995,7 +995,7 @@ NextCopyFrom(CopyFromState cstate, ExprContext *econtext,
 					}
 					else
 						ereport(NOTICE,
-								errmsg("skipping row due to data type incompatibility at line %llu for column %s: null input",
+								errmsg("skipping row due to data type incompatibility at line %llu for column \"%s\": null input",
 									   (unsigned long long) cstate->cur_lineno,
 									   cstate->cur_attname));
 

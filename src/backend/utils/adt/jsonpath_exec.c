@@ -1382,7 +1382,7 @@ executeItemOptUnwrapTarget(JsonPathExecContext *cxt, JsonPathItem *jsp,
 				if (res == jperNotFound)
 					RETURN_ERROR(ereport(ERROR,
 										 (errcode(ERRCODE_NON_NUMERIC_SQL_JSON_ITEM),
-										  errmsg("jsonpath item method .%s() can only be applied to a bool, string, or numeric value",
+										  errmsg("jsonpath item method .%s() can only be applied to a boolean, string, or numeric value",
 												 jspOperationName(jsp->type)))));
 
 				jb = &jbv;
@@ -1663,7 +1663,7 @@ executeItemOptUnwrapTarget(JsonPathExecContext *cxt, JsonPathItem *jsp,
 					case jbvBinary:
 						RETURN_ERROR(ereport(ERROR,
 											 (errcode(ERRCODE_NON_NUMERIC_SQL_JSON_ITEM),
-											  errmsg("jsonpath item method .%s() can only be applied to a bool, string, numeric, or datetime value",
+											  errmsg("jsonpath item method .%s() can only be applied to a boolean, string, numeric, or datetime value",
 													 jspOperationName(jsp->type)))));
 						break;
 				}
@@ -3984,12 +3984,12 @@ JsonPathQuery(Datum jb, JsonPath *jp, JsonWrapper wrapper, bool *empty,
 					(errcode(ERRCODE_MORE_THAN_ONE_SQL_JSON_ITEM),
 					 errmsg("JSON path expression for column \"%s\" should return single item without wrapper",
 							column_name),
-					 errhint("Use WITH WRAPPER clause to wrap SQL/JSON items into array.")));
+					 errhint("Use the WITH WRAPPER clause to wrap SQL/JSON items into an array.")));
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_MORE_THAN_ONE_SQL_JSON_ITEM),
 					 errmsg("JSON path expression in JSON_QUERY should return single item without wrapper"),
-					 errhint("Use WITH WRAPPER clause to wrap SQL/JSON items into array.")));
+					 errhint("Use the WITH WRAPPER clause to wrap SQL/JSON items into an array.")));
 	}
 
 	if (singleton)

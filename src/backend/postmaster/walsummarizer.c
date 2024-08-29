@@ -752,9 +752,11 @@ WaitForWalSummarization(XLogRecPtr lsn)
 												current_time) / 1000;
 			ereport(WARNING,
 					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-					 errmsg("still waiting for WAL summarization through %X/%X after %ld seconds",
-							LSN_FORMAT_ARGS(lsn),
-							elapsed_seconds),
+					 errmsg_plural("still waiting for WAL summarization through %X/%X after %ld second",
+								   "still waiting for WAL summarization through %X/%X after %ld seconds",
+								   elapsed_seconds,
+								   LSN_FORMAT_ARGS(lsn),
+								   elapsed_seconds),
 					 errdetail("Summarization has reached %X/%X on disk and %X/%X in memory.",
 							   LSN_FORMAT_ARGS(summarized_lsn),
 							   LSN_FORMAT_ARGS(pending_lsn))));

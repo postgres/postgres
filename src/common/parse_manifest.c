@@ -634,7 +634,7 @@ json_manifest_finalize_system_identifier(JsonManifestParseState *parse)
 	system_identifier = strtou64(parse->manifest_system_identifier, &ep, 10);
 	if (*ep)
 		json_manifest_parse_failure(parse->context,
-									"manifest system identifier not an integer");
+									"system identifier in manifest not an integer");
 
 	/* Invoke the callback for system identifier */
 	context->system_identifier_cb(context, system_identifier);

@@ -2019,7 +2019,7 @@ struct config_bool ConfigureNamesBool[] =
 
 	{
 		{"sync_replication_slots", PGC_SIGHUP, REPLICATION_STANDBY,
-			gettext_noop("Enables a physical standby to synchronize logical failover slots from the primary server."),
+			gettext_noop("Enables a physical standby to synchronize logical failover replication slots from the primary server."),
 		},
 		&sync_replication_slots,
 		false,
@@ -2349,7 +2349,7 @@ struct config_int ConfigureNamesInt[] =
 
 	{
 		{"subtransaction_buffers", PGC_POSTMASTER, RESOURCES_MEM,
-			gettext_noop("Sets the size of the dedicated buffer pool used for the sub-transaction cache."),
+			gettext_noop("Sets the size of the dedicated buffer pool used for the subtransaction cache."),
 			gettext_noop("Specify 0 to have this value determined as a fraction of shared_buffers."),
 			GUC_UNIT_BLOCKS
 		},
@@ -4699,11 +4699,11 @@ struct config_string ConfigureNamesString[] =
 
 	{
 		{"synchronized_standby_slots", PGC_SIGHUP, REPLICATION_PRIMARY,
-			gettext_noop("Lists streaming replication standby server slot "
+			gettext_noop("Lists streaming replication standby server replication slot "
 						 "names that logical WAL sender processes will wait for."),
 			gettext_noop("Logical WAL sender processes will send decoded "
-						 "changes to plugins only after the specified  "
-						 "replication slots confirm receiving WAL."),
+						 "changes to output plugins only after the specified "
+						 "replication slots have confirmed receiving WAL."),
 			GUC_LIST_INPUT
 		},
 		&synchronized_standby_slots,

@@ -1230,7 +1230,7 @@ AlterSubscription(ParseState *pstate, AlterSubscriptionStmt *stmt,
 					if (!sub->slotname)
 						ereport(ERROR,
 								(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-								 errmsg("cannot set %s for a subscription that does not have a slot name",
+								 errmsg("cannot set option \"%s\" for a subscription that does not have a slot name",
 										"failover")));
 
 					/*

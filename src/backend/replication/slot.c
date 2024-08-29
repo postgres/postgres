@@ -795,7 +795,7 @@ ReplicationSlotDrop(const char *name, bool nowait)
 		ereport(ERROR,
 				errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				errmsg("cannot drop replication slot \"%s\"", name),
-				errdetail("This slot is being synced from the primary server."));
+				errdetail("This replication slot is being synchronized from the primary server."));
 
 	ReplicationSlotDropAcquired();
 }
@@ -826,7 +826,7 @@ ReplicationSlotAlter(const char *name, bool failover)
 			ereport(ERROR,
 					errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 					errmsg("cannot alter replication slot \"%s\"", name),
-					errdetail("This slot is being synced from the primary server."));
+					errdetail("This replication slot is being synchronized from the primary server."));
 
 		/*
 		 * Do not allow users to enable failover on the standby as we do not
@@ -2635,11 +2635,11 @@ StandbySlotsHaveCaughtup(XLogRecPtr wait_for_lsn, int elevel)
 			 */
 			ereport(elevel,
 					errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					errmsg("replication slot \"%s\" specified in parameter %s does not exist",
+					errmsg("replication slot \"%s\" specified in parameter \"%s\" does not exist",
 						   name, "synchronized_standby_slots"),
-					errdetail("Logical replication is waiting on the standby associated with \"%s\".",
+					errdetail("Logical replication is waiting on the standby associated with replication slot \"%s\".",
 							  name),
-					errhint("Consider creating the slot \"%s\" or amend parameter %s.",
+					errhint("Create the replication slot \"%s\" or amend parameter \"%s\".",
 							name, "synchronized_standby_slots"));
 			break;
 		}
@@ -2656,11 +2656,11 @@ StandbySlotsHaveCaughtup(XLogRecPtr wait_for_lsn, int elevel)
 			 */
 			ereport(elevel,
 					errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					errmsg("cannot have logical replication slot \"%s\" in parameter %s",
+					errmsg("cannot specify logical replication slot \"%s\" in parameter \"%s\"",
 						   name, "synchronized_standby_slots"),
-					errdetail("Logical replication is waiting for correction on \"%s\".",
+					errdetail("Logical replication is waiting for correction on replication slot \"%s\".",
 							  name),
-					errhint("Consider removing logical slot \"%s\" from parameter %s.",
+					errhint("Remove the logical replication slot \"%s\" from parameter \"%s\".",
 							name, "synchronized_standby_slots"));
 			break;
 		}
@@ -2676,11 +2676,11 @@ StandbySlotsHaveCaughtup(XLogRecPtr wait_for_lsn, int elevel)
 			/* Specified physical slot has been invalidated */
 			ereport(elevel,
 					errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-					errmsg("physical slot \"%s\" specified in parameter %s has been invalidated",
+					errmsg("physical replication slot \"%s\" specified in parameter \"%s\" has been invalidated",
 						   name, "synchronized_standby_slots"),
-					errdetail("Logical replication is waiting on the standby associated with \"%s\".",
+					errdetail("Logical replication is waiting on the standby associated with replication slot \"%s\".",
 							  name),
-					errhint("Consider dropping and recreating the slot \"%s\" or amend parameter %s.",
+					errhint("Drop and recreate the replication slot \"%s\", or amend parameter \"%s\".",
 							name, "synchronized_standby_slots"));
 			break;
 		}
@@ -2691,11 +2691,11 @@ StandbySlotsHaveCaughtup(XLogRecPtr wait_for_lsn, int elevel)
 			if (inactive)
 				ereport(elevel,
 						errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-						errmsg("replication slot \"%s\" specified in parameter %s does not have active_pid",
+						errmsg("replication slot \"%s\" specified in parameter \"%s\" does not have active_pid",
 							   name, "synchronized_standby_slots"),
-						errdetail("Logical replication is waiting on the standby associated with \"%s\".",
+						errdetail("Logical replication is waiting on the standby associated with replication slot \"%s\".",
 								  name),
-						errhint("Consider starting standby associated with \"%s\" or amend parameter %s.",
+						errhint("Start the standby associated with the replication slot \"%s\", or amend parameter \"%s\".",
 								name, "synchronized_standby_slots"));
 
 			/* Continue if the current slot hasn't caught up. */
