@@ -116,7 +116,7 @@ CalculateShmemSize(int *num_semaphores)
 	size = add_size(size, dsm_estimate_size());
 	size = add_size(size, DSMRegistryShmemSize());
 	size = add_size(size, BufferShmemSize());
-	size = add_size(size, LockShmemSize());
+	size = add_size(size, LockManagerShmemSize());
 	size = add_size(size, PredicateLockShmemSize());
 	size = add_size(size, ProcGlobalShmemSize());
 	size = add_size(size, XLogPrefetchShmemSize());
@@ -291,7 +291,7 @@ CreateOrAttachShmemStructs(void)
 	/*
 	 * Set up lock manager
 	 */
-	InitLocks();
+	LockManagerShmemInit();
 
 	/*
 	 * Set up predicate lock manager

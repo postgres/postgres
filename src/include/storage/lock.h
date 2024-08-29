@@ -544,7 +544,9 @@ typedef enum
 /*
  * function prototypes
  */
-extern void InitLocks(void);
+extern void LockManagerShmemInit(void);
+extern Size LockManagerShmemSize(void);
+extern void InitLockManagerAccess(void);
 extern LockMethod GetLocksMethodTable(const LOCK *lock);
 extern LockMethod GetLockTagsMethodTable(const LOCKTAG *locktag);
 extern uint32 LockTagHashCode(const LOCKTAG *locktag);
@@ -584,7 +586,6 @@ extern bool LockCheckConflicts(LockMethod lockMethodTable,
 extern void GrantLock(LOCK *lock, PROCLOCK *proclock, LOCKMODE lockmode);
 extern void GrantAwaitedLock(void);
 extern void RemoveFromWaitQueue(PGPROC *proc, uint32 hashcode);
-extern Size LockShmemSize(void);
 extern LockData *GetLockStatusData(void);
 extern BlockedProcsData *GetBlockerStatusData(int blocked_pid);
 

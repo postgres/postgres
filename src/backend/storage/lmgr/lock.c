@@ -377,19 +377,17 @@ static void GetSingleProcBlockerStatusData(PGPROC *blocked_proc,
 
 
 /*
- * InitLocks -- Initialize the lock manager's data structures.
+ * Initialize the lock manager's shmem data structures.
  *
- * This is called from CreateSharedMemoryAndSemaphores(), which see for
- * more comments.  In the normal postmaster case, the shared hash tables
- * are created here, as well as a locallock hash table that will remain
- * unused and empty in the postmaster itself.  Backends inherit the pointers
- * to the shared tables via fork(), and also inherit an image of the locallock
- * hash table, which they proceed to use.  In the EXEC_BACKEND case, each
- * backend re-executes this code to obtain pointers to the already existing
- * shared hash tables and to create its locallock hash table.
+ * This is called from CreateSharedMemoryAndSemaphores(), which see for more
+ * comments.  In the normal postmaster case, the shared hash tables are
+ * created here, and backends inherit pointers to them via fork().  In the
+ * EXEC_BACKEND case, each backend re-executes this code to obtain pointers to
+ * the already existing shared hash tables.  In either case, each backend must
+ * also call InitLockManagerAccess() to create the locallock hash table.
  */
 void
-InitLocks(void)
+LockManagerShmemInit(void)
 {
 	HASHCTL		info;
 	long		init_table_size,
@@ -444,18 +442,19 @@ InitLocks(void)
 						sizeof(FastPathStrongRelationLockData), &found);
 	if (!found)
 		SpinLockInit(&FastPathStrongRelationLocks->mutex);
+}
 
+/*
+ * Initialize the lock manager's backend-private data structures.
+ */
+void
+InitLockManagerAccess(void)
+{
 	/*
 	 * Allocate non-shared hash table for LOCALLOCK structs.  This stores lock
 	 * counts and resource owner information.
-	 *
-	 * The non-shared table could already exist in this process (this occurs
-	 * when the postmaster is recreating shared memory after a backend crash).
-	 * If so, delete and recreate it.  (We could simply leave it, since it
-	 * ought to be empty in the postmaster, but for safety let's zap it.)
 	 */
-	if (LockMethodLocalHash)
-		hash_destroy(LockMethodLocalHash);
+	HASHCTL		info;
 
 	info.keysize = sizeof(LOCALLOCKTAG);
 	info.entrysize = sizeof(LOCALLOCK);
@@ -3571,7 +3570,7 @@ PostPrepare_Locks(TransactionId xid)
  * Estimate shared-memory space used for lock tables
  */
 Size
-LockShmemSize(void)
+LockManagerShmemSize(void)
 {
 	Size		size = 0;
 	long		max_table_size;
