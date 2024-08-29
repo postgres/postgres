@@ -836,7 +836,8 @@ SELECT * FROM gtest27;
 (2 rows)
 
 ALTER TABLE gtest27 ALTER COLUMN x TYPE boolean USING x <> 0;  -- error
-ERROR:  generation expression for column "x" cannot be cast automatically to type boolean
+ERROR:  cannot specify USING when altering type of generated column
+DETAIL:  Column "x" is a generated column.
 ALTER TABLE gtest27 ALTER COLUMN x DROP DEFAULT;  -- error
 ERROR:  column "x" of relation "gtest27" is a generated column
 HINT:  Use ALTER TABLE ... ALTER COLUMN ... DROP EXPRESSION instead.
