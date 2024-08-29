@@ -824,6 +824,54 @@ View definition:
            FROM temp_view_test.tx1 tx1_1
           WHERE tx1.y1 = tx1_1.f1));
 
+-- Test correct deparsing of ORDER BY when there is an output name conflict
+create view aliased_order_by as
+select x1 as x2, x2 as x1, x3 from tt1
+  order by x2;  -- this is interpreted per SQL92, so really ordering by x1
+\d+ aliased_order_by
+                   View "testviewschm2.aliased_order_by"
+ Column |  Type   | Collation | Nullable | Default | Storage  | Description 
+--------+---------+-----------+----------+---------+----------+-------------
+ x2     | integer |           |          |         | plain    | 
+ x1     | integer |           |          |         | plain    | 
+ x3     | text    |           |          |         | extended | 
+View definition:
+ SELECT x1 AS x2,
+    x2 AS x1,
+    x3
+   FROM tt1
+  ORDER BY tt1.x1;
+
+alter view aliased_order_by rename column x1 to x0;
+\d+ aliased_order_by
+                   View "testviewschm2.aliased_order_by"
+ Column |  Type   | Collation | Nullable | Default | Storage  | Description 
+--------+---------+-----------+----------+---------+----------+-------------
+ x2     | integer |           |          |         | plain    | 
+ x0     | integer |           |          |         | plain    | 
+ x3     | text    |           |          |         | extended | 
+View definition:
+ SELECT x1 AS x2,
+    x2 AS x0,
+    x3
+   FROM tt1
+  ORDER BY x1;
+
+alter view aliased_order_by rename column x3 to x1;
+\d+ aliased_order_by
+                   View "testviewschm2.aliased_order_by"
+ Column |  Type   | Collation | Nullable | Default | Storage  | Description 
+--------+---------+-----------+----------+---------+----------+-------------
+ x2     | integer |           |          |         | plain    | 
+ x0     | integer |           |          |         | plain    | 
+ x1     | text    |           |          |         | extended | 
+View definition:
+ SELECT x1 AS x2,
+    x2 AS x0,
+    x3 AS x1
+   FROM tt1
+  ORDER BY tt1.x1;
+
 -- Test aliasing of joins
 create view view_of_joins as
 select * from
@@ -2248,7 +2296,7 @@ drop cascades to view aliased_view_2
 drop cascades to view aliased_view_3
 drop cascades to view aliased_view_4
 DROP SCHEMA testviewschm2 CASCADE;
-NOTICE:  drop cascades to 79 other objects
+NOTICE:  drop cascades to 80 other objects
 DETAIL:  drop cascades to table t1
 drop cascades to view temporal1
 drop cascades to view temporal2
@@ -2275,6 +2323,7 @@ drop cascades to view mysecview9
 drop cascades to view unspecified_types
 drop cascades to table tt1
 drop cascades to table tx1
+drop cascades to view aliased_order_by
 drop cascades to view view_of_joins
 drop cascades to table tbl1a
 drop cascades to view view_of_joins_2a
