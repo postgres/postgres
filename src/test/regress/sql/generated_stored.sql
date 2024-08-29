@@ -2,12 +2,16 @@
 SELECT attrelid, attname, attgenerated FROM pg_attribute WHERE attgenerated NOT IN ('', 's');
 
 
+CREATE SCHEMA generated_stored_tests;
+GRANT USAGE ON SCHEMA generated_stored_tests TO PUBLIC;
+SET search_path = generated_stored_tests;
+
 CREATE TABLE gtest0 (a int PRIMARY KEY, b int GENERATED ALWAYS AS (55) STORED);
 CREATE TABLE gtest1 (a int PRIMARY KEY, b int GENERATED ALWAYS AS (a * 2) STORED);
 
-SELECT table_name, column_name, column_default, is_nullable, is_generated, generation_expression FROM information_schema.columns WHERE table_name LIKE 'gtest_' ORDER BY 1, 2;
+SELECT table_name, column_name, column_default, is_nullable, is_generated, generation_expression FROM information_schema.columns WHERE table_schema = 'generated_stored_tests' ORDER BY 1, 2;
 
-SELECT table_name, column_name, dependent_column FROM information_schema.column_column_usage ORDER BY 1, 2, 3;
+SELECT table_name, column_name, dependent_column FROM information_schema.column_column_usage WHERE table_schema = 'generated_stored_tests' ORDER BY 1, 2, 3;
 
 \d gtest1
 
