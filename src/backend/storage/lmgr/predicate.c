@@ -153,7 +153,7 @@
  * INTERFACE ROUTINES
  *
  * housekeeping for setting up shared memory predicate lock structures
- *		InitPredicateLocks(void)
+ *		PredicateLockShmemInit(void)
  *		PredicateLockShmemSize(void)
  *
  * predicate lock reporting
@@ -1127,7 +1127,7 @@ CheckPointPredicate(void)
 /*------------------------------------------------------------------------*/
 
 /*
- * InitPredicateLocks -- Initialize the predicate locking data structures.
+ * PredicateLockShmemInit -- Initialize the predicate locking data structures.
  *
  * This is called from CreateSharedMemoryAndSemaphores(), which see for
  * more comments.  In the normal postmaster case, the shared hash tables
@@ -1137,7 +1137,7 @@ CheckPointPredicate(void)
  * shared hash tables.
  */
 void
-InitPredicateLocks(void)
+PredicateLockShmemInit(void)
 {
 	HASHCTL		info;
 	long		max_table_size;

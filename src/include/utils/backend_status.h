@@ -299,7 +299,7 @@ extern PGDLLIMPORT PgBackendStatus *MyBEEntry;
  * ----------
  */
 extern Size BackendStatusShmemSize(void);
-extern void CreateSharedBackendStatus(void);
+extern void BackendStatusShmemInit(void);
 
 
 /* ----------

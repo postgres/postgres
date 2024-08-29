@@ -77,7 +77,7 @@ static void pgstat_setup_backend_status_context(void);
 
 
 /*
- * Report shared-memory space needed by CreateSharedBackendStatus.
+ * Report shared-memory space needed by BackendStatusShmemInit.
  */
 Size
 BackendStatusShmemSize(void)
@@ -113,7 +113,7 @@ BackendStatusShmemSize(void)
  * during postmaster startup.
  */
 void
-CreateSharedBackendStatus(void)
+BackendStatusShmemInit(void)
 {
 	Size		size;
 	bool		found;

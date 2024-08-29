@@ -3582,7 +3582,7 @@ AtEOXact_Buffers(bool isCommit)
  * buffer pool.
  */
 void
-InitBufferPoolAccess(void)
+InitBufferManagerAccess(void)
 {
 	HASHCTL		hash_ctl;
 

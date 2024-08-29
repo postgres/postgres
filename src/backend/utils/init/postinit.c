@@ -592,7 +592,7 @@ BaseInit(void)
 	/* Do local initialization of storage and buffer managers */
 	InitSync();
 	smgrinit();
-	InitBufferPoolAccess();
+	InitBufferManagerAccess();
 
 	/*
 	 * Initialize temporary file access after pgstat, so that the temporary

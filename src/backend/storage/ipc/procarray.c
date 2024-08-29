@@ -370,7 +370,7 @@ static inline FullTransactionId FullXidRelativeTo(FullTransactionId rel,
 static void GlobalVisUpdateApply(ComputeXidHorizonsResult *horizons);
 
 /*
- * Report shared-memory space needed by CreateSharedProcArray.
+ * Report shared-memory space needed by ProcArrayShmemInit
  */
 Size
 ProcArrayShmemSize(void)
@@ -415,7 +415,7 @@ ProcArrayShmemSize(void)
  * Initialize the shared PGPROC array during postmaster startup.
  */
 void
-CreateSharedProcArray(void)
+ProcArrayShmemInit(void)
 {
 	bool		found;
 

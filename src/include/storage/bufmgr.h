@@ -249,7 +249,7 @@ extern Buffer ExtendBufferedRelTo(BufferManagerRelation bmr,
 								  BlockNumber extend_to,
 								  ReadBufferMode mode);
 
-extern void InitBufferPoolAccess(void);
+extern void InitBufferManagerAccess(void);
 extern void AtEOXact_Buffers(bool isCommit);
 extern char *DebugPrintBufferRefcount(Buffer buffer);
 extern void CheckPointBuffers(int flags);
@@ -300,8 +300,8 @@ extern void LimitAdditionalLocalPins(uint32 *additional_pins);
 extern bool EvictUnpinnedBuffer(Buffer buf);
 
 /* in buf_init.c */
-extern void InitBufferPool(void);
-extern Size BufferShmemSize(void);
+extern void BufferManagerShmemInit(void);
+extern Size BufferManagerShmemSize(void);
 
 /* in localbuf.c */
 extern void AtProcExit_LocalBuffers(void);

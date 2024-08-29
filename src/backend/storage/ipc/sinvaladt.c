@@ -212,10 +212,10 @@ static void CleanupInvalidationState(int status, Datum arg);
 
 
 /*
- * SInvalShmemSize --- return shared-memory space needed
+ * SharedInvalShmemSize --- return shared-memory space needed
  */
 Size
-SInvalShmemSize(void)
+SharedInvalShmemSize(void)
 {
 	Size		size;
 
@@ -227,18 +227,18 @@ SInvalShmemSize(void)
 }
 
 /*
- * CreateSharedInvalidationState
+ * SharedInvalShmemInit
  *		Create and initialize the SI message buffer
  */
 void
-CreateSharedInvalidationState(void)
+SharedInvalShmemInit(void)
 {
 	int			i;
 	bool		found;
 
 	/* Allocate space in shared memory */
 	shmInvalBuffer = (SISeg *)
-		ShmemInitStruct("shmInvalBuffer", SInvalShmemSize(), &found);
+		ShmemInitStruct("shmInvalBuffer", SharedInvalShmemSize(), &found);
 	if (found)
 		return;
 
