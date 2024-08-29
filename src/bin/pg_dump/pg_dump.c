@@ -17381,7 +17381,7 @@ collectSequences(Archive *fout)
 	 * versions, but for now it seems unlikely to be worth it.
 	 *
 	 * Since version 18, we can gather the sequence data in this query with
-	 * pg_sequence_read_tuple(), but we only do so for non-schema-only dumps.
+	 * pg_get_sequence_data(), but we only do so for non-schema-only dumps.
 	 */
 	if (fout->remoteVersion < 100000)
 		return;
@@ -17401,7 +17401,7 @@ collectSequences(Archive *fout)
 			"seqcache, seqcycle, "
 			"last_value, is_called "
 			"FROM pg_catalog.pg_sequence, "
-			"pg_sequence_read_tuple(seqrelid) "
+			"pg_get_sequence_data(seqrelid) "
 			"ORDER BY seqrelid;";
 
 	res = ExecuteSqlQuery(fout, query, PGRES_TUPLES_OK);

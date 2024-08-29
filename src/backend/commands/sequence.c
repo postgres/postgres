@@ -1781,23 +1781,22 @@ pg_sequence_parameters(PG_FUNCTION_ARGS)
  * without needing to individually query each sequence relation.
  */
 Datum
-pg_sequence_read_tuple(PG_FUNCTION_ARGS)
+pg_get_sequence_data(PG_FUNCTION_ARGS)
 {
+#define PG_GET_SEQUENCE_DATA_COLS	2
 	Oid			relid = PG_GETARG_OID(0);
 	SeqTable	elm;
 	Relation	seqrel;
-	Datum		values[SEQ_COL_LASTCOL] = {0};
-	bool		isnull[SEQ_COL_LASTCOL] = {0};
+	Datum		values[PG_GET_SEQUENCE_DATA_COLS] = {0};
+	bool		isnull[PG_GET_SEQUENCE_DATA_COLS] = {0};
 	TupleDesc	resultTupleDesc;
 	HeapTuple	resultHeapTuple;
 	Datum		result;
 
-	resultTupleDesc = CreateTemplateTupleDesc(SEQ_COL_LASTCOL);
+	resultTupleDesc = CreateTemplateTupleDesc(PG_GET_SEQUENCE_DATA_COLS);
 	TupleDescInitEntry(resultTupleDesc, (AttrNumber) 1, "last_value",
 					   INT8OID, -1, 0);
-	TupleDescInitEntry(resultTupleDesc, (AttrNumber) 2, "log_cnt",
-					   INT8OID, -1, 0);
-	TupleDescInitEntry(resultTupleDesc, (AttrNumber) 3, "is_called",
+	TupleDescInitEntry(resultTupleDesc, (AttrNumber) 2, "is_called",
 					   BOOLOID, -1, 0);
 	resultTupleDesc = BlessTupleDesc(resultTupleDesc);
 
@@ -1818,8 +1817,7 @@ pg_sequence_read_tuple(PG_FUNCTION_ARGS)
 		seq = read_seq_tuple(seqrel, &buf, &seqtuple);
 
 		values[0] = Int64GetDatum(seq->last_value);
-		values[1] = Int64GetDatum(seq->log_cnt);
-		values[2] = BoolGetDatum(seq->is_called);
+		values[1] = BoolGetDatum(seq->is_called);
 
 		UnlockReleaseBuffer(buf);
 	}
@@ -1831,6 +1829,7 @@ pg_sequence_read_tuple(PG_FUNCTION_ARGS)
 	resultHeapTuple = heap_form_tuple(resultTupleDesc, values, isnull);
 	result = HeapTupleGetDatum(resultHeapTuple);
 	PG_RETURN_DATUM(result);
+#undef PG_GET_SEQUENCE_DATA_COLS
 }
 
 
