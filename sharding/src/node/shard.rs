@@ -60,16 +60,12 @@ impl Shard {
 
         // Initialize memory manager
         let config = get_shard_config();
-        let memory_threshold = config.memory_threshold;
-        let memory_manager = MemoryManager::new(memory_threshold);
+        let reserved_memory = config.unavailable_memory_perc;
+        let memory_manager = MemoryManager::new(reserved_memory);
 
         println!(
             "{color_blue}[Shard] Available Memory: {:?} %{style_reset}",
             memory_manager.available_memory_perc
-        );
-        println!(
-            "{color_blue}[Shard] Accepts Insertions: {:?}{style_reset}",
-            memory_manager.accepts_insertions()
         );
 
         let stream = Arc::new(RwLock::new(None));
@@ -102,7 +98,7 @@ impl Shard {
         let listener_guard = listener.read().unwrap();
         match listener_guard.accept() {
             Ok((stream, addr)) => {
-                println!("New connection accepted from {}.", addr);
+                println!("{color_bright_green}New connection accepted from {}.{style_reset}", addr);
                 // let mut stream_guard = rw_stream.write().unwrap();
 
                 self.router_stream = Arc::new(RwLock::new(Some(stream)));
@@ -170,13 +166,13 @@ impl Shard {
 
         match message.message_type {
             MessageType::InitConnection => {
-                println!("Received an InitConnection message");
+                println!("{color_bright_green}Received an InitConnection message{style_reset}");
                 let response_string = self.get_agreed_connection();
                 println!("Response created: {}", response_string);
                 Some(response_string)
             }
             MessageType::AskMemoryUpdate => {
-                println!("Received an AskMemoryUpdate message");
+                println!("{color_bright_green}Received an AskMemoryUpdate message{style_reset}");
                 let response_string = self.get_memory_update_message();
                 println!("Response created: {}", response_string);
                 Some(response_string)
@@ -218,22 +214,6 @@ impl Shard {
 
     fn update(&mut self) -> Result<(), io::Error> {
         self.memory_manager.as_ref().try_lock().unwrap().update()
-    }
-
-    fn accepts_insertions(&self) -> bool {
-        self.memory_manager
-            .as_ref()
-            .try_lock()
-            .unwrap()
-            .accepts_insertions()
-    }
-
-    fn get_insertion_response(&self) -> MessageType {
-        if self.accepts_insertions() {
-            MessageType::Agreed
-        } else {
-            MessageType::Denied
-        }
     }
 }
 

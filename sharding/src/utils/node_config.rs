@@ -15,7 +15,7 @@ pub struct Node {
 
 #[derive(Debug, Deserialize)]
 pub struct LocalNode {
-    pub memory_threshold: f64,
+    pub unavailable_memory_perc: f64,
 }
 
 pub fn get_router_config(config_file_path: Option<&str>) -> NodesConfig {

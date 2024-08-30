@@ -35,12 +35,17 @@ impl ShardManager {
         }
     }
 
+    /// Updates the memory of a shard and reorders the shards based on the new memory.
+    /// If the memory is higher than the current top shard, it will become the new top shard.
+    /// If the memory is lower than the current top shard, it will be placed in the correct position in the heap.
+    /// If the memoty is zero, the shard will be at the base of the heap until it is updated once again.
     pub fn update_shard_memory(&mut self, memory: f64, shard_id: String) {
         println!(
             "{color_bright_green}Updating shard memory: {} to {}{style_reset}",
             shard_id, memory
         );
-        self.pop();
+
+        self.delete(shard_id.clone());
         self.add_shard(memory, shard_id);
 
         println!(
@@ -55,9 +60,29 @@ impl ShardManager {
             None => None,
         }
     }
+
+    // TODO-SHARD: This is not efficient. Should we use a different data structure? Or maybe if the query affects all shards, we should just clear the heap and add them from scratch? This needs to be thinked through, because the router handles each of the shards separately.
+    fn delete(&mut self, shard_id: String) {
+        if shard_id == self.peek().unwrap() {
+            self.pop();
+            return;
+        }
+
+        let mut shards = self.shards.lock().unwrap();
+        let mut new_shards = BinaryHeap::new();
+
+        while let Some(shard) = shards.pop() {
+            if shard.value == shard_id {
+                continue;
+            } else {
+                new_shards.push(shard);
+            }
+        }
+        *shards = new_shards;
+    }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct ShardManagerObject {
     key: f64,
     value: String,
