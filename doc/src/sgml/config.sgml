@@ -9818,9 +9818,9 @@ SET XML OPTION { DOCUMENT | CONTENT };
      </term>
      <listitem>
       <para>
-       This variable specifies relation kind to which access is restricted.
-       It contains a comma-separated list of relation kind.  Currently, the
-       supported relation kinds are <literal>view</literal> and
+       Set relation kinds for which access to non-system relations is prohibited.
+       The value takes the form of a comma-separated list of relation kinds.
+       Currently, the supported relation kinds are <literal>view</literal> and
        <literal>foreign-table</literal>.
       </para>
      </listitem>
