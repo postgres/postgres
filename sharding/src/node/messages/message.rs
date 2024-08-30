@@ -1,7 +1,5 @@
 use std::{fmt, str::FromStr};
 
-use crate::node;
-
 /// MessageType enum shows which command is being sent
 #[derive(Debug, PartialEq, Clone)]
 pub enum MessageType {

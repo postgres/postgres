@@ -1,16 +1,14 @@
 use inline_colorization::*;
 extern crate users;
-use postgres::Client as PostgresClient;
-use rust_decimal::Decimal;
 use std::{
     io::{Read, Write},
     net::TcpStream,
     sync::{Arc, Mutex},
+    thread,
 };
 
 use crate::node::messages::message;
-use crate::utils::common::{connect_to_node, Channel};
-
+use crate::utils::common::Channel;
 use super::super::utils::node_config::*;
 use super::node::*;
 
@@ -26,15 +24,15 @@ impl Client {
     /// Creates a new Client node with the given port
     pub fn new(ip: &str, port: &str, config_path: Option<&str>) -> Self {
         let config = get_router_config(config_path);
-        let mut candidate_ip = String::new();
-        let mut candidate_port = String::new();
+        let mut candidate_ip;
+        let mut candidate_port;
 
         for node in config.nodes {
             candidate_ip = node.ip.clone();
-            candidate_port =  (node.port.clone().parse::<u64>().unwrap() + 1000).to_string();
+            candidate_port =  node.port.clone().parse::<u64>().unwrap() + 1000;
 
             // This shouldn't happen, but just in case
-            if (&candidate_ip == ip) && (&candidate_port == port) {
+            if (&candidate_ip == ip) && (&candidate_port.to_string() == port) {
                 continue;
             }
 
@@ -54,14 +52,15 @@ impl Client {
                     }
                     Err(e) => {
                         eprintln!("Failed to connect to the router: {:?}", e);
-                        panic!("Failed to connect to the router");
+                        // panic!("Failed to connect to the router");
+                        continue;
                     }
                 };
 
             let message = message::Message::new(message::MessageType::GetRouter, None, None);
             println!("Sending message: {:?}", message);
             candidate_stream
-                .write(message.to_string().as_bytes())
+                .write_all(message.to_string().as_bytes())
                 .unwrap();
 
             let response: &mut [u8] = &mut [0; 1024];
@@ -113,7 +112,7 @@ impl Client {
 
 impl NodeRole for Client {
     fn send_query(&mut self, query: &str) -> bool {
-        let mut router = self.router_postgres_client.stream.as_ref().lock().unwrap();
+        // let mut router = self.router_postgres_client.stream.as_ref().lock().unwrap();
         // TODO-SHARD send Query Msg and parse response as rows
         return true;
     }

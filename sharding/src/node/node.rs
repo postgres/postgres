@@ -3,7 +3,7 @@ use crate::node::client::Client;
 use super::router::Router;
 use super::shard::Shard;
 use std::ffi::CStr;
-use std::sync::{Arc, Mutex, RwLock};
+use std::sync::{Arc, Mutex};
 use std::thread;
 
 /// The role of a node in the sharding system
@@ -90,7 +90,7 @@ pub extern "C" fn init_node_instance(
                 let shared_shard = Arc::new(Mutex::new(shard));
 
                 let _handle = thread::spawn(move || {
-                    Shard::accept_connections(shared_shard);
+                    Shard::accept_connections(shared_shard, ip, node_port);
                 });
 
                 println!("Sharding node initializes");

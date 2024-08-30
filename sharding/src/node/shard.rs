@@ -2,7 +2,7 @@ use inline_colorization::*;
 use postgres::Client as PostgresClient;
 use std::io::{Read, Write};
 use std::net::{TcpListener, TcpStream};
-use std::sync::{Arc, RwLock, Mutex};
+use std::sync::{Arc, Mutex};
 use std::{io, thread};
 
 extern crate users;
@@ -21,7 +21,7 @@ pub struct Shard {
     backend: Arc<Mutex<PostgresClient>>,
     ip: Arc<str>,
     port: Arc<str>,
-    listener: Arc<TcpListener>,
+    // listener: Arc<Mutex<TcpListener>>,
     memory_manager: Arc<Mutex<MemoryManager>>,
     router_info: Arc<Mutex<Option<NodeInfo>>>
 }
@@ -44,9 +44,6 @@ impl Shard {
         println!("Connecting to the database with port: {}", port);
 
         let backend: PostgresClient = connect_to_node(ip, port).unwrap();
-        let listener = Arc::new(
-            TcpListener::bind(format!("{}:{}", ip, port.parse::<u64>().unwrap() + 1000)).unwrap(),
-        );
 
         // Initialize memory manager
         let config = get_shard_config();
@@ -58,13 +55,12 @@ impl Shard {
             memory_manager.available_memory_perc
         );
 
-
         let shard = Shard {
             // router: clients,
             backend: Arc::new(Mutex::new(backend)),
             ip: Arc::from(ip),
             port: Arc::from(port),
-            listener: listener.clone(),
+            // listener: listener.clone(),
             memory_manager: Arc::new(Mutex::new(memory_manager)),
             router_info: Arc::new(Mutex::new(None)),
         };
@@ -73,13 +69,15 @@ impl Shard {
 
     pub fn accept_connections(
         shared_shard: Arc<Mutex<Shard>>,
+        ip: &str,
+        port: &str,
     ) {
-        let shard = shared_shard.lock().unwrap();
-        let listener = shard.listener.as_ref();
+        let listener = TcpListener::bind(format!("{}:{}", ip, port.parse::<u64>().unwrap() + 1000)).unwrap();
+
         loop {
             println!("Listening for incoming connections");
             match listener.accept() {
-                Ok((mut stream, addr)) => {
+                Ok((stream, addr)) => {
                     println!(
                         "{color_bright_green}[SHARD1] New connection accepted from {}.{style_reset}",
                         addr
@@ -87,10 +85,12 @@ impl Shard {
 
                     // Start listening for incoming messages in a thread
                     let shard_clone = shared_shard.clone();
+                    let shareable_stream = Arc::new(Mutex::new(stream));
+                    let stream_clone = Arc::clone(&shareable_stream);
                     
                     let _handle = thread::spawn(move || {
                         println!("[SHARD1] Inside listening thread");
-                        Shard::listen(shard_clone, &mut stream);
+                        Shard::listen(shard_clone, stream_clone);
                     });
                 }
                 Err(e) => {
@@ -101,41 +101,48 @@ impl Shard {
     }
 
     // Listen for incoming messages
-    pub fn listen(shared_shard: Arc<Mutex<Shard>>, stream: &mut TcpStream) {
+    pub fn listen(shared_shard: Arc<Mutex<Shard>>, stream: Arc<Mutex<TcpStream>>) {
         println!("[LISTEN] Listening for incoming messages from stream: {:?}", stream);
         loop {
+            // sleep for 1 millisecond to allow the stream to be ready to read
+            thread::sleep(std::time::Duration::from_millis(1));
             let mut shard = shared_shard.lock().unwrap();
             let mut buffer = [0; 1024];
-            let mut retries = 10;
-            match stream.read(&mut buffer) {
+
+            let mut stream = stream.lock().unwrap();
+        
+            match stream
+            .set_read_timeout(Some(std::time::Duration::new(10, 0))) {
                 Ok(_) => {
+                }
+                Err(_e) => {
+                    continue;
+                }
+            }
+
+            match stream.read(&mut buffer) {
+                Ok(chars) => {
+                    if chars == 0 {
+                        continue;
+                    }
                     let message_string = String::from_utf8_lossy(&buffer);
-                    // println!("Received message: {}", message_string);
                     match shard.get_response_message(&message_string) {
                         Some(response) => {
                             stream.write(response.as_bytes()).unwrap();
                         }
                         None => {
-                            retries -= 1;
-                            if retries == 0 {
-                                eprintln!("Stream has exceeded the number of retries");
-                                break;
-                            }
+                            // do nothing
                         }
                     }
                 }
-                Err(e) => {
-                    eprintln!("Failed to read from stream: {:?}", e);
+                Err(_e) => {
+                    // could not read from the stream, ignore
                 }
             }
         }
     }
 
     fn get_response_message(&mut self, message: &str) -> Option<String> {
-
-        //print self
-        println!("Self: {:?}", self);
-
 
         if message.is_empty() {
             return None;
@@ -179,10 +186,12 @@ impl Shard {
                     Some(router_info) => {
                         let response_message =
                             Message::new(MessageType::RouterId, None, Some(router_info.clone()));
+                        println!("Response created: {}", response_message.to_string());
                         Some(response_message.to_string())
                     }
                     None => {
                         let response_message = Message::new(MessageType::NoRouterData, None, None);
+                        println!("Response created: {}", response_message.to_string());
                         Some(response_message.to_string())
                     }
                 }
