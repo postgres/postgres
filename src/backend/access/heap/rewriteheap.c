@@ -961,8 +961,8 @@ logical_rewrite_log_mapping(RewriteState state, TransactionId xid,
 			dboid = MyDatabaseId;
 
 		snprintf(path, MAXPGPATH,
-				 "pg_logical/mappings/" LOGICAL_REWRITE_FORMAT,
-				 dboid, relid,
+				 "%s/" LOGICAL_REWRITE_FORMAT,
+				 PG_LOGICAL_MAPPINGS_DIR, dboid, relid,
 				 LSN_FORMAT_ARGS(state->rs_begin_lsn),
 				 xid, GetCurrentTransactionId());
 
@@ -1081,8 +1081,8 @@ heap_xlog_logical_rewrite(XLogReaderState *r)
 	xlrec = (xl_heap_rewrite_mapping *) XLogRecGetData(r);
 
 	snprintf(path, MAXPGPATH,
-			 "pg_logical/mappings/" LOGICAL_REWRITE_FORMAT,
-			 xlrec->mapped_db, xlrec->mapped_rel,
+			 "%s/" LOGICAL_REWRITE_FORMAT,
+			 PG_LOGICAL_MAPPINGS_DIR, xlrec->mapped_db, xlrec->mapped_rel,
 			 LSN_FORMAT_ARGS(xlrec->start_lsn),
 			 xlrec->mapped_xid, XLogRecGetXid(r));
 
@@ -1158,7 +1158,7 @@ CheckPointLogicalRewriteHeap(void)
 	XLogRecPtr	redo;
 	DIR		   *mappings_dir;
 	struct dirent *mapping_de;
-	char		path[MAXPGPATH + 20];
+	char		path[MAXPGPATH + sizeof(PG_LOGICAL_MAPPINGS_DIR)];
 
 	/*
 	 * We start of with a minimum of the last redo pointer. No new decoding
@@ -1173,8 +1173,8 @@ CheckPointLogicalRewriteHeap(void)
 	if (cutoff != InvalidXLogRecPtr && redo < cutoff)
 		cutoff = redo;
 
-	mappings_dir = AllocateDir("pg_logical/mappings");
-	while ((mapping_de = ReadDir(mappings_dir, "pg_logical/mappings")) != NULL)
+	mappings_dir = AllocateDir(PG_LOGICAL_MAPPINGS_DIR);
+	while ((mapping_de = ReadDir(mappings_dir, PG_LOGICAL_MAPPINGS_DIR)) != NULL)
 	{
 		Oid			dboid;
 		Oid			relid;
@@ -1189,7 +1189,7 @@ CheckPointLogicalRewriteHeap(void)
 			strcmp(mapping_de->d_name, "..") == 0)
 			continue;
 
-		snprintf(path, sizeof(path), "pg_logical/mappings/%s", mapping_de->d_name);
+		snprintf(path, sizeof(path), "%s/%s", PG_LOGICAL_MAPPINGS_DIR, mapping_de->d_name);
 		de_type = get_dirent_type(path, mapping_de, false, DEBUG1);
 
 		if (de_type != PGFILETYPE_ERROR && de_type != PGFILETYPE_REG)
@@ -1249,5 +1249,5 @@ CheckPointLogicalRewriteHeap(void)
 	FreeDir(mappings_dir);
 
 	/* persist directory entries to disk */
-	fsync_fname("pg_logical/mappings", true);
+	fsync_fname(PG_LOGICAL_MAPPINGS_DIR, true);
 }

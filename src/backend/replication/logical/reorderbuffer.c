@@ -5081,7 +5081,7 @@ ApplyLogicalMappingFile(HTAB *tuplecid_data, Oid relid, const char *fname)
 	int			readBytes;
 	LogicalRewriteMappingData map;
 
-	sprintf(path, "pg_logical/mappings/%s", fname);
+	sprintf(path, "%s/%s", PG_LOGICAL_MAPPINGS_DIR, fname);
 	fd = OpenTransientFile(path, O_RDONLY | PG_BINARY);
 	if (fd < 0)
 		ereport(ERROR,
@@ -5197,8 +5197,8 @@ UpdateLogicalMappings(HTAB *tuplecid_data, Oid relid, Snapshot snapshot)
 	ListCell   *file;
 	Oid			dboid = IsSharedRelation(relid) ? InvalidOid : MyDatabaseId;
 
-	mapping_dir = AllocateDir("pg_logical/mappings");
-	while ((mapping_de = ReadDir(mapping_dir, "pg_logical/mappings")) != NULL)
+	mapping_dir = AllocateDir(PG_LOGICAL_MAPPINGS_DIR);
+	while ((mapping_de = ReadDir(mapping_dir, PG_LOGICAL_MAPPINGS_DIR)) != NULL)
 	{
 		Oid			f_dboid;
 		Oid			f_relid;

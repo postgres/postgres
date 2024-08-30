@@ -1654,7 +1654,8 @@ SnapBuildSerialize(SnapBuild *builder, XLogRecPtr lsn)
 	 * unless the user used pg_resetwal or similar. If a user did so, there's
 	 * no hope continuing to decode anyway.
 	 */
-	sprintf(path, "pg_logical/snapshots/%X-%X.snap",
+	sprintf(path, "%s/%X-%X.snap",
+			PG_LOGICAL_SNAPSHOTS_DIR,
 			LSN_FORMAT_ARGS(lsn));
 
 	/*
@@ -1681,7 +1682,7 @@ SnapBuildSerialize(SnapBuild *builder, XLogRecPtr lsn)
 		 * be safely on disk.
 		 */
 		fsync_fname(path, false);
-		fsync_fname("pg_logical/snapshots", true);
+		fsync_fname(PG_LOGICAL_SNAPSHOTS_DIR, true);
 
 		builder->last_serialized_snapshot = lsn;
 		goto out;
@@ -1697,7 +1698,8 @@ SnapBuildSerialize(SnapBuild *builder, XLogRecPtr lsn)
 	elog(DEBUG1, "serializing snapshot to %s", path);
 
 	/* to make sure only we will write to this tempfile, include pid */
-	sprintf(tmppath, "pg_logical/snapshots/%X-%X.snap.%d.tmp",
+	sprintf(tmppath, "%s/%X-%X.snap.%d.tmp",
+			PG_LOGICAL_SNAPSHOTS_DIR,
 			LSN_FORMAT_ARGS(lsn), MyProcPid);
 
 	/*
@@ -1818,7 +1820,7 @@ SnapBuildSerialize(SnapBuild *builder, XLogRecPtr lsn)
 				(errcode_for_file_access(),
 				 errmsg("could not close file \"%s\": %m", tmppath)));
 
-	fsync_fname("pg_logical/snapshots", true);
+	fsync_fname(PG_LOGICAL_SNAPSHOTS_DIR, true);
 
 	/*
 	 * We may overwrite the work from some other backend, but that's ok, our
@@ -1834,7 +1836,7 @@ SnapBuildSerialize(SnapBuild *builder, XLogRecPtr lsn)
 
 	/* make sure we persist */
 	fsync_fname(path, false);
-	fsync_fname("pg_logical/snapshots", true);
+	fsync_fname(PG_LOGICAL_SNAPSHOTS_DIR, true);
 
 	/*
 	 * Now there's no way we can lose the dumped state anymore, remember this
@@ -1871,7 +1873,8 @@ SnapBuildRestore(SnapBuild *builder, XLogRecPtr lsn)
 	if (builder->state == SNAPBUILD_CONSISTENT)
 		return false;
 
-	sprintf(path, "pg_logical/snapshots/%X-%X.snap",
+	sprintf(path, "%s/%X-%X.snap",
+			PG_LOGICAL_SNAPSHOTS_DIR,
 			LSN_FORMAT_ARGS(lsn));
 
 	fd = OpenTransientFile(path, O_RDONLY | PG_BINARY);
@@ -1892,7 +1895,7 @@ SnapBuildRestore(SnapBuild *builder, XLogRecPtr lsn)
 	 * ----
 	 */
 	fsync_fname(path, false);
-	fsync_fname("pg_logical/snapshots", true);
+	fsync_fname(PG_LOGICAL_SNAPSHOTS_DIR, true);
 
 
 	/* read statically sized portion of snapshot */
@@ -2074,7 +2077,7 @@ CheckPointSnapBuild(void)
 	XLogRecPtr	redo;
 	DIR		   *snap_dir;
 	struct dirent *snap_de;
-	char		path[MAXPGPATH + 21];
+	char		path[MAXPGPATH + sizeof(PG_LOGICAL_SNAPSHOTS_DIR)];
 
 	/*
 	 * We start off with a minimum of the last redo pointer. No new
@@ -2090,8 +2093,8 @@ CheckPointSnapBuild(void)
 	if (redo < cutoff)
 		cutoff = redo;
 
-	snap_dir = AllocateDir("pg_logical/snapshots");
-	while ((snap_de = ReadDir(snap_dir, "pg_logical/snapshots")) != NULL)
+	snap_dir = AllocateDir(PG_LOGICAL_SNAPSHOTS_DIR);
+	while ((snap_de = ReadDir(snap_dir, PG_LOGICAL_SNAPSHOTS_DIR)) != NULL)
 	{
 		uint32		hi;
 		uint32		lo;
@@ -2102,7 +2105,7 @@ CheckPointSnapBuild(void)
 			strcmp(snap_de->d_name, "..") == 0)
 			continue;
 
-		snprintf(path, sizeof(path), "pg_logical/snapshots/%s", snap_de->d_name);
+		snprintf(path, sizeof(path), "%s/%s", PG_LOGICAL_SNAPSHOTS_DIR, snap_de->d_name);
 		de_type = get_dirent_type(path, snap_de, false, DEBUG1);
 
 		if (de_type != PGFILETYPE_ERROR && de_type != PGFILETYPE_REG)
@@ -2162,7 +2165,8 @@ SnapBuildSnapshotExists(XLogRecPtr lsn)
 	int			ret;
 	struct stat stat_buf;
 
-	sprintf(path, "pg_logical/snapshots/%X-%X.snap",
+	sprintf(path, "%s/%X-%X.snap",
+			PG_LOGICAL_SNAPSHOTS_DIR,
 			LSN_FORMAT_ARGS(lsn));
 
 	ret = stat(path, &stat_buf);

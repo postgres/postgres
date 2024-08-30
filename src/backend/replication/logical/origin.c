@@ -95,6 +95,10 @@
 #include "utils/snapmgr.h"
 #include "utils/syscache.h"
 
+/* paths for replication origin checkpoint files */
+#define PG_REPLORIGIN_CHECKPOINT_FILENAME PG_LOGICAL_DIR "/replorigin_checkpoint"
+#define PG_REPLORIGIN_CHECKPOINT_TMPFILE PG_REPLORIGIN_CHECKPOINT_FILENAME ".tmp"
+
 /*
  * Replay progress of a single remote node.
  */
@@ -572,8 +576,8 @@ ReplicationOriginShmemInit(void)
 void
 CheckPointReplicationOrigin(void)
 {
-	const char *tmppath = "pg_logical/replorigin_checkpoint.tmp";
-	const char *path = "pg_logical/replorigin_checkpoint";
+	const char *tmppath = PG_REPLORIGIN_CHECKPOINT_TMPFILE;
+	const char *path = PG_REPLORIGIN_CHECKPOINT_FILENAME;
 	int			tmpfd;
 	int			i;
 	uint32		magic = REPLICATION_STATE_MAGIC;
@@ -698,7 +702,7 @@ CheckPointReplicationOrigin(void)
 void
 StartupReplicationOrigin(void)
 {
-	const char *path = "pg_logical/replorigin_checkpoint";
+	const char *path = PG_REPLORIGIN_CHECKPOINT_FILENAME;
 	int			fd;
 	int			readBytes;
 	uint32		magic = REPLICATION_STATE_MAGIC;
