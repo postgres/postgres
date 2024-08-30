@@ -160,36 +160,6 @@ WHERE s.c1 = s.c2 AND t1.unique1 < 1000;
   1000 | 9.5000000000000000
 (1 row)
 
--- Try with LATERAL references within PlaceHolderVars
-SELECT explain_memoize('
-SELECT COUNT(*), AVG(t1.twenty) FROM tenk1 t1 LEFT JOIN
-LATERAL (SELECT t1.two+t2.two AS c1, t2.unique1 AS c2 FROM tenk1 t2) s ON TRUE
-WHERE s.c1 = s.c2 AND t1.unique1 < 1000;', false);
-                                   explain_memoize                                    
---------------------------------------------------------------------------------------
- Aggregate (actual rows=1 loops=N)
-   ->  Nested Loop (actual rows=1000 loops=N)
-         ->  Seq Scan on tenk1 t1 (actual rows=1000 loops=N)
-               Filter: (unique1 < 1000)
-               Rows Removed by Filter: 9000
-         ->  Memoize (actual rows=1 loops=N)
-               Cache Key: t1.two
-               Cache Mode: binary
-               Hits: 998  Misses: 2  Evictions: Zero  Overflows: 0  Memory Usage: NkB
-               ->  Seq Scan on tenk1 t2 (actual rows=1 loops=N)
-                     Filter: ((t1.two + two) = unique1)
-                     Rows Removed by Filter: 9999
-(12 rows)
-
--- And check we get the expected results.
-SELECT COUNT(*), AVG(t1.twenty) FROM tenk1 t1 LEFT JOIN
-LATERAL (SELECT t1.two+t2.two AS c1, t2.unique1 AS c2 FROM tenk1 t2) s ON TRUE
-WHERE s.c1 = s.c2 AND t1.unique1 < 1000;
- count |        avg         
--------+--------------------
-  1000 | 9.0000000000000000
-(1 row)
-
 -- Ensure we do not omit the cache keys from PlaceHolderVars
 SELECT explain_memoize('
 SELECT COUNT(*), AVG(t1.twenty) FROM tenk1 t1 LEFT JOIN
