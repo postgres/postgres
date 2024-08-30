@@ -36,6 +36,7 @@
 #include "port.h"
 #include "postmaster/syslogger.h"
 #include "postmaster/walsummarizer.h"
+#include "replication/slot.h"
 #include "replication/walsender.h"
 #include "replication/walsender_private.h"
 #include "storage/bufpage.h"
@@ -161,7 +162,7 @@ static const char *const excludeDirContents[] =
 	 * even if the intention is to restore to another primary. See backup.sgml
 	 * for a more detailed description.
 	 */
-	"pg_replslot",
+	PG_REPLSLOT_DIR,
 
 	/* Contents removed on startup, see dsm_cleanup_for_mmap(). */
 	PG_DYNSHMEM_DIR,

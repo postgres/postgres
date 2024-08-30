@@ -4595,9 +4595,9 @@ ReorderBufferCleanupSerializedTXNs(const char *slotname)
 	DIR		   *spill_dir;
 	struct dirent *spill_de;
 	struct stat statbuf;
-	char		path[MAXPGPATH * 2 + 12];
+	char		path[MAXPGPATH * 2 + sizeof(PG_REPLSLOT_DIR)];
 
-	sprintf(path, "pg_replslot/%s", slotname);
+	sprintf(path, "%s/%s", PG_REPLSLOT_DIR, slotname);
 
 	/* we're only handling directories here, skip if it's not ours */
 	if (lstat(path, &statbuf) == 0 && !S_ISDIR(statbuf.st_mode))
@@ -4610,14 +4610,14 @@ ReorderBufferCleanupSerializedTXNs(const char *slotname)
 		if (strncmp(spill_de->d_name, "xid", 3) == 0)
 		{
 			snprintf(path, sizeof(path),
-					 "pg_replslot/%s/%s", slotname,
+					 "%s/%s/%s", PG_REPLSLOT_DIR, slotname,
 					 spill_de->d_name);
 
 			if (unlink(path) != 0)
 				ereport(ERROR,
 						(errcode_for_file_access(),
-						 errmsg("could not remove file \"%s\" during removal of pg_replslot/%s/xid*: %m",
-								path, slotname)));
+						 errmsg("could not remove file \"%s\" during removal of %s/%s/xid*: %m",
+								path, PG_REPLSLOT_DIR, slotname)));
 		}
 	}
 	FreeDir(spill_dir);
@@ -4636,7 +4636,8 @@ ReorderBufferSerializedPath(char *path, ReplicationSlot *slot, TransactionId xid
 
 	XLogSegNoOffsetToRecPtr(segno, 0, wal_segment_size, recptr);
 
-	snprintf(path, MAXPGPATH, "pg_replslot/%s/xid-%u-lsn-%X-%X.spill",
+	snprintf(path, MAXPGPATH, "%s/%s/xid-%u-lsn-%X-%X.spill",
+			 PG_REPLSLOT_DIR,
 			 NameStr(MyReplicationSlot->data.name),
 			 xid, LSN_FORMAT_ARGS(recptr));
 }
@@ -4651,8 +4652,8 @@ StartupReorderBuffer(void)
 	DIR		   *logical_dir;
 	struct dirent *logical_de;
 
-	logical_dir = AllocateDir("pg_replslot");
-	while ((logical_de = ReadDir(logical_dir, "pg_replslot")) != NULL)
+	logical_dir = AllocateDir(PG_REPLSLOT_DIR);
+	while ((logical_de = ReadDir(logical_dir, PG_REPLSLOT_DIR)) != NULL)
 	{
 		if (strcmp(logical_de->d_name, ".") == 0 ||
 			strcmp(logical_de->d_name, "..") == 0)

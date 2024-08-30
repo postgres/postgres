@@ -708,7 +708,7 @@ pg_ls_logicalmapdir(PG_FUNCTION_ARGS)
 }
 
 /*
- * Function to return the list of files in the pg_replslot/<replication_slot>
+ * Function to return the list of files in the PG_REPLSLOT_DIR/<slot_name>
  * directory.
  */
 Datum
@@ -728,6 +728,7 @@ pg_ls_replslotdir(PG_FUNCTION_ARGS)
 				 errmsg("replication slot \"%s\" does not exist",
 						slotname)));
 
-	snprintf(path, sizeof(path), "pg_replslot/%s", slotname);
+	snprintf(path, sizeof(path), "%s/%s", PG_REPLSLOT_DIR, slotname);
+
 	return pg_ls_dir_files(fcinfo, path, false);
 }

@@ -17,6 +17,9 @@
 #include "storage/spin.h"
 #include "replication/walreceiver.h"
 
+/* directory to store replication slot data in */
+#define PG_REPLSLOT_DIR     "pg_replslot"
+
 /*
  * Behaviour of replication slots, upon release or crash.
  *
