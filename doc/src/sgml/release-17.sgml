@@ -3266,6 +3266,7 @@ Author: Alexander Korotkov <akorotkov@postgresql.org>
     <member>Ashutosh Sharma</member>
     <member>Atsushi Torikoshi</member>
     <member>Attila Gulyás</member>
+    <member>Ayush Tiwari</member>
     <member>Ayush Vatsa</member>
     <member>Bartosz Chrol</member>
     <member>Benoît Ryder</member>
@@ -3277,6 +3278,7 @@ Author: Alexander Korotkov <akorotkov@postgresql.org>
     <member>Bowen Shi</member>
     <member>Boyu Yang</member>
     <member>Bruce Momjian</member>
+    <member>Cameron Vogt</member>
     <member>Cary Huang</member>
     <member>Cédric Villemain</member>
     <member>Changhong Fei</member>
@@ -3354,6 +3356,7 @@ Author: Alexander Korotkov <akorotkov@postgresql.org>
     <member>Fabrízio de Royes Mello</member>
     <member>Farias de Oliveira</member>
     <member>Feliphe Pozzer</member>
+    <member>Fire Emerald</member>
     <member>Flavien Guedez</member>
     <member>Floris Van Nee</member>
     <member>Frank Streitzig</member>
@@ -3380,8 +3383,10 @@ Author: Alexander Korotkov <akorotkov@postgresql.org>
     <member>Heikki Linnakangas</member>
     <member>Hemanth Sandrana</member>
     <member>Himanshu Upadhyaya</member>
+    <member>Hironobu Suzuki</member>
     <member>Holger Reise</member>
     <member>Hongxu Ma</member>
+    <member>Hongyu Song</member>
     <member>Horst Reiterer</member>
     <member>Hubert Lubaczewski</member>
     <member>Hywel Carver</member>
@@ -3443,12 +3448,14 @@ Author: Alexander Korotkov <akorotkov@postgresql.org>
     <member>Kirill Reshke</member>
     <member>Kirk Parker</member>
     <member>Kirk Wolak</member>
+    <member>Kisoon Kwon</member>
     <member>Koen De Groote</member>
     <member>Kohei KaiGai</member>
     <member>Kong Man</member>
     <member>Konstantin Knizhnik</member>
     <member>Kouhei Sutou</member>
     <member>Krishnakumar R</member>
+    <member>Kuntal Ghosh</member>
     <member>Kurt Roeckx</member>
     <member>Kyotaro Horiguchi</member>
     <member>Lang Liu</member>
@@ -3518,6 +3525,7 @@ Author: Alexander Korotkov <akorotkov@postgresql.org>
     <member>Nitin Jadhav</member>
     <member>Noah Misch</member>
     <member>Noriyoshi Shinoda</member>
+    <member>Ole Peder Brandtzæg</member>
     <member>Oleg Bartunov</member>
     <member>Oleg Sibiryakov</member>
     <member>Oleg Tselebrovskiy</member>
@@ -3544,6 +3552,7 @@ Author: Alexander Korotkov <akorotkov@postgresql.org>
     <member>Pierre Ducroquet</member>
     <member>Pierre Fortin</member>
     <member>Przemyslaw Sztoch</member>
+    <member>Quynh Tran</member>
     <member>Raghuveer Devulapalli</member>
     <member>Ranier Vilela</member>
     <member>Reid Thompson</member>
@@ -3561,6 +3570,7 @@ Author: Alexander Korotkov <akorotkov@postgresql.org>
     <member>Rui Zhao</member>
     <member>Ryo Matsumura</member>
     <member>Ryoga Yoshida</member>
+    <member>Sameer Kumar</member>
     <member>Sami Imseih</member>
     <member>Samuel Dussault</member>
     <member>Sanjay Minni</member>
@@ -3569,6 +3579,7 @@ Author: Alexander Korotkov <akorotkov@postgresql.org>
     <member>Sergei Glukhov</member>
     <member>Sergei Kornilov</member>
     <member>Sergey Prokhorenko</member>
+    <member>Sergey Sargsyan</member>
     <member>Sergey Shinderuk</member>
     <member>Shaozhong Shi</member>
     <member>Shaun Thomas</member>
@@ -3618,6 +3629,7 @@ Author: Alexander Korotkov <akorotkov@postgresql.org>
     <member>Uwe Binder</member>
     <member>Valerie Woolard</member>
     <member>Vallimaharajan G</member>
+    <member>Vasya Boytsov</member>
     <member>Victor Wagner</member>
     <member>Victor Yegorov</member>
     <member>Victoria Shepard</member>
