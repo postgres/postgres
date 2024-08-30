@@ -2490,14 +2490,48 @@ pullup_replace_vars_callback(Var *var,
 				else
 					wrap = false;
 			}
+			else if (rcon->wrap_non_vars)
+			{
+				/* Caller told us to wrap all non-Vars in a PlaceHolderVar */
+				wrap = true;
+			}
 			else
 			{
 				/*
-				 * Must wrap, either because we need a place to insert
-				 * varnullingrels or because caller told us to wrap
-				 * everything.
+				 * If the node contains Var(s) or PlaceHolderVar(s) of the
+				 * subquery being pulled up, and does not contain any
+				 * non-strict constructs, then instead of adding a PHV on top
+				 * we can add the required nullingrels to those Vars/PHVs.
+				 * (This is fundamentally a generalization of the above cases
+				 * for bare Vars and PHVs.)
+				 *
+				 * This test is somewhat expensive, but it avoids pessimizing
+				 * the plan in cases where the nullingrels get removed again
+				 * later by outer join reduction.
+				 *
+				 * This analysis could be tighter: in particular, a non-strict
+				 * construct hidden within a lower-level PlaceHolderVar is not
+				 * reason to add another PHV.  But for now it doesn't seem
+				 * worth the code to be more exact.
+				 *
+				 * For a LATERAL subquery, we have to check the actual var
+				 * membership of the node, but if it's non-lateral then any
+				 * level-zero var must belong to the subquery.
 				 */
-				wrap = true;
+				if ((rcon->target_rte->lateral ?
+					 bms_overlap(pull_varnos(rcon->root, newnode),
+								 rcon->relids) :
+					 contain_vars_of_level(newnode, 0)) &&
+					!contain_nonstrict_functions(newnode))
+				{
+					/* No wrap needed */
+					wrap = false;
+				}
+				else
+				{
+					/* Else wrap it in a PlaceHolderVar */
+					wrap = true;
+				}
 			}
 
 			if (wrap)
@@ -2518,18 +2552,14 @@ pullup_replace_vars_callback(Var *var,
 		}
 	}
 
-	/* Must adjust varlevelsup if replaced Var is within a subquery */
-	if (var->varlevelsup > 0)
-		IncrementVarSublevelsUp(newnode, var->varlevelsup, 0);
-
-	/* Propagate any varnullingrels into the replacement Var or PHV */
+	/* Propagate any varnullingrels into the replacement expression */
 	if (var->varnullingrels != NULL)
 	{
 		if (IsA(newnode, Var))
 		{
 			Var		   *newvar = (Var *) newnode;
 
-			Assert(newvar->varlevelsup == var->varlevelsup);
+			Assert(newvar->varlevelsup == 0);
 			newvar->varnullingrels = bms_add_members(newvar->varnullingrels,
 													 var->varnullingrels);
 		}
@@ -2537,13 +2567,25 @@ pullup_replace_vars_callback(Var *var,
 		{
 			PlaceHolderVar *newphv = (PlaceHolderVar *) newnode;
 
-			Assert(newphv->phlevelsup == var->varlevelsup);
+			Assert(newphv->phlevelsup == 0);
 			newphv->phnullingrels = bms_add_members(newphv->phnullingrels,
 													var->varnullingrels);
 		}
 		else
-			elog(ERROR, "failed to wrap a non-Var");
+		{
+			/* There should be lower-level Vars/PHVs we can modify */
+			newnode = add_nulling_relids(newnode,
+										 NULL,	/* modify all Vars/PHVs */
+										 var->varnullingrels);
+			/* Assert we did put the varnullingrels into the expression */
+			Assert(bms_is_subset(var->varnullingrels,
+								 pull_varnos(rcon->root, newnode)));
+		}
 	}
+
+	/* Must adjust varlevelsup if replaced Var is within a subquery */
+	if (var->varlevelsup > 0)
+		IncrementVarSublevelsUp(newnode, var->varlevelsup, 0);
 
 	return newnode;
 }
