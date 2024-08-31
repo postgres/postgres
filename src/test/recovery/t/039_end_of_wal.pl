@@ -251,6 +251,12 @@ $WAL_BLOCK_SIZE = get_int_setting($node, 'wal_block_size');
 $TLI = $node->safe_psql('postgres',
 	"SELECT timeline_id FROM pg_control_checkpoint();");
 
+# Initial LSN may vary across systems due to different catalog contents set up
+# by initdb.  Switch to a new WAL file so all systems start out in the same
+# place.  The first test depends on trailing zeroes on a page with a valid
+# header.
+$node->safe_psql('postgres', "SELECT pg_switch_wal();");
+
 my $end_lsn;
 my $prev_lsn;
 
