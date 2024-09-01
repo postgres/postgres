@@ -387,4 +387,4 @@
 /*
  * Enable Percona specific features, should always be defined in this fork
  */
-#define PERCONA_FORK 1
+#define PERCONA_EXT 1
