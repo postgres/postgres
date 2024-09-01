@@ -12,7 +12,7 @@
 #include "postgres.h"
 #include "access/xlog.h"
 #include "access/xlog_internal.h"
-#ifdef PERCONA_FORK
+#ifdef PERCONA_EXT
 #include "access/xlog_smgr.h"
 #endif
 
@@ -38,7 +38,7 @@ static const RmgrData tdeheap_rmgr = {
 	.rm_identify = tdeheap_rmgr_identify
 };
 
-#ifdef PERCONA_FORK
+#ifdef PERCONA_EXT
 
 /* XLog encryption staff */
 

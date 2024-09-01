@@ -755,7 +755,7 @@ pg_tde_rotate_principal_key_internal(PG_FUNCTION_ARGS)
     ensure_new_key = PG_GETARG_BOOL(2);
     is_global = PG_GETARG_BOOL(3);
 
-#ifdef PERCONA_FORK
+#ifdef PERCONA_EXT
 	if (is_global)
 	{
 		dbOid = GLOBAL_DATA_TDE_OID;

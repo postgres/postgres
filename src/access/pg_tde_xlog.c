@@ -27,7 +27,7 @@
 #include "access/pg_tde_tdemap.h"
 #include "access/pg_tde_xlog.h"
 #include "encryption/enc_tde.h"
-#ifdef PERCONA_FORK
+#ifdef PERCONA_EXT
 #include "catalog/tde_global_space.h"
 
 static char *TDEXLogEncryptBuf = NULL;
@@ -140,7 +140,7 @@ tdeheap_rmgr_identify(uint8 info)
 	return NULL;
 }
 
-#ifdef PERCONA_FORK
+#ifdef PERCONA_EXT
 
 /* 
  * -------------------------

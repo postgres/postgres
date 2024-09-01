@@ -8,7 +8,7 @@
 #include "access/pg_tde_tdemap.h"
 #include "pg_tde_event_capture.h"
 
-#ifdef PERCONA_FORK
+#ifdef PERCONA_EXT
 
 // TODO: implement proper IV
 // iv should be based on blocknum + relfile, available in the API
@@ -222,4 +222,4 @@ void RegisterStorageMgr(void)
 void RegisterStorageMgr(void)
 {
 }
-#endif /* PERCONA_FORK */
+#endif /* PERCONA_EXT */
