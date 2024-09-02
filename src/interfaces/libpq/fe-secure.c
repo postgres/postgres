@@ -108,42 +108,27 @@ PQsslInUse(PGconn *conn)
 }
 
 /*
- *	Exported function to allow application to tell us it's already
- *	initialized OpenSSL.
+ *	Exported function to allow application to tell us it's already initialized
+ *	OpenSSL.  Since OpenSSL 1.1.0 it is no longer required to explicitly
+ *	initialize libssl and libcrypto, so this is a no-op.  This function remains
+ *	for backwards API compatibility.
  */
 void
 PQinitSSL(int do_init)
 {
-#ifdef USE_SSL
-	pgtls_init_library(do_init, do_init);
-#endif
+	/* no-op */
 }
 
 /*
- *	Exported function to allow application to tell us it's already
- *	initialized OpenSSL and/or libcrypto.
+ *	Exported function to allow application to tell us it's already initialized
+ *	OpenSSL.  Since OpenSSL 1.1.0 it is no longer required to explicitly
+ *	initialize libssl and libcrypto, so this is a no-op.  This function remains
+ *	for backwards API compatibility.
  */
 void
 PQinitOpenSSL(int do_ssl, int do_crypto)
 {
-#ifdef USE_SSL
-	pgtls_init_library(do_ssl, do_crypto);
-#endif
-}
-
-/*
- *	Initialize global SSL context
- */
-int
-pqsecure_initialize(PGconn *conn, bool do_ssl, bool do_crypto)
-{
-	int			r = 0;
-
-#ifdef USE_SSL
-	r = pgtls_init(conn, do_ssl, do_crypto);
-#endif
-
-	return r;
+	/* no-op */
 }
 
 /*

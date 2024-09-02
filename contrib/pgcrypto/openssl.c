@@ -154,8 +154,6 @@ digest_free(PX_MD *h)
 	pfree(h);
 }
 
-static int	px_openssl_initialized = 0;
-
 /* PUBLIC functions */
 
 int
@@ -165,12 +163,6 @@ px_find_digest(const char *name, PX_MD **res)
 	EVP_MD_CTX *ctx;
 	PX_MD	   *h;
 	OSSLDigest *digest;
-
-	if (!px_openssl_initialized)
-	{
-		px_openssl_initialized = 1;
-		OpenSSL_add_all_algorithms();
-	}
 
 	md = EVP_get_digestbyname(name);
 	if (md == NULL)

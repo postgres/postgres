@@ -44,6 +44,7 @@
  * include <wincrypt.h>, but some other Windows headers do.)
  */
 #include "common/openssl.h"
+#include <openssl/bn.h>
 #include <openssl/conf.h>
 #include <openssl/dh.h>
 #ifndef OPENSSL_NO_ECDH
@@ -80,7 +81,6 @@ static const char *SSLerrmessage(unsigned long ecode);
 static char *X509_NAME_to_cstring(X509_NAME *name);
 
 static SSL_CTX *SSL_context = NULL;
-static bool SSL_initialized = false;
 static bool dummy_ssl_passwd_cb_called = false;
 static bool ssl_is_server_start;
 
@@ -100,19 +100,6 @@ be_tls_init(bool isServerStart)
 	SSL_CTX    *context;
 	int			ssl_ver_min = -1;
 	int			ssl_ver_max = -1;
-
-	/* This stuff need be done only once. */
-	if (!SSL_initialized)
-	{
-#ifdef HAVE_OPENSSL_INIT_SSL
-		OPENSSL_init_ssl(OPENSSL_INIT_LOAD_CONFIG, NULL);
-#else
-		OPENSSL_config(NULL);
-		SSL_library_init();
-		SSL_load_error_strings();
-#endif
-		SSL_initialized = true;
-	}
 
 	/*
 	 * Create a new SSL context into which we'll load all the configuration
@@ -952,7 +939,6 @@ my_BIO_s_socket(void)
 	if (!my_bio_methods)
 	{
 		BIO_METHOD *biom = (BIO_METHOD *) BIO_s_socket();
-#ifdef HAVE_BIO_METH_NEW
 		int			my_bio_index;
 
 		my_bio_index = BIO_get_new_index();
@@ -975,14 +961,6 @@ my_BIO_s_socket(void)
 			my_bio_methods = NULL;
 			return NULL;
 		}
-#else
-		my_bio_methods = malloc(sizeof(BIO_METHOD));
-		if (!my_bio_methods)
-			return NULL;
-		memcpy(my_bio_methods, biom, sizeof(BIO_METHOD));
-		my_bio_methods->bread = my_sock_read;
-		my_bio_methods->bwrite = my_sock_write;
-#endif
 	}
 	return my_bio_methods;
 }

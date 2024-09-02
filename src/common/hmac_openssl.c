@@ -35,17 +35,12 @@
 
 /*
  * In backend, use an allocation in TopMemoryContext to count for resowner
- * cleanup handling if necessary.  For versions of OpenSSL where HMAC_CTX is
- * known, just use palloc().  In frontend, use malloc to be able to return
+ * cleanup handling if necessary.  In frontend, use malloc to be able to return
  * a failure status back to the caller.
  */
 #ifndef FRONTEND
-#ifdef HAVE_HMAC_CTX_NEW
 #define USE_RESOWNER_FOR_HMAC
 #define ALLOC(size) MemoryContextAlloc(TopMemoryContext, size)
-#else
-#define ALLOC(size) palloc(size)
-#endif
 #define FREE(ptr) pfree(ptr)
 #else							/* FRONTEND */
 #define ALLOC(size) malloc(size)
@@ -144,11 +139,7 @@ pg_hmac_create(pg_cryptohash_type type)
 	ResourceOwnerEnlarge(CurrentResourceOwner);
 #endif
 
-#ifdef HAVE_HMAC_CTX_NEW
 	ctx->hmacctx = HMAC_CTX_new();
-#else
-	ctx->hmacctx = ALLOC(sizeof(HMAC_CTX));
-#endif
 
 	if (ctx->hmacctx == NULL)
 	{
@@ -162,9 +153,6 @@ pg_hmac_create(pg_cryptohash_type type)
 		return NULL;
 	}
 
-#ifndef HAVE_HMAC_CTX_NEW
-	memset(ctx->hmacctx, 0, sizeof(HMAC_CTX));
-#endif
 
 #ifdef USE_RESOWNER_FOR_HMAC
 	ctx->resowner = CurrentResourceOwner;
@@ -328,13 +316,7 @@ pg_hmac_free(pg_hmac_ctx *ctx)
 	if (ctx == NULL)
 		return;
 
-#ifdef HAVE_HMAC_CTX_FREE
 	HMAC_CTX_free(ctx->hmacctx);
-#else
-	explicit_bzero(ctx->hmacctx, sizeof(HMAC_CTX));
-	FREE(ctx->hmacctx);
-#endif
-
 #ifdef USE_RESOWNER_FOR_HMAC
 	if (ctx->resowner)
 		ResourceOwnerForgetHMAC(ctx->resowner, ctx);

@@ -36,8 +36,7 @@ sub switch_server_cert
 }
 
 # Determine whether this build uses OpenSSL or LibreSSL. As a heuristic, the
-# HAVE_SSL_CTX_SET_CERT_CB macro isn't defined for LibreSSL. (Nor for OpenSSL
-# 1.0.1, but that's old enough that accommodating it isn't worth the cost.)
+# HAVE_SSL_CTX_SET_CERT_CB macro isn't defined for LibreSSL.
 my $libressl = not check_pg_config("#define HAVE_SSL_CTX_SET_CERT_CB 1");
 
 #### Some configuration

@@ -44,7 +44,6 @@ if ssl.found()
   common_sources += files(
     'cryptohash_openssl.c',
     'hmac_openssl.c',
-    'protocol_openssl.c',
   )
 else
   common_sources += files(

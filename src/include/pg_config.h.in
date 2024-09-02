@@ -54,17 +54,11 @@
 /* Define to 1 if you have the `append_history' function. */
 #undef HAVE_APPEND_HISTORY
 
-/* Define to 1 if you have the `ASN1_STRING_get0_data' function. */
-#undef HAVE_ASN1_STRING_GET0_DATA
-
 /* Define to 1 if you have the <atomic.h> header file. */
 #undef HAVE_ATOMIC_H
 
 /* Define to 1 if you have the `backtrace_symbols' function. */
 #undef HAVE_BACKTRACE_SYMBOLS
-
-/* Define to 1 if you have the `BIO_meth_new' function. */
-#undef HAVE_BIO_METH_NEW
 
 /* Define to 1 if your compiler handles computed gotos. */
 #undef HAVE_COMPUTED_GOTO
@@ -80,9 +74,6 @@
 
 /* Define to 1 if you have the <crtdefs.h> header file. */
 #undef HAVE_CRTDEFS_H
-
-/* Define to 1 if you have the `CRYPTO_lock' function. */
-#undef HAVE_CRYPTO_LOCK
 
 /* Define to 1 if you have the declaration of `fdatasync', and to 0 if you
    don't. */
@@ -198,12 +189,6 @@
 
 /* Define to 1 if you have the `history_truncate_file' function. */
 #undef HAVE_HISTORY_TRUNCATE_FILE
-
-/* Define to 1 if you have the `HMAC_CTX_free' function. */
-#undef HAVE_HMAC_CTX_FREE
-
-/* Define to 1 if you have the `HMAC_CTX_new' function. */
-#undef HAVE_HMAC_CTX_NEW
 
 /* Define to 1 if you have the <ifaddrs.h> header file. */
 #undef HAVE_IFADDRS_H

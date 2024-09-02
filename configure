@@ -12313,9 +12313,9 @@ if test "$with_openssl" = yes ; then
 fi
 
 if test "$with_ssl" = openssl ; then
-    # Minimum required OpenSSL version is 1.0.2
+    # Minimum required OpenSSL version is 1.1.0
 
-$as_echo "#define OPENSSL_API_COMPAT 0x10002000L" >>confdefs.h
+$as_echo "#define OPENSSL_API_COMPAT 0x10100000L" >>confdefs.h
 
   if test "$PORTNAME" != "win32"; then
      { $as_echo "$as_me:${as_lineno-$LINENO}: checking for CRYPTO_new_ex_data in -lcrypto" >&5
@@ -12547,33 +12547,20 @@ done
   # defines OPENSSL_VERSION_NUMBER to claim version 2.0.0, even though it
   # doesn't have these OpenSSL 1.1.0 functions. So check for individual
   # functions.
-  for ac_func in OPENSSL_init_ssl BIO_meth_new ASN1_STRING_get0_data HMAC_CTX_new HMAC_CTX_free
+  for ac_func in OPENSSL_init_ssl
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "OPENSSL_init_ssl" "ac_cv_func_OPENSSL_init_ssl"
+if test "x$ac_cv_func_OPENSSL_init_ssl" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_OPENSSL_INIT_SSL 1
 _ACEOF
 
+else
+  as_fn_error $? "OpenSSL version >= 1.1.0 is required for SSL support" "$LINENO" 5
 fi
 done
 
-  # OpenSSL versions before 1.1.0 required setting callback functions, for
-  # thread-safety. In 1.1.0, it's no longer required, and CRYPTO_lock()
-  # function was removed.
-  for ac_func in CRYPTO_lock
-do :
-  ac_fn_c_check_func "$LINENO" "CRYPTO_lock" "ac_cv_func_CRYPTO_lock"
-if test "x$ac_cv_func_CRYPTO_lock" = xyes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_CRYPTO_LOCK 1
-_ACEOF
-
-fi
-done
-
-  # Function introduced in OpenSSL 1.1.1.
+  # Function introduced in OpenSSL 1.1.1, not in LibreSSL.
   for ac_func in X509_get_signature_info SSL_CTX_set_num_tickets
 do :
   as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`

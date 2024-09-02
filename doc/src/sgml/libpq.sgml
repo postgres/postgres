@@ -9865,15 +9865,21 @@ ldap://ldap.acme.com/cn=dbserver,cn=hosts?pgconnectinfo?base?(objectclass=*)
   <title>SSL Library Initialization</title>
 
   <para>
-   If your application initializes <literal>libssl</literal> and/or
-   <literal>libcrypto</literal> libraries and <application>libpq</application>
-   is built with <acronym>SSL</acronym> support, you should call
+   Applications which need to be compatible with older versions of
+   <productname>PostgreSQL</productname>, using <productname>OpenSSL</productname>
+   version 1.0.2 or older, need to initialize the SSL library before using it.
+   Applications which initialize <literal>libssl</literal> and/or
+   <literal>libcrypto</literal> libraries should call
    <xref linkend="libpq-PQinitOpenSSL"/> to tell <application>libpq</application>
    that the <literal>libssl</literal> and/or <literal>libcrypto</literal> libraries
    have been initialized by your application, so that
    <application>libpq</application> will not also initialize those libraries.
    However, this is unnecessary when using <productname>OpenSSL</productname>
    version 1.1.0 or later, as duplicate initializations are no longer problematic.
+  </para>
+  <para>
+   Refer to the documentation for the version of <productname>PostgreSQL</productname>
+   that you are targeting for details on their use.
   </para>
 
   <para>
@@ -9890,21 +9896,8 @@ void PQinitOpenSSL(int do_ssl, int do_crypto);
       </para>
 
       <para>
-       When <parameter>do_ssl</parameter> is non-zero, <application>libpq</application>
-       will initialize the <productname>OpenSSL</productname> library before first
-       opening a database connection.  When <parameter>do_crypto</parameter> is
-       non-zero, the <literal>libcrypto</literal> library will be initialized.  By
-       default (if <xref linkend="libpq-PQinitOpenSSL"/> is not called), both libraries
-       are initialized.  When SSL support is not compiled in, this function is
-       present but does nothing.
-      </para>
-
-      <para>
-       If your application uses and initializes either <productname>OpenSSL</productname>
-       or its underlying <literal>libcrypto</literal> library, you <emphasis>must</emphasis>
-       call this function with zeroes for the appropriate parameter(s)
-       before first opening a database connection.  Also be sure that you
-       have done that initialization before opening a database connection.
+       This function is deprecated and only present for backwards compatibility,
+       it does nothing.
       </para>
      </listitem>
     </varlistentry>
@@ -9921,11 +9914,14 @@ void PQinitSSL(int do_ssl);
       <para>
        This function is equivalent to
        <literal>PQinitOpenSSL(do_ssl, do_ssl)</literal>.
-       It is sufficient for applications that initialize both or neither
-       of <productname>OpenSSL</productname> and <literal>libcrypto</literal>.
+       This function is deprecated and only present for backwards compatibility,
+       it does nothing.
       </para>
 
       <para>
+       <xref linkend="libpq-PQinitSSL"/> and <xref linkend="libpq-PQinitOpenSSL"/>
+       are maintained for backwards compatibility, but are no longer required
+       since <productname>PostgreSQL</productname> 18.
        <xref linkend="libpq-PQinitSSL"/> has been present since
        <productname>PostgreSQL</productname> 8.0, while <xref linkend="libpq-PQinitOpenSSL"/>
        was added in <productname>PostgreSQL</productname> 8.4, so <xref linkend="libpq-PQinitSSL"/>
