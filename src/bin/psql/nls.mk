@@ -23,8 +23,7 @@ GETTEXT_FILES    = $(FRONTEND_COMMON_GETTEXT_FILES) \
                    ../../common/exec.c \
                    ../../common/fe_memutils.c \
                    ../../common/username.c \
-                   ../../common/wait_error.c \
-                   ../../port/user.c
+                   ../../common/wait_error.c
 GETTEXT_TRIGGERS = $(FRONTEND_COMMON_GETTEXT_TRIGGERS) \
                    HELP0 HELPN N_ simple_prompt simple_prompt_extended
 GETTEXT_FLAGS    = $(FRONTEND_COMMON_GETTEXT_FLAGS) \

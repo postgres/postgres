@@ -28,6 +28,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <limits.h>
+#include <pwd.h>
 #include <sys/param.h>			/* for MAXHOSTNAMELEN on most */
 #include <sys/socket.h>
 #ifdef HAVE_SYS_UCRED_H
@@ -1203,7 +1204,10 @@ pg_fe_getusername(uid_t user_id, PQExpBuffer errorMessage)
 	char		username[256 + 1];
 	DWORD		namesize = sizeof(username);
 #else
-	char		pwdbuf[BUFSIZ];
+	struct passwd pwbuf;
+	struct passwd *pw;
+	char		buf[1024];
+	int			rc;
 #endif
 
 #ifdef WIN32
@@ -1214,10 +1218,19 @@ pg_fe_getusername(uid_t user_id, PQExpBuffer errorMessage)
 						   "user name lookup failure: error code %lu",
 						   GetLastError());
 #else
-	if (pg_get_user_name(user_id, pwdbuf, sizeof(pwdbuf)))
-		name = pwdbuf;
-	else if (errorMessage)
-		appendPQExpBuffer(errorMessage, "%s\n", pwdbuf);
+	rc = getpwuid_r(user_id, &pwbuf, buf, sizeof buf, &pw);
+	if (rc != 0)
+	{
+		errno = rc;
+		if (errorMessage)
+			libpq_append_error(errorMessage, "could not look up local user ID %ld: %m", (long) user_id);
+	}
+	else if (!pw)
+	{
+		if (errorMessage)
+			libpq_append_error(errorMessage, "local user with ID %ld does not exist", (long) user_id);
+	}
+	name = pw->pw_name;
 #endif
 
 	if (name)

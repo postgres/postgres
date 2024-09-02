@@ -20,7 +20,6 @@ pgport_sources = [
   'snprintf.c',
   'strerror.c',
   'tar.c',
-  'user.c',
 ]
 
 if host_system == 'windows'

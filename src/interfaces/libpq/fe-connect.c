@@ -50,6 +50,7 @@
 #include <netdb.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
+#include <pwd.h>
 #endif
 
 #ifdef WIN32
@@ -7702,10 +7703,24 @@ pqGetHomeDirectory(char *buf, int bufsize)
 	const char *home;
 
 	home = getenv("HOME");
-	if (home == NULL || home[0] == '\0')
-		return pg_get_user_home_dir(geteuid(), buf, bufsize);
-	strlcpy(buf, home, bufsize);
-	return true;
+	if (home && home[0])
+	{
+		strlcpy(buf, home, bufsize);
+		return true;
+	}
+	else
+	{
+		struct passwd pwbuf;
+		struct passwd *pw;
+		char		tmpbuf[1024];
+		int			rc;
+
+		rc = getpwuid_r(geteuid(), &pwbuf, tmpbuf, sizeof tmpbuf, &pw);
+		if (rc != 0 || !pw)
+			return false;
+		strlcpy(buf, pw->pw_dir, bufsize);
+		return true;
+	}
 #else
 	char		tmppath[MAX_PATH];
 

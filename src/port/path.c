@@ -32,6 +32,7 @@
 #define near
 #include <shlobj.h>
 #else
+#include <pwd.h>
 #include <unistd.h>
 #endif
 
@@ -934,10 +935,24 @@ get_home_path(char *ret_path)
 	const char *home;
 
 	home = getenv("HOME");
-	if (home == NULL || home[0] == '\0')
-		return pg_get_user_home_dir(geteuid(), ret_path, MAXPGPATH);
-	strlcpy(ret_path, home, MAXPGPATH);
-	return true;
+	if (home && home[0])
+	{
+		strlcpy(ret_path, home, MAXPGPATH);
+		return true;
+	}
+	else
+	{
+		struct passwd pwbuf;
+		struct passwd *pw;
+		char		buf[1024];
+		int			rc;
+
+		rc = getpwuid_r(geteuid(), &pwbuf, buf, sizeof buf, &pw);
+		if (rc != 0 || !pw)
+			return false;
+		strlcpy(ret_path, pw->pw_dir, MAXPGPATH);
+		return true;
+	}
 #else
 	char	   *tmppath;
 

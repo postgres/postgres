@@ -1857,7 +1857,10 @@ auth_peer(hbaPort *port)
 	uid_t		uid;
 	gid_t		gid;
 #ifndef WIN32
+	struct passwd pwbuf;
 	struct passwd *pw;
+	char		buf[1024];
+	int			rc;
 	int			ret;
 #endif
 
@@ -1876,16 +1879,18 @@ auth_peer(hbaPort *port)
 	}
 
 #ifndef WIN32
-	errno = 0;					/* clear errno before call */
-	pw = getpwuid(uid);
-	if (!pw)
+	rc = getpwuid_r(uid, &pwbuf, buf, sizeof buf, &pw);
+	if (rc != 0)
 	{
-		int			save_errno = errno;
-
+		errno = rc;
 		ereport(LOG,
-				(errmsg("could not look up local user ID %ld: %s",
-						(long) uid,
-						save_errno ? strerror(save_errno) : _("user does not exist"))));
+				errmsg("could not look up local user ID %ld: %m", (long) uid));
+		return STATUS_ERROR;
+	}
+	else if (!pw)
+	{
+		ereport(LOG,
+				errmsg("local user with ID %ld does not exist", (long) uid));
 		return STATUS_ERROR;
 	}
 

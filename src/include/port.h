@@ -436,12 +436,6 @@ extern size_t strnlen(const char *str, size_t maxlen);
 extern char *strsep(char **stringp, const char *delim);
 #endif
 
-/* port/user.c */
-#ifndef WIN32
-extern bool pg_get_user_name(uid_t user_id, char *buffer, size_t buflen);
-extern bool pg_get_user_home_dir(uid_t user_id, char *buffer, size_t buflen);
-#endif
-
 /*
  * Callers should use the qsort() macro defined below instead of calling
  * pg_qsort() directly.
