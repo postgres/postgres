@@ -200,6 +200,7 @@ typedef struct _typeInfo
 	const char *rolname;
 	Oid			typelem;
 	Oid			typrelid;
+	Oid			typarray;
 	char		typrelkind;		/* 'r', 'v', 'c', etc */
 	char		typtype;		/* 'b', 'c', etc */
 	bool		isArray;		/* true if auto-generated array type */

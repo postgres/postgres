@@ -5412,23 +5412,15 @@ binary_upgrade_set_type_oids_by_type_oid(Archive *fout,
 	Oid			pg_type_array_oid;
 	Oid			pg_type_multirange_oid;
 	Oid			pg_type_multirange_array_oid;
+	TypeInfo   *tinfo;
 
 	appendPQExpBufferStr(upgrade_buffer, "\n-- For binary upgrade, must preserve pg_type oid\n");
 	appendPQExpBuffer(upgrade_buffer,
 					  "SELECT pg_catalog.binary_upgrade_set_next_pg_type_oid('%u'::pg_catalog.oid);\n\n",
 					  pg_type_oid);
 
-	appendPQExpBuffer(upgrade_query,
-					  "SELECT typarray "
-					  "FROM pg_catalog.pg_type "
-					  "WHERE oid = '%u'::pg_catalog.oid;",
-					  pg_type_oid);
-
-	res = ExecuteSqlQueryForSingleRow(fout, upgrade_query->data);
-
-	pg_type_array_oid = atooid(PQgetvalue(res, 0, PQfnumber(res, "typarray")));
-
-	PQclear(res);
+	tinfo = findTypeByOid(pg_type_oid);
+	pg_type_array_oid = tinfo->typarray;
 
 	if (!OidIsValid(pg_type_array_oid) && force_array_type)
 		pg_type_array_oid = get_next_possible_free_pg_type_oid(fout, upgrade_query);
@@ -5910,6 +5902,7 @@ getTypes(Archive *fout)
 	int			i_typtype;
 	int			i_typisdefined;
 	int			i_isarray;
+	int			i_typarray;
 
 	/*
 	 * we include even the built-in types because those may be used as array
@@ -5930,7 +5923,7 @@ getTypes(Archive *fout)
 						 "typnamespace, typacl, "
 						 "acldefault('T', typowner) AS acldefault, "
 						 "typowner, "
-						 "typelem, typrelid, "
+						 "typelem, typrelid, typarray, "
 						 "CASE WHEN typrelid = 0 THEN ' '::\"char\" "
 						 "ELSE (SELECT relkind FROM pg_class WHERE oid = typrelid) END AS typrelkind, "
 						 "typtype, typisdefined, "
@@ -5957,6 +5950,7 @@ getTypes(Archive *fout)
 	i_typtype = PQfnumber(res, "typtype");
 	i_typisdefined = PQfnumber(res, "typisdefined");
 	i_isarray = PQfnumber(res, "isarray");
+	i_typarray = PQfnumber(res, "typarray");
 
 	for (i = 0; i < ntups; i++)
 	{
@@ -5988,6 +5982,8 @@ getTypes(Archive *fout)
 			tyinfo[i].isArray = true;
 		else
 			tyinfo[i].isArray = false;
+
+		tyinfo[i].typarray = atooid(PQgetvalue(res, i, i_typarray));
 
 		if (tyinfo[i].typtype == TYPTYPE_MULTIRANGE)
 			tyinfo[i].isMultirange = true;
