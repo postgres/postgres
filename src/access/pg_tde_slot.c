@@ -445,8 +445,8 @@ slot_copytuple(void* buffer, HeapTuple tuple)
 	newTuple->t_self = tuple->t_self;
 	newTuple->t_tableOid = tuple->t_tableOid;
 	newTuple->t_data = (HeapTupleHeader) ((char *) newTuple + HEAPTUPLESIZE);
-	// TODO: no need for this memcpy, don't decrypt in place instead!
-	memcpy((char *) newTuple->t_data, (char *) tuple->t_data, tuple->t_len);
+	// We don't copy the data, it will be copied by the decryption code
+	memcpy((char *) newTuple->t_data, (char *) tuple->t_data, tuple->t_data->t_hoff);
 	return newTuple;
 }
 
