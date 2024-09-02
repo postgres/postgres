@@ -3,13 +3,12 @@
 # This file is distributed under the same license as the pg_combinebackup (PostgreSQL) package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2024.
 #
-#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_combinebackup (PostgreSQL) 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2024-08-29 17:53+0000\n"
-"PO-Revision-Date: 2024-08-30 08:32+0200\n"
+"PO-Revision-Date: 2024-09-02 17:49+0200\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: fr\n"
