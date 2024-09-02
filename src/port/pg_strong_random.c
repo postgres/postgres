@@ -50,17 +50,20 @@
 
 #ifdef USE_OPENSSL
 
+#include <openssl/opensslv.h>
 #include <openssl/rand.h>
 
 void
 pg_strong_random_init(void)
 {
+#if (OPENSSL_VERSION_NUMBER < 0x10101000L)
 	/*
-	 * Make sure processes do not share OpenSSL randomness state.  This is no
-	 * longer required in OpenSSL 1.1.1 and later versions, but until we drop
-	 * support for version < 1.1.1 we need to do this.
+	 * Make sure processes do not share OpenSSL randomness state.  This is not
+	 * required on LibreSSL and no longer required in OpenSSL 1.1.1 and later
+	 * versions.
 	 */
 	RAND_poll();
+#endif
 }
 
 bool
