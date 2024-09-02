@@ -43,11 +43,12 @@ static inline void tdeheap_tts_buffer_heap_store_tuple(TupleTableSlot *slot,
 											   HeapTuple tuple,
 											   Buffer buffer,
 											   bool transfer_pin);
-
+static inline RelKeyData *get_current_slot_relation_key(TDEBufferHeapTupleTableSlot *bslot, Relation rel);
 static void
 tdeheap_tts_buffer_heap_init(TupleTableSlot *slot)
 {
     TDEBufferHeapTupleTableSlot *bslot = (TDEBufferHeapTupleTableSlot *) slot;
+	bslot->cached_relation_key = NULL;
 }
 
 static void
@@ -509,7 +510,7 @@ PGTdeExecStoreBufferHeapTuple(Relation rel,
 
 	if (rel->rd_rel->relkind != RELKIND_TOASTVALUE)
 	{
-		RelKeyData *key = GetRelationKey(rel->rd_locator);
+		RelKeyData *key = get_current_slot_relation_key(bslot, rel);
 		slot_copytuple(bslot->decrypted_buffer, tuple);
 		PG_TDE_DECRYPT_TUPLE_EX(tuple, (HeapTuple)bslot->decrypted_buffer, key, "ExecStoreBuffer");
 		tuple->t_data = ((HeapTuple)bslot->decrypted_buffer)->t_data;
@@ -547,7 +548,7 @@ PGTdeExecStorePinnedBufferHeapTuple(Relation rel,
 
 	if (rel->rd_rel->relkind != RELKIND_TOASTVALUE)
 	{
-		RelKeyData *key = GetRelationKey(rel->rd_locator);
+		RelKeyData *key = get_current_slot_relation_key(bslot,rel);
 
 		slot_copytuple(bslot->decrypted_buffer, tuple);
 		PG_TDE_DECRYPT_TUPLE_EX(tuple, (HeapTuple)bslot->decrypted_buffer, key, "ExecStorePinnedBuffer");
@@ -560,4 +561,13 @@ PGTdeExecStorePinnedBufferHeapTuple(Relation rel,
 	slot->tts_tableOid = tuple->t_tableOid;
 
 	return slot;
+}
+
+static inline RelKeyData*
+get_current_slot_relation_key(TDEBufferHeapTupleTableSlot *bslot, Relation rel)
+{
+	Assert(bslot != NULL);
+	if (bslot->cached_relation_key == NULL)
+		bslot->cached_relation_key = GetRelationKey(rel->rd_locator);
+	return bslot->cached_relation_key;
 }

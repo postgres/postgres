@@ -11,9 +11,10 @@
 #define PG_TDE_SLOT_H
 
 
- #include "postgres.h"
- #include "executor/tuptable.h"
- #include "utils/relcache.h"
+#include "postgres.h"
+#include "executor/tuptable.h"
+#include "access/pg_tde_tdemap.h"
+#include "utils/relcache.h"
 
 /* heap tuple residing in a buffer */
 typedef struct TDEBufferHeapTupleTableSlot
@@ -30,6 +31,7 @@ typedef struct TDEBufferHeapTupleTableSlot
 	 */
 	Buffer		buffer;			/* tuple's buffer, or InvalidBuffer */
 	char		decrypted_buffer[BLCKSZ];
+	RelKeyData *cached_relation_key;
 } TDEBufferHeapTupleTableSlot;
 
 extern PGDLLIMPORT const TupleTableSlotOps TTSOpsTDEBufferHeapTuple;
