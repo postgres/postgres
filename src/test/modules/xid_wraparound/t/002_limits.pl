@@ -103,7 +103,7 @@ $ret = $node->psql(
 	stderr => \$stderr);
 like(
 	$stderr,
-	qr/ERROR:  database is not accepting commands that assign new XIDs to avoid wraparound data loss in database "postgres"/,
+	qr/ERROR:  database is not accepting commands that assign new transaction IDs to avoid wraparound data loss in database "postgres"/,
 	"stop-limit");
 
 # Finish the old transaction, to allow vacuum freezing to advance
