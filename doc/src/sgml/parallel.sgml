@@ -423,7 +423,7 @@ EXPLAIN SELECT * FROM pgbench_accounts WHERE filler LIKE '%x%';
     Append</literal> node can have both partial and non-partial child plans.
     Non-partial children will be scanned by only a single process, since
     scanning them more than once would produce duplicate results.  Plans that
-    involve appending multiple results sets can therefore achieve
+    involve appending multiple result sets can therefore achieve
     coarse-grained parallelism even when efficient partial plans are not
     available.  For example, consider a query against a partitioned table
     that can only be implemented efficiently by using an index that does
