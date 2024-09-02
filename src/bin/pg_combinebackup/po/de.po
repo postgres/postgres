@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_combinebackup (PostgreSQL) 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-07-22 11:23+0000\n"
-"PO-Revision-Date: 2024-07-22 16:49+0200\n"
+"POT-Creation-Date: 2024-08-29 13:22+0000\n"
+"PO-Revision-Date: 2024-08-29 16:46+0200\n"
 "Last-Translator: Peter Eisentraut <peter@eisentraut.org>\n"
 "Language-Team: German <pgsql-translators@postgresql.org>\n"
 "Language: de\n"
@@ -324,7 +324,7 @@ msgid "unexpected manifest version"
 msgstr "unerwartete Manifestversion"
 
 #: ../../common/parse_manifest.c:637
-msgid "manifest system identifier not an integer"
+msgid "system identifier in manifest not an integer"
 msgstr "Systemidentifikator im Manifest ist keine ganze Zahl"
 
 #: ../../common/parse_manifest.c:662
@@ -571,7 +571,7 @@ msgstr "%s: Systemidentifikator im Manifest ist %llu, aber Kontrolldatei hat %ll
 
 #: pg_combinebackup.c:340
 #, c-format
-msgid "can't generate a manifest because no manifest is available for the final input backup"
+msgid "cannot generate a manifest because no manifest is available for the final input backup"
 msgstr "kann kein Manifest erzeugen, weil kein Manifest für das letzte Eingabe-Backup verfügbar ist"
 
 #: pg_combinebackup.c:387
@@ -646,8 +646,8 @@ msgstr "nur einige Sicherungen haben Prüfsummen aktiviert"
 
 #: pg_combinebackup.c:658
 #, c-format
-msgid "disable, and optionally reenable, checksums on the output directory to avoid failures"
-msgstr "schalten Sie für das Ausgabeverzeichnis Prüfsummen aus, und optional wieder an, um Fehler zu vermeiden"
+msgid "Disable, and optionally reenable, checksums on the output directory to avoid failures."
+msgstr "Schalten Sie für das Ausgabeverzeichnis Prüfsummen aus, und optional wieder an, um Fehler zu vermeiden."
 
 #: pg_combinebackup.c:693
 #, c-format
@@ -740,7 +740,7 @@ msgstr ""
 
 #: pg_combinebackup.c:769
 #, c-format
-msgid "      --clone               clone (reflink) instead of copying files\n"
+msgid "      --clone               clone (reflink) files instead of copying\n"
 msgstr "      --clone               Dateien klonen (reflink) statt kopieren\n"
 
 #: pg_combinebackup.c:770
@@ -750,7 +750,7 @@ msgstr "      --copy                Dateien kopieren (Voreinstellung)\n"
 
 #: pg_combinebackup.c:771
 #, c-format
-msgid "      --copy-file-range     copy using copy_file_range() syscall\n"
+msgid "      --copy-file-range     copy using copy_file_range() system call\n"
 msgstr "      --copy-file-range     mit Systemaufruf copy_file_range() kopieren\n"
 
 #: pg_combinebackup.c:772
@@ -808,10 +808,10 @@ msgstr "überspringe symbolische Verknüpfung »%s«"
 msgid "skipping special file \"%s\""
 msgstr "überspringe besondere Datei »%s«"
 
-#: pg_combinebackup.c:1073
+#: pg_combinebackup.c:1073 reconstruct.c:300
 #, c-format
-msgid "\"%s\" contains no entry for \"%s\""
-msgstr "»%s« enthält keinen Eintrag für »%s«"
+msgid "manifest file \"%s\" contains no entry for file \"%s\""
+msgstr "Manifestdatei »%s« enthält keinen Eintrag für Datei »%s«"
 
 #: pg_combinebackup.c:1189
 #, c-format
@@ -863,11 +863,6 @@ msgstr "Datei »%s« ist zu groß"
 msgid "could not read file \"%s\": read %zd of %lld"
 msgstr "konnte Datei »%s« nicht lesen: %zd von %lld gelesen"
 
-#: reconstruct.c:300
-#, c-format
-msgid "manifest file \"%s\" contains no entry for file \"%s\""
-msgstr "Manifestdatei »%s« enthält keinen Eintrag für Datei »%s«"
-
 #: reconstruct.c:410
 #, c-format
 msgid "file \"%s\" is too short: expected %llu, found %llu"
@@ -875,8 +870,8 @@ msgstr "Datei »%s« ist zu kurz: %llu erwartet, %llu gefunden"
 
 #: reconstruct.c:452
 #, c-format
-msgid "file \"%s\" has bad incremental magic number (0x%x not 0x%x)"
-msgstr "Datei »%s« hat falsche magische Zahl für inkrementelles Backup (0x%x, nicht 0x%x)"
+msgid "file \"%s\" has bad incremental magic number (0x%x, expected 0x%x)"
+msgstr "Datei »%s« hat falsche inkrementelle magische Zahl (0x%x, erwartet 0x%x)"
 
 #: reconstruct.c:458
 #, c-format

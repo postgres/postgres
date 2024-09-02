@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_dump (PostgreSQL) 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-06-24 21:52+0000\n"
-"PO-Revision-Date: 2024-06-25 05:48+0200\n"
+"POT-Creation-Date: 2024-08-27 16:52+0000\n"
+"PO-Revision-Date: 2024-08-28 05:56+0200\n"
 "Last-Translator: Temuri Doghonadze <temuri.doghonadze@gmail.com>\n"
 "Language-Team: Georgian <nothing>\n"
 "Language: ka\n"
@@ -823,7 +823,7 @@ msgstr "მიმდინარეობს დიდი ობიექტი�
 msgid "could not create large object %u: %s"
 msgstr "დიდი ობიექტის (%u) შექმნის შეცდომა: %s"
 
-#: pg_backup_archiver.c:1486 pg_dump.c:3863
+#: pg_backup_archiver.c:1486 pg_dump.c:3888
 #, c-format
 msgid "could not open large object %u: %s"
 msgstr "დიდი ობიექტის (%u) გახსნის შეცდომა: %s"
@@ -974,12 +974,12 @@ msgstr "stdout-ის ბოლოში მისაწერად გახ�
 msgid "unrecognized file format \"%d\""
 msgstr "ფაილის უცნობი ფორმატი \"%d\""
 
-#: pg_backup_archiver.c:2527 pg_backup_archiver.c:4625
+#: pg_backup_archiver.c:2527 pg_backup_archiver.c:4647
 #, c-format
 msgid "finished item %d %s %s"
 msgstr "დასრულებული ელემენტი %d %s %s"
 
-#: pg_backup_archiver.c:2531 pg_backup_archiver.c:4638
+#: pg_backup_archiver.c:2531 pg_backup_archiver.c:4660
 #, c-format
 msgid "worker process failed: exit code %d"
 msgstr "დამხმარე პროცესის შეცდომა: გამოსვლის კოდი %d"
@@ -1064,72 +1064,72 @@ msgstr "ცხრილის წვდომის მეთოდის შე
 msgid "don't know how to set owner for object type \"%s\""
 msgstr "არ ვიცი, როგორ დავაყენო ობიექტის მოცემული ტიპის (%s) მფლობელი"
 
-#: pg_backup_archiver.c:3982
+#: pg_backup_archiver.c:4004
 #, c-format
 msgid "did not find magic string in file header"
 msgstr "ფაილის თავსართში მაგიური სტრიქონი ნაპოვნი არაა"
 
-#: pg_backup_archiver.c:3996
+#: pg_backup_archiver.c:4018
 #, c-format
 msgid "unsupported version (%d.%d) in file header"
 msgstr "ფაილის თავსართში არსებული ვერსია (%d.%d) მხარდაუჭერელია"
 
-#: pg_backup_archiver.c:4001
+#: pg_backup_archiver.c:4023
 #, c-format
 msgid "sanity check on integer size (%lu) failed"
 msgstr "მთელი რიცხვის ზომის (%lu) სისწორის შემოწმების შეცდომა"
 
-#: pg_backup_archiver.c:4005
+#: pg_backup_archiver.c:4027
 #, c-format
 msgid "archive was made on a machine with larger integers, some operations might fail"
 msgstr "არქივი შეიქმნა მანქანაზე, სადაც მთელი რიცხვი უფრო დიდია. ზოგიერთი ოპერაცია შეიძლება შეცდომით დასრულდეს"
 
-#: pg_backup_archiver.c:4015
+#: pg_backup_archiver.c:4037
 #, c-format
 msgid "expected format (%d) differs from format found in file (%d)"
 msgstr "მოსალოდნელი ფორმატი (%d) განსხვავდება ფაილის ფორმატისგან (%d)"
 
-#: pg_backup_archiver.c:4037
+#: pg_backup_archiver.c:4059
 #, c-format
 msgid "archive is compressed, but this installation does not support compression (%s) -- no data will be available"
 msgstr "არქივი შეკუმშულია, მაგრამ ამ ვერსიას შეკუმშვის(%s) მხარდაჭერა არ გააჩნია -- მონაცემები მიუწვდომელი იქნება"
 
-#: pg_backup_archiver.c:4073
+#: pg_backup_archiver.c:4095
 #, c-format
 msgid "invalid creation date in header"
 msgstr "თავსართში არსებული შექმნის დრო არასწორია"
 
-#: pg_backup_archiver.c:4207
+#: pg_backup_archiver.c:4229
 #, c-format
 msgid "processing item %d %s %s"
 msgstr "მუშავდება ელემენტი %d %s %s"
 
-#: pg_backup_archiver.c:4292
+#: pg_backup_archiver.c:4314
 #, c-format
 msgid "entering main parallel loop"
 msgstr "მთავარი პარალელური მარყუჟის დასაწყისი"
 
-#: pg_backup_archiver.c:4303
+#: pg_backup_archiver.c:4325
 #, c-format
 msgid "skipping item %d %s %s"
 msgstr "ელემენტის გამოტოვება %d %s %s"
 
-#: pg_backup_archiver.c:4312
+#: pg_backup_archiver.c:4334
 #, c-format
 msgid "launching item %d %s %s"
 msgstr "ელემენტის გაშვება %d %s %s"
 
-#: pg_backup_archiver.c:4366
+#: pg_backup_archiver.c:4388
 #, c-format
 msgid "finished main parallel loop"
 msgstr "მთავარი პარალელური მარყუჟის დასასრული"
 
-#: pg_backup_archiver.c:4402
+#: pg_backup_archiver.c:4424
 #, c-format
 msgid "processing missed item %d %s %s"
 msgstr "გამორჩენილი ჩანაწერის დამუშავება %d %s %s"
 
-#: pg_backup_archiver.c:4944
+#: pg_backup_archiver.c:4966
 #, c-format
 msgid "table \"%s\" could not be created, will not restore its data"
 msgstr "ცხრილის (%s) შექმნა შეუძლებელია. მონაცემების აღდგენა არ მოხდება"
@@ -1245,7 +1245,7 @@ msgstr "ბაზასთან მიერთების შეცდომ�
 msgid "reconnection failed: %s"
 msgstr "თავიდან მიერთების შეცდომა: %s"
 
-#: pg_backup_db.c:190 pg_backup_db.c:264 pg_dump.c:787 pg_dump_sort.c:1213
+#: pg_backup_db.c:190 pg_backup_db.c:264 pg_dump.c:788 pg_dump_sort.c:1213
 #: pg_dump_sort.c:1233 pg_dumpall.c:1704 pg_dumpall.c:1788
 #, c-format
 msgid "%s"
@@ -1292,7 +1292,7 @@ msgstr "\"PQputCopyEnd\"-ის მიერ დაბრუნებული �
 msgid "COPY failed for table \"%s\": %s"
 msgstr "COPY-ის შეცდომა ცხრილისთვის \"%s\": %s"
 
-#: pg_backup_db.c:521 pg_dump.c:2271
+#: pg_backup_db.c:521 pg_dump.c:2283
 #, c-format
 msgid "unexpected extra results during COPY of table \"%s\""
 msgstr "მოულოდნელი დამატებითი შედეგები COPY-ის დროს ცხრილისთვის \"%s\""
@@ -1464,7 +1464,7 @@ msgstr "%s-ში ნაპოვნია დაზიანებული თ
 msgid "unrecognized section name: \"%s\""
 msgstr "სექციის უცნობი სახელი: %s"
 
-#: pg_backup_utils.c:55 pg_dump.c:693 pg_dump.c:710 pg_dumpall.c:370
+#: pg_backup_utils.c:55 pg_dump.c:694 pg_dump.c:711 pg_dumpall.c:370
 #: pg_dumpall.c:380 pg_dumpall.c:388 pg_dumpall.c:396 pg_dumpall.c:403
 #: pg_dumpall.c:413 pg_dumpall.c:488 pg_restore.c:307 pg_restore.c:323
 #: pg_restore.c:337
@@ -1477,82 +1477,82 @@ msgstr "მეტი ინფორმაციისთვის სცად�
 msgid "out of on_exit_nicely slots"
 msgstr "on_exit_nicely ტიპის სლოტები აღარ დარჩა"
 
-#: pg_dump.c:708 pg_dumpall.c:378 pg_restore.c:321
+#: pg_dump.c:709 pg_dumpall.c:378 pg_restore.c:321
 #, c-format
 msgid "too many command-line arguments (first is \"%s\")"
 msgstr "მეტისმეტად ბევრი ბრძანების-სტრიქონის არგუმენტი (პირველია \"%s\")"
 
-#: pg_dump.c:727 pg_restore.c:344
+#: pg_dump.c:728 pg_restore.c:344
 #, c-format
 msgid "options -s/--schema-only and -a/--data-only cannot be used together"
 msgstr "პარამეტრები -s/--schema-only და -a/--data-only ერთად ვერ გამოიყენება"
 
-#: pg_dump.c:730
+#: pg_dump.c:731
 #, c-format
 msgid "options -s/--schema-only and --include-foreign-data cannot be used together"
 msgstr "პარამეტრები -s/--schema-only და --include-foreign-data ერთად ვერ გამოიყენება"
 
-#: pg_dump.c:733
+#: pg_dump.c:734
 #, c-format
 msgid "option --include-foreign-data is not supported with parallel backup"
 msgstr "პარამეტრი --include-foreign-data მხარდაუჭერელია პარალელური მარქაფისას"
 
-#: pg_dump.c:736 pg_restore.c:347
+#: pg_dump.c:737 pg_restore.c:347
 #, c-format
 msgid "options -c/--clean and -a/--data-only cannot be used together"
 msgstr "პარამეტრები -c/--clean და -a/--data-only ერთად ვერ გამოიყენება"
 
-#: pg_dump.c:739 pg_dumpall.c:408 pg_restore.c:375
+#: pg_dump.c:740 pg_dumpall.c:408 pg_restore.c:375
 #, c-format
 msgid "option --if-exists requires option -c/--clean"
 msgstr "--if-exists -ს -c/--clean პარამეტრი ესაჭიროება"
 
-#: pg_dump.c:746
+#: pg_dump.c:747
 #, c-format
 msgid "option --on-conflict-do-nothing requires option --inserts, --rows-per-insert, or --column-inserts"
 msgstr "--on-conflict-do-nothing -ს --inserts, --rows-per-insert ან --column-inserts ესაჭიროება"
 
-#: pg_dump.c:775
+#: pg_dump.c:776
 #, c-format
 msgid "unrecognized compression algorithm: \"%s\""
 msgstr "შეკუმშვის უცხო ალგორითმი: \"%s\""
 
-#: pg_dump.c:782
+#: pg_dump.c:783
 #, c-format
 msgid "invalid compression specification: %s"
 msgstr "შეკუმშვის არასწორი სპეციფიკაცია: %s"
 
-#: pg_dump.c:795
+#: pg_dump.c:796
 #, c-format
 msgid "compression option \"%s\" is not currently supported by pg_dump"
 msgstr "შეკუმშვის პარამეტრი \"%s\"-ი pg_dump-ის მიერ ამჟამად მხარდაჭერილი არაა"
 
-#: pg_dump.c:807
+#: pg_dump.c:808
 #, c-format
 msgid "parallel backup only supported by the directory format"
 msgstr "პარალელური მარქაფი მხოლოდ საქაღალდის რეჟიმშია მხარდაჭერილი"
 
-#: pg_dump.c:853
+#: pg_dump.c:854
 #, c-format
 msgid "last built-in OID is %u"
 msgstr "ბოლო ჩაშენებული OID %u"
 
-#: pg_dump.c:862
+#: pg_dump.c:863
 #, c-format
 msgid "no matching schemas were found"
 msgstr "შესაბამისი სქემები ნაპოვნი არაა"
 
-#: pg_dump.c:879
+#: pg_dump.c:880
 #, c-format
 msgid "no matching tables were found"
 msgstr "შესაბამისი ცხრილები ნაპოვნი არაა"
 
-#: pg_dump.c:907
+#: pg_dump.c:908
 #, c-format
 msgid "no matching extensions were found"
 msgstr "შესაბამისი გაფართოებები ნაპოვნი არაა"
 
-#: pg_dump.c:1091
+#: pg_dump.c:1092
 #, c-format
 msgid ""
 "%s dumps a database as a text file or to other formats.\n"
@@ -1561,17 +1561,17 @@ msgstr ""
 "%s მონაცემთა ბაზას გამოიტანს, როგორც ტექსტურ ფაილს ან სხვა ფორმატებს.\n"
 "\n"
 
-#: pg_dump.c:1092 pg_dumpall.c:635 pg_restore.c:452
+#: pg_dump.c:1093 pg_dumpall.c:635 pg_restore.c:452
 #, c-format
 msgid "Usage:\n"
 msgstr "გამოყენება:\n"
 
-#: pg_dump.c:1093
+#: pg_dump.c:1094
 #, c-format
 msgid "  %s [OPTION]... [DBNAME]\n"
 msgstr "  %s [პარამეტრი]... [ბაზისსახელი]\n"
 
-#: pg_dump.c:1095 pg_dumpall.c:638 pg_restore.c:455
+#: pg_dump.c:1096 pg_dumpall.c:638 pg_restore.c:455
 #, c-format
 msgid ""
 "\n"
@@ -1580,12 +1580,12 @@ msgstr ""
 "\n"
 "ზოგადი პარამეტრები:\n"
 
-#: pg_dump.c:1096
+#: pg_dump.c:1097
 #, c-format
 msgid "  -f, --file=FILENAME          output file or directory name\n"
 msgstr "  -f, --file=FILENAME          გამოტანის ფაილის სახელი\n"
 
-#: pg_dump.c:1097
+#: pg_dump.c:1098
 #, c-format
 msgid ""
 "  -F, --format=c|d|t|p         output file format (custom, directory, tar,\n"
@@ -1594,22 +1594,22 @@ msgstr ""
 "  -F, --format=c|d|t|p         გამოტანის ფაილის ფორმატი (custom, directory, tar\n"
 "                               უბრალო ტექსტი (ნაგულისხმევი))\n"
 
-#: pg_dump.c:1099
+#: pg_dump.c:1100
 #, c-format
 msgid "  -j, --jobs=NUM               use this many parallel jobs to dump\n"
 msgstr "  -j, --jobs=NUM               მითითებული რაოდენობის პარალელური დავალების გაშვება\n"
 
-#: pg_dump.c:1100 pg_dumpall.c:640
+#: pg_dump.c:1101 pg_dumpall.c:640
 #, c-format
 msgid "  -v, --verbose                verbose mode\n"
 msgstr "  -v, --verbose                   დამატებითი ინფორმაციის გამოტანა\n"
 
-#: pg_dump.c:1101 pg_dumpall.c:641
+#: pg_dump.c:1102 pg_dumpall.c:641
 #, c-format
 msgid "  -V, --version                output version information, then exit\n"
 msgstr "  -V, --version            ვერსიის ინფორმაციის გამოტანა და გასვლა\n"
 
-#: pg_dump.c:1102
+#: pg_dump.c:1103
 #, c-format
 msgid ""
 "  -Z, --compress=METHOD[:DETAIL]\n"
@@ -1618,27 +1618,27 @@ msgstr ""
 "  -Z, --compress=მეთოდი[:წვრილმანი]\n"
 "                         შეკუმშვის მითითება\n"
 
-#: pg_dump.c:1104 pg_dumpall.c:642
+#: pg_dump.c:1105 pg_dumpall.c:642
 #, c-format
 msgid "  --lock-wait-timeout=TIMEOUT  fail after waiting TIMEOUT for a table lock\n"
 msgstr "  --lock-wait-timeout=TIMEOUT  ცხრილის დაბლოკვისას TIMEOUT ის შემდეგ შეცდომის გამოგდება\n"
 
-#: pg_dump.c:1105 pg_dumpall.c:670
+#: pg_dump.c:1106 pg_dumpall.c:670
 #, c-format
 msgid "  --no-sync                    do not wait for changes to be written safely to disk\n"
 msgstr "            --no-sync             არ დაველოდო ცვლილებების დისკზე უსაფრთხოდ ჩაწერას\n"
 
-#: pg_dump.c:1106
+#: pg_dump.c:1107
 #, c-format
 msgid "  --sync-method=METHOD         set method for syncing files to disk\n"
 msgstr "      --sync-method=მეთოდი          ფაილების დისკზე სინქრონიზაციის მეთოდის დაყენება\n"
 
-#: pg_dump.c:1107 pg_dumpall.c:643
+#: pg_dump.c:1108 pg_dumpall.c:643
 #, c-format
 msgid "  -?, --help                   show this help, then exit\n"
 msgstr "  -?, --help     ამ დახმარების ჩვენება და გასვლა\n"
 
-#: pg_dump.c:1109 pg_dumpall.c:644
+#: pg_dump.c:1110 pg_dumpall.c:644
 #, c-format
 msgid ""
 "\n"
@@ -1647,62 +1647,62 @@ msgstr ""
 "\n"
 "პარამეტრები, რომლებიც აკონტროლებენ გამოტანას:\n"
 
-#: pg_dump.c:1110 pg_dumpall.c:645
+#: pg_dump.c:1111 pg_dumpall.c:645
 #, c-format
 msgid "  -a, --data-only              dump only the data, not the schema\n"
 msgstr "  -a, --data-only              გამოტანილი იქნება მხოლოდ მონაცემები, სქემის გარეშე\n"
 
-#: pg_dump.c:1111
+#: pg_dump.c:1112
 #, c-format
 msgid "  -b, --large-objects          include large objects in dump\n"
 msgstr "  -b, --large-objects                  გამოტანილი იქნება დიდი ობიექტებიც\n"
 
-#: pg_dump.c:1112
+#: pg_dump.c:1113
 #, c-format
 msgid "  --blobs                      (same as --large-objects, deprecated)\n"
 msgstr "  --blobs                      (იგივე, რაც--large-objects, რომელიც მოძველებულია)\n"
 
-#: pg_dump.c:1113
+#: pg_dump.c:1114
 #, c-format
 msgid "  -B, --no-large-objects       exclude large objects in dump\n"
 msgstr "  -B, --no-large-objects               დიდი ობიექტები გამოტანილი არ იქნება\n"
 
-#: pg_dump.c:1114
+#: pg_dump.c:1115
 #, c-format
 msgid "  --no-blobs                   (same as --no-large-objects, deprecated)\n"
 msgstr "  --no-blobs                   (იგივე, რაც --no-large-objects, რომელიც მოძველებულია)\n"
 
-#: pg_dump.c:1115 pg_restore.c:466
+#: pg_dump.c:1116 pg_restore.c:466
 #, c-format
 msgid "  -c, --clean                  clean (drop) database objects before recreating\n"
 msgstr "  -c, --clean                  ბაზის ობიექტების წაშლა თავიდან შექმნამდე\n"
 
-#: pg_dump.c:1116
+#: pg_dump.c:1117
 #, c-format
 msgid "  -C, --create                 include commands to create database in dump\n"
 msgstr "  -C, --create                 გამოტანილში ბაზის შექმნის ბრძანებების მიყოლება\n"
 
-#: pg_dump.c:1117
+#: pg_dump.c:1118
 #, c-format
 msgid "  -e, --extension=PATTERN      dump the specified extension(s) only\n"
 msgstr "  -e, --extension=PATTERN      მხოლოდ მითითებული გაფართოებების გამოტანა\n"
 
-#: pg_dump.c:1118 pg_dumpall.c:647
+#: pg_dump.c:1119 pg_dumpall.c:647
 #, c-format
 msgid "  -E, --encoding=ENCODING      dump the data in encoding ENCODING\n"
 msgstr "  -E, --encoding=ENCODING      მხოლოდ მითითებული კოდირების მქონე მონაცემების გამოტანა\n"
 
-#: pg_dump.c:1119
+#: pg_dump.c:1120
 #, c-format
 msgid "  -n, --schema=PATTERN         dump the specified schema(s) only\n"
 msgstr "  -n, --schema=PATTERN         მხოლოდ მითითებული სქემების გამოტანა\n"
 
-#: pg_dump.c:1120
+#: pg_dump.c:1121
 #, c-format
 msgid "  -N, --exclude-schema=PATTERN do NOT dump the specified schema(s)\n"
 msgstr "  -N, --exclude-schema=PATTERN მითითებული სქემები გამოტანილი არ იქნება\n"
 
-#: pg_dump.c:1121
+#: pg_dump.c:1122
 #, c-format
 msgid ""
 "  -O, --no-owner               skip restoration of object ownership in\n"
@@ -1711,52 +1711,52 @@ msgstr ""
 "  -O, --no-owner               უბრალო ტექსტურ ფორმატში ობიექტების მფლობელობის \n"
 "                               აღდგენის გამოტოვება\n"
 
-#: pg_dump.c:1123 pg_dumpall.c:651
+#: pg_dump.c:1124 pg_dumpall.c:651
 #, c-format
 msgid "  -s, --schema-only            dump only the schema, no data\n"
 msgstr "  -s, --schema-only            აღდგება მხოლოდ სქემები, მონაცემები კი არა\n"
 
-#: pg_dump.c:1124
+#: pg_dump.c:1125
 #, c-format
 msgid "  -S, --superuser=NAME         superuser user name to use in plain-text format\n"
 msgstr "  -S, --superuser=NAME         უბრალო ტექსტურ ფაილში გამოტანისას გამოყენებული ზემომხმარებლის სახელი\n"
 
-#: pg_dump.c:1125
+#: pg_dump.c:1126
 #, c-format
 msgid "  -t, --table=PATTERN          dump only the specified table(s)\n"
 msgstr "  -t, --table=შაბლონი          მხოლოდ მითითებული ცხრილების დამპი\n"
 
-#: pg_dump.c:1126
+#: pg_dump.c:1127
 #, c-format
 msgid "  -T, --exclude-table=PATTERN  do NOT dump the specified table(s)\n"
 msgstr "  -T, --exclude-table=PATTERN  მითითებული ცხრილები გამოტანილი არ იქნება\n"
 
-#: pg_dump.c:1127 pg_dumpall.c:654
+#: pg_dump.c:1128 pg_dumpall.c:654
 #, c-format
 msgid "  -x, --no-privileges          do not dump privileges (grant/revoke)\n"
 msgstr "  -x, --no-privileges          პრივილეგიები (dump/revoke) გამოტანილი არ იქნება\n"
 
-#: pg_dump.c:1128 pg_dumpall.c:655
+#: pg_dump.c:1129 pg_dumpall.c:655
 #, c-format
 msgid "  --binary-upgrade             for use by upgrade utilities only\n"
 msgstr "  --binary-upgrade             გამოიყენება მხოლოდ განახლების პროგრამების მიერ\n"
 
-#: pg_dump.c:1129 pg_dumpall.c:656
+#: pg_dump.c:1130 pg_dumpall.c:656
 #, c-format
 msgid "  --column-inserts             dump data as INSERT commands with column names\n"
 msgstr "  --column-inserts             მონაცემების დამპი ისე, როგორც ბრძანება INSERT, სვეტების სახელებით\n"
 
-#: pg_dump.c:1130 pg_dumpall.c:657
+#: pg_dump.c:1131 pg_dumpall.c:657
 #, c-format
 msgid "  --disable-dollar-quoting     disable dollar quoting, use SQL standard quoting\n"
 msgstr "  --disable-dollar-quoting     დოლარით ციტირების გამორთვა. სტანდარტული SQL ციტირების გამოყენება\n"
 
-#: pg_dump.c:1131 pg_dumpall.c:658 pg_restore.c:483
+#: pg_dump.c:1132 pg_dumpall.c:658 pg_restore.c:483
 #, c-format
 msgid "  --disable-triggers           disable triggers during data-only restore\n"
 msgstr "  --disable-triggers           მხოლოდ მონაცემების აღდგენისას ტრიგერების გამორთვა\n"
 
-#: pg_dump.c:1132
+#: pg_dump.c:1133
 #, c-format
 msgid ""
 "  --enable-row-security        enable row security (dump only content user has\n"
@@ -1765,12 +1765,12 @@ msgstr ""
 "  --enable-row-security        მწკრივების უსაფრთხოების ჩართვა (მხოლოდ იმ მონაცემების დამპი, \n"
 "                               რაზეც მომხმარებელს წვდომა გააჩნია)\n"
 
-#: pg_dump.c:1134
+#: pg_dump.c:1135
 #, c-format
 msgid "  --exclude-extension=PATTERN  do NOT dump the specified extension(s)\n"
 msgstr "  --exclude-extension=PATTERN  მითითებული გაფართოებ(ებ)-ი გამოტანილი *არ* იქნება\n"
 
-#: pg_dump.c:1135
+#: pg_dump.c:1136
 #, c-format
 msgid ""
 "  --exclude-table-and-children=PATTERN\n"
@@ -1781,12 +1781,12 @@ msgstr ""
 "                              მითითებული ცხრილები დამპში არ იქნება,\n"
 "                               შვილი და დაყოფილი ცხრილების ჩათვლით\n"
 
-#: pg_dump.c:1138
+#: pg_dump.c:1139
 #, c-format
 msgid "  --exclude-table-data=PATTERN do NOT dump data for the specified table(s)\n"
 msgstr "  -T, --exclude-table=შაბლონი  შაბლონით მითითებული ცხრილები\n"
 
-#: pg_dump.c:1139
+#: pg_dump.c:1140
 #, c-format
 msgid ""
 "  --exclude-table-data-and-children=PATTERN\n"
@@ -1797,12 +1797,12 @@ msgstr ""
 "                              მითითებული ცხრილების მონაცემები დამპში არ იქნება,\n"
 "                               შვილი და დაყოფილი ცხრილების ჩათვლით\n"
 
-#: pg_dump.c:1142 pg_dumpall.c:660
+#: pg_dump.c:1143 pg_dumpall.c:660
 #, c-format
 msgid "  --extra-float-digits=NUM     override default setting for extra_float_digits\n"
 msgstr "  --extra-float-digits=NUM     extra_float_digits-ის ნაგულისხმევი პარამეტრის გადაფარვა\n"
 
-#: pg_dump.c:1143
+#: pg_dump.c:1144
 #, c-format
 msgid ""
 "  --filter=FILENAME            include or exclude objects and data from dump\n"
@@ -1811,12 +1811,12 @@ msgstr ""
 "  --filter=ფაილისსახელი            დამპიდან ობიექტების და მონაცემების, რომლებიც ემთხვევა მითითებულ\n"
 "                               ფაილისსახელში მყოფ გამოსახულებას, ამოღება ან ჩასმა\n"
 
-#: pg_dump.c:1145 pg_dumpall.c:662 pg_restore.c:487
+#: pg_dump.c:1146 pg_dumpall.c:662 pg_restore.c:487
 #, c-format
 msgid "  --if-exists                  use IF EXISTS when dropping objects\n"
 msgstr "  --if-exists                  ობიექტების გადაყრისას IF EXISTS -ის გამოყენება\n"
 
-#: pg_dump.c:1146
+#: pg_dump.c:1147
 #, c-format
 msgid ""
 "  --include-foreign-data=PATTERN\n"
@@ -1827,87 +1827,87 @@ msgstr ""
 "                               მონაცემების ჩასმა უცხო სერვერებზე მდებარე , უცხო ცხრილებიდან, რომლებიც\n"
 "                               შაბლონს ემთხვევა\n"
 
-#: pg_dump.c:1149 pg_dumpall.c:663
+#: pg_dump.c:1150 pg_dumpall.c:663
 #, c-format
 msgid "  --inserts                    dump data as INSERT commands, rather than COPY\n"
 msgstr "  --inserts                    მონაცემების დამპი INSERT ბრძანებების მსგავსად, COPY-ის მაგიერ\n"
 
-#: pg_dump.c:1150 pg_dumpall.c:664
+#: pg_dump.c:1151 pg_dumpall.c:664
 #, c-format
 msgid "  --load-via-partition-root    load partitions via the root table\n"
 msgstr "  --load-via-partition-root    დანაყოფების root ცხრილს გავლით ჩატვირთვა\n"
 
-#: pg_dump.c:1151 pg_dumpall.c:665
+#: pg_dump.c:1152 pg_dumpall.c:665
 #, c-format
 msgid "  --no-comments                do not dump comments\n"
 msgstr "  --no-comments                კომენტარების გარეშე\n"
 
-#: pg_dump.c:1152 pg_dumpall.c:666
+#: pg_dump.c:1153 pg_dumpall.c:666
 #, c-format
 msgid "  --no-publications            do not dump publications\n"
 msgstr "  --no-publications            გამოცემების გარეშე\n"
 
-#: pg_dump.c:1153 pg_dumpall.c:668
+#: pg_dump.c:1154 pg_dumpall.c:668
 #, c-format
 msgid "  --no-security-labels         do not dump security label assignments\n"
 msgstr "  --no-security-labels         უსაფრთხოების ჭდეების მინიჭებების გარეშე\n"
 
-#: pg_dump.c:1154 pg_dumpall.c:669
+#: pg_dump.c:1155 pg_dumpall.c:669
 #, c-format
 msgid "  --no-subscriptions           do not dump subscriptions\n"
 msgstr "  --no-subscriptions           გამოწერების გარეშე\n"
 
-#: pg_dump.c:1155 pg_dumpall.c:671
+#: pg_dump.c:1156 pg_dumpall.c:671
 #, c-format
 msgid "  --no-table-access-method     do not dump table access methods\n"
 msgstr "  --no-table-access-method     ცხრილის წვდომის მეთოდები\n"
 
-#: pg_dump.c:1156 pg_dumpall.c:672
+#: pg_dump.c:1157 pg_dumpall.c:672
 #, c-format
 msgid "  --no-tablespaces             do not dump tablespace assignments\n"
 msgstr "  --no-tablespaces             ცხრილის სივრცის მინიჭებები\n"
 
-#: pg_dump.c:1157 pg_dumpall.c:673
+#: pg_dump.c:1158 pg_dumpall.c:673
 #, c-format
 msgid "  --no-toast-compression       do not dump TOAST compression methods\n"
 msgstr "  --no-toast-compression       TOAST-ის შეკუმშვის მეთოდები დამპში არ ჩაიწერება\n"
 
-#: pg_dump.c:1158 pg_dumpall.c:674
+#: pg_dump.c:1159 pg_dumpall.c:674
 #, c-format
 msgid "  --no-unlogged-table-data     do not dump unlogged table data\n"
 msgstr "  --no-unlogged-table-data     ის ცხრილები, რომლებსაც ჟურნალი არ აქვთ, დამპში არ ჩაიწერება\n"
 
-#: pg_dump.c:1159 pg_dumpall.c:675
+#: pg_dump.c:1160 pg_dumpall.c:675
 #, c-format
 msgid "  --on-conflict-do-nothing     add ON CONFLICT DO NOTHING to INSERT commands\n"
 msgstr "  --on-conflict-do-nothing     INSERT ბრძანებებისთვის ON CONFLICT DO NOTHING -ის დამატება\n"
 
-#: pg_dump.c:1160 pg_dumpall.c:676
+#: pg_dump.c:1161 pg_dumpall.c:676
 #, c-format
 msgid "  --quote-all-identifiers      quote all identifiers, even if not key words\n"
 msgstr "  --quote-all-identifiers      ყველა იდენტიფიკატორის ციტირება. მაშინაც კი, თუ ისინი საკვანძო სიტყვები არაა\n"
 
-#: pg_dump.c:1161 pg_dumpall.c:677
+#: pg_dump.c:1162 pg_dumpall.c:677
 #, c-format
 msgid "  --rows-per-insert=NROWS      number of rows per INSERT; implies --inserts\n"
 msgstr "  --rows-per-insert=NROWS      მწკრივების რიცხვი თითოეული INSERT-ისთვის ; ასევე მიუთითებს --inserts\n"
 
-#: pg_dump.c:1162
+#: pg_dump.c:1163
 #, c-format
 msgid "  --section=SECTION            dump named section (pre-data, data, or post-data)\n"
 msgstr "  --section=სექცია            მითითებული სექცია (pre-data, data, ან post-data)\n"
 
-#: pg_dump.c:1163
+#: pg_dump.c:1164
 #, c-format
 msgid "  --serializable-deferrable    wait until the dump can run without anomalies\n"
 msgstr "  --serializable-deferrable    მოცდა, სანამ დამპის გაშვება ანომალიების გარეშე იქნება შესაძლებელი\n"
 
-#: pg_dump.c:1164
+#: pg_dump.c:1165
 #, c-format
 msgid "  --snapshot=SNAPSHOT          use given snapshot for the dump\n"
 msgstr "  --snapshot=SNAPSHOT          დამპისთვის მითითებული სწრაფი ასლის გამოყენება\n"
 
-#: pg_dump.c:1165 pg_restore.c:497
+#: pg_dump.c:1166 pg_restore.c:497
 #, c-format
 msgid ""
 "  --strict-names               require table and/or schema include patterns to\n"
@@ -1916,7 +1916,7 @@ msgstr ""
 "  --strict-names               მოთხოვნა, რომ ცხრილი ან/და სქემა შეიცავდეს შაბლონებს, რომლებიც\n"
 "                               ერთ ელემენტს მაინც ემთხვევა\n"
 
-#: pg_dump.c:1167
+#: pg_dump.c:1168
 #, c-format
 msgid ""
 "  --table-and-children=PATTERN dump only the specified table(s), including\n"
@@ -1925,7 +1925,7 @@ msgstr ""
 "  --table-and-children=შაბლონი მხოლოდ მითითებული ცხრილების დამპი,\n"
 "                               შვილი და დაყოფილი ცხრილების ჩათვლით\n"
 
-#: pg_dump.c:1169 pg_dumpall.c:678 pg_restore.c:500
+#: pg_dump.c:1170 pg_dumpall.c:678 pg_restore.c:500
 #, c-format
 msgid ""
 "  --use-set-session-authorization\n"
@@ -1936,7 +1936,7 @@ msgstr ""
 "                               მფლობელობის დასაყენებლად ALTER OWNER ბრძანებების მაგიერ\n"
 "                               SET SESSION AUTHORIZATION -ის გამოყენება\n"
 
-#: pg_dump.c:1173 pg_dumpall.c:682 pg_restore.c:504
+#: pg_dump.c:1174 pg_dumpall.c:682 pg_restore.c:504
 #, c-format
 msgid ""
 "\n"
@@ -1945,42 +1945,42 @@ msgstr ""
 "\n"
 "შეერთების პარამეტრები:\n"
 
-#: pg_dump.c:1174
+#: pg_dump.c:1175
 #, c-format
 msgid "  -d, --dbname=DBNAME      database to dump\n"
 msgstr "  -d, --dbname=ბაზისსახელი      მონაცემთა ბაზის სახელი\n"
 
-#: pg_dump.c:1175 pg_dumpall.c:684 pg_restore.c:505
+#: pg_dump.c:1176 pg_dumpall.c:684 pg_restore.c:505
 #, c-format
 msgid "  -h, --host=HOSTNAME      database server host or socket directory\n"
 msgstr "  -h, --host=HOSTNAME      მონაცემთა ბაზის სერვერის ჰოსტის ან სოკეტის საქაღალდე\n"
 
-#: pg_dump.c:1176 pg_dumpall.c:686 pg_restore.c:506
+#: pg_dump.c:1177 pg_dumpall.c:686 pg_restore.c:506
 #, c-format
 msgid "  -p, --port=PORT          database server port number\n"
 msgstr "  -p, --port=PORT          მონაცემთა ბაზის სერვერის პორტი\n"
 
-#: pg_dump.c:1177 pg_dumpall.c:687 pg_restore.c:507
+#: pg_dump.c:1178 pg_dumpall.c:687 pg_restore.c:507
 #, c-format
 msgid "  -U, --username=NAME      connect as specified database user\n"
 msgstr "  -U, --username=მომხმარებელი  ბაზის მომხმარებლის სახელი\n"
 
-#: pg_dump.c:1178 pg_dumpall.c:688 pg_restore.c:508
+#: pg_dump.c:1179 pg_dumpall.c:688 pg_restore.c:508
 #, c-format
 msgid "  -w, --no-password        never prompt for password\n"
 msgstr "  -w, --no-password        არასოდეს მკითხო პაროლი\n"
 
-#: pg_dump.c:1179 pg_dumpall.c:689 pg_restore.c:509
+#: pg_dump.c:1180 pg_dumpall.c:689 pg_restore.c:509
 #, c-format
 msgid "  -W, --password           force password prompt (should happen automatically)\n"
 msgstr "  -W, --password           პაროლის ყოველთვის კითხვა (ავტომატურად უნდა ხდებოდეს)\n"
 
-#: pg_dump.c:1180 pg_dumpall.c:690
+#: pg_dump.c:1181 pg_dumpall.c:690
 #, c-format
 msgid "  --role=ROLENAME          do SET ROLE before dump\n"
 msgstr "  --role=ROLENAME          აღდგენამდე SET ROLE -ის გაშვება\n"
 
-#: pg_dump.c:1182
+#: pg_dump.c:1183
 #, c-format
 msgid ""
 "\n"
@@ -1993,459 +1993,459 @@ msgstr ""
 "ცვლადი გამოიყენება.\n"
 "\n"
 
-#: pg_dump.c:1184 pg_dumpall.c:694 pg_restore.c:516
+#: pg_dump.c:1185 pg_dumpall.c:694 pg_restore.c:516
 #, c-format
 msgid "Report bugs to <%s>.\n"
 msgstr "შეცდომების შესახებ მიწერეთ: <%s>\n"
 
-#: pg_dump.c:1185 pg_dumpall.c:695 pg_restore.c:517
+#: pg_dump.c:1186 pg_dumpall.c:695 pg_restore.c:517
 #, c-format
 msgid "%s home page: <%s>\n"
 msgstr "%s-ის საწყისი გვერდია: <%s>\n"
 
-#: pg_dump.c:1204 pg_dumpall.c:518
+#: pg_dump.c:1205 pg_dumpall.c:518
 #, c-format
 msgid "invalid client encoding \"%s\" specified"
 msgstr "კლიენტის მითითებული კოდირება არასწორია: %s"
 
-#: pg_dump.c:1344
+#: pg_dump.c:1352
 #, c-format
 msgid "parallel dumps from standby servers are not supported by this server version"
 msgstr "სერვერის ამ ვერსიაში უქმე სერვერებიდან პარალელური დამპი მხარდაჭერილი არაა"
 
-#: pg_dump.c:1409
+#: pg_dump.c:1417
 #, c-format
 msgid "invalid output format \"%s\" specified"
 msgstr "გამოტანის მითითებული ფორმატი არასწორია: %s"
 
-#: pg_dump.c:1450 pg_dump.c:1506 pg_dump.c:1559 pg_dumpall.c:1467
+#: pg_dump.c:1458 pg_dump.c:1514 pg_dump.c:1567 pg_dumpall.c:1467
 #, c-format
 msgid "improper qualified name (too many dotted names): %s"
 msgstr "არასწორი სრული სახელი (ძალიან ბევრი წერტილიანი სახელი): %s"
 
-#: pg_dump.c:1458
+#: pg_dump.c:1466
 #, c-format
 msgid "no matching schemas were found for pattern \"%s\""
 msgstr "შესაბამისი სქემა შაბლონისთვის \"%s\" ვერ ვიპოვე"
 
-#: pg_dump.c:1511
+#: pg_dump.c:1519
 #, c-format
 msgid "no matching extensions were found for pattern \"%s\""
 msgstr "შესაბამისი გაფართოება შაბლონისთვის \"%s\" ვერ ვიპოვე"
 
-#: pg_dump.c:1564
+#: pg_dump.c:1572
 #, c-format
 msgid "no matching foreign servers were found for pattern \"%s\""
 msgstr "შესაბამისი უცხო სერვერი შაბლონისთვის \"%s\" ვერ ვიპოვე"
 
-#: pg_dump.c:1635
+#: pg_dump.c:1643
 #, c-format
 msgid "improper relation name (too many dotted names): %s"
 msgstr "ურთიერთობის არასწორი სახელი (ძალიან ბევრი წერტილიანი სახელი): %s"
 
-#: pg_dump.c:1657
+#: pg_dump.c:1665
 #, c-format
 msgid "no matching tables were found for pattern \"%s\""
 msgstr "შესაბამისი ცხრილი შაბლონისთვის \"%s\" ვერ ვიპოვე"
 
-#: pg_dump.c:1684
+#: pg_dump.c:1692
 #, c-format
 msgid "You are currently not connected to a database."
 msgstr "ამჟამად მონაცემთა ბაზასთან მიერთებული არ ბრძანდებით."
 
-#: pg_dump.c:1687
+#: pg_dump.c:1695
 #, c-format
 msgid "cross-database references are not implemented: %s"
 msgstr "ბაზებს შორის ბმულები განხორციელებული არაა: %s"
 
-#: pg_dump.c:2146
+#: pg_dump.c:2154
 #, c-format
 msgid "dumping contents of table \"%s.%s\""
 msgstr "ცხრილის შემცველობის გამოტანა: \"%s.%s\""
 
-#: pg_dump.c:2252
+#: pg_dump.c:2264
 #, c-format
 msgid "Dumping the contents of table \"%s\" failed: PQgetCopyData() failed."
 msgstr "ცხრილის (\"%s\") დამპის შეცდომა: PQgetCopyData() failed."
 
-#: pg_dump.c:2253 pg_dump.c:2263
+#: pg_dump.c:2265 pg_dump.c:2275
 #, c-format
 msgid "Error message from server: %s"
 msgstr "შეცდომა სერვერიდან: %s"
 
-#: pg_dump.c:2254 pg_dump.c:2264
+#: pg_dump.c:2266 pg_dump.c:2276
 #, c-format
 msgid "Command was: %s"
 msgstr "ბრძანება იყო: %s"
 
-#: pg_dump.c:2262
+#: pg_dump.c:2274
 #, c-format
 msgid "Dumping the contents of table \"%s\" failed: PQgetResult() failed."
 msgstr "ცხრილის (\"%s\") დამპის შეცდომა: PQgetResult() failed."
 
-#: pg_dump.c:2344
+#: pg_dump.c:2365
 #, c-format
 msgid "wrong number of fields retrieved from table \"%s\""
 msgstr "ცხრილიდან \"%s\" მიღებულია ველების არასწორი რაოდენობა"
 
-#: pg_dump.c:3042
+#: pg_dump.c:3067
 #, c-format
 msgid "saving database definition"
 msgstr "ბაზის აღწერის შენახვა"
 
-#: pg_dump.c:3151
+#: pg_dump.c:3176
 #, c-format
 msgid "unrecognized locale provider: %s"
 msgstr "ენის უცნობი მომწოდებელი: %s"
 
-#: pg_dump.c:3512
+#: pg_dump.c:3537
 #, c-format
 msgid "saving encoding = %s"
 msgstr "კოდირების შენახვა = %s"
 
-#: pg_dump.c:3537
+#: pg_dump.c:3562
 #, c-format
 msgid "saving \"standard_conforming_strings = %s\""
 msgstr "შენახვა: \"standard_conforming_strings = %s\""
 
-#: pg_dump.c:3576
+#: pg_dump.c:3601
 #, c-format
 msgid "could not parse result of current_schemas()"
 msgstr "current_schemas() -ის შედეგის დამუშავების შეცდომა"
 
-#: pg_dump.c:3595
+#: pg_dump.c:3620
 #, c-format
 msgid "saving \"search_path = %s\""
 msgstr "შენახვა: \"search_path = %s\""
 
-#: pg_dump.c:3631
+#: pg_dump.c:3656
 #, c-format
 msgid "reading large objects"
 msgstr "დიდი ობიექტების კითხვა"
 
-#: pg_dump.c:3852
+#: pg_dump.c:3877
 #, c-format
 msgid "saving large objects \"%s\""
 msgstr "მიმდინარეობს შენახვა დიდი ობიექტებისთვის \"%s\""
 
-#: pg_dump.c:3873
+#: pg_dump.c:3898
 #, c-format
 msgid "error reading large object %u: %s"
 msgstr "დიდი ობიექტის (%u) წაკითხვის შეცდომა: %s"
 
-#: pg_dump.c:3976
+#: pg_dump.c:4001
 #, c-format
 msgid "reading row-level security policies"
 msgstr "მწკრივის დონის უსაფრთხოების წესების წაკითხვა"
 
-#: pg_dump.c:4117
+#: pg_dump.c:4142
 #, c-format
 msgid "unexpected policy command type: %c"
 msgstr "წესების ბრძანების მოულოდნელი ტიპი: %c"
 
-#: pg_dump.c:4567 pg_dump.c:5103 pg_dump.c:12315 pg_dump.c:18137
-#: pg_dump.c:18139 pg_dump.c:18761
+#: pg_dump.c:4592 pg_dump.c:5150 pg_dump.c:12362 pg_dump.c:18246
+#: pg_dump.c:18248 pg_dump.c:18870
 #, c-format
 msgid "could not parse %s array"
 msgstr "მასივის დამუშავების შეცდომა: %s"
 
-#: pg_dump.c:4759
+#: pg_dump.c:4806
 #, c-format
 msgid "subscriptions not dumped because current user is not a superuser"
 msgstr "გამოწერები დამპში არ ჩაწერილა. მიმდინარე მომხმარებელი ზემომხმარებელი არაა"
 
-#: pg_dump.c:4965
+#: pg_dump.c:5012
 #, c-format
 msgid "subscription with OID %u does not exist"
 msgstr "გამოწერა OID-ით %u არ არსებობს"
 
-#: pg_dump.c:4972
+#: pg_dump.c:5019
 #, c-format
 msgid "failed sanity check, table with OID %u not found"
 msgstr "სისწორის შემოწმების შეცდომა. ცხრილი OID-ით %u აღმოჩენილი არაა"
 
-#: pg_dump.c:5535
+#: pg_dump.c:5582
 #, c-format
 msgid "could not find parent extension for %s %s"
 msgstr "%s-სთვის მშობელი გაფართოება ვერ ვიპოვე %s"
 
-#: pg_dump.c:5680
+#: pg_dump.c:5727
 #, c-format
 msgid "schema with OID %u does not exist"
 msgstr "სქემა OID-ით %u არ არსებობს"
 
-#: pg_dump.c:7162 pg_dump.c:17508
+#: pg_dump.c:7209 pg_dump.c:17617
 #, c-format
 msgid "failed sanity check, parent table with OID %u of sequence with OID %u not found"
 msgstr "სისწორის შემოწმების შეცდომა. მშობელი ცხრილი OID-ით %u მიმდევრობიდან OID-ით %u არ არსებობს"
 
-#: pg_dump.c:7305
+#: pg_dump.c:7352
 #, c-format
 msgid "failed sanity check, table OID %u appearing in pg_partitioned_table not found"
 msgstr "სისწორის შემოწმების შეცდომა. pg_parttioned_table-ში მოხსენიებული ცხრილი OID-ით %u ვერ ვიპოვე"
 
-#: pg_dump.c:7536 pg_dump.c:7810 pg_dump.c:8257 pg_dump.c:8871 pg_dump.c:8993
-#: pg_dump.c:9141
+#: pg_dump.c:7583 pg_dump.c:7857 pg_dump.c:8304 pg_dump.c:8918 pg_dump.c:9040
+#: pg_dump.c:9188
 #, c-format
 msgid "unrecognized table OID %u"
 msgstr "ცხრილის უცნობი OID: %u"
 
-#: pg_dump.c:7540
+#: pg_dump.c:7587
 #, c-format
 msgid "unexpected index data for table \"%s\""
 msgstr "მოულოდნელი ინდექსის მონაცემები ცხრილისთვის \"%s\""
 
-#: pg_dump.c:8042
+#: pg_dump.c:8089
 #, c-format
 msgid "failed sanity check, parent table with OID %u of pg_rewrite entry with OID %u not found"
 msgstr "სისწორის შემოწმების შეცდომა. მშობელი ცხრილი OID-ით %u pg_rewrite-ის ელემენტიდან OID-ით %u ვერ ვიპოვე"
 
-#: pg_dump.c:8875
+#: pg_dump.c:8922
 #, c-format
 msgid "unexpected column data for table \"%s\""
 msgstr "სვეტის მოულოდნელი მონაცემები ცხრილისთვის %s"
 
-#: pg_dump.c:8904
+#: pg_dump.c:8951
 #, c-format
 msgid "invalid column numbering in table \"%s\""
 msgstr "ცხრილში \"%s\" სვეტები არასწორადაა დანომრილი"
 
-#: pg_dump.c:8955
+#: pg_dump.c:9002
 #, c-format
 msgid "finding table default expressions"
 msgstr "ვეძებ ცხრილის ნაგულისხმევ გამოსახულებებს"
 
-#: pg_dump.c:8997
+#: pg_dump.c:9044
 #, c-format
 msgid "invalid adnum value %d for table \"%s\""
 msgstr "adnum -ის არასწორი მნიშვნელობა %d ცხრილისთვის \"%s\""
 
-#: pg_dump.c:9091
+#: pg_dump.c:9138
 #, c-format
 msgid "finding table check constraints"
 msgstr "ვეძებ ცხრილის შემოწმების შეზღუდვებს"
 
-#: pg_dump.c:9145
+#: pg_dump.c:9192
 #, c-format
 msgid "expected %d check constraint on table \"%s\" but found %d"
 msgid_plural "expected %d check constraints on table \"%s\" but found %d"
 msgstr[0] "მოველოდი %d შემოწმების შეზღუდვას ცხრილზე \"%s\", მაგრამ %d"
 msgstr[1] "მოველოდი %d შემოწმების შეზღუდვას ცხრილზე \"%s\", მაგრამ %d"
 
-#: pg_dump.c:9149
+#: pg_dump.c:9196
 #, c-format
 msgid "The system catalogs might be corrupted."
 msgstr "სისტემის კატალოგი შეიძლება დაზიანებულია."
 
-#: pg_dump.c:9839
+#: pg_dump.c:9886
 #, c-format
 msgid "role with OID %u does not exist"
 msgstr "როლი OID-ით %u არ არსებობს"
 
-#: pg_dump.c:9951 pg_dump.c:9980
+#: pg_dump.c:9998 pg_dump.c:10027
 #, c-format
 msgid "unsupported pg_init_privs entry: %u %u %d"
 msgstr "pg_init_privs -ის არასწორი ჩანაწერი: %u %u %d"
 
-#: pg_dump.c:10527
+#: pg_dump.c:10574
 #, c-format
 msgid "missing metadata for large objects \"%s\""
 msgstr "აკლია მეტამონაცემები დიდი ობიექტებისთვის \"%s\""
 
-#: pg_dump.c:10810
+#: pg_dump.c:10857
 #, c-format
 msgid "typtype of data type \"%s\" appears to be invalid"
 msgstr "მონაცემის ტიპი %s-ის typetype თურმე არასორია"
 
-#: pg_dump.c:12384
+#: pg_dump.c:12431
 #, c-format
 msgid "unrecognized provolatile value for function \"%s\""
 msgstr "უცნობი provolatile მნიშვნელობა ფუნქციისთვის \"%s\""
 
-#: pg_dump.c:12434 pg_dump.c:14330
+#: pg_dump.c:12481 pg_dump.c:14377
 #, c-format
 msgid "unrecognized proparallel value for function \"%s\""
 msgstr "უცნობი proparallel მნიშვნელობა ფუნქციისთვის \"%s\""
 
-#: pg_dump.c:12564 pg_dump.c:12670 pg_dump.c:12677
+#: pg_dump.c:12611 pg_dump.c:12717 pg_dump.c:12724
 #, c-format
 msgid "could not find function definition for function with OID %u"
 msgstr "ფუნქციის აღწერა ფუნქციისთვის OID-ით %u ვერ ვიპოვე"
 
-#: pg_dump.c:12603
+#: pg_dump.c:12650
 #, c-format
 msgid "bogus value in pg_cast.castfunc or pg_cast.castmethod field"
 msgstr "pg_cast.castfunc ან pg_cast.castmethod ველების არასწორი მნიშვნელობა"
 
-#: pg_dump.c:12606
+#: pg_dump.c:12653
 #, c-format
 msgid "bogus value in pg_cast.castmethod field"
 msgstr "pg_cast.castmethod ველის არასწორი მნიშვნელობა"
 
-#: pg_dump.c:12696
+#: pg_dump.c:12743
 #, c-format
 msgid "bogus transform definition, at least one of trffromsql and trftosql should be nonzero"
 msgstr "არასწორი გარდაქმნის აღწერა. ერთ-ერთი, trffromsql ან trftosql ნულს არ უნდა უდრიდეს"
 
-#: pg_dump.c:12713
+#: pg_dump.c:12760
 #, c-format
 msgid "bogus value in pg_transform.trffromsql field"
 msgstr "pg_transform.trffromsql ველის არასწორი მნიშვნელობა"
 
-#: pg_dump.c:12734
+#: pg_dump.c:12781
 #, c-format
 msgid "bogus value in pg_transform.trftosql field"
 msgstr "pg_transform.trftosql ველის არასწორი მნიშვნელობა"
 
-#: pg_dump.c:12879
+#: pg_dump.c:12926
 #, c-format
 msgid "postfix operators are not supported anymore (operator \"%s\")"
 msgstr "postfix ოპერატორები მხარდაჭერილი აღარაა (ოპერატორი \"%s\")"
 
-#: pg_dump.c:13049
+#: pg_dump.c:13096
 #, c-format
 msgid "could not find operator with OID %s"
 msgstr "ოპერატორი OID-ით %s  არ არსებობს"
 
-#: pg_dump.c:13117
+#: pg_dump.c:13164
 #, c-format
 msgid "invalid type \"%c\" of access method \"%s\""
 msgstr "წვდომის მეთოდის (%2$s) არასწორი ტიპი: %1$c"
 
-#: pg_dump.c:13791 pg_dump.c:13859
+#: pg_dump.c:13838 pg_dump.c:13906
 #, c-format
 msgid "unrecognized collation provider: %s"
 msgstr "კოლაციის უცნობი მომწოდებელი: %s"
 
-#: pg_dump.c:13800 pg_dump.c:13807 pg_dump.c:13818 pg_dump.c:13828
-#: pg_dump.c:13843
+#: pg_dump.c:13847 pg_dump.c:13854 pg_dump.c:13865 pg_dump.c:13875
+#: pg_dump.c:13890
 #, c-format
 msgid "invalid collation \"%s\""
 msgstr "არასწორი კოლაცია \"%s\""
 
-#: pg_dump.c:14249
+#: pg_dump.c:14296
 #, c-format
 msgid "unrecognized aggfinalmodify value for aggregate \"%s\""
 msgstr "აგრეგატის (%s) aggfinalmodify -ის უცნობი ტიპი"
 
-#: pg_dump.c:14305
+#: pg_dump.c:14352
 #, c-format
 msgid "unrecognized aggmfinalmodify value for aggregate \"%s\""
 msgstr "აგრეგატის (%s) aggmfinalmodify -ის უცნობი ტიპი"
 
-#: pg_dump.c:15022
+#: pg_dump.c:15069
 #, c-format
 msgid "unrecognized object type in default privileges: %d"
 msgstr "ნაგულისხმევ პრივილეგიებში არსებული ობიექტის უცნობი ტიპი: %d"
 
-#: pg_dump.c:15038
+#: pg_dump.c:15085
 #, c-format
 msgid "could not parse default ACL list (%s)"
 msgstr "ნაგულიხმები ACL სიის ანალიზი შეუძლებელია: %s"
 
-#: pg_dump.c:15122
+#: pg_dump.c:15169
 #, c-format
 msgid "could not parse initial ACL list (%s) or default (%s) for object \"%s\" (%s)"
 msgstr "საწყისი ACL სიის (%s) დამუშავების შეცდომა ან ნაგულისხმევი (%s) ობიექტისთვის \"%s\" (%s)"
 
-#: pg_dump.c:15147
+#: pg_dump.c:15194
 #, c-format
 msgid "could not parse ACL list (%s) or default (%s) for object \"%s\" (%s)"
 msgstr "შეცდომა ACL სიის (%s) დამუშავებისას ან ნაგულისხმევი (%s) ობიექტისთვის \"%s\" (%s)"
 
-#: pg_dump.c:15690
+#: pg_dump.c:15737
 #, c-format
 msgid "query to obtain definition of view \"%s\" returned no data"
 msgstr "ხედის (%s) აღწერის გამოთხოვამ მონაცემები არ დააბრუნა"
 
-#: pg_dump.c:15693
+#: pg_dump.c:15740
 #, c-format
 msgid "query to obtain definition of view \"%s\" returned more than one definition"
 msgstr "ხედის (%s) აღწერის გამოთხოვამ ერთზე მეტი აღწერა დააბრუნა"
 
-#: pg_dump.c:15700
+#: pg_dump.c:15747
 #, c-format
 msgid "definition of view \"%s\" appears to be empty (length zero)"
 msgstr "ხედის (%s) აღწერა, როგორც ჩანს, ცარიელია (ნულოვანი სიგრძე)"
 
-#: pg_dump.c:15784
+#: pg_dump.c:15832
 #, c-format
 msgid "WITH OIDS is not supported anymore (table \"%s\")"
 msgstr "WITH OIDS-ები უკვე მხარდაუჭერელია (ცხრილი \"%s\")"
 
-#: pg_dump.c:16710
+#: pg_dump.c:16819
 #, c-format
 msgid "invalid column number %d for table \"%s\""
 msgstr "სვეტების არასწორი რიცხვი %d ცხრილისთვის %s"
 
-#: pg_dump.c:16788
+#: pg_dump.c:16897
 #, c-format
 msgid "could not parse index statistic columns"
 msgstr "ინდექსის სტატისტიკის სვეტების დამუშავების შეცდომა"
 
-#: pg_dump.c:16790
+#: pg_dump.c:16899
 #, c-format
 msgid "could not parse index statistic values"
 msgstr "ინდექსის სტატისტიკის მნიშვნელობების დამუშავების შეცდომა"
 
-#: pg_dump.c:16792
+#: pg_dump.c:16901
 #, c-format
 msgid "mismatched number of columns and values for index statistics"
 msgstr "ინდექსის სტატისტიკისთვის სვეტებისა და მნიშვნელობების რაოდენობა არ ემთხვევა"
 
-#: pg_dump.c:17007
+#: pg_dump.c:17116
 #, c-format
 msgid "missing index for constraint \"%s\""
 msgstr "შეზღუდვას ინდექსი აკლია: \"%s\""
 
-#: pg_dump.c:17242
+#: pg_dump.c:17351
 #, c-format
 msgid "unrecognized constraint type: %c"
 msgstr "შეზღუდვის უცნობი ტიპი: %c"
 
-#: pg_dump.c:17343 pg_dump.c:17572
+#: pg_dump.c:17452 pg_dump.c:17681
 #, c-format
 msgid "query to get data of sequence \"%s\" returned %d row (expected 1)"
 msgid_plural "query to get data of sequence \"%s\" returned %d rows (expected 1)"
 msgstr[0] "მოთხოვნამ, რომელსაც მონაცემები მიმდევრობიდან (%s) უნდა მიეღო, %d მწკრივი დააბრუნა. (მოველოდი: 1)"
 msgstr[1] "მოთხოვნამ, რომელსაც მონაცემები მიმდევრობიდან (%s) უნდა მიეღო, %d მწკრივი დააბრუნა. (მოველოდი: 1)"
 
-#: pg_dump.c:17375
+#: pg_dump.c:17484
 #, c-format
 msgid "unrecognized sequence type: %s"
 msgstr "მიმდევრობის უცნობი ტიპი: %s"
 
-#: pg_dump.c:17889
+#: pg_dump.c:17998
 #, c-format
 msgid "query to get rule \"%s\" for table \"%s\" failed: wrong number of rows returned"
 msgstr "მოთხოვნის შეცდომა, რომელსაც ცხრილისთვის \"%2$s\" წესი \"%1$s\" უნდა მიეღო: დაბრუნებულია მწკრივების არასწორი რაოდენობა"
 
-#: pg_dump.c:18042
+#: pg_dump.c:18151
 #, c-format
 msgid "could not find referenced extension %u"
 msgstr "მიბმული გაფართოება (%u) ვერ ვიპოვე"
 
-#: pg_dump.c:18141
+#: pg_dump.c:18250
 #, c-format
 msgid "mismatched number of configurations and conditions for extension"
 msgstr "კონფიგურაციებისა და პირობების რაოდენობა გაფართოებისთვის არ ემთხვევა"
 
-#: pg_dump.c:18273
+#: pg_dump.c:18382
 #, c-format
 msgid "reading dependency data"
 msgstr "დამოკიდებულების მონაცემების კითხვა"
 
-#: pg_dump.c:18359
+#: pg_dump.c:18468
 #, c-format
 msgid "no referencing object %u %u"
 msgstr "მიბმადი ობიექტის გარეშე %u %u"
 
-#: pg_dump.c:18370
+#: pg_dump.c:18479
 #, c-format
 msgid "no referenced object %u %u"
 msgstr "მიბმული ობიექტის გარეშე %u %u"
 
-#: pg_dump.c:18795 pg_dump.c:18833 pg_dumpall.c:1962 pg_restore.c:551
+#: pg_dump.c:18904 pg_dump.c:18942 pg_dumpall.c:1962 pg_restore.c:551
 #: pg_restore.c:597
 #, c-format
 msgid "%s filter for \"%s\" is not allowed"
@@ -2588,7 +2588,7 @@ msgstr "  --exclude-database=PATTERN   გამორიცხავს ბა�
 
 #: pg_dumpall.c:661
 #, c-format
-msgid "  --filter=FILENAME            exclude databases specified in FILENAME\n"
+msgid "  --filter=FILENAME            exclude databases based on expressions in FILENAME\n"
 msgstr "  --filter=FILENAME            ფაილში მითითებული მონაცემთა ბაზების ამოღება\n"
 
 #: pg_dumpall.c:667

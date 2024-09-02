@@ -10,8 +10,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 15\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-07-20 21:23+0000\n"
-"PO-Revision-Date: 2024-07-22 15:37+0200\n"
+"POT-Creation-Date: 2024-08-29 17:53+0000\n"
+"PO-Revision-Date: 2024-08-30 08:29+0200\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team: French <guillaume@lelarge.info>\n"
 "Language: fr\n"
@@ -255,8 +255,8 @@ msgstr "dans la base de données « %s » : utilisation de la version « %s » d
 
 #: pg_amcheck.c:624
 #, c-format
-msgid "--checkunique option is not supported by amcheck version \"%s\""
-msgstr "l'option --checkunique n'est pas accepté par la version « %s » de amcheck"
+msgid "option %s is not supported by amcheck version %s"
+msgstr "l'option %s n'est pas acceptée par la version « %s » de amcheck"
 
 #: pg_amcheck.c:650
 #, c-format

@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_combinebackup (PostgreSQL) 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-07-04 05:53+0000\n"
-"PO-Revision-Date: 2024-07-04 09:37+0200\n"
+"POT-Creation-Date: 2024-08-29 17:53+0000\n"
+"PO-Revision-Date: 2024-08-29 22:30+0200\n"
 "Last-Translator: Temuri Doghonadze <temuri.doghonadze@gmail.com>\n"
 "Language-Team: \n"
 "Language: ka\n"
@@ -324,7 +324,7 @@ msgid "unexpected manifest version"
 msgstr "მანიფესტის მოულოდნელი ვერსია"
 
 #: ../../common/parse_manifest.c:637
-msgid "manifest system identifier not an integer"
+msgid "system identifier in manifest not an integer"
 msgstr "მანიფესტის სისტემის იდენფიტიკატორი მთელი რიცხვი არაა"
 
 #: ../../common/parse_manifest.c:662
@@ -571,7 +571,7 @@ msgstr "%s: მანიფესტის სისტემის იდენ
 
 #: pg_combinebackup.c:340
 #, c-format
-msgid "can't generate a manifest because no manifest is available for the final input backup"
+msgid "cannot generate a manifest because no manifest is available for the final input backup"
 msgstr "მანიფესტის გენერაცია შეუძლებელია, რადგან საბოლოო შეყვანის მარქაფისთვის მანიფესტი ხელმისაწვდომი არაა"
 
 #: pg_combinebackup.c:387
@@ -646,8 +646,8 @@ msgstr "საკონტროლო ჯამები, მხოლოდ, �
 
 #: pg_combinebackup.c:658
 #, c-format
-msgid "disable, and optionally reenable, checksums on the output directory to avoid failures"
-msgstr "გამორთვა და არასავალდებულოდ თავიდან ჩართვა საკონტროლო ჯამებისა გამოტანის საქაღალდეზე, ჩავარდნების თავიდან ასაცილებლად"
+msgid "Disable, and optionally reenable, checksums on the output directory to avoid failures."
+msgstr "გამორთვა და არასავალდებულოდ თავიდან ჩართვა საკონტროლო ჯამებისა გამოტანის საქაღალდეზე, ჩავარდნების თავიდან ასაცილებლად."
 
 #: pg_combinebackup.c:693
 #, c-format
@@ -738,7 +738,7 @@ msgstr ""
 
 #: pg_combinebackup.c:769
 #, c-format
-msgid "      --clone               clone (reflink) instead of copying files\n"
+msgid "      --clone               clone (reflink) files instead of copying\n"
 msgstr "     --clone                 ფაილების დაკლონვა (reflink) კოპირების ნაცვლად\n"
 
 #: pg_combinebackup.c:770
@@ -748,7 +748,7 @@ msgstr "      --copy                ფაილების კოპირე�
 
 #: pg_combinebackup.c:771
 #, c-format
-msgid "      --copy-file-range     copy using copy_file_range() syscall\n"
+msgid "      --copy-file-range     copy using copy_file_range() system call\n"
 msgstr "      --copy-file-range     კოპირება სისტემური ფუნქციით copy_file_range()\n"
 
 #: pg_combinebackup.c:772
@@ -804,10 +804,10 @@ msgstr "%s: სიმბმულია. გამოტოვება"
 msgid "skipping special file \"%s\""
 msgstr "სპეციალური ფაილის გამოტოვება \"%s\""
 
-#: pg_combinebackup.c:1073
+#: pg_combinebackup.c:1073 reconstruct.c:300
 #, c-format
-msgid "\"%s\" contains no entry for \"%s\""
-msgstr "\"%s\" არ შეიცავს ჩანაწერს \"%s\"-სთვის"
+msgid "manifest file \"%s\" contains no entry for file \"%s\""
+msgstr "მანიფესტის ფაილი \"%s\" ფაილისთვის \"%s\" ჩანაწერებს არ შეიცავს"
 
 #: pg_combinebackup.c:1189
 #, c-format
@@ -859,11 +859,6 @@ msgstr "%s: ფაილი ძალიან დიდია"
 msgid "could not read file \"%s\": read %zd of %lld"
 msgstr "ფაილის \"%s\" წაკითხვა შეუძლებელია: წაკითხულია %zd %lld-დან"
 
-#: reconstruct.c:300
-#, c-format
-msgid "manifest file \"%s\" contains no entry for file \"%s\""
-msgstr "მანიფესტის ფაილი \"%s\" ფაილისთვის \"%s\" ჩანაწერებს არ შეიცავს"
-
 #: reconstruct.c:410
 #, c-format
 msgid "file \"%s\" is too short: expected %llu, found %llu"
@@ -871,7 +866,7 @@ msgstr "ფაილი \"%s\" მეტისმეტად მოკლეა
 
 #: reconstruct.c:452
 #, c-format
-msgid "file \"%s\" has bad incremental magic number (0x%x not 0x%x)"
+msgid "file \"%s\" has bad incremental magic number (0x%x, expected 0x%x)"
 msgstr "ფაილს \"%s\" არასწორი ინკრემენტული ჯადოსნური რიცხვი (0x%x not 0x%x) გააჩნია"
 
 #: reconstruct.c:458
@@ -893,6 +888,10 @@ msgstr "ფაილის \"%s\" წაკითხვის შეცდომ
 #, c-format
 msgid "could not read from file \"%s\", offset %llu: read %d of %d"
 msgstr "ფაილიდან \"%s\" წაკითხვის შეცდომა. წანაცვლება %llu: წაკითხულია %d %d-დან"
+
+#, c-format
+#~ msgid "\"%s\" contains no entry for \"%s\""
+#~ msgstr "\"%s\" არ შეიცავს ჩანაწერს \"%s\"-სთვის"
 
 #, c-format
 #~ msgid "\"%s\" does not exist"

@@ -11,8 +11,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_dump (PostgreSQL) 16\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-08-01 11:22+0000\n"
-"PO-Revision-Date: 2024-08-01 12:06-0400\n"
+"POT-Creation-Date: 2024-08-05 02:51+0000\n"
+"PO-Revision-Date: 2024-08-05 16:03-0400\n"
 "Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
 "Language: es\n"
@@ -453,10 +453,10 @@ msgid "reading subscriptions"
 msgstr "leyendo las suscripciones"
 
 #: common.c:270
-#, fuzzy, c-format
+#, c-format
 #| msgid "reading publication membership of tables"
 msgid "reading subscription membership of tables"
-msgstr "leyendo membresía de tablas en publicaciones"
+msgstr "leyendo membresía de tablas en suscripciones"
 
 #: common.c:333
 #, c-format
@@ -573,65 +573,62 @@ msgid "unhandled mode \"%s\""
 msgstr "modo «%s» sin manejar"
 
 #: filter.c:49
-#, fuzzy, c-format
+#, c-format
 #| msgid "could not open input file \"%s\": %m"
 msgid "could not open filter file \"%s\": %m"
-msgstr "no se pudo abrir el archivo de entrada «%s»: %m"
+msgstr "no se pudo abrir el archivo de filtro «%s»: %m"
 
 #: filter.c:72
-#, fuzzy, c-format
+#, c-format
 #| msgid "could not close file \"%s\": %m"
 msgid "could not close filter file \"%s\": %m"
-msgstr "no se pudo cerrar el archivo «%s»: %m"
+msgstr "no se pudo cerrar el archivo de filtro «%s»: %m"
 
 #: filter.c:165
 #, c-format
 msgid "invalid format in filter read from standard input on line %d: %s"
-msgstr ""
+msgstr "formato inválido en filtro leído desde entrada estándar en línea %d: %s"
 
 #: filter.c:168
-#, fuzzy, c-format
+#, c-format
 #| msgid "invalid syntax in time zone file \"%s\", line %d"
 msgid "invalid format in filter read from file \"%s\" on line %d: %s"
-msgstr "sintaxis no válida en archivo de huso horario «%s», línea %d"
+msgstr "sintaxis no válida en filtro leído desde archivo «%s», línea %d: %s"
 
 #: filter.c:241 filter.c:468
-#, fuzzy, c-format
+#, c-format
 #| msgid "could not read from file \"%s\": %m"
 msgid "could not read from filter file \"%s\": %m"
-msgstr "no se pudo leer el archivo «%s»: %m"
+msgstr "no se pudo leer el archivo de filtro «%s»: %m"
 
 #: filter.c:244
-#, fuzzy
 #| msgid "unexpected end of line"
 msgid "unexpected end of file"
-msgstr "fin de línea inesperado"
+msgstr "fin de archivo inesperado"
 
 #: filter.c:311
-#, fuzzy
 #| msgid "missing Language parameter"
 msgid "missing object name pattern"
-msgstr "falta un parámetro Language"
+msgstr "falta el parámetro de nombre de objeto"
 
 #: filter.c:422
 msgid "no filter command found (expected \"include\" or \"exclude\")"
-msgstr ""
+msgstr "no se encontró orden de filtro (se esperaba «include» o «include»)"
 
 #: filter.c:433
 msgid "invalid filter command (expected \"include\" or \"exclude\")"
-msgstr ""
+msgstr "orden de filtro no válida (se esperaba «include» o «exclude»)"
 
 #: filter.c:440
-#, fuzzy
 #| msgid "saving large objects"
 msgid "missing filter object type"
-msgstr "salvando objetos grandes"
+msgstr "falta el parámetro de tipo de objeto"
 
 #: filter.c:447
-#, fuzzy, c-format
+#, c-format
 #| msgid "unsupported object type \"%s\""
 msgid "unsupported filter object type: \"%.*s\""
-msgstr "tipo de objeto «%s» no soportado"
+msgstr "tipo de objeto de filtro «%.*s» no soportado"
 
 #: parallel.c:251
 #, c-format
@@ -738,10 +735,10 @@ msgid "parallel restore is not supported with archives made by pre-8.0 pg_dump"
 msgstr "la restauración en paralelo no está soportada con archivos construidos con pg_dump anterior a 8.0"
 
 #: pg_backup_archiver.c:377
-#, fuzzy, c-format
+#, c-format
 #| msgid "cannot parse archive \"%s\""
 msgid "cannot restore from compressed archive (%s)"
-msgstr "no se pudo interpretar el archivo «%s»"
+msgstr "no se puede restaurar del archivo comprimido (%s)"
 
 #: pg_backup_archiver.c:397
 #, c-format
@@ -1057,28 +1054,28 @@ msgid "could not set session user to \"%s\": %s"
 msgstr "no se pudo establecer el usuario de sesión a «%s»: %s"
 
 #: pg_backup_archiver.c:3457
-#, fuzzy, c-format
+#, c-format
 #| msgid "could not set search_path to \"%s\": %s"
 msgid "could not set \"search_path\" to \"%s\": %s"
-msgstr "no se pudo definir search_path a «%s»: %s"
+msgstr "no se pudo definir «search_path» a «%s»: %s"
 
 #: pg_backup_archiver.c:3518
-#, fuzzy, c-format
+#, c-format
 #| msgid "could not set default_tablespace to %s: %s"
 msgid "could not set \"default_tablespace\" to %s: %s"
-msgstr "no se pudo definir default_tablespace a %s: %s"
+msgstr "no se pudo definir «default_tablespace» a %s: %s"
 
 #: pg_backup_archiver.c:3567
-#, fuzzy, c-format
+#, c-format
 #| msgid "could not set default_table_access_method: %s"
 msgid "could not set \"default_table_access_method\": %s"
-msgstr "no se pudo definir default_table_access_method: %s"
+msgstr "no se pudo definir «default_table_access_method»: %s"
 
 #: pg_backup_archiver.c:3616
-#, fuzzy, c-format
+#, c-format
 #| msgid "could not set default_table_access_method: %s"
 msgid "could not alter table access method: %s"
-msgstr "no se pudo definir default_table_access_method: %s"
+msgstr "no se pudo alterar el método de acceso a tabla: %s"
 
 #: pg_backup_archiver.c:3717
 #, c-format
@@ -1111,8 +1108,7 @@ msgid "expected format (%d) differs from format found in file (%d)"
 msgstr "el formato esperado (%d) difiere del formato encontrado en el archivo (%d)"
 
 #: pg_backup_archiver.c:4059
-#, fuzzy, c-format
-#| msgid "archive is compressed, but this installation does not support compression (%s) -- no data will be available"
+#, c-format
 msgid "archive is compressed, but this installation does not support compression (%s) -- no data will be available"
 msgstr "el archivo está comprimido, pero esta instalación no soporta compresión (%s) -- los datos no estarán disponibles"
 
@@ -1384,13 +1380,13 @@ msgid "could not close LO data file: %m"
 msgstr "no se pudo cerrar el archivo de datos LO: %m"
 
 #: pg_backup_directory.c:712
-#, fuzzy, c-format
+#, c-format
 #| msgid "could not write to LOs TOC file: %s"
 msgid "could not write to LOs TOC file: %s"
 msgstr "no se pudo escribir archivo TOC de LOs: %s"
 
 #: pg_backup_directory.c:728
-#, fuzzy, c-format
+#, c-format
 #| msgid "could not close TOC file: %m"
 msgid "could not close LOs TOC file: %m"
 msgstr "no se pudo cerrar el archivo TOC: %m"
@@ -1653,10 +1649,10 @@ msgid "  --no-sync                    do not wait for changes to be written safe
 msgstr "  --no-sync                no esperar que los cambios se sincronicen a disco\n"
 
 #: pg_dump.c:1106
-#, fuzzy, c-format
+#, c-format
 #| msgid "  --clone                       clone instead of copying files to new cluster\n"
 msgid "  --sync-method=METHOD         set method for syncing files to disk\n"
-msgstr "  --clone                       clonar los archivos en vez de copiarlos\n"
+msgstr "  --sync-method=MÉTODO      definir método para sincr. archivos a disco\n"
 
 #: pg_dump.c:1107 pg_dumpall.c:643
 #, c-format
@@ -1678,7 +1674,7 @@ msgid "  -a, --data-only              dump only the data, not the schema\n"
 msgstr "  -a, --data-only              extrae sólo los datos, no el esquema\n"
 
 #: pg_dump.c:1111
-#, fuzzy, c-format
+#, c-format
 #| msgid "  -b, --large-objects          include large objects in dump\n"
 msgid "  -b, --large-objects          include large objects in dump\n"
 msgstr "  -b, --large-objects          incluir “large objects” en la extracción\n"
@@ -1689,7 +1685,7 @@ msgid "  --blobs                      (same as --large-objects, deprecated)\n"
 msgstr "  --blobs                      (igual que --large-objects, deprecado)\n"
 
 #: pg_dump.c:1113
-#, fuzzy, c-format
+#, c-format
 #| msgid "  -B, --no-large-objects       exclude large objects in dump\n"
 msgid "  -B, --no-large-objects       exclude large objects in dump\n"
 msgstr "  -B, --no-large-objects       excluir “large objects” en la extracción\n"
@@ -1751,7 +1747,7 @@ msgid "  -S, --superuser=NAME         superuser user name to use in plain-text f
 msgstr "  -S, --superuser=NAME         superusuario a utilizar en el volcado de texto\n"
 
 #: pg_dump.c:1125
-#, fuzzy, c-format
+#, c-format
 #| msgid "  -t, --table=PATTERN          dump only the specified table(s)\n"
 msgid "  -t, --table=PATTERN          dump only the specified table(s)\n"
 msgstr "  -t, --table=PATRÓN           extrae sólo la o las tablas nombradas\n"
@@ -1802,10 +1798,10 @@ msgstr ""
 "                               contenido al que el usuario tiene acceso)\n"
 
 #: pg_dump.c:1134
-#, fuzzy, c-format
+#, c-format
 #| msgid "  -e, --extension=PATTERN      dump the specified extension(s) only\n"
 msgid "  --exclude-extension=PATTERN  do NOT dump the specified extension(s)\n"
-msgstr "  -e, --extension=PATRÓN       extrae sólo la o las extensiones nombradas\n"
+msgstr "  --exclude-extension=PATRÓN  NO volcar la o las extensiones indicadas\n"
 
 #: pg_dump.c:1135
 #, c-format
@@ -1845,6 +1841,8 @@ msgid ""
 "  --filter=FILENAME            include or exclude objects and data from dump\n"
 "                               based on expressions in FILENAME\n"
 msgstr ""
+"  --filter=ARCHIVO              incluir o excluir objetos y datos basado en\n"
+"                                expresiones en ARCHIVO\n"
 
 #: pg_dump.c:1145 pg_dumpall.c:662 pg_restore.c:487
 #, c-format
@@ -2149,10 +2147,10 @@ msgid "saving encoding = %s"
 msgstr "salvando codificaciones = %s"
 
 #: pg_dump.c:3537
-#, fuzzy, c-format
+#, c-format
 #| msgid "saving standard_conforming_strings = %s"
 msgid "saving \"standard_conforming_strings = %s\""
-msgstr "salvando standard_conforming_strings = %s"
+msgstr "salvando «standard_conforming_strings = %s»"
 
 #: pg_dump.c:3576
 #, c-format
@@ -2160,10 +2158,10 @@ msgid "could not parse result of current_schemas()"
 msgstr "no se pudo interpretar la salida de current_schemas()"
 
 #: pg_dump.c:3595
-#, fuzzy, c-format
+#, c-format
 #| msgid "saving search_path = %s"
 msgid "saving \"search_path = %s\""
-msgstr "salvando search_path = %s"
+msgstr "salvando «search_path = %s»"
 
 #: pg_dump.c:3631
 #, c-format
@@ -2171,10 +2169,10 @@ msgid "reading large objects"
 msgstr "leyendo objetos grandes"
 
 #: pg_dump.c:3852
-#, fuzzy, c-format
+#, c-format
 #| msgid "saving large objects"
 msgid "saving large objects \"%s\""
-msgstr "salvando objetos grandes"
+msgstr "salvando objetos grandes «%s»"
 
 #: pg_dump.c:3873
 #, c-format
@@ -2208,10 +2206,10 @@ msgid "subscription with OID %u does not exist"
 msgstr "no existe la suscripción con OID %u"
 
 #: pg_dump.c:4972
-#, fuzzy, c-format
+#, c-format
 #| msgid "failed sanity check, parent OID %u of table \"%s\" (OID %u) not found"
 msgid "failed sanity check, table with OID %u not found"
-msgstr "falló la revisión de integridad, el OID %u del padre de la tabla «%s» (OID %u) no se encontró"
+msgstr "falló la revisión de integridad, tabla con OID %u no se encontró"
 
 #: pg_dump.c:5535
 #, c-format
@@ -2297,10 +2295,10 @@ msgid "unsupported pg_init_privs entry: %u %u %d"
 msgstr "entrada en pg_init_privs no soportada: %u %u %d"
 
 #: pg_dump.c:10527
-#, fuzzy, c-format
+#, c-format
 #| msgid "permission denied for large object %s"
 msgid "missing metadata for large objects \"%s\""
-msgstr "permiso denegado al objeto grande %s"
+msgstr "metadata faltante para los objetos grandes «%s»"
 
 #: pg_dump.c:10810
 #, c-format
@@ -2497,10 +2495,10 @@ msgstr "no existe el objeto referenciado %u %u"
 
 #: pg_dump.c:18857 pg_dump.c:18895 pg_dumpall.c:1962 pg_restore.c:551
 #: pg_restore.c:597
-#, fuzzy, c-format
+#, c-format
 #| msgid "access to library \"%s\" is not allowed"
 msgid "%s filter for \"%s\" is not allowed"
-msgstr "no está permitido el acceso a la biblioteca «%s»"
+msgstr "el filtro %s para «%s» no está permitido"
 
 #: pg_dump_sort.c:424
 #, c-format
@@ -2645,10 +2643,10 @@ msgid "  --exclude-database=PATTERN   exclude databases whose name matches PATTE
 msgstr "  --exclude-database=PATRÓN excluir bases de datos cuyos nombres coinciden con el patrón\n"
 
 #: pg_dumpall.c:661
-#, fuzzy, c-format
+#, c-format
 #| msgid "  -f, --file=FILENAME          output file name\n"
 msgid "  --filter=FILENAME            exclude databases specified in FILENAME\n"
-msgstr "  -f, --file=ARCHIVO       nombre del archivo de salida\n"
+msgstr "  --filter=ARCHIVO         excluir bases de datos especificadas en ARCHIVO\n"
 
 #: pg_dumpall.c:667
 #, c-format
@@ -2738,10 +2736,9 @@ msgid "executing %s"
 msgstr "ejecutando %s"
 
 #: pg_dumpall.c:1982
-#, fuzzy
 #| msgid "unsupported object type \"%s\""
 msgid "unsupported filter object"
-msgstr "tipo de objeto «%s» no soportado"
+msgstr "objeto de filtro no soportado"
 
 #: pg_restore.c:329
 #, c-format
@@ -2754,10 +2751,10 @@ msgid "options -d/--dbname and -f/--file cannot be used together"
 msgstr "las opciones -d/--dbname y -f/--file no pueden usarse juntas"
 
 #: pg_restore.c:350
-#, fuzzy, c-format
+#, c-format
 #| msgid "options -C/--create and -1/--single-transaction cannot be used together"
 msgid "options -1/--single-transaction and --transaction-size cannot be used together"
-msgstr "las opciones -c/--clean y -1/--single-transaction no pueden usarse juntas"
+msgstr "las opciones -1/--single-transaction y --transaction-size no pueden usarse juntas"
 
 #: pg_restore.c:357
 #, c-format
@@ -2929,16 +2926,13 @@ msgid "  --enable-row-security        enable row security\n"
 msgstr "  --enable-row-security        activa seguridad de filas\n"
 
 #: pg_restore.c:485
-#, fuzzy, c-format
-#| msgid ""
-#| "  -O, --no-owner               skip restoration of object ownership in\n"
-#| "                               plain-text format\n"
+#, c-format
 msgid ""
 "  --filter=FILENAME            restore or skip objects based on expressions\n"
 "                               in FILENAME\n"
 msgstr ""
-"  -O, --no-owner               en formato de sólo texto, no reestablece\n"
-"                               los dueños de los objetos\n"
+"  --filter=ARCHIVO             restaurar o ignorar objetos basados en\n"
+"                               expresiones en ARCHIVO\n"
 
 #: pg_restore.c:488
 #, c-format
@@ -2989,7 +2983,7 @@ msgstr ""
 #: pg_restore.c:499
 #, c-format
 msgid "  --transaction-size=N         commit after every N objects\n"
-msgstr ""
+msgstr "  --transaction-size=N         comprometer transacción cada N objetos\n"
 
 #: pg_restore.c:510
 #, c-format

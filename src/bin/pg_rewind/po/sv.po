@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-07-13 04:54+0000\n"
-"PO-Revision-Date: 2024-07-13 11:19+0200\n"
+"POT-Creation-Date: 2024-08-27 15:53+0000\n"
+"PO-Revision-Date: 2024-08-27 18:32+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
 "Language: sv\n"
@@ -811,69 +811,69 @@ msgstr "måldatakatalog måste stängas ner utan fel"
 msgid "%*s/%s kB (%d%%) copied"
 msgstr "%*s/%s kB (%d%%) kopierad"
 
-#: pg_rewind.c:950
+#: pg_rewind.c:948
 #, c-format
 msgid "could not find common ancestor of the source and target cluster's timelines"
 msgstr "kunde inte finna en gemensam anfader av källa och målklusterets tidslinjer"
 
-#: pg_rewind.c:991
+#: pg_rewind.c:989
 #, c-format
 msgid "backup label buffer too small"
 msgstr "backupetikett-buffer för liten"
 
-#: pg_rewind.c:1014
+#: pg_rewind.c:1012
 #, c-format
 msgid "unexpected control file CRC"
 msgstr "oväntad kontrollfil-CRC"
 
-#: pg_rewind.c:1026
+#: pg_rewind.c:1024
 #, c-format
 msgid "unexpected control file size %d, expected %d"
 msgstr "oväntad kontrollfilstorlek %d, förväntade %d"
 
-#: pg_rewind.c:1036
+#: pg_rewind.c:1034
 #, c-format
 msgid "invalid WAL segment size in control file (%d byte)"
 msgid_plural "invalid WAL segment size in control file (%d bytes)"
 msgstr[0] "ogiltigt WAL-segmentstorlek i kontrollfil (%d byte)"
 msgstr[1] "ogiltigt WAL-segmentstorlek i kontrollfil (%d byte)"
 
-#: pg_rewind.c:1040
+#: pg_rewind.c:1038
 #, c-format
 msgid "The WAL segment size must be a power of two between 1 MB and 1 GB."
 msgstr "WAL-segmentstorleken måste vara en tvåpotens mellan 1 MB och 1 GB."
 
-#: pg_rewind.c:1077 pg_rewind.c:1145
+#: pg_rewind.c:1075 pg_rewind.c:1143
 #, c-format
 msgid "program \"%s\" is needed by %s but was not found in the same directory as \"%s\""
 msgstr "programmet \"%s\" behövs av %s men hittades inte i samma katalog som \"%s\""
 
-#: pg_rewind.c:1080 pg_rewind.c:1148
+#: pg_rewind.c:1078 pg_rewind.c:1146
 #, c-format
 msgid "program \"%s\" was found by \"%s\" but was not the same version as %s"
 msgstr "programmet \"%s\" hittades av \"%s\" men är inte av samma version som %s"
 
-#: pg_rewind.c:1109
+#: pg_rewind.c:1107
 #, c-format
-msgid "unable to read restore_command from target cluster"
-msgstr "kan inte läsa restore_command från målklustret"
+msgid "could not read restore_command from target cluster"
+msgstr "kunde inte läsa restore_command från målklustret"
 
-#: pg_rewind.c:1114
+#: pg_rewind.c:1112
 #, c-format
 msgid "\"restore_command\" is not set in the target cluster"
 msgstr "\"restore_command\" är inte satt i målklustret"
 
-#: pg_rewind.c:1152
+#: pg_rewind.c:1150
 #, c-format
 msgid "executing \"%s\" for target server to complete crash recovery"
 msgstr "kör \"%s\" för målservern för att slutföra krashåterställning"
 
-#: pg_rewind.c:1190
+#: pg_rewind.c:1188
 #, c-format
 msgid "postgres single-user mode in target cluster failed"
 msgstr "postgres enanvändarläge misslyckades i målklustret"
 
-#: pg_rewind.c:1191
+#: pg_rewind.c:1189
 #, c-format
 msgid "Command was: %s"
 msgstr "Kommandot var: %s"

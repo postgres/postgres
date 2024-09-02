@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-08-02 21:50+0000\n"
-"PO-Revision-Date: 2024-08-03 15:01+0200\n"
+"POT-Creation-Date: 2024-08-25 09:20+0000\n"
+"PO-Revision-Date: 2024-08-25 16:44+0200\n"
 "Last-Translator: Peter Eisentraut <peter@eisentraut.org>\n"
 "Language-Team: German <pgsql-translators@postgresql.org>\n"
 "Language: de\n"
@@ -1297,18 +1297,18 @@ msgstr "Der Zielserver kann nicht mehr als physischer Standby verwendet werden. 
 
 #: pg_createsubscriber.c:198
 #, c-format
-msgid "publication \"%s\" in database \"%s\" on primary might be left behind"
-msgstr "Publikation »%s« in Datenbank »%s« auf dem Primärserver wurde zurückgelassen"
+msgid "publication \"%s\" created in database \"%s\" on primary was left behind"
+msgstr "Publikation »%s« erzeugt in Datenbank »%s« auf dem Primärserver wurde zurückgelassen"
 
 #: pg_createsubscriber.c:200
 #, c-format
-msgid "Consider dropping this publication before trying again."
-msgstr "Löschen Sie diese Publikation eventuell, bevor Sie erneut versuchen."
+msgid "Drop this publication before trying again."
+msgstr "Löschen Sie diese Publikation, bevor Sie erneut versuchen."
 
 #: pg_createsubscriber.c:204
 #, c-format
-msgid "replication slot \"%s\" in database \"%s\" on primary might be left behind"
-msgstr "Replikations-Slot »%s« in Datenbank »%s« auf dem Primärserver wurde zurückgelassen"
+msgid "replication slot \"%s\" created in database \"%s\" on primary was left behind"
+msgstr "Replikations-Slot »%s« erzeugt in Datenbank »%s« auf dem Primärserver wurde zurückgelassen"
 
 #: pg_createsubscriber.c:206 pg_createsubscriber.c:1260
 #, c-format
@@ -1335,7 +1335,7 @@ msgstr ""
 
 #: pg_createsubscriber.c:224
 #, c-format
-msgid "  -d, --database=DBNAME           database to create a subscription\n"
+msgid "  -d, --database=DBNAME           database in which to create a subscription\n"
 msgstr "  -d, --database=DBNAME           Datenbank, in der eine Subskription erzeugt werden soll\n"
 
 #: pg_createsubscriber.c:225
@@ -1370,8 +1370,8 @@ msgstr "  -t, --recovery-timeout=SEK      Sekunden zu warten auf Ende der Wieder
 
 #: pg_createsubscriber.c:231
 #, c-format
-msgid "  -U, --subscriber-username=NAME  subscriber username\n"
-msgstr "  -U, --subscriber-username=NAME  Subskriptionsserver-Benutzername\n"
+msgid "  -U, --subscriber-username=NAME  user name for subscriber connection\n"
+msgstr "  -U, --subscriber-username=NAME  Benutzername für Subskriptionsserver-Verbindung\n"
 
 #: pg_createsubscriber.c:232
 #, c-format
@@ -1504,8 +1504,8 @@ msgstr "Subskriptionsserver hat Systemidentifikator erfolgreich geändert"
 
 #: pg_createsubscriber.c:673
 #, c-format
-msgid "subscriber failed to change system identifier: exit code: %d"
-msgstr "Subskriptionsserver konnte Systemidentifikator nicht ändern: Exitcode %d"
+msgid "could not change system identifier of subscriber: %s"
+msgstr "konnte Systemidentifikator des Subskriptionsservers nicht ändern: %s"
 
 #: pg_createsubscriber.c:697
 #, c-format
@@ -1566,13 +1566,13 @@ msgstr "Erhöhen Sie den Konfigurationsparameter »%s« auf mindestens %d."
 
 #: pg_createsubscriber.c:929
 #, c-format
-msgid "publisher requires %d wal sender processes, but only %d remain"
+msgid "publisher requires %d WAL sender processes, but only %d remain"
 msgstr "Publikationsserver benötigt %d WAL-Sender-Prozesse, aber nur %d verbleiben"
 
 #: pg_createsubscriber.c:938
 #, c-format
-msgid "two_phase option will not be enabled for slots"
-msgstr "Option »two_phase« wird für Slots nicht aktiviert"
+msgid "two_phase option will not be enabled for replication slots"
+msgstr "Option »two_phase« wird für Replikations-Slots nicht aktiviert"
 
 #: pg_createsubscriber.c:939
 #, c-format
@@ -1786,13 +1786,13 @@ msgstr "konnte Subskriptions-OID nicht ermitteln: %d Zeilen erhalten, %d Zeile e
 
 #: pg_createsubscriber.c:1794
 #, c-format
-msgid "setting the replication progress (node name \"%s\" ; LSN %s) in database \"%s\""
-msgstr "setze Replikationsfortschritt (Knotenname »%s«; LSN %s) in Datenbank »%s«"
+msgid "setting the replication progress (node name \"%s\", LSN %s) in database \"%s\""
+msgstr "setze Replikationsfortschritt (Knotenname »%s«, LSN %s) in Datenbank »%s«"
 
 #: pg_createsubscriber.c:1809
 #, c-format
-msgid "could not set replication progress for the subscription \"%s\": %s"
-msgstr "konnte Replikationsfortschritt für die Subskription »%s« nicht setzen: %s"
+msgid "could not set replication progress for subscription \"%s\": %s"
+msgstr "konnte Replikationsfortschritt für Subskription »%s« nicht setzen: %s"
 
 #: pg_createsubscriber.c:1840
 #, c-format
@@ -1816,23 +1816,23 @@ msgstr "Sie müssen %s als PostgreSQL-Superuser ausführen."
 
 #: pg_createsubscriber.c:1966
 #, c-format
-msgid "duplicate database \"%s\""
-msgstr "doppelte Datenbank »%s«"
+msgid "database \"%s\" specified more than once"
+msgstr "Datenbank »%s« mehrmals angegeben"
 
 #: pg_createsubscriber.c:2007
 #, c-format
-msgid "duplicate publication \"%s\""
-msgstr "doppelte Publikation »%s«"
+msgid "publication \"%s\" specified more than once"
+msgstr "Publikation »%s« mehrmals angegeben"
 
 #: pg_createsubscriber.c:2019
 #, c-format
-msgid "duplicate replication slot \"%s\""
-msgstr "doppelter Replikations-Slot »%s«"
+msgid "replication slot \"%s\" specified more than once"
+msgstr "Replikations-Slot »%s« mehrmals angegeben"
 
 #: pg_createsubscriber.c:2031
 #, c-format
-msgid "duplicate subscription \"%s\""
-msgstr "doppelte Subskription »%s«"
+msgid "subscription \"%s\" specified more than once"
+msgstr "Subskription »%s« mehrmals angegeben"
 
 #: pg_createsubscriber.c:2054
 #, c-format
@@ -1866,8 +1866,8 @@ msgstr "keine Datenbank wurde angegeben"
 
 #: pg_createsubscriber.c:2109
 #, c-format
-msgid "database \"%s\" was extracted from the publisher connection string"
-msgstr "Datenbank »%s« wurde aus der Verbindungszeichenkette des Publikationsservers extrahiert"
+msgid "database name \"%s\" was extracted from the publisher connection string"
+msgstr "Datenbankname »%s« wurde aus der Verbindungszeichenkette des Publikationsservers extrahiert"
 
 #: pg_createsubscriber.c:2114
 #, c-format
@@ -1876,33 +1876,33 @@ msgstr "kein Datenbankname angegeben"
 
 #: pg_createsubscriber.c:2124
 #, c-format
-msgid "wrong number of publication names"
-msgstr "falsche Anzahl Publikationsnamen"
+msgid "wrong number of publication names specified"
+msgstr "falsche Anzahl Publikationsnamen angegeben"
 
 #: pg_createsubscriber.c:2125
 #, c-format
-msgid "Number of publication names (%d) must match number of database names (%d)."
-msgstr "Die Anzahl der Publikationsnamen (%d) muss mit der Anzahl der Datenbanknamen (%d) übereinstimmen."
+msgid "The number of specified publication names (%d) must match the number of specified database names (%d)."
+msgstr "Die Anzahl der angegebenen Publikationsnamen (%d) muss mit der Anzahl der angegebenen Datenbanknamen (%d) übereinstimmen."
 
 #: pg_createsubscriber.c:2131
 #, c-format
-msgid "wrong number of subscription names"
-msgstr "falsche Anzahl Subskriptionsnamen"
+msgid "wrong number of subscription names specified"
+msgstr "falsche Anzahl Subskriptionsnamen angegeben"
 
 #: pg_createsubscriber.c:2132
 #, c-format
-msgid "Number of subscription names (%d) must match number of database names (%d)."
-msgstr "Die Anzahl der Subskriptionsnamen (%d) muss mit der Anzahl der Datenbanknamen (%d) übereinstimmen."
+msgid "The number of specified subscription names (%d) must match the number of specified database names (%d)."
+msgstr "Die Anzahl der angegebenen Subskriptionsnamen (%d) muss mit der Anzahl der angegebenen Datenbanknamen (%d) übereinstimmen."
 
 #: pg_createsubscriber.c:2138
 #, c-format
-msgid "wrong number of replication slot names"
-msgstr "falsche Anzahl Replikations-Slot-Namen"
+msgid "wrong number of replication slot names specified"
+msgstr "falsche Anzahl Replikations-Slot-Namen angegeben"
 
 #: pg_createsubscriber.c:2139
 #, c-format
-msgid "Number of replication slot names (%d) must match number of database names (%d)."
-msgstr "Die Anzahl der Replikations-Slot-Namen (%d) muss mit der Anzahl der Datenbanknamen (%d) übereinstimmen."
+msgid "The number of specified replication slot names (%d) must match the number of specified database names (%d)."
+msgstr "Die Anzahl der angegebenen Replikations-Slot-Namen (%d) muss mit der Anzahl der angegebenen Datenbanknamen (%d) übereinstimmen."
 
 #: pg_createsubscriber.c:2168
 #, c-format
@@ -1911,18 +1911,18 @@ msgstr "Datenverzeichnis des Subskriptionsservers ist keine Kopie des Quelldaten
 
 #: pg_createsubscriber.c:2181
 #, c-format
-msgid "standby is up and running"
-msgstr "Standby läuft"
+msgid "standby server is running"
+msgstr "Standby-Server läuft"
 
 #: pg_createsubscriber.c:2182
 #, c-format
-msgid "Stop the standby and try again."
-msgstr "Halten Sie den Standby an und versuchen Sie erneut."
+msgid "Stop the standby server and try again."
+msgstr "Halten Sie den Standby-Server an und versuchen Sie erneut."
 
 #: pg_createsubscriber.c:2191
 #, c-format
-msgid "starting the standby with command-line options"
-msgstr "starte den Standby mit Kommandozeilenoptionen"
+msgid "starting the standby server with command-line options"
+msgstr "starte den Standby-Server mit Kommandozeilenoptionen"
 
 #: pg_createsubscriber.c:2207 pg_createsubscriber.c:2242
 #, c-format

@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_verifybackup (PostgreSQL) 16\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-07-01 03:48+0000\n"
-"PO-Revision-Date: 2024-06-05 01:39+0200\n"
+"POT-Creation-Date: 2024-08-29 17:48+0000\n"
+"PO-Revision-Date: 2024-08-29 22:31+0200\n"
 "Last-Translator: Temuri Doghonadze <temuri.doghonadze@gmail.com>\n"
 "Language-Team: Georgian <nothing>\n"
 "Language: ka\n"
@@ -281,8 +281,8 @@ msgid "unexpected manifest version"
 msgstr "მანიფესტის მოულოდნელი ვერსია"
 
 #: ../../common/parse_manifest.c:637
-msgid "manifest system identifier not an integer"
-msgstr "მანიფესტის სისტემის იდენფიტიკატორი მთელი რიცხვი არაა"
+msgid "system identifier in manifest not an integer"
+msgstr "სისტემის იდენფიტიკატორი მანიფესტში მთელი რიცხვი არაა"
 
 #: ../../common/parse_manifest.c:662
 msgid "missing path name"

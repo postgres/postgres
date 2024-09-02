@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_verifybackup (PostgreSQL) 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-06-16 07:48+0000\n"
-"PO-Revision-Date: 2024-05-24 15:40+0200\n"
+"POT-Creation-Date: 2024-08-29 13:18+0000\n"
+"PO-Revision-Date: 2024-08-29 16:47+0200\n"
 "Last-Translator: Peter Eisentraut <peter@eisentraut.org>\n"
 "Language-Team: German <pgsql-translators@postgresql.org>\n"
 "Language: de\n"
@@ -280,7 +280,7 @@ msgid "unexpected manifest version"
 msgstr "unerwartete Manifestversion"
 
 #: ../../common/parse_manifest.c:637
-msgid "manifest system identifier not an integer"
+msgid "system identifier in manifest not an integer"
 msgstr "Systemidentifikator im Manifest ist keine ganze Zahl"
 
 #: ../../common/parse_manifest.c:662

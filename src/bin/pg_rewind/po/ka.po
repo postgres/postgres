@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_rewind (PostgreSQL) 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-06-14 02:23+0000\n"
-"PO-Revision-Date: 2024-06-14 06:15+0200\n"
+"POT-Creation-Date: 2024-08-27 16:53+0000\n"
+"PO-Revision-Date: 2024-08-28 05:56+0200\n"
 "Last-Translator: Temuri Doghonadze <temuri.doghonadze@gmail.com>\n"
 "Language-Team: Georgian <nothing>\n"
 "Language: ka\n"
@@ -812,69 +812,69 @@ msgstr "საწყისი ბაზა წესების დაცვი
 msgid "%*s/%s kB (%d%%) copied"
 msgstr "%*s/%s კბ (%d%%) დაკოპირდა"
 
-#: pg_rewind.c:950
+#: pg_rewind.c:948
 #, c-format
 msgid "could not find common ancestor of the source and target cluster's timelines"
 msgstr "საწყისი და სამიზნე კლასტერების დროის ხაზის საერთო წინაპრის პოვნა შეუძლებელია"
 
-#: pg_rewind.c:991
+#: pg_rewind.c:989
 #, c-format
 msgid "backup label buffer too small"
 msgstr "მარქაფის ჭდის ბაფერი ძალიან პატარაა"
 
-#: pg_rewind.c:1014
+#: pg_rewind.c:1012
 #, c-format
 msgid "unexpected control file CRC"
 msgstr "კონტროლის ფაილის მოულოდნელი CRC"
 
-#: pg_rewind.c:1026
+#: pg_rewind.c:1024
 #, c-format
 msgid "unexpected control file size %d, expected %d"
 msgstr "საკონტროლო ფაილის არასწორი სიგრძე: %d. უნდა იყოს: %d"
 
-#: pg_rewind.c:1036
+#: pg_rewind.c:1034
 #, c-format
 msgid "invalid WAL segment size in control file (%d byte)"
 msgid_plural "invalid WAL segment size in control file (%d bytes)"
 msgstr[0] "არასწორი WAL სეგმენტის ზომა კონტროლის ფაილში (%d ბაიტი)"
 msgstr[1] "არასწორი WAL სეგმენტის ზომა კონტროლის ფაილში (%d ბაიტი)"
 
-#: pg_rewind.c:1040
+#: pg_rewind.c:1038
 #, c-format
 msgid "The WAL segment size must be a power of two between 1 MB and 1 GB."
 msgstr "WAL სეგმენტის ზომა ორის ხარისხი უნდა იყოს, შუალედიდან 1მბ-1გბ."
 
-#: pg_rewind.c:1077 pg_rewind.c:1145
+#: pg_rewind.c:1075 pg_rewind.c:1143
 #, c-format
 msgid "program \"%s\" is needed by %s but was not found in the same directory as \"%s\""
 msgstr "პროგრამა \"%s\" სჭირდება \"%s\"-ს, მაგრამ იგივე საქაღალდეში, სადაც \"%s\", ნაპოვნი არაა"
 
-#: pg_rewind.c:1080 pg_rewind.c:1148
+#: pg_rewind.c:1078 pg_rewind.c:1146
 #, c-format
 msgid "program \"%s\" was found by \"%s\" but was not the same version as %s"
 msgstr "პროგრამა „%s“ ნაპოვნია „%s“-ის მიერ, მაგრამ ვერსია, იგივეა არაა, რაც %s"
 
-#: pg_rewind.c:1109
+#: pg_rewind.c:1107
 #, c-format
-msgid "unable to read restore_command from target cluster"
+msgid "could not read restore_command from target cluster"
 msgstr "სამიზნე კლასტერიდან restore_command-ის წაკითხვა შეუძლებელია"
 
-#: pg_rewind.c:1114
+#: pg_rewind.c:1112
 #, c-format
 msgid "\"restore_command\" is not set in the target cluster"
 msgstr "სამიზნე კლასტერში \"restore_command\" დაყენებული არაა"
 
-#: pg_rewind.c:1152
+#: pg_rewind.c:1150
 #, c-format
 msgid "executing \"%s\" for target server to complete crash recovery"
 msgstr "ავარიიდან სრულად აღდგენისთვის სამიზნე სერვერზე %s-ის შესრულდება"
 
-#: pg_rewind.c:1190
+#: pg_rewind.c:1188
 #, c-format
 msgid "postgres single-user mode in target cluster failed"
 msgstr "სამიზნე კლასტერში postgres-ის ერთმომხმარებლიანი რეჟიმის შეცდომა"
 
-#: pg_rewind.c:1191
+#: pg_rewind.c:1189
 #, c-format
 msgid "Command was: %s"
 msgstr "ბრძანება იყო: %s"

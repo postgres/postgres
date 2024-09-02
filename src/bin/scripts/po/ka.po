@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: pgscripts (PostgreSQL) 16\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2024-06-14 02:21+0000\n"
-"PO-Revision-Date: 2024-06-14 06:16+0200\n"
+"PO-Revision-Date: 2024-08-08 15:28+0200\n"
 "Last-Translator: Temuri Doghonadze <temuri.doghonadze@gmail.com>\n"
 "Language-Team: Georgian <nothing>\n"
 "Language: ka\n"
@@ -341,7 +341,7 @@ msgstr "  -p, --port=PORT          მონაცემთა ბაზის �
 #: clusterdb.c:289 dropdb.c:184 vacuumdb.c:1181
 #, c-format
 msgid "  -U, --username=USERNAME   user name to connect as\n"
-msgstr "  -U, --username=მომხმარებელი  ბაზის მომხმარებლის სახელი\n"
+msgstr "  -U, --username=მომხმარებ.  ბაზის მომხმარებლის სახელი\n"
 
 #: clusterdb.c:290 createuser.c:452 dropdb.c:185 dropuser.c:183 vacuumdb.c:1182
 #, c-format
@@ -454,7 +454,7 @@ msgstr "  -e, --echo-queries       სერვერზე გაგზავ�
 #: createdb.c:303
 #, c-format
 msgid "  -E, --encoding=ENCODING      encoding for the database\n"
-msgstr "  \\encoding [კოდირება]   კლიენტის კოდირების ჩვენება ან დაყენება\n"
+msgstr "  \\encoding [კოდირება]     კლიენტის კოდირების ჩვენება ან დაყენება\n"
 
 #: createdb.c:304
 #, c-format
@@ -498,12 +498,12 @@ msgstr ""
 #: createdb.c:312
 #, c-format
 msgid "  -O, --owner=OWNER            database user to own the new database\n"
-msgstr "  -O, --owner=მფლობელი            ახალი ბაზის მფლობელი მომხმარებლის სახელი\n"
+msgstr "  -O, --owner=მფლობელი     ახალი ბაზის მფლობელი მომხმარებლის სახელი\n"
 
 #: createdb.c:313
 #, c-format
 msgid "  -S, --strategy=STRATEGY      database creation strategy wal_log or file_copy\n"
-msgstr "  -S, --strategy=სტრატეგია      ბაზის შექმნის სტრატეგია: wal_log ან file_copy\n"
+msgstr "  -S, --strategy=სტრატეგია     ბაზის შექმნის სტრატეგია: wal_log ან file_copy\n"
 
 #: createdb.c:314
 #, c-format

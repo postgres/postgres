@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-08-03 13:19+0000\n"
-"PO-Revision-Date: 2024-08-04 09:26+0200\n"
+"POT-Creation-Date: 2024-08-26 18:20+0000\n"
+"PO-Revision-Date: 2024-08-26 20:56+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
 "Language: sv\n"
@@ -1291,18 +1291,18 @@ msgstr "Målservern kan inte längre användas som en fysisk replika. Du måste 
 
 #: pg_createsubscriber.c:198
 #, c-format
-msgid "publication \"%s\" in database \"%s\" on primary might be left behind"
-msgstr "publiceringen \"%s\" i databasen \"%s\" på primären kan ha lämnats kvar"
+msgid "publication \"%s\" created in database \"%s\" on primary was left behind"
+msgstr "publiceringen \"%s\" som skapades i databasen \"%s\" på primären har lämnats kvar"
 
 #: pg_createsubscriber.c:200
 #, c-format
-msgid "Consider dropping this publication before trying again."
-msgstr "Överväg att slänga publiceringen innan du försöker igen."
+msgid "Drop this publication before trying again."
+msgstr "Släng denna publiceringen innan du försöker igen."
 
 #: pg_createsubscriber.c:204
 #, c-format
-msgid "replication slot \"%s\" in database \"%s\" on primary might be left behind"
-msgstr "replikeringsslotten \"%s\" i databasen \"%s\" på primären kan ha lämnats kvar"
+msgid "replication slot \"%s\" created in database \"%s\" on primary was left behind"
+msgstr "replikeringsslotten \"%s\" som skapades i databasen \"%s\" på primären har lämnats kvar"
 
 #: pg_createsubscriber.c:206 pg_createsubscriber.c:1260
 #, c-format
@@ -1327,8 +1327,8 @@ msgstr ""
 
 #: pg_createsubscriber.c:224
 #, c-format
-msgid "  -d, --database=DBNAME           database to create a subscription\n"
-msgstr "  -d, --database=DBNAME           databas att indexera om\n"
+msgid "  -d, --database=DBNAME           database in which to create a subscription\n"
+msgstr "  -d, --database=DBNAME           databas att skapa prenumeration i\n"
 
 #: pg_createsubscriber.c:225
 #, c-format
@@ -1362,8 +1362,8 @@ msgstr "  -t, --recovery-timeout=SECS     antal sekunder att vänta på att åte
 
 #: pg_createsubscriber.c:231
 #, c-format
-msgid "  -U, --subscriber-username=NAME  subscriber username\n"
-msgstr "  -U, --subscriber-username=NAME  prenumerantens användarnamn\n"
+msgid "  -U, --subscriber-username=NAME  user name for subscriber connection\n"
+msgstr "  -U, --subscriber-username=NAME  användarnamn för prenumerantens anslutning\n"
 
 #: pg_createsubscriber.c:232
 #, c-format
@@ -1496,8 +1496,8 @@ msgstr "prenumeranten lyckades ändra systemidentifieraren"
 
 #: pg_createsubscriber.c:673
 #, c-format
-msgid "subscriber failed to change system identifier: exit code: %d"
-msgstr "prenumeranten misslyckades att ändra systemidentifieraren: felkod: %d"
+msgid "could not change system identifier of subscriber: %s"
+msgstr "kunde inte ändra systemidentifierare för prenumerant: %s"
 
 #: pg_createsubscriber.c:697
 #, c-format
@@ -1558,13 +1558,13 @@ msgstr "Öka konfigurationsparametern \"%s\" till minst %d."
 
 #: pg_createsubscriber.c:929
 #, c-format
-msgid "publisher requires %d wal sender processes, but only %d remain"
-msgstr "publicerare kräver %d wal-skickar-processer men bara %d återstår"
+msgid "publisher requires %d WAL sender processes, but only %d remain"
+msgstr "publicerare kräver %d WAL-skickar-processer men bara %d återstår"
 
 #: pg_createsubscriber.c:938
 #, c-format
-msgid "two_phase option will not be enabled for slots"
-msgstr "flaggan two_phase kommer inte aktiveras för slottar"
+msgid "two_phase option will not be enabled for replication slots"
+msgstr "flaggan two_phase kommer inte aktiveras för replikeringsslottar"
 
 #: pg_createsubscriber.c:939
 #, c-format
@@ -1780,13 +1780,13 @@ msgstr "kunde inte hämta prenumerations-OID: fick %d rader, förväntade %d rad
 
 #: pg_createsubscriber.c:1794
 #, c-format
-msgid "setting the replication progress (node name \"%s\" ; LSN %s) in database \"%s\""
-msgstr "sätter progress för replikering (nod-namn \"%s\" ; LSN %s) i databasen \"%s\""
+msgid "setting the replication progress (node name \"%s\", LSN %s) in database \"%s\""
+msgstr "sätter progress för replikering (nod-namn \"%s\", LSN %s) i databasen \"%s\""
 
 #: pg_createsubscriber.c:1809
 #, c-format
-msgid "could not set replication progress for the subscription \"%s\": %s"
-msgstr "kunde inte sätta progress för replikering på prenumerationen \"%s\": %s"
+msgid "could not set replication progress for subscription \"%s\": %s"
+msgstr "kunde inte sätta progress för replikering till prenumeration \"%s\": %s"
 
 #: pg_createsubscriber.c:1840
 #, c-format
@@ -1810,23 +1810,23 @@ msgstr "Du måste köra %s som PostgreSQL:s superuser."
 
 #: pg_createsubscriber.c:1966
 #, c-format
-msgid "duplicate database \"%s\""
-msgstr "duplicerad databas \"%s\""
+msgid "database \"%s\" specified more than once"
+msgstr "database \"%s\" angiven mer än en gång"
 
 #: pg_createsubscriber.c:2007
 #, c-format
-msgid "duplicate publication \"%s\""
-msgstr "duplicerad publicering \"%s\""
+msgid "publication \"%s\" specified more than once"
+msgstr "publicering \"%s\" angiven mer än en gång"
 
 #: pg_createsubscriber.c:2019
 #, c-format
-msgid "duplicate replication slot \"%s\""
-msgstr "duplicerad replikeringsslot \"%s\""
+msgid "replication slot \"%s\" specified more than once"
+msgstr "replikeringsslott \"%s\" angiven mer än en gång"
 
 #: pg_createsubscriber.c:2031
 #, c-format
-msgid "duplicate subscription \"%s\""
-msgstr "duplicerad prenumeration \"%s\""
+msgid "subscription \"%s\" specified more than once"
+msgstr "prenumeration \"%s\" angiven mer än en gång"
 
 #: pg_createsubscriber.c:2054
 #, c-format
@@ -1860,8 +1860,8 @@ msgstr "ingen databas angavs"
 
 #: pg_createsubscriber.c:2109
 #, c-format
-msgid "database \"%s\" was extracted from the publisher connection string"
-msgstr "databasen \"%s\" extraherades från publicistens anslutningssträng"
+msgid "database name \"%s\" was extracted from the publisher connection string"
+msgstr "databasnamn \"%s\" extraherades från publicistens anslutningssträng"
 
 #: pg_createsubscriber.c:2114
 #, c-format
@@ -1870,33 +1870,33 @@ msgstr "inget databasnamn angavs"
 
 #: pg_createsubscriber.c:2124
 #, c-format
-msgid "wrong number of publication names"
-msgstr "fel antal namn på publicister"
+msgid "wrong number of publication names specified"
+msgstr "fel antal namn på publicister angavs"
 
 #: pg_createsubscriber.c:2125
 #, c-format
-msgid "Number of publication names (%d) must match number of database names (%d)."
-msgstr "Antalet namn på publicister (%d) måste matcha antalet namn på databaser (%d)."
+msgid "The number of specified publication names (%d) must match the number of specified database names (%d)."
+msgstr "Antalet angivna namn på publicister (%d) måste matcha antalet angivna namn på databaser (%d)."
 
 #: pg_createsubscriber.c:2131
 #, c-format
-msgid "wrong number of subscription names"
-msgstr "fel antal namn på prenumeranter"
+msgid "wrong number of subscription names specified"
+msgstr "fel antal namn på prenumeranter angivna"
 
 #: pg_createsubscriber.c:2132
 #, c-format
-msgid "Number of subscription names (%d) must match number of database names (%d)."
-msgstr "Antalet namn på prenumeranter (%d) måste matcha antalet namn på databaser (%d)."
+msgid "The number of specified subscription names (%d) must match the number of specified database names (%d)."
+msgstr "Antalet angivna namn på prenumeranter (%d) måste matcha antalet angivna namn på databaser (%d)."
 
 #: pg_createsubscriber.c:2138
 #, c-format
-msgid "wrong number of replication slot names"
-msgstr "fel antal namn på replikeringsslottar"
+msgid "wrong number of replication slot names specified"
+msgstr "fel antal namn på replikeringsslottar angivet"
 
 #: pg_createsubscriber.c:2139
 #, c-format
-msgid "Number of replication slot names (%d) must match number of database names (%d)."
-msgstr "Antalet namn på replikeringsslottar (%d) måste matcha antalet namn på databaser (%d)."
+msgid "The number of specified replication slot names (%d) must match the number of specified database names (%d)."
+msgstr "Antalet angivna namn på replikeringsslottar (%d) måste matcha antalet angivna namn på databaser (%d)."
 
 #: pg_createsubscriber.c:2168
 #, c-format
@@ -1905,18 +1905,18 @@ msgstr "prenumerantens datakatalog är inte en kopia på källdatabasens kluster
 
 #: pg_createsubscriber.c:2181
 #, c-format
-msgid "standby is up and running"
-msgstr "standby:en är igång och kör"
+msgid "standby server is running"
+msgstr "standby-servern kör"
 
 #: pg_createsubscriber.c:2182
 #, c-format
-msgid "Stop the standby and try again."
-msgstr "Stoppa standby:en och försök igen."
+msgid "Stop the standby server and try again."
+msgstr "Stoppa standby-servern och försök igen."
 
 #: pg_createsubscriber.c:2191
 #, c-format
-msgid "starting the standby with command-line options"
-msgstr "startar standby:en med kommandoradsflaggor"
+msgid "starting the standby server with command-line options"
+msgstr "startar standby-server med kommandoradsflaggor"
 
 #: pg_createsubscriber.c:2207 pg_createsubscriber.c:2242
 #, c-format
@@ -2594,27 +2594,3 @@ msgstr "unlink stöds inte med komprimering"
 #: walmethods.c:1293
 msgid "could not close compression stream"
 msgstr "kunde inte stänga komprimeringsström"
-
-#, c-format
-#~ msgid "  -s, --socket-directory=DIR      socket directory to use (default current directory)\n"
-#~ msgstr "  -s, --socket-directory=DIR      uttagskatalog som skall användas (standard är aktuell katalog.)\n"
-
-#, c-format
-#~ msgid "Consider increasing max_logical_replication_workers to at least %d."
-#~ msgstr "Överväg att öka max_logical_replication_workers till minst %d."
-
-#, c-format
-#~ msgid "Consider increasing max_replication_slots to at least %d."
-#~ msgstr "Överväg att öka max_replication_slots till minst %d."
-
-#, c-format
-#~ msgid "Consider increasing max_wal_senders to at least %d."
-#~ msgstr "Överväg att öka max_wal_senders till minst %d."
-
-#, c-format
-#~ msgid "Consider increasing max_worker_processes to at least %d."
-#~ msgstr "Överväg att öka max_worker_processes till minst %d."
-
-#, c-format
-#~ msgid "validating connection string on subscriber"
-#~ msgstr "validerar anslutningssträng på prenumerant"
