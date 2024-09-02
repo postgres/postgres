@@ -65,6 +65,7 @@ FUNCTION pg_tde_add_key_provider_file(
 SELECT pg_tde_add_key_provider_file('file','/tmp/pgkeyring');
 ```
 **Note: The `File` provided is intended for development and stores the keys unencrypted in the specified data file.**
+
 6. Set the principal key for the database using the `pg_tde_set_principal_key` function.
 ```sql
 FUNCTION pg_tde_set_principal_key (
