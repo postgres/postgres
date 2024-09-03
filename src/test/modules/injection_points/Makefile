@@ -20,7 +20,7 @@ TAP_TESTS = 1
 # The injection points are cluster-wide, so disable installcheck
 NO_INSTALLCHECK = 1
 
-export enable_injection_points enable_injection_points
+export enable_injection_points
 
 ifdef USE_PGXS
 PG_CONFIG = pg_config

@@ -8,7 +8,7 @@ OBJS = \
 PGFILEDESC = "test_slru - test module for SLRUs"
 
 EXTRA_INSTALL=src/test/modules/injection_points
-export enable_injection_points enable_injection_points
+export enable_injection_points
 TAP_TESTS = 1
 
 EXTENSION = test_slru
