@@ -1083,7 +1083,7 @@ check_recovery_prefetch(int *new_value, void **extra, GucSource source)
 #ifndef USE_PREFETCH
 	if (*new_value == RECOVERY_PREFETCH_ON)
 	{
-		GUC_check_errdetail("\"recovery_prefetch\" is not supported on platforms that lack posix_fadvise().");
+		GUC_check_errdetail("\"recovery_prefetch\" is not supported on platforms that lack support for issuing read-ahead advice.");
 		return false;
 	}
 #endif

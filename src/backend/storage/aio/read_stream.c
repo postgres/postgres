@@ -24,16 +24,17 @@
  * already.  There is no benefit to looking ahead more than one block, so
  * distance is 1.  This is the default initial assumption.
  *
- * B) I/O is necessary, but fadvise is undesirable because the access is
- * sequential, or impossible because direct I/O is enabled or the system
- * doesn't support fadvise.  There is no benefit in looking ahead more than
+ * B) I/O is necessary, but read-ahead advice is undesirable because the
+ * access is sequential and we can rely on the kernel's read-ahead heuristics,
+ * or impossible because direct I/O is enabled, or the system doesn't support
+ * read-ahead advice.  There is no benefit in looking ahead more than
  * io_combine_limit, because in this case the only goal is larger read system
  * calls.  Looking further ahead would pin many buffers and perform
- * speculative work looking ahead for no benefit.
+ * speculative work for no benefit.
  *
- * C) I/O is necessary, it appears random, and this system supports fadvise.
- * We'll look further ahead in order to reach the configured level of I/O
- * concurrency.
+ * C) I/O is necessary, it appears to be random, and this system supports
+ * read-ahead advice.  We'll look further ahead in order to reach the
+ * configured level of I/O concurrency.
  *
  * The distance increases rapidly and decays slowly, so that it moves towards
  * those levels as different I/O patterns are discovered.  For example, a
