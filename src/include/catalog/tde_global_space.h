@@ -21,8 +21,9 @@
  * We take Oids of the sql operators, so there is no overlap with the "real"
  * catalog objects possible.
  */
-#define GLOBAL_DATA_TDE_OID	607 /* Global objects fake "db" */
 #define XLOG_TDE_OID        608
+
+#define GLOBAL_DATA_TDE_OID	InvalidOid
 
 #define GLOBAL_SPACE_RLOCATOR(_obj_oid) (RelFileLocator) { \
 	GLOBALTABLESPACE_OID, \
