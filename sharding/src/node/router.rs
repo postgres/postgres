@@ -1,6 +1,7 @@
 use postgres::Client as PostgresClient;
 extern crate users;
-use crate::node::messages::message::{Message, MessageType, NodeInfo};
+use crate::node::messages::message::{Message, MessageType};
+use crate::node::messages::node_info::NodeInfo;
 use crate::utils::queries::{query_affects_memory_state, query_is_insert};
 
 use super::node::*;
@@ -13,8 +14,6 @@ use std::collections::HashMap;
 use std::io::{Read, Write};
 use std::sync::{Arc, MutexGuard, RwLock};
 use std::{io, net::TcpStream, sync::Mutex};
-
-// use super::super::utils::sysinfo::print_available_memory;
 
 /// This struct represents the Router node in the distributed system. It has the responsibility of routing the queries to the appropriate shard or shards.
 #[repr(C)]
@@ -119,15 +118,12 @@ impl Router {
     ) -> bool {
         // Send InitConnection Message to Shard and save shard to ShardManager
         let mut stream = health_connection.stream.as_ref().lock().unwrap();
-        let update_message = Message::new(
-            MessageType::InitConnection,
-            None,
-            Some(NodeInfo {
-                ip: self.ip.as_ref().to_string(),
-                port: self.port.as_ref().to_string(),
-            }),
-        );
 
+        let node_info = NodeInfo {
+            ip: self.ip.as_ref().to_string(),
+            port: self.port.as_ref().to_string(),
+        };
+        let update_message = Message::new_init_connection(node_info);
         println!("Sending message to shard: {:?}", update_message);
 
         let message_string = update_message.to_string();
@@ -161,19 +157,19 @@ impl Router {
 
     /// Handles the responses from the shard from the health_connection channel.
     fn handle_response(&mut self, response_message: Message, node_port: &str) -> bool {
-        match response_message.message_type {
+        match response_message.get_message_type() {
             MessageType::Agreed => {
                 println!(
                     "{color_bright_green}Shard {} accepted the connection{style_reset}",
                     node_port
                 );
-                let memory_size = response_message.payload.unwrap();
+                let memory_size = response_message.get_data().payload.unwrap();
                 println!("Memory size: {}", memory_size);
                 self.save_shard_in_manager(memory_size, node_port.to_string());
                 true
             }
             MessageType::MemoryUpdate => {
-                let memory_size = response_message.payload.unwrap();
+                let memory_size = response_message.get_data().payload.unwrap();
                 println!(
                     "{color_bright_green}Shard {} updated its memory size to {}{style_reset}",
                     node_port, memory_size
@@ -338,7 +334,7 @@ impl Router {
         };
 
         // Write message
-        let message = Message::new(MessageType::AskMemoryUpdate, None, None);
+        let message = Message::new_ask_memory_update();
         self.init_message_exchange(message, &mut writable_stream, shard_id);
     }
 

@@ -4,10 +4,9 @@ use std::{
     io::{Read, Write},
     net::TcpStream,
     sync::{Arc, Mutex},
-    thread,
 };
 
-use crate::node::messages::message;
+use crate::node::messages::{message, node_info::NodeInfo};
 use crate::utils::common::Channel;
 use super::super::utils::node_config::*;
 use super::node::*;
@@ -57,7 +56,7 @@ impl Client {
                     }
                 };
 
-            let message = message::Message::new(message::MessageType::GetRouter, None, None);
+            let message = message::Message::new_get_router();
             println!("Sending message: {:?}", message);
             candidate_stream
                 .write_all(message.to_string().as_bytes())
@@ -74,8 +73,8 @@ impl Client {
                     println!("Received response: {}", response_str);
                     let response_message = message::Message::from_string(&response_str).unwrap();
 
-                    if response_message.message_type == message::MessageType::RouterId {
-                        let node_info: message::NodeInfo = response_message.node_info.unwrap();
+                    if response_message.get_message_type() == message::MessageType::RouterId {
+                        let node_info: NodeInfo = response_message.get_data().node_info.unwrap();
                         let node_ip = node_info.ip.clone();
                         let node_port = node_info.port.clone();
                         let router_stream =
@@ -112,8 +111,11 @@ impl Client {
 
 impl NodeRole for Client {
     fn send_query(&mut self, query: &str) -> bool {
-        // let mut router = self.router_postgres_client.stream.as_ref().lock().unwrap();
-        // TODO-SHARD send Query Msg and parse response as rows
+        let message = message::Message::new_query(query.to_string());
+        let mut stream = self.router_postgres_client.stream.lock().unwrap();
+        stream.write_all(message.to_string().as_bytes()).unwrap();
+
+        
         return true;
     }
 }

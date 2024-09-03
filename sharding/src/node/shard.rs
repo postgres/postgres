@@ -7,7 +7,8 @@ use std::{io, thread};
 
 extern crate users;
 use super::memory_manager::MemoryManager;
-use super::messages::message::{Message, MessageType, NodeInfo};
+use super::messages::message::{Message, MessageType};
+use super::messages::node_info::NodeInfo;
 use super::node::*;
 use crate::node::shard;
 use crate::utils::common::connect_to_node;
@@ -156,9 +157,9 @@ impl Shard {
             }
         };
 
-        match message.message_type {
+        match message.get_message_type() {
             MessageType::InitConnection => {
-                let router_info = message.node_info.unwrap();
+                let router_info = message.get_data().node_info.unwrap();
                 self.router_info = Arc::new(Mutex::new(Some(router_info.clone())));
                 println!("Router info: {:?}", self.router_info);
                 println!("{color_bright_green}Received an InitConnection message{style_reset}");
@@ -185,12 +186,12 @@ impl Shard {
                 match router_info {
                     Some(router_info) => {
                         let response_message =
-                            Message::new(MessageType::RouterId, None, Some(router_info.clone()));
+                            Message::new_router_id(router_info.clone());
                         println!("Response created: {}", response_message.to_string());
                         Some(response_message.to_string())
                     }
                     None => {
-                        let response_message = Message::new(MessageType::NoRouterData, None, None);
+                        let response_message = Message::new_no_router_data();
                         println!("Response created: {}", response_message.to_string());
                         Some(response_message.to_string())
                     }
@@ -199,7 +200,7 @@ impl Shard {
             _ => {
                 eprintln!(
                     "Message type received: {:?}, not yet implemented",
-                    message.message_type
+                    message.get_message_type()
                 );
                 None
             }
@@ -210,7 +211,7 @@ impl Shard {
         let memory_manager = self.memory_manager.as_ref().try_lock().unwrap();
         let memory_percentage = memory_manager.available_memory_perc;
         let response_message =
-            shard::Message::new(MessageType::Agreed, Some(memory_percentage), None);
+            shard::Message::new_agreed(memory_percentage);
 
         response_message.to_string()
     }
@@ -227,7 +228,7 @@ impl Shard {
         let memory_manager = self.memory_manager.as_ref().try_lock().unwrap();
         let memory_percentage = memory_manager.available_memory_perc;
         let response_message =
-            shard::Message::new(MessageType::MemoryUpdate, Some(memory_percentage), None);
+            shard::Message::new_memory_update(memory_percentage);
 
         response_message.to_string()
     }

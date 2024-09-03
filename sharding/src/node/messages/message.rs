@@ -1,4 +1,5 @@
-use std::{fmt, str::FromStr};
+use std::fmt;
+use super::{message_data::MessageData, node_info::NodeInfo};
 
 /// MessageType enum shows which command is being sent
 #[derive(Debug, PartialEq, Clone)]
@@ -11,41 +12,16 @@ pub enum MessageType {
     GetRouter,
     RouterId,
     NoRouterData,
-}
-
-#[derive(Clone, Debug)]
-pub struct NodeInfo {
-    pub ip: String,
-    pub port: String,
-}
-
-impl FromStr for NodeInfo {
-    type Err = &'static str;
-
-    fn from_str(input: &str) -> Result<NodeInfo, &'static str> {
-        // split the input string by ':'
-        let mut parts = input.split(':');
-
-        let ip = match parts.next() {
-            Some(ip) => ip.to_string(),
-            None => return Err("Missing ip"),
-        };
-
-        let port = match parts.next() {
-            Some(port) => port.to_string(),
-            None => return Err("Missing port"),
-        };
-
-        Ok(NodeInfo { ip, port })
-    }
+    Query,
 }
 
 #[derive(Clone)]
 /// Message struct is used to send commands between clients and server
 pub struct Message {
-    pub message_type: MessageType,
-    pub payload: Option<f64>,
-    pub node_info: Option<NodeInfo>,
+    message_type: MessageType,
+    payload: Option<f64>,
+    node_info: Option<NodeInfo>,
+    query: Option<String>,
 }
 
 /// Implementing Display for Message
@@ -55,23 +31,132 @@ impl fmt::Debug for Message {
             .field("message_type", &self.message_type)
             .field("payload", &self.payload)
             .field("node_info", &self.node_info)
+            .field("query", &self.query)
             .finish()
     }
 }
 
+/// Message Creation
 impl Message {
-    /// Create a new Message
-    pub fn new(
-        message_type: MessageType,
-        payload: Option<f64>,
-        node_info: Option<NodeInfo>,
-    ) -> Self {
+
+    // --- Constructors ---
+    
+    pub fn new_init_connection(node_info: NodeInfo) -> Self {
         Message {
-            message_type,
-            payload,
-            node_info,
+            message_type: MessageType::InitConnection,
+            payload: None,
+            node_info: Some(node_info),
+            query: None,
         }
     }
+
+    pub fn new_ask_memory_update() -> Self {
+        Message {
+            message_type: MessageType::AskMemoryUpdate,
+            payload: None,
+            node_info: None,
+            query: None,
+        }
+    }
+
+    pub fn new_memory_update(payload: f64) -> Self {
+        Message {
+            message_type: MessageType::MemoryUpdate,
+            payload: Some(payload),
+            node_info: None,
+            query: None,
+        }
+    }
+
+    pub fn new_agreed(memory_percentage: f64) -> Self {
+        Message {
+            message_type: MessageType::Agreed,
+            payload: Some(memory_percentage),
+            node_info: None,
+            query: None,
+        }
+    }
+
+    pub fn new_denied() -> Self {
+        Message {
+            message_type: MessageType::Denied,
+            payload: None,
+            node_info: None,
+            query: None,
+        }
+    }
+
+    pub fn new_get_router() -> Self {
+        Message {
+            message_type: MessageType::GetRouter,
+            payload: None,
+            node_info: None,
+            query: None,
+        }
+    }
+
+    pub fn new_router_id(node_info: NodeInfo) -> Self {
+        Message {
+            message_type: MessageType::RouterId,
+            payload: None,
+            node_info: Some(node_info),
+            query: None,
+        }
+    }
+
+    pub fn new_no_router_data() -> Self {
+        Message {
+            message_type: MessageType::NoRouterData,
+            payload: None,
+            node_info: None,
+            query: None,
+        }
+    }
+
+    pub fn new_query(query: String) -> Self {
+        Message {
+            message_type: MessageType::Query,
+            payload: None,
+            node_info: None,
+            query: Some(query),
+        }
+    }
+
+    // --- Method to get the data ---
+
+    pub fn get_data(&self) -> MessageData {
+        match self.message_type {
+            MessageType::InitConnection | MessageType::RouterId => {
+                if let Some(ref node_info) = self.node_info {
+                    MessageData::new_node_info(node_info.clone())
+                } else {
+                    MessageData::new_none()
+                }
+            }
+            MessageType::MemoryUpdate | MessageType::Agreed => {
+                if let Some(payload) = self.payload {
+                    MessageData::new_payload(payload)
+                } else {
+                    MessageData::new_none()
+                }
+            }
+            MessageType::Query => {
+                if let Some(ref query) = self.query {
+                    MessageData::new_query(query.clone())
+                } else {
+                    MessageData::new_none()
+                }
+            }
+            _ => MessageData::new_none(),
+        }
+    }
+
+    pub fn get_message_type(&self) -> MessageType {
+        self.message_type.clone()
+    }
+}
+
+impl Message {
 
     // Serialize the Message to a String
     pub fn to_string(&self) -> String {
@@ -86,6 +171,7 @@ impl Message {
             MessageType::GetRouter => "GET_ROUTER",
             MessageType::RouterId => "ROUTER_ID",
             MessageType::NoRouterData => "NO_ROUTER_DATA",
+            MessageType::Query => "QUERY",
         });
 
         result.push(' ');
@@ -100,6 +186,13 @@ impl Message {
             result.push_str(&node_info.ip);
             result.push(':');
             result.push_str(&node_info.port);
+        } else {
+            result.push_str("None");
+        }
+
+        result.push(' ');
+        if let Some(query) = &self.query {
+            result.push_str(&query);
         } else {
             result.push_str("None");
         }
@@ -120,6 +213,7 @@ impl Message {
             Some("GET_ROUTER") => MessageType::GetRouter,
             Some("ROUTER_ID") => MessageType::RouterId,
             Some("NO_ROUTER_DATA") => MessageType::NoRouterData,
+            Some("QUERY") => MessageType::Query,
             _ => return Err("Invalid message type"),
         };
 
@@ -135,7 +229,13 @@ impl Message {
             None => None,
         };
 
-        Ok(Message::new(message_type, payload, node_info))
+        let query = match parts.next() {
+            Some("None") => None,
+            Some(query) => Some(query.to_string()),
+            None => None,
+        };
+
+        Ok(Message { message_type, payload, node_info, query} )
     }
 }
 
@@ -150,15 +250,183 @@ impl PartialEq for Message {
 mod tests {
     use super::*;
 
+    // test initializers
+
+    #[test]
+    fn test_new_init_connection() {
+        let node_info = NodeInfo {
+            ip: "1".to_string(),
+            port: "2".to_string(),
+        };
+        let message = Message::new_init_connection(node_info.clone());
+        assert_eq!(message, Message {
+            message_type: MessageType::InitConnection,
+            payload: None,
+            node_info: Some(node_info),
+            query: None,
+        });
+    }
+
+    #[test]
+    fn test_new_ask_memory_update() {
+        let message = Message::new_ask_memory_update();
+        assert_eq!(message, Message {
+            message_type: MessageType::AskMemoryUpdate,
+            payload: None,
+            node_info: None,
+            query: None,
+        });
+    }
+
+    #[test]
+    fn test_new_memory_update() {
+        let message = Message::new_memory_update(0.5);
+        assert_eq!(message, Message {
+            message_type: MessageType::MemoryUpdate,
+            payload: Some(0.5),
+            node_info: None,
+            query: None,
+        });
+    }
+
+    #[test]
+    fn test_new_agreed() {
+        let message = Message::new_agreed(0.5);
+        assert_eq!(message, Message {
+            message_type: MessageType::Agreed,
+            payload: Some(0.5),
+            node_info: None,
+            query: None,
+        });
+    }
+
+    #[test]
+    fn test_new_denied() {
+        let message = Message::new_denied();
+        assert_eq!(message, Message {
+            message_type: MessageType::Denied,
+            payload: None,
+            node_info: None,
+            query: None,
+        });
+    }
+
+    #[test]
+    fn test_new_get_router() {
+        let message = Message::new_get_router();
+        assert_eq!(message, Message {
+            message_type: MessageType::GetRouter,
+            payload: None,
+            node_info: None,
+            query: None,
+        });
+    }
+
+    #[test]
+    fn test_new_router_id() {
+        let node_info = NodeInfo {
+            ip: "1".to_string(),
+            port: "2".to_string(),
+        };
+        let message = Message::new_router_id(node_info.clone());
+        assert_eq!(message, Message {
+            message_type: MessageType::RouterId,
+            payload: None,
+            node_info: Some(node_info),
+            query: None,
+        });
+    }
+
+    #[test]
+    fn test_new_no_router_data() {
+        let message = Message::new_no_router_data();
+        assert_eq!(message, Message {
+            message_type: MessageType::NoRouterData,
+            payload: None,
+            node_info: None,
+            query: None,
+        });
+    }
+
+    #[test]
+    fn test_new_query() {
+        let message = Message::new_query("SELECT * FROM table".to_string());
+        assert_eq!(message, Message {
+            message_type: MessageType::Query,
+            payload: None,
+            node_info: None,
+            query: Some("SELECT * FROM table".to_string()),
+        });
+    }
+
+    #[test]
+    fn test_get_data_payload() {
+        let message = Message {
+            message_type: MessageType::MemoryUpdate,
+            payload: Some(0.5),
+            node_info: None,
+            query: None,
+        };
+        assert_eq!(message.get_data(), MessageData::new_payload(0.5));
+    }
+
+    #[test]
+    fn test_get_data_node_info() {
+        let node_info = NodeInfo {
+            ip: "1".to_string(),
+            port: "2".to_string(),
+        };
+
+        let message = Message {
+            message_type: MessageType::InitConnection,
+            payload: None,
+            node_info: Some(node_info.clone()),
+            query: None,
+        };
+        assert_eq!(message.get_data(), MessageData::new_node_info(node_info));
+    }
+
+    #[test]
+    fn test_get_data_query() {
+        let message = Message {
+            message_type: MessageType::Query,
+            payload: None,
+            node_info: None,
+            query: Some("SELECT * FROM table".to_string()),
+        };
+        assert_eq!(message.get_data(), MessageData::new_query("SELECT * FROM table".to_string()));
+    }
+
+    #[test]
+    fn test_get_data_none() {
+        let message = Message {
+            message_type: MessageType::InitConnection,
+            payload: None,
+            node_info: None,
+            query: None,
+        };
+        assert_eq!(message.get_data(), MessageData::new_none());
+    }
+
     #[test]
     fn test_message_to_string() {
-        let message = Message::new(MessageType::InitConnection, Some(0.5), None);
-        assert_eq!(message.to_string(), "INIT_CONNECTION 0.5\n");
+        let message = Message {
+            message_type: MessageType::InitConnection,
+            payload: Some(0.5),
+            node_info: None,
+            query: None,
+        };
+        assert_eq!(message.to_string(), "INIT_CONNECTION 0.5 None None\n");
     }
 
     #[test]
     fn test_message_from_string() {
-        let message = Message::new(MessageType::InitConnection, Some(0.5), None);
+        let message = Message {
+            message_type: MessageType::InitConnection,
+            payload: Some(0.5),
+            node_info: None,
+            query: None,
+        };
         let message_string = message.to_string();
         assert_eq!(Message::from_string(&message_string).unwrap(), message);
     }
@@ -170,11 +438,27 @@ mod tests {
             port: "2".to_string(),
         };
 
-        let message = Message::new(
-            MessageType::InitConnection,
-            Some(0.5),
-            Some(node_info.clone()),
-        );
+        let message = Message {
+            message_type: MessageType::InitConnection,
+            payload: Some(0.5),
+            node_info: Some(node_info.clone()),
+            query: None,
+        };
+        let message_string = message.to_string();
+        assert_eq!(Message::from_string(&message_string).unwrap(), message);
+    }
+
+    #[test]
+    fn test_message_from_string_with_query() {
+        let message = Message {
+            message_type: MessageType::Query,
+            payload: Some(0.5),
+            node_info: Some(NodeInfo {
+                ip: "1".to_string(),
+                port: "2".to_string(),
+            }),
+            query: Some("SELECT * FROM table".to_string()),
+        };
         let message_string = message.to_string();
         assert_eq!(Message::from_string(&message_string).unwrap(), message);
     }
