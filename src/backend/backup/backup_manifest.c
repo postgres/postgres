@@ -16,6 +16,7 @@
 #include "access/xlog.h"
 #include "backup/backup_manifest.h"
 #include "backup/basebackup_sink.h"
+#include "common/relpath.h"
 #include "mb/pg_wchar.h"
 #include "utils/builtins.h"
 #include "utils/json.h"
@@ -117,7 +118,7 @@ AddFileToBackupManifest(backup_manifest_info *manifest, Oid spcoid,
 	 */
 	if (OidIsValid(spcoid))
 	{
-		snprintf(pathbuf, sizeof(pathbuf), "pg_tblspc/%u/%s", spcoid,
+		snprintf(pathbuf, sizeof(pathbuf), "%s/%u/%s", PG_TBLSPC_DIR, spcoid,
 				 pathname);
 		pathname = pathbuf;
 	}

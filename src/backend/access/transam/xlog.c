@@ -8944,10 +8944,10 @@ do_pg_backup_start(const char *backupidstr, bool fast, List **tablespaces,
 		datadirpathlen = strlen(DataDir);
 
 		/* Collect information about all tablespaces */
-		tblspcdir = AllocateDir("pg_tblspc");
-		while ((de = ReadDir(tblspcdir, "pg_tblspc")) != NULL)
+		tblspcdir = AllocateDir(PG_TBLSPC_DIR);
+		while ((de = ReadDir(tblspcdir, PG_TBLSPC_DIR)) != NULL)
 		{
-			char		fullpath[MAXPGPATH + 10];
+			char		fullpath[MAXPGPATH + sizeof(PG_TBLSPC_DIR)];
 			char		linkpath[MAXPGPATH];
 			char	   *relpath = NULL;
 			char	   *s;
@@ -8970,7 +8970,7 @@ do_pg_backup_start(const char *backupidstr, bool fast, List **tablespaces,
 			if (*badp != '\0' || errno == EINVAL || errno == ERANGE)
 				continue;
 
-			snprintf(fullpath, sizeof(fullpath), "pg_tblspc/%s", de->d_name);
+			snprintf(fullpath, sizeof(fullpath), "%s/%s", PG_TBLSPC_DIR, de->d_name);
 
 			de_type = get_dirent_type(fullpath, de, false, ERROR);
 
@@ -9031,8 +9031,8 @@ do_pg_backup_start(const char *backupidstr, bool fast, List **tablespaces,
 				 * In this case, we store a relative path rather than an
 				 * absolute path into the tablespaceinfo.
 				 */
-				snprintf(linkpath, sizeof(linkpath), "pg_tblspc/%s",
-						 de->d_name);
+				snprintf(linkpath, sizeof(linkpath), "%s/%s",
+						 PG_TBLSPC_DIR, de->d_name);
 				relpath = pstrdup(linkpath);
 			}
 			else

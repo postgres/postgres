@@ -6800,10 +6800,10 @@ RelationCacheInitFilePostInvalidate(void)
 void
 RelationCacheInitFileRemove(void)
 {
-	const char *tblspcdir = "pg_tblspc";
+	const char *tblspcdir = PG_TBLSPC_DIR;
 	DIR		   *dir;
 	struct dirent *de;
-	char		path[MAXPGPATH + 10 + sizeof(TABLESPACE_VERSION_DIRECTORY)];
+	char		path[MAXPGPATH + sizeof(PG_TBLSPC_DIR) + sizeof(TABLESPACE_VERSION_DIRECTORY)];
 
 	snprintf(path, sizeof(path), "global/%s",
 			 RELCACHE_INIT_FILENAME);

@@ -3257,7 +3257,7 @@ recovery_create_dbdir(char *path, bool only_tblspc)
 	if (stat(path, &st) == 0)
 		return;
 
-	if (only_tblspc && strstr(path, "pg_tblspc/") == NULL)
+	if (only_tblspc && strstr(path, PG_TBLSPC_DIR_SLASH) == NULL)
 		elog(PANIC, "requested to created invalid directory: %s", path);
 
 	if (reachedConsistency && !allow_in_place_tablespaces)

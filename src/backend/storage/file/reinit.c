@@ -46,7 +46,7 @@ typedef struct
 void
 ResetUnloggedRelations(int op)
 {
-	char		temp_path[MAXPGPATH + 10 + sizeof(TABLESPACE_VERSION_DIRECTORY)];
+	char		temp_path[MAXPGPATH + sizeof(PG_TBLSPC_DIR) + sizeof(TABLESPACE_VERSION_DIRECTORY)];
 	DIR		   *spc_dir;
 	struct dirent *spc_de;
 	MemoryContext tmpctx,
@@ -77,16 +77,16 @@ ResetUnloggedRelations(int op)
 	/*
 	 * Cycle through directories for all non-default tablespaces.
 	 */
-	spc_dir = AllocateDir("pg_tblspc");
+	spc_dir = AllocateDir(PG_TBLSPC_DIR);
 
-	while ((spc_de = ReadDir(spc_dir, "pg_tblspc")) != NULL)
+	while ((spc_de = ReadDir(spc_dir, PG_TBLSPC_DIR)) != NULL)
 	{
 		if (strcmp(spc_de->d_name, ".") == 0 ||
 			strcmp(spc_de->d_name, "..") == 0)
 			continue;
 
-		snprintf(temp_path, sizeof(temp_path), "pg_tblspc/%s/%s",
-				 spc_de->d_name, TABLESPACE_VERSION_DIRECTORY);
+		snprintf(temp_path, sizeof(temp_path), "%s/%s/%s",
+				 PG_TBLSPC_DIR, spc_de->d_name, TABLESPACE_VERSION_DIRECTORY);
 		ResetUnloggedRelationsInTablespaceDir(temp_path, op);
 	}
 

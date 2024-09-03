@@ -242,7 +242,7 @@ pg_tablespace_databases(PG_FUNCTION_ARGS)
 	if (tablespaceOid == DEFAULTTABLESPACE_OID)
 		location = "base";
 	else
-		location = psprintf("pg_tblspc/%u/%s", tablespaceOid,
+		location = psprintf("%s/%u/%s", PG_TBLSPC_DIR, tablespaceOid,
 							TABLESPACE_VERSION_DIRECTORY);
 
 	dirdesc = AllocateDir(location);
@@ -325,7 +325,7 @@ pg_tablespace_location(PG_FUNCTION_ARGS)
 	 * Find the location of the tablespace by reading the symbolic link that
 	 * is in pg_tblspc/<oid>.
 	 */
-	snprintf(sourcepath, sizeof(sourcepath), "pg_tblspc/%u", tablespaceOid);
+	snprintf(sourcepath, sizeof(sourcepath), "%s/%u", PG_TBLSPC_DIR, tablespaceOid);
 
 	/*
 	 * Before reading the link, check if the source path is a link or a

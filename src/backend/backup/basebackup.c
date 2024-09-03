@@ -1488,7 +1488,7 @@ sendDir(bbsink *sink, const char *path, int basepathlen, bool sizeonly,
 				if (OidIsValid(spcoid))
 				{
 					relspcoid = spcoid;
-					lookup_path = psprintf("pg_tblspc/%u/%s", spcoid,
+					lookup_path = psprintf("%s/%u/%s", PG_TBLSPC_DIR, spcoid,
 										   tarfilename);
 				}
 				else

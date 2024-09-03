@@ -576,7 +576,7 @@ create_tablespace_directories(const char *location, const Oid tablespaceoid)
 	struct stat st;
 	bool		in_place;
 
-	linkloc = psprintf("pg_tblspc/%u", tablespaceoid);
+	linkloc = psprintf("%s/%u", PG_TBLSPC_DIR, tablespaceoid);
 
 	/*
 	 * If we're asked to make an 'in place' tablespace, create the directory
@@ -692,7 +692,7 @@ destroy_tablespace_directories(Oid tablespaceoid, bool redo)
 	char	   *subfile;
 	struct stat st;
 
-	linkloc_with_version_dir = psprintf("pg_tblspc/%u/%s", tablespaceoid,
+	linkloc_with_version_dir = psprintf("%s/%u/%s", PG_TBLSPC_DIR, tablespaceoid,
 										TABLESPACE_VERSION_DIRECTORY);
 
 	/*

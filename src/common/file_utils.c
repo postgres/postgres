@@ -28,6 +28,7 @@
 #ifdef FRONTEND
 #include "common/logging.h"
 #endif
+#include "common/relpath.h"
 #include "port/pg_iovec.h"
 
 #ifdef FRONTEND
@@ -105,7 +106,7 @@ sync_pgdata(const char *pg_data,
 	/* handle renaming of pg_xlog to pg_wal in post-10 clusters */
 	snprintf(pg_wal, MAXPGPATH, "%s/%s", pg_data,
 			 serverVersion < MINIMUM_VERSION_FOR_PG_WAL ? "pg_xlog" : "pg_wal");
-	snprintf(pg_tblspc, MAXPGPATH, "%s/pg_tblspc", pg_data);
+	snprintf(pg_tblspc, MAXPGPATH, "%s/%s", pg_data, PG_TBLSPC_DIR);
 
 	/*
 	 * If pg_wal is a symlink, we'll need to recurse into it separately,

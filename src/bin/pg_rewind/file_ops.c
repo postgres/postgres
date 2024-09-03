@@ -452,7 +452,7 @@ recurse_dir(const char *datadir, const char *parentpath,
 			 * to process all the tablespaces.  We also follow a symlink if
 			 * it's for pg_wal.  Symlinks elsewhere are ignored.
 			 */
-			if ((parentpath && strcmp(parentpath, "pg_tblspc") == 0) ||
+			if ((parentpath && strcmp(parentpath, PG_TBLSPC_DIR) == 0) ||
 				strcmp(path, "pg_wal") == 0)
 				recurse_dir(datadir, path, callback);
 		}

@@ -373,7 +373,7 @@ main(int argc, char *argv[])
 		{
 			char		linkpath[MAXPGPATH];
 
-			snprintf(linkpath, MAXPGPATH, "%s/pg_tblspc/%u", opt.output,
+			snprintf(linkpath, MAXPGPATH, "%s/%s/%u", opt.output, PG_TBLSPC_DIR,
 					 ts->oid);
 
 			if (opt.dry_run)
@@ -867,12 +867,12 @@ process_directory_recursively(Oid tsoid,
 		is_incremental_dir = true;
 	else if (relative_path != NULL)
 	{
-		is_pg_tblspc = strcmp(relative_path, "pg_tblspc") == 0;
+		is_pg_tblspc = strcmp(relative_path, PG_TBLSPC_DIR) == 0;
 		is_pg_wal = (strcmp(relative_path, "pg_wal") == 0 ||
 					 strncmp(relative_path, "pg_wal/", 7) == 0);
 		is_incremental_dir = strncmp(relative_path, "base/", 5) == 0 ||
 			strcmp(relative_path, "global") == 0 ||
-			strncmp(relative_path, "pg_tblspc/", 10) == 0;
+			strncmp(relative_path, PG_TBLSPC_DIR_SLASH, 10) == 0;
 	}
 
 	/*
@@ -895,7 +895,7 @@ process_directory_recursively(Oid tsoid,
 		strlcpy(ifulldir, input_directory, MAXPGPATH);
 		strlcpy(ofulldir, output_directory, MAXPGPATH);
 		if (OidIsValid(tsoid))
-			snprintf(manifest_prefix, MAXPGPATH, "pg_tblspc/%u/", tsoid);
+			snprintf(manifest_prefix, MAXPGPATH, "%s/%u/", PG_TBLSPC_DIR, tsoid);
 		else
 			manifest_prefix[0] = '\0';
 	}
@@ -906,8 +906,8 @@ process_directory_recursively(Oid tsoid,
 		snprintf(ofulldir, MAXPGPATH, "%s/%s", output_directory,
 				 relative_path);
 		if (OidIsValid(tsoid))
-			snprintf(manifest_prefix, MAXPGPATH, "pg_tblspc/%u/%s/",
-					 tsoid, relative_path);
+			snprintf(manifest_prefix, MAXPGPATH, "%s/%u/%s/",
+					 PG_TBLSPC_DIR, tsoid, relative_path);
 		else
 			snprintf(manifest_prefix, MAXPGPATH, "%s/", relative_path);
 	}
@@ -1249,7 +1249,7 @@ scan_for_existing_tablespaces(char *pathname, cb_options *opt)
 	struct dirent *de;
 	cb_tablespace *tslist = NULL;
 
-	snprintf(pg_tblspc, MAXPGPATH, "%s/pg_tblspc", pathname);
+	snprintf(pg_tblspc, MAXPGPATH, "%s/%s", pathname, PG_TBLSPC_DIR);
 	pg_log_debug("scanning \"%s\"", pg_tblspc);
 
 	if ((dir = opendir(pg_tblspc)) == NULL)
@@ -1344,8 +1344,8 @@ scan_for_existing_tablespaces(char *pathname, cb_options *opt)
 			 * we just record the paths within the data directories.
 			 */
 			snprintf(ts->old_dir, MAXPGPATH, "%s/%s", pg_tblspc, de->d_name);
-			snprintf(ts->new_dir, MAXPGPATH, "%s/pg_tblspc/%s", opt->output,
-					 de->d_name);
+			snprintf(ts->new_dir, MAXPGPATH, "%s/%s/%s", opt->output,
+					 PG_TBLSPC_DIR, de->d_name);
 			ts->in_place = true;
 		}
 
