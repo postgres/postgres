@@ -35,6 +35,17 @@ restart_after_crash = on
 ]);
 $node_primary->start;
 
+# Check if the extension injection_points is available, as it may be
+# possible that this script is run with installcheck, where the module
+# would not be installed by default.
+my $result = $node_primary->safe_psql('postgres',
+	"SELECT count(*) > 0 FROM pg_available_extensions WHERE name = 'injection_points';"
+);
+if ($result eq 'f')
+{
+	plan skip_all => 'Extension injection_points not installed';
+}
+
 my $backup_name = 'my_backup';
 $node_primary->backup($backup_name);
 
