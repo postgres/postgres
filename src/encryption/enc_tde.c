@@ -166,7 +166,6 @@ pg_tde_crypt(const char* iv_prefix, uint32 start_offset, const char* data, uint3
 /*
  * pg_tde_crypt_tuple:
  * Does the encryption/decryption of tuple data in place
- * page: Page containing the tuple, Used to calculate the offset of tuple in the page
  * tuple: HeapTuple to be encrypted/decrypted
  * out_tuple: to encrypt/decrypt into. If you want to do inplace encryption/decryption, pass tuple as out_tuple
  * context: Optional context message to be used in debug log
