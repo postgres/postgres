@@ -197,17 +197,18 @@ sub configure_test_server_for_ssl
 	}
 
 	# enable logging etc.
-	open my $conf, '>>', "$pgdata/postgresql.conf" or die $!;
-	print $conf "fsync=off\n";
-	print $conf "log_connections=on\n";
-	print $conf "log_hostname=on\n";
-	print $conf "listen_addresses='$serverhost'\n";
-	print $conf "log_statement=all\n";
+	$node->append_conf(
+		'postgresql.conf', <<EOF
+fsync=off
+log_connections=on
+log_hostname=on
+listen_addresses='$serverhost'
+log_statement=all
+EOF
+	);
 
 	# enable SSL and set up server key
-	print $conf "include 'sslconfig.conf'\n";
-
-	close $conf;
+	$node->append_conf('postgresql.conf', "include 'sslconfig.conf'");
 
 	# SSL configuration will be placed here
 	open my $sslconf, '>', "$pgdata/sslconfig.conf" or die $!;
@@ -296,13 +297,12 @@ sub switch_server_cert
 	my %params = @_;
 	my $pgdata = $node->data_dir;
 
-	open my $sslconf, '>', "$pgdata/sslconfig.conf" or die $!;
-	print $sslconf "ssl=on\n";
-	print $sslconf $backend->set_server_cert(\%params);
-	print $sslconf "ssl_passphrase_command='"
-	  . $params{passphrase_cmd} . "'\n"
+	ok(unlink($node->data_dir . '/sslconfig.conf'));
+	$node->append_conf('sslconfig.conf', "ssl=on");
+	$node->append_conf('sslconfig.conf', $backend->set_server_cert(\%params));
+	$node->append_conf('sslconfig.conf',
+		"ssl_passphrase_command='" . $params{passphrase_cmd} . "'")
 	  if defined $params{passphrase_cmd};
-	close $sslconf;
 
 	return if (defined($params{restart}) && $params{restart} eq 'no');
 
@@ -321,35 +321,32 @@ sub _configure_hba_for_ssl
 	# but seems best to keep it as narrow as possible for security reasons.
 	#
 	# When connecting to certdb, also check the client certificate.
-	open my $hba, '>', "$pgdata/pg_hba.conf" or die $!;
-	print $hba
-	  "# TYPE  DATABASE        USER            ADDRESS                 METHOD             OPTIONS\n";
-	print $hba
-	  "hostssl trustdb         md5testuser     $servercidr            md5\n";
-	print $hba
-	  "hostssl trustdb         all             $servercidr            $authmethod\n";
-	print $hba
-	  "hostssl verifydb        ssltestuser     $servercidr            $authmethod        clientcert=verify-full\n";
-	print $hba
-	  "hostssl verifydb        anotheruser     $servercidr            $authmethod        clientcert=verify-full\n";
-	print $hba
-	  "hostssl verifydb        yetanotheruser  $servercidr            $authmethod        clientcert=verify-ca\n";
-	print $hba
-	  "hostssl certdb          all             $servercidr            cert\n";
-	print $hba
-	  "hostssl certdb_dn       all             $servercidr            cert clientname=DN map=dn\n",
-	  "hostssl certdb_dn_re    all             $servercidr            cert clientname=DN map=dnre\n",
-	  "hostssl certdb_cn       all             $servercidr            cert clientname=CN map=cn\n";
-	close $hba;
+	ok(unlink($node->data_dir . '/pg_hba.conf'));
+	$node->append_conf(
+		'pg_hba.conf', <<EOF
+# TYPE  DATABASE      USER            ADDRESS       METHOD         OPTIONS
+hostssl trustdb       md5testuser     $servercidr   md5
+hostssl trustdb       all             $servercidr   $authmethod
+hostssl verifydb      ssltestuser     $servercidr   $authmethod    clientcert=verify-full
+hostssl verifydb      anotheruser     $servercidr   $authmethod    clientcert=verify-full
+hostssl verifydb      yetanotheruser  $servercidr   $authmethod    clientcert=verify-ca
+hostssl certdb        all             $servercidr   cert
+hostssl certdb_dn     all             $servercidr   cert clientname=DN map=dn
+hostssl certdb_dn_re  all             $servercidr   cert clientname=DN map=dnre
+hostssl certdb_cn     all             $servercidr   cert clientname=CN map=cn
+EOF
+	);
 
 	# Also set the ident maps. Note: fields with commas must be quoted
-	open my $map, ">", "$pgdata/pg_ident.conf" or die $!;
-	print $map
-	  "# MAPNAME       SYSTEM-USERNAME                           PG-USERNAME\n",
-	  "dn             \"CN=ssltestuser-dn,OU=Testing,OU=Engineering,O=PGDG\"    ssltestuser\n",
-	  "dnre           \"/^.*OU=Testing,.*\$\"                    ssltestuser\n",
-	  "cn              ssltestuser-dn                            ssltestuser\n";
-
+	ok(unlink($node->data_dir . '/pg_ident.conf'));
+	$node->append_conf(
+		'pg_ident.conf', <<EOF
+# MAPNAME SYSTEM-USERNAME                                         PG-USERNAME
+dn        "CN=ssltestuser-dn,OU=Testing,OU=Engineering,O=PGDG"    ssltestuser
+dnre      "/^.*OU=Testing,.*\$"                                   ssltestuser
+cn        ssltestuser-dn                                          ssltestuser
+EOF
+	);
 	return;
 }
 
