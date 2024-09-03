@@ -384,9 +384,9 @@ PageGetMaxOffsetNumber(Page page)
  * Additional functions for access to page headers.
  */
 static inline XLogRecPtr
-PageGetLSN(Page page)
+PageGetLSN(const char *page)
 {
-	return PageXLogRecPtrGet(((PageHeader) page)->pd_lsn);
+	return PageXLogRecPtrGet(((const PageHeaderData *) page)->pd_lsn);
 }
 static inline void
 PageSetLSN(Page page, XLogRecPtr lsn)

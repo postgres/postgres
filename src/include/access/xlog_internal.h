@@ -312,7 +312,7 @@ typedef struct xl_end_of_recovery
 typedef struct XLogRecData
 {
 	struct XLogRecData *next;	/* next struct in chain, or NULL */
-	char	   *data;			/* start of rmgr data to include */
+	const char *data;			/* start of rmgr data to include */
 	uint32		len;			/* length of rmgr data to include */
 } XLogRecData;
 

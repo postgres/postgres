@@ -1248,7 +1248,7 @@ CopyXLogRecordToWAL(int write_len, bool isLogSwitch, XLogRecData *rdata,
 	written = 0;
 	while (rdata != NULL)
 	{
-		char	   *rdata_data = rdata->data;
+		const char *rdata_data = rdata->data;
 		int			rdata_len = rdata->len;
 
 		while (rdata_len > freespace)
