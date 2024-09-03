@@ -849,7 +849,7 @@ process_directory_recursively(Oid tsoid,
 	 *
 	 * We set is_pg_wal for the toplevel WAL directory and all of its
 	 * subdirectories, because those files are not included in the backup
-	 * manifest and hence need special treatement. (Since incremental backup
+	 * manifest and hence need special treatment. (Since incremental backup
 	 * does not exist in pre-v10 versions, we don't have to worry about the
 	 * old pg_xlog naming.)
 	 *

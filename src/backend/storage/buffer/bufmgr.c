@@ -4741,7 +4741,7 @@ RelationCopyStorageUsingBuffer(RelFileLocator srclocator,
 	bstrategy_src = GetAccessStrategy(BAS_BULKREAD);
 	bstrategy_dst = GetAccessStrategy(BAS_BULKWRITE);
 
-	/* Initalize streaming read */
+	/* Initialize streaming read */
 	p.blocknum = 0;
 	p.nblocks = nblocks;
 	src_smgr = smgropen(srclocator, INVALID_PROC_NUMBER);

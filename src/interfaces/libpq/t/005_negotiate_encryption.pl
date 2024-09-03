@@ -240,7 +240,7 @@ testuser    disable      disable      postgres       connect, authok            
 .           .            require      postgres       connect, sslreject          -> fail
 .           .            .            direct         connect, directsslreject    -> fail
 
-# sslnegotiation=direct is not acccepted unless sslmode=require or stronger
+# sslnegotiation=direct is not accepted unless sslmode=require or stronger
 *           *            disable      direct         -     -> fail
 *           *            allow        direct         -     -> fail
 *           *            prefer       direct         -     -> fail
@@ -303,7 +303,7 @@ nossluser   .            disable      postgres       connect, authok            
 .           .            require      postgres       connect, sslaccept, authfail                    -> fail
 .           .            require      direct         connect, directsslaccept, authfail              -> fail
 
-# sslnegotiation=direct is not acccepted unless sslmode=require or stronger
+# sslnegotiation=direct is not accepted unless sslmode=require or stronger
 *           *            disable      direct         -     -> fail
 *           *            allow        direct         -     -> fail
 *           *            prefer       direct         -     -> fail
@@ -405,7 +405,7 @@ nogssuser   disable      disable      postgres       connect, authok            
 .           .            require      postgres       connect, gssaccept, authfail -> fail   # If both GSSAPI and sslmode are required, and GSS is not available -> fail
 .           .            .            direct         connect, gssaccept, authfail -> fail   # If both GSSAPI and sslmode are required, and GSS is not available -> fail
 
-# sslnegotiation=direct is not acccepted unless sslmode=require or stronger
+# sslnegotiation=direct is not accepted unless sslmode=require or stronger
 *           *            disable      direct         -     -> fail
 *           *            allow        direct         -     -> fail
 *           *            prefer       direct         -     -> fail
@@ -562,7 +562,7 @@ nossluser   disable      disable      postgres       connect, authok            
 .           require      *            postgres       connect, gssaccept, authok   -> gss
 .           .            require      direct         connect, gssaccept, authok   -> gss
 
-# sslnegotiation=direct is not acccepted unless sslmode=require or stronger
+# sslnegotiation=direct is not accepted unless sslmode=require or stronger
 *           *            disable      direct         -     -> fail
 *           *            allow        direct         -     -> fail
 *           *            prefer       direct         -     -> fail
