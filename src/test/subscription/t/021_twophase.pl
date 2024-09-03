@@ -76,7 +76,7 @@ $node_publisher->safe_psql(
 	INSERT INTO tab_full VALUES (11);
 	PREPARE TRANSACTION 'test_prepared_tab_full';");
 
-# Confirm the ERROR is reported becasue max_prepared_transactions is zero
+# Confirm the ERROR is reported because max_prepared_transactions is zero
 $node_subscriber->wait_for_log(
 	qr/ERROR: ( [A-Z0-9]+:)? prepared transactions are disabled/);
 

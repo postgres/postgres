@@ -3891,8 +3891,8 @@ static const PgStat_KindInfo custom_stats = {
      it with <literal>pgstat_register_kind</literal> and a unique ID used to
      store the entries related to this type of statistics:
 <programlisting>
-extern PgStat_Kind pgstat_add_kind(PgStat_Kind kind,
-                                   const PgStat_KindInfo *kind_info);
+extern PgStat_Kind pgstat_register_kind(PgStat_Kind kind,
+                                        const PgStat_KindInfo *kind_info);
 </programlisting>
      While developing a new extension, use
      <literal>PGSTAT_KIND_EXPERIMENTAL</literal> for

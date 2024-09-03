@@ -948,7 +948,7 @@ fillPGconn(PGconn *conn, PQconninfoOption *connOptions)
  * Copy over option values from srcConn to dstConn
  *
  * Don't put anything cute here --- intelligence should be in
- * connectOptions2 ...
+ * pqConnectOptions2 ...
  *
  * Returns true on success. On failure, returns false and sets error message of
  * dstConn.

@@ -1715,7 +1715,7 @@ ExecQueryAndProcessResults(const char *query,
 			{
 				/*
 				 * Display the current chunk of results, unless the output
-				 * stream stopped working or we got cancelled.  We skip use of
+				 * stream stopped working or we got canceled.  We skip use of
 				 * PrintQueryResult and go directly to printQuery, so that we
 				 * can pass the correct is_pager value and because we don't
 				 * want PrintQueryStatus to happen yet.  Above, we rejected

@@ -369,7 +369,7 @@ pg_wal_replay_wait(PG_FUNCTION_ARGS)
 	 */
 	InvalidateCatalogSnapshot();
 
-	/* Give up if there is still an active or registered sanpshot. */
+	/* Give up if there is still an active or registered snapshot. */
 	if (GetOldestSnapshot())
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),

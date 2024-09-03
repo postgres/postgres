@@ -449,7 +449,7 @@ read_stream_begin_impl(int flags,
 	queue_size = max_pinned_buffers + 1;
 
 	/*
-	 * Allocate the object, the buffers, the ios and per_data_data space in
+	 * Allocate the object, the buffers, the ios and per_buffer_data space in
 	 * one big chunk.  Though we have queue_size buffers, we want to be able
 	 * to assume that all the buffers for a single read are contiguous (i.e.
 	 * don't wrap around halfway through), so we allow temporary overflows of

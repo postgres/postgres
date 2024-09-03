@@ -2017,7 +2017,7 @@ check_multixact_offset_buffers(int *newval, void **extra, GucSource source)
 }
 
 /*
- * GUC check_hook for multixact_member_buffer
+ * GUC check_hook for multixact_member_buffers
  */
 bool
 check_multixact_member_buffers(int *newval, void **extra, GucSource source)

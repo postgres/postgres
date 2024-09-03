@@ -39,7 +39,7 @@ step "s2_get_changes_slot0" { SELECT data FROM pg_logical_slot_get_changes('slot
 # serializes consistent snapshots to the disk at LSNs where are before
 # s0-transaction's commit. After s0-transaction commits, "s1_init" resumes but
 # must not restore any serialized snapshots and will reach the consistent state
-# when decoding a RUNNING_XACT record generated after s0-transaction's commit.
+# when decoding a RUNNING_XACTS record generated after s0-transaction's commit.
 # We check if the get_changes on 'slot1' will not return any s0-transaction's
 # changes as its confirmed_flush_lsn will be after the s0-transaction's commit
 # record.

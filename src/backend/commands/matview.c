@@ -382,7 +382,7 @@ RefreshMatViewByOid(Oid matviewOid, bool is_create, bool skipData,
 	 * command tag is left false in cmdtaglist.h. Otherwise, the change of
 	 * completion tag output might break applications using it.
 	 *
-	 * When called from CREATE MATERIALIZED VIEW comand, the rowcount is
+	 * When called from CREATE MATERIALIZED VIEW command, the rowcount is
 	 * displayed with the command tag CMDTAG_SELECT.
 	 */
 	if (qc)

@@ -83,7 +83,7 @@
  * this flag is set. Note that we don't need to reset this variable as after
  * promotion the slot sync worker won't be restarted because the pmState
  * changes to PM_RUN from PM_HOT_STANDBY and we don't support demoting
- * primary without restarting the server. See MaybeStartSlotSyncWorker.
+ * primary without restarting the server. See LaunchMissingBackgroundProcesses.
  *
  * The 'syncing' flag is needed to prevent concurrent slot syncs to avoid slot
  * overwrites.

@@ -13,7 +13,7 @@
  * taken here is less flexible, because a writer can only write to a file,
  * while a compressor can write to a subsequent astreamer which is free
  * to do whatever it likes. The reason it's like this is because this
- * code was adapated from old, less-modular pg_basebackup code that used
+ * code was adapted from old, less-modular pg_basebackup code that used
  * the same APIs that astreamer_gzip_writer now uses, and it didn't seem
  * necessary to change anything at the time.
  *

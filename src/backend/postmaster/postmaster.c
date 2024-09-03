@@ -2628,7 +2628,8 @@ CleanupBackend(Backend *bp,
 		BackgroundWorkerStopNotifications(bp->pid);
 
 	/*
-	 * If it was a background worker, also update its RegisteredWorker entry.
+	 * If it was a background worker, also update its RegisteredBgWorker
+	 * entry.
 	 */
 	if (bp->bkend_type == BACKEND_TYPE_BGWORKER)
 	{

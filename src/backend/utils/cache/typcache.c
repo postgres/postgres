@@ -367,9 +367,9 @@ lookup_type_cache(Oid type_id, int flags)
 		ctl.entrysize = sizeof(TypeCacheEntry);
 
 		/*
-		 * TypeEntry takes hash value from the system cache. For TypeCacheHash
-		 * we use the same hash in order to speedup search by hash value. This
-		 * is used by hash_seq_init_with_hash_value().
+		 * TypeCacheEntry takes hash value from the system cache. For
+		 * TypeCacheHash we use the same hash in order to speedup search by
+		 * hash value. This is used by hash_seq_init_with_hash_value().
 		 */
 		ctl.hash = type_cache_syshash;
 

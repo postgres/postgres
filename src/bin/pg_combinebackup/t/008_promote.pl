@@ -54,7 +54,7 @@ recovery_target_action = 'pause'
 EOM
 $node2->start();
 
-# Wait until recoveery pauses, then promote.
+# Wait until recovery pauses, then promote.
 $node2->poll_query_until('postgres', "SELECT pg_get_wal_replay_pause_state() = 'paused';");
 $node2->safe_psql('postgres', "SELECT pg_promote()");
 
@@ -65,7 +65,7 @@ INSERT INTO mytable VALUES (2, 'blackberry');
 EOM
 
 # Now take an incremental backup. If WAL summarization didn't follow the
-# timeline cange correctly, something should break at this point.
+# timeline change correctly, something should break at this point.
 my $backup2path = $node1->backup_dir . '/backup2';
 $node2->command_ok(
 	[ 'pg_basebackup', '-D', $backup2path, '--no-sync', '-cfast',

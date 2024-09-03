@@ -12,7 +12,7 @@
 #define INJECTION_POINT_H
 
 /*
- * Injections points require --enable-injection-points.
+ * Injection points require --enable-injection-points.
  */
 #ifdef USE_INJECTION_POINTS
 #define INJECTION_POINT_LOAD(name) InjectionPointLoad(name)

@@ -396,7 +396,7 @@ LockManagerShmemInit(void)
 
 	/*
 	 * Compute init/max size to request for lock hashtables.  Note these
-	 * calculations must agree with LockShmemSize!
+	 * calculations must agree with LockManagerShmemSize!
 	 */
 	max_table_size = NLOCKENTS();
 	init_table_size = max_table_size / 2;

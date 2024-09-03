@@ -67,7 +67,7 @@ like(
 
 my $offset = -s $node->logfile;
 
-# Role with pg_signal_autovacuum can terminate autovacuum worker.
+# Role with pg_signal_autovacuum_worker can terminate autovacuum worker.
 my $terminate_with_pg_signal_av = $node->psql(
 	'postgres', qq(
     SET ROLE regress_worker_role;
