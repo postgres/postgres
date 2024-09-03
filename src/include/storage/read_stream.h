@@ -45,11 +45,21 @@
 struct ReadStream;
 typedef struct ReadStream ReadStream;
 
+/* for block_range_read_stream_cb */
+typedef struct BlockRangeReadStreamPrivate
+{
+	BlockNumber current_blocknum;
+	BlockNumber last_exclusive;
+} BlockRangeReadStreamPrivate;
+
 /* Callback that returns the next block number to read. */
 typedef BlockNumber (*ReadStreamBlockNumberCB) (ReadStream *stream,
 												void *callback_private_data,
 												void *per_buffer_data);
 
+extern BlockNumber block_range_read_stream_cb(ReadStream *stream,
+											  void *callback_private_data,
+											  void *per_buffer_data);
 extern ReadStream *read_stream_begin_relation(int flags,
 											  BufferAccessStrategy strategy,
 											  Relation rel,

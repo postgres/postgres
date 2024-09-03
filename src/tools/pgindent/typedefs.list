@@ -275,6 +275,7 @@ BlockId
 BlockIdData
 BlockInfoRecord
 BlockNumber
+BlockRangeReadStreamPrivate
 BlockRefTable
 BlockRefTableBuffer
 BlockRefTableChunk
