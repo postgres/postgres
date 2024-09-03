@@ -490,6 +490,7 @@ collect_visibility_data(Oid relid, bool include_pd)
 	BlockNumber blkno;
 	Buffer		vmbuffer = InvalidBuffer;
 	BufferAccessStrategy bstrategy = GetAccessStrategy(BAS_BULKREAD);
+	BlockRangeReadStreamPrivate p;
 	ReadStream *stream = NULL;
 
 	rel = relation_open(relid, AccessShareLock);
@@ -505,8 +506,6 @@ collect_visibility_data(Oid relid, bool include_pd)
 	/* Create a stream if reading main fork. */
 	if (include_pd)
 	{
-		BlockRangeReadStreamPrivate p;
-
 		p.current_blocknum = 0;
 		p.last_exclusive = nblocks;
 		stream = read_stream_begin_relation(READ_STREAM_FULL,
