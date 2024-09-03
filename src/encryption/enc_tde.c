@@ -83,7 +83,7 @@ pg_tde_crypt_simple(const char* iv_prefix, uint32 start_offset, const char* data
  * pg_tde_crypt_complex:
  * Encrypts/decrypts `data` with a given `key`. The result is written to `out`.
  * start_offset: is the absolute location of start of data in the file.
- * This is a generic function indented for large data, that od not fit into a single block
+ * This is a generic function intended for large data, that do not fit into a single block
  */
 static void
 pg_tde_crypt_complex(const char* iv_prefix, uint32 start_offset, const char* data, uint32 data_len, char* out, RelKeyData* key, const char* context)
