@@ -56,7 +56,7 @@
 #include "utils/rel.h"
 
 PG_FUNCTION_INFO_V1(pg_tdeam_basic_handler);
-#ifdef PERCONA_FORK
+#ifdef PERCONA_EXT
 PG_FUNCTION_INFO_V1(pg_tdeam_handler);
 #endif
 
@@ -2684,7 +2684,7 @@ pg_tdeam_basic_handler(PG_FUNCTION_ARGS)
 	PG_RETURN_POINTER(&pg_tdeam_methods);
 }
 
-#ifdef PERCONA_FORK
+#ifdef PERCONA_EXT
 Datum
 pg_tdeam_handler(PG_FUNCTION_ARGS)
 {

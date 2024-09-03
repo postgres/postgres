@@ -12,7 +12,7 @@
 
 #include "postgres.h"
 
-#ifdef PERCONA_FORK
+#ifdef PERCONA_EXT
 
 #include "catalog/pg_tablespace_d.h"
 #include "nodes/pg_list.h"
@@ -181,4 +181,4 @@ create_principal_key(const char *key_name, GenericKeyring * keyring,
 
 	return principalKey;
 }
-#endif							/* PERCONA_FORK */
+#endif							/* PERCONA_EXT */

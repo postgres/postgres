@@ -34,7 +34,7 @@
 #include "utils/builtins.h"
 #include "pg_tde_defs.h"
 #include "smgr/pg_tde_smgr.h"
-#ifdef PERCONA_FORK
+#ifdef PERCONA_EXT
 #include "catalog/tde_global_space.h"
 #endif
 
@@ -66,7 +66,7 @@ tde_shmem_request(void)
 	Size sz = TdeRequiredSharedMemorySize();
 	int required_locks = TdeRequiredLocksCount();
 
-#ifdef PERCONA_FORK
+#ifdef PERCONA_EXT
 	sz = add_size(sz, XLOG_TDE_ENC_BUFF_ALIGNED_SIZE);
 #endif
 
@@ -86,7 +86,7 @@ tde_shmem_startup(void)
 	TdeShmemInit();
 	AesInit();
 
-#ifdef PERCONA_FORK
+#ifdef PERCONA_EXT
 	TDEInitGlobalKeys();
 
 	TDEXLogShmemInit();
@@ -105,7 +105,7 @@ _PG_init(void)
 	keyringRegisterVariables();
 	InitializePrincipalKeyInfo();
 	InitializeKeyProviderInfo();
-#ifdef PERCONA_FORK
+#ifdef PERCONA_EXT
 	XLogInitGUC();
 #endif
 	prev_shmem_request_hook = shmem_request_hook;
