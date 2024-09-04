@@ -337,7 +337,7 @@ logicalrep_worker_launch(LogicalRepWorkerType wtype,
 	if (max_replication_slots == 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_CONFIGURATION_LIMIT_EXCEEDED),
-				 errmsg("cannot start logical replication workers when max_replication_slots = 0")));
+				 errmsg("cannot start logical replication workers when \"max_replication_slots\"=0")));
 
 	/*
 	 * We need to do the modification of the shared memory under lock so that

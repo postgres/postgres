@@ -1104,7 +1104,7 @@ getRestoreCommand(const char *argv0)
 
 	restore_command = pipe_read_line(postgres_cmd->data);
 	if (restore_command == NULL)
-		pg_fatal("could not read restore_command from target cluster");
+		pg_fatal("could not read \"restore_command\" from target cluster");
 
 	(void) pg_strip_crlf(restore_command);
 

@@ -2254,7 +2254,7 @@ FileWriteV(File file, const struct iovec *iov, int iovcnt, off_t offset,
 			if (newTotal > (uint64) temp_file_limit * (uint64) 1024)
 				ereport(ERROR,
 						(errcode(ERRCODE_CONFIGURATION_LIMIT_EXCEEDED),
-						 errmsg("temporary file size exceeds temp_file_limit (%dkB)",
+						 errmsg("temporary file size exceeds \"temp_file_limit\" (%dkB)",
 								temp_file_limit)));
 		}
 	}

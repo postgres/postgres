@@ -353,7 +353,7 @@ sql_conn(struct options *my_opts)
 	res = PQexec(conn, ALWAYS_SECURE_SEARCH_PATH_SQL);
 	if (PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
-		pg_log_error("could not clear search_path: %s",
+		pg_log_error("could not clear \"search_path\": %s",
 					 PQerrorMessage(conn));
 		PQclear(res);
 		PQfinish(conn);

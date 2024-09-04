@@ -663,7 +663,7 @@ CheckArchiveTimeout(void)
 			 * assume nothing happened.
 			 */
 			if (XLogSegmentOffset(switchpoint, wal_segment_size) != 0)
-				elog(DEBUG1, "write-ahead log switch forced (archive_timeout=%d)",
+				elog(DEBUG1, "write-ahead log switch forced (\"archive_timeout\"=%d)",
 					 XLogArchiveTimeout);
 		}
 

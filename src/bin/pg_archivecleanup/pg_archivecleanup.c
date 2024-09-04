@@ -270,7 +270,7 @@ usage(void)
 			 "                              clean up\n"));
 	printf(_("  -?, --help                  show this help, then exit\n"));
 	printf(_("\n"
-			 "For use as archive_cleanup_command in postgresql.conf:\n"
+			 "For use as \"archive_cleanup_command\" in postgresql.conf:\n"
 			 "  archive_cleanup_command = 'pg_archivecleanup [OPTION]... ARCHIVELOCATION %%r'\n"
 			 "e.g.\n"
 			 "  archive_cleanup_command = 'pg_archivecleanup /mnt/server/archiverdir %%r'\n"));

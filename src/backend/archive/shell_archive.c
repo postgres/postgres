@@ -48,7 +48,7 @@ shell_archive_configured(ArchiveModuleState *state)
 	if (XLogArchiveCommand[0] != '\0')
 		return true;
 
-	arch_module_check_errdetail("%s is not set.",
+	arch_module_check_errdetail("\"%s\" is not set.",
 								"archive_command");
 	return false;
 }

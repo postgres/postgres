@@ -39,7 +39,7 @@ _check_database_version(ArchiveHandle *AH)
 	remoteversion_str = PQparameterStatus(AH->connection, "server_version");
 	remoteversion = PQserverVersion(AH->connection);
 	if (remoteversion == 0 || !remoteversion_str)
-		pg_fatal("could not get server_version from libpq");
+		pg_fatal("could not get \"server_version\" from libpq");
 
 	AH->public.remoteVersionStr = pg_strdup(remoteversion_str);
 	AH->public.remoteVersion = remoteversion;

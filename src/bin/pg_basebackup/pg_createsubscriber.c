@@ -523,7 +523,7 @@ connect_database(const char *conninfo, bool exit_on_error)
 	res = PQexec(conn, ALWAYS_SECURE_SEARCH_PATH_SQL);
 	if (PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
-		pg_log_error("could not clear search_path: %s",
+		pg_log_error("could not clear \"search_path\": %s",
 					 PQresultErrorMessage(res));
 		PQclear(res);
 		PQfinish(conn);
@@ -911,7 +911,7 @@ check_publisher(const struct LogicalRepInfo *dbinfo)
 
 	if (strcmp(wal_level, "logical") != 0)
 	{
-		pg_log_error("publisher requires wal_level >= \"logical\"");
+		pg_log_error("publisher requires \"wal_level\" >= \"logical\"");
 		failed = true;
 	}
 

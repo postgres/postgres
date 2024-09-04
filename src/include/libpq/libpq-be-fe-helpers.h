@@ -142,13 +142,13 @@ libpqsrv_connect_prepare(void)
 				(errcode(ERRCODE_SQLCLIENT_UNABLE_TO_ESTABLISH_SQLCONNECTION),
 				 errmsg("could not establish connection"),
 				 errdetail("There are too many open files on the local server."),
-				 errhint("Raise the server's max_files_per_process and/or \"ulimit -n\" limits.")));
+				 errhint("Raise the server's \"max_files_per_process\" and/or \"ulimit -n\" limits.")));
 #else
 		ereport(ERROR,
 				(errcode(ERRCODE_SQLCLIENT_UNABLE_TO_ESTABLISH_SQLCONNECTION),
 				 errmsg("could not establish connection"),
 				 errdetail("There are too many open files on the local server."),
-				 errhint("Raise the server's max_files_per_process setting.")));
+				 errhint("Raise the server's \"max_files_per_process\" setting.")));
 #endif
 	}
 }

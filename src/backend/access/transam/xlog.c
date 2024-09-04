@@ -9111,7 +9111,7 @@ do_pg_backup_stop(BackupState *state, bool waitforarchive)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("WAL level not sufficient for making an online backup"),
-				 errhint("wal_level must be set to \"replica\" or \"logical\" at server start.")));
+				 errhint("\"wal_level\" must be set to \"replica\" or \"logical\" at server start.")));
 
 	/*
 	 * OK to update backup counter and session-level lock.

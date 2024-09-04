@@ -962,14 +962,14 @@ validate_remote_info(WalReceiverConn *wrconn)
 
 	if (res->status != WALRCV_OK_TUPLES)
 		ereport(ERROR,
-				errmsg("could not fetch primary_slot_name \"%s\" info from the primary server: %s",
+				errmsg("could not fetch primary slot name \"%s\" info from the primary server: %s",
 					   PrimarySlotName, res->err),
-				errhint("Check if primary_slot_name is configured correctly."));
+				errhint("Check if \"primary_slot_name\" is configured correctly."));
 
 	tupslot = MakeSingleTupleTableSlot(res->tupledesc, &TTSOpsMinimalTuple);
 	if (!tuplestore_gettupleslot(res->tuplestore, true, false, tupslot))
 		elog(ERROR,
-			 "failed to fetch tuple for the primary server slot specified by primary_slot_name");
+			 "failed to fetch tuple for the primary server slot specified by \"primary_slot_name\"");
 
 	remote_in_recovery = DatumGetBool(slot_getattr(tupslot, 1, &isnull));
 	Assert(!isnull);
