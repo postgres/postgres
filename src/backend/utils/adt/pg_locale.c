@@ -1266,33 +1266,6 @@ lookup_collation_cache(Oid collation)
 	return cache_entry;
 }
 
-
-/*
- * Detect whether collation's LC_COLLATE property is C
- */
-bool
-lc_collate_is_c(Oid collation)
-{
-	/*
-	 * If we're asked about "collation 0", return false, so that the code will
-	 * go into the non-C path and report that the collation is bogus.
-	 */
-	if (!OidIsValid(collation))
-		return false;
-
-	/*
-	 * If we're asked about the built-in C/POSIX collations, we know that.
-	 */
-	if (collation == C_COLLATION_OID ||
-		collation == POSIX_COLLATION_OID)
-		return true;
-
-	/*
-	 * Otherwise, we have to consult pg_collation, but we cache that.
-	 */
-	return pg_newlocale_from_collation(collation)->collate_is_c;
-}
-
 /*
  * Detect whether collation's LC_CTYPE property is C
  */
@@ -1571,11 +1544,11 @@ pg_newlocale_from_collation(Oid collid)
 {
 	collation_cache_entry *cache_entry;
 
-	/* Callers must pass a valid OID */
-	Assert(OidIsValid(collid));
-
 	if (collid == DEFAULT_COLLATION_OID)
 		return &default_locale;
+
+	if (!OidIsValid(collid))
+		elog(ERROR, "cache lookup failed for collation %u", collid);
 
 	if (last_collation_cache_oid == collid)
 		return last_collation_cache_locale;

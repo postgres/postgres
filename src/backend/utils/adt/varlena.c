@@ -1538,10 +1538,13 @@ int
 varstr_cmp(const char *arg1, int len1, const char *arg2, int len2, Oid collid)
 {
 	int			result;
+	pg_locale_t mylocale;
 
 	check_collation_set(collid);
 
-	if (lc_collate_is_c(collid))
+	mylocale = pg_newlocale_from_collation(collid);
+
+	if (mylocale->collate_is_c)
 	{
 		result = memcmp(arg1, arg2, Min(len1, len2));
 		if ((result == 0) && (len1 != len2))
@@ -1549,10 +1552,6 @@ varstr_cmp(const char *arg1, int len1, const char *arg2, int len2, Oid collid)
 	}
 	else
 	{
-		pg_locale_t mylocale;
-
-		mylocale = pg_newlocale_from_collation(collid);
-
 		/*
 		 * memcmp() can't tell us which of two unequal strings sorts first,
 		 * but it's a cheap way to tell if they're equal.  Testing shows that
@@ -1859,9 +1858,11 @@ varstr_sortsupport(SortSupport ssup, Oid typid, Oid collid)
 	bool		abbreviate = ssup->abbreviate;
 	bool		collate_c = false;
 	VarStringSortSupport *sss;
-	pg_locale_t locale = 0;
+	pg_locale_t locale;
 
 	check_collation_set(collid);
+
+	locale = pg_newlocale_from_collation(collid);
 
 	/*
 	 * If possible, set ssup->comparator to a function which can be used to
@@ -1876,7 +1877,7 @@ varstr_sortsupport(SortSupport ssup, Oid typid, Oid collid)
 	 * varstrfastcmp_c, bpcharfastcmp_c, or namefastcmp_c, all of which use
 	 * memcmp() rather than strcoll().
 	 */
-	if (lc_collate_is_c(collid))
+	if (locale->collate_is_c)
 	{
 		if (typid == BPCHAROID)
 			ssup->comparator = bpcharfastcmp_c;
@@ -1893,13 +1894,6 @@ varstr_sortsupport(SortSupport ssup, Oid typid, Oid collid)
 	}
 	else
 	{
-		/*
-		 * We need a collation-sensitive comparison.  To make things faster,
-		 * we'll figure out the collation based on the locale id and cache the
-		 * result.
-		 */
-		locale = pg_newlocale_from_collation(collid);
-
 		/*
 		 * We use varlenafastcmp_locale except for type NAME.
 		 */
@@ -1950,7 +1944,10 @@ varstr_sortsupport(SortSupport ssup, Oid typid, Oid collid)
 		sss->last_len2 = -1;
 		/* Initialize */
 		sss->last_returned = 0;
-		sss->locale = locale;
+		if (collate_c)
+			sss->locale = NULL;
+		else
+			sss->locale = locale;
 
 		/*
 		 * To avoid somehow confusing a strxfrm() blob and an original string,
@@ -2536,12 +2533,15 @@ btvarstrequalimage(PG_FUNCTION_ARGS)
 {
 	/* Oid		opcintype = PG_GETARG_OID(0); */
 	Oid			collid = PG_GET_COLLATION();
+	pg_locale_t locale;
 
 	check_collation_set(collid);
 
-	if (lc_collate_is_c(collid) ||
+	locale = pg_newlocale_from_collation(collid);
+
+	if (locale->collate_is_c ||
 		collid == DEFAULT_COLLATION_OID ||
-		get_collation_isdeterministic(collid))
+		pg_locale_deterministic(locale))
 		PG_RETURN_BOOL(true);
 	else
 		PG_RETURN_BOOL(false);

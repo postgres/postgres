@@ -433,7 +433,7 @@ match_pattern_prefix(Node *leftop,
 	 * collation.
 	 */
 	if (collation_aware &&
-		!lc_collate_is_c(indexcollation))
+		!pg_newlocale_from_collation(indexcollation)->collate_is_c)
 		return NIL;
 
 	/*
@@ -1603,7 +1603,7 @@ make_greater_string(const Const *str_const, FmgrInfo *ltproc, Oid collation)
 		else
 			workstr = TextDatumGetCString(str_const->constvalue);
 		len = strlen(workstr);
-		if (lc_collate_is_c(collation) || len == 0)
+		if (len == 0 || pg_newlocale_from_collation(collation)->collate_is_c)
 			cmpstr = str_const->constvalue;
 		else
 		{

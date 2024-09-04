@@ -4646,6 +4646,7 @@ static char *
 convert_string_datum(Datum value, Oid typid, Oid collid, bool *failure)
 {
 	char	   *val;
+	pg_locale_t mylocale;
 
 	switch (typid)
 	{
@@ -4671,9 +4672,10 @@ convert_string_datum(Datum value, Oid typid, Oid collid, bool *failure)
 			return NULL;
 	}
 
-	if (!lc_collate_is_c(collid))
+	mylocale = pg_newlocale_from_collation(collid);
+
+	if (!mylocale->collate_is_c)
 	{
-		pg_locale_t mylocale = pg_newlocale_from_collation(collid);
 		char	   *xfrmstr;
 		size_t		xfrmlen;
 		size_t		xfrmlen2 PG_USED_FOR_ASSERTS_ONLY;
