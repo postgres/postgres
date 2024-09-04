@@ -17,8 +17,9 @@
 #include "access/commit_ts.h"
 #include "access/tableam.h"
 #include "executor/executor.h"
+#include "pgstat.h"
 #include "replication/conflict.h"
-#include "replication/logicalrelation.h"
+#include "replication/worker_internal.h"
 #include "storage/lmgr.h"
 #include "utils/lsyscache.h"
 
@@ -113,6 +114,8 @@ ReportApplyConflict(EState *estate, ResultRelInfo *relinfo, int elevel,
 
 	Assert(!OidIsValid(indexoid) ||
 		   CheckRelationOidLockedByMe(indexoid, RowExclusiveLock, true));
+
+	pgstat_report_subscription_conflict(MySubscription->oid, type);
 
 	ereport(elevel,
 			errcode_apply_conflict(type),

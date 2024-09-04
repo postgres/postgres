@@ -40,6 +40,21 @@ pgstat_report_subscription_error(Oid subid, bool is_apply_error)
 }
 
 /*
+ * Report a subscription conflict.
+ */
+void
+pgstat_report_subscription_conflict(Oid subid, ConflictType type)
+{
+	PgStat_EntryRef *entry_ref;
+	PgStat_BackendSubEntry *pending;
+
+	entry_ref = pgstat_prep_pending_entry(PGSTAT_KIND_SUBSCRIPTION,
+										  InvalidOid, subid, NULL);
+	pending = entry_ref->pending;
+	pending->conflict_count[type]++;
+}
+
+/*
  * Report creating the subscription.
  */
 void
@@ -101,6 +116,8 @@ pgstat_subscription_flush_cb(PgStat_EntryRef *entry_ref, bool nowait)
 #define SUB_ACC(fld) shsubent->stats.fld += localent->fld
 	SUB_ACC(apply_error_count);
 	SUB_ACC(sync_error_count);
+	for (int i = 0; i < CONFLICT_NUM_TYPES; i++)
+		SUB_ACC(conflict_count[i]);
 #undef SUB_ACC
 
 	pgstat_unlock_entry(entry_ref);

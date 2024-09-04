@@ -507,7 +507,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
 
      <row>
       <entry><structname>pg_stat_subscription_stats</structname><indexterm><primary>pg_stat_subscription_stats</primary></indexterm></entry>
-      <entry>One row per subscription, showing statistics about errors.
+      <entry>One row per subscription, showing statistics about errors and conflicts.
       See <link linkend="monitoring-pg-stat-subscription-stats">
       <structname>pg_stat_subscription_stats</structname></link> for details.
       </entry>
@@ -2157,7 +2157,10 @@ description | Waiting for a newly initialized WAL file to reach durable storage
        <structfield>apply_error_count</structfield> <type>bigint</type>
       </para>
       <para>
-       Number of times an error occurred while applying changes
+       Number of times an error occurred while applying changes. Note that any
+       conflict resulting in an apply error will be counted in both
+       <literal>apply_error_count</literal> and the corresponding conflict
+       count (e.g., <literal>confl_*</literal>).
       </para></entry>
      </row>
 
@@ -2168,6 +2171,76 @@ description | Waiting for a newly initialized WAL file to reach durable storage
       <para>
        Number of times an error occurred during the initial table
        synchronization
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>confl_insert_exists</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of times a row insertion violated a
+       <literal>NOT DEFERRABLE</literal> unique constraint during the
+       application of changes. See <xref linkend="conflict-insert-exists"/>
+       for details about this conflict.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>confl_update_origin_differs</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of times an update was applied to a row that had been previously
+       modified by another source during the application of changes. See
+       <xref linkend="conflict-update-origin-differs"/> for details about this
+       conflict.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>confl_update_exists</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of times that an updated row value violated a
+       <literal>NOT DEFERRABLE</literal> unique constraint during the
+       application of changes. See <xref linkend="conflict-update-exists"/>
+       for details about this conflict.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>confl_update_missing</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of times the tuple to be updated was not found during the
+       application of changes. See <xref linkend="conflict-update-missing"/>
+       for details about this conflict.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>confl_delete_origin_differs</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of times a delete operation was applied to row that had been
+       previously modified by another source during the application of changes.
+       See <xref linkend="conflict-delete-origin-differs"/> for details about
+       this conflict.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>confl_delete_missing</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of times the tuple to be deleted was not found during the application
+       of changes. See <xref linkend="conflict-delete-missing"/> for details
+       about this conflict.
       </para></entry>
      </row>
 

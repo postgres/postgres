@@ -1582,10 +1582,11 @@ test_sub=# SELECT * FROM t1 ORDER BY id;
   </para>
 
   <para>
-   Additional logging is triggered in the following <firstterm>conflict</firstterm>
-   cases:
+   Additional logging is triggered, and the conflict statistics are collected (displayed in the
+   <link linkend="monitoring-pg-stat-subscription-stats"><structname>pg_stat_subscription_stats</structname></link> view)
+   in the following <firstterm>conflict</firstterm> cases:
    <variablelist>
-    <varlistentry>
+    <varlistentry id="conflict-insert-exists" xreflabel="insert_exists">
      <term><literal>insert_exists</literal></term>
      <listitem>
       <para>
@@ -1598,7 +1599,7 @@ test_sub=# SELECT * FROM t1 ORDER BY id;
       </para>
      </listitem>
     </varlistentry>
-    <varlistentry>
+    <varlistentry id="conflict-update-origin-differs" xreflabel="update_origin_differs">
      <term><literal>update_origin_differs</literal></term>
      <listitem>
       <para>
@@ -1610,7 +1611,7 @@ test_sub=# SELECT * FROM t1 ORDER BY id;
       </para>
      </listitem>
     </varlistentry>
-    <varlistentry>
+    <varlistentry id="conflict-update-exists" xreflabel="update_exists">
      <term><literal>update_exists</literal></term>
      <listitem>
       <para>
@@ -1627,7 +1628,7 @@ test_sub=# SELECT * FROM t1 ORDER BY id;
       </para>
      </listitem>
     </varlistentry>
-    <varlistentry>
+    <varlistentry id="conflict-update-missing" xreflabel="update_missing">
      <term><literal>update_missing</literal></term>
      <listitem>
       <para>
@@ -1636,7 +1637,7 @@ test_sub=# SELECT * FROM t1 ORDER BY id;
       </para>
      </listitem>
     </varlistentry>
-    <varlistentry>
+    <varlistentry id="conflict-delete-origin-differs" xreflabel="delete_origin_differs">
      <term><literal>delete_origin_differs</literal></term>
      <listitem>
       <para>
@@ -1648,7 +1649,7 @@ test_sub=# SELECT * FROM t1 ORDER BY id;
       </para>
      </listitem>
     </varlistentry>
-    <varlistentry>
+    <varlistentry id="conflict-delete-missing" xreflabel="delete_missing">
      <term><literal>delete_missing</literal></term>
      <listitem>
       <para>

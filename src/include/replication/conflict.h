@@ -14,6 +14,12 @@
 
 /*
  * Conflict types that could occur while applying remote changes.
+ *
+ * This enum is used in statistics collection (see
+ * PgStat_StatSubEntry::conflict_count and
+ * PgStat_BackendSubEntry::conflict_count) as well, therefore, when adding new
+ * values or reordering existing ones, ensure to review and potentially adjust
+ * the corresponding statistics collection codes.
  */
 typedef enum
 {
@@ -41,6 +47,8 @@ typedef enum
 	 * future improvements.
 	 */
 } ConflictType;
+
+#define CONFLICT_NUM_TYPES (CT_DELETE_MISSING + 1)
 
 extern bool GetTupleTransactionInfo(TupleTableSlot *localslot,
 									TransactionId *xmin,

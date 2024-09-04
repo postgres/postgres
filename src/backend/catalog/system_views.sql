@@ -1365,6 +1365,12 @@ CREATE VIEW pg_stat_subscription_stats AS
         s.subname,
         ss.apply_error_count,
         ss.sync_error_count,
+        ss.confl_insert_exists,
+        ss.confl_update_origin_differs,
+        ss.confl_update_exists,
+        ss.confl_update_missing,
+        ss.confl_delete_origin_differs,
+        ss.confl_delete_missing,
         ss.stats_reset
     FROM pg_subscription as s,
          pg_stat_get_subscription_stats(s.oid) as ss;
