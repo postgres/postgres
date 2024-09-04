@@ -4395,17 +4395,21 @@ ReadControlFile(void)
 		ereport(FATAL,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("database files are incompatible with server"),
-				 errdetail("The database cluster was initialized with CATALOG_VERSION_NO %d,"
-						   " but the server was compiled with CATALOG_VERSION_NO %d.",
-						   ControlFile->catalog_version_no, CATALOG_VERSION_NO),
+		/* translator: %s is a variable name and %d is its value */
+				 errdetail("The database cluster was initialized with %s %d,"
+						   " but the server was compiled with %s %d.",
+						   "CATALOG_VERSION_NO", ControlFile->catalog_version_no,
+						   "CATALOG_VERSION_NO", CATALOG_VERSION_NO),
 				 errhint("It looks like you need to initdb.")));
 	if (ControlFile->maxAlign != MAXIMUM_ALIGNOF)
 		ereport(FATAL,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("database files are incompatible with server"),
-				 errdetail("The database cluster was initialized with MAXALIGN %d,"
-						   " but the server was compiled with MAXALIGN %d.",
-						   ControlFile->maxAlign, MAXIMUM_ALIGNOF),
+		/* translator: %s is a variable name and %d is its value */
+				 errdetail("The database cluster was initialized with %s %d,"
+						   " but the server was compiled with %s %d.",
+						   "MAXALIGN", ControlFile->maxAlign,
+						   "MAXALIGN", MAXIMUM_ALIGNOF),
 				 errhint("It looks like you need to initdb.")));
 	if (ControlFile->floatFormat != FLOATFORMAT_VALUE)
 		ereport(FATAL,
@@ -4417,57 +4421,71 @@ ReadControlFile(void)
 		ereport(FATAL,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("database files are incompatible with server"),
-				 errdetail("The database cluster was initialized with BLCKSZ %d,"
-						   " but the server was compiled with BLCKSZ %d.",
-						   ControlFile->blcksz, BLCKSZ),
+		/* translator: %s is a variable name and %d is its value */
+				 errdetail("The database cluster was initialized with %s %d,"
+						   " but the server was compiled with %s %d.",
+						   "BLCKSZ", ControlFile->blcksz,
+						   "BLCKSZ", BLCKSZ),
 				 errhint("It looks like you need to recompile or initdb.")));
 	if (ControlFile->relseg_size != RELSEG_SIZE)
 		ereport(FATAL,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("database files are incompatible with server"),
-				 errdetail("The database cluster was initialized with RELSEG_SIZE %d,"
-						   " but the server was compiled with RELSEG_SIZE %d.",
-						   ControlFile->relseg_size, RELSEG_SIZE),
+		/* translator: %s is a variable name and %d is its value */
+				 errdetail("The database cluster was initialized with %s %d,"
+						   " but the server was compiled with %s %d.",
+						   "RELSEG_SIZE", ControlFile->relseg_size,
+						   "RELSEG_SIZE", RELSEG_SIZE),
 				 errhint("It looks like you need to recompile or initdb.")));
 	if (ControlFile->xlog_blcksz != XLOG_BLCKSZ)
 		ereport(FATAL,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("database files are incompatible with server"),
-				 errdetail("The database cluster was initialized with XLOG_BLCKSZ %d,"
-						   " but the server was compiled with XLOG_BLCKSZ %d.",
-						   ControlFile->xlog_blcksz, XLOG_BLCKSZ),
+		/* translator: %s is a variable name and %d is its value */
+				 errdetail("The database cluster was initialized with %s %d,"
+						   " but the server was compiled with %s %d.",
+						   "XLOG_BLCKSZ", ControlFile->xlog_blcksz,
+						   "XLOG_BLCKSZ", XLOG_BLCKSZ),
 				 errhint("It looks like you need to recompile or initdb.")));
 	if (ControlFile->nameDataLen != NAMEDATALEN)
 		ereport(FATAL,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("database files are incompatible with server"),
-				 errdetail("The database cluster was initialized with NAMEDATALEN %d,"
-						   " but the server was compiled with NAMEDATALEN %d.",
-						   ControlFile->nameDataLen, NAMEDATALEN),
+		/* translator: %s is a variable name and %d is its value */
+				 errdetail("The database cluster was initialized with %s %d,"
+						   " but the server was compiled with %s %d.",
+						   "NAMEDATALEN", ControlFile->nameDataLen,
+						   "NAMEDATALEN", NAMEDATALEN),
 				 errhint("It looks like you need to recompile or initdb.")));
 	if (ControlFile->indexMaxKeys != INDEX_MAX_KEYS)
 		ereport(FATAL,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("database files are incompatible with server"),
-				 errdetail("The database cluster was initialized with INDEX_MAX_KEYS %d,"
-						   " but the server was compiled with INDEX_MAX_KEYS %d.",
-						   ControlFile->indexMaxKeys, INDEX_MAX_KEYS),
+		/* translator: %s is a variable name and %d is its value */
+				 errdetail("The database cluster was initialized with %s %d,"
+						   " but the server was compiled with %s %d.",
+						   "INDEX_MAX_KEYS", ControlFile->indexMaxKeys,
+						   "INDEX_MAX_KEYS", INDEX_MAX_KEYS),
 				 errhint("It looks like you need to recompile or initdb.")));
 	if (ControlFile->toast_max_chunk_size != TOAST_MAX_CHUNK_SIZE)
 		ereport(FATAL,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("database files are incompatible with server"),
-				 errdetail("The database cluster was initialized with TOAST_MAX_CHUNK_SIZE %d,"
-						   " but the server was compiled with TOAST_MAX_CHUNK_SIZE %d.",
-						   ControlFile->toast_max_chunk_size, (int) TOAST_MAX_CHUNK_SIZE),
+		/* translator: %s is a variable name and %d is its value */
+				 errdetail("The database cluster was initialized with %s %d,"
+						   " but the server was compiled with %s %d.",
+						   "TOAST_MAX_CHUNK_SIZE", ControlFile->toast_max_chunk_size,
+						   "TOAST_MAX_CHUNK_SIZE", (int) TOAST_MAX_CHUNK_SIZE),
 				 errhint("It looks like you need to recompile or initdb.")));
 	if (ControlFile->loblksize != LOBLKSIZE)
 		ereport(FATAL,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("database files are incompatible with server"),
-				 errdetail("The database cluster was initialized with LOBLKSIZE %d,"
-						   " but the server was compiled with LOBLKSIZE %d.",
-						   ControlFile->loblksize, (int) LOBLKSIZE),
+		/* translator: %s is a variable name and %d is its value */
+				 errdetail("The database cluster was initialized with %s %d,"
+						   " but the server was compiled with %s %d.",
+						   "LOBLKSIZE", ControlFile->loblksize,
+						   "LOBLKSIZE", (int) LOBLKSIZE),
 				 errhint("It looks like you need to recompile or initdb.")));
 
 #ifdef USE_FLOAT8_BYVAL
@@ -4505,11 +4523,15 @@ ReadControlFile(void)
 	/* check and update variables dependent on wal_segment_size */
 	if (ConvertToXSegs(min_wal_size_mb, wal_segment_size) < 2)
 		ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						errmsg("\"min_wal_size\" must be at least twice \"wal_segment_size\"")));
+		/* translator: both %s are GUC names */
+						errmsg("\"%s\" must be at least twice \"%s\"",
+							   "min_wal_size", "wal_segment_size")));
 
 	if (ConvertToXSegs(max_wal_size_mb, wal_segment_size) < 2)
 		ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						errmsg("\"max_wal_size\" must be at least twice \"wal_segment_size\"")));
+		/* translator: both %s are GUC names */
+						errmsg("\"%s\" must be at least twice \"%s\"",
+							   "max_wal_size", "wal_segment_size")));
 
 	UsableBytesInSegment =
 		(wal_segment_size / XLOG_BLCKSZ * UsableBytesInPage) -
