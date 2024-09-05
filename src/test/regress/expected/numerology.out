@@ -6,15 +6,15 @@
 -- Trailing junk in numeric literals
 --
 SELECT 123abc;
-ERROR:  trailing junk after numeric literal at or near "123a"
+ERROR:  trailing junk after numeric literal at or near "123abc"
 LINE 1: SELECT 123abc;
                ^
 SELECT 0x0o;
-ERROR:  trailing junk after numeric literal at or near "0x"
+ERROR:  trailing junk after numeric literal at or near "0x0o"
 LINE 1: SELECT 0x0o;
                ^
 SELECT 1_2_3;
-ERROR:  trailing junk after numeric literal at or near "1_"
+ERROR:  trailing junk after numeric literal at or near "1_2_3"
 LINE 1: SELECT 1_2_3;
                ^
 SELECT 0.a;

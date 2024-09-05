@@ -336,12 +336,12 @@ decimalfail		{digit}+\.\.
 real			({integer}|{decimal})[Ee][-+]?{digit}+
 realfail		({integer}|{decimal})[Ee][-+]
 
-integer_junk	{integer}{ident_start}
-decimal_junk	{decimal}{ident_start}
-real_junk		{real}{ident_start}
+integer_junk	{integer}{identifier}
+decimal_junk	{decimal}{identifier}
+real_junk		{real}{identifier}
 
 param			\${integer}
-param_junk		\${integer}{ident_start}
+param_junk		\${integer}{identifier}
 
 /* psql-specific: characters allowed in variable names */
 variable_char	[A-Za-z\200-\377_0-9]
