@@ -230,6 +230,12 @@ typedef struct PgStat_KindInfo
 	uint32		pending_size;
 
 	/*
+	 * Perform custom actions when initializing a backend (standalone or under
+	 * postmaster). Optional.
+	 */
+	void		(*init_backend_cb) (void);
+
+	/*
 	 * For variable-numbered stats: flush pending stats. Required if pending
 	 * data is used.
 	 */
@@ -673,9 +679,9 @@ extern void pgstat_slru_snapshot_cb(void);
  */
 
 extern bool pgstat_flush_wal(bool nowait);
-extern void pgstat_init_wal(void);
 extern bool pgstat_have_pending_wal(void);
 
+extern void pgstat_wal_init_backend_cb(void);
 extern void pgstat_wal_init_shmem_cb(void *stats);
 extern void pgstat_wal_reset_all_cb(TimestampTz ts);
 extern void pgstat_wal_snapshot_cb(void);

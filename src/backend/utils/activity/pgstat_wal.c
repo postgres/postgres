@@ -138,7 +138,7 @@ pgstat_flush_wal(bool nowait)
 }
 
 void
-pgstat_init_wal(void)
+pgstat_wal_init_backend_cb(void)
 {
 	/*
 	 * Initialize prevWalUsage with pgWalUsage so that pgstat_flush_wal() can
