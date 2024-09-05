@@ -231,6 +231,9 @@ static const unsigned char pg_char_properties[128] = {
 void
 pg_set_regex_collation(Oid collation)
 {
+	pg_locale_t locale = 0;
+	PG_Locale_Strategy strategy;
+
 	if (!OidIsValid(collation))
 	{
 		/*
@@ -246,40 +249,41 @@ pg_set_regex_collation(Oid collation)
 	if (lc_ctype_is_c(collation))
 	{
 		/* C/POSIX collations use this path regardless of database encoding */
-		pg_regex_strategy = PG_REGEX_STRATEGY_C;
-		pg_regex_locale = 0;
-		pg_regex_collation = C_COLLATION_OID;
+		strategy = PG_REGEX_STRATEGY_C;
+		collation = C_COLLATION_OID;
 	}
 	else
 	{
-		pg_regex_locale = pg_newlocale_from_collation(collation);
+		locale = pg_newlocale_from_collation(collation);
 
-		if (!pg_locale_deterministic(pg_regex_locale))
+		if (!pg_locale_deterministic(locale))
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("nondeterministic collations are not supported for regular expressions")));
 
-		if (pg_regex_locale->provider == COLLPROVIDER_BUILTIN)
+		if (locale->provider == COLLPROVIDER_BUILTIN)
 		{
 			Assert(GetDatabaseEncoding() == PG_UTF8);
-			pg_regex_strategy = PG_REGEX_STRATEGY_BUILTIN;
+			strategy = PG_REGEX_STRATEGY_BUILTIN;
 		}
 #ifdef USE_ICU
-		else if (pg_regex_locale->provider == COLLPROVIDER_ICU)
+		else if (locale->provider == COLLPROVIDER_ICU)
 		{
-			pg_regex_strategy = PG_REGEX_STRATEGY_ICU;
+			strategy = PG_REGEX_STRATEGY_ICU;
 		}
 #endif
 		else
 		{
 			if (GetDatabaseEncoding() == PG_UTF8)
-				pg_regex_strategy = PG_REGEX_STRATEGY_LIBC_WIDE;
+				strategy = PG_REGEX_STRATEGY_LIBC_WIDE;
 			else
-				pg_regex_strategy = PG_REGEX_STRATEGY_LIBC_1BYTE;
+				strategy = PG_REGEX_STRATEGY_LIBC_1BYTE;
 		}
-
-		pg_regex_collation = collation;
 	}
+
+	pg_regex_strategy = strategy;
+	pg_regex_locale = locale;
+	pg_regex_collation = collation;
 }
 
 static int
