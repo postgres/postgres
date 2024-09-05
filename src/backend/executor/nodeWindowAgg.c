@@ -1074,57 +1074,24 @@ eval_windowfunction(WindowAggState *winstate, WindowStatePerFunc perfuncstate,
 }
 
 /*
- * begin_partition
- * Start buffering rows of the next partition.
+ * prepare_tuplestore
+ *		Prepare the tuplestore and all of the required read pointers for the
+ *		WindowAggState's frameOptions.
+ *
+ * Note: We use pg_noinline to avoid bloating the calling function with code
+ * which is only called once.
  */
-static void
-begin_partition(WindowAggState *winstate)
+static pg_noinline void
+prepare_tuplestore(WindowAggState *winstate)
 {
 	WindowAgg  *node = (WindowAgg *) winstate->ss.ps.plan;
-	PlanState  *outerPlan = outerPlanState(winstate);
 	int			frameOptions = winstate->frameOptions;
 	int			numfuncs = winstate->numfuncs;
-	int			i;
 
-	winstate->partition_spooled = false;
-	winstate->framehead_valid = false;
-	winstate->frametail_valid = false;
-	winstate->grouptail_valid = false;
-	winstate->spooled_rows = 0;
-	winstate->currentpos = 0;
-	winstate->frameheadpos = 0;
-	winstate->frametailpos = 0;
-	winstate->currentgroup = 0;
-	winstate->frameheadgroup = 0;
-	winstate->frametailgroup = 0;
-	winstate->groupheadpos = 0;
-	winstate->grouptailpos = -1;	/* see update_grouptailpos */
-	ExecClearTuple(winstate->agg_row_slot);
-	if (winstate->framehead_slot)
-		ExecClearTuple(winstate->framehead_slot);
-	if (winstate->frametail_slot)
-		ExecClearTuple(winstate->frametail_slot);
+	/* we shouldn't be called if this was done already */
+	Assert(winstate->buffer == NULL);
 
-	/*
-	 * If this is the very first partition, we need to fetch the first input
-	 * row to store in first_part_slot.
-	 */
-	if (TupIsNull(winstate->first_part_slot))
-	{
-		TupleTableSlot *outerslot = ExecProcNode(outerPlan);
-
-		if (!TupIsNull(outerslot))
-			ExecCopySlot(winstate->first_part_slot, outerslot);
-		else
-		{
-			/* outer plan is empty, so we have nothing to do */
-			winstate->partition_spooled = true;
-			winstate->more_partitions = false;
-			return;
-		}
-	}
-
-	/* Create new tuplestore for this partition */
+	/* Create new tuplestore */
 	winstate->buffer = tuplestore_begin_heap(false, false, work_mem);
 
 	/*
@@ -1158,16 +1125,10 @@ begin_partition(WindowAggState *winstate)
 
 		agg_winobj->readptr = tuplestore_alloc_read_pointer(winstate->buffer,
 															readptr_flags);
-		agg_winobj->markpos = -1;
-		agg_winobj->seekpos = -1;
-
-		/* Also reset the row counters for aggregates */
-		winstate->aggregatedbase = 0;
-		winstate->aggregatedupto = 0;
 	}
 
 	/* create mark and read pointers for each real window function */
-	for (i = 0; i < numfuncs; i++)
+	for (int i = 0; i < numfuncs; i++)
 	{
 		WindowStatePerFunc perfuncstate = &(winstate->perfunc[i]);
 
@@ -1179,8 +1140,6 @@ begin_partition(WindowAggState *winstate)
 															0);
 			winobj->readptr = tuplestore_alloc_read_pointer(winstate->buffer,
 															EXEC_FLAG_BACKWARD);
-			winobj->markpos = -1;
-			winobj->seekpos = -1;
 		}
 	}
 
@@ -1223,6 +1182,88 @@ begin_partition(WindowAggState *winstate)
 	{
 		winstate->grouptail_ptr =
 			tuplestore_alloc_read_pointer(winstate->buffer, 0);
+	}
+}
+
+/*
+ * begin_partition
+ * Start buffering rows of the next partition.
+ */
+static void
+begin_partition(WindowAggState *winstate)
+{
+	PlanState  *outerPlan = outerPlanState(winstate);
+	int			numfuncs = winstate->numfuncs;
+
+	winstate->partition_spooled = false;
+	winstate->framehead_valid = false;
+	winstate->frametail_valid = false;
+	winstate->grouptail_valid = false;
+	winstate->spooled_rows = 0;
+	winstate->currentpos = 0;
+	winstate->frameheadpos = 0;
+	winstate->frametailpos = 0;
+	winstate->currentgroup = 0;
+	winstate->frameheadgroup = 0;
+	winstate->frametailgroup = 0;
+	winstate->groupheadpos = 0;
+	winstate->grouptailpos = -1;	/* see update_grouptailpos */
+	ExecClearTuple(winstate->agg_row_slot);
+	if (winstate->framehead_slot)
+		ExecClearTuple(winstate->framehead_slot);
+	if (winstate->frametail_slot)
+		ExecClearTuple(winstate->frametail_slot);
+
+	/*
+	 * If this is the very first partition, we need to fetch the first input
+	 * row to store in first_part_slot.
+	 */
+	if (TupIsNull(winstate->first_part_slot))
+	{
+		TupleTableSlot *outerslot = ExecProcNode(outerPlan);
+
+		if (!TupIsNull(outerslot))
+			ExecCopySlot(winstate->first_part_slot, outerslot);
+		else
+		{
+			/* outer plan is empty, so we have nothing to do */
+			winstate->partition_spooled = true;
+			winstate->more_partitions = false;
+			return;
+		}
+	}
+
+	/* Create new tuplestore if not done already. */
+	if (unlikely(winstate->buffer == NULL))
+		prepare_tuplestore(winstate);
+
+	winstate->next_partition = false;
+
+	if (winstate->numaggs > 0)
+	{
+		WindowObject agg_winobj = winstate->agg_winobj;
+
+		/* reset mark and see positions for aggregate functions */
+		agg_winobj->markpos = -1;
+		agg_winobj->seekpos = -1;
+
+		/* Also reset the row counters for aggregates */
+		winstate->aggregatedbase = 0;
+		winstate->aggregatedupto = 0;
+	}
+
+	/* reset mark and seek positions for each real window function */
+	for (int i = 0; i < numfuncs; i++)
+	{
+		WindowStatePerFunc perfuncstate = &(winstate->perfunc[i]);
+
+		if (!perfuncstate->plain_agg)
+		{
+			WindowObject winobj = perfuncstate->winobj;
+
+			winobj->markpos = -1;
+			winobj->seekpos = -1;
+		}
 	}
 
 	/*
@@ -1360,9 +1401,9 @@ release_partition(WindowAggState *winstate)
 	}
 
 	if (winstate->buffer)
-		tuplestore_end(winstate->buffer);
-	winstate->buffer = NULL;
+		tuplestore_clear(winstate->buffer);
 	winstate->partition_spooled = false;
+	winstate->next_partition = true;
 }
 
 /*
@@ -2143,7 +2184,7 @@ ExecWindowAgg(PlanState *pstate)
 	/* We need to loop as the runCondition or qual may filter out tuples */
 	for (;;)
 	{
-		if (winstate->buffer == NULL)
+		if (winstate->next_partition)
 		{
 			/* Initialize for first partition and set current row = 0 */
 			begin_partition(winstate);
@@ -2686,6 +2727,7 @@ ExecInitWindowAgg(WindowAgg *node, EState *estate, int eflags)
 	winstate->all_first = true;
 	winstate->partition_spooled = false;
 	winstate->more_partitions = false;
+	winstate->next_partition = true;
 
 	return winstate;
 }
@@ -2699,6 +2741,14 @@ ExecEndWindowAgg(WindowAggState *node)
 {
 	PlanState  *outerPlan;
 	int			i;
+
+	if (node->buffer != NULL)
+	{
+		tuplestore_end(node->buffer);
+
+		/* nullify so that release_partition skips the tuplestore_clear() */
+		node->buffer = NULL;
+	}
 
 	release_partition(node);
 

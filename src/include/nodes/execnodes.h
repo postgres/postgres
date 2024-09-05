@@ -2619,6 +2619,17 @@ typedef struct WindowAggState
 	bool		inRangeAsc;		/* use ASC sort order for in_range tests? */
 	bool		inRangeNullsFirst;	/* nulls sort first for in_range tests? */
 
+	/* fields relating to runconditions */
+	bool		use_pass_through;	/* When false, stop execution when
+									 * runcondition is no longer true.  Else
+									 * just stop evaluating window funcs. */
+	bool		top_window;		/* true if this is the top-most WindowAgg or
+								 * the only WindowAgg in this query level */
+	ExprState  *runcondition;	/* Condition which must remain true otherwise
+								 * execution of the WindowAgg will finish or
+								 * go into pass-through mode.  NULL when there
+								 * is no such condition. */
+
 	/* these fields are used in GROUPS mode: */
 	int64		currentgroup;	/* peer group # of current row in partition */
 	int64		frameheadgroup; /* peer group # of frame head row */
@@ -2631,19 +2642,10 @@ typedef struct WindowAggState
 	MemoryContext curaggcontext;	/* current aggregate's working data */
 	ExprContext *tmpcontext;	/* short-term evaluation context */
 
-	ExprState  *runcondition;	/* Condition which must remain true otherwise
-								 * execution of the WindowAgg will finish or
-								 * go into pass-through mode.  NULL when there
-								 * is no such condition. */
-
-	bool		use_pass_through;	/* When false, stop execution when
-									 * runcondition is no longer true.  Else
-									 * just stop evaluating window funcs. */
-	bool		top_window;		/* true if this is the top-most WindowAgg or
-								 * the only WindowAgg in this query level */
 	bool		all_first;		/* true if the scan is starting */
 	bool		partition_spooled;	/* true if all tuples in current partition
 									 * have been spooled into tuplestore */
+	bool		next_partition; /* true if begin_partition needs to be called */
 	bool		more_partitions;	/* true if there's more partitions after
 									 * this one */
 	bool		framehead_valid;	/* true if frameheadpos is known up to
