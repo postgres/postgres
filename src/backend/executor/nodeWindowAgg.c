@@ -2032,6 +2032,82 @@ update_grouptailpos(WindowAggState *winstate)
 	MemoryContextSwitchTo(oldcontext);
 }
 
+/*
+ * calculate_frame_offsets
+ *		Determine the startOffsetValue and endOffsetValue values for the
+ *		WindowAgg's frame options.
+ */
+static pg_noinline void
+calculate_frame_offsets(PlanState *pstate)
+{
+	WindowAggState *winstate = castNode(WindowAggState, pstate);
+	ExprContext *econtext;
+	int			frameOptions = winstate->frameOptions;
+	Datum		value;
+	bool		isnull;
+	int16		len;
+	bool		byval;
+
+	/* Ensure we've not been called before for this scan */
+	Assert(winstate->all_first);
+
+	econtext = winstate->ss.ps.ps_ExprContext;
+
+	if (frameOptions & FRAMEOPTION_START_OFFSET)
+	{
+		Assert(winstate->startOffset != NULL);
+		value = ExecEvalExprSwitchContext(winstate->startOffset,
+										  econtext,
+										  &isnull);
+		if (isnull)
+			ereport(ERROR,
+					(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+					 errmsg("frame starting offset must not be null")));
+		/* copy value into query-lifespan context */
+		get_typlenbyval(exprType((Node *) winstate->startOffset->expr),
+						&len,
+						&byval);
+		winstate->startOffsetValue = datumCopy(value, byval, len);
+		if (frameOptions & (FRAMEOPTION_ROWS | FRAMEOPTION_GROUPS))
+		{
+			/* value is known to be int8 */
+			int64		offset = DatumGetInt64(value);
+
+			if (offset < 0)
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_PRECEDING_OR_FOLLOWING_SIZE),
+						 errmsg("frame starting offset must not be negative")));
+		}
+	}
+
+	if (frameOptions & FRAMEOPTION_END_OFFSET)
+	{
+		Assert(winstate->endOffset != NULL);
+		value = ExecEvalExprSwitchContext(winstate->endOffset,
+										  econtext,
+										  &isnull);
+		if (isnull)
+			ereport(ERROR,
+					(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+					 errmsg("frame ending offset must not be null")));
+		/* copy value into query-lifespan context */
+		get_typlenbyval(exprType((Node *) winstate->endOffset->expr),
+						&len,
+						&byval);
+		winstate->endOffsetValue = datumCopy(value, byval, len);
+		if (frameOptions & (FRAMEOPTION_ROWS | FRAMEOPTION_GROUPS))
+		{
+			/* value is known to be int8 */
+			int64		offset = DatumGetInt64(value);
+
+			if (offset < 0)
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_PRECEDING_OR_FOLLOWING_SIZE),
+						 errmsg("frame ending offset must not be negative")));
+		}
+	}
+	winstate->all_first = false;
+}
 
 /* -----------------
  * ExecWindowAgg
@@ -2061,68 +2137,8 @@ ExecWindowAgg(PlanState *pstate)
 	 * rescan).  These are assumed to hold constant throughout the scan; if
 	 * user gives us a volatile expression, we'll only use its initial value.
 	 */
-	if (winstate->all_first)
-	{
-		int			frameOptions = winstate->frameOptions;
-		Datum		value;
-		bool		isnull;
-		int16		len;
-		bool		byval;
-
-		econtext = winstate->ss.ps.ps_ExprContext;
-
-		if (frameOptions & FRAMEOPTION_START_OFFSET)
-		{
-			Assert(winstate->startOffset != NULL);
-			value = ExecEvalExprSwitchContext(winstate->startOffset,
-											  econtext,
-											  &isnull);
-			if (isnull)
-				ereport(ERROR,
-						(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
-						 errmsg("frame starting offset must not be null")));
-			/* copy value into query-lifespan context */
-			get_typlenbyval(exprType((Node *) winstate->startOffset->expr),
-							&len, &byval);
-			winstate->startOffsetValue = datumCopy(value, byval, len);
-			if (frameOptions & (FRAMEOPTION_ROWS | FRAMEOPTION_GROUPS))
-			{
-				/* value is known to be int8 */
-				int64		offset = DatumGetInt64(value);
-
-				if (offset < 0)
-					ereport(ERROR,
-							(errcode(ERRCODE_INVALID_PRECEDING_OR_FOLLOWING_SIZE),
-							 errmsg("frame starting offset must not be negative")));
-			}
-		}
-		if (frameOptions & FRAMEOPTION_END_OFFSET)
-		{
-			Assert(winstate->endOffset != NULL);
-			value = ExecEvalExprSwitchContext(winstate->endOffset,
-											  econtext,
-											  &isnull);
-			if (isnull)
-				ereport(ERROR,
-						(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
-						 errmsg("frame ending offset must not be null")));
-			/* copy value into query-lifespan context */
-			get_typlenbyval(exprType((Node *) winstate->endOffset->expr),
-							&len, &byval);
-			winstate->endOffsetValue = datumCopy(value, byval, len);
-			if (frameOptions & (FRAMEOPTION_ROWS | FRAMEOPTION_GROUPS))
-			{
-				/* value is known to be int8 */
-				int64		offset = DatumGetInt64(value);
-
-				if (offset < 0)
-					ereport(ERROR,
-							(errcode(ERRCODE_INVALID_PRECEDING_OR_FOLLOWING_SIZE),
-							 errmsg("frame ending offset must not be negative")));
-			}
-		}
-		winstate->all_first = false;
-	}
+	if (unlikely(winstate->all_first))
+		calculate_frame_offsets(pstate);
 
 	/* We need to loop as the runCondition or qual may filter out tuples */
 	for (;;)
