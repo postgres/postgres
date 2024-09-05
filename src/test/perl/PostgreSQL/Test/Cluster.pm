@@ -2837,6 +2837,28 @@ sub lsn
 
 =pod
 
+=item $node->check_extension(extension_name)
+
+Scan pg_available_extensions to check that an extension is available in an
+installation.
+
+Returns 1 if the extension is available, 0 otherwise.
+
+=cut
+
+sub check_extension
+{
+	my ($self, $extension_name) = @_;
+
+	my $result = $self->safe_psql('postgres',
+		"SELECT count(*) > 0 FROM pg_available_extensions WHERE name = '$extension_name';"
+	);
+
+	return $result eq 't' ? 1 : 0;
+}
+
+=pod
+
 =item $node->wait_for_event(wait_event_name, backend_type)
 
 Poll pg_stat_activity until backend_type reaches wait_event_name.

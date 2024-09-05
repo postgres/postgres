@@ -90,8 +90,6 @@ my $kerberos_enabled =
   $ENV{PG_TEST_EXTRA} && $ENV{PG_TEST_EXTRA} =~ /\bkerberos\b/;
 my $ssl_supported = $ENV{with_ssl} eq 'openssl';
 
-my $injection_points_supported = $ENV{enable_injection_points} eq 'yes';
-
 ###
 ### Prepare test server for GSSAPI and SSL authentication, with a few
 ### different test users and helper functions. We don't actually
@@ -150,6 +148,11 @@ if ($ssl_supported != 0)
 }
 
 $node->start;
+
+# Check if the extension injection_points is available, as it may be
+# possible that this script is run with installcheck, where the module
+# would not be installed by default.
+my $injection_points_supported = $node->check_extension('injection_points');
 
 $node->safe_psql('postgres', 'CREATE USER localuser;');
 $node->safe_psql('postgres', 'CREATE USER testuser;');

@@ -121,7 +121,6 @@ tests += {
       't/005_negotiate_encryption.pl',
     ],
     'env': {
-      'enable_injection_points': get_option('injection_points') ? 'yes' : 'no',
       'with_ssl': ssl_library,
       'with_gssapi': gssapi.found() ? 'yes' : 'no',
       'with_krb_srvnam': 'postgres',

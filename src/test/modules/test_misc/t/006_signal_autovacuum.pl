@@ -25,6 +25,15 @@ $node->init;
 # This ensures a quick worker spawn.
 $node->append_conf('postgresql.conf', 'autovacuum_naptime = 1');
 $node->start;
+
+# Check if the extension injection_points is available, as it may be
+# possible that this script is run with installcheck, where the module
+# would not be installed by default.
+if (!$node->check_extension('injection_points'))
+{
+	plan skip_all => 'Extension injection_points not installed';
+}
+
 $node->safe_psql('postgres', 'CREATE EXTENSION injection_points;');
 
 $node->safe_psql(

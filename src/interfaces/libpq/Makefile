@@ -15,7 +15,7 @@ subdir = src/interfaces/libpq
 top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
-export with_ssl with_gssapi with_krb_srvnam enable_injection_points
+export with_ssl with_gssapi with_krb_srvnam
 
 PGFILEDESC = "PostgreSQL Access Library"
 
