@@ -2978,7 +2978,7 @@ _SPI_error_callback(void *arg)
 		switch (carg->mode)
 		{
 			case RAW_PARSE_PLPGSQL_EXPR:
-				errcontext("SQL expression \"%s\"", query);
+				errcontext("PL/pgSQL expression \"%s\"", query);
 				break;
 			case RAW_PARSE_PLPGSQL_ASSIGN1:
 			case RAW_PARSE_PLPGSQL_ASSIGN2:

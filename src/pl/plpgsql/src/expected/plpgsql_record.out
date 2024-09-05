@@ -272,7 +272,7 @@ NOTICE:  r1.q1 = <NULL>
 NOTICE:  r1.q2 = <NULL>
 NOTICE:  r1 = <NULL>
 ERROR:  record "r1" has no field "nosuchfield"
-CONTEXT:  SQL expression "r1.nosuchfield"
+CONTEXT:  PL/pgSQL expression "r1.nosuchfield"
 PL/pgSQL function inline_code_block line 7 at RAISE
 -- records, not so much
 do $$
@@ -286,7 +286,7 @@ end$$;
 NOTICE:  r1 = <NULL>
 ERROR:  record "r1" is not assigned yet
 DETAIL:  The tuple structure of a not-yet-assigned record is indeterminate.
-CONTEXT:  SQL expression "r1.f1"
+CONTEXT:  PL/pgSQL expression "r1.f1"
 PL/pgSQL function inline_code_block line 5 at RAISE
 -- but OK if you assign first
 do $$
@@ -304,7 +304,7 @@ NOTICE:  r1.f1 = 1
 NOTICE:  r1.f2 = 2
 NOTICE:  r1 = (1,2)
 ERROR:  record "r1" has no field "nosuchfield"
-CONTEXT:  SQL expression "r1.nosuchfield"
+CONTEXT:  PL/pgSQL expression "r1.nosuchfield"
 PL/pgSQL function inline_code_block line 9 at RAISE
 -- check %type with block-qualified variable names
 do $$
@@ -598,7 +598,7 @@ create function getf3(x mutable) returns int language plpgsql as
 $$ begin return x.f3; end $$;
 select getf3(null::mutable);  -- doesn't work yet
 ERROR:  record "x" has no field "f3"
-CONTEXT:  SQL expression "x.f3"
+CONTEXT:  PL/pgSQL expression "x.f3"
 PL/pgSQL function getf3(mutable) line 1 at RETURN
 alter table mutable add column f3 int;
 select getf3(null::mutable);  -- now it works
