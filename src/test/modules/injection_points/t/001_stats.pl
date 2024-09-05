@@ -69,4 +69,10 @@ $fixedstats = $node->safe_psql('postgres',
 	"SELECT * FROM injection_points_stats_fixed();");
 is($fixedstats, '0|0|0|0|0', 'fixed stats after crash');
 
+# Stop the server, disable the module, then restart.  The server
+# should be able to come up.
+$node->stop;
+$node->adjust_conf('postgresql.conf', 'shared_preload_libraries', "''");
+$node->start;
+
 done_testing();
