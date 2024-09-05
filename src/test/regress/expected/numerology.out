@@ -171,7 +171,7 @@ SELECT -0x8000000000000001;
 
 -- error cases
 SELECT 123abc;
-ERROR:  trailing junk after numeric literal at or near "123a"
+ERROR:  trailing junk after numeric literal at or near "123abc"
 LINE 1: SELECT 123abc;
                ^
 SELECT 0x0o;
@@ -322,7 +322,7 @@ ERROR:  trailing junk after numeric literal at or near "100_"
 LINE 1: SELECT 100_;
                ^
 SELECT 100__000;
-ERROR:  trailing junk after numeric literal at or near "100_"
+ERROR:  trailing junk after numeric literal at or near "100__000"
 LINE 1: SELECT 100__000;
                ^
 SELECT _1_000.5;
@@ -334,7 +334,7 @@ ERROR:  trailing junk after numeric literal at or near "1_000_"
 LINE 1: SELECT 1_000_.5;
                ^
 SELECT 1_000._5;
-ERROR:  trailing junk after numeric literal at or near "1_000._"
+ERROR:  trailing junk after numeric literal at or near "1_000._5"
 LINE 1: SELECT 1_000._5;
                ^
 SELECT 1_000.5_;
@@ -342,11 +342,11 @@ ERROR:  trailing junk after numeric literal at or near "1_000.5_"
 LINE 1: SELECT 1_000.5_;
                ^
 SELECT 1_000.5e_1;
-ERROR:  trailing junk after numeric literal at or near "1_000.5e"
+ERROR:  trailing junk after numeric literal at or near "1_000.5e_1"
 LINE 1: SELECT 1_000.5e_1;
                ^
 PREPARE p1 AS SELECT $0_1;
-ERROR:  trailing junk after parameter at or near "$0_"
+ERROR:  trailing junk after parameter at or near "$0_1"
 LINE 1: PREPARE p1 AS SELECT $0_1;
                              ^
 --
