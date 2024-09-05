@@ -5420,7 +5420,10 @@ binary_upgrade_set_type_oids_by_type_oid(Archive *fout,
 					  pg_type_oid);
 
 	tinfo = findTypeByOid(pg_type_oid);
-	pg_type_array_oid = tinfo->typarray;
+	if (tinfo)
+		pg_type_array_oid = tinfo->typarray;
+	else
+		pg_type_array_oid = InvalidOid;
 
 	if (!OidIsValid(pg_type_array_oid) && force_array_type)
 		pg_type_array_oid = get_next_possible_free_pg_type_oid(fout, upgrade_query);
