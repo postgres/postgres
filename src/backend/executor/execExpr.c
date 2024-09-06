@@ -4414,6 +4414,8 @@ ExecInitJsonExpr(JsonExpr *jsexpr, ExprState *state,
 	ErrorSaveContext *escontext =
 		jsexpr->on_error->btype != JSON_BEHAVIOR_ERROR ?
 		&jsestate->escontext : NULL;
+	bool		returning_domain =
+		get_typtype(jsexpr->returning->typid) == TYPTYPE_DOMAIN;
 
 	jsestate->jsexpr = jsexpr;
 
@@ -4556,19 +4558,26 @@ ExecInitJsonExpr(JsonExpr *jsexpr, ExprState *state,
 		ExprEvalPushStep(state, scratch);
 	}
 
-	jsestate->jump_empty = jsestate->jump_error = -1;
-
 	/*
 	 * Step to check jsestate->error and return the ON ERROR expression if
 	 * there is one.  This handles both the errors that occur during jsonpath
 	 * evaluation in EEOP_JSONEXPR_PATH and subsequent coercion evaluation.
+	 *
+	 * Speed up common cases by avoiding extra steps for a NULL-valued ON
+	 * ERROR expression unless RETURNING a domain type, where constraints must
+	 * be checked. ExecEvalJsonExprPath() already returns NULL on error,
+	 * making additional steps unnecessary in typical scenarios. Note that the
+	 * default ON ERROR behavior for JSON_VALUE() and JSON_QUERY() is to
+	 * return NULL.
 	 */
+	jsestate->jump_error = state->steps_len;
 	if (jsexpr->on_error &&
-		jsexpr->on_error->btype != JSON_BEHAVIOR_ERROR)
+		jsexpr->on_error->btype != JSON_BEHAVIOR_ERROR &&
+		(!(IsA(jsexpr->on_error->expr, Const) &&
+		   ((Const *) jsexpr->on_error->expr)->constisnull) ||
+		 returning_domain))
 	{
 		ErrorSaveContext *saved_escontext;
-
-		jsestate->jump_error = state->steps_len;
 
 		/* JUMP to end if false, that is, skip the ON ERROR expression. */
 		jumps_to_end = lappend_int(jumps_to_end, state->steps_len);
@@ -4619,13 +4628,18 @@ ExecInitJsonExpr(JsonExpr *jsexpr, ExprState *state,
 	/*
 	 * Step to check jsestate->empty and return the ON EMPTY expression if
 	 * there is one.
+	 *
+	 * See the comment above for details on the optimization for NULL-valued
+	 * expressions.
 	 */
+	jsestate->jump_empty = state->steps_len;
 	if (jsexpr->on_empty != NULL &&
-		jsexpr->on_empty->btype != JSON_BEHAVIOR_ERROR)
+		jsexpr->on_empty->btype != JSON_BEHAVIOR_ERROR &&
+		(!(IsA(jsexpr->on_empty->expr, Const) &&
+		   ((Const *) jsexpr->on_empty->expr)->constisnull) ||
+		 returning_domain))
 	{
 		ErrorSaveContext *saved_escontext;
-
-		jsestate->jump_empty = state->steps_len;
 
 		/* JUMP to end if false, that is, skip the ON EMPTY expression. */
 		jumps_to_end = lappend_int(jumps_to_end, state->steps_len);
