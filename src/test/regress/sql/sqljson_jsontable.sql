@@ -547,3 +547,8 @@ SELECT * FROM JSON_TABLE(jsonb '1', '$' COLUMNS (a int exists empty object on er
 -- behavior
 EXPLAIN VERBOSE SELECT * from JSON_TABLE('"a"', '$' COLUMNS (a text PATH '$'));
 EXPLAIN VERBOSE SELECT * from JSON_TABLE('"a"', '$' COLUMNS (a text PATH '$') ERROR ON ERROR);
+
+-- Test JSON_TABLE() deparsing -- don't emit default ON ERROR behavior
+EXPLAIN VERBOSE SELECT * from JSON_TABLE('"a"', '$' COLUMNS (a text PATH '$'));
+EXPLAIN VERBOSE SELECT * from JSON_TABLE('"a"', '$' COLUMNS (a text PATH '$') EMPTY ON ERROR);
+EXPLAIN VERBOSE SELECT * from JSON_TABLE('"a"', '$' COLUMNS (a text PATH '$') EMPTY ARRAY ON ERROR);
