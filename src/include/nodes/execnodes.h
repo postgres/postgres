@@ -132,8 +132,10 @@ typedef struct ExprState
 	bool	   *innermost_domainnull;
 
 	/*
-	 * For expression nodes that support soft errors.  Should be set to NULL
-	 * before calling ExecInitExprRec() if the caller wants errors thrown.
+	 * For expression nodes that support soft errors. Should be set to NULL if
+	 * the caller wants errors to be thrown. Callers that do not want errors
+	 * thrown should set it to a valid ErrorSaveContext before calling
+	 * ExecInitExprRec().
 	 */
 	ErrorSaveContext *escontext;
 } ExprState;
