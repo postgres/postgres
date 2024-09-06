@@ -1266,32 +1266,6 @@ lookup_collation_cache(Oid collation)
 	return cache_entry;
 }
 
-/*
- * Detect whether collation's LC_CTYPE property is C
- */
-bool
-lc_ctype_is_c(Oid collation)
-{
-	/*
-	 * If we're asked about "collation 0", return false, so that the code will
-	 * go into the non-C path and report that the collation is bogus.
-	 */
-	if (!OidIsValid(collation))
-		return false;
-
-	/*
-	 * If we're asked about the built-in C/POSIX collations, we know that.
-	 */
-	if (collation == C_COLLATION_OID ||
-		collation == POSIX_COLLATION_OID)
-		return true;
-
-	/*
-	 * Otherwise, we have to consult pg_collation, but we cache that.
-	 */
-	return pg_newlocale_from_collation(collation)->ctype_is_c;
-}
-
 /* simple subroutine for reporting errors from newlocale() */
 static void
 report_newlocale_failure(const char *localename)

@@ -147,7 +147,7 @@ SB_lower_char(unsigned char c, pg_locale_t locale, bool locale_is_c)
 static inline int
 GenericMatchText(const char *s, int slen, const char *p, int plen, Oid collation)
 {
-	if (collation && !lc_ctype_is_c(collation))
+	if (collation)
 	{
 		pg_locale_t locale = pg_newlocale_from_collation(collation);
 

@@ -246,9 +246,13 @@ pg_set_regex_collation(Oid collation)
 				 errhint("Use the COLLATE clause to set the collation explicitly.")));
 	}
 
-	if (lc_ctype_is_c(collation))
+	if (collation == C_COLLATION_OID)
 	{
-		/* C/POSIX collations use this path regardless of database encoding */
+		/*
+		 * Some callers expect regexes to work for C_COLLATION_OID before
+		 * catalog access is available, so we can't call
+		 * pg_newlocale_from_collation().
+		 */
 		strategy = PG_REGEX_STRATEGY_C;
 		collation = C_COLLATION_OID;
 	}
@@ -261,7 +265,17 @@ pg_set_regex_collation(Oid collation)
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("nondeterministic collations are not supported for regular expressions")));
 
-		if (locale->provider == COLLPROVIDER_BUILTIN)
+		if (locale->ctype_is_c)
+		{
+			/*
+			 * C/POSIX collations use this path regardless of database
+			 * encoding
+			 */
+			strategy = PG_REGEX_STRATEGY_C;
+			locale = 0;
+			collation = C_COLLATION_OID;
+		}
+		else if (locale->provider == COLLPROVIDER_BUILTIN)
 		{
 			Assert(GetDatabaseEncoding() == PG_UTF8);
 			strategy = PG_REGEX_STRATEGY_BUILTIN;
@@ -274,6 +288,7 @@ pg_set_regex_collation(Oid collation)
 #endif
 		else
 		{
+			Assert(locale->provider == COLLPROVIDER_LIBC);
 			if (GetDatabaseEncoding() == PG_UTF8)
 				strategy = PG_REGEX_STRATEGY_LIBC_WIDE;
 			else

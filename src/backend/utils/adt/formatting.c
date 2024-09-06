@@ -1636,6 +1636,7 @@ char *
 str_tolower(const char *buff, size_t nbytes, Oid collid)
 {
 	char	   *result;
+	pg_locale_t mylocale;
 
 	if (!buff)
 		return NULL;
@@ -1653,17 +1654,15 @@ str_tolower(const char *buff, size_t nbytes, Oid collid)
 				 errhint("Use the COLLATE clause to set the collation explicitly.")));
 	}
 
+	mylocale = pg_newlocale_from_collation(collid);
+
 	/* C/POSIX collations use this path regardless of database encoding */
-	if (lc_ctype_is_c(collid))
+	if (mylocale->ctype_is_c)
 	{
 		result = asc_tolower(buff, nbytes);
 	}
 	else
 	{
-		pg_locale_t mylocale;
-
-		mylocale = pg_newlocale_from_collation(collid);
-
 #ifdef USE_ICU
 		if (mylocale->provider == COLLPROVIDER_ICU)
 		{
@@ -1774,6 +1773,7 @@ char *
 str_toupper(const char *buff, size_t nbytes, Oid collid)
 {
 	char	   *result;
+	pg_locale_t mylocale;
 
 	if (!buff)
 		return NULL;
@@ -1791,17 +1791,15 @@ str_toupper(const char *buff, size_t nbytes, Oid collid)
 				 errhint("Use the COLLATE clause to set the collation explicitly.")));
 	}
 
+	mylocale = pg_newlocale_from_collation(collid);
+
 	/* C/POSIX collations use this path regardless of database encoding */
-	if (lc_ctype_is_c(collid))
+	if (mylocale->ctype_is_c)
 	{
 		result = asc_toupper(buff, nbytes);
 	}
 	else
 	{
-		pg_locale_t mylocale;
-
-		mylocale = pg_newlocale_from_collation(collid);
-
 #ifdef USE_ICU
 		if (mylocale->provider == COLLPROVIDER_ICU)
 		{
@@ -1954,6 +1952,7 @@ str_initcap(const char *buff, size_t nbytes, Oid collid)
 {
 	char	   *result;
 	int			wasalnum = false;
+	pg_locale_t mylocale;
 
 	if (!buff)
 		return NULL;
@@ -1971,17 +1970,15 @@ str_initcap(const char *buff, size_t nbytes, Oid collid)
 				 errhint("Use the COLLATE clause to set the collation explicitly.")));
 	}
 
+	mylocale = pg_newlocale_from_collation(collid);
+
 	/* C/POSIX collations use this path regardless of database encoding */
-	if (lc_ctype_is_c(collid))
+	if (mylocale->ctype_is_c)
 	{
 		result = asc_initcap(buff, nbytes);
 	}
 	else
 	{
-		pg_locale_t mylocale;
-
-		mylocale = pg_newlocale_from_collation(collid);
-
 #ifdef USE_ICU
 		if (mylocale->provider == COLLPROVIDER_ICU)
 		{
