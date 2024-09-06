@@ -1132,3 +1132,26 @@ ERROR:  invalid ON ERROR behavior for column "a"
 LINE 1: ...M JSON_TABLE(jsonb '1', '$' COLUMNS (a int exists empty obje...
                                                              ^
 DETAIL:  Only ERROR, TRUE, FALSE, or UNKNOWN is allowed in ON ERROR for EXISTS columns.
+-- Test JSON_TABLE() column deparsing -- don't emit default ON ERROR / EMPTY
+-- behavior
+CREATE VIEW json_table_view8 AS SELECT * from JSON_TABLE('"a"', '$' COLUMNS (a text PATH '$'));
+\sv json_table_view8;
+CREATE OR REPLACE VIEW public.json_table_view8 AS
+ SELECT a
+   FROM JSON_TABLE(
+            '"a"'::text, '$' AS json_table_path_0
+            COLUMNS (
+                a text PATH '$'
+            )
+        )
+CREATE VIEW json_table_view9 AS SELECT * from JSON_TABLE('"a"', '$' COLUMNS (a text PATH '$') ERROR ON ERROR);
+\sv json_table_view9;
+CREATE OR REPLACE VIEW public.json_table_view9 AS
+ SELECT a
+   FROM JSON_TABLE(
+            '"a"'::text, '$' AS json_table_path_0
+            COLUMNS (
+                a text PATH '$'
+            ) ERROR ON ERROR
+        )
+DROP VIEW json_table_view8, json_table_view9;
