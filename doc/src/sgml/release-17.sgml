@@ -2282,8 +2282,6 @@ Author: Masahiko Sawada <msawada@postgresql.org>
 2024-03-28 [f1bb9284f] Improve tab completion for ALTER TABLE ALTER COLUMN SET
 Author: Masahiko Sawada <msawada@postgresql.org>
 2024-04-08 [304b6b1a6] Add more tab completion support for ALTER DEFAULT PRIVIL
-Author: Alexander Korotkov <akorotkov@postgresql.org>
-2024-04-30 [60ae37a8b] Add tab completion for partition MERGE/SPLIT operations
 Author: Michael Paquier <michael@paquier.xyz>
 2024-05-01 [2800fbb2b] Add tab completion for EXPLAIN (MEMORY|SERIALIZE)
 -->
