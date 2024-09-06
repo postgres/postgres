@@ -4603,13 +4603,13 @@ transformJsonFuncExpr(ParseState *pstate, JsonFuncExpr *func)
 			}
 
 			/*
-			 * Assume EMPTY ON ERROR when ON ERROR is not specified.
+			 * Assume EMPTY ARRAY ON ERROR when ON ERROR is not specified.
 			 *
 			 * ON EMPTY cannot be specified at the top level but it can be for
 			 * the individual columns.
 			 */
 			jsexpr->on_error = transformJsonBehavior(pstate, func->on_error,
-													 JSON_BEHAVIOR_EMPTY,
+													 JSON_BEHAVIOR_EMPTY_ARRAY,
 													 jsexpr->returning);
 			break;
 

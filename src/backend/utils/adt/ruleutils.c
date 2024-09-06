@@ -11875,7 +11875,7 @@ get_json_table(TableFunc *tf, deparse_context *context, bool showimplicit)
 	get_json_table_columns(tf, castNode(JsonTablePathScan, tf->plan), context,
 						   showimplicit);
 
-	if (jexpr->on_error->btype != JSON_BEHAVIOR_EMPTY)
+	if (jexpr->on_error->btype != JSON_BEHAVIOR_EMPTY_ARRAY)
 		get_json_behavior(jexpr->on_error, context, "ERROR");
 
 	if (PRETTY_INDENT(context))

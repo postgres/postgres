@@ -1150,3 +1150,28 @@ EXPLAIN VERBOSE SELECT * from JSON_TABLE('"a"', '$' COLUMNS (a text PATH '$') ER
    Table Function Call: JSON_TABLE('"a"'::jsonb, '$' AS json_table_path_0 COLUMNS (a text PATH '$') ERROR ON ERROR)
 (3 rows)
 
+-- Test JSON_TABLE() deparsing -- don't emit default ON ERROR behavior
+EXPLAIN VERBOSE SELECT * from JSON_TABLE('"a"', '$' COLUMNS (a text PATH '$'));
+                                             QUERY PLAN                                              
+-----------------------------------------------------------------------------------------------------
+ Table Function Scan on "json_table"  (cost=0.01..1.00 rows=100 width=32)
+   Output: a
+   Table Function Call: JSON_TABLE('"a"'::jsonb, '$' AS json_table_path_0 COLUMNS (a text PATH '$'))
+(3 rows)
+
+EXPLAIN VERBOSE SELECT * from JSON_TABLE('"a"', '$' COLUMNS (a text PATH '$') EMPTY ON ERROR);
+                                             QUERY PLAN                                              
+-----------------------------------------------------------------------------------------------------
+ Table Function Scan on "json_table"  (cost=0.01..1.00 rows=100 width=32)
+   Output: a
+   Table Function Call: JSON_TABLE('"a"'::jsonb, '$' AS json_table_path_0 COLUMNS (a text PATH '$'))
+(3 rows)
+
+EXPLAIN VERBOSE SELECT * from JSON_TABLE('"a"', '$' COLUMNS (a text PATH '$') EMPTY ARRAY ON ERROR);
+                                             QUERY PLAN                                              
+-----------------------------------------------------------------------------------------------------
+ Table Function Scan on "json_table"  (cost=0.01..1.00 rows=100 width=32)
+   Output: a
+   Table Function Call: JSON_TABLE('"a"'::jsonb, '$' AS json_table_path_0 COLUMNS (a text PATH '$'))
+(3 rows)
+
