@@ -552,3 +552,12 @@ CREATE VIEW json_table_view9 AS SELECT * from JSON_TABLE('"a"', '$' COLUMNS (a t
 \sv json_table_view9;
 
 DROP VIEW json_table_view8, json_table_view9;
+
+-- Test JSON_TABLE() deparsing -- don't emit default ON ERROR behavior
+CREATE VIEW json_table_view8 AS SELECT * from JSON_TABLE('"a"', '$' COLUMNS (a text PATH '$') EMPTY ON ERROR);
+\sv json_table_view8;
+
+CREATE VIEW json_table_view9 AS SELECT * from JSON_TABLE('"a"', '$' COLUMNS (a text PATH '$') EMPTY ARRAY ON ERROR);
+\sv json_table_view9;
+
+DROP VIEW json_table_view8, json_table_view9;
