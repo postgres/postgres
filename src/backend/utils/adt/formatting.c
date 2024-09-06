@@ -2621,7 +2621,7 @@ seq_search_localized(const char *name, char **array, int *len, Oid collid)
 	 * Fold to upper case, then to lower case, so that we can match reliably
 	 * even in languages in which case conversions are not injective.
 	 */
-	upper_name = str_toupper(unconstify(char *, name), strlen(name), collid);
+	upper_name = str_toupper(name, strlen(name), collid);
 	lower_name = str_tolower(upper_name, strlen(upper_name), collid);
 	pfree(upper_name);
 
