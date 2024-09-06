@@ -542,3 +542,13 @@ SELECT * FROM JSON_TABLE(jsonb '1', '$' COLUMNS (a int) NULL ON ERROR);
 SELECT * FROM JSON_TABLE(jsonb '1', '$' COLUMNS (a int true on empty));
 SELECT * FROM JSON_TABLE(jsonb '1', '$' COLUMNS (a int omit quotes true on error));
 SELECT * FROM JSON_TABLE(jsonb '1', '$' COLUMNS (a int exists empty object on error));
+
+-- Test JSON_TABLE() column deparsing -- don't emit default ON ERROR / EMPTY
+-- behavior
+CREATE VIEW json_table_view8 AS SELECT * from JSON_TABLE('"a"', '$' COLUMNS (a text PATH '$'));
+\sv json_table_view8;
+
+CREATE VIEW json_table_view9 AS SELECT * from JSON_TABLE('"a"', '$' COLUMNS (a text PATH '$') ERROR ON ERROR);
+\sv json_table_view9;
+
+DROP VIEW json_table_view8, json_table_view9;
