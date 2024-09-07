@@ -64,6 +64,7 @@
 #include "utils/memutils.h"
 #include "utils/rel.h"
 #include "utils/snapmgr.h"
+#include "utils/syscache.h"
 #include "utils/varlena.h"
 
 
@@ -145,32 +146,9 @@ Oid
 get_extension_oid(const char *extname, bool missing_ok)
 {
 	Oid			result;
-	Relation	rel;
-	SysScanDesc scandesc;
-	HeapTuple	tuple;
-	ScanKeyData entry[1];
 
-	rel = table_open(ExtensionRelationId, AccessShareLock);
-
-	ScanKeyInit(&entry[0],
-				Anum_pg_extension_extname,
-				BTEqualStrategyNumber, F_NAMEEQ,
-				CStringGetDatum(extname));
-
-	scandesc = systable_beginscan(rel, ExtensionNameIndexId, true,
-								  NULL, 1, entry);
-
-	tuple = systable_getnext(scandesc);
-
-	/* We assume that there can be at most one matching tuple */
-	if (HeapTupleIsValid(tuple))
-		result = ((Form_pg_extension) GETSTRUCT(tuple))->oid;
-	else
-		result = InvalidOid;
-
-	systable_endscan(scandesc);
-
-	table_close(rel, AccessShareLock);
+	result = GetSysCacheOid1(EXTENSIONNAME, Anum_pg_extension_oid,
+							 CStringGetDatum(extname));
 
 	if (!OidIsValid(result) && !missing_ok)
 		ereport(ERROR,
@@ -190,32 +168,15 @@ char *
 get_extension_name(Oid ext_oid)
 {
 	char	   *result;
-	Relation	rel;
-	SysScanDesc scandesc;
 	HeapTuple	tuple;
-	ScanKeyData entry[1];
 
-	rel = table_open(ExtensionRelationId, AccessShareLock);
+	tuple = SearchSysCache1(EXTENSIONOID, ObjectIdGetDatum(ext_oid));
 
-	ScanKeyInit(&entry[0],
-				Anum_pg_extension_oid,
-				BTEqualStrategyNumber, F_OIDEQ,
-				ObjectIdGetDatum(ext_oid));
+	if (!HeapTupleIsValid(tuple))
+		return NULL;
 
-	scandesc = systable_beginscan(rel, ExtensionOidIndexId, true,
-								  NULL, 1, entry);
-
-	tuple = systable_getnext(scandesc);
-
-	/* We assume that there can be at most one matching tuple */
-	if (HeapTupleIsValid(tuple))
-		result = pstrdup(NameStr(((Form_pg_extension) GETSTRUCT(tuple))->extname));
-	else
-		result = NULL;
-
-	systable_endscan(scandesc);
-
-	table_close(rel, AccessShareLock);
+	result = pstrdup(NameStr(((Form_pg_extension) GETSTRUCT(tuple))->extname));
+	ReleaseSysCache(tuple);
 
 	return result;
 }
@@ -229,32 +190,15 @@ Oid
 get_extension_schema(Oid ext_oid)
 {
 	Oid			result;
-	Relation	rel;
-	SysScanDesc scandesc;
 	HeapTuple	tuple;
-	ScanKeyData entry[1];
 
-	rel = table_open(ExtensionRelationId, AccessShareLock);
+	tuple = SearchSysCache1(EXTENSIONOID, ObjectIdGetDatum(ext_oid));
 
-	ScanKeyInit(&entry[0],
-				Anum_pg_extension_oid,
-				BTEqualStrategyNumber, F_OIDEQ,
-				ObjectIdGetDatum(ext_oid));
+	if (!HeapTupleIsValid(tuple))
+		return InvalidOid;
 
-	scandesc = systable_beginscan(rel, ExtensionOidIndexId, true,
-								  NULL, 1, entry);
-
-	tuple = systable_getnext(scandesc);
-
-	/* We assume that there can be at most one matching tuple */
-	if (HeapTupleIsValid(tuple))
-		result = ((Form_pg_extension) GETSTRUCT(tuple))->extnamespace;
-	else
-		result = InvalidOid;
-
-	systable_endscan(scandesc);
-
-	table_close(rel, AccessShareLock);
+	result = ((Form_pg_extension) GETSTRUCT(tuple))->extnamespace;
+	ReleaseSysCache(tuple);
 
 	return result;
 }
