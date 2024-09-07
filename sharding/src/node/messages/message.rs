@@ -1,5 +1,5 @@
-use std::fmt;
 use super::{message_data::MessageData, node_info::NodeInfo};
+use std::fmt;
 
 /// MessageType enum shows which command is being sent
 #[derive(Debug, PartialEq, Clone)]
@@ -38,9 +38,8 @@ impl fmt::Debug for Message {
 
 /// Message Creation
 impl Message {
-
     // --- Constructors ---
-    
+
     pub fn new_init_connection(node_info: NodeInfo) -> Self {
         Message {
             message_type: MessageType::InitConnection,
@@ -157,7 +156,6 @@ impl Message {
 }
 
 impl Message {
-
     // Serialize the Message to a String
     pub fn to_string(&self) -> String {
         let mut result = String::new();
@@ -231,11 +229,24 @@ impl Message {
 
         let query = match parts.next() {
             Some("None") => None,
-            Some(query) => Some(query.to_string()),
+            Some(query) => {
+                let mut query = query.to_string();
+                query.push(' ');
+                for part in parts {
+                    query.push_str(part);
+                    query.push(' ');
+                }
+                Some(query.split(';').next().unwrap().to_string())
+            },
             None => None,
         };
 
-        Ok(Message { message_type, payload, node_info, query} )
+        Ok(Message {
+            message_type,
+            payload,
+            node_info,
+            query,
+        })
     }
 }
 
@@ -259,67 +270,85 @@ mod tests {
             port: "2".to_string(),
         };
         let message = Message::new_init_connection(node_info.clone());
-        assert_eq!(message, Message {
-            message_type: MessageType::InitConnection,
-            payload: None,
-            node_info: Some(node_info),
-            query: None,
-        });
+        assert_eq!(
+            message,
+            Message {
+                message_type: MessageType::InitConnection,
+                payload: None,
+                node_info: Some(node_info),
+                query: None,
+            }
+        );
     }
 
     #[test]
     fn test_new_ask_memory_update() {
         let message = Message::new_ask_memory_update();
-        assert_eq!(message, Message {
-            message_type: MessageType::AskMemoryUpdate,
-            payload: None,
-            node_info: None,
-            query: None,
-        });
+        assert_eq!(
+            message,
+            Message {
+                message_type: MessageType::AskMemoryUpdate,
+                payload: None,
+                node_info: None,
+                query: None,
+            }
+        );
     }
 
     #[test]
     fn test_new_memory_update() {
         let message = Message::new_memory_update(0.5);
-        assert_eq!(message, Message {
-            message_type: MessageType::MemoryUpdate,
-            payload: Some(0.5),
-            node_info: None,
-            query: None,
-        });
+        assert_eq!(
+            message,
+            Message {
+                message_type: MessageType::MemoryUpdate,
+                payload: Some(0.5),
+                node_info: None,
+                query: None,
+            }
+        );
     }
 
     #[test]
     fn test_new_agreed() {
         let message = Message::new_agreed(0.5);
-        assert_eq!(message, Message {
-            message_type: MessageType::Agreed,
-            payload: Some(0.5),
-            node_info: None,
-            query: None,
-        });
+        assert_eq!(
+            message,
+            Message {
+                message_type: MessageType::Agreed,
+                payload: Some(0.5),
+                node_info: None,
+                query: None,
+            }
+        );
     }
 
     #[test]
     fn test_new_denied() {
         let message = Message::new_denied();
-        assert_eq!(message, Message {
-            message_type: MessageType::Denied,
-            payload: None,
-            node_info: None,
-            query: None,
-        });
+        assert_eq!(
+            message,
+            Message {
+                message_type: MessageType::Denied,
+                payload: None,
+                node_info: None,
+                query: None,
+            }
+        );
     }
 
     #[test]
     fn test_new_get_router() {
         let message = Message::new_get_router();
-        assert_eq!(message, Message {
-            message_type: MessageType::GetRouter,
-            payload: None,
-            node_info: None,
-            query: None,
-        });
+        assert_eq!(
+            message,
+            Message {
+                message_type: MessageType::GetRouter,
+                payload: None,
+                node_info: None,
+                query: None,
+            }
+        );
     }
 
     #[test]
@@ -329,34 +358,43 @@ mod tests {
             port: "2".to_string(),
         };
         let message = Message::new_router_id(node_info.clone());
-        assert_eq!(message, Message {
-            message_type: MessageType::RouterId,
-            payload: None,
-            node_info: Some(node_info),
-            query: None,
-        });
+        assert_eq!(
+            message,
+            Message {
+                message_type: MessageType::RouterId,
+                payload: None,
+                node_info: Some(node_info),
+                query: None,
+            }
+        );
     }
 
     #[test]
     fn test_new_no_router_data() {
         let message = Message::new_no_router_data();
-        assert_eq!(message, Message {
-            message_type: MessageType::NoRouterData,
-            payload: None,
-            node_info: None,
-            query: None,
-        });
+        assert_eq!(
+            message,
+            Message {
+                message_type: MessageType::NoRouterData,
+                payload: None,
+                node_info: None,
+                query: None,
+            }
+        );
     }
 
     #[test]
     fn test_new_query() {
         let message = Message::new_query("SELECT * FROM table".to_string());
-        assert_eq!(message, Message {
-            message_type: MessageType::Query,
-            payload: None,
-            node_info: None,
-            query: Some("SELECT * FROM table".to_string()),
-        });
+        assert_eq!(
+            message,
+            Message {
+                message_type: MessageType::Query,
+                payload: None,
+                node_info: None,
+                query: Some("SELECT * FROM table".to_string()),
+            }
+        );
     }
 
     #[test]
@@ -394,7 +432,10 @@ mod tests {
             node_info: None,
             query: Some("SELECT * FROM table".to_string()),
         };
-        assert_eq!(message.get_data(), MessageData::new_query("SELECT * FROM table".to_string()));
+        assert_eq!(
+            message.get_data(),
+            MessageData::new_query("SELECT * FROM table".to_string())
+        );
     }
 
     #[test]

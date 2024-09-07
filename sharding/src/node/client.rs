@@ -6,10 +6,10 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-use crate::node::messages::{message, node_info::NodeInfo};
-use crate::utils::common::Channel;
 use super::super::utils::node_config::*;
 use super::node::*;
+use crate::node::messages::{message, node_info::NodeInfo};
+use crate::utils::common::Channel;
 
 /// This struct represents the Client node in the distributed system.
 /// It finds the router and connects to it to send queries.
@@ -28,7 +28,7 @@ impl Client {
 
         for node in config.nodes {
             candidate_ip = node.ip.clone();
-            candidate_port =  node.port.clone().parse::<u64>().unwrap() + 1000;
+            candidate_port = node.port.clone().parse::<u64>().unwrap() + 1000;
 
             // This shouldn't happen, but just in case
             if (&candidate_ip == ip) && (&candidate_port.to_string() == port) {
@@ -77,12 +77,13 @@ impl Client {
                         let node_info: NodeInfo = response_message.get_data().node_info.unwrap();
                         let node_ip = node_info.ip.clone();
                         let node_port = node_info.port.clone();
+                        let connections_port = node_port.parse::<u64>().unwrap() + 1000;
                         let router_stream =
-                            match TcpStream::connect(format!("{}:{}", node_ip, node_port)) {
+                            match TcpStream::connect(format!("{}:{}", node_ip, connections_port)) {
                                 Ok(stream) => {
                                     println!(
                                         "{color_bright_green}Router stream {}:{}{style_reset}",
-                                        node_ip, port
+                                        node_ip, connections_port.to_string()
                                     );
                                     stream
                                 }
@@ -111,11 +112,11 @@ impl Client {
 
 impl NodeRole for Client {
     fn send_query(&mut self, query: &str) -> bool {
+        println!("[CLIENT] Received query: {}", query);
         let message = message::Message::new_query(query.to_string());
         let mut stream = self.router_postgres_client.stream.lock().unwrap();
         stream.write_all(message.to_string().as_bytes()).unwrap();
 
-        
         return true;
     }
 }

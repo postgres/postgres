@@ -9,7 +9,6 @@ pub struct MessageData {
 }
 
 impl MessageData {
-
     // - Constructors -
 
     pub fn new_payload(payload: f64) -> Self {
@@ -44,7 +43,6 @@ impl MessageData {
         }
     }
 
-
     /// Returns the attributes as a string
     pub fn to_string(&self) -> String {
         let mut attributes_to_string = String::new();
@@ -63,7 +61,6 @@ impl MessageData {
 
         attributes_to_string
     }
-
 }
 
 impl PartialEq for MessageData {

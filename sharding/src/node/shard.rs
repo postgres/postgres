@@ -24,7 +24,7 @@ pub struct Shard {
     port: Arc<str>,
     // listener: Arc<Mutex<TcpListener>>,
     memory_manager: Arc<Mutex<MemoryManager>>,
-    router_info: Arc<Mutex<Option<NodeInfo>>>
+    router_info: Arc<Mutex<Option<NodeInfo>>>,
 }
 
 use std::fmt;
@@ -68,12 +68,9 @@ impl Shard {
         shard
     }
 
-    pub fn accept_connections(
-        shared_shard: Arc<Mutex<Shard>>,
-        ip: &str,
-        port: &str,
-    ) {
-        let listener = TcpListener::bind(format!("{}:{}", ip, port.parse::<u64>().unwrap() + 1000)).unwrap();
+    pub fn accept_connections(shared_shard: Arc<Mutex<Shard>>, ip: &str, port: &str) {
+        let listener =
+            TcpListener::bind(format!("{}:{}", ip, port.parse::<u64>().unwrap() + 1000)).unwrap();
 
         loop {
             println!("Listening for incoming connections");
@@ -88,7 +85,7 @@ impl Shard {
                     let shard_clone = shared_shard.clone();
                     let shareable_stream = Arc::new(Mutex::new(stream));
                     let stream_clone = Arc::clone(&shareable_stream);
-                    
+
                     let _handle = thread::spawn(move || {
                         println!("[SHARD1] Inside listening thread");
                         Shard::listen(shard_clone, stream_clone);
@@ -103,7 +100,10 @@ impl Shard {
 
     // Listen for incoming messages
     pub fn listen(shared_shard: Arc<Mutex<Shard>>, stream: Arc<Mutex<TcpStream>>) {
-        println!("[LISTEN] Listening for incoming messages from stream: {:?}", stream);
+        println!(
+            "[LISTEN] Listening for incoming messages from stream: {:?}",
+            stream
+        );
         loop {
             // sleep for 1 millisecond to allow the stream to be ready to read
             thread::sleep(std::time::Duration::from_millis(1));
@@ -111,11 +111,9 @@ impl Shard {
             let mut buffer = [0; 1024];
 
             let mut stream = stream.lock().unwrap();
-        
-            match stream
-            .set_read_timeout(Some(std::time::Duration::new(10, 0))) {
-                Ok(_) => {
-                }
+
+            match stream.set_read_timeout(Some(std::time::Duration::new(10, 0))) {
+                Ok(_) => {}
                 Err(_e) => {
                     continue;
                 }
@@ -144,7 +142,6 @@ impl Shard {
     }
 
     fn get_response_message(&mut self, message: &str) -> Option<String> {
-
         if message.is_empty() {
             return None;
         }
@@ -175,7 +172,7 @@ impl Shard {
             }
             MessageType::GetRouter => {
                 println!("{color_bright_green}Received a GetRouter message{style_reset}");
-                
+
                 let self_clone = self.clone();
                 let router_info: Option<NodeInfo> = {
                     let router_info = self_clone.router_info.as_ref().try_lock().unwrap();
@@ -185,8 +182,7 @@ impl Shard {
                 println!("[SHARD RESP MSG] Router info: {:?}", router_info);
                 match router_info {
                     Some(router_info) => {
-                        let response_message =
-                            Message::new_router_id(router_info.clone());
+                        let response_message = Message::new_router_id(router_info.clone());
                         println!("Response created: {}", response_message.to_string());
                         Some(response_message.to_string())
                     }
@@ -210,8 +206,7 @@ impl Shard {
     fn get_agreed_connection(&self) -> String {
         let memory_manager = self.memory_manager.as_ref().try_lock().unwrap();
         let memory_percentage = memory_manager.available_memory_perc;
-        let response_message =
-            shard::Message::new_agreed(memory_percentage);
+        let response_message = shard::Message::new_agreed(memory_percentage);
 
         response_message.to_string()
     }
@@ -227,8 +222,7 @@ impl Shard {
         }
         let memory_manager = self.memory_manager.as_ref().try_lock().unwrap();
         let memory_percentage = memory_manager.available_memory_perc;
-        let response_message =
-            shard::Message::new_memory_update(memory_percentage);
+        let response_message = shard::Message::new_memory_update(memory_percentage);
 
         response_message.to_string()
     }

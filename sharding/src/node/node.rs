@@ -75,11 +75,15 @@ pub extern "C" fn init_node_instance(
         println!("[DEBUG] Node type: {:?}", node_type);
         match node_type {
             NodeType::Router => {
-                NODE_INSTANCE = Some(NodeInstance::new(Box::new(Router::new(
-                    ip,
-                    node_port,
-                    config_path,
-                ))));
+                let router = Router::new(ip, node_port, config_path);
+                NODE_INSTANCE = Some(NodeInstance::new(Box::new(router.clone())));
+
+                let shared_router: Arc<Mutex<Router>> = Arc::new(Mutex::new(router));
+
+                let _handle = thread::spawn(move || {
+                    Router::wait_for_client(shared_router, ip, node_port);
+                });
+
                 println!("Router node initializes");
             }
             NodeType::Shard => {

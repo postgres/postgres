@@ -2,6 +2,7 @@ use postgres::Client as PostgresClient;
 extern crate users;
 use crate::node::messages::message::{Message, MessageType};
 use crate::node::messages::node_info::NodeInfo;
+use crate::node::router;
 use crate::utils::queries::{query_affects_memory_state, query_is_insert};
 
 use super::node::*;
@@ -13,7 +14,7 @@ use rust_decimal::Decimal;
 use std::collections::HashMap;
 use std::io::{Read, Write};
 use std::sync::{Arc, MutexGuard, RwLock};
-use std::{io, net::TcpStream, sync::Mutex};
+use std::{io, net::TcpListener, net::TcpStream, sync::Mutex, thread};
 
 /// This struct represents the Router node in the distributed system. It has the responsibility of routing the queries to the appropriate shard or shards.
 #[repr(C)]
@@ -36,6 +37,107 @@ impl Router {
     /// Creates a new Router node with the given port and ip, connecting it to the shards specified in the configuration file.
     pub fn new(ip: &str, port: &str, config_path: Option<&str>) -> Self {
         Router::initialize_router_with_connections(ip, port, config_path)
+    }
+
+    pub fn wait_for_client(shared_router: Arc<Mutex<Router>>, ip: &str, port: &str) {
+        let listener =
+            TcpListener::bind(format!("{}:{}", ip, port.parse::<u64>().unwrap() + 1000)).unwrap();
+
+        loop {
+            println!("Listening for incoming connections");
+            match listener.accept() {
+                Ok((stream, addr)) => {
+                    println!(
+                        "{color_bright_green}[ROUTER] New connection accepted from {}.{style_reset}",
+                        addr
+                    );
+
+                    // Start listening for incoming messages in a thread
+                    let router_clone = shared_router.clone();
+                    let shareable_stream = Arc::new(Mutex::new(stream));
+                    let stream_clone = Arc::clone(&shareable_stream);
+
+                    let _handle = thread::spawn(move || {
+                        Router::listen(router_clone, stream_clone);
+                    });
+                }
+                Err(e) => {
+                    eprintln!("Failed to accept a connection: {}", e);
+                }
+            }
+        }
+    }
+
+    // Listen for incoming messages
+    pub fn listen(shared_router: Arc<Mutex<Router>>, stream: Arc<Mutex<TcpStream>>) {
+        println!(
+            "[LISTEN] Listening for incoming messages from stream: {:?}",
+            stream
+        );
+        loop {
+            // sleep for 1 millisecond to allow the stream to be ready to read
+            thread::sleep(std::time::Duration::from_millis(1));
+            let mut router = shared_router.lock().unwrap();
+            let mut buffer = [0; 1024];
+
+            let mut stream = stream.lock().unwrap();
+
+            match stream.set_read_timeout(Some(std::time::Duration::new(10, 0))) {
+                Ok(_) => {}
+                Err(_e) => {
+                    continue;
+                }
+            }
+
+            match stream.read(&mut buffer) {
+                Ok(chars) => {
+                    if chars == 0 {
+                        continue;
+                    }
+                    let message_string = String::from_utf8_lossy(&buffer);
+                    match router.get_incoming_message(&message_string) {
+                        Some(response) => {
+                            stream.write(response.as_bytes()).unwrap();
+                        }
+                        None => {
+                            // do nothing
+                        }
+                    }
+                }
+                Err(_e) => {
+                    // could not read from the stream, ignore
+                }
+            }
+        }
+    }
+
+    fn get_incoming_message(&mut self, message: &str) -> Option<String> {
+        if message.is_empty() {
+            return None;
+        }
+
+        let message = match Message::from_string(&message) {
+            Ok(message) => message,
+            Err(_e) => {
+                // eprintln!("Failed to parse message: {:?}. Message: [{:?}]", e, message);
+                return None;
+            }
+        };
+
+        match message.get_message_type() {
+            MessageType::Query => {
+                let query = message.get_data().query.unwrap();
+                let response = self.send_query(&query);
+                Some(response.to_string())
+            }
+            _ => {
+                eprintln!(
+                    "Message type received: {:?}, not yet implemented",
+                    message.get_message_type()
+                );
+                None
+            }
+        }
     }
 
     /// Initializes the Router node with connections to the shards specified in the configuration file.
