@@ -1205,7 +1205,7 @@ pg_fe_getusername(uid_t user_id, PQExpBuffer errorMessage)
 	DWORD		namesize = sizeof(username);
 #else
 	struct passwd pwbuf;
-	struct passwd *pw;
+	struct passwd *pw = NULL;
 	char		buf[1024];
 	int			rc;
 #endif
@@ -1230,7 +1230,8 @@ pg_fe_getusername(uid_t user_id, PQExpBuffer errorMessage)
 		if (errorMessage)
 			libpq_append_error(errorMessage, "local user with ID %ld does not exist", (long) user_id);
 	}
-	name = pw->pw_name;
+	else
+		name = pw->pw_name;
 #endif
 
 	if (name)
