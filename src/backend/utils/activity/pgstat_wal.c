@@ -72,6 +72,15 @@ pgstat_fetch_stat_wal(void)
 }
 
 /*
+ * Simple wrapper of pgstat_wal_flush_cb()
+ */
+void
+pgstat_flush_wal(bool nowait)
+{
+	(void) pgstat_wal_flush_cb(nowait);
+}
+
+/*
  * Calculate how much WAL usage counters have increased by subtracting the
  * previous counters from the current ones.
  *
@@ -79,7 +88,7 @@ pgstat_fetch_stat_wal(void)
  * acquired. Otherwise return false.
  */
 bool
-pgstat_flush_wal(bool nowait)
+pgstat_wal_flush_cb(bool nowait)
 {
 	PgStatShared_Wal *stats_shmem = &pgStatLocal.shmem->wal;
 	WalUsage	wal_usage_diff = {0};
@@ -92,7 +101,7 @@ pgstat_flush_wal(bool nowait)
 	 * This function can be called even if nothing at all has happened. Avoid
 	 * taking lock for nothing in that case.
 	 */
-	if (!pgstat_have_pending_wal())
+	if (!pgstat_wal_have_pending_cb())
 		return false;
 
 	/*
@@ -141,8 +150,8 @@ void
 pgstat_wal_init_backend_cb(void)
 {
 	/*
-	 * Initialize prevWalUsage with pgWalUsage so that pgstat_flush_wal() can
-	 * calculate how much pgWalUsage counters are increased by subtracting
+	 * Initialize prevWalUsage with pgWalUsage so that pgstat_wal_flush_cb()
+	 * can calculate how much pgWalUsage counters are increased by subtracting
 	 * prevWalUsage from pgWalUsage.
 	 */
 	prevWalUsage = pgWalUsage;
@@ -156,7 +165,7 @@ pgstat_wal_init_backend_cb(void)
  * data pages.
  */
 bool
-pgstat_have_pending_wal(void)
+pgstat_wal_have_pending_cb(void)
 {
 	return pgWalUsage.wal_records != prevWalUsage.wal_records ||
 		PendingWalStats.wal_write != 0 ||

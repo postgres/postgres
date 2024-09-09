@@ -32,7 +32,7 @@ static void pgstat_reset_slru_counter_internal(int index, TimestampTz ts);
  * in order to avoid memory allocation.
  */
 static PgStat_SLRUStats pending_SLRUStats[SLRU_NUM_ELEMENTS];
-bool		have_slrustats = false;
+static bool have_slrustats = false;
 
 
 /*
@@ -144,6 +144,15 @@ pgstat_get_slru_index(const char *name)
 }
 
 /*
+ * Check if there are any SLRU stats entries waiting for flush.
+ */
+bool
+pgstat_slru_have_pending_cb(void)
+{
+	return have_slrustats;
+}
+
+/*
  * Flush out locally pending SLRU stats entries
  *
  * If nowait is true, this function returns false on lock failure. Otherwise
@@ -153,7 +162,7 @@ pgstat_get_slru_index(const char *name)
  * acquired. Otherwise return false.
  */
 bool
-pgstat_slru_flush(bool nowait)
+pgstat_slru_flush_cb(bool nowait)
 {
 	PgStatShared_SLRU *stats_shmem = &pgStatLocal.shmem->slru;
 	int			i;

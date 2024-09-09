@@ -237,7 +237,7 @@ typedef struct PgStat_KindInfo
 
 	/*
 	 * For variable-numbered stats: flush pending stats. Required if pending
-	 * data is used.
+	 * data is used.  See flush_fixed_cb for fixed-numbered stats.
 	 */
 	bool		(*flush_pending_cb) (PgStat_EntryRef *sr, bool nowait);
 
@@ -264,6 +264,19 @@ typedef struct PgStat_KindInfo
 	 * "stats" is the pointer to the allocated shared memory area.
 	 */
 	void		(*init_shmem_cb) (void *stats);
+
+	/*
+	 * For fixed-numbered statistics: Flush pending stats. Returns true if
+	 * some of the stats could not be flushed, due to lock contention for
+	 * example. Optional.
+	 */
+	bool		(*flush_fixed_cb) (bool nowait);
+
+	/*
+	 * For fixed-numbered statistics: Check for pending stats in need of
+	 * flush. Returns true if there are any stats pending for flush. Optional.
+	 */
+	bool		(*have_fixed_pending_cb) (void);
 
 	/*
 	 * For fixed-numbered statistics: Reset All.
@@ -609,7 +622,10 @@ extern bool pgstat_function_flush_cb(PgStat_EntryRef *entry_ref, bool nowait);
  * Functions in pgstat_io.c
  */
 
-extern bool pgstat_flush_io(bool nowait);
+extern void pgstat_flush_io(bool nowait);
+
+extern bool pgstat_io_have_pending_cb(void);
+extern bool pgstat_io_flush_cb(bool nowait);
 extern void pgstat_io_init_shmem_cb(void *stats);
 extern void pgstat_io_reset_all_cb(TimestampTz ts);
 extern void pgstat_io_snapshot_cb(void);
@@ -668,7 +684,8 @@ extern PgStatShared_Common *pgstat_init_entry(PgStat_Kind kind,
  * Functions in pgstat_slru.c
  */
 
-extern bool pgstat_slru_flush(bool nowait);
+extern bool pgstat_slru_have_pending_cb(void);
+extern bool pgstat_slru_flush_cb(bool nowait);
 extern void pgstat_slru_init_shmem_cb(void *stats);
 extern void pgstat_slru_reset_all_cb(TimestampTz ts);
 extern void pgstat_slru_snapshot_cb(void);
@@ -678,10 +695,11 @@ extern void pgstat_slru_snapshot_cb(void);
  * Functions in pgstat_wal.c
  */
 
-extern bool pgstat_flush_wal(bool nowait);
-extern bool pgstat_have_pending_wal(void);
+extern void pgstat_flush_wal(bool nowait);
 
 extern void pgstat_wal_init_backend_cb(void);
+extern bool pgstat_wal_have_pending_cb(void);
+extern bool pgstat_wal_flush_cb(bool nowait);
 extern void pgstat_wal_init_shmem_cb(void *stats);
 extern void pgstat_wal_reset_all_cb(TimestampTz ts);
 extern void pgstat_wal_snapshot_cb(void);
@@ -709,20 +727,6 @@ extern void pgstat_create_transactional(PgStat_Kind kind, Oid dboid, Oid objoid)
  */
 
 extern PGDLLIMPORT PgStat_LocalState pgStatLocal;
-
-
-/*
- * Variables in pgstat_io.c
- */
-
-extern PGDLLIMPORT bool have_iostats;
-
-
-/*
- * Variables in pgstat_slru.c
- */
-
-extern PGDLLIMPORT bool have_slrustats;
 
 
 /*

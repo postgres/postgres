@@ -29,7 +29,7 @@ typedef struct PgStat_PendingIO
 
 
 static PgStat_PendingIO PendingIOStats;
-bool		have_iostats = false;
+static bool have_iostats = false;
 
 
 /*
@@ -162,6 +162,24 @@ pgstat_fetch_stat_io(void)
 }
 
 /*
+ * Check if there any IO stats waiting for flush.
+ */
+bool
+pgstat_io_have_pending_cb(void)
+{
+	return have_iostats;
+}
+
+/*
+ * Simpler wrapper of pgstat_io_flush_cb()
+ */
+void
+pgstat_flush_io(bool nowait)
+{
+	(void) pgstat_io_flush_cb(nowait);
+}
+
+/*
  * Flush out locally pending IO statistics
  *
  * If no stats have been recorded, this function returns false.
@@ -170,7 +188,7 @@ pgstat_fetch_stat_io(void)
  * acquired. Otherwise, return false.
  */
 bool
-pgstat_flush_io(bool nowait)
+pgstat_io_flush_cb(bool nowait)
 {
 	LWLock	   *bktype_lock;
 	PgStat_BktypeIO *bktype_shstats;
