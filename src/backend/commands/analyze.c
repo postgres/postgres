@@ -305,6 +305,7 @@ do_analyze_rel(Relation onerel, VacuumParams *params,
 	Oid			save_userid;
 	int			save_sec_context;
 	int			save_nestlevel;
+	WalUsage	startwalusage = pgWalUsage;
 	BufferUsage startbufferusage = pgBufferUsage;
 	BufferUsage bufferusage;
 	PgStat_Counter startreadtime = 0;
@@ -740,6 +741,7 @@ do_analyze_rel(Relation onerel, VacuumParams *params,
 									   params->log_min_duration))
 		{
 			long		delay_in_ms;
+			WalUsage	walusage;
 			double		read_rate = 0;
 			double		write_rate = 0;
 			char	   *msgfmt;
@@ -750,6 +752,8 @@ do_analyze_rel(Relation onerel, VacuumParams *params,
 
 			memset(&bufferusage, 0, sizeof(BufferUsage));
 			BufferUsageAccumDiff(&bufferusage, &pgBufferUsage, &startbufferusage);
+			memset(&walusage, 0, sizeof(WalUsage));
+			WalUsageAccumDiff(&walusage, &pgWalUsage, &startwalusage);
 
 			total_blks_hit = bufferusage.shared_blks_hit +
 				bufferusage.local_blks_hit;
@@ -818,6 +822,11 @@ do_analyze_rel(Relation onerel, VacuumParams *params,
 							 (long long) total_blks_hit,
 							 (long long) total_blks_read,
 							 (long long) total_blks_dirtied);
+			appendStringInfo(&buf,
+							 _("WAL usage: %lld records, %lld full page images, %llu bytes\n"),
+							 (long long) walusage.wal_records,
+							 (long long) walusage.wal_fpi,
+							 (unsigned long long) walusage.wal_bytes);
 			appendStringInfo(&buf, _("system usage: %s"), pg_rusage_show(&ru0));
 
 			ereport(verbose ? INFO : LOG,
