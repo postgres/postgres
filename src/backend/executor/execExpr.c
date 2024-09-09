@@ -4411,9 +4411,11 @@ ExecInitJsonExpr(JsonExpr *jsexpr, ExprState *state,
 	List	   *jumps_return_null = NIL;
 	List	   *jumps_to_end = NIL;
 	ListCell   *lc;
-	ErrorSaveContext *escontext =
-		jsexpr->on_error->btype != JSON_BEHAVIOR_ERROR ?
-		&jsestate->escontext : NULL;
+	ErrorSaveContext *escontext;
+	bool		returning_domain =
+		get_typtype(jsexpr->returning->typid) == TYPTYPE_DOMAIN;
+
+	Assert(jsexpr->on_error != NULL);
 
 	jsestate->jsexpr = jsexpr;
 
@@ -4491,6 +4493,9 @@ ExecInitJsonExpr(JsonExpr *jsexpr, ExprState *state,
 	scratch->d.constval.isnull = true;
 	ExprEvalPushStep(state, scratch);
 
+	escontext = jsexpr->on_error->btype != JSON_BEHAVIOR_ERROR ?
+		&jsestate->escontext : NULL;
+
 	/*
 	 * To handle coercion errors softly, use the following ErrorSaveContext to
 	 * pass to ExecInitExprRec() when initializing the coercion expressions
@@ -4562,9 +4567,18 @@ ExecInitJsonExpr(JsonExpr *jsexpr, ExprState *state,
 	 * Step to check jsestate->error and return the ON ERROR expression if
 	 * there is one.  This handles both the errors that occur during jsonpath
 	 * evaluation in EEOP_JSONEXPR_PATH and subsequent coercion evaluation.
+	 *
+	 * Speed up common cases by avoiding extra steps for a NULL-valued ON
+	 * ERROR expression unless RETURNING a domain type, where constraints must
+	 * be checked. ExecEvalJsonExprPath() already returns NULL on error,
+	 * making additional steps unnecessary in typical scenarios. Note that the
+	 * default ON ERROR behavior for JSON_VALUE() and JSON_QUERY() is to
+	 * return NULL.
 	 */
-	if (jsexpr->on_error &&
-		jsexpr->on_error->btype != JSON_BEHAVIOR_ERROR)
+	if (jsexpr->on_error->btype != JSON_BEHAVIOR_ERROR &&
+		(!(IsA(jsexpr->on_error->expr, Const) &&
+		   ((Const *) jsexpr->on_error->expr)->constisnull) ||
+		 returning_domain))
 	{
 		ErrorSaveContext *saved_escontext;
 
@@ -4619,9 +4633,15 @@ ExecInitJsonExpr(JsonExpr *jsexpr, ExprState *state,
 	/*
 	 * Step to check jsestate->empty and return the ON EMPTY expression if
 	 * there is one.
+	 *
+	 * See the comment above for details on the optimization for NULL-valued
+	 * expressions.
 	 */
 	if (jsexpr->on_empty != NULL &&
-		jsexpr->on_empty->btype != JSON_BEHAVIOR_ERROR)
+		jsexpr->on_empty->btype != JSON_BEHAVIOR_ERROR &&
+		(!(IsA(jsexpr->on_empty->expr, Const) &&
+		   ((Const *) jsexpr->on_empty->expr)->constisnull) ||
+		 returning_domain))
 	{
 		ErrorSaveContext *saved_escontext;
 
