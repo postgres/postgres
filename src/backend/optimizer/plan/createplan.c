@@ -5454,8 +5454,8 @@ label_sort_with_costsize(PlannerInfo *root, Sort *plan, double limit_tuples)
 	Assert(IsA(plan, Sort));
 
 	cost_sort(&sort_path, root, NIL,
-			  lefttree->total_cost,
 			  plan->plan.disabled_nodes,
+			  lefttree->total_cost,
 			  lefttree->plan_rows,
 			  lefttree->plan_width,
 			  0.0,
