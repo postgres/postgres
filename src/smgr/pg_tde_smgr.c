@@ -10,10 +10,6 @@
 
 #ifdef PERCONA_EXT
 
-// TODO: implement proper IV
-// iv should be based on blocknum + relfile, available in the API
-static unsigned char iv[16] = {0,};
-
 static RelKeyData*
 tde_smgr_get_key(SMgrRelation reln)
 {
@@ -98,6 +94,11 @@ tde_mdwritev(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 		{
 			int out_len = BLCKSZ;
 			local_buffers[i] = &local_blocks_aligned[i * BLCKSZ];
+
+			BlockNumber bn = blocknum + i;
+			unsigned char iv[16] = {0,}
+			memcpy(iv+4, &bn, sizeof(BlockNumber));
+
 			AesEncrypt(rkd->internal_key.key, iv, ((char**)buffers)[i], BLCKSZ, local_buffers[i], &out_len);
 		}
 
@@ -131,6 +132,10 @@ tde_mdextend(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 		char *local_blocks = palloc(BLCKSZ * (1 + 1));
 		char *local_blocks_aligned = (char *)TYPEALIGN(PG_IO_ALIGN_SIZE, local_blocks);
 		int out_len = BLCKSZ;
+
+		unsigned char iv[16] = {0,}
+		memcpy(iv+4, &blocknum, sizeof(BlockNumber));
+
 		AesEncrypt(rkd->internal_key.key, iv, ((char*)buffer), BLCKSZ, local_blocks_aligned, &out_len);
 
 		mdextend(reln, forknum, blocknum, local_blocks_aligned, skipFsync);
@@ -173,6 +178,11 @@ tde_mdreadv(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 		}
 		if(allZero)
 			continue;
+
+		BlockNumber bn = blocknum + i;
+		unsigned char iv[16] = {0,}
+		memcpy(iv+4, &bn, sizeof(BlockNumber));
+
 		AesDecrypt(rkd->internal_key.key, iv, ((char **)buffers)[i], BLCKSZ, ((char **)buffers)[i], &out_len);
 	}
 }
