@@ -1,3 +1,5 @@
+use postgres::Row;
+
 use crate::node::client::Client;
 
 use super::router::Router;
@@ -9,7 +11,7 @@ use std::thread;
 /// The role of a node in the sharding system
 pub trait NodeRole {
     /// Sends a query to the shard group
-    fn send_query(&mut self, query: &str) -> bool;
+    fn send_query(&mut self, query: &str) -> Option<Vec<Row>>;
 }
 
 #[repr(C)]

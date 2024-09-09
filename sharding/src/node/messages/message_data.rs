@@ -27,11 +27,19 @@ impl MessageData {
         }
     }
 
-    pub fn new_query(query: String) -> Self {
+    pub fn new_query(query: String, sender_info: Option<NodeInfo>) -> Self {
+        MessageData {
+            payload: None,
+            node_info: sender_info,
+            query: Some(query),
+        }
+    }
+
+    pub fn new_query_response(query_response: String) -> Self {
         MessageData {
             payload: None,
             node_info: None,
-            query: Some(query),
+            query: Some(query_response),
         }
     }
 
@@ -94,7 +102,13 @@ mod tests {
 
     #[test]
     fn test_message_data_query() {
-        let message_data = MessageData::new_query("SELECT * FROM table".to_string());
+        let message_data = MessageData::new_query(
+            "SELECT * FROM table".to_string(),
+            Some(NodeInfo {
+                ip: "1".to_string(),
+                port: "2".to_string(),
+            }),
+        );
         assert_eq!(message_data.to_string(), "SELECT * FROM table");
     }
 

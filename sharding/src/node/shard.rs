@@ -1,5 +1,5 @@
 use inline_colorization::*;
-use postgres::Client as PostgresClient;
+use postgres::{Client as PostgresClient, Row};
 use std::io::{Read, Write};
 use std::net::{TcpListener, TcpStream};
 use std::sync::{Arc, Mutex};
@@ -233,26 +233,13 @@ impl Shard {
 }
 
 impl NodeRole for Shard {
-    fn send_query(&mut self, query: &str) -> bool {
+    fn send_query(&mut self, query: &str) -> Option<Vec<Row>> {
         match self.backend.as_ref().try_lock().unwrap().query(query, &[]) {
-            Ok(rows) => rows,
+            Ok(rows) => Some(rows),
             Err(e) => {
                 eprintln!("Failed to execute query: {:?}", e);
-                return false;
+                None
             }
-        };
-
-        // for row in rows {
-        //     let id: i32 = row.get(0);
-        //     let name: &str = row.get(1);
-        //     let position: &str = row.get(2);
-        //     let salary: Decimal = row.get(3);
-        //     println!(
-        //         "QUERY RESULT: id: {}, name: {}, position: {}, salary: {}",
-        //         id, name, position, salary
-        //     );
-        // }
-
-        true
+        }
     }
 }

@@ -1,9 +1,8 @@
-use postgres::Client as PostgresClient;
+use postgres::{Client as PostgresClient, Row};
 extern crate users;
 use crate::node::messages::message::{Message, MessageType};
 use crate::node::messages::node_info::NodeInfo;
-use crate::node::router;
-use crate::utils::queries::{query_affects_memory_state, query_is_insert};
+use crate::utils::queries::{query_affects_memory_state, query_is_insert, ConvertToString};
 
 use super::node::*;
 use super::shard_manager::ShardManager;
@@ -95,8 +94,9 @@ impl Router {
                         continue;
                     }
                     let message_string = String::from_utf8_lossy(&buffer);
-                    match router.get_incoming_message(&message_string) {
+                    match router.get_response_message(&message_string) {
                         Some(response) => {
+                            println!("Sending response: {:?}", response);
                             stream.write(response.as_bytes()).unwrap();
                         }
                         None => {
@@ -111,7 +111,7 @@ impl Router {
         }
     }
 
-    fn get_incoming_message(&mut self, message: &str) -> Option<String> {
+    fn get_response_message(&mut self, message: &str) -> Option<String> {
         if message.is_empty() {
             return None;
         }
@@ -127,8 +127,15 @@ impl Router {
         match message.get_message_type() {
             MessageType::Query => {
                 let query = message.get_data().query.unwrap();
-                let response = self.send_query(&query);
-                Some(response.to_string())
+                let response = match self.send_query(&query) {
+                    Some(response) => response,
+                    None => {
+                        eprintln!("Failed to send query to shards");
+                        return None;
+                    }
+                };
+                let response_message = Message::new_query_response(response);
+               Some(response_message.to_string())
             }
             _ => {
                 eprintln!(
@@ -352,20 +359,22 @@ impl Router {
 }
 
 impl NodeRole for Router {
-    fn send_query(&mut self, query: &str) -> bool {
+    fn send_query(&mut self, query: &str) -> Option<Vec<Row>> {
         println!("Router send_query called with query: {:?}", query);
 
         let (shards, is_insert) = self.get_shards_for_query(query);
 
         if shards.len() == 0 {
             eprintln!("No shards found for the query");
-            return false;
+            return None;
         }
 
+        let mut shards_responses: Vec<Row> = Vec::new();
         for shard_id in shards {
-            self.send_query_to_shard(shard_id, query, is_insert);
+            shards_responses.extend(self.send_query_to_shard(shard_id, query, is_insert));
         }
-        true
+
+        Some(shards_responses)
     }
 }
 
@@ -440,13 +449,13 @@ impl Router {
         self.init_message_exchange(message, &mut writable_stream, shard_id);
     }
 
-    fn send_query_to_shard(&mut self, shard_id: String, query: &str, update: bool) {
+    fn send_query_to_shard(&mut self, shard_id: String, query: &str, update: bool) -> Vec<Row> {
         if let Some(shard) = self.clone().shards.lock().unwrap().get_mut(&shard_id) {
             let rows = match shard.query(query, &[]) {
                 Ok(rows) => rows,
                 Err(e) => {
                     eprintln!("Failed to send the query to the shard: {:?}", e);
-                    return;
+                    return Vec::new();
                 }
             };
 
@@ -454,21 +463,12 @@ impl Router {
                 self.ask_for_memory_update(shard_id);
             }
 
-            // TODO-SHARD: maybe this can be encapsulated inside another trait, with `.query` included
+            print!("{:?}", rows.convert_to_string());
 
-            for row in rows {
-                let id: i32 = row.get(0);
-                let name: &str = row.get(1);
-                let position: &str = row.get(2);
-                let salary: Decimal = row.get(3);
-                println!(
-                    "QUERY RESULT: id: {}, name: {}, position: {}, salary: {}",
-                    id, name, position, salary
-                );
-            }
+            return rows;
         } else {
             eprintln!("Shard {:?} not found", shard_id);
-            return;
+            return Vec::new();
         }
     }
 }

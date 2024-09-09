@@ -1,9 +1,8 @@
 use inline_colorization::*;
+use postgres::Row;
 extern crate users;
 use std::{
-    io::{Read, Write},
-    net::TcpStream,
-    sync::{Arc, Mutex},
+    io::{Read, Write}, net::TcpStream, sync::{Arc, Mutex}
 };
 
 use super::super::utils::node_config::*;
@@ -17,6 +16,7 @@ use crate::utils::common::Channel;
 #[derive(Clone)]
 pub struct Client {
     router_postgres_client: Channel,
+    client_info: NodeInfo,
 }
 
 impl Client {
@@ -97,6 +97,10 @@ impl Client {
                             router_postgres_client: Channel {
                                 stream: Arc::new(Mutex::new(router_stream)),
                             },
+                            client_info: NodeInfo {
+                                ip: ip.to_string(),
+                                port: port.to_string(),
+                            },
                         };
                     }
                 }
@@ -108,15 +112,39 @@ impl Client {
 
         panic!("No valid router found in the config");
     }
+
+    fn handle_received_message(buffer: &mut [u8]) {
+        let message_string = String::from_utf8_lossy(&buffer);
+        let response_message = message::Message::from_string(&message_string).unwrap();
+
+        if response_message.get_message_type() == message::MessageType::QueryResponse {
+            let rows = response_message.get_data().query.unwrap();
+            print!("{:?}", rows);
+        }
+    }
 }
 
 impl NodeRole for Client {
-    fn send_query(&mut self, query: &str) -> bool {
+    fn send_query(&mut self, query: &str) -> Option<Vec<Row>> {
         println!("[CLIENT] Received query: {}", query);
-        let message = message::Message::new_query(query.to_string());
+        let message = message::Message::new_query(Some(self.client_info.clone()), query.to_string());
         let mut stream = self.router_postgres_client.stream.lock().unwrap();
         stream.write_all(message.to_string().as_bytes()).unwrap();
 
-        return true;
+        let mut buffer: [u8; 1024] = [0; 1024];
+
+        match stream.read(&mut buffer) {
+            Ok(chars) => {
+                if chars == 0 {
+                    return None;
+                }
+
+                Client::handle_received_message(&mut buffer);
+                Some(Vec::new())
+            }
+            Err(_e) => {
+                None
+            }
+        }
     }
 }
