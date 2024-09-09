@@ -430,9 +430,9 @@ static int	emode_for_corrupt_record(int emode, XLogRecPtr RecPtr);
 static XLogRecord *ReadCheckpointRecord(XLogPrefetcher *xlogprefetcher,
 										XLogRecPtr RecPtr, TimeLineID replayTLI);
 static bool rescanLatestTimeLine(TimeLineID replayTLI, XLogRecPtr replayLSN);
-static int	XLogFileRead(XLogSegNo segno, int emode, TimeLineID tli,
+static int	XLogFileRead(XLogSegNo segno, TimeLineID tli,
 						 XLogSource source, bool notfoundOk);
-static int	XLogFileReadAnyTLI(XLogSegNo segno, int emode, XLogSource source);
+static int	XLogFileReadAnyTLI(XLogSegNo segno, XLogSource source);
 
 static bool CheckForStandbyTrigger(void);
 static void SetPromoteIsTriggered(void);
@@ -3780,7 +3780,7 @@ WaitForWALToBecomeAvailable(XLogRecPtr RecPtr, bool randAccess,
 				 * Try to restore the file from archive, or read an existing
 				 * file from pg_wal.
 				 */
-				readFile = XLogFileReadAnyTLI(readSegNo, DEBUG2,
+				readFile = XLogFileReadAnyTLI(readSegNo,
 											  currentSource == XLOG_FROM_ARCHIVE ? XLOG_FROM_ANY :
 											  currentSource);
 				if (readFile >= 0)
@@ -3929,8 +3929,7 @@ WaitForWALToBecomeAvailable(XLogRecPtr RecPtr, bool randAccess,
 						{
 							if (!expectedTLEs)
 								expectedTLEs = readTimeLineHistory(recoveryTargetTLI);
-							readFile = XLogFileRead(readSegNo, PANIC,
-													receiveTLI,
+							readFile = XLogFileRead(readSegNo, receiveTLI,
 													XLOG_FROM_STREAM, false);
 							Assert(readFile >= 0);
 						}
@@ -4201,7 +4200,7 @@ rescanLatestTimeLine(TimeLineID replayTLI, XLogRecPtr replayLSN)
  * Otherwise, it's assumed to be already available in pg_wal.
  */
 static int
-XLogFileRead(XLogSegNo segno, int emode, TimeLineID tli,
+XLogFileRead(XLogSegNo segno, TimeLineID tli,
 			 XLogSource source, bool notfoundOk)
 {
 	char		xlogfname[MAXFNAMELEN];
@@ -4283,7 +4282,7 @@ XLogFileRead(XLogSegNo segno, int emode, TimeLineID tli,
  * This version searches for the segment with any TLI listed in expectedTLEs.
  */
 static int
-XLogFileReadAnyTLI(XLogSegNo segno, int emode, XLogSource source)
+XLogFileReadAnyTLI(XLogSegNo segno, XLogSource source)
 {
 	char		path[MAXPGPATH];
 	ListCell   *cell;
@@ -4347,8 +4346,7 @@ XLogFileReadAnyTLI(XLogSegNo segno, int emode, XLogSource source)
 
 		if (source == XLOG_FROM_ANY || source == XLOG_FROM_ARCHIVE)
 		{
-			fd = XLogFileRead(segno, emode, tli,
-							  XLOG_FROM_ARCHIVE, true);
+			fd = XLogFileRead(segno, tli, XLOG_FROM_ARCHIVE, true);
 			if (fd != -1)
 			{
 				elog(DEBUG1, "got WAL segment from archive");
@@ -4360,8 +4358,7 @@ XLogFileReadAnyTLI(XLogSegNo segno, int emode, XLogSource source)
 
 		if (source == XLOG_FROM_ANY || source == XLOG_FROM_PG_WAL)
 		{
-			fd = XLogFileRead(segno, emode, tli,
-							  XLOG_FROM_PG_WAL, true);
+			fd = XLogFileRead(segno, tli, XLOG_FROM_PG_WAL, true);
 			if (fd != -1)
 			{
 				if (!expectedTLEs)
@@ -4374,7 +4371,7 @@ XLogFileReadAnyTLI(XLogSegNo segno, int emode, XLogSource source)
 	/* Couldn't find it.  For simplicity, complain about front timeline */
 	XLogFilePath(path, recoveryTargetTLI, segno, wal_segment_size);
 	errno = ENOENT;
-	ereport(emode,
+	ereport(DEBUG2,
 			(errcode_for_file_access(),
 			 errmsg("could not open file \"%s\": %m", path)));
 	return -1;
