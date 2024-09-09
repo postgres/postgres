@@ -56,6 +56,10 @@ extern "C"
 /* Indicates presence of PQsocketPoll, PQgetCurrentTimeUSec */
 #define LIBPQ_HAS_SOCKET_POLL 1
 
+/* Features added in PostgreSQL v18: */
+/* Indicates presence of PQfullProtocolVersion */
+#define LIBPQ_HAS_FULL_PROTOCOL_VERSION 1
+
 /*
  * Option flags for PQcopyResult
  */
@@ -393,6 +397,7 @@ extern PGTransactionStatusType PQtransactionStatus(const PGconn *conn);
 extern const char *PQparameterStatus(const PGconn *conn,
 									 const char *paramName);
 extern int	PQprotocolVersion(const PGconn *conn);
+extern int	PQfullProtocolVersion(const PGconn *conn);
 extern int	PQserverVersion(const PGconn *conn);
 extern char *PQerrorMessage(const PGconn *conn);
 extern int	PQsocket(const PGconn *conn);

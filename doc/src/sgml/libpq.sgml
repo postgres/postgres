@@ -2678,22 +2678,44 @@ const char *PQparameterStatus(const PGconn *conn, const char *paramName);
      </listitem>
     </varlistentry>
 
-    <varlistentry id="libpq-PQprotocolVersion">
-     <term><function>PQprotocolVersion</function><indexterm><primary>PQprotocolVersion</primary></indexterm></term>
+    <varlistentry id="libpq-PQfullProtocolVersion">
+     <term><function>PQfullProtocolVersion</function><indexterm><primary>PQfullProtocolVersion</primary></indexterm></term>
 
      <listitem>
       <para>
        Interrogates the frontend/backend protocol being used.
 <synopsis>
-int PQprotocolVersion(const PGconn *conn);
+int PQfullProtocolVersion(const PGconn *conn);
 </synopsis>
        Applications might wish to use this function to determine whether certain
-       features are supported.  Currently, the possible values are 3
-       (3.0 protocol), or zero (connection bad).  The protocol version will
-       not change after connection startup is complete, but it could
-       theoretically change during a connection reset.  The 3.0 protocol is
-       supported by <productname>PostgreSQL</productname> server versions 7.4
-       and above.
+       features are supported. The result is formed by multiplying the server's
+       major version number by 10000 and adding the minor version number. For
+       example, version 3.2 would be returned as 30002, and version 4.0 would
+       be returned as 40000. Zero is returned if the connection is bad. The 3.0
+       protocol is supported by <productname>PostgreSQL</productname> server
+       versions 7.4 and above.
+      </para>
+      <para>
+       The protocol version will not change after connection startup is
+       complete, but it could theoretically change during a connection reset.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry id="libpq-PQprotocolVersion">
+     <term><function>PQprotocolVersion</function><indexterm><primary>PQprotocolVersion</primary></indexterm></term>
+
+     <listitem>
+      <para>
+       Interrogates the frontend/backend protocol major version.
+<synopsis>
+int PQprotocolVersion(const PGconn *conn);
+</synopsis>
+       Unlike <xref linkend="libpq-PQfullProtocolVersion"/>, this returns only
+       the major protocol version in use, but it is supported by a wider range
+       of libpq releases back to version 7.4. Currently, the possible values are
+       3 (3.0 protocol), or zero (connection bad). Prior to release version
+       14.0, libpq could additionally return 2 (2.0 protocol).
       </para>
      </listitem>
     </varlistentry>

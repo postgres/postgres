@@ -86,6 +86,7 @@ is_unixsock_path(const char *path)
 
 #define PG_PROTOCOL_MAJOR(v)	((v) >> 16)
 #define PG_PROTOCOL_MINOR(v)	((v) & 0x0000ffff)
+#define PG_PROTOCOL_FULL(v)	(PG_PROTOCOL_MAJOR(v) * 10000 + PG_PROTOCOL_MINOR(v))
 #define PG_PROTOCOL(m,n)	(((m) << 16) | (n))
 
 /*
