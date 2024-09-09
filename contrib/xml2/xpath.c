@@ -560,8 +560,7 @@ xpath_table(PG_FUNCTION_ARGS)
 					 relname,
 					 condition);
 
-	if ((ret = SPI_connect()) < 0)
-		elog(ERROR, "xpath_table: SPI_connect returned %d", ret);
+	SPI_connect();
 
 	if ((ret = SPI_exec(query_buf.data, 0)) != SPI_OK_SELECT)
 		elog(ERROR, "xpath_table: SPI execution failed for query %s",

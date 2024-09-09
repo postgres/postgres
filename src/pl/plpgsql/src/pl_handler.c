@@ -235,8 +235,7 @@ plpgsql_call_handler(PG_FUNCTION_ARGS)
 	/*
 	 * Connect to SPI manager
 	 */
-	if ((rc = SPI_connect_ext(nonatomic ? SPI_OPT_NONATOMIC : 0)) != SPI_OK_CONNECT)
-		elog(ERROR, "SPI_connect failed: %s", SPI_result_code_string(rc));
+	SPI_connect_ext(nonatomic ? SPI_OPT_NONATOMIC : 0);
 
 	/* Find or compile the function */
 	func = plpgsql_compile(fcinfo, false);
@@ -326,8 +325,7 @@ plpgsql_inline_handler(PG_FUNCTION_ARGS)
 	/*
 	 * Connect to SPI manager
 	 */
-	if ((rc = SPI_connect_ext(codeblock->atomic ? 0 : SPI_OPT_NONATOMIC)) != SPI_OK_CONNECT)
-		elog(ERROR, "SPI_connect failed: %s", SPI_result_code_string(rc));
+	SPI_connect_ext(codeblock->atomic ? 0 : SPI_OPT_NONATOMIC);
 
 	/* Compile the anonymous code block */
 	func = plpgsql_compile_inline(codeblock->source_text);
@@ -510,8 +508,7 @@ plpgsql_validator(PG_FUNCTION_ARGS)
 		/*
 		 * Connect to SPI manager (is this needed for compilation?)
 		 */
-		if ((rc = SPI_connect()) != SPI_OK_CONNECT)
-			elog(ERROR, "SPI_connect failed: %s", SPI_result_code_string(rc));
+		SPI_connect();
 
 		/*
 		 * Set up a fake fcinfo with just enough info to satisfy

@@ -915,8 +915,7 @@ trigf(PG_FUNCTION_ARGS)
     tupdesc = trigdata->tg_relation->rd_att;
 
     /* connect to SPI manager */
-    if ((ret = SPI_connect()) < 0)
-        elog(ERROR, "trigf (fired %s): SPI_connect returned %d", when, ret);
+    SPI_connect();
 
     /* get number of rows in table */
     ret = SPI_exec("SELECT count(*) FROM ttest", 0);

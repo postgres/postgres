@@ -639,8 +639,7 @@ refresh_by_match_merge(Oid matviewOid, Oid tempOid, Oid relowner,
 	relnatts = RelationGetNumberOfAttributes(matviewRel);
 
 	/* Open SPI context. */
-	if (SPI_connect() != SPI_OK_CONNECT)
-		elog(ERROR, "SPI_connect failed");
+	SPI_connect();
 
 	/* Analyze the temp table with the new contents. */
 	appendStringInfo(&querybuf, "ANALYZE %s", tempname);

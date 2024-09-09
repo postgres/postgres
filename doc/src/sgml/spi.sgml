@@ -126,16 +126,16 @@ int SPI_connect_ext(int <parameter>options</parameter>)
      </para>
     </listitem>
    </varlistentry>
-
-   <varlistentry>
-    <term><symbol>SPI_ERROR_CONNECT</symbol></term>
-    <listitem>
-     <para>
-      on error
-     </para>
-    </listitem>
-   </varlistentry>
   </variablelist>
+
+  <para>
+   The fact that these functions return <type>int</type>
+   not <type>void</type> is historical.  All failure cases are reported
+   via <function>ereport</function> or <function>elog</function>.
+   (In versions before <productname>PostgreSQL</productname> v10,
+   some but not all failures would be reported with a result value
+   of <symbol>SPI_ERROR_CONNECT</symbol>.)
+  </para>
  </refsect1>
 </refentry>
 

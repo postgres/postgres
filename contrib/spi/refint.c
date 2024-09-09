@@ -108,9 +108,7 @@ check_primary_key(PG_FUNCTION_ARGS)
 	tupdesc = rel->rd_att;
 
 	/* Connect to SPI manager */
-	if ((ret = SPI_connect()) < 0)
-		/* internal error */
-		elog(ERROR, "check_primary_key: SPI_connect returned %d", ret);
+	SPI_connect();
 
 	/*
 	 * We use SPI plan preparation feature, so allocate space to place key
@@ -328,9 +326,7 @@ check_foreign_key(PG_FUNCTION_ARGS)
 	tupdesc = rel->rd_att;
 
 	/* Connect to SPI manager */
-	if ((ret = SPI_connect()) < 0)
-		/* internal error */
-		elog(ERROR, "check_foreign_key: SPI_connect returned %d", ret);
+	SPI_connect();
 
 	/*
 	 * We use SPI plan preparation feature, so allocate space to place key

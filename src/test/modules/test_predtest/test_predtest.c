@@ -54,8 +54,7 @@ test_predtest(PG_FUNCTION_ARGS)
 	int			i;
 
 	/* We use SPI to parse, plan, and execute the test query */
-	if (SPI_connect() != SPI_OK_CONNECT)
-		elog(ERROR, "SPI_connect failed");
+	SPI_connect();
 
 	/*
 	 * First, plan and execute the query, and inspect the results.  To the

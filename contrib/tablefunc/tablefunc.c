@@ -385,9 +385,7 @@ crosstab(PG_FUNCTION_ARGS)
 	per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
 
 	/* Connect to SPI manager */
-	if ((ret = SPI_connect()) < 0)
-		/* internal error */
-		elog(ERROR, "crosstab: SPI_connect returned %d", ret);
+	SPI_connect();
 
 	/* Retrieve the desired rows */
 	ret = SPI_execute(sql, true, 0);
@@ -724,9 +722,7 @@ load_categories_hash(char *cats_sql, MemoryContext per_query_ctx)
 								HASH_ELEM | HASH_STRINGS | HASH_CONTEXT);
 
 	/* Connect to SPI manager */
-	if ((ret = SPI_connect()) < 0)
-		/* internal error */
-		elog(ERROR, "load_categories_hash: SPI_connect returned %d", ret);
+	SPI_connect();
 
 	/* Retrieve the category name rows */
 	ret = SPI_execute(cats_sql, true, 0);
@@ -806,9 +802,7 @@ get_crosstab_tuplestore(char *sql,
 	tupstore = tuplestore_begin_heap(randomAccess, false, work_mem);
 
 	/* Connect to SPI manager */
-	if ((ret = SPI_connect()) < 0)
-		/* internal error */
-		elog(ERROR, "get_crosstab_tuplestore: SPI_connect returned %d", ret);
+	SPI_connect();
 
 	/* Now retrieve the crosstab source rows */
 	ret = SPI_execute(sql, true, 0);
@@ -1151,15 +1145,11 @@ connectby(char *relname,
 		  AttInMetadata *attinmeta)
 {
 	Tuplestorestate *tupstore = NULL;
-	int			ret;
 	MemoryContext oldcontext;
-
 	int			serial = 1;
 
 	/* Connect to SPI manager */
-	if ((ret = SPI_connect()) < 0)
-		/* internal error */
-		elog(ERROR, "connectby: SPI_connect returned %d", ret);
+	SPI_connect();
 
 	/* switch to longer term context to create the tuple store */
 	oldcontext = MemoryContextSwitchTo(per_query_ctx);

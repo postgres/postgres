@@ -220,8 +220,7 @@ plsample_trigger_handler(PG_FUNCTION_ARGS)
 		elog(ERROR, "not called by trigger manager");
 
 	/* Connect to the SPI manager */
-	if (SPI_connect() != SPI_OK_CONNECT)
-		elog(ERROR, "could not connect to SPI manager");
+	SPI_connect();
 
 	rc = SPI_register_trigger_data(trigdata);
 	Assert(rc >= 0);

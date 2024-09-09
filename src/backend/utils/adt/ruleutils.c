@@ -589,8 +589,7 @@ pg_get_ruledef_worker(Oid ruleoid, int prettyFlags)
 	/*
 	 * Connect to SPI manager
 	 */
-	if (SPI_connect() != SPI_OK_CONNECT)
-		elog(ERROR, "SPI_connect failed");
+	SPI_connect();
 
 	/*
 	 * On the first call prepare the plan to lookup pg_rewrite. We read
@@ -782,8 +781,7 @@ pg_get_viewdef_worker(Oid viewoid, int prettyFlags, int wrapColumn)
 	/*
 	 * Connect to SPI manager
 	 */
-	if (SPI_connect() != SPI_OK_CONNECT)
-		elog(ERROR, "SPI_connect failed");
+	SPI_connect();
 
 	/*
 	 * On the first call prepare the plan to lookup pg_rewrite. We read
