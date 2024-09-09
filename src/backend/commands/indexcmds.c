@@ -3680,8 +3680,8 @@ ReindexRelationConcurrently(Oid relationOid, ReindexParams *params)
 		save_nestlevel = NewGUCNestLevel();
 
 		/* determine safety of this index for set_indexsafe_procflags */
-		idx->safe = (indexRel->rd_indexprs == NIL &&
-					 indexRel->rd_indpred == NIL);
+		idx->safe = (RelationGetIndexExpressions(indexRel) == NIL &&
+					 RelationGetIndexPredicate(indexRel) == NIL);
 		idx->tableId = RelationGetRelid(heapRel);
 		idx->amId = indexRel->rd_rel->relam;
 
