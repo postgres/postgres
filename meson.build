@@ -112,7 +112,8 @@ tests += {
       't/003_remote_config.pl',
       't/004_file_config.pl',
       't/005_multiple_extensions.pl',
-      't/006_remote_vault_config.pl'
+      't/006_remote_vault_config.pl',
+      't/007_access_control.pl'
     ],
   },
 }
