@@ -372,7 +372,7 @@ pgstat_heap(Relation rel, FunctionCallInfo fcinfo)
 			buffer = ReadBufferExtended(rel, MAIN_FORKNUM, block,
 										RBM_NORMAL, hscan->rs_strategy);
 			LockBuffer(buffer, BUFFER_LOCK_SHARE);
-			stat.free_space += PageGetHeapFreeSpace((Page) BufferGetPage(buffer));
+			stat.free_space += PageGetExactFreeSpace((Page) BufferGetPage(buffer));
 			UnlockReleaseBuffer(buffer);
 			block++;
 		}
@@ -385,7 +385,7 @@ pgstat_heap(Relation rel, FunctionCallInfo fcinfo)
 		buffer = ReadBufferExtended(rel, MAIN_FORKNUM, block,
 									RBM_NORMAL, hscan->rs_strategy);
 		LockBuffer(buffer, BUFFER_LOCK_SHARE);
-		stat.free_space += PageGetHeapFreeSpace((Page) BufferGetPage(buffer));
+		stat.free_space += PageGetExactFreeSpace((Page) BufferGetPage(buffer));
 		UnlockReleaseBuffer(buffer);
 		block++;
 	}
@@ -565,7 +565,7 @@ pgstat_index_page(pgstattuple_type *stat, Page page,
 {
 	OffsetNumber i;
 
-	stat->free_space += PageGetFreeSpace(page);
+	stat->free_space += PageGetExactFreeSpace(page);
 
 	for (i = minoff; i <= maxoff; i = OffsetNumberNext(i))
 	{

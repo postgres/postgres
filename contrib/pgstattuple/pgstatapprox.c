@@ -106,14 +106,7 @@ statapprox_heap(Relation rel, output_type *stat)
 
 		page = BufferGetPage(buf);
 
-		/*
-		 * It's not safe to call PageGetHeapFreeSpace() on new pages, so we
-		 * treat them as being free space for our purposes.
-		 */
-		if (!PageIsNew(page))
-			stat->free_space += PageGetHeapFreeSpace(page);
-		else
-			stat->free_space += BLCKSZ - SizeOfPageHeaderData;
+		stat->free_space += PageGetExactFreeSpace(page);
 
 		/* We may count the page as scanned even if it's new/empty */
 		scanned++;
