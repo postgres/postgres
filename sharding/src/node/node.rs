@@ -74,7 +74,6 @@ pub extern "C" fn init_node_instance(
 
         let ip = "127.0.0.1";
 
-        println!("[DEBUG] Node type: {:?}", node_type);
         match node_type {
             NodeType::Router => {
                 let router = Router::new(ip, node_port, config_path);

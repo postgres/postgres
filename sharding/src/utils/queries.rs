@@ -30,7 +30,7 @@ pub fn query_affects_memory_state(query: &str) -> bool {
 // ************** ToString TRAIT **************
 
 pub trait ConvertToString {
-     fn convert_to_string(&self) -> String;
+    fn convert_to_string(&self) -> String;
 }
 
 impl ConvertToString for Row {
@@ -41,15 +41,15 @@ impl ConvertToString for Row {
             let formatted_value = match self.try_get::<usize, String>(i) {
                 Ok(v) => format!("{}", v),
                 Err(_) => match self.try_get::<usize, i32>(i) {
-                    Ok(v) => format!("{}",v),
+                    Ok(v) => format!("{}", v),
                     Err(_) => match self.try_get::<usize, f64>(i) {
                         Ok(v) => format!("{}", v),
                         Err(_) => match self.try_get::<usize, Decimal>(i) {
                             Ok(v) => format!("{}", v),
                             Err(_) => String::new(),
-                        }
-                    }
-                }
+                        },
+                    },
+                },
             };
 
             result.push_str(&formatted_value);
@@ -58,8 +58,6 @@ impl ConvertToString for Row {
         result
     }
 }
-
-
 
 impl ConvertToString for Vec<Row> {
     fn convert_to_string(&self) -> String {
@@ -73,7 +71,7 @@ impl ConvertToString for Vec<Row> {
         }
 
         result.push('\n');
-        
+
         for row in self {
             result.push_str(&row.convert_to_string());
             result.push('\n');

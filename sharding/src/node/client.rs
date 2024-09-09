@@ -2,7 +2,9 @@ use inline_colorization::*;
 use postgres::Row;
 extern crate users;
 use std::{
-    io::{Read, Write}, net::TcpStream, sync::{Arc, Mutex}
+    io::{Read, Write},
+    net::TcpStream,
+    sync::{Arc, Mutex},
 };
 
 use super::super::utils::node_config::*;
@@ -35,11 +37,6 @@ impl Client {
                 continue;
             }
 
-            println!(
-                "Trying to connect to the candidate at {}:{}",
-                candidate_ip, candidate_port
-            );
-
             let mut candidate_stream =
                 match TcpStream::connect(format!("{}:{}", candidate_ip, candidate_port)) {
                     Ok(stream) => {
@@ -51,13 +48,11 @@ impl Client {
                     }
                     Err(e) => {
                         eprintln!("Failed to connect to the router: {:?}", e);
-                        // panic!("Failed to connect to the router");
                         continue;
                     }
                 };
 
             let message = message::Message::new_get_router();
-            println!("Sending message: {:?}", message);
             candidate_stream
                 .write_all(message.to_string().as_bytes())
                 .unwrap();
@@ -70,7 +65,6 @@ impl Client {
             match candidate_stream.read(response) {
                 Ok(_) => {
                     let response_str = String::from_utf8_lossy(response);
-                    println!("Received response: {}", response_str);
                     let response_message = message::Message::from_string(&response_str).unwrap();
 
                     if response_message.get_message_type() == message::MessageType::RouterId {
@@ -83,7 +77,8 @@ impl Client {
                                 Ok(stream) => {
                                     println!(
                                         "{color_bright_green}Router stream {}:{}{style_reset}",
-                                        node_ip, connections_port.to_string()
+                                        node_ip,
+                                        connections_port.to_string()
                                     );
                                     stream
                                 }
@@ -126,8 +121,8 @@ impl Client {
 
 impl NodeRole for Client {
     fn send_query(&mut self, query: &str) -> Option<Vec<Row>> {
-        println!("[CLIENT] Received query: {}", query);
-        let message = message::Message::new_query(Some(self.client_info.clone()), query.to_string());
+        let message =
+            message::Message::new_query(Some(self.client_info.clone()), query.to_string());
         let mut stream = self.router_postgres_client.stream.lock().unwrap();
         stream.write_all(message.to_string().as_bytes()).unwrap();
 
@@ -142,9 +137,7 @@ impl NodeRole for Client {
                 Client::handle_received_message(&mut buffer);
                 Some(Vec::new())
             }
-            Err(_e) => {
-                None
-            }
+            Err(_e) => None,
         }
     }
 }

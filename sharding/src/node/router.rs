@@ -2,14 +2,13 @@ use postgres::{Client as PostgresClient, Row};
 extern crate users;
 use crate::node::messages::message::{Message, MessageType};
 use crate::node::messages::node_info::NodeInfo;
-use crate::utils::queries::{query_affects_memory_state, query_is_insert, ConvertToString};
+use crate::utils::queries::{query_affects_memory_state, query_is_insert};
 
 use super::node::*;
 use super::shard_manager::ShardManager;
 use crate::utils::common::{connect_to_node, Channel};
 use crate::utils::node_config::{get_router_config, Node};
 use inline_colorization::*;
-use rust_decimal::Decimal;
 use std::collections::HashMap;
 use std::io::{Read, Write};
 use std::sync::{Arc, MutexGuard, RwLock};
@@ -43,7 +42,6 @@ impl Router {
             TcpListener::bind(format!("{}:{}", ip, port.parse::<u64>().unwrap() + 1000)).unwrap();
 
         loop {
-            println!("Listening for incoming connections");
             match listener.accept() {
                 Ok((stream, addr)) => {
                     println!(
@@ -69,10 +67,6 @@ impl Router {
 
     // Listen for incoming messages
     pub fn listen(shared_router: Arc<Mutex<Router>>, stream: Arc<Mutex<TcpStream>>) {
-        println!(
-            "[LISTEN] Listening for incoming messages from stream: {:?}",
-            stream
-        );
         loop {
             // sleep for 1 millisecond to allow the stream to be ready to read
             thread::sleep(std::time::Duration::from_millis(1));
@@ -96,7 +90,6 @@ impl Router {
                     let message_string = String::from_utf8_lossy(&buffer);
                     match router.get_response_message(&message_string) {
                         Some(response) => {
-                            println!("Sending response: {:?}", response);
                             stream.write(response.as_bytes()).unwrap();
                         }
                         None => {
@@ -118,8 +111,8 @@ impl Router {
 
         let message = match Message::from_string(&message) {
             Ok(message) => message,
-            Err(_e) => {
-                // eprintln!("Failed to parse message: {:?}. Message: [{:?}]", e, message);
+            Err(e) => {
+                eprintln!("Failed to parse message: {:?}. Message: [{:?}]", e, message);
                 return None;
             }
         };
@@ -135,7 +128,7 @@ impl Router {
                     }
                 };
                 let response_message = Message::new_query_response(response);
-               Some(response_message.to_string())
+                Some(response_message.to_string())
             }
             _ => {
                 eprintln!(
@@ -462,8 +455,6 @@ impl Router {
             if update {
                 self.ask_for_memory_update(shard_id);
             }
-
-            print!("{:?}", rows.convert_to_string());
 
             return rows;
         } else {

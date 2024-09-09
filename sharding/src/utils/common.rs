@@ -1,9 +1,8 @@
+use postgres::{Client as PostgresClient, NoTls};
 use std::{
     net::TcpStream,
     sync::{Arc, Mutex},
 };
-
-use postgres::{Client as PostgresClient, NoTls};
 use users::get_current_username;
 
 pub fn get_username_dinamically() -> String {
@@ -15,7 +14,6 @@ pub fn get_username_dinamically() -> String {
 
 /// Connects to the node with the given ip and port, returning a Client.
 pub fn connect_to_node(ip: &str, port: &str) -> Result<PostgresClient, postgres::Error> {
-    // get username dynamically
     let username = get_username_dinamically();
 
     match PostgresClient::connect(

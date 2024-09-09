@@ -268,10 +268,9 @@ impl Message {
             message_type,
             payload,
             node_info,
-            query_data: query
+            query_data: query,
         })
     }
-
 }
 
 impl PartialEq for Message {
@@ -301,7 +300,6 @@ mod tests {
                 payload: None,
                 node_info: Some(node_info),
                 query_data: None,
-
             }
         );
     }
@@ -316,7 +314,6 @@ mod tests {
                 payload: None,
                 node_info: None,
                 query_data: None,
-
             }
         );
     }
@@ -331,7 +328,6 @@ mod tests {
                 payload: Some(0.5),
                 node_info: None,
                 query_data: None,
-
             }
         );
     }
@@ -346,7 +342,6 @@ mod tests {
                 payload: Some(0.5),
                 node_info: None,
                 query_data: None,
-
             }
         );
     }
@@ -361,7 +356,6 @@ mod tests {
                 payload: None,
                 node_info: None,
                 query_data: None,
-
             }
         );
     }
@@ -376,7 +370,6 @@ mod tests {
                 payload: None,
                 node_info: None,
                 query_data: None,
-
             }
         );
     }
@@ -395,7 +388,6 @@ mod tests {
                 payload: None,
                 node_info: Some(node_info),
                 query_data: None,
-
             }
         );
     }
@@ -410,7 +402,6 @@ mod tests {
                 payload: None,
                 node_info: None,
                 query_data: None,
-
             }
         );
     }
@@ -431,7 +422,6 @@ mod tests {
                 payload: None,
                 node_info: None,
                 query_data: Some("SELECT * FROM table".to_string()),
-
             }
         );
     }
@@ -468,7 +458,10 @@ mod tests {
         let message = Message {
             message_type: MessageType::Query,
             payload: None,
-            node_info: None,
+            node_info: Some(NodeInfo {
+                ip: "1".to_string(),
+                port: "2".to_string(),
+            }),
             query_data: Some("SELECT * FROM table".to_string()),
         };
         assert_eq!(

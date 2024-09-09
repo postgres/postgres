@@ -1,6 +1,6 @@
 use crate::node::messages::node_info::NodeInfo;
 
-/// Enum to represent the data returned by `get_data`
+/// Enum used to represent the data returned by `get_data`
 #[derive(Debug, Clone)]
 pub struct MessageData {
     pub payload: Option<f64>,
@@ -103,13 +103,20 @@ mod tests {
     #[test]
     fn test_message_data_query() {
         let message_data = MessageData::new_query(
-            "SELECT * FROM table".to_string(),
+            "SELECT * FROM table;".to_string(),
             Some(NodeInfo {
                 ip: "1".to_string(),
                 port: "2".to_string(),
             }),
         );
-        assert_eq!(message_data.to_string(), "SELECT * FROM table");
+        assert_eq!(
+            message_data.node_info,
+            Some(NodeInfo {
+                ip: "1".to_string(),
+                port: "2".to_string()
+            })
+        );
+        assert_eq!(message_data.query, Some("SELECT * FROM table;".to_string()));
     }
 
     #[test]
