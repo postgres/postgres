@@ -2854,6 +2854,11 @@ range_table_entry_walker_impl(RangeTblEntry *rte,
 		case RTE_RESULT:
 			/* nothing to do */
 			break;
+		case RTE_GROUP:
+			if (!(flags & QTW_IGNORE_GROUPEXPRS))
+				if (WALK(rte->groupexprs))
+					return true;
+			break;
 	}
 
 	if (WALK(rte->securityQuals))
@@ -3890,6 +3895,15 @@ range_table_mutator_impl(List *rtable,
 			case RTE_NAMEDTUPLESTORE:
 			case RTE_RESULT:
 				/* nothing to do */
+				break;
+			case RTE_GROUP:
+				if (!(flags & QTW_IGNORE_GROUPEXPRS))
+					MUTATE(newrte->groupexprs, rte->groupexprs, List *);
+				else
+				{
+					/* else, copy grouping exprs as-is */
+					newrte->groupexprs = copyObject(rte->groupexprs);
+				}
 				break;
 		}
 		MUTATE(newrte->securityQuals, rte->securityQuals, List *);

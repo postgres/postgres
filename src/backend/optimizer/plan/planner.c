@@ -88,6 +88,7 @@ create_upper_paths_hook_type create_upper_paths_hook = NULL;
 #define EXPRKIND_ARBITER_ELEM		10
 #define EXPRKIND_TABLEFUNC			11
 #define EXPRKIND_TABLEFUNC_LATERAL	12
+#define EXPRKIND_GROUPEXPR			13
 
 /*
  * Data specific to grouping sets
@@ -748,6 +749,7 @@ subquery_planner(PlannerGlobal *glob, Query *parse, PlannerInfo *parent_root,
 	 */
 	root->hasJoinRTEs = false;
 	root->hasLateralRTEs = false;
+	root->group_rtindex = 0;
 	hasOuterJoins = false;
 	hasResultRTEs = false;
 	foreach(l, parse->rtable)
@@ -780,6 +782,10 @@ subquery_planner(PlannerGlobal *glob, Query *parse, PlannerInfo *parent_root,
 				break;
 			case RTE_RESULT:
 				hasResultRTEs = true;
+				break;
+			case RTE_GROUP:
+				Assert(parse->hasGroupRTE);
+				root->group_rtindex = list_cell_number(parse->rtable, l) + 1;
 				break;
 			default:
 				/* No work here for other RTE types */
@@ -835,10 +841,6 @@ subquery_planner(PlannerGlobal *glob, Query *parse, PlannerInfo *parent_root,
 	parse->targetList = (List *)
 		preprocess_expression(root, (Node *) parse->targetList,
 							  EXPRKIND_TARGET);
-
-	/* Constant-folding might have removed all set-returning functions */
-	if (parse->hasTargetSRFs)
-		parse->hasTargetSRFs = expression_returns_set((Node *) parse->targetList);
 
 	newWithCheckOptions = NIL;
 	foreach(l, parse->withCheckOptions)
@@ -969,6 +971,13 @@ subquery_planner(PlannerGlobal *glob, Query *parse, PlannerInfo *parent_root,
 			rte->values_lists = (List *)
 				preprocess_expression(root, (Node *) rte->values_lists, kind);
 		}
+		else if (rte->rtekind == RTE_GROUP)
+		{
+			/* Preprocess the groupexprs list fully */
+			rte->groupexprs = (List *)
+				preprocess_expression(root, (Node *) rte->groupexprs,
+									  EXPRKIND_GROUPEXPR);
+		}
 
 		/*
 		 * Process each element of the securityQuals list as if it were a
@@ -1006,6 +1015,27 @@ subquery_planner(PlannerGlobal *glob, Query *parse, PlannerInfo *parent_root,
 	}
 
 	/*
+	 * Replace any Vars in the subquery's targetlist and havingQual that
+	 * reference GROUP outputs with the underlying grouping expressions.
+	 *
+	 * Note that we need to perform this replacement after we've preprocessed
+	 * the grouping expressions.  This is to ensure that there is only one
+	 * instance of SubPlan for each SubLink contained within the grouping
+	 * expressions.
+	 */
+	if (parse->hasGroupRTE)
+	{
+		parse->targetList = (List *)
+			flatten_group_exprs(root, root->parse, (Node *) parse->targetList);
+		parse->havingQual =
+			flatten_group_exprs(root, root->parse, parse->havingQual);
+	}
+
+	/* Constant-folding might have removed all set-returning functions */
+	if (parse->hasTargetSRFs)
+		parse->hasTargetSRFs = expression_returns_set((Node *) parse->targetList);
+
+	/*
 	 * In some cases we may want to transfer a HAVING clause into WHERE. We
 	 * cannot do so if the HAVING clause contains aggregates (obviously) or
 	 * volatile functions (since a HAVING clause is supposed to be executed
@@ -1032,6 +1062,16 @@ subquery_planner(PlannerGlobal *glob, Query *parse, PlannerInfo *parent_root,
 	 * don't emit a bogus aggregated row. (This could be done better, but it
 	 * seems not worth optimizing.)
 	 *
+	 * Note that a HAVING clause may contain expressions that are not fully
+	 * preprocessed.  This can happen if these expressions are part of
+	 * grouping items.  In such cases, they are replaced with GROUP Vars in
+	 * the parser and then replaced back after we've done with expression
+	 * preprocessing on havingQual.  This is not an issue if the clause
+	 * remains in HAVING, because these expressions will be matched to lower
+	 * target items in setrefs.c.  However, if the clause is moved or copied
+	 * into WHERE, we need to ensure that these expressions are fully
+	 * preprocessed.
+	 *
 	 * Note that both havingQual and parse->jointree->quals are in
 	 * implicitly-ANDed-list form at this point, even though they are declared
 	 * as Node *.
@@ -1051,16 +1091,28 @@ subquery_planner(PlannerGlobal *glob, Query *parse, PlannerInfo *parent_root,
 		}
 		else if (parse->groupClause && !parse->groupingSets)
 		{
-			/* move it to WHERE */
+			Node	   *whereclause;
+
+			/* Preprocess the HAVING clause fully */
+			whereclause = preprocess_expression(root, havingclause,
+												EXPRKIND_QUAL);
+			/* ... and move it to WHERE */
 			parse->jointree->quals = (Node *)
-				lappend((List *) parse->jointree->quals, havingclause);
+				list_concat((List *) parse->jointree->quals,
+							(List *) whereclause);
 		}
 		else
 		{
-			/* put a copy in WHERE, keep it in HAVING */
+			Node	   *whereclause;
+
+			/* Preprocess the HAVING clause fully */
+			whereclause = preprocess_expression(root, copyObject(havingclause),
+												EXPRKIND_QUAL);
+			/* ... and put a copy in WHERE */
 			parse->jointree->quals = (Node *)
-				lappend((List *) parse->jointree->quals,
-						copyObject(havingclause));
+				list_concat((List *) parse->jointree->quals,
+							(List *) whereclause);
+			/* ... and also keep it in HAVING */
 			newHaving = lappend(newHaving, havingclause);
 		}
 	}

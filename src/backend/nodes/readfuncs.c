@@ -422,6 +422,9 @@ _readRangeTblEntry(void)
 		case RTE_RESULT:
 			/* no extra fields */
 			break;
+		case RTE_GROUP:
+			READ_NODE_FIELD(groupexprs);
+			break;
 		default:
 			elog(ERROR, "unrecognized RTE kind: %d",
 				 (int) local_node->rtekind);

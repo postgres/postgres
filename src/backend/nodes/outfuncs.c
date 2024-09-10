@@ -562,6 +562,9 @@ _outRangeTblEntry(StringInfo str, const RangeTblEntry *node)
 		case RTE_RESULT:
 			/* no extra fields */
 			break;
+		case RTE_GROUP:
+			WRITE_NODE_FIELD(groupexprs);
+			break;
 		default:
 			elog(ERROR, "unrecognized RTE kind: %d", (int) node->rtekind);
 			break;

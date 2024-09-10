@@ -151,6 +151,8 @@ typedef Node *(*CoerceParamHook) (ParseState *pstate, Param *param,
  *
  * p_target_nsitem: target relation's ParseNamespaceItem.
  *
+ * p_grouping_nsitem: the ParseNamespaceItem that represents the grouping step.
+ *
  * p_is_insert: true to process assignment expressions like INSERT, false
  * to process them like UPDATE.  (Note this can change intra-statement, for
  * cases like INSERT ON CONFLICT UPDATE.)
@@ -206,6 +208,7 @@ struct ParseState
 	CommonTableExpr *p_parent_cte;	/* this query's containing CTE */
 	Relation	p_target_relation;	/* INSERT/UPDATE/DELETE/MERGE target rel */
 	ParseNamespaceItem *p_target_nsitem;	/* target rel's NSItem, or NULL */
+	ParseNamespaceItem *p_grouping_nsitem;	/* NSItem for grouping, or NULL */
 	bool		p_is_insert;	/* process assignment like INSERT not UPDATE */
 	List	   *p_windowdefs;	/* raw representations of window clauses */
 	ParseExprKind p_expr_kind;	/* what kind of expression we're parsing */

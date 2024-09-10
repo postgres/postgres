@@ -100,6 +100,8 @@ extern ParseNamespaceItem *addRangeTableEntryForCTE(ParseState *pstate,
 extern ParseNamespaceItem *addRangeTableEntryForENR(ParseState *pstate,
 													RangeVar *rv,
 													bool inFromCl);
+extern ParseNamespaceItem *addRangeTableEntryForGroup(ParseState *pstate,
+													  List *groupClauses);
 extern RTEPermissionInfo *addRTEPermissionInfo(List **rteperminfos,
 											   RangeTblEntry *rte);
 extern RTEPermissionInfo *getRTEPermissionInfo(List *rteperminfos,

@@ -81,6 +81,8 @@ static bool pull_var_clause_walker(Node *node,
 								   pull_var_clause_context *context);
 static Node *flatten_join_alias_vars_mutator(Node *node,
 											 flatten_join_alias_vars_context *context);
+static Node *flatten_group_exprs_mutator(Node *node,
+										 flatten_join_alias_vars_context *context);
 static Node *add_nullingrels_if_needed(PlannerInfo *root, Node *newnode,
 									   Var *oldvar);
 static bool is_standard_join_alias_expression(Node *newnode, Var *oldvar);
@@ -893,12 +895,148 @@ flatten_join_alias_vars_mutator(Node *node,
 	}
 	/* Already-planned tree not supported */
 	Assert(!IsA(node, SubPlan));
+	Assert(!IsA(node, AlternativeSubPlan));
 	/* Shouldn't need to handle these planner auxiliary nodes here */
 	Assert(!IsA(node, SpecialJoinInfo));
 	Assert(!IsA(node, PlaceHolderInfo));
 	Assert(!IsA(node, MinMaxAggInfo));
 
 	return expression_tree_mutator(node, flatten_join_alias_vars_mutator,
+								   (void *) context);
+}
+
+/*
+ * flatten_group_exprs
+ *	  Replace Vars that reference GROUP outputs with the underlying grouping
+ *	  expressions.
+ */
+Node *
+flatten_group_exprs(PlannerInfo *root, Query *query, Node *node)
+{
+	flatten_join_alias_vars_context context;
+
+	/*
+	 * We do not expect this to be applied to the whole Query, only to
+	 * expressions or LATERAL subqueries.  Hence, if the top node is a Query,
+	 * it's okay to immediately increment sublevels_up.
+	 */
+	Assert(node != (Node *) query);
+
+	context.root = root;
+	context.query = query;
+	context.sublevels_up = 0;
+	/* flag whether grouping expressions could possibly contain SubLinks */
+	context.possible_sublink = query->hasSubLinks;
+	/* if hasSubLinks is already true, no need to work hard */
+	context.inserted_sublink = query->hasSubLinks;
+
+	return flatten_group_exprs_mutator(node, &context);
+}
+
+static Node *
+flatten_group_exprs_mutator(Node *node,
+							flatten_join_alias_vars_context *context)
+{
+	if (node == NULL)
+		return NULL;
+	if (IsA(node, Var))
+	{
+		Var		   *var = (Var *) node;
+		RangeTblEntry *rte;
+		Node	   *newvar;
+
+		/* No change unless Var belongs to the GROUP of the target level */
+		if (var->varlevelsup != context->sublevels_up)
+			return node;		/* no need to copy, really */
+		rte = rt_fetch(var->varno, context->query->rtable);
+		if (rte->rtekind != RTE_GROUP)
+			return node;
+
+		/* Expand group exprs reference */
+		Assert(var->varattno > 0);
+		newvar = (Node *) list_nth(rte->groupexprs, var->varattno - 1);
+		Assert(newvar != NULL);
+		newvar = copyObject(newvar);
+
+		/*
+		 * If we are expanding an expr carried down from an upper query, must
+		 * adjust its varlevelsup fields.
+		 */
+		if (context->sublevels_up != 0)
+			IncrementVarSublevelsUp(newvar, context->sublevels_up, 0);
+
+		/* Preserve original Var's location, if possible */
+		if (IsA(newvar, Var))
+			((Var *) newvar)->location = var->location;
+
+		/* Detect if we are adding a sublink to query */
+		if (context->possible_sublink && !context->inserted_sublink)
+			context->inserted_sublink = checkExprHasSubLink(newvar);
+
+		return newvar;
+	}
+
+	if (IsA(node, Aggref))
+	{
+		Aggref	   *agg = (Aggref *) node;
+
+		if ((int) agg->agglevelsup == context->sublevels_up)
+		{
+			/*
+			 * If we find an aggregate call of the original level, do not
+			 * recurse into its normal arguments, ORDER BY arguments, or
+			 * filter; there are no grouped vars there.  But we should check
+			 * direct arguments as though they weren't in an aggregate.
+			 */
+			agg = copyObject(agg);
+			agg->aggdirectargs = (List *)
+				flatten_group_exprs_mutator((Node *) agg->aggdirectargs, context);
+
+			return (Node *) agg;
+		}
+
+		/*
+		 * We can skip recursing into aggregates of higher levels altogether,
+		 * since they could not possibly contain Vars of concern to us (see
+		 * transformAggregateCall).  We do need to look at aggregates of lower
+		 * levels, however.
+		 */
+		if ((int) agg->agglevelsup > context->sublevels_up)
+			return node;
+	}
+
+	if (IsA(node, GroupingFunc))
+	{
+		GroupingFunc *grp = (GroupingFunc *) node;
+
+		/*
+		 * If we find a GroupingFunc node of the original or higher level, do
+		 * not recurse into its arguments; there are no grouped vars there.
+		 */
+		if ((int) grp->agglevelsup >= context->sublevels_up)
+			return node;
+	}
+
+	if (IsA(node, Query))
+	{
+		/* Recurse into RTE subquery or not-yet-planned sublink subquery */
+		Query	   *newnode;
+		bool		save_inserted_sublink;
+
+		context->sublevels_up++;
+		save_inserted_sublink = context->inserted_sublink;
+		context->inserted_sublink = ((Query *) node)->hasSubLinks;
+		newnode = query_tree_mutator((Query *) node,
+									 flatten_group_exprs_mutator,
+									 (void *) context,
+									 QTW_IGNORE_GROUPEXPRS);
+		newnode->hasSubLinks |= context->inserted_sublink;
+		context->inserted_sublink = save_inserted_sublink;
+		context->sublevels_up--;
+		return (Node *) newnode;
+	}
+
+	return expression_tree_mutator(node, flatten_group_exprs_mutator,
 								   (void *) context);
 }
 

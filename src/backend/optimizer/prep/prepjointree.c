@@ -1235,6 +1235,7 @@ pull_up_simple_subquery(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte,
 				case RTE_CTE:
 				case RTE_NAMEDTUPLESTORE:
 				case RTE_RESULT:
+				case RTE_GROUP:
 					/* these can't contain any lateral references */
 					break;
 			}
@@ -2218,7 +2219,8 @@ perform_pullup_replace_vars(PlannerInfo *root,
 	}
 
 	/*
-	 * Replace references in the joinaliasvars lists of join RTEs.
+	 * Replace references in the joinaliasvars lists of join RTEs and the
+	 * groupexprs list of group RTE.
 	 */
 	foreach(lc, parse->rtable)
 	{
@@ -2227,6 +2229,10 @@ perform_pullup_replace_vars(PlannerInfo *root,
 		if (otherrte->rtekind == RTE_JOIN)
 			otherrte->joinaliasvars = (List *)
 				pullup_replace_vars((Node *) otherrte->joinaliasvars,
+									rvcontext);
+		else if (otherrte->rtekind == RTE_GROUP)
+			otherrte->groupexprs = (List *)
+				pullup_replace_vars((Node *) otherrte->groupexprs,
 									rvcontext);
 	}
 }
@@ -2293,6 +2299,7 @@ replace_vars_in_jointree(Node *jtnode,
 					case RTE_CTE:
 					case RTE_NAMEDTUPLESTORE:
 					case RTE_RESULT:
+					case RTE_GROUP:
 						/* these shouldn't be marked LATERAL */
 						Assert(false);
 						break;

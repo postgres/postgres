@@ -2557,6 +2557,79 @@ addRangeTableEntryForENR(ParseState *pstate,
 									tupdesc);
 }
 
+/*
+ * Add an entry for grouping step to the pstate's range table (p_rtable).
+ * Then, construct and return a ParseNamespaceItem for the new RTE.
+ */
+ParseNamespaceItem *
+addRangeTableEntryForGroup(ParseState *pstate,
+						   List *groupClauses)
+{
+	RangeTblEntry *rte = makeNode(RangeTblEntry);
+	Alias	   *eref;
+	List	   *groupexprs;
+	List	   *coltypes,
+			   *coltypmods,
+			   *colcollations;
+	ListCell   *lc;
+	ParseNamespaceItem *nsitem;
+
+	Assert(pstate != NULL);
+
+	rte->rtekind = RTE_GROUP;
+	rte->alias = NULL;
+
+	eref = makeAlias("*GROUP*", NIL);
+
+	/* fill in any unspecified alias columns, and extract column type info */
+	groupexprs = NIL;
+	coltypes = coltypmods = colcollations = NIL;
+	foreach(lc, groupClauses)
+	{
+		TargetEntry *te = (TargetEntry *) lfirst(lc);
+		char	   *colname = te->resname ? pstrdup(te->resname) : "?column?";
+
+		eref->colnames = lappend(eref->colnames, makeString(colname));
+
+		groupexprs = lappend(groupexprs, copyObject(te->expr));
+
+		coltypes = lappend_oid(coltypes,
+							   exprType((Node *) te->expr));
+		coltypmods = lappend_int(coltypmods,
+								 exprTypmod((Node *) te->expr));
+		colcollations = lappend_oid(colcollations,
+									exprCollation((Node *) te->expr));
+	}
+
+	rte->eref = eref;
+	rte->groupexprs = groupexprs;
+
+	/*
+	 * Set flags.
+	 *
+	 * The grouping step is never checked for access rights, so no need to
+	 * perform addRTEPermissionInfo().
+	 */
+	rte->lateral = false;
+	rte->inFromCl = false;
+
+	/*
+	 * Add completed RTE to pstate's range table list, so that we know its
+	 * index.  But we don't add it to the join list --- caller must do that if
+	 * appropriate.
+	 */
+	pstate->p_rtable = lappend(pstate->p_rtable, rte);
+
+	/*
+	 * Build a ParseNamespaceItem, but don't add it to the pstate's namespace
+	 * list --- caller must do that if appropriate.
+	 */
+	nsitem = buildNSItemFromLists(rte, list_length(pstate->p_rtable),
+								  coltypes, coltypmods, colcollations);
+
+	return nsitem;
+}
+
 
 /*
  * Has the specified refname been selected FOR UPDATE/FOR SHARE?
@@ -3003,6 +3076,7 @@ expandRTE(RangeTblEntry *rte, int rtindex, int sublevels_up,
 			}
 			break;
 		case RTE_RESULT:
+		case RTE_GROUP:
 			/* These expose no columns, so nothing to do */
 			break;
 		default:
@@ -3317,10 +3391,11 @@ get_rte_attribute_is_dropped(RangeTblEntry *rte, AttrNumber attnum)
 		case RTE_TABLEFUNC:
 		case RTE_VALUES:
 		case RTE_CTE:
+		case RTE_GROUP:
 
 			/*
-			 * Subselect, Table Functions, Values, CTE RTEs never have dropped
-			 * columns
+			 * Subselect, Table Functions, Values, CTE, GROUP RTEs never have
+			 * dropped columns
 			 */
 			result = false;
 			break;

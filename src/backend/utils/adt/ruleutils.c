@@ -5433,10 +5433,27 @@ get_query_def(Query *query, StringInfo buf, List *parentnamespace,
 {
 	deparse_context context;
 	deparse_namespace dpns;
+	int			rtable_size;
 
 	/* Guard against excessively long or deeply-nested queries */
 	CHECK_FOR_INTERRUPTS();
 	check_stack_depth();
+
+	rtable_size = query->hasGroupRTE ?
+		list_length(query->rtable) - 1 :
+		list_length(query->rtable);
+
+	/*
+	 * Replace any Vars in the query's targetlist and havingQual that
+	 * reference GROUP outputs with the underlying grouping expressions.
+	 */
+	if (query->hasGroupRTE)
+	{
+		query->targetList = (List *)
+			flatten_group_exprs(NULL, query, (Node *) query->targetList);
+		query->havingQual =
+			flatten_group_exprs(NULL, query, query->havingQual);
+	}
 
 	/*
 	 * Before we begin to examine the query, acquire locks on referenced
@@ -5455,7 +5472,7 @@ get_query_def(Query *query, StringInfo buf, List *parentnamespace,
 	context.targetList = NIL;
 	context.windowClause = NIL;
 	context.varprefix = (parentnamespace != NIL ||
-						 list_length(query->rtable) != 1);
+						 rtable_size != 1);
 	context.prettyFlags = prettyFlags;
 	context.wrapColumn = wrapColumn;
 	context.indentLevel = startIndent;
@@ -8114,6 +8131,14 @@ get_name_for_var_field(Var *var, int fieldno,
 					return result;
 				}
 			}
+			break;
+		case RTE_GROUP:
+
+			/*
+			 * We couldn't get here: any Vars that reference the RTE_GROUP RTE
+			 * should have been replaced with the underlying grouping
+			 * expressions.
+			 */
 			break;
 	}
 

@@ -67,6 +67,8 @@ typedef struct ExplainState
 	List	   *deparse_cxt;	/* context list for deparsing expressions */
 	Bitmapset  *printed_subplans;	/* ids of SubPlans we've printed */
 	bool		hide_workers;	/* set if we find an invisible Gather */
+	int			rtable_size;	/* length of rtable excluding the RTE_GROUP
+								 * entry */
 	/* state related to the current plan node */
 	ExplainWorkersState *workers_state; /* needed if parallel plan */
 } ExplainState;

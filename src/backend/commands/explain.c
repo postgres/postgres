@@ -879,6 +879,7 @@ ExplainPrintPlan(ExplainState *es, QueryDesc *queryDesc)
 {
 	Bitmapset  *rels_used = NULL;
 	PlanState  *ps;
+	ListCell   *lc;
 
 	/* Set up ExplainState fields associated with this plan tree */
 	Assert(queryDesc->plannedstmt != NULL);
@@ -889,6 +890,17 @@ ExplainPrintPlan(ExplainState *es, QueryDesc *queryDesc)
 	es->deparse_cxt = deparse_context_for_plan_tree(queryDesc->plannedstmt,
 													es->rtable_names);
 	es->printed_subplans = NULL;
+	es->rtable_size = list_length(es->rtable);
+	foreach(lc, es->rtable)
+	{
+		RangeTblEntry *rte = lfirst_node(RangeTblEntry, lc);
+
+		if (rte->rtekind == RTE_GROUP)
+		{
+			es->rtable_size--;
+			break;
+		}
+	}
 
 	/*
 	 * Sometimes we mark a Gather node as "invisible", which means that it's
@@ -2474,7 +2486,7 @@ show_plan_tlist(PlanState *planstate, List *ancestors, ExplainState *es)
 	context = set_deparse_context_plan(es->deparse_cxt,
 									   plan,
 									   ancestors);
-	useprefix = list_length(es->rtable) > 1;
+	useprefix = es->rtable_size > 1;
 
 	/* Deparse each result column (we now include resjunk ones) */
 	foreach(lc, plan->targetlist)
@@ -2558,7 +2570,7 @@ show_upper_qual(List *qual, const char *qlabel,
 {
 	bool		useprefix;
 
-	useprefix = (list_length(es->rtable) > 1 || es->verbose);
+	useprefix = (es->rtable_size > 1 || es->verbose);
 	show_qual(qual, qlabel, planstate, ancestors, useprefix, es);
 }
 
@@ -2648,7 +2660,7 @@ show_grouping_sets(PlanState *planstate, Agg *agg,
 	context = set_deparse_context_plan(es->deparse_cxt,
 									   planstate->plan,
 									   ancestors);
-	useprefix = (list_length(es->rtable) > 1 || es->verbose);
+	useprefix = (es->rtable_size > 1 || es->verbose);
 
 	ExplainOpenGroup("Grouping Sets", "Grouping Sets", false, es);
 
@@ -2788,7 +2800,7 @@ show_sort_group_keys(PlanState *planstate, const char *qlabel,
 	context = set_deparse_context_plan(es->deparse_cxt,
 									   plan,
 									   ancestors);
-	useprefix = (list_length(es->rtable) > 1 || es->verbose);
+	useprefix = (es->rtable_size > 1 || es->verbose);
 
 	for (keyno = 0; keyno < nkeys; keyno++)
 	{
@@ -2900,7 +2912,7 @@ show_tablesample(TableSampleClause *tsc, PlanState *planstate,
 	context = set_deparse_context_plan(es->deparse_cxt,
 									   planstate->plan,
 									   ancestors);
-	useprefix = list_length(es->rtable) > 1;
+	useprefix = es->rtable_size > 1;
 
 	/* Get the tablesample method name */
 	method_name = get_func_name(tsc->tsmhandler);
@@ -3386,7 +3398,7 @@ show_memoize_info(MemoizeState *mstate, List *ancestors, ExplainState *es)
 	 * It's hard to imagine having a memoize node with fewer than 2 RTEs, but
 	 * let's just keep the same useprefix logic as elsewhere in this file.
 	 */
-	useprefix = list_length(es->rtable) > 1 || es->verbose;
+	useprefix = es->rtable_size > 1 || es->verbose;
 
 	/* Set up deparsing context */
 	context = set_deparse_context_plan(es->deparse_cxt,

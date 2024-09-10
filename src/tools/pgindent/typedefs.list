@@ -3359,7 +3359,6 @@ check_function_callback
 check_network_data
 check_object_relabel_type
 check_password_hook_type
-check_ungrouped_columns_context
 child_process_kind
 chr
 cmpEntriesArg
@@ -3947,6 +3946,7 @@ stream_stop_callback
 string
 substitute_actual_parameters_context
 substitute_actual_srf_parameters_context
+substitute_grouped_columns_context
 substitute_phv_relids_context
 subxids_array_status
 symbol

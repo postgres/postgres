@@ -420,6 +420,9 @@ markTargetListOrigin(ParseState *pstate, TargetEntry *tle,
 				tle->resorigcol = ste->resorigcol;
 			}
 			break;
+		case RTE_GROUP:
+			/* We couldn't get here: the RTE_GROUP RTE has not been added */
+			break;
 	}
 }
 
@@ -1680,6 +1683,12 @@ expandRecordVariable(ParseState *pstate, Var *var, int levelsup)
 				}
 				/* else fall through to inspect the expression */
 			}
+			break;
+		case RTE_GROUP:
+
+			/*
+			 * We couldn't get here: the RTE_GROUP RTE has not been added.
+			 */
 			break;
 	}
 
