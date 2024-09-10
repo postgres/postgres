@@ -598,10 +598,28 @@ select jsonb_path_query('1234', '$.string()');
 select jsonb_path_query('true', '$.string()');
 select jsonb_path_query('1234', '$.string().type()');
 select jsonb_path_query('[2, true]', '$.string()');
-select jsonb_path_query('"2023-08-15 12:34:56 +5:30"', '$.timestamp().string()');
-select jsonb_path_query_tz('"2023-08-15 12:34:56 +5:30"', '$.timestamp().string()'); -- should work
 select jsonb_path_query_array('[1.23, "yes", false]', '$[*].string()');
 select jsonb_path_query_array('[1.23, "yes", false]', '$[*].string().type()');
+select jsonb_path_query('"2023-08-15 12:34:56 +5:30"', '$.timestamp().string()');
+select jsonb_path_query_tz('"2023-08-15 12:34:56 +5:30"', '$.timestamp().string()'); -- should work
+select jsonb_path_query('"2023-08-15 12:34:56"', '$.timestamp_tz().string()');
+select jsonb_path_query_tz('"2023-08-15 12:34:56"', '$.timestamp_tz().string()'); -- should work
+select jsonb_path_query('"2023-08-15 12:34:56 +5:30"', '$.timestamp_tz().string()');
+select jsonb_path_query('"2023-08-15 12:34:56"', '$.timestamp().string()');
+select jsonb_path_query('"12:34:56 +5:30"', '$.time_tz().string()');
+select jsonb_path_query_tz('"12:34:56"', '$.time_tz().string()');
+select jsonb_path_query('"12:34:56"', '$.time().string()');
+select jsonb_path_query('"2023-08-15"', '$.date().string()');
+
+set datestyle = 'ISO';
+select jsonb_path_query_tz('"2023-08-15 12:34:56"', '$.timestamp_tz().string()');
+select jsonb_path_query('"2023-08-15 12:34:56 +5:30"', '$.timestamp_tz().string()');
+select jsonb_path_query('"2023-08-15 12:34:56"', '$.timestamp().string()');
+select jsonb_path_query('"12:34:56 +5:30"', '$.time_tz().string()');
+select jsonb_path_query_tz('"12:34:56"', '$.time_tz().string()');
+select jsonb_path_query('"12:34:56"', '$.time().string()');
+select jsonb_path_query('"2023-08-15"', '$.date().string()');
+reset datestyle;
 
 -- Test .time()
 select jsonb_path_query('null', '$.time()');
