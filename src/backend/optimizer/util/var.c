@@ -22,6 +22,7 @@
 
 #include "access/sysattr.h"
 #include "nodes/nodeFuncs.h"
+#include "optimizer/clauses.h"
 #include "optimizer/optimizer.h"
 #include "optimizer/placeholder.h"
 #include "optimizer/prep.h"
@@ -83,6 +84,8 @@ static Node *flatten_join_alias_vars_mutator(Node *node,
 											 flatten_join_alias_vars_context *context);
 static Node *flatten_group_exprs_mutator(Node *node,
 										 flatten_join_alias_vars_context *context);
+static Node *mark_nullable_by_grouping(PlannerInfo *root, Node *newnode,
+									   Var *oldvar);
 static Node *add_nullingrels_if_needed(PlannerInfo *root, Node *newnode,
 									   Var *oldvar);
 static bool is_standard_join_alias_expression(Node *newnode, Var *oldvar);
@@ -909,6 +912,18 @@ flatten_join_alias_vars_mutator(Node *node,
  * flatten_group_exprs
  *	  Replace Vars that reference GROUP outputs with the underlying grouping
  *	  expressions.
+ *
+ * We have to preserve any varnullingrels info attached to the group Vars we're
+ * replacing.  If the replacement expression is a Var or PlaceHolderVar or
+ * constructed from those, we can just add the varnullingrels bits to the
+ * existing nullingrels field(s); otherwise we have to add a PlaceHolderVar
+ * wrapper.
+ *
+ * NOTE: this is also used by ruleutils.c, to deparse one query parsetree back
+ * to source text.  For that use-case, root will be NULL, which is why we have
+ * to pass the Query separately.  We need the root itself only for preserving
+ * varnullingrels.  We can avoid preserving varnullingrels in the ruleutils.c's
+ * usage because it does not make any difference to the deparsed source text.
  */
 Node *
 flatten_group_exprs(PlannerInfo *root, Query *query, Node *node)
@@ -973,7 +988,8 @@ flatten_group_exprs_mutator(Node *node,
 		if (context->possible_sublink && !context->inserted_sublink)
 			context->inserted_sublink = checkExprHasSubLink(newvar);
 
-		return newvar;
+		/* Lastly, add any varnullingrels to the replacement expression */
+		return mark_nullable_by_grouping(context->root, newvar, var);
 	}
 
 	if (IsA(node, Aggref))
@@ -1038,6 +1054,76 @@ flatten_group_exprs_mutator(Node *node,
 
 	return expression_tree_mutator(node, flatten_group_exprs_mutator,
 								   (void *) context);
+}
+
+/*
+ * Add oldvar's varnullingrels, if any, to a flattened grouping expression.
+ * The newnode has been copied, so we can modify it freely.
+ */
+static Node *
+mark_nullable_by_grouping(PlannerInfo *root, Node *newnode, Var *oldvar)
+{
+	Relids		relids;
+
+	if (root == NULL)
+		return newnode;
+	if (oldvar->varnullingrels == NULL)
+		return newnode;			/* nothing to do */
+
+	Assert(bms_equal(oldvar->varnullingrels,
+					 bms_make_singleton(root->group_rtindex)));
+
+	relids = pull_varnos_of_level(root, newnode, oldvar->varlevelsup);
+
+	if (!bms_is_empty(relids))
+	{
+		/*
+		 * If the newnode is not variable-free, we set the nullingrels of Vars
+		 * or PHVs that are contained in the expression.  This is not really
+		 * 'correct' in theory, because it is the whole expression that can be
+		 * nullable by grouping sets, not its individual vars.  But it works
+		 * in practice, because what we need is that the expression can be
+		 * somehow distinguished from the same expression in ECs, and marking
+		 * its vars is sufficient for this purpose.
+		 */
+		newnode = add_nulling_relids(newnode,
+									 relids,
+									 oldvar->varnullingrels);
+	}
+	else						/* variable-free? */
+	{
+		/*
+		 * If the newnode is variable-free and does not contain volatile
+		 * functions or set-returning functions, it can be treated as a member
+		 * of EC that is redundant.  So wrap it in a new PlaceHolderVar to
+		 * carry the nullingrels.  Otherwise we do not bother to make any
+		 * changes.
+		 *
+		 * Aggregate functions and window functions are not allowed in
+		 * grouping expressions.
+		 */
+		Assert(!contain_agg_clause(newnode));
+		Assert(!contain_window_function(newnode));
+
+		if (!contain_volatile_functions(newnode) &&
+			!expression_returns_set(newnode))
+		{
+			PlaceHolderVar *newphv;
+			Relids		phrels;
+
+			phrels = get_relids_in_jointree((Node *) root->parse->jointree,
+											true, false);
+			Assert(!bms_is_empty(phrels));
+
+			newphv = make_placeholder_expr(root, (Expr *) newnode, phrels);
+			/* newphv has zero phlevelsup and NULL phnullingrels; fix it */
+			newphv->phlevelsup = oldvar->varlevelsup;
+			newphv->phnullingrels = bms_copy(oldvar->varnullingrels);
+			newnode = (Node *) newphv;
+		}
+	}
+
+	return newnode;
 }
 
 /*

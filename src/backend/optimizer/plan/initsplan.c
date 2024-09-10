@@ -1328,6 +1328,10 @@ mark_rels_nulled_by_join(PlannerInfo *root, Index ojrelid,
 	{
 		RelOptInfo *rel = root->simple_rel_array[relid];
 
+		/* ignore the RTE_GROUP RTE */
+		if (relid == root->group_rtindex)
+			continue;
+
 		if (rel == NULL)		/* must be an outer join */
 		{
 			Assert(bms_is_member(relid, root->outer_join_rels));

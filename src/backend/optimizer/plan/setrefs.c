@@ -26,6 +26,7 @@
 #include "optimizer/subselect.h"
 #include "optimizer/tlist.h"
 #include "parser/parse_relation.h"
+#include "rewrite/rewriteManip.h"
 #include "tcop/utility.h"
 #include "utils/syscache.h"
 
@@ -2425,6 +2426,28 @@ set_upper_references(PlannerInfo *root, Plan *plan, int rtoffset)
 	ListCell   *l;
 
 	subplan_itlist = build_tlist_index(subplan->targetlist);
+
+	/*
+	 * If it's a grouping node with grouping sets, any Vars and PHVs appearing
+	 * in the targetlist and quals should have nullingrels that include the
+	 * effects of the grouping step, ie they will have nullingrels equal to
+	 * the input Vars/PHVs' nullingrels plus the RT index of the grouping
+	 * step.  In order to perform exact nullingrels matches, we remove the RT
+	 * index of the grouping step first.
+	 */
+	if (IsA(plan, Agg) &&
+		root->group_rtindex > 0 &&
+		((Agg *) plan)->groupingSets)
+	{
+		plan->targetlist = (List *)
+			remove_nulling_relids((Node *) plan->targetlist,
+								  bms_make_singleton(root->group_rtindex),
+								  NULL);
+		plan->qual = (List *)
+			remove_nulling_relids((Node *) plan->qual,
+								  bms_make_singleton(root->group_rtindex),
+								  NULL);
+	}
 
 	output_targetlist = NIL;
 	foreach(l, plan->targetlist)

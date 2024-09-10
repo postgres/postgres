@@ -1333,9 +1333,6 @@ substitute_grouped_columns_mutator(Node *node,
 
 	if (node == NULL)
 		return NULL;
-	if (IsA(node, Const) ||
-		IsA(node, Param))
-		return node;			/* constants are always acceptable */
 
 	if (IsA(node, Aggref))
 	{
@@ -1408,6 +1405,16 @@ substitute_grouped_columns_mutator(Node *node,
 			}
 		}
 	}
+
+	/*
+	 * Constants are always acceptable.  We have to do this after we checked
+	 * the subexpression as a whole for a match, because it is possible that
+	 * we have GROUP BY items that are constants, and the constants would
+	 * become not so constant after the grouping step.
+	 */
+	if (IsA(node, Const) ||
+		IsA(node, Param))
+		return node;
 
 	/*
 	 * If we have an ungrouped Var of the original query level, we have a

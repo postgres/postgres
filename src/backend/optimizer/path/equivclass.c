@@ -726,6 +726,10 @@ get_eclass_for_sort_expr(PlannerInfo *root,
 		{
 			RelOptInfo *rel = root->simple_rel_array[i];
 
+			/* ignore the RTE_GROUP RTE */
+			if (i == root->group_rtindex)
+				continue;
+
 			if (rel == NULL)	/* must be an outer join */
 			{
 				Assert(bms_is_member(i, root->outer_join_rels));
@@ -1086,6 +1090,10 @@ generate_base_implied_equalities(PlannerInfo *root)
 		while ((i = bms_next_member(ec->ec_relids, i)) > 0)
 		{
 			RelOptInfo *rel = root->simple_rel_array[i];
+
+			/* ignore the RTE_GROUP RTE */
+			if (i == root->group_rtindex)
+				continue;
 
 			if (rel == NULL)	/* must be an outer join */
 			{
@@ -3353,6 +3361,10 @@ get_eclass_indexes_for_relids(PlannerInfo *root, Relids relids)
 	while ((i = bms_next_member(relids, i)) > 0)
 	{
 		RelOptInfo *rel = root->simple_rel_array[i];
+
+		/* ignore the RTE_GROUP RTE */
+		if (i == root->group_rtindex)
+			continue;
 
 		if (rel == NULL)		/* must be an outer join */
 		{

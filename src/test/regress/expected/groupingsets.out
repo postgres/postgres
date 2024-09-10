@@ -442,19 +442,22 @@ select * from (
   group by grouping sets(1, 2)
 ) ss
 where x = 1 and q1 = 123;
-                 QUERY PLAN                 
---------------------------------------------
+                    QUERY PLAN                    
+--------------------------------------------------
  Subquery Scan on ss
    Output: ss.x, ss.q1, ss.sum
    Filter: ((ss.x = 1) AND (ss.q1 = 123))
    ->  GroupAggregate
          Output: (1), i1.q1, sum(i1.q2)
-         Group Key: 1
+         Group Key: (1)
          Sort Key: i1.q1
            Group Key: i1.q1
-         ->  Seq Scan on public.int8_tbl i1
-               Output: 1, i1.q1, i1.q2
-(10 rows)
+         ->  Sort
+               Output: (1), i1.q1, i1.q2
+               Sort Key: (1)
+               ->  Seq Scan on public.int8_tbl i1
+                     Output: 1, i1.q1, i1.q2
+(13 rows)
 
 select * from (
   select 1 as x, q1, sum(q2)
@@ -736,15 +739,18 @@ select a, b, sum(v.x)
 -- Test reordering of grouping sets
 explain (costs off)
 select * from gstest1 group by grouping sets((a,b,v),(v)) order by v,b,a;
-                                  QUERY PLAN                                  
-------------------------------------------------------------------------------
- GroupAggregate
-   Group Key: "*VALUES*".column3, "*VALUES*".column2, "*VALUES*".column1
-   Group Key: "*VALUES*".column3
-   ->  Sort
-         Sort Key: "*VALUES*".column3, "*VALUES*".column2, "*VALUES*".column1
-         ->  Values Scan on "*VALUES*"
-(6 rows)
+                                     QUERY PLAN                                     
+------------------------------------------------------------------------------------
+ Incremental Sort
+   Sort Key: "*VALUES*".column3, "*VALUES*".column2, "*VALUES*".column1
+   Presorted Key: "*VALUES*".column3
+   ->  GroupAggregate
+         Group Key: "*VALUES*".column3, "*VALUES*".column2, "*VALUES*".column1
+         Group Key: "*VALUES*".column3
+         ->  Sort
+               Sort Key: "*VALUES*".column3, "*VALUES*".column2, "*VALUES*".column1
+               ->  Values Scan on "*VALUES*"
+(9 rows)
 
 -- Agg level check. This query should error out.
 select (select grouping(a,b) from gstest2) from gstest2 group by a,b;
@@ -816,16 +822,18 @@ select a,count(*) from gstest2 group by rollup(a) having a is distinct from 1 or
 
 explain (costs off)
   select a,count(*) from gstest2 group by rollup(a) having a is distinct from 1 order by a;
-            QUERY PLAN            
-----------------------------------
- GroupAggregate
-   Group Key: a
-   Group Key: ()
-   Filter: (a IS DISTINCT FROM 1)
-   ->  Sort
-         Sort Key: a
-         ->  Seq Scan on gstest2
-(7 rows)
+               QUERY PLAN               
+----------------------------------------
+ Sort
+   Sort Key: a
+   ->  GroupAggregate
+         Group Key: a
+         Group Key: ()
+         Filter: (a IS DISTINCT FROM 1)
+         ->  Sort
+               Sort Key: a
+               ->  Seq Scan on gstest2
+(9 rows)
 
 select v.c, (select count(*) from gstest2 group by () having v.c)
   from (values (false),(true)) v(c) order by v.c;
@@ -2287,5 +2295,138 @@ select not a from (values(true)) t(a) group by rollup(not a) having not not a;
 ----------
  f
 (1 row)
+
+-- test handling of expressions nullable by grouping sets
+explain (costs off)
+select distinct on (a, b) a, b
+from (values (1, 1), (2, 2)) as t (a, b) where a = b
+group by grouping sets((a, b), (a))
+order by a, b;
+                           QUERY PLAN                           
+----------------------------------------------------------------
+ Unique
+   ->  Sort
+         Sort Key: "*VALUES*".column1, "*VALUES*".column2
+         ->  HashAggregate
+               Hash Key: "*VALUES*".column1, "*VALUES*".column2
+               Hash Key: "*VALUES*".column1
+               ->  Values Scan on "*VALUES*"
+                     Filter: (column1 = column2)
+(8 rows)
+
+select distinct on (a, b) a, b
+from (values (1, 1), (2, 2)) as t (a, b) where a = b
+group by grouping sets((a, b), (a))
+order by a, b;
+ a | b 
+---+---
+ 1 | 1
+ 1 |  
+ 2 | 2
+ 2 |  
+(4 rows)
+
+explain (costs off)
+select distinct on (a, b+1) a, b+1
+from (values (1, 0), (2, 1)) as t (a, b) where a = b+1
+group by grouping sets((a, b+1), (a))
+order by a, b+1;
+                              QUERY PLAN                              
+----------------------------------------------------------------------
+ Unique
+   ->  Sort
+         Sort Key: "*VALUES*".column1, (("*VALUES*".column2 + 1))
+         ->  HashAggregate
+               Hash Key: "*VALUES*".column1, ("*VALUES*".column2 + 1)
+               Hash Key: "*VALUES*".column1
+               ->  Values Scan on "*VALUES*"
+                     Filter: (column1 = (column2 + 1))
+(8 rows)
+
+select distinct on (a, b+1) a, b+1
+from (values (1, 0), (2, 1)) as t (a, b) where a = b+1
+group by grouping sets((a, b+1), (a))
+order by a, b+1;
+ a | ?column? 
+---+----------
+ 1 |        1
+ 1 |         
+ 2 |        2
+ 2 |         
+(4 rows)
+
+explain (costs off)
+select a, b
+from (values (1, 1), (2, 2)) as t (a, b) where a = b
+group by grouping sets((a, b), (a))
+order by a, b nulls first;
+                           QUERY PLAN                           
+----------------------------------------------------------------
+ Sort
+   Sort Key: "*VALUES*".column1, "*VALUES*".column2 NULLS FIRST
+   ->  HashAggregate
+         Hash Key: "*VALUES*".column1, "*VALUES*".column2
+         Hash Key: "*VALUES*".column1
+         ->  Values Scan on "*VALUES*"
+               Filter: (column1 = column2)
+(7 rows)
+
+select a, b
+from (values (1, 1), (2, 2)) as t (a, b) where a = b
+group by grouping sets((a, b), (a))
+order by a, b nulls first;
+ a | b 
+---+---
+ 1 |  
+ 1 | 1
+ 2 |  
+ 2 | 2
+(4 rows)
+
+explain (costs off)
+select 1 as one group by rollup(one) order by one nulls first;
+         QUERY PLAN          
+-----------------------------
+ Sort
+   Sort Key: (1) NULLS FIRST
+   ->  MixedAggregate
+         Hash Key: 1
+         Group Key: ()
+         ->  Result
+(6 rows)
+
+select 1 as one group by rollup(one) order by one nulls first;
+ one 
+-----
+    
+   1
+(2 rows)
+
+explain (costs off)
+select a, b, row_number() over (order by a, b nulls first)
+from (values (1, 1), (2, 2)) as t (a, b) where a = b
+group by grouping sets((a, b), (a));
+                              QUERY PLAN                              
+----------------------------------------------------------------------
+ WindowAgg
+   ->  Sort
+         Sort Key: "*VALUES*".column1, "*VALUES*".column2 NULLS FIRST
+         ->  HashAggregate
+               Hash Key: "*VALUES*".column1, "*VALUES*".column2
+               Hash Key: "*VALUES*".column1
+               ->  Values Scan on "*VALUES*"
+                     Filter: (column1 = column2)
+(8 rows)
+
+select a, b, row_number() over (order by a, b nulls first)
+from (values (1, 1), (2, 2)) as t (a, b) where a = b
+group by grouping sets((a, b), (a));
+ a | b | row_number 
+---+---+------------
+ 1 |   |          1
+ 1 | 1 |          2
+ 2 |   |          3
+ 2 | 2 |          4
+(4 rows)
 
 -- end

@@ -58,6 +58,7 @@
 #include "parser/parse_relation.h"
 #include "parser/parsetree.h"
 #include "partitioning/partdesc.h"
+#include "rewrite/rewriteManip.h"
 #include "utils/lsyscache.h"
 #include "utils/rel.h"
 #include "utils/selfuncs.h"
@@ -3506,9 +3507,23 @@ standard_qp_callback(PlannerInfo *root, void *extra)
 
 		if (grouping_is_sortable(groupClause))
 		{
-			root->group_pathkeys = make_pathkeys_for_sortclauses(root,
-																 groupClause,
-																 tlist);
+			bool		sortable;
+
+			/*
+			 * The groupClause is logically below the grouping step.  So if
+			 * there is an RTE entry for the grouping step, we need to remove
+			 * its RT index from the sort expressions before we make PathKeys
+			 * for them.
+			 */
+			root->group_pathkeys =
+				make_pathkeys_for_sortclauses_extended(root,
+													   &groupClause,
+													   tlist,
+													   false,
+													   parse->hasGroupRTE,
+													   &sortable,
+													   false);
+			Assert(sortable);
 			root->num_groupby_pathkeys = list_length(root->group_pathkeys);
 		}
 		else
@@ -3538,6 +3553,7 @@ standard_qp_callback(PlannerInfo *root, void *extra)
 												   &root->processed_groupClause,
 												   tlist,
 												   true,
+												   false,
 												   &sortable,
 												   true);
 		if (!sortable)
@@ -3589,6 +3605,7 @@ standard_qp_callback(PlannerInfo *root, void *extra)
 												   &root->processed_distinctClause,
 												   tlist,
 												   true,
+												   false,
 												   &sortable,
 												   false);
 		if (!sortable)
@@ -3615,6 +3632,7 @@ standard_qp_callback(PlannerInfo *root, void *extra)
 			make_pathkeys_for_sortclauses_extended(root,
 												   &groupClauses,
 												   tlist,
+												   false,
 												   false,
 												   &sortable,
 												   false);
@@ -5526,7 +5544,19 @@ make_group_input_target(PlannerInfo *root, PathTarget *final_target)
 		{
 			/*
 			 * It's a grouping column, so add it to the input target as-is.
+			 *
+			 * Note that the target is logically below the grouping step.  So
+			 * with grouping sets we need to remove the RT index of the
+			 * grouping step if there is any from the target expression.
 			 */
+			if (parse->hasGroupRTE && parse->groupingSets != NIL)
+			{
+				Assert(root->group_rtindex > 0);
+				expr = (Expr *)
+					remove_nulling_relids((Node *) expr,
+										  bms_make_singleton(root->group_rtindex),
+										  NULL);
+			}
 			add_column_to_pathtarget(input_target, expr, sgref);
 		}
 		else
@@ -5554,11 +5584,23 @@ make_group_input_target(PlannerInfo *root, PathTarget *final_target)
 	 * includes Vars used in resjunk items, so we are covering the needs of
 	 * ORDER BY and window specifications.  Vars used within Aggrefs and
 	 * WindowFuncs will be pulled out here, too.
+	 *
+	 * Note that the target is logically below the grouping step.  So with
+	 * grouping sets we need to remove the RT index of the grouping step if
+	 * there is any from the non-group Vars.
 	 */
 	non_group_vars = pull_var_clause((Node *) non_group_cols,
 									 PVC_RECURSE_AGGREGATES |
 									 PVC_RECURSE_WINDOWFUNCS |
 									 PVC_INCLUDE_PLACEHOLDERS);
+	if (parse->hasGroupRTE && parse->groupingSets != NIL)
+	{
+		Assert(root->group_rtindex > 0);
+		non_group_vars = (List *)
+			remove_nulling_relids((Node *) non_group_vars,
+								  bms_make_singleton(root->group_rtindex),
+								  NULL);
+	}
 	add_new_columns_to_pathtarget(input_target, non_group_vars);
 
 	/* clean up cruft */
@@ -6207,6 +6249,7 @@ make_pathkeys_for_window(PlannerInfo *root, WindowClause *wc,
 																 &wc->partitionClause,
 																 tlist,
 																 true,
+																 false,
 																 &sortable,
 																 false);
 
