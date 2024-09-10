@@ -36,6 +36,7 @@ tests += {
   'tap': {
     'tests': [
       't/001_concurrent_transaction.pl',
+      't/002_corrupt_vm.pl',
     ],
   },
 }
