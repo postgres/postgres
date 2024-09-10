@@ -443,6 +443,17 @@ ERROR:  unsupported XML feature
 LINE 1: SELECT xmlserialize(CONTENT  '<foo><bar><val x="y">42</val><...
                                      ^
 DETAIL:  This functionality requires the server to be built with libxml support.
+-- indent xml strings containing blank nodes
+SELECT xmlserialize(DOCUMENT '<foo>   <bar></bar>    </foo>' AS text INDENT);
+ERROR:  unsupported XML feature
+LINE 1: SELECT xmlserialize(DOCUMENT '<foo>   <bar></bar>    </foo>'...
+                                     ^
+DETAIL:  This functionality requires the server to be built with libxml support.
+SELECT xmlserialize(CONTENT  'text node<foo>    <bar></bar>   </foo>' AS text INDENT);
+ERROR:  unsupported XML feature
+LINE 1: SELECT xmlserialize(CONTENT  'text node<foo>    <bar></bar> ...
+                                     ^
+DETAIL:  This functionality requires the server to be built with libxml support.
 SELECT xml '<foo>bar</foo>' IS DOCUMENT;
 ERROR:  unsupported XML feature
 LINE 1: SELECT xml '<foo>bar</foo>' IS DOCUMENT;

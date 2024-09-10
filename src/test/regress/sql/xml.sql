@@ -168,6 +168,9 @@ SELECT xmlserialize(CONTENT  '<foo><bar></bar></foo>' AS text INDENT);
 -- 'no indent' = not using 'no indent'
 SELECT xmlserialize(DOCUMENT '<foo><bar><val x="y">42</val></bar></foo>' AS text) = xmlserialize(DOCUMENT '<foo><bar><val x="y">42</val></bar></foo>' AS text NO INDENT);
 SELECT xmlserialize(CONTENT  '<foo><bar><val x="y">42</val></bar></foo>' AS text) = xmlserialize(CONTENT '<foo><bar><val x="y">42</val></bar></foo>' AS text NO INDENT);
+-- indent xml strings containing blank nodes
+SELECT xmlserialize(DOCUMENT '<foo>   <bar></bar>    </foo>' AS text INDENT);
+SELECT xmlserialize(CONTENT  'text node<foo>    <bar></bar>   </foo>' AS text INDENT);
 
 SELECT xml '<foo>bar</foo>' IS DOCUMENT;
 SELECT xml '<foo>bar</foo><bar>foo</bar>' IS DOCUMENT;
