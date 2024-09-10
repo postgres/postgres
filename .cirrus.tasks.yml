@@ -321,6 +321,7 @@ task:
 
       env:
         SANITIZER_FLAGS: -fsanitize=address
+        PG_TEST_PG_COMBINEBACKUP_MODE: --copy-file-range
 
       # Normally, the "relation segment" code basically has no coverage in our
       # tests, because we (quite reasonably) don't generate tables large
@@ -435,6 +436,7 @@ task:
     CXXFLAGS: -Og -ggdb
 
     PG_TEST_PG_UPGRADE_MODE: --clone
+    PG_TEST_PG_COMBINEBACKUP_MODE: --clone
 
   <<: *macos_task_template
 
