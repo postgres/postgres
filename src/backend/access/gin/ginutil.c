@@ -69,6 +69,7 @@ ginhandler(PG_FUNCTION_ARGS)
 	amroutine->amvacuumcleanup = ginvacuumcleanup;
 	amroutine->amcanreturn = NULL;
 	amroutine->amcostestimate = gincostestimate;
+	amroutine->amgettreeheight = NULL;
 	amroutine->amoptions = ginoptions;
 	amroutine->amproperty = NULL;
 	amroutine->ambuildphasename = NULL;

@@ -146,6 +146,7 @@ typedef struct IndexAmRoutine
     amvacuumcleanup_function amvacuumcleanup;
     amcanreturn_function amcanreturn;   /* can be NULL */
     amcostestimate_function amcostestimate;
+    amgettreeheight_function amgettreeheight;   /* can be NULL */
     amoptions_function amoptions;
     amproperty_function amproperty;     /* can be NULL */
     ambuildphasename_function ambuildphasename;   /* can be NULL */
@@ -476,6 +477,21 @@ amcostestimate (PlannerInfo *root,
 </programlisting>
    Estimate the costs of an index scan.  This function is described fully
    in <xref linkend="index-cost-estimation"/>, below.
+  </para>
+
+  <para>
+<programlisting>
+int
+amgettreeheight (Relation rel);
+</programlisting>
+   Compute the height of a tree-shaped index.  This information is supplied to
+   the <function>amcostestimate</function> function in
+   <literal>path->indexinfo->tree_height</literal> and can be used to support
+   the cost estimation.  The result is not used anywhere else, so this
+   function can actually be used to compute any kind of data (that fits into
+   an integer) about the index that the cost estimation function might want to
+   know.  If the computation is expensive, it could be useful to cache the
+   result as part of <literal>RelationData.rd_amcache</literal>.
   </para>
 
   <para>

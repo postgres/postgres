@@ -76,6 +76,7 @@ spghandler(PG_FUNCTION_ARGS)
 	amroutine->amvacuumcleanup = spgvacuumcleanup;
 	amroutine->amcanreturn = spgcanreturn;
 	amroutine->amcostestimate = spgcostestimate;
+	amroutine->amgettreeheight = NULL;
 	amroutine->amoptions = spgoptions;
 	amroutine->amproperty = spgproperty;
 	amroutine->ambuildphasename = NULL;

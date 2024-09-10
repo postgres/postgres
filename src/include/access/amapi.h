@@ -140,6 +140,13 @@ typedef void (*amcostestimate_function) (struct PlannerInfo *root,
 										 double *indexCorrelation,
 										 double *indexPages);
 
+/* estimate height of a tree-structured index
+ *
+ * XXX This just computes a value that is later used by amcostestimate.  This
+ * API could be expanded to support passing more values if the need arises.
+ */
+typedef int (*amgettreeheight_function) (Relation rel);
+
 /* parse index reloptions */
 typedef bytea *(*amoptions_function) (Datum reloptions,
 									  bool validate);
@@ -272,6 +279,7 @@ typedef struct IndexAmRoutine
 	amvacuumcleanup_function amvacuumcleanup;
 	amcanreturn_function amcanreturn;	/* can be NULL */
 	amcostestimate_function amcostestimate;
+	amgettreeheight_function amgettreeheight;	/* can be NULL */
 	amoptions_function amoptions;
 	amproperty_function amproperty; /* can be NULL */
 	ambuildphasename_function ambuildphasename; /* can be NULL */

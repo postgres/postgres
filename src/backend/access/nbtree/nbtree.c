@@ -133,6 +133,7 @@ bthandler(PG_FUNCTION_ARGS)
 	amroutine->amvacuumcleanup = btvacuumcleanup;
 	amroutine->amcanreturn = btcanreturn;
 	amroutine->amcostestimate = btcostestimate;
+	amroutine->amgettreeheight = btgettreeheight;
 	amroutine->amoptions = btoptions;
 	amroutine->amproperty = btproperty;
 	amroutine->ambuildphasename = btbuildphasename;
@@ -1444,4 +1445,13 @@ bool
 btcanreturn(Relation index, int attno)
 {
 	return true;
+}
+
+/*
+ * btgettreeheight() -- Compute tree height for use by btcostestimate().
+ */
+int
+btgettreeheight(Relation rel)
+{
+	return _bt_getrootheight(rel);
 }

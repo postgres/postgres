@@ -241,7 +241,7 @@ get_relation_info(PlannerInfo *root, Oid relationObjectId, bool inhparent,
 			Oid			indexoid = lfirst_oid(l);
 			Relation	indexRelation;
 			Form_pg_index index;
-			IndexAmRoutine *amroutine;
+			IndexAmRoutine *amroutine = NULL;
 			IndexOptInfo *info;
 			int			ncolumns,
 						nkeycolumns;
@@ -485,13 +485,12 @@ get_relation_info(PlannerInfo *root, Oid relationObjectId, bool inhparent,
 						info->tuples = rel->tuples;
 				}
 
-				if (info->relam == BTREE_AM_OID)
+				/*
+				 * Get tree height while we have the index open
+				 */
+				if (amroutine->amgettreeheight)
 				{
-					/*
-					 * For btrees, get tree height while we have the index
-					 * open
-					 */
-					info->tree_height = _bt_getrootheight(indexRelation);
+					info->tree_height = amroutine->amgettreeheight(indexRelation);
 				}
 				else
 				{

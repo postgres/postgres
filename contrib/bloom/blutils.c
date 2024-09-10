@@ -137,6 +137,7 @@ blhandler(PG_FUNCTION_ARGS)
 	amroutine->amvacuumcleanup = blvacuumcleanup;
 	amroutine->amcanreturn = NULL;
 	amroutine->amcostestimate = blcostestimate;
+	amroutine->amgettreeheight = NULL;
 	amroutine->amoptions = bloptions;
 	amroutine->amproperty = NULL;
 	amroutine->ambuildphasename = NULL;

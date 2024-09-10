@@ -1186,6 +1186,7 @@ extern IndexBulkDeleteResult *btbulkdelete(IndexVacuumInfo *info,
 extern IndexBulkDeleteResult *btvacuumcleanup(IndexVacuumInfo *info,
 											  IndexBulkDeleteResult *stats);
 extern bool btcanreturn(Relation index, int attno);
+extern int	btgettreeheight(Relation rel);
 
 /*
  * prototypes for internal functions in nbtree.c

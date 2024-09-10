@@ -308,6 +308,7 @@ dihandler(PG_FUNCTION_ARGS)
 	amroutine->amvacuumcleanup = divacuumcleanup;
 	amroutine->amcanreturn = NULL;
 	amroutine->amcostestimate = dicostestimate;
+	amroutine->amgettreeheight = NULL;
 	amroutine->amoptions = dioptions;
 	amroutine->amproperty = NULL;
 	amroutine->ambuildphasename = NULL;
