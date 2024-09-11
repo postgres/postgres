@@ -537,6 +537,8 @@ SELECT JSON_OBJECT('a': '1', 'b': NULL, 'c': 2 ABSENT ON NULL);
  {"a" : "1", "c" : 2}
 (1 row)
 
+SELECT JSON_OBJECT(1: 1, '2': NULL, '3': 1, repeat('x', 1000): 1, 2: repeat('a', 100) WITH UNIQUE);
+ERROR:  duplicate JSON object key value: "2"
 SELECT JSON_OBJECT(1: 1, '1': NULL WITH UNIQUE);
 ERROR:  duplicate JSON object key value: "1"
 SELECT JSON_OBJECT(1: 1, '1': NULL ABSENT ON NULL WITH UNIQUE);
@@ -921,6 +923,9 @@ FROM (VALUES (1, 1), (0, NULL),(4, null), (5, null),(6, null),(2, 2)) foo(k, v);
  {"1": 1, "2": 2}
 (1 row)
 
+SELECT JSON_OBJECTAGG(mod(i,100): (i)::text FORMAT JSON WITH UNIQUE)
+FROM generate_series(0, 199) i;
+ERROR:  duplicate JSON object key value: "0"
 -- Test JSON_OBJECT deparsing
 EXPLAIN (VERBOSE, COSTS OFF)
 SELECT JSON_OBJECT('foo' : '1' FORMAT JSON, 'bar' : 'baz' RETURNING json);
