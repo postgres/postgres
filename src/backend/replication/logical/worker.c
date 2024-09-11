@@ -2929,9 +2929,10 @@ FindReplTupleInLocalRel(ApplyExecutionData *edata, Relation localrel,
 		Relation	idxrel = index_open(localidxoid, AccessShareLock);
 
 		/* Index must be PK, RI, or usable for REPLICA IDENTITY FULL tables */
-		Assert(GetRelationIdentityOrPK(idxrel) == localidxoid ||
-			   IsIndexUsableForReplicaIdentityFull(BuildIndexInfo(idxrel),
-												   edata->targetRel->attrmap));
+		Assert(GetRelationIdentityOrPK(localrel) == localidxoid ||
+			   (remoterel->replident == REPLICA_IDENTITY_FULL &&
+				IsIndexUsableForReplicaIdentityFull(BuildIndexInfo(idxrel),
+													edata->targetRel->attrmap)));
 		index_close(idxrel, AccessShareLock);
 #endif
 
