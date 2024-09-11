@@ -376,8 +376,6 @@ check_agglevels_and_constraints(ParseState *pstate, Node *expr)
 
 			break;
 		case EXPR_KIND_FROM_SUBSELECT:
-			/* Should only be possible in a LATERAL subquery */
-			Assert(pstate->p_lateral_active);
 
 			/*
 			 * Aggregate/grouping scope rules make it worth being explicit
