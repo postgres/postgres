@@ -14,8 +14,6 @@
 #ifndef JSONAPI_H
 #define JSONAPI_H
 
-#include "lib/stringinfo.h"
-
 typedef enum JsonTokenType
 {
 	JSON_TOKEN_INVALID,
@@ -51,6 +49,7 @@ typedef enum JsonParseErrorType
 	JSON_EXPECTED_OBJECT_NEXT,
 	JSON_EXPECTED_STRING,
 	JSON_INVALID_TOKEN,
+	JSON_OUT_OF_MEMORY,
 	JSON_UNICODE_CODE_POINT_ZERO,
 	JSON_UNICODE_ESCAPE_FORMAT,
 	JSON_UNICODE_HIGH_ESCAPE,
@@ -63,6 +62,16 @@ typedef enum JsonParseErrorType
 /* Parser state private to jsonapi.c */
 typedef struct JsonParserStack JsonParserStack;
 typedef struct JsonIncrementalState JsonIncrementalState;
+
+/*
+ * Don't depend on the internal type header for strval; if callers need access
+ * then they can include the appropriate header themselves.
+ */
+#ifdef JSONAPI_USE_PQEXPBUFFER
+#define jsonapi_StrValType PQExpBufferData
+#else
+#define jsonapi_StrValType StringInfoData
+#endif
 
 /*
  * All the fields in this structure should be treated as read-only.
@@ -102,8 +111,9 @@ typedef struct JsonLexContext
 	const char *line_start;		/* where that line starts within input */
 	JsonParserStack *pstack;
 	JsonIncrementalState *inc_state;
-	StringInfo	strval;
-	StringInfo	errormsg;
+	bool		need_escapes;
+	struct jsonapi_StrValType *strval;	/* only used if need_escapes == true */
+	struct jsonapi_StrValType *errormsg;
 } JsonLexContext;
 
 typedef JsonParseErrorType (*json_struct_action) (void *state);

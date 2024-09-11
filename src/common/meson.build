@@ -102,6 +102,10 @@ common_sources_cflags = {
 # a matter of policy, because it is not appropriate for general purpose
 # libraries such as libpq to report errors directly.  fe_memutils.c is
 # excluded because libpq must not exit() on allocation failure.
+#
+# The excluded files for _shlib builds are pulled into their own static
+# library, for the benefit of test programs that need not follow the
+# shlib rules.
 
 common_sources_frontend_shlib = common_sources
 common_sources_frontend_shlib += files(
@@ -109,11 +113,15 @@ common_sources_frontend_shlib += files(
   'sprompt.c',
 )
 
-common_sources_frontend_static = common_sources_frontend_shlib
-common_sources_frontend_static += files(
+common_sources_excluded_shlib = files(
   'fe_memutils.c',
   'logging.c',
 )
+
+common_sources_frontend_static = [
+  common_sources_frontend_shlib,
+  common_sources_excluded_shlib,
+]
 
 # Build pgcommon once for backend, once for use in frontend binaries, and
 # once for use in shared libraries
@@ -142,6 +150,10 @@ pgcommon_variants = {
     'pic': true,
     'sources': common_sources_frontend_shlib,
     'dependencies': [frontend_common_code],
+    # The JSON API normally exits on out-of-memory; disable that behavior for
+    # shared library builds. This requires libpq's pqexpbuffer.h.
+    'c_args': ['-DJSONAPI_USE_PQEXPBUFFER'],
+    'include_directories': include_directories('../interfaces/libpq'),
   },
 }
 
@@ -157,8 +169,11 @@ foreach name, opts : pgcommon_variants
     c_args = opts.get('c_args', []) + common_cflags[cflagname]
     cflag_libs += static_library('libpgcommon@0@_@1@'.format(name, cflagname),
       c_pch: pch_c_h,
-      include_directories: include_directories('.'),
       kwargs: opts + {
+        'include_directories': [
+          include_directories('.'),
+          opts.get('include_directories', []),
+        ],
         'sources': sources,
         'c_args': c_args,
         'build_by_default': false,
@@ -170,8 +185,11 @@ foreach name, opts : pgcommon_variants
   lib = static_library('libpgcommon@0@'.format(name),
       link_with: cflag_libs,
       c_pch: pch_c_h,
-      include_directories: include_directories('.'),
       kwargs: opts + {
+        'include_directories': [
+          include_directories('.'),
+          opts.get('include_directories', []),
+        ],
         'dependencies': opts['dependencies'] + [ssl],
       }
     )
@@ -181,5 +199,14 @@ endforeach
 common_srv = pgcommon['_srv']
 common_shlib = pgcommon['_shlib']
 common_static = pgcommon['']
+
+common_excluded_shlib = static_library('libpgcommon_excluded_shlib',
+  sources: common_sources_excluded_shlib,
+  dependencies: [frontend_common_code],
+  build_by_default: false,
+  kwargs: default_lib_args + {
+    'install': false,
+  },
+)
 
 subdir('unicode')

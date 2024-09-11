@@ -16,24 +16,31 @@ use File::Temp qw(tempfile);
 my $test_file = "$FindBin::RealBin/../tiny.json";
 my $test_out = "$FindBin::RealBin/../tiny.out";
 
-my $exe = "test_json_parser_incremental";
+my @exes =
+  ("test_json_parser_incremental", "test_json_parser_incremental_shlib");
 
-my ($stdout, $stderr) = run_command([ $exe, "-s", $test_file ]);
+foreach my $exe (@exes)
+{
+	note "testing executable $exe";
 
-is($stderr, "", "no error output");
+	my ($stdout, $stderr) = run_command([ $exe, "-s", $test_file ]);
 
-my $dir = PostgreSQL::Test::Utils::tempdir;
-my ($fh, $fname) = tempfile(DIR => $dir);
+	is($stderr, "", "no error output");
 
-print $fh $stdout, "\n";
+	my $dir = PostgreSQL::Test::Utils::tempdir;
+	my ($fh, $fname) = tempfile(DIR => $dir);
 
-close($fh);
+	print $fh $stdout, "\n";
 
-my @diffopts = ("-u");
-push(@diffopts, "--strip-trailing-cr") if $windows_os;
-($stdout, $stderr) = run_command([ "diff", @diffopts, $fname, $test_out ]);
+	close($fh);
 
-is($stdout, "", "no output diff");
-is($stderr, "", "no diff error");
+	my @diffopts = ("-u");
+	push(@diffopts, "--strip-trailing-cr") if $windows_os;
+	($stdout, $stderr) =
+	  run_command([ "diff", @diffopts, $fname, $test_out ]);
+
+	is($stdout, "", "no output diff");
+	is($stderr, "", "no diff error");
+}
 
 done_testing();
