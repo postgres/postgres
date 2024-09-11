@@ -404,9 +404,7 @@ btrescan(IndexScanDesc scan, ScanKey scankey, int nscankeys,
 	 * Reset the scan keys
 	 */
 	if (scankey && scan->numberOfKeys > 0)
-		memmove(scan->keyData,
-				scankey,
-				scan->numberOfKeys * sizeof(ScanKeyData));
+		memcpy(scan->keyData, scankey, scan->numberOfKeys * sizeof(ScanKeyData));
 	so->numberOfKeys = 0;		/* until _bt_preprocess_keys sets it */
 	so->numArrayKeys = 0;		/* ditto */
 }

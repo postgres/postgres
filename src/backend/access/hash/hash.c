@@ -415,11 +415,7 @@ hashrescan(IndexScanDesc scan, ScanKey scankey, int nscankeys,
 
 	/* Update scan key, if a new one is given */
 	if (scankey && scan->numberOfKeys > 0)
-	{
-		memmove(scan->keyData,
-				scankey,
-				scan->numberOfKeys * sizeof(ScanKeyData));
-	}
+		memcpy(scan->keyData, scankey, scan->numberOfKeys * sizeof(ScanKeyData));
 
 	so->hashso_buc_populated = false;
 	so->hashso_buc_split = false;

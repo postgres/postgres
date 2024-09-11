@@ -447,10 +447,7 @@ ginrescan(IndexScanDesc scan, ScanKey scankey, int nscankeys,
 	ginFreeScanKeys(so);
 
 	if (scankey && scan->numberOfKeys > 0)
-	{
-		memmove(scan->keyData, scankey,
-				scan->numberOfKeys * sizeof(ScanKeyData));
-	}
+		memcpy(scan->keyData, scankey, scan->numberOfKeys * sizeof(ScanKeyData));
 }
 
 

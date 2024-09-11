@@ -55,10 +55,7 @@ blrescan(IndexScanDesc scan, ScanKey scankey, int nscankeys,
 	so->sign = NULL;
 
 	if (scankey && scan->numberOfKeys > 0)
-	{
-		memmove(scan->keyData, scankey,
-				scan->numberOfKeys * sizeof(ScanKeyData));
-	}
+		memcpy(scan->keyData, scankey, scan->numberOfKeys * sizeof(ScanKeyData));
 }
 
 /*
