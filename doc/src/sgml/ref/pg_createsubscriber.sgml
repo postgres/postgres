@@ -64,7 +64,7 @@ PostgreSQL documentation
   </para>
 
   <para>
-   The <application>pg_createsubscriber</application> targets large database
+   <application>pg_createsubscriber</application> targets large database
    systems because in logical replication setup, most of the time is spent
    doing the initial data copy.  Furthermore, a side effect of this long time
    spent synchronizing data is usually a large amount of changes to be applied
@@ -191,8 +191,8 @@ PostgreSQL documentation
      <listitem>
       <para>
        Use the specified main server configuration file for the target data
-       directory.  The <application>pg_createsubscriber</application> uses
-       internally the <application>pg_ctl</application> command to start and
+       directory.  <application>pg_createsubscriber</application> internally uses
+       the <application>pg_ctl</application> command to start and
        stop the target server.  It allows you to specify the actual
        <filename>postgresql.conf</filename> configuration file if it is stored
        outside the data directory.
