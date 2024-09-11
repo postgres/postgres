@@ -1,15 +1,23 @@
+use postgres::Row;
+
+use crate::node::client::Client;
+
 use super::router::Router;
 use super::shard::Shard;
 use std::ffi::CStr;
+use std::sync::{Arc, Mutex};
+use std::thread;
 
 /// The role of a node in the sharding system
 pub trait NodeRole {
     /// Sends a query to the shard group
-    fn send_query(&mut self, query: &str) -> bool;
+    fn send_query(&mut self, query: &str) -> Option<Vec<Row>>;
 }
 
 #[repr(C)]
+#[derive(Debug)]
 pub enum NodeType {
+    Client,
     Router,
     Shard,
 }
@@ -68,17 +76,38 @@ pub extern "C" fn init_node_instance(
 
         match node_type {
             NodeType::Router => {
-                NODE_INSTANCE = Some(NodeInstance::new(Box::new(Router::new(
-                    ip,
-                    node_port,
-                    config_path,
-                ))));
+                let router = Router::new(ip, node_port, config_path);
+                NODE_INSTANCE = Some(NodeInstance::new(Box::new(router.clone())));
+
+                let shared_router: Arc<Mutex<Router>> = Arc::new(Mutex::new(router));
+
+                let _handle = thread::spawn(move || {
+                    Router::wait_for_client(shared_router, ip, node_port);
+                });
+
                 println!("Router node initializes");
             }
             NodeType::Shard => {
                 println!("Sharding node initializing");
-                NODE_INSTANCE = Some(NodeInstance::new(Box::new(Shard::new(ip, node_port))));
+                let shard = Shard::new(ip, node_port);
+                NODE_INSTANCE = Some(NodeInstance::new(Box::new(shard.clone())));
+
+                let shared_shard = Arc::new(Mutex::new(shard));
+
+                let _handle = thread::spawn(move || {
+                    Shard::accept_connections(shared_shard, ip, node_port);
+                });
+
                 println!("Sharding node initializes");
+            }
+            NodeType::Client => {
+                println!("Client node initializing");
+                NODE_INSTANCE = Some(NodeInstance::new(Box::new(Client::new(
+                    ip,
+                    node_port,
+                    config_path,
+                ))));
+                println!("Client node initializes");
             }
         }
     }

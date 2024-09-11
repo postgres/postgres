@@ -11,6 +11,7 @@
 #include "fe_utils/psqlscan.h"
 
 typedef enum {
+    Client,
     Router,
     Shard,
 } NodeType;

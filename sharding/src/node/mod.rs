@@ -1,3 +1,4 @@
+pub mod client;
 mod memory_manager;
 pub mod messages;
 pub mod node;

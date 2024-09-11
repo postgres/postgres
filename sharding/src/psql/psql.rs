@@ -2,7 +2,6 @@ use std::ffi::CStr;
 extern crate users;
 use super::super::node::node::*;
 use inline_colorization::*;
-use users::get_current_username;
 
 #[no_mangle]
 pub extern "C" fn SendQueryToShard(query_data: *const i8) -> bool {
@@ -29,5 +28,8 @@ pub extern "C" fn SendQueryToShard(query_data: *const i8) -> bool {
 
 fn handle_query(query: &str) -> bool {
     let node_instance = get_node_instance();
-    node_instance.send_query(query)
+    match node_instance.send_query(query) {
+        Some(_) => true,
+        None => false,
+    }
 }

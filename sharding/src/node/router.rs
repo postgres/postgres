@@ -1,25 +1,18 @@
-use postgres::{Client, NoTls};
+use postgres::{Client as PostgresClient, Row};
 extern crate users;
 use crate::node::messages::message::{Message, MessageType};
+use crate::node::messages::node_info::NodeInfo;
 use crate::utils::queries::{query_affects_memory_state, query_is_insert};
 
 use super::node::*;
 use super::shard_manager::ShardManager;
-use crate::utils::common::get_username_dinamically;
+use crate::utils::common::{connect_to_node, Channel};
 use crate::utils::node_config::{get_router_config, Node};
 use inline_colorization::*;
-use rust_decimal::Decimal;
 use std::collections::HashMap;
 use std::io::{Read, Write};
 use std::sync::{Arc, MutexGuard, RwLock};
-use std::{io, net::TcpStream, sync::Mutex};
-
-// use super::super::utils::sysinfo::print_available_memory;
-
-#[derive(Clone)]
-pub struct Channel {
-    stream: Arc<Mutex<TcpStream>>,
-}
+use std::{io, net::TcpListener, net::TcpStream, sync::Mutex, thread};
 
 /// This struct represents the Router node in the distributed system. It has the responsibility of routing the queries to the appropriate shard or shards.
 #[repr(C)]
@@ -28,7 +21,7 @@ pub struct Router {
     ///  HashMap:
     ///     key: shardId
     ///     value: Shard's Client
-    shards: Arc<Mutex<HashMap<String, Client>>>,
+    shards: Arc<Mutex<HashMap<String, PostgresClient>>>,
     shard_manager: Arc<ShardManager>,
     ///  HashMap:
     ///     key: Hash
@@ -44,10 +37,117 @@ impl Router {
         Router::initialize_router_with_connections(ip, port, config_path)
     }
 
+    pub fn wait_for_client(shared_router: Arc<Mutex<Router>>, ip: &str, port: &str) {
+        let listener =
+            TcpListener::bind(format!("{}:{}", ip, port.parse::<u64>().unwrap() + 1000)).unwrap();
+
+        loop {
+            match listener.accept() {
+                Ok((stream, addr)) => {
+                    println!(
+                        "{color_bright_green}[ROUTER] New connection accepted from {}.{style_reset}",
+                        addr
+                    );
+
+                    // Start listening for incoming messages in a thread
+                    let router_clone = shared_router.clone();
+                    let shareable_stream = Arc::new(Mutex::new(stream));
+                    let stream_clone = Arc::clone(&shareable_stream);
+
+                    let _handle = thread::spawn(move || {
+                        Router::listen(router_clone, stream_clone);
+                    });
+                }
+                Err(e) => {
+                    eprintln!("Failed to accept a connection: {}", e);
+                }
+            }
+        }
+    }
+
+    // Listen for incoming messages
+    pub fn listen(shared_router: Arc<Mutex<Router>>, stream: Arc<Mutex<TcpStream>>) {
+        loop {
+            // sleep for 1 millisecond to allow the stream to be ready to read
+            thread::sleep(std::time::Duration::from_millis(1));
+            let mut router = shared_router.lock().unwrap();
+            let mut buffer = [0; 1024];
+
+            let mut stream = stream.lock().unwrap();
+
+            match stream.set_read_timeout(Some(std::time::Duration::new(10, 0))) {
+                Ok(_) => {}
+                Err(_e) => {
+                    continue;
+                }
+            }
+
+            match stream.read(&mut buffer) {
+                Ok(chars) => {
+                    if chars == 0 {
+                        continue;
+                    }
+                    let message_string = String::from_utf8_lossy(&buffer);
+                    match router.get_response_message(&message_string) {
+                        Some(response) => {
+                            stream.write(response.as_bytes()).unwrap();
+                        }
+                        None => {
+                            // do nothing
+                        }
+                    }
+                }
+                Err(_e) => {
+                    // could not read from the stream, ignore
+                }
+            }
+        }
+    }
+
+    fn get_response_message(&mut self, message: &str) -> Option<String> {
+        if message.is_empty() {
+            return None;
+        }
+
+        let message = match Message::from_string(&message) {
+            Ok(message) => message,
+            Err(e) => {
+                eprintln!("Failed to parse message: {:?}. Message: [{:?}]", e, message);
+                return None;
+            }
+        };
+
+        match message.get_message_type() {
+            MessageType::Query => {
+                let query = message.get_data().query.unwrap();
+                let response = match self.send_query(&query) {
+                    Some(response) => response,
+                    None => {
+                        eprintln!("Failed to send query to shards");
+                        return None;
+                    }
+                };
+                let response_message = Message::new_query_response(response);
+                Some(response_message.to_string())
+            }
+            _ => {
+                eprintln!(
+                    "Message type received: {:?}, not yet implemented",
+                    message.get_message_type()
+                );
+                None
+            }
+        }
+    }
+
     /// Initializes the Router node with connections to the shards specified in the configuration file.
-    fn initialize_router_with_connections(ip: &str, port: &str, config_path: Option<&str>) -> Router {
+    fn initialize_router_with_connections(
+        ip: &str,
+        port: &str,
+        config_path: Option<&str>,
+    ) -> Router {
         let config = get_router_config(config_path);
-        let shards: HashMap<String, Client> = HashMap::new();
+        let shards: HashMap<String, PostgresClient> = HashMap::new();
         let comm_channels: HashMap<String, Channel> = HashMap::new();
         let shard_manager = ShardManager::new();
 
@@ -73,7 +173,7 @@ impl Router {
         let node_ip = node.ip;
         let node_port = node.port;
 
-        let shard_client = match Router::connect_to_node(&node_ip, &node_port) {
+        let shard_client = match connect_to_node(&node_ip, &node_port) {
             Ok(shard_client) => shard_client,
             Err(_) => {
                 println!("Failed to connect to port: {}", node_port);
@@ -87,7 +187,7 @@ impl Router {
     }
 
     /// Saves the shard client in the Router's shards HashMap with its corresponding shard id as key.
-    fn save_shard_client(&mut self, shard_id: String, shard_client: Client) {
+    fn save_shard_client(&mut self, shard_id: String, shard_client: PostgresClient) {
         let mut shards = self.shards.lock().unwrap();
         shards.insert(shard_id, shard_client);
     }
@@ -120,8 +220,12 @@ impl Router {
     ) -> bool {
         // Send InitConnection Message to Shard and save shard to ShardManager
         let mut stream = health_connection.stream.as_ref().lock().unwrap();
-        let update_message = Message::new(MessageType::InitConnection, None);
 
+        let node_info = NodeInfo {
+            ip: self.ip.as_ref().to_string(),
+            port: self.port.as_ref().to_string(),
+        };
+        let update_message = Message::new_init_connection(node_info);
         println!("Sending message to shard: {:?}", update_message);
 
         let message_string = update_message.to_string();
@@ -155,19 +259,19 @@ impl Router {
 
     /// Handles the responses from the shard from the health_connection channel.
     fn handle_response(&mut self, response_message: Message, node_port: &str) -> bool {
-        match response_message.message_type {
+        match response_message.get_message_type() {
             MessageType::Agreed => {
                 println!(
                     "{color_bright_green}Shard {} accepted the connection{style_reset}",
                     node_port
                 );
-                let memory_size = response_message.payload.unwrap();
+                let memory_size = response_message.get_data().payload.unwrap();
                 println!("Memory size: {}", memory_size);
                 self.save_shard_in_manager(memory_size, node_port.to_string());
                 true
             }
             MessageType::MemoryUpdate => {
-                let memory_size = response_message.payload.unwrap();
+                let memory_size = response_message.get_data().payload.unwrap();
                 println!(
                     "{color_bright_green}Shard {} updated its memory size to {}{style_reset}",
                     node_port, memory_size
@@ -205,24 +309,6 @@ impl Router {
         );
     }
 
-    /// Connects to the node with the given ip and port, returning a Client.
-    fn connect_to_node(ip: &str, port: &str) -> Result<Client, postgres::Error> {
-        // get username dynamically
-        let username = get_username_dinamically();
-
-        match Client::connect(
-            format!(
-                "host={} port={} user={} dbname=template1",
-                ip, port, username
-            )
-            .as_str(),
-            NoTls,
-        ) {
-            Ok(shard_client) => Ok(shard_client),
-            Err(e) => Err(e),
-        }
-    }
-
     /// Establishes a health connection with the node with the given ip and port, returning a Channel.
     fn get_shard_channel(node_ip: &str, node_port: &str) -> Result<Channel, io::Error> {
         let port = node_port.parse::<u64>().unwrap() + 1000;
@@ -257,32 +343,36 @@ impl Router {
             (vec![shard.clone()], true)
         } else {
             // Return all shards
-            (self.shards.lock().unwrap().keys().cloned().collect(), query_affects_memory_state(query))
+            (
+                self.shards.lock().unwrap().keys().cloned().collect(),
+                query_affects_memory_state(query),
+            )
         }
     }
 }
 
 impl NodeRole for Router {
-    fn send_query(&mut self, query: &str) -> bool {
+    fn send_query(&mut self, query: &str) -> Option<Vec<Row>> {
         println!("Router send_query called with query: {:?}", query);
 
         let (shards, is_insert) = self.get_shards_for_query(query);
 
         if shards.len() == 0 {
             eprintln!("No shards found for the query");
-            return false;
+            return None;
         }
 
+        let mut shards_responses: Vec<Row> = Vec::new();
         for shard_id in shards {
-            self.send_query_to_shard(shard_id, query, is_insert);
+            shards_responses.extend(self.send_query_to_shard(shard_id, query, is_insert));
         }
-        true
+
+        Some(shards_responses)
     }
 }
 
 // Communication with shards
 impl Router {
-
     fn get_stream(&self, shard_id: &str) -> Option<Arc<Mutex<TcpStream>>> {
         let comm_channels = match self.comm_channels.read() {
             Ok(comm_channels) => comm_channels,
@@ -303,8 +393,15 @@ impl Router {
         Some(shard_comm_channel.stream.clone())
     }
 
-    fn init_message_exchange(&mut self, message: Message, writable_stream: &mut MutexGuard<TcpStream>, shard_id: String) -> bool {
-        writable_stream.write(message.to_string().as_bytes()).unwrap();
+    fn init_message_exchange(
+        &mut self,
+        message: Message,
+        writable_stream: &mut MutexGuard<TcpStream>,
+        shard_id: String,
+    ) -> bool {
+        writable_stream
+            .write(message.to_string().as_bytes())
+            .unwrap();
         let mut response: [u8; 1024] = [0; 1024];
 
         // Readn and handle message
@@ -318,7 +415,7 @@ impl Router {
                 return false;
             }
         };
-        
+
         self.handle_response(response_message, shard_id.as_str())
     }
 
@@ -341,17 +438,17 @@ impl Router {
         };
 
         // Write message
-        let message = Message::new(MessageType::AskMemoryUpdate, None);
+        let message = Message::new_ask_memory_update();
         self.init_message_exchange(message, &mut writable_stream, shard_id);
     }
 
-    fn send_query_to_shard(&mut self, shard_id: String, query: &str, update: bool) {
+    fn send_query_to_shard(&mut self, shard_id: String, query: &str, update: bool) -> Vec<Row> {
         if let Some(shard) = self.clone().shards.lock().unwrap().get_mut(&shard_id) {
             let rows = match shard.query(query, &[]) {
                 Ok(rows) => rows,
                 Err(e) => {
                     eprintln!("Failed to send the query to the shard: {:?}", e);
-                    return;
+                    return Vec::new();
                 }
             };
 
@@ -359,21 +456,10 @@ impl Router {
                 self.ask_for_memory_update(shard_id);
             }
 
-            // TODO-SHARD: maybe this can be encapsulated inside another trait, with `.query` included
-
-            for row in rows {
-                let id: i32 = row.get(0);
-                let name: &str = row.get(1);
-                let position: &str = row.get(2);
-                let salary: Decimal = row.get(3);
-                println!(
-                    "QUERY RESULT: id: {}, name: {}, position: {}, salary: {}",
-                    id, name, position, salary
-                );
-            }
+            return rows;
         } else {
             eprintln!("Shard {:?} not found", shard_id);
-            return;
+            return Vec::new();
         }
     }
 }

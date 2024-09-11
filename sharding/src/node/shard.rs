@@ -1,62 +1,48 @@
-use futures::lock::Mutex;
 use inline_colorization::*;
-use postgres::{Client, NoTls};
+use postgres::{Client as PostgresClient, Row};
 use std::io::{Read, Write};
 use std::net::{TcpListener, TcpStream};
-use std::sync::{Arc, RwLock};
+use std::sync::{Arc, Mutex};
 use std::{io, thread};
 
 extern crate users;
 use super::memory_manager::MemoryManager;
 use super::messages::message::{Message, MessageType};
+use super::messages::node_info::NodeInfo;
 use super::node::*;
 use crate::node::shard;
+use crate::utils::common::connect_to_node;
 use crate::utils::node_config::get_shard_config;
-use users::get_current_username;
 
 /// This struct represents the Shard node in the distributed system. It will communicate with the router
 #[repr(C)]
 #[derive(Clone)]
 pub struct Shard {
-    // router: Client,
-    backend: Arc<Mutex<Client>>,
+    backend: Arc<Mutex<PostgresClient>>,
     ip: Arc<str>,
     port: Arc<str>,
-    listener: Arc<RwLock<TcpListener>>,
-    router_stream: Arc<RwLock<Option<TcpStream>>>,
     memory_manager: Arc<Mutex<MemoryManager>>,
+    router_info: Arc<Mutex<Option<NodeInfo>>>,
+}
+
+use std::fmt;
+impl fmt::Debug for Shard {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.debug_struct("Shard")
+            .field("ip", &self.ip)
+            .field("port", &self.port)
+            .field("router_info", &self.router_info)
+            .finish()
+    }
 }
 
 impl Shard {
     /// Creates a new Shard node with the given port
     pub fn new(ip: &str, port: &str) -> Self {
         println!("Creating a new Shard node with port: {}", port);
-
-        // get username dynamically
-        let username = match get_current_username() {
-            Some(username) => username.to_string_lossy().to_string(),
-            None => panic!("Failed to get current username"),
-        };
-        println!("Username found: {:?}", username);
         println!("Connecting to the database with port: {}", port);
 
-        let mut backend: Client = match Client::connect(
-            format!(
-                "host=127.0.0.1 port={} user={} dbname=template1",
-                port, username
-            )
-            .as_str(),
-            NoTls,
-        ) {
-            Ok(backend) => backend,
-            Err(e) => {
-                eprintln!("Failed to connect to the database: {:?}", e);
-                panic!("Failed to connect to the database");
-            }
-        };
-        let mut listener = Arc::new(RwLock::new(
-            TcpListener::bind(format!("{}:{}", ip, port.parse::<u64>().unwrap() + 1000)).unwrap(),
-        ));
+        let backend: PostgresClient = connect_to_node(ip, port).unwrap();
 
         // Initialize memory manager
         let config = get_shard_config();
@@ -68,119 +54,132 @@ impl Shard {
             memory_manager.available_memory_perc
         );
 
-        let stream = Arc::new(RwLock::new(None));
         let shard = Shard {
-            // router: clients,
             backend: Arc::new(Mutex::new(backend)),
             ip: Arc::from(ip),
             port: Arc::from(port),
-            listener: listener.clone(),
-            router_stream: stream.clone(),
             memory_manager: Arc::new(Mutex::new(memory_manager)),
+            router_info: Arc::new(Mutex::new(None)),
         };
-
-        let listener_clone = listener.clone();
-        let stream_clone = stream.clone();
-
-        let mut shard_clone = shard.clone();
-        let _handle = thread::spawn(move || {
-            shard_clone.accept_connections(listener_clone, stream_clone);
-        });
-
         shard
     }
 
-    fn accept_connections(
-        &mut self,
-        listener: Arc<RwLock<TcpListener>>,
-        rw_stream: Arc<RwLock<Option<TcpStream>>>,
-    ) {
-        let listener_guard = listener.read().unwrap();
-        match listener_guard.accept() {
-            Ok((stream, addr)) => {
-                println!("{color_bright_green}New connection accepted from {}.{style_reset}", addr);
-                // let mut stream_guard = rw_stream.write().unwrap();
+    pub fn accept_connections(shared_shard: Arc<Mutex<Shard>>, ip: &str, port: &str) {
+        let listener =
+            TcpListener::bind(format!("{}:{}", ip, port.parse::<u64>().unwrap() + 1000)).unwrap();
 
-                self.router_stream = Arc::new(RwLock::new(Some(stream)));
+        loop {
+            match listener.accept() {
+                Ok((stream, addr)) => {
+                    println!(
+                        "{color_bright_green}[SHARD] New connection accepted from {}.{style_reset}",
+                        addr
+                    );
 
-                // Start listening for incoming messages in a thread
-                let mut shard_clone = self.clone();
-                let _handle = thread::spawn(move || {
-                    shard_clone.listen();
-                });
-            }
-            Err(e) => {
-                eprintln!("Failed to accept a connection: {}", e);
+                    // Start listening for incoming messages in a thread
+                    let shard_clone = shared_shard.clone();
+                    let shareable_stream = Arc::new(Mutex::new(stream));
+                    let stream_clone = Arc::clone(&shareable_stream);
+
+                    let _handle = thread::spawn(move || {
+                        Shard::listen(shard_clone, stream_clone);
+                    });
+                }
+                Err(e) => {
+                    eprintln!("Failed to accept a connection: {}", e);
+                }
             }
         }
     }
 
     // Listen for incoming messages
-    pub fn listen(&mut self) {
-        println!("Listening for incoming messages");
-        let self_clone = self.clone();
-        let stream = self_clone.router_stream.read().unwrap();
+    pub fn listen(shared_shard: Arc<Mutex<Shard>>, stream: Arc<Mutex<TcpStream>>) {
         loop {
-            // TODO-SHARD fix this multiple match statements so they're not nested
-            match stream.as_ref() {
-                Some(mut stream) => {
-                    let mut buffer = [0; 1024];
-                    let mut retries = 10;
-                    match stream.read(&mut buffer) {
-                        Ok(_) => {
-                            let message_string = String::from_utf8_lossy(&buffer);
-                            // println!("Received message: {}", message_string);
-                            match self.get_response_message(&message_string) {
-                                Some(response) => {
-                                    stream.write(response.as_bytes()).unwrap();
-                                }
-                                None => {
-                                    retries -= 1;
-                                    if retries == 0 {
-                                        eprintln!("Stream has exceeded the number of retries");
-                                        break;
-                                    }
-                                }
-                            }
+            // sleep for 1 millisecond to allow the stream to be ready to read
+            thread::sleep(std::time::Duration::from_millis(1));
+            let mut shard = shared_shard.lock().unwrap();
+            let mut buffer = [0; 1024];
+
+            let mut stream = stream.lock().unwrap();
+
+            match stream.set_read_timeout(Some(std::time::Duration::new(10, 0))) {
+                Ok(_) => {}
+                Err(_e) => {
+                    continue;
+                }
+            }
+
+            match stream.read(&mut buffer) {
+                Ok(chars) => {
+                    if chars == 0 {
+                        continue;
+                    }
+                    let message_string = String::from_utf8_lossy(&buffer);
+                    match shard.get_response_message(&message_string) {
+                        Some(response) => {
+                            stream.write(response.as_bytes()).unwrap();
                         }
-                        Err(e) => {
-                            eprintln!("Failed to read from stream: {:?}", e);
+                        None => {
+                            // do nothing
                         }
                     }
                 }
-                None => {
-                    // Do nothing
+                Err(_e) => {
+                    // could not read from the stream, ignore
                 }
-            };
+            }
         }
     }
 
     fn get_response_message(&mut self, message: &str) -> Option<String> {
+        if message.is_empty() {
+            return None;
+        }
+
         let message = match Message::from_string(&message) {
             Ok(message) => message,
-            Err(_e) => {
-                // eprintln!("Failed to parse message: {:?}", e);
+            Err(e) => {
+                eprintln!("Failed to parse message: {:?}. Message: [{:?}]", e, message);
                 return None;
             }
         };
 
-        match message.message_type {
+        match message.get_message_type() {
             MessageType::InitConnection => {
+                let router_info = message.get_data().node_info.unwrap();
+                self.router_info = Arc::new(Mutex::new(Some(router_info.clone())));
                 println!("{color_bright_green}Received an InitConnection message{style_reset}");
                 let response_string = self.get_agreed_connection();
-                println!("Response created: {}", response_string);
                 Some(response_string)
             }
             MessageType::AskMemoryUpdate => {
                 println!("{color_bright_green}Received an AskMemoryUpdate message{style_reset}");
                 let response_string = self.get_memory_update_message();
-                println!("Response created: {}", response_string);
                 Some(response_string)
+            }
+            MessageType::GetRouter => {
+                println!("{color_bright_green}Received a GetRouter message{style_reset}");
+                let self_clone = self.clone();
+                let router_info: Option<NodeInfo> = {
+                    let router_info = self_clone.router_info.as_ref().try_lock().unwrap();
+                    router_info.clone()
+                };
+
+                match router_info {
+                    Some(router_info) => {
+                        let response_message = Message::new_router_id(router_info.clone());
+                        Some(response_message.to_string())
+                    }
+                    None => {
+                        let response_message = Message::new_no_router_data();
+                        Some(response_message.to_string())
+                    }
+                }
             }
             _ => {
                 eprintln!(
                     "Message type received: {:?}, not yet implemented",
-                    message.message_type
+                    message.get_message_type()
                 );
                 None
             }
@@ -190,7 +189,7 @@ impl Shard {
     fn get_agreed_connection(&self) -> String {
         let memory_manager = self.memory_manager.as_ref().try_lock().unwrap();
         let memory_percentage = memory_manager.available_memory_perc;
-        let response_message = shard::Message::new(MessageType::Agreed, Some(memory_percentage));
+        let response_message = shard::Message::new_agreed(memory_percentage);
 
         response_message.to_string()
     }
@@ -206,8 +205,7 @@ impl Shard {
         }
         let memory_manager = self.memory_manager.as_ref().try_lock().unwrap();
         let memory_percentage = memory_manager.available_memory_perc;
-        let response_message =
-            shard::Message::new(MessageType::MemoryUpdate, Some(memory_percentage));
+        let response_message = shard::Message::new_memory_update(memory_percentage);
 
         response_message.to_string()
     }
@@ -218,26 +216,13 @@ impl Shard {
 }
 
 impl NodeRole for Shard {
-    fn send_query(&mut self, query: &str) -> bool {
+    fn send_query(&mut self, query: &str) -> Option<Vec<Row>> {
         match self.backend.as_ref().try_lock().unwrap().query(query, &[]) {
-            Ok(rows) => rows,
+            Ok(rows) => Some(rows),
             Err(e) => {
                 eprintln!("Failed to execute query: {:?}", e);
-                return false;
+                None
             }
-        };
-
-        // for row in rows {
-        //     let id: i32 = row.get(0);
-        //     let name: &str = row.get(1);
-        //     let position: &str = row.get(2);
-        //     let salary: Decimal = row.get(3);
-        //     println!(
-        //         "QUERY RESULT: id: {}, name: {}, position: {}, salary: {}",
-        //         id, name, position, salary
-        //     );
-        // }
-
-        true
+        }
     }
 }

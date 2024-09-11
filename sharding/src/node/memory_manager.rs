@@ -14,10 +14,11 @@ pub struct MemoryManager {
 
 impl MemoryManager {
     pub fn new(unavailable_memory_perc: f64) -> Self {
-        let available_memory_perc = match Self::get_available_memory_percentage(unavailable_memory_perc) {
-            Some(perc) => perc,
-            None => panic!("[MemoryManager] Failed to get available memory"),
-        };
+        let available_memory_perc =
+            match Self::get_available_memory_percentage(unavailable_memory_perc) {
+                Some(perc) => perc,
+                None => panic!("[MemoryManager] Failed to get available memory"),
+            };
         println!(
             "{color_blue}[Memory Manager] Memory Threshold: {:?}%{style_reset}",
             unavailable_memory_perc
@@ -29,15 +30,16 @@ impl MemoryManager {
     }
 
     pub fn update(&mut self) -> Result<(), io::Error> {
-        self.available_memory_perc = match Self::get_available_memory_percentage(self.unavailable_memory_perc) {
-            Some(perc) => perc,
-            None => {
-                return Err(io::Error::new(
-                    io::ErrorKind::Other,
-                    "[MemoryManager] Failed to get available memory",
-                ))
-            }
-        };
+        self.available_memory_perc =
+            match Self::get_available_memory_percentage(self.unavailable_memory_perc) {
+                Some(perc) => perc,
+                None => {
+                    return Err(io::Error::new(
+                        io::ErrorKind::Other,
+                        "[MemoryManager] Failed to get available memory",
+                    ))
+                }
+            };
         Ok(())
     }
 
@@ -71,10 +73,10 @@ impl MemoryManager {
                 );
                 return Some(0.0);
             }
-            
+
             let usable_available_space = available_space as f64 - threshold_size;
             let usable_total_space = total - threshold_size / 100.0;
-            
+
             let percentage = usable_available_space / usable_total_space * 100.0;
             if percentage > 100.0 {
                 return Some(0.0);
@@ -90,7 +92,6 @@ impl MemoryManager {
     }
 }
 
-
 #[cfg(test)]
 
 mod tests {
@@ -99,21 +100,24 @@ mod tests {
     #[test]
     fn test_get_available_memory_percentage() {
         let unavailable_memory_perc = 0.0;
-        let available_memory_perc = MemoryManager::get_available_memory_percentage(unavailable_memory_perc);
+        let available_memory_perc =
+            MemoryManager::get_available_memory_percentage(unavailable_memory_perc);
         assert_eq!(available_memory_perc.is_some(), true);
     }
 
     #[test]
     fn test_get_available_memory_percentage_threashold_is_total() {
         let unavailable_memory_perc = 100.0;
-        let available_memory_perc = MemoryManager::get_available_memory_percentage(unavailable_memory_perc).unwrap();
+        let available_memory_perc =
+            MemoryManager::get_available_memory_percentage(unavailable_memory_perc).unwrap();
         assert_eq!(available_memory_perc, 0.0);
     }
 
     #[test]
     fn test_get_available_memory_percentage_threashold_exceeds_available_space() {
         let unavailable_memory_perc = 90.0;
-        let available_memory_perc = MemoryManager::get_available_memory_percentage(unavailable_memory_perc).unwrap();
+        let available_memory_perc =
+            MemoryManager::get_available_memory_percentage(unavailable_memory_perc).unwrap();
         assert_eq!(available_memory_perc, 0.0);
     }
 }

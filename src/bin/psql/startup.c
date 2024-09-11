@@ -160,8 +160,14 @@ main(int argc, char *argv[])
 		{
 			if(strcmp(argv[i],"-nodeType")==0)
 			{
+				// If equals c or C (client)
+				if (strcmp(argv[i+1],"c")==0 || strcmp(argv[i+1],"C")==0)
+				{
+					nodeType = Client;
+					printf("Node Type: client\n");
+				}
 				// If equals r or R (router)
-				if (strcmp(argv[i+1],"r")==0 || strcmp(argv[i+1],"R")==0)
+				else if (strcmp(argv[i+1],"r")==0 || strcmp(argv[i+1],"R")==0)
 				{
 					nodeType = Router;
 					printf("Node Type: router\n");
@@ -171,7 +177,7 @@ main(int argc, char *argv[])
 				{
 					nodeType = Shard;
 					printf("Node Type: shard\n");
-				}
+				} 
 				else
 				{
 					printf("Invalid Node Type\n");
@@ -768,7 +774,7 @@ parse_psql_options(int argc, char *argv[], struct adhoc_opts *options)
 		else if (!options->username)
 			options->username = argv[optind];
 		else if (!pset.quiet) {
-			if (strcmp(argv[optind],"r") == 0 || strcmp(argv[optind],"R") == 0 || strcmp(argv[optind],"s") == 0 || strcmp(argv[optind],"S") == 0)
+			if (strcmp(argv[optind],"c") == 0 || strcmp(argv[optind],"C") == 0 || strcmp(argv[optind],"r") == 0 || strcmp(argv[optind],"R") == 0 || strcmp(argv[optind],"s") == 0 || strcmp(argv[optind],"S") == 0)
 			{
 				optind++;
 				continue;
