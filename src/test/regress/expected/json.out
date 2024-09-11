@@ -2330,6 +2330,9 @@ select json_object('{a,b,"","d e f"}','{1,2,3,"a b c"}');
  {"a" : "1", "b" : "2", "" : "3", "d e f" : "a b c"}
 (1 row)
 
+-- json_object_agg_unique requires unique keys
+select json_object_agg_unique(mod(i,100), i) from generate_series(0, 199) i;
+ERROR:  duplicate JSON object key value: "0"
 -- json_to_record and json_to_recordset
 select * from json_to_record('{"a":1,"b":"foo","c":"bar"}')
     as x(a int, b text, d text);

@@ -1111,7 +1111,14 @@ json_object_agg_transfn_worker(FunctionCallInfo fcinfo,
 
 	if (unique_keys)
 	{
-		const char *key = &out->data[key_offset];
+		/*
+		 * Copy the key first, instead of pointing into the buffer. It will be
+		 * added to the hash table, but the buffer may get reallocated as
+		 * we're appending more data to it. That would invalidate pointers to
+		 * keys in the current buffer.
+		 */
+		const char *key = MemoryContextStrdup(aggcontext,
+											  &out->data[key_offset]);
 
 		if (!json_unique_check_key(&state->unique_check.check, key, 0))
 			ereport(ERROR,
@@ -1274,8 +1281,15 @@ json_build_object_worker(int nargs, const Datum *args, const bool *nulls, const 
 
 		if (unique_keys)
 		{
-			/* check key uniqueness after key appending */
-			const char *key = &out->data[key_offset];
+			/*
+			 * check key uniqueness after key appending
+			 *
+			 * Copy the key first, instead of pointing into the buffer. It
+			 * will be added to the hash table, but the buffer may get
+			 * reallocated as we're appending more data to it. That would
+			 * invalidate pointers to keys in the current buffer.
+			 */
+			const char *key = pstrdup(&out->data[key_offset]);
 
 			if (!json_unique_check_key(&unique_check.check, key, 0))
 				ereport(ERROR,
