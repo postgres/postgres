@@ -273,6 +273,31 @@ select pgstathashindex('test_partition_hash_idx');
  (4,8,0,1,0,0,0,100)
 (1 row)
 
+-- these should work for sequences
+create sequence test_sequence;
+select count(*) from pgstattuple('test_sequence');
+ count 
+-------
+     1
+(1 row)
+
+select pg_relpages('test_sequence');
+ pg_relpages 
+-------------
+           1
+(1 row)
+
+-- these should fail for sequences
+select pgstatindex('test_sequence');
+ERROR:  relation "test_sequence" is not a btree index
+select pgstatginindex('test_sequence');
+ERROR:  relation "test_sequence" is not a GIN index
+select pgstathashindex('test_sequence');
+ERROR:  relation "test_sequence" is not a hash index
+select pgstattuple_approx('test_sequence');
+ERROR:  relation "test_sequence" is of wrong relation kind
+DETAIL:  This operation is not supported for sequences.
+drop sequence test_sequence;
 drop table test_partitioned;
 drop view test_view;
 drop foreign table test_foreign_table;
