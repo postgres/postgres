@@ -232,3 +232,12 @@ SELECT page_checksum(decode(repeat('00', :block_size), 'hex'), 1);
               
 (1 row)
 
+-- tests for sequences
+create temporary sequence test_sequence;
+select tuple_data_split('test_sequence'::regclass, t_data, t_infomask, t_infomask2, t_bits)
+  from heap_page_items(get_raw_page('test_sequence', 0));
+                   tuple_data_split                    
+-------------------------------------------------------
+ {"\\x0100000000000000","\\x0000000000000000","\\x00"}
+(1 row)
+
