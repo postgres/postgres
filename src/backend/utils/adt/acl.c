@@ -341,9 +341,6 @@ aclparse(const char *s, AclItem *aip, Node *escontext)
 			case ACL_MAINTAIN_CHR:
 				read = ACL_MAINTAIN;
 				break;
-			case 'R':			/* ignore old RULE privileges */
-				read = 0;
-				break;
 			default:
 				ereturn(escontext, NULL,
 						(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
@@ -1639,7 +1636,6 @@ makeaclitem(PG_FUNCTION_ARGS)
 		{"SET", ACL_SET},
 		{"ALTER SYSTEM", ACL_ALTER_SYSTEM},
 		{"MAINTAIN", ACL_MAINTAIN},
-		{"RULE", 0},			/* ignore old RULE privileges */
 		{NULL, 0}
 	};
 
@@ -2063,8 +2059,6 @@ convert_table_priv_string(text *priv_type_text)
 		{"TRIGGER WITH GRANT OPTION", ACL_GRANT_OPTION_FOR(ACL_TRIGGER)},
 		{"MAINTAIN", ACL_MAINTAIN},
 		{"MAINTAIN WITH GRANT OPTION", ACL_GRANT_OPTION_FOR(ACL_MAINTAIN)},
-		{"RULE", 0},			/* ignore old RULE privileges */
-		{"RULE WITH GRANT OPTION", 0},
 		{NULL, 0}
 	};
 

@@ -2641,8 +2641,6 @@ string_to_privilege(const char *privname)
 		return ACL_ALTER_SYSTEM;
 	if (strcmp(privname, "maintain") == 0)
 		return ACL_MAINTAIN;
-	if (strcmp(privname, "rule") == 0)
-		return 0;				/* ignore old RULE privileges */
 	ereport(ERROR,
 			(errcode(ERRCODE_SYNTAX_ERROR),
 			 errmsg("unrecognized privilege type \"%s\"", privname)));
