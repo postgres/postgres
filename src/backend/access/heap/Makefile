@@ -16,6 +16,7 @@ OBJS = \
 	heapam.o \
 	heapam_handler.o \
 	heapam_visibility.o \
+	heapam_xlog.o \
 	heaptoast.o \
 	hio.o \
 	pruneheap.o \
