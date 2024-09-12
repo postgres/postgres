@@ -146,11 +146,11 @@ select json_value('{"a": "1.234"}', '$.a' returning int error on error);
 SELECT JSON_VALUE(NULL::jsonb, '$');
 
 SELECT
-	JSON_QUERY(js, '$'),
-	JSON_QUERY(js, '$' WITHOUT WRAPPER),
-	JSON_QUERY(js, '$' WITH CONDITIONAL WRAPPER),
-	JSON_QUERY(js, '$' WITH UNCONDITIONAL ARRAY WRAPPER),
-	JSON_QUERY(js, '$' WITH ARRAY WRAPPER)
+	JSON_QUERY(js, '$') AS "unspec",
+	JSON_QUERY(js, '$' WITHOUT WRAPPER) AS "without",
+	JSON_QUERY(js, '$' WITH CONDITIONAL WRAPPER) AS "with cond",
+	JSON_QUERY(js, '$' WITH UNCONDITIONAL ARRAY WRAPPER) AS "with uncond",
+	JSON_QUERY(js, '$' WITH ARRAY WRAPPER) AS "with"
 FROM
 	(VALUES
 		(jsonb 'null'),
@@ -331,7 +331,7 @@ CREATE TABLE test_jsonb_constraints (
 	CONSTRAINT test_jsonb_constraint3
 		CHECK (JSON_VALUE(js::jsonb, '$.a' RETURNING int DEFAULT '12' ON EMPTY ERROR ON ERROR) > i)
 	CONSTRAINT test_jsonb_constraint4
-		CHECK (JSON_QUERY(js::jsonb, '$.a' WITH CONDITIONAL WRAPPER EMPTY OBJECT ON ERROR) < jsonb '[10]')
+		CHECK (JSON_QUERY(js::jsonb, '$.a' WITH CONDITIONAL WRAPPER EMPTY OBJECT ON ERROR) = jsonb '[10]')
 	CONSTRAINT test_jsonb_constraint5
 		CHECK (JSON_QUERY(js::jsonb, '$.a' RETURNING char(5) OMIT QUOTES EMPTY ARRAY ON EMPTY) >  'a' COLLATE "C")
 );
@@ -353,7 +353,6 @@ INSERT INTO test_jsonb_constraints VALUES ('1', 1);
 INSERT INTO test_jsonb_constraints VALUES ('[]');
 INSERT INTO test_jsonb_constraints VALUES ('{"b": 1}', 1);
 INSERT INTO test_jsonb_constraints VALUES ('{"a": 1}', 1);
-INSERT INTO test_jsonb_constraints VALUES ('{"a": 7}', 1);
 INSERT INTO test_jsonb_constraints VALUES ('{"a": 10}', 1);
 
 DROP TABLE test_jsonb_constraints;

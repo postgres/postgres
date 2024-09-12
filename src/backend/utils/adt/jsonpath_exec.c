@@ -3947,7 +3947,24 @@ JsonPathQuery(Datum jb, JsonPath *jp, JsonWrapper wrapper, bool *empty,
 		return (Datum) 0;
 	}
 
-	/* WRAP or not? */
+	/*
+	 * Determine whether to wrap the result in a JSON array or not.
+	 *
+	 * First, count the number of SQL/JSON items in the returned
+	 * JsonValueList. If the list is empty (singleton == NULL), no wrapping is
+	 * necessary.
+	 *
+	 * If the wrapper mode is JSW_NONE or JSW_UNSPEC, wrapping is explicitly
+	 * disabled. This enforces a WITHOUT WRAPPER clause, which is also the
+	 * default when no WRAPPER clause is specified.
+	 *
+	 * If the mode is JSW_UNCONDITIONAL, wrapping is enforced regardless of
+	 * the number of SQL/JSON items, enforcing a WITH WRAPPER or WITH
+	 * UNCONDITIONAL WRAPPER clause.
+	 *
+	 * For JSW_CONDITIONAL, wrapping occurs only if there is more than one
+	 * SQL/JSON item in the list, enforcing a WITH CONDITIONAL WRAPPER clause.
+	 */
 	count = JsonValueListLength(&found);
 	singleton = count > 0 ? JsonValueListHead(&found) : NULL;
 	if (singleton == NULL)
@@ -3957,10 +3974,7 @@ JsonPathQuery(Datum jb, JsonPath *jp, JsonWrapper wrapper, bool *empty,
 	else if (wrapper == JSW_UNCONDITIONAL)
 		wrap = true;
 	else if (wrapper == JSW_CONDITIONAL)
-		wrap = count > 1 ||
-			IsAJsonbScalar(singleton) ||
-			(singleton->type == jbvBinary &&
-			 JsonContainerIsScalar(singleton->val.binary.data));
+		wrap = count > 1;
 	else
 	{
 		elog(ERROR, "unrecognized json wrapper %d", (int) wrapper);

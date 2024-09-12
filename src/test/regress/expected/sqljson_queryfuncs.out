@@ -541,11 +541,11 @@ SELECT JSON_VALUE(NULL::jsonb, '$');
 (1 row)
 
 SELECT
-	JSON_QUERY(js, '$'),
-	JSON_QUERY(js, '$' WITHOUT WRAPPER),
-	JSON_QUERY(js, '$' WITH CONDITIONAL WRAPPER),
-	JSON_QUERY(js, '$' WITH UNCONDITIONAL ARRAY WRAPPER),
-	JSON_QUERY(js, '$' WITH ARRAY WRAPPER)
+	JSON_QUERY(js, '$') AS "unspec",
+	JSON_QUERY(js, '$' WITHOUT WRAPPER) AS "without",
+	JSON_QUERY(js, '$' WITH CONDITIONAL WRAPPER) AS "with cond",
+	JSON_QUERY(js, '$' WITH UNCONDITIONAL ARRAY WRAPPER) AS "with uncond",
+	JSON_QUERY(js, '$' WITH ARRAY WRAPPER) AS "with"
 FROM
 	(VALUES
 		(jsonb 'null'),
@@ -555,12 +555,12 @@ FROM
 		('[1, null, "2"]'),
 		('{"a": 1, "b": [2]}')
 	) foo(js);
-     json_query     |     json_query     |     json_query     |      json_query      |      json_query      
+       unspec       |      without       |     with cond      |     with uncond      |         with         
 --------------------+--------------------+--------------------+----------------------+----------------------
- null               | null               | [null]             | [null]               | [null]
- 12.3               | 12.3               | [12.3]             | [12.3]               | [12.3]
- true               | true               | [true]             | [true]               | [true]
- "aaa"              | "aaa"              | ["aaa"]            | ["aaa"]              | ["aaa"]
+ null               | null               | null               | [null]               | [null]
+ 12.3               | 12.3               | 12.3               | [12.3]               | [12.3]
+ true               | true               | true               | [true]               | [true]
+ "aaa"              | "aaa"              | "aaa"              | ["aaa"]              | ["aaa"]
  [1, null, "2"]     | [1, null, "2"]     | [1, null, "2"]     | [[1, null, "2"]]     | [[1, null, "2"]]
  {"a": 1, "b": [2]} | {"a": 1, "b": [2]} | {"a": 1, "b": [2]} | [{"a": 1, "b": [2]}] | [{"a": 1, "b": [2]}]
 (6 rows)
@@ -587,10 +587,10 @@ FROM
 --------------------+--------------------+---------------------+----------------------+----------------------
                     |                    |                     |                      | 
                     |                    |                     |                      | 
- null               | null               | [null]              | [null]               | [null]
- 12.3               | 12.3               | [12.3]              | [12.3]               | [12.3]
- true               | true               | [true]              | [true]               | [true]
- "aaa"              | "aaa"              | ["aaa"]             | ["aaa"]              | ["aaa"]
+ null               | null               | null                | [null]               | [null]
+ 12.3               | 12.3               | 12.3                | [12.3]               | [12.3]
+ true               | true               | true                | [true]               | [true]
+ "aaa"              | "aaa"              | "aaa"               | ["aaa"]              | ["aaa"]
  [1, 2, 3]          | [1, 2, 3]          | [1, 2, 3]           | [[1, 2, 3]]          | [[1, 2, 3]]
  {"a": 1, "b": [2]} | {"a": 1, "b": [2]} | {"a": 1, "b": [2]}  | [{"a": 1, "b": [2]}] | [{"a": 1, "b": [2]}]
                     |                    | [1, "2", null, [3]] | [1, "2", null, [3]]  | [1, "2", null, [3]]
@@ -681,7 +681,7 @@ LINE 1: SELECT JSON_QUERY(jsonb '[1]', '$' WITH CONDITIONAL WRAPPER ...
 SELECT JSON_QUERY(jsonb '["1"]', '$[*]' WITH CONDITIONAL WRAPPER KEEP QUOTES);
  json_query 
 ------------
- ["1"]
+ "1"
 (1 row)
 
 SELECT JSON_QUERY(jsonb '["1"]', '$[*]' WITH UNCONDITIONAL WRAPPER KEEP QUOTES);
@@ -940,30 +940,30 @@ FROM
  x | y |     list     
 ---+---+--------------
  0 | 0 | []
- 0 | 1 | [1]
+ 0 | 1 | 1
  0 | 2 | [1, 2]
  0 | 3 | [1, 2, 3]
  0 | 4 | [1, 2, 3, 4]
  1 | 0 | []
- 1 | 1 | [1]
+ 1 | 1 | 1
  1 | 2 | [1, 2]
  1 | 3 | [1, 2, 3]
  1 | 4 | [1, 2, 3, 4]
  2 | 0 | []
  2 | 1 | []
- 2 | 2 | [2]
+ 2 | 2 | 2
  2 | 3 | [2, 3]
  2 | 4 | [2, 3, 4]
  3 | 0 | []
  3 | 1 | []
  3 | 2 | []
- 3 | 3 | [3]
+ 3 | 3 | 3
  3 | 4 | [3, 4]
  4 | 0 | []
  4 | 1 | []
  4 | 2 | []
  4 | 3 | []
- 4 | 4 | [4]
+ 4 | 4 | 4
 (25 rows)
 
 -- record type returning with quotes behavior.
@@ -1088,7 +1088,7 @@ CREATE TABLE test_jsonb_constraints (
 	CONSTRAINT test_jsonb_constraint3
 		CHECK (JSON_VALUE(js::jsonb, '$.a' RETURNING int DEFAULT '12' ON EMPTY ERROR ON ERROR) > i)
 	CONSTRAINT test_jsonb_constraint4
-		CHECK (JSON_QUERY(js::jsonb, '$.a' WITH CONDITIONAL WRAPPER EMPTY OBJECT ON ERROR) < jsonb '[10]')
+		CHECK (JSON_QUERY(js::jsonb, '$.a' WITH CONDITIONAL WRAPPER EMPTY OBJECT ON ERROR) = jsonb '[10]')
 	CONSTRAINT test_jsonb_constraint5
 		CHECK (JSON_QUERY(js::jsonb, '$.a' RETURNING char(5) OMIT QUOTES EMPTY ARRAY ON EMPTY) >  'a' COLLATE "C")
 );
@@ -1103,7 +1103,7 @@ Check constraints:
     "test_jsonb_constraint1" CHECK (js IS JSON)
     "test_jsonb_constraint2" CHECK (JSON_EXISTS(js::jsonb, '$."a"' PASSING i + 5 AS int, i::text AS txt, ARRAY[1, 2, 3] AS arr))
     "test_jsonb_constraint3" CHECK (JSON_VALUE(js::jsonb, '$."a"' RETURNING integer DEFAULT 12 ON EMPTY ERROR ON ERROR) > i)
-    "test_jsonb_constraint4" CHECK (JSON_QUERY(js::jsonb, '$."a"' RETURNING jsonb WITH CONDITIONAL WRAPPER KEEP QUOTES EMPTY OBJECT ON ERROR) < '[10]'::jsonb)
+    "test_jsonb_constraint4" CHECK (JSON_QUERY(js::jsonb, '$."a"' RETURNING jsonb WITH CONDITIONAL WRAPPER KEEP QUOTES EMPTY OBJECT ON ERROR) = '[10]'::jsonb)
     "test_jsonb_constraint5" CHECK (JSON_QUERY(js::jsonb, '$."a"' RETURNING character(5) WITHOUT WRAPPER OMIT QUOTES EMPTY ARRAY ON EMPTY) > ('a'::bpchar COLLATE "C"))
 
 SELECT check_clause
@@ -1113,7 +1113,7 @@ ORDER BY 1;
                                                               check_clause                                                              
 ----------------------------------------------------------------------------------------------------------------------------------------
  (JSON_QUERY((js)::jsonb, '$."a"' RETURNING character(5) WITHOUT WRAPPER OMIT QUOTES EMPTY ARRAY ON EMPTY) > ('a'::bpchar COLLATE "C"))
- (JSON_QUERY((js)::jsonb, '$."a"' RETURNING jsonb WITH CONDITIONAL WRAPPER KEEP QUOTES EMPTY OBJECT ON ERROR) < '[10]'::jsonb)
+ (JSON_QUERY((js)::jsonb, '$."a"' RETURNING jsonb WITH CONDITIONAL WRAPPER KEEP QUOTES EMPTY OBJECT ON ERROR) = '[10]'::jsonb)
  (JSON_VALUE((js)::jsonb, '$."a"' RETURNING integer DEFAULT 12 ON EMPTY ERROR ON ERROR) > i)
  (js IS JSON)
  JSON_EXISTS((js)::jsonb, '$."a"' PASSING (i + 5) AS int, (i)::text AS txt, ARRAY[1, 2, 3] AS arr)
@@ -1143,9 +1143,6 @@ DETAIL:  Failing row contains ({"b": 1}, 1, [1, 2]).
 INSERT INTO test_jsonb_constraints VALUES ('{"a": 1}', 1);
 ERROR:  new row for relation "test_jsonb_constraints" violates check constraint "test_jsonb_constraint3"
 DETAIL:  Failing row contains ({"a": 1}, 1, [1, 2]).
-INSERT INTO test_jsonb_constraints VALUES ('{"a": 7}', 1);
-ERROR:  new row for relation "test_jsonb_constraints" violates check constraint "test_jsonb_constraint5"
-DETAIL:  Failing row contains ({"a": 7}, 1, [1, 2]).
 INSERT INTO test_jsonb_constraints VALUES ('{"a": 10}', 1);
 ERROR:  new row for relation "test_jsonb_constraints" violates check constraint "test_jsonb_constraint4"
 DETAIL:  Failing row contains ({"a": 10}, 1, [1, 2]).
