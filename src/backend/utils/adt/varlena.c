@@ -2540,7 +2540,6 @@ btvarstrequalimage(PG_FUNCTION_ARGS)
 	locale = pg_newlocale_from_collation(collid);
 
 	if (locale->collate_is_c ||
-		collid == DEFAULT_COLLATION_OID ||
 		pg_locale_deterministic(locale))
 		PG_RETURN_BOOL(true);
 	else
