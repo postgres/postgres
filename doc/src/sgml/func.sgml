@@ -25120,6 +25120,24 @@ SELECT has_function_privilege('joeuser', 'myfunc(int, text)', 'execute');
       <row>
        <entry role="func_table_entry"><para role="func_signature">
         <indexterm>
+         <primary>has_largeobject_privilege</primary>
+        </indexterm>
+        <function>has_largeobject_privilege</function> (
+          <optional> <parameter>user</parameter> <type>name</type> or <type>oid</type>, </optional>
+          <parameter>largeobject</parameter> <type>oid</type>,
+          <parameter>privilege</parameter> <type>text</type> )
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Does user have privilege for large object?
+        Allowable privilege types are
+        <literal>SELECT</literal> and <literal>UPDATE</literal>.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
          <primary>has_parameter_privilege</primary>
         </indexterm>
         <function>has_parameter_privilege</function> (

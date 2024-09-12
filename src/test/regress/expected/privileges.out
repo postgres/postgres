@@ -2068,10 +2068,160 @@ SELECT lo_truncate(lo_open(2001, x'20000'::int), 10);
            0
 (1 row)
 
+-- has_largeobject_privilege function
+-- superuser
+\c -
+SELECT has_largeobject_privilege(1001, 'SELECT');
+ has_largeobject_privilege 
+---------------------------
+ t
+(1 row)
+
+SELECT has_largeobject_privilege(1002, 'SELECT');
+ has_largeobject_privilege 
+---------------------------
+ t
+(1 row)
+
+SELECT has_largeobject_privilege(1003, 'SELECT');
+ has_largeobject_privilege 
+---------------------------
+ t
+(1 row)
+
+SELECT has_largeobject_privilege(1004, 'SELECT');
+ has_largeobject_privilege 
+---------------------------
+ t
+(1 row)
+
+SELECT has_largeobject_privilege(1001, 'UPDATE');
+ has_largeobject_privilege 
+---------------------------
+ t
+(1 row)
+
+SELECT has_largeobject_privilege(1002, 'UPDATE');
+ has_largeobject_privilege 
+---------------------------
+ t
+(1 row)
+
+SELECT has_largeobject_privilege(1003, 'UPDATE');
+ has_largeobject_privilege 
+---------------------------
+ t
+(1 row)
+
+SELECT has_largeobject_privilege(1004, 'UPDATE');
+ has_largeobject_privilege 
+---------------------------
+ t
+(1 row)
+
+-- not-existing large object
+SELECT has_largeobject_privilege(9999, 'SELECT');	-- NULL
+ has_largeobject_privilege 
+---------------------------
+ 
+(1 row)
+
+-- non-superuser
+SET SESSION AUTHORIZATION regress_priv_user2;
+SELECT has_largeobject_privilege(1001, 'SELECT');
+ has_largeobject_privilege 
+---------------------------
+ t
+(1 row)
+
+SELECT has_largeobject_privilege(1002, 'SELECT');	-- false
+ has_largeobject_privilege 
+---------------------------
+ f
+(1 row)
+
+SELECT has_largeobject_privilege(1003, 'SELECT');
+ has_largeobject_privilege 
+---------------------------
+ t
+(1 row)
+
+SELECT has_largeobject_privilege(1004, 'SELECT');
+ has_largeobject_privilege 
+---------------------------
+ t
+(1 row)
+
+SELECT has_largeobject_privilege(1001, 'UPDATE');
+ has_largeobject_privilege 
+---------------------------
+ t
+(1 row)
+
+SELECT has_largeobject_privilege(1002, 'UPDATE');	-- false
+ has_largeobject_privilege 
+---------------------------
+ f
+(1 row)
+
+SELECT has_largeobject_privilege(1003, 'UPDATE');	-- false
+ has_largeobject_privilege 
+---------------------------
+ f
+(1 row)
+
+SELECT has_largeobject_privilege(1004, 'UPDATE');
+ has_largeobject_privilege 
+---------------------------
+ t
+(1 row)
+
+SELECT has_largeobject_privilege('regress_priv_user3', 1001, 'SELECT');
+ has_largeobject_privilege 
+---------------------------
+ t
+(1 row)
+
+SELECT has_largeobject_privilege('regress_priv_user3', 1003, 'SELECT');	-- false
+ has_largeobject_privilege 
+---------------------------
+ f
+(1 row)
+
+SELECT has_largeobject_privilege('regress_priv_user3', 1005, 'SELECT');
+ has_largeobject_privilege 
+---------------------------
+ t
+(1 row)
+
+SELECT has_largeobject_privilege('regress_priv_user3', 1005, 'UPDATE');	-- false
+ has_largeobject_privilege 
+---------------------------
+ f
+(1 row)
+
+SELECT has_largeobject_privilege('regress_priv_user3', 2001, 'UPDATE');
+ has_largeobject_privilege 
+---------------------------
+ t
+(1 row)
+
 -- compatibility mode in largeobject permission
 \c -
 SET lo_compat_privileges = false;	-- default setting
 SET SESSION AUTHORIZATION regress_priv_user4;
+SELECT has_largeobject_privilege(1002, 'SELECT'); -- false
+ has_largeobject_privilege 
+---------------------------
+ f
+(1 row)
+
+SELECT has_largeobject_privilege(1002, 'UPDATE'); -- false
+ has_largeobject_privilege 
+---------------------------
+ f
+(1 row)
+
 SELECT loread(lo_open(1002, x'40000'::int), 32);	-- to be denied
 ERROR:  permission denied for large object 1002
 SELECT lowrite(lo_open(1002, x'20000'::int), 'abcd');	-- to be denied
@@ -2091,6 +2241,18 @@ ERROR:  permission denied for function lo_import
 \c -
 SET lo_compat_privileges = true;	-- compatibility mode
 SET SESSION AUTHORIZATION regress_priv_user4;
+SELECT has_largeobject_privilege(1002, 'SELECT'); -- true
+ has_largeobject_privilege 
+---------------------------
+ t
+(1 row)
+
+SELECT has_largeobject_privilege(1002, 'UPDATE'); -- true
+ has_largeobject_privilege 
+---------------------------
+ t
+(1 row)
+
 SELECT loread(lo_open(1002, x'40000'::int), 32);
  loread 
 --------
