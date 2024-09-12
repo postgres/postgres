@@ -19,6 +19,7 @@
 #include "access/multixact.h"
 #include "access/transam.h"
 #include "access/xact.h"
+#include "common/hashfn.h"
 #include "common/int.h"
 #include "libpq/pqformat.h"
 #include "utils/builtins.h"
@@ -95,6 +96,18 @@ xidneq(PG_FUNCTION_ARGS)
 	TransactionId xid2 = PG_GETARG_TRANSACTIONID(1);
 
 	PG_RETURN_BOOL(!TransactionIdEquals(xid1, xid2));
+}
+
+Datum
+hashxid(PG_FUNCTION_ARGS)
+{
+	return hash_uint32(PG_GETARG_TRANSACTIONID(0));
+}
+
+Datum
+hashxidextended(PG_FUNCTION_ARGS)
+{
+	return hash_uint32_extended(PG_GETARG_TRANSACTIONID(0), PG_GETARG_INT64(1));
 }
 
 /*
@@ -288,6 +301,18 @@ xid8cmp(PG_FUNCTION_ARGS)
 }
 
 Datum
+hashxid8(PG_FUNCTION_ARGS)
+{
+	return hashint8(fcinfo);
+}
+
+Datum
+hashxid8extended(PG_FUNCTION_ARGS)
+{
+	return hashint8extended(fcinfo);
+}
+
+Datum
 xid8_larger(PG_FUNCTION_ARGS)
 {
 	FullTransactionId fxid1 = PG_GETARG_FULLTRANSACTIONID(0);
@@ -373,4 +398,16 @@ cideq(PG_FUNCTION_ARGS)
 	CommandId	arg2 = PG_GETARG_COMMANDID(1);
 
 	PG_RETURN_BOOL(arg1 == arg2);
+}
+
+Datum
+hashcid(PG_FUNCTION_ARGS)
+{
+	return hash_uint32(PG_GETARG_COMMANDID(0));
+}
+
+Datum
+hashcidextended(PG_FUNCTION_ARGS)
+{
+	return hash_uint32_extended(PG_GETARG_COMMANDID(0), PG_GETARG_INT64(1));
 }

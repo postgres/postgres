@@ -2298,6 +2298,18 @@ timestamp_hash_extended(PG_FUNCTION_ARGS)
 	return hashint8extended(fcinfo);
 }
 
+Datum
+timestamptz_hash(PG_FUNCTION_ARGS)
+{
+	return hashint8(fcinfo);
+}
+
+Datum
+timestamptz_hash_extended(PG_FUNCTION_ARGS)
+{
+	return hashint8extended(fcinfo);
+}
+
 /*
  * Cross-type comparison functions for timestamp vs timestamptz
  */

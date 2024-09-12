@@ -456,6 +456,18 @@ date_sortsupport(PG_FUNCTION_ARGS)
 }
 
 Datum
+hashdate(PG_FUNCTION_ARGS)
+{
+	return hash_uint32(PG_GETARG_DATEADT(0));
+}
+
+Datum
+hashdateextended(PG_FUNCTION_ARGS)
+{
+	return hash_uint32_extended(PG_GETARG_DATEADT(0), PG_GETARG_INT64(1));
+}
+
+Datum
 date_finite(PG_FUNCTION_ARGS)
 {
 	DateADT		date = PG_GETARG_DATEADT(0);
