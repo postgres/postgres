@@ -1415,13 +1415,6 @@ make_icu_collator(const char *iculocstr,
 #endif							/* not USE_ICU */
 }
 
-
-bool
-pg_locale_deterministic(pg_locale_t locale)
-{
-	return locale->deterministic;
-}
-
 /*
  * Initialize default_locale with database locale settings.
  */

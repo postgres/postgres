@@ -279,7 +279,7 @@ hashtext(PG_FUNCTION_ARGS)
 
 	mylocale = pg_newlocale_from_collation(collid);
 
-	if (pg_locale_deterministic(mylocale))
+	if (mylocale->deterministic)
 	{
 		result = hash_any((unsigned char *) VARDATA_ANY(key),
 						  VARSIZE_ANY_EXHDR(key));
@@ -334,7 +334,7 @@ hashtextextended(PG_FUNCTION_ARGS)
 
 	mylocale = pg_newlocale_from_collation(collid);
 
-	if (pg_locale_deterministic(mylocale))
+	if (mylocale->deterministic)
 	{
 		result = hash_any_extended((unsigned char *) VARDATA_ANY(key),
 								   VARSIZE_ANY_EXHDR(key),

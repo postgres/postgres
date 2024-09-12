@@ -151,7 +151,7 @@ GenericMatchText(const char *s, int slen, const char *p, int plen, Oid collation
 	{
 		pg_locale_t locale = pg_newlocale_from_collation(collation);
 
-		if (!pg_locale_deterministic(locale))
+		if (!locale->deterministic)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("nondeterministic collations are not supported for LIKE")));
@@ -188,7 +188,7 @@ Generic_Text_IC_like(text *str, text *pat, Oid collation)
 
 	locale = pg_newlocale_from_collation(collation);
 
-	if (!pg_locale_deterministic(locale))
+	if (!locale->deterministic)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("nondeterministic collations are not supported for ILIKE")));

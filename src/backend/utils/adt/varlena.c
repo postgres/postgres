@@ -1223,7 +1223,7 @@ text_position_setup(text *t1, text *t2, Oid collid, TextPositionState *state)
 
 	mylocale = pg_newlocale_from_collation(collid);
 
-	if (!pg_locale_deterministic(mylocale))
+	if (!mylocale->deterministic)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("nondeterministic collations are not supported for substring searches")));
@@ -1567,7 +1567,7 @@ varstr_cmp(const char *arg1, int len1, const char *arg2, int len2, Oid collid)
 		result = pg_strncoll(arg1, len1, arg2, len2, mylocale);
 
 		/* Break tie if necessary. */
-		if (result == 0 && pg_locale_deterministic(mylocale))
+		if (result == 0 && mylocale->deterministic)
 		{
 			result = memcmp(arg1, arg2, Min(len1, len2));
 			if ((result == 0) && (len1 != len2))
@@ -1618,7 +1618,7 @@ texteq(PG_FUNCTION_ARGS)
 
 	mylocale = pg_newlocale_from_collation(collid);
 
-	if (pg_locale_deterministic(mylocale))
+	if (mylocale->deterministic)
 	{
 		Datum		arg1 = PG_GETARG_DATUM(0);
 		Datum		arg2 = PG_GETARG_DATUM(1);
@@ -1673,7 +1673,7 @@ textne(PG_FUNCTION_ARGS)
 
 	mylocale = pg_newlocale_from_collation(collid);
 
-	if (pg_locale_deterministic(mylocale))
+	if (mylocale->deterministic)
 	{
 		Datum		arg1 = PG_GETARG_DATUM(0);
 		Datum		arg2 = PG_GETARG_DATUM(1);
@@ -1786,7 +1786,7 @@ text_starts_with(PG_FUNCTION_ARGS)
 
 	mylocale = pg_newlocale_from_collation(collid);
 
-	if (!pg_locale_deterministic(mylocale))
+	if (!mylocale->deterministic)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("nondeterministic collations are not supported for substring searches")));
@@ -2200,7 +2200,7 @@ varstrfastcmp_locale(char *a1p, int len1, char *a2p, int len2, SortSupport ssup)
 	result = pg_strcoll(sss->buf1, sss->buf2, sss->locale);
 
 	/* Break tie if necessary. */
-	if (result == 0 && pg_locale_deterministic(sss->locale))
+	if (result == 0 && sss->locale->deterministic)
 		result = strcmp(sss->buf1, sss->buf2);
 
 	/* Cache result, perhaps saving an expensive strcoll() call next time */
@@ -2539,11 +2539,7 @@ btvarstrequalimage(PG_FUNCTION_ARGS)
 
 	locale = pg_newlocale_from_collation(collid);
 
-	if (locale->collate_is_c ||
-		pg_locale_deterministic(locale))
-		PG_RETURN_BOOL(true);
-	else
-		PG_RETURN_BOOL(false);
+	PG_RETURN_BOOL(locale->deterministic);
 }
 
 Datum
