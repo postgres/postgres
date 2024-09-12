@@ -17965,15 +17965,16 @@ ERROR:  jsonpath member accessor can only be applied to an object
         <returnvalue><replaceable>string</replaceable></returnvalue>
        </para>
        <para>
-        String value converted from a JSON boolean, number, string, or datetime
+        String value converted from a JSON boolean, number, string, or
+        datetime
        </para>
        <para>
         <literal>jsonb_path_query_array('[1.23, "xyz", false]', '$[*].string()')</literal>
         <returnvalue>["1.23", "xyz", "false"]</returnvalue>
        </para>
        <para>
-        <literal>jsonb_path_query('"2023-08-15"', '$.datetime().string()')</literal>
-        <returnvalue>"2023-08-15"</returnvalue>
+        <literal>jsonb_path_query('"2023-08-15 12:34:56"', '$.timestamp().string()')</literal>
+        <returnvalue>"2023-08-15T12:34:56"</returnvalue>
        </para></entry>
       </row>
 
@@ -18054,7 +18055,9 @@ ERROR:  jsonpath member accessor can only be applied to an object
         <returnvalue><replaceable>decimal</replaceable></returnvalue>
        </para>
        <para>
-        Rounded decimal value converted from a JSON number or string. <literal>precision</literal> and <literal>scale</literal> must be integer values.
+        Rounded decimal value converted from a JSON number or string
+        (<literal>precision</literal> and <literal>scale</literal> must be
+        integer values)
        </para>
        <para>
         <literal>jsonb_path_query('1234.5678', '$.decimal(6, 2)')</literal>
@@ -18156,7 +18159,7 @@ ERROR:  jsonpath member accessor can only be applied to an object
        </para>
        <para>
         Time without time zone value converted from a string, with fractional
-        seconds adjusted to the given precision.
+        seconds adjusted to the given precision
        </para>
        <para>
         <literal>jsonb_path_query('"12:34:56.789"', '$.time(2)')</literal>
@@ -18185,7 +18188,7 @@ ERROR:  jsonpath member accessor can only be applied to an object
        </para>
        <para>
         Time with time zone value converted from a string, with fractional
-        seconds adjusted to the given precision.
+        seconds adjusted to the given precision
        </para>
        <para>
         <literal>jsonb_path_query('"12:34:56.789 +05:30"', '$.time_tz(2)')</literal>
@@ -18214,7 +18217,7 @@ ERROR:  jsonpath member accessor can only be applied to an object
        </para>
        <para>
         Timestamp without time zone value converted from a string, with
-        fractional seconds adjusted to the given precision.
+        fractional seconds adjusted to the given precision
        </para>
        <para>
         <literal>jsonb_path_query('"2023-08-15 12:34:56.789"', '$.timestamp(2)')</literal>
@@ -18243,7 +18246,7 @@ ERROR:  jsonpath member accessor can only be applied to an object
        </para>
        <para>
         Timestamp with time zone value converted from a string, with fractional
-        seconds adjusted to the given precision.
+        seconds adjusted to the given precision
        </para>
        <para>
         <literal>jsonb_path_query('"2023-08-15 12:34:56.789 +05:30"', '$.timestamp_tz(2)')</literal>

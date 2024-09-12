@@ -2586,15 +2586,6 @@ select jsonb_path_query('[2, true]', '$.string()');
  "true"
 (2 rows)
 
-select jsonb_path_query('"2023-08-15 12:34:56 +5:30"', '$.timestamp().string()');
-ERROR:  cannot convert value from timestamptz to timestamp without time zone usage
-HINT:  Use *_tz() function for time zone support.
-select jsonb_path_query_tz('"2023-08-15 12:34:56 +5:30"', '$.timestamp().string()'); -- should work
-    jsonb_path_query_tz     
-----------------------------
- "Tue Aug 15 00:04:56 2023"
-(1 row)
-
 select jsonb_path_query_array('[1.23, "yes", false]', '$[*].string()');
   jsonb_path_query_array  
 --------------------------
@@ -2607,6 +2598,77 @@ select jsonb_path_query_array('[1.23, "yes", false]', '$[*].string().type()');
  ["string", "string", "string"]
 (1 row)
 
+select jsonb_path_query('"2023-08-15 12:34:56 +5:30"', '$.timestamp().string()');
+ERROR:  cannot convert value from timestamptz to timestamp without time zone usage
+HINT:  Use *_tz() function for time zone support.
+select jsonb_path_query_tz('"2023-08-15 12:34:56 +5:30"', '$.timestamp().string()'); -- should work
+  jsonb_path_query_tz  
+-----------------------
+ "2023-08-15T00:04:56"
+(1 row)
+
+select jsonb_path_query('"2023-08-15 12:34:56"', '$.timestamp_tz().string()');
+ERROR:  cannot convert value from timestamp to timestamptz without time zone usage
+HINT:  Use *_tz() function for time zone support.
+select jsonb_path_query_tz('"2023-08-15 12:34:56"', '$.timestamp_tz().string()'); -- should work
+     jsonb_path_query_tz     
+-----------------------------
+ "2023-08-15T12:34:56-07:00"
+(1 row)
+
+select jsonb_path_query('"2023-08-15 12:34:56 +5:30"', '$.timestamp_tz().string()');
+      jsonb_path_query       
+-----------------------------
+ "2023-08-15T12:34:56+05:30"
+(1 row)
+
+select jsonb_path_query('"2023-08-15 12:34:56"', '$.timestamp().string()');
+   jsonb_path_query    
+-----------------------
+ "2023-08-15T12:34:56"
+(1 row)
+
+select jsonb_path_query('"12:34:56 +5:30"', '$.time_tz().string()');
+ jsonb_path_query 
+------------------
+ "12:34:56+05:30"
+(1 row)
+
+select jsonb_path_query_tz('"12:34:56"', '$.time_tz().string()');
+ jsonb_path_query_tz 
+---------------------
+ "12:34:56-07:00"
+(1 row)
+
+select jsonb_path_query('"12:34:56"', '$.time().string()');
+ jsonb_path_query 
+------------------
+ "12:34:56"
+(1 row)
+
+select jsonb_path_query('"2023-08-15"', '$.date().string()');
+ jsonb_path_query 
+------------------
+ "2023-08-15"
+(1 row)
+
+-- .string() does not react to timezone or datestyle
+begin;
+set local timezone = 'UTC';
+set local datestyle = 'German';
+select jsonb_path_query('"2023-08-15 12:34:56 +5:30"', '$.timestamp_tz().string()');
+      jsonb_path_query       
+-----------------------------
+ "2023-08-15T12:34:56+05:30"
+(1 row)
+
+select jsonb_path_query('"2023-08-15 12:34:56"', '$.timestamp().string()');
+   jsonb_path_query    
+-----------------------
+ "2023-08-15T12:34:56"
+(1 row)
+
+rollback;
 -- Test .time()
 select jsonb_path_query('null', '$.time()');
 ERROR:  jsonpath item method .time() can only be applied to a string
