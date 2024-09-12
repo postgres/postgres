@@ -119,6 +119,18 @@ create index test_partition_hash_idx on test_partition using hash (a);
 select pgstatindex('test_partition_idx');
 select pgstathashindex('test_partition_hash_idx');
 
+-- these should work for sequences
+create sequence test_sequence;
+select count(*) from pgstattuple('test_sequence');
+select pg_relpages('test_sequence');
+
+-- these should fail for sequences
+select pgstatindex('test_sequence');
+select pgstatginindex('test_sequence');
+select pgstathashindex('test_sequence');
+select pgstattuple_approx('test_sequence');
+
+drop sequence test_sequence;
 drop table test_partitioned;
 drop view test_view;
 drop foreign table test_foreign_table;
