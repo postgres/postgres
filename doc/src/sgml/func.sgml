@@ -21927,6 +21927,54 @@ SELECT NULLIF(value, '(none)') ...
 
       <row>
        <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>json_agg_strict</primary>
+        </indexterm>
+        <function>json_agg_strict</function> ( <type>anyelement</type> )
+        <returnvalue>json</returnvalue>
+       </para>
+       <para role="func_signature">
+        <indexterm>
+         <primary>jsonb_agg_strict</primary>
+        </indexterm>
+        <function>jsonb_agg_strict</function> ( <type>anyelement</type> )
+        <returnvalue>jsonb</returnvalue>
+       </para>
+       <para>
+        Collects all the input values, skipping nulls, into a JSON array.
+        Values are converted to JSON as per <function>to_json</function>
+        or <function>to_jsonb</function>.
+       </para></entry>
+       <entry>No</entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm><primary>json_arrayagg</primary></indexterm>
+        <function>json_arrayagg</function> (
+        <optional> <replaceable>value_expression</replaceable> </optional>
+        <optional> <literal>ORDER BY</literal> <replaceable>sort_expression</replaceable> </optional>
+        <optional> { <literal>NULL</literal> | <literal>ABSENT</literal> } <literal>ON NULL</literal> </optional>
+        <optional> <literal>RETURNING</literal> <replaceable>data_type</replaceable> <optional> <literal>FORMAT JSON</literal> <optional> <literal>ENCODING UTF8</literal> </optional> </optional> </optional>)
+       </para>
+       <para>
+        Behaves in the same way as <function>json_array</function>
+        but as an aggregate function so it only takes one
+        <replaceable>value_expression</replaceable> parameter.
+        If <literal>ABSENT ON NULL</literal> is specified, any NULL
+        values are omitted.
+        If <literal>ORDER BY</literal> is specified, the elements will
+        appear in the array in that order rather than in the input order.
+       </para>
+       <para>
+        <literal>SELECT json_arrayagg(v) FROM (VALUES(2),(1)) t(v)</literal>
+        <returnvalue>[2, 1]</returnvalue>
+       </para></entry>
+       <entry>No</entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
          <indexterm><primary>json_objectagg</primary></indexterm>
          <function>json_objectagg</function> (
          <optional> { <replaceable>key_expression</replaceable> { <literal>VALUE</literal> | ':' } <replaceable>value_expression</replaceable> } </optional>
@@ -22037,31 +22085,6 @@ SELECT NULLIF(value, '(none)') ...
 
       <row>
        <entry role="func_table_entry"><para role="func_signature">
-        <indexterm><primary>json_arrayagg</primary></indexterm>
-        <function>json_arrayagg</function> (
-        <optional> <replaceable>value_expression</replaceable> </optional>
-        <optional> <literal>ORDER BY</literal> <replaceable>sort_expression</replaceable> </optional>
-        <optional> { <literal>NULL</literal> | <literal>ABSENT</literal> } <literal>ON NULL</literal> </optional>
-        <optional> <literal>RETURNING</literal> <replaceable>data_type</replaceable> <optional> <literal>FORMAT JSON</literal> <optional> <literal>ENCODING UTF8</literal> </optional> </optional> </optional>)
-       </para>
-       <para>
-        Behaves in the same way as <function>json_array</function>
-        but as an aggregate function so it only takes one
-        <replaceable>value_expression</replaceable> parameter.
-        If <literal>ABSENT ON NULL</literal> is specified, any NULL
-        values are omitted.
-        If <literal>ORDER BY</literal> is specified, the elements will
-        appear in the array in that order rather than in the input order.
-       </para>
-       <para>
-        <literal>SELECT json_arrayagg(v) FROM (VALUES(2),(1)) t(v)</literal>
-        <returnvalue>[2, 1]</returnvalue>
-       </para></entry>
-       <entry>No</entry>
-      </row>
-
-      <row>
-       <entry role="func_table_entry"><para role="func_signature">
         <indexterm>
          <primary>json_object_agg_unique_strict</primary>
         </indexterm>
@@ -22164,29 +22187,6 @@ SELECT NULLIF(value, '(none)') ...
        </para>
        <para>
         Computes the intersection of the non-null input values.
-       </para></entry>
-       <entry>No</entry>
-      </row>
-
-      <row>
-       <entry role="func_table_entry"><para role="func_signature">
-        <indexterm>
-         <primary>json_agg_strict</primary>
-        </indexterm>
-        <function>json_agg_strict</function> ( <type>anyelement</type> )
-        <returnvalue>json</returnvalue>
-       </para>
-       <para role="func_signature">
-        <indexterm>
-         <primary>jsonb_agg_strict</primary>
-        </indexterm>
-        <function>jsonb_agg_strict</function> ( <type>anyelement</type> )
-        <returnvalue>jsonb</returnvalue>
-       </para>
-       <para>
-        Collects all the input values, skipping nulls, into a JSON array.
-        Values are converted to JSON as per <function>to_json</function>
-        or <function>to_jsonb</function>.
        </para></entry>
        <entry>No</entry>
       </row>
