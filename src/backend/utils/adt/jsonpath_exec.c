@@ -72,6 +72,7 @@
 #include "utils/datetime.h"
 #include "utils/float.h"
 #include "utils/formatting.h"
+#include "utils/json.h"
 #include "utils/jsonpath.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
@@ -1629,32 +1630,13 @@ executeItemOptUnwrapTarget(JsonPathExecContext *cxt, JsonPathItem *jsp,
 						break;
 					case jbvDatetime:
 						{
-							switch (jb->val.datetime.typid)
-							{
-								case DATEOID:
-									tmp = DatumGetCString(DirectFunctionCall1(date_out,
-																			  jb->val.datetime.value));
-									break;
-								case TIMEOID:
-									tmp = DatumGetCString(DirectFunctionCall1(time_out,
-																			  jb->val.datetime.value));
-									break;
-								case TIMETZOID:
-									tmp = DatumGetCString(DirectFunctionCall1(timetz_out,
-																			  jb->val.datetime.value));
-									break;
-								case TIMESTAMPOID:
-									tmp = DatumGetCString(DirectFunctionCall1(timestamp_out,
-																			  jb->val.datetime.value));
-									break;
-								case TIMESTAMPTZOID:
-									tmp = DatumGetCString(DirectFunctionCall1(timestamptz_out,
-																			  jb->val.datetime.value));
-									break;
-								default:
-									elog(ERROR, "unrecognized SQL/JSON datetime type oid: %u",
-										 jb->val.datetime.typid);
-							}
+							char		buf[MAXDATELEN + 1];
+
+							JsonEncodeDateTime(buf,
+											   jb->val.datetime.value,
+											   jb->val.datetime.typid,
+											   &jb->val.datetime.tz);
+							tmp = pstrdup(buf);
 						}
 						break;
 					case jbvNull:

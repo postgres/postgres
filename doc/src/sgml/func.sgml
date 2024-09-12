@@ -18017,16 +18017,15 @@ ERROR:  jsonpath member accessor can only be applied to an object
        </para>
        <para>
         String value converted from a JSON boolean, number, string, or
-        datetime (the output format for datetimes is determined by
-        the <xref linkend="guc-datestyle"/> parameter)
+        datetime
        </para>
        <para>
         <literal>jsonb_path_query_array('[1.23, "xyz", false]', '$[*].string()')</literal>
         <returnvalue>["1.23", "xyz", "false"]</returnvalue>
        </para>
        <para>
-        <literal>jsonb_path_query('"2023-08-15"', '$.datetime().string()')</literal>
-        <returnvalue>"2023-08-15"</returnvalue>
+        <literal>jsonb_path_query('"2023-08-15 12:34:56"', '$.timestamp().string()')</literal>
+        <returnvalue>"2023-08-15T12:34:56"</returnvalue>
        </para></entry>
       </row>
 
