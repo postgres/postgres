@@ -107,9 +107,10 @@ struct Tuplestorestate
 	bool		backward;		/* store extra length words in file? */
 	bool		interXact;		/* keep open through transactions? */
 	bool		truncated;		/* tuplestore_trim has removed tuples? */
+	bool		usedDisk;		/* used by tuplestore_get_stats() */
+	int64		maxSpace;		/* used by tuplestore_get_stats() */
 	int64		availMem;		/* remaining memory available, in bytes */
 	int64		allowedMem;		/* total memory allowed, in bytes */
-	int64		maxSpace;		/* maximum space used in memory */
 	int64		tuples;			/* number of tuples added */
 	BufFile    *myfile;			/* underlying file, or NULL if none */
 	MemoryContext context;		/* memory context for holding tuples */
@@ -262,9 +263,10 @@ tuplestore_begin_common(int eflags, bool interXact, int maxKBytes)
 	state->eflags = eflags;
 	state->interXact = interXact;
 	state->truncated = false;
+	state->usedDisk = false;
+	state->maxSpace = 0;
 	state->allowedMem = maxKBytes * 1024L;
 	state->availMem = state->allowedMem;
-	state->maxSpace = 0;
 	state->myfile = NULL;
 
 	/*
@@ -870,6 +872,14 @@ tuplestore_puttuple_common(Tuplestorestate *state, void *tuple)
 			 * though callers might drop the requirement.
 			 */
 			state->backward = (state->eflags & EXEC_FLAG_BACKWARD) != 0;
+
+			/*
+			 * Update the maximum space used before dumping the tuples.  It's
+			 * possible that more space will be used by the tuples in memory
+			 * than the space that will be used on disk.
+			 */
+			tuplestore_updatemax(state);
+
 			state->status = TSS_WRITEFILE;
 			dumptuples(state);
 			break;
@@ -1444,7 +1454,7 @@ tuplestore_trim(Tuplestorestate *state)
 	Assert(nremove >= state->memtupdeleted);
 	Assert(nremove <= state->memtupcount);
 
-	/* before freeing any memory, update maxSpace */
+	/* before freeing any memory, update the statistics */
 	tuplestore_updatemax(state);
 
 	/* Release no-longer-needed tuples */
@@ -1491,7 +1501,8 @@ tuplestore_trim(Tuplestorestate *state)
 
 /*
  * tuplestore_updatemax
- *		Update maxSpace field
+ *		Update the maximum space used by this tuplestore and the method used
+ *		for storage.
  */
 static void
 tuplestore_updatemax(Tuplestorestate *state)
@@ -1499,37 +1510,37 @@ tuplestore_updatemax(Tuplestorestate *state)
 	if (state->status == TSS_INMEM)
 		state->maxSpace = Max(state->maxSpace,
 							  state->allowedMem - state->availMem);
-}
-
-/*
- * tuplestore_storage_type_name
- *		Return a string description of the storage method used to store the
- *		tuples.
- */
-const char *
-tuplestore_storage_type_name(Tuplestorestate *state)
-{
-	if (state->status == TSS_INMEM)
-		return "Memory";
 	else
-		return "Disk";
+	{
+		state->maxSpace = Max(state->maxSpace,
+							  BufFileSize(state->myfile));
+
+		/*
+		 * usedDisk never gets set to false again after spilling to disk, even
+		 * if tuplestore_clear() is called and new tuples go to memory again.
+		 */
+		state->usedDisk = true;
+	}
 }
 
 /*
- * tuplestore_space_used
- *		Return the maximum space used in memory unless the tuplestore has spilled
- *		to disk, in which case, return the disk space used.
+ * tuplestore_get_stats
+ *		Obtain statistics about the maximum space used by the tuplestore.
+ *		These statistics are the maximums and are not reset by calls to
+ *		tuplestore_trim() or tuplestore_clear().
  */
-int64
-tuplestore_space_used(Tuplestorestate *state)
+void
+tuplestore_get_stats(Tuplestorestate *state, char **max_storage_type,
+					 int64 *max_space)
 {
-	/* First, update the maxSpace field */
 	tuplestore_updatemax(state);
 
-	if (state->status == TSS_INMEM)
-		return state->maxSpace;
+	if (state->usedDisk)
+		*max_storage_type = "Disk";
 	else
-		return BufFileSize(state->myfile);
+		*max_storage_type = "Memory";
+
+	*max_space = state->maxSpace;
 }
 
 /*
@@ -1601,7 +1612,6 @@ writetup_heap(Tuplestorestate *state, void *tup)
 	if (state->backward)		/* need trailing length word? */
 		BufFileWrite(state->myfile, &tuplen, sizeof(tuplen));
 
-	/* no need to call tuplestore_updatemax() when not in TSS_INMEM */
 	FREEMEM(state, GetMemoryChunkSpace(tuple));
 	heap_free_minimal_tuple(tuple);
 }

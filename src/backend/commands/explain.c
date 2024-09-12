@@ -3350,8 +3350,9 @@ static void
 show_material_info(MaterialState *mstate, ExplainState *es)
 {
 	Tuplestorestate *tupstore = mstate->tuplestorestate;
-	const char *storageType;
-	int64		spaceUsedKB;
+	char	   *maxStorageType;
+	int64		maxSpaceUsed,
+				maxSpaceUsedKB;
 
 	/*
 	 * Nothing to show if ANALYZE option wasn't used or if execution didn't
@@ -3360,21 +3361,21 @@ show_material_info(MaterialState *mstate, ExplainState *es)
 	if (!es->analyze || tupstore == NULL)
 		return;
 
-	storageType = tuplestore_storage_type_name(tupstore);
-	spaceUsedKB = BYTES_TO_KILOBYTES(tuplestore_space_used(tupstore));
+	tuplestore_get_stats(tupstore, &maxStorageType, &maxSpaceUsed);
+	maxSpaceUsedKB = BYTES_TO_KILOBYTES(maxSpaceUsed);
 
 	if (es->format != EXPLAIN_FORMAT_TEXT)
 	{
-		ExplainPropertyText("Storage", storageType, es);
-		ExplainPropertyInteger("Maximum Storage", "kB", spaceUsedKB, es);
+		ExplainPropertyText("Storage", maxStorageType, es);
+		ExplainPropertyInteger("Maximum Storage", "kB", maxSpaceUsedKB, es);
 	}
 	else
 	{
 		ExplainIndentText(es);
 		appendStringInfo(es->str,
 						 "Storage: %s  Maximum Storage: " INT64_FORMAT "kB\n",
-						 storageType,
-						 spaceUsedKB);
+						 maxStorageType,
+						 maxSpaceUsedKB);
 	}
 }
 
