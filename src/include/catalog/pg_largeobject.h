@@ -20,6 +20,7 @@
 
 #include "catalog/genbki.h"
 #include "catalog/pg_largeobject_d.h"
+#include "utils/snapshot.h"
 
 /* ----------------
  *		pg_largeobject definition.  cpp turns this into
@@ -49,5 +50,6 @@ DECLARE_UNIQUE_INDEX_PKEY(pg_largeobject_loid_pn_index, 2683, LargeObjectLOidPNI
 extern Oid	LargeObjectCreate(Oid loid);
 extern void LargeObjectDrop(Oid loid);
 extern bool LargeObjectExists(Oid loid);
+extern bool LargeObjectExistsWithSnapshot(Oid loid, Snapshot snapshot);
 
 #endif							/* PG_LARGEOBJECT_H */

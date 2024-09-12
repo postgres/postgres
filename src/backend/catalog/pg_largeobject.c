@@ -14,8 +14,6 @@
  */
 #include "postgres.h"
 
-#include "access/genam.h"
-#include "access/htup_details.h"
 #include "access/table.h"
 #include "catalog/catalog.h"
 #include "catalog/indexing.h"
@@ -154,6 +152,15 @@ LargeObjectDrop(Oid loid)
 bool
 LargeObjectExists(Oid loid)
 {
+	return LargeObjectExistsWithSnapshot(loid, NULL);
+}
+
+/*
+ * Same as LargeObjectExists(), except snapshot to read with can be specified.
+ */
+bool
+LargeObjectExistsWithSnapshot(Oid loid, Snapshot snapshot)
+{
 	Relation	pg_lo_meta;
 	ScanKeyData skey[1];
 	SysScanDesc sd;
@@ -170,7 +177,7 @@ LargeObjectExists(Oid loid)
 
 	sd = systable_beginscan(pg_lo_meta,
 							LargeObjectMetadataOidIndexId, true,
-							NULL, 1, skey);
+							snapshot, 1, skey);
 
 	tuple = systable_getnext(sd);
 	if (HeapTupleIsValid(tuple))
