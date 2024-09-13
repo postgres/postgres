@@ -100,6 +100,7 @@ SELECT page_header(decode(repeat('00', :block_size), 'hex'));
 SELECT page_checksum(decode(repeat('00', :block_size), 'hex'), 1);
 
 -- tests for sequences
-create temporary sequence test_sequence;
+create sequence test_sequence start 72057594037927937;
 select tuple_data_split('test_sequence'::regclass, t_data, t_infomask, t_infomask2, t_bits)
   from heap_page_items(get_raw_page('test_sequence', 0));
+drop sequence test_sequence;
