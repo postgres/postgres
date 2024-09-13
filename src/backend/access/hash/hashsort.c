@@ -145,6 +145,9 @@ _h_indexbuild(HSpool *hspool, Relation heapRel)
 
 		_hash_doinsert(hspool->index, itup, heapRel);
 
+		/* allow insertion phase to be interrupted, and track progress */
+		CHECK_FOR_INTERRUPTS();
+
 		pgstat_progress_update_param(PROGRESS_CREATEIDX_TUPLES_DONE,
 									 ++tups_done);
 	}
