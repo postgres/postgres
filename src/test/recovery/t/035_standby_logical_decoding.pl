@@ -495,7 +495,8 @@ $node_subscriber->stop;
 # Scenario 1: hot_standby_feedback off and vacuum FULL
 #
 # In passing, ensure that replication slot stats are not removed when the
-# active slot is invalidated.
+# active slot is invalidated, and check that an error occurs when
+# attempting to alter the invalid slot.
 ##################################################
 
 # One way to produce recovery conflict is to create/drop a relation and
@@ -525,6 +526,15 @@ check_for_invalidation('vacuum_full_', 1, 'with vacuum FULL on pg_class');
 
 # Verify reason for conflict is 'rows_removed' in pg_replication_slots
 check_slots_conflict_reason('vacuum_full_', 'rows_removed');
+
+# Attempting to alter an invalidated slot should result in an error
+($result, $stdout, $stderr) = $node_standby->psql(
+    'postgres',
+    qq[ALTER_REPLICATION_SLOT vacuum_full_inactiveslot (failover);],
+    replication => 'database');
+ok($stderr =~ /ERROR:  cannot alter invalid replication slot "vacuum_full_inactiveslot"/ &&
+   $stderr =~ /DETAIL:  This replication slot has been invalidated due to "rows_removed"./,
+    "invalidated slot cannot be altered");
 
 # Ensure that replication slot stats are not removed after invalidation.
 is( $node_standby->safe_psql(

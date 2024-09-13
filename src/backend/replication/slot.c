@@ -820,6 +820,13 @@ ReplicationSlotAlter(const char *name, const bool *failover,
 				errmsg("cannot use %s with a physical replication slot",
 					   "ALTER_REPLICATION_SLOT"));
 
+	if (MyReplicationSlot->data.invalidated != RS_INVAL_NONE)
+		ereport(ERROR,
+				errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				errmsg("cannot alter invalid replication slot \"%s\"", name),
+				errdetail("This replication slot has been invalidated due to \"%s\".",
+						  SlotInvalidationCauses[MyReplicationSlot->data.invalidated]));
+
 	if (RecoveryInProgress())
 	{
 		/*
