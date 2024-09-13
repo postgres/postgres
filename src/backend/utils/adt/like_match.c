@@ -71,14 +71,13 @@
  */
 
 #ifdef MATCH_LOWER
-#define GETCHAR(t) MATCH_LOWER(t)
+#define GETCHAR(t, locale) MATCH_LOWER(t, locale)
 #else
-#define GETCHAR(t) (t)
+#define GETCHAR(t, locale) (t)
 #endif
 
 static int
-MatchText(const char *t, int tlen, const char *p, int plen,
-		  pg_locale_t locale, bool locale_is_c)
+MatchText(const char *t, int tlen, const char *p, int plen, pg_locale_t locale)
 {
 	/* Fast path for match-everything pattern */
 	if (plen == 1 && *p == '%')
@@ -106,7 +105,7 @@ MatchText(const char *t, int tlen, const char *p, int plen,
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_ESCAPE_SEQUENCE),
 						 errmsg("LIKE pattern must not end with escape character")));
-			if (GETCHAR(*p) != GETCHAR(*t))
+			if (GETCHAR(*p, locale) != GETCHAR(*t, locale))
 				return LIKE_FALSE;
 		}
 		else if (*p == '%')
@@ -166,17 +165,16 @@ MatchText(const char *t, int tlen, const char *p, int plen,
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_ESCAPE_SEQUENCE),
 							 errmsg("LIKE pattern must not end with escape character")));
-				firstpat = GETCHAR(p[1]);
+				firstpat = GETCHAR(p[1], locale);
 			}
 			else
-				firstpat = GETCHAR(*p);
+				firstpat = GETCHAR(*p, locale);
 
 			while (tlen > 0)
 			{
-				if (GETCHAR(*t) == firstpat)
+				if (GETCHAR(*t, locale) == firstpat)
 				{
-					int			matched = MatchText(t, tlen, p, plen,
-													locale, locale_is_c);
+					int			matched = MatchText(t, tlen, p, plen, locale);
 
 					if (matched != LIKE_FALSE)
 						return matched; /* TRUE or ABORT */
@@ -198,7 +196,7 @@ MatchText(const char *t, int tlen, const char *p, int plen,
 			NextByte(p, plen);
 			continue;
 		}
-		else if (GETCHAR(*p) != GETCHAR(*t))
+		else if (GETCHAR(*p, locale) != GETCHAR(*t, locale))
 		{
 			/* non-wildcard pattern char fails to match text char */
 			return LIKE_FALSE;
