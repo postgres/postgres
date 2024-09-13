@@ -1,0 +1,62 @@
+-- Tests with extended query protocol
+SET pg_stat_statements.track_utility = FALSE;
+SELECT pg_stat_statements_reset() IS NOT NULL AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT $1 \parse stmt1
+SELECT $1, $2 \parse stmt2
+SELECT $1, $2, $3 \parse stmt3
+SELECT $1 \bind 'unnamed_val1' \g
+   ?column?   
+--------------
+ unnamed_val1
+(1 row)
+
+\bind_named stmt1 'stmt1_val1' \g
+  ?column?  
+------------
+ stmt1_val1
+(1 row)
+
+\bind_named stmt2 'stmt2_val1' 'stmt2_val2' \g
+  ?column?  |  ?column?  
+------------+------------
+ stmt2_val1 | stmt2_val2
+(1 row)
+
+\bind_named stmt3 'stmt3_val1' 'stmt3_val2' 'stmt3_val3' \g
+  ?column?  |  ?column?  |  ?column?  
+------------+------------+------------
+ stmt3_val1 | stmt3_val2 | stmt3_val3
+(1 row)
+
+\bind_named stmt3 'stmt3_val4' 'stmt3_val5' 'stmt3_val6' \g
+  ?column?  |  ?column?  |  ?column?  
+------------+------------+------------
+ stmt3_val4 | stmt3_val5 | stmt3_val6
+(1 row)
+
+\bind_named stmt2 'stmt2_val3' 'stmt2_val4' \g
+  ?column?  |  ?column?  
+------------+------------
+ stmt2_val3 | stmt2_val4
+(1 row)
+
+\bind_named stmt1 'stmt1_val1' \g
+  ?column?  
+------------
+ stmt1_val1
+(1 row)
+
+SELECT calls, rows, query FROM pg_stat_statements ORDER BY query COLLATE "C";
+ calls | rows |                       query                        
+-------+------+----------------------------------------------------
+     3 |    3 | SELECT $1
+     2 |    2 | SELECT $1, $2
+     2 |    2 | SELECT $1, $2, $3
+     1 |    1 | SELECT pg_stat_statements_reset() IS NOT NULL AS t
+(4 rows)
+

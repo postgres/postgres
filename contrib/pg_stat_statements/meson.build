@@ -51,6 +51,7 @@ tests += {
       'wal',
       'entry_timestamp',
       'privileges',
+      'extended',
       'cleanup',
       'oldextversions',
     ],

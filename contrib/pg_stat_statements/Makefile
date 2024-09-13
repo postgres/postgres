@@ -19,7 +19,7 @@ LDFLAGS_SL += $(filter -lm, $(LIBS))
 
 REGRESS_OPTS = --temp-config $(top_srcdir)/contrib/pg_stat_statements/pg_stat_statements.conf
 REGRESS = select dml cursors utility level_tracking planning \
-	user_activity wal entry_timestamp privileges cleanup \
+	user_activity wal entry_timestamp privileges extended cleanup \
 	oldextversions
 # Disabled because these tests require "shared_preload_libraries=pg_stat_statements",
 # which typical installcheck users do not have (e.g. buildfarm clients).
