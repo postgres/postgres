@@ -3012,6 +3012,23 @@ Author: Michael Paquier <michael@paquier.xyz>
      </listitem>
 
 <!--
+Author: Nathan Bossart <nathan@postgresql.org>
+2024-01-19 [8b2bcf3f2] Introduce the dynamic shared memory registry.
+-->
+
+     <listitem>
+      <para>
+      Add dynamic shared memory registry (Nathan Bossart)
+      <ulink url="&commit_baseurl;8b2bcf3f2">&sect;</ulink>
+      </para>
+
+      <para>
+       This allows shared libraries which are not initialized at startup
+       to coordinate dynamic shared memory access.
+      </para>
+     </listitem>
+
+<!--
 Author: Michael Paquier <michael@paquier.xyz>
 2024-04-04 [2a217c371] Coordinate emit_log_hook and all log destinations to sha
 -->
