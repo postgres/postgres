@@ -18832,7 +18832,7 @@ ERROR:  jsonpath array subscript is out of bounds
        </para>
        <para>
         <literal>JSON_QUERY(jsonb '[1,[2,3],null]', 'lax $[*][$off]' PASSING 1 AS off WITH CONDITIONAL WRAPPER)</literal>
-        <returnvalue>[3]</returnvalue>
+        <returnvalue>3</returnvalue>
        </para>
        <para>
         <literal>JSON_QUERY(jsonb '{"a": "[1, 2]"}', 'lax $.a' OMIT QUOTES)</literal>
