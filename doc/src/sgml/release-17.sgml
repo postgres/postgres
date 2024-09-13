@@ -1660,23 +1660,6 @@ Author: Peter Eisentraut <peter@eisentraut.org>
      </listitem>
 
 <!--
-Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
-2024-03-25 [374c7a229] Allow specifying an access method for partitioned tables
-Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
-2024-03-28 [e2395cdbe] ALTER TABLE: rework determination of access method ID
--->
-
-     <listitem>
-      <para>
-      Allow specification of partitioned <link linkend="tableam">table
-      access methods</link> (Justin Pryzby, Soumyadeep Chakraborty,
-      Michael Paquier)
-      <ulink url="&commit_baseurl;374c7a229">&sect;</ulink>
-      <ulink url="&commit_baseurl;e2395cdbe">&sect;</ulink>
-      </para>
-     </listitem>
-
-<!--
 Author: Peter Eisentraut <peter@eisentraut.org>
 2024-01-13 [4f622503d] Make attstattarget nullable
 -->
@@ -1711,6 +1694,23 @@ Author: Peter Eisentraut <peter@eisentraut.org>
       <para>
       The syntax is <literal>ALTER TABLE ... ALTER COLUMN ... SET
       EXPRESSION</literal>.
+      </para>
+     </listitem>
+
+<!--
+Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
+2024-03-25 [374c7a229] Allow specifying an access method for partitioned tables
+Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
+2024-03-28 [e2395cdbe] ALTER TABLE: rework determination of access method ID
+-->
+
+     <listitem>
+      <para>
+      Allow specification of <link linkend="tableam">table access
+      methods</link> on partitioned tables (Justin Pryzby, Soumyadeep
+      Chakraborty, Michael Paquier)
+      <ulink url="&commit_baseurl;374c7a229">&sect;</ulink>
+      <ulink url="&commit_baseurl;e2395cdbe">&sect;</ulink>
       </para>
      </listitem>
 
