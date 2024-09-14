@@ -1072,20 +1072,19 @@ if not perlopt.disabled()
     # Config's ccdlflags and ldflags.  (Those are the choices of those who
     # built the Perl installation, which are not necessarily appropriate
     # for building PostgreSQL.)
-    ldopts = run_command(perl, '-MExtUtils::Embed', '-e', 'ldopts', check: true).stdout().strip()
-    undesired = run_command(perl_conf_cmd, 'ccdlflags', check: true).stdout().split()
-    undesired += run_command(perl_conf_cmd, 'ldflags', check: true).stdout().split()
+    perl_ldopts = run_command(perl, '-e', '''
+use ExtUtils::Embed;
+use Text::ParseWords;
+# tell perl to suppress including these in ldopts
+*ExtUtils::Embed::_ldflags =*ExtUtils::Embed::_ccdlflags = sub { return ""; };
+# adding an argument to ldopts makes it return a value instead of printing
+# print one of these per line so splitting will preserve spaces in file names.
+# shellwords eats backslashes, so we need to escape them.
+(my $opts = ldopts(undef)) =~ s!\\!\\\\!g;
+print "$_\n" foreach shellwords($opts);
+''',
+     check: true).stdout().strip().split('\n')
 
-    perl_ldopts = []
-    foreach ldopt : ldopts.split(' ')
-      if ldopt == '' or ldopt in undesired
-        continue
-      endif
-
-      perl_ldopts += ldopt.strip('"')
-    endforeach
-
-    message('LDFLAGS recommended by perl: "@0@"'.format(ldopts))
     message('LDFLAGS for embedding perl: "@0@"'.format(' '.join(perl_ldopts)))
 
     perl_dep_int = declare_dependency(
