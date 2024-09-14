@@ -1,9 +1,9 @@
 --
 -- HOROLOGY
 --
-SET DateStyle = 'Postgres, MDY';
 
-SHOW TimeZone;  -- Many of these tests depend on the prevailing setting
+SHOW TimeZone;  -- Many of these tests depend on the prevailing settings
+SHOW DateStyle;
 
 --
 -- Test various input formats
