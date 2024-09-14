@@ -2479,7 +2479,6 @@ Author: Michael Paquier <michael@paquier.xyz>
       <ulink url="&commit_baseurl;927332b95">&sect;</ulink>
       <ulink url="&commit_baseurl;f1bb9284f">&sect;</ulink>
       <ulink url="&commit_baseurl;304b6b1a6">&sect;</ulink>
-      <ulink url="&commit_baseurl;60ae37a8b">&sect;</ulink>
       <ulink url="&commit_baseurl;2800fbb2b">&sect;</ulink>
       </para>
      </listitem>
