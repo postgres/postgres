@@ -6,7 +6,7 @@
 
   <formalpara>
    <title>Release date:</title>
-   <para>2024-??-??, AS OF 2024-06-17</para>
+   <para>2024-??-??, AS OF 2024-09-14</para>
   </formalpara>
 
   <sect2 id="release-17-highlights">
@@ -3004,6 +3004,8 @@ Author: Michael Paquier <michael@paquier.xyz>
 2024-03-04 [37b369dc6] injection_points: Add wait and wakeup of processes
 Author: Michael Paquier <michael@paquier.xyz>
 2024-04-08 [f587338de] injection_points: Introduce runtime conditions
+Author: Noah Misch <noah@leadboat.com>
+2024-06-27 [bb93640a6] Add wait event type "InjectionPoint", a custom
 -->
 
      <listitem>
@@ -3012,6 +3014,7 @@ Author: Michael Paquier <michael@paquier.xyz>
       <ulink url="&commit_baseurl;d86d20f0b">&sect;</ulink>
       <ulink url="&commit_baseurl;37b369dc6">&sect;</ulink>
       <ulink url="&commit_baseurl;f587338de">&sect;</ulink>
+      <ulink url="&commit_baseurl;bb93640a6">&sect;</ulink>
       </para>
 
       <para>
