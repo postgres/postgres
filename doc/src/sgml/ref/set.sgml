@@ -200,7 +200,7 @@ SELECT setseed(<replaceable>value</replaceable>);
 
        <variablelist>
         <varlistentry>
-         <term><literal>'PST8PDT'</literal></term>
+         <term><literal>'America/Los_Angeles'</literal></term>
          <listitem>
           <para>
            The time zone for Berkeley, California.
@@ -298,7 +298,7 @@ SET datestyle TO postgres, dmy;
   <para>
    Set the time zone for Berkeley, California:
 <screen>
-SET TIME ZONE 'PST8PDT';
+SET TIME ZONE 'America/Los_Angeles';
 </screen>
   </para>
 
