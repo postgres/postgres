@@ -1054,7 +1054,10 @@ if not perlopt.disabled()
       if cc.get_id() == 'msvc'
         # prevent binary mismatch between MSVC built plperl and Strawberry or
         # msys ucrt perl libraries
-        perl_ccflags += ['-DNO_THREAD_SAFE_LOCALE']
+        perl_v = run_command(perl, '-V').stdout()
+        if not perl_v.contains('USE_THREAD_SAFE_LOCALE')
+          perl_ccflags += ['-DNO_THREAD_SAFE_LOCALE']
+        endif
       endif
     endif
 
