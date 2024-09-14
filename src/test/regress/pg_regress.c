@@ -778,7 +778,7 @@ initialize_environment(void)
 	/*
 	 * Set timezone and datestyle for datetime-related tests
 	 */
-	putenv("PGTZ=PST8PDT");
+	putenv("PGTZ=America/Los_Angeles");
 	putenv("PGDATESTYLE=Postgres, MDY");
 
 	/*
