@@ -1558,77 +1558,6 @@ Author: Andrew Dunstan <andrew@dunslane.net>
      </listitem>
 
 <!--
-Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
-2024-01-29 [5de890e36] Add EXPLAIN (MEMORY) to report planner memory consumptio
--->
-
-     <listitem>
-      <para>
-      Allow <link linkend="sql-explain"><command>EXPLAIN</command></link>
-      to report optimizer memory usage (Ashutosh Bapat)
-      <ulink url="&commit_baseurl;5de890e36">&sect;</ulink>
-      </para>
-
-      <para>
-      The option is called <literal>MEMORY</literal>.
-      </para>
-     </listitem>
-
-<!--
-Author: Tom Lane <tgl@sss.pgh.pa.us>
-2024-04-03 [06286709e] Invent SERIALIZE option for EXPLAIN.
--->
-
-     <listitem>
-      <para>
-      Add <command>EXPLAIN</command> option <literal>SERIALIZE</literal>
-      to report the cost of converting data for network transmission
-      (Stepan Rutz, Matthias van de Meent)
-      <ulink url="&commit_baseurl;06286709e">&sect;</ulink>
-      </para>
-     </listitem>
-
-<!--
-Author: Michael Paquier <michael@paquier.xyz>
-2023-10-19 [295c36c0c] Add local_blk_{read|write}_time I/O timing statistics fo
--->
-
-     <listitem>
-      <para>
-      Add local I/O block read/write timing statistics to
-      <command>EXPLAIN</command>'s <literal>BUFFERS</literal> output
-      (Nazir Bilal Yavuz)
-      <ulink url="&commit_baseurl;295c36c0c">&sect;</ulink>
-      </para>
-     </listitem>
-
-<!--
-Author: Tom Lane <tgl@sss.pgh.pa.us>
-2024-03-19 [fd0398fcb] Improve EXPLAIN's display of SubPlan nodes and output pa
--->
-
-     <listitem>
-      <para>
-      Improve <command>EXPLAIN</command>'s display of SubPlan nodes and
-      output parameters (Tom Lane, Dean Rasheed)
-      <ulink url="&commit_baseurl;fd0398fcb">&sect;</ulink>
-      </para>
-     </listitem>
-
-<!--
-Author: Daniel Gustafsson <dgustafsson@postgresql.org>
-2023-09-08 [5a3423ad8] Add JIT deform_counter
--->
-
-     <listitem>
-      <para>
-      Add <acronym>JIT</acronym> <literal>deform_counter</literal>
-      details to <command>EXPLAIN</command> (Dmitry Dolgov)
-      <ulink url="&commit_baseurl;5a3423ad8">&sect;</ulink>
-      </para>
-     </listitem>
-
-<!--
 Author: Peter Eisentraut <peter@eisentraut.org>
 2024-01-16 [699586315] Support identity columns in partitioned tables
 -->
@@ -1770,6 +1699,86 @@ Author: Nathan Bossart <nathan@postgresql.org>
      </listitem>
 
     </itemizedlist>
+
+    <sect4 id="release-17-explain">
+     <title><link linkend="sql-explain"><command>EXPLAIN</command></link></title>
+
+     <itemizedlist>
+
+<!--
+Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
+2024-01-29 [5de890e36] Add EXPLAIN (MEMORY) to report planner memory consumptio
+-->
+
+      <listitem>
+       <para>
+       Allow <command>EXPLAIN</command> to report
+       optimizer memory usage (Ashutosh Bapat) <ulink
+       url="&commit_baseurl;5de890e36">&sect;</ulink>
+       </para>
+
+       <para>
+       The option is called <literal>MEMORY</literal>.
+       </para>
+      </listitem>
+
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+2024-04-03 [06286709e] Invent SERIALIZE option for EXPLAIN.
+-->
+
+      <listitem>
+       <para>
+       Add <command>EXPLAIN</command> option <literal>SERIALIZE</literal>
+       to report the cost of converting data for network transmission
+       (Stepan Rutz, Matthias van de Meent)
+       <ulink url="&commit_baseurl;06286709e">&sect;</ulink>
+       </para>
+      </listitem>
+
+<!--
+Author: Michael Paquier <michael@paquier.xyz>
+2023-10-19 [295c36c0c] Add local_blk_{read|write}_time I/O timing statistics fo
+-->
+
+      <listitem>
+       <para>
+       Add local I/O block read/write timing statistics to
+       <command>EXPLAIN</command>'s <literal>BUFFERS</literal> output
+       (Nazir Bilal Yavuz)
+       <ulink url="&commit_baseurl;295c36c0c">&sect;</ulink>
+       </para>
+      </listitem>
+
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+2024-03-19 [fd0398fcb] Improve EXPLAIN's display of SubPlan nodes and output pa
+-->
+
+      <listitem>
+       <para>
+       Improve <command>EXPLAIN</command>'s display of SubPlan nodes and
+       output parameters (Tom Lane, Dean Rasheed)
+       <ulink url="&commit_baseurl;fd0398fcb">&sect;</ulink>
+       </para>
+      </listitem>
+
+<!--
+Author: Daniel Gustafsson <dgustafsson@postgresql.org>
+2023-09-08 [5a3423ad8] Add JIT deform_counter
+-->
+
+      <listitem>
+       <para>
+       Add <acronym>JIT</acronym> <literal>deform_counter</literal>
+       details to <command>EXPLAIN</command> (Dmitry Dolgov)
+       <ulink url="&commit_baseurl;5a3423ad8">&sect;</ulink>
+       </para>
+      </listitem>
+
+     </itemizedlist>
+
+    </sect4>
 
    </sect3>
 
