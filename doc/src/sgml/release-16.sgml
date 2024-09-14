@@ -4043,7 +4043,7 @@ Branch: REL_12_STABLE [b59ae79b7] 2024-02-01 15:57:53 -0500
       release 2024a for DST law changes in Greenland, Kazakhstan, and
       Palestine, plus corrections for the Antarctic stations Casey and
       Vostok.  Also historical corrections for Vietnam, Toronto, and
-      Miquelon.
+      Miquelon. (Tom Lane)
      </para>
     </listitem>
 
