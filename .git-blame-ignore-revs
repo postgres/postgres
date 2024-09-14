@@ -14,6 +14,9 @@
 #
 # $ git log --pretty=format:"%H # %cd%n# %s" $PGINDENTGITHASH -1 --date=iso
 
+c739ae9e288c095cfe1b91ce27a2f2c075ed5da4 # 2024-08-26 16:16:09 -0700
+# Fix identation.
+
 da256a4a7fdcca35fe7ca808686ad3de6ee22306 # 2024-05-14 16:34:50 -0400
 # Pre-beta mechanical code beautification.
 
