@@ -551,7 +551,6 @@ Author: Alexander Korotkov <akorotkov@postgresql.org>
        to report range-type histogram information (Egor Rogov, Soumyadeep
        Chakraborty)
        <ulink url="&commit_baseurl;bc3c8db8a">&sect;</ulink>
-
        </para>
       </listitem>
 
@@ -1713,8 +1712,8 @@ Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
       <listitem>
        <para>
        Allow <command>EXPLAIN</command> to report
-       optimizer memory usage (Ashutosh Bapat) <ulink
-       url="&commit_baseurl;5de890e36">&sect;</ulink>
+       optimizer memory usage (Ashutosh Bapat)
+       <ulink url="&commit_baseurl;5de890e36">&sect;</ulink>
        </para>
 
        <para>
