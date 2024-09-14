@@ -2616,7 +2616,7 @@ Branch: REL_12_STABLE [b59ae79b7] 2024-02-01 15:57:53 -0500
       release 2024a for DST law changes in Greenland, Kazakhstan, and
       Palestine, plus corrections for the Antarctic stations Casey and
       Vostok.  Also historical corrections for Vietnam, Toronto, and
-      Miquelon.
+      Miquelon (Tom Lane)
      </para>
     </listitem>
 
@@ -5694,7 +5694,7 @@ Branch: REL_11_STABLE [7228f2f81] 2023-04-18 14:46:39 -0400
      <para>
       Update time zone data files to <application>tzdata</application>
       release 2023c for DST law changes in Egypt, Greenland, Morocco, and
-      Palestine.
+      Palestine. (Tom Lane)
      </para>
 
      <para>
@@ -6496,7 +6496,7 @@ Branch: REL_11_STABLE [7ddc428ef] 2023-01-31 17:37:34 -0500
       Update time zone data files to <application>tzdata</application>
       release 2022g for DST law changes in Greenland and Mexico,
       plus historical corrections for northern Canada, Colombia, and
-      Singapore.
+      Singapore. (Tom Lane)
      </para>
 
      <para>
@@ -7458,7 +7458,7 @@ Branch: REL_10_STABLE [b3326a753] 2022-11-01 17:09:21 -0400
       Update time zone data files to <application>tzdata</application>
       release 2022f for DST law changes in Chile, Fiji, Iran, Jordan,
       Mexico, Palestine, and Syria, plus historical corrections for Chile,
-      Crimea, Iran, and Mexico.
+      Crimea, Iran, and Mexico. (Tom Lane)
      </para>
 
      <para>
@@ -9408,7 +9408,7 @@ Branch: REL_10_STABLE [bc334ec9f] 2022-05-05 14:55:30 -0400
      <para>
       Update time zone data files to <application>tzdata</application>
       release 2022a for DST law changes in Palestine, plus historical
-      corrections for Chile and Ukraine.
+      corrections for Chile and Ukraine. (Tom Lane)
      </para>
     </listitem>
 
@@ -11783,7 +11783,7 @@ Branch: REL9_6_STABLE [22a498b9b] 2021-10-29 11:39:05 -0400
       Update time zone data files to <application>tzdata</application>
       release 2021e for DST law changes in Fiji, Jordan, Palestine, and
       Samoa, plus historical corrections for Barbados, Cook Islands,
-      Guyana, Niue, Portugal, and Tonga.
+      Guyana, Niue, Portugal, and Tonga. (Tom Lane)
      </para>
 
      <para>
@@ -15821,7 +15821,7 @@ Branch: REL9_5_STABLE [c26a0865d] 2021-01-24 16:29:48 -0500
       release 2021a for DST law changes in Russia (Volgograd zone) and
       South Sudan, plus historical corrections for Australia, Bahamas,
       Belize, Bermuda, Ghana, Israel, Kenya, Nigeria, Palestine,
-      Seychelles, and Vanuatu.
+      Seychelles, and Vanuatu. (Tom Lane)
      </para>
 
      <para>
@@ -17088,7 +17088,7 @@ Branch: REL9_5_STABLE [0abebb58f] 2020-10-22 21:24:28 -0400
       release 2020d for DST law changes in Fiji, Morocco, Palestine, the
       Canadian Yukon, Macquarie Island, and Casey Station (Antarctica);
       plus historical corrections for France, Hungary, Monaco, and
-      Palestine.
+      Palestine. (Tom Lane)
      </para>
     </listitem>
 
@@ -19795,7 +19795,7 @@ Branch: REL9_5_STABLE [3f3ab184c] 2020-04-24 17:21:44 -0400
      <para>
       Update time zone data files to <application>tzdata</application>
       release 2020a for DST law changes in Morocco and the Canadian Yukon,
-      plus historical corrections for Shanghai.
+      plus historical corrections for Shanghai. (Tom Lane)
      </para>
 
      <para>
