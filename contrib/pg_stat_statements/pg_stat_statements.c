@@ -886,13 +886,6 @@ pgss_planner(Query *parse,
 	 * We can't process the query if no query_string is provided, as
 	 * pgss_store needs it.  We also ignore query without queryid, as it would
 	 * be treated as a utility statement, which may not be the case.
-	 *
-	 * Note that planner_hook can be called from the planner itself, so we
-	 * have a specific nesting level for the planner.  However, utility
-	 * commands containing optimizable statements can also call the planner,
-	 * same for regular DML (for instance for underlying foreign key queries).
-	 * So testing the planner nesting level only is not enough to detect real
-	 * top level planner call.
 	 */
 	if (pgss_enabled(nesting_level)
 		&& pgss_track_planning && query_string
