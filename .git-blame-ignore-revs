@@ -14,6 +14,9 @@
 #
 # $ git log --pretty=format:"%H # %cd%n# %s" $PGINDENTGITHASH -1 --date=iso
 
+7229ebe011dff3f418251a4836f6d098923aa1e1 # 2024-08-26 16:16:12 -0700
+# Fix identation.
+
 2b03cfeea47834913ff769124f4deba88140f662 # 2024-08-21 09:58:11 -0400
 # Fix pgindent damage
 
