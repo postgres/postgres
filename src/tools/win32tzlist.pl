@@ -38,7 +38,7 @@ my $tzfile = 'src/bin/initdb/findtimezone.c';
 #
 my $basekey;
 $HKEY_LOCAL_MACHINE->Open(
-	"SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Time Zones", $basekey)
+	'SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Time Zones', $basekey)
   or die $!;
 
 my @subkeys;
