@@ -15,20 +15,24 @@ pub struct Node {
 
 #[derive(Debug, Deserialize)]
 pub struct LocalNode {
-    pub memory_threshold: f64,
+    pub unavailable_memory_perc: f64,
 }
 
-pub fn get_router_config() -> NodesConfig {
+pub fn get_router_config(config_file_path: Option<&str>) -> NodesConfig {
     // read from 'config.yaml' to get the NodeConfig
-    let config_content = fs::read_to_string("../../../sharding/src/node/router_config.yaml")
-        .expect("Should have been able to read the file");
+    let config_file_path = match config_file_path {
+        Some(path) => path,
+        None => "../../../sharding/src/node/config/router_config.yaml",
+    };
+
+    let config_content =
+        fs::read_to_string(config_file_path).expect("Should have been able to read the file");
 
     serde_yaml::from_str(&config_content).expect("Should have been able to parse the YAML")
 }
 
 pub fn get_shard_config() -> LocalNode {
-
-    let config_content = fs::read_to_string("../../../sharding/src/node/shard_config.yaml")
+    let config_content = fs::read_to_string("../../../sharding/src/node/config/shard_config.yaml")
         .expect("Should have been able to read the file");
 
     serde_yaml::from_str(&config_content).expect("Should have been able to parse the YAML")
