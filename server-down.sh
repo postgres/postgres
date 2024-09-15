@@ -20,19 +20,28 @@ if [ ${#clusters[@]} -eq 1 ]; then
     DB_CLUSTER_NAME="${clusters[0]}"
     echo "Only one cluster available. Automatically stopping: $DB_CLUSTER_NAME"
 else
-    # Ask for the database cluster name to stop
-    read -p "Enter the name of the database cluster to stop: " DB_CLUSTER_NAME
+    # Ask for the database cluster name to stop or stop all
+    read -p "Enter the name of the database cluster to stop (or type 'all' to stop all clusters): " DB_CLUSTER_NAME
 fi
 
-DB_DIR="$CLUSTERS_DIR/$DB_CLUSTER_NAME"
+if [ "$DB_CLUSTER_NAME" == "all" ]; then
+    # Stop all clusters
+    for cluster in "${clusters[@]}"; do
+        DB_DIR="$CLUSTERS_DIR/$cluster"
+        echo "[DISTRIBUTED POSTGRESQL] Stopping PostgreSQL server for cluster $cluster..."
+        cd $PG_CTL_DIR
+        ./pg_ctl -D $DB_DIR stop
+        echo "[DISTRIBUTED POSTGRESQL] PostgreSQL server stopped successfully for cluster $cluster."
+    done
+else
+    DB_DIR="$CLUSTERS_DIR/$DB_CLUSTER_NAME"
+    if [ ! -d "$DB_DIR" ]; then
+        echo "[ERROR] The specified database cluster directory does not exist."
+        exit 1
+    fi
 
-if [ ! -d "$DB_DIR" ]; then
-    echo "[ERROR] The specified database cluster directory does not exist."
-    exit 1
+    echo "[DISTRIBUTED POSTGRESQL] Stopping PostgreSQL server for cluster $DB_CLUSTER_NAME..."
+    cd $PG_CTL_DIR
+    ./pg_ctl -D $DB_DIR stop
+    echo "[DISTRIBUTED POSTGRESQL] PostgreSQL server stopped successfully for cluster $DB_CLUSTER_NAME."
 fi
-
-echo "[DISTRIBUTED POSTGRESQL] Stopping PostgreSQL server for cluster $DB_CLUSTER_NAME..."
-cd $PG_CTL_DIR
-./pg_ctl -D $DB_DIR stop
-
-echo "[DISTRIBUTED POSTGRESQL] PostgreSQL server stopped successfully for cluster $DB_CLUSTER_NAME."
