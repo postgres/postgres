@@ -4154,7 +4154,13 @@ xpath_internal(text *xpath_expr_text, xmltype *data, ArrayType *namespaces,
 			}
 		}
 
-		xpathcomp = xmlXPathCompile(xpath_expr);
+		/*
+		 * Note: here and elsewhere, be careful to use xmlXPathCtxtCompile not
+		 * xmlXPathCompile.  In libxml2 2.13.3 and older, the latter function
+		 * fails to defend itself against recursion-to-stack-overflow.  See
+		 * https://gitlab.gnome.org/GNOME/libxml2/-/issues/799
+		 */
+		xpathcomp = xmlXPathCtxtCompile(xpathctx, xpath_expr);
 		if (xpathcomp == NULL || xmlerrcxt->err_occurred)
 			xml_ereport(xmlerrcxt, ERROR, ERRCODE_INTERNAL_ERROR,
 						"invalid XPath expression");
@@ -4533,7 +4539,10 @@ XmlTableSetRowFilter(TableFuncScanState *state, const char *path)
 
 	xstr = pg_xmlCharStrndup(path, strlen(path));
 
-	xtCxt->xpathcomp = xmlXPathCompile(xstr);
+	/* We require XmlTableSetDocument to have been done already */
+	Assert(xtCxt->xpathcxt != NULL);
+
+	xtCxt->xpathcomp = xmlXPathCtxtCompile(xtCxt->xpathcxt, xstr);
 	if (xtCxt->xpathcomp == NULL || xtCxt->xmlerrcxt->err_occurred)
 		xml_ereport(xtCxt->xmlerrcxt, ERROR, ERRCODE_SYNTAX_ERROR,
 					"invalid XPath expression");
@@ -4564,7 +4573,10 @@ XmlTableSetColumnFilter(TableFuncScanState *state, const char *path, int colnum)
 
 	xstr = pg_xmlCharStrndup(path, strlen(path));
 
-	xtCxt->xpathscomp[colnum] = xmlXPathCompile(xstr);
+	/* We require XmlTableSetDocument to have been done already */
+	Assert(xtCxt->xpathcxt != NULL);
+
+	xtCxt->xpathscomp[colnum] = xmlXPathCtxtCompile(xtCxt->xpathcxt, xstr);
 	if (xtCxt->xpathscomp[colnum] == NULL || xtCxt->xmlerrcxt->err_occurred)
 		xml_ereport(xtCxt->xmlerrcxt, ERROR, ERRCODE_DATA_EXCEPTION,
 					"invalid XPath expression");
