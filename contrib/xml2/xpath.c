@@ -432,7 +432,7 @@ pgxml_xpath(text *document, xmlChar *xpath, xpath_workspace *workspace)
 			workspace->ctxt->node = xmlDocGetRootElement(workspace->doctree);
 
 			/* compile the path */
-			comppath = xmlXPathCompile(xpath);
+			comppath = xmlXPathCtxtCompile(workspace->ctxt, xpath);
 			if (comppath == NULL)
 				xml_ereport(xmlerrcxt, ERROR, ERRCODE_EXTERNAL_ROUTINE_EXCEPTION,
 							"XPath Syntax Error");
@@ -746,7 +746,7 @@ xpath_table(PG_FUNCTION_ARGS)
 						ctxt->node = xmlDocGetRootElement(doctree);
 
 						/* compile the path */
-						comppath = xmlXPathCompile(xpaths[j]);
+						comppath = xmlXPathCtxtCompile(ctxt, xpaths[j]);
 						if (comppath == NULL)
 							xml_ereport(xmlerrcxt, ERROR,
 										ERRCODE_EXTERNAL_ROUTINE_EXCEPTION,
