@@ -9,7 +9,7 @@ use std::{
 
 use super::super::utils::node_config::*;
 use super::node::*;
-use crate::node::messages::{message, node_info::NodeInfo};
+use crate::{node::messages::{message, node_info::NodeInfo}, utils::queries::print_query_response};
 use crate::utils::common::Channel;
 
 /// This struct represents the Client node in the distributed system.
@@ -114,13 +114,13 @@ impl Client {
 
         if response_message.get_message_type() == message::MessageType::QueryResponse {
             let rows = response_message.get_data().query.unwrap();
-            print!("{:?}", rows);
+            print_query_response(rows);
         }
     }
 }
 
 impl NodeRole for Client {
-    fn send_query(&mut self, query: &str) -> Option<Vec<Row>> {
+    fn send_query(&mut self, query: &str) -> Option<String> {
         let message =
             message::Message::new_query(Some(self.client_info.clone()), query.to_string());
         let mut stream = self.router_postgres_client.stream.lock().unwrap();
@@ -135,7 +135,7 @@ impl NodeRole for Client {
                 }
 
                 Client::handle_received_message(&mut buffer);
-                Some(Vec::new())
+                Some(String::new())
             }
             Err(_e) => None,
         }

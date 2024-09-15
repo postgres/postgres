@@ -1,9 +1,8 @@
 use postgres::Row;
 
-use crate::utils::queries::ConvertToString;
-
 use super::{message_data::MessageData, node_info::NodeInfo};
 use std::fmt;
+use crate::{node::tables_id_info::TablesIdInfo, utils::common::{ConvertToString,FromString}};
 
 /// MessageType enum shows which command is being sent
 #[derive(Debug, PartialEq, Clone)]
@@ -25,6 +24,7 @@ pub enum MessageType {
 pub struct Message {
     message_type: MessageType,
     payload: Option<f64>,
+    max_ids: Option<TablesIdInfo>,
     node_info: Option<NodeInfo>,
     query_data: Option<String>,
 }
@@ -35,6 +35,7 @@ impl fmt::Debug for Message {
         f.debug_struct("Message")
             .field("message_type", &self.message_type)
             .field("payload", &self.payload)
+            .field("max_ids", &self.max_ids)
             .field("node_info", &self.node_info)
             .field("query_data", &self.query_data)
             .finish()
@@ -49,6 +50,7 @@ impl Message {
         Message {
             message_type: MessageType::InitConnection,
             payload: None,
+            max_ids: None,
             node_info: Some(node_info),
             query_data: None,
         }
@@ -58,24 +60,27 @@ impl Message {
         Message {
             message_type: MessageType::AskMemoryUpdate,
             payload: None,
+            max_ids: None,
             node_info: None,
             query_data: None,
         }
     }
 
-    pub fn new_memory_update(payload: f64) -> Self {
+    pub fn new_memory_update(payload: f64, max_ids: TablesIdInfo) -> Self {
         Message {
             message_type: MessageType::MemoryUpdate,
             payload: Some(payload),
             node_info: None,
             query_data: None,
+            max_ids: Some(max_ids),
         }
     }
 
-    pub fn new_agreed(memory_percentage: f64) -> Self {
+    pub fn new_agreed(memory_percentage: f64, max_ids: TablesIdInfo) -> Self {
         Message {
             message_type: MessageType::Agreed,
             payload: Some(memory_percentage),
+            max_ids: Some(max_ids),
             node_info: None,
             query_data: None,
         }
@@ -85,6 +90,7 @@ impl Message {
         Message {
             message_type: MessageType::Denied,
             payload: None,
+            max_ids: None,
             node_info: None,
             query_data: None,
         }
@@ -94,6 +100,7 @@ impl Message {
         Message {
             message_type: MessageType::GetRouter,
             payload: None,
+            max_ids: None,
             node_info: None,
             query_data: None,
         }
@@ -103,6 +110,7 @@ impl Message {
         Message {
             message_type: MessageType::RouterId,
             payload: None,
+            max_ids: None,
             node_info: Some(node_info),
             query_data: None,
         }
@@ -112,6 +120,7 @@ impl Message {
         Message {
             message_type: MessageType::NoRouterData,
             payload: None,
+            max_ids: None,
             node_info: None,
             query_data: None,
         }
@@ -121,17 +130,19 @@ impl Message {
         Message {
             message_type: MessageType::Query,
             payload: None,
+            max_ids: None,
             node_info: sender_info,
             query_data: Some(query),
         }
     }
 
-    pub fn new_query_response(query_response: Vec<Row>) -> Self {
+    pub fn new_query_response(query_response: String) -> Self {
         Message {
             message_type: MessageType::QueryResponse,
             payload: None,
+            max_ids: None,
             node_info: None,
-            query_data: Some(query_response.convert_to_string()),
+            query_data: Some(query_response),
         }
     }
 
@@ -147,8 +158,8 @@ impl Message {
                 }
             }
             MessageType::MemoryUpdate | MessageType::Agreed => {
-                if let Some(payload) = self.payload {
-                    MessageData::new_payload(payload)
+                if let (Some(payload), Some(max_ids)) = (self.payload, self.max_ids.clone()) {
+                    MessageData::new_payload(payload, max_ids)
                 } else {
                     MessageData::new_none()
                 }
@@ -202,6 +213,13 @@ impl Message {
         }
 
         result.push(' ');
+        if let Some(max_ids) = self.max_ids.clone() {
+            result.push_str(&max_ids.clone().convert_to_string());
+        } else {
+            result.push_str("None");
+        }
+
+        result.push(' ');
         if let Some(node_info) = &self.node_info {
             result.push_str(&node_info.ip);
             result.push(':');
@@ -244,6 +262,12 @@ impl Message {
             None => None,
         };
 
+        let max_ids = match parts.next() {
+            Some("None") => None,
+            Some(max_ids) => Some(TablesIdInfo::from_string(max_ids)),
+            None => None,
+        };
+
         let node_info = match parts.next() {
             Some("None") => None,
             Some(node_info) => Some(node_info.parse().unwrap()),
@@ -267,6 +291,7 @@ impl Message {
         Ok(Message {
             message_type,
             payload,
+            max_ids,
             node_info,
             query_data: query,
         })
@@ -298,6 +323,7 @@ mod tests {
             Message {
                 message_type: MessageType::InitConnection,
                 payload: None,
+                max_ids: None,
                 node_info: Some(node_info),
                 query_data: None,
             }
@@ -312,6 +338,7 @@ mod tests {
             Message {
                 message_type: MessageType::AskMemoryUpdate,
                 payload: None,
+                max_ids: None,
                 node_info: None,
                 query_data: None,
             }
@@ -320,12 +347,14 @@ mod tests {
 
     #[test]
     fn test_new_memory_update() {
-        let message = Message::new_memory_update(0.5);
+        let max_ids = TablesIdInfo::from_string("employees:3,departments:5");
+        let message = Message::new_memory_update(0.5, max_ids.clone());
         assert_eq!(
             message,
             Message {
                 message_type: MessageType::MemoryUpdate,
                 payload: Some(0.5),
+                max_ids: Some(max_ids),
                 node_info: None,
                 query_data: None,
             }
@@ -334,12 +363,14 @@ mod tests {
 
     #[test]
     fn test_new_agreed() {
-        let message = Message::new_agreed(0.5);
+        let max_ids = TablesIdInfo::from_string("employees:3,departments:5");
+        let message = Message::new_agreed(0.5, max_ids.clone());
         assert_eq!(
             message,
             Message {
                 message_type: MessageType::Agreed,
                 payload: Some(0.5),
+                max_ids: Some(max_ids),
                 node_info: None,
                 query_data: None,
             }
@@ -354,6 +385,7 @@ mod tests {
             Message {
                 message_type: MessageType::Denied,
                 payload: None,
+                max_ids: None,
                 node_info: None,
                 query_data: None,
             }
@@ -368,6 +400,7 @@ mod tests {
             Message {
                 message_type: MessageType::GetRouter,
                 payload: None,
+                max_ids: None,
                 node_info: None,
                 query_data: None,
             }
@@ -386,6 +419,7 @@ mod tests {
             Message {
                 message_type: MessageType::RouterId,
                 payload: None,
+                max_ids: None,
                 node_info: Some(node_info),
                 query_data: None,
             }
@@ -400,6 +434,7 @@ mod tests {
             Message {
                 message_type: MessageType::NoRouterData,
                 payload: None,
+                max_ids: None,
                 node_info: None,
                 query_data: None,
             }
@@ -420,6 +455,7 @@ mod tests {
             Message {
                 message_type: MessageType::Query,
                 payload: None,
+                max_ids: None,
                 node_info: None,
                 query_data: Some("SELECT * FROM table".to_string()),
             }
@@ -428,13 +464,15 @@ mod tests {
 
     #[test]
     fn test_get_data_payload() {
+        let max_ids = TablesIdInfo::from_string("employees:3,departments:5");
         let message = Message {
             message_type: MessageType::MemoryUpdate,
             payload: Some(0.5),
+            max_ids: Some(max_ids.clone()),
             node_info: None,
             query_data: None,
         };
-        assert_eq!(message.get_data(), MessageData::new_payload(0.5));
+        assert_eq!(message.get_data(), MessageData::new_payload(0.5, max_ids));
     }
 
     #[test]
@@ -447,6 +485,7 @@ mod tests {
         let message = Message {
             message_type: MessageType::InitConnection,
             payload: None,
+            max_ids: None,
             node_info: Some(node_info.clone()),
             query_data: None,
         };
@@ -458,6 +497,7 @@ mod tests {
         let message = Message {
             message_type: MessageType::Query,
             payload: None,
+            max_ids: None,
             node_info: Some(NodeInfo {
                 ip: "1".to_string(),
                 port: "2".to_string(),
@@ -481,6 +521,7 @@ mod tests {
         let message = Message {
             message_type: MessageType::InitConnection,
             payload: None,
+            max_ids: None,
             node_info: None,
             query_data: None,
         };
@@ -489,20 +530,27 @@ mod tests {
 
     #[test]
     fn test_message_to_string() {
+        let max_ids = TablesIdInfo::from_string("employees:3,departments:5");
         let message = Message {
             message_type: MessageType::InitConnection,
             payload: Some(0.5),
+            max_ids: Some(max_ids.clone()),
             node_info: None,
             query_data: None,
         };
-        assert_eq!(message.to_string(), "INIT_CONNECTION 0.5 None None\n");
+        println!("-{}-", message.to_string());
+        let options = ["INIT_CONNECTION 0.5 employees:3,departments:5 None None\n", "INIT_CONNECTION 0.5 departments:5,employees:3 None None\n"];
+        
+        assert!(options.contains(&&message.to_string().as_str()));
     }
 
     #[test]
     fn test_message_from_string() {
+        let max_ids = TablesIdInfo::from_string("employees:3,departments:5");
         let message = Message {
             message_type: MessageType::InitConnection,
             payload: Some(0.5),
+            max_ids: Some(max_ids.clone()),
             node_info: None,
             query_data: None,
         };
@@ -517,9 +565,11 @@ mod tests {
             port: "2".to_string(),
         };
 
+        let max_ids = TablesIdInfo::from_string("employees:3,departments:5");
         let message = Message {
             message_type: MessageType::InitConnection,
             payload: Some(0.5),
+            max_ids: Some(max_ids.clone()),
             node_info: Some(node_info.clone()),
             query_data: None,
         };
@@ -529,9 +579,11 @@ mod tests {
 
     #[test]
     fn test_message_from_string_with_query() {
+        let max_ids = TablesIdInfo::from_string("employees:3,departments:5");
         let message = Message {
             message_type: MessageType::Query,
             payload: Some(0.5),
+            max_ids: Some(max_ids.clone()),
             node_info: Some(NodeInfo {
                 ip: "1".to_string(),
                 port: "2".to_string(),
