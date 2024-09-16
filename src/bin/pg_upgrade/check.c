@@ -1315,95 +1315,99 @@ check_for_isn_and_int8_passing_mismatch(ClusterInfo *cluster)
 }
 
 /*
+ * Callback function for processing result of query for
+ * check_for_user_defined_postfix_ops()'s UpgradeTask.  If the query returned
+ * any rows (i.e., the check failed), write the details to the report file.
+ */
+static void
+process_user_defined_postfix_ops(DbInfo *dbinfo, PGresult *res, void *arg)
+{
+	UpgradeTaskReport *report = (UpgradeTaskReport *) arg;
+	int			ntups = PQntuples(res);
+	bool		db_used = false;
+	int			i_oproid = PQfnumber(res, "oproid");
+	int			i_oprnsp = PQfnumber(res, "oprnsp");
+	int			i_oprname = PQfnumber(res, "oprname");
+	int			i_typnsp = PQfnumber(res, "typnsp");
+	int			i_typname = PQfnumber(res, "typname");
+
+	AssertVariableIsOfType(&process_user_defined_postfix_ops,
+						   UpgradeTaskProcessCB);
+
+	if (!ntups)
+		return;
+
+	for (int rowno = 0; rowno < ntups; rowno++)
+	{
+		if (report->file == NULL &&
+			(report->file = fopen_priv(report->path, "w")) == NULL)
+			pg_fatal("could not open file \"%s\": %m", report->path);
+		if (!db_used)
+		{
+			fprintf(report->file, "In database: %s\n", dbinfo->db_name);
+			db_used = true;
+		}
+		fprintf(report->file, "  (oid=%s) %s.%s (%s.%s, NONE)\n",
+				PQgetvalue(res, rowno, i_oproid),
+				PQgetvalue(res, rowno, i_oprnsp),
+				PQgetvalue(res, rowno, i_oprname),
+				PQgetvalue(res, rowno, i_typnsp),
+				PQgetvalue(res, rowno, i_typname));
+	}
+}
+
+/*
  * Verify that no user defined postfix operators exist.
  */
 static void
 check_for_user_defined_postfix_ops(ClusterInfo *cluster)
 {
-	int			dbnum;
-	FILE	   *script = NULL;
-	char		output_path[MAXPGPATH];
+	UpgradeTaskReport report;
+	UpgradeTask *task = upgrade_task_create();
+	const char *query;
+
+	/*
+	 * The query below hardcodes FirstNormalObjectId as 16384 rather than
+	 * interpolating that C #define into the query because, if that #define is
+	 * ever changed, the cutoff we want to use is the value used by
+	 * pre-version 14 servers, not that of some future version.
+	 */
+	query = "SELECT o.oid AS oproid, "
+		"       n.nspname AS oprnsp, "
+		"       o.oprname, "
+		"       tn.nspname AS typnsp, "
+		"       t.typname "
+		"FROM pg_catalog.pg_operator o, "
+		"     pg_catalog.pg_namespace n, "
+		"     pg_catalog.pg_type t, "
+		"     pg_catalog.pg_namespace tn "
+		"WHERE o.oprnamespace = n.oid AND "
+		"      o.oprleft = t.oid AND "
+		"      t.typnamespace = tn.oid AND "
+		"      o.oprright = 0 AND "
+		"      o.oid >= 16384";
 
 	prep_status("Checking for user-defined postfix operators");
 
-	snprintf(output_path, sizeof(output_path), "%s/%s",
+	report.file = NULL;
+	snprintf(report.path, sizeof(report.path), "%s/%s",
 			 log_opts.basedir,
 			 "postfix_ops.txt");
 
-	/* Find any user defined postfix operators */
-	for (dbnum = 0; dbnum < cluster->dbarr.ndbs; dbnum++)
+	upgrade_task_add_step(task, query, process_user_defined_postfix_ops,
+						  true, &report);
+	upgrade_task_run(task, cluster);
+	upgrade_task_free(task);
+
+	if (report.file)
 	{
-		PGresult   *res;
-		bool		db_used = false;
-		int			ntups;
-		int			rowno;
-		int			i_oproid,
-					i_oprnsp,
-					i_oprname,
-					i_typnsp,
-					i_typname;
-		DbInfo	   *active_db = &cluster->dbarr.dbs[dbnum];
-		PGconn	   *conn = connectToServer(cluster, active_db->db_name);
-
-		/*
-		 * The query below hardcodes FirstNormalObjectId as 16384 rather than
-		 * interpolating that C #define into the query because, if that
-		 * #define is ever changed, the cutoff we want to use is the value
-		 * used by pre-version 14 servers, not that of some future version.
-		 */
-		res = executeQueryOrDie(conn,
-								"SELECT o.oid AS oproid, "
-								"       n.nspname AS oprnsp, "
-								"       o.oprname, "
-								"       tn.nspname AS typnsp, "
-								"       t.typname "
-								"FROM pg_catalog.pg_operator o, "
-								"     pg_catalog.pg_namespace n, "
-								"     pg_catalog.pg_type t, "
-								"     pg_catalog.pg_namespace tn "
-								"WHERE o.oprnamespace = n.oid AND "
-								"      o.oprleft = t.oid AND "
-								"      t.typnamespace = tn.oid AND "
-								"      o.oprright = 0 AND "
-								"      o.oid >= 16384");
-		ntups = PQntuples(res);
-		i_oproid = PQfnumber(res, "oproid");
-		i_oprnsp = PQfnumber(res, "oprnsp");
-		i_oprname = PQfnumber(res, "oprname");
-		i_typnsp = PQfnumber(res, "typnsp");
-		i_typname = PQfnumber(res, "typname");
-		for (rowno = 0; rowno < ntups; rowno++)
-		{
-			if (script == NULL &&
-				(script = fopen_priv(output_path, "w")) == NULL)
-				pg_fatal("could not open file \"%s\": %m", output_path);
-			if (!db_used)
-			{
-				fprintf(script, "In database: %s\n", active_db->db_name);
-				db_used = true;
-			}
-			fprintf(script, "  (oid=%s) %s.%s (%s.%s, NONE)\n",
-					PQgetvalue(res, rowno, i_oproid),
-					PQgetvalue(res, rowno, i_oprnsp),
-					PQgetvalue(res, rowno, i_oprname),
-					PQgetvalue(res, rowno, i_typnsp),
-					PQgetvalue(res, rowno, i_typname));
-		}
-
-		PQclear(res);
-
-		PQfinish(conn);
-	}
-
-	if (script)
-	{
-		fclose(script);
+		fclose(report.file);
 		pg_log(PG_REPORT, "fatal");
 		pg_fatal("Your installation contains user-defined postfix operators, which are not\n"
 				 "supported anymore.  Consider dropping the postfix operators and replacing\n"
 				 "them with prefix operators or function calls.\n"
 				 "A list of user-defined postfix operators is in the file:\n"
-				 "    %s", output_path);
+				 "    %s", report.path);
 	}
 	else
 		check_ok();
