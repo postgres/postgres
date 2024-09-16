@@ -1684,81 +1684,89 @@ check_for_pg_role_prefix(ClusterInfo *cluster)
 }
 
 /*
+ * Callback function for processing results of query for
+ * check_for_user_defined_encoding_conversions()'s UpgradeTask.  If the query
+ * returned any rows (i.e., the check failed), write the details to the report
+ * file.
+ */
+static void
+process_user_defined_encoding_conversions(DbInfo *dbinfo, PGresult *res, void *arg)
+{
+	UpgradeTaskReport *report = (UpgradeTaskReport *) arg;
+	bool		db_used = false;
+	int			ntups = PQntuples(res);
+	int			i_conoid = PQfnumber(res, "conoid");
+	int			i_conname = PQfnumber(res, "conname");
+	int			i_nspname = PQfnumber(res, "nspname");
+
+	AssertVariableIsOfType(&process_user_defined_encoding_conversions,
+						   UpgradeTaskProcessCB);
+
+	if (!ntups)
+		return;
+
+	for (int rowno = 0; rowno < ntups; rowno++)
+	{
+		if (report->file == NULL &&
+			(report->file = fopen_priv(report->path, "w")) == NULL)
+			pg_fatal("could not open file \"%s\": %m", report->path);
+		if (!db_used)
+		{
+			fprintf(report->file, "In database: %s\n", dbinfo->db_name);
+			db_used = true;
+		}
+		fprintf(report->file, "  (oid=%s) %s.%s\n",
+				PQgetvalue(res, rowno, i_conoid),
+				PQgetvalue(res, rowno, i_nspname),
+				PQgetvalue(res, rowno, i_conname));
+	}
+}
+
+/*
  * Verify that no user-defined encoding conversions exist.
  */
 static void
 check_for_user_defined_encoding_conversions(ClusterInfo *cluster)
 {
-	int			dbnum;
-	FILE	   *script = NULL;
-	char		output_path[MAXPGPATH];
+	UpgradeTaskReport report;
+	UpgradeTask *task = upgrade_task_create();
+	const char *query;
 
 	prep_status("Checking for user-defined encoding conversions");
 
-	snprintf(output_path, sizeof(output_path), "%s/%s",
+	report.file = NULL;
+	snprintf(report.path, sizeof(report.path), "%s/%s",
 			 log_opts.basedir,
 			 "encoding_conversions.txt");
 
-	/* Find any user defined encoding conversions */
-	for (dbnum = 0; dbnum < cluster->dbarr.ndbs; dbnum++)
+	/*
+	 * The query below hardcodes FirstNormalObjectId as 16384 rather than
+	 * interpolating that C #define into the query because, if that #define is
+	 * ever changed, the cutoff we want to use is the value used by
+	 * pre-version 14 servers, not that of some future version.
+	 */
+	query = "SELECT c.oid as conoid, c.conname, n.nspname "
+		"FROM pg_catalog.pg_conversion c, "
+		"     pg_catalog.pg_namespace n "
+		"WHERE c.connamespace = n.oid AND "
+		"      c.oid >= 16384";
+
+	upgrade_task_add_step(task, query,
+						  process_user_defined_encoding_conversions,
+						  true, &report);
+	upgrade_task_run(task, cluster);
+	upgrade_task_free(task);
+
+	if (report.file)
 	{
-		PGresult   *res;
-		bool		db_used = false;
-		int			ntups;
-		int			rowno;
-		int			i_conoid,
-					i_conname,
-					i_nspname;
-		DbInfo	   *active_db = &cluster->dbarr.dbs[dbnum];
-		PGconn	   *conn = connectToServer(cluster, active_db->db_name);
-
-		/*
-		 * The query below hardcodes FirstNormalObjectId as 16384 rather than
-		 * interpolating that C #define into the query because, if that
-		 * #define is ever changed, the cutoff we want to use is the value
-		 * used by pre-version 14 servers, not that of some future version.
-		 */
-		res = executeQueryOrDie(conn,
-								"SELECT c.oid as conoid, c.conname, n.nspname "
-								"FROM pg_catalog.pg_conversion c, "
-								"     pg_catalog.pg_namespace n "
-								"WHERE c.connamespace = n.oid AND "
-								"      c.oid >= 16384");
-		ntups = PQntuples(res);
-		i_conoid = PQfnumber(res, "conoid");
-		i_conname = PQfnumber(res, "conname");
-		i_nspname = PQfnumber(res, "nspname");
-		for (rowno = 0; rowno < ntups; rowno++)
-		{
-			if (script == NULL &&
-				(script = fopen_priv(output_path, "w")) == NULL)
-				pg_fatal("could not open file \"%s\": %m", output_path);
-			if (!db_used)
-			{
-				fprintf(script, "In database: %s\n", active_db->db_name);
-				db_used = true;
-			}
-			fprintf(script, "  (oid=%s) %s.%s\n",
-					PQgetvalue(res, rowno, i_conoid),
-					PQgetvalue(res, rowno, i_nspname),
-					PQgetvalue(res, rowno, i_conname));
-		}
-
-		PQclear(res);
-
-		PQfinish(conn);
-	}
-
-	if (script)
-	{
-		fclose(script);
+		fclose(report.file);
 		pg_log(PG_REPORT, "fatal");
 		pg_fatal("Your installation contains user-defined encoding conversions.\n"
 				 "The conversion function parameters changed in PostgreSQL version 14\n"
 				 "so this cluster cannot currently be upgraded.  You can remove the\n"
 				 "encoding conversions in the old cluster and restart the upgrade.\n"
 				 "A list of user-defined encoding conversions is in the file:\n"
-				 "    %s", output_path);
+				 "    %s", report.path);
 	}
 	else
 		check_ok();
