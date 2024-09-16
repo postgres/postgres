@@ -19,7 +19,7 @@ char		saved_argv0[MAXPGPATH];
 char		isolation_exec[MAXPGPATH];
 bool		looked_up_isolation_exec = false;
 
-#define PG_ISOLATION_VERSIONSTR "isolationtester (PostgreSQL) " PG_VERSION "\n"
+#define PG_ISOLATION_VERSIONSTR "isolationtester (Percona Server for PostgreSQL) " PG_VERSION "\n"
 
 /*
  * start an isolation tester process for specified file (including
