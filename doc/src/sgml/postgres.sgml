@@ -9,6 +9,7 @@
 <!ENTITY % filelist SYSTEM "filelist.sgml">
 %filelist;
 
+<!ENTITY commit_baseurl "https://postgr.es/c/">
 <!ENTITY reference  SYSTEM "reference.sgml">
 
 ]>
