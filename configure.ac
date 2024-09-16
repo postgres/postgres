@@ -257,6 +257,13 @@ PGAC_ARG_BOOL(enable, injection-points, no, [enable injection points (for testin
 AC_SUBST(enable_injection_points)
 
 #
+# Percona ext
+#
+PGAC_ARG_BOOL(enable, percona-ext, yes, [enable Percona specific features],
+              [AC_DEFINE([PERCONA_EXT], 1, [Define to 1 to build with Percona specific features. (--enable-percona-ext)])])
+AC_SUBST(enable_percona_ext)
+
+#
 # Block size
 #
 AC_MSG_CHECKING([for block size])

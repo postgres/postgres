@@ -383,8 +383,3 @@
  * Enable tracing of syncscan operations (see also the trace_syncscan GUC var).
  */
 /* #define TRACE_SYNCSCAN */
-
-/*
- * Enable Percona specific features, should always be defined in this fork
- */
-#define PERCONA_EXT 1

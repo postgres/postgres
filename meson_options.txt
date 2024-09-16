@@ -215,3 +215,8 @@ option('ZSTD', type: 'string', value: 'zstd',
 
 option('ZIC', type: 'string', value: 'zic',
   description: 'Path to zic binary, when cross-compiling')
+
+# Percona options
+
+option('percona_ext', type: 'boolean', value: true,
+  description: 'Enable Percona specific features')

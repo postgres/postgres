@@ -607,6 +607,10 @@
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION
 
+/* Define to 1 to build with Percona specific features. (--enable-percona-ext)
+   */
+#undef PERCONA_EXT
+
 /* Define to the name of a signed 128-bit integer type. */
 #undef PG_INT128_TYPE
 
