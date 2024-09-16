@@ -1550,72 +1550,76 @@ check_for_incompatible_polymorphics(ClusterInfo *cluster)
 }
 
 /*
+ * Callback function for processing results of query for
+ * check_for_tables_with_oids()'s UpgradeTask.  If the query returned any rows
+ * (i.e., the check failed), write the details to the report file.
+ */
+static void
+process_with_oids_check(DbInfo *dbinfo, PGresult *res, void *arg)
+{
+	UpgradeTaskReport *report = (UpgradeTaskReport *) arg;
+	bool		db_used = false;
+	int			ntups = PQntuples(res);
+	int			i_nspname = PQfnumber(res, "nspname");
+	int			i_relname = PQfnumber(res, "relname");
+
+	AssertVariableIsOfType(&process_with_oids_check, UpgradeTaskProcessCB);
+
+	if (!ntups)
+		return;
+
+	for (int rowno = 0; rowno < ntups; rowno++)
+	{
+		if (report->file == NULL &&
+			(report->file = fopen_priv(report->path, "w")) == NULL)
+			pg_fatal("could not open file \"%s\": %m", report->path);
+		if (!db_used)
+		{
+			fprintf(report->file, "In database: %s\n", dbinfo->db_name);
+			db_used = true;
+		}
+		fprintf(report->file, "  %s.%s\n",
+				PQgetvalue(res, rowno, i_nspname),
+				PQgetvalue(res, rowno, i_relname));
+	}
+}
+
+/*
  * Verify that no tables are declared WITH OIDS.
  */
 static void
 check_for_tables_with_oids(ClusterInfo *cluster)
 {
-	int			dbnum;
-	FILE	   *script = NULL;
-	char		output_path[MAXPGPATH];
+	UpgradeTaskReport report;
+	UpgradeTask *task = upgrade_task_create();
+	const char *query = "SELECT n.nspname, c.relname "
+		"FROM   pg_catalog.pg_class c, "
+		"       pg_catalog.pg_namespace n "
+		"WHERE  c.relnamespace = n.oid AND "
+		"       c.relhasoids AND"
+		"       n.nspname NOT IN ('pg_catalog')";
 
 	prep_status("Checking for tables WITH OIDS");
 
-	snprintf(output_path, sizeof(output_path), "%s/%s",
+	report.file = NULL;
+	snprintf(report.path, sizeof(report.path), "%s/%s",
 			 log_opts.basedir,
 			 "tables_with_oids.txt");
 
-	/* Find any tables declared WITH OIDS */
-	for (dbnum = 0; dbnum < cluster->dbarr.ndbs; dbnum++)
+	upgrade_task_add_step(task, query, process_with_oids_check,
+						  true, &report);
+	upgrade_task_run(task, cluster);
+	upgrade_task_free(task);
+
+	if (report.file)
 	{
-		PGresult   *res;
-		bool		db_used = false;
-		int			ntups;
-		int			rowno;
-		int			i_nspname,
-					i_relname;
-		DbInfo	   *active_db = &cluster->dbarr.dbs[dbnum];
-		PGconn	   *conn = connectToServer(cluster, active_db->db_name);
-
-		res = executeQueryOrDie(conn,
-								"SELECT n.nspname, c.relname "
-								"FROM	pg_catalog.pg_class c, "
-								"		pg_catalog.pg_namespace n "
-								"WHERE	c.relnamespace = n.oid AND "
-								"		c.relhasoids AND"
-								"       n.nspname NOT IN ('pg_catalog')");
-
-		ntups = PQntuples(res);
-		i_nspname = PQfnumber(res, "nspname");
-		i_relname = PQfnumber(res, "relname");
-		for (rowno = 0; rowno < ntups; rowno++)
-		{
-			if (script == NULL && (script = fopen_priv(output_path, "w")) == NULL)
-				pg_fatal("could not open file \"%s\": %m", output_path);
-			if (!db_used)
-			{
-				fprintf(script, "In database: %s\n", active_db->db_name);
-				db_used = true;
-			}
-			fprintf(script, "  %s.%s\n",
-					PQgetvalue(res, rowno, i_nspname),
-					PQgetvalue(res, rowno, i_relname));
-		}
-
-		PQclear(res);
-
-		PQfinish(conn);
-	}
-
-	if (script)
-	{
-		fclose(script);
+		fclose(report.file);
 		pg_log(PG_REPORT, "fatal");
 		pg_fatal("Your installation contains tables declared WITH OIDS, which is not\n"
 				 "supported anymore.  Consider removing the oid column using\n"
 				 "    ALTER TABLE ... SET WITHOUT OIDS;\n"
 				 "A list of tables with the problem is in the file:\n"
-				 "    %s", output_path);
+				 "    %s", report.path);
 	}
 	else
 		check_ok();
