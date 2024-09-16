@@ -37,7 +37,7 @@ if ($minor =~ m/^\d+$/)
 {
 	$dotneeded = 1;
 }
-elsif ($minor eq 'devel')
+elsif ($minor eq "devel")
 {
 	$dotneeded = 0;
 }
@@ -63,7 +63,7 @@ my $fullversion;
 # Create various required forms of the version number
 if ($dotneeded)
 {
-	$fullversion = $majorversion . '.' . $minor;
+	$fullversion = $majorversion . "." . $minor;
 }
 else
 {
@@ -73,8 +73,8 @@ else
 # Get the autoconf version number for eventual nag message
 # (this also ensures we're in the right directory)
 
-my $aconfver = '';
-open(my $fh, '<', 'configure.ac') || die "could not read configure.ac: $!\n";
+my $aconfver = "";
+open(my $fh, '<', "configure.ac") || die "could not read configure.ac: $!\n";
 while (<$fh>)
 {
 	if (m/^m4_if\(m4_defn\(\[m4_PACKAGE_VERSION\]\), \[(.*)\], \[\], \[m4_fatal/
@@ -85,17 +85,17 @@ while (<$fh>)
 	}
 }
 close($fh);
-$aconfver ne ''
+$aconfver ne ""
   || die "could not find autoconf version number in configure.ac\n";
 
 # Update configure.ac and other files that contain version numbers
 
-my $fixedfiles = '';
+my $fixedfiles = "";
 
-sed_file('configure.ac',
+sed_file("configure.ac",
 	"-e 's/AC_INIT(\\[PostgreSQL\\], \\[[0-9a-z.]*\\]/AC_INIT([PostgreSQL], [$fullversion]/'"
 );
-sed_file('meson.build',
+sed_file("meson.build",
 	qq{-e "/^project(/,/^)/ s/ version: '[0-9a-z.]*',/ version: '$fullversion',/"}
 );
 
@@ -107,7 +107,7 @@ exit 0;
 sub sed_file
 {
 	my ($filename, $sedargs) = @_;
-	my ($tmpfilename) = $filename . '.tmp';
+	my ($tmpfilename) = $filename . ".tmp";
 
 	system("sed $sedargs $filename >$tmpfilename") == 0
 	  or die "sed failed: $?";

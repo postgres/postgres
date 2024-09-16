@@ -44,7 +44,7 @@ sub wanted
 	return if ($_ =~ m/\.(ico|bin|po|key)$/);
 
 	my @lines;
-	tie @lines, 'Tie::File', $File::Find::name;
+	tie @lines, "Tie::File", $File::Find::name;
 
 	# We process all lines because some files have copyright
 	# strings embedded in them, e.g. src/bin/psql/help.c

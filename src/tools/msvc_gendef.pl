@@ -72,10 +72,10 @@ sub extract_syms
 		next unless $pieces[6];
 
 		# Skip externs used from another compilation unit
-		next if ($pieces[2] eq 'UNDEF');
+		next if ($pieces[2] eq "UNDEF");
 
 		# Skip static symbols
-		next unless ($pieces[4] eq 'External');
+		next unless ($pieces[4] eq "External");
 
 		# Skip some more MSVC-generated crud
 		next if $pieces[6] =~ /^@/;
@@ -120,7 +120,7 @@ sub writedef
 
 		# Strip the leading underscore for win32, but not x64
 		$f =~ s/^_//
-		  unless ($arch eq 'x86_64');
+		  unless ($arch eq "x86_64");
 
 		# Emit just the name if it's a function symbol, or emit the name
 		# decorated with the DATA option for variables.
@@ -193,11 +193,11 @@ mkdir($tempdir) unless -d $tempdir;
 
 my $cmd = "dumpbin /nologo /symbols /out:$tmpfile " . join(' ', @files);
 
-system($cmd) == 0 or die 'Could not call dumpbin';
+system($cmd) == 0 or die "Could not call dumpbin";
 rename($tmpfile, $symfile) or die $!;
 extract_syms($symfile, \%def);
 print "\n";
 
 writedef($deffile, $arch, \%def);
 
-print 'Generated ' . scalar(keys(%def)) . " symbols\n";
+print "Generated " . scalar(keys(%def)) . " symbols\n";

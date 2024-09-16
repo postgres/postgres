@@ -14,7 +14,7 @@ GetOptions(
 	'format:s' => \$format,
 	'libname:s' => \$libname,
 	'input:s' => \$input,
-	'output:s' => \$output) or die 'wrong arguments';
+	'output:s' => \$output) or die "wrong arguments";
 
 if (not(   $format eq 'darwin'
 		or $format eq 'gnu'
@@ -32,9 +32,9 @@ open(my $output_handle, '>', $output)
 
 if ($format eq 'gnu')
 {
-	print $output_handle '{
+	print $output_handle "{
   global:
-';
+";
 }
 elsif ($format eq 'win')
 {
@@ -76,7 +76,7 @@ while (<$input_handle>)
 
 if ($format eq 'gnu')
 {
-	print $output_handle '  local: *;
+	print $output_handle "  local: *;
 };
-';
+";
 }

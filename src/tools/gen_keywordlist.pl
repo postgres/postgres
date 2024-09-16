@@ -160,7 +160,7 @@ printf $kwdef "#define %s_NUM_KEYWORDS %d\n\n", uc $varname, scalar @keywords;
 
 # Emit the definition of the hash function.
 
-my $funcname = $varname . '_hash_func';
+my $funcname = $varname . "_hash_func";
 
 my $f = PerfectHash::generate_hash_function(\@keywords, $funcname,
 	case_fold => $case_fold);
@@ -169,7 +169,7 @@ printf $kwdef qq|static %s\n|, $f;
 
 # Emit the struct that wraps all this lookup info into one variable.
 
-printf $kwdef 'static ' if !$extern;
+printf $kwdef "static " if !$extern;
 printf $kwdef "const ScanKeywordList %s = {\n", $varname;
 printf $kwdef qq|\t%s_kw_string,\n|, $varname;
 printf $kwdef qq|\t%s_kw_offsets,\n|, $varname;
