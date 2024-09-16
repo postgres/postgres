@@ -79,12 +79,12 @@ typedef struct UpgradeTaskStep
  * This struct is a thin wrapper around an array of steps, i.e.,
  * UpgradeTaskStep, plus a PQExpBuffer for all the query strings.
  */
-typedef struct UpgradeTask
+struct UpgradeTask
 {
 	UpgradeTaskStep *steps;
 	int			num_steps;
 	PQExpBuffer queries;
-} UpgradeTask;
+};
 
 /*
  * The different states for a parallel slot.
