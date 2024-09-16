@@ -14,6 +14,7 @@ pg_upgrade_sources = files(
   'relfilenumber.c',
   'server.c',
   'tablespace.c',
+  'task.c',
   'util.c',
   'version.c',
 )

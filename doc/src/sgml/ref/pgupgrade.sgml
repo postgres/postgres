@@ -118,7 +118,7 @@ PostgreSQL documentation
      <varlistentry>
       <term><option>-j <replaceable class="parameter">njobs</replaceable></option></term>
       <term><option>--jobs=<replaceable class="parameter">njobs</replaceable></option></term>
-      <listitem><para>number of simultaneous processes or threads to use
+      <listitem><para>number of simultaneous connections and processes/threads to use
       </para></listitem>
      </varlistentry>
 
@@ -587,8 +587,8 @@ NET STOP postgresql-&majorversion;
 
     <para>
      The <option>--jobs</option> option allows multiple CPU cores to be used
-     for copying/linking of files and to dump and restore database schemas
-     in parallel;  a good place to start is the maximum of the number of
+     for copying/linking of files, dumping and restoring database schemas
+     in parallel, etc.;  a good place to start is the maximum of the number of
      CPU cores and tablespaces.  This option can dramatically reduce the
      time to upgrade a multi-database server running on a multiprocessor
      machine.

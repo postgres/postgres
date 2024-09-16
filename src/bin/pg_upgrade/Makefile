@@ -25,6 +25,7 @@ OBJS = \
 	relfilenumber.o \
 	server.o \
 	tablespace.o \
+	task.o \
 	util.o \
 	version.o
 

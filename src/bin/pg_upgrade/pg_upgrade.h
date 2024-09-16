@@ -494,3 +494,24 @@ void		parallel_transfer_all_new_dbs(DbInfoArr *old_db_arr, DbInfoArr *new_db_arr
 										  char *old_pgdata, char *new_pgdata,
 										  char *old_tablespace);
 bool		reap_child(bool wait_for_child);
+
+/* task.c */
+
+typedef void (*UpgradeTaskProcessCB) (DbInfo *dbinfo, PGresult *res, void *arg);
+
+/* struct definition is private to task.c */
+typedef struct UpgradeTask UpgradeTask;
+
+UpgradeTask *upgrade_task_create(void);
+void		upgrade_task_add_step(UpgradeTask *task, const char *query,
+								  UpgradeTaskProcessCB process_cb, bool free_result,
+								  void *arg);
+void		upgrade_task_run(const UpgradeTask *task, const ClusterInfo *cluster);
+void		upgrade_task_free(UpgradeTask *task);
+
+/* convenient type for common private data needed by several tasks */
+typedef struct
+{
+	FILE	   *file;
+	char		path[MAXPGPATH];
+} UpgradeTaskReport;
