@@ -10,6 +10,7 @@ For All Releases (major, minor, beta, RC)
 	o update doc/src/sgml/release-NN.sgml in relevant branches
 	o run spellchecker on result
 	o add SGML markup
+	o run src/tools/add_commit_links.pl
 
 * Update timezone data to match latest IANA timezone database and new
   Windows releases, if any (see src/timezone/README)
