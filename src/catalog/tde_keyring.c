@@ -10,7 +10,6 @@
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
-#include "funcapi.h"
 #include "access/xlog.h"
 #include "access/xloginsert.h"
 #include "access/pg_tde_xlog.h"
@@ -18,29 +17,27 @@
 #include "catalog/tde_keyring.h"
 #include "catalog/tde_principal_key.h"
 #include "access/skey.h"
-#include "access/relscan.h"
-#include "access/relation.h"
-#include "catalog/namespace.h"
 #include "utils/lsyscache.h"
-#include "access/heapam.h"
 #include "utils/snapmgr.h"
 #include "utils/fmgroids.h"
 #include "common/pg_tde_utils.h"
-#include "common/pg_tde_shmem.h"
-#include "executor/spi.h"
 #include "miscadmin.h"
 #include "unistd.h"
 #include "utils/builtins.h"
 #include "pg_tde.h"
 
-PG_FUNCTION_INFO_V1(pg_tde_add_key_provider_internal);
-Datum pg_tde_add_key_provider_internal(PG_FUNCTION_ARGS);
-
-PG_FUNCTION_INFO_V1(pg_tde_list_all_key_providers);
-Datum pg_tde_list_all_key_providers(PG_FUNCTION_ARGS);
-
-#define PG_TDE_KEYRING_FILENAME "pg_tde_keyrings"
-#define PG_TDE_LIST_PROVIDERS_COLS 4
+#ifndef FRONTEND
+#include "access/heapam.h"
+#include "common/pg_tde_shmem.h"
+#include "funcapi.h"
+#include "access/relscan.h"
+#include "access/relation.h"
+#include "catalog/namespace.h"
+#include "executor/spi.h"
+#else
+#include "fe_utils/simple_list.h"
+#include "pg_tde_fe.h"
+#endif /* !FRONTEND */
 
 typedef enum ProviderScanType
 {
@@ -50,13 +47,33 @@ typedef enum ProviderScanType
 	PROVIDER_SCAN_ALL
 } ProviderScanType;
 
-static List *scan_key_provider_file(ProviderScanType scanType, void *scanKey, Oid dbOid, Oid spcOid);
+#define PG_TDE_KEYRING_FILENAME "pg_tde_keyrings"
 
 static FileKeyring *load_file_keyring_provider_options(char *keyring_options);
 static GenericKeyring *load_keyring_provider_options(ProviderType provider_type, char *keyring_options);
 static VaultV2Keyring *load_vaultV2_keyring_provider_options(char *keyring_options);
 static void debug_print_kerying(GenericKeyring *keyring);
+static GenericKeyring *load_keyring_provider_from_record(KeyringProvideRecord *provider);
 static char *get_keyring_infofile_path(char *resPath, Oid dbOid, Oid spcOid);
+static bool fetch_next_key_provider(int fd, off_t* curr_pos, KeyringProvideRecord *provider);
+
+#ifdef FRONTEND
+
+static SimplePtrList *scan_key_provider_file(ProviderScanType scanType, void *scanKey, Oid dbOid, Oid spcOid);
+static void simple_list_free(SimplePtrList *list);
+
+#else
+
+static List *scan_key_provider_file(ProviderScanType scanType, void *scanKey, Oid dbOid, Oid spcOid);
+
+PG_FUNCTION_INFO_V1(pg_tde_add_key_provider_internal);
+Datum pg_tde_add_key_provider_internal(PG_FUNCTION_ARGS);
+
+PG_FUNCTION_INFO_V1(pg_tde_list_all_key_providers);
+Datum pg_tde_list_all_key_providers(PG_FUNCTION_ARGS);
+
+#define PG_TDE_LIST_PROVIDERS_COLS 4
+
 static void key_provider_startup_cleanup(int tde_tbl_count, XLogExtensionInstall *ext_info, bool redo, void *arg);
 static const char *get_keyring_provider_typename(ProviderType p_type);
 static uint32 write_key_provider_info(KeyringProvideRecord *provider, 
@@ -148,22 +165,6 @@ get_keyring_provider_typename(ProviderType p_type)
 	return NULL;
 }
 
-static GenericKeyring *load_keyring_provider_from_record(KeyringProvideRecord *provider)
-{
-	GenericKeyring *keyring = NULL;
-
-	keyring = load_keyring_provider_options(provider->provider_type, provider->options);
-	if (keyring)
-	{
-		keyring->key_id = provider->provider_id;
-		strncpy(keyring->provider_name, provider->provider_name, sizeof(keyring->provider_name));
-		keyring->type = provider->provider_type;
-		strncpy(keyring->options, provider->options, sizeof(keyring->options));
-		debug_print_kerying(keyring);
-	}
-	return keyring;
-}
-
 List *
 GetAllKeyringProviders(Oid dbOid, Oid spcOid)
 {
@@ -190,140 +191,6 @@ GetKeyProviderByName(const char *provider_name, Oid dbOid, Oid spcOid)
 	return keyring;
 }
 
-GenericKeyring *
-GetKeyProviderByID(int provider_id, Oid dbOid, Oid spcOid)
-{
-	GenericKeyring *keyring = NULL;
-	List *providers = scan_key_provider_file(PROVIDER_SCAN_BY_ID, &provider_id, dbOid, spcOid);
-	if (providers != NIL)
-	{
-		keyring = (GenericKeyring *)linitial(providers);
-		list_free(providers);
-	}
-	return keyring;
-}
-
-static GenericKeyring *
-load_keyring_provider_options(ProviderType provider_type, char *keyring_options)
-{
-	switch (provider_type)
-	{
-	case FILE_KEY_PROVIDER:
-		return (GenericKeyring *)load_file_keyring_provider_options(keyring_options);
-		break;
-	case VAULT_V2_KEY_PROVIDER:
-		return (GenericKeyring *)load_vaultV2_keyring_provider_options(keyring_options);
-		break;
-	default:
-		break;
-	}
-	return NULL;
-}
-
-static FileKeyring *
-load_file_keyring_provider_options(char *keyring_options)
-{
-	FileKeyring			*file_keyring = palloc0(sizeof(FileKeyring));
-
-	file_keyring->keyring.type = FILE_KEY_PROVIDER;
-
-	if (!ParseKeyringJSONOptions(FILE_KEY_PROVIDER, file_keyring, 
-										keyring_options, strlen(keyring_options)))
-	{
-		return NULL;
-	}
-
-	if(strlen(file_keyring->file_name) == 0)
-	{
-		ereport(WARNING,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("file path is missing in the keyring options")));
-		return NULL;
-	}
-
-	return file_keyring;
-}
-
-static VaultV2Keyring *
-load_vaultV2_keyring_provider_options(char *keyring_options)
-{
-	VaultV2Keyring	*vaultV2_keyring = palloc0(sizeof(VaultV2Keyring));
-
-	vaultV2_keyring->keyring.type = VAULT_V2_KEY_PROVIDER;
-
-	if (!ParseKeyringJSONOptions(VAULT_V2_KEY_PROVIDER, vaultV2_keyring, 
-									keyring_options, strlen(keyring_options)))
-	{
-		return NULL;
-	}
-	
-	if(strlen(vaultV2_keyring->vault_token) == 0 ||
-		strlen(vaultV2_keyring->vault_url) == 0 || 
-		strlen(vaultV2_keyring->vault_mount_path) == 0)
-	{
-		ereport(WARNING,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("missing in the keyring options:%s%s%s",
-							!vaultV2_keyring->vault_token ? " token" : "",
-							!vaultV2_keyring->vault_url ? " url" : "",
-							!vaultV2_keyring->vault_mount_path ? " mountPath" : "")));
-		return NULL;
-	}
-
-	return vaultV2_keyring;
-}
-
-static void
-debug_print_kerying(GenericKeyring *keyring)
-{
-	int debug_level = DEBUG2;
-	elog(debug_level, "Keyring type: %d", keyring->type);
-	elog(debug_level, "Keyring name: %s", keyring->provider_name);
-	elog(debug_level, "Keyring id: %d", keyring->key_id);
-	switch (keyring->type)
-	{
-	case FILE_KEY_PROVIDER:
-		elog(debug_level, "File Keyring Path: %s", ((FileKeyring *)keyring)->file_name);
-		break;
-	case VAULT_V2_KEY_PROVIDER:
-		elog(debug_level, "Vault Keyring Token: %s", ((VaultV2Keyring *)keyring)->vault_token);
-		elog(debug_level, "Vault Keyring URL: %s", ((VaultV2Keyring *)keyring)->vault_url);
-		elog(debug_level, "Vault Keyring Mount Path: %s", ((VaultV2Keyring *)keyring)->vault_mount_path);
-		elog(debug_level, "Vault Keyring CA Path: %s", ((VaultV2Keyring *)keyring)->vault_ca_path);
-		break;
-	case UNKNOWN_KEY_PROVIDER:
-		elog(debug_level, "Unknown Keyring ");
-		break;
-	}
-}
-
-/*
- * Fetch the next key provider from the file and update the curr_pos
-*/
-static bool
-fetch_next_key_provider(int fd, off_t* curr_pos, KeyringProvideRecord *provider)
-{
-	off_t bytes_read = 0;
-
-	Assert(provider != NULL);
-	Assert(fd >= 0);
-
-	bytes_read = pg_pread(fd, provider, sizeof(KeyringProvideRecord), *curr_pos);
-	*curr_pos += bytes_read;
-
-	if (bytes_read == 0)
-		return false;
-	if (bytes_read != sizeof(KeyringProvideRecord))
-	{
-		close(fd);
-		/* Corrupt file */
-		ereport(ERROR,
-				(errcode_for_file_access(),
-					errmsg("key provider info file is corrupted: %m"),
-					errdetail("invalid key provider record size %lld expected %lu", bytes_read, sizeof(KeyringProvideRecord) )));
-	}
-	return true;
-}
 
 static uint32
 write_key_provider_info(KeyringProvideRecord *provider, Oid database_id, 
@@ -436,71 +303,6 @@ redo_key_provider_info(KeyringProviderXLRecord* xlrec)
 	return write_key_provider_info(&xlrec->provider, xlrec->database_id, xlrec->tablespace_id, xlrec->offset_in_file, true, false);
 }
 
-/*
-	* Scan the key provider info file and can also apply filter based on scanType
-	*/
-static List *scan_key_provider_file(ProviderScanType scanType, void *scanKey, Oid dbOid, Oid spcOid)
-{
-	off_t curr_pos = 0;
-	int fd;
-	char kp_info_path[MAXPGPATH] = {0};
-	KeyringProvideRecord provider;
-	List *providers_list = NIL;
-
-	if (scanType != PROVIDER_SCAN_ALL)
-		Assert(scanKey != NULL);
-
-	get_keyring_infofile_path(kp_info_path, dbOid, spcOid);
-
-	LWLockAcquire(tde_provider_info_lock(), LW_SHARED);
-
-	fd = BasicOpenFile(kp_info_path, PG_BINARY);
-	if (fd < 0)
-	{
-		LWLockRelease(tde_provider_info_lock());
-		ereport(DEBUG2,
-			(errcode_for_file_access(),
-				errmsg("could not open tde file \"%s\": %m", kp_info_path)));
-		return NIL;
-	}
-	while (fetch_next_key_provider(fd, &curr_pos, &provider))
-	{
-		bool match = false;
-		ereport(DEBUG2,
-			(errmsg("read key provider ID=%d %s", provider.provider_id, provider.provider_name)));
-
-		if (scanType == PROVIDER_SCAN_BY_NAME)
-		{
-			if (strcasecmp(provider.provider_name, (char*)scanKey) == 0)
-				match = true;
-		}
-		else if (scanType == PROVIDER_SCAN_BY_ID)
-		{
-			if (provider.provider_id == *(int *)scanKey)
-				match = true;
-		}
-		else if (scanType == PROVIDER_SCAN_BY_TYPE)
-		{
-			if (provider.provider_type == *(ProviderType*)scanKey)
-				match = true;
-		}
-		else if (scanType == PROVIDER_SCAN_ALL)
-			match = true;
-
-		if (match)
-		{
-			GenericKeyring *keyring = load_keyring_provider_from_record(&provider);
-			if (keyring)
-			{
-				providers_list = lappend(providers_list, keyring);
-			}
-		}
-	}
-	close(fd);
-	LWLockRelease(tde_provider_info_lock());
-	return providers_list;
-}
-
 void
 cleanup_key_provider_info(Oid databaseId, Oid tablespaceId)
 {
@@ -509,16 +311,6 @@ cleanup_key_provider_info(Oid databaseId, Oid tablespaceId)
 
 	get_keyring_infofile_path(kp_info_path, databaseId, tablespaceId);
 	PathNameDeleteTemporaryFile(kp_info_path, false);
-}
-
-static char*
-get_keyring_infofile_path(char* resPath, Oid dbOid, Oid spcOid)
-{
-	char *db_path = pg_tde_get_tde_file_dir(dbOid, spcOid);
-	Assert(db_path != NULL);
-	join_path_components(resPath, db_path, PG_TDE_KEYRING_FILENAME);
-	pfree(db_path);
-	return resPath;
 }
 
 Datum
@@ -598,4 +390,280 @@ pg_tde_list_all_key_providers(PG_FUNCTION_ARGS)
 	}
 	list_free_deep(all_providers);
 	return (Datum)0;
+}
+
+GenericKeyring *
+GetKeyProviderByID(int provider_id, Oid dbOid, Oid spcOid)
+{
+	GenericKeyring *keyring = NULL;
+	List *providers = scan_key_provider_file(PROVIDER_SCAN_BY_ID, &provider_id, dbOid, spcOid);
+	if (providers != NIL)
+	{
+		keyring = (GenericKeyring *)linitial(providers);
+		list_free(providers);
+	}
+	return keyring;
+}
+
+#endif			/* !FRONTEND */
+
+#ifdef FRONTEND
+GenericKeyring *
+GetKeyProviderByID(int provider_id, Oid dbOid, Oid spcOid)
+{
+	GenericKeyring *keyring = NULL;
+	SimplePtrList *providers = scan_key_provider_file(PROVIDER_SCAN_BY_ID, &provider_id, dbOid, spcOid);
+	if (providers != NULL)
+	{
+		keyring = (GenericKeyring *) providers->head->ptr;
+		simple_list_free(providers);
+	}
+	return keyring;
+}
+
+static void
+simple_list_free(SimplePtrList *list)
+{
+	SimplePtrListCell *cell;
+
+	cell = list->head;
+	while (cell != NULL)
+	{
+		SimplePtrListCell *next;
+
+		next = cell->next;
+		pfree(cell);
+		cell = next;
+	}
+}
+#endif			/* FRONTEND */
+
+/*
+ * Scan the key provider info file and can also apply filter based on scanType
+ */
+#ifndef FRONTEND
+static List *
+#else
+static SimplePtrList *
+#endif
+scan_key_provider_file(ProviderScanType scanType, void *scanKey, Oid dbOid, Oid spcOid)
+{
+	off_t curr_pos = 0;
+	int fd;
+	char kp_info_path[MAXPGPATH] = {0};
+	KeyringProvideRecord provider;
+#ifndef FRONTEND
+	List *providers_list = NIL;
+#else
+	SimplePtrList *providers_list = NULL;
+#endif
+
+	if (scanType != PROVIDER_SCAN_ALL)
+		Assert(scanKey != NULL);
+
+	get_keyring_infofile_path(kp_info_path, dbOid, spcOid);
+
+	LWLockAcquire(tde_provider_info_lock(), LW_SHARED);
+
+	fd = BasicOpenFile(kp_info_path, PG_BINARY);
+	if (fd < 0)
+	{
+		LWLockRelease(tde_provider_info_lock());
+		ereport(DEBUG2,
+			(errcode_for_file_access(),
+				errmsg("could not open tde file \"%s\": %m", kp_info_path)));
+		return providers_list;
+	}
+	while (fetch_next_key_provider(fd, &curr_pos, &provider))
+	{
+		bool match = false;
+		ereport(DEBUG2,
+			(errmsg("read key provider ID=%d %s", provider.provider_id, provider.provider_name)));
+
+		if (scanType == PROVIDER_SCAN_BY_NAME)
+		{
+			if (strcasecmp(provider.provider_name, (char*)scanKey) == 0)
+				match = true;
+		}
+		else if (scanType == PROVIDER_SCAN_BY_ID)
+		{
+			if (provider.provider_id == *(int *)scanKey)
+				match = true;
+		}
+		else if (scanType == PROVIDER_SCAN_BY_TYPE)
+		{
+			if (provider.provider_type == *(ProviderType*)scanKey)
+				match = true;
+		}
+		else if (scanType == PROVIDER_SCAN_ALL)
+			match = true;
+
+		if (match)
+		{
+			GenericKeyring *keyring = load_keyring_provider_from_record(&provider);
+			if (keyring)
+			{
+#ifndef FRONTEND
+				providers_list = lappend(providers_list, keyring);
+#else
+				if (providers_list == NULL)
+					providers_list = palloc(sizeof(providers_list));
+				simple_ptr_list_append(providers_list, keyring);
+#endif
+			}
+		}
+	}
+	close(fd);
+	LWLockRelease(tde_provider_info_lock());
+	return providers_list;
+}
+
+static GenericKeyring *
+load_keyring_provider_from_record(KeyringProvideRecord *provider)
+{
+	GenericKeyring *keyring = NULL;
+
+	keyring = load_keyring_provider_options(provider->provider_type, provider->options);
+	if (keyring)
+	{
+		keyring->key_id = provider->provider_id;
+		strncpy(keyring->provider_name, provider->provider_name, sizeof(keyring->provider_name));
+		keyring->type = provider->provider_type;
+		strncpy(keyring->options, provider->options, sizeof(keyring->options));
+		debug_print_kerying(keyring);
+	}
+	return keyring;
+}
+
+
+static GenericKeyring *
+load_keyring_provider_options(ProviderType provider_type, char *keyring_options)
+{
+	switch (provider_type)
+	{
+	case FILE_KEY_PROVIDER:
+		return (GenericKeyring *)load_file_keyring_provider_options(keyring_options);
+		break;
+	case VAULT_V2_KEY_PROVIDER:
+		return (GenericKeyring *)load_vaultV2_keyring_provider_options(keyring_options);
+		break;
+	default:
+		break;
+	}
+	return NULL;
+}
+
+static FileKeyring *
+load_file_keyring_provider_options(char *keyring_options)
+{
+	FileKeyring			*file_keyring = palloc0(sizeof(FileKeyring));
+
+	file_keyring->keyring.type = FILE_KEY_PROVIDER;
+
+	if (!ParseKeyringJSONOptions(FILE_KEY_PROVIDER, file_keyring, 
+										keyring_options, strlen(keyring_options)))
+	{
+		return NULL;
+	}
+
+	if(strlen(file_keyring->file_name) == 0)
+	{
+		ereport(WARNING,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("file path is missing in the keyring options")));
+		return NULL;
+	}
+
+	return file_keyring;
+}
+
+static VaultV2Keyring *
+load_vaultV2_keyring_provider_options(char *keyring_options)
+{
+	VaultV2Keyring	*vaultV2_keyring = palloc0(sizeof(VaultV2Keyring));
+
+	vaultV2_keyring->keyring.type = VAULT_V2_KEY_PROVIDER;
+
+	if (!ParseKeyringJSONOptions(VAULT_V2_KEY_PROVIDER, vaultV2_keyring, 
+									keyring_options, strlen(keyring_options)))
+	{
+		return NULL;
+	}
+	
+	if(strlen(vaultV2_keyring->vault_token) == 0 ||
+		strlen(vaultV2_keyring->vault_url) == 0 || 
+		strlen(vaultV2_keyring->vault_mount_path) == 0)
+	{
+		ereport(WARNING,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("missing in the keyring options:%s%s%s",
+							!vaultV2_keyring->vault_token ? " token" : "",
+							!vaultV2_keyring->vault_url ? " url" : "",
+							!vaultV2_keyring->vault_mount_path ? " mountPath" : "")));
+		return NULL;
+	}
+
+	return vaultV2_keyring;
+}
+
+static void
+debug_print_kerying(GenericKeyring *keyring)
+{
+	int debug_level = DEBUG2;
+	elog(debug_level, "Keyring type: %d", keyring->type);
+	elog(debug_level, "Keyring name: %s", keyring->provider_name);
+	elog(debug_level, "Keyring id: %d", keyring->key_id);
+	switch (keyring->type)
+	{
+	case FILE_KEY_PROVIDER:
+		elog(debug_level, "File Keyring Path: %s", ((FileKeyring *)keyring)->file_name);
+		break;
+	case VAULT_V2_KEY_PROVIDER:
+		elog(debug_level, "Vault Keyring Token: %s", ((VaultV2Keyring *)keyring)->vault_token);
+		elog(debug_level, "Vault Keyring URL: %s", ((VaultV2Keyring *)keyring)->vault_url);
+		elog(debug_level, "Vault Keyring Mount Path: %s", ((VaultV2Keyring *)keyring)->vault_mount_path);
+		elog(debug_level, "Vault Keyring CA Path: %s", ((VaultV2Keyring *)keyring)->vault_ca_path);
+		break;
+	case UNKNOWN_KEY_PROVIDER:
+		elog(debug_level, "Unknown Keyring ");
+		break;
+	}
+}
+
+static char*
+get_keyring_infofile_path(char* resPath, Oid dbOid, Oid spcOid)
+{
+	char *db_path = pg_tde_get_tde_file_dir(dbOid, spcOid);
+	Assert(db_path != NULL);
+	join_path_components(resPath, db_path, PG_TDE_KEYRING_FILENAME);
+	pfree(db_path);
+	return resPath;
+}
+
+/*
+ * Fetch the next key provider from the file and update the curr_pos
+*/
+static bool
+fetch_next_key_provider(int fd, off_t* curr_pos, KeyringProvideRecord *provider)
+{
+	off_t bytes_read = 0;
+
+	Assert(provider != NULL);
+	Assert(fd >= 0);
+
+	bytes_read = pg_pread(fd, provider, sizeof(KeyringProvideRecord), *curr_pos);
+	*curr_pos += bytes_read;
+
+	if (bytes_read == 0)
+		return false;
+	if (bytes_read != sizeof(KeyringProvideRecord))
+	{
+		close(fd);
+		/* Corrupt file */
+		ereport(ERROR,
+				(errcode_for_file_access(),
+					errmsg("key provider info file is corrupted: %m"),
+					errdetail("invalid key provider record size %ld expected %lu", bytes_read, sizeof(KeyringProvideRecord) )));
+	}
+	return true;
 }

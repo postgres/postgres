@@ -13,11 +13,16 @@
 #include "postgres.h"
 
 #include "keyring/keyring_file.h"
-#include "keyring/keyring_config.h"
 #include "catalog/tde_keyring.h"
+#include "common/file_perm.h"
 #include "keyring/keyring_api.h"
 #include "storage/fd.h"
 #include "utils/wait_event.h"
+
+#ifdef FRONTEND
+#include "pg_tde_fe.h"
+#endif
+
 #include <stdio.h>
 #include <unistd.h>
 
@@ -131,6 +136,7 @@ set_key_by_name(GenericKeyring* keyring, keyInfo *key, bool throw_error)
 					 file_keyring->file_name)));
 		return KEYRING_CODE_RESOURCE_NOT_ACCESSABLE;
 	}
+
 	if (pg_fsync(fd) != 0)
 	{
 		close(fd);

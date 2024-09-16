@@ -20,11 +20,11 @@
 #include "storage/shmem.h"
 #include "access/pg_tde_ddl.h"
 #include "access/pg_tde_xlog.h"
+#include "access/pg_tde_xlog_encrypt.h"
 #include "encryption/enc_aes.h"
 #include "access/pg_tde_tdemap.h"
 #include "access/xlog.h"
 #include "access/xloginsert.h"
-#include "keyring/keyring_config.h"
 #include "keyring/keyring_api.h"
 #include "common/pg_tde_shmem.h"
 #include "common/pg_tde_utils.h"
@@ -87,7 +87,7 @@ tde_shmem_startup(void)
 	AesInit();
 
 #ifdef PERCONA_EXT
-	TDEInitGlobalKeys();
+	TDEInitGlobalKeys(NULL);
 
 	TDEXLogShmemInit();
 	TDEXLogSmgrInit();
@@ -102,7 +102,6 @@ _PG_init(void)
 		elog(WARNING, "pg_tde can only be loaded at server startup. Restart required.");
 	}
 
-	keyringRegisterVariables();
 	InitializePrincipalKeyInfo();
 	InitializeKeyProviderInfo();
 #ifdef PERCONA_EXT

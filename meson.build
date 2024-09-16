@@ -32,11 +32,11 @@ pg_tde_sources = files(
         src_version / 'access/pg_tde_visibilitymap.c',
         'src/access/pg_tde_ddl.c',
         'src/access/pg_tde_xlog.c',
+        'src/access/pg_tde_xlog_encrypt.c',
 
         'src/encryption/enc_tde.c',
         'src/encryption/enc_aes.c',
 
-        'src/keyring/keyring_config.c',
         'src/keyring/keyring_curl.c',
         'src/keyring/keyring_file.c',
         'src/keyring/keyring_vault.c',

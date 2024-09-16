@@ -163,6 +163,7 @@ pg_tde_crypt(const char* iv_prefix, uint32 start_offset, const char* data, uint3
 	}
 }
 
+#ifndef FRONTEND
 /*
  * pg_tde_crypt_tuple:
  * Does the encryption/decryption of tuple data in place
@@ -247,6 +248,8 @@ AesEncryptKey(const TDEPrincipalKey *principal_key, const RelFileLocator *rlocat
 	AesEncrypt(principal_key->keyData, iv, ((unsigned char*)&rel_key_data->internal_key), INTERNAL_KEY_LEN, ((unsigned char *)&(*p_enc_rel_key_data)->internal_key), (int *)enc_key_bytes);
 }
 
+#endif			/* FRONTEND */
+
 /*
  * Provide a simple interface to decrypt a given key.
  *
@@ -264,7 +267,17 @@ void AesDecryptKey(const TDEPrincipalKey *principal_key, const RelFileLocator *r
 	memcpy(iv, &rlocator->spcOid, sizeof(Oid));
 	memcpy(iv + sizeof(Oid), &rlocator->dbOid, sizeof(Oid));
 	
-	*p_rel_key_data = (RelKeyData *) MemoryContextAlloc(TopMemoryContext, sizeof(RelKeyData));
+#ifndef FRONTEND
+	    MemoryContext oldcontext;
+
+	    oldcontext = MemoryContextSwitchTo(TopMemoryContext);
+#endif
+
+	*p_rel_key_data = (RelKeyData *) palloc(sizeof(RelKeyData));
+
+#ifndef FRONTEND
+    	MemoryContextSwitchTo(oldcontext);
+#endif
 
 	/* Fill in the structure */
 	memcpy(*p_rel_key_data, enc_rel_key_data, sizeof(RelKeyData));

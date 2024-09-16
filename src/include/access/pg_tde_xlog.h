@@ -9,12 +9,11 @@
 #ifndef PG_TDE_XLOG_H
 #define PG_TDE_XLOG_H
 
+#ifndef FRONTEND
+
 #include "postgres.h"
 #include "access/xlog.h"
 #include "access/xlog_internal.h"
-#ifdef PERCONA_EXT
-#include "access/xlog_smgr.h"
-#endif
 
 /* TDE XLOG resource manager */
 #define XLOG_TDE_ADD_RELATION_KEY		0x00
@@ -38,28 +37,5 @@ static const RmgrData tdeheap_rmgr = {
 	.rm_identify = tdeheap_rmgr_identify
 };
 
-#ifdef PERCONA_EXT
-
-/* XLog encryption staff */
-
-extern Size TDEXLogEncryptBuffSize(void);
-
-#define XLOG_TDE_ENC_BUFF_ALIGNED_SIZE	add_size(TDEXLogEncryptBuffSize(), PG_IO_ALIGN_SIZE)
-
-extern void TDEXLogShmemInit(void);
-
-extern ssize_t tdeheap_xlog_seg_read(int fd, void *buf, size_t count, off_t offset);
-extern ssize_t tdeheap_xlog_seg_write(int fd, const void *buf, size_t count, off_t offset);
-
-static const XLogSmgr tde_xlog_smgr = {
-	.seg_read = tdeheap_xlog_seg_read,
-	.seg_write = tdeheap_xlog_seg_write,
-};
-
-extern void TDEXLogSmgrInit(void);
-
-extern void XLogInitGUC(void);
-
-#endif
-
+#endif							/* !FRONTEND */
 #endif							/* PG_TDE_XLOG_H */

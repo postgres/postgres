@@ -21,6 +21,7 @@
  * We take Oids of the sql operators, so there is no overlap with the "real"
  * catalog objects possible.
  */
+#define GLOBAL_DATA_TDE_OID	InvalidOid
 #define XLOG_TDE_OID        608
 
 #define GLOBAL_DATA_TDE_OID	InvalidOid
@@ -31,6 +32,6 @@
 	_obj_oid \
 }
 
-extern void TDEInitGlobalKeys(void);
+extern void TDEInitGlobalKeys(const char *dir);
 
 #endif							/* TDE_GLOBAL_CATALOG_H */

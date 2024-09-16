@@ -12,7 +12,6 @@
 #include "access/xlog_internal.h"
 #include "catalog/pg_tablespace_d.h"
 #include "catalog/tde_principal_key.h"
-#include "storage/fd.h"
 #include "storage/relfilelocator.h"
 
 typedef struct InternalKey

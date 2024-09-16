@@ -2,13 +2,16 @@
 #include "keyring/keyring_api.h"
 #include "keyring/keyring_file.h"
 #include "keyring/keyring_vault.h"
-#include "keyring/keyring_config.h"
 
 #include "postgres.h"
 #include "access/xlog.h"
 #include "storage/shmem.h"
 #include "nodes/pg_list.h"
 #include "utils/memutils.h"
+#ifdef FRONTEND
+#include "fe_utils/simple_list.h"
+#include "pg_tde_fe.h"
+#endif
 
 #include <assert.h>
 #include <openssl/rand.h>
@@ -19,9 +22,14 @@ typedef struct KeyProviders
 	ProviderType type;
 } KeyProviders;
 
+#ifndef FRONTEND
 List *registeredKeyProviders = NIL;
+#else
+SimplePtrList registeredKeyProviders = {NULL, NULL};
+#endif
 static KeyProviders *find_key_provider(ProviderType type);
 
+#ifndef FRONTEND
 static KeyProviders *
 find_key_provider(ProviderType type)
 {
@@ -36,9 +44,25 @@ find_key_provider(ProviderType type)
 	}
 	return NULL;
 }
+#else
+static KeyProviders *
+find_key_provider(ProviderType type)
+{
+	SimplePtrListCell *lc;
+	for (lc = registeredKeyProviders.head; lc; lc = lc->next)
+	{
+		KeyProviders *kp = (KeyProviders *) lc->ptr;
+		if (kp->type == type)
+		{
+			return kp;
+		}
+	}
+	return NULL;
+}
+#endif /* !FRONTEND */
+
 bool RegisterKeyProvider(const TDEKeyringRoutine *routine, ProviderType type)
 {
-	MemoryContext oldcontext;
 	KeyProviders *kp;
 
 	Assert(routine != NULL);
@@ -52,12 +76,21 @@ bool RegisterKeyProvider(const TDEKeyringRoutine *routine, ProviderType type)
 				(errmsg("Key provider of type %d already registered", type)));
 		return false;
 	}
+
+#ifndef FRONTEND
+	MemoryContext oldcontext;
 	oldcontext = MemoryContextSwitchTo(TopMemoryContext);
+#endif
 	kp = palloc(sizeof(KeyProviders));
 	kp->routine = (TDEKeyringRoutine *)routine;
 	kp->type = type;
+#ifndef FRONTEND
 	registeredKeyProviders = lappend(registeredKeyProviders, kp);
 	MemoryContextSwitchTo(oldcontext);
+#else
+	simple_ptr_list_append(&registeredKeyProviders, kp);
+#endif
+
 	return true;
 }
 

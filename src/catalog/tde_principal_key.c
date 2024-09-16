@@ -13,8 +13,6 @@
 #include "access/xlog.h"
 #include "access/xloginsert.h"
 #include "catalog/tde_principal_key.h"
-#include "common/pg_tde_shmem.h"
-#include "storage/lwlock.h"
 #include "storage/fd.h"
 #include "utils/palloc.h"
 #include "utils/memutils.h"
@@ -22,14 +20,22 @@
 #include "utils/timestamp.h"
 #include "common/relpath.h"
 #include "miscadmin.h"
-#include "funcapi.h"
 #include "utils/builtins.h"
 #include "pg_tde.h"
 #include "access/pg_tde_xlog.h"
-#include <sys/time.h>
-
 #include "access/pg_tde_tdemap.h"
 #include "catalog/tde_global_space.h"
+#ifndef FRONTEND
+#include "common/pg_tde_shmem.h"
+#include "funcapi.h"
+#include "storage/lwlock.h"
+#else
+#include "pg_tde_fe.h"
+#endif
+
+#include <sys/time.h>
+
+#ifndef FRONTEND
 
 typedef struct TdePrincipalKeySharedState
 {
@@ -204,125 +210,6 @@ save_principal_key_info(TDEPrincipalKeyInfo *principal_key_info)
     Assert(principal_key_info != NULL);
 
     return pg_tde_save_principal_key(principal_key_info);
-}
-
-/*
- * Public interface to get the principal key for the current database
- * If the principal key is not present in the cache, it is loaded from
- * the keyring and stored in the cache.
- * When the principal key is not set for the database. The function returns
- * throws an error.
- */
-TDEPrincipalKey *
-GetPrincipalKey(Oid dbOid, Oid spcOid)
-{
-    GenericKeyring *keyring;
-    TDEPrincipalKey *principalKey = NULL;
-    TDEPrincipalKeyInfo *principalKeyInfo = NULL;
-    const keyInfo *keyInfo = NULL;
-    KeyringReturnCodes keyring_ret;
-    LWLock *lock_files = tde_lwlock_mk_files();
-    LWLock *lock_cache = tde_lwlock_mk_cache();
-
-	// TODO: This recursion counter is a dirty hack until the metadata is in the catalog
-	// As otherwise we would call GetPrincipalKey recursively and deadlock
-	static int recursion = 0;
-
-	if(recursion > 0)
-	{
-		return NULL;
-	}
-
-	recursion++;
-
-    /* We don't store global space key in cache */
-    if (spcOid != GLOBALTABLESPACE_OID)
-    {
-        LWLockAcquire(lock_cache, LW_SHARED);
-        principalKey = get_principal_key_from_cache(dbOid);
-        LWLockRelease(lock_cache);
-    }
-
-    if (principalKey)
-	{
-		recursion--;
-        return principalKey;
-	}
-
-    /*
-     * We should hold an exclusive lock here to ensure that a valid principal key, if found, is added
-     * to the cache without any interference.
-     */
-    LWLockAcquire(lock_files, LW_SHARED);
-    LWLockAcquire(lock_cache, LW_EXCLUSIVE);
-
-    /* We don't store global space key in cache */
-    if (spcOid != GLOBALTABLESPACE_OID)
-    {
-        principalKey = get_principal_key_from_cache(dbOid);
-    }
-
-    if (principalKey)
-    {
-        LWLockRelease(lock_cache);
-        LWLockRelease(lock_files);
-		recursion--;
-        return principalKey;
-    }
-
-    /* Principal key not present in cache. Load from the keyring */
-    principalKeyInfo = pg_tde_get_principal_key(dbOid, spcOid);
-    if (principalKeyInfo == NULL)
-    {
-        LWLockRelease(lock_cache);
-        LWLockRelease(lock_files);
-
-		recursion--;
-        return NULL;
-    }
-
-    keyring = GetKeyProviderByID(principalKeyInfo->keyringId, dbOid, spcOid);
-    if (keyring == NULL)
-    {
-        LWLockRelease(lock_cache);
-        LWLockRelease(lock_files);
-
-        recursion--;
-        return NULL;
-    }
-
-    keyInfo = KeyringGetKey(keyring, principalKeyInfo->keyId.versioned_name, false, &keyring_ret);
-    if (keyInfo == NULL)
-    {
-        LWLockRelease(lock_cache);
-        LWLockRelease(lock_files);
-
-		recursion--;
-        return NULL;
-    }
-
-    principalKey = palloc(sizeof(TDEPrincipalKey));
-
-    memcpy(&principalKey->keyInfo, principalKeyInfo, sizeof(principalKey->keyInfo));
-    memcpy(principalKey->keyData, keyInfo->data.data, keyInfo->data.len);
-    principalKey->keyLength = keyInfo->data.len;
-
-    Assert(dbOid == principalKey->keyInfo.databaseId);
-    /* We don't store global space key in cache */
-    if (spcOid != GLOBALTABLESPACE_OID)
-    {
-        push_principal_key_to_cache(principalKey);
-    }
-
-    /* Release the exclusive locks here */
-    LWLockRelease(lock_cache);
-    LWLockRelease(lock_files);
-
-    if (principalKeyInfo)
-        pfree(principalKeyInfo);
-
-    recursion--;
-    return principalKey;
 }
 
 /*
@@ -854,4 +741,131 @@ pg_tde_get_key_info(PG_FUNCTION_ARGS, Oid dbOid, Oid spcOid)
     result = HeapTupleGetDatum(tuple);
 
     PG_RETURN_DATUM(result);
+}
+#endif /* FRONTEND */
+
+/*
+ * Public interface to get the principal key for the current database
+ * If the principal key is not present in the cache, it is loaded from
+ * the keyring and stored in the cache.
+ * When the principal key is not set for the database. The function returns
+ * throws an error.
+ */
+TDEPrincipalKey *
+GetPrincipalKey(Oid dbOid, Oid spcOid)
+{
+    GenericKeyring *keyring;
+    TDEPrincipalKey *principalKey = NULL;
+    TDEPrincipalKeyInfo *principalKeyInfo = NULL;
+    const keyInfo *keyInfo = NULL;
+    KeyringReturnCodes keyring_ret;
+    LWLock *lock_files = tde_lwlock_mk_files();
+    LWLock *lock_cache = tde_lwlock_mk_cache();
+
+	// TODO: This recursion counter is a dirty hack until the metadata is in the catalog
+	// As otherwise we would call GetPrincipalKey recursively and deadlock
+	static int recursion = 0;
+
+	if(recursion > 0)
+	{
+		return NULL;
+	}
+
+	recursion++;
+
+#ifndef FRONTEND
+    /* We don't store global space key in cache */
+    if (spcOid != GLOBALTABLESPACE_OID)
+    {
+        LWLockAcquire(lock_cache, LW_SHARED);
+        principalKey = get_principal_key_from_cache(dbOid);
+        LWLockRelease(lock_cache);
+    }
+
+    if (principalKey)
+	{
+		recursion--;
+        return principalKey;
+	}
+#endif
+
+    /*
+     * We should hold an exclusive lock here to ensure that a valid principal key, if found, is added
+     * to the cache without any interference.
+     */
+    LWLockAcquire(lock_files, LW_SHARED);
+    LWLockAcquire(lock_cache, LW_EXCLUSIVE);
+
+#ifndef FRONTEND
+    /* We don't store global space key in cache */
+    if (spcOid != GLOBALTABLESPACE_OID)
+    {
+        principalKey = get_principal_key_from_cache(dbOid);
+    }
+
+    if (principalKey)
+    {
+        LWLockRelease(lock_cache);
+        LWLockRelease(lock_files);
+		recursion--;
+        return principalKey;
+    }
+#endif
+
+    /* Principal key not present in cache. Load from the keyring */
+    principalKeyInfo = pg_tde_get_principal_key(dbOid, spcOid);
+    if (principalKeyInfo == NULL)
+    {
+        LWLockRelease(lock_cache);
+        LWLockRelease(lock_files);
+
+		recursion--;
+        return NULL;
+    }
+
+    keyring = GetKeyProviderByID(principalKeyInfo->keyringId, dbOid, spcOid);
+    if (keyring == NULL)
+    {
+        LWLockRelease(lock_cache);
+        LWLockRelease(lock_files);
+
+        recursion--;
+        return NULL;
+    }
+
+    keyInfo = KeyringGetKey(keyring, principalKeyInfo->keyId.versioned_name, false, &keyring_ret);
+    if (keyInfo == NULL)
+    {
+        LWLockRelease(lock_cache);
+        LWLockRelease(lock_files);
+
+		recursion--;
+        return NULL;
+    }
+
+    principalKey = palloc(sizeof(TDEPrincipalKey));
+
+    memcpy(&principalKey->keyInfo, principalKeyInfo, sizeof(principalKey->keyInfo));
+    memcpy(principalKey->keyData, keyInfo->data.data, keyInfo->data.len);
+    principalKey->keyLength = keyInfo->data.len;
+
+    Assert(dbOid == principalKey->keyInfo.databaseId);
+
+#ifndef FRONTEND
+    /* We don't store global space key in cache */
+    if (spcOid != GLOBALTABLESPACE_OID)
+    {
+        push_principal_key_to_cache(principalKey);
+    }
+#endif
+
+    /* Release the exclusive locks here */
+    LWLockRelease(lock_cache);
+    LWLockRelease(lock_files);
+
+    if (principalKeyInfo)
+        pfree(principalKeyInfo);
+
+    recursion--;
+    return principalKey;
 }

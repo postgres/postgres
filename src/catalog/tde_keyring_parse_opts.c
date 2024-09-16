@@ -23,12 +23,17 @@
  */
 
 #include "postgres.h"
+#include "common/file_perm.h"
 #include "common/jsonapi.h"
 #include "mb/pg_wchar.h"
 #include "storage/fd.h"
 
 #include "catalog/tde_keyring.h"
 #include "keyring/keyring_curl.h"
+
+#ifdef FRONTEND
+#include "pg_tde_fe.h"
+#endif
 
 #include <unistd.h>
 

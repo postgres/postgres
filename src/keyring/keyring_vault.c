@@ -12,7 +12,6 @@
 #include "postgres.h"
 
 #include "keyring/keyring_vault.h"
-#include "keyring/keyring_config.h"
 #include "keyring/keyring_curl.h"
 #include "keyring/keyring_api.h"
 #include "pg_tde_defines.h"
@@ -25,6 +24,10 @@
 #include <curl/curl.h>
 
 #include "common/base64.h"
+
+#ifdef FRONTEND
+#include "pg_tde_fe.h"
+#endif
 
 /*
  * JSON parser state

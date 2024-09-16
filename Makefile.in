@@ -36,8 +36,8 @@ src$(MAJORVERSION)/access/pg_tde_rewrite.o \
 src$(MAJORVERSION)/access/pg_tdeam_handler.o \
 src/access/pg_tde_ddl.o \
 src/access/pg_tde_xlog.o \
+src/access/pg_tde_xlog_encrypt.o \
 src/transam/pg_tde_xact_handler.o \
-src/keyring/keyring_config.o \
 src/keyring/keyring_curl.o \
 src/keyring/keyring_file.o \
 src/keyring/keyring_vault.o \
