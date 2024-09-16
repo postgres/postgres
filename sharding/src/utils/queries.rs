@@ -93,7 +93,6 @@ impl ConvertToStringOffset for Row {
         }
         
         for (i, _) in self.columns().iter().enumerate() {
-            // get True if the column name is 'id'
             let is_id = self.columns()[i].name().to_string() == "id";
 
             // Try to get the value as a String, If it fails, try to get it as an i32. Same for f64 and Decimal
