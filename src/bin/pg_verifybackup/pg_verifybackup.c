@@ -211,7 +211,7 @@ main(int argc, char **argv)
 		}
 		if (strcmp(argv[1], "--version") == 0 || strcmp(argv[1], "-V") == 0)
 		{
-			puts("pg_verifybackup (PostgreSQL) " PG_VERSION);
+			puts("pg_verifybackup (Percona Server for PostgreSQL) " PG_VERSION);
 			exit(0);
 		}
 	}
@@ -310,7 +310,7 @@ main(int argc, char **argv)
 
 		pg_waldump_path = pg_malloc(MAXPGPATH);
 		ret = find_other_exec(argv[0], "pg_waldump",
-							  "pg_waldump (PostgreSQL) " PG_VERSION "\n",
+							  "pg_waldump (Percona Server for PostgreSQL) " PG_VERSION "\n",
 							  pg_waldump_path);
 		if (ret < 0)
 		{
