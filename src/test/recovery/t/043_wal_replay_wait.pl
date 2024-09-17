@@ -177,6 +177,12 @@ $psql_session->query_until(
 	CALL pg_wal_replay_wait('${lsn4}');
 ]);
 
+# Make sure standby will be promoted at least at the primary insert LSN we
+# have just observed.  Use pg_switch_wal() to force the insert LSN to be
+# written then wait for standby to catchup.
+$node_primary->safe_psql('postgres', 'SELECT pg_switch_wal();');
+$node_primary->wait_for_catchup($node_standby);
+
 $log_offset = -s $node_standby->logfile;
 $node_standby->promote;
 $node_standby->wait_for_log('recovery is not in progress', $log_offset);
