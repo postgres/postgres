@@ -77,8 +77,8 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
 
 [ CONSTRAINT <replaceable class="parameter">constraint_name</replaceable> ]
 { CHECK ( <replaceable class="parameter">expression</replaceable> ) [ NO INHERIT ] |
-  UNIQUE [ NULLS [ NOT ] DISTINCT ] ( <replaceable class="parameter">column_name</replaceable> [, ... ] ) <replaceable class="parameter">index_parameters</replaceable> |
-  PRIMARY KEY ( <replaceable class="parameter">column_name</replaceable> [, ... ] ) <replaceable class="parameter">index_parameters</replaceable> |
+  UNIQUE [ NULLS [ NOT ] DISTINCT ] ( <replaceable class="parameter">column_name</replaceable> [, ... ] [, <replaceable class="parameter">column_name</replaceable> WITHOUT OVERLAPS ] ) <replaceable class="parameter">index_parameters</replaceable> |
+  PRIMARY KEY ( <replaceable class="parameter">column_name</replaceable> [, ... ] [, <replaceable class="parameter">column_name</replaceable> WITHOUT OVERLAPS ] ) <replaceable class="parameter">index_parameters</replaceable> |
   EXCLUDE [ USING <replaceable class="parameter">index_method</replaceable> ] ( <replaceable class="parameter">exclude_element</replaceable> WITH <replaceable class="parameter">operator</replaceable> [, ... ] ) <replaceable class="parameter">index_parameters</replaceable> [ WHERE ( <replaceable class="parameter">predicate</replaceable> ) ] |
   FOREIGN KEY ( <replaceable class="parameter">column_name</replaceable> [, ... ] ) REFERENCES <replaceable class="parameter">reftable</replaceable> [ ( <replaceable class="parameter">refcolumn</replaceable> [, ... ] ) ]
     [ MATCH FULL | MATCH PARTIAL | MATCH SIMPLE ] [ ON DELETE <replaceable
@@ -964,7 +964,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
 
    <varlistentry id="sql-createtable-parms-unique">
     <term><literal>UNIQUE [ NULLS [ NOT ] DISTINCT ]</literal> (column constraint)</term>
-    <term><literal>UNIQUE [ NULLS [ NOT ] DISTINCT ] ( <replaceable class="parameter">column_name</replaceable> [, ... ] )</literal>
+    <term><literal>UNIQUE [ NULLS [ NOT ] DISTINCT ] ( <replaceable class="parameter">column_name</replaceable> [, ... ] [, <replaceable class="parameter">column_name</replaceable> WITHOUT OVERLAPS ] )</literal>
     <optional> <literal>INCLUDE ( <replaceable class="parameter">column_name</replaceable> [, ...])</literal> </optional> (table constraint)</term>
 
     <listitem>
@@ -976,6 +976,27 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       additional capability to span multiple columns.  The constraint
       therefore enforces that any two rows must differ in at least one
       of these columns.
+     </para>
+
+     <para>
+      If the <literal>WITHOUT OVERLAPS</literal> option is specified for the
+      last column, then that column is checked for overlaps instead of
+      equality.  In that case, the other columns of the constraint will allow
+      duplicates so long as the duplicates don't overlap in the
+      <literal>WITHOUT OVERLAPS</literal> column.  (This is sometimes called a
+      temporal key, if the column is a range of dates or timestamps, but
+      <productname>PostgreSQL</productname> allows ranges over any base type.)
+      In effect, such a constraint is enforced with an <literal>EXCLUDE</literal>
+      constraint rather than a <literal>UNIQUE</literal> constraint.  So for
+      example <literal>UNIQUE (id, valid_at WITHOUT OVERLAPS)</literal> behaves
+      like <literal>EXCLUDE USING GIST (id WITH =, valid_at WITH
+      &amp;&amp;)</literal>.  The <literal>WITHOUT OVERLAPS</literal> column
+      must have a range or multirange type.  Empty ranges/multiranges are
+      not permitted.  The non-<literal>WITHOUT OVERLAPS</literal> columns of
+      the constraint can be any type that can be compared for equality in a
+      GiST index.  By default, only range types are supported, but you can use
+      other types by adding the <xref linkend="btree-gist"/> extension (which
+      is the expected way to use this feature).
      </para>
 
      <para>
@@ -1000,8 +1021,10 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
 
      <para>
       Adding a unique constraint will automatically create a unique btree
-      index on the column or group of columns used in the constraint.  The
-      created index has the same name as the unique constraint.
+      index on the column or group of columns used in the constraint.  But if
+      the constraint includes a <literal>WITHOUT OVERLAPS</literal> clause, it
+      will use a GiST index.  The created index has the same name as the
+      unique constraint.
      </para>
 
      <para>
@@ -1019,7 +1042,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
 
    <varlistentry id="sql-createtable-parms-primary-key">
     <term><literal>PRIMARY KEY</literal> (column constraint)</term>
-    <term><literal>PRIMARY KEY ( <replaceable class="parameter">column_name</replaceable> [, ... ] )</literal>
+    <term><literal>PRIMARY KEY ( <replaceable class="parameter">column_name</replaceable> [, ... ] [, <replaceable class="parameter">column_name</replaceable> WITHOUT OVERLAPS ] )</literal>
     <optional> <literal>INCLUDE ( <replaceable class="parameter">column_name</replaceable> [, ...])</literal> </optional> (table constraint)</term>
     <listitem>
      <para>
@@ -1054,8 +1077,8 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
      <para>
       Adding a <literal>PRIMARY KEY</literal> constraint will automatically
       create a unique btree index on the column or group of columns used in
-      the constraint.  That index has the same name as the primary key
-      constraint.
+      the constraint, or GiST if <literal>WITHOUT OVERLAPS</literal> was
+      specified.
      </para>
 
      <para>

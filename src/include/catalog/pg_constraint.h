@@ -107,6 +107,12 @@ CATALOG(pg_constraint,2606,ConstraintRelationId)
 	/* Has a local definition and cannot be inherited */
 	bool		connoinherit;
 
+	/*
+	 * For primary keys and unique constraints, signifies the last column uses
+	 * overlaps instead of equals.
+	 */
+	bool		conperiod;
+
 #ifdef CATALOG_VARLEN			/* variable-length fields start here */
 
 	/*
@@ -146,7 +152,8 @@ CATALOG(pg_constraint,2606,ConstraintRelationId)
 
 	/*
 	 * If an exclusion constraint, the OIDs of the exclusion operators for
-	 * each column of the constraint
+	 * each column of the constraint.  Also set for unique constraints/primary
+	 * keys using WITHOUT OVERLAPS.
 	 */
 	Oid			conexclop[1] BKI_LOOKUP(pg_operator);
 
@@ -238,6 +245,7 @@ extern Oid	CreateConstraintEntry(const char *constraintName,
 								  bool conIsLocal,
 								  int conInhCount,
 								  bool conNoInherit,
+								  bool conPeriod,
 								  bool is_internal);
 
 extern bool ConstraintNameIsUsed(ConstraintCategory conCat, Oid objId,

@@ -17,6 +17,7 @@
 #define GIST_H
 
 #include "access/itup.h"
+#include "access/stratnum.h"
 #include "access/transam.h"
 #include "access/xlog.h"
 #include "access/xlogdefs.h"
@@ -245,5 +246,7 @@ typedef struct
 #define gistentryinit(e, k, r, pg, o, l) \
 	do { (e).key = (k); (e).rel = (r); (e).page = (pg); \
 		 (e).offset = (o); (e).leafkey = (l); } while (0)
+
+extern StrategyNumber GistTranslateStratnum(Oid opclass, StrategyNumber strat);
 
 #endif							/* GIST_H */

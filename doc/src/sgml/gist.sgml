@@ -292,7 +292,8 @@ CREATE INDEX ON my_table USING GIST (my_inet_column inet_ops);
    The optional twelfth method <function>stratnum</function> is used to
    translate well-known <literal>RT*StrategyNumber</literal>s (from
    <filename>src/include/access/stratnum.h</filename>) into strategy numbers
-   used by the operator class.
+   used by the operator class.  This lets the core code look up operators for
+   temporal constraint indexes.
  </para>
 
  <variablelist>
@@ -1177,6 +1178,14 @@ my_sortsupport(PG_FUNCTION_ARGS)
        number used by this operator class for matching functionality.  The
        function should return <literal>InvalidStrategy</literal> if the
        operator class has no matching strategy.
+      </para>
+
+      <para>
+       This is used for temporal index constraints (i.e., <literal>PRIMARY
+       KEY</literal> and <literal>UNIQUE</literal>).  If the operator class
+       provides this function and it returns results for
+       <literal>RTEqualStrategyNumber</literal>, it can be used in the
+       non-<literal>WITHOUT OVERLAPS</literal> part(s) of an index constraint.
       </para>
 
       <para>

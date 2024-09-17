@@ -114,6 +114,8 @@
 #include "executor/executor.h"
 #include "nodes/nodeFuncs.h"
 #include "storage/lmgr.h"
+#include "utils/multirangetypes.h"
+#include "utils/rangetypes.h"
 #include "utils/snapmgr.h"
 
 /* waitMode argument to check_exclusion_or_unique_constraint() */
@@ -141,6 +143,8 @@ static bool index_unchanged_by_update(ResultRelInfo *resultRelInfo,
 									  Relation indexRelation);
 static bool index_expression_changed_walker(Node *node,
 											Bitmapset *allUpdatedCols);
+static void ExecWithoutOverlapsNotEmpty(Relation rel, NameData attname, Datum attval,
+										char typtype, Oid atttypid);
 
 /* ----------------------------------------------------------------
  *		ExecOpenIndices
@@ -211,7 +215,7 @@ ExecOpenIndices(ResultRelInfo *resultRelInfo, bool speculative)
 		 * detection in logical replication, add extra information required by
 		 * unique index entries.
 		 */
-		if (speculative && ii->ii_Unique)
+		if (speculative && ii->ii_Unique && !indexDesc->rd_index->indisexclusion)
 			BuildSpeculativeIndexInfo(indexDesc, ii);
 
 		relationDescs[i] = indexDesc;
@@ -726,6 +730,32 @@ check_exclusion_or_unique_constraint(Relation heap, Relation index,
 	}
 
 	/*
+	 * If this is a WITHOUT OVERLAPS constraint, we must also forbid empty
+	 * ranges/multiranges. This must happen before we look for NULLs below, or
+	 * a UNIQUE constraint could insert an empty range along with a NULL
+	 * scalar part.
+	 */
+	if (indexInfo->ii_WithoutOverlaps)
+	{
+		/*
+		 * Look up the type from the heap tuple, but check the Datum from the
+		 * index tuple.
+		 */
+		AttrNumber	attno = indexInfo->ii_IndexAttrNumbers[indnkeyatts - 1];
+
+		if (!isnull[indnkeyatts - 1])
+		{
+			TupleDesc	tupdesc = RelationGetDescr(heap);
+			Form_pg_attribute att = TupleDescAttr(tupdesc, attno - 1);
+			TypeCacheEntry *typcache = lookup_type_cache(att->atttypid, 0);
+
+			ExecWithoutOverlapsNotEmpty(heap, att->attname,
+										values[indnkeyatts - 1],
+										typcache->typtype, att->atttypid);
+		}
+	}
+
+	/*
 	 * If any of the input values are NULL, and the index uses the default
 	 * nulls-are-distinct mode, the constraint check is assumed to pass (i.e.,
 	 * we assume the operators are strict).  Otherwise, we interpret the
@@ -1101,4 +1131,38 @@ index_expression_changed_walker(Node *node, Bitmapset *allUpdatedCols)
 
 	return expression_tree_walker(node, index_expression_changed_walker,
 								  (void *) allUpdatedCols);
+}
+
+/*
+ * ExecWithoutOverlapsNotEmpty - raise an error if the tuple has an empty
+ * range or multirange in the given attribute.
+ */
+static void
+ExecWithoutOverlapsNotEmpty(Relation rel, NameData attname, Datum attval, char typtype, Oid atttypid)
+{
+	bool		isempty;
+	RangeType  *r;
+	MultirangeType *mr;
+
+	switch (typtype)
+	{
+		case TYPTYPE_RANGE:
+			r = DatumGetRangeTypeP(attval);
+			isempty = RangeIsEmpty(r);
+			break;
+		case TYPTYPE_MULTIRANGE:
+			mr = DatumGetMultirangeTypeP(attval);
+			isempty = MultirangeIsEmpty(mr);
+			break;
+		default:
+			elog(ERROR, "WITHOUT OVERLAPS column \"%s\" is not a range or multirange",
+				 NameStr(attname));
+	}
+
+	/* Report a CHECK_VIOLATION */
+	if (isempty)
+		ereport(ERROR,
+				(errcode(ERRCODE_CHECK_VIOLATION),
+				 errmsg("empty WITHOUT OVERLAPS value found in column \"%s\" in relation \"%s\"",
+						NameStr(attname), RelationGetRelationName(rel))));
 }

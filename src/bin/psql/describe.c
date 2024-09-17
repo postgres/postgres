@@ -2383,6 +2383,10 @@ describeOneTableDetails(const char *schemaname,
 			else
 				appendPQExpBufferStr(&buf, ", false AS indisreplident");
 			appendPQExpBufferStr(&buf, ", c2.reltablespace");
+			if (pset.sversion >= 180000)
+				appendPQExpBufferStr(&buf, ", con.conperiod");
+			else
+				appendPQExpBufferStr(&buf, ", false AS conperiod");
 			appendPQExpBuffer(&buf,
 							  "\nFROM pg_catalog.pg_class c, pg_catalog.pg_class c2, pg_catalog.pg_index i\n"
 							  "  LEFT JOIN pg_catalog.pg_constraint con ON (conrelid = i.indrelid AND conindid = i.indexrelid AND contype IN ('p','u','x'))\n"
@@ -2404,8 +2408,12 @@ describeOneTableDetails(const char *schemaname,
 					printfPQExpBuffer(&buf, "    \"%s\"",
 									  PQgetvalue(result, i, 0));
 
-					/* If exclusion constraint, print the constraintdef */
-					if (strcmp(PQgetvalue(result, i, 7), "x") == 0)
+					/*
+					 * If exclusion constraint or PK/UNIQUE constraint WITHOUT
+					 * OVERLAPS, print the constraintdef
+					 */
+					if (strcmp(PQgetvalue(result, i, 7), "x") == 0 ||
+						strcmp(PQgetvalue(result, i, 12), "t") == 0)
 					{
 						appendPQExpBuffer(&buf, " %s",
 										  PQgetvalue(result, i, 6));

@@ -1,0 +1,1336 @@
+-- Tests for WITHOUT OVERLAPS.
+--
+-- We leave behind several tables to test pg_dump etc:
+-- temporal_rng, temporal_rng2,
+-- temporal_fk_rng2rng.
+SET datestyle TO ISO, YMD;
+--
+-- test input parser
+--
+-- PK with no columns just WITHOUT OVERLAPS:
+CREATE TABLE temporal_rng (
+  valid_at daterange,
+  CONSTRAINT temporal_rng_pk PRIMARY KEY (valid_at WITHOUT OVERLAPS)
+);
+ERROR:  constraint using WITHOUT OVERLAPS needs at least two columns
+-- PK with a range column/PERIOD that isn't there:
+CREATE TABLE temporal_rng (
+  id INTEGER,
+  CONSTRAINT temporal_rng_pk PRIMARY KEY (id, valid_at WITHOUT OVERLAPS)
+);
+ERROR:  column "valid_at" named in key does not exist
+LINE 3:   CONSTRAINT temporal_rng_pk PRIMARY KEY (id, valid_at WITHO...
+          ^
+-- PK with a non-range column:
+CREATE TABLE temporal_rng (
+  id int4range,
+  valid_at TEXT,
+  CONSTRAINT temporal_rng_pk PRIMARY KEY (id, valid_at WITHOUT OVERLAPS)
+);
+ERROR:  column "valid_at" in WITHOUT OVERLAPS is not a range or multirange type
+LINE 4:   CONSTRAINT temporal_rng_pk PRIMARY KEY (id, valid_at WITHO...
+          ^
+-- PK with one column plus a range:
+CREATE TABLE temporal_rng (
+  -- Since we can't depend on having btree_gist here,
+  -- use an int4range instead of an int.
+  -- (The rangetypes regression test uses the same trick.)
+  id int4range,
+  valid_at daterange,
+  CONSTRAINT temporal_rng_pk PRIMARY KEY (id, valid_at WITHOUT OVERLAPS)
+);
+\d temporal_rng
+              Table "public.temporal_rng"
+  Column  |   Type    | Collation | Nullable | Default 
+----------+-----------+-----------+----------+---------
+ id       | int4range |           | not null | 
+ valid_at | daterange |           | not null | 
+Indexes:
+    "temporal_rng_pk" PRIMARY KEY (id, valid_at WITHOUT OVERLAPS)
+
+SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conname = 'temporal_rng_pk';
+            pg_get_constraintdef             
+---------------------------------------------
+ PRIMARY KEY (id, valid_at WITHOUT OVERLAPS)
+(1 row)
+
+SELECT pg_get_indexdef(conindid, 0, true) FROM pg_constraint WHERE conname = 'temporal_rng_pk';
+                                pg_get_indexdef                                
+-------------------------------------------------------------------------------
+ CREATE UNIQUE INDEX temporal_rng_pk ON temporal_rng USING gist (id, valid_at)
+(1 row)
+
+-- PK from LIKE:
+CREATE TABLE temporal_rng2 (LIKE temporal_rng INCLUDING ALL);
+\d temporal_rng2
+             Table "public.temporal_rng2"
+  Column  |   Type    | Collation | Nullable | Default 
+----------+-----------+-----------+----------+---------
+ id       | int4range |           | not null | 
+ valid_at | daterange |           | not null | 
+Indexes:
+    "temporal_rng2_pkey" PRIMARY KEY (id, valid_at WITHOUT OVERLAPS)
+
+DROP TABLE temporal_rng2;
+-- no PK from INHERITS:
+CREATE TABLE temporal_rng2 () INHERITS (temporal_rng);
+\d temporal_rng2
+             Table "public.temporal_rng2"
+  Column  |   Type    | Collation | Nullable | Default 
+----------+-----------+-----------+----------+---------
+ id       | int4range |           | not null | 
+ valid_at | daterange |           | not null | 
+Inherits: temporal_rng
+
+DROP TABLE temporal_rng2;
+DROP TABLE temporal_rng;
+-- PK in inheriting table:
+CREATE TABLE temporal_rng (
+  id int4range,
+  valid_at daterange
+);
+CREATE TABLE temporal_rng2 (
+  CONSTRAINT temporal_rng_pk PRIMARY KEY (id, valid_at WITHOUT OVERLAPS)
+) INHERITS (temporal_rng);
+\d temporal_rng2
+             Table "public.temporal_rng2"
+  Column  |   Type    | Collation | Nullable | Default 
+----------+-----------+-----------+----------+---------
+ id       | int4range |           | not null | 
+ valid_at | daterange |           | not null | 
+Indexes:
+    "temporal_rng_pk" PRIMARY KEY (id, valid_at WITHOUT OVERLAPS)
+Inherits: temporal_rng
+
+DROP TABLE temporal_rng CASCADE;
+NOTICE:  drop cascades to table temporal_rng2
+-- Add PK to already inheriting table:
+CREATE TABLE temporal_rng (
+  id int4range,
+  valid_at daterange
+);
+CREATE TABLE temporal_rng2 () INHERITS (temporal_rng);
+ALTER TABLE temporal_rng2
+  ADD CONSTRAINT temporal_rng_pk PRIMARY KEY (id, valid_at WITHOUT OVERLAPS);
+\d temporal_rng2
+             Table "public.temporal_rng2"
+  Column  |   Type    | Collation | Nullable | Default 
+----------+-----------+-----------+----------+---------
+ id       | int4range |           | not null | 
+ valid_at | daterange |           | not null | 
+Indexes:
+    "temporal_rng_pk" PRIMARY KEY (id, valid_at WITHOUT OVERLAPS)
+Inherits: temporal_rng
+
+DROP TABLE temporal_rng2;
+DROP TABLE temporal_rng;
+-- PK with two columns plus a range:
+CREATE TABLE temporal_rng2 (
+  id1 int4range,
+  id2 int4range,
+  valid_at daterange,
+  CONSTRAINT temporal_rng2_pk PRIMARY KEY (id1, id2, valid_at WITHOUT OVERLAPS)
+);
+\d temporal_rng2
+             Table "public.temporal_rng2"
+  Column  |   Type    | Collation | Nullable | Default 
+----------+-----------+-----------+----------+---------
+ id1      | int4range |           | not null | 
+ id2      | int4range |           | not null | 
+ valid_at | daterange |           | not null | 
+Indexes:
+    "temporal_rng2_pk" PRIMARY KEY (id1, id2, valid_at WITHOUT OVERLAPS)
+
+SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conname = 'temporal_rng2_pk';
+               pg_get_constraintdef                
+---------------------------------------------------
+ PRIMARY KEY (id1, id2, valid_at WITHOUT OVERLAPS)
+(1 row)
+
+SELECT pg_get_indexdef(conindid, 0, true) FROM pg_constraint WHERE conname = 'temporal_rng2_pk';
+                                    pg_get_indexdef                                    
+---------------------------------------------------------------------------------------
+ CREATE UNIQUE INDEX temporal_rng2_pk ON temporal_rng2 USING gist (id1, id2, valid_at)
+(1 row)
+
+-- PK with a custom range type:
+CREATE TYPE textrange2 AS range (subtype=text, collation="C");
+CREATE TABLE temporal_rng3 (
+  id int4range,
+  valid_at textrange2,
+  CONSTRAINT temporal_rng3_pk PRIMARY KEY (id, valid_at WITHOUT OVERLAPS)
+);
+ALTER TABLE temporal_rng3 DROP CONSTRAINT temporal_rng3_pk;
+DROP TABLE temporal_rng3;
+DROP TYPE textrange2;
+-- PK with one column plus a multirange:
+CREATE TABLE temporal_mltrng (
+  id int4range,
+  valid_at datemultirange,
+  CONSTRAINT temporal_mltrng_pk PRIMARY KEY (id, valid_at WITHOUT OVERLAPS)
+);
+\d temporal_mltrng
+               Table "public.temporal_mltrng"
+  Column  |      Type      | Collation | Nullable | Default 
+----------+----------------+-----------+----------+---------
+ id       | int4range      |           | not null | 
+ valid_at | datemultirange |           | not null | 
+Indexes:
+    "temporal_mltrng_pk" PRIMARY KEY (id, valid_at WITHOUT OVERLAPS)
+
+SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conname = 'temporal_mltrng_pk';
+            pg_get_constraintdef             
+---------------------------------------------
+ PRIMARY KEY (id, valid_at WITHOUT OVERLAPS)
+(1 row)
+
+SELECT pg_get_indexdef(conindid, 0, true) FROM pg_constraint WHERE conname = 'temporal_mltrng_pk';
+                                   pg_get_indexdef                                   
+-------------------------------------------------------------------------------------
+ CREATE UNIQUE INDEX temporal_mltrng_pk ON temporal_mltrng USING gist (id, valid_at)
+(1 row)
+
+-- PK with two columns plus a multirange:
+CREATE TABLE temporal_mltrng2 (
+  id1 int4range,
+  id2 int4range,
+  valid_at datemultirange,
+  CONSTRAINT temporal_mltrng2_pk PRIMARY KEY (id1, id2, valid_at WITHOUT OVERLAPS)
+);
+\d temporal_mltrng2
+              Table "public.temporal_mltrng2"
+  Column  |      Type      | Collation | Nullable | Default 
+----------+----------------+-----------+----------+---------
+ id1      | int4range      |           | not null | 
+ id2      | int4range      |           | not null | 
+ valid_at | datemultirange |           | not null | 
+Indexes:
+    "temporal_mltrng2_pk" PRIMARY KEY (id1, id2, valid_at WITHOUT OVERLAPS)
+
+SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conname = 'temporal_mltrng2_pk';
+               pg_get_constraintdef                
+---------------------------------------------------
+ PRIMARY KEY (id1, id2, valid_at WITHOUT OVERLAPS)
+(1 row)
+
+SELECT pg_get_indexdef(conindid, 0, true) FROM pg_constraint WHERE conname = 'temporal_mltrng2_pk';
+                                       pg_get_indexdef                                       
+---------------------------------------------------------------------------------------------
+ CREATE UNIQUE INDEX temporal_mltrng2_pk ON temporal_mltrng2 USING gist (id1, id2, valid_at)
+(1 row)
+
+-- UNIQUE with no columns just WITHOUT OVERLAPS:
+CREATE TABLE temporal_rng3 (
+  valid_at daterange,
+  CONSTRAINT temporal_rng3_uq UNIQUE (valid_at WITHOUT OVERLAPS)
+);
+ERROR:  constraint using WITHOUT OVERLAPS needs at least two columns
+-- UNIQUE with a range column/PERIOD that isn't there:
+CREATE TABLE temporal_rng3 (
+  id INTEGER,
+  CONSTRAINT temporal_rng3_uq UNIQUE (id, valid_at WITHOUT OVERLAPS)
+);
+ERROR:  column "valid_at" named in key does not exist
+LINE 3:   CONSTRAINT temporal_rng3_uq UNIQUE (id, valid_at WITHOUT O...
+          ^
+-- UNIQUE with a non-range column:
+CREATE TABLE temporal_rng3 (
+  id int4range,
+  valid_at TEXT,
+  CONSTRAINT temporal_rng3_uq UNIQUE (id, valid_at WITHOUT OVERLAPS)
+);
+ERROR:  column "valid_at" in WITHOUT OVERLAPS is not a range or multirange type
+LINE 4:   CONSTRAINT temporal_rng3_uq UNIQUE (id, valid_at WITHOUT O...
+          ^
+-- UNIQUE with one column plus a range:
+CREATE TABLE temporal_rng3 (
+  id int4range,
+  valid_at daterange,
+  CONSTRAINT temporal_rng3_uq UNIQUE (id, valid_at WITHOUT OVERLAPS)
+);
+\d temporal_rng3
+             Table "public.temporal_rng3"
+  Column  |   Type    | Collation | Nullable | Default 
+----------+-----------+-----------+----------+---------
+ id       | int4range |           |          | 
+ valid_at | daterange |           |          | 
+Indexes:
+    "temporal_rng3_uq" UNIQUE (id, valid_at WITHOUT OVERLAPS)
+
+SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conname = 'temporal_rng3_uq';
+          pg_get_constraintdef          
+----------------------------------------
+ UNIQUE (id, valid_at WITHOUT OVERLAPS)
+(1 row)
+
+SELECT pg_get_indexdef(conindid, 0, true) FROM pg_constraint WHERE conname = 'temporal_rng3_uq';
+                                 pg_get_indexdef                                 
+---------------------------------------------------------------------------------
+ CREATE UNIQUE INDEX temporal_rng3_uq ON temporal_rng3 USING gist (id, valid_at)
+(1 row)
+
+DROP TABLE temporal_rng3;
+-- UNIQUE with two columns plus a range:
+CREATE TABLE temporal_rng3 (
+  id1 int4range,
+  id2 int4range,
+  valid_at daterange,
+  CONSTRAINT temporal_rng3_uq UNIQUE (id1, id2, valid_at WITHOUT OVERLAPS)
+);
+\d temporal_rng3
+             Table "public.temporal_rng3"
+  Column  |   Type    | Collation | Nullable | Default 
+----------+-----------+-----------+----------+---------
+ id1      | int4range |           |          | 
+ id2      | int4range |           |          | 
+ valid_at | daterange |           |          | 
+Indexes:
+    "temporal_rng3_uq" UNIQUE (id1, id2, valid_at WITHOUT OVERLAPS)
+
+SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conname = 'temporal_rng3_uq';
+             pg_get_constraintdef             
+----------------------------------------------
+ UNIQUE (id1, id2, valid_at WITHOUT OVERLAPS)
+(1 row)
+
+SELECT pg_get_indexdef(conindid, 0, true) FROM pg_constraint WHERE conname = 'temporal_rng3_uq';
+                                    pg_get_indexdef                                    
+---------------------------------------------------------------------------------------
+ CREATE UNIQUE INDEX temporal_rng3_uq ON temporal_rng3 USING gist (id1, id2, valid_at)
+(1 row)
+
+DROP TABLE temporal_rng3;
+-- UNIQUE with a custom range type:
+CREATE TYPE textrange2 AS range (subtype=text, collation="C");
+CREATE TABLE temporal_rng3 (
+  id int4range,
+  valid_at textrange2,
+  CONSTRAINT temporal_rng3_uq UNIQUE (id, valid_at WITHOUT OVERLAPS)
+);
+ALTER TABLE temporal_rng3 DROP CONSTRAINT temporal_rng3_uq;
+DROP TABLE temporal_rng3;
+DROP TYPE textrange2;
+--
+-- test ALTER TABLE ADD CONSTRAINT
+--
+CREATE TABLE temporal_rng (
+  id int4range,
+  valid_at daterange
+);
+ALTER TABLE temporal_rng
+  ADD CONSTRAINT temporal_rng_pk
+  PRIMARY KEY (id, valid_at WITHOUT OVERLAPS);
+-- PK with USING INDEX (not possible):
+CREATE TABLE temporal3 (
+  id int4range,
+  valid_at daterange
+);
+CREATE INDEX idx_temporal3_uq ON temporal3 USING gist (id, valid_at);
+ALTER TABLE temporal3
+  ADD CONSTRAINT temporal3_pk
+  PRIMARY KEY USING INDEX idx_temporal3_uq;
+ERROR:  "idx_temporal3_uq" is not a unique index
+LINE 2:   ADD CONSTRAINT temporal3_pk
+              ^
+DETAIL:  Cannot create a primary key or unique constraint using such an index.
+DROP TABLE temporal3;
+-- UNIQUE with USING INDEX (not possible):
+CREATE TABLE temporal3 (
+  id int4range,
+  valid_at daterange
+);
+CREATE INDEX idx_temporal3_uq ON temporal3 USING gist (id, valid_at);
+ALTER TABLE temporal3
+  ADD CONSTRAINT temporal3_uq
+  UNIQUE USING INDEX idx_temporal3_uq;
+ERROR:  "idx_temporal3_uq" is not a unique index
+LINE 2:   ADD CONSTRAINT temporal3_uq
+              ^
+DETAIL:  Cannot create a primary key or unique constraint using such an index.
+DROP TABLE temporal3;
+-- UNIQUE with USING [UNIQUE] INDEX (possible but not a temporal constraint):
+CREATE TABLE temporal3 (
+  id int4range,
+  valid_at daterange
+);
+CREATE UNIQUE INDEX idx_temporal3_uq ON temporal3 (id, valid_at);
+ALTER TABLE temporal3
+  ADD CONSTRAINT temporal3_uq
+  UNIQUE USING INDEX idx_temporal3_uq;
+NOTICE:  ALTER TABLE / ADD CONSTRAINT USING INDEX will rename index "idx_temporal3_uq" to "temporal3_uq"
+DROP TABLE temporal3;
+-- Add range column and the PK at the same time
+CREATE TABLE temporal3 (
+  id int4range
+);
+ALTER TABLE temporal3
+  ADD COLUMN valid_at daterange,
+  ADD CONSTRAINT temporal3_pk
+  PRIMARY KEY (id, valid_at WITHOUT OVERLAPS);
+DROP TABLE temporal3;
+-- Add range column and UNIQUE constraint at the same time
+CREATE TABLE temporal3 (
+  id int4range
+);
+ALTER TABLE temporal3
+  ADD COLUMN valid_at daterange,
+  ADD CONSTRAINT temporal3_uq
+  UNIQUE (id, valid_at WITHOUT OVERLAPS);
+DROP TABLE temporal3;
+--
+-- range PK: test with existing rows
+--
+ALTER TABLE temporal_rng DROP CONSTRAINT temporal_rng_pk;
+-- okay:
+INSERT INTO temporal_rng (id, valid_at) VALUES ('[1,2)', daterange('2018-01-02', '2018-02-03'));
+INSERT INTO temporal_rng (id, valid_at) VALUES ('[1,2)', daterange('2018-03-03', '2018-04-04'));
+INSERT INTO temporal_rng (id, valid_at) VALUES ('[2,3)', daterange('2018-01-01', '2018-01-05'));
+INSERT INTO temporal_rng (id, valid_at) VALUES ('[3,4)', daterange('2018-01-01', NULL));
+ALTER TABLE temporal_rng ADD CONSTRAINT temporal_rng_pk PRIMARY KEY (id, valid_at WITHOUT OVERLAPS);
+ALTER TABLE temporal_rng DROP CONSTRAINT temporal_rng_pk;
+-- should fail:
+BEGIN;
+  INSERT INTO temporal_rng (id, valid_at) VALUES ('[1,2)', daterange('2018-01-01', '2018-01-05'));
+  ALTER TABLE temporal_rng ADD CONSTRAINT temporal_rng_pk PRIMARY KEY (id, valid_at WITHOUT OVERLAPS);
+ERROR:  could not create exclusion constraint "temporal_rng_pk"
+DETAIL:  Key (id, valid_at)=([1,2), [2018-01-02,2018-02-03)) conflicts with key (id, valid_at)=([1,2), [2018-01-01,2018-01-05)).
+ROLLBACK;
+-- rejects empty:
+BEGIN;
+  INSERT INTO temporal_rng (id, valid_at) VALUES ('[3,4)', 'empty');
+  ALTER TABLE temporal_rng ADD CONSTRAINT temporal_rng_pk PRIMARY KEY (id, valid_at WITHOUT OVERLAPS);
+ERROR:  empty WITHOUT OVERLAPS value found in column "valid_at" in relation "temporal_rng"
+ROLLBACK;
+ALTER TABLE temporal_rng ADD CONSTRAINT temporal_rng_pk PRIMARY KEY (id, valid_at WITHOUT OVERLAPS);
+DELETE FROM temporal_rng;
+--
+-- range PK: test inserts
+--
+-- okay:
+INSERT INTO temporal_rng (id, valid_at) VALUES ('[1,2)', daterange('2018-01-02', '2018-02-03'));
+INSERT INTO temporal_rng (id, valid_at) VALUES ('[1,2)', daterange('2018-03-03', '2018-04-04'));
+INSERT INTO temporal_rng (id, valid_at) VALUES ('[2,3)', daterange('2018-01-01', '2018-01-05'));
+INSERT INTO temporal_rng (id, valid_at) VALUES ('[3,4)', daterange('2018-01-01', NULL));
+-- should fail:
+INSERT INTO temporal_rng (id, valid_at) VALUES ('[1,2)', daterange('2018-01-01', '2018-01-05'));
+ERROR:  conflicting key value violates exclusion constraint "temporal_rng_pk"
+DETAIL:  Key (id, valid_at)=([1,2), [2018-01-01,2018-01-05)) conflicts with existing key (id, valid_at)=([1,2), [2018-01-02,2018-02-03)).
+INSERT INTO temporal_rng (id, valid_at) VALUES (NULL, daterange('2018-01-01', '2018-01-05'));
+ERROR:  null value in column "id" of relation "temporal_rng" violates not-null constraint
+DETAIL:  Failing row contains (null, [2018-01-01,2018-01-05)).
+INSERT INTO temporal_rng (id, valid_at) VALUES ('[3,4)', NULL);
+ERROR:  null value in column "valid_at" of relation "temporal_rng" violates not-null constraint
+DETAIL:  Failing row contains ([3,4), null).
+-- rejects empty:
+INSERT INTO temporal_rng (id, valid_at) VALUES ('[3,4)', 'empty');
+ERROR:  empty WITHOUT OVERLAPS value found in column "valid_at" in relation "temporal_rng"
+SELECT * FROM temporal_rng ORDER BY id, valid_at;
+  id   |        valid_at         
+-------+-------------------------
+ [1,2) | [2018-01-02,2018-02-03)
+ [1,2) | [2018-03-03,2018-04-04)
+ [2,3) | [2018-01-01,2018-01-05)
+ [3,4) | [2018-01-01,)
+(4 rows)
+
+--
+-- range PK: test updates
+--
+-- update the scalar part
+UPDATE  temporal_rng
+SET     id = '[11,12)'
+WHERE   id = '[1,2)'
+AND     valid_at @> '2018-01-15'::date;
+-- update the range part
+UPDATE  temporal_rng
+SET     valid_at = '[2020-01-01,2021-01-01)'
+WHERE   id = '[11,12)'
+AND     valid_at @> '2018-01-15'::date;
+-- update both at once
+UPDATE  temporal_rng
+SET     id = '[21,22)',
+        valid_at = '[2018-01-02,2018-02-03)'
+WHERE   id = '[11,12)'
+AND     valid_at @> '2020-01-15'::date;
+SELECT * FROM temporal_rng ORDER BY id, valid_at;
+   id    |        valid_at         
+---------+-------------------------
+ [1,2)   | [2018-03-03,2018-04-04)
+ [2,3)   | [2018-01-01,2018-01-05)
+ [3,4)   | [2018-01-01,)
+ [21,22) | [2018-01-02,2018-02-03)
+(4 rows)
+
+-- should fail:
+UPDATE  temporal_rng
+SET     id = '[1,2)',
+        valid_at = daterange('2018-03-05', '2018-05-05')
+WHERE   id = '[21,22)';
+ERROR:  conflicting key value violates exclusion constraint "temporal_rng_pk"
+DETAIL:  Key (id, valid_at)=([1,2), [2018-03-05,2018-05-05)) conflicts with existing key (id, valid_at)=([1,2), [2018-03-03,2018-04-04)).
+-- set the scalar part to NULL
+UPDATE  temporal_rng
+SET     id = NULL,
+        valid_at = daterange('2018-03-05', '2018-05-05')
+WHERE   id = '[21,22)';
+ERROR:  null value in column "id" of relation "temporal_rng" violates not-null constraint
+DETAIL:  Failing row contains (null, [2018-03-05,2018-05-05)).
+-- set the range part to NULL
+UPDATE  temporal_rng
+SET     id = '[1,2)',
+        valid_at = NULL
+WHERE   id = '[21,22)';
+ERROR:  null value in column "valid_at" of relation "temporal_rng" violates not-null constraint
+DETAIL:  Failing row contains ([1,2), null).
+-- rejects empty:
+UPDATE  temporal_rng
+SET     id = '[1,2)',
+        valid_at = 'empty'
+WHERE   id = '[21,22)';
+ERROR:  empty WITHOUT OVERLAPS value found in column "valid_at" in relation "temporal_rng"
+SELECT * FROM temporal_rng ORDER BY id, valid_at;
+   id    |        valid_at         
+---------+-------------------------
+ [1,2)   | [2018-03-03,2018-04-04)
+ [2,3)   | [2018-01-01,2018-01-05)
+ [3,4)   | [2018-01-01,)
+ [21,22) | [2018-01-02,2018-02-03)
+(4 rows)
+
+--
+-- range UQ: test with existing rows
+--
+CREATE TABLE temporal_rng3 (
+  id int4range,
+  valid_at daterange
+);
+-- okay:
+INSERT INTO temporal_rng3 (id, valid_at) VALUES ('[1,2)', daterange('2018-01-02', '2018-02-03'));
+INSERT INTO temporal_rng3 (id, valid_at) VALUES ('[1,2)', daterange('2018-03-03', '2018-04-04'));
+INSERT INTO temporal_rng3 (id, valid_at) VALUES ('[2,3)', daterange('2018-01-01', '2018-01-05'));
+INSERT INTO temporal_rng3 (id, valid_at) VALUES ('[3,4)', daterange('2018-01-01', NULL));
+INSERT INTO temporal_rng3 (id, valid_at) VALUES (NULL, daterange('2018-01-01', '2018-01-05'));
+INSERT INTO temporal_rng3 (id, valid_at) VALUES ('[3,4)', NULL);
+ALTER TABLE temporal_rng3 ADD CONSTRAINT temporal_rng3_uq UNIQUE (id, valid_at WITHOUT OVERLAPS);
+ALTER TABLE temporal_rng3 DROP CONSTRAINT temporal_rng3_uq;
+-- should fail:
+BEGIN;
+  INSERT INTO temporal_rng3 (id, valid_at) VALUES ('[1,2)', daterange('2018-01-01', '2018-01-05'));
+  ALTER TABLE temporal_rng3 ADD CONSTRAINT temporal_rng3_uq UNIQUE (id, valid_at WITHOUT OVERLAPS);
+ERROR:  could not create exclusion constraint "temporal_rng3_uq"
+DETAIL:  Key (id, valid_at)=([1,2), [2018-01-02,2018-02-03)) conflicts with key (id, valid_at)=([1,2), [2018-01-01,2018-01-05)).
+ROLLBACK;
+-- rejects empty:
+BEGIN;
+  INSERT INTO temporal_rng3 (id, valid_at) VALUES ('[3,4)', 'empty');
+  ALTER TABLE temporal_rng3 ADD CONSTRAINT temporal_rng3_uq UNIQUE (id, valid_at WITHOUT OVERLAPS);
+ERROR:  empty WITHOUT OVERLAPS value found in column "valid_at" in relation "temporal_rng3"
+ROLLBACK;
+ALTER TABLE temporal_rng3 ADD CONSTRAINT temporal_rng3_uq UNIQUE (id, valid_at WITHOUT OVERLAPS);
+DELETE FROM temporal_rng3;
+--
+-- range UQ: test inserts
+--
+-- okay:
+INSERT INTO temporal_rng3 (id, valid_at) VALUES ('[1,2)', daterange('2018-01-02', '2018-02-03'));
+INSERT INTO temporal_rng3 (id, valid_at) VALUES ('[1,2)', daterange('2018-03-03', '2018-04-04'));
+INSERT INTO temporal_rng3 (id, valid_at) VALUES ('[2,3)', daterange('2018-01-01', '2018-01-05'));
+INSERT INTO temporal_rng3 (id, valid_at) VALUES ('[3,4)', daterange('2018-01-01', NULL));
+INSERT INTO temporal_rng3 (id, valid_at) VALUES (NULL, daterange('2018-01-01', '2018-01-05'));
+INSERT INTO temporal_rng3 (id, valid_at) VALUES ('[3,4)', NULL);
+-- should fail:
+INSERT INTO temporal_rng3 (id, valid_at) VALUES ('[1,2)', daterange('2018-01-01', '2018-01-05'));
+ERROR:  conflicting key value violates exclusion constraint "temporal_rng3_uq"
+DETAIL:  Key (id, valid_at)=([1,2), [2018-01-01,2018-01-05)) conflicts with existing key (id, valid_at)=([1,2), [2018-01-02,2018-02-03)).
+-- rejects empty:
+INSERT INTO temporal_rng3 (id, valid_at) VALUES ('[3,4)', 'empty');
+ERROR:  empty WITHOUT OVERLAPS value found in column "valid_at" in relation "temporal_rng3"
+SELECT * FROM temporal_rng3 ORDER BY id, valid_at;
+  id   |        valid_at         
+-------+-------------------------
+ [1,2) | [2018-01-02,2018-02-03)
+ [1,2) | [2018-03-03,2018-04-04)
+ [2,3) | [2018-01-01,2018-01-05)
+ [3,4) | [2018-01-01,)
+ [3,4) | 
+       | [2018-01-01,2018-01-05)
+(6 rows)
+
+--
+-- range UQ: test updates
+--
+-- update the scalar part
+UPDATE  temporal_rng3
+SET     id = '[11,12)'
+WHERE   id = '[1,2)'
+AND     valid_at @> '2018-01-15'::date;
+-- update the range part
+UPDATE  temporal_rng3
+SET     valid_at = '[2020-01-01,2021-01-01)'
+WHERE   id = '[11,12)'
+AND     valid_at @> '2018-01-15'::date;
+-- update both at once
+UPDATE  temporal_rng3
+SET     id = '[21,22)',
+        valid_at = '[2018-01-02,2018-02-03)'
+WHERE   id = '[11,12)'
+AND     valid_at @> '2020-01-15'::date;
+-- set the scalar part to NULL
+UPDATE  temporal_rng3
+SET     id = NULL,
+        valid_at = daterange('2020-01-01', '2021-01-01')
+WHERE   id = '[21,22)';
+-- set the range part to NULL
+UPDATE  temporal_rng3
+SET     id = '[1,2)',
+        valid_at = NULL
+WHERE   id IS NULL AND valid_at @> '2020-06-01'::date;
+SELECT * FROM temporal_rng3 ORDER BY id, valid_at;
+  id   |        valid_at         
+-------+-------------------------
+ [1,2) | [2018-03-03,2018-04-04)
+ [1,2) | 
+ [2,3) | [2018-01-01,2018-01-05)
+ [3,4) | [2018-01-01,)
+ [3,4) | 
+       | [2018-01-01,2018-01-05)
+(6 rows)
+
+-- should fail:
+UPDATE  temporal_rng3
+SET     valid_at = daterange('2018-03-01', '2018-05-05')
+WHERE   id = '[1,2)' AND valid_at IS NULL;
+ERROR:  conflicting key value violates exclusion constraint "temporal_rng3_uq"
+DETAIL:  Key (id, valid_at)=([1,2), [2018-03-01,2018-05-05)) conflicts with existing key (id, valid_at)=([1,2), [2018-03-03,2018-04-04)).
+-- rejects empty:
+UPDATE  temporal_rng3
+SET     valid_at = 'empty'
+WHERE   id = '[1,2)' AND valid_at IS NULL;
+ERROR:  empty WITHOUT OVERLAPS value found in column "valid_at" in relation "temporal_rng3"
+-- still rejects empty when scalar part is NULL:
+UPDATE  temporal_rng3
+SET     id = NULL,
+        valid_at = 'empty'
+WHERE   id = '[1,2)' AND valid_at IS NULL;
+ERROR:  empty WITHOUT OVERLAPS value found in column "valid_at" in relation "temporal_rng3"
+SELECT * FROM temporal_rng3 ORDER BY id, valid_at;
+  id   |        valid_at         
+-------+-------------------------
+ [1,2) | [2018-03-03,2018-04-04)
+ [1,2) | 
+ [2,3) | [2018-01-01,2018-01-05)
+ [3,4) | [2018-01-01,)
+ [3,4) | 
+       | [2018-01-01,2018-01-05)
+(6 rows)
+
+DROP TABLE temporal_rng3;
+--
+-- multirange PK: test with existing rows
+--
+ALTER TABLE temporal_mltrng DROP CONSTRAINT temporal_mltrng_pk;
+-- okay:
+INSERT INTO temporal_mltrng (id, valid_at) VALUES ('[1,2)', datemultirange(daterange('2018-01-02', '2018-02-03')));
+INSERT INTO temporal_mltrng (id, valid_at) VALUES ('[1,2)', datemultirange(daterange('2018-03-03', '2018-04-04')));
+INSERT INTO temporal_mltrng (id, valid_at) VALUES ('[2,3)', datemultirange(daterange('2018-01-01', '2018-01-05')));
+INSERT INTO temporal_mltrng (id, valid_at) VALUES ('[3,4)', datemultirange(daterange('2018-01-01', NULL)));
+ALTER TABLE temporal_mltrng ADD CONSTRAINT temporal_mltrng_pk PRIMARY KEY (id, valid_at WITHOUT OVERLAPS);
+ALTER TABLE temporal_mltrng DROP CONSTRAINT temporal_mltrng_pk;
+-- should fail:
+BEGIN;
+  INSERT INTO temporal_mltrng (id, valid_at) VALUES ('[1,2)', datemultirange(daterange('2018-01-01', '2018-01-05')));
+  ALTER TABLE temporal_mltrng ADD CONSTRAINT temporal_mltrng_pk PRIMARY KEY (id, valid_at WITHOUT OVERLAPS);
+ERROR:  could not create exclusion constraint "temporal_mltrng_pk"
+DETAIL:  Key (id, valid_at)=([1,2), {[2018-01-02,2018-02-03)}) conflicts with key (id, valid_at)=([1,2), {[2018-01-01,2018-01-05)}).
+ROLLBACK;
+-- rejects empty:
+BEGIN;
+  INSERT INTO temporal_mltrng (id, valid_at) VALUES ('[3,4)', '{}');
+  ALTER TABLE temporal_mltrng ADD CONSTRAINT temporal_mltrng_pk PRIMARY KEY (id, valid_at WITHOUT OVERLAPS);
+ERROR:  empty WITHOUT OVERLAPS value found in column "valid_at" in relation "temporal_mltrng"
+ROLLBACK;
+ALTER TABLE temporal_mltrng ADD CONSTRAINT temporal_mltrng_pk PRIMARY KEY (id, valid_at WITHOUT OVERLAPS);
+DELETE FROM temporal_mltrng;
+--
+-- multirange PK: test inserts
+--
+-- okay:
+INSERT INTO temporal_mltrng (id, valid_at) VALUES ('[1,2)', datemultirange(daterange('2018-01-02', '2018-02-03')));
+INSERT INTO temporal_mltrng (id, valid_at) VALUES ('[1,2)', datemultirange(daterange('2018-03-03', '2018-04-04')));
+INSERT INTO temporal_mltrng (id, valid_at) VALUES ('[2,3)', datemultirange(daterange('2018-01-01', '2018-01-05')));
+INSERT INTO temporal_mltrng (id, valid_at) VALUES ('[3,4)', datemultirange(daterange('2018-01-01', NULL)));
+-- should fail:
+INSERT INTO temporal_mltrng (id, valid_at) VALUES ('[1,2)', datemultirange(daterange('2018-01-01', '2018-01-05')));
+ERROR:  conflicting key value violates exclusion constraint "temporal_mltrng_pk"
+DETAIL:  Key (id, valid_at)=([1,2), {[2018-01-01,2018-01-05)}) conflicts with existing key (id, valid_at)=([1,2), {[2018-01-02,2018-02-03)}).
+INSERT INTO temporal_mltrng (id, valid_at) VALUES (NULL, datemultirange(daterange('2018-01-01', '2018-01-05')));
+ERROR:  null value in column "id" of relation "temporal_mltrng" violates not-null constraint
+DETAIL:  Failing row contains (null, {[2018-01-01,2018-01-05)}).
+INSERT INTO temporal_mltrng (id, valid_at) VALUES ('[3,4)', NULL);
+ERROR:  null value in column "valid_at" of relation "temporal_mltrng" violates not-null constraint
+DETAIL:  Failing row contains ([3,4), null).
+-- rejects empty:
+INSERT INTO temporal_mltrng (id, valid_at) VALUES ('[3,4)', '{}');
+ERROR:  empty WITHOUT OVERLAPS value found in column "valid_at" in relation "temporal_mltrng"
+SELECT * FROM temporal_mltrng ORDER BY id, valid_at;
+  id   |         valid_at          
+-------+---------------------------
+ [1,2) | {[2018-01-02,2018-02-03)}
+ [1,2) | {[2018-03-03,2018-04-04)}
+ [2,3) | {[2018-01-01,2018-01-05)}
+ [3,4) | {[2018-01-01,)}
+(4 rows)
+
+--
+-- multirange PK: test updates
+--
+-- update the scalar part
+UPDATE  temporal_mltrng
+SET     id = '[11,12)'
+WHERE   id = '[1,2)'
+AND     valid_at @> '2018-01-15'::date;
+-- update the multirange part
+UPDATE  temporal_mltrng
+SET     valid_at = '{[2020-01-01,2021-01-01)}'
+WHERE   id = '[11,12)'
+AND     valid_at @> '2018-01-15'::date;
+-- update both at once
+UPDATE  temporal_mltrng
+SET     id = '[21,22)',
+        valid_at = '{[2018-01-02,2018-02-03)}'
+WHERE   id = '[11,12)'
+AND     valid_at @> '2020-01-15'::date;
+SELECT * FROM temporal_mltrng ORDER BY id, valid_at;
+   id    |         valid_at          
+---------+---------------------------
+ [1,2)   | {[2018-03-03,2018-04-04)}
+ [2,3)   | {[2018-01-01,2018-01-05)}
+ [3,4)   | {[2018-01-01,)}
+ [21,22) | {[2018-01-02,2018-02-03)}
+(4 rows)
+
+-- should fail:
+UPDATE  temporal_mltrng
+SET     id = '[1,2)',
+        valid_at = datemultirange(daterange('2018-03-05', '2018-05-05'))
+WHERE   id = '[21,22)';
+ERROR:  conflicting key value violates exclusion constraint "temporal_mltrng_pk"
+DETAIL:  Key (id, valid_at)=([1,2), {[2018-03-05,2018-05-05)}) conflicts with existing key (id, valid_at)=([1,2), {[2018-03-03,2018-04-04)}).
+-- set the scalar part to NULL
+UPDATE  temporal_mltrng
+SET     id = NULL,
+        valid_at = datemultirange(daterange('2018-03-05', '2018-05-05'))
+WHERE   id = '[21,22)';
+ERROR:  null value in column "id" of relation "temporal_mltrng" violates not-null constraint
+DETAIL:  Failing row contains (null, {[2018-03-05,2018-05-05)}).
+-- set the multirange part to NULL
+UPDATE  temporal_mltrng
+SET     id = '[1,2)',
+        valid_at = NULL
+WHERE   id = '[21,22)';
+ERROR:  null value in column "valid_at" of relation "temporal_mltrng" violates not-null constraint
+DETAIL:  Failing row contains ([1,2), null).
+-- rejects empty:
+UPDATE  temporal_mltrng
+SET     id = '[1,2)',
+        valid_at = '{}'
+WHERE   id = '[21,22)';
+ERROR:  empty WITHOUT OVERLAPS value found in column "valid_at" in relation "temporal_mltrng"
+SELECT * FROM temporal_mltrng ORDER BY id, valid_at;
+   id    |         valid_at          
+---------+---------------------------
+ [1,2)   | {[2018-03-03,2018-04-04)}
+ [2,3)   | {[2018-01-01,2018-01-05)}
+ [3,4)   | {[2018-01-01,)}
+ [21,22) | {[2018-01-02,2018-02-03)}
+(4 rows)
+
+--
+-- multirange UQ: test with existing rows
+--
+CREATE TABLE temporal_mltrng3 (
+  id int4range,
+  valid_at datemultirange
+);
+-- okay:
+INSERT INTO temporal_mltrng3 (id, valid_at) VALUES ('[1,2)', datemultirange(daterange('2018-01-02', '2018-02-03')));
+INSERT INTO temporal_mltrng3 (id, valid_at) VALUES ('[1,2)', datemultirange(daterange('2018-03-03', '2018-04-04')));
+INSERT INTO temporal_mltrng3 (id, valid_at) VALUES ('[2,3)', datemultirange(daterange('2018-01-01', '2018-01-05')));
+INSERT INTO temporal_mltrng3 (id, valid_at) VALUES ('[3,4)', datemultirange(daterange('2018-01-01', NULL)));
+INSERT INTO temporal_mltrng3 (id, valid_at) VALUES (NULL, datemultirange(daterange('2018-01-01', '2018-01-05')));
+INSERT INTO temporal_mltrng3 (id, valid_at) VALUES ('[3,4)', NULL);
+ALTER TABLE temporal_mltrng3 ADD CONSTRAINT temporal_mltrng3_uq UNIQUE (id, valid_at WITHOUT OVERLAPS);
+ALTER TABLE temporal_mltrng3 DROP CONSTRAINT temporal_mltrng3_uq;
+-- should fail:
+BEGIN;
+  INSERT INTO temporal_mltrng3 (id, valid_at) VALUES ('[1,2)', datemultirange(daterange('2018-01-01', '2018-01-05')));
+  ALTER TABLE temporal_mltrng3 ADD CONSTRAINT temporal_mltrng3_uq UNIQUE (id, valid_at WITHOUT OVERLAPS);
+ERROR:  could not create exclusion constraint "temporal_mltrng3_uq"
+DETAIL:  Key (id, valid_at)=([1,2), {[2018-01-02,2018-02-03)}) conflicts with key (id, valid_at)=([1,2), {[2018-01-01,2018-01-05)}).
+ROLLBACK;
+-- rejects empty:
+BEGIN;
+  INSERT INTO temporal_mltrng3 (id, valid_at) VALUES ('[3,4)', '{}');
+  ALTER TABLE temporal_mltrng3 ADD CONSTRAINT temporal_mltrng3_uq UNIQUE (id, valid_at WITHOUT OVERLAPS);
+ERROR:  empty WITHOUT OVERLAPS value found in column "valid_at" in relation "temporal_mltrng3"
+ROLLBACK;
+ALTER TABLE temporal_mltrng3 ADD CONSTRAINT temporal_mltrng3_uq UNIQUE (id, valid_at WITHOUT OVERLAPS);
+DELETE FROM temporal_mltrng3;
+--
+-- multirange UQ: test inserts
+--
+-- okay:
+INSERT INTO temporal_mltrng3 (id, valid_at) VALUES ('[1,2)', datemultirange(daterange('2018-01-02', '2018-02-03')));
+INSERT INTO temporal_mltrng3 (id, valid_at) VALUES ('[1,2)', datemultirange(daterange('2018-03-03', '2018-04-04')));
+INSERT INTO temporal_mltrng3 (id, valid_at) VALUES ('[2,3)', datemultirange(daterange('2018-01-01', '2018-01-05')));
+INSERT INTO temporal_mltrng3 (id, valid_at) VALUES ('[3,4)', datemultirange(daterange('2018-01-01', NULL)));
+INSERT INTO temporal_mltrng3 (id, valid_at) VALUES (NULL, datemultirange(daterange('2018-01-01', '2018-01-05')));
+INSERT INTO temporal_mltrng3 (id, valid_at) VALUES ('[3,4)', NULL);
+-- should fail:
+INSERT INTO temporal_mltrng3 (id, valid_at) VALUES ('[1,2)', datemultirange(daterange('2018-01-01', '2018-01-05')));
+ERROR:  conflicting key value violates exclusion constraint "temporal_mltrng3_uq"
+DETAIL:  Key (id, valid_at)=([1,2), {[2018-01-01,2018-01-05)}) conflicts with existing key (id, valid_at)=([1,2), {[2018-01-02,2018-02-03)}).
+-- rejects empty:
+INSERT INTO temporal_mltrng3 (id, valid_at) VALUES ('[3,4)', '{}');
+ERROR:  empty WITHOUT OVERLAPS value found in column "valid_at" in relation "temporal_mltrng3"
+SELECT * FROM temporal_mltrng3 ORDER BY id, valid_at;
+  id   |         valid_at          
+-------+---------------------------
+ [1,2) | {[2018-01-02,2018-02-03)}
+ [1,2) | {[2018-03-03,2018-04-04)}
+ [2,3) | {[2018-01-01,2018-01-05)}
+ [3,4) | {[2018-01-01,)}
+ [3,4) | 
+       | {[2018-01-01,2018-01-05)}
+(6 rows)
+
+--
+-- multirange UQ: test updates
+--
+-- update the scalar part
+UPDATE  temporal_mltrng3
+SET     id = '[11,12)'
+WHERE   id = '[1,2)'
+AND     valid_at @> '2018-01-15'::date;
+-- update the multirange part
+UPDATE  temporal_mltrng3
+SET     valid_at = '{[2020-01-01,2021-01-01)}'
+WHERE   id = '[11,12)'
+AND     valid_at @> '2018-01-15'::date;
+-- update both at once
+UPDATE  temporal_mltrng3
+SET     id = '[21,22)',
+        valid_at = '{[2018-01-02,2018-02-03)}'
+WHERE   id = '[11,12)'
+AND     valid_at @> '2020-01-15'::date;
+-- set the scalar part to NULL
+UPDATE  temporal_mltrng3
+SET     id = NULL,
+        valid_at = datemultirange(daterange('2020-01-01', '2021-01-01'))
+WHERE   id = '[21,22)';
+-- set the multirange part to NULL
+UPDATE  temporal_mltrng3
+SET     id = '[1,2)',
+        valid_at = NULL
+WHERE   id IS NULL AND valid_at @> '2020-06-01'::date;
+SELECT * FROM temporal_mltrng3 ORDER BY id, valid_at;
+  id   |         valid_at          
+-------+---------------------------
+ [1,2) | {[2018-03-03,2018-04-04)}
+ [1,2) | 
+ [2,3) | {[2018-01-01,2018-01-05)}
+ [3,4) | {[2018-01-01,)}
+ [3,4) | 
+       | {[2018-01-01,2018-01-05)}
+(6 rows)
+
+-- should fail:
+UPDATE  temporal_mltrng3
+SET     valid_at = datemultirange(daterange('2018-03-01', '2018-05-05'))
+WHERE   id = '[1,2)' AND valid_at IS NULL;
+ERROR:  conflicting key value violates exclusion constraint "temporal_mltrng3_uq"
+DETAIL:  Key (id, valid_at)=([1,2), {[2018-03-01,2018-05-05)}) conflicts with existing key (id, valid_at)=([1,2), {[2018-03-03,2018-04-04)}).
+-- rejects empty:
+UPDATE  temporal_mltrng3
+SET     valid_at = '{}'
+WHERE   id = '[1,2)' AND valid_at IS NULL;
+ERROR:  empty WITHOUT OVERLAPS value found in column "valid_at" in relation "temporal_mltrng3"
+-- still rejects empty when scalar part is NULL:
+UPDATE  temporal_mltrng3
+SET     id = NULL,
+        valid_at = '{}'
+WHERE   id = '[1,2)' AND valid_at IS NULL;
+ERROR:  empty WITHOUT OVERLAPS value found in column "valid_at" in relation "temporal_mltrng3"
+SELECT * FROM temporal_mltrng3 ORDER BY id, valid_at;
+  id   |         valid_at          
+-------+---------------------------
+ [1,2) | {[2018-03-03,2018-04-04)}
+ [1,2) | 
+ [2,3) | {[2018-01-01,2018-01-05)}
+ [3,4) | {[2018-01-01,)}
+ [3,4) | 
+       | {[2018-01-01,2018-01-05)}
+(6 rows)
+
+DROP TABLE temporal_mltrng3;
+--
+-- test a range with both a PK and a UNIQUE constraint
+--
+CREATE TABLE temporal3 (
+  id int4range,
+  valid_at daterange,
+  id2 int8range,
+  name TEXT,
+  CONSTRAINT temporal3_pk PRIMARY KEY (id, valid_at WITHOUT OVERLAPS),
+  CONSTRAINT temporal3_uniq UNIQUE (id2, valid_at WITHOUT OVERLAPS)
+);
+INSERT INTO temporal3 (id, valid_at, id2, name)
+  VALUES
+  ('[1,2)', daterange('2000-01-01', '2010-01-01'), '[7,8)', 'foo'),
+  ('[2,3)', daterange('2000-01-01', '2010-01-01'), '[9,10)', 'bar')
+;
+DROP TABLE temporal3;
+--
+-- test changing the PK's dependencies
+--
+CREATE TABLE temporal3 (
+  id int4range,
+  valid_at daterange,
+  CONSTRAINT temporal3_pk PRIMARY KEY (id, valid_at WITHOUT OVERLAPS)
+);
+ALTER TABLE temporal3 ALTER COLUMN valid_at DROP NOT NULL;
+ERROR:  column "valid_at" is in a primary key
+ALTER TABLE temporal3 ALTER COLUMN valid_at TYPE tstzrange USING tstzrange(lower(valid_at), upper(valid_at));
+ALTER TABLE temporal3 RENAME COLUMN valid_at TO valid_thru;
+ALTER TABLE temporal3 DROP COLUMN valid_thru;
+DROP TABLE temporal3;
+--
+-- test PARTITION BY for ranges
+--
+-- temporal PRIMARY KEY:
+CREATE TABLE temporal_partitioned (
+  id int4range,
+  valid_at daterange,
+  name text,
+  CONSTRAINT temporal_paritioned_pk PRIMARY KEY (id, valid_at WITHOUT OVERLAPS)
+) PARTITION BY LIST (id);
+CREATE TABLE tp1 PARTITION OF temporal_partitioned FOR VALUES IN ('[1,2)', '[2,3)');
+CREATE TABLE tp2 PARTITION OF temporal_partitioned FOR VALUES IN ('[3,4)', '[4,5)');
+INSERT INTO temporal_partitioned (id, valid_at, name) VALUES
+  ('[1,2)', daterange('2000-01-01', '2000-02-01'), 'one'),
+  ('[1,2)', daterange('2000-02-01', '2000-03-01'), 'one'),
+  ('[3,4)', daterange('2000-01-01', '2010-01-01'), 'three');
+SELECT * FROM temporal_partitioned ORDER BY id, valid_at;
+  id   |        valid_at         | name  
+-------+-------------------------+-------
+ [1,2) | [2000-01-01,2000-02-01) | one
+ [1,2) | [2000-02-01,2000-03-01) | one
+ [3,4) | [2000-01-01,2010-01-01) | three
+(3 rows)
+
+SELECT * FROM tp1 ORDER BY id, valid_at;
+  id   |        valid_at         | name 
+-------+-------------------------+------
+ [1,2) | [2000-01-01,2000-02-01) | one
+ [1,2) | [2000-02-01,2000-03-01) | one
+(2 rows)
+
+SELECT * FROM tp2 ORDER BY id, valid_at;
+  id   |        valid_at         | name  
+-------+-------------------------+-------
+ [3,4) | [2000-01-01,2010-01-01) | three
+(1 row)
+
+DROP TABLE temporal_partitioned;
+-- temporal UNIQUE:
+CREATE TABLE temporal_partitioned (
+  id int4range,
+  valid_at daterange,
+  name text,
+  CONSTRAINT temporal_paritioned_uq UNIQUE (id, valid_at WITHOUT OVERLAPS)
+) PARTITION BY LIST (id);
+CREATE TABLE tp1 PARTITION OF temporal_partitioned FOR VALUES IN ('[1,2)', '[2,3)');
+CREATE TABLE tp2 PARTITION OF temporal_partitioned FOR VALUES IN ('[3,4)', '[4,5)');
+INSERT INTO temporal_partitioned (id, valid_at, name) VALUES
+  ('[1,2)', daterange('2000-01-01', '2000-02-01'), 'one'),
+  ('[1,2)', daterange('2000-02-01', '2000-03-01'), 'one'),
+  ('[3,4)', daterange('2000-01-01', '2010-01-01'), 'three');
+SELECT * FROM temporal_partitioned ORDER BY id, valid_at;
+  id   |        valid_at         | name  
+-------+-------------------------+-------
+ [1,2) | [2000-01-01,2000-02-01) | one
+ [1,2) | [2000-02-01,2000-03-01) | one
+ [3,4) | [2000-01-01,2010-01-01) | three
+(3 rows)
+
+SELECT * FROM tp1 ORDER BY id, valid_at;
+  id   |        valid_at         | name 
+-------+-------------------------+------
+ [1,2) | [2000-01-01,2000-02-01) | one
+ [1,2) | [2000-02-01,2000-03-01) | one
+(2 rows)
+
+SELECT * FROM tp2 ORDER BY id, valid_at;
+  id   |        valid_at         | name  
+-------+-------------------------+-------
+ [3,4) | [2000-01-01,2010-01-01) | three
+(1 row)
+
+DROP TABLE temporal_partitioned;
+-- ALTER TABLE REPLICA IDENTITY
+-- (should fail)
+ALTER TABLE temporal_rng REPLICA IDENTITY USING INDEX temporal_rng_pk;
+ERROR:  cannot use non-unique index "temporal_rng_pk" as replica identity
+--
+-- ON CONFLICT: ranges
+--
+TRUNCATE temporal_rng;
+INSERT INTO temporal_rng (id, valid_at) VALUES ('[1,2)', daterange('2000-01-01', '2010-01-01'));
+-- with a conflict
+INSERT INTO temporal_rng (id, valid_at) VALUES ('[1,2)', daterange('2005-01-01', '2006-01-01')) ON CONFLICT DO NOTHING;
+-- id matches but no conflict
+INSERT INTO temporal_rng (id, valid_at) VALUES ('[1,2)', daterange('2010-01-01', '2020-01-01')) ON CONFLICT DO NOTHING;
+-- date matches but no conflict
+INSERT INTO temporal_rng (id, valid_at) VALUES ('[2,3)', daterange('2005-01-01', '2006-01-01')) ON CONFLICT DO NOTHING;
+SELECT * FROM temporal_rng ORDER BY id, valid_at;
+  id   |        valid_at         
+-------+-------------------------
+ [1,2) | [2000-01-01,2010-01-01)
+ [1,2) | [2010-01-01,2020-01-01)
+ [2,3) | [2005-01-01,2006-01-01)
+(3 rows)
+
+TRUNCATE temporal_rng;
+INSERT INTO temporal_rng (id, valid_at) VALUES ('[1,2)', daterange('2000-01-01', '2010-01-01'));
+-- with a conflict
+INSERT INTO temporal_rng (id, valid_at) VALUES ('[1,2)', daterange('2005-01-01', '2006-01-01')) ON CONFLICT (id, valid_at) DO NOTHING;
+ERROR:  there is no unique or exclusion constraint matching the ON CONFLICT specification
+-- id matches but no conflict
+INSERT INTO temporal_rng (id, valid_at) VALUES ('[1,2)', daterange('2010-01-01', '2020-01-01')) ON CONFLICT (id, valid_at) DO NOTHING;
+ERROR:  there is no unique or exclusion constraint matching the ON CONFLICT specification
+-- date matches but no conflict
+INSERT INTO temporal_rng (id, valid_at) VALUES ('[2,3)', daterange('2005-01-01', '2006-01-01')) ON CONFLICT (id, valid_at) DO NOTHING;
+ERROR:  there is no unique or exclusion constraint matching the ON CONFLICT specification
+SELECT * FROM temporal_rng ORDER BY id, valid_at;
+  id   |        valid_at         
+-------+-------------------------
+ [1,2) | [2000-01-01,2010-01-01)
+(1 row)
+
+TRUNCATE temporal_rng;
+INSERT INTO temporal_rng (id, valid_at) VALUES ('[1,2)', daterange('2000-01-01', '2010-01-01'));
+-- with a conflict
+INSERT INTO temporal_rng (id, valid_at) VALUES ('[1,2)', daterange('2005-01-01', '2006-01-01')) ON CONFLICT ON CONSTRAINT temporal_rng_pk DO NOTHING;
+-- id matches but no conflict
+INSERT INTO temporal_rng (id, valid_at) VALUES ('[1,2)', daterange('2010-01-01', '2020-01-01')) ON CONFLICT ON CONSTRAINT temporal_rng_pk DO NOTHING;
+-- date matches but no conflict
+INSERT INTO temporal_rng (id, valid_at) VALUES ('[2,3)', daterange('2005-01-01', '2006-01-01')) ON CONFLICT ON CONSTRAINT temporal_rng_pk DO NOTHING;
+SELECT * FROM temporal_rng ORDER BY id, valid_at;
+  id   |        valid_at         
+-------+-------------------------
+ [1,2) | [2000-01-01,2010-01-01)
+ [1,2) | [2010-01-01,2020-01-01)
+ [2,3) | [2005-01-01,2006-01-01)
+(3 rows)
+
+TRUNCATE temporal_rng;
+INSERT INTO temporal_rng (id, valid_at) VALUES ('[1,2)', daterange('2000-01-01', '2010-01-01'));
+-- with a conflict
+INSERT INTO temporal_rng (id, valid_at) VALUES ('[1,2)', daterange('2005-01-01', '2006-01-01')) ON CONFLICT (id, valid_at) DO UPDATE SET id = EXCLUDED.id + '[2,3)';
+ERROR:  there is no unique or exclusion constraint matching the ON CONFLICT specification
+-- id matches but no conflict
+INSERT INTO temporal_rng (id, valid_at) VALUES ('[1,2)', daterange('2010-01-01', '2020-01-01')) ON CONFLICT (id, valid_at) DO UPDATE SET id = EXCLUDED.id + '[3,4)';
+ERROR:  there is no unique or exclusion constraint matching the ON CONFLICT specification
+-- date matches but no conflict
+INSERT INTO temporal_rng (id, valid_at) VALUES ('[2,3)', daterange('2005-01-01', '2006-01-01')) ON CONFLICT (id, valid_at) DO UPDATE SET id = EXCLUDED.id + '[4,5)';
+ERROR:  there is no unique or exclusion constraint matching the ON CONFLICT specification
+SELECT * FROM temporal_rng ORDER BY id, valid_at;
+  id   |        valid_at         
+-------+-------------------------
+ [1,2) | [2000-01-01,2010-01-01)
+(1 row)
+
+TRUNCATE temporal_rng;
+INSERT INTO temporal_rng (id, valid_at) VALUES ('[1,2)', daterange('2000-01-01', '2010-01-01'));
+-- with a conflict
+INSERT INTO temporal_rng (id, valid_at) VALUES ('[1,2)', daterange('2005-01-01', '2006-01-01')) ON CONFLICT ON CONSTRAINT temporal_rng_pk DO UPDATE SET id = EXCLUDED.id + '[2,3)';
+ERROR:  ON CONFLICT DO UPDATE not supported with exclusion constraints
+-- id matches but no conflict
+INSERT INTO temporal_rng (id, valid_at) VALUES ('[1,2)', daterange('2010-01-01', '2020-01-01')) ON CONFLICT ON CONSTRAINT temporal_rng_pk DO UPDATE SET id = EXCLUDED.id + '[3,4)';
+ERROR:  ON CONFLICT DO UPDATE not supported with exclusion constraints
+-- date matches but no conflict
+INSERT INTO temporal_rng (id, valid_at) VALUES ('[2,3)', daterange('2005-01-01', '2006-01-01')) ON CONFLICT ON CONSTRAINT temporal_rng_pk DO UPDATE SET id = EXCLUDED.id + '[4,5)';
+ERROR:  ON CONFLICT DO UPDATE not supported with exclusion constraints
+SELECT * FROM temporal_rng ORDER BY id, valid_at;
+  id   |        valid_at         
+-------+-------------------------
+ [1,2) | [2000-01-01,2010-01-01)
+(1 row)
+
+-- with a UNIQUE constraint:
+CREATE TABLE temporal3 (
+  id int4range,
+  valid_at daterange,
+  CONSTRAINT temporal3_uq UNIQUE (id, valid_at WITHOUT OVERLAPS)
+);
+TRUNCATE temporal3;
+INSERT INTO temporal3 (id, valid_at) VALUES ('[1,2)', daterange('2000-01-01', '2010-01-01'));
+-- with a conflict
+INSERT INTO temporal3 (id, valid_at) VALUES ('[1,2)', daterange('2005-01-01', '2006-01-01')) ON CONFLICT DO NOTHING;
+-- id matches but no conflict
+INSERT INTO temporal3 (id, valid_at) VALUES ('[1,2)', daterange('2010-01-01', '2020-01-01')) ON CONFLICT DO NOTHING;
+-- date matches but no conflict
+INSERT INTO temporal3 (id, valid_at) VALUES ('[2,3)', daterange('2005-01-01', '2006-01-01')) ON CONFLICT DO NOTHING;
+SELECT * FROM temporal3 ORDER BY id, valid_at;
+  id   |        valid_at         
+-------+-------------------------
+ [1,2) | [2000-01-01,2010-01-01)
+ [1,2) | [2010-01-01,2020-01-01)
+ [2,3) | [2005-01-01,2006-01-01)
+(3 rows)
+
+TRUNCATE temporal3;
+INSERT INTO temporal3 (id, valid_at) VALUES ('[1,2)', daterange('2000-01-01', '2010-01-01'));
+-- with a conflict
+INSERT INTO temporal3 (id, valid_at) VALUES ('[1,2)', daterange('2005-01-01', '2006-01-01')) ON CONFLICT (id, valid_at) DO NOTHING;
+ERROR:  there is no unique or exclusion constraint matching the ON CONFLICT specification
+-- id matches but no conflict
+INSERT INTO temporal3 (id, valid_at) VALUES ('[1,2)', daterange('2010-01-01', '2020-01-01')) ON CONFLICT (id, valid_at) DO NOTHING;
+ERROR:  there is no unique or exclusion constraint matching the ON CONFLICT specification
+-- date matches but no conflict
+INSERT INTO temporal3 (id, valid_at) VALUES ('[2,3)', daterange('2005-01-01', '2006-01-01')) ON CONFLICT (id, valid_at) DO NOTHING;
+ERROR:  there is no unique or exclusion constraint matching the ON CONFLICT specification
+SELECT * FROM temporal3 ORDER BY id, valid_at;
+  id   |        valid_at         
+-------+-------------------------
+ [1,2) | [2000-01-01,2010-01-01)
+(1 row)
+
+TRUNCATE temporal3;
+INSERT INTO temporal3 (id, valid_at) VALUES ('[1,2)', daterange('2000-01-01', '2010-01-01'));
+-- with a conflict
+INSERT INTO temporal3 (id, valid_at) VALUES ('[1,2)', daterange('2005-01-01', '2006-01-01')) ON CONFLICT ON CONSTRAINT temporal3_uq DO NOTHING;
+-- id matches but no conflict
+INSERT INTO temporal3 (id, valid_at) VALUES ('[1,2)', daterange('2010-01-01', '2020-01-01')) ON CONFLICT ON CONSTRAINT temporal3_uq DO NOTHING;
+-- date matches but no conflict
+INSERT INTO temporal3 (id, valid_at) VALUES ('[2,3)', daterange('2005-01-01', '2006-01-01')) ON CONFLICT ON CONSTRAINT temporal3_uq DO NOTHING;
+SELECT * FROM temporal3 ORDER BY id, valid_at;
+  id   |        valid_at         
+-------+-------------------------
+ [1,2) | [2000-01-01,2010-01-01)
+ [1,2) | [2010-01-01,2020-01-01)
+ [2,3) | [2005-01-01,2006-01-01)
+(3 rows)
+
+TRUNCATE temporal3;
+INSERT INTO temporal3 (id, valid_at) VALUES ('[1,2)', daterange('2000-01-01', '2010-01-01'));
+-- with a conflict
+INSERT INTO temporal3 (id, valid_at) VALUES ('[1,2)', daterange('2005-01-01', '2006-01-01')) ON CONFLICT (id, valid_at) DO UPDATE SET id = EXCLUDED.id + '[2,3)';
+ERROR:  there is no unique or exclusion constraint matching the ON CONFLICT specification
+-- id matches but no conflict
+INSERT INTO temporal3 (id, valid_at) VALUES ('[1,2)', daterange('2010-01-01', '2020-01-01')) ON CONFLICT (id, valid_at) DO UPDATE SET id = EXCLUDED.id + '[3,4)';
+ERROR:  there is no unique or exclusion constraint matching the ON CONFLICT specification
+-- date matches but no conflict
+INSERT INTO temporal3 (id, valid_at) VALUES ('[2,3)', daterange('2005-01-01', '2006-01-01')) ON CONFLICT (id, valid_at) DO UPDATE SET id = EXCLUDED.id + '[4,5)';
+ERROR:  there is no unique or exclusion constraint matching the ON CONFLICT specification
+SELECT * FROM temporal3 ORDER BY id, valid_at;
+  id   |        valid_at         
+-------+-------------------------
+ [1,2) | [2000-01-01,2010-01-01)
+(1 row)
+
+TRUNCATE temporal3;
+INSERT INTO temporal3 (id, valid_at) VALUES ('[1,2)', daterange('2000-01-01', '2010-01-01'));
+-- with a conflict
+INSERT INTO temporal3 (id, valid_at) VALUES ('[1,2)', daterange('2005-01-01', '2006-01-01')) ON CONFLICT ON CONSTRAINT temporal3_uq DO UPDATE SET id = EXCLUDED.id + '[2,3)';
+ERROR:  ON CONFLICT DO UPDATE not supported with exclusion constraints
+-- id matches but no conflict
+INSERT INTO temporal3 (id, valid_at) VALUES ('[1,2)', daterange('2010-01-01', '2020-01-01')) ON CONFLICT ON CONSTRAINT temporal3_uq DO UPDATE SET id = EXCLUDED.id + '[3,4)';
+ERROR:  ON CONFLICT DO UPDATE not supported with exclusion constraints
+-- date matches but no conflict
+INSERT INTO temporal3 (id, valid_at) VALUES ('[2,3)', daterange('2005-01-01', '2006-01-01')) ON CONFLICT ON CONSTRAINT temporal3_uq DO UPDATE SET id = EXCLUDED.id + '[4,5)';
+ERROR:  ON CONFLICT DO UPDATE not supported with exclusion constraints
+SELECT * FROM temporal3 ORDER BY id, valid_at;
+  id   |        valid_at         
+-------+-------------------------
+ [1,2) | [2000-01-01,2010-01-01)
+(1 row)
+
+DROP TABLE temporal3;
+--
+-- ON CONFLICT: multiranges
+--
+TRUNCATE temporal_mltrng;
+INSERT INTO temporal_mltrng (id, valid_at) VALUES ('[1,2)', datemultirange(daterange('2000-01-01', '2010-01-01')));
+-- with a conflict
+INSERT INTO temporal_mltrng (id, valid_at) VALUES ('[1,2)', datemultirange(daterange('2005-01-01', '2006-01-01'))) ON CONFLICT DO NOTHING;
+-- id matches but no conflict
+INSERT INTO temporal_mltrng (id, valid_at) VALUES ('[1,2)', datemultirange(daterange('2010-01-01', '2020-01-01'))) ON CONFLICT DO NOTHING;
+-- date matches but no conflict
+INSERT INTO temporal_mltrng (id, valid_at) VALUES ('[2,3)', datemultirange(daterange('2005-01-01', '2006-01-01'))) ON CONFLICT DO NOTHING;
+SELECT * FROM temporal_mltrng ORDER BY id, valid_at;
+  id   |         valid_at          
+-------+---------------------------
+ [1,2) | {[2000-01-01,2010-01-01)}
+ [1,2) | {[2010-01-01,2020-01-01)}
+ [2,3) | {[2005-01-01,2006-01-01)}
+(3 rows)
+
+TRUNCATE temporal_mltrng;
+INSERT INTO temporal_mltrng (id, valid_at) VALUES ('[1,2)', datemultirange(daterange('2000-01-01', '2010-01-01')));
+-- with a conflict
+INSERT INTO temporal_mltrng (id, valid_at) VALUES ('[1,2)', datemultirange(daterange('2005-01-01', '2006-01-01'))) ON CONFLICT (id, valid_at) DO NOTHING;
+ERROR:  there is no unique or exclusion constraint matching the ON CONFLICT specification
+-- id matches but no conflict
+INSERT INTO temporal_mltrng (id, valid_at) VALUES ('[1,2)', datemultirange(daterange('2010-01-01', '2020-01-01'))) ON CONFLICT (id, valid_at) DO NOTHING;
+ERROR:  there is no unique or exclusion constraint matching the ON CONFLICT specification
+-- date matches but no conflict
+INSERT INTO temporal_mltrng (id, valid_at) VALUES ('[2,3)', datemultirange(daterange('2005-01-01', '2006-01-01'))) ON CONFLICT (id, valid_at) DO NOTHING;
+ERROR:  there is no unique or exclusion constraint matching the ON CONFLICT specification
+SELECT * FROM temporal_mltrng ORDER BY id, valid_at;
+  id   |         valid_at          
+-------+---------------------------
+ [1,2) | {[2000-01-01,2010-01-01)}
+(1 row)
+
+TRUNCATE temporal_mltrng;
+INSERT INTO temporal_mltrng (id, valid_at) VALUES ('[1,2)', datemultirange(daterange('2000-01-01', '2010-01-01')));
+-- with a conflict
+INSERT INTO temporal_mltrng (id, valid_at) VALUES ('[1,2)', datemultirange(daterange('2005-01-01', '2006-01-01'))) ON CONFLICT ON CONSTRAINT temporal_mltrng_pk DO NOTHING;
+-- id matches but no conflict
+INSERT INTO temporal_mltrng (id, valid_at) VALUES ('[1,2)', datemultirange(daterange('2010-01-01', '2020-01-01'))) ON CONFLICT ON CONSTRAINT temporal_mltrng_pk DO NOTHING;
+-- date matches but no conflict
+INSERT INTO temporal_mltrng (id, valid_at) VALUES ('[2,3)', datemultirange(daterange('2005-01-01', '2006-01-01'))) ON CONFLICT ON CONSTRAINT temporal_mltrng_pk DO NOTHING;
+SELECT * FROM temporal_mltrng ORDER BY id, valid_at;
+  id   |         valid_at          
+-------+---------------------------
+ [1,2) | {[2000-01-01,2010-01-01)}
+ [1,2) | {[2010-01-01,2020-01-01)}
+ [2,3) | {[2005-01-01,2006-01-01)}
+(3 rows)
+
+TRUNCATE temporal_mltrng;
+INSERT INTO temporal_mltrng (id, valid_at) VALUES ('[1,2)', datemultirange(daterange('2000-01-01', '2010-01-01')));
+-- with a conflict
+INSERT INTO temporal_mltrng (id, valid_at) VALUES ('[1,2)', datemultirange(daterange('2005-01-01', '2006-01-01'))) ON CONFLICT (id, valid_at) DO UPDATE SET id = EXCLUDED.id + '[2,3)';
+ERROR:  there is no unique or exclusion constraint matching the ON CONFLICT specification
+-- id matches but no conflict
+INSERT INTO temporal_mltrng (id, valid_at) VALUES ('[1,2)', datemultirange(daterange('2010-01-01', '2020-01-01'))) ON CONFLICT (id, valid_at) DO UPDATE SET id = EXCLUDED.id + '[3,4)';
+ERROR:  there is no unique or exclusion constraint matching the ON CONFLICT specification
+-- date matches but no conflict
+INSERT INTO temporal_mltrng (id, valid_at) VALUES ('[2,3)', datemultirange(daterange('2005-01-01', '2006-01-01'))) ON CONFLICT (id, valid_at) DO UPDATE SET id = EXCLUDED.id + '[4,5)';
+ERROR:  there is no unique or exclusion constraint matching the ON CONFLICT specification
+SELECT * FROM temporal_mltrng ORDER BY id, valid_at;
+  id   |         valid_at          
+-------+---------------------------
+ [1,2) | {[2000-01-01,2010-01-01)}
+(1 row)
+
+TRUNCATE temporal_mltrng;
+INSERT INTO temporal_mltrng (id, valid_at) VALUES ('[1,2)', datemultirange(daterange('2000-01-01', '2010-01-01')));
+-- with a conflict
+INSERT INTO temporal_mltrng (id, valid_at) VALUES ('[1,2)', datemultirange(daterange('2005-01-01', '2006-01-01'))) ON CONFLICT ON CONSTRAINT temporal_mltrng_pk DO UPDATE SET id = EXCLUDED.id + '[2,3)';
+ERROR:  ON CONFLICT DO UPDATE not supported with exclusion constraints
+-- id matches but no conflict
+INSERT INTO temporal_mltrng (id, valid_at) VALUES ('[1,2)', datemultirange(daterange('2010-01-01', '2020-01-01'))) ON CONFLICT ON CONSTRAINT temporal_mltrng_pk DO UPDATE SET id = EXCLUDED.id + '[3,4)';
+ERROR:  ON CONFLICT DO UPDATE not supported with exclusion constraints
+-- date matches but no conflict
+INSERT INTO temporal_mltrng (id, valid_at) VALUES ('[2,3)', datemultirange(daterange('2005-01-01', '2006-01-01'))) ON CONFLICT ON CONSTRAINT temporal_mltrng_pk DO UPDATE SET id = EXCLUDED.id + '[4,5)';
+ERROR:  ON CONFLICT DO UPDATE not supported with exclusion constraints
+SELECT * FROM temporal_mltrng ORDER BY id, valid_at;
+  id   |         valid_at          
+-------+---------------------------
+ [1,2) | {[2000-01-01,2010-01-01)}
+(1 row)
+
+-- with a UNIQUE constraint:
+CREATE TABLE temporal_mltrng3 (
+  id int4range,
+  valid_at datemultirange,
+  CONSTRAINT temporal_mltrng3_uq UNIQUE (id, valid_at WITHOUT OVERLAPS)
+);
+TRUNCATE temporal_mltrng3;
+INSERT INTO temporal_mltrng3 (id, valid_at) VALUES ('[1,2)', datemultirange(daterange('2000-01-01', '2010-01-01')));
+-- with a conflict
+INSERT INTO temporal_mltrng3 (id, valid_at) VALUES ('[1,2)', datemultirange(daterange('2005-01-01', '2006-01-01'))) ON CONFLICT DO NOTHING;
+-- id matches but no conflict
+INSERT INTO temporal_mltrng3 (id, valid_at) VALUES ('[1,2)', datemultirange(daterange('2010-01-01', '2020-01-01'))) ON CONFLICT DO NOTHING;
+-- date matches but no conflict
+INSERT INTO temporal_mltrng3 (id, valid_at) VALUES ('[2,3)', datemultirange(daterange('2005-01-01', '2006-01-01'))) ON CONFLICT DO NOTHING;
+SELECT * FROM temporal_mltrng3 ORDER BY id, valid_at;
+  id   |         valid_at          
+-------+---------------------------
+ [1,2) | {[2000-01-01,2010-01-01)}
+ [1,2) | {[2010-01-01,2020-01-01)}
+ [2,3) | {[2005-01-01,2006-01-01)}
+(3 rows)
+
+TRUNCATE temporal_mltrng3;
+INSERT INTO temporal_mltrng3 (id, valid_at) VALUES ('[1,2)', datemultirange(daterange('2000-01-01', '2010-01-01')));
+-- with a conflict
+INSERT INTO temporal_mltrng3 (id, valid_at) VALUES ('[1,2)', datemultirange(daterange('2005-01-01', '2006-01-01'))) ON CONFLICT (id, valid_at) DO NOTHING;
+ERROR:  there is no unique or exclusion constraint matching the ON CONFLICT specification
+-- id matches but no conflict
+INSERT INTO temporal_mltrng3 (id, valid_at) VALUES ('[1,2)', datemultirange(daterange('2010-01-01', '2020-01-01'))) ON CONFLICT (id, valid_at) DO NOTHING;
+ERROR:  there is no unique or exclusion constraint matching the ON CONFLICT specification
+-- date matches but no conflict
+INSERT INTO temporal_mltrng3 (id, valid_at) VALUES ('[2,3)', datemultirange(daterange('2005-01-01', '2006-01-01'))) ON CONFLICT (id, valid_at) DO NOTHING;
+ERROR:  there is no unique or exclusion constraint matching the ON CONFLICT specification
+SELECT * FROM temporal_mltrng3 ORDER BY id, valid_at;
+  id   |         valid_at          
+-------+---------------------------
+ [1,2) | {[2000-01-01,2010-01-01)}
+(1 row)
+
+TRUNCATE temporal_mltrng3;
+INSERT INTO temporal_mltrng3 (id, valid_at) VALUES ('[1,2)', datemultirange(daterange('2000-01-01', '2010-01-01')));
+-- with a conflict
+INSERT INTO temporal_mltrng3 (id, valid_at) VALUES ('[1,2)', datemultirange(daterange('2005-01-01', '2006-01-01'))) ON CONFLICT ON CONSTRAINT temporal_mltrng3_uq DO NOTHING;
+-- id matches but no conflict
+INSERT INTO temporal_mltrng3 (id, valid_at) VALUES ('[1,2)', datemultirange(daterange('2010-01-01', '2020-01-01'))) ON CONFLICT ON CONSTRAINT temporal_mltrng3_uq DO NOTHING;
+-- date matches but no conflict
+INSERT INTO temporal_mltrng3 (id, valid_at) VALUES ('[2,3)', datemultirange(daterange('2005-01-01', '2006-01-01'))) ON CONFLICT ON CONSTRAINT temporal_mltrng3_uq DO NOTHING;
+SELECT * FROM temporal_mltrng3 ORDER BY id, valid_at;
+  id   |         valid_at          
+-------+---------------------------
+ [1,2) | {[2000-01-01,2010-01-01)}
+ [1,2) | {[2010-01-01,2020-01-01)}
+ [2,3) | {[2005-01-01,2006-01-01)}
+(3 rows)
+
+TRUNCATE temporal_mltrng3;
+INSERT INTO temporal_mltrng3 (id, valid_at) VALUES ('[1,2)', datemultirange(daterange('2000-01-01', '2010-01-01')));
+-- with a conflict
+INSERT INTO temporal_mltrng3 (id, valid_at) VALUES ('[1,2)', datemultirange(daterange('2005-01-01', '2006-01-01'))) ON CONFLICT (id, valid_at) DO UPDATE SET id = EXCLUDED.id + '[2,3)';
+ERROR:  there is no unique or exclusion constraint matching the ON CONFLICT specification
+-- id matches but no conflict
+INSERT INTO temporal_mltrng3 (id, valid_at) VALUES ('[1,2)', datemultirange(daterange('2010-01-01', '2020-01-01'))) ON CONFLICT (id, valid_at) DO UPDATE SET id = EXCLUDED.id + '[3,4)';
+ERROR:  there is no unique or exclusion constraint matching the ON CONFLICT specification
+-- date matches but no conflict
+INSERT INTO temporal_mltrng3 (id, valid_at) VALUES ('[2,3)', datemultirange(daterange('2005-01-01', '2006-01-01'))) ON CONFLICT (id, valid_at) DO UPDATE SET id = EXCLUDED.id + '[4,5)';
+ERROR:  there is no unique or exclusion constraint matching the ON CONFLICT specification
+SELECT * FROM temporal_mltrng3 ORDER BY id, valid_at;
+  id   |         valid_at          
+-------+---------------------------
+ [1,2) | {[2000-01-01,2010-01-01)}
+(1 row)
+
+TRUNCATE temporal_mltrng3;
+INSERT INTO temporal_mltrng3 (id, valid_at) VALUES ('[1,2)', datemultirange(daterange('2000-01-01', '2010-01-01')));
+-- with a conflict
+INSERT INTO temporal_mltrng3 (id, valid_at) VALUES ('[1,2)', datemultirange(daterange('2005-01-01', '2006-01-01'))) ON CONFLICT ON CONSTRAINT temporal_mltrng3_uq DO UPDATE SET id = EXCLUDED.id + '[2,3)';
+ERROR:  ON CONFLICT DO UPDATE not supported with exclusion constraints
+-- id matches but no conflict
+INSERT INTO temporal_mltrng3 (id, valid_at) VALUES ('[1,2)', datemultirange(daterange('2010-01-01', '2020-01-01'))) ON CONFLICT ON CONSTRAINT temporal_mltrng3_uq DO UPDATE SET id = EXCLUDED.id + '[3,4)';
+ERROR:  ON CONFLICT DO UPDATE not supported with exclusion constraints
+-- date matches but no conflict
+INSERT INTO temporal_mltrng3 (id, valid_at) VALUES ('[2,3)', datemultirange(daterange('2005-01-01', '2006-01-01'))) ON CONFLICT ON CONSTRAINT temporal_mltrng3_uq DO UPDATE SET id = EXCLUDED.id + '[4,5)';
+ERROR:  ON CONFLICT DO UPDATE not supported with exclusion constraints
+SELECT * FROM temporal_mltrng3 ORDER BY id, valid_at;
+  id   |         valid_at          
+-------+---------------------------
+ [1,2) | {[2000-01-01,2010-01-01)}
+(1 row)
+
+DROP TABLE temporal_mltrng3;
+RESET datestyle;
