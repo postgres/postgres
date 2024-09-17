@@ -96,7 +96,7 @@ tde_mdwritev(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 			local_buffers[i] = &local_blocks_aligned[i * BLCKSZ];
 
 			BlockNumber bn = blocknum + i;
-			unsigned char iv[16] = {0,}
+			unsigned char iv[16] = {0,};
 			memcpy(iv+4, &bn, sizeof(BlockNumber));
 
 			AesEncrypt(rkd->internal_key.key, iv, ((char**)buffers)[i], BLCKSZ, local_buffers[i], &out_len);
@@ -133,7 +133,7 @@ tde_mdextend(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 		char *local_blocks_aligned = (char *)TYPEALIGN(PG_IO_ALIGN_SIZE, local_blocks);
 		int out_len = BLCKSZ;
 
-		unsigned char iv[16] = {0,}
+		unsigned char iv[16] = {0,};
 		memcpy(iv+4, &blocknum, sizeof(BlockNumber));
 
 		AesEncrypt(rkd->internal_key.key, iv, ((char*)buffer), BLCKSZ, local_blocks_aligned, &out_len);
@@ -180,7 +180,7 @@ tde_mdreadv(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 			continue;
 
 		BlockNumber bn = blocknum + i;
-		unsigned char iv[16] = {0,}
+		unsigned char iv[16] = {0,};
 		memcpy(iv+4, &bn, sizeof(BlockNumber));
 
 		AesDecrypt(rkd->internal_key.key, iv, ((char **)buffers)[i], BLCKSZ, ((char **)buffers)[i], &out_len);
