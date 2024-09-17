@@ -585,7 +585,10 @@ btparallelrescan(IndexScanDesc scan)
  *		or _bt_parallel_done().
  *
  * The return value is true if we successfully seized the scan and false
- * if we did not.  The latter case occurs if no pages remain.
+ * if we did not.  The latter case occurs when no pages remain, or when
+ * another primitive index scan is scheduled that caller's backend cannot
+ * start just yet (only backends that call from _bt_first are capable of
+ * starting primitive index scans, which they indicate by passing first=true).
  *
  * If the return value is true, *pageno returns the next or current page
  * of the scan (depending on the scan direction).  An invalid block number
@@ -596,10 +599,6 @@ btparallelrescan(IndexScanDesc scan)
  * scan will return false.
  *
  * Callers should ignore the value of pageno if the return value is false.
- *
- * Callers that are in a position to start a new primitive index scan must
- * pass first=true (all other callers pass first=false).  We just return false
- * for first=false callers that require another primitive index scan.
  */
 bool
 _bt_parallel_seize(IndexScanDesc scan, BlockNumber *pageno, bool first)
@@ -616,13 +615,7 @@ _bt_parallel_seize(IndexScanDesc scan, BlockNumber *pageno, bool first)
 	{
 		/*
 		 * Initialize array related state when called from _bt_first, assuming
-		 * that this will either be the first primitive index scan for the
-		 * scan, or a previous explicitly scheduled primitive scan.
-		 *
-		 * Note: so->needPrimScan is only set when a scheduled primitive index
-		 * scan is set to be performed in caller's worker process.  It should
-		 * not be set here by us for the first primitive scan, nor should we
-		 * ever set it for a parallel scan that has no array keys.
+		 * that this will be the first primitive index scan for the scan
 		 */
 		so->needPrimScan = false;
 		so->scanBehind = false;
@@ -630,8 +623,8 @@ _bt_parallel_seize(IndexScanDesc scan, BlockNumber *pageno, bool first)
 	else
 	{
 		/*
-		 * Don't attempt to seize the scan when backend requires another
-		 * primitive index scan unless we're in a position to start it now
+		 * Don't attempt to seize the scan when it requires another primitive
+		 * index scan, since caller's backend cannot start it right now
 		 */
 		if (so->needPrimScan)
 			return false;
@@ -653,12 +646,9 @@ _bt_parallel_seize(IndexScanDesc scan, BlockNumber *pageno, bool first)
 		{
 			Assert(so->numArrayKeys);
 
-			/*
-			 * If we can start another primitive scan right away, do so.
-			 * Otherwise just wait.
-			 */
 			if (first)
 			{
+				/* Can start scheduled primitive scan right away, so do so */
 				btscan->btps_pageStatus = BTPARALLEL_ADVANCING;
 				for (int i = 0; i < so->numArrayKeys; i++)
 				{
@@ -668,11 +658,25 @@ _bt_parallel_seize(IndexScanDesc scan, BlockNumber *pageno, bool first)
 					array->cur_elem = btscan->btps_arrElems[i];
 					skey->sk_argument = array->elem_values[array->cur_elem];
 				}
-				so->needPrimScan = true;
-				so->scanBehind = false;
 				*pageno = InvalidBlockNumber;
 				exit_loop = true;
 			}
+			else
+			{
+				/*
+				 * Don't attempt to seize the scan when it requires another
+				 * primitive index scan, since caller's backend cannot start
+				 * it right now
+				 */
+				status = false;
+			}
+
+			/*
+			 * Either way, update backend local state to indicate that a
+			 * pending primitive scan is required
+			 */
+			so->needPrimScan = true;
+			so->scanBehind = false;
 		}
 		else if (btscan->btps_pageStatus != BTPARALLEL_ADVANCING)
 		{
@@ -731,12 +735,20 @@ _bt_parallel_release(IndexScanDesc scan, BlockNumber scan_page)
 void
 _bt_parallel_done(IndexScanDesc scan)
 {
+	BTScanOpaque so = (BTScanOpaque) scan->opaque;
 	ParallelIndexScanDesc parallel_scan = scan->parallel_scan;
 	BTParallelScanDesc btscan;
 	bool		status_changed = false;
 
 	/* Do nothing, for non-parallel scans */
 	if (parallel_scan == NULL)
+		return;
+
+	/*
+	 * Should not mark parallel scan done when there's still a pending
+	 * primitive index scan
+	 */
+	if (so->needPrimScan)
 		return;
 
 	btscan = (BTParallelScanDesc) OffsetToPointer((void *) parallel_scan,
@@ -747,6 +759,7 @@ _bt_parallel_done(IndexScanDesc scan)
 	 * already
 	 */
 	SpinLockAcquire(&btscan->btps_mutex);
+	Assert(btscan->btps_pageStatus != BTPARALLEL_NEED_PRIMSCAN);
 	if (btscan->btps_pageStatus != BTPARALLEL_DONE)
 	{
 		btscan->btps_pageStatus = BTPARALLEL_DONE;
