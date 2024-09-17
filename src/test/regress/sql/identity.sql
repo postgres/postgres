@@ -528,3 +528,12 @@ SELECT * FROM itest15;
 SELECT * FROM itest16;
 DROP TABLE itest15;
 DROP TABLE itest16;
+
+-- For testing of pg_dump and pg_upgrade, leave behind some identity
+-- sequences whose logged-ness doesn't match their owning table's.
+CREATE TABLE identity_dump_logged (a INT GENERATED ALWAYS AS IDENTITY);
+ALTER SEQUENCE identity_dump_logged_a_seq SET UNLOGGED;
+CREATE UNLOGGED TABLE identity_dump_unlogged (a INT GENERATED ALWAYS AS IDENTITY);
+ALTER SEQUENCE identity_dump_unlogged_a_seq SET LOGGED;
+SELECT relname, relpersistence FROM pg_class
+  WHERE relname ~ '^identity_dump_' ORDER BY 1;
