@@ -68,6 +68,8 @@ extern ReadStream *read_stream_begin_relation(int flags,
 											  void *callback_private_data,
 											  size_t per_buffer_data_size);
 extern Buffer read_stream_next_buffer(ReadStream *stream, void **per_buffer_data);
+extern BlockNumber read_stream_next_block(ReadStream *stream,
+										  BufferAccessStrategy *strategy);
 extern ReadStream *read_stream_begin_smgr_relation(int flags,
 												   BufferAccessStrategy strategy,
 												   SMgrRelation smgr,
