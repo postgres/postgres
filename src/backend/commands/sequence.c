@@ -1347,7 +1347,10 @@ init_params(ParseState *pstate, List *options, bool for_identity,
 			/*
 			 * The parser allows this, but it is only for identity columns, in
 			 * which case it is filtered out in parse_utilcmd.c.  We only get
-			 * here if someone puts it into a CREATE SEQUENCE.
+			 * here if someone puts it into a CREATE SEQUENCE, where it'd be
+			 * redundant.  (The same is true for the equally-nonstandard
+			 * LOGGED and UNLOGGED options, but for those, the default error
+			 * below seems sufficient.)
 			 */
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
