@@ -120,6 +120,7 @@ static void show_sort_group_keys(PlanState *planstate, const char *qlabel,
 								 List *ancestors, ExplainState *es);
 static void show_sortorder_options(StringInfo buf, Node *sortexpr,
 								   Oid sortOperator, Oid collation, bool nullsFirst);
+static void show_storage_info(Tuplestorestate *tupstore, ExplainState *es);
 static void show_tablesample(TableSampleClause *tsc, PlanState *planstate,
 							 List *ancestors, ExplainState *es);
 static void show_sort_info(SortState *sortstate, ExplainState *es);
@@ -127,6 +128,7 @@ static void show_incremental_sort_info(IncrementalSortState *incrsortstate,
 									   ExplainState *es);
 static void show_hash_info(HashState *hashstate, ExplainState *es);
 static void show_material_info(MaterialState *mstate, ExplainState *es);
+static void show_windowagg_info(WindowAggState *winstate, ExplainState *es);
 static void show_memoize_info(MemoizeState *mstate, List *ancestors,
 							  ExplainState *es);
 static void show_hashagg_info(AggState *aggstate, ExplainState *es);
@@ -2231,6 +2233,7 @@ ExplainNode(PlanState *planstate, List *ancestors,
 										   planstate, es);
 			show_upper_qual(((WindowAgg *) plan)->runConditionOrig,
 							"Run Condition", planstate, ancestors, es);
+			show_windowagg_info(castNode(WindowAggState, planstate), es);
 			break;
 		case T_Group:
 			show_group_keys(castNode(GroupState, planstate), ancestors, es);
@@ -2895,6 +2898,34 @@ show_sortorder_options(StringInfo buf, Node *sortexpr,
 }
 
 /*
+ * Show information on storage method and maximum memory/disk space used.
+ */
+static void
+show_storage_info(Tuplestorestate *tupstore, ExplainState *es)
+{
+	char	   *maxStorageType;
+	int64		maxSpaceUsed,
+				maxSpaceUsedKB;
+
+	tuplestore_get_stats(tupstore, &maxStorageType, &maxSpaceUsed);
+	maxSpaceUsedKB = BYTES_TO_KILOBYTES(maxSpaceUsed);
+
+	if (es->format != EXPLAIN_FORMAT_TEXT)
+	{
+		ExplainPropertyText("Storage", maxStorageType, es);
+		ExplainPropertyInteger("Maximum Storage", "kB", maxSpaceUsedKB, es);
+	}
+	else
+	{
+		ExplainIndentText(es);
+		appendStringInfo(es->str,
+						 "Storage: %s  Maximum Storage: " INT64_FORMAT "kB\n",
+						 maxStorageType,
+						 maxSpaceUsedKB);
+	}
+}
+
+/*
  * Show TABLESAMPLE properties
  */
 static void
@@ -3350,9 +3381,6 @@ static void
 show_material_info(MaterialState *mstate, ExplainState *es)
 {
 	Tuplestorestate *tupstore = mstate->tuplestorestate;
-	char	   *maxStorageType;
-	int64		maxSpaceUsed,
-				maxSpaceUsedKB;
 
 	/*
 	 * Nothing to show if ANALYZE option wasn't used or if execution didn't
@@ -3361,22 +3389,26 @@ show_material_info(MaterialState *mstate, ExplainState *es)
 	if (!es->analyze || tupstore == NULL)
 		return;
 
-	tuplestore_get_stats(tupstore, &maxStorageType, &maxSpaceUsed);
-	maxSpaceUsedKB = BYTES_TO_KILOBYTES(maxSpaceUsed);
+	show_storage_info(tupstore, es);
+}
 
-	if (es->format != EXPLAIN_FORMAT_TEXT)
-	{
-		ExplainPropertyText("Storage", maxStorageType, es);
-		ExplainPropertyInteger("Maximum Storage", "kB", maxSpaceUsedKB, es);
-	}
-	else
-	{
-		ExplainIndentText(es);
-		appendStringInfo(es->str,
-						 "Storage: %s  Maximum Storage: " INT64_FORMAT "kB\n",
-						 maxStorageType,
-						 maxSpaceUsedKB);
-	}
+/*
+ * Show information on WindowAgg node, storage method and maximum memory/disk
+ * space used.
+ */
+static void
+show_windowagg_info(WindowAggState *winstate, ExplainState *es)
+{
+	Tuplestorestate *tupstore = winstate->buffer;
+
+	/*
+	 * Nothing to show if ANALYZE option wasn't used or if execution didn't
+	 * get as far as creating the tuplestore.
+	 */
+	if (!es->analyze || tupstore == NULL)
+		return;
+
+	show_storage_info(tupstore, es);
 }
 
 /*
