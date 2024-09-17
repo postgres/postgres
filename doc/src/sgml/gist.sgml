@@ -266,7 +266,7 @@ CREATE INDEX ON my_table USING GIST (my_inet_column inet_ops);
 
  <para>
    There are five methods that an index operator class for
-   <acronym>GiST</acronym> must provide, and six that are optional.
+   <acronym>GiST</acronym> must provide, and seven that are optional.
    Correctness of the index is ensured
    by proper implementation of the <function>same</function>, <function>consistent</function>
    and <function>union</function> methods, while efficiency (size and speed) of the
@@ -289,6 +289,10 @@ CREATE INDEX ON my_table USING GIST (my_inet_column inet_ops);
    user-specified parameters.
    The optional eleventh method <function>sortsupport</function> is used to
    speed up building a <acronym>GiST</acronym> index.
+   The optional twelfth method <function>stratnum</function> is used to
+   translate well-known <literal>RT*StrategyNumber</literal>s (from
+   <filename>src/include/access/stratnum.h</filename>) into strategy numbers
+   used by the operator class.
  </para>
 
  <variablelist>
@@ -1160,6 +1164,65 @@ my_sortsupport(PG_FUNCTION_ARGS)
   PG_RETURN_VOID();
 }
 </programlisting>
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><function>stratnum</function></term>
+     <listitem>
+      <para>
+       Given an <literal>RT*StrategyNumber</literal> value from
+       <filename>src/include/access/stratnum.h</filename>, returns a strategy
+       number used by this operator class for matching functionality.  The
+       function should return <literal>InvalidStrategy</literal> if the
+       operator class has no matching strategy.
+      </para>
+
+      <para>
+       The <acronym>SQL</acronym> declaration of the function must look like
+       this:
+
+<programlisting>
+CREATE OR REPLACE FUNCTION my_stratnum(integer)
+RETURNS integer
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT;
+</programlisting>
+      </para>
+
+       <para>
+        The matching code in the C module could then follow this skeleton:
+
+<programlisting>
+PG_FUNCTION_INFO_V1(my_stratnum);
+
+Datum
+my_stratnum(PG_FUNCTION_ARGS)
+{
+    StrategyNumber strategy = (StrategyNumber) PG_GETARG_UINT16(1);
+    StrategyNumber ret = InvalidStrategy;
+
+    switch (strategy)
+    {
+        case RTEqualStrategyNumber:
+            ret = BTEqualStrategyNumber;
+    }
+
+    PG_RETURN_UINT16(ret);
+}
+</programlisting>
+      </para>
+
+      <para>
+       One translation function is provided by
+       <productname>PostgreSQL</productname>:
+       <literal>gist_stratnum_identity</literal> is for operator classes that
+       already use the <literal>RT*StrategyNumber</literal> constants.  It
+       returns whatever is passed to it.  The <literal>btree_gist</literal>
+       extension defines a second translation function,
+       <literal>gist_stratnum_btree</literal>, for operator classes that use
+       the <literal>BT*StrategyNumber</literal> constants.
       </para>
      </listitem>
     </varlistentry>

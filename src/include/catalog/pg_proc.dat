@@ -12310,4 +12310,10 @@
   proargnames => '{summarized_tli,summarized_lsn,pending_lsn,summarizer_pid}',
   prosrc => 'pg_get_wal_summarizer_state' },
 
+# GiST stratnum implementations
+{ oid => '8047', descr => 'GiST support',
+  proname => 'gist_stratnum_identity', prorettype => 'int2',
+  proargtypes => 'int2',
+  prosrc => 'gist_stratnum_identity' },
+
 ]

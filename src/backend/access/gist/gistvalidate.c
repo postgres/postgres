@@ -146,6 +146,10 @@ gistvalidate(Oid opclassoid)
 				ok = check_amproc_signature(procform->amproc, VOIDOID, true,
 											1, 1, INTERNALOID);
 				break;
+			case GIST_STRATNUM_PROC:
+				ok = check_amproc_signature(procform->amproc, INT2OID, true,
+											1, 1, INT2OID);
+				break;
 			default:
 				ereport(INFO,
 						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
@@ -266,7 +270,8 @@ gistvalidate(Oid opclassoid)
 			continue;			/* got it */
 		if (i == GIST_DISTANCE_PROC || i == GIST_FETCH_PROC ||
 			i == GIST_COMPRESS_PROC || i == GIST_DECOMPRESS_PROC ||
-			i == GIST_OPTIONS_PROC || i == GIST_SORTSUPPORT_PROC)
+			i == GIST_OPTIONS_PROC || i == GIST_SORTSUPPORT_PROC ||
+			i == GIST_STRATNUM_PROC)
 			continue;			/* optional methods */
 		ereport(INFO,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
@@ -338,6 +343,7 @@ gistadjustmembers(Oid opfamilyoid,
 			case GIST_FETCH_PROC:
 			case GIST_OPTIONS_PROC:
 			case GIST_SORTSUPPORT_PROC:
+			case GIST_STRATNUM_PROC:
 				/* Optional, so force it to be a soft family dependency */
 				op->ref_is_hard = false;
 				op->ref_is_family = true;

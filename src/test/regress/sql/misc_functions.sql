@@ -360,3 +360,7 @@ SELECT pg_column_toast_chunk_id(a) IS NULL,
   FROM test_chunk_id;
 DROP TABLE test_chunk_id;
 DROP FUNCTION explain_mask_costs(text, bool, bool, bool, bool);
+
+-- test stratnum support functions
+SELECT gist_stratnum_identity(3::smallint);
+SELECT gist_stratnum_identity(18::smallint);

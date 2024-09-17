@@ -21,6 +21,7 @@
 #include "common/pg_prng.h"
 #include "storage/indexfsm.h"
 #include "utils/float.h"
+#include "utils/fmgrprotos.h"
 #include "utils/lsyscache.h"
 #include "utils/rel.h"
 #include "utils/snapmgr.h"
@@ -1054,4 +1055,17 @@ gistGetFakeLSN(Relation rel)
 		Assert(rel->rd_rel->relpersistence == RELPERSISTENCE_UNLOGGED);
 		return GetFakeLSNForUnloggedRel();
 	}
+}
+
+/*
+ * Returns the same number that was received.
+ *
+ * This is for GiST opclasses that use the RT*StrategyNumber constants.
+ */
+Datum
+gist_stratnum_identity(PG_FUNCTION_ARGS)
+{
+	StrategyNumber strat = PG_GETARG_UINT16(0);
+
+	PG_RETURN_UINT16(strat);
 }
