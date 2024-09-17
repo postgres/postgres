@@ -895,8 +895,8 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
      <para>
       This clause creates the column as an <firstterm>identity
       column</firstterm>.  It will have an implicit sequence attached to it
-      and the column in new rows will automatically have values from the
-      sequence assigned to it.
+      and in newly-inserted rows the column will automatically have values
+      from the sequence assigned to it.
       Such a column is implicitly <literal>NOT NULL</literal>.
      </para>
 
@@ -926,9 +926,16 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
      </para>
 
      <para>
-      The optional <replaceable>sequence_options</replaceable> clause can be
-      used to override the options of the sequence.
-      See <xref linkend="sql-createsequence"/> for details.
+      The optional <replaceable>sequence_options</replaceable> clause can
+      be used to override the parameters of the sequence.  The available
+      options include those shown for <xref linkend="sql-createsequence"/>,
+      plus <literal>SEQUENCE NAME <replaceable>name</replaceable></literal>,
+      <literal>LOGGED</literal>, and <literal>UNLOGGED</literal>, which
+      allow selection of the name and persistence level of the
+      sequence.  Without <literal>SEQUENCE NAME</literal>, the system
+      chooses an unused name for the sequence.
+      Without <literal>LOGGED</literal> or <literal>UNLOGGED</literal>,
+      the sequence will have the same persistence level as the table.
      </para>
     </listitem>
    </varlistentry>
