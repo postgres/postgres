@@ -29076,7 +29076,7 @@ postgres=# SELECT * FROM movie WHERE genre = 'Drama';
 (0 rows)
    </programlisting>
 
-   It may also happen that target <acronym>lsn</acronym> is not achieved
+   It may also happen that target <acronym>lsn</acronym> is not reached
    within the timeout.  In that case the error is thrown.
 
    <programlisting>

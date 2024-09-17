@@ -299,7 +299,7 @@ WaitForLSNReplay(XLogRecPtr targetLSN, int64 timeout)
 		/*
 		 * If the timeout value is specified, calculate the number of
 		 * milliseconds before the timeout.  Exit if the timeout is already
-		 * achieved.
+		 * reached.
 		 */
 		if (timeout > 0)
 		{
@@ -325,7 +325,7 @@ WaitForLSNReplay(XLogRecPtr targetLSN, int64 timeout)
 	deleteLSNWaiter();
 
 	/*
-	 * If we didn't achieve the target LSN, we must be exited by timeout.
+	 * If we didn't reach the target LSN, we must be exited by timeout.
 	 */
 	if (targetLSN > currentLSN)
 	{
