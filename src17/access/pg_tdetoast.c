@@ -812,7 +812,7 @@ tdeheap_fetch_toast_slice(Relation toastrel, Oid valueid, int32 attrsize,
 		}
 		/* Decrypt the data chunk by chunk here */
 
-		PG_TDE_DECRYPT_DATA(iv_prefix, (curchunk * TOAST_MAX_CHUNK_SIZE - sliceoffset) + encrypt_offset,
+		PG_TDE_DECRYPT_DATA(iv_prefix, (curchunk * TOAST_MAX_CHUNK_SIZE) + encrypt_offset,
 					chunkdata + chcpystrt,
 					(chcpyend - chcpystrt) + 1,
 					decrypted_data, key);

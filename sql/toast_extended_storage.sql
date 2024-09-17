@@ -35,4 +35,15 @@ UPDATE indtoasttest SET  f2 = '+'||f2||'-' ;
 
 DROP TABLE indtoasttest;
 
+-- Test substr with toasted externalized bytea values
+CREATE TABLE toasttest(t bytea STORAGE EXTERNAL) using tde_heap_basic;
+INSERT INTO toasttest VALUES (decode(repeat('1234567890',10000), 'escape'));
+
+SET bytea_output = 'escape';
+SELECT substring(t, 1, 10) FROM toasttest;
+SELECT substring(t, 50001, 10) FROM toasttest;
+SELECT substring(t, 99991) FROM toasttest;
+
+DROP TABLE toasttest;
+
 DROP EXTENSION pg_tde;
