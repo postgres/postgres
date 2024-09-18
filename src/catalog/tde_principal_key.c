@@ -23,6 +23,9 @@
 #include "utils/builtins.h"
 #include "pg_tde.h"
 #include "access/pg_tde_xlog.h"
+#include <sys/mman.h>
+#include <sys/time.h>
+
 #include "access/pg_tde_tdemap.h"
 #include "catalog/tde_global_space.h"
 #ifndef FRONTEND
@@ -549,6 +552,10 @@ push_principal_key_to_cache(TDEPrincipalKey *principalKey)
     if (!found)
         memcpy(cacheEntry, principalKey, sizeof(TDEPrincipalKey));
     dshash_release_lock(get_principal_key_Hash(), cacheEntry);
+
+    /* we don't want principal keys to end up paged to the swap */
+    if (mlock(cacheEntry, sizeof(TDEPrincipalKey)) == -1)
+        elog(ERROR, "could not mlock principal key cache entry: %m");
 }
 
 /*

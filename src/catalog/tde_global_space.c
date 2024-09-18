@@ -78,7 +78,7 @@ TDEInitGlobalKeys(const char *dir)
 		 * backend. (see
 		 * https://github.com/Percona-Lab/pg_tde/pull/214#discussion_r1648998317)
 		 */
-		pg_tde_put_key_into_map(XLOG_TDE_OID, ikey);
+		pg_tde_put_key_into_cache(XLOG_TDE_OID, ikey);
 	}
 }
 

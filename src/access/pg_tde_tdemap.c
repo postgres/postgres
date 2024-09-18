@@ -33,6 +33,7 @@
 
 #include <openssl/rand.h>
 #include <openssl/err.h>
+#include <sys/mman.h>
 #include <unistd.h>
 
 #include "pg_tde_defines.h"
@@ -84,22 +85,34 @@ typedef struct TDEMapFilePath
 	char keydata_path[MAXPGPATH];
 } TDEMapFilePath;
 
-/* Relation key cache.
- *
- * TODO: For now it is just a linked list. Data can only be added w/o any
- * ability to remove or change it. Also consider usage of more efficient data
- * struct (hash map) in the shared memory(?) - currently allocated in the
- * TopMemoryContext of the process.
- */
-typedef struct RelKey
+
+typedef struct RelKeyCacheRec
 {
 	Oid rel_id;
 	RelKeyData key;
-	struct RelKey *next;
-} RelKey;
+} RelKeyCacheRec;
 
-/* Head of the key cache (linked list) */
-RelKey *tde_rel_key_map = NULL;
+/* 
+ * Relation keys cache.
+ * 
+ * This is a slice backed by memory `*data`. Initially, we allocate one memory
+ * page (usually 4Kb). We reallocate it by adding another page when we run out
+ * of space. This memory is locked in the RAM so it won't be paged to the swap 
+ * (we don't want decrypted keys on disk). We do allocations in mem pages as
+ * these are the units `mlock()` operations are performed in.
+ * 
+ * Currently, the cache can only grow (no eviction). The data is located in 
+ * TopMemoryContext hence being wiped when the process exits, as well as memory
+ * is being unlocked by OS.
+ */
+typedef struct RelKeyCache
+{
+	RelKeyCacheRec *data; /* must be a multiple of a memory page (usually 4Kb) */
+	int len; /* num of RelKeyCacheRecs currenty in cache */
+	int cap; /* max amount of RelKeyCacheRec data can fit */
+} RelKeyCache;
+
+RelKeyCache *tde_rel_key_cache = NULL;
 
 static int32 pg_tde_process_map_entry(const RelFileLocator *rlocator, char *db_map_path, off_t *offset, bool should_delete);
 static RelKeyData* pg_tde_read_keydata(char *db_keydata_path, int32 key_index, TDEPrincipalKey *principal_key);
@@ -108,6 +121,7 @@ static int pg_tde_file_header_read(char *tde_filename, int fd, TDEFileHeader *fh
 static bool pg_tde_read_one_map_entry(int fd, const RelFileLocator *rlocator, int flags, TDEMapEntry *map_entry, off_t *offset);
 static RelKeyData* pg_tde_read_one_keydata(int keydata_fd, int32 key_index, TDEPrincipalKey *principal_key);
 static int pg_tde_open_file(char *tde_filename, TDEPrincipalKeyInfo *principal_key_info, bool should_fill_info, int fileFlags, bool *is_new_file, off_t *offset);
+static RelKeyData *pg_tde_get_key_from_cache(Oid rel_id);
 
 #ifndef FRONTEND
 
@@ -199,7 +213,7 @@ tde_create_rel_key(Oid rel_id, InternalKey *key, TDEPrincipalKeyInfo *principal_
 	rel_key_data.internal_key.ctx = NULL;
 
 	/* Add to the decrypted key to cache */
-	return pg_tde_put_key_into_map(rel_id, &rel_key_data);
+	return pg_tde_put_key_into_cache(rel_id, &rel_key_data);
 }
 /*
  * Encrypts a given key and returns the encrypted one.
@@ -1269,33 +1283,6 @@ pg_tde_get_principal_key(Oid dbOid, Oid spcOid)
 	return principal_key_info;
 }
 
-RelKeyData *
-pg_tde_put_key_into_map(Oid rel_id, RelKeyData *key)
-{
-	RelKey		*new;
-	
-#ifndef FRONTEND
-	MemoryContext oldctx;
-	oldctx = MemoryContextSwitchTo(TopMemoryContext);
-#endif
-	 new = (RelKey *) palloc(sizeof(RelKey));
-#ifndef FRONTEND
-	MemoryContextSwitchTo(oldctx);
-#endif
-	new->rel_id = rel_id;
-	memcpy(&new->key, key, sizeof(RelKeyData));
-	new->next = NULL;
-
-	if (tde_rel_key_map == NULL)
-		tde_rel_key_map = new;
-	else
-	{
-		new->next = tde_rel_key_map;
-		tde_rel_key_map = new;
-	}
-	return &new->key;
-}
-
 /*
  * Returns TDE key for a given relation.
  * First it looks in a cache. If nothing found in the cache, it reads data from
@@ -1304,26 +1291,124 @@ pg_tde_put_key_into_map(Oid rel_id, RelKeyData *key)
 RelKeyData *
 GetRelationKey(RelFileLocator rel)
 {
-	RelKey		*curr;
 	RelKeyData *key;
 	Oid rel_id = rel.relNumber;
 
-	for (curr = tde_rel_key_map; curr != NULL; curr = curr->next)
+	key = pg_tde_get_key_from_cache(rel_id);
+	if (key != NULL)
 	{
-		if (curr->rel_id == rel_id)
-		{
-			return &curr->key;
-		}
+		return key;
 	}
 
 	key = pg_tde_get_key_from_file(&rel);
 
 	if (key != NULL)
 	{
-		RelKeyData* cached_key = pg_tde_put_key_into_map(rel.relNumber, key);
+		RelKeyData* cached_key = pg_tde_put_key_into_cache(rel.relNumber, key);
 		pfree(key);
 		return cached_key;
 	}
 
-	return key; /* returning NULL key */
+	return NULL;
+}
+
+static RelKeyData *
+pg_tde_get_key_from_cache(Oid rel_id)
+{
+	RelKeyCacheRec		*rec;
+
+	if (tde_rel_key_cache == NULL)
+		return NULL;
+
+	for (int i = 0; i < tde_rel_key_cache->len; i++)
+	{
+		rec = tde_rel_key_cache->data+i;
+		if (rec != NULL && rec->rel_id == rel_id)
+		{
+			return &rec->key;
+		}
+	}
+
+	return NULL;
+}
+
+/* Add key to cache. See comments on `RelKeyCache`.
+ * 
+ * TODO: add tests.
+ */
+RelKeyData *
+pg_tde_put_key_into_cache(Oid rel_id, RelKeyData *key)
+{
+	static long			pageSize = 0;
+	RelKeyCacheRec		*rec;
+	MemoryContext		oldCtx;
+
+	if (pageSize == 0)
+	{
+	#ifndef _SC_PAGESIZE
+		pageSize = getpagesize();
+	#else
+		pageSize = sysconf(_SC_PAGESIZE);
+	#endif
+	}
+
+	if (tde_rel_key_cache == NULL)
+	{
+#ifndef FRONTEND
+		oldCtx = MemoryContextSwitchTo(TopMemoryContext);
+		tde_rel_key_cache = palloc(sizeof(RelKeyCache));
+		tde_rel_key_cache->data = palloc_aligned(pageSize, pageSize, MCXT_ALLOC_ZERO);
+		MemoryContextSwitchTo(oldCtx);
+#else
+		tde_rel_key_cache = palloc(sizeof(RelKeyCache));
+		tde_rel_key_cache->data = aligned_alloc(pageSize, pageSize);
+		memset(tde_rel_key_cache->data, 0, pageSize);
+#endif
+
+		if (mlock(tde_rel_key_cache->data, pageSize) == -1)
+			elog(ERROR, "could not mlock internal key initial cache page: %m");
+
+		tde_rel_key_cache->len = 0;
+		tde_rel_key_cache->cap = pageSize / sizeof(RelKeyCacheRec);
+	}
+
+	/* Add another mem page if there is no more room left for another key. We 
+	 * allocate `current_memory_size` + 1 page and copy data there.
+	 */
+	if (tde_rel_key_cache->len+1 > 
+		(tde_rel_key_cache->cap * sizeof(RelKeyCacheRec)) / sizeof(RelKeyCacheRec))
+	{
+		size_t size;
+		size_t old_size;
+		RelKeyCacheRec		*chachePage;
+
+		size = TYPEALIGN(pageSize, (tde_rel_key_cache->cap+1) * sizeof(RelKeyCacheRec));
+		old_size = TYPEALIGN(pageSize, (tde_rel_key_cache->cap) * sizeof(RelKeyCacheRec));
+
+#ifndef FRONTEND
+		oldCtx = MemoryContextSwitchTo(TopMemoryContext);
+		chachePage = palloc_aligned(pageSize, size, MCXT_ALLOC_ZERO);
+		MemoryContextSwitchTo(oldCtx);
+#else
+		chachePage = aligned_alloc(pageSize, size);
+		memset(chachePage, 0, size);
+#endif
+
+		memcpy(chachePage, tde_rel_key_cache->data, old_size);
+		pfree(tde_rel_key_cache->data);
+		tde_rel_key_cache->data = chachePage;
+
+		if (mlock(tde_rel_key_cache->data, pageSize) == -1)
+			elog(ERROR, "could not mlock internal key cache page: %m");
+
+		tde_rel_key_cache->cap = size / sizeof(RelKeyCacheRec);
+	}
+
+	rec = tde_rel_key_cache->data + tde_rel_key_cache->len;
+
+	rec->rel_id = rel_id;
+	memcpy(&rec->key, key, sizeof(RelKeyCacheRec));
+	tde_rel_key_cache->len++;
+
+	return &rec->key;
 }
