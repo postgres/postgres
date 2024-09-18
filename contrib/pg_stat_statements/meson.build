@@ -48,6 +48,7 @@ tests += {
       'planning',
       'user_activity',
       'wal',
+      'extended',
       'cleanup',
       'oldextversions',
     ],
