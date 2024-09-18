@@ -283,7 +283,13 @@ typedef struct xl_xact_stats_item
 {
 	int			kind;
 	Oid			dboid;
-	Oid			objoid;
+
+	/*
+	 * This stores the value of PgStat_HashKey.objid as two uint32 as all the
+	 * fields of xl_xact_xinfo should be multiples of size(int).
+	 */
+	uint32		objid_lo;
+	uint32		objid_hi;
 } xl_xact_stats_item;
 
 typedef struct xl_xact_stats_items

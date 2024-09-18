@@ -267,7 +267,7 @@ typedef struct PgStat_TableXactStatus
  * ------------------------------------------------------------
  */
 
-#define PGSTAT_FILE_FORMAT_ID	0x01A5BCAE
+#define PGSTAT_FILE_FORMAT_ID	0x01A5BCAF
 
 typedef struct PgStat_ArchiverStats
 {
@@ -511,7 +511,7 @@ extern long pgstat_report_stat(bool force);
 extern void pgstat_force_next_flush(void);
 
 extern void pgstat_reset_counters(void);
-extern void pgstat_reset(PgStat_Kind kind, Oid dboid, Oid objoid);
+extern void pgstat_reset(PgStat_Kind kind, Oid dboid, uint64 objid);
 extern void pgstat_reset_of_kind(PgStat_Kind kind);
 
 /* stats accessors */
@@ -520,7 +520,7 @@ extern TimestampTz pgstat_get_stat_snapshot_timestamp(bool *have_snapshot);
 
 /* helpers */
 extern PgStat_Kind pgstat_get_kind_from_str(char *kind_str);
-extern bool pgstat_have_entry(PgStat_Kind kind, Oid dboid, Oid objoid);
+extern bool pgstat_have_entry(PgStat_Kind kind, Oid dboid, uint64 objid);
 
 
 /*

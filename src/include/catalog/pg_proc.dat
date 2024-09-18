@@ -5581,7 +5581,7 @@
 
 { oid => '6230', descr => 'statistics: check if a stats object exists',
   proname => 'pg_stat_have_stats', provolatile => 'v', proparallel => 'r',
-  prorettype => 'bool', proargtypes => 'text oid oid',
+  prorettype => 'bool', proargtypes => 'text oid int8',
   prosrc => 'pg_stat_have_stats' },
 
 { oid => '6231', descr => 'statistics: information about subscription stats',

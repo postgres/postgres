@@ -51,9 +51,9 @@ static const PgStat_KindInfo injection_stats = {
 };
 
 /*
- * Compute stats entry idx from point name with a 4-byte hash.
+ * Compute stats entry idx from point name with an 8-byte hash.
  */
-#define PGSTAT_INJ_IDX(name) hash_bytes((const unsigned char *) name, strlen(name))
+#define PGSTAT_INJ_IDX(name) hash_bytes_extended((const unsigned char *) name, strlen(name), 0)
 
 /*
  * Kind ID reserved for statistics of injection points.

@@ -2046,8 +2046,8 @@ pg_stat_have_stats(PG_FUNCTION_ARGS)
 {
 	char	   *stats_type = text_to_cstring(PG_GETARG_TEXT_P(0));
 	Oid			dboid = PG_GETARG_OID(1);
-	Oid			objoid = PG_GETARG_OID(2);
+	uint64		objid = PG_GETARG_INT64(2);
 	PgStat_Kind kind = pgstat_get_kind_from_str(stats_type);
 
-	PG_RETURN_BOOL(pgstat_have_entry(kind, dboid, objoid));
+	PG_RETURN_BOOL(pgstat_have_entry(kind, dboid, objid));
 }

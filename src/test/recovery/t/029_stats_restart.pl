@@ -292,10 +292,10 @@ sub trigger_funcrel_stat
 
 sub have_stats
 {
-	my ($kind, $dboid, $objoid) = @_;
+	my ($kind, $dboid, $objid) = @_;
 
 	return $node->safe_psql($connect_db,
-		"SELECT pg_stat_have_stats('$kind', $dboid, $objoid)");
+		"SELECT pg_stat_have_stats('$kind', $dboid, $objid)");
 }
 
 sub overwrite_file

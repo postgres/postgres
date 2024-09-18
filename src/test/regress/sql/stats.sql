@@ -542,7 +542,7 @@ ROLLBACK;
 SELECT pg_stat_have_stats('bgwriter', 0, 0);
 -- unknown stats kinds error out
 SELECT pg_stat_have_stats('zaphod', 0, 0);
--- db stats have objoid 0
+-- db stats have objid 0
 SELECT pg_stat_have_stats('database', :dboid, 1);
 SELECT pg_stat_have_stats('database', :dboid, 0);
 

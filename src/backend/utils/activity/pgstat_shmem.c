@@ -429,10 +429,10 @@ pgstat_get_entry_ref_cached(PgStat_HashKey key, PgStat_EntryRef **entry_ref_p)
  * if the entry is newly created, false otherwise.
  */
 PgStat_EntryRef *
-pgstat_get_entry_ref(PgStat_Kind kind, Oid dboid, Oid objoid, bool create,
+pgstat_get_entry_ref(PgStat_Kind kind, Oid dboid, uint64 objid, bool create,
 					 bool *created_entry)
 {
-	PgStat_HashKey key = {.kind = kind,.dboid = dboid,.objoid = objoid};
+	PgStat_HashKey key = {.kind = kind,.dboid = dboid,.objid = objid};
 	PgStatShared_HashEntry *shhashent;
 	PgStatShared_Common *shheader = NULL;
 	PgStat_EntryRef *entry_ref;
@@ -644,13 +644,13 @@ pgstat_unlock_entry(PgStat_EntryRef *entry_ref)
  * Helper function to fetch and lock shared stats.
  */
 PgStat_EntryRef *
-pgstat_get_entry_ref_locked(PgStat_Kind kind, Oid dboid, Oid objoid,
+pgstat_get_entry_ref_locked(PgStat_Kind kind, Oid dboid, uint64 objid,
 							bool nowait)
 {
 	PgStat_EntryRef *entry_ref;
 
 	/* find shared table stats entry corresponding to the local entry */
-	entry_ref = pgstat_get_entry_ref(kind, dboid, objoid, true, NULL);
+	entry_ref = pgstat_get_entry_ref(kind, dboid, objid, true, NULL);
 
 	/* lock the shared entry to protect the content, skip if failed */
 	if (!pgstat_lock_entry(entry_ref, nowait))
@@ -820,9 +820,10 @@ pgstat_drop_entry_internal(PgStatShared_HashEntry *shent,
 	 */
 	if (shent->dropped)
 		elog(ERROR,
-			 "trying to drop stats entry already dropped: kind=%s dboid=%u objoid=%u refcount=%u",
+			 "trying to drop stats entry already dropped: kind=%s dboid=%u objid=%llu refcount=%u",
 			 pgstat_get_kind_info(shent->key.kind)->name,
-			 shent->key.dboid, shent->key.objoid,
+			 shent->key.dboid,
+			 (unsigned long long) shent->key.objid,
 			 pg_atomic_read_u32(&shent->refcount));
 	shent->dropped = true;
 
@@ -905,9 +906,9 @@ pgstat_drop_database_and_contents(Oid dboid)
  * pgstat_gc_entry_refs().
  */
 bool
-pgstat_drop_entry(PgStat_Kind kind, Oid dboid, Oid objoid)
+pgstat_drop_entry(PgStat_Kind kind, Oid dboid, uint64 objid)
 {
-	PgStat_HashKey key = {.kind = kind,.dboid = dboid,.objoid = objoid};
+	PgStat_HashKey key = {.kind = kind,.dboid = dboid,.objid = objid};
 	PgStatShared_HashEntry *shent;
 	bool		freed = true;
 
@@ -980,13 +981,13 @@ shared_stat_reset_contents(PgStat_Kind kind, PgStatShared_Common *header,
  * Reset one variable-numbered stats entry.
  */
 void
-pgstat_reset_entry(PgStat_Kind kind, Oid dboid, Oid objoid, TimestampTz ts)
+pgstat_reset_entry(PgStat_Kind kind, Oid dboid, uint64 objid, TimestampTz ts)
 {
 	PgStat_EntryRef *entry_ref;
 
 	Assert(!pgstat_get_kind_info(kind)->fixed_amount);
 
-	entry_ref = pgstat_get_entry_ref(kind, dboid, objoid, false, NULL);
+	entry_ref = pgstat_get_entry_ref(kind, dboid, objid, false, NULL);
 	if (!entry_ref || entry_ref->shared_entry->dropped)
 		return;
 

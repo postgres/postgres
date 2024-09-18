@@ -77,6 +77,7 @@ AtEOXact_PgStat_DroppedStats(PgStat_SubXactStatus *xact_state, bool isCommit)
 		PgStat_PendingDroppedStatsItem *pending =
 			dclist_container(PgStat_PendingDroppedStatsItem, node, iter.cur);
 		xl_xact_stats_item *it = &pending->item;
+		uint64		objid = ((uint64) it->objid_hi) << 32 | it->objid_lo;
 
 		if (isCommit && !pending->is_create)
 		{
@@ -84,7 +85,7 @@ AtEOXact_PgStat_DroppedStats(PgStat_SubXactStatus *xact_state, bool isCommit)
 			 * Transaction that dropped an object committed. Drop the stats
 			 * too.
 			 */
-			if (!pgstat_drop_entry(it->kind, it->dboid, it->objoid))
+			if (!pgstat_drop_entry(it->kind, it->dboid, objid))
 				not_freed_count++;
 		}
 		else if (!isCommit && pending->is_create)
@@ -93,7 +94,7 @@ AtEOXact_PgStat_DroppedStats(PgStat_SubXactStatus *xact_state, bool isCommit)
 			 * Transaction that created an object aborted. Drop the stats
 			 * associated with the object.
 			 */
-			if (!pgstat_drop_entry(it->kind, it->dboid, it->objoid))
+			if (!pgstat_drop_entry(it->kind, it->dboid, objid))
 				not_freed_count++;
 		}
 
@@ -149,6 +150,7 @@ AtEOSubXact_PgStat_DroppedStats(PgStat_SubXactStatus *xact_state,
 		PgStat_PendingDroppedStatsItem *pending =
 			dclist_container(PgStat_PendingDroppedStatsItem, node, iter.cur);
 		xl_xact_stats_item *it = &pending->item;
+		uint64		objid = ((uint64) it->objid_hi) << 32 | it->objid_lo;
 
 		dclist_delete_from(&xact_state->pending_drops, &pending->node);
 
@@ -158,7 +160,7 @@ AtEOSubXact_PgStat_DroppedStats(PgStat_SubXactStatus *xact_state,
 			 * Subtransaction creating a new stats object aborted. Drop the
 			 * stats object.
 			 */
-			if (!pgstat_drop_entry(it->kind, it->dboid, it->objoid))
+			if (!pgstat_drop_entry(it->kind, it->dboid, objid))
 				not_freed_count++;
 			pfree(pending);
 		}
@@ -319,8 +321,9 @@ pgstat_execute_transactional_drops(int ndrops, struct xl_xact_stats_item *items,
 	for (int i = 0; i < ndrops; i++)
 	{
 		xl_xact_stats_item *it = &items[i];
+		uint64		objid = ((uint64) it->objid_hi) << 32 | it->objid_lo;
 
-		if (!pgstat_drop_entry(it->kind, it->dboid, it->objoid))
+		if (!pgstat_drop_entry(it->kind, it->dboid, objid))
 			not_freed_count++;
 	}
 
@@ -329,7 +332,7 @@ pgstat_execute_transactional_drops(int ndrops, struct xl_xact_stats_item *items,
 }
 
 static void
-create_drop_transactional_internal(PgStat_Kind kind, Oid dboid, Oid objoid, bool is_create)
+create_drop_transactional_internal(PgStat_Kind kind, Oid dboid, uint64 objid, bool is_create)
 {
 	int			nest_level = GetCurrentTransactionNestLevel();
 	PgStat_SubXactStatus *xact_state;
@@ -341,7 +344,8 @@ create_drop_transactional_internal(PgStat_Kind kind, Oid dboid, Oid objoid, bool
 	drop->is_create = is_create;
 	drop->item.kind = kind;
 	drop->item.dboid = dboid;
-	drop->item.objoid = objoid;
+	drop->item.objid_lo = (uint32) objid;
+	drop->item.objid_hi = (uint32) (objid >> 32);
 
 	dclist_push_tail(&xact_state->pending_drops, &drop->node);
 }
@@ -354,18 +358,19 @@ create_drop_transactional_internal(PgStat_Kind kind, Oid dboid, Oid objoid, bool
  * dropped.
  */
 void
-pgstat_create_transactional(PgStat_Kind kind, Oid dboid, Oid objoid)
+pgstat_create_transactional(PgStat_Kind kind, Oid dboid, uint64 objid)
 {
-	if (pgstat_get_entry_ref(kind, dboid, objoid, false, NULL))
+	if (pgstat_get_entry_ref(kind, dboid, objid, false, NULL))
 	{
 		ereport(WARNING,
-				errmsg("resetting existing statistics for kind %s, db=%u, oid=%u",
-					   (pgstat_get_kind_info(kind))->name, dboid, objoid));
+				errmsg("resetting existing statistics for kind %s, db=%u, oid=%llu",
+					   (pgstat_get_kind_info(kind))->name, dboid,
+					   (unsigned long long) objid));
 
-		pgstat_reset(kind, dboid, objoid);
+		pgstat_reset(kind, dboid, objid);
 	}
 
-	create_drop_transactional_internal(kind, dboid, objoid, /* create */ true);
+	create_drop_transactional_internal(kind, dboid, objid, /* create */ true);
 }
 
 /*
@@ -376,7 +381,7 @@ pgstat_create_transactional(PgStat_Kind kind, Oid dboid, Oid objoid)
  * alive.
  */
 void
-pgstat_drop_transactional(PgStat_Kind kind, Oid dboid, Oid objoid)
+pgstat_drop_transactional(PgStat_Kind kind, Oid dboid, uint64 objid)
 {
-	create_drop_transactional_internal(kind, dboid, objoid, /* create */ false);
+	create_drop_transactional_internal(kind, dboid, objid, /* create */ false);
 }
