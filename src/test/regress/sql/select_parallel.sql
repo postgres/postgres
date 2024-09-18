@@ -543,3 +543,34 @@ reset debug_parallel_query;
 drop function set_and_report_role();
 drop function set_role_and_error(int);
 drop role regress_parallel_worker;
+
+-- don't freeze in ParallelFinish while holding an LWLock
+BEGIN;
+
+CREATE FUNCTION my_cmp (int4, int4)
+RETURNS int LANGUAGE sql AS
+$$
+	SELECT
+		CASE WHEN $1 < $2 THEN -1
+				WHEN $1 > $2 THEN  1
+				ELSE 0
+		END;
+$$;
+
+CREATE TABLE parallel_hang (i int4);
+INSERT INTO parallel_hang
+	(SELECT * FROM generate_series(1, 400) gs);
+
+CREATE OPERATOR CLASS int4_custom_ops FOR TYPE int4 USING btree AS
+	OPERATOR 1 < (int4, int4), OPERATOR 2 <= (int4, int4),
+	OPERATOR 3 = (int4, int4), OPERATOR 4 >= (int4, int4),
+	OPERATOR 5 > (int4, int4), FUNCTION 1 my_cmp(int4, int4);
+
+CREATE UNIQUE INDEX parallel_hang_idx
+					ON parallel_hang
+					USING btree (i int4_custom_ops);
+
+SET debug_parallel_query = on;
+DELETE FROM parallel_hang WHERE 380 <= i AND i <= 420;
+
+ROLLBACK;

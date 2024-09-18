@@ -342,6 +342,11 @@ standard_planner(Query *parse, const char *query_string, int cursorOptions,
 	 * we want to allow parallel inserts in general; updates and deletes have
 	 * additional problems especially around combo CIDs.)
 	 *
+	 * We don't try to use parallel mode unless interruptible.  The leader
+	 * expects ProcessInterrupts() calls to reach HandleParallelMessages().
+	 * Even if we called HandleParallelMessages() another way, starting a
+	 * parallel worker is too delay-prone to be prudent when uncancellable.
+	 *
 	 * For now, we don't try to use parallel mode if we're running inside a
 	 * parallel worker.  We might eventually be able to relax this
 	 * restriction, but for now it seems best not to have parallel workers
@@ -352,6 +357,7 @@ standard_planner(Query *parse, const char *query_string, int cursorOptions,
 		parse->commandType == CMD_SELECT &&
 		!parse->hasModifyingCTE &&
 		max_parallel_workers_per_gather > 0 &&
+		INTERRUPTS_CAN_BE_PROCESSED() &&
 		!IsParallelWorker())
 	{
 		/* all the cheap tests pass, so scan the query tree */
