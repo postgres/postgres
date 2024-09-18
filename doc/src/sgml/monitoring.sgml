@@ -3051,7 +3051,10 @@ description | Waiting for a newly initialized WAL file to reach durable storage
        <structfield>num_timed</structfield> <type>bigint</type>
       </para>
       <para>
-       Number of scheduled checkpoints that have been performed
+       Number of scheduled checkpoints due to timeout.
+       Note that checkpoints may be skipped if the server has been idle
+       since the last one, and this value counts both completed and
+       skipped checkpoints
       </para></entry>
      </row>
 
