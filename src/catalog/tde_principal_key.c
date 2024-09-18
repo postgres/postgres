@@ -270,7 +270,7 @@ set_principal_key_with_keyring(const char *key_name, GenericKeyring *keyring,
             LWLockRelease(lock_files);
 
             ereport(ERROR,
-                    (errmsg("failed to retrieve principal key")));
+                    (errmsg("failed to retrieve principal key. Create one using pg_tde_set_principal_key before using encrypted tables.")));
         }
 
         principalKey->keyLength = keyInfo->data.len;

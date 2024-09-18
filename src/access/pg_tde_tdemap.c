@@ -149,7 +149,7 @@ pg_tde_create_key_map_entry(const RelFileLocator *newrlocator)
 	if (principal_key == NULL)
 	{
 		ereport(ERROR,
-				(errmsg("failed to retrieve principal key")));
+				(errmsg("failed to retrieve principal key. Create one using pg_tde_set_principal_key before using encrypted tables.")));
 
 		return NULL;
 	}
@@ -873,7 +873,7 @@ pg_tde_get_key_from_file(const RelFileLocator *rlocator)
 	{
 		LWLockRelease(lock_files);
 		ereport(ERROR,
-				(errmsg("failed to retrieve principal key")));
+				(errmsg("failed to retrieve principal key. Create one using pg_tde_set_principal_key before using encrypted tables.")));
 	}
 
 	/* Get the file paths */

@@ -21,6 +21,9 @@
 #include "commands/event_trigger.h"
 #include "common/pg_tde_utils.h"
 #include "pg_tde_event_capture.h"
+#include "commands/tablespace.h"
+#include "catalog/tde_principal_key.h"
+#include "miscadmin.h"
 
 /* Global variable that gets set at ddl start and cleard out at ddl end*/
 TdeCreateEvent tdeCurrentCreateEvent = {.relation = NULL};
@@ -97,6 +100,8 @@ pg_tde_ddl_command_start_capture(PG_FUNCTION_ARGS)
 	else if (IsA(parsetree, CreateStmt))
 	{
 		CreateStmt *stmt = (CreateStmt *) parsetree;
+		TDEPrincipalKey * principal_key;
+		Oid tablespace_oid;
 
 		tdeCurrentCreateEvent.eventType = TDE_TABLE_CREATE_EVENT;
 		tdeCurrentCreateEvent.relation = stmt->relation;
@@ -105,6 +110,17 @@ pg_tde_ddl_command_start_capture(PG_FUNCTION_ARGS)
 		{
 			tdeCurrentCreateEvent.encryptMode = true;
 		}
+
+		tablespace_oid = stmt->tablespacename != NULL ? get_tablespace_oid(stmt->tablespacename, false) 
+						 : MyDatabaseTableSpace;  
+		principal_key = GetPrincipalKey(MyDatabaseId, tablespace_oid);
+		if (principal_key == NULL)
+		{
+			ereport(ERROR,
+					(errmsg("failed to retrieve principal key. Create one using pg_tde_set_principal_key before using encrypted tables.")));
+
+		}
+
 	}
 #endif
 	PG_RETURN_NULL();
