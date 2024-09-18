@@ -769,17 +769,6 @@ GetPrincipalKey(Oid dbOid, Oid spcOid)
     LWLock *lock_files = tde_lwlock_mk_files();
     LWLock *lock_cache = tde_lwlock_mk_cache();
 
-	// TODO: This recursion counter is a dirty hack until the metadata is in the catalog
-	// As otherwise we would call GetPrincipalKey recursively and deadlock
-	static int recursion = 0;
-
-	if(recursion > 0)
-	{
-		return NULL;
-	}
-
-	recursion++;
-
 #ifndef FRONTEND
     /* We don't store global space key in cache */
     if (spcOid != GLOBALTABLESPACE_OID)
@@ -791,7 +780,6 @@ GetPrincipalKey(Oid dbOid, Oid spcOid)
 
     if (principalKey)
 	{
-		recursion--;
         return principalKey;
 	}
 #endif
@@ -814,7 +802,6 @@ GetPrincipalKey(Oid dbOid, Oid spcOid)
     {
         LWLockRelease(lock_cache);
         LWLockRelease(lock_files);
-		recursion--;
         return principalKey;
     }
 #endif
@@ -826,7 +813,6 @@ GetPrincipalKey(Oid dbOid, Oid spcOid)
         LWLockRelease(lock_cache);
         LWLockRelease(lock_files);
 
-		recursion--;
         return NULL;
     }
 
@@ -836,7 +822,6 @@ GetPrincipalKey(Oid dbOid, Oid spcOid)
         LWLockRelease(lock_cache);
         LWLockRelease(lock_files);
 
-        recursion--;
         return NULL;
     }
 
@@ -846,7 +831,6 @@ GetPrincipalKey(Oid dbOid, Oid spcOid)
         LWLockRelease(lock_cache);
         LWLockRelease(lock_files);
 
-		recursion--;
         return NULL;
     }
 
@@ -873,6 +857,5 @@ GetPrincipalKey(Oid dbOid, Oid spcOid)
     if (principalKeyInfo)
         pfree(principalKeyInfo);
 
-    recursion--;
     return principalKey;
 }
