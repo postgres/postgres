@@ -2,6 +2,10 @@
 
 SET pg_stat_statements.track_utility = FALSE;
 
+-- This test checks that an execute message sets a query ID.
+SELECT query_id IS NOT NULL AS query_id_set
+  FROM pg_stat_activity WHERE pid = pg_backend_pid() \bind \g
+
 SELECT pg_stat_statements_reset() IS NOT NULL AS t;
 SELECT $1 \parse stmt1
 SELECT $1, $2 \parse stmt2
