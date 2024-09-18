@@ -779,7 +779,8 @@ OPTIONS (ADD password_required 'false');
    <varlistentry>
     <term><function>postgres_fdw_get_connections(
       IN check_conn boolean DEFAULT false, OUT server_name text,
-      OUT valid boolean, OUT used_in_xact boolean, OUT closed boolean)
+      OUT user_name text, OUT valid boolean, OUT used_in_xact boolean,
+      OUT closed boolean)
       returns setof record</function></term>
     <listitem>
      <para>
@@ -806,10 +807,12 @@ OPTIONS (ADD password_required 'false');
      <para>
       Example usage of the function:
 <screen>
- server_name | valid | used_in_xact | closed
--------------+-------+--------------+--------
- loopback1   | t     | t            |
- loopback2   | f     | t            |
+postgres=# SELECT * FROM postgres_fdw_get_connections(true);
+ server_name | user_name | valid | used_in_xact | closed
+-------------+-----------+-------+--------------+--------
+ loopback1   | postgres  | t     | t            | f
+ loopback2   | public    | t     | t            | f
+ loopback3   |           | f     | t            | f
 </screen>
       The output columns are described in
       <xref linkend="postgres-fdw-get-connections-columns"/>.
@@ -834,6 +837,16 @@ OPTIONS (ADD password_required 'false');
          The foreign server name of this connection. If the server is
          dropped but the connection remains open (i.e., marked as
          invalid), this will be <literal>NULL</literal>.
+        </entry>
+       </row>
+       <row>
+        <entry><structfield>user_name</structfield></entry>
+        <entry><type>text</type></entry>
+        <entry>
+         Name of the local user mapped to the foreign server of this
+         connection, or <literal>public</literal> if a public mapping is used.
+         If the user mapping is dropped but the connection remains open
+         (i.e., marked as invalid), this will be <literal>NULL</literal>.
         </entry>
        </row>
        <row>

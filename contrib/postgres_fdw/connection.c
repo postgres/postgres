@@ -1997,8 +1997,8 @@ pgfdw_finish_abort_cleanup(List *pending_entries, List *cancel_requested,
 
 /* Number of output arguments (columns) for various API versions */
 #define POSTGRES_FDW_GET_CONNECTIONS_COLS_V1_1	2
-#define POSTGRES_FDW_GET_CONNECTIONS_COLS_V1_2	4
-#define POSTGRES_FDW_GET_CONNECTIONS_COLS	4	/* maximum of above */
+#define POSTGRES_FDW_GET_CONNECTIONS_COLS_V1_2	5
+#define POSTGRES_FDW_GET_CONNECTIONS_COLS	5	/* maximum of above */
 
 /*
  * Internal function used by postgres_fdw_get_connections variants.
@@ -2014,10 +2014,13 @@ pgfdw_finish_abort_cleanup(List *pending_entries, List *cancel_requested,
  *
  * For API version 1.2 and later, this function takes an input parameter
  * to check a connection status and returns the following
- * additional values along with the two values from version 1.1:
+ * additional values along with the three values from version 1.1:
  *
+ * - user_name - the local user name of the active connection. In case the
+ *   user mapping is dropped but the connection is still active, then the
+ *   user name will be NULL in the output.
  * - used_in_xact - true if the connection is used in the current transaction.
- * - closed: true if the connection is closed.
+ * - closed - true if the connection is closed.
  *
  * No records are returned when there are no cached connections at all.
  */
@@ -2056,6 +2059,7 @@ postgres_fdw_get_connections_internal(FunctionCallInfo fcinfo,
 		ForeignServer *server;
 		Datum		values[POSTGRES_FDW_GET_CONNECTIONS_COLS] = {0};
 		bool		nulls[POSTGRES_FDW_GET_CONNECTIONS_COLS] = {0};
+		int			i = 0;
 
 		/* We only look for open remote connections */
 		if (!entry->conn)
@@ -2100,28 +2104,61 @@ postgres_fdw_get_connections_internal(FunctionCallInfo fcinfo,
 			Assert(entry->conn && entry->xact_depth > 0 && entry->invalidated);
 
 			/* Show null, if no server name was found */
-			nulls[0] = true;
+			nulls[i++] = true;
 		}
 		else
-			values[0] = CStringGetTextDatum(server->servername);
+			values[i++] = CStringGetTextDatum(server->servername);
 
-		values[1] = BoolGetDatum(!entry->invalidated);
+		if (api_version >= PGFDW_V1_2)
+		{
+			HeapTuple	tp;
+
+			/* Use the system cache to obtain the user mapping */
+			tp = SearchSysCache1(USERMAPPINGOID, ObjectIdGetDatum(entry->key));
+
+			/*
+			 * Just like in the foreign server case, user mappings can also be
+			 * dropped in the current explicit transaction. Therefore, the
+			 * similar check as in the server case is required.
+			 */
+			if (!HeapTupleIsValid(tp))
+			{
+				/*
+				 * If we reach here, this entry must have been invalidated in
+				 * pgfdw_inval_callback, same as in the server case.
+				 */
+				Assert(entry->conn && entry->xact_depth > 0 &&
+					   entry->invalidated);
+
+				nulls[i++] = true;
+			}
+			else
+			{
+				Oid			userid;
+
+				userid = ((Form_pg_user_mapping) GETSTRUCT(tp))->umuser;
+				values[i++] = CStringGetTextDatum(MappingUserName(userid));
+				ReleaseSysCache(tp);
+			}
+		}
+
+		values[i++] = BoolGetDatum(!entry->invalidated);
 
 		if (api_version >= PGFDW_V1_2)
 		{
 			bool		check_conn = PG_GETARG_BOOL(0);
 
 			/* Is this connection used in the current transaction? */
-			values[2] = BoolGetDatum(entry->xact_depth > 0);
+			values[i++] = BoolGetDatum(entry->xact_depth > 0);
 
 			/*
 			 * If a connection status check is requested and supported, return
 			 * whether the connection is closed. Otherwise, return NULL.
 			 */
 			if (check_conn && pgfdw_conn_checkable())
-				values[3] = BoolGetDatum(pgfdw_conn_check(entry->conn) != 0);
+				values[i++] = BoolGetDatum(pgfdw_conn_check(entry->conn) != 0);
 			else
-				nulls[3] = true;
+				nulls[i++] = true;
 		}
 
 		tuplestore_putvalues(rsinfo->setResult, rsinfo->setDesc, values, nulls);
