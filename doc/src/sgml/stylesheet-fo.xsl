@@ -17,7 +17,7 @@
 </xsl:template>
 
 <!-- Also suppress the description of the section markers in print mode -->
-<xsl:template match="appendix[@id='release']//para[@id='release-no-print-output']">
+<xsl:template match="appendix[@id='release']//para[@id='release-commit-links']">
   <!-- Output nothing for this para -->
 </xsl:template>
 
