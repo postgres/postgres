@@ -58,6 +58,11 @@ SELECT $1, $2 \parse stmt3
 \bind_named stmt1 \g
 \bind_named stmt2 'foo' \g
 \bind_named stmt3 'foo' 'bar' \g
+-- Repeated calls.  The second call generates an error, cleaning up the
+-- statement name set by the first call.
+\bind_named stmt4
+\bind_named
+\g
 
 -- \close (extended query protocol)
 \close
