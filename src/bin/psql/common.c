@@ -1241,14 +1241,7 @@ sendquery_cleanup:
 	}
 
 	/* clean up after \bind */
-	if (pset.bind_flag)
-	{
-		for (i = 0; i < pset.bind_nparams; i++)
-			free(pset.bind_params[i]);
-		free(pset.bind_params);
-		pset.bind_params = NULL;
-		pset.bind_flag = false;
-	}
+	clean_bind_state();
 
 	/* reset \gset trigger */
 	if (pset.gset_prefix)
@@ -2411,6 +2404,26 @@ uri_prefix_length(const char *connstr)
 		return sizeof(short_uri_designator) - 1;
 
 	return 0;
+}
+
+/*
+ * Reset state related to \bind
+ *
+ * Clean up any state related to bind parameters and bind_flag.  This needs
+ * to be called after processing a query or when running \bind.
+ */
+void
+clean_bind_state(void)
+{
+	if (pset.bind_flag)
+	{
+		for (int i = 0; i < pset.bind_nparams; i++)
+			free(pset.bind_params[i]);
+		free(pset.bind_params);
+	}
+
+	pset.bind_params = NULL;
+	pset.bind_flag = false;
 }
 
 /*
