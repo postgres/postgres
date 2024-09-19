@@ -141,6 +141,25 @@ SELECT $1, $2 \parse stmt3
 ERROR:  there is no parameter $1
 LINE 1: SELECT $1, $2 
                ^
+-- Last \bind_named wins
+\bind_named stmt2 'foo' \bind_named stmt3 'foo2' 'bar2' \g
+ ?column? | ?column? 
+----------+----------
+ foo2     | bar2
+(1 row)
+
+-- Multiple \g calls mean multiple executions
+\bind_named stmt2 'foo3' \g \bind_named stmt3 'foo4' 'bar4' \g
+ ?column? 
+----------
+ foo3
+(1 row)
+
+ ?column? | ?column? 
+----------+----------
+ foo4     | bar4
+(1 row)
+
 -- \close (extended query protocol)
 \close
 \close: missing required argument
@@ -171,6 +190,25 @@ SELECT $1, $2 \bind 'foo' 'bar' \g
  ?column? | ?column? 
 ----------+----------
  foo      | bar
+(1 row)
+
+-- last \bind wins
+select $1::int as col \bind 'foo' \bind 2 \g
+ col 
+-----
+   2
+(1 row)
+
+-- Multiple \g calls mean multiple executions
+select $1::int as col \bind 1 \g \bind 2 \g
+ col 
+-----
+   1
+(1 row)
+
+ col 
+-----
+   2
 (1 row)
 
 -- errors

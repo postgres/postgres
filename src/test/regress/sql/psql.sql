@@ -63,6 +63,10 @@ SELECT $1, $2 \parse stmt3
 \bind_named stmt4
 \bind_named
 \g
+-- Last \bind_named wins
+\bind_named stmt2 'foo' \bind_named stmt3 'foo2' 'bar2' \g
+-- Multiple \g calls mean multiple executions
+\bind_named stmt2 'foo3' \g \bind_named stmt3 'foo4' 'bar4' \g
 
 -- \close (extended query protocol)
 \close
@@ -75,6 +79,11 @@ SELECT name, statement FROM pg_prepared_statements ORDER BY name;
 SELECT 1 \bind \g
 SELECT $1 \bind 'foo' \g
 SELECT $1, $2 \bind 'foo' 'bar' \g
+
+-- last \bind wins
+select $1::int as col \bind 'foo' \bind 2 \g
+-- Multiple \g calls mean multiple executions
+select $1::int as col \bind 1 \g \bind 2 \g
 
 -- errors
 -- parse error
