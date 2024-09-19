@@ -17,14 +17,14 @@
 #include "access/pg_tde_tdemap.h"
 
 
-static object_access_hook_type old_objectaccess_hook = NULL;
+static object_access_hook_type prev_object_access_hook = NULL;
 
 static void tdeheap_object_access_hook(ObjectAccessType access, Oid classId,
                                          Oid objectId, int subId, void *arg);
 
 void SetupTdeDDLHooks(void)
 {
-    old_objectaccess_hook = object_access_hook;
+    prev_object_access_hook = object_access_hook;
     object_access_hook = tdeheap_object_access_hook;
 }
 
@@ -32,6 +32,9 @@ static void
  tdeheap_object_access_hook(ObjectAccessType access, Oid classId, Oid objectId,
                              int subId, void *arg)
  {
+    if (prev_object_access_hook)
+        prev_object_access_hook(access, classId, objectId, subId, arg);
+
      Relation    rel = NULL;
      if (access == OAT_DROP && classId == RelationRelationId)
      {
