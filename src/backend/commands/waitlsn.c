@@ -217,7 +217,7 @@ WaitLSNCleanup(void)
  * Wait using MyLatch till the given LSN is replayed, the postmaster dies or
  * timeout happens.
  */
-static void
+void
 WaitForLSNReplay(XLogRecPtr targetLSN, int64 timeout)
 {
 	XLogRecPtr	currentLSN;
@@ -335,54 +335,4 @@ WaitForLSNReplay(XLogRecPtr targetLSN, int64 timeout)
 						LSN_FORMAT_ARGS(targetLSN),
 						LSN_FORMAT_ARGS(currentLSN))));
 	}
-}
-
-Datum
-pg_wal_replay_wait(PG_FUNCTION_ARGS)
-{
-	XLogRecPtr	target_lsn = PG_GETARG_LSN(0);
-	int64		timeout = PG_GETARG_INT64(1);
-
-	if (timeout < 0)
-		ereport(ERROR,
-				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("\"timeout\" must not be negative")));
-
-	/*
-	 * We are going to wait for the LSN replay.  We should first care that we
-	 * don't hold a snapshot and correspondingly our MyProc->xmin is invalid.
-	 * Otherwise, our snapshot could prevent the replay of WAL records
-	 * implying a kind of self-deadlock.  This is the reason why
-	 * pg_wal_replay_wait() is a procedure, not a function.
-	 *
-	 * At first, we should check there is no active snapshot.  According to
-	 * PlannedStmtRequiresSnapshot(), even in an atomic context, CallStmt is
-	 * processed with a snapshot.  Thankfully, we can pop this snapshot,
-	 * because PortalRunUtility() can tolerate this.
-	 */
-	if (ActiveSnapshotSet())
-		PopActiveSnapshot();
-
-	/*
-	 * At second, invalidate a catalog snapshot if any.  And we should be done
-	 * with the preparation.
-	 */
-	InvalidateCatalogSnapshot();
-
-	/* Give up if there is still an active or registered snapshot. */
-	if (GetOldestSnapshot())
-		ereport(ERROR,
-				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("pg_wal_replay_wait() must be only called without an active or registered snapshot"),
-				 errdetail("Make sure pg_wal_replay_wait() isn't called within a transaction with an isolation level higher than READ COMMITTED, another procedure, or a function.")));
-
-	/*
-	 * As the result we should hold no snapshot, and correspondingly our xmin
-	 * should be unset.
-	 */
-	Assert(MyProc->xmin == InvalidTransactionId);
-
-	(void) WaitForLSNReplay(target_lsn, timeout);
-
-	PG_RETURN_VOID();
 }

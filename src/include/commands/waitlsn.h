@@ -76,5 +76,6 @@ extern Size WaitLSNShmemSize(void);
 extern void WaitLSNShmemInit(void);
 extern void WaitLSNSetLatches(XLogRecPtr currentLSN);
 extern void WaitLSNCleanup(void);
+extern void WaitForLSNReplay(XLogRecPtr targetLSN, int64 timeout);
 
 #endif							/* WAIT_LSN_H */
