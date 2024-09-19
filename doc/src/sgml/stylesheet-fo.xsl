@@ -22,11 +22,11 @@
 
 <!--
 Suppress the description of the commit link markers in print mode.
-Caues an "Unresolved ID reference found" warning during PDF builds
-because the paragraph is suppressed in the output.
+Use "node()" to keep the paragraph but remove all content;  prevents
+an "Unresolved ID reference found" warning during PDF builds.
 -->
-<xsl:template match="appendix[@id='release']//para[@id='release-commit-links']">
-  <!-- Output nothing for this para -->
+<xsl:template match="appendix[@id='release']//para[@id='release-commit-links']//node()">
+  <!-- Output an empty para -->
 </xsl:template>
 
 <xsl:param name="use.extensions" select="1"></xsl:param>
