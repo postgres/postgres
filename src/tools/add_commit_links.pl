@@ -51,9 +51,8 @@ sub process_file
 	$file =~ m/-(\d+)\./;
 	my $major_version = $1;
 
-	open(my $fh, '<', $file) || die "could not open file %s: $!\n", $file;
-	open(my $tfh, '>', $tmpfile) || die "could not open file %s: $!\n",
-	  $tmpfile;
+	open(my $fh, '<', $file) || die "could not open file $file: $!\n";
+	open(my $tfh, '>', $tmpfile) || die "could not open file $tmpfile: $!\n";
 
 	while (<$fh>)
 	{
@@ -64,9 +63,9 @@ sub process_file
 		# skip over commit links because we will add them below
 		next
 		  if (!$in_comment &&
-			m{^\s*<ulink url="&commit_baseurl;[\da-f]+">&sect;</ulink>\s*$});
+			m{^\s*<ulink url="&commit_baseurl;[[:xdigit:]]+">&sect;</ulink>\s*$});
 
-		if ($in_comment && m/\[([\da-f]+)\]/)
+		if ($in_comment && m/\[([[:xdigit:]]+)\]/)
 		{
 			my $hash = $1;
 
@@ -88,23 +87,21 @@ sub process_file
 				{
 					for my $hash (@hashes)
 					{
-						print({$tfh}
-							  "$prev_leading_space<ulink url=\"&commit_baseurl;$hash\">&sect;</ulink>\n"
-						);
+						print $tfh
+						  "$prev_leading_space<ulink url=\"&commit_baseurl;$hash\">&sect;</ulink>\n";
 					}
 					@hashes = ();
 				}
 				else
 				{
-					printf(
-						"hashes found but no matching text found for placement on line %s\n",
-						$lineno);
+					print
+					  "hashes found but no matching text found for placement on line $lineno\n";
 					exit(1);
 				}
 			}
 		}
 
-		print({$tfh} $_);
+		print $tfh $_;
 
 		$prev_line_ended_with_paren = m/\)\s*$/;
 
