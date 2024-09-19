@@ -69,7 +69,7 @@ For new features, add links to the documentation sections.
    review, so each item is truly a community effort.
   </para>
 
-  <para id="release-no-print-output">
+  <para id="release-commit-links">
    Section markers (&sect;) in the release notes link to <ulink
    url="https://git.postgresql.org/gitweb/?p=postgresql.git"><application>gitweb</application></ulink>
    pages which show the primary <application>git</application> commit
