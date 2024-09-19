@@ -126,6 +126,7 @@ if get_variable('percona_ext', false)
       'trigger_on_view',
       'change_access_method',
       'insert_update_delete',
+      'tablespace',
       'vault_v2_test',
       'alter_index',
       'merge_join',
