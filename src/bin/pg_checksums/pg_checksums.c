@@ -16,8 +16,8 @@
 
 #include <dirent.h>
 #include <limits.h>
-#include <time.h>
 #include <sys/stat.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "common/controldata_utils.h"
