@@ -168,7 +168,7 @@ table_beginscan_parallel(Relation relation, ParallelTableScanDesc pscan)
 	uint32		flags = SO_TYPE_SEQSCAN |
 		SO_ALLOW_STRAT | SO_ALLOW_SYNC | SO_ALLOW_PAGEMODE;
 
-	Assert(RelationGetRelid(relation) == pscan->phs_relid);
+	Assert(RelFileLocatorEquals(relation->rd_locator, pscan->phs_locator));
 
 	if (!pscan->phs_snapshot_any)
 	{
@@ -389,7 +389,7 @@ table_block_parallelscan_initialize(Relation rel, ParallelTableScanDesc pscan)
 {
 	ParallelBlockTableScanDesc bpscan = (ParallelBlockTableScanDesc) pscan;
 
-	bpscan->base.phs_relid = RelationGetRelid(rel);
+	bpscan->base.phs_locator = rel->rd_locator;
 	bpscan->phs_nblocks = RelationGetNumberOfBlocks(rel);
 	/* compare phs_syncscan initialization to similar logic in initscan */
 	bpscan->base.phs_syncscan = synchronize_seqscans &&

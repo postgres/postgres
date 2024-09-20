@@ -18,6 +18,7 @@
 #include "access/itup.h"
 #include "port/atomics.h"
 #include "storage/buf.h"
+#include "storage/relfilelocator.h"
 #include "storage/spin.h"
 #include "utils/relcache.h"
 
@@ -62,7 +63,7 @@ typedef struct TableScanDescData *TableScanDesc;
  */
 typedef struct ParallelTableScanDescData
 {
-	Oid			phs_relid;		/* OID of relation to scan */
+	RelFileLocator phs_locator; /* physical relation to scan */
 	bool		phs_syncscan;	/* report location to syncscan logic? */
 	bool		phs_snapshot_any;	/* SnapshotAny, not phs_snapshot_data? */
 	Size		phs_snapshot_off;	/* data for snapshot */
@@ -169,8 +170,8 @@ typedef struct IndexScanDescData
 /* Generic structure for parallel scans */
 typedef struct ParallelIndexScanDescData
 {
-	Oid			ps_relid;
-	Oid			ps_indexid;
+	RelFileLocator ps_locator;	/* physical table relation to scan */
+	RelFileLocator ps_indexlocator; /* physical index relation to scan */
 	Size		ps_offset;		/* Offset in bytes of am specific structure */
 	char		ps_snapshot_data[FLEXIBLE_ARRAY_MEMBER];
 }			ParallelIndexScanDescData;

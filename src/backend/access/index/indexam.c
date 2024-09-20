@@ -500,8 +500,8 @@ index_parallelscan_initialize(Relation heapRelation, Relation indexRelation,
 					  EstimateSnapshotSpace(snapshot));
 	offset = MAXALIGN(offset);
 
-	target->ps_relid = RelationGetRelid(heapRelation);
-	target->ps_indexid = RelationGetRelid(indexRelation);
+	target->ps_locator = heapRelation->rd_locator;
+	target->ps_indexlocator = indexRelation->rd_locator;
 	target->ps_offset = offset;
 	SerializeSnapshot(snapshot, target->ps_snapshot_data);
 
@@ -544,7 +544,9 @@ index_beginscan_parallel(Relation heaprel, Relation indexrel, int nkeys,
 	Snapshot	snapshot;
 	IndexScanDesc scan;
 
-	Assert(RelationGetRelid(heaprel) == pscan->ps_relid);
+	Assert(RelFileLocatorEquals(heaprel->rd_locator, pscan->ps_locator));
+	Assert(RelFileLocatorEquals(indexrel->rd_locator, pscan->ps_indexlocator));
+
 	snapshot = RestoreSnapshot(pscan->ps_snapshot_data);
 	RegisterSnapshot(snapshot);
 	scan = index_beginscan_internal(indexrel, nkeys, norderbys, snapshot,
