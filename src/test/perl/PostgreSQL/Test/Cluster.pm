@@ -2181,6 +2181,11 @@ returned.  Set B<on_error_stop> to 0 to ignore errors instead.
 Set a timeout for a background psql session. By default, timeout of
 $PostgreSQL::Test::Utils::timeout_default is set up.
 
+=item connstr => B<value>
+
+If set, use this as the connection string for the connection to the
+backend.
+
 =item replication => B<value>
 
 If set, add B<replication=value> to the conninfo string.
@@ -2204,14 +2209,21 @@ sub background_psql
 	my $replication = $params{replication};
 	my $timeout = undef;
 
+	# Build the connection string.
+	my $psql_connstr;
+	if (defined $params{connstr})
+	{
+		$psql_connstr = $params{connstr};
+	}
+	else
+	{
+		$psql_connstr = $self->connstr($dbname);
+	}
+	$psql_connstr .= defined $replication ? " replication=$replication" : "";
+
 	my @psql_params = (
 		$self->installed_command('psql'),
-		'-XAtq',
-		'-d',
-		$self->connstr($dbname)
-		  . (defined $replication ? " replication=$replication" : ""),
-		'-f',
-		'-');
+		'-XAtq', '-d', $psql_connstr, '-f', '-');
 
 	$params{on_error_stop} = 1 unless defined $params{on_error_stop};
 	$timeout = $params{timeout} if defined $params{timeout};
