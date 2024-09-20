@@ -18,7 +18,81 @@
    </para>
 
    <itemizedlist>
-    <listitem><para>TO BE COMPLETED LATER</para></listitem>
+    <listitem>
+     <para>
+      New memory management system for <command>VACUUM</command>, which reduces
+      memory consumption and can improve overall vacuuming performance.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      New <acronym>SQL/JSON</acronym> capabilities, including constructors,
+      identity functions, and the <link
+      linkend="functions-sqljson-table"><function>JSON_TABLE()</function></link>
+      function, which converts JSON data into a table representation.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Various query performance improvements, including to sequential reads
+      using streaming I/O, write throughput under high concurrency, and
+      searches over multiple values in a <link linkend="btree">btree</link>
+      index.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Logical replication enhancements, including:
+      <itemizedlist>
+       <listitem>
+        <para>
+         Failover control
+        </para>
+       </listitem>
+       <listitem>
+        <para>
+         <link
+          linkend="app-pgcreatesubscriber"><application>pg_createsubscriber</application></link>,
+          a utility that logical replicas from physical standbys
+        </para>
+       </listitem>
+       <listitem>
+        <para>
+         <link
+          linkend="pgupgrade"><application>pg_upgrade</application></link> now
+          preserves replication slots on both publishers and subscribers
+        </para>
+       </listitem>
+      </itemizedlist>
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      New client-side connection option, <link
+      linkend="libpq-connect-sslnegotiation"><literal>sslnegotiation=direct</literal></link>,
+      that allows direct TLS handshakes that avoids a round-trip negotation.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      <link
+       linkend="app-pgbasebackup"><application>pg_basebackup</application></link>
+      now supports incremental backup.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      <link linkend="sql-copy"><command>COPY</command></link> adds a new option,
+      <literal>ON_ERROR ignore</literal>, that allows a copy operation to
+      continue in the event of an error.
+     </para>
+    </listitem>
    </itemizedlist>
 
    <para>
