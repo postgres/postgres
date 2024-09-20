@@ -6,7 +6,7 @@
 
   <formalpara>
    <title>Release date:</title>
-   <para>2024-??-??, AS OF 2024-09-14</para>
+   <para>2024-09-26</para>
   </formalpara>
 
   <sect2 id="release-17-highlights">
@@ -36,7 +36,7 @@
 
     <listitem>
      <para>
-      Various query performance improvements, including to sequential reads
+      Various query performance improvements, including for sequential reads
       using streaming I/O, write throughput under high concurrency, and
       searches over multiple values in a <link linkend="btree">btree</link>
       index.
@@ -56,7 +56,7 @@
         <para>
          <link
           linkend="app-pgcreatesubscriber"><application>pg_createsubscriber</application></link>,
-          a utility that logical replicas from physical standbys
+          a utility that creates logical replicas from physical standbys
         </para>
        </listitem>
        <listitem>
@@ -74,7 +74,7 @@
      <para>
       New client-side connection option, <link
       linkend="libpq-connect-sslnegotiation"><literal>sslnegotiation=direct</literal></link>,
-      that allows direct TLS handshakes that avoids a round-trip negotation.
+      that performs a direct TLS handshake to avoid a round-trip negotiation.
      </para>
     </listitem>
 
