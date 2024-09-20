@@ -25220,6 +25220,10 @@ SELECT has_function_privilege('joeuser', 'myfunc(int, text)', 'execute');
         are immediately available without doing <command>SET ROLE</command>,
         while <literal>SET</literal> denotes whether it is possible to change
         to the role using the <literal>SET ROLE</literal> command.
+        <literal>WITH ADMIN OPTION</literal> or <literal>WITH GRANT
+        OPTION</literal> can be added to any of these privilege types to
+        test whether the <literal>ADMIN</literal> privilege is held (all
+        six spellings test the same thing).
         This function does not allow the special case of
         setting <parameter>user</parameter> to <literal>public</literal>,
         because the PUBLIC pseudo-role can never be a member of real roles.
