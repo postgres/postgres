@@ -22594,6 +22594,10 @@ SELECT has_function_privilege('joeuser', 'myfunc(int, text)', 'execute');
         the role (that is, the right to do <command>SET ROLE</command>), while
         <literal>USAGE</literal> denotes whether the privileges of the role
         are immediately available without doing <command>SET ROLE</command>.
+        <literal>WITH ADMIN OPTION</literal> or <literal>WITH GRANT
+        OPTION</literal> can be added to either of these privilege types to
+        test whether the <literal>ADMIN</literal> privilege is held (all
+        four spellings test the same thing).
         This function does not allow the special case of
         setting <parameter>user</parameter> to <literal>public</literal>,
         because the PUBLIC pseudo-role can never be a member of real roles.
