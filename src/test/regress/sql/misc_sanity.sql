@@ -43,6 +43,8 @@ WHERE refclassid = 0 OR refobjid = 0 OR
 -- 2. pg_largeobject and pg_largeobject_metadata.  Large object catalogs
 -- and toast tables are mutually exclusive and large object data is handled
 -- as user data by pg_upgrade, which would cause failures.
+-- 3. pg_authid, since its toast table cannot be accessed when it would be
+-- needed, i.e., during authentication before we've selected a database.
 
 SELECT relname, attname, atttypid::regtype
 FROM pg_class c JOIN pg_attribute a ON c.oid = attrelid

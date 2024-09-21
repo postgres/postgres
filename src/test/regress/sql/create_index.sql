@@ -1126,9 +1126,9 @@ REINDEX TABLE CONCURRENTLY concur_reindex_tab;
 COMMIT;
 REINDEX TABLE CONCURRENTLY pg_class; -- no catalog relation
 REINDEX INDEX CONCURRENTLY pg_class_oid_index; -- no catalog index
--- These are the toast table and index of pg_authid.
-REINDEX TABLE CONCURRENTLY pg_toast.pg_toast_1260; -- no catalog toast table
-REINDEX INDEX CONCURRENTLY pg_toast.pg_toast_1260_index; -- no catalog toast index
+-- These are the toast table and index of pg_database.
+REINDEX TABLE CONCURRENTLY pg_toast.pg_toast_1262; -- no catalog toast table
+REINDEX INDEX CONCURRENTLY pg_toast.pg_toast_1262_index; -- no catalog toast index
 REINDEX SYSTEM CONCURRENTLY postgres; -- not allowed for SYSTEM
 REINDEX (CONCURRENTLY) SYSTEM postgres; -- ditto
 REINDEX (CONCURRENTLY) SYSTEM;  -- ditto
@@ -1305,8 +1305,8 @@ REINDEX SCHEMA schema_to_reindex;
 RESET ROLE;
 GRANT USAGE ON SCHEMA pg_toast TO regress_reindexuser;
 SET SESSION ROLE regress_reindexuser;
-REINDEX TABLE pg_toast.pg_toast_1260;
-REINDEX INDEX pg_toast.pg_toast_1260_index;
+REINDEX TABLE pg_toast.pg_toast_1262;
+REINDEX INDEX pg_toast.pg_toast_1262_index;
 
 -- Clean up
 RESET ROLE;

@@ -300,9 +300,7 @@ IsSharedRelation(Oid relationId)
 		relationId == TablespaceOidIndexId)
 		return true;
 	/* These are their toast tables and toast indexes */
-	if (relationId == PgAuthidToastTable ||
-		relationId == PgAuthidToastIndex ||
-		relationId == PgDatabaseToastTable ||
+	if (relationId == PgDatabaseToastTable ||
 		relationId == PgDatabaseToastIndex ||
 		relationId == PgDbRoleSettingToastTable ||
 		relationId == PgDbRoleSettingToastIndex ||

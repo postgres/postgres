@@ -2664,10 +2664,10 @@ REINDEX TABLE CONCURRENTLY pg_class; -- no catalog relation
 ERROR:  cannot reindex system catalogs concurrently
 REINDEX INDEX CONCURRENTLY pg_class_oid_index; -- no catalog index
 ERROR:  cannot reindex system catalogs concurrently
--- These are the toast table and index of pg_authid.
-REINDEX TABLE CONCURRENTLY pg_toast.pg_toast_1260; -- no catalog toast table
+-- These are the toast table and index of pg_database.
+REINDEX TABLE CONCURRENTLY pg_toast.pg_toast_1262; -- no catalog toast table
 ERROR:  cannot reindex system catalogs concurrently
-REINDEX INDEX CONCURRENTLY pg_toast.pg_toast_1260_index; -- no catalog toast index
+REINDEX INDEX CONCURRENTLY pg_toast.pg_toast_1262_index; -- no catalog toast index
 ERROR:  cannot reindex system catalogs concurrently
 REINDEX SYSTEM CONCURRENTLY postgres; -- not allowed for SYSTEM
 ERROR:  cannot reindex system catalogs concurrently
@@ -2974,10 +2974,10 @@ ERROR:  must be owner of schema schema_to_reindex
 RESET ROLE;
 GRANT USAGE ON SCHEMA pg_toast TO regress_reindexuser;
 SET SESSION ROLE regress_reindexuser;
-REINDEX TABLE pg_toast.pg_toast_1260;
-ERROR:  permission denied for table pg_toast_1260
-REINDEX INDEX pg_toast.pg_toast_1260_index;
-ERROR:  permission denied for index pg_toast_1260_index
+REINDEX TABLE pg_toast.pg_toast_1262;
+ERROR:  permission denied for table pg_toast_1262
+REINDEX INDEX pg_toast.pg_toast_1262_index;
+ERROR:  permission denied for index pg_toast_1262_index
 -- Clean up
 RESET ROLE;
 REVOKE USAGE ON SCHEMA pg_toast FROM regress_reindexuser;
