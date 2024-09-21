@@ -78,12 +78,17 @@ struct XidCache
 #define		PROC_XMIN_FLAGS (PROC_IN_VACUUM | PROC_IN_SAFE_IC)
 
 /*
- * We allow a small number of "weak" relation locks (AccessShareLock,
+ * We allow a limited number of "weak" relation locks (AccessShareLock,
  * RowShareLock, RowExclusiveLock) to be recorded in the PGPROC structure
- * rather than the main lock table.  This eases contention on the lock
- * manager LWLocks.  See storage/lmgr/README for additional details.
+ * (or rather in shared memory referenced from PGPROC) rather than the main
+ * lock table.  This eases contention on the lock manager LWLocks.  See
+ * storage/lmgr/README for additional details.
  */
-#define		FP_LOCK_SLOTS_PER_BACKEND 16
+extern PGDLLIMPORT int FastPathLockGroupsPerBackend;
+
+#define		FP_LOCK_GROUPS_PER_BACKEND_MAX	1024
+#define		FP_LOCK_SLOTS_PER_GROUP		16	/* don't change */
+#define		FP_LOCK_SLOTS_PER_BACKEND	(FP_LOCK_SLOTS_PER_GROUP * FastPathLockGroupsPerBackend)
 
 /*
  * Flags for PGPROC.delayChkptFlags
@@ -292,8 +297,8 @@ struct PGPROC
 
 	/* Lock manager data, recording fast-path locks taken by this backend. */
 	LWLock		fpInfoLock;		/* protects per-backend fast-path state */
-	uint64		fpLockBits;		/* lock modes held for each fast-path slot */
-	Oid			fpRelId[FP_LOCK_SLOTS_PER_BACKEND]; /* slots for rel oids */
+	uint64	   *fpLockBits;		/* lock modes held for each fast-path slot */
+	Oid		   *fpRelId;		/* slots for rel oids */
 	bool		fpVXIDLock;		/* are we holding a fast-path VXID lock? */
 	LocalTransactionId fpLocalTransactionId;	/* lxid for fast-path VXID
 												 * lock */

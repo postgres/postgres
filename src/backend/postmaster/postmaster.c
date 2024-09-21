@@ -904,6 +904,11 @@ PostmasterMain(int argc, char *argv[])
 	InitializeMaxBackends();
 
 	/*
+	 * Calculate the size of the PGPROC fast-path lock arrays.
+	 */
+	InitializeFastPathLocks();
+
+	/*
 	 * Give preloaded libraries a chance to request additional shared memory.
 	 */
 	process_shmem_requests();

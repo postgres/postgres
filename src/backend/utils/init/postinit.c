@@ -558,6 +558,40 @@ InitializeMaxBackends(void)
 }
 
 /*
+ * Initialize the number of fast-path lock slots in PGPROC.
+ *
+ * This must be called after modules have had the chance to alter GUCs in
+ * shared_preload_libraries and before shared memory size is determined.
+ *
+ * The default max_locks_per_xact=64 means 4 groups by default.
+ *
+ * We allow anything between 1 and 1024 groups, with the usual power-of-2
+ * logic. The 1 is the "old" size with only 16 slots, 1024 is an arbitrary
+ * limit (matching max_locks_per_xact = 16k). Values over 1024 are unlikely
+ * to be beneficial - there are bottlenecks we'll hit way before that.
+ */
+void
+InitializeFastPathLocks(void)
+{
+	/* Should be initialized only once. */
+	Assert(FastPathLockGroupsPerBackend == 0);
+
+	/* we need at least one group */
+	FastPathLockGroupsPerBackend = 1;
+
+	while (FastPathLockGroupsPerBackend < FP_LOCK_GROUPS_PER_BACKEND_MAX)
+	{
+		/* stop once we exceed max_locks_per_xact */
+		if (FastPathLockGroupsPerBackend * FP_LOCK_SLOTS_PER_GROUP >= max_locks_per_xact)
+			break;
+
+		FastPathLockGroupsPerBackend *= 2;
+	}
+
+	Assert(FastPathLockGroupsPerBackend <= FP_LOCK_GROUPS_PER_BACKEND_MAX);
+}
+
+/*
  * Early initialization of a backend (either standalone or under postmaster).
  * This happens even before InitPostgres.
  *

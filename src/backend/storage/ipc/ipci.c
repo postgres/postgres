@@ -178,6 +178,12 @@ AttachSharedMemoryStructs(void)
 	Assert(MyProc != NULL);
 	Assert(IsUnderPostmaster);
 
+	/*
+	 * In EXEC_BACKEND mode, backends don't inherit the number of fast-path
+	 * groups we calculated before setting the shmem up, so recalculate it.
+	 */
+	InitializeFastPathLocks();
+
 	CreateOrAttachShmemStructs();
 
 	/*

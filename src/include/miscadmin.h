@@ -475,6 +475,7 @@ extern PGDLLIMPORT ProcessingMode Mode;
 #define INIT_PG_OVERRIDE_ROLE_LOGIN		0x0004
 extern void pg_split_opts(char **argv, int *argcp, const char *optstr);
 extern void InitializeMaxBackends(void);
+extern void InitializeFastPathLocks(void);
 extern void InitPostgres(const char *in_dbname, Oid dboid,
 						 const char *username, Oid useroid,
 						 bits32 flags,
