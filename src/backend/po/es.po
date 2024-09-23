@@ -19038,7 +19038,7 @@ msgstr "CREATE especifica un esquema (%s) diferente del que se está creando (%s
 #: parser/parse_utilcmd.c:4108
 #, c-format
 msgid "table \"%s\" is not partitioned"
-msgstr "«la tabla %s» no está particionada"
+msgstr "la tabla «%s» no está particionada"
 
 #: parser/parse_utilcmd.c:4115
 #, c-format

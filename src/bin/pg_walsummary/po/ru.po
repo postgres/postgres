@@ -1,126 +1,123 @@
-# LANGUAGE message translation file for pg_walsummary
-# Copyright (C) 2024 PostgreSQL Global Development Group
-# This file is distributed under the same license as the pg_walsummary (PostgreSQL) package.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2024.
-#
+# Alexander Lakhin <exclusion@gmail.com>, 2024.
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 17\n"
+"Project-Id-Version: pg_walsummary (PostgreSQL) 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-08-23 10:22+0000\n"
-"PO-Revision-Date: 2024-09-16 16:28+0200\n"
-"Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
-"Language-Team: French <guillaume@lelarge.info>\n"
-"Language: fr\n"
+"POT-Creation-Date: 2024-09-02 09:31+0300\n"
+"PO-Revision-Date: 2024-09-05 14:47+0300\n"
+"Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
+"Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
+"Language: ru\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 3.5\n"
-"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
+"n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"X-Generator: Lokalize 21.12.3\n"
 
 #: ../../../src/common/logging.c:276
 #, c-format
 msgid "error: "
-msgstr "erreur : "
+msgstr "ошибка: "
 
 #: ../../../src/common/logging.c:283
 #, c-format
 msgid "warning: "
-msgstr "attention : "
+msgstr "предупреждение: "
 
 #: ../../../src/common/logging.c:294
 #, c-format
 msgid "detail: "
-msgstr "détail : "
+msgstr "подробности: "
 
 #: ../../../src/common/logging.c:301
 #, c-format
 msgid "hint: "
-msgstr "astuce : "
+msgstr "подсказка: "
 
 #: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
 #: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:161
 #, c-format
 msgid "out of memory\n"
-msgstr "mémoire épuisée\n"
+msgstr "нехватка памяти\n"
 
 #: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:153
 #, c-format
 msgid "cannot duplicate null pointer (internal error)\n"
-msgstr "ne peut pas dupliquer un pointeur nul (erreur interne)\n"
+msgstr "попытка дублирования нулевого указателя (внутренняя ошибка)\n"
 
 #: ../../common/file_utils.c:70 ../../common/file_utils.c:347
 #: ../../common/file_utils.c:406 ../../common/file_utils.c:480
 #: pg_walsummary.c:109
 #, c-format
 msgid "could not open file \"%s\": %m"
-msgstr "n'a pas pu ouvrir le fichier « %s » : %m"
+msgstr "не удалось открыть файл \"%s\": %m"
 
 #: ../../common/file_utils.c:76
 #, c-format
 msgid "could not synchronize file system for file \"%s\": %m"
-msgstr "n'a pas pu synchroniser sur disque (fsync) le système de fichiers pour le fichier « %s » : %m"
+msgstr "не удалось синхронизировать с ФС файл \"%s\": %m"
 
 #: ../../common/file_utils.c:120 ../../common/file_utils.c:566
 #, c-format
 msgid "could not stat file \"%s\": %m"
-msgstr "n'a pas pu tester le fichier « %s » : %m"
+msgstr "не удалось получить информацию о файле \"%s\": %m"
 
 #: ../../common/file_utils.c:130 ../../common/file_utils.c:227
 #: ../../fe_utils/option_utils.c:99
 #, c-format
 msgid "this build does not support sync method \"%s\""
-msgstr "cette construction ne supporte pas la méthode de synchronisation « %s »"
+msgstr "эта сборка программы не поддерживает метод синхронизации \"%s\""
 
 #: ../../common/file_utils.c:151 ../../common/file_utils.c:281
 #, c-format
 msgid "could not open directory \"%s\": %m"
-msgstr "n'a pas pu ouvrir le répertoire « %s » : %m"
+msgstr "не удалось открыть каталог \"%s\": %m"
 
 #: ../../common/file_utils.c:169 ../../common/file_utils.c:315
 #, c-format
 msgid "could not read directory \"%s\": %m"
-msgstr "n'a pas pu lire le répertoire « %s » : %m"
+msgstr "не удалось прочитать каталог \"%s\": %m"
 
 #: ../../common/file_utils.c:418 ../../common/file_utils.c:488
 #, c-format
 msgid "could not fsync file \"%s\": %m"
-msgstr "n'a pas pu synchroniser sur disque (fsync) le fichier « %s » : %m"
+msgstr "не удалось синхронизировать с ФС файл \"%s\": %m"
 
 #: ../../common/file_utils.c:498
 #, c-format
 msgid "could not rename file \"%s\" to \"%s\": %m"
-msgstr "n'a pas pu renommer le fichier « %s » en « %s » : %m"
+msgstr "не удалось переименовать файл \"%s\" в \"%s\": %m"
 
 #: ../../fe_utils/option_utils.c:69
 #, c-format
 msgid "invalid value \"%s\" for option %s"
-msgstr "valeur « %s » invalide pour l'option %s"
+msgstr "неверное значение \"%s\" для параметра %s"
 
 #: ../../fe_utils/option_utils.c:76
 #, c-format
 msgid "%s must be in range %d..%d"
-msgstr "%s doit être compris entre %d et %d"
+msgstr "значение %s должно быть в диапазоне %d..%d"
 
 #: ../../fe_utils/option_utils.c:106
 #, c-format
 msgid "unrecognized sync method: %s"
-msgstr "méthode de synchronisation non reconnu : %s"
+msgstr "нераспознанный метод синхронизации: %s"
 
 #: pg_walsummary.c:87 pg_walsummary.c:95
 #, c-format
 msgid "Try \"%s --help\" for more information."
-msgstr "Essayez « %s --help » pour plus d'informations."
+msgstr "Для дополнительной информации попробуйте \"%s --help\"."
 
 #: pg_walsummary.c:94
 #, c-format
 msgid "no input files specified"
-msgstr "aucun fichier spécifié en entrée"
+msgstr "нет входных файлов"
 
 #: pg_walsummary.c:252
 #, c-format
 msgid "could not read file \"%s\": %m"
-msgstr "n'a pas pu lire le fichier « %s » : %m"
+msgstr "не удалось прочитать файл \"%s\": %m"
 
 #: pg_walsummary.c:267
 #, c-format
@@ -128,18 +125,18 @@ msgid ""
 "%s prints the contents of a WAL summary file.\n"
 "\n"
 msgstr ""
-"%s affiche le contenu d'un fichier de résumé de WAL.\n"
+"%s выводит содержимое файла обобщения WAL.\n"
 "\n"
 
 #: pg_walsummary.c:268
 #, c-format
 msgid "Usage:\n"
-msgstr "Usage :\n"
+msgstr "Использование:\n"
 
 #: pg_walsummary.c:269
 #, c-format
 msgid "  %s [OPTION]... FILE...\n"
-msgstr "  %s [OPTION]... FICHIER...\n"
+msgstr "  %s [ПАРАМЕТР]... [ФАЙЛ]...\n"
 
 #: pg_walsummary.c:270
 #, c-format
@@ -148,27 +145,32 @@ msgid ""
 "Options:\n"
 msgstr ""
 "\n"
-"Options :\n"
+"Параметры:\n"
 
 #: pg_walsummary.c:271
 #, c-format
-msgid "  -i, --individual          list block numbers individually, not as ranges\n"
-msgstr "  -i, --individual  liste les numéros de bloc individuellement, pas sous la forme d'intervalles\n"
+msgid ""
+"  -i, --individual          list block numbers individually, not as ranges\n"
+msgstr ""
+"  -i, --individual          выводить номера блоков по одному, не "
+"диапазонами\n"
 
 #: pg_walsummary.c:272
 #, c-format
-msgid "  -q, --quiet               don't print anything, just parse the files\n"
-msgstr "  -q, --quiet       n'affiche rien, analyse uniquement les fichiers\n"
+msgid ""
+"  -q, --quiet               don't print anything, just parse the files\n"
+msgstr ""
+"  -q, --quiet               не выводить ничего, только разобрать файлы\n"
 
 #: pg_walsummary.c:273
 #, c-format
 msgid "  -V, --version             output version information, then exit\n"
-msgstr "  -V, --version     affiche la version puis quitte\n"
+msgstr "  -V, --version             показать версию и выйти\n"
 
 #: pg_walsummary.c:274
 #, c-format
 msgid "  -?, --help                show this help, then exit\n"
-msgstr "  -?, --help        affiche cette aide puis quitte\n"
+msgstr "  -?, --help                показать эту справку и выйти\n"
 
 #: pg_walsummary.c:276
 #, c-format
@@ -177,9 +179,9 @@ msgid ""
 "Report bugs to <%s>.\n"
 msgstr ""
 "\n"
-"Rapporter les bogues à <%s>.\n"
+"Об ошибках сообщайте по адресу <%s>.\n"
 
 #: pg_walsummary.c:277
 #, c-format
 msgid "%s home page: <%s>\n"
-msgstr "Page d'accueil de %s : <%s>\n"
+msgstr "Домашняя страница %s: <%s>\n"

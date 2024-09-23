@@ -9,10 +9,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 15\n"
+"Project-Id-Version: PostgreSQL 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2024-07-20 21:10+0000\n"
-"PO-Revision-Date: 2024-07-22 14:53+0200\n"
+"PO-Revision-Date: 2024-09-16 16:28+0200\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team: French <guillaume@lelarge.info>\n"
 "Language: fr\n"
@@ -20,7 +20,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
-"X-Generator: Poedit 3.4.4\n"
+"X-Generator: Poedit 3.5\n"
 
 #: descriptor.c:64
 #, c-format
@@ -250,17 +250,17 @@ msgstr "commentaire /* non terminé"
 #: pgc.l:545
 #, c-format
 msgid "unterminated bit string literal"
-msgstr "chaîne bit litéral non terminée"
+msgstr "chaîne bit littéral non terminée"
 
 #: pgc.l:553
 #, c-format
 msgid "unterminated hexadecimal string literal"
-msgstr "chaîne hexadécimale litérale non terminée"
+msgstr "chaîne hexadécimale littérale non terminée"
 
 #: pgc.l:628
 #, c-format
 msgid "invalid bit string literal"
-msgstr "chaîne bit litéral invalide"
+msgstr "chaîne bit littéral invalide"
 
 #: pgc.l:633
 #, c-format
@@ -727,41 +727,3 @@ msgstr "ce type de données ne supporte pas les pointeurs de pointeur"
 #, c-format
 msgid "multidimensional arrays for structures are not supported"
 msgstr "les tableaux multidimensionnels ne sont pas supportés pour les structures"
-
-#~ msgid ""
-#~ "\n"
-#~ "Report bugs to <pgsql-bugs@lists.postgresql.org>.\n"
-#~ msgstr ""
-#~ "\n"
-#~ "Rapporter les bogues à <pgsql-bugs@lists.postgresql.org>.\n"
-
-#~ msgid "  --version      output version information, then exit\n"
-#~ msgstr "  --version      affiche la version et quitte\n"
-
-#~ msgid "AT option not allowed in DEALLOCATE statement"
-#~ msgstr "option AT non autorisée dans une instruction DEALLOCATE"
-
-#~ msgid "COPY FROM STDOUT is not possible"
-#~ msgstr "COPY FROM STDOUT n'est pas possible"
-
-#~ msgid "COPY TO STDIN is not possible"
-#~ msgstr "COPY TO STDIN n'est pas possible"
-
-#~ msgid "NEW used in query that is not in a rule"
-#~ msgstr "NEW utilisé dans une requête qui n'est pas dans une règle"
-
-#~ msgid "OLD used in query that is not in a rule"
-#~ msgstr "OLD utilisé dans une requête qui n'est pas dans une règle"
-
-#~ msgid "constraint declared INITIALLY DEFERRED must be DEFERRABLE"
-#~ msgstr "une contrainte déclarée INITIALLY DEFERRED doit être DEFERRABLE"
-
-#~ msgid "declared name %s is already defined"
-#~ msgstr "le nom déclaré %s est déjà défini"
-
-#, c-format
-#~ msgid "subquery in FROM must have an alias"
-#~ msgstr "la sous-requête du FROM doit avoir un alias"
-
-#~ msgid "using unsupported DESCRIBE statement"
-#~ msgstr "utilisation de l'instruction DESCRIBE non supporté"

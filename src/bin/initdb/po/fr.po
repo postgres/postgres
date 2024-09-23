@@ -10,10 +10,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 15\n"
+"Project-Id-Version: PostgreSQL 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2024-07-20 21:22+0000\n"
-"PO-Revision-Date: 2024-07-22 14:59+0200\n"
+"PO-Revision-Date: 2024-09-16 16:28+0200\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team: French <guillaume@lelarge.info>\n"
 "Language: fr\n"
@@ -21,7 +21,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
-"X-Generator: Poedit 3.4.4\n"
+"X-Generator: Poedit 3.5\n"
 
 #: ../../../src/common/logging.c:276
 #, c-format
@@ -611,7 +611,7 @@ msgstr "      --icu-locale=LOCALE      initialise l'identifiant de locale ICU po
 #: initdb.c:2457
 #, c-format
 msgid "      --icu-rules=RULES     set additional ICU collation rules for new databases\n"
-msgstr "      --icu-rules=REGLES      initialise les règles supplémentaires de la locale ICU pour les nouvelles bases de données\n"
+msgstr "      --icu-rules=REGLES       initialise les règles supplémentaires de la locale ICU pour les nouvelles bases de données\n"
 
 #: initdb.c:2458
 #, c-format
@@ -719,7 +719,7 @@ msgstr ""
 #: initdb.c:2477
 #, c-format
 msgid "  -c, --set NAME=VALUE      override default setting for server parameter\n"
-msgstr "  -c NOM=VALEUR      surcharge la configuration par défaut d'un paramètre serveur\n"
+msgstr "  -c NOM=VALEUR                surcharge la configuration par défaut d'un paramètre serveur\n"
 
 #: initdb.c:2478
 #, c-format
@@ -765,7 +765,7 @@ msgstr "  -s, --show                   affiche la configuration interne, puis qu
 #: initdb.c:2485
 #, c-format
 msgid "      --sync-method=METHOD  set method for syncing files to disk\n"
-msgstr "      --sync-method=METHODE configure la méthode pour synchroniser les fichiers sur disque\n"
+msgstr "      --sync-method=METHODE    configure la méthode pour synchroniser les fichiers sur disque\n"
 
 #: initdb.c:2486
 #, c-format
@@ -1154,277 +1154,3 @@ msgstr ""
 "\n"
 "    %s\n"
 "\n"
-
-#~ msgid ""
-#~ "\n"
-#~ "Report bugs to <pgsql-bugs@lists.postgresql.org>.\n"
-#~ msgstr ""
-#~ "\n"
-#~ "Rapporter les bogues à <pgsql-bugs@lists.postgresql.org>.\n"
-
-#, c-format
-#~ msgid "  ICU locale:  %s\n"
-#~ msgstr "  locale ICU :  %s\n"
-
-#~ msgid "%s: The password file was not generated. Please report this problem.\n"
-#~ msgstr ""
-#~ "%s : le fichier de mots de passe n'a pas été créé.\n"
-#~ "Merci de rapporter ce problème.\n"
-
-#~ msgid "%s: could not access directory \"%s\": %s\n"
-#~ msgstr "%s : n'a pas pu accéder au répertoire « %s » : %s\n"
-
-#~ msgid "%s: could not access file \"%s\": %s\n"
-#~ msgstr "%s : n'a pas pu accéder au fichier « %s » : %s\n"
-
-#~ msgid "%s: could not close directory \"%s\": %s\n"
-#~ msgstr "%s : n'a pas pu fermer le répertoire « %s » : %s\n"
-
-#~ msgid "%s: could not create directory \"%s\": %s\n"
-#~ msgstr "%s : n'a pas pu créer le répertoire « %s » : %s\n"
-
-#~ msgid "%s: could not create symbolic link \"%s\": %s\n"
-#~ msgstr "%s : n'a pas pu créer le lien symbolique « %s » : %s\n"
-
-#~ msgid "%s: could not determine valid short version string\n"
-#~ msgstr "%s : n'a pas pu déterminer une chaîne de version courte valide\n"
-
-#~ msgid "%s: could not execute command \"%s\": %s\n"
-#~ msgstr "%s : n'a pas pu exécuter la commande « %s » : %s\n"
-
-#~ msgid "%s: could not fsync file \"%s\": %s\n"
-#~ msgstr "%s : n'a pas pu synchroniser sur disque le fichier « %s » : %s\n"
-
-#~ msgid "%s: could not get current user name: %s\n"
-#~ msgstr "%s : n'a pas pu obtenir le nom de l'utilisateur courant : %s\n"
-
-#~ msgid "%s: could not obtain information about current user: %s\n"
-#~ msgstr "%s : n'a pas pu obtenir d'informations sur l'utilisateur courant : %s\n"
-
-#~ msgid "%s: could not open directory \"%s\": %s\n"
-#~ msgstr "%s : n'a pas pu ouvrir le répertoire « %s » : %s\n"
-
-#~ msgid "%s: could not open file \"%s\" for reading: %s\n"
-#~ msgstr "%s : n'a pas pu ouvrir le fichier « %s » en lecture : %s\n"
-
-#~ msgid "%s: could not open file \"%s\" for writing: %s\n"
-#~ msgstr "%s : n'a pas pu ouvrir le fichier « %s » en écriture : %s\n"
-
-#~ msgid "%s: could not open file \"%s\": %s\n"
-#~ msgstr "%s : n'a pas pu ouvrir le fichier « %s » : %s\n"
-
-#~ msgid "%s: could not read directory \"%s\": %s\n"
-#~ msgstr "%s : n'a pas pu lire le répertoire « %s » : %s\n"
-
-#~ msgid "%s: could not rename file \"%s\" to \"%s\": %s\n"
-#~ msgstr "%s : n'a pas pu renommer le fichier « %s » en « %s » : %s\n"
-
-#~ msgid "%s: could not stat file \"%s\": %s\n"
-#~ msgstr "%s : n'a pas pu récupérer les informations sur le fichier « %s » : %s\n"
-
-#~ msgid "%s: could not to allocate SIDs: error code %lu\n"
-#~ msgstr "%s : n'a pas pu allouer les SID : code d'erreur %lu\n"
-
-#~ msgid "%s: could not write file \"%s\": %s\n"
-#~ msgstr "%s : n'a pas pu écrire le fichier « %s » : %s\n"
-
-#~ msgid "%s: failed to remove contents of transaction log directory\n"
-#~ msgstr "%s : échec de la suppression du contenu du répertoire des journaux de transaction\n"
-
-#~ msgid "%s: failed to remove transaction log directory\n"
-#~ msgstr "%s : échec de la suppression du répertoire des journaux de transaction\n"
-
-#~ msgid "%s: failed to restore old locale \"%s\"\n"
-#~ msgstr "%s : n'a pas pu restaurer l'ancienne locale « %s »\n"
-
-#~ msgid "%s: file \"%s\" does not exist\n"
-#~ msgstr "%s : le fichier « %s » n'existe pas\n"
-
-#~ msgid "%s: invalid locale name \"%s\"\n"
-#~ msgstr "%s : nom de locale invalide (« %s »)\n"
-
-#~ msgid "%s: locale name has non-ASCII characters, skipped: \"%s\"\n"
-#~ msgstr "%s : le nom de la locale contient des caractères non ASCII, ignoré : « %s »\n"
-
-#~ msgid "%s: locale name too long, skipped: \"%s\"\n"
-#~ msgstr "%s : nom de locale trop long, ignoré : « %s »\n"
-
-#~ msgid "%s: out of memory\n"
-#~ msgstr "%s : mémoire épuisée\n"
-
-#~ msgid "%s: removing contents of transaction log directory \"%s\"\n"
-#~ msgstr "%s : suppression du contenu du répertoire des journaux de transaction « %s »\n"
-
-#~ msgid "%s: removing transaction log directory \"%s\"\n"
-#~ msgstr "%s : suppression du répertoire des journaux de transaction « %s »\n"
-
-#~ msgid "%s: symlinks are not supported on this platform\n"
-#~ msgstr "%s : les liens symboliques ne sont pas supportés sur cette plateforme\n"
-
-#~ msgid "%s: transaction log directory \"%s\" not removed at user's request\n"
-#~ msgstr ""
-#~ "%s : répertoire des journaux de transaction « %s » non supprimé à la demande\n"
-#~ "de l'utilisateur\n"
-
-#~ msgid "%s: unrecognized authentication method \"%s\"\n"
-#~ msgstr "%s : méthode d'authentification « %s » inconnue.\n"
-
-#, c-format
-#~ msgid "ICU locale must be specified"
-#~ msgstr "la locale ICU doit être précisée"
-
-#~ msgid "No usable system locales were found.\n"
-#~ msgstr "Aucune locale système utilisable n'a été trouvée.\n"
-
-#, c-format
-#~ msgid "The default database encoding has been set to \"%s\".\n"
-#~ msgstr "L'encodage par défaut des bases de données a été configuré à « %s ».\n"
-
-#~ msgid ""
-#~ "The program \"postgres\" is needed by %s but was not found in the\n"
-#~ "same directory as \"%s\".\n"
-#~ "Check your installation."
-#~ msgstr ""
-#~ "Le programme « postgres » est nécessaire à %s mais n'a pas été trouvé dans\n"
-#~ "le même répertoire que « %s ».\n"
-#~ "Vérifiez votre installation."
-
-#~ msgid ""
-#~ "The program \"postgres\" was found by \"%s\"\n"
-#~ "but was not the same version as %s.\n"
-#~ "Check your installation."
-#~ msgstr ""
-#~ "Le programme « postgres » a été trouvé par « %s » mais n'est pas de la même\n"
-#~ "version que « %s ».\n"
-#~ "Vérifiez votre installation."
-
-#, c-format
-#~ msgid "Try \"%s --help\" for more information.\n"
-#~ msgstr "Essayer « %s --help » pour plus d'informations.\n"
-
-#~ msgid "Use the option \"--debug\" to see details.\n"
-#~ msgstr "Utilisez l'option « --debug » pour voir le détail.\n"
-
-#, c-format
-#~ msgid "argument of --wal-segsize must be a number"
-#~ msgstr "l'argument de --wal-segsize doit être un nombre"
-
-#, c-format
-#~ msgid "cannot create restricted tokens on this platform: error code %lu"
-#~ msgstr "ne peut pas créer les jetons restreints sur cette plateforme : code d'erreur %lu"
-
-#~ msgid "child process was terminated by signal %s"
-#~ msgstr "le processus fils a été terminé par le signal %s"
-
-#~ msgid "copying template1 to postgres ... "
-#~ msgstr "copie de template1 vers postgres... "
-
-#~ msgid "copying template1 to template0 ... "
-#~ msgstr "copie de template1 vers template0... "
-
-#~ msgid "could not change directory to \"%s\""
-#~ msgstr "n'a pas pu accéder au répertoire « %s »"
-
-#, c-format
-#~ msgid "could not change directory to \"%s\": %m"
-#~ msgstr "n'a pas pu modifier le répertoire par « %s » : %m"
-
-#~ msgid "could not change directory to \"%s\": %s"
-#~ msgstr "n'a pas pu modifier le répertoire par « %s » : %s"
-
-#, c-format
-#~ msgid "could not identify current directory: %m"
-#~ msgstr "n'a pas pu identifier le répertoire courant : %m"
-
-#, c-format
-#~ msgid "could not load library \"%s\": error code %lu"
-#~ msgstr "n'a pas pu charger la bibliothèque « %s » : code d'erreur %lu"
-
-#~ msgid "could not open directory \"%s\": %s\n"
-#~ msgstr "n'a pas pu ouvrir le répertoire « %s » : %s\n"
-
-#, c-format
-#~ msgid "could not read binary \"%s\""
-#~ msgstr "n'a pas pu lire le binaire « %s »"
-
-#~ msgid "could not read directory \"%s\": %s\n"
-#~ msgstr "n'a pas pu lire le répertoire « %s » : %s\n"
-
-#~ msgid "could not read symbolic link \"%s\""
-#~ msgstr "n'a pas pu lire le lien symbolique « %s »"
-
-#, c-format
-#~ msgid "could not read symbolic link \"%s\": %m"
-#~ msgstr "n'a pas pu lire le lien symbolique « %s » : %m"
-
-#, c-format
-#~ msgid "could not remove file or directory \"%s\": %m"
-#~ msgstr "n'a pas pu supprimer le fichier ou répertoire « %s » : %m"
-
-#, c-format
-#~ msgid "could not stat file or directory \"%s\": %m"
-#~ msgstr ""
-#~ "n'a pas pu récupérer les informations sur le fichier ou répertoire\n"
-#~ "« %s » : %m"
-
-#~ msgid "could not stat file or directory \"%s\": %s\n"
-#~ msgstr ""
-#~ "n'a pas pu récupérer les informations sur le fichier ou répertoire\n"
-#~ "« %s » : %s\n"
-
-#~ msgid "creating collations ... "
-#~ msgstr "création des collationnements... "
-
-#~ msgid "creating conversions ... "
-#~ msgstr "création des conversions... "
-
-#~ msgid "creating dictionaries ... "
-#~ msgstr "création des dictionnaires... "
-
-#~ msgid "creating information schema ... "
-#~ msgstr "création du schéma d'informations... "
-
-#~ msgid "creating system views ... "
-#~ msgstr "création des vues système... "
-
-#~ msgid "creating template1 database in %s/base/1 ... "
-#~ msgstr "création de la base de données template1 dans %s/base/1... "
-
-#, c-format
-#~ msgid "fatal: "
-#~ msgstr "fatal : "
-
-#~ msgid "initializing dependencies ... "
-#~ msgstr "initialisation des dépendances... "
-
-#~ msgid "initializing pg_authid ... "
-#~ msgstr "initialisation de pg_authid... "
-
-#, c-format
-#~ msgid "invalid binary \"%s\""
-#~ msgstr "binaire « %s » invalide"
-
-#~ msgid "loading PL/pgSQL server-side language ... "
-#~ msgstr "chargement du langage PL/pgSQL... "
-
-#~ msgid "loading system objects' descriptions ... "
-#~ msgstr "chargement de la description des objets système... "
-
-#~ msgid "not supported on this platform\n"
-#~ msgstr "non supporté sur cette plateforme\n"
-
-#~ msgid "pclose failed: %m"
-#~ msgstr "échec de pclose : %m"
-
-#~ msgid "setting password ... "
-#~ msgstr "initialisation du mot de passe... "
-
-#~ msgid "setting privileges on built-in objects ... "
-#~ msgstr "initialisation des droits sur les objets internes... "
-
-#, c-format
-#~ msgid "symlinks are not supported on this platform"
-#~ msgstr "les liens symboliques ne sont pas supportés sur cette plateforme"
-
-#~ msgid "vacuuming database template1 ... "
-#~ msgstr "lancement du vacuum sur la base de données template1... "

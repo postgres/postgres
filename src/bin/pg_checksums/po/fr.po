@@ -8,10 +8,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 15\n"
+"Project-Id-Version: PostgreSQL 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2024-07-20 21:25+0000\n"
-"PO-Revision-Date: 2024-07-22 15:50+0200\n"
+"PO-Revision-Date: 2024-09-16 16:28+0200\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team: French <guillaume@lelarge.info>\n"
 "Language: fr\n"
@@ -19,7 +19,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
-"X-Generator: Poedit 3.4.4\n"
+"X-Generator: Poedit 3.5\n"
 
 #: ../../../src/common/logging.c:276
 #, c-format
@@ -227,7 +227,7 @@ msgstr "  -P, --progress             affiche la progression de l'opération\n"
 #: pg_checksums.c:81
 #, c-format
 msgid "      --sync-method=METHOD set method for syncing files to disk\n"
-msgstr "      --sync-method=METHODE configure la méthode pour synchroniser les fichiers sur disque\n"
+msgstr "      --sync-method=METHODE  configure la méthode pour synchroniser les fichiers sur disque\n"
 
 #: pg_checksums.c:82
 #, c-format
@@ -431,39 +431,3 @@ msgstr "Sommes de contrôle sur les données activées sur cette instance\n"
 #, c-format
 msgid "Checksums disabled in cluster\n"
 msgstr "Sommes de contrôle sur les données désactivées sur cette instance\n"
-
-#~ msgid "  -?, --help             show this help, then exit\n"
-#~ msgstr "  -?, --help                 affiche cette aide puis quitte\n"
-
-#~ msgid "  -V, --version          output version information, then exit\n"
-#~ msgstr "  -V, --version              affiche la version puis quitte\n"
-
-#~ msgid "%s: could not open directory \"%s\": %s\n"
-#~ msgstr "%s : n'a pas pu ouvrir le répertoire « %s » : %s\n"
-
-#~ msgid "%s: could not open file \"%s\": %s\n"
-#~ msgstr "%s : n'a pas pu ouvrir le fichier « %s » : %s\n"
-
-#~ msgid "%s: could not stat file \"%s\": %s\n"
-#~ msgstr "%s : n'a pas pu récupérer les informations sur le fichier « %s » : %s\n"
-
-#~ msgid "%s: no data directory specified\n"
-#~ msgstr "%s : aucun répertoire de données indiqué\n"
-
-#~ msgid "%s: too many command-line arguments (first is \"%s\")\n"
-#~ msgstr "%s : trop d'arguments en ligne de commande (le premier étant « %s »)\n"
-
-#~ msgid "Report bugs to <pgsql-bugs@lists.postgresql.org>.\n"
-#~ msgstr "Rapporter les bogues à <pgsql-bugs@lists.postgresql.org>.\n"
-
-#, c-format
-#~ msgid "Try \"%s --help\" for more information.\n"
-#~ msgstr "Essayez « %s --help » pour plus d'informations.\n"
-
-#, c-format
-#~ msgid "fatal: "
-#~ msgstr "fatal : "
-
-#, c-format
-#~ msgid "invalid filenode specification, must be numeric: %s"
-#~ msgstr "spécification invalide du relfilnode, doit être numérique : %s"

@@ -10,10 +10,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 15\n"
+"Project-Id-Version: PostgreSQL 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2024-08-22 10:19+0000\n"
-"PO-Revision-Date: 2024-08-23 11:07+0200\n"
+"PO-Revision-Date: 2024-09-16 16:28+0200\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team: French <guillaume@lelarge.info>\n"
 "Language: fr\n"
@@ -21,7 +21,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
-"X-Generator: Poedit 3.4.4\n"
+"X-Generator: Poedit 3.5\n"
 
 #: ../../common/controldata_utils.c:168
 msgid "byte ordering mismatch"
@@ -894,139 +894,3 @@ msgid "%s: no database directory specified and environment variable PGDATA unset
 msgstr ""
 "%s : aucun répertoire de bases de données indiqué et variable\n"
 "d'environnement PGDATA non initialisée\n"
-
-#~ msgid ""
-#~ "\n"
-#~ "%s: -w option cannot use a relative socket directory specification\n"
-#~ msgstr ""
-#~ "\n"
-#~ "%s : l'option -w ne peut pas utiliser un chemin relatif vers le répertoire de\n"
-#~ "la socket\n"
-
-#~ msgid ""
-#~ "\n"
-#~ "%s: -w option is not supported when starting a pre-9.1 server\n"
-#~ msgstr ""
-#~ "\n"
-#~ "%s : l'option -w n'est pas supportée lors du démarrage d'un serveur pré-9.1\n"
-
-#~ msgid ""
-#~ "\n"
-#~ "%s: this data directory appears to be running a pre-existing postmaster\n"
-#~ msgstr ""
-#~ "\n"
-#~ "%s : ce répertoire des données semble être utilisé par un postmaster déjà existant\n"
-
-#~ msgid ""
-#~ "\n"
-#~ "Options for stop, restart, or promote:\n"
-#~ msgstr ""
-#~ "\n"
-#~ "Options pour l'arrêt, le redémarrage ou la promotion :\n"
-
-#~ msgid ""
-#~ "\n"
-#~ "Report bugs to <pgsql-bugs@lists.postgresql.org>.\n"
-#~ msgstr ""
-#~ "\n"
-#~ "Rapporter les bogues à <pgsql-bugs@lists.postgresql.org>.\n"
-
-#~ msgid "  %s start   [-w] [-t SECS] [-D DATADIR] [-s] [-l FILENAME] [-o \"OPTIONS\"]\n"
-#~ msgstr ""
-#~ "  %s start      [-w] [-t SECS] [-D RÉP_DONNÉES] [-s] [-l NOM_FICHIER]\n"
-#~ "                [-o \"OPTIONS\"]\n"
-
-#~ msgid "  --help                 show this help, then exit\n"
-#~ msgstr "  --help                   affiche cette aide et quitte\n"
-
-#~ msgid "  --version              output version information, then exit\n"
-#~ msgstr "  --version                affiche la version et quitte\n"
-
-#~ msgid ""
-#~ "%s is a utility to start, stop, restart, reload configuration files,\n"
-#~ "report the status of a PostgreSQL server, or signal a PostgreSQL process.\n"
-#~ "\n"
-#~ msgstr ""
-#~ "%s est un outil qui permet de démarrer, arrêter, redémarrer, recharger les\n"
-#~ "les fichiers de configuration, rapporter le statut d'un serveur PostgreSQL\n"
-#~ "ou d'envoyer un signal à un processus PostgreSQL\n"
-#~ "\n"
-
-#~ msgid "%s: could not create log file \"%s\": %s\n"
-#~ msgstr "%s : n'a pas pu créer le fichier de traces « %s » : %s\n"
-
-#~ msgid "%s: could not open process token: %lu\n"
-#~ msgstr "%s : n'a pas pu ouvrir le jeton du processus : %lu\n"
-
-#~ msgid "%s: could not start server: exit code was %d\n"
-#~ msgstr "%s : n'a pas pu démarrer le serveur : le code de sortie est %d\n"
-
-#~ msgid "%s: could not wait for server because of misconfiguration\n"
-#~ msgstr "%s : n'a pas pu attendre le serveur à cause d'une mauvaise configuration\n"
-
-#~ msgid ""
-#~ "(The default is to wait for shutdown, but not for start or restart.)\n"
-#~ "\n"
-#~ msgstr ""
-#~ "(Le comportement par défaut attend l'arrêt, pas le démarrage ou le\n"
-#~ "redémarrage.)\n"
-#~ "\n"
-
-#, c-format
-#~ msgid ""
-#~ "The program \"%s\" is needed by %s but was not found in the\n"
-#~ "same directory as \"%s\".\n"
-#~ "Check your installation.\n"
-#~ msgstr ""
-#~ "Le programme « %s » est nécessaire pour %s, mais n'a pas été trouvé\n"
-#~ "dans le même répertoire que « %s ».\n"
-#~ "Vérifiez votre installation.\n"
-
-#, c-format
-#~ msgid ""
-#~ "The program \"%s\" was found by \"%s\"\n"
-#~ "but was not the same version as %s.\n"
-#~ "Check your installation.\n"
-#~ msgstr ""
-#~ "Le programme « %s » a été trouvé par « %s »\n"
-#~ "mais n'est pas de la même version que %s.\n"
-#~ "Vérifiez votre installation.\n"
-
-#~ msgid ""
-#~ "WARNING: online backup mode is active\n"
-#~ "Shutdown will not complete until pg_stop_backup() is called.\n"
-#~ "\n"
-#~ msgstr ""
-#~ "ATTENTION : le mode de sauvegarde en ligne est activé.\n"
-#~ "L'arrêt ne surviendra qu'au moment où pg_stop_backup() sera appelé.\n"
-#~ "\n"
-
-#~ msgid "child process was terminated by signal %s"
-#~ msgstr "le processus fils a été terminé par le signal %s"
-
-#~ msgid "could not change directory to \"%s\""
-#~ msgstr "n'a pas pu accéder au répertoire « %s »"
-
-#, c-format
-#~ msgid "could not change directory to \"%s\": %m"
-#~ msgstr "n'a pas pu modifier le répertoire par « %s » : %m"
-
-#~ msgid "could not change directory to \"%s\": %s"
-#~ msgstr "n'a pas pu modifier le répertoire par « %s » : %s"
-
-#, c-format
-#~ msgid "could not identify current directory: %m"
-#~ msgstr "n'a pas pu identifier le répertoire courant : %m"
-
-#~ msgid "could not read symbolic link \"%s\""
-#~ msgstr "n'a pas pu lire le lien symbolique « %s »"
-
-#, c-format
-#~ msgid "could not read symbolic link \"%s\": %m"
-#~ msgstr "n'a pas pu lire le lien symbolique « %s » : %m"
-
-#~ msgid "pclose failed: %m"
-#~ msgstr "échec de pclose : %m"
-
-#~ msgid "server is still starting up\n"
-#~ msgstr "le serveur est toujours en cours de démarrage\n"

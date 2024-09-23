@@ -5,17 +5,18 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_combinebackup (PostgreSQL) 17\n"
+"Project-Id-Version: PostgreSQL 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2024-08-29 17:53+0000\n"
-"PO-Revision-Date: 2024-09-02 17:49+0200\n"
-"Last-Translator: \n"
-"Language-Team: \n"
+"PO-Revision-Date: 2024-09-16 16:28+0200\n"
+"Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
+"Language-Team: French <guillaume@lelarge.info>\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 3.4.4\n"
+"X-Generator: Poedit 3.5\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
 
 #: ../../../src/common/logging.c:276
 #, c-format
@@ -712,7 +713,7 @@ msgstr ""
 #: pg_combinebackup.c:763
 #, c-format
 msgid "  -d, --debug               generate lots of debugging output\n"
-msgstr "  -d, --debug                  engendre un grand nombre de traces de débogage\n"
+msgstr "  -d, --debug               engendre un grand nombre de traces de débogage\n"
 
 #: pg_combinebackup.c:764
 #, c-format
@@ -723,8 +724,8 @@ msgstr "  -n, --dry-run             ne fait rien\n"
 #, c-format
 msgid "  -N, --no-sync             do not wait for changes to be written safely to disk\n"
 msgstr ""
-"  -N, --nosync                 n'attend pas que les modifications soient\n"
-"                               proprement écrites sur disque\n"
+"  -N, --nosync              n'attend pas que les modifications soient\n"
+"                            proprement écrites sur disque\n"
 
 #: pg_combinebackup.c:766
 #, c-format
@@ -777,12 +778,12 @@ msgstr "      --sync-method=METHODE configure la méthode pour synchroniser les 
 #: pg_combinebackup.c:776
 #, c-format
 msgid "  -V, --version             output version information, then exit\n"
-msgstr "  -V, --version                affiche la version puis quitte\n"
+msgstr "  -V, --version             affiche la version puis quitte\n"
 
 #: pg_combinebackup.c:777
 #, c-format
 msgid "  -?, --help                show this help, then exit\n"
-msgstr "  -?, --help                   affiche cette aide puis quitte\n"
+msgstr "  -?, --help                affiche cette aide puis quitte\n"
 
 #: pg_combinebackup.c:779
 #, c-format
@@ -892,7 +893,3 @@ msgstr "n'a pas pu lire le fichier « %s » : a lu %d sur %u"
 #, c-format
 msgid "could not read from file \"%s\", offset %llu: read %d of %d"
 msgstr "n'a pas pu lire le fichier « %s » à la position %llu : a lu %d sur %d"
-
-#, c-format
-#~ msgid "\"%s\" contains no entry for \"%s\""
-#~ msgstr "« %s » ne contient aucune entrée pour «%s »"

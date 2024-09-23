@@ -1,43 +1,43 @@
 # LANGUAGE message translation file for plpython
 # Copyright (C) 2010 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2010.
+# Dianjin Wang <wangdianjin@gmail.com>, 2024
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: plpython (PostgreSQL) 14\n"
+"Project-Id-Version: plpython (PostgreSQL) 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2021-08-14 05:38+0000\n"
-"PO-Revision-Date: 2021-08-16 18:00+0800\n"
-"Last-Translator: Jie Zhang <zhangjie2@fujitsu.com>\n"
+"POT-Creation-Date: 2024-09-13 22:40+0000\n"
+"PO-Revision-Date: 2024-09-14 14:12+0800\n"
+"Last-Translator: Dianjin Wang <wangdianjin@gmail.com>\n"
 "Language-Team: Chinese (Simplified) <zhangjie2@fujitsu.com>\n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Poedit 1.5.7\n"
+"X-Generator: Poedit 3.4.4\n"
 
 #: plpy_cursorobject.c:72
 #, c-format
 msgid "plpy.cursor expected a query or a plan"
-msgstr "plpy.cursor期望一个查询或一个计划"
+msgstr "plpy.cursor 期望一个查询或一个计划"
 
 #: plpy_cursorobject.c:155
 #, c-format
 msgid "plpy.cursor takes a sequence as its second argument"
-msgstr "plpy.cursor将一个序列作为它的第二个参数"
+msgstr "plpy.cursor 将一个序列作为它的第二个参数"
 
-#: plpy_cursorobject.c:171 plpy_spi.c:207
+#: plpy_cursorobject.c:171 plpy_spi.c:205
 #, c-format
 msgid "could not execute plan"
 msgstr "无法执行计划"
 
-#: plpy_cursorobject.c:174 plpy_spi.c:210
+#: plpy_cursorobject.c:174 plpy_spi.c:208
 #, c-format
 msgid "Expected sequence of %d argument, got %d: %s"
 msgid_plural "Expected sequence of %d arguments, got %d: %s"
-msgstr[0] "期望%d序列参数,但是得到%d: %s"
+msgstr[0] "期望 %d 参数序列, 但是得到 %d: %s"
 
 #: plpy_cursorobject.c:321
 #, c-format
@@ -54,17 +54,17 @@ msgstr "在终止的子事务里遍历一个游标"
 msgid "fetch from a closed cursor"
 msgstr "从关闭的游标里获取结果"
 
-#: plpy_cursorobject.c:430 plpy_spi.c:403
+#: plpy_cursorobject.c:430 plpy_spi.c:401
 #, c-format
 msgid "query result has too many rows to fit in a Python list"
-msgstr "查询结果中的行太多，无法放在一个Python列表中"
+msgstr "查询结果中的行太多，无法放在一个 Python 列表中"
 
 #: plpy_cursorobject.c:482
 #, c-format
 msgid "closing a cursor in an aborted subtransaction"
 msgstr "在终止的子事务里关闭一个游标"
 
-#: plpy_elog.c:125 plpy_elog.c:126 plpy_plpymodule.c:548
+#: plpy_elog.c:122 plpy_elog.c:123 plpy_plpymodule.c:530
 #, c-format
 msgid "%s"
 msgstr "%s"
@@ -77,221 +77,221 @@ msgstr "不支持集合函数返回模式"
 #: plpy_exec.c:140
 #, c-format
 msgid "PL/Python set-returning functions only support returning one value per call."
-msgstr "PL/Python集合返回函数只支持在每次调用时返回一个值。"
+msgstr "PL/Python 集合返回函数只支持在每次调用时返回一个值."
 
 #: plpy_exec.c:153
 #, c-format
 msgid "returned object cannot be iterated"
-msgstr "所返回的对象无法迭代"
+msgstr "所返回的对象无法进行遍历"
 
 #: plpy_exec.c:154
 #, c-format
 msgid "PL/Python set-returning functions must return an iterable object."
-msgstr "PL/Python集合返回函数必须返回一个可迭代的对象."
+msgstr "PL/Python 集合返回函数必须返回一个可遍历的对象."
 
 #: plpy_exec.c:168
 #, c-format
 msgid "error fetching next item from iterator"
-msgstr "当从迭代器中取回下一个成员时出现错误"
+msgstr "当从迭代器中获取下一个成员时出现错误"
 
 #: plpy_exec.c:211
 #, c-format
 msgid "PL/Python procedure did not return None"
-msgstr "PL/Python过程没有返回None"
+msgstr "PL/Python 过程没有返回 None"
 
 #: plpy_exec.c:215
 #, c-format
 msgid "PL/Python function with return type \"void\" did not return None"
-msgstr "返回类型为\"void\"的PL/Python函数不返回None"
+msgstr "返回类型为 \"void\" 的 PL/Python 函数不返回 None"
 
-#: plpy_exec.c:371 plpy_exec.c:397
-#, c-format
-msgid "unexpected return value from trigger procedure"
-msgstr "在触发器存储过程出现非期望的返回值"
-
-#: plpy_exec.c:372
-#, c-format
-msgid "Expected None or a string."
-msgstr "期望空值或一个字符串"
-
-#: plpy_exec.c:387
-#, c-format
-msgid "PL/Python trigger function returned \"MODIFY\" in a DELETE trigger -- ignored"
-msgstr "在DELETE触发器中的PL/Python 触发器函数返回 \"MODIFY\"  -- 忽略"
-
-#: plpy_exec.c:398
-#, c-format
-msgid "Expected None, \"OK\", \"SKIP\", or \"MODIFY\"."
-msgstr "期望None, \"OK\", \"SKIP\", 或\"MODIFY\""
-
-#: plpy_exec.c:443
-#, c-format
-msgid "PyList_SetItem() failed, while setting up arguments"
-msgstr "当设置参数的同时, 执行PyList_SetItem()失败"
-
-#: plpy_exec.c:447
-#, c-format
-msgid "PyDict_SetItemString() failed, while setting up arguments"
-msgstr "当设置参数的同时, 执行PyDict_SetItemString()失败"
-
-#: plpy_exec.c:459
+#: plpy_exec.c:246
 #, c-format
 msgid "function returning record called in context that cannot accept type record"
 msgstr "返回值类型是记录的函数在不接受使用记录类型的环境中调用"
 
-#: plpy_exec.c:676
+#: plpy_exec.c:392 plpy_exec.c:416
+#, c-format
+msgid "unexpected return value from trigger procedure"
+msgstr "在触发器存储过程出现非期望的返回值"
+
+#: plpy_exec.c:393
+#, c-format
+msgid "Expected None or a string."
+msgstr "期望 None 或一个字符串."
+
+#: plpy_exec.c:406
+#, c-format
+msgid "PL/Python trigger function returned \"MODIFY\" in a DELETE trigger -- ignored"
+msgstr "在 DELETE 触发器中的 PL/Python 触发器函数返回 \"MODIFY\"  -- 忽略"
+
+#: plpy_exec.c:417
+#, c-format
+msgid "Expected None, \"OK\", \"SKIP\", or \"MODIFY\"."
+msgstr "期望 None, \"OK\", \"SKIP\", 或\"MODIFY”."
+
+#: plpy_exec.c:468
+#, c-format
+msgid "PyList_SetItem() failed, while setting up arguments"
+msgstr "当设置参数的同时, 执行 PyList_SetItem() 失败"
+
+#: plpy_exec.c:472
+#, c-format
+msgid "PyDict_SetItemString() failed, while setting up arguments"
+msgstr "当设置参数的同时, 执行 PyDict_SetItemString() 失败"
+
+#: plpy_exec.c:701
 #, c-format
 msgid "while creating return value"
 msgstr "同时在创建返回值"
 
-#: plpy_exec.c:910
+#: plpy_exec.c:952
 #, c-format
 msgid "TD[\"new\"] deleted, cannot modify row"
 msgstr "TD[\"new\"] 已删除，无法修改记录"
 
-#: plpy_exec.c:915
+#: plpy_exec.c:957
 #, c-format
 msgid "TD[\"new\"] is not a dictionary"
-msgstr "TD[\"new\"]不是一个字典"
+msgstr "TD[\"new\"] 不是一个字典"
 
-#: plpy_exec.c:942
+#: plpy_exec.c:982
 #, c-format
 msgid "TD[\"new\"] dictionary key at ordinal position %d is not a string"
-msgstr "在顺序位置%d的TD[\"new\"]字典键值不是字符串"
+msgstr "在顺序位置 %d 的 TD[\"new\"] 字典键值不是字符串"
 
-#: plpy_exec.c:949
+#: plpy_exec.c:989
 #, c-format
 msgid "key \"%s\" found in TD[\"new\"] does not exist as a column in the triggering row"
-msgstr "在 TD[\"new\"]中找到的键 \"%s\"在正在触发的记录中不是作为列而存在."
+msgstr "在 TD[\"new\"] 中找到的键 \"%s\" 在正在触发的记录中不是作为列而存在"
 
-#: plpy_exec.c:954
+#: plpy_exec.c:994
 #, c-format
 msgid "cannot set system attribute \"%s\""
-msgstr "不能设置系统属性\"%s\""
+msgstr "无法设置系统属性 \"%s\""
 
-#: plpy_exec.c:959
+#: plpy_exec.c:999
 #, c-format
 msgid "cannot set generated column \"%s\""
 msgstr "无法设置生成的列 \"%s\""
 
-#: plpy_exec.c:1017
+#: plpy_exec.c:1057
 #, c-format
 msgid "while modifying trigger row"
 msgstr "同时正在修改触发器记录"
 
-#: plpy_exec.c:1075
+#: plpy_exec.c:1115
 #, c-format
 msgid "forcibly aborting a subtransaction that has not been exited"
 msgstr "强行终止一个还未退出的子事务"
 
-#: plpy_main.c:121
+#: plpy_main.c:109
 #, c-format
 msgid "multiple Python libraries are present in session"
-msgstr "会话中存在多个Python库"
+msgstr "会话中存在多个 Python 库"
 
-#: plpy_main.c:122
+#: plpy_main.c:110
 #, c-format
 msgid "Only one Python major version can be used in one session."
-msgstr "一个会话中只能使用一个Python主版本."
+msgstr "一个会话中只能使用一个 Python 主版本."
 
-#: plpy_main.c:138
+#: plpy_main.c:122
 #, c-format
 msgid "untrapped error in initialization"
 msgstr "在初始化过程中出现无法捕获的错误"
 
-#: plpy_main.c:161
+#: plpy_main.c:145
 #, c-format
 msgid "could not import \"__main__\" module"
-msgstr "无法导入模块\"__main__\" "
+msgstr "无法导入 \"__main__\" 模块"
 
-#: plpy_main.c:170
+#: plpy_main.c:154
 #, c-format
 msgid "could not initialize globals"
 msgstr "无法初始化全局变量"
 
-#: plpy_main.c:393
+#: plpy_main.c:352
 #, c-format
 msgid "PL/Python procedure \"%s\""
-msgstr "PL/Python过程\"%s\""
+msgstr "PL/Python 过程 \"%s\""
 
-#: plpy_main.c:396
+#: plpy_main.c:355
 #, c-format
 msgid "PL/Python function \"%s\""
-msgstr "PL/Python函数\"%s\""
+msgstr "PL/Python 函数\"%s\""
 
-#: plpy_main.c:404
+#: plpy_main.c:363
 #, c-format
 msgid "PL/Python anonymous code block"
-msgstr "PL/Python匿名代码块"
+msgstr "PL/Python 匿名代码块"
 
-#: plpy_plpymodule.c:182 plpy_plpymodule.c:185
+#: plpy_plpymodule.c:168 plpy_plpymodule.c:171
 #, c-format
 msgid "could not import \"plpy\" module"
-msgstr "无法导入模块\"plpy\" "
+msgstr "无法导入 \"plpy\" 模块"
 
-#: plpy_plpymodule.c:200
+#: plpy_plpymodule.c:182
 #, c-format
 msgid "could not create the spiexceptions module"
-msgstr "无法创建spiexceptions模块"
+msgstr "无法创建 spiexceptions 模块"
 
-#: plpy_plpymodule.c:208
+#: plpy_plpymodule.c:190
 #, c-format
 msgid "could not add the spiexceptions module"
-msgstr "无法添加spiexceptions模块 "
+msgstr "无法添加 spiexceptions 模块"
 
-#: plpy_plpymodule.c:275
+#: plpy_plpymodule.c:257
 #, c-format
 msgid "could not generate SPI exceptions"
-msgstr "无法产生SPI异常"
+msgstr "无法产生 SPI 异常"
 
-#: plpy_plpymodule.c:443
+#: plpy_plpymodule.c:425
 #, c-format
 msgid "could not unpack arguments in plpy.elog"
-msgstr "无法解析plpy.elog中的参数"
+msgstr "无法解包 plpy.elog 中的参数"
 
-#: plpy_plpymodule.c:452
+#: plpy_plpymodule.c:434
 msgid "could not parse error message in plpy.elog"
-msgstr "无法解析在plpy.elog中的错误消息"
+msgstr "无法解析 plpy.elog 中的错误消息"
 
-#: plpy_plpymodule.c:469
+#: plpy_plpymodule.c:451
 #, c-format
 msgid "argument 'message' given by name and position"
-msgstr "由名称和位置提供的参数'message'"
+msgstr "由名称和位置提供的参数 'message'"
 
-#: plpy_plpymodule.c:496
+#: plpy_plpymodule.c:478
 #, c-format
 msgid "'%s' is an invalid keyword argument for this function"
-msgstr "对于这个函数，'%s'是一个无效的关键词参数"
+msgstr "对于这个函数，'%s' 是一个无效的关键词参数"
 
-#: plpy_plpymodule.c:507 plpy_plpymodule.c:513
+#: plpy_plpymodule.c:489 plpy_plpymodule.c:495
 #, c-format
 msgid "invalid SQLSTATE code"
-msgstr "无效的SQLSTATE代码"
+msgstr "无效的 SQLSTATE 代码"
 
-#: plpy_procedure.c:225
+#: plpy_procedure.c:226
 #, c-format
 msgid "trigger functions can only be called as triggers"
-msgstr "触发器函数只能以触发器的形式调用"
+msgstr "触发器函数只能以触发器的形式被调用"
 
-#: plpy_procedure.c:229
+#: plpy_procedure.c:230
 #, c-format
 msgid "PL/Python functions cannot return type %s"
-msgstr "PL/Python函数不能返回类型%s"
+msgstr "PL/Python 函数不能返回类型 %s"
 
-#: plpy_procedure.c:307
+#: plpy_procedure.c:308
 #, c-format
 msgid "PL/Python functions cannot accept type %s"
-msgstr "PL/Python函数不能接受类型%s"
+msgstr "PL/Python 函数不能接受类型 %s"
 
-#: plpy_procedure.c:397
+#: plpy_procedure.c:396
 #, c-format
 msgid "could not compile PL/Python function \"%s\""
-msgstr "无法编译PL/Python函数\"%s\""
+msgstr "无法编译 PL/Python 函数 \"%s\""
 
-#: plpy_procedure.c:400
+#: plpy_procedure.c:399
 #, c-format
 msgid "could not compile anonymous PL/Python code block"
-msgstr "无法编译PL/Python中的匿名代码块"
+msgstr "无法编译 PL/Python 中的匿名代码块"
 
 #: plpy_resultobject.c:117 plpy_resultobject.c:143 plpy_resultobject.c:169
 #, c-format
@@ -301,32 +301,32 @@ msgstr "命令没有产生结果集"
 #: plpy_spi.c:56
 #, c-format
 msgid "second argument of plpy.prepare must be a sequence"
-msgstr "plpy.prepare的第二个参数必须是一个序列"
+msgstr "plpy.prepare 的第二个参数必须是一个序列"
 
-#: plpy_spi.c:100
+#: plpy_spi.c:98
 #, c-format
 msgid "plpy.prepare: type name at ordinal position %d is not a string"
-msgstr "plpy.prepare: 在顺序位置%d的类型名称不是string"
+msgstr "plpy.prepare: 在顺序位置 %d 的类型名称不是一个字符串"
 
-#: plpy_spi.c:172
+#: plpy_spi.c:170
 #, c-format
 msgid "plpy.execute expected a query or a plan"
-msgstr "plpy.execute期望一个查询或一个计划"
+msgstr "plpy.execute 期望一个查询或一个计划"
 
-#: plpy_spi.c:191
+#: plpy_spi.c:189
 #, c-format
 msgid "plpy.execute takes a sequence as its second argument"
-msgstr "plpy.execute将一个序列作为它的第二个参数"
+msgstr "plpy.execute 将一个序列作为它的第二个参数"
 
-#: plpy_spi.c:299
+#: plpy_spi.c:297
 #, c-format
 msgid "SPI_execute_plan failed: %s"
-msgstr "执行SPI_execute_plan失败: %s"
+msgstr "SPI_execute_plan 执行失败: %s"
 
-#: plpy_spi.c:341
+#: plpy_spi.c:339
 #, c-format
 msgid "SPI_execute failed: %s"
-msgstr "SPI_execute执行失败: %s"
+msgstr "SPI_execute 执行失败: %s"
 
 #: plpy_subxactobject.c:92
 #, c-format
@@ -348,112 +348,114 @@ msgstr "该子事务仍没有进入"
 msgid "there is no subtransaction to exit from"
 msgstr "没有子事务可以退出"
 
-#: plpy_typeio.c:587
+#: plpy_typeio.c:588
 #, c-format
 msgid "could not import a module for Decimal constructor"
 msgstr "无法为十进制构造函数导入模块"
 
-#: plpy_typeio.c:591
+#: plpy_typeio.c:592
 #, c-format
 msgid "no Decimal attribute in module"
 msgstr "模块中没有小数位属性"
 
-#: plpy_typeio.c:597
+#: plpy_typeio.c:598
 #, c-format
 msgid "conversion from numeric to Decimal failed"
-msgstr "由numeric数值到Decimal小数转换失败"
+msgstr "由 numeric 数值到 Decimal 小数转换失败"
 
-#: plpy_typeio.c:911
+#: plpy_typeio.c:912
 #, c-format
 msgid "could not create bytes representation of Python object"
-msgstr "无法创建Python对象的字节表达式"
+msgstr "无法创建 Python 对象的字节表达式"
 
-#: plpy_typeio.c:1056
+#: plpy_typeio.c:1049
 #, c-format
 msgid "could not create string representation of Python object"
-msgstr "无法创建Python对象的字符串表达式"
+msgstr "无法创建 Python 对象的字符串表达式"
 
-#: plpy_typeio.c:1067
+#: plpy_typeio.c:1060
 #, c-format
 msgid "could not convert Python object into cstring: Python string representation appears to contain null bytes"
-msgstr "无法将Python对象转换为cstring: Python字符串表达式可能包含空字节"
+msgstr "无法将 Python 对象转换为 cstring: Python 字符串表达式可能包含空字节"
 
-#: plpy_typeio.c:1178
+#: plpy_typeio.c:1157
 #, c-format
-msgid "number of array dimensions exceeds the maximum allowed (%d)"
-msgstr "数组的维数超过最大允许值(%d)"
+msgid "return value of function with array return type is not a Python sequence"
+msgstr "带有数组返回类型的函数返回值不是一个 Python 序列"
 
-#: plpy_typeio.c:1183
+#: plpy_typeio.c:1202
 #, c-format
 msgid "could not determine sequence length for function return value"
 msgstr "无法确定函数返回值的序列长度"
 
-#: plpy_typeio.c:1188 plpy_typeio.c:1194
+#: plpy_typeio.c:1222 plpy_typeio.c:1237 plpy_typeio.c:1253
 #, c-format
-msgid "array size exceeds the maximum allowed"
-msgstr "数组的大小超过了最大允许值"
+msgid "multidimensional arrays must have array expressions with matching dimensions"
+msgstr "多维数组必须有符合维度的数组表达式"
 
-#: plpy_typeio.c:1222
+#: plpy_typeio.c:1227
 #, c-format
-msgid "return value of function with array return type is not a Python sequence"
-msgstr "带有数组返回类型的函数返回值不是一个Python序列"
+msgid "number of array dimensions exceeds the maximum allowed (%d)"
+msgstr "数组的维数超过最大允许值 (%d)"
 
-#: plpy_typeio.c:1269
-#, c-format
-msgid "wrong length of inner sequence: has length %d, but %d was expected"
-msgstr "内部序列的长度错误：长度为%d，但应为%d"
-
-#: plpy_typeio.c:1271
-#, c-format
-msgid "To construct a multidimensional array, the inner sequences must all have the same length."
-msgstr "要构造多维数组，内部序列的长度必须相同."
-
-#: plpy_typeio.c:1350
+#: plpy_typeio.c:1329
 #, c-format
 msgid "malformed record literal: \"%s\""
 msgstr "有缺陷的记录常量: \"%s\""
 
-#: plpy_typeio.c:1351
+#: plpy_typeio.c:1330
 #, c-format
 msgid "Missing left parenthesis."
-msgstr "缺少一个左括弧"
+msgstr "缺少一个左括弧."
 
-#: plpy_typeio.c:1352 plpy_typeio.c:1553
+#: plpy_typeio.c:1331 plpy_typeio.c:1532
 #, c-format
 msgid "To return a composite type in an array, return the composite type as a Python tuple, e.g., \"[('foo',)]\"."
-msgstr "要返回数组中的复合类型，请将复合类型作为Python元组返回，例如 \"[('foo',)]\"."
+msgstr "要返回数组中的复合类型，请将复合类型作为 Python 元组返回，例如 \"[('foo',)]\"."
 
-#: plpy_typeio.c:1399
+#: plpy_typeio.c:1378
 #, c-format
 msgid "key \"%s\" not found in mapping"
-msgstr "在映射中没有找到键\"%s\""
+msgstr "在映射中没有找到键 \"%s\""
 
-#: plpy_typeio.c:1400
+#: plpy_typeio.c:1379
 #, c-format
 msgid "To return null in a column, add the value None to the mapping with the key named after the column."
-msgstr "为了在一列中返回空值, 需要在列的后面对带有已命名键的映射添加值None"
+msgstr "为了在一列中返回空值, 需要在列的后面对带有已命名键的映射添加值 None."
 
-#: plpy_typeio.c:1453
+#: plpy_typeio.c:1432
 #, c-format
 msgid "length of returned sequence did not match number of columns in row"
 msgstr "所返回序列的长度与在记录中列的数量不匹配"
 
-#: plpy_typeio.c:1551
+#: plpy_typeio.c:1530
 #, c-format
 msgid "attribute \"%s\" does not exist in Python object"
-msgstr "在Python对象中不存在属性\"%s\""
+msgstr "在 Python 对象中不存在属性 \"%s\""
 
-#: plpy_typeio.c:1554
+#: plpy_typeio.c:1533
 #, c-format
 msgid "To return null in a column, let the returned object have an attribute named after column with value None."
-msgstr "为了在一列中返回空值, 需要让返回的对象在带有值None的列后面的带有已命名属性"
+msgstr "为了在一列中返回空值, 需要让返回的对象在带有值 None 的列后面的带有已命名属性."
 
 #: plpy_util.c:31
 #, c-format
 msgid "could not convert Python Unicode object to bytes"
-msgstr "无法将Python中以Unicode编码的对象转换为PostgreSQL服务器字节码"
+msgstr "无法将 Python 中的 Unicode 编码对象转换为 PostgreSQL 服务器字节码"
 
 #: plpy_util.c:37
 #, c-format
 msgid "could not extract bytes from encoded string"
-msgstr "无法从已编码字符串里提取相应字节码值"
+msgstr "无法从已编码字符串里提取相应字节"
+
+#, c-format
+#~ msgid "To construct a multidimensional array, the inner sequences must all have the same length."
+#~ msgstr "要构造多维数组，内部序列的长度必须相同."
+
+#, c-format
+#~ msgid "array size exceeds the maximum allowed"
+#~ msgstr "数组的大小超过了最大允许值"
+
+#, c-format
+#~ msgid "wrong length of inner sequence: has length %d, but %d was expected"
+#~ msgstr "内部序列的长度错误：长度为%d，但应为%d"

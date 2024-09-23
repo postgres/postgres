@@ -11,10 +11,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 15\n"
+"Project-Id-Version: PostgreSQL 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2024-07-20 21:24+0000\n"
-"PO-Revision-Date: 2024-07-22 15:53+0200\n"
+"PO-Revision-Date: 2024-09-16 16:28+0200\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team: French <guillaume@lelarge.info>\n"
 "Language: fr\n"
@@ -22,7 +22,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
-"X-Generator: Poedit 3.4.4\n"
+"X-Generator: Poedit 3.5\n"
 
 #: ../../common/controldata_utils.c:97
 #, c-format
@@ -400,7 +400,7 @@ msgstr "oui"
 #: pg_controldata.c:286
 #, c-format
 msgid "wal_level setting:                    %s\n"
-msgstr "Paramètrage actuel de wal_level :                       %s\n"
+msgstr "Paramétrage actuel de wal_level :                       %s\n"
 
 #: pg_controldata.c:288
 #, c-format
@@ -410,7 +410,7 @@ msgstr "Paramétrage actuel de wal_log_hints :                   %s\n"
 #: pg_controldata.c:290
 #, c-format
 msgid "max_connections setting:              %d\n"
-msgstr "Paramètrage actuel de max_connections :                 %d\n"
+msgstr "Paramétrage actuel de max_connections :                 %d\n"
 
 #: pg_controldata.c:292
 #, c-format
@@ -420,22 +420,22 @@ msgstr "Paramétrage actuel de max_worker_processes :            %d\n"
 #: pg_controldata.c:294
 #, c-format
 msgid "max_wal_senders setting:              %d\n"
-msgstr "Paramètrage actuel de max_wal_senders :                 %d\n"
+msgstr "Paramétrage actuel de max_wal_senders :                 %d\n"
 
 #: pg_controldata.c:296
 #, c-format
 msgid "max_prepared_xacts setting:           %d\n"
-msgstr "Paramètrage actuel de max_prepared_xacts :              %d\n"
+msgstr "Paramétrage actuel de max_prepared_xacts :              %d\n"
 
 #: pg_controldata.c:298
 #, c-format
 msgid "max_locks_per_xact setting:           %d\n"
-msgstr "Paramètrage actuel de max_locks_per_xact :              %d\n"
+msgstr "Paramétrage actuel de max_locks_per_xact :              %d\n"
 
 #: pg_controldata.c:300
 #, c-format
 msgid "track_commit_timestamp setting:       %s\n"
-msgstr "Paramètrage actuel de track_commit_timestamp :          %s\n"
+msgstr "Paramétrage actuel de track_commit_timestamp :          %s\n"
 
 #: pg_controldata.c:302
 #, c-format
@@ -513,71 +513,3 @@ msgstr "Version des sommes de contrôle des pages de données :   %u\n"
 #, c-format
 msgid "Mock authentication nonce:            %s\n"
 msgstr "Nonce pour simuler une identité:            %s\n"
-
-#~ msgid "  -?, --help     show this help, then exit\n"
-#~ msgstr "  -?, --help     affiche cette aide et quitte\n"
-
-#~ msgid "  -V, --version  output version information, then exit\n"
-#~ msgstr "  -V, --version  affiche la version et quitte\n"
-
-#~ msgid "%s: could not open file \"%s\" for reading: %s\n"
-#~ msgstr "%s : n'a pas pu ouvrir le fichier « %s » en lecture : %s\n"
-
-#~ msgid "%s: could not read file \"%s\": %s\n"
-#~ msgstr "%s : n'a pas pu lire le fichier « %s » : %s\n"
-
-#~ msgid "%s: could not read file \"%s\": read %d of %d\n"
-#~ msgstr "%s : n'a pas pu lire le fichier « %s » : a lu %d sur %d\n"
-
-#~ msgid "Float4 argument passing:              %s\n"
-#~ msgstr "Passage d'argument float4 :                             %s\n"
-
-#~ msgid "Prior checkpoint location:            %X/%X\n"
-#~ msgstr "Point de contrôle précédent :                           %X/%X\n"
-
-#~ msgid "Report bugs to <pgsql-bugs@lists.postgresql.org>.\n"
-#~ msgstr "Rapporter les bogues à <pgsql-bugs@lists.postgresql.org>.\n"
-
-#, c-format
-#~ msgid ""
-#~ "The WAL segment size stored in the file, %d byte, is not a power of two\n"
-#~ "between 1 MB and 1 GB.  The file is corrupt and the results below are\n"
-#~ "untrustworthy.\n"
-#~ "\n"
-#~ msgid_plural ""
-#~ "The WAL segment size stored in the file, %d bytes, is not a power of two\n"
-#~ "between 1 MB and 1 GB.  The file is corrupt and the results below are\n"
-#~ "untrustworthy.\n"
-#~ "\n"
-#~ msgstr[0] ""
-#~ "La taille d'un segment WAL enregistré dans le fichier, %d octet, n'est pas une puissance de deux entre 1 Mo et 1 Go. Le fichier est corrompu et les résultats ci-dessous ne proviennent pas d'une source fiable.\n"
-#~ "\n"
-#~ msgstr[1] ""
-#~ "La taille d'un segment WAL enregistré dans le fichier, %d octets, n'est pas une puissance de deux entre 1 Mo et 1 Go. Le fichier est corrompu et les résultats ci-dessous ne proviennent pas d'une source fiable.\n"
-#~ "\n"
-
-#, c-format
-#~ msgid "Try \"%s --help\" for more information.\n"
-#~ msgstr "Essayer « %s --help » pour plus d'informations.\n"
-
-#~ msgid ""
-#~ "Usage:\n"
-#~ "  %s [OPTION] [DATADIR]\n"
-#~ "\n"
-#~ "Options:\n"
-#~ "  --help         show this help, then exit\n"
-#~ "  --version      output version information, then exit\n"
-#~ msgstr ""
-#~ "Usage :\n"
-#~ "  %s [OPTION] [RÉP_DONNÉES]\n"
-#~ "\n"
-#~ "Options :\n"
-#~ "  --help         affiche cette aide et quitte\n"
-#~ "  --version      affiche les informations de version et quitte\n"
-
-#, c-format
-#~ msgid "WARNING: invalid WAL segment size\n"
-#~ msgstr "ATTENTION : taille invalide du segment WAL\n"
-
-#~ msgid "floating-point numbers"
-#~ msgstr "nombres à virgule flottante"

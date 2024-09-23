@@ -8,10 +8,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 15\n"
+"Project-Id-Version: PostgreSQL 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2023-07-30 09:08+0000\n"
-"PO-Revision-Date: 2022-04-12 17:29+0200\n"
+"PO-Revision-Date: 2024-09-16 16:28+0200\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team: French <guillaume@lelarge.info>\n"
 "Language: fr\n"
@@ -19,7 +19,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
-"X-Generator: Poedit 3.0.1\n"
+"X-Generator: Poedit 3.5\n"
 
 #: plpy_cursorobject.c:72
 #, c-format
@@ -390,7 +390,7 @@ msgstr "n'a pas pu créer une représentation chaîne de caractères de l'objet 
 #: plpy_typeio.c:1060
 #, c-format
 msgid "could not convert Python object into cstring: Python string representation appears to contain null bytes"
-msgstr "n'a pas pu convertir l'objet Python en csting : la représentation de la chaîne Python contient des octets nuls"
+msgstr "n'a pas pu convertir l'objet Python en cstring : la représentation de la chaîne Python contient des octets nuls"
 
 #: plpy_typeio.c:1157
 #, c-format
@@ -417,7 +417,7 @@ msgstr "le nombre de dimensions du tableau dépasse le maximum autorisé (%d)"
 #: plpy_typeio.c:1329
 #, c-format
 msgid "malformed record literal: \"%s\""
-msgstr "enregistrement litéral invalide : « %s »"
+msgstr "enregistrement littéral invalide : « %s »"
 
 #: plpy_typeio.c:1330
 #, c-format
@@ -469,122 +469,3 @@ msgstr "n'a pas pu convertir l'objet Unicode Python en octets"
 #, c-format
 msgid "could not extract bytes from encoded string"
 msgstr "n'a pas pu extraire les octets de la chaîne encodée"
-
-#~ msgid "PL/Python does not support conversion to arrays of row types."
-#~ msgstr "PL/Python ne supporte pas les conversions vers des tableaux de types row."
-
-#~ msgid "PL/Python function \"%s\" could not execute plan"
-#~ msgstr "la fonction PL/python « %s » n'a pas pu exécuter un plan"
-
-#~ msgid "PL/Python function \"%s\" failed"
-#~ msgstr "échec de la fonction PL/python « %s »"
-
-#~ msgid "PL/Python only supports one-dimensional arrays."
-#~ msgstr "PL/Python supporte seulement les tableaux uni-dimensionnels."
-
-#~ msgid "PL/Python: %s"
-#~ msgstr "PL/python : %s"
-
-#~ msgid "PyCObject_AsVoidPtr() failed"
-#~ msgstr "échec de PyCObject_AsVoidPtr()"
-
-#~ msgid "PyCObject_FromVoidPtr() failed"
-#~ msgstr "échec de PyCObject_FromVoidPtr()"
-
-#~ msgid "Python major version mismatch in session"
-#~ msgstr "Différence de version majeure de Python dans la session"
-
-#~ msgid "Start a new session to use a different Python major version."
-#~ msgstr ""
-#~ "Lancez une nouvelle session pour utiliser une version majeure différente de\n"
-#~ "Python."
-
-#~ msgid "This session has previously used Python major version %d, and it is now attempting to use Python major version %d."
-#~ msgstr ""
-#~ "Cette session a auparavant utilisé la version majeure %d de Python et elle\n"
-#~ "essaie maintenant d'utiliser la version majeure %d."
-
-#, c-format
-#~ msgid "To construct a multidimensional array, the inner sequences must all have the same length."
-#~ msgstr "Pour construire un tableau multidimensionnel, les séquences internes doivent toutes avoir la même longueur."
-
-#, c-format
-#~ msgid "array size exceeds the maximum allowed"
-#~ msgstr "la taille du tableau dépasse le maximum permis"
-
-#~ msgid "cannot convert multidimensional array to Python list"
-#~ msgstr "ne peut pas convertir un tableau multidimensionnel en liste Python"
-
-#~ msgid "could not compute string representation of Python object in PL/Python function \"%s\" while modifying trigger row"
-#~ msgstr ""
-#~ "n'a pas pu traiter la représentation de la chaîne d'un objet Python dans\n"
-#~ "la fonction PL/Python « %s » lors de la modification de la ligne du trigger"
-
-#~ msgid "could not create exception \"%s\""
-#~ msgstr "n'a pas pu créer l'exception « %s »"
-
-#~ msgid "could not create globals"
-#~ msgstr "n'a pas pu créer les globales"
-
-#~ msgid "could not create new Python list"
-#~ msgstr "n'a pas pu créer la nouvelle liste Python"
-
-#~ msgid "could not create new dictionary"
-#~ msgstr "n'a pas pu créer le nouveau dictionnaire"
-
-#~ msgid "could not create new dictionary while building trigger arguments"
-#~ msgstr ""
-#~ "n'a pas pu créer un nouveau dictionnaire lors de la construction des\n"
-#~ "arguments du trigger"
-
-#~ msgid "could not create procedure cache"
-#~ msgstr "n'a pas pu créer le cache de procédure"
-
-#~ msgid "could not create string representation of Python object in PL/Python function \"%s\" while creating return value"
-#~ msgstr ""
-#~ "n'a pas pu créer la représentation en chaîne de caractère de l'objet\n"
-#~ "Python dans la fonction PL/python « %s » lors de la création de la valeur\n"
-#~ "de retour"
-
-#~ msgid "could not create the base SPI exceptions"
-#~ msgstr "n'a pas pu créer les exceptions SPI de base"
-
-#~ msgid "invalid arguments for plpy.prepare"
-#~ msgstr "arguments invalides pour plpy.prepare"
-
-#~ msgid "multidimensional arrays must have array expressions with matching dimensions. PL/Python function return value has sequence length %d while expected %d"
-#~ msgstr ""
-#~ "les tableaux multidimensionnels doivent avoir des expressions de tableaux\n"
-#~ "avec des dimensions correspondantes. La valeur de retour de la fonction\n"
-#~ "PL/Python a une longueur de séquence %d alors que %d est attendue"
-
-#~ msgid "out of memory"
-#~ msgstr "mémoire épuisée"
-
-#~ msgid "plan.status takes no arguments"
-#~ msgstr "plan.status ne prends pas d'arguments"
-
-#~ msgid "plpy.prepare does not support composite types"
-#~ msgstr "plpy.prepare ne supporte pas les types composites"
-
-#~ msgid "the message is already specified"
-#~ msgstr "le message est déjà spécifié"
-
-#~ msgid "transaction aborted"
-#~ msgstr "transaction annulée"
-
-#~ msgid "unrecognized error in PLy_spi_execute_fetch_result"
-#~ msgstr "erreur inconnue dans PLy_spi_execute_fetch_result"
-
-#~ msgid "unrecognized error in PLy_spi_execute_plan"
-#~ msgstr "erreur inconnue dans PLy_spi_execute_plan"
-
-#~ msgid "unrecognized error in PLy_spi_execute_query"
-#~ msgstr "erreur inconnue dans PLy_spi_execute_query"
-
-#~ msgid "unrecognized error in PLy_spi_prepare"
-#~ msgstr "erreur inconnue dans PLy_spi_prepare"
-
-#, c-format
-#~ msgid "wrong length of inner sequence: has length %d, but %d was expected"
-#~ msgstr "mauvaise longueur de la séquence interne : a une longueur %d, mais %d était attendu"
