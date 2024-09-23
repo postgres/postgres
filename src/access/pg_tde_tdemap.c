@@ -1387,7 +1387,7 @@ pg_tde_put_key_into_cache(Oid rel_id, RelKeyData *key)
 
 #ifndef FRONTEND
 		oldCtx = MemoryContextSwitchTo(TopMemoryContext);
-		chachePage = palloc_aligned(pageSize, size, MCXT_ALLOC_ZERO);
+		chachePage = palloc_aligned(size, pageSize, MCXT_ALLOC_ZERO);
 		MemoryContextSwitchTo(oldCtx);
 #else
 		chachePage = aligned_alloc(pageSize, size);
