@@ -544,19 +544,28 @@ inc_lex_level(JsonLexContext *lex)
 
 		new_prediction = REALLOC(lex->pstack->prediction,
 								 new_stack_size * JS_MAX_PROD_LEN);
-		new_fnames = REALLOC(lex->pstack->fnames,
-							 new_stack_size * sizeof(char *));
-		new_fnull = REALLOC(lex->pstack->fnull, new_stack_size * sizeof(bool));
-
 #ifdef JSONAPI_USE_PQEXPBUFFER
-		if (!new_prediction || !new_fnames || !new_fnull)
+		if (!new_prediction)
 			return false;
 #endif
+		lex->pstack->prediction = new_prediction;
+
+		new_fnames = REALLOC(lex->pstack->fnames,
+							 new_stack_size * sizeof(char *));
+#ifdef JSONAPI_USE_PQEXPBUFFER
+		if (!new_fnames)
+			return false;
+#endif
+		lex->pstack->fnames = new_fnames;
+
+		new_fnull = REALLOC(lex->pstack->fnull, new_stack_size * sizeof(bool));
+#ifdef JSONAPI_USE_PQEXPBUFFER
+		if (!new_fnull)
+			return false;
+#endif
+		lex->pstack->fnull = new_fnull;
 
 		lex->pstack->stack_size = new_stack_size;
-		lex->pstack->prediction = new_prediction;
-		lex->pstack->fnames = new_fnames;
-		lex->pstack->fnull = new_fnull;
 	}
 
 	lex->lex_level += 1;
