@@ -120,7 +120,8 @@ static void show_sort_group_keys(PlanState *planstate, const char *qlabel,
 								 List *ancestors, ExplainState *es);
 static void show_sortorder_options(StringInfo buf, Node *sortexpr,
 								   Oid sortOperator, Oid collation, bool nullsFirst);
-static void show_storage_info(Tuplestorestate *tupstore, ExplainState *es);
+static void show_storage_info(char *maxStorageType, int64 maxSpaceUsed,
+							  ExplainState *es);
 static void show_tablesample(TableSampleClause *tsc, PlanState *planstate,
 							 List *ancestors, ExplainState *es);
 static void show_sort_info(SortState *sortstate, ExplainState *es);
@@ -129,6 +130,11 @@ static void show_incremental_sort_info(IncrementalSortState *incrsortstate,
 static void show_hash_info(HashState *hashstate, ExplainState *es);
 static void show_material_info(MaterialState *mstate, ExplainState *es);
 static void show_windowagg_info(WindowAggState *winstate, ExplainState *es);
+static void show_ctescan_info(CteScanState *ctescanstate, ExplainState *es);
+static void show_table_func_scan_info(TableFuncScanState *tscanstate,
+									  ExplainState *es);
+static void show_recursive_union_info(RecursiveUnionState *rstate,
+									  ExplainState *es);
 static void show_memoize_info(MemoizeState *mstate, List *ancestors,
 							  ExplainState *es);
 static void show_hashagg_info(AggState *aggstate, ExplainState *es);
@@ -2046,6 +2052,8 @@ ExplainNode(PlanState *planstate, List *ancestors,
 			if (plan->qual)
 				show_instrumentation_count("Rows Removed by Filter", 1,
 										   planstate, es);
+			if (IsA(plan, CteScan))
+				show_ctescan_info(castNode(CteScanState, planstate), es);
 			break;
 		case T_Gather:
 			{
@@ -2127,6 +2135,8 @@ ExplainNode(PlanState *planstate, List *ancestors,
 			if (plan->qual)
 				show_instrumentation_count("Rows Removed by Filter", 1,
 										   planstate, es);
+			show_table_func_scan_info(castNode(TableFuncScanState,
+											   planstate), es);
 			break;
 		case T_TidScan:
 			{
@@ -2277,6 +2287,10 @@ ExplainNode(PlanState *planstate, List *ancestors,
 		case T_Memoize:
 			show_memoize_info(castNode(MemoizeState, planstate), ancestors,
 							  es);
+			break;
+		case T_RecursiveUnion:
+			show_recursive_union_info(castNode(RecursiveUnionState,
+											   planstate), es);
 			break;
 		default:
 			break;
@@ -2901,14 +2915,9 @@ show_sortorder_options(StringInfo buf, Node *sortexpr,
  * Show information on storage method and maximum memory/disk space used.
  */
 static void
-show_storage_info(Tuplestorestate *tupstore, ExplainState *es)
+show_storage_info(char *maxStorageType, int64 maxSpaceUsed, ExplainState *es)
 {
-	char	   *maxStorageType;
-	int64		maxSpaceUsed,
-				maxSpaceUsedKB;
-
-	tuplestore_get_stats(tupstore, &maxStorageType, &maxSpaceUsed);
-	maxSpaceUsedKB = BYTES_TO_KILOBYTES(maxSpaceUsed);
+	int64		maxSpaceUsedKB = BYTES_TO_KILOBYTES(maxSpaceUsed);
 
 	if (es->format != EXPLAIN_FORMAT_TEXT)
 	{
@@ -3380,6 +3389,9 @@ show_hash_info(HashState *hashstate, ExplainState *es)
 static void
 show_material_info(MaterialState *mstate, ExplainState *es)
 {
+	char	   *maxStorageType;
+	int64		maxSpaceUsed;
+
 	Tuplestorestate *tupstore = mstate->tuplestorestate;
 
 	/*
@@ -3389,7 +3401,8 @@ show_material_info(MaterialState *mstate, ExplainState *es)
 	if (!es->analyze || tupstore == NULL)
 		return;
 
-	show_storage_info(tupstore, es);
+	tuplestore_get_stats(tupstore, &maxStorageType, &maxSpaceUsed);
+	show_storage_info(maxStorageType, maxSpaceUsed, es);
 }
 
 /*
@@ -3399,6 +3412,9 @@ show_material_info(MaterialState *mstate, ExplainState *es)
 static void
 show_windowagg_info(WindowAggState *winstate, ExplainState *es)
 {
+	char	   *maxStorageType;
+	int64		maxSpaceUsed;
+
 	Tuplestorestate *tupstore = winstate->buffer;
 
 	/*
@@ -3408,7 +3424,78 @@ show_windowagg_info(WindowAggState *winstate, ExplainState *es)
 	if (!es->analyze || tupstore == NULL)
 		return;
 
-	show_storage_info(tupstore, es);
+	tuplestore_get_stats(tupstore, &maxStorageType, &maxSpaceUsed);
+	show_storage_info(maxStorageType, maxSpaceUsed, es);
+}
+
+/*
+ * Show information on CTE Scan node, storage method and maximum memory/disk
+ * space used.
+ */
+static void
+show_ctescan_info(CteScanState *ctescanstate, ExplainState *es)
+{
+	char	   *maxStorageType;
+	int64		maxSpaceUsed;
+
+	Tuplestorestate *tupstore = ctescanstate->leader->cte_table;
+
+	if (!es->analyze || tupstore == NULL)
+		return;
+
+	tuplestore_get_stats(tupstore, &maxStorageType, &maxSpaceUsed);
+	show_storage_info(maxStorageType, maxSpaceUsed, es);
+}
+
+/*
+ * Show information on Table Function Scan node, storage method and maximum
+ * memory/disk space used.
+ */
+static void
+show_table_func_scan_info(TableFuncScanState *tscanstate, ExplainState *es)
+{
+	char	   *maxStorageType;
+	int64		maxSpaceUsed;
+
+	Tuplestorestate *tupstore = tscanstate->tupstore;
+
+	if (!es->analyze || tupstore == NULL)
+		return;
+
+	tuplestore_get_stats(tupstore, &maxStorageType, &maxSpaceUsed);
+	show_storage_info(maxStorageType, maxSpaceUsed, es);
+}
+
+/*
+ * Show information on Recursive Union node, storage method and maximum
+ * memory/disk space used.
+ */
+static void
+show_recursive_union_info(RecursiveUnionState *rstate, ExplainState *es)
+{
+	char	   *maxStorageType,
+			   *tempStorageType;
+	int64		maxSpaceUsed,
+				tempSpaceUsed;
+
+	if (!es->analyze)
+		return;
+
+	/*
+	 * Recursive union node uses two tuplestores.  We employ the storage type
+	 * from one of them which consumed more memory/disk than the other.  The
+	 * storage size is sum of the two.
+	 */
+	tuplestore_get_stats(rstate->working_table, &tempStorageType,
+						 &tempSpaceUsed);
+	tuplestore_get_stats(rstate->intermediate_table, &maxStorageType,
+						 &maxSpaceUsed);
+
+	if (tempSpaceUsed > maxSpaceUsed)
+		maxStorageType = tempStorageType;
+
+	maxSpaceUsed += tempSpaceUsed;
+	show_storage_info(maxStorageType, maxSpaceUsed, es);
 }
 
 /*
