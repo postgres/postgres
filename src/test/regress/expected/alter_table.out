@@ -3911,7 +3911,8 @@ CREATE TABLE unparted (
 );
 CREATE TABLE fail_part (like unparted);
 ALTER TABLE unparted ATTACH PARTITION fail_part FOR VALUES IN ('a');
-ERROR:  table "unparted" is not partitioned
+ERROR:  ALTER action ATTACH PARTITION cannot be performed on relation "unparted"
+DETAIL:  This operation is not supported for tables.
 DROP TABLE unparted, fail_part;
 -- check that partition bound is compatible
 CREATE TABLE list_parted (
@@ -4281,7 +4282,14 @@ DROP TABLE fail_part;
 -- check that the table is partitioned at all
 CREATE TABLE regular_table (a int);
 ALTER TABLE regular_table DETACH PARTITION any_name;
-ERROR:  table "regular_table" is not partitioned
+ERROR:  ALTER action DETACH PARTITION cannot be performed on relation "regular_table"
+DETAIL:  This operation is not supported for tables.
+ALTER TABLE regular_table DETACH PARTITION any_name CONCURRENTLY;
+ERROR:  ALTER action DETACH PARTITION cannot be performed on relation "regular_table"
+DETAIL:  This operation is not supported for tables.
+ALTER TABLE regular_table DETACH PARTITION any_name FINALIZE;
+ERROR:  ALTER action DETACH PARTITION ... FINALIZE cannot be performed on relation "regular_table"
+DETAIL:  This operation is not supported for tables.
 DROP TABLE regular_table;
 -- check that the partition being detached exists at all
 ALTER TABLE list_parted2 DETACH PARTITION part_4;

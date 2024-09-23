@@ -2742,6 +2742,8 @@ DROP TABLE fail_part;
 -- check that the table is partitioned at all
 CREATE TABLE regular_table (a int);
 ALTER TABLE regular_table DETACH PARTITION any_name;
+ALTER TABLE regular_table DETACH PARTITION any_name CONCURRENTLY;
+ALTER TABLE regular_table DETACH PARTITION any_name FINALIZE;
 DROP TABLE regular_table;
 
 -- check that the partition being detached exists at all
