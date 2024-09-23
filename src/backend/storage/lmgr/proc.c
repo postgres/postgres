@@ -322,7 +322,7 @@ InitProcGlobal(void)
 	}
 
 	/* Should have consumed exactly the expected amount of fast-path memory. */
-	Assert(fpPtr = fpEndPtr);
+	Assert(fpPtr == fpEndPtr);
 
 	/*
 	 * Save pointers to the blocks of PGPROC structures reserved for auxiliary
