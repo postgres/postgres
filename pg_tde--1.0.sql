@@ -165,7 +165,8 @@ SELECT EXISTS (
     SELECT 1
     FROM   pg_catalog.pg_class
     WHERE  relname = table_name
-    AND    relam = (SELECT oid FROM pg_catalog.pg_am WHERE amname = 'tde_heap_basic')
+    AND    (relam = (SELECT oid FROM pg_catalog.pg_am WHERE amname = 'tde_heap_basic')
+        OR relam = (SELECT oid FROM pg_catalog.pg_am WHERE amname = 'tde_heap'))
     )$$
 LANGUAGE SQL;
 
