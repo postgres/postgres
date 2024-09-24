@@ -173,7 +173,7 @@ static void SnapBuildWaitSnapshot(xl_running_xacts *running, TransactionId cutof
 /* serialization functions */
 static void SnapBuildSerialize(SnapBuild *builder, XLogRecPtr lsn);
 static bool SnapBuildRestore(SnapBuild *builder, XLogRecPtr lsn);
-static void SnapBuildRestoreContents(int fd, char *dest, Size size, const char *path);
+static void SnapBuildRestoreContents(int fd, void *dest, Size size, const char *path);
 
 /*
  * Allocate a new snapshot builder.
@@ -1722,7 +1722,7 @@ SnapBuildRestoreSnapshot(SnapBuildOnDisk *ondisk, const char *path,
 	fsync_fname(PG_LOGICAL_SNAPSHOTS_DIR, true);
 
 	/* read statically sized portion of snapshot */
-	SnapBuildRestoreContents(fd, (char *) ondisk, SnapBuildOnDiskConstantSize, path);
+	SnapBuildRestoreContents(fd, ondisk, SnapBuildOnDiskConstantSize, path);
 
 	if (ondisk->magic != SNAPBUILD_MAGIC)
 		ereport(ERROR,
@@ -1742,7 +1742,7 @@ SnapBuildRestoreSnapshot(SnapBuildOnDisk *ondisk, const char *path,
 				SnapBuildOnDiskConstantSize - SnapBuildOnDiskNotChecksummedSize);
 
 	/* read SnapBuild */
-	SnapBuildRestoreContents(fd, (char *) &ondisk->builder, sizeof(SnapBuild), path);
+	SnapBuildRestoreContents(fd, &ondisk->builder, sizeof(SnapBuild), path);
 	COMP_CRC32C(checksum, &ondisk->builder, sizeof(SnapBuild));
 
 	/* restore committed xacts information */
@@ -1750,7 +1750,7 @@ SnapBuildRestoreSnapshot(SnapBuildOnDisk *ondisk, const char *path,
 	{
 		sz = sizeof(TransactionId) * ondisk->builder.committed.xcnt;
 		ondisk->builder.committed.xip = MemoryContextAllocZero(context, sz);
-		SnapBuildRestoreContents(fd, (char *) ondisk->builder.committed.xip, sz, path);
+		SnapBuildRestoreContents(fd, ondisk->builder.committed.xip, sz, path);
 		COMP_CRC32C(checksum, ondisk->builder.committed.xip, sz);
 	}
 
@@ -1759,7 +1759,7 @@ SnapBuildRestoreSnapshot(SnapBuildOnDisk *ondisk, const char *path,
 	{
 		sz = sizeof(TransactionId) * ondisk->builder.catchange.xcnt;
 		ondisk->builder.catchange.xip = MemoryContextAllocZero(context, sz);
-		SnapBuildRestoreContents(fd, (char *) ondisk->builder.catchange.xip, sz, path);
+		SnapBuildRestoreContents(fd, ondisk->builder.catchange.xip, sz, path);
 		COMP_CRC32C(checksum, ondisk->builder.catchange.xip, sz);
 	}
 
@@ -1882,7 +1882,7 @@ snapshot_not_interesting:
  * Read the contents of the serialized snapshot to 'dest'.
  */
 static void
-SnapBuildRestoreContents(int fd, char *dest, Size size, const char *path)
+SnapBuildRestoreContents(int fd, void *dest, Size size, const char *path)
 {
 	int			readBytes;
 
