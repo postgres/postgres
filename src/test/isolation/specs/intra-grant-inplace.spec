@@ -14,6 +14,7 @@ teardown
 
 # heap_update()
 session s1
+setup	{ SET deadlock_timeout = '100s'; }
 step b1	{ BEGIN; }
 step grant1	{
 	GRANT SELECT ON intra_grant_inplace TO PUBLIC;
@@ -25,6 +26,7 @@ step c1	{ COMMIT; }
 
 # inplace update
 session s2
+setup	{ SET deadlock_timeout = '10ms'; }
 step read2	{
 	SELECT relhasindex FROM pg_class
 	WHERE oid = 'intra_grant_inplace'::regclass;
@@ -48,7 +50,6 @@ step sfu3	{
 	SELECT relhasindex FROM pg_class
 	WHERE oid = 'intra_grant_inplace'::regclass FOR UPDATE;
 }
-step as3	{ LOCK TABLE intra_grant_inplace IN ACCESS SHARE MODE; }
 step r3	{ ROLLBACK; }
 
 # Additional heap_update()
@@ -73,8 +74,6 @@ step keyshr5	{
 }
 teardown	{ ROLLBACK; }
 
-
-# XXX extant bugs: permutation comments refer to planned future LockTuple()
 
 permutation
 	b1
@@ -118,7 +117,6 @@ permutation
 	b1
 	grant1(r3)	# acquire LockTuple(), await sfu3 xmax
 	read2
-	as3			# XXX temporary until patch adds locking to addk2
 	addk2(c1)	# block in LockTuple() behind grant1
 	r3			# unblock grant1; addk2 now awaits grant1 xmax
 	c1
@@ -128,8 +126,8 @@ permutation
 	b2
 	sfnku2
 	b1
-	grant1(c2)		# acquire LockTuple(), await sfnku2 xmax
-	addk2			# block in LockTuple() behind grant1 = deadlock
+	grant1(addk2)	# acquire LockTuple(), await sfnku2 xmax
+	addk2(*)		# block in LockTuple() behind grant1 = deadlock
 	c2
 	c1
 	read2
@@ -140,7 +138,7 @@ permutation
 	grant1
 	b3
 	sfu3(c1)	# acquire LockTuple(), await grant1 xmax
-	revoke4(sfu3)	# block in LockTuple() behind sfu3
+	revoke4(r3)	# block in LockTuple() behind sfu3
 	c1
 	r3			# revoke4 unlocks old tuple and finds new
 
