@@ -807,7 +807,7 @@ dropdb(const char *dbname, bool missing_ok)
 	Relation	pgdbrel;
 	HeapTuple	tup;
 	ScanKeyData scankey;
-	SysScanDesc scan;
+	void	   *inplace_state;
 	Form_pg_database datform;
 	int			notherbackends;
 	int			npreparedxacts;
@@ -933,24 +933,6 @@ dropdb(const char *dbname, bool missing_ok)
 	dropDatabaseDependencies(db_id);
 
 	/*
-	 * Get the pg_database tuple to scribble on.  Note that this does not
-	 * directly rely on the syscache to avoid issues with flattened toast
-	 * values for the in-place update.
-	 */
-	ScanKeyInit(&scankey,
-				Anum_pg_database_datname,
-				BTEqualStrategyNumber, F_NAMEEQ,
-				CStringGetDatum(dbname));
-
-	scan = systable_beginscan(pgdbrel, DatabaseNameIndexId, true,
-							  NULL, 1, &scankey);
-
-	tup = systable_getnext(scan);
-	if (!HeapTupleIsValid(tup))
-		elog(ERROR, "cache lookup failed for database %u", db_id);
-	datform = (Form_pg_database) GETSTRUCT(tup);
-
-	/*
 	 * Except for the deletion of the catalog row, subsequent actions are not
 	 * transactional (consider DropDatabaseBuffers() discarding modified
 	 * buffers). But we might crash or get interrupted below. To prevent
@@ -961,8 +943,17 @@ dropdb(const char *dbname, bool missing_ok)
 	 * modification is durable before performing irreversible filesystem
 	 * operations.
 	 */
+	ScanKeyInit(&scankey,
+				Anum_pg_database_datname,
+				BTEqualStrategyNumber, F_NAMEEQ,
+				CStringGetDatum(dbname));
+	systable_inplace_update_begin(pgdbrel, DatabaseNameIndexId, true,
+								  NULL, 1, &scankey, &tup, &inplace_state);
+	if (!HeapTupleIsValid(tup))
+		elog(ERROR, "cache lookup failed for database %u", db_id);
+	datform = (Form_pg_database) GETSTRUCT(tup);
 	datform->datconnlimit = DATCONNLIMIT_INVALID_DB;
-	heap_inplace_update(pgdbrel, tup);
+	systable_inplace_update_finish(inplace_state, tup);
 	XLogFlush(XactLastRecEnd);
 
 	/*
@@ -970,8 +961,7 @@ dropdb(const char *dbname, bool missing_ok)
 	 * the row will be gone, but if we fail, dropdb() can be invoked again.
 	 */
 	CatalogTupleDelete(pgdbrel, &tup->t_self);
-
-	systable_endscan(scan);
+	heap_freetuple(tup);
 
 	/*
 	 * Drop db-specific replication slots.
