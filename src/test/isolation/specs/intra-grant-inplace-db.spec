@@ -42,5 +42,4 @@ step cmp3	{
 }
 
 
-# XXX extant bug
 permutation snap3 b1 grant1 vac2(c1) snap3 c1 cmp3

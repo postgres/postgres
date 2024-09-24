@@ -32,12 +32,9 @@ setup
 	CREATE TABLE vactest.orig50 ();
 	SELECT vactest.mkrels('orig', 51, 100);
 }
-
-# XXX DROP causes an assertion failure; adopt DROP once fixed
 teardown
 {
-	--DROP SCHEMA vactest CASCADE;
-	DO $$BEGIN EXECUTE 'ALTER SCHEMA vactest RENAME TO schema' || oid FROM pg_namespace where nspname = 'vactest'; END$$;
+	DROP SCHEMA vactest CASCADE;
 	DROP EXTENSION injection_points;
 }
 
@@ -56,11 +53,13 @@ step read1	{
 	FROM pg_class WHERE oid = 'vactest.orig50'::regclass;
 }
 
-
 # Transactional updates of the tuple vac1 is waiting to inplace-update.
 session s2
 step grant2		{ GRANT SELECT ON TABLE vactest.orig50 TO PUBLIC; }
-
+step revoke2	{ REVOKE SELECT ON TABLE vactest.orig50 FROM PUBLIC; }
+step begin2		{ BEGIN; }
+step c2			{ COMMIT; }
+step r2			{ ROLLBACK; }
 
 # Non-blocking actions.
 session s3
@@ -74,10 +73,69 @@ step mkrels3	{
 }
 
 
-# XXX extant bug
+# target gains a successor at the last moment
 permutation
 	vac1(mkrels3)	# reads pg_class tuple T0 for vactest.orig50, xmax invalid
 	grant2			# T0 becomes eligible for pruning, T1 is successor
 	vac3			# T0 becomes LP_UNUSED
-	mkrels3			# T0 reused; vac1 wakes and overwrites the reused T0
+	mkrels3			# vac1 wakes, scans to T1
 	read1
+
+# target already has a successor, which commits
+permutation
+	begin2
+	grant2			# T0.t_ctid = T1
+	vac1(mkrels3)	# reads T0 for vactest.orig50
+	c2				# T0 becomes eligible for pruning
+	vac3			# T0 becomes LP_UNUSED
+	mkrels3			# vac1 wakes, scans to T1
+	read1
+
+# target already has a successor, which becomes LP_UNUSED at the last moment
+permutation
+	begin2
+	grant2			# T0.t_ctid = T1
+	vac1(mkrels3)	# reads T0 for vactest.orig50
+	r2				# T1 becomes eligible for pruning
+	vac3			# T1 becomes LP_UNUSED
+	mkrels3			# reuse T1; vac1 scans to T0
+	read1
+
+# target already has a successor, which becomes LP_REDIRECT at the last moment
+permutation
+	begin2
+	grant2			# T0.t_ctid = T1, non-HOT due to filled page
+	vac1(mkrels3)	# reads T0
+	c2
+	revoke2			# HOT update to T2
+	grant2			# HOT update to T3
+	vac3			# T1 becomes LP_REDIRECT
+	mkrels3			# reuse T2; vac1 scans to T3
+	read1
+
+# waiting for updater to end
+permutation
+	vac1(c2)		# reads pg_class tuple T0 for vactest.orig50, xmax invalid
+	begin2
+	grant2			# T0.t_ctid = T1, non-HOT due to filled page
+	revoke2			# HOT update to T2
+	mkrels3			# vac1 awakes briefly, then waits for s2
+	c2
+	read1
+
+# Another LP_UNUSED.  This time, do change the live tuple.  Final live tuple
+# body is identical to original, at a different TID.
+permutation
+	begin2
+	grant2			# T0.t_ctid = T1, non-HOT due to filled page
+	vac1(mkrels3)	# reads T0
+	r2				# T1 becomes eligible for pruning
+	grant2			# T0.t_ctid = T2; T0 becomes eligible for pruning
+	revoke2			# T2.t_ctid = T3; T2 becomes eligible for pruning
+	vac3			# T0, T1 & T2 become LP_UNUSED
+	mkrels3			# reuse T0, T1 & T2; vac1 scans to T3
+	read1
+
+# Another LP_REDIRECT.  Compared to the earlier test, omit the last grant2.
+# Hence, final live tuple body is identical to original, at a different TID.
+permutation begin2 grant2 vac1(mkrels3) c2 revoke2 vac3 mkrels3 read1

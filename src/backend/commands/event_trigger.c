@@ -946,25 +946,18 @@ EventTriggerOnLogin(void)
 		{
 			Relation	pg_db = table_open(DatabaseRelationId, RowExclusiveLock);
 			HeapTuple	tuple;
+			void	   *state;
 			Form_pg_database db;
 			ScanKeyData key[1];
-			SysScanDesc scan;
 
-			/*
-			 * Get the pg_database tuple to scribble on.  Note that this does
-			 * not directly rely on the syscache to avoid issues with
-			 * flattened toast values for the in-place update.
-			 */
+			/* Fetch a copy of the tuple to scribble on */
 			ScanKeyInit(&key[0],
 						Anum_pg_database_oid,
 						BTEqualStrategyNumber, F_OIDEQ,
 						ObjectIdGetDatum(MyDatabaseId));
 
-			scan = systable_beginscan(pg_db, DatabaseOidIndexId, true,
-									  NULL, 1, key);
-			tuple = systable_getnext(scan);
-			tuple = heap_copytuple(tuple);
-			systable_endscan(scan);
+			systable_inplace_update_begin(pg_db, DatabaseOidIndexId, true,
+										  NULL, 1, key, &tuple, &state);
 
 			if (!HeapTupleIsValid(tuple))
 				elog(ERROR, "could not find tuple for database %u", MyDatabaseId);
@@ -980,13 +973,15 @@ EventTriggerOnLogin(void)
 				 * that avoids possible waiting on the row-level lock. Second,
 				 * that avoids dealing with TOAST.
 				 *
-				 * It's known that changes made by heap_inplace_update() may
-				 * be lost due to concurrent normal updates.  However, we are
-				 * OK with that.  The subsequent connections will still have a
-				 * chance to set "dathasloginevt" to false.
+				 * Changes made by inplace update may be lost due to
+				 * concurrent normal updates; see inplace-inval.spec. However,
+				 * we are OK with that.  The subsequent connections will still
+				 * have a chance to set "dathasloginevt" to false.
 				 */
-				heap_inplace_update(pg_db, tuple);
+				systable_inplace_update_finish(state, tuple);
 			}
+			else
+				systable_inplace_update_cancel(state);
 			table_close(pg_db, RowExclusiveLock);
 			heap_freetuple(tuple);
 		}
