@@ -3534,6 +3534,7 @@ RelationSetNewRelfilenode(Relation relation, char persistence)
 {
 	Oid			newrelfilenode;
 	Relation	pg_class;
+	ItemPointerData otid;
 	HeapTuple	tuple;
 	Form_pg_class classform;
 	MultiXactId minmulti = InvalidMultiXactId;
@@ -3549,11 +3550,12 @@ RelationSetNewRelfilenode(Relation relation, char persistence)
 	 */
 	pg_class = table_open(RelationRelationId, RowExclusiveLock);
 
-	tuple = SearchSysCacheCopy1(RELOID,
-								ObjectIdGetDatum(RelationGetRelid(relation)));
+	tuple = SearchSysCacheLockedCopy1(RELOID,
+									  ObjectIdGetDatum(RelationGetRelid(relation)));
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "could not find tuple for relation %u",
 			 RelationGetRelid(relation));
+	otid = tuple->t_self;
 	classform = (Form_pg_class) GETSTRUCT(tuple);
 
 	/*
@@ -3652,9 +3654,10 @@ RelationSetNewRelfilenode(Relation relation, char persistence)
 		classform->relminmxid = minmulti;
 		classform->relpersistence = persistence;
 
-		CatalogTupleUpdate(pg_class, &tuple->t_self, tuple);
+		CatalogTupleUpdate(pg_class, &otid, tuple);
 	}
 
+	UnlockTuple(pg_class, &otid, InplaceUpdateTupleLock);
 	heap_freetuple(tuple);
 
 	table_close(pg_class, RowExclusiveLock);
