@@ -388,6 +388,7 @@ SetDatabaseHasLoginEventTriggers(void)
 	/* Set dathasloginevt flag in pg_database */
 	Form_pg_database db;
 	Relation	pg_db = table_open(DatabaseRelationId, RowExclusiveLock);
+	ItemPointerData otid;
 	HeapTuple	tuple;
 
 	/*
@@ -399,16 +400,18 @@ SetDatabaseHasLoginEventTriggers(void)
 	 */
 	LockSharedObject(DatabaseRelationId, MyDatabaseId, 0, AccessExclusiveLock);
 
-	tuple = SearchSysCacheCopy1(DATABASEOID, ObjectIdGetDatum(MyDatabaseId));
+	tuple = SearchSysCacheLockedCopy1(DATABASEOID, ObjectIdGetDatum(MyDatabaseId));
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "cache lookup failed for database %u", MyDatabaseId);
+	otid = tuple->t_self;
 	db = (Form_pg_database) GETSTRUCT(tuple);
 	if (!db->dathasloginevt)
 	{
 		db->dathasloginevt = true;
-		CatalogTupleUpdate(pg_db, &tuple->t_self, tuple);
+		CatalogTupleUpdate(pg_db, &otid, tuple);
 		CommandCounterIncrement();
 	}
+	UnlockTuple(pg_db, &otid, InplaceUpdateTupleLock);
 	table_close(pg_db, RowExclusiveLock);
 	heap_freetuple(tuple);
 }

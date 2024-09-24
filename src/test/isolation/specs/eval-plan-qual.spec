@@ -194,7 +194,7 @@ step simplepartupdate_noroute {
 	update parttbl set b = 2 where c = 1 returning *;
 }
 
-# test system class updates
+# test system class LockTuple()
 
 step sys1	{
 	UPDATE pg_class SET reltuples = 123 WHERE oid = 'accounts'::regclass;
