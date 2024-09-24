@@ -1297,14 +1297,15 @@ report_newlocale_failure(const char *localename)
 }
 
 /*
- * Initialize the locale_t field.
+ * Create a locale_t with the given collation and ctype.
  *
- * The "C" and "POSIX" locales are not actually handled by libc, so set the
- * locale_t to zero in that case.
+ * The "C" and "POSIX" locales are not actually handled by libc, so return
+ * NULL.
+ *
+ * Ensure that no path leaks a locale_t.
  */
-static void
-make_libc_collator(const char *collate, const char *ctype,
-				   pg_locale_t result)
+static locale_t
+make_libc_collator(const char *collate, const char *ctype)
 {
 	locale_t	loc = 0;
 
@@ -1343,7 +1344,11 @@ make_libc_collator(const char *collate, const char *ctype,
 			errno = 0;
 			loc = newlocale(LC_CTYPE_MASK, ctype, loc1);
 			if (!loc)
+			{
+				if (loc1)
+					freelocale(loc1);
 				report_newlocale_failure(ctype);
+			}
 		}
 		else
 			loc = loc1;
@@ -1360,60 +1365,78 @@ make_libc_collator(const char *collate, const char *ctype,
 #endif
 	}
 
-	result->info.lt = loc;
+	return loc;
 }
 
-void
-make_icu_collator(const char *iculocstr,
-				  const char *icurules,
-				  struct pg_locale_struct *resultp)
-{
+/*
+ * Create a UCollator with the given locale string and rules.
+ *
+ * Ensure that no path leaks a UCollator.
+ */
 #ifdef USE_ICU
-	UCollator  *collator;
-
-	collator = pg_ucol_open(iculocstr);
-
-	/*
-	 * If rules are specified, we extract the rules of the standard collation,
-	 * add our own rules, and make a new collator with the combined rules.
-	 */
-	if (icurules)
+static UCollator *
+make_icu_collator(const char *iculocstr, const char *icurules)
+{
+	if (!icurules)
 	{
-		const UChar *default_rules;
-		UChar	   *agg_rules;
+		/* simple case without rules */
+		return pg_ucol_open(iculocstr);
+	}
+	else
+	{
+		UCollator  *collator_std_rules;
+		UCollator  *collator_all_rules;
+		const UChar *std_rules;
 		UChar	   *my_rules;
-		UErrorCode	status;
+		UChar	   *all_rules;
 		int32_t		length;
+		int32_t		total;
+		UErrorCode	status;
 
-		default_rules = ucol_getRules(collator, &length);
+		/*
+		 * If rules are specified, we extract the rules of the standard
+		 * collation, add our own rules, and make a new collator with the
+		 * combined rules.
+		 */
 		icu_to_uchar(&my_rules, icurules, strlen(icurules));
 
-		agg_rules = palloc_array(UChar, u_strlen(default_rules) + u_strlen(my_rules) + 1);
-		u_strcpy(agg_rules, default_rules);
-		u_strcat(agg_rules, my_rules);
+		collator_std_rules = pg_ucol_open(iculocstr);
 
-		ucol_close(collator);
+		std_rules = ucol_getRules(collator_std_rules, &length);
+
+		total = u_strlen(std_rules) + u_strlen(my_rules) + 1;
+
+		/* avoid leaking collator on OOM */
+		all_rules = palloc_extended(sizeof(UChar) * total, MCXT_ALLOC_NO_OOM);
+		if (!all_rules)
+		{
+			ucol_close(collator_std_rules);
+			ereport(ERROR,
+					(errcode(ERRCODE_OUT_OF_MEMORY),
+					 errmsg("out of memory")));
+		}
+
+		u_strcpy(all_rules, std_rules);
+		u_strcat(all_rules, my_rules);
+
+		ucol_close(collator_std_rules);
 
 		status = U_ZERO_ERROR;
-		collator = ucol_openRules(agg_rules, u_strlen(agg_rules),
-								  UCOL_DEFAULT, UCOL_DEFAULT_STRENGTH, NULL, &status);
+		collator_all_rules = ucol_openRules(all_rules, u_strlen(all_rules),
+											UCOL_DEFAULT, UCOL_DEFAULT_STRENGTH,
+											NULL, &status);
 		if (U_FAILURE(status))
+		{
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 					 errmsg("could not open collator for locale \"%s\" with rules \"%s\": %s",
 							iculocstr, icurules, u_errorName(status))));
-	}
+		}
 
-	/* We will leak this string if the caller errors later :-( */
-	resultp->info.icu.locale = MemoryContextStrdup(TopMemoryContext, iculocstr);
-	resultp->info.icu.ucol = collator;
-#else							/* not USE_ICU */
-	/* could get here if a collation was created by a build with ICU */
-	ereport(ERROR,
-			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			 errmsg("ICU is not supported in this build")));
-#endif							/* not USE_ICU */
+		return collator_all_rules;
+	}
 }
+#endif							/* not USE_ICU */
 
 /*
  * Initialize default_locale with database locale settings.
@@ -1424,7 +1447,6 @@ init_database_collation(void)
 	HeapTuple	tup;
 	Form_pg_database dbform;
 	Datum		datum;
-	bool		isnull;
 
 	/* Fetch our pg_database row normally, via syscache */
 	tup = SearchSysCache1(DATABASEOID, ObjectIdGetDatum(MyDatabaseId));
@@ -1449,8 +1471,10 @@ init_database_collation(void)
 	}
 	else if (dbform->datlocprovider == COLLPROVIDER_ICU)
 	{
+#ifdef USE_ICU
 		char	   *datlocale;
 		char	   *icurules;
+		bool		isnull;
 
 		datum = SysCacheGetAttrNotNull(DATABASEOID, tup, Anum_pg_database_datlocale);
 		datlocale = TextDatumGetCString(datum);
@@ -1464,14 +1488,19 @@ init_database_collation(void)
 		else
 			icurules = NULL;
 
-		make_icu_collator(datlocale, icurules, &default_locale);
+		default_locale.info.icu.locale = MemoryContextStrdup(TopMemoryContext, datlocale);
+		default_locale.info.icu.ucol = make_icu_collator(datlocale, icurules);
+#else
+		/* could get here if a collation was created by a build with ICU */
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("ICU is not supported in this build")));
+#endif
 	}
-	else
+	else if (dbform->datlocprovider == COLLPROVIDER_LIBC)
 	{
 		const char *datcollate;
 		const char *datctype;
-
-		Assert(dbform->datlocprovider == COLLPROVIDER_LIBC);
 
 		datum = SysCacheGetAttrNotNull(DATABASEOID, tup, Anum_pg_database_datcollate);
 		datcollate = TextDatumGetCString(datum);
@@ -1483,8 +1512,12 @@ init_database_collation(void)
 		default_locale.ctype_is_c = (strcmp(datctype, "C") == 0) ||
 			(strcmp(datctype, "POSIX") == 0);
 
-		make_libc_collator(datcollate, datctype, &default_locale);
+		default_locale.info.lt = make_libc_collator(datcollate, datctype);
 	}
+	else
+		/* shouldn't happen */
+		PGLOCALE_SUPPORT_ERROR(dbform->datlocprovider);
+
 
 	default_locale.provider = dbform->datlocprovider;
 
@@ -1557,25 +1590,9 @@ pg_newlocale_from_collation(Oid collid)
 			result.info.builtin.locale = MemoryContextStrdup(TopMemoryContext,
 															 locstr);
 		}
-		else if (collform->collprovider == COLLPROVIDER_LIBC)
-		{
-			const char *collcollate;
-			const char *collctype;
-
-			datum = SysCacheGetAttrNotNull(COLLOID, tp, Anum_pg_collation_collcollate);
-			collcollate = TextDatumGetCString(datum);
-			datum = SysCacheGetAttrNotNull(COLLOID, tp, Anum_pg_collation_collctype);
-			collctype = TextDatumGetCString(datum);
-
-			result.collate_is_c = (strcmp(collcollate, "C") == 0) ||
-				(strcmp(collcollate, "POSIX") == 0);
-			result.ctype_is_c = (strcmp(collctype, "C") == 0) ||
-				(strcmp(collctype, "POSIX") == 0);
-
-			make_libc_collator(collcollate, collctype, &result);
-		}
 		else if (collform->collprovider == COLLPROVIDER_ICU)
 		{
+#ifdef USE_ICU
 			const char *iculocstr;
 			const char *icurules;
 
@@ -1591,8 +1608,35 @@ pg_newlocale_from_collation(Oid collid)
 			else
 				icurules = NULL;
 
-			make_icu_collator(iculocstr, icurules, &result);
+			result.info.icu.locale = MemoryContextStrdup(TopMemoryContext, iculocstr);
+			result.info.icu.ucol = make_icu_collator(iculocstr, icurules);
+#else
+			/* could get here if a collation was created by a build with ICU */
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("ICU is not supported in this build")));
+#endif
 		}
+		else if (collform->collprovider == COLLPROVIDER_LIBC)
+		{
+			const char *collcollate;
+			const char *collctype;
+
+			datum = SysCacheGetAttrNotNull(COLLOID, tp, Anum_pg_collation_collcollate);
+			collcollate = TextDatumGetCString(datum);
+			datum = SysCacheGetAttrNotNull(COLLOID, tp, Anum_pg_collation_collctype);
+			collctype = TextDatumGetCString(datum);
+
+			result.collate_is_c = (strcmp(collcollate, "C") == 0) ||
+				(strcmp(collcollate, "POSIX") == 0);
+			result.ctype_is_c = (strcmp(collctype, "C") == 0) ||
+				(strcmp(collctype, "POSIX") == 0);
+
+			result.info.lt = make_libc_collator(collcollate, collctype);
+		}
+		else
+			/* shouldn't happen */
+			PGLOCALE_SUPPORT_ERROR(collform->collprovider);
 
 		datum = SysCacheGetAttr(COLLOID, tp, Anum_pg_collation_collversion,
 								&isnull);
@@ -2500,6 +2544,8 @@ builtin_validate_locale(int encoding, const char *locale)
 /*
  * Wrapper around ucol_open() to handle API differences for older ICU
  * versions.
+ *
+ * Ensure that no path leaks a UCollator.
  */
 static UCollator *
 pg_ucol_open(const char *loc_str)
