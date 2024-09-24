@@ -48,6 +48,7 @@ step sfu3	{
 	SELECT relhasindex FROM pg_class
 	WHERE oid = 'intra_grant_inplace'::regclass FOR UPDATE;
 }
+step as3	{ LOCK TABLE intra_grant_inplace IN ACCESS SHARE MODE; }
 step r3	{ ROLLBACK; }
 
 # Additional heap_update()
@@ -73,7 +74,7 @@ step keyshr5	{
 teardown	{ ROLLBACK; }
 
 
-# XXX extant bugs: permutation comments refer to planned post-bugfix behavior
+# XXX extant bugs: permutation comments refer to planned future LockTuple()
 
 permutation
 	b1
@@ -117,6 +118,7 @@ permutation
 	b1
 	grant1(r3)	# acquire LockTuple(), await sfu3 xmax
 	read2
+	as3			# XXX temporary until patch adds locking to addk2
 	addk2(c1)	# block in LockTuple() behind grant1
 	r3			# unblock grant1; addk2 now awaits grant1 xmax
 	c1
