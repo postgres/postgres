@@ -6678,7 +6678,7 @@ printACLColumn(PQExpBuffer buf, const char *colname)
 {
 	appendPQExpBuffer(buf,
 					  "CASE"
-					  " WHEN pg_catalog.cardinality(%s) = 0 THEN '%s'"
+					  " WHEN pg_catalog.array_length(%s, 1) = 0 THEN '%s'"
 					  " ELSE pg_catalog.array_to_string(%s, E'\\n')"
 					  " END AS \"%s\"",
 					  colname, gettext_noop("(none)"),
