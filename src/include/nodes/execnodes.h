@@ -582,6 +582,9 @@ typedef struct ResultRelInfo
 	 * one of its ancestors; see ExecCrossPartitionUpdateForeignKey().
 	 */
 	List	   *ri_ancestorResultRels;
+
+	/* updates do LockTuple() before oldtup read; see README.tuplock */
+	bool		ri_needLockTagTuple;
 } ResultRelInfo;
 
 /* ----------------
