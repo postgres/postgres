@@ -538,11 +538,10 @@ _bt_preprocess_array_keys(IndexScanDesc scan, int *new_numberOfKeys)
  *	_bt_preprocess_array_keys_final() -- fix up array scan key references
  *
  * When _bt_preprocess_array_keys performed initial array preprocessing, it
- * set each array's array->scan_key to the array's arrayKeys[] entry offset
- * (that also work as references into the original scan->keyData[] array).
+ * set each array's array->scan_key to its scankey's arrayKeyData[] offset.
  * This function handles translation of the scan key references from the
  * BTArrayKeyInfo info array, from input scan key references (to the keys in
- * scan->keyData[]), into output references (to the keys in so->keyData[]).
+ * arrayKeyData[]), into output references (to the keys in so->keyData[]).
  * Caller's keyDataMap[] array tells us how to perform this remapping.
  *
  * Also finalizes so->orderProcs[] for the scan.  Arrays already have an ORDER
@@ -2974,8 +2973,8 @@ _bt_preprocess_keys(IndexScanDesc scan)
 
 	/*
 	 * Now that we've built a temporary mapping from so->keyData[] (output
-	 * scan keys) to scan->keyData[] (input scan keys), fix array->scan_key
-	 * references.  Also consolidate the so->orderProc[] array such that it
+	 * scan keys) to arrayKeyData[] (our input scan keys), fix array->scan_key
+	 * references.  Also consolidate the so->orderProcs[] array such that it
 	 * can be subscripted using so->keyData[]-wise offsets.
 	 */
 	if (arrayKeyData)
