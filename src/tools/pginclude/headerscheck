@@ -138,6 +138,12 @@ do
 	test "$f" = src/pl/tcl/pltclerrcodes.h && continue
 
 	# Also not meant to be included standalone.
+	test "$f" = contrib/isn/EAN13.h && continue
+	test "$f" = contrib/isn/ISBN.h && continue
+	test "$f" = contrib/isn/ISMN.h && continue
+	test "$f" = contrib/isn/ISSN.h && continue
+	test "$f" = contrib/isn/UPC.h && continue
+
 	test "$f" = src/include/common/unicode_nonspacing_table.h && continue
 	test "$f" = src/include/common/unicode_east_asian_fw_table.h && continue
 
