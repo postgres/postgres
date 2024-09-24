@@ -388,7 +388,7 @@ pgxml_xpath(text *document, xmlChar *xpath, xpath_workspace *workspace)
 			/* compile the path */
 			comppath = xmlXPathCtxtCompile(workspace->ctxt, xpath);
 			if (comppath == NULL)
-				xml_ereport(xmlerrcxt, ERROR, ERRCODE_EXTERNAL_ROUTINE_EXCEPTION,
+				xml_ereport(xmlerrcxt, ERROR, ERRCODE_INVALID_ARGUMENT_FOR_XQUERY,
 							"XPath Syntax Error");
 
 			/* Now evaluate the path expression. */
@@ -652,7 +652,7 @@ xpath_table(PG_FUNCTION_ARGS)
 						comppath = xmlXPathCtxtCompile(ctxt, xpaths[j]);
 						if (comppath == NULL)
 							xml_ereport(xmlerrcxt, ERROR,
-										ERRCODE_EXTERNAL_ROUTINE_EXCEPTION,
+										ERRCODE_INVALID_ARGUMENT_FOR_XQUERY,
 										"XPath Syntax Error");
 
 						/* Now evaluate the path expression. */

@@ -141,6 +141,12 @@ Section: Class 0Z - Diagnostics Exception
 0Z000    E    ERRCODE_DIAGNOSTICS_EXCEPTION                                  diagnostics_exception
 0Z002    E    ERRCODE_STACKED_DIAGNOSTICS_ACCESSED_WITHOUT_ACTIVE_HANDLER    stacked_diagnostics_accessed_without_active_handler
 
+Section: Class 10 - XQuery Error
+
+# recent SQL versions define quite a few codes in this class, but for now
+# we are only using this generic one
+10608    E    ERRCODE_INVALID_ARGUMENT_FOR_XQUERY                            invalid_argument_for_xquery
+
 Section: Class 20 - Case Not Found
 
 20000    E    ERRCODE_CASE_NOT_FOUND                                         case_not_found
