@@ -1282,6 +1282,7 @@ ExecUpdate(ModifyTableState *mtstate,
 	}
 	else
 	{
+		ItemPointerData lockedtid PG_USED_FOR_ASSERTS_ONLY;
 		LockTupleMode lockmode;
 		bool		partition_constraint_failed;
 		bool		update_indexes;
@@ -1473,6 +1474,26 @@ lreplace:
 			ExecConstraints(resultRelInfo, slot, estate);
 
 		/*
+		 * We lack the infrastructure to follow rules in README.tuplock
+		 * section "Locking to write inplace-updated tables".  Specifically,
+		 * we lack infrastructure to lock tupleid before this file's
+		 * ExecProcNode() call fetches the tuple's old columns.  Just take a
+		 * lock that silences check_lock_if_inplace_updateable_rel().  This
+		 * doesn't actually protect inplace updates like those rules intend,
+		 * so we may lose an inplace update that overlaps a superuser running
+		 * "UPDATE pg_class" or "UPDATE pg_database".
+		 */
+#ifdef USE_ASSERT_CHECKING
+		if (IsInplaceUpdateRelation(resultRelationDesc))
+		{
+			lockedtid = *tupleid;
+			LockTuple(resultRelationDesc, &lockedtid, InplaceUpdateTupleLock);
+		}
+		else
+			ItemPointerSetInvalid(&lockedtid);
+#endif
+
+		/*
 		 * replace the heap tuple
 		 *
 		 * Note: if es_crosscheck_snapshot isn't InvalidSnapshot, we check
@@ -1487,6 +1508,11 @@ lreplace:
 									estate->es_crosscheck_snapshot,
 									true /* wait for commit */ ,
 									&tmfd, &lockmode, &update_indexes);
+
+#ifdef USE_ASSERT_CHECKING
+		if (ItemPointerIsValid(&lockedtid))
+			UnlockTuple(resultRelationDesc, &lockedtid, InplaceUpdateTupleLock);
+#endif
 
 		switch (result)
 		{

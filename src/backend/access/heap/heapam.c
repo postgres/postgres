@@ -51,6 +51,8 @@
 #include "access/xloginsert.h"
 #include "access/xlogutils.h"
 #include "catalog/catalog.h"
+#include "catalog/pg_database.h"
+#include "catalog/pg_database_d.h"
 #include "miscadmin.h"
 #include "pgstat.h"
 #include "port/atomics.h"
@@ -76,6 +78,12 @@ static XLogRecPtr log_heap_update(Relation reln, Buffer oldbuf,
 								  Buffer newbuf, HeapTuple oldtup,
 								  HeapTuple newtup, HeapTuple old_key_tuple,
 								  bool all_visible_cleared, bool new_all_visible_cleared);
+#ifdef USE_ASSERT_CHECKING
+static void check_lock_if_inplace_updateable_rel(Relation relation,
+												 ItemPointer otid,
+												 HeapTuple newtup);
+static void check_inplace_rel_lock(HeapTuple oldtup);
+#endif
 static Bitmapset *HeapDetermineColumnsInfo(Relation relation,
 										   Bitmapset *interesting_cols,
 										   Bitmapset *external_cols,
@@ -114,6 +122,8 @@ static HeapTuple ExtractReplicaIdentity(Relation rel, HeapTuple tup, bool key_re
  * update them).  This table (and the macros below) helps us determine the
  * heavyweight lock mode and MultiXactStatus values to use for any particular
  * tuple lock strength.
+ *
+ * These interact with InplaceUpdateTupleLock, an alias for ExclusiveLock.
  *
  * Don't look at lockstatus/updstatus directly!  Use get_mxact_status_for_lock
  * instead.
@@ -2975,6 +2985,10 @@ heap_update(Relation relation, ItemPointer otid, HeapTuple newtup,
 				(errcode(ERRCODE_INVALID_TRANSACTION_STATE),
 				 errmsg("cannot update tuples during a parallel operation")));
 
+#ifdef USE_ASSERT_CHECKING
+	check_lock_if_inplace_updateable_rel(relation, otid, newtup);
+#endif
+
 	/*
 	 * Fetch the list of attributes to be checked for various operations.
 	 *
@@ -3820,6 +3834,128 @@ l2:
 
 	return TM_Ok;
 }
+
+#ifdef USE_ASSERT_CHECKING
+/*
+ * Confirm adequate lock held during heap_update(), per rules from
+ * README.tuplock section "Locking to write inplace-updated tables".
+ */
+static void
+check_lock_if_inplace_updateable_rel(Relation relation,
+									 ItemPointer otid,
+									 HeapTuple newtup)
+{
+	/* LOCKTAG_TUPLE acceptable for any catalog */
+	switch (RelationGetRelid(relation))
+	{
+		case RelationRelationId:
+		case DatabaseRelationId:
+			{
+				LOCKTAG		tuptag;
+
+				SET_LOCKTAG_TUPLE(tuptag,
+								  relation->rd_lockInfo.lockRelId.dbId,
+								  relation->rd_lockInfo.lockRelId.relId,
+								  ItemPointerGetBlockNumber(otid),
+								  ItemPointerGetOffsetNumber(otid));
+				if (LockHeldByMe(&tuptag, InplaceUpdateTupleLock))
+					return;
+			}
+			break;
+		default:
+			Assert(!IsInplaceUpdateRelation(relation));
+			return;
+	}
+
+	switch (RelationGetRelid(relation))
+	{
+		case RelationRelationId:
+			{
+				/* LOCKTAG_TUPLE or LOCKTAG_RELATION ok */
+				Form_pg_class classForm = (Form_pg_class) GETSTRUCT(newtup);
+				Oid			relid = classForm->oid;
+				Oid			dbid;
+				LOCKTAG		tag;
+
+				if (IsSharedRelation(relid))
+					dbid = InvalidOid;
+				else
+					dbid = MyDatabaseId;
+
+				if (classForm->relkind == RELKIND_INDEX)
+				{
+					Relation	irel = index_open(relid, AccessShareLock);
+
+					SET_LOCKTAG_RELATION(tag, dbid, irel->rd_index->indrelid);
+					index_close(irel, AccessShareLock);
+				}
+				else
+					SET_LOCKTAG_RELATION(tag, dbid, relid);
+
+				if (!LockHeldByMe(&tag, ShareUpdateExclusiveLock) &&
+					!LockOrStrongerHeldByMe(&tag, ShareRowExclusiveLock))
+					elog(WARNING,
+						 "missing lock for relation \"%s\" (OID %u, relkind %c) @ TID (%u,%u)",
+						 NameStr(classForm->relname),
+						 relid,
+						 classForm->relkind,
+						 ItemPointerGetBlockNumber(otid),
+						 ItemPointerGetOffsetNumber(otid));
+			}
+			break;
+		case DatabaseRelationId:
+			{
+				/* LOCKTAG_TUPLE required */
+				Form_pg_database dbForm = (Form_pg_database) GETSTRUCT(newtup);
+
+				elog(WARNING,
+					 "missing lock on database \"%s\" (OID %u) @ TID (%u,%u)",
+					 NameStr(dbForm->datname),
+					 dbForm->oid,
+					 ItemPointerGetBlockNumber(otid),
+					 ItemPointerGetOffsetNumber(otid));
+			}
+			break;
+	}
+}
+
+/*
+ * Confirm adequate relation lock held, per rules from README.tuplock section
+ * "Locking to write inplace-updated tables".
+ */
+static void
+check_inplace_rel_lock(HeapTuple oldtup)
+{
+	Form_pg_class classForm = (Form_pg_class) GETSTRUCT(oldtup);
+	Oid			relid = classForm->oid;
+	Oid			dbid;
+	LOCKTAG		tag;
+
+	if (IsSharedRelation(relid))
+		dbid = InvalidOid;
+	else
+		dbid = MyDatabaseId;
+
+	if (classForm->relkind == RELKIND_INDEX)
+	{
+		Relation	irel = index_open(relid, AccessShareLock);
+
+		SET_LOCKTAG_RELATION(tag, dbid, irel->rd_index->indrelid);
+		index_close(irel, AccessShareLock);
+	}
+	else
+		SET_LOCKTAG_RELATION(tag, dbid, relid);
+
+	if (!LockOrStrongerHeldByMe(&tag, ShareUpdateExclusiveLock))
+		elog(WARNING,
+			 "missing lock for relation \"%s\" (OID %u, relkind %c) @ TID (%u,%u)",
+			 NameStr(classForm->relname),
+			 relid,
+			 classForm->relkind,
+			 ItemPointerGetBlockNumber(&oldtup->t_self),
+			 ItemPointerGetOffsetNumber(&oldtup->t_self));
+}
+#endif
 
 /*
  * Check if the specified attribute's values are the same.  Subroutine for
@@ -5848,15 +5984,21 @@ heap_inplace_lock(Relation relation,
 	TM_Result	result;
 	bool		ret;
 
+#ifdef USE_ASSERT_CHECKING
+	if (RelationGetRelid(relation) == RelationRelationId)
+		check_inplace_rel_lock(oldtup_ptr);
+#endif
+
 	Assert(BufferIsValid(buffer));
 
+	LockTuple(relation, &oldtup.t_self, InplaceUpdateTupleLock);
 	LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
 
 	/*----------
 	 * Interpret HeapTupleSatisfiesUpdate() like heap_update() does, except:
 	 *
 	 * - wait unconditionally
-	 * - no tuple locks
+	 * - already locked tuple above, since inplace needs that unconditionally
 	 * - don't recheck header after wait: simpler to defer to next iteration
 	 * - don't try to continue even if the updater aborts: likewise
 	 * - no crosscheck
@@ -5940,7 +6082,10 @@ heap_inplace_lock(Relation relation,
 	 * don't bother optimizing that.
 	 */
 	if (!ret)
+	{
+		UnlockTuple(relation, &oldtup.t_self, InplaceUpdateTupleLock);
 		InvalidateCatalogSnapshot();
+	}
 	return ret;
 }
 
@@ -5949,6 +6094,8 @@ heap_inplace_lock(Relation relation,
  *
  * The tuple cannot change size, and therefore its header fields and null
  * bitmap (if any) don't change either.
+ *
+ * Since we hold LOCKTAG_TUPLE, no updater has a local copy of this tuple.
  */
 void
 heap_inplace_update_and_unlock(Relation relation,
@@ -6032,6 +6179,7 @@ heap_inplace_unlock(Relation relation,
 					HeapTuple oldtup, Buffer buffer)
 {
 	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
+	UnlockTuple(relation, &oldtup->t_self, InplaceUpdateTupleLock);
 }
 
 /*
