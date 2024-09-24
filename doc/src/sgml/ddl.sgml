@@ -3778,12 +3778,14 @@ VALUES ('Albany', NULL, NULL, 'NY');
    not <literal>INSERT</literal> or <literal>ALTER TABLE ...
    RENAME</literal>) typically default to including child tables and
    support the <literal>ONLY</literal> notation to exclude them.
-   Commands that do database maintenance and tuning
-   (e.g., <literal>REINDEX</literal>, <literal>VACUUM</literal>)
-   typically only work on individual, physical tables and do not
-   support recursing over inheritance hierarchies.  The respective
-   behavior of each individual command is documented in its reference
-   page (<xref linkend="sql-commands"/>).
+   The majority of commands that do database maintenance and tuning
+   (e.g., <literal>REINDEX</literal>) only work on individual, physical
+   tables and do not support recursing over inheritance hierarchies.
+   However, both <literal>VACUUM</literal> and <literal>ANALYZE</literal>
+   commands default to including child tables and the <literal>ONLY</literal>
+   notation is supported to allow them to be excluded.  The respective
+   behavior of each individual command is documented in its reference page
+   (<xref linkend="sql-commands"/>).
   </para>
 
   <para>
@@ -4854,11 +4856,12 @@ ALTER TABLE measurement_y2008m02 INHERIT measurement;
 
       <listitem>
        <para>
-        If you are using manual <command>VACUUM</command> or
-        <command>ANALYZE</command> commands, don't forget that
-        you need to run them on each child table individually. A command like:
+        Manual <command>VACUUM</command> and <command>ANALYZE</command>
+        commands will automatically process all inheritance child tables.  If
+        this is undesirable, you can use the <literal>ONLY</literal> keyword.
+        A command like:
 <programlisting>
-ANALYZE measurement;
+ANALYZE ONLY measurement;
 </programlisting>
         will only process the root table.
        </para>

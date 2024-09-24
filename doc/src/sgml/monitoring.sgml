@@ -5525,9 +5525,9 @@ FROM pg_stat_get_backend_idset() AS backendid;
 
   <note>
    <para>
-    Note that when <command>ANALYZE</command> is run on a partitioned table,
-    all of its partitions are also recursively analyzed.
-    In that case, <command>ANALYZE</command>
+    Note that when <command>ANALYZE</command> is run on a partitioned table
+    without the <literal>ONLY</literal> keyword, all of its partitions are
+    also recursively analyzed.  In that case, <command>ANALYZE</command>
     progress is reported first for the parent table, whereby its inheritance
     statistics are collected, followed by that for each partition.
    </para>

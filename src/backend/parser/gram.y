@@ -11921,7 +11921,7 @@ opt_name_list:
 		;
 
 vacuum_relation:
-			qualified_name opt_name_list
+			relation_expr opt_name_list
 				{
 					$$ = (Node *) makeVacuumRelation($1, InvalidOid, $2);
 				}

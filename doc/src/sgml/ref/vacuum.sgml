@@ -42,7 +42,7 @@ VACUUM [ ( <replaceable class="parameter">option</replaceable> [, ...] ) ] [ <re
 
 <phrase>and <replaceable class="parameter">table_and_columns</replaceable> is:</phrase>
 
-    <replaceable class="parameter">table_name</replaceable> [ ( <replaceable class="parameter">column_name</replaceable> [, ...] ) ]
+    [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ] [ ( <replaceable class="parameter">column_name</replaceable> [, ...] ) ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -401,8 +401,13 @@ VACUUM [ ( <replaceable class="parameter">option</replaceable> [, ...] ) ] [ <re
     <listitem>
      <para>
       The name (optionally schema-qualified) of a specific table or
-      materialized view to vacuum.  If the specified table is a partitioned
-      table, all of its leaf partitions are vacuumed.
+      materialized view to vacuum.  If <literal>ONLY</literal> is specified
+      before the table name, only that table is vacuumed.  If
+      <literal>ONLY</literal> is not specified, the table and all its
+      inheritance child tables or partitions (if any) are also vacuumed.
+      Optionally, <literal>*</literal> can be specified after the table name
+      to explicitly indicate that inheritance child tables (or partitions) are
+      to be vacuumed.
      </para>
     </listitem>
    </varlistentry>

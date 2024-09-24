@@ -851,7 +851,7 @@ vacuum_open_relation(Oid relid, RangeVar *relation, bits32 options,
 
 /*
  * Given a VacuumRelation, fill in the table OID if it wasn't specified,
- * and optionally add VacuumRelations for partitions of the table.
+ * and optionally add VacuumRelations for partitions or inheritance children.
  *
  * If a VacuumRelation does not have an OID supplied and is a partitioned
  * table, an extra entry will be added to the output for each partition.
@@ -879,11 +879,15 @@ expand_vacuum_rel(VacuumRelation *vrel, MemoryContext vac_context,
 	}
 	else
 	{
-		/* Process a specific relation, and possibly partitions thereof */
+		/*
+		 * Process a specific relation, and possibly partitions or child
+		 * tables thereof.
+		 */
 		Oid			relid;
 		HeapTuple	tuple;
 		Form_pg_class classForm;
-		bool		include_parts;
+		bool		include_children;
+		bool		is_partitioned_table;
 		int			rvr_opts;
 
 		/*
@@ -944,20 +948,31 @@ expand_vacuum_rel(VacuumRelation *vrel, MemoryContext vac_context,
 			MemoryContextSwitchTo(oldcontext);
 		}
 
+		/*
+		 * Vacuuming a partitioned table with ONLY will not do anything since
+		 * the partitioned table itself is empty.  Issue a warning if the user
+		 * requests this.
+		 */
+		include_children = vrel->relation->inh;
+		is_partitioned_table = (classForm->relkind == RELKIND_PARTITIONED_TABLE);
+		if ((options & VACOPT_VACUUM) && is_partitioned_table && !include_children)
+			ereport(WARNING,
+					(errmsg("VACUUM ONLY of partitioned table \"%s\" has no effect",
+							vrel->relation->relname)));
 
-		include_parts = (classForm->relkind == RELKIND_PARTITIONED_TABLE);
 		ReleaseSysCache(tuple);
 
 		/*
-		 * If it is, make relation list entries for its partitions.  Note that
-		 * the list returned by find_all_inheritors() includes the passed-in
-		 * OID, so we have to skip that.  There's no point in taking locks on
-		 * the individual partitions yet, and doing so would just add
-		 * unnecessary deadlock risk.  For this last reason we do not check
-		 * yet the ownership of the partitions, which get added to the list to
-		 * process.  Ownership will be checked later on anyway.
+		 * Unless the user has specified ONLY, make relation list entries for
+		 * its partitions or inheritance child tables.  Note that the list
+		 * returned by find_all_inheritors() includes the passed-in OID, so we
+		 * have to skip that.  There's no point in taking locks on the
+		 * individual partitions or child tables yet, and doing so would just
+		 * add unnecessary deadlock risk.  For this last reason, we do not yet
+		 * check the ownership of the partitions/tables, which get added to
+		 * the list to process.  Ownership will be checked later on anyway.
 		 */
-		if (include_parts)
+		if (include_children)
 		{
 			List	   *part_oids = find_all_inheritors(relid, NoLock, NULL);
 			ListCell   *part_lc;
