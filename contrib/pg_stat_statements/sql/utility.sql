@@ -47,7 +47,8 @@ DROP FOREIGN DATA WRAPPER wrapper_stats;
 
 -- Functions
 CREATE FUNCTION func_stats(a text DEFAULT 'a_data', b text DEFAULT lower('b_data'))
-  RETURNS text AS $$ SELECT $1::text || '_' || $2::text; $$ LANGUAGE SQL;
+  RETURNS text AS $$ SELECT $1::text || '_' || $2::text; $$ LANGUAGE SQL
+  SET work_mem = '256kB';
 DROP FUNCTION func_stats;
 
 -- Rules
@@ -277,12 +278,26 @@ SELECT pg_stat_statements_reset() IS NOT NULL AS t;
 
 -- SET statements.
 -- These use two different strings, still they count as one entry.
+CREATE ROLE regress_stat_set_1;
+CREATE ROLE regress_stat_set_2;
 SET work_mem = '1MB';
 Set work_mem = '1MB';
 SET work_mem = '2MB';
+SET work_mem = DEFAULT;
+SET work_mem TO DEFAULT;
+SET work_mem FROM CURRENT;
+BEGIN;
+SET LOCAL work_mem = '128kB';
+SET LOCAL work_mem = '256kB';
+SET LOCAL work_mem = DEFAULT;
+SET LOCAL work_mem TO DEFAULT;
+SET LOCAL work_mem FROM CURRENT;
+COMMIT;
 RESET work_mem;
 SET enable_seqscan = off;
 SET enable_seqscan = on;
+SET SESSION work_mem = '300kB';
+SET SESSION work_mem = '400kB';
 RESET enable_seqscan;
 -- SET TRANSACTION ISOLATION
 BEGIN;
@@ -290,15 +305,35 @@ SET TRANSACTION ISOLATION LEVEL READ COMMITTED;
 SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;
 SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
 COMMIT;
--- SET SESSION CHARACTERISTICS
+-- SET SESSION AUTHORIZATION
 SET SESSION SESSION AUTHORIZATION DEFAULT;
+SET SESSION AUTHORIZATION 'regress_stat_set_1';
+SET SESSION AUTHORIZATION 'regress_stat_set_2';
 RESET SESSION AUTHORIZATION;
 BEGIN;
 SET LOCAL SESSION AUTHORIZATION DEFAULT;
+SET LOCAL SESSION AUTHORIZATION 'regress_stat_set_1';
+SET LOCAL SESSION AUTHORIZATION 'regress_stat_set_2';
 RESET SESSION AUTHORIZATION;
 COMMIT;
+-- SET SESSION CHARACTERISTICS
+SET SESSION CHARACTERISTICS AS TRANSACTION READ ONLY;
+SET SESSION CHARACTERISTICS AS TRANSACTION READ ONLY, READ ONLY;
+SET SESSION CHARACTERISTICS AS TRANSACTION READ ONLY, READ WRITE;
+-- SET XML OPTION
+SET XML OPTION DOCUMENT;
+SET XML OPTION CONTENT;
+-- SET TIME ZONE
+SET TIME ZONE 'America/New_York';
+SET TIME ZONE 'Asia/Tokyo';
+SET TIME ZONE DEFAULT;
+SET TIME ZONE LOCAL;
+SET TIME ZONE 'CST7CDT,M4.1.0,M10.5.0';
+RESET TIME ZONE;
 
 SELECT calls, rows, query FROM pg_stat_statements ORDER BY query COLLATE "C";
+DROP ROLE regress_stat_set_1;
+DROP ROLE regress_stat_set_2;
 SELECT pg_stat_statements_reset() IS NOT NULL AS t;
 
 --
@@ -327,5 +362,13 @@ SELECT calls, rows, query FROM pg_stat_statements ORDER BY query COLLATE "C";
 DROP MATERIALIZED VIEW pgss_matv;
 DROP TABLE pgss_ctas;
 DROP TABLE pgss_select_into;
+
+SELECT pg_stat_statements_reset() IS NOT NULL AS t;
+
+-- Special cases.  Keep these ones at the end to avoid conflicts.
+SET SCHEMA 'foo';
+SET SCHEMA 'public';
+RESET ALL;
+SELECT calls, rows, query FROM pg_stat_statements ORDER BY query COLLATE "C";
 
 SELECT pg_stat_statements_reset() IS NOT NULL AS t;
