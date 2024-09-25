@@ -2719,6 +2719,399 @@ select jsonb_path_query('"2023-08-15 12:34:56"', '$.timestamp().string()');
 (1 row)
 
 rollback;
+-- test .ltrim()
+select jsonb_path_query('"   hello   "', '$.ltrim(" ")');
+ jsonb_path_query 
+------------------
+ "hello   "
+(1 row)
+
+select jsonb_path_query('"   hello   "', '$.ltrim(" ")');
+ jsonb_path_query 
+------------------
+ "hello   "
+(1 row)
+
+select jsonb_path_query('"   hello   "', '$.ltrim()');
+ jsonb_path_query 
+------------------
+ "hello   "
+(1 row)
+
+select jsonb_path_query('"   hello   "', '$.ltrim()');
+ jsonb_path_query 
+------------------
+ "hello   "
+(1 row)
+
+select jsonb_path_query('null', '$.ltrim()');
+ERROR:  jsonpath item method .ltrim() can only be applied to a string
+select jsonb_path_query('null', '$.ltrim()', silent => true);
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('[]', '$.ltrim()');
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('[]', 'strict $.ltrim()');
+ERROR:  jsonpath item method .ltrim() can only be applied to a string
+select jsonb_path_query('{}', '$.ltrim()');
+ERROR:  jsonpath item method .ltrim() can only be applied to a string
+select jsonb_path_query('[]', 'strict $.ltrim()', silent => true);
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('{}', '$.ltrim()', silent => true);
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('1.23', '$.ltrim()');
+ERROR:  jsonpath item method .ltrim() can only be applied to a string
+select jsonb_path_query('"1.23"', '$.ltrim()');
+ jsonb_path_query 
+------------------
+ "1.23"
+(1 row)
+
+select jsonb_path_query('"1.23aaa"', '$.ltrim()');
+ jsonb_path_query 
+------------------
+ "1.23aaa"
+(1 row)
+
+select jsonb_path_query('1234', '$.ltrim()');
+ERROR:  jsonpath item method .ltrim() can only be applied to a string
+select jsonb_path_query('true', '$.ltrim()');
+ERROR:  jsonpath item method .ltrim() can only be applied to a string
+select jsonb_path_query('1234', '$.ltrim().type()');
+ERROR:  jsonpath item method .ltrim() can only be applied to a string
+select jsonb_path_query('[2, true]', '$.ltrim()');
+ERROR:  jsonpath item method .ltrim() can only be applied to a string
+select jsonb_path_query_array('["  maybe  ", "  yes", "  no"]', '$[*].ltrim()');
+  jsonb_path_query_array  
+--------------------------
+ ["maybe  ", "yes", "no"]
+(1 row)
+
+select jsonb_path_query_array('["  maybe  ", "  yes", "  no"]', '$[*].ltrim().type()');
+     jsonb_path_query_array     
+--------------------------------
+ ["string", "string", "string"]
+(1 row)
+
+-- test .rtrim()
+select jsonb_path_query('"   hello   "', '$.rtrim(" ")');
+ jsonb_path_query 
+------------------
+ "   hello"
+(1 row)
+
+select jsonb_path_query('"   hello   "', '$.rtrim(" ")');
+ jsonb_path_query 
+------------------
+ "   hello"
+(1 row)
+
+select jsonb_path_query('"   hello   "', '$.rtrim()');
+ jsonb_path_query 
+------------------
+ "   hello"
+(1 row)
+
+select jsonb_path_query('"   hello   "', '$.rtrim()');
+ jsonb_path_query 
+------------------
+ "   hello"
+(1 row)
+
+-- test .btrim()
+select jsonb_path_query('"   hello   "', '$.btrim(" ")');
+ jsonb_path_query 
+------------------
+ "hello"
+(1 row)
+
+select jsonb_path_query('"   hello   "', '$.btrim(" ")');
+ jsonb_path_query 
+------------------
+ "hello"
+(1 row)
+
+select jsonb_path_query('"   hello   "', '$.btrim()');
+ jsonb_path_query 
+------------------
+ "hello"
+(1 row)
+
+select jsonb_path_query('"   hello   "', '$.btrim()');
+ jsonb_path_query 
+------------------
+ "hello"
+(1 row)
+
+-- test .lower()
+select jsonb_path_query('null', '$.lower()');
+ERROR:  jsonpath item method .lower() can only be applied to a string
+select jsonb_path_query('null', '$.lower()', silent => true);
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('[]', '$.lower()');
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('[]', 'strict $.lower()');
+ERROR:  jsonpath item method .lower() can only be applied to a string
+select jsonb_path_query('{}', '$.lower()');
+ERROR:  jsonpath item method .lower() can only be applied to a string
+select jsonb_path_query('[]', 'strict $.lower()', silent => true);
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('{}', '$.lower()', silent => true);
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('1.23', '$.lower()');
+ERROR:  jsonpath item method .lower() can only be applied to a string
+select jsonb_path_query('"1.23"', '$.lower()');
+ jsonb_path_query 
+------------------
+ "1.23"
+(1 row)
+
+select jsonb_path_query('"1.23aaa"', '$.lower()');
+ jsonb_path_query 
+------------------
+ "1.23aaa"
+(1 row)
+
+select jsonb_path_query('1234', '$.lower()');
+ERROR:  jsonpath item method .lower() can only be applied to a string
+select jsonb_path_query('true', '$.lower()');
+ERROR:  jsonpath item method .lower() can only be applied to a string
+select jsonb_path_query('1234', '$.lower().type()');
+ERROR:  jsonpath item method .lower() can only be applied to a string
+select jsonb_path_query('[2, true]', '$.lower()');
+ERROR:  jsonpath item method .lower() can only be applied to a string
+select jsonb_path_query_array('["maybe", "yes", "no"]', '$[*].lower()');
+ jsonb_path_query_array 
+------------------------
+ ["maybe", "yes", "no"]
+(1 row)
+
+select jsonb_path_query_array('["maybe", "yes", "no"]', '$[*].lower().type()');
+     jsonb_path_query_array     
+--------------------------------
+ ["string", "string", "string"]
+(1 row)
+
+-- test .upper()
+select jsonb_path_query('null', '$.upper()');
+ERROR:  jsonpath item method .upper() can only be applied to a string
+select jsonb_path_query('null', '$.upper()', silent => true);
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('[]', '$.upper()');
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('[]', 'strict $.upper()');
+ERROR:  jsonpath item method .upper() can only be applied to a string
+select jsonb_path_query('{}', '$.upper()');
+ERROR:  jsonpath item method .upper() can only be applied to a string
+select jsonb_path_query('[]', 'strict $.upper()', silent => true);
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('{}', '$.upper()', silent => true);
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('1.23', '$.upper()');
+ERROR:  jsonpath item method .upper() can only be applied to a string
+select jsonb_path_query('"1.23"', '$.upper()');
+ jsonb_path_query 
+------------------
+ "1.23"
+(1 row)
+
+select jsonb_path_query('"1.23aaa"', '$.upper()');
+ jsonb_path_query 
+------------------
+ "1.23AAA"
+(1 row)
+
+select jsonb_path_query('1234', '$.upper()');
+ERROR:  jsonpath item method .upper() can only be applied to a string
+select jsonb_path_query('true', '$.upper()');
+ERROR:  jsonpath item method .upper() can only be applied to a string
+select jsonb_path_query('1234', '$.upper().type()');
+ERROR:  jsonpath item method .upper() can only be applied to a string
+select jsonb_path_query('[2, true]', '$.upper()');
+ERROR:  jsonpath item method .upper() can only be applied to a string
+select jsonb_path_query_array('["maybe", "yes", "no"]', '$[*].upper()');
+ jsonb_path_query_array 
+------------------------
+ ["MAYBE", "YES", "NO"]
+(1 row)
+
+select jsonb_path_query_array('["maybe", "yes", "no"]', '$[*].upper().type()');
+     jsonb_path_query_array     
+--------------------------------
+ ["string", "string", "string"]
+(1 row)
+
+-- test .initcap()
+select jsonb_path_query('null', '$.initcap()');
+ERROR:  jsonpath item method .initcap() can only be applied to a string
+select jsonb_path_query('null', '$.initcap()', silent => true);
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('[]', '$.initcap()');
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('[]', 'strict $.initcap()');
+ERROR:  jsonpath item method .initcap() can only be applied to a string
+select jsonb_path_query('{}', '$.initcap()');
+ERROR:  jsonpath item method .initcap() can only be applied to a string
+select jsonb_path_query('[]', 'strict $.initcap()', silent => true);
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('{}', '$.initcap()', silent => true);
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('1.23', '$.initcap()');
+ERROR:  jsonpath item method .initcap() can only be applied to a string
+select jsonb_path_query('"1.23"', '$.initcap()');
+ jsonb_path_query 
+------------------
+ "1.23"
+(1 row)
+
+select jsonb_path_query('"1.23aaa"', '$.initcap()');
+ jsonb_path_query 
+------------------
+ "1.23aaa"
+(1 row)
+
+select jsonb_path_query('1234', '$.initcap()');
+ERROR:  jsonpath item method .initcap() can only be applied to a string
+select jsonb_path_query('true', '$.initcap()');
+ERROR:  jsonpath item method .initcap() can only be applied to a string
+select jsonb_path_query('1234', '$.initcap().type()');
+ERROR:  jsonpath item method .initcap() can only be applied to a string
+select jsonb_path_query('[2, true]', '$.initcap()');
+ERROR:  jsonpath item method .initcap() can only be applied to a string
+select jsonb_path_query('["maybe yes", "probably no"]', '$.initcap()');
+ jsonb_path_query 
+------------------
+ "Maybe Yes"
+ "Probably No"
+(2 rows)
+
+-- Test .replace()
+select jsonb_path_query('null', '$.replace("x", "bye")');
+ERROR:  jsonpath item method .replace() can only be applied to a string
+select jsonb_path_query('null', '$.replace("x", "bye")', silent => true);
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('["x", "y", "z"]', '$.replace("x", "bye")');
+ jsonb_path_query 
+------------------
+ "bye"
+ "y"
+ "z"
+(3 rows)
+
+select jsonb_path_query('{}', '$.replace("x", "bye")');
+ERROR:  jsonpath item method .replace() can only be applied to a string
+select jsonb_path_query('[]', 'strict $.replace("x", "bye")', silent => true);
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('{}', '$.replace("x", "bye")', silent => true);
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('1.23', '$.replace("x", "bye")');
+ERROR:  jsonpath item method .replace() can only be applied to a string
+select jsonb_path_query('"hello world"', '$.replace("hello","bye")');
+ jsonb_path_query 
+------------------
+ "bye world"
+(1 row)
+
+select jsonb_path_query('"hello world"', '$.replace("hello","bye") starts with "bye"');
+ jsonb_path_query 
+------------------
+ true
+(1 row)
+
+-- Test .split_part()
+select jsonb_path_query('"abc~@~def~@~ghi"', '$.split_part("~@~", 2)');
+ jsonb_path_query 
+------------------
+ "def"
+(1 row)
+
+-- Test string methods play nicely together
+select jsonb_path_query('"hello world"', '$.replace("hello","bye").upper()');
+ jsonb_path_query 
+------------------
+ "BYE WORLD"
+(1 row)
+
+select jsonb_path_query('"hElLo WorlD"', '$.lower().upper().lower().replace("hello","bye")');
+ jsonb_path_query 
+------------------
+ "bye world"
+(1 row)
+
+select jsonb_path_query('"hElLo WorlD"', '$.upper().lower().upper().replace("HELLO", "BYE")');
+ jsonb_path_query 
+------------------
+ "BYE WORLD"
+(1 row)
+
+select jsonb_path_query('"hElLo WorlD"', '$.lower().upper().lower().replace("hello","bye") starts with "bye"');
+ jsonb_path_query 
+------------------
+ true
+(1 row)
+
+select jsonb_path_query('"   hElLo WorlD "', '$.btrim().lower().upper().lower().replace("hello","bye") starts with "bye"');
+ jsonb_path_query 
+------------------
+ true
+(1 row)
+
 -- Test .time()
 select jsonb_path_query('null', '$.time()');
 ERROR:  jsonpath item method .time() can only be applied to a string

@@ -1,0 +1,36 @@
+# Hitchhiker's guide to jsonpath
+
+All of the jsonpath action happens in `src/backend/utils/adt/jsonpath*`
+
+There are two things to consider when adding a new jsonpath method in Postgres
+1. Start by making your method part of a `jsonpath` expression.
+2. What happens when that method is executed against a `jsonb` value.
+
+## Add your method as a new jsonpath keyword
+
+* `jsonpath_scan.l`: Add your new method to the array `JsonPathKeyword keywords[]`
+* `jsonpath_gram.y`: Add a new token `%token <str> MYFUNC_P`
+
+* `jsonpath.h`: add a new `jpiMyMethod` value to `enum JsonPathItemType`
+
+This `jpiMyMethod` will be
+used in switch cases across the rest of the code
+
+In `jsonpath.c`:
+you must handle the switch for `jpiMyMethod` in the following functions:
+
+* `flattenJsonPathParseItem`
+* `printJsonPathItem`
+* `jspInitByBuffer`: take care to properly handle arguments if any. 
+See cases items for inspiration 
+* `jspOperationName`
+* `jspGetNext`: add a new `Assert`
+* `jspGetArgX`: if your method accepts arguments, add assertions to these functions
+* `jspIsMutableWalker`
+
+Now it's a good time to test the text representation of your
+new jsp item.
+Tests are in `src/test/regress/sql`
+
+In `jsonpath_exec.c`:
+* `executeItemOptUnwrapTarget`

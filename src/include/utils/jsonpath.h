@@ -115,6 +115,14 @@ typedef enum JsonPathItemType
 	jpiTimeTz,					/* .time_tz() item method */
 	jpiTimestamp,				/* .timestamp() item method */
 	jpiTimestampTz,				/* .timestamp_tz() item method */
+	jpiReplaceFunc,				/* .replace() item method */
+	jpiStrLowerFunc,			/* .lower() item method */
+	jpiStrUpperFunc,			/* .upper() item method */
+	jpiStrLtrimFunc,			/* .ltrim() item method */
+	jpiStrRtrimFunc,			/* .rtrim() item method */
+	jpiStrBtrimFunc,			/* .btrim() item method */
+	jpiStrInitcapFunc,			/* .initcap() item method */
+	jpiStrSplitPartFunc,		/* .split_part() item method */
 } JsonPathItemType;
 
 /* XQuery regex mode flags for LIKE_REGEX predicate */
@@ -188,6 +196,12 @@ typedef struct JsonPathItem
 			int32		patternlen;
 			uint32		flags;
 		}			like_regex;
+
+		struct
+		{
+			int32		arg0;
+			int32		arg1;
+		}			method_args;
 	}			content;
 } JsonPathItem;
 
@@ -199,6 +213,8 @@ extern bool jspGetNext(JsonPathItem *v, JsonPathItem *a);
 extern void jspGetArg(JsonPathItem *v, JsonPathItem *a);
 extern void jspGetLeftArg(JsonPathItem *v, JsonPathItem *a);
 extern void jspGetRightArg(JsonPathItem *v, JsonPathItem *a);
+extern void jspGetArg0(JsonPathItem *v, JsonPathItem *a);
+extern void jspGetArg1(JsonPathItem *v, JsonPathItem *a);
 extern Numeric jspGetNumeric(JsonPathItem *v);
 extern bool jspGetBool(JsonPathItem *v);
 extern char *jspGetString(JsonPathItem *v, int32 *len);
@@ -266,6 +282,12 @@ struct JsonPathParseItem
 			uint32		len;
 			char	   *val;	/* could not be not null-terminated */
 		}			string;
+
+		struct
+		{
+			JsonPathParseItem *arg0;
+			JsonPathParseItem *arg1;
+		}			method_args;
 	}			value;
 };
 
