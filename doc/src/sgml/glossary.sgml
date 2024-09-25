@@ -1069,6 +1069,16 @@
    </glossdef>
   </glossentry>
 
+  <glossentry id="glossary-logical-replication-cluster">
+   <glossterm>Logical replication cluster</glossterm>
+   <glossdef>
+    <para>
+     A set of publisher and subscriber instances with the publisher instance
+     replicating changes to the subscriber instance.
+    </para>
+   </glossdef>
+  </glossentry>
+
   <glossentry id="glossary-log-record">
    <glossterm>Log record</glossterm>
     <glossdef>
