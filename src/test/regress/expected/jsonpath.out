@@ -435,6 +435,78 @@ select '$.string()'::jsonpath;
  $.string()
 (1 row)
 
+select '$.replace("hello","bye")'::jsonpath;
+         jsonpath         
+--------------------------
+ $.replace("hello","bye")
+(1 row)
+
+select '$.lower()'::jsonpath;
+ jsonpath  
+-----------
+ $.lower()
+(1 row)
+
+select '$.upper()'::jsonpath;
+ jsonpath  
+-----------
+ $.upper()
+(1 row)
+
+select '$.lower().upper().lower().replace("hello","bye")'::jsonpath;
+                     jsonpath                     
+--------------------------------------------------
+ $.lower().upper().lower().replace("hello","bye")
+(1 row)
+
+select '$.ltrim()'::jsonpath;
+ jsonpath  
+-----------
+ $.ltrim()
+(1 row)
+
+select '$.ltrim("xyz")'::jsonpath;
+    jsonpath    
+----------------
+ $.ltrim("xyz")
+(1 row)
+
+select '$.rtrim()'::jsonpath;
+ jsonpath  
+-----------
+ $.rtrim()
+(1 row)
+
+select '$.rtrim("xyz")'::jsonpath;
+    jsonpath    
+----------------
+ $.rtrim("xyz")
+(1 row)
+
+select '$.btrim()'::jsonpath;
+ jsonpath  
+-----------
+ $.btrim()
+(1 row)
+
+select '$.btrim("xyz")'::jsonpath;
+    jsonpath    
+----------------
+ $.btrim("xyz")
+(1 row)
+
+select '$.initcap()'::jsonpath;
+  jsonpath   
+-------------
+ $.initcap()
+(1 row)
+
+select '$.split_part("~@~", 2)'::jsonpath;
+       jsonpath        
+-----------------------
+ $.split_part("~@~",2)
+(1 row)
+
 select '$.time()'::jsonpath;
  jsonpath 
 ----------

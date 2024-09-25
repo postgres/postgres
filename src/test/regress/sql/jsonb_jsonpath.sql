@@ -619,6 +619,114 @@ select jsonb_path_query('"2023-08-15 12:34:56 +5:30"', '$.timestamp_tz().string(
 select jsonb_path_query('"2023-08-15 12:34:56"', '$.timestamp().string()');
 rollback;
 
+-- test .ltrim()
+select jsonb_path_query('"   hello   "', '$.ltrim(" ")');
+select jsonb_path_query('"   hello   "', '$.ltrim(" ")');
+select jsonb_path_query('"   hello   "', '$.ltrim()');
+select jsonb_path_query('"   hello   "', '$.ltrim()');
+select jsonb_path_query('null', '$.ltrim()');
+select jsonb_path_query('null', '$.ltrim()', silent => true);
+select jsonb_path_query('[]', '$.ltrim()');
+select jsonb_path_query('[]', 'strict $.ltrim()');
+select jsonb_path_query('{}', '$.ltrim()');
+select jsonb_path_query('[]', 'strict $.ltrim()', silent => true);
+select jsonb_path_query('{}', '$.ltrim()', silent => true);
+select jsonb_path_query('1.23', '$.ltrim()');
+select jsonb_path_query('"1.23"', '$.ltrim()');
+select jsonb_path_query('"1.23aaa"', '$.ltrim()');
+select jsonb_path_query('1234', '$.ltrim()');
+select jsonb_path_query('true', '$.ltrim()');
+select jsonb_path_query('1234', '$.ltrim().type()');
+select jsonb_path_query('[2, true]', '$.ltrim()');
+select jsonb_path_query_array('["  maybe  ", "  yes", "  no"]', '$[*].ltrim()');
+select jsonb_path_query_array('["  maybe  ", "  yes", "  no"]', '$[*].ltrim().type()');
+
+-- test .rtrim()
+select jsonb_path_query('"   hello   "', '$.rtrim(" ")');
+select jsonb_path_query('"   hello   "', '$.rtrim(" ")');
+select jsonb_path_query('"   hello   "', '$.rtrim()');
+select jsonb_path_query('"   hello   "', '$.rtrim()');
+
+-- test .btrim()
+select jsonb_path_query('"   hello   "', '$.btrim(" ")');
+select jsonb_path_query('"   hello   "', '$.btrim(" ")');
+select jsonb_path_query('"   hello   "', '$.btrim()');
+select jsonb_path_query('"   hello   "', '$.btrim()');
+
+-- test .lower()
+select jsonb_path_query('null', '$.lower()');
+select jsonb_path_query('null', '$.lower()', silent => true);
+select jsonb_path_query('[]', '$.lower()');
+select jsonb_path_query('[]', 'strict $.lower()');
+select jsonb_path_query('{}', '$.lower()');
+select jsonb_path_query('[]', 'strict $.lower()', silent => true);
+select jsonb_path_query('{}', '$.lower()', silent => true);
+select jsonb_path_query('1.23', '$.lower()');
+select jsonb_path_query('"1.23"', '$.lower()');
+select jsonb_path_query('"1.23aaa"', '$.lower()');
+select jsonb_path_query('1234', '$.lower()');
+select jsonb_path_query('true', '$.lower()');
+select jsonb_path_query('1234', '$.lower().type()');
+select jsonb_path_query('[2, true]', '$.lower()');
+select jsonb_path_query_array('["maybe", "yes", "no"]', '$[*].lower()');
+select jsonb_path_query_array('["maybe", "yes", "no"]', '$[*].lower().type()');
+
+-- test .upper()
+select jsonb_path_query('null', '$.upper()');
+select jsonb_path_query('null', '$.upper()', silent => true);
+select jsonb_path_query('[]', '$.upper()');
+select jsonb_path_query('[]', 'strict $.upper()');
+select jsonb_path_query('{}', '$.upper()');
+select jsonb_path_query('[]', 'strict $.upper()', silent => true);
+select jsonb_path_query('{}', '$.upper()', silent => true);
+select jsonb_path_query('1.23', '$.upper()');
+select jsonb_path_query('"1.23"', '$.upper()');
+select jsonb_path_query('"1.23aaa"', '$.upper()');
+select jsonb_path_query('1234', '$.upper()');
+select jsonb_path_query('true', '$.upper()');
+select jsonb_path_query('1234', '$.upper().type()');
+select jsonb_path_query('[2, true]', '$.upper()');
+select jsonb_path_query_array('["maybe", "yes", "no"]', '$[*].upper()');
+select jsonb_path_query_array('["maybe", "yes", "no"]', '$[*].upper().type()');
+
+-- test .initcap()
+select jsonb_path_query('null', '$.initcap()');
+select jsonb_path_query('null', '$.initcap()', silent => true);
+select jsonb_path_query('[]', '$.initcap()');
+select jsonb_path_query('[]', 'strict $.initcap()');
+select jsonb_path_query('{}', '$.initcap()');
+select jsonb_path_query('[]', 'strict $.initcap()', silent => true);
+select jsonb_path_query('{}', '$.initcap()', silent => true);
+select jsonb_path_query('1.23', '$.initcap()');
+select jsonb_path_query('"1.23"', '$.initcap()');
+select jsonb_path_query('"1.23aaa"', '$.initcap()');
+select jsonb_path_query('1234', '$.initcap()');
+select jsonb_path_query('true', '$.initcap()');
+select jsonb_path_query('1234', '$.initcap().type()');
+select jsonb_path_query('[2, true]', '$.initcap()');
+select jsonb_path_query('["maybe yes", "probably no"]', '$.initcap()');
+
+-- Test .replace()
+select jsonb_path_query('null', '$.replace("x", "bye")');
+select jsonb_path_query('null', '$.replace("x", "bye")', silent => true);
+select jsonb_path_query('["x", "y", "z"]', '$.replace("x", "bye")');
+select jsonb_path_query('{}', '$.replace("x", "bye")');
+select jsonb_path_query('[]', 'strict $.replace("x", "bye")', silent => true);
+select jsonb_path_query('{}', '$.replace("x", "bye")', silent => true);
+select jsonb_path_query('1.23', '$.replace("x", "bye")');
+select jsonb_path_query('"hello world"', '$.replace("hello","bye")');
+select jsonb_path_query('"hello world"', '$.replace("hello","bye") starts with "bye"');
+
+-- Test .split_part()
+select jsonb_path_query('"abc~@~def~@~ghi"', '$.split_part("~@~", 2)');
+
+-- Test string methods play nicely together
+select jsonb_path_query('"hello world"', '$.replace("hello","bye").upper()');
+select jsonb_path_query('"hElLo WorlD"', '$.lower().upper().lower().replace("hello","bye")');
+select jsonb_path_query('"hElLo WorlD"', '$.upper().lower().upper().replace("HELLO", "BYE")');
+select jsonb_path_query('"hElLo WorlD"', '$.lower().upper().lower().replace("hello","bye") starts with "bye"');
+select jsonb_path_query('"   hElLo WorlD "', '$.btrim().lower().upper().lower().replace("hello","bye") starts with "bye"');
+
 -- Test .time()
 select jsonb_path_query('null', '$.time()');
 select jsonb_path_query('true', '$.time()');

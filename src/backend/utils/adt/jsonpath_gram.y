@@ -43,6 +43,9 @@ static bool makeItemLikeRegex(JsonPathParseItem *expr,
 							  JsonPathString *flags,
 							  JsonPathParseItem ** result,
 							  struct Node *escontext);
+static JsonPathParseItem *makeItemReplaceFunc(JsonPathParseItem *arg0, JsonPathParseItem *arg1);
+static JsonPathParseItem *makeItemStrSplitPartFunc(JsonPathParseItem *arg0, JsonPathParseItem *arg1);
+
 
 /*
  * Bison doesn't allocate anything that needs to live across parser calls,
@@ -84,6 +87,8 @@ static bool makeItemLikeRegex(JsonPathParseItem *expr,
 %token	<str>		DATETIME_P
 %token	<str>		BIGINT_P BOOLEAN_P DATE_P DECIMAL_P INTEGER_P NUMBER_P
 %token	<str>		STRINGFUNC_P TIME_P TIME_TZ_P TIMESTAMP_P TIMESTAMP_TZ_P
+%token	<str>		STR_REPLACEFUNC_P STR_LOWER_P STR_UPPER_P STR_LTRIM_P STR_RTRIM_P STR_BTRIM_P
+					STR_INITCAP_P STR_SPLIT_PART_P
 
 %type	<result>	result
 
@@ -92,8 +97,9 @@ static bool makeItemLikeRegex(JsonPathParseItem *expr,
 					index_elem starts_with_initial expr_or_predicate
 					datetime_template opt_datetime_template csv_elem
 					datetime_precision opt_datetime_precision
+					str_method_arg_elem
 
-%type	<elems>		accessor_expr csv_list opt_csv_list
+%type	<elems>		accessor_expr csv_list opt_csv_list str_method_arg_list
 
 %type	<indexs>	index_list
 
@@ -276,6 +282,32 @@ accessor_op:
 		{ $$ = makeItemUnary(jpiTimestamp, $4); }
 	| '.' TIMESTAMP_TZ_P '(' opt_datetime_precision ')'
 		{ $$ = makeItemUnary(jpiTimestampTz, $4); }
+	| '.' STR_REPLACEFUNC_P '(' str_method_arg_list ')'
+		{
+			if (list_length($4) == 2)
+				$$ = makeItemReplaceFunc(linitial($4), lsecond($4));
+			else
+				ereturn(escontext, false,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("invalid input syntax for type %s", "jsonpath"),
+						 errdetail(".replace() accepts two arguments.")));
+		}
+	| '.' STR_SPLIT_PART_P '(' str_method_arg_list ')'
+		{
+			if (list_length($4) == 2)
+				$$ = makeItemStrSplitPartFunc(linitial($4), lsecond($4));
+			else
+				ereturn(escontext, false,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("invalid input syntax for type %s", "jsonpath"),
+						 errdetail(".split_part() accepts two arguments.")));
+		}
+	| '.' STR_LTRIM_P '(' opt_datetime_template ')'
+		{ $$ = makeItemUnary(jpiStrLtrimFunc, $4); }
+	| '.' STR_RTRIM_P '(' opt_datetime_template ')'
+		{ $$ = makeItemUnary(jpiStrRtrimFunc, $4); }
+	| '.' STR_BTRIM_P '(' opt_datetime_template ')'
+		{ $$ = makeItemUnary(jpiStrBtrimFunc, $4); }
 	;
 
 csv_elem:
@@ -315,6 +347,15 @@ opt_datetime_template:
 	| /* EMPTY */					{ $$ = NULL; }
 	;
 
+str_method_arg_elem:
+	STRING_P						{ $$ = makeItemString(&$1); }
+	| INT_P							{ $$ = makeItemNumeric(&$1); }
+	;
+
+str_method_arg_list:
+	str_method_arg_elem							{ $$ = list_make1($1); }
+	| str_method_arg_list ',' str_method_arg_elem	{ $$ = lappend($1, $3); }
+	;
 key:
 	key_name						{ $$ = makeItemKey(&$1); }
 	;
@@ -355,6 +396,9 @@ key_name:
 	| TIME_TZ_P
 	| TIMESTAMP_P
 	| TIMESTAMP_TZ_P
+	| STR_LTRIM_P
+	| STR_RTRIM_P
+	| STR_BTRIM_P
 	;
 
 method:
@@ -371,6 +415,9 @@ method:
 	| INTEGER_P						{ $$ = jpiInteger; }
 	| NUMBER_P						{ $$ = jpiNumber; }
 	| STRINGFUNC_P					{ $$ = jpiStringFunc; }
+	| STR_LOWER_P					{ $$ = jpiStrLowerFunc; }
+	| STR_UPPER_P					{ $$ = jpiStrUpperFunc; }
+	| STR_INITCAP_P					{ $$ = jpiStrInitcapFunc; }
 	;
 %%
 
@@ -466,6 +513,28 @@ makeItemBinary(JsonPathItemType type, JsonPathParseItem *la, JsonPathParseItem *
 
 	v->value.args.left = la;
 	v->value.args.right = ra;
+
+	return v;
+}
+
+static JsonPathParseItem *
+makeItemReplaceFunc(JsonPathParseItem *arg0, JsonPathParseItem *arg1)
+{
+	JsonPathParseItem *v = makeItemType(jpiReplaceFunc);
+
+	v->value.method_args.arg0 = arg0;
+	v->value.method_args.arg1 = arg1;
+
+	return v;
+}
+
+static JsonPathParseItem *
+makeItemStrSplitPartFunc(JsonPathParseItem *arg0, JsonPathParseItem *arg1)
+{
+	JsonPathParseItem *v = makeItemType(jpiStrSplitPartFunc);
+
+	v->value.method_args.arg0 = arg0;
+	v->value.method_args.arg1 = arg1;
 
 	return v;
 }
