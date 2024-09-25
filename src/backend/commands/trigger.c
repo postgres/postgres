@@ -4097,8 +4097,11 @@ afterTriggerAddEvent(AfterTriggerEventList *events,
 		chunk->endptr = chunk->endfree = (char *) chunk + chunksize;
 		Assert(chunk->endfree - chunk->freeptr >= needed);
 
-		if (events->head == NULL)
+		if (events->tail == NULL)
+		{
+			Assert(events->head == NULL);
 			events->head = chunk;
+		}
 		else
 			events->tail->next = chunk;
 		events->tail = chunk;
