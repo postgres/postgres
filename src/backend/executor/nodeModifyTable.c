@@ -2827,7 +2827,7 @@ ExecMergeMatched(ModifyTableContext *context, ResultRelInfo *resultRelInfo,
 	 * If there are no WHEN MATCHED actions, we are done.
 	 */
 	if (resultRelInfo->ri_matchedMergeAction == NIL)
-		goto out;
+		return no_further_action;
 
 	/*
 	 * Make tuple and any needed join variables available to ExecQual and
