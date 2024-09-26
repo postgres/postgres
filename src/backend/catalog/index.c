@@ -2276,8 +2276,16 @@ index_drop(Oid indexId, bool concurrent, bool concurrent_lock_mode)
 		 */
 		WaitForLockers(heaplocktag, AccessExclusiveLock, true);
 
+		/*
+		 * Updating pg_index might involve TOAST table access, so ensure we
+		 * have a valid snapshot.
+		 */
+		PushActiveSnapshot(GetTransactionSnapshot());
+
 		/* Finish invalidation of index and mark it as dead */
 		index_concurrently_set_dead(heapId, indexId);
+
+		PopActiveSnapshot();
 
 		/*
 		 * Again, commit the transaction to make the pg_index update visible
@@ -2327,6 +2335,16 @@ index_drop(Oid indexId, bool concurrent, bool concurrent_lock_mode)
 	RelationForgetRelation(indexId);
 
 	/*
+	 * Updating pg_index might involve TOAST table access, so ensure we have a
+	 * valid snapshot.  We only expect to get here without a snapshot in the
+	 * concurrent path.
+	 */
+	if (concurrent)
+		PushActiveSnapshot(GetTransactionSnapshot());
+	else
+		Assert(HaveRegisteredOrActiveSnapshot());
+
+	/*
 	 * fix INDEX relation, and check for expressional index
 	 */
 	indexRelation = table_open(IndexRelationId, RowExclusiveLock);
@@ -2342,6 +2360,9 @@ index_drop(Oid indexId, bool concurrent, bool concurrent_lock_mode)
 
 	ReleaseSysCache(tuple);
 	table_close(indexRelation, RowExclusiveLock);
+
+	if (concurrent)
+		PopActiveSnapshot();
 
 	/*
 	 * if it has any expression columns, we might have stored statistics about

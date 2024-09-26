@@ -1799,9 +1799,17 @@ DefineIndex(Oid tableId,
 	WaitForOlderSnapshots(limitXmin, true);
 
 	/*
+	 * Updating pg_index might involve TOAST table access, so ensure we have a
+	 * valid snapshot.
+	 */
+	PushActiveSnapshot(GetTransactionSnapshot());
+
+	/*
 	 * Index can now be marked valid -- update its pg_index entry
 	 */
 	index_set_state_flags(indexRelationId, INDEX_CREATE_SET_VALID);
+
+	PopActiveSnapshot();
 
 	/*
 	 * The pg_index update will cause backends (including this one) to update
@@ -4257,10 +4265,18 @@ ReindexRelationConcurrently(const ReindexStmt *stmt, Oid relationOid, const Rein
 									 false);
 
 		/*
+		 * Updating pg_index might involve TOAST table access, so ensure we
+		 * have a valid snapshot.
+		 */
+		PushActiveSnapshot(GetTransactionSnapshot());
+
+		/*
 		 * Swap old index with the new one.  This also marks the new one as
 		 * valid and the old one as not valid.
 		 */
 		index_concurrently_swap(newidx->indexId, oldidx->indexId, oldName);
+
+		PopActiveSnapshot();
 
 		/*
 		 * Invalidate the relcache for the table, so that after this commit
@@ -4312,7 +4328,15 @@ ReindexRelationConcurrently(const ReindexStmt *stmt, Oid relationOid, const Rein
 		 */
 		CHECK_FOR_INTERRUPTS();
 
+		/*
+		 * Updating pg_index might involve TOAST table access, so ensure we
+		 * have a valid snapshot.
+		 */
+		PushActiveSnapshot(GetTransactionSnapshot());
+
 		index_concurrently_set_dead(oldidx->tableId, oldidx->indexId);
+
+		PopActiveSnapshot();
 	}
 
 	/* Commit this transaction to make the updates visible. */

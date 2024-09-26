@@ -1640,3 +1640,18 @@ select indexrelid::regclass, indisvalid, indisreplident,
 (3 rows)
 
 drop table parted_replica_tab;
+-- test that indexing commands work with TOASTed values in pg_index
+create table test_pg_index_toast_table (a int);
+create or replace function test_pg_index_toast_func (a int, b int[])
+  returns bool as $$ select true $$ language sql immutable;
+select array_agg(n) b from generate_series(1, 10000) n \gset
+create index concurrently test_pg_index_toast_index
+  on test_pg_index_toast_table (test_pg_index_toast_func(a, :'b'));
+reindex index concurrently test_pg_index_toast_index;
+drop index concurrently test_pg_index_toast_index;
+create index test_pg_index_toast_index
+  on test_pg_index_toast_table (test_pg_index_toast_func(a, :'b'));
+reindex index test_pg_index_toast_index;
+drop index test_pg_index_toast_index;
+drop function test_pg_index_toast_func;
+drop table test_pg_index_toast_table;
