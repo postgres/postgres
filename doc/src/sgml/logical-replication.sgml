@@ -2564,6 +2564,14 @@ ALTER SUBSCRIPTION
        </para>
       </step>
      </procedure>
+
+     <note>
+      <para>
+       In the steps described above, the publisher is upgraded first, followed
+       by the subscriber. Alternatively, the user can use similar steps to
+       upgrade the subscriber first, followed by the publisher.
+      </para>
+     </note>
     </sect3>
 
     <sect3 id="steps-cascaded-logical-replication-cluster">
