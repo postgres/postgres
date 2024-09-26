@@ -8739,6 +8739,8 @@ SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
        <replaceable>n</replaceable> is the number of digits following
        <literal>V</literal>.  <literal>V</literal> with
        <function>to_number</function> divides in a similar manner.
+       The <literal>V</literal> can be thought of as marking the position
+       of an implicit decimal point in the input or output string.
        <function>to_char</function> and <function>to_number</function>
        do not support the use of
        <literal>V</literal> combined with a decimal point

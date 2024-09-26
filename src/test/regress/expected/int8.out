@@ -530,6 +530,16 @@ SELECT to_char(q2, 'MI9999999999999999')     FROM INT8_TBL;
  -4567890123456789
 (5 rows)
 
+SELECT to_char(q2, '9999999999999999PL')     FROM INT8_TBL;
+      to_char       
+--------------------
+               456+
+  4567890123456789+
+               123+
+  4567890123456789+
+ -4567890123456789 
+(5 rows)
+
 SELECT to_char(q2, 'FMS9999999999999999')    FROM INT8_TBL;
       to_char      
 -------------------
@@ -649,6 +659,46 @@ SELECT to_char(q2, '999999SG9999999999')     FROM INT8_TBL;
  456789+0123456789
  456789-0123456789
 (5 rows)
+
+SELECT to_char(q2, 'FMRN')                   FROM INT8_TBL;
+     to_char     
+-----------------
+ CDLVI
+ ###############
+ CXXIII
+ ###############
+ ###############
+(5 rows)
+
+SELECT to_char(1234, '9.99EEEE');
+  to_char  
+-----------
+  1.23e+03
+(1 row)
+
+SELECT to_char(1234::int8, '9.99eeee');
+  to_char  
+-----------
+  1.23e+03
+(1 row)
+
+SELECT to_char(-1234::int8, '9.99eeee');
+  to_char  
+-----------
+ -1.23e+03
+(1 row)
+
+SELECT to_char(1234, '99999V99');
+ to_char  
+----------
+   123400
+(1 row)
+
+SELECT to_char(1234::int8, '99999V99');
+ to_char  
+----------
+   123400
+(1 row)
 
 -- check min/max values and overflow behavior
 select '-9223372036854775808'::int8;

@@ -110,6 +110,7 @@ SELECT to_char( (q1 * -1), '9999999999999999S'), to_char( (q2 * -1), 'S999999999
 	FROM INT8_TBL;
 
 SELECT to_char(q2, 'MI9999999999999999')     FROM INT8_TBL;
+SELECT to_char(q2, '9999999999999999PL')     FROM INT8_TBL;
 SELECT to_char(q2, 'FMS9999999999999999')    FROM INT8_TBL;
 SELECT to_char(q2, 'FM9999999999999999THPR') FROM INT8_TBL;
 SELECT to_char(q2, 'SG9999999999999999th')   FROM INT8_TBL;
@@ -122,6 +123,13 @@ SELECT to_char(q2, 'FM9999999999999999.999') FROM INT8_TBL;
 SELECT to_char(q2, 'S 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 . 9 9 9') FROM INT8_TBL;
 SELECT to_char(q2, E'99999 "text" 9999 "9999" 999 "\\"text between quote marks\\"" 9999') FROM INT8_TBL;
 SELECT to_char(q2, '999999SG9999999999')     FROM INT8_TBL;
+SELECT to_char(q2, 'FMRN')                   FROM INT8_TBL;
+
+SELECT to_char(1234, '9.99EEEE');
+SELECT to_char(1234::int8, '9.99eeee');
+SELECT to_char(-1234::int8, '9.99eeee');
+SELECT to_char(1234, '99999V99');
+SELECT to_char(1234::int8, '99999V99');
 
 -- check min/max values and overflow behavior
 

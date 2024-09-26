@@ -996,6 +996,7 @@ SELECT to_char(val, E'99999 "text" 9999 "9999" 999 "\\"text between quote marks\
 SELECT to_char(val, '999999SG9999999999')			FROM num_data;
 SELECT to_char(val, 'FM9999999999999999.999999999999999')	FROM num_data;
 SELECT to_char(val, '9.999EEEE')				FROM num_data;
+SELECT to_char(val, 'FMRN')					FROM num_data;
 
 WITH v(val) AS
   (VALUES('0'::numeric),('-4.2'),('4.2e9'),('1.2e-5'),('inf'),('-inf'),('nan'))
@@ -1032,6 +1033,19 @@ SELECT to_char('100'::numeric, 'FM999.9');
 SELECT to_char('100'::numeric, 'FM999.');
 SELECT to_char('100'::numeric, 'FM999');
 SELECT to_char('12345678901'::float8, 'FM9999999999D9999900000000000000000');
+
+SELECT to_char('100'::numeric, 'rn');
+SELECT to_char('1234'::numeric, 'rn');
+SELECT to_char('1235'::float4, 'rn');
+SELECT to_char('1236'::float8, 'rn');
+SELECT to_char('1237'::float8, 'fmrn');
+SELECT to_char('100e9'::numeric, 'RN');
+SELECT to_char('100e9'::float4, 'RN');
+SELECT to_char('100e9'::float8, 'RN');
+
+SELECT to_char(1234.56::numeric, '99999V99');
+SELECT to_char(1234.56::float4, '99999V99');
+SELECT to_char(1234.56::float8, '99999V99');
 
 -- Check parsing of literal text in a format string
 SELECT to_char('100'::numeric, 'foo999');
@@ -1070,6 +1084,7 @@ SELECT to_number('$1,234.56','L99,999.99');
 SELECT to_number('1234.56','L99,999.99');
 SELECT to_number('1,234.56','L99,999.99');
 SELECT to_number('42nd', '99th');
+SELECT to_number('123456', '99999V99');
 RESET lc_numeric;
 
 --

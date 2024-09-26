@@ -1991,6 +1991,21 @@ SELECT to_char(val, '9.999EEEE')				FROM num_data;
  -2.493e+07
 (10 rows)
 
+SELECT to_char(val, 'FMRN')					FROM num_data;
+     to_char     
+-----------------
+ ###############
+ ###############
+ ###############
+ IV
+ ###############
+ ###############
+ ###############
+ ###############
+ ###############
+ ###############
+(10 rows)
+
 WITH v(val) AS
   (VALUES('0'::numeric),('-4.2'),('4.2e9'),('1.2e-5'),('inf'),('-inf'),('nan'))
 SELECT val,
@@ -2099,6 +2114,72 @@ SELECT to_char('12345678901'::float8, 'FM9999999999D9999900000000000000000');
      to_char     
 -----------------
  ##########.####
+(1 row)
+
+SELECT to_char('100'::numeric, 'rn');
+     to_char     
+-----------------
+               c
+(1 row)
+
+SELECT to_char('1234'::numeric, 'rn');
+     to_char     
+-----------------
+        mccxxxiv
+(1 row)
+
+SELECT to_char('1235'::float4, 'rn');
+     to_char     
+-----------------
+         mccxxxv
+(1 row)
+
+SELECT to_char('1236'::float8, 'rn');
+     to_char     
+-----------------
+        mccxxxvi
+(1 row)
+
+SELECT to_char('1237'::float8, 'fmrn');
+  to_char  
+-----------
+ mccxxxvii
+(1 row)
+
+SELECT to_char('100e9'::numeric, 'RN');
+     to_char     
+-----------------
+ ###############
+(1 row)
+
+SELECT to_char('100e9'::float4, 'RN');
+     to_char     
+-----------------
+ ###############
+(1 row)
+
+SELECT to_char('100e9'::float8, 'RN');
+     to_char     
+-----------------
+ ###############
+(1 row)
+
+SELECT to_char(1234.56::numeric, '99999V99');
+ to_char  
+----------
+   123456
+(1 row)
+
+SELECT to_char(1234.56::float4, '99999V99');
+ to_char  
+----------
+   123456
+(1 row)
+
+SELECT to_char(1234.56::float8, '99999V99');
+ to_char  
+----------
+   123456
 (1 row)
 
 -- Check parsing of literal text in a format string
@@ -2295,6 +2376,12 @@ SELECT to_number('42nd', '99th');
  to_number 
 -----------
         42
+(1 row)
+
+SELECT to_number('123456', '99999V99');
+        to_number        
+-------------------------
+ 1234.560000000000000000
 (1 row)
 
 RESET lc_numeric;

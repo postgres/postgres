@@ -5189,6 +5189,11 @@ NUM_cache(int len, NUMDesc *Num, text *pars_str, bool *shouldFree)
 }
 
 
+/*
+ * Convert integer to Roman numerals
+ * Result is upper-case and not blank-padded (NUM_processor converts as needed)
+ * If input is out-of-range, produce '###############'
+ */
 static char *
 int_to_roman(int number)
 {
@@ -5201,32 +5206,42 @@ int_to_roman(int number)
 	result = (char *) palloc(16);
 	*result = '\0';
 
+	/*
+	 * This range limit is the same as in Oracle(TM).  The difficulty with
+	 * handling 4000 or more is that we'd need to use more than 3 "M"'s, and
+	 * more than 3 of the same digit isn't considered a valid Roman string.
+	 */
 	if (number > 3999 || number < 1)
 	{
 		fill_str(result, '#', 15);
 		return result;
 	}
+
+	/* Convert to decimal, then examine each digit */
 	len = snprintf(numstr, sizeof(numstr), "%d", number);
+	Assert(len > 0 && len <= 4);
 
 	for (p = numstr; *p != '\0'; p++, --len)
 	{
 		num = *p - ('0' + 1);
 		if (num < 0)
-			continue;
-
-		if (len > 3)
+			continue;			/* ignore zeroes */
+		/* switch on current column position */
+		switch (len)
 		{
-			while (num-- != -1)
-				strcat(result, "M");
-		}
-		else
-		{
-			if (len == 3)
+			case 4:
+				while (num-- >= 0)
+					strcat(result, "M");
+				break;
+			case 3:
 				strcat(result, rm100[num]);
-			else if (len == 2)
+				break;
+			case 2:
 				strcat(result, rm10[num]);
-			else if (len == 1)
+				break;
+			case 1:
 				strcat(result, rm1[num]);
+				break;
 		}
 	}
 	return result;
@@ -6367,7 +6382,6 @@ numeric_to_char(PG_FUNCTION_ARGS)
 	char	   *numstr,
 			   *orgnum,
 			   *p;
-	Numeric		x;
 
 	NUM_TOCHAR_prepare;
 
@@ -6376,12 +6390,15 @@ numeric_to_char(PG_FUNCTION_ARGS)
 	 */
 	if (IS_ROMAN(&Num))
 	{
-		x = DatumGetNumeric(DirectFunctionCall2(numeric_round,
-												NumericGetDatum(value),
-												Int32GetDatum(0)));
-		numstr =
-			int_to_roman(DatumGetInt32(DirectFunctionCall1(numeric_int4,
-														   NumericGetDatum(x))));
+		int32		intvalue;
+		bool		err;
+
+		/* Round and convert to int */
+		intvalue = numeric_int4_opt_error(value, &err);
+		/* On overflow, just use PG_INT32_MAX; int_to_roman will cope */
+		if (err)
+			intvalue = PG_INT32_MAX;
+		numstr = int_to_roman(intvalue);
 	}
 	else if (IS_EEEE(&Num))
 	{
@@ -6421,6 +6438,7 @@ numeric_to_char(PG_FUNCTION_ARGS)
 	{
 		int			numstr_pre_len;
 		Numeric		val = value;
+		Numeric		x;
 
 		if (IS_MULTI(&Num))
 		{
@@ -6589,12 +6607,18 @@ int8_to_char(PG_FUNCTION_ARGS)
 	NUM_TOCHAR_prepare;
 
 	/*
-	 * On DateType depend part (int32)
+	 * On DateType depend part (int64)
 	 */
 	if (IS_ROMAN(&Num))
 	{
-		/* Currently don't support int8 conversion to roman... */
-		numstr = int_to_roman(DatumGetInt32(DirectFunctionCall1(int84, Int64GetDatum(value))));
+		int32		intvalue;
+
+		/* On overflow, just use PG_INT32_MAX; int_to_roman will cope */
+		if (value <= PG_INT32_MAX && value >= PG_INT32_MIN)
+			intvalue = (int32) value;
+		else
+			intvalue = PG_INT32_MAX;
+		numstr = int_to_roman(intvalue);
 	}
 	else if (IS_EEEE(&Num))
 	{
@@ -6695,7 +6719,18 @@ float4_to_char(PG_FUNCTION_ARGS)
 	NUM_TOCHAR_prepare;
 
 	if (IS_ROMAN(&Num))
-		numstr = int_to_roman((int) rint(value));
+	{
+		int32		intvalue;
+
+		/* See notes in ftoi4() */
+		value = rint(value);
+		/* On overflow, just use PG_INT32_MAX; int_to_roman will cope */
+		if (!isnan(value) && FLOAT4_FITS_IN_INT32(value))
+			intvalue = (int32) value;
+		else
+			intvalue = PG_INT32_MAX;
+		numstr = int_to_roman(intvalue);
+	}
 	else if (IS_EEEE(&Num))
 	{
 		if (isnan(value) || isinf(value))
@@ -6797,7 +6832,18 @@ float8_to_char(PG_FUNCTION_ARGS)
 	NUM_TOCHAR_prepare;
 
 	if (IS_ROMAN(&Num))
-		numstr = int_to_roman((int) rint(value));
+	{
+		int32		intvalue;
+
+		/* See notes in dtoi4() */
+		value = rint(value);
+		/* On overflow, just use PG_INT32_MAX; int_to_roman will cope */
+		if (!isnan(value) && FLOAT8_FITS_IN_INT32(value))
+			intvalue = (int32) value;
+		else
+			intvalue = PG_INT32_MAX;
+		numstr = int_to_roman(intvalue);
+	}
 	else if (IS_EEEE(&Num))
 	{
 		if (isnan(value) || isinf(value))
