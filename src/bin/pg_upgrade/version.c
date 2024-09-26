@@ -147,31 +147,28 @@ old_9_6_invalidate_hash_indexes(ClusterInfo *cluster, bool check_mode)
 static void
 process_extension_updates(DbInfo *dbinfo, PGresult *res, void *arg)
 {
-	bool		db_used = false;
 	int			ntups = PQntuples(res);
 	int			i_name = PQfnumber(res, "name");
 	UpgradeTaskReport *report = (UpgradeTaskReport *) arg;
+	PQExpBufferData connectbuf;
 
 	AssertVariableIsOfType(&process_extension_updates, UpgradeTaskProcessCB);
 
-	for (int rowno = 0; rowno < ntups; rowno++)
-	{
-		if (report->file == NULL &&
-			(report->file = fopen_priv(report->path, "w")) == NULL)
-			pg_fatal("could not open file \"%s\": %m", report->path);
-		if (!db_used)
-		{
-			PQExpBufferData connectbuf;
+	if (ntups == 0)
+		return;
 
-			initPQExpBuffer(&connectbuf);
-			appendPsqlMetaConnect(&connectbuf, dbinfo->db_name);
-			fputs(connectbuf.data, report->file);
-			termPQExpBuffer(&connectbuf);
-			db_used = true;
-		}
+	if (report->file == NULL &&
+		(report->file = fopen_priv(report->path, "w")) == NULL)
+		pg_fatal("could not open file \"%s\": %m", report->path);
+
+	initPQExpBuffer(&connectbuf);
+	appendPsqlMetaConnect(&connectbuf, dbinfo->db_name);
+	fputs(connectbuf.data, report->file);
+	termPQExpBuffer(&connectbuf);
+
+	for (int rowno = 0; rowno < ntups; rowno++)
 		fprintf(report->file, "ALTER EXTENSION %s UPDATE;\n",
 				quote_identifier(PQgetvalue(res, rowno, i_name)));
-	}
 }
 
 /*

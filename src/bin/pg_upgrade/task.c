@@ -89,7 +89,7 @@ struct UpgradeTask
 /*
  * The different states for a parallel slot.
  */
-typedef enum
+typedef enum UpgradeTaskSlotState
 {
 	FREE,						/* slot available for use in a new database */
 	CONNECTING,					/* waiting for connection to be established */
@@ -99,7 +99,7 @@ typedef enum
 /*
  * We maintain an array of user_opts.jobs slots to execute the task.
  */
-typedef struct
+typedef struct UpgradeTaskSlot
 {
 	UpgradeTaskSlotState state; /* state of the slot */
 	int			db_idx;			/* index of the database assigned to slot */
