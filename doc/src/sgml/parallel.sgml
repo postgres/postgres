@@ -512,12 +512,6 @@ EXPLAIN SELECT * FROM pgbench_accounts WHERE filler LIKE '%x%';
 
     <listitem>
       <para>
-        Plan nodes to which an <literal>InitPlan</literal> is attached.
-      </para>
-    </listitem>
-
-    <listitem>
-      <para>
         Plan nodes that reference a correlated <literal>SubPlan</literal>.
       </para>
     </listitem>
