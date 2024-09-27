@@ -18,8 +18,7 @@
 
 typedef enum
 {
-    TDE_LWLOCK_MK_CACHE,
-    TDE_LWLOCK_MK_FILES,
+    TDE_LWLOCK_ENC_KEY,
     TDE_LWLOCK_PI_FILES,
 
     /* Must be the last entry in the enum */

@@ -101,20 +101,16 @@ void InitializePrincipalKeyInfo(void)
     on_ext_install(principal_key_startup_cleanup, NULL);
 }
 
+/*
+ * Lock to guard internal/principal key. Usually, this lock has to be held until
+ * the caller fetches an internal_key or rotates the principal.
+ */
 LWLock *
-tde_lwlock_mk_files(void)
+tde_lwlock_enc_keys(void)
 {
     Assert(principalKeyLocalState.sharedPrincipalKeyState);
 
-    return &principalKeyLocalState.sharedPrincipalKeyState->Locks[TDE_LWLOCK_MK_FILES];
-}
-
-LWLock *
-tde_lwlock_mk_cache(void)
-{
-    Assert(principalKeyLocalState.sharedPrincipalKeyState);
-
-    return &principalKeyLocalState.sharedPrincipalKeyState->Locks[TDE_LWLOCK_MK_CACHE];
+    return &principalKeyLocalState.sharedPrincipalKeyState->Locks[TDE_LWLOCK_ENC_KEY];
 }
 
 static Size
@@ -218,36 +214,28 @@ save_principal_key_info(TDEPrincipalKeyInfo *principal_key_info)
 /*
  * SetPrincipalkey:
  * We need to ensure that only one principal key is set for a database.
- * To do that we take a little help from cache. Before setting the
- * principal key we take an exclusive lock on the cache entry for the
- * database.
- * After acquiring the exclusive lock we check for the entry again
- * to make sure if some other caller has not added a principal key for
- * same database while we were waiting for the lock.
  */
 TDEPrincipalKey *
 set_principal_key_with_keyring(const char *key_name, GenericKeyring *keyring,
                             Oid dbOid, Oid spcOid, bool ensure_new_key)
 {
     TDEPrincipalKey *principalKey = NULL;
-    LWLock *lock_files = tde_lwlock_mk_files();
-    LWLock *lock_cache = tde_lwlock_mk_cache();
+    LWLock *lock_files = tde_lwlock_enc_keys();
     bool is_dup_key = false;
 
     /*
      * Try to get principal key from cache.
      */
     LWLockAcquire(lock_files, LW_EXCLUSIVE);
-    LWLockAcquire(lock_cache, LW_EXCLUSIVE);
 
     principalKey = get_principal_key_from_cache(dbOid);
     is_dup_key = (principalKey != NULL);
 
     /*  TODO: Add the key in the cache? */
-    if (is_dup_key == false)
-        is_dup_key = (pg_tde_get_principal_key(dbOid, spcOid) != NULL);
+    if (!is_dup_key)
+        is_dup_key = (pg_tde_get_principal_key_info(dbOid, spcOid) != NULL);
 
-    if (is_dup_key == false)
+    if (!is_dup_key)
     {
         const keyInfo *keyInfo = NULL;
 
@@ -266,7 +254,6 @@ set_principal_key_with_keyring(const char *key_name, GenericKeyring *keyring,
 
         if (keyInfo == NULL)
         {
-            LWLockRelease(lock_cache);
             LWLockRelease(lock_files);
 
             ereport(ERROR,
@@ -286,7 +273,6 @@ set_principal_key_with_keyring(const char *key_name, GenericKeyring *keyring,
         push_principal_key_to_cache(principalKey);
     }
 
-    LWLockRelease(lock_cache);
     LWLockRelease(lock_files);
 
     if (is_dup_key)
@@ -395,7 +381,7 @@ xl_tde_perform_rotate_key(XLogPrincipalKeyRotate *xlrec)
     bool ret;
 
     ret = pg_tde_write_map_keydata_files(xlrec->map_size, xlrec->buff, xlrec->keydata_size, &xlrec->buff[xlrec->map_size]);
-    clear_principal_key_cache(MyDatabaseId);
+    clear_principal_key_cache(xlrec->databaseId);
 
 	return ret;
 }
@@ -476,11 +462,9 @@ GetPrincipalKeyProviderId(void)
     TDEPrincipalKeyInfo *principalKeyInfo = NULL;
     Oid keyringId = InvalidOid;
     Oid dbOid = MyDatabaseId;
-    LWLock *lock_files = tde_lwlock_mk_files();
-    LWLock *lock_cache = tde_lwlock_mk_cache();
+    LWLock *lock_files = tde_lwlock_enc_keys();
 
     LWLockAcquire(lock_files, LW_SHARED);
-    LWLockAcquire(lock_cache, LW_SHARED);
 
     principalKey = get_principal_key_from_cache(dbOid);
     if (principalKey)
@@ -489,7 +473,7 @@ GetPrincipalKeyProviderId(void)
     }
     {
         /* Principal key not present in cache. Try Loading it from the info file */
-        principalKeyInfo = pg_tde_get_principal_key(dbOid, MyDatabaseTableSpace);
+        principalKeyInfo = pg_tde_get_principal_key_info(dbOid, MyDatabaseTableSpace);
         if (principalKeyInfo)
         {
             keyringId = principalKeyInfo->keyringId;
@@ -497,7 +481,6 @@ GetPrincipalKeyProviderId(void)
         }
     }
 
-    LWLockRelease(lock_cache);
     LWLockRelease(lock_files);
 
     return keyringId;
@@ -661,8 +644,12 @@ pg_tde_rotate_principal_key_internal(PG_FUNCTION_ARGS)
                             new_principal_key_name,
                             new_provider_name,
                             is_global ? "cluster" : "database")));
-    current_key = GetPrincipalKey(dbOid, spcOid);
+
+	LWLockAcquire(tde_lwlock_enc_keys(), LW_EXCLUSIVE);
+    current_key = GetPrincipalKey(dbOid, spcOid, LW_EXCLUSIVE);
     ret = RotatePrincipalKey(current_key, new_principal_key_name, new_provider_name, ensure_new_key);
+	LWLockRelease(tde_lwlock_enc_keys());
+
     PG_RETURN_BOOL(ret);
 }
 
@@ -700,7 +687,9 @@ pg_tde_get_key_info(PG_FUNCTION_ARGS, Oid dbOid, Oid spcOid)
                 (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
                     errmsg("function returning record called in context that cannot accept type record")));
 
-    principal_key = GetPrincipalKey(dbOid, spcOid);
+	LWLockAcquire(tde_lwlock_enc_keys(), LW_SHARED);
+    principal_key = GetPrincipalKey(dbOid, spcOid, LW_SHARED);
+	LWLockRelease(tde_lwlock_enc_keys());
     if (principal_key == NULL)
 	{
 		ereport(ERROR,
@@ -751,86 +740,36 @@ pg_tde_get_key_info(PG_FUNCTION_ARGS, Oid dbOid, Oid spcOid)
 }
 #endif /* FRONTEND */
 
-/*
- * Public interface to get the principal key for the current database
- * If the principal key is not present in the cache, it is loaded from
- * the keyring and stored in the cache.
- * When the principal key is not set for the database. The function returns
- * throws an error.
+/* 
+ * Gets principal key form the keyring and pops it into cache if key exists
+ * Caller should hold an exclusive tde_lwlock_enc_keys lock
  */
 TDEPrincipalKey *
-GetPrincipalKey(Oid dbOid, Oid spcOid)
+get_principal_key_from_keyring(Oid dbOid, Oid spcOid)
 {
     GenericKeyring *keyring;
     TDEPrincipalKey *principalKey = NULL;
     TDEPrincipalKeyInfo *principalKeyInfo = NULL;
     const keyInfo *keyInfo = NULL;
     KeyringReturnCodes keyring_ret;
-    LWLock *lock_files = tde_lwlock_mk_files();
-    LWLock *lock_cache = tde_lwlock_mk_cache();
 
-#ifndef FRONTEND
-    /* We don't store global space key in cache */
-    if (spcOid != GLOBALTABLESPACE_OID)
-    {
-        LWLockAcquire(lock_cache, LW_SHARED);
-        principalKey = get_principal_key_from_cache(dbOid);
-        LWLockRelease(lock_cache);
-    }
+    Assert(LWLockHeldByMeInMode(tde_lwlock_enc_keys(), LW_EXCLUSIVE));
 
-    if (principalKey)
-	{
-        return principalKey;
-	}
-#endif
-
-    /*
-     * We should hold an exclusive lock here to ensure that a valid principal key, if found, is added
-     * to the cache without any interference.
-     */
-    LWLockAcquire(lock_files, LW_SHARED);
-    LWLockAcquire(lock_cache, LW_EXCLUSIVE);
-
-#ifndef FRONTEND
-    /* We don't store global space key in cache */
-    if (spcOid != GLOBALTABLESPACE_OID)
-    {
-        principalKey = get_principal_key_from_cache(dbOid);
-    }
-
-    if (principalKey)
-    {
-        LWLockRelease(lock_cache);
-        LWLockRelease(lock_files);
-        return principalKey;
-    }
-#endif
-
-    /* Principal key not present in cache. Load from the keyring */
-    principalKeyInfo = pg_tde_get_principal_key(dbOid, spcOid);
+    principalKeyInfo = pg_tde_get_principal_key_info(dbOid, spcOid);
     if (principalKeyInfo == NULL)
     {
-        LWLockRelease(lock_cache);
-        LWLockRelease(lock_files);
-
         return NULL;
     }
 
     keyring = GetKeyProviderByID(principalKeyInfo->keyringId, dbOid, spcOid);
     if (keyring == NULL)
     {
-        LWLockRelease(lock_cache);
-        LWLockRelease(lock_files);
-
         return NULL;
     }
 
     keyInfo = KeyringGetKey(keyring, principalKeyInfo->keyId.versioned_name, false, &keyring_ret);
     if (keyInfo == NULL)
     {
-        LWLockRelease(lock_cache);
-        LWLockRelease(lock_files);
-
         return NULL;
     }
 
@@ -850,12 +789,51 @@ GetPrincipalKey(Oid dbOid, Oid spcOid)
     }
 #endif
 
-    /* Release the exclusive locks here */
-    LWLockRelease(lock_cache);
-    LWLockRelease(lock_files);
-
     if (principalKeyInfo)
         pfree(principalKeyInfo);
 
     return principalKey;
+}
+
+/*
+ * A public interface to get the principal key for the database.
+ * If the principal key is not present in the cache, it is loaded from
+ * the keyring and stored in the cache.
+ * When the principal key is not set for the database. The function returns
+ * throws an error.
+ * 
+ * The caller must hold a `tde_lwlock_enc_keys` lock and pass its obtained mode
+ * via the `lockMode` param (LW_SHARED or LW_EXCLUSIVE). We expect the key to be
+ * most likely in the cache. So the caller should use LW_SHARED if there are no
+ * principal key changes planned as this is faster and creates less contention.
+ * But if there is no key in the cache, we have to switch the lock 
+ * (LWLockRelease + LWLockAcquire) to LW_EXCLUSIVE mode to write the key to the
+ * cache.
+ */
+TDEPrincipalKey *
+GetPrincipalKey(Oid dbOid, Oid spcOid, LWLockMode lockMode)
+{
+#ifndef FRONTEND
+    TDEPrincipalKey *principalKey = NULL;
+
+    Assert(LWLockHeldByMeInMode(tde_lwlock_enc_keys(), lockMode));
+    /* We don't store global space key in cache */
+    if (spcOid != GLOBALTABLESPACE_OID)
+    {
+        principalKey = get_principal_key_from_cache(dbOid);
+    }
+
+    if (likely(principalKey))
+	{
+        return principalKey;
+	}
+
+    if (lockMode != LW_EXCLUSIVE)
+    {
+        LWLockRelease(tde_lwlock_enc_keys());
+        LWLockAcquire(tde_lwlock_enc_keys(), LW_EXCLUSIVE);
+    }
+#endif
+
+    return get_principal_key_from_keyring(dbOid, spcOid);
 }

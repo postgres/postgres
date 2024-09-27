@@ -76,7 +76,12 @@ static int	tde_fe_error_level = 0;
 
 #define LWLockAcquire(lock, mode) NULL
 #define LWLockRelease(lock_files) NULL
+#define LWLockHeldByMeInMode(lock, mode) NULL
 #define LWLock void
+#define LWLockMode void*
+#define LW_SHARED NULL
+#define LW_EXCLUSIVE NULL
+#define tde_lwlock_enc_keys() NULL
 
 #define BasicOpenFile(fileName, fileFlags) open(fileName, fileFlags, PG_FILE_MODE_OWNER)
 

@@ -15,6 +15,7 @@ tde_smgr_get_key(SMgrRelation reln)
 {
 	TdeCreateEvent *event;
 	RelKeyData *rkd;
+	TDEPrincipalKey *pk;
 
 	if(IsCatalogRelationOid(reln->smgr_rlocator.locator.relNumber))
 	{
@@ -22,7 +23,10 @@ tde_smgr_get_key(SMgrRelation reln)
 		return NULL;
 	}
 
-	if(GetPrincipalKey(reln->smgr_rlocator.locator.dbOid, reln->smgr_rlocator.locator.spcOid)==NULL)
+	LWLockAcquire(tde_lwlock_enc_keys(), LW_SHARED);
+	pk = GetPrincipalKey(reln->smgr_rlocator.locator.dbOid, reln->smgr_rlocator.locator.spcOid, LW_SHARED);
+	LWLockRelease(tde_lwlock_enc_keys());
+	if(pk == NULL)
 	{
 		return NULL;
 	}

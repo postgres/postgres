@@ -39,13 +39,17 @@ tdeheap_rmgr_redo(XLogReaderState *record)
 	{
 		XLogRelKey *xlrec = (XLogRelKey *) XLogRecGetData(record);
 
+		LWLockAcquire(tde_lwlock_enc_keys(), LW_EXCLUSIVE);
 		pg_tde_write_key_map_entry(&xlrec->rlocator, &xlrec->relKey, NULL);
+		LWLockRelease(tde_lwlock_enc_keys());
 	}
 	else if (info == XLOG_TDE_ADD_PRINCIPAL_KEY)
 	{
 		TDEPrincipalKeyInfo *mkey = (TDEPrincipalKeyInfo *) XLogRecGetData(record);
 
+		LWLockAcquire(tde_lwlock_enc_keys(), LW_EXCLUSIVE);
 		save_principal_key_info(mkey);
+		LWLockRelease(tde_lwlock_enc_keys());
 	}
 	else if (info == XLOG_TDE_EXTENSION_INSTALL_KEY)
 	{
@@ -64,7 +68,9 @@ tdeheap_rmgr_redo(XLogReaderState *record)
 	{
 		XLogPrincipalKeyRotate *xlrec = (XLogPrincipalKeyRotate *) XLogRecGetData(record);
 
+		LWLockAcquire(tde_lwlock_enc_keys(), LW_EXCLUSIVE);
 		xl_tde_perform_rotate_key(xlrec);
+		LWLockRelease(tde_lwlock_enc_keys());
 	}
 	else
 	{
