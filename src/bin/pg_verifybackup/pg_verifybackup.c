@@ -331,8 +331,8 @@ main(int argc, char **argv)
 	}
 
 	/*
-	 * XXX: In the future, we should consider enhancing pg_waldump to read
-	 * WAL files from an archive.
+	 * XXX: In the future, we should consider enhancing pg_waldump to read WAL
+	 * files from an archive.
 	 */
 	if (!no_parse_wal && context.format == 't')
 	{
