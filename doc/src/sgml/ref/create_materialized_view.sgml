@@ -143,7 +143,9 @@ CREATE MATERIALIZED VIEW [ IF NOT EXISTS ] <replaceable>table_name</replaceable>
       A <link linkend="sql-select"><command>SELECT</command></link>, <link linkend="sql-table"><command>TABLE</command></link>,
       or <link linkend="sql-values"><command>VALUES</command></link> command.  This query will run within a
       security-restricted operation; in particular, calls to functions that
-      themselves create temporary tables will fail.
+      themselves create temporary tables will fail.  Also, while the query is
+      running, the <xref linkend="guc-search-path"/> is temporarily changed to
+      <literal>pg_catalog, pg_temp</literal>.
      </para>
     </listitem>
    </varlistentry>
