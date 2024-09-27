@@ -3336,6 +3336,7 @@ astreamer_plain_writer
 astreamer_recovery_injector
 astreamer_tar_archiver
 astreamer_tar_parser
+astreamer_verify
 astreamer_zstd_frame
 bgworker_main_type
 bh_node_type
@@ -3957,6 +3958,7 @@ substitute_phv_relids_context
 subxids_array_status
 symbol
 tablespaceinfo
+tar_file
 td_entry
 teSection
 temp_tablespaces_extra

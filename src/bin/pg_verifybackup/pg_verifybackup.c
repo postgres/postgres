@@ -22,6 +22,7 @@
 #include "common/parse_manifest.h"
 #include "fe_utils/simple_list.h"
 #include "getopt_long.h"
+#include "limits.h"
 #include "pg_verifybackup.h"
 #include "pgtime.h"
 
@@ -44,6 +45,16 @@
  */
 #define READ_CHUNK_SIZE				(128 * 1024)
 
+/*
+ * Tar file information needed for content verification.
+ */
+typedef struct tar_file
+{
+	char	   *relpath;
+	Oid			tblspc_oid;
+	pg_compress_algorithm compress_algorithm;
+} tar_file;
+
 static manifest_data *parse_manifest_file(char *manifest_path);
 static void verifybackup_version_cb(JsonManifestParseContext *context,
 									int manifest_version);
@@ -62,12 +73,18 @@ static void report_manifest_error(JsonManifestParseContext *context,
 								  const char *fmt,...)
 			pg_attribute_printf(2, 3) pg_attribute_noreturn();
 
-static void verify_backup_directory(verifier_context *context,
-									char *relpath, char *fullpath);
-static void verify_backup_file(verifier_context *context,
-							   char *relpath, char *fullpath);
+static void verify_tar_backup(verifier_context *context, DIR *dir);
+static void verify_plain_backup_directory(verifier_context *context,
+										  char *relpath, char *fullpath,
+										  DIR *dir);
+static void verify_plain_backup_file(verifier_context *context, char *relpath,
+									 char *fullpath);
 static void verify_control_file(const char *controlpath,
 								uint64 manifest_system_identifier);
+static void precheck_tar_backup_file(verifier_context *context, char *relpath,
+									 char *fullpath, SimplePtrList *tarfiles);
+static void verify_tar_file(verifier_context *context, char *relpath,
+							char *fullpath, astreamer *streamer);
 static void report_extra_backup_files(verifier_context *context);
 static void verify_backup_checksums(verifier_context *context);
 static void verify_file_checksum(verifier_context *context,
@@ -76,6 +93,10 @@ static void verify_file_checksum(verifier_context *context,
 static void parse_required_wal(verifier_context *context,
 							   char *pg_waldump_path,
 							   char *wal_directory);
+static astreamer *create_archive_verifier(verifier_context *context,
+										  char *archive_name,
+										  Oid tblspc_oid,
+										  pg_compress_algorithm compress_algo);
 
 static void progress_report(bool finished);
 static void usage(void);
@@ -99,6 +120,7 @@ main(int argc, char **argv)
 		{"exit-on-error", no_argument, NULL, 'e'},
 		{"ignore", required_argument, NULL, 'i'},
 		{"manifest-path", required_argument, NULL, 'm'},
+		{"format", required_argument, NULL, 'F'},
 		{"no-parse-wal", no_argument, NULL, 'n'},
 		{"progress", no_argument, NULL, 'P'},
 		{"quiet", no_argument, NULL, 'q'},
@@ -114,6 +136,7 @@ main(int argc, char **argv)
 	bool		quiet = false;
 	char	   *wal_directory = NULL;
 	char	   *pg_waldump_path = NULL;
+	DIR		   *dir;
 
 	pg_logging_init(argv[0]);
 	set_pglocale_pgservice(argv[0], PG_TEXTDOMAIN("pg_verifybackup"));
@@ -156,7 +179,7 @@ main(int argc, char **argv)
 	simple_string_list_append(&context.ignore_list, "recovery.signal");
 	simple_string_list_append(&context.ignore_list, "standby.signal");
 
-	while ((c = getopt_long(argc, argv, "ei:m:nPqsw:", long_options, NULL)) != -1)
+	while ((c = getopt_long(argc, argv, "eF:i:m:nPqsw:", long_options, NULL)) != -1)
 	{
 		switch (c)
 		{
@@ -174,6 +197,15 @@ main(int argc, char **argv)
 			case 'm':
 				manifest_path = pstrdup(optarg);
 				canonicalize_path(manifest_path);
+				break;
+			case 'F':
+				if (strcmp(optarg, "p") == 0 || strcmp(optarg, "plain") == 0)
+					context.format = 'p';
+				else if (strcmp(optarg, "t") == 0 || strcmp(optarg, "tar") == 0)
+					context.format = 't';
+				else
+					pg_fatal("invalid backup format \"%s\", must be \"plain\" or \"tar\"",
+							 optarg);
 				break;
 			case 'n':
 				no_parse_wal = true;
@@ -264,25 +296,75 @@ main(int argc, char **argv)
 	context.manifest = parse_manifest_file(manifest_path);
 
 	/*
-	 * Now scan the files in the backup directory. At this stage, we verify
-	 * that every file on disk is present in the manifest and that the sizes
-	 * match. We also set the "matched" flag on every manifest entry that
-	 * corresponds to a file on disk.
+	 * If the backup directory cannot be found, treat this as a fatal error.
 	 */
-	verify_backup_directory(&context, NULL, context.backup_directory);
+	dir = opendir(context.backup_directory);
+	if (dir == NULL)
+		report_fatal_error("could not open directory \"%s\": %m",
+						   context.backup_directory);
+
+	/*
+	 * At this point, we know that the backup directory exists, so it's now
+	 * reasonable to check for files immediately inside it. Thus, before going
+	 * further, if the user did not specify the backup format, check for
+	 * PG_VERSION to distinguish between tar and plain format.
+	 */
+	if (context.format == '\0')
+	{
+		struct stat sb;
+		char	   *path;
+
+		path = psprintf("%s/%s", context.backup_directory, "PG_VERSION");
+		if (stat(path, &sb) == 0)
+			context.format = 'p';
+		else if (errno != ENOENT)
+		{
+			pg_log_error("could not stat file \"%s\": %m", path);
+			exit(1);
+		}
+		else
+		{
+			/* No PG_VERSION, so assume tar format. */
+			context.format = 't';
+		}
+		pfree(path);
+	}
+
+	/*
+	 * XXX: In the future, we should consider enhancing pg_waldump to read
+	 * WAL files from an archive.
+	 */
+	if (!no_parse_wal && context.format == 't')
+	{
+		pg_log_error("pg_waldump cannot read tar files");
+		pg_log_error_hint("You must use -n or --no-parse-wal when verifying a tar-format backup.");
+		exit(1);
+	}
+
+	/*
+	 * Perform the appropriate type of verification appropriate based on the
+	 * backup format. This will close 'dir'.
+	 */
+	if (context.format == 'p')
+		verify_plain_backup_directory(&context, NULL, context.backup_directory,
+									  dir);
+	else
+		verify_tar_backup(&context, dir);
 
 	/*
 	 * The "matched" flag should now be set on every entry in the hash table.
 	 * Any entries for which the bit is not set are files mentioned in the
-	 * manifest that don't exist on disk.
+	 * manifest that don't exist on disk (or in the relevant tar files).
 	 */
 	report_extra_backup_files(&context);
 
 	/*
-	 * Now do the expensive work of verifying file checksums, unless we were
-	 * told to skip it.
+	 * If this is a tar-format backup, checksums were already verified above;
+	 * but if it's a plain-format backup, we postpone it until this point,
+	 * since the earlier checks can be performed just by knowing which files
+	 * are present, without needing to read all of them.
 	 */
-	if (!context.skip_checksums)
+	if (context.format == 'p' && !context.skip_checksums)
 		verify_backup_checksums(&context);
 
 	/*
@@ -517,35 +599,27 @@ verifybackup_per_wal_range_cb(JsonManifestParseContext *context,
 }
 
 /*
- * Verify one directory.
+ * Verify one directory of a plain-format backup.
  *
  * 'relpath' is NULL if we are to verify the top-level backup directory,
  * and otherwise the relative path to the directory that is to be verified.
  *
  * 'fullpath' is the backup directory with 'relpath' appended; i.e. the actual
  * filesystem path at which it can be found.
+ *
+ * 'dir' is an open directory handle, or NULL if the caller wants us to
+ * open it. If the caller chooses to pass a handle, we'll close it when
+ * we're done with it.
  */
 static void
-verify_backup_directory(verifier_context *context, char *relpath,
-						char *fullpath)
+verify_plain_backup_directory(verifier_context *context, char *relpath,
+							  char *fullpath, DIR *dir)
 {
-	DIR		   *dir;
 	struct dirent *dirent;
 
-	dir = opendir(fullpath);
-	if (dir == NULL)
+	/* Open the directory unless the caller did it. */
+	if (dir == NULL && ((dir = opendir(fullpath)) == NULL))
 	{
-		/*
-		 * If even the toplevel backup directory cannot be found, treat this
-		 * as a fatal error.
-		 */
-		if (relpath == NULL)
-			report_fatal_error("could not open directory \"%s\": %m", fullpath);
-
-		/*
-		 * Otherwise, treat this as a non-fatal error, but ignore any further
-		 * errors related to this path and anything beneath it.
-		 */
 		report_backup_error(context,
 							"could not open directory \"%s\": %m", fullpath);
 		simple_string_list_append(&context->ignore_list, relpath);
@@ -570,7 +644,7 @@ verify_backup_directory(verifier_context *context, char *relpath,
 			newrelpath = psprintf("%s/%s", relpath, filename);
 
 		if (!should_ignore_relpath(context, newrelpath))
-			verify_backup_file(context, newrelpath, newfullpath);
+			verify_plain_backup_file(context, newrelpath, newfullpath);
 
 		pfree(newfullpath);
 		pfree(newrelpath);
@@ -587,11 +661,12 @@ verify_backup_directory(verifier_context *context, char *relpath,
 /*
  * Verify one file (which might actually be a directory or a symlink).
  *
- * The arguments to this function have the same meaning as the arguments to
- * verify_backup_directory.
+ * The arguments to this function have the same meaning as the similarly named
+ * arguments to verify_plain_backup_directory.
  */
 static void
-verify_backup_file(verifier_context *context, char *relpath, char *fullpath)
+verify_plain_backup_file(verifier_context *context, char *relpath,
+						 char *fullpath)
 {
 	struct stat sb;
 	manifest_file *m;
@@ -614,7 +689,7 @@ verify_backup_file(verifier_context *context, char *relpath, char *fullpath)
 	/* If it's a directory, just recurse. */
 	if (S_ISDIR(sb.st_mode))
 	{
-		verify_backup_directory(context, relpath, fullpath);
+		verify_plain_backup_directory(context, relpath, fullpath, NULL);
 		return;
 	}
 
@@ -701,6 +776,252 @@ verify_control_file(const char *controlpath, uint64 manifest_system_identifier)
 
 	/* Release memory. */
 	pfree(control_file);
+}
+
+/*
+ * Verify tar backup.
+ *
+ * The caller should pass a handle to the target directory, which we will
+ * close when we're done with it.
+ */
+static void
+verify_tar_backup(verifier_context *context, DIR *dir)
+{
+	struct dirent *dirent;
+	SimplePtrList tarfiles = {NULL, NULL};
+	SimplePtrListCell *cell;
+
+	Assert(context->format != 'p');
+
+	progress_report(false);
+
+	/* First pass: scan the directory for tar files. */
+	while (errno = 0, (dirent = readdir(dir)) != NULL)
+	{
+		char	   *filename = dirent->d_name;
+
+		/* Skip "." and ".." */
+		if (filename[0] == '.' && (filename[1] == '\0'
+								   || strcmp(filename, "..") == 0))
+			continue;
+
+		/*
+		 * Unless it's something we should ignore, perform prechecks and add
+		 * it to the list.
+		 */
+		if (!should_ignore_relpath(context, filename))
+		{
+			char	   *fullpath;
+
+			fullpath = psprintf("%s/%s", context->backup_directory, filename);
+			precheck_tar_backup_file(context, filename, fullpath, &tarfiles);
+			pfree(fullpath);
+		}
+	}
+
+	if (closedir(dir))
+	{
+		report_backup_error(context,
+							"could not close directory \"%s\": %m",
+							context->backup_directory);
+		return;
+	}
+
+	/* Second pass: Perform the final verification of the tar contents. */
+	for (cell = tarfiles.head; cell != NULL; cell = cell->next)
+	{
+		tar_file   *tar = (tar_file *) cell->ptr;
+		astreamer  *streamer;
+		char	   *fullpath;
+
+		/*
+		 * Prepares the archive streamer stack according to the tar
+		 * compression format.
+		 */
+		streamer = create_archive_verifier(context,
+										   tar->relpath,
+										   tar->tblspc_oid,
+										   tar->compress_algorithm);
+
+		/* Compute the full pathname to the target file. */
+		fullpath = psprintf("%s/%s", context->backup_directory,
+							tar->relpath);
+
+		/* Invoke the streamer for reading, decompressing, and verifying. */
+		verify_tar_file(context, tar->relpath, fullpath, streamer);
+
+		/* Cleanup. */
+		pfree(tar->relpath);
+		pfree(tar);
+		pfree(fullpath);
+
+		astreamer_finalize(streamer);
+		astreamer_free(streamer);
+	}
+	simple_ptr_list_destroy(&tarfiles);
+
+	progress_report(true);
+}
+
+/*
+ * Preparatory steps for verifying files in tar format backups.
+ *
+ * Carries out basic validation of the tar format backup file, detects the
+ * compression type, and appends that information to the tarfiles list. An
+ * error will be reported if the tar file is inaccessible, or if the file type,
+ * name, or compression type is not as expected.
+ *
+ * The arguments to this function are mostly the same as the
+ * verify_plain_backup_file. The additional argument outputs a list of valid
+ * tar files.
+ */
+static void
+precheck_tar_backup_file(verifier_context *context, char *relpath,
+						 char *fullpath, SimplePtrList *tarfiles)
+{
+	struct stat sb;
+	Oid			tblspc_oid = InvalidOid;
+	pg_compress_algorithm compress_algorithm;
+	tar_file   *tar;
+	char	   *suffix = NULL;
+
+	/* Should be tar format backup */
+	Assert(context->format == 't');
+
+	/* Get file information */
+	if (stat(fullpath, &sb) != 0)
+	{
+		report_backup_error(context,
+							"could not stat file or directory \"%s\": %m",
+							relpath);
+		return;
+	}
+
+	/* In a tar format backup, we expect only plain files. */
+	if (!S_ISREG(sb.st_mode))
+	{
+		report_backup_error(context,
+							"\"%s\" is not a plain file",
+							relpath);
+		return;
+	}
+
+	/*
+	 * We expect tar files for backing up the main directory, tablespace, and
+	 * pg_wal directory.
+	 *
+	 * pg_basebackup writes the main data directory to an archive file named
+	 * base.tar, the pg_wal directory to pg_wal.tar, and the tablespace
+	 * directory to <tablespaceoid>.tar, each followed by a compression type
+	 * extension such as .gz, .lz4, or .zst.
+	 */
+	if (strncmp("base", relpath, 4) == 0)
+		suffix = relpath + 4;
+	else if (strncmp("pg_wal", relpath, 6) == 0)
+		suffix = relpath + 6;
+	else
+	{
+		/* Expected a <tablespaceoid>.tar file here. */
+		uint64		num = strtoul(relpath, &suffix, 10);
+
+		/*
+		 * Report an error if we didn't consume at least one character, if the
+		 * result is 0, or if the value is too large to be a valid OID.
+		 */
+		if (suffix == NULL || num <= 0 || num > OID_MAX)
+			report_backup_error(context,
+								"file \"%s\" is not expected in a tar format backup",
+								relpath);
+		tblspc_oid = (Oid) num;
+	}
+
+	/* Now, check the compression type of the tar */
+	if (strcmp(suffix, ".tar") == 0)
+		compress_algorithm = PG_COMPRESSION_NONE;
+	else if (strcmp(suffix, ".tgz") == 0)
+		compress_algorithm = PG_COMPRESSION_GZIP;
+	else if (strcmp(suffix, ".tar.gz") == 0)
+		compress_algorithm = PG_COMPRESSION_GZIP;
+	else if (strcmp(suffix, ".tar.lz4") == 0)
+		compress_algorithm = PG_COMPRESSION_LZ4;
+	else if (strcmp(suffix, ".tar.zst") == 0)
+		compress_algorithm = PG_COMPRESSION_ZSTD;
+	else
+	{
+		report_backup_error(context,
+							"file \"%s\" is not expected in a tar format backup",
+							relpath);
+		return;
+	}
+
+	/*
+	 * Ignore WALs, as reading and verification will be handled through
+	 * pg_waldump.
+	 */
+	if (strncmp("pg_wal", relpath, 6) == 0)
+		return;
+
+	/*
+	 * Append the information to the list for complete verification at a later
+	 * stage.
+	 */
+	tar = pg_malloc(sizeof(tar_file));
+	tar->relpath = pstrdup(relpath);
+	tar->tblspc_oid = tblspc_oid;
+	tar->compress_algorithm = compress_algorithm;
+
+	simple_ptr_list_append(tarfiles, tar);
+
+	/* Update statistics for progress report, if necessary */
+	if (show_progress)
+		total_size += sb.st_size;
+}
+
+/*
+ * Verification of a single tar file content.
+ *
+ * It reads a given tar archive in predefined chunks and passes it to the
+ * streamer, which initiates routines for decompression (if necessary) and then
+ * verifies each member within the tar file.
+ */
+static void
+verify_tar_file(verifier_context *context, char *relpath, char *fullpath,
+				astreamer *streamer)
+{
+	int			fd;
+	int			rc;
+	char	   *buffer;
+
+	pg_log_debug("reading \"%s\"", fullpath);
+
+	/* Open the target file. */
+	if ((fd = open(fullpath, O_RDONLY | PG_BINARY, 0)) < 0)
+	{
+		report_backup_error(context, "could not open file \"%s\": %m",
+							relpath);
+		return;
+	}
+
+	buffer = pg_malloc(READ_CHUNK_SIZE * sizeof(uint8));
+
+	/* Perform the reads */
+	while ((rc = read(fd, buffer, READ_CHUNK_SIZE)) > 0)
+	{
+		astreamer_content(streamer, NULL, buffer, rc, ASTREAMER_UNKNOWN);
+
+		/* Report progress */
+		done_size += rc;
+		progress_report(false);
+	}
+
+	if (rc < 0)
+		report_backup_error(context, "could not read file \"%s\": %m",
+							relpath);
+
+	/* Close the file. */
+	if (close(fd) != 0)
+		report_backup_error(context, "could not close file \"%s\": %m",
+							relpath);
 }
 
 /*
@@ -830,10 +1151,10 @@ verify_file_checksum(verifier_context *context, manifest_file *m,
 
 	/*
 	 * Double-check that we read the expected number of bytes from the file.
-	 * Normally, a file size mismatch would be caught in verify_backup_file
-	 * and this check would never be reached, but this provides additional
-	 * safety and clarity in the event of concurrent modifications or
-	 * filesystem misbehavior.
+	 * Normally, mismatches would be caught in verify_plain_backup_file and
+	 * this check would never be reached, but this provides additional safety
+	 * and clarity in the event of concurrent modifications or filesystem
+	 * misbehavior.
 	 */
 	if (bytes_read != m->size)
 	{
@@ -956,6 +1277,37 @@ should_ignore_relpath(verifier_context *context, const char *relpath)
 }
 
 /*
+ * Create a chain of archive streamers appropriate for verifying a given
+ * archive.
+ */
+static astreamer *
+create_archive_verifier(verifier_context *context, char *archive_name,
+						Oid tblspc_oid, pg_compress_algorithm compress_algo)
+{
+	astreamer  *streamer = NULL;
+
+	/* Should be here only for tar backup */
+	Assert(context->format == 't');
+
+	/* Last step is the actual verification. */
+	streamer = astreamer_verify_content_new(streamer, context, archive_name,
+											tblspc_oid);
+
+	/* Before that we must parse the tar file. */
+	streamer = astreamer_tar_parser_new(streamer);
+
+	/* Before that we must decompress, if archive is compressed. */
+	if (compress_algo == PG_COMPRESSION_GZIP)
+		streamer = astreamer_gzip_decompressor_new(streamer);
+	else if (compress_algo == PG_COMPRESSION_LZ4)
+		streamer = astreamer_lz4_decompressor_new(streamer);
+	else if (compress_algo == PG_COMPRESSION_ZSTD)
+		streamer = astreamer_zstd_decompressor_new(streamer);
+
+	return streamer;
+}
+
+/*
  * Print a progress report based on the global variables.
  *
  * Progress report is written at maximum once per second, unless the finished
@@ -1010,6 +1362,7 @@ usage(void)
 	printf(_("Usage:\n  %s [OPTION]... BACKUPDIR\n\n"), progname);
 	printf(_("Options:\n"));
 	printf(_("  -e, --exit-on-error         exit immediately on error\n"));
+	printf(_("  -F, --format=p|t            backup format (plain, tar)\n"));
 	printf(_("  -i, --ignore=RELATIVE_PATH  ignore indicated path\n"));
 	printf(_("  -m, --manifest-path=PATH    use specified path for manifest\n"));
 	printf(_("  -n, --no-parse-wal          do not try to parse WAL files\n"));

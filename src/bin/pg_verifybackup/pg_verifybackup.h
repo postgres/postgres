@@ -18,6 +18,7 @@
 #include "common/hashfn_unstable.h"
 #include "common/logging.h"
 #include "common/parse_manifest.h"
+#include "fe_utils/astreamer.h"
 #include "fe_utils/simple_list.h"
 
 /*
@@ -88,6 +89,7 @@ typedef struct verifier_context
 	manifest_data *manifest;
 	char	   *backup_directory;
 	SimpleStringList ignore_list;
+	char		format;			/* backup format:  p(lain)/t(ar) */
 	bool		skip_checksums;
 	bool		exit_on_error;
 	bool		saw_any_error;
@@ -100,5 +102,10 @@ extern void report_fatal_error(const char *pg_restrict fmt,...)
 			pg_attribute_printf(1, 2) pg_attribute_noreturn();
 extern bool should_ignore_relpath(verifier_context *context,
 								  const char *relpath);
+
+extern astreamer *astreamer_verify_content_new(astreamer *next,
+											   verifier_context *context,
+											   char *archive_name,
+											   Oid tblspc_oid);
 
 #endif							/* PG_VERIFYBACKUP_H */

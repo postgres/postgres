@@ -5,11 +5,14 @@
 
 use strict;
 use warnings FATAL => 'all';
+use Cwd;
 use File::Path qw(rmtree);
 use File::Copy;
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
 use Test::More;
+
+my $tar = $ENV{TAR};
 
 my $primary = PostgreSQL::Test::Cluster->new('primary');
 $primary->init(allows_streaming => 1);
@@ -34,35 +37,35 @@ my @scenario = (
 		'name' => 'extra_file',
 		'mutilate' => \&mutilate_extra_file,
 		'fails_like' =>
-		  qr/extra_file.*present on disk but not in the manifest/
+		  qr/extra_file.*present (on disk|in "[^"]+") but not in the manifest/
 	},
 	{
 		'name' => 'extra_tablespace_file',
 		'mutilate' => \&mutilate_extra_tablespace_file,
 		'fails_like' =>
-		  qr/extra_ts_file.*present on disk but not in the manifest/
+		  qr/extra_ts_file.*present (on disk|in "[^"]+") but not in the manifest/
 	},
 	{
 		'name' => 'missing_file',
 		'mutilate' => \&mutilate_missing_file,
 		'fails_like' =>
-		  qr/pg_xact\/0000.*present in the manifest but not on disk/
+		  qr/pg_xact\/0000.*present in the manifest but not (on disk|in "[^"]+")/
 	},
 	{
 		'name' => 'missing_tablespace',
 		'mutilate' => \&mutilate_missing_tablespace,
 		'fails_like' =>
-		  qr/pg_tblspc.*present in the manifest but not on disk/
+		  qr/pg_tblspc.*present in the manifest but not (on disk|in "[^"]+")/
 	},
 	{
 		'name' => 'append_to_file',
 		'mutilate' => \&mutilate_append_to_file,
-		'fails_like' => qr/has size \d+ on disk but size \d+ in the manifest/
+		'fails_like' => qr/has size \d+ (on disk|in "[^"]+") but size \d+ in the manifest/
 	},
 	{
 		'name' => 'truncate_file',
 		'mutilate' => \&mutilate_truncate_file,
-		'fails_like' => qr/has size 0 on disk but size \d+ in the manifest/
+		'fails_like' => qr/has size 0 (on disk|in "[^"]+") but size \d+ in the manifest/
 	},
 	{
 		'name' => 'replace_file',
@@ -84,21 +87,21 @@ my @scenario = (
 		'name' => 'open_file_fails',
 		'mutilate' => \&mutilate_open_file_fails,
 		'fails_like' => qr/could not open file/,
-		'skip_on_windows' => 1
+		'needs_unix_permissions' => 1
 	},
 	{
 		'name' => 'open_directory_fails',
 		'mutilate' => \&mutilate_open_directory_fails,
 		'cleanup' => \&cleanup_open_directory_fails,
 		'fails_like' => qr/could not open directory/,
-		'skip_on_windows' => 1
+		'needs_unix_permissions' => 1
 	},
 	{
 		'name' => 'search_directory_fails',
 		'mutilate' => \&mutilate_search_directory_fails,
 		'cleanup' => \&cleanup_search_directory_fails,
 		'fails_like' => qr/could not stat file or directory/,
-		'skip_on_windows' => 1
+		'needs_unix_permissions' => 1
 	});
 
 for my $scenario (@scenario)
@@ -108,7 +111,7 @@ for my $scenario (@scenario)
   SKIP:
 	{
 		skip "unix-style permissions not supported on Windows", 4
-		  if ($scenario->{'skip_on_windows'}
+		  if ($scenario->{'needs_unix_permissions'}
 			&& ($windows_os || $Config::Config{osname} eq 'cygwin'));
 
 		# Take a backup and check that it verifies OK.
@@ -140,7 +143,59 @@ for my $scenario (@scenario)
 		$scenario->{'cleanup'}->($backup_path)
 		  if exists $scenario->{'cleanup'};
 
-		# Finally, use rmtree to reclaim space.
+		# Turn it into a tar-format backup and see if we can still detect the
+		# same problem, unless the scenario needs UNIX permissions or we don't
+		# have a TAR program available. Note that this destructively modifies
+		# the backup directory.
+		if (! $scenario->{'needs_unix_permissions'} ||
+			!defined $tar || $tar eq '')
+		{
+			my $tar_backup_path = $primary->backup_dir . '/tar_' . $name;
+			mkdir($tar_backup_path) || die "mkdir $tar_backup_path: $!";
+
+			# tar and then remove each tablespace. We remove the original files
+			# so that they don't also end up in base.tar.
+			my @tsoid = grep { $_ ne '.' && $_ ne '..' }
+				slurp_dir("$backup_path/pg_tblspc");
+			my $cwd = getcwd;
+			for my $tsoid (@tsoid)
+			{
+				my $tspath = $backup_path . '/pg_tblspc/' . $tsoid;
+
+				chdir($tspath) || die "chdir: $!";
+				command_ok([ $tar, '-cf', "$tar_backup_path/$tsoid.tar", '.' ]);
+				chdir($cwd) || die "chdir: $!";
+				rmtree($tspath);
+			}
+
+			# tar and remove pg_wal
+			chdir($backup_path . '/pg_wal') || die "chdir: $!";
+			command_ok([ $tar, '-cf', "$tar_backup_path/pg_wal.tar", '.' ]);
+			chdir($cwd) || die "chdir: $!";
+			rmtree($backup_path . '/pg_wal');
+
+			# move the backup manifest
+			move($backup_path . '/backup_manifest',
+				$tar_backup_path . '/backup_manifest')
+				or die "could not copy manifest to $tar_backup_path";
+
+			# Construct base.tar with what's left.
+			chdir($backup_path) || die "chdir: $!";
+			command_ok([ $tar, '-cf', "$tar_backup_path/base.tar", '.' ]);
+			chdir($cwd) || die "chdir: $!";
+
+			# Now check that the backup no longer verifies. We must use -n
+			# here, because pg_waldump can't yet read WAL from a tarfile.
+			command_fails_like(
+				[ 'pg_verifybackup', '-n', $tar_backup_path ],
+				$scenario->{'fails_like'},
+				"corrupt backup fails verification: $name");
+
+			# Use rmtree to reclaim space.
+			rmtree($tar_backup_path);
+		}
+
+		# Use rmtree to reclaim space.
 		rmtree($backup_path);
 	}
 }

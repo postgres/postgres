@@ -66,5 +66,6 @@ extern void simple_string_list_destroy(SimpleStringList *list);
 extern const char *simple_string_list_not_touched(SimpleStringList *list);
 
 extern void simple_ptr_list_append(SimplePtrList *list, void *ptr);
+extern void simple_ptr_list_destroy(SimplePtrList *list);
 
 #endif							/* SIMPLE_LIST_H */

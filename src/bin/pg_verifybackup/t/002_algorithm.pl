@@ -14,24 +14,35 @@ my $primary = PostgreSQL::Test::Cluster->new('primary');
 $primary->init(allows_streaming => 1);
 $primary->start;
 
-for my $algorithm (qw(bogus none crc32c sha224 sha256 sha384 sha512))
+sub test_checksums
 {
-	my $backup_path = $primary->backup_dir . '/' . $algorithm;
+	my ($format, $algorithm) = @_;
+	my $backup_path = $primary->backup_dir . '/' . $format . '/' . $algorithm;
 	my @backup = (
 		'pg_basebackup', '-D', $backup_path,
 		'--manifest-checksums', $algorithm, '--no-sync', '-cfast');
 	my @verify = ('pg_verifybackup', '-e', $backup_path);
 
+	if ($format eq 'tar')
+	{
+		# Add switch to get a tar-format backup
+		push @backup, ('-F', 't');
+
+		# Add switch to skip WAL verification, which is not yet supported for
+		# tar-format backups
+		push @verify, ('-n');
+	}
+
 	# A backup with a bogus algorithm should fail.
 	if ($algorithm eq 'bogus')
 	{
 		$primary->command_fails(\@backup,
-			"backup fails with algorithm \"$algorithm\"");
-		next;
+			"$format format backup fails with algorithm \"$algorithm\"");
+		return;
 	}
 
 	# A backup with a valid algorithm should work.
-	$primary->command_ok(\@backup, "backup ok with algorithm \"$algorithm\"");
+	$primary->command_ok(\@backup, "$format format backup ok with algorithm \"$algorithm\"");
 
 	# We expect each real checksum algorithm to be mentioned on every line of
 	# the backup manifest file except the first and last; for simplicity, we
@@ -39,7 +50,7 @@ for my $algorithm (qw(bogus none crc32c sha224 sha256 sha384 sha512))
 	# is none, we just check that the manifest exists.
 	if ($algorithm eq 'none')
 	{
-		ok(-f "$backup_path/backup_manifest", "backup manifest exists");
+		ok(-f "$backup_path/backup_manifest", "$format format backup manifest exists");
 	}
 	else
 	{
@@ -52,10 +63,19 @@ for my $algorithm (qw(bogus none crc32c sha224 sha256 sha384 sha512))
 
 	# Make sure that it verifies OK.
 	$primary->command_ok(\@verify,
-		"verify backup with algorithm \"$algorithm\"");
+		"verify $format format backup with algorithm \"$algorithm\"");
 
 	# Remove backup immediately to save disk space.
 	rmtree($backup_path);
+}
+
+# Do the check
+for my $format (qw(plain tar))
+{
+	for my $algorithm (qw(bogus none crc32c sha224 sha256 sha384 sha512))
+	{
+		test_checksums($format, $algorithm);
+	}
 }
 
 done_testing();

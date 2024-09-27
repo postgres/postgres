@@ -28,6 +28,23 @@ ok($result, "-q succeeds: exit code 0");
 is($stdout, '', "-q succeeds: no stdout");
 is($stderr, '', "-q succeeds: no stderr");
 
+# Should still work if we specify -Fp.
+$primary->command_ok(
+	[ 'pg_verifybackup', '-Fp', $backup_path ],
+	"verifies with -Fp");
+
+# Should not work if we specify -Fy because that's invalid.
+$primary->command_fails_like(
+	[ 'pg_verifybackup', '-Fy', $backup_path ],
+	qr(invalid backup format "y", must be "plain" or "tar"),
+	"does not verify with -Fy");
+
+# Should produce a lengthy list of errors; we test for just one of those.
+$primary->command_fails_like(
+	[ 'pg_verifybackup', '-Ft', '-n', $backup_path ],
+	qr("pg_multixact" is not a plain file),
+	"does not verify with -Ft -n");
+
 # Test invalid options
 command_fails_like(
 	[ 'pg_verifybackup', '--progress', '--quiet', $backup_path ],

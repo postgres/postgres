@@ -1,6 +1,7 @@
 # Copyright (c) 2022-2024, PostgreSQL Global Development Group
 
 pg_verifybackup_sources = files(
+  'astreamer_verify.c',
   'pg_verifybackup.c'
 )
 

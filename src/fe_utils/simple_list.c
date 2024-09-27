@@ -173,3 +173,22 @@ simple_ptr_list_append(SimplePtrList *list, void *ptr)
 		list->head = cell;
 	list->tail = cell;
 }
+
+/*
+ * Destroy only pointer list and not the pointed-to element
+ */
+void
+simple_ptr_list_destroy(SimplePtrList *list)
+{
+	SimplePtrListCell *cell;
+
+	cell = list->head;
+	while (cell != NULL)
+	{
+		SimplePtrListCell *next;
+
+		next = cell->next;
+		pg_free(cell);
+		cell = next;
+	}
+}
