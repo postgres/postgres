@@ -88,7 +88,10 @@ is($node->psql('postgres', 'DROP DATABASE regression_invalid'),
 # Test that interruption of DROP DATABASE is handled properly. To ensure the
 # interruption happens at the appropriate moment, we lock pg_tablespace. DROP
 # DATABASE scans pg_tablespace once it has reached the "irreversible" part of
-# dropping the database, making it a suitable point to wait.
+# dropping the database, making it a suitable point to wait.  Since relcache
+# init reads pg_tablespace, establish each connection before locking.  This
+# avoids a connection-time hang with debug_discard_caches.
+my $cancel = $node->background_psql('postgres', on_error_stop => 1);
 my $bgpsql = $node->background_psql('postgres', on_error_stop => 0);
 my $pid = $bgpsql->query('SELECT pg_backend_pid()');
 
@@ -104,14 +107,19 @@ ok( $bgpsql->query_safe(
 # Try to drop. This will wait due to the still held lock.
 $bgpsql->query_until(qr//, "DROP DATABASE regression_invalid_interrupt;\n");
 
-# Ensure we're waiting for the lock
-$node->poll_query_until('postgres',
-	qq(SELECT EXISTS(SELECT * FROM pg_locks WHERE NOT granted AND relation = 'pg_tablespace'::regclass AND mode = 'AccessShareLock');)
-);
 
-# and finally interrupt the DROP DATABASE
-ok($node->safe_psql('postgres', "SELECT pg_cancel_backend($pid)"),
+# Once the DROP DATABASE is waiting for the lock, interrupt it.
+ok( $cancel->query_safe(
+		qq(
+	DO \$\$
+	BEGIN
+		WHILE NOT EXISTS(SELECT * FROM pg_locks WHERE NOT granted AND relation = 'pg_tablespace'::regclass AND mode = 'AccessShareLock') LOOP
+			PERFORM pg_sleep(.1);
+		END LOOP;
+	END\$\$;
+	SELECT pg_cancel_backend($pid);)),
 	"canceling DROP DATABASE");
+$cancel->quit();
 
 # wait for cancellation to be processed
 ok( pump_until(
@@ -120,7 +128,8 @@ ok( pump_until(
 	"cancel processed");
 $bgpsql->{stderr} = '';
 
-# verify that connection to the database aren't allowed
+# Verify that connections to the database aren't allowed.  The backend checks
+# this before relcache init, so the lock won't interfere.
 is($node->psql('regression_invalid_interrupt', ''),
 	2, "can't connect to invalid_interrupt database");
 
