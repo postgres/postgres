@@ -315,6 +315,33 @@ fix_placeholder_input_needed_levels(PlannerInfo *root)
 }
 
 /*
+ * rebuild_placeholder_attr_needed
+ *	  Put back attr_needed bits for Vars/PHVs needed in PlaceHolderVars.
+ *
+ * This is used to rebuild attr_needed/ph_needed sets after removal of a
+ * useless outer join.  It should match what
+ * fix_placeholder_input_needed_levels did, except that we call
+ * add_vars_to_attr_needed not add_vars_to_targetlist.
+ */
+void
+rebuild_placeholder_attr_needed(PlannerInfo *root)
+{
+	ListCell   *lc;
+
+	foreach(lc, root->placeholder_list)
+	{
+		PlaceHolderInfo *phinfo = (PlaceHolderInfo *) lfirst(lc);
+		List	   *vars = pull_var_clause((Node *) phinfo->ph_var->phexpr,
+										   PVC_RECURSE_AGGREGATES |
+										   PVC_RECURSE_WINDOWFUNCS |
+										   PVC_INCLUDE_PLACEHOLDERS);
+
+		add_vars_to_attr_needed(root, vars, phinfo->ph_eval_at);
+		list_free(vars);
+	}
+}
+
+/*
  * add_placeholders_to_base_rels
  *		Add any required PlaceHolderVars to base rels' targetlists.
  *

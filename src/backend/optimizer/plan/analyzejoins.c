@@ -27,6 +27,7 @@
 #include "optimizer/optimizer.h"
 #include "optimizer/pathnode.h"
 #include "optimizer/paths.h"
+#include "optimizer/placeholder.h"
 #include "optimizer/planmain.h"
 #include "optimizer/restrictinfo.h"
 #include "utils/lsyscache.h"
@@ -342,35 +343,6 @@ remove_rel_from_query(PlannerInfo *root, int relid, SpecialJoinInfo *sjinfo)
 	joinrelids = bms_add_member(joinrelids, ojrelid);
 
 	/*
-	 * Remove references to the rel from other baserels' attr_needed arrays.
-	 */
-	for (rti = 1; rti < root->simple_rel_array_size; rti++)
-	{
-		RelOptInfo *otherrel = root->simple_rel_array[rti];
-		int			attroff;
-
-		/* there may be empty slots corresponding to non-baserel RTEs */
-		if (otherrel == NULL)
-			continue;
-
-		Assert(otherrel->relid == rti); /* sanity check on array */
-
-		/* no point in processing target rel itself */
-		if (otherrel == rel)
-			continue;
-
-		for (attroff = otherrel->max_attr - otherrel->min_attr;
-			 attroff >= 0;
-			 attroff--)
-		{
-			otherrel->attr_needed[attroff] =
-				bms_del_member(otherrel->attr_needed[attroff], relid);
-			otherrel->attr_needed[attroff] =
-				bms_del_member(otherrel->attr_needed[attroff], ojrelid);
-		}
-	}
-
-	/*
 	 * Update all_baserels and related relid sets.
 	 */
 	root->all_baserels = bms_del_member(root->all_baserels, relid);
@@ -450,9 +422,11 @@ remove_rel_from_query(PlannerInfo *root, int relid, SpecialJoinInfo *sjinfo)
 			phinfo->ph_eval_at = bms_del_member(phinfo->ph_eval_at, relid);
 			phinfo->ph_eval_at = bms_del_member(phinfo->ph_eval_at, ojrelid);
 			Assert(!bms_is_empty(phinfo->ph_eval_at));	/* checked previously */
-			phinfo->ph_needed = bms_del_member(phinfo->ph_needed, relid);
-			phinfo->ph_needed = bms_del_member(phinfo->ph_needed, ojrelid);
-			/* ph_needed might or might not become empty */
+			/* Reduce ph_needed to contain only "relation 0"; see below */
+			if (bms_is_member(0, phinfo->ph_needed))
+				phinfo->ph_needed = bms_make_singleton(0);
+			else
+				phinfo->ph_needed = NULL;
 			phv->phrels = bms_del_member(phv->phrels, relid);
 			phv->phrels = bms_del_member(phv->phrels, ojrelid);
 			Assert(!bms_is_empty(phv->phrels));
@@ -540,7 +514,7 @@ remove_rel_from_query(PlannerInfo *root, int relid, SpecialJoinInfo *sjinfo)
 	 */
 
 	/*
-	 * Finally, remove the rel from the baserel array to prevent it from being
+	 * Now remove the rel from the baserel array to prevent it from being
 	 * referenced again.  (We can't do this earlier because
 	 * remove_join_clause_from_rels will touch it.)
 	 */
@@ -548,6 +522,51 @@ remove_rel_from_query(PlannerInfo *root, int relid, SpecialJoinInfo *sjinfo)
 
 	/* And nuke the RelOptInfo, just in case there's another access path */
 	pfree(rel);
+
+	/*
+	 * Finally, we must recompute per-Var attr_needed and per-PlaceHolderVar
+	 * ph_needed relid sets.  These have to be known accurately, else we may
+	 * fail to remove other now-removable outer joins.  And our removal of the
+	 * join clause(s) for this outer join may mean that Vars that were
+	 * formerly needed no longer are.  So we have to do this honestly by
+	 * repeating the construction of those relid sets.  We can cheat to one
+	 * small extent: we can avoid re-examining the targetlist and HAVING qual
+	 * by preserving "relation 0" bits from the existing relid sets.  This is
+	 * safe because we'd never remove such references.
+	 *
+	 * So, start by removing all other bits from attr_needed sets.  (We
+	 * already did this above for ph_needed.)
+	 */
+	for (rti = 1; rti < root->simple_rel_array_size; rti++)
+	{
+		RelOptInfo *otherrel = root->simple_rel_array[rti];
+		int			attroff;
+
+		/* there may be empty slots corresponding to non-baserel RTEs */
+		if (otherrel == NULL)
+			continue;
+
+		Assert(otherrel->relid == rti); /* sanity check on array */
+
+		for (attroff = otherrel->max_attr - otherrel->min_attr;
+			 attroff >= 0;
+			 attroff--)
+		{
+			if (bms_is_member(0, otherrel->attr_needed[attroff]))
+				otherrel->attr_needed[attroff] = bms_make_singleton(0);
+			else
+				otherrel->attr_needed[attroff] = NULL;
+		}
+	}
+
+	/*
+	 * Now repeat construction of attr_needed bits coming from all other
+	 * sources.
+	 */
+	rebuild_placeholder_attr_needed(root);
+	rebuild_joinclause_attr_needed(root);
+	rebuild_eclass_attr_needed(root);
+	rebuild_lateral_attr_needed(root);
 }
 
 /*

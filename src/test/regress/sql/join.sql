@@ -1952,17 +1952,22 @@ CREATE TEMP TABLE a (id int PRIMARY KEY, b_id int);
 CREATE TEMP TABLE b (id int PRIMARY KEY, c_id int);
 CREATE TEMP TABLE c (id int PRIMARY KEY);
 CREATE TEMP TABLE d (a int, b int);
+CREATE TEMP TABLE e (id1 int, id2 int, PRIMARY KEY(id1, id2));
 INSERT INTO a VALUES (0, 0), (1, NULL);
 INSERT INTO b VALUES (0, 0), (1, NULL);
 INSERT INTO c VALUES (0), (1);
 INSERT INTO d VALUES (1,3), (2,2), (3,1);
+INSERT INTO e VALUES (0,0), (2,2), (3,1);
 
--- all three cases should be optimizable into a simple seqscan
+-- all these cases should be optimizable into a simple seqscan
 explain (costs off) SELECT a.* FROM a LEFT JOIN b ON a.b_id = b.id;
 explain (costs off) SELECT b.* FROM b LEFT JOIN c ON b.c_id = c.id;
 explain (costs off)
   SELECT a.* FROM a LEFT JOIN (b left join c on b.c_id = c.id)
   ON (a.b_id = b.id);
+explain (costs off)
+  SELECT a.* FROM a LEFT JOIN b ON a.id = b.id
+  LEFT JOIN e ON e.id1 = a.b_id AND b.c_id = e.id2;
 
 -- check optimization of outer join within another special join
 explain (costs off)

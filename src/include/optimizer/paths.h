@@ -128,6 +128,7 @@ extern bool process_equivalence(PlannerInfo *root,
 extern Expr *canonicalize_ec_expression(Expr *expr,
 										Oid req_type, Oid req_collation);
 extern void reconsider_outer_join_clauses(PlannerInfo *root);
+extern void rebuild_eclass_attr_needed(PlannerInfo *root);
 extern EquivalenceClass *get_eclass_for_sort_expr(PlannerInfo *root,
 												  Expr *expr,
 												  List *opfamilies,
