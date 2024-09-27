@@ -1,4 +1,4 @@
-# src/bin/pg_combinebackup/nls.mk
+# src/bin/pg_walsummary/nls.mk
 CATALOG_NAME     = pg_walsummary
 GETTEXT_FILES    = $(FRONTEND_COMMON_GETTEXT_FILES) \
                    pg_walsummary.c \
