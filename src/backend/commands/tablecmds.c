@@ -3861,9 +3861,9 @@ RenameRelationInternal(Oid myrelid, const char *newrelname, bool is_internal, bo
 	relrelation = table_open(RelationRelationId, RowExclusiveLock);
 
 	reltup = SearchSysCacheLockedCopy1(RELOID, ObjectIdGetDatum(myrelid));
-	otid = reltup->t_self;
 	if (!HeapTupleIsValid(reltup))	/* shouldn't happen */
 		elog(ERROR, "cache lookup failed for relation %u", myrelid);
+	otid = reltup->t_self;
 	relform = (Form_pg_class) GETSTRUCT(reltup);
 
 	if (get_relname_relid(newrelname, namespaceId) != InvalidOid)
