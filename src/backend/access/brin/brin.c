@@ -67,6 +67,9 @@ typedef struct BrinShared
 	BlockNumber pagesPerRange;
 	int			scantuplesortstates;
 
+	/* Query ID, for report in worker processes */
+	uint64		queryid;
+
 	/*
 	 * workersdonecv is used to monitor the progress of workers.  All parallel
 	 * participants must indicate that they are done before leader can use
@@ -2448,6 +2451,7 @@ _brin_begin_parallel(BrinBuildState *buildstate, Relation heap, Relation index,
 	brinshared->isconcurrent = isconcurrent;
 	brinshared->scantuplesortstates = scantuplesortstates;
 	brinshared->pagesPerRange = buildstate->bs_pagesPerRange;
+	brinshared->queryid = pgstat_get_my_query_id();
 	ConditionVariableInit(&brinshared->workersdonecv);
 	SpinLockInit(&brinshared->mutex);
 
@@ -2890,6 +2894,9 @@ _brin_parallel_build_main(dsm_segment *seg, shm_toc *toc)
 		heapLockmode = ShareUpdateExclusiveLock;
 		indexLockmode = RowExclusiveLock;
 	}
+
+	/* Track query ID */
+	pgstat_report_query_id(brinshared->queryid, false);
 
 	/* Open relations within worker */
 	heapRel = table_open(brinshared->heaprelid, heapLockmode);

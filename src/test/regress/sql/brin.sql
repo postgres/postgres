@@ -510,6 +510,17 @@ SELECT * FROM brintest_3 WHERE b < '0';
 DROP TABLE brintest_3;
 RESET enable_seqscan;
 
+-- test parallel build with immutable function.
+CREATE TABLE brintest_expr (n int);
+CREATE FUNCTION brintest_func() RETURNS int LANGUAGE sql IMMUTABLE RETURN 0;
+BEGIN;
+SET LOCAL min_parallel_table_scan_size = 0;
+SET LOCAL max_parallel_maintenance_workers = 4;
+CREATE INDEX brintest_expr_idx ON brintest_expr USING brin (brintest_func());
+COMMIT;
+DROP TABLE brintest_expr;
+DROP FUNCTION brintest_func();
+
 -- test an unlogged table, mostly to get coverage of brinbuildempty
 CREATE UNLOGGED TABLE brintest_unlogged (n numrange);
 CREATE INDEX brinidx_unlogged ON brintest_unlogged USING brin (n);
