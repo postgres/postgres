@@ -7482,13 +7482,17 @@ passwordFromFile(const char *hostname, const char *port, const char *dbname,
 
 #ifndef WIN32
 	if (fstat(fileno(fp), &stat_buf) != 0)
+	{
+		fclose(fp);
 		return NULL;
+	}
 
 	if (!S_ISREG(stat_buf.st_mode))
 	{
 		fprintf(stderr,
 				libpq_gettext("WARNING: password file \"%s\" is not a plain file\n"),
 				pgpassfile);
+		fclose(fp);
 		return NULL;
 	}
 
@@ -7498,6 +7502,7 @@ passwordFromFile(const char *hostname, const char *port, const char *dbname,
 		fprintf(stderr,
 				libpq_gettext("WARNING: password file \"%s\" has group or world access; permissions should be u=rw (0600) or less\n"),
 				pgpassfile);
+		fclose(fp);
 		return NULL;
 	}
 #else
