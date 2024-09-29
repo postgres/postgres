@@ -110,7 +110,7 @@ get_opts(int argc, char **argv, struct options *my_opts)
 		}
 		if (strcmp(argv[1], "--version") == 0 || strcmp(argv[1], "-V") == 0)
 		{
-			puts("oid2name (Percona Server for PostgreSQL) " PG_VERSION);
+			puts("oid2name (PostgreSQL) " PG_VERSION);
 			exit(0);
 		}
 	}

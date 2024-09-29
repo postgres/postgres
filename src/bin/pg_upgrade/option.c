@@ -95,7 +95,7 @@ parseCommandLine(int argc, char *argv[])
 		}
 		if (strcmp(argv[1], "--version") == 0 || strcmp(argv[1], "-V") == 0)
 		{
-			puts("pg_upgrade (Percona Server for PostgreSQL) " PG_VERSION);
+			puts("pg_upgrade (PostgreSQL) " PG_VERSION);
 			exit(0);
 		}
 	}
