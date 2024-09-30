@@ -3051,10 +3051,7 @@ description | Waiting for a newly initialized WAL file to reach durable storage
        <structfield>num_timed</structfield> <type>bigint</type>
       </para>
       <para>
-       Number of scheduled checkpoints due to timeout.
-       Note that checkpoints may be skipped if the server has been idle
-       since the last one, and this value counts both completed and
-       skipped checkpoints
+       Number of scheduled checkpoints due to timeout
       </para></entry>
      </row>
 
@@ -3063,7 +3060,7 @@ description | Waiting for a newly initialized WAL file to reach durable storage
        <structfield>num_requested</structfield> <type>bigint</type>
       </para>
       <para>
-       Number of backend requested checkpoints
+       Number of requested checkpoints
       </para></entry>
      </row>
 
@@ -3146,6 +3143,18 @@ description | Waiting for a newly initialized WAL file to reach durable storage
    </tgroup>
   </table>
 
+  <para>
+   Checkpoints may be skipped if the server has been idle since the last one.
+   <structfield>num_timed</structfield> and
+   <structfield>num_requested</structfield> count both completed and skipped
+   checkpoints, while <structfield>num_done</structfield> tracks only
+   the completed ones.  Similarly, restartpoints may be skipped
+   if the last replayed checkpoint record is already the last restartpoint.
+   <structfield>restartpoints_timed</structfield> and
+   <structfield>restartpoints_req</structfield> count both completed and
+   skipped restartpoints, while <structfield>restartpoints_done</structfield>
+   tracks only the completed ones.
+  </para>
  </sect2>
 
  <sect2 id="monitoring-pg-stat-wal-view">
