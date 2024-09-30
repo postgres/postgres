@@ -319,6 +319,18 @@ set default_with_oids to f;
 -- Should not allow to set it to true.
 set default_with_oids to t;
 
+-- Test that disabling track_activities disables query ID reporting in
+-- pg_stat_activity.
+SET compute_query_id = on;
+SET track_activities = on;
+SELECT query_id IS NOT NULL AS qid_set FROM pg_stat_activity
+  WHERE pid = pg_backend_pid();
+SET track_activities = off;
+SELECT query_id IS NOT NULL AS qid_set FROM pg_stat_activity
+  WHERE pid = pg_backend_pid();
+RESET track_activities;
+RESET compute_query_id;
+
 -- Test GUC categories and flag patterns
 SELECT pg_settings_get_flags(NULL);
 SELECT pg_settings_get_flags('does_not_exist');

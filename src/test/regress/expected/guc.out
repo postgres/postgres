@@ -824,6 +824,27 @@ set default_with_oids to f;
 -- Should not allow to set it to true.
 set default_with_oids to t;
 ERROR:  tables declared WITH OIDS are not supported
+-- Test that disabling track_activities disables query ID reporting in
+-- pg_stat_activity.
+SET compute_query_id = on;
+SET track_activities = on;
+SELECT query_id IS NOT NULL AS qid_set FROM pg_stat_activity
+  WHERE pid = pg_backend_pid();
+ qid_set 
+---------
+ t
+(1 row)
+
+SET track_activities = off;
+SELECT query_id IS NOT NULL AS qid_set FROM pg_stat_activity
+  WHERE pid = pg_backend_pid();
+ qid_set 
+---------
+ f
+(1 row)
+
+RESET track_activities;
+RESET compute_query_id;
 -- Test GUC categories and flag patterns
 SELECT pg_settings_get_flags(NULL);
  pg_settings_get_flags 
