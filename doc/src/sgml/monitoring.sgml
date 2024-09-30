@@ -3063,7 +3063,16 @@ description | Waiting for a newly initialized WAL file to reach durable storage
        <structfield>num_requested</structfield> <type>bigint</type>
       </para>
       <para>
-       Number of requested checkpoints that have been performed
+       Number of backend requested checkpoints
+      </para></entry>
+     </row>
+
+      <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>num_done</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of checkpoints that have been performed
       </para></entry>
      </row>
 

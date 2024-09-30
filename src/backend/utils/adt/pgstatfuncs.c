@@ -1192,6 +1192,12 @@ pg_stat_get_checkpointer_num_requested(PG_FUNCTION_ARGS)
 }
 
 Datum
+pg_stat_get_checkpointer_num_performed(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_INT64(pgstat_fetch_stat_checkpointer()->num_performed);
+}
+
+Datum
 pg_stat_get_checkpointer_restartpoints_timed(PG_FUNCTION_ARGS)
 {
 	PG_RETURN_INT64(pgstat_fetch_stat_checkpointer()->restartpoints_timed);

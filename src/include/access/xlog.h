@@ -239,7 +239,7 @@ extern void LocalProcessControlFile(bool reset);
 extern WalLevel GetActiveWalLevelOnStandby(void);
 extern void StartupXLOG(void);
 extern void ShutdownXLOG(int code, Datum arg);
-extern void CreateCheckPoint(int flags);
+extern bool CreateCheckPoint(int flags);
 extern bool CreateRestartPoint(int flags);
 extern WALAvailability GetWALAvailability(XLogRecPtr targetLSN);
 extern void XLogPutNextOid(Oid nextOid);

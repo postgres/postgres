@@ -294,6 +294,7 @@ typedef struct PgStat_CheckpointerStats
 {
 	PgStat_Counter num_timed;
 	PgStat_Counter num_requested;
+	PgStat_Counter num_performed;
 	PgStat_Counter restartpoints_timed;
 	PgStat_Counter restartpoints_requested;
 	PgStat_Counter restartpoints_performed;

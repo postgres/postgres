@@ -6878,8 +6878,11 @@ update_checkpoint_display(int flags, bool restartpoint, bool reset)
  * In this case, we only insert an XLOG_CHECKPOINT_SHUTDOWN record, and it's
  * both the record marking the completion of the checkpoint and the location
  * from which WAL replay would begin if needed.
+ *
+ * Returns true if a new checkpoint was performed, or false if it was skipped
+ * because the system was idle.
  */
-void
+bool
 CreateCheckPoint(int flags)
 {
 	bool		shutdown;
@@ -6971,7 +6974,7 @@ CreateCheckPoint(int flags)
 			END_CRIT_SECTION();
 			ereport(DEBUG1,
 					(errmsg_internal("checkpoint skipped because system is idle")));
-			return;
+			return false;
 		}
 	}
 
@@ -7353,6 +7356,8 @@ CreateCheckPoint(int flags)
 									 CheckpointStats.ckpt_segs_added,
 									 CheckpointStats.ckpt_segs_removed,
 									 CheckpointStats.ckpt_segs_recycled);
+
+	return true;
 }
 
 /*
