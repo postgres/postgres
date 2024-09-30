@@ -2616,11 +2616,26 @@ typedef enum VariableSetKind
 
 typedef struct VariableSetStmt
 {
+	pg_node_attr(custom_query_jumble)
+
 	NodeTag		type;
 	VariableSetKind kind;
-	char	   *name;			/* variable to be set */
-	List	   *args;			/* List of A_Const nodes */
-	bool		is_local;		/* SET LOCAL? */
+	/* variable to be set */
+	char	   *name;
+	/* List of A_Const nodes */
+	List	   *args;
+
+	/*
+	 * True if arguments should be accounted for in query jumbling.  We use a
+	 * separate flag rather than query_jumble_ignore on "args" as several
+	 * grammar flavors of SET rely on a list of values that are parsed
+	 * directly from the grammar's keywords.
+	 */
+	bool		jumble_args;
+	/* SET LOCAL? */
+	bool		is_local;
+	/* token location, or -1 if unknown */
+	ParseLoc	location pg_node_attr(query_jumble_location);
 } VariableSetStmt;
 
 /* ----------------------

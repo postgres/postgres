@@ -82,7 +82,7 @@ SELECT calls, rows, query FROM pg_stat_statements ORDER BY query COLLATE "C";
      2 |    4 | SELECT * FROM pgss_dml_tab WHERE a > $1 ORDER BY a
      1 |    8 | SELECT * FROM pgss_dml_tab WHERE a IN ($1, $2, $3, $4, $5)
      1 |    1 | SELECT pg_stat_statements_reset() IS NOT NULL AS t
-     1 |    0 | SET pg_stat_statements.track_utility = FALSE
+     1 |    0 | SET pg_stat_statements.track_utility = $1
      6 |    6 | UPDATE pgss_dml_tab SET b = $1 WHERE a = $2
      1 |    3 | UPDATE pgss_dml_tab SET b = $1 WHERE a > $2
 (10 rows)

@@ -64,7 +64,7 @@ SELECT toplevel, calls, query FROM pg_stat_statements
           |       | END; $$
  f        |     1 | SELECT $1::TEXT
  t        |     1 | SELECT pg_stat_statements_reset() IS NOT NULL AS t
- t        |     1 | SET pg_stat_statements.track = 'all'
+ t        |     1 | SET pg_stat_statements.track = $1
 (7 rows)
 
 -- Procedure with multiple utility statements.

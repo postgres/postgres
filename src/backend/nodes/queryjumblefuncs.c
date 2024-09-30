@@ -57,6 +57,7 @@ static void RecordConstLocation(JumbleState *jstate, int location);
 static void _jumbleNode(JumbleState *jstate, Node *node);
 static void _jumbleA_Const(JumbleState *jstate, Node *node);
 static void _jumbleList(JumbleState *jstate, Node *node);
+static void _jumbleVariableSetStmt(JumbleState *jstate, Node *node);
 
 /*
  * Given a possibly multi-statement source string, confine our attention to the
@@ -351,4 +352,22 @@ _jumbleA_Const(JumbleState *jstate, Node *node)
 				break;
 		}
 	}
+}
+
+static void
+_jumbleVariableSetStmt(JumbleState *jstate, Node *node)
+{
+	VariableSetStmt *expr = (VariableSetStmt *) node;
+
+	JUMBLE_FIELD(kind);
+	JUMBLE_STRING(name);
+
+	/*
+	 * Account for the list of arguments in query jumbling only if told by the
+	 * parser.
+	 */
+	if (expr->jumble_args)
+		JUMBLE_NODE(args);
+	JUMBLE_FIELD(is_local);
+	JUMBLE_LOCATION(location);
 }

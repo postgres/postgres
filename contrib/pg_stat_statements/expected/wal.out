@@ -18,7 +18,7 @@ FROM pg_stat_statements ORDER BY query COLLATE "C";
  DELETE FROM pgss_wal_tab WHERE a > $1                        |     1 |    1 | t                   | t                     | t
  INSERT INTO pgss_wal_tab VALUES(generate_series($1, $2), $3) |     1 |   10 | t                   | t                     | t
  SELECT pg_stat_statements_reset() IS NOT NULL AS t           |     1 |    1 | f                   | f                     | f
- SET pg_stat_statements.track_utility = FALSE                 |     1 |    0 | f                   | f                     | t
+ SET pg_stat_statements.track_utility = $1                    |     1 |    0 | f                   | f                     | t
  UPDATE pgss_wal_tab SET b = $1 WHERE a > $2                  |     1 |    3 | t                   | t                     | t
 (5 rows)
 
