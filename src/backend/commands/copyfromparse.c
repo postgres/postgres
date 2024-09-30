@@ -136,14 +136,6 @@ if (1) \
 	} \
 } else ((void) 0)
 
-/* Undo any read-ahead and jump out of the block. */
-#define NO_END_OF_COPY_GOTO \
-if (1) \
-{ \
-	input_buf_ptr = prev_raw_ptr + 1; \
-	goto not_end_of_copy; \
-} else ((void) 0)
-
 /* NOTE: there's a copy of this in copyto.c */
 static const char BinarySignature[11] = "PGCOPY\n\377\r\n\0";
 
@@ -1182,7 +1174,6 @@ CopyReadLineText(CopyFromState cstate)
 	bool		result = false;
 
 	/* CSV variables */
-	bool		first_char_in_line = true;
 	bool		in_quote = false,
 				last_was_esc = false;
 	char		quotec = '\0';
@@ -1268,12 +1259,12 @@ CopyReadLineText(CopyFromState cstate)
 		if (cstate->opts.csv_mode)
 		{
 			/*
-			 * If character is '\\' or '\r', we may need to look ahead below.
-			 * Force fetch of the next character if we don't already have it.
-			 * We need to do this before changing CSV state, in case one of
-			 * these characters is also the quote or escape character.
+			 * If character is '\r', we may need to look ahead below.  Force
+			 * fetch of the next character if we don't already have it.  We
+			 * need to do this before changing CSV state, in case '\r' is also
+			 * the quote or escape character.
 			 */
-			if (c == '\\' || c == '\r')
+			if (c == '\r')
 			{
 				IF_NEED_REFILL_AND_NOT_EOF_CONTINUE(0);
 			}
@@ -1377,10 +1368,10 @@ CopyReadLineText(CopyFromState cstate)
 		}
 
 		/*
-		 * In CSV mode, we only recognize \. alone on a line.  This is because
-		 * \. is a valid CSV data value.
+		 * Process backslash, except in CSV mode where backslash is a normal
+		 * character.
 		 */
-		if (c == '\\' && (!cstate->opts.csv_mode || first_char_in_line))
+		if (c == '\\' && !cstate->opts.csv_mode)
 		{
 			char		c2;
 
@@ -1398,12 +1389,6 @@ CopyReadLineText(CopyFromState cstate)
 			if (c2 == '.')
 			{
 				input_buf_ptr++;	/* consume the '.' */
-
-				/*
-				 * Note: if we loop back for more data here, it does not
-				 * matter that the CSV state change checks are re-executed; we
-				 * will come back here with no important state changed.
-				 */
 				if (cstate->eol_type == EOL_CRNL)
 				{
 					/* Get the next character */
@@ -1412,23 +1397,13 @@ CopyReadLineText(CopyFromState cstate)
 					c2 = copy_input_buf[input_buf_ptr++];
 
 					if (c2 == '\n')
-					{
-						if (!cstate->opts.csv_mode)
-							ereport(ERROR,
-									(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
-									 errmsg("end-of-copy marker does not match previous newline style")));
-						else
-							NO_END_OF_COPY_GOTO;
-					}
+						ereport(ERROR,
+								(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
+								 errmsg("end-of-copy marker does not match previous newline style")));
 					else if (c2 != '\r')
-					{
-						if (!cstate->opts.csv_mode)
-							ereport(ERROR,
-									(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
-									 errmsg("end-of-copy marker corrupt")));
-						else
-							NO_END_OF_COPY_GOTO;
-					}
+						ereport(ERROR,
+								(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
+								 errmsg("end-of-copy marker corrupt")));
 				}
 
 				/* Get the next character */
@@ -1437,14 +1412,9 @@ CopyReadLineText(CopyFromState cstate)
 				c2 = copy_input_buf[input_buf_ptr++];
 
 				if (c2 != '\r' && c2 != '\n')
-				{
-					if (!cstate->opts.csv_mode)
-						ereport(ERROR,
-								(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
-								 errmsg("end-of-copy marker corrupt")));
-					else
-						NO_END_OF_COPY_GOTO;
-				}
+					ereport(ERROR,
+							(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
+							 errmsg("end-of-copy marker corrupt")));
 
 				if ((cstate->eol_type == EOL_NL && c2 != '\n') ||
 					(cstate->eol_type == EOL_CRNL && c2 != '\n') ||
@@ -1467,7 +1437,7 @@ CopyReadLineText(CopyFromState cstate)
 				result = true;	/* report EOF */
 				break;
 			}
-			else if (!cstate->opts.csv_mode)
+			else
 			{
 				/*
 				 * If we are here, it means we found a backslash followed by
@@ -1475,23 +1445,11 @@ CopyReadLineText(CopyFromState cstate)
 				 * after a backslash is special, so we skip over that second
 				 * character too.  If we didn't do that \\. would be
 				 * considered an eof-of copy, while in non-CSV mode it is a
-				 * literal backslash followed by a period.  In CSV mode,
-				 * backslashes are not special, so we want to process the
-				 * character after the backslash just like a normal character,
-				 * so we don't increment in those cases.
+				 * literal backslash followed by a period.
 				 */
 				input_buf_ptr++;
 			}
 		}
-
-		/*
-		 * This label is for CSV cases where \. appears at the start of a
-		 * line, but there is more text after it, meaning it was a data value.
-		 * We are more strict for \. in CSV mode because \. could be a data
-		 * value, while in non-CSV mode, \. cannot be a data value.
-		 */
-not_end_of_copy:
-		first_char_in_line = false;
 	}							/* end of outer loop */
 
 	/*

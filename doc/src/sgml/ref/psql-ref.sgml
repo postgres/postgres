@@ -1135,7 +1135,8 @@ SELECT $1 \parse stmt1
 
         <para>
         For <literal>\copy ... from stdin</literal>, data rows are read from the same
-        source that issued the command, continuing until <literal>\.</literal>
+        source that issued the command, continuing until a line containing
+        only <literal>\.</literal>
         is read or the stream reaches <acronym>EOF</acronym>. This option is useful
         for populating tables in-line within an SQL script file.
         For <literal>\copy ... to stdout</literal>, output is sent to the same place
@@ -1179,10 +1180,6 @@ SELECT $1 \parse stmt1
         destination, because all data must pass through the client/server
         connection.  For large amounts of data the <acronym>SQL</acronym>
         command might be preferable.
-        Also, because of this pass-through method, <literal>\copy
-        ... from</literal> in <acronym>CSV</acronym> mode will erroneously
-        treat a <literal>\.</literal> data value alone on a line as an
-        end-of-input marker.
         </para>
         </tip>
 

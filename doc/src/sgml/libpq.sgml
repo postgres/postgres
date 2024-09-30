@@ -7381,8 +7381,9 @@ int PQputline(PGconn *conn,
         <literal>\.</literal> as a final line to indicate to the server that it had
         finished sending <command>COPY</command> data.  While this still works, it is deprecated and the
         special meaning of <literal>\.</literal> can be expected to be removed in a
-        future release.  It is sufficient to call <xref linkend="libpq-PQendcopy"/> after
-        having sent the actual data.
+        future release.  (It already will misbehave in <literal>CSV</literal>
+        mode.)  It is sufficient to call <xref linkend="libpq-PQendcopy"/>
+        after having sent the actual data.
        </para>
       </note>
      </listitem>

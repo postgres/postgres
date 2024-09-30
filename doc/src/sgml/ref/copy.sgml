@@ -646,11 +646,16 @@ COPY <replaceable class="parameter">count</replaceable>
    </para>
 
    <para>
-    End of data can be represented by a single line containing just
+    End of data can be represented by a line containing just
     backslash-period (<literal>\.</literal>).  An end-of-data marker is
     not necessary when reading from a file, since the end of file
-    serves perfectly well; it is needed only when copying data to or from
-    client applications using pre-3.0 client protocol.
+    serves perfectly well; in that context this provision exists only for
+    backward compatibility.  However, <application>psql</application>
+    uses <literal>\.</literal> to terminate a <literal>COPY FROM
+    STDIN</literal> operation (that is, reading
+    in-line <command>COPY</command> data in a SQL script).  In that
+    context the rule is needed to be able to end the operation before the
+    end of the script.
    </para>
 
    <para>
@@ -811,15 +816,24 @@ COPY <replaceable class="parameter">count</replaceable>
 
    <para>
     Because backslash is not a special character in the <literal>CSV</literal>
-    format, <literal>\.</literal>, the end-of-data marker, could also appear
-    as a data value.  To avoid any misinterpretation, a <literal>\.</literal>
-    data value appearing as a lone entry on a line is automatically
-    quoted on output, and on input, if quoted, is not interpreted as the
-    end-of-data marker.  If you are loading a file created by another
-    application that has a single unquoted column and might have a
-    value of <literal>\.</literal>, you might need to quote that value in the
-    input file.
+    format, the end-of-data marker used in text mode (<literal>\.</literal>)
+    is not normally treated as special when reading <literal>CSV</literal>
+    data.  An exception is that <application>psql</application> will terminate
+    a <literal>COPY FROM STDIN</literal> operation (that is, reading
+    in-line <command>COPY</command> data in a SQL script) at a line containing
+    only <literal>\.</literal>, whether it is text or <literal>CSV</literal>
+    mode.
    </para>
+
+   <note>
+    <para>
+     <productname>PostgreSQL</productname> versions before v18 always
+     recognized unquoted <literal>\.</literal> as an end-of-data marker,
+     even when reading from a separate file.  For compatibility with older
+     versions, <command>COPY TO</command> will quote <literal>\.</literal>
+     when it's alone on a line, even though this is no longer necessary.
+    </para>
+   </note>
 
    <note>
     <para>
