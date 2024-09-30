@@ -4401,7 +4401,7 @@ ALTER TABLE part_2 RENAME COLUMN b to c;
 ERROR:  cannot rename inherited column "b"
 ALTER TABLE part_2 ALTER COLUMN b TYPE text;
 ERROR:  cannot alter inherited column "b"
--- cannot add/drop NOT NULL or check constraints to *only* the parent, when
+-- cannot add NOT NULL or check constraints to *only* the parent, when
 -- partitions exist
 ALTER TABLE ONLY list_parted2 ALTER b SET NOT NULL;
 ERROR:  constraint must be added to child tables too
@@ -4409,20 +4409,27 @@ DETAIL:  Column "b" of relation "part_2" is not already NOT NULL.
 HINT:  Do not specify the ONLY keyword.
 ALTER TABLE ONLY list_parted2 ADD CONSTRAINT check_b CHECK (b <> 'zz');
 ERROR:  constraint must be added to child tables too
+-- dropping them is ok though
 ALTER TABLE list_parted2 ALTER b SET NOT NULL;
 ALTER TABLE ONLY list_parted2 ALTER b DROP NOT NULL;
-ERROR:  cannot remove constraint from only the partitioned table when partitions exist
-HINT:  Do not specify the ONLY keyword.
 ALTER TABLE list_parted2 ADD CONSTRAINT check_b CHECK (b <> 'zz');
 ALTER TABLE ONLY list_parted2 DROP CONSTRAINT check_b;
-ERROR:  cannot remove constraint from only the partitioned table when partitions exist
-HINT:  Do not specify the ONLY keyword.
+-- ... and the partitions should still have both
+\d+ part_2
+                                     Table "public.part_2"
+ Column |     Type     | Collation | Nullable | Default | Storage  | Stats target | Description 
+--------+--------------+-----------+----------+---------+----------+--------------+-------------
+ a      | integer      |           |          |         | plain    |              | 
+ b      | character(1) |           | not null |         | extended |              | 
+Partition of: list_parted2 FOR VALUES IN (2)
+Partition constraint: ((a IS NOT NULL) AND (a = 2))
+Check constraints:
+    "check_b" CHECK (b <> 'zz'::bpchar)
+
 -- It's alright though, if no partitions are yet created
 CREATE TABLE parted_no_parts (a int) PARTITION BY LIST (a);
 ALTER TABLE ONLY parted_no_parts ALTER a SET NOT NULL;
 ALTER TABLE ONLY parted_no_parts ADD CONSTRAINT check_a CHECK (a > 0);
-ALTER TABLE ONLY parted_no_parts ALTER a DROP NOT NULL;
-ALTER TABLE ONLY parted_no_parts DROP CONSTRAINT check_a;
 DROP TABLE parted_no_parts;
 -- cannot drop inherited NOT NULL or check constraints from partition
 ALTER TABLE list_parted2 ALTER b SET NOT NULL, ADD CONSTRAINT check_a2 CHECK (a > 0);

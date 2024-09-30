@@ -251,7 +251,9 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       table.  Even if there is no <literal>NOT NULL</literal> constraint on the
       parent, such a constraint can still be added to individual partitions,
       if desired; that is, the children can disallow nulls even if the parent
-      allows them, but not the other way around.
+      allows them, but not the other way around.  It is also possible to drop
+      the <literal>NOT NULL</literal> constraint from <literal>ONLY</literal>
+      the parent table, which does not remove it from the children.
      </para>
     </listitem>
    </varlistentry>
