@@ -71,7 +71,7 @@ main(int argc, char *argv[])
 	handle_help_version_opts(argc, argv, progname, help);
 
 	/* process command-line options */
-	while ((c = getopt_long(argc, argv, "f:iqw:",
+	while ((c = getopt_long(argc, argv, "iq",
 							long_options, &optindex)) != -1)
 	{
 		switch (c)
