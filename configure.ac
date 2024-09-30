@@ -37,9 +37,12 @@ AC_DEFINE_UNQUOTED(PG_MAJORVERSION, "$PG_MAJORVERSION", [PostgreSQL major versio
 AC_DEFINE_UNQUOTED(PG_MAJORVERSION_NUM, $PG_MAJORVERSION, [PostgreSQL major version number])
 AC_DEFINE_UNQUOTED(PG_MINORVERSION_NUM, $PG_MINORVERSION, [PostgreSQL minor version number])
 
+[PG_PERCONAVERSION=1]
+AC_DEFINE_UNQUOTED(PG_PERCONAVERSION, "$PG_PERCONAVERSION", [PostgreSQL Percona version as a string])
+
 PGAC_ARG_REQ(with, extra-version, [STRING], [append STRING to version],
-             [PG_VERSION="$PACKAGE_VERSION$withval"],
-             [PG_VERSION="$PACKAGE_VERSION"])
+             [PG_VERSION="$PACKAGE_VERSION.$PG_PERCONAVERSION (Percona Server for PostgreSQL)$withval"],
+             [PG_VERSION="$PACKAGE_VERSION.$PG_PERCONAVERSION (Percona Server for PostgreSQL)"])
 AC_DEFINE_UNQUOTED(PG_VERSION, "$PG_VERSION", [PostgreSQL version as a string])
 
 AC_CANONICAL_HOST
@@ -2444,7 +2447,7 @@ else
 fi
 
 AC_DEFINE_UNQUOTED(PG_VERSION_STR,
-                   ["Percona Server for PostgreSQL $PG_VERSION on $host, compiled by $cc_string, `expr $ac_cv_sizeof_void_p \* 8`-bit"],
+                   ["PostgreSQL $PG_VERSION on $host, compiled by $cc_string, `expr $ac_cv_sizeof_void_p \* 8`-bit"],
                    [A string containing the version number, platform, and C compiler])
 
 # Supply a numeric version string for use by 3rd party add-ons

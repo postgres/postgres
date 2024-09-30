@@ -2854,6 +2854,13 @@ cat >>confdefs.h <<_ACEOF
 _ACEOF
 
 
+PG_PERCONAVERSION=1
+
+cat >>confdefs.h <<_ACEOF
+#define PG_PERCONAVERSION "$PG_PERCONAVERSION"
+_ACEOF
+
+
 
 
 
@@ -2868,12 +2875,12 @@ if test "${with_extra_version+set}" = set; then :
       as_fn_error $? "argument required for --with-extra-version option" "$LINENO" 5
       ;;
     *)
-      PG_VERSION="$PACKAGE_VERSION$withval"
+      PG_VERSION="$PACKAGE_VERSION.$PG_PERCONAVERSION (Percona Server for PostgreSQL)$withval"
       ;;
   esac
 
 else
-  PG_VERSION="$PACKAGE_VERSION"
+  PG_VERSION="$PACKAGE_VERSION.$PG_PERCONAVERSION (Percona Server for PostgreSQL)"
 fi
 
 
@@ -19223,7 +19230,7 @@ fi
 
 
 cat >>confdefs.h <<_ACEOF
-#define PG_VERSION_STR "Percona Server for PostgreSQL $PG_VERSION on $host, compiled by $cc_string, `expr $ac_cv_sizeof_void_p \* 8`-bit"
+#define PG_VERSION_STR "PostgreSQL $PG_VERSION on $host, compiled by $cc_string, `expr $ac_cv_sizeof_void_p \* 8`-bit"
 _ACEOF
 
 
