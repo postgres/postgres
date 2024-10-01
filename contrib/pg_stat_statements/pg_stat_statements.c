@@ -126,9 +126,9 @@ typedef enum pgssStoreKind
 	 */
 	PGSS_PLAN = 0,
 	PGSS_EXEC,
-
-	PGSS_NUMKIND				/* Must be last value of this enum */
 } pgssStoreKind;
+
+#define PGSS_NUMKIND (PGSS_EXEC + 1)
 
 /*
  * Hashtable key that defines the identity of a hashtable entry.  We separate

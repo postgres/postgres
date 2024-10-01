@@ -40,9 +40,9 @@ typedef enum
 	PMSIGNAL_BACKGROUND_WORKER_CHANGE,	/* background worker state change */
 	PMSIGNAL_START_WALRECEIVER, /* start a walreceiver */
 	PMSIGNAL_ADVANCE_STATE_MACHINE, /* advance postmaster's state machine */
-
-	NUM_PMSIGNALS				/* Must be last value of enum! */
 } PMSignalReason;
+
+#define NUM_PMSIGNALS (PMSIGNAL_ADVANCE_STATE_MACHINE+1)
 
 /*
  * Reasons why the postmaster would send SIGQUIT to its children.

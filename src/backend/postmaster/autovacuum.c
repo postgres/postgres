@@ -247,8 +247,9 @@ typedef enum
 {
 	AutoVacForkFailed,			/* failed trying to start a worker */
 	AutoVacRebalance,			/* rebalance the cost limits */
-	AutoVacNumSignals,			/* must be last */
 }			AutoVacuumSignal;
+
+#define AutoVacNumSignals (AutoVacRebalance + 1)
 
 /*
  * Autovacuum workitem array, stored in AutoVacuumShmem->av_workItems.  This
