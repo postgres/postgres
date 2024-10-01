@@ -82,7 +82,7 @@ DROP EXTENSION [ IF EXISTS ] <replaceable class="parameter">name</replaceable> [
      <para>
       This option prevents the specified extensions from being dropped if
       other objects, besides these extensions, their members, and their
-      explicitly dependent routines, depend on them.  This is the default.
+      explicitly dependent routines, depend on them. This is the default.
      </para>
     </listitem>
    </varlistentry>
