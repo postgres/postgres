@@ -9384,7 +9384,7 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
        <para>
         If <varname>transaction_timeout</varname> is shorter or equal to
         <varname>idle_in_transaction_session_timeout</varname> or <varname>statement_timeout</varname>
-        then the longer timeout is ignored.
+        then the longer timeout is ignored.
        </para>
 
        <para>
