@@ -267,7 +267,7 @@ PostgreSQL documentation
        <para>
         Use checksums on data pages to help detect corruption by the
         I/O system that would otherwise be silent. Enabling checksums
-        may incur a noticeable performance penalty. If set, checksums
+        might incur a small performance penalty. If set, checksums
         are calculated for all objects, in all databases. All checksum
         failures will be reported in the
         <link linkend="monitoring-pg-stat-database-view">
