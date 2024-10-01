@@ -11,7 +11,7 @@ use std::thread;
 /// The role of a node in the sharding system
 pub trait NodeRole {
     /// Sends a query to the shard group
-    fn send_query(&mut self, query: &str) -> Option<Vec<Row>>;
+    fn send_query(&mut self, query: &str) -> Option<String>;
 }
 
 #[repr(C)]

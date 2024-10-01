@@ -1,15 +1,17 @@
+use indexmap::IndexMap;
 use postgres::{Client as PostgresClient, Row};
 extern crate users;
 use crate::node::messages::message::{Message, MessageType};
 use crate::node::messages::node_info::NodeInfo;
-use crate::utils::queries::{query_affects_memory_state, query_is_insert};
-
+use crate::node::shard;
+use crate::utils::queries::{format_query_with_new_id, format_rows_with_offset, get_id_if_exists, get_table_name_from_query, print_query_response, query_affects_memory_state, query_is_insert, query_is_select};
+use crate::utils::common::ConvertToString;
 use super::node::*;
 use super::shard_manager::ShardManager;
+use super::tables_id_info::TablesIdInfo;
 use crate::utils::common::{connect_to_node, Channel};
 use crate::utils::node_config::{get_router_config, Node};
 use inline_colorization::*;
-use std::collections::HashMap;
 use std::io::{Read, Write};
 use std::sync::{Arc, MutexGuard, RwLock};
 use std::{io, net::TcpListener, net::TcpStream, sync::Mutex, thread};
@@ -18,15 +20,15 @@ use std::{io, net::TcpListener, net::TcpStream, sync::Mutex, thread};
 #[repr(C)]
 #[derive(Clone)]
 pub struct Router {
-    ///  HashMap:
+    ///  IndexMap:
     ///     key: shardId
     ///     value: Shard's Client
-    shards: Arc<Mutex<HashMap<String, PostgresClient>>>,
+    shards: Arc<Mutex<IndexMap<String, PostgresClient>>>,
     shard_manager: Arc<ShardManager>,
-    ///  HashMap:
+    ///  IndexMap:
     ///     key: Hash
     ///     value: shardId
-    comm_channels: Arc<RwLock<HashMap<String, Channel>>>,
+    comm_channels: Arc<RwLock<IndexMap<String, Channel>>>,
     ip: Arc<str>,
     port: Arc<str>,
 }
@@ -147,8 +149,8 @@ impl Router {
         config_path: Option<&str>,
     ) -> Router {
         let config = get_router_config(config_path);
-        let shards: HashMap<String, PostgresClient> = HashMap::new();
-        let comm_channels: HashMap<String, Channel> = HashMap::new();
+        let shards: IndexMap<String, PostgresClient> = IndexMap::new();
+        let comm_channels: IndexMap<String, Channel> = IndexMap::new();
         let shard_manager = ShardManager::new();
 
         let mut router = Router {
@@ -186,7 +188,7 @@ impl Router {
         self.set_health_connection(node_ip.as_str(), node_port.as_str());
     }
 
-    /// Saves the shard client in the Router's shards HashMap with its corresponding shard id as key.
+    /// Saves the shard client in the Router's shards IndexMap with its corresponding shard id as key.
     fn save_shard_client(&mut self, shard_id: String, shard_client: PostgresClient) {
         let mut shards = self.shards.lock().unwrap();
         shards.insert(shard_id, shard_client);
@@ -244,7 +246,7 @@ impl Router {
             Ok(_) => {
                 let response_string = String::from_utf8_lossy(response);
                 let response_message = Message::from_string(&response_string).unwrap();
-                println!("Response from shard: {:?}", response_message);
+                //println!("Response from shard: {:?}", response_message);
                 self.handle_response(response_message, node_port)
             }
             Err(_) => {
@@ -266,17 +268,21 @@ impl Router {
                     node_port
                 );
                 let memory_size = response_message.get_data().payload.unwrap();
-                println!("Memory size: {}", memory_size);
-                self.save_shard_in_manager(memory_size, node_port.to_string());
+                let max_ids_info = response_message.get_data().max_ids.unwrap();
+                println!("{color_bright_green}Memory size: {}{style_reset}", memory_size);
+                println!("{color_bright_green}Max Ids for Shard: {:?}{style_reset}", max_ids_info);
+                self.save_shard_in_manager(memory_size, node_port.to_string(), max_ids_info);
                 true
             }
             MessageType::MemoryUpdate => {
                 let memory_size = response_message.get_data().payload.unwrap();
+                let max_ids_info = response_message.get_data().max_ids.unwrap();
                 println!(
                     "{color_bright_green}Shard {} updated its memory size to {}{style_reset}",
                     node_port, memory_size
                 );
-                self.update_shard_in_manager(memory_size, node_port.to_string());
+                println!("{color_bright_green}Max Ids for Shard: {:?}{style_reset}", max_ids_info);
+                self.update_shard_in_manager(memory_size, node_port.to_string(), max_ids_info);
                 true
             }
             _ => {
@@ -290,23 +296,27 @@ impl Router {
     }
 
     /// Adds a shard to the ShardManager with the given memory size and shard id.
-    fn save_shard_in_manager(&mut self, memory_size: f64, shard_id: String) {
+    fn save_shard_in_manager(&mut self, memory_size: f64, shard_id: String, max_ids: TablesIdInfo) {
         let mut shard_manager = self.shard_manager.as_ref().clone();
         shard_manager.add_shard(memory_size, shard_id.clone());
+        shard_manager.save_max_ids_for_shard(shard_id.clone(), max_ids);
         println!(
             "{color_bright_green}Shard {} added to ShardManager{style_reset}",
             shard_id
         );
+        println!("Shard Manager: {:?}", shard_manager);
     }
 
     /// Updates the shard in the ShardManager with the given memory size and shard id.
-    fn update_shard_in_manager(&mut self, memory_size: f64, shard_id: String) {
+    fn update_shard_in_manager(&mut self, memory_size: f64, shard_id: String, max_ids: TablesIdInfo) {
         let mut shard_manager = self.shard_manager.as_ref().clone();
         shard_manager.update_shard_memory(memory_size, shard_id.clone());
+        shard_manager.save_max_ids_for_shard(shard_id.clone(), max_ids);
         println!(
             "{color_bright_green}Shard {} updated in ShardManager{style_reset}",
             shard_id
         );
+        println!("Shard Manager: {:?}", shard_manager);
     }
 
     /// Establishes a health connection with the node with the given ip and port, returning a Channel.
@@ -336,38 +346,117 @@ impl Router {
     /// If the query is an INSERT query, it will return the specific shard that the query should be sent to.
     /// If the query is not an INSERT query, it will return all shards.
     /// The second return value is a boolean that indicates if the shards need to update their memory after the query is executed. This will be true if the query affects the memory state of the system.
-    fn get_shards_for_query(&mut self, query: &str) -> (Vec<String>, bool) {
+    /// Returns the query formatted if needed (if there's a 'WHERE ID=' clause, offset might need to be removed)
+    fn get_data_needed_from(&mut self, query: &str) -> (Vec<String>, bool, String) {
+
+        if let Some(id) = get_id_if_exists(query) {
+            println!("ID found in query: {}", id);
+            return self.get_specific_shard_with(id, query);
+        }
+
+        println!("ID NOT FOUND in query.");
         if query_is_insert(query) {
             println!("Query is INSERT");
             let shard = self.shard_manager.peek().unwrap();
-            (vec![shard.clone()], true)
+            (vec![shard.clone()], true, query.to_string())
         } else {
             // Return all shards
             (
                 self.shards.lock().unwrap().keys().cloned().collect(),
                 query_affects_memory_state(query),
+                query.to_string(),
             )
         }
+    }
+
+    fn get_specific_shard_with(&mut self, mut id: i64, query: &str) -> (Vec<String>, bool, String) {
+        let table_name = match get_table_name_from_query(query) {
+            Some(table_name) => table_name,
+            None => {
+                return (self.shards.lock().unwrap().keys().cloned().collect(), query_affects_memory_state(query), query.to_string());
+            }
+        };
+        println!("Table name: {}", table_name);
+        for shard_id in self.shards.lock().unwrap().keys() {
+            let max_id = match self.shard_manager.get_max_ids_for_shard_table(shard_id, &table_name) {
+                Some(max_id) => max_id,
+                None => {
+                    continue
+                }
+            };
+            if id > max_id {
+                id -= max_id;
+            } else {
+                let formatted_query = format_query_with_new_id(query, id);
+                return (vec![shard_id.clone()], query_affects_memory_state(query), formatted_query);
+            }
+        }
+
+        println!("ID not found in any shard");
+        return (self.shards.lock().unwrap().keys().cloned().collect(), query_affects_memory_state(query), query.to_string());
+    }
+
+    fn format_response(&self, shards_responses: IndexMap<String, Vec<Row>>, query: &str) -> String {
+        let table_name = match get_table_name_from_query(query) {
+            Some(table_name) => table_name,
+            None => {
+                eprintln!("Failed to get table name from query");
+                return String::new();
+            }
+        };
+
+        let mut rows_offset: Vec<(Vec<Row>, i64)> = Vec::new();
+        let mut last_offset: i64 = 0;
+        for (shard_id, rows) in shards_responses {
+            let offset = match self.shard_manager.get_max_ids_for_shard_table(&shard_id, &table_name) {
+                Some(offset) => offset,
+                None => {
+                    eprintln!("Failed to get offset for shard");
+                    return String::new();
+                }
+            };
+            rows_offset.push((rows, last_offset));
+            last_offset = offset;
+        }
+
+        format_rows_with_offset(rows_offset)
     }
 }
 
 impl NodeRole for Router {
-    fn send_query(&mut self, query: &str) -> Option<Vec<Row>> {
-        println!("Router send_query called with query: {:?}", query);
+    fn send_query(&mut self, received_query: &str) -> Option<String> {
+        println!("Router send_query called with query: {:?}", received_query);
 
-        let (shards, is_insert) = self.get_shards_for_query(query);
+        let (shards, is_insert, query) = self.get_data_needed_from(received_query);
+
+        println!("Shards: {:?}, is_insert: {}, query: {}", shards, is_insert, query);
 
         if shards.len() == 0 {
             eprintln!("No shards found for the query");
             return None;
         }
 
-        let mut shards_responses: Vec<Row> = Vec::new();
+        let mut shards_responses: IndexMap<String, Vec<Row>> = IndexMap::new();
+        let mut rows = Vec::new();
         for shard_id in shards {
-            shards_responses.extend(self.send_query_to_shard(shard_id, query, is_insert));
+            let shard_response = self.send_query_to_shard(shard_id.clone(), &query, is_insert);
+            if !shard_response.is_empty() {
+                shards_responses.insert(shard_id, shard_response.clone());
+                rows.extend(shard_response);
+            }
         }
 
-        Some(shards_responses)
+        let response;
+        if query_is_select(&query) && shards_responses.len() > 0 {
+            println!("Query is SELECT and shards_responses is not empty");
+            response = self.format_response(shards_responses, &query);
+        } else {
+            println!("Query is SELECT: {}, shards_responses is empty: {}", query_is_insert(&query), shards_responses.is_empty());
+            response = rows.convert_to_string();
+        }
+        
+        print_query_response(response.clone());
+        Some(response)
     }
 }
 
@@ -404,7 +493,7 @@ impl Router {
             .unwrap();
         let mut response: [u8; 1024] = [0; 1024];
 
-        // Readn and handle message
+        // Read and handle message
         writable_stream.read(&mut response).unwrap();
         let response_string = String::from_utf8_lossy(&response);
         let response_message = match Message::from_string(&response_string) {

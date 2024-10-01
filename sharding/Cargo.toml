@@ -22,6 +22,7 @@ serde_yaml = "0.9.34"
 serde = { version = "1.0", features = ["derive"] }
 serde_derive = "1.0.204"
 sysinfo = "0.30.13"
+indexmap = "2.5.0"
 
 [lib]
 name = "sharding"

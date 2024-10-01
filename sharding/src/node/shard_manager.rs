@@ -1,3 +1,4 @@
+use indexmap::IndexMap;
 use inline_colorization::*;
 use std::{
     cmp::Ordering,
@@ -5,15 +6,19 @@ use std::{
     sync::{Arc, Mutex},
 };
 
+use super::tables_id_info::TablesIdInfo;
+
 #[derive(Debug, Clone)]
 pub(crate) struct ShardManager {
     shards: Arc<Mutex<BinaryHeap<ShardManagerObject>>>,
+    shard_max_ids: Arc<Mutex<IndexMap<String, TablesIdInfo>>>,
 }
 
 impl ShardManager {
     pub fn new() -> Self {
         ShardManager {
             shards: Arc::new(Mutex::new(BinaryHeap::new())),
+            shard_max_ids: Arc::new(Mutex::new(IndexMap::new())),
         }
     }
 
@@ -79,6 +84,24 @@ impl ShardManager {
             }
         }
         *shards = new_shards;
+    }
+
+    pub fn save_max_ids_for_shard(&mut self, shard_id: String, tables_id_info: TablesIdInfo) {
+        let mut shard_max_ids = self.shard_max_ids.lock().unwrap();
+        shard_max_ids.insert(shard_id, tables_id_info);
+    }
+
+    pub fn get_max_ids_for_shard_table(&self, shard_id: &str, table: &str) -> Option<i64> {
+        let shard_max_ids = self.shard_max_ids.lock().unwrap();
+        println!("shard_max_ids: {:?}", shard_max_ids);
+        println!("shard_id: {:?}, table: {:?}", shard_id, table);
+        match shard_max_ids.get(shard_id) {
+            Some(tables_id_info) => match tables_id_info.get(table) {
+                Some(max_id) => Some(*max_id),
+                None => None,
+            },
+            None => None,
+        }
     }
 }
 
