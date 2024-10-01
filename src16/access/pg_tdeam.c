@@ -2803,8 +2803,6 @@ l1:
 
 	old_key_tuple = ExtractReplicaIdentity(relation, decrypted_tuple, true, &old_key_copied);
 
-	tdeheap_freetuple(decrypted_tuple);
-
 	/*
 	 * If this is the first possibly-multixact-able operation in the current
 	 * transaction, set my per-backend OldestMemberMXactId setting. We can be
@@ -2942,7 +2940,15 @@ l1:
 		Assert(!HeapTupleHasExternal(&tp));
 	}
 	else if (HeapTupleHasExternal(&tp))
-		tdeheap_toast_delete(relation, &tp, false);
+	{
+		/* 
+		 * tdeheap_toast_delete needs decypted tuple to extract external 
+		 * attributes 
+		 */
+		tdeheap_toast_delete(relation, decrypted_tuple, false);
+	}
+
+	tdeheap_freetuple(decrypted_tuple);
 
 	/*
 	 * Mark tuple for invalidation from system caches at next command
