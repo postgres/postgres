@@ -841,19 +841,6 @@ llvm_session_initialize(void)
 	}
 
 	/*
-	 * When targeting LLVM 15, turn off opaque pointers for the context we
-	 * build our code in.  We don't need to do so for other contexts (e.g.
-	 * llvm_ts_context).  Once the IR is generated, it carries the necessary
-	 * information.
-	 *
-	 * For 16 and above, opaque pointers must be used, and we have special
-	 * code for that.
-	 */
-#if LLVM_VERSION_MAJOR == 15
-	LLVMContextSetOpaquePointers(LLVMGetGlobalContext(), false);
-#endif
-
-	/*
 	 * Synchronize types early, as that also includes inferring the target
 	 * triple.
 	 */
