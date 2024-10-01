@@ -1403,7 +1403,7 @@ CopyReadLineText(CopyFromState cstate)
 					else if (c2 != '\r')
 						ereport(ERROR,
 								(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
-								 errmsg("end-of-copy marker corrupt")));
+								 errmsg("end-of-copy marker is not alone on its line")));
 				}
 
 				/* Get the next character */
@@ -1414,25 +1414,27 @@ CopyReadLineText(CopyFromState cstate)
 				if (c2 != '\r' && c2 != '\n')
 					ereport(ERROR,
 							(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
-							 errmsg("end-of-copy marker corrupt")));
+							 errmsg("end-of-copy marker is not alone on its line")));
 
 				if ((cstate->eol_type == EOL_NL && c2 != '\n') ||
 					(cstate->eol_type == EOL_CRNL && c2 != '\n') ||
 					(cstate->eol_type == EOL_CR && c2 != '\r'))
-				{
 					ereport(ERROR,
 							(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
 							 errmsg("end-of-copy marker does not match previous newline style")));
-				}
 
 				/*
-				 * Transfer only the data before the \. into line_buf, then
-				 * discard the data and the \. sequence.
+				 * If there is any data on this line before the \., complain.
 				 */
-				if (prev_raw_ptr > cstate->input_buf_index)
-					appendBinaryStringInfo(&cstate->line_buf,
-										   cstate->input_buf + cstate->input_buf_index,
-										   prev_raw_ptr - cstate->input_buf_index);
+				if (cstate->line_buf.len > 0 ||
+					prev_raw_ptr > cstate->input_buf_index)
+					ereport(ERROR,
+							(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
+							 errmsg("end-of-copy marker is not alone on its line")));
+
+				/*
+				 * Discard the \. and newline, then report EOF.
+				 */
 				cstate->input_buf_index = input_buf_ptr;
 				result = true;	/* report EOF */
 				break;

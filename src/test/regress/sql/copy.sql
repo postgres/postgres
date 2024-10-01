@@ -50,6 +50,22 @@ truncate copytest2;
 copy copytest2(test) from :'filename' csv;
 select test from copytest2 order by test collate "C";
 
+-- in text mode, \. must be alone on its line
+truncate copytest2;
+copy copytest2(test) from stdin;
+line1
+line2
+foo\.
+line3
+\.
+copy copytest2(test) from stdin;
+line4
+line5
+\.foo
+line6
+\.
+select test from copytest2;
+
 
 -- test header line feature
 

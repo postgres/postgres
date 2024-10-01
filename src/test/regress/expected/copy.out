@@ -50,6 +50,19 @@ select test from copytest2 order by test collate "C";
  line2
 (3 rows)
 
+-- in text mode, \. must be alone on its line
+truncate copytest2;
+copy copytest2(test) from stdin;
+ERROR:  end-of-copy marker is not alone on its line
+CONTEXT:  COPY copytest2, line 3
+copy copytest2(test) from stdin;
+ERROR:  end-of-copy marker is not alone on its line
+CONTEXT:  COPY copytest2, line 3
+select test from copytest2;
+ test 
+------
+(0 rows)
+
 -- test header line feature
 create temp table copytest3 (
 	c1 int,
