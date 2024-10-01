@@ -25,8 +25,8 @@ AC_DEFUN([PGAC_LLVM_SUPPORT],
     AC_MSG_ERROR([$LLVM_CONFIG does not work])
   fi
   # and whether the version is supported
-  if echo $pgac_llvm_version | $AWK -F '.' '{ if ([$]1 >= 10) exit 1; else exit 0;}';then
-    AC_MSG_ERROR([$LLVM_CONFIG version is $pgac_llvm_version but at least 10 is required])
+  if echo $pgac_llvm_version | $AWK -F '.' '{ if ([$]1 >= 14) exit 1; else exit 0;}';then
+    AC_MSG_ERROR([$LLVM_CONFIG version is $pgac_llvm_version but at least 14 is required])
   fi
   AC_MSG_NOTICE([using llvm $pgac_llvm_version])
 

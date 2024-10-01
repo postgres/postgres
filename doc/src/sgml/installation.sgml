@@ -936,7 +936,7 @@ build-postgresql:
          <acronym>JIT</acronym> compilation (see <xref linkend="jit"/>).  This
          requires the <productname>LLVM</productname> library to be installed.
          The minimum required version of <productname>LLVM</productname> is
-         currently 10.
+         currently 14.
         </para>
         <para>
          <command>llvm-config</command><indexterm><primary>llvm-config</primary></indexterm>
@@ -2394,7 +2394,7 @@ ninja install
         <acronym>JIT</acronym> compilation (see <xref linkend="jit"/>).
         This requires the <productname>LLVM</productname> library to be
         installed.  The minimum required version of
-        <productname>LLVM</productname> is currently 10.  Disabled by
+        <productname>LLVM</productname> is currently 14.  Disabled by
         default.
        </para>
 

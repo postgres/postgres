@@ -30,13 +30,7 @@ static std::new_handler old_new_handler = NULL;
 
 static void fatal_system_new_handler(void);
 static void fatal_llvm_new_handler(void *user_data, const char *reason, bool gen_crash_diag);
-#if LLVM_VERSION_MAJOR < 14
-static void fatal_llvm_new_handler(void *user_data, const std::string& reason, bool gen_crash_diag);
-#endif
 static void fatal_llvm_error_handler(void *user_data, const char *reason, bool gen_crash_diag);
-#if LLVM_VERSION_MAJOR < 14
-static void fatal_llvm_error_handler(void *user_data, const std::string& reason, bool gen_crash_diag);
-#endif
 
 
 /*
@@ -135,15 +129,6 @@ fatal_llvm_new_handler(void *user_data,
 			 errmsg("out of memory"),
 			 errdetail("While in LLVM: %s", reason)));
 }
-#if LLVM_VERSION_MAJOR < 14
-static void
-fatal_llvm_new_handler(void *user_data,
-					   const std::string& reason,
-					   bool gen_crash_diag)
-{
-	fatal_llvm_new_handler(user_data, reason.c_str(), gen_crash_diag);
-}
-#endif
 
 static void
 fatal_llvm_error_handler(void *user_data,
@@ -154,13 +139,3 @@ fatal_llvm_error_handler(void *user_data,
 			(errcode(ERRCODE_OUT_OF_MEMORY),
 			 errmsg("fatal llvm error: %s", reason)));
 }
-
-#if LLVM_VERSION_MAJOR < 14
-static void
-fatal_llvm_error_handler(void *user_data,
-						 const std::string& reason,
-						 bool gen_crash_diag)
-{
-	fatal_llvm_error_handler(user_data, reason.c_str(), gen_crash_diag);
-}
-#endif

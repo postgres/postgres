@@ -5072,8 +5072,8 @@ fi
     as_fn_error $? "$LLVM_CONFIG does not work" "$LINENO" 5
   fi
   # and whether the version is supported
-  if echo $pgac_llvm_version | $AWK -F '.' '{ if ($1 >= 10) exit 1; else exit 0;}';then
-    as_fn_error $? "$LLVM_CONFIG version is $pgac_llvm_version but at least 10 is required" "$LINENO" 5
+  if echo $pgac_llvm_version | $AWK -F '.' '{ if ($1 >= 14) exit 1; else exit 0;}';then
+    as_fn_error $? "$LLVM_CONFIG version is $pgac_llvm_version but at least 14 is required" "$LINENO" 5
   fi
   { $as_echo "$as_me:${as_lineno-$LINENO}: using llvm $pgac_llvm_version" >&5
 $as_echo "$as_me: using llvm $pgac_llvm_version" >&6;}

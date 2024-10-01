@@ -17,10 +17,6 @@ extern "C"
 }
 
 #include <llvm-c/Core.h>
-
-/* Avoid macro clash with LLVM's C++ headers */
-#undef Min
-
 #include <llvm/IR/Function.h>
 
 #include "jit/llvmjit.h"
