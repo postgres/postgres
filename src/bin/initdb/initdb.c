@@ -2466,6 +2466,7 @@ usage(const char *progname)
 			 "                            set builtin locale name for new databases\n"));
 	printf(_("      --locale-provider={builtin|libc|icu}\n"
 			 "                            set default locale provider for new databases\n"));
+	printf(_("      --no-data-checksums   do not use data page checksums\n"));
 	printf(_("      --pwfile=FILE         read password for the new superuser from file\n"));
 	printf(_("  -T, --text-search-config=CFG\n"
 			 "                            default text search configuration\n"));
@@ -3128,6 +3129,7 @@ main(int argc, char *argv[])
 		{"icu-locale", required_argument, NULL, 17},
 		{"icu-rules", required_argument, NULL, 18},
 		{"sync-method", required_argument, NULL, 19},
+		{"no-data-checksums", no_argument, NULL, 20},
 		{NULL, 0, NULL, 0}
 	};
 
@@ -3318,6 +3320,9 @@ main(int argc, char *argv[])
 			case 19:
 				if (!parse_sync_method(optarg, &sync_method))
 					exit(1);
+				break;
+			case 20:
+				data_checksums = false;
 				break;
 			default:
 				/* getopt_long already emitted a complaint */

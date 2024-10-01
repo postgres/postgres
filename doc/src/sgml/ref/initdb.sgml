@@ -343,6 +343,16 @@ PostgreSQL documentation
       </listitem>
      </varlistentry>
 
+     <varlistentry id="app-initdb-no-data-checksums" xreflabel="no data checksums">
+      <term><option>--no-data-checksums</option></term>
+      <listitem>
+       <para>
+        Do not enable data checksums.  This can be used to override a
+        <option>--data-checksums</option> option.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="app-initdb-option-pwfile">
       <term><option>--pwfile=<replaceable>filename</replaceable></option></term>
       <listitem>

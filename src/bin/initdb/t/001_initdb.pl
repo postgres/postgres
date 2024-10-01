@@ -268,4 +268,16 @@ ok($conf !~ qr/^WORK_MEM = /m, "WORK_MEM should not be configured");
 ok($conf !~ qr/^Work_Mem = /m, "Work_Mem should not be configured");
 ok($conf =~ qr/^work_mem = 512/m, "work_mem should be in config");
 
+# Test the no-data-checksums flag
+my $datadir_nochecksums = "$tempdir/data_no_checksums";
+
+command_ok([ 'initdb', '--no-data-checksums', $datadir_nochecksums ],
+	'successful creation without data checksums');
+
+# Control file should tell that data checksums are disabled.
+command_like(
+	[ 'pg_controldata', $datadir_nochecksums ],
+	qr/Data page checksum version:.*0/,
+	'checksums are disabled in control file');
+
 done_testing();
