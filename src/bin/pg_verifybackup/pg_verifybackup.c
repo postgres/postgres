@@ -929,9 +929,12 @@ precheck_tar_backup_file(verifier_context *context, char *relpath,
 		 * result is 0, or if the value is too large to be a valid OID.
 		 */
 		if (suffix == NULL || num <= 0 || num > OID_MAX)
+		{
 			report_backup_error(context,
 								"file \"%s\" is not expected in a tar format backup",
 								relpath);
+			return;
+		}
 		tblspc_oid = (Oid) num;
 	}
 
@@ -1013,6 +1016,8 @@ verify_tar_file(verifier_context *context, char *relpath, char *fullpath,
 		done_size += rc;
 		progress_report(false);
 	}
+
+	pg_free(buffer);
 
 	if (rc < 0)
 		report_backup_error(context, "could not read file \"%s\": %m",
