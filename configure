@@ -2875,12 +2875,12 @@ if test "${with_extra_version+set}" = set; then :
       as_fn_error $? "argument required for --with-extra-version option" "$LINENO" 5
       ;;
     *)
-      PG_VERSION="$PACKAGE_VERSION.$PG_PERCONAVERSION (Percona Server for PostgreSQL)$withval"
+      PG_VERSION="$PACKAGE_VERSION - Percona Server for PostgreSQL $PG_MAJORVERSION.$PG_MINORVERSION.$PG_PERCONAVERSION$withval"
       ;;
   esac
 
 else
-  PG_VERSION="$PACKAGE_VERSION.$PG_PERCONAVERSION (Percona Server for PostgreSQL)"
+  PG_VERSION="$PACKAGE_VERSION - Percona Server for PostgreSQL $PG_MAJORVERSION.$PG_MINORVERSION.$PG_PERCONAVERSION"
 fi
 
 
