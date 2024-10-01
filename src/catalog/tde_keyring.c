@@ -85,7 +85,7 @@ static Size required_shared_mem_size(void);
 
 typedef struct TdeKeyProviderInfoSharedState
 {
-	LWLock *Locks;
+	LWLockPadded *Locks;
 } TdeKeyProviderInfoSharedState;
 
 TdeKeyProviderInfoSharedState*	sharedPrincipalKeyState = NULL; /* Lives in shared state */
@@ -107,7 +107,8 @@ static Size
 initialize_shared_state(void *start_address)
 {
 	sharedPrincipalKeyState = (TdeKeyProviderInfoSharedState *)start_address;
-	sharedPrincipalKeyState->Locks = GetLWLocks();
+	sharedPrincipalKeyState->Locks = GetNamedLWLockTranche(TDE_TRANCHE_NAME);
+
 	return sizeof(TdeKeyProviderInfoSharedState);
 }
 
@@ -115,7 +116,7 @@ static inline LWLock *
 tde_provider_info_lock(void)
 {
 	Assert(sharedPrincipalKeyState);
-	return &sharedPrincipalKeyState->Locks[TDE_LWLOCK_PI_FILES];
+	return &sharedPrincipalKeyState->Locks[TDE_LWLOCK_PI_FILES].lock;
 }
 
 void InitializeKeyProviderInfo(void)

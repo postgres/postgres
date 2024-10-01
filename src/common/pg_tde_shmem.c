@@ -137,12 +137,3 @@ tde_shmem_shutdown(int code, Datum arg)
 			routine->shmem_kill(code, arg);
 	}
 }
-
-/*
- * Returns a locks array from registered named tranch.
- */
-LWLock *
-GetLWLocks(void)
-{
-	return &(GetNamedLWLockTranche(TDE_TRANCHE_NAME))->lock;
-}

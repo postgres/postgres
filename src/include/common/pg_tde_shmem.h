@@ -56,6 +56,5 @@ extern void RegisterShmemRequest(const TDEShmemSetupRoutine *routine);
 extern void TdeShmemInit(void);
 extern Size TdeRequiredSharedMemorySize(void);
 extern int TdeRequiredLocksCount(void);
-extern LWLock *GetLWLocks(void);
 
 #endif /*PG_TDE_SHMEM_H*/
