@@ -41,8 +41,8 @@ AC_DEFINE_UNQUOTED(PG_MINORVERSION_NUM, $PG_MINORVERSION, [PostgreSQL minor vers
 AC_DEFINE_UNQUOTED(PG_PERCONAVERSION, "$PG_PERCONAVERSION", [PostgreSQL Percona version as a string])
 
 PGAC_ARG_REQ(with, extra-version, [STRING], [append STRING to version],
-             [PG_VERSION="$PACKAGE_VERSION.$PG_PERCONAVERSION (Percona Server for PostgreSQL)$withval"],
-             [PG_VERSION="$PACKAGE_VERSION.$PG_PERCONAVERSION (Percona Server for PostgreSQL)"])
+             [PG_VERSION="$PACKAGE_VERSION - Percona Server for PostgreSQL $PG_MAJORVERSION.$PG_MINORVERSION.$PG_PERCONAVERSION$withval"],
+             [PG_VERSION="$PACKAGE_VERSION - Percona Server for PostgreSQL $PG_MAJORVERSION.$PG_MINORVERSION.$PG_PERCONAVERSION"])
 AC_DEFINE_UNQUOTED(PG_VERSION, "$PG_VERSION", [PostgreSQL version as a string])
 
 AC_CANONICAL_HOST

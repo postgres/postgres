@@ -145,7 +145,7 @@ cdata.set_quoted('PACKAGE_VERSION', pg_version)
 cdata.set_quoted('PACKAGE_STRING', 'PostgreSQL @0@'.format(pg_version))
 cdata.set_quoted('PACKAGE_TARNAME', 'postgresql')
 
-pg_version += '.' + pg_percona_ver + ' (Percona Server for PostgreSQL)'
+pg_version += ' - Percona Server for PostgreSQL' + pg_version_major.to_string() + '.' + pg_version_minor.to_string() + '.' + pg_percona_ver
 pg_version += get_option('extra_version')
 cdata.set_quoted('PG_VERSION', pg_version)
 cdata.set_quoted('PG_MAJORVERSION', pg_version_major.to_string())
