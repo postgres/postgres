@@ -12,9 +12,6 @@
 #ifndef _PG_LOCALE_
 #define _PG_LOCALE_
 
-#if defined(LOCALE_T_IN_XLOCALE) || defined(WCSTOMBS_L_IN_XLOCALE)
-#include <xlocale.h>
-#endif
 #ifdef USE_ICU
 #include <unicode/ucol.h>
 #endif

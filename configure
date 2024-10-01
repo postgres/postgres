@@ -13219,7 +13219,7 @@ $as_echo "#define HAVE_STDBOOL_H 1" >>confdefs.h
 fi
 
 
-for ac_header in atomic.h copyfile.h execinfo.h getopt.h ifaddrs.h mbarrier.h sys/epoll.h sys/event.h sys/personality.h sys/prctl.h sys/procctl.h sys/signalfd.h sys/ucred.h termios.h ucred.h
+for ac_header in atomic.h copyfile.h execinfo.h getopt.h ifaddrs.h mbarrier.h sys/epoll.h sys/event.h sys/personality.h sys/prctl.h sys/procctl.h sys/signalfd.h sys/ucred.h termios.h ucred.h xlocale.h
 do :
   as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
 ac_fn_c_check_header_mongrel "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default"
@@ -14547,55 +14547,6 @@ _ACEOF
 fi
 
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for locale_t" >&5
-$as_echo_n "checking for locale_t... " >&6; }
-if ${pgac_cv_type_locale_t+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <locale.h>
-locale_t x;
-int
-main ()
-{
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  pgac_cv_type_locale_t=yes
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <xlocale.h>
-locale_t x;
-int
-main ()
-{
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  pgac_cv_type_locale_t='yes (in xlocale.h)'
-else
-  pgac_cv_type_locale_t=no
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $pgac_cv_type_locale_t" >&5
-$as_echo "$pgac_cv_type_locale_t" >&6; }
-if test "$pgac_cv_type_locale_t" = 'yes (in xlocale.h)'; then
-
-$as_echo "#define LOCALE_T_IN_XLOCALE 1" >>confdefs.h
-
-fi
-
 # MSVC doesn't cope well with defining restrict to __restrict, the
 # spelling it understands, because it conflicts with
 # __declspec(restrict). Therefore we define pg_restrict to the
@@ -15081,59 +15032,6 @@ $as_echo "$pgac_cv_var_int_timezone" >&6; }
 if test x"$pgac_cv_var_int_timezone" = xyes ; then
 
 $as_echo "#define HAVE_INT_TIMEZONE 1" >>confdefs.h
-
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for wcstombs_l declaration" >&5
-$as_echo_n "checking for wcstombs_l declaration... " >&6; }
-if ${pgac_cv_func_wcstombs_l+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <stdlib.h>
-#include <locale.h>
-int
-main ()
-{
-#ifndef wcstombs_l
-(void) wcstombs_l;
-#endif
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  pgac_cv_func_wcstombs_l='yes'
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <stdlib.h>
-#include <locale.h>
-#include <xlocale.h>
-int
-main ()
-{
-#ifndef wcstombs_l
-(void) wcstombs_l;
-#endif
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  pgac_cv_func_wcstombs_l='yes (in xlocale.h)'
-else
-  pgac_cv_func_wcstombs_l='no'
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $pgac_cv_func_wcstombs_l" >&5
-$as_echo "$pgac_cv_func_wcstombs_l" >&6; }
-if test "$pgac_cv_func_wcstombs_l" = 'yes (in xlocale.h)'; then
-
-$as_echo "#define WCSTOMBS_L_IN_XLOCALE 1" >>confdefs.h
 
 fi
 

@@ -23,10 +23,6 @@
 #include <langinfo.h>
 #endif
 
-#ifdef LOCALE_T_IN_XLOCALE
-#include <xlocale.h>
-#endif
-
 #include "mb/pg_wchar.h"
 
 

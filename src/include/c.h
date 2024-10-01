@@ -71,6 +71,9 @@
 #include <fcntl.h>				/* ensure O_BINARY is available */
 #endif
 #include <locale.h>
+#ifdef HAVE_XLOCALE_H
+#include <xlocale.h>
+#endif
 #ifdef ENABLE_NLS
 #include <libintl.h>
 #endif

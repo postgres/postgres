@@ -1446,6 +1446,7 @@ AC_CHECK_HEADERS(m4_normalize([
 	sys/ucred.h
 	termios.h
 	ucred.h
+	xlocale.h
 ]))
 
 if expr x"$pgac_cv_check_readline" : 'x-lreadline' >/dev/null ; then
@@ -1608,8 +1609,6 @@ PGAC_UNION_SEMUN
 AC_CHECK_TYPES(socklen_t, [], [], [#include <sys/socket.h>])
 PGAC_STRUCT_SOCKADDR_SA_LEN
 
-PGAC_TYPE_LOCALE_T
-
 # MSVC doesn't cope well with defining restrict to __restrict, the
 # spelling it understands, because it conflicts with
 # __declspec(restrict). Therefore we define pg_restrict to the
@@ -1708,7 +1707,6 @@ fi
 ##
 
 PGAC_VAR_INT_TIMEZONE
-PGAC_FUNC_WCSTOMBS_L
 
 # Some versions of libedit contain strlcpy(), setproctitle(), and other
 # symbols that that library has no business exposing to the world.  Pending

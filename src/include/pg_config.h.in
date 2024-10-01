@@ -499,6 +499,9 @@
 /* Define to 1 if the assembler supports X86_64's POPCNTQ instruction. */
 #undef HAVE_X86_64_POPCNTQ
 
+/* Define to 1 if you have the <xlocale.h> header file. */
+#undef HAVE_XLOCALE_H
+
 /* Define to 1 if you have XSAVE intrinsics. */
 #undef HAVE_XSAVE_INTRINSICS
 
@@ -558,9 +561,6 @@
 
 /* Define to the appropriate printf length modifier for 64-bit ints. */
 #undef INT64_MODIFIER
-
-/* Define to 1 if `locale_t' requires <xlocale.h>. */
-#undef LOCALE_T_IN_XLOCALE
 
 /* Define as the maximum alignment requirement of any C data type. */
 #undef MAXIMUM_ALIGNOF
@@ -747,9 +747,6 @@
 
 /* Define to 1 to build with ZSTD support. (--with-zstd) */
 #undef USE_ZSTD
-
-/* Define to 1 if `wcstombs_l' requires <xlocale.h>. */
-#undef WCSTOMBS_L_IN_XLOCALE
 
 /* Define WORDS_BIGENDIAN to 1 if your processor stores words with the most
    significant byte first (like Motorola and SPARC, unlike Intel). */

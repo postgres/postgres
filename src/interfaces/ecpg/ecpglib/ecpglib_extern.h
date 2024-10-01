@@ -13,9 +13,6 @@
 #ifndef CHAR_BIT
 #include <limits.h>
 #endif
-#ifdef LOCALE_T_IN_XLOCALE
-#include <xlocale.h>
-#endif
 
 enum COMPAT_MODE
 {
