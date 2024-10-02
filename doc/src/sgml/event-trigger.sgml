@@ -55,6 +55,11 @@
    </para>
 
    <para>
+     For an example on how to use the <literal>login</literal> event trigger,
+     see <xref linkend="event-trigger-database-login-example"/>.
+   </para>
+
+   <para>
      The <literal>ddl_command_start</literal> event occurs just before the
      execution of a <literal>CREATE</literal>, <literal>ALTER</literal>, <literal>DROP</literal>,
      <literal>SECURITY LABEL</literal>,
