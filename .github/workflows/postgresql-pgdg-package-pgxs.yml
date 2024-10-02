@@ -154,13 +154,11 @@ jobs:
           cd pgtde-pgdg$POSTGRESQL_VERSION && sudo tar -czvf ../pgtde-pgdg$POSTGRESQL_VERSION.tar.gz .
 
       - name: Publish release
-        env:
-          POSTGRESQL_VERSION: ${{ matrix.postgresql-version }}
         uses: ncipollo/release-action@v1
         # Only try and deploy on merged code
         if: "github.repository == 'Percona-Lab/pg_tde' && github.ref_name == 'main' && (github.event_name == 'push' || github.event_name == 'schedule')"
         with:
-          artifacts: "pgtde-pgdg$POSTGRESQL_VERSION.tar.gz,pgtde-pgdg$POSTGRESQL_VERSION.deb"
+          artifacts: "pgtde-pgdg${{ matrix.postgresql-version }}.tar.gz,pgtde-pgdg${{ matrix.postgresql-version }}.deb"
           omitBody: true
           allowUpdates: true
           generateReleaseNotes: true
