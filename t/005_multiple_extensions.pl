@@ -14,7 +14,7 @@ PGTDE::setup_files_dir(basename($0));
 
 my $PG_VERSION_STRING = `pg_config --version`;
 
-if (index(lc($PG_VERSION_STRING), lc("percona")) == -1)
+if (index(lc($PG_VERSION_STRING), lc("Percona Distribution")) == -1)
 {
     plan skip_all => "pg_tde test case only for PPG server package install with extensions.";
 }

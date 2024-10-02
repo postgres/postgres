@@ -1,0 +1,24 @@
+\set tde_am tde_heap_basic
+\i sql/update_compare_indexes.inc
+CREATE EXTENSION pg_tde;
+SELECT pg_tde_add_key_provider_file('file-vault','/tmp/pg_tde_test_keyring.per');
+ pg_tde_add_key_provider_file 
+------------------------------
+                            1
+(1 row)
+
+SELECT pg_tde_set_principal_key('test-db-principal-key','file-vault');
+ pg_tde_set_principal_key 
+--------------------------
+ t
+(1 row)
+
+DROP TABLE IF EXISTS pvactst;
+psql:sql/update_compare_indexes.inc:6: NOTICE:  table "pvactst" does not exist, skipping
+CREATE TABLE pvactst (i INT, a INT[], p POINT) USING :tde_am;
+INSERT INTO pvactst SELECT i, array[1,2,3], point(i, i+1) FROM generate_series(1,1000) i;
+CREATE INDEX spgist_pvactst ON pvactst USING spgist (p);
+UPDATE pvactst SET i = i WHERE i < 1000;
+-- crash!
+DROP TABLE pvactst;
+DROP EXTENSION pg_tde;

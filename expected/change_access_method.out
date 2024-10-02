@@ -1,3 +1,5 @@
+\set tde_am tde_heap
+\i sql/change_access_method.inc
 CREATE EXTENSION pg_tde;
 SELECT pg_tde_add_key_provider_file('file-vault','/tmp/pg_tde_test_keyring.per');
  pg_tde_add_key_provider_file 
@@ -11,13 +13,13 @@ SELECT pg_tde_set_principal_key('test-db-principal-key','file-vault');
  t
 (1 row)
 
- CREATE TABLE country_table (
+CREATE TABLE country_table (
      country_id        serial primary key,
      country_name    text unique not null,
      continent        text not null
- ) using tde_heap_basic;
+) using :tde_am;
  
- INSERT INTO country_table (country_name, continent)
+INSERT INTO country_table (country_name, continent)
      VALUES ('Japan', 'Asia'),
             ('UK', 'Europe'),
             ('USA', 'North America');
@@ -60,7 +62,7 @@ SELECT pg_tde_is_encrypted('country_table');
 (1 row)
 
 -- Change it back to encrypted
-ALTER TABLE country_table SET access method  tde_heap_basic;
+ALTER TABLE country_table SET access method  :tde_am;
 INSERT INTO country_table (country_name, continent)
      VALUES ('China', 'Asia'),
             ('Brazil', 'South America'),

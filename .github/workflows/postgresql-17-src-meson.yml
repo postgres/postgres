@@ -37,18 +37,14 @@ jobs:
       - name: Clone postgres repository
         uses: actions/checkout@v4
         with:
-          repository: 'postgres/postgres'
-          ref: 'REL_17_STABLE'
+          repository: 'percona-lab/postgres'
+          ref: 'TDE_REL_17_STABLE'
           path: 'src'
 
       - name: Clone pg_tde repository
         uses: actions/checkout@v4
         with:
           path: 'src/contrib/pg_tde'
-
-      - name: Include pg_tde in meson build
-        run: |
-          echo "subdir('pg_tde')" >> src/contrib/meson.build
 
       - name: Build postgres
         run: |

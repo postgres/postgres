@@ -1,7 +1,9 @@
+\set tde_am tde_heap
+\i sql/test_issue_153_fix.inc
 CREATE EXTENSION pg_tde;
 SET datestyle TO 'iso, dmy';
 SELECT  * FROM pg_tde_principal_key_info();
-ERROR:  Principal key does not exists for the database
+psql:sql/test_issue_153_fix.inc:4: ERROR:  Principal key does not exists for the database
 HINT:  Use set_principal_key interface to set the principal key
 CONTEXT:  SQL function "pg_tde_principal_key_info" statement 1
 SELECT pg_tde_add_key_provider_file('file-ring','/tmp/pg_tde_test_keyring.per');
@@ -32,7 +34,7 @@ CREATE TABLE dept (
     deptno          NUMERIC(2) NOT NULL CONSTRAINT dept_pk PRIMARY KEY,
     dname           VARCHAR(14) CONSTRAINT dept_dname_uq UNIQUE,
     loc             VARCHAR(13)
-)using tde_heap_basic;
+)using :tde_am;
 --
 --  Create the 'emp' table
 --
@@ -46,7 +48,7 @@ CREATE TABLE emp (
     comm            NUMERIC(7,2),
     deptno          NUMERIC(2) CONSTRAINT emp_ref_dept_fk
                         REFERENCES dept(deptno)
-)using tde_heap_basic;
+)using :tde_am;
 --
 --  Create the 'jobhist' table
 --
@@ -65,7 +67,7 @@ CREATE TABLE jobhist (
     CONSTRAINT jobhist_ref_dept_fk FOREIGN KEY (deptno)
         REFERENCES dept (deptno) ON DELETE SET NULL,
     CONSTRAINT jobhist_date_chk CHECK (startdate <= enddate)
-)using tde_heap_basic;
+)using :tde_am;
 --
 --  Create the 'salesemp' view
 --
@@ -518,31 +520,31 @@ SELECT * FROM jobhist;
 
 -- Now test the crash fix
 DELETE FROM emp WHERE empno = 7934;
-INFO:  Deleting employee 7934
-INFO:  ..Old salary: 1300.00
-INFO:   User  deleted employee(s) on 
+psql:sql/test_issue_153_fix.inc:465: INFO:  Deleting employee 7934
+psql:sql/test_issue_153_fix.inc:465: INFO:  ..Old salary: 1300.00
+psql:sql/test_issue_153_fix.inc:465: INFO:   User  deleted employee(s) on 
 DELETE FROM emp WHERE empno = 7698;
-INFO:  Deleting employee 7698
-INFO:  ..Old salary: 2850.00
-INFO:   User  deleted employee(s) on 
+psql:sql/test_issue_153_fix.inc:466: INFO:  Deleting employee 7698
+psql:sql/test_issue_153_fix.inc:466: INFO:  ..Old salary: 2850.00
+psql:sql/test_issue_153_fix.inc:466: INFO:   User  deleted employee(s) on 
 DELETE FROM emp WHERE empno = 7782;
-INFO:  Deleting employee 7782
-INFO:  ..Old salary: 2450.00
-INFO:   User  deleted employee(s) on 
+psql:sql/test_issue_153_fix.inc:467: INFO:  Deleting employee 7782
+psql:sql/test_issue_153_fix.inc:467: INFO:  ..Old salary: 2450.00
+psql:sql/test_issue_153_fix.inc:467: INFO:   User  deleted employee(s) on 
 DELETE FROM emp WHERE empno = 7788;
-INFO:  Deleting employee 7788
-INFO:  ..Old salary: 3000.00
-INFO:   User  deleted employee(s) on 
+psql:sql/test_issue_153_fix.inc:468: INFO:  Deleting employee 7788
+psql:sql/test_issue_153_fix.inc:468: INFO:  ..Old salary: 3000.00
+psql:sql/test_issue_153_fix.inc:468: INFO:   User  deleted employee(s) on 
 DELETE FROM emp WHERE empno = 7838;
-INFO:   User  deleted employee(s) on 
+psql:sql/test_issue_153_fix.inc:469: INFO:   User  deleted employee(s) on 
 DELETE FROM emp WHERE empno = 7900;
-INFO:  Deleting employee 7900
-INFO:  ..Old salary: 950.00
-INFO:   User  deleted employee(s) on 
+psql:sql/test_issue_153_fix.inc:470: INFO:  Deleting employee 7900
+psql:sql/test_issue_153_fix.inc:470: INFO:  ..Old salary: 950.00
+psql:sql/test_issue_153_fix.inc:470: INFO:   User  deleted employee(s) on 
 DELETE FROM emp WHERE empno = 7654;
-INFO:  Deleting employee 7654
-INFO:  ..Old salary: 1250.00
-INFO:   User  deleted employee(s) on 
+psql:sql/test_issue_153_fix.inc:471: INFO:  Deleting employee 7654
+psql:sql/test_issue_153_fix.inc:471: INFO:  ..Old salary: 1250.00
+psql:sql/test_issue_153_fix.inc:471: INFO:   User  deleted employee(s) on 
 DELETE FROM dept WHERE deptno = 40;
 SELECT * FROM emp;
  empno | ename  |    job    | mgr  |  hiredate  |   sal   |  comm  | deptno 
@@ -580,6 +582,8 @@ SELECT * FROM jobhist;
 
 DROP TABLE jobhist CASCADE;
 DROP TABLE emp CASCADE;
-NOTICE:  drop cascades to view salesemp
+psql:sql/test_issue_153_fix.inc:480: NOTICE:  drop cascades to view salesemp
 DROP TABLE dept CASCADE;
+DROP SEQUENCE next_empno;
+DROP TYPE emp_query_type;
 DROP EXTENSION pg_tde CASCADE;

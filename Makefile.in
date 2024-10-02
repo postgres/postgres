@@ -6,19 +6,19 @@ EXTENSION = pg_tde
 DATA = pg_tde--1.0.sql
 
 REGRESS_OPTS = --temp-config $(top_srcdir)/contrib/pg_tde/pg_tde.conf
-REGRESS = toast_decrypt \
-toast_extended_storage \
-move_large_tuples \
-non_sorted_off_compact \
-update_compare_indexes \
-pg_tde_is_encrypted \
-test_issue_153_fix \
-multi_insert \
-trigger_on_view \
-change_access_method \
-insert_update_delete \
-keyprovider_dependency \
-vault_v2_test
+REGRESS = toast_decrypt_basic \
+toast_extended_storage_basic \
+move_large_tuples_basic \
+non_sorted_off_compact_basic \
+update_compare_indexes_basic \
+pg_tde_is_encrypted_basic \
+test_issue_153_fix_basic \
+multi_insert_basic \
+trigger_on_view_basic \
+change_access_method_basic \
+insert_update_delete_basic \
+keyprovider_dependency_basic \
+vault_v2_test_basic
 TAP_TESTS = 1
 
 OBJS = src/encryption/enc_tde.o \

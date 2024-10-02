@@ -1,3 +1,5 @@
+\set tde_am tde_heap
+\i sql/trigger_on_view.inc
 CREATE extension pg_tde;
 SELECT pg_tde_add_key_provider_file('file-vault','/tmp/pg_tde_test_keyring.per');
  pg_tde_add_key_provider_file 
@@ -14,18 +16,20 @@ SELECT pg_tde_set_principal_key('test-db-principal-key','file-vault');
 --
 -- 2 -- Test triggers on a join view
 --
-SET default_table_access_method TO 'tde_heap_basic';
+SET default_table_access_method TO ':tde_am';
+psql:sql/trigger_on_view.inc:9: ERROR:  invalid value for parameter "default_table_access_method": ":tde_am"
+DETAIL:  Table access method ":tde_am" does not exist.
 DROP VIEW IF EXISTS city_view CASCADE;
-NOTICE:  view "city_view" does not exist, skipping
+psql:sql/trigger_on_view.inc:11: NOTICE:  view "city_view" does not exist, skipping
 DROP TABLE IF exists country_table CASCADE;
-NOTICE:  table "country_table" does not exist, skipping
+psql:sql/trigger_on_view.inc:12: NOTICE:  table "country_table" does not exist, skipping
 DROP TABLE IF exists city_table cascade;
-NOTICE:  table "city_table" does not exist, skipping
+psql:sql/trigger_on_view.inc:13: NOTICE:  table "city_table" does not exist, skipping
  CREATE TABLE country_table (
      country_id        serial primary key,
      country_name    text unique not null,
      continent        text not null
- ) using tde_heap_basic;
+ ) using :tde_am;
  
  INSERT INTO country_table (country_name, continent)
      VALUES ('Japan', 'Asia'),
@@ -45,7 +49,7 @@ NOTICE:  table "city_table" does not exist, skipping
      city_name    text not null,
      population    bigint, 
      country_id    int references country_table
- ) using tde_heap_basic;
+ ) using :tde_am;
  
  CREATE VIEW city_view AS
      SELECT city_id, city_name, population, country_name, continent
@@ -155,7 +159,7 @@ CREATE OR REPLACE FUNCTION city_insert() RETURNS trigger LANGUAGE plpgsql AS $$
  
  -- UPDATE .. RETURNING
  UPDATE city_view SET country_name = 'Japon' WHERE city_name = 'Tokyo'; -- error
-ERROR:  No such country: "Japon"
+psql:sql/trigger_on_view.inc:118: ERROR:  No such country: "Japon"
 CONTEXT:  PL/pgSQL function city_update() line 9 at RAISE
  UPDATE city_view SET country_name = 'Japan' WHERE city_name = 'Takyo'; -- no match
  UPDATE city_view SET country_name = 'Japan' WHERE city_name = 'Tokyo' RETURNING *; -- OK
@@ -206,7 +210,7 @@ CONTEXT:  PL/pgSQL function city_update() line 9 at RAISE
 
  
 DROP extension pg_tde CASCADE;
-NOTICE:  drop cascades to 3 other objects
+psql:sql/trigger_on_view.inc:133: NOTICE:  drop cascades to 3 other objects
 DETAIL:  drop cascades to table country_table
 drop cascades to table city_table
 drop cascades to view city_view

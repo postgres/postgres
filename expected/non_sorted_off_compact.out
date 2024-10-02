@@ -1,3 +1,5 @@
+\set tde_am tde_heap
+\i sql/non_sorted_off_compact.inc
 -- A test case for https://github.com/Percona-Lab/pg_tde/pull/21
 -- 
 CREATE EXTENSION pg_tde;
@@ -14,12 +16,12 @@ SELECT pg_tde_set_principal_key('test-db-principal-key','file-vault');
 (1 row)
 
 DROP TABLE IF EXISTS sbtest1;
-NOTICE:  table "sbtest1" does not exist, skipping
+psql:sql/non_sorted_off_compact.inc:8: NOTICE:  table "sbtest1" does not exist, skipping
 CREATE TABLE sbtest1(
 	  id SERIAL,
 	  k INTEGER DEFAULT '0' NOT NULL,
 	  PRIMARY KEY (id)
-	) USING tde_heap_basic;
+	) USING :tde_am;
 INSERT INTO sbtest1(k) VALUES
 (1),
 (2),

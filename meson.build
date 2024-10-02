@@ -82,12 +82,25 @@ install_data(
   kwargs: contrib_data_args,
 )
 
-tests += {
-  'name': 'pg_tde',
-  'sd': meson.current_source_dir(),
-  'bd': meson.current_build_dir(),
-  'regress': {
-    'sql': [
+
+sql_tests = [
+      'toast_decrypt_basic',
+      'toast_extended_storage_basic',
+      'move_large_tuples_basic',
+      'non_sorted_off_compact_basic',
+      'update_compare_indexes_basic',
+      'pg_tde_is_encrypted_basic',
+      'test_issue_153_fix_basic',
+      'multi_insert_basic',
+      'keyprovider_dependency_basic',
+      'trigger_on_view_basic',
+      'change_access_method_basic',
+      'insert_update_delete_basic',
+      'vault_v2_test_basic',
+]
+
+if get_variable('percona_ext', false)
+  sql_tests += [
       'toast_decrypt',
       'toast_extended_storage',
       'move_large_tuples',
@@ -101,7 +114,15 @@ tests += {
       'change_access_method',
       'insert_update_delete',
       'vault_v2_test',
-    ],
+  ]
+endif
+
+tests += {
+  'name': 'pg_tde',
+  'sd': meson.current_source_dir(),
+  'bd': meson.current_build_dir(),
+  'regress': {
+    'sql': sql_tests,
     'regress_args': ['--temp-config', files('pg_tde.conf')],
     'runningcheck': false,
   },

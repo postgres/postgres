@@ -1,0 +1,91 @@
+\set tde_am tde_heap_basic
+\i sql/change_access_method.inc
+CREATE EXTENSION pg_tde;
+SELECT pg_tde_add_key_provider_file('file-vault','/tmp/pg_tde_test_keyring.per');
+ pg_tde_add_key_provider_file 
+------------------------------
+                            1
+(1 row)
+
+SELECT pg_tde_set_principal_key('test-db-principal-key','file-vault');
+ pg_tde_set_principal_key 
+--------------------------
+ t
+(1 row)
+
+CREATE TABLE country_table (
+     country_id        serial primary key,
+     country_name    text unique not null,
+     continent        text not null
+) using :tde_am;
+ 
+INSERT INTO country_table (country_name, continent)
+     VALUES ('Japan', 'Asia'),
+            ('UK', 'Europe'),
+            ('USA', 'North America');
+SELECT * FROM country_table;
+ country_id | country_name |   continent   
+------------+--------------+---------------
+          1 | Japan        | Asia
+          2 | UK           | Europe
+          3 | USA          | North America
+(3 rows)
+
+SELECT pg_tde_is_encrypted('country_table');
+ pg_tde_is_encrypted 
+---------------------
+ t
+(1 row)
+
+-- Try changing the encrypted table to an unencrypted table
+ALTER TABLE country_table SET access method  heap;
+-- Insert some more data 
+INSERT INTO country_table (country_name, continent)
+     VALUES ('France', 'Europe'),
+            ('Germany', 'Europe'),
+            ('Canada', 'North America');
+SELECT * FROM country_table;
+ country_id | country_name |   continent   
+------------+--------------+---------------
+          1 | Japan        | Asia
+          2 | UK           | Europe
+          3 | USA          | North America
+          4 | France       | Europe
+          5 | Germany      | Europe
+          6 | Canada       | North America
+(6 rows)
+
+SELECT pg_tde_is_encrypted('country_table');
+ pg_tde_is_encrypted 
+---------------------
+ f
+(1 row)
+
+-- Change it back to encrypted
+ALTER TABLE country_table SET access method  :tde_am;
+INSERT INTO country_table (country_name, continent)
+     VALUES ('China', 'Asia'),
+            ('Brazil', 'South America'),
+            ('Australia', 'Oceania');
+SELECT * FROM country_table;
+ country_id | country_name |   continent   
+------------+--------------+---------------
+          1 | Japan        | Asia
+          2 | UK           | Europe
+          3 | USA          | North America
+          4 | France       | Europe
+          5 | Germany      | Europe
+          6 | Canada       | North America
+          7 | China        | Asia
+          8 | Brazil       | South America
+          9 | Australia    | Oceania
+(9 rows)
+
+SELECT pg_tde_is_encrypted('country_table');
+ pg_tde_is_encrypted 
+---------------------
+ t
+(1 row)
+
+DROP TABLE country_table;
+DROP EXTENSION pg_tde;

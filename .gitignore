@@ -8,3 +8,4 @@ __pycache__
 /Makefile
 /autom4te.cache
 /configure~
+t/results

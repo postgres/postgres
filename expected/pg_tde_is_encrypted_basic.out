@@ -1,0 +1,63 @@
+\set tde_am tde_heap_basic
+\i sql/pg_tde_is_encrypted.inc
+CREATE EXTENSION pg_tde;
+SELECT  * FROM pg_tde_principal_key_info();
+psql:sql/pg_tde_is_encrypted.inc:3: ERROR:  Principal key does not exists for the database
+HINT:  Use set_principal_key interface to set the principal key
+CONTEXT:  SQL function "pg_tde_principal_key_info" statement 1
+SELECT pg_tde_add_key_provider_file('file-vault','/tmp/pg_tde_test_keyring.per');
+ pg_tde_add_key_provider_file 
+------------------------------
+                            1
+(1 row)
+
+SELECT pg_tde_set_principal_key('test-db-principal-key','file-vault');
+ pg_tde_set_principal_key 
+--------------------------
+ t
+(1 row)
+
+CREATE TABLE test_enc(
+	  id SERIAL,
+	  k INTEGER DEFAULT '0' NOT NULL,
+	  PRIMARY KEY (id)
+	) USING :tde_am;
+CREATE TABLE test_norm(
+	  id SERIAL,
+	  k INTEGER DEFAULT '0' NOT NULL,
+	  PRIMARY KEY (id)
+	) USING heap;
+SELECT amname FROM pg_class INNER JOIN pg_am ON pg_am.oid = pg_class.relam WHERE relname = 'test_enc';
+     amname     
+----------------
+ tde_heap_basic
+(1 row)
+
+SELECT amname FROM pg_class INNER JOIN pg_am ON pg_am.oid = pg_class.relam WHERE relname = 'test_norm';
+ amname 
+--------
+ heap
+(1 row)
+
+SELECT pg_tde_is_encrypted('test_enc');
+ pg_tde_is_encrypted 
+---------------------
+ t
+(1 row)
+
+SELECT pg_tde_is_encrypted('test_norm');
+ pg_tde_is_encrypted 
+---------------------
+ f
+(1 row)
+
+SELECT  key_provider_id, key_provider_name, principal_key_name
+		FROM pg_tde_principal_key_info();
+ key_provider_id | key_provider_name |  principal_key_name   
+-----------------+-------------------+-----------------------
+               1 | file-vault        | test-db-principal-key
+(1 row)
+
+DROP TABLE test_enc;
+DROP TABLE test_norm;
+DROP EXTENSION pg_tde;
