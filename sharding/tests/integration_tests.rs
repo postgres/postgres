@@ -65,22 +65,23 @@ fn test_nodes_initialize_empty() {
 fn test_create_table() {
     create_and_init_cluster(b"test-shard1\n", "s", "localhost", "5433");
     create_and_init_cluster(b"test-router1\n", "r", "localhost", "5434");
+    create_and_init_cluster(b"test-client1\n", "c", "localhost", "5435");
 
     let mut shard_connection: Client = setup_connection("localhost", "5433", "template1").unwrap();
 
-    // Initialize and get the router
+    // Initialize and get the router.
     init_node_instance(
-        NodeType::Router,
-        "5434\0".as_ptr() as *const i8,
-        "/src/node/router_config.yaml\0".as_ptr() as *const i8,
+        NodeType::Client,
+        "5435\0".as_ptr() as *const i8,
+        "src/node/config/router_config.yaml\0".as_ptr() as *const i8,
     );
-    let router = get_node_instance();
+    let client = get_node_instance();
 
     // Create a table on the router
-    assert!(router
+    assert!(client
         .send_query("DROP TABLE IF EXISTS test_table;")
         .is_some());
-    assert!(router
+    assert!(client
         .send_query("CREATE TABLE test_table (id INT PRIMARY KEY);")
         .is_some());
 
@@ -96,6 +97,7 @@ fn test_create_table() {
 
     stop_cluster(b"test-shard1\n");
     stop_cluster(b"test-router1\n");
+    stop_cluster(b"test-client1\n");
 }
 
 #[test]
@@ -109,7 +111,7 @@ fn test_insert_into_table_select_and_delete() {
     init_node_instance(
         NodeType::Router,
         "5434\0".as_ptr() as *const i8,
-        "src/node/router_config.yaml\0".as_ptr() as *const i8,
+        "src/node/config/router_config.yaml\0".as_ptr() as *const i8,
     );
     let router = get_node_instance();
 
