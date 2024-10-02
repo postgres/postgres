@@ -301,6 +301,7 @@ typedef struct PgStat_CheckpointerStats
 	PgStat_Counter write_time;	/* times in milliseconds */
 	PgStat_Counter sync_time;
 	PgStat_Counter buffers_written;
+	PgStat_Counter slru_written;
 	TimestampTz stat_reset_timestamp;
 } PgStat_CheckpointerStats;
 

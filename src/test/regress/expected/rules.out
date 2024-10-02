@@ -1831,6 +1831,7 @@ pg_stat_checkpointer| SELECT pg_stat_get_checkpointer_num_timed() AS num_timed,
     pg_stat_get_checkpointer_write_time() AS write_time,
     pg_stat_get_checkpointer_sync_time() AS sync_time,
     pg_stat_get_checkpointer_buffers_written() AS buffers_written,
+    pg_stat_get_checkpointer_slru_written() AS slru_written,
     pg_stat_get_checkpointer_stat_reset_time() AS stats_reset;
 pg_stat_database| SELECT oid AS datid,
     datname,

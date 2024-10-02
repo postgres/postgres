@@ -56,6 +56,7 @@ pgstat_report_checkpointer(void)
 	CHECKPOINTER_ACC(write_time);
 	CHECKPOINTER_ACC(sync_time);
 	CHECKPOINTER_ACC(buffers_written);
+	CHECKPOINTER_ACC(slru_written);
 #undef CHECKPOINTER_ACC
 
 	pgstat_end_changecount_write(&stats_shmem->changecount);
@@ -135,5 +136,6 @@ pgstat_checkpointer_snapshot_cb(void)
 	CHECKPOINTER_COMP(write_time);
 	CHECKPOINTER_COMP(sync_time);
 	CHECKPOINTER_COMP(buffers_written);
+	CHECKPOINTER_COMP(slru_written);
 #undef CHECKPOINTER_COMP
 }

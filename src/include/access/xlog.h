@@ -167,6 +167,7 @@ typedef struct CheckpointStatsData
 	TimestampTz ckpt_end_t;		/* end of checkpoint */
 
 	int			ckpt_bufs_written;	/* # of buffers written */
+	int			ckpt_slru_written;	/* # of SLRU buffers written */
 
 	int			ckpt_segs_added;	/* # of new xlog segments created */
 	int			ckpt_segs_removed;	/* # of xlog segments deleted */

@@ -3127,7 +3127,16 @@ description | Waiting for a newly initialized WAL file to reach durable storage
        <structfield>buffers_written</structfield> <type>bigint</type>
       </para>
       <para>
-       Number of buffers written during checkpoints and restartpoints
+       Number of shared buffers written during checkpoints and restartpoints
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+        <structfield>slru_written</structfield> <type>bigint</type>
+      </para>
+      <para>
+        Number of SLRU buffers written during checkpoints and restartpoints
       </para></entry>
      </row>
 
