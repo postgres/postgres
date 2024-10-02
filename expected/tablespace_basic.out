@@ -1,4 +1,4 @@
-\set tde_am tde_heap
+\set tde_am tde_heap_basic
 \i sql/tablespace.inc
 CREATE EXTENSION pg_tde;
 SELECT pg_tde_add_key_provider_file('file-vault','/tmp/pg_tde_test_keyring.per');

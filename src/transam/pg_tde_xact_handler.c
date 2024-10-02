@@ -101,6 +101,8 @@ do_pending_deletes(bool isCommit)
     PendingMapEntryDelete *prev;
     PendingMapEntryDelete *next;
 
+    LWLockAcquire(tde_lwlock_enc_keys(), LW_EXCLUSIVE);
+
     prev = NULL;
     for (pending = pendingDeletes; pending != NULL; pending = next)
     {
@@ -129,6 +131,8 @@ do_pending_deletes(bool isCommit)
         /* prev does not change */
 
     }
+
+    LWLockRelease(tde_lwlock_enc_keys());
 }
 
 

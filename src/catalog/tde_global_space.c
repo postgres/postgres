@@ -113,7 +113,7 @@ init_default_keyring(void)
 		 * TODO: should we remove it automaticaly on
 		 * pg_tde_rotate_principal_key() ?
 		 */
-		save_new_key_provider_info(&provider, GLOBAL_DATA_TDE_OID, GLOBALTABLESPACE_OID, true);
+		save_new_key_provider_info(&provider, GLOBAL_DATA_TDE_OID, GLOBALTABLESPACE_OID, false);
 		elog(INFO,
 			 "default keyring has been created for the global tablespace (WAL)."
 			 " Change it with pg_tde_add_key_provider_* and run pg_tde_rotate_principal_key."

@@ -78,7 +78,8 @@ static void key_provider_startup_cleanup(int tde_tbl_count, XLogExtensionInstall
 static const char *get_keyring_provider_typename(ProviderType p_type);
 static uint32 write_key_provider_info(KeyringProvideRecord *provider, 
 									Oid database_id, Oid tablespace_id,
-									off_t position, bool redo, bool recovery);
+									off_t position, bool error_if_exists, 
+									bool write_xlog);
 
 static Size initialize_shared_state(void *start_address);
 static Size required_shared_mem_size(void);
@@ -195,7 +196,7 @@ GetKeyProviderByName(const char *provider_name, Oid dbOid, Oid spcOid)
 
 static uint32
 write_key_provider_info(KeyringProvideRecord *provider, Oid database_id, 
-					Oid tablespace_id, off_t position, bool redo, bool recovery)
+					Oid tablespace_id, off_t position, bool error_if_exists, bool write_xlog)
 {
 	off_t bytes_written = 0;
 	off_t curr_pos = 0;
@@ -218,7 +219,7 @@ write_key_provider_info(KeyringProvideRecord *provider, Oid database_id,
 			(errcode_for_file_access(),
 				errmsg("could not open tde file \"%s\": %m", kp_info_path)));
 	}
-	if (!redo)
+	if (position == -1)
 	{
 		/* we also need to verify the name conflict and generate the next provider ID */
 		while (fetch_next_key_provider(fd, &curr_pos, &existing_provider))
@@ -227,9 +228,15 @@ write_key_provider_info(KeyringProvideRecord *provider, Oid database_id,
 			{
 				close(fd);
 				LWLockRelease(tde_provider_info_lock());
-				ereport(ERROR,
+				ereport(error_if_exists ? ERROR : DEBUG1,
 						(errcode(ERRCODE_DUPLICATE_OBJECT),
 						errmsg("key provider \"%s\" already exists", provider->provider_name)));
+
+				if (!error_if_exists)
+				{
+					provider->provider_id = existing_provider.provider_id;
+					return provider->provider_id;
+				}
 			}
 			if (max_provider_id < existing_provider.provider_id)
 				max_provider_id = existing_provider.provider_id;
@@ -240,7 +247,7 @@ write_key_provider_info(KeyringProvideRecord *provider, Oid database_id,
 		/* emit the xlog here. So that we can handle partial file write errors
 		 * but cannot make new WAL entries during recovery.
 		 */
-		if (!recovery)
+		if (write_xlog)
 		{
 			KeyringProviderXLRecord xlrec;
 
@@ -293,9 +300,18 @@ write_key_provider_info(KeyringProvideRecord *provider, Oid database_id,
  * Save the key provider info to the file
  */
 uint32
-save_new_key_provider_info(KeyringProvideRecord* provider, Oid databaseId, Oid tablespaceId, bool recovery)
+save_new_key_provider_info(KeyringProvideRecord* provider, Oid databaseId, Oid tablespaceId, bool write_xlog)
 {
-	return write_key_provider_info(provider, databaseId, tablespaceId, 0, false, recovery);
+	return write_key_provider_info(provider, databaseId, tablespaceId, -1, true, write_xlog);
+}
+
+/*
+ * Save the key provider info to the file but don't fail if it is already exists.
+ */
+uint32
+copy_key_provider_info(KeyringProvideRecord* provider, Oid newdatabaseId, Oid newtablespaceId, bool write_xlog)
+{
+	return write_key_provider_info(provider, newdatabaseId, newtablespaceId, -1, false, write_xlog);
 }
 
 uint32
@@ -334,7 +350,7 @@ pg_tde_add_key_provider_internal(PG_FUNCTION_ARGS)
 	strncpy(provider.options, options, sizeof(provider.options));
 	strncpy(provider.provider_name, provider_name, sizeof(provider.provider_name));
 	provider.provider_type = get_keyring_provider_from_typename(provider_type);
-	save_new_key_provider_info(&provider, dbOid, spcOid, false);
+	save_new_key_provider_info(&provider, dbOid, spcOid, true);
 
 	PG_RETURN_INT32(provider.provider_id);
 }
