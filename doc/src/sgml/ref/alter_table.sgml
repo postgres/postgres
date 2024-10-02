@@ -1123,8 +1123,8 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
   </para>
 
   <para>
-   All the forms of ALTER TABLE that act on a single table, except
-   <literal>RENAME</literal>, <literal>SET SCHEMA</literal>,
+   All the forms of <command>ALTER TABLE</command> that act on a single table,
+   except <literal>RENAME</literal>, <literal>SET SCHEMA</literal>,
    <literal>ATTACH PARTITION</literal>, and
    <literal>DETACH PARTITION</literal> can be combined into
    a list of multiple alterations to be applied together.  For example, it

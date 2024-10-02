@@ -427,7 +427,7 @@ COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable 
     <term><literal>LOG_VERBOSITY</literal></term>
     <listitem>
      <para>
-      Specify the amount of messages emitted by a <command>COPY</command>
+      Specifies the amount of messages emitted by a <command>COPY</command>
       command: <literal>default</literal> or <literal>verbose</literal>. If
       <literal>verbose</literal> is specified, additional messages are emitted
       during processing.
@@ -779,7 +779,7 @@ COPY <replaceable class="parameter">count</replaceable>
    <title>CSV Format</title>
 
    <para>
-    This format option is used for importing and exporting the Comma
+    This format option is used for importing and exporting the Comma-
     Separated Value (<literal>CSV</literal>) file format used by many other
     programs, such as spreadsheets. Instead of the escaping rules used by
     <productname>PostgreSQL</productname>'s standard text format, it

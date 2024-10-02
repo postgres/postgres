@@ -2586,7 +2586,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
        True if this logical slot conflicted with recovery (and so is now
        invalidated). When this column is true, check
        <structfield>invalidation_reason</structfield> column for the conflict
-       reason. Always NULL for physical slots.
+       reason. Always <literal>NULL</literal> for physical slots.
       </para></entry>
      </row>
 
@@ -3945,7 +3945,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
        range type column. (Null for non-range types.)
       </para>
       <para>
-       This histogram is calculated using the <literal>subtype_diff</literal>
+       This histogram is calculated using the <function>subtype_diff</function>
        range function regardless of whether range bounds are inclusive.
       </para></entry>
      </row>

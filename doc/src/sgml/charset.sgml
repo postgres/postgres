@@ -862,7 +862,7 @@ SELECT * FROM test1 ORDER BY a || b COLLATE "fr_FR";
         This SQL standard collation sorts using the Unicode Collation
         Algorithm with the Default Unicode Collation Element Table.  It is
         available in all encodings.  ICU support is required to use this
-        collation, and behavior may change if Postgres is built with a
+        collation, and behavior may change if <productname>PostgreSQL</productname> is built with a
         different version of ICU.  (This collation has the same behavior as
         the ICU root locale; see <xref
         linkend="collation-managing-predefined-icu-und-x-icu"/>.)
@@ -897,7 +897,7 @@ SELECT * FROM test1 ORDER BY a || b COLLATE "fr_FR";
         expressions), it uses the POSIX Compatible variant of Unicode <ulink
         url="https://www.unicode.org/reports/tr18/#Compatibility_Properties">Compatibility
         Properties</ulink>.  Behavior is efficient and stable within a
-        <productname>Postgres</productname> major version.  This collation is
+        <productname>PostgreSQL</productname> major version.  This collation is
         only available for encoding <literal>UTF8</literal>.
        </para>
       </listitem>

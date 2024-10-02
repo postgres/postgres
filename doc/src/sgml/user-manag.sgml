@@ -407,7 +407,7 @@ REVOKE <replaceable>group_role</replaceable> FROM <replaceable>role1</replaceabl
    temporarily <quote>become</quote> the group role.  In this state, the
    database session has access to the privileges of the group role rather
    than the original login role, and any database objects created are
-   considered owned by the group role not the login role.  Second, member
+   considered owned by the group role, not the login role.  Second, member
    roles that have been granted membership with the
    <literal>INHERIT</literal> option automatically have use of the
    privileges of those directly or indirectly a member of, though the

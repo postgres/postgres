@@ -708,7 +708,7 @@ include_dir 'conf.d'
        </para>
 
        <para>
-        PostgreSQL sizes certain resources based directly on the value of
+        <productname>PostgreSQL</productname> sizes certain resources based directly on the value of
         <varname>max_connections</varname>. Increasing its value leads to
         higher allocation of those resources, including shared memory.
        </para>
@@ -6422,7 +6422,7 @@ SELECT * FROM parent WHERE key = 2400;
        </para>
        <para>
         If <systemitem>csvlog</systemitem> is included in <varname>log_destination</varname>,
-        log entries are output in <quote>comma separated
+        log entries are output in <quote>comma-separated
         value</quote> (<acronym>CSV</acronym>) format, which is convenient for
         loading logs into programs.
         See <xref linkend="runtime-config-logging-csvlog"/> for details.
@@ -10838,7 +10838,7 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
         Turning this setting off is intended for environments where the
         configuration of <productname>PostgreSQL</productname> is managed by
         some external tool.
-        In such environments, a well intentioned superuser might
+        In such environments, a well-intentioned superuser might
         <emphasis>mistakenly</emphasis> use <command>ALTER SYSTEM</command>
         to change the configuration instead of using the external tool.
         This might result in unintended behavior, such as the external tool

@@ -87,7 +87,7 @@ Policy from config file:        targeted
   </para>
 
   <para>
-   To build this module specify <xref
+   To build this module, specify <xref
    linkend="configure-option-with-sepgsql"/> (when using <link
    linkend="install-make">make and autoconf</link> ) or <xref
    linkend="configure-with-sepgsql-meson"/> (when using <link

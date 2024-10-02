@@ -2496,7 +2496,7 @@ SELECT getf1(CAST(ROW(11,'this is a test',2.5) AS myrowtype));
    linkend="functions-comparison"/>, to compare one row against another
    as described in <xref linkend="functions-comparisons"/>, and to
    use them in connection with subqueries, as discussed in <xref
-   linkend="functions-subquery"/>,
+   linkend="functions-subquery"/>.
   </para>
 
   </sect2>

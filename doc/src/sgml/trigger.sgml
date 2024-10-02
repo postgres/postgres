@@ -357,7 +357,8 @@
    <para>
     If a foreign key constraint specifies referential actions (that
     is, cascading updates or deletes), those actions are performed via
-    ordinary SQL update or delete commands on the referencing table.
+    ordinary SQL <command>UPDATE</command> or <command>DELETE</command>
+    commands on the referencing table.
     In particular, any triggers that exist on the referencing table
     will be fired for those changes.  If such a trigger modifies or
     blocks the effect of one of these commands, the end result could

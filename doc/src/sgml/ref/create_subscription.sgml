@@ -185,7 +185,7 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
 
          <para>
           When setting <literal>slot_name</literal> to a valid name and
-          <literal>create_slot</literal> to false, the
+          <literal>create_slot</literal> to <literal>false</literal>, the
           <literal>failover</literal> property value of the named slot may
           differ from the counterpart <literal>failover</literal> parameter
           specified in the subscription. Always ensure the slot property
@@ -474,7 +474,8 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
   <para>
    If any table in the publication has a <literal>WHERE</literal> clause, rows
    for which the <replaceable class="parameter">expression</replaceable>
-   evaluates to false or null will not be published. If the subscription has
+   evaluates to <literal>false</literal> or <literal>NULL</literal> will not be
+   published. If the subscription has
    several publications in which the same table has been published with
    different <literal>WHERE</literal> clauses, a row will be published if any
    of the expressions (referring to that publish operation) are satisfied. In

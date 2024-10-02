@@ -679,11 +679,11 @@
 
   <para>
    In some cases, when the WAL size on the primary increases quickly,
-   for instance during massive INSERT,
+   for instance during massive <command>INSERT</command>,
    the <structfield>restartpoints_req</structfield> counter on the standby
    may demonstrate a peak growth.
    This occurs because requests to create a new restartpoint due to increased
-   XLOG consumption cannot be performed because the safe checkpoint record
+   WAL consumption cannot be performed because the safe checkpoint record
    since the last restartpoint has not yet been replayed on the standby.
    This behavior is normal and does not lead to an increase in system resource
    consumption.

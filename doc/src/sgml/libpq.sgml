@@ -545,9 +545,9 @@ int PQsocketPoll(int sock, int forRead, int forWrite,
        the Unix epoch (that is, <type>time_t</type> times 1 million).
        Timeout is infinite if <parameter>end_time</parameter>
        is <literal>-1</literal>.  Timeout is immediate (no blocking) if
-       end_time is <literal>0</literal> (or indeed, any time before now).
-       Timeout values can be calculated conveniently by adding the desired
-       number of microseconds to the result of
+       <parameter>end_time</parameter> is <literal>0</literal> (or indeed, any
+       time before now).  Timeout values can be calculated conveniently by
+       adding the desired number of microseconds to the result of
        <xref linkend="libpq-PQgetCurrentTimeUSec"/>.
        Note that the underlying system calls may have less than microsecond
        precision, so that the actual delay may be imprecise.
@@ -1830,11 +1830,12 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
           <term><literal>direct</literal></term>
           <listitem>
            <para>
-             start SSL handshake directly after establishing the TCP/IP
-             connection.  This is only allowed with sslmode=require or higher,
-             because the weaker settings could lead to unintended fallback to
-             plaintext authentication when the server does not support direct
-             SSL handshake.
+            start SSL handshake directly after establishing the TCP/IP
+            connection.  This is only allowed with
+            <literal>sslmode=require</literal> or higher, because the weaker
+            settings could lead to unintended fallback to plaintext
+            authentication when the server does not support direct SSL
+            handshake.
            </para>
           </listitem>
          </varlistentry>
@@ -9582,7 +9583,7 @@ ldap://ldap.acme.com/cn=dbserver,cn=hosts?pgconnectinfo?base?(objectclass=*)
    <para>
     For backwards compatibility with earlier versions of PostgreSQL, if a
     root CA file exists, the behavior of
-    <literal>sslmode</literal>=<literal>require</literal> will be the same
+    <literal>sslmode=require</literal> will be the same
     as that of <literal>verify-ca</literal>, meaning the server certificate
     is validated against the CA. Relying on this behavior is discouraged,
     and applications that need certificate validation should always use
