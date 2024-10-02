@@ -284,7 +284,7 @@ PostgreSQL documentation
        </para>
        <para>
         The full page images are saved with the following file name format:
-        <literal><replaceable>TIMELINE</replaceable>-<replaceable>LSN</replaceable>.<replaceable>RELTABLESPACE</replaceable>.<replaceable>DATOID</replaceable>.<replaceable>RELNODE</replaceable>.<replaceable>BLKNO</replaceable><replaceable>FORK</replaceable></literal>
+        <literal><replaceable>TIMELINE</replaceable>-<replaceable>LSN</replaceable>.<replaceable>RELTABLESPACE</replaceable>.<replaceable>DATOID</replaceable>.<replaceable>RELNODE</replaceable>.<replaceable>BLKNO</replaceable>_<replaceable>FORK</replaceable></literal>
 
         The file names are composed of the following parts:
         <informaltable>
@@ -335,8 +335,8 @@ PostgreSQL documentation
             <entry>FORK</entry>
             <entry>
              The name of the fork the full page image came from, such as
-             <literal>_main</literal>, <literal>_fsm</literal>,
-             <literal>_vm</literal>, or <literal>_init</literal>.
+             <literal>main</literal>, <literal>fsm</literal>,
+             <literal>vm</literal>, or <literal>init</literal>.
             </entry>
            </row>
           </tbody>
