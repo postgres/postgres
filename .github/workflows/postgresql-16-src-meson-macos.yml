@@ -4,7 +4,7 @@ on: [pull_request, workflow_dispatch]
 jobs:
   build:
     name: pg-16-src-meson-test
-    runs-on: macos-12
+    runs-on: macos-14
     steps:
       - name: Install dependencies
         run: |
@@ -29,7 +29,7 @@ jobs:
 
       - name: Build postgres
         run: |
-          export PKG_CONFIG_PATH="/usr/local/opt/icu4c/lib/pkgconfig"
+          export PKG_CONFIG_PATH="/opt/homebrew/opt/icu4c/lib/pkgconfig"
           meson setup build --prefix `pwd`/../inst --buildtype=debug -Dcassert=true
           cd build && ninja && ninja install
         working-directory: src
