@@ -1,4 +1,4 @@
-name: postgresql-16-pgdg-package-pgxs
+name: postgresql-pgdg-package-pgxs
 on: 
   pull_request:
   workflow_dispatch:
@@ -7,8 +7,11 @@ on:
 
 jobs:
   build:
-    name: pg-16-pgdg-package-pgxs-build
-    runs-on: ubuntu-22.04
+    name: pg-pgdg-package-pgxs-build
+    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        postgresql-version: [16, 17]
     steps:
       - name: Remove old postgres
         run: |
@@ -32,15 +35,17 @@ jobs:
           sudo apt update && sudo apt install -y vault
 
 
-      - name: Install PG Distribution Postgresql 16
+      - name: Install PG Distribution Postgresql
+        env:
+          POSTGRESQL_VERSION: ${{ matrix.postgresql-version }}
         run: |
           sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt \
-            $(lsb_release -cs)-pgdg main 16" > /etc/apt/sources.list.d/pgdg.list'
+            $(lsb_release -cs)-pgdg main $POSTGRESQL_VERSION" > /etc/apt/sources.list.d/pgdg.list'
           sudo wget --quiet -O - \
             https://www.postgresql.org/media/keys/ACCC4CF8.asc |
             sudo apt-key add -
           sudo apt update
-          sudo apt -y install postgresql-16 postgresql-server-dev-16
+          sudo apt -y install postgresql-$POSTGRESQL_VERSION postgresql-server-dev-$POSTGRESQL_VERSION
 
       - name: Clone pg_tde repository
         uses: actions/checkout@master
@@ -53,13 +58,17 @@ jobs:
           sudo chown -R postgres:postgres src
 
       - name: Build pg_tde
+        env:
+          POSTGRESQL_VERSION: ${{ matrix.postgresql-version }}
         run: |
           sudo -u postgres bash -c './configure'
           sudo -u postgres bash -c 'make USE_PGXS=1'
-          sudo make USE_PGXS=1 MAJORVERSION=16 install
+          sudo make USE_PGXS=1 MAJORVERSION=$POSTGRESQL_VERSION install
         working-directory: src/pg_tde
 
       - name: Start pg_tde tests
+        env:
+          POSTGRESQL_VERSION: ${{ matrix.postgresql-version }}
         run: |
           TV=$(mktemp)
           { exec >$TV; vault server -dev; } &
@@ -71,7 +80,7 @@ jobs:
           
           sudo service postgresql stop
           echo "shared_preload_libraries = 'pg_tde'" |
-            sudo tee -a /etc/postgresql/16/main/postgresql.conf
+            sudo tee -a /etc/postgresql/$POSTGRESQL_VERSION/main/postgresql.conf
           sudo service postgresql start
 
           sudo -u postgres bash -c "export ROOT_TOKEN=$ROOT_TOKEN && make installcheck USE_PGXS=1"
@@ -93,51 +102,65 @@ jobs:
           cat src/pg_tde/regression.diffs
 
       - name: Create release directory
+        env:
+          POSTGRESQL_VERSION: ${{ matrix.postgresql-version }}
         run: |
-          sudo mkdir pgtde-pgdg16
-          sudo mkdir -p pgtde-pgdg16/usr/lib/postgresql/16/lib/
-          sudo mkdir -p pgtde-pgdg16/share/postgresql/16/extension/
-          sudo cp /usr/share/postgresql/16/extension/pg_tde* pgtde-pgdg16/share/postgresql/16/extension/
-          sudo cp /usr/lib/postgresql/16/lib/pg_tde* pgtde-pgdg16/usr/lib/postgresql/16/lib/
+          sudo -E mkdir pgtde-pgdg$POSTGRESQL_VERSION
+          sudo -E mkdir -p pgtde-pgdg$POSTGRESQL_VERSION/usr/lib/postgresql/$POSTGRESQL_VERSION/lib/
+          sudo -E mkdir -p pgtde-pgdg$POSTGRESQL_VERSION/share/postgresql/$POSTGRESQL_VERSION/extension/
+          sudo -E cp /usr/share/postgresql/$POSTGRESQL_VERSION/extension/pg_tde* pgtde-pgdg$POSTGRESQL_VERSION/share/postgresql/$POSTGRESQL_VERSION/extension/
+          sudo -E cp /usr/lib/postgresql/$POSTGRESQL_VERSION/lib/pg_tde* pgtde-pgdg$POSTGRESQL_VERSION/usr/lib/postgresql/$POSTGRESQL_VERSION/lib/
 
       - name: Upload tgz
+        env:
+          POSTGRESQL_VERSION: ${{ matrix.postgresql-version }}
         uses: actions/upload-artifact@v4
         with:
-          name: pg_tde_pgdg16_binary
-          path: pgtde-pgdg16
+          name: pg_tde_pgdg$POSTGRESQL_VERSION_binary
+          path: pgtde-pgdg$POSTGRESQL_VERSION
 
       - name: Create deb
+        env:
+          POSTGRESQL_VERSION: ${{ matrix.postgresql-version }}
         run: |
-          sudo mkdir pgtde-pgdg16/DEBIAN
-          sudo sh -c 'echo "Package: pgtde-pgdg16" > pgtde-pgdg16/DEBIAN/control'
-          sudo sh -c 'echo "Version: 0.1" >> pgtde-pgdg16/DEBIAN/control'
-          sudo sh -c 'echo "Architecture: amd64" >> pgtde-pgdg16/DEBIAN/control'
-          sudo sh -c 'echo "Maintainer: Percona" >> pgtde-pgdg16/DEBIAN/control'
-          sudo sh -c 'echo "Description: Experimental pg_tde extension" >> pgtde-pgdg16/DEBIAN/control'
-          sudo dpkg-deb --build --root-owner-group pgtde-pgdg16
+          sudo -E mkdir pgtde-pgdg$POSTGRESQL_VERSION/DEBIAN
+          sudo -E sh -c 'echo "Package: pgtde-pgdg$POSTGRESQL_VERSION" > pgtde-pgdg$POSTGRESQL_VERSION/DEBIAN/control'
+          sudo -E sh -c 'echo "Version: 0.1" >> pgtde-pgdg$POSTGRESQL_VERSION/DEBIAN/control'
+          sudo -E sh -c 'echo "Architecture: amd64" >> pgtde-pgdg$POSTGRESQL_VERSION/DEBIAN/control'
+          sudo -E sh -c 'echo "Maintainer: Percona" >> pgtde-pgdg$POSTGRESQL_VERSION/DEBIAN/control'
+          sudo -E sh -c 'echo "Description: Experimental pg_tde extension" >> pgtde-pgdg$POSTGRESQL_VERSION/DEBIAN/control'
+          sudo -E dpkg-deb --build --root-owner-group pgtde-pgdg$POSTGRESQL_VERSION
 
       - name: Test deb
+        env:
+          POSTGRESQL_VERSION: ${{ matrix.postgresql-version }}
         run: |
-          sudo rm -rf /usr/share/postgresql/16/extension/pg_tde*
-          sudo rm -rf /usr/lib/postgresql/16/lib/pg_tde*
-          sudo dpkg -i --debug=7777 pgtde-pgdg16.deb
+          sudo -E rm -rf /usr/share/postgresql/$POSTGRESQL_VERSION/extension/pg_tde*
+          sudo -E rm -rf /usr/lib/postgresql/$POSTGRESQL_VERSION/lib/pg_tde*
+          sudo -E dpkg -i --debug=7777 pgtde-pgdg$POSTGRESQL_VERSION.deb
 
       - name: Upload deb
+        env:
+          POSTGRESQL_VERSION: ${{ matrix.postgresql-version }}
         uses: actions/upload-artifact@v4
         with:
           name: pg_tde_deb
-          path: pgtde-pgdg16.deb
+          path: pgtde-pgdg$POSTGRESQL_VERSION.deb
 
       - name: Create tgz
+        env:
+          POSTGRESQL_VERSION: ${{ matrix.postgresql-version }}
         run: |
-          cd pgtde-pgdg16 && sudo tar -czvf ../pgtde-pgdg16.tar.gz .
+          cd pgtde-pgdg$POSTGRESQL_VERSION && sudo tar -czvf ../pgtde-pgdg$POSTGRESQL_VERSION.tar.gz .
 
       - name: Publish release
+        env:
+          POSTGRESQL_VERSION: ${{ matrix.postgresql-version }}
         uses: ncipollo/release-action@v1
         # Only try and deploy on merged code
         if: "github.repository == 'Percona-Lab/pg_tde' && github.ref_name == 'main' && (github.event_name == 'push' || github.event_name == 'schedule')"
         with:
-          artifacts: "pgtde-pgdg16.tar.gz,pgtde-pgdg16.deb"
+          artifacts: "pgtde-pgdg$POSTGRESQL_VERSION.tar.gz,pgtde-pgdg$POSTGRESQL_VERSION.deb"
           omitBody: true
           allowUpdates: true
           generateReleaseNotes: true
