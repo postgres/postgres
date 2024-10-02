@@ -1,8 +1,9 @@
-use postgres::Row;
-
 use super::{message_data::MessageData, node_info::NodeInfo};
+use crate::{
+    node::tables_id_info::TablesIdInfo,
+    utils::common::{ConvertToString, FromString},
+};
 use std::fmt;
-use crate::{node::tables_id_info::TablesIdInfo, utils::common::{ConvertToString,FromString}};
 
 /// MessageType enum shows which command is being sent
 #[derive(Debug, PartialEq, Clone)]
@@ -263,7 +264,7 @@ impl Message {
         };
 
         let max_ids = match parts.next() {
-            Some("None") => None,
+            Some("None") => Some(TablesIdInfo::new()),
             Some(max_ids) => Some(TablesIdInfo::from_string(max_ids)),
             None => None,
         };
@@ -539,8 +540,11 @@ mod tests {
             query_data: None,
         };
         println!("-{}-", message.to_string());
-        let options = ["INIT_CONNECTION 0.5 employees:3,departments:5 None None\n", "INIT_CONNECTION 0.5 departments:5,employees:3 None None\n"];
-        
+        let options = [
+            "INIT_CONNECTION 0.5 employees:3,departments:5 None None\n",
+            "INIT_CONNECTION 0.5 departments:5,employees:3 None None\n",
+        ];
+
         assert!(options.contains(&&message.to_string().as_str()));
     }
 

@@ -1,7 +1,10 @@
-use std::fmt::{self, Display};
 use indexmap::IndexMap;
+use std::fmt::{self, Display};
 
-use crate::{node::{messages::node_info::NodeInfo, tables_id_info::TablesIdInfo}, utils::common::ConvertToString};
+use crate::{
+    node::{messages::node_info::NodeInfo, tables_id_info::TablesIdInfo},
+    utils::common::ConvertToString,
+};
 
 /// Enum used to represent the data returned by `get_data`
 #[derive(Debug, Clone)]

@@ -69,7 +69,10 @@ impl Shard {
             tables_max_id: Arc::new(Mutex::new(IndexMap::new())),
         };
         let _ = shard.update();
-        println!("{color_bright_green}Shard created successfully. Shard: {:?}{style_reset}", shard);
+        println!(
+            "{color_bright_green}Shard created successfully. Shard: {:?}{style_reset}",
+            shard
+        );
         shard
     }
 
@@ -126,6 +129,9 @@ impl Shard {
                     let message_string = String::from_utf8_lossy(&buffer);
                     match shard.get_response_message(&message_string) {
                         Some(response) => {
+                            println!(
+                                "{color_bright_green}Sending response: {response}{style_reset}"
+                            );
                             stream.write(response.as_bytes()).unwrap();
                         }
                         None => {
@@ -216,18 +222,20 @@ impl Shard {
         let memory_manager = self.memory_manager.as_ref().try_lock().unwrap();
         let memory_percentage = memory_manager.available_memory_perc;
         let tables_max_id_clone = self.tables_max_id.as_ref().try_lock().unwrap().clone();
-        let response_message = shard::Message::new_memory_update(memory_percentage, tables_max_id_clone);
+        let response_message =
+            shard::Message::new_memory_update(memory_percentage, tables_max_id_clone);
 
         response_message.to_string()
     }
 
     fn update(&mut self) -> Result<(), io::Error> {
         self.set_max_ids();
-        self.memory_manager.as_ref().try_lock().unwrap().update()        
+        self.memory_manager.as_ref().try_lock().unwrap().update()
     }
 
     fn get_all_tables(&mut self) -> Vec<String> {
-        let query = "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'";
+        let query =
+            "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'";
         let rows = match self.get_rows_for_query(query) {
             Some(rows) => rows,
             None => return Vec::new(),
@@ -249,7 +257,10 @@ impl Shard {
                 let max_id: i32 = match rows[0].try_get(0) {
                     Ok(id) => id,
                     Err(_) => {
-                        eprintln!("Failed to get max id for table: {}. Table might be empty", table);
+                        eprintln!(
+                            "Failed to get max id for table: {}. Table might be empty",
+                            table
+                        );
                         0
                     }
                 };
@@ -267,7 +278,7 @@ impl Shard {
                 }
                 print_rows(rows.clone());
                 Some(rows)
-            },
+            }
             Err(e) => {
                 eprintln!("Failed to execute query: {:?}", e);
                 None

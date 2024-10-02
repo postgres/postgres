@@ -213,7 +213,9 @@ fn stop_cluster(node_name: &[u8]) {
             .expect("failed to write to stdin");
     }
 
-    stop_cluster.wait().expect("failed to wait on server-down.sh");
+    stop_cluster
+        .wait()
+        .expect("failed to wait on server-down.sh");
 
     let mut _delete_cluster: std::process::Child = Command::new("rm")
         .current_dir("../clusters")
