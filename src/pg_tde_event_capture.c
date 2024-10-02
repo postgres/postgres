@@ -113,7 +113,9 @@ pg_tde_ddl_command_start_capture(PG_FUNCTION_ARGS)
 
 		tablespace_oid = stmt->tablespacename != NULL ? get_tablespace_oid(stmt->tablespacename, false) 
 						 : MyDatabaseTableSpace;  
-		principal_key = GetPrincipalKey(MyDatabaseId, tablespace_oid);
+		LWLockAcquire(tde_lwlock_enc_keys(), LW_SHARED);
+		principal_key = GetPrincipalKey(MyDatabaseId, tablespace_oid, LW_SHARED);
+		LWLockRelease(tde_lwlock_enc_keys());
 		if (principal_key == NULL)
 		{
 			ereport(ERROR,
