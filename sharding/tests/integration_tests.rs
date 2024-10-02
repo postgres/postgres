@@ -237,7 +237,7 @@ fn wait_for_postgres(host: &str, port: &str) {
     let mut attempts = 0;
     loop {
         attempts += 1;
-        
+
         if attempts > 30 {
             panic!("PostgreSQL server did not start in time");
         }
