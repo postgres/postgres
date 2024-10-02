@@ -23,7 +23,7 @@ extern manifest_writer *create_manifest_writer(char *directory,
 											   uint64 system_identifier);
 extern void add_file_to_manifest(manifest_writer *mwriter,
 								 const char *manifest_path,
-								 size_t size, time_t mtime,
+								 uint64 size, time_t mtime,
 								 pg_checksum_type checksum_type,
 								 int checksum_length,
 								 uint8 *checksum_payload);

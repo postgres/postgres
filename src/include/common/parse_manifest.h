@@ -28,7 +28,7 @@ typedef void (*json_manifest_system_identifier_callback) (JsonManifestParseConte
 														  uint64 manifest_system_identifier);
 typedef void (*json_manifest_per_file_callback) (JsonManifestParseContext *,
 												 const char *pathname,
-												 size_t size, pg_checksum_type checksum_type,
+												 uint64 size, pg_checksum_type checksum_type,
 												 int checksum_length, uint8 *checksum_payload);
 typedef void (*json_manifest_per_wal_range_callback) (JsonManifestParseContext *,
 													  TimeLineID tli,

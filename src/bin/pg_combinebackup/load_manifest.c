@@ -60,7 +60,7 @@ static void combinebackup_version_cb(JsonManifestParseContext *context,
 static void combinebackup_system_identifier_cb(JsonManifestParseContext *context,
 											   uint64 manifest_system_identifier);
 static void combinebackup_per_file_cb(JsonManifestParseContext *context,
-									  const char *pathname, size_t size,
+									  const char *pathname, uint64 size,
 									  pg_checksum_type checksum_type,
 									  int checksum_length,
 									  uint8 *checksum_payload);
@@ -267,7 +267,7 @@ combinebackup_system_identifier_cb(JsonManifestParseContext *context,
  */
 static void
 combinebackup_per_file_cb(JsonManifestParseContext *context,
-						  const char *pathname, size_t size,
+						  const char *pathname, uint64 size,
 						  pg_checksum_type checksum_type,
 						  int checksum_length, uint8 *checksum_payload)
 {

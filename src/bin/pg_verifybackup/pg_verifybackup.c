@@ -61,7 +61,7 @@ static void verifybackup_version_cb(JsonManifestParseContext *context,
 static void verifybackup_system_identifier(JsonManifestParseContext *context,
 										   uint64 manifest_system_identifier);
 static void verifybackup_per_file_cb(JsonManifestParseContext *context,
-									 const char *pathname, size_t size,
+									 const char *pathname, uint64 size,
 									 pg_checksum_type checksum_type,
 									 int checksum_length,
 									 uint8 *checksum_payload);
@@ -547,7 +547,7 @@ verifybackup_system_identifier(JsonManifestParseContext *context,
  */
 static void
 verifybackup_per_file_cb(JsonManifestParseContext *context,
-						 const char *pathname, size_t size,
+						 const char *pathname, uint64 size,
 						 pg_checksum_type checksum_type,
 						 int checksum_length, uint8 *checksum_payload)
 {
@@ -719,8 +719,9 @@ verify_plain_backup_file(verifier_context *context, char *relpath,
 	if (m->size != sb.st_size)
 	{
 		report_backup_error(context,
-							"\"%s\" has size %lld on disk but size %zu in the manifest",
-							relpath, (long long int) sb.st_size, m->size);
+							"\"%s\" has size %llu on disk but size %llu in the manifest",
+							relpath, (unsigned long long) sb.st_size,
+							(unsigned long long) m->size);
 		m->bad = true;
 	}
 
@@ -1101,7 +1102,7 @@ verify_file_checksum(verifier_context *context, manifest_file *m,
 	const char *relpath = m->pathname;
 	int			fd;
 	int			rc;
-	size_t		bytes_read = 0;
+	uint64		bytes_read = 0;
 	uint8		checksumbuf[PG_CHECKSUM_MAX_LENGTH];
 	int			checksumlen;
 
@@ -1164,8 +1165,9 @@ verify_file_checksum(verifier_context *context, manifest_file *m,
 	if (bytes_read != m->size)
 	{
 		report_backup_error(context,
-							"file \"%s\" should contain %zu bytes, but read %zu bytes",
-							relpath, m->size, bytes_read);
+							"file \"%s\" should contain %llu bytes, but read %llu bytes",
+							relpath, (unsigned long long) m->size,
+							(unsigned long long) bytes_read);
 		return;
 	}
 

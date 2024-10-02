@@ -74,7 +74,7 @@ create_manifest_writer(char *directory, uint64 system_identifier)
  */
 void
 add_file_to_manifest(manifest_writer *mwriter, const char *manifest_path,
-					 size_t size, time_t mtime,
+					 uint64 size, time_t mtime,
 					 pg_checksum_type checksum_type,
 					 int checksum_length,
 					 uint8 *checksum_payload)
@@ -104,7 +104,8 @@ add_file_to_manifest(manifest_writer *mwriter, const char *manifest_path,
 		appendStringInfoString(&mwriter->buf, "\", ");
 	}
 
-	appendStringInfo(&mwriter->buf, "\"Size\": %zu, ", size);
+	appendStringInfo(&mwriter->buf, "\"Size\": %llu, ",
+					 (unsigned long long) size);
 
 	appendStringInfoString(&mwriter->buf, "\"Last-Modified\": \"");
 	enlargeStringInfo(&mwriter->buf, 128);

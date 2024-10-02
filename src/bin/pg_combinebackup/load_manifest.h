@@ -23,7 +23,7 @@ typedef struct manifest_file
 {
 	uint32		status;			/* hash status */
 	const char *pathname;
-	size_t		size;
+	uint64		size;
 	pg_checksum_type checksum_type;
 	int			checksum_length;
 	uint8	   *checksum_payload;

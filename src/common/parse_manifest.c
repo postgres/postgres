@@ -650,7 +650,7 @@ static void
 json_manifest_finalize_file(JsonManifestParseState *parse)
 {
 	JsonManifestParseContext *context = parse->context;
-	size_t		size;
+	uint64		size;
 	char	   *ep;
 	int			checksum_string_length;
 	pg_checksum_type checksum_type;
@@ -688,7 +688,7 @@ json_manifest_finalize_file(JsonManifestParseState *parse)
 	}
 
 	/* Parse size. */
-	size = strtoul(parse->size, &ep, 10);
+	size = strtou64(parse->size, &ep, 10);
 	if (*ep)
 		json_manifest_parse_failure(parse->context,
 									"file size is not an integer");
