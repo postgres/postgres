@@ -1,5 +1,7 @@
+use indexmap::IndexMap;
 use inline_colorization::*;
 use postgres::{Client as PostgresClient, Row};
+use std::hash::Hash;
 use std::io::{Read, Write};
 use std::net::{TcpListener, TcpStream};
 use std::sync::{Arc, Mutex};
@@ -10,9 +12,11 @@ use super::memory_manager::MemoryManager;
 use super::messages::message::{Message, MessageType};
 use super::messages::node_info::NodeInfo;
 use super::node::*;
+use super::tables_id_info::TablesIdInfo;
 use crate::node::shard;
-use crate::utils::common::connect_to_node;
+use crate::utils::common::{connect_to_node, ConvertToString};
 use crate::utils::node_config::get_shard_config;
+use crate::utils::queries::print_rows;
 
 /// This struct represents the Shard node in the distributed system. It will communicate with the router
 #[repr(C)]
@@ -23,6 +27,7 @@ pub struct Shard {
     port: Arc<str>,
     memory_manager: Arc<Mutex<MemoryManager>>,
     router_info: Arc<Mutex<Option<NodeInfo>>>,
+    tables_max_id: Arc<Mutex<TablesIdInfo>>,
 }
 
 use std::fmt;
@@ -32,6 +37,7 @@ impl fmt::Debug for Shard {
             .field("ip", &self.ip)
             .field("port", &self.port)
             .field("router_info", &self.router_info)
+            .field("tables_max_id", &self.tables_max_id)
             .finish()
     }
 }
@@ -54,13 +60,16 @@ impl Shard {
             memory_manager.available_memory_perc
         );
 
-        let shard = Shard {
+        let mut shard = Shard {
             backend: Arc::new(Mutex::new(backend)),
             ip: Arc::from(ip),
             port: Arc::from(port),
             memory_manager: Arc::new(Mutex::new(memory_manager)),
             router_info: Arc::new(Mutex::new(None)),
+            tables_max_id: Arc::new(Mutex::new(IndexMap::new())),
         };
+        let _ = shard.update();
+        println!("{color_bright_green}Shard created successfully. Shard: {:?}{style_reset}", shard);
         shard
     }
 
@@ -189,7 +198,8 @@ impl Shard {
     fn get_agreed_connection(&self) -> String {
         let memory_manager = self.memory_manager.as_ref().try_lock().unwrap();
         let memory_percentage = memory_manager.available_memory_perc;
-        let response_message = shard::Message::new_agreed(memory_percentage);
+        let tables_max_id_clone = self.tables_max_id.as_ref().try_lock().unwrap().clone();
+        let response_message = shard::Message::new_agreed(memory_percentage, tables_max_id_clone);
 
         response_message.to_string()
     }
@@ -205,24 +215,72 @@ impl Shard {
         }
         let memory_manager = self.memory_manager.as_ref().try_lock().unwrap();
         let memory_percentage = memory_manager.available_memory_perc;
-        let response_message = shard::Message::new_memory_update(memory_percentage);
+        let tables_max_id_clone = self.tables_max_id.as_ref().try_lock().unwrap().clone();
+        let response_message = shard::Message::new_memory_update(memory_percentage, tables_max_id_clone);
 
         response_message.to_string()
     }
 
     fn update(&mut self) -> Result<(), io::Error> {
-        self.memory_manager.as_ref().try_lock().unwrap().update()
+        self.set_max_ids();
+        self.memory_manager.as_ref().try_lock().unwrap().update()        
     }
-}
 
-impl NodeRole for Shard {
-    fn send_query(&mut self, query: &str) -> Option<Vec<Row>> {
+    fn get_all_tables(&mut self) -> Vec<String> {
+        let query = "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'";
+        let rows = match self.get_rows_for_query(query) {
+            Some(rows) => rows,
+            None => return Vec::new(),
+        };
+        let mut tables = Vec::new();
+        for row in rows {
+            let table_name: String = row.get(0);
+            tables.push(table_name);
+        }
+        tables
+    }
+
+    // Set the max ids for all tables in tables_max_id
+    fn set_max_ids(&mut self) {
+        let tables = self.get_all_tables();
+        for table in tables {
+            let query = format!("SELECT MAX(id) FROM {}", table);
+            if let Some(rows) = self.get_rows_for_query(&query) {
+                let max_id: i32 = match rows[0].try_get(0) {
+                    Ok(id) => id,
+                    Err(_) => {
+                        eprintln!("Failed to get max id for table: {}. Table might be empty", table);
+                        0
+                    }
+                };
+                let mut tables_max_id = self.tables_max_id.as_ref().try_lock().unwrap();
+                tables_max_id.insert(table, max_id as i64);
+            }
+        }
+    }
+
+    fn get_rows_for_query(&mut self, query: &str) -> Option<Vec<Row>> {
         match self.backend.as_ref().try_lock().unwrap().query(query, &[]) {
-            Ok(rows) => Some(rows),
+            Ok(rows) => {
+                if rows.is_empty() {
+                    return None;
+                }
+                print_rows(rows.clone());
+                Some(rows)
+            },
             Err(e) => {
                 eprintln!("Failed to execute query: {:?}", e);
                 None
             }
         }
+    }
+}
+
+impl NodeRole for Shard {
+    fn send_query(&mut self, query: &str) -> Option<String> {
+        println!("{color_bright_green}Sending query to the database: {query}{style_reset}");
+        let rows = self.get_rows_for_query(query)?;
+        let _ = self.update(); // Updates memory and tables_max_id
+        Some(rows.convert_to_string())
     }
 }

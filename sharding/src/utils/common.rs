@@ -1,4 +1,4 @@
-use postgres::{Client as PostgresClient, NoTls};
+use postgres::{Client as PostgresClient, NoTls, Row};
 use std::{
     net::TcpStream,
     sync::{Arc, Mutex},
@@ -32,4 +32,12 @@ pub fn connect_to_node(ip: &str, port: &str) -> Result<PostgresClient, postgres:
 #[derive(Clone)]
 pub struct Channel {
     pub stream: Arc<Mutex<TcpStream>>,
+}
+
+pub trait ConvertToString {
+    fn convert_to_string(&self) -> String;
+}
+
+pub trait FromString {
+    fn from_string(string: &str) -> Self;
 }
