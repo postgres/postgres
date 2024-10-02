@@ -15,7 +15,7 @@ jobs:
         with:
           toolchain: stable
           override: true
-      - run: cargo fmt -- --check
+      - run: cd sharding && cargo fmt -- --check
 
   test:
     runs-on: ubuntu-latest
@@ -26,4 +26,4 @@ jobs:
         with:
           toolchain: stable
           override: true
-      - run: cargo test -- --test-threads=1
+      - run: cd sharding && cargo test -- --test-threads=1
