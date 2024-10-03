@@ -220,6 +220,10 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       If this is specified, any sequences created together with the unlogged
       table (for identity or serial columns) are also created as unlogged.
      </para>
+
+     <para>
+      This form is not supported for partitioned tables.
+     </para>
     </listitem>
    </varlistentry>
 

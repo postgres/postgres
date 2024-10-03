@@ -50,6 +50,16 @@ ERROR:  cannot create temporary relation in non-temporary schema
 LINE 1: CREATE TEMP TABLE public.temp_to_perm (a int primary key);
                           ^
 DROP TABLE unlogged1, public.unlogged2;
+CREATE UNLOGGED TABLE unlogged1 (a int) PARTITION BY RANGE (a); -- fail
+ERROR:  partitioned tables cannot be unlogged
+CREATE TABLE unlogged1 (a int) PARTITION BY RANGE (a); -- ok
+ALTER TABLE unlogged1 SET LOGGED; -- fails
+ERROR:  ALTER action SET LOGGED cannot be performed on relation "unlogged1"
+DETAIL:  This operation is not supported for partitioned tables.
+ALTER TABLE unlogged1 SET UNLOGGED; -- fails
+ERROR:  ALTER action SET UNLOGGED cannot be performed on relation "unlogged1"
+DETAIL:  This operation is not supported for partitioned tables.
+DROP TABLE unlogged1;
 CREATE TABLE as_select1 AS SELECT * FROM pg_class WHERE relkind = 'r';
 CREATE TABLE as_select1 AS SELECT * FROM pg_class WHERE relkind = 'r';
 ERROR:  relation "as_select1" already exists

@@ -15915,8 +15915,13 @@ dumpTableSchema(Archive *fout, const TableInfo *tbinfo)
 			binary_upgrade_set_pg_class_oids(fout, q,
 											 tbinfo->dobj.catId.oid);
 
+		/*
+		 * PostgreSQL 18 has disabled UNLOGGED for partitioned tables, so
+		 * ignore it when dumping if it was set in this case.
+		 */
 		appendPQExpBuffer(q, "CREATE %s%s %s",
-						  tbinfo->relpersistence == RELPERSISTENCE_UNLOGGED ?
+						  (tbinfo->relpersistence == RELPERSISTENCE_UNLOGGED &&
+						   tbinfo->relkind != RELKIND_PARTITIONED_TABLE) ?
 						  "UNLOGGED " : "",
 						  reltypename,
 						  qualrelname);

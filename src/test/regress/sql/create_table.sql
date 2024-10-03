@@ -30,6 +30,12 @@ CREATE TEMP TABLE pg_temp.doubly_temp (a int primary key);		-- also OK
 CREATE TEMP TABLE public.temp_to_perm (a int primary key);		-- not OK
 DROP TABLE unlogged1, public.unlogged2;
 
+CREATE UNLOGGED TABLE unlogged1 (a int) PARTITION BY RANGE (a); -- fail
+CREATE TABLE unlogged1 (a int) PARTITION BY RANGE (a); -- ok
+ALTER TABLE unlogged1 SET LOGGED; -- fails
+ALTER TABLE unlogged1 SET UNLOGGED; -- fails
+DROP TABLE unlogged1;
+
 CREATE TABLE as_select1 AS SELECT * FROM pg_class WHERE relkind = 'r';
 CREATE TABLE as_select1 AS SELECT * FROM pg_class WHERE relkind = 'r';
 CREATE TABLE IF NOT EXISTS as_select1 AS SELECT * FROM pg_class WHERE relkind = 'r';
