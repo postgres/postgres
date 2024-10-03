@@ -533,6 +533,10 @@ COPY check_ign_err2 FROM STDIN WITH (on_error ignore, log_verbosity verbose);
 1	{1}	1	'foo'
 2	{2}	2	\N
 \.
+COPY check_ign_err2 FROM STDIN WITH (on_error ignore, log_verbosity silent);
+3	{3}	3	'bar'
+4	{4}	4	\N
+\.
 
 -- reset context choice
 \set SHOW_CONTEXT errors

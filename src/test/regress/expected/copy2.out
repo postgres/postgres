@@ -760,6 +760,7 @@ COPY check_ign_err2 FROM STDIN WITH (on_error ignore, log_verbosity verbose);
 NOTICE:  skipping row due to data type incompatibility at line 2 for column "l": null input
 CONTEXT:  COPY check_ign_err2
 NOTICE:  1 row was skipped due to data type incompatibility
+COPY check_ign_err2 FROM STDIN WITH (on_error ignore, log_verbosity silent);
 -- reset context choice
 \set SHOW_CONTEXT errors
 SELECT * FROM check_ign_err;
@@ -774,7 +775,8 @@ SELECT * FROM check_ign_err2;
  n |  m  | k |   l   
 ---+-----+---+-------
  1 | {1} | 1 | 'foo'
-(1 row)
+ 3 | {3} | 3 | 'bar'
+(2 rows)
 
 -- test datatype error that can't be handled as soft: should fail
 CREATE TABLE hard_err(foo widget);

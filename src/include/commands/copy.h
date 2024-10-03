@@ -45,7 +45,9 @@ typedef enum CopyOnErrorChoice
  */
 typedef enum CopyLogVerbosityChoice
 {
-	COPY_LOG_VERBOSITY_DEFAULT = 0, /* logs no additional messages, default */
+	COPY_LOG_VERBOSITY_SILENT = -1, /* logs none */
+	COPY_LOG_VERBOSITY_DEFAULT = 0, /* logs no additional messages. As this is
+									 * the default, assign 0 */
 	COPY_LOG_VERBOSITY_VERBOSE, /* logs additional messages */
 } CopyLogVerbosityChoice;
 

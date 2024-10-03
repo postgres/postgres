@@ -2916,7 +2916,7 @@ psql_completion(const char *text, int start, int end)
 
 	/* Complete COPY <sth> FROM filename WITH (LOG_VERBOSITY */
 	else if (Matches("COPY|\\copy", MatchAny, "FROM|TO", MatchAny, "WITH", "(", "LOG_VERBOSITY"))
-		COMPLETE_WITH("default", "verbose");
+		COMPLETE_WITH("silent", "default", "verbose");
 
 	/* Complete COPY <sth> FROM <sth> WITH (<options>) */
 	else if (Matches("COPY|\\copy", MatchAny, "FROM", MatchAny, "WITH", MatchAny))

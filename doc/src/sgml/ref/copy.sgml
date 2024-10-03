@@ -407,6 +407,8 @@ COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable 
       <literal>verbose</literal>, a <literal>NOTICE</literal> message
       containing the line of the input file and the column name whose input
       conversion has failed is emitted for each discarded row.
+      When it is set to <literal>silent</literal>, no message is emitted
+      regarding ignored rows.
      </para>
     </listitem>
    </varlistentry>
@@ -428,9 +430,11 @@ COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable 
     <listitem>
      <para>
       Specifies the amount of messages emitted by a <command>COPY</command>
-      command: <literal>default</literal> or <literal>verbose</literal>. If
-      <literal>verbose</literal> is specified, additional messages are emitted
-      during processing.
+      command: <literal>default</literal>, <literal>verbose</literal>, or
+      <literal>silent</literal>.
+      If <literal>verbose</literal> is specified, additional messages are
+      emitted during processing.
+      <literal>silent</literal> suppresses both verbose and default messages.
      </para>
      <para>
       This is currently used in <command>COPY FROM</command> command when

@@ -427,9 +427,11 @@ defGetCopyLogVerbosityChoice(DefElem *def, ParseState *pstate)
 	char	   *sval;
 
 	/*
-	 * Allow "default", or "verbose" values.
+	 * Allow "silent", "default", or "verbose" values.
 	 */
 	sval = defGetString(def);
+	if (pg_strcasecmp(sval, "silent") == 0)
+		return COPY_LOG_VERBOSITY_SILENT;
 	if (pg_strcasecmp(sval, "default") == 0)
 		return COPY_LOG_VERBOSITY_DEFAULT;
 	if (pg_strcasecmp(sval, "verbose") == 0)
