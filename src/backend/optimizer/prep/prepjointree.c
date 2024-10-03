@@ -283,6 +283,45 @@ transform_MERGE_to_join(Query *parse)
 							   bms_make_singleton(joinrti));
 
 	/*
+	 * If the source relation is on the outer side of the join, mark any
+	 * source relation Vars in the join condition, actions, and RETURNING list
+	 * as nullable by the join.  These Vars will be added to the targetlist by
+	 * preprocess_targetlist(), so it's important to mark them correctly here.
+	 *
+	 * It might seem that this is not necessary for Vars in the join
+	 * condition, since it is inside the join, but it is also needed above the
+	 * join (in the ModifyTable node) to distinguish between the MATCHED and
+	 * NOT MATCHED BY SOURCE cases -- see ExecMergeMatched().  Note that this
+	 * creates a modified copy of the join condition, for use above the join,
+	 * without modifying the the original join condition, inside the join.
+	 */
+	if (jointype == JOIN_LEFT || jointype == JOIN_FULL)
+	{
+		parse->mergeJoinCondition =
+			add_nulling_relids(parse->mergeJoinCondition,
+							   bms_make_singleton(sourcerti),
+							   bms_make_singleton(joinrti));
+
+		foreach_node(MergeAction, action, parse->mergeActionList)
+		{
+			action->qual =
+				add_nulling_relids(action->qual,
+								   bms_make_singleton(sourcerti),
+								   bms_make_singleton(joinrti));
+
+			action->targetList = (List *)
+				add_nulling_relids((Node *) action->targetList,
+								   bms_make_singleton(sourcerti),
+								   bms_make_singleton(joinrti));
+		}
+
+		parse->returningList = (List *)
+			add_nulling_relids((Node *) parse->returningList,
+							   bms_make_singleton(sourcerti),
+							   bms_make_singleton(joinrti));
+	}
+
+	/*
 	 * If there are any WHEN NOT MATCHED BY SOURCE actions, the executor will
 	 * use the join condition to distinguish between MATCHED and NOT MATCHED
 	 * BY SOURCE cases.  Otherwise, it's no longer needed, and we set it to
