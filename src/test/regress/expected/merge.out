@@ -2689,6 +2689,28 @@ DETAIL:  drop cascades to table measurement_y2006m02
 drop cascades to table measurement_y2006m03
 drop cascades to table measurement_y2007m01
 DROP FUNCTION measurement_insert_trigger();
+--
+-- test non-strict join clause
+--
+CREATE TABLE src (a int, b text);
+INSERT INTO src VALUES (1, 'src row');
+CREATE TABLE tgt (a int, b text);
+INSERT INTO tgt VALUES (NULL, 'tgt row');
+MERGE INTO tgt USING src ON tgt.a IS NOT DISTINCT FROM src.a
+  WHEN MATCHED THEN UPDATE SET a = src.a, b = src.b
+  WHEN NOT MATCHED BY SOURCE THEN DELETE
+  RETURNING merge_action(), src.*, tgt.*;
+ merge_action | a | b | a |    b    
+--------------+---+---+---+---------
+ DELETE       |   |   |   | tgt row
+(1 row)
+
+SELECT * FROM tgt;
+ a | b 
+---+---
+(0 rows)
+
+DROP TABLE src, tgt;
 -- prepare
 RESET SESSION AUTHORIZATION;
 -- try a system catalog
