@@ -1003,6 +1003,7 @@ GenerationBlock
 GenerationContext
 GenerationPointer
 GenericCosts
+GenericXLogPageData
 GenericXLogState
 GeqoPrivateData
 GetForeignJoinPaths_function
@@ -1975,7 +1976,6 @@ PX_Combo
 PX_HMAC
 PX_MD
 Page
-PageData
 PageGistNSN
 PageHeader
 PageHeaderData
