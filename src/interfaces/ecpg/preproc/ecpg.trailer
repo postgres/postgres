@@ -348,7 +348,7 @@ connect_options: ColId opt_opt_value
 		if (strcmp($3, "&") != 0)
 			mmerror(PARSE_ERROR, ET_ERROR, "unrecognized token \"%s\"", $3);
 
-		$$ = cat_str(3, make2_str($1, $2), $3, $4);
+		$$ = make3_str(make2_str($1, $2), $3, $4);
 	}
 	;
 

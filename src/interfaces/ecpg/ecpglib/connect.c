@@ -579,7 +579,10 @@ ECPGconnect(int lineno, int c, const char *name, const char *user, const char *p
 		 * The options string contains "keyword=value" pairs separated by
 		 * '&'s.  We must break this up into keywords and values to pass to
 		 * libpq (it's okay to scribble on the options string).  We ignore
-		 * spaces just before each keyword or value.
+		 * spaces just before each keyword or value.  (The preprocessor used
+		 * to add spaces around '&'s, making it necessary to ignore spaces
+		 * before keywords here.  While it no longer does that, we still must
+		 * skip spaces to support code compiled with older preprocessors.)
 		 */
 		for (str = options; *str;)
 		{

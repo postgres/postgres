@@ -117,7 +117,7 @@ main(void)
 #line 56 "test5.pgc"
 
 
-	{ ECPGconnect(__LINE__, 0, "unix:postgresql://localhost/ecpg2_regression?connect_timeout=180 & client_encoding=sql_ascii" , "regress_ecpg_user1" , "connectpw" , "main", 0); }
+	{ ECPGconnect(__LINE__, 0, "unix:postgresql://localhost/ecpg2_regression?connect_timeout=180&client_encoding=sql_ascii" , "regress_ecpg_user1" , "connectpw" , "main", 0); }
 #line 58 "test5.pgc"
 
 	{ ECPGdisconnect(__LINE__, "main");}
