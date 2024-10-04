@@ -60,7 +60,7 @@
  * NBASE that's less than sqrt(INT_MAX), in practice we are only interested
  * in NBASE a power of ten, so that I/O conversions and decimal rounding
  * are easy.  Also, it's actually more efficient if NBASE is rather less than
- * sqrt(INT_MAX), so that there is "headroom" for mul_var and div_var_fast to
+ * sqrt(INT_MAX), so that there is "headroom" for mul_var and div_var to
  * postpone processing carries.
  *
  * Values of NBASE other than 10000 are considered of historical interest only
@@ -563,10 +563,7 @@ static void mul_var(const NumericVar *var1, const NumericVar *var2,
 static void mul_var_short(const NumericVar *var1, const NumericVar *var2,
 						  NumericVar *result);
 static void div_var(const NumericVar *var1, const NumericVar *var2,
-					NumericVar *result,
-					int rscale, bool round);
-static void div_var_fast(const NumericVar *var1, const NumericVar *var2,
-						 NumericVar *result, int rscale, bool round);
+					NumericVar *result, int rscale, bool round, bool exact);
 static void div_var_int(const NumericVar *var, int ival, int ival_weight,
 						NumericVar *result, int rscale, bool round);
 #ifdef HAVE_INT128
@@ -1958,7 +1955,7 @@ compute_bucket(Numeric operand, Numeric bound1, Numeric bound2,
 
 	mul_var(&operand_var, count_var, &operand_var,
 			operand_var.dscale + count_var->dscale);
-	div_var(&operand_var, &bound2_var, result_var, 0, false);
+	div_var(&operand_var, &bound2_var, result_var, 0, false, true);
 	add_var(result_var, &const_one, result_var);
 
 	free_var(&bound1_var);
@@ -3240,7 +3237,7 @@ numeric_div_opt_error(Numeric num1, Numeric num2, bool *have_error)
 	/*
 	 * Do the divide and return the result
 	 */
-	div_var(&arg1, &arg2, &result, rscale, true);
+	div_var(&arg1, &arg2, &result, rscale, true, true);
 
 	res = make_result_opt_error(&result, have_error);
 
@@ -3329,7 +3326,7 @@ numeric_div_trunc(PG_FUNCTION_ARGS)
 	/*
 	 * Do the divide and return the result
 	 */
-	div_var(&arg1, &arg2, &result, 0, false);
+	div_var(&arg1, &arg2, &result, 0, false, true);
 
 	res = make_result(&result);
 
@@ -3600,7 +3597,7 @@ numeric_lcm(PG_FUNCTION_ARGS)
 	else
 	{
 		gcd_var(&arg1, &arg2, &result);
-		div_var(&arg1, &result, &result, 0, false);
+		div_var(&arg1, &result, &result, 0, false, true);
 		mul_var(&arg2, &result, &result, arg2.dscale);
 		result.sign = NUMERIC_POS;
 	}
@@ -6272,7 +6269,7 @@ numeric_stddev_internal(NumericAggState *state,
 		else
 			mul_var(&vN, &vN, &vNminus1, 0);	/* N * N */
 		rscale = select_div_scale(&vsumX2, &vNminus1);
-		div_var(&vsumX2, &vNminus1, &vsumX, rscale, true);	/* variance */
+		div_var(&vsumX2, &vNminus1, &vsumX, rscale, true, true);	/* variance */
 		if (!variance)
 			sqrt_var(&vsumX, &vsumX, rscale);	/* stddev */
 
@@ -7690,7 +7687,7 @@ get_str_from_var_sci(const NumericVar *var, int rscale)
 	init_var(&tmp_var);
 
 	power_ten_int(exponent, &tmp_var);
-	div_var(var, &tmp_var, &tmp_var, rscale, true);
+	div_var(var, &tmp_var, &tmp_var, rscale, true, true);
 	sig_out = get_str_from_var(&tmp_var);
 
 	free_var(&tmp_var);
@@ -9228,32 +9225,48 @@ mul_var_short(const NumericVar *var1, const NumericVar *var2,
 /*
  * div_var() -
  *
- *	Division on variable level. Quotient of var1 / var2 is stored in result.
- *	The quotient is figured to exactly rscale fractional digits.
- *	If round is true, it is rounded at the rscale'th digit; if false, it
- *	is truncated (towards zero) at that digit.
+ *	Compute the quotient var1 / var2 to rscale fractional digits.
+ *
+ *	If "round" is true, the result is rounded at the rscale'th digit; if
+ *	false, it is truncated (towards zero) at that digit.
+ *
+ *	If "exact" is true, the exact result is computed to the specified rscale;
+ *	if false, successive quotient digits are approximated up to rscale plus
+ *	DIV_GUARD_DIGITS extra digits, ignoring all contributions from digits to
+ *	the right of that, before rounding or truncating to the specified rscale.
+ *	This can be significantly faster, and usually gives the same result as the
+ *	exact computation, but it may occasionally be off by one in the final
+ *	digit, if contributions from the ignored digits would have propagated
+ *	through the guard digits.  This is good enough for the transcendental
+ *	functions, where small errors are acceptable.
  */
 static void
 div_var(const NumericVar *var1, const NumericVar *var2, NumericVar *result,
-		int rscale, bool round)
+		int rscale, bool round, bool exact)
 {
-	int			div_ndigits;
-	int			res_ndigits;
-	int			res_sign;
-	int			res_weight;
-	int			carry;
-	int			borrow;
-	int			divisor1;
-	int			divisor2;
-	NumericDigit *dividend;
-	NumericDigit *divisor;
-	NumericDigit *res_digits;
-	int			i;
-	int			j;
-
-	/* copy these values into local vars for speed in inner loop */
 	int			var1ndigits = var1->ndigits;
 	int			var2ndigits = var2->ndigits;
+	int			res_sign;
+	int			res_weight;
+	int			res_ndigits;
+	int			var1ndigitpairs;
+	int			var2ndigitpairs;
+	int			res_ndigitpairs;
+	int			div_ndigitpairs;
+	int64	   *dividend;
+	int32	   *divisor;
+	double		fdivisor,
+				fdivisorinverse,
+				fdividend,
+				fquotient;
+	int64		maxdiv;
+	int			qi;
+	int32		qdigit;
+	int64		carry;
+	int64		newdig;
+	int64	   *remainder;
+	NumericDigit *res_digits;
+	int			i;
 
 	/*
 	 * First of all division by zero check; we must not be handed an
@@ -9323,6 +9336,22 @@ div_var(const NumericVar *var1, const NumericVar *var2, NumericVar *result,
 	}
 
 	/*
+	 * The approximate computation can be significantly faster than the exact
+	 * one, since the working dividend is var2ndigitpairs base-NBASE^2 digits
+	 * shorter below.  However, that comes with the tradeoff of computing
+	 * DIV_GUARD_DIGITS extra base-NBASE result digits.  Ignoring all other
+	 * overheads, that suggests that, in theory, the approximate computation
+	 * will only be faster than the exact one when var2ndigits is greater than
+	 * 2 * (DIV_GUARD_DIGITS + 1), independent of the size of var1.
+	 *
+	 * Thus, we're better off doing an exact computation when var2 is shorter
+	 * than this.  Empirically, it has been found that the exact threshold is
+	 * a little higher, due to other overheads in the outer division loop.
+	 */
+	if (var2ndigits <= 2 * (DIV_GUARD_DIGITS + 2))
+		exact = true;
+
+	/*
 	 * Determine the result sign, weight and number of digits to calculate.
 	 * The weight figured here is correct if the emitted quotient has no
 	 * leading zero digits; otherwise strip_var() will fix things up.
@@ -9331,7 +9360,7 @@ div_var(const NumericVar *var1, const NumericVar *var2, NumericVar *result,
 		res_sign = NUMERIC_POS;
 	else
 		res_sign = NUMERIC_NEG;
-	res_weight = var1->weight - var2->weight;
+	res_weight = var1->weight - var2->weight + 1;
 	/* The number of accurate result digits we need to produce: */
 	res_ndigits = res_weight + 1 + (rscale + DEC_DIGITS - 1) / DEC_DIGITS;
 	/* ... but always at least 1 */
@@ -9339,170 +9368,393 @@ div_var(const NumericVar *var1, const NumericVar *var2, NumericVar *result,
 	/* If rounding needed, figure one more digit to ensure correct result */
 	if (round)
 		res_ndigits++;
+	/* Add guard digits for roundoff error when producing approx result */
+	if (!exact)
+		res_ndigits += DIV_GUARD_DIGITS;
 
 	/*
-	 * The working dividend normally requires res_ndigits + var2ndigits
-	 * digits, but make it at least var1ndigits so we can load all of var1
-	 * into it.  (There will be an additional digit dividend[0] in the
-	 * dividend space, but for consistency with Knuth's notation we don't
-	 * count that in div_ndigits.)
+	 * The computation itself is done using base-NBASE^2 arithmetic, so we
+	 * actually process the input digits in pairs, producing a base-NBASE^2
+	 * intermediate result.  This significantly improves performance, since
+	 * the computation is O(N^2) in the number of input digits, and working in
+	 * base NBASE^2 effectively halves "N".
 	 */
-	div_ndigits = res_ndigits + var2ndigits;
-	div_ndigits = Max(div_ndigits, var1ndigits);
+	var1ndigitpairs = (var1ndigits + 1) / 2;
+	var2ndigitpairs = (var2ndigits + 1) / 2;
+	res_ndigitpairs = (res_ndigits + 1) / 2;
+	res_ndigits = 2 * res_ndigitpairs;
 
 	/*
-	 * We need a workspace with room for the working dividend (div_ndigits+1
-	 * digits) plus room for the possibly-normalized divisor (var2ndigits
-	 * digits).  It is convenient also to have a zero at divisor[0] with the
-	 * actual divisor data in divisor[1 .. var2ndigits].  Transferring the
-	 * digits into the workspace also allows us to realloc the result (which
-	 * might be the same as either input var) before we begin the main loop.
-	 * Note that we use palloc0 to ensure that divisor[0], dividend[0], and
-	 * any additional dividend positions beyond var1ndigits, start out 0.
-	 */
-	dividend = (NumericDigit *)
-		palloc0((div_ndigits + var2ndigits + 2) * sizeof(NumericDigit));
-	divisor = dividend + (div_ndigits + 1);
-	memcpy(dividend + 1, var1->digits, var1ndigits * sizeof(NumericDigit));
-	memcpy(divisor + 1, var2->digits, var2ndigits * sizeof(NumericDigit));
-
-	/*
-	 * Now we can realloc the result to hold the generated quotient digits.
-	 */
-	alloc_var(result, res_ndigits);
-	res_digits = result->digits;
-
-	/*
-	 * The full multiple-place algorithm is taken from Knuth volume 2,
-	 * Algorithm 4.3.1D.
+	 * We do the arithmetic in an array "dividend[]" of signed 64-bit
+	 * integers.  Since PG_INT64_MAX is much larger than NBASE^4, this gives
+	 * us a lot of headroom to avoid normalizing carries immediately.
 	 *
-	 * We need the first divisor digit to be >= NBASE/2.  If it isn't, make it
-	 * so by scaling up both the divisor and dividend by the factor "d".  (The
-	 * reason for allocating dividend[0] above is to leave room for possible
-	 * carry here.)
+	 * When performing an exact computation, the working dividend requires
+	 * res_ndigitpairs + var2ndigitpairs digits.  If var1 is larger than that,
+	 * the extra digits do not contribute to the result, and are ignored.
+	 *
+	 * When performing an approximate computation, the working dividend only
+	 * requires res_ndigitpairs digits (which includes the extra guard
+	 * digits).  All input digits beyond that are ignored.
 	 */
-	if (divisor[1] < HALF_NBASE)
+	if (exact)
 	{
-		int			d = NBASE / (divisor[1] + 1);
-
-		carry = 0;
-		for (i = var2ndigits; i > 0; i--)
-		{
-			carry += divisor[i] * d;
-			divisor[i] = carry % NBASE;
-			carry = carry / NBASE;
-		}
-		Assert(carry == 0);
-		carry = 0;
-		/* at this point only var1ndigits of dividend can be nonzero */
-		for (i = var1ndigits; i >= 0; i--)
-		{
-			carry += dividend[i] * d;
-			dividend[i] = carry % NBASE;
-			carry = carry / NBASE;
-		}
-		Assert(carry == 0);
-		Assert(divisor[1] >= HALF_NBASE);
+		div_ndigitpairs = res_ndigitpairs + var2ndigitpairs;
+		var1ndigitpairs = Min(var1ndigitpairs, div_ndigitpairs);
 	}
-	/* First 2 divisor digits are used repeatedly in main loop */
-	divisor1 = divisor[1];
-	divisor2 = divisor[2];
+	else
+	{
+		div_ndigitpairs = res_ndigitpairs;
+		var1ndigitpairs = Min(var1ndigitpairs, div_ndigitpairs);
+		var2ndigitpairs = Min(var2ndigitpairs, div_ndigitpairs);
+	}
 
 	/*
-	 * Begin the main loop.  Each iteration of this loop produces the j'th
-	 * quotient digit by dividing dividend[j .. j + var2ndigits] by the
-	 * divisor; this is essentially the same as the common manual procedure
-	 * for long division.
+	 * Allocate room for the working dividend (div_ndigitpairs 64-bit digits)
+	 * plus the divisor (var2ndigitpairs 32-bit base-NBASE^2 digits).
+	 *
+	 * For convenience, we allocate one extra dividend digit, which is set to
+	 * zero and not counted in div_ndigitpairs, so that the main loop below
+	 * can safely read and write the (qi+1)'th digit in the approximate case.
 	 */
-	for (j = 0; j < res_ndigits; j++)
+	dividend = (int64 *) palloc((div_ndigitpairs + 1) * sizeof(int64) +
+								var2ndigitpairs * sizeof(int32));
+	divisor = (int32 *) (dividend + div_ndigitpairs + 1);
+
+	/* load var1 into dividend[0 .. var1ndigitpairs-1], zeroing the rest */
+	for (i = 0; i < var1ndigitpairs - 1; i++)
+		dividend[i] = var1->digits[2 * i] * NBASE + var1->digits[2 * i + 1];
+
+	if (2 * i + 1 < var1ndigits)
+		dividend[i] = var1->digits[2 * i] * NBASE + var1->digits[2 * i + 1];
+	else
+		dividend[i] = var1->digits[2 * i] * NBASE;
+
+	memset(dividend + i + 1, 0, (div_ndigitpairs - i) * sizeof(int64));
+
+	/* load var2 into divisor[0 .. var2ndigitpairs-1] */
+	for (i = 0; i < var2ndigitpairs - 1; i++)
+		divisor[i] = var2->digits[2 * i] * NBASE + var2->digits[2 * i + 1];
+
+	if (2 * i + 1 < var2ndigits)
+		divisor[i] = var2->digits[2 * i] * NBASE + var2->digits[2 * i + 1];
+	else
+		divisor[i] = var2->digits[2 * i] * NBASE;
+
+	/*
+	 * We estimate each quotient digit using floating-point arithmetic, taking
+	 * the first 2 base-NBASE^2 digits of the (current) dividend and divisor.
+	 * This must be float to avoid overflow.
+	 *
+	 * Since the floating-point dividend and divisor use 4 base-NBASE input
+	 * digits, they include roughly 40-53 bits of information from their
+	 * respective inputs (assuming NBASE is 10000), which fits well in IEEE
+	 * double-precision variables.  The relative error in the floating-point
+	 * quotient digit will then be less than around 2/NBASE^3, so the
+	 * estimated base-NBASE^2 quotient digit will typically be correct, and
+	 * should not be off by more than one from the correct value.
+	 */
+	fdivisor = (double) divisor[0] * NBASE_SQR;
+	if (var2ndigitpairs > 1)
+		fdivisor += (double) divisor[1];
+	fdivisorinverse = 1.0 / fdivisor;
+
+	/*
+	 * maxdiv tracks the maximum possible absolute value of any dividend[]
+	 * entry; when this threatens to exceed PG_INT64_MAX, we take the time to
+	 * propagate carries.  Furthermore, we need to ensure that overflow
+	 * doesn't occur during the carry propagation passes either.  The carry
+	 * values may have an absolute value as high as PG_INT64_MAX/NBASE^2 + 1,
+	 * so really we must normalize when digits threaten to exceed PG_INT64_MAX
+	 * - PG_INT64_MAX/NBASE^2 - 1.
+	 *
+	 * To avoid overflow in maxdiv itself, it represents the max absolute
+	 * value divided by NBASE^2-1, i.e., at the top of the loop it is known
+	 * that no dividend[] entry has an absolute value exceeding maxdiv *
+	 * (NBASE^2-1).
+	 *
+	 * Actually, though, that holds good only for dividend[] entries after
+	 * dividend[qi]; the adjustment done at the bottom of the loop may cause
+	 * dividend[qi + 1] to exceed the maxdiv limit, so that dividend[qi] in
+	 * the next iteration is beyond the limit.  This does not cause problems,
+	 * as explained below.
+	 */
+	maxdiv = 1;
+
+	/*
+	 * Outer loop computes next quotient digit, which goes in dividend[qi].
+	 */
+	for (qi = 0; qi < res_ndigitpairs; qi++)
 	{
-		/* Estimate quotient digit from the first two dividend digits */
-		int			next2digits = dividend[j] * NBASE + dividend[j + 1];
-		int			qhat;
+		/* Approximate the current dividend value */
+		fdividend = (double) dividend[qi] * NBASE_SQR;
+		fdividend += (double) dividend[qi + 1];
 
-		/*
-		 * If next2digits are 0, then quotient digit must be 0 and there's no
-		 * need to adjust the working dividend.  It's worth testing here to
-		 * fall out ASAP when processing trailing zeroes in a dividend.
-		 */
-		if (next2digits == 0)
+		/* Compute the (approximate) quotient digit */
+		fquotient = fdividend * fdivisorinverse;
+		qdigit = (fquotient >= 0.0) ? ((int32) fquotient) :
+			(((int32) fquotient) - 1);	/* truncate towards -infinity */
+
+		if (qdigit != 0)
 		{
-			res_digits[j] = 0;
-			continue;
-		}
-
-		if (dividend[j] == divisor1)
-			qhat = NBASE - 1;
-		else
-			qhat = next2digits / divisor1;
-
-		/*
-		 * Adjust quotient digit if it's too large.  Knuth proves that after
-		 * this step, the quotient digit will be either correct or just one
-		 * too large.  (Note: it's OK to use dividend[j+2] here because we
-		 * know the divisor length is at least 2.)
-		 */
-		while (divisor2 * qhat >
-			   (next2digits - qhat * divisor1) * NBASE + dividend[j + 2])
-			qhat--;
-
-		/* As above, need do nothing more when quotient digit is 0 */
-		if (qhat > 0)
-		{
-			NumericDigit *dividend_j = &dividend[j];
-
-			/*
-			 * Multiply the divisor by qhat, and subtract that from the
-			 * working dividend.  The multiplication and subtraction are
-			 * folded together here, noting that qhat <= NBASE (since it might
-			 * be one too large), and so the intermediate result "tmp_result"
-			 * is in the range [-NBASE^2, NBASE - 1], and "borrow" is in the
-			 * range [0, NBASE].
-			 */
-			borrow = 0;
-			for (i = var2ndigits; i >= 0; i--)
+			/* Do we need to normalize now? */
+			maxdiv += i64abs(qdigit);
+			if (maxdiv > (PG_INT64_MAX - PG_INT64_MAX / NBASE_SQR - 1) / (NBASE_SQR - 1))
 			{
-				int			tmp_result;
+				/*
+				 * Yes, do it.  Note that if var2ndigitpairs is much smaller
+				 * than div_ndigitpairs, we can save a significant amount of
+				 * effort here by noting that we only need to normalise those
+				 * dividend[] entries touched where prior iterations
+				 * subtracted multiples of the divisor.
+				 */
+				carry = 0;
+				for (i = Min(qi + var2ndigitpairs - 2, div_ndigitpairs - 1); i > qi; i--)
+				{
+					newdig = dividend[i] + carry;
+					if (newdig < 0)
+					{
+						carry = -((-newdig - 1) / NBASE_SQR) - 1;
+						newdig -= carry * NBASE_SQR;
+					}
+					else if (newdig >= NBASE_SQR)
+					{
+						carry = newdig / NBASE_SQR;
+						newdig -= carry * NBASE_SQR;
+					}
+					else
+						carry = 0;
+					dividend[i] = newdig;
+				}
+				dividend[qi] += carry;
 
-				tmp_result = dividend_j[i] - borrow - divisor[i] * qhat;
-				borrow = (NBASE - 1 - tmp_result) / NBASE;
-				dividend_j[i] = tmp_result + borrow * NBASE;
+				/*
+				 * All the dividend[] digits except possibly dividend[qi] are
+				 * now in the range 0..NBASE^2-1.  We do not need to consider
+				 * dividend[qi] in the maxdiv value anymore, so we can reset
+				 * maxdiv to 1.
+				 */
+				maxdiv = 1;
+
+				/*
+				 * Recompute the quotient digit since new info may have
+				 * propagated into the top two dividend digits.
+				 */
+				fdividend = (double) dividend[qi] * NBASE_SQR;
+				fdividend += (double) dividend[qi + 1];
+				fquotient = fdividend * fdivisorinverse;
+				qdigit = (fquotient >= 0.0) ? ((int32) fquotient) :
+					(((int32) fquotient) - 1);	/* truncate towards -infinity */
+
+				maxdiv += i64abs(qdigit);
 			}
 
 			/*
-			 * If we got a borrow out of the top dividend digit, then indeed
-			 * qhat was one too large.  Fix it, and add back the divisor to
-			 * correct the working dividend.  (Knuth proves that this will
-			 * occur only about 3/NBASE of the time; hence, it's a good idea
-			 * to test this code with small NBASE to be sure this section gets
-			 * exercised.)
+			 * Subtract off the appropriate multiple of the divisor.
+			 *
+			 * The digits beyond dividend[qi] cannot overflow, because we know
+			 * they will fall within the maxdiv limit.  As for dividend[qi]
+			 * itself, note that qdigit is approximately trunc(dividend[qi] /
+			 * divisor[0]), which would make the new value simply dividend[qi]
+			 * mod divisor[0].  The lower-order terms in qdigit can change
+			 * this result by not more than about twice PG_INT64_MAX/NBASE^2,
+			 * so overflow is impossible.
+			 *
+			 * This inner loop is the performance bottleneck for division, so
+			 * code it in the same way as the inner loop of mul_var() so that
+			 * it can be auto-vectorized.
 			 */
-			if (borrow)
+			if (qdigit != 0)
 			{
-				qhat--;
+				int			istop = Min(var2ndigitpairs, div_ndigitpairs - qi);
+				int64	   *dividend_qi = &dividend[qi];
+
+				for (i = 0; i < istop; i++)
+					dividend_qi[i] -= (int64) qdigit * divisor[i];
+			}
+		}
+
+		/*
+		 * The dividend digit we are about to replace might still be nonzero.
+		 * Fold it into the next digit position.
+		 *
+		 * There is no risk of overflow here, although proving that requires
+		 * some care.  Much as with the argument for dividend[qi] not
+		 * overflowing, if we consider the first two terms in the numerator
+		 * and denominator of qdigit, we can see that the final value of
+		 * dividend[qi + 1] will be approximately a remainder mod
+		 * (divisor[0]*NBASE^2 + divisor[1]).  Accounting for the lower-order
+		 * terms is a bit complicated but ends up adding not much more than
+		 * PG_INT64_MAX/NBASE^2 to the possible range.  Thus, dividend[qi + 1]
+		 * cannot overflow here, and in its role as dividend[qi] in the next
+		 * loop iteration, it can't be large enough to cause overflow in the
+		 * carry propagation step (if any), either.
+		 *
+		 * But having said that: dividend[qi] can be more than
+		 * PG_INT64_MAX/NBASE^2, as noted above, which means that the product
+		 * dividend[qi] * NBASE^2 *can* overflow.  When that happens, adding
+		 * it to dividend[qi + 1] will always cause a canceling overflow so
+		 * that the end result is correct.  We could avoid the intermediate
+		 * overflow by doing the multiplication and addition using unsigned
+		 * int64 arithmetic, which is modulo 2^64, but so far there appears no
+		 * need.
+		 */
+		dividend[qi + 1] += dividend[qi] * NBASE_SQR;
+
+		dividend[qi] = qdigit;
+	}
+
+	/*
+	 * If an exact result was requested, use the remainder to correct the
+	 * approximate quotient.  The remainder is in dividend[], immediately
+	 * after the quotient digits.  Note, however, that although the remainder
+	 * starts at dividend[qi = res_ndigitpairs], the first digit is the result
+	 * of folding two remainder digits into one above, and the remainder
+	 * currently only occupies var2ndigitpairs - 1 digits (the last digit of
+	 * the working dividend was untouched by the computation above).  Thus we
+	 * expand the remainder down by one base-NBASE^2 digit when we normalize
+	 * it, so that it completely fills the last var2ndigitpairs digits of the
+	 * dividend array.
+	 */
+	if (exact)
+	{
+		/* Normalize the remainder, expanding it down by one digit */
+		remainder = &dividend[qi];
+		carry = 0;
+		for (i = var2ndigitpairs - 2; i >= 0; i--)
+		{
+			newdig = remainder[i] + carry;
+			if (newdig < 0)
+			{
+				carry = -((-newdig - 1) / NBASE_SQR) - 1;
+				newdig -= carry * NBASE_SQR;
+			}
+			else if (newdig >= NBASE_SQR)
+			{
+				carry = newdig / NBASE_SQR;
+				newdig -= carry * NBASE_SQR;
+			}
+			else
 				carry = 0;
-				for (i = var2ndigits; i >= 0; i--)
+			remainder[i + 1] = newdig;
+		}
+		remainder[0] = carry;
+
+		if (remainder[0] < 0)
+		{
+			/*
+			 * The remainder is negative, so the approximate quotient is too
+			 * large.  Correct by reducing the quotient by one and adding the
+			 * divisor to the remainder until the remainder is positive.  We
+			 * expect the quotient to be off by at most one, which has been
+			 * borne out in all testing, but not conclusively proven, so we
+			 * allow for larger corrections, just in case.
+			 */
+			do
+			{
+				/* Add the divisor to the remainder */
+				carry = 0;
+				for (i = var2ndigitpairs - 1; i > 0; i--)
 				{
-					carry += dividend_j[i] + divisor[i];
-					if (carry >= NBASE)
+					newdig = remainder[i] + divisor[i] + carry;
+					if (newdig >= NBASE_SQR)
 					{
-						dividend_j[i] = carry - NBASE;
+						remainder[i] = newdig - NBASE_SQR;
 						carry = 1;
 					}
 					else
 					{
-						dividend_j[i] = carry;
+						remainder[i] = newdig;
 						carry = 0;
 					}
 				}
-				/* A carry should occur here to cancel the borrow above */
-				Assert(carry == 1);
+				remainder[0] += divisor[0] + carry;
+
+				/* Subtract 1 from the quotient (propagating carries later) */
+				dividend[qi - 1]--;
+
+			} while (remainder[0] < 0);
+		}
+		else
+		{
+			/*
+			 * The remainder is nonnegative.  If it's greater than or equal to
+			 * the divisor, then the approximate quotient is too small and
+			 * must be corrected.  As above, we don't expect to have to apply
+			 * more than one correction, but allow for it just in case.
+			 */
+			while (true)
+			{
+				bool		less = false;
+
+				/* Is remainder < divisor? */
+				for (i = 0; i < var2ndigitpairs; i++)
+				{
+					if (remainder[i] < divisor[i])
+					{
+						less = true;
+						break;
+					}
+					if (remainder[i] > divisor[i])
+						break;	/* remainder > divisor */
+				}
+				if (less)
+					break;		/* quotient is correct */
+
+				/* Subtract the divisor from the remainder */
+				carry = 0;
+				for (i = var2ndigitpairs - 1; i > 0; i--)
+				{
+					newdig = remainder[i] - divisor[i] + carry;
+					if (newdig < 0)
+					{
+						remainder[i] = newdig + NBASE_SQR;
+						carry = -1;
+					}
+					else
+					{
+						remainder[i] = newdig;
+						carry = 0;
+					}
+				}
+				remainder[0] = remainder[0] - divisor[0] + carry;
+
+				/* Add 1 to the quotient (propagating carries later) */
+				dividend[qi - 1]++;
 			}
 		}
-
-		/* And we're done with this quotient digit */
-		res_digits[j] = qhat;
 	}
+
+	/*
+	 * Because the quotient digits were estimates that might have been off by
+	 * one (and we didn't bother propagating carries when adjusting the
+	 * quotient above), some quotient digits might be out of range, so do a
+	 * final carry propagation pass to normalize back to base NBASE^2, and
+	 * construct the base-NBASE result digits.  Note that this is still done
+	 * at full precision w/guard digits.
+	 */
+	alloc_var(result, res_ndigits);
+	res_digits = result->digits;
+	carry = 0;
+	for (i = res_ndigitpairs - 1; i >= 0; i--)
+	{
+		newdig = dividend[i] + carry;
+		if (newdig < 0)
+		{
+			carry = -((-newdig - 1) / NBASE_SQR) - 1;
+			newdig -= carry * NBASE_SQR;
+		}
+		else if (newdig >= NBASE_SQR)
+		{
+			carry = newdig / NBASE_SQR;
+			newdig -= carry * NBASE_SQR;
+		}
+		else
+			carry = 0;
+		res_digits[2 * i + 1] = (NumericDigit) ((uint32) newdig % NBASE);
+		res_digits[2 * i] = (NumericDigit) ((uint32) newdig / NBASE);
+	}
+	Assert(carry == 0);
 
 	pfree(dividend);
 
@@ -9513,382 +9765,6 @@ div_var(const NumericVar *var1, const NumericVar *var2, NumericVar *result,
 	result->sign = res_sign;
 
 	/* Round or truncate to target rscale (and set result->dscale) */
-	if (round)
-		round_var(result, rscale);
-	else
-		trunc_var(result, rscale);
-
-	/* Strip leading and trailing zeroes */
-	strip_var(result);
-}
-
-
-/*
- * div_var_fast() -
- *
- *	This has the same API as div_var, but is implemented using the division
- *	algorithm from the "FM" library, rather than Knuth's schoolbook-division
- *	approach.  This is significantly faster but can produce inaccurate
- *	results, because it sometimes has to propagate rounding to the left,
- *	and so we can never be entirely sure that we know the requested digits
- *	exactly.  We compute DIV_GUARD_DIGITS extra digits, but there is
- *	no certainty that that's enough.  We use this only in the transcendental
- *	function calculation routines, where everything is approximate anyway.
- *
- *	Although we provide a "round" argument for consistency with div_var,
- *	it is unwise to use this function with round=false.  In truncation mode
- *	it is possible to get a result with no significant digits, for example
- *	with rscale=0 we might compute 0.99999... and truncate that to 0 when
- *	the correct answer is 1.
- */
-static void
-div_var_fast(const NumericVar *var1, const NumericVar *var2,
-			 NumericVar *result, int rscale, bool round)
-{
-	int			div_ndigits;
-	int			load_ndigits;
-	int			res_sign;
-	int			res_weight;
-	int		   *div;
-	int			qdigit;
-	int			carry;
-	int			maxdiv;
-	int			newdig;
-	NumericDigit *res_digits;
-	double		fdividend,
-				fdivisor,
-				fdivisorinverse,
-				fquotient;
-	int			qi;
-	int			i;
-
-	/* copy these values into local vars for speed in inner loop */
-	int			var1ndigits = var1->ndigits;
-	int			var2ndigits = var2->ndigits;
-	NumericDigit *var1digits = var1->digits;
-	NumericDigit *var2digits = var2->digits;
-
-	/*
-	 * First of all division by zero check; we must not be handed an
-	 * unnormalized divisor.
-	 */
-	if (var2ndigits == 0 || var2digits[0] == 0)
-		ereport(ERROR,
-				(errcode(ERRCODE_DIVISION_BY_ZERO),
-				 errmsg("division by zero")));
-
-	/*
-	 * If the divisor has just one or two digits, delegate to div_var_int(),
-	 * which uses fast short division.
-	 *
-	 * Similarly, on platforms with 128-bit integer support, delegate to
-	 * div_var_int64() for divisors with three or four digits.
-	 */
-	if (var2ndigits <= 2)
-	{
-		int			idivisor;
-		int			idivisor_weight;
-
-		idivisor = var2->digits[0];
-		idivisor_weight = var2->weight;
-		if (var2ndigits == 2)
-		{
-			idivisor = idivisor * NBASE + var2->digits[1];
-			idivisor_weight--;
-		}
-		if (var2->sign == NUMERIC_NEG)
-			idivisor = -idivisor;
-
-		div_var_int(var1, idivisor, idivisor_weight, result, rscale, round);
-		return;
-	}
-#ifdef HAVE_INT128
-	if (var2ndigits <= 4)
-	{
-		int64		idivisor;
-		int			idivisor_weight;
-
-		idivisor = var2->digits[0];
-		idivisor_weight = var2->weight;
-		for (i = 1; i < var2ndigits; i++)
-		{
-			idivisor = idivisor * NBASE + var2->digits[i];
-			idivisor_weight--;
-		}
-		if (var2->sign == NUMERIC_NEG)
-			idivisor = -idivisor;
-
-		div_var_int64(var1, idivisor, idivisor_weight, result, rscale, round);
-		return;
-	}
-#endif
-
-	/*
-	 * Otherwise, perform full long division.
-	 */
-
-	/* Result zero check */
-	if (var1ndigits == 0)
-	{
-		zero_var(result);
-		result->dscale = rscale;
-		return;
-	}
-
-	/*
-	 * Determine the result sign, weight and number of digits to calculate
-	 */
-	if (var1->sign == var2->sign)
-		res_sign = NUMERIC_POS;
-	else
-		res_sign = NUMERIC_NEG;
-	res_weight = var1->weight - var2->weight + 1;
-	/* The number of accurate result digits we need to produce: */
-	div_ndigits = res_weight + 1 + (rscale + DEC_DIGITS - 1) / DEC_DIGITS;
-	/* Add guard digits for roundoff error */
-	div_ndigits += DIV_GUARD_DIGITS;
-	if (div_ndigits < DIV_GUARD_DIGITS)
-		div_ndigits = DIV_GUARD_DIGITS;
-
-	/*
-	 * We do the arithmetic in an array "div[]" of signed int's.  Since
-	 * INT_MAX is noticeably larger than NBASE*NBASE, this gives us headroom
-	 * to avoid normalizing carries immediately.
-	 *
-	 * We start with div[] containing one zero digit followed by the
-	 * dividend's digits (plus appended zeroes to reach the desired precision
-	 * including guard digits).  Each step of the main loop computes an
-	 * (approximate) quotient digit and stores it into div[], removing one
-	 * position of dividend space.  A final pass of carry propagation takes
-	 * care of any mistaken quotient digits.
-	 *
-	 * Note that div[] doesn't necessarily contain all of the digits from the
-	 * dividend --- the desired precision plus guard digits might be less than
-	 * the dividend's precision.  This happens, for example, in the square
-	 * root algorithm, where we typically divide a 2N-digit number by an
-	 * N-digit number, and only require a result with N digits of precision.
-	 */
-	div = (int *) palloc0((div_ndigits + 1) * sizeof(int));
-	load_ndigits = Min(div_ndigits, var1ndigits);
-	for (i = 0; i < load_ndigits; i++)
-		div[i + 1] = var1digits[i];
-
-	/*
-	 * We estimate each quotient digit using floating-point arithmetic, taking
-	 * the first four digits of the (current) dividend and divisor.  This must
-	 * be float to avoid overflow.  The quotient digits will generally be off
-	 * by no more than one from the exact answer.
-	 */
-	fdivisor = (double) var2digits[0];
-	for (i = 1; i < 4; i++)
-	{
-		fdivisor *= NBASE;
-		if (i < var2ndigits)
-			fdivisor += (double) var2digits[i];
-	}
-	fdivisorinverse = 1.0 / fdivisor;
-
-	/*
-	 * maxdiv tracks the maximum possible absolute value of any div[] entry;
-	 * when this threatens to exceed INT_MAX, we take the time to propagate
-	 * carries.  Furthermore, we need to ensure that overflow doesn't occur
-	 * during the carry propagation passes either.  The carry values may have
-	 * an absolute value as high as INT_MAX/NBASE + 1, so really we must
-	 * normalize when digits threaten to exceed INT_MAX - INT_MAX/NBASE - 1.
-	 *
-	 * To avoid overflow in maxdiv itself, it represents the max absolute
-	 * value divided by NBASE-1, ie, at the top of the loop it is known that
-	 * no div[] entry has an absolute value exceeding maxdiv * (NBASE-1).
-	 *
-	 * Actually, though, that holds good only for div[] entries after div[qi];
-	 * the adjustment done at the bottom of the loop may cause div[qi + 1] to
-	 * exceed the maxdiv limit, so that div[qi] in the next iteration is
-	 * beyond the limit.  This does not cause problems, as explained below.
-	 */
-	maxdiv = 1;
-
-	/*
-	 * Outer loop computes next quotient digit, which will go into div[qi]
-	 */
-	for (qi = 0; qi < div_ndigits; qi++)
-	{
-		/* Approximate the current dividend value */
-		fdividend = (double) div[qi];
-		for (i = 1; i < 4; i++)
-		{
-			fdividend *= NBASE;
-			if (qi + i <= div_ndigits)
-				fdividend += (double) div[qi + i];
-		}
-		/* Compute the (approximate) quotient digit */
-		fquotient = fdividend * fdivisorinverse;
-		qdigit = (fquotient >= 0.0) ? ((int) fquotient) :
-			(((int) fquotient) - 1);	/* truncate towards -infinity */
-
-		if (qdigit != 0)
-		{
-			/* Do we need to normalize now? */
-			maxdiv += abs(qdigit);
-			if (maxdiv > (INT_MAX - INT_MAX / NBASE - 1) / (NBASE - 1))
-			{
-				/*
-				 * Yes, do it.  Note that if var2ndigits is much smaller than
-				 * div_ndigits, we can save a significant amount of effort
-				 * here by noting that we only need to normalise those div[]
-				 * entries touched where prior iterations subtracted multiples
-				 * of the divisor.
-				 */
-				carry = 0;
-				for (i = Min(qi + var2ndigits - 2, div_ndigits); i > qi; i--)
-				{
-					newdig = div[i] + carry;
-					if (newdig < 0)
-					{
-						carry = -((-newdig - 1) / NBASE) - 1;
-						newdig -= carry * NBASE;
-					}
-					else if (newdig >= NBASE)
-					{
-						carry = newdig / NBASE;
-						newdig -= carry * NBASE;
-					}
-					else
-						carry = 0;
-					div[i] = newdig;
-				}
-				newdig = div[qi] + carry;
-				div[qi] = newdig;
-
-				/*
-				 * All the div[] digits except possibly div[qi] are now in the
-				 * range 0..NBASE-1.  We do not need to consider div[qi] in
-				 * the maxdiv value anymore, so we can reset maxdiv to 1.
-				 */
-				maxdiv = 1;
-
-				/*
-				 * Recompute the quotient digit since new info may have
-				 * propagated into the top four dividend digits
-				 */
-				fdividend = (double) div[qi];
-				for (i = 1; i < 4; i++)
-				{
-					fdividend *= NBASE;
-					if (qi + i <= div_ndigits)
-						fdividend += (double) div[qi + i];
-				}
-				/* Compute the (approximate) quotient digit */
-				fquotient = fdividend * fdivisorinverse;
-				qdigit = (fquotient >= 0.0) ? ((int) fquotient) :
-					(((int) fquotient) - 1);	/* truncate towards -infinity */
-				maxdiv += abs(qdigit);
-			}
-
-			/*
-			 * Subtract off the appropriate multiple of the divisor.
-			 *
-			 * The digits beyond div[qi] cannot overflow, because we know they
-			 * will fall within the maxdiv limit.  As for div[qi] itself, note
-			 * that qdigit is approximately trunc(div[qi] / vardigits[0]),
-			 * which would make the new value simply div[qi] mod vardigits[0].
-			 * The lower-order terms in qdigit can change this result by not
-			 * more than about twice INT_MAX/NBASE, so overflow is impossible.
-			 *
-			 * This inner loop is the performance bottleneck for division, so
-			 * code it in the same way as the inner loop of mul_var() so that
-			 * it can be auto-vectorized.  We cast qdigit to NumericDigit
-			 * before multiplying to allow the compiler to generate more
-			 * efficient code (using 16-bit multiplication), which is safe
-			 * since we know that the quotient digit is off by at most one, so
-			 * there is no overflow risk.
-			 */
-			if (qdigit != 0)
-			{
-				int			istop = Min(var2ndigits, div_ndigits - qi + 1);
-				int		   *div_qi = &div[qi];
-
-				for (i = 0; i < istop; i++)
-					div_qi[i] -= ((NumericDigit) qdigit) * var2digits[i];
-			}
-		}
-
-		/*
-		 * The dividend digit we are about to replace might still be nonzero.
-		 * Fold it into the next digit position.
-		 *
-		 * There is no risk of overflow here, although proving that requires
-		 * some care.  Much as with the argument for div[qi] not overflowing,
-		 * if we consider the first two terms in the numerator and denominator
-		 * of qdigit, we can see that the final value of div[qi + 1] will be
-		 * approximately a remainder mod (vardigits[0]*NBASE + vardigits[1]).
-		 * Accounting for the lower-order terms is a bit complicated but ends
-		 * up adding not much more than INT_MAX/NBASE to the possible range.
-		 * Thus, div[qi + 1] cannot overflow here, and in its role as div[qi]
-		 * in the next loop iteration, it can't be large enough to cause
-		 * overflow in the carry propagation step (if any), either.
-		 *
-		 * But having said that: div[qi] can be more than INT_MAX/NBASE, as
-		 * noted above, which means that the product div[qi] * NBASE *can*
-		 * overflow.  When that happens, adding it to div[qi + 1] will always
-		 * cause a canceling overflow so that the end result is correct.  We
-		 * could avoid the intermediate overflow by doing the multiplication
-		 * and addition in int64 arithmetic, but so far there appears no need.
-		 */
-		div[qi + 1] += div[qi] * NBASE;
-
-		div[qi] = qdigit;
-	}
-
-	/*
-	 * Approximate and store the last quotient digit (div[div_ndigits])
-	 */
-	fdividend = (double) div[qi];
-	for (i = 1; i < 4; i++)
-		fdividend *= NBASE;
-	fquotient = fdividend * fdivisorinverse;
-	qdigit = (fquotient >= 0.0) ? ((int) fquotient) :
-		(((int) fquotient) - 1);	/* truncate towards -infinity */
-	div[qi] = qdigit;
-
-	/*
-	 * Because the quotient digits might be off by one, some of them might be
-	 * -1 or NBASE at this point.  The represented value is correct in a
-	 * mathematical sense, but it doesn't look right.  We do a final carry
-	 * propagation pass to normalize the digits, which we combine with storing
-	 * the result digits into the output.  Note that this is still done at
-	 * full precision w/guard digits.
-	 */
-	alloc_var(result, div_ndigits + 1);
-	res_digits = result->digits;
-	carry = 0;
-	for (i = div_ndigits; i >= 0; i--)
-	{
-		newdig = div[i] + carry;
-		if (newdig < 0)
-		{
-			carry = -((-newdig - 1) / NBASE) - 1;
-			newdig -= carry * NBASE;
-		}
-		else if (newdig >= NBASE)
-		{
-			carry = newdig / NBASE;
-			newdig -= carry * NBASE;
-		}
-		else
-			carry = 0;
-		res_digits[i] = newdig;
-	}
-	Assert(carry == 0);
-
-	pfree(div);
-
-	/*
-	 * Finally, round the result to the requested precision.
-	 */
-	result->weight = res_weight;
-	result->sign = res_sign;
-
-	/* Round to target rscale (and set result->dscale) */
 	if (round)
 		round_var(result, rscale);
 	else
@@ -10215,7 +10091,7 @@ mod_var(const NumericVar *var1, const NumericVar *var2, NumericVar *result)
 	 * div_var can be persuaded to give us trunc(x/y) directly.
 	 * ----------
 	 */
-	div_var(var1, var2, &tmp, 0, false);
+	div_var(var1, var2, &tmp, 0, false, true);
 
 	mul_var(var2, &tmp, &tmp, var2->dscale);
 
@@ -10242,11 +10118,11 @@ div_mod_var(const NumericVar *var1, const NumericVar *var2,
 	init_var(&r);
 
 	/*
-	 * Use div_var_fast() to get an initial estimate for the integer quotient.
-	 * This might be inaccurate (per the warning in div_var_fast's comments),
-	 * but we can correct it below.
+	 * Use div_var() with exact = false to get an initial estimate for the
+	 * integer quotient (truncated towards zero).  This might be slightly
+	 * inaccurate, but we correct it below.
 	 */
-	div_var_fast(var1, var2, &q, 0, false);
+	div_var(var1, var2, &q, 0, false, false);
 
 	/* Compute initial estimate of remainder using the quotient estimate. */
 	mul_var(var2, &q, &r, var2->dscale);
@@ -11189,7 +11065,7 @@ ln_var(const NumericVar *arg, NumericVar *result, int rscale)
 
 	sub_var(&x, &const_one, result);
 	add_var(&x, &const_one, &elem);
-	div_var_fast(result, &elem, result, local_rscale, true);
+	div_var(result, &elem, result, local_rscale, true, false);
 	set_var_from_var(result, &xx);
 	mul_var(result, result, &x, local_rscale);
 
@@ -11273,7 +11149,7 @@ log_var(const NumericVar *base, const NumericVar *num, NumericVar *result)
 	ln_var(num, &ln_num, ln_num_rscale);
 
 	/* Divide and round to the required scale */
-	div_var_fast(&ln_num, &ln_base, result, rscale, true);
+	div_var(&ln_num, &ln_base, result, rscale, true, false);
 
 	free_var(&ln_num);
 	free_var(&ln_base);
@@ -11535,7 +11411,7 @@ power_var_int(const NumericVar *base, int exp, int exp_dscale,
 			round_var(result, rscale);
 			return;
 		case -1:
-			div_var(&const_one, base, result, rscale, true);
+			div_var(&const_one, base, result, rscale, true, true);
 			return;
 		case 2:
 			mul_var(base, base, result, rscale);
@@ -11643,7 +11519,7 @@ power_var_int(const NumericVar *base, int exp, int exp_dscale,
 
 	/* Compensate for input sign, and round to requested rscale */
 	if (neg)
-		div_var_fast(&const_one, result, result, rscale, true);
+		div_var(&const_one, result, result, rscale, true, false);
 	else
 		round_var(result, rscale);
 }
