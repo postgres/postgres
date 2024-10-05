@@ -315,7 +315,7 @@ WalSummarizerMain(char *startup_data, size_t startup_data_len)
 		 * So a really fast retry time doesn't seem to be especially
 		 * beneficial, and it will clutter the logs.
 		 */
-		(void) WaitLatch(MyLatch,
+		(void) WaitLatch(NULL,
 						 WL_TIMEOUT | WL_EXIT_ON_PM_DEATH,
 						 10000,
 						 WAIT_EVENT_WAL_SUMMARIZER_ERROR);
