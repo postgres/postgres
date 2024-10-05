@@ -2935,7 +2935,6 @@ InitWalSenderSlot(void)
 			walsnd->flushLag = -1;
 			walsnd->applyLag = -1;
 			walsnd->sync_standby_priority = 0;
-			walsnd->latch = &MyProc->procLatch;
 			walsnd->replyTime = 0;
 
 			/*
@@ -2979,8 +2978,6 @@ WalSndKill(int code, Datum arg)
 	MyWalSnd = NULL;
 
 	SpinLockAcquire(&walsnd->mutex);
-	/* clear latch while holding the spinlock, so it can safely be read */
-	walsnd->latch = NULL;
 	/* Mark WalSnd struct as no longer being in use. */
 	walsnd->pid = 0;
 	SpinLockRelease(&walsnd->mutex);

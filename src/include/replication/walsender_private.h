@@ -18,7 +18,6 @@
 #include "nodes/replnodes.h"
 #include "replication/syncrep.h"
 #include "storage/condition_variable.h"
-#include "storage/latch.h"
 #include "storage/shmem.h"
 #include "storage/spin.h"
 
@@ -70,12 +69,6 @@ typedef struct WalSnd
 
 	/* Protects shared variables in this structure. */
 	slock_t		mutex;
-
-	/*
-	 * Pointer to the walsender's latch. Used by backends to wake up this
-	 * walsender when it has work to do. NULL if the walsender isn't active.
-	 */
-	Latch	   *latch;
 
 	/*
 	 * Timestamp of the last message received from standby.
