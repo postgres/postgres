@@ -2215,7 +2215,6 @@ select conname, obj_description(oid, 'pg_constraint') as desc
 (3 rows)
 
 alter table at_partitioned alter column name type varchar(127);
--- Note: these tests currently show the wrong behavior for comments :-(
 select relname,
   c.oid = oldoid as orig_oid,
   case relfilenode
@@ -2232,9 +2231,9 @@ select relname,
 ------------------------------+----------+---------+--------------
  at_partitioned               | t        | none    | 
  at_partitioned_0             | t        | own     | 
- at_partitioned_0_id_name_key | f        | own     | parent index
+ at_partitioned_0_id_name_key | f        | own     | 
  at_partitioned_1             | t        | own     | 
- at_partitioned_1_id_name_key | f        | own     | parent index
+ at_partitioned_1_id_name_key | f        | own     | 
  at_partitioned_id_name_key   | f        | none    | parent index
 (6 rows)
 
