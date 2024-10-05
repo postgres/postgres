@@ -55,6 +55,7 @@ tests += {
     'sql': [
       'security',
       'seg',
+      'partition',
     ],
   },
 }
