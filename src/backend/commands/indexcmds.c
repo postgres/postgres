@@ -50,6 +50,7 @@
 #include "optimizer/optimizer.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_oper.h"
+#include "parser/parse_utilcmd.h"
 #include "partitioning/partdesc.h"
 #include "pgstat.h"
 #include "rewrite/rewriteManip.h"
@@ -1445,55 +1446,20 @@ DefineIndex(Oid tableId,
 				 */
 				if (!found)
 				{
-					IndexStmt  *childStmt = copyObject(stmt);
-					bool		found_whole_row;
-					ListCell   *lc;
+					IndexStmt  *childStmt;
 					ObjectAddress childAddr;
 
 					/*
-					 * We can't use the same index name for the child index,
-					 * so clear idxname to let the recursive invocation choose
-					 * a new name.  Likewise, the existing target relation
-					 * field is wrong, and if indexOid or oldNumber are set,
-					 * they mustn't be applied to the child either.
+					 * Build an IndexStmt describing the desired child index
+					 * in the same way that we do during ATTACH PARTITION.
+					 * Notably, we rely on generateClonedIndexStmt to produce
+					 * a search-path-independent representation, which the
+					 * original IndexStmt might not be.
 					 */
-					childStmt->idxname = NULL;
-					childStmt->relation = NULL;
-					childStmt->indexOid = InvalidOid;
-					childStmt->oldNumber = InvalidRelFileNumber;
-					childStmt->oldCreateSubid = InvalidSubTransactionId;
-					childStmt->oldFirstRelfilelocatorSubid = InvalidSubTransactionId;
-
-					/*
-					 * Adjust any Vars (both in expressions and in the index's
-					 * WHERE clause) to match the partition's column numbering
-					 * in case it's different from the parent's.
-					 */
-					foreach(lc, childStmt->indexParams)
-					{
-						IndexElem  *ielem = lfirst(lc);
-
-						/*
-						 * If the index parameter is an expression, we must
-						 * translate it to contain child Vars.
-						 */
-						if (ielem->expr)
-						{
-							ielem->expr =
-								map_variable_attnos((Node *) ielem->expr,
-													1, 0, attmap,
-													InvalidOid,
-													&found_whole_row);
-							if (found_whole_row)
-								elog(ERROR, "cannot convert whole-row table reference");
-						}
-					}
-					childStmt->whereClause =
-						map_variable_attnos(stmt->whereClause, 1, 0,
-											attmap,
-											InvalidOid, &found_whole_row);
-					if (found_whole_row)
-						elog(ERROR, "cannot convert whole-row table reference");
+					childStmt = generateClonedIndexStmt(NULL,
+														parentIndex,
+														attmap,
+														NULL);
 
 					/*
 					 * Recurse as the starting user ID.  Callee will use that
