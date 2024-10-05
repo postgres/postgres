@@ -57,6 +57,7 @@
 #include "access/htup_details.h"
 #include "catalog/pg_collation.h"
 #include "catalog/pg_control.h"
+#include "common/string.h"
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
 #include "utils/builtins.h"
@@ -281,6 +282,16 @@ check_locale(int category, const char *locale, char **canonname)
 	char	   *save;
 	char	   *res;
 
+	/* Don't let Windows' non-ASCII locale names in. */
+	if (!pg_is_ascii(locale))
+	{
+		ereport(WARNING,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("locale name \"%s\" contains non-ASCII characters",
+						locale)));
+		return false;
+	}
+
 	if (canonname)
 		*canonname = NULL;		/* in case of failure */
 
@@ -302,6 +313,18 @@ check_locale(int category, const char *locale, char **canonname)
 	if (!setlocale(category, save))
 		elog(WARNING, "failed to restore old locale \"%s\"", save);
 	pfree(save);
+
+	/* Don't let Windows' non-ASCII locale names out. */
+	if (canonname && *canonname && !pg_is_ascii(*canonname))
+	{
+		ereport(WARNING,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("locale name \"%s\" contains non-ASCII characters",
+						*canonname)));
+		pfree(*canonname);
+		*canonname = NULL;
+		return false;
+	}
 
 	return (res != NULL);
 }
