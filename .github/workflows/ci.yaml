@@ -28,8 +28,13 @@ jobs:
           override: true
       - run: brew update && brew upgrade
       - run: brew install libpq
-      - run: brew cleanup
-      - run: ./configure --without-icu
+      - run: brew link --force libpq
+      - run: |
+          export PATH="/opt/homebrew/opt/libpq/bin:$PATH"
+          export LDFLAGS="-L/opt/homebrew/opt/libpq/lib"
+          export CPPFLAGS="-I/opt/homebrew/opt/libpq/include"
+          export DYLD_LIBRARY_PATH="/opt/homebrew/opt/libpq/lib:$DYLD_LIBRARY_PATH"
+          ./configure --without-icu
       - run: make
       - run: python3 -m venv myenv
       - run: |
