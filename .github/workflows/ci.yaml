@@ -29,7 +29,12 @@ jobs:
       - run: ./configure --without-icu
       - run: make
       - run: python3 -m venv myenv
-      - run: echo "source myenv/bin/activate" >> $GITHUB_ENV
-      - run: source myenv/bin/activate && pip install pyyaml
-      - run: cd sharding && cargo test -- --test-threads=1
+      - run: |
+          source myenv/bin/activate
+          pip install pyyaml
+      - run: |
+          source myenv/bin/activate
+          cd sharding && cargo test -- --test-threads=1      
       - run: deactivate
+
+      
