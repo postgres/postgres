@@ -86,6 +86,24 @@ my @tests = (
 		q{user='uri-user' host='host' (inet)},
 		q{},
 	],
+	[
+		# Leading and trailing spaces, works.
+		q{postgresql://host?  user = uri-user & port  = 12345 },
+		q{user='uri-user' host='host' port='12345' (inet)},
+		q{},
+	],
+	[
+		# Trailing data in parameter.
+		q{postgresql://host?  user user  =  uri  & port = 12345 12 },
+		q{},
+		q{libpq_uri_regress: trailing data found: "  user user  "},
+	],
+	[
+		# Trailing data in value.
+		q{postgresql://host?  user  =  uri-user  & port = 12345 12 },
+		q{},
+		q{libpq_uri_regress: trailing data found: " 12345 12 "},
+	],
 	[ q{postgresql://host?}, q{host='host' (inet)}, q{}, ],
 	[
 		q{postgresql://[::1]:12345/db},

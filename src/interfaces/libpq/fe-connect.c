@@ -6763,9 +6763,9 @@ conninfo_uri_parse_params(char *params,
 static char *
 conninfo_uri_decode(const char *str, PQExpBuffer errorMessage)
 {
-	char	   *buf;
-	char	   *p;
-	const char *q = str;
+	char	   *buf;			/* result */
+	char	   *p;				/* output location */
+	const char *q = str;		/* input location */
 
 	buf = malloc(strlen(str) + 1);
 	if (buf == NULL)
@@ -6775,13 +6775,23 @@ conninfo_uri_decode(const char *str, PQExpBuffer errorMessage)
 	}
 	p = buf;
 
+	/* skip leading whitespaces */
+	for (const char *s = q; *s == ' '; s++)
+	{
+		q++;
+		continue;
+	}
+
 	for (;;)
 	{
 		if (*q != '%')
 		{
-			/* copy and check for NUL terminator */
-			if (!(*(p++) = *(q++)))
-				break;
+			/* if found a whitespace or NUL, the string ends */
+			if (*q == ' ' || *q == '\0')
+				goto end;
+
+			/* copy character */
+			*(p++) = *(q++);
 		}
 		else
 		{
@@ -6816,6 +6826,26 @@ conninfo_uri_decode(const char *str, PQExpBuffer errorMessage)
 			*(p++) = c;
 		}
 	}
+
+end:
+
+	/* skip trailing whitespaces */
+	for (const char *s = q; *s == ' '; s++)
+	{
+		q++;
+		continue;
+	}
+
+	/* Not at the end of the string yet?  Fail. */
+	if (*q != '\0')
+	{
+		libpq_append_error(errorMessage, "trailing data found: \"%s\"", str);
+		free(buf);
+		return NULL;
+	}
+
+	/* Copy NUL terminator */
+	*p = '\0';
 
 	return buf;
 }
