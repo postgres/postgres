@@ -175,6 +175,11 @@ INIT
 	$portdir =~ s!\\!/!g;
 	# Make sure the directory exists
 	mkpath($portdir) unless -d $portdir;
+
+	#
+	# Signal handlers
+	#
+	$SIG{TERM} = $SIG{INT} = sub { die "death by signal"; };
 }
 
 =pod
@@ -3349,13 +3354,6 @@ sub corrupt_page_checksum
 
 	return;
 }
-
-#
-# Signal handlers
-#
-$SIG{TERM} = $SIG{INT} = sub {
-	die "death by signal";
-};
 
 =pod
 
