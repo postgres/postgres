@@ -27,6 +27,7 @@ jobs:
           toolchain: stable
           override: true
       - run: brew install postgresql && brew install libpq
+      - run: brew link --force libpq
       - run: ./configure --without-icu
       - run: make
       - run: python3 -m venv myenv
