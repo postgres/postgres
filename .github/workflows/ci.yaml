@@ -26,6 +26,7 @@ jobs:
         with:
           toolchain: stable
           override: true
+      - run: brew install postgresql
       - run: ./configure --without-icu
       - run: make
       - run: python3 -m venv myenv
