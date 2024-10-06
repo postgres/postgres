@@ -28,7 +28,6 @@ jobs:
           override: true
       - run: brew update && brew upgrade
       - run: brew install libpq
-      - run: brew unlink postgresql@14
       - run: brew cleanup
       - run: brew link --overwrite libpq
       - run: |
