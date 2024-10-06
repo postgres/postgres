@@ -28,7 +28,7 @@ jobs:
           override: true
       - run: brew update && brew upgrade
       - run: brew install libpq
-      - run: sudo ln -s /opt/homebrew/opt/postgresql@14/lib/postgresql@14/libpq.5.dylib /usr/local/lib/libpq.5.dylib
+      - run: brew cleanup
       - run: ./configure --without-icu
       - run: make
       - run: python3 -m venv myenv
