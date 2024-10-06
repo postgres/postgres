@@ -1,6 +1,3 @@
-use indexmap::IndexMap;
-use std::fmt::{self, Display};
-
 use crate::{
     node::{messages::node_info::NodeInfo, tables_id_info::TablesIdInfo},
     utils::common::ConvertToString,
@@ -106,6 +103,7 @@ impl PartialEq for MessageData {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use indexmap::IndexMap;
 
     #[test]
     fn test_message_data_payload() {

@@ -6,7 +6,6 @@ use super::shard_manager::ShardManager;
 use super::tables_id_info::TablesIdInfo;
 use crate::node::messages::message::{Message, MessageType};
 use crate::node::messages::node_info::NodeInfo;
-use crate::node::shard;
 use crate::utils::common::ConvertToString;
 use crate::utils::common::{connect_to_node, Channel};
 use crate::utils::node_config::{get_router_config, Node};

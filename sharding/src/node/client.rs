@@ -1,5 +1,4 @@
 use inline_colorization::*;
-use postgres::Row;
 extern crate users;
 use std::{
     io::{Read, Write},

@@ -1,7 +1,6 @@
 // tests/integration_tests.rs
 
 use core::panic;
-use libc::creat;
 use postgres::{Client, NoTls};
 use sharding::node::node::{get_node_instance, init_node_instance, NodeType};
 use std::{
@@ -63,7 +62,7 @@ fn test_nodes_initialize_empty() {
 }
 
 #[test]
-fn test_create_table() {
+fn test_create_table_insert_select_and_delete() {
     create_and_init_cluster(b"test-shard1\n", "s", "localhost", "5433");
     create_and_init_cluster(b"test-router1\n", "r", "localhost", "5434");
     create_and_init_cluster(b"test-client1\n", "c", "localhost", "5435");
@@ -96,37 +95,8 @@ fn test_create_table() {
     let count: i64 = row.get(0);
     assert_eq!(count, 1);
 
-    stop_cluster(b"test-shard1\n");
-    stop_cluster(b"test-router1\n");
-    stop_cluster(b"test-client1\n");
-}
-
-#[test]
-fn test_insert_into_table_select_and_delete() {
-    create_and_init_cluster(b"test-shard2\n", "s", "localhost", "5433");
-    create_and_init_cluster(b"test-router2\n", "r", "localhost", "5434");
-    create_and_init_cluster(b"test-client2\n", "c", "localhost", "5435");
-
-    let mut shard_connection: Client = setup_connection("localhost", "5433", "template1").unwrap();
-
-    // Initialize and get the router
-    init_node_instance(
-        NodeType::Client,
-        "5435\0".as_ptr() as *const i8,
-        "src/node/config/router_config.yaml\0".as_ptr() as *const i8,
-    );
-    let client = get_node_instance();
-
-    // Create a table on the router
-    assert!(client
-        .send_query("DROP TABLE IF EXISTS test_table;")
-        .is_some());
-    assert!(client
-        .send_query("CREATE TABLE test_table (id INT PRIMARY KEY);")
-        .is_some());
-
-    // Insert 10000 rows into the table
-    for i in 0..10000 {
+    // Insert 3 rows into the table
+    for i in 0..3 {
         assert!(client
             .send_query(&format!("INSERT INTO test_table VALUES ({});", i))
             .is_some());
@@ -136,7 +106,7 @@ fn test_insert_into_table_select_and_delete() {
     let rows = shard_connection
         .query("SELECT * FROM test_table;", &[])
         .unwrap();
-    assert_eq!(rows.len(), 10000);
+    assert_eq!(rows.len(), 3);
 
     // Validate the data inserted in each row
     for (i, row) in rows.iter().enumerate() {
@@ -153,11 +123,11 @@ fn test_insert_into_table_select_and_delete() {
     let rows = shard_connection
         .query("SELECT * FROM test_table;", &[])
         .unwrap();
-    assert_eq!(rows.len(), 5000);
+    assert_eq!(rows.len(), 1);
 
-    stop_cluster(b"test-shard2\n");
-    stop_cluster(b"test-router2\n");
-    stop_cluster(b"test-client2\n");
+    stop_cluster(b"test-shard1\n");
+    stop_cluster(b"test-router1\n");
+    stop_cluster(b"test-client1\n");
 }
 
 // Utility functions

@@ -1,5 +1,3 @@
-use postgres::Row;
-
 use crate::node::client::Client;
 
 use super::router::Router;

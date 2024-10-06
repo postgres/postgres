@@ -1,7 +1,6 @@
 use indexmap::IndexMap;
 use inline_colorization::*;
 use postgres::{Client as PostgresClient, Row};
-use std::hash::Hash;
 use std::io::{Read, Write};
 use std::net::{TcpListener, TcpStream};
 use std::sync::{Arc, Mutex};
