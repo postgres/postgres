@@ -26,12 +26,10 @@ jobs:
         with:
           toolchain: stable
           override: true
+      - run: brew update && brew upgrade
       - run: brew install libpq
-      - run: |
-          export PATH="/opt/homebrew/opt/libpq/bin:$PATH"
-          export LDFLAGS="-L/opt/homebrew/opt/libpq/lib"
-          export CPPFLAGS="-I/opt/homebrew/opt/libpq/include"
-          ./configure --without-icu
+      - run: gem uninstall pg && bundle install
+      - run: ./configure --without-icu
       - run: make
       - run: python3 -m venv myenv
       - run: |
