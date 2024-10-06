@@ -27,8 +27,11 @@ jobs:
           toolchain: stable
           override: true
       - run: brew install libpq
-      - run: brew link --force libpq
-      - run: ./configure --without-icu
+      - run: |
+          export PATH="/opt/homebrew/opt/libpq/bin:$PATH"
+          export LDFLAGS="-L/opt/homebrew/opt/libpq/lib"
+          export CPPFLAGS="-I/opt/homebrew/opt/libpq/include"
+          ./configure --without-icu
       - run: make
       - run: python3 -m venv myenv
       - run: |
