@@ -7,7 +7,7 @@ on:
 
 jobs:
   check-format:
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v2
@@ -18,7 +18,7 @@ jobs:
       - run: cd sharding && cargo fmt -- --check
 
   test:
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v2
@@ -26,15 +26,12 @@ jobs:
         with:
           toolchain: stable
           override: true
-      - run: brew update && brew upgrade
-      - run: brew install libpq
-      - run: brew cleanup
-      - run: brew link --overwrite libpq
+      - run: sudo apt update && sudo apt upgrade -y
+      - run: sudo apt install -y libpq-dev postgresql-client
       - run: |
-          export PATH="/opt/homebrew/opt/libpq/bin:$PATH"
-          export LDFLAGS="-L/opt/homebrew/opt/libpq/lib"
-          export CPPFLAGS="-I/opt/homebrew/opt/libpq/include"
-          export DYLD_LIBRARY_PATH="/opt/homebrew/opt/libpq/lib:$DYLD_LIBRARY_PATH"
+          export LDFLAGS="-L/usr/lib"
+          export CPPFLAGS="-I/usr/include"
+          export DYLD_LIBRARY_PATH="/usr/lib:$DYLD_LIBRARY_PATH"  # Puede que no sea necesario en Ubuntu
           ./configure --without-icu
       - run: make
       - run: python3 -m venv myenv
