@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2024, PostgreSQL Global Development Group
  *
- * src/bin/psql/tab-complete.c
+ * src/bin/psql/tab-complete.in.c
  *
  * Note: this will compile and work as-is if SWITCH_CONVERSION_APPLIED
  * is not defined.  However, the expected usage is that it's first run

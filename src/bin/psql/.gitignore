@@ -1,4 +1,5 @@
 /psqlscanslash.c
+/tab-complete.c
 /sql_help.h
 /sql_help.c
 /psql
