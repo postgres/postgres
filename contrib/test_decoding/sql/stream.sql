@@ -44,5 +44,23 @@ toasted-123456789012345678901234567890123456789012345678901234567890123456789012
 
 SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL,NULL, 'include-xids', '0', 'skip-empty-xacts', '1', 'stream-changes', '1');
 
+-- Test that accessing a TOAST table in streaming mode is allowed.
+
+-- Create a table with a column that uses a TOASTed default value.
+-- (temporarily hide query, to avoid the long CREATE TABLE stmt)
+\set ECHO none
+SELECT 'CREATE TABLE test_tab (a text DEFAULT ''' || string_agg('toast value', '') || ''');' FROM generate_series(1, 4000)
+\gexec
+\set ECHO all
+
+BEGIN;
+INSERT INTO test_tab SELECT repeat('a', 6000) || g.i FROM generate_series(1, 350) g(i);
+
+-- Force WAL flush, so that the above changes will be streamed.
+SELECT 'force flush' FROM pg_switch_wal();
+
+SELECT count(*) FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1', 'stream-changes', '1');
+COMMIT;
+
 DROP TABLE stream_test;
 SELECT pg_drop_replication_slot('regression_slot');
