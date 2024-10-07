@@ -182,7 +182,7 @@ check_datestyle(char **newval, void **extra, GucSource source)
 
 	if (!ok)
 	{
-		GUC_check_errdetail("Conflicting \"datestyle\" specifications.");
+		GUC_check_errdetail("Conflicting \"DateStyle\" specifications.");
 		return false;
 	}
 

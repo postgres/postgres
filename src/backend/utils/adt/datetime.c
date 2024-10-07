@@ -4107,7 +4107,7 @@ DateTimeParseError(int dterr, DateTimeErrorExtra *extra,
 					(errcode(ERRCODE_DATETIME_FIELD_OVERFLOW),
 					 errmsg("date/time field value out of range: \"%s\"",
 							str),
-					 errhint("Perhaps you need a different \"datestyle\" setting.")));
+					 errhint("Perhaps you need a different \"DateStyle\" setting.")));
 			break;
 		case DTERR_INTERVAL_OVERFLOW:
 			errsave(escontext,
