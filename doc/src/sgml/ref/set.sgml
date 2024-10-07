@@ -165,7 +165,7 @@ SET [ SESSION | LOCAL ] TIME ZONE { <replaceable class="parameter">value</replac
     <varlistentry>
      <term><literal>NAMES</literal></term>
      <listitem>
-      <para><literal>SET NAMES <replaceable>value</replaceable></literal> is an alias for
+      <para><literal>SET NAMES '<replaceable>value</replaceable>'</literal> is an alias for
        <literal>SET client_encoding TO <replaceable>value</replaceable></literal>.
       </para>
      </listitem>
