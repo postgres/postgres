@@ -562,7 +562,8 @@ vacuum_one_database(ConnParams *cparams,
 	 * Exclude temporary tables, beginning the WHERE clause.
 	 */
 	appendPQExpBufferStr(&catalog_query,
-						 " WHERE c.relpersistence != " CppAsString2(RELPERSISTENCE_TEMP));
+						 " WHERE c.relpersistence OPERATOR(pg_catalog.!=) "
+						 CppAsString2(RELPERSISTENCE_TEMP) "\n");
 
 
 	/*
