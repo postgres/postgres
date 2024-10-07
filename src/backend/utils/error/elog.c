@@ -2596,12 +2596,12 @@ log_line_prefix(StringInfo buf, ErrorData *edata)
 				{
 					char		strfbuf[128];
 
-					snprintf(strfbuf, sizeof(strfbuf) - 1, "%lx.%x",
-							 (long) (MyStartTime), MyProcPid);
+					snprintf(strfbuf, sizeof(strfbuf) - 1, "%" INT64_MODIFIER "x.%x",
+							 MyStartTime, MyProcPid);
 					appendStringInfo(buf, "%*s", padding, strfbuf);
 				}
 				else
-					appendStringInfo(buf, "%lx.%x", (long) (MyStartTime), MyProcPid);
+					appendStringInfo(buf, "%" INT64_MODIFIER "x.%x", MyStartTime, MyProcPid);
 				break;
 			case 'p':
 				if (padding != 0)
