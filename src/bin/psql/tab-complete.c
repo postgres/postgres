@@ -4,6 +4,13 @@
  * Copyright (c) 2000-2024, PostgreSQL Global Development Group
  *
  * src/bin/psql/tab-complete.c
+ *
+ * Note: this will compile and work as-is if SWITCH_CONVERSION_APPLIED
+ * is not defined.  However, the expected usage is that it's first run
+ * through gen_tabcomplete.pl, which will #define that symbol, fill in the
+ * tcpatterns[] array, and convert the else-if chain in match_previous_words()
+ * into a switch.  See comments for match_previous_words() and the header
+ * comment in gen_tabcomplete.pl for more detail.
  */
 
 /*----------------------------------------------------------------------
@@ -1195,6 +1202,20 @@ static const VersionedQuery Query_for_list_of_subscriptions[] = {
 	{0, NULL}
 };
 
+ /* Known command-starting keywords. */
+static const char *const sql_commands[] = {
+	"ABORT", "ALTER", "ANALYZE", "BEGIN", "CALL", "CHECKPOINT", "CLOSE", "CLUSTER",
+	"COMMENT", "COMMIT", "COPY", "CREATE", "DEALLOCATE", "DECLARE",
+	"DELETE FROM", "DISCARD", "DO", "DROP", "END", "EXECUTE", "EXPLAIN",
+	"FETCH", "GRANT", "IMPORT FOREIGN SCHEMA", "INSERT INTO", "LISTEN", "LOAD", "LOCK",
+	"MERGE INTO", "MOVE", "NOTIFY", "PREPARE",
+	"REASSIGN", "REFRESH MATERIALIZED VIEW", "REINDEX", "RELEASE",
+	"RESET", "REVOKE", "ROLLBACK",
+	"SAVEPOINT", "SECURITY LABEL", "SELECT", "SET", "SHOW", "START",
+	"TABLE", "TRUNCATE", "UNLISTEN", "UPDATE", "VACUUM", "VALUES", "WITH",
+	NULL
+};
+
 /*
  * This is a list of all "things" in Pgsql, which can show up after CREATE or
  * DROP; and there is also a query to get a list of them.
@@ -1287,6 +1308,51 @@ static const pgsql_thing_t words_after_create[] = {
 	{NULL}						/* end of list */
 };
 
+/*
+ * The tcpatterns[] table provides the initial pattern-match rule for each
+ * switch case in match_previous_words().  The contents of the table
+ * are constructed by gen_tabcomplete.pl.
+ */
+
+/* Basic match rules appearing in tcpatterns[].kind */
+enum TCPatternKind
+{
+	Match,
+	MatchCS,
+	HeadMatch,
+	HeadMatchCS,
+	TailMatch,
+	TailMatchCS,
+};
+
+/* Things besides string literals that can appear in tcpatterns[].words */
+#define MatchAny  NULL
+#define MatchAnyExcept(pattern)  ("!" pattern)
+#define MatchAnyN ""
+
+/* One entry in tcpatterns[] */
+typedef struct
+{
+	int			id;				/* case label used in match_previous_words */
+	enum TCPatternKind kind;	/* match kind, see above */
+	int			nwords;			/* length of words[] array */
+	const char *const *words;	/* array of match words */
+} TCPattern;
+
+/* Macro emitted by gen_tabcomplete.pl to fill a tcpatterns[] entry */
+#define TCPAT(id, kind, ...) \
+	{ (id), (kind), VA_ARGS_NARGS(__VA_ARGS__), \
+	  (const char * const []) { __VA_ARGS__ } }
+
+#ifdef SWITCH_CONVERSION_APPLIED
+
+static const TCPattern tcpatterns[] =
+{
+	/* Insert tab-completion pattern data here. */
+};
+
+#endif							/* SWITCH_CONVERSION_APPLIED */
+
 /* Storage parameters for CREATE TABLE and ALTER TABLE */
 static const char *const table_storage_parameters[] = {
 	"autovacuum_analyze_scale_factor",
@@ -1340,6 +1406,10 @@ static const char *const view_optional_parameters[] = {
 
 /* Forward declaration of functions */
 static char **psql_completion(const char *text, int start, int end);
+static char **match_previous_words(int pattern_id,
+								   const char *text, int start, int end,
+								   char **previous_words,
+								   int previous_words_count);
 static char *create_command_generator(const char *text, int state);
 static char *drop_command_generator(const char *text, int state);
 static char *alter_command_generator(const char *text, int state);
@@ -1449,10 +1519,6 @@ initialize_readline(void)
  * just be written directly in patterns.)  There is also MatchAnyN, but that
  * is supported only in Matches/MatchesCS and is not handled here.
  */
-#define MatchAny  NULL
-#define MatchAnyExcept(pattern)  ("!" pattern)
-#define MatchAnyN ""
-
 static bool
 word_matches(const char *pattern,
 			 const char *word,
@@ -1787,20 +1853,6 @@ psql_completion(const char *text, int start, int end)
 	HeadMatchesImpl(true, previous_words_count, previous_words, \
 					VA_ARGS_NARGS(__VA_ARGS__), __VA_ARGS__)
 
-	/* Known command-starting keywords. */
-	static const char *const sql_commands[] = {
-		"ABORT", "ALTER", "ANALYZE", "BEGIN", "CALL", "CHECKPOINT", "CLOSE", "CLUSTER",
-		"COMMENT", "COMMIT", "COPY", "CREATE", "DEALLOCATE", "DECLARE",
-		"DELETE FROM", "DISCARD", "DO", "DROP", "END", "EXECUTE", "EXPLAIN",
-		"FETCH", "GRANT", "IMPORT FOREIGN SCHEMA", "INSERT INTO", "LISTEN", "LOAD", "LOCK",
-		"MERGE INTO", "MOVE", "NOTIFY", "PREPARE",
-		"REASSIGN", "REFRESH MATERIALIZED VIEW", "REINDEX", "RELEASE",
-		"RESET", "REVOKE", "ROLLBACK",
-		"SAVEPOINT", "SECURITY LABEL", "SELECT", "SET", "SHOW", "START",
-		"TABLE", "TRUNCATE", "UNLISTEN", "UPDATE", "VACUUM", "VALUES", "WITH",
-		NULL
-	};
-
 	/* psql's backslash commands. */
 	static const char *const backslash_commands[] = {
 		"\\a",
@@ -1886,6 +1938,194 @@ psql_completion(const char *text, int start, int end)
 	/* If no previous word, suggest one of the basic sql commands */
 	else if (previous_words_count == 0)
 		COMPLETE_WITH_LIST(sql_commands);
+
+	/* Else try completions based on matching patterns of previous words */
+	else
+	{
+#ifdef SWITCH_CONVERSION_APPLIED
+		/*
+		 * If we have transformed match_previous_words into a switch, iterate
+		 * through tcpatterns[] to see which pattern ids match.
+		 *
+		 * For now, we have to try the patterns in the order they are stored
+		 * (matching the order of switch cases in match_previous_words),
+		 * because some of the logic in match_previous_words assumes that
+		 * previous matches have been eliminated.  This is fairly
+		 * unprincipled, and it is likely that there are undesirable as well
+		 * as desirable interactions hidden in the order of the pattern
+		 * checks.  TODO: think about a better way to manage that.
+		 */
+		for (int tindx = 0; tindx < lengthof(tcpatterns); tindx++)
+		{
+			const TCPattern *tcpat = tcpatterns + tindx;
+			bool		match = false;
+
+			switch (tcpat->kind)
+			{
+				case Match:
+					match = MatchesArray(false,
+										 previous_words_count,
+										 previous_words,
+										 tcpat->nwords, tcpat->words);
+					break;
+				case MatchCS:
+					match = MatchesArray(true,
+										 previous_words_count,
+										 previous_words,
+										 tcpat->nwords, tcpat->words);
+					break;
+				case HeadMatch:
+					match = HeadMatchesArray(false,
+											 previous_words_count,
+											 previous_words,
+											 tcpat->nwords, tcpat->words);
+					break;
+				case HeadMatchCS:
+					match = HeadMatchesArray(true,
+											 previous_words_count,
+											 previous_words,
+											 tcpat->nwords, tcpat->words);
+					break;
+				case TailMatch:
+					match = TailMatchesArray(false,
+											 previous_words_count,
+											 previous_words,
+											 tcpat->nwords, tcpat->words);
+					break;
+				case TailMatchCS:
+					match = TailMatchesArray(true,
+											 previous_words_count,
+											 previous_words,
+											 tcpat->nwords, tcpat->words);
+					break;
+			}
+			if (match)
+			{
+				matches = match_previous_words(tcpat->id, text, start, end,
+											   previous_words,
+											   previous_words_count);
+				if (matches != NULL)
+					break;
+			}
+		}
+#else							/* !SWITCH_CONVERSION_APPLIED */
+		/*
+		 * If gen_tabcomplete.pl hasn't been applied to this code, just let
+		 * match_previous_words scan through all its patterns.
+		 */
+		matches = match_previous_words(0, text, start, end,
+									   previous_words,
+									   previous_words_count);
+#endif							/* SWITCH_CONVERSION_APPLIED */
+	}
+
+	/*
+	 * Finally, we look through the list of "things", such as TABLE, INDEX and
+	 * check if that was the previous word. If so, execute the query to get a
+	 * list of them.
+	 */
+	if (matches == NULL)
+	{
+		const pgsql_thing_t *wac;
+
+		for (wac = words_after_create; wac->name != NULL; wac++)
+		{
+			if (pg_strcasecmp(prev_wd, wac->name) == 0)
+			{
+				if (wac->query)
+					COMPLETE_WITH_QUERY_LIST(wac->query,
+											 wac->keywords);
+				else if (wac->vquery)
+					COMPLETE_WITH_VERSIONED_QUERY_LIST(wac->vquery,
+													   wac->keywords);
+				else if (wac->squery)
+					COMPLETE_WITH_VERSIONED_SCHEMA_QUERY_LIST(wac->squery,
+															  wac->keywords);
+				break;
+			}
+		}
+	}
+
+	/*
+	 * If we still don't have anything to match we have to fabricate some sort
+	 * of default list. If we were to just return NULL, readline automatically
+	 * attempts filename completion, and that's usually no good.
+	 */
+	if (matches == NULL)
+	{
+		COMPLETE_WITH_CONST(true, "");
+		/* Also, prevent Readline from appending stuff to the non-match */
+		rl_completion_append_character = '\0';
+#ifdef HAVE_RL_COMPLETION_SUPPRESS_QUOTE
+		rl_completion_suppress_quote = 1;
+#endif
+	}
+
+	/* free storage */
+	free(previous_words);
+	free(words_buffer);
+	free(text_copy);
+	free(completion_ref_object);
+	completion_ref_object = NULL;
+	free(completion_ref_schema);
+	completion_ref_schema = NULL;
+
+	/* Return our Grand List O' Matches */
+	return matches;
+}
+
+/*
+ * Subroutine to try matches based on previous_words.
+ *
+ * This can operate in one of two modes.  As presented, the body of the
+ * function is a long if-else-if chain that sequentially tries each known
+ * match rule.  That works, but some C compilers have trouble with such a long
+ * else-if chain, either taking extra time to compile or failing altogether.
+ * Therefore, we prefer to transform the else-if chain into a switch, and then
+ * each call of this function considers just one match rule (under control of
+ * a loop in psql_completion()).  Compilers tend to be more ready to deal
+ * with many-arm switches than many-arm else-if chains.
+ *
+ * Each if-condition in this function must begin with a call of one of the
+ * functions Matches, HeadMatches, TailMatches, MatchesCS, HeadMatchesCS, or
+ * TailMatchesCS.  The preprocessor gen_tabcomplete.pl strips out those
+ * calls and converts them into entries in tcpatterns[], which are evaluated
+ * by the calling loop in psql_completion().  Successful matches result in
+ * calls to this function with the appropriate pattern_id, causing just the
+ * corresponding switch case to be executed.
+ *
+ * If-conditions in this function can be more complex than a single *Matches
+ * function call in one of two ways (but not both!).  They can be OR's
+ * of *Matches calls, such as
+ *  else if (Matches("ALTER", "VIEW", MatchAny, "ALTER", MatchAny) ||
+ *           Matches("ALTER", "VIEW", MatchAny, "ALTER", "COLUMN", MatchAny))
+ * or they can be a *Matches call AND'ed with some other condition, e.g.
+ *  else if (Matches("CREATE", "PUBLICATION", MatchAny, "FOR", "TABLE", MatchAny) &&
+ *           !ends_with(prev_wd, ','))
+ * The former case is transformed into multiple tcpatterns[] entries and
+ * multiple case labels for the same bit of code.  The latter case is
+ * transformed into a case label and a contained if-statement.
+ *
+ * This is split out of psql_completion() primarily to separate code that
+ * gen_tabcomplete.pl should process from code that it should not, although
+ * doing so also helps to avoid extra indentation of this code.
+ *
+ * Returns a matches list, or NULL if no match.
+ */
+static char **
+match_previous_words(int pattern_id,
+					 const char *text, int start, int end,
+					 char **previous_words, int previous_words_count)
+{
+	/* This is the variable we'll return. */
+	char	  **matches = NULL;
+
+	/* Dummy statement, allowing all the match rules to look like "else if" */
+	if (0)
+		 /* skip */ ;
+
+	/* gen_tabcomplete.pl begins special processing here */
+	/* BEGIN GEN_TABCOMPLETE */
 
 /* CREATE */
 	/* complete with something you can create */
@@ -1985,9 +2225,10 @@ psql_completion(const char *text, int start, int end)
 	/* ALTER PUBLICATION <name> ADD */
 	else if (Matches("ALTER", "PUBLICATION", MatchAny, "ADD"))
 		COMPLETE_WITH("TABLES IN SCHEMA", "TABLE");
-	else if (Matches("ALTER", "PUBLICATION", MatchAny, "ADD|SET", "TABLE") ||
-			 (HeadMatches("ALTER", "PUBLICATION", MatchAny, "ADD|SET", "TABLE") &&
-			  ends_with(prev_wd, ',')))
+	else if (Matches("ALTER", "PUBLICATION", MatchAny, "ADD|SET", "TABLE"))
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tables);
+	else if (HeadMatches("ALTER", "PUBLICATION", MatchAny, "ADD|SET", "TABLE") &&
+			 ends_with(prev_wd, ','))
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tables);
 
 	/*
@@ -2452,8 +2693,7 @@ psql_completion(const char *text, int start, int end)
 	}
 	/* ALTER TABLE xxx ADD [COLUMN] yyy */
 	else if (Matches("ALTER", "TABLE", MatchAny, "ADD", "COLUMN", MatchAny) ||
-			 (Matches("ALTER", "TABLE", MatchAny, "ADD", MatchAny) &&
-			  !Matches("ALTER", "TABLE", MatchAny, "ADD", "COLUMN|CONSTRAINT|CHECK|UNIQUE|PRIMARY|EXCLUDE|FOREIGN")))
+			 Matches("ALTER", "TABLE", MatchAny, "ADD", MatchAnyExcept("COLUMN|CONSTRAINT|CHECK|UNIQUE|PRIMARY|EXCLUDE|FOREIGN")))
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_datatypes);
 	/* ALTER TABLE xxx ADD CONSTRAINT yyy */
 	else if (Matches("ALTER", "TABLE", MatchAny, "ADD", "CONSTRAINT", MatchAny))
@@ -3835,12 +4075,13 @@ psql_completion(const char *text, int start, int end)
 					 "COLLATION|CONVERSION|DOMAIN|EXTENSION|LANGUAGE|PUBLICATION|SCHEMA|SEQUENCE|SERVER|SUBSCRIPTION|STATISTICS|TABLE|TYPE|VIEW",
 					 MatchAny) ||
 			 Matches("DROP", "ACCESS", "METHOD", MatchAny) ||
-			 (Matches("DROP", "AGGREGATE|FUNCTION|PROCEDURE|ROUTINE", MatchAny, MatchAny) &&
-			  ends_with(prev_wd, ')')) ||
 			 Matches("DROP", "EVENT", "TRIGGER", MatchAny) ||
 			 Matches("DROP", "FOREIGN", "DATA", "WRAPPER", MatchAny) ||
 			 Matches("DROP", "FOREIGN", "TABLE", MatchAny) ||
 			 Matches("DROP", "TEXT", "SEARCH", "CONFIGURATION|DICTIONARY|PARSER|TEMPLATE", MatchAny))
+		COMPLETE_WITH("CASCADE", "RESTRICT");
+	else if (Matches("DROP", "AGGREGATE|FUNCTION|PROCEDURE|ROUTINE", MatchAny, MatchAny) &&
+			 ends_with(prev_wd, ')'))
 		COMPLETE_WITH("CASCADE", "RESTRICT");
 
 	/* help completing some of the variants */
@@ -5120,58 +5361,9 @@ psql_completion(const char *text, int start, int end)
 		matches = rl_completion_matches(text, complete_from_files);
 	}
 
-	/*
-	 * Finally, we look through the list of "things", such as TABLE, INDEX and
-	 * check if that was the previous word. If so, execute the query to get a
-	 * list of them.
-	 */
-	else
-	{
-		const pgsql_thing_t *wac;
+	/* gen_tabcomplete.pl ends special processing here */
+	/* END GEN_TABCOMPLETE */
 
-		for (wac = words_after_create; wac->name != NULL; wac++)
-		{
-			if (pg_strcasecmp(prev_wd, wac->name) == 0)
-			{
-				if (wac->query)
-					COMPLETE_WITH_QUERY_LIST(wac->query,
-											 wac->keywords);
-				else if (wac->vquery)
-					COMPLETE_WITH_VERSIONED_QUERY_LIST(wac->vquery,
-													   wac->keywords);
-				else if (wac->squery)
-					COMPLETE_WITH_VERSIONED_SCHEMA_QUERY_LIST(wac->squery,
-															  wac->keywords);
-				break;
-			}
-		}
-	}
-
-	/*
-	 * If we still don't have anything to match we have to fabricate some sort
-	 * of default list. If we were to just return NULL, readline automatically
-	 * attempts filename completion, and that's usually no good.
-	 */
-	if (matches == NULL)
-	{
-		COMPLETE_WITH_CONST(true, "");
-		/* Also, prevent Readline from appending stuff to the non-match */
-		rl_completion_append_character = '\0';
-#ifdef HAVE_RL_COMPLETION_SUPPRESS_QUOTE
-		rl_completion_suppress_quote = 1;
-#endif
-	}
-
-	/* free storage */
-	free(previous_words);
-	free(words_buffer);
-	free(text_copy);
-	free(completion_ref_object);
-	completion_ref_object = NULL;
-	free(completion_ref_schema);
-	completion_ref_schema = NULL;
-
-	/* Return our Grand List O' Matches */
 	return matches;
 }
 

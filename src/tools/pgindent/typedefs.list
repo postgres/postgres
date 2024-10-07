@@ -2810,6 +2810,7 @@ TBMSharedIterator
 TBMSharedIteratorState
 TBMStatus
 TBlockState
+TCPattern
 TIDBitmap
 TM_FailureData
 TM_IndexDelete
