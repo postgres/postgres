@@ -1446,10 +1446,12 @@ initialize_readline(void)
  *
  * For readability, callers should use the macros MatchAny and MatchAnyExcept
  * to invoke those two special cases for 'pattern'.  (But '|' and '*' must
- * just be written directly in patterns.)
+ * just be written directly in patterns.)  There is also MatchAnyN, but that
+ * is supported only in Matches/MatchesCS and is not handled here.
  */
 #define MatchAny  NULL
 #define MatchAnyExcept(pattern)  ("!" pattern)
+#define MatchAnyN ""
 
 static bool
 word_matches(const char *pattern,
@@ -1514,105 +1516,194 @@ word_matches(const char *pattern,
 }
 
 /*
- * Implementation of TailMatches and TailMatchesCS macros: do the last N words
- * in previous_words match the variadic arguments?
+ * Implementation of TailMatches and TailMatchesCS tests: do the last N words
+ * in previous_words match the pattern arguments?
  *
  * The array indexing might look backwards, but remember that
  * previous_words[0] contains the *last* word on the line, not the first.
+ */
+static bool
+TailMatchesArray(bool case_sensitive,
+				 int previous_words_count, char **previous_words,
+				 int narg, const char *const *args)
+{
+	if (previous_words_count < narg)
+		return false;
+
+	for (int argno = 0; argno < narg; argno++)
+	{
+		const char *arg = args[argno];
+
+		if (!word_matches(arg, previous_words[narg - argno - 1],
+						  case_sensitive))
+			return false;
+	}
+
+	return true;
+}
+
+/*
+ * As above, but the pattern is passed as a variadic argument list.
  */
 static bool
 TailMatchesImpl(bool case_sensitive,
 				int previous_words_count, char **previous_words,
 				int narg,...)
 {
+	const char *argarray[64];
 	va_list		args;
+
+	Assert(narg <= lengthof(argarray));
 
 	if (previous_words_count < narg)
 		return false;
 
 	va_start(args, narg);
-
 	for (int argno = 0; argno < narg; argno++)
-	{
-		const char *arg = va_arg(args, const char *);
-
-		if (!word_matches(arg, previous_words[narg - argno - 1],
-						  case_sensitive))
-		{
-			va_end(args);
-			return false;
-		}
-	}
-
+		argarray[argno] = va_arg(args, const char *);
 	va_end(args);
 
-	return true;
+	return TailMatchesArray(case_sensitive,
+							previous_words_count, previous_words,
+							narg, argarray);
 }
 
 /*
- * Implementation of Matches and MatchesCS macros: do all of the words
- * in previous_words match the variadic arguments?
+ * Implementation of HeadMatches and HeadMatchesCS tests: do the first N
+ * words in previous_words match the pattern arguments?
  */
 static bool
-MatchesImpl(bool case_sensitive,
-			int previous_words_count, char **previous_words,
-			int narg,...)
+HeadMatchesArray(bool case_sensitive,
+				 int previous_words_count, char **previous_words,
+				 int narg, const char *const *args)
 {
-	va_list		args;
-
-	if (previous_words_count != narg)
+	if (previous_words_count < narg)
 		return false;
-
-	va_start(args, narg);
 
 	for (int argno = 0; argno < narg; argno++)
 	{
-		const char *arg = va_arg(args, const char *);
+		const char *arg = args[argno];
 
-		if (!word_matches(arg, previous_words[narg - argno - 1],
+		if (!word_matches(arg, previous_words[previous_words_count - argno - 1],
 						  case_sensitive))
-		{
-			va_end(args);
 			return false;
-		}
 	}
-
-	va_end(args);
 
 	return true;
 }
 
 /*
- * Implementation of HeadMatches and HeadMatchesCS macros: do the first N
- * words in previous_words match the variadic arguments?
+ * As above, but the pattern is passed as a variadic argument list.
  */
 static bool
 HeadMatchesImpl(bool case_sensitive,
 				int previous_words_count, char **previous_words,
 				int narg,...)
 {
+	const char *argarray[64];
 	va_list		args;
+
+	Assert(narg <= lengthof(argarray));
 
 	if (previous_words_count < narg)
 		return false;
 
 	va_start(args, narg);
+	for (int argno = 0; argno < narg; argno++)
+		argarray[argno] = va_arg(args, const char *);
+	va_end(args);
 
+	return HeadMatchesArray(case_sensitive,
+							previous_words_count, previous_words,
+							narg, argarray);
+}
+
+/*
+ * Implementation of Matches and MatchesCS tests: do all of the words
+ * in previous_words match the pattern arguments?
+ *
+ * This supports an additional kind of wildcard: MatchAnyN (represented as "")
+ * can match any number of words, including zero, in the middle of the list.
+ */
+static bool
+MatchesArray(bool case_sensitive,
+			 int previous_words_count, char **previous_words,
+			 int narg, const char *const *args)
+{
+	int			match_any_pos = -1;
+
+	/* Even with MatchAnyN, there must be at least N-1 words */
+	if (previous_words_count < narg - 1)
+		return false;
+
+	/* Check for MatchAnyN */
 	for (int argno = 0; argno < narg; argno++)
 	{
-		const char *arg = va_arg(args, const char *);
+		const char *arg = args[argno];
 
-		if (!word_matches(arg, previous_words[previous_words_count - argno - 1],
-						  case_sensitive))
+		if (arg != NULL && arg[0] == '\0')
 		{
-			va_end(args);
-			return false;
+			match_any_pos = argno;
+			break;
 		}
 	}
 
-	va_end(args);
+	if (match_any_pos < 0)
+	{
+		/* Standard case without MatchAnyN */
+		if (previous_words_count != narg)
+			return false;
+
+		/* Either Head or Tail match will do for the rest */
+		if (!HeadMatchesArray(case_sensitive,
+							  previous_words_count, previous_words,
+							  narg, args))
+			return false;
+	}
+	else
+	{
+		/* Match against head */
+		if (!HeadMatchesArray(case_sensitive,
+							  previous_words_count, previous_words,
+							  match_any_pos, args))
+			return false;
+
+		/* Match against tail */
+		if (!TailMatchesArray(case_sensitive,
+							  previous_words_count, previous_words,
+							  narg - match_any_pos - 1,
+							  args + match_any_pos + 1))
+			return false;
+	}
 
 	return true;
+}
+
+/*
+ * As above, but the pattern is passed as a variadic argument list.
+ */
+static bool
+MatchesImpl(bool case_sensitive,
+			int previous_words_count, char **previous_words,
+			int narg,...)
+{
+	const char *argarray[64];
+	va_list		args;
+
+	Assert(narg <= lengthof(argarray));
+
+	/* Even with MatchAnyN, there must be at least N-1 words */
+	if (previous_words_count < narg - 1)
+		return false;
+
+	va_start(args, narg);
+	for (int argno = 0; argno < narg; argno++)
+		argarray[argno] = va_arg(args, const char *);
+	va_end(args);
+
+	return MatchesArray(case_sensitive,
+						previous_words_count, previous_words,
+						narg, argarray);
 }
 
 /*
@@ -1906,9 +1997,9 @@ psql_completion(const char *text, int start, int end)
 	 * "ALTER PUBLICATION <name> ADD TABLE <name> WHERE (" - complete with
 	 * table attributes
 	 */
-	else if (HeadMatches("ALTER", "PUBLICATION", MatchAny) && TailMatches("WHERE"))
+	else if (Matches("ALTER", "PUBLICATION", MatchAny, MatchAnyN, "WHERE"))
 		COMPLETE_WITH("(");
-	else if (HeadMatches("ALTER", "PUBLICATION", MatchAny) && TailMatches("WHERE", "("))
+	else if (Matches("ALTER", "PUBLICATION", MatchAny, MatchAnyN, "WHERE", "("))
 		COMPLETE_WITH_ATTR(prev3_wd);
 	else if (HeadMatches("ALTER", "PUBLICATION", MatchAny, "ADD|SET", "TABLE") &&
 			 !TailMatches("WHERE", "(*)"))
@@ -1926,7 +2017,7 @@ psql_completion(const char *text, int start, int end)
 								 " AND nspname NOT LIKE E'pg\\\\_%%'",
 								 "CURRENT_SCHEMA");
 	/* ALTER PUBLICATION <name> SET ( */
-	else if (HeadMatches("ALTER", "PUBLICATION", MatchAny) && TailMatches("SET", "("))
+	else if (Matches("ALTER", "PUBLICATION", MatchAny, MatchAnyN, "SET", "("))
 		COMPLETE_WITH("publish", "publish_via_partition_root");
 	/* ALTER SUBSCRIPTION <name> */
 	else if (Matches("ALTER", "SUBSCRIPTION", MatchAny))
@@ -1934,36 +2025,34 @@ psql_completion(const char *text, int start, int end)
 					  "RENAME TO", "REFRESH PUBLICATION", "SET", "SKIP (",
 					  "ADD PUBLICATION", "DROP PUBLICATION");
 	/* ALTER SUBSCRIPTION <name> REFRESH PUBLICATION */
-	else if (HeadMatches("ALTER", "SUBSCRIPTION", MatchAny) &&
-			 TailMatches("REFRESH", "PUBLICATION"))
+	else if (Matches("ALTER", "SUBSCRIPTION", MatchAny, MatchAnyN, "REFRESH", "PUBLICATION"))
 		COMPLETE_WITH("WITH (");
 	/* ALTER SUBSCRIPTION <name> REFRESH PUBLICATION WITH ( */
-	else if (HeadMatches("ALTER", "SUBSCRIPTION", MatchAny) &&
-			 TailMatches("REFRESH", "PUBLICATION", "WITH", "("))
+	else if (Matches("ALTER", "SUBSCRIPTION", MatchAny, MatchAnyN, "REFRESH", "PUBLICATION", "WITH", "("))
 		COMPLETE_WITH("copy_data");
 	/* ALTER SUBSCRIPTION <name> SET */
 	else if (Matches("ALTER", "SUBSCRIPTION", MatchAny, "SET"))
 		COMPLETE_WITH("(", "PUBLICATION");
 	/* ALTER SUBSCRIPTION <name> SET ( */
-	else if (HeadMatches("ALTER", "SUBSCRIPTION", MatchAny) && TailMatches("SET", "("))
+	else if (Matches("ALTER", "SUBSCRIPTION", MatchAny, MatchAnyN, "SET", "("))
 		COMPLETE_WITH("binary", "disable_on_error", "failover", "origin",
 					  "password_required", "run_as_owner", "slot_name",
 					  "streaming", "synchronous_commit", "two_phase");
 	/* ALTER SUBSCRIPTION <name> SKIP ( */
-	else if (HeadMatches("ALTER", "SUBSCRIPTION", MatchAny) && TailMatches("SKIP", "("))
+	else if (Matches("ALTER", "SUBSCRIPTION", MatchAny, MatchAnyN, "SKIP", "("))
 		COMPLETE_WITH("lsn");
 	/* ALTER SUBSCRIPTION <name> SET PUBLICATION */
-	else if (HeadMatches("ALTER", "SUBSCRIPTION", MatchAny) && TailMatches("SET", "PUBLICATION"))
+	else if (Matches("ALTER", "SUBSCRIPTION", MatchAny, MatchAnyN, "SET", "PUBLICATION"))
 	{
 		/* complete with nothing here as this refers to remote publications */
 	}
 	/* ALTER SUBSCRIPTION <name> ADD|DROP|SET PUBLICATION <name> */
-	else if (HeadMatches("ALTER", "SUBSCRIPTION", MatchAny) &&
-			 TailMatches("ADD|DROP|SET", "PUBLICATION", MatchAny))
+	else if (Matches("ALTER", "SUBSCRIPTION", MatchAny, MatchAnyN,
+					 "ADD|DROP|SET", "PUBLICATION", MatchAny))
 		COMPLETE_WITH("WITH (");
 	/* ALTER SUBSCRIPTION <name> ADD|DROP|SET PUBLICATION <name> WITH ( */
-	else if (HeadMatches("ALTER", "SUBSCRIPTION", MatchAny) &&
-			 TailMatches("ADD|DROP|SET", "PUBLICATION", MatchAny, "WITH", "("))
+	else if (Matches("ALTER", "SUBSCRIPTION", MatchAny, MatchAnyN,
+					 "ADD|DROP|SET", "PUBLICATION", MatchAny, "WITH", "("))
 		COMPLETE_WITH("copy_data", "refresh");
 
 	/* ALTER SCHEMA <name> */
@@ -2712,7 +2801,7 @@ psql_completion(const char *text, int start, int end)
 		else if (TailMatches("VERBOSE|SKIP_LOCKED"))
 			COMPLETE_WITH("ON", "OFF");
 	}
-	else if (HeadMatches("ANALYZE") && TailMatches("("))
+	else if (Matches("ANALYZE", MatchAnyN, "("))
 		/* "ANALYZE (" should be caught above, so assume we want columns */
 		COMPLETE_WITH_ATTR(prev2_wd);
 	else if (HeadMatches("ANALYZE"))
@@ -3164,11 +3253,11 @@ psql_completion(const char *text, int start, int end)
 	 * "CREATE PUBLICATION <name> FOR TABLE <name> WHERE (" - complete with
 	 * table attributes
 	 */
-	else if (HeadMatches("CREATE", "PUBLICATION", MatchAny) && TailMatches("WHERE"))
+	else if (Matches("CREATE", "PUBLICATION", MatchAny, MatchAnyN, "WHERE"))
 		COMPLETE_WITH("(");
-	else if (HeadMatches("CREATE", "PUBLICATION", MatchAny) && TailMatches("WHERE", "("))
+	else if (Matches("CREATE", "PUBLICATION", MatchAny, MatchAnyN, "WHERE", "("))
 		COMPLETE_WITH_ATTR(prev3_wd);
-	else if (HeadMatches("CREATE", "PUBLICATION", MatchAny) && TailMatches("WHERE", "(*)"))
+	else if (Matches("CREATE", "PUBLICATION", MatchAny, MatchAnyN, "WHERE", "(*)"))
 		COMPLETE_WITH(" WITH (");
 
 	/*
@@ -3181,7 +3270,7 @@ psql_completion(const char *text, int start, int end)
 	else if (Matches("CREATE", "PUBLICATION", MatchAny, "FOR", "TABLES", "IN", "SCHEMA", MatchAny) && (!ends_with(prev_wd, ',')))
 		COMPLETE_WITH("WITH (");
 	/* Complete "CREATE PUBLICATION <name> [...] WITH" */
-	else if (HeadMatches("CREATE", "PUBLICATION") && TailMatches("WITH", "("))
+	else if (Matches("CREATE", "PUBLICATION", MatchAnyN, "WITH", "("))
 		COMPLETE_WITH("publish", "publish_via_partition_root");
 
 /* CREATE RULE */
@@ -3245,8 +3334,7 @@ psql_completion(const char *text, int start, int end)
 		COMPLETE_WITH("ndistinct", "dependencies", "mcv");
 	else if (Matches("CREATE", "STATISTICS", MatchAny, "(*)"))
 		COMPLETE_WITH("ON");
-	else if (HeadMatches("CREATE", "STATISTICS", MatchAny) &&
-			 TailMatches("FROM"))
+	else if (Matches("CREATE", "STATISTICS", MatchAny, MatchAnyN, "FROM"))
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tables);
 
 /* CREATE TABLE --- is allowed inside CREATE SCHEMA, so use TailMatches */
@@ -3338,10 +3426,10 @@ psql_completion(const char *text, int start, int end)
 	{
 		/* complete with nothing here as this refers to remote publications */
 	}
-	else if (HeadMatches("CREATE", "SUBSCRIPTION") && TailMatches("PUBLICATION", MatchAny))
+	else if (Matches("CREATE", "SUBSCRIPTION", MatchAnyN, "PUBLICATION", MatchAny))
 		COMPLETE_WITH("WITH (");
 	/* Complete "CREATE SUBSCRIPTION <name> ...  WITH ( <opt>" */
-	else if (HeadMatches("CREATE", "SUBSCRIPTION") && TailMatches("WITH", "("))
+	else if (Matches("CREATE", "SUBSCRIPTION", MatchAnyN, "WITH", "("))
 		COMPLETE_WITH("binary", "connect", "copy_data", "create_slot",
 					  "disable_on_error", "enabled", "failover", "origin",
 					  "password_required", "run_as_owner", "slot_name",
@@ -3395,9 +3483,10 @@ psql_completion(const char *text, int start, int end)
 	else if (TailMatches("CREATE", "TRIGGER", MatchAny, "INSTEAD", "OF", MatchAny, "ON") ||
 			 TailMatches("CREATE", "OR", "REPLACE", "TRIGGER", MatchAny, "INSTEAD", "OF", MatchAny, "ON"))
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_views);
-	else if ((HeadMatches("CREATE", "TRIGGER") ||
-			  HeadMatches("CREATE", "OR", "REPLACE", "TRIGGER")) &&
-			 TailMatches("ON", MatchAny))
+	else if (Matches("CREATE", "TRIGGER", MatchAnyN,
+					 "ON", MatchAny) ||
+			 Matches("CREATE", "OR", "REPLACE", "TRIGGER", MatchAnyN,
+					 "ON", MatchAny))
 	{
 		if (pset.sversion >= 110000)
 			COMPLETE_WITH("NOT DEFERRABLE", "DEFERRABLE", "INITIALLY",
@@ -3406,76 +3495,108 @@ psql_completion(const char *text, int start, int end)
 			COMPLETE_WITH("NOT DEFERRABLE", "DEFERRABLE", "INITIALLY",
 						  "REFERENCING", "FOR", "WHEN (", "EXECUTE PROCEDURE");
 	}
-	else if ((HeadMatches("CREATE", "TRIGGER") ||
-			  HeadMatches("CREATE", "OR", "REPLACE", "TRIGGER")) &&
-			 (TailMatches("DEFERRABLE") || TailMatches("INITIALLY", "IMMEDIATE|DEFERRED")))
+	else if (Matches("CREATE", "TRIGGER", MatchAnyN,
+					 "DEFERRABLE") ||
+			 Matches("CREATE", "OR", "REPLACE", "TRIGGER", MatchAnyN,
+					 "DEFERRABLE") ||
+			 Matches("CREATE", "TRIGGER", MatchAnyN,
+					 "INITIALLY", "IMMEDIATE|DEFERRED") ||
+			 Matches("CREATE", "OR", "REPLACE", "TRIGGER", MatchAnyN,
+					 "INITIALLY", "IMMEDIATE|DEFERRED"))
 	{
 		if (pset.sversion >= 110000)
 			COMPLETE_WITH("REFERENCING", "FOR", "WHEN (", "EXECUTE FUNCTION");
 		else
 			COMPLETE_WITH("REFERENCING", "FOR", "WHEN (", "EXECUTE PROCEDURE");
 	}
-	else if ((HeadMatches("CREATE", "TRIGGER") ||
-			  HeadMatches("CREATE", "OR", "REPLACE", "TRIGGER")) &&
-			 TailMatches("REFERENCING"))
+	else if (Matches("CREATE", "TRIGGER", MatchAnyN,
+					 "REFERENCING") ||
+			 Matches("CREATE", "OR", "REPLACE", "TRIGGER", MatchAnyN,
+					 "REFERENCING"))
 		COMPLETE_WITH("OLD TABLE", "NEW TABLE");
-	else if ((HeadMatches("CREATE", "TRIGGER") ||
-			  HeadMatches("CREATE", "OR", "REPLACE", "TRIGGER")) &&
-			 TailMatches("OLD|NEW", "TABLE"))
+	else if (Matches("CREATE", "TRIGGER", MatchAnyN,
+					 "OLD|NEW", "TABLE") ||
+			 Matches("CREATE", "OR", "REPLACE", "TRIGGER", MatchAnyN,
+					 "OLD|NEW", "TABLE"))
 		COMPLETE_WITH("AS");
-	else if ((HeadMatches("CREATE", "TRIGGER") ||
-			  HeadMatches("CREATE", "OR", "REPLACE", "TRIGGER")) &&
-			 (TailMatches("REFERENCING", "OLD", "TABLE", "AS", MatchAny) ||
-			  TailMatches("REFERENCING", "OLD", "TABLE", MatchAny)))
+	else if (Matches("CREATE", "TRIGGER", MatchAnyN,
+					 "REFERENCING", "OLD", "TABLE", "AS", MatchAny) ||
+			 Matches("CREATE", "OR", "REPLACE", "TRIGGER", MatchAnyN,
+					 "REFERENCING", "OLD", "TABLE", "AS", MatchAny) ||
+			 Matches("CREATE", "TRIGGER", MatchAnyN,
+					 "REFERENCING", "OLD", "TABLE", MatchAny) ||
+			 Matches("CREATE", "OR", "REPLACE", "TRIGGER", MatchAnyN,
+					 "REFERENCING", "OLD", "TABLE", MatchAny))
 	{
 		if (pset.sversion >= 110000)
 			COMPLETE_WITH("NEW TABLE", "FOR", "WHEN (", "EXECUTE FUNCTION");
 		else
 			COMPLETE_WITH("NEW TABLE", "FOR", "WHEN (", "EXECUTE PROCEDURE");
 	}
-	else if ((HeadMatches("CREATE", "TRIGGER") ||
-			  HeadMatches("CREATE", "OR", "REPLACE", "TRIGGER")) &&
-			 (TailMatches("REFERENCING", "NEW", "TABLE", "AS", MatchAny) ||
-			  TailMatches("REFERENCING", "NEW", "TABLE", MatchAny)))
+	else if (Matches("CREATE", "TRIGGER", MatchAnyN,
+					 "REFERENCING", "NEW", "TABLE", "AS", MatchAny) ||
+			 Matches("CREATE", "OR", "REPLACE", "TRIGGER", MatchAnyN,
+					 "REFERENCING", "NEW", "TABLE", "AS", MatchAny) ||
+			 Matches("CREATE", "TRIGGER", MatchAnyN,
+					 "REFERENCING", "NEW", "TABLE", MatchAny) ||
+			 Matches("CREATE", "OR", "REPLACE", "TRIGGER", MatchAnyN,
+					 "REFERENCING", "NEW", "TABLE", MatchAny))
 	{
 		if (pset.sversion >= 110000)
 			COMPLETE_WITH("OLD TABLE", "FOR", "WHEN (", "EXECUTE FUNCTION");
 		else
 			COMPLETE_WITH("OLD TABLE", "FOR", "WHEN (", "EXECUTE PROCEDURE");
 	}
-	else if ((HeadMatches("CREATE", "TRIGGER") ||
-			  HeadMatches("CREATE", "OR", "REPLACE", "TRIGGER")) &&
-			 (TailMatches("REFERENCING", "OLD|NEW", "TABLE", "AS", MatchAny, "OLD|NEW", "TABLE", "AS", MatchAny) ||
-			  TailMatches("REFERENCING", "OLD|NEW", "TABLE", MatchAny, "OLD|NEW", "TABLE", "AS", MatchAny) ||
-			  TailMatches("REFERENCING", "OLD|NEW", "TABLE", "AS", MatchAny, "OLD|NEW", "TABLE", MatchAny) ||
-			  TailMatches("REFERENCING", "OLD|NEW", "TABLE", MatchAny, "OLD|NEW", "TABLE", MatchAny)))
+	else if (Matches("CREATE", "TRIGGER", MatchAnyN,
+					 "REFERENCING", "OLD|NEW", "TABLE", "AS", MatchAny, "OLD|NEW", "TABLE", "AS", MatchAny) ||
+			 Matches("CREATE", "OR", "REPLACE", "TRIGGER", MatchAnyN,
+					 "REFERENCING", "OLD|NEW", "TABLE", "AS", MatchAny, "OLD|NEW", "TABLE", "AS", MatchAny) ||
+			 Matches("CREATE", "TRIGGER", MatchAnyN,
+					 "REFERENCING", "OLD|NEW", "TABLE", MatchAny, "OLD|NEW", "TABLE", "AS", MatchAny) ||
+			 Matches("CREATE", "OR", "REPLACE", "TRIGGER", MatchAnyN,
+					 "REFERENCING", "OLD|NEW", "TABLE", MatchAny, "OLD|NEW", "TABLE", "AS", MatchAny) ||
+			 Matches("CREATE", "TRIGGER", MatchAnyN,
+					 "REFERENCING", "OLD|NEW", "TABLE", "AS", MatchAny, "OLD|NEW", "TABLE", MatchAny) ||
+			 Matches("CREATE", "OR", "REPLACE", "TRIGGER", MatchAnyN,
+					 "REFERENCING", "OLD|NEW", "TABLE", "AS", MatchAny, "OLD|NEW", "TABLE", MatchAny) ||
+			 Matches("CREATE", "TRIGGER", MatchAnyN,
+					 "REFERENCING", "OLD|NEW", "TABLE", MatchAny, "OLD|NEW", "TABLE", MatchAny) ||
+			 Matches("CREATE", "OR", "REPLACE", "TRIGGER", MatchAnyN,
+					 "REFERENCING", "OLD|NEW", "TABLE", MatchAny, "OLD|NEW", "TABLE", MatchAny))
 	{
 		if (pset.sversion >= 110000)
 			COMPLETE_WITH("FOR", "WHEN (", "EXECUTE FUNCTION");
 		else
 			COMPLETE_WITH("FOR", "WHEN (", "EXECUTE PROCEDURE");
 	}
-	else if ((HeadMatches("CREATE", "TRIGGER") ||
-			  HeadMatches("CREATE", "OR", "REPLACE", "TRIGGER")) &&
-			 TailMatches("FOR"))
+	else if (Matches("CREATE", "TRIGGER", MatchAnyN,
+					 "FOR") ||
+			 Matches("CREATE", "OR", "REPLACE", "TRIGGER", MatchAnyN,
+					 "FOR"))
 		COMPLETE_WITH("EACH", "ROW", "STATEMENT");
-	else if ((HeadMatches("CREATE", "TRIGGER") ||
-			  HeadMatches("CREATE", "OR", "REPLACE", "TRIGGER")) &&
-			 TailMatches("FOR", "EACH"))
+	else if (Matches("CREATE", "TRIGGER", MatchAnyN,
+					 "FOR", "EACH") ||
+			 Matches("CREATE", "OR", "REPLACE", "TRIGGER", MatchAnyN,
+					 "FOR", "EACH"))
 		COMPLETE_WITH("ROW", "STATEMENT");
-	else if ((HeadMatches("CREATE", "TRIGGER") ||
-			  HeadMatches("CREATE", "OR", "REPLACE", "TRIGGER")) &&
-			 (TailMatches("FOR", "EACH", "ROW|STATEMENT") ||
-			  TailMatches("FOR", "ROW|STATEMENT")))
+	else if (Matches("CREATE", "TRIGGER", MatchAnyN,
+					 "FOR", "EACH", "ROW|STATEMENT") ||
+			 Matches("CREATE", "OR", "REPLACE", "TRIGGER", MatchAnyN,
+					 "FOR", "EACH", "ROW|STATEMENT") ||
+			 Matches("CREATE", "TRIGGER", MatchAnyN,
+					 "FOR", "ROW|STATEMENT") ||
+			 Matches("CREATE", "OR", "REPLACE", "TRIGGER", MatchAnyN,
+					 "FOR", "ROW|STATEMENT"))
 	{
 		if (pset.sversion >= 110000)
 			COMPLETE_WITH("WHEN (", "EXECUTE FUNCTION");
 		else
 			COMPLETE_WITH("WHEN (", "EXECUTE PROCEDURE");
 	}
-	else if ((HeadMatches("CREATE", "TRIGGER") ||
-			  HeadMatches("CREATE", "OR", "REPLACE", "TRIGGER")) &&
-			 TailMatches("WHEN", "(*)"))
+	else if (Matches("CREATE", "TRIGGER", MatchAnyN,
+					 "WHEN", "(*)") ||
+			 Matches("CREATE", "OR", "REPLACE", "TRIGGER", MatchAnyN,
+					 "WHEN", "(*)"))
 	{
 		if (pset.sversion >= 110000)
 			COMPLETE_WITH("EXECUTE FUNCTION");
@@ -3487,18 +3608,20 @@ psql_completion(const char *text, int start, int end)
 	 * Complete CREATE [ OR REPLACE ] TRIGGER ... EXECUTE with
 	 * PROCEDURE|FUNCTION.
 	 */
-	else if ((HeadMatches("CREATE", "TRIGGER") ||
-			  HeadMatches("CREATE", "OR", "REPLACE", "TRIGGER")) &&
-			 TailMatches("EXECUTE"))
+	else if (Matches("CREATE", "TRIGGER", MatchAnyN,
+					 "EXECUTE") ||
+			 Matches("CREATE", "OR", "REPLACE", "TRIGGER", MatchAnyN,
+					 "EXECUTE"))
 	{
 		if (pset.sversion >= 110000)
 			COMPLETE_WITH("FUNCTION");
 		else
 			COMPLETE_WITH("PROCEDURE");
 	}
-	else if ((HeadMatches("CREATE", "TRIGGER") ||
-			  HeadMatches("CREATE", "OR", "REPLACE", "TRIGGER")) &&
-			 TailMatches("EXECUTE", "FUNCTION|PROCEDURE"))
+	else if (Matches("CREATE", "TRIGGER", MatchAnyN,
+					 "EXECUTE", "FUNCTION|PROCEDURE") ||
+			 Matches("CREATE", "OR", "REPLACE", "TRIGGER", MatchAnyN,
+					 "EXECUTE", "FUNCTION|PROCEDURE"))
 		COMPLETE_WITH_VERSIONED_SCHEMA_QUERY(Query_for_list_of_functions);
 
 /* CREATE ROLE,USER,GROUP <name> */
@@ -3631,16 +3754,14 @@ psql_completion(const char *text, int start, int end)
 		else
 			COMPLETE_WITH("WHEN TAG IN (", "EXECUTE PROCEDURE");
 	}
-	else if (HeadMatches("CREATE", "EVENT", "TRIGGER") &&
-			 TailMatches("WHEN|AND", MatchAny, "IN", "(*)"))
+	else if (Matches("CREATE", "EVENT", "TRIGGER", MatchAnyN, "WHEN|AND", MatchAny, "IN", "(*)"))
 	{
 		if (pset.sversion >= 110000)
 			COMPLETE_WITH("EXECUTE FUNCTION");
 		else
 			COMPLETE_WITH("EXECUTE PROCEDURE");
 	}
-	else if (HeadMatches("CREATE", "EVENT", "TRIGGER") &&
-			 TailMatches("EXECUTE", "FUNCTION|PROCEDURE"))
+	else if (Matches("CREATE", "EVENT", "TRIGGER", MatchAnyN, "EXECUTE", "FUNCTION|PROCEDURE"))
 		COMPLETE_WITH_VERSIONED_SCHEMA_QUERY(Query_for_list_of_functions);
 
 /* DEALLOCATE */
@@ -3665,27 +3786,27 @@ psql_completion(const char *text, int start, int end)
 	 * provides, like the syntax of DECLARE command in the documentation
 	 * indicates.
 	 */
-	else if (HeadMatches("DECLARE") && TailMatches("BINARY"))
+	else if (Matches("DECLARE", MatchAnyN, "BINARY"))
 		COMPLETE_WITH("ASENSITIVE", "INSENSITIVE", "SCROLL", "NO SCROLL", "CURSOR");
-	else if (HeadMatches("DECLARE") && TailMatches("ASENSITIVE|INSENSITIVE"))
+	else if (Matches("DECLARE", MatchAnyN, "ASENSITIVE|INSENSITIVE"))
 		COMPLETE_WITH("SCROLL", "NO SCROLL", "CURSOR");
-	else if (HeadMatches("DECLARE") && TailMatches("SCROLL"))
+	else if (Matches("DECLARE", MatchAnyN, "SCROLL"))
 		COMPLETE_WITH("CURSOR");
 	/* Complete DECLARE ... [options] NO with SCROLL */
-	else if (HeadMatches("DECLARE") && TailMatches("NO"))
+	else if (Matches("DECLARE", MatchAnyN, "NO"))
 		COMPLETE_WITH("SCROLL");
 
 	/*
 	 * Complete DECLARE ... CURSOR with one of WITH HOLD, WITHOUT HOLD, and
 	 * FOR
 	 */
-	else if (HeadMatches("DECLARE") && TailMatches("CURSOR"))
+	else if (Matches("DECLARE", MatchAnyN, "CURSOR"))
 		COMPLETE_WITH("WITH HOLD", "WITHOUT HOLD", "FOR");
 	/* Complete DECLARE ... CURSOR WITH|WITHOUT with HOLD */
-	else if (HeadMatches("DECLARE") && TailMatches("CURSOR", "WITH|WITHOUT"))
+	else if (Matches("DECLARE", MatchAnyN, "CURSOR", "WITH|WITHOUT"))
 		COMPLETE_WITH("HOLD");
 	/* Complete DECLARE ... CURSOR WITH|WITHOUT HOLD with FOR */
-	else if (HeadMatches("DECLARE") && TailMatches("CURSOR", "WITH|WITHOUT", "HOLD"))
+	else if (Matches("DECLARE", MatchAnyN, "CURSOR", "WITH|WITHOUT", "HOLD"))
 		COMPLETE_WITH("FOR");
 
 /* DELETE --- can be inside EXPLAIN, RULE, etc */
@@ -3910,8 +4031,7 @@ psql_completion(const char *text, int start, int end)
 								 "FROM",
 								 "IN");
 	/* Complete FETCH <direction> "FROM" or "IN" with a list of cursors */
-	else if (HeadMatches("FETCH|MOVE") &&
-			 TailMatches("FROM|IN"))
+	else if (Matches("FETCH|MOVE", MatchAnyN, "FROM|IN"))
 		COMPLETE_WITH_QUERY(Query_for_list_of_cursors);
 
 /* FOREIGN DATA WRAPPER */
@@ -3920,8 +4040,7 @@ psql_completion(const char *text, int start, int end)
 			 !TailMatches("CREATE", MatchAny, MatchAny, MatchAny))
 		COMPLETE_WITH_QUERY(Query_for_list_of_fdws);
 	/* applies in CREATE SERVER */
-	else if (TailMatches("FOREIGN", "DATA", "WRAPPER", MatchAny) &&
-			 HeadMatches("CREATE", "SERVER"))
+	else if (Matches("CREATE", "SERVER", MatchAnyN, "FOREIGN", "DATA", "WRAPPER", MatchAny))
 		COMPLETE_WITH("OPTIONS");
 
 /* FOREIGN TABLE */
@@ -4108,44 +4227,43 @@ psql_completion(const char *text, int start, int end)
 	 * Complete "GRANT/REVOKE ... TO/FROM" with username, PUBLIC,
 	 * CURRENT_ROLE, CURRENT_USER, or SESSION_USER.
 	 */
-	else if ((HeadMatches("GRANT") && TailMatches("TO")) ||
-			 (HeadMatches("REVOKE") && TailMatches("FROM")))
+	else if (Matches("GRANT", MatchAnyN, "TO") ||
+			 Matches("REVOKE", MatchAnyN, "FROM"))
 		COMPLETE_WITH_QUERY_PLUS(Query_for_list_of_roles,
 								 Keywords_for_list_of_grant_roles);
 
 	/*
 	 * Offer grant options after that.
 	 */
-	else if (HeadMatches("GRANT") && TailMatches("TO", MatchAny))
+	else if (Matches("GRANT", MatchAnyN, "TO", MatchAny))
 		COMPLETE_WITH("WITH ADMIN",
 					  "WITH INHERIT",
 					  "WITH SET",
 					  "WITH GRANT OPTION",
 					  "GRANTED BY");
-	else if (HeadMatches("GRANT") && TailMatches("TO", MatchAny, "WITH"))
+	else if (Matches("GRANT", MatchAnyN, "TO", MatchAny, "WITH"))
 		COMPLETE_WITH("ADMIN",
 					  "INHERIT",
 					  "SET",
 					  "GRANT OPTION");
-	else if (HeadMatches("GRANT") &&
-			 (TailMatches("TO", MatchAny, "WITH", "ADMIN|INHERIT|SET")))
+	else if (Matches("GRANT", MatchAnyN, "TO", MatchAny, "WITH", "ADMIN|INHERIT|SET"))
 		COMPLETE_WITH("OPTION", "TRUE", "FALSE");
-	else if (HeadMatches("GRANT") && TailMatches("TO", MatchAny, "WITH", MatchAny, "OPTION"))
+	else if (Matches("GRANT", MatchAnyN, "TO", MatchAny, "WITH", MatchAny, "OPTION"))
 		COMPLETE_WITH("GRANTED BY");
-	else if (HeadMatches("GRANT") && TailMatches("TO", MatchAny, "WITH", MatchAny, "OPTION", "GRANTED", "BY"))
+	else if (Matches("GRANT", MatchAnyN, "TO", MatchAny, "WITH", MatchAny, "OPTION", "GRANTED", "BY"))
 		COMPLETE_WITH_QUERY_PLUS(Query_for_list_of_roles,
 								 Keywords_for_list_of_grant_roles);
 	/* Complete "ALTER DEFAULT PRIVILEGES ... GRANT/REVOKE ... TO/FROM */
-	else if (HeadMatches("ALTER", "DEFAULT", "PRIVILEGES") && TailMatches("TO|FROM"))
+	else if (Matches("ALTER", "DEFAULT", "PRIVILEGES", MatchAnyN, "TO|FROM"))
 		COMPLETE_WITH_QUERY_PLUS(Query_for_list_of_roles,
 								 Keywords_for_list_of_grant_roles);
 	/* Offer WITH GRANT OPTION after that */
-	else if (HeadMatches("ALTER", "DEFAULT", "PRIVILEGES") && TailMatches("TO", MatchAny))
+	else if (Matches("ALTER", "DEFAULT", "PRIVILEGES", MatchAnyN, "TO", MatchAny))
 		COMPLETE_WITH("WITH GRANT OPTION");
 	/* Complete "GRANT/REVOKE ... ON * *" with TO/FROM */
-	else if (HeadMatches("GRANT") && TailMatches("ON", MatchAny, MatchAny))
+	else if (Matches("GRANT", MatchAnyN, "ON", MatchAny, MatchAny))
 		COMPLETE_WITH("TO");
-	else if (HeadMatches("REVOKE") && TailMatches("ON", MatchAny, MatchAny))
+	else if (Matches("REVOKE", MatchAnyN, "ON", MatchAny, MatchAny))
 		COMPLETE_WITH("FROM");
 
 	/* Complete "GRANT/REVOKE * ON ALL * IN SCHEMA *" with TO/FROM */
@@ -4260,7 +4378,7 @@ psql_completion(const char *text, int start, int end)
 		COMPLETE_WITH("IN", "NOWAIT");
 
 	/* Complete LOCK [TABLE] [ONLY] <table> IN with a lock mode */
-	else if (HeadMatches("LOCK") && TailMatches("IN"))
+	else if (Matches("LOCK", MatchAnyN, "IN"))
 		COMPLETE_WITH("ACCESS SHARE MODE",
 					  "ROW SHARE MODE", "ROW EXCLUSIVE MODE",
 					  "SHARE UPDATE EXCLUSIVE MODE", "SHARE MODE",
@@ -4271,16 +4389,16 @@ psql_completion(const char *text, int start, int end)
 	 * Complete LOCK [TABLE][ONLY] <table> IN ACCESS|ROW with rest of lock
 	 * mode
 	 */
-	else if (HeadMatches("LOCK") && TailMatches("IN", "ACCESS|ROW"))
+	else if (Matches("LOCK", MatchAnyN, "IN", "ACCESS|ROW"))
 		COMPLETE_WITH("EXCLUSIVE MODE", "SHARE MODE");
 
 	/* Complete LOCK [TABLE] [ONLY] <table> IN SHARE with rest of lock mode */
-	else if (HeadMatches("LOCK") && TailMatches("IN", "SHARE"))
+	else if (Matches("LOCK", MatchAnyN, "IN", "SHARE"))
 		COMPLETE_WITH("MODE", "ROW EXCLUSIVE MODE",
 					  "UPDATE EXCLUSIVE MODE");
 
 	/* Complete LOCK [TABLE] [ONLY] <table> [IN lockmode MODE] with "NOWAIT" */
-	else if (HeadMatches("LOCK") && TailMatches("MODE"))
+	else if (Matches("LOCK", MatchAnyN, "MODE"))
 		COMPLETE_WITH("NOWAIT");
 
 /* MERGE --- can be inside EXPLAIN */
@@ -4585,9 +4703,7 @@ psql_completion(const char *text, int start, int end)
 	 * Complete ALTER DATABASE|FUNCTION|PROCEDURE|ROLE|ROUTINE|USER ... SET
 	 * <name>
 	 */
-	else if (HeadMatches("ALTER", "DATABASE|FUNCTION|PROCEDURE|ROLE|ROUTINE|USER") &&
-			 TailMatches("SET", MatchAny) &&
-			 !TailMatches("SCHEMA"))
+	else if (Matches("ALTER", "DATABASE|FUNCTION|PROCEDURE|ROLE|ROUTINE|USER", MatchAnyN, "SET", MatchAnyExcept("SCHEMA")))
 		COMPLETE_WITH("FROM CURRENT", "TO");
 
 	/*
@@ -4663,13 +4779,13 @@ psql_completion(const char *text, int start, int end)
 	else if (Matches("TRUNCATE", "TABLE"))
 		COMPLETE_WITH_SCHEMA_QUERY_PLUS(Query_for_list_of_truncatables,
 										"ONLY");
-	else if (HeadMatches("TRUNCATE") && TailMatches("ONLY"))
+	else if (Matches("TRUNCATE", MatchAnyN, "ONLY"))
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_truncatables);
 	else if (Matches("TRUNCATE", MatchAny) ||
 			 Matches("TRUNCATE", "TABLE|ONLY", MatchAny) ||
 			 Matches("TRUNCATE", "TABLE", "ONLY", MatchAny))
 		COMPLETE_WITH("RESTART IDENTITY", "CONTINUE IDENTITY", "CASCADE", "RESTRICT");
-	else if (HeadMatches("TRUNCATE") && TailMatches("IDENTITY"))
+	else if (Matches("TRUNCATE", MatchAnyN, "IDENTITY"))
 		COMPLETE_WITH("CASCADE", "RESTRICT");
 
 /* UNLISTEN */
@@ -4750,7 +4866,7 @@ psql_completion(const char *text, int start, int end)
 		else if (TailMatches("INDEX_CLEANUP"))
 			COMPLETE_WITH("AUTO", "ON", "OFF");
 	}
-	else if (HeadMatches("VACUUM") && TailMatches("("))
+	else if (Matches("VACUUM", MatchAnyN, "("))
 		/* "VACUUM (" should be caught above, so assume we want columns */
 		COMPLETE_WITH_ATTR(prev2_wd);
 	else if (HeadMatches("VACUUM"))
