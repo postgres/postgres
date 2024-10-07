@@ -35,13 +35,60 @@
   argument of type <type>internal</type> and to return the pseudo-type
   <type>table_am_handler</type>.  The argument is a dummy value that simply
   serves to prevent handler functions from being called directly from SQL commands.
+ </para>
 
+ <para>
+  Here is how an extension SQL script file might create a table access
+  method handler:
+ </para>
+
+<programlisting>
+CREATE OR REPLACE FUNCTION my_tableam_handler(internal)
+  RETURNS table_am_handler AS 'my_extension', 'my_tableam_handler'
+  LANGUAGE C STRICT;
+
+CREATE ACCESS METHOD myam TYPE TABLE HANDLER my_tableam_handler;
+</programlisting>
+
+ <para>
   The result of the function must be a pointer to a struct of type
   <structname>TableAmRoutine</structname>, which contains everything that the
   core code needs to know to make use of the table access method. The return
   value needs to be of server lifetime, which is typically achieved by
-  defining it as a <literal>static const</literal> variable in global
-  scope. The <structname>TableAmRoutine</structname> struct, also called the
+  defining it as a <literal>static const</literal> variable in global scope.
+ </para>
+
+ <para>
+  Here is how a source file with the table access method handler might
+  look like:
+ </para>
+
+<programlisting><![CDATA[
+#include "postgres.h"
+
+#include "access/tableam.h"
+#include "fmgr.h"
+
+PG_MODULE_MAGIC;
+
+static const TableAmRoutine my_tableam_methods = {
+    .type = T_TableAmRoutine,
+
+    /* Methods of TableAmRoutine omitted from example, add them here. */
+};
+
+PG_FUNCTION_INFO_V1(my_tableam_handler);
+
+Datum
+my_tableam_handler(PG_FUNCTION_ARGS)
+{
+    PG_RETURN_POINTER(&my_tableam_methods);
+}
+]]>
+</programlisting>
+
+ <para>
+  The <structname>TableAmRoutine</structname> struct, also called the
   access method's <firstterm>API struct</firstterm>, defines the behavior of
   the access method using callbacks. These callbacks are pointers to plain C
   functions and are not visible or callable at the SQL level. All the
