@@ -116,7 +116,7 @@ encrypt_password(PasswordType target_type, const char *role,
 				 const char *password)
 {
 	PasswordType guessed_type = get_password_type(password);
-	char	   *encrypted_password;
+	char	   *encrypted_password = NULL;
 	const char *errstr = NULL;
 
 	if (guessed_type != PASSWORD_TYPE_PLAINTEXT)
@@ -125,32 +125,56 @@ encrypt_password(PasswordType target_type, const char *role,
 		 * Cannot convert an already-encrypted password from one format to
 		 * another, so return it as it is.
 		 */
-		return pstrdup(password);
+		encrypted_password = pstrdup(password);
 	}
-
-	switch (target_type)
+	else
 	{
-		case PASSWORD_TYPE_MD5:
-			encrypted_password = palloc(MD5_PASSWD_LEN + 1);
+		switch (target_type)
+		{
+			case PASSWORD_TYPE_MD5:
+				encrypted_password = palloc(MD5_PASSWD_LEN + 1);
 
-			if (!pg_md5_encrypt(password, role, strlen(role),
-								encrypted_password, &errstr))
-				elog(ERROR, "password encryption failed: %s", errstr);
-			return encrypted_password;
+				if (!pg_md5_encrypt(password, role, strlen(role),
+									encrypted_password, &errstr))
+					elog(ERROR, "password encryption failed: %s", errstr);
+				break;
 
-		case PASSWORD_TYPE_SCRAM_SHA_256:
-			return pg_be_scram_build_secret(password);
+			case PASSWORD_TYPE_SCRAM_SHA_256:
+				encrypted_password = pg_be_scram_build_secret(password);
+				break;
 
-		case PASSWORD_TYPE_PLAINTEXT:
-			elog(ERROR, "cannot encrypt password with 'plaintext'");
+			case PASSWORD_TYPE_PLAINTEXT:
+				elog(ERROR, "cannot encrypt password with 'plaintext'");
+				break;
+		}
 	}
+
+	Assert(encrypted_password);
 
 	/*
-	 * This shouldn't happen, because the above switch statements should
-	 * handle every combination of source and target password types.
+	 * Valid password hashes may be very long, but we don't want to store
+	 * anything that might need out-of-line storage, since de-TOASTing won't
+	 * work during authentication because we haven't selected a database yet
+	 * and cannot read pg_class. 512 bytes should be more than enough for all
+	 * practical use, so fail for anything longer.
 	 */
-	elog(ERROR, "cannot encrypt password to requested type");
-	return NULL;				/* keep compiler quiet */
+	if (encrypted_password &&	/* keep compiler quiet */
+		strlen(encrypted_password) > MAX_ENCRYPTED_PASSWORD_LEN)
+	{
+		/*
+		 * We don't expect any of our own hashing routines to produce hashes
+		 * that are too long.
+		 */
+		Assert(guessed_type != PASSWORD_TYPE_PLAINTEXT);
+
+		ereport(ERROR,
+				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+				 errmsg("encrypted password is too long"),
+				 errdetail("Encrypted passwords must be no longer than %d bytes.",
+						   MAX_ENCRYPTED_PASSWORD_LEN)));
+	}
+
+	return encrypted_password;
 }
 
 /*

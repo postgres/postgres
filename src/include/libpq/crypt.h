@@ -16,6 +16,16 @@
 #include "datatype/timestamp.h"
 
 /*
+ * Valid password hashes may be very long, but we don't want to store anything
+ * that might need out-of-line storage, since de-TOASTing won't work during
+ * authentication because we haven't selected a database yet and cannot read
+ * pg_class.  512 bytes should be more than enough for all practical use, and
+ * our own password encryption routines should never produce hashes longer than
+ * this.
+ */
+#define MAX_ENCRYPTED_PASSWORD_LEN (512)
+
+/*
  * Types of password hashes or secrets.
  *
  * Plaintext passwords can be passed in by the user, in a CREATE/ALTER USER
