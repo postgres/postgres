@@ -1372,10 +1372,10 @@ CreateLockFile(const char *filename, bool amPostmaster,
 	 * both datadir and socket lockfiles; although more stuff may get added to
 	 * the datadir lockfile later.
 	 */
-	snprintf(buffer, sizeof(buffer), "%d\n%s\n%ld\n%d\n%s\n",
+	snprintf(buffer, sizeof(buffer), "%d\n%s\n" INT64_FORMAT "\n%d\n%s\n",
 			 amPostmaster ? (int) my_pid : -((int) my_pid),
 			 DataDir,
-			 (long) MyStartTime,
+			 MyStartTime,
 			 PostPortNumber,
 			 socketDir);
 
