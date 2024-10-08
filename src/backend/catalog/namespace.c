@@ -305,17 +305,32 @@ static SearchPathCacheEntry *LastSearchPathCacheEntry = NULL;
 static void
 spcache_init(void)
 {
-	Assert(SearchPathCacheContext);
-
 	if (SearchPathCache && searchPathCacheValid &&
 		SearchPathCache->members < SPCACHE_RESET_THRESHOLD)
 		return;
 
-	/* make sure we don't leave dangling pointers if nsphash_create fails */
+	searchPathCacheValid = false;
+	baseSearchPathValid = false;
+
+	/*
+	 * Make sure we don't leave dangling pointers if a failure happens during
+	 * initialization.
+	 */
 	SearchPathCache = NULL;
 	LastSearchPathCacheEntry = NULL;
 
-	MemoryContextReset(SearchPathCacheContext);
+	if (SearchPathCacheContext == NULL)
+	{
+		/* Make the context we'll keep search path cache hashtable in */
+		SearchPathCacheContext = AllocSetContextCreate(TopMemoryContext,
+													   "search_path processing cache",
+													   ALLOCSET_DEFAULT_SIZES);
+	}
+	else
+	{
+		MemoryContextReset(SearchPathCacheContext);
+	}
+
 	/* arbitrary initial starting size of 16 elements */
 	SearchPathCache = nsphash_create(SearchPathCacheContext, 16, NULL);
 	searchPathCacheValid = true;
@@ -4742,11 +4757,6 @@ InitializeSearchPath(void)
 	}
 	else
 	{
-		/* Make the context we'll keep search path cache hashtable in */
-		SearchPathCacheContext = AllocSetContextCreate(TopMemoryContext,
-													   "search_path processing cache",
-													   ALLOCSET_DEFAULT_SIZES);
-
 		/*
 		 * In normal mode, arrange for a callback on any syscache invalidation
 		 * that will affect the search_path cache.
