@@ -21,12 +21,10 @@ Install `pg_tde` using one of available installation methods:
 
     Starting with Aplha1 version, you can install the extension as package from Percona repositories using the `percona-release` tool. The packages are available for the following operating systems:
     
-    - Red Hat Enterprise Linux and CentOS 7
     - Red Hat Enterprise Linux 8 and compatible derivatives
     - Red Hat Enterprise Linux 9 and compatible derivatives
     - Ubuntu 20.04 (Focal Fossa)
     - Ubuntu 22.04 (Jammy Jellyfish)
-    - Debian 10 (Buster)
     - Debian 11 (Bullseye) 
     - Debian 12 (Bookworm)
 
@@ -34,6 +32,8 @@ Install `pg_tde` using one of available installation methods:
     [Install on RHEL or derivatives](yum.md){.md-button}
 
 === "Build from source"
+
+    The following steps apply to PostgreSQL 16. To build `pg_tde` for PostgreSQL 17, replace the version in the commands. 
 
     1. To build `pg_tde` from source code, you require the following on Ubuntu/Debian:
 

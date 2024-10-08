@@ -165,10 +165,10 @@ nav:
   - functions.md
   - How to:
     - Use reference to external parameters: external-parameters.md
+    - Decrypt encrypted table: decrypt.md
   - Release notes:
     - "pg_tde release notes": release-notes/release-notes.md
   - uninstall.md
   - contribute.md
 
-# - Version Selector: "../"
 
