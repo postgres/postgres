@@ -12,7 +12,7 @@ subdir = src/test
 top_builddir = ../..
 include $(top_builddir)/src/Makefile.global
 
-SUBDIRS = perl regress isolation modules authentication recovery subscription
+SUBDIRS = perl postmaster regress isolation modules authentication recovery subscription
 
 ifeq ($(with_icu),yes)
 SUBDIRS += icu
