@@ -43,6 +43,7 @@ sub background_psql_as_user
 }
 
 my @sessions = ();
+my @raw_connections = ();
 
 push(@sessions, background_psql_as_user('regress_regular'));
 push(@sessions, background_psql_as_user('regress_regular'));
@@ -69,11 +70,50 @@ $node->connect_fails(
 	"superuser_reserved_connections limit",
 	expected_stderr => qr/FATAL:  sorry, too many clients already/);
 
-# TODO: test that query cancellation is still possible
+# We can still open TCP (or Unix domain socket) connections, but
+# beyond a certain number (roughly 2x max_connections), they will be
+# "dead-end backends".
+SKIP:
+{
+	skip "this test requies working raw_connect()" unless $node->raw_connect_works();
 
+	for (my $i = 0; $i <= 20; $i++)
+	{
+		my $sock = $node->raw_connect();
+
+		# On a busy system, the server might reject connections if
+		# postmaster cannot accept() them fast enough. The exact limit
+		# and behavior depends on the platform. To make this reliable,
+		# we attempt SSL negotiation on each connection before opening
+		# next one. The server will reject the SSL negotations, but
+		# when it does so, we know that the backend has been launched
+		# and we should be able to open another connection.
+
+		# SSLRequest packet consists of packet length followed by
+		# NEGOTIATE_SSL_CODE.
+		my $negotiate_ssl_code = pack("Nnn", 8, 1234, 5679);
+		my $sent = $sock->send($negotiate_ssl_code);
+
+		# Read reply. We expect the server to reject it with 'N'
+		my $reply = "";
+		$sock->recv($reply, 1);
+		is($reply, "N", "dead-end connection $i");
+
+		push(@raw_connections, $sock);
+	}
+}
+
+# TODO: test that query cancellation is still possible. A dead-end
+# backend can process a query cancellation packet.
+
+# Clean up
 foreach my $session (@sessions)
 {
 	$session->quit;
+}
+foreach my $socket (@raw_connections)
+{
+	$socket->close();
 }
 
 done_testing();

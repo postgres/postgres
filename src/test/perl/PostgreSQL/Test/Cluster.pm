@@ -104,6 +104,7 @@ use File::Path qw(rmtree mkpath);
 use File::Spec;
 use File::stat qw(stat);
 use File::Temp ();
+use IO::Socket::INET;
 use IPC::Run;
 use PostgreSQL::Version;
 use PostgreSQL::Test::RecursiveCopy;
@@ -287,6 +288,83 @@ sub connstr
 	$dbname =~ s#\'#\\\'#g;
 
 	return "port=$pgport host=$pghost dbname='$dbname'";
+}
+
+=pod
+
+=item $node->raw_connect()
+
+Open a raw TCP or Unix domain socket connection to the server. This is
+used by low-level protocol and connection limit tests.
+
+=cut
+
+sub raw_connect
+{
+	my ($self) = @_;
+	my $pgport = $self->port;
+	my $pghost = $self->host;
+
+	my $socket;
+	if ($PostgreSQL::Test::Utils::use_unix_sockets)
+	{
+		require IO::Socket::UNIX;
+		my $path = "$pghost/.s.PGSQL.$pgport";
+
+		$socket = IO::Socket::UNIX->new(
+			Type => SOCK_STREAM(),
+			Peer => $path,
+		) or die "Cannot create socket - $IO::Socket::errstr\n";
+	}
+	else
+	{
+		$socket = IO::Socket::INET->new(
+			PeerHost => $pghost,
+			PeerPort => $pgport,
+			Proto => 'tcp'
+		) or die "Cannot create socket - $IO::Socket::errstr\n";
+	}
+	return $socket;
+}
+
+=pod
+
+=item $node->raw_connect_works()
+
+Check if raw_connect() function works on this platform. This should
+be called to SKIP any tests that require raw_connect().
+
+This tries to connect to the server, to test whether it works or not,,
+so the server is up and running. Otherwise this can return 0 even if
+there's nothing wrong with raw_connect() itself.
+
+Notably, raw_connect() does not work on Unix domain sockets on
+Strawberry perl 5.26.3.1 on Windows, which we use in Cirrus CI images
+as of this writing. It dies with "not implemented on this
+architecture".
+
+=cut
+
+sub raw_connect_works
+{
+	my ($self) = @_;
+
+	# If we're using Unix domain sockets, we need a working
+	# IO::Socket::UNIX implementation.
+	if ($PostgreSQL::Test::Utils::use_unix_sockets)
+	{
+		diag "checking if IO::Socket::UNIX works";
+		eval {
+			my $sock = $self->raw_connect();
+			$sock->close();
+		};
+		if ($@ =~ /not implemented/)
+		{
+			diag "IO::Socket::UNIX does not work: $@";
+			return 0;
+		}
+	}
+	return 1
 }
 
 =pod
