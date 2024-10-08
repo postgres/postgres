@@ -62,12 +62,14 @@ execTuplesMatchPrepare(TupleDesc desc,
 					   const Oid *collations,
 					   PlanState *parent)
 {
-	Oid		   *eqFunctions = (Oid *) palloc(numCols * sizeof(Oid));
+	Oid		   *eqFunctions;
 	int			i;
 	ExprState  *expr;
 
 	if (numCols == 0)
 		return NULL;
+
+	eqFunctions = (Oid *) palloc(numCols * sizeof(Oid));
 
 	/* lookup equality functions */
 	for (i = 0; i < numCols; i++)

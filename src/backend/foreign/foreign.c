@@ -524,7 +524,7 @@ pg_options_to_table(PG_FUNCTION_ARGS)
 	Datum		array = PG_GETARG_DATUM(0);
 	ListCell   *cell;
 	List	   *options;
-	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
+	ReturnSetInfo *rsinfo;
 
 	options = untransformRelOptions(array);
 	rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
