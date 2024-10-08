@@ -2122,7 +2122,9 @@ match_previous_words(int pattern_id,
 
 	/* Dummy statement, allowing all the match rules to look like "else if" */
 	if (0)
-		 /* skip */ ;
+	{
+		/* skip */
+	}
 
 	/* gen_tabcomplete.pl begins special processing here */
 	/* BEGIN GEN_TABCOMPLETE */
