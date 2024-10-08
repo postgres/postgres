@@ -75,7 +75,8 @@ $node->connect_fails(
 # "dead-end backends".
 SKIP:
 {
-	skip "this test requies working raw_connect()" unless $node->raw_connect_works();
+	skip "this test requires working raw_connect()"
+	  unless $node->raw_connect_works();
 
 	for (my $i = 0; $i <= 20; $i++)
 	{
