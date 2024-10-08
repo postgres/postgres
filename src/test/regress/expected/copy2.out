@@ -116,6 +116,10 @@ COPY x to stdout (log_verbosity unsupported);
 ERROR:  COPY LOG_VERBOSITY "unsupported" not recognized
 LINE 1: COPY x to stdout (log_verbosity unsupported);
                           ^
+COPY x from stdin with (reject_limit 1);
+ERROR:  COPY REJECT_LIMIT requires ON_ERROR to be set to IGNORE
+COPY x from stdin with (on_error ignore, reject_limit 0);
+ERROR:  REJECT_LIMIT (0) must be greater than zero
 -- too many columns in column list: should fail
 COPY x (a, b, c, d, e, d, c) from stdin;
 ERROR:  column "d" specified more than once
@@ -791,6 +795,12 @@ CONTEXT:  COPY check_ign_err, line 1: "1	{1}"
 COPY check_ign_err FROM STDIN WITH (on_error ignore);
 ERROR:  extra data after last expected column
 CONTEXT:  COPY check_ign_err, line 1: "1	{1}	3	abc"
+-- tests for reject_limit option
+COPY check_ign_err FROM STDIN WITH (on_error ignore, reject_limit 3);
+ERROR:  skipped more than REJECT_LIMIT (3) rows due to data type incompatibility
+CONTEXT:  COPY check_ign_err, line 5, column n: ""
+COPY check_ign_err FROM STDIN WITH (on_error ignore, reject_limit 4);
+NOTICE:  4 rows were skipped due to data type incompatibility
 -- clean up
 DROP TABLE forcetest;
 DROP TABLE vistest;

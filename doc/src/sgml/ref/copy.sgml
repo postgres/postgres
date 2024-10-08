@@ -44,6 +44,7 @@ COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable 
     FORCE_NOT_NULL { ( <replaceable class="parameter">column_name</replaceable> [, ...] ) | * }
     FORCE_NULL { ( <replaceable class="parameter">column_name</replaceable> [, ...] ) | * }
     ON_ERROR <replaceable class="parameter">error_action</replaceable>
+    REJECT_LIMIT <replaceable class="parameter">maxerror</replaceable>
     ENCODING '<replaceable class="parameter">encoding_name</replaceable>'
     LOG_VERBOSITY <replaceable class="parameter">verbosity</replaceable>
 </synopsis>
@@ -409,6 +410,24 @@ COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable 
       conversion has failed is emitted for each discarded row.
       When it is set to <literal>silent</literal>, no message is emitted
       regarding ignored rows.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>REJECT_LIMIT</literal></term>
+    <listitem>
+     <para>
+      Specifies the maximum number of errors tolerated while converting a
+      column's input value to its data type, when <literal>ON_ERROR</literal> is
+      set to <literal>ignore</literal>.
+      If the input causes more errors than the specified value, the <command>COPY</command>
+      command fails, even with <literal>ON_ERROR</literal> set to <literal>ignore</literal>.
+      This clause must be used with <literal>ON_ERROR</literal>=<literal>ignore</literal>
+      and <replaceable class="parameter">maxerror</replaceable> must be positive <type>bigint</type>.
+      If not specified, <literal>ON_ERROR</literal>=<literal>ignore</literal>
+      allows an unlimited number of errors, meaning <command>COPY</command> will
+      skip all erroneous data.
      </para>
     </listitem>
    </varlistentry>

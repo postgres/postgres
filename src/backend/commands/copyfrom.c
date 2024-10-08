@@ -1018,6 +1018,13 @@ CopyFrom(CopyFromState cstate)
 			pgstat_progress_update_param(PROGRESS_COPY_TUPLES_SKIPPED,
 										 cstate->num_errors);
 
+			if (cstate->opts.reject_limit > 0 && \
+				cstate->num_errors > cstate->opts.reject_limit)
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+						 errmsg("skipped more than REJECT_LIMIT (%lld) rows due to data type incompatibility",
+								(long long) cstate->opts.reject_limit)));
+
 			/* Repeat NextCopyFrom() until no soft error occurs */
 			continue;
 		}
