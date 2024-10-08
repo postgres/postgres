@@ -529,6 +529,24 @@
 
      <row>
       <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>parallel_workers_to_launch</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of parallel workers planned to be launched
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>parallel_workers_launched</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of parallel workers actually launched
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
        <structfield>stats_since</structfield> <type>timestamp with time zone</type>
       </para>
       <para>
