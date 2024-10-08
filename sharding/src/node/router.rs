@@ -3,6 +3,7 @@ use postgres::{Client as PostgresClient, Row};
 extern crate users;
 use super::node::*;
 use super::shard_manager::ShardManager;
+
 use super::tables_id_info::TablesIdInfo;
 use crate::node::messages::message::{Message, MessageType};
 use crate::node::messages::node_info::NodeInfo;

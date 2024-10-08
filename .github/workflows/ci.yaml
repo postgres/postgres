@@ -28,19 +28,8 @@ jobs:
           override: true
       - run: sudo apt update && sudo apt upgrade -y
       - run: sudo apt install -y libpq-dev postgresql-client
-      - run: |
-          export LDFLAGS="-L/usr/lib"
-          export CPPFLAGS="-I/usr/include"
-          export DYLD_LIBRARY_PATH="/usr/lib:$DYLD_LIBRARY_PATH"  # Puede que no sea necesario en Ubuntu
-          ./configure --without-icu
+      - run: ./configure --without-icu
       - run: make
-      - run: python3 -m venv myenv
-      - run: |
-          source myenv/bin/activate
-          pip install pyyaml
-      - run: |
-          source myenv/bin/activate
-          cd sharding && cargo test -- --test-threads=1      
-      - run: deactivate
+      - run: cd sharding && cargo test -- --test-threads=1      
 
       
