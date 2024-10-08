@@ -30,6 +30,7 @@ typedef struct PendingMapEntryDelete
 static PendingMapEntryDelete *pendingDeletes = NULL; /* head of linked list */
 
 static void do_pending_deletes(bool isCommit);
+static void reassign_pending_deletes_to_parent_xact(void);
 static void pending_delete_cleanup(void);
 
 /* Transaction Callbacks from Backend*/
@@ -64,6 +65,11 @@ pg_tde_subxact_callback(SubXactEvent event, SubTransactionId mySubid,
         ereport(DEBUG2,
                 (errmsg("pg_tde_subxact_callback: aborting subtransaction")));
         do_pending_deletes(false);
+    } else if (event == SUBXACT_EVENT_COMMIT_SUB)
+    {
+        ereport(DEBUG2,
+                (errmsg("pg_tde_subxact_callback: committing subtransaction")));
+        reassign_pending_deletes_to_parent_xact();
     }
 }
 
@@ -99,31 +105,53 @@ do_pending_deletes(bool isCommit)
     for (pending = pendingDeletes; pending != NULL; pending = next)
     {
         next = pending->next;
-        if (pending->nestLevel < nestLevel)
+        if (pending->nestLevel != nestLevel)
         {
             /* outer-level entries should not be processed yet */
             prev = pending;
+            continue;
         }
+
+        /* unlink list entry first, so we don't retry on failure */
+        if (prev)
+            prev->next = next;
         else
+            pendingDeletes = next;
+        /* do deletion if called for */
+        if (pending->atCommit == isCommit)
         {
-            /* unlink list entry first, so we don't retry on failure */
-            if (prev)
-                prev->next = next;
-            else
-                pendingDeletes = next;
-            /* do deletion if called for */
-            if (pending->atCommit == isCommit)
-            {
-                ereport(LOG,
-                        (errmsg("pg_tde_xact_callback: deleting entry at offset %d",
-                                (int)(pending->map_entry_offset))));
-
-                pg_tde_free_key_map_entry(&pending->rlocator, pending->map_entry_offset);
-            }
-
-            pfree(pending);
-            /* prev does not change */
+            ereport(LOG,
+                    (errmsg("pg_tde_xact_callback: deleting entry at offset %d",
+                            (int)(pending->map_entry_offset))));
+            pg_tde_free_key_map_entry(&pending->rlocator, pending->map_entry_offset);
         }
+        pfree(pending);
+        /* prev does not change */
+
+    }
+}
+
+
+/*
+  *  reassign_pending_deletes_to_parent_xact() -- Adjust nesting level of pending deletes.
+  *
+  * There are several cases to consider:
+  * 1. Only top level transaction can perform on-commit deletes.
+  * 2. Subtransaction and top level transaction can perform on-abort deletes.
+  * So we have to decrement the nesting level of pending deletes to reassing them to the parent transaction
+  * if subtransaction was not self aborted. In other words if subtransaction state is commited all its pending 
+  * deletes are reassigned to the parent transaction.
+  */
+static void 
+reassign_pending_deletes_to_parent_xact(void)
+{
+    PendingMapEntryDelete *pending;
+    int nestLevel = GetCurrentTransactionNestLevel();
+
+    for (pending = pendingDeletes; pending != NULL; pending = pending->next)
+    {
+        if (pending->nestLevel == nestLevel)
+            pending->nestLevel--;
     }
 }
 

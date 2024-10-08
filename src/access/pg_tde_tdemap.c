@@ -530,6 +530,7 @@ pg_tde_delete_key_map_entry(const RelFileLocator *rlocator)
 	/* Get the file paths */
 	pg_tde_set_db_file_paths(rlocator, db_map_path, db_keydata_path);
 
+	errno = 0;
 	/* Remove the map entry if found */
 	LWLockAcquire(lock_files, LW_EXCLUSIVE);
 	key_index = pg_tde_process_map_entry(rlocator, db_map_path, &offset, false);
