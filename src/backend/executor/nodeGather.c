@@ -182,6 +182,13 @@ ExecGather(PlanState *pstate)
 			/* We save # workers launched for the benefit of EXPLAIN */
 			node->nworkers_launched = pcxt->nworkers_launched;
 
+			/*
+			 * Count number of workers originally wanted and actually
+			 * launched.
+			 */
+			estate->es_parallel_workers_to_launch += pcxt->nworkers_to_launch;
+			estate->es_parallel_workers_launched += pcxt->nworkers_launched;
+
 			/* Set up tuple queue readers to read the results. */
 			if (pcxt->nworkers_launched > 0)
 			{

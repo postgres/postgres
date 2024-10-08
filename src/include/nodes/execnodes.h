@@ -708,6 +708,11 @@ typedef struct EState
 
 	bool		es_use_parallel_mode;	/* can we use parallel workers? */
 
+	int			es_parallel_workers_to_launch;	/* number of workers to
+												 * launch. */
+	int			es_parallel_workers_launched;	/* number of workers actually
+												 * launched. */
+
 	/* The per-query shared memory area to use for parallel execution. */
 	struct dsa_area *es_query_dsa;
 
