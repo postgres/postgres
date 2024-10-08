@@ -222,6 +222,24 @@ Author: Nathan Bossart <nathan@postgresql.org>
     </listitem>
 
 <!--
+Author: Daniel Gustafsson <dgustafsson@postgresql.org>
+2024-03-04 [cc09e6549] Remove the adminpack contrib extension
+-->
+
+     <listitem>
+      <para>
+      Remove <application>adminpack</application> contrib extension
+      (Daniel Gustafsson)
+      <ulink url="&commit_baseurl;cc09e6549">&sect;</ulink>
+      </para>
+
+      <para>
+      This was used by now end-of-life <productname>pgAdmin
+      III</productname>.
+      </para>
+     </listitem>
+
+<!--
 Author: Thomas Munro <tmunro@postgresql.org>
 2023-07-14 [d0c28601e] Remove wal_sync_method=fsync_writethrough on Windows.
 -->
@@ -3299,24 +3317,6 @@ Author: Nathan Bossart <nathan@postgresql.org>
       Remove some unused <link linkend="spi"><acronym>SPI</acronym></link>
       macros (Bharath Rupireddy)
       <ulink url="&commit_baseurl;75680c3d8">&sect;</ulink>
-      </para>
-     </listitem>
-
-<!--
-Author: Daniel Gustafsson <dgustafsson@postgresql.org>
-2024-03-04 [cc09e6549] Remove the adminpack contrib extension
--->
-
-     <listitem>
-      <para>
-      Remove <application>adminpack</application> contrib extension
-      (Daniel Gustafsson)
-      <ulink url="&commit_baseurl;cc09e6549">&sect;</ulink>
-      </para>
-
-      <para>
-      This was used by now end-of-life <productname>pgAdmin
-      III</productname>.
       </para>
      </listitem>
 
