@@ -12,7 +12,10 @@ use Test::More;
 
 # Initialize the server with specific low connection limits
 my $node = PostgreSQL::Test::Cluster->new('primary');
-$node->init;
+$node->init(
+	'auth_extra' => [
+		'--create-role', 'regress_regular,regress_reserved,regress_superuser'
+	]);
 $node->append_conf('postgresql.conf', "max_connections = 6");
 $node->append_conf('postgresql.conf', "reserved_connections = 2");
 $node->append_conf('postgresql.conf', "superuser_reserved_connections = 1");
