@@ -672,7 +672,7 @@ ProcessCopyOptions(ParseState *pstate,
 	}
 
 	/*
-	 * Check for incompatible options (must do these two before inserting
+	 * Check for incompatible options (must do these three before inserting
 	 * defaults)
 	 */
 	if (opts_out->binary && opts_out->delim)
@@ -690,11 +690,6 @@ ProcessCopyOptions(ParseState *pstate,
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("cannot specify %s in BINARY mode", "DEFAULT")));
-
-	if (opts_out->binary && opts_out->on_error != COPY_ON_ERROR_STOP)
-		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("only ON_ERROR STOP is allowed in BINARY mode")));
 
 	/* Set defaults for omitted options */
 	if (!opts_out->delim)
@@ -900,6 +895,11 @@ ProcessCopyOptions(ParseState *pstate,
 					 errmsg("NULL specification and DEFAULT specification cannot be the same")));
 	}
 	/* Check on_error */
+	if (opts_out->binary && opts_out->on_error != COPY_ON_ERROR_STOP)
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("only ON_ERROR STOP is allowed in BINARY mode")));
+
 	if (opts_out->reject_limit && !opts_out->on_error)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
