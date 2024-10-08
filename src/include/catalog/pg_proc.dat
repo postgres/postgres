@@ -1314,6 +1314,13 @@
   proname => 'text_smaller', proleakproof => 't', prorettype => 'text',
   proargtypes => 'text text', prosrc => 'text_smaller' },
 
+{ oid => '8920', descr => 'larger of two',
+  proname => 'bytea_larger', proleakproof => 't', prorettype => 'bytea',
+  proargtypes => 'bytea bytea', prosrc => 'bytea_larger' },
+{ oid => '8921', descr => 'smaller of two',
+  proname => 'bytea_smaller', proleakproof => 't', prorettype => 'bytea',
+  proargtypes => 'bytea bytea', prosrc => 'bytea_smaller' },
+
 { oid => '460', descr => 'I/O',
   proname => 'int8in', prorettype => 'int8', proargtypes => 'cstring',
   prosrc => 'int8in' },
@@ -6879,6 +6886,9 @@
 { oid => '5099', descr => 'maximum value of all xid8 input values',
   proname => 'max', prokind => 'a', proisstrict => 'f', prorettype => 'xid8',
   proargtypes => 'xid8', prosrc => 'aggregate_dummy' },
+{ oid => '8922', descr => 'maximum value of all bytea input values',
+  proname => 'max', prokind => 'a', proisstrict => 'f', prorettype => 'bytea',
+  proargtypes => 'bytea', prosrc => 'aggregate_dummy' },
 
 { oid => '2131', descr => 'minimum value of all bigint input values',
   proname => 'min', prokind => 'a', proisstrict => 'f', prorettype => 'int8',
@@ -6952,6 +6962,9 @@
 { oid => '5100', descr => 'minimum value of all xid8 input values',
   proname => 'min', prokind => 'a', proisstrict => 'f', prorettype => 'xid8',
   proargtypes => 'xid8', prosrc => 'aggregate_dummy' },
+{ oid => '8923', descr => 'minimum value of all bytea input values',
+  proname => 'min', prokind => 'a', proisstrict => 'f', prorettype => 'bytea',
+  proargtypes => 'bytea', prosrc => 'aggregate_dummy' },
 
 # count has two forms: count(any) and count(*)
 { oid => '2147',

@@ -876,6 +876,8 @@ uuid_extract_timestamp(uuid)
 uuid_extract_version(uuid)
 crc32(bytea)
 crc32c(bytea)
+bytea_larger(bytea,bytea)
+bytea_smaller(bytea,bytea)
 -- restore normal output mode
 \a\t
 -- List of functions used by libpq's fe-lobj.c

@@ -1950,7 +1950,7 @@ select string_agg(distinct f1::text, ',' order by f1::text) from varchar_tbl;  -
  a,ab,abcd
 (1 row)
 
--- string_agg bytea tests
+-- string_agg, min, max bytea tests
 create table bytea_test_table(v bytea);
 select string_agg(v, '') from bytea_test_table;
  string_agg 
@@ -1982,6 +1982,32 @@ select string_agg(v, decode('ee', 'hex')) from bytea_test_table;
  string_agg 
 ------------
  \xffeeaa
+(1 row)
+
+select min(v) from bytea_test_table;
+ min  
+------
+ \xaa
+(1 row)
+
+select max(v) from bytea_test_table;
+ max  
+------
+ \xff
+(1 row)
+
+insert into bytea_test_table values(decode('ffff','hex'));
+insert into bytea_test_table values(decode('aaaa','hex'));
+select min(v) from bytea_test_table;
+ min  
+------
+ \xaa
+(1 row)
+
+select max(v) from bytea_test_table;
+  max   
+--------
+ \xffff
 (1 row)
 
 drop table bytea_test_table;

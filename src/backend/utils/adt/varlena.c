@@ -3932,6 +3932,44 @@ byteacmp(PG_FUNCTION_ARGS)
 }
 
 Datum
+bytea_larger(PG_FUNCTION_ARGS)
+{
+	bytea	   *arg1 = PG_GETARG_BYTEA_PP(0);
+	bytea	   *arg2 = PG_GETARG_BYTEA_PP(1);
+	bytea	   *result;
+	int			len1,
+				len2;
+	int			cmp;
+
+	len1 = VARSIZE_ANY_EXHDR(arg1);
+	len2 = VARSIZE_ANY_EXHDR(arg2);
+
+	cmp = memcmp(VARDATA_ANY(arg1), VARDATA_ANY(arg2), Min(len1, len2));
+	result = ((cmp > 0) || ((cmp == 0) && (len1 > len2)) ? arg1 : arg2);
+
+	PG_RETURN_BYTEA_P(result);
+}
+
+Datum
+bytea_smaller(PG_FUNCTION_ARGS)
+{
+	bytea	   *arg1 = PG_GETARG_BYTEA_PP(0);
+	bytea	   *arg2 = PG_GETARG_BYTEA_PP(1);
+	bytea	   *result;
+	int			len1,
+				len2;
+	int			cmp;
+
+	len1 = VARSIZE_ANY_EXHDR(arg1);
+	len2 = VARSIZE_ANY_EXHDR(arg2);
+
+	cmp = memcmp(VARDATA_ANY(arg1), VARDATA_ANY(arg2), Min(len1, len2));
+	result = ((cmp < 0) || ((cmp == 0) && (len1 < len2)) ? arg1 : arg2);
+
+	PG_RETURN_BYTEA_P(result);
+}
+
+Datum
 bytea_sortsupport(PG_FUNCTION_ARGS)
 {
 	SortSupport ssup = (SortSupport) PG_GETARG_POINTER(0);
