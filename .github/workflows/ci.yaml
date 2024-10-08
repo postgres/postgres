@@ -30,6 +30,7 @@ jobs:
       - run: sudo apt install -y libpq-dev postgresql-client
       - run: ./configure --without-icu
       - run: make
+      - run: ls -l src/bin/psql/libsharding.a
       - run: ranlib src/bin/psql/libsharding.a
       - run: cd sharding && cargo test -- --test-threads=1      
 
