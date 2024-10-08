@@ -205,11 +205,34 @@ SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'inc
  COMMIT
 (3 rows)
 
+-- Test that accessing a TOAST table is permitted during the decoding of a
+-- prepared transaction.
+-- Create a table with a column that uses a TOASTed default value.
+-- (temporarily hide query, to avoid the long CREATE TABLE stmt)
+\set ECHO none
+BEGIN;
+INSERT INTO test_tab VALUES('test');
+PREPARE TRANSACTION 'test_toast_table_access';
+SELECT count(*) FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1', 'stream-changes', '1');
+ count 
+-------
+     3
+(1 row)
+
+COMMIT PREPARED 'test_toast_table_access';
+-- consume commit prepared
+SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1', 'stream-changes', '1');
+                   data                    
+-------------------------------------------
+ COMMIT PREPARED 'test_toast_table_access'
+(1 row)
+
 -- Test 8:
 -- cleanup and make sure results are also empty
 DROP TABLE test_prepared1;
 DROP TABLE test_prepared2;
 DROP TABLE test_prepared_savepoint;
+DROP TABLE test_tab;
 -- show results. There should be nothing to show
 SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1');
  data 
