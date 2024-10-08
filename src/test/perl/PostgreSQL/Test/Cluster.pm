@@ -353,7 +353,6 @@ sub raw_connect_works
 	# IO::Socket::UNIX implementation.
 	if ($PostgreSQL::Test::Utils::use_unix_sockets)
 	{
-		diag "checking if IO::Socket::UNIX works";
 		eval {
 			my $sock = $self->raw_connect();
 			$sock->close();
