@@ -242,6 +242,17 @@ tdeheap_tts_buffer_heap_copyslot(TupleTableSlot *dstslot, TupleTableSlot *srcslo
 }
 
 static HeapTuple
+tdeheap_tts_buffer_heap_get_heap_tuple(TupleTableSlot *slot)
+{
+	BufferHeapTupleTableSlot *bslot = (BufferHeapTupleTableSlot *) slot;
+	Assert(!TTS_EMPTY(slot));
+
+	if (!bslot->base.tuple)
+		tdeheap_tts_buffer_heap_materialize(slot);
+	return bslot->base.tuple;
+}
+
+static HeapTuple
 tdeheap_tts_buffer_heap_copy_heap_tuple(TupleTableSlot *slot)
 {
 	BufferHeapTupleTableSlot *bslot = (BufferHeapTupleTableSlot *) slot;
@@ -462,7 +473,7 @@ const TupleTableSlotOps TTSOpsTDEBufferHeapTuple = {
 	.is_current_xact_tuple = tdeheap_buffer_is_current_xact_tuple,
 #endif
 	.copyslot = tdeheap_tts_buffer_heap_copyslot,
-	.get_heap_tuple = NULL,
+	.get_heap_tuple = tdeheap_tts_buffer_heap_get_heap_tuple,
 
 	/* A buffer heap tuple table slot can not "own" a minimal tuple. */
 	.get_minimal_tuple = NULL,

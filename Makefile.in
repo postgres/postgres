@@ -14,6 +14,7 @@ update_compare_indexes_basic \
 pg_tde_is_encrypted_basic \
 test_issue_153_fix_basic \
 multi_insert_basic \
+update_basic \
 subtransaction_basic \
 trigger_on_view_basic \
 change_access_method_basic \
