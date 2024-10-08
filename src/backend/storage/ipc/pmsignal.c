@@ -24,6 +24,7 @@
 #include "miscadmin.h"
 #include "postmaster/postmaster.h"
 #include "replication/walsender.h"
+#include "storage/ipc.h"
 #include "storage/pmsignal.h"
 #include "storage/shmem.h"
 #include "utils/memutils.h"
@@ -120,6 +121,8 @@ postmaster_death_handler(SIGNAL_ARGS)
 #endif
 
 #endif							/* USE_POSTMASTER_DEATH_SIGNAL */
+
+static void MarkPostmasterChildInactive(int code, Datum arg);
 
 /*
  * PMSignalShmemSize
@@ -316,11 +319,14 @@ IsPostmasterChildWalSender(int slot)
 }
 
 /*
- * MarkPostmasterChildActive - mark a postmaster child as about to begin
+ * RegisterPostmasterChildActive - mark a postmaster child as about to begin
  * actively using shared memory.  This is called in the child process.
+ *
+ * This register an shmem exit hook to mark us as inactive again when the
+ * process exits normally.
  */
 void
-MarkPostmasterChildActive(void)
+RegisterPostmasterChildActive(void)
 {
 	int			slot = MyPMChildSlot;
 
@@ -328,6 +334,9 @@ MarkPostmasterChildActive(void)
 	slot--;
 	Assert(PMSignalState->PMChildFlags[slot] == PM_CHILD_ASSIGNED);
 	PMSignalState->PMChildFlags[slot] = PM_CHILD_ACTIVE;
+
+	/* Arrange to clean up at exit. */
+	on_shmem_exit(MarkPostmasterChildInactive, 0);
 }
 
 /*
@@ -352,8 +361,8 @@ MarkPostmasterChildWalSender(void)
  * MarkPostmasterChildInactive - mark a postmaster child as done using
  * shared memory.  This is called in the child process.
  */
-void
-MarkPostmasterChildInactive(void)
+static void
+MarkPostmasterChildInactive(int code, Datum arg)
 {
 	int			slot = MyPMChildSlot;
 

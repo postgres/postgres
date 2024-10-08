@@ -354,6 +354,19 @@ InitProcess(void)
 	if (MyProc != NULL)
 		elog(ERROR, "you already exist");
 
+	/*
+	 * Before we start accessing the shared memory in a serious way, mark
+	 * ourselves as an active postmaster child; this is so that the postmaster
+	 * can detect it if we exit without cleaning up.  (XXX autovac launcher
+	 * currently doesn't participate in this; it probably should.)
+	 *
+	 * Slot sync worker also does not participate in it, see comments atop
+	 * 'struct bkend' in postmaster.c.
+	 */
+	if (IsUnderPostmaster && !AmAutoVacuumLauncherProcess() &&
+		!AmLogicalSlotSyncWorkerProcess())
+		RegisterPostmasterChildActive();
+
 	/* Decide which list should supply our PGPROC. */
 	if (AmAutoVacuumLauncherProcess() || AmAutoVacuumWorkerProcess())
 		procgloballist = &ProcGlobal->autovacFreeProcs;
@@ -405,19 +418,6 @@ InitProcess(void)
 	 * the case, it would get returned to the wrong list.
 	 */
 	Assert(MyProc->procgloballist == procgloballist);
-
-	/*
-	 * Now that we have a PGPROC, mark ourselves as an active postmaster
-	 * child; this is so that the postmaster can detect it if we exit without
-	 * cleaning up.  (XXX autovac launcher currently doesn't participate in
-	 * this; it probably should.)
-	 *
-	 * Slot sync worker also does not participate in it, see comments atop
-	 * 'struct bkend' in postmaster.c.
-	 */
-	if (IsUnderPostmaster && !AmAutoVacuumLauncherProcess() &&
-		!AmLogicalSlotSyncWorkerProcess())
-		MarkPostmasterChildActive();
 
 	/*
 	 * Initialize all fields of MyProc, except for those previously
@@ -992,18 +992,6 @@ ProcKill(int code, Datum arg)
 	ProcGlobal->spins_per_delay = update_spins_per_delay(ProcGlobal->spins_per_delay);
 
 	SpinLockRelease(ProcStructLock);
-
-	/*
-	 * This process is no longer present in shared memory in any meaningful
-	 * way, so tell the postmaster we've cleaned up acceptably well. (XXX
-	 * autovac launcher should be included here someday)
-	 *
-	 * Slot sync worker is also not a postmaster child, so skip this shared
-	 * memory related processing here.
-	 */
-	if (IsUnderPostmaster && !AmAutoVacuumLauncherProcess() &&
-		!AmLogicalSlotSyncWorkerProcess())
-		MarkPostmasterChildInactive();
 
 	/* wake autovac launcher if needed -- see comments in FreeWorkerInfo */
 	if (AutovacuumLauncherPid != 0)
