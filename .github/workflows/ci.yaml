@@ -29,6 +29,7 @@ jobs:
       - run: sudo apt update && sudo apt upgrade -y
       - run: sudo apt install -y libpq-dev postgresql-client
       - run: ./configure --without-icu
+      - run: cd sharding && ./build-release.sh & cd ..
       - run: make
       - run: ls -l src/bin/psql/libsharding.a
       - run: ranlib src/bin/psql/libsharding.a
