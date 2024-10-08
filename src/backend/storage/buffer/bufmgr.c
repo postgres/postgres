@@ -5899,7 +5899,12 @@ ScheduleBufferTagForWriteback(WritebackContext *wb_context, IOContext io_context
 {
 	PendingWriteback *pending;
 
-	if (io_direct_flags & IO_DIRECT_DATA)
+	/*
+	 * As pg_flush_data() doesn't do anything with fsync disabled, there's no
+	 * point in tracking in that case.
+	 */
+	if (io_direct_flags & IO_DIRECT_DATA ||
+		!enableFsync)
 		return;
 
 	/*
