@@ -1259,6 +1259,7 @@ StartReadBuffersImpl(ReadBuffersOperation *operation,
 {
 	int			actual_nblocks = *nblocks;
 	int			io_buffers_len = 0;
+	int			maxcombine = 0;
 
 	Assert(*nblocks > 0);
 	Assert(*nblocks <= MAX_IO_COMBINE_LIMIT);
@@ -1290,6 +1291,23 @@ StartReadBuffersImpl(ReadBuffersOperation *operation,
 		{
 			/* Extend the readable range to cover this block. */
 			io_buffers_len++;
+
+			/*
+			 * Check how many blocks we can cover with the same IO. The smgr
+			 * implementation might e.g. be limited due to a segment boundary.
+			 */
+			if (i == 0 && actual_nblocks > 1)
+			{
+				maxcombine = smgrmaxcombine(operation->smgr,
+											operation->forknum,
+											blockNum);
+				if (unlikely(maxcombine < actual_nblocks))
+				{
+					elog(DEBUG2, "limiting nblocks at %u from %u to %u",
+						 blockNum, actual_nblocks, maxcombine);
+					actual_nblocks = maxcombine;
+				}
+			}
 		}
 	}
 	*nblocks = actual_nblocks;

@@ -88,6 +88,8 @@ typedef struct f_smgr
 									BlockNumber blocknum, int nblocks, bool skipFsync);
 	bool		(*smgr_prefetch) (SMgrRelation reln, ForkNumber forknum,
 								  BlockNumber blocknum, int nblocks);
+	uint32		(*smgr_maxcombine) (SMgrRelation reln, ForkNumber forknum,
+									BlockNumber blocknum);
 	void		(*smgr_readv) (SMgrRelation reln, ForkNumber forknum,
 							   BlockNumber blocknum,
 							   void **buffers, BlockNumber nblocks);
@@ -117,6 +119,7 @@ static const f_smgr smgrsw[] = {
 		.smgr_extend = mdextend,
 		.smgr_zeroextend = mdzeroextend,
 		.smgr_prefetch = mdprefetch,
+		.smgr_maxcombine = mdmaxcombine,
 		.smgr_readv = mdreadv,
 		.smgr_writev = mdwritev,
 		.smgr_writeback = mdwriteback,
@@ -589,12 +592,28 @@ smgrprefetch(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 }
 
 /*
+ * smgrmaxcombine() - Return the maximum number of total blocks that can be
+ *				 combined with an IO starting at blocknum.
+ *
+ * The returned value includes the IO for blocknum itself.
+ */
+uint32
+smgrmaxcombine(SMgrRelation reln, ForkNumber forknum,
+			   BlockNumber blocknum)
+{
+	return smgrsw[reln->smgr_which].smgr_maxcombine(reln, forknum, blocknum);
+}
+
+/*
  * smgrreadv() -- read a particular block range from a relation into the
  *				 supplied buffers.
  *
  * This routine is called from the buffer manager in order to
  * instantiate pages in the shared buffer cache.  All storage managers
  * return pages in the format that POSTGRES expects.
+ *
+ * If more than one block is intended to be read, callers need to use
+ * smgrmaxcombine() to check how many blocks can be combined into one IO.
  */
 void
 smgrreadv(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
@@ -626,6 +645,9 @@ smgrreadv(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
  * skipFsync indicates that the caller will make other provisions to
  * fsync the relation, so we needn't bother.  Temporary relations also
  * do not require fsync.
+ *
+ * If more than one block is intended to be read, callers need to use
+ * smgrmaxcombine() to check how many blocks can be combined into one IO.
  */
 void
 smgrwritev(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
