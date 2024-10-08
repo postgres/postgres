@@ -282,10 +282,8 @@ InitWalSender(void)
 	/* Create a per-walsender data structure in shared memory */
 	InitWalSenderSlot();
 
-	/*
-	 * We don't currently need any ResourceOwner in a walsender process, but
-	 * if we did, we could call CreateAuxProcessResourceOwner here.
-	 */
+	/* need resource owner for e.g. basebackups */
+	CreateAuxProcessResourceOwner();
 
 	/*
 	 * Let postmaster know that we're a WAL sender. Once we've declared us as
@@ -346,41 +344,13 @@ WalSndErrorCleanup(void)
 	 * without a transaction, we've got to clean that up now.
 	 */
 	if (!IsTransactionOrTransactionBlock())
-		WalSndResourceCleanup(false);
+		ReleaseAuxProcessResources(false);
 
 	if (got_STOPPING || got_SIGUSR2)
 		proc_exit(0);
 
 	/* Revert back to startup state */
 	WalSndSetState(WALSNDSTATE_STARTUP);
-}
-
-/*
- * Clean up any ResourceOwner we created.
- */
-void
-WalSndResourceCleanup(bool isCommit)
-{
-	ResourceOwner resowner;
-
-	if (CurrentResourceOwner == NULL)
-		return;
-
-	/*
-	 * Deleting CurrentResourceOwner is not allowed, so we must save a pointer
-	 * in a local variable and clear it first.
-	 */
-	resowner = CurrentResourceOwner;
-	CurrentResourceOwner = NULL;
-
-	/* Now we can release resources and delete it. */
-	ResourceOwnerRelease(resowner,
-						 RESOURCE_RELEASE_BEFORE_LOCKS, isCommit, true);
-	ResourceOwnerRelease(resowner,
-						 RESOURCE_RELEASE_LOCKS, isCommit, true);
-	ResourceOwnerRelease(resowner,
-						 RESOURCE_RELEASE_AFTER_LOCKS, isCommit, true);
-	ResourceOwnerDelete(resowner);
 }
 
 /*
@@ -685,8 +655,10 @@ UploadManifest(void)
 	 * parsing the manifest will use the cryptohash stuff, which requires a
 	 * resource owner
 	 */
-	Assert(CurrentResourceOwner == NULL);
-	CurrentResourceOwner = ResourceOwnerCreate(NULL, "base backup");
+	Assert(AuxProcessResourceOwner != NULL);
+	Assert(CurrentResourceOwner == AuxProcessResourceOwner ||
+		   CurrentResourceOwner == NULL);
+	CurrentResourceOwner = AuxProcessResourceOwner;
 
 	/* Prepare to read manifest data into a temporary context. */
 	mcxt = AllocSetContextCreate(CurrentMemoryContext,
@@ -723,7 +695,7 @@ UploadManifest(void)
 	uploaded_manifest_mcxt = mcxt;
 
 	/* clean up the resource owner we created */
-	WalSndResourceCleanup(true);
+	ReleaseAuxProcessResources(true);
 }
 
 /*

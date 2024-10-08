@@ -250,8 +250,10 @@ perform_base_backup(basebackup_options *opt, bbsink *sink,
 	state.bytes_total_is_valid = false;
 
 	/* we're going to use a BufFile, so we need a ResourceOwner */
-	Assert(CurrentResourceOwner == NULL);
-	CurrentResourceOwner = ResourceOwnerCreate(NULL, "base backup");
+	Assert(AuxProcessResourceOwner != NULL);
+	Assert(CurrentResourceOwner == AuxProcessResourceOwner ||
+		   CurrentResourceOwner == NULL);
+	CurrentResourceOwner = AuxProcessResourceOwner;
 
 	backup_started_in_recovery = RecoveryInProgress();
 
@@ -672,7 +674,7 @@ perform_base_backup(basebackup_options *opt, bbsink *sink,
 	FreeBackupManifest(&manifest);
 
 	/* clean up the resource owner we created */
-	WalSndResourceCleanup(true);
+	ReleaseAuxProcessResources(true);
 
 	basebackup_progress_done();
 }
