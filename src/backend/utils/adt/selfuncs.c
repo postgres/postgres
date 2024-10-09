@@ -2131,6 +2131,9 @@ scalararraysel(PlannerInfo *root,
  *
  * Note: the result is integral, but we use "double" to avoid overflow
  * concerns.  Most callers will use it in double-type expressions anyway.
+ *
+ * Note: in some code paths root can be passed as NULL, resulting in
+ * slightly worse estimates.
  */
 double
 estimate_array_length(PlannerInfo *root, Node *arrayexpr)
@@ -2154,7 +2157,7 @@ estimate_array_length(PlannerInfo *root, Node *arrayexpr)
 	{
 		return list_length(((ArrayExpr *) arrayexpr)->elements);
 	}
-	else if (arrayexpr)
+	else if (arrayexpr && root)
 	{
 		/* See if we can find any statistics about it */
 		VariableStatData vardata;
