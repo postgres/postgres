@@ -279,6 +279,11 @@ explain (costs off)
   select v.c, (select count(*) from gstest2 group by () having v.c)
     from (values (false),(true)) v(c) order by v.c;
 
+-- test pushdown of HAVING clause that does not reference any columns that are nullable by grouping sets
+explain (costs off)
+select a, b, count(*) from gstest2 group by grouping sets ((a, b), (a)) having a > 1 and b > 1;
+select a, b, count(*) from gstest2 group by grouping sets ((a, b), (a)) having a > 1 and b > 1;
+
 -- HAVING with GROUPING queries
 select ten, grouping(ten) from onek
 group by grouping sets(ten) having grouping(ten) >= 0

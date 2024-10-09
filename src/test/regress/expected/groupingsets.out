@@ -860,6 +860,27 @@ explain (costs off)
                        ->  Seq Scan on gstest2
 (10 rows)
 
+-- test pushdown of HAVING clause that does not reference any columns that are nullable by grouping sets
+explain (costs off)
+select a, b, count(*) from gstest2 group by grouping sets ((a, b), (a)) having a > 1 and b > 1;
+           QUERY PLAN            
+---------------------------------
+ GroupAggregate
+   Group Key: a, b
+   Group Key: a
+   Filter: (b > 1)
+   ->  Sort
+         Sort Key: a, b
+         ->  Seq Scan on gstest2
+               Filter: (a > 1)
+(8 rows)
+
+select a, b, count(*) from gstest2 group by grouping sets ((a, b), (a)) having a > 1 and b > 1;
+ a | b | count 
+---+---+-------
+ 2 | 2 |     1
+(1 row)
+
 -- HAVING with GROUPING queries
 select ten, grouping(ten) from onek
 group by grouping sets(ten) having grouping(ten) >= 0
