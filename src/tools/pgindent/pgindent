@@ -7,7 +7,7 @@ use warnings FATAL => 'all';
 
 use Cwd qw(abs_path getcwd);
 use File::Find;
-use File::Spec qw(devnull);
+use File::Spec;
 use File::Temp;
 use IO::Handle;
 use Getopt::Long;
