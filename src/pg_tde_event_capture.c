@@ -24,6 +24,7 @@
 #include "commands/tablespace.h"
 #include "catalog/tde_principal_key.h"
 #include "miscadmin.h"
+#include "access/tableam.h"
 
 /* Global variable that gets set at ddl start and cleard out at ddl end*/
 TdeCreateEvent tdeCurrentCreateEvent = {.relation = NULL};
@@ -106,23 +107,65 @@ pg_tde_ddl_command_start_capture(PG_FUNCTION_ARGS)
 		tdeCurrentCreateEvent.eventType = TDE_TABLE_CREATE_EVENT;
 		tdeCurrentCreateEvent.relation = stmt->relation;
 
-		if (stmt->accessMethod && !strcmp(stmt->accessMethod, "tde_heap"))
+		if (stmt->accessMethod && strcmp(stmt->accessMethod, "tde_heap") == 0)
+		{
+			tdeCurrentCreateEvent.encryptMode = true;
+		} else if ((stmt->accessMethod == NULL || stmt->accessMethod[0] ==0) && strcmp(default_table_access_method, "tde_heap") == 0)
 		{
 			tdeCurrentCreateEvent.encryptMode = true;
 		}
 
-		tablespace_oid = stmt->tablespacename != NULL ? get_tablespace_oid(stmt->tablespacename, false) 
-						 : MyDatabaseTableSpace;  
-		LWLockAcquire(tde_lwlock_enc_keys(), LW_SHARED);
-		principal_key = GetPrincipalKey(MyDatabaseId, tablespace_oid, LW_SHARED);
-		LWLockRelease(tde_lwlock_enc_keys());
-		if (principal_key == NULL)
+		if(tdeCurrentCreateEvent.encryptMode)
 		{
-			ereport(ERROR,
-					(errmsg("failed to retrieve principal key. Create one using pg_tde_set_principal_key before using encrypted tables.")));
+			tablespace_oid = stmt->tablespacename != NULL ? get_tablespace_oid(stmt->tablespacename, false) 
+							 : MyDatabaseTableSpace;  
+			LWLockAcquire(tde_lwlock_enc_keys(), LW_SHARED);
+			principal_key = GetPrincipalKey(MyDatabaseId, tablespace_oid, LW_SHARED);
+			LWLockRelease(tde_lwlock_enc_keys());
+			if (principal_key == NULL)
+			{
+				ereport(ERROR,
+						(errmsg("failed to retrieve principal key. Create one using pg_tde_set_principal_key before using encrypted tables.")));
 
+			}
 		}
 
+	}
+	else if (IsA(parsetree, AlterTableStmt))
+	{
+		LOCKMODE	lockmode = AccessShareLock; /* TODO. Verify lock mode? */
+		AlterTableStmt *stmt = (AlterTableStmt *) parsetree;
+		TDEPrincipalKey * principal_key;
+		Oid		relationId = RangeVarGetRelid(stmt->relation, NoLock, true);
+		Relation	rel = table_open(relationId, lockmode);
+		Oid tablespace_oid = rel->rd_locator.spcOid;
+		ListCell   *lcmd;
+		table_close(rel, lockmode);
+
+		foreach(lcmd, stmt->cmds)
+        	{
+			AlterTableCmd *cmd = (AlterTableCmd *) lfirst(lcmd);
+			if(cmd->subtype == AT_SetAccessMethod && strcmp(cmd->name, "tde_heap")==0) {
+				tdeCurrentCreateEvent.encryptMode = true;
+				tdeCurrentCreateEvent.eventType = TDE_TABLE_CREATE_EVENT;
+				tdeCurrentCreateEvent.relation = stmt->relation;
+			}
+		}
+
+		// TODO: also check for tablespace change, if current or new AM is tde_heap!
+
+		if (tdeCurrentCreateEvent.encryptMode)
+		{
+			LWLockAcquire(tde_lwlock_enc_keys(), LW_SHARED);
+			principal_key = GetPrincipalKey(MyDatabaseId, tablespace_oid, LW_SHARED);
+			LWLockRelease(tde_lwlock_enc_keys());
+			if (principal_key == NULL)
+			{
+				ereport(ERROR,
+						(errmsg("failed to retrieve principal key. Create one using pg_tde_set_principal_key before using encrypted tables.")));
+
+			}
+		}
 	}
 #endif
 	PG_RETURN_NULL();
