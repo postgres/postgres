@@ -2100,7 +2100,7 @@ Author: Michael Paquier <michael@paquier.xyz>
      <listitem>
       <para>
       Allow the session <link linkend="guc-timezone">time zone</link>
-      to be specified by <literal>AS LOCAL</literal> (Vik Fearing)
+      to be specified by <literal>AT LOCAL</literal> (Vik Fearing)
       <ulink url="&commit_baseurl;97957fdba">&sect;</ulink>
       </para>
 
