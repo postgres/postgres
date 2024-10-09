@@ -6,6 +6,10 @@ SHOW datestyle;
  Postgres, MDY
 (1 row)
 
+-- Check output style of CamelCase enum options
+SET intervalstyle to 'asd';
+ERROR:  invalid value for parameter "IntervalStyle": "asd"
+HINT:  Available values: postgres, postgres_verbose, sql_standard, iso_8601.
 -- SET to some nondefault value
 SET vacuum_cost_delay TO 40;
 SET datestyle = 'ISO, YMD';
