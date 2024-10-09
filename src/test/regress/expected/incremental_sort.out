@@ -1701,3 +1701,24 @@ explain (costs off) select a, b, a <-> point(5, 5) dist from point_table order b
                Order By: (a <-> '(5,5)'::point)
 (6 rows)
 
+-- Ensure we get an incremental sort on the outer side of the mergejoin
+explain (costs off)
+select * from
+  (select * from tenk1 order by four) t1 join tenk1 t2 on t1.four = t2.four and t1.two = t2.two
+order by t1.four, t1.two limit 1;
+                              QUERY PLAN                               
+-----------------------------------------------------------------------
+ Limit
+   ->  Merge Join
+         Merge Cond: ((tenk1.four = t2.four) AND (tenk1.two = t2.two))
+         ->  Incremental Sort
+               Sort Key: tenk1.four, tenk1.two
+               Presorted Key: tenk1.four
+               ->  Sort
+                     Sort Key: tenk1.four
+                     ->  Seq Scan on tenk1
+         ->  Sort
+               Sort Key: t2.four, t2.two
+               ->  Seq Scan on tenk1 t2
+(12 rows)
+

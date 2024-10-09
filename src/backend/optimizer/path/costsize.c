@@ -3532,7 +3532,8 @@ final_cost_nestloop(PlannerInfo *root, NestPath *path,
  * join quals here, except for obtaining the scan selectivity estimate which
  * is really essential (but fortunately, use of caching keeps the cost of
  * getting that down to something reasonable).
- * We also assume that cost_sort is cheap enough to use here.
+ * We also assume that cost_sort/cost_incremental_sort is cheap enough to use
+ * here.
  *
  * 'workspace' is to be filled with startup_cost, total_cost, and perhaps
  *		other data to be used by final_cost_mergejoin
@@ -3569,7 +3570,8 @@ initial_cost_mergejoin(PlannerInfo *root, JoinCostWorkspace *workspace,
 				outerendsel,
 				innerstartsel,
 				innerendsel;
-	Path		sort_path;		/* dummy for result of cost_sort */
+	Path		sort_path;		/* dummy for result of
+								 * cost_sort/cost_incremental_sort */
 
 	/* Protect some assumptions below that rowcounts aren't zero */
 	if (outer_path_rows <= 0)
@@ -3682,16 +3684,54 @@ initial_cost_mergejoin(PlannerInfo *root, JoinCostWorkspace *workspace,
 
 	if (outersortkeys)			/* do we need to sort outer? */
 	{
-		cost_sort(&sort_path,
-				  root,
-				  outersortkeys,
-				  outer_path->disabled_nodes,
-				  outer_path->total_cost,
-				  outer_path_rows,
-				  outer_path->pathtarget->width,
-				  0.0,
-				  work_mem,
-				  -1.0);
+		bool		use_incremental_sort = false;
+		int			presorted_keys;
+
+		/*
+		 * We choose to use incremental sort if it is enabled and there are
+		 * presorted keys; otherwise we use full sort.
+		 */
+		if (enable_incremental_sort)
+		{
+			bool		is_sorted PG_USED_FOR_ASSERTS_ONLY;
+
+			is_sorted = pathkeys_count_contained_in(outersortkeys,
+													outer_path->pathkeys,
+													&presorted_keys);
+			Assert(!is_sorted);
+
+			if (presorted_keys > 0)
+				use_incremental_sort = true;
+		}
+
+		if (!use_incremental_sort)
+		{
+			cost_sort(&sort_path,
+					  root,
+					  outersortkeys,
+					  outer_path->disabled_nodes,
+					  outer_path->total_cost,
+					  outer_path_rows,
+					  outer_path->pathtarget->width,
+					  0.0,
+					  work_mem,
+					  -1.0);
+		}
+		else
+		{
+			cost_incremental_sort(&sort_path,
+								  root,
+								  outersortkeys,
+								  presorted_keys,
+								  outer_path->disabled_nodes,
+								  outer_path->startup_cost,
+								  outer_path->total_cost,
+								  outer_path_rows,
+								  outer_path->pathtarget->width,
+								  0.0,
+								  work_mem,
+								  -1.0);
+		}
 		disabled_nodes += sort_path.disabled_nodes;
 		startup_cost += sort_path.startup_cost;
 		startup_cost += (sort_path.total_cost - sort_path.startup_cost)
@@ -3711,6 +3751,11 @@ initial_cost_mergejoin(PlannerInfo *root, JoinCostWorkspace *workspace,
 
 	if (innersortkeys)			/* do we need to sort inner? */
 	{
+		/*
+		 * We do not consider incremental sort for inner path, because
+		 * incremental sort does not support mark/restore.
+		 */
+
 		cost_sort(&sort_path,
 				  root,
 				  innersortkeys,

@@ -1232,13 +1232,13 @@ EXPLAIN (COSTS OFF) SELECT count(*)
 FROM (SELECT * FROM btg ORDER BY x, y, w, z) AS q1
 GROUP BY w, x, z, y;
 
--- Utilize the ordering of merge join to avoid a full Sort operation
+-- Utilize the ordering of merge join to avoid a Sort operation
 SET enable_hashjoin = off;
 SET enable_nestloop = off;
 EXPLAIN (COSTS OFF)
 SELECT count(*)
-  FROM btg t1 JOIN btg t2 ON t1.z = t2.z AND t1.w = t2.w AND t1.x = t2.x
-  GROUP BY t1.x, t1.y, t1.z, t1.w;
+  FROM btg t1 JOIN btg t2 ON t1.w = t2.w AND t1.x = t2.x AND t1.z = t2.z
+  GROUP BY t1.w, t1.z, t1.x;
 RESET enable_nestloop;
 RESET enable_hashjoin;
 

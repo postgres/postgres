@@ -2858,29 +2858,27 @@ GROUP BY w, x, z, y;
          ->  Index Scan using btg_x_y_idx on btg
 (6 rows)
 
--- Utilize the ordering of merge join to avoid a full Sort operation
+-- Utilize the ordering of merge join to avoid a Sort operation
 SET enable_hashjoin = off;
 SET enable_nestloop = off;
 EXPLAIN (COSTS OFF)
 SELECT count(*)
-  FROM btg t1 JOIN btg t2 ON t1.z = t2.z AND t1.w = t2.w AND t1.x = t2.x
-  GROUP BY t1.x, t1.y, t1.z, t1.w;
-                                  QUERY PLAN                                   
--------------------------------------------------------------------------------
+  FROM btg t1 JOIN btg t2 ON t1.w = t2.w AND t1.x = t2.x AND t1.z = t2.z
+  GROUP BY t1.w, t1.z, t1.x;
+                               QUERY PLAN                                
+-------------------------------------------------------------------------
  GroupAggregate
-   Group Key: t1.z, t1.w, t1.x, t1.y
-   ->  Incremental Sort
-         Sort Key: t1.z, t1.w, t1.x, t1.y
-         Presorted Key: t1.z, t1.w, t1.x
-         ->  Merge Join
-               Merge Cond: ((t1.z = t2.z) AND (t1.w = t2.w) AND (t1.x = t2.x))
-               ->  Sort
-                     Sort Key: t1.z, t1.w, t1.x
-                     ->  Index Scan using btg_x_y_idx on btg t1
-               ->  Sort
-                     Sort Key: t2.z, t2.w, t2.x
-                     ->  Index Scan using btg_x_y_idx on btg t2
-(13 rows)
+   Group Key: t1.x, t1.w, t1.z
+   ->  Merge Join
+         Merge Cond: ((t1.x = t2.x) AND (t1.w = t2.w) AND (t1.z = t2.z))
+         ->  Incremental Sort
+               Sort Key: t1.x, t1.w, t1.z
+               Presorted Key: t1.x
+               ->  Index Scan using btg_x_y_idx on btg t1
+         ->  Sort
+               Sort Key: t2.x, t2.w, t2.z
+               ->  Index Scan using btg_x_y_idx on btg t2
+(11 rows)
 
 RESET enable_nestloop;
 RESET enable_hashjoin;
