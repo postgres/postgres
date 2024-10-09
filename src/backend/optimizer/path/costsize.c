@@ -4724,6 +4724,9 @@ cost_rescan(PlannerInfo *root, Path *path,
  *		preferred since it allows caching of the results.)
  *		The result includes both a one-time (startup) component,
  *		and a per-evaluation component.
+ *
+ * Note: in some code paths root can be passed as NULL, resulting in
+ * slightly worse estimates.
  */
 void
 cost_qual_eval(QualCost *cost, List *quals, PlannerInfo *root)
