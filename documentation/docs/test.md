@@ -40,7 +40,7 @@ To check if the data is encrypted, do the following:
 
     !!! warning
 
-        This is the tech preview functionality. It is under active development and can change anytime. Use it only for testing purposes
+        This is the tech preview functionality. Its scope is not yet finalized and can change anytime. Use it only for testing purposes.
 
     1. Create a table in the database for which you have [enabled `pg_tde`](setup.md). Enabling `pg_tde`    extension creates the table access method `tde_heap`. To enable data encryption, create the table using this access method as follows:
 
@@ -65,3 +65,7 @@ To check if the data is encrypted, do the following:
         -- or
         SELECT pg_tde_rotate_principal_key('new-principal-key', 'new-provider'); -- change provider
         ```
+
+!!! hint
+
+    If you no longer wish to use `pg_tde` or wish to switch to using the `tde_heap_basic` access method, see how you can [decrypt your data](decrypt.md)

@@ -1,8 +1,8 @@
-# Decrypt encrypted table
+# Decrypt an encrypted table
 
 ## Method 1. Change the access method
 
-If you encrypted a table with the `tde_heap_basic` access method and need to decrypt it, run the following command against the desired table (`mytable` in the example below):
+If you encrypted a table with the `tde_heap` or `tde_heap_basic` access method and need to decrypt it, run the following command against the desired table (`mytable` in the example below):
 
 ```sql
 ALTER TABLE mytable SET access method heap;
@@ -14,7 +14,17 @@ Check that the table is not encrypted:
 SELECT pg_tde_is_encrypted('mytable');
 ```
 
-The output returns `f` meaning that the table is no longer encrypted.
+The output returns `f` meaning that the table is no longer encrypted. 
+
+!!! note ""
+
+    In the same way you can re-encrypt the data with the `tde_heap_basic` access method. 
+    
+    ```sql
+    ALTER TABLE mytable SET access method tde_heap_basic;
+    ```
+    
+    Note that the indexes and WAL files will no longer be encrypted.
 
 ## Method 2. Create a new unencrypted table on the base of the encrypted one
 
