@@ -263,10 +263,12 @@ DO $$
 		CREATE EVENT TRIGGER pg_tde_trigger_create_index
 		ON ddl_command_start
 		EXECUTE FUNCTION pg_tde_ddl_command_start_capture();
+		ALTER EVENT TRIGGER pg_tde_trigger_create_index ENABLE ALWAYS;
 
 		CREATE EVENT TRIGGER pg_tde_trigger_create_index_2
 		ON ddl_command_end
 		EXECUTE FUNCTION pg_tde_ddl_command_end_capture();
+		ALTER EVENT TRIGGER pg_tde_trigger_create_index_2 ENABLE ALWAYS;
 	EXCEPTION WHEN OTHERS THEN
 		NULL;
 	END;
