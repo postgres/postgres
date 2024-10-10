@@ -1900,7 +1900,7 @@ index_constraint_create(Relation heapRelation,
 	bool		islocal;
 	bool		noinherit;
 	bool		is_without_overlaps;
-	int			inhcount;
+	int16		inhcount;
 
 	deferrable = (constr_flags & INDEX_CONSTR_CREATE_DEFERRABLE) != 0;
 	initdeferred = (constr_flags & INDEX_CONSTR_CREATE_INIT_DEFERRED) != 0;

@@ -245,7 +245,7 @@ extern Oid	CreateConstraintEntry(const char *constraintName,
 								  Node *conExpr,
 								  const char *conBin,
 								  bool conIsLocal,
-								  int conInhCount,
+								  int16 conInhCount,
 								  bool conNoInherit,
 								  bool conPeriod,
 								  bool is_internal);

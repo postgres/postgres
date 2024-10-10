@@ -102,7 +102,7 @@ static ObjectAddress AddNewRelationType(const char *typeName,
 										Oid new_array_type);
 static void RelationRemoveInheritance(Oid relid);
 static Oid	StoreRelCheck(Relation rel, const char *ccname, Node *expr,
-						  bool is_validated, bool is_local, int inhcount,
+						  bool is_validated, bool is_local, int16 inhcount,
 						  bool is_no_inherit, bool is_internal);
 static void StoreConstraints(Relation rel, List *cooked_constraints,
 							 bool is_internal);
@@ -2072,7 +2072,7 @@ SetAttrMissing(Oid relid, char *attname, char *value)
  */
 static Oid
 StoreRelCheck(Relation rel, const char *ccname, Node *expr,
-			  bool is_validated, bool is_local, int inhcount,
+			  bool is_validated, bool is_local, int16 inhcount,
 			  bool is_no_inherit, bool is_internal)
 {
 	char	   *ccbin;
@@ -2624,10 +2624,8 @@ MergeWithExistingConstraint(Relation rel, const char *ccname, Node *expr,
 		{
 			if (is_local)
 				con->conislocal = true;
-			else
-				con->coninhcount++;
-
-			if (con->coninhcount < 0)
+			else if (pg_add_s16_overflow(con->coninhcount, 1,
+										 &con->coninhcount))
 				ereport(ERROR,
 						errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 						errmsg("too many inheritance parents"));
