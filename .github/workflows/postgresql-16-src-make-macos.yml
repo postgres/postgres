@@ -8,7 +8,8 @@ jobs:
     steps:
       - name: Install dependencies
         run: |
-          brew install vault gnu-sed
+          brew tap hashicorp/tap
+          brew install gnu-sed hashicorp/tap/vault
           sudo /usr/bin/perl -MCPAN -e 'install HTTP::Server::Simple'
 
       - name: Clone postgres repository
