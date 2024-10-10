@@ -55,8 +55,9 @@ my $outfile = '';
 
 GetOptions('outfile=s' => \$outfile) or die "$0: wrong arguments";
 
-open my $infh, '<', $ARGV[0]
-  or die "$0: could not open input file '$ARGV[0]': $!\n";
+my $infile = $ARGV[0];
+open my $infh, '<', $infile
+  or die "$0: could not open input file '$infile': $!\n";
 
 my $outfh;
 if ($outfile)
@@ -91,7 +92,7 @@ printf $outfh <<EOM;
 
 #define SWITCH_CONVERSION_APPLIED
 
-#line 1 "tab-complete.in.c"
+#line 1 "${infile}"
 EOM
 
 # Scan input file until we find the data-replacement label line.
@@ -114,7 +115,7 @@ my $last_case_label = 0;
 # with the line numbering of the original, to simplify compiler error message
 # reading and debugging.
 my $next_line_no = $. + 1;
-$output_code .= "#line ${next_line_no} \"tab-complete.in.c\"\n";
+$output_code .= "#line ${next_line_no} \"${infile}\"\n";
 
 # Scan until we find the BEGIN GEN_TABCOMPLETE line.
 # Add the scanned code to $output_code verbatim.
@@ -131,7 +132,7 @@ $output_code .= "\t{\n";
 
 # Keep line numbering in sync.
 $next_line_no = $. + 1;
-$output_code .= "#line ${next_line_no} \"tab-complete.in.c\"\n";
+$output_code .= "#line ${next_line_no} \"${infile}\"\n";
 
 # Scan input file, collecting outer-level else-if conditions
 # to pass to process_else_if.
@@ -190,7 +191,7 @@ $output_code .= "\t}\n";
 
 # Keep line numbering in sync.
 $next_line_no = $. + 1;
-$output_code .= "#line ${next_line_no} \"tab-complete.in.c\"\n";
+$output_code .= "#line ${next_line_no} \"${infile}\"\n";
 
 # Scan the rest, adding it to $output_code verbatim.
 while (<$infh>)
@@ -245,7 +246,7 @@ sub process_else_if
 		process_match($typ, $cs, $args, $else_if_lineno, $isfirst);
 		$isfirst = 0;
 		# approximate line positioning of AND'd condition
-		$output_code .= "#line ${end_lineno} \"tab-complete.in.c\"\n";
+		$output_code .= "#line ${end_lineno} \"${infile}\"\n";
 		$output_code .= "\tif ($else_if_line\n";
 	}
 	elsif ($else_if_line =~
@@ -269,7 +270,7 @@ sub process_else_if
 	if ($end_lineno != $else_if_lineno)
 	{
 		my $next_lineno = $end_lineno + 1;
-		$output_code .= "#line ${next_lineno} \"tab-complete.in.c\"\n";
+		$output_code .= "#line ${next_lineno} \"${infile}\"\n";
 	}
 }
 
