@@ -125,6 +125,8 @@
 <!--
 Author: Jeff Davis <jdavis@postgresql.org>
 2024-03-04 [2af07e2f7] Fix search_path to a safe value during maintenance opera
+Author: Jeff Davis <jdavis@postgresql.org>
+2024-07-16 [b4da732fd64] When creating materialized views, use REFRESH to load data.
 -->
 
     <listitem>
@@ -132,11 +134,14 @@ Author: Jeff Davis <jdavis@postgresql.org>
      Change functions to use a safe <xref linkend="guc-search-path"/>
      during maintenance operations (Jeff Davis)
      <ulink url="&commit_baseurl;2af07e2f7">&sect;</ulink>
+     <ulink url="&commit_baseurl;b4da732fd64">&sect;</ulink>
      </para>
 
      <para>
      This prevents maintenance operations (<command>ANALYZE</command>,
-     <command>CLUSTER</command>, <command>REFRESH
+     <command>CLUSTER</command>, <command>CREATE
+     INDEX</command>, <command>CREATE
+     MATERIALIZED VIEW</command>, <command>REFRESH
      MATERIALIZED VIEW</command>, <command>REINDEX</command>,
      or <command>VACUUM</command>) from performing unsafe access.
      Functions used by expression indexes and materialized views that
