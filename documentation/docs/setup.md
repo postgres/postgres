@@ -80,7 +80,9 @@ Load the `pg_tde` at the start time. The extension requires additional shared me
 
 Perform this step if you [installed Percona Server for PostgreSQL :octicons-link-external-16:](https://docs.percona.com/postgresql/17/installing.html). Otherwise, proceed to the [Next steps](#next-steps).
 
-1. Enable WAL level encryption using the ALTER SYSTEM SET command:
+After you [enabled `pg_tde`](#enable-extension) and started the Percona Server for PostgreSQL, a principal key and a keyring for WAL are created. Now you need to instruct `pg_tde ` to encrypt WAL files by configuring WAL encryption. Here's how to do it:
+
+1. Enable WAL level encryption using the `ALTER SYSTEM SET` command:
 
     ```sql
     ALTER SYSTEM set pg_tde.wal_encrypt = on;
@@ -100,9 +102,9 @@ Perform this step if you [installed Percona Server for PostgreSQL :octicons-link
        sudo systemctl restart postgresql-17
        ```
 
-    After you enabled `pg_tde` and started the Percona Server for PostgreSQL, a principal key and a keyring for WAL are created. We highly recommend you to create your own keyring and rotate the principal key. This is because the default principal key is created from the local keyfile and is stored unencrypted.
+3. We highly recommend you to create your own keyring and rotate the principal key. This is because the default principal key is created from the local keyfile and is stored unencrypted. 
 
-3. Set up the key provider for WAL encryption
+   Set up the key provider for WAL encryption
 
    === "With HaschiCorp Vault"
 
@@ -128,7 +130,7 @@ Perform this step if you [installed Percona Server for PostgreSQL :octicons-link
         SELECT pg_tde_add_key_provider_file('provider-name','/path/to/the/keyring/data.file');
         ```
 
-2. Rotate the principal key. Don't forget to specify the `PG_TDE_GLOBAL` constant to rotate only the principal key for WAL
+4. Rotate the principal key. Don't forget to specify the `PG_TDE_GLOBAL` constant to rotate only the principal key for WAL.
 
     ```sql
     SELECT pg_tde_rotate_principal_key('PG_TDE_GLOBAL', 'new-principal-key', 'provider-name');
