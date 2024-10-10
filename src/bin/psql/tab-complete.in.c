@@ -2024,7 +2024,7 @@ psql_completion(const char *text, int start, int end)
 	 * check if that was the previous word. If so, execute the query to get a
 	 * list of them.
 	 */
-	if (matches == NULL)
+	if (matches == NULL && previous_words_count > 0)
 	{
 		const pgsql_thing_t *wac;
 
