@@ -53,8 +53,7 @@ TDEInitGlobalKeys(const char *dir)
 #ifndef FRONTEND
 	char		db_map_path[MAXPGPATH] = {0};
 
-	pg_tde_set_db_file_paths(&GLOBAL_SPACE_RLOCATOR(XLOG_TDE_OID),
-							 db_map_path, NULL);
+	pg_tde_set_db_file_paths(GLOBAL_DATA_TDE_OID, GLOBALTABLESPACE_OID,  db_map_path, NULL);
 	if (access(db_map_path, F_OK) == -1)
 	{
 		init_default_keyring();

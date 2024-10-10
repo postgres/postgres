@@ -51,7 +51,7 @@ extern RelKeyData *tde_encrypt_rel_key(TDEPrincipalKey *principal_key, RelKeyDat
 extern RelKeyData *tde_decrypt_rel_key(TDEPrincipalKey *principal_key, RelKeyData *enc_rel_key_data, const RelFileLocator *rlocator);
 extern RelKeyData *pg_tde_get_key_from_file(const RelFileLocator *rlocator);
 
-extern void pg_tde_set_db_file_paths(const RelFileLocator *rlocator, char *map_path, char *keydata_path);
+extern void pg_tde_set_db_file_paths(Oid dbOid, Oid spcOid, char *map_path, char *keydata_path);
 
 const char * tde_sprint_key(InternalKey *k);
 

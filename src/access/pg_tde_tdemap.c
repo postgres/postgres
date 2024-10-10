@@ -245,11 +245,7 @@ pg_tde_delete_tde_files(Oid dbOid, Oid spcOid)
 	char db_keydata_path[MAXPGPATH] = {0};
 
 	/* Set the file paths */
-	pg_tde_set_db_file_paths(&(RelFileLocator) { 
-									spcOid,
-									dbOid,
-									0},
-								db_map_path, db_keydata_path);
+	pg_tde_set_db_file_paths(dbOid, spcOid, db_map_path, db_keydata_path);
 
 	/* Remove these files without emitting any error */
 	PathNameDeleteTemporaryFile(db_map_path, false);
@@ -277,10 +273,8 @@ pg_tde_save_principal_key(TDEPrincipalKeyInfo *principal_key_info)
 	char		db_keydata_path[MAXPGPATH] = {0};
 
 	/* Set the file paths */
-	pg_tde_set_db_file_paths(&(RelFileLocator) { 
-									principal_key_info->tablespaceId,
-									principal_key_info->databaseId,
-									0}, 
+	pg_tde_set_db_file_paths(principal_key_info->databaseId,
+								principal_key_info->tablespaceId,
 								db_map_path, db_keydata_path);
 
 	ereport(LOG, (errmsg("pg_tde_save_principal_key")));
@@ -413,7 +407,7 @@ pg_tde_write_one_map_entry(int fd, const RelFileLocator *rlocator, int flags, in
 	if (bytes_written != MAP_ENTRY_SIZE)
 	{
 		char db_map_path[MAXPGPATH] = {0};
-		pg_tde_set_db_file_paths(rlocator, db_map_path, NULL);
+		pg_tde_set_db_file_paths(rlocator->dbOid, rlocator->spcOid, db_map_path, NULL);
 		ereport(FATAL,
 				(errcode_for_file_access(),
 					errmsg("could not write tde map file \"%s\": %m",
@@ -422,7 +416,7 @@ pg_tde_write_one_map_entry(int fd, const RelFileLocator *rlocator, int flags, in
 	if (pg_fsync(fd) != 0)
 	{
 		char db_map_path[MAXPGPATH] = {0};
-		pg_tde_set_db_file_paths(rlocator, db_map_path, NULL);
+		pg_tde_set_db_file_paths(rlocator->dbOid, rlocator->spcOid, db_map_path, NULL);
 		ereport(data_sync_elevel(ERROR),
 				(errcode_for_file_access(),
 				 errmsg("could not fsync file \"%s\": %m", db_map_path)));
@@ -503,7 +497,7 @@ pg_tde_write_key_map_entry(const RelFileLocator *rlocator, RelKeyData *enc_rel_k
 	Assert(rlocator);
 
 	/* Set the file paths */
-	pg_tde_set_db_file_paths(rlocator, db_map_path, db_keydata_path);
+	pg_tde_set_db_file_paths(rlocator->dbOid, rlocator->spcOid, db_map_path, db_keydata_path);
 
 	/* Create the map entry and then add the encrypted key to the data file */
 	key_index = pg_tde_write_map_entry(rlocator, db_map_path, principal_key_info);
@@ -528,7 +522,7 @@ pg_tde_delete_key_map_entry(const RelFileLocator *rlocator)
 	Assert(rlocator);
 
 	/* Get the file paths */
-	pg_tde_set_db_file_paths(rlocator, db_map_path, db_keydata_path);
+	pg_tde_set_db_file_paths(rlocator->dbOid, rlocator->spcOid, db_map_path, db_keydata_path);
 
 	errno = 0;
 	/* Remove the map entry if found */
@@ -573,7 +567,7 @@ pg_tde_free_key_map_entry(const RelFileLocator *rlocator, off_t offset)
 	Assert(rlocator);
 
 	/* Get the file paths */
-	pg_tde_set_db_file_paths(rlocator, db_map_path, db_keydata_path);
+	pg_tde_set_db_file_paths(rlocator->dbOid, rlocator->spcOid, db_map_path, db_keydata_path);
 
 	/* Remove the map entry if found */
 	LWLockAcquire(lock_files, LW_EXCLUSIVE);
@@ -656,10 +650,8 @@ pg_tde_perform_rotate_key(TDEPrincipalKey *principal_key, TDEPrincipalKey *new_p
 	char		db_keydata_path[MAXPGPATH] = {0};
 
 	/* Set the file paths */
-	pg_tde_set_db_file_paths(&(RelFileLocator) { 
-									principal_key->keyInfo.tablespaceId,
-									principal_key->keyInfo.databaseId,
-									0}, 
+	pg_tde_set_db_file_paths(principal_key->keyInfo.databaseId,
+								principal_key->keyInfo.tablespaceId,
 								db_map_path, db_keydata_path);
 
 	/* Let's update the pathnames in the local variable for ease of use/readability */
@@ -774,10 +766,8 @@ pg_tde_write_map_keydata_files(off_t map_size, char *m_file_data, off_t keydata_
 	fheader = (TDEFileHeader *) m_file_data;
 
 	/* Set the file paths */
-	pg_tde_set_db_file_paths(&(RelFileLocator) { 
-									fheader->principal_key_info.tablespaceId,
-									fheader->principal_key_info.databaseId,
-									0}, 
+	pg_tde_set_db_file_paths(fheader->principal_key_info.databaseId,
+								fheader->principal_key_info.tablespaceId,
 								db_map_path, db_keydata_path);
 
 	/* Initialize the new files and set the names */
@@ -875,7 +865,7 @@ pg_tde_get_key_from_file(const RelFileLocator *rlocator)
 	}
 
 	/* Get the file paths */
-	pg_tde_set_db_file_paths(rlocator, db_map_path, db_keydata_path);
+	pg_tde_set_db_file_paths(rlocator->dbOid, rlocator->spcOid, db_map_path, db_keydata_path);
 
 	/* Read the map entry and get the index of the relation key */
 	key_index = pg_tde_process_map_entry(rlocator, db_map_path, &offset, false);
@@ -895,9 +885,9 @@ pg_tde_get_key_from_file(const RelFileLocator *rlocator)
 }
 
 inline void
-pg_tde_set_db_file_paths(const RelFileLocator *rlocator, char *map_path, char *keydata_path)
+pg_tde_set_db_file_paths(Oid dbOid, Oid spcOid, char *map_path, char *keydata_path)
 {
-	char *db_path = pg_tde_get_tde_file_dir(rlocator->dbOid, rlocator->spcOid);
+	char *db_path = pg_tde_get_tde_file_dir(dbOid, spcOid);
 
 	if (map_path)
 		join_path_components(map_path, db_path, PG_TDE_MAP_FILENAME);
@@ -1199,11 +1189,7 @@ pg_tde_read_one_keydata(int keydata_fd, int32 key_index, TDEPrincipalKey *princi
 	if ((read_pos + INTERNAL_KEY_LEN) > lseek(keydata_fd, 0, SEEK_END))
 	{
 		char db_keydata_path[MAXPGPATH] = {0};
-		pg_tde_set_db_file_paths(&(RelFileLocator) { 
-										principal_key->keyInfo.tablespaceId,
-										principal_key->keyInfo.databaseId,
-										0},
-									NULL, db_keydata_path);
+		pg_tde_set_db_file_paths(principal_key->keyInfo.databaseId, principal_key->keyInfo.tablespaceId,  NULL, db_keydata_path);
 		ereport(FATAL,
 				(errcode(ERRCODE_NO_DATA_FOUND),
 					errmsg("could not find the required key at index %d in tde data file \"%s\": %m",
@@ -1216,11 +1202,7 @@ pg_tde_read_one_keydata(int keydata_fd, int32 key_index, TDEPrincipalKey *princi
 	if (pg_pread(keydata_fd, &(enc_rel_key_data->internal_key), INTERNAL_KEY_LEN, read_pos) != INTERNAL_KEY_LEN)
 	{
 		char db_keydata_path[MAXPGPATH] = {0};
-		pg_tde_set_db_file_paths(&(RelFileLocator) { 
-										principal_key->keyInfo.tablespaceId,
-										principal_key->keyInfo.databaseId,
-										0},
-									NULL, db_keydata_path);
+		pg_tde_set_db_file_paths(principal_key->keyInfo.databaseId, principal_key->keyInfo.tablespaceId, NULL, db_keydata_path);
 		ereport(FATAL,
 				(errcode_for_file_access(),
 					errmsg("could not read key at index %d in tde key data file \"%s\": %m",
@@ -1247,11 +1229,7 @@ pg_tde_get_principal_key_info(Oid dbOid, Oid spcOid)
 	char		db_map_path[MAXPGPATH] = {0};
 
 	/* Set the file paths */
-	pg_tde_set_db_file_paths(&(RelFileLocator) { 
-									spcOid,
-									dbOid,
-									0},
-								db_map_path, NULL);
+	pg_tde_set_db_file_paths(dbOid, spcOid, db_map_path, NULL);
 
 	/*
 	 * Ensuring that we always open the file in binary mode. The caller must
