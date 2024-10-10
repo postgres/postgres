@@ -63,7 +63,10 @@
         <para>
          <link
           linkend="pgupgrade"><application>pg_upgrade</application></link> now
-          preserves replication slots on both publishers and subscribers
+          preserves logical replication slots on publishers and full
+          subscription state on subscribers.  This will allow upgrades
+          to future major versions to continue logical replication without
+          requiring copy to resynchronize.
         </para>
        </listitem>
       </itemizedlist>
