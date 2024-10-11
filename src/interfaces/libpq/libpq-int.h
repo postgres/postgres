@@ -581,6 +581,7 @@ struct pg_conn
 	bool		ssl_handshake_started;
 	bool		ssl_cert_requested; /* Did the server ask us for a cert? */
 	bool		ssl_cert_sent;	/* Did we send one in reply? */
+	bool		last_read_was_eof;
 
 #ifdef USE_SSL
 #ifdef USE_OPENSSL

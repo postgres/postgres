@@ -57,10 +57,10 @@
 static void default_openssl_tls_init(SSL_CTX *context, bool isServerStart);
 openssl_tls_init_hook_typ openssl_tls_init_hook = default_openssl_tls_init;
 
-static int	my_sock_read(BIO *h, char *buf, int size);
-static int	my_sock_write(BIO *h, const char *buf, int size);
-static BIO_METHOD *my_BIO_s_socket(void);
-static int	my_SSL_set_fd(Port *port, int fd);
+static int	port_bio_read(BIO *h, char *buf, int size);
+static int	port_bio_write(BIO *h, const char *buf, int size);
+static BIO_METHOD *port_bio_method(void);
+static int	ssl_set_port_bio(Port *port);
 
 static DH  *load_dh_file(char *filename, bool isServerStart);
 static DH  *load_dh_buffer(const char *buffer, size_t len);
@@ -453,7 +453,7 @@ be_tls_open_server(Port *port)
 						SSLerrmessage(ERR_get_error()))));
 		return -1;
 	}
-	if (!my_SSL_set_fd(port, port->sock))
+	if (!ssl_set_port_bio(port))
 	{
 		ereport(COMMERROR,
 				(errcode(ERRCODE_PROTOCOL_VIOLATION),
@@ -890,17 +890,19 @@ be_tls_write(Port *port, void *ptr, size_t len, int *waitfor)
  * see sock_read() and sock_write() in OpenSSL's crypto/bio/bss_sock.c.
  */
 
-static BIO_METHOD *my_bio_methods = NULL;
+static BIO_METHOD *port_bio_method_ptr = NULL;
 
 static int
-my_sock_read(BIO *h, char *buf, int size)
+port_bio_read(BIO *h, char *buf, int size)
 {
 	int			res = 0;
+	Port	   *port = (Port *) BIO_get_data(h);
 
 	if (buf != NULL)
 	{
-		res = secure_raw_read(((Port *) BIO_get_app_data(h)), buf, size);
+		res = secure_raw_read(port, buf, size);
 		BIO_clear_retry_flags(h);
+		port->last_read_was_eof = res == 0;
 		if (res <= 0)
 		{
 			/* If we were interrupted, tell caller to retry */
@@ -915,11 +917,11 @@ my_sock_read(BIO *h, char *buf, int size)
 }
 
 static int
-my_sock_write(BIO *h, const char *buf, int size)
+port_bio_write(BIO *h, const char *buf, int size)
 {
 	int			res = 0;
 
-	res = secure_raw_write(((Port *) BIO_get_app_data(h)), buf, size);
+	res = secure_raw_write(((Port *) BIO_get_data(h)), buf, size);
 	BIO_clear_retry_flags(h);
 	if (res <= 0)
 	{
@@ -933,66 +935,81 @@ my_sock_write(BIO *h, const char *buf, int size)
 	return res;
 }
 
-static BIO_METHOD *
-my_BIO_s_socket(void)
+static long
+port_bio_ctrl(BIO *h, int cmd, long num, void *ptr)
 {
-	if (!my_bio_methods)
+	long		res;
+	Port	   *port = (Port *) BIO_get_data(h);
+
+	switch (cmd)
 	{
-		BIO_METHOD *biom = (BIO_METHOD *) BIO_s_socket();
+		case BIO_CTRL_EOF:
+
+			/*
+			 * This should not be needed. port_bio_read already has a way to
+			 * signal EOF to OpenSSL. However, OpenSSL made an undocumented,
+			 * backwards-incompatible change and now expects EOF via BIO_ctrl.
+			 * See https://github.com/openssl/openssl/issues/8208
+			 */
+			res = port->last_read_was_eof;
+			break;
+		case BIO_CTRL_FLUSH:
+			/* libssl expects all BIOs to support BIO_flush. */
+			res = 1;
+			break;
+		default:
+			res = 0;
+			break;
+	}
+
+	return res;
+}
+
+static BIO_METHOD *
+port_bio_method(void)
+{
+	if (!port_bio_method_ptr)
+	{
 		int			my_bio_index;
 
 		my_bio_index = BIO_get_new_index();
 		if (my_bio_index == -1)
 			return NULL;
-		my_bio_index |= (BIO_TYPE_DESCRIPTOR | BIO_TYPE_SOURCE_SINK);
-		my_bio_methods = BIO_meth_new(my_bio_index, "PostgreSQL backend socket");
-		if (!my_bio_methods)
+		my_bio_index |= BIO_TYPE_SOURCE_SINK;
+		port_bio_method_ptr = BIO_meth_new(my_bio_index, "PostgreSQL backend socket");
+		if (!port_bio_method_ptr)
 			return NULL;
-		if (!BIO_meth_set_write(my_bio_methods, my_sock_write) ||
-			!BIO_meth_set_read(my_bio_methods, my_sock_read) ||
-			!BIO_meth_set_gets(my_bio_methods, BIO_meth_get_gets(biom)) ||
-			!BIO_meth_set_puts(my_bio_methods, BIO_meth_get_puts(biom)) ||
-			!BIO_meth_set_ctrl(my_bio_methods, BIO_meth_get_ctrl(biom)) ||
-			!BIO_meth_set_create(my_bio_methods, BIO_meth_get_create(biom)) ||
-			!BIO_meth_set_destroy(my_bio_methods, BIO_meth_get_destroy(biom)) ||
-			!BIO_meth_set_callback_ctrl(my_bio_methods, BIO_meth_get_callback_ctrl(biom)))
+		if (!BIO_meth_set_write(port_bio_method_ptr, port_bio_write) ||
+			!BIO_meth_set_read(port_bio_method_ptr, port_bio_read) ||
+			!BIO_meth_set_ctrl(port_bio_method_ptr, port_bio_ctrl))
 		{
-			BIO_meth_free(my_bio_methods);
-			my_bio_methods = NULL;
+			BIO_meth_free(port_bio_method_ptr);
+			port_bio_method_ptr = NULL;
 			return NULL;
 		}
 	}
-	return my_bio_methods;
+	return port_bio_method_ptr;
 }
 
-/* This should exactly match OpenSSL's SSL_set_fd except for using my BIO */
 static int
-my_SSL_set_fd(Port *port, int fd)
+ssl_set_port_bio(Port *port)
 {
-	int			ret = 0;
 	BIO		   *bio;
 	BIO_METHOD *bio_method;
 
-	bio_method = my_BIO_s_socket();
+	bio_method = port_bio_method();
 	if (bio_method == NULL)
-	{
-		SSLerr(SSL_F_SSL_SET_FD, ERR_R_BUF_LIB);
-		goto err;
-	}
+		return 0;
+
 	bio = BIO_new(bio_method);
-
 	if (bio == NULL)
-	{
-		SSLerr(SSL_F_SSL_SET_FD, ERR_R_BUF_LIB);
-		goto err;
-	}
-	BIO_set_app_data(bio, port);
+		return 0;
 
-	BIO_set_fd(bio, fd, BIO_NOCLOSE);
+	BIO_set_data(bio, port);
+	BIO_set_init(bio, 1);
+
 	SSL_set_bio(port->ssl, bio, bio);
-	ret = 1;
-err:
-	return ret;
+	return 1;
 }
 
 /*

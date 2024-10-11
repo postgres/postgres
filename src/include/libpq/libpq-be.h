@@ -204,6 +204,7 @@ typedef struct Port
 	char	   *peer_dn;
 	bool		peer_cert_valid;
 	bool		alpn_used;
+	bool		last_read_was_eof;
 
 	/*
 	 * OpenSSL structures. (Keep these last so that the locations of other

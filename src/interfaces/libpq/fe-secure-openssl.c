@@ -77,10 +77,10 @@ static char *SSLerrmessage(unsigned long ecode);
 static void SSLerrfree(char *buf);
 static int	PQssl_passwd_cb(char *buf, int size, int rwflag, void *userdata);
 
-static int	my_sock_read(BIO *h, char *buf, int size);
-static int	my_sock_write(BIO *h, const char *buf, int size);
-static BIO_METHOD *my_BIO_s_socket(void);
-static int	my_SSL_set_fd(PGconn *conn, int fd);
+static int	pgconn_bio_read(BIO *h, char *buf, int size);
+static int	pgconn_bio_write(BIO *h, const char *buf, int size);
+static BIO_METHOD *pgconn_bio_method(void);
+static int	ssl_set_pgconn_bio(PGconn *conn);
 
 static pthread_mutex_t ssl_config_mutex = PTHREAD_MUTEX_INITIALIZER;
 
@@ -989,7 +989,7 @@ initialize_SSL(PGconn *conn)
 	 */
 	if (!(conn->ssl = SSL_new(SSL_context)) ||
 		!SSL_set_app_data(conn->ssl, conn) ||
-		!my_SSL_set_fd(conn, conn->sock))
+		!ssl_set_pgconn_bio(conn))
 	{
 		char	   *err = SSLerrmessage(ERR_get_error());
 
@@ -1670,16 +1670,17 @@ PQsslAttribute(PGconn *conn, const char *attribute_name)
  */
 
 /* protected by ssl_config_mutex */
-static BIO_METHOD *my_bio_methods;
+static BIO_METHOD *pgconn_bio_method_ptr;
 
 static int
-my_sock_read(BIO *h, char *buf, int size)
+pgconn_bio_read(BIO *h, char *buf, int size)
 {
-	PGconn	   *conn = (PGconn *) BIO_get_app_data(h);
+	PGconn	   *conn = (PGconn *) BIO_get_data(h);
 	int			res;
 
 	res = pqsecure_raw_read(conn, buf, size);
 	BIO_clear_retry_flags(h);
+	conn->last_read_was_eof = res == 0;
 	if (res < 0)
 	{
 		/* If we were interrupted, tell caller to retry */
@@ -1707,11 +1708,11 @@ my_sock_read(BIO *h, char *buf, int size)
 }
 
 static int
-my_sock_write(BIO *h, const char *buf, int size)
+pgconn_bio_write(BIO *h, const char *buf, int size)
 {
 	int			res;
 
-	res = pqsecure_raw_write((PGconn *) BIO_get_app_data(h), buf, size);
+	res = pqsecure_raw_write((PGconn *) BIO_get_data(h), buf, size);
 	BIO_clear_retry_flags(h);
 	if (res < 0)
 	{
@@ -1736,25 +1737,54 @@ my_sock_write(BIO *h, const char *buf, int size)
 	return res;
 }
 
+static long
+pgconn_bio_ctrl(BIO *h, int cmd, long num, void *ptr)
+{
+	long		res;
+	PGconn	   *conn = (PGconn *) BIO_get_data(h);
+
+	switch (cmd)
+	{
+		case BIO_CTRL_EOF:
+
+			/*
+			 * This should not be needed. pgconn_bio_read already has a way to
+			 * signal EOF to OpenSSL. However, OpenSSL made an undocumented,
+			 * backwards-incompatible change and now expects EOF via BIO_ctrl.
+			 * See https://github.com/openssl/openssl/issues/8208
+			 */
+			res = conn->last_read_was_eof;
+			break;
+		case BIO_CTRL_FLUSH:
+			/* libssl expects all BIOs to support BIO_flush. */
+			res = 1;
+			break;
+		default:
+			res = 0;
+			break;
+	}
+
+	return res;
+}
+
 static BIO_METHOD *
-my_BIO_s_socket(void)
+pgconn_bio_method(void)
 {
 	BIO_METHOD *res;
 
 	if (pthread_mutex_lock(&ssl_config_mutex))
 		return NULL;
 
-	res = my_bio_methods;
+	res = pgconn_bio_method_ptr;
 
-	if (!my_bio_methods)
+	if (!pgconn_bio_method_ptr)
 	{
-		BIO_METHOD *biom = (BIO_METHOD *) BIO_s_socket();
 		int			my_bio_index;
 
 		my_bio_index = BIO_get_new_index();
 		if (my_bio_index == -1)
 			goto err;
-		my_bio_index |= (BIO_TYPE_DESCRIPTOR | BIO_TYPE_SOURCE_SINK);
+		my_bio_index |= BIO_TYPE_SOURCE_SINK;
 		res = BIO_meth_new(my_bio_index, "libpq socket");
 		if (!res)
 			goto err;
@@ -1763,20 +1793,15 @@ my_BIO_s_socket(void)
 		 * As of this writing, these functions never fail. But check anyway,
 		 * like OpenSSL's own examples do.
 		 */
-		if (!BIO_meth_set_write(res, my_sock_write) ||
-			!BIO_meth_set_read(res, my_sock_read) ||
-			!BIO_meth_set_gets(res, BIO_meth_get_gets(biom)) ||
-			!BIO_meth_set_puts(res, BIO_meth_get_puts(biom)) ||
-			!BIO_meth_set_ctrl(res, BIO_meth_get_ctrl(biom)) ||
-			!BIO_meth_set_create(res, BIO_meth_get_create(biom)) ||
-			!BIO_meth_set_destroy(res, BIO_meth_get_destroy(biom)) ||
-			!BIO_meth_set_callback_ctrl(res, BIO_meth_get_callback_ctrl(biom)))
+		if (!BIO_meth_set_write(res, pgconn_bio_write) ||
+			!BIO_meth_set_read(res, pgconn_bio_read) ||
+			!BIO_meth_set_ctrl(res, pgconn_bio_ctrl))
 		{
 			goto err;
 		}
 	}
 
-	my_bio_methods = res;
+	pgconn_bio_method_ptr = res;
 	pthread_mutex_unlock(&ssl_config_mutex);
 	return res;
 
@@ -1787,33 +1812,25 @@ err:
 	return NULL;
 }
 
-/* This should exactly match OpenSSL's SSL_set_fd except for using my BIO */
 static int
-my_SSL_set_fd(PGconn *conn, int fd)
+ssl_set_pgconn_bio(PGconn *conn)
 {
-	int			ret = 0;
 	BIO		   *bio;
 	BIO_METHOD *bio_method;
 
-	bio_method = my_BIO_s_socket();
+	bio_method = pgconn_bio_method();
 	if (bio_method == NULL)
-	{
-		SSLerr(SSL_F_SSL_SET_FD, ERR_R_BUF_LIB);
-		goto err;
-	}
+		return 0;
+
 	bio = BIO_new(bio_method);
 	if (bio == NULL)
-	{
-		SSLerr(SSL_F_SSL_SET_FD, ERR_R_BUF_LIB);
-		goto err;
-	}
-	BIO_set_app_data(bio, conn);
+		return 0;
+
+	BIO_set_data(bio, conn);
+	BIO_set_init(bio, 1);
 
 	SSL_set_bio(conn->ssl, bio, bio);
-	BIO_set_fd(bio, fd, BIO_NOCLOSE);
-	ret = 1;
-err:
-	return ret;
+	return 1;
 }
 
 /*
