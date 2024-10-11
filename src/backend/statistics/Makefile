@@ -16,6 +16,8 @@ OBJS = \
 	dependencies.o \
 	extended_stats.o \
 	mcv.o \
-	mvdistinct.o
+	mvdistinct.o \
+	relation_stats.o \
+	stat_utils.o
 
 include $(top_srcdir)/src/backend/common.mk

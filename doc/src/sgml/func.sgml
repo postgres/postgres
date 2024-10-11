@@ -30136,6 +30136,100 @@ DETAIL:  Make sure pg_wal_replay_wait() isn't called within a transaction with a
    </table>
 
    <para>
+    <xref linkend="functions-admin-statsmod"/> lists functions used to
+    manipulate statistics.
+    <warning>
+     <para>
+      Changes made by these statistics manipulation functions are likely to be
+      overwritten by <link linkend="autovacuum">autovacuum</link> (or manual
+      <command>VACUUM</command> or <command>ANALYZE</command>) and should be
+      considered temporary.
+     </para>
+    </warning>
+   </para>
+
+   <table id="functions-admin-statsmod">
+    <title>Database Object Statistics Manipulation Functions</title>
+    <tgroup cols="1">
+     <thead>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        Function
+       </para>
+       <para>
+        Description
+       </para></entry>
+      </row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry role="func_table_entry">
+        <para role="func_signature">
+         <indexterm>
+          <primary>pg_set_relation_stats</primary>
+         </indexterm>
+         <function>pg_set_relation_stats</function> (
+         <parameter>relation</parameter> <type>regclass</type>
+         <optional>, <parameter>relpages</parameter> <type>integer</type></optional>
+         <optional>, <parameter>reltuples</parameter> <type>real</type></optional>
+         <optional>, <parameter>relallvisible</parameter> <type>integer</type></optional> )
+         <returnvalue>boolean</returnvalue>
+        </para>
+        <para>
+         Updates relation-level statistics for the given relation to the
+         specified values. The parameters correspond to columns in <link
+         linkend="catalog-pg-class"><structname>pg_class</structname></link>. Unspecified
+         or <literal>NULL</literal> values leave the setting
+         unchanged. Returns <literal>true</literal> if a change was made;
+         <literal>false</literal> otherwise.
+        </para>
+        <para>
+         Ordinarily, these statistics are collected automatically or updated
+         as a part of <xref linkend="sql-vacuum"/> or <xref
+         linkend="sql-analyze"/>, so it's not necessary to call this
+         function. However, it may be useful when testing the effects of
+         statistics on the planner to understand or anticipate plan changes.
+        </para>
+        <para>
+         The caller must have the <literal>MAINTAIN</literal> privilege on
+         the table or be the owner of the database.
+        </para>
+        <para>
+         The value of <structfield>relpages</structfield> must be greater than
+         or equal to <literal>0</literal>,
+         <structfield>reltuples</structfield> must be greater than or equal to
+         <literal>-1.0</literal>, and <structfield>relallvisible</structfield>
+         must be greater than or equal to <literal>0</literal>.
+        </para>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry">
+        <para role="func_signature">
+         <indexterm>
+          <primary>pg_clear_relation_stats</primary>
+         </indexterm>
+         <function>pg_clear_relation_stats</function> ( <parameter>relation</parameter> <type>regclass</type> )
+         <returnvalue>boolean</returnvalue>
+        </para>
+        <para>
+         Clears table-level statistics for the given relation, as though the
+         table was newly created. Returns <literal>true</literal> if a change
+         was made; <literal>false</literal> otherwise.
+        </para>
+        <para>
+         The caller must have the <literal>MAINTAIN</literal> privilege on
+         the table or be the owner of the database.
+        </para>
+       </entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+
+   <para>
     <xref linkend="functions-info-partition"/> lists functions that provide
     information about the structure of partitioned tables.
    </para>

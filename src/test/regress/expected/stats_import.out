@@ -1,0 +1,143 @@
+CREATE SCHEMA stats_import;
+CREATE TYPE stats_import.complex_type AS (
+    a integer,
+    b real,
+    c text,
+    d date,
+    e jsonb);
+CREATE TABLE stats_import.test(
+    id INTEGER PRIMARY KEY,
+    name text,
+    comp stats_import.complex_type,
+    arange int4range,
+    tags text[]
+);
+-- starting stats
+SELECT relpages, reltuples, relallvisible
+FROM pg_class
+WHERE oid = 'stats_import.test'::regclass;
+ relpages | reltuples | relallvisible 
+----------+-----------+---------------
+        0 |        -1 |             0
+(1 row)
+
+-- error: regclass not found
+SELECT
+    pg_catalog.pg_set_relation_stats(
+        relation => 0::Oid,
+        relpages => 17::integer,
+        reltuples => 400.0::real,
+        relallvisible => 4::integer);
+ERROR:  could not open relation with OID 0
+-- relpages default
+SELECT
+    pg_catalog.pg_set_relation_stats(
+        relation => 'stats_import.test'::regclass,
+        relpages => NULL::integer,
+        reltuples => 400.0::real,
+        relallvisible => 4::integer);
+ pg_set_relation_stats 
+-----------------------
+ t
+(1 row)
+
+-- reltuples default
+SELECT
+    pg_catalog.pg_set_relation_stats(
+        relation => 'stats_import.test'::regclass,
+        relpages => 17::integer,
+        reltuples => NULL::real,
+        relallvisible => 4::integer);
+ pg_set_relation_stats 
+-----------------------
+ t
+(1 row)
+
+-- relallvisible default
+SELECT
+    pg_catalog.pg_set_relation_stats(
+        relation => 'stats_import.test'::regclass,
+        relpages => 17::integer,
+        reltuples => 400.0::real,
+        relallvisible => NULL::integer);
+ pg_set_relation_stats 
+-----------------------
+ f
+(1 row)
+
+-- named arguments
+SELECT
+    pg_catalog.pg_set_relation_stats(
+        relation => 'stats_import.test'::regclass,
+        relpages => 17::integer,
+        reltuples => 400.0::real,
+        relallvisible => 4::integer);
+ pg_set_relation_stats 
+-----------------------
+ f
+(1 row)
+
+SELECT relpages, reltuples, relallvisible
+FROM pg_class
+WHERE oid = 'stats_import.test'::regclass;
+ relpages | reltuples | relallvisible 
+----------+-----------+---------------
+       17 |       400 |             4
+(1 row)
+
+-- positional arguments
+SELECT
+    pg_catalog.pg_set_relation_stats(
+        'stats_import.test'::regclass,
+        18::integer,
+        401.0::real,
+        5::integer);
+ pg_set_relation_stats 
+-----------------------
+ t
+(1 row)
+
+SELECT relpages, reltuples, relallvisible
+FROM pg_class
+WHERE oid = 'stats_import.test'::regclass;
+ relpages | reltuples | relallvisible 
+----------+-----------+---------------
+       18 |       401 |             5
+(1 row)
+
+-- clear
+SELECT
+    pg_catalog.pg_clear_relation_stats(
+        'stats_import.test'::regclass);
+ pg_clear_relation_stats 
+-------------------------
+ t
+(1 row)
+
+SELECT relpages, reltuples, relallvisible
+FROM pg_class
+WHERE oid = 'stats_import.test'::regclass;
+ relpages | reltuples | relallvisible 
+----------+-----------+---------------
+        0 |        -1 |             0
+(1 row)
+
+-- invalid relkinds for statistics
+CREATE SEQUENCE stats_import.testseq;
+CREATE VIEW stats_import.testview AS SELECT * FROM stats_import.test;
+SELECT
+    pg_catalog.pg_clear_relation_stats(
+        'stats_import.testseq'::regclass);
+ERROR:  cannot modify statistics for relation "testseq"
+DETAIL:  This operation is not supported for sequences.
+SELECT
+    pg_catalog.pg_clear_relation_stats(
+        'stats_import.testview'::regclass);
+ERROR:  cannot modify statistics for relation "testview"
+DETAIL:  This operation is not supported for views.
+DROP SCHEMA stats_import CASCADE;
+NOTICE:  drop cascades to 4 other objects
+DETAIL:  drop cascades to type stats_import.complex_type
+drop cascades to table stats_import.test
+drop cascades to sequence stats_import.testseq
+drop cascades to view stats_import.testview

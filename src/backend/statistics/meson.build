@@ -5,4 +5,6 @@ backend_sources += files(
   'extended_stats.c',
   'mcv.c',
   'mvdistinct.c',
+  'relation_stats.c',
+  'stat_utils.c'
 )
