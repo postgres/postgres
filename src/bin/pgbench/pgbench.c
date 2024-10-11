@@ -6391,6 +6391,13 @@ printResults(StatsData *total,
 			   total->cnt);
 	}
 
+	/*
+	 * Remaining stats are nonsensical if we failed to execute any xacts due
+	 * to others than serialization or deadlock errors
+	 */
+	if (total_cnt <= 0)
+		return;
+
 	printf("number of failed transactions: " INT64_FORMAT " (%.3f%%)\n",
 		   failures, 100.0 * failures / total_cnt);
 
@@ -6411,10 +6418,6 @@ printResults(StatsData *total,
 			   total->retried, 100.0 * total->retried / total_cnt);
 		printf("total number of retries: " INT64_FORMAT "\n", total->retries);
 	}
-
-	/* Remaining stats are nonsensical if we failed to execute any xacts */
-	if (total->cnt + total->skipped <= 0)
-		return;
 
 	if (throttle_delay && latency_limit)
 		printf("number of transactions skipped: " INT64_FORMAT " (%.3f%%)\n",
@@ -6483,45 +6486,53 @@ printResults(StatsData *total,
 
 				printf("SQL script %d: %s\n"
 					   " - weight: %d (targets %.1f%% of total)\n"
-					   " - " INT64_FORMAT " transactions (%.1f%% of total, tps = %f)\n",
+					   " - " INT64_FORMAT " transactions (%.1f%% of total)\n",
 					   i + 1, sql_script[i].desc,
 					   sql_script[i].weight,
 					   100.0 * sql_script[i].weight / total_weight,
-					   sstats->cnt,
-					   100.0 * sstats->cnt / total->cnt,
-					   sstats->cnt / bench_duration);
+					   script_total_cnt,
+					   100.0 * script_total_cnt / total_cnt);
 
-				printf(" - number of failed transactions: " INT64_FORMAT " (%.3f%%)\n",
-					   script_failures,
-					   100.0 * script_failures / script_total_cnt);
-
-				if (failures_detailed)
+				if (script_total_cnt > 0)
 				{
-					printf(" - number of serialization failures: " INT64_FORMAT " (%.3f%%)\n",
-						   sstats->serialization_failures,
-						   (100.0 * sstats->serialization_failures /
-							script_total_cnt));
-					printf(" - number of deadlock failures: " INT64_FORMAT " (%.3f%%)\n",
-						   sstats->deadlock_failures,
-						   (100.0 * sstats->deadlock_failures /
-							script_total_cnt));
+					printf(" - number of transactions actually pocessed: " INT64_FORMAT " (tps = %f)\n",
+						   sstats->cnt, sstats->cnt / bench_duration);
+
+					printf(" - number of failed transactions: " INT64_FORMAT " (%.3f%%)\n",
+						   script_failures,
+						   100.0 * script_failures / script_total_cnt);
+
+					if (failures_detailed)
+					{
+						printf(" - number of serialization failures: " INT64_FORMAT " (%.3f%%)\n",
+							   sstats->serialization_failures,
+							   (100.0 * sstats->serialization_failures /
+								script_total_cnt));
+						printf(" - number of deadlock failures: " INT64_FORMAT " (%.3f%%)\n",
+							   sstats->deadlock_failures,
+							   (100.0 * sstats->deadlock_failures /
+								script_total_cnt));
+					}
+
+					/*
+					 * it can be non-zero only if max_tries is not equal to
+					 * one
+					 */
+					if (max_tries != 1)
+					{
+						printf(" - number of transactions retried: " INT64_FORMAT " (%.3f%%)\n",
+							   sstats->retried,
+							   100.0 * sstats->retried / script_total_cnt);
+						printf(" - total number of retries: " INT64_FORMAT "\n",
+							   sstats->retries);
+					}
+
+					if (throttle_delay && latency_limit)
+						printf(" - number of transactions skipped: " INT64_FORMAT " (%.3f%%)\n",
+							   sstats->skipped,
+							   100.0 * sstats->skipped / script_total_cnt);
+
 				}
-
-				/* it can be non-zero only if max_tries is not equal to one */
-				if (max_tries != 1)
-				{
-					printf(" - number of transactions retried: " INT64_FORMAT " (%.3f%%)\n",
-						   sstats->retried,
-						   100.0 * sstats->retried / script_total_cnt);
-					printf(" - total number of retries: " INT64_FORMAT "\n",
-						   sstats->retries);
-				}
-
-				if (throttle_delay && latency_limit && script_total_cnt > 0)
-					printf(" - number of transactions skipped: " INT64_FORMAT " (%.3f%%)\n",
-						   sstats->skipped,
-						   100.0 * sstats->skipped / script_total_cnt);
-
 				printSimpleStats(" - latency", &sstats->latency);
 			}
 
