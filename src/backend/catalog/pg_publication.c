@@ -1059,8 +1059,7 @@ pg_get_publication_tables(PG_FUNCTION_ARGS)
 		 * publication name.
 		 */
 		arr = PG_GETARG_ARRAYTYPE_P(0);
-		deconstruct_array(arr, TEXTOID, -1, false, TYPALIGN_INT,
-						  &elems, NULL, &nelems);
+		deconstruct_array_builtin(arr, TEXTOID, &elems, NULL, &nelems);
 
 		/* Get Oids of tables from each publication. */
 		for (i = 0; i < nelems; i++)
