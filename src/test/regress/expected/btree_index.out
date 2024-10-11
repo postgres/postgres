@@ -335,12 +335,11 @@ select proname from pg_proc where proname ilike 'ri%foo' order by 1;
                   QUERY PLAN                  
 ----------------------------------------------
  Sort
-   Disabled Nodes: 1
    Sort Key: proname
    ->  Seq Scan on pg_proc
-         Disabled Nodes: 1
+         Disabled: true
          Filter: (proname ~~* 'ri%foo'::text)
-(6 rows)
+(5 rows)
 
 reset enable_seqscan;
 reset enable_indexscan;

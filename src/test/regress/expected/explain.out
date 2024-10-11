@@ -104,6 +104,7 @@ select explain_filter('explain (analyze, buffers, format xml) select * from int8
        <Actual-Total-Time>N.N</Actual-Total-Time>      +
        <Actual-Rows>N</Actual-Rows>                    +
        <Actual-Loops>N</Actual-Loops>                  +
+       <Disabled>false</Disabled>                      +
        <Shared-Hit-Blocks>N</Shared-Hit-Blocks>        +
        <Shared-Read-Blocks>N</Shared-Read-Blocks>      +
        <Shared-Dirtied-Blocks>N</Shared-Dirtied-Blocks>+
@@ -152,6 +153,7 @@ select explain_filter('explain (analyze, serialize, buffers, format yaml) select
      Actual Total Time: N.N   +
      Actual Rows: N           +
      Actual Loops: N          +
+     Disabled: false          +
      Shared Hit Blocks: N     +
      Shared Read Blocks: N    +
      Shared Dirtied Blocks: N +
@@ -213,6 +215,7 @@ select explain_filter('explain (buffers, format json) select * from int8_tbl i8'
        "Total Cost": N.N,          +
        "Plan Rows": N,             +
        "Plan Width": N,            +
+       "Disabled": false,          +
        "Shared Hit Blocks": N,     +
        "Shared Read Blocks": N,    +
        "Shared Dirtied Blocks": N, +
@@ -262,6 +265,7 @@ select explain_filter('explain (analyze, buffers, format json) select * from int
        "Actual Total Time": N.N,    +
        "Actual Rows": N,            +
        "Actual Loops": N,           +
+       "Disabled": false,           +
        "Shared Hit Blocks": N,      +
        "Shared Read Blocks": N,     +
        "Shared Dirtied Blocks": N,  +
@@ -370,6 +374,7 @@ select explain_filter('explain (memory, summary, format yaml) select * from int8
      Total Cost: N.N          +
      Plan Rows: N             +
      Plan Width: N            +
+     Disabled: false          +
    Planning:                  +
      Memory Used: N           +
      Memory Allocated: N      +
@@ -394,7 +399,8 @@ select explain_filter('explain (memory, analyze, format json) select * from int8
        "Actual Startup Time": N.N, +
        "Actual Total Time": N.N,   +
        "Actual Rows": N,           +
-       "Actual Loops": N           +
+       "Actual Loops": N,          +
+       "Disabled": false           +
      },                            +
      "Planning": {                 +
        "Memory Used": N,           +
@@ -497,6 +503,7 @@ select jsonb_pretty(
                                  "string4"                  +
                              ],                             +
                              "Schema": "public",            +
+                             "Disabled": false,             +
                              "Node Type": "Seq Scan",       +
                              "Plan Rows": 0,                +
                              "Plan Width": 0,               +
@@ -540,6 +547,7 @@ select jsonb_pretty(
                          "stringu2",                        +
                          "string4"                          +
                      ],                                     +
+                     "Disabled": false,                     +
                      "Sort Key": [                          +
                          "tenk1.tenthous"                   +
                      ],                                     +
@@ -586,6 +594,7 @@ select jsonb_pretty(
                  "stringu2",                                +
                  "string4"                                  +
              ],                                             +
+             "Disabled": false,                             +
              "Node Type": "Gather Merge",                   +
              "Plan Rows": 0,                                +
              "Plan Width": 0,                               +

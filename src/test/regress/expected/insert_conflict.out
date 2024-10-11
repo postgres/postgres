@@ -218,6 +218,7 @@ explain (costs off, format json) insert into insertconflicttest values (0, 'Bilb
        "Async Capable": false,                                         +
        "Relation Name": "insertconflicttest",                          +
        "Alias": "insertconflicttest",                                  +
+       "Disabled": false,                                              +
        "Conflict Resolution": "UPDATE",                                +
        "Conflict Arbiter Indexes": ["key_index"],                      +
        "Conflict Filter": "(insertconflicttest.fruit <> 'Lime'::text)",+
@@ -226,7 +227,8 @@ explain (costs off, format json) insert into insertconflicttest values (0, 'Bilb
            "Node Type": "Result",                                      +
            "Parent Relationship": "Outer",                             +
            "Parallel Aware": false,                                    +
-           "Async Capable": false                                      +
+           "Async Capable": false,                                     +
+           "Disabled": false                                           +
          }                                                             +
        ]                                                               +
      }                                                                 +

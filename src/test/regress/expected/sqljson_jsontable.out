@@ -474,6 +474,7 @@ SELECT * FROM
        "Async Capable": false,                                                                                                                                                                              +
        "Table Function Name": "json_table",                                                                                                                                                                 +
        "Alias": "json_table_func",                                                                                                                                                                          +
+       "Disabled": false,                                                                                                                                                                                   +
        "Output": ["id", "\"int\"", "text"],                                                                                                                                                                 +
        "Table Function Call": "JSON_TABLE('null'::jsonb, '$[*]' AS json_table_path_0 PASSING 3 AS a, '\"foo\"'::jsonb AS \"b c\" COLUMNS (id FOR ORDINALITY, \"int\" integer PATH '$', text text PATH '$'))"+
      }                                                                                                                                                                                                      +

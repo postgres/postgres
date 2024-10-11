@@ -1364,6 +1364,96 @@ ExplainPreScanNode(PlanState *planstate, Bitmapset **rels_used)
 }
 
 /*
+ * plan_is_disabled
+ *		Checks if the given plan node type was disabled during query planning.
+ *		This is evident by the disable_node field being higher than the sum of
+ *		the disabled_node field from the plan's children.
+ */
+static bool
+plan_is_disabled(Plan *plan)
+{
+	int			child_disabled_nodes;
+
+	/* The node is certainly not disabled if this is zero */
+	if (plan->disabled_nodes == 0)
+		return false;
+
+	child_disabled_nodes = 0;
+
+	/*
+	 * Handle special nodes first.  Children of BitmapOrs and BitmapAnds can't
+	 * be disabled, so no need to handle those specifically.
+	 */
+	if (IsA(plan, Append))
+	{
+		ListCell   *lc;
+		Append	   *aplan = (Append *) plan;
+
+		/*
+		 * Sum the Append childrens' disabled_nodes.  This purposefully
+		 * includes any run-time pruned children.  Ignoring those could give
+		 * us the incorrect number of disabled nodes.
+		 */
+		foreach(lc, aplan->appendplans)
+		{
+			Plan	   *subplan = lfirst(lc);
+
+			child_disabled_nodes += subplan->disabled_nodes;
+		}
+	}
+	else if (IsA(plan, MergeAppend))
+	{
+		ListCell   *lc;
+		MergeAppend *maplan = (MergeAppend *) plan;
+
+		/*
+		 * Sum the MergeAppend childrens' disabled_nodes.  This purposefully
+		 * includes any run-time pruned children.  Ignoring those could give
+		 * us the incorrect number of disabled nodes.
+		 */
+		foreach(lc, maplan->mergeplans)
+		{
+			Plan	   *subplan = lfirst(lc);
+
+			child_disabled_nodes += subplan->disabled_nodes;
+		}
+	}
+	else if (IsA(plan, SubqueryScan))
+		child_disabled_nodes += ((SubqueryScan *) plan)->subplan->disabled_nodes;
+	else if (IsA(plan, CustomScan))
+	{
+		ListCell   *lc;
+		CustomScan *cplan = (CustomScan *) plan;
+
+		foreach(lc, cplan->custom_plans)
+		{
+			Plan	   *subplan = lfirst(lc);
+
+			child_disabled_nodes += subplan->disabled_nodes;
+		}
+	}
+	else
+	{
+		/*
+		 * Else, sum up disabled_nodes from the plan's inner and outer side.
+		 */
+		if (outerPlan(plan))
+			child_disabled_nodes += outerPlan(plan)->disabled_nodes;
+		if (innerPlan(plan))
+			child_disabled_nodes += innerPlan(plan)->disabled_nodes;
+	}
+
+	/*
+	 * It's disabled if the plan's disable_nodes is higher than the sum of its
+	 * child's plan disabled_nodes.
+	 */
+	if (plan->disabled_nodes > child_disabled_nodes)
+		return true;
+
+	return false;
+}
+
+/*
  * ExplainNode -
  *	  Appends a description of a plan tree to es->str
  *
@@ -1399,6 +1489,7 @@ ExplainNode(PlanState *planstate, List *ancestors,
 	ExplainWorkersState *save_workers_state = es->workers_state;
 	int			save_indent = es->indent;
 	bool		haschildren;
+	bool		isdisabled;
 
 	/*
 	 * Prepare per-worker output buffers, if needed.  We'll append the data in
@@ -1914,9 +2005,10 @@ ExplainNode(PlanState *planstate, List *ancestors,
 	if (es->format == EXPLAIN_FORMAT_TEXT)
 		appendStringInfoChar(es->str, '\n');
 
-	if (plan->disabled_nodes != 0)
-		ExplainPropertyInteger("Disabled Nodes", NULL, plan->disabled_nodes,
-							   es);
+
+	isdisabled = plan_is_disabled(plan);
+	if (es->format != EXPLAIN_FORMAT_TEXT || isdisabled)
+		ExplainPropertyBool("Disabled", isdisabled, es);
 
 	/* prepare per-worker general execution details */
 	if (es->workers_state && es->verbose)

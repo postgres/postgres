@@ -6149,6 +6149,7 @@ make_sort(Plan *lefttree, int numCols,
 
 	plan = &node->plan;
 	plan->targetlist = lefttree->targetlist;
+	plan->disabled_nodes = lefttree->disabled_nodes + (enable_sort == false);
 	plan->qual = NIL;
 	plan->lefttree = lefttree;
 	plan->righttree = NULL;

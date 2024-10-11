@@ -822,7 +822,7 @@ explain (costs off) select '123'::xid union select '123'::xid;
         QUERY PLAN         
 ---------------------------
  HashAggregate
-   Disabled Nodes: 1
+   Disabled: true
    Group Key: ('123'::xid)
    ->  Append
          ->  Result
