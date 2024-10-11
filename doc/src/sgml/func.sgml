@@ -30533,6 +30533,30 @@ SELECT pg_size_pretty(sum(pg_relation_size(relid))) AS total_size
       <row>
        <entry role="func_table_entry"><para role="func_signature">
         <indexterm>
+         <primary>pg_ls_summariesdir</primary>
+        </indexterm>
+        <function>pg_ls_summariesdir</function> ()
+        <returnvalue>setof record</returnvalue>
+        ( <parameter>name</parameter> <type>text</type>,
+        <parameter>size</parameter> <type>bigint</type>,
+        <parameter>modification</parameter> <type>timestamp with time zone</type> )
+       </para>
+       <para>
+        Returns the name, size, and last modification time (mtime) of each
+        ordinary file in the server's WAL summaries directory
+        (<filename>pg_wal/summaries</filename>).  Filenames beginning
+        with a dot, directories, and other special files are excluded.
+       </para>
+       <para>
+        This function is restricted to superusers and members of
+        the <literal>pg_monitor</literal> role by default, but other users can
+        be granted EXECUTE to run the function.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
          <primary>pg_ls_archive_statusdir</primary>
         </indexterm>
         <function>pg_ls_archive_statusdir</function> ()

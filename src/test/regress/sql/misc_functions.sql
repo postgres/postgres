@@ -163,6 +163,7 @@ select (w).size = :segsize as ok
 from (select pg_ls_waldir() w) ss where length((w).name) = 24 limit 1;
 
 select count(*) >= 0 as ok from pg_ls_archive_statusdir();
+select count(*) >= 0 as ok from pg_ls_summariesdir();
 
 -- pg_read_file()
 select length(pg_read_file('postmaster.pid')) > 20;

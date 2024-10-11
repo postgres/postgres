@@ -412,6 +412,12 @@ select count(*) >= 0 as ok from pg_ls_archive_statusdir();
  t
 (1 row)
 
+select count(*) >= 0 as ok from pg_ls_summariesdir();
+ ok 
+----
+ t
+(1 row)
+
 -- pg_read_file()
 select length(pg_read_file('postmaster.pid')) > 20;
  ?column? 

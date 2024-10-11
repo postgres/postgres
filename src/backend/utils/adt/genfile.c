@@ -690,6 +690,15 @@ pg_ls_archive_statusdir(PG_FUNCTION_ARGS)
 }
 
 /*
+ * Function to return the list of files in the WAL summaries directory.
+ */
+Datum
+pg_ls_summariesdir(PG_FUNCTION_ARGS)
+{
+	return pg_ls_dir_files(fcinfo, XLOGDIR "/summaries", true);
+}
+
+/*
  * Function to return the list of files in the PG_LOGICAL_SNAPSHOTS_DIR
  * directory.
  */
