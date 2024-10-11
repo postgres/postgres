@@ -147,7 +147,7 @@ jobs:
       - name: Publish release
         uses: ncipollo/release-action@v1
         # Only try and deploy on merged code
-        if: "github.repository == 'Percona-Lab/pg_tde' && github.ref_name == 'main' && (github.event_name == 'push' || github.event_name == 'schedule')"
+        if: "github.repository == 'percona/pg_tde' && github.ref_name == 'main' && (github.event_name == 'push' || github.event_name == 'schedule')"
         with:
           artifacts: "pgtde-ppg16.tar.gz,pgtde-ppg16.deb"
           omitBody: true

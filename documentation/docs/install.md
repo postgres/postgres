@@ -48,7 +48,7 @@ Install `pg_tde` using one of available installation methods:
     4. Clone the repository:  
 
         ```
-        git clone git://github.com/Percona-Lab/pg_tde
+        git clone git://github.com/percona/pg_tde
         ```
 
     5. Compile and install the extension

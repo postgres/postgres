@@ -5,7 +5,7 @@ pg_tde_version = '1.0.0-beta2'
 
 conf_data = configuration_data()
 conf_data.set_quoted('PACKAGE_NAME', 'pg_tde')
-conf_data.set_quoted('PACKAGE_BUGREPORT', 'https://github.com/Percona-Lab/pg_tde/issues')
+conf_data.set_quoted('PACKAGE_BUGREPORT', 'https://github.com/percona/pg_tde/issues')
 conf_data.set_quoted('PACKAGE_VERSION', pg_tde_version)
 conf_data.set_quoted('PACKAGE_STRING', 'pg_tde ' + pg_tde_version)
 conf_data.set_quoted('PACKAGE_TARNAME', 'pg_tde')

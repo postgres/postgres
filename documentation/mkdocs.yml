@@ -7,8 +7,8 @@ copyright: >
   <a href="https://www.percona.com/about">Percona LLC</a> and/or its affiliates © 2023 — <a href="#__consent">Cookie Consent</a>
 
  
-repo_name: Percona-Lab/pg_tde
-repo_url: https://github.com/Percona-Lab/pg_tde
+repo_name: percona/pg_tde
+repo_url: https://github.com/percona/pg_tde
 edit_uri: edit/main/documentation/docs/
 
 use_directory_urls: false

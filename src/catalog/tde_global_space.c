@@ -76,7 +76,7 @@ TDEInitGlobalKeys(const char *dir)
 		 * current backend. So new backends have to inherit a cached key with
 		 * NULL SSL connext and any changes to it have to remain local ot the
 		 * backend. (see
-		 * https://github.com/Percona-Lab/pg_tde/pull/214#discussion_r1648998317)
+		 * https://github.com/percona-Lab/pg_tde/pull/214#discussion_r1648998317)
 		 */
 		pg_tde_put_key_into_cache(XLOG_TDE_OID, ikey);
 	}

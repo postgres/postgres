@@ -37,7 +37,7 @@ jobs:
       - name: Clone postgres repository
         uses: actions/checkout@v4
         with:
-          repository: 'percona-lab/postgres'
+          repository: 'percona/postgres'
           ref: 'TDE_REL_17_STABLE'
           path: 'src'
 

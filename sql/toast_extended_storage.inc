@@ -1,4 +1,4 @@
--- test https://github.com/Percona-Lab/pg_tde/issues/63
+-- test https://github.com/percona/pg_tde/issues/63
 CREATE EXTENSION pg_tde;
 
 SELECT pg_tde_add_key_provider_file('file-vault','/tmp/pg_tde_test_keyring.per');
@@ -19,7 +19,7 @@ SELECT * FROM src2;
 
 DROP TABLE src2;
 
--- https://github.com/Percona-Lab/pg_tde/issues/82 
+-- https://github.com/percona/pg_tde/issues/82 
 CREATE TABLE indtoasttest(descr text, cnt int DEFAULT 0, f1 text, f2 text) using :tde_am;
 
 INSERT INTO indtoasttest(descr, f1, f2) VALUES('two-compressed', repeat('1234567890',1000), repeat('1234567890',1000));

@@ -1,21 +1,21 @@
 # pg_tde
 
-This is an `experimental` encrypted access method for PostgreSQL 16. [We need your feedback!](https://github.com/Percona-Lab/pg_tde/discussions/151)
+This is an `experimental` encrypted access method for PostgreSQL 16. [We need your feedback!](https://github.com/percona/pg_tde/discussions/151)
 
 ## Latest test release
 
-To download the latest build of the main branch, use the `HEAD` release from [releases](https://github.com/Percona-Lab/pg_tde/releases).
+To download the latest build of the main branch, use the `HEAD` release from [releases](https://github.com/percona/pg_tde/releases).
 
 Builds are available in a tar.gz format, containing only the required files, and as a deb package.
 The deb package is built against the pgdg16 release, but this dependency is not yet enforced in the package.
 
 ## Documentation
 
-Find more information about `pg_tde` in the [documentation](https://percona-lab.github.io/pg_tde/).
+Find more information about `pg_tde` in the [documentation](https://percona.github.io/pg_tde/).
 
 ## Installation steps
 
-1. Build and install the plugin with make [from source](#build-from-source), or download a [release](https://github.com/Percona-Lab/pg_tde/releases) and [install the package](#install-from-package)
+1. Build and install the plugin with make [from source](#build-from-source), or download a [release](https://github.com/percona/pg_tde/releases) and [install the package](#install-from-package)
 2. `pg_tde` needs to be loaded at the start time. The extension requires additional shared memory; therefore,  add the `pg_tde` value for the `shared_preload_libraries` parameter and restart the `postgresql` instance.
 
 Use the [ALTER SYSTEM](https://www.postgresql.org/docs/current/sql-altersystem.html) command from `psql` terminal to modify the `shared_preload_libraries` parameter.
@@ -114,7 +114,7 @@ brew install make autoconf curl gettext postresql@16
 4. Clone the repository, build and install it with the following commands:  
 
 ```
-git clone https://github.com/Percona-Lab/pg_tde
+git clone https://github.com/percona/pg_tde
 ```
 
 Compile and install the extension
@@ -131,14 +131,14 @@ PATH=$PATH:/usr/pgsql-16/bin/ make USE_PGXS=1
 sudo PATH=$PATH:/usr/pgsql-16/bin/ make USE_PGXS=1 install
 ```
 
-_See [Make Builds for Developers](https://github.com/Percona-Lab/pg_tde/wiki/Make-builds-for-developers) for more info on the build infrastructure._
+_See [Make Builds for Developers](https://github.com/percona/pg_tde/wiki/Make-builds-for-developers) for more info on the build infrastructure._
 
 ## Install from package
 
-1. Download the latest [release package](https://github.com/Percona-Lab/pg_tde/releases)
+1. Download the latest [release package](https://github.com/percona/pg_tde/releases)
 
 ``` sh
-wget https://github.com/Percona-Lab/pg_tde/releases/download/latest/pgtde-pgdg16.deb
+wget https://github.com/percona/pg_tde/releases/download/latest/pgtde-pgdg16.deb
 ```
 2. Install the package
 

@@ -852,7 +852,7 @@ tdeheap_toast_encrypt(Pointer dval, Oid valueid, RelKeyData *key)
 	/*
 	 * Encryption specific data_p and data_size as we have to avoid
 	 * encryption of the compression info.
-	 * See https://github.com/Percona-Lab/pg_tde/commit/dee6e357ef05d217a4c4df131249a80e5e909163
+	 * See https://github.com/percona/pg_tde/commit/dee6e357ef05d217a4c4df131249a80e5e909163
 	 */
 	if (VARATT_IS_SHORT(dval))
 	{

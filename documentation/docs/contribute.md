@@ -27,7 +27,7 @@ Please make sure to read and agree to our [Code of Conduct](https://github.com/p
 
 ## Submitting a pull request
 
-All bug reports, enhancements and feature requests are tracked in [GitHub issues](https://github.com/Percona-Lab/pg_tde/issues). Though not mandatory, we encourage you to first check for a bug report among the issues and in the PR list: perhaps the bug has already been addressed. 
+All bug reports, enhancements and feature requests are tracked in [GitHub issues](https://github.com/percona/pg_tde/issues). Though not mandatory, we encourage you to first check for a bug report among the issues and in the PR list: perhaps the bug has already been addressed. 
 
 For feature requests and enhancements, we do ask you to create a GitHub issue, describe your idea and discuss the design with us. This way we align your ideas with our vision for the product development.
 
@@ -41,7 +41,7 @@ If the bug hasn’t been reported / addressed, or we’ve agreed on the enhancem
     - [PostgreSQL coding conventions](https://www.postgresql.org/docs/current/source.html)
     - [C style and Coding rules](https://github.com/MaJerle/c-code-style) 
 
-5. [Build `pg_tde`](https://github.com/Percona-Lab/pg_tde/wiki/Make-builds-for-developers) and [test your changes locally](#run-local-tests). 
+5. [Build `pg_tde`](https://github.com/percona/pg_tde/wiki/Make-builds-for-developers) and [test your changes locally](#run-local-tests). 
 6. Commit the changes. The [commit message guidelines](https://gist.github.com/robertpainsi/b632364184e70900af4ab688decf6f53) will help you with writing great commit messages
 7. Open a pull request to Percona.
 8. Our team will review your code and if everything is correct, will merge it. 
@@ -96,7 +96,7 @@ git clone git@github.com:<your-name>/pg_tde.git
 3. Change the directory to ``pg_tde`` and add the remote upstream repository:
 
 ```sh
-git remote add upstream git@github.com:Percona-Lab/pg_tde.git
+git remote add upstream git@github.com:percona/pg_tde.git
 ```
 
 4. Pull the latest changes from upstream
