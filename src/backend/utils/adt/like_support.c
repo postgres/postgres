@@ -1500,13 +1500,11 @@ pattern_char_isalpha(char c, bool is_multibyte,
 		return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z');
 	else if (is_multibyte && IS_HIGHBIT_SET(c))
 		return true;
-	else if (locale->provider == COLLPROVIDER_ICU)
+	else if (locale->provider != COLLPROVIDER_LIBC)
 		return IS_HIGHBIT_SET(c) ||
 			(c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z');
-	else if (locale->provider == COLLPROVIDER_LIBC)
-		return isalpha_l((unsigned char) c, locale->info.lt);
 	else
-		return isalpha((unsigned char) c);
+		return isalpha_l((unsigned char) c, locale->info.lt);
 }
 
 
