@@ -598,9 +598,9 @@ load_vaultV2_keyring_provider_options(char *keyring_options)
 		ereport(WARNING,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("missing in the keyring options:%s%s%s",
-							!vaultV2_keyring->vault_token ? " token" : "",
-							!vaultV2_keyring->vault_url ? " url" : "",
-							!vaultV2_keyring->vault_mount_path ? " mountPath" : "")));
+							*(vaultV2_keyring->vault_token) ? "" : " token",
+							*(vaultV2_keyring->vault_url) ? "" : " url",
+							*(vaultV2_keyring->vault_mount_path) ? "" : " mountPath")));
 		return NULL;
 	}
 
@@ -664,7 +664,7 @@ fetch_next_key_provider(int fd, off_t* curr_pos, KeyringProvideRecord *provider)
 		ereport(ERROR,
 				(errcode_for_file_access(),
 					errmsg("key provider info file is corrupted: %m"),
-					errdetail("invalid key provider record size %ld expected %lu", bytes_read, sizeof(KeyringProvideRecord) )));
+					errdetail("invalid key provider record size %lld expected %lu", bytes_read, sizeof(KeyringProvideRecord) )));
 	}
 	return true;
 }
