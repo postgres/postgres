@@ -15,7 +15,13 @@ To check if the data is encrypted, do the following:
             You can enable data encryption by default by setting the `default_table_access_method` to     `tde_heap_basic`:
 
             ```sql
-            SET default_table_access_method = tde_heap_basic;
+            ALTER SYSTEM  SET default_table_access_method=tde_heap;
+            ```
+
+            Reload the configuration to apply the changes:
+
+            ```
+            SELECT pg_reload_conf();
             ```
     
     2. Run the following function:
@@ -40,7 +46,7 @@ To check if the data is encrypted, do the following:
 
     !!! warning
 
-        This is the tech preview functionality. Its scope is not yet finalized and can change anytime. Use it only for testing purposes.
+        This is the tech preview functionality. Its scope is not yet finalized and can change anytime.** Use it only for testing purposes.**
 
     1. Create a table in the database for which you have [enabled `pg_tde`](setup.md). Enabling `pg_tde`    extension creates the table access method `tde_heap`. To enable data encryption, create the table using this access method as follows:
 
