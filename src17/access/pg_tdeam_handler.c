@@ -600,6 +600,9 @@ pg_tdeam_relation_set_new_filelocator(Relation rel,
 									MultiXactId *minmulti)
 {
 	SMgrRelation srel;
+#ifdef PERCONA_EXT
+	RelFileLocator oldlocator = rel->rd_locator;
+#endif
 
 	/*
 	 * Initialize to the minimum XID that could put tuples in the table. We
@@ -618,7 +621,11 @@ pg_tdeam_relation_set_new_filelocator(Relation rel,
 	 */
 	*minmulti = GetOldestMultiXactId();
 
+#ifdef PERCONA_EXT
+	srel = RelationCreateStorage(oldlocator, *newrlocator, persistence, true);
+#else
 	srel = RelationCreateStorage(*newrlocator, persistence, true);
+#endif
 
 	/*
 	 * If required, set up an init fork for an unlogged table so that it can
@@ -631,7 +638,11 @@ pg_tdeam_relation_set_new_filelocator(Relation rel,
 		Assert(rel->rd_rel->relkind == RELKIND_RELATION ||
 			   rel->rd_rel->relkind == RELKIND_MATVIEW ||
 			   rel->rd_rel->relkind == RELKIND_TOASTVALUE);
+#ifdef PERCONA_EXT
+		smgrcreate(oldlocator, srel, INIT_FORKNUM, false);
+#else
 		smgrcreate(srel, INIT_FORKNUM, false);
+#endif
 		log_smgrcreate(newrlocator, INIT_FORKNUM);
 	}
 
@@ -675,7 +686,11 @@ pg_tdeam_relation_copy_data(Relation rel, const RelFileLocator *newrlocator)
 	 * NOTE: any conflict in relfilenumber value will be caught in
 	 * RelationCreateStorage().
 	 */
+#ifdef PERCONA_EXT
+	dstrel = RelationCreateStorage(rel->rd_locator, *newrlocator, rel->rd_rel->relpersistence, true);
+#else
 	dstrel = RelationCreateStorage(*newrlocator, rel->rd_rel->relpersistence, true);
+#endif
 
 	/* copy main fork */
 	RelationCopyStorage(RelationGetSmgr(rel), dstrel, MAIN_FORKNUM,
@@ -687,7 +702,11 @@ pg_tdeam_relation_copy_data(Relation rel, const RelFileLocator *newrlocator)
 	{
 		if (smgrexists(RelationGetSmgr(rel), forkNum))
 		{
+#ifdef PERCONA_EXT
+			smgrcreate(rel->rd_locator, dstrel, forkNum, false);
+#else
 			smgrcreate(dstrel, forkNum, false);
+#endif
 
 			/*
 			 * WAL log creation if the relation is persistent, or this is the

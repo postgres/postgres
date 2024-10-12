@@ -38,7 +38,7 @@ tde_is_encryption_required(TDESMgrRelation tdereln, ForkNumber forknum)
 }
 
 static RelKeyData *
-tde_smgr_get_key(SMgrRelation reln)
+tde_smgr_get_key(SMgrRelation reln, RelFileLocator* old_locator)
 {
 	TdeCreateEvent *event;
 	RelKeyData *rkd;
@@ -83,6 +83,17 @@ tde_smgr_get_key(SMgrRelation reln)
 		 * keys
 		 */
 		return pg_tde_create_smgr_key(&reln->smgr_rlocator.locator);
+	}
+
+	/* check if we had a key for the old locator, if there's one */
+	if(old_locator != NULL)
+	{
+		RelKeyData *rkd2 = GetSMGRRelationKey(*old_locator);
+		if(rkd2!=NULL)
+		{
+			// create a new key for the new file
+			return pg_tde_create_key_map_entry(&reln->smgr_rlocator.locator, TDE_KEY_TYPE_SMGR);
+		}
 	}
 
 	return NULL;
@@ -213,7 +224,7 @@ tde_mdreadv(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 }
 
 static void
-tde_mdcreate(SMgrRelation reln, ForkNumber forknum, bool isRedo)
+tde_mdcreate(RelFileLocator relold, SMgrRelation reln, ForkNumber forknum, bool isRedo)
 {
 	TDESMgrRelation tdereln = (TDESMgrRelation) reln;
 
@@ -223,11 +234,13 @@ tde_mdcreate(SMgrRelation reln, ForkNumber forknum, bool isRedo)
 	 */
 	/* so we create the key here by loading it */
 
+	mdcreate(relold, reln, forknum, isRedo);
+
 	/*
 	 * Later calls then decide to encrypt or not based on the existence of the
 	 * key
 	 */
-	RelKeyData *key = tde_smgr_get_key(reln);
+	RelKeyData *key = tde_smgr_get_key(reln, &relold);
 
 	if (key)
 	{
@@ -238,8 +251,6 @@ tde_mdcreate(SMgrRelation reln, ForkNumber forknum, bool isRedo)
 	{
 		tdereln->encrypted_relation = false;
 	}
-
-	return mdcreate(reln, forknum, isRedo);
 }
 
 /*
@@ -249,7 +260,7 @@ static void
 tde_mdopen(SMgrRelation reln)
 {
 	TDESMgrRelation tdereln = (TDESMgrRelation) reln;
-	RelKeyData *key = tde_smgr_get_key(reln);
+	RelKeyData *key = tde_smgr_get_key(reln, NULL);
 
 	if (key)
 	{
