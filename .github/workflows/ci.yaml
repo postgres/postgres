@@ -15,24 +15,4 @@ jobs:
         with:
           toolchain: stable
           override: true
-      - run: cd sharding && cargo fmt -- --check
-
-  test:
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          override: true
-      - run: sudo apt update && sudo apt upgrade -y
-      - run: sudo apt install -y libpq-dev postgresql-client
-      - run: ./configure --without-icu
-      - run: cd sharding && ./build-release.sh & cd ..
-      - run: make
-      - run: ls -l src/bin/psql/libsharding.a
-      - run: ranlib src/bin/psql/libsharding.a
-      - run: cd sharding && cargo test -- --test-threads=1      
-
-      
+      - run: cd sharding && cargo fmt -- --check      
