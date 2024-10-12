@@ -1568,6 +1568,36 @@ select min(1-id) from matest0;
 
 reset enable_seqscan;
 reset enable_parallel_append;
+explain (verbose, costs off)  -- bug #18652
+select 1 - id as c from
+(select id from matest3 t1 union all select id * 2 from matest3 t2) ss
+order by c;
+                         QUERY PLAN                         
+------------------------------------------------------------
+ Result
+   Output: ((1 - t1.id))
+   ->  Merge Append
+         Sort Key: ((1 - t1.id))
+         ->  Index Scan using matest3i on public.matest3 t1
+               Output: t1.id, (1 - t1.id)
+         ->  Sort
+               Output: ((t2.id * 2)), ((1 - (t2.id * 2)))
+               Sort Key: ((1 - (t2.id * 2)))
+               ->  Seq Scan on public.matest3 t2
+                     Output: (t2.id * 2), (1 - (t2.id * 2))
+(11 rows)
+
+select 1 - id as c from
+(select id from matest3 t1 union all select id * 2 from matest3 t2) ss
+order by c;
+  c  
+-----
+ -11
+  -9
+  -5
+  -4
+(4 rows)
+
 drop table matest0 cascade;
 NOTICE:  drop cascades to 3 other objects
 DETAIL:  drop cascades to table matest1

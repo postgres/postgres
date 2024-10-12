@@ -35,7 +35,6 @@
 static EquivalenceMember *add_eq_member(EquivalenceClass *ec,
 										Expr *expr, Relids relids, Relids nullable_relids,
 										bool is_child, Oid datatype);
-static bool is_exprlist_member(Expr *node, List *exprs);
 static void generate_base_implied_equalities_const(PlannerInfo *root,
 												   EquivalenceClass *ec);
 static void generate_base_implied_equalities_no_const(PlannerInfo *root,
@@ -832,9 +831,18 @@ find_ec_member_matching_expr(EquivalenceClass *ec,
  *		expressions appearing in "exprs"; return NULL if no match.
  *
  * "exprs" can be either a list of bare expression trees, or a list of
- * TargetEntry nodes.  Either way, it should contain Vars and possibly
- * Aggrefs and WindowFuncs, which are matched to the corresponding elements
- * of the EquivalenceClass's expressions.
+ * TargetEntry nodes.  Typically it will contain Vars and possibly Aggrefs
+ * and WindowFuncs; however, when considering an appendrel member the list
+ * could contain arbitrary expressions.  We consider an EC member to be
+ * computable if all the Vars, PlaceHolderVars, Aggrefs, and WindowFuncs
+ * it needs are present in "exprs".
+ *
+ * There is some subtlety in that definition: for example, if an EC member is
+ * Var_A + 1 while what is in "exprs" is Var_A + 2, it's still computable.
+ * This works because in the final plan tree, the EC member's expression will
+ * be computed as part of the same plan node targetlist that is currently
+ * represented by "exprs".  So if we have Var_A available for the existing
+ * tlist member, it must be OK to use it in the EC expression too.
  *
  * Unlike find_ec_member_matching_expr, there's no special provision here
  * for binary-compatible relabeling.  This is intentional: if we have to
@@ -854,12 +862,24 @@ find_computable_ec_member(PlannerInfo *root,
 						  Relids relids,
 						  bool require_parallel_safe)
 {
+	List	   *exprvars;
 	ListCell   *lc;
+
+	/*
+	 * Pull out the Vars and quasi-Vars present in "exprs".  In the typical
+	 * non-appendrel case, this is just another representation of the same
+	 * list.  However, it does remove the distinction between the case of a
+	 * list of plain expressions and a list of TargetEntrys.
+	 */
+	exprvars = pull_var_clause((Node *) exprs,
+							   PVC_INCLUDE_AGGREGATES |
+							   PVC_INCLUDE_WINDOWFUNCS |
+							   PVC_INCLUDE_PLACEHOLDERS);
 
 	foreach(lc, ec->ec_members)
 	{
 		EquivalenceMember *em = (EquivalenceMember *) lfirst(lc);
-		List	   *exprvars;
+		List	   *emvars;
 		ListCell   *lc2;
 
 		/*
@@ -877,18 +897,18 @@ find_computable_ec_member(PlannerInfo *root,
 			continue;
 
 		/*
-		 * Match if all Vars and quasi-Vars are available in "exprs".
+		 * Match if all Vars and quasi-Vars are present in "exprs".
 		 */
-		exprvars = pull_var_clause((Node *) em->em_expr,
-								   PVC_INCLUDE_AGGREGATES |
-								   PVC_INCLUDE_WINDOWFUNCS |
-								   PVC_INCLUDE_PLACEHOLDERS);
-		foreach(lc2, exprvars)
+		emvars = pull_var_clause((Node *) em->em_expr,
+								 PVC_INCLUDE_AGGREGATES |
+								 PVC_INCLUDE_WINDOWFUNCS |
+								 PVC_INCLUDE_PLACEHOLDERS);
+		foreach(lc2, emvars)
 		{
-			if (!is_exprlist_member(lfirst(lc2), exprs))
+			if (!list_member(exprvars, lfirst(lc2)))
 				break;
 		}
-		list_free(exprvars);
+		list_free(emvars);
 		if (lc2)
 			continue;			/* we hit a non-available Var */
 
@@ -904,31 +924,6 @@ find_computable_ec_member(PlannerInfo *root,
 	}
 
 	return NULL;
-}
-
-/*
- * is_exprlist_member
- *	  Subroutine for find_computable_ec_member: is "node" in "exprs"?
- *
- * Per the requirements of that function, "exprs" might or might not have
- * TargetEntry superstructure.
- */
-static bool
-is_exprlist_member(Expr *node, List *exprs)
-{
-	ListCell   *lc;
-
-	foreach(lc, exprs)
-	{
-		Expr	   *expr = (Expr *) lfirst(lc);
-
-		if (expr && IsA(expr, TargetEntry))
-			expr = ((TargetEntry *) expr)->expr;
-
-		if (equal(node, expr))
-			return true;
-	}
-	return false;
 }
 
 /*
