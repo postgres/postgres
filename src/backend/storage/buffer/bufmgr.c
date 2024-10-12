@@ -942,7 +942,7 @@ ExtendBufferedRelTo(BufferManagerRelation bmr,
 
 		/* recheck, fork might have been created concurrently */
 		if (!smgrexists(bmr.smgr, fork))
-			smgrcreate(bmr.smgr, fork, flags & EB_PERFORMING_RECOVERY);
+			smgrcreate(bmr.rel->rd_locator, bmr.smgr, fork, flags & EB_PERFORMING_RECOVERY);
 
 		UnlockRelationForExtension(bmr.rel, ExclusiveLock);
 	}
@@ -4787,7 +4787,7 @@ CreateAndCopyRelationData(RelFileLocator src_rlocator,
 	 * directory.  Therefore, each individual relation doesn't need to be
 	 * registered for cleanup.
 	 */
-	RelationCreateStorage(dst_rlocator, relpersistence, false);
+	RelationCreateStorage(src_rlocator, dst_rlocator, relpersistence, false);
 
 	/* copy main fork. */
 	RelationCopyStorageUsingBuffer(src_rlocator, dst_rlocator, MAIN_FORKNUM,
@@ -4799,7 +4799,8 @@ CreateAndCopyRelationData(RelFileLocator src_rlocator,
 	{
 		if (smgrexists(src_rel, forkNum))
 		{
-			smgrcreate(dst_rel, forkNum, false);
+			// TODO: for sure?
+			smgrcreate(src_rel->smgr_rlocator.locator, dst_rel, forkNum, false);
 
 			/*
 			 * WAL log creation if the relation is persistent, or this is the

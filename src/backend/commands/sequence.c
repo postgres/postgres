@@ -344,7 +344,7 @@ fill_seq_with_data(Relation rel, HeapTuple tuple)
 		SMgrRelation srel;
 
 		srel = smgropen(rel->rd_locator, INVALID_PROC_NUMBER);
-		smgrcreate(srel, INIT_FORKNUM, false);
+		smgrcreate(rel->rd_locator, srel, INIT_FORKNUM, false);
 		log_smgrcreate(&rel->rd_locator, INIT_FORKNUM);
 		fill_seq_fork_with_data(rel, tuple, INIT_FORKNUM);
 		FlushRelationBuffers(rel);
