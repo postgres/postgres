@@ -204,7 +204,7 @@ filtered_base_yylex(void)
 
 				/* Combine 3 tokens into 1 */
 				base_yylval.str = psprintf("%s UESCAPE %s", base_yylval.str, escstr);
-				base_yylloc = mm_strdup(base_yylval.str);
+				base_yylloc = loc_strdup(base_yylval.str);
 
 				/* Clear have_lookahead, thereby consuming all three tokens */
 				have_lookahead = false;
@@ -254,11 +254,11 @@ base_yylex_location(void)
 		case UIDENT:
 		case IP:
 			/* Duplicate the <str> value */
-			base_yylloc = mm_strdup(base_yylval.str);
+			base_yylloc = loc_strdup(base_yylval.str);
 			break;
 		default:
 			/* Else just use the input, i.e., yytext */
-			base_yylloc = mm_strdup(base_yytext);
+			base_yylloc = loc_strdup(base_yytext);
 			/* Apply an ASCII-only downcasing */
 			for (unsigned char *ptr = (unsigned char *) base_yylloc; *ptr; ptr++)
 			{

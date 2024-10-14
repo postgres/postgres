@@ -45,18 +45,16 @@ ECPG: stmtExecuteStmt block
 			else
 			{
 				/* case of ecpg_ident or CSTRING */
-				char	   *length = mm_alloc(sizeof(int) * CHAR_BIT * 10 / 3);
-				char	   *str = mm_strdup($1.name + 1);
+				char		length[32];
+				char	   *str;
 
-				/*
-				 * It must be cut off double quotation because new_variable()
-				 * double-quotes.
-				 */
+				/* Remove double quotes from name */
+				str = loc_strdup($1.name + 1);
 				str[strlen(str) - 1] = '\0';
-				sprintf(length, "%zu", strlen(str));
+				snprintf(length, sizeof(length), "%zu", strlen(str));
 				add_variable_to_tail(&argsinsert, new_variable(str, ECPGmake_simple_type(ECPGt_const, length, 0), 0), &no_indicator);
 			}
-			output_statement(cat_str(3, mm_strdup("execute"), mm_strdup("$0"), $1.type), 0, ECPGst_exec_with_exprlist);
+			output_statement(cat_str(3, "execute", "$0", $1.type), 0, ECPGst_exec_with_exprlist);
 		}
 	}
 ECPG: stmtPrepareStmt block
@@ -66,7 +64,7 @@ ECPG: stmtPrepareStmt block
 			output_prepare_statement($1.name, $1.stmt);
 		else if (strlen($1.type) == 0)
 		{
-			char	   *stmt = cat_str(3, mm_strdup("\""), $1.stmt, mm_strdup("\""));
+			char	   *stmt = cat_str(3, "\"", $1.stmt, "\"");
 
 			output_prepare_statement($1.name, stmt);
 		}
@@ -77,18 +75,16 @@ ECPG: stmtPrepareStmt block
 				add_variable_to_tail(&argsinsert, find_variable($1.name), &no_indicator);
 			else
 			{
-				char	   *length = mm_alloc(sizeof(int) * CHAR_BIT * 10 / 3);
-				char	   *str = mm_strdup($1.name + 1);
+				char		length[32];
+				char	   *str;
 
-				/*
-				 * It must be cut off double quotation because new_variable()
-				 * double-quotes.
-				 */
+				/* Remove double quotes from name */
+				str = loc_strdup($1.name + 1);
 				str[strlen(str) - 1] = '\0';
-				sprintf(length, "%zu", strlen(str));
+				snprintf(length, sizeof(length), "%zu", strlen(str));
 				add_variable_to_tail(&argsinsert, new_variable(str, ECPGmake_simple_type(ECPGt_const, length, 0), 0), &no_indicator);
 			}
-			output_statement(cat_str(5, mm_strdup("prepare"), mm_strdup("$0"), $1.type, mm_strdup("as"), $1.stmt), 0, ECPGst_prepare);
+			output_statement(cat_str(5, "prepare", "$0", $1.type, "as", $1.stmt), 0, ECPGst_prepare);
 		}
 	}
 ECPG: stmtTransactionStmt block
@@ -142,8 +138,6 @@ ECPG: stmtViewStmt rule
 		fputs("ECPGt_EORT);", base_yyout);
 		fprintf(base_yyout, "}");
 		output_line_number();
-
-		free($1.stmt_name);
 	}
 	| ECPGDisconnect
 	{
@@ -175,8 +169,6 @@ ECPG: stmtViewStmt rule
 	{
 		lookup_descriptor($1.name, connection);
 		output_get_descr($1.name, $1.str);
-		free($1.name);
-		free($1.str);
 	}
 	| ECPGGetDescriptorHeader
 	{
@@ -190,7 +182,7 @@ ECPG: stmtViewStmt rule
 		if ((ptr = add_additional_variables(@1, true)) != NULL)
 		{
 			connection = ptr->connection ? mm_strdup(ptr->connection) : NULL;
-			output_statement(mm_strdup(ptr->command), 0, ECPGst_normal);
+			output_statement(ptr->command, 0, ECPGst_normal);
 			ptr->opened = true;
 		}
 	}
@@ -211,8 +203,6 @@ ECPG: stmtViewStmt rule
 	{
 		lookup_descriptor($1.name, connection);
 		output_set_descr($1.name, $1.str);
-		free($1.name);
-		free($1.str);
 	}
 	| ECPGSetDescriptorHeader
 	{
@@ -243,9 +233,9 @@ ECPG: stmtViewStmt rule
 	}
 ECPG: where_or_current_clauseWHERECURRENT_POFcursor_name block
 	{
-		char	   *cursor_marker = @4[0] == ':' ? mm_strdup("$0") : @4;
+		const char *cursor_marker = @4[0] == ':' ? "$0" : @4;
 
-		@$ = cat_str(2, mm_strdup("where current of"), cursor_marker);
+		@$ = cat_str(2, "where current of", cursor_marker);
 	}
 ECPG: CopyStmtCOPYopt_binaryqualified_nameopt_column_listcopy_fromopt_programcopy_file_namecopy_delimiteropt_withcopy_optionswhere_clause addon
 		if (strcmp(@6, "from") == 0 &&
@@ -253,21 +243,21 @@ ECPG: CopyStmtCOPYopt_binaryqualified_nameopt_column_listcopy_fromopt_programcop
 			mmerror(PARSE_ERROR, ET_WARNING, "COPY FROM STDIN is not implemented");
 ECPG: var_valueNumericOnly addon
 		if (@1[0] == '$')
-			@$ = mm_strdup("$0");
+			@$ = "$0";
 ECPG: fetch_argscursor_name addon
 		struct cursor *ptr = add_additional_variables(@1, false);
 
 		if (ptr->connection)
 			connection = mm_strdup(ptr->connection);
 		if (@1[0] == ':')
-			@$ = mm_strdup("$0");
+			@$ = "$0";
 ECPG: fetch_argsfrom_incursor_name addon
 		struct cursor *ptr = add_additional_variables(@2, false);
 
 		if (ptr->connection)
 			connection = mm_strdup(ptr->connection);
 		if (@2[0] == ':')
-			@$ = cat2_str(mm_strdup(@1), mm_strdup("$0"));
+			@$ = cat2_str(@1, "$0");
 ECPG: fetch_argsNEXTopt_from_incursor_name addon
 ECPG: fetch_argsPRIORopt_from_incursor_name addon
 ECPG: fetch_argsFIRST_Popt_from_incursor_name addon
@@ -278,7 +268,7 @@ ECPG: fetch_argsALLopt_from_incursor_name addon
 		if (ptr->connection)
 			connection = mm_strdup(ptr->connection);
 		if (@3[0] == ':')
-			@$ = cat_str(3, mm_strdup(@1), mm_strdup(@2), mm_strdup("$0"));
+			@$ = cat_str(3, @1, @2, "$0");
 ECPG: fetch_argsSignedIconstopt_from_incursor_name addon
 		struct cursor *ptr = add_additional_variables(@3, false);
 		bool	replace = false;
@@ -287,16 +277,16 @@ ECPG: fetch_argsSignedIconstopt_from_incursor_name addon
 			connection = mm_strdup(ptr->connection);
 		if (@3[0] == ':')
 		{
-			@3 = mm_strdup("$0");
+			@3 = "$0";
 			replace = true;
 		}
 		if (@1[0] == '$')
 		{
-			@1 = mm_strdup("$0");
+			@1 = "$0";
 			replace = true;
 		}
 		if (replace)
-			@$ = cat_str(3, mm_strdup(@1), mm_strdup(@2), mm_strdup(@3));
+			@$ = cat_str(3, @1, @2, @3);
 ECPG: fetch_argsFORWARDALLopt_from_incursor_name addon
 ECPG: fetch_argsBACKWARDALLopt_from_incursor_name addon
 		struct cursor *ptr = add_additional_variables(@4, false);
@@ -304,7 +294,7 @@ ECPG: fetch_argsBACKWARDALLopt_from_incursor_name addon
 		if (ptr->connection)
 			connection = mm_strdup(ptr->connection);
 		if (@4[0] == ':')
-			@$ = cat_str(4, mm_strdup(@1), mm_strdup(@2), mm_strdup(@3), mm_strdup("$0"));
+			@$ = cat_str(4, @1, @2, @3, "$0");
 ECPG: fetch_argsABSOLUTE_PSignedIconstopt_from_incursor_name addon
 ECPG: fetch_argsRELATIVE_PSignedIconstopt_from_incursor_name addon
 ECPG: fetch_argsFORWARDSignedIconstopt_from_incursor_name addon
@@ -316,20 +306,20 @@ ECPG: fetch_argsBACKWARDSignedIconstopt_from_incursor_name addon
 			connection = mm_strdup(ptr->connection);
 		if (@4[0] == ':')
 		{
-			@4 = mm_strdup("$0");
+			@4 = "$0";
 			replace = true;
 		}
 		if (@2[0] == '$')
 		{
-			@2 = mm_strdup("$0");
+			@2 = "$0";
 			replace = true;
 		}
 		if (replace)
-			@$ = cat_str(4, mm_strdup(@1), mm_strdup(@2), mm_strdup(@3), mm_strdup(@4));
+			@$ = cat_str(4, @1, @2, @3, @4);
 ECPG: cursor_namename block
 	| char_civar
 	{
-		char	   *curname = mm_alloc(strlen(@1) + 2);
+		char	   *curname = loc_alloc(strlen(@1) + 2);
 
 		sprintf(curname, ":%s", @1);
 		@$ = curname;
@@ -367,7 +357,7 @@ ECPG: DeclareCursorStmtDECLAREcursor_namecursor_optionsCURSORopt_holdFORSelectSt
 	{
 		struct cursor *ptr,
 				   *this;
-		char	   *cursor_marker = @2[0] == ':' ? mm_strdup("$0") : mm_strdup(@2);
+		const char *cursor_marker = @2[0] == ':' ? "$0" : @2;
 		char	   *comment,
 				   *c1,
 				   *c2;
@@ -394,7 +384,7 @@ ECPG: DeclareCursorStmtDECLAREcursor_namecursor_optionsCURSORopt_holdFORSelectSt
 		this->function = (current_function ? mm_strdup(current_function) : NULL);
 		this->connection = connection ? mm_strdup(connection) : NULL;
 		this->opened = false;
-		this->command = cat_str(7, mm_strdup("declare"), cursor_marker, @3, mm_strdup("cursor"), @5, mm_strdup("for"), @7);
+		this->command = mm_strdup(cat_str(7, "declare", cursor_marker, @3, "cursor", @5, "for", @7));
 		this->argsinsert = argsinsert;
 		this->argsinsert_oos = NULL;
 		this->argsresult = argsresult;
@@ -402,20 +392,20 @@ ECPG: DeclareCursorStmtDECLAREcursor_namecursor_optionsCURSORopt_holdFORSelectSt
 		argsinsert = argsresult = NULL;
 		cur = this;
 
-		c1 = mm_strdup(this->command);
-		if ((c2 = strstr(c1, "*/")) != NULL)
+		c1 = loc_strdup(this->command);
+		while ((c2 = strstr(c1, "*/")) != NULL)
 		{
 			/* We put this text into a comment, so we better remove [*][/]. */
 			c2[0] = '.';
 			c2[1] = '.';
 		}
-		comment = cat_str(3, mm_strdup("/*"), c1, mm_strdup("*/"));
+		comment = cat_str(3, "/*", c1, "*/");
 
 		@$ = cat2_str(adjust_outofscope_cursor_vars(this), comment);
 	}
 ECPG: ClosePortalStmtCLOSEcursor_name block
 	{
-		char	   *cursor_marker = @2[0] == ':' ? mm_strdup("$0") : @2;
+		const char *cursor_marker = @2[0] == ':' ? "$0" : @2;
 		struct cursor *ptr = NULL;
 
 		for (ptr = cur; ptr != NULL; ptr = ptr->next)
@@ -427,23 +417,23 @@ ECPG: ClosePortalStmtCLOSEcursor_name block
 				break;
 			}
 		}
-		@$ = cat2_str(mm_strdup("close"), cursor_marker);
+		@$ = cat2_str("close", cursor_marker);
 	}
 ECPG: opt_hold block
 	{
 		if (compat == ECPG_COMPAT_INFORMIX_SE && autocommit)
-			@$ = mm_strdup("with hold");
+			@$ = "with hold";
 		else
-			@$ = EMPTY;
+			@$ = "";
 	}
 ECPG: into_clauseINTOOptTempTableName block
 	{
 		FoundInto = 1;
-		@$ = cat2_str(mm_strdup("into"), @2);
+		@$ = cat2_str("into", @2);
 	}
 	| ecpg_into
 	{
-		@$ = EMPTY;
+		@$ = "";
 	}
 ECPG: TypenameSimpleTypenameopt_array_bounds block
 	{
@@ -451,37 +441,33 @@ ECPG: TypenameSimpleTypenameopt_array_bounds block
 	}
 ECPG: TypenameSETOFSimpleTypenameopt_array_bounds block
 	{
-		@$ = cat_str(3, mm_strdup("setof"), @2, $3.str);
+		@$ = cat_str(3, "setof", @2, $3.str);
 	}
 ECPG: opt_array_boundsopt_array_bounds'['']' block
 	{
 		$$.index1 = $1.index1;
 		$$.index2 = $1.index2;
 		if (strcmp($$.index1, "-1") == 0)
-			$$.index1 = mm_strdup("0");
+			$$.index1 = "0";
 		else if (strcmp($1.index2, "-1") == 0)
-			$$.index2 = mm_strdup("0");
-		$$.str = cat_str(2, $1.str, mm_strdup("[]"));
+			$$.index2 = "0";
+		$$.str = cat_str(2, $1.str, "[]");
 	}
 	| opt_array_bounds '[' Iresult ']'
 	{
 		$$.index1 = $1.index1;
 		$$.index2 = $1.index2;
 		if (strcmp($1.index1, "-1") == 0)
-			$$.index1 = mm_strdup(@3);
+			$$.index1 = @3;
 		else if (strcmp($1.index2, "-1") == 0)
-			$$.index2 = mm_strdup(@3);
-		$$.str = cat_str(4, $1.str, mm_strdup("["), @3, mm_strdup("]"));
+			$$.index2 = @3;
+		$$.str = cat_str(4, $1.str, "[", @3, "]");
 	}
 ECPG: opt_array_bounds block
 	{
-		$$.index1 = mm_strdup("-1");
-		$$.index2 = mm_strdup("-1");
-		$$.str = EMPTY;
-	}
-ECPG: IconstICONST block
-	{
-		@$ = make_name();
+		$$.index1 = "-1";
+		$$.index2 = "-1";
+		$$.str = "";
 	}
 ECPG: AexprConstNULL_P rule
 	| civar
@@ -494,83 +480,83 @@ ECPG: FetchStmtMOVEfetch_args rule
 	| FETCH fetch_args ecpg_fetch_into
 	| FETCH FORWARD cursor_name opt_ecpg_fetch_into
 	{
-		char	   *cursor_marker = @3[0] == ':' ? mm_strdup("$0") : @3;
+		const char *cursor_marker = @3[0] == ':' ? "$0" : @3;
 		struct cursor *ptr = add_additional_variables(@3, false);
 
 		if (ptr->connection)
 			connection = mm_strdup(ptr->connection);
 
-		@$ = cat_str(2, mm_strdup("fetch forward"), cursor_marker);
+		@$ = cat_str(2, "fetch forward", cursor_marker);
 	}
 	| FETCH FORWARD from_in cursor_name opt_ecpg_fetch_into
 	{
-		char	   *cursor_marker = @4[0] == ':' ? mm_strdup("$0") : @4;
+		const char *cursor_marker = @4[0] == ':' ? "$0" : @4;
 		struct cursor *ptr = add_additional_variables(@4, false);
 
 		if (ptr->connection)
 			connection = mm_strdup(ptr->connection);
 
-		@$ = cat_str(2, mm_strdup("fetch forward from"), cursor_marker);
+		@$ = cat_str(2, "fetch forward from", cursor_marker);
 	}
 	| FETCH BACKWARD cursor_name opt_ecpg_fetch_into
 	{
-		char	   *cursor_marker = @3[0] == ':' ? mm_strdup("$0") : @3;
+		const char *cursor_marker = @3[0] == ':' ? "$0" : @3;
 		struct cursor *ptr = add_additional_variables(@3, false);
 
 		if (ptr->connection)
 			connection = mm_strdup(ptr->connection);
 
-		@$ = cat_str(2, mm_strdup("fetch backward"), cursor_marker);
+		@$ = cat_str(2, "fetch backward", cursor_marker);
 	}
 	| FETCH BACKWARD from_in cursor_name opt_ecpg_fetch_into
 	{
-		char	   *cursor_marker = @4[0] == ':' ? mm_strdup("$0") : @4;
+		const char *cursor_marker = @4[0] == ':' ? "$0" : @4;
 		struct cursor *ptr = add_additional_variables(@4, false);
 
 		if (ptr->connection)
 			connection = mm_strdup(ptr->connection);
 
-		@$ = cat_str(2, mm_strdup("fetch backward from"), cursor_marker);
+		@$ = cat_str(2, "fetch backward from", cursor_marker);
 	}
 	| MOVE FORWARD cursor_name
 	{
-		char	   *cursor_marker = @3[0] == ':' ? mm_strdup("$0") : @3;
+		const char *cursor_marker = @3[0] == ':' ? "$0" : @3;
 		struct cursor *ptr = add_additional_variables(@3, false);
 
 		if (ptr->connection)
 			connection = mm_strdup(ptr->connection);
 
-		@$ = cat_str(2, mm_strdup("move forward"), cursor_marker);
+		@$ = cat_str(2, "move forward", cursor_marker);
 	}
 	| MOVE FORWARD from_in cursor_name
 	{
-		char	   *cursor_marker = @4[0] == ':' ? mm_strdup("$0") : @4;
+		const char *cursor_marker = @4[0] == ':' ? "$0" : @4;
 		struct cursor *ptr = add_additional_variables(@4, false);
 
 		if (ptr->connection)
 			connection = mm_strdup(ptr->connection);
 
-		@$ = cat_str(2, mm_strdup("move forward from"), cursor_marker);
+		@$ = cat_str(2, "move forward from", cursor_marker);
 	}
 	| MOVE BACKWARD cursor_name
 	{
-		char	   *cursor_marker = @3[0] == ':' ? mm_strdup("$0") : @3;
+		const char *cursor_marker = @3[0] == ':' ? "$0" : @3;
 		struct cursor *ptr = add_additional_variables(@3, false);
 
 		if (ptr->connection)
 			connection = mm_strdup(ptr->connection);
 
-		@$ = cat_str(2, mm_strdup("move backward"), cursor_marker);
+		@$ = cat_str(2, "move backward", cursor_marker);
 	}
 	| MOVE BACKWARD from_in cursor_name
 	{
-		char	   *cursor_marker = @4[0] == ':' ? mm_strdup("$0") : @4;
+		const char *cursor_marker = @4[0] == ':' ? "$0" : @4;
 		struct cursor *ptr = add_additional_variables(@4, false);
 
 		if (ptr->connection)
 			connection = mm_strdup(ptr->connection);
 
-		@$ = cat_str(2, mm_strdup("move backward from"), cursor_marker);
+		@$ = cat_str(2, "move backward from", cursor_marker);
 	}
 ECPG: limit_clauseLIMITselect_limit_value','select_offset_value block
 	{

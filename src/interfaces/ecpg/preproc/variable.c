@@ -22,7 +22,7 @@ new_variable(const char *name, struct ECPGtype *type, int brace_level)
 }
 
 static struct variable *
-find_struct_member(char *name, char *str, struct ECPGstruct_member *members, int brace_level)
+find_struct_member(const char *name, char *str, struct ECPGstruct_member *members, int brace_level)
 {
 	char	   *next = strpbrk(++str, ".-["),
 			   *end,
@@ -123,7 +123,7 @@ find_struct_member(char *name, char *str, struct ECPGstruct_member *members, int
 }
 
 static struct variable *
-find_struct(char *name, char *next, char *end)
+find_struct(const char *name, char *next, char *end)
 {
 	struct variable *p;
 	char		c = *next;
@@ -174,7 +174,7 @@ find_struct(char *name, char *next, char *end)
 }
 
 static struct variable *
-find_simple(char *name)
+find_simple(const char *name)
 {
 	struct variable *p;
 
@@ -190,7 +190,7 @@ find_simple(char *name)
 /* Note that this function will end the program in case of an unknown */
 /* variable */
 struct variable *
-find_variable(char *name)
+find_variable(const char *name)
 {
 	char	   *next,
 			   *end;
@@ -513,7 +513,10 @@ get_typedef(const char *name, bool noerror)
 }
 
 void
-adjust_array(enum ECPGttype type_enum, char **dimension, char **length, char *type_dimension, char *type_index, int pointer_len, bool type_definition)
+adjust_array(enum ECPGttype type_enum,
+			 const char **dimension, const char **length,
+			 const char *type_dimension, const char *type_index,
+			 int pointer_len, bool type_definition)
 {
 	if (atoi(type_index) >= 0)
 	{
@@ -556,7 +559,7 @@ adjust_array(enum ECPGttype type_enum, char **dimension, char **length, char *ty
 			if (pointer_len)
 			{
 				*length = *dimension;
-				*dimension = mm_strdup("0");
+				*dimension = "0";
 			}
 
 			if (atoi(*length) >= 0)
@@ -567,13 +570,13 @@ adjust_array(enum ECPGttype type_enum, char **dimension, char **length, char *ty
 		case ECPGt_bytea:
 			/* pointer has to get dimension 0 */
 			if (pointer_len)
-				*dimension = mm_strdup("0");
+				*dimension = "0";
 
 			/* one index is the string length */
 			if (atoi(*length) < 0)
 			{
 				*length = *dimension;
-				*dimension = mm_strdup("-1");
+				*dimension = "-1";
 			}
 
 			break;
@@ -583,13 +586,13 @@ adjust_array(enum ECPGttype type_enum, char **dimension, char **length, char *ty
 			/* char ** */
 			if (pointer_len == 2)
 			{
-				*length = *dimension = mm_strdup("0");
+				*length = *dimension = "0";
 				break;
 			}
 
 			/* pointer has to get length 0 */
 			if (pointer_len == 1)
-				*length = mm_strdup("0");
+				*length = "0";
 
 			/* one index is the string length */
 			if (atoi(*length) < 0)
@@ -604,13 +607,13 @@ adjust_array(enum ECPGttype type_enum, char **dimension, char **length, char *ty
 					 * do not change this for typedefs since it will be
 					 * changed later on when the variable is defined
 					 */
-					*length = mm_strdup("1");
+					*length = "1";
 				else if (strcmp(*dimension, "0") == 0)
-					*length = mm_strdup("-1");
+					*length = "-1";
 				else
 					*length = *dimension;
 
-				*dimension = mm_strdup("-1");
+				*dimension = "-1";
 			}
 			break;
 		default:
@@ -618,7 +621,7 @@ adjust_array(enum ECPGttype type_enum, char **dimension, char **length, char *ty
 			if (pointer_len)
 			{
 				*length = *dimension;
-				*dimension = mm_strdup("0");
+				*dimension = "0";
 			}
 
 			if (atoi(*length) >= 0)

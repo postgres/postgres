@@ -35,8 +35,8 @@ struct ECPGtype
 /* Everything is malloced. */
 void		ECPGmake_struct_member(const char *name, struct ECPGtype *type,
 								   struct ECPGstruct_member **start);
-struct ECPGtype *ECPGmake_simple_type(enum ECPGttype type, char *size, int counter);
-struct ECPGtype *ECPGmake_array_type(struct ECPGtype *type, char *size);
+struct ECPGtype *ECPGmake_simple_type(enum ECPGttype type, const char *size, int counter);
+struct ECPGtype *ECPGmake_array_type(struct ECPGtype *type, const char *size);
 struct ECPGtype *ECPGmake_struct_type(struct ECPGstruct_member *rm,
 									  enum ECPGttype type, char *type_name,
 									  char *struct_sizeof);
@@ -93,28 +93,28 @@ struct when
 
 struct index
 {
-	char	   *index1;
-	char	   *index2;
-	char	   *str;
+	const char *index1;
+	const char *index2;
+	const char *str;
 };
 
 struct su_symbol
 {
-	char	   *su;
-	char	   *symbol;
+	const char *su;
+	const char *symbol;
 };
 
 struct prep
 {
-	char	   *name;
-	char	   *stmt;
-	char	   *type;
+	const char *name;
+	const char *stmt;
+	const char *type;
 };
 
 struct exec
 {
-	char	   *name;
-	char	   *type;
+	const char *name;
+	const char *type;
 };
 
 struct this_type
@@ -221,14 +221,14 @@ enum errortype
 
 struct fetch_desc
 {
-	char	   *str;
-	char	   *name;
+	const char *str;
+	const char *name;
 };
 
 struct describe
 {
 	int			input;
-	char	   *stmt_name;
+	const char *stmt_name;
 };
 
 #endif							/* _ECPG_PREPROC_TYPE_H */

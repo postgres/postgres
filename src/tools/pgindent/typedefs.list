@@ -3602,6 +3602,7 @@ libpq_source
 line_t
 lineno_t
 list_sort_comparator
+loc_chunk
 local_relopt
 local_relopts
 local_source

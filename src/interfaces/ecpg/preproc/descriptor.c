@@ -18,13 +18,12 @@
 static struct assignment *assignments;
 
 void
-push_assignment(char *var, enum ECPGdtype value)
+push_assignment(const char *var, enum ECPGdtype value)
 {
 	struct assignment *new = (struct assignment *) mm_alloc(sizeof(struct assignment));
 
 	new->next = assignments;
-	new->variable = mm_alloc(strlen(var) + 1);
-	strcpy(new->variable, var);
+	new->variable = mm_strdup(var);
 	new->value = value;
 	assignments = new;
 }
@@ -73,7 +72,7 @@ ECPGnumeric_lvalue(char *name)
 static struct descriptor *descriptors;
 
 void
-add_descriptor(char *name, char *connection)
+add_descriptor(const char *name, const char *connection)
 {
 	struct descriptor *new;
 
@@ -83,20 +82,16 @@ add_descriptor(char *name, char *connection)
 	new = (struct descriptor *) mm_alloc(sizeof(struct descriptor));
 
 	new->next = descriptors;
-	new->name = mm_alloc(strlen(name) + 1);
-	strcpy(new->name, name);
+	new->name = mm_strdup(name);
 	if (connection)
-	{
-		new->connection = mm_alloc(strlen(connection) + 1);
-		strcpy(new->connection, connection);
-	}
+		new->connection = mm_strdup(connection);
 	else
-		new->connection = connection;
+		new->connection = NULL;
 	descriptors = new;
 }
 
 void
-drop_descriptor(char *name, char *connection)
+drop_descriptor(const char *name, const char *connection)
 {
 	struct descriptor *i;
 	struct descriptor **lastptr = &descriptors;
@@ -126,9 +121,8 @@ drop_descriptor(char *name, char *connection)
 		mmerror(PARSE_ERROR, ET_WARNING, "descriptor %s bound to the default connection does not exist", name);
 }
 
-struct descriptor
-		   *
-lookup_descriptor(char *name, char *connection)
+struct descriptor *
+lookup_descriptor(const char *name, const char *connection)
 {
 	struct descriptor *i;
 
@@ -159,7 +153,7 @@ lookup_descriptor(char *name, char *connection)
 }
 
 void
-output_get_descr_header(char *desc_name)
+output_get_descr_header(const char *desc_name)
 {
 	struct assignment *results;
 
@@ -178,7 +172,7 @@ output_get_descr_header(char *desc_name)
 }
 
 void
-output_get_descr(char *desc_name, char *index)
+output_get_descr(const char *desc_name, const char *index)
 {
 	struct assignment *results;
 
@@ -211,7 +205,7 @@ output_get_descr(char *desc_name, char *index)
 }
 
 void
-output_set_descr_header(char *desc_name)
+output_set_descr_header(const char *desc_name)
 {
 	struct assignment *results;
 
@@ -272,7 +266,7 @@ descriptor_item_name(enum ECPGdtype itemcode)
 }
 
 void
-output_set_descr(char *desc_name, char *index)
+output_set_descr(const char *desc_name, const char *index)
 {
 	struct assignment *results;
 
