@@ -16784,50 +16784,6 @@ _ACEOF
 
 
 
-# Some platforms predefine the types int8, int16, etc.  Only check
-# a (hopefully) representative subset.
-ac_fn_c_check_type "$LINENO" "int8" "ac_cv_type_int8" "#include <stdio.h>
-"
-if test "x$ac_cv_type_int8" = xyes; then :
-
-cat >>confdefs.h <<_ACEOF
-#define HAVE_INT8 1
-_ACEOF
-
-
-fi
-ac_fn_c_check_type "$LINENO" "uint8" "ac_cv_type_uint8" "#include <stdio.h>
-"
-if test "x$ac_cv_type_uint8" = xyes; then :
-
-cat >>confdefs.h <<_ACEOF
-#define HAVE_UINT8 1
-_ACEOF
-
-
-fi
-ac_fn_c_check_type "$LINENO" "int64" "ac_cv_type_int64" "#include <stdio.h>
-"
-if test "x$ac_cv_type_int64" = xyes; then :
-
-cat >>confdefs.h <<_ACEOF
-#define HAVE_INT64 1
-_ACEOF
-
-
-fi
-ac_fn_c_check_type "$LINENO" "uint64" "ac_cv_type_uint64" "#include <stdio.h>
-"
-if test "x$ac_cv_type_uint64" = xyes; then :
-
-cat >>confdefs.h <<_ACEOF
-#define HAVE_UINT64 1
-_ACEOF
-
-
-fi
-
-
 # Some compilers offer a 128-bit integer scalar type.
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for __int128" >&5
 $as_echo_n "checking for __int128... " >&6; }
