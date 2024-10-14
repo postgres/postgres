@@ -64,8 +64,7 @@ preproc.h: preproc.c
 
 preproc.c: BISONFLAGS += -d
 
-preproc.y: ../../../backend/parser/gram.y parse.pl check_rules.pl ecpg.addons ecpg.header ecpg.tokens ecpg.trailer ecpg.type
-	$(PERL) $(srcdir)/check_rules.pl --srcdir $(srcdir) --parser $<
+preproc.y: ../../../backend/parser/gram.y parse.pl ecpg.addons ecpg.header ecpg.tokens ecpg.trailer ecpg.type
 	$(PERL) $(srcdir)/parse.pl --srcdir $(srcdir) --parser $< --output $@
 
 # generate keyword headers

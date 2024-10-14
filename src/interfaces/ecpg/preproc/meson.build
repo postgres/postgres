@@ -44,20 +44,6 @@ preproc_y = custom_target('preproc.y',
 )
 generated_sources += preproc_y
 
-check_rules = custom_target('preproc.y.check_rules',
-  input: [
-    '../../../backend/parser/gram.y',
-    ecpg_files,
-  ],
-  output: 'preproc.y.check_rules',
-  command: [
-    perl, files('check_rules.pl'),
-    '--srcdir', '@CURRENT_SOURCE_DIR@',
-    '--parser', '@INPUT0@',
-    '--stamp', '@OUTPUT0@',
-  ],
-)
-
 preproc = custom_target('preproc.c',
   input: preproc_y,
   kwargs: bison_kw,
@@ -68,7 +54,6 @@ ecpg_sources += preproc
 c_kwlist = custom_target('c_kwlist_d.h',
   input: ['c_kwlist.h'],
   output: ['c_kwlist_d.h'],
-  depends: check_rules,
   depend_files: gen_kwlist_deps,
   command: [gen_kwlist_cmd, '--varname', 'ScanCKeywords', '--no-case-fold'],
 )
