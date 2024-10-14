@@ -120,7 +120,7 @@ sub perform_all_corruptions()
 
 # Test set-up
 $node = PostgreSQL::Test::Cluster->new('test');
-$node->init;
+$node->init(no_data_checksums => 1);
 $node->append_conf('postgresql.conf', 'autovacuum=off');
 $node->start;
 $port = $node->port;

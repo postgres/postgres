@@ -88,7 +88,7 @@ sub check_relation_corruption
 
 # Initialize node with checksums disabled.
 my $node = PostgreSQL::Test::Cluster->new('node_checksum');
-$node->init();
+$node->init(no_data_checksums => 1);
 my $pgdata = $node->data_dir;
 
 # Control file should know that checksums are disabled.

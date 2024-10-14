@@ -586,6 +586,8 @@ On Windows, we use SSPI authentication to ensure the same (by pg_regress
 WAL archiving can be enabled on this node by passing the keyword parameter
 has_archiving => 1. This is disabled by default.
 
+Data checksums can be forced off by passing no_data_checksums => 1.
+
 postgresql.conf can be set up for replication by passing the keyword
 parameter allows_streaming => 'logical' or 'physical' (passing 1 will also
 suffice for physical replication) depending on type of replication that
@@ -616,6 +618,12 @@ sub init
 	if (defined $initdb_extra_opts_env)
 	{
 		push @{ $params{extra} }, shellwords($initdb_extra_opts_env);
+	}
+
+	# This should override user-supplied initdb options.
+	if ($params{no_data_checksums})
+	{
+		push @{ $params{extra} }, '--no-data-checksums';
 	}
 
 	mkdir $self->backup_dir;

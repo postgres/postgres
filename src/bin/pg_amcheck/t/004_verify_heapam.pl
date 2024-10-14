@@ -181,7 +181,7 @@ my $aborted_xid;
 # autovacuum workers visiting the table could crash the backend.
 # Disable autovacuum so that won't happen.
 my $node = PostgreSQL::Test::Cluster->new('test');
-$node->init;
+$node->init(no_data_checksums => 1);
 $node->append_conf('postgresql.conf', 'autovacuum=off');
 $node->append_conf('postgresql.conf', 'max_prepared_transactions=10');
 
