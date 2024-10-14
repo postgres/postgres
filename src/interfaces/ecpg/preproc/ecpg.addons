@@ -497,7 +497,7 @@ ECPG: opt_array_boundsopt_array_bounds'['']' block
 			$$.index2 = mm_strdup($3);
 		$$.str = cat_str(4, $1.str, mm_strdup("["), $3, mm_strdup("]"));
 	}
-ECPG: opt_array_bounds
+ECPG: opt_array_bounds block
 	{
 		$$.index1 = mm_strdup("-1");
 		$$.index2 = mm_strdup("-1");
@@ -510,15 +510,6 @@ ECPG: IconstICONST block
 ECPG: AexprConstNULL_P rule
 	| civar							{ $$ = $1; }
 	| civarind						{ $$ = $1; }
-ECPG: ColIdcol_name_keyword rule
-	| ECPGKeywords					{ $$ = $1; }
-	| ECPGCKeywords					{ $$ = $1; }
-	| CHAR_P						{ $$ = mm_strdup("char"); }
-	| VALUES						{ $$ = mm_strdup("values"); }
-ECPG: type_function_nametype_func_name_keyword rule
-	| ECPGKeywords					{ $$ = $1; }
-	| ECPGTypeName					{ $$ = $1; }
-	| ECPGCKeywords					{ $$ = $1; }
 ECPG: VariableShowStmtSHOWALL block
 	{
 		mmerror(PARSE_ERROR, ET_ERROR, "SHOW ALL is not implemented");

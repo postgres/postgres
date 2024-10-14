@@ -1,7 +1,13 @@
 #!/usr/bin/perl
 # src/interfaces/ecpg/preproc/parse.pl
-# parser generator for ecpg version 2
-# call with backend parser as stdin
+# parser generator for ecpg
+#
+# See README.parser for some explanation of what this does.
+#
+# Command-line options:
+#   --srcdir: where to find ecpg-provided input files (default ".")
+#   --parser: the backend gram.y file to read (required, no default)
+#   --output: where to write preproc.y (required, no default)
 #
 # Copyright (c) 2007-2024, PostgreSQL Global Development Group
 #
@@ -147,6 +153,14 @@ include_file('trailer', 'ecpg.trailer');
 dump_buffer('trailer');
 
 close($parserfh);
+
+# Cross-check that we don't have dead or ambiguous addon rules.
+foreach (keys %addons)
+{
+	die "addon rule $_ was never used\n" if $addons{$_}{used} == 0;
+	die "addon rule $_ was matched multiple times\n" if $addons{$_}{used} > 1;
+}
+
 
 sub main
 {
@@ -487,7 +501,10 @@ sub include_addon
 	my $rec = $addons{$block};
 	return 0 unless $rec;
 
-	my $rectype = (defined $rec->{type}) ? $rec->{type} : '';
+	# Track usage for later cross-check
+	$rec->{used}++;
+
+	my $rectype = $rec->{type};
 	if ($rectype eq 'rule')
 	{
 		dump_fields($stmt_mode, $fields, ' { ');
@@ -668,10 +685,10 @@ sub dump_line
 }
 
 =top
-	load addons into cache
+	load ecpg.addons into %addons hash.  The result is something like
 	%addons = {
-		stmtClosePortalStmt => { 'type' => 'block', 'lines' => [ "{", "if (INFORMIX_MODE)" ..., "}" ] },
-		stmtViewStmt => { 'type' => 'rule', 'lines' => [ "| ECPGAllocateDescr", ... ] }
+		stmtClosePortalStmt => { 'type' => 'block', 'lines' => [ "{", "if (INFORMIX_MODE)" ..., "}" ], 'used' => 0 },
+		stmtViewStmt => { 'type' => 'rule', 'lines' => [ "| ECPGAllocateDescr", ... ], 'used' => 0 }
 	}
 
 =cut
@@ -681,17 +698,25 @@ sub preload_addons
 	my $filename = $srcdir . "/ecpg.addons";
 	open(my $fh, '<', $filename) or die;
 
-	# there may be multiple lines starting ECPG: and then multiple lines of code.
-	# the code need to be add to all prior ECPG records.
-	my (@needsRules, @code, $record);
+	# There may be multiple "ECPG:" lines and then multiple lines of code.
+	# The block of code needs to be added to each of the consecutively-
+	# preceding "ECPG:" records.
+	my (@needsRules, @code);
 
-	# there may be comments before the first ECPG line, skip them
+	# there may be comments before the first "ECPG:" line, skip them
 	my $skip = 1;
 	while (<$fh>)
 	{
-		if (/^ECPG:\s(\S+)\s?(\w+)?/)
+		if (/^ECPG:\s+(\S+)\s+(\w+)\s*$/)
 		{
+			# Found an "ECPG:" line, so we're done skipping the header
 			$skip = 0;
+			# Validate record type and target
+			die "invalid record type $2 in addon rule for $1\n"
+			  unless ($2 eq 'block' or $2 eq 'addon' or $2 eq 'rule');
+			die "duplicate addon rule for $1\n" if (exists $addons{$1});
+			# If we had some preceding code lines, attach them to all
+			# as-yet-unfinished records.
 			if (@code)
 			{
 				for my $x (@needsRules)
@@ -701,20 +726,27 @@ sub preload_addons
 				@code = ();
 				@needsRules = ();
 			}
-			$record = {};
+			my $record = {};
 			$record->{type} = $2;
 			$record->{lines} = [];
-			if (exists $addons{$1}) { die "Ga! there are dups!\n"; }
+			$record->{used} = 0;
 			$addons{$1} = $record;
 			push(@needsRules, $record);
 		}
+		elsif (/^ECPG:/)
+		{
+			# Complain if preceding regex failed to match
+			die "incorrect syntax in ECPG line: $_\n";
+		}
 		else
 		{
+			# Non-ECPG line: add to @code unless we're still skipping
 			next if $skip;
 			push(@code, $_);
 		}
 	}
 	close($fh);
+	# Deal with final code block
 	if (@code)
 	{
 		for my $x (@needsRules)

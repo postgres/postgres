@@ -1,42 +1,77 @@
-ECPG modifies and extends the core grammar in a way that
-1) every token in ECPG is <str> type. New tokens are
-   defined in ecpg.tokens, types are defined in ecpg.type
-2) most tokens from the core grammar are simply converted
-   to literals concatenated together to form the SQL string
-   passed to the server, this is done by parse.pl.
-3) some rules need side-effects, actions are either added
-   or completely overridden (compared to the basic token
-   concatenation) for them, these are defined in ecpg.addons,
-   the rules for ecpg.addons are explained below.
-4) new grammar rules are needed for ECPG metacommands.
-   These are in ecpg.trailer.
-5) ecpg.header contains common functions, etc. used by
-   actions for grammar rules.
+ECPG's grammar (preproc.y) is built by parse.pl from the
+backend's grammar (gram.y) plus various add-on rules.
+Some notes:
 
-In "ecpg.addons", every modified rule follows this pattern:
-       ECPG: dumpedtokens postfix
-where "dumpedtokens" is simply tokens from core gram.y's
-rules concatenated together. e.g. if gram.y has this:
-       ruleA: tokenA tokenB tokenC {...}
-then "dumpedtokens" is "ruleAtokenAtokenBtokenC".
-"postfix" above can be:
-a) "block" - the automatic rule created by parse.pl is completely
-    overridden, the code block has to be written completely as
-    it were in a plain bison grammar
-b) "rule" - the automatic rule is extended on, so new syntaxes
-    are accepted for "ruleA". E.g.:
-      ECPG: ruleAtokenAtokenBtokenC rule
-          | tokenD tokenE { action_code; }
-          ...
-    It will be substituted with:
-      ruleA: <original syntax forms and actions up to and including
-                    "tokenA tokenB tokenC">
-             | tokenD tokenE { action_code; }
-             ...
-c) "addon" - the automatic action for the rule (SQL syntax constructed
-    from the tokens concatenated together) is prepended with a new
-    action code part. This code part is written as is's already inside
-    the { ... }
+1) Most input matching core grammar productions is simply converted
+   to strings and concatenated together to form the SQL string
+   passed to the server.  parse.pl can automatically build the
+   grammar actions needed to do this.
+2) Some grammar rules need special actions that are added to or
+   completely override the default token-concatenation behavior.
+   This is controlled by ecpg.addons as explained below.
+3) Additional grammar rules are needed for ECPG's own commands.
+   These are in ecpg.trailer, as is the "epilogue" part of preproc.y.
+4) ecpg.header contains the "prologue" part of preproc.y, including
+   support functions, Bison options, etc.
+5) Additional terminals added by ECPG must be defined in ecpg.tokens.
+   Additional nonterminals added by ECPG must be defined in ecpg.type.
 
-Multiple "addon" or "block" lines may appear together with the
-new code block if the code block is common for those rules.
+ecpg.header, ecpg.tokens, ecpg.type, and ecpg.trailer are just
+copied verbatim into preproc.y at appropriate points.
+
+ecpg.addons contains entries that begin with a line like
+       ECPG: concattokens ruletype
+and typically have one or more following lines that are the code
+for a grammar action.  Any line not starting with "ECPG:" is taken
+to be part of the code block for the preceding "ECPG:" line.
+
+"concattokens" identifies which gram.y production this entry affects.
+It is simply the target nonterminal and the tokens from the gram.y rule
+concatenated together.  For example, to modify the action for a gram.y
+rule like this:
+      target: tokenA tokenB tokenC {...}
+"concattokens" would be "targettokenAtokenBtokenC".  If we want to
+modify a non-first alternative for a nonterminal, we still write the
+nonterminal.  For example, "concattokens" should be "targettokenDtokenE"
+to affect the second alternative in:
+      target: tokenA tokenB tokenC {...}
+              | tokenD tokenE {...}
+
+"ruletype" is one of:
+
+a) "block" - the automatic action that parse.pl would create is
+    completely overridden.  Instead the entry's code block is emitted.
+    The code block must include the braces ({}) needed for a Bison action.
+
+b) "addon" - the entry's code block is inserted into the generated
+    action, ahead of the automatic token-concatenation code.
+    In this case the code block need not contain braces, since
+    it will be inserted within braces.
+
+c) "rule" - the automatic action is emitted, but then the entry's
+    code block is added verbatim afterwards.  This typically is
+    used to add new alternatives to a nonterminal of the core grammar.
+    For example, given the entry:
+      ECPG: targettokenAtokenBtokenC rule
+          | tokenD tokenE { custom_action; }
+    what will be emitted is
+      target: tokenA tokenB tokenC { automatic_action; }
+          | tokenD tokenE { custom_action; }
+
+Multiple "ECPG:" entries can share the same code block, if the
+same action is needed for all.  When an "ECPG:" line is immediately
+followed by another one, it is not assigned an empty code block;
+rather the next nonempty code block is assumed to apply to all
+immediately preceding "ECPG:" entries.
+
+In addition to the modifications specified by ecpg.addons,
+parse.pl contains some tables that list backend grammar
+productions to be ignored or modified.
+
+Nonterminals that construct strings (as described above) should be
+given <str> type, which is parse.pl's default assumption for
+nonterminals found in gram.y.  That can be overridden at need by
+making an entry in parse.pl's %replace_types table.  %replace_types
+can also be used to suppress output of a nonterminal's rules
+altogether (in which case ecpg.trailer had better provide replacement
+rules, since the nonterminal will still be referred to elsewhere).
