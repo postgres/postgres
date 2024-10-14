@@ -67,6 +67,7 @@ backend_sources += files(
   'partitionfuncs.c',
   'pg_locale.c',
   'pg_locale_icu.c',
+  'pg_locale_libc.c',
   'pg_lsn.c',
   'pg_upgrade_support.c',
   'pgstatfuncs.c',
