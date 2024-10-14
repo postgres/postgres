@@ -2946,9 +2946,7 @@ float8_combine(PG_FUNCTION_ARGS)
 		transdatums[1] = Float8GetDatumFast(Sx);
 		transdatums[2] = Float8GetDatumFast(Sxx);
 
-		result = construct_array(transdatums, 3,
-								 FLOAT8OID,
-								 sizeof(float8), FLOAT8PASSBYVAL, TYPALIGN_DOUBLE);
+		result = construct_array_builtin(transdatums, 3, FLOAT8OID);
 
 		PG_RETURN_ARRAYTYPE_P(result);
 	}
@@ -3029,9 +3027,7 @@ float8_accum(PG_FUNCTION_ARGS)
 		transdatums[1] = Float8GetDatumFast(Sx);
 		transdatums[2] = Float8GetDatumFast(Sxx);
 
-		result = construct_array(transdatums, 3,
-								 FLOAT8OID,
-								 sizeof(float8), FLOAT8PASSBYVAL, TYPALIGN_DOUBLE);
+		result = construct_array_builtin(transdatums, 3, FLOAT8OID);
 
 		PG_RETURN_ARRAYTYPE_P(result);
 	}
@@ -3114,9 +3110,7 @@ float4_accum(PG_FUNCTION_ARGS)
 		transdatums[1] = Float8GetDatumFast(Sx);
 		transdatums[2] = Float8GetDatumFast(Sxx);
 
-		result = construct_array(transdatums, 3,
-								 FLOAT8OID,
-								 sizeof(float8), FLOAT8PASSBYVAL, TYPALIGN_DOUBLE);
+		result = construct_array_builtin(transdatums, 3, FLOAT8OID);
 
 		PG_RETURN_ARRAYTYPE_P(result);
 	}
@@ -3359,9 +3353,7 @@ float8_regr_accum(PG_FUNCTION_ARGS)
 		transdatums[4] = Float8GetDatumFast(Syy);
 		transdatums[5] = Float8GetDatumFast(Sxy);
 
-		result = construct_array(transdatums, 6,
-								 FLOAT8OID,
-								 sizeof(float8), FLOAT8PASSBYVAL, TYPALIGN_DOUBLE);
+		result = construct_array_builtin(transdatums, 6, FLOAT8OID);
 
 		PG_RETURN_ARRAYTYPE_P(result);
 	}
@@ -3500,9 +3492,7 @@ float8_regr_combine(PG_FUNCTION_ARGS)
 		transdatums[4] = Float8GetDatumFast(Syy);
 		transdatums[5] = Float8GetDatumFast(Sxy);
 
-		result = construct_array(transdatums, 6,
-								 FLOAT8OID,
-								 sizeof(float8), FLOAT8PASSBYVAL, TYPALIGN_DOUBLE);
+		result = construct_array_builtin(transdatums, 6, FLOAT8OID);
 
 		PG_RETURN_ARRAYTYPE_P(result);
 	}
