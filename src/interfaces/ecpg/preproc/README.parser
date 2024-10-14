@@ -40,19 +40,19 @@ continue to use the normal Bison notations.)
 
 
 ecpg.addons contains entries that begin with a line like
-       ECPG: concattokens ruletype
+       ECPG: ruletype tokenlist
 and typically have one or more following lines that are the code
 for a grammar action.  Any line not starting with "ECPG:" is taken
 to be part of the code block for the preceding "ECPG:" line.
 
-"concattokens" identifies which gram.y production this entry affects.
-It is simply the target nonterminal and the tokens from the gram.y rule
-concatenated together.  For example, to modify the action for a gram.y
-rule like this:
+"tokenlist" identifies which gram.y production this entry affects.
+It is simply a list of the target nonterminal and the input tokens
+from the gram.y rule.  For example, to modify the action for a
+gram.y rule like this:
       target: tokenA tokenB tokenC {...}
-"concattokens" would be "targettokenAtokenBtokenC".  If we want to
+"tokenlist" would be "target tokenA tokenB tokenC".  If we want to
 modify a non-first alternative for a nonterminal, we still write the
-nonterminal.  For example, "concattokens" should be "targettokenDtokenE"
+nonterminal.  For example, "tokenlist" should be "target tokenD tokenE"
 to affect the second alternative in:
       target: tokenA tokenB tokenC {...}
               | tokenD tokenE {...}
@@ -72,7 +72,7 @@ c) "rule" - the automatic action is emitted, but then the entry's
     code block is added verbatim afterwards.  This typically is
     used to add new alternatives to a nonterminal of the core grammar.
     For example, given the entry:
-      ECPG: targettokenAtokenBtokenC rule
+      ECPG: rule target tokenA tokenB tokenC
           | tokenD tokenE { custom_action; }
     what will be emitted is
       target: tokenA tokenB tokenC { automatic_action; }

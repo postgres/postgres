@@ -1,5 +1,5 @@
 /* src/interfaces/ecpg/preproc/ecpg.addons */
-ECPG: stmtClosePortalStmt block
+ECPG: block stmt ClosePortalStmt
 	{
 		if (INFORMIX_MODE)
 		{
@@ -16,23 +16,23 @@ ECPG: stmtClosePortalStmt block
 
 		output_statement(@1, 0, ECPGst_normal);
 	}
-ECPG: stmtDeallocateStmt block
+ECPG: block stmt DeallocateStmt
 	{
 		output_deallocate_prepare_statement(@1);
 	}
-ECPG: stmtDeclareCursorStmt block
+ECPG: block stmt DeclareCursorStmt
 	{
 		output_simple_statement(@1, (strncmp(@1, "ECPGset_var", strlen("ECPGset_var")) == 0) ? 4 : 0);
 	}
-ECPG: stmtDiscardStmt block
-ECPG: stmtFetchStmt block
+ECPG: block stmt DiscardStmt
+ECPG: block stmt FetchStmt
 	{ output_statement(@1, 1, ECPGst_normal); }
-ECPG: stmtDeleteStmt block
-ECPG: stmtInsertStmt block
-ECPG: stmtSelectStmt block
-ECPG: stmtUpdateStmt block
+ECPG: block stmt DeleteStmt
+ECPG: block stmt InsertStmt
+ECPG: block stmt SelectStmt
+ECPG: block stmt UpdateStmt
 	{ output_statement(@1, 1, ECPGst_prepnormal); }
-ECPG: stmtExecuteStmt block
+ECPG: block stmt ExecuteStmt
 	{
 		check_declared_list($1.name);
 		if ($1.type == NULL || strlen($1.type) == 0)
@@ -57,7 +57,7 @@ ECPG: stmtExecuteStmt block
 			output_statement(cat_str(3, "execute", "$0", $1.type), 0, ECPGst_exec_with_exprlist);
 		}
 	}
-ECPG: stmtPrepareStmt block
+ECPG: block stmt PrepareStmt
 	{
 		check_declared_list($1.name);
 		if ($1.type == NULL)
@@ -87,17 +87,17 @@ ECPG: stmtPrepareStmt block
 			output_statement(cat_str(5, "prepare", "$0", $1.type, "as", $1.stmt), 0, ECPGst_prepare);
 		}
 	}
-ECPG: stmtTransactionStmt block
+ECPG: block stmt TransactionStmt
 	{
 		fprintf(base_yyout, "{ ECPGtrans(__LINE__, %s, \"%s\");", connection ? connection : "NULL", @1);
 		whenever_action(2);
 	}
-ECPG: toplevel_stmtTransactionStmtLegacy block
+ECPG: block toplevel_stmt TransactionStmtLegacy
 	{
 		fprintf(base_yyout, "{ ECPGtrans(__LINE__, %s, \"%s\");", connection ? connection : "NULL", @1);
 		whenever_action(2);
 	}
-ECPG: stmtViewStmt rule
+ECPG: rule stmt ViewStmt
 	| ECPGAllocateDescr
 	{
 		fprintf(base_yyout, "ECPGallocate_desc(__LINE__, %s);", @1);
@@ -231,45 +231,45 @@ ECPG: stmtViewStmt rule
 
 		output_simple_statement(@1, 0);
 	}
-ECPG: where_or_current_clauseWHERECURRENT_POFcursor_name block
+ECPG: block where_or_current_clause WHERE CURRENT_P OF cursor_name
 	{
 		const char *cursor_marker = @4[0] == ':' ? "$0" : @4;
 
 		@$ = cat_str(2, "where current of", cursor_marker);
 	}
-ECPG: CopyStmtCOPYopt_binaryqualified_nameopt_column_listcopy_fromopt_programcopy_file_namecopy_delimiteropt_withcopy_optionswhere_clause addon
+ECPG: addon CopyStmt COPY opt_binary qualified_name opt_column_list copy_from opt_program copy_file_name copy_delimiter opt_with copy_options where_clause
 		if (strcmp(@6, "from") == 0 &&
 			(strcmp(@7, "stdin") == 0 || strcmp(@7, "stdout") == 0))
 			mmerror(PARSE_ERROR, ET_WARNING, "COPY FROM STDIN is not implemented");
-ECPG: var_valueNumericOnly addon
+ECPG: addon var_value NumericOnly
 		if (@1[0] == '$')
 			@$ = "$0";
-ECPG: fetch_argscursor_name addon
+ECPG: addon fetch_args cursor_name
 		struct cursor *ptr = add_additional_variables(@1, false);
 
 		if (ptr->connection)
 			connection = mm_strdup(ptr->connection);
 		if (@1[0] == ':')
 			@$ = "$0";
-ECPG: fetch_argsfrom_incursor_name addon
+ECPG: addon fetch_args from_in cursor_name
 		struct cursor *ptr = add_additional_variables(@2, false);
 
 		if (ptr->connection)
 			connection = mm_strdup(ptr->connection);
 		if (@2[0] == ':')
 			@$ = cat2_str(@1, "$0");
-ECPG: fetch_argsNEXTopt_from_incursor_name addon
-ECPG: fetch_argsPRIORopt_from_incursor_name addon
-ECPG: fetch_argsFIRST_Popt_from_incursor_name addon
-ECPG: fetch_argsLAST_Popt_from_incursor_name addon
-ECPG: fetch_argsALLopt_from_incursor_name addon
+ECPG: addon fetch_args NEXT opt_from_in cursor_name
+ECPG: addon fetch_args PRIOR opt_from_in cursor_name
+ECPG: addon fetch_args FIRST_P opt_from_in cursor_name
+ECPG: addon fetch_args LAST_P opt_from_in cursor_name
+ECPG: addon fetch_args ALL opt_from_in cursor_name
 		struct cursor *ptr = add_additional_variables(@3, false);
 
 		if (ptr->connection)
 			connection = mm_strdup(ptr->connection);
 		if (@3[0] == ':')
 			@$ = cat_str(3, @1, @2, "$0");
-ECPG: fetch_argsSignedIconstopt_from_incursor_name addon
+ECPG: addon fetch_args SignedIconst opt_from_in cursor_name
 		struct cursor *ptr = add_additional_variables(@3, false);
 		bool	replace = false;
 
@@ -287,18 +287,18 @@ ECPG: fetch_argsSignedIconstopt_from_incursor_name addon
 		}
 		if (replace)
 			@$ = cat_str(3, @1, @2, @3);
-ECPG: fetch_argsFORWARDALLopt_from_incursor_name addon
-ECPG: fetch_argsBACKWARDALLopt_from_incursor_name addon
+ECPG: addon fetch_args FORWARD ALL opt_from_in cursor_name
+ECPG: addon fetch_args BACKWARD ALL opt_from_in cursor_name
 		struct cursor *ptr = add_additional_variables(@4, false);
 
 		if (ptr->connection)
 			connection = mm_strdup(ptr->connection);
 		if (@4[0] == ':')
 			@$ = cat_str(4, @1, @2, @3, "$0");
-ECPG: fetch_argsABSOLUTE_PSignedIconstopt_from_incursor_name addon
-ECPG: fetch_argsRELATIVE_PSignedIconstopt_from_incursor_name addon
-ECPG: fetch_argsFORWARDSignedIconstopt_from_incursor_name addon
-ECPG: fetch_argsBACKWARDSignedIconstopt_from_incursor_name addon
+ECPG: addon fetch_args ABSOLUTE_P SignedIconst opt_from_in cursor_name
+ECPG: addon fetch_args RELATIVE_P SignedIconst opt_from_in cursor_name
+ECPG: addon fetch_args FORWARD SignedIconst opt_from_in cursor_name
+ECPG: addon fetch_args BACKWARD SignedIconst opt_from_in cursor_name
 		struct cursor *ptr = add_additional_variables(@4, false);
 		bool	replace = false;
 
@@ -316,7 +316,7 @@ ECPG: fetch_argsBACKWARDSignedIconstopt_from_incursor_name addon
 		}
 		if (replace)
 			@$ = cat_str(4, @1, @2, @3, @4);
-ECPG: cursor_namename block
+ECPG: block cursor_name name
 	| char_civar
 	{
 		char	   *curname = loc_alloc(strlen(@1) + 2);
@@ -324,11 +324,11 @@ ECPG: cursor_namename block
 		sprintf(curname, ":%s", @1);
 		@$ = curname;
 	}
-ECPG: ExplainableStmtExecuteStmt block
+ECPG: block ExplainableStmt ExecuteStmt
 	{
 		@$ = $1.name;
 	}
-ECPG: PrepareStmtPREPAREprepared_nameprep_type_clauseASPreparableStmt block
+ECPG: block PrepareStmt PREPARE prepared_name prep_type_clause AS PreparableStmt
 	{
 		$$.name = @2;
 		$$.type = @3;
@@ -340,20 +340,20 @@ ECPG: PrepareStmtPREPAREprepared_nameprep_type_clauseASPreparableStmt block
 		$$.type = NULL;
 		$$.stmt = @4;
 	}
-ECPG: ExecuteStmtEXECUTEprepared_nameexecute_param_clauseexecute_rest block
+ECPG: block ExecuteStmt EXECUTE prepared_name execute_param_clause execute_rest
 	{
 		$$.name = @2;
 		$$.type = @3;
 	}
-ECPG: ExecuteStmtCREATEOptTempTABLEcreate_as_targetASEXECUTEprepared_nameexecute_param_clauseopt_with_dataexecute_rest block
+ECPG: block ExecuteStmt CREATE OptTemp TABLE create_as_target AS EXECUTE prepared_name execute_param_clause opt_with_data execute_rest
 	{
 		$$.name = @$;
 	}
-ECPG: ExecuteStmtCREATEOptTempTABLEIF_PNOTEXISTScreate_as_targetASEXECUTEprepared_nameexecute_param_clauseopt_with_dataexecute_rest block
+ECPG: block ExecuteStmt CREATE OptTemp TABLE IF_P NOT EXISTS create_as_target AS EXECUTE prepared_name execute_param_clause opt_with_data execute_rest
 	{
 		$$.name = @$;
 	}
-ECPG: DeclareCursorStmtDECLAREcursor_namecursor_optionsCURSORopt_holdFORSelectStmt block
+ECPG: block DeclareCursorStmt DECLARE cursor_name cursor_options CURSOR opt_hold FOR SelectStmt
 	{
 		struct cursor *ptr,
 				   *this;
@@ -403,7 +403,7 @@ ECPG: DeclareCursorStmtDECLAREcursor_namecursor_optionsCURSORopt_holdFORSelectSt
 
 		@$ = cat2_str(adjust_outofscope_cursor_vars(this), comment);
 	}
-ECPG: ClosePortalStmtCLOSEcursor_name block
+ECPG: block ClosePortalStmt CLOSE cursor_name
 	{
 		const char *cursor_marker = @2[0] == ':' ? "$0" : @2;
 		struct cursor *ptr = NULL;
@@ -419,14 +419,14 @@ ECPG: ClosePortalStmtCLOSEcursor_name block
 		}
 		@$ = cat2_str("close", cursor_marker);
 	}
-ECPG: opt_hold block
+ECPG: block opt_hold
 	{
 		if (compat == ECPG_COMPAT_INFORMIX_SE && autocommit)
 			@$ = "with hold";
 		else
 			@$ = "";
 	}
-ECPG: into_clauseINTOOptTempTableName block
+ECPG: block into_clause INTO OptTempTableName
 	{
 		FoundInto = 1;
 		@$ = cat2_str("into", @2);
@@ -435,15 +435,15 @@ ECPG: into_clauseINTOOptTempTableName block
 	{
 		@$ = "";
 	}
-ECPG: TypenameSimpleTypenameopt_array_bounds block
+ECPG: block Typename SimpleTypename opt_array_bounds
 	{
 		@$ = cat2_str(@1, $2.str);
 	}
-ECPG: TypenameSETOFSimpleTypenameopt_array_bounds block
+ECPG: block Typename SETOF SimpleTypename opt_array_bounds
 	{
 		@$ = cat_str(3, "setof", @2, $3.str);
 	}
-ECPG: opt_array_boundsopt_array_bounds'['']' block
+ECPG: block opt_array_bounds opt_array_bounds '[' ']'
 	{
 		$$.index1 = $1.index1;
 		$$.index2 = $1.index2;
@@ -463,20 +463,20 @@ ECPG: opt_array_boundsopt_array_bounds'['']' block
 			$$.index2 = @3;
 		$$.str = cat_str(4, $1.str, "[", @3, "]");
 	}
-ECPG: opt_array_bounds block
+ECPG: block opt_array_bounds
 	{
 		$$.index1 = "-1";
 		$$.index2 = "-1";
 		$$.str = "";
 	}
-ECPG: AexprConstNULL_P rule
+ECPG: rule AexprConst NULL_P
 	| civar
 	| civarind
-ECPG: VariableShowStmtSHOWALL block
+ECPG: block VariableShowStmt SHOW ALL
 	{
 		mmerror(PARSE_ERROR, ET_ERROR, "SHOW ALL is not implemented");
 	}
-ECPG: FetchStmtMOVEfetch_args rule
+ECPG: rule FetchStmt MOVE fetch_args
 	| FETCH fetch_args ecpg_fetch_into
 	| FETCH FORWARD cursor_name opt_ecpg_fetch_into
 	{
@@ -558,9 +558,9 @@ ECPG: FetchStmtMOVEfetch_args rule
 
 		@$ = cat_str(2, "move backward from", cursor_marker);
 	}
-ECPG: limit_clauseLIMITselect_limit_value','select_offset_value block
+ECPG: block limit_clause LIMIT select_limit_value ',' select_offset_value
 	{
 		mmerror(PARSE_ERROR, ET_WARNING, "no longer supported LIMIT #,# syntax passed to server");
 	}
-ECPG: SignedIconstIconst rule
+ECPG: rule SignedIconst Iconst
 	| civar
