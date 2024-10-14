@@ -5359,6 +5359,10 @@ do_shell(const char *command)
  *
  * We break this out of exec_command to avoid having to plaster "volatile"
  * onto a bunch of exec_command's variables to silence stupider compilers.
+ *
+ * "sleep" is the amount of time to sleep during each loop, measured in
+ * seconds.  The internals of this function should use "sleep_ms" for
+ * precise sleep time calculations.
  */
 static bool
 do_watch(PQExpBuffer query_buf, double sleep, int iter, int min_rows)
@@ -5484,10 +5488,10 @@ do_watch(PQExpBuffer query_buf, double sleep, int iter, int min_rows)
 
 		if (user_title)
 			snprintf(title, title_len, _("%s\t%s (every %gs)\n"),
-					 user_title, timebuf, sleep);
+					 user_title, timebuf, sleep_ms / 1000.0);
 		else
 			snprintf(title, title_len, _("%s (every %gs)\n"),
-					 timebuf, sleep);
+					 timebuf, sleep_ms / 1000.0);
 		myopt.title = title;
 
 		/* Run the query and print out the result */
@@ -5508,7 +5512,8 @@ do_watch(PQExpBuffer query_buf, double sleep, int iter, int min_rows)
 		if (pagerpipe && ferror(pagerpipe))
 			break;
 
-		if (sleep == 0)
+		/* Tight loop, no wait needed */
+		if (sleep_ms == 0)
 			continue;
 
 #ifdef WIN32
