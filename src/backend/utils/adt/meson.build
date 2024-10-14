@@ -66,6 +66,7 @@ backend_sources += files(
   'orderedsetaggs.c',
   'partitionfuncs.c',
   'pg_locale.c',
+  'pg_locale_icu.c',
   'pg_lsn.c',
   'pg_upgrade_support.c',
   'pgstatfuncs.c',

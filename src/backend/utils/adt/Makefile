@@ -79,6 +79,7 @@ OBJS = \
 	orderedsetaggs.o \
 	partitionfuncs.o \
 	pg_locale.o \
+	pg_locale_icu.o \
 	pg_lsn.o \
 	pg_upgrade_support.o \
 	pgstatfuncs.o \
