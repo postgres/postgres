@@ -14,6 +14,9 @@
 #
 # $ git log --pretty=format:"%H # %cd%n# %s" $PGINDENTGITHASH -1 --date=iso
 
+7f7474a8e4002ac9fd4979cc7b16b50b70b70c28 # 2024-09-27 11:14:31 -0400
+# Reindent pg_verifybackup.c.
+
 7229ebe011dff3f418251a4836f6d098923aa1e1 # 2024-08-26 16:16:12 -0700
 # Fix identation.
 
