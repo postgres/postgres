@@ -10,6 +10,7 @@ ecpg_sources = files(
   'output.c',
   'parser.c',
   'type.c',
+  'util.c',
   'variable.c',
 )
 

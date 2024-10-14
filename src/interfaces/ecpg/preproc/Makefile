@@ -36,6 +36,7 @@ OBJS = \
 	preproc.o \
 	type.o \
 	typename.o \
+	util.o \
 	variable.o
 
 # where to find gen_keywordlist.pl and subsidiary files
