@@ -221,6 +221,7 @@ COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable 
       <literal>csv</literal> (Comma Separated Values),
       or <literal>binary</literal>.
       The default is <literal>text</literal>.
+      See <xref linkend="sql-copy-file-formats"/> below for details.
      </para>
     </listitem>
    </varlistentry>
@@ -650,10 +651,10 @@ COPY <replaceable class="parameter">count</replaceable>
 
  </refsect1>
 
- <refsect1>
+ <refsect1 id="sql-copy-file-formats" xreflabel="File Formats">
   <title>File Formats</title>
 
-  <refsect2>
+  <refsect2 id="sql-copy-text-format" xreflabel="Text Format">
    <title>Text Format</title>
 
    <para>
@@ -798,7 +799,7 @@ COPY <replaceable class="parameter">count</replaceable>
    </para>
   </refsect2>
 
-  <refsect2>
+  <refsect2 id="sql-copy-csv-format" xreflabel="CSV Format">
    <title>CSV Format</title>
 
    <para>
@@ -892,7 +893,7 @@ COPY <replaceable class="parameter">count</replaceable>
 
   </refsect2>
 
-  <refsect2>
+  <refsect2 id="sql-copy-binary-format" xreflabel="Binary Format">
    <title>Binary Format</title>
 
    <para>
