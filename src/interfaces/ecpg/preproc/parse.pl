@@ -289,11 +289,10 @@ sub main
 				# Accumulate the line in $str.
 				$str = $str . ' ' . $a;
 
-				# HACK: insert our own %nonassoc line after IDENT.
-				# XXX: this seems pretty wrong, IDENT is not last on its line!
+				# Give our token CSTRING the same precedence as IDENT.
 				if ($a eq 'IDENT' && $arr[0] eq '%nonassoc')
 				{
-					$str = $str . "\n%nonassoc CSTRING";
+					$str = $str . " CSTRING";
 				}
 			}
 			# Save the lightly-processed line in orig_tokens.
