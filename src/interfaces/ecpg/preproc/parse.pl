@@ -33,7 +33,9 @@ GetOptions(
 
 
 # These hash tables define additional transformations to apply to
-# grammar rules.
+# grammar rules.  For bug-detection purposes, we count usages of
+# each hash table entry in a second hash table, and verify that
+# all the entries get used.
 
 # Substitutions to apply to tokens whenever they are seen in a rule.
 my %replace_token = (
@@ -43,6 +45,8 @@ my %replace_token = (
 	'XCONST' => 'ecpg_xconst',
 	'IDENT' => 'ecpg_ident',
 	'PARAM' => 'ecpg_param',);
+
+my %replace_token_used;
 
 # This hash can provide a result type to override "void" for nonterminals
 # that need that, or it can specify 'ignore' to cause us to skip the rule
@@ -67,6 +71,8 @@ my %replace_types = (
 	'PLAssignStmt' => 'ignore',
 	'plassign_target' => 'ignore',
 	'plassign_equals' => 'ignore',);
+
+my %replace_types_used;
 
 # This hash provides an "ignore" option or substitute expansion for any
 # rule or rule alternative.  The hash key is the same "concattokens" tag
@@ -110,6 +116,8 @@ my %replace_line = (
 	'PrepareStmtPREPAREnameprep_type_clauseASPreparableStmt' =>
 	  'PREPARE prepared_name prep_type_clause AS PreparableStmt',
 	'var_nameColId' => 'ECPGColId');
+
+my %replace_line_used;
 
 
 # Declare assorted state variables.
@@ -196,6 +204,30 @@ foreach (keys %addons)
 {
 	die "addon rule $_ was never used\n" if $addons{$_}{used} == 0;
 	die "addon rule $_ was matched multiple times\n" if $addons{$_}{used} > 1;
+}
+
+# Likewise cross-check that entries in our internal hash tables match something.
+foreach (keys %replace_token)
+{
+	die "replace_token entry $_ was never used\n"
+	  if !defined($replace_token_used{$_});
+	# multiple use of a replace_token entry is fine
+}
+
+foreach (keys %replace_types)
+{
+	die "replace_types entry $_ was never used\n"
+	  if !defined($replace_types_used{$_});
+	die "replace_types entry $_ was matched multiple times\n"
+	  if $replace_types_used{$_} > 1;
+}
+
+foreach (keys %replace_line)
+{
+	die "replace_line entry $_ was never used\n"
+	  if !defined($replace_line_used{$_});
+	die "replace_line entry $_ was matched multiple times\n"
+	  if $replace_line_used{$_} > 1;
 }
 
 
@@ -399,6 +431,7 @@ sub main
 			# Apply replace_token substitution if we have one.
 			if (exists $replace_token{ $arr[$fieldIndexer] })
 			{
+				$replace_token_used{ $arr[$fieldIndexer] }++;
 				$arr[$fieldIndexer] = $replace_token{ $arr[$fieldIndexer] };
 			}
 
@@ -424,6 +457,7 @@ sub main
 					&& $replace_types{$non_term_id} eq 'ignore')
 				{
 					# We'll ignore this nonterminal and rule altogether.
+					$replace_types_used{$non_term_id}++;
 					$copymode = 0;
 					next line;
 				}
@@ -450,6 +484,7 @@ sub main
 					  . $replace_types{$non_term_id} . ' '
 					  . $non_term_id;
 					add_to_buffer('types', $tstr);
+					$replace_types_used{$non_term_id}++;
 				}
 
 				# Emit the target part of the rule.
@@ -615,8 +650,10 @@ sub emit_rule
 
 	# apply replace_line substitution if any
 	my $rep = $replace_line{$tag};
-	if ($rep)
+	if (defined $rep)
 	{
+		$replace_line_used{$tag}++;
+
 		if ($rep eq 'ignore')
 		{
 			return 0;
