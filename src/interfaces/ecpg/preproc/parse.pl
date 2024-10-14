@@ -44,27 +44,10 @@ my %replace_token = (
 	'IDENT' => 'ecpg_ident',
 	'PARAM' => 'ecpg_param',);
 
-# Substitutions to apply to terminal token names to reconstruct the
-# literal form of the token.  (There is also a hard-wired substitution
-# rule that strips trailing '_P'.)
-my %replace_string = (
-	'FORMAT_LA' => 'format',
-	'NOT_LA' => 'not',
-	'NULLS_LA' => 'nulls',
-	'WITH_LA' => 'with',
-	'WITHOUT_LA' => 'without',
-	'TYPECAST' => '::',
-	'DOT_DOT' => '..',
-	'COLON_EQUALS' => ':=',
-	'EQUALS_GREATER' => '=>',
-	'LESS_EQUALS' => '<=',
-	'GREATER_EQUALS' => '>=',
-	'NOT_EQUALS' => '<>',);
-
-# This hash can provide a result type to override '<str>' for nonterminals
+# This hash can provide a result type to override "void" for nonterminals
 # that need that, or it can specify 'ignore' to cause us to skip the rule
-# for that nonterminal.  (In that case, ecpg.trailer had better provide
-# a substitute rule.)
+# for that nonterminal.  (In either case, ecpg.trailer had better provide
+# a substitute rule, since the default won't do.)
 my %replace_types = (
 	'PrepareStmt' => '<prep>',
 	'ExecuteStmt' => '<exec>',
@@ -175,11 +158,8 @@ my $non_term_id;
 # we plan to emit for the current rule.
 my $line = '';
 
-# @fields holds the items to be emitted in the token-concatenation action
-# for the current rule (assuming we emit one).  "$N" refers to the N'th
-# input token of the rule; anything else is a string to emit literally.
-# (We assume no such string can need to start with '$'.)
-my @fields;
+# count of tokens included in $line.
+my $line_count = 0;
 
 
 # Open parser / output file early, to raise errors early.
@@ -244,10 +224,6 @@ sub main
 			$has_if_command = 1 if /^\s*if/;
 		}
 
-		# We track %prec per-line, not per-rule, which is not quite right
-		# but there are no counterexamples in gram.y at present.
-		my $prec = 0;
-
 		# Make sure any braces are split into separate fields
 		s/{/ { /g;
 		s/}/ } /g;
@@ -296,7 +272,7 @@ sub main
 				}
 
 				# If it's "<something>", it's a type in a %token declaration,
-				# which we can just drop.
+				# which we should just drop so that the tokens have void type.
 				if (substr($a, 0, 1) eq '<')
 				{
 					next;
@@ -376,7 +352,7 @@ sub main
 				if ($copymode)
 				{
 					# Print the accumulated rule.
-					emit_rule(\@fields);
+					emit_rule();
 					add_to_buffer('rules', ";\n\n");
 				}
 				else
@@ -386,8 +362,8 @@ sub main
 				}
 
 				# Reset for the next rule.
-				@fields = ();
 				$line = '';
+				$line_count = 0;
 				$in_rule = 0;
 				$alt_count = 0;
 				$has_feature_not_supported = 0;
@@ -401,11 +377,10 @@ sub main
 				{
 					# Print the accumulated alternative.
 					# Increment $alt_count for each non-ignored alternative.
-					$alt_count += emit_rule(\@fields);
+					$alt_count += emit_rule();
 				}
 
 				# Reset for the next alternative.
-				@fields = ();
 				# Start the next line with '|' if we've printed at least one
 				# alternative.
 				if ($alt_count > 1)
@@ -416,6 +391,7 @@ sub main
 				{
 					$line = '';
 				}
+				$line_count = 0;
 				$has_feature_not_supported = 0;
 				$has_if_command = 0;
 				next;
@@ -444,13 +420,9 @@ sub main
 					$fieldIndexer++;
 				}
 
-				# Check for %replace_types override of nonterminal's type
-				if (not defined $replace_types{$non_term_id})
-				{
-					# By default, the type is <str>
-					$replace_types{$non_term_id} = '<str>';
-				}
-				elsif ($replace_types{$non_term_id} eq 'ignore')
+				# Check for %replace_types entry indicating to ignore it.
+				if (defined $replace_types{$non_term_id}
+					&& $replace_types{$non_term_id} eq 'ignore')
 				{
 					# We'll ignore this nonterminal and rule altogether.
 					$copymode = 0;
@@ -470,22 +442,26 @@ sub main
 					$stmt_mode = 0;
 				}
 
-				# Emit appropriate %type declaration for this nonterminal.
-				my $tstr =
-					'%type '
-				  . $replace_types{$non_term_id} . ' '
-				  . $non_term_id;
-				add_to_buffer('types', $tstr);
+				# Emit appropriate %type declaration for this nonterminal,
+				# if it has a type; otherwise omit that.
+				if (defined $replace_types{$non_term_id})
+				{
+					my $tstr =
+						'%type '
+					  . $replace_types{$non_term_id} . ' '
+					  . $non_term_id;
+					add_to_buffer('types', $tstr);
+				}
 
 				# Emit the target part of the rule.
 				# Note: the leading space is just to match
 				# the rather weird pre-v18 output logic.
-				$tstr = ' ' . $non_term_id . ':';
+				my $tstr = ' ' . $non_term_id . ':';
 				add_to_buffer('rules', $tstr);
 
-				# Prepare for reading the fields (tokens) of the rule.
+				# Prepare for reading the tokens of the rule.
 				$line = '';
-				@fields = ();
+				$line_count = 0;
 				die "unterminated rule at grammar line $.\n"
 				  if $in_rule;
 				$in_rule = 1;
@@ -496,48 +472,7 @@ sub main
 			{
 				# Not a nonterminal declaration, so just add it to $line.
 				$line = $line . ' ' . $arr[$fieldIndexer];
-			}
-
-			# %prec and whatever follows it should get added to $line,
-			# but not to @fields.
-			if ($arr[$fieldIndexer] eq '%prec')
-			{
-				$prec = 1;
-				next;
-			}
-
-			# Emit transformed version of token to @fields if appropriate.
-			if (   $copymode
-				&& !$prec
-				&& !$comment
-				&& $in_rule)
-			{
-				my $S = $arr[$fieldIndexer];
-
-				# If it's a known terminal token (other than Op) or a literal
-				# character, we need to emit the equivalent string, which'll
-				# later get wrapped into a C string literal, perhaps after
-				# merging with adjacent strings.
-				if ($S ne 'Op'
-					&& (defined $tokens{$S}
-						|| $S =~ /^'.+'$/))
-				{
-					# Apply replace_string substitution if any.
-					$S = $replace_string{$S} if (exists $replace_string{$S});
-					# Automatically strip _P if present.
-					$S =~ s/_P$//;
-					# And get rid of quotes if it's a literal character.
-					$S =~ tr/'//d;
-					# Finally, downcase and push into @fields.
-					push(@fields, lc($S));
-				}
-				else
-				{
-					# Otherwise, push a $N reference to this input token.
-					# (We assume this cannot be confused with anything the
-					# above code would produce.)
-					push(@fields, '$' . (scalar(@fields) + 1));
-				}
+				$line_count++;
 			}
 		}
 	}
@@ -568,13 +503,13 @@ sub include_file
 # by an ecpg.addons entry.
 sub emit_rule_action
 {
-	my ($tag, $fields) = @_;
+	my ($tag) = @_;
 
 	# See if we have an addons entry; if not, just emit default action
 	my $rec = $addons{$tag};
 	if (!$rec)
 	{
-		emit_default_action($fields, 0);
+		emit_default_action(0);
 		return;
 	}
 
@@ -585,7 +520,7 @@ sub emit_rule_action
 	if ($rectype eq 'rule')
 	{
 		# Emit default action and then the code block.
-		emit_default_action($fields, 0);
+		emit_default_action(0);
 	}
 	elsif ($rectype eq 'addon')
 	{
@@ -600,7 +535,7 @@ sub emit_rule_action
 
 	if ($rectype eq 'addon')
 	{
-		emit_default_action($fields, 1);
+		emit_default_action(1);
 	}
 	return;
 }
@@ -626,12 +561,11 @@ sub dump_buffer
 }
 
 # Emit the default action (usually token concatenation) for the current rule.
-#   Pass: fields array, brace_printed boolean
+#   Pass: brace_printed boolean
 # brace_printed should be true if caller already printed action's open brace.
 sub emit_default_action
 {
-	my ($flds, $brace_printed) = @_;
-	my $len = scalar(@$flds);
+	my ($brace_printed) = @_;
 
 	if ($stmt_mode == 0)
 	{
@@ -651,91 +585,21 @@ sub emit_default_action
 			);
 		}
 
-		if ($len == 0)
-		{
-			# Empty rule
-			if (!$brace_printed)
-			{
-				add_to_buffer('rules', ' { ');
-				$brace_printed = 1;
-			}
-			add_to_buffer('rules', ' $$=EMPTY; }');
-		}
-		else
-		{
-			# Go through each field and aggregate consecutive literal tokens
-			# into a single 'mm_strdup' call.
-			my @flds_new;
-			my $str;
-			for (my $z = 0; $z < $len; $z++)
-			{
-				if (substr($flds->[$z], 0, 1) eq '$')
-				{
-					push(@flds_new, $flds->[$z]);
-					next;
-				}
-
-				$str = $flds->[$z];
-
-				while (1)
-				{
-					if ($z >= $len - 1
-						|| substr($flds->[ $z + 1 ], 0, 1) eq '$')
-					{
-						# Can't combine any more literals; push to @flds_new.
-						# This code would need work if any literals contain
-						# backslash or double quote, but right now that never
-						# happens.
-						push(@flds_new, "mm_strdup(\"$str\")");
-						last;
-					}
-					$z++;
-					$str = $str . ' ' . $flds->[$z];
-				}
-			}
-
-			# So - how many fields did we end up with ?
-			$len = scalar(@flds_new);
-			if ($len == 1)
-			{
-				# Single field can be handled by straight assignment
-				if (!$brace_printed)
-				{
-					add_to_buffer('rules', ' { ');
-					$brace_printed = 1;
-				}
-				$str = ' $$ = ' . $flds_new[0] . ';';
-				add_to_buffer('rules', $str);
-			}
-			else
-			{
-				# Need to concatenate the results to form our final string
-				if (!$brace_printed)
-				{
-					add_to_buffer('rules', ' { ');
-					$brace_printed = 1;
-				}
-				$str =
-				  ' $$ = cat_str(' . $len . ',' . join(',', @flds_new) . ');';
-				add_to_buffer('rules', $str);
-			}
-			add_to_buffer('rules', '}') if ($brace_printed);
-		}
+		add_to_buffer('rules', '}') if ($brace_printed);
 	}
 	else
 	{
 		# We're in the "stmt:" rule, where we need to output special actions.
 		# This code assumes that no ecpg.addons entry applies.
-		if ($len)
+		if ($line_count)
 		{
 			# Any regular kind of statement calls output_statement
 			add_to_buffer('rules',
-				' { output_statement($1, 0, ECPGst_normal); }');
+				' { output_statement(@1, 0, ECPGst_normal); }');
 		}
 		else
 		{
 			# The empty production for stmt: do nothing
-			add_to_buffer('rules', ' { $$ = NULL; }');
 		}
 	}
 	return;
@@ -746,8 +610,6 @@ sub emit_default_action
 # entry in %replace_line, then do nothing and return 0.
 sub emit_rule
 {
-	my ($fields) = @_;
-
 	# compute tag to be used as lookup key in %replace_line and %addons
 	my $tag = $non_term_id . $line;
 	$tag =~ tr/ |//d;
@@ -761,7 +623,8 @@ sub emit_rule
 			return 0;
 		}
 
-		# non-ignore entries replace the line, but we'd better keep any '|'
+		# non-ignore entries replace the line, but we'd better keep any '|';
+		# we don't bother to update $line_count here.
 		if (index($line, '|') != -1)
 		{
 			$line = '| ' . $rep;
@@ -778,7 +641,7 @@ sub emit_rule
 
 	# Emit $line, then print the appropriate action.
 	add_to_buffer('rules', $line);
-	emit_rule_action($tag, $fields);
+	emit_rule_action($tag);
 	return 1;
 }
 

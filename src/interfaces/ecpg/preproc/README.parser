@@ -4,8 +4,8 @@ Some notes:
 
 1) Most input matching core grammar productions is simply converted
    to strings and concatenated together to form the SQL string
-   passed to the server.  parse.pl can automatically build the
-   grammar actions needed to do this.
+   passed to the server.  This is handled mostly automatically,
+   as described below.
 2) Some grammar rules need special actions that are added to or
    completely override the default token-concatenation behavior.
    This is controlled by ecpg.addons as explained below.
@@ -14,10 +14,30 @@ Some notes:
 4) ecpg.header contains the "prologue" part of preproc.y, including
    support functions, Bison options, etc.
 5) Additional terminals added by ECPG must be defined in ecpg.tokens.
-   Additional nonterminals added by ECPG must be defined in ecpg.type.
+   Additional nonterminals added by ECPG must be defined in ecpg.type,
+   but only if they have non-void result type, which most don't.
 
 ecpg.header, ecpg.tokens, ecpg.type, and ecpg.trailer are just
 copied verbatim into preproc.y at appropriate points.
+
+
+In the pre-v18 implementation of ecpg, the strings constructed
+by grammar rules were returned as the Bison result of each rule.
+This led to a large number of effectively-identical rule actions,
+which caused compilation-time problems with some versions of clang.
+Now, rules that need to return a string are declared as having
+void type (which in Bison means leaving out any %type declaration
+for them).  Instead, we abuse Bison's "location tracking" mechanism
+to carry the string results, which allows a single YYLLOC_DEFAULT
+call to handle the standard token-concatenation behavior for the
+vast majority of the rules.  Rules that don't need to do anything
+else can omit a semantic action altogether.  Rules that need to
+construct an output string specially can do so, but they should
+assign it to "@$" rather than the usual "$$"; also, to reference
+the string value of the N'th input token, write "@N" not "$N".
+(But rules that return something other than a simple string
+continue to use the normal Bison notations.)
+
 
 ecpg.addons contains entries that begin with a line like
        ECPG: concattokens ruletype
@@ -69,9 +89,9 @@ parse.pl contains some tables that list backend grammar
 productions to be ignored or modified.
 
 Nonterminals that construct strings (as described above) should be
-given <str> type, which is parse.pl's default assumption for
-nonterminals found in gram.y.  That can be overridden at need by
-making an entry in parse.pl's %replace_types table.  %replace_types
+given void type, which is parse.pl's default assumption for
+nonterminals found in gram.y.  If the result should be of some other
+type, make an entry in parse.pl's %replace_types table.  %replace_types
 can also be used to suppress output of a nonterminal's rules
 altogether (in which case ecpg.trailer had better provide replacement
 rules, since the nonterminal will still be referred to elsewhere).

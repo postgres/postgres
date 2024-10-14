@@ -15,6 +15,13 @@
 #define STRUCT_DEPTH 128
 #define EMPTY mm_strdup("")
 
+/*
+ * "Location tracking" support --- see ecpg.header for more comments.
+ */
+typedef char *YYLTYPE;
+
+#define YYLTYPE_IS_DECLARED 1
+
 /* variables */
 
 extern bool autocommit,
@@ -65,10 +72,10 @@ extern const uint16 SQLScanKeywordTokens[];
 extern const char *get_dtype(enum ECPGdtype);
 extern void lex_init(void);
 extern void output_line_number(void);
-extern void output_statement(char *stmt, int whenever_mode, enum ECPG_statement_type st);
-extern void output_prepare_statement(char *name, char *stmt);
-extern void output_deallocate_prepare_statement(char *name);
-extern void output_simple_statement(char *stmt, int whenever_mode);
+extern void output_statement(const char *stmt, int whenever_mode, enum ECPG_statement_type st);
+extern void output_prepare_statement(const char *name, const char *stmt);
+extern void output_deallocate_prepare_statement(const char *name);
+extern void output_simple_statement(const char *stmt, int whenever_mode);
 extern char *hashline_number(void);
 extern int	base_yyparse(void);
 extern int	base_yylex(void);

@@ -4,7 +4,7 @@
 
 #include "preproc_extern.h"
 
-static void output_escaped_str(char *str, bool quoted);
+static void output_escaped_str(const char *str, bool quoted);
 
 void
 output_line_number(void)
@@ -16,13 +16,12 @@ output_line_number(void)
 }
 
 void
-output_simple_statement(char *stmt, int whenever_mode)
+output_simple_statement(const char *stmt, int whenever_mode)
 {
 	output_escaped_str(stmt, false);
 	if (whenever_mode)
 		whenever_action(whenever_mode);
 	output_line_number();
-	free(stmt);
 }
 
 
@@ -133,7 +132,7 @@ static char *ecpg_statement_type_name[] = {
 };
 
 void
-output_statement(char *stmt, int whenever_mode, enum ECPG_statement_type st)
+output_statement(const char *stmt, int whenever_mode, enum ECPG_statement_type st)
 {
 	fprintf(base_yyout, "{ ECPGdo(__LINE__, %d, %d, %s, %d, ", compat, force_indicator, connection ? connection : "NULL", questionmarks);
 
@@ -163,11 +162,10 @@ output_statement(char *stmt, int whenever_mode, enum ECPG_statement_type st)
 	reset_variables();
 
 	whenever_action(whenever_mode | 2);
-	free(stmt);
 }
 
 void
-output_prepare_statement(char *name, char *stmt)
+output_prepare_statement(const char *name, const char *stmt)
 {
 	fprintf(base_yyout, "{ ECPGprepare(__LINE__, %s, %d, ", connection ? connection : "NULL", questionmarks);
 	output_escaped_str(name, true);
@@ -175,11 +173,10 @@ output_prepare_statement(char *name, char *stmt)
 	output_escaped_str(stmt, true);
 	fputs(");", base_yyout);
 	whenever_action(2);
-	free(name);
 }
 
 void
-output_deallocate_prepare_statement(char *name)
+output_deallocate_prepare_statement(const char *name)
 {
 	const char *con = connection ? connection : "NULL";
 
@@ -193,11 +190,10 @@ output_deallocate_prepare_statement(char *name)
 		fprintf(base_yyout, "{ ECPGdeallocate_all(__LINE__, %d, %s);", compat, con);
 
 	whenever_action(2);
-	free(name);
 }
 
 static void
-output_escaped_str(char *str, bool quoted)
+output_escaped_str(const char *str, bool quoted)
 {
 	int			i = 0;
 	int			len = strlen(str);

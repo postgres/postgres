@@ -13,14 +13,6 @@
 extern int base_yychar;
 extern int base_yynerrs;
 
-/* Location tracking support --- simpler than bison's default */
-#define YYLLOC_DEFAULT(Current, Rhs, N) \
-	do { \
-		if (N)						\
-			(Current) = (Rhs)[1];	\
-		else						\
-			(Current) = (Rhs)[0];	\
-	} while (0)
 
 /*
  * The %name-prefix option below will make bison call base_yylex, but we
@@ -198,6 +190,61 @@ make3_str(char *str1, char *str2, char *str3)
 	free(str2);
 	free(str3);
 	return res_str;
+}
+
+/*
+ * "Location tracking" support.  We commandeer Bison's location tracking
+ * mechanism to manage the output string for productions that ordinarily would
+ * return a <str> result.  This allows the majority of those productions to
+ * have default semantic actions, reducing the size of the parser, and also
+ * greatly reducing its compilation time on some versions of clang.
+ *
+ * To do this, we make YYLTYPE be a pointer to a malloc'd string, and then
+ * merge the location strings of the input tokens in the default YYLLOC
+ * computation.  Productions that are okay with the standard merge need not
+ * do anything more; otherwise, they can override it by assigning to @$.
+ */
+#define YYLLOC_DEFAULT(Current, Rhs, N) yylloc_default(&(Current), Rhs, N)
+
+static void
+yylloc_default(YYLTYPE *target, YYLTYPE *rhs, int N)
+{
+	if (N > 1)
+	{
+		/* Concatenate non-empty inputs with one space between them */
+		char	   *result,
+				   *ptr;
+		size_t		needed = 0;
+
+		for (int i = 1; i <= N; i++)
+		{
+			size_t		thislen = strlen(rhs[i]);
+
+			if (needed > 0 && thislen > 0)
+				needed++;
+			needed += thislen;
+		}
+		result = (char *) mm_alloc(needed + 1);
+		ptr = result;
+		for (int i = 1; i <= N; i++)
+		{
+			size_t		thislen = strlen(rhs[i]);
+
+			if (ptr > result && thislen > 0)
+				*ptr++ = ' ';
+			memcpy(ptr, rhs[i], thislen);
+			ptr += thislen;
+		}
+		*ptr = '\0';
+		*target = result;
+	}
+	else if (N == 1)
+	{
+		/* Just re-use the single input */
+		*target = rhs[1];
+	}
+	else
+		*target = EMPTY;
 }
 
 /* and the rest */
