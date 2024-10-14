@@ -394,10 +394,9 @@ typedef struct ReorderBufferTXN
 	SharedInvalidationMessage *invalidations;
 
 	/* ---
-	 * Position in one of three lists:
+	 * Position in one of two lists:
 	 * * list of subtransactions if we are *known* to be subxact
 	 * * list of toplevel xacts (can be an as-yet unknown subxact)
-	 * * list of preallocated ReorderBufferTXNs (if unused)
 	 * ---
 	 */
 	dlist_node	node;
