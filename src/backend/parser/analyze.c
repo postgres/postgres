@@ -1985,6 +1985,7 @@ makeSortGroupClauseForSetOp(Oid rescoltype, bool require_hash)
 	grpcl->tleSortGroupRef = 0;
 	grpcl->eqop = eqop;
 	grpcl->sortop = sortop;
+	grpcl->reverse_sort = false;	/* Sort-op is "less than", or InvalidOid */
 	grpcl->nulls_first = false; /* OK with or without sortop */
 	grpcl->hashable = hashable;
 

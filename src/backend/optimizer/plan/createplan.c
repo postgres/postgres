@@ -1896,6 +1896,7 @@ create_unique_plan(PlannerInfo *root, UniquePath *best_path, int flags)
 														 subplan->targetlist);
 			sortcl->eqop = eqop;
 			sortcl->sortop = sortop;
+			sortcl->reverse_sort = false;
 			sortcl->nulls_first = false;
 			sortcl->hashable = false;	/* no need to make this accurate */
 			sortList = lappend(sortList, sortcl);

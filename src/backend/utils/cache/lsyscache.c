@@ -289,7 +289,7 @@ get_equality_op_for_ordering_op(Oid opno, bool *reverse)
 
 /*
  * get_ordering_op_for_equality_op
- *		Get the OID of a datatype-specific btree ordering operator
+ *		Get the OID of a datatype-specific btree "less than" ordering operator
  *		associated with an equality operator.  (If there are multiple
  *		possibilities, assume any one will do.)
  *

@@ -1438,6 +1438,7 @@ typedef struct SortGroupClause
 	Index		tleSortGroupRef;	/* reference into targetlist */
 	Oid			eqop;			/* the equality operator ('=' op) */
 	Oid			sortop;			/* the ordering operator ('<' op), or 0 */
+	bool		reverse_sort;	/* is sortop a "greater than" operator? */
 	bool		nulls_first;	/* do NULLs come before normal values? */
 	/* can eqop be implemented by hashing? */
 	bool		hashable pg_node_attr(query_jumble_ignore);
