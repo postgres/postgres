@@ -31,27 +31,11 @@ GetOptions(
 	'output=s' => \$outfile,
 	'parser=s' => \$parser,) or die "wrong arguments";
 
-# open parser / output file early, to raise errors early
-open(my $parserfh, '<', $parser) or die "could not open parser file $parser";
-open(my $outfh, '>', $outfile) or die "could not open output file $outfile";
 
-my $copymode = 0;
-my $brace_indent = 0;
-my $yaccmode = 0;
-my $in_rule = 0;
-my $header_included = 0;
-my $has_feature_not_supported = 0;
-my $has_if_command = 0;
-my $tokenmode = 0;
+# These hash tables define additional transformations to apply to
+# grammar rules.
 
-my (%buff, $infield, $comment, %tokens, %addons);
-my ($stmt_mode, @fields);
-my $line = '';
-my $non_term_id;
-
-
-# some token have to be replaced by other symbols
-# either in the rule
+# Substitutions to apply to tokens whenever they are seen in a rule.
 my %replace_token = (
 	'BCONST' => 'ecpg_bconst',
 	'FCONST' => 'ecpg_fconst',
@@ -60,7 +44,9 @@ my %replace_token = (
 	'IDENT' => 'ecpg_ident',
 	'PARAM' => 'ecpg_param',);
 
-# or in the block
+# Substitutions to apply to terminal token names to reconstruct the
+# literal form of the token.  (There is also a hard-wired substitution
+# rule that strips trailing '_P'.)
 my %replace_string = (
 	'FORMAT_LA' => 'format',
 	'NOT_LA' => 'not',
@@ -75,14 +61,16 @@ my %replace_string = (
 	'GREATER_EQUALS' => '>=',
 	'NOT_EQUALS' => '<>',);
 
-# specific replace_types for specific non-terminals - never include the ':'
-# ECPG-only replace_types are defined in ecpg-replace_types
+# This hash can provide a result type to override '<str>' for nonterminals
+# that need that, or it can specify 'ignore' to cause us to skip the rule
+# for that nonterminal.  (In that case, ecpg.trailer had better provide
+# a substitute rule.)
 my %replace_types = (
 	'PrepareStmt' => '<prep>',
 	'ExecuteStmt' => '<exec>',
 	'opt_array_bounds' => '<index>',
 
-	# "ignore" means: do not create type and rules for this non-term-id
+	# "ignore" means: do not create type and rules for this nonterminal
 	'parse_toplevel' => 'ignore',
 	'stmtmulti' => 'ignore',
 	'CreateAsStmt' => 'ignore',
@@ -97,9 +85,12 @@ my %replace_types = (
 	'plassign_target' => 'ignore',
 	'plassign_equals' => 'ignore',);
 
-# these replace_line commands excise certain keywords from the core keyword
-# lists.  Be sure to account for these in ColLabel and related productions.
+# This hash provides an "ignore" option or substitute expansion for any
+# rule or rule alternative.  The hash key is the same "concattokens" tag
+# used for lookup in ecpg.addons.
 my %replace_line = (
+	# These entries excise certain keywords from the core keyword lists.
+	# Be sure to account for these in ColLabel and related productions.
 	'unreserved_keywordCONNECTION' => 'ignore',
 	'unreserved_keywordCURRENT_P' => 'ignore',
 	'unreserved_keywordDAY_P' => 'ignore',
@@ -137,10 +128,77 @@ my %replace_line = (
 	  'PREPARE prepared_name prep_type_clause AS PreparableStmt',
 	'var_nameColId' => 'ECPGColId');
 
-preload_addons();
 
+# Declare assorted state variables.
+
+# yaccmode counts the '%%' separator lines we have seen, so that we can
+# distinguish prologue, rules, and epilogue sections of gram.y.
+my $yaccmode = 0;
+# in /* ... */ comment?
+my $comment = 0;
+# in { ... } braced text?
+my $brace_indent = 0;
+# within a rule (production)?
+my $in_rule = 0;
+# count of alternatives processed within the current rule.
+my $alt_count = 0;
+# copymode = 1 when we want to emit the current rule to preproc.y.
+# If it's 0, we have decided to ignore the current rule, and should
+# skip all output until we get to the ending semicolon.
+my $copymode = 0;
+# tokenmode = 1 indicates we are processing %token and following declarations.
+my $tokenmode = 0;
+# stmt_mode = 1 indicates that we are processing the 'stmt:' rule.
+my $stmt_mode = 0;
+# Hacky state for emitting feature-not-supported warnings.
+my $has_feature_not_supported = 0;
+my $has_if_command = 0;
+
+# %addons holds the rules loaded from ecpg.addons.
+my %addons;
+
+# %buff holds various named "buffers", which are just strings that accumulate
+# the output destined for different sections of the preproc.y file.  This
+# allows us to process the input in one pass even though the resulting output
+# needs to appear in various places.  See dump_buffer calls below for the
+# set of buffer names and the order in which they'll be dumped.
+my %buff;
+
+# %tokens contains an entry for every name we have discovered to be a token.
+my %tokens;
+
+# $non_term_id is the name of the nonterminal that is the target of the
+# current rule.
+my $non_term_id;
+
+# $line holds the reconstructed rule text (that is, RHS token list) that
+# we plan to emit for the current rule.
+my $line = '';
+
+# @fields holds the items to be emitted in the token-concatenation action
+# for the current rule (assuming we emit one).  "$N" refers to the N'th
+# input token of the rule; anything else is a string to emit literally.
+# (We assume no such string can need to start with '$'.)
+my @fields;
+
+
+# Open parser / output file early, to raise errors early.
+open(my $parserfh, '<', $parser) or die "could not open parser file $parser";
+open(my $outfh, '>', $outfile) or die "could not open output file $outfile";
+
+# Read the various ecpg-supplied input files.
+# ecpg.addons is loaded into the %addons hash, while the other files
+# are just copied into buffers for verbatim output later.
+preload_addons();
+include_file('header', 'ecpg.header');
+include_file('tokens', 'ecpg.tokens');
+include_file('ecpgtype', 'ecpg.type');
+include_file('trailer', 'ecpg.trailer');
+
+# Read gram.y, and do the bulk of the processing.
 main();
 
+# Emit data from the various buffers we filled.
 dump_buffer('header');
 dump_buffer('tokens');
 dump_buffer('types');
@@ -149,7 +207,6 @@ dump_buffer('orig_tokens');
 print $outfh '%%', "\n";
 print $outfh 'prog: statements;', "\n";
 dump_buffer('rules');
-include_file('trailer', 'ecpg.trailer');
 dump_buffer('trailer');
 
 close($parserfh);
@@ -162,83 +219,67 @@ foreach (keys %addons)
 }
 
 
+# Read the backend grammar.
 sub main
 {
   line: while (<$parserfh>)
 	{
 		chomp;
 
-		# comment out the line below to make the result file match (blank line wise)
-		# the prior version.
-		#next if ($_ eq '');
-
-		# Dump the action for a rule -
-		# stmt_mode indicates if we are processing the 'stmt:'
-		# rule (mode==0 means normal,  mode==1 means stmt:)
-		# flds are the fields to use. These may start with a '$' - in
-		# which case they are the result of a previous non-terminal
-		#
-		# if they don't start with a '$' then they are token name
-		#
-		# len is the number of fields in flds...
-		# leadin is the padding to apply at the beginning (just use for formatting)
-
 		if (/^%%/)
 		{
-			$tokenmode = 2;
-			$copymode = 1;
+			# New file section, so advance yaccmode.
 			$yaccmode++;
-			$infield = 0;
+			# We are no longer examining %token and related commands.
+			$tokenmode = 0;
+			# Shouldn't be anything else on the line.
+			next line;
 		}
 
+		# Hacky check for rules that throw FEATURE_NOT_SUPPORTED
+		# (do this before $_ has a chance to get clobbered)
 		if ($yaccmode == 1)
 		{
-			# Check for rules that throw FEATURE_NOT_SUPPORTED
 			$has_feature_not_supported = 1 if /ERRCODE_FEATURE_NOT_SUPPORTED/;
 			$has_if_command = 1 if /^\s*if/;
 		}
 
+		# We track %prec per-line, not per-rule, which is not quite right
+		# but there are no counterexamples in gram.y at present.
 		my $prec = 0;
 
-		# Make sure any braces are split
+		# Make sure any braces are split into separate fields
 		s/{/ { /g;
 		s/}/ } /g;
 
-		# Any comments are split
+		# Likewise for comment start/end markers
 		s|\/\*| /* |g;
 		s|\*\/| */ |g;
 
 		# Now split the line into individual fields
 		my @arr = split(' ');
 
+		# Ignore empty lines
 		if (!@arr)
 		{
-			# empty line: in tokenmode 1, emit an empty line, else ignore
-			if ($tokenmode == 1)
-			{
-				add_to_buffer('orig_tokens', '');
-			}
 			next line;
 		}
 
-		if ($arr[0] eq '%token' && $tokenmode == 0)
+		# Once we have seen %token in the prologue, we assume all that follows
+		# up to the '%%' separator is %token and associativity declarations.
+		# Collect and process that as necessary.
+		if ($arr[0] eq '%token' && $yaccmode == 0)
 		{
 			$tokenmode = 1;
-			include_file('tokens', 'ecpg.tokens');
-		}
-		elsif ($arr[0] eq '%type' && $header_included == 0)
-		{
-			include_file('header', 'ecpg.header');
-			include_file('ecpgtype', 'ecpg.type');
-			$header_included = 1;
 		}
 
 		if ($tokenmode == 1)
 		{
+			# Collect everything of interest on this line into $str.
 			my $str = '';
-			my $prior = '';
 			for my $a (@arr)
 			{
+				# Skip comments.
 				if ($a eq '/*')
 				{
 					$comment++;
@@ -253,40 +294,50 @@ sub main
 				{
 					next;
 				}
+
+				# If it's "<something>", it's a type in a %token declaration,
+				# which we can just drop.
 				if (substr($a, 0, 1) eq '<')
 				{
 					next;
-
-					# its a type
 				}
+
+				# Remember that this is a token.  This will also make entries
+				# for "%token" and the associativity keywords such as "%left",
+				# which should be harmless so it's not worth the trouble to
+				# avoid it.  If a token appears both in %token and in an
+				# associativity declaration, we'll redundantly re-set its
+				# entry, which is also OK.
 				$tokens{$a} = 1;
 
+				# Accumulate the line in $str.
 				$str = $str . ' ' . $a;
-				if ($a eq 'IDENT' && $prior eq '%nonassoc')
-				{
 
-					# add more tokens to the list
+				# HACK: insert our own %nonassoc line after IDENT.
+				# XXX: this seems pretty wrong, IDENT is not last on its line!
+				if ($a eq 'IDENT' && $arr[0] eq '%nonassoc')
+				{
 					$str = $str . "\n%nonassoc CSTRING";
 				}
-				$prior = $a;
 			}
+			# Save the lightly-processed line in orig_tokens.
 			add_to_buffer('orig_tokens', $str);
 			next line;
 		}
 
-		# Don't worry about anything if we're not in the right section of gram.y
+		# The rest is only appropriate if we're in the rules section of gram.y
 		if ($yaccmode != 1)
 		{
 			next line;
 		}
 
-
-		# Go through each field in turn
+		# Go through each word of the rule in turn
 		for (
 			my $fieldIndexer = 0;
 			$fieldIndexer < scalar(@arr);
 			$fieldIndexer++)
 		{
+			# Detect and ignore comments and braced action text
 			if ($arr[$fieldIndexer] eq '*/' && $comment)
 			{
 				$comment = 0;
@@ -298,14 +349,9 @@ sub main
 			}
 			elsif ($arr[$fieldIndexer] eq '/*')
 			{
-
-				# start of a multiline comment
+				# start of a possibly-multiline comment
 				$comment = 1;
 				next;
-			}
-			elsif ($arr[$fieldIndexer] eq '//')
-			{
-				next line;
 			}
 			elsif ($arr[$fieldIndexer] eq '}')
 			{
@@ -317,29 +363,35 @@ sub main
 				$brace_indent++;
 				next;
 			}
-
 			if ($brace_indent > 0)
 			{
 				next;
 			}
+
+			# OK, it's not a comment or part of an action.
+			# Check for ';' ending the current rule, or '|' ending the
+			# current alternative.
 			if ($arr[$fieldIndexer] eq ';')
 			{
 				if ($copymode)
 				{
-					if ($infield)
-					{
-						dump_line($stmt_mode, \@fields);
-					}
+					# Print the accumulated rule.
+					emit_rule(\@fields);
 					add_to_buffer('rules', ";\n\n");
 				}
 				else
 				{
+					# End of an ignored rule; revert to copymode = 1.
 					$copymode = 1;
 				}
+
+				# Reset for the next rule.
 				@fields = ();
-				$infield = 0;
 				$line = '';
 				$in_rule = 0;
+				$alt_count = 0;
+				$has_feature_not_supported = 0;
+				$has_if_command = 0;
 				next;
 			}
 
@@ -347,56 +399,68 @@ sub main
 			{
 				if ($copymode)
 				{
-					if ($infield)
-					{
-						$infield = $infield + dump_line($stmt_mode, \@fields);
-					}
-					if ($infield > 1)
-					{
-						$line = '| ';
-					}
+					# Print the accumulated alternative.
+					# Increment $alt_count for each non-ignored alternative.
+					$alt_count += emit_rule(\@fields);
 				}
+
+				# Reset for the next alternative.
 				@fields = ();
+				# Start the next line with '|' if we've printed at least one
+				# alternative.
+				if ($alt_count > 1)
+				{
+					$line = '| ';
+				}
+				else
+				{
+					$line = '';
+				}
+				$has_feature_not_supported = 0;
+				$has_if_command = 0;
 				next;
 			}
 
+			# Apply replace_token substitution if we have one.
 			if (exists $replace_token{ $arr[$fieldIndexer] })
 			{
 				$arr[$fieldIndexer] = $replace_token{ $arr[$fieldIndexer] };
 			}
 
-			# Are we looking at a declaration of a non-terminal ?
-			if (($arr[$fieldIndexer] =~ /[A-Za-z0-9]+:/)
+			# Are we looking at a declaration of a non-terminal?
+			# We detect that by seeing ':' on the end of the token or
+			# as the next token.
+			if (($arr[$fieldIndexer] =~ /[A-Za-z0-9]+:$/)
 				|| (   $fieldIndexer + 1 < scalar(@arr)
 					&& $arr[ $fieldIndexer + 1 ] eq ':'))
 			{
+				# Extract the non-terminal, sans : if any
 				$non_term_id = $arr[$fieldIndexer];
 				$non_term_id =~ tr/://d;
 
-				if (not defined $replace_types{$non_term_id})
+				# Consume the ':' if it's separate
+				if (!($arr[$fieldIndexer] =~ /[A-Za-z0-9]+:$/))
 				{
-					$replace_types{$non_term_id} = '<str>';
-					$copymode = 1;
-				}
-				elsif ($replace_types{$non_term_id} eq 'ignore')
-				{
-					$copymode = 0;
-					$line = '';
-					next line;
-				}
-				$line = $line . ' ' . $arr[$fieldIndexer];
-
-				# Do we have the : attached already ?
-				# If yes, we'll have already printed the ':'
-				if (!($arr[$fieldIndexer] =~ '[A-Za-z0-9]+:'))
-				{
-
-					# Consume the ':' which is next...
-					$line = $line . ':';
 					$fieldIndexer++;
 				}
 
-				# Special mode?
+				# Check for %replace_types override of nonterminal's type
+				if (not defined $replace_types{$non_term_id})
+				{
+					# By default, the type is <str>
+					$replace_types{$non_term_id} = '<str>';
+				}
+				elsif ($replace_types{$non_term_id} eq 'ignore')
+				{
+					# We'll ignore this nonterminal and rule altogether.
+					$copymode = 0;
+					next line;
+				}
+
+				# OK, we want this rule.
+				$copymode = 1;
+
+				# Set special mode for the "stmt:" rule.
 				if ($non_term_id eq 'stmt')
 				{
 					$stmt_mode = 1;
@@ -405,69 +469,73 @@ sub main
 				{
 					$stmt_mode = 0;
 				}
+
+				# Emit appropriate %type declaration for this nonterminal.
 				my $tstr =
 					'%type '
 				  . $replace_types{$non_term_id} . ' '
 				  . $non_term_id;
 				add_to_buffer('types', $tstr);
 
-				if ($copymode)
-				{
-					add_to_buffer('rules', $line);
-				}
+				# Emit the target part of the rule.
+				# Note: the leading space is just to match
+				# the rather weird pre-v18 output logic.
+				$tstr = ' ' . $non_term_id . ':';
+				add_to_buffer('rules', $tstr);
+
+				# Prepare for reading the fields (tokens) of the rule.
 				$line = '';
 				@fields = ();
-				$infield = 1;
 				die "unterminated rule at grammar line $.\n"
 				  if $in_rule;
 				$in_rule = 1;
+				$alt_count = 1;
 				next;
 			}
 			elsif ($copymode)
 			{
+				# Not a nonterminal declaration, so just add it to $line.
 				$line = $line . ' ' . $arr[$fieldIndexer];
 			}
+
+			# %prec and whatever follows it should get added to $line,
+			# but not to @fields.
 			if ($arr[$fieldIndexer] eq '%prec')
 			{
 				$prec = 1;
 				next;
 			}
 
+			# Emit transformed version of token to @fields if appropriate.
 			if (   $copymode
 				&& !$prec
 				&& !$comment
-				&& $fieldIndexer < scalar(@arr)
-				&& length($arr[$fieldIndexer])
-				&& $infield)
+				&& $in_rule)
 			{
-				if ($arr[$fieldIndexer] ne 'Op'
-					&& ((   defined $tokens{ $arr[$fieldIndexer] }
-							&& $tokens{ $arr[$fieldIndexer] } > 0)
-						|| $arr[$fieldIndexer] =~ /'.+'/)
-					|| $stmt_mode == 1)
+				my $S = $arr[$fieldIndexer];
+
+				# If it's a known terminal token (other than Op) or a literal
+				# character, we need to emit the equivalent string, which'll
+				# later get wrapped into a C string literal, perhaps after
+				# merging with adjacent strings.
+				if ($S ne 'Op'
+					&& (defined $tokens{$S}
+						|| $S =~ /^'.+'$/))
 				{
-					my $S;
-					if (exists $replace_string{ $arr[$fieldIndexer] })
-					{
-						$S = $replace_string{ $arr[$fieldIndexer] };
-					}
-					else
-					{
-						$S = $arr[$fieldIndexer];
-					}
-					$S =~ s/_P//g;
+					# Apply replace_string substitution if any.
+					$S = $replace_string{$S} if (exists $replace_string{$S});
+					# Automatically strip _P if present.
+					$S =~ s/_P$//;
+					# And get rid of quotes if it's a literal character.
 					$S =~ tr/'//d;
-					if ($stmt_mode == 1)
-					{
-						push(@fields, $S);
-					}
-					else
-					{
-						push(@fields, lc($S));
-					}
+					# Finally, downcase and push into @fields.
+					push(@fields, lc($S));
 				}
 				else
 				{
+					# Otherwise, push a $N reference to this input token.
+					# (We assume this cannot be confused with anything the
+					# above code would produce.)
 					push(@fields, '$' . (scalar(@fields) + 1));
 				}
 			}
@@ -495,94 +563,108 @@ sub include_file
 	return;
 }
 
-sub include_addon
+# Emit the semantic action for the current rule.
+# This function mainly accounts for any modifications specified
+# by an ecpg.addons entry.
+sub emit_rule_action
 {
-	my ($buffer, $block, $fields, $stmt_mode) = @_;
-	my $rec = $addons{$block};
-	return 0 unless $rec;
+	my ($tag, $fields) = @_;
 
-	# Track usage for later cross-check
+	# See if we have an addons entry; if not, just emit default action
+	my $rec = $addons{$tag};
+	if (!$rec)
+	{
+		emit_default_action($fields, 0);
+		return;
+	}
+
+	# Track addons entry usage for later cross-check
 	$rec->{used}++;
 
 	my $rectype = $rec->{type};
 	if ($rectype eq 'rule')
 	{
-		dump_fields($stmt_mode, $fields, ' { ');
+		# Emit default action and then the code block.
+		emit_default_action($fields, 0);
 	}
 	elsif ($rectype eq 'addon')
 	{
+		# Emit the code block wrapped in the same braces as the default action.
 		add_to_buffer('rules', ' { ');
 	}
 
-	#add_to_buffer( $stream, $_ );
-	#We have an array to add to the buffer, we'll add it ourself instead of
-	#calling add_to_buffer, which does not know about arrays
-
-	push(@{ $buff{$buffer} }, @{ $rec->{lines} });
+	# Emit the addons entry's code block.
+	# We have an array to add to the buffer, we'll add it directly instead of
+	# calling add_to_buffer, which does not know about arrays.
+	push(@{ $buff{'rules'} }, @{ $rec->{lines} });
 
 	if ($rectype eq 'addon')
 	{
-		dump_fields($stmt_mode, $fields, '');
+		emit_default_action($fields, 1);
 	}
-
-
-	# if we added something (ie there are lines in our array), return 1
-	return 1 if (scalar(@{ $rec->{lines} }) > 0);
-	return 0;
+	return;
 }
 
-
-# include_addon does this same thing, but does not call this
-# sub... so if you change this, you need to fix include_addon too
+# Add the given line to the specified buffer.
 #   Pass:  buffer_name, string_to_append
+# Note we add a newline automatically.
 sub add_to_buffer
 {
 	push(@{ $buff{ $_[0] } }, "$_[1]\n");
 	return;
 }
 
+# Dump the specified buffer to the output file.
 sub dump_buffer
 {
 	my ($buffer) = @_;
+	# Label the output for debugging purposes.
 	print $outfh '/* ', $buffer, ' */', "\n";
 	my $ref = $buff{$buffer};
 	print $outfh @$ref;
 	return;
 }
 
-sub dump_fields
+# Emit the default action (usually token concatenation) for the current rule.
+#   Pass: fields array, brace_printed boolean
+# brace_printed should be true if caller already printed action's open brace.
+sub emit_default_action
 {
-	my ($mode, $flds, $ln) = @_;
+	my ($flds, $brace_printed) = @_;
 	my $len = scalar(@$flds);
 
-	if ($mode == 0)
+	if ($stmt_mode == 0)
 	{
-
-		#Normal
-		add_to_buffer('rules', $ln);
+		# Normal rule
 		if ($has_feature_not_supported and not $has_if_command)
 		{
 			# The backend unconditionally reports
 			# FEATURE_NOT_SUPPORTED in this rule, so let's emit
 			# a warning on the ecpg side.
+			if (!$brace_printed)
+			{
+				add_to_buffer('rules', ' { ');
+				$brace_printed = 1;
+			}
 			add_to_buffer('rules',
 				'mmerror(PARSE_ERROR, ET_WARNING, "unsupported feature will be passed to server");'
 			);
 		}
-		$has_feature_not_supported = 0;
-		$has_if_command = 0;
 
 		if ($len == 0)
 		{
-
-			# We have no fields ?
+			# Empty rule
+			if (!$brace_printed)
+			{
+				add_to_buffer('rules', ' { ');
+				$brace_printed = 1;
+			}
 			add_to_buffer('rules', ' $$=EMPTY; }');
 		}
 		else
 		{
-
-			# Go through each field and try to 'aggregate' the tokens
-			# into a single 'mm_strdup' where possible
+			# Go through each field and aggregate consecutive literal tokens
+			# into a single 'mm_strdup' call.
 			my @flds_new;
 			my $str;
 			for (my $z = 0; $z < $len; $z++)
@@ -600,8 +682,10 @@ sub dump_fields
 					if ($z >= $len - 1
 						|| substr($flds->[ $z + 1 ], 0, 1) eq '$')
 					{
-
-						# We're at the end...
+						# Can't combine any more literals; push to @flds_new.
+						# This code would need work if any literals contain
+						# backslash or double quote, but right now that never
+						# happens.
 						push(@flds_new, "mm_strdup(\"$str\")");
 						last;
 					}
@@ -614,49 +698,62 @@ sub dump_fields
 			$len = scalar(@flds_new);
 			if ($len == 1)
 			{
-
-				# Straight assignment
+				# Single field can be handled by straight assignment
+				if (!$brace_printed)
+				{
+					add_to_buffer('rules', ' { ');
+					$brace_printed = 1;
+				}
 				$str = ' $$ = ' . $flds_new[0] . ';';
 				add_to_buffer('rules', $str);
 			}
 			else
 			{
-
-				# Need to concatenate the results to form
-				# our final string
+				# Need to concatenate the results to form our final string
+				if (!$brace_printed)
+				{
+					add_to_buffer('rules', ' { ');
+					$brace_printed = 1;
+				}
 				$str =
 				  ' $$ = cat_str(' . $len . ',' . join(',', @flds_new) . ');';
 				add_to_buffer('rules', $str);
 			}
-			add_to_buffer('rules', '}');
+			add_to_buffer('rules', '}') if ($brace_printed);
 		}
 	}
 	else
 	{
-
-		# we're in the stmt: rule
+		# We're in the "stmt:" rule, where we need to output special actions.
+		# This code assumes that no ecpg.addons entry applies.
 		if ($len)
 		{
-
-			# or just the statement ...
+			# Any regular kind of statement calls output_statement
 			add_to_buffer('rules',
 				' { output_statement($1, 0, ECPGst_normal); }');
 		}
 		else
 		{
+			# The empty production for stmt: do nothing
 			add_to_buffer('rules', ' { $$ = NULL; }');
 		}
 	}
 	return;
 }
 
-
-sub dump_line
+# Print the accumulated rule text (in $line) and the appropriate action.
+# Ordinarily return 1.  However, if the rule matches an "ignore"
+# entry in %replace_line, then do nothing and return 0.
+sub emit_rule
 {
-	my ($stmt_mode, $fields) = @_;
-	my $block = $non_term_id . $line;
-	$block =~ tr/ |//d;
-	my $rep = $replace_line{$block};
+	my ($fields) = @_;
+
+	# compute tag to be used as lookup key in %replace_line and %addons
+	my $tag = $non_term_id . $line;
+	$tag =~ tr/ |//d;
+
+	# apply replace_line substitution if any
+	my $rep = $replace_line{$tag};
 	if ($rep)
 	{
 		if ($rep eq 'ignore')
@@ -664,6 +761,7 @@ sub dump_line
 			return 0;
 		}
 
+		# non-ignore entries replace the line, but we'd better keep any '|'
 		if (index($line, '|') != -1)
 		{
 			$line = '| ' . $rep;
@@ -672,15 +770,15 @@ sub dump_line
 		{
 			$line = $rep;
 		}
-		$block = $non_term_id . $line;
-		$block =~ tr/ |//d;
+
+		# recompute tag for use in emit_rule_action
+		$tag = $non_term_id . $line;
+		$tag =~ tr/ |//d;
 	}
+
+	# Emit $line, then print the appropriate action.
 	add_to_buffer('rules', $line);
-	my $i = include_addon('rules', $block, $fields, $stmt_mode);
-	if ($i == 0)
-	{
-		dump_fields($stmt_mode, $fields, ' { ');
-	}
+	emit_rule_action($tag, $fields);
 	return 1;
 }
 
