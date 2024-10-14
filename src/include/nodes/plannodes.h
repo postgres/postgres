@@ -850,7 +850,7 @@ typedef struct MergeJoin
 	Oid		   *mergeCollations pg_node_attr(array_size(mergeclauses));
 
 	/* per-clause ordering (ASC or DESC) */
-	int		   *mergeStrategies pg_node_attr(array_size(mergeclauses));
+	bool	   *mergeReversals pg_node_attr(array_size(mergeclauses));
 
 	/* per-clause nulls ordering */
 	bool	   *mergeNullsFirst pg_node_attr(array_size(mergeclauses));
