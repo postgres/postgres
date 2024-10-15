@@ -3453,6 +3453,12 @@ construct_array_builtin(Datum *elems, int nelems, Oid elmtype)
 			elmalign = TYPALIGN_SHORT;
 			break;
 
+		case XIDOID:
+			elmlen = sizeof(TransactionId);
+			elmbyval = true;
+			elmalign = TYPALIGN_INT;
+			break;
+
 		default:
 			elog(ERROR, "type %u not supported by construct_array_builtin()", elmtype);
 			/* keep compiler quiet */

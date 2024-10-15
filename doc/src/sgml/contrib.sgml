@@ -154,6 +154,7 @@ CREATE EXTENSION <replaceable>extension_name</replaceable>;
  &pgbuffercache;
  &pgcrypto;
  &pgfreespacemap;
+ &pglogicalinspect;
  &pgprewarm;
  &pgrowlocks;
  &pgstatstatements;

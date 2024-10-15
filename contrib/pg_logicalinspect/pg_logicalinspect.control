@@ -1,0 +1,5 @@
+# pg_logicalinspect extension
+comment = 'functions to inspect logical decoding components'
+default_version = '1.0'
+module_pathname = '$libdir/pg_logicalinspect'
+relocatable = true

@@ -15,6 +15,10 @@
 #include "access/xlogdefs.h"
 #include "utils/snapmgr.h"
 
+/*
+ * Please keep get_snapbuild_state_desc() (located in the pg_logicalinspect
+ * module) updated if a change needs to be made to SnapBuildState.
+ */
 typedef enum
 {
 	/*

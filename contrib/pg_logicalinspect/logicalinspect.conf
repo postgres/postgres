@@ -1,0 +1,1 @@
+wal_level = logical
