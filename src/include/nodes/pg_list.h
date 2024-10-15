@@ -485,7 +485,7 @@ for_each_cell_setup(const List *lst, const ListCell *initcell)
 		for (ForEachState var##__state = {(lst), 0}; \
 			 (var##__state.l != NIL && \
 			  var##__state.i < var##__state.l->length && \
-			 (var = func(&var##__state.l->elements[var##__state.i]), true)); \
+			 (var = (type pointer) func(&var##__state.l->elements[var##__state.i]), true)); \
 			 var##__state.i++)
 
 /*
