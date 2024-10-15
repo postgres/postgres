@@ -25,6 +25,7 @@
 #include "optimizer/paths.h"
 #include "optimizer/placeholder.h"
 #include "optimizer/planmain.h"
+#include "optimizer/restrictinfo.h"
 #include "utils/lsyscache.h"
 #include "utils/typcache.h"
 
@@ -58,9 +59,6 @@ static void try_partial_mergejoin_path(PlannerInfo *root,
 static void sort_inner_and_outer(PlannerInfo *root, RelOptInfo *joinrel,
 								 RelOptInfo *outerrel, RelOptInfo *innerrel,
 								 JoinType jointype, JoinPathExtraData *extra);
-static inline bool clause_sides_match_join(RestrictInfo *rinfo,
-										   RelOptInfo *outerrel,
-										   RelOptInfo *innerrel);
 static void match_unsorted_outer(PlannerInfo *root, RelOptInfo *joinrel,
 								 RelOptInfo *outerrel, RelOptInfo *innerrel,
 								 JoinType jointype, JoinPathExtraData *extra);
@@ -470,7 +468,8 @@ paraminfo_get_equal_hashops(PlannerInfo *root, ParamPathInfo *param_info,
 			 * with 2 args.
 			 */
 			if (!IsA(opexpr, OpExpr) || list_length(opexpr->args) != 2 ||
-				!clause_sides_match_join(rinfo, outerrel, innerrel))
+				!clause_sides_match_join(rinfo, outerrel->relids,
+										 innerrel->relids))
 			{
 				list_free(*operators);
 				list_free(*param_exprs);
@@ -1318,37 +1317,6 @@ try_partial_hashjoin_path(PlannerInfo *root,
 										  extra->restrictlist,
 										  NULL,
 										  hashclauses));
-}
-
-/*
- * clause_sides_match_join
- *	  Determine whether a join clause is of the right form to use in this join.
- *
- * We already know that the clause is a binary opclause referencing only the
- * rels in the current join.  The point here is to check whether it has the
- * form "outerrel_expr op innerrel_expr" or "innerrel_expr op outerrel_expr",
- * rather than mixing outer and inner vars on either side.  If it matches,
- * we set the transient flag outer_is_left to identify which side is which.
- */
-static inline bool
-clause_sides_match_join(RestrictInfo *rinfo, RelOptInfo *outerrel,
-						RelOptInfo *innerrel)
-{
-	if (bms_is_subset(rinfo->left_relids, outerrel->relids) &&
-		bms_is_subset(rinfo->right_relids, innerrel->relids))
-	{
-		/* lefthand side is outer */
-		rinfo->outer_is_left = true;
-		return true;
-	}
-	else if (bms_is_subset(rinfo->left_relids, innerrel->relids) &&
-			 bms_is_subset(rinfo->right_relids, outerrel->relids))
-	{
-		/* righthand side is outer */
-		rinfo->outer_is_left = false;
-		return true;
-	}
-	return false;				/* no good for these input relations */
 }
 
 /*
@@ -2264,7 +2232,8 @@ hash_inner_and_outer(PlannerInfo *root,
 		/*
 		 * Check if clause has the form "outer op inner" or "inner op outer".
 		 */
-		if (!clause_sides_match_join(restrictinfo, outerrel, innerrel))
+		if (!clause_sides_match_join(restrictinfo, outerrel->relids,
+									 innerrel->relids))
 			continue;			/* no good for these input relations */
 
 		/*
@@ -2549,7 +2518,8 @@ select_mergejoin_clauses(PlannerInfo *root,
 		/*
 		 * Check if clause has the form "outer op inner" or "inner op outer".
 		 */
-		if (!clause_sides_match_join(restrictinfo, outerrel, innerrel))
+		if (!clause_sides_match_join(restrictinfo, outerrel->relids,
+									 innerrel->relids))
 		{
 			have_nonmergeable_joinclause = true;
 			continue;			/* no good for these input relations */

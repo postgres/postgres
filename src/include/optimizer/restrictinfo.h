@@ -48,4 +48,35 @@ extern bool join_clause_is_movable_into(RestrictInfo *rinfo,
 										Relids currentrelids,
 										Relids current_and_outer);
 
+/*
+ * clause_sides_match_join
+ *	  Determine whether a join clause is of the right form to use in this join.
+ *
+ * We already know that the clause is a binary opclause referencing only the
+ * rels in the current join.  The point here is to check whether it has the
+ * form "outerrel_expr op innerrel_expr" or "innerrel_expr op outerrel_expr",
+ * rather than mixing outer and inner vars on either side.  If it matches,
+ * we set the transient flag outer_is_left to identify which side is which.
+ */
+static inline bool
+clause_sides_match_join(RestrictInfo *rinfo, Relids outerrelids,
+						Relids innerrelids)
+{
+	if (bms_is_subset(rinfo->left_relids, outerrelids) &&
+		bms_is_subset(rinfo->right_relids, innerrelids))
+	{
+		/* lefthand side is outer */
+		rinfo->outer_is_left = true;
+		return true;
+	}
+	else if (bms_is_subset(rinfo->left_relids, innerrelids) &&
+			 bms_is_subset(rinfo->right_relids, outerrelids))
+	{
+		/* righthand side is outer */
+		rinfo->outer_is_left = false;
+		return true;
+	}
+	return false;				/* no good for these input relations */
+}
+
 #endif							/* RESTRICTINFO_H */
