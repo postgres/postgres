@@ -337,15 +337,20 @@ ReorderBufferAllocate(void)
 											sizeof(ReorderBufferTXN));
 
 	/*
-	 * XXX the allocation sizes used below pre-date generation context's block
-	 * growing code.  These values should likely be benchmarked and set to
-	 * more suitable values.
+	 * To minimize memory fragmentation caused by long-running transactions
+	 * with changes spanning multiple memory blocks, we use a single
+	 * fixed-size memory block for decoded tuple storage. The performance
+	 * testing showed that the default memory block size maintains logical
+	 * decoding performance without causing fragmentation due to concurrent
+	 * transactions. One might think that we can use the max size as
+	 * SLAB_LARGE_BLOCK_SIZE but the test also showed it doesn't help resolve
+	 * the memory fragmentation.
 	 */
 	buffer->tup_context = GenerationContextCreate(new_ctx,
 												  "Tuples",
-												  SLAB_LARGE_BLOCK_SIZE,
-												  SLAB_LARGE_BLOCK_SIZE,
-												  SLAB_LARGE_BLOCK_SIZE);
+												  SLAB_DEFAULT_BLOCK_SIZE,
+												  SLAB_DEFAULT_BLOCK_SIZE,
+												  SLAB_DEFAULT_BLOCK_SIZE);
 
 	hash_ctl.keysize = sizeof(TransactionId);
 	hash_ctl.entrysize = sizeof(ReorderBufferTXNByIdEnt);
