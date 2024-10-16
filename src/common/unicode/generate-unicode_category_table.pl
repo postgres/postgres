@@ -369,19 +369,19 @@ typedef struct
 	uint32		first;			/* Unicode codepoint */
 	uint32		last;			/* Unicode codepoint */
 	uint8		category;		/* General Category */
-}			pg_category_range;
+} pg_category_range;
 
 typedef struct
 {
 	uint32		first;			/* Unicode codepoint */
 	uint32		last;			/* Unicode codepoint */
-}			pg_unicode_range;
+} pg_unicode_range;
 
 typedef struct
 {
 	uint8		category;
 	uint8		properties;
-}			pg_unicode_properties;
+} pg_unicode_properties;
 
 /*
  * The properties currently used, in no particular order. Fits in a uint8, but

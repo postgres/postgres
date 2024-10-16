@@ -92,13 +92,13 @@ typedef enum
 	CaseTitle = 1,
 	CaseUpper = 2,
 	NCaseKind
-}			CaseKind;
+} CaseKind;
 
 typedef struct
 {
 	pg_wchar	codepoint;		/* Unicode codepoint */
 	pg_wchar	simplemap[NCaseKind];
-}			pg_case_map;
+} pg_case_map;
 
 /*
  * Case mapping table. Dense for codepoints < 0x80 (enabling fast lookup),
