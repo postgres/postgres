@@ -1713,7 +1713,7 @@ _bt_readpage(IndexScanDesc scan, ScanDirection dir, OffsetNumber offnum,
 				 * required scan keys up to and including a > or >= scan key.
 				 *
 				 * _bt_checkkeys won't consider the scanBehind flag unless the
-				 * scan is stoppped by a scan key required in the current scan
+				 * scan is stopped by a scan key required in the current scan
 				 * direction.  We need this recheck so that we'll notice when
 				 * all tuples on this page are still before the _bt_first-wise
 				 * start of matches for the current set of array keys.
