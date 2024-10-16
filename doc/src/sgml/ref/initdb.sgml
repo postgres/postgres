@@ -227,7 +227,7 @@ PostgreSQL documentation
       </listitem>
      </varlistentry>
 
-     <varlistentry id="app-initdb-allow-group-access" xreflabel="group access">
+     <varlistentry id="app-initdb-allow-group-access">
       <term><option>-g</option></term>
       <term><option>--allow-group-access</option></term>
       <listitem>
@@ -260,7 +260,7 @@ PostgreSQL documentation
       </listitem>
      </varlistentry>
 
-     <varlistentry id="app-initdb-data-checksums" xreflabel="data checksums">
+     <varlistentry id="app-initdb-data-checksums">
       <term><option>-k</option></term>
       <term><option>--data-checksums</option></term>
       <listitem>

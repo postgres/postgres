@@ -11042,7 +11042,9 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
         had at server startup.
         (On Microsoft Windows this parameter will always display
         <literal>0700</literal>.) See
-        <xref linkend="app-initdb-allow-group-access"/> for more information.
+        <link linkend="app-initdb-allow-group-access">the
+        <application>initdb</application> <option>-g</option> option</link>
+        for more information.
        </para>
       </listitem>
      </varlistentry>
