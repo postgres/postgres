@@ -26,7 +26,9 @@
 
 ## Supported PostgreSQL versions
 
-`pg_tde` is currently based on PostgreSQL 16.0 and supported for Percona Distribution for PostgreSQL 16.x and upstream PostgreSQL 16.x. 
+`pg_tde` is currently based on Percona Server for PostgreSQL 17.0 and upstream PostgreSQL 16.x. 
+
+It is also supported for Percona Distribution for PostgreSQL 16.x and upstream PostgreSQL 16.x. 
 
 ## Future releases
 
@@ -34,6 +36,8 @@ The following is planned for future releases of `pg_tde`:
 
 * Encryption of indexes and `NULL` bitmaps of tuples
 * Logical replication support
+* KMIP integration for key management
+* Global principal key management
 
 
 

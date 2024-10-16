@@ -1,3 +1,5 @@
 #Variables used throughout the docs
 
 release: 'Beta'
+pgversion16: '16.4'
+pgversion17: '17.0'
