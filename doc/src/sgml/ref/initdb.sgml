@@ -265,8 +265,14 @@ PostgreSQL documentation
       <term><option>--data-checksums</option></term>
       <listitem>
        <para>
-        Use checksums on data pages to help detect corruption by the
-        I/O system that would otherwise be silent. Enabling checksums
+        Use checksums on data pages to help detect corruption by the I/O
+        system that would otherwise be silent.  This is enabled by default;
+        use <xref linkend="app-initdb-no-data-checksums"/> to disable
+        checksums.
+       </para>
+
+       <para>
+        Enabling checksums
         might incur a small performance penalty. If set, checksums
         are calculated for all objects, in all databases. All checksum
         failures will be reported in the
@@ -343,12 +349,11 @@ PostgreSQL documentation
       </listitem>
      </varlistentry>
 
-     <varlistentry id="app-initdb-no-data-checksums" xreflabel="no data checksums">
+     <varlistentry id="app-initdb-no-data-checksums">
       <term><option>--no-data-checksums</option></term>
       <listitem>
        <para>
-        Do not enable data checksums.  This can be used to override a
-        <option>--data-checksums</option> option.
+        Do not enable data checksums.
        </para>
       </listitem>
      </varlistentry>
