@@ -20,9 +20,9 @@
 #include "catalog/pg_database.h"
 #include "miscadmin.h"
 #include "statistics/stat_utils.h"
+#include "utils/acl.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
-#include "utils/acl.h"
 #include "utils/rel.h"
 
 /*
