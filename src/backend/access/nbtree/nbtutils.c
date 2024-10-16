@@ -1371,7 +1371,7 @@ _bt_start_array_keys(IndexScanDesc scan, ScanDirection dir)
 			curArrayKey->cur_elem = 0;
 		skey->sk_argument = curArrayKey->elem_values[curArrayKey->cur_elem];
 	}
-	so->scanBehind = false;
+	so->scanBehind = so->oppositeDirCheck = false;	/* reset */
 }
 
 /*
@@ -1680,8 +1680,7 @@ _bt_start_prim_scan(IndexScanDesc scan, ScanDirection dir)
 
 	Assert(so->numArrayKeys);
 
-	/* scanBehind flag doesn't persist across primitive index scans - reset */
-	so->scanBehind = false;
+	so->scanBehind = so->oppositeDirCheck = false;	/* reset */
 
 	/*
 	 * Array keys are advanced within _bt_checkkeys when the scan reaches the
@@ -1817,7 +1816,7 @@ _bt_advance_array_keys(IndexScanDesc scan, BTReadPageState *pstate,
 		Assert(!_bt_tuple_before_array_skeys(scan, dir, tuple, tupdesc,
 											 tupnatts, false, 0, NULL));
 
-		so->scanBehind = false; /* reset */
+		so->scanBehind = so->oppositeDirCheck = false;	/* reset */
 
 		/*
 		 * Required scan key wasn't satisfied, so required arrays will have to
@@ -2302,19 +2301,22 @@ _bt_advance_array_keys(IndexScanDesc scan, BTReadPageState *pstate,
 	if (so->scanBehind && has_required_opposite_direction_only)
 	{
 		/*
-		 * However, we avoid this behavior whenever the scan involves a scan
+		 * However, we need to work harder whenever the scan involves a scan
 		 * key required in the opposite direction to the scan only, along with
 		 * a finaltup with at least one truncated attribute that's associated
 		 * with a scan key marked required (required in either direction).
 		 *
 		 * _bt_check_compare simply won't stop the scan for a scan key that's
 		 * marked required in the opposite scan direction only.  That leaves
-		 * us without any reliable way of reconsidering any opposite-direction
+		 * us without an automatic way of reconsidering any opposite-direction
 		 * inequalities if it turns out that starting a new primitive index
-		 * scan will allow _bt_first to skip ahead by a great many leaf pages
-		 * (see next section for details of how that works).
+		 * scan will allow _bt_first to skip ahead by a great many leaf pages.
+		 *
+		 * We deal with this by explicitly scheduling a finaltup recheck on
+		 * the right sibling page.  _bt_readpage calls _bt_oppodir_checkkeys
+		 * for next page's finaltup (and we skip it for this page's finaltup).
 		 */
-		goto new_prim_scan;
+		so->oppositeDirCheck = true;	/* recheck next page's high key */
 	}
 
 	/*
@@ -2345,61 +2347,24 @@ _bt_advance_array_keys(IndexScanDesc scan, BTReadPageState *pstate,
 	 * similar "deduce NOT NULL" rule, where it finishes its insertion scan
 	 * key by consing up an explicit SK_SEARCHNOTNULL key.)
 	 *
-	 * Apply a test against finaltup to detect and recover from these problem:
+	 * Apply a test against finaltup to detect and recover from the problem:
 	 * if even finaltup doesn't satisfy such an inequality, we just skip by
 	 * starting a new primitive index scan.  When we skip, we know for sure
 	 * that all of the tuples on the current page following caller's tuple are
 	 * also before the _bt_first-wise start of tuples for our new qual.  That
 	 * at least suggests many more skippable pages beyond the current page.
+	 * (when so->oppositeDirCheck was set, this'll happen on the next page.)
 	 */
-	if (has_required_opposite_direction_only && pstate->finaltup &&
-		(all_required_satisfied || oppodir_inequality_sktrig))
+	else if (has_required_opposite_direction_only && pstate->finaltup &&
+			 (all_required_satisfied || oppodir_inequality_sktrig) &&
+			 unlikely(!_bt_oppodir_checkkeys(scan, dir, pstate->finaltup)))
 	{
-		int			nfinaltupatts = BTreeTupleGetNAtts(pstate->finaltup, rel);
-		ScanDirection flipped;
-		bool		continuescanflip;
-		int			opsktrig;
-
 		/*
-		 * We're checking finaltup (which is usually not caller's tuple), so
-		 * cannot reuse work from caller's earlier _bt_check_compare call.
-		 *
-		 * Flip the scan direction when calling _bt_check_compare this time,
-		 * so that it will set continuescanflip=false when it encounters an
-		 * inequality required in the opposite scan direction.
+		 * Make sure that any non-required arrays are set to the first array
+		 * element for the current scan direction
 		 */
-		Assert(!so->scanBehind);
-		opsktrig = 0;
-		flipped = -dir;
-		_bt_check_compare(scan, flipped,
-						  pstate->finaltup, nfinaltupatts, tupdesc,
-						  false, false, false,
-						  &continuescanflip, &opsktrig);
-
-		/*
-		 * Only start a new primitive index scan when finaltup has a required
-		 * unsatisfied inequality (unsatisfied in the opposite direction)
-		 */
-		Assert(all_required_satisfied != oppodir_inequality_sktrig);
-		if (unlikely(!continuescanflip &&
-					 so->keyData[opsktrig].sk_strategy != BTEqualStrategyNumber))
-		{
-			/*
-			 * It's possible for the same inequality to be unsatisfied by both
-			 * caller's tuple (in scan's direction) and finaltup (in the
-			 * opposite direction) due to _bt_check_compare's behavior with
-			 * NULLs
-			 */
-			Assert(opsktrig >= sktrig); /* not opsktrig > sktrig due to NULLs */
-
-			/*
-			 * Make sure that any non-required arrays are set to the first
-			 * array element for the current scan direction
-			 */
-			_bt_rewind_nonrequired_arrays(scan, dir);
-
-			goto new_prim_scan;
-		}
+		_bt_rewind_nonrequired_arrays(scan, dir);
+		goto new_prim_scan;
 	}
 
 	/*
@@ -3511,7 +3476,8 @@ _bt_checkkeys(IndexScanDesc scan, BTReadPageState *pstate, bool arrayKeys,
 		 *
 		 * Assert that the scan isn't in danger of becoming confused.
 		 */
-		Assert(!so->scanBehind && !pstate->prechecked && !pstate->firstmatch);
+		Assert(!so->scanBehind && !so->oppositeDirCheck);
+		Assert(!pstate->prechecked && !pstate->firstmatch);
 		Assert(!_bt_tuple_before_array_skeys(scan, dir, tuple, tupdesc,
 											 tupnatts, false, 0, NULL));
 	}
@@ -3621,6 +3587,47 @@ _bt_checkkeys(IndexScanDesc scan, BTReadPageState *pstate, bool arrayKeys,
 	 */
 	return _bt_advance_array_keys(scan, pstate, tuple, tupnatts, tupdesc,
 								  ikey, true);
+}
+
+/*
+ * Test whether an indextuple fails to satisfy an inequality required in the
+ * opposite direction only.
+ *
+ * Caller's finaltup tuple is the page high key (for forwards scans), or the
+ * first non-pivot tuple (for backwards scans).  Called during scans with
+ * required array keys and required opposite-direction inequalities.
+ *
+ * Returns false if an inequality scan key required in the opposite direction
+ * only isn't satisfied (and any earlier required scan keys are satisfied).
+ * Otherwise returns true.
+ *
+ * An unsatisfied inequality required in the opposite direction only might
+ * well enable skipping over many leaf pages, provided another _bt_first call
+ * takes place.  This type of unsatisfied inequality won't usually cause
+ * _bt_checkkeys to stop the scan to consider array advancement/starting a new
+ * primitive index scan.
+ */
+bool
+_bt_oppodir_checkkeys(IndexScanDesc scan, ScanDirection dir,
+					  IndexTuple finaltup)
+{
+	Relation	rel = scan->indexRelation;
+	TupleDesc	tupdesc = RelationGetDescr(rel);
+	BTScanOpaque so = (BTScanOpaque) scan->opaque;
+	int			nfinaltupatts = BTreeTupleGetNAtts(finaltup, rel);
+	bool		continuescan;
+	ScanDirection flipped = -dir;
+	int			ikey = 0;
+
+	Assert(so->numArrayKeys);
+
+	_bt_check_compare(scan, flipped, finaltup, nfinaltupatts, tupdesc,
+					  false, false, false, &continuescan, &ikey);
+
+	if (!continuescan && so->keyData[ikey].sk_strategy != BTEqualStrategyNumber)
+		return false;
+
+	return true;
 }
 
 /*

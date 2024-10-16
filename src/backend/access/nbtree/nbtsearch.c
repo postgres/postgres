@@ -1703,6 +1703,31 @@ _bt_readpage(IndexScanDesc scan, ScanDirection dir, OffsetNumber offnum,
 			ItemId		iid = PageGetItemId(page, P_HIKEY);
 
 			pstate.finaltup = (IndexTuple) PageGetItem(page, iid);
+
+			if (unlikely(so->oppositeDirCheck))
+			{
+				Assert(so->scanBehind);
+
+				/*
+				 * Last _bt_readpage call scheduled a recheck of finaltup for
+				 * required scan keys up to and including a > or >= scan key.
+				 *
+				 * _bt_checkkeys won't consider the scanBehind flag unless the
+				 * scan is stoppped by a scan key required in the current scan
+				 * direction.  We need this recheck so that we'll notice when
+				 * all tuples on this page are still before the _bt_first-wise
+				 * start of matches for the current set of array keys.
+				 */
+				if (!_bt_oppodir_checkkeys(scan, dir, pstate.finaltup))
+				{
+					/* Schedule another primitive index scan after all */
+					so->currPos.moreRight = false;
+					so->needPrimScan = true;
+					return false;
+				}
+
+				/* Deliberately don't unset scanBehind flag just yet */
+			}
 		}
 
 		/* load items[] in ascending order */
