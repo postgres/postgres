@@ -783,12 +783,14 @@ ProcessCopyOptions(ParseState *pstate,
 						"COPY FROM")));
 
 	/* Check force_notnull */
-	if (!opts_out->csv_mode && opts_out->force_notnull != NIL)
+	if (!opts_out->csv_mode && (opts_out->force_notnull != NIL ||
+								opts_out->force_notnull_all))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 		/*- translator: %s is the name of a COPY option, e.g. ON_ERROR */
 				 errmsg("COPY %s requires CSV mode", "FORCE_NOT_NULL")));
-	if (opts_out->force_notnull != NIL && !is_from)
+	if ((opts_out->force_notnull != NIL || opts_out->force_notnull_all) &&
+		!is_from)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 		/*- translator: first %s is the name of a COPY option, e.g. ON_ERROR,
@@ -797,13 +799,15 @@ ProcessCopyOptions(ParseState *pstate,
 						"COPY TO")));
 
 	/* Check force_null */
-	if (!opts_out->csv_mode && opts_out->force_null != NIL)
+	if (!opts_out->csv_mode && (opts_out->force_null != NIL ||
+								opts_out->force_null_all))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 		/*- translator: %s is the name of a COPY option, e.g. ON_ERROR */
 				 errmsg("COPY %s requires CSV mode", "FORCE_NULL")));
 
-	if (opts_out->force_null != NIL && !is_from)
+	if ((opts_out->force_null != NIL || opts_out->force_null_all) &&
+		!is_from)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 		/*- translator: first %s is the name of a COPY option, e.g. ON_ERROR,

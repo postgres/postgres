@@ -98,15 +98,27 @@ LINE 1: COPY x from stdin (on_error unsupported);
                            ^
 COPY x from stdin (format TEXT, force_quote(a));
 ERROR:  COPY FORCE_QUOTE requires CSV mode
+COPY x from stdin (format TEXT, force_quote *);
+ERROR:  COPY FORCE_QUOTE requires CSV mode
 COPY x from stdin (format CSV, force_quote(a));
+ERROR:  COPY FORCE_QUOTE cannot be used with COPY FROM
+COPY x from stdin (format CSV, force_quote *);
 ERROR:  COPY FORCE_QUOTE cannot be used with COPY FROM
 COPY x from stdin (format TEXT, force_not_null(a));
 ERROR:  COPY FORCE_NOT_NULL requires CSV mode
+COPY x from stdin (format TEXT, force_not_null *);
+ERROR:  COPY FORCE_NOT_NULL requires CSV mode
 COPY x to stdout (format CSV, force_not_null(a));
+ERROR:  COPY FORCE_NOT_NULL cannot be used with COPY TO
+COPY x to stdout (format CSV, force_not_null *);
 ERROR:  COPY FORCE_NOT_NULL cannot be used with COPY TO
 COPY x from stdin (format TEXT, force_null(a));
 ERROR:  COPY FORCE_NULL requires CSV mode
+COPY x from stdin (format TEXT, force_null *);
+ERROR:  COPY FORCE_NULL requires CSV mode
 COPY x to stdout (format CSV, force_null(a));
+ERROR:  COPY FORCE_NULL cannot be used with COPY TO
+COPY x to stdout (format CSV, force_null *);
 ERROR:  COPY FORCE_NULL cannot be used with COPY TO
 COPY x to stdout (format BINARY, on_error unsupported);
 ERROR:  COPY ON_ERROR cannot be used with COPY TO
