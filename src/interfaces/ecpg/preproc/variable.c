@@ -216,6 +216,9 @@ find_variable(const char *name)
 					case ']':
 						count--;
 						break;
+					case '\0':
+						mmfatal(PARSE_ERROR, "unmatched brace in variable \"%s\"", name);
+						break;
 					default:
 						break;
 				}

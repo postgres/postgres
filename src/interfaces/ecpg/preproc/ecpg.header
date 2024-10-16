@@ -432,7 +432,8 @@ adjust_outofscope_cursor_vars(struct cursor *cur)
 /* This tests whether the cursor was declared and opened in the same function. */
 #define SAMEFUNC(cur)	\
 	((cur->function == NULL) ||		\
-	 (cur->function != NULL && strcmp(cur->function, current_function) == 0))
+	 (cur->function != NULL && current_function != NULL && \
+	  strcmp(cur->function, current_function) == 0))
 
 static struct cursor *
 add_additional_variables(const char *name, bool insert)

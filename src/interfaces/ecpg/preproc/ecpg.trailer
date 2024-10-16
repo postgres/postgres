@@ -433,6 +433,7 @@ ECPGCursorStmt: DECLARE cursor_name cursor_options CURSOR opt_hold FOR prepared_
 		this->name = mm_strdup(@2);
 		this->function = (current_function ? mm_strdup(current_function) : NULL);
 		this->connection = connection ? mm_strdup(connection) : NULL;
+		this->opened = false;
 		this->command = mm_strdup(cat_str(6, "declare", cursor_marker, @3, "cursor", @5, "for $1"));
 		this->argsresult = NULL;
 		this->argsresult_oos = NULL;
