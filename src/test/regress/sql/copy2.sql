@@ -75,11 +75,17 @@ COPY x from stdin (format BINARY, null 'x');
 COPY x from stdin (format BINARY, on_error ignore);
 COPY x from stdin (on_error unsupported);
 COPY x from stdin (format TEXT, force_quote(a));
+COPY x from stdin (format TEXT, force_quote *);
 COPY x from stdin (format CSV, force_quote(a));
+COPY x from stdin (format CSV, force_quote *);
 COPY x from stdin (format TEXT, force_not_null(a));
+COPY x from stdin (format TEXT, force_not_null *);
 COPY x to stdout (format CSV, force_not_null(a));
+COPY x to stdout (format CSV, force_not_null *);
 COPY x from stdin (format TEXT, force_null(a));
+COPY x from stdin (format TEXT, force_null *);
 COPY x to stdout (format CSV, force_null(a));
+COPY x to stdout (format CSV, force_null *);
 COPY x to stdout (format BINARY, on_error unsupported);
 COPY x from stdin (log_verbosity unsupported);
 
