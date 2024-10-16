@@ -86,9 +86,9 @@ ERROR:  conflicting or redundant options
 LINE 1: COPY x from stdin (log_verbosity default, log_verbosity verb...
                                                   ^
 -- incorrect options
-COPY x to stdin (format BINARY, delimiter ',');
+COPY x from stdin (format BINARY, delimiter ',');
 ERROR:  cannot specify DELIMITER in BINARY mode
-COPY x to stdin (format BINARY, null 'x');
+COPY x from stdin (format BINARY, null 'x');
 ERROR:  cannot specify NULL in BINARY mode
 COPY x from stdin (format BINARY, on_error ignore);
 ERROR:  only ON_ERROR STOP is allowed in BINARY mode
@@ -96,26 +96,26 @@ COPY x from stdin (on_error unsupported);
 ERROR:  COPY ON_ERROR "unsupported" not recognized
 LINE 1: COPY x from stdin (on_error unsupported);
                            ^
-COPY x to stdin (format TEXT, force_quote(a));
+COPY x from stdin (format TEXT, force_quote(a));
 ERROR:  COPY FORCE_QUOTE requires CSV mode
 COPY x from stdin (format CSV, force_quote(a));
 ERROR:  COPY FORCE_QUOTE cannot be used with COPY FROM
-COPY x to stdout (format TEXT, force_not_null(a));
+COPY x from stdin (format TEXT, force_not_null(a));
 ERROR:  COPY FORCE_NOT_NULL requires CSV mode
-COPY x to stdin (format CSV, force_not_null(a));
+COPY x to stdout (format CSV, force_not_null(a));
 ERROR:  COPY FORCE_NOT_NULL cannot be used with COPY TO
-COPY x to stdout (format TEXT, force_null(a));
+COPY x from stdin (format TEXT, force_null(a));
 ERROR:  COPY FORCE_NULL requires CSV mode
-COPY x to stdin (format CSV, force_null(a));
+COPY x to stdout (format CSV, force_null(a));
 ERROR:  COPY FORCE_NULL cannot be used with COPY TO
-COPY x to stdin (format BINARY, on_error unsupported);
+COPY x to stdout (format BINARY, on_error unsupported);
 ERROR:  COPY ON_ERROR cannot be used with COPY TO
-LINE 1: COPY x to stdin (format BINARY, on_error unsupported);
-                                        ^
-COPY x to stdout (log_verbosity unsupported);
+LINE 1: COPY x to stdout (format BINARY, on_error unsupported);
+                                         ^
+COPY x from stdin (log_verbosity unsupported);
 ERROR:  COPY LOG_VERBOSITY "unsupported" not recognized
-LINE 1: COPY x to stdout (log_verbosity unsupported);
-                          ^
+LINE 1: COPY x from stdin (log_verbosity unsupported);
+                           ^
 -- too many columns in column list: should fail
 COPY x (a, b, c, d, e, d, c) from stdin;
 ERROR:  column "d" specified more than once

@@ -70,18 +70,18 @@ COPY x from stdin (on_error ignore, on_error ignore);
 COPY x from stdin (log_verbosity default, log_verbosity verbose);
 
 -- incorrect options
-COPY x to stdin (format BINARY, delimiter ',');
-COPY x to stdin (format BINARY, null 'x');
+COPY x from stdin (format BINARY, delimiter ',');
+COPY x from stdin (format BINARY, null 'x');
 COPY x from stdin (format BINARY, on_error ignore);
 COPY x from stdin (on_error unsupported);
-COPY x to stdin (format TEXT, force_quote(a));
+COPY x from stdin (format TEXT, force_quote(a));
 COPY x from stdin (format CSV, force_quote(a));
-COPY x to stdout (format TEXT, force_not_null(a));
-COPY x to stdin (format CSV, force_not_null(a));
-COPY x to stdout (format TEXT, force_null(a));
-COPY x to stdin (format CSV, force_null(a));
-COPY x to stdin (format BINARY, on_error unsupported);
-COPY x to stdout (log_verbosity unsupported);
+COPY x from stdin (format TEXT, force_not_null(a));
+COPY x to stdout (format CSV, force_not_null(a));
+COPY x from stdin (format TEXT, force_null(a));
+COPY x to stdout (format CSV, force_null(a));
+COPY x to stdout (format BINARY, on_error unsupported);
+COPY x from stdin (log_verbosity unsupported);
 
 -- too many columns in column list: should fail
 COPY x (a, b, c, d, e, d, c) from stdin;
