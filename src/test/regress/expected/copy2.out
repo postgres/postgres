@@ -78,21 +78,21 @@ ERROR:  conflicting or redundant options
 LINE 1: COPY x from stdin (encoding 'sql_ascii', encoding 'sql_ascii...
                                                  ^
 -- incorrect options
-COPY x to stdin (format BINARY, delimiter ',');
+COPY x from stdin (format BINARY, delimiter ',');
 ERROR:  cannot specify DELIMITER in BINARY mode
-COPY x to stdin (format BINARY, null 'x');
+COPY x from stdin (format BINARY, null 'x');
 ERROR:  cannot specify NULL in BINARY mode
-COPY x to stdin (format TEXT, force_quote(a));
+COPY x from stdin (format TEXT, force_quote(a));
 ERROR:  COPY force quote available only in CSV mode
 COPY x from stdin (format CSV, force_quote(a));
 ERROR:  COPY force quote only available using COPY TO
-COPY x to stdout (format TEXT, force_not_null(a));
+COPY x from stdin (format TEXT, force_not_null(a));
 ERROR:  COPY force not null available only in CSV mode
-COPY x to stdin (format CSV, force_not_null(a));
+COPY x to stdout (format CSV, force_not_null(a));
 ERROR:  COPY force not null only available using COPY FROM
-COPY x to stdout (format TEXT, force_null(a));
+COPY x from stdin (format TEXT, force_null(a));
 ERROR:  COPY force null available only in CSV mode
-COPY x to stdin (format CSV, force_null(a));
+COPY x to stdout (format CSV, force_null(a));
 ERROR:  COPY force null only available using COPY FROM
 -- too many columns in column list: should fail
 COPY x (a, b, c, d, e, d, c) from stdin;

@@ -68,14 +68,14 @@ COPY x from stdin (convert_selectively (a), convert_selectively (b));
 COPY x from stdin (encoding 'sql_ascii', encoding 'sql_ascii');
 
 -- incorrect options
-COPY x to stdin (format BINARY, delimiter ',');
-COPY x to stdin (format BINARY, null 'x');
-COPY x to stdin (format TEXT, force_quote(a));
+COPY x from stdin (format BINARY, delimiter ',');
+COPY x from stdin (format BINARY, null 'x');
+COPY x from stdin (format TEXT, force_quote(a));
 COPY x from stdin (format CSV, force_quote(a));
-COPY x to stdout (format TEXT, force_not_null(a));
-COPY x to stdin (format CSV, force_not_null(a));
-COPY x to stdout (format TEXT, force_null(a));
-COPY x to stdin (format CSV, force_null(a));
+COPY x from stdin (format TEXT, force_not_null(a));
+COPY x to stdout (format CSV, force_not_null(a));
+COPY x from stdin (format TEXT, force_null(a));
+COPY x to stdout (format CSV, force_null(a));
 
 -- too many columns in column list: should fail
 COPY x (a, b, c, d, e, d, c) from stdin;
