@@ -2996,7 +2996,7 @@ expression_tree_mutator_impl(Node *node,
 		case T_SortGroupClause:
 		case T_CTESearchClause:
 		case T_MergeSupportFunc:
-			return (Node *) copyObject(node);
+			return copyObject(node);
 		case T_WithCheckOption:
 			{
 				WithCheckOption *wco = (WithCheckOption *) node;
@@ -3604,7 +3604,7 @@ expression_tree_mutator_impl(Node *node,
 			break;
 		case T_PartitionPruneStepCombine:
 			/* no expression sub-nodes */
-			return (Node *) copyObject(node);
+			return copyObject(node);
 		case T_JoinExpr:
 			{
 				JoinExpr   *join = (JoinExpr *) node;

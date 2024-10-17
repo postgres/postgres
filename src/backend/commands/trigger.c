@@ -1169,7 +1169,7 @@ CreateTriggerFiringOn(CreateTrigStmt *stmt, const char *queryString,
 			 * Initialize our fabricated parse node by copying the original
 			 * one, then resetting fields that we pass separately.
 			 */
-			childStmt = (CreateTrigStmt *) copyObject(stmt);
+			childStmt = copyObject(stmt);
 			childStmt->funcname = NIL;
 			childStmt->whenClause = NULL;
 

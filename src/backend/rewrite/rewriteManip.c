@@ -1715,7 +1715,7 @@ ReplaceVarsFromTargetList_callback(Var *var,
 				break;
 
 			case REPLACEVARS_CHANGE_VARNO:
-				var = (Var *) copyObject(var);
+				var = copyObject(var);
 				var->varno = rcon->nomatch_varno;
 				/* we leave the syntactic referent alone */
 				return (Node *) var;
