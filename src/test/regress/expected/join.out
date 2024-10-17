@@ -2359,6 +2359,61 @@ where b.f1 = t.thousand and a.f1 = b.f1 and (a.f1+b.f1+999) = t.tenthous;
 (0 rows)
 
 --
+-- Test hash joins with multiple hash keys and subplans.
+--
+-- First ensure we get a hash join with multiple hash keys.
+explain (costs off)
+select t1.unique1,t2.unique1 from tenk1 t1
+inner join tenk1 t2 on t1.two = t2.two
+  and t1.unique1 = (select min(unique1) from tenk1
+                    where t2.unique1=unique1)
+where t1.unique1 < 10 and t2.unique1 < 10
+order by t1.unique1;
+                                             QUERY PLAN                                             
+----------------------------------------------------------------------------------------------------
+ Sort
+   Sort Key: t1.unique1
+   ->  Hash Join
+         Hash Cond: ((t1.two = t2.two) AND (t1.unique1 = (SubPlan 2)))
+         ->  Bitmap Heap Scan on tenk1 t1
+               Recheck Cond: (unique1 < 10)
+               ->  Bitmap Index Scan on tenk1_unique1
+                     Index Cond: (unique1 < 10)
+         ->  Hash
+               ->  Bitmap Heap Scan on tenk1 t2
+                     Recheck Cond: (unique1 < 10)
+                     ->  Bitmap Index Scan on tenk1_unique1
+                           Index Cond: (unique1 < 10)
+               SubPlan 2
+                 ->  Result
+                       InitPlan 1
+                         ->  Limit
+                               ->  Index Only Scan using tenk1_unique1 on tenk1
+                                     Index Cond: ((unique1 IS NOT NULL) AND (unique1 = t2.unique1))
+(19 rows)
+
+-- Ensure we get the expected result
+select t1.unique1,t2.unique1 from tenk1 t1
+inner join tenk1 t2 on t1.two = t2.two
+  and t1.unique1 = (select min(unique1) from tenk1
+                    where t2.unique1=unique1)
+where t1.unique1 < 10 and t2.unique1 < 10
+order by t1.unique1;
+ unique1 | unique1 
+---------+---------
+       0 |       0
+       1 |       1
+       2 |       2
+       3 |       3
+       4 |       4
+       5 |       5
+       6 |       6
+       7 |       7
+       8 |       8
+       9 |       9
+(10 rows)
+
+--
 -- checks for correct handling of quals in multiway outer joins
 --
 explain (costs off)

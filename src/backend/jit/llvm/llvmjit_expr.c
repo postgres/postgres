@@ -1940,13 +1940,16 @@ llvm_compile_expr(ExprState *state)
 					{
 						LLVMValueRef v_tmp1;
 						LLVMValueRef v_tmp2;
+						LLVMValueRef tmp;
+
+						tmp = l_ptr_const(&op->d.hashdatum.iresult->value,
+										  l_ptr(TypeSizeT));
 
 						/*
 						 * Fetch the previously hashed value from where the
-						 * EEOP_HASHDATUM_FIRST operation stored it.
+						 * previous hash operation stored it.
 						 */
-						v_prevhash = l_load(b, TypeSizeT, v_resvaluep,
-											"prevhash");
+						v_prevhash = l_load(b, TypeSizeT, tmp, "prevhash");
 
 						/*
 						 * Rotate bits left by 1 bit.  Be careful not to
@@ -2062,13 +2065,16 @@ llvm_compile_expr(ExprState *state)
 					{
 						LLVMValueRef v_tmp1;
 						LLVMValueRef v_tmp2;
+						LLVMValueRef tmp;
+
+						tmp = l_ptr_const(&op->d.hashdatum.iresult->value,
+										  l_ptr(TypeSizeT));
 
 						/*
 						 * Fetch the previously hashed value from where the
-						 * EEOP_HASHDATUM_FIRST_STRICT operation stored it.
+						 * previous hash operation stored it.
 						 */
-						v_prevhash = l_load(b, TypeSizeT, v_resvaluep,
-											"prevhash");
+						v_prevhash = l_load(b, TypeSizeT, tmp, "prevhash");
 
 						/*
 						 * Rotate bits left by 1 bit.  Be careful not to

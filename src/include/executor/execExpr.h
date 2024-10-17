@@ -580,6 +580,7 @@ typedef struct ExprEvalStep
 			/* faster to access without additional indirection: */
 			PGFunction	fn_addr;	/* actual call address */
 			int			jumpdone;	/* jump here on null */
+			NullableDatum *iresult; /* intermediate hash result */
 		}			hashdatum;
 
 		/* for EEOP_CONVERT_ROWTYPE */

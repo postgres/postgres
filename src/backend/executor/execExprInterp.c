@@ -1600,10 +1600,11 @@ ExecInterpExpr(ExprState *state, ExprContext *econtext, bool *isnull)
 		EEO_CASE(EEOP_HASHDATUM_NEXT32)
 		{
 			FunctionCallInfo fcinfo = op->d.hashdatum.fcinfo_data;
-			uint32		existing_hash = DatumGetUInt32(*op->resvalue);
+			uint32		existinghash;
 
+			existinghash = DatumGetUInt32(op->d.hashdatum.iresult->value);
 			/* combine successive hash values by rotating */
-			existing_hash = pg_rotate_left32(existing_hash, 1);
+			existinghash = pg_rotate_left32(existinghash, 1);
 
 			/* leave the hash value alone on NULL inputs */
 			if (!fcinfo->args[0].isnull)
@@ -1612,10 +1613,10 @@ ExecInterpExpr(ExprState *state, ExprContext *econtext, bool *isnull)
 
 				/* execute hash func and combine with previous hash value */
 				hashvalue = DatumGetUInt32(op->d.hashdatum.fn_addr(fcinfo));
-				existing_hash = existing_hash ^ hashvalue;
+				existinghash = existinghash ^ hashvalue;
 			}
 
-			*op->resvalue = UInt32GetDatum(existing_hash);
+			*op->resvalue = UInt32GetDatum(existinghash);
 			*op->resnull = false;
 
 			EEO_NEXT();
@@ -1638,15 +1639,16 @@ ExecInterpExpr(ExprState *state, ExprContext *econtext, bool *isnull)
 			}
 			else
 			{
-				uint32		existing_hash = DatumGetUInt32(*op->resvalue);
+				uint32		existinghash;
 				uint32		hashvalue;
 
+				existinghash = DatumGetUInt32(op->d.hashdatum.iresult->value);
 				/* combine successive hash values by rotating */
-				existing_hash = pg_rotate_left32(existing_hash, 1);
+				existinghash = pg_rotate_left32(existinghash, 1);
 
 				/* execute hash func and combine with previous hash value */
 				hashvalue = DatumGetUInt32(op->d.hashdatum.fn_addr(fcinfo));
-				*op->resvalue = UInt32GetDatum(existing_hash ^ hashvalue);
+				*op->resvalue = UInt32GetDatum(existinghash ^ hashvalue);
 				*op->resnull = false;
 			}
 

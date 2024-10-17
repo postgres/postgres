@@ -3996,6 +3996,7 @@ ExecBuildHash32Expr(TupleDesc desc, const TupleTableSlotOps *ops,
 {
 	ExprState  *state = makeNode(ExprState);
 	ExprEvalStep scratch = {0};
+	NullableDatum *iresult = NULL;
 	List	   *adjust_jumps = NIL;
 	ListCell   *lc;
 	ListCell   *lc2;
@@ -4008,6 +4009,14 @@ ExecBuildHash32Expr(TupleDesc desc, const TupleTableSlotOps *ops,
 
 	/* Insert setup steps as needed. */
 	ExecCreateExprSetupSteps(state, (Node *) hash_exprs);
+
+	/*
+	 * When hashing more than 1 expression or if we have an init value, we
+	 * need somewhere to store the intermediate hash value so that it's
+	 * available to be combined with the result of subsequent hashing.
+	 */
+	if (list_length(hash_exprs) > 1 || init_value != 0)
+		iresult = palloc(sizeof(NullableDatum));
 
 	if (init_value == 0)
 	{
@@ -4024,8 +4033,8 @@ ExecBuildHash32Expr(TupleDesc desc, const TupleTableSlotOps *ops,
 		/* Set up operation to set the initial value. */
 		scratch.opcode = EEOP_HASHDATUM_SET_INITVAL;
 		scratch.d.hashdatum_initvalue.init_value = UInt32GetDatum(init_value);
-		scratch.resvalue = &state->resvalue;
-		scratch.resnull = &state->resnull;
+		scratch.resvalue = &iresult->value;
+		scratch.resnull = &iresult->isnull;
 
 		ExprEvalPushStep(state, &scratch);
 
@@ -4063,8 +4072,26 @@ ExecBuildHash32Expr(TupleDesc desc, const TupleTableSlotOps *ops,
 						&fcinfo->args[0].value,
 						&fcinfo->args[0].isnull);
 
-		scratch.resvalue = &state->resvalue;
-		scratch.resnull = &state->resnull;
+		if (i == list_length(hash_exprs) - 1)
+		{
+			/* the result for hashing the final expr is stored in the state */
+			scratch.resvalue = &state->resvalue;
+			scratch.resnull = &state->resnull;
+		}
+		else
+		{
+			Assert(iresult != NULL);
+
+			/* intermediate values are stored in an intermediate result */
+			scratch.resvalue = &iresult->value;
+			scratch.resnull = &iresult->isnull;
+		}
+
+		/*
+		 * NEXT32 opcodes need to look at the intermediate result.  We might
+		 * as well just set this for all ops.  FIRSTs won't look at it.
+		 */
+		scratch.d.hashdatum.iresult = iresult;
 
 		/* Initialize function call parameter structure too */
 		InitFunctionCallInfoData(*fcinfo, finfo, 1, inputcollid, NULL, NULL);
