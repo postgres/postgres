@@ -233,7 +233,8 @@ find_variable(const char *name)
 				p = find_simple(name);
 				if (p == NULL)
 					mmfatal(PARSE_ERROR, "variable \"%s\" is not declared", name);
-
+				if (p->type->type != ECPGt_array)
+					mmfatal(PARSE_ERROR, "variable \"%s\" is not a pointer", name);
 				*next = c;
 				switch (p->type->u.element->type)
 				{

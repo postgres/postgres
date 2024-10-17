@@ -43,12 +43,15 @@ statement: ecpgstart at toplevel_stmt ';'
 	}
 	| '}'
 	{
-		remove_typedefs(braces_open);
-		remove_variables(braces_open--);
-		if (braces_open == 0)
+		if (braces_open > 0)
 		{
-			free(current_function);
-			current_function = NULL;
+			remove_typedefs(braces_open);
+			remove_variables(braces_open);
+			if (--braces_open == 0)
+			{
+				free(current_function);
+				current_function = NULL;
+			}
 		}
 		fputs("}", base_yyout);
 	}
