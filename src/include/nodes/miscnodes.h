@@ -36,9 +36,10 @@
  * After calling code that might report an error this way, check
  * error_occurred to see if an error happened.  If so, and if details_wanted
  * is true, error_data has been filled with error details (stored in the
- * callee's memory context!).  FreeErrorData() can be called to release
- * error_data, although that step is typically not necessary if the called
- * code was run in a short-lived context.
+ * callee's memory context!).  The ErrorData can be modified (e.g. downgraded
+ * to a WARNING) and reported with ThrowErrorData().  FreeErrorData() can be
+ * called to release error_data, although that step is typically not necessary
+ * if the called code was run in a short-lived context.
  */
 typedef struct ErrorSaveContext
 {
