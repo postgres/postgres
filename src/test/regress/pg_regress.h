@@ -18,8 +18,6 @@
 #define INVALID_PID INVALID_HANDLE_VALUE
 #endif
 
-struct StringInfoData;			/* avoid including stringinfo.h here */
-
 /* simple list of strings */
 typedef struct _stringlist
 {
