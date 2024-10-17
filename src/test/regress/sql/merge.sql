@@ -1727,7 +1727,7 @@ MERGE INTO tgt USING src ON tgt.a IS NOT DISTINCT FROM src.a
 SELECT * FROM tgt;
 
 DROP TABLE src, tgt;
- 
+
 --
 -- test for bug #18634 (wrong varnullingrels error)
 --
