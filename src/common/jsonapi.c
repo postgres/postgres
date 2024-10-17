@@ -1536,7 +1536,7 @@ json_lex(JsonLexContext *lex)
 		jsonapi_StrValType *ptok = &(lex->inc_state->partial_token);
 		size_t		added = 0;
 		bool		tok_done = false;
-		JsonLexContext dummy_lex;
+		JsonLexContext dummy_lex = {0};
 		JsonParseErrorType partial_result;
 
 		if (ptok->data[0] == '"')
