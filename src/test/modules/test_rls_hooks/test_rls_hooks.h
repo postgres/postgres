@@ -14,7 +14,7 @@
 #ifndef TEST_RLS_HOOKS_H
 #define TEST_RLS_HOOKS_H
 
-#include <rewrite/rowsecurity.h>
+#include "rewrite/rowsecurity.h"
 
 /* Return set of permissive hooks based on CmdType and Relation */
 extern List *test_rls_hooks_permissive(CmdType cmdtype, Relation relation);
