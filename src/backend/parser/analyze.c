@@ -3077,7 +3077,7 @@ transformCreateTableAsStmt(ParseState *pstate, CreateTableAsStmt *stmt)
 		 * in the IntoClause because that's where intorel_startup() can
 		 * conveniently get it from.
 		 */
-		stmt->into->viewQuery = (Node *) copyObject(query);
+		stmt->into->viewQuery = copyObject(query);
 	}
 
 	/* represent the command as a utility Query */

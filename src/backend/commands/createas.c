@@ -133,7 +133,7 @@ create_ctas_internal(List *attrList, IntoClause *into)
 	if (is_matview)
 	{
 		/* StoreViewQuery scribbles on tree, so make a copy */
-		Query	   *query = (Query *) copyObject(into->viewQuery);
+		Query	   *query = copyObject(into->viewQuery);
 
 		StoreViewQuery(intoRelationAddr.objectId, query, false);
 		CommandCounterIncrement();
