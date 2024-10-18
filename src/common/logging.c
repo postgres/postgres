@@ -120,8 +120,9 @@ pg_logging_init(const char *argv0)
 			if (colors)
 			{
 				char	   *token;
+				char	   *cp = colors;
 
-				while ((token = strsep(&colors, ":")))
+				while ((token = strsep(&cp, ":")))
 				{
 					char	   *e = strchr(token, '=');
 
