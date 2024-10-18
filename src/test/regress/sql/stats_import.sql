@@ -95,4 +95,29 @@ SELECT
     pg_catalog.pg_clear_relation_stats(
         'stats_import.testview'::regclass);
 
+--  relpages may be -1 for partitioned tables
+CREATE TABLE stats_import.part_parent ( i integer ) PARTITION BY RANGE(i);
+CREATE TABLE stats_import.part_child_1
+  PARTITION OF stats_import.part_parent
+  FOR VALUES FROM (0) TO (10);
+
+ANALYZE stats_import.part_parent;
+
+SELECT relpages
+FROM pg_class
+WHERE oid = 'stats_import.part_parent'::regclass;
+
+-- although partitioned tables have no storage, setting relpages to a
+-- positive value is still allowed
+SELECT
+    pg_catalog.pg_set_relation_stats(
+        relation => 'stats_import.part_parent'::regclass,
+        relpages => 2::integer);
+
+-- nothing stops us from setting it to -1
+SELECT
+    pg_catalog.pg_set_relation_stats(
+        relation => 'stats_import.part_parent'::regclass,
+        relpages => -1::integer);
+
 DROP SCHEMA stats_import CASCADE;

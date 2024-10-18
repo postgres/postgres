@@ -99,11 +99,16 @@ relation_statistics_update(FunctionCallInfo fcinfo, int elevel)
 	{
 		int32		relpages = PG_GETARG_INT32(RELPAGES_ARG);
 
-		if (relpages < 0)
+		/*
+		 * Partitioned tables may have relpages=-1. Note: for relations with
+		 * no storage, relpages=-1 is not used consistently, but must be
+		 * supported here.
+		 */
+		if (relpages < -1)
 		{
 			ereport(elevel,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("relpages cannot be < 0")));
+					 errmsg("relpages cannot be < -1")));
 			table_close(crel, RowExclusiveLock);
 			return false;
 		}

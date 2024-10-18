@@ -30197,7 +30197,7 @@ DETAIL:  Make sure pg_wal_replay_wait() isn't called within a transaction with a
         </para>
         <para>
          The value of <structfield>relpages</structfield> must be greater than
-         or equal to <literal>0</literal>,
+         or equal to <literal>-1</literal>,
          <structfield>reltuples</structfield> must be greater than or equal to
          <literal>-1.0</literal>, and <structfield>relallvisible</structfield>
          must be greater than or equal to <literal>0</literal>.
