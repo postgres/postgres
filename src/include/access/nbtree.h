@@ -925,13 +925,13 @@ typedef BTVacuumPostingData *BTVacuumPosting;
  * Index scans work a page at a time: we pin and read-lock the page, identify
  * all the matching items on the page and save them in BTScanPosData, then
  * release the read-lock while returning the items to the caller for
- * processing.  This approach minimizes lock/unlock traffic.  Note that we
- * keep the pin on the index page until the caller is done with all the items
- * (this is needed for VACUUM synchronization, see nbtree/README).  When we
- * are ready to step to the next page, if the caller has told us any of the
- * items were killed, we re-lock the page to mark them killed, then unlock.
- * Finally we drop the pin and step to the next page in the appropriate
- * direction.
+ * processing.  This approach minimizes lock/unlock traffic.  We must always
+ * drop the lock to make it okay for caller to process the returned items.
+ * Whether or not we can also release the pin during this window will vary.
+ * We drop the pin eagerly (when safe) to avoid blocking progress by VACUUM
+ * (see nbtree/README section about making concurrent TID recycling safe).
+ * We'll always release both the lock and the pin on the current page before
+ * moving on to its sibling page.
  *
  * If we are doing an index-only scan, we save the entire IndexTuple for each
  * matched item, otherwise only its heap TID and offset.  The IndexTuples go
@@ -950,28 +950,15 @@ typedef struct BTScanPosItem	/* what we remember about each match */
 
 typedef struct BTScanPosData
 {
-	Buffer		buf;			/* if valid, the buffer is pinned */
+	Buffer		buf;			/* currPage buf (invalid means unpinned) */
 
-	XLogRecPtr	lsn;			/* pos in the WAL stream when page was read */
+	/* page details as of the saved position's call to _bt_readpage */
 	BlockNumber currPage;		/* page referenced by items array */
-	BlockNumber nextPage;		/* page's right link when we scanned it */
+	BlockNumber prevPage;		/* currPage's left link */
+	BlockNumber nextPage;		/* currPage's right link */
+	XLogRecPtr	lsn;			/* currPage's LSN */
 
-	/*
-	 * moreLeft and moreRight track whether we think there may be matching
-	 * index entries to the left and right of the current page, respectively.
-	 * We can clear the appropriate one of these flags when _bt_checkkeys()
-	 * sets BTReadPageState.continuescan = false.
-	 */
-	bool		moreLeft;
-	bool		moreRight;
-
-	/*
-	 * Direction of the scan at the time that _bt_readpage was called.
-	 *
-	 * Used by btrestrpos to "restore" the scan's array keys by resetting each
-	 * array to its first element's value (first in this scan direction). This
-	 * avoids the need to directly track the array keys in btmarkpos.
-	 */
+	/* scan direction for the saved position's call to _bt_readpage */
 	ScanDirection dir;
 
 	/*
@@ -979,6 +966,13 @@ typedef struct BTScanPosData
 	 * location in the associated tuple storage workspace.
 	 */
 	int			nextTupleOffset;
+
+	/*
+	 * moreLeft and moreRight track whether we think there may be matching
+	 * index entries to the left and right of the current page, respectively.
+	 */
+	bool		moreLeft;
+	bool		moreRight;
 
 	/*
 	 * The items array is always ordered in index order (ie, increasing
@@ -1021,11 +1015,8 @@ typedef BTScanPosData *BTScanPos;
 )
 #define BTScanPosInvalidate(scanpos) \
 	do { \
-		(scanpos).currPage = InvalidBlockNumber; \
-		(scanpos).nextPage = InvalidBlockNumber; \
 		(scanpos).buf = InvalidBuffer; \
-		(scanpos).lsn = InvalidXLogRecPtr; \
-		(scanpos).nextTupleOffset = 0; \
+		(scanpos).currPage = InvalidBlockNumber; \
 	} while (0)
 
 /* We need one of these for each equality-type SK_SEARCHARRAY scan key */
@@ -1091,7 +1082,6 @@ typedef struct BTReadPageState
 	OffsetNumber minoff;		/* Lowest non-pivot tuple's offset */
 	OffsetNumber maxoff;		/* Highest non-pivot tuple's offset */
 	IndexTuple	finaltup;		/* Needed by scans with array keys */
-	BlockNumber prev_scan_page; /* previous _bt_parallel_release block */
 	Page		page;			/* Page being read */
 
 	/* Per-tuple input parameters, set by _bt_readpage for _bt_checkkeys */
@@ -1192,12 +1182,14 @@ extern int	btgettreeheight(Relation rel);
 /*
  * prototypes for internal functions in nbtree.c
  */
-extern bool _bt_parallel_seize(IndexScanDesc scan, BlockNumber *pageno,
-							   bool first);
-extern void _bt_parallel_release(IndexScanDesc scan, BlockNumber scan_page);
+extern bool _bt_parallel_seize(IndexScanDesc scan, BlockNumber *next_scan_page,
+							   BlockNumber *last_curr_page, bool first);
+extern void _bt_parallel_release(IndexScanDesc scan,
+								 BlockNumber next_scan_page,
+								 BlockNumber curr_page);
 extern void _bt_parallel_done(IndexScanDesc scan);
 extern void _bt_parallel_primscan_schedule(IndexScanDesc scan,
-										   BlockNumber prev_scan_page);
+										   BlockNumber curr_page);
 
 /*
  * prototypes for functions in nbtdedup.c
