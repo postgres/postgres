@@ -2837,7 +2837,7 @@ sub lsn
 
 =pod
 
-=item $node->wait_for_event(wait_event_name, backend_type)
+=item $node->wait_for_event(backend_type, wait_event_name)
 
 Poll pg_stat_activity until backend_type reaches wait_event_name.
 
