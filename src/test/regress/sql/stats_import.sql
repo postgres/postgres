@@ -13,7 +13,7 @@ CREATE TABLE stats_import.test(
     comp stats_import.complex_type,
     arange int4range,
     tags text[]
-);
+) WITH (autovacuum_enabled = false);
 
 -- starting stats
 SELECT relpages, reltuples, relallvisible
@@ -99,7 +99,8 @@ SELECT
 CREATE TABLE stats_import.part_parent ( i integer ) PARTITION BY RANGE(i);
 CREATE TABLE stats_import.part_child_1
   PARTITION OF stats_import.part_parent
-  FOR VALUES FROM (0) TO (10);
+  FOR VALUES FROM (0) TO (10)
+  WITH (autovacuum_enabled = false);
 
 ANALYZE stats_import.part_parent;
 
