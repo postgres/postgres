@@ -3,7 +3,7 @@
  * pg_authid.h
  *	  definition of the "authorization identifier" system catalog (pg_authid)
  *
- *	  pg_shadow and pg_group are now publicly accessible views on pg_authid.
+ *	  pg_shadow and pg_group are now views on pg_authid.
  *
  *
  * Portions Copyright (c) 1996-2024, PostgreSQL Global Development Group
