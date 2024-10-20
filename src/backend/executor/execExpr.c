@@ -2294,6 +2294,8 @@ ExecInitExprRec(Expr *node, ExprState *state,
 			{
 				JsonValueExpr *jve = (JsonValueExpr *) node;
 
+				Assert(jve->raw_expr != NULL);
+				ExecInitExprRec(jve->raw_expr, state, resv, resnull);
 				Assert(jve->formatted_expr != NULL);
 				ExecInitExprRec(jve->formatted_expr, state, resv, resnull);
 				break;

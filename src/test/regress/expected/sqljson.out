@@ -951,3 +951,52 @@ CREATE OR REPLACE VIEW public.is_json_view AS
     '{}'::text IS JSON OBJECT WITH UNIQUE KEYS AS object
    FROM generate_series(1, 3) i(i)
 DROP VIEW is_json_view;
+-- Bug #18657: JsonValueExpr.raw_expr was not initialized in ExecInitExprRec()
+-- causing the Aggrefs contained in it to also not be initialized, which led
+-- to a crash in ExecBuildAggTrans() as mentioned in the bug report:
+-- https://postgr.es/m/18657-1b90ccce2b16bdb8@postgresql.org
+CREATE FUNCTION volatile_one() RETURNS int AS $$ BEGIN RETURN 1; END; $$ LANGUAGE plpgsql VOLATILE;
+CREATE FUNCTION stable_one() RETURNS int AS $$ BEGIN RETURN 1; END; $$ LANGUAGE plpgsql STABLE;
+EXPLAIN (VERBOSE, COSTS OFF) SELECT JSON_OBJECT('a': JSON_OBJECTAGG('b': volatile_one() RETURNING text) FORMAT JSON);
+                                                 QUERY PLAN                                                  
+-------------------------------------------------------------------------------------------------------------
+ Aggregate
+   Output: JSON_OBJECT('a' : JSON_OBJECTAGG('b' : volatile_one() RETURNING text) FORMAT JSON RETURNING json)
+   ->  Result
+(3 rows)
+
+SELECT JSON_OBJECT('a': JSON_OBJECTAGG('b': volatile_one() RETURNING text) FORMAT JSON);
+     json_object     
+---------------------
+ {"a" : { "b" : 1 }}
+(1 row)
+
+EXPLAIN (VERBOSE, COSTS OFF) SELECT JSON_OBJECT('a': JSON_OBJECTAGG('b': stable_one() RETURNING text) FORMAT JSON);
+                                                QUERY PLAN                                                 
+-----------------------------------------------------------------------------------------------------------
+ Aggregate
+   Output: JSON_OBJECT('a' : JSON_OBJECTAGG('b' : stable_one() RETURNING text) FORMAT JSON RETURNING json)
+   ->  Result
+(3 rows)
+
+SELECT JSON_OBJECT('a': JSON_OBJECTAGG('b': stable_one() RETURNING text) FORMAT JSON);
+     json_object     
+---------------------
+ {"a" : { "b" : 1 }}
+(1 row)
+
+EXPLAIN (VERBOSE, COSTS OFF) SELECT JSON_OBJECT('a': JSON_OBJECTAGG('b': 1 RETURNING text) FORMAT JSON);
+                                           QUERY PLAN                                           
+------------------------------------------------------------------------------------------------
+ Aggregate
+   Output: JSON_OBJECT('a' : JSON_OBJECTAGG('b' : 1 RETURNING text) FORMAT JSON RETURNING json)
+   ->  Result
+(3 rows)
+
+SELECT JSON_OBJECT('a': JSON_OBJECTAGG('b': 1 RETURNING text) FORMAT JSON);
+     json_object     
+---------------------
+ {"a" : { "b" : 1 }}
+(1 row)
+
+DROP FUNCTION volatile_one, stable_one;
