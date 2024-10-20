@@ -87,10 +87,11 @@ ALTER INDEX ALL IN TABLESPACE <replaceable class="parameter">name</replaceable> 
    </varlistentry>
 
    <varlistentry>
-    <term><literal>ATTACH PARTITION</literal></term>
+    <term><literal>ATTACH PARTITION <replaceable class="parameter">index_name</replaceable></literal></term>
     <listitem>
      <para>
-      Causes the named index to become attached to the altered index.
+      Causes the named index (possibly schema-qualified) to become attached
+      to the altered index.
       The named index must be on a partition of the table containing the
       index being altered, and have an equivalent definition.  An attached
       index cannot be dropped by itself, and will automatically be dropped
