@@ -2915,13 +2915,25 @@ eval_const_expressions_mutator(Node *node,
 		case T_JsonValueExpr:
 			{
 				JsonValueExpr *jve = (JsonValueExpr *) node;
-				Node	   *formatted;
+				Node	   *raw_expr = (Node *) jve->raw_expr;
+				Node	   *formatted_expr = (Node *) jve->formatted_expr;
 
-				formatted = eval_const_expressions_mutator((Node *) jve->formatted_expr,
-														   context);
-				if (formatted && IsA(formatted, Const))
-					return formatted;
-				break;
+				/*
+				 * If we can fold formatted_expr to a constant, we can elide
+				 * the JsonValueExpr altogether.  Otherwise we must process
+				 * raw_expr too.  But JsonFormat is a flat node and requires
+				 * no simplification, only copying.
+				 */
+				formatted_expr = eval_const_expressions_mutator(formatted_expr,
+																context);
+				if (formatted_expr && IsA(formatted_expr, Const))
+					return formatted_expr;
+
+				raw_expr = eval_const_expressions_mutator(raw_expr, context);
+
+				return (Node *) makeJsonValueExpr((Expr *) raw_expr,
+												  (Expr *) formatted_expr,
+												  copyObject(jve->format));
 			}
 
 		case T_SubPlan:
