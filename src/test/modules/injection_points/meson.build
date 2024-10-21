@@ -42,6 +42,7 @@ tests += {
   },
   'isolation': {
     'specs': [
+      'basic',
       'inplace',
     ],
   },

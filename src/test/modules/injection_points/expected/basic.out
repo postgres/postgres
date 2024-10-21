@@ -1,0 +1,74 @@
+Parsed test spec with 2 sessions
+
+starting permutation: wait1 wakeup2 detach2
+injection_points_attach
+-----------------------
+                       
+(1 row)
+
+step wait1: SELECT injection_points_run('injection-points-wait'); <waiting ...>
+step wakeup2: SELECT injection_points_wakeup('injection-points-wait');
+injection_points_wakeup
+-----------------------
+                       
+(1 row)
+
+step wait1: <... completed>
+injection_points_run
+--------------------
+                    
+(1 row)
+
+step detach2: SELECT injection_points_detach('injection-points-wait');
+injection_points_detach
+-----------------------
+                       
+(1 row)
+
+
+starting permutation: wait1 detach2 wakeup2
+injection_points_attach
+-----------------------
+                       
+(1 row)
+
+step wait1: SELECT injection_points_run('injection-points-wait'); <waiting ...>
+step detach2: SELECT injection_points_detach('injection-points-wait');
+injection_points_detach
+-----------------------
+                       
+(1 row)
+
+step wakeup2: SELECT injection_points_wakeup('injection-points-wait');
+injection_points_wakeup
+-----------------------
+                       
+(1 row)
+
+step wait1: <... completed>
+injection_points_run
+--------------------
+                    
+(1 row)
+
+
+starting permutation: detach2 wait1 wakeup2
+injection_points_attach
+-----------------------
+                       
+(1 row)
+
+step detach2: SELECT injection_points_detach('injection-points-wait');
+injection_points_detach
+-----------------------
+                       
+(1 row)
+
+step wait1: SELECT injection_points_run('injection-points-wait');
+injection_points_run
+--------------------
+                    
+(1 row)
+
+step wakeup2: SELECT injection_points_wakeup('injection-points-wait');
+ERROR:  could not find injection point injection-points-wait to wake up
