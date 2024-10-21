@@ -579,6 +579,6 @@ get_current_slot_relation_key(TDEBufferHeapTupleTableSlot *bslot, Relation rel)
 {
 	Assert(bslot != NULL);
 	if (bslot->cached_relation_key == NULL)
-		bslot->cached_relation_key = GetRelationKey(rel->rd_locator);
+		bslot->cached_relation_key = GetHeapBaiscRelationKey(rel->rd_locator);
 	return bslot->cached_relation_key;
 }

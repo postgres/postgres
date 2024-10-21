@@ -1892,7 +1892,7 @@ tdeheap_insert(Relation relation, HeapTuple tup, CommandId cid,
 	 * Make sure relation keys in the cahce to avoid pallocs in
 	 * the critical section. 
 	*/
-	GetRelationKey(relation->rd_locator);
+	GetHeapBaiscRelationKey(relation->rd_locator);
 
 	/* NO EREPORT(ERROR) from here till changes are logged */
 	START_CRIT_SECTION();
@@ -2233,7 +2233,7 @@ tdeheap_multi_insert(Relation relation, TupleTableSlot **slots, int ntuples,
 		 * Make sure relation keys in the cahce to avoid pallocs in
 		 * the critical section. 
 		*/
-		GetRelationKey(relation->rd_locator);
+		GetHeapBaiscRelationKey(relation->rd_locator);
 
 		/* NO EREPORT(ERROR) from here till changes are logged */
 		START_CRIT_SECTION();
@@ -2799,7 +2799,7 @@ l1:
 	 * won't be able to extract varlen attributes.
 	 */
 	decrypted_tuple = tdeheap_copytuple(&tp);
-	PG_TDE_DECRYPT_TUPLE(&tp, decrypted_tuple, GetRelationKey(relation->rd_locator));
+	PG_TDE_DECRYPT_TUPLE(&tp, decrypted_tuple, GetHeapBaiscRelationKey(relation->rd_locator));
 
 	old_key_tuple = ExtractReplicaIdentity(relation, decrypted_tuple, true, &old_key_copied);
 
@@ -3157,7 +3157,7 @@ tdeheap_update(Relation relation, ItemPointer otid, HeapTuple newtup,
 		oldtup_decrypted.t_data = (HeapTupleHeader)new_ptr;
 	}
 	PG_TDE_DECRYPT_TUPLE(&oldtup, &oldtup_decrypted,
-							GetRelationKey(relation->rd_locator));
+						 GetHeapBaiscRelationKey(relation->rd_locator));
 
 	// change field in oldtup now.
 	// We can't do it before, as PG_TDE_DECRYPT_TUPLE uses t_data address in 
@@ -3809,7 +3809,7 @@ l2:
 	 * Make sure relation keys in the cahce to avoid pallocs in
 	 * the critical section. 
 	*/
-	GetRelationKey(relation->rd_locator);
+	GetHeapBaiscRelationKey(relation->rd_locator);
 
 	/* NO EREPORT(ERROR) from here till changes are logged */
 	START_CRIT_SECTION();

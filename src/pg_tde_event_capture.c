@@ -69,7 +69,7 @@ pg_tde_ddl_command_start_capture(PG_FUNCTION_ARGS)
 	trigdata = (EventTriggerData *) fcinfo->context;
 	parsetree = trigdata->parsetree;
 
-	elog(DEBUG2, "EVENT TRIGGER (%s) %s", trigdata->event, nodeToString(parsetree));
+	elog(LOG, "EVENT TRIGGER (%s) %s", trigdata->event, nodeToString(parsetree));
 	reset_current_tde_create_event();
 
 	if (IsA(parsetree, IndexStmt))
@@ -184,7 +184,7 @@ pg_tde_ddl_command_end_capture(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errmsg("Function can only be fired by event trigger manager")));
 
-	elog(DEBUG1, "Type:%s EncryptMode:%s, Oid:%d, Relation:%s ",
+	elog(LOG, "Type:%s EncryptMode:%s, Oid:%d, Relation:%s ",
 		 (tdeCurrentCreateEvent.eventType == TDE_INDEX_CREATE_EVENT) ? "CREATE INDEX" :
 		 (tdeCurrentCreateEvent.eventType == TDE_TABLE_CREATE_EVENT) ? "CREATE TABLE" : "UNKNOWN",
 		 tdeCurrentCreateEvent.encryptMode ? "true" : "false",

@@ -34,7 +34,7 @@ tde_smgr_get_key(SMgrRelation reln)
 	event = GetCurrentTdeCreateEvent();
 
 	// see if we have a key for the relation, and return if yes
-	rkd = GetRelationKey(reln->smgr_rlocator.locator);
+	rkd = GetSMGRRelationKey(reln->smgr_rlocator.locator);
 
 	if(rkd != NULL)
 	{
@@ -44,7 +44,7 @@ tde_smgr_get_key(SMgrRelation reln)
 	// if this is a CREATE TABLE, we have to generate the key
 	if(event->encryptMode == true && event->eventType == TDE_TABLE_CREATE_EVENT)
 	{
-		return pg_tde_create_key_map_entry(&reln->smgr_rlocator.locator);
+		return pg_tde_create_smgr_key(&reln->smgr_rlocator.locator);
 	}
 	
 	// if this is a CREATE INDEX, we have to load the key based on the table
@@ -52,7 +52,7 @@ tde_smgr_get_key(SMgrRelation reln)
 	{
 		// For now keep it simple and create separate key for indexes
 		// Later we might modify the map infrastructure to support the same keys
-		return pg_tde_create_key_map_entry(&reln->smgr_rlocator.locator);
+		return pg_tde_create_smgr_key(&reln->smgr_rlocator.locator);
 	}
 
 	return NULL;

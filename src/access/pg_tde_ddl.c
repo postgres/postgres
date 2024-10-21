@@ -29,7 +29,7 @@ void SetupTdeDDLHooks(void)
 }
 
 static void
- tdeheap_object_access_hook(ObjectAccessType access, Oid classId, Oid objectId,
+tdeheap_object_access_hook(ObjectAccessType access, Oid classId, Oid objectId,
                              int subId, void *arg)
  {
     Relation    rel = NULL;
@@ -49,7 +49,7 @@ static void
             rel->rd_rel->relkind == RELKIND_MATVIEW) &&
             (subId == 0) && is_tdeheap_rel(rel))
             {
-                pg_tde_delete_key_map_entry(&rel->rd_locator);
+                pg_tde_delete_key_map_entry(&rel->rd_locator, MAP_ENTRY_VALID);
             }
         relation_close(rel, AccessShareLock);
     }

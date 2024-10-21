@@ -657,7 +657,7 @@ tdeheap_fetch_toast_slice(Relation toastrel, Oid valueid, int32 attrsize,
 	int			validIndex;
 	SnapshotData SnapshotToast;
 	char		decrypted_data[TOAST_MAX_CHUNK_SIZE];
-	RelKeyData 	*key = GetRelationKey(toastrel->rd_locator);
+	RelKeyData *key = GetHeapBaiscRelationKey(toastrel->rd_locator);
 	char		iv_prefix[16] = {0,};
 
 
@@ -1093,7 +1093,7 @@ tdeheap_toast_save_datum(Relation rel, Datum value,
 	/*
 	* Encrypt toast data.
 	*/
-	tdeheap_toast_encrypt(dval, toast_pointer.va_valueid, GetRelationKey(toastrel->rd_locator));
+	tdeheap_toast_encrypt(dval, toast_pointer.va_valueid, GetHeapBaiscRelationKey(toastrel->rd_locator));
 
 	/*
 	 * Initialize constant parts of the tuple data

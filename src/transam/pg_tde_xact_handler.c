@@ -123,7 +123,7 @@ do_pending_deletes(bool isCommit)
             ereport(LOG,
                     (errmsg("pg_tde_xact_callback: deleting entry at offset %d",
                             (int)(pending->map_entry_offset))));
-            pg_tde_free_key_map_entry(&pending->rlocator, pending->map_entry_offset);
+            pg_tde_free_key_map_entry(&pending->rlocator, MAP_ENTRY_VALID, pending->map_entry_offset);
         }
         pfree(pending);
         /* prev does not change */

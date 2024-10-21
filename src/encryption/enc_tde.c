@@ -214,7 +214,7 @@ PGTdePageAddItemExtended(RelFileLocator rel,
 	uint32	data_len = size - header_size;
 	/* ctid stored in item is incorrect (not set) at this point */
 	ItemPointerData ip;
-	RelKeyData *key = GetRelationKey(rel);
+	RelKeyData *key = GetHeapBaiscRelationKey(rel);
 
 	ItemPointerSet(&ip, bn, off); 
 

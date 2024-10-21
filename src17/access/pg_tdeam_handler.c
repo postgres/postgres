@@ -645,7 +645,7 @@ pg_tdeam_relation_set_new_filelocator(Relation rel,
 		ereport(DEBUG1,
 			(errmsg("creating key file for relation %s", RelationGetRelationName(rel))));
 
-		pg_tde_create_key_map_entry(newrlocator);
+		pg_tde_create_heap_basic_key(newrlocator);
 	}
 }
 
