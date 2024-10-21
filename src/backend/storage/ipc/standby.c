@@ -1121,6 +1121,9 @@ StandbyReleaseAllLocks(void)
  * StandbyReleaseOldLocks
  *		Release standby locks held by top-level XIDs that aren't running,
  *		as long as they're not prepared transactions.
+ *
+ * This is needed to prune the locks of crashed transactions, which didn't
+ * write an ABORT/COMMIT record.
  */
 void
 StandbyReleaseOldLocks(TransactionId oldxid)
@@ -1265,13 +1268,6 @@ standby_redo(XLogReaderState *record)
  * Later, when we apply the running xact data we must be careful to ignore
  * transactions already committed, since those commits raced ahead when
  * making WAL entries.
- *
- * The loose timing also means that locks may be recorded that have a
- * zero xid, since xids are removed from procs before locks are removed.
- * So we must prune the lock list down to ensure we hold locks only for
- * currently running xids, performed by StandbyReleaseOldLocks().
- * Zero xids should no longer be possible, but we may be replaying WAL
- * from a time when they were possible.
  *
  * For logical decoding only the running xacts information is needed;
  * there's no need to look at the locking information, but it's logged anyway,
