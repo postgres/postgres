@@ -1495,11 +1495,11 @@ WaitReadBuffers(ReadBuffersOperation *operation)
 		io_buffers_len = 1;
 
 		/*
-		 * How many neighboring-on-disk blocks can we can scatter-read into
-		 * other buffers at the same time?  In this case we don't wait if we
-		 * see an I/O already in progress.  We already hold BM_IO_IN_PROGRESS
-		 * for the head block, so we should get on with that I/O as soon as
-		 * possible.  We'll come back to this block again, above.
+		 * How many neighboring-on-disk blocks can we scatter-read into other
+		 * buffers at the same time?  In this case we don't wait if we see an
+		 * I/O already in progress.  We already hold BM_IO_IN_PROGRESS for the
+		 * head block, so we should get on with that I/O as soon as possible.
+		 * We'll come back to this block again, above.
 		 */
 		while ((i + 1) < nblocks &&
 			   WaitReadBuffersCanStartIO(buffers[i + 1], true))
