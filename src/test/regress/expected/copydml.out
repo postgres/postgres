@@ -38,7 +38,7 @@ ERROR:  DO INSTEAD NOTHING rules are not supported for COPY
 drop rule qqq on copydml_test;
 create rule qqq as on insert to copydml_test do also delete from copydml_test;
 copy (insert into copydml_test default values) to stdout;
-ERROR:  DO ALSO rules are not supported for the COPY
+ERROR:  DO ALSO rules are not supported for COPY
 drop rule qqq on copydml_test;
 create rule qqq as on insert to copydml_test do instead (delete from copydml_test; delete from copydml_test);
 copy (insert into copydml_test default values) to stdout;
@@ -54,7 +54,7 @@ ERROR:  DO INSTEAD NOTHING rules are not supported for COPY
 drop rule qqq on copydml_test;
 create rule qqq as on update to copydml_test do also delete from copydml_test;
 copy (update copydml_test set t = 'f') to stdout;
-ERROR:  DO ALSO rules are not supported for the COPY
+ERROR:  DO ALSO rules are not supported for COPY
 drop rule qqq on copydml_test;
 create rule qqq as on update to copydml_test do instead (delete from copydml_test; delete from copydml_test);
 copy (update copydml_test set t = 'f') to stdout;
@@ -70,7 +70,7 @@ ERROR:  DO INSTEAD NOTHING rules are not supported for COPY
 drop rule qqq on copydml_test;
 create rule qqq as on delete to copydml_test do also insert into copydml_test default values;
 copy (delete from copydml_test) to stdout;
-ERROR:  DO ALSO rules are not supported for the COPY
+ERROR:  DO ALSO rules are not supported for COPY
 drop rule qqq on copydml_test;
 create rule qqq as on delete to copydml_test do instead (insert into copydml_test default values; insert into copydml_test default values);
 copy (delete from copydml_test) to stdout;
@@ -79,6 +79,10 @@ drop rule qqq on copydml_test;
 create rule qqq as on delete to copydml_test where old.t <> 'f' do instead insert into copydml_test default values;
 copy (delete from copydml_test) to stdout;
 ERROR:  conditional DO INSTEAD rules are not supported for COPY
+drop rule qqq on copydml_test;
+create rule qqq as on insert to copydml_test do instead notify copydml_test;
+copy (insert into copydml_test default values) to stdout;
+ERROR:  COPY query must not be a utility command
 drop rule qqq on copydml_test;
 -- triggers
 create function qqq_trig() returns trigger as $$
