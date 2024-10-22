@@ -1,7 +1,7 @@
 # Checks waiting for the lsn replay on standby using
 # pg_wal_replay_wait() procedure.
 use strict;
-use warnings;
+use warnings FATAL => 'all';
 
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
