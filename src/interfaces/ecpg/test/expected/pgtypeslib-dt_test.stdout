@@ -20,7 +20,8 @@ date_defmt_asc10: 1995-12-25
 date_defmt_asc12: 0095-12-25
 timestamp_to_asc1: 1996-02-29 00:00:00
 timestamp_to_asc2: 1994-02-11 03:10:35
-timestamp_to_asc3: 2000-01-01 00:00:00
+(errno == PGTYPES_TS_BAD_TIMESTAMP) - timestamp_to_asc3: 2000-01-01 00:00:00
+(errno == PGTYPES_TS_BAD_TIMESTAMP) - timestamp_to_asc4: 2000-01-01 00:00:00
 timestamp_fmt_asc: 0: abc-00:00:00-def-01/01/00-ghi%
 timestamp_defmt_asc(This is a 4/12/80 3-39l12test, This is a %m/%d/%y %H-%Ml%Stest) = 1980-04-12 03:39:12, error: 0
 timestamp_defmt_asc(Tue Jul 22 17:28:44 +0200 2003, %a %b %d %H:%M:%S %z %Y) = 2003-07-22 15:28:44, error: 0
