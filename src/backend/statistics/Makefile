@@ -13,6 +13,7 @@ top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
 OBJS = \
+	attribute_stats.o \
 	dependencies.o \
 	extended_stats.o \
 	mcv.o \

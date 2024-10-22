@@ -30222,6 +30222,78 @@ DETAIL:  Make sure pg_wal_replay_wait() isn't called within a transaction with a
         </para>
        </entry>
       </row>
+
+      <row>
+       <entry role="func_table_entry">
+        <para role="func_signature">
+         <indexterm>
+          <primary>pg_set_attribute_stats</primary>
+         </indexterm>
+         <function>pg_set_attribute_stats</function> (
+         <parameter>relation</parameter> <type>regclass</type>,
+         <parameter>attname</parameter> <type>name</type>,
+         <parameter>inherited</parameter> <type>boolean</type>
+         <optional>, <parameter>null_frac</parameter> <type>real</type></optional>
+         <optional>, <parameter>avg_width</parameter> <type>integer</type></optional>
+         <optional>, <parameter>n_distinct</parameter> <type>real</type></optional>
+         <optional>, <parameter>most_common_vals</parameter> <type>text</type>, <parameter>most_common_freqs</parameter> <type>real[]</type> </optional>
+         <optional>, <parameter>histogram_bounds</parameter> <type>text</type> </optional>
+         <optional>, <parameter>correlation</parameter> <type>real</type> </optional>
+         <optional>, <parameter>most_common_elems</parameter> <type>text</type>, <parameter>most_common_elem_freqs</parameter> <type>real[]</type> </optional>
+         <optional>, <parameter>elem_count_histogram</parameter> <type>real[]</type> </optional>
+         <optional>, <parameter>range_length_histogram</parameter> <type>text</type> </optional>
+         <optional>, <parameter>range_empty_frac</parameter> <type>real</type> </optional>
+         <optional>, <parameter>range_bounds_histogram</parameter> <type>text</type> </optional> )
+         <returnvalue>void</returnvalue>
+        </para>
+        <para>
+         Creates or updates attribute-level statistics for the given relation
+         and attribute name to the specified values. The parameters correspond
+         to to attributes of the same name found in the <link
+         linkend="view-pg-stats"><structname>pg_stats</structname></link>
+         view.
+        </para>
+        <para>
+         Optional parameters default to <literal>NULL</literal>, which leave
+         the corresponding statistic unchanged.
+        </para>
+        <para>
+         Ordinarily, these statistics are collected automatically or updated
+         as a part of <xref linkend="sql-vacuum"/> or <xref
+         linkend="sql-analyze"/>, so it's not necessary to call this
+         function. However, it may be useful when testing the effects of
+         statistics on the planner to understand or anticipate plan changes.
+        </para>
+        <para>
+         The caller must have the <literal>MAINTAIN</literal> privilege on
+         the table or be the owner of the database.
+        </para>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry">
+        <para role="func_signature">
+         <indexterm>
+          <primary>pg_clear_attribute_stats</primary>
+         </indexterm>
+         <function>pg_clear_attribute_stats</function> (
+         <parameter>relation</parameter> <type>regclass</type>,
+         <parameter>attname</parameter> <type>name</type>,
+         <parameter>inherited</parameter> <type>boolean</type> )
+         <returnvalue>boolean</returnvalue>
+        </para>
+        <para>
+         Clears table-level statistics for the given relation attribute, as
+         though the table was newly created.
+        </para>
+        <para>
+         The caller must have the <literal>MAINTAIN</literal> privilege on
+         the table or be the owner of the database.
+        </para>
+       </entry>
+      </row>
+
      </tbody>
     </tgroup>
    </table>

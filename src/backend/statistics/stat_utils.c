@@ -41,6 +41,79 @@ stats_check_required_arg(FunctionCallInfo fcinfo,
 }
 
 /*
+ * Check that argument is either NULL or a one dimensional array with no
+ * NULLs.
+ *
+ * If a problem is found, emit at elevel, and return false. Otherwise return
+ * true.
+ */
+bool
+stats_check_arg_array(FunctionCallInfo fcinfo,
+					  struct StatsArgInfo *arginfo,
+					  int argnum, int elevel)
+{
+	ArrayType  *arr;
+
+	if (PG_ARGISNULL(argnum))
+		return true;
+
+	arr = DatumGetArrayTypeP(PG_GETARG_DATUM(argnum));
+
+	if (ARR_NDIM(arr) != 1)
+	{
+		ereport(elevel,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("\"%s\" cannot be a multidimensional array",
+						arginfo[argnum].argname)));
+		return false;
+	}
+
+	if (array_contains_nulls(arr))
+	{
+		ereport(elevel,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("\"%s\" array cannot contain NULL values",
+						arginfo[argnum].argname)));
+		return false;
+	}
+
+	return true;
+}
+
+/*
+ * Enforce parameter pairs that must be specified together (or not at all) for
+ * a particular stakind, such as most_common_vals and most_common_freqs for
+ * STATISTIC_KIND_MCV.
+ *
+ * If a problem is found, emit at elevel, and return false. Otherwise return
+ * true.
+ */
+bool
+stats_check_arg_pair(FunctionCallInfo fcinfo,
+					 struct StatsArgInfo *arginfo,
+					 int argnum1, int argnum2, int elevel)
+{
+	if (PG_ARGISNULL(argnum1) && PG_ARGISNULL(argnum2))
+		return true;
+
+	if (PG_ARGISNULL(argnum1) || PG_ARGISNULL(argnum2))
+	{
+		int			nullarg = PG_ARGISNULL(argnum1) ? argnum1 : argnum2;
+		int			otherarg = PG_ARGISNULL(argnum1) ? argnum2 : argnum1;
+
+		ereport(elevel,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("\"%s\" must be specified when \"%s\" is specified",
+						arginfo[nullarg].argname,
+						arginfo[otherarg].argname)));
+
+		return false;
+	}
+
+	return true;
+}
+
+/*
  * Lock relation in ShareUpdateExclusive mode, check privileges, and close the
  * relation (but retain the lock).
  *
