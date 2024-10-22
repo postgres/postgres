@@ -12,8 +12,9 @@ SELECT pg_stat_statements_reset() IS NOT NULL AS t;
 --
 SELECT 1 AS "int";
 
+/* this comment should not appear in the output */
 SELECT 'hello'
-  -- multiline
+  -- but this one will appear
   AS "text";
 
 SELECT 'world' AS "text";

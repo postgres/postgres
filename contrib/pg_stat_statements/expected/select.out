@@ -19,8 +19,9 @@ SELECT 1 AS "int";
    1
 (1 row)
 
+/* this comment should not appear in the output */
 SELECT 'hello'
-  -- multiline
+  -- but this one will appear
   AS "text";
  text  
 -------
@@ -129,7 +130,7 @@ SELECT calls, rows, query FROM pg_stat_statements ORDER BY query COLLATE "C";
 -------+------+------------------------------------------------------------------------------
      1 |    1 | PREPARE pgss_test (int) AS SELECT $1, $2 LIMIT $3
      4 |    4 | SELECT $1                                                                   +
-       |      |   -- multiline                                                              +
+       |      |   -- but this one will appear                                               +
        |      |   AS "text"
      2 |    2 | SELECT $1 + $2
      3 |    3 | SELECT $1 + $2 + $3 AS "add"

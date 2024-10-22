@@ -90,6 +90,12 @@ CleanQuerytext(const char *query, int *location, int *len)
 	/*
 	 * Discard leading and trailing whitespace, too.  Use scanner_isspace()
 	 * not libc's isspace(), because we want to match the lexer's behavior.
+	 *
+	 * Note: the parser now strips leading comments and whitespace from the
+	 * reported stmt_location, so this first loop will only iterate in the
+	 * unusual case that the location didn't propagate to here.  But the
+	 * statement length will extend to the end-of-string or terminating
+	 * semicolon, so the second loop often does something useful.
 	 */
 	while (query_len > 0 && scanner_isspace(query[0]))
 		query++, query_location++, query_len--;

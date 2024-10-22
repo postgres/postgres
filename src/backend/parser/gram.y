@@ -67,38 +67,24 @@
 
 
 /*
- * Location tracking support --- simpler than bison's default, since we only
- * want to track the start position not the end position of each nonterminal.
+ * Location tracking support.  Unlike bison's default, we only want
+ * to track the start position not the end position of each nonterminal.
+ * Nonterminals that reduce to empty receive position "-1".  Since a
+ * production's leading RHS nonterminal(s) may have reduced to empty,
+ * we have to scan to find the first one that's not -1.
  */
 #define YYLLOC_DEFAULT(Current, Rhs, N) \
 	do { \
-		if ((N) > 0) \
-			(Current) = (Rhs)[1]; \
-		else \
-			(Current) = (-1); \
+		(Current) = (-1); \
+		for (int _i = 1; _i <= (N); _i++) \
+		{ \
+			if ((Rhs)[_i] >= 0) \
+			{ \
+				(Current) = (Rhs)[_i]; \
+				break; \
+			} \
+		} \
 	} while (0)
-
-/*
- * The above macro assigns -1 (unknown) as the parse location of any
- * nonterminal that was reduced from an empty rule, or whose leftmost
- * component was reduced from an empty rule.  This is problematic
- * for nonterminals defined like
- *		OptFooList: / * EMPTY * / { ... } | OptFooList Foo { ... } ;
- * because we'll set -1 as the location during the first reduction and then
- * copy it during each subsequent reduction, leaving us with -1 for the
- * location even when the list is not empty.  To fix that, do this in the
- * action for the nonempty rule(s):
- *		if (@$ < 0) @$ = @2;
- * (Although we have many nonterminals that follow this pattern, we only
- * bother with fixing @$ like this when the nonterminal's parse location
- * is actually referenced in some rule.)
- *
- * A cleaner answer would be to make YYLLOC_DEFAULT scan all the Rhs
- * locations until it's found one that's not -1.  Then we'd get a correct
- * location for any nonterminal that isn't entirely empty.  But this way
- * would add overhead to every rule reduction, and so far there's not been
- * a compelling reason to pay that overhead.
- */
 
 /*
  * Bison doesn't allocate anything that needs to live across parser calls,
@@ -930,7 +916,7 @@ parse_toplevel:
 			| MODE_PLPGSQL_EXPR PLpgSQL_Expr
 			{
 				pg_yyget_extra(yyscanner)->parsetree =
-					list_make1(makeRawStmt($2, 0));
+					list_make1(makeRawStmt($2, @2));
 			}
 			| MODE_PLPGSQL_ASSIGN1 PLAssignStmt
 			{
@@ -938,7 +924,7 @@ parse_toplevel:
 
 				n->nnames = 1;
 				pg_yyget_extra(yyscanner)->parsetree =
-					list_make1(makeRawStmt((Node *) n, 0));
+					list_make1(makeRawStmt((Node *) n, @2));
 			}
 			| MODE_PLPGSQL_ASSIGN2 PLAssignStmt
 			{
@@ -946,7 +932,7 @@ parse_toplevel:
 
 				n->nnames = 2;
 				pg_yyget_extra(yyscanner)->parsetree =
-					list_make1(makeRawStmt((Node *) n, 0));
+					list_make1(makeRawStmt((Node *) n, @2));
 			}
 			| MODE_PLPGSQL_ASSIGN3 PLAssignStmt
 			{
@@ -954,19 +940,15 @@ parse_toplevel:
 
 				n->nnames = 3;
 				pg_yyget_extra(yyscanner)->parsetree =
-					list_make1(makeRawStmt((Node *) n, 0));
+					list_make1(makeRawStmt((Node *) n, @2));
 			}
 		;
 
 /*
  * At top level, we wrap each stmt with a RawStmt node carrying start location
- * and length of the stmt's text.  Notice that the start loc/len are driven
- * entirely from semicolon locations (@2).  It would seem natural to use
- * @1 or @3 to get the true start location of a stmt, but that doesn't work
- * for statements that can start with empty nonterminals (opt_with_clause is
- * the main offender here); as noted in the comments for YYLLOC_DEFAULT,
- * we'd get -1 for the location in such cases.
- * We also take care to discard empty statements entirely.
+ * and length of the stmt's text.
+ * We also take care to discard empty statements entirely (which among other
+ * things dodges the problem of assigning them a location).
  */
 stmtmulti:	stmtmulti ';' toplevel_stmt
 				{
@@ -976,14 +958,14 @@ stmtmulti:	stmtmulti ';' toplevel_stmt
 						updateRawStmtEnd(llast_node(RawStmt, $1), @2);
 					}
 					if ($3 != NULL)
-						$$ = lappend($1, makeRawStmt($3, @2 + 1));
+						$$ = lappend($1, makeRawStmt($3, @3));
 					else
 						$$ = $1;
 				}
 			| toplevel_stmt
 				{
 					if ($1 != NULL)
-						$$ = list_make1(makeRawStmt($1, 0));
+						$$ = list_make1(makeRawStmt($1, @1));
 					else
 						$$ = NIL;
 				}
@@ -1584,8 +1566,6 @@ CreateSchemaStmt:
 OptSchemaEltList:
 			OptSchemaEltList schema_stmt
 				{
-					if (@$ < 0)			/* see comments for YYLLOC_DEFAULT */
-						@$ = @2;
 					$$ = lappend($1, $2);
 				}
 			| /* EMPTY */
