@@ -15,6 +15,8 @@ test_install_data += files(
   'test_ext6.control',
   'test_ext7--1.0--2.0.sql',
   'test_ext7--1.0.sql',
+  'test_ext7--2.0--2.1bad.sql',
+  'test_ext7--2.0--2.2bad.sql',
   'test_ext7.control',
   'test_ext8--1.0.sql',
   'test_ext8.control',

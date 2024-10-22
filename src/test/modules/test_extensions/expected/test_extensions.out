@@ -72,6 +72,22 @@ Objects in extension "test_ext7"
  type ext7_table2[]
 (4 rows)
 
+-- test reporting of errors in extension scripts
+alter extension test_ext7 update to '2.1bad';
+ERROR:  syntax error at or near "FUNCTIN"
+LINE 1: CREATE FUNCTIN my_erroneous_func(int) RETURNS int LANGUAGE S...
+               ^
+QUERY:  CREATE FUNCTIN my_erroneous_func(int) RETURNS int LANGUAGE SQL
+AS $$ SELECT $1 + 1 $$;
+CONTEXT:  extension script file "test_ext7--2.0--2.1bad.sql", near line 10
+alter extension test_ext7 update to '2.2bad';
+ERROR:  syntax error at or near ","
+LINE 1:  SELECT $1 + , 1 
+                     ^
+QUERY:   SELECT $1 + , 1 
+CONTEXT:  SQL statement "CREATE FUNCTION my_erroneous_func(int) RETURNS int LANGUAGE SQL
+AS $$ SELECT $1 + , 1 $$"
+extension script file "test_ext7--2.0--2.2bad.sql", near line 9
 -- test handling of temp objects created by extensions
 create extension test_ext8;
 -- \dx+ would expose a variable pg_temp_nn schema name, so we can't use it here
@@ -295,6 +311,9 @@ CREATE FUNCTION ext_cor_func() RETURNS text
 CREATE EXTENSION test_ext_cor;  -- fail
 ERROR:  function ext_cor_func() is not a member of extension "test_ext_cor"
 DETAIL:  An extension is not allowed to replace an object that it does not own.
+CONTEXT:  SQL statement "CREATE OR REPLACE FUNCTION ext_cor_func() RETURNS text
+  AS $$ SELECT 'ext_cor_func: from extension'::text $$ LANGUAGE sql"
+extension script file "test_ext_cor--1.0.sql", near line 8
 SELECT ext_cor_func();
       ext_cor_func      
 ------------------------
@@ -307,6 +326,9 @@ CREATE VIEW ext_cor_view AS
 CREATE EXTENSION test_ext_cor;  -- fail
 ERROR:  view ext_cor_view is not a member of extension "test_ext_cor"
 DETAIL:  An extension is not allowed to replace an object that it does not own.
+CONTEXT:  SQL statement "CREATE OR REPLACE VIEW ext_cor_view AS
+  SELECT 'ext_cor_view: from extension'::text AS col"
+extension script file "test_ext_cor--1.0.sql", near line 11
 SELECT ext_cor_func();
 ERROR:  function ext_cor_func() does not exist
 LINE 1: SELECT ext_cor_func();
@@ -323,6 +345,8 @@ CREATE TYPE test_ext_type;
 CREATE EXTENSION test_ext_cor;  -- fail
 ERROR:  type test_ext_type is not a member of extension "test_ext_cor"
 DETAIL:  An extension is not allowed to replace an object that it does not own.
+CONTEXT:  SQL statement "CREATE TYPE test_ext_type AS ENUM('x', 'y')"
+extension script file "test_ext_cor--1.0.sql", near line 17
 DROP TYPE test_ext_type;
 -- this makes a shell "point <<@@ polygon" operator too
 CREATE OPERATOR @@>> ( PROCEDURE = poly_contain_pt,
@@ -331,6 +355,9 @@ CREATE OPERATOR @@>> ( PROCEDURE = poly_contain_pt,
 CREATE EXTENSION test_ext_cor;  -- fail
 ERROR:  operator <<@@(point,polygon) is not a member of extension "test_ext_cor"
 DETAIL:  An extension is not allowed to replace an object that it does not own.
+CONTEXT:  SQL statement "CREATE OPERATOR <<@@ ( PROCEDURE = pt_contained_poly,
+  LEFTARG = point, RIGHTARG = polygon )"
+extension script file "test_ext_cor--1.0.sql", near line 19
 DROP OPERATOR <<@@ (point, polygon);
 CREATE EXTENSION test_ext_cor;  -- now it should work
 SELECT ext_cor_func();
@@ -379,37 +406,52 @@ CREATE COLLATION ext_cine_coll
 CREATE EXTENSION test_ext_cine;  -- fail
 ERROR:  collation ext_cine_coll is not a member of extension "test_ext_cine"
 DETAIL:  An extension may only use CREATE ... IF NOT EXISTS to skip object creation if the conflicting object is one that it already owns.
+CONTEXT:  SQL statement "CREATE COLLATION IF NOT EXISTS ext_cine_coll
+  ( LC_COLLATE = "POSIX", LC_CTYPE = "POSIX" )"
+extension script file "test_ext_cine--1.0.sql", near line 10
 DROP COLLATION ext_cine_coll;
 CREATE MATERIALIZED VIEW ext_cine_mv AS SELECT 11 AS f1;
 CREATE EXTENSION test_ext_cine;  -- fail
 ERROR:  materialized view ext_cine_mv is not a member of extension "test_ext_cine"
 DETAIL:  An extension may only use CREATE ... IF NOT EXISTS to skip object creation if the conflicting object is one that it already owns.
+CONTEXT:  SQL statement "CREATE MATERIALIZED VIEW IF NOT EXISTS ext_cine_mv AS SELECT 42 AS f1"
+extension script file "test_ext_cine--1.0.sql", near line 13
 DROP MATERIALIZED VIEW ext_cine_mv;
 CREATE FOREIGN DATA WRAPPER dummy;
 CREATE SERVER ext_cine_srv FOREIGN DATA WRAPPER dummy;
 CREATE EXTENSION test_ext_cine;  -- fail
 ERROR:  server ext_cine_srv is not a member of extension "test_ext_cine"
 DETAIL:  An extension may only use CREATE ... IF NOT EXISTS to skip object creation if the conflicting object is one that it already owns.
+CONTEXT:  SQL statement "CREATE SERVER IF NOT EXISTS ext_cine_srv FOREIGN DATA WRAPPER ext_cine_fdw"
+extension script file "test_ext_cine--1.0.sql", near line 17
 DROP SERVER ext_cine_srv;
 CREATE SCHEMA ext_cine_schema;
 CREATE EXTENSION test_ext_cine;  -- fail
 ERROR:  schema ext_cine_schema is not a member of extension "test_ext_cine"
 DETAIL:  An extension may only use CREATE ... IF NOT EXISTS to skip object creation if the conflicting object is one that it already owns.
+CONTEXT:  SQL statement "CREATE SCHEMA IF NOT EXISTS ext_cine_schema"
+extension script file "test_ext_cine--1.0.sql", near line 19
 DROP SCHEMA ext_cine_schema;
 CREATE SEQUENCE ext_cine_seq;
 CREATE EXTENSION test_ext_cine;  -- fail
 ERROR:  sequence ext_cine_seq is not a member of extension "test_ext_cine"
 DETAIL:  An extension may only use CREATE ... IF NOT EXISTS to skip object creation if the conflicting object is one that it already owns.
+CONTEXT:  SQL statement "CREATE SEQUENCE IF NOT EXISTS ext_cine_seq"
+extension script file "test_ext_cine--1.0.sql", near line 21
 DROP SEQUENCE ext_cine_seq;
 CREATE TABLE ext_cine_tab1 (x int);
 CREATE EXTENSION test_ext_cine;  -- fail
 ERROR:  table ext_cine_tab1 is not a member of extension "test_ext_cine"
 DETAIL:  An extension may only use CREATE ... IF NOT EXISTS to skip object creation if the conflicting object is one that it already owns.
+CONTEXT:  SQL statement "CREATE TABLE IF NOT EXISTS ext_cine_tab1 (x int)"
+extension script file "test_ext_cine--1.0.sql", near line 23
 DROP TABLE ext_cine_tab1;
 CREATE TABLE ext_cine_tab2 AS SELECT 42 AS y;
 CREATE EXTENSION test_ext_cine;  -- fail
 ERROR:  table ext_cine_tab2 is not a member of extension "test_ext_cine"
 DETAIL:  An extension may only use CREATE ... IF NOT EXISTS to skip object creation if the conflicting object is one that it already owns.
+CONTEXT:  SQL statement "CREATE TABLE IF NOT EXISTS ext_cine_tab2 AS SELECT 42 AS y"
+extension script file "test_ext_cine--1.0.sql", near line 25
 DROP TABLE ext_cine_tab2;
 CREATE EXTENSION test_ext_cine;
 \dx+ test_ext_cine

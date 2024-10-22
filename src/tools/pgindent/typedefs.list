@@ -3886,6 +3886,7 @@ saophash_hash
 save_buffer
 scram_state
 scram_state_enum
+script_error_callback_arg
 security_class_t
 sem_t
 sepgsql_context_info_t

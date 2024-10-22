@@ -28,6 +28,10 @@ create extension test_ext7;
 alter extension test_ext7 update to '2.0';
 \dx+ test_ext7
 
+-- test reporting of errors in extension scripts
+alter extension test_ext7 update to '2.1bad';
+alter extension test_ext7 update to '2.2bad';
+
 -- test handling of temp objects created by extensions
 create extension test_ext8;
 

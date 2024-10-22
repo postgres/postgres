@@ -13,7 +13,9 @@ EXTENSION = test_ext1 test_ext2 test_ext3 test_ext4 test_ext5 test_ext6 \
 
 DATA = test_ext1--1.0.sql test_ext2--1.0.sql test_ext3--1.0.sql \
        test_ext4--1.0.sql test_ext5--1.0.sql test_ext6--1.0.sql \
-       test_ext7--1.0.sql test_ext7--1.0--2.0.sql test_ext8--1.0.sql \
+       test_ext7--1.0.sql test_ext7--1.0--2.0.sql \
+       test_ext7--2.0--2.1bad.sql test_ext7--2.0--2.2bad.sql \
+       test_ext8--1.0.sql \
        test_ext9--1.0.sql \
        test_ext_cine--1.0.sql test_ext_cine--1.0--1.1.sql \
        test_ext_cor--1.0.sql \
