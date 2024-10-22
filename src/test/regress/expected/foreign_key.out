@@ -2934,3 +2934,99 @@ DETAIL:  drop cascades to table fkpart11.pk
 drop cascades to table fkpart11.fk_parted
 drop cascades to table fkpart11.fk_another
 drop cascades to function fkpart11.print_row()
+-- When a table is attached as partition to a partitioned table that has
+-- a foreign key to another partitioned table, it acquires a clone of the
+-- FK.  Upon detach, this clone is not removed, but instead becomes an
+-- independent FK.  If it then attaches to the partitioned table again,
+-- the FK from the parent "takes over" ownership of the independent FK rather
+-- than creating a separate one.
+CREATE SCHEMA fkpart12
+  CREATE TABLE fk_p ( id int, jd int, PRIMARY KEY(id, jd)) PARTITION BY list (id)
+  CREATE TABLE fk_p_1 PARTITION OF fk_p FOR VALUES IN (1) PARTITION BY list (jd)
+  CREATE TABLE fk_p_1_1 PARTITION OF fk_p_1 FOR VALUES IN (1)
+  CREATE TABLE fk_p_1_2 PARTITION OF fk_p_1 FOR VALUES IN (2)
+  CREATE TABLE fk_p_2 PARTITION OF fk_p FOR VALUES IN (2) PARTITION BY list (jd)
+  CREATE TABLE fk_p_2_1 PARTITION OF fk_p_2 FOR VALUES IN (1)
+  CREATE TABLE fk_p_2_2 PARTITION OF fk_p_2 FOR VALUES IN (2)
+  CREATE TABLE fk_r_1 ( id int PRIMARY KEY, p_id int NOT NULL, p_jd int NOT NULL)
+  CREATE TABLE fk_r_2 ( id int PRIMARY KEY, p_id int NOT NULL, p_jd int NOT NULL) PARTITION BY list (id)
+  CREATE TABLE fk_r_2_1 PARTITION OF fk_r_2 FOR VALUES IN (2, 1)
+  CREATE TABLE fk_r   ( id int PRIMARY KEY, p_id int NOT NULL, p_jd int NOT NULL,
+       FOREIGN KEY (p_id, p_jd) REFERENCES fk_p (id, jd)
+  ) PARTITION BY list (id);
+SET search_path TO fkpart12;
+INSERT INTO fk_p VALUES (1, 1);
+ALTER TABLE fk_r ATTACH PARTITION fk_r_1 FOR VALUES IN (1);
+ALTER TABLE fk_r ATTACH PARTITION fk_r_2 FOR VALUES IN (2);
+\d fk_r_2
+        Partitioned table "fkpart12.fk_r_2"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ id     | integer |           | not null | 
+ p_id   | integer |           | not null | 
+ p_jd   | integer |           | not null | 
+Partition of: fk_r FOR VALUES IN (2)
+Partition key: LIST (id)
+Indexes:
+    "fk_r_2_pkey" PRIMARY KEY, btree (id)
+Foreign-key constraints:
+    TABLE "fk_r" CONSTRAINT "fk_r_p_id_p_jd_fkey" FOREIGN KEY (p_id, p_jd) REFERENCES fk_p(id, jd)
+Number of partitions: 1 (Use \d+ to list them.)
+
+INSERT INTO fk_r VALUES (1, 1, 1);
+INSERT INTO fk_r VALUES (2, 2, 1);
+ERROR:  insert or update on table "fk_r_2_1" violates foreign key constraint "fk_r_p_id_p_jd_fkey"
+DETAIL:  Key (p_id, p_jd)=(2, 1) is not present in table "fk_p".
+ALTER TABLE fk_r DETACH PARTITION fk_r_1;
+ALTER TABLE fk_r DETACH PARTITION fk_r_2;
+\d fk_r_2
+        Partitioned table "fkpart12.fk_r_2"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ id     | integer |           | not null | 
+ p_id   | integer |           | not null | 
+ p_jd   | integer |           | not null | 
+Partition key: LIST (id)
+Indexes:
+    "fk_r_2_pkey" PRIMARY KEY, btree (id)
+Foreign-key constraints:
+    "fk_r_p_id_p_jd_fkey" FOREIGN KEY (p_id, p_jd) REFERENCES fk_p(id, jd)
+Number of partitions: 1 (Use \d+ to list them.)
+
+INSERT INTO fk_r_1 VALUES (2, 1, 2); -- should fail
+ERROR:  insert or update on table "fk_r_1" violates foreign key constraint "fk_r_p_id_p_jd_fkey"
+DETAIL:  Key (p_id, p_jd)=(1, 2) is not present in table "fk_p".
+DELETE FROM fk_p; -- should fail
+ERROR:  update or delete on table "fk_p_1_1" violates foreign key constraint "fk_r_1_p_id_p_jd_fkey1" on table "fk_r_1"
+DETAIL:  Key (id, jd)=(1, 1) is still referenced from table "fk_r_1".
+ALTER TABLE fk_r ATTACH PARTITION fk_r_1 FOR VALUES IN (1);
+ALTER TABLE fk_r ATTACH PARTITION fk_r_2 FOR VALUES IN (2);
+\d fk_r_2
+        Partitioned table "fkpart12.fk_r_2"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ id     | integer |           | not null | 
+ p_id   | integer |           | not null | 
+ p_jd   | integer |           | not null | 
+Partition of: fk_r FOR VALUES IN (2)
+Partition key: LIST (id)
+Indexes:
+    "fk_r_2_pkey" PRIMARY KEY, btree (id)
+Foreign-key constraints:
+    TABLE "fk_r" CONSTRAINT "fk_r_p_id_p_jd_fkey" FOREIGN KEY (p_id, p_jd) REFERENCES fk_p(id, jd)
+Number of partitions: 1 (Use \d+ to list them.)
+
+DELETE FROM fk_p; -- should fail
+ERROR:  update or delete on table "fk_p_1_1" violates foreign key constraint "fk_r_p_id_p_jd_fkey2" on table "fk_r"
+DETAIL:  Key (id, jd)=(1, 1) is still referenced from table "fk_r".
+-- these should all fail
+ALTER TABLE fk_r_1 DROP CONSTRAINT fk_r_p_id_p_jd_fkey;
+ERROR:  cannot drop inherited constraint "fk_r_p_id_p_jd_fkey" of relation "fk_r_1"
+ALTER TABLE fk_r DROP CONSTRAINT fk_r_p_id_p_jd_fkey1;
+ERROR:  cannot drop inherited constraint "fk_r_p_id_p_jd_fkey1" of relation "fk_r"
+ALTER TABLE fk_r_2 DROP CONSTRAINT fk_r_p_id_p_jd_fkey;
+ERROR:  cannot drop inherited constraint "fk_r_p_id_p_jd_fkey" of relation "fk_r_2"
+SET client_min_messages TO warning;
+DROP SCHEMA fkpart12 CASCADE;
+RESET client_min_messages;
+RESET search_path;
