@@ -30174,15 +30174,13 @@ DETAIL:  Make sure pg_wal_replay_wait() isn't called within a transaction with a
          <optional>, <parameter>relpages</parameter> <type>integer</type></optional>
          <optional>, <parameter>reltuples</parameter> <type>real</type></optional>
          <optional>, <parameter>relallvisible</parameter> <type>integer</type></optional> )
-         <returnvalue>boolean</returnvalue>
+         <returnvalue>void</returnvalue>
         </para>
         <para>
          Updates relation-level statistics for the given relation to the
          specified values. The parameters correspond to columns in <link
          linkend="catalog-pg-class"><structname>pg_class</structname></link>. Unspecified
-         or <literal>NULL</literal> values leave the setting
-         unchanged. Returns <literal>true</literal> if a change was made;
-         <literal>false</literal> otherwise.
+         or <literal>NULL</literal> values leave the setting unchanged.
         </para>
         <para>
          Ordinarily, these statistics are collected automatically or updated
@@ -30212,12 +30210,11 @@ DETAIL:  Make sure pg_wal_replay_wait() isn't called within a transaction with a
           <primary>pg_clear_relation_stats</primary>
          </indexterm>
          <function>pg_clear_relation_stats</function> ( <parameter>relation</parameter> <type>regclass</type> )
-         <returnvalue>boolean</returnvalue>
+         <returnvalue>void</returnvalue>
         </para>
         <para>
          Clears table-level statistics for the given relation, as though the
-         table was newly created. Returns <literal>true</literal> if a change
-         was made; <literal>false</literal> otherwise.
+         table was newly created.
         </para>
         <para>
          The caller must have the <literal>MAINTAIN</literal> privilege on

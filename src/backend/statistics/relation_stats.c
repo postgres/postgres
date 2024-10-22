@@ -188,7 +188,8 @@ relation_statistics_update(FunctionCallInfo fcinfo, int elevel)
 Datum
 pg_set_relation_stats(PG_FUNCTION_ARGS)
 {
-	PG_RETURN_BOOL(relation_statistics_update(fcinfo, ERROR));
+	relation_statistics_update(fcinfo, ERROR);
+	PG_RETURN_VOID();
 }
 
 /*
@@ -211,5 +212,6 @@ pg_clear_relation_stats(PG_FUNCTION_ARGS)
 	newfcinfo->args[3].value = DEFAULT_RELALLVISIBLE;
 	newfcinfo->args[3].isnull = false;
 
-	PG_RETURN_BOOL(relation_statistics_update(newfcinfo, ERROR));
+	relation_statistics_update(newfcinfo, ERROR);
+	PG_RETURN_VOID();
 }

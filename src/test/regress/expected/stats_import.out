@@ -38,7 +38,7 @@ SELECT
         relallvisible => 4::integer);
  pg_set_relation_stats 
 -----------------------
- t
+ 
 (1 row)
 
 -- reltuples default
@@ -50,7 +50,7 @@ SELECT
         relallvisible => 4::integer);
  pg_set_relation_stats 
 -----------------------
- t
+ 
 (1 row)
 
 -- relallvisible default
@@ -62,7 +62,7 @@ SELECT
         relallvisible => NULL::integer);
  pg_set_relation_stats 
 -----------------------
- f
+ 
 (1 row)
 
 -- named arguments
@@ -74,7 +74,7 @@ SELECT
         relallvisible => 4::integer);
  pg_set_relation_stats 
 -----------------------
- f
+ 
 (1 row)
 
 SELECT relpages, reltuples, relallvisible
@@ -94,7 +94,7 @@ SELECT
         5::integer);
  pg_set_relation_stats 
 -----------------------
- t
+ 
 (1 row)
 
 SELECT relpages, reltuples, relallvisible
@@ -111,7 +111,7 @@ SELECT
         'stats_import.test'::regclass);
  pg_clear_relation_stats 
 -------------------------
- t
+ 
 (1 row)
 
 SELECT relpages, reltuples, relallvisible
@@ -158,7 +158,7 @@ SELECT
         relpages => 2::integer);
  pg_set_relation_stats 
 -----------------------
- t
+ 
 (1 row)
 
 -- nothing stops us from setting it to -1
@@ -168,7 +168,7 @@ SELECT
         relpages => -1::integer);
  pg_set_relation_stats 
 -----------------------
- t
+ 
 (1 row)
 
 DROP SCHEMA stats_import CASCADE;
