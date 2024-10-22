@@ -3250,6 +3250,7 @@ _stringlist
 access_vector_t
 acquireLocksOnSubLinks_context
 add_nulling_relids_context
+addFkConstraintSides
 adjust_appendrel_attrs_context
 allocfunc
 amadjustmembers_function
