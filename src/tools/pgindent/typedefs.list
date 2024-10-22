@@ -3075,6 +3075,7 @@ _locale_t
 _resultmap
 _stringlist
 acquireLocksOnSubLinks_context
+addFkConstraintSides
 adjust_appendrel_attrs_context
 aff_regex_struct
 allocfunc
