@@ -1101,6 +1101,9 @@ typedef struct IndexOptInfo IndexOptInfo;
 #define HAVE_INDEXOPTINFO_TYPEDEF 1
 #endif
 
+struct IndexPath;				/* avoid including pathnodes.h here */
+struct PlannerInfo;				/* avoid including pathnodes.h here */
+
 struct IndexOptInfo
 {
 	pg_node_attr(no_copy_equal, no_read, no_query_jumble)
@@ -1200,7 +1203,7 @@ struct IndexOptInfo
 	bool		amcanmarkpos;
 	/* AM's cost estimator */
 	/* Rather than include amapi.h here, we declare amcostestimate like this */
-	void		(*amcostestimate) () pg_node_attr(read_write_ignore);
+	void		(*amcostestimate) (struct PlannerInfo *, struct IndexPath *, double, Cost *, Cost *, Selectivity *, double *, double *) pg_node_attr(read_write_ignore);
 };
 
 /*
