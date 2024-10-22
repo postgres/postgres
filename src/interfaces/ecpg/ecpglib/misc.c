@@ -232,10 +232,10 @@ void
 ecpg_log(const char *format,...)
 {
 	va_list		ap;
-	struct sqlca_t *sqlca = ECPGget_sqlca();
 	const char *intl_format;
 	int			bufsize;
 	char	   *fmt;
+	struct sqlca_t *sqlca;
 
 	/*
 	 * For performance reasons, inspect simple_debug without taking the mutex.
@@ -261,6 +261,8 @@ ecpg_log(const char *format,...)
 		snprintf(fmt, bufsize, "[NO_PID]: %s", intl_format);
 	else
 		snprintf(fmt, bufsize, "[%d]: %s", (int) getpid(), intl_format);
+
+	sqlca = ECPGget_sqlca();
 
 	pthread_mutex_lock(&debug_mutex);
 
