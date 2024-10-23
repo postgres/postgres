@@ -161,6 +161,11 @@ attribute_statistics_update(FunctionCallInfo fcinfo, int elevel)
 	stats_check_required_arg(fcinfo, attarginfo, ATTNAME_ARG);
 	attname = PG_GETARG_NAME(ATTNAME_ARG);
 	attnum = get_attnum(reloid, NameStr(*attname));
+	if (attnum == InvalidAttrNumber)
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_COLUMN),
+				 errmsg("column \"%s\" of relation \"%s\" does not exist",
+						NameStr(*attname), get_rel_name(reloid))));
 
 	stats_check_required_arg(fcinfo, attarginfo, INHERITED_ARG);
 	inherited = PG_GETARG_BOOL(INHERITED_ARG);
@@ -860,6 +865,11 @@ pg_clear_attribute_stats(PG_FUNCTION_ARGS)
 	stats_check_required_arg(fcinfo, attarginfo, ATTNAME_ARG);
 	attname = PG_GETARG_NAME(ATTNAME_ARG);
 	attnum = get_attnum(reloid, NameStr(*attname));
+	if (attnum == InvalidAttrNumber)
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_COLUMN),
+				 errmsg("column \"%s\" of relation \"%s\" does not exist",
+						NameStr(*attname), get_rel_name(reloid))));
 
 	stats_check_required_arg(fcinfo, attarginfo, INHERITED_ARG);
 	inherited = PG_GETARG_BOOL(INHERITED_ARG);

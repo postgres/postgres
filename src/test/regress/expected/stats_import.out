@@ -180,6 +180,12 @@ SELECT pg_catalog.pg_set_attribute_stats(
     avg_width => 2::integer,
     n_distinct => 0.3::real);
 ERROR:  could not open relation with OID 0
+-- error: object doesn't exist
+SELECT pg_catalog.pg_clear_attribute_stats(
+    relation => '0'::oid,
+    attname => 'id'::name,
+    inherited => false::boolean);
+ERROR:  could not open relation with OID 0
 -- error: relation null
 SELECT pg_catalog.pg_set_attribute_stats(
     relation => NULL::oid,
@@ -189,6 +195,21 @@ SELECT pg_catalog.pg_set_attribute_stats(
     avg_width => 2::integer,
     n_distinct => 0.3::real);
 ERROR:  "relation" cannot be NULL
+-- error: attname doesn't exist
+SELECT pg_catalog.pg_set_attribute_stats(
+    relation => 'stats_import.test'::regclass,
+    attname => 'nope'::name,
+    inherited => false::boolean,
+    null_frac => 0.1::real,
+    avg_width => 2::integer,
+    n_distinct => 0.3::real);
+ERROR:  column "nope" of relation "test" does not exist
+-- error: attname doesn't exist
+SELECT pg_catalog.pg_clear_attribute_stats(
+    relation => 'stats_import.test'::regclass,
+    attname => 'nope'::name,
+    inherited => false::boolean);
+ERROR:  column "nope" of relation "test" does not exist
 -- error: attname null
 SELECT pg_catalog.pg_set_attribute_stats(
     relation => 'stats_import.test'::regclass,
@@ -301,7 +322,7 @@ SELECT pg_catalog.pg_set_attribute_stats(
     most_common_freqs => '{0.2,0.1}'::real[]
     );
 ERROR:  invalid input syntax for type integer: "2023-09-30"
--- warning: mcv cast failure
+-- error: mcv cast failure
 SELECT pg_catalog.pg_set_attribute_stats(
     relation => 'stats_import.test'::regclass,
     attname => 'id'::name,
