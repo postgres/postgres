@@ -271,8 +271,8 @@ CREATE TABLE people (
    example, with the above definitions and assuming additional appropriate
    columns, writing
 <programlisting>
-INSERT INTO people (name, address) VALUE ('A', 'foo');
-INSERT INTO people (name, address) VALUE ('B', 'bar');
+INSERT INTO people (name, address) VALUES ('A', 'foo');
+INSERT INTO people (name, address) VALUES ('B', 'bar');
 </programlisting>
    would generate values for the <literal>id</literal> column starting at 1
    and result in the following table data:
@@ -285,7 +285,7 @@ INSERT INTO people (name, address) VALUE ('B', 'bar');
    Alternatively, the keyword <literal>DEFAULT</literal> can be specified in
    place of a value to explicitly request the sequence-generated value, like
 <programlisting>
-INSERT INTO people (id, name, address) VALUE (<emphasis>DEFAULT</emphasis>, 'C', 'baz');
+INSERT INTO people (id, name, address) VALUES (<emphasis>DEFAULT</emphasis>, 'C', 'baz');
 </programlisting>
    Similarly, the keyword <literal>DEFAULT</literal> can be used in
    <command>UPDATE</command> commands.
