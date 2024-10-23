@@ -35,7 +35,7 @@ typedef enum
 /*
  * Frontend SASL mechanism callbacks.
  *
- * To implement a frontend mechanism, declare a pg_be_sasl_mech struct with
+ * To implement a frontend mechanism, declare a pg_fe_sasl_mech struct with
  * appropriate callback implementations, then hook it into conn->sasl during
  * pg_SASL_init()'s mechanism negotiation.
  */
