@@ -633,7 +633,7 @@ text_to_stavalues(const char *staname, FmgrInfo *array_in, Datum d, Oid typid,
 
 	pfree(s);
 
-	if (SOFT_ERROR_OCCURRED(&escontext))
+	if (escontext.error_occurred)
 	{
 		if (elevel != ERROR)
 			escontext.error_data->elevel = elevel;
