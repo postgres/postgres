@@ -30281,7 +30281,7 @@ DETAIL:  Make sure pg_wal_replay_wait() isn't called within a transaction with a
          <parameter>relation</parameter> <type>regclass</type>,
          <parameter>attname</parameter> <type>name</type>,
          <parameter>inherited</parameter> <type>boolean</type> )
-         <returnvalue>boolean</returnvalue>
+         <returnvalue>void</returnvalue>
         </para>
         <para>
          Clears table-level statistics for the given relation attribute, as
