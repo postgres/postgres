@@ -30249,7 +30249,7 @@ DETAIL:  Make sure pg_wal_replay_wait() isn't called within a transaction with a
         <para>
          Creates or updates attribute-level statistics for the given relation
          and attribute name to the specified values. The parameters correspond
-         to to attributes of the same name found in the <link
+         to attributes of the same name found in the <link
          linkend="view-pg-stats"><structname>pg_stats</structname></link>
          view.
         </para>
