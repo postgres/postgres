@@ -22,7 +22,7 @@ typedef struct TidStoreIter TidStoreIter;
 
 /*
  * Result struct for TidStoreIterateNext.  This is copyable, but should be
- * treated as opaque.  Call TidStoreGetOffsets() to obtain the offsets.
+ * treated as opaque.  Call TidStoreGetBlockOffsets() to obtain the offsets.
  */
 typedef struct TidStoreIterResult
 {
