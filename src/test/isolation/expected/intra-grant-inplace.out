@@ -63,6 +63,30 @@ step addk2: ALTER TABLE intra_grant_inplace ADD PRIMARY KEY (c); <waiting ...>
 step r3: ROLLBACK;
 step addk2: <... completed>
 
+starting permutation: b3 sfnku3 keyshr5 addk2 r3
+step b3: BEGIN ISOLATION LEVEL READ COMMITTED;
+step sfnku3: 
+	SELECT relhasindex FROM pg_class
+	WHERE oid = 'intra_grant_inplace'::regclass FOR NO KEY UPDATE;
+
+relhasindex
+-----------
+f          
+(1 row)
+
+step keyshr5: 
+	SELECT relhasindex FROM pg_class
+	WHERE oid = 'intra_grant_inplace'::regclass FOR KEY SHARE;
+
+relhasindex
+-----------
+f          
+(1 row)
+
+step addk2: ALTER TABLE intra_grant_inplace ADD PRIMARY KEY (c); <waiting ...>
+step r3: ROLLBACK;
+step addk2: <... completed>
+
 starting permutation: b2 sfnku2 addk2 c2
 step b2: BEGIN;
 step sfnku2: 
