@@ -28989,12 +28989,15 @@ postgres=# SELECT '0/0'::pg_lsn + pd.segment_number * ps.setting::int + :offset 
    </para>
 
    <table id="recovery-synchronization-procedure-table">
-    <title>Recovery Synchronization Procedure</title>
+    <title>Recovery Synchronization Procedure and Function</title>
     <tgroup cols="1">
      <thead>
       <row>
        <entry role="func_table_entry"><para role="func_signature">
-        Procedure
+        Procedure or Function
+       </para>
+       <para>
+        Type
        </para>
        <para>
         Description
@@ -29010,8 +29013,11 @@ postgres=# SELECT '0/0'::pg_lsn + pd.segment_number * ps.setting::int + :offset 
         </indexterm>
         <function>pg_wal_replay_wait</function> (
           <parameter>target_lsn</parameter> <type>pg_lsn</type>,
-          <parameter>timeout</parameter> <type>bigint</type> <literal>DEFAULT</literal> <literal>0</literal>)
-        <returnvalue>void</returnvalue>
+          <parameter>timeout</parameter> <type>bigint</type> <literal>DEFAULT</literal> <literal>0</literal>,
+          <parameter>no_error</parameter> <type>bool</type> <literal>DEFAULT</literal> <literal>false</literal>)
+       </para>
+       <para>
+        Procedure
        </para>
        <para>
         Waits until recovery replays <literal>target_lsn</literal>.
@@ -29022,7 +29028,30 @@ postgres=# SELECT '0/0'::pg_lsn + pd.segment_number * ps.setting::int + :offset 
         procedure waits until <literal>target_lsn</literal> is reached or
         the specified <parameter>timeout</parameter> has elapsed.
         On timeout, or if the server is promoted before
-        <literal>target_lsn</literal> is reached, an error is emitted.
+        <literal>target_lsn</literal> is reached, an error is emitted,
+        as soon as <parameter>no_error</parameter> is false.
+        If <parameter>no_error</parameter> is set to true, then the procedure
+        doesn't throw errors.  The last result status could be read
+        with <function>pg_wal_replay_wait_status</function>.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_wal_replay_wait_status</primary>
+        </indexterm>
+        <function>pg_wal_replay_wait_status</function> ()
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        Function
+       </para>
+       <para>
+        Returns the last result status for
+        <function>pg_wal_replay_wait</function> procedure.  The possible
+        values are <literal>success</literal>, <literal>timeout</literal>,
+        and <literal>not in recovery</literal>.
        </para></entry>
       </row>
      </tbody>
@@ -29044,7 +29073,8 @@ postgres=# SELECT '0/0'::pg_lsn + pd.segment_number * ps.setting::int + :offset 
    <para>
     <function>pg_wal_replay_wait</function> should be called on standby.
     If a user calls <function>pg_wal_replay_wait</function> on primary, it
-    will error out.  However, if <function>pg_wal_replay_wait</function> is
+    will error out as soon as <parameter>no_error</parameter> is false.
+    However, if <function>pg_wal_replay_wait</function> is
     called on primary promoted from standby and <literal>target_lsn</literal>
     was already replayed, then <function>pg_wal_replay_wait</function> just
     exits immediately.
@@ -29088,6 +29118,20 @@ postgres=# SELECT * FROM movie WHERE genre = 'Drama';
    <programlisting>
 postgres=# CALL pg_wal_replay_wait('0/306EE20', 100);
 ERROR:  timed out while waiting for target LSN 0/306EE20 to be replayed; current replay LSN 0/306EA60
+    </programlisting>
+
+   The same example uses <function>pg_wal_replay_wait</function> with
+   <parameter>no_error</parameter> set to true.  In this case, the result
+   status must be read with <function>pg_wal_replay_wait_status</function>.
+
+   <programlisting>
+postgres=# CALL pg_wal_replay_wait('0/306EE20', 100, true);
+CALL
+postgres=# SELECT pg_wal_replay_wait_status();
+ pg_wal_replay_wait_status
+---------------------------
+ timeout
+(1 row)
     </programlisting>
 
    </para>

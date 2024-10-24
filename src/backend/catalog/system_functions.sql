@@ -414,7 +414,9 @@ CREATE OR REPLACE FUNCTION
   json_populate_recordset(base anyelement, from_json json, use_json_as_text boolean DEFAULT false)
   RETURNS SETOF anyelement LANGUAGE internal STABLE ROWS 100  AS 'json_populate_recordset' PARALLEL SAFE;
 
-CREATE OR REPLACE PROCEDURE pg_wal_replay_wait(target_lsn pg_lsn, timeout int8 DEFAULT 0)
+CREATE OR REPLACE PROCEDURE pg_wal_replay_wait(target_lsn pg_lsn,
+											   timeout int8 DEFAULT 0,
+											   no_error bool DEFAULT false)
   LANGUAGE internal AS 'pg_wal_replay_wait';
 
 CREATE OR REPLACE FUNCTION pg_logical_slot_get_changes(

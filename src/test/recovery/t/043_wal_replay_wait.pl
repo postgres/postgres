@@ -77,6 +77,20 @@ $node_standby->psql(
 ok( $stderr =~ /timed out while waiting for target LSN/,
 	"get timeout on waiting for unreachable LSN");
 
+$output = $node_standby->safe_psql(
+	'postgres', qq[
+	CALL pg_wal_replay_wait('${lsn2}', 10, true);
+	SELECT pg_wal_replay_wait_status();]);
+ok( $output eq "success",
+	"pg_wal_replay_wait_status() returns correct status after successful waiting"
+);
+$output = $node_standby->safe_psql(
+	'postgres', qq[
+	CALL pg_wal_replay_wait('${lsn3}', 10, true);
+	SELECT pg_wal_replay_wait_status();]);
+ok($output eq "timeout",
+	"pg_wal_replay_wait_status() returns correct status after timeout");
+
 # 4. Check that pg_wal_replay_wait() triggers an error if called on primary,
 # within another function, or inside a transaction with an isolation level
 # higher than READ COMMITTED.
@@ -192,6 +206,14 @@ ok(1, 'got error after standby promote');
 $node_standby->safe_psql('postgres', "CALL pg_wal_replay_wait('${lsn5}');");
 
 ok(1, 'wait for already replayed LSN exits immediately even after promotion');
+
+$output = $node_standby->safe_psql(
+	'postgres', qq[
+	CALL pg_wal_replay_wait('${lsn4}', 10, true);
+	SELECT pg_wal_replay_wait_status();]);
+ok( $output eq "not in recovery",
+	"pg_wal_replay_wait_status() returns correct status after standby promotion"
+);
 
 $node_standby->stop;
 $node_primary->stop;

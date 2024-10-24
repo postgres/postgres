@@ -2,7 +2,8 @@
  *
  * xlogwait.c
  *	  Implements waiting for the given replay LSN, which is used in
- *	  CALL pg_wal_replay_wait(target_lsn pg_lsn, timeout float8).
+ *	  CALL pg_wal_replay_wait(target_lsn pg_lsn,
+ *							  timeout float8, no_error bool).
  *
  * Copyright (c) 2024, PostgreSQL Global Development Group
  *
