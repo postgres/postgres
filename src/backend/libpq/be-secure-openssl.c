@@ -76,6 +76,7 @@ static int	alpn_cb(SSL *ssl,
 					void *userdata);
 static bool initialize_dh(SSL_CTX *context, bool isServerStart);
 static bool initialize_ecdh(SSL_CTX *context, bool isServerStart);
+static const char *SSLerrmessageExt(unsigned long ecode, const char *replacement);
 static const char *SSLerrmessage(unsigned long ecode);
 
 static char *X509_NAME_to_cstring(X509_NAME *name);
@@ -1409,33 +1410,48 @@ static bool
 initialize_ecdh(SSL_CTX *context, bool isServerStart)
 {
 #ifndef OPENSSL_NO_ECDH
-	EC_KEY	   *ecdh;
-	int			nid;
-
-	nid = OBJ_sn2nid(SSLECDHCurve);
-	if (!nid)
+	if (SSL_CTX_set1_groups_list(context, SSLECDHCurve) != 1)
 	{
+		/*
+		 * OpenSSL 3.3.0 introduced proper error messages for group parsing
+		 * errors, earlier versions returns "no SSL error reported" which is
+		 * far from helpful. For older versions, we replace with a better
+		 * error message. Injecting the error into the OpenSSL error queue
+		 * need APIs from OpenSSL 3.0.
+		 */
 		ereport(isServerStart ? FATAL : LOG,
-				(errcode(ERRCODE_CONFIG_FILE_ERROR),
-				 errmsg("ECDH: unrecognized curve name: %s", SSLECDHCurve)));
+				errcode(ERRCODE_CONFIG_FILE_ERROR),
+				errmsg("failed to set group names specified in ssl_groups: %s",
+					   SSLerrmessageExt(ERR_get_error(),
+										_("No valid groups found"))),
+				errhint("Ensure that each group name is spelled correctly and supported by the installed version of OpenSSL"));
 		return false;
 	}
-
-	ecdh = EC_KEY_new_by_curve_name(nid);
-	if (!ecdh)
-	{
-		ereport(isServerStart ? FATAL : LOG,
-				(errcode(ERRCODE_CONFIG_FILE_ERROR),
-				 errmsg("ECDH: could not create key")));
-		return false;
-	}
-
-	SSL_CTX_set_options(context, SSL_OP_SINGLE_ECDH_USE);
-	SSL_CTX_set_tmp_ecdh(context, ecdh);
-	EC_KEY_free(ecdh);
 #endif
 
 	return true;
+}
+
+/*
+ * Obtain reason string for passed SSL errcode with replacement
+ *
+ * The error message supplied in replacement will be used in case the error
+ * code from OpenSSL is 0, else the error message from SSLerrmessage() will
+ * be returned.
+ *
+ * Not all versions of OpenSSL place an error on the queue even for failing
+ * operations, which will yield "no SSL error reported" by SSLerrmessage. This
+ * function can be used to ensure that a proper error message is displayed for
+ * versions reporting no error, while using the OpenSSL error via SSLerrmessage
+ * for versions where there is one.
+ */
+static const char *
+SSLerrmessageExt(unsigned long ecode, const char *replacement)
+{
+	if (ecode == 0)
+		return replacement;
+	else
+		return SSLerrmessage(ecode);
 }
 
 /*

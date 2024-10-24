@@ -4656,9 +4656,9 @@ struct config_string ConfigureNamesString[] =
 	},
 
 	{
-		{"ssl_ecdh_curve", PGC_SIGHUP, CONN_AUTH_SSL,
-			gettext_noop("Sets the curve to use for ECDH."),
-			NULL,
+		{"ssl_groups", PGC_SIGHUP, CONN_AUTH_SSL,
+			gettext_noop("Sets the group(s) to use for Diffie-Hellman key exchange."),
+			gettext_noop("Multiple groups can be specified using colon-separated list."),
 			GUC_SUPERUSER_ONLY
 		},
 		&SSLECDHCurve,

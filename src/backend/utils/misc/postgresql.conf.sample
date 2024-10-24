@@ -112,7 +112,7 @@
 #ssl_key_file = 'server.key'
 #ssl_ciphers = 'HIGH:MEDIUM:+3DES:!aNULL'	# allowed SSL ciphers
 #ssl_prefer_server_ciphers = on
-#ssl_ecdh_curve = 'prime256v1'
+#ssl_groups = 'prime256v1'
 #ssl_min_protocol_version = 'TLSv1.2'
 #ssl_max_protocol_version = ''
 #ssl_dh_params_file = ''

@@ -1452,20 +1452,20 @@ include_dir 'conf.d'
       </listitem>
      </varlistentry>
 
-     <varlistentry id="guc-ssl-ecdh-curve" xreflabel="ssl_ecdh_curve">
-      <term><varname>ssl_ecdh_curve</varname> (<type>string</type>)
+     <varlistentry id="guc-ssl-groups" xreflabel="ssl_groups">
+      <term><varname>ssl_groups</varname> (<type>string</type>)
       <indexterm>
-       <primary><varname>ssl_ecdh_curve</varname> configuration parameter</primary>
+       <primary><varname>ssl_groups</varname> configuration parameter</primary>
       </indexterm>
       </term>
       <listitem>
        <para>
         Specifies the name of the curve to use in <acronym>ECDH</acronym> key
         exchange.  It needs to be supported by all clients that connect.
+        Multiple curves can be specified by using a colon-separated list.
         It does not need to be the same curve used by the server's Elliptic
-        Curve key.
-        This parameter can only be set in the <filename>postgresql.conf</filename>
-        file or on the server command line.
+        Curve key.  This parameter can only be set in the
+        <filename>postgresql.conf</filename> file or on the server command line.
         The default is <literal>prime256v1</literal>.
        </para>
 
@@ -1475,9 +1475,16 @@ include_dir 'conf.d'
         <literal>prime256v1</literal> (NIST P-256),
         <literal>secp384r1</literal> (NIST P-384),
         <literal>secp521r1</literal> (NIST P-521).
-        The full list of available curves can be shown with the command
-        <command>openssl ecparam -list_curves</command>.  Not all of them
-        are usable in <acronym>TLS</acronym> though.
+        An incomplete list of available groups can be shown with the command
+        <command>openssl ecparam -list_curves</command>.  Not all of them are
+        usable with <acronym>TLS</acronym> though, and many supported group
+        names and aliases are omitted.
+       </para>
+
+       <para>
+        In <productname>PostgreSQL</productname> versions before 18.0 this
+        setting was named <literal>ssl_ecdh_curve</literal> and only accepted
+        a single value.
        </para>
       </listitem>
      </varlistentry>
