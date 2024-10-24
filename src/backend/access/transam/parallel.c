@@ -1421,17 +1421,18 @@ ParallelWorkerMain(Datum main_arg)
 	StartParallelWorkerTransaction(tstatespace);
 
 	/*
-	 * Restore relmapper and reindex state early, since these affect catalog
-	 * access.  Ideally we'd do this even before calling InitPostgres, but
-	 * that has order-of-initialization problems, and also the relmapper would
-	 * get confused during the CommitTransactionCommand call above.
+	 * Restore state that affects catalog access.  Ideally we'd do this even
+	 * before calling InitPostgres, but that has order-of-initialization
+	 * problems, and also the relmapper would get confused during the
+	 * CommitTransactionCommand call above.
 	 */
+	pendingsyncsspace = shm_toc_lookup(toc, PARALLEL_KEY_PENDING_SYNCS,
+									   false);
+	RestorePendingSyncs(pendingsyncsspace);
 	relmapperspace = shm_toc_lookup(toc, PARALLEL_KEY_RELMAPPER_STATE, false);
 	RestoreRelationMap(relmapperspace);
 	reindexspace = shm_toc_lookup(toc, PARALLEL_KEY_REINDEX_STATE, false);
 	RestoreReindexState(reindexspace);
-
-	/* Restore combo CID state. */
 	combocidspace = shm_toc_lookup(toc, PARALLEL_KEY_COMBO_CID, false);
 	RestoreComboCIDState(combocidspace);
 
@@ -1487,11 +1488,6 @@ ParallelWorkerMain(Datum main_arg)
 	/* Restore temp-namespace state to ensure search path matches leader's. */
 	SetTempNamespaceState(fps->temp_namespace_id,
 						  fps->temp_toast_namespace_id);
-
-	/* Restore pending syncs. */
-	pendingsyncsspace = shm_toc_lookup(toc, PARALLEL_KEY_PENDING_SYNCS,
-									   false);
-	RestorePendingSyncs(pendingsyncsspace);
 
 	/* Restore uncommitted enums. */
 	uncommittedenumsspace = shm_toc_lookup(toc, PARALLEL_KEY_UNCOMMITTEDENUMS,
