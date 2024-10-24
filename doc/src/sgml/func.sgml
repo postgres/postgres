@@ -30268,6 +30268,55 @@ DETAIL:  Make sure pg_wal_replay_wait() isn't called within a transaction with a
       </row>
 
       <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_restore_relation_stats</primary>
+        </indexterm>
+        <function>pg_restore_relation_stats</function> (
+        <literal>VARIADIC</literal> <parameter>kwargs</parameter> <type>"any"</type> )
+        <returnvalue>boolean</returnvalue>
+        </para>
+        <para>
+         Similar to <function>pg_set_relation_stats()</function>, but intended
+         for bulk restore of relation statistics. The tracked statistics may
+         change from version to version, so the primary purpose of this
+         function is to maintain a consistent function signature to avoid
+         errors when restoring statistics from previous versions.
+        </para>
+        <para>
+         Arguments are passed as pairs of <replaceable>argname</replaceable>
+         and <replaceable>argvalue</replaceable>, where
+         <replaceable>argname</replaceable> corresponds to a named argument in
+         <function>pg_set_relation_stats()</function> and
+         <replaceable>argvalue</replaceable> is of the corresponding type.
+        </para>
+        <para>
+         Additionally, this function supports argument name
+         <literal>version</literal> of type <type>integer</type>, which
+         specifies the version from which the statistics originated, improving
+         intepretation of older statistics.
+        </para>
+        <para>
+         For example, to set the <structname>relpages</structname> and
+         <structname>reltuples</structname> of the table
+         <structname>mytable</structname>:
+<programlisting>
+ SELECT pg_restore_relation_stats(
+    'relation',  'mytable'::regclass,
+    'relpages',  173::integer,
+    'reltuples', 10000::float4);
+</programlisting>
+        </para>
+        <para>
+         Minor errors are reported as a <literal>WARNING</literal> and
+         ignored, and remaining statistics will still be restored. If all
+         specified statistics are successfully restored, return
+         <literal>true</literal>, otherwise <literal>false</literal>.
+        </para>
+       </entry>
+      </row>
+
+      <row>
        <entry role="func_table_entry">
         <para role="func_signature">
          <indexterm>
@@ -30338,6 +30387,57 @@ DETAIL:  Make sure pg_wal_replay_wait() isn't called within a transaction with a
        </entry>
       </row>
 
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_restore_attribute_stats</primary>
+        </indexterm>
+        <function>pg_restore_attribute_stats</function> (
+        <literal>VARIADIC</literal> <parameter>kwargs</parameter> <type>"any"</type> )
+        <returnvalue>boolean</returnvalue>
+        </para>
+        <para>
+         Similar to <function>pg_set_attribute_stats()</function>, but
+         intended for bulk restore of attribute statistics. The tracked
+         statistics may change from version to version, so the primary purpose
+         of this function is to maintain a consistent function signature to
+         avoid errors when restoring statistics from previous versions.
+        </para>
+        <para>
+         Arguments are passed as pairs of <replaceable>argname</replaceable>
+         and <replaceable>argvalue</replaceable>, where
+         <replaceable>argname</replaceable> corresponds to a named argument in
+         <function>pg_set_attribute_stats()</function> and
+         <replaceable>argvalue</replaceable> is of the corresponding type.
+        </para>
+        <para>
+         Additionally, this function supports argument name
+         <literal>version</literal> of type <type>integer</type>, which
+         specifies the version from which the statistics originated, improving
+         intepretation of older statistics.
+        </para>
+        <para>
+         For example, to set the <structname>avg_width</structname> and
+         <structname>null_frac</structname> for the attribute
+         <structname>col1</structname> of the table
+         <structname>mytable</structname>:
+<programlisting>
+ SELECT pg_restore_attribute_stats(
+    'relation',    'mytable'::regclass,
+    'attname',     'col1'::name,
+    'inherited',   false,
+    'avg_width',   125::integer,
+    'null_frac',   0.5::real);
+</programlisting>
+        </para>
+        <para>
+         Minor errors are reported as a <literal>WARNING</literal> and
+         ignored, and remaining statistics will still be restored. If all
+         specified statistics are successfully restored, return
+         <literal>true</literal>, otherwise <literal>false</literal>.
+        </para>
+       </entry>
+      </row>
      </tbody>
     </tgroup>
    </table>

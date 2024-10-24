@@ -877,3 +877,22 @@ pg_clear_attribute_stats(PG_FUNCTION_ARGS)
 	delete_pg_statistic(reloid, attnum, inherited);
 	PG_RETURN_VOID();
 }
+
+Datum
+pg_restore_attribute_stats(PG_FUNCTION_ARGS)
+{
+	LOCAL_FCINFO(positional_fcinfo, NUM_ATTRIBUTE_STATS_ARGS);
+	bool		result = true;
+
+	InitFunctionCallInfoData(*positional_fcinfo, NULL, NUM_ATTRIBUTE_STATS_ARGS,
+							 InvalidOid, NULL, NULL);
+
+	if (!stats_fill_fcinfo_from_arg_pairs(fcinfo, positional_fcinfo,
+										  attarginfo, WARNING))
+		result = false;
+
+	if (!attribute_statistics_update(positional_fcinfo, WARNING))
+		result = false;
+
+	PG_RETURN_BOOL(result);
+}

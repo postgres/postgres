@@ -18,6 +18,7 @@
 
 #include "access/relation.h"
 #include "catalog/pg_database.h"
+#include "funcapi.h"
 #include "miscadmin.h"
 #include "statistics/stat_utils.h"
 #include "utils/acl.h"
@@ -164,4 +165,129 @@ stats_lock_check_privileges(Oid reloid)
 	}
 
 	relation_close(rel, NoLock);
+}
+
+/*
+ * Find the argument number for the given argument name, returning -1 if not
+ * found.
+ */
+static int
+get_arg_by_name(const char *argname, struct StatsArgInfo *arginfo, int elevel)
+{
+	int			argnum;
+
+	for (argnum = 0; arginfo[argnum].argname != NULL; argnum++)
+		if (pg_strcasecmp(argname, arginfo[argnum].argname) == 0)
+			return argnum;
+
+	ereport(elevel,
+			(errmsg("unrecognized argument name: \"%s\"", argname)));
+
+	return -1;
+}
+
+/*
+ * Ensure that a given argument matched the expected type.
+ */
+static bool
+stats_check_arg_type(const char *argname, Oid argtype, Oid expectedtype, int elevel)
+{
+	if (argtype != expectedtype)
+	{
+		ereport(elevel,
+				(errmsg("argument \"%s\" has type \"%s\", expected type \"%s\"",
+						argname, format_type_be(argtype),
+						format_type_be(expectedtype))));
+		return false;
+	}
+
+	return true;
+}
+
+/*
+ * Translate variadic argument pairs from 'pairs_fcinfo' into a
+ * 'positional_fcinfo' appropriate for calling relation_statistics_update() or
+ * attribute_statistics_update() with positional arguments.
+ *
+ * Caller should have already initialized positional_fcinfo with a size
+ * appropriate for calling the intended positional function, and arginfo
+ * should also match the intended positional function.
+ */
+bool
+stats_fill_fcinfo_from_arg_pairs(FunctionCallInfo pairs_fcinfo,
+								 FunctionCallInfo positional_fcinfo,
+								 struct StatsArgInfo *arginfo,
+								 int elevel)
+{
+	Datum	   *args;
+	bool	   *argnulls;
+	Oid		   *types;
+	int			nargs;
+	bool		result = true;
+
+	/* clear positional args */
+	for (int i = 0; arginfo[i].argname != NULL; i++)
+	{
+		positional_fcinfo->args[i].value = (Datum) 0;
+		positional_fcinfo->args[i].isnull = true;
+	}
+
+	nargs = extract_variadic_args(pairs_fcinfo, 0, true,
+								  &args, &types, &argnulls);
+
+	if (nargs % 2 != 0)
+		ereport(ERROR,
+				errmsg("variadic arguments must be name/value pairs"),
+				errhint("Provide an even number of variadic arguments that can be divided into pairs."));
+
+	/*
+	 * For each argument name/value pair, find corresponding positional
+	 * argument for the argument name, and assign the argument value to
+	 * postitional_fcinfo.
+	 */
+	for (int i = 0; i < nargs; i += 2)
+	{
+		int			argnum;
+		char	   *argname;
+
+		if (argnulls[i])
+			ereport(ERROR,
+					(errmsg("name at variadic position %d is NULL", i + 1)));
+
+		if (types[i] != TEXTOID)
+			ereport(ERROR,
+					(errmsg("name at variadic position %d has type \"%s\", expected type \"%s\"",
+							i + 1, format_type_be(types[i]),
+							format_type_be(TEXTOID))));
+
+		if (argnulls[i + 1])
+			continue;
+
+		argname = TextDatumGetCString(args[i]);
+
+		/*
+		 * The 'version' argument is a special case, not handled by arginfo
+		 * because it's not a valid positional argument.
+		 *
+		 * For now, 'version' is accepted but ignored. In the future it can be
+		 * used to interpret older statistics properly.
+		 */
+		if (pg_strcasecmp(argname, "version") == 0)
+			continue;
+
+		argnum = get_arg_by_name(argname, arginfo, elevel);
+
+		if (argnum < 0 || !stats_check_arg_type(argname, types[i + 1],
+												arginfo[argnum].argtype,
+												elevel))
+		{
+			result = false;
+			continue;
+		}
+
+		positional_fcinfo->args[argnum].value = args[i + 1];
+		positional_fcinfo->args[argnum].isnull = false;
+	}
+
+	return result;
 }
