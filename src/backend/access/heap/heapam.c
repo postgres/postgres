@@ -6229,10 +6229,9 @@ heap_inplace_lock(Relation relation,
 			LockTupleMode lockmode = LockTupleNoKeyExclusive;
 			MultiXactStatus mxact_status = MultiXactStatusNoKeyUpdate;
 			int			remain;
-			bool		current_is_member;
 
 			if (DoesMultiXactIdConflict((MultiXactId) xwait, infomask,
-										lockmode, &current_is_member))
+										lockmode, NULL))
 			{
 				LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 				ret = false;
