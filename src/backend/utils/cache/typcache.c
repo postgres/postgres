@@ -351,6 +351,15 @@ type_cache_syshash(const void *key, Size keysize)
  * invalid.  Note however that we may fail to find one or more of the
  * values requested by 'flags'; the caller needs to check whether the fields
  * are InvalidOid or not.
+ *
+ * Note that while filling TypeCacheEntry we might process concurrent
+ * invalidation messages, causing our not-yet-filled TypeCacheEntry to be
+ * invalidated.  In this case, we typically only clear flags while values are
+ * still available for the caller.  It's expected that the caller holds
+ * enough locks on type-depending objects that the values are still relevant.
+ * It's also important that the tupdesc is filled after all other
+ * TypeCacheEntry items for TYPTYPE_COMPOSITE.  So, tupdesc can't get
+ * invalidated during the lookup_type_cache() call.
  */
 TypeCacheEntry *
 lookup_type_cache(Oid type_id, int flags)
