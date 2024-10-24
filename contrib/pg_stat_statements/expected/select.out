@@ -128,7 +128,6 @@ DEALLOCATE pgss_test;
 SELECT calls, rows, query FROM pg_stat_statements ORDER BY query COLLATE "C";
  calls | rows |                                    query                                     
 -------+------+------------------------------------------------------------------------------
-     1 |    1 | PREPARE pgss_test (int) AS SELECT $1, $2 LIMIT $3
      4 |    4 | SELECT $1                                                                   +
        |      |   -- but this one will appear                                               +
        |      |   AS "text"
@@ -138,6 +137,7 @@ SELECT calls, rows, query FROM pg_stat_statements ORDER BY query COLLATE "C";
      2 |    2 | SELECT $1 AS "int"
      1 |    2 | SELECT $1 AS i UNION SELECT $2 ORDER BY i
      1 |    1 | SELECT $1 || $2
+     1 |    1 | SELECT $1, $2 LIMIT $3
      0 |    0 | SELECT calls, rows, query FROM pg_stat_statements ORDER BY query COLLATE "C"
      1 |    1 | SELECT pg_stat_statements_reset() IS NOT NULL AS t
      1 |    2 | WITH t(f) AS (                                                              +
