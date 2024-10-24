@@ -3731,44 +3731,55 @@ GetLockStatusData(void)
 	for (i = 0; i < ProcGlobal->allProcCount; ++i)
 	{
 		PGPROC	   *proc = &ProcGlobal->allProcs[i];
-		uint32		f;
+
+		/* Skip backends with pid=0, as they don't hold fast-path locks */
+		if (proc->pid == 0)
+			continue;
 
 		LWLockAcquire(&proc->fpInfoLock, LW_SHARED);
 
-		for (f = 0; f < FP_LOCK_SLOTS_PER_BACKEND; ++f)
+		for (uint32 g = 0; g < FastPathLockGroupsPerBackend; g++)
 		{
-			LockInstanceData *instance;
-			uint32		lockbits = FAST_PATH_GET_BITS(proc, f);
-
-			/* Skip unallocated slots. */
-			if (!lockbits)
+			/* Skip groups without registered fast-path locks */
+			if (proc->fpLockBits[g] == 0)
 				continue;
 
-			if (el >= els)
+			for (int j = 0; j < FP_LOCK_SLOTS_PER_GROUP; j++)
 			{
-				els += MaxBackends;
-				data->locks = (LockInstanceData *)
-					repalloc(data->locks, sizeof(LockInstanceData) * els);
+				LockInstanceData *instance;
+				uint32		f = FAST_PATH_SLOT(g, j);
+				uint32		lockbits = FAST_PATH_GET_BITS(proc, f);
+
+				/* Skip unallocated slots */
+				if (!lockbits)
+					continue;
+
+				if (el >= els)
+				{
+					els += MaxBackends;
+					data->locks = (LockInstanceData *)
+						repalloc(data->locks, sizeof(LockInstanceData) * els);
+				}
+
+				instance = &data->locks[el];
+				SET_LOCKTAG_RELATION(instance->locktag, proc->databaseId,
+									 proc->fpRelId[f]);
+				instance->holdMask = lockbits << FAST_PATH_LOCKNUMBER_OFFSET;
+				instance->waitLockMode = NoLock;
+				instance->vxid.procNumber = proc->vxid.procNumber;
+				instance->vxid.localTransactionId = proc->vxid.lxid;
+				instance->pid = proc->pid;
+				instance->leaderPid = proc->pid;
+				instance->fastpath = true;
+
+				/*
+				 * Successfully taking fast path lock means there were no
+				 * conflicting locks.
+				 */
+				instance->waitStart = 0;
+
+				el++;
 			}
-
-			instance = &data->locks[el];
-			SET_LOCKTAG_RELATION(instance->locktag, proc->databaseId,
-								 proc->fpRelId[f]);
-			instance->holdMask = lockbits << FAST_PATH_LOCKNUMBER_OFFSET;
-			instance->waitLockMode = NoLock;
-			instance->vxid.procNumber = proc->vxid.procNumber;
-			instance->vxid.localTransactionId = proc->vxid.lxid;
-			instance->pid = proc->pid;
-			instance->leaderPid = proc->pid;
-			instance->fastpath = true;
-
-			/*
-			 * Successfully taking fast path lock means there were no
-			 * conflicting locks.
-			 */
-			instance->waitStart = 0;
-
-			el++;
 		}
 
 		if (proc->fpVXIDLock)
