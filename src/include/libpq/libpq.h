@@ -118,6 +118,7 @@ extern ssize_t secure_open_gssapi(Port *port);
 
 /* GUCs */
 extern PGDLLIMPORT char *SSLCipherSuites;
+extern PGDLLIMPORT char *SSLCipherList;
 extern PGDLLIMPORT char *SSLECDHCurve;
 extern PGDLLIMPORT bool SSLPreferServerCiphers;
 extern PGDLLIMPORT int ssl_min_protocol_version;

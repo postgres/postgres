@@ -1340,6 +1340,28 @@ include_dir 'conf.d'
       </listitem>
      </varlistentry>
 
+     <varlistentry id="guc-ssl-tls13-ciphers" xreflabel="ssl_tls13_ciphers">
+      <term><varname>ssl_tls13_ciphers</varname> (<type>string</type>)
+      <indexterm>
+       <primary><varname>ssl_tls13_ciphers</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Specifies a list of cipher suites that are allowed by connections using
+        <acronym>TLS</acronym> version 1.3.  Multiple cipher suites can be
+        specified by using a colon separated list. If left blank, the default
+        set of cipher suites in <productname>OpenSSL</productname> will be used.
+       </para>
+
+       <para>
+        This parameter can only be set in the
+        <filename>postgresql.conf</filename> file or on the server command
+        line.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="guc-ssl-ciphers" xreflabel="ssl_ciphers">
       <term><varname>ssl_ciphers</varname> (<type>string</type>)
       <indexterm>
@@ -1348,15 +1370,13 @@ include_dir 'conf.d'
       </term>
       <listitem>
        <para>
-        Specifies a list of <acronym>SSL</acronym> cipher suites that are
-        allowed to be used by SSL connections.  See the
-        <citerefentry><refentrytitle>ciphers</refentrytitle></citerefentry>
+        Specifies a list of <acronym>SSL</acronym> ciphers that are allowed by
+        connections using TLS version 1.2 and lower, see
+        <xref linkend="guc-ssl-tls13-ciphers"/> for TLS version 1.3 connections. See
+        the <citerefentry><refentrytitle>ciphers</refentrytitle></citerefentry>
         manual page in the <productname>OpenSSL</productname> package for the
-        syntax of this setting and a list of supported values.  Only
-        connections using TLS version 1.2 and lower are affected.  There is
-        currently no setting that controls the cipher choices used by TLS
-        version 1.3 connections.  The default value is
-        <literal>HIGH:MEDIUM:+3DES:!aNULL</literal>.  The default is usually a
+        syntax of this setting and a list of supported values.  The default value
+        is <literal>HIGH:MEDIUM:+3DES:!aNULL</literal>.  The default is usually a
         reasonable choice unless you have specific security requirements.
        </para>
 

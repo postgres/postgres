@@ -300,8 +300,9 @@ sub switch_server_cert
 	ok(unlink($node->data_dir . '/sslconfig.conf'));
 	$node->append_conf('sslconfig.conf', "ssl=on");
 	$node->append_conf('sslconfig.conf', $backend->set_server_cert(\%params));
-	# use lists of ECDH curves for syntax testing
+	# use lists of ECDH curves and cipher suites for syntax testing
 	$node->append_conf('sslconfig.conf', 'ssl_groups=prime256v1:secp521r1');
+	$node->append_conf('sslconfig.conf', 'ssl_tls13_ciphers=TLS_AES_256_GCM_SHA384:TLS_AES_128_GCM_SHA256');
 
 	$node->append_conf('sslconfig.conf',
 		"ssl_passphrase_command='" . $params{passphrase_cmd} . "'")

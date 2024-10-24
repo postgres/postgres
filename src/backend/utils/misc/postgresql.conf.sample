@@ -110,7 +110,8 @@
 #ssl_crl_file = ''
 #ssl_crl_dir = ''
 #ssl_key_file = 'server.key'
-#ssl_ciphers = 'HIGH:MEDIUM:+3DES:!aNULL'	# allowed SSL ciphers
+#ssl_ciphers = 'HIGH:MEDIUM:+3DES:!aNULL'	# allowed TLSv1.2 ciphers
+#ssl_tls13_ciphers = ''	# allowed TLSv1.3 cipher suites, blank for default
 #ssl_prefer_server_ciphers = on
 #ssl_groups = 'prime256v1'
 #ssl_min_protocol_version = 'TLSv1.2'

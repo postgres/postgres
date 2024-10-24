@@ -288,13 +288,29 @@ be_tls_init(bool isServerStart)
 	if (!initialize_ecdh(context, isServerStart))
 		goto error;
 
-	/* set up the allowed cipher list */
-	if (SSL_CTX_set_cipher_list(context, SSLCipherSuites) != 1)
+	/* set up the allowed cipher list for TLSv1.2 and below */
+	if (SSL_CTX_set_cipher_list(context, SSLCipherList) != 1)
 	{
 		ereport(isServerStart ? FATAL : LOG,
 				(errcode(ERRCODE_CONFIG_FILE_ERROR),
-				 errmsg("could not set the cipher list (no valid ciphers available)")));
+				 errmsg("could not set the TLSv1.2 cipher list (no valid ciphers available)")));
 		goto error;
+	}
+
+	/*
+	 * Set up the allowed cipher suites for TLSv1.3. If the GUC is an empty
+	 * string we leave the allowed suites to be the OpenSSL default value.
+	 */
+	if (SSLCipherSuites[0])
+	{
+		/* set up the allowed cipher suites */
+		if (SSL_CTX_set_ciphersuites(context, SSLCipherSuites) != 1)
+		{
+			ereport(isServerStart ? FATAL : LOG,
+					(errcode(ERRCODE_CONFIG_FILE_ERROR),
+					 errmsg("could not set the TLSv1.3 cipher suites (no valid ciphers available)")));
+			goto error;
+		}
 	}
 
 	/* Let server choose order */
