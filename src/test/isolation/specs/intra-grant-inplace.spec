@@ -96,6 +96,14 @@ permutation
 	addk2(r3)
 	r3
 
+# reproduce bug in DoesMultiXactIdConflict() call
+permutation
+	b3
+	sfnku3
+	keyshr5
+	addk2(r3)
+	r3
+
 # same-xact rowmark
 permutation
 	b2
