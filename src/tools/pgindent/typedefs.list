@@ -2378,6 +2378,7 @@ RelFileLocator
 RelFileLocatorBackend
 RelFileNumber
 RelIdCacheEnt
+RelIdToTypeIdCacheEntry
 RelInfo
 RelInfoArr
 RelMapFile

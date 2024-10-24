@@ -207,4 +207,8 @@ extern void SharedRecordTypmodRegistryInit(SharedRecordTypmodRegistry *,
 
 extern void SharedRecordTypmodRegistryAttach(SharedRecordTypmodRegistry *);
 
+extern void AtEOXact_TypeCache(void);
+
+extern void AtEOSubXact_TypeCache(void);
+
 #endif							/* TYPCACHE_H */
