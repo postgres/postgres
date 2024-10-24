@@ -1,16 +1,16 @@
 /*-------------------------------------------------------------------------
  *
- * waitlsn.h
+ * xlogwait.h
  *	  Declarations for LSN replay waiting routines.
  *
  * Copyright (c) 2024, PostgreSQL Global Development Group
  *
- * src/include/commands/waitlsn.h
+ * src/include/access/xlogwait.h
  *
  *-------------------------------------------------------------------------
  */
-#ifndef WAIT_LSN_H
-#define WAIT_LSN_H
+#ifndef XLOG_WAIT_H
+#define XLOG_WAIT_H
 
 #include "lib/pairingheap.h"
 #include "postgres.h"
@@ -78,4 +78,4 @@ extern void WaitLSNSetLatches(XLogRecPtr currentLSN);
 extern void WaitLSNCleanup(void);
 extern void WaitForLSNReplay(XLogRecPtr targetLSN, int64 timeout);
 
-#endif							/* WAIT_LSN_H */
+#endif							/* XLOG_WAIT_H */

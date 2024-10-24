@@ -24,6 +24,7 @@ backend_sources += files(
   'xlogrecovery.c',
   'xlogstats.c',
   'xlogutils.c',
+  'xlogwait.c',
 )
 
 # used by frontend programs to build a frontend xlogreader

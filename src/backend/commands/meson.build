@@ -50,5 +50,4 @@ backend_sources += files(
   'vacuumparallel.c',
   'variable.c',
   'view.c',
-  'waitlsn.c',
 )

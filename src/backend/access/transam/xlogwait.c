@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * waitlsn.c
+ * xlogwait.c
  *	  Implements waiting for the given replay LSN, which is used in
  *	  CALL pg_wal_replay_wait(target_lsn pg_lsn, timeout float8).
  *
  * Copyright (c) 2024, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  src/backend/commands/waitlsn.c
+ *	  src/backend/access/transam/xlogwait.c
  *
  *-------------------------------------------------------------------------
  */
@@ -20,7 +20,7 @@
 #include "pgstat.h"
 #include "access/xlog.h"
 #include "access/xlogrecovery.h"
-#include "commands/waitlsn.h"
+#include "access/xlogwait.h"
 #include "funcapi.h"
 #include "miscadmin.h"
 #include "storage/latch.h"
