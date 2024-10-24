@@ -56,7 +56,7 @@ while (my $line = <$contents>)
 	# file.
 	# - Valid configuration options are followed immediately by " = ",
 	# with one space before and after the equal sign.
-	if ($line =~ m/^#?([_[:alpha:]]+) = .*/)
+	if ($line =~ m/^#?([_[:alnum:]]+) = .*/)
 	{
 		# Lower-case conversion matters for some of the GUCs.
 		my $param_name = lc($1);
