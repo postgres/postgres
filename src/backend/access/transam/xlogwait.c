@@ -222,7 +222,7 @@ WaitForLSNReplay(XLogRecPtr targetLSN, int64 timeout)
 {
 	XLogRecPtr	currentLSN;
 	TimestampTz endtime = 0;
-	int			wake_events = WL_LATCH_SET | WL_EXIT_ON_PM_DEATH;
+	int			wake_events = WL_LATCH_SET | WL_POSTMASTER_DEATH;
 
 	/* Shouldn't be called when shmem isn't initialized */
 	Assert(waitLSNState);
@@ -312,6 +312,16 @@ WaitForLSNReplay(XLogRecPtr targetLSN, int64 timeout)
 
 		rc = WaitLatch(MyLatch, wake_events, delay_ms,
 					   WAIT_EVENT_WAIT_FOR_WAL_REPLAY);
+
+		/*
+		 * Emergency bailout if postmaster has died.  This is to avoid the
+		 * necessity for manual cleanup of all postmaster children.
+		 */
+		if (rc & WL_POSTMASTER_DEATH)
+			ereport(FATAL,
+					(errcode(ERRCODE_ADMIN_SHUTDOWN),
+					 errmsg("terminating connection due to unexpected postmaster exit"),
+					 errcontext("while waiting for LSN replay")));
 
 		if (rc & WL_LATCH_SET)
 			ResetLatch(MyLatch);
