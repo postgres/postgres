@@ -70,12 +70,23 @@ typedef struct WaitLSNState
 	WaitLSNProcInfo procInfos[FLEXIBLE_ARRAY_MEMBER];
 } WaitLSNState;
 
+/*
+ * Result statuses for WaitForLSNReplay().
+ */
+typedef enum
+{
+	WAIT_LSN_RESULT_SUCCESS,	/* Target LSN is reached */
+	WAIT_LSN_RESULT_TIMEOUT,	/* Timeout occurred */
+	WAIT_LSN_RESULT_NOT_IN_RECOVERY,	/* Recovery ended before or during our
+										 * wait */
+} WaitLSNResult;
+
 extern PGDLLIMPORT WaitLSNState *waitLSNState;
 
 extern Size WaitLSNShmemSize(void);
 extern void WaitLSNShmemInit(void);
 extern void WaitLSNSetLatches(XLogRecPtr currentLSN);
 extern void WaitLSNCleanup(void);
-extern void WaitForLSNReplay(XLogRecPtr targetLSN, int64 timeout);
+extern WaitLSNResult WaitForLSNReplay(XLogRecPtr targetLSN, int64 timeout);
 
 #endif							/* XLOG_WAIT_H */

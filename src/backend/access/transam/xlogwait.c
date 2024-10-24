@@ -217,7 +217,7 @@ WaitLSNCleanup(void)
  * Wait using MyLatch till the given LSN is replayed, the postmaster dies or
  * timeout happens.
  */
-void
+WaitLSNResult
 WaitForLSNReplay(XLogRecPtr targetLSN, int64 timeout)
 {
 	XLogRecPtr	currentLSN;
@@ -240,17 +240,14 @@ WaitForLSNReplay(XLogRecPtr targetLSN, int64 timeout)
 		 * check the last replay LSN before reporting an error.
 		 */
 		if (targetLSN <= GetXLogReplayRecPtr(NULL))
-			return;
-		ereport(ERROR,
-				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("recovery is not in progress"),
-				 errhint("Waiting for LSN can only be executed during recovery.")));
+			return WAIT_LSN_RESULT_SUCCESS;
+		return WAIT_LSN_RESULT_NOT_IN_RECOVERY;
 	}
 	else
 	{
 		/* If target LSN is already replayed, exit immediately */
 		if (targetLSN <= GetXLogReplayRecPtr(NULL))
-			return;
+			return WAIT_LSN_RESULT_SUCCESS;
 	}
 
 	if (timeout > 0)
@@ -276,17 +273,13 @@ WaitForLSNReplay(XLogRecPtr targetLSN, int64 timeout)
 		{
 			/*
 			 * Recovery was ended, but recheck if target LSN was already
-			 * replayed.
+			 * replayed.  See the comment regarding deleteLSNWaiter() below.
 			 */
+			deleteLSNWaiter();
 			currentLSN = GetXLogReplayRecPtr(NULL);
 			if (targetLSN <= currentLSN)
-				return;
-			ereport(ERROR,
-					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-					 errmsg("recovery is not in progress"),
-					 errdetail("Recovery ended before replaying target LSN %X/%X; last replay LSN %X/%X.",
-							   LSN_FORMAT_ARGS(targetLSN),
-							   LSN_FORMAT_ARGS(currentLSN))));
+				return WAIT_LSN_RESULT_SUCCESS;
+			return WAIT_LSN_RESULT_NOT_IN_RECOVERY;
 		}
 		else
 		{
@@ -338,11 +331,7 @@ WaitForLSNReplay(XLogRecPtr targetLSN, int64 timeout)
 	 * If we didn't reach the target LSN, we must be exited by timeout.
 	 */
 	if (targetLSN > currentLSN)
-	{
-		ereport(ERROR,
-				(errcode(ERRCODE_QUERY_CANCELED),
-				 errmsg("timed out while waiting for target LSN %X/%X to be replayed; current replay LSN %X/%X",
-						LSN_FORMAT_ARGS(targetLSN),
-						LSN_FORMAT_ARGS(currentLSN))));
-	}
+		return WAIT_LSN_RESULT_TIMEOUT;
+
+	return WAIT_LSN_RESULT_SUCCESS;
 }

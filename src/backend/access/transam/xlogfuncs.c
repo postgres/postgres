@@ -759,6 +759,7 @@ pg_wal_replay_wait(PG_FUNCTION_ARGS)
 {
 	XLogRecPtr	target_lsn = PG_GETARG_LSN(0);
 	int64		timeout = PG_GETARG_INT64(1);
+	WaitLSNResult result;
 
 	if (timeout < 0)
 		ereport(ERROR,
@@ -799,7 +800,35 @@ pg_wal_replay_wait(PG_FUNCTION_ARGS)
 	 */
 	Assert(MyProc->xmin == InvalidTransactionId);
 
-	(void) WaitForLSNReplay(target_lsn, timeout);
+	result = WaitForLSNReplay(target_lsn, timeout);
+
+	/*
+	 * Process the result of WaitForLSNReplay().  Throw appropriate error if
+	 * needed.
+	 */
+	switch (result)
+	{
+		case WAIT_LSN_RESULT_SUCCESS:
+			/* Nothing to do on success */
+			break;
+
+		case WAIT_LSN_RESULT_TIMEOUT:
+			ereport(ERROR,
+					(errcode(ERRCODE_QUERY_CANCELED),
+					 errmsg("timed out while waiting for target LSN %X/%X to be replayed; current replay LSN %X/%X",
+							LSN_FORMAT_ARGS(target_lsn),
+							LSN_FORMAT_ARGS(GetXLogReplayRecPtr(NULL)))));
+			break;
+
+		case WAIT_LSN_RESULT_NOT_IN_RECOVERY:
+			ereport(ERROR,
+					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+					 errmsg("recovery is not in progress"),
+					 errdetail("Recovery ended before replaying target LSN %X/%X; last replay LSN %X/%X.",
+							   LSN_FORMAT_ARGS(target_lsn),
+							   LSN_FORMAT_ARGS(GetXLogReplayRecPtr(NULL)))));
+			break;
+	}
 
 	PG_RETURN_VOID();
 }
