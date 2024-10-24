@@ -293,7 +293,13 @@
       encrypted client connections.  <productname>OpenSSL</productname> is
       also required for random number generation on platforms that do not
       have <filename>/dev/urandom</filename> (except Windows).  The minimum
-      required version is 1.1.0.
+      required version is 1.1.1.
+     </para>
+     <para>
+      Additionally, <productname>LibreSSL</productname> is supported using the
+      <productname>OpenSSL</productname> compatibility layer.  The minimum
+      required version is 3.4 (from <systemitem class="osname">OpenBSD</systemitem>
+      version 7.0).
      </para>
     </listitem>
 
@@ -989,7 +995,9 @@ build-postgresql:
         <para>
          Build with support for <acronym>SSL</acronym> (encrypted)
          connections. The only <replaceable>LIBRARY</replaceable>
-         supported is <option>openssl</option>. This requires the
+         supported is <option>openssl</option>, which is used for both
+         <productname>OpenSSL</productname>
+         and <productname>LibreSSL</productname>. This requires the
          <productname>OpenSSL</productname> package to be installed.
          <filename>configure</filename> will check for the required
          header files and libraries to make sure that your

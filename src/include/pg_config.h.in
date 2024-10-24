@@ -280,9 +280,6 @@
 /* Define to 1 if you have the `mkdtemp' function. */
 #undef HAVE_MKDTEMP
 
-/* Define to 1 if you have the `OPENSSL_init_ssl' function. */
-#undef HAVE_OPENSSL_INIT_SSL
-
 /* Define to 1 if you have the <ossp/uuid.h> header file. */
 #undef HAVE_OSSP_UUID_H
 
@@ -357,6 +354,9 @@
 
 /* Define to 1 if you have the `SSL_CTX_set_cert_cb' function. */
 #undef HAVE_SSL_CTX_SET_CERT_CB
+
+/* Define to 1 if you have the `SSL_CTX_set_ciphersuites' function. */
+#undef HAVE_SSL_CTX_SET_CIPHERSUITES
 
 /* Define to 1 if you have the `SSL_CTX_set_num_tickets' function. */
 #undef HAVE_SSL_CTX_SET_NUM_TICKETS

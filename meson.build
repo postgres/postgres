@@ -1361,12 +1361,8 @@ if sslopt in ['auto', 'openssl']
       ['CRYPTO_new_ex_data', {'required': true}],
       ['SSL_new', {'required': true}],
 
-      # Functions introduced in OpenSSL 1.1.0. We used to check for
-      # OPENSSL_VERSION_NUMBER, but that didn't work with 1.1.0, because LibreSSL
-      # defines OPENSSL_VERSION_NUMBER to claim version 2.0.0, even though it
-      # doesn't have these OpenSSL 1.1.0 functions. So check for individual
-      # functions.
-      ['OPENSSL_init_ssl', {'required': true}],
+      # Functions introduced in OpenSSL 1.1.1.
+      ['SSL_CTX_set_ciphersuites', {'required': true}],
 
       # Function introduced in OpenSSL 1.0.2, not in LibreSSL.
       ['SSL_CTX_set_cert_cb'],
@@ -1395,7 +1391,7 @@ if sslopt in ['auto', 'openssl']
     if are_openssl_funcs_complete
       cdata.set('USE_OPENSSL', 1,
                 description: 'Define to 1 to build with OpenSSL support. (-Dssl=openssl)')
-      cdata.set('OPENSSL_API_COMPAT', '0x10100000L',
+      cdata.set('OPENSSL_API_COMPAT', '0x10101000L',
                 description: 'Define to the OpenSSL API version in use. This avoids deprecation warnings from newer OpenSSL versions.')
       ssl_library = 'openssl'
     else

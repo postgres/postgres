@@ -12224,9 +12224,9 @@ if test "$with_openssl" = yes ; then
 fi
 
 if test "$with_ssl" = openssl ; then
-    # Minimum required OpenSSL version is 1.1.0
+    # Minimum required OpenSSL version is 1.1.1
 
-$as_echo "#define OPENSSL_API_COMPAT 0x10100000L" >>confdefs.h
+$as_echo "#define OPENSSL_API_COMPAT 0x10101000L" >>confdefs.h
 
   if test "$PORTNAME" != "win32"; then
      { $as_echo "$as_me:${as_lineno-$LINENO}: checking for CRYPTO_new_ex_data in -lcrypto" >&5
@@ -12441,6 +12441,20 @@ else
 fi
 
   fi
+  # Functions introduced in OpenSSL 1.1.1.
+  for ac_func in SSL_CTX_set_ciphersuites
+do :
+  ac_fn_c_check_func "$LINENO" "SSL_CTX_set_ciphersuites" "ac_cv_func_SSL_CTX_set_ciphersuites"
+if test "x$ac_cv_func_SSL_CTX_set_ciphersuites" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_SSL_CTX_SET_CIPHERSUITES 1
+_ACEOF
+
+else
+  as_fn_error $? "OpenSSL version >= 1.1.1 is required for SSL support" "$LINENO" 5
+fi
+done
+
   # Function introduced in OpenSSL 1.0.2, not in LibreSSL.
   for ac_func in SSL_CTX_set_cert_cb
 do :
@@ -12450,24 +12464,6 @@ if test "x$ac_cv_func_SSL_CTX_set_cert_cb" = xyes; then :
 #define HAVE_SSL_CTX_SET_CERT_CB 1
 _ACEOF
 
-fi
-done
-
-  # Functions introduced in OpenSSL 1.1.0. We used to check for
-  # OPENSSL_VERSION_NUMBER, but that didn't work with 1.1.0, because LibreSSL
-  # defines OPENSSL_VERSION_NUMBER to claim version 2.0.0, even though it
-  # doesn't have these OpenSSL 1.1.0 functions. So check for individual
-  # functions.
-  for ac_func in OPENSSL_init_ssl
-do :
-  ac_fn_c_check_func "$LINENO" "OPENSSL_init_ssl" "ac_cv_func_OPENSSL_init_ssl"
-if test "x$ac_cv_func_OPENSSL_init_ssl" = xyes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_OPENSSL_INIT_SSL 1
-_ACEOF
-
-else
-  as_fn_error $? "OpenSSL version >= 1.1.0 is required for SSL support" "$LINENO" 5
 fi
 done
 

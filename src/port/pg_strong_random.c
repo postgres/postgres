@@ -31,7 +31,9 @@
  * cryptographically secure, suitable for use e.g. in authentication.
  *
  * Before pg_strong_random is called in any process, the generator must first
- * be initialized by calling pg_strong_random_init().
+ * be initialized by calling pg_strong_random_init().  Initialization is a no-
+ * op for all supported randomness sources, it is kept to maintain backwards
+ * compatibility with extensions.
  *
  * We rely on system facilities for actually generating the numbers.
  * We support a number of sources:
@@ -50,20 +52,12 @@
 
 #ifdef USE_OPENSSL
 
-#include <openssl/opensslv.h>
 #include <openssl/rand.h>
 
 void
 pg_strong_random_init(void)
 {
-#if (OPENSSL_VERSION_NUMBER < 0x10101000L)
-	/*
-	 * Make sure processes do not share OpenSSL randomness state.  This is not
-	 * required on LibreSSL and no longer required in OpenSSL 1.1.1 and later
-	 * versions.
-	 */
-	RAND_poll();
-#endif
+	/* No initialization needed */
 }
 
 bool
