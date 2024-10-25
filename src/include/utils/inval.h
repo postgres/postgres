@@ -27,6 +27,9 @@ extern void AcceptInvalidationMessages(void);
 
 extern void AtEOXact_Inval(bool isCommit);
 
+extern void PreInplace_Inval(void);
+extern void AtInplace_Inval(void);
+
 extern void AtEOSubXact_Inval(bool isCommit);
 
 extern void PostPrepare_Inval(void);
@@ -36,6 +39,9 @@ extern void CommandEndInvalidationMessages(void);
 extern void CacheInvalidateHeapTuple(Relation relation,
 									 HeapTuple tuple,
 									 HeapTuple newtuple);
+extern void CacheInvalidateHeapTupleInplace(Relation relation,
+											HeapTuple tuple,
+											HeapTuple newtuple);
 
 extern void CacheInvalidateCatalog(Oid catalogId);
 
