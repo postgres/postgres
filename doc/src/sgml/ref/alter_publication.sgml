@@ -154,6 +154,21 @@ ALTER PUBLICATION <replaceable class="parameter">name</replaceable> RENAME TO <r
       This clause alters publication parameters originally set by
       <xref linkend="sql-createpublication"/>.  See there for more information.
      </para>
+     <caution>
+      <para>
+       Altering the <literal>publish_via_partition_root</literal> parameter can
+       lead to data loss or duplication at the subscriber because it changes
+       the identity and schema of the published tables. Note this happens only
+       when a partition root table is specified as the replication target.
+      </para>
+      <para>
+       This problem can be avoided by refraining from modifying partition leaf
+       tables after the <command>ALTER PUBLICATION ... SET</command> until the
+       <link linkend="sql-altersubscription"><command>ALTER SUBSCRIPTION ... REFRESH PUBLICATION</command></link>
+       is executed and by only refreshing using the <literal>copy_data = off</literal>
+       option.
+      </para>
+     </caution>
     </listitem>
    </varlistentry>
 
