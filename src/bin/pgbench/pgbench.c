@@ -6495,7 +6495,7 @@ printResults(StatsData *total,
 
 				if (script_total_cnt > 0)
 				{
-					printf(" - number of transactions actually pocessed: " INT64_FORMAT " (tps = %f)\n",
+					printf(" - number of transactions actually processed: " INT64_FORMAT " (tps = %f)\n",
 						   sstats->cnt, sstats->cnt / bench_duration);
 
 					printf(" - number of failed transactions: " INT64_FORMAT " (%.3f%%)\n",
