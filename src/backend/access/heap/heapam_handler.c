@@ -2115,17 +2115,48 @@ heapam_estimate_rel_size(Relation rel, int32 *attr_widths,
 
 static bool
 heapam_scan_bitmap_next_block(TableScanDesc scan,
-							  TBMIterateResult *tbmres,
+							  BlockNumber *blockno, bool *recheck,
 							  uint64 *lossy_pages, uint64 *exact_pages)
 {
 	HeapScanDesc hscan = (HeapScanDesc) scan;
-	BlockNumber block = tbmres->blockno;
+	BlockNumber block;
 	Buffer		buffer;
 	Snapshot	snapshot;
 	int			ntup;
+	TBMIterateResult *tbmres;
 
 	hscan->rs_cindex = 0;
 	hscan->rs_ntuples = 0;
+
+	*blockno = InvalidBlockNumber;
+	*recheck = true;
+
+	do
+	{
+		CHECK_FOR_INTERRUPTS();
+
+		if (scan->st.bitmap.rs_shared_iterator)
+			tbmres = tbm_shared_iterate(scan->st.bitmap.rs_shared_iterator);
+		else
+			tbmres = tbm_iterate(scan->st.bitmap.rs_iterator);
+
+		if (tbmres == NULL)
+			return false;
+
+		/*
+		 * Ignore any claimed entries past what we think is the end of the
+		 * relation. It may have been extended after the start of our scan (we
+		 * only hold an AccessShareLock, and it could be inserts from this
+		 * backend).  We don't take this optimization in SERIALIZABLE
+		 * isolation though, as we need to examine all invisible tuples
+		 * reachable by the index.
+		 */
+	} while (!IsolationIsSerializable() &&
+			 tbmres->blockno >= hscan->rs_nblocks);
+
+	/* Got a valid block */
+	*blockno = tbmres->blockno;
+	*recheck = tbmres->recheck;
 
 	/*
 	 * We can skip fetching the heap page if we don't need any fields from the
@@ -2145,16 +2176,7 @@ heapam_scan_bitmap_next_block(TableScanDesc scan,
 		return true;
 	}
 
-	/*
-	 * Ignore any claimed entries past what we think is the end of the
-	 * relation. It may have been extended after the start of our scan (we
-	 * only hold an AccessShareLock, and it could be inserts from this
-	 * backend).  We don't take this optimization in SERIALIZABLE isolation
-	 * though, as we need to examine all invisible tuples reachable by the
-	 * index.
-	 */
-	if (!IsolationIsSerializable() && block >= hscan->rs_nblocks)
-		return false;
+	block = tbmres->blockno;
 
 	/*
 	 * Acquire pin on the target heap page, trading in any pin we held before.
@@ -2249,12 +2271,18 @@ heapam_scan_bitmap_next_block(TableScanDesc scan,
 	else
 		(*lossy_pages)++;
 
-	return ntup > 0;
+	/*
+	 * Return true to indicate that a valid block was found and the bitmap is
+	 * not exhausted. If there are no visible tuples on this page,
+	 * hscan->rs_ntuples will be 0 and heapam_scan_bitmap_next_tuple() will
+	 * return false returning control to this function to advance to the next
+	 * block in the bitmap.
+	 */
+	return true;
 }
 
 static bool
 heapam_scan_bitmap_next_tuple(TableScanDesc scan,
-							  TBMIterateResult *tbmres,
 							  TupleTableSlot *slot)
 {
 	HeapScanDesc hscan = (HeapScanDesc) scan;

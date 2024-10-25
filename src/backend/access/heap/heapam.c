@@ -1387,8 +1387,8 @@ heap_set_tidrange(TableScanDesc sscan, ItemPointer mintid,
 	heap_setscanlimits(sscan, startBlk, numBlks);
 
 	/* Finally, set the TID range in sscan */
-	ItemPointerCopy(&lowestItem, &sscan->rs_mintid);
-	ItemPointerCopy(&highestItem, &sscan->rs_maxtid);
+	ItemPointerCopy(&lowestItem, &sscan->st.tidrange.rs_mintid);
+	ItemPointerCopy(&highestItem, &sscan->st.tidrange.rs_maxtid);
 }
 
 bool
@@ -1396,8 +1396,8 @@ heap_getnextslot_tidrange(TableScanDesc sscan, ScanDirection direction,
 						  TupleTableSlot *slot)
 {
 	HeapScanDesc scan = (HeapScanDesc) sscan;
-	ItemPointer mintid = &sscan->rs_mintid;
-	ItemPointer maxtid = &sscan->rs_maxtid;
+	ItemPointer mintid = &sscan->st.tidrange.rs_mintid;
+	ItemPointer maxtid = &sscan->st.tidrange.rs_maxtid;
 
 	/* Note: no locking manipulations needed */
 	for (;;)
