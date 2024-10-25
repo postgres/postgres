@@ -203,6 +203,4 @@ Inplace updates create an exception to the rule that tuple data won't change
 under a reader holding a pin.  A reader of a heap_fetch() result tuple may
 witness a torn read.  Current inplace-updated fields are aligned and are no
 wider than four bytes, and current readers don't need consistency across
-fields.  Hence, they get by with just fetching each field once.  XXX such a
-caller may also read a value that has not reached WAL; see
-systable_inplace_update_finish().
+fields.  Hence, they get by with just fetching each field once.
