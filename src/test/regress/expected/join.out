@@ -3183,6 +3183,21 @@ where b.unique2 is null;
 (5 rows)
 
 --
+-- regression test for bogus RTE_GROUP entries
+--
+explain (costs off)
+select a.* from tenk1 a
+where exists (select 1 from tenk1 b where a.unique1 = b.unique2 group by b.unique1);
+                         QUERY PLAN                         
+------------------------------------------------------------
+ Hash Semi Join
+   Hash Cond: (a.unique1 = b.unique2)
+   ->  Seq Scan on tenk1 a
+   ->  Hash
+         ->  Index Only Scan using tenk1_unique2 on tenk1 b
+(5 rows)
+
+--
 -- regression test for proper handling of outer joins within antijoins
 --
 create temp table tt4x(c1 int, c2 int, c3 int);

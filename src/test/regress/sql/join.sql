@@ -819,6 +819,14 @@ select a.* from tenk1 a left join tenk1 b on a.unique1 = b.unique2
 where b.unique2 is null;
 
 --
+-- regression test for bogus RTE_GROUP entries
+--
+
+explain (costs off)
+select a.* from tenk1 a
+where exists (select 1 from tenk1 b where a.unique1 = b.unique2 group by b.unique1);
+
+--
 -- regression test for proper handling of outer joins within antijoins
 --
 
