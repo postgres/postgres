@@ -6295,12 +6295,17 @@ heap_inplace_update_and_unlock(Relation relation,
 	HeapTupleHeader htup = oldtup->t_data;
 	uint32		oldlen;
 	uint32		newlen;
+	char	   *dst;
+	char	   *src;
 
 	Assert(ItemPointerEquals(&oldtup->t_self, &tuple->t_self));
 	oldlen = oldtup->t_len - htup->t_hoff;
 	newlen = tuple->t_len - tuple->t_data->t_hoff;
 	if (oldlen != newlen || htup->t_hoff != tuple->t_data->t_hoff)
 		elog(ERROR, "wrong tuple length");
+
+	dst = (char *) htup + htup->t_hoff;
+	src = (char *) tuple->t_data + tuple->t_data->t_hoff;
 
 	/*
 	 * Construct shared cache inval if necessary.  Note that because we only
@@ -6320,15 +6325,15 @@ heap_inplace_update_and_unlock(Relation relation,
 	 */
 	PreInplace_Inval();
 
-	/* NO EREPORT(ERROR) from here till changes are logged */
-	START_CRIT_SECTION();
-
-	memcpy((char *) htup + htup->t_hoff,
-		   (char *) tuple->t_data + tuple->t_data->t_hoff,
-		   newlen);
-
 	/*----------
-	 * XXX A crash here can allow datfrozenxid() to get ahead of relfrozenxid:
+	 * NO EREPORT(ERROR) from here till changes are complete
+	 *
+	 * Our buffer lock won't stop a reader having already pinned and checked
+	 * visibility for this tuple.  Hence, we write WAL first, then mutate the
+	 * buffer.  Like in MarkBufferDirtyHint() or RecordTransactionCommit(),
+	 * checkpoint delay makes that acceptable.  With the usual order of
+	 * changes, a crash after memcpy() and before XLogInsert() could allow
+	 * datfrozenxid to overtake relfrozenxid:
 	 *
 	 * ["D" is a VACUUM (ONLY_DATABASE_STATS)]
 	 * ["R" is a VACUUM tbl]
@@ -6338,14 +6343,28 @@ heap_inplace_update_and_unlock(Relation relation,
 	 * D: raise pg_database.datfrozenxid, XLogInsert(), finish
 	 * [crash]
 	 * [recovery restores datfrozenxid w/o relfrozenxid]
+	 *
+	 * Like in MarkBufferDirtyHint() subroutine XLogSaveBufferForHint(), copy
+	 * the buffer to the stack before logging.  Here, that facilitates a FPI
+	 * of the post-mutation block before we accept other sessions seeing it.
 	 */
-
-	MarkBufferDirty(buffer);
+	Assert((MyProc->delayChkptFlags & DELAY_CHKPT_START) == 0);
+	START_CRIT_SECTION();
+	MyProc->delayChkptFlags |= DELAY_CHKPT_START;
 
 	/* XLOG stuff */
 	if (RelationNeedsWAL(relation))
 	{
 		xl_heap_inplace xlrec;
+		PGAlignedBlock copied_buffer;
+		char	   *origdata = (char *) BufferGetBlock(buffer);
+		Page		page = BufferGetPage(buffer);
+		uint16		lower = ((PageHeader) page)->pd_lower;
+		uint16		upper = ((PageHeader) page)->pd_upper;
+		uintptr_t	dst_offset_in_block;
+		RelFileNode	rnode;
+		ForkNumber	forkno;
+		BlockNumber blkno;
 		XLogRecPtr	recptr;
 
 		xlrec.offnum = ItemPointerGetOffsetNumber(&tuple->t_self);
@@ -6353,15 +6372,27 @@ heap_inplace_update_and_unlock(Relation relation,
 		XLogBeginInsert();
 		XLogRegisterData((char *) &xlrec, SizeOfHeapInplace);
 
-		XLogRegisterBuffer(0, buffer, REGBUF_STANDARD);
-		XLogRegisterBufData(0, (char *) htup + htup->t_hoff, newlen);
+		/* register block matching what buffer will look like after changes */
+		memcpy(copied_buffer.data, origdata, lower);
+		memcpy(copied_buffer.data + upper, origdata + upper, BLCKSZ - upper);
+		dst_offset_in_block = dst - origdata;
+		memcpy(copied_buffer.data + dst_offset_in_block, src, newlen);
+		BufferGetTag(buffer, &rnode, &forkno, &blkno);
+		Assert(forkno == MAIN_FORKNUM);
+		XLogRegisterBlock(0, &rnode, forkno, blkno, copied_buffer.data,
+						  REGBUF_STANDARD);
+		XLogRegisterBufData(0, src, newlen);
 
 		/* inplace updates aren't decoded atm, don't log the origin */
 
 		recptr = XLogInsert(RM_HEAP_ID, XLOG_HEAP_INPLACE);
 
-		PageSetLSN(BufferGetPage(buffer), recptr);
+		PageSetLSN(page, recptr);
 	}
+
+	memcpy(dst, src, newlen);
+
+	MarkBufferDirty(buffer);
 
 	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 
@@ -6375,6 +6406,7 @@ heap_inplace_update_and_unlock(Relation relation,
 	 */
 	AtInplace_Inval();
 
+	MyProc->delayChkptFlags &= ~DELAY_CHKPT_START;
 	END_CRIT_SECTION();
 	UnlockTuple(relation, &tuple->t_self, InplaceUpdateTupleLock);
 
