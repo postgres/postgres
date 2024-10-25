@@ -975,11 +975,6 @@ EventTriggerOnLogin(void)
 				 * this instead of regular updates serves two purposes. First,
 				 * that avoids possible waiting on the row-level lock. Second,
 				 * that avoids dealing with TOAST.
-				 *
-				 * Changes made by inplace update may be lost due to
-				 * concurrent normal updates; see inplace-inval.spec. However,
-				 * we are OK with that.  The subsequent connections will still
-				 * have a chance to set "dathasloginevt" to false.
 				 */
 				systable_inplace_update_finish(state, tuple);
 			}
