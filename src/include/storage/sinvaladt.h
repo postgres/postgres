@@ -39,6 +39,7 @@ extern void BackendIdGetTransactionIds(int backendID, TransactionId *xid,
 extern void SIInsertDataEntries(const SharedInvalidationMessage *data, int n);
 extern int	SIGetDataEntries(SharedInvalidationMessage *data, int datasize);
 extern void SICleanupQueue(bool callerHasWriteLock, int minFree);
+extern void SIResetAll(void);
 
 extern LocalTransactionId GetNextLocalTransactionId(void);
 
