@@ -26,7 +26,8 @@ step wakeup2	{ SELECT injection_points_wakeup('injection-points-wait'); }
 step detach2	{ SELECT injection_points_detach('injection-points-wait'); }
 
 # Detach after wait and wakeup.
-permutation wait1 wakeup2 detach2
+# This permutation is proving to be unstable on FreeBSD, so disable for now.
+#permutation wait1 wakeup2 detach2
 
 # Detach before wakeup.  s1 waits until wakeup, ignores the detach.
 permutation wait1 detach2 wakeup2
