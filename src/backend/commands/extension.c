@@ -3639,7 +3639,7 @@ read_whole_file(const char *filename, int *length)
 				 errmsg("file \"%s\" is too large", filename)));
 	bytes_to_read = (size_t) fst.st_size;
 
-	if ((file = AllocateFile(filename, PG_BINARY_R)) == NULL)
+	if ((file = AllocateFile(filename, "r")) == NULL)
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not open file \"%s\" for reading: %m",
