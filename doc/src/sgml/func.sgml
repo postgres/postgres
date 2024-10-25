@@ -30294,7 +30294,7 @@ DETAIL:  Make sure pg_wal_replay_wait() isn't called within a transaction with a
          Additionally, this function supports argument name
          <literal>version</literal> of type <type>integer</type>, which
          specifies the version from which the statistics originated, improving
-         intepretation of older statistics.
+         interpretation of older statistics.
         </para>
         <para>
          For example, to set the <structname>relpages</structname> and
@@ -30414,7 +30414,7 @@ DETAIL:  Make sure pg_wal_replay_wait() isn't called within a transaction with a
          Additionally, this function supports argument name
          <literal>version</literal> of type <type>integer</type>, which
          specifies the version from which the statistics originated, improving
-         intepretation of older statistics.
+         interpretation of older statistics.
         </para>
         <para>
          For example, to set the <structname>avg_width</structname> and
