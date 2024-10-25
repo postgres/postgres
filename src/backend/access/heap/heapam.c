@@ -6111,6 +6111,24 @@ heap_inplace_update_and_unlock(Relation relation,
 	if (oldlen != newlen || htup->t_hoff != tuple->t_data->t_hoff)
 		elog(ERROR, "wrong tuple length");
 
+	/*
+	 * Construct shared cache inval if necessary.  Note that because we only
+	 * pass the new version of the tuple, this mustn't be used for any
+	 * operations that could change catcache lookup keys.  But we aren't
+	 * bothering with index updates either, so that's true a fortiori.
+	 */
+	CacheInvalidateHeapTupleInplace(relation, tuple, NULL);
+
+	/*
+	 * Unlink relcache init files as needed.  If unlinking, acquire
+	 * RelCacheInitLock until after associated invalidations.  By doing this
+	 * in advance, if we checkpoint and then crash between inplace
+	 * XLogInsert() and inval, we don't rely on StartupXLOG() ->
+	 * RelationCacheInitFileRemove().  That uses elevel==LOG, so replay would
+	 * neglect to PANIC on EIO.
+	 */
+	PreInplace_Inval();
+
 	/* NO EREPORT(ERROR) from here till changes are logged */
 	START_CRIT_SECTION();
 
@@ -6154,17 +6172,28 @@ heap_inplace_update_and_unlock(Relation relation,
 		PageSetLSN(BufferGetPage(buffer), recptr);
 	}
 
-	END_CRIT_SECTION();
-
-	heap_inplace_unlock(relation, oldtup, buffer);
+	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 
 	/*
-	 * Send out shared cache inval if necessary.  Note that because we only
-	 * pass the new version of the tuple, this mustn't be used for any
-	 * operations that could change catcache lookup keys.  But we aren't
-	 * bothering with index updates either, so that's true a fortiori.
+	 * Send invalidations to shared queue.  SearchSysCacheLocked1() assumes we
+	 * do this before UnlockTuple().
 	 *
-	 * XXX ROLLBACK discards the invalidation.  See test inplace-inval.spec.
+	 * If we're mutating a tuple visible only to this transaction, there's an
+	 * equivalent transactional inval from the action that created the tuple,
+	 * and this inval is superfluous.
+	 */
+	AtInplace_Inval();
+
+	END_CRIT_SECTION();
+	UnlockTuple(relation, &tuple->t_self, InplaceUpdateTupleLock);
+
+	AcceptInvalidationMessages();	/* local processing of just-sent inval */
+
+	/*
+	 * Queue a transactional inval.  The immediate invalidation we just sent
+	 * is the only one known to be necessary.  To reduce risk from the
+	 * transition to immediate invalidation, continue sending a transactional
+	 * invalidation like we've long done.  Third-party code might rely on it.
 	 */
 	if (!IsBootstrapProcessingMode())
 		CacheInvalidateHeapTuple(relation, tuple, NULL);
