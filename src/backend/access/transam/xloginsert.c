@@ -268,8 +268,6 @@ XLogRegisterBlock(uint8 block_id, RelFileNode *rnode, ForkNumber forknum,
 {
 	registered_buffer *regbuf;
 
-	/* This is currently only used to WAL-log a full-page image of a page */
-	Assert(flags & REGBUF_FORCE_IMAGE);
 	Assert(begininsert_called);
 
 	if (block_id >= max_registered_block_id)
