@@ -10,6 +10,9 @@
 
 CREATE EXTENSION injection_points;
 
+-- Make all injection points local to this process, for concurrency.
+SELECT injection_points_set_local();
+
 CREATE TABLE t (i int);
 SELECT injection_points_attach('typecache-before-rel-type-cache-insert', 'error');
 SELECT '(1)'::t;

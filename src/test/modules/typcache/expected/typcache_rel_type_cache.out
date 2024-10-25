@@ -8,6 +8,13 @@
 -- successful type cache invalidation by relation oid.
 --
 CREATE EXTENSION injection_points;
+-- Make all injection points local to this process, for concurrency.
+SELECT injection_points_set_local();
+ injection_points_set_local 
+----------------------------
+ 
+(1 row)
+
 CREATE TABLE t (i int);
 SELECT injection_points_attach('typecache-before-rel-type-cache-insert', 'error');
  injection_points_attach 
