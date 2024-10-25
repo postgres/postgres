@@ -20,7 +20,7 @@
 #include "access/xlogdefs.h"
 #include "catalog/genbki.h"
 #include "catalog/pg_subscription_d.h"
-
+#include "lib/stringinfo.h"
 #include "nodes/pg_list.h"
 
 /*
@@ -179,5 +179,8 @@ extern void FreeSubscription(Subscription *sub);
 extern void DisableSubscription(Oid subid);
 
 extern int	CountDBSubscriptions(Oid dbid);
+
+extern void GetPublicationsStr(List *publications, StringInfo dest,
+							   bool quote_literal);
 
 #endif							/* PG_SUBSCRIPTION_H */

@@ -35,6 +35,37 @@
 static List *textarray_to_stringlist(ArrayType *textarray);
 
 /*
+ * Add a comma-separated list of publication names to the 'dest' string.
+ */
+void
+GetPublicationsStr(List *publications, StringInfo dest, bool quote_literal)
+{
+	ListCell   *lc;
+	bool		first = true;
+
+	Assert(publications != NIL);
+
+	foreach(lc, publications)
+	{
+		char	   *pubname = strVal(lfirst(lc));
+
+		if (first)
+			first = false;
+		else
+			appendStringInfoString(dest, ", ");
+
+		if (quote_literal)
+			appendStringInfoString(dest, quote_literal_cstr(pubname));
+		else
+		{
+			appendStringInfoChar(dest, '"');
+			appendStringInfoString(dest, pubname);
+			appendStringInfoChar(dest, '"');
+		}
+	}
+}
+
+/*
  * Fetch the subscription from the syscache.
  */
 Subscription *

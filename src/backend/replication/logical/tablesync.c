@@ -802,7 +802,7 @@ fetch_remote_table_info(char *nspname, char *relname,
 	Oid			qualRow[] = {TEXTOID};
 	bool		isnull;
 	int			natt;
-	ListCell   *lc;
+	StringInfo	pub_names = NULL;
 	Bitmapset  *included_cols = NULL;
 
 	lrel->nspname = nspname;
@@ -856,15 +856,10 @@ fetch_remote_table_info(char *nspname, char *relname,
 		WalRcvExecResult *pubres;
 		TupleTableSlot *tslot;
 		Oid			attrsRow[] = {INT2VECTOROID};
-		StringInfoData pub_names;
 
-		initStringInfo(&pub_names);
-		foreach(lc, MySubscription->publications)
-		{
-			if (foreach_current_index(lc) > 0)
-				appendStringInfoString(&pub_names, ", ");
-			appendStringInfoString(&pub_names, quote_literal_cstr(strVal(lfirst(lc))));
-		}
+		/* Build the pub_names comma-separated string. */
+		pub_names = makeStringInfo();
+		GetPublicationsStr(MySubscription->publications, pub_names, true);
 
 		/*
 		 * Fetch info about column lists for the relation (from all the
@@ -881,7 +876,7 @@ fetch_remote_table_info(char *nspname, char *relname,
 						 " WHERE gpt.relid = %u AND c.oid = gpt.relid"
 						 "   AND p.pubname IN ( %s )",
 						 lrel->remoteid,
-						 pub_names.data);
+						 pub_names->data);
 
 		pubres = walrcv_exec(LogRepWorkerWalRcvConn, cmd.data,
 							 lengthof(attrsRow), attrsRow);
@@ -936,8 +931,6 @@ fetch_remote_table_info(char *nspname, char *relname,
 		ExecDropSingleTupleTableSlot(tslot);
 
 		walrcv_clear_result(pubres);
-
-		pfree(pub_names.data);
 	}
 
 	/*
@@ -1039,19 +1032,8 @@ fetch_remote_table_info(char *nspname, char *relname,
 	 */
 	if (walrcv_server_version(LogRepWorkerWalRcvConn) >= 150000)
 	{
-		StringInfoData pub_names;
-
-		/* Build the pubname list. */
-		initStringInfo(&pub_names);
-		foreach_node(String, pubstr, MySubscription->publications)
-		{
-			char	   *pubname = strVal(pubstr);
-
-			if (foreach_current_index(pubstr) > 0)
-				appendStringInfoString(&pub_names, ", ");
-
-			appendStringInfoString(&pub_names, quote_literal_cstr(pubname));
-		}
+		/* Reuse the already-built pub_names. */
+		Assert(pub_names != NULL);
 
 		/* Check for row filters. */
 		resetStringInfo(&cmd);
@@ -1062,7 +1044,7 @@ fetch_remote_table_info(char *nspname, char *relname,
 						 " WHERE gpt.relid = %u"
 						 "   AND p.pubname IN ( %s )",
 						 lrel->remoteid,
-						 pub_names.data);
+						 pub_names->data);
 
 		res = walrcv_exec(LogRepWorkerWalRcvConn, cmd.data, 1, qualRow);
 
@@ -1101,6 +1083,7 @@ fetch_remote_table_info(char *nspname, char *relname,
 		ExecDropSingleTupleTableSlot(slot);
 
 		walrcv_clear_result(res);
+		destroyStringInfo(pub_names);
 	}
 
 	pfree(cmd.data);
