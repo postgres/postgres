@@ -951,8 +951,7 @@ SearchSysCacheLocked1(int cacheId,
 
 		/*
 		 * If an inplace update just finished, ensure we process the syscache
-		 * inval.  XXX this is insufficient: the inplace updater may not yet
-		 * have reached AtEOXact_Inval().  See test at inplace-inval.spec.
+		 * inval.
 		 *
 		 * If a heap_update() call just released its LOCKTAG_TUPLE, we'll
 		 * probably find the old tuple and reach "tuple concurrently updated".
