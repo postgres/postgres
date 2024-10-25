@@ -20,6 +20,7 @@
 #include "storage/buf.h"
 #include "storage/bufpage.h"
 #include "storage/relfilelocator.h"
+#include "storage/sinval.h"
 #include "utils/relcache.h"
 
 
@@ -425,9 +426,14 @@ typedef struct xl_heap_confirm
 typedef struct xl_heap_inplace
 {
 	OffsetNumber offnum;		/* updated tuple's offset on page */
+	Oid			dbId;			/* MyDatabaseId */
+	Oid			tsId;			/* MyDatabaseTableSpace */
+	bool		relcacheInitFileInval;	/* invalidate relcache init files */
+	int			nmsgs;			/* number of shared inval msgs */
+	SharedInvalidationMessage msgs[FLEXIBLE_ARRAY_MEMBER];
 } xl_heap_inplace;
 
-#define SizeOfHeapInplace	(offsetof(xl_heap_inplace, offnum) + sizeof(OffsetNumber))
+#define MinSizeOfHeapInplace	(offsetof(xl_heap_inplace, nmsgs) + sizeof(int))
 
 /*
  * This is what we need to know about setting a visibility map bit

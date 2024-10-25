@@ -1,6 +1,6 @@
 Parsed test spec with 3 sessions
 
-starting permutation: cachefill3 cir1 cic2 ddl3
+starting permutation: cachefill3 cir1 cic2 ddl3 read1
 step cachefill3: TABLE newly_indexed;
 c
 -
@@ -9,6 +9,14 @@ c
 step cir1: BEGIN; CREATE INDEX i1 ON newly_indexed (c); ROLLBACK;
 step cic2: CREATE INDEX i2 ON newly_indexed (c);
 step ddl3: ALTER TABLE newly_indexed ADD extra int;
+step read1: 
+	SELECT relhasindex FROM pg_class WHERE oid = 'newly_indexed'::regclass;
+
+relhasindex
+-----------
+t          
+(1 row)
+
 
 starting permutation: cir1 cic2 ddl3 read1
 step cir1: BEGIN; CREATE INDEX i1 ON newly_indexed (c); ROLLBACK;

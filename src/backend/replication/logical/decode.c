@@ -509,23 +509,19 @@ heap_decode(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 
 			/*
 			 * Inplace updates are only ever performed on catalog tuples and
-			 * can, per definition, not change tuple visibility.  Since we
-			 * don't decode catalog tuples, we're not interested in the
-			 * record's contents.
+			 * can, per definition, not change tuple visibility.  Inplace
+			 * updates don't affect storage or interpretation of table rows,
+			 * so they don't affect logicalrep_write_tuple() outcomes.  Hence,
+			 * we don't process invalidations from the original operation.  If
+			 * inplace updates did affect those things, invalidations wouldn't
+			 * make it work, since there are no snapshot-specific versions of
+			 * inplace-updated values.  Since we also don't decode catalog
+			 * tuples, we're not interested in the record's contents.
 			 *
-			 * In-place updates can be used either by XID-bearing transactions
-			 * (e.g.  in CREATE INDEX CONCURRENTLY) or by XID-less
-			 * transactions (e.g.  VACUUM).  In the former case, the commit
-			 * record will include cache invalidations, so we mark the
-			 * transaction as catalog modifying here. Currently that's
-			 * redundant because the commit will do that as well, but once we
-			 * support decoding in-progress relations, this will be important.
+			 * WAL contains likely-unnecessary commit-time invals from the
+			 * CacheInvalidateHeapTuple() call in heap_inplace_update().
+			 * Excess invalidation is safe.
 			 */
-			if (!TransactionIdIsValid(xid))
-				break;
-
-			(void) SnapBuildProcessChange(builder, xid, buf->origptr);
-			ReorderBufferXidSetCatalogChanges(ctx->reorder, xid, buf->origptr);
 			break;
 
 		case XLOG_HEAP_CONFIRM:

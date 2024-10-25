@@ -16,6 +16,7 @@
 
 #include "access/heapam_xlog.h"
 #include "access/rmgrdesc_utils.h"
+#include "storage/standbydefs.h"
 
 /*
  * NOTE: "keyname" argument cannot have trailing spaces or punctuation
@@ -253,6 +254,9 @@ heap_desc(StringInfo buf, XLogReaderState *record)
 		xl_heap_inplace *xlrec = (xl_heap_inplace *) rec;
 
 		appendStringInfo(buf, "off: %u", xlrec->offnum);
+		standby_desc_invalidations(buf, xlrec->nmsgs, xlrec->msgs,
+								   xlrec->dbId, xlrec->tsId,
+								   xlrec->relcacheInitFileInval);
 	}
 }
 

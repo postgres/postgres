@@ -1170,6 +1170,12 @@ heap_xlog_inplace(XLogReaderState *record)
 	}
 	if (BufferIsValid(buffer))
 		UnlockReleaseBuffer(buffer);
+
+	ProcessCommittedInvalidationMessages(xlrec->msgs,
+										 xlrec->nmsgs,
+										 xlrec->relcacheInitFileInval,
+										 xlrec->dbId,
+										 xlrec->tsId);
 }
 
 void
