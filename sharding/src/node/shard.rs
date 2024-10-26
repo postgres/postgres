@@ -14,7 +14,6 @@ use std::io::{Read, Write};
 use std::net::{TcpListener, TcpStream};
 use std::sync::{Arc, Mutex};
 use std::{io, thread};
-
 extern crate users;
 
 /// This struct represents the Shard node in the distributed system. It will communicate with the router
