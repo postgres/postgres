@@ -1,4 +1,3 @@
-use postgres::Row;
 
 use crate::node::client::Client;
 

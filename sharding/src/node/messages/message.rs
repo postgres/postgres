@@ -1,4 +1,3 @@
-use postgres::Row;
 
 use super::{message_data::MessageData, node_info::NodeInfo};
 use std::fmt;

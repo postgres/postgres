@@ -3,7 +3,6 @@ use postgres::{Client as PostgresClient, Row};
 extern crate users;
 use crate::node::messages::message::{Message, MessageType};
 use crate::node::messages::node_info::NodeInfo;
-use crate::node::shard;
 use crate::utils::queries::{format_query_with_new_id, format_rows_with_offset, get_id_if_exists, get_table_name_from_query, print_query_response, query_affects_memory_state, query_is_insert, query_is_select};
 use crate::utils::common::ConvertToString;
 use super::node::*;

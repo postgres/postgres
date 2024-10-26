@@ -1,4 +1,4 @@
-use postgres::{Client as PostgresClient, NoTls, Row};
+use postgres::{Client as PostgresClient, NoTls};
 use std::{
     net::TcpStream,
     sync::{Arc, Mutex},
