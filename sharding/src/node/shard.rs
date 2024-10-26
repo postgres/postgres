@@ -1,12 +1,3 @@
-use indexmap::IndexMap;
-use inline_colorization::*;
-use postgres::{Client as PostgresClient, Row};
-use std::io::{Read, Write};
-use std::net::{TcpListener, TcpStream};
-use std::sync::{Arc, Mutex};
-use std::{io, thread};
-
-extern crate users;
 use super::memory_manager::MemoryManager;
 use super::messages::message::{Message, MessageType};
 use super::messages::node_info::NodeInfo;
@@ -16,6 +7,14 @@ use crate::node::shard;
 use crate::utils::common::{connect_to_node, ConvertToString};
 use crate::utils::node_config::get_shard_config;
 use crate::utils::queries::print_rows;
+use indexmap::IndexMap;
+use inline_colorization::*;
+use postgres::{Client as PostgresClient, Row};
+use std::io::{Read, Write};
+use std::net::{TcpListener, TcpStream};
+use std::sync::{Arc, Mutex};
+use std::{io, thread};
+extern crate users;
 
 /// This struct represents the Shard node in the distributed system. It will communicate with the router
 #[repr(C)]
