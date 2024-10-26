@@ -1,10 +1,14 @@
-use indexmap::IndexMap;
 use crate::utils::common::{ConvertToString, FromString};
+use indexmap::IndexMap;
 
 pub type TablesIdInfo = IndexMap<String, i64>;
 
 impl ConvertToString for TablesIdInfo {
     fn convert_to_string(&self) -> String {
+        if self.is_empty() {
+            return "None".to_string();
+        }
+
         let mut result = Vec::new();
         for (key, value) in self.iter() {
             result.push(format!("{}:{}", key, value));
@@ -16,6 +20,7 @@ impl ConvertToString for TablesIdInfo {
 impl FromString for TablesIdInfo {
     fn from_string(string: &str) -> Self {
         let mut result = IndexMap::new();
+
         for pair in string.split(",") {
             let mut parts = pair.split(':');
             let key = match parts.next() {
@@ -46,7 +51,8 @@ mod tests {
         tables_id_info.insert("departments".to_string(), 5);
         assert!(
             // Order inside a hashmap is not guaranteed
-            (tables_id_info.convert_to_string() == "employees:3,departments:5") || (tables_id_info.convert_to_string() == "departments:5,employees:3")
+            (tables_id_info.convert_to_string() == "employees:3,departments:5")
+                || (tables_id_info.convert_to_string() == "departments:5,employees:3")
         );
     }
 

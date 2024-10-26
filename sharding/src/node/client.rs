@@ -1,5 +1,4 @@
 use inline_colorization::*;
-use postgres::Row;
 extern crate users;
 use std::{
     io::{Read, Write},
@@ -9,8 +8,11 @@ use std::{
 
 use super::super::utils::node_config::*;
 use super::node::*;
-use crate::{node::messages::{message, node_info::NodeInfo}, utils::queries::print_query_response};
 use crate::utils::common::Channel;
+use crate::{
+    node::messages::{message, node_info::NodeInfo},
+    utils::queries::print_query_response,
+};
 
 /// This struct represents the Client node in the distributed system.
 /// It finds the router and connects to it to send queries.

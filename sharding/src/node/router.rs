@@ -1,16 +1,19 @@
 use indexmap::IndexMap;
 use postgres::{Client as PostgresClient, Row};
 extern crate users;
-use crate::node::messages::message::{Message, MessageType};
-use crate::node::messages::node_info::NodeInfo;
-use crate::node::shard;
-use crate::utils::queries::{format_query_with_new_id, format_rows_with_offset, get_id_if_exists, get_table_name_from_query, print_query_response, query_affects_memory_state, query_is_insert, query_is_select};
-use crate::utils::common::ConvertToString;
 use super::node::*;
 use super::shard_manager::ShardManager;
 use super::tables_id_info::TablesIdInfo;
+use crate::node::messages::message::{Message, MessageType};
+use crate::node::messages::node_info::NodeInfo;
+
+use crate::utils::common::ConvertToString;
 use crate::utils::common::{connect_to_node, Channel};
 use crate::utils::node_config::{get_router_config, Node};
+use crate::utils::queries::{
+    format_query_with_new_id, format_rows_with_offset, get_id_if_exists, get_table_name_from_query,
+    print_query_response, query_affects_memory_state, query_is_insert, query_is_select,
+};
 use inline_colorization::*;
 use std::io::{Read, Write};
 use std::sync::{Arc, MutexGuard, RwLock};
@@ -264,13 +267,19 @@ impl Router {
         match response_message.get_message_type() {
             MessageType::Agreed => {
                 println!(
-                    "{color_bright_green}Shard {} accepted the connection{style_reset}",
-                    node_port
+                    "{color_bright_green}Shard {} accepted the connection. Message: {:?}{style_reset}",
+                    node_port, response_message.get_data()
                 );
                 let memory_size = response_message.get_data().payload.unwrap();
                 let max_ids_info = response_message.get_data().max_ids.unwrap();
-                println!("{color_bright_green}Memory size: {}{style_reset}", memory_size);
-                println!("{color_bright_green}Max Ids for Shard: {:?}{style_reset}", max_ids_info);
+                println!(
+                    "{color_bright_green}Memory size: {}{style_reset}",
+                    memory_size
+                );
+                println!(
+                    "{color_bright_green}Max Ids for Shard: {:?}{style_reset}",
+                    max_ids_info
+                );
                 self.save_shard_in_manager(memory_size, node_port.to_string(), max_ids_info);
                 true
             }
@@ -281,7 +290,10 @@ impl Router {
                     "{color_bright_green}Shard {} updated its memory size to {}{style_reset}",
                     node_port, memory_size
                 );
-                println!("{color_bright_green}Max Ids for Shard: {:?}{style_reset}", max_ids_info);
+                println!(
+                    "{color_bright_green}Max Ids for Shard: {:?}{style_reset}",
+                    max_ids_info
+                );
                 self.update_shard_in_manager(memory_size, node_port.to_string(), max_ids_info);
                 true
             }
@@ -308,7 +320,12 @@ impl Router {
     }
 
     /// Updates the shard in the ShardManager with the given memory size and shard id.
-    fn update_shard_in_manager(&mut self, memory_size: f64, shard_id: String, max_ids: TablesIdInfo) {
+    fn update_shard_in_manager(
+        &mut self,
+        memory_size: f64,
+        shard_id: String,
+        max_ids: TablesIdInfo,
+    ) {
         let mut shard_manager = self.shard_manager.as_ref().clone();
         shard_manager.update_shard_memory(memory_size, shard_id.clone());
         shard_manager.save_max_ids_for_shard(shard_id.clone(), max_ids);
@@ -348,7 +365,6 @@ impl Router {
     /// The second return value is a boolean that indicates if the shards need to update their memory after the query is executed. This will be true if the query affects the memory state of the system.
     /// Returns the query formatted if needed (if there's a 'WHERE ID=' clause, offset might need to be removed)
     fn get_data_needed_from(&mut self, query: &str) -> (Vec<String>, bool, String) {
-
         if let Some(id) = get_id_if_exists(query) {
             println!("ID found in query: {}", id);
             return self.get_specific_shard_with(id, query);
@@ -373,27 +389,40 @@ impl Router {
         let table_name = match get_table_name_from_query(query) {
             Some(table_name) => table_name,
             None => {
-                return (self.shards.lock().unwrap().keys().cloned().collect(), query_affects_memory_state(query), query.to_string());
+                return (
+                    self.shards.lock().unwrap().keys().cloned().collect(),
+                    query_affects_memory_state(query),
+                    query.to_string(),
+                );
             }
         };
         println!("Table name: {}", table_name);
         for shard_id in self.shards.lock().unwrap().keys() {
-            let max_id = match self.shard_manager.get_max_ids_for_shard_table(shard_id, &table_name) {
+            let max_id = match self
+                .shard_manager
+                .get_max_ids_for_shard_table(shard_id, &table_name)
+            {
                 Some(max_id) => max_id,
-                None => {
-                    continue
-                }
+                None => continue,
             };
             if id > max_id {
                 id -= max_id;
             } else {
                 let formatted_query = format_query_with_new_id(query, id);
-                return (vec![shard_id.clone()], query_affects_memory_state(query), formatted_query);
+                return (
+                    vec![shard_id.clone()],
+                    query_affects_memory_state(query),
+                    formatted_query,
+                );
             }
         }
 
         println!("ID not found in any shard");
-        return (self.shards.lock().unwrap().keys().cloned().collect(), query_affects_memory_state(query), query.to_string());
+        return (
+            self.shards.lock().unwrap().keys().cloned().collect(),
+            query_affects_memory_state(query),
+            query.to_string(),
+        );
     }
 
     fn format_response(&self, shards_responses: IndexMap<String, Vec<Row>>, query: &str) -> String {
@@ -408,7 +437,10 @@ impl Router {
         let mut rows_offset: Vec<(Vec<Row>, i64)> = Vec::new();
         let mut last_offset: i64 = 0;
         for (shard_id, rows) in shards_responses {
-            let offset = match self.shard_manager.get_max_ids_for_shard_table(&shard_id, &table_name) {
+            let offset = match self
+                .shard_manager
+                .get_max_ids_for_shard_table(&shard_id, &table_name)
+            {
                 Some(offset) => offset,
                 None => {
                     eprintln!("Failed to get offset for shard");
@@ -429,7 +461,10 @@ impl NodeRole for Router {
 
         let (shards, is_insert, query) = self.get_data_needed_from(received_query);
 
-        println!("Shards: {:?}, is_insert: {}, query: {}", shards, is_insert, query);
+        println!(
+            "Shards: {:?}, is_insert: {}, query: {}",
+            shards, is_insert, query
+        );
 
         if shards.len() == 0 {
             eprintln!("No shards found for the query");
@@ -451,10 +486,14 @@ impl NodeRole for Router {
             println!("Query is SELECT and shards_responses is not empty");
             response = self.format_response(shards_responses, &query);
         } else {
-            println!("Query is SELECT: {}, shards_responses is empty: {}", query_is_insert(&query), shards_responses.is_empty());
+            println!(
+                "Query is SELECT: {}, shards_responses is empty: {}",
+                query_is_insert(&query),
+                shards_responses.is_empty()
+            );
             response = rows.convert_to_string();
         }
-        
+
         print_query_response(response.clone());
         Some(response)
     }
