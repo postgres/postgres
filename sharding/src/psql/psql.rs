@@ -27,7 +27,7 @@ pub extern "C" fn SendQueryToShard(query_data: *const i8) -> bool {
 }
 
 fn handle_query(query: &str) -> bool {
-    let node_instance = get_node_instance();
+    let node_instance = get_node_role();
     match node_instance.send_query(query) {
         Some(_) => true,
         None => false,

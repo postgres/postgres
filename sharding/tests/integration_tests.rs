@@ -1,8 +1,8 @@
-// tests/integration_tests.rs
+// tests/integration_test.rs
 
 use core::panic;
 use postgres::{Client, NoTls};
-use sharding::node::node::{get_node_instance, init_node_instance, NodeType};
+use sharding::node::node::{get_node_role, init_node_instance, NodeType};
 use std::{
     io::Write,
     process::{Command, Stdio},
@@ -62,28 +62,26 @@ fn test_nodes_initialize_empty() {
 }
 
 #[test]
-fn test_create_table_insert_select_and_delete() {
+fn test_create_table() {
     create_and_init_cluster(b"test-shard1\n", "s", "localhost", "5433");
     create_and_init_cluster(b"test-router1\n", "r", "localhost", "5434");
-    create_and_init_cluster(b"test-client1\n", "c", "localhost", "5435");
 
     let mut shard_connection: Client = setup_connection("localhost", "5433", "template1").unwrap();
 
-    // Initialize and get the router.
+    // Initialize and get the router
     init_node_instance(
-        NodeType::Client,
-        "5435\0".as_ptr() as *const i8,
-        "src/node/config/router_config.yaml\0".as_ptr() as *const i8,
+        NodeType::Router,
+        "5434\0".as_ptr() as *const i8,
+        "src/node/nodes_config.yaml\0".as_ptr() as *const i8,
     );
-    let client = get_node_instance();
+    let router = get_node_role();
 
     // Create a table on the router
-    assert!(client
-        .send_query("DROP TABLE IF EXISTS test_table;")
-        .is_some());
-    assert!(client
-        .send_query("CREATE TABLE test_table (id INT PRIMARY KEY);")
-        .is_some());
+    assert_eq!(true, router.send_query("DROP TABLE IF EXISTS test_table;"));
+    assert_eq!(
+        true,
+        router.send_query("CREATE TABLE test_table (id INT PRIMARY KEY);")
+    );
 
     // Count user tables in the shard, excluding system tables. Should be one.
     let row = shard_connection
@@ -95,18 +93,45 @@ fn test_create_table_insert_select_and_delete() {
     let count: i64 = row.get(0);
     assert_eq!(count, 1);
 
-    // Insert 3 rows into the table
-    for i in 0..3 {
-        assert!(client
-            .send_query(&format!("INSERT INTO test_table VALUES ({});", i))
-            .is_some());
+    stop_cluster(b"test-shard1\n");
+    stop_cluster(b"test-router1\n");
+}
+
+#[test]
+fn test_insert_into_table_select_and_delete() {
+    create_and_init_cluster(b"test-shard2\n", "s", "localhost", "5433");
+    create_and_init_cluster(b"test-router2\n", "r", "localhost", "5434");
+
+    let mut shard_connection: Client = setup_connection("localhost", "5433", "template1").unwrap();
+
+    // Initialize and get the router
+    init_node_instance(
+        NodeType::Router,
+        "5434\0".as_ptr() as *const i8,
+        "src/node/nodes_config.yaml\0".as_ptr() as *const i8,
+    );
+    let router = get_node_role();
+
+    // Create a table on the router
+    assert_eq!(true, router.send_query("DROP TABLE IF EXISTS test_table;"));
+    assert_eq!(
+        true,
+        router.send_query("CREATE TABLE test_table (id INT PRIMARY KEY);")
+    );
+
+    // Insert 10000 rows into the table
+    for i in 0..10000 {
+        assert_eq!(
+            true,
+            router.send_query(&format!("INSERT INTO test_table VALUES ({});", i))
+        );
     }
 
     // Select all rows from the table using the shard connection
     let rows = shard_connection
         .query("SELECT * FROM test_table;", &[])
         .unwrap();
-    assert_eq!(rows.len(), 3);
+    assert_eq!(rows.len(), 10000);
 
     // Validate the data inserted in each row
     for (i, row) in rows.iter().enumerate() {
@@ -115,19 +140,19 @@ fn test_create_table_insert_select_and_delete() {
     }
 
     // Delete half of the rows from the table using the router connection
-    assert!(client
-        .send_query("DELETE FROM test_table WHERE id % 2 = 0;")
-        .is_some());
+    assert_eq!(
+        true,
+        router.send_query("DELETE FROM test_table WHERE id % 2 = 0;")
+    );
 
     // Select all rows from the table using the shard connection
     let rows = shard_connection
         .query("SELECT * FROM test_table;", &[])
         .unwrap();
-    assert_eq!(rows.len(), 1);
+    assert_eq!(rows.len(), 5000);
 
-    stop_cluster(b"test-shard1\n");
-    stop_cluster(b"test-router1\n");
-    stop_cluster(b"test-client1\n");
+    stop_cluster(b"test-shard2\n");
+    stop_cluster(b"test-router2\n");
 }
 
 // Utility functions
@@ -136,7 +161,6 @@ fn create_and_init_cluster(node_name: &[u8], node_type: &str, ip: &str, port: &s
     create_cluster_dir(node_name);
     init_cluster(std::str::from_utf8(node_name).unwrap(), node_type);
     wait_for_postgres(ip, port);
-    std::thread::sleep(std::time::Duration::from_secs(1));
 }
 
 fn create_cluster_dir(node_name: &[u8]) {
@@ -185,17 +209,6 @@ fn stop_cluster(node_name: &[u8]) {
             .write_all(node_name)
             .expect("failed to write to stdin");
     }
-
-    stop_cluster
-        .wait()
-        .expect("failed to wait on server-down.sh");
-
-    let mut _delete_cluster: std::process::Child = Command::new("rm")
-        .current_dir("../clusters")
-        .arg("-rf")
-        .arg(std::str::from_utf8(node_name).unwrap().trim())
-        .spawn()
-        .expect("failed to delete cluster");
 }
 
 fn wait_for_postgres(host: &str, port: &str) {
@@ -207,7 +220,6 @@ fn wait_for_postgres(host: &str, port: &str) {
     let mut attempts = 0;
     loop {
         attempts += 1;
-
         if attempts > 30 {
             panic!("PostgreSQL server did not start in time");
         }
