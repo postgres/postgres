@@ -6,6 +6,7 @@ use super::shard::Shard;
 use std::ffi::CStr;
 use std::sync::{Arc, Mutex};
 use std::thread;
+use futures::executor::block_on;
 use raft::raft_module::RaftModule;
 
 pub trait NodeRole {
@@ -111,12 +112,13 @@ fn new_node_instance(node_type: NodeType, ip: &str, port: &str, config_file_path
         }
     }
 
-    // TODO-A: Implement Raft module and start it
-    // let node_id = format!("{}:{}", ip, port); // TODO-A fix this, it should be the node ID
-    // raft port = port.parse to usize, but this is temporary, we need to fix this
-    // create raft module here
-    // get_nodes_config_raft
-    // handle = raft.start(nodes_config)
+    let node_id = format!("{}:{}", ip, port); // TODO-A fix this, it should be the node ID
+    let mut raft_module = raft::raft_module::RaftModule::new(node_id.clone(), ip.to_string(), port.parse::<usize>().unwrap());
+    let mut nodes = get_nodes_config_raft(config_file_path);
+let mut raft_handle = thread::spawn(move ||  {
+        println!("Inside raft_handle");
+        let _handle_start = block_on(raft_module.start(nodes, Some(&format!("../../../sharding/init_history/init_{}", node_id))));
+    });
 }
 
 fn init_router(ip: &str, port: &str, config_file_path: Option<&str>) {
