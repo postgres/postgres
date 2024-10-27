@@ -1720,7 +1720,7 @@ _bt_split(Relation rel, Relation heaprel, BTScanInsert itup_key, Buffer buf,
 	rbuf = _bt_allocbuf(rel, heaprel);
 	rightpage = BufferGetPage(rbuf);
 	rightpagenumber = BufferGetBlockNumber(rbuf);
-	/* rightpage was initialized by _bt_getbuf */
+	/* rightpage was initialized by _bt_allocbuf */
 	ropaque = BTPageGetOpaque(rightpage);
 
 	/*
