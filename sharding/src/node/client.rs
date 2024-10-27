@@ -23,7 +23,7 @@ pub struct Client {
 impl Client {
     /// Creates a new Client node with the given port
     pub fn new(ip: &str, port: &str, config_path: Option<&str>) -> Self {
-        let config = get_router_config(config_path);
+        let config = get_nodes_config(config_path);
         let mut candidate_ip;
         let mut candidate_port;
 
