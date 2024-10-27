@@ -33,15 +33,9 @@
 
 #include <unistd.h>
 
-#include "access/xlog.h"
-#include "common/file_utils.h"
 #include "libpq/libpq-be.h"
-#include "libpq/pqsignal.h"
 #include "miscadmin.h"
-#include "nodes/queryjumble.h"
-#include "port.h"
 #include "postmaster/autovacuum.h"
-#include "postmaster/auxprocess.h"
 #include "postmaster/bgworker_internals.h"
 #include "postmaster/bgwriter.h"
 #include "postmaster/fork_process.h"
@@ -54,20 +48,9 @@
 #include "replication/slotsync.h"
 #include "replication/walreceiver.h"
 #include "storage/dsm.h"
-#include "storage/fd.h"
-#include "storage/ipc.h"
 #include "storage/pg_shmem.h"
-#include "storage/pmsignal.h"
-#include "storage/proc.h"
-#include "storage/procsignal.h"
 #include "tcop/backend_startup.h"
-#include "tcop/tcopprot.h"
-#include "utils/builtins.h"
-#include "utils/datetime.h"
-#include "utils/guc.h"
-#include "utils/injection_point.h"
 #include "utils/memutils.h"
-#include "utils/timestamp.h"
 
 #ifdef EXEC_BACKEND
 #include "nodes/queryjumble.h"
@@ -77,6 +60,15 @@
 
 
 #ifdef EXEC_BACKEND
+
+#include "common/file_utils.h"
+#include "storage/fd.h"
+#include "storage/lwlock.h"
+#include "storage/pmsignal.h"
+#include "storage/proc.h"
+#include "storage/procsignal.h"
+#include "tcop/tcopprot.h"
+#include "utils/injection_point.h"
 
 /* Type for a socket that can be inherited to a client process */
 #ifdef WIN32

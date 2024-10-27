@@ -26,7 +26,6 @@
 #include "libpq/protocol.h"
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
-#include "port/pg_bswap.h"
 #include "tcop/fastpath.h"
 #include "tcop/tcopprot.h"
 #include "utils/acl.h"

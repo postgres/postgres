@@ -32,7 +32,6 @@
 
 #include "bootstrap/bootstrap.h"
 #include "common/username.h"
-#include "port/atomics.h"
 #include "postmaster/postmaster.h"
 #include "tcop/tcopprot.h"
 #include "utils/help_config.h"

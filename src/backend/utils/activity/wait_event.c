@@ -22,7 +22,6 @@
  */
 #include "postgres.h"
 
-#include "port/pg_bitutils.h"
 #include "storage/lmgr.h"		/* for GetLockNameFromTagType */
 #include "storage/lwlock.h"		/* for GetLWLockIdentifier */
 #include "storage/spin.h"

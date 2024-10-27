@@ -27,7 +27,6 @@
 #include "utils/float.h"
 #include "utils/fmgrprotos.h"
 #include "utils/sortsupport.h"
-#include "utils/timestamp.h"
 
 
 /*

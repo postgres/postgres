@@ -19,4 +19,4 @@
  * external programs can incorporate the checksum code by #include'ing
  * that file from the exported Postgres headers.  (Compare our CRC code.)
  */
-#include "storage/checksum_impl.h"
+#include "storage/checksum_impl.h"	/* IWYU pragma: keep */

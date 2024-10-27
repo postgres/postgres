@@ -27,9 +27,7 @@
 #include "common/hashfn.h"
 #include "common/int.h"
 #include "common/parse_manifest.h"
-#include "datatype/timestamp.h"
 #include "postmaster/walsummarizer.h"
-#include "utils/timestamp.h"
 
 #define	BLOCKS_PER_READ			512
 

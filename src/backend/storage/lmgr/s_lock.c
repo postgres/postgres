@@ -51,7 +51,6 @@
 #include <unistd.h>
 
 #include "common/pg_prng.h"
-#include "port/atomics.h"
 #include "storage/s_lock.h"
 #include "utils/wait_event.h"
 

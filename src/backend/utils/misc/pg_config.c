@@ -17,7 +17,6 @@
 #include "common/config_info.h"
 #include "funcapi.h"
 #include "miscadmin.h"
-#include "port.h"
 #include "utils/builtins.h"
 
 Datum

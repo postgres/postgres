@@ -22,7 +22,6 @@
 #include "access/xlog.h"
 #include "access/xlogrecovery.h"
 #include "access/xlogwait.h"
-#include "funcapi.h"
 #include "miscadmin.h"
 #include "storage/latch.h"
 #include "storage/proc.h"
@@ -30,7 +29,6 @@
 #include "utils/fmgrprotos.h"
 #include "utils/pg_lsn.h"
 #include "utils/snapmgr.h"
-#include "utils/wait_event_types.h"
 
 static int	waitlsn_cmp(const pairingheap_node *a, const pairingheap_node *b,
 						void *arg);

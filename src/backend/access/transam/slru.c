@@ -70,7 +70,7 @@
 #include "pgstat.h"
 #include "storage/fd.h"
 #include "storage/shmem.h"
-#include "utils/guc_hooks.h"
+#include "utils/guc.h"
 
 /*
  * Converts segment number to the filename of the segment.

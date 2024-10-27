@@ -124,7 +124,6 @@
 #include "access/htup_details.h"
 #include "access/reloptions.h"
 #include "catalog/pg_am.h"
-#include "catalog/pg_amop.h"
 #include "catalog/pg_type.h"
 #include "common/hashfn.h"
 #include "utils/fmgrprotos.h"

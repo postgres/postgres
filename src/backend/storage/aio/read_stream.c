@@ -89,7 +89,6 @@
  */
 #include "postgres.h"
 
-#include "catalog/pg_tablespace.h"
 #include "miscadmin.h"
 #include "storage/fd.h"
 #include "storage/smgr.h"

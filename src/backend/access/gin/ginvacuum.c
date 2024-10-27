@@ -19,7 +19,6 @@
 #include "access/xloginsert.h"
 #include "commands/vacuum.h"
 #include "miscadmin.h"
-#include "postmaster/autovacuum.h"
 #include "storage/indexfsm.h"
 #include "storage/lmgr.h"
 #include "storage/predicate.h"

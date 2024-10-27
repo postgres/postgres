@@ -35,7 +35,6 @@
 
 #include "access/genam.h"
 #include "access/heapam.h"
-#include "access/heapam_xlog.h"
 #include "access/htup_details.h"
 #include "access/multixact.h"
 #include "access/tidstore.h"
@@ -56,7 +55,6 @@
 #include "storage/freespace.h"
 #include "storage/lmgr.h"
 #include "utils/lsyscache.h"
-#include "utils/memutils.h"
 #include "utils/pg_rusage.h"
 #include "utils/timestamp.h"
 

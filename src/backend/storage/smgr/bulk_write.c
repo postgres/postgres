@@ -36,7 +36,6 @@
 
 #include "access/xloginsert.h"
 #include "access/xlogrecord.h"
-#include "storage/bufmgr.h"
 #include "storage/bufpage.h"
 #include "storage/bulk_write.h"
 #include "storage/proc.h"

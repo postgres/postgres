@@ -182,7 +182,6 @@ print $tfh <<TFH;
 
 #include "postgres.h"
 
-#include "access/transam.h"
 #include "utils/fmgrtab.h"
 #include "utils/fmgrprotos.h"
 

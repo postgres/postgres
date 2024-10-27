@@ -33,8 +33,7 @@
 #include "pgstat.h"
 #include "storage/fd.h"
 #include "storage/latch.h"
-#include "tcop/tcopprot.h"
-#include "utils/builtins.h"
+#include "utils/guc.h"
 #include "utils/memutils.h"
 
 /*

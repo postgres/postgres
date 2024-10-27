@@ -105,7 +105,6 @@
 #include "access/xlog.h"
 #include "lib/dshash.h"
 #include "pgstat.h"
-#include "port/atomics.h"
 #include "storage/fd.h"
 #include "storage/ipc.h"
 #include "storage/lwlock.h"

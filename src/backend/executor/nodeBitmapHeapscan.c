@@ -46,7 +46,6 @@
 #include "pgstat.h"
 #include "storage/bufmgr.h"
 #include "utils/rel.h"
-#include "utils/snapmgr.h"
 #include "utils/spccache.h"
 
 static TupleTableSlot *BitmapHeapNext(BitmapHeapScanState *node);

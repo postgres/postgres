@@ -20,7 +20,7 @@
 #include "postgres.h"
 
 #include "port/pg_crc32c.h"
-#include "utils/builtins.h"
+#include "utils/fmgrprotos.h"
 #include "utils/pg_crc.h"
 #include "varatt.h"
 

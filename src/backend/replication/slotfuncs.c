@@ -17,16 +17,12 @@
 #include "access/xlogrecovery.h"
 #include "access/xlogutils.h"
 #include "funcapi.h"
-#include "miscadmin.h"
-#include "replication/decode.h"
 #include "replication/logical.h"
 #include "replication/slot.h"
 #include "replication/slotsync.h"
 #include "utils/builtins.h"
 #include "utils/guc.h"
-#include "utils/inval.h"
 #include "utils/pg_lsn.h"
-#include "utils/resowner.h"
 
 /*
  * Helper function for creating a new physical replication slot with

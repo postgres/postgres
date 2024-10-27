@@ -17,6 +17,10 @@
  */
 #include "postgres.h"
 
+#include "utils/injection_point.h"
+
+#ifdef USE_INJECTION_POINTS
+
 #include <sys/stat.h>
 
 #include "fmgr.h"
@@ -25,10 +29,7 @@
 #include "storage/lwlock.h"
 #include "storage/shmem.h"
 #include "utils/hsearch.h"
-#include "utils/injection_point.h"
 #include "utils/memutils.h"
-
-#ifdef USE_INJECTION_POINTS
 
 /* Field sizes */
 #define INJ_NAME_MAXLEN		64

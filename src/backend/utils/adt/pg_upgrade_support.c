@@ -28,7 +28,6 @@
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
 #include "utils/pg_lsn.h"
-#include "utils/syscache.h"
 
 
 #define CHECK_IS_BINARY_UPGRADE									\

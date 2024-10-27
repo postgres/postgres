@@ -48,7 +48,6 @@
 #include <ctype.h>
 #include <limits.h>
 
-#include "access/tableam.h"
 #include "catalog/index.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_am.h"
@@ -59,10 +58,7 @@
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
 #include "parser/parser.h"
-#include "storage/lmgr.h"
-#include "utils/date.h"
 #include "utils/datetime.h"
-#include "utils/numeric.h"
 #include "utils/xml.h"
 
 

@@ -17,7 +17,6 @@
 #include <signal.h>
 #include <unistd.h>
 
-#include "access/transam.h"
 #include "miscadmin.h"
 #include "storage/ipc.h"
 #include "storage/proc.h"

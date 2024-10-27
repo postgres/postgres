@@ -45,7 +45,6 @@
 #include "access/relscan.h"
 #include "access/table.h"
 #include "access/xact.h"
-#include "access/xloginsert.h"
 #include "catalog/index.h"
 #include "commands/progress.h"
 #include "executor/instrument.h"

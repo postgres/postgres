@@ -20,10 +20,8 @@
 
 #include "access/nbtree.h"
 #include "access/relscan.h"
-#include "access/xloginsert.h"
 #include "commands/progress.h"
 #include "commands/vacuum.h"
-#include "miscadmin.h"
 #include "nodes/execnodes.h"
 #include "pgstat.h"
 #include "storage/bulk_write.h"
@@ -31,7 +29,6 @@
 #include "storage/indexfsm.h"
 #include "storage/ipc.h"
 #include "storage/lmgr.h"
-#include "storage/smgr.h"
 #include "utils/fmgrprotos.h"
 #include "utils/index_selfuncs.h"
 #include "utils/memutils.h"

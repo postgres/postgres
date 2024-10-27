@@ -33,7 +33,6 @@
 #include "nodes/pg_list.h"
 #include "pgstat.h"
 #include "pgtar.h"
-#include "port.h"
 #include "postmaster/syslogger.h"
 #include "postmaster/walsummarizer.h"
 #include "replication/slot.h"
