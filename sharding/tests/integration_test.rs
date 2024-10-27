@@ -2,7 +2,7 @@
 
 use core::panic;
 use postgres::{Client, NoTls};
-use sharding::node::node::{get_node_instance, init_node_instance, NodeType};
+use sharding::node::node::{get_node_role, init_node_instance, NodeType};
 use std::{
     io::Write,
     process::{Command, Stdio},
@@ -72,9 +72,9 @@ fn test_create_table() {
     init_node_instance(
         NodeType::Router,
         "5434\0".as_ptr() as *const i8,
-        "src/node/router_config.yaml\0".as_ptr() as *const i8,
+        "src/node/nodes_config.yaml\0".as_ptr() as *const i8,
     );
-    let router = get_node_instance();
+    let router = get_node_role();
 
     // Create a table on the router
     assert_eq!(true, router.send_query("DROP TABLE IF EXISTS test_table;"));
@@ -108,9 +108,9 @@ fn test_insert_into_table_select_and_delete() {
     init_node_instance(
         NodeType::Router,
         "5434\0".as_ptr() as *const i8,
-        "src/node/router_config.yaml\0".as_ptr() as *const i8,
+        "src/node/nodes_config.yaml\0".as_ptr() as *const i8,
     );
-    let router = get_node_instance();
+    let router = get_node_role();
 
     // Create a table on the router
     assert_eq!(true, router.send_query("DROP TABLE IF EXISTS test_table;"));
