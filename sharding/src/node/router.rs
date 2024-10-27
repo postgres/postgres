@@ -6,10 +6,9 @@ use super::shard_manager::ShardManager;
 use super::tables_id_info::TablesIdInfo;
 use crate::node::messages::message::{Message, MessageType};
 use crate::node::messages::node_info::NodeInfo;
-
 use crate::utils::common::ConvertToString;
 use crate::utils::common::{connect_to_node, Channel};
-use crate::utils::node_config::{get_router_config, Node};
+use crate::utils::node_config::{get_nodes_config, Node};
 use crate::utils::queries::{
     format_query_with_new_id, format_rows_with_offset, get_id_if_exists, get_table_name_from_query,
     print_query_response, query_affects_memory_state, query_is_insert, query_is_select,
@@ -42,7 +41,7 @@ impl Router {
         Router::initialize_router_with_connections(ip, port, config_path)
     }
 
-    pub fn wait_for_client(shared_router: Arc<Mutex<Router>>, ip: &str, port: &str) {
+    pub fn wait_for_client(shared_router: Arc<Mutex<Router>>, ip: String, port: String) {
         let listener =
             TcpListener::bind(format!("{}:{}", ip, port.parse::<u64>().unwrap() + 1000)).unwrap();
 
@@ -151,7 +150,7 @@ impl Router {
         port: &str,
         config_path: Option<&str>,
     ) -> Router {
-        let config = get_router_config(config_path);
+        let config = get_nodes_config(config_path);
         let shards: IndexMap<String, PostgresClient> = IndexMap::new();
         let comm_channels: IndexMap<String, Channel> = IndexMap::new();
         let shard_manager = ShardManager::new();
@@ -267,8 +266,8 @@ impl Router {
         match response_message.get_message_type() {
             MessageType::Agreed => {
                 println!(
-                    "{color_bright_green}Shard {} accepted the connection. Message: {:?}{style_reset}",
-                    node_port, response_message.get_data()
+                    "{color_bright_green}Shard {} accepted the connection{style_reset}",
+                    node_port
                 );
                 let memory_size = response_message.get_data().payload.unwrap();
                 let max_ids_info = response_message.get_data().max_ids.unwrap();

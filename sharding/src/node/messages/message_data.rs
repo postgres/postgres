@@ -102,8 +102,9 @@ impl PartialEq for MessageData {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use indexmap::IndexMap;
+
+    use super::*;
 
     #[test]
     fn test_message_data_payload() {

@@ -23,8 +23,12 @@ serde = { version = "1.0", features = ["derive"] }
 serde_derive = "1.0.204"
 sysinfo = "0.30.13"
 indexmap = "2.5.0"
+actix = "0.13.5"
+actix-rt = "2.0"
+# raft = { git = "https://github.com/isoprophlex/raft", branch = "master" }
+raft = { path = "../../raft" }
+
 
 [lib]
 name = "sharding"
 crate-type = ["lib", "staticlib"]
-
