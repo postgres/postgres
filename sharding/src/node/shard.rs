@@ -14,7 +14,7 @@ use super::node::*;
 use super::tables_id_info::TablesIdInfo;
 use crate::node::shard;
 use crate::utils::common::{connect_to_node, ConvertToString};
-use crate::utils::node_config::get_shard_config;
+use crate::utils::node_config::get_memory_config;
 use crate::utils::queries::print_rows;
 
 /// This struct represents the Shard node in the distributed system. It will communicate with the router
@@ -50,7 +50,7 @@ impl Shard {
         let backend: PostgresClient = connect_to_node(ip, port).unwrap();
 
         // Initialize memory manager
-        let config = get_shard_config();
+        let config = get_memory_config();
         let reserved_memory = config.unavailable_memory_perc;
         let memory_manager = MemoryManager::new(reserved_memory);
 
@@ -72,7 +72,7 @@ impl Shard {
         shard
     }
 
-    pub fn accept_connections(shared_shard: Arc<Mutex<Shard>>, ip: &str, port: &str) {
+    pub fn accept_connections(shared_shard: Arc<Mutex<Shard>>, ip: String, port: String) {
         let listener =
             TcpListener::bind(format!("{}:{}", ip, port.parse::<u64>().unwrap() + 1000)).unwrap();
 

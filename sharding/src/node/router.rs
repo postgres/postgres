@@ -9,7 +9,7 @@ use super::node::*;
 use super::shard_manager::ShardManager;
 use super::tables_id_info::TablesIdInfo;
 use crate::utils::common::{connect_to_node, Channel};
-use crate::utils::node_config::{get_router_config, Node};
+use crate::utils::node_config::{get_nodes_config, Node};
 use inline_colorization::*;
 use std::io::{Read, Write};
 use std::sync::{Arc, MutexGuard, RwLock};
@@ -38,7 +38,7 @@ impl Router {
         Router::initialize_router_with_connections(ip, port, config_path)
     }
 
-    pub fn wait_for_client(shared_router: Arc<Mutex<Router>>, ip: &str, port: &str) {
+    pub fn wait_for_client(shared_router: Arc<Mutex<Router>>, ip: String, port: String) {
         let listener =
             TcpListener::bind(format!("{}:{}", ip, port.parse::<u64>().unwrap() + 1000)).unwrap();
 
@@ -147,7 +147,7 @@ impl Router {
         port: &str,
         config_path: Option<&str>,
     ) -> Router {
-        let config = get_router_config(config_path);
+        let config = get_nodes_config(config_path);
         let shards: IndexMap<String, PostgresClient> = IndexMap::new();
         let comm_channels: IndexMap<String, Channel> = IndexMap::new();
         let shard_manager = ShardManager::new();
