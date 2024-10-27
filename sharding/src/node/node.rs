@@ -3,13 +3,13 @@ use crate::utils::node_config::get_nodes_config_raft;
 
 use super::router::Router;
 use super::shard::Shard;
+use actix_rt::System;
+use futures::executor::block_on;
+use raft::raft_module::RaftModule;
 use std::ffi::CStr;
 use std::sync::{Arc, Mutex};
 use std::thread;
-use futures::executor::block_on;
-use raft::raft_module::RaftModule;
 use tokio::runtime::Runtime;
-use actix_rt::System;
 
 use tokio::task;
 use tokio::task::LocalSet;
@@ -40,7 +40,7 @@ impl NodeInstance {
         NodeInstance {
             instance: Some(instance),
             ip,
-            port
+            port,
         }
     }
 
@@ -104,9 +104,6 @@ pub extern "C" fn init_node_instance(
     }
 }
 
-
-
-
 fn new_node_instance(node_type: NodeType, ip: &str, port: &str, config_file_path: Option<&str>) {
     // Initialize node based on node type
     match node_type {
@@ -131,23 +128,25 @@ fn new_node_instance(node_type: NodeType, ip: &str, port: &str, config_file_path
         // Spawn the Raft task
         actix_rt::spawn(async move {
             raft_module
-                .start(nodes, Some(&format!("../../../sharding/init_history/init_{}", node_id)))
+                .start(
+                    nodes,
+                    Some(&format!("../../../sharding/init_history/init_{}", node_id)),
+                )
                 .await;
-        }).await.expect("Error in Raft");
+        })
+        .await
+        .expect("Error in Raft");
     });
 }
 
-
-
-
 fn init_router(ip: &str, port: &str, config_file_path: Option<&str>) {
     let router = Router::new(ip, port, config_file_path);
-    
+
     unsafe {
         NODE_INSTANCE = Some(NodeInstance::new(
             Box::new(router.clone()),
             ip.to_string(),
-            port.to_string()
+            port.to_string(),
         ));
     }
 
@@ -164,12 +163,12 @@ fn init_router(ip: &str, port: &str, config_file_path: Option<&str>) {
 fn init_shard(ip: &str, port: &str) {
     println!("Sharding node initializing");
     let shard = Shard::new(ip, port);
-    
+
     unsafe {
         NODE_INSTANCE = Some(NodeInstance::new(
             Box::new(shard.clone()),
             ip.to_string(),
-            port.to_string()
+            port.to_string(),
         ));
     }
 
@@ -189,7 +188,7 @@ fn init_client(ip: &str, port: &str, config_file_path: Option<&str>) {
         NODE_INSTANCE = Some(NodeInstance::new(
             Box::new(Client::new(ip, port, config_file_path)),
             ip.to_string(),
-            port.to_string()
+            port.to_string(),
         ));
     }
     println!("Client node initializes");

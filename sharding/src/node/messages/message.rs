@@ -1,7 +1,9 @@
-
 use super::{message_data::MessageData, node_info::NodeInfo};
+use crate::{
+    node::tables_id_info::TablesIdInfo,
+    utils::common::{ConvertToString, FromString},
+};
 use std::fmt;
-use crate::{node::tables_id_info::TablesIdInfo, utils::common::{ConvertToString,FromString}};
 
 /// MessageType enum shows which command is being sent
 #[derive(Debug, PartialEq, Clone)]
@@ -162,7 +164,11 @@ impl Message {
                     None => TablesIdInfo::new(),
                 };
                 if let Some(payload) = self.payload {
-                    println!("Payload: {}, Max Ids: {}", payload, max_ids.convert_to_string());
+                    println!(
+                        "Payload: {}, Max Ids: {}",
+                        payload,
+                        max_ids.convert_to_string()
+                    );
                     MessageData::new_payload(payload, max_ids)
                 } else {
                     MessageData::new_none()
@@ -556,8 +562,11 @@ mod tests {
             query_data: None,
         };
         println!("-{}-", message.to_string());
-        let options = ["INIT_CONNECTION 0.5 employees:3,departments:5 None None\n", "INIT_CONNECTION 0.5 departments:5,employees:3 None None\n"];
-        
+        let options = [
+            "INIT_CONNECTION 0.5 employees:3,departments:5 None None\n",
+            "INIT_CONNECTION 0.5 departments:5,employees:3 None None\n",
+        ];
+
         assert!(options.contains(&&message.to_string().as_str()));
     }
 

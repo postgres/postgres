@@ -1,6 +1,6 @@
+use raft::node_config::*;
 use serde::Deserialize;
 use std::fs;
-use raft::node_config::*;
 
 #[derive(Debug, Deserialize)]
 pub struct NodesConfig {
