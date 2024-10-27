@@ -157,7 +157,12 @@ impl Message {
                 }
             }
             MessageType::MemoryUpdate | MessageType::Agreed => {
-                if let (Some(payload), Some(max_ids)) = (self.payload, self.max_ids.clone()) {
+                let max_ids = match self.max_ids.clone() {
+                    Some(max_ids) => max_ids,
+                    None => TablesIdInfo::new(),
+                };
+                if let Some(payload) = self.payload {
+                    println!("Payload: {}, Max Ids: {}", payload, max_ids.convert_to_string());
                     MessageData::new_payload(payload, max_ids)
                 } else {
                     MessageData::new_none()
@@ -191,6 +196,7 @@ impl Message {
     pub fn to_string(&self) -> String {
         let mut result = String::new();
 
+        // Message Type
         result.push_str(match self.message_type {
             MessageType::InitConnection => "INIT_CONNECTION",
             MessageType::AskMemoryUpdate => "ASK_MEMORY_UPDATE",
@@ -204,6 +210,7 @@ impl Message {
             MessageType::QueryResponse => "QUERY_RESPONSE",
         });
 
+        // Payload
         result.push(' ');
         if let Some(payload) = self.payload {
             result.push_str(&payload.to_string());
@@ -211,13 +218,19 @@ impl Message {
             result.push_str("None");
         }
 
+        // Max Ids
         result.push(' ');
-        if let Some(max_ids) = self.max_ids.clone() {
+        let max_ids = match self.max_ids.clone() {
+            Some(max_ids) => max_ids,
+            None => TablesIdInfo::new(),
+        };
+        if !max_ids.is_empty() {
             result.push_str(&max_ids.clone().convert_to_string());
         } else {
             result.push_str("None");
         }
 
+        // Node Info
         result.push(' ');
         if let Some(node_info) = &self.node_info {
             result.push_str(&node_info.ip);
@@ -227,13 +240,13 @@ impl Message {
             result.push_str("None");
         }
 
+        // Query Data
         result.push(' ');
         if let Some(query) = &self.query_data {
             result.push_str(&query);
         } else {
             result.push_str("None");
         }
-
         result + "\n"
     }
 
@@ -241,6 +254,7 @@ impl Message {
     pub fn from_string(input: &str) -> Result<Message, &'static str> {
         let mut parts = input.split_whitespace();
 
+        // Message Type
         let message_type = match parts.next() {
             Some("INIT_CONNECTION") => MessageType::InitConnection,
             Some("ASK_MEMORY_UPDATE") => MessageType::AskMemoryUpdate,
@@ -255,24 +269,28 @@ impl Message {
             _ => return Err("Invalid message type"),
         };
 
+        // Payload
         let payload = match parts.next() {
             Some("None") => None,
             Some(payload) => Some(payload.parse().unwrap()),
             None => None,
         };
 
+        // Max Ids
         let max_ids = match parts.next() {
             Some("None") => None,
             Some(max_ids) => Some(TablesIdInfo::from_string(max_ids)),
             None => None,
         };
 
+        // Node Info
         let node_info = match parts.next() {
             Some("None") => None,
             Some(node_info) => Some(node_info.parse().unwrap()),
             None => None,
         };
 
+        // Query Data
         let query = match parts.next() {
             Some("None") => None,
             Some(query) => {

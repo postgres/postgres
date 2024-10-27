@@ -100,6 +100,8 @@ impl PartialEq for MessageData {
 
 #[cfg(test)]
 mod tests {
+    use indexmap::IndexMap;
+
     use super::*;
 
     #[test]
