@@ -8,6 +8,11 @@ use std::sync::{Arc, Mutex};
 use std::thread;
 use futures::executor::block_on;
 use raft::raft_module::RaftModule;
+use tokio::runtime::Runtime;
+use actix_rt::System;
+
+use tokio::task;
+use tokio::task::LocalSet;
 
 pub trait NodeRole {
     /// Sends a query to the shard group
@@ -99,27 +104,41 @@ pub extern "C" fn init_node_instance(
     }
 }
 
+
+
+
 fn new_node_instance(node_type: NodeType, ip: &str, port: &str, config_file_path: Option<&str>) {
+    // Initialize node based on node type
     match node_type {
-        NodeType::Router => {
-            init_router(ip, port, config_file_path);
-        }
-        NodeType::Shard => {
-            init_shard(ip, port);
-        }
-        NodeType::Client => {
-            init_client(ip, port, config_file_path);
-        }
+        NodeType::Router => init_router(ip, port, config_file_path),
+        NodeType::Shard => init_shard(ip, port),
+        NodeType::Client => init_client(ip, port, config_file_path),
     }
 
-    let node_id = format!("{}:{}", ip, port); // TODO-A fix this, it should be the node ID
-    let mut raft_module = raft::raft_module::RaftModule::new(node_id.clone(), ip.to_string(), port.parse::<usize>().unwrap());
-    let mut nodes = get_nodes_config_raft(config_file_path);
-let mut raft_handle = thread::spawn(move ||  {
-        println!("Inside raft_handle");
-        let _handle_start = block_on(raft_module.start(nodes, Some(&format!("../../../sharding/init_history/init_{}", node_id))));
+    // Define node_id and create the Raft module instance
+    let node_id = format!("{}:{}", ip, port);
+    let mut raft_module = raft::raft_module::RaftModule::new(
+        node_id.clone(),
+        ip.to_string(),
+        port.parse::<usize>().unwrap(),
+    );
+    let nodes = get_nodes_config_raft(config_file_path);
+
+    // Run everything within Actix runtime
+    System::new().block_on(async move {
+        println!("Starting Raft module");
+
+        // Spawn the Raft task
+        actix_rt::spawn(async move {
+            raft_module
+                .start(nodes, Some(&format!("../../../sharding/init_history/init_{}", node_id)))
+                .await;
+        }).await.expect("Error in Raft");
     });
 }
+
+
+
 
 fn init_router(ip: &str, port: &str, config_file_path: Option<&str>) {
     let router = Router::new(ip, port, config_file_path);
