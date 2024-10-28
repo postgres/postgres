@@ -44,7 +44,7 @@ tdeheap_rmgr_redo(XLogReaderState *record)
 			pk = &xlrec->pkInfo;
 
 		LWLockAcquire(tde_lwlock_enc_keys(), LW_EXCLUSIVE);
-		pg_tde_write_key_map_entry(&xlrec->rlocator, xlrec->entry_type, &xlrec->relKey, pk);
+		pg_tde_write_key_map_entry(&xlrec->rlocator, &xlrec->relKey, pk);
 		LWLockRelease(tde_lwlock_enc_keys());
 	}
 	else if (info == XLOG_TDE_ADD_PRINCIPAL_KEY)
@@ -83,7 +83,7 @@ tdeheap_rmgr_redo(XLogReaderState *record)
 		RelFileLocator *xlrec = (RelFileLocator *) XLogRecGetData(record);
 
 		LWLockAcquire(tde_lwlock_enc_keys(), LW_EXCLUSIVE);
-		pg_tde_free_key_map_entry(xlrec, offset);
+		pg_tde_free_key_map_entry(xlrec, MAP_ENTRY_VALID, offset);
 		LWLockRelease(tde_lwlock_enc_keys());
 	}
 	else
