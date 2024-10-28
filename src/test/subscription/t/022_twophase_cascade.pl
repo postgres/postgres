@@ -88,7 +88,7 @@ $node_B->safe_psql(
 	CREATE SUBSCRIPTION tap_sub_B
 	CONNECTION '$node_A_connstr application_name=$appname_B'
 	PUBLICATION tap_pub_A
-	WITH (two_phase = on)");
+	WITH (two_phase = on, streaming = off)");
 
 # node_B (pub) -> node_C (sub)
 my $node_B_connstr = $node_B->connstr . ' dbname=postgres';
@@ -100,7 +100,7 @@ $node_C->safe_psql(
 	CREATE SUBSCRIPTION tap_sub_C
 	CONNECTION '$node_B_connstr application_name=$appname_C'
 	PUBLICATION tap_pub_B
-	WITH (two_phase = on)");
+	WITH (two_phase = on, streaming = off)");
 
 # Wait for subscribers to finish initialization
 $node_A->wait_for_catchup($appname_B);

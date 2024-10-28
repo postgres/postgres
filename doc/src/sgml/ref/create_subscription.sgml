@@ -271,10 +271,22 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
         <listitem>
          <para>
           Specifies whether to enable streaming of in-progress transactions
-          for this subscription.  The default value is <literal>off</literal>,
-          meaning all transactions are fully decoded on the publisher and only
-          then sent to the subscriber as a whole.
+          for this subscription.  The default value is <literal>parallel</literal>,
+          meaning incoming changes are directly applied via one of the parallel
+          apply workers, if available. If no parallel apply worker is free to
+          handle streaming transactions then the changes are written to
+          temporary files and applied after the transaction is committed. Note
+          that if an error happens in a parallel apply worker, the finish LSN
+          of the remote transaction might not be reported in the server log.
          </para>
+
+         <caution>
+          <para>
+           There is a risk of deadlock when the schemas of the publisher and
+           subscriber differ, although such cases are rare. The apply worker
+           is equipped to retry these transactions automatically.
+          </para>
+         </caution>
 
          <para>
           If set to <literal>on</literal>, the incoming changes are written to
@@ -283,13 +295,8 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
          </para>
 
          <para>
-          If set to <literal>parallel</literal>, incoming changes are directly
-          applied via one of the parallel apply workers, if available. If no
-          parallel apply worker is free to handle streaming transactions then
-          the changes are written to temporary files and applied after the
-          transaction is committed. Note that if an error happens in a
-          parallel apply worker, the finish LSN of the remote transaction
-          might not be reported in the server log.
+          If set to <literal>off</literal>, all transactions are fully decoded
+          on the publisher and only then sent to the subscriber as a whole.
          </para>
         </listitem>
        </varlistentry>

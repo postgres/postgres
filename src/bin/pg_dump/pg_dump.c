@@ -5235,6 +5235,8 @@ dumpSubscription(Archive *fout, const SubscriptionInfo *subinfo)
 		appendPQExpBufferStr(query, ", streaming = on");
 	else if (strcmp(subinfo->substream, "p") == 0)
 		appendPQExpBufferStr(query, ", streaming = parallel");
+	else
+		appendPQExpBufferStr(query, ", streaming = off");
 
 	if (strcmp(subinfo->subtwophasestate, two_phase_disabled) != 0)
 		appendPQExpBufferStr(query, ", two_phase = on");
