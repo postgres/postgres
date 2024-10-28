@@ -1580,7 +1580,7 @@ _bt_readpage(IndexScanDesc scan, ScanDirection dir, OffsetNumber offnum,
 								 so->currPos.currPage);
 	}
 
-	/* initialize remaining currPos fields (before moreLeft/moreright) */
+	/* initialize remaining currPos fields (before moreLeft/moreRight) */
 	so->currPos.lsn = BufferGetLSNAtomic(so->currPos.buf);
 	so->currPos.dir = dir;
 	so->currPos.nextTupleOffset = 0;
@@ -2154,7 +2154,7 @@ _bt_readfirstpage(IndexScanDesc scan, OffsetNumber offnum, ScanDirection dir)
 	so->numKilled = 0;			/* just paranoia */
 	so->markItemIndex = -1;		/* ditto */
 
-	/* Initialize currPos for so->currPos */
+	/* Initialize so->currPos for the first page (page in so->currPos.buf) */
 	if (so->needPrimScan)
 	{
 		Assert(so->numArrayKeys);
@@ -2175,7 +2175,7 @@ _bt_readfirstpage(IndexScanDesc scan, OffsetNumber offnum, ScanDirection dir)
 	}
 
 	/*
-	 * Attempt to load matching tuples from the page in so->currPos.buf.
+	 * Attempt to load matching tuples from the first page.
 	 *
 	 * Note that _bt_readpage will finish initializing the so->currPos fields.
 	 * _bt_readpage also releases parallel scan (even when it returns false).
@@ -2208,8 +2208,7 @@ _bt_readfirstpage(IndexScanDesc scan, OffsetNumber offnum, ScanDirection dir)
  * Caller's blkno is the next interesting page's link, taken from either the
  * previously-saved right link or left link.  lastcurrblkno is the page that
  * was current at the point where the blkno link was saved, which we use to
- * reason about concurrent page splits/page deletions during backwards scans
- * (_bt_parallel_seize also requires it, regardless of scan direction).
+ * reason about concurrent page splits/page deletions during backwards scans.
  *
  * On entry, caller shouldn't hold any locks or pins on any page (we work
  * directly off of blkno and lastcurrblkno instead).  Parallel scan callers
@@ -2234,8 +2233,6 @@ _bt_readnextpage(IndexScanDesc scan, BlockNumber blkno,
 {
 	Relation	rel = scan->indexRelation;
 	BTScanOpaque so = (BTScanOpaque) scan->opaque;
-	Page		page;
-	BTPageOpaque opaque;
 
 	Assert(so->currPos.currPage == lastcurrblkno || scan->parallel_scan != NULL);
 	Assert(!BTScanPosIsPinned(so->currPos));
@@ -2251,14 +2248,14 @@ _bt_readnextpage(IndexScanDesc scan, BlockNumber blkno,
 
 	for (;;)
 	{
-		/*
-		 * if we're at end of scan, give up and mark parallel scan as done, so
-		 * that all the workers can finish their scan
-		 */
+		Page		page;
+		BTPageOpaque opaque;
+
 		if (blkno == P_NONE ||
 			(ScanDirectionIsForward(dir) ?
 			 !so->currPos.moreRight : !so->currPos.moreLeft))
 		{
+			/* most recent _bt_readpage call (for lastcurrblkno) ended scan */
 			_bt_parallel_done(scan);
 			BTScanPosInvalidate(so->currPos);
 			return false;
