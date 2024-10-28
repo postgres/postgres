@@ -10,6 +10,32 @@
 
 #ifdef PERCONA_EXT
 
+typedef struct TDESMgrRelationData
+{
+	/* parent data */
+	SMgrRelationData reln;
+	/*
+	 * for md.c; per-fork arrays of the number of open segments
+	 * (md_num_open_segs) and the segments themselves (md_seg_fds).
+	 */
+	int md_num_open_segs[MAX_FORKNUM + 1];
+	struct _MdfdVec *md_seg_fds[MAX_FORKNUM + 1];
+
+	bool encrypted_relation;
+	RelKeyData relKey;
+} TDESMgrRelationData;
+
+typedef TDESMgrRelationData *TDESMgrRelation;
+
+/*
+ * we only encrypt main and init forks
+ */
+static inline bool
+tde_is_encryption_required(TDESMgrRelation tdereln, ForkNumber forknum)
+{
+	return (tdereln->encrypted_relation && (forknum == MAIN_FORKNUM || forknum == INIT_FORKNUM));
+}
+
 static RelKeyData*
 tde_smgr_get_key(SMgrRelation reln)
 {
@@ -62,21 +88,20 @@ static void
 tde_mdwritev(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 		 const void **buffers, BlockNumber nblocks, bool skipFsync)
 {
-	AesInit();
+	TDESMgrRelation tdereln = (TDESMgrRelation)reln;
+	RelKeyData *rkd = &tdereln->relKey;
 
-	RelKeyData* rkd = tde_smgr_get_key(reln);
-
-	if(rkd == NULL)
+	if (!tde_is_encryption_required(tdereln, forknum))
 	{
 		mdwritev(reln, forknum, blocknum, buffers, nblocks, skipFsync);
-
-		return;
 	}
 	else
 	{
 		char *local_blocks = palloc(BLCKSZ * (nblocks + 1));
 		char *local_blocks_aligned = (char *)TYPEALIGN(PG_IO_ALIGN_SIZE, local_blocks);
 		const void **local_buffers = palloc(sizeof(void *) * nblocks);
+
+		AesInit();
 
 		for(int i = 0; i  < nblocks; ++i )
 		{
@@ -102,29 +127,26 @@ static void
 tde_mdextend(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 		 const void *buffer, bool skipFsync)
 {
-	RelKeyData *rkd;
+	TDESMgrRelation tdereln = (TDESMgrRelation)reln;
+	RelKeyData *rkd = &tdereln->relKey;
 
-	AesInit();
-
-	rkd = tde_smgr_get_key(reln);
-
-	if(rkd == NULL)
+	if (!tde_is_encryption_required(tdereln, forknum))
 	{
 		mdextend(reln, forknum, blocknum, buffer, skipFsync);
-
-		return;
 	}
 	else
 	{
-
 		char *local_blocks = palloc(BLCKSZ * (1 + 1));
 		char *local_blocks_aligned = (char *)TYPEALIGN(PG_IO_ALIGN_SIZE, local_blocks);
 		int out_len = BLCKSZ;
+		unsigned char iv[16] = {
+			0,
+		};
 
-		unsigned char iv[16] = {0,};
-		memcpy(iv+4, &blocknum, sizeof(BlockNumber));
+		AesInit();
+		memcpy(iv + 4, &blocknum, sizeof(BlockNumber));
 
-		AesEncrypt(rkd->internal_key.key, iv, ((char*)buffer), BLCKSZ, local_blocks_aligned, &out_len);
+		AesEncrypt(rkd->internal_key.key, iv, ((char *)buffer), BLCKSZ, local_blocks_aligned, &out_len);
 
 		mdextend(reln, forknum, blocknum, local_blocks_aligned, skipFsync);
 
@@ -136,21 +158,23 @@ static void
 tde_mdreadv(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 		void **buffers, BlockNumber nblocks)
 {
-	RelKeyData *rkd;
 	int out_len = BLCKSZ;
-
-	AesInit();
+	TDESMgrRelation tdereln = (TDESMgrRelation)reln;
+	RelKeyData *rkd = &tdereln->relKey;
 
 	mdreadv(reln, forknum, blocknum, buffers, nblocks);
 
-	rkd = tde_smgr_get_key(reln);
-
-	if(rkd == NULL)
+	if (!tde_is_encryption_required(tdereln, forknum))
 		return;
+
+	AesInit();
 
 	for(int i = 0; i < nblocks; ++i)
 	{
 		bool allZero = true;
+		BlockNumber bn = blocknum + i;
+		unsigned char iv[16] = {0,};
+
 		for(int j = 0; j  < 32; ++j)
 		{
 			if(((char**)buffers)[i][j] != 0)
@@ -167,8 +191,6 @@ tde_mdreadv(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 		if(allZero)
 			continue;
 
-		BlockNumber bn = blocknum + i;
-		unsigned char iv[16] = {0,};
 		memcpy(iv+4, &bn, sizeof(BlockNumber));
 
 		AesDecrypt(rkd->internal_key.key, iv, ((char **)buffers)[i], BLCKSZ, ((char **)buffers)[i], &out_len);
@@ -178,20 +200,50 @@ tde_mdreadv(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 static void
 tde_mdcreate(SMgrRelation reln, ForkNumber forknum, bool isRedo)
 {
+	TDESMgrRelation tdereln = (TDESMgrRelation)reln;
 	// This is the only function that gets called during actual CREATE TABLE/INDEX (EVENT TRIGGER)
 	// so we create the key here by loading it
 	// Later calls then decide to encrypt or not based on the existence of the key
-	tde_smgr_get_key(reln);
+	RelKeyData* key = tde_smgr_get_key(reln);
+	if (key)
+	{
+		tdereln->encrypted_relation = true;
+		memcpy(&tdereln->relKey, key, sizeof(RelKeyData));
+	}
+	else
+	{
+		tdereln->encrypted_relation = false;
+	}
+
 	return mdcreate(reln, forknum, isRedo);
 }
 
+/*
+ * mdopen() -- Initialize newly-opened relation.
+ */
+static void
+tde_mdopen(SMgrRelation reln)
+{
+	TDESMgrRelation tdereln = (TDESMgrRelation)reln;
+	RelKeyData *key = tde_smgr_get_key(reln);
+	if (key)
+	{
+		tdereln->encrypted_relation = true;
+		memcpy(&tdereln->relKey, key, sizeof(RelKeyData));
+	}
+	else
+	{
+		tdereln->encrypted_relation = false;
+	}
+	mdopen(reln);
+}
 
 static SMgrId tde_smgr_id;
 static const struct f_smgr tde_smgr = {
 	.name = "tde",
 	.smgr_init = mdinit,
 	.smgr_shutdown = NULL,
-	.smgr_open = mdopen,
+	.smgr_open = tde_mdopen,
 	.smgr_close = mdclose,
 	.smgr_create = tde_mdcreate,
 	.smgr_exists = mdexists,
@@ -210,7 +262,7 @@ static const struct f_smgr tde_smgr = {
 
 void RegisterStorageMgr(void)
 {
-    tde_smgr_id = smgr_register(&tde_smgr, 0);
+	tde_smgr_id = smgr_register(&tde_smgr, sizeof(TDESMgrRelationData));
 
 	// TODO: figure out how this part should work in a real extension
 	storage_manager_id = tde_smgr_id; 

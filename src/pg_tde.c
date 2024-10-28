@@ -163,7 +163,7 @@ void on_ext_install(pg_tde_on_ext_install_callback function, void *arg)
 }
 
 /* ------------------
- * Run all of the on_ext_install routines and exexute those one by one
+ * Run all of the on_ext_install routines and execute those one by one
  * ------------------
  */
 static void
