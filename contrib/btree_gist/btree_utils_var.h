@@ -6,7 +6,6 @@
 
 #include "access/gist.h"
 #include "btree_gist.h"
-#include "mb/pg_wchar.h"
 
 /* Variable length key */
 typedef bytea GBT_VARKEY;

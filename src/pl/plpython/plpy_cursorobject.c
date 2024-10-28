@@ -8,14 +8,12 @@
 
 #include <limits.h>
 
-#include "access/xact.h"
 #include "catalog/pg_type.h"
 #include "mb/pg_wchar.h"
 #include "plpy_cursorobject.h"
 #include "plpy_elog.h"
 #include "plpy_main.h"
 #include "plpy_planobject.h"
-#include "plpy_procedure.h"
 #include "plpy_resultobject.h"
 #include "plpy_spi.h"
 #include "plpython.h"

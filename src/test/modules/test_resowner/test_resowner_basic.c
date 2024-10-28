@@ -13,8 +13,6 @@
 #include "postgres.h"
 
 #include "fmgr.h"
-#include "lib/ilist.h"
-#include "utils/memutils.h"
 #include "utils/resowner.h"
 
 PG_MODULE_MAGIC;

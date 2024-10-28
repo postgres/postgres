@@ -18,7 +18,6 @@
 
 #include "access/tidstore.h"
 #include "fmgr.h"
-#include "funcapi.h"
 #include "storage/block.h"
 #include "storage/itemptr.h"
 #include "storage/lwlock.h"

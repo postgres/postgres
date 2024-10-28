@@ -49,7 +49,6 @@
 
 #include "access/parallel.h"
 #include "catalog/pg_authid.h"
-#include "common/hashfn.h"
 #include "common/int.h"
 #include "executor/instrument.h"
 #include "funcapi.h"
@@ -59,9 +58,7 @@
 #include "nodes/queryjumble.h"
 #include "optimizer/planner.h"
 #include "parser/analyze.h"
-#include "parser/parsetree.h"
 #include "parser/scanner.h"
-#include "parser/scansup.h"
 #include "pgstat.h"
 #include "storage/fd.h"
 #include "storage/ipc.h"

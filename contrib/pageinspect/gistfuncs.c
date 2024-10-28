@@ -10,10 +10,8 @@
 #include "postgres.h"
 
 #include "access/gist.h"
-#include "access/gist_private.h"
 #include "access/htup.h"
 #include "access/relation.h"
-#include "catalog/namespace.h"
 #include "catalog/pg_am_d.h"
 #include "funcapi.h"
 #include "miscadmin.h"
@@ -25,7 +23,6 @@
 #include "utils/pg_lsn.h"
 #include "utils/rel.h"
 #include "utils/ruleutils.h"
-#include "utils/varlena.h"
 
 PG_FUNCTION_INFO_V1(gist_page_opaque_info);
 PG_FUNCTION_INFO_V1(gist_page_items);

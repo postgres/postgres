@@ -21,7 +21,6 @@
 #include "UPC.h"
 #include "fmgr.h"
 #include "isn.h"
-#include "utils/builtins.h"
 
 PG_MODULE_MAGIC;
 

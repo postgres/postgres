@@ -38,10 +38,10 @@
 #include "catalog/pg_type.h"
 #include "common/pg_prng.h"
 #include "executor/spi.h"
+#include "fmgr.h"
 #include "funcapi.h"
 #include "lib/stringinfo.h"
 #include "miscadmin.h"
-#include "tablefunc.h"
 #include "utils/builtins.h"
 
 PG_MODULE_MAGIC;

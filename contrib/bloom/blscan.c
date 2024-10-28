@@ -15,11 +15,7 @@
 #include "access/relscan.h"
 #include "bloom.h"
 #include "miscadmin.h"
-#include "pgstat.h"
 #include "storage/bufmgr.h"
-#include "storage/lmgr.h"
-#include "utils/memutils.h"
-#include "utils/rel.h"
 
 /*
  * Begin scan of bloom index.

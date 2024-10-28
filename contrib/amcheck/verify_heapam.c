@@ -12,18 +12,22 @@
 
 #include "access/detoast.h"
 #include "access/genam.h"
-#include "access/heapam.h"
 #include "access/heaptoast.h"
 #include "access/multixact.h"
+#include "access/relation.h"
+#include "access/table.h"
 #include "access/toast_internals.h"
 #include "access/visibilitymap.h"
+#include "access/xact.h"
 #include "catalog/pg_am.h"
+#include "catalog/pg_class.h"
 #include "funcapi.h"
 #include "miscadmin.h"
 #include "storage/bufmgr.h"
 #include "storage/procarray.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
+#include "utils/rel.h"
 
 PG_FUNCTION_INFO_V1(verify_heapam);
 

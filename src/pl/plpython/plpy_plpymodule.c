@@ -6,11 +6,9 @@
 
 #include "postgres.h"
 
-#include "access/xact.h"
 #include "mb/pg_wchar.h"
 #include "plpy_cursorobject.h"
 #include "plpy_elog.h"
-#include "plpy_main.h"
 #include "plpy_planobject.h"
 #include "plpy_plpymodule.h"
 #include "plpy_resultobject.h"
@@ -18,7 +16,6 @@
 #include "plpy_subxactobject.h"
 #include "plpython.h"
 #include "utils/builtins.h"
-#include "utils/snapmgr.h"
 
 HTAB	   *PLy_spi_exceptions = NULL;
 

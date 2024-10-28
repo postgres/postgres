@@ -36,7 +36,6 @@
 #include "storage/copydir.h"
 #include "storage/fd.h"
 #include "utils/guc.h"
-#include "utils/memutils.h"
 
 PG_MODULE_MAGIC;
 

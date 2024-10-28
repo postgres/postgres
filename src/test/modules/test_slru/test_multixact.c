@@ -16,7 +16,7 @@
 
 #include "access/multixact.h"
 #include "access/xact.h"
-#include "utils/builtins.h"
+#include "fmgr.h"
 #include "utils/injection_point.h"
 
 PG_FUNCTION_INFO_V1(test_create_multixact);

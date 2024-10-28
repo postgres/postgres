@@ -19,7 +19,7 @@ OH, me, I'm Terry Mackintosh <terry@terrym.com>
 #include "catalog/pg_type.h"
 #include "commands/trigger.h"
 #include "executor/spi.h"
-#include "utils/builtins.h"
+#include "utils/fmgrprotos.h"
 #include "utils/rel.h"
 
 PG_MODULE_MAGIC;

@@ -14,7 +14,6 @@
 
 #include "fmgr.h"
 #include "lib/ilist.h"
-#include "utils/memutils.h"
 #include "utils/resowner.h"
 
 /*

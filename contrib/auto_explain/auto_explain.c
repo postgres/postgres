@@ -18,8 +18,6 @@
 #include "commands/explain.h"
 #include "common/pg_prng.h"
 #include "executor/instrument.h"
-#include "jit/jit.h"
-#include "nodes/params.h"
 #include "utils/guc.h"
 
 PG_MODULE_MAGIC;

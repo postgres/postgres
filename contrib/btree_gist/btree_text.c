@@ -5,7 +5,8 @@
 
 #include "btree_gist.h"
 #include "btree_utils_var.h"
-#include "utils/builtins.h"
+#include "mb/pg_wchar.h"
+#include "utils/fmgrprotos.h"
 
 /*
 ** Text ops

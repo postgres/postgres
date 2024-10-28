@@ -15,8 +15,6 @@
 #include "common/int.h"
 #include "common/pg_prng.h"
 #include "fmgr.h"
-#include "miscadmin.h"
-#include "storage/lwlock.h"
 #include "utils/memutils.h"
 #include "utils/timestamp.h"
 

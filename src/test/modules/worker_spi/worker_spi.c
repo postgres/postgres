@@ -26,11 +26,7 @@
 #include "miscadmin.h"
 #include "postmaster/bgworker.h"
 #include "postmaster/interrupt.h"
-#include "storage/ipc.h"
 #include "storage/latch.h"
-#include "storage/lwlock.h"
-#include "storage/proc.h"
-#include "storage/shmem.h"
 
 /* these headers are used by this particular worker's code */
 #include "access/xact.h"

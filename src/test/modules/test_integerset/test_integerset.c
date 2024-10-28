@@ -15,10 +15,6 @@
 #include "common/pg_prng.h"
 #include "fmgr.h"
 #include "lib/integerset.h"
-#include "miscadmin.h"
-#include "nodes/bitmapset.h"
-#include "storage/block.h"
-#include "storage/itemptr.h"
 #include "utils/memutils.h"
 #include "utils/timestamp.h"
 

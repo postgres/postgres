@@ -18,10 +18,8 @@
 #include "plpy_procedure.h"
 #include "plpy_subxactobject.h"
 #include "plpython.h"
-#include "utils/builtins.h"
-#include "utils/lsyscache.h"
+#include "utils/fmgrprotos.h"
 #include "utils/rel.h"
-#include "utils/typcache.h"
 
 /* saved state for a set-returning function */
 typedef struct PLySRFState

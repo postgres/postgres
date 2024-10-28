@@ -23,7 +23,7 @@
 #include "catalog/pg_type.h"
 #include "funcapi.h"
 #include "nodes/makefuncs.h"
-#include "parser/parse_type.h"
+#include "parser/parse_node.h"
 #include "plpgsql.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
@@ -31,7 +31,6 @@
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/regproc.h"
-#include "utils/rel.h"
 #include "utils/syscache.h"
 #include "utils/typcache.h"
 

@@ -7,7 +7,6 @@
 #include "postgres.h"
 
 #include "plpy_cursorobject.h"
-#include "plpy_elog.h"
 #include "plpy_planobject.h"
 #include "plpy_spi.h"
 #include "plpython.h"

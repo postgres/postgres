@@ -5,8 +5,7 @@
 
 #include "btree_gist.h"
 #include "btree_utils_var.h"
-#include "utils/builtins.h"
-#include "utils/bytea.h"
+#include "utils/fmgrprotos.h"
 #include "utils/varbit.h"
 
 

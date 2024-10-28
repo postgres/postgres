@@ -19,10 +19,8 @@
 #include <sys/time.h>
 
 #include "catalog/pg_type_d.h"
-#include "common/fe_memutils.h"
 #include "libpq-fe.h"
 #include "pg_getopt.h"
-#include "portability/instr_time.h"
 
 
 static void exit_nicely(PGconn *conn);

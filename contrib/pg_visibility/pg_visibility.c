@@ -19,12 +19,10 @@
 #include "funcapi.h"
 #include "miscadmin.h"
 #include "storage/bufmgr.h"
-#include "storage/proc.h"
 #include "storage/procarray.h"
 #include "storage/read_stream.h"
 #include "storage/smgr.h"
 #include "utils/rel.h"
-#include "utils/snapmgr.h"
 
 PG_MODULE_MAGIC;
 

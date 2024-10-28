@@ -20,7 +20,6 @@
 #include "commands/extension.h"
 #include "libpq/libpq-be.h"
 #include "postgres_fdw.h"
-#include "utils/builtins.h"
 #include "utils/guc.h"
 #include "utils/varlena.h"
 

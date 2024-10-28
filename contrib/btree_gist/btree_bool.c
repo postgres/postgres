@@ -5,7 +5,6 @@
 
 #include "btree_gist.h"
 #include "btree_utils_num.h"
-#include "common/int.h"
 
 typedef struct boolkey
 {

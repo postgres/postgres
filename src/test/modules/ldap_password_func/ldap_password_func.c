@@ -15,10 +15,8 @@
 #include <float.h>
 #include <stdio.h>
 
+#include "fmgr.h"
 #include "libpq/auth.h"
-#include "libpq/libpq.h"
-#include "libpq/libpq-be.h"
-#include "utils/guc.h"
 
 PG_MODULE_MAGIC;
 

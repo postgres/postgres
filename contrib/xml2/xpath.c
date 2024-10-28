@@ -11,7 +11,6 @@
 #include "fmgr.h"
 #include "funcapi.h"
 #include "lib/stringinfo.h"
-#include "miscadmin.h"
 #include "utils/builtins.h"
 #include "utils/xml.h"
 

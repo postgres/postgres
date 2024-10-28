@@ -24,7 +24,6 @@
 #include "executor/spi.h"
 #include "funcapi.h"
 #include "miscadmin.h"
-#include "nodes/makefuncs.h"
 #include "parser/parse_type.h"
 #include "storage/ipc.h"
 #include "tcop/tcopprot.h"

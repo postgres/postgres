@@ -8,7 +8,6 @@
 
 #include <limits.h>
 
-#include "access/htup_details.h"
 #include "access/xact.h"
 #include "catalog/pg_type.h"
 #include "executor/spi.h"
@@ -18,12 +17,10 @@
 #include "plpy_main.h"
 #include "plpy_planobject.h"
 #include "plpy_plpymodule.h"
-#include "plpy_procedure.h"
 #include "plpy_resultobject.h"
 #include "plpy_spi.h"
 #include "plpython.h"
 #include "utils/memutils.h"
-#include "utils/syscache.h"
 
 static PyObject *PLy_spi_execute_query(char *query, long limit);
 static PyObject *PLy_spi_execute_fetch_result(SPITupleTable *tuptable,

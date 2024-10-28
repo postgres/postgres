@@ -9,7 +9,7 @@
 #include "postgres.h"
 
 #include "access/relation.h"
-#include "funcapi.h"
+#include "fmgr.h"
 #include "storage/freespace.h"
 
 PG_MODULE_MAGIC;

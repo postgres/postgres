@@ -18,8 +18,6 @@
 #include "catalog/index.h"
 #include "commands/vacuum.h"
 #include "nodes/pathnodes.h"
-#include "utils/guc.h"
-#include "utils/rel.h"
 
 PG_MODULE_MAGIC;
 

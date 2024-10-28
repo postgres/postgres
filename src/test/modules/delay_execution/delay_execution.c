@@ -23,7 +23,7 @@
 #include <limits.h>
 
 #include "optimizer/planner.h"
-#include "utils/builtins.h"
+#include "utils/fmgrprotos.h"
 #include "utils/guc.h"
 #include "utils/inval.h"
 

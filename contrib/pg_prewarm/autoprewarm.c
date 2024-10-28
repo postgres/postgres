@@ -30,8 +30,6 @@
 
 #include "access/relation.h"
 #include "access/xact.h"
-#include "catalog/pg_class.h"
-#include "catalog/pg_type.h"
 #include "pgstat.h"
 #include "postmaster/bgworker.h"
 #include "postmaster/interrupt.h"
@@ -42,18 +40,13 @@
 #include "storage/ipc.h"
 #include "storage/latch.h"
 #include "storage/lwlock.h"
-#include "storage/proc.h"
 #include "storage/procsignal.h"
-#include "storage/shmem.h"
 #include "storage/smgr.h"
 #include "tcop/tcopprot.h"
-#include "utils/acl.h"
-#include "utils/datetime.h"
 #include "utils/guc.h"
-#include "utils/memutils.h"
 #include "utils/rel.h"
 #include "utils/relfilenumbermap.h"
-#include "utils/resowner.h"
+#include "utils/timestamp.h"
 
 #define AUTOPREWARM_FILE "autoprewarm.blocks"
 

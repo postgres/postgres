@@ -15,7 +15,6 @@
 
 #include "catalog/pg_type.h"
 #include "fmgr.h"
-#include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "parser/parse_clause.h"
 #include "parser/parse_collate.h"

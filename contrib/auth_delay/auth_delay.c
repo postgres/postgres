@@ -14,9 +14,7 @@
 #include <limits.h>
 
 #include "libpq/auth.h"
-#include "port.h"
 #include "utils/guc.h"
-#include "utils/timestamp.h"
 
 PG_MODULE_MAGIC;
 

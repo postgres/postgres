@@ -16,7 +16,6 @@
 #include <poll.h>
 #endif
 
-#include "access/htup_details.h"
 #include "access/xact.h"
 #include "catalog/pg_user_mapping.h"
 #include "commands/defrem.h"
@@ -27,13 +26,10 @@
 #include "miscadmin.h"
 #include "pgstat.h"
 #include "postgres_fdw.h"
-#include "storage/fd.h"
 #include "storage/latch.h"
 #include "utils/builtins.h"
-#include "utils/datetime.h"
 #include "utils/hsearch.h"
 #include "utils/inval.h"
-#include "utils/memutils.h"
 #include "utils/syscache.h"
 
 /*

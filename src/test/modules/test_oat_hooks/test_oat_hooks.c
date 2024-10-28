@@ -16,7 +16,6 @@
 #include "access/parallel.h"
 #include "catalog/dependency.h"
 #include "catalog/objectaccess.h"
-#include "catalog/pg_proc.h"
 #include "executor/executor.h"
 #include "fmgr.h"
 #include "miscadmin.h"

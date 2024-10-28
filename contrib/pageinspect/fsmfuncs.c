@@ -19,7 +19,7 @@
 
 #include "postgres.h"
 
-#include "funcapi.h"
+#include "fmgr.h"
 #include "lib/stringinfo.h"
 #include "miscadmin.h"
 #include "pageinspect.h"

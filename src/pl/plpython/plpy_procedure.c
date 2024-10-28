@@ -7,7 +7,6 @@
 #include "postgres.h"
 
 #include "access/htup_details.h"
-#include "access/transam.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
 #include "funcapi.h"
@@ -17,8 +16,6 @@
 #include "plpython.h"
 #include "utils/builtins.h"
 #include "utils/hsearch.h"
-#include "utils/inval.h"
-#include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/syscache.h"
 
