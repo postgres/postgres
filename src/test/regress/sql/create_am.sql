@@ -217,6 +217,16 @@ ALTER MATERIALIZED VIEW heapmv SET ACCESS METHOD heap, SET ACCESS METHOD heap2;
 DROP MATERIALIZED VIEW heapmv;
 DROP TABLE heaptable;
 
+-- Partitioned table with USING
+CREATE TABLE am_partitioned(x INT, y INT) PARTITION BY hash (x) USING heap2;
+SELECT pg_describe_object(classid, objid, objsubid) AS obj,
+       pg_describe_object(refclassid, refobjid, refobjsubid) as refobj
+  FROM pg_depend, pg_am
+  WHERE pg_depend.refclassid = 'pg_am'::regclass
+    AND pg_am.oid = pg_depend.refobjid
+    AND pg_depend.objid = 'am_partitioned'::regclass;
+DROP TABLE am_partitioned;
+
 -- Partition hierarchies with access methods
 BEGIN;
 SET LOCAL default_table_access_method = 'heap';
