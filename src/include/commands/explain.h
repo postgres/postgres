@@ -100,8 +100,8 @@ extern ExplainState *NewExplainState(void);
 extern TupleDesc ExplainResultDesc(ExplainStmt *stmt);
 
 extern void ExplainOneUtility(Node *utilityStmt, IntoClause *into,
-							  ExplainState *es, const char *queryString,
-							  ParamListInfo params, QueryEnvironment *queryEnv);
+							  ExplainState *es, ParseState *pstate,
+							  ParamListInfo params);
 
 extern void ExplainOnePlan(PlannedStmt *plannedstmt, IntoClause *into,
 						   ExplainState *es, const char *queryString,

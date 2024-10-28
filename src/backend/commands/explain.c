@@ -71,8 +71,7 @@ typedef struct SerializeMetrics
 
 static void ExplainOneQuery(Query *query, int cursorOptions,
 							IntoClause *into, ExplainState *es,
-							const char *queryString, ParamListInfo params,
-							QueryEnvironment *queryEnv);
+							ParseState *pstate, ParamListInfo params);
 static void ExplainPrintJIT(ExplainState *es, int jit_flags,
 							JitInstrumentation *ji);
 static void ExplainPrintSerialize(ExplainState *es,
@@ -350,7 +349,7 @@ ExplainQuery(ParseState *pstate, ExplainStmt *stmt,
 		{
 			ExplainOneQuery(lfirst_node(Query, l),
 							CURSOR_OPT_PARALLEL_OK, NULL, es,
-							pstate->p_sourcetext, params, pstate->p_queryEnv);
+							pstate, params);
 
 			/* Separate plans with an appropriate separator */
 			if (lnext(rewritten, l) != NULL)
@@ -436,24 +435,22 @@ ExplainResultDesc(ExplainStmt *stmt)
 static void
 ExplainOneQuery(Query *query, int cursorOptions,
 				IntoClause *into, ExplainState *es,
-				const char *queryString, ParamListInfo params,
-				QueryEnvironment *queryEnv)
+				ParseState *pstate, ParamListInfo params)
 {
 	/* planner will not cope with utility statements */
 	if (query->commandType == CMD_UTILITY)
 	{
-		ExplainOneUtility(query->utilityStmt, into, es, queryString, params,
-						  queryEnv);
+		ExplainOneUtility(query->utilityStmt, into, es, pstate, params);
 		return;
 	}
 
 	/* if an advisor plugin is present, let it manage things */
 	if (ExplainOneQuery_hook)
 		(*ExplainOneQuery_hook) (query, cursorOptions, into, es,
-								 queryString, params, queryEnv);
+								 pstate->p_sourcetext, params, pstate->p_queryEnv);
 	else
 		standard_ExplainOneQuery(query, cursorOptions, into, es,
-								 queryString, params, queryEnv);
+								 pstate->p_sourcetext, params, pstate->p_queryEnv);
 }
 
 /*
@@ -534,8 +531,7 @@ standard_ExplainOneQuery(Query *query, int cursorOptions,
  */
 void
 ExplainOneUtility(Node *utilityStmt, IntoClause *into, ExplainState *es,
-				  const char *queryString, ParamListInfo params,
-				  QueryEnvironment *queryEnv)
+				  ParseState *pstate, ParamListInfo params)
 {
 	if (utilityStmt == NULL)
 		return;
@@ -547,7 +543,9 @@ ExplainOneUtility(Node *utilityStmt, IntoClause *into, ExplainState *es,
 		 * ExplainOneQuery.  Copy to be safe in the EXPLAIN EXECUTE case.
 		 */
 		CreateTableAsStmt *ctas = (CreateTableAsStmt *) utilityStmt;
+		Query	   *ctas_query;
 		List	   *rewritten;
+		JumbleState *jstate = NULL;
 
 		/*
 		 * Check if the relation exists or not.  This is done at this stage to
@@ -565,11 +563,16 @@ ExplainOneUtility(Node *utilityStmt, IntoClause *into, ExplainState *es,
 			return;
 		}
 
-		rewritten = QueryRewrite(castNode(Query, copyObject(ctas->query)));
+		ctas_query = castNode(Query, copyObject(ctas->query));
+		if (IsQueryIdEnabled())
+			jstate = JumbleQuery(ctas_query);
+		if (post_parse_analyze_hook)
+			(*post_parse_analyze_hook) (pstate, ctas_query, jstate);
+		rewritten = QueryRewrite(ctas_query);
 		Assert(list_length(rewritten) == 1);
 		ExplainOneQuery(linitial_node(Query, rewritten),
 						CURSOR_OPT_PARALLEL_OK, ctas->into, es,
-						queryString, params, queryEnv);
+						pstate, params);
 	}
 	else if (IsA(utilityStmt, DeclareCursorStmt))
 	{
@@ -582,17 +585,25 @@ ExplainOneUtility(Node *utilityStmt, IntoClause *into, ExplainState *es,
 		 * be created, however.
 		 */
 		DeclareCursorStmt *dcs = (DeclareCursorStmt *) utilityStmt;
+		Query	   *dcs_query;
 		List	   *rewritten;
+		JumbleState *jstate = NULL;
 
-		rewritten = QueryRewrite(castNode(Query, copyObject(dcs->query)));
+		dcs_query = castNode(Query, copyObject(dcs->query));
+		if (IsQueryIdEnabled())
+			jstate = JumbleQuery(dcs_query);
+		if (post_parse_analyze_hook)
+			(*post_parse_analyze_hook) (pstate, dcs_query, jstate);
+
+		rewritten = QueryRewrite(dcs_query);
 		Assert(list_length(rewritten) == 1);
 		ExplainOneQuery(linitial_node(Query, rewritten),
 						dcs->options, NULL, es,
-						queryString, params, queryEnv);
+						pstate, params);
 	}
 	else if (IsA(utilityStmt, ExecuteStmt))
 		ExplainExecuteQuery((ExecuteStmt *) utilityStmt, into, es,
-							queryString, params, queryEnv);
+							pstate, params);
 	else if (IsA(utilityStmt, NotifyStmt))
 	{
 		if (es->format == EXPLAIN_FORMAT_TEXT)

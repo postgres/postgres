@@ -163,6 +163,10 @@ select explain_filter('explain (verbose) select * from t1 where pg_temp.mysin(f1
 set compute_query_id = on;
 select explain_filter('explain (verbose) select * from int8_tbl i8');
 
+-- Test compute_query_id with utility statements containing plannable query
+select explain_filter('explain (verbose) declare test_cur cursor for select * from int8_tbl');
+select explain_filter('explain (verbose) create table test_ctas as select 1');
+
 -- Test SERIALIZE option
 select explain_filter('explain (analyze,serialize) select * from int8_tbl i8');
 select explain_filter('explain (analyze,serialize text,buffers,timing off) select * from int8_tbl i8');

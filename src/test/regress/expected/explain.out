@@ -662,6 +662,23 @@ select explain_filter('explain (verbose) select * from int8_tbl i8');
  Query Identifier: N
 (3 rows)
 
+-- Test compute_query_id with utility statements containing plannable query
+select explain_filter('explain (verbose) declare test_cur cursor for select * from int8_tbl');
+                       explain_filter                        
+-------------------------------------------------------------
+ Seq Scan on public.int8_tbl  (cost=N.N..N.N rows=N width=N)
+   Output: q1, q2
+ Query Identifier: N
+(3 rows)
+
+select explain_filter('explain (verbose) create table test_ctas as select 1');
+             explain_filter             
+----------------------------------------
+ Result  (cost=N.N..N.N rows=N width=N)
+   Output: N
+ Query Identifier: N
+(3 rows)
+
 -- Test SERIALIZE option
 select explain_filter('explain (analyze,serialize) select * from int8_tbl i8');
                                         explain_filter                                         
