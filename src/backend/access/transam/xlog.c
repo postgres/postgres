@@ -104,6 +104,10 @@
 #include "utils/timestamp.h"
 #include "utils/varlena.h"
 
+#ifdef WAL_DEBUG
+#include "utils/memutils.h"
+#endif
+
 /* timeline ID to be used when bootstrapping */
 #define BootstrapTimeLineID		1
 
