@@ -58,8 +58,8 @@ bsearch_arg(const void *key, const void *base0,
 			void *arg)
 {
 	const char *base = (const char *) base0;
-	int			lim,
-				cmp;
+	size_t		lim;
+	int			cmp;
 	const void *p;
 
 	for (lim = nmemb; lim != 0; lim >>= 1)
