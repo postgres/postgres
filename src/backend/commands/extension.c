@@ -724,6 +724,10 @@ script_error_callback(void *arg)
 			 * certainly possible to fool this with semicolon-newline embedded
 			 * in a string literal, but it seems better to do this than to
 			 * show the entire extension script.
+			 *
+			 * Notice we cope with Windows-style newlines (\r\n) regardless of
+			 * platform.  This is because there might be such newlines in
+			 * script files on other platforms.
 			 */
 			int			slen = strlen(query);
 
@@ -3618,7 +3622,8 @@ ExecAlterExtensionContentsRecurse(AlterExtensionContentsStmt *stmt,
  * Read the whole of file into memory.
  *
  * The file contents are returned as a single palloc'd chunk. For convenience
- * of the callers, an extra \0 byte is added to the end.
+ * of the callers, an extra \0 byte is added to the end.  That is not counted
+ * in the length returned into *length.
  */
 static char *
 read_whole_file(const char *filename, int *length)
@@ -3639,7 +3644,7 @@ read_whole_file(const char *filename, int *length)
 				 errmsg("file \"%s\" is too large", filename)));
 	bytes_to_read = (size_t) fst.st_size;
 
-	if ((file = AllocateFile(filename, "r")) == NULL)
+	if ((file = AllocateFile(filename, PG_BINARY_R)) == NULL)
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not open file \"%s\" for reading: %m",
@@ -3647,7 +3652,7 @@ read_whole_file(const char *filename, int *length)
 
 	buf = (char *) palloc(bytes_to_read + 1);
 
-	*length = fread(buf, 1, bytes_to_read, file);
+	bytes_to_read = fread(buf, 1, bytes_to_read, file);
 
 	if (ferror(file))
 		ereport(ERROR,
@@ -3656,6 +3661,31 @@ read_whole_file(const char *filename, int *length)
 
 	FreeFile(file);
 
-	buf[*length] = '\0';
+	buf[bytes_to_read] = '\0';
+
+	/*
+	 * On Windows, manually convert Windows-style newlines (\r\n) to the Unix
+	 * convention of \n only.  This avoids gotchas due to script files
+	 * possibly getting converted when being transferred between platforms.
+	 * Ideally we'd do this by using text mode to read the file, but that also
+	 * causes control-Z to be treated as end-of-file.  Historically we've
+	 * allowed control-Z in script files, so breaking that seems unwise.
+	 */
+#ifdef WIN32
+	{
+		char	   *s,
+				   *d;
+
+		for (s = d = buf; *s; s++)
+		{
+			if (!(*s == '\r' && s[1] == '\n'))
+				*d++ = *s;
+		}
+		*d = '\0';
+		bytes_to_read = d - buf;
+	}
+#endif
+
+	*length = bytes_to_read;
 	return buf;
 }
