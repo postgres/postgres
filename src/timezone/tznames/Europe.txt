@@ -183,12 +183,10 @@ GMT         0    # Greenwich Mean Time
 # - IST: Israel Standard Time (Asia)
 IST      3600    # Irish Standard Time
                  #     (Europe/Dublin)
-MEST     7200 D  # Middle Europe Summer Time
-                 #     (MET)
+MEST     7200 D  # Middle Europe Summer Time (obsolete)
 MESZ     7200 D  # Mitteleuropaeische Sommerzeit (German)
                  #     (attested in IANA comments though not their code)
-MET      3600    # Middle Europe Time
-                 #     (MET)
+MET      3600    # Middle Europe Time (obsolete)
 METDST   7200 D  # Middle Europe Summer Time (not in IANA database)
 MEZ      3600    # Mitteleuropaeische Zeit (German)
                  #     (attested in IANA comments though not their code)
