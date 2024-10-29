@@ -171,6 +171,8 @@ relation_statistics_update(FunctionCallInfo fcinfo, int elevel)
 	/* release the lock, consistent with vac_update_relstats() */
 	table_close(crel, RowExclusiveLock);
 
+	CommandCounterIncrement();
+
 	return result;
 }
 

@@ -752,6 +752,8 @@ upsert_pg_statistic(Relation starel, HeapTuple oldtup,
 	}
 
 	heap_freetuple(newtup);
+
+	CommandCounterIncrement();
 }
 
 /*
@@ -762,6 +764,7 @@ delete_pg_statistic(Oid reloid, AttrNumber attnum, bool stainherit)
 {
 	Relation	sd = table_open(StatisticRelationId, RowExclusiveLock);
 	HeapTuple	oldtup;
+	bool		result = false;
 
 	/* Is there already a pg_statistic tuple for this attribute? */
 	oldtup = SearchSysCache3(STATRELATTINH,
@@ -773,12 +776,14 @@ delete_pg_statistic(Oid reloid, AttrNumber attnum, bool stainherit)
 	{
 		CatalogTupleDelete(sd, &oldtup->t_self);
 		ReleaseSysCache(oldtup);
-		table_close(sd, RowExclusiveLock);
-		return true;
+		result = true;
 	}
 
 	table_close(sd, RowExclusiveLock);
-	return false;
+
+	CommandCounterIncrement();
+
+	return result;
 }
 
 /*
