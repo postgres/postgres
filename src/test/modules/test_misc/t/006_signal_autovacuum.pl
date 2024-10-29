@@ -7,7 +7,7 @@
 # at the beginning of the autovacuum worker startup.
 
 use strict;
-use warnings;
+use warnings FATAL => 'all';
 use PostgreSQL::Test::Cluster;
 use Test::More;
 
