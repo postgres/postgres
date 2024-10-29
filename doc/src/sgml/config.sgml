@@ -5419,8 +5419,9 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
       </term>
       <listitem>
        <para>
-        Enables or disables the query planner's use of index-scan plan
-        types. The default is <literal>on</literal>.
+        Enables or disables the query planner's use of index-scan and
+        index-only-scan plan types.  The default is <literal>on</literal>.
+        Also see <xref linkend="guc-enable-indexonlyscan"/>.
        </para>
       </listitem>
      </varlistentry>
@@ -5435,7 +5436,9 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
        <para>
         Enables or disables the query planner's use of index-only-scan plan
         types (see <xref linkend="indexes-index-only-scans"/>).
-        The default is <literal>on</literal>.
+        The default is <literal>on</literal>.  The
+        <xref linkend="guc-enable-indexscan"/> setting must also be
+        enabled to have the query planner consider index-only-scans.
        </para>
       </listitem>
      </varlistentry>
