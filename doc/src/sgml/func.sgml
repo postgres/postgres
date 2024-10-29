@@ -26786,8 +26786,11 @@ CREATE EVENT TRIGGER test_event_trigger_for_drops
         <returnvalue>integer</returnvalue>
        </para>
        <para>
-        Returns a code explaining the reason(s) for rewriting.  The exact
-        meaning of the codes is release dependent.
+        Returns a code explaining the reason(s) for rewriting. The value is
+        a bitmap built from the following values: <literal>1</literal>
+        (the table has changed its persistence), <literal>2</literal>
+        (default value of a column has changed) and <literal>4</literal>
+        (a column has a new data type).
        </para></entry>
       </row>
      </tbody>
