@@ -6134,8 +6134,8 @@ heap_abort_speculative(Relation relation, ItemPointer tid)
  * transaction.  If compatible, return true with the buffer exclusive-locked,
  * and the caller must release that by calling
  * heap_inplace_update_and_unlock(), calling heap_inplace_unlock(), or raising
- * an error.  Otherwise, return false after blocking transactions, if any,
- * have ended.
+ * an error.  Otherwise, call release_callback(arg), wait for blocking
+ * transactions to end, and return false.
  *
  * Since this is intended for system catalogs and SERIALIZABLE doesn't cover
  * DDL, this doesn't guarantee any particular predicate locking.
@@ -6169,7 +6169,8 @@ heap_abort_speculative(Relation relation, ItemPointer tid)
  */
 bool
 heap_inplace_lock(Relation relation,
-				  HeapTuple oldtup_ptr, Buffer buffer)
+				  HeapTuple oldtup_ptr, Buffer buffer,
+				  void (*release_callback) (void *), void *arg)
 {
 	HeapTupleData oldtup = *oldtup_ptr; /* minimize diff vs. heap_update() */
 	TM_Result	result;
@@ -6234,6 +6235,7 @@ heap_inplace_lock(Relation relation,
 										lockmode, NULL))
 			{
 				LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
+				release_callback(arg);
 				ret = false;
 				MultiXactIdWait((MultiXactId) xwait, mxact_status, infomask,
 								relation, &oldtup.t_self, XLTW_Update,
@@ -6249,6 +6251,7 @@ heap_inplace_lock(Relation relation,
 		else
 		{
 			LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
+			release_callback(arg);
 			ret = false;
 			XactLockTableWait(xwait, relation, &oldtup.t_self,
 							  XLTW_Update);
@@ -6260,6 +6263,7 @@ heap_inplace_lock(Relation relation,
 		if (!ret)
 		{
 			LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
+			release_callback(arg);
 		}
 	}
 
