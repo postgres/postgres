@@ -80,6 +80,11 @@
     control statements are available to rewrite a table,
     like <literal>CLUSTER</literal> and <literal>VACUUM</literal>,
     the <literal>table_rewrite</literal> event is not triggered by them.
+    To find the OID of the table that was rewritten, use the function
+    <literal>pg_event_trigger_table_rewrite_oid()</literal> (see
+    <xref linkend="functions-event-triggers"/>). To discover the reason(s)
+    for the rewrite, use the function
+    <literal>pg_event_trigger_table_rewrite_reason()</literal>.
    </para>
 
    <para>
