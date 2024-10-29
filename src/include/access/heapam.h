@@ -338,7 +338,8 @@ extern TM_Result heap_lock_tuple(Relation relation, HeapTuple tuple,
 								 Buffer *buffer, struct TM_FailureData *tmfd);
 
 extern bool heap_inplace_lock(Relation relation,
-							  HeapTuple oldtup_ptr, Buffer buffer);
+							  HeapTuple oldtup_ptr, Buffer buffer,
+							  void (*release_callback) (void *), void *arg);
 extern void heap_inplace_update_and_unlock(Relation relation,
 										   HeapTuple oldtup, HeapTuple tuple,
 										   Buffer buffer);
