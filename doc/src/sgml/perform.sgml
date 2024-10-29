@@ -579,6 +579,31 @@ WHERE t1.unique1 &lt; 100 AND t1.unique2 = t2.unique2;
    </para>
 
    <para>
+    When using the enable/disable flags to disable plan node types, many of
+    the flags only discourage the use of the corresponding plan node and don't
+    outright disallow the planner's ability to use the plan node type.  This
+    is by design so that the planner still maintains the ability to form a
+    plan for a given query.  When the resulting plan contains a disabled node,
+    the <command>EXPLAIN</command> output will indicate this fact.
+
+<screen>
+SET enable_seqscan = off;
+EXPLAIN SELECT * FROM unit;
+
+                       QUERY PLAN
+---------------------------------------------------------
+ Seq Scan on unit  (cost=0.00..21.30 rows=1130 width=44)
+   Disabled: true
+</screen>
+   </para>
+
+   <para>
+    Because the <literal>unit</literal> table has no indexes, there is no
+    other means to read the table data, so the sequential scan is the only
+    option available to the query planner.
+   </para>
+
+   <para>
     <indexterm>
      <primary>subplan</primary>
     </indexterm>
