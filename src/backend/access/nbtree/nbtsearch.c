@@ -2272,6 +2272,8 @@ _bt_readnextpage(IndexScanDesc scan, BlockNumber blkno,
 			return false;
 		}
 
+		Assert(!so->needPrimScan);
+
 		if (ScanDirectionIsForward(dir))
 		{
 			/* read blkno, but check for interrupts first */
