@@ -1424,14 +1424,19 @@ _bt_advance_array_keys_increment(IndexScanDesc scan, ScanDirection dir)
 	}
 
 	/*
-	 * The array keys are now exhausted.  (There isn't actually a distinct
-	 * state that represents array exhaustion, since index scans don't always
-	 * end after btgettuple returns "false".)
+	 * The array keys are now exhausted.
 	 *
 	 * Restore the array keys to the state they were in immediately before we
 	 * were called.  This ensures that the arrays only ever ratchet in the
-	 * current scan direction.  Without this, scans would overlook matching
-	 * tuples if and when the scan's direction was subsequently reversed.
+	 * current scan direction.
+	 *
+	 * Without this, scans could overlook matching tuples when the scan
+	 * direction gets reversed just before btgettuple runs out of items to
+	 * return, but just after _bt_readpage prepares all the items from the
+	 * scan's final page in so->currPos.  When we're on the final page it is
+	 * typical for so->currPos to get invalidated once btgettuple finally
+	 * returns false, which'll effectively invalidate the scan's array keys.
+	 * That hasn't happened yet, though -- and in general it may never happen.
 	 */
 	_bt_start_array_keys(scan, -dir);
 
