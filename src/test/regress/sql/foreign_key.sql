@@ -2097,17 +2097,21 @@ CREATE SCHEMA fkpart12
   CREATE TABLE fk_p ( id int, jd int, PRIMARY KEY(id, jd)) PARTITION BY list (id)
   CREATE TABLE fk_p_1 PARTITION OF fk_p FOR VALUES IN (1) PARTITION BY list (jd)
   CREATE TABLE fk_p_1_1 PARTITION OF fk_p_1 FOR VALUES IN (1)
-  CREATE TABLE fk_p_1_2 PARTITION OF fk_p_1 FOR VALUES IN (2)
+  CREATE TABLE fk_p_1_2 (x int, y int, jd int NOT NULL, id int NOT NULL)
   CREATE TABLE fk_p_2 PARTITION OF fk_p FOR VALUES IN (2) PARTITION BY list (jd)
   CREATE TABLE fk_p_2_1 PARTITION OF fk_p_2 FOR VALUES IN (1)
   CREATE TABLE fk_p_2_2 PARTITION OF fk_p_2 FOR VALUES IN (2)
-  CREATE TABLE fk_r_1 ( id int PRIMARY KEY, p_id int NOT NULL, p_jd int NOT NULL)
+  CREATE TABLE fk_r_1 ( p_jd int NOT NULL, x int, id int PRIMARY KEY, p_id int NOT NULL)
   CREATE TABLE fk_r_2 ( id int PRIMARY KEY, p_id int NOT NULL, p_jd int NOT NULL) PARTITION BY list (id)
   CREATE TABLE fk_r_2_1 PARTITION OF fk_r_2 FOR VALUES IN (2, 1)
   CREATE TABLE fk_r   ( id int PRIMARY KEY, p_id int NOT NULL, p_jd int NOT NULL,
        FOREIGN KEY (p_id, p_jd) REFERENCES fk_p (id, jd)
   ) PARTITION BY list (id);
 SET search_path TO fkpart12;
+
+ALTER TABLE fk_p_1_2 DROP COLUMN x, DROP COLUMN y;
+ALTER TABLE fk_p_1 ATTACH PARTITION fk_p_1_2 FOR VALUES IN (2);
+ALTER TABLE fk_r_1 DROP COLUMN x;
 
 INSERT INTO fk_p VALUES (1, 1);
 
@@ -2124,7 +2128,7 @@ ALTER TABLE fk_r DETACH PARTITION fk_r_2;
 
 \d fk_r_2
 
-INSERT INTO fk_r_1 VALUES (2, 1, 2); -- should fail
+INSERT INTO fk_r_1 (id, p_id, p_jd) VALUES (2, 1, 2); -- should fail
 DELETE FROM fk_p; -- should fail
 
 ALTER TABLE fk_r ATTACH PARTITION fk_r_1 FOR VALUES IN (1);
