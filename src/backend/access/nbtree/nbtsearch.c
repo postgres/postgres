@@ -1568,6 +1568,7 @@ _bt_readpage(IndexScanDesc scan, ScanDirection dir, OffsetNumber offnum,
 
 	Assert(!P_IGNORE(opaque));
 	Assert(BTScanPosIsPinned(so->currPos));
+	Assert(!so->needPrimScan);
 
 	if (scan->parallel_scan)
 	{
@@ -1594,7 +1595,6 @@ _bt_readpage(IndexScanDesc scan, ScanDirection dir, OffsetNumber offnum,
 	maxoff = PageGetMaxOffsetNumber(page);
 
 	/* initialize page-level state that we'll pass to _bt_checkkeys */
-	pstate.dir = dir;
 	pstate.minoff = minoff;
 	pstate.maxoff = maxoff;
 	pstate.finaltup = NULL;
@@ -2088,7 +2088,7 @@ _bt_steppage(IndexScanDesc scan, ScanDirection dir)
 		 */
 		if (so->needPrimScan)
 		{
-			if (ScanDirectionIsForward(dir))
+			if (ScanDirectionIsForward(so->currPos.dir))
 				so->markPos.moreRight = true;
 			else
 				so->markPos.moreLeft = true;
@@ -2109,6 +2109,15 @@ _bt_steppage(IndexScanDesc scan, ScanDirection dir)
 		else
 			blkno = so->currPos.prevPage;
 		lastcurrblkno = so->currPos.currPage;
+
+		/*
+		 * Cancel primitive index scans that were scheduled when the call to
+		 * _bt_readpage for currPos happened to use the opposite direction to
+		 * the one that we're stepping in now.  (It's okay to leave the scan's
+		 * array keys as-is, since the next _bt_readpage will advance them.)
+		 */
+		if (so->currPos.dir != dir)
+			so->needPrimScan = false;
 	}
 	else
 	{
@@ -2118,6 +2127,8 @@ _bt_steppage(IndexScanDesc scan, ScanDirection dir)
 		 */
 		if (!_bt_parallel_seize(scan, &blkno, &lastcurrblkno, false))
 			return false;
+
+		Assert(!so->needPrimScan);
 	}
 
 	return _bt_readnextpage(scan, blkno, lastcurrblkno, dir);

@@ -1078,7 +1078,6 @@ typedef BTScanOpaqueData *BTScanOpaque;
 typedef struct BTReadPageState
 {
 	/* Input parameters, set by _bt_readpage for _bt_checkkeys */
-	ScanDirection dir;			/* current scan direction */
 	OffsetNumber minoff;		/* Lowest non-pivot tuple's offset */
 	OffsetNumber maxoff;		/* Highest non-pivot tuple's offset */
 	IndexTuple	finaltup;		/* Needed by scans with array keys */
