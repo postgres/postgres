@@ -2426,8 +2426,10 @@ new_prim_scan:
 	/*
 	 * End this primitive index scan, but schedule another.
 	 *
-	 * Note: If the scan direction happens to change, this scheduled primitive
-	 * index scan won't go ahead after all.
+	 * Note: We make a soft assumption that the current scan direction will
+	 * also be used within _bt_next, when it is asked to step off this page.
+	 * It is up to _bt_next to cancel this scheduled primitive index scan
+	 * whenever it steps to a page in the direction opposite currPos.dir.
 	 */
 	pstate->continuescan = false;	/* Tell _bt_readpage we're done... */
 	so->needPrimScan = true;	/* ...but call _bt_first again */
