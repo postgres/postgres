@@ -323,34 +323,23 @@ sift_down(binaryheap *heap, int node_off)
 	{
 		int			left_off = left_offset(node_off);
 		int			right_off = right_offset(node_off);
-		int			swap_off = 0;
+		int			swap_off = left_off;
 
-		/* Is the left child larger than the parent? */
-		if (left_off < heap->bh_size &&
-			heap->bh_compare(node_val,
-							 heap->bh_nodes[left_off],
-							 heap->bh_arg) < 0)
-			swap_off = left_off;
-
-		/* Is the right child larger than the parent? */
+		/* Is the right child larger than the left child? */
 		if (right_off < heap->bh_size &&
-			heap->bh_compare(node_val,
+			heap->bh_compare(heap->bh_nodes[left_off],
 							 heap->bh_nodes[right_off],
 							 heap->bh_arg) < 0)
-		{
-			/* swap with the larger child */
-			if (!swap_off ||
-				heap->bh_compare(heap->bh_nodes[left_off],
-								 heap->bh_nodes[right_off],
-								 heap->bh_arg) < 0)
-				swap_off = right_off;
-		}
+			swap_off = right_off;
 
 		/*
-		 * If we didn't find anything to swap, the heap condition is
+		 * If no children or parent is >= the larger child, heap condition is
 		 * satisfied, and we're done.
 		 */
-		if (!swap_off)
+		if (left_off >= heap->bh_size ||
+			heap->bh_compare(node_val,
+							 heap->bh_nodes[swap_off],
+							 heap->bh_arg) >= 0)
 			break;
 
 		/*
