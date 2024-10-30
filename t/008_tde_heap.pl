@@ -85,6 +85,15 @@ PGTDE::append_to_file($stdout);
 $stdout = $node->safe_psql('postgres', 'SELECT * FROM test_enc3 ORDER BY id ASC;', extra_params => ['-a']);
 PGTDE::append_to_file($stdout);
 
+$stdout = $node->safe_psql('postgres', 'CREATE TABLE test_enc4(id SERIAL,k VARCHAR(32),PRIMARY KEY (id)) USING heap;', extra_params => ['-a']);
+PGTDE::append_to_file($stdout);
+
+$stdout = $node->safe_psql('postgres', 'INSERT INTO test_enc4 (k) VALUES (\'foobar\'),(\'barfoo\');', extra_params => ['-a']);
+PGTDE::append_to_file($stdout);
+
+$stdout = $node->safe_psql('postgres', 'SET default_table_access_method = "tde_heap"; ALTER TABLE test_enc4 SET ACCESS METHOD DEFAULT;', extra_params => ['-a']);
+PGTDE::append_to_file($stdout);
+
 # Restart the server
 PGTDE::append_to_file("-- server restart");
 $rt_value = $node->stop();
@@ -140,6 +149,22 @@ PGTDE::append_to_file($strings);
 
 
 
+
+# Verify that we can't see the data in the file
+my $tablefile4 = $node->safe_psql('postgres', 'SHOW data_directory;');
+$tablefile4 .= '/';
+$tablefile4 .= $node->safe_psql('postgres', 'SELECT pg_relation_filepath(\'test_enc4\');');
+
+$strings = 'TABLEFILE4 FOUND: ';
+$strings .= `(ls  $tablefile4 >/dev/null && echo yes) || echo no`;
+PGTDE::append_to_file($strings);
+
+$strings = 'CONTAINS FOO (should be empty): ';
+$strings .= `strings $tablefile4 | grep foo`;
+PGTDE::append_to_file($strings);
+
+
+
 $stdout = $node->safe_psql('postgres', 'DROP TABLE test_enc;', extra_params => ['-a']);
 PGTDE::append_to_file($stdout);
 
@@ -147,6 +172,9 @@ $stdout = $node->safe_psql('postgres', 'DROP TABLE test_enc2;', extra_params => 
 PGTDE::append_to_file($stdout);
 
 $stdout = $node->safe_psql('postgres', 'DROP TABLE test_enc3;', extra_params => ['-a']);
+PGTDE::append_to_file($stdout);
+
+$stdout = $node->safe_psql('postgres', 'DROP TABLE test_enc4;', extra_params => ['-a']);
 PGTDE::append_to_file($stdout);
 
 # DROP EXTENSION

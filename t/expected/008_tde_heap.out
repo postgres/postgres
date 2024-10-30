@@ -17,6 +17,9 @@ INSERT INTO test_enc3 (k) VALUES ('foobar'),('barfoo');
 SELECT * FROM test_enc3 ORDER BY id ASC;
 1|foobar
 2|barfoo
+CREATE TABLE test_enc4(id SERIAL,k VARCHAR(32),PRIMARY KEY (id)) USING heap;
+INSERT INTO test_enc4 (k) VALUES ('foobar'),('barfoo');
+SET default_table_access_method = "tde_heap"; ALTER TABLE test_enc4 SET ACCESS METHOD DEFAULT;
 -- server restart
 SELECT * FROM test_enc ORDER BY id ASC;
 1|foobar
@@ -30,7 +33,11 @@ CONTAINS FOO (should be empty):
 TABLEFILE3 FOUND: yes
 
 CONTAINS FOO (should be empty): 
+TABLEFILE4 FOUND: yes
+
+CONTAINS FOO (should be empty): 
 DROP TABLE test_enc;
 DROP TABLE test_enc2;
 DROP TABLE test_enc3;
+DROP TABLE test_enc4;
 DROP EXTENSION pg_tde;

@@ -137,11 +137,14 @@ pg_tde_ddl_command_start_capture(PG_FUNCTION_ARGS)
 		AlterTableStmt *stmt = (AlterTableStmt *) parsetree;
 		ListCell   *lcmd;
 
-		/* TODO: it might make sense to cehck rd_rel->relkind  */
 		foreach(lcmd, stmt->cmds)
-        	{
+		{
 			AlterTableCmd *cmd = (AlterTableCmd *) lfirst(lcmd);
-			if(cmd->subtype == AT_SetAccessMethod && strcmp(cmd->name, "tde_heap")==0) {
+			if (cmd->subtype == AT_SetAccessMethod && 
+				(cmd->name != NULL && strcmp(cmd->name, "tde_heap")==0) ||
+				(cmd->name == NULL && strcmp(default_table_access_method, "tde_heap") == 0)
+				)
+			{
 				tdeCurrentCreateEvent.encryptMode = true;
 				tdeCurrentCreateEvent.eventType = TDE_TABLE_CREATE_EVENT;
 				tdeCurrentCreateEvent.relation = stmt->relation;
