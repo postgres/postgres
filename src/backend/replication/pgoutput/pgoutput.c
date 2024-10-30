@@ -766,14 +766,10 @@ send_relation_and_attrs(Relation relation, TransactionId xid,
 	{
 		Form_pg_attribute att = TupleDescAttr(desc, i);
 
-		if (att->attisdropped || att->attgenerated)
+		if (!logicalrep_should_publish_column(att, columns))
 			continue;
 
 		if (att->atttypid < FirstGenbkiObjectId)
-			continue;
-
-		/* Skip this attribute if it's not present in the column list */
-		if (columns != NULL && !bms_is_member(att->attnum, columns))
 			continue;
 
 		OutputPluginPrepareWrite(ctx, false);
@@ -1074,6 +1070,7 @@ pgoutput_column_list_init(PGOutputData *data, List *publications,
 					int			i;
 					int			nliveatts = 0;
 					TupleDesc	desc = RelationGetDescr(relation);
+					bool		att_gen_present = false;
 
 					pgoutput_ensure_entry_cxt(data, entry);
 
@@ -1085,17 +1082,30 @@ pgoutput_column_list_init(PGOutputData *data, List *publications,
 					{
 						Form_pg_attribute att = TupleDescAttr(desc, i);
 
-						if (att->attisdropped || att->attgenerated)
+						if (att->attisdropped)
 							continue;
+
+						if (att->attgenerated)
+						{
+							/*
+							 * Generated cols are skipped unless they are
+							 * present in a column list.
+							 */
+							if (!bms_is_member(att->attnum, cols))
+								continue;
+
+							att_gen_present = true;
+						}
 
 						nliveatts++;
 					}
 
 					/*
-					 * If column list includes all the columns of the table,
-					 * set it to NULL.
+					 * Generated attributes are published only when they are
+					 * present in the column list. Otherwise, a NULL column
+					 * list means publish all columns.
 					 */
-					if (bms_num_members(cols) == nliveatts)
+					if (!att_gen_present && bms_num_members(cols) == nliveatts)
 					{
 						bms_free(cols);
 						cols = NULL;

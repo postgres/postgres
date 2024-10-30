@@ -270,5 +270,7 @@ extern void logicalrep_read_stream_abort(StringInfo in,
 										 LogicalRepStreamAbortData *abort_data,
 										 bool read_abort_info);
 extern const char *logicalrep_message_type(LogicalRepMsgType action);
+extern bool logicalrep_should_publish_column(Form_pg_attribute att,
+											 Bitmapset *columns);
 
 #endif							/* LOGICAL_PROTO_H */

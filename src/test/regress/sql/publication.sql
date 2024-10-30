@@ -413,8 +413,6 @@ ALTER PUBLICATION testpub_fortable ADD TABLE testpub_tbl5 (a, x);
 ALTER PUBLICATION testpub_fortable ADD TABLE testpub_tbl5 (b, c);
 UPDATE testpub_tbl5 SET a = 1;
 ALTER PUBLICATION testpub_fortable DROP TABLE testpub_tbl5;
--- error: generated column "d" can't be in list
-ALTER PUBLICATION testpub_fortable ADD TABLE testpub_tbl5 (a, d);
 -- error: system attributes "ctid" not allowed in column list
 ALTER PUBLICATION testpub_fortable ADD TABLE testpub_tbl5 (a, ctid);
 ALTER PUBLICATION testpub_fortable SET TABLE testpub_tbl1 (id, ctid);
@@ -433,6 +431,10 @@ ALTER TABLE testpub_tbl5 ALTER b SET NOT NULL, ALTER c SET NOT NULL;
 ALTER TABLE testpub_tbl5 REPLICA IDENTITY USING INDEX testpub_tbl5_b_key;
 -- error: replica identity (b,c) is not covered by column list (a, c)
 UPDATE testpub_tbl5 SET a = 1;
+ALTER PUBLICATION testpub_fortable DROP TABLE testpub_tbl5;
+
+-- ok: generated column "d" can be in the list too
+ALTER PUBLICATION testpub_fortable ADD TABLE testpub_tbl5 (a, d);
 ALTER PUBLICATION testpub_fortable DROP TABLE testpub_tbl5;
 
 -- error: change the replica identity to "b", and column list to (a, c)

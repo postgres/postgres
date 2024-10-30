@@ -41,19 +41,6 @@ static void logicalrep_write_namespace(StringInfo out, Oid nspid);
 static const char *logicalrep_read_namespace(StringInfo in);
 
 /*
- * Check if a column is covered by a column list.
- *
- * Need to be careful about NULL, which is treated as a column list covering
- * all columns.
- */
-static bool
-column_in_column_list(int attnum, Bitmapset *columns)
-{
-	return (columns == NULL || bms_is_member(attnum, columns));
-}
-
-
-/*
  * Write BEGIN to the output stream.
  */
 void
@@ -781,10 +768,7 @@ logicalrep_write_tuple(StringInfo out, Relation rel, TupleTableSlot *slot,
 	{
 		Form_pg_attribute att = TupleDescAttr(desc, i);
 
-		if (att->attisdropped || att->attgenerated)
-			continue;
-
-		if (!column_in_column_list(att->attnum, columns))
+		if (!logicalrep_should_publish_column(att, columns))
 			continue;
 
 		nliveatts++;
@@ -802,10 +786,7 @@ logicalrep_write_tuple(StringInfo out, Relation rel, TupleTableSlot *slot,
 		Form_pg_type typclass;
 		Form_pg_attribute att = TupleDescAttr(desc, i);
 
-		if (att->attisdropped || att->attgenerated)
-			continue;
-
-		if (!column_in_column_list(att->attnum, columns))
+		if (!logicalrep_should_publish_column(att, columns))
 			continue;
 
 		if (isnull[i])
@@ -938,10 +919,7 @@ logicalrep_write_attrs(StringInfo out, Relation rel, Bitmapset *columns)
 	{
 		Form_pg_attribute att = TupleDescAttr(desc, i);
 
-		if (att->attisdropped || att->attgenerated)
-			continue;
-
-		if (!column_in_column_list(att->attnum, columns))
+		if (!logicalrep_should_publish_column(att, columns))
 			continue;
 
 		nliveatts++;
@@ -959,10 +937,7 @@ logicalrep_write_attrs(StringInfo out, Relation rel, Bitmapset *columns)
 		Form_pg_attribute att = TupleDescAttr(desc, i);
 		uint8		flags = 0;
 
-		if (att->attisdropped || att->attgenerated)
-			continue;
-
-		if (!column_in_column_list(att->attnum, columns))
+		if (!logicalrep_should_publish_column(att, columns))
 			continue;
 
 		/* REPLICA IDENTITY FULL means all columns are sent as part of key. */
@@ -1268,4 +1243,34 @@ logicalrep_message_type(LogicalRepMsgType action)
 	snprintf(err_unknown, sizeof(err_unknown), "??? (%d)", action);
 
 	return err_unknown;
+}
+
+/*
+ * Check if the column 'att' of a table should be published.
+ *
+ * 'columns' represents the column list specified for that table in the
+ * publication.
+ *
+ * Note that generated columns can be present only in 'columns' list.
+ */
+bool
+logicalrep_should_publish_column(Form_pg_attribute att, Bitmapset *columns)
+{
+	if (att->attisdropped)
+		return false;
+
+	/*
+	 * Skip publishing generated columns if they are not included in the
+	 * column list.
+	 */
+	if (!columns && att->attgenerated)
+		return false;
+
+	/*
+	 * Check if a column is covered by a column list.
+	 */
+	if (columns && !bms_is_member(att->attnum, columns))
+		return false;
+
+	return true;
 }
