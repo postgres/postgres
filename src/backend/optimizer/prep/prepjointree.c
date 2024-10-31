@@ -293,7 +293,7 @@ transform_MERGE_to_join(Query *parse)
 	 * join (in the ModifyTable node) to distinguish between the MATCHED and
 	 * NOT MATCHED BY SOURCE cases -- see ExecMergeMatched().  Note that this
 	 * creates a modified copy of the join condition, for use above the join,
-	 * without modifying the the original join condition, inside the join.
+	 * without modifying the original join condition, inside the join.
 	 */
 	if (jointype == JOIN_LEFT || jointype == JOIN_FULL)
 	{

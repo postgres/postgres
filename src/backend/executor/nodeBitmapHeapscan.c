@@ -281,7 +281,7 @@ new_page:
 			break;
 
 		/*
-		 * If serial, we can error out if the the prefetch block doesn't stay
+		 * If serial, we can error out if the prefetch block doesn't stay
 		 * ahead of the current block.
 		 */
 		if (node->pstate == NULL &&

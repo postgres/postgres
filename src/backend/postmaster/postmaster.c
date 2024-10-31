@@ -3145,7 +3145,7 @@ LaunchMissingBackgroundProcesses(void)
 	 * The checkpointer and the background writer are active from the start,
 	 * until shutdown is initiated.
 	 *
-	 * (If the checkpointer is not running when we enter the the PM_SHUTDOWN
+	 * (If the checkpointer is not running when we enter the PM_SHUTDOWN
 	 * state, it is launched one more time to perform the shutdown checkpoint.
 	 * That's done in PostmasterStateMachine(), not here.)
 	 */

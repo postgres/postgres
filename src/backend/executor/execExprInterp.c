@@ -4686,9 +4686,9 @@ ExecEvalJsonCoercion(ExprState *state, ExprEvalStep *op,
 
 	/*
 	 * Prepare to call json_populate_type() to coerce the boolean result of
-	 * JSON_EXISTS_OP to the target type.  If the the target type is integer
-	 * or a domain over integer, call the boolean-to-integer cast function
-	 * instead, because the integer's input function (which is what
+	 * JSON_EXISTS_OP to the target type.  If the target type is integer or a
+	 * domain over integer, call the boolean-to-integer cast function instead,
+	 * because the integer's input function (which is what
 	 * json_populate_type() calls to coerce to scalar target types) doesn't
 	 * accept boolean literals as valid input.  We only have a special case
 	 * for integer and domains thereof as it seems common to use those types
