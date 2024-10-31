@@ -105,12 +105,15 @@ typedef struct ImportQual
 	List	   *table_names;
 } ImportQual;
 
-/* Private struct for the result of opt_select_limit production */
+/* Private struct for the result of select_limit & limit_clause productions */
 typedef struct SelectLimit
 {
 	Node	   *limitOffset;
 	Node	   *limitCount;
-	LimitOption limitOption;
+	LimitOption limitOption;	/* indicates presence of WITH TIES */
+	ParseLoc	offsetLoc;		/* location of OFFSET token, if present */
+	ParseLoc	countLoc;		/* location of LIMIT/FETCH token, if present */
+	ParseLoc	optionLoc;		/* location of WITH TIES, if present */
 } SelectLimit;
 
 /* Private struct for the result of group_clause production */
@@ -195,7 +198,8 @@ static void SplitColQualList(List *qualList,
 static void processCASbits(int cas_bits, int location, const char *constrType,
 			   bool *deferrable, bool *initdeferred, bool *not_valid,
 			   bool *no_inherit, core_yyscan_t yyscanner);
-static PartitionStrategy parsePartitionStrategy(char *strategy);
+static PartitionStrategy parsePartitionStrategy(char *strategy, int location,
+												core_yyscan_t yyscanner);
 static void preprocess_pubobj_list(List *pubobjspec_list,
 								   core_yyscan_t yyscanner);
 static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
@@ -3145,11 +3149,13 @@ PartitionBoundSpec:
 					if (n->modulus == -1)
 						ereport(ERROR,
 								(errcode(ERRCODE_SYNTAX_ERROR),
-								 errmsg("modulus for hash partition must be specified")));
+								 errmsg("modulus for hash partition must be specified"),
+								 parser_errposition(@3)));
 					if (n->remainder == -1)
 						ereport(ERROR,
 								(errcode(ERRCODE_SYNTAX_ERROR),
-								 errmsg("remainder for hash partition must be specified")));
+								 errmsg("remainder for hash partition must be specified"),
+								 parser_errposition(@3)));
 
 					n->location = @3;
 
@@ -4528,7 +4534,7 @@ PartitionSpec: PARTITION BY ColId '(' part_params ')'
 				{
 					PartitionSpec *n = makeNode(PartitionSpec);
 
-					n->strategy = parsePartitionStrategy($3);
+					n->strategy = parsePartitionStrategy($3, @3, yyscanner);
 					n->partParams = $5;
 					n->location = @1;
 
@@ -5962,7 +5968,8 @@ CreateTrigStmt:
 					if (n->replace) /* not supported, see CreateTrigger */
 						ereport(ERROR,
 								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-								 errmsg("CREATE OR REPLACE CONSTRAINT TRIGGER is not supported")));
+								 errmsg("CREATE OR REPLACE CONSTRAINT TRIGGER is not supported"),
+								 parser_errposition(@1)));
 					n->isconstraint = true;
 					n->trigname = $5;
 					n->relation = $9;
@@ -6247,7 +6254,8 @@ CreateAssertionStmt:
 				{
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							 errmsg("CREATE ASSERTION is not yet implemented")));
+							 errmsg("CREATE ASSERTION is not yet implemented"),
+							 parser_errposition(@1)));
 
 					$$ = NULL;
 				}
@@ -13156,11 +13164,13 @@ select_limit:
 				{
 					$$ = $1;
 					($$)->limitOffset = $2;
+					($$)->offsetLoc = @2;
 				}
 			| offset_clause limit_clause
 				{
 					$$ = $2;
 					($$)->limitOffset = $1;
+					($$)->offsetLoc = @1;
 				}
 			| limit_clause
 				{
@@ -13173,6 +13183,9 @@ select_limit:
 					n->limitOffset = $1;
 					n->limitCount = NULL;
 					n->limitOption = LIMIT_OPTION_COUNT;
+					n->offsetLoc = @1;
+					n->countLoc = -1;
+					n->optionLoc = -1;
 					$$ = n;
 				}
 		;
@@ -13190,6 +13203,9 @@ limit_clause:
 					n->limitOffset = NULL;
 					n->limitCount = $2;
 					n->limitOption = LIMIT_OPTION_COUNT;
+					n->offsetLoc = -1;
+					n->countLoc = @1;
+					n->optionLoc = -1;
 					$$ = n;
 				}
 			| LIMIT select_limit_value ',' select_offset_value
@@ -13215,6 +13231,9 @@ limit_clause:
 					n->limitOffset = NULL;
 					n->limitCount = $3;
 					n->limitOption = LIMIT_OPTION_COUNT;
+					n->offsetLoc = -1;
+					n->countLoc = @1;
+					n->optionLoc = -1;
 					$$ = n;
 				}
 			| FETCH first_or_next select_fetch_first_value row_or_rows WITH TIES
@@ -13224,6 +13243,9 @@ limit_clause:
 					n->limitOffset = NULL;
 					n->limitCount = $3;
 					n->limitOption = LIMIT_OPTION_WITH_TIES;
+					n->offsetLoc = -1;
+					n->countLoc = @1;
+					n->optionLoc = @5;
 					$$ = n;
 				}
 			| FETCH first_or_next row_or_rows ONLY
@@ -13233,6 +13255,9 @@ limit_clause:
 					n->limitOffset = NULL;
 					n->limitCount = makeIntConst(1, -1);
 					n->limitOption = LIMIT_OPTION_COUNT;
+					n->offsetLoc = -1;
+					n->countLoc = @1;
+					n->optionLoc = -1;
 					$$ = n;
 				}
 			| FETCH first_or_next row_or_rows WITH TIES
@@ -13242,6 +13267,9 @@ limit_clause:
 					n->limitOffset = NULL;
 					n->limitCount = makeIntConst(1, -1);
 					n->limitOption = LIMIT_OPTION_WITH_TIES;
+					n->offsetLoc = -1;
+					n->countLoc = @1;
+					n->optionLoc = @4;
 					$$ = n;
 				}
 		;
@@ -16954,8 +16982,9 @@ json_format_clause:
 						encoding = JS_ENC_UTF32;
 					else
 						ereport(ERROR,
-								errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-								errmsg("unrecognized JSON encoding: %s", $4));
+								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+								 errmsg("unrecognized JSON encoding: %s", $4),
+								 parser_errposition(@4)));
 
 					$$ = (Node *) makeJsonFormat(JS_FORMAT_JSON, encoding, @1);
 				}
@@ -17457,7 +17486,8 @@ PLpgSQL_Expr: opt_distinct_clause opt_target_list
 							$9->limitOption == LIMIT_OPTION_WITH_TIES)
 							ereport(ERROR,
 									(errcode(ERRCODE_SYNTAX_ERROR),
-									 errmsg("WITH TIES cannot be specified without ORDER BY clause")));
+									 errmsg("WITH TIES cannot be specified without ORDER BY clause"),
+									 parser_errposition($9->optionLoc)));
 						n->limitOption = $9->limitOption;
 					}
 					n->lockingClause = $10;
@@ -18962,7 +18992,7 @@ insertSelectOptions(SelectStmt *stmt,
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
 					 errmsg("multiple OFFSET clauses not allowed"),
-					 parser_errposition(exprLocation(limitClause->limitOffset))));
+					 parser_errposition(limitClause->offsetLoc)));
 		stmt->limitOffset = limitClause->limitOffset;
 	}
 	if (limitClause && limitClause->limitCount)
@@ -18971,19 +19001,18 @@ insertSelectOptions(SelectStmt *stmt,
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
 					 errmsg("multiple LIMIT clauses not allowed"),
-					 parser_errposition(exprLocation(limitClause->limitCount))));
+					 parser_errposition(limitClause->countLoc)));
 		stmt->limitCount = limitClause->limitCount;
 	}
 	if (limitClause)
 	{
-		if (stmt->limitOption)
-			ereport(ERROR,
-					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("multiple limit options not allowed")));
+		/* If there was a conflict, we must have detected it above */
+		Assert(!stmt->limitOption);
 		if (!stmt->sortClause && limitClause->limitOption == LIMIT_OPTION_WITH_TIES)
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("WITH TIES cannot be specified without ORDER BY clause")));
+					 errmsg("WITH TIES cannot be specified without ORDER BY clause"),
+					 parser_errposition(limitClause->optionLoc)));
 		if (limitClause->limitOption == LIMIT_OPTION_WITH_TIES && stmt->lockingClause)
 		{
 			ListCell   *lc;
@@ -18996,7 +19025,8 @@ insertSelectOptions(SelectStmt *stmt,
 					ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
 							 errmsg("%s and %s options cannot be used together",
-									"SKIP LOCKED", "WITH TIES")));
+									"SKIP LOCKED", "WITH TIES"),
+							 parser_errposition(limitClause->optionLoc)));
 			}
 		}
 		stmt->limitOption = limitClause->limitOption;
@@ -19425,7 +19455,7 @@ processCASbits(int cas_bits, int location, const char *constrType,
  * PartitionStrategy representation, or die trying.
  */
 static PartitionStrategy
-parsePartitionStrategy(char *strategy)
+parsePartitionStrategy(char *strategy, int location, core_yyscan_t yyscanner)
 {
 	if (pg_strcasecmp(strategy, "list") == 0)
 		return PARTITION_STRATEGY_LIST;
@@ -19436,8 +19466,8 @@ parsePartitionStrategy(char *strategy)
 
 	ereport(ERROR,
 			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-			 errmsg("unrecognized partitioning strategy \"%s\"",
-					strategy)));
+			 errmsg("unrecognized partitioning strategy \"%s\"", strategy),
+			 parser_errposition(location)));
 	return PARTITION_STRATEGY_LIST;		/* keep compiler quiet */
 
 }

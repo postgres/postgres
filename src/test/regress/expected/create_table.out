@@ -198,6 +198,8 @@ CREATE TABLE partitioned (
     a int
 ) PARTITION BY MAGIC (a);
 ERROR:  unrecognized partitioning strategy "magic"
+LINE 3: ) PARTITION BY MAGIC (a);
+                       ^
 -- specified column must be present in the table
 CREATE TABLE partitioned (
 	a int

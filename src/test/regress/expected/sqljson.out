@@ -337,6 +337,8 @@ LINE 1: SELECT JSON_OBJECT(RETURNING text FORMAT JSON ENCODING UTF8)...
                                           ^
 SELECT JSON_OBJECT(RETURNING text FORMAT JSON ENCODING INVALID_ENCODING);
 ERROR:  unrecognized JSON encoding: invalid_encoding
+LINE 1: ...T JSON_OBJECT(RETURNING text FORMAT JSON ENCODING INVALID_EN...
+                                                             ^
 SELECT JSON_OBJECT(RETURNING bytea);
  json_object 
 -------------
@@ -620,6 +622,8 @@ LINE 1: SELECT JSON_ARRAY(RETURNING text FORMAT JSON ENCODING UTF8);
                                          ^
 SELECT JSON_ARRAY(RETURNING text FORMAT JSON ENCODING INVALID_ENCODING);
 ERROR:  unrecognized JSON encoding: invalid_encoding
+LINE 1: ...CT JSON_ARRAY(RETURNING text FORMAT JSON ENCODING INVALID_EN...
+                                                             ^
 SELECT JSON_ARRAY(RETURNING bytea);
  json_array 
 ------------
