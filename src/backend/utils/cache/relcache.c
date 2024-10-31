@@ -2253,11 +2253,14 @@ RelationReloadIndexInfo(Relation relation)
 	 * If it's a shared index, we might be called before backend startup has
 	 * finished selecting a database, in which case we have no way to read
 	 * pg_class yet.  However, a shared index can never have any significant
-	 * schema updates, so it's okay to ignore the invalidation signal.  Just
-	 * mark it valid and return without doing anything more.
+	 * schema updates, so it's okay to mostly ignore the invalidation signal.
+	 * Its physical relfilenumber might've changed, but that's all.  Update
+	 * the physical relfilenumber, mark it valid and return without doing
+	 * anything more.
 	 */
 	if (relation->rd_rel->relisshared && !criticalRelcachesBuilt)
 	{
+		RelationInitPhysicalAddr(relation);
 		relation->rd_isvalid = true;
 		return;
 	}
