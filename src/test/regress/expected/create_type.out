@@ -20,6 +20,8 @@ CREATE FUNCTION widget_out(widget)
    AS :'regresslib'
    LANGUAGE C STRICT IMMUTABLE;
 NOTICE:  argument type widget is only a shell
+LINE 1: CREATE FUNCTION widget_out(widget)
+                                   ^
 CREATE FUNCTION int44in(cstring)
    RETURNS city_budget
    AS :'regresslib'
@@ -31,6 +33,8 @@ CREATE FUNCTION int44out(city_budget)
    AS :'regresslib'
    LANGUAGE C STRICT IMMUTABLE;
 NOTICE:  argument type city_budget is only a shell
+LINE 1: CREATE FUNCTION int44out(city_budget)
+                                 ^
 CREATE TYPE widget (
    internallength = 24,
    input = widget_in,
@@ -75,6 +79,8 @@ CREATE FUNCTION int42_out(int42)
    AS 'int4out'
    LANGUAGE internal STRICT IMMUTABLE;
 NOTICE:  argument type int42 is only a shell
+LINE 1: CREATE FUNCTION int42_out(int42)
+                                  ^
 CREATE FUNCTION text_w_default_in(cstring)
    RETURNS text_w_default
    AS 'textin'
@@ -85,6 +91,8 @@ CREATE FUNCTION text_w_default_out(text_w_default)
    AS 'textout'
    LANGUAGE internal STRICT IMMUTABLE;
 NOTICE:  argument type text_w_default is only a shell
+LINE 1: CREATE FUNCTION text_w_default_out(text_w_default)
+                                           ^
 CREATE TYPE int42 (
    internallength = 4,
    input = int42_in,
@@ -186,6 +194,8 @@ NOTICE:  return type base_type is only a shell
 CREATE FUNCTION base_fn_out(base_type) RETURNS cstring AS 'boolout'
     LANGUAGE internal IMMUTABLE STRICT;
 NOTICE:  argument type base_type is only a shell
+LINE 1: CREATE FUNCTION base_fn_out(base_type) RETURNS cstring AS 'b...
+                                    ^
 CREATE TYPE base_type(INPUT = base_fn_in, OUTPUT = base_fn_out);
 DROP FUNCTION base_fn_in(cstring); -- error
 ERROR:  cannot drop function base_fn_in(cstring) because other objects depend on it
@@ -320,9 +330,13 @@ NOTICE:  return type myvarchar is only a shell
 CREATE FUNCTION myvarcharout(myvarchar) RETURNS cstring
 LANGUAGE internal IMMUTABLE PARALLEL SAFE STRICT AS 'varcharout';
 NOTICE:  argument type myvarchar is only a shell
+LINE 1: CREATE FUNCTION myvarcharout(myvarchar) RETURNS cstring
+                                     ^
 CREATE FUNCTION myvarcharsend(myvarchar) RETURNS bytea
 LANGUAGE internal STABLE PARALLEL SAFE STRICT AS 'varcharsend';
 NOTICE:  argument type myvarchar is only a shell
+LINE 1: CREATE FUNCTION myvarcharsend(myvarchar) RETURNS bytea
+                                      ^
 CREATE FUNCTION myvarcharrecv(internal, oid, integer) RETURNS myvarchar
 LANGUAGE internal STABLE PARALLEL SAFE STRICT AS 'varcharrecv';
 NOTICE:  return type myvarchar is only a shell

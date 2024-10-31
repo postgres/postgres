@@ -13,6 +13,8 @@ CREATE FUNCTION text_w_default_out(text_w_default)
    AS 'textout'
    LANGUAGE internal STABLE STRICT ;
 NOTICE:  argument type text_w_default is only a shell
+LINE 1: CREATE FUNCTION text_w_default_out(text_w_default)
+                                           ^
 NOTICE:  DDL test: type simple, tag CREATE FUNCTION
 CREATE TYPE employee_type AS (name TEXT, salary NUMERIC);
 NOTICE:  DDL test: type simple, tag CREATE TYPE

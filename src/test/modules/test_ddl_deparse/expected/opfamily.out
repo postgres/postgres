@@ -8,6 +8,8 @@ NOTICE:  DDL test: type simple, tag CREATE FUNCTION
 create function int8alias1out(int8alias1) returns cstring
   strict immutable language internal as 'int8out';
 NOTICE:  argument type int8alias1 is only a shell
+LINE 1: create function int8alias1out(int8alias1) returns cstring
+                                      ^
 NOTICE:  DDL test: type simple, tag CREATE FUNCTION
 create type int8alias1 (
     input = int8alias1in,
@@ -24,6 +26,8 @@ NOTICE:  DDL test: type simple, tag CREATE FUNCTION
 create function int8alias2out(int8alias2) returns cstring
   strict immutable language internal as 'int8out';
 NOTICE:  argument type int8alias2 is only a shell
+LINE 1: create function int8alias2out(int8alias2) returns cstring
+                                      ^
 NOTICE:  DDL test: type simple, tag CREATE FUNCTION
 create type int8alias2 (
     input = int8alias2in,

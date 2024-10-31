@@ -36,6 +36,8 @@ CREATE FUNCTION casttesttype_out(casttesttype)
    AS 'textout'
    LANGUAGE internal STRICT IMMUTABLE;
 NOTICE:  argument type casttesttype is only a shell
+LINE 1: CREATE FUNCTION casttesttype_out(casttesttype)
+                                         ^
 CREATE TYPE casttesttype (
    internallength = variable,
    input = casttesttype_in,

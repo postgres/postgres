@@ -184,7 +184,7 @@ static Node *makeSQLValueFunction(SQLValueFunctionOp op, int32 typmod,
 								  int location);
 static Node *makeXmlExpr(XmlExprOp op, char *name, List *named_args,
 						 List *args, int location);
-static List *mergeTableFuncParameters(List *func_args, List *columns);
+static List *mergeTableFuncParameters(List *func_args, List *columns, core_yyscan_t yyscanner);
 static TypeName *TableFuncTypeName(List *columns);
 static RangeVar *makeRangeVarFromAnyName(List *names, int position, core_yyscan_t yyscanner);
 static RangeVar *makeRangeVarFromQualifiedName(char *name, List *namelist, int location,
@@ -8290,7 +8290,7 @@ CreateFunctionStmt:
 					n->is_procedure = false;
 					n->replace = $2;
 					n->funcname = $4;
-					n->parameters = mergeTableFuncParameters($5, $9);
+					n->parameters = mergeTableFuncParameters($5, $9, yyscanner);
 					n->returnType = TableFuncTypeName($9);
 					n->returnType->location = @7;
 					n->options = $11;
@@ -8423,6 +8423,7 @@ func_arg:
 					n->argType = $3;
 					n->mode = $1;
 					n->defexpr = NULL;
+					n->location = @1;
 					$$ = n;
 				}
 			| param_name arg_class func_type
@@ -8433,6 +8434,7 @@ func_arg:
 					n->argType = $3;
 					n->mode = $2;
 					n->defexpr = NULL;
+					n->location = @1;
 					$$ = n;
 				}
 			| param_name func_type
@@ -8443,6 +8445,7 @@ func_arg:
 					n->argType = $2;
 					n->mode = FUNC_PARAM_DEFAULT;
 					n->defexpr = NULL;
+					n->location = @1;
 					$$ = n;
 				}
 			| arg_class func_type
@@ -8453,6 +8456,7 @@ func_arg:
 					n->argType = $2;
 					n->mode = $1;
 					n->defexpr = NULL;
+					n->location = @1;
 					$$ = n;
 				}
 			| func_type
@@ -8463,6 +8467,7 @@ func_arg:
 					n->argType = $1;
 					n->mode = FUNC_PARAM_DEFAULT;
 					n->defexpr = NULL;
+					n->location = @1;
 					$$ = n;
 				}
 		;
@@ -8799,6 +8804,7 @@ table_func_column:	param_name func_type
 					n->argType = $2;
 					n->mode = FUNC_PARAM_TABLE;
 					n->defexpr = NULL;
+					n->location = @1;
 					$$ = n;
 				}
 		;
@@ -18908,7 +18914,7 @@ makeOrderedSetArgs(List *directargs, List *orderedargs,
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("an ordered-set aggregate with a VARIADIC direct argument must have one VARIADIC aggregated argument of the same data type"),
-					 parser_errposition(exprLocation((Node *) firsto))));
+					 parser_errposition(firsto->location)));
 
 		/* OK, drop the duplicate VARIADIC argument from the internal form */
 		orderedargs = NIL;
@@ -19183,7 +19189,7 @@ makeXmlExpr(XmlExprOp op, char *name, List *named_args, List *args,
  * Merge the input and output parameters of a table function.
  */
 static List *
-mergeTableFuncParameters(List *func_args, List *columns)
+mergeTableFuncParameters(List *func_args, List *columns, core_yyscan_t yyscanner)
 {
 	ListCell   *lc;
 
@@ -19197,7 +19203,8 @@ mergeTableFuncParameters(List *func_args, List *columns)
 			p->mode != FUNC_PARAM_VARIADIC)
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("OUT and INOUT arguments aren't allowed in TABLE functions")));
+					 errmsg("OUT and INOUT arguments aren't allowed in TABLE functions"),
+					 parser_errposition(p->location)));
 	}
 
 	return list_concat(func_args, columns);

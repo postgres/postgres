@@ -490,6 +490,8 @@ NOTICE:  return type xfloat4 is only a shell
 create function xfloat4out(xfloat4) returns cstring immutable strict
   language internal as 'int4out';
 NOTICE:  argument type xfloat4 is only a shell
+LINE 1: create function xfloat4out(xfloat4) returns cstring immutabl...
+                                   ^
 create type xfloat4 (input = xfloat4in, output = xfloat4out, like = float4);
 create cast (xfloat4 as float4) without function;
 create cast (float4 as xfloat4) without function;

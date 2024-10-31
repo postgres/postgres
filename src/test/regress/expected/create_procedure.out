@@ -401,9 +401,13 @@ LINE 1: CREATE PROCEDURE ptestx() LANGUAGE SQL STRICT AS $$ INSERT I...
 CREATE PROCEDURE ptestx(a VARIADIC int[], b OUT int) LANGUAGE SQL
   AS $$ SELECT a[1] $$;
 ERROR:  VARIADIC parameter must be the last parameter
+LINE 1: CREATE PROCEDURE ptestx(a VARIADIC int[], b OUT int) LANGUAG...
+                                                  ^
 CREATE PROCEDURE ptestx(a int DEFAULT 42, b OUT int) LANGUAGE SQL
   AS $$ SELECT a $$;
 ERROR:  procedure OUT parameters cannot appear after one with a default value
+LINE 1: CREATE PROCEDURE ptestx(a int DEFAULT 42, b OUT int) LANGUAG...
+                                                  ^
 ALTER PROCEDURE ptest1(text) STRICT;
 ERROR:  invalid attribute in procedure definition
 LINE 1: ALTER PROCEDURE ptest1(text) STRICT;

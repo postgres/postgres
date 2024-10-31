@@ -337,9 +337,13 @@ NOTICE:  return type myint is only a shell
 create function myintout(myint) returns cstring strict immutable language
   internal as 'int4out';
 NOTICE:  argument type myint is only a shell
+LINE 1: create function myintout(myint) returns cstring strict immut...
+                                 ^
 create function myinthash(myint) returns integer strict immutable language
   internal as 'hashint4';
 NOTICE:  argument type myint is only a shell
+LINE 1: create function myinthash(myint) returns integer strict immu...
+                                  ^
 create type myint (input = myintin, output = myintout, like = int4);
 create cast (int4 as myint) without function;
 create cast (myint as int4) without function;
