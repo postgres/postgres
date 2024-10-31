@@ -98,6 +98,7 @@ sql_tests = [
       'insert_update_delete_basic',
       'vault_v2_test_basic',
       'alter_index_basic',
+      'merge_join_basic',
 ]
 
 tap_tests = [
@@ -127,6 +128,7 @@ if get_variable('percona_ext', false)
       'insert_update_delete',
       'vault_v2_test',
       'alter_index',
+      'merge_join',
   ]
 
   tap_tests += [

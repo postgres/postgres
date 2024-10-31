@@ -21,7 +21,8 @@ change_access_method_basic \
 insert_update_delete_basic \
 keyprovider_dependency_basic \
 vault_v2_test_basic \
-alter_index_basic
+alter_index_basic \
+merge_join_basic
 TAP_TESTS = 1
 
 OBJS = src/encryption/enc_tde.o \
