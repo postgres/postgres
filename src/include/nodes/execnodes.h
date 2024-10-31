@@ -796,7 +796,7 @@ typedef struct ExecAuxRowMark
  * All-in-memory tuple hash tables are used for a number of purposes.
  *
  * Note: tab_hash_funcs are for the key datatype(s) stored in the table,
- * and tab_eq_funcs are non-cross-type equality operators for those types.
+ * and tab_eq_func are non-cross-type equality operators for those types.
  * Normally these are the only functions used, but FindTupleHashEntry()
  * supports searching a hashtable using cross-data-type hashing.  For that,
  * the caller must supply hash functions for the LHS datatype as well as
@@ -994,7 +994,6 @@ typedef struct SubPlanState
 									 * datatype(s) */
 	Oid		   *tab_collations; /* collations for hash and comparison */
 	FmgrInfo   *tab_hash_funcs; /* hash functions for table datatype(s) */
-	FmgrInfo   *tab_eq_funcs;	/* equality functions for table datatype(s) */
 	FmgrInfo   *lhs_hash_funcs; /* hash functions for lefthand datatype(s) */
 	FmgrInfo   *cur_eq_funcs;	/* equality functions for LHS vs. table */
 	ExprState  *cur_eq_comp;	/* equality comparator for LHS vs. table */
