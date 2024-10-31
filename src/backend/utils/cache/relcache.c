@@ -2083,16 +2083,7 @@ RelationIdGetRelation(Oid relationId)
 		/* revalidate cache entry if necessary */
 		if (!rd->rd_isvalid)
 		{
-			/*
-			 * Indexes only have a limited number of possible schema changes,
-			 * and we don't want to use the full-blown procedure because it's
-			 * a headache for indexes that reload itself depends on.
-			 */
-			if (rd->rd_rel->relkind == RELKIND_INDEX ||
-				rd->rd_rel->relkind == RELKIND_PARTITIONED_INDEX)
-				RelationReloadIndexInfo(rd);
-			else
-				RelationClearRelation(rd, true);
+			RelationClearRelation(rd, true);
 
 			/*
 			 * Normally entries need to be valid here, but before the relcache
@@ -2263,14 +2254,6 @@ RelationReloadIndexInfo(Relation relation)
 			relation->rd_rel->relkind == RELKIND_PARTITIONED_INDEX) &&
 		   !relation->rd_isvalid &&
 		   relation->rd_droppedSubid == InvalidSubTransactionId);
-
-	/* Ensure it's closed at smgr level */
-	RelationCloseSmgr(relation);
-
-	/* Must free any AM cached data upon relcache flush */
-	if (relation->rd_amcache)
-		pfree(relation->rd_amcache);
-	relation->rd_amcache = NULL;
 
 	/*
 	 * If it's a shared index, we might be called before backend startup has
@@ -2600,15 +2583,19 @@ RelationClearRelation(Relation relation, bool rebuild)
 		return;
 
 	/*
-	 * Even non-system indexes should not be blown away if they are open and
-	 * have valid index support information.  This avoids problems with active
-	 * use of the index support information.  As with nailed indexes, we
-	 * re-read the pg_class row to handle possible physical relocation of the
-	 * index, and we check for pg_index updates too.
+	 * Indexes only have a limited number of possible schema changes, and we
+	 * don't want to use the full-blown procedure because it's a headache for
+	 * indexes that reload itself depends on.
+	 *
+	 * As an exception, use the full procedure if the index access info hasn't
+	 * been initialized yet.  Index creation relies on that: it first builds
+	 * the relcache entry with RelationBuildLocalRelation(), creates the
+	 * pg_index tuple only after that, and then relies on
+	 * CommandCounterIncrement to load the pg_index contents.
 	 */
 	if ((relation->rd_rel->relkind == RELKIND_INDEX ||
 		 relation->rd_rel->relkind == RELKIND_PARTITIONED_INDEX) &&
-		relation->rd_refcnt > 0 &&
+		rebuild &&
 		relation->rd_indexcxt != NULL)
 	{
 		if (IsTransactionState())
@@ -3719,6 +3706,12 @@ RelationBuildLocalRelation(const char *relname,
 
 	if (RELKIND_HAS_TABLE_AM(relkind) || relkind == RELKIND_SEQUENCE)
 		RelationInitTableAccessMethod(rel);
+
+	/*
+	 * Leave index access method uninitialized, because the pg_index row has
+	 * not been inserted at this stage of index creation yet.  The cache
+	 * invalidation after pg_index row has been inserted will initialize it.
+	 */
 
 	/*
 	 * Okay to insert into the relcache hash table.
