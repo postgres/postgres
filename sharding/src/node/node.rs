@@ -3,7 +3,6 @@ use crate::utils::node_config::get_nodes_config_raft;
 
 use super::router::Router;
 use super::shard::Shard;
-use actix_rt::System;
 use std::ffi::CStr;
 use std::sync::{Arc, Mutex};
 use std::thread;

@@ -9,6 +9,7 @@ use crate::utils::node_config::get_memory_config;
 use crate::utils::queries::print_rows;
 use indexmap::IndexMap;
 use inline_colorization::{color_blue, color_bright_green, style_reset};
+use log::{debug, error, info};
 use postgres::{Client as PostgresClient, Row};
 use std::io::{Read, Write};
 use std::net::{TcpListener, TcpStream};
@@ -45,14 +46,14 @@ impl Shard {
     /// Creates a new Shard node in the given port.
     #[must_use]
     pub fn new(ip: &str, port: &str) -> Self {
-        println!("Creating a new Shard node in port: {port}");
-        println!("Connecting to the database in port: {port}");
+        info!("Creating a new Shard node in port: {port}");
+        info!("Connecting to the database in port: {port}");
 
         let backend: PostgresClient = connect_to_node(ip, port).unwrap();
 
         let memory_manager = Self::initialize_memory_manager();
 
-        println!(
+        debug!(
             "{color_blue}[Shard] Available Memory: {:?} %{style_reset}",
             memory_manager.available_memory_perc
         );
@@ -68,7 +69,7 @@ impl Shard {
 
         let _ = shard.update();
 
-        println!("{color_bright_green}Shard created successfully. Shard: {shard:?}{style_reset}");
+        info!("{color_bright_green}Shard created successfully. Shard: {shard:?}{style_reset}");
 
         shard
     }
@@ -86,7 +87,7 @@ impl Shard {
         loop {
             match listener.accept() {
                 Ok((stream, addr)) => {
-                    println!(
+                    info!(
                         "{color_bright_green}[SHARD] New connection accepted from {addr}.{style_reset}",
                     );
 
@@ -100,7 +101,7 @@ impl Shard {
                     });
                 }
                 Err(e) => {
-                    eprintln!("Failed to accept a connection: {e}");
+                    error!("Failed to accept a connection: {e}");
                 }
             }
         }
@@ -132,7 +133,7 @@ impl Shard {
                     let message_string = String::from_utf8_lossy(&buffer);
 
                     if let Some(response) = shard.get_response_message(&message_string) {
-                        println!("{color_bright_green}Sending response: {response}{style_reset}");
+                        debug!("{color_bright_green}Sending response: {response}{style_reset}");
                         // stream.write(response.as_bytes()).unwrap();
                         stream.write_all(response.as_bytes()).unwrap();
                     } else {
@@ -154,7 +155,7 @@ impl Shard {
         let message = match Message::from_string(message) {
             Ok(message) => message,
             Err(e) => {
-                eprintln!("Failed to parse message: {e:?}. Message: [{message:?}]");
+                error!("Failed to parse message: {e:?}. Message: [{message:?}]");
                 return None;
             }
         };
@@ -170,7 +171,7 @@ impl Shard {
                 self.handle_get_router_message()
             }
             _ => {
-                eprintln!(
+                error!(
                     "Message type received: {:?}, not yet implemented",
                     message.get_message_type()
                 );
@@ -182,19 +183,19 @@ impl Shard {
     fn handle_init_connection_message(&mut self, message: Message) -> Option<String> {
         let router_info = message.get_data().node_info.unwrap();
         self.router_info = Arc::new(Mutex::new(Some(router_info.clone())));
-        println!("{color_bright_green}Received an InitConnection message{style_reset}");
+        debug!("{color_bright_green}Received an InitConnection message{style_reset}");
         let response_string = self.get_agreed_connection();
         Some(response_string)
     }
 
     fn handle_memory_update_message(&mut self) -> Option<String> {
-        println!("{color_bright_green}Received an AskMemoryUpdate message{style_reset}");
+        debug!("{color_bright_green}Received an AskMemoryUpdate message{style_reset}");
         let response_string = self.get_memory_update_message();
         Some(response_string)
     }
 
     fn handle_get_router_message(&mut self) -> Option<String> {
-        println!("{color_bright_green}Received a GetRouter message{style_reset}");
+        debug!("{color_bright_green}Received a GetRouter message{style_reset}");
         let self_clone = self.clone();
         let router_info: Option<NodeInfo> = {
             let router_info = self_clone.router_info.as_ref().try_lock().unwrap();
@@ -222,10 +223,10 @@ impl Shard {
     fn get_memory_update_message(&mut self) -> String {
         match self.update() {
             Ok(()) => {
-                println!("Memory updated successfully");
+                debug!("Memory updated successfully");
             }
             Err(e) => {
-                eprintln!("Failed to update memory: {e:?}");
+                error!("Failed to update memory: {e:?}");
             }
         }
         let memory_manager = self.memory_manager.as_ref().try_lock().unwrap();
@@ -265,7 +266,7 @@ impl Shard {
                 let max_id: i32 = if let Ok(id) = rows[0].try_get(0) {
                     id
                 } else {
-                    eprintln!("Failed to get max id for table: {table}. Table might be empty",);
+                    error!("Failed to get max id for table: {table}. Table might be empty",);
                     0
                 };
                 let mut tables_max_id = self.tables_max_id.as_ref().try_lock().unwrap();
@@ -284,7 +285,7 @@ impl Shard {
                 Some(rows)
             }
             Err(e) => {
-                eprintln!("Failed to execute query: {e:?}");
+                error!("Failed to execute query: {e:?}");
                 None
             }
         }
@@ -293,7 +294,7 @@ impl Shard {
 
 impl NodeRole for Shard {
     fn send_query(&mut self, query: &str) -> Option<String> {
-        println!("{color_bright_green}Sending query to the database: {query}{style_reset}");
+        debug!("{color_bright_green}Sending query to the database: {query}{style_reset}");
         let rows = self.get_rows_for_query(query)?;
         let _ = self.update(); // Updates memory and tables_max_id
         Some(rows.convert_to_string())

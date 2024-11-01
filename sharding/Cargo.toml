@@ -27,6 +27,8 @@ actix = "0.13.5"
 actix-rt = "2.0"
 raft = { git = "https://github.com/isoprophlex/raft", branch = "master" }
 # raft = { path = "../../raft" }
+log = "0.4"
+env_logger = "0.10"
 
 
 [lib]
