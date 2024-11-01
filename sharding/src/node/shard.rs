@@ -161,32 +161,13 @@ impl Shard {
 
         match message.get_message_type() {
             MessageType::InitConnection => {
-                let router_info = message.get_data().node_info.unwrap();
-                self.router_info = Arc::new(Mutex::new(Some(router_info.clone())));
-                println!("{color_bright_green}Received an InitConnection message{style_reset}");
-                let response_string = self.get_agreed_connection();
-                Some(response_string)
+                self.handle_init_connection_message(message)
             }
             MessageType::AskMemoryUpdate => {
-                println!("{color_bright_green}Received an AskMemoryUpdate message{style_reset}");
-                let response_string = self.get_memory_update_message();
-                Some(response_string)
+                self.handle_memory_update_message()
             }
             MessageType::GetRouter => {
-                println!("{color_bright_green}Received a GetRouter message{style_reset}");
-                let self_clone = self.clone();
-                let router_info: Option<NodeInfo> = {
-                    let router_info = self_clone.router_info.as_ref().try_lock().unwrap();
-                    router_info.clone()
-                };
-
-                if let Some(router_info) = router_info {
-                    let response_message = Message::new_router_id(router_info.clone());
-                    Some(response_message.to_string())
-                } else {
-                    let response_message = Message::new_no_router_data();
-                    Some(response_message.to_string())
-                }
+                self.handle_get_router_message()
             }
             _ => {
                 eprintln!(
@@ -195,6 +176,37 @@ impl Shard {
                 );
                 None
             }
+        }
+    }
+
+    fn handle_init_connection_message(&mut self, message: Message) -> Option<String> {
+        let router_info = message.get_data().node_info.unwrap();
+        self.router_info = Arc::new(Mutex::new(Some(router_info.clone())));
+        println!("{color_bright_green}Received an InitConnection message{style_reset}");
+        let response_string = self.get_agreed_connection();
+        Some(response_string)
+    }
+
+    fn handle_memory_update_message(&mut self) -> Option<String> {
+        println!("{color_bright_green}Received an AskMemoryUpdate message{style_reset}");
+        let response_string = self.get_memory_update_message();
+        Some(response_string)
+    }
+
+    fn handle_get_router_message(&mut self) -> Option<String> {
+        println!("{color_bright_green}Received a GetRouter message{style_reset}");
+        let self_clone = self.clone();
+        let router_info: Option<NodeInfo> = {
+            let router_info = self_clone.router_info.as_ref().try_lock().unwrap();
+            router_info.clone()
+        };
+
+        if let Some(router_info) = router_info {
+            let response_message = Message::new_router_id(router_info.clone());
+            Some(response_message.to_string())
+        } else {
+            let response_message = Message::new_no_router_data();
+            Some(response_message.to_string())
         }
     }
 
