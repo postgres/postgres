@@ -1837,7 +1837,7 @@ PerformWalRecovery(void)
 			if (waitLSNState &&
 				(XLogRecoveryCtl->lastReplayedEndRecPtr >=
 				 pg_atomic_read_u64(&waitLSNState->minWaitedLSN)))
-				WaitLSNSetLatches(XLogRecoveryCtl->lastReplayedEndRecPtr);
+				WaitLSNWakeup(XLogRecoveryCtl->lastReplayedEndRecPtr);
 
 			/* Else, try to fetch the next WAL record */
 			record = ReadRecord(xlogprefetcher, LOG, false, replayTLI);

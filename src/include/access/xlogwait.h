@@ -82,7 +82,7 @@ extern PGDLLIMPORT WaitLSNState *waitLSNState;
 
 extern Size WaitLSNShmemSize(void);
 extern void WaitLSNShmemInit(void);
-extern void WaitLSNSetLatches(XLogRecPtr currentLSN);
+extern void WaitLSNWakeup(XLogRecPtr currentLSN);
 extern void WaitLSNCleanup(void);
 extern WaitLSNResult WaitForLSNReplay(XLogRecPtr targetLSN, int64 timeout);
 

@@ -151,7 +151,7 @@ deleteLSNWaiter(void)
  * and set latches for all waiters.
  */
 void
-WaitLSNSetLatches(XLogRecPtr currentLSN)
+WaitLSNWakeup(XLogRecPtr currentLSN)
 {
 	int			i;
 	ProcNumber *wakeUpProcs;
