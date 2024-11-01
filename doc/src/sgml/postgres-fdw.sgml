@@ -194,7 +194,9 @@ OPTIONS (ADD password_required 'false');
     user can potentially use any client certificates,
     <filename>.pgpass</filename>,
     <filename>.pg_service.conf</filename> etc. in the unix home directory of the
-    system user the postgres server runs as. They can also use any trust
+    system user the postgres server runs as.   (For details on how home
+    directories are found, see <xref linkend="libpq-pgpass"/>.)  They can
+    also use any trust
     relationship granted by authentication modes like <literal>peer</literal>
     or <literal>ident</literal> authentication.
    </para>

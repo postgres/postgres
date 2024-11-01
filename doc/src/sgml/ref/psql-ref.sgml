@@ -1048,7 +1048,8 @@ INSERT INTO tbls1 VALUES ($1, $2) \parse stmt1
         <para>
          Changes the current working directory to
          <replaceable>directory</replaceable>. Without argument, changes
-         to the current user's home directory.
+         to the current user's home directory.  For details on how home
+         directories are found, see <xref linkend="libpq-pgpass"/>.
         </para>
 
         <tip>
