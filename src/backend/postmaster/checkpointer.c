@@ -324,10 +324,10 @@ CheckpointerMain(char *startup_data, size_t startup_data_len)
 	UpdateSharedMemoryConfig();
 
 	/*
-	 * Advertise our latch that backends can use to wake us up while we're
-	 * sleeping.
+	 * Advertise our proc number that backends can use to wake us up while
+	 * we're sleeping.
 	 */
-	ProcGlobal->checkpointerLatch = &MyProc->procLatch;
+	ProcGlobal->checkpointerProc = MyProcNumber;
 
 	/*
 	 * Loop forever
@@ -1139,8 +1139,14 @@ ForwardSyncRequest(const FileTag *ftag, SyncRequestType type)
 	LWLockRelease(CheckpointerCommLock);
 
 	/* ... but not till after we release the lock */
-	if (too_full && ProcGlobal->checkpointerLatch)
-		SetLatch(ProcGlobal->checkpointerLatch);
+	if (too_full)
+	{
+		volatile PROC_HDR *procglobal = ProcGlobal;
+		ProcNumber	checkpointerProc = procglobal->checkpointerProc;
+
+		if (checkpointerProc != INVALID_PROC_NUMBER)
+			SetLatch(&GetPGProcByNumber(checkpointerProc)->procLatch);
+	}
 
 	return true;
 }

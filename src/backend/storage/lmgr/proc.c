@@ -194,8 +194,8 @@ InitProcGlobal(void)
 	dlist_init(&ProcGlobal->bgworkerFreeProcs);
 	dlist_init(&ProcGlobal->walsenderFreeProcs);
 	ProcGlobal->startupBufferPinWaitBufId = -1;
-	ProcGlobal->walwriterLatch = NULL;
-	ProcGlobal->checkpointerLatch = NULL;
+	ProcGlobal->walwriterProc = INVALID_PROC_NUMBER;
+	ProcGlobal->checkpointerProc = INVALID_PROC_NUMBER;
 	pg_atomic_init_u32(&ProcGlobal->procArrayGroupFirst, INVALID_PROC_NUMBER);
 	pg_atomic_init_u32(&ProcGlobal->clogGroupFirst, INVALID_PROC_NUMBER);
 

@@ -418,10 +418,14 @@ typedef struct PROC_HDR
 	pg_atomic_uint32 procArrayGroupFirst;
 	/* First pgproc waiting for group transaction status update */
 	pg_atomic_uint32 clogGroupFirst;
-	/* WALWriter process's latch */
-	Latch	   *walwriterLatch;
-	/* Checkpointer process's latch */
-	Latch	   *checkpointerLatch;
+
+	/*
+	 * Current slot numbers of some auxiliary processes. There can be only one
+	 * of each of these running at a time.
+	 */
+	ProcNumber	walwriterProc;
+	ProcNumber	checkpointerProc;
+
 	/* Current shared estimate of appropriate spins_per_delay value */
 	int			spins_per_delay;
 	/* Buffer id of the buffer that Startup process waits for pin on, or -1 */

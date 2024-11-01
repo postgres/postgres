@@ -27,6 +27,7 @@
 #include "pgstat.h"
 #include "replication/walreceiver.h"
 #include "storage/pmsignal.h"
+#include "storage/proc.h"
 #include "storage/shmem.h"
 #include "utils/timestamp.h"
 
@@ -66,7 +67,7 @@ WalRcvShmemInit(void)
 		ConditionVariableInit(&WalRcv->walRcvStoppedCV);
 		SpinLockInit(&WalRcv->mutex);
 		pg_atomic_init_u64(&WalRcv->writtenUpto, 0);
-		WalRcv->latch = NULL;
+		WalRcv->procno = INVALID_PROC_NUMBER;
 	}
 }
 
@@ -248,7 +249,7 @@ RequestXLogStreaming(TimeLineID tli, XLogRecPtr recptr, const char *conninfo,
 	WalRcvData *walrcv = WalRcv;
 	bool		launch = false;
 	pg_time_t	now = (pg_time_t) time(NULL);
-	Latch	   *latch;
+	ProcNumber	walrcv_proc;
 
 	/*
 	 * We always start at the beginning of the segment. That prevents a broken
@@ -309,14 +310,14 @@ RequestXLogStreaming(TimeLineID tli, XLogRecPtr recptr, const char *conninfo,
 	walrcv->receiveStart = recptr;
 	walrcv->receiveStartTLI = tli;
 
-	latch = walrcv->latch;
+	walrcv_proc = walrcv->procno;
 
 	SpinLockRelease(&walrcv->mutex);
 
 	if (launch)
 		SendPostmasterSignal(PMSIGNAL_START_WALRECEIVER);
-	else if (latch)
-		SetLatch(latch);
+	else if (walrcv_proc != INVALID_PROC_NUMBER)
+		SetLatch(&GetPGProcByNumber(walrcv_proc)->procLatch);
 }
 
 /*
