@@ -4,8 +4,6 @@ use crate::utils::node_config::get_nodes_config_raft;
 use super::router::Router;
 use super::shard::Shard;
 use actix_rt::System;
-use futures::executor::block_on;
-use raft::raft_module::RaftModule;
 use std::ffi::CStr;
 use std::sync::{Arc, Mutex};
 use std::thread;
@@ -101,6 +99,18 @@ pub extern "C" fn init_node_instance(
         let ip = "127.0.0.1";
 
         new_node_instance(node_type, ip, node_port, config_path);
+
+        thread::spawn(move || {
+            let rt = Runtime::new().unwrap();
+            rt.block_on(async {
+                task::block_in_place(|| {
+                    let local = LocalSet::new();
+                    local.block_on(&rt, async {
+                        new_raft_instance(ip.to_string(), node_port.to_string(), config_path).await;
+                    });
+                });
+            });
+        });
     }
 }
 
@@ -111,32 +121,31 @@ fn new_node_instance(node_type: NodeType, ip: &str, port: &str, config_file_path
         NodeType::Shard => init_shard(ip, port),
         NodeType::Client => init_client(ip, port, config_file_path),
     }
+}
 
-    // Define node_id and create the Raft module instance
-    let node_id = format!("{}:{}", ip, port);
+async fn new_raft_instance(ip: String, port: String, config_file_path: Option<&str>) {
+    // Iterate over nodes and find the name of the one that matches ip and port:
+    let nodes = get_nodes_config_raft(config_file_path);
+    let node_id = nodes
+        .nodes
+        .iter()
+        .find(|node| node.ip == ip && node.port == port)
+        .expect("Could not find node in config file")
+        .name
+        .clone();
+
     let mut raft_module = raft::raft_module::RaftModule::new(
         node_id.clone(),
         ip.to_string(),
         port.parse::<usize>().unwrap(),
     );
-    let nodes = get_nodes_config_raft(config_file_path);
 
-    // Run everything within Actix runtime
-    System::new().block_on(async move {
-        println!("Starting Raft module");
-
-        // Spawn the Raft task
-        actix_rt::spawn(async move {
-            raft_module
-                .start(
-                    nodes,
-                    Some(&format!("../../../sharding/init_history/init_{}", node_id)),
-                )
-                .await;
-        })
-        .await
-        .expect("Error in Raft");
-    });
+    raft_module
+        .start(
+            nodes,
+            Some(&format!("../../../sharding/init_history/init_{}", node_id)),
+        )
+        .await;
 }
 
 fn init_router(ip: &str, port: &str, config_file_path: Option<&str>) {
