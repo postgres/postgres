@@ -708,23 +708,6 @@ WHEN NOT MATCHED THEN
   </para>
 
   <para>
-   Notice that this would be exactly equivalent to the following
-   statement because the <literal>MATCHED</literal> result does not change
-   during execution.
-
-<programlisting>
-MERGE INTO customer_account ca
-USING (SELECT customer_id, transaction_value FROM recent_transactions) AS t
-ON t.customer_id = ca.customer_id
-WHEN MATCHED THEN
-  UPDATE SET balance = balance + transaction_value
-WHEN NOT MATCHED THEN
-  INSERT (customer_id, balance)
-  VALUES (t.customer_id, t.transaction_value);
-</programlisting>
-  </para>
-
-  <para>
    Attempt to insert a new stock item along with the quantity of stock. If
    the item already exists, instead update the stock count of the existing
    item. Don't allow entries that have zero stock. Return details of all
