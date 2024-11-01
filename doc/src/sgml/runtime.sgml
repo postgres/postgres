@@ -637,7 +637,8 @@ psql: error: connection to server at "server.joe.com" (123.123.123.123), port 54
      This is the generic <quote>I couldn't find a server to talk
      to</quote> failure. It looks like the above when TCP/IP
      communication is attempted. A common mistake is to forget to
-     configure the server to allow TCP/IP connections.
+     configure <xref linkend="guc-listen-addresses"/> so that the server
+     accepts remote TCP connections.
     </para>
 
     <para>
