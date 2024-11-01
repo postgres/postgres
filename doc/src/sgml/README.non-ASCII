@@ -1,0 +1,37 @@
+<!-- doc/src/sgml/README.non-ASCII -->
+
+Representation of non-ASCII characters
+--------------------------------------
+
+Find non-ASCII characters using:
+
+        grep --recursive --color='auto' -P '[\x80-\xFF]' .
+
+Convert to HTML4 named entity (&) escapes
+-----------------------------------------
+
+We support several output formats:
+
+*  html (supports all Unicode characters)
+*  man (supports all Unicode characters)
+*  pdf (supports only Latin-1 characters)
+*  info
+
+While some output formatting tools support all Unicode characters,
+others only support Latin-1 characters.  Specifically, the PDF rendering
+engine can only display Latin-1 characters;  non-Latin-1 Unicode
+characters are displayed as "###".
+
+Therefore, in the SGML files, we only use Latin-1 characters.  We
+typically encode these characters as HTML entities, e.g., &Aacute;lvaro.
+It is also possible to safely represent Latin-1 characters in UTF8
+encoding for all output formats.
+
+Do not use UTF numeric character escapes (&#nnn;).
+
+HTML entities
+        official:      http://www.w3.org/TR/html4/sgml/entities.html
+        one page:      http://www.zipcon.net/~swhite/docs/computers/browsers/entities_page.html
+        other lists:   http://www.zipcon.net/~swhite/docs/computers/browsers/entities.html
+                       http://www.zipcon.net/~swhite/docs/computers/browsers/entities_page.html
+                       https://en.wikipedia.org/wiki/List_of_XML_and_HTML_character_entity_references

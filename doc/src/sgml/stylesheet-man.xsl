@@ -213,12 +213,12 @@
     <!-- Slight rephrasing to indicate that missing sections are found
          in the documentation. -->
     <l:context name="xref-number-and-title">
-      <l:template name="chapter" text="Chapter %n, %t, in the documentation"/>
-      <l:template name="sect1" text="Section %n, “%t”, in the documentation"/>
-      <l:template name="sect2" text="Section %n, “%t”, in the documentation"/>
-      <l:template name="sect3" text="Section %n, “%t”, in the documentation"/>
-      <l:template name="sect4" text="Section %n, “%t”, in the documentation"/>
-      <l:template name="sect5" text="Section %n, “%t”, in the documentation"/>
+      <l:template name="chapter" text="Chapter %n, &quot;%t&quot;, in the documentation"/>
+      <l:template name="sect1" text="Section %n, &quot;%t&quot;, in the documentation"/>
+      <l:template name="sect2" text="Section %n, &quot;%t&quot;, in the documentation"/>
+      <l:template name="sect3" text="Section %n, &quot;%t&quot;, in the documentation"/>
+      <l:template name="sect4" text="Section %n, &quot;%t&quot;, in the documentation"/>
+      <l:template name="sect5" text="Section %n, &quot;%t&quot;, in the documentation"/>
     </l:context>
   </l:l10n>
 </l:i18n>

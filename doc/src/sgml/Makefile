@@ -59,7 +59,7 @@ GENERATED_SGML = version.sgml \
 	features-supported.sgml features-unsupported.sgml errcodes-table.sgml \
 	keywords-table.sgml targets-meson.sgml wait_event_types.sgml
 
-ALLSGML := $(wildcard $(srcdir)/*.sgml $(srcdir)/ref/*.sgml) $(GENERATED_SGML)
+ALL_SGML := $(wildcard $(srcdir)/*.sgml $(srcdir)/ref/*.sgml) $(GENERATED_SGML)
 
 ALL_IMAGES := $(wildcard $(srcdir)/images/*.svg)
 
@@ -68,7 +68,7 @@ ALL_IMAGES := $(wildcard $(srcdir)/images/*.svg)
 # we're at it, also resolve all entities (that is, copy all included
 # files into one big file).  This helps tools that don't understand
 # vpath builds (such as dbtoepub).
-postgres-full.xml: postgres.sgml $(ALLSGML)
+postgres-full.xml: postgres.sgml $(ALL_SGML)
 	$(XMLLINT) $(XMLINCLUDE) --output $@ --noent --valid $<
 
 
@@ -143,11 +143,12 @@ postgres.txt: postgres.html
 ## Print
 ##
 
-postgres.pdf:
+postgres.pdf pdf:
 	$(error Invalid target;  use postgres-A4.pdf or postgres-US.pdf as targets)
 
 XSLTPROC_FO_FLAGS += --stringparam img.src.path '$(srcdir)/'
 
+# XSL Formatting Objects (FO), https://en.wikipedia.org/wiki/XSL_Formatting_Objects
 %-A4.fo: stylesheet-fo.xsl %-full.xml
 	$(XSLTPROC) $(XMLINCLUDE) $(XSLTPROCFLAGS) $(XSLTPROC_FO_FLAGS) --stringparam paper.type A4 -o $@ $^
 
@@ -194,7 +195,7 @@ MAKEINFO = makeinfo
 ##
 
 # Quick syntax check without style processing
-check: postgres.sgml $(ALLSGML) check-tabs check-nbsp
+check: postgres.sgml $(ALL_SGML) check-tabs check-nbsp
 	$(XMLLINT) $(XMLINCLUDE) --noout --valid $<
 
 
@@ -264,7 +265,7 @@ check-tabs:
 # Use perl command because non-GNU grep or sed could not have hex escape sequence.
 check-nbsp:
 	@ ( $(PERL) -ne '/\xC2\xA0/ and print("$$ARGV:$$_"),$$n++; END {exit($$n>0)}' \
-	  $(wildcard $(srcdir)/*.sgml $(srcdir)/ref/*.sgml $(srcdir)/*.xsl) ) || \
+	  $(wildcard $(srcdir)/*.sgml $(srcdir)/ref/*.sgml $(srcdir)/images/*.svg $(srcdir)/*.xsl $(srcdir)/images/*.xsl) ) || \
 	(echo "Non-breaking spaces appear in SGML/XML files" 1>&2;  exit 1)
 
 ##
