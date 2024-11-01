@@ -1,9 +1,9 @@
-use crate::node::shard;
 use super::memory_manager::MemoryManager;
 use super::messages::message::{Message, MessageType};
 use super::messages::node_info::NodeInfo;
 use super::node::NodeRole;
 use super::tables_id_info::TablesIdInfo;
+use crate::node::shard;
 use crate::utils::common::{connect_to_node, ConvertToString};
 use crate::utils::node_config::get_memory_config;
 use crate::utils::queries::print_rows;
@@ -43,13 +43,14 @@ impl fmt::Debug for Shard {
 
 impl Shard {
     /// Creates a new Shard node in the given port.
-    #[must_use] pub fn new(ip: &str, port: &str) -> Self {
+    #[must_use]
+    pub fn new(ip: &str, port: &str) -> Self {
         println!("Creating a new Shard node in port: {port}");
         println!("Connecting to the database in port: {port}");
 
         let backend: PostgresClient = connect_to_node(ip, port).unwrap();
 
-        let memory_manager = Self::initialize_memory_manager();        
+        let memory_manager = Self::initialize_memory_manager();
 
         println!(
             "{color_blue}[Shard] Available Memory: {:?} %{style_reset}",
@@ -67,10 +68,7 @@ impl Shard {
 
         let _ = shard.update();
 
-        println!(
-            "{color_bright_green}Shard created successfully. Shard: {:?}{style_reset}",
-            shard
-        );
+        println!("{color_bright_green}Shard created successfully. Shard: {shard:?}{style_reset}");
 
         shard
     }
@@ -98,7 +96,7 @@ impl Shard {
                     let stream_clone = Arc::clone(&shareable_stream);
 
                     let _handle = thread::spawn(move || {
-                        Shard::listen(shard_clone, stream_clone);
+                        Shard::listen(&shard_clone, &stream_clone);
                     });
                 }
                 Err(e) => {
@@ -109,7 +107,7 @@ impl Shard {
     }
 
     // Listen for incoming messages
-    pub fn listen(shared_shard: Arc<Mutex<Shard>>, stream: Arc<Mutex<TcpStream>>) {
+    pub fn listen(shared_shard: &Arc<Mutex<Shard>>, stream: &Arc<Mutex<TcpStream>>) {
         loop {
             // sleep for 1 millisecond to allow the stream to be ready to read
             thread::sleep(std::time::Duration::from_millis(1));
@@ -119,7 +117,7 @@ impl Shard {
             let mut stream = stream.lock().unwrap();
 
             match stream.set_read_timeout(Some(std::time::Duration::new(10, 0))) {
-                Ok(_) => {}
+                Ok(()) => {}
                 Err(_e) => {
                     continue;
                 }
@@ -130,17 +128,15 @@ impl Shard {
                     if chars == 0 {
                         continue;
                     }
+
                     let message_string = String::from_utf8_lossy(&buffer);
-                    match shard.get_response_message(&message_string) {
-                        Some(response) => {
-                            println!(
-                                "{color_bright_green}Sending response: {response}{style_reset}"
-                            );
-                            stream.write(response.as_bytes()).unwrap();
-                        }
-                        None => {
-                            // do nothing
-                        }
+
+                    if let Some(response) = shard.get_response_message(&message_string) {
+                        println!("{color_bright_green}Sending response: {response}{style_reset}");
+                        // stream.write(response.as_bytes()).unwrap();
+                        stream.write_all(response.as_bytes()).unwrap();
+                    } else {
+                        // do nothing
                     }
                 }
                 Err(_e) => {
@@ -155,10 +151,10 @@ impl Shard {
             return None;
         }
 
-        let message = match Message::from_string(&message) {
+        let message = match Message::from_string(message) {
             Ok(message) => message,
             Err(e) => {
-                eprintln!("Failed to parse message: {:?}. Message: [{:?}]", e, message);
+                eprintln!("Failed to parse message: {e:?}. Message: [{message:?}]");
                 return None;
             }
         };
@@ -184,15 +180,12 @@ impl Shard {
                     router_info.clone()
                 };
 
-                match router_info {
-                    Some(router_info) => {
-                        let response_message = Message::new_router_id(router_info.clone());
-                        Some(response_message.to_string())
-                    }
-                    None => {
-                        let response_message = Message::new_no_router_data();
-                        Some(response_message.to_string())
-                    }
+                if let Some(router_info) = router_info {
+                    let response_message = Message::new_router_id(router_info.clone());
+                    Some(response_message.to_string())
+                } else {
+                    let response_message = Message::new_no_router_data();
+                    Some(response_message.to_string())
                 }
             }
             _ => {
@@ -216,11 +209,11 @@ impl Shard {
 
     fn get_memory_update_message(&mut self) -> String {
         match self.update() {
-            Ok(_) => {
+            Ok(()) => {
                 println!("Memory updated successfully");
             }
             Err(e) => {
-                eprintln!("Failed to update memory: {:?}", e);
+                eprintln!("Failed to update memory: {e:?}");
             }
         }
         let memory_manager = self.memory_manager.as_ref().try_lock().unwrap();
@@ -240,9 +233,8 @@ impl Shard {
     fn get_all_tables(&mut self) -> Vec<String> {
         let query =
             "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'";
-        let rows = match self.get_rows_for_query(query) {
-            Some(rows) => rows,
-            None => return Vec::new(),
+        let Some(rows) = self.get_rows_for_query(query) else {
+            return Vec::new();
         };
         let mut tables = Vec::new();
         for row in rows {
@@ -256,20 +248,16 @@ impl Shard {
     fn set_max_ids(&mut self) {
         let tables = self.get_all_tables();
         for table in tables {
-            let query = format!("SELECT MAX(id) FROM {}", table);
+            let query = format!("SELECT MAX(id) FROM {table}");
             if let Some(rows) = self.get_rows_for_query(&query) {
-                let max_id: i32 = match rows[0].try_get(0) {
-                    Ok(id) => id,
-                    Err(_) => {
-                        eprintln!(
-                            "Failed to get max id for table: {}. Table might be empty",
-                            table
-                        );
-                        0
-                    }
+                let max_id: i32 = if let Ok(id) = rows[0].try_get(0) {
+                    id
+                } else {
+                    eprintln!("Failed to get max id for table: {table}. Table might be empty",);
+                    0
                 };
                 let mut tables_max_id = self.tables_max_id.as_ref().try_lock().unwrap();
-                tables_max_id.insert(table, max_id as i64);
+                tables_max_id.insert(table, i64::from(max_id));
             }
         }
     }
@@ -284,7 +272,7 @@ impl Shard {
                 Some(rows)
             }
             Err(e) => {
-                eprintln!("Failed to execute query: {:?}", e);
+                eprintln!("Failed to execute query: {e:?}");
                 None
             }
         }
