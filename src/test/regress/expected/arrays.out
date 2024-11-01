@@ -2703,3 +2703,34 @@ SELECT array_sample('{1,2,3,4,5,6}'::int[], -1); -- fail
 ERROR:  sample size must be between 0 and 6
 SELECT array_sample('{1,2,3,4,5,6}'::int[], 7); --fail
 ERROR:  sample size must be between 0 and 6
+-- array_reverse
+SELECT array_reverse('{}'::int[]);
+ array_reverse 
+---------------
+ {}
+(1 row)
+
+SELECT array_reverse('{1}'::int[]);
+ array_reverse 
+---------------
+ {1}
+(1 row)
+
+SELECT array_reverse('{1,2}'::int[]);
+ array_reverse 
+---------------
+ {2,1}
+(1 row)
+
+SELECT array_reverse('{1,2,3,NULL,4,5,6}'::int[]);
+   array_reverse    
+--------------------
+ {6,5,4,NULL,3,2,1}
+(1 row)
+
+SELECT array_reverse('{{1,2},{3,4},{5,6},{7,8}}'::int[]);
+       array_reverse       
+---------------------------
+ {{7,8},{5,6},{3,4},{1,2}}
+(1 row)
+

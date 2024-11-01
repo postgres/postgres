@@ -1685,3 +1685,115 @@ array_sample(PG_FUNCTION_ARGS)
 
 	PG_RETURN_ARRAYTYPE_P(result);
 }
+
+
+/*
+ * array_reverse_n
+ *		Return a copy of array with reversed items.
+ *
+ * NOTE: it would be cleaner to look up the elmlen/elmbval/elmalign info
+ * from the system catalogs, given only the elmtyp. However, the caller is
+ * in a better position to cache this info across multiple calls.
+ */
+static ArrayType *
+array_reverse_n(ArrayType *array, Oid elmtyp, TypeCacheEntry *typentry)
+{
+	ArrayType  *result;
+	int			ndim,
+			   *dims,
+			   *lbs,
+				nelm,
+				nitem,
+				rdims[MAXDIM],
+				rlbs[MAXDIM];
+	int16		elmlen;
+	bool		elmbyval;
+	char		elmalign;
+	Datum	   *elms,
+			   *ielms;
+	bool	   *nuls,
+			   *inuls;
+
+	ndim = ARR_NDIM(array);
+	dims = ARR_DIMS(array);
+	lbs = ARR_LBOUND(array);
+
+	elmlen = typentry->typlen;
+	elmbyval = typentry->typbyval;
+	elmalign = typentry->typalign;
+
+	deconstruct_array(array, elmtyp, elmlen, elmbyval, elmalign,
+					  &elms, &nuls, &nelm);
+
+	nitem = dims[0];			/* total number of items */
+	nelm /= nitem;				/* number of elements per item */
+
+	/* Reverse the array */
+	ielms = elms;
+	inuls = nuls;
+	for (int i = 0; i < nitem / 2; i++)
+	{
+		int			j = (nitem - i - 1) * nelm;
+		Datum	   *jelms = elms + j;
+		bool	   *jnuls = nuls + j;
+
+		/* Swap i'th and j'th items; advance ielms/inuls to next item */
+		for (int k = 0; k < nelm; k++)
+		{
+			Datum		elm = *ielms;
+			bool		nul = *inuls;
+
+			*ielms++ = *jelms;
+			*inuls++ = *jnuls;
+			*jelms++ = elm;
+			*jnuls++ = nul;
+		}
+	}
+
+	/* Set up dimensions of the result */
+	memcpy(rdims, dims, ndim * sizeof(int));
+	memcpy(rlbs, lbs, ndim * sizeof(int));
+	rdims[0] = nitem;
+
+	result = construct_md_array(elms, nuls, ndim, rdims, rlbs,
+								elmtyp, elmlen, elmbyval, elmalign);
+
+	pfree(elms);
+	pfree(nuls);
+
+	return result;
+}
+
+/*
+ * array_reverse
+ *
+ * Returns an array with the same dimensions as the input array, with its
+ * first-dimension elements in reverse order.
+ */
+Datum
+array_reverse(PG_FUNCTION_ARGS)
+{
+	ArrayType  *array = PG_GETARG_ARRAYTYPE_P(0);
+	ArrayType  *result;
+	Oid			elmtyp;
+	TypeCacheEntry *typentry;
+
+	/*
+	 * There is no point in reversing empty arrays or arrays with less than
+	 * two items.
+	 */
+	if (ARR_NDIM(array) < 1 || ARR_DIMS(array)[0] < 2)
+		PG_RETURN_ARRAYTYPE_P(array);
+
+	elmtyp = ARR_ELEMTYPE(array);
+	typentry = (TypeCacheEntry *) fcinfo->flinfo->fn_extra;
+	if (typentry == NULL || typentry->type_id != elmtyp)
+	{
+		typentry = lookup_type_cache(elmtyp, 0);
+		fcinfo->flinfo->fn_extra = (void *) typentry;
+	}
+
+	result = array_reverse_n(array, elmtyp, typentry);
+
+	PG_RETURN_ARRAYTYPE_P(result);
+}

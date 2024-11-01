@@ -20382,6 +20382,23 @@ SELECT NULLIF(value, '(none)') ...
       <row>
        <entry role="func_table_entry"><para role="func_signature">
         <indexterm>
+         <primary>array_reverse</primary>
+        </indexterm>
+        <function>array_reverse</function> ( <type>anyarray</type> )
+        <returnvalue>anyarray</returnvalue>
+       </para>
+       <para>
+        Reverses the first dimension of the array.
+       </para>
+       <para>
+        <literal>array_reverse(ARRAY[[1,2],[3,4],[5,6]])</literal>
+        <returnvalue>{{5,6},{3,4},{1,2}}</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
          <primary>array_sample</primary>
         </indexterm>
         <function>array_sample</function> ( <parameter>array</parameter> <type>anyarray</type>, <parameter>n</parameter> <type>integer</type> )
