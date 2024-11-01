@@ -154,6 +154,8 @@ LOG:  SELinux: allowed { add_name } scontext=unconfined_u:unconfined_r:sepgsql_r
 CREATE FUNCTION regtest_func(text,int[]) RETURNS bool LANGUAGE plpgsql
 	   AS 'BEGIN RAISE NOTICE ''regtest_func => %'', $1; RETURN true; END';
 LOG:  SELinux: allowed { search } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=system_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="pg_catalog" permissive=0
+LINE 1: CREATE FUNCTION regtest_func(text,int[]) RETURNS bool LANGUA...
+                                          ^
 LOG:  SELinux: allowed { add_name } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="regtest_schema" permissive=0
 LOG:  SELinux: allowed { create } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_proc_exec_t:s0 tclass=db_procedure name="regtest_schema.regtest_func(pg_catalog.text,integer[])" permissive=0
 CREATE AGGREGATE regtest_agg (
@@ -247,6 +249,8 @@ LOG:  SELinux: allowed { create } scontext=unconfined_u:unconfined_r:sepgsql_reg
 CREATE FUNCTION regtest_func_2(int) RETURNS bool LANGUAGE plpgsql
            AS 'BEGIN RETURN $1 * $1 < 100; END';
 LOG:  SELinux: allowed { search } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=system_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="pg_catalog" permissive=0
+LINE 1: CREATE FUNCTION regtest_func_2(int) RETURNS bool LANGUAGE pl...
+                                       ^
 LOG:  SELinux: allowed { add_name } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_schema_t:s0 tclass=db_schema name="regtest_schema" permissive=0
 LOG:  SELinux: allowed { create } scontext=unconfined_u:unconfined_r:sepgsql_regtest_superuser_t:s0 tcontext=unconfined_u:object_r:sepgsql_proc_exec_t:s0 tclass=db_procedure name="regtest_schema.regtest_func_2(integer)" permissive=0
 RESET SESSION AUTHORIZATION;
