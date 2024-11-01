@@ -37,10 +37,14 @@ tdeheap_rmgr_redo(XLogReaderState *record)
 
 	if (info == XLOG_TDE_ADD_RELATION_KEY)
 	{
+		TDEPrincipalKeyInfo *pk = NULL;
 		XLogRelKey *xlrec = (XLogRelKey *) XLogRecGetData(record);
 
+		if (xlrec->pkInfo.databaseId != 0)
+			pk = &xlrec->pkInfo;
+
 		LWLockAcquire(tde_lwlock_enc_keys(), LW_EXCLUSIVE);
-		pg_tde_write_key_map_entry(&xlrec->rlocator, xlrec->entry_type, &xlrec->relKey, NULL);
+		pg_tde_write_key_map_entry(&xlrec->rlocator, &xlrec->relKey, pk);
 		LWLockRelease(tde_lwlock_enc_keys());
 	}
 	else if (info == XLOG_TDE_ADD_PRINCIPAL_KEY)
@@ -70,6 +74,16 @@ tdeheap_rmgr_redo(XLogReaderState *record)
 
 		LWLockAcquire(tde_lwlock_enc_keys(), LW_EXCLUSIVE);
 		xl_tde_perform_rotate_key(xlrec);
+		LWLockRelease(tde_lwlock_enc_keys());
+	}
+
+	else if (info == XLOG_TDE_FREE_MAP_ENTRY)
+	{
+		off_t		offset = 0;
+		RelFileLocator *xlrec = (RelFileLocator *) XLogRecGetData(record);
+
+		LWLockAcquire(tde_lwlock_enc_keys(), LW_EXCLUSIVE);
+		pg_tde_free_key_map_entry(xlrec, MAP_ENTRY_VALID, offset);
 		LWLockRelease(tde_lwlock_enc_keys());
 	}
 	else

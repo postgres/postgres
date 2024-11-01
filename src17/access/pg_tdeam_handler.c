@@ -702,6 +702,7 @@ pg_tdeam_relation_copy_data(Relation rel, const RelFileLocator *newrlocator)
 		}
 	}
 
+	pg_tde_move_rel_key(newrlocator, &rel->rd_locator);
 
 	/* drop old relation, and close new one */
 	RelationDropStorage(rel);

@@ -67,7 +67,7 @@ TDEInitGlobalKeys(const char *dir)
 		if (dir != NULL)
 			pg_tde_set_globalspace_dir(dir);
 
-		ikey = pg_tde_get_key_from_file(&GLOBAL_SPACE_RLOCATOR(XLOG_TDE_OID), TDE_KEY_TYPE_GLOBAL);
+		ikey = pg_tde_get_key_from_file(&GLOBAL_SPACE_RLOCATOR(XLOG_TDE_OID), TDE_KEY_TYPE_GLOBAL, false);
 
 		/*
 		 * Internal Key should be in the TopMemmoryContext because of SSL
@@ -78,7 +78,7 @@ TDEInitGlobalKeys(const char *dir)
 		 * backend. (see
 		 * https://github.com/percona-Lab/pg_tde/pull/214#discussion_r1648998317)
 		 */
-		pg_tde_put_key_into_cache(XLOG_TDE_OID, TDE_KEY_TYPE_GLOBAL, ikey);
+		pg_tde_put_key_into_cache(XLOG_TDE_OID, ikey);
 	}
 }
 
@@ -113,7 +113,7 @@ init_default_keyring(void)
 		 * TODO: should we remove it automaticaly on
 		 * pg_tde_rotate_principal_key() ?
 		 */
-		save_new_key_provider_info(&provider, GLOBAL_DATA_TDE_OID, GLOBALTABLESPACE_OID, true);
+		save_new_key_provider_info(&provider, GLOBAL_DATA_TDE_OID, GLOBALTABLESPACE_OID, false);
 		elog(INFO,
 			 "default keyring has been created for the global tablespace (WAL)."
 			 " Change it with pg_tde_add_key_provider_* and run pg_tde_rotate_principal_key."
@@ -146,6 +146,8 @@ init_keys(void)
 
 	memset(&int_key, 0, sizeof(InternalKey));
 
+	int_key.rel_type = TDE_KEY_TYPE_GLOBAL;
+
 	/* Create and store an internal key for XLog */
 	if (!RAND_bytes(int_key.key, INTERNAL_KEY_LEN))
 	{
@@ -156,9 +158,9 @@ init_keys(void)
 	}
 
 	rlocator = &GLOBAL_SPACE_RLOCATOR(XLOG_TDE_OID);
-	rel_key_data = tde_create_rel_key(rlocator->relNumber, TDE_KEY_TYPE_GLOBAL, &int_key, &mkey->keyInfo);
+	rel_key_data = tde_create_rel_key(rlocator->relNumber, &int_key, &mkey->keyInfo);
 	enc_rel_key_data = tde_encrypt_rel_key(mkey, rel_key_data, rlocator);
-	pg_tde_write_key_map_entry(rlocator, TDE_KEY_TYPE_GLOBAL, enc_rel_key_data, &mkey->keyInfo);
+	pg_tde_write_key_map_entry(rlocator, enc_rel_key_data, &mkey->keyInfo);
 	pfree(enc_rel_key_data);
 	pfree(mkey);
 }
