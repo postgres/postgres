@@ -1,14 +1,14 @@
+use crate::node::shard;
 use super::memory_manager::MemoryManager;
 use super::messages::message::{Message, MessageType};
 use super::messages::node_info::NodeInfo;
-use super::node::*;
+use super::node::NodeRole;
 use super::tables_id_info::TablesIdInfo;
-use crate::node::shard;
 use crate::utils::common::{connect_to_node, ConvertToString};
 use crate::utils::node_config::get_memory_config;
 use crate::utils::queries::print_rows;
 use indexmap::IndexMap;
-use inline_colorization::*;
+use inline_colorization::{color_blue, color_bright_green, style_reset};
 use postgres::{Client as PostgresClient, Row};
 use std::io::{Read, Write};
 use std::net::{TcpListener, TcpStream};
@@ -43,9 +43,9 @@ impl fmt::Debug for Shard {
 
 impl Shard {
     /// Creates a new Shard node in the given port.
-    pub fn new(ip: &str, port: &str) -> Self {
-        println!("Creating a new Shard node in port: {}", port);
-        println!("Connecting to the database in port: {}", port);
+    #[must_use] pub fn new(ip: &str, port: &str) -> Self {
+        println!("Creating a new Shard node in port: {port}");
+        println!("Connecting to the database in port: {port}");
 
         let backend: PostgresClient = connect_to_node(ip, port).unwrap();
 
@@ -64,11 +64,14 @@ impl Shard {
             router_info: Arc::new(Mutex::new(None)),
             tables_max_id: Arc::new(Mutex::new(IndexMap::new())),
         };
+
         let _ = shard.update();
+
         println!(
             "{color_bright_green}Shard created successfully. Shard: {:?}{style_reset}",
             shard
         );
+
         shard
     }
 
@@ -78,7 +81,7 @@ impl Shard {
         MemoryManager::new(reserved_memory)
     }
 
-    pub fn accept_connections(shared_shard: Arc<Mutex<Shard>>, ip: String, port: String) {
+    pub fn accept_connections(shared_shard: &Arc<Mutex<Shard>>, ip: &str, port: &str) {
         let listener =
             TcpListener::bind(format!("{}:{}", ip, port.parse::<u64>().unwrap() + 1000)).unwrap();
 
@@ -86,8 +89,7 @@ impl Shard {
             match listener.accept() {
                 Ok((stream, addr)) => {
                     println!(
-                        "{color_bright_green}[SHARD] New connection accepted from {}.{style_reset}",
-                        addr
+                        "{color_bright_green}[SHARD] New connection accepted from {addr}.{style_reset}",
                     );
 
                     // Start listening for incoming messages in a thread
@@ -100,7 +102,7 @@ impl Shard {
                     });
                 }
                 Err(e) => {
-                    eprintln!("Failed to accept a connection: {}", e);
+                    eprintln!("Failed to accept a connection: {e}");
                 }
             }
         }

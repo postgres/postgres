@@ -185,7 +185,7 @@ fn init_shard(ip: &str, port: &str) {
     let ip_clone = ip.to_string();
     let port_clone = port.to_string();
     let _handle = thread::spawn(move || {
-        Shard::accept_connections(shared_shard, ip_clone, port_clone);
+        Shard::accept_connections(&shared_shard, &ip_clone, &port_clone);
     });
 
     println!("Sharding node initializes");
