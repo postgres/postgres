@@ -42,17 +42,14 @@ impl fmt::Debug for Shard {
 }
 
 impl Shard {
-    /// Creates a new Shard node with the given port
+    /// Creates a new Shard node in the given port.
     pub fn new(ip: &str, port: &str) -> Self {
-        println!("Creating a new Shard node with port: {}", port);
-        println!("Connecting to the database with port: {}", port);
+        println!("Creating a new Shard node in port: {}", port);
+        println!("Connecting to the database in port: {}", port);
 
         let backend: PostgresClient = connect_to_node(ip, port).unwrap();
 
-        // Initialize memory manager
-        let config = get_memory_config();
-        let reserved_memory = config.unavailable_memory_perc;
-        let memory_manager = MemoryManager::new(reserved_memory);
+        let memory_manager = Self::initialize_memory_manager();        
 
         println!(
             "{color_blue}[Shard] Available Memory: {:?} %{style_reset}",
@@ -73,6 +70,12 @@ impl Shard {
             shard
         );
         shard
+    }
+
+    fn initialize_memory_manager() -> MemoryManager {
+        let config = get_memory_config();
+        let reserved_memory = config.unavailable_memory_perc;
+        MemoryManager::new(reserved_memory)
     }
 
     pub fn accept_connections(shared_shard: Arc<Mutex<Shard>>, ip: String, port: String) {
