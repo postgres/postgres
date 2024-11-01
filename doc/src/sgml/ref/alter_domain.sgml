@@ -41,6 +41,11 @@ ALTER DOMAIN <replaceable class="parameter">name</replaceable>
     RENAME TO <replaceable class="parameter">new_name</replaceable>
 ALTER DOMAIN <replaceable class="parameter">name</replaceable>
     SET SCHEMA <replaceable class="parameter">new_schema</replaceable>
+
+<phrase>where <replaceable class="parameter">domain_constraint</replaceable> is:</phrase>
+
+[ CONSTRAINT <replaceable class="parameter">constraint_name</replaceable> ]
+{ NOT NULL | CHECK (<replaceable class="parameter">expression</replaceable>) }
 </synopsis>
  </refsynopsisdiv>
 
@@ -79,8 +84,7 @@ ALTER DOMAIN <replaceable class="parameter">name</replaceable>
     <term><literal>ADD <replaceable class="parameter">domain_constraint</replaceable> [ NOT VALID ]</literal></term>
     <listitem>
      <para>
-      This form adds a new constraint to a domain using the same syntax as
-      <link linkend="sql-createdomain"><command>CREATE DOMAIN</command></link>.
+      This form adds a new constraint to a domain.
       When a new constraint is added to a domain, all columns using that
       domain will be checked against the newly added constraint.  These
       checks can be suppressed by adding the new constraint using the
