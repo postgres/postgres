@@ -2901,8 +2901,9 @@ _bt_preprocess_keys(IndexScanDesc scan)
 						 * ...unless we have to keep the old key because it's
 						 * an array that rendered the new key redundant.  We
 						 * need to make sure that we don't throw away an array
-						 * scan key.  _bt_compare_scankey_args expects us to
-						 * always keep arrays (and discard non-arrays).
+						 * scan key.  _bt_preprocess_array_keys_final expects
+						 * us to keep all of the arrays that weren't already
+						 * eliminated by _bt_preprocess_array_keys earlier on.
 						 */
 						Assert(!(inkey->sk_flags & SK_SEARCHARRAY));
 					}
