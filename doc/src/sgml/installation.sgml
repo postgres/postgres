@@ -3868,14 +3868,12 @@ make: *** [postgres] Error 1
 
      <variablelist>
       <varlistentry>
-       <term><productname>ActiveState Perl</productname></term>
+       <term><productname>Strawberry Perl</productname></term>
        <listitem><para>
-        ActiveState Perl is required to run the build generation scripts. MinGW
+        Strawberry Perl is required to run the build generation scripts. MinGW
         or Cygwin Perl will not work. It must also be present in the PATH.
         Binaries can be downloaded from
-        <ulink url="https://www.activestate.com"></ulink>
-        (Note: version 5.14 or later is required,
-        the free Standard Distribution is sufficient).
+        <ulink url="https://strawberryperl.com"></ulink>.
        </para></listitem>
       </varlistentry>
 
@@ -3927,10 +3925,11 @@ make: *** [postgres] Error 1
 
      <variablelist>
       <varlistentry>
-       <term><productname>ActiveState Tcl</productname></term>
+       <term><productname>Magicsplat Tcl</productname></term>
        <listitem><para>
-        Required for building <application>PL/Tcl</application> (Note: version
-        8.4 is required, the free Standard Distribution is sufficient).
+        Required for building <application>PL/Tcl</application>.
+        Binaries can be downloaded from
+        <ulink url="https://www.magicsplat.com/tcl-installer/index.html"></ulink>.
        </para></listitem>
       </varlistentry>
 
