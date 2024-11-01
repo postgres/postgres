@@ -89,8 +89,10 @@ PageIsVerifiedExtended(Page page, BlockNumber blkno, int flags)
 {
 	PageHeader	p = (PageHeader) page;
 	size_t	   *pagebytes;
+	int			i;
 	bool		checksum_failure = false;
 	bool		header_sane = false;
+	bool		all_zeroes = false;
 	uint16		checksum = 0;
 
 	/*
@@ -124,9 +126,18 @@ PageIsVerifiedExtended(Page page, BlockNumber blkno, int flags)
 	}
 
 	/* Check all-zeroes case */
+	all_zeroes = true;
 	pagebytes = (size_t *) page;
+	for (i = 0; i < (BLCKSZ / sizeof(size_t)); i++)
+	{
+		if (pagebytes[i] != 0)
+		{
+			all_zeroes = false;
+			break;
+		}
+	}
 
-	if (pg_memory_is_all_zeros(pagebytes, (BLCKSZ / sizeof(size_t))))
+	if (all_zeroes)
 		return true;
 
 	/*
