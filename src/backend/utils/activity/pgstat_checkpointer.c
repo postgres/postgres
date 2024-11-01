@@ -17,6 +17,7 @@
 
 #include "postgres.h"
 
+#include "utils/memutils.h"
 #include "utils/pgstat_internal.h"
 
 
@@ -29,8 +30,6 @@ PgStat_CheckpointerStats PendingCheckpointerStats = {0};
 void
 pgstat_report_checkpointer(void)
 {
-	/* We assume this initializes to zeroes */
-	static const PgStat_CheckpointerStats all_zeroes;
 	PgStatShared_Checkpointer *stats_shmem = &pgStatLocal.shmem->checkpointer;
 
 	Assert(!pgStatLocal.shmem->is_shutdown);
@@ -40,8 +39,8 @@ pgstat_report_checkpointer(void)
 	 * This function can be called even if nothing at all has happened. In
 	 * this case, avoid unnecessarily modifying the stats entry.
 	 */
-	if (memcmp(&PendingCheckpointerStats, &all_zeroes,
-			   sizeof(all_zeroes)) == 0)
+	if (pg_memory_is_all_zeros(&PendingCheckpointerStats,
+							   sizeof(struct PgStat_CheckpointerStats)))
 		return;
 
 	pgstat_begin_changecount_write(&stats_shmem->changecount);

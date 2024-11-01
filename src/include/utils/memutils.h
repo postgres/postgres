@@ -189,4 +189,21 @@ extern MemoryContext BumpContextCreate(MemoryContext parent,
 #define SLAB_DEFAULT_BLOCK_SIZE		(8 * 1024)
 #define SLAB_LARGE_BLOCK_SIZE		(8 * 1024 * 1024)
 
+/*
+ * Test if a memory region starting at "ptr" and of size "len" is full of
+ * zeroes.
+ */
+static inline bool
+pg_memory_is_all_zeros(const void *ptr, size_t len)
+{
+	const char *p = (const char *) ptr;
+
+	for (size_t i = 0; i < len; i++)
+	{
+		if (p[i] != 0)
+			return false;
+	}
+	return true;
+}
+
 #endif							/* MEMUTILS_H */

@@ -17,6 +17,7 @@
 
 #include "postgres.h"
 
+#include "utils/memutils.h"
 #include "utils/pgstat_internal.h"
 
 
@@ -30,7 +31,6 @@ void
 pgstat_report_bgwriter(void)
 {
 	PgStatShared_BgWriter *stats_shmem = &pgStatLocal.shmem->bgwriter;
-	static const PgStat_BgWriterStats all_zeroes;
 
 	Assert(!pgStatLocal.shmem->is_shutdown);
 	pgstat_assert_is_up();
@@ -39,7 +39,8 @@ pgstat_report_bgwriter(void)
 	 * This function can be called even if nothing at all has happened. In
 	 * this case, avoid unnecessarily modifying the stats entry.
 	 */
-	if (memcmp(&PendingBgWriterStats, &all_zeroes, sizeof(all_zeroes)) == 0)
+	if (pg_memory_is_all_zeros(&PendingBgWriterStats,
+							   sizeof(struct PgStat_BgWriterStats)))
 		return;
 
 	pgstat_begin_changecount_write(&stats_shmem->changecount);
