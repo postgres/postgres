@@ -99,7 +99,7 @@ pub extern "C" fn init_node_instance(
         let ip = "127.0.0.1";
 
         new_node_instance(node_type, ip, node_port, config_path);
-        
+
         thread::spawn(move || {
             let rt = Runtime::new().unwrap();
             rt.block_on(async {
@@ -111,7 +111,6 @@ pub extern "C" fn init_node_instance(
                 });
             });
         });
-        
     }
 }
 
@@ -128,11 +127,13 @@ async fn new_raft_instance(ip: String, port: String, config_file_path: Option<&s
     // Iterate over nodes and find the name of the one that matches ip and port:
     let nodes = get_nodes_config_raft(config_file_path);
     let node_id = nodes
-    .nodes
-    .iter()
-    .find(|node| node.ip == ip && node.port == port)
-    .expect("Could not find node in config file").name.clone();
-    
+        .nodes
+        .iter()
+        .find(|node| node.ip == ip && node.port == port)
+        .expect("Could not find node in config file")
+        .name
+        .clone();
+
     let mut raft_module = raft::raft_module::RaftModule::new(
         node_id.clone(),
         ip.to_string(),
@@ -142,8 +143,9 @@ async fn new_raft_instance(ip: String, port: String, config_file_path: Option<&s
     raft_module
         .start(
             nodes,
-            Some(&format!("../../../sharding/init_history/init_{}", node_id))
-        ).await;
+            Some(&format!("../../../sharding/init_history/init_{}", node_id)),
+        )
+        .await;
 }
 
 fn init_router(ip: &str, port: &str, config_file_path: Option<&str>) {
