@@ -1202,6 +1202,18 @@ AtInplace_Inval(void)
 }
 
 /*
+ * ForgetInplace_Inval
+ *		Alternative to PreInplace_Inval()+AtInplace_Inval(): discard queued-up
+ *		invalidations.  This lets inplace update enumerate invalidations
+ *		optimistically, before locking the buffer.
+ */
+void
+ForgetInplace_Inval(void)
+{
+	inplaceInvalInfo = NULL;
+}
+
+/*
  * AtEOSubXact_Inval
  *		Process queued-up invalidation messages at end of subtransaction.
  *
