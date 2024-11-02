@@ -2801,6 +2801,9 @@ index_update_stats(Relation rel,
 				   bool hasindex,
 				   double reltuples)
 {
+	bool		update_stats;
+	BlockNumber relpages;
+	BlockNumber relallvisible;
 	Oid			relid = RelationGetRelid(rel);
 	Relation	pg_class;
 	ScanKeyData key[1];
@@ -2808,6 +2811,38 @@ index_update_stats(Relation rel,
 	void	   *state;
 	Form_pg_class rd_rel;
 	bool		dirty;
+
+	/*
+	 * As a special hack, if we are dealing with an empty table and the
+	 * existing reltuples is -1, we leave that alone.  This ensures that
+	 * creating an index as part of CREATE TABLE doesn't cause the table to
+	 * prematurely look like it's been vacuumed.  The rd_rel we modify may
+	 * differ from rel->rd_rel due to e.g. commit of concurrent GRANT, but the
+	 * commands that change reltuples take locks conflicting with ours.  (Even
+	 * if a command changed reltuples under a weaker lock, this affects only
+	 * statistics for an empty table.)
+	 */
+	if (reltuples == 0 && rel->rd_rel->reltuples < 0)
+		reltuples = -1;
+
+	update_stats = reltuples >= 0;
+
+	/*
+	 * Finish I/O and visibility map buffer locks before
+	 * systable_inplace_update_begin() locks the pg_class buffer.  The rd_rel
+	 * we modify may differ from rel->rd_rel due to e.g. commit of concurrent
+	 * GRANT, but no command changes a relkind from non-index to index.  (Even
+	 * if one did, relallvisible doesn't break functionality.)
+	 */
+	if (update_stats)
+	{
+		relpages = RelationGetNumberOfBlocks(rel);
+
+		if (rel->rd_rel->relkind != RELKIND_INDEX)
+			visibilitymap_count(rel, &relallvisible, NULL);
+		else					/* don't bother for indexes */
+			relallvisible = 0;
+	}
 
 	/*
 	 * We always update the pg_class row using a non-transactional,
@@ -2853,15 +2888,6 @@ index_update_stats(Relation rel,
 	/* Should this be a more comprehensive test? */
 	Assert(rd_rel->relkind != RELKIND_PARTITIONED_INDEX);
 
-	/*
-	 * As a special hack, if we are dealing with an empty table and the
-	 * existing reltuples is -1, we leave that alone.  This ensures that
-	 * creating an index as part of CREATE TABLE doesn't cause the table to
-	 * prematurely look like it's been vacuumed.
-	 */
-	if (reltuples == 0 && rd_rel->reltuples < 0)
-		reltuples = -1;
-
 	/* Apply required updates, if any, to copied tuple */
 
 	dirty = false;
@@ -2871,16 +2897,8 @@ index_update_stats(Relation rel,
 		dirty = true;
 	}
 
-	if (reltuples >= 0)
+	if (update_stats)
 	{
-		BlockNumber relpages = RelationGetNumberOfBlocks(rel);
-		BlockNumber relallvisible;
-
-		if (rd_rel->relkind != RELKIND_INDEX)
-			visibilitymap_count(rel, &relallvisible, NULL);
-		else					/* don't bother for indexes */
-			relallvisible = 0;
-
 		if (rd_rel->relpages != (int32) relpages)
 		{
 			rd_rel->relpages = (int32) relpages;
