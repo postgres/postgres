@@ -225,7 +225,6 @@ extern void CatCacheInvalidate(CatCache *cache, uint32 hashValue);
 extern void PrepareToInvalidateCacheTuple(Relation relation,
 										  HeapTuple tuple,
 										  HeapTuple newtuple,
-										  void (*function) (int, uint32, Oid, void *),
-										  void *context);
+										  void (*function) (int, uint32, Oid));
 
 #endif							/* CATCACHE_H */
