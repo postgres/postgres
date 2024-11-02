@@ -1276,24 +1276,14 @@ RecordTransactionCommit(void)
 
 		/*
 		 * Transactions without an assigned xid can contain invalidation
-		 * messages.  While inplace updates do this, this is not known to be
-		 * necessary; see comment at inplace CacheInvalidateHeapTuple().
-		 * Extensions might still rely on this capability, and standbys may
-		 * need to process those invals.  We can't emit a commit record
-		 * without an xid, and we don't want to force assigning an xid,
-		 * because that'd be problematic for e.g. vacuum.  Hence we emit a
-		 * bespoke record for the invalidations. We don't want to use that in
-		 * case a commit record is emitted, so they happen synchronously with
-		 * commits (besides not wanting to emit more WAL records).
-		 *
-		 * XXX Every known use of this capability is a defect.  Since an XID
-		 * isn't controlling visibility of the change that prompted invals,
-		 * other sessions need the inval even if this transactions aborts.
-		 *
-		 * ON COMMIT DELETE ROWS does a nontransactional index_build(), which
-		 * queues a relcache inval, including in transactions without an xid
-		 * that had read the (empty) table.  Standbys don't need any ON COMMIT
-		 * DELETE ROWS invals, but we've not done the work to withhold them.
+		 * messages (e.g. explicit relcache invalidations or catcache
+		 * invalidations for inplace updates); standbys need to process those.
+		 * We can't emit a commit record without an xid, and we don't want to
+		 * force assigning an xid, because that'd be problematic for e.g.
+		 * vacuum.  Hence we emit a bespoke record for the invalidations. We
+		 * don't want to use that in case a commit record is emitted, so they
+		 * happen synchronously with commits (besides not wanting to emit more
+		 * WAL records).
 		 */
 		if (nmsgs != 0)
 		{
