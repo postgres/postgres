@@ -2915,19 +2915,12 @@ index_update_stats(Relation rel,
 	if (dirty)
 	{
 		systable_inplace_update_finish(state, tuple);
-		/* the above sends transactional and immediate cache inval messages */
+		/* the above sends a cache inval message */
 	}
 	else
 	{
 		systable_inplace_update_cancel(state);
-
-		/*
-		 * While we didn't change relhasindex, CREATE INDEX needs a
-		 * transactional inval for when the new index's catalog rows become
-		 * visible.  Other CREATE INDEX and REINDEX code happens to also queue
-		 * this inval, but keep this in case rare callers rely on this part of
-		 * our API contract.
-		 */
+		/* no need to change tuple, but force relcache inval anyway */
 		CacheInvalidateRelcacheByTuple(tuple);
 	}
 
