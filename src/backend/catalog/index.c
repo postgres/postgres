@@ -2788,8 +2788,8 @@ index_update_stats(Relation rel,
 				   double reltuples)
 {
 	bool		update_stats;
-	BlockNumber relpages;
-	BlockNumber relallvisible;
+	BlockNumber relpages = 0;	/* keep compiler quiet */
+	BlockNumber relallvisible = 0;
 	Oid			relid = RelationGetRelid(rel);
 	Relation	pg_class;
 	ScanKeyData key[1];
@@ -2826,8 +2826,6 @@ index_update_stats(Relation rel,
 
 		if (rel->rd_rel->relkind != RELKIND_INDEX)
 			visibilitymap_count(rel, &relallvisible, NULL);
-		else					/* don't bother for indexes */
-			relallvisible = 0;
 	}
 
 	/*
