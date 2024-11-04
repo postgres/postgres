@@ -26,6 +26,10 @@ program_version_ok('pg_bsd_indent');
 # Any diffs in the generated files will be accumulated here.
 my $diffs_file = "test.diffs";
 
+# options used with diff (see pg_regress.c's pretty_diff_opts)
+my @diffopts = ("-U3");
+push(@diffopts, "--strip-trailing-cr") if $windows_os;
+
 # Copy support files to current dir, so *.pro files don't need to know path.
 while (my $file = glob("$src_dir/tests/*.list"))
 {
@@ -45,7 +49,7 @@ while (my $test_src = glob("$src_dir/tests/*.0"))
 		],
 		"pg_bsd_indent succeeds on $test");
 	# check result matches, adding any diff to $diffs_file
-	my $result = run_log([ 'diff', '-upd', "$test_src.stdout", "$test.out" ],
+	my $result = run_log([ 'diff', @diffopts, "$test_src.stdout", "$test.out" ],
 		'>>', $diffs_file);
 	ok($result, "pg_bsd_indent output matches for $test");
 }
