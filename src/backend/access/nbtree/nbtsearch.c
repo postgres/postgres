@@ -862,14 +862,15 @@ _bt_compare(Relation rel,
  *		We need to be clever about the direction of scan, the search
  *		conditions, and the tree ordering.  We find the first item (or,
  *		if backwards scan, the last item) in the tree that satisfies the
- *		qualifications in the scan key.  On success exit, the page containing
- *		the current index tuple is pinned but not locked, and data about
- *		the matching tuple(s) on the page has been loaded into so->currPos.
+ *		qualifications in the scan key.  On success exit, data about the
+ *		matching tuple(s) on the page has been loaded into so->currPos.  We'll
+ *		drop all locks and hold onto a pin on page's buffer, except when
+ *		_bt_drop_lock_and_maybe_pin dropped the pin to avoid blocking VACUUM.
  *		scan->xs_heaptid is set to the heap TID of the current tuple, and if
  *		requested, scan->xs_itup points to a copy of the index tuple.
  *
  * If there are no matching items in the index, we return false, with no
- * pins or locks held.
+ * pins or locks held.  so->currPos will remain invalid.
  *
  * Note that scan->keyData[], and the so->keyData[] scankey built from it,
  * are both search-type scankeys (see nbtree/README for more about this).
@@ -1469,6 +1470,8 @@ _bt_next(IndexScanDesc scan, ScanDirection dir)
 {
 	BTScanOpaque so = (BTScanOpaque) scan->opaque;
 	BTScanPosItem *currItem;
+
+	Assert(BTScanPosIsValid(so->currPos));
 
 	/*
 	 * Advance to next tuple on current page; or if there's no more, try to
