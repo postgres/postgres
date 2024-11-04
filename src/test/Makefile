@@ -27,11 +27,6 @@ ifeq ($(with_ssl),openssl)
 SUBDIRS += ssl
 endif
 
-# Test suites that are not safe by default but can be run if selected
-# by the user via the whitespace-separated list in variable PG_TEST_EXTRA.
-# Export PG_TEST_EXTRA to check it in individual tap tests.
-export PG_TEST_EXTRA
-
 # We don't build or execute these by default, but we do want "make
 # clean" etc to recurse into them.  (We must filter out those that we
 # have conditionally included into SUBDIRS above, else there will be

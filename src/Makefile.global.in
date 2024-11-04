@@ -642,6 +642,16 @@ submake-libpgfeutils: | submake-generated-headers
 #
 # Testing support
 
+# Store any configure-time setting for PG_TEST_EXTRA, but let environment
+# variables override it to maintain the historical behavior of the tests.
+# (Standard `=` assignment would require devs to use a commandline option.)
+# This is skipped in PGXS mode to keep the setting from escaping into other
+# projects' builds.
+ifndef PGXS
+PG_TEST_EXTRA ?= @PG_TEST_EXTRA@
+export PG_TEST_EXTRA
+endif
+
 ifneq ($(USE_MODULE_DB),)
   PL_TESTDB = pl_regression_$(NAME)
   ifneq ($(MODULE_big),)

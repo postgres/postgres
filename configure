@@ -764,6 +764,7 @@ LDFLAGS
 CFLAGS
 CC
 enable_injection_points
+PG_TEST_EXTRA
 enable_tap_tests
 enable_dtrace
 DTRACEFLAGS
@@ -880,6 +881,7 @@ enable_largefile
       ac_precious_vars='build_alias
 host_alias
 target_alias
+PG_TEST_EXTRA
 CC
 CFLAGS
 LDFLAGS
@@ -1587,6 +1589,9 @@ Optional Packages:
   --with-openssl          obsolete spelling of --with-ssl=openssl
 
 Some influential environment variables:
+  PG_TEST_EXTRA
+              enable selected extra tests (overridden at runtime by
+              PG_TEST_EXTRA environment variable)
   CC          C compiler command
   CFLAGS      C compiler flags
   LDFLAGS     linker flags, e.g. -L<lib dir> if you have libraries in a
@@ -3625,6 +3630,7 @@ else
   enable_tap_tests=no
 
 fi
+
 
 
 

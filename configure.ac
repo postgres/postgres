@@ -236,6 +236,8 @@ AC_SUBST(enable_dtrace)
 PGAC_ARG_BOOL(enable, tap-tests, no,
               [enable TAP tests (requires Perl and IPC::Run)])
 AC_SUBST(enable_tap_tests)
+AC_ARG_VAR(PG_TEST_EXTRA,
+           [enable selected extra tests (overridden at runtime by PG_TEST_EXTRA environment variable)])
 
 #
 # Injection points
