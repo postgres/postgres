@@ -315,13 +315,16 @@ PostgreSQL documentation
         will override any conflicting command line options.
        </para>
        <para>
-        The option is called <literal>--dbname</literal> for consistency with other
+        This option is called <literal>--dbname</literal> for consistency with other
         client applications, but because <application>pg_receivewal</application>
         doesn't connect to any particular database in the cluster, any database
-        name in the connection string will be ignored by
-        <productname>PostgreSQL</productname>. Middleware, or proxies, used in
-        connecting to <productname>PostgreSQL</productname> might however
-        utilize the value.
+        name included in the connection string will be ignored by the server.
+        However, a database name supplied that way overrides the default
+        database name (<literal>replication</literal>) for purposes of
+        looking up the replication connection's password
+        in <filename>~/.pgpass</filename>.  Similarly, middleware or proxies
+        used in connecting to <productname>PostgreSQL</productname> might
+        utilize the name for purposes such as connection routing.
        </para>
       </listitem>
      </varlistentry>
