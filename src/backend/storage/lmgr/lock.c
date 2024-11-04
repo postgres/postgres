@@ -1096,11 +1096,6 @@ LockAcquireExtended(const LOCKTAG *locktag,
 	else
 	{
 		/*
-		 * Set bitmask of locks this process already holds on this object.
-		 */
-		MyProc->heldLocks = proclock->holdMask;
-
-		/*
 		 * Sleep till someone wakes me up. We do this even in the dontWait
 		 * case, because while trying to go to sleep, we may discover that we
 		 * can acquire the lock immediately after all.
@@ -1855,9 +1850,6 @@ MarkLockClear(LOCALLOCK *locallock)
 
 /*
  * WaitOnLock -- wait to acquire a lock
- *
- * Caller must have set MyProc->heldLocks to reflect locks already held
- * on the lockable object by this process.
  *
  * The appropriate partition lock must be held at entry, and will still be
  * held at exit.

@@ -1080,9 +1080,6 @@ AuxiliaryPidGetProc(int pid)
 /*
  * ProcSleep -- put a process to sleep on the specified lock
  *
- * Caller must have set MyProc->heldLocks to reflect locks already held
- * on the lockable object by this process (under all XIDs).
- *
  * It's not actually guaranteed that we need to wait when this function is
  * called, because it could be that when we try to find a position at which
  * to insert ourself into the wait queue, we discover that we must be inserted
@@ -1112,7 +1109,8 @@ ProcSleep(LOCALLOCK *locallock, LockMethod lockMethodTable, bool dontWait)
 	LWLock	   *partitionLock = LockHashPartitionLock(hashcode);
 	dclist_head *waitQueue = &lock->waitProcs;
 	PGPROC	   *insert_before = NULL;
-	LOCKMASK	myHeldLocks = MyProc->heldLocks;
+	LOCKMASK	myProcHeldLocks;
+	LOCKMASK	myHeldLocks;
 	TimestampTz standbyWaitStart = 0;
 	bool		early_deadlock = false;
 	bool		allow_autovacuum_cancel = true;
@@ -1121,6 +1119,8 @@ ProcSleep(LOCALLOCK *locallock, LockMethod lockMethodTable, bool dontWait)
 	PGPROC	   *leader = MyProc->lockGroupLeader;
 
 	/*
+	 * Determine which locks we're already holding.
+	 *
 	 * If group locking is in use, locks held by members of my locking group
 	 * need to be included in myHeldLocks.  This is not required for relation
 	 * extension lock which conflict among group members. However, including
@@ -1130,6 +1130,8 @@ ProcSleep(LOCALLOCK *locallock, LockMethod lockMethodTable, bool dontWait)
 	 * that kind of locks, but there doesn't appear to be a clear advantage of
 	 * the same.
 	 */
+	myProcHeldLocks = proclock->holdMask;
+	myHeldLocks = myProcHeldLocks;
 	if (leader != NULL)
 	{
 		dlist_iter	iter;
@@ -1234,6 +1236,7 @@ ProcSleep(LOCALLOCK *locallock, LockMethod lockMethodTable, bool dontWait)
 	lock->waitMask |= LOCKBIT_ON(lockmode);
 
 	/* Set up wait information in PGPROC object, too */
+	MyProc->heldLocks = myProcHeldLocks;
 	MyProc->waitLock = lock;
 	MyProc->waitProcLock = proclock;
 	MyProc->waitLockMode = lockmode;
