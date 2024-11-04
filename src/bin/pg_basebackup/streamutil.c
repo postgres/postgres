@@ -74,7 +74,10 @@ GetConnection(void)
 	PQconninfoOption *conn_opt;
 	char	   *err_msg = NULL;
 
-	/* pg_recvlogical uses dbname only; others use connection_string only. */
+	/*
+	 * pg_recvlogical uses dbname only; others use connection_string only.
+	 * (Note: both variables will be NULL if there's no command line options.)
+	 */
 	Assert(dbname == NULL || connection_string == NULL);
 
 	/*
@@ -120,12 +123,12 @@ GetConnection(void)
 		keywords = pg_malloc0((argcount + 1) * sizeof(*keywords));
 		values = pg_malloc0((argcount + 1) * sizeof(*values));
 		keywords[i] = "dbname";
-		values[i] = dbname;
+		values[i] = (dbname == NULL) ? "replication" : dbname;
 		i++;
 	}
 
 	keywords[i] = "replication";
-	values[i] = dbname == NULL ? "true" : "database";
+	values[i] = (dbname == NULL) ? "true" : "database";
 	i++;
 	keywords[i] = "fallback_application_name";
 	values[i] = progname;
