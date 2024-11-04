@@ -883,7 +883,6 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	BTScanOpaque so = (BTScanOpaque) scan->opaque;
 	BTStack		stack;
 	OffsetNumber offnum;
-	StrategyNumber strat;
 	BTScanInsertData inskey;
 	ScanKey		startKeys[INDEX_MAX_KEYS];
 	ScanKeyData notnullkeys[INDEX_MAX_KEYS];
@@ -1090,18 +1089,11 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 					break;
 				startKeys[keysz++] = chosen;
 
-				/*
-				 * Adjust strat_total, and quit if we have stored a > or <
-				 * key.
-				 */
-				strat = chosen->sk_strategy;
-				if (strat != BTEqualStrategyNumber)
-				{
-					strat_total = strat;
-					if (strat == BTGreaterStrategyNumber ||
-						strat == BTLessStrategyNumber)
-						break;
-				}
+				/* Quit if we have stored a > or < key */
+				strat_total = chosen->sk_strategy;
+				if (strat_total == BTGreaterStrategyNumber ||
+					strat_total == BTLessStrategyNumber)
+					break;
 
 				/*
 				 * Done if that was the last attribute, or if next key is not
