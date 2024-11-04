@@ -3036,7 +3036,7 @@ SELECT NOT(ROW(table.*) IS NOT NULL) FROM TABLE; -- detect at least one null in 
          <primary>concat</primary>
         </indexterm>
         <function>concat</function> ( <parameter>val1</parameter> <type>"any"</type>
-         [, <parameter>val2</parameter> <type>"any"</type> [, ...] ] )
+         <optional>, <parameter>val2</parameter> <type>"any"</type> <optional>, ...</optional> </optional> )
         <returnvalue>text</returnvalue>
        </para>
        <para>
@@ -3056,7 +3056,7 @@ SELECT NOT(ROW(table.*) IS NOT NULL) FROM TABLE; -- detect at least one null in 
         </indexterm>
         <function>concat_ws</function> ( <parameter>sep</parameter> <type>text</type>,
         <parameter>val1</parameter> <type>"any"</type>
-        [, <parameter>val2</parameter> <type>"any"</type> [, ...] ] )
+        <optional>, <parameter>val2</parameter> <type>"any"</type> <optional>, ...</optional> </optional> )
         <returnvalue>text</returnvalue>
        </para>
        <para>
@@ -3076,7 +3076,7 @@ SELECT NOT(ROW(table.*) IS NOT NULL) FROM TABLE; -- detect at least one null in 
          <primary>format</primary>
         </indexterm>
         <function>format</function> ( <parameter>formatstr</parameter> <type>text</type>
-        [, <parameter>formatarg</parameter> <type>"any"</type> [, ...] ] )
+        <optional>, <parameter>formatarg</parameter> <type>"any"</type> <optional>, ...</optional> </optional> )
         <returnvalue>text</returnvalue>
        </para>
        <para>
@@ -3170,7 +3170,7 @@ SELECT NOT(ROW(table.*) IS NOT NULL) FROM TABLE; -- detect at least one null in 
          <primary>parse_ident</primary>
         </indexterm>
         <function>parse_ident</function> ( <parameter>qualified_identifier</parameter> <type>text</type>
-        [, <parameter>strict_mode</parameter> <type>boolean</type> <literal>DEFAULT</literal> <literal>true</literal> ] )
+        <optional>, <parameter>strict_mode</parameter> <type>boolean</type> <literal>DEFAULT</literal> <literal>true</literal> </optional> )
         <returnvalue>text[]</returnvalue>
        </para>
        <para>
@@ -3309,8 +3309,8 @@ SELECT NOT(ROW(table.*) IS NOT NULL) FROM TABLE; -- detect at least one null in 
          <primary>regexp_count</primary>
         </indexterm>
         <function>regexp_count</function> ( <parameter>string</parameter> <type>text</type>, <parameter>pattern</parameter> <type>text</type>
-         [, <parameter>start</parameter> <type>integer</type>
-         [, <parameter>flags</parameter> <type>text</type> ] ] )
+         <optional>, <parameter>start</parameter> <type>integer</type>
+         <optional>, <parameter>flags</parameter> <type>text</type> </optional> </optional> )
         <returnvalue>integer</returnvalue>
        </para>
        <para>
@@ -3331,11 +3331,11 @@ SELECT NOT(ROW(table.*) IS NOT NULL) FROM TABLE; -- detect at least one null in 
          <primary>regexp_instr</primary>
         </indexterm>
         <function>regexp_instr</function> ( <parameter>string</parameter> <type>text</type>, <parameter>pattern</parameter> <type>text</type>
-         [, <parameter>start</parameter> <type>integer</type>
-         [, <parameter>N</parameter> <type>integer</type>
-         [, <parameter>endoption</parameter> <type>integer</type>
-         [, <parameter>flags</parameter> <type>text</type>
-         [, <parameter>subexpr</parameter> <type>integer</type> ] ] ] ] ] )
+         <optional>, <parameter>start</parameter> <type>integer</type>
+         <optional>, <parameter>N</parameter> <type>integer</type>
+         <optional>, <parameter>endoption</parameter> <type>integer</type>
+         <optional>, <parameter>flags</parameter> <type>text</type>
+         <optional>, <parameter>subexpr</parameter> <type>integer</type> </optional> </optional> </optional> </optional> </optional> )
         <returnvalue>integer</returnvalue>
        </para>
        <para>
@@ -3360,7 +3360,7 @@ SELECT NOT(ROW(table.*) IS NOT NULL) FROM TABLE; -- detect at least one null in 
          <primary>regexp_like</primary>
         </indexterm>
         <function>regexp_like</function> ( <parameter>string</parameter> <type>text</type>, <parameter>pattern</parameter> <type>text</type>
-         [, <parameter>flags</parameter> <type>text</type> ] )
+         <optional>, <parameter>flags</parameter> <type>text</type> </optional> )
         <returnvalue>boolean</returnvalue>
        </para>
        <para>
@@ -3380,7 +3380,7 @@ SELECT NOT(ROW(table.*) IS NOT NULL) FROM TABLE; -- detect at least one null in 
         <indexterm>
          <primary>regexp_match</primary>
         </indexterm>
-        <function>regexp_match</function> ( <parameter>string</parameter> <type>text</type>, <parameter>pattern</parameter> <type>text</type> [, <parameter>flags</parameter> <type>text</type> ] )
+        <function>regexp_match</function> ( <parameter>string</parameter> <type>text</type>, <parameter>pattern</parameter> <type>text</type> <optional>, <parameter>flags</parameter> <type>text</type> </optional> )
         <returnvalue>text[]</returnvalue>
        </para>
        <para>
@@ -3400,7 +3400,7 @@ SELECT NOT(ROW(table.*) IS NOT NULL) FROM TABLE; -- detect at least one null in 
         <indexterm>
          <primary>regexp_matches</primary>
         </indexterm>
-        <function>regexp_matches</function> ( <parameter>string</parameter> <type>text</type>, <parameter>pattern</parameter> <type>text</type> [, <parameter>flags</parameter> <type>text</type> ] )
+        <function>regexp_matches</function> ( <parameter>string</parameter> <type>text</type>, <parameter>pattern</parameter> <type>text</type> <optional>, <parameter>flags</parameter> <type>text</type> </optional> )
         <returnvalue>setof text[]</returnvalue>
        </para>
        <para>
@@ -3473,7 +3473,7 @@ SELECT NOT(ROW(table.*) IS NOT NULL) FROM TABLE; -- detect at least one null in 
         <indexterm>
          <primary>regexp_split_to_array</primary>
         </indexterm>
-        <function>regexp_split_to_array</function> ( <parameter>string</parameter> <type>text</type>, <parameter>pattern</parameter> <type>text</type> [, <parameter>flags</parameter> <type>text</type> ] )
+        <function>regexp_split_to_array</function> ( <parameter>string</parameter> <type>text</type>, <parameter>pattern</parameter> <type>text</type> <optional>, <parameter>flags</parameter> <type>text</type> </optional> )
         <returnvalue>text[]</returnvalue>
        </para>
        <para>
@@ -3492,7 +3492,7 @@ SELECT NOT(ROW(table.*) IS NOT NULL) FROM TABLE; -- detect at least one null in 
         <indexterm>
          <primary>regexp_split_to_table</primary>
         </indexterm>
-        <function>regexp_split_to_table</function> ( <parameter>string</parameter> <type>text</type>, <parameter>pattern</parameter> <type>text</type> [, <parameter>flags</parameter> <type>text</type> ] )
+        <function>regexp_split_to_table</function> ( <parameter>string</parameter> <type>text</type>, <parameter>pattern</parameter> <type>text</type> <optional>, <parameter>flags</parameter> <type>text</type> </optional> )
         <returnvalue>setof text</returnvalue>
        </para>
        <para>
@@ -3516,10 +3516,10 @@ SELECT NOT(ROW(table.*) IS NOT NULL) FROM TABLE; -- detect at least one null in 
          <primary>regexp_substr</primary>
         </indexterm>
         <function>regexp_substr</function> ( <parameter>string</parameter> <type>text</type>, <parameter>pattern</parameter> <type>text</type>
-         [, <parameter>start</parameter> <type>integer</type>
-         [, <parameter>N</parameter> <type>integer</type>
-         [, <parameter>flags</parameter> <type>text</type>
-         [, <parameter>subexpr</parameter> <type>integer</type> ] ] ] ] )
+         <optional>, <parameter>start</parameter> <type>integer</type>
+         <optional>, <parameter>N</parameter> <type>integer</type>
+         <optional>, <parameter>flags</parameter> <type>text</type>
+         <optional>, <parameter>subexpr</parameter> <type>integer</type> </optional> </optional> </optional> </optional> )
         <returnvalue>text</returnvalue>
        </para>
        <para>
@@ -3986,7 +3986,7 @@ SELECT NOT(ROW(table.*) IS NOT NULL) FROM TABLE; -- detect at least one null in 
 
     <para>
 <synopsis>
-<function>format</function>(<parameter>formatstr</parameter> <type>text</type> [, <parameter>formatarg</parameter> <type>"any"</type> [, ...] ])
+<function>format</function>(<parameter>formatstr</parameter> <type>text</type> <optional>, <parameter>formatarg</parameter> <type>"any"</type> <optional>, ...</optional> </optional>)
 </synopsis>
      <parameter>formatstr</parameter> is a format string that specifies how the
      result should be formatted.  Text in the format string is copied
@@ -10621,7 +10621,7 @@ SELECT date_part('hour', INTERVAL '4 hours 3 minutes');
 
    <para>
 <synopsis>
-date_trunc(<replaceable>field</replaceable>, <replaceable>source</replaceable> [, <replaceable>time_zone</replaceable> ])
+date_trunc(<replaceable>field</replaceable>, <replaceable>source</replaceable> <optional>, <replaceable>time_zone</replaceable> </optional>)
 </synopsis>
     <replaceable>source</replaceable> is a value expression of type
     <type>timestamp</type>, <type>timestamp with time zone</type>,
@@ -29708,11 +29708,11 @@ DETAIL:  Make sure pg_wal_replay_wait() isn't called within a transaction with a
         <indexterm>
          <primary>pg_logical_emit_message</primary>
         </indexterm>
-        <function>pg_logical_emit_message</function> ( <parameter>transactional</parameter> <type>boolean</type>, <parameter>prefix</parameter> <type>text</type>, <parameter>content</parameter> <type>text</type> [, <parameter>flush</parameter> <type>boolean</type> <literal>DEFAULT</literal> <literal>false</literal>] )
+        <function>pg_logical_emit_message</function> ( <parameter>transactional</parameter> <type>boolean</type>, <parameter>prefix</parameter> <type>text</type>, <parameter>content</parameter> <type>text</type> <optional>, <parameter>flush</parameter> <type>boolean</type> <literal>DEFAULT</literal> <literal>false</literal></optional> )
         <returnvalue>pg_lsn</returnvalue>
        </para>
        <para role="func_signature">
-        <function>pg_logical_emit_message</function> ( <parameter>transactional</parameter> <type>boolean</type>, <parameter>prefix</parameter> <type>text</type>, <parameter>content</parameter> <type>bytea</type> [, <parameter>flush</parameter> <type>boolean</type> <literal>DEFAULT</literal> <literal>false</literal>] )
+        <function>pg_logical_emit_message</function> ( <parameter>transactional</parameter> <type>boolean</type>, <parameter>prefix</parameter> <type>text</type>, <parameter>content</parameter> <type>bytea</type> <optional>, <parameter>flush</parameter> <type>boolean</type> <literal>DEFAULT</literal> <literal>false</literal></optional> )
         <returnvalue>pg_lsn</returnvalue>
        </para>
        <para>
