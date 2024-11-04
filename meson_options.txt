@@ -47,7 +47,7 @@ option('injection_points', type: 'boolean', value: false,
   description: 'Enable injection points')
 
 option('PG_TEST_EXTRA', type: 'string', value: '',
-  description: 'Enable selected extra tests')
+  description: 'Enable selected extra tests. Overridden by PG_TEST_EXTRA environment variable.')
 
 option('PG_GIT_REVISION', type: 'string', value: 'HEAD',
   description: 'git revision to be packaged by pgdist target')

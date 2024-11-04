@@ -3080,9 +3080,13 @@ ninja install
       <term><option>-DPG_TEST_EXTRA=<replaceable>TEST_SUITES</replaceable></option></term>
       <listitem>
        <para>
-        Enable test suites which require special software to run.  This option
-        accepts arguments via a whitespace-separated list.  See <xref
-        linkend="regress-additional"/> for details.
+        Enable additional test suites, which are not run by default because
+        they are not secure to run on a multiuser system, require special
+        software to run, or are resource intensive.  The argument is a
+        whitespace-separated list of tests to enable. See
+        <xref linkend="regress-additional"/> for details. If the
+        <envar>PG_TEST_EXTRA</envar> environment variable is set when the
+        tests are run, it overrides this setup-time option.
        </para>
       </listitem>
      </varlistentry>

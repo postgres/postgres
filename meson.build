@@ -3289,11 +3289,6 @@ test_env.set('PG_REGRESS', pg_regress.full_path())
 test_env.set('REGRESS_SHLIB', regress_module.full_path())
 test_env.set('INITDB_TEMPLATE', test_initdb_template)
 
-# Test suites that are not safe by default but can be run if selected
-# by the user via the whitespace-separated list in variable PG_TEST_EXTRA.
-# Export PG_TEST_EXTRA so it can be checked in individual tap tests.
-test_env.set('PG_TEST_EXTRA', get_option('PG_TEST_EXTRA'))
-
 # Add the temporary installation to the library search path on platforms where
 # that works (everything but windows, basically). On windows everything
 # library-like gets installed into bindir, solving that issue.
@@ -3357,6 +3352,11 @@ foreach test_dir : tests
     testwrap,
     '--basedir', meson.build_root(),
     '--srcdir', test_dir['sd'],
+    # Some test suites are not run by default but can be run if selected by the
+    # user via variable PG_TEST_EXTRA. Pass configuration time value of
+    # PG_TEST_EXTRA as an argument to testwrap so that it can be overridden by
+    # run time value, if any.
+    '--pg-test-extra', get_option('PG_TEST_EXTRA'),
   ]
 
   foreach kind, v : test_dir

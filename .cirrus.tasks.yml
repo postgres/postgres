@@ -175,7 +175,6 @@ task:
         --buildtype=debug \
         -Dcassert=true -Dinjection_points=true \
         -Duuid=bsd -Dtcl_version=tcl86 -Ddtrace=auto \
-        -DPG_TEST_EXTRA="$PG_TEST_EXTRA" \
         -Dextra_lib_dirs=/usr/local/lib -Dextra_include_dirs=/usr/local/include/ \
         build
     EOF
@@ -364,7 +363,6 @@ task:
             --buildtype=debug \
             -Dcassert=true -Dinjection_points=true \
             ${LINUX_MESON_FEATURES} \
-            -DPG_TEST_EXTRA="$PG_TEST_EXTRA" \
             build
         EOF
 
@@ -380,7 +378,6 @@ task:
             -Dllvm=disabled \
             --pkg-config-path /usr/lib/i386-linux-gnu/pkgconfig/ \
             -DPERL=perl5.36-i386-linux-gnu \
-            -DPG_TEST_EXTRA="$PG_TEST_EXTRA" \
             build-32
         EOF
 
@@ -502,7 +499,6 @@ task:
       -Dextra_lib_dirs=/opt/local/lib \
       -Dcassert=true -Dinjection_points=true \
       -Duuid=e2fs -Ddtrace=auto \
-      -DPG_TEST_EXTRA="$PG_TEST_EXTRA" \
       build
 
   build_script: ninja -C build -j${BUILD_JOBS}
@@ -574,7 +570,7 @@ task:
   # Use /DEBUG:FASTLINK to avoid high memory usage during linking
   configure_script: |
     vcvarsall x64
-    meson setup --backend ninja --buildtype debug -Dc_link_args=/DEBUG:FASTLINK -Dcassert=true -Dinjection_points=true -Db_pch=true -Dextra_lib_dirs=c:\openssl\1.1\lib -Dextra_include_dirs=c:\openssl\1.1\include -DTAR=%TAR% -DPG_TEST_EXTRA="%PG_TEST_EXTRA%" build
+    meson setup --backend ninja --buildtype debug -Dc_link_args=/DEBUG:FASTLINK -Dcassert=true -Dinjection_points=true -Db_pch=true -Dextra_lib_dirs=c:\openssl\1.1\lib -Dextra_include_dirs=c:\openssl\1.1\include -DTAR=%TAR% build
 
   build_script: |
     vcvarsall x64
