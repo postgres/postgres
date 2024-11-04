@@ -3085,7 +3085,7 @@ ProcessRecoveryConflictInterrupt(ProcSignalReason reason)
 			/*
 			 * If we aren't waiting for a lock we can never deadlock.
 			 */
-			if (!IsWaitingForLock())
+			if (GetAwaitedLock() == NULL)
 				return;
 
 			/* Intentional fall through to check wait for pin */
