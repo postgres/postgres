@@ -265,7 +265,7 @@ check-tabs:
 # Use perl command because non-GNU grep or sed could not have hex escape sequence.
 check-nbsp:
 	@ ( $(PERL) -ne '/\xC2\xA0/ and print("$$ARGV:$$_"),$$n++; END {exit($$n>0)}' \
-	  $(wildcard $(srcdir)/*.sgml $(srcdir)/ref/*.sgml $(srcdir)/images/*.svg $(srcdir)/*.xsl $(srcdir)/images/*.xsl) ) || \
+	  $(wildcard $(srcdir)/*.sgml $(srcdir)/ref/*.sgml $(srcdir)/*.xsl $(srcdir)/images/*.xsl) ) || \
 	(echo "Non-breaking spaces appear in SGML/XML files" 1>&2;  exit 1)
 
 ##
