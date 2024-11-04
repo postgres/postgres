@@ -1161,28 +1161,18 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	 * If we found no usable boundary keys, we have to start from one end of
 	 * the tree.  Walk down that edge to the first or last key, and scan from
 	 * there.
+	 *
+	 * Note: calls _bt_readfirstpage for us, which releases the parallel scan.
 	 */
 	if (keysz == 0)
-	{
-		bool		match;
-
-		match = _bt_endpoint(scan, dir);
-
-		if (!match)
-		{
-			/* No match, so mark (parallel) scan finished */
-			_bt_parallel_done(scan);
-		}
-
-		return match;
-	}
+		return _bt_endpoint(scan, dir);
 
 	/*
 	 * We want to start the scan somewhere within the index.  Set up an
 	 * insertion scankey we can use to search for the boundary point we
 	 * identified above.  The insertion scankey is built using the keys
 	 * identified by startKeys[].  (Remaining insertion scankey fields are
-	 * initialized after initial-positioning strategy is finalized.)
+	 * initialized after initial-positioning scan keys are finalized.)
 	 */
 	Assert(keysz <= INDEX_MAX_KEYS);
 	for (i = 0; i < keysz; i++)
@@ -1425,12 +1415,7 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 
 		if (!BufferIsValid(so->currPos.buf))
 		{
-			/*
-			 * Mark parallel scan as done, so that all the workers can finish
-			 * their scan.
-			 */
 			_bt_parallel_done(scan);
-			BTScanPosInvalidate(so->currPos);
 			return false;
 		}
 	}
@@ -2267,8 +2252,8 @@ _bt_readnextpage(IndexScanDesc scan, BlockNumber blkno,
 			 !so->currPos.moreRight : !so->currPos.moreLeft))
 		{
 			/* most recent _bt_readpage call (for lastcurrblkno) ended scan */
-			_bt_parallel_done(scan);
 			BTScanPosInvalidate(so->currPos);
+			_bt_parallel_done(scan);
 			return false;
 		}
 
@@ -2288,8 +2273,8 @@ _bt_readnextpage(IndexScanDesc scan, BlockNumber blkno,
 			if (so->currPos.buf == InvalidBuffer)
 			{
 				/* must have been a concurrent deletion of leftmost page */
-				_bt_parallel_done(scan);
 				BTScanPosInvalidate(so->currPos);
+				_bt_parallel_done(scan);
 				return false;
 			}
 		}
@@ -2564,8 +2549,10 @@ _bt_get_endpoint(Relation rel, uint32 level, bool rightmost)
  *
  * This is used by _bt_first() to set up a scan when we've determined
  * that the scan must start at the beginning or end of the index (for
- * a forward or backward scan respectively).  Exit conditions are the
- * same as for _bt_first().
+ * a forward or backward scan respectively).
+ *
+ * Parallel scan callers must have seized the scan before calling here.
+ * Exit conditions are the same as for _bt_first().
  */
 static bool
 _bt_endpoint(IndexScanDesc scan, ScanDirection dir)
@@ -2577,10 +2564,11 @@ _bt_endpoint(IndexScanDesc scan, ScanDirection dir)
 	OffsetNumber start;
 	BTScanPosItem *currItem;
 
+	Assert(!BTScanPosIsValid(so->currPos));
+
 	/*
 	 * Scan down to the leftmost or rightmost leaf page.  This is a simplified
-	 * version of _bt_search().  We don't maintain a stack since we know we
-	 * won't need it.
+	 * version of _bt_search().
 	 */
 	so->currPos.buf = _bt_get_endpoint(rel, 0, ScanDirectionIsBackward(dir));
 
@@ -2591,7 +2579,7 @@ _bt_endpoint(IndexScanDesc scan, ScanDirection dir)
 		 * exists.
 		 */
 		PredicateLockRelation(rel, scan->xs_snapshot);
-		BTScanPosInvalidate(so->currPos);
+		_bt_parallel_done(scan);
 		return false;
 	}
 

@@ -762,13 +762,15 @@ _bt_parallel_done(IndexScanDesc scan)
 	BTParallelScanDesc btscan;
 	bool		status_changed = false;
 
+	Assert(!BTScanPosIsValid(so->currPos));
+
 	/* Do nothing, for non-parallel scans */
 	if (parallel_scan == NULL)
 		return;
 
 	/*
 	 * Should not mark parallel scan done when there's still a pending
-	 * primitive index scan
+	 * primitive index scan (defensive)
 	 */
 	if (so->needPrimScan)
 		return;
