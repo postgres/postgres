@@ -427,7 +427,7 @@ UPDATE accounts SET balance = balance - 100.00 WHERE acctnum = 7534;
 COMMIT;
 </screen>
 
-    If another transactions concurrently tries to change the balance of account
+    If another transaction concurrently tries to change the balance of account
     7534, we clearly want the second statement to start with the updated
     version of the account's row.  Because each command is affecting only a
     predetermined row, letting it see the updated version of the row does
