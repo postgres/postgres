@@ -326,11 +326,19 @@ reconstruct_from_incremental_file(char *input_filename,
 	 * result, then forget about performing reconstruction and just copy that
 	 * file in its entirety.
 	 *
+	 * If we have only incremental files, and there's no full file at any
+	 * point in the backup chain, something has gone wrong. Emit an error.
+	 *
 	 * Otherwise, reconstruct.
 	 */
 	if (copy_source != NULL)
 		copy_file(copy_source->filename, output_filename,
 				  &checksum_ctx, copy_method, dry_run);
+	else if (sidx == 0 && source[0]->header_length != 0)
+	{
+		pg_fatal("full backup contains unexpected incremental file \"%s\"",
+				 source[0]->filename);
+	}
 	else
 	{
 		write_reconstructed_file(input_filename, output_filename,
