@@ -51,7 +51,6 @@ tests += {
       't/040_standby_failover_slots_sync.pl',
       't/041_checkpoint_at_promote.pl',
       't/042_low_level_backup.pl',
-      't/043_wal_replay_wait.pl',
     ],
   },
 }

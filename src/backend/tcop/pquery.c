@@ -1168,11 +1168,10 @@ PortalRunUtility(Portal portal, PlannedStmt *pstmt,
 	MemoryContextSwitchTo(portal->portalContext);
 
 	/*
-	 * Some utility commands (e.g., VACUUM, CALL pg_wal_replay_wait()) pop the
-	 * ActiveSnapshot stack from under us, so don't complain if it's now
-	 * empty.  Otherwise, our snapshot should be the top one; pop it.  Note
-	 * that this could be a different snapshot from the one we made above; see
-	 * EnsurePortalSnapshotExists.
+	 * Some utility commands (e.g., VACUUM) pop the ActiveSnapshot stack from
+	 * under us, so don't complain if it's now empty.  Otherwise, our snapshot
+	 * should be the top one; pop it.  Note that this could be a different
+	 * snapshot from the one we made above; see EnsurePortalSnapshotExists.
 	 */
 	if (portal->portalSnapshot != NULL && ActiveSnapshotSet())
 	{

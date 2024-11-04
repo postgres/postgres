@@ -6665,17 +6665,6 @@
   prorettype => 'text', proargtypes => '',
   prosrc => 'pg_get_wal_replay_pause_state' },
 
-{ oid => '8593',
-  descr => 'wait for the target LSN to be replayed on standby with an optional timeout',
-  proname => 'pg_wal_replay_wait', prokind => 'p', prorettype => 'void',
-  proargtypes => 'pg_lsn int8 bool', proargnames => '{target_lsn,timeout,no_error}',
-  prosrc => 'pg_wal_replay_wait' },
-{ oid => '8594',
-  descr => 'the last result for pg_wal_replay_wait()',
-  proname => 'pg_wal_replay_wait_status', prorettype => 'text',
-  proargtypes => '',
-  prosrc => 'pg_wal_replay_wait_status' },
-
 { oid => '6224', descr => 'get resource managers loaded in system',
   proname => 'pg_get_wal_resource_managers', prorows => '50', proretset => 't',
   provolatile => 'v', prorettype => 'record', proargtypes => '',

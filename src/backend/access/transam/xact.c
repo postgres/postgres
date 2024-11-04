@@ -31,7 +31,6 @@
 #include "access/xloginsert.h"
 #include "access/xlogrecovery.h"
 #include "access/xlogutils.h"
-#include "access/xlogwait.h"
 #include "catalog/index.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_enum.h"
@@ -2826,11 +2825,6 @@ AbortTransaction(void)
 	 * while cleaning up!
 	 */
 	LWLockReleaseAll();
-
-	/*
-	 * Cleanup waiting for LSN if any.
-	 */
-	WaitLSNCleanup();
 
 	/* Clear wait information and command progress indicator */
 	pgstat_report_wait_end();

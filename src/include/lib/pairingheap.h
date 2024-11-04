@@ -77,9 +77,6 @@ typedef struct pairingheap
 
 extern pairingheap *pairingheap_allocate(pairingheap_comparator compare,
 										 void *arg);
-extern void pairingheap_initialize(pairingheap *heap,
-								   pairingheap_comparator compare,
-								   void *arg);
 extern void pairingheap_free(pairingheap *heap);
 extern void pairingheap_add(pairingheap *heap, pairingheap_node *node);
 extern pairingheap_node *pairingheap_first(pairingheap *heap);

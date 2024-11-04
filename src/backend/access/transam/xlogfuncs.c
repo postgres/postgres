@@ -22,19 +22,17 @@
 #include "access/xlog_internal.h"
 #include "access/xlogbackup.h"
 #include "access/xlogrecovery.h"
-#include "access/xlogwait.h"
 #include "catalog/pg_type.h"
 #include "funcapi.h"
 #include "miscadmin.h"
 #include "pgstat.h"
 #include "replication/walreceiver.h"
 #include "storage/fd.h"
-#include "storage/proc.h"
+#include "storage/latch.h"
 #include "storage/standby.h"
 #include "utils/builtins.h"
 #include "utils/memutils.h"
 #include "utils/pg_lsn.h"
-#include "utils/snapmgr.h"
 #include "utils/timestamp.h"
 
 /*
@@ -749,116 +747,4 @@ pg_promote(PG_FUNCTION_ARGS)
 						   wait_seconds,
 						   wait_seconds)));
 	PG_RETURN_BOOL(false);
-}
-
-static WaitLSNResult lastWaitLSNResult = WAIT_LSN_RESULT_SUCCESS;
-
-/*
- * Waits until recovery replays the target LSN with optional timeout.  Unless
- * 'no_error' provided throws an error on failure
- */
-Datum
-pg_wal_replay_wait(PG_FUNCTION_ARGS)
-{
-	XLogRecPtr	target_lsn = PG_GETARG_LSN(0);
-	int64		timeout = PG_GETARG_INT64(1);
-	bool		no_error = PG_GETARG_BOOL(2);
-
-	if (timeout < 0)
-		ereport(ERROR,
-				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("\"timeout\" must not be negative")));
-
-	/*
-	 * We are going to wait for the LSN replay.  We should first care that we
-	 * don't hold a snapshot and correspondingly our MyProc->xmin is invalid.
-	 * Otherwise, our snapshot could prevent the replay of WAL records
-	 * implying a kind of self-deadlock.  This is the reason why
-	 * pg_wal_replay_wait() is a procedure, not a function.
-	 *
-	 * At first, we should check there is no active snapshot.  According to
-	 * PlannedStmtRequiresSnapshot(), even in an atomic context, CallStmt is
-	 * processed with a snapshot.  Thankfully, we can pop this snapshot,
-	 * because PortalRunUtility() can tolerate this.
-	 */
-	if (ActiveSnapshotSet())
-		PopActiveSnapshot();
-
-	/*
-	 * At second, invalidate a catalog snapshot if any.  And we should be done
-	 * with the preparation.
-	 */
-	InvalidateCatalogSnapshot();
-
-	/* Give up if there is still an active or registered snapshot. */
-	if (GetOldestSnapshot())
-		ereport(ERROR,
-				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("pg_wal_replay_wait() must be only called without an active or registered snapshot"),
-				 errdetail("Make sure pg_wal_replay_wait() isn't called within a transaction with an isolation level higher than READ COMMITTED, another procedure, or a function.")));
-
-	/*
-	 * As the result we should hold no snapshot, and correspondingly our xmin
-	 * should be unset.
-	 */
-	Assert(MyProc->xmin == InvalidTransactionId);
-
-	lastWaitLSNResult = WaitForLSNReplay(target_lsn, timeout);
-
-	if (no_error)
-		PG_RETURN_VOID();
-
-	/*
-	 * Process the result of WaitForLSNReplay().  Throw appropriate error if
-	 * needed.
-	 */
-	switch (lastWaitLSNResult)
-	{
-		case WAIT_LSN_RESULT_SUCCESS:
-			/* Nothing to do on success */
-			break;
-
-		case WAIT_LSN_RESULT_TIMEOUT:
-			ereport(ERROR,
-					(errcode(ERRCODE_QUERY_CANCELED),
-					 errmsg("timed out while waiting for target LSN %X/%X to be replayed; current replay LSN %X/%X",
-							LSN_FORMAT_ARGS(target_lsn),
-							LSN_FORMAT_ARGS(GetXLogReplayRecPtr(NULL)))));
-			break;
-
-		case WAIT_LSN_RESULT_NOT_IN_RECOVERY:
-			ereport(ERROR,
-					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-					 errmsg("recovery is not in progress"),
-					 errdetail("Recovery ended before replaying target LSN %X/%X; last replay LSN %X/%X.",
-							   LSN_FORMAT_ARGS(target_lsn),
-							   LSN_FORMAT_ARGS(GetXLogReplayRecPtr(NULL)))));
-			break;
-	}
-
-	PG_RETURN_VOID();
-}
-
-Datum
-pg_wal_replay_wait_status(PG_FUNCTION_ARGS)
-{
-	const char *result_string = "";
-
-	/* Process the result of WaitForLSNReplay(). */
-	switch (lastWaitLSNResult)
-	{
-		case WAIT_LSN_RESULT_SUCCESS:
-			result_string = "success";
-			break;
-
-		case WAIT_LSN_RESULT_TIMEOUT:
-			result_string = "timeout";
-			break;
-
-		case WAIT_LSN_RESULT_NOT_IN_RECOVERY:
-			result_string = "not in recovery";
-			break;
-	}
-
-	PG_RETURN_TEXT_P(cstring_to_text(result_string));
 }
