@@ -26,8 +26,8 @@ program_version_ok('pg_bsd_indent');
 # Any diffs in the generated files will be accumulated here.
 my $diffs_file = "test.diffs";
 
-# options used with diff
-my @diffopts = ("-upd");
+# options used with diff (see pg_regress.c's pretty_diff_opts)
+my @diffopts = ("-U3");
 push(@diffopts, "--strip-trailing-cr") if $windows_os;
 
 # Copy support files to current dir, so *.pro files don't need to know path.
