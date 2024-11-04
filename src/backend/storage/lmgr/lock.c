@@ -2258,9 +2258,8 @@ LockReleaseAll(LOCKMETHODID lockmethodid, bool allLocks)
 	while ((locallock = (LOCALLOCK *) hash_seq_search(&status)) != NULL)
 	{
 		/*
-		 * If the LOCALLOCK entry is unused, we must've run out of shared
-		 * memory while trying to set up this lock.  Just forget the local
-		 * entry.
+		 * If the LOCALLOCK entry is unused, something must've gone wrong
+		 * while trying to acquire this lock.  Just forget the local entry.
 		 */
 		if (locallock->nLocks == 0)
 		{
