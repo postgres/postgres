@@ -1436,7 +1436,9 @@ test_sub=# SELECT * FROM child ORDER BY a;
    During initial data synchronization, only the published columns are
    copied.  However, if the subscriber is from a release prior to 15, then
    all the columns in the table are copied during initial data synchronization,
-   ignoring any column lists.
+   ignoring any column lists. If the subscriber is from a release prior to 18,
+   then initial table synchronization won't copy generated columns even if they
+   are defined in the publisher.
   </para>
 
    <warning id="logical-replication-col-list-combining">

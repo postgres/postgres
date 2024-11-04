@@ -514,8 +514,9 @@ CREATE TABLE people (
     </listitem>
     <listitem>
      <para>
-      Generated columns are skipped for logical replication and cannot be
-      specified in a <command>CREATE PUBLICATION</command> column list.
+      Generated columns can be replicated during logical replication by
+      including them in the column list of the
+      <command>CREATE PUBLICATION</command> command.
      </para>
     </listitem>
    </itemizedlist>
