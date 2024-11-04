@@ -5217,20 +5217,20 @@ fi
 
   # Collect compiler flags necessary to build the LLVM dependent
   # shared library.
-  for pgac_option in `$LLVM_CONFIG --cppflags`; do
+  for pgac_option in `$LLVM_CONFIG --link-static --cppflags`; do
     case $pgac_option in
       -I*|-D*) LLVM_CPPFLAGS="$pgac_option $LLVM_CPPFLAGS";;
     esac
   done
 
-  for pgac_option in `$LLVM_CONFIG --ldflags`; do
+  for pgac_option in `$LLVM_CONFIG --link-static --ldflags`; do
     case $pgac_option in
       -L*) LDFLAGS="$LDFLAGS $pgac_option";;
     esac
   done
 
   # ABI influencing options, standard influencing options
-  for pgac_option in `$LLVM_CONFIG --cxxflags`; do
+  for pgac_option in `$LLVM_CONFIG --link-static --cxxflags`; do
     case $pgac_option in
       -fno-rtti*) LLVM_CXXFLAGS="$LLVM_CXXFLAGS $pgac_option";;
       -std=*) LLVM_CXXFLAGS="$LLVM_CXXFLAGS $pgac_option";;
@@ -5241,7 +5241,7 @@ fi
   # libs. As some components are optional, we can't just list all of
   # them as it'd raise an error.
   pgac_components='';
-  for pgac_component in `$LLVM_CONFIG --components`; do
+  for pgac_component in `$LLVM_CONFIG --link-static --components`; do
     case $pgac_component in
       engine) pgac_components="$pgac_components $pgac_component";;
       debuginfodwarf) pgac_components="$pgac_components $pgac_component";;
@@ -5255,7 +5255,7 @@ fi
   # And then get the libraries that need to be linked in for the
   # selected components.  They're large libraries, we only want to
   # link them into the LLVM using shared library.
-  for pgac_option in `$LLVM_CONFIG --libs --system-libs $pgac_components`; do
+  for pgac_option in `$LLVM_CONFIG --link-static --libs --system-libs $pgac_components`; do
     case $pgac_option in
       -l*) LLVM_LIBS="$LLVM_LIBS $pgac_option";;
     esac
