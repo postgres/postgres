@@ -294,6 +294,17 @@ DOTypeNameCompare(const void *p1, const void *p2)
 		if (cmpval != 0)
 			return cmpval;
 	}
+	else if (obj1->objType == DO_RULE)
+	{
+		RuleInfo   *robj1 = *(RuleInfo *const *) p1;
+		RuleInfo   *robj2 = *(RuleInfo *const *) p2;
+
+		/* Sort by table name (table namespace was considered already) */
+		cmpval = strcmp(robj1->ruletable->dobj.name,
+						robj2->ruletable->dobj.name);
+		if (cmpval != 0)
+			return cmpval;
+	}
 	else if (obj1->objType == DO_TRIGGER)
 	{
 		TriggerInfo *tobj1 = *(TriggerInfo *const *) p1;
