@@ -182,6 +182,7 @@ pgxs_empty = [
 
   # Not needed because we don't build the server / PLs with the generated makefile
   'LIBOBJS', 'PG_CRC32C_OBJS', 'PG_POPCNT_OBJS', 'TAS',
+  'PG_TEST_EXTRA',
   'DTRACEFLAGS', # only server has dtrace probes
 
   'perl_archlibexp', 'perl_embed_ccflags', 'perl_embed_ldflags', 'perl_includespec', 'perl_privlibexp',
