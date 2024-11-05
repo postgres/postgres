@@ -406,10 +406,17 @@ PgStat_EntryRef *
 pgstat_get_entry_ref(PgStat_Kind kind, Oid dboid, Oid objoid, bool create,
 					 bool *created_entry)
 {
-	PgStat_HashKey key = {.kind = kind,.dboid = dboid,.objoid = objoid};
+	PgStat_HashKey key;
 	PgStatShared_HashEntry *shhashent;
 	PgStatShared_Common *shheader = NULL;
 	PgStat_EntryRef *entry_ref;
+
+	/* clear padding */
+	memset(&key, 0, sizeof(struct PgStat_HashKey));
+
+	key.kind = kind;
+	key.dboid = dboid;
+	key.objoid = objoid;
 
 	/*
 	 * passing in created_entry only makes sense if we possibly could create
@@ -881,9 +888,16 @@ pgstat_drop_database_and_contents(Oid dboid)
 bool
 pgstat_drop_entry(PgStat_Kind kind, Oid dboid, Oid objoid)
 {
-	PgStat_HashKey key = {.kind = kind,.dboid = dboid,.objoid = objoid};
+	PgStat_HashKey key;
 	PgStatShared_HashEntry *shent;
 	bool		freed = true;
+
+	/* clear padding */
+	memset(&key, 0, sizeof(struct PgStat_HashKey));
+
+	key.kind = kind;
+	key.dboid = dboid;
+	key.objoid = objoid;
 
 	/* delete local reference */
 	if (pgStatEntryRefHash)
