@@ -938,6 +938,9 @@ pgstat_fetch_entry(PgStat_Kind kind, Oid dboid, uint64 objid)
 
 	pgstat_prep_snapshot();
 
+	/* clear padding */
+	memset(&key, 0, sizeof(struct PgStat_HashKey));
+
 	key.kind = kind;
 	key.dboid = dboid;
 	key.objid = objid;
