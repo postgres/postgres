@@ -9,8 +9,10 @@ jobs:
       - name: Install dependencies
         run: |
           brew tap hashicorp/tap
-          brew install gnu-sed hashicorp/tap/vault
+          brew install gnu-sed icu4c hashicorp/tap/vault
           sudo /usr/bin/perl -MCPAN -e 'install HTTP::Server::Simple'
+          sudo /usr/bin/perl -MCPAN -e 'install IPC::Run'
+          sudo /usr/bin/perl -MCPAN -e 'install Text::Trim'
 
       - name: Clone postgres repository
         uses: actions/checkout@v4
