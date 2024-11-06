@@ -1370,9 +1370,9 @@ lc_collate_is_c(Oid collation)
 		}
 		else if (default_locale.provider == COLLPROVIDER_LIBC)
 		{
-			localeptr = setlocale(LC_CTYPE, NULL);
+			localeptr = setlocale(LC_COLLATE, NULL);
 			if (!localeptr)
-				elog(ERROR, "invalid LC_CTYPE setting");
+				elog(ERROR, "invalid LC_COLLATE setting");
 		}
 		else
 			elog(ERROR, "unexpected collation provider '%c'",
