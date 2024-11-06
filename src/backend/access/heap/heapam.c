@@ -8302,7 +8302,6 @@ index_delete_sort(TM_IndexDeleteOp *delstate)
 {
 	TM_IndexDelete *deltids = delstate->deltids;
 	int			ndeltids = delstate->ndeltids;
-	int			low = 0;
 
 	/*
 	 * Shellsort gap sequence (taken from Sedgewick-Incerpi paper).
@@ -8318,7 +8317,7 @@ index_delete_sort(TM_IndexDeleteOp *delstate)
 
 	for (int g = 0; g < lengthof(gaps); g++)
 	{
-		for (int hi = gaps[g], i = low + hi; i < ndeltids; i++)
+		for (int hi = gaps[g], i = hi; i < ndeltids; i++)
 		{
 			TM_IndexDelete d = deltids[i];
 			int			j = i;
