@@ -14,6 +14,7 @@ llvmjit_sources += files(
   'llvmjit_error.cpp',
   'llvmjit_inline.cpp',
   'llvmjit_wrap.cpp',
+  'SectionMemoryManager.cpp',
 )
 
 # Code generation
