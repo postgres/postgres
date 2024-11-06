@@ -14,6 +14,7 @@
 #include "postgres.h"
 
 #include "jit/llvmjit.h"
+#include "jit/llvmjit_backport.h"
 #include "jit/llvmjit_emit.h"
 
 #include "miscadmin.h"
@@ -1320,8 +1321,13 @@ llvm_log_jit_error(void *ctx, LLVMErrorRef error)
 static LLVMOrcObjectLayerRef
 llvm_create_object_layer(void *Ctx, LLVMOrcExecutionSessionRef ES, const char *Triple)
 {
+#ifdef USE_LLVM_BACKPORT_SECTION_MEMORY_MANAGER
 	LLVMOrcObjectLayerRef objlayer =
-	LLVMOrcCreateRTDyldObjectLinkingLayerWithSectionMemoryManager(ES);
+		LLVMOrcCreateRTDyldObjectLinkingLayerWithSafeSectionMemoryManager(ES);
+#else
+	LLVMOrcObjectLayerRef objlayer =
+		LLVMOrcCreateRTDyldObjectLinkingLayerWithSectionMemoryManager(ES);
+#endif
 
 #if defined(HAVE_DECL_LLVMCREATEGDBREGISTRATIONLISTENER) && HAVE_DECL_LLVMCREATEGDBREGISTRATIONLISTENER
 	if (jit_debugging_support)
