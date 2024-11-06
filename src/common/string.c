@@ -22,7 +22,6 @@
 #endif
 
 #include "common/string.h"
-#include "lib/stringinfo.h"
 
 
 /*

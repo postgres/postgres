@@ -16,7 +16,6 @@
 #include "fe_utils/option_utils.h"
 #include "fe_utils/query_utils.h"
 #include "fe_utils/simple_list.h"
-#include "fe_utils/string_utils.h"
 
 
 static void cluster_one_database(const ConnParams *cparams, const char *table,

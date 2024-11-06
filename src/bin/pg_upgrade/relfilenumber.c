@@ -11,8 +11,6 @@
 
 #include <sys/stat.h>
 
-#include "access/transam.h"
-#include "catalog/pg_class_d.h"
 #include "pg_upgrade.h"
 
 static void transfer_single_new_db(FileNameMap *maps, int size, char *old_tablespace);

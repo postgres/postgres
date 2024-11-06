@@ -11,9 +11,7 @@
 
 #include "catalog/pg_authid_d.h"
 #include "catalog/pg_class_d.h"
-#include "catalog/pg_collation.h"
 #include "fe_utils/string_utils.h"
-#include "mb/pg_wchar.h"
 #include "pg_upgrade.h"
 
 static void check_new_cluster_is_empty(void);

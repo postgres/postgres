@@ -13,7 +13,6 @@
  */
 #include "postgres_fe.h"
 
-#include "common/fe_memutils.h"
 #include "common/logging.h"
 #include "common/string.h"
 #include "filter.h"

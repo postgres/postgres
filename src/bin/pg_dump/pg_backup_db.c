@@ -19,8 +19,6 @@
 
 #include "common/connect.h"
 #include "common/string.h"
-#include "dumputils.h"
-#include "fe_utils/string_utils.h"
 #include "parallel.h"
 #include "pg_backup_archiver.h"
 #include "pg_backup_db.h"

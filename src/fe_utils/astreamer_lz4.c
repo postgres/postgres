@@ -21,9 +21,7 @@
 #include <lz4frame.h>
 #endif
 
-#include "common/file_perm.h"
 #include "common/logging.h"
-#include "common/string.h"
 #include "fe_utils/astreamer.h"
 
 #ifdef USE_LZ4

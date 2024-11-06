@@ -63,7 +63,9 @@
 #include "fe_utils/string_utils.h"
 #include "parallel.h"
 #include "pg_backup_utils.h"
+#ifdef WIN32
 #include "port/pg_bswap.h"
+#endif
 
 /* Mnemonic macros for indexing the fd array returned by pipe(2) */
 #define PIPE_READ							0

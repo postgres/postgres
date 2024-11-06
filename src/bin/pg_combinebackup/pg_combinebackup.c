@@ -25,12 +25,12 @@
 #endif
 
 #include "backup_label.h"
-#include "common/blkreftable.h"
 #include "common/checksum_helper.h"
 #include "common/controldata_utils.h"
 #include "common/file_perm.h"
 #include "common/file_utils.h"
 #include "common/logging.h"
+#include "common/relpath.h"
 #include "copy_file.h"
 #include "fe_utils/option_utils.h"
 #include "getopt_long.h"

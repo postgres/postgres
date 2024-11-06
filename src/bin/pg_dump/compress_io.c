@@ -70,7 +70,6 @@
 #include "compress_lz4.h"
 #include "compress_none.h"
 #include "compress_zstd.h"
-#include "pg_backup_utils.h"
 
 /*----------------------
  * Generic functions

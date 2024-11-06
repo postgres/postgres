@@ -11,7 +11,6 @@
 
 #include "catalog/pg_type_d.h"
 #include "common/connect.h"
-#include "datapagemap.h"
 #include "file_ops.h"
 #include "filemap.h"
 #include "lib/stringinfo.h"

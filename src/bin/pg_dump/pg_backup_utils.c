@@ -13,7 +13,9 @@
  */
 #include "postgres_fe.h"
 
+#ifdef WIN32
 #include "parallel.h"
+#endif
 #include "pg_backup_utils.h"
 
 /* Globals exported by this file */

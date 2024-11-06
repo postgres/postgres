@@ -27,7 +27,6 @@
 #include "fe_utils/print.h"
 #include "fe_utils/string_utils.h"
 #include "settings.h"
-#include "variables.h"
 
 static const char *map_typename_pattern(const char *pattern);
 static bool describeOneTableDetails(const char *schemaname,

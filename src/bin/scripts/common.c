@@ -21,7 +21,6 @@
 #include "common/connect.h"
 #include "common/logging.h"
 #include "common/string.h"
-#include "fe_utils/cancel.h"
 #include "fe_utils/query_utils.h"
 #include "fe_utils/string_utils.h"
 

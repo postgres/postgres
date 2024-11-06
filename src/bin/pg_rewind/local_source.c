@@ -12,10 +12,8 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-#include "datapagemap.h"
+#include "common/logging.h"
 #include "file_ops.h"
-#include "filemap.h"
-#include "pg_rewind.h"
 #include "rewind_source.h"
 
 typedef struct

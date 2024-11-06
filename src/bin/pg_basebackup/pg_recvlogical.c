@@ -18,8 +18,6 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include "access/xlog_internal.h"
-#include "common/fe_memutils.h"
 #include "common/file_perm.h"
 #include "common/logging.h"
 #include "fe_utils/option_utils.h"

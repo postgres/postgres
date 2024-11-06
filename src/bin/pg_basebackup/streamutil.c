@@ -19,14 +19,12 @@
 
 #include "access/xlog_internal.h"
 #include "common/connect.h"
-#include "common/fe_memutils.h"
 #include "common/file_perm.h"
 #include "common/logging.h"
 #include "common/string.h"
 #include "datatype/timestamp.h"
 #include "port/pg_bswap.h"
 #include "pqexpbuffer.h"
-#include "receivelog.h"
 #include "streamutil.h"
 
 #define ERRCODE_DUPLICATE_OBJECT  "42710"

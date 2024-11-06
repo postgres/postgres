@@ -45,7 +45,6 @@
 #include <termios.h>
 #endif
 
-#include "dumputils.h"
 #include "fe_utils/option_utils.h"
 #include "filter.h"
 #include "getopt_long.h"

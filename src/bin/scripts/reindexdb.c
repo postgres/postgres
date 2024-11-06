@@ -15,7 +15,6 @@
 
 #include "catalog/pg_class_d.h"
 #include "common.h"
-#include "common/connect.h"
 #include "common/logging.h"
 #include "fe_utils/cancel.h"
 #include "fe_utils/option_utils.h"

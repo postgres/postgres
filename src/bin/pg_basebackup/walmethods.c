@@ -11,6 +11,7 @@
 
 #include "postgres_fe.h"
 
+#include <fcntl.h>
 #include <sys/stat.h>
 #include <time.h>
 #include <unistd.h>
@@ -26,8 +27,7 @@
 #include "common/file_utils.h"
 #include "common/logging.h"
 #include "pgtar.h"
-#include "receivelog.h"
-#include "streamutil.h"
+#include "walmethods.h"
 
 /* Size of zlib buffer for .tar.gz */
 #define ZLIB_OUT_SIZE 4096

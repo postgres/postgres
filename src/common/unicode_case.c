@@ -17,7 +17,6 @@
 
 #include "common/unicode_case.h"
 #include "common/unicode_case_table.h"
-#include "common/unicode_category.h"
 #include "mb/pg_wchar.h"
 
 static const pg_case_map *find_case_map(pg_wchar ucs);

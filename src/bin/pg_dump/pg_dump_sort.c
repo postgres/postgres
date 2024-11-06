@@ -18,7 +18,6 @@
 #include "catalog/pg_class_d.h"
 #include "common/int.h"
 #include "lib/binaryheap.h"
-#include "pg_backup_archiver.h"
 #include "pg_backup_utils.h"
 #include "pg_dump.h"
 

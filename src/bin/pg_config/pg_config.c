@@ -25,7 +25,6 @@
 #include "postgres_fe.h"
 
 #include "common/config_info.h"
-#include "port.h"
 
 static const char *progname;
 

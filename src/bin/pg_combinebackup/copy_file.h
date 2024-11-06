@@ -13,7 +13,6 @@
 
 #include "c.h"
 #include "common/checksum_helper.h"
-#include "common/file_utils.h"
 
 /*
  * Enumeration to denote copy modes.

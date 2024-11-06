@@ -19,7 +19,6 @@
 #include <unistd.h>
 #include <signal.h>
 
-#include "access/xlogdefs.h"
 #include "common/logging.h"
 #include "common/pg_prng.h"
 #include "getopt_long.h"
