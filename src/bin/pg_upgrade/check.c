@@ -16,7 +16,7 @@
 
 static void check_new_cluster_is_empty(void);
 static void check_is_install_user(ClusterInfo *cluster);
-static void check_proper_datallowconn(ClusterInfo *cluster);
+static void check_for_connection_status(ClusterInfo *cluster);
 static void check_for_prepared_transactions(ClusterInfo *cluster);
 static void check_for_isn_and_int8_passing_mismatch(ClusterInfo *cluster);
 static void check_for_user_defined_postfix_ops(ClusterInfo *cluster);
@@ -591,6 +591,12 @@ check_and_dump_old_cluster(void)
 		start_postmaster(&old_cluster, true);
 
 	/*
+	 * First check that all databases allow connections since we'll otherwise
+	 * fail in later stages.
+	 */
+	check_for_connection_status(&old_cluster);
+
+	/*
 	 * Extract a list of databases, tables, and logical replication slots from
 	 * the old cluster.
 	 */
@@ -605,7 +611,6 @@ check_and_dump_old_cluster(void)
 	 * Check for various failure cases
 	 */
 	check_is_install_user(&old_cluster);
-	check_proper_datallowconn(&old_cluster);
 	check_for_prepared_transactions(&old_cluster);
 	check_for_isn_and_int8_passing_mismatch(&old_cluster);
 
@@ -1087,14 +1092,14 @@ check_is_install_user(ClusterInfo *cluster)
 
 
 /*
- *	check_proper_datallowconn
+ *	check_for_connection_status
  *
  *	Ensure that all non-template0 databases allow connections since they
  *	otherwise won't be restored; and that template0 explicitly doesn't allow
  *	connections since it would make pg_dumpall --globals restore fail.
  */
 static void
-check_proper_datallowconn(ClusterInfo *cluster)
+check_for_connection_status(ClusterInfo *cluster)
 {
 	int			dbnum;
 	PGconn	   *conn_template1;
@@ -1102,6 +1107,7 @@ check_proper_datallowconn(ClusterInfo *cluster)
 	int			ntups;
 	int			i_datname;
 	int			i_datallowconn;
+	int			i_datconnlimit;
 	FILE	   *script = NULL;
 	char		output_path[MAXPGPATH];
 
@@ -1109,23 +1115,25 @@ check_proper_datallowconn(ClusterInfo *cluster)
 
 	snprintf(output_path, sizeof(output_path), "%s/%s",
 			 log_opts.basedir,
-			 "databases_with_datallowconn_false.txt");
+			 "databases_cannot_connect_to.txt");
 
 	conn_template1 = connectToServer(cluster, "template1");
 
 	/* get database names */
 	dbres = executeQueryOrDie(conn_template1,
-							  "SELECT	datname, datallowconn "
+							  "SELECT	datname, datallowconn, datconnlimit "
 							  "FROM	pg_catalog.pg_database");
 
 	i_datname = PQfnumber(dbres, "datname");
 	i_datallowconn = PQfnumber(dbres, "datallowconn");
+	i_datconnlimit = PQfnumber(dbres, "datconnlimit");
 
 	ntups = PQntuples(dbres);
 	for (dbnum = 0; dbnum < ntups; dbnum++)
 	{
 		char	   *datname = PQgetvalue(dbres, dbnum, i_datname);
 		char	   *datallowconn = PQgetvalue(dbres, dbnum, i_datallowconn);
+		char	   *datconnlimit = PQgetvalue(dbres, dbnum, i_datconnlimit);
 
 		if (strcmp(datname, "template0") == 0)
 		{
@@ -1137,10 +1145,11 @@ check_proper_datallowconn(ClusterInfo *cluster)
 		else
 		{
 			/*
-			 * avoid datallowconn == false databases from being skipped on
-			 * restore
+			 * Avoid datallowconn == false databases from being skipped on
+			 * restore, and ensure that no databases are marked invalid with
+			 * datconnlimit == -2.
 			 */
-			if (strcmp(datallowconn, "f") == 0)
+			if ((strcmp(datallowconn, "f") == 0) || strcmp(datconnlimit, "-2") == 0)
 			{
 				if (script == NULL && (script = fopen_priv(output_path, "w")) == NULL)
 					pg_fatal("could not open file \"%s\": %m", output_path);
@@ -1159,11 +1168,11 @@ check_proper_datallowconn(ClusterInfo *cluster)
 		fclose(script);
 		pg_log(PG_REPORT, "fatal");
 		pg_fatal("All non-template0 databases must allow connections, i.e. their\n"
-				 "pg_database.datallowconn must be true.  Your installation contains\n"
-				 "non-template0 databases with their pg_database.datallowconn set to\n"
-				 "false.  Consider allowing connection for all non-template0 databases\n"
-				 "or drop the databases which do not allow connections.  A list of\n"
-				 "databases with the problem is in the file:\n"
+				 "pg_database.datallowconn must be true and pg_database.datconnlimit\n"
+				 "must not be -2.  Your installation contains non-template0 databases\n"
+				 "which cannot be connected to.  Consider allowing connection for all\n"
+				 "non-template0 databases or drop the databases which do not allow\n"
+				 "connections.  A list of databases with the problem is in the file:\n"
 				 "    %s", output_path);
 	}
 	else
