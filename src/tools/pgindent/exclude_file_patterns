@@ -4,8 +4,9 @@
 src/include/storage/s_lock\.h$
 src/include/port/atomics/
 #
-# This contains C++ constructs that confuse pgindent.
+# These contains C++ constructs that confuse pgindent.
 src/include/jit/llvmjit\.h$
+src/include/jit/SectionMemoryManager\.h$
 #
 # These are generated files with incomplete code fragments that
 # confuse pgindent.
