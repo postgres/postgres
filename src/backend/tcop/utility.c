@@ -535,6 +535,9 @@ ProcessUtility(PlannedStmt *pstmt,
  * event trigger code not be invoked when doing START TRANSACTION for
  * example, because we might need to refresh the event trigger cache,
  * which requires being in a valid transaction.
+ *
+ * When adding or moving utility commands, check that the documentation in
+ * event-trigger.sgml is kept up to date.
  */
 void
 standard_ProcessUtility(PlannedStmt *pstmt,

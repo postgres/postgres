@@ -26,7 +26,7 @@
 
    <para>
      An event trigger fires whenever the event with which it is associated
-     occurs in the database in which it is defined. Currently, the only
+     occurs in the database in which it is defined. Currently, the
      supported events are
      <literal>login</literal>,
      <literal>ddl_command_start</literal>,
@@ -35,6 +35,9 @@
      and <literal>sql_drop</literal>.
      Support for additional events may be added in future releases.
    </para>
+
+   <sect2 id="event-trigger-login">
+    <title>login</title>
 
    <para>
      The <literal>login</literal> event occurs when an authenticated user logs
@@ -58,26 +61,58 @@
      For an example on how to use the <literal>login</literal> event trigger,
      see <xref linkend="event-trigger-database-login-example"/>.
    </para>
+   </sect2>
+
+   <sect2 id="event-trigger-ddl_command_start">
+    <title>ddl_command_start</title>
 
    <para>
      The <literal>ddl_command_start</literal> event occurs just before the
-     execution of a <literal>CREATE</literal>, <literal>ALTER</literal>, <literal>DROP</literal>,
-     <literal>SECURITY LABEL</literal>,
-     <literal>COMMENT</literal>, <literal>GRANT</literal> or <literal>REVOKE</literal>
-     command.  No check whether the affected object exists or doesn't exist is
-     performed before the event trigger fires.
-     As an exception, however, this event does not occur for
-     DDL commands targeting shared objects &mdash; databases, roles, and tablespaces
-     &mdash; or for commands targeting event triggers themselves.  The event trigger
-     mechanism does not support these object types.
-     <literal>ddl_command_start</literal> also occurs just before the execution of a
-     <literal>SELECT INTO</literal> command, since this is equivalent to
-     <literal>CREATE TABLE AS</literal>.
+     execution of a DDL command.  DDL commands in this context are:
+     <itemizedlist>
+      <listitem><para><literal>CREATE</literal></para></listitem>
+      <listitem><para><literal>ALTER</literal></para></listitem>
+      <listitem><para><literal>DROP</literal></para></listitem>
+      <listitem><para><literal>COMMENT</literal></para></listitem>
+      <listitem><para><literal>GRANT</literal></para></listitem>
+      <listitem><para><literal>IMPORT FOREIGN SCHEMA</literal></para></listitem>
+      <listitem><para><literal>REINDEX</literal></para></listitem>
+      <listitem><para><literal>REFRESH MATERIALIZED VIEW</literal></para></listitem>
+      <listitem><para><literal>REVOKE</literal></para></listitem>
+      <listitem><para><literal>SECURITY LABEL</literal></para></listitem>
+     </itemizedlist>
+     <literal>ddl_command_start</literal> also occurs just before the
+     execution of a <literal>SELECT INTO</literal> command, since this is
+     equivalent to <literal>CREATE TABLE AS</literal>.
    </para>
 
    <para>
+     As an exception, this event does not occur for DDL commands targeting
+     shared objects:
+     <itemizedlist>
+      <listitem><para>databases</para></listitem>
+      <listitem><para>roles (role definitions and role memberships)</para></listitem>
+      <listitem><para>tablespaces</para></listitem>
+      <listitem><para>parameter privileges</para></listitem>
+      <listitem><para><command>ALTER SYSTEM</command></para></listitem>
+     </itemizedlist>
+     This event also does not occur for commands targeting event triggers
+     themselves.
+   </para>
+
+   <para>
+     No check whether the affected object exists or doesn't exist is performed
+     before the event trigger fires.
+   </para>
+   </sect2>
+
+   <sect2 id="event-trigger-ddl_command_end">
+    <title>ddl_command_end</title>
+
+   <para>
     The <literal>ddl_command_end</literal> event occurs just after the execution of
-    this same set of commands.  To obtain more details on the <acronym>DDL</acronym>
+    the same set of commands as <literal>ddl_command_start</literal>.  To
+    obtain more details on the <acronym>DDL</acronym>
     operations that took place, use the set-returning function
     <literal>pg_event_trigger_ddl_commands()</literal> from the
     <literal>ddl_command_end</literal> event trigger code (see
@@ -85,17 +120,31 @@
     after the actions have taken place (but before the transaction commits),
     and thus the system catalogs can be read as already changed.
    </para>
+   </sect2>
+
+   <sect2 id="event-trigger-sql_drop">
+    <title>sql_drop</title>
 
    <para>
     The <literal>sql_drop</literal> event occurs just before the
     <literal>ddl_command_end</literal> event trigger for any operation that drops
-    database objects.  To list the objects that have been dropped, use the
+    database objects.  Note that besides the obvious <literal>DROP</literal>
+    commands, some <literal>ALTER</literal> commands can also trigger an
+    <literal>sql_drop</literal> event.
+   </para>
+
+   <para>
+    To list the objects that have been dropped, use the
     set-returning function <literal>pg_event_trigger_dropped_objects()</literal> from the
     <literal>sql_drop</literal> event trigger code (see
     <xref linkend="functions-event-triggers"/>). Note that
     the trigger is executed after the objects have been deleted from the
     system catalogs, so it's not possible to look them up anymore.
    </para>
+   </sect2>
+
+   <sect2 id="event-trigger-table_rewrite">
+    <title>table_rewrite</title>
 
    <para>
     The <literal>table_rewrite</literal> event occurs just before a table is
@@ -105,11 +154,15 @@
     like <literal>CLUSTER</literal> and <literal>VACUUM</literal>,
     the <literal>table_rewrite</literal> event is not triggered by them.
     To find the OID of the table that was rewritten, use the function
-    <literal>pg_event_trigger_table_rewrite_oid()</literal> (see
-    <xref linkend="functions-event-triggers"/>). To discover the reason(s)
-    for the rewrite, use the function
-    <literal>pg_event_trigger_table_rewrite_reason()</literal>.
+    <literal>pg_event_trigger_table_rewrite_oid()</literal>, to discover the
+    reason(s) for the rewrite, use the function
+    <literal>pg_event_trigger_table_rewrite_reason()</literal> (see <xref
+    linkend="functions-event-triggers"/>).
    </para>
+   </sect2>
+
+   <sect2 id="event-trigger-aborted-transactions">
+    <title>Event Triggers in Aborted Transactions</title>
 
    <para>
      Event triggers (like other functions) cannot be executed in an aborted
@@ -122,11 +175,10 @@
      back, just as they would be in any other case where the containing
      transaction aborts.
    </para>
+   </sect2>
 
-   <para>
-     For a complete list of commands supported by the event trigger mechanism,
-     see <xref linkend="event-trigger-matrix"/>.
-   </para>
+   <sect2 id="event-trigger-creating">
+    <title>Creating Event Triggers</title>
 
    <para>
      Event triggers are created using the command <xref linkend="sql-createeventtrigger"/>.
@@ -148,935 +200,7 @@
      to intercept. A common use of such triggers is to restrict the range of
      DDL operations which users may perform.
    </para>
-  </sect1>
-
-  <sect1 id="event-trigger-matrix">
-   <title>Event Trigger Firing Matrix</title>
-
-   <para>
-     <xref linkend="event-trigger-by-command-tag"/> lists all commands
-     for which event triggers are supported.
-   </para>
-
-   <table id="event-trigger-by-command-tag">
-     <title>Event Trigger Support by Command Tag</title>
-     <tgroup cols="6">
-      <colspec colname="col1" colwidth="2*"/>
-      <colspec colname="col2" colwidth="1*"/>
-      <colspec colname="col3" colwidth="1*"/>
-      <colspec colname="col4" colwidth="1*"/>
-      <colspec colname="col5" colwidth="1*"/>
-      <colspec colname="col6" colwidth="1*"/>
-      <thead>
-       <row>
-        <entry>Command Tag</entry>
-        <entry><literal>ddl_&zwsp;command_&zwsp;start</literal></entry>
-        <entry><literal>ddl_&zwsp;command_&zwsp;end</literal></entry>
-        <entry><literal>sql_&zwsp;drop</literal></entry>
-        <entry><literal>table_&zwsp;rewrite</literal></entry>
-        <entry>Notes</entry>
-       </row>
-      </thead>
-      <tbody>
-       <row>
-        <entry align="left"><literal>ALTER AGGREGATE</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>ALTER COLLATION</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>ALTER CONVERSION</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>ALTER DOMAIN</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>ALTER DEFAULT PRIVILEGES</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>ALTER EXTENSION</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>ALTER FOREIGN DATA WRAPPER</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>ALTER FOREIGN TABLE</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>ALTER FUNCTION</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>ALTER LANGUAGE</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>ALTER LARGE OBJECT</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>ALTER MATERIALIZED VIEW</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>ALTER OPERATOR</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>ALTER OPERATOR CLASS</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>ALTER OPERATOR FAMILY</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>ALTER POLICY</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>ALTER PROCEDURE</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>ALTER PUBLICATION</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>ALTER ROUTINE</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>ALTER SCHEMA</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>ALTER SEQUENCE</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>ALTER SERVER</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>ALTER STATISTICS</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>ALTER SUBSCRIPTION</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>ALTER TABLE</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>ALTER TEXT SEARCH CONFIGURATION</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>ALTER TEXT SEARCH DICTIONARY</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>ALTER TEXT SEARCH PARSER</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>ALTER TEXT SEARCH TEMPLATE</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>ALTER TRIGGER</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>ALTER TYPE</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>ALTER USER MAPPING</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>ALTER VIEW</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>COMMENT</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left">Only for local objects</entry>
-       </row>
-       <row>
-        <entry align="left"><literal>CREATE ACCESS METHOD</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>CREATE AGGREGATE</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>CREATE CAST</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>CREATE COLLATION</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>CREATE CONVERSION</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>CREATE DOMAIN</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>CREATE EXTENSION</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>CREATE FOREIGN DATA WRAPPER</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>CREATE FOREIGN TABLE</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>CREATE FUNCTION</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>CREATE INDEX</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>CREATE LANGUAGE</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>CREATE MATERIALIZED VIEW</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>CREATE OPERATOR</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>CREATE OPERATOR CLASS</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>CREATE OPERATOR FAMILY</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>CREATE POLICY</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>CREATE PROCEDURE</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>CREATE PUBLICATION</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>CREATE RULE</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>CREATE SCHEMA</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>CREATE SEQUENCE</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>CREATE SERVER</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>CREATE STATISTICS</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>CREATE SUBSCRIPTION</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>CREATE TABLE</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>CREATE TABLE AS</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>CREATE TEXT SEARCH CONFIGURATION</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>CREATE TEXT SEARCH DICTIONARY</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>CREATE TEXT SEARCH PARSER</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>CREATE TEXT SEARCH TEMPLATE</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>CREATE TRIGGER</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>CREATE TYPE</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>CREATE USER MAPPING</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>CREATE VIEW</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>DROP ACCESS METHOD</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>DROP AGGREGATE</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>DROP CAST</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>DROP COLLATION</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>DROP CONVERSION</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>DROP DOMAIN</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>DROP EXTENSION</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>DROP FOREIGN DATA WRAPPER</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>DROP FOREIGN TABLE</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>DROP FUNCTION</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>DROP INDEX</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>DROP LANGUAGE</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>DROP MATERIALIZED VIEW</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>DROP OPERATOR</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>DROP OPERATOR CLASS</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>DROP OPERATOR FAMILY</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>DROP OWNED</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>DROP POLICY</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>DROP PROCEDURE</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>DROP PUBLICATION</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>DROP ROUTINE</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>DROP RULE</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>DROP SCHEMA</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>DROP SEQUENCE</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>DROP SERVER</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>DROP STATISTICS</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>DROP SUBSCRIPTION</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>DROP TABLE</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>DROP TEXT SEARCH CONFIGURATION</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>DROP TEXT SEARCH DICTIONARY</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>DROP TEXT SEARCH PARSER</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>DROP TEXT SEARCH TEMPLATE</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>DROP TRIGGER</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>DROP TYPE</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>DROP USER MAPPING</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>DROP VIEW</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>GRANT</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left">Only for local objects</entry>
-       </row>
-       <row>
-        <entry align="left"><literal>IMPORT FOREIGN SCHEMA</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>REFRESH MATERIALIZED VIEW</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>REINDEX</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-       <row>
-        <entry align="left"><literal>REVOKE</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left">Only for local objects</entry>
-       </row>
-       <row>
-        <entry align="left"><literal>SECURITY LABEL</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left">Only for local objects</entry>
-       </row>
-       <row>
-        <entry align="left"><literal>SELECT INTO</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>X</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="center"><literal>-</literal></entry>
-        <entry align="left"></entry>
-       </row>
-      </tbody>
-     </tgroup>
-   </table>
+   </sect2>
   </sect1>
 
   <sect1 id="event-trigger-interface">

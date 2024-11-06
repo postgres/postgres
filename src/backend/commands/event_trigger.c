@@ -1123,7 +1123,7 @@ EventTriggerInvoke(List *fn_oid_list, EventTriggerData *trigdata)
 /*
  * Do event triggers support this object type?
  *
- * See also event trigger support matrix in event-trigger.sgml.
+ * See also event trigger documentation in event-trigger.sgml.
  */
 bool
 EventTriggerSupportsObjectType(ObjectType obtype)
@@ -1147,7 +1147,7 @@ EventTriggerSupportsObjectType(ObjectType obtype)
 /*
  * Do event triggers support this object class?
  *
- * See also event trigger support matrix in event-trigger.sgml.
+ * See also event trigger documentation in event-trigger.sgml.
  */
 bool
 EventTriggerSupportsObject(const ObjectAddress *object)
