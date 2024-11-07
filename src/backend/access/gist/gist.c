@@ -179,8 +179,7 @@ gistinsert(Relation r, Datum *values, bool *isnull,
 
 	oldCxt = MemoryContextSwitchTo(giststate->tempCxt);
 
-	itup = gistFormTuple(giststate, r,
-						 values, isnull, true /* size is currently bogus */ );
+	itup = gistFormTuple(giststate, r, values, isnull, true);
 	itup->t_tid = *ht_ctid;
 
 	gistdoinsert(r, itup, 0, giststate, heapRel, false);
