@@ -733,7 +733,7 @@ AC_DEFUN([PGAC_AVX512_POPCNT_INTRINSICS],
 AC_CACHE_CHECK([for _mm512_popcnt_epi64], [Ac_cachevar],
 [AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <immintrin.h>
     #if defined(__has_attribute) && __has_attribute (target)
-    __attribute__((target("avx512vpopcntdq","avx512bw")))
+    __attribute__((target("avx512vpopcntdq,avx512bw")))
     #endif
     static int popcount_test(void)
     {

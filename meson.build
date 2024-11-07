@@ -2184,7 +2184,7 @@ if host_cpu == 'x86_64'
 #include <immintrin.h>
 
 #if defined(__has_attribute) && __has_attribute (target)
-__attribute__((target("avx512vpopcntdq","avx512bw")))
+__attribute__((target("avx512vpopcntdq,avx512bw")))
 #endif
 int main(void)
 {

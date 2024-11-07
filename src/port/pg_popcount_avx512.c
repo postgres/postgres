@@ -106,7 +106,7 @@ pg_popcount_avx512_available(void)
  * pg_popcount_avx512
  *		Returns the number of 1-bits in buf
  */
-pg_attribute_target("avx512vpopcntdq", "avx512bw")
+pg_attribute_target("avx512vpopcntdq,avx512bw")
 uint64
 pg_popcount_avx512(const char *buf, int bytes)
 {
@@ -162,7 +162,7 @@ pg_popcount_avx512(const char *buf, int bytes)
  * pg_popcount_masked_avx512
  *		Returns the number of 1-bits in buf after applying the mask to each byte
  */
-pg_attribute_target("avx512vpopcntdq", "avx512bw")
+pg_attribute_target("avx512vpopcntdq,avx512bw")
 uint64
 pg_popcount_masked_avx512(const char *buf, int bytes, bits8 mask)
 {
