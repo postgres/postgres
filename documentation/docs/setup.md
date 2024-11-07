@@ -21,7 +21,7 @@ Load the `pg_tde` at the start time. The extension requires additional shared me
     * On RHEL and derivatives
 
        ```sh
-       sudo systemctl restart postgresql-16
+       sudo systemctl restart postgresql-17
        ```
 
 3. Create the extension using the [CREATE EXTENSION](https://www.postgresql.org/docs/current/sql-createextension.html) command. You must have the privileges of a superuser or a database owner to use this command. Connect to `psql` as a superuser for a database and run the following command:
@@ -44,7 +44,7 @@ Load the `pg_tde` at the start time. The extension requires additional shared me
 
 1. Set up a key provider for the database where you have enabled the extension
 
-    === "With HaschiCorp Vault"
+    === "With HashiCorp Vault"
 
         ```sql
         SELECT pg_tde_add_key_provider_vault_v2('provider-name',:'secret_token','url','mount','ca_path');
@@ -106,7 +106,7 @@ After you [enabled `pg_tde`](#enable-extension) and started the Percona Server f
 
    Set up the key provider for WAL encryption
 
-   === "With HaschiCorp Vault"
+   === "With HashiCorp Vault"
 
         ```sql
         SELECT pg_tde_add_key_provider_vault_v2('PG_TDE_GLOBAL','provider-name',:'secret_token','url','mount','ca_path');
