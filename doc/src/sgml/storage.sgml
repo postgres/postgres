@@ -444,9 +444,7 @@ for storing <acronym>TOAST</acronym>-able columns on disk:
     <listitem>
      <para>
       <literal>PLAIN</literal> prevents either compression or
-      out-of-line storage; furthermore it disables use of single-byte headers
-      for varlena types.
-      This is the only possible strategy for
+      out-of-line storage.  This is the only possible strategy for
       columns of non-<acronym>TOAST</acronym>-able data types.
      </para>
     </listitem>

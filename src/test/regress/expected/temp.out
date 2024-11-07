@@ -113,6 +113,26 @@ SELECT * FROM temptest;
 ERROR:  relation "temptest" does not exist
 LINE 1: SELECT * FROM temptest;
                       ^
+-- Test it with a CHECK condition that produces a toasted pg_constraint entry
+BEGIN;
+do $$
+begin
+  execute format($cmd$
+    CREATE TEMP TABLE temptest (col text CHECK (col < %L)) ON COMMIT DROP
+  $cmd$,
+    (SELECT string_agg(g.i::text || ':' || random()::text, '|')
+     FROM generate_series(1, 100) g(i)));
+end$$;
+SELECT * FROM temptest;
+ col 
+-----
+(0 rows)
+
+COMMIT;
+SELECT * FROM temptest;
+ERROR:  relation "temptest" does not exist
+LINE 1: SELECT * FROM temptest;
+                      ^
 -- ON COMMIT is only allowed for TEMP
 CREATE TABLE temptest(col int) ON COMMIT DELETE ROWS;
 ERROR:  ON COMMIT can only be used on temporary tables

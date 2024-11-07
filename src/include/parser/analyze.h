@@ -35,6 +35,7 @@ extern Query *parse_sub_analyze(Node *parseTree, ParseState *parentParseState,
 extern Query *transformTopLevelStmt(ParseState *pstate, RawStmt *parseTree);
 extern Query *transformStmt(ParseState *pstate, Node *parseTree);
 
+extern bool stmt_requires_parse_analysis(RawStmt *parseTree);
 extern bool analyze_requires_snapshot(RawStmt *parseTree);
 
 extern const char *LCS_asString(LockClauseStrength strength);

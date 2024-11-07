@@ -1,14 +1,14 @@
 # Russian message translation file for pg_upgrade
 # Copyright (C) 2017 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# Alexander Lakhin <a.lakhin@postgrespro.ru>, 2017, 2018, 2019, 2020, 2021, 2022.
+# Alexander Lakhin <a.lakhin@postgrespro.ru>, 2017, 2018, 2019, 2020, 2021, 2022, 2023.
 # Maxim Yablokov <m.yablokov@postgrespro.ru>, 2021.
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_upgrade (PostgreSQL) 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2023-02-02 08:44+0300\n"
-"PO-Revision-Date: 2022-01-19 16:26+0300\n"
+"PO-Revision-Date: 2023-08-30 15:47+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -107,7 +107,7 @@ msgstr ""
 #: check.c:250
 #, c-format
 msgid "This utility can only upgrade to PostgreSQL version %s.\n"
-msgstr "Эта утилита может только повышать версию PostgreSQL до %s.\n"
+msgstr "Эта утилита может повышать версию PostgreSQL только до %s.\n"
 
 #: check.c:259
 #, c-format
@@ -265,7 +265,7 @@ msgid ""
 "template0 must not allow connections, i.e. its pg_database.datallowconn must "
 "be false\n"
 msgstr ""
-"База template0 не должна допускать подключения, то есть её свойство "
+"база template0 не должна допускать подключения, то есть её свойство "
 "pg_database.datallowconn должно быть false\n"
 
 #: check.c:767
@@ -517,7 +517,7 @@ msgstr "В целевом кластере не хватает необходи�
 #: controldata.c:563
 #, c-format
 msgid "  checkpoint next XID\n"
-msgstr "  следующий XID последней конт. точки\n"
+msgstr "  следующий XID конт. точки\n"
 
 # skip-rule: capital-letter-first
 #: controldata.c:566
@@ -1703,7 +1703,8 @@ msgstr "нехватка памяти\n"
 #: server.c:381
 #, c-format
 msgid "libpq environment variable %s has a non-local server value: %s\n"
-msgstr "в переменной окружения для libpq %s задано не локальное значение: %s\n"
+msgstr ""
+"в переменной окружения %s для libpq указан адрес не локального сервера: %s\n"
 
 #: tablespace.c:28
 #, c-format

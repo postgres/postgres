@@ -9141,7 +9141,8 @@ write_one_nondefault_variable(FILE *fp, struct config_generic *gconf)
 			{
 				struct config_string *conf = (struct config_string *) gconf;
 
-				fprintf(fp, "%s", *conf->variable);
+				if (*conf->variable)
+					fprintf(fp, "%s", *conf->variable);
 			}
 			break;
 

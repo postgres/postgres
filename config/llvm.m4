@@ -28,6 +28,7 @@ AC_DEFUN([PGAC_LLVM_SUPPORT],
   if echo $pgac_llvm_version | $AWK -F '.' '{ if ([$]1 >= 4 || ([$]1 == 3 && [$]2 >= 9)) exit 1; else exit 0;}';then
     AC_MSG_ERROR([$LLVM_CONFIG version is $pgac_llvm_version but at least 3.9 is required])
   fi
+  AC_MSG_NOTICE([using llvm $pgac_llvm_version])
 
   # need clang to create some bitcode files
   AC_ARG_VAR(CLANG, [path to clang compiler to generate bitcode])

@@ -149,6 +149,15 @@ where i8 in (row(123,456)::int8_tbl, '(4567890123456789,123)');
 select * from int8_tbl i8
 where i8 in (row(123,456)::int8_tbl, '(4567890123456789,123)');
 
+-- Check ability to select columns from an anonymous rowtype
+select (row(1, 2.0)).f1;
+select (row(1, 2.0)).f2;
+select (row(1, 2.0)).nosuch;  -- fail
+select (row(1, 2.0)).*;
+select (r).f1 from (select row(1, 2.0) as r) ss;
+select (r).f3 from (select row(1, 2.0) as r) ss;  -- fail
+select (r).* from (select row(1, 2.0) as r) ss;
+
 -- Check some corner cases involving empty rowtypes
 select ROW();
 select ROW() IS NULL;
@@ -441,6 +450,31 @@ with r(a,b) as
           (null,row(1,2)), (null,row(null,null)), (null,null) )
 select r, r is null as isnull, r is not null as isnotnull from r;
 
+--
+-- Check parsing of indirect references to composite values (bug #18077)
+--
+explain (verbose, costs off)
+with cte(c) as (select row(1, 2)),
+     cte2(c) as (select * from cte)
+select * from cte2 as t
+where (select * from (select c as c1) s
+       where (select (c1).f1 > 0)) is not null;
+
+with cte(c) as (select row(1, 2)),
+     cte2(c) as (select * from cte)
+select * from cte2 as t
+where (select * from (select c as c1) s
+       where (select (c1).f1 > 0)) is not null;
+
+-- Also check deparsing of such cases
+create view composite_v as
+with cte(c) as (select row(1, 2)),
+     cte2(c) as (select * from cte)
+select 1 as one from cte2 as t
+where (select * from (select c as c1) s
+       where (select (c1).f1 > 0)) is not null;
+select pg_get_viewdef('composite_v', true);
+drop view composite_v;
 
 --
 -- Tests for component access / FieldSelect

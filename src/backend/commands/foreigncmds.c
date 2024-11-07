@@ -472,7 +472,7 @@ static Oid
 lookup_fdw_handler_func(DefElem *handler)
 {
 	Oid			handlerOid;
-	Oid			funcargtypes[1];	/* dummy */
+	Oid			funcargtypes[1] = {0};	/* dummy */
 
 	if (handler == NULL || handler->arg == NULL)
 		return InvalidOid;

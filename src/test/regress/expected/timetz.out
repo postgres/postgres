@@ -144,3 +144,63 @@ ERROR:  operator does not exist: time with time zone + time with time zone
 LINE 1: SELECT f1 + time with time zone '00:01' AS "Illegal" FROM TI...
                   ^
 HINT:  No operator matches the given name and argument types. You might need to add explicit type casts.
+--
+-- Test timetz_zone, timetz_izone
+--
+BEGIN;
+SET LOCAL TimeZone TO 'UTC';
+CREATE VIEW timetz_local_view AS
+  SELECT f1 AS dat,
+       f1 AT TIME ZONE current_setting('TimeZone') AS dat_at_tz,
+       f1 AT TIME ZONE INTERVAL '00:00' AS dat_at_int
+  FROM TIMETZ_TBL
+  ORDER BY f1;
+SELECT pg_get_viewdef('timetz_local_view', true);
+                                pg_get_viewdef                                
+------------------------------------------------------------------------------
+  SELECT timetz_tbl.f1 AS dat,                                               +
+     timezone(current_setting('TimeZone'::text), timetz_tbl.f1) AS dat_at_tz,+
+     timezone('@ 0'::interval, timetz_tbl.f1) AS dat_at_int                  +
+    FROM timetz_tbl                                                          +
+   ORDER BY timetz_tbl.f1;
+(1 row)
+
+TABLE timetz_local_view;
+      dat       |   dat_at_tz    |   dat_at_int   
+----------------+----------------+----------------
+ 00:01:00-07    | 07:01:00+00    | 07:01:00+00
+ 01:00:00-07    | 08:00:00+00    | 08:00:00+00
+ 02:03:00-07    | 09:03:00+00    | 09:03:00+00
+ 08:08:00-04    | 12:08:00+00    | 12:08:00+00
+ 07:07:00-08    | 15:07:00+00    | 15:07:00+00
+ 11:59:00-07    | 18:59:00+00    | 18:59:00+00
+ 12:00:00-07    | 19:00:00+00    | 19:00:00+00
+ 12:01:00-07    | 19:01:00+00    | 19:01:00+00
+ 15:36:39-04    | 19:36:39+00    | 19:36:39+00
+ 15:36:39-05    | 20:36:39+00    | 20:36:39+00
+ 23:59:00-07    | 06:59:00+00    | 06:59:00+00
+ 23:59:59.99-07 | 06:59:59.99+00 | 06:59:59.99+00
+(12 rows)
+
+SELECT f1 AS dat,
+       f1 AT TIME ZONE 'UTC+10' AS dat_at_tz,
+       f1 AT TIME ZONE INTERVAL '-10:00' AS dat_at_int
+  FROM TIMETZ_TBL
+  ORDER BY f1;
+      dat       |   dat_at_tz    |   dat_at_int   
+----------------+----------------+----------------
+ 00:01:00-07    | 21:01:00-10    | 21:01:00-10
+ 01:00:00-07    | 22:00:00-10    | 22:00:00-10
+ 02:03:00-07    | 23:03:00-10    | 23:03:00-10
+ 08:08:00-04    | 02:08:00-10    | 02:08:00-10
+ 07:07:00-08    | 05:07:00-10    | 05:07:00-10
+ 11:59:00-07    | 08:59:00-10    | 08:59:00-10
+ 12:00:00-07    | 09:00:00-10    | 09:00:00-10
+ 12:01:00-07    | 09:01:00-10    | 09:01:00-10
+ 15:36:39-04    | 09:36:39-10    | 09:36:39-10
+ 15:36:39-05    | 10:36:39-10    | 10:36:39-10
+ 23:59:00-07    | 20:59:00-10    | 20:59:00-10
+ 23:59:59.99-07 | 20:59:59.99-10 | 20:59:59.99-10
+(12 rows)
+
+ROLLBACK;

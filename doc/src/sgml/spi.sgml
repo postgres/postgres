@@ -2083,6 +2083,19 @@ Portal SPI_cursor_find(const char * <parameter>name</parameter>)
    <symbol>NULL</symbol> if none was found
   </para>
  </refsect1>
+
+ <refsect1>
+  <title>Notes</title>
+
+  <para>
+   Beware that this function can return a <type>Portal</type> object
+   that does not have cursor-like properties; for example it might not
+   return tuples.  If you simply pass the <type>Portal</type> pointer
+   to other SPI functions, they can defend themselves against such
+   cases, but caution is appropriate when directly inspecting
+   the <type>Portal</type>.
+  </para>
+ </refsect1>
 </refentry>
 
 <!-- *********************************************** -->

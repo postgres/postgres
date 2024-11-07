@@ -344,3 +344,14 @@ $$ LANGUAGE plpythonu;
 \set SHOW_CONTEXT always
 
 SELECT notice_outerfunc();
+
+/* test error logged with an underlying exception that includes a detail
+ * string (bug #18070).
+ */
+CREATE FUNCTION python_error_detail() RETURNS SETOF text AS $$
+  plan = plpy.prepare("SELECT to_date('xy', 'DD') d")
+  for row in plpy.cursor(plan):
+    yield row['d']
+$$ LANGUAGE plpythonu;
+
+SELECT python_error_detail();

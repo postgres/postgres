@@ -269,10 +269,10 @@ should be visited too. When split inserts the downlink to the parent, it
 clears the F_FOLLOW_RIGHT flag in the child, and sets the NSN field in the
 child page header to match the LSN of the insertion on the parent. If the
 F_FOLLOW_RIGHT flag is not set, a scan compares the NSN on the child and the
-LSN it saw in the parent. If NSN < LSN, the scan looked at the parent page
-before the downlink was inserted, so it should follow the rightlink. Otherwise
-the scan saw the downlink in the parent page, and will/did follow that as
-usual.
+LSN it saw in the parent. If the child's NSN is greater than the LSN seen on
+the parent, the scan looked at the parent page before the downlink was
+inserted, so it should follow the rightlink. Otherwise the scan saw the
+downlink in the parent page, and will/did follow that as usual.
 
 A scan can't normally see a page with the F_FOLLOW_RIGHT flag set, because
 a page split keeps the child pages locked until the downlink has been inserted

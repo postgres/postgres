@@ -237,6 +237,18 @@ pgstatindex_impl(Relation rel, FunctionCallInfo fcinfo)
 				 errmsg("cannot access temporary tables of other sessions")));
 
 	/*
+	 * A !indisready index could lead to ERRCODE_DATA_CORRUPTED later, so exit
+	 * early.  We're capable of assessing an indisready&&!indisvalid index,
+	 * but the results could be confusing.  For example, the index's size
+	 * could be too low for a valid index of the table.
+	 */
+	if (!rel->rd_index->indisvalid)
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("index \"%s\" is not valid",
+						RelationGetRelationName(rel))));
+
+	/*
 	 * Read metapage
 	 */
 	{
@@ -537,6 +549,13 @@ pgstatginindex_internal(Oid relid, FunctionCallInfo fcinfo)
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("cannot access temporary indexes of other sessions")));
 
+	/* see pgstatindex_impl */
+	if (!rel->rd_index->indisvalid)
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("index \"%s\" is not valid",
+						RelationGetRelationName(rel))));
+
 	/*
 	 * Read metapage
 	 */
@@ -613,6 +632,13 @@ pgstathashindex(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("cannot access temporary indexes of other sessions")));
+
+	/* see pgstatindex_impl */
+	if (!rel->rd_index->indisvalid)
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("index \"%s\" is not valid",
+						RelationGetRelationName(rel))));
 
 	/* Get the information we need from the metapage. */
 	memset(&stats, 0, sizeof(stats));

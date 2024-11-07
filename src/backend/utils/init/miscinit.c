@@ -700,6 +700,14 @@ InitializeSessionUserIdStandalone(void)
 	AuthenticatedUserIsSuperuser = true;
 
 	SetSessionUserId(BOOTSTRAP_SUPERUSERID, true);
+
+	/*
+	 * XXX This should set SetConfigOption("session_authorization"), too.
+	 * Since we don't, C code will get NULL, and current_setting() will get an
+	 * empty string.
+	 */
+	SetConfigOption("is_superuser", "on",
+					PGC_INTERNAL, PGC_S_DYNAMIC_DEFAULT);
 }
 
 

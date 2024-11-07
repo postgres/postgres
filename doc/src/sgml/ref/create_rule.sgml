@@ -59,15 +59,17 @@ CREATE [ OR REPLACE ] RULE <replaceable class="parameter">name</replaceable> AS 
   </para>
 
   <para>
-   Presently, <literal>ON SELECT</literal> rules must be unconditional
-   <literal>INSTEAD</literal> rules and must have actions that consist
-   of a single <command>SELECT</command> command.  Thus, an
-   <literal>ON SELECT</literal> rule effectively turns the table into
-   a view, whose visible contents are the rows returned by the rule's
-   <command>SELECT</command> command rather than whatever had been
-   stored in the table (if anything).  It is considered better style
-   to write a <command>CREATE VIEW</command> command than to create a
-   real table and define an <literal>ON SELECT</literal> rule for it.
+   Presently, <literal>ON SELECT</literal> rules can only be attached
+   to views.  (Attaching one to a table converts the table into a view.)
+   Such a rule must be named <literal>"_RETURN"</literal>,
+   must be an unconditional <literal>INSTEAD</literal> rule, and must have
+   an action that consists of a single <command>SELECT</command> command.
+   This command defines the visible contents of the view.  (The view
+   itself is basically a dummy table with no storage.)  It's best to
+   regard such a rule as an implementation detail.  While a view can be
+   redefined via <literal>CREATE OR REPLACE RULE "_RETURN" AS
+   ...</literal>, it's better style to use <literal>CREATE OR REPLACE
+   VIEW</literal>.
   </para>
 
   <para>

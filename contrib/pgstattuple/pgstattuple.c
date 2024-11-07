@@ -259,6 +259,13 @@ pgstat_relation(Relation rel, FunctionCallInfo fcinfo)
 		case RELKIND_SEQUENCE:
 			return pgstat_heap(rel, fcinfo);
 		case RELKIND_INDEX:
+			/* see pgstatindex_impl */
+			if (!rel->rd_index->indisvalid)
+				ereport(ERROR,
+						(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+						 errmsg("index \"%s\" is not valid",
+								RelationGetRelationName(rel))));
+
 			switch (rel->rd_rel->relam)
 			{
 				case BTREE_AM_OID:

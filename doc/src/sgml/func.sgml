@@ -6582,6 +6582,14 @@ SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
 
      <listitem>
       <para>
+       If the format provides fewer fractional digits than the number being
+       formatted, <function>to_char()</function> will round the number to
+       the specified number of fractional digits.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
        The pattern characters <literal>S</literal>, <literal>L</literal>, <literal>D</literal>,
        and <literal>G</literal> represent the sign, currency symbol, decimal point,
        and thousands separator characters defined by the current locale
@@ -16122,7 +16130,7 @@ SELECT * FROM pg_ls_dir('.') WITH ORDINALITY AS t(ls,n);
   <para>
    In addition to the functions listed in this section, there are a number of
    functions related to the statistics system that also provide system
-   information. See <xref linkend="monitoring-stats-views"/> for more
+   information. See <xref linkend="monitoring-stats-functions"/> for more
    information.
   </para>
 

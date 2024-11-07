@@ -1060,6 +1060,10 @@ testdb=&gt;
         destination, because all data must pass through the client/server
         connection.  For large amounts of data the <acronym>SQL</acronym>
         command might be preferable.
+        Also, because of this pass-through method, <literal>\copy
+        ... from</literal> in <acronym>CSV</acronym> mode will erroneously
+        treat a <literal>\.</literal> data value alone on a line as an
+        end-of-input marker.
         </para>
         </tip>
 

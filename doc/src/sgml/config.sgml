@@ -635,10 +635,15 @@ include_dir 'conf.d'
          <literal>::</literal> allows listening for all IPv6 addresses.
          If the list is empty, the server does not listen on any IP interface
          at all, in which case only Unix-domain sockets can be used to connect
-         to it.
+         to it.  If the list is not empty, the server will start if it
+         can listen on at least one TCP/IP address.  A warning will be
+         emitted for any TCP/IP address which cannot be opened.
          The default value is <systemitem class="systemname">localhost</systemitem>,
          which allows only local TCP/IP <quote>loopback</quote> connections to be
-         made.  While client authentication (<xref
+         made.
+       </para>
+       <para>
+         While client authentication (<xref
          linkend="client-authentication"/>) allows fine-grained control
          over who can access the server, <varname>listen_addresses</varname>
          controls which interfaces accept connection attempts, which
@@ -1577,9 +1582,10 @@ include_dir 'conf.d'
         Specifies the amount of memory to be used by internal sort operations
         and hash tables before writing to temporary disk files. The value
         defaults to four megabytes (<literal>4MB</literal>).
-        Note that for a complex query, several sort or hash operations might be
-        running in parallel; each operation will be allowed to use as much memory
-        as this value specifies before it starts to write data into temporary
+        Note that a complex query might perform several sort and hash
+        operations at the same time, with each operation generally being
+        allowed to use as much memory as this value specifies before it
+        starts to write data into temporary
         files. Also, several running sessions could be doing such operations
         concurrently.  Therefore, the total memory used could be many
         times the value of <varname>work_mem</varname>; it is necessary to
@@ -3986,13 +3992,14 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
       <listitem>
        <para>
         Enables or disables the query planner's use of partitionwise grouping
-        or aggregation, which allows grouping or aggregation on a partitioned
-        tables performed separately for each partition.  If the <literal>GROUP
-        BY</literal> clause does not include the partition keys, only partial
-        aggregation can be performed on a per-partition basis, and
-        finalization must be performed later.  Because partitionwise grouping
-        or aggregation can use significantly more CPU time and memory during
-        planning, the default is <literal>off</literal>.
+        or aggregation, which allows grouping or aggregation on partitioned
+        tables to be performed separately for each partition.  If the
+        <literal>GROUP BY</literal> clause does not include the partition
+        keys, only partial aggregation can be performed on a per-partition
+        basis, and finalization must be performed later.  Because
+        partitionwise grouping or aggregation can use significantly more CPU
+        time and memory during planning, the default is
+        <literal>off</literal>.
        </para>
       </listitem>
      </varlistentry>

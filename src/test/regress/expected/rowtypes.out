@@ -346,6 +346,45 @@ where i8 in (row(123,456)::int8_tbl, '(4567890123456789,123)');
  4567890123456789 | 123
 (2 rows)
 
+-- Check ability to select columns from an anonymous rowtype
+select (row(1, 2.0)).f1;
+ f1 
+----
+  1
+(1 row)
+
+select (row(1, 2.0)).f2;
+ f2  
+-----
+ 2.0
+(1 row)
+
+select (row(1, 2.0)).nosuch;  -- fail
+ERROR:  could not identify column "nosuch" in record data type
+LINE 1: select (row(1, 2.0)).nosuch;
+                ^
+select (row(1, 2.0)).*;
+ f1 | f2  
+----+-----
+  1 | 2.0
+(1 row)
+
+select (r).f1 from (select row(1, 2.0) as r) ss;
+ f1 
+----
+  1
+(1 row)
+
+select (r).f3 from (select row(1, 2.0) as r) ss;  -- fail
+ERROR:  could not identify column "f3" in record data type
+LINE 1: select (r).f3 from (select row(1, 2.0) as r) ss;
+                ^
+select (r).* from (select row(1, 2.0) as r) ss;
+ f1 | f2  
+----+-----
+  1 | 2.0
+(1 row)
+
 -- Check some corner cases involving empty rowtypes
 select ROW();
  row 
@@ -1054,6 +1093,69 @@ select r, r is null as isnull, r is not null as isnotnull from r;
  (,)         | t      | f
 (6 rows)
 
+--
+-- Check parsing of indirect references to composite values (bug #18077)
+--
+explain (verbose, costs off)
+with cte(c) as (select row(1, 2)),
+     cte2(c) as (select * from cte)
+select * from cte2 as t
+where (select * from (select c as c1) s
+       where (select (c1).f1 > 0)) is not null;
+                QUERY PLAN                
+------------------------------------------
+ CTE Scan on cte2 t
+   Output: t.c
+   Filter: ((SubPlan 4) IS NOT NULL)
+   CTE cte
+     ->  Result
+           Output: '(1,2)'::record
+   CTE cte2
+     ->  CTE Scan on cte
+           Output: cte.c
+   SubPlan 4
+     ->  Result
+           Output: t.c
+           One-Time Filter: $3
+           InitPlan 3 (returns $3)
+             ->  Result
+                   Output: ((t.c).f1 > 0)
+(16 rows)
+
+with cte(c) as (select row(1, 2)),
+     cte2(c) as (select * from cte)
+select * from cte2 as t
+where (select * from (select c as c1) s
+       where (select (c1).f1 > 0)) is not null;
+   c   
+-------
+ (1,2)
+(1 row)
+
+-- Also check deparsing of such cases
+create view composite_v as
+with cte(c) as (select row(1, 2)),
+     cte2(c) as (select * from cte)
+select 1 as one from cte2 as t
+where (select * from (select c as c1) s
+       where (select (c1).f1 > 0)) is not null;
+select pg_get_viewdef('composite_v', true);
+                     pg_get_viewdef                     
+--------------------------------------------------------
+  WITH cte(c) AS (                                     +
+          SELECT ROW(1, 2) AS "row"                    +
+         ), cte2(c) AS (                               +
+          SELECT cte.c                                 +
+            FROM cte                                   +
+         )                                             +
+  SELECT 1 AS one                                      +
+    FROM cte2 t                                        +
+   WHERE (( SELECT s.c1                                +
+            FROM ( SELECT t.c AS c1) s                 +
+           WHERE ( SELECT (s.c1).f1 > 0))) IS NOT NULL;
+(1 row)
+
+drop view composite_v;
 --
 -- Tests for component access / FieldSelect
 --

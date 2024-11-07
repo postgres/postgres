@@ -251,6 +251,72 @@ get_expr_result_type(Node *expr,
 										  NULL,
 										  resultTypeId,
 										  resultTupleDesc);
+	else if (expr && IsA(expr, RowExpr) &&
+			 ((RowExpr *) expr)->row_typeid == RECORDOID)
+	{
+		/* We can resolve the record type by generating the tupdesc directly */
+		RowExpr    *rexpr = (RowExpr *) expr;
+		TupleDesc	tupdesc;
+		AttrNumber	i = 1;
+		ListCell   *lcc,
+				   *lcn;
+
+		tupdesc = CreateTemplateTupleDesc(list_length(rexpr->args), false);
+		Assert(list_length(rexpr->args) == list_length(rexpr->colnames));
+		forboth(lcc, rexpr->args, lcn, rexpr->colnames)
+		{
+			Node	   *col = (Node *) lfirst(lcc);
+			char	   *colname = strVal(lfirst(lcn));
+
+			TupleDescInitEntry(tupdesc, i,
+							   colname,
+							   exprType(col),
+							   exprTypmod(col),
+							   0);
+			TupleDescInitEntryCollation(tupdesc, i,
+										exprCollation(col));
+			i++;
+		}
+		if (resultTypeId)
+			*resultTypeId = rexpr->row_typeid;
+		if (resultTupleDesc)
+			*resultTupleDesc = BlessTupleDesc(tupdesc);
+		return TYPEFUNC_COMPOSITE;
+	}
+	else if (expr && IsA(expr, Const) &&
+			 ((Const *) expr)->consttype == RECORDOID &&
+			 !((Const *) expr)->constisnull)
+	{
+		/*
+		 * When EXPLAIN'ing some queries with SEARCH/CYCLE clauses, we may
+		 * need to resolve field names of a RECORD-type Const.  The datum
+		 * should contain a typmod that will tell us that.
+		 */
+		HeapTupleHeader rec;
+		Oid			tupType;
+		int32		tupTypmod;
+
+		rec = DatumGetHeapTupleHeader(((Const *) expr)->constvalue);
+		tupType = HeapTupleHeaderGetTypeId(rec);
+		tupTypmod = HeapTupleHeaderGetTypMod(rec);
+		if (resultTypeId)
+			*resultTypeId = tupType;
+		if (tupType != RECORDOID || tupTypmod >= 0)
+		{
+			/* Should be able to look it up */
+			if (resultTupleDesc)
+				*resultTupleDesc = lookup_rowtype_tupdesc_copy(tupType,
+															   tupTypmod);
+			return TYPEFUNC_COMPOSITE;
+		}
+		else
+		{
+			/* This shouldn't really happen ... */
+			if (resultTupleDesc)
+				*resultTupleDesc = NULL;
+			return TYPEFUNC_RECORD;
+		}
+	}
 	else
 	{
 		/* handle as a generic expression; no chance to resolve RECORD */

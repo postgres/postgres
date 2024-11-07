@@ -380,7 +380,7 @@ msgstr "Ingrésela nuevamente: "
 #: initdb.c:1526
 #, c-format
 msgid "Passwords didn't match.\n"
-msgstr "Las constraseñas no coinciden.\n"
+msgstr "Las contraseñas no coinciden.\n"
 
 #: initdb.c:1552
 #, c-format

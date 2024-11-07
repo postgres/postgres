@@ -251,7 +251,7 @@ msgstr "Dernier REDO (reprise) du point de contrôle :           %X/%X\n"
 #: pg_controldata.c:250
 #, c-format
 msgid "Latest checkpoint's REDO WAL file:    %s\n"
-msgstr "Dernier fichier WAL du rejeu du point de contrrôle :     %s\n"
+msgstr "Dernier fichier WAL du rejeu du point de contrôle :     %s\n"
 
 #: pg_controldata.c:252
 #, c-format

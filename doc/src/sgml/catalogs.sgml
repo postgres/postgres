@@ -1646,15 +1646,15 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
   </indexterm>
 
   <para>
-   The catalog <structname>pg_class</structname> catalogs tables and most
-   everything else that has columns or is otherwise similar to a
+   The catalog <structname>pg_class</structname> describes tables and
+   other objects that have columns or are otherwise similar to a
    table.  This includes indexes (but see also
    <structname>pg_index</structname>), sequences (but see also
    <structname>pg_sequence</structname>), views, materialized
    views, composite types, and TOAST tables; see <structfield>relkind</structfield>.
-   Below, when we mean all of these
-   kinds of objects we speak of <quote>relations</quote>.  Not all
-   columns are meaningful for all relation types.
+   Below, when we mean all of these kinds of objects we speak of
+   <quote>relations</quote>.  Not all of <structname>pg_class</structname>'s
+   columns are meaningful for all relation kinds.
   </para>
 
   <table>
@@ -10248,7 +10248,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
      <row>
       <entry><structfield>data_type</structfield></entry>
       <entry><type>regtype</type></entry>
-      <entry><literal><link linkend="catalog-pg-authid"><structname>pg_type</structname></link>.oid</literal></entry>
+      <entry><literal><link linkend="catalog-pg-type"><structname>pg_type</structname></link>.oid</literal></entry>
       <entry>Data type of the sequence</entry>
      </row>
      <row>

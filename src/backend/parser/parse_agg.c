@@ -111,18 +111,6 @@ transformAggregateCall(ParseState *pstate, Aggref *agg,
 	int			save_next_resno;
 	ListCell   *lc;
 
-	/*
-	 * Before separating the args into direct and aggregated args, make a list
-	 * of their data type OIDs for use later.
-	 */
-	foreach(lc, args)
-	{
-		Expr	   *arg = (Expr *) lfirst(lc);
-
-		argtypes = lappend_oid(argtypes, exprType((Node *) arg));
-	}
-	agg->aggargtypes = argtypes;
-
 	if (AGGKIND_IS_ORDERED_SET(agg->aggkind))
 	{
 		/*
@@ -233,6 +221,29 @@ transformAggregateCall(ParseState *pstate, Aggref *agg,
 	agg->args = tlist;
 	agg->aggorder = torder;
 	agg->aggdistinct = tdistinct;
+
+	/*
+	 * Now build the aggargtypes list with the type OIDs of the direct and
+	 * aggregated args, ignoring any resjunk entries that might have been
+	 * added by ORDER BY/DISTINCT processing.  We can't do this earlier
+	 * because said processing can modify some args' data types, in particular
+	 * by resolving previously-unresolved "unknown" literals.
+	 */
+	foreach(lc, agg->aggdirectargs)
+	{
+		Expr	   *arg = (Expr *) lfirst(lc);
+
+		argtypes = lappend_oid(argtypes, exprType((Node *) arg));
+	}
+	foreach(lc, tlist)
+	{
+		TargetEntry *tle = (TargetEntry *) lfirst(lc);
+
+		if (tle->resjunk)
+			continue;			/* ignore junk */
+		argtypes = lappend_oid(argtypes, exprType((Node *) tle->expr));
+	}
+	agg->aggargtypes = argtypes;
 
 	check_agglevels_and_constraints(pstate, (Node *) agg);
 }

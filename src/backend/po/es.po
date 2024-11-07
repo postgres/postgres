@@ -21247,7 +21247,7 @@ msgstr "OID está fuera de rango"
 #: utils/adt/json.c:794
 #, c-format
 msgid "Character with value 0x%02x must be escaped."
-msgstr "Los caracteres con valor 0x%02x deben ser escapados"
+msgstr "Los caracteres con valor 0x%02x deben ser escapados."
 
 #: utils/adt/json.c:835
 #, c-format

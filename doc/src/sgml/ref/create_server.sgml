@@ -129,6 +129,11 @@ CREATE SERVER [ IF NOT EXISTS ] <replaceable class="parameter">server_name</repl
    the <literal>USAGE</literal> privilege on the foreign server to be
    able to use it in this way.
   </para>
+
+  <para>
+   If the foreign server supports sort pushdown, it is necessary for it
+   to have the same sort ordering as the local server.
+  </para>
  </refsect1>
 
  <refsect1>

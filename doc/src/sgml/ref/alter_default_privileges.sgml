@@ -137,7 +137,11 @@ REVOKE [ GRANT OPTION FOR ]
     <listitem>
      <para>
       The name of an existing role of which the current role is a member.
-      If <literal>FOR ROLE</literal> is omitted, the current role is assumed.
+      Default access privileges are not inherited, so member roles
+      must use <command>SET ROLE</command> to access these privileges,
+      or <command>ALTER DEFAULT PRIVILEGES</command> must be run for
+      each member role.  If <literal>FOR ROLE</literal> is omitted,
+      the current role is assumed.
      </para>
     </listitem>
    </varlistentry>

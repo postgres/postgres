@@ -337,6 +337,17 @@ SnapBuildStartNextPhaseAt(SnapBuild *builder, TransactionId at)
 }
 
 /*
+ * Memory context reset callback for clearing the array of running transactions
+ * and subtransactions.
+ */
+static void
+SnapBuildResetRunningXactsCallback(void *arg)
+{
+	NInitialRunningXacts = 0;
+	InitialRunningXacts = NULL;
+}
+
+/*
  * Allocate a new snapshot builder.
  *
  * xmin_horizon is the xid >= which we can be sure no catalog rows have been
@@ -351,6 +362,7 @@ AllocateSnapshotBuilder(ReorderBuffer *reorder,
 	MemoryContext context;
 	MemoryContext oldcontext;
 	SnapBuild  *builder;
+	MemoryContextCallback *mcallback;
 
 	/* allocate memory in own context, to have better accountability */
 	context = AllocSetContextCreate(CurrentMemoryContext,
@@ -374,6 +386,10 @@ AllocateSnapshotBuilder(ReorderBuffer *reorder,
 	builder->initial_xmin_horizon = xmin_horizon;
 	builder->start_decoding_at = start_lsn;
 	builder->building_full_snapshot = need_full_snapshot;
+
+	mcallback = palloc0(sizeof(MemoryContextCallback));
+	mcallback->func = SnapBuildResetRunningXactsCallback;
+	MemoryContextRegisterResetCallback(CurrentMemoryContext, mcallback);
 
 	MemoryContextSwitchTo(oldcontext);
 
@@ -400,10 +416,6 @@ FreeSnapshotBuilder(SnapBuild *builder)
 
 	/* other resources are deallocated via memory context reset */
 	MemoryContextDelete(context);
-
-	/* InitialRunningXacts is freed along with the context */
-	NInitialRunningXacts = 0;
-	InitialRunningXacts = NULL;
 }
 
 /*

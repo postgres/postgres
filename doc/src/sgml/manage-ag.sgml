@@ -208,6 +208,12 @@ createdb -O <replaceable>rolename</replaceable> <replaceable>dbname</replaceable
   </para>
 
   <para>
+   However, <command>CREATE DATABASE</command> does not copy database-level
+   <command>GRANT</command> permissions attached to the source database.
+   The new database has default database-level permissions.
+  </para>
+
+  <para>
    There is a second standard system database named
    <literal>template0</literal>.<indexterm><primary>template0</primary></indexterm> This
    database contains the same data as the initial contents of

@@ -336,7 +336,7 @@ msgstr "Dernier oldestActiveXID du point de contrôle :          %u\n"
 #: pg_resetwal.c:812
 #, c-format
 msgid "Latest checkpoint's oldestMultiXid:   %u\n"
-msgstr "Dernier oldestMultiXID du point de contrôle :           %u\n"
+msgstr "Dernier oldestMultiXid du point de contrôle :           %u\n"
 
 #: pg_resetwal.c:814
 #, c-format

@@ -3753,7 +3753,7 @@ RAISE unique_violation USING MESSAGE = 'Duplicate user ID: ' || user_id;
    <para>
     If no condition name nor SQLSTATE is specified in a
     <command>RAISE EXCEPTION</command> command, the default is to use
-    <literal>ERRCODE_RAISE_EXCEPTION</literal> (<literal>P0001</literal>).
+    <literal>raise_exception</literal> (<literal>P0001</literal>).
     If no message text is specified, the default is to use the condition
     name or SQLSTATE as message text.
    </para>
@@ -4150,11 +4150,11 @@ CREATE OR REPLACE FUNCTION process_emp_audit() RETURNS TRIGGER AS $emp_audit$
         -- making use of the special variable TG_OP to work out the operation.
         --
         IF (TG_OP = 'DELETE') THEN
-            INSERT INTO emp_audit SELECT 'D', now(), user, OLD.*;
+            INSERT INTO emp_audit SELECT 'D', now(), current_user, OLD.*;
         ELSIF (TG_OP = 'UPDATE') THEN
-            INSERT INTO emp_audit SELECT 'U', now(), user, NEW.*;
+            INSERT INTO emp_audit SELECT 'U', now(), current_user, NEW.*;
         ELSIF (TG_OP = 'INSERT') THEN
-            INSERT INTO emp_audit SELECT 'I', now(), user, NEW.*;
+            INSERT INTO emp_audit SELECT 'I', now(), current_user, NEW.*;
         END IF;
         RETURN NULL; -- result is ignored since this is an AFTER trigger
     END;
@@ -4220,20 +4220,20 @@ CREATE OR REPLACE FUNCTION update_emp_view() RETURNS TRIGGER AS $$
             IF NOT FOUND THEN RETURN NULL; END IF;
 
             OLD.last_updated = now();
-            INSERT INTO emp_audit VALUES('D', user, OLD.*);
+            INSERT INTO emp_audit VALUES('D', current_user, OLD.*);
             RETURN OLD;
         ELSIF (TG_OP = 'UPDATE') THEN
             UPDATE emp SET salary = NEW.salary WHERE empname = OLD.empname;
             IF NOT FOUND THEN RETURN NULL; END IF;
 
             NEW.last_updated = now();
-            INSERT INTO emp_audit VALUES('U', user, NEW.*);
+            INSERT INTO emp_audit VALUES('U', current_user, NEW.*);
             RETURN NEW;
         ELSIF (TG_OP = 'INSERT') THEN
             INSERT INTO emp VALUES(NEW.empname, NEW.salary);
 
             NEW.last_updated = now();
-            INSERT INTO emp_audit VALUES('I', user, NEW.*);
+            INSERT INTO emp_audit VALUES('I', current_user, NEW.*);
             RETURN NEW;
         END IF;
     END;
@@ -4448,13 +4448,13 @@ CREATE OR REPLACE FUNCTION process_emp_audit() RETURNS TRIGGER AS $emp_audit$
         --
         IF (TG_OP = 'DELETE') THEN
             INSERT INTO emp_audit
-                SELECT 'D', now(), user, o.* FROM old_table o;
+                SELECT 'D', now(), current_user, o.* FROM old_table o;
         ELSIF (TG_OP = 'UPDATE') THEN
             INSERT INTO emp_audit
-                SELECT 'U', now(), user, n.* FROM new_table n;
+                SELECT 'U', now(), current_user, n.* FROM new_table n;
         ELSIF (TG_OP = 'INSERT') THEN
             INSERT INTO emp_audit
-                SELECT 'I', now(), user, n.* FROM new_table n;
+                SELECT 'I', now(), current_user, n.* FROM new_table n;
         END IF;
         RETURN NULL; -- result is ignored since this is an AFTER trigger
     END;

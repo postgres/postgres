@@ -70,6 +70,13 @@ struct ExprContext;
 
 
 /*
+ * Maximum number of elements in an array.  We limit this to at most about a
+ * quarter billion elements, so that it's not necessary to check for overflow
+ * in quite so many places --- for instance when palloc'ing Datum arrays.
+ */
+#define MaxArraySize ((Size) (MaxAllocSize / sizeof(Datum)))
+
+/*
  * Arrays are varlena objects, so must meet the varlena convention that
  * the first int32 of the object contains the total object size in bytes.
  * Be sure to use VARSIZE() and SET_VARSIZE() to access it, though!

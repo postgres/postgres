@@ -180,8 +180,9 @@ make installcheck-world
    </listitem>
    <listitem>
     <para>
-     Regression tests for the ECPG interface library,
-     located in <filename>src/interfaces/ecpg/test</filename>.
+     Regression tests for the interface libraries,
+     located in <filename>src/interfaces/libpq/test</filename> and
+     <filename>src/interfaces/ecpg/test</filename>.
     </para>
    </listitem>
    <listitem>
