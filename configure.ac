@@ -2050,32 +2050,19 @@ fi
 
 # Check for XSAVE intrinsics
 #
-CFLAGS_XSAVE=""
-PGAC_XSAVE_INTRINSICS([])
-if test x"$pgac_xsave_intrinsics" != x"yes"; then
-  PGAC_XSAVE_INTRINSICS([-mxsave])
-fi
+PGAC_XSAVE_INTRINSICS()
 if test x"$pgac_xsave_intrinsics" = x"yes"; then
   AC_DEFINE(HAVE_XSAVE_INTRINSICS, 1, [Define to 1 if you have XSAVE intrinsics.])
 fi
-AC_SUBST(CFLAGS_XSAVE)
 
 # Check for AVX-512 popcount intrinsics
 #
-CFLAGS_POPCNT=""
-PG_POPCNT_OBJS=""
 if test x"$host_cpu" = x"x86_64"; then
-  PGAC_AVX512_POPCNT_INTRINSICS([])
-  if test x"$pgac_avx512_popcnt_intrinsics" != x"yes"; then
-    PGAC_AVX512_POPCNT_INTRINSICS([-mavx512vpopcntdq -mavx512bw])
-  fi
+  PGAC_AVX512_POPCNT_INTRINSICS()
   if test x"$pgac_avx512_popcnt_intrinsics" = x"yes"; then
-    PG_POPCNT_OBJS="pg_popcount_avx512.o pg_popcount_avx512_choose.o"
     AC_DEFINE(USE_AVX512_POPCNT_WITH_RUNTIME_CHECK, 1, [Define to 1 to use AVX-512 popcount instructions with a runtime check.])
   fi
 fi
-AC_SUBST(CFLAGS_POPCNT)
-AC_SUBST(PG_POPCNT_OBJS)
 
 # Check for Intel SSE 4.2 intrinsics to do CRC calculations.
 #

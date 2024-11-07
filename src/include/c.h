@@ -175,6 +175,18 @@
 #endif
 
 /*
+ * pg_attribute_target allows specifying different target options that the
+ * function should be compiled with (e.g., for using special CPU instructions).
+ * Note that there still needs to be a configure-time check to verify that a
+ * specific target is understood by the compiler.
+ */
+#if __has_attribute (target)
+#define pg_attribute_target(...) __attribute__((target(__VA_ARGS__)))
+#else
+#define pg_attribute_target(...)
+#endif
+
+/*
  * Append PG_USED_FOR_ASSERTS_ONLY to definitions of variables that are only
  * used in assert-enabled builds, to avoid compiler warnings about unused
  * variables in assert-disabled builds.

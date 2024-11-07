@@ -700,20 +700,22 @@ undefine([Ac_cachevar])dnl
 # Check if the compiler supports the XSAVE instructions using the _xgetbv
 # intrinsic function.
 #
-# An optional compiler flag can be passed as argument (e.g., -mxsave).  If the
-# intrinsic is supported, sets pgac_xsave_intrinsics and CFLAGS_XSAVE.
+# If the intrinsics are supported, sets pgac_xsave_intrinsics.
 AC_DEFUN([PGAC_XSAVE_INTRINSICS],
-[define([Ac_cachevar], [AS_TR_SH([pgac_cv_xsave_intrinsics_$1])])dnl
-AC_CACHE_CHECK([for _xgetbv with CFLAGS=$1], [Ac_cachevar],
-[pgac_save_CFLAGS=$CFLAGS
-CFLAGS="$pgac_save_CFLAGS $1"
-AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <immintrin.h>],
-  [return _xgetbv(0) & 0xe0;])],
+[define([Ac_cachevar], [AS_TR_SH([pgac_cv_xsave_intrinsics])])dnl
+AC_CACHE_CHECK([for _xgetbv], [Ac_cachevar],
+[AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <immintrin.h>
+    #if defined(__has_attribute) && __has_attribute (target)
+    __attribute__((target("xsave")))
+    #endif
+    static int xsave_test(void)
+    {
+      return _xgetbv(0) & 0xe0;
+    }],
+  [return xsave_test();])],
   [Ac_cachevar=yes],
-  [Ac_cachevar=no])
-CFLAGS="$pgac_save_CFLAGS"])
+  [Ac_cachevar=no])])
 if test x"$Ac_cachevar" = x"yes"; then
-  CFLAGS_XSAVE="$1"
   pgac_xsave_intrinsics=yes
 fi
 undefine([Ac_cachevar])dnl
@@ -725,29 +727,29 @@ undefine([Ac_cachevar])dnl
 # _mm512_setzero_si512, _mm512_maskz_loadu_epi8, _mm512_popcnt_epi64,
 # _mm512_add_epi64, and _mm512_reduce_add_epi64 intrinsic functions.
 #
-# Optional compiler flags can be passed as argument (e.g., -mavx512vpopcntdq
-# -mavx512bw).  If the intrinsics are supported, sets
-# pgac_avx512_popcnt_intrinsics and CFLAGS_POPCNT.
+# If the intrinsics are supported, sets pgac_avx512_popcnt_intrinsics.
 AC_DEFUN([PGAC_AVX512_POPCNT_INTRINSICS],
-[define([Ac_cachevar], [AS_TR_SH([pgac_cv_avx512_popcnt_intrinsics_$1])])dnl
-AC_CACHE_CHECK([for _mm512_popcnt_epi64 with CFLAGS=$1], [Ac_cachevar],
-[pgac_save_CFLAGS=$CFLAGS
-CFLAGS="$pgac_save_CFLAGS $1"
-AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <immintrin.h>],
-  [const char buf@<:@sizeof(__m512i)@:>@;
-   PG_INT64_TYPE popcnt = 0;
-   __m512i accum = _mm512_setzero_si512();
-   const __m512i val = _mm512_maskz_loadu_epi8((__mmask64) 0xf0f0f0f0f0f0f0f0, (const __m512i *) buf);
-   const __m512i cnt = _mm512_popcnt_epi64(val);
-   accum = _mm512_add_epi64(accum, cnt);
-   popcnt = _mm512_reduce_add_epi64(accum);
-   /* return computed value, to prevent the above being optimized away */
-   return popcnt == 0;])],
+[define([Ac_cachevar], [AS_TR_SH([pgac_cv_avx512_popcnt_intrinsics])])dnl
+AC_CACHE_CHECK([for _mm512_popcnt_epi64], [Ac_cachevar],
+[AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <immintrin.h>
+    #if defined(__has_attribute) && __has_attribute (target)
+    __attribute__((target("avx512vpopcntdq","avx512bw")))
+    #endif
+    static int popcount_test(void)
+    {
+      const char buf@<:@sizeof(__m512i)@:>@;
+      PG_INT64_TYPE popcnt = 0;
+      __m512i accum = _mm512_setzero_si512();
+      const __m512i val = _mm512_maskz_loadu_epi8((__mmask64) 0xf0f0f0f0f0f0f0f0, (const __m512i *) buf);
+      const __m512i cnt = _mm512_popcnt_epi64(val);
+      accum = _mm512_add_epi64(accum, cnt);
+      popcnt = _mm512_reduce_add_epi64(accum);
+      return (int) popcnt;
+    }],
+  [return popcount_test();])],
   [Ac_cachevar=yes],
-  [Ac_cachevar=no])
-CFLAGS="$pgac_save_CFLAGS"])
+  [Ac_cachevar=no])])
 if test x"$Ac_cachevar" = x"yes"; then
-  CFLAGS_POPCNT="$1"
   pgac_avx512_popcnt_intrinsics=yes
 fi
 undefine([Ac_cachevar])dnl

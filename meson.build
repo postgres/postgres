@@ -2153,25 +2153,22 @@ endforeach
 # Check for the availability of XSAVE intrinsics.
 ###############################################################
 
-cflags_xsave = []
 if host_cpu == 'x86' or host_cpu == 'x86_64'
 
   prog = '''
 #include <immintrin.h>
 
+#if defined(__has_attribute) && __has_attribute (target)
+__attribute__((target("xsave")))
+#endif
 int main(void)
 {
     return _xgetbv(0) & 0xe0;
 }
 '''
 
-  if cc.links(prog, name: 'XSAVE intrinsics without -mxsave',
-        args: test_c_args)
+  if cc.links(prog, name: 'XSAVE intrinsics', args: test_c_args)
     cdata.set('HAVE_XSAVE_INTRINSICS', 1)
-  elif cc.links(prog, name: 'XSAVE intrinsics with -mxsave',
-        args: test_c_args + ['-mxsave'])
-    cdata.set('HAVE_XSAVE_INTRINSICS', 1)
-    cflags_xsave += '-mxsave'
   endif
 
 endif
@@ -2181,12 +2178,14 @@ endif
 # Check for the availability of AVX-512 popcount intrinsics.
 ###############################################################
 
-cflags_popcnt = []
 if host_cpu == 'x86_64'
 
   prog = '''
 #include <immintrin.h>
 
+#if defined(__has_attribute) && __has_attribute (target)
+__attribute__((target("avx512vpopcntdq","avx512bw")))
+#endif
 int main(void)
 {
     const char buf[sizeof(__m512i)];
@@ -2201,13 +2200,9 @@ int main(void)
 }
 '''
 
-  if cc.links(prog, name: 'AVX-512 popcount without -mavx512vpopcntdq -mavx512bw',
+  if cc.links(prog, name: 'AVX-512 popcount',
         args: test_c_args + ['-DINT64=@0@'.format(cdata.get('PG_INT64_TYPE'))])
     cdata.set('USE_AVX512_POPCNT_WITH_RUNTIME_CHECK', 1)
-  elif cc.links(prog, name: 'AVX-512 popcount with -mavx512vpopcntdq -mavx512bw',
-        args: test_c_args + ['-DINT64=@0@'.format(cdata.get('PG_INT64_TYPE'))] + ['-mavx512vpopcntdq'] + ['-mavx512bw'])
-    cdata.set('USE_AVX512_POPCNT_WITH_RUNTIME_CHECK', 1)
-    cflags_popcnt += ['-mavx512vpopcntdq'] + ['-mavx512bw']
   endif
 
 endif
