@@ -7477,7 +7477,7 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
      </variablelist>
 
      <para>
-      Next, one of the following submessages appears for each column:
+      Next, one of the following submessages appears for each published column:
 
       <variablelist>
        <varlistentry>

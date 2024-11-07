@@ -4280,6 +4280,7 @@ getPublications(Archive *fout)
 	int			i_pubdelete;
 	int			i_pubtruncate;
 	int			i_pubviaroot;
+	int			i_pubgencols;
 	int			i,
 				ntups;
 
@@ -4289,24 +4290,26 @@ getPublications(Archive *fout)
 	query = createPQExpBuffer();
 
 	/* Get the publications. */
-	if (fout->remoteVersion >= 130000)
-		appendPQExpBufferStr(query,
-							 "SELECT p.tableoid, p.oid, p.pubname, "
-							 "p.pubowner, "
-							 "p.puballtables, p.pubinsert, p.pubupdate, p.pubdelete, p.pubtruncate, p.pubviaroot "
-							 "FROM pg_publication p");
-	else if (fout->remoteVersion >= 110000)
-		appendPQExpBufferStr(query,
-							 "SELECT p.tableoid, p.oid, p.pubname, "
-							 "p.pubowner, "
-							 "p.puballtables, p.pubinsert, p.pubupdate, p.pubdelete, p.pubtruncate, false AS pubviaroot "
-							 "FROM pg_publication p");
+	appendPQExpBufferStr(query, "SELECT p.tableoid, p.oid, p.pubname, "
+						 "p.pubowner, p.puballtables, p.pubinsert, "
+						 "p.pubupdate, p.pubdelete, ");
+
+	if (fout->remoteVersion >= 110000)
+		appendPQExpBufferStr(query, "p.pubtruncate, ");
 	else
-		appendPQExpBufferStr(query,
-							 "SELECT p.tableoid, p.oid, p.pubname, "
-							 "p.pubowner, "
-							 "p.puballtables, p.pubinsert, p.pubupdate, p.pubdelete, false AS pubtruncate, false AS pubviaroot "
-							 "FROM pg_publication p");
+		appendPQExpBufferStr(query, "false AS pubtruncate, ");
+
+	if (fout->remoteVersion >= 130000)
+		appendPQExpBufferStr(query, "p.pubviaroot, ");
+	else
+		appendPQExpBufferStr(query, "false AS pubviaroot, ");
+
+	if (fout->remoteVersion >= 180000)
+		appendPQExpBufferStr(query, "p.pubgencols ");
+	else
+		appendPQExpBufferStr(query, "false AS pubgencols ");
+
+	appendPQExpBufferStr(query, "FROM pg_publication p");
 
 	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
 
@@ -4325,6 +4328,7 @@ getPublications(Archive *fout)
 	i_pubdelete = PQfnumber(res, "pubdelete");
 	i_pubtruncate = PQfnumber(res, "pubtruncate");
 	i_pubviaroot = PQfnumber(res, "pubviaroot");
+	i_pubgencols = PQfnumber(res, "pubgencols");
 
 	pubinfo = pg_malloc(ntups * sizeof(PublicationInfo));
 
@@ -4349,6 +4353,8 @@ getPublications(Archive *fout)
 			(strcmp(PQgetvalue(res, i, i_pubtruncate), "t") == 0);
 		pubinfo[i].pubviaroot =
 			(strcmp(PQgetvalue(res, i, i_pubviaroot), "t") == 0);
+		pubinfo[i].pubgencols =
+			(strcmp(PQgetvalue(res, i, i_pubgencols), "t") == 0);
 
 		/* Decide whether we want to dump it */
 		selectDumpableObject(&(pubinfo[i].dobj), fout);
@@ -4429,6 +4435,9 @@ dumpPublication(Archive *fout, const PublicationInfo *pubinfo)
 
 	if (pubinfo->pubviaroot)
 		appendPQExpBufferStr(query, ", publish_via_partition_root = true");
+
+	if (pubinfo->pubgencols)
+		appendPQExpBufferStr(query, ", publish_generated_columns = true");
 
 	appendPQExpBufferStr(query, ");\n");
 

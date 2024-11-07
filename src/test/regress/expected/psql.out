@@ -6350,9 +6350,9 @@ List of schemas
 (0 rows)
 
 \dRp "no.such.publication"
-                              List of publications
- Name | Owner | All tables | Inserts | Updates | Deletes | Truncates | Via root 
-------+-------+------------+---------+---------+---------+-----------+----------
+                                        List of publications
+ Name | Owner | All tables | Inserts | Updates | Deletes | Truncates | Generated columns | Via root 
+------+-------+------------+---------+---------+---------+-----------+-------------------+----------
 (0 rows)
 
 \dRs "no.such.subscription"

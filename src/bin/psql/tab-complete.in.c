@@ -2261,7 +2261,7 @@ match_previous_words(int pattern_id,
 								 "CURRENT_SCHEMA");
 	/* ALTER PUBLICATION <name> SET ( */
 	else if (Matches("ALTER", "PUBLICATION", MatchAny, MatchAnyN, "SET", "("))
-		COMPLETE_WITH("publish", "publish_via_partition_root");
+		COMPLETE_WITH("publish", "publish_generated_columns", "publish_via_partition_root");
 	/* ALTER SUBSCRIPTION <name> */
 	else if (Matches("ALTER", "SUBSCRIPTION", MatchAny))
 		COMPLETE_WITH("CONNECTION", "ENABLE", "DISABLE", "OWNER TO",
@@ -3513,7 +3513,7 @@ match_previous_words(int pattern_id,
 		COMPLETE_WITH("WITH (");
 	/* Complete "CREATE PUBLICATION <name> [...] WITH" */
 	else if (Matches("CREATE", "PUBLICATION", MatchAnyN, "WITH", "("))
-		COMPLETE_WITH("publish", "publish_via_partition_root");
+		COMPLETE_WITH("publish", "publish_generated_columns", "publish_via_partition_root");
 
 /* CREATE RULE */
 	/* Complete "CREATE [ OR REPLACE ] RULE <sth>" with "AS ON" */

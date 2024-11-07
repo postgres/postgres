@@ -189,6 +189,26 @@ CREATE PUBLICATION <replaceable class="parameter">name</replaceable>
         </listitem>
        </varlistentry>
 
+       <varlistentry id="sql-createpublication-params-with-publish-generated-columns">
+        <term><literal>publish_generated_columns</literal> (<type>boolean</type>)</term>
+        <listitem>
+         <para>
+          Specifies whether the generated columns present in the tables
+          associated with the publication should be replicated.
+          The default is <literal>false</literal>.
+         </para>
+
+         <note>
+          <para>
+           If the subscriber is from a release prior to 18, then initial table
+           synchronization won't copy generated columns even if parameter
+           <literal>publish_generated_columns</literal> is true in the
+           publisher.
+          </para>
+         </note>
+        </listitem>
+       </varlistentry>
+
        <varlistentry id="sql-createpublication-params-with-publish-via-partition-root">
         <term><literal>publish_via_partition_root</literal> (<type>boolean</type>)</term>
         <listitem>

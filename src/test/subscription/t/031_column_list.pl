@@ -1276,40 +1276,6 @@ ok( $stderr =~
 	  qr/cannot use different column lists for table "public.test_mix_1" in different publications/,
 	'different column lists detected');
 
-# TEST: Generated columns are considered for the column list.
-$node_publisher->safe_psql(
-	'postgres', qq(
-	CREATE TABLE test_gen (a int PRIMARY KEY, b int GENERATED ALWAYS AS (a + 1) STORED);
-	INSERT INTO test_gen VALUES (0);
-	CREATE PUBLICATION pub_gen FOR TABLE test_gen (a, b);
-));
-
-$node_subscriber->safe_psql(
-	'postgres', qq(
-	CREATE TABLE test_gen (a int PRIMARY KEY, b int);
-	CREATE SUBSCRIPTION sub_gen CONNECTION '$publisher_connstr' PUBLICATION pub_gen;
-));
-
-$node_subscriber->wait_for_subscription_sync;
-
-is( $node_subscriber->safe_psql(
-		'postgres', "SELECT * FROM test_gen ORDER BY a"),
-	qq(0|1),
-	'initial replication with generated columns in column list');
-
-$node_publisher->safe_psql(
-	'postgres', qq(
-	INSERT INTO test_gen VALUES (1);
-));
-
-$node_publisher->wait_for_catchup('sub_gen');
-
-is( $node_subscriber->safe_psql(
-		'postgres', "SELECT * FROM test_gen ORDER BY a"),
-	qq(0|1
-1|2),
-	'replication with generated columns in column list');
-
 # TEST: If the column list is changed after creating the subscription, we
 # should catch the error reported by walsender.
 

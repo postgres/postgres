@@ -257,6 +257,52 @@ is_schema_publication(Oid pubid)
 }
 
 /*
+ * Returns true if the relation has column list associated with the
+ * publication, false otherwise.
+ *
+ * If a column list is found, the corresponding bitmap is returned through the
+ * cols parameter, if provided. The bitmap is constructed within the given
+ * memory context (mcxt).
+ */
+bool
+check_and_fetch_column_list(Publication *pub, Oid relid, MemoryContext mcxt,
+							Bitmapset **cols)
+{
+	HeapTuple	cftuple;
+	bool		found = false;
+
+	if (pub->alltables)
+		return false;
+
+	cftuple = SearchSysCache2(PUBLICATIONRELMAP,
+							  ObjectIdGetDatum(relid),
+							  ObjectIdGetDatum(pub->oid));
+	if (HeapTupleIsValid(cftuple))
+	{
+		Datum		cfdatum;
+		bool		isnull;
+
+		/* Lookup the column list attribute. */
+		cfdatum = SysCacheGetAttr(PUBLICATIONRELMAP, cftuple,
+								  Anum_pg_publication_rel_prattrs, &isnull);
+
+		/* Was a column list found? */
+		if (!isnull)
+		{
+			/* Build the column list bitmap in the given memory context. */
+			if (cols)
+				*cols = pub_collist_to_bitmapset(*cols, cfdatum, mcxt);
+
+			found = true;
+		}
+
+		ReleaseSysCache(cftuple);
+	}
+
+	return found;
+}
+
+/*
  * Gets the relations based on the publication partition option for a specified
  * relation.
  */
@@ -569,6 +615,30 @@ pub_collist_to_bitmapset(Bitmapset *columns, Datum pubcols, MemoryContext mcxt)
 
 	if (mcxt)
 		MemoryContextSwitchTo(oldcxt);
+
+	return result;
+}
+
+/*
+ * Returns a bitmap representing the columns of the specified table.
+ *
+ * Generated columns are included if include_gencols is true.
+ */
+Bitmapset *
+pub_form_cols_map(Relation relation, bool include_gencols)
+{
+	Bitmapset  *result = NULL;
+	TupleDesc	desc = RelationGetDescr(relation);
+
+	for (int i = 0; i < desc->natts; i++)
+	{
+		Form_pg_attribute att = TupleDescAttr(desc, i);
+
+		if (att->attisdropped || (att->attgenerated && !include_gencols))
+			continue;
+
+		result = bms_add_member(result, att->attnum);
+	}
 
 	return result;
 }
@@ -998,6 +1068,7 @@ GetPublication(Oid pubid)
 	pub->pubactions.pubdelete = pubform->pubdelete;
 	pub->pubactions.pubtruncate = pubform->pubtruncate;
 	pub->pubviaroot = pubform->pubviaroot;
+	pub->pubgencols = pubform->pubgencols;
 
 	ReleaseSysCache(tup);
 
@@ -1205,7 +1276,7 @@ pg_get_publication_tables(PG_FUNCTION_ARGS)
 			{
 				Form_pg_attribute att = TupleDescAttr(desc, i);
 
-				if (att->attisdropped || att->attgenerated)
+				if (att->attisdropped || (att->attgenerated && !pub->pubgencols))
 					continue;
 
 				attnums[nattnums++] = att->attnum;

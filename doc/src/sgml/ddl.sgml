@@ -514,9 +514,11 @@ CREATE TABLE people (
     </listitem>
     <listitem>
      <para>
-      Generated columns can be replicated during logical replication by
-      including them in the column list of the
-      <command>CREATE PUBLICATION</command> command.
+      Generated columns are allowed to be replicated during logical replication
+      according to the <command>CREATE PUBLICATION</command> parameter
+      <link linkend="sql-createpublication-params-with-publish-generated-columns">
+      <literal>publish_generated_columns</literal></link> or by including them
+      in the column list of the <command>CREATE PUBLICATION</command> command.
      </para>
     </listitem>
    </itemizedlist>

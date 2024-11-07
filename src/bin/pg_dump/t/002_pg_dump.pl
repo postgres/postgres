@@ -2986,6 +2986,16 @@ my %tests = (
 		like => { %full_runs, section_post_data => 1, },
 	},
 
+	'CREATE PUBLICATION pub5' => {
+		create_order => 50,
+		create_sql =>
+		  'CREATE PUBLICATION pub5 WITH (publish_generated_columns = true);',
+		regexp => qr/^
+			\QCREATE PUBLICATION pub5 WITH (publish = 'insert, update, delete, truncate', publish_generated_columns = true);\E
+			/xm,
+		like => { %full_runs, section_post_data => 1, },
+	},
+
 	'CREATE SUBSCRIPTION sub1' => {
 		create_order => 50,
 		create_sql => 'CREATE SUBSCRIPTION sub1

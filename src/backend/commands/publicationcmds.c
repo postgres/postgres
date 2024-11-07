@@ -78,12 +78,15 @@ parse_publication_options(ParseState *pstate,
 						  bool *publish_given,
 						  PublicationActions *pubactions,
 						  bool *publish_via_partition_root_given,
-						  bool *publish_via_partition_root)
+						  bool *publish_via_partition_root,
+						  bool *publish_generated_columns_given,
+						  bool *publish_generated_columns)
 {
 	ListCell   *lc;
 
 	*publish_given = false;
 	*publish_via_partition_root_given = false;
+	*publish_generated_columns_given = false;
 
 	/* defaults */
 	pubactions->pubinsert = true;
@@ -91,6 +94,7 @@ parse_publication_options(ParseState *pstate,
 	pubactions->pubdelete = true;
 	pubactions->pubtruncate = true;
 	*publish_via_partition_root = false;
+	*publish_generated_columns = false;
 
 	/* Parse options */
 	foreach(lc, options)
@@ -150,6 +154,13 @@ parse_publication_options(ParseState *pstate,
 				errorConflictingDefElem(defel, pstate);
 			*publish_via_partition_root_given = true;
 			*publish_via_partition_root = defGetBoolean(defel);
+		}
+		else if (strcmp(defel->defname, "publish_generated_columns") == 0)
+		{
+			if (*publish_generated_columns_given)
+				errorConflictingDefElem(defel, pstate);
+			*publish_generated_columns_given = true;
+			*publish_generated_columns = defGetBoolean(defel);
 		}
 		else
 			ereport(ERROR,
@@ -737,6 +748,8 @@ CreatePublication(ParseState *pstate, CreatePublicationStmt *stmt)
 	PublicationActions pubactions;
 	bool		publish_via_partition_root_given;
 	bool		publish_via_partition_root;
+	bool		publish_generated_columns_given;
+	bool		publish_generated_columns;
 	AclResult	aclresult;
 	List	   *relations = NIL;
 	List	   *schemaidlist = NIL;
@@ -776,7 +789,9 @@ CreatePublication(ParseState *pstate, CreatePublicationStmt *stmt)
 							  stmt->options,
 							  &publish_given, &pubactions,
 							  &publish_via_partition_root_given,
-							  &publish_via_partition_root);
+							  &publish_via_partition_root,
+							  &publish_generated_columns_given,
+							  &publish_generated_columns);
 
 	puboid = GetNewOidWithIndex(rel, PublicationObjectIndexId,
 								Anum_pg_publication_oid);
@@ -793,6 +808,8 @@ CreatePublication(ParseState *pstate, CreatePublicationStmt *stmt)
 		BoolGetDatum(pubactions.pubtruncate);
 	values[Anum_pg_publication_pubviaroot - 1] =
 		BoolGetDatum(publish_via_partition_root);
+	values[Anum_pg_publication_pubgencols - 1] =
+		BoolGetDatum(publish_generated_columns);
 
 	tup = heap_form_tuple(RelationGetDescr(rel), values, nulls);
 
@@ -878,6 +895,8 @@ AlterPublicationOptions(ParseState *pstate, AlterPublicationStmt *stmt,
 	PublicationActions pubactions;
 	bool		publish_via_partition_root_given;
 	bool		publish_via_partition_root;
+	bool		publish_generated_columns_given;
+	bool		publish_generated_columns;
 	ObjectAddress obj;
 	Form_pg_publication pubform;
 	List	   *root_relids = NIL;
@@ -887,7 +906,9 @@ AlterPublicationOptions(ParseState *pstate, AlterPublicationStmt *stmt,
 							  stmt->options,
 							  &publish_given, &pubactions,
 							  &publish_via_partition_root_given,
-							  &publish_via_partition_root);
+							  &publish_via_partition_root,
+							  &publish_generated_columns_given,
+							  &publish_generated_columns);
 
 	pubform = (Form_pg_publication) GETSTRUCT(tup);
 
@@ -995,6 +1016,12 @@ AlterPublicationOptions(ParseState *pstate, AlterPublicationStmt *stmt,
 	{
 		values[Anum_pg_publication_pubviaroot - 1] = BoolGetDatum(publish_via_partition_root);
 		replaces[Anum_pg_publication_pubviaroot - 1] = true;
+	}
+
+	if (publish_generated_columns_given)
+	{
+		values[Anum_pg_publication_pubgencols - 1] = BoolGetDatum(publish_generated_columns);
+		replaces[Anum_pg_publication_pubgencols - 1] = true;
 	}
 
 	tup = heap_modify_tuple(tup, RelationGetDescr(rel), values, nulls,

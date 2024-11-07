@@ -223,20 +223,21 @@ extern void logicalrep_write_origin(StringInfo out, const char *origin,
 									XLogRecPtr origin_lsn);
 extern char *logicalrep_read_origin(StringInfo in, XLogRecPtr *origin_lsn);
 extern void logicalrep_write_insert(StringInfo out, TransactionId xid,
-									Relation rel,
-									TupleTableSlot *newslot,
-									bool binary, Bitmapset *columns);
+									Relation rel, TupleTableSlot *newslot,
+									bool binary, Bitmapset *columns,
+									bool include_gencols);
 extern LogicalRepRelId logicalrep_read_insert(StringInfo in, LogicalRepTupleData *newtup);
 extern void logicalrep_write_update(StringInfo out, TransactionId xid,
-									Relation rel,
-									TupleTableSlot *oldslot,
-									TupleTableSlot *newslot, bool binary, Bitmapset *columns);
+									Relation rel, TupleTableSlot *oldslot,
+									TupleTableSlot *newslot, bool binary,
+									Bitmapset *columns, bool include_gencols);
 extern LogicalRepRelId logicalrep_read_update(StringInfo in,
 											  bool *has_oldtuple, LogicalRepTupleData *oldtup,
 											  LogicalRepTupleData *newtup);
 extern void logicalrep_write_delete(StringInfo out, TransactionId xid,
 									Relation rel, TupleTableSlot *oldslot,
-									bool binary, Bitmapset *columns);
+									bool binary, Bitmapset *columns,
+									bool include_gencols);
 extern LogicalRepRelId logicalrep_read_delete(StringInfo in,
 											  LogicalRepTupleData *oldtup);
 extern void logicalrep_write_truncate(StringInfo out, TransactionId xid,
@@ -247,7 +248,8 @@ extern List *logicalrep_read_truncate(StringInfo in,
 extern void logicalrep_write_message(StringInfo out, TransactionId xid, XLogRecPtr lsn,
 									 bool transactional, const char *prefix, Size sz, const char *message);
 extern void logicalrep_write_rel(StringInfo out, TransactionId xid,
-								 Relation rel, Bitmapset *columns);
+								 Relation rel, Bitmapset *columns,
+								 bool include_gencols);
 extern LogicalRepRelation *logicalrep_read_rel(StringInfo in);
 extern void logicalrep_write_typ(StringInfo out, TransactionId xid,
 								 Oid typoid);
@@ -271,6 +273,7 @@ extern void logicalrep_read_stream_abort(StringInfo in,
 										 bool read_abort_info);
 extern const char *logicalrep_message_type(LogicalRepMsgType action);
 extern bool logicalrep_should_publish_column(Form_pg_attribute att,
-											 Bitmapset *columns);
+											 Bitmapset *columns,
+											 bool include_gencols);
 
 #endif							/* LOGICAL_PROTO_H */
