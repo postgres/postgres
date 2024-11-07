@@ -236,8 +236,10 @@ sub query
 	die "psql query timed out" if $self->{timeout}->is_expired;
 	$output = $self->{stdout};
 
-	# remove banner again, our caller doesn't care
-	$output =~ s/\n$banner\n$//s;
+	# Remove banner again, our caller doesn't care.  The first newline is
+	# optional, as there would not be one if consuming an empty query
+	# result.
+	$output =~ s/\n?$banner\n$//s;
 
 	# clear out output for the next query
 	$self->{stdout} = '';

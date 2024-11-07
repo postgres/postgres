@@ -96,13 +96,12 @@ my $bgpsql = $node->background_psql('postgres', on_error_stop => 0);
 my $pid = $bgpsql->query('SELECT pg_backend_pid()');
 
 # create the database, prevent drop database via lock held by a 2PC transaction
-ok( $bgpsql->query_safe(
-		qq(
+$bgpsql->query_safe(
+	qq(
   CREATE DATABASE regression_invalid_interrupt;
   BEGIN;
   LOCK pg_tablespace;
-  PREPARE TRANSACTION 'lock_tblspc';)),
-	"blocked DROP DATABASE completion");
+  PREPARE TRANSACTION 'lock_tblspc';));
 
 # Try to drop. This will wait due to the still held lock.
 $bgpsql->query_until(qr//, "DROP DATABASE regression_invalid_interrupt;\n");
@@ -135,11 +134,8 @@ is($node->psql('regression_invalid_interrupt', ''),
 
 # To properly drop the database, we need to release the lock previously preventing
 # doing so.
-ok($bgpsql->query_safe(qq(ROLLBACK PREPARED 'lock_tblspc')),
-	"unblock DROP DATABASE");
-
-ok($bgpsql->query(qq(DROP DATABASE regression_invalid_interrupt)),
-	"DROP DATABASE invalid_interrupt");
+$bgpsql->query_safe(qq(ROLLBACK PREPARED 'lock_tblspc'));
+$bgpsql->query_safe(qq(DROP DATABASE regression_invalid_interrupt));
 
 $bgpsql->quit();
 
