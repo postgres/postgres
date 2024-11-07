@@ -659,12 +659,12 @@ CREATE TEMP TABLE FKTABLE (ftest1 inet);
 -- This next should fail, because int=inet does not exist
 ALTER TABLE FKTABLE ADD FOREIGN KEY(ftest1) references pktable;
 ERROR:  foreign key constraint "fktable_ftest1_fkey" cannot be implemented
-DETAIL:  Key columns "ftest1" and "ptest1" are of incompatible types: inet and integer.
+DETAIL:  Key columns "ftest1" of the referencing table and "ptest1" of the referenced table are of incompatible types: inet and integer.
 -- This should also fail for the same reason, but here we
 -- give the column name
 ALTER TABLE FKTABLE ADD FOREIGN KEY(ftest1) references pktable(ptest1);
 ERROR:  foreign key constraint "fktable_ftest1_fkey" cannot be implemented
-DETAIL:  Key columns "ftest1" and "ptest1" are of incompatible types: inet and integer.
+DETAIL:  Key columns "ftest1" of the referencing table and "ptest1" of the referenced table are of incompatible types: inet and integer.
 DROP TABLE FKTABLE;
 -- This should succeed, even though they are different types,
 -- because int=int8 exists and is a member of the integer opfamily
@@ -682,7 +682,7 @@ DROP TABLE FKTABLE;
 CREATE TEMP TABLE FKTABLE (ftest1 numeric);
 ALTER TABLE FKTABLE ADD FOREIGN KEY(ftest1) references pktable;
 ERROR:  foreign key constraint "fktable_ftest1_fkey" cannot be implemented
-DETAIL:  Key columns "ftest1" and "ptest1" are of incompatible types: numeric and integer.
+DETAIL:  Key columns "ftest1" of the referencing table and "ptest1" of the referenced table are of incompatible types: numeric and integer.
 DROP TABLE FKTABLE;
 DROP TABLE PKTABLE;
 -- On the other hand, this should work because int implicitly promotes to
@@ -704,26 +704,26 @@ CREATE TEMP TABLE PKTABLE (ptest1 int, ptest2 inet,
 CREATE TEMP TABLE FKTABLE (ftest1 cidr, ftest2 timestamp);
 ALTER TABLE FKTABLE ADD FOREIGN KEY(ftest1, ftest2) references pktable;
 ERROR:  foreign key constraint "fktable_ftest1_ftest2_fkey" cannot be implemented
-DETAIL:  Key columns "ftest1" and "ptest1" are of incompatible types: cidr and integer.
+DETAIL:  Key columns "ftest1" of the referencing table and "ptest1" of the referenced table are of incompatible types: cidr and integer.
 DROP TABLE FKTABLE;
 -- Again, so should this...
 CREATE TEMP TABLE FKTABLE (ftest1 cidr, ftest2 timestamp);
 ALTER TABLE FKTABLE ADD FOREIGN KEY(ftest1, ftest2)
      references pktable(ptest1, ptest2);
 ERROR:  foreign key constraint "fktable_ftest1_ftest2_fkey" cannot be implemented
-DETAIL:  Key columns "ftest1" and "ptest1" are of incompatible types: cidr and integer.
+DETAIL:  Key columns "ftest1" of the referencing table and "ptest1" of the referenced table are of incompatible types: cidr and integer.
 DROP TABLE FKTABLE;
 -- This fails because we mixed up the column ordering
 CREATE TEMP TABLE FKTABLE (ftest1 int, ftest2 inet);
 ALTER TABLE FKTABLE ADD FOREIGN KEY(ftest1, ftest2)
      references pktable(ptest2, ptest1);
 ERROR:  foreign key constraint "fktable_ftest1_ftest2_fkey" cannot be implemented
-DETAIL:  Key columns "ftest1" and "ptest2" are of incompatible types: integer and inet.
+DETAIL:  Key columns "ftest1" of the referencing table and "ptest2" of the referenced table are of incompatible types: integer and inet.
 -- As does this...
 ALTER TABLE FKTABLE ADD FOREIGN KEY(ftest2, ftest1)
      references pktable(ptest1, ptest2);
 ERROR:  foreign key constraint "fktable_ftest2_ftest1_fkey" cannot be implemented
-DETAIL:  Key columns "ftest2" and "ptest1" are of incompatible types: inet and integer.
+DETAIL:  Key columns "ftest2" of the referencing table and "ptest1" of the referenced table are of incompatible types: inet and integer.
 DROP TABLE FKTABLE;
 DROP TABLE PKTABLE;
 -- Test that ALTER CONSTRAINT updates trigger deferrability properly
@@ -3458,7 +3458,7 @@ COMMENT ON CONSTRAINT comment_test_child_fk ON comment_test_child IS 'FOREIGN KE
 ALTER TABLE comment_test ALTER COLUMN id SET DATA TYPE text;
 ALTER TABLE comment_test ALTER COLUMN id SET DATA TYPE int USING id::integer;
 ERROR:  foreign key constraint "comment_test_child_fk" cannot be implemented
-DETAIL:  Key columns "id" and "id" are of incompatible types: text and integer.
+DETAIL:  Key columns "id" of the referencing table and "id" of the referenced table are of incompatible types: text and integer.
 -- Comments should be intact
 SELECT col_description('comment_test_child'::regclass, 1) as comment;
               comment              

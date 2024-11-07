@@ -9961,7 +9961,7 @@ ATAddForeignKeyConstraint(List **wqueue, AlteredTableInfo *tab, Relation rel,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
 					 errmsg("foreign key constraint \"%s\" cannot be implemented",
 							fkconstraint->conname),
-					 errdetail("Key columns \"%s\" and \"%s\" "
+					 errdetail("Key columns \"%s\" of the referencing table and \"%s\" of the referenced table "
 							   "are of incompatible types: %s and %s.",
 							   strVal(list_nth(fkconstraint->fk_attrs, i)),
 							   strVal(list_nth(fkconstraint->pk_attrs, i)),

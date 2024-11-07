@@ -581,7 +581,7 @@ DETAIL:  Key (id)=(red) is still referenced from table "enumtest_child".
 CREATE TYPE bogus AS ENUM('good', 'bad', 'ugly');
 CREATE TABLE enumtest_bogus_child(parent bogus REFERENCES enumtest_parent);
 ERROR:  foreign key constraint "enumtest_bogus_child_parent_fkey" cannot be implemented
-DETAIL:  Key columns "parent" and "id" are of incompatible types: bogus and rainbow.
+DETAIL:  Key columns "parent" of the referencing table and "id" of the referenced table are of incompatible types: bogus and rainbow.
 DROP TYPE bogus;
 -- check renaming a value
 ALTER TYPE rainbow RENAME VALUE 'red' TO 'crimson';

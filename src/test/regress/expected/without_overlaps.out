@@ -1377,7 +1377,7 @@ CREATE TABLE temporal_fk_rng2rng (
     REFERENCES temporal_rng (id, PERIOD valid_at)
 );
 ERROR:  foreign key constraint "temporal_fk_rng2rng_fk2" cannot be implemented
-DETAIL:  Key columns "valid_at" and "valid_at" are of incompatible types: int4range and daterange.
+DETAIL:  Key columns "valid_at" of the referencing table and "valid_at" of the referenced table are of incompatible types: int4range and daterange.
 -- works: PERIOD for both referenced and referencing
 CREATE TABLE temporal_fk_rng2rng (
   id int4range,
@@ -1562,7 +1562,7 @@ ALTER TABLE temporal_fk_rng2rng
   FOREIGN KEY (parent_id, PERIOD valid_at)
   REFERENCES temporal_rng;
 ERROR:  foreign key constraint "temporal_fk_rng2rng_fk" cannot be implemented
-DETAIL:  Key columns "valid_at" and "valid_at" are of incompatible types: tsrange and daterange.
+DETAIL:  Key columns "valid_at" of the referencing table and "valid_at" of the referenced table are of incompatible types: tsrange and daterange.
 ALTER TABLE temporal_fk_rng2rng
   ALTER COLUMN valid_at TYPE daterange USING daterange(lower(valid_at)::date, upper(valid_at)::date);
 -- with inferred PK on the referenced table:
@@ -1884,7 +1884,7 @@ CREATE TABLE temporal_fk_mltrng2mltrng (
     REFERENCES temporal_mltrng (id, PERIOD valid_at)
 );
 ERROR:  foreign key constraint "temporal_fk_mltrng2mltrng_fk2" cannot be implemented
-DETAIL:  Key columns "valid_at" and "valid_at" are of incompatible types: int4multirange and datemultirange.
+DETAIL:  Key columns "valid_at" of the referencing table and "valid_at" of the referenced table are of incompatible types: int4multirange and datemultirange.
 CREATE TABLE temporal_fk_mltrng2mltrng (
   id int4range,
   valid_at datemultirange,
