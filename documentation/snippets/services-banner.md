@@ -6,7 +6,7 @@ If you need assistance, visit the community forum for comprehensive and free dat
 
 <div class="actions" markdown>
 
-[:material-forum-outline: Community Forum](https://forums.percona.com/c/postgresql/25?utm_campaign=Doc%20pages) [:percona-logo: Get a Percona Expert](https://www.percona.com/about/contact)
+[:material-forum-outline: Community Forum](https://forums.percona.com/c/postgresql/pg-tde-transparent-data-encryption-tde/82) [:percona-logo: Get a Percona Expert](https://www.percona.com/about/contact)
 
 
 <img referrerpolicy="no-referrer-when-downgrade" src="https://static.scarf.sh/a.png?x-pxid=b95a2b04-c5c7-47f9-bb4e-b7fc13c3ab0d" />
