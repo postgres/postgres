@@ -2136,6 +2136,124 @@ SELECT c collate "C", count(c) FROM pagg_tab3 GROUP BY c collate "C" ORDER BY 1;
  b |     5
 (4 rows)
 
+-- Partitionwise join should not be allowed too when the collation used by the
+-- join keys doesn't match the partition key collation.
+SET enable_partitionwise_join TO false;
+EXPLAIN (COSTS OFF)
+SELECT t1.c, count(t2.c) FROM pagg_tab3 t1 JOIN pagg_tab3 t2 ON t1.c = t2.c GROUP BY 1 ORDER BY t1.c COLLATE "C";
+                         QUERY PLAN                          
+-------------------------------------------------------------
+ Sort
+   Sort Key: t1.c COLLATE "C"
+   ->  HashAggregate
+         Group Key: t1.c
+         ->  Hash Join
+               Hash Cond: (t1.c = t2.c)
+               ->  Append
+                     ->  Seq Scan on pagg_tab3_p2 t1_1
+                     ->  Seq Scan on pagg_tab3_p1 t1_2
+               ->  Hash
+                     ->  Append
+                           ->  Seq Scan on pagg_tab3_p2 t2_1
+                           ->  Seq Scan on pagg_tab3_p1 t2_2
+(13 rows)
+
+SELECT t1.c, count(t2.c) FROM pagg_tab3 t1 JOIN pagg_tab3 t2 ON t1.c = t2.c GROUP BY 1 ORDER BY t1.c COLLATE "C";
+ c | count 
+---+-------
+ A |   100
+ B |   100
+(2 rows)
+
+SET enable_partitionwise_join TO true;
+EXPLAIN (COSTS OFF)
+SELECT t1.c, count(t2.c) FROM pagg_tab3 t1 JOIN pagg_tab3 t2 ON t1.c = t2.c GROUP BY 1 ORDER BY t1.c COLLATE "C";
+                         QUERY PLAN                          
+-------------------------------------------------------------
+ Sort
+   Sort Key: t1.c COLLATE "C"
+   ->  HashAggregate
+         Group Key: t1.c
+         ->  Hash Join
+               Hash Cond: (t1.c = t2.c)
+               ->  Append
+                     ->  Seq Scan on pagg_tab3_p2 t1_1
+                     ->  Seq Scan on pagg_tab3_p1 t1_2
+               ->  Hash
+                     ->  Append
+                           ->  Seq Scan on pagg_tab3_p2 t2_1
+                           ->  Seq Scan on pagg_tab3_p1 t2_2
+(13 rows)
+
+SELECT t1.c, count(t2.c) FROM pagg_tab3 t1 JOIN pagg_tab3 t2 ON t1.c = t2.c GROUP BY 1 ORDER BY t1.c COLLATE "C";
+ c | count 
+---+-------
+ A |   100
+ B |   100
+(2 rows)
+
+-- OK when the join clause uses the same collation as the partition key.
+EXPLAIN (COSTS OFF)
+SELECT t1.c COLLATE "C", count(t2.c) FROM pagg_tab3 t1 JOIN pagg_tab3 t2 ON t1.c = t2.c COLLATE "C" GROUP BY t1.c COLLATE "C" ORDER BY t1.c COLLATE "C";
+                            QUERY PLAN                            
+------------------------------------------------------------------
+ Sort
+   Sort Key: ((t1.c)::text) COLLATE "C"
+   ->  Append
+         ->  HashAggregate
+               Group Key: (t1.c)::text
+               ->  Hash Join
+                     Hash Cond: ((t1.c)::text = (t2.c)::text)
+                     ->  Seq Scan on pagg_tab3_p2 t1
+                     ->  Hash
+                           ->  Seq Scan on pagg_tab3_p2 t2
+         ->  HashAggregate
+               Group Key: (t1_1.c)::text
+               ->  Hash Join
+                     Hash Cond: ((t1_1.c)::text = (t2_1.c)::text)
+                     ->  Seq Scan on pagg_tab3_p1 t1_1
+                     ->  Hash
+                           ->  Seq Scan on pagg_tab3_p1 t2_1
+(17 rows)
+
+SELECT t1.c COLLATE "C", count(t2.c) FROM pagg_tab3 t1 JOIN pagg_tab3 t2 ON t1.c = t2.c COLLATE "C" GROUP BY t1.c COLLATE "C" ORDER BY t1.c COLLATE "C";
+ c | count 
+---+-------
+ A |    25
+ B |    25
+ a |    25
+ b |    25
+(4 rows)
+
+SET enable_partitionwise_join TO false;
+EXPLAIN (COSTS OFF)
+SELECT t1.c COLLATE "C", count(t2.c) FROM pagg_tab3 t1 JOIN pagg_tab3 t2 ON t1.c = t2.c COLLATE "C" GROUP BY t1.c COLLATE "C" ORDER BY t1.c COLLATE "C";
+                         QUERY PLAN                          
+-------------------------------------------------------------
+ Sort
+   Sort Key: ((t1.c)::text) COLLATE "C"
+   ->  HashAggregate
+         Group Key: (t1.c)::text
+         ->  Hash Join
+               Hash Cond: ((t1.c)::text = (t2.c)::text)
+               ->  Append
+                     ->  Seq Scan on pagg_tab3_p2 t1_1
+                     ->  Seq Scan on pagg_tab3_p1 t1_2
+               ->  Hash
+                     ->  Append
+                           ->  Seq Scan on pagg_tab3_p2 t2_1
+                           ->  Seq Scan on pagg_tab3_p1 t2_2
+(13 rows)
+
+SELECT t1.c COLLATE "C", count(t2.c) FROM pagg_tab3 t1 JOIN pagg_tab3 t2 ON t1.c = t2.c COLLATE "C" GROUP BY t1.c COLLATE "C" ORDER BY t1.c COLLATE "C";
+ c | count 
+---+-------
+ A |    25
+ B |    25
+ a |    25
+ b |    25
+(4 rows)
+
 DROP TABLE pagg_tab3;
 RESET enable_partitionwise_aggregate;
 RESET max_parallel_workers_per_gather;
