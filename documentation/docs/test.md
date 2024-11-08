@@ -1,8 +1,12 @@
 # Test Transparent Data Encryption
 
-!!! warning
+To check if the data is encrypted, do the following:
 
-    This is the tech preview functionality. Its scope is not yet finalized and can change anytime.** Use it only for testing purposes.**
+=== "pg_tde Tech preview"
+
+    !!! warning
+
+        This is the tech preview functionality. Its scope is not yet finalized and can change anytime.** Use it only for testing purposes.**
 
 To check if the data is encrypted, do the following:
 
@@ -10,6 +14,17 @@ To check if the data is encrypted, do the following:
 
     ```sql
     CREATE TABLE <table_name> (<field> <datatype>) USING tde_heap;
+    ```
+
+    <i warning>:material-information: Warning:</i> Example for testing purposes only:
+
+    ```sql
+    CREATE TABLE albums (
+    album_id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    artist_id INTEGER,
+    title TEXT NOT NULL,
+    released DATE NOT NULL
+    ) USING tde_heap;
     ```
 
 2. Run the following function:
@@ -28,6 +43,12 @@ To check if the data is encrypted, do the following:
     SELECT pg_tde_rotate_principal_key('new-principal-key', NULL); -- specify new key name
     -- or
     SELECT pg_tde_rotate_principal_key('new-principal-key', 'new-provider'); -- changeprovider
+    ```
+
+4. You can encrypt existing table. It requires rewriting the table, so for large tables, it might take a considerable amount of time.
+
+    ```sql
+    ALTER TABLE table_name SET access method  tde_heap;
     ```
 
 !!! hint

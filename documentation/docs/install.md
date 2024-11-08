@@ -25,6 +25,7 @@ Install `pg_tde` using one of available installation methods:
     - Red Hat Enterprise Linux 9 and compatible derivatives
     - Ubuntu 20.04 (Focal Fossa)
     - Ubuntu 22.04 (Jammy Jellyfish)
+    - Ubuntu 24.04 (Noble Numbat)
     - Debian 11 (Bullseye) 
     - Debian 12 (Bookworm)
 

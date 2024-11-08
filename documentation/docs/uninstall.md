@@ -27,5 +27,5 @@ Here's how to do it:
     * On RHEL and derivatives
 
        ```sh
-       sudo systemctl restart postgresql-16
+       sudo systemctl restart postgresql-17
        ```
