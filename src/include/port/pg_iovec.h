@@ -68,7 +68,7 @@ pg_preadv(int fd, const struct iovec *iov, int iovcnt, off_t offset)
 		}
 		sum += part;
 		offset += part;
-		if (part < iov[i].iov_len)
+		if ((size_t) part < iov[i].iov_len)
 			return sum;
 	}
 	return sum;
@@ -107,7 +107,7 @@ pg_pwritev(int fd, const struct iovec *iov, int iovcnt, off_t offset)
 		}
 		sum += part;
 		offset += part;
-		if (part < iov[i].iov_len)
+		if ((size_t) part < iov[i].iov_len)
 			return sum;
 	}
 	return sum;
