@@ -147,3 +147,18 @@ EXPLAIN (COSTS OFF)
 SELECT * FROM pred_parent WHERE a IS NULL;
 
 DROP TABLE pred_parent, pred_child;
+
+-- Validate the additional constant-FALSE qual does not cause inconsistent
+-- RestrictInfo serial numbers
+CREATE TABLE pred_tab (a int PRIMARY KEY, b int);
+INSERT INTO pred_tab SELECT i, i FROM generate_series(1, 10)i;
+ANALYZE pred_tab;
+
+EXPLAIN (COSTS OFF)
+SELECT 1 FROM pred_tab t1
+    LEFT JOIN
+        (pred_tab t2 LEFT JOIN pred_tab t3 ON t2.a = t3.a) ON TRUE
+    LEFT JOIN pred_tab t4 ON t1.a IS NULL AND t1.b = 1
+    RIGHT JOIN pred_tab t5 ON t1.b = t5.b;
+
+DROP TABLE pred_tab;

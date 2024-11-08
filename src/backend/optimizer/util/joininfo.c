@@ -106,12 +106,19 @@ add_join_clause_to_rels(PlannerInfo *root,
 		return;
 
 	/*
-	 * Substitute constant-FALSE for the origin qual if it is always false.
-	 * Note that we keep the same rinfo_serial.
+	 * Substitute the origin qual with constant-FALSE if it is provably always
+	 * false.
+	 *
+	 * Note that we need to keep the same rinfo_serial, since it is in
+	 * practice the same condition.  We also need to reset the
+	 * last_rinfo_serial counter, which is essential to ensure that the
+	 * RestrictInfos for the "same" qual condition get identical serial
+	 * numbers (see deconstruct_distribute_oj_quals).
 	 */
 	if (restriction_is_always_false(root, restrictinfo))
 	{
 		int			save_rinfo_serial = restrictinfo->rinfo_serial;
+		int			save_last_rinfo_serial = root->last_rinfo_serial;
 
 		restrictinfo = make_restrictinfo(root,
 										 (Expr *) makeBoolConst(false, false),
@@ -124,6 +131,7 @@ add_join_clause_to_rels(PlannerInfo *root,
 										 restrictinfo->incompatible_relids,
 										 restrictinfo->outer_relids);
 		restrictinfo->rinfo_serial = save_rinfo_serial;
+		root->last_rinfo_serial = save_last_rinfo_serial;
 	}
 
 	cur_relid = -1;
