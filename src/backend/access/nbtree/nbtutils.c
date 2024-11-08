@@ -2402,6 +2402,8 @@ _bt_advance_array_keys(IndexScanDesc scan, BTReadPageState *pstate,
 
 new_prim_scan:
 
+	Assert(pstate->finaltup);	/* not on rightmost/leftmost page */
+
 	/*
 	 * End this primitive index scan, but schedule another.
 	 *
