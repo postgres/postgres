@@ -12,13 +12,13 @@
  */
 #include "c.h"
 
+#ifdef USE_AVX512_POPCNT_WITH_RUNTIME_CHECK
+
 #if defined(HAVE__GET_CPUID) || defined(HAVE__GET_CPUID_COUNT)
 #include <cpuid.h>
 #endif
 
-#ifdef USE_AVX512_POPCNT_WITH_RUNTIME_CHECK
 #include <immintrin.h>
-#endif
 
 #if defined(HAVE__CPUID) || defined(HAVE__CPUIDEX)
 #include <intrin.h>
@@ -31,7 +31,7 @@
  * use AVX-512 intrinsics, but we check it anyway to be sure.  We piggy-back on
  * the function pointers that are only used when TRY_POPCNT_FAST is set.
  */
-#if defined(TRY_POPCNT_FAST) && defined(USE_AVX512_POPCNT_WITH_RUNTIME_CHECK)
+#ifdef TRY_POPCNT_FAST
 
 /*
  * Does CPUID say there's support for XSAVE instructions?
@@ -219,5 +219,5 @@ pg_popcount_masked_avx512(const char *buf, int bytes, bits8 mask)
 	return _mm512_reduce_add_epi64(accum);
 }
 
-#endif							/* TRY_POPCNT_FAST &&
-								 * USE_AVX512_POPCNT_WITH_RUNTIME_CHECK */
+#endif							/* TRY_POPCNT_FAST */
+#endif							/* USE_AVX512_POPCNT_WITH_RUNTIME_CHECK */
