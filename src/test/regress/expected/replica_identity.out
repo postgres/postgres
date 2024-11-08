@@ -174,6 +174,10 @@ Indexes:
     "test_replica_identity_partial" UNIQUE, btree (keya, keyb) WHERE keyb <> '3'::text
     "test_replica_identity_unique_defer" UNIQUE CONSTRAINT, btree (keya, keyb) DEFERRABLE
     "test_replica_identity_unique_nondefer" UNIQUE CONSTRAINT, btree (keya, keyb)
+Not-null constraints:
+    "test_replica_identity_id_not_null" NOT NULL "id"
+    "test_replica_identity_keya_not_null" NOT NULL "keya"
+    "test_replica_identity_keyb_not_null" NOT NULL "keyb"
 Replica Identity: FULL
 
 ALTER TABLE test_replica_identity REPLICA IDENTITY NOTHING;
@@ -231,6 +235,9 @@ Indexes:
 -- used as replica identity.
 ALTER TABLE test_replica_identity3 ALTER COLUMN id DROP NOT NULL;
 ERROR:  column "id" is in index used as replica identity
+-- but it's OK when the identity is FULL
+ALTER TABLE test_replica_identity3 REPLICA IDENTITY FULL;
+ALTER TABLE test_replica_identity3 ALTER COLUMN id DROP NOT NULL;
 --
 -- Test that replica identity can be set on an index that's not yet valid.
 -- (This matches the way pg_dump will try to dump a partitioned table.)
@@ -253,6 +260,8 @@ ALTER TABLE ONLY test_replica_identity4_1
 Partition key: LIST (id)
 Indexes:
     "test_replica_identity4_pkey" PRIMARY KEY, btree (id) INVALID REPLICA IDENTITY
+Not-null constraints:
+    "test_replica_identity4_id_not_null" NOT NULL "id"
 Partitions: test_replica_identity4_1 FOR VALUES IN (1)
 
 ALTER INDEX test_replica_identity4_pkey
@@ -265,11 +274,26 @@ ALTER INDEX test_replica_identity4_pkey
 Partition key: LIST (id)
 Indexes:
     "test_replica_identity4_pkey" PRIMARY KEY, btree (id) REPLICA IDENTITY
+Not-null constraints:
+    "test_replica_identity4_id_not_null" NOT NULL "id"
 Partitions: test_replica_identity4_1 FOR VALUES IN (1)
 
+-- Dropping the primary key is not allowed if that would leave the replica
+-- identity as nullable
+CREATE TABLE test_replica_identity5 (a int not null, b int, c int,
+	PRIMARY KEY (b, c));
+CREATE UNIQUE INDEX test_replica_identity5_a_b_key ON test_replica_identity5 (a, b);
+ALTER TABLE test_replica_identity5 REPLICA IDENTITY USING INDEX test_replica_identity5_a_b_key;
+ALTER TABLE test_replica_identity5 DROP CONSTRAINT test_replica_identity5_pkey;
+ALTER TABLE test_replica_identity5 ALTER b SET NOT NULL;
+ALTER TABLE test_replica_identity5 DROP CONSTRAINT test_replica_identity5_pkey;
+ERROR:  constraint "test_replica_identity5_pkey" of relation "test_replica_identity5" does not exist
+ALTER TABLE test_replica_identity5 ALTER b DROP NOT NULL;
+ERROR:  column "b" is in index used as replica identity
 DROP TABLE test_replica_identity;
 DROP TABLE test_replica_identity2;
 DROP TABLE test_replica_identity3;
 DROP TABLE test_replica_identity4;
+DROP TABLE test_replica_identity5;
 DROP TABLE test_replica_identity_othertable;
 DROP TABLE test_replica_identity_t3;

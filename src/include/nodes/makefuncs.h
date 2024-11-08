@@ -68,6 +68,7 @@ extern RelabelType *makeRelabelType(Expr *arg, Oid rtype, int32 rtypmod,
 									Oid rcollid, CoercionForm rformat);
 
 extern RangeVar *makeRangeVar(char *schemaname, char *relname, int location);
+extern Constraint *makeNotNullConstraint(String *colname);
 
 extern TypeName *makeTypeName(char *typnam);
 extern TypeName *makeTypeNameFromNameList(List *names);

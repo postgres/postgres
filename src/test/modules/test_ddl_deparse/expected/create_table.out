@@ -85,8 +85,6 @@ CREATE TABLE employees OF employee_type (
     salary WITH OPTIONS DEFAULT 1000
 );
 NOTICE:  DDL test: type simple, tag CREATE TABLE
-NOTICE:  DDL test: type alter table, tag ALTER TABLE
-NOTICE:    subcommand: type SET NOT NULL desc column name of table employees
 NOTICE:  DDL test: type simple, tag CREATE INDEX
 -- Inheritance
 CREATE TABLE person (

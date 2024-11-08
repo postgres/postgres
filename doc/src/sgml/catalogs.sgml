@@ -1271,7 +1271,7 @@
        <structfield>attnotnull</structfield> <type>bool</type>
       </para>
       <para>
-       This represents a not-null constraint.
+       This column has a not-null constraint.
       </para></entry>
      </row>
 
@@ -2502,14 +2502,10 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
   </indexterm>
 
   <para>
-   The catalog <structname>pg_constraint</structname> stores check, primary
-   key, unique, foreign key, and exclusion constraints on tables, as well as
-   not-null constraints on domains.
+   The catalog <structname>pg_constraint</structname> stores check, not-null,
+   primary key, unique, foreign key, and exclusion constraints on tables.
    (Column constraints are not treated specially.  Every column constraint is
    equivalent to some table constraint.)
-   Not-null constraints on relations are represented in the
-   <link linkend="catalog-pg-attribute"><structname>pg_attribute</structname></link>
-   catalog, not here.
   </para>
 
   <para>
@@ -2571,7 +2567,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
       <para>
        <literal>c</literal> = check constraint,
        <literal>f</literal> = foreign key constraint,
-       <literal>n</literal> = not-null constraint (domains only),
+       <literal>n</literal> = not-null constraint,
        <literal>p</literal> = primary key constraint,
        <literal>u</literal> = unique constraint,
        <literal>t</literal> = constraint trigger,

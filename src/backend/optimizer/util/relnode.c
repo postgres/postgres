@@ -2185,6 +2185,10 @@ have_partkey_equi_join(PlannerInfo *root, RelOptInfo *joinrel,
 		if (pk_known_equal[ipk1])
 			continue;
 
+		/* Reject if the partition key collation differs from the clause's. */
+		if (rel1->part_scheme->partcollation[ipk1] != opexpr->inputcollid)
+			return false;
+
 		/*
 		 * The clause allows partitionwise join only if it uses the same
 		 * operator family as that specified by the partition key.
@@ -2258,6 +2262,8 @@ have_partkey_equi_join(PlannerInfo *root, RelOptInfo *joinrel,
 		{
 			Node	   *expr1 = (Node *) lfirst(lc);
 			ListCell   *lc2;
+			Oid			partcoll1 = rel1->part_scheme->partcollation[ipk];
+			Oid			exprcoll1 = exprCollation(expr1);
 
 			foreach(lc2, rel2->partexprs[ipk])
 			{
@@ -2265,8 +2271,26 @@ have_partkey_equi_join(PlannerInfo *root, RelOptInfo *joinrel,
 
 				if (exprs_known_equal(root, expr1, expr2, btree_opfamily))
 				{
-					pk_known_equal[ipk] = true;
-					break;
+					/*
+					 * Ensure that the collation of the expression matches
+					 * that of the partition key. Checking just one collation
+					 * (partcoll1 and exprcoll1) suffices because partcoll1
+					 * and partcoll2, as well as exprcoll1 and exprcoll2,
+					 * should be identical. This holds because both rel1 and
+					 * rel2 use the same PartitionScheme and expr1 and expr2
+					 * are equal.
+					 */
+					if (partcoll1 == exprcoll1)
+					{
+						Oid			partcoll2 PG_USED_FOR_ASSERTS_ONLY =
+							rel2->part_scheme->partcollation[ipk];
+						Oid			exprcoll2 PG_USED_FOR_ASSERTS_ONLY =
+							exprCollation(expr2);
+
+						Assert(partcoll2 == exprcoll2);
+						pk_known_equal[ipk] = true;
+						break;
+					}
 				}
 			}
 			if (pk_known_equal[ipk])

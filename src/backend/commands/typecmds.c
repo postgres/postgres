@@ -944,6 +944,10 @@ DefineDomain(CreateDomainStmt *stmt)
 					ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
 							 errmsg("conflicting NULL/NOT NULL constraints")));
+				if (constr->is_no_inherit)
+					ereport(ERROR,
+							errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+							errmsg("not-null constraints for domains cannot be marked NO INHERIT"));
 				typNotNull = true;
 				nullDefined = true;
 				break;

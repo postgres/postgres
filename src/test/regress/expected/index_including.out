@@ -113,7 +113,7 @@ SELECT indexrelid::regclass, indnatts, indnkeyatts, indisunique, indisprimary, i
  covering   |        4 |           2 | t           | t            | 1 2 3 4 | 1978 1978
 (1 row)
 
-SELECT pg_get_constraintdef(oid), conname, conkey FROM pg_constraint WHERE conrelid = 'tbl'::regclass::oid;
+SELECT pg_get_constraintdef(oid), conname, conkey FROM pg_constraint WHERE conrelid = 'tbl'::regclass::oid AND contype = 'p';
          pg_get_constraintdef          | conname  | conkey 
 ---------------------------------------+----------+--------
  PRIMARY KEY (c1, c2) INCLUDE (c3, c4) | covering | {1,2}
@@ -191,7 +191,7 @@ SELECT indexrelid::regclass, indnatts, indnkeyatts, indisunique, indisprimary, i
  tbl_pkey   |        4 |           2 | t           | t            | 1 2 3 4 | 1978 1978
 (1 row)
 
-SELECT pg_get_constraintdef(oid), conname, conkey FROM pg_constraint WHERE conrelid = 'tbl'::regclass::oid;
+SELECT pg_get_constraintdef(oid), conname, conkey FROM pg_constraint WHERE conrelid = 'tbl'::regclass::oid AND contype = 'p';
          pg_get_constraintdef          | conname  | conkey 
 ---------------------------------------+----------+--------
  PRIMARY KEY (c1, c2) INCLUDE (c3, c4) | tbl_pkey | {1,2}

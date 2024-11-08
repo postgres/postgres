@@ -100,6 +100,9 @@ ALTER TABLE test_replica_identity3 ALTER COLUMN id TYPE bigint;
 -- ALTER TABLE DROP NOT NULL is not allowed for columns part of an index
 -- used as replica identity.
 ALTER TABLE test_replica_identity3 ALTER COLUMN id DROP NOT NULL;
+-- but it's OK when the identity is FULL
+ALTER TABLE test_replica_identity3 REPLICA IDENTITY FULL;
+ALTER TABLE test_replica_identity3 ALTER COLUMN id DROP NOT NULL;
 
 --
 -- Test that replica identity can be set on an index that's not yet valid.
@@ -120,9 +123,21 @@ ALTER INDEX test_replica_identity4_pkey
   ATTACH PARTITION test_replica_identity4_1_pkey;
 \d+ test_replica_identity4
 
+-- Dropping the primary key is not allowed if that would leave the replica
+-- identity as nullable
+CREATE TABLE test_replica_identity5 (a int not null, b int, c int,
+	PRIMARY KEY (b, c));
+CREATE UNIQUE INDEX test_replica_identity5_a_b_key ON test_replica_identity5 (a, b);
+ALTER TABLE test_replica_identity5 REPLICA IDENTITY USING INDEX test_replica_identity5_a_b_key;
+ALTER TABLE test_replica_identity5 DROP CONSTRAINT test_replica_identity5_pkey;
+ALTER TABLE test_replica_identity5 ALTER b SET NOT NULL;
+ALTER TABLE test_replica_identity5 DROP CONSTRAINT test_replica_identity5_pkey;
+ALTER TABLE test_replica_identity5 ALTER b DROP NOT NULL;
+
 DROP TABLE test_replica_identity;
 DROP TABLE test_replica_identity2;
 DROP TABLE test_replica_identity3;
 DROP TABLE test_replica_identity4;
+DROP TABLE test_replica_identity5;
 DROP TABLE test_replica_identity_othertable;
 DROP TABLE test_replica_identity_t3;

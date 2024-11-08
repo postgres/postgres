@@ -61,7 +61,7 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
 <phrase>where <replaceable class="parameter">column_constraint</replaceable> is:</phrase>
 
 [ CONSTRAINT <replaceable class="parameter">constraint_name</replaceable> ]
-{ NOT NULL |
+{ NOT NULL [ NO INHERIT ]  |
   NULL |
   CHECK ( <replaceable class="parameter">expression</replaceable> ) [ NO INHERIT ] |
   DEFAULT <replaceable>default_expr</replaceable> |
@@ -77,6 +77,7 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
 
 [ CONSTRAINT <replaceable class="parameter">constraint_name</replaceable> ]
 { CHECK ( <replaceable class="parameter">expression</replaceable> ) [ NO INHERIT ] |
+  NOT NULL <replaceable class="parameter">column_name</replaceable> [ NO INHERIT ] |
   UNIQUE [ NULLS [ NOT ] DISTINCT ] ( <replaceable class="parameter">column_name</replaceable> [, ... ] [, <replaceable class="parameter">column_name</replaceable> WITHOUT OVERLAPS ] ) <replaceable class="parameter">index_parameters</replaceable> |
   PRIMARY KEY ( <replaceable class="parameter">column_name</replaceable> [, ... ] [, <replaceable class="parameter">column_name</replaceable> WITHOUT OVERLAPS ] ) <replaceable class="parameter">index_parameters</replaceable> |
   EXCLUDE [ USING <replaceable class="parameter">index_method</replaceable> ] ( <replaceable class="parameter">exclude_element</replaceable> WITH <replaceable class="parameter">operator</replaceable> [, ... ] ) <replaceable class="parameter">index_parameters</replaceable> [ WHERE ( <replaceable class="parameter">predicate</replaceable> ) ] |
@@ -818,10 +819,15 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
    </varlistentry>
 
    <varlistentry id="sql-createtable-parms-not-null">
-    <term><literal>NOT NULL</literal></term>
+    <term><literal>NOT NULL [ NO INHERIT ] </literal></term>
     <listitem>
      <para>
       The column is not allowed to contain null values.
+     </para>
+
+     <para>
+      A constraint marked with <literal>NO INHERIT</literal> will not propagate to
+      child tables.
      </para>
     </listitem>
    </varlistentry>
@@ -2397,13 +2403,6 @@ CREATE TABLE cities_partdef
     constraints), because the associated index is named the same as the
     constraint, and index names must be unique across all relations within
     the same schema.
-   </para>
-
-   <para>
-    Currently, <productname>PostgreSQL</productname> does not record names
-    for not-null constraints at all, so they are not
-    subject to the uniqueness restriction.  This might change in a future
-    release.
    </para>
   </refsect2>
 

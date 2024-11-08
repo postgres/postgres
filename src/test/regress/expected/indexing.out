@@ -1117,15 +1117,27 @@ alter table idxpart attach partition idxpart3 for values from (20, 20) to (30, 3
 select conname, contype, conrelid::regclass, conindid::regclass, conkey
   from pg_constraint where conrelid::regclass::text like 'idxpart%'
   order by conrelid::regclass::text, conname;
-    conname     | contype | conrelid  |    conindid    | conkey 
-----------------+---------+-----------+----------------+--------
- idxpart_pkey   | p       | idxpart   | idxpart_pkey   | {1,2}
- idxpart1_pkey  | p       | idxpart1  | idxpart1_pkey  | {1,2}
- idxpart2_pkey  | p       | idxpart2  | idxpart2_pkey  | {1,2}
- idxpart21_pkey | p       | idxpart21 | idxpart21_pkey | {1,2}
- idxpart22_pkey | p       | idxpart22 | idxpart22_pkey | {1,2}
- idxpart3_pkey  | p       | idxpart3  | idxpart3_pkey  | {2,1}
-(6 rows)
+       conname       | contype | conrelid  |    conindid    | conkey 
+---------------------+---------+-----------+----------------+--------
+ idxpart_a_not_null  | n       | idxpart   | -              | {1}
+ idxpart_b_not_null  | n       | idxpart   | -              | {2}
+ idxpart_pkey        | p       | idxpart   | idxpart_pkey   | {1,2}
+ idxpart1_pkey       | p       | idxpart1  | idxpart1_pkey  | {1,2}
+ idxpart_a_not_null  | n       | idxpart1  | -              | {1}
+ idxpart_b_not_null  | n       | idxpart1  | -              | {2}
+ idxpart2_pkey       | p       | idxpart2  | idxpart2_pkey  | {1,2}
+ idxpart_a_not_null  | n       | idxpart2  | -              | {1}
+ idxpart_b_not_null  | n       | idxpart2  | -              | {2}
+ idxpart21_pkey      | p       | idxpart21 | idxpart21_pkey | {1,2}
+ idxpart_a_not_null  | n       | idxpart21 | -              | {1}
+ idxpart_b_not_null  | n       | idxpart21 | -              | {2}
+ idxpart22_pkey      | p       | idxpart22 | idxpart22_pkey | {1,2}
+ idxpart_a_not_null  | n       | idxpart22 | -              | {1}
+ idxpart_b_not_null  | n       | idxpart22 | -              | {2}
+ idxpart3_a_not_null | n       | idxpart3  | -              | {2}
+ idxpart3_b_not_null | n       | idxpart3  | -              | {1}
+ idxpart3_pkey       | p       | idxpart3  | idxpart3_pkey  | {2,1}
+(18 rows)
 
 drop table idxpart;
 -- Verify that multi-layer partitioning honors the requirement that all
@@ -1150,13 +1162,19 @@ create table idxpart2 partition of idxpart for values from (0) to (1000) partiti
 create table idxpart21 partition of idxpart2 for values from (0) to (1000);
 select conname, contype, conrelid::regclass, conindid::regclass, conkey
   from pg_constraint where conrelid::regclass::text like 'idxpart%'
-  order by conname;
-    conname     | contype | conrelid  |    conindid    | conkey 
-----------------+---------+-----------+----------------+--------
- idxpart21_pkey | p       | idxpart21 | idxpart21_pkey | {1,2}
- idxpart2_pkey  | p       | idxpart2  | idxpart2_pkey  | {1,2}
- idxpart_pkey   | p       | idxpart   | idxpart_pkey   | {1,2}
-(3 rows)
+  order by conrelid::regclass::text, conname;
+      conname       | contype | conrelid  |    conindid    | conkey 
+--------------------+---------+-----------+----------------+--------
+ idxpart_a_not_null | n       | idxpart   | -              | {1}
+ idxpart_b_not_null | n       | idxpart   | -              | {2}
+ idxpart_pkey       | p       | idxpart   | idxpart_pkey   | {1,2}
+ idxpart2_pkey      | p       | idxpart2  | idxpart2_pkey  | {1,2}
+ idxpart_a_not_null | n       | idxpart2  | -              | {1}
+ idxpart_b_not_null | n       | idxpart2  | -              | {2}
+ idxpart21_pkey     | p       | idxpart21 | idxpart21_pkey | {1,2}
+ idxpart_a_not_null | n       | idxpart21 | -              | {1}
+ idxpart_b_not_null | n       | idxpart21 | -              | {2}
+(9 rows)
 
 drop table idxpart;
 -- If a partitioned table has a unique/PK constraint, then it's not possible
@@ -1259,14 +1277,10 @@ create table idxpart0 (like idxpart);
 alter table idxpart0 add unique (a);
 alter table idxpart attach partition idxpart0 default;
 alter table only idxpart add primary key (a);  -- fail, no not-null constraint
-ERROR:  constraint must be added to child tables too
-DETAIL:  Column "a" of relation "idxpart0" is not already NOT NULL.
-HINT:  Do not specify the ONLY keyword.
+ERROR:  column "a" of table "idxpart0" is not marked NOT NULL
 alter table idxpart0 alter column a set not null;
 alter table only idxpart add primary key (a);  -- now it works
 alter index idxpart_pkey attach partition idxpart0_a_key;
-alter table idxpart0 alter column a drop not null;  -- fail, pkey needs it
-ERROR:  column "a" is marked NOT NULL in parent table
 drop table idxpart;
 -- if a partition has a unique index without a constraint, does not attach
 -- automatically; creates a new index instead.

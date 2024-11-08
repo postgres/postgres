@@ -440,9 +440,8 @@ CREATE VIEW check_constraints AS
     WHERE pg_has_role(coalesce(c.relowner, t.typowner), 'USAGE')
       AND con.contype = 'c'
 
-    UNION
-    -- not-null constraints on domains
-
+    UNION ALL
+    -- not-null constraints
     SELECT current_database()::information_schema.sql_identifier AS constraint_catalog,
            rs.nspname::information_schema.sql_identifier AS constraint_schema,
            con.conname::information_schema.sql_identifier AS constraint_name,
@@ -453,24 +452,7 @@ CREATE VIEW check_constraints AS
             LEFT JOIN pg_type t ON t.oid = con.contypid
             LEFT JOIN pg_attribute at ON (con.conrelid = at.attrelid AND con.conkey[1] = at.attnum)
      WHERE pg_has_role(coalesce(c.relowner, t.typowner), 'USAGE'::text)
-       AND con.contype = 'n'
-
-    UNION
-    -- not-null constraints on relations
-
-    SELECT CAST(current_database() AS sql_identifier) AS constraint_catalog,
-           CAST(n.nspname AS sql_identifier) AS constraint_schema,
-           CAST(CAST(n.oid AS text) || '_' || CAST(r.oid AS text) || '_' || CAST(a.attnum AS text) || '_not_null' AS sql_identifier) AS constraint_name, -- XXX
-           CAST(a.attname || ' IS NOT NULL' AS character_data)
-             AS check_clause
-    FROM pg_namespace n, pg_class r, pg_attribute a
-    WHERE n.oid = r.relnamespace
-      AND r.oid = a.attrelid
-      AND a.attnum > 0
-      AND NOT a.attisdropped
-      AND a.attnotnull
-      AND r.relkind IN ('r', 'p')
-      AND pg_has_role(r.relowner, 'USAGE');
+       AND con.contype = 'n';
 
 GRANT SELECT ON check_constraints TO PUBLIC;
 
@@ -836,6 +818,20 @@ CREATE VIEW constraint_column_usage AS
             AND c.contype = 'c'
             AND r.relkind IN ('r', 'p')
             AND NOT a.attisdropped
+
+        UNION ALL
+
+        /* not-null constraints */
+        SELECT DISTINCT nr.nspname, r.relname, r.relowner, a.attname, nc.nspname, c.conname
+          FROM pg_namespace nr, pg_class r, pg_attribute a, pg_namespace nc, pg_constraint c
+          WHERE nr.oid = r.relnamespace
+            AND r.oid = a.attrelid
+            AND r.oid = c.conrelid
+            AND a.attnum = c.conkey[1]
+            AND c.connamespace = nc.oid
+            AND c.contype = 'n'
+            AND r.relkind in ('r', 'p')
+            AND not a.attisdropped
 
         UNION ALL
 
@@ -1839,6 +1835,7 @@ CREATE VIEW table_constraints AS
            CAST(r.relname AS sql_identifier) AS table_name,
            CAST(
              CASE c.contype WHEN 'c' THEN 'CHECK'
+                            WHEN 'n' THEN 'CHECK'
                             WHEN 'f' THEN 'FOREIGN KEY'
                             WHEN 'p' THEN 'PRIMARY KEY'
                             WHEN 'u' THEN 'UNIQUE' END
@@ -1861,38 +1858,6 @@ CREATE VIEW table_constraints AS
     WHERE nc.oid = c.connamespace AND nr.oid = r.relnamespace
           AND c.conrelid = r.oid
           AND c.contype NOT IN ('t', 'x')  -- ignore nonstandard constraints
-          AND r.relkind IN ('r', 'p')
-          AND (NOT pg_is_other_temp_schema(nr.oid))
-          AND (pg_has_role(r.relowner, 'USAGE')
-               -- SELECT privilege omitted, per SQL standard
-               OR has_table_privilege(r.oid, 'INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER')
-               OR has_any_column_privilege(r.oid, 'INSERT, UPDATE, REFERENCES') )
-
-    UNION ALL
-
-    -- not-null constraints
-
-    SELECT CAST(current_database() AS sql_identifier) AS constraint_catalog,
-           CAST(nr.nspname AS sql_identifier) AS constraint_schema,
-           CAST(CAST(nr.oid AS text) || '_' || CAST(r.oid AS text) || '_' || CAST(a.attnum AS text) || '_not_null' AS sql_identifier) AS constraint_name, -- XXX
-           CAST(current_database() AS sql_identifier) AS table_catalog,
-           CAST(nr.nspname AS sql_identifier) AS table_schema,
-           CAST(r.relname AS sql_identifier) AS table_name,
-           CAST('CHECK' AS character_data) AS constraint_type,
-           CAST('NO' AS yes_or_no) AS is_deferrable,
-           CAST('NO' AS yes_or_no) AS initially_deferred,
-           CAST('YES' AS yes_or_no) AS enforced,
-           CAST(NULL AS yes_or_no) AS nulls_distinct
-
-    FROM pg_namespace nr,
-         pg_class r,
-         pg_attribute a
-
-    WHERE nr.oid = r.relnamespace
-          AND r.oid = a.attrelid
-          AND a.attnotnull
-          AND a.attnum > 0
-          AND NOT a.attisdropped
           AND r.relkind IN ('r', 'p')
           AND (NOT pg_is_other_temp_schema(nr.oid))
           AND (pg_has_role(r.relowner, 'USAGE')

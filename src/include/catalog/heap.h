@@ -34,10 +34,11 @@ typedef struct RawColumnDefault
 
 typedef struct CookedConstraint
 {
-	ConstrType	contype;		/* CONSTR_DEFAULT or CONSTR_CHECK */
+	ConstrType	contype;		/* CONSTR_DEFAULT, CONSTR_CHECK,
+								 * CONSTR_NOTNULL */
 	Oid			conoid;			/* constr OID if created, otherwise Invalid */
 	char	   *name;			/* name, or NULL if none */
-	AttrNumber	attnum;			/* which attr (only for DEFAULT) */
+	AttrNumber	attnum;			/* which attr (only for NOTNULL, DEFAULT) */
 	Node	   *expr;			/* transformed default or check expr */
 	bool		skip_validation;	/* skip validation? (only for CHECK) */
 	bool		is_local;		/* constraint has local (non-inherited) def */
@@ -113,6 +114,9 @@ extern List *AddRelationNewConstraints(Relation rel,
 									   bool is_local,
 									   bool is_internal,
 									   const char *queryString);
+extern List *AddRelationNotNullConstraints(Relation rel,
+										   List *constraints,
+										   List *old_notnulls);
 
 extern void RelationClearMissing(Relation rel);
 extern void SetAttrMissing(Oid relid, char *attname, char *value);

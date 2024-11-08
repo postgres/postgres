@@ -43,7 +43,7 @@ CREATE FOREIGN TABLE [ IF NOT EXISTS ] <replaceable class="parameter">table_name
 <phrase>where <replaceable class="parameter">column_constraint</replaceable> is:</phrase>
 
 [ CONSTRAINT <replaceable class="parameter">constraint_name</replaceable> ]
-{ NOT NULL |
+{ NOT NULL [ NO INHERIT ] |
   NULL |
   CHECK ( <replaceable class="parameter">expression</replaceable> ) [ NO INHERIT ] |
   DEFAULT <replaceable>default_expr</replaceable> |
@@ -52,6 +52,7 @@ CREATE FOREIGN TABLE [ IF NOT EXISTS ] <replaceable class="parameter">table_name
 <phrase>and <replaceable class="parameter">table_constraint</replaceable> is:</phrase>
 
 [ CONSTRAINT <replaceable class="parameter">constraint_name</replaceable> ]
+  NOT NULL <replaceable class="parameter">column_name</replaceable> [ NO INHERIT ] |
 CHECK ( <replaceable class="parameter">expression</replaceable> ) [ NO INHERIT ]
 
 <phrase>and <replaceable class="parameter">partition_bound_spec</replaceable> is:</phrase>
@@ -203,10 +204,15 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
    </varlistentry>
 
    <varlistentry>
-    <term><literal>NOT NULL</literal></term>
+    <term><literal>NOT NULL</literal> [ NO INHERIT ]</term>
     <listitem>
      <para>
       The column is not allowed to contain null values.
+     </para>
+
+     <para>
+      A constraint marked with <literal>NO INHERIT</literal> will not propagate to
+      child tables.
      </para>
     </listitem>
    </varlistentry>

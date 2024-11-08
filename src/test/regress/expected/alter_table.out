@@ -1216,20 +1216,6 @@ alter table only parent alter a set not null;
 ERROR:  column "a" of relation "parent" contains null values
 alter table child alter a set not null;
 ERROR:  column "a" of relation "child" contains null values
-delete from parent;
-alter table only parent alter a set not null;
-insert into parent values (NULL);
-ERROR:  null value in column "a" of relation "parent" violates not-null constraint
-DETAIL:  Failing row contains (null).
-alter table child alter a set not null;
-insert into child (a, b) values (NULL, 'foo');
-ERROR:  null value in column "a" of relation "child" violates not-null constraint
-DETAIL:  Failing row contains (null, foo).
-delete from child;
-alter table child alter a set not null;
-insert into child (a, b) values (NULL, 'foo');
-ERROR:  null value in column "a" of relation "child" violates not-null constraint
-DETAIL:  Failing row contains (null, foo).
 drop table child;
 drop table parent;
 -- test setting and removing default values
@@ -3385,6 +3371,7 @@ DROP TABLE tt9;
 -- Check that comments on constraints and indexes are not lost at ALTER TABLE.
 CREATE TABLE comment_test (
   id int,
+  constraint id_notnull_constraint not null id,
   positive_col int CHECK (positive_col > 0),
   indexed_col int,
   CONSTRAINT comment_test_pk PRIMARY KEY (id));
@@ -3393,6 +3380,7 @@ COMMENT ON COLUMN comment_test.id IS 'Column ''id'' on comment_test';
 COMMENT ON INDEX comment_test_index IS 'Simple index on comment_test';
 COMMENT ON CONSTRAINT comment_test_positive_col_check ON comment_test IS 'CHECK constraint on comment_test.positive_col';
 COMMENT ON CONSTRAINT comment_test_pk ON comment_test IS 'PRIMARY KEY constraint of comment_test';
+COMMENT ON CONSTRAINT id_notnull_constraint ON comment_test IS 'NOT NULL constraint of comment_test';
 COMMENT ON INDEX comment_test_pk IS 'Index backing the PRIMARY KEY of comment_test';
 SELECT col_description('comment_test'::regclass, 1) as comment;
            comment           
@@ -3412,7 +3400,8 @@ SELECT conname as constraint, obj_description(oid, 'pg_constraint') as comment F
 ---------------------------------+-----------------------------------------------
  comment_test_pk                 | PRIMARY KEY constraint of comment_test
  comment_test_positive_col_check | CHECK constraint on comment_test.positive_col
-(2 rows)
+ id_notnull_constraint           | NOT NULL constraint of comment_test
+(3 rows)
 
 -- Change the datatype of all the columns. ALTER TABLE is optimized to not
 -- rebuild an index if the new data type is binary compatible with the old
@@ -3443,7 +3432,8 @@ SELECT conname as constraint, obj_description(oid, 'pg_constraint') as comment F
 ---------------------------------+-----------------------------------------------
  comment_test_pk                 | PRIMARY KEY constraint of comment_test
  comment_test_positive_col_check | CHECK constraint on comment_test.positive_col
-(2 rows)
+ id_notnull_constraint           | NOT NULL constraint of comment_test
+(3 rows)
 
 -- Check compatibility for foreign keys and comments. This is done
 -- separately as rebuilding the column type of the parent leads
@@ -3860,6 +3850,9 @@ ALTER TABLE atnotnull1
   ADD COLUMN a INT,
   ALTER a SET NOT NULL;
 ALTER TABLE atnotnull1
+  ADD COLUMN b INT,
+  ADD NOT NULL b;
+ALTER TABLE atnotnull1
   ADD COLUMN c INT,
   ADD PRIMARY KEY (c);
 \d+ atnotnull1
@@ -3867,9 +3860,14 @@ ALTER TABLE atnotnull1
  Column |  Type   | Collation | Nullable | Default | Storage | Stats target | Description 
 --------+---------+-----------+----------+---------+---------+--------------+-------------
  a      | integer |           | not null |         | plain   |              | 
+ b      | integer |           | not null |         | plain   |              | 
  c      | integer |           | not null |         | plain   |              | 
 Indexes:
     "atnotnull1_pkey" PRIMARY KEY, btree (c)
+Not-null constraints:
+    "atnotnull1_a_not_null" NOT NULL "a"
+    "atnotnull1_b_not_null" NOT NULL "b"
+    "atnotnull1_c_not_null" NOT NULL "c"
 
 -- cannot drop column that is part of the partition key
 CREATE TABLE partitioned (
@@ -4028,6 +4026,14 @@ SELECT conislocal, coninhcount FROM pg_constraint WHERE conrelid = 'part_1'::reg
  f          |           1
 (1 row)
 
+-- check that NOT NULL NO INHERIT cannot be merged to a normal NOT NULL
+CREATE TABLE part_fail (a int NOT NULL NO INHERIT,
+	b char(2) COLLATE "C",
+	CONSTRAINT check_a CHECK (a > 0)
+);
+ALTER TABLE list_parted ATTACH PARTITION part_fail FOR VALUES IN (2);
+ERROR:  constraint "part_fail_a_not_null" conflicts with non-inherited constraint on child table "part_fail"
+DROP TABLE part_fail;
 -- check that the new partition won't overlap with an existing partition
 CREATE TABLE fail_part (LIKE part_1 INCLUDING CONSTRAINTS);
 ALTER TABLE list_parted ATTACH PARTITION fail_part FOR VALUES IN (1);
@@ -4404,7 +4410,6 @@ ERROR:  cannot alter inherited column "b"
 -- partitions exist
 ALTER TABLE ONLY list_parted2 ALTER b SET NOT NULL;
 ERROR:  constraint must be added to child tables too
-DETAIL:  Column "b" of relation "part_2" is not already NOT NULL.
 HINT:  Do not specify the ONLY keyword.
 ALTER TABLE ONLY list_parted2 ADD CONSTRAINT check_b CHECK (b <> 'zz');
 ERROR:  constraint must be added to child tables too
@@ -4424,6 +4429,8 @@ Partition of: list_parted2 FOR VALUES IN (2)
 Partition constraint: ((a IS NOT NULL) AND (a = 2))
 Check constraints:
     "check_b" CHECK (b <> 'zz'::bpchar)
+Not-null constraints:
+    "list_parted2_b_not_null" NOT NULL "b"
 
 -- It's alright though, if no partitions are yet created
 CREATE TABLE parted_no_parts (a int) PARTITION BY LIST (a);
@@ -4436,6 +4443,12 @@ ALTER TABLE part_2 ALTER b DROP NOT NULL;
 ERROR:  column "b" is marked NOT NULL in parent table
 ALTER TABLE part_2 DROP CONSTRAINT check_a2;
 ERROR:  cannot drop inherited constraint "check_a2" of relation "part_2"
+-- can't drop NOT NULL from under an invalid PK
+CREATE TABLE list_parted3 (a int NOT NULL) PARTITION BY LIST (a);
+CREATE TABLE list_parted3_1 PARTITION OF list_parted3 FOR VALUES IN (1);
+ALTER TABLE ONLY list_parted3 ADD PRIMARY KEY (a);
+ALTER TABLE ONLY list_parted3 DROP CONSTRAINT list_parted3_a_not_null;
+ERROR:  column "a" is in a primary key
 -- Doesn't make sense to add NO INHERIT constraints on partitioned tables
 ALTER TABLE list_parted2 add constraint check_b2 check (b <> 'zz') NO INHERIT;
 ERROR:  cannot add NO INHERIT constraint to partitioned table "list_parted2"
@@ -4462,7 +4475,7 @@ SELECT * FROM list_parted;
 (0 rows)
 
 -- cleanup
-DROP TABLE list_parted, list_parted2, range_parted;
+DROP TABLE list_parted, list_parted2, range_parted, list_parted3;
 DROP TABLE fail_def_part;
 DROP TABLE hash_parted;
 -- more tests for certain multi-level partitioning scenarios

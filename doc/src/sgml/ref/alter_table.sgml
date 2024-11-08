@@ -98,7 +98,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
 <phrase>and <replaceable class="parameter">column_constraint</replaceable> is:</phrase>
 
 [ CONSTRAINT <replaceable class="parameter">constraint_name</replaceable> ]
-{ NOT NULL |
+{ NOT NULL [ NO INHERIT ] |
   NULL |
   CHECK ( <replaceable class="parameter">expression</replaceable> ) [ NO INHERIT ] |
   DEFAULT <replaceable>default_expr</replaceable> |
@@ -114,6 +114,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
 
 [ CONSTRAINT <replaceable class="parameter">constraint_name</replaceable> ]
 { CHECK ( <replaceable class="parameter">expression</replaceable> ) [ NO INHERIT ] |
+  NOT NULL <replaceable class="parameter">column_name</replaceable> [ NO INHERIT ] |
   UNIQUE [ NULLS [ NOT ] DISTINCT ] ( <replaceable class="parameter">column_name</replaceable> [, ... ] ) <replaceable class="parameter">index_parameters</replaceable> |
   PRIMARY KEY ( <replaceable class="parameter">column_name</replaceable> [, ... ] ) <replaceable class="parameter">index_parameters</replaceable> |
   EXCLUDE [ USING <replaceable class="parameter">index_method</replaceable> ] ( <replaceable class="parameter">exclude_element</replaceable> WITH <replaceable class="parameter">operator</replaceable> [, ... ] ) <replaceable class="parameter">index_parameters</replaceable> [ WHERE ( <replaceable class="parameter">predicate</replaceable> ) ] |
@@ -849,19 +850,16 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       table.  Subsequently, queries against the parent will include records
       of the target table.  To be added as a child, the target table must
       already contain all the same columns as the parent (it could have
-      additional columns, too).  The columns must have matching data types,
-      and if they have <literal>NOT NULL</literal> constraints in the parent
-      then they must also have <literal>NOT NULL</literal> constraints in the
-      child.
+      additional columns, too).  The columns must have matching data types.
      </para>
 
      <para>
-      There must also be matching child-table constraints for all
-      <literal>CHECK</literal> constraints of the parent, except those
-      marked non-inheritable (that is, created with <literal>ALTER TABLE ... ADD CONSTRAINT ... NO INHERIT</literal>)
-      in the parent, which are ignored; all child-table constraints matched
-      must not be marked non-inheritable.
-      Currently
+      In addition, all <literal>CHECK</literal> and <literal>NOT NULL</literal>
+      constraints on the parent must also exist on the child, except those
+      marked non-inheritable (that is, created with
+      <literal>ALTER TABLE ... ADD CONSTRAINT ... NO INHERIT</literal>), which
+      are ignored.  All child-table constraints matched must not be marked
+      non-inheritable.  Currently
       <literal>UNIQUE</literal>, <literal>PRIMARY KEY</literal>, and
       <literal>FOREIGN KEY</literal> constraints are not considered, but
       this might change in the future.
@@ -1793,11 +1791,17 @@ ALTER TABLE measurement
   <title>Compatibility</title>
 
   <para>
-   The forms <literal>ADD</literal> (without <literal>USING INDEX</literal>),
+   The forms <literal>ADD [COLUMN]</literal>,
    <literal>DROP [COLUMN]</literal>, <literal>DROP IDENTITY</literal>, <literal>RESTART</literal>,
    <literal>SET DEFAULT</literal>, <literal>SET DATA TYPE</literal> (without <literal>USING</literal>),
    <literal>SET GENERATED</literal>, and <literal>SET <replaceable>sequence_option</replaceable></literal>
-   conform with the SQL standard.  The other forms are
+   conform with the SQL standard.
+   The form <literal>ADD <replaceable>table_constraint</replaceable></literal>
+   conforms with the SQL standard when the <literal>USING INDEX</literal> and
+   <literal>NOT VALID</literal> clauses are omitted and the constraint type is
+   one of <literal>CHECK</literal>, <literal>UNIQUE</literal>, <literal>PRIMARY KEY</literal>,
+   or <literal>REFERENCES</literal>.
+   The other forms are
    <productname>PostgreSQL</productname> extensions of the SQL standard.
    Also, the ability to specify more than one manipulation in a single
    <command>ALTER TABLE</command> command is an extension.
