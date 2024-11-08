@@ -2230,8 +2230,9 @@ _bt_readnextpage(IndexScanDesc scan, BlockNumber blkno,
 			 !so->currPos.moreRight : !so->currPos.moreLeft))
 		{
 			/* most recent _bt_readpage call (for lastcurrblkno) ended scan */
+			Assert(so->currPos.currPage == lastcurrblkno && !seized);
 			BTScanPosInvalidate(so->currPos);
-			_bt_parallel_done(scan);
+			_bt_parallel_done(scan);	/* iff !so->needPrimScan */
 			return false;
 		}
 
