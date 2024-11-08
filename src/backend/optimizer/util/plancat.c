@@ -1698,6 +1698,8 @@ relation_excluded_by_constraints(PlannerInfo *root,
 	 * Currently, attnotnull constraints must be treated as NO INHERIT unless
 	 * this is a partitioned table.  In future we might track their
 	 * inheritance status more accurately, allowing this to be refined.
+	 *
+	 * XXX do we need/want to change this?
 	 */
 	include_notnull = (!rte->inh || rte->relkind == RELKIND_PARTITIONED_TABLE);
 

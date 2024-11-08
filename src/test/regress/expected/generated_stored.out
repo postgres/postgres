@@ -321,6 +321,8 @@ NOTICE:  merging column "b" with inherited definition
  a      | integer |           | not null |                                     | plain   |              | 
  b      | integer |           |          | generated always as (a * 22) stored | plain   |              | 
  x      | integer |           |          |                                     | plain   |              | 
+Not-null constraints:
+    "gtest1_a_not_null" NOT NULL "a" (inherited)
 Inherits: gtest1
 
 CREATE TABLE gtestxx_1 (a int NOT NULL, b int);

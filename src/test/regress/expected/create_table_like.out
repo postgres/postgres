@@ -348,6 +348,8 @@ CREATE TABLE ctlt12_storage (LIKE ctlt1 INCLUDING STORAGE, LIKE ctlt2 INCLUDING 
  a      | text |           | not null |         | main     |              | 
  b      | text |           |          |         | extended |              | 
  c      | text |           |          |         | external |              | 
+Not-null constraints:
+    "ctlt1_a_not_null" NOT NULL "a"
 
 CREATE TABLE ctlt12_comments (LIKE ctlt1 INCLUDING COMMENTS, LIKE ctlt2 INCLUDING COMMENTS);
 \d+ ctlt12_comments
@@ -357,6 +359,8 @@ CREATE TABLE ctlt12_comments (LIKE ctlt1 INCLUDING COMMENTS, LIKE ctlt2 INCLUDIN
  a      | text |           | not null |         | extended |              | A
  b      | text |           |          |         | extended |              | B
  c      | text |           |          |         | extended |              | C
+Not-null constraints:
+    "ctlt1_a_not_null" NOT NULL "a"
 
 CREATE TABLE ctlt1_inh (LIKE ctlt1 INCLUDING CONSTRAINTS INCLUDING COMMENTS) INHERITS (ctlt1);
 NOTICE:  merging column "a" with inherited definition
@@ -370,6 +374,8 @@ NOTICE:  merging constraint "ctlt1_a_check" with inherited definition
  b      | text |           |          |         | extended |              | B
 Check constraints:
     "ctlt1_a_check" CHECK (length(a) > 2)
+Not-null constraints:
+    "ctlt1_a_not_null" NOT NULL "a" (local, inherited)
 Inherits: ctlt1
 
 SELECT description FROM pg_description, pg_constraint c WHERE classoid = 'pg_constraint'::regclass AND objoid = c.oid AND c.conrelid = 'ctlt1_inh'::regclass;
@@ -391,6 +397,8 @@ Check constraints:
     "ctlt1_a_check" CHECK (length(a) > 2)
     "ctlt3_a_check" CHECK (length(a) < 5)
     "ctlt3_c_check" CHECK (length(c) < 7)
+Not-null constraints:
+    "ctlt1_a_not_null" NOT NULL "a" (inherited)
 Inherits: ctlt1,
           ctlt3
 
@@ -409,6 +417,8 @@ Check constraints:
     "ctlt1_a_check" CHECK (length(a) > 2)
     "ctlt3_a_check" CHECK (length(a) < 5)
     "ctlt3_c_check" CHECK (length(c) < 7)
+Not-null constraints:
+    "ctlt1_a_not_null" NOT NULL "a" (inherited)
 Inherits: ctlt1
 
 SELECT description FROM pg_description, pg_constraint c WHERE classoid = 'pg_constraint'::regclass AND objoid = c.oid AND c.conrelid = 'ctlt13_like'::regclass;
@@ -433,6 +443,8 @@ Check constraints:
 Statistics objects:
     "public.ctlt_all_a_b_stat" ON a, b FROM ctlt_all
     "public.ctlt_all_expr_stat" ON (a || b) FROM ctlt_all
+Not-null constraints:
+    "ctlt1_a_not_null" NOT NULL "a"
 
 SELECT c.relname, objsubid, description FROM pg_description, pg_index i, pg_class c WHERE classoid = 'pg_class'::regclass AND objoid = i.indexrelid AND c.oid = i.indexrelid AND i.indrelid = 'ctlt_all'::regclass ORDER BY c.relname, objsubid;
     relname     | objsubid | description 
@@ -473,6 +485,8 @@ Check constraints:
 Statistics objects:
     "public.pg_attrdef_a_b_stat" ON a, b FROM public.pg_attrdef
     "public.pg_attrdef_expr_stat" ON (a || b) FROM public.pg_attrdef
+Not-null constraints:
+    "ctlt1_a_not_null" NOT NULL "a"
 
 DROP TABLE public.pg_attrdef;
 -- Check that LIKE isn't confused when new table masks the old, either
@@ -495,20 +509,28 @@ Check constraints:
 Statistics objects:
     "ctl_schema.ctlt1_a_b_stat" ON a, b FROM ctlt1
     "ctl_schema.ctlt1_expr_stat" ON (a || b) FROM ctlt1
+Not-null constraints:
+    "ctlt1_a_not_null" NOT NULL "a"
 
 ROLLBACK;
 DROP TABLE ctlt1, ctlt2, ctlt3, ctlt4, ctlt12_storage, ctlt12_comments, ctlt1_inh, ctlt13_inh, ctlt13_like, ctlt_all, ctla, ctlb CASCADE;
 NOTICE:  drop cascades to table inhe
 -- LIKE must respect NO INHERIT property of constraints
-CREATE TABLE noinh_con_copy (a int CHECK (a > 0) NO INHERIT);
+CREATE TABLE noinh_con_copy (a int CHECK (a > 0) NO INHERIT, b int not null,
+	c int not null no inherit);
 CREATE TABLE noinh_con_copy1 (LIKE noinh_con_copy INCLUDING CONSTRAINTS);
-\d noinh_con_copy1
-          Table "public.noinh_con_copy1"
- Column |  Type   | Collation | Nullable | Default 
---------+---------+-----------+----------+---------
- a      | integer |           |          | 
+\d+ noinh_con_copy1
+                              Table "public.noinh_con_copy1"
+ Column |  Type   | Collation | Nullable | Default | Storage | Stats target | Description 
+--------+---------+-----------+----------+---------+---------+--------------+-------------
+ a      | integer |           |          |         | plain   |              | 
+ b      | integer |           | not null |         | plain   |              | 
+ c      | integer |           | not null |         | plain   |              | 
 Check constraints:
     "noinh_con_copy_a_check" CHECK (a > 0) NO INHERIT
+Not-null constraints:
+    "noinh_con_copy_b_not_null" NOT NULL "b"
+    "noinh_con_copy_c_not_null" NOT NULL "c" NO INHERIT
 
 -- fail, as partitioned tables don't allow NO INHERIT constraints
 CREATE TABLE noinh_con_copy1_parted (LIKE noinh_con_copy INCLUDING ALL)

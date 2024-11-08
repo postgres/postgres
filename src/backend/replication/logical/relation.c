@@ -855,7 +855,7 @@ GetRelationIdentityOrPK(Relation rel)
 	idxoid = RelationGetReplicaIndex(rel);
 
 	if (!OidIsValid(idxoid))
-		idxoid = RelationGetPrimaryKeyIndex(rel);
+		idxoid = RelationGetPrimaryKeyIndex(rel, false);
 
 	return idxoid;
 }

@@ -199,6 +199,8 @@ Indexes:
     "testpub_tbl2_pkey" PRIMARY KEY, btree (id)
 Publications:
     "testpub_foralltables"
+Not-null constraints:
+    "testpub_tbl2_id_not_null" NOT NULL "id"
 
 \dRp+ testpub_foralltables
                                         Publication testpub_foralltables
@@ -777,6 +779,8 @@ Indexes:
     "testpub_tbl7_pkey" PRIMARY KEY, btree (a)
 Publications:
     "testpub_fortable" (a, b)
+Not-null constraints:
+    "testpub_tbl7_a_not_null" NOT NULL "a"
 
 -- ok: the column list is the same, we should skip this table (or at least not fail)
 ALTER PUBLICATION testpub_fortable SET TABLE testpub_tbl7 (a, b);
@@ -791,6 +795,8 @@ Indexes:
     "testpub_tbl7_pkey" PRIMARY KEY, btree (a)
 Publications:
     "testpub_fortable" (a, b)
+Not-null constraints:
+    "testpub_tbl7_a_not_null" NOT NULL "a"
 
 -- ok: the column list changes, make sure the catalog gets updated
 ALTER PUBLICATION testpub_fortable SET TABLE testpub_tbl7 (a, c);
@@ -805,6 +811,8 @@ Indexes:
     "testpub_tbl7_pkey" PRIMARY KEY, btree (a)
 Publications:
     "testpub_fortable" (a, c)
+Not-null constraints:
+    "testpub_tbl7_a_not_null" NOT NULL "a"
 
 -- column list for partitioned tables has to cover replica identities for
 -- all child relations
@@ -941,6 +949,9 @@ Indexes:
     "testpub_tbl_both_filters_pkey" PRIMARY KEY, btree (a, c) REPLICA IDENTITY
 Publications:
     "testpub_both_filters" (a, c) WHERE (c <> 1)
+Not-null constraints:
+    "testpub_tbl_both_filters_a_not_null" NOT NULL "a"
+    "testpub_tbl_both_filters_c_not_null" NOT NULL "c"
 
 DROP TABLE testpub_tbl_both_filters;
 DROP PUBLICATION testpub_both_filters;
@@ -1170,6 +1181,8 @@ Publications:
     "testpib_ins_trunct"
     "testpub_default"
     "testpub_fortbl"
+Not-null constraints:
+    "testpub_tbl1_id_not_null" NOT NULL "id"
 
 \dRp+ testpub_default
                                           Publication testpub_default
@@ -1195,6 +1208,8 @@ Indexes:
 Publications:
     "testpib_ins_trunct"
     "testpub_fortbl"
+Not-null constraints:
+    "testpub_tbl1_id_not_null" NOT NULL "id"
 
 -- verify relation cache invalidation when a primary key is added using
 -- an existing index

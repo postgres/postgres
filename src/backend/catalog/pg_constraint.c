@@ -21,6 +21,7 @@
 #include "access/table.h"
 #include "catalog/catalog.h"
 #include "catalog/dependency.h"
+#include "catalog/heap.h"
 #include "catalog/indexing.h"
 #include "catalog/objectaccess.h"
 #include "catalog/pg_constraint.h"
@@ -565,6 +566,78 @@ ChooseConstraintName(const char *name1, const char *name2,
 }
 
 /*
+ * Find and return a copy of the pg_constraint tuple that implements a
+ * validated not-null constraint for the given column of the given relation.
+ * If no such constraint exists, return NULL.
+ *
+ * XXX This would be easier if we had pg_attribute.notnullconstr with the OID
+ * of the constraint that implements the not-null constraint for that column.
+ * I'm not sure it's worth the catalog bloat and de-normalization, however.
+ */
+HeapTuple
+findNotNullConstraintAttnum(Oid relid, AttrNumber attnum)
+{
+	Relation	pg_constraint;
+	HeapTuple	conTup,
+				retval = NULL;
+	SysScanDesc scan;
+	ScanKeyData key;
+
+	pg_constraint = table_open(ConstraintRelationId, AccessShareLock);
+	ScanKeyInit(&key,
+				Anum_pg_constraint_conrelid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(relid));
+	scan = systable_beginscan(pg_constraint, ConstraintRelidTypidNameIndexId,
+							  true, NULL, 1, &key);
+
+	while (HeapTupleIsValid(conTup = systable_getnext(scan)))
+	{
+		Form_pg_constraint con = (Form_pg_constraint) GETSTRUCT(conTup);
+		AttrNumber	conkey;
+
+		/*
+		 * We're looking for a NOTNULL constraint that's marked validated,
+		 * with the column we're looking for as the sole element in conkey.
+		 */
+		if (con->contype != CONSTRAINT_NOTNULL)
+			continue;
+		if (!con->convalidated)
+			continue;
+
+		conkey = extractNotNullColumn(conTup);
+		if (conkey != attnum)
+			continue;
+
+		/* Found it */
+		retval = heap_copytuple(conTup);
+		break;
+	}
+
+	systable_endscan(scan);
+	table_close(pg_constraint, AccessShareLock);
+
+	return retval;
+}
+
+/*
+ * Find and return the pg_constraint tuple that implements a validated
+ * not-null constraint for the given column of the given relation.  If
+ * no such column or no such constraint exists, return NULL.
+ */
+HeapTuple
+findNotNullConstraint(Oid relid, const char *colname)
+{
+	AttrNumber	attnum;
+
+	attnum = get_attnum(relid, colname);
+	if (attnum <= InvalidAttrNumber)
+		return NULL;
+
+	return findNotNullConstraintAttnum(relid, attnum);
+}
+
+/*
  * Find and return the pg_constraint tuple that implements a validated
  * not-null constraint for the given domain.
  */
@@ -607,6 +680,185 @@ findDomainNotNullConstraint(Oid typid)
 
 	return retval;
 }
+
+/*
+ * Given a pg_constraint tuple for a not-null constraint, return the column
+ * number it is for.
+ */
+AttrNumber
+extractNotNullColumn(HeapTuple constrTup)
+{
+	AttrNumber	colnum;
+	Datum		adatum;
+	ArrayType  *arr;
+
+	/* only tuples for not-null constraints should be given */
+	Assert(((Form_pg_constraint) GETSTRUCT(constrTup))->contype == CONSTRAINT_NOTNULL);
+
+	adatum = SysCacheGetAttrNotNull(CONSTROID, constrTup,
+									Anum_pg_constraint_conkey);
+	arr = DatumGetArrayTypeP(adatum);	/* ensure not toasted */
+	if (ARR_NDIM(arr) != 1 ||
+		ARR_HASNULL(arr) ||
+		ARR_ELEMTYPE(arr) != INT2OID ||
+		ARR_DIMS(arr)[0] != 1)
+		elog(ERROR, "conkey is not a 1-D smallint array");
+
+	memcpy(&colnum, ARR_DATA_PTR(arr), sizeof(AttrNumber));
+	Assert(colnum > 0 && colnum <= MaxAttrNumber);
+
+	if ((Pointer) arr != DatumGetPointer(adatum))
+		pfree(arr);				/* free de-toasted copy, if any */
+
+	return colnum;
+}
+
+/*
+ * AdjustNotNullInheritance
+ *		Adjust inheritance status for a single not-null constraint
+ *
+ * If no not-null constraint is found for the column, return false.
+ * Caller can create one.
+ * If a constraint exists but the connoinherit flag is not what the caller
+ * wants, throw an error about the incompatibility.  Otherwise, we adjust
+ * conislocal/coninhcount and return true.
+ * In the latter case, if is_local is true we flip conislocal true, or do
+ * nothing if it's already true; otherwise we increment coninhcount by 1.
+ */
+bool
+AdjustNotNullInheritance(Oid relid, AttrNumber attnum,
+						 bool is_local, bool is_no_inherit)
+{
+	HeapTuple	tup;
+
+	tup = findNotNullConstraintAttnum(relid, attnum);
+	if (HeapTupleIsValid(tup))
+	{
+		Relation	pg_constraint;
+		Form_pg_constraint conform;
+		bool		changed = false;
+
+		pg_constraint = table_open(ConstraintRelationId, RowExclusiveLock);
+		conform = (Form_pg_constraint) GETSTRUCT(tup);
+
+		/*
+		 * If the NO INHERIT flag we're asked for doesn't match what the
+		 * existing constraint has, throw an error.
+		 */
+		if (is_no_inherit != conform->connoinherit)
+			ereport(ERROR,
+					errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+					errmsg("cannot change NO INHERIT status of NOT NULL constraint \"%s\" on relation \"%s\"",
+						   NameStr(conform->conname), get_rel_name(relid)));
+
+		if (!is_local)
+		{
+			if (pg_add_s16_overflow(conform->coninhcount, 1,
+									&conform->coninhcount))
+				ereport(ERROR,
+						errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+						errmsg("too many inheritance parents"));
+			changed = true;
+		}
+		else if (!conform->conislocal)
+		{
+			conform->conislocal = true;
+			changed = true;
+		}
+
+		if (changed)
+			CatalogTupleUpdate(pg_constraint, &tup->t_self, tup);
+
+		table_close(pg_constraint, RowExclusiveLock);
+
+		return true;
+	}
+
+	return false;
+}
+
+/*
+ * RelationGetNotNullConstraints
+ *		Return the list of not-null constraints for the given rel
+ *
+ * Caller can request cooked constraints, or raw.
+ *
+ * This is seldom needed, so we just scan pg_constraint each time.
+ *
+ * 'include_noinh' determines whether to include NO INHERIT constraints or not.
+ */
+List *
+RelationGetNotNullConstraints(Oid relid, bool cooked, bool include_noinh)
+{
+	List	   *notnulls = NIL;
+	Relation	constrRel;
+	HeapTuple	htup;
+	SysScanDesc conscan;
+	ScanKeyData skey;
+
+	constrRel = table_open(ConstraintRelationId, AccessShareLock);
+	ScanKeyInit(&skey,
+				Anum_pg_constraint_conrelid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(relid));
+	conscan = systable_beginscan(constrRel, ConstraintRelidTypidNameIndexId, true,
+								 NULL, 1, &skey);
+
+	while (HeapTupleIsValid(htup = systable_getnext(conscan)))
+	{
+		Form_pg_constraint conForm = (Form_pg_constraint) GETSTRUCT(htup);
+		AttrNumber	colnum;
+
+		if (conForm->contype != CONSTRAINT_NOTNULL)
+			continue;
+		if (conForm->connoinherit && !include_noinh)
+			continue;
+
+		colnum = extractNotNullColumn(htup);
+
+		if (cooked)
+		{
+			CookedConstraint *cooked;
+
+			cooked = (CookedConstraint *) palloc(sizeof(CookedConstraint));
+
+			cooked->contype = CONSTR_NOTNULL;
+			cooked->conoid = conForm->oid;
+			cooked->name = pstrdup(NameStr(conForm->conname));
+			cooked->attnum = colnum;
+			cooked->expr = NULL;
+			cooked->skip_validation = false;
+			cooked->is_local = true;
+			cooked->inhcount = 0;
+			cooked->is_no_inherit = conForm->connoinherit;
+
+			notnulls = lappend(notnulls, cooked);
+		}
+		else
+		{
+			Constraint *constr;
+
+			constr = makeNode(Constraint);
+			constr->contype = CONSTR_NOTNULL;
+			constr->conname = pstrdup(NameStr(conForm->conname));
+			constr->deferrable = false;
+			constr->initdeferred = false;
+			constr->location = -1;
+			constr->keys = list_make1(makeString(get_attname(relid, colnum,
+															 false)));
+			constr->skip_validation = false;
+			constr->initially_valid = true;
+			constr->is_no_inherit = conForm->connoinherit;
+			notnulls = lappend(notnulls, constr);
+		}
+	}
+
+	systable_endscan(conscan);
+	table_close(constrRel, AccessShareLock);
+
+	return notnulls;
+}
+
 
 /*
  * Delete a single constraint record.

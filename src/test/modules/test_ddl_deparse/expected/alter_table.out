@@ -28,6 +28,7 @@ ALTER TABLE parent ADD COLUMN b serial;
 NOTICE:  DDL test: type simple, tag CREATE SEQUENCE
 NOTICE:  DDL test: type alter table, tag ALTER TABLE
 NOTICE:    subcommand: type ADD COLUMN (and recurse) desc column b of table parent
+NOTICE:    subcommand: type ADD CONSTRAINT (and recurse) desc constraint parent_b_not_null on table parent
 NOTICE:  DDL test: type simple, tag ALTER SEQUENCE
 ALTER TABLE parent RENAME COLUMN b TO c;
 NOTICE:  DDL test: type simple, tag ALTER TABLE
@@ -57,24 +58,17 @@ NOTICE:    subcommand: type DETACH PARTITION desc table part2
 DROP TABLE part2;
 ALTER TABLE part ADD PRIMARY KEY (a);
 NOTICE:  DDL test: type alter table, tag ALTER TABLE
-NOTICE:    subcommand: type SET NOT NULL desc column a of table part
-NOTICE:    subcommand: type SET NOT NULL desc column a of table part1
+NOTICE:    subcommand: type ADD CONSTRAINT (and recurse) desc constraint part_a_not_null on table part
 NOTICE:    subcommand: type ADD INDEX desc index part_pkey
 ALTER TABLE parent ALTER COLUMN a SET NOT NULL;
 NOTICE:  DDL test: type alter table, tag ALTER TABLE
-NOTICE:    subcommand: type SET NOT NULL desc column a of table parent
-NOTICE:    subcommand: type SET NOT NULL desc column a of table child
-NOTICE:    subcommand: type SET NOT NULL desc column a of table grandchild
+NOTICE:    subcommand: type SET NOT NULL (and recurse) desc constraint parent_a_not_null on table parent
 ALTER TABLE parent ALTER COLUMN a DROP NOT NULL;
 NOTICE:  DDL test: type alter table, tag ALTER TABLE
-NOTICE:    subcommand: type DROP NOT NULL desc column a of table parent
-NOTICE:    subcommand: type DROP NOT NULL desc column a of table child
-NOTICE:    subcommand: type DROP NOT NULL desc column a of table grandchild
+NOTICE:    subcommand: type DROP NOT NULL (and recurse) desc column a of table parent
 ALTER TABLE parent ALTER COLUMN a SET NOT NULL;
 NOTICE:  DDL test: type alter table, tag ALTER TABLE
-NOTICE:    subcommand: type SET NOT NULL desc column a of table parent
-NOTICE:    subcommand: type SET NOT NULL desc column a of table child
-NOTICE:    subcommand: type SET NOT NULL desc column a of table grandchild
+NOTICE:    subcommand: type SET NOT NULL (and recurse) desc constraint parent_a_not_null on table parent
 ALTER TABLE parent ALTER COLUMN a ADD GENERATED ALWAYS AS IDENTITY;
 NOTICE:  DDL test: type simple, tag CREATE SEQUENCE
 NOTICE:  DDL test: type simple, tag ALTER SEQUENCE
@@ -116,6 +110,7 @@ NOTICE:  DDL test: type alter table, tag ALTER TABLE
 NOTICE:    subcommand: type ALTER COLUMN SET TYPE desc column c of table parent
 NOTICE:    subcommand: type ALTER COLUMN SET TYPE desc column c of table child
 NOTICE:    subcommand: type ALTER COLUMN SET TYPE desc column c of table grandchild
+NOTICE:    subcommand: type (re) ADD CONSTRAINT desc constraint parent_b_not_null on table parent
 NOTICE:    subcommand: type (re) ADD STATS desc statistics object parent_stat
 ALTER TABLE parent ALTER COLUMN c SET DEFAULT 0;
 NOTICE:  DDL test: type alter table, tag ALTER TABLE

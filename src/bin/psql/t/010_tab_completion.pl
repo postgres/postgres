@@ -39,7 +39,7 @@ $node->start;
 
 # set up a few database objects
 $node->safe_psql('postgres',
-		"CREATE TABLE tab1 (c1 int primary key, c2 text);\n"
+	"CREATE TABLE tab1 (c1 int primary key constraint foo not null, c2 text);\n"
 	  . "CREATE TABLE mytab123 (f1 int, f2 text);\n"
 	  . "CREATE TABLE mytab246 (f1 int, f2 text);\n"
 	  . "CREATE TABLE \"mixedName\" (f1 int, f2 text);\n"
@@ -209,21 +209,21 @@ clear_query();
 
 # check interpretation of referenced names
 check_completion(
-	"alter table tab1 drop constraint \t",
+	"alter table tab1 drop constraint t\t",
 	qr/tab1_pkey /,
 	"complete index name for referenced table");
 
 clear_query();
 
 check_completion(
-	"alter table TAB1 drop constraint \t",
+	"alter table TAB1 drop constraint t\t",
 	qr/tab1_pkey /,
 	"complete index name for referenced table, with downcasing");
 
 clear_query();
 
 check_completion(
-	"alter table public.\"tab1\" drop constraint \t",
+	"alter table public.\"tab1\" drop constraint t\t",
 	qr/tab1_pkey /,
 	"complete index name for referenced table, with schema and quoting");
 

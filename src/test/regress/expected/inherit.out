@@ -539,6 +539,9 @@ CREATE TEMP TABLE z (b TEXT, PRIMARY KEY(aa, b)) inherits (a);
 INSERT INTO z VALUES (NULL, 'text'); -- should fail
 ERROR:  null value in column "aa" of relation "z" violates not-null constraint
 DETAIL:  Failing row contains (null, text).
+-- ... but not UNIQUE.
+CREATE TEMP TABLE z2 (b TEXT, UNIQUE(aa, b)) inherits (a);
+INSERT INTO z2 VALUES (NULL, 'text'); -- should work
 -- Check inherited UPDATE with first child excluded
 create table some_tab (f1 int, f2 int, f3 int, check (f1 < 10) no inherit);
 create table some_tab_child () inherits(some_tab);
@@ -1252,6 +1255,8 @@ Indexes:
     "test_primary_constraints_pkey" PRIMARY KEY, btree (id)
 Referenced by:
     TABLE "test_foreign_constraints" CONSTRAINT "test_foreign_constraints_id1_fkey" FOREIGN KEY (id1) REFERENCES test_primary_constraints(id)
+Not-null constraints:
+    "test_primary_constraints_id_not_null" NOT NULL "id"
 
 \d+ test_foreign_constraints
                          Table "public.test_foreign_constraints"
@@ -2053,6 +2058,613 @@ select * from cnullparent where f1 = 2;
 
 drop table cnullparent cascade;
 NOTICE:  drop cascades to table cnullchild
+--
+-- Test inheritance of NOT NULL constraints
+--
+create table pp1 (f1 int);
+create table cc1 (f2 text, f3 int) inherits (pp1);
+create table cc2 (f4 float) inherits (pp1,cc1);
+NOTICE:  merging multiple inherited definitions of column "f1"
+create table cc3 () inherits (pp1,cc1,cc2);
+NOTICE:  merging multiple inherited definitions of column "f1"
+NOTICE:  merging multiple inherited definitions of column "f1"
+NOTICE:  merging multiple inherited definitions of column "f2"
+NOTICE:  merging multiple inherited definitions of column "f3"
+alter table pp1 alter f1 set not null;
+\d+ cc3
+                                         Table "public.cc3"
+ Column |       Type       | Collation | Nullable | Default | Storage  | Stats target | Description 
+--------+------------------+-----------+----------+---------+----------+--------------+-------------
+ f1     | integer          |           | not null |         | plain    |              | 
+ f2     | text             |           |          |         | extended |              | 
+ f3     | integer          |           |          |         | plain    |              | 
+ f4     | double precision |           |          |         | plain    |              | 
+Not-null constraints:
+    "pp1_f1_not_null" NOT NULL "f1" (inherited)
+Inherits: pp1,
+          cc1,
+          cc2
+
+alter table cc3 no inherit pp1;
+alter table cc3 no inherit cc1;
+alter table cc3 no inherit cc2;
+\d+ cc3
+                                         Table "public.cc3"
+ Column |       Type       | Collation | Nullable | Default | Storage  | Stats target | Description 
+--------+------------------+-----------+----------+---------+----------+--------------+-------------
+ f1     | integer          |           | not null |         | plain    |              | 
+ f2     | text             |           |          |         | extended |              | 
+ f3     | integer          |           |          |         | plain    |              | 
+ f4     | double precision |           |          |         | plain    |              | 
+Not-null constraints:
+    "pp1_f1_not_null" NOT NULL "f1"
+
+drop table cc3;
+-- named NOT NULL constraint
+alter table cc1 add column a2 int constraint nn not null;
+\d+ cc1
+                                    Table "public.cc1"
+ Column |  Type   | Collation | Nullable | Default | Storage  | Stats target | Description 
+--------+---------+-----------+----------+---------+----------+--------------+-------------
+ f1     | integer |           | not null |         | plain    |              | 
+ f2     | text    |           |          |         | extended |              | 
+ f3     | integer |           |          |         | plain    |              | 
+ a2     | integer |           | not null |         | plain    |              | 
+Not-null constraints:
+    "pp1_f1_not_null" NOT NULL "f1" (inherited)
+    "nn" NOT NULL "a2"
+Inherits: pp1
+Child tables: cc2
+
+\d+ cc2
+                                         Table "public.cc2"
+ Column |       Type       | Collation | Nullable | Default | Storage  | Stats target | Description 
+--------+------------------+-----------+----------+---------+----------+--------------+-------------
+ f1     | integer          |           | not null |         | plain    |              | 
+ f2     | text             |           |          |         | extended |              | 
+ f3     | integer          |           |          |         | plain    |              | 
+ f4     | double precision |           |          |         | plain    |              | 
+ a2     | integer          |           | not null |         | plain    |              | 
+Not-null constraints:
+    "pp1_f1_not_null" NOT NULL "f1" (inherited)
+    "nn" NOT NULL "a2" (inherited)
+Inherits: pp1,
+          cc1
+
+alter table pp1 alter column f1 set not null;
+\d+ pp1
+                                    Table "public.pp1"
+ Column |  Type   | Collation | Nullable | Default | Storage | Stats target | Description 
+--------+---------+-----------+----------+---------+---------+--------------+-------------
+ f1     | integer |           | not null |         | plain   |              | 
+Not-null constraints:
+    "pp1_f1_not_null" NOT NULL "f1"
+Child tables: cc1,
+              cc2
+
+\d+ cc1
+                                    Table "public.cc1"
+ Column |  Type   | Collation | Nullable | Default | Storage  | Stats target | Description 
+--------+---------+-----------+----------+---------+----------+--------------+-------------
+ f1     | integer |           | not null |         | plain    |              | 
+ f2     | text    |           |          |         | extended |              | 
+ f3     | integer |           |          |         | plain    |              | 
+ a2     | integer |           | not null |         | plain    |              | 
+Not-null constraints:
+    "pp1_f1_not_null" NOT NULL "f1" (inherited)
+    "nn" NOT NULL "a2"
+Inherits: pp1
+Child tables: cc2
+
+\d+ cc2
+                                         Table "public.cc2"
+ Column |       Type       | Collation | Nullable | Default | Storage  | Stats target | Description 
+--------+------------------+-----------+----------+---------+----------+--------------+-------------
+ f1     | integer          |           | not null |         | plain    |              | 
+ f2     | text             |           |          |         | extended |              | 
+ f3     | integer          |           |          |         | plain    |              | 
+ f4     | double precision |           |          |         | plain    |              | 
+ a2     | integer          |           | not null |         | plain    |              | 
+Not-null constraints:
+    "pp1_f1_not_null" NOT NULL "f1" (inherited)
+    "nn" NOT NULL "a2" (inherited)
+Inherits: pp1,
+          cc1
+
+-- cannot create table with inconsistent NO INHERIT constraint
+create table cc3 (a2 int not null no inherit) inherits (cc1);
+NOTICE:  moving and merging column "a2" with inherited definition
+DETAIL:  User-specified column moved to the position of the inherited column.
+ERROR:  cannot define not-null constraint on column "a2" with NO INHERIT
+DETAIL:  The column has an inherited not-null constraint.
+-- change NO INHERIT status of inherited constraint: no dice, it's inherited
+alter table cc2 add not null a2 no inherit;
+ERROR:  cannot change NO INHERIT status of NOT NULL constraint "nn" on relation "cc2"
+-- remove constraint from cc2: no dice, it's inherited
+alter table cc2 alter column a2 drop not null;
+ERROR:  cannot drop inherited constraint "nn" of relation "cc2"
+-- remove constraint from cc1, should succeed
+alter table cc1 alter column a2 drop not null;
+\d+ cc1
+                                    Table "public.cc1"
+ Column |  Type   | Collation | Nullable | Default | Storage  | Stats target | Description 
+--------+---------+-----------+----------+---------+----------+--------------+-------------
+ f1     | integer |           | not null |         | plain    |              | 
+ f2     | text    |           |          |         | extended |              | 
+ f3     | integer |           |          |         | plain    |              | 
+ a2     | integer |           |          |         | plain    |              | 
+Not-null constraints:
+    "pp1_f1_not_null" NOT NULL "f1" (inherited)
+Inherits: pp1
+Child tables: cc2
+
+-- same for cc2
+alter table cc2 alter column f1 drop not null;
+ERROR:  cannot drop inherited constraint "pp1_f1_not_null" of relation "cc2"
+\d+ cc2
+                                         Table "public.cc2"
+ Column |       Type       | Collation | Nullable | Default | Storage  | Stats target | Description 
+--------+------------------+-----------+----------+---------+----------+--------------+-------------
+ f1     | integer          |           | not null |         | plain    |              | 
+ f2     | text             |           |          |         | extended |              | 
+ f3     | integer          |           |          |         | plain    |              | 
+ f4     | double precision |           |          |         | plain    |              | 
+ a2     | integer          |           |          |         | plain    |              | 
+Not-null constraints:
+    "pp1_f1_not_null" NOT NULL "f1" (inherited)
+Inherits: pp1,
+          cc1
+
+-- remove from cc1, should fail again
+alter table cc1 alter column f1 drop not null;
+ERROR:  cannot drop inherited constraint "pp1_f1_not_null" of relation "cc1"
+-- remove from pp1, should succeed
+alter table pp1 alter column f1 drop not null;
+\d+ pp1
+                                    Table "public.pp1"
+ Column |  Type   | Collation | Nullable | Default | Storage | Stats target | Description 
+--------+---------+-----------+----------+---------+---------+--------------+-------------
+ f1     | integer |           |          |         | plain   |              | 
+Child tables: cc1,
+              cc2
+
+alter table pp1 add primary key (f1);
+-- Leave these tables around, for pg_upgrade testing
+-- test that removing inheritance of NOT NULL NO INHERIT works correctly
+create table inh_parent (f1 int not null no inherit, f2 int not null no inherit);
+create table inh_child (f1 int not null no inherit, f2 int);
+alter table inh_child inherit inh_parent;
+alter table inh_child no inherit inh_parent;
+\d+ inh_child
+                                 Table "public.inh_child"
+ Column |  Type   | Collation | Nullable | Default | Storage | Stats target | Description 
+--------+---------+-----------+----------+---------+---------+--------------+-------------
+ f1     | integer |           | not null |         | plain   |              | 
+ f2     | integer |           |          |         | plain   |              | 
+Not-null constraints:
+    "inh_child_f1_not_null" NOT NULL "f1" NO INHERIT
+
+drop table inh_parent, inh_child;
+-- test that inhcount is updated correctly through multiple inheritance
+create table inh_pp1 (f1 int);
+create table inh_cc1 (f2 text, f3 int) inherits (inh_pp1);
+create table inh_cc2(f4 float) inherits(inh_pp1,inh_cc1);
+NOTICE:  merging multiple inherited definitions of column "f1"
+alter table inh_pp1 alter column f1 set not null;
+alter table inh_cc2 no inherit inh_pp1;
+alter table inh_cc2 no inherit inh_cc1;
+\d+ inh_cc2
+                                       Table "public.inh_cc2"
+ Column |       Type       | Collation | Nullable | Default | Storage  | Stats target | Description 
+--------+------------------+-----------+----------+---------+----------+--------------+-------------
+ f1     | integer          |           | not null |         | plain    |              | 
+ f2     | text             |           |          |         | extended |              | 
+ f3     | integer          |           |          |         | plain    |              | 
+ f4     | double precision |           |          |         | plain    |              | 
+Not-null constraints:
+    "inh_pp1_f1_not_null" NOT NULL "f1"
+
+drop table inh_pp1, inh_cc1, inh_cc2;
+create table inh_pp1 (f1 int not null);
+create table inh_cc1 (f2 text, f3 int) inherits (inh_pp1);
+create table inh_cc2(f4 float) inherits(inh_pp1,inh_cc1);
+NOTICE:  merging multiple inherited definitions of column "f1"
+alter table inh_pp1 alter column f1 drop not null;
+\d+ inh_cc2
+                                       Table "public.inh_cc2"
+ Column |       Type       | Collation | Nullable | Default | Storage  | Stats target | Description 
+--------+------------------+-----------+----------+---------+----------+--------------+-------------
+ f1     | integer          |           |          |         | plain    |              | 
+ f2     | text             |           |          |         | extended |              | 
+ f3     | integer          |           |          |         | plain    |              | 
+ f4     | double precision |           |          |         | plain    |              | 
+Inherits: inh_pp1,
+          inh_cc1
+
+drop table inh_pp1, inh_cc1, inh_cc2;
+-- Test a not-null addition that must walk down the hierarchy
+CREATE TABLE inh_parent ();
+CREATE TABLE inh_child (i int) INHERITS (inh_parent);
+CREATE TABLE inh_grandchild () INHERITS (inh_parent, inh_child);
+ALTER TABLE inh_parent ADD COLUMN i int NOT NULL;
+NOTICE:  merging definition of column "i" for child "inh_child"
+NOTICE:  merging definition of column "i" for child "inh_grandchild"
+drop table inh_parent, inh_child, inh_grandchild;
+-- Test the same constraint name for different columns in different parents
+create table inh_parent1(a int constraint nn not null);
+create table inh_parent2(b int constraint nn not null);
+create table inh_child1 () inherits (inh_parent1, inh_parent2);
+\d+ inh_child1
+                                Table "public.inh_child1"
+ Column |  Type   | Collation | Nullable | Default | Storage | Stats target | Description 
+--------+---------+-----------+----------+---------+---------+--------------+-------------
+ a      | integer |           | not null |         | plain   |              | 
+ b      | integer |           | not null |         | plain   |              | 
+Not-null constraints:
+    "nn" NOT NULL "a" (inherited)
+    "inh_child1_b_not_null" NOT NULL "b" (inherited)
+Inherits: inh_parent1,
+          inh_parent2
+
+create table inh_child2 (constraint foo not null a) inherits (inh_parent1, inh_parent2);
+alter table inh_child2 no inherit inh_parent2;
+\d+ inh_child2
+                                Table "public.inh_child2"
+ Column |  Type   | Collation | Nullable | Default | Storage | Stats target | Description 
+--------+---------+-----------+----------+---------+---------+--------------+-------------
+ a      | integer |           | not null |         | plain   |              | 
+ b      | integer |           | not null |         | plain   |              | 
+Not-null constraints:
+    "foo" NOT NULL "a" (local, inherited)
+    "nn" NOT NULL "b"
+Inherits: inh_parent1
+
+drop table inh_parent1, inh_parent2, inh_child1, inh_child2;
+-- Test multiple parents with overlapping primary keys
+create table inh_parent1(a int, b int, c int, primary key (a, b));
+create table inh_parent2(d int, e int, b int, primary key (d, b));
+create table inh_child() inherits (inh_parent1, inh_parent2);
+NOTICE:  merging multiple inherited definitions of column "b"
+select conrelid::regclass, conname, contype, conkey,
+ coninhcount, conislocal, connoinherit
+ from pg_constraint where contype in ('n','p') and
+ conrelid::regclass::text in ('inh_child', 'inh_parent1', 'inh_parent2')
+ order by 1, 2;
+  conrelid   |        conname         | contype | conkey | coninhcount | conislocal | connoinherit 
+-------------+------------------------+---------+--------+-------------+------------+--------------
+ inh_parent1 | inh_parent1_a_not_null | n       | {1}    |           0 | t          | f
+ inh_parent1 | inh_parent1_b_not_null | n       | {2}    |           0 | t          | f
+ inh_parent1 | inh_parent1_pkey       | p       | {1,2}  |           0 | t          | t
+ inh_parent2 | inh_parent2_b_not_null | n       | {3}    |           0 | t          | f
+ inh_parent2 | inh_parent2_d_not_null | n       | {1}    |           0 | t          | f
+ inh_parent2 | inh_parent2_pkey       | p       | {1,3}  |           0 | t          | t
+ inh_child   | inh_parent1_a_not_null | n       | {1}    |           1 | f          | f
+ inh_child   | inh_parent1_b_not_null | n       | {2}    |           2 | f          | f
+ inh_child   | inh_parent2_d_not_null | n       | {4}    |           1 | f          | f
+(9 rows)
+
+\d+ inh_child
+                                 Table "public.inh_child"
+ Column |  Type   | Collation | Nullable | Default | Storage | Stats target | Description 
+--------+---------+-----------+----------+---------+---------+--------------+-------------
+ a      | integer |           | not null |         | plain   |              | 
+ b      | integer |           | not null |         | plain   |              | 
+ c      | integer |           |          |         | plain   |              | 
+ d      | integer |           | not null |         | plain   |              | 
+ e      | integer |           |          |         | plain   |              | 
+Not-null constraints:
+    "inh_parent1_a_not_null" NOT NULL "a" (inherited)
+    "inh_parent1_b_not_null" NOT NULL "b" (inherited)
+    "inh_parent2_d_not_null" NOT NULL "d" (inherited)
+Inherits: inh_parent1,
+          inh_parent2
+
+drop table inh_parent1, inh_parent2, inh_child;
+-- NOT NULL NO INHERIT
+create table inh_nn_parent(a int);
+create table inh_nn_child() inherits (inh_nn_parent);
+alter table inh_nn_parent add not null a no inherit;
+create table inh_nn_child2() inherits (inh_nn_parent);
+select conrelid::regclass, conname, contype, conkey,
+ (select attname from pg_attribute where attrelid = conrelid and attnum = conkey[1]),
+ coninhcount, conislocal, connoinherit
+ from pg_constraint where contype = 'n' and
+ conrelid::regclass::text like 'inh\_nn\_%'
+ order by 2, 1;
+   conrelid    |         conname          | contype | conkey | attname | coninhcount | conislocal | connoinherit 
+---------------+--------------------------+---------+--------+---------+-------------+------------+--------------
+ inh_nn_parent | inh_nn_parent_a_not_null | n       | {1}    | a       |           0 | t          | t
+(1 row)
+
+\d+ inh_nn*
+                               Table "public.inh_nn_child"
+ Column |  Type   | Collation | Nullable | Default | Storage | Stats target | Description 
+--------+---------+-----------+----------+---------+---------+--------------+-------------
+ a      | integer |           |          |         | plain   |              | 
+Inherits: inh_nn_parent
+
+                               Table "public.inh_nn_child2"
+ Column |  Type   | Collation | Nullable | Default | Storage | Stats target | Description 
+--------+---------+-----------+----------+---------+---------+--------------+-------------
+ a      | integer |           |          |         | plain   |              | 
+Inherits: inh_nn_parent
+
+                               Table "public.inh_nn_parent"
+ Column |  Type   | Collation | Nullable | Default | Storage | Stats target | Description 
+--------+---------+-----------+----------+---------+---------+--------------+-------------
+ a      | integer |           | not null |         | plain   |              | 
+Not-null constraints:
+    "inh_nn_parent_a_not_null" NOT NULL "a" NO INHERIT
+Child tables: inh_nn_child,
+              inh_nn_child2
+
+drop table inh_nn_parent, inh_nn_child, inh_nn_child2;
+CREATE TABLE inh_nn_parent (a int, NOT NULL a NO INHERIT);
+CREATE TABLE inh_nn_child() INHERITS (inh_nn_parent);
+ALTER TABLE inh_nn_parent ADD CONSTRAINT nna NOT NULL a;
+ERROR:  cannot change NO INHERIT status of NOT NULL constraint "inh_nn_parent_a_not_null" on relation "inh_nn_parent"
+ALTER TABLE inh_nn_parent ALTER a SET NOT NULL;
+ERROR:  cannot change NO INHERIT status of NOT NULL constraint "inh_nn_parent_a_not_null" on relation "inh_nn_parent"
+DROP TABLE inh_nn_parent cascade;
+NOTICE:  drop cascades to table inh_nn_child
+-- Adding a PK at the top level of a hierarchy should cause all descendants
+-- to be checked for nulls, even past a no-inherit constraint
+CREATE TABLE inh_nn_lvl1 (a int);
+CREATE TABLE inh_nn_lvl2 () INHERITS (inh_nn_lvl1);
+CREATE TABLE inh_nn_lvl3 (CONSTRAINT foo NOT NULL a NO INHERIT) INHERITS (inh_nn_lvl2);
+ALTER TABLE inh_nn_lvl1 ADD PRIMARY KEY (a);
+ERROR:  cannot change NO INHERIT status of NOT NULL constraint "foo" on relation "inh_nn_lvl3"
+DROP TABLE inh_nn_lvl1, inh_nn_lvl2, inh_nn_lvl3;
+-- Disallow specifying conflicting NO INHERIT flags for the same constraint
+CREATE TABLE inh_nn1 (a int primary key, b int, not null a no inherit);
+ERROR:  conflicting NO INHERIT declaration for not-null constraint on column "a"
+CREATE TABLE inh_nn1 (a int not null);
+CREATE TABLE inh_nn2 (a int not null no inherit) INHERITS (inh_nn1);
+NOTICE:  merging column "a" with inherited definition
+ERROR:  cannot define not-null constraint on column "a" with NO INHERIT
+DETAIL:  The column has an inherited not-null constraint.
+CREATE TABLE inh_nn3 (a int not null, b int,  not null a no inherit);
+ERROR:  conflicting NO INHERIT declaration for not-null constraint on column "a"
+CREATE TABLE inh_nn4 (a int not null no inherit, b int,  not null a);
+ERROR:  conflicting NO INHERIT declaration for not-null constraint on column "a"
+DROP TABLE inh_nn1, inh_nn2, inh_nn3, inh_nn4;
+ERROR:  table "inh_nn2" does not exist
+--
+-- test inherit/deinherit
+--
+create table inh_parent(f1 int);
+create table inh_child1(f1 int not null);
+create table inh_child2(f1 int);
+-- inh_child1 should have not null constraint
+alter table inh_child1 inherit inh_parent;
+-- should fail, missing NOT NULL constraint
+alter table inh_child2 inherit inh_child1;
+ERROR:  column "f1" in child table "inh_child2" must be marked NOT NULL
+alter table inh_child2 alter column f1 set not null;
+alter table inh_child2 inherit inh_child1;
+-- add NOT NULL constraint recursively
+alter table inh_parent alter column f1 set not null;
+\d+ inh_parent
+                                Table "public.inh_parent"
+ Column |  Type   | Collation | Nullable | Default | Storage | Stats target | Description 
+--------+---------+-----------+----------+---------+---------+--------------+-------------
+ f1     | integer |           | not null |         | plain   |              | 
+Not-null constraints:
+    "inh_parent_f1_not_null" NOT NULL "f1"
+Child tables: inh_child1
+
+\d+ inh_child1
+                                Table "public.inh_child1"
+ Column |  Type   | Collation | Nullable | Default | Storage | Stats target | Description 
+--------+---------+-----------+----------+---------+---------+--------------+-------------
+ f1     | integer |           | not null |         | plain   |              | 
+Not-null constraints:
+    "inh_child1_f1_not_null" NOT NULL "f1" (local, inherited)
+Inherits: inh_parent
+Child tables: inh_child2
+
+\d+ inh_child2
+                                Table "public.inh_child2"
+ Column |  Type   | Collation | Nullable | Default | Storage | Stats target | Description 
+--------+---------+-----------+----------+---------+---------+--------------+-------------
+ f1     | integer |           | not null |         | plain   |              | 
+Not-null constraints:
+    "inh_child2_f1_not_null" NOT NULL "f1" (local, inherited)
+Inherits: inh_child1
+
+select conrelid::regclass, conname, contype, coninhcount, conislocal
+ from pg_constraint where contype = 'n' and
+ conrelid in ('inh_parent'::regclass, 'inh_child1'::regclass, 'inh_child2'::regclass)
+ order by 2, 1;
+  conrelid  |        conname         | contype | coninhcount | conislocal 
+------------+------------------------+---------+-------------+------------
+ inh_child1 | inh_child1_f1_not_null | n       |           1 | t
+ inh_child2 | inh_child2_f1_not_null | n       |           1 | t
+ inh_parent | inh_parent_f1_not_null | n       |           0 | t
+(3 rows)
+
+--
+-- test deinherit procedure
+--
+-- deinherit inh_child1
+create table inh_child3 () inherits (inh_child1);
+alter table inh_child1 no inherit inh_parent;
+\d+ inh_parent
+                                Table "public.inh_parent"
+ Column |  Type   | Collation | Nullable | Default | Storage | Stats target | Description 
+--------+---------+-----------+----------+---------+---------+--------------+-------------
+ f1     | integer |           | not null |         | plain   |              | 
+Not-null constraints:
+    "inh_parent_f1_not_null" NOT NULL "f1"
+
+\d+ inh_child1
+                                Table "public.inh_child1"
+ Column |  Type   | Collation | Nullable | Default | Storage | Stats target | Description 
+--------+---------+-----------+----------+---------+---------+--------------+-------------
+ f1     | integer |           | not null |         | plain   |              | 
+Not-null constraints:
+    "inh_child1_f1_not_null" NOT NULL "f1"
+Child tables: inh_child2,
+              inh_child3
+
+\d+ inh_child2
+                                Table "public.inh_child2"
+ Column |  Type   | Collation | Nullable | Default | Storage | Stats target | Description 
+--------+---------+-----------+----------+---------+---------+--------------+-------------
+ f1     | integer |           | not null |         | plain   |              | 
+Not-null constraints:
+    "inh_child2_f1_not_null" NOT NULL "f1" (local, inherited)
+Inherits: inh_child1
+
+select conrelid::regclass, conname, contype, coninhcount, conislocal
+ from pg_constraint where contype = 'n' and
+ conrelid::regclass::text in ('inh_parent', 'inh_child1', 'inh_child2', 'inh_child3')
+ order by 2, 1;
+  conrelid  |        conname         | contype | coninhcount | conislocal 
+------------+------------------------+---------+-------------+------------
+ inh_child1 | inh_child1_f1_not_null | n       |           0 | t
+ inh_child3 | inh_child1_f1_not_null | n       |           1 | f
+ inh_child2 | inh_child2_f1_not_null | n       |           1 | t
+ inh_parent | inh_parent_f1_not_null | n       |           0 | t
+(4 rows)
+
+drop table inh_parent, inh_child1, inh_child2, inh_child3;
+-- ALTER TABLE INHERIT ensures that the child has not-null constraints
+create table inh_parent (a int not null);
+create table inh_child (a int);
+alter table inh_child inherit inh_parent; -- nope
+ERROR:  column "a" in child table "inh_child" must be marked NOT NULL
+drop table inh_parent, inh_child;
+-- Can't merge a NO INHERIT constraint with a normal one
+create table inh_parent (a int not null);
+create table inh_child (a int not null no inherit);
+alter table inh_child inherit inh_parent;
+ERROR:  constraint "inh_child_a_not_null" conflicts with non-inherited constraint on child table "inh_child"
+drop table inh_parent, inh_child;
+-- don't interfere with other types of constraints
+create table inh_parent (a int primary key);
+create table inh_child (a int primary key) inherits (inh_parent);
+NOTICE:  merging column "a" with inherited definition
+alter table inh_parent add constraint inh_parent_excl exclude ((1) with =);
+alter table inh_parent add constraint inh_parent_uq unique (a);
+alter table inh_parent add constraint inh_parent_fk foreign key (a) references inh_parent (a);
+create table inh_child2 () inherits (inh_parent);
+create table inh_child3 (like inh_parent);
+alter table inh_child3 inherit inh_parent;
+select conrelid::regclass, conname, contype, coninhcount, conislocal
+ from pg_constraint
+ where conrelid::regclass::text in ('inh_parent', 'inh_child', 'inh_child2', 'inh_child3')
+ order by 2, 1;
+  conrelid  |        conname        | contype | coninhcount | conislocal 
+------------+-----------------------+---------+-------------+------------
+ inh_child  | inh_child_a_not_null  | n       |           1 | t
+ inh_child  | inh_child_pkey        | p       |           0 | t
+ inh_parent | inh_parent_a_not_null | n       |           0 | t
+ inh_child2 | inh_parent_a_not_null | n       |           1 | f
+ inh_child3 | inh_parent_a_not_null | n       |           1 | t
+ inh_parent | inh_parent_excl       | x       |           0 | t
+ inh_parent | inh_parent_fk         | f       |           0 | t
+ inh_parent | inh_parent_pkey       | p       |           0 | t
+ inh_parent | inh_parent_uq         | u       |           0 | t
+(9 rows)
+
+drop table inh_parent, inh_child, inh_child2, inh_child3;
+--
+-- test multi inheritance tree
+--
+create table inh_parent(f1 int not null);
+create table inh_child1() inherits(inh_parent);
+create table inh_child2() inherits(inh_parent);
+create table inh_child3() inherits(inh_child1, inh_child2);
+NOTICE:  merging multiple inherited definitions of column "f1"
+-- show constraint info
+select conrelid::regclass, conname, contype, coninhcount, conislocal
+ from pg_constraint where contype = 'n' and
+ conrelid in ('inh_parent'::regclass, 'inh_child1'::regclass, 'inh_child2'::regclass, 'inh_child3'::regclass)
+ order by 2, conrelid::regclass::text;
+  conrelid  |        conname         | contype | coninhcount | conislocal 
+------------+------------------------+---------+-------------+------------
+ inh_child1 | inh_parent_f1_not_null | n       |           1 | f
+ inh_child2 | inh_parent_f1_not_null | n       |           1 | f
+ inh_child3 | inh_parent_f1_not_null | n       |           2 | f
+ inh_parent | inh_parent_f1_not_null | n       |           0 | t
+(4 rows)
+
+drop table inh_parent cascade;
+NOTICE:  drop cascades to 3 other objects
+DETAIL:  drop cascades to table inh_child1
+drop cascades to table inh_child2
+drop cascades to table inh_child3
+-- test child table with inherited columns and
+-- with explicitly specified not null constraints
+create table inh_parent_1(f1 int);
+create table inh_parent_2(f2 text);
+create table inh_child(f1 int not null, f2 text not null) inherits(inh_parent_1, inh_parent_2);
+NOTICE:  merging column "f1" with inherited definition
+NOTICE:  merging column "f2" with inherited definition
+-- show constraint info
+select conrelid::regclass, conname, contype, coninhcount, conislocal
+ from pg_constraint where contype = 'n' and
+ conrelid in ('inh_parent_1'::regclass, 'inh_parent_2'::regclass, 'inh_child'::regclass)
+ order by 2, conrelid::regclass::text;
+ conrelid  |        conname        | contype | coninhcount | conislocal 
+-----------+-----------------------+---------+-------------+------------
+ inh_child | inh_child_f1_not_null | n       |           0 | t
+ inh_child | inh_child_f2_not_null | n       |           0 | t
+(2 rows)
+
+-- also drops inh_child table
+drop table inh_parent_1 cascade;
+NOTICE:  drop cascades to table inh_child
+drop table inh_parent_2;
+-- test multi layer inheritance tree
+create table inh_p1(f1 int not null);
+create table inh_p2(f1 int not null);
+create table inh_p3(f2 int);
+create table inh_p4(f1 int not null, f3 text not null);
+create table inh_multiparent() inherits(inh_p1, inh_p2, inh_p3, inh_p4);
+NOTICE:  merging multiple inherited definitions of column "f1"
+NOTICE:  merging multiple inherited definitions of column "f1"
+-- constraint on f1 should have three parents
+select conrelid::regclass, contype, conname,
+  (select attname from pg_attribute where attrelid = conrelid and attnum = conkey[1]),
+  coninhcount, conislocal
+ from pg_constraint where contype = 'n' and
+ conrelid::regclass in ('inh_p1', 'inh_p2', 'inh_p3', 'inh_p4',
+	'inh_multiparent')
+ order by conrelid::regclass::text, conname;
+    conrelid     | contype |      conname       | attname | coninhcount | conislocal 
+-----------------+---------+--------------------+---------+-------------+------------
+ inh_multiparent | n       | inh_p1_f1_not_null | f1      |           3 | f
+ inh_multiparent | n       | inh_p4_f3_not_null | f3      |           1 | f
+ inh_p1          | n       | inh_p1_f1_not_null | f1      |           0 | t
+ inh_p2          | n       | inh_p2_f1_not_null | f1      |           0 | t
+ inh_p4          | n       | inh_p4_f1_not_null | f1      |           0 | t
+ inh_p4          | n       | inh_p4_f3_not_null | f3      |           0 | t
+(6 rows)
+
+create table inh_multiparent2 (a int not null, f1 int) inherits(inh_p3, inh_multiparent);
+NOTICE:  merging multiple inherited definitions of column "f2"
+NOTICE:  merging column "f1" with inherited definition
+select conrelid::regclass, contype, conname,
+  (select attname from pg_attribute where attrelid = conrelid and attnum = conkey[1]),
+  coninhcount, conislocal
+ from pg_constraint where contype = 'n' and
+ conrelid::regclass in ('inh_p3', 'inh_multiparent', 'inh_multiparent2')
+ order by conrelid::regclass::text, conname;
+     conrelid     | contype |           conname           | attname | coninhcount | conislocal 
+------------------+---------+-----------------------------+---------+-------------+------------
+ inh_multiparent  | n       | inh_p1_f1_not_null          | f1      |           3 | f
+ inh_multiparent  | n       | inh_p4_f3_not_null          | f3      |           1 | f
+ inh_multiparent2 | n       | inh_multiparent2_a_not_null | a       |           0 | t
+ inh_multiparent2 | n       | inh_p1_f1_not_null          | f1      |           1 | f
+ inh_multiparent2 | n       | inh_p4_f3_not_null          | f3      |           1 | f
+(5 rows)
+
+drop table inh_p1, inh_p2, inh_p3, inh_p4 cascade;
+NOTICE:  drop cascades to 2 other objects
+DETAIL:  drop cascades to table inh_multiparent
+drop cascades to table inh_multiparent2
 --
 -- Mixed ownership inheritance tree
 --

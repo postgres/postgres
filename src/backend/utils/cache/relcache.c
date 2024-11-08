@@ -4817,18 +4817,38 @@ RelationGetIndexList(Relation relation)
 		result = lappend_oid(result, index->indexrelid);
 
 		/*
-		 * Invalid, non-unique, non-immediate or predicate indexes aren't
-		 * interesting for either oid indexes or replication identity indexes,
-		 * so don't check them.
+		 * Non-unique or predicate indexes aren't interesting for either oid
+		 * indexes or replication identity indexes, so don't check them.
+		 * Deferred ones are not useful for replication identity either; but
+		 * we do include them if they are PKs.
 		 */
-		if (!index->indisvalid || !index->indisunique ||
-			!index->indimmediate ||
+		if (!index->indisunique ||
 			!heap_attisnull(htup, Anum_pg_index_indpred, NULL))
 			continue;
 
-		/* remember primary key index if any */
-		if (index->indisprimary)
+		/*
+		 * Remember primary key index, if any.  For regular tables we do this
+		 * only if the index is valid; but for partitioned tables, then we do
+		 * it even if it's invalid.
+		 *
+		 * The reason for returning invalid primary keys for partitioned
+		 * tables is that we need it to prevent drop of not-null constraints
+		 * that may underlie such a primary key, which is only a problem for
+		 * partitioned tables.
+		 */
+		if (index->indisprimary &&
+			(index->indisvalid ||
+			 relation->rd_rel->relkind == RELKIND_PARTITIONED_TABLE))
+		{
 			pkeyIndex = index->indexrelid;
+			pkdeferrable = !index->indimmediate;
+		}
+
+		if (!index->indimmediate)
+			continue;
+
+		if (!index->indisvalid)
+			continue;
 
 		/* remember explicitly chosen replica index */
 		if (index->indisreplident)
@@ -4952,10 +4972,10 @@ RelationGetStatExtList(Relation relation)
  * RelationGetPrimaryKeyIndex -- get OID of the relation's primary key index
  *
  * Returns InvalidOid if there is no such index, or if the primary key is
- * DEFERRABLE.
+ * DEFERRABLE and the caller isn't OK with that.
  */
 Oid
-RelationGetPrimaryKeyIndex(Relation relation)
+RelationGetPrimaryKeyIndex(Relation relation, bool deferrable_ok)
 {
 	List	   *ilist;
 
@@ -4967,7 +4987,11 @@ RelationGetPrimaryKeyIndex(Relation relation)
 		Assert(relation->rd_indexvalid);
 	}
 
-	return relation->rd_ispkdeferrable ? InvalidOid : relation->rd_pkindex;
+	if (deferrable_ok)
+		return relation->rd_pkindex;
+	else if (relation->rd_ispkdeferrable)
+		return InvalidOid;
+	return relation->rd_pkindex;
 }
 
 /*
