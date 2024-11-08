@@ -2188,6 +2188,10 @@ have_partkey_equi_join(PlannerInfo *root, RelOptInfo *joinrel,
 		if (ipk1 != ipk2)
 			continue;
 
+		/* Reject if the partition key collation differs from the clause's. */
+		if (rel1->part_scheme->partcollation[ipk1] != opexpr->inputcollid)
+			return false;
+
 		/*
 		 * The clause allows partitionwise join only if it uses the same
 		 * operator family as that specified by the partition key.
