@@ -1972,7 +1972,7 @@ ALTER TABLE fk_partitioned_fk ATTACH PARTITION fk_partitioned_fk_2
 CREATE TABLE fk_partitioned_pk_6 (a int PRIMARY KEY);
 CREATE TABLE fk_partitioned_fk_6 (a int REFERENCES fk_partitioned_pk_6) PARTITION BY LIST (a);
 ALTER TABLE fk_partitioned_fk_6 ATTACH PARTITION fk_partitioned_pk_6 FOR VALUES IN (1);
-ERROR:  can't attach table "fk_partitioned_pk_6" as a partition which is referenced by foreign key "fk_partitioned_fk_6_a_fkey"
+ERROR:  cannot attach table "fk_partitioned_pk_6" as a partition because it is referenced by foreign key "fk_partitioned_fk_6_a_fkey"
 DROP TABLE fk_partitioned_pk_6, fk_partitioned_fk_6;
 -- This case is similar to above, but the referenced relation is one level
 -- lower in the hierarchy.  This one fails in a different way as the above,
