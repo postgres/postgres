@@ -746,7 +746,6 @@ SELECT (SELECT count(*) FROM test33_0) <> (SELECT count(*) FROM test33_1);
 -- partition key's collation doesn't match that of the GROUP BY column it is
 -- matched with.
 SET max_parallel_workers_per_gather TO 0;
-SET enable_incremental_sort TO off;
 
 CREATE TABLE pagg_tab3 (a text, c text collate case_insensitive) PARTITION BY LIST(c collate "C");
 CREATE TABLE pagg_tab3_p1 PARTITION OF pagg_tab3 FOR VALUES IN ('a', 'b');
@@ -797,7 +796,6 @@ DROP TABLE pagg_tab3;
 
 RESET enable_partitionwise_aggregate;
 RESET max_parallel_workers_per_gather;
-RESET enable_incremental_sort;
 
 -- cleanup
 RESET search_path;

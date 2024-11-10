@@ -1950,7 +1950,6 @@ SELECT (SELECT count(*) FROM test33_0) <> (SELECT count(*) FROM test33_1);
 -- partition key's collation doesn't match that of the GROUP BY column it is
 -- matched with.
 SET max_parallel_workers_per_gather TO 0;
-SET enable_incremental_sort TO off;
 CREATE TABLE pagg_tab3 (a text, c text collate case_insensitive) PARTITION BY LIST(c collate "C");
 CREATE TABLE pagg_tab3_p1 PARTITION OF pagg_tab3 FOR VALUES IN ('a', 'b');
 CREATE TABLE pagg_tab3_p2 PARTITION OF pagg_tab3 FOR VALUES IN ('B', 'A');
@@ -1959,15 +1958,15 @@ ANALYZE pagg_tab3;
 SET enable_partitionwise_aggregate TO false;
 EXPLAIN (COSTS OFF)
 SELECT upper(c collate case_insensitive), count(c) FROM pagg_tab3 GROUP BY c collate case_insensitive ORDER BY 1;
-                        QUERY PLAN                         
------------------------------------------------------------
+                          QUERY PLAN                          
+--------------------------------------------------------------
  Sort
-   Sort Key: (upper(pagg_tab3.c)) COLLATE case_insensitive
+   Sort Key: (upper(pagg_tab3_p2.c)) COLLATE case_insensitive
    ->  HashAggregate
-         Group Key: pagg_tab3.c
+         Group Key: pagg_tab3_p2.c
          ->  Append
-               ->  Seq Scan on pagg_tab3_p2 pagg_tab3_1
-               ->  Seq Scan on pagg_tab3_p1 pagg_tab3_2
+               ->  Seq Scan on pagg_tab3_p2
+               ->  Seq Scan on pagg_tab3_p1
 (7 rows)
 
 SELECT upper(c collate case_insensitive), count(c) FROM pagg_tab3 GROUP BY c collate case_insensitive ORDER BY 1;
@@ -1984,16 +1983,16 @@ SELECT upper(c collate case_insensitive), count(c) FROM pagg_tab3 GROUP BY c col
                           QUERY PLAN                          
 --------------------------------------------------------------
  Sort
-   Sort Key: (upper(pagg_tab3.c)) COLLATE case_insensitive
+   Sort Key: (upper(pagg_tab3_p2.c)) COLLATE case_insensitive
    ->  Finalize HashAggregate
-         Group Key: pagg_tab3.c
+         Group Key: pagg_tab3_p2.c
          ->  Append
                ->  Partial HashAggregate
-                     Group Key: pagg_tab3.c
-                     ->  Seq Scan on pagg_tab3_p2 pagg_tab3
+                     Group Key: pagg_tab3_p2.c
+                     ->  Seq Scan on pagg_tab3_p2
                ->  Partial HashAggregate
-                     Group Key: pagg_tab3_1.c
-                     ->  Seq Scan on pagg_tab3_p1 pagg_tab3_1
+                     Group Key: pagg_tab3_p1.c
+                     ->  Seq Scan on pagg_tab3_p1
 (11 rows)
 
 SELECT upper(c collate case_insensitive), count(c) FROM pagg_tab3 GROUP BY c collate case_insensitive ORDER BY 1;
@@ -2007,17 +2006,17 @@ SELECT upper(c collate case_insensitive), count(c) FROM pagg_tab3 GROUP BY c col
 -- collation to be the same as that of the partition key.
 EXPLAIN (COSTS OFF)
 SELECT c collate "C", count(c) FROM pagg_tab3 GROUP BY c collate "C" ORDER BY 1;
-                       QUERY PLAN                       
---------------------------------------------------------
+                    QUERY PLAN                    
+--------------------------------------------------
  Sort
-   Sort Key: ((pagg_tab3.c)::text) COLLATE "C"
+   Sort Key: ((pagg_tab3_p2.c)::text) COLLATE "C"
    ->  Append
          ->  HashAggregate
-               Group Key: (pagg_tab3.c)::text
-               ->  Seq Scan on pagg_tab3_p2 pagg_tab3
+               Group Key: (pagg_tab3_p2.c)::text
+               ->  Seq Scan on pagg_tab3_p2
          ->  HashAggregate
-               Group Key: (pagg_tab3_1.c)::text
-               ->  Seq Scan on pagg_tab3_p1 pagg_tab3_1
+               Group Key: (pagg_tab3_p1.c)::text
+               ->  Seq Scan on pagg_tab3_p1
 (9 rows)
 
 SELECT c collate "C", count(c) FROM pagg_tab3 GROUP BY c collate "C" ORDER BY 1;
@@ -2043,12 +2042,12 @@ SELECT t1.c, count(t2.c) FROM pagg_tab3 t1 JOIN pagg_tab3 t2 ON t1.c = t2.c GROU
          ->  Hash Join
                Hash Cond: (t1.c = t2.c)
                ->  Append
-                     ->  Seq Scan on pagg_tab3_p2 t1_1
-                     ->  Seq Scan on pagg_tab3_p1 t1_2
+                     ->  Seq Scan on pagg_tab3_p2 t1
+                     ->  Seq Scan on pagg_tab3_p1 t1_1
                ->  Hash
                      ->  Append
-                           ->  Seq Scan on pagg_tab3_p2 t2_1
-                           ->  Seq Scan on pagg_tab3_p1 t2_2
+                           ->  Seq Scan on pagg_tab3_p2 t2
+                           ->  Seq Scan on pagg_tab3_p1 t2_1
 (13 rows)
 
 SELECT t1.c, count(t2.c) FROM pagg_tab3 t1 JOIN pagg_tab3 t2 ON t1.c = t2.c GROUP BY 1 ORDER BY t1.c COLLATE "C";
@@ -2070,12 +2069,12 @@ SELECT t1.c, count(t2.c) FROM pagg_tab3 t1 JOIN pagg_tab3 t2 ON t1.c = t2.c GROU
          ->  Hash Join
                Hash Cond: (t1.c = t2.c)
                ->  Append
-                     ->  Seq Scan on pagg_tab3_p2 t1_1
-                     ->  Seq Scan on pagg_tab3_p1 t1_2
+                     ->  Seq Scan on pagg_tab3_p2 t1
+                     ->  Seq Scan on pagg_tab3_p1 t1_1
                ->  Hash
                      ->  Append
-                           ->  Seq Scan on pagg_tab3_p2 t2_1
-                           ->  Seq Scan on pagg_tab3_p1 t2_2
+                           ->  Seq Scan on pagg_tab3_p2 t2
+                           ->  Seq Scan on pagg_tab3_p1 t2_1
 (13 rows)
 
 SELECT t1.c, count(t2.c) FROM pagg_tab3 t1 JOIN pagg_tab3 t2 ON t1.c = t2.c GROUP BY 1 ORDER BY t1.c COLLATE "C";
@@ -2130,12 +2129,12 @@ SELECT t1.c COLLATE "C", count(t2.c) FROM pagg_tab3 t1 JOIN pagg_tab3 t2 ON t1.c
          ->  Hash Join
                Hash Cond: ((t1.c)::text = (t2.c)::text)
                ->  Append
-                     ->  Seq Scan on pagg_tab3_p2 t1_1
-                     ->  Seq Scan on pagg_tab3_p1 t1_2
+                     ->  Seq Scan on pagg_tab3_p2 t1
+                     ->  Seq Scan on pagg_tab3_p1 t1_1
                ->  Hash
                      ->  Append
-                           ->  Seq Scan on pagg_tab3_p2 t2_1
-                           ->  Seq Scan on pagg_tab3_p1 t2_2
+                           ->  Seq Scan on pagg_tab3_p2 t2
+                           ->  Seq Scan on pagg_tab3_p1 t2_1
 (13 rows)
 
 SELECT t1.c COLLATE "C", count(t2.c) FROM pagg_tab3 t1 JOIN pagg_tab3 t2 ON t1.c = t2.c COLLATE "C" GROUP BY t1.c COLLATE "C" ORDER BY t1.c COLLATE "C";
@@ -2150,7 +2149,6 @@ SELECT t1.c COLLATE "C", count(t2.c) FROM pagg_tab3 t1 JOIN pagg_tab3 t2 ON t1.c
 DROP TABLE pagg_tab3;
 RESET enable_partitionwise_aggregate;
 RESET max_parallel_workers_per_gather;
-RESET enable_incremental_sort;
 -- cleanup
 RESET search_path;
 SET client_min_messages TO warning;
