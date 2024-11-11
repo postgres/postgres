@@ -4043,6 +4043,84 @@ execute q;
 --------------+---
 (0 rows)
 
+-- make sure RLS dependencies in CTEs are handled
+reset role;
+create or replace function rls_f() returns setof rls_t
+  stable language sql
+  as $$ with cte as (select * from rls_t) select * from cte $$;
+prepare r as select current_user, * from rls_f();
+set role regress_rls_alice;
+execute r;
+   current_user    |        c         
+-------------------+------------------
+ regress_rls_alice | invisible to bob
+(1 row)
+
+set role regress_rls_bob;
+execute r;
+ current_user | c 
+--------------+---
+(0 rows)
+
+-- make sure RLS dependencies in subqueries are handled
+reset role;
+create or replace function rls_f() returns setof rls_t
+  stable language sql
+  as $$ select * from (select * from rls_t) _ $$;
+prepare s as select current_user, * from rls_f();
+set role regress_rls_alice;
+execute s;
+   current_user    |        c         
+-------------------+------------------
+ regress_rls_alice | invisible to bob
+(1 row)
+
+set role regress_rls_bob;
+execute s;
+ current_user | c 
+--------------+---
+(0 rows)
+
+-- make sure RLS dependencies in sublinks are handled
+reset role;
+create or replace function rls_f() returns setof rls_t
+  stable language sql
+  as $$ select exists(select * from rls_t)::text $$;
+prepare t as select current_user, * from rls_f();
+set role regress_rls_alice;
+execute t;
+   current_user    |  c   
+-------------------+------
+ regress_rls_alice | true
+(1 row)
+
+set role regress_rls_bob;
+execute t;
+  current_user   |   c   
+-----------------+-------
+ regress_rls_bob | false
+(1 row)
+
+-- make sure RLS dependencies are handled when coercion projections are inserted
+reset role;
+create or replace function rls_f() returns setof rls_t
+  stable language sql
+  as $$ select * from (select array_agg(c) as cs from rls_t) _ group by cs $$;
+prepare u as select current_user, * from rls_f();
+set role regress_rls_alice;
+execute u;
+   current_user    |          c           
+-------------------+----------------------
+ regress_rls_alice | {"invisible to bob"}
+(1 row)
+
+set role regress_rls_bob;
+execute u;
+  current_user   | c 
+-----------------+---
+ regress_rls_bob | 
+(1 row)
+
 RESET ROLE;
 DROP FUNCTION rls_f();
 DROP TABLE rls_t;
