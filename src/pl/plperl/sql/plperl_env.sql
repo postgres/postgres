@@ -56,3 +56,6 @@ $$
    }
 
 $$ LANGUAGE plperl;
+
+-- clean up to simplify cross-version upgrade testing
+DROP FUNCTION get_environ();
