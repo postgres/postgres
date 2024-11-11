@@ -11,7 +11,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 15\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2022-05-14 10:19+0000\n"
-"PO-Revision-Date: 2022-05-14 17:15+0200\n"
+"PO-Revision-Date: 2024-09-16 16:35+0200\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team: French <guillaume@lelarge.info>\n"
 "Language: fr\n"
@@ -19,7 +19,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
-"X-Generator: Poedit 3.0.1\n"
+"X-Generator: Poedit 3.5\n"
 
 #: ../../../src/common/logging.c:277
 #, c-format
@@ -556,50 +556,3 @@ msgstr "aucune base de données connectable à vérifier correspondant à « %s 
 #, c-format
 msgid "internal error: received unexpected relation pattern_id %d"
 msgstr "erreur interne : a reçu un pattern_id %d inattendu de la relation"
-
-#~ msgid ""
-#~ "\n"
-#~ "Other Options:\n"
-#~ msgstr ""
-#~ "\n"
-#~ "Autres options:\n"
-
-#~ msgid "  -?, --help                     show this help, then exit\n"
-#~ msgstr "  -?, --help                     affiche cette aide, puis quitte\n"
-
-#~ msgid "  -V, --version                  output version information, then exit\n"
-#~ msgstr "  -V, --version                  affiche la version, puis quitte\n"
-
-#~ msgid "  -e, --echo                     show the commands being sent to the server\n"
-#~ msgstr "  -e, --echo                     affiche les commandes envoyées au serveur\n"
-
-#~ msgid "  -q, --quiet                     don't write any messages\n"
-#~ msgstr "  -q, --quiet                     n'écrit aucun message\n"
-
-#~ msgid "  -q, --quiet                    don't write any messages\n"
-#~ msgstr "  -q, --quiet                    n'écrit aucun message\n"
-
-#~ msgid "  -v, --verbose                  write a lot of output\n"
-#~ msgstr "  -v, --verbose                  mode verbeux\n"
-
-#, c-format
-#~ msgid "Try \"%s --help\" for more information.\n"
-#~ msgstr "Essayez « %s --help » pour plus d'informations.\n"
-
-#, c-format
-#~ msgid "command was: %s"
-#~ msgstr "la commande était : %s"
-
-#, c-format
-#~ msgid "fatal: "
-#~ msgstr "fatal : "
-
-#~ msgid "invalid skip option"
-#~ msgstr "option skip invalide"
-
-#, c-format
-#~ msgid "number of parallel jobs must be at least 1"
-#~ msgstr "le nombre maximum de jobs en parallèle doit être au moins de 1"
-
-#~ msgid "number of parallel jobs must be at least 1\n"
-#~ msgstr "le nombre de jobs parallèles doit être au moins de 1\n"

@@ -14,7 +14,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 15\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2022-04-12 05:16+0000\n"
-"PO-Revision-Date: 2022-04-12 17:29+0200\n"
+"PO-Revision-Date: 2024-09-16 16:35+0200\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team: French <guillaume@lelarge.info>\n"
 "Language: fr\n"
@@ -22,7 +22,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
-"X-Generator: Poedit 3.0.1\n"
+"X-Generator: Poedit 3.5\n"
 
 #: ../../common/controldata_utils.c:73
 #, c-format
@@ -405,7 +405,7 @@ msgstr "oui"
 #: pg_controldata.c:287
 #, c-format
 msgid "wal_level setting:                    %s\n"
-msgstr "Paramètrage actuel de wal_level :                       %s\n"
+msgstr "Paramétrage actuel de wal_level :                       %s\n"
 
 #: pg_controldata.c:289
 #, c-format
@@ -415,7 +415,7 @@ msgstr "Paramétrage actuel de wal_log_hints :                   %s\n"
 #: pg_controldata.c:291
 #, c-format
 msgid "max_connections setting:              %d\n"
-msgstr "Paramètrage actuel de max_connections :                 %d\n"
+msgstr "Paramétrage actuel de max_connections :                 %d\n"
 
 #: pg_controldata.c:293
 #, c-format
@@ -518,52 +518,3 @@ msgstr "Version des sommes de contrôle des pages de données :   %u\n"
 #, c-format
 msgid "Mock authentication nonce:            %s\n"
 msgstr "Nonce pour simuler une identité:            %s\n"
-
-#~ msgid "  -?, --help     show this help, then exit\n"
-#~ msgstr "  -?, --help     affiche cette aide et quitte\n"
-
-#~ msgid "  -V, --version  output version information, then exit\n"
-#~ msgstr "  -V, --version  affiche la version et quitte\n"
-
-#~ msgid "%s: could not open file \"%s\" for reading: %s\n"
-#~ msgstr "%s : n'a pas pu ouvrir le fichier « %s » en lecture : %s\n"
-
-#~ msgid "%s: could not read file \"%s\": %s\n"
-#~ msgstr "%s : n'a pas pu lire le fichier « %s » : %s\n"
-
-#~ msgid "%s: could not read file \"%s\": read %d of %d\n"
-#~ msgstr "%s : n'a pas pu lire le fichier « %s » : a lu %d sur %d\n"
-
-#~ msgid "Float4 argument passing:              %s\n"
-#~ msgstr "Passage d'argument float4 :                             %s\n"
-
-#~ msgid "Prior checkpoint location:            %X/%X\n"
-#~ msgstr "Point de contrôle précédent :                           %X/%X\n"
-
-#~ msgid "Report bugs to <pgsql-bugs@lists.postgresql.org>.\n"
-#~ msgstr "Rapporter les bogues à <pgsql-bugs@lists.postgresql.org>.\n"
-
-#, c-format
-#~ msgid "Try \"%s --help\" for more information.\n"
-#~ msgstr "Essayer « %s --help » pour plus d'informations.\n"
-
-#~ msgid ""
-#~ "Usage:\n"
-#~ "  %s [OPTION] [DATADIR]\n"
-#~ "\n"
-#~ "Options:\n"
-#~ "  --help         show this help, then exit\n"
-#~ "  --version      output version information, then exit\n"
-#~ msgstr ""
-#~ "Usage :\n"
-#~ "  %s [OPTION] [RÉP_DONNÉES]\n"
-#~ "\n"
-#~ "Options :\n"
-#~ "  --help         affiche cette aide et quitte\n"
-#~ "  --version      affiche les informations de version et quitte\n"
-
-#~ msgid "calculated CRC checksum does not match value stored in file"
-#~ msgstr "la somme de contrôle CRC calculée ne correspond par à la valeur enregistrée dans le fichier"
-
-#~ msgid "floating-point numbers"
-#~ msgstr "nombres à virgule flottante"

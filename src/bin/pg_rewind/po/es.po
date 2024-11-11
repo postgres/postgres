@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_rewind (PostgreSQL) 15\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-08-02 09:56+0000\n"
+"POT-Creation-Date: 2024-11-09 06:25+0000\n"
 "PO-Revision-Date: 2022-10-20 09:06+0200\n"
 "Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
@@ -229,27 +229,27 @@ msgstr "no se pudo leer el archivo «%s»: leídos %d de %zu"
 msgid "could not open directory \"%s\": %m"
 msgstr "no se pudo abrir el directorio «%s»: %m"
 
-#: file_ops.c:446
+#: file_ops.c:442
 #, c-format
 msgid "could not read symbolic link \"%s\": %m"
 msgstr "no se pudo leer el enlace simbólico «%s»: %m"
 
-#: file_ops.c:449
+#: file_ops.c:445
 #, c-format
 msgid "symbolic link \"%s\" target is too long"
 msgstr "la ruta «%s» del enlace simbólico es demasiado larga"
 
-#: file_ops.c:464
+#: file_ops.c:460
 #, c-format
 msgid "\"%s\" is a symbolic link, but symbolic links are not supported on this platform"
 msgstr "«%s» es un link simbólico, pero los links simbólicos no están soportados en esta plataforma"
 
-#: file_ops.c:471
+#: file_ops.c:467
 #, c-format
 msgid "could not read directory \"%s\": %m"
 msgstr "no se pudo leer el directorio «%s»: %m"
 
-#: file_ops.c:475
+#: file_ops.c:471
 #, c-format
 msgid "could not close directory \"%s\": %m"
 msgstr "no se pudo abrir el directorio «%s»: %m"
@@ -750,59 +750,59 @@ msgstr "%*s/%s kB (%d%%) copiados"
 msgid "invalid control file"
 msgstr "archivo de control no válido"
 
-#: pg_rewind.c:918
+#: pg_rewind.c:916
 #, c-format
 msgid "could not find common ancestor of the source and target cluster's timelines"
 msgstr "no se pudo encontrar un ancestro común en el timeline de los clusters de origen y destino"
 
-#: pg_rewind.c:959
+#: pg_rewind.c:957
 #, c-format
 msgid "backup label buffer too small"
 msgstr "el búfer del backup label es demasiado pequeño"
 
-#: pg_rewind.c:982
+#: pg_rewind.c:980
 #, c-format
 msgid "unexpected control file CRC"
 msgstr "CRC de archivo de control inesperado"
 
-#: pg_rewind.c:994
+#: pg_rewind.c:992
 #, c-format
 msgid "unexpected control file size %d, expected %d"
 msgstr "tamaño del archivo de control %d inesperado, se esperaba %d"
 
-#: pg_rewind.c:1003
+#: pg_rewind.c:1001
 #, c-format
 msgid "WAL segment size must be a power of two between 1 MB and 1 GB, but the control file specifies %d byte"
 msgid_plural "WAL segment size must be a power of two between 1 MB and 1 GB, but the control file specifies %d bytes"
 msgstr[0] "El tamaño del segmento de WAL debe ser una potencia de dos entre 1 MB y 1 GB, pero el archivo de control especifica %d byte"
 msgstr[1] "El tamaño del segmento de WAL debe ser una potencia de dos entre 1 MB y 1 GB, pero el archivo de control especifica %d bytes"
 
-#: pg_rewind.c:1042 pg_rewind.c:1112
+#: pg_rewind.c:1040 pg_rewind.c:1110
 #, c-format
 msgid "program \"%s\" is needed by %s but was not found in the same directory as \"%s\""
 msgstr "el programa «%s» es requerido por %s, pero no se encontró en el mismo directorio que «%s»"
 
-#: pg_rewind.c:1045 pg_rewind.c:1115
+#: pg_rewind.c:1043 pg_rewind.c:1113
 #, c-format
 msgid "program \"%s\" was found by \"%s\" but was not the same version as %s"
 msgstr "el programa «%s» fue encontrado por «%s» pero no es de la misma versión que %s"
 
-#: pg_rewind.c:1078
+#: pg_rewind.c:1076
 #, c-format
 msgid "restore_command is not set in the target cluster"
 msgstr "restore_command no está definido en el clúster de destino"
 
-#: pg_rewind.c:1119
+#: pg_rewind.c:1117
 #, c-format
 msgid "executing \"%s\" for target server to complete crash recovery"
 msgstr "ejecutando «%s» en el servidor de destino para completar la recuperación de caídas"
 
-#: pg_rewind.c:1156
+#: pg_rewind.c:1154
 #, c-format
 msgid "postgres single-user mode in target cluster failed"
 msgstr "el modo «single-user» en el servidor de destino falló"
 
-#: pg_rewind.c:1157
+#: pg_rewind.c:1155
 #, c-format
 msgid "Command was: %s"
 msgstr "La orden era: % s"

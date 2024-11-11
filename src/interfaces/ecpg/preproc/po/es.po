@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ecpg (PostgreSQL) 15\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-08-02 09:45+0000\n"
+"POT-Creation-Date: 2024-11-09 06:14+0000\n"
 "PO-Revision-Date: 2022-10-20 09:05+0200\n"
 "Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
@@ -395,12 +395,12 @@ msgstr "inicializador no permitido en definición de tipo"
 msgid "type name \"string\" is reserved in Informix mode"
 msgstr "el nombre de tipo «string» está reservado en modo Informix"
 
-#: preproc.y:552 preproc.y:17918
+#: preproc.y:552 preproc.y:17926
 #, c-format
 msgid "type \"%s\" is already defined"
 msgstr "el tipo «%s» ya está definido"
 
-#: preproc.y:577 preproc.y:18553 preproc.y:18878 variable.c:620
+#: preproc.y:577 preproc.y:18561 preproc.y:18886 variable.c:620
 #, c-format
 msgid "multidimensional arrays for simple data types are not supported"
 msgstr "los arrays multidimensionales para tipos de datos simples no están soportados"
@@ -445,8 +445,8 @@ msgstr "la opción AT no está permitida en la sentencia VAR"
 msgid "AT option not allowed in WHENEVER statement"
 msgstr "la opción AT no está permitida en la sentencia WHENEVER"
 
-#: preproc.y:2227 preproc.y:2525 preproc.y:4176 preproc.y:4840 preproc.y:5710
-#: preproc.y:6010 preproc.y:12132
+#: preproc.y:2227 preproc.y:2525 preproc.y:4176 preproc.y:4848 preproc.y:5718
+#: preproc.y:6018 preproc.y:12140
 #, c-format
 msgid "unsupported feature will be passed to server"
 msgstr "característica no soportada será pasada al servidor"
@@ -461,128 +461,128 @@ msgstr "SHOW ALL no está implementado"
 msgid "COPY FROM STDIN is not implemented"
 msgstr "COPY FROM STDIN no está implementado"
 
-#: preproc.y:10223 preproc.y:17491
+#: preproc.y:10231 preproc.y:17499
 #, c-format
 msgid "\"database\" cannot be used as cursor name in INFORMIX mode"
 msgstr "no se puede usar «database» como nombre de cursor en modo INFORMIX"
 
-#: preproc.y:10230 preproc.y:17501
+#: preproc.y:10238 preproc.y:17509
 #, c-format
 msgid "using variable \"%s\" in different declare statements is not supported"
 msgstr "el uso de la variable «%s» en diferentes sentencias declare no está soportado"
 
-#: preproc.y:10232 preproc.y:17503
+#: preproc.y:10240 preproc.y:17511
 #, c-format
 msgid "cursor \"%s\" is already defined"
 msgstr "el cursor «%s» ya está definido"
 
-#: preproc.y:10706
+#: preproc.y:10714
 #, c-format
 msgid "no longer supported LIMIT #,# syntax passed to server"
 msgstr "la sintaxis LIMIT #,# que ya no está soportada ha sido pasada al servidor"
 
-#: preproc.y:11039 preproc.y:11046
+#: preproc.y:11047 preproc.y:11054
 #, c-format
 msgid "subquery in FROM must have an alias"
 msgstr "las subconsultas en FROM deben tener un alias"
 
-#: preproc.y:17183 preproc.y:17190
+#: preproc.y:17191 preproc.y:17198
 #, c-format
 msgid "CREATE TABLE AS cannot specify INTO"
 msgstr "CREATE TABLE AS no puede especificar INTO"
 
-#: preproc.y:17226
+#: preproc.y:17234
 #, c-format
 msgid "expected \"@\", found \"%s\""
 msgstr "se esperaba «@», se encontró «%s»"
 
-#: preproc.y:17238
+#: preproc.y:17246
 #, c-format
 msgid "only protocols \"tcp\" and \"unix\" and database type \"postgresql\" are supported"
 msgstr "sólo los protocolos «tcp» y «unix» y tipo de bases de datos «postgresql» están soportados"
 
-#: preproc.y:17241
+#: preproc.y:17249
 #, c-format
 msgid "expected \"://\", found \"%s\""
 msgstr "se esperaba «://», se encontró «%s»"
 
-#: preproc.y:17246
+#: preproc.y:17254
 #, c-format
 msgid "Unix-domain sockets only work on \"localhost\" but not on \"%s\""
 msgstr "los sockets de dominio unix sólo trabajan en «localhost» pero no en «%s»"
 
-#: preproc.y:17272
+#: preproc.y:17280
 #, c-format
 msgid "expected \"postgresql\", found \"%s\""
 msgstr "se esperaba «postgresql», se encontró «%s»"
 
-#: preproc.y:17275
+#: preproc.y:17283
 #, c-format
 msgid "invalid connection type: %s"
 msgstr "tipo de conexión no válido: %s"
 
-#: preproc.y:17284
+#: preproc.y:17292
 #, c-format
 msgid "expected \"@\" or \"://\", found \"%s\""
 msgstr "se esperaba «@» o «://», se encontró «%s»"
 
-#: preproc.y:17359 preproc.y:17377
+#: preproc.y:17367 preproc.y:17385
 #, c-format
 msgid "invalid data type"
 msgstr "tipo de dato no válido"
 
-#: preproc.y:17388 preproc.y:17405
+#: preproc.y:17396 preproc.y:17413
 #, c-format
 msgid "incomplete statement"
 msgstr "sentencia incompleta"
 
-#: preproc.y:17391 preproc.y:17408
+#: preproc.y:17399 preproc.y:17416
 #, c-format
 msgid "unrecognized token \"%s\""
 msgstr "elemento «%s» no reconocido"
 
-#: preproc.y:17453
+#: preproc.y:17461
 #, c-format
 msgid "name \"%s\" is already declared"
 msgstr "el nombre «%s» ya está declarado"
 
-#: preproc.y:17721
+#: preproc.y:17729
 #, c-format
 msgid "only data types numeric and decimal have precision/scale argument"
 msgstr "sólo los tipos de dato numeric y decimal tienen argumento de precisión/escala"
 
-#: preproc.y:17733
+#: preproc.y:17741
 #, c-format
 msgid "interval specification not allowed here"
 msgstr "la especificación de intervalo no está permitida aquí"
 
-#: preproc.y:17893 preproc.y:17945
+#: preproc.y:17901 preproc.y:17953
 #, c-format
 msgid "too many levels in nested structure/union definition"
 msgstr "demasiados niveles en la definición anidada de estructura/unión"
 
-#: preproc.y:18068
+#: preproc.y:18076
 #, c-format
 msgid "pointers to varchar are not implemented"
 msgstr "los punteros a varchar no están implementados"
 
-#: preproc.y:18519
+#: preproc.y:18527
 #, c-format
 msgid "initializer not allowed in EXEC SQL VAR command"
 msgstr "inicializador no permitido en la orden EXEC SQL VAR"
 
-#: preproc.y:18836
+#: preproc.y:18844
 #, c-format
 msgid "arrays of indicators are not allowed on input"
 msgstr "no se permiten los arrays de indicadores en la entrada"
 
-#: preproc.y:19023
+#: preproc.y:19031
 #, c-format
 msgid "operator not allowed in variable definition"
 msgstr "operador no permitido en definición de variable"
 
 #. translator: %s is typically the translation of "syntax error"
-#: preproc.y:19064
+#: preproc.y:19072
 #, c-format
 msgid "%s at or near \"%s\""
 msgstr "%s en o cerca de «%s»"

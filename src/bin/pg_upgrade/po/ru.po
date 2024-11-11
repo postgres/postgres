@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: pg_upgrade (PostgreSQL) 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2024-02-02 18:11+0300\n"
-"PO-Revision-Date: 2023-11-03 09:24+0300\n"
+"PO-Revision-Date: 2024-09-07 12:05+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -485,9 +485,10 @@ msgid ""
 msgstr ""
 "В вашей инсталляции пользовательские таблицы используют тип данных \"%s\".\n"
 "Тип \"%s\" был удалён в PostgreSQL версии %s, поэтому обновить\n"
-"кластер в текущем состоянии невозможно. Вы можете удалить проблемные столбцы "
-"и\n"
-"перезапустить обновление. Список проблемных столбцов приведён в файле:\n"
+"кластер в текущем состоянии невозможно. Вы можете удалить проблемные "
+"столбцы\n"
+"или поменять их тип на другой, а затем перезапустить обновление. Список\n"
+"проблемных столбцов приведён в файле:\n"
 "    %s\n"
 "\n"
 
@@ -1053,8 +1054,8 @@ msgstr ""
 msgid ""
 "error while copying relation \"%s.%s\": could not write file \"%s\": %s\n"
 msgstr ""
-"ошибка при копировании отношения \"%s.%s\": не удалось записать в файл "
-"\"%s\": %s\n"
+"ошибка при копировании отношения \"%s.%s\": не удалось записать файл \"%s\": "
+"%s\n"
 
 #: file.c:134
 #, c-format
@@ -1349,12 +1350,12 @@ msgstr ""
 #: option.c:271
 #, c-format
 msgid "  -d, --old-datadir=DATADIR     old cluster data directory\n"
-msgstr "  -d, --old-datadir=КАТ_DATA    каталог данных старого кластера\n"
+msgstr "  -d, --old-datadir=КАТ_ДАННЫХ  каталог данных старого кластера\n"
 
 #: option.c:272
 #, c-format
 msgid "  -D, --new-datadir=DATADIR     new cluster data directory\n"
-msgstr "  -D, --new-datadir=КАТ_DATA    каталог данных нового кластера\n"
+msgstr "  -D, --new-datadir=КАТ_ДАННЫХ  каталог данных нового кластера\n"
 
 #: option.c:273
 #, c-format
@@ -1619,7 +1620,7 @@ msgstr "дочерний процесс завершился аварийно: %
 #: pg_upgrade.c:102
 #, c-format
 msgid "could not read permissions of directory \"%s\": %s\n"
-msgstr "не удалось считать права на каталог \"%s\": %s\n"
+msgstr "не удалось прочитать права на каталог \"%s\": %s\n"
 
 #: pg_upgrade.c:134
 #, c-format
@@ -1927,7 +1928,7 @@ msgstr "%-*s"
 #: util.c:95
 #, c-format
 msgid "could not access directory \"%s\": %m\n"
-msgstr "ошибка доступа к каталогу \"%s\": %m\n"
+msgstr "ошибка при обращении к каталогу \"%s\": %m\n"
 
 #: util.c:158
 #, c-format

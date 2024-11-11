@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_upgrade (PostgreSQL) 15\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-08-02 09:54+0000\n"
+"POT-Creation-Date: 2024-11-09 06:23+0000\n"
 "PO-Revision-Date: 2024-08-02 19:21-0400\n"
 "Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
@@ -429,18 +429,11 @@ msgstr ""
 
 #: check.c:1364
 #, c-format
-#| msgid "Checking for removed \"abstime\" data type in user tables"
 msgid "Checking for removed \"%s\" data type in user tables"
 msgstr "Verificando tipo de datos «%s» eliminado en tablas de usuario"
 
 #: check.c:1374
 #, c-format
-#| msgid ""
-#| "Your installation contains the \"abstime\" data type in user tables.\n"
-#| "The \"abstime\" type has been removed in PostgreSQL version 12,\n"
-#| "so this cluster cannot currently be upgraded.  You can drop the\n"
-#| "problem columns, or change them to another data type, and restart\n"
-#| "the upgrade.\n"
 msgid ""
 "Your installation contains the \"%s\" data type in user tables.\n"
 "The \"%s\" type has been removed in PostgreSQL version %s,\n"
