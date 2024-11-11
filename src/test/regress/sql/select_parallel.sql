@@ -2,6 +2,13 @@
 -- PARALLEL
 --
 
+-- Save parallel worker stats, used for comparison at the end
+select pg_stat_force_next_flush();
+select parallel_workers_to_launch as parallel_workers_to_launch_before,
+       parallel_workers_launched as parallel_workers_launched_before
+  from pg_stat_database
+  where datname = current_database() \gset
+
 create function sp_parallel_restricted(int) returns int as
   $$begin return $1; end$$ language plpgsql parallel restricted;
 
@@ -574,3 +581,10 @@ SET debug_parallel_query = on;
 DELETE FROM parallel_hang WHERE 380 <= i AND i <= 420;
 
 ROLLBACK;
+
+-- Check parallel worker stats
+select pg_stat_force_next_flush();
+select parallel_workers_to_launch > :'parallel_workers_to_launch_before'  AS wrk_to_launch,
+       parallel_workers_launched > :'parallel_workers_launched_before' AS wrk_launched
+  from pg_stat_database
+  where datname = current_database();

@@ -52,6 +52,7 @@
 #include "miscadmin.h"
 #include "nodes/queryjumble.h"
 #include "parser/parse_relation.h"
+#include "pgstat.h"
 #include "rewrite/rewriteHandler.h"
 #include "tcop/utility.h"
 #include "utils/acl.h"
@@ -482,6 +483,10 @@ standard_ExecutorEnd(QueryDesc *queryDesc)
 	estate = queryDesc->estate;
 
 	Assert(estate != NULL);
+
+	if (estate->es_parallel_workers_to_launch > 0)
+		pgstat_update_parallel_workers_stats((PgStat_Counter) estate->es_parallel_workers_to_launch,
+											 (PgStat_Counter) estate->es_parallel_workers_launched);
 
 	/*
 	 * Check that ExecutorFinish was called, unless in EXPLAIN-only mode. This
