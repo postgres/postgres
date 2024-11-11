@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_amcheck (PostgreSQL 17)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-06-14 11:23+0900\n"
-"PO-Revision-Date: 2024-06-14 11:27+0900\n"
+"POT-Creation-Date: 2024-08-28 10:42+0900\n"
+"PO-Revision-Date: 2024-08-28 11:43+0900\n"
 "Last-Translator: Kyotaro Horiguchi <horikyota.ntt@gmail.com>\n"
 "Language-Team: \n"
 "Language: ja\n"
@@ -18,22 +18,22 @@ msgstr ""
 "X-Generator: Poedit 1.8.13\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: ../../../src/common/logging.c:276
+#: ../../../src/common/logging.c:278
 #, c-format
 msgid "error: "
 msgstr "エラー: "
 
-#: ../../../src/common/logging.c:283
+#: ../../../src/common/logging.c:285
 #, c-format
 msgid "warning: "
 msgstr "警告: "
 
-#: ../../../src/common/logging.c:294
+#: ../../../src/common/logging.c:296
 #, c-format
 msgid "detail: "
 msgstr "詳細: "
 
-#: ../../../src/common/logging.c:301
+#: ../../../src/common/logging.c:303
 #, c-format
 msgid "hint: "
 msgstr "ヒント: "
@@ -252,8 +252,8 @@ msgstr "データベース\"%1$s\"内: スキーマ\"%3$s\"内でamcheck バー�
 
 #: pg_amcheck.c:624
 #, c-format
-msgid "--checkunique option is not supported by amcheck version \"%s\""
-msgstr "--checkuniqueオプションはamcheckバージョン\"%s\"ではサポートされていません"
+msgid "option %s is not supported by amcheck version %s"
+msgstr "%sオプションはamcheckバージョン\"%s\"ではサポートされていません"
 
 #: pg_amcheck.c:650
 #, c-format

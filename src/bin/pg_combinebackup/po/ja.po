@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_combinebackup (PostgreSQL) 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-07-01 11:00+0900\n"
-"PO-Revision-Date: 2024-07-01 14:06+0900\n"
+"POT-Creation-Date: 2024-11-05 09:21+0900\n"
+"PO-Revision-Date: 2024-11-05 09:28+0900\n"
 "Last-Translator: Kyotaro Horiguchi <horikyota.ntt@gmail.com>\n"
 "Language-Team: \n"
 "Language: ja\n"
@@ -17,22 +17,22 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: Poedit 1.8.13\n"
 
-#: ../../../src/common/logging.c:276
+#: ../../../src/common/logging.c:279
 #, c-format
 msgid "error: "
 msgstr "エラー: "
 
-#: ../../../src/common/logging.c:283
+#: ../../../src/common/logging.c:286
 #, c-format
 msgid "warning: "
 msgstr "警告: "
 
-#: ../../../src/common/logging.c:294
+#: ../../../src/common/logging.c:297
 #, c-format
 msgid "detail: "
 msgstr "詳細: "
 
-#: ../../../src/common/logging.c:301
+#: ../../../src/common/logging.c:304
 #, c-format
 msgid "hint: "
 msgstr "ヒント: "
@@ -43,7 +43,7 @@ msgid "could not open file \"%s\" for reading: %m"
 msgstr "ファイル\"%s\"を読み込み用にオープンできませんでした: %m"
 
 #: ../../common/controldata_utils.c:110 copy_file.c:150 load_manifest.c:161
-#: load_manifest.c:199 pg_combinebackup.c:1400 reconstruct.c:527
+#: load_manifest.c:199 pg_combinebackup.c:1400 reconstruct.c:540
 #, c-format
 msgid "could not read file \"%s\": %m"
 msgstr "ファイル\"%s\"の読み込みに失敗しました: %m"
@@ -55,8 +55,8 @@ msgstr "ファイル\"%1$s\"を読み込めませんでした: %3$zuバイトの
 
 #: ../../common/controldata_utils.c:132 ../../common/controldata_utils.c:280
 #: backup_label.c:174 copy_file.c:68 pg_combinebackup.c:538
-#: pg_combinebackup.c:1175 reconstruct.c:356 reconstruct.c:727
-#: write_manifest.c:187
+#: pg_combinebackup.c:1175 reconstruct.c:369 reconstruct.c:740
+#: write_manifest.c:188
 #, c-format
 msgid "could not close file \"%s\": %m"
 msgstr "ファイル\"%s\"をクローズできませんでした: %m"
@@ -78,31 +78,32 @@ msgstr ""
 "されるものと一致しないようです。この場合以下の結果は不正確になります。また、\n"
 "PostgreSQLインストレーションはこのデータディレクトリと互換性がなくなります。"
 
-#: ../../common/controldata_utils.c:230 ../../common/file_utils.c:70
-#: ../../common/file_utils.c:347 ../../common/file_utils.c:406
-#: ../../common/file_utils.c:480 backup_label.c:143 copy_file.c:66
+#: ../../common/controldata_utils.c:230 ../../common/file_utils.c:71
+#: ../../common/file_utils.c:348 ../../common/file_utils.c:407
+#: ../../common/file_utils.c:481 backup_label.c:143 copy_file.c:66
 #: copy_file.c:139 copy_file.c:171 copy_file.c:175 copy_file.c:225
 #: copy_file.c:268 load_manifest.c:128 pg_combinebackup.c:523
-#: pg_combinebackup.c:1167 reconstruct.c:510 reconstruct.c:625
-#: write_manifest.c:250
+#: pg_combinebackup.c:1167 reconstruct.c:523 reconstruct.c:638
+#: write_manifest.c:251
 #, c-format
 msgid "could not open file \"%s\": %m"
 msgstr "ファイル\"%s\"をオープンできませんでした: %m"
 
-#: ../../common/controldata_utils.c:249 backup_label.c:160 reconstruct.c:746
-#: write_manifest.c:260
+#: ../../common/controldata_utils.c:249 backup_label.c:160 reconstruct.c:759
+#: write_manifest.c:261
 #, c-format
 msgid "could not write file \"%s\": %m"
 msgstr "ファイル\"%s\"を書き出せませんでした: %m"
 
-#: ../../common/controldata_utils.c:268 ../../common/file_utils.c:418
-#: ../../common/file_utils.c:488
+#: ../../common/controldata_utils.c:268 ../../common/file_utils.c:419
+#: ../../common/file_utils.c:489
 #, c-format
 msgid "could not fsync file \"%s\": %m"
 msgstr "ファイル\"%s\"をfsyncできませんでした: %m"
 
 #: ../../common/cryptohash.c:261 ../../common/cryptohash_openssl.c:356
-#: ../../common/parse_manifest.c:157 ../../common/parse_manifest.c:853
+#: ../../common/jsonapi.c:2317 ../../common/parse_manifest.c:157
+#: ../../common/parse_manifest.c:853
 #, c-format
 msgid "out of memory"
 msgstr "メモリ不足です"
@@ -131,136 +132,140 @@ msgstr "メモリ不足です\n"
 msgid "cannot duplicate null pointer (internal error)\n"
 msgstr "nullポインタは複製できません(内部エラー)\n"
 
-#: ../../common/file_utils.c:76
+#: ../../common/file_utils.c:77
 #, c-format
 msgid "could not synchronize file system for file \"%s\": %m"
 msgstr "ファイル\"%s\"に対してファイルシステムを同期できませんでした: %m"
 
-#: ../../common/file_utils.c:120 ../../common/file_utils.c:566
+#: ../../common/file_utils.c:121 ../../common/file_utils.c:567
 #: backup_label.c:187 load_manifest.c:133 pg_combinebackup.c:676
-#: pg_combinebackup.c:1131 pg_combinebackup.c:1383 reconstruct.c:199
-#: reconstruct.c:408
+#: pg_combinebackup.c:1131 pg_combinebackup.c:1383 reconstruct.c:204
+#: reconstruct.c:421
 #, c-format
 msgid "could not stat file \"%s\": %m"
 msgstr "ファイル\"%s\"のstatに失敗しました: %m"
 
-#: ../../common/file_utils.c:130 ../../common/file_utils.c:227
+#: ../../common/file_utils.c:131 ../../common/file_utils.c:228
 #: ../../fe_utils/option_utils.c:99
 #, c-format
 msgid "this build does not support sync method \"%s\""
 msgstr "このビルドでは同期方式\"%s\"をサポートしていません"
 
-#: ../../common/file_utils.c:151 ../../common/file_utils.c:281
+#: ../../common/file_utils.c:152 ../../common/file_utils.c:282
 #: pg_combinebackup.c:933 pg_combinebackup.c:1256
 #, c-format
 msgid "could not open directory \"%s\": %m"
 msgstr "ディレクトリ\"%s\"をオープンできませんでした: %m"
 
-#: ../../common/file_utils.c:169 ../../common/file_utils.c:315
+#: ../../common/file_utils.c:170 ../../common/file_utils.c:316
 #, c-format
 msgid "could not read directory \"%s\": %m"
 msgstr "ディレクトリ\"%s\"を読み取れませんでした: %m"
 
-#: ../../common/file_utils.c:498
+#: ../../common/file_utils.c:499
 #, c-format
 msgid "could not rename file \"%s\" to \"%s\": %m"
 msgstr "ファイル\"%s\"の名前を\"%s\"に変更できませんでした: %m"
 
-#: ../../common/jsonapi.c:2121
+#: ../../common/jsonapi.c:2342
 msgid "Recursive descent parser cannot use incremental lexer."
 msgstr "再帰降下パーサーは差分字句解析器を使用できません。"
 
-#: ../../common/jsonapi.c:2123
+#: ../../common/jsonapi.c:2344
 msgid "Incremental parser requires incremental lexer."
 msgstr "差分パーサーは差分字句解析器を必要とします。"
 
-#: ../../common/jsonapi.c:2125
+#: ../../common/jsonapi.c:2346
 msgid "JSON nested too deep, maximum permitted depth is 6400."
 msgstr "JSONのネストが深すぎます、可能な最大の深さは6400です。"
 
-#: ../../common/jsonapi.c:2127
+#: ../../common/jsonapi.c:2348
 #, c-format
 msgid "Escape sequence \"\\%.*s\" is invalid."
 msgstr "エスケープシーケンス\"\\%.*s\"は不正です。"
 
-#: ../../common/jsonapi.c:2131
+#: ../../common/jsonapi.c:2352
 #, c-format
 msgid "Character with value 0x%02x must be escaped."
 msgstr "0x%02x値を持つ文字はエスケープしなければなりません"
 
-#: ../../common/jsonapi.c:2135
+#: ../../common/jsonapi.c:2356
 #, c-format
 msgid "Expected end of input, but found \"%.*s\"."
 msgstr "入力の終端を想定していましたが、\"\\%.*s\"でした。"
 
-#: ../../common/jsonapi.c:2138
+#: ../../common/jsonapi.c:2359
 #, c-format
 msgid "Expected array element or \"]\", but found \"%.*s\"."
 msgstr "配列要素または\"]\"を想定していましたが、\"\\%.*s\"でした。"
 
-#: ../../common/jsonapi.c:2141
+#: ../../common/jsonapi.c:2362
 #, c-format
 msgid "Expected \",\" or \"]\", but found \"%.*s\"."
 msgstr "\",\"または\"]\"を想定していましたが、\"\\%.*s\"でした。"
 
-#: ../../common/jsonapi.c:2144
+#: ../../common/jsonapi.c:2365
 #, c-format
 msgid "Expected \":\", but found \"%.*s\"."
 msgstr "\":\"を想定していましたが、\"\\%.*s\"でした。"
 
-#: ../../common/jsonapi.c:2147
+#: ../../common/jsonapi.c:2368
 #, c-format
 msgid "Expected JSON value, but found \"%.*s\"."
 msgstr "JSON値を想定していましたが、\"\\%.*s\"でした。"
 
-#: ../../common/jsonapi.c:2150
+#: ../../common/jsonapi.c:2371
 msgid "The input string ended unexpectedly."
 msgstr "入力文字列が予期せず終了しました。"
 
-#: ../../common/jsonapi.c:2152
+#: ../../common/jsonapi.c:2373
 #, c-format
 msgid "Expected string or \"}\", but found \"%.*s\"."
 msgstr "文字列または\"}\"を想定していましたが、\"\\%.*s\"でした。"
 
-#: ../../common/jsonapi.c:2155
+#: ../../common/jsonapi.c:2376
 #, c-format
 msgid "Expected \",\" or \"}\", but found \"%.*s\"."
 msgstr "\",\"または\"}\"を想定していましたが、\"\\%.*s\"でした。"
 
-#: ../../common/jsonapi.c:2158
+#: ../../common/jsonapi.c:2379
 #, c-format
 msgid "Expected string, but found \"%.*s\"."
 msgstr "文字列を想定していましたが、\"\\%.*s\"でした。"
 
-#: ../../common/jsonapi.c:2161
+#: ../../common/jsonapi.c:2382
 #, c-format
 msgid "Token \"%.*s\" is invalid."
 msgstr "トークン\"\\%.*s\"は不正です。"
 
-#: ../../common/jsonapi.c:2164
+#: ../../common/jsonapi.c:2388
 msgid "\\u0000 cannot be converted to text."
 msgstr "\\u0000 はテキストに変換できません。"
 
-#: ../../common/jsonapi.c:2166
+#: ../../common/jsonapi.c:2390
 msgid "\"\\u\" must be followed by four hexadecimal digits."
 msgstr "\"\\u\"の後には16進数の4桁が続かなければなりません。"
 
-#: ../../common/jsonapi.c:2169
+#: ../../common/jsonapi.c:2393
 msgid "Unicode escape values cannot be used for code point values above 007F when the encoding is not UTF8."
 msgstr "エンコーディングがUTF-8ではない場合、コードポイントの値が 007F 以上についてはUnicodeエスケープの値は使用できません。"
 
-#: ../../common/jsonapi.c:2178
+#: ../../common/jsonapi.c:2402
 #, c-format
 msgid "Unicode escape value could not be translated to the server's encoding %s."
 msgstr "Unicodeエスケープの値がサーバーエンコーディング%sに変換できませんでした。"
 
-#: ../../common/jsonapi.c:2185
+#: ../../common/jsonapi.c:2409
 msgid "Unicode high surrogate must not follow a high surrogate."
 msgstr "Unicodeのハイサロゲートはハイサロゲートに続いてはいけません。"
 
-#: ../../common/jsonapi.c:2187
+#: ../../common/jsonapi.c:2411
 msgid "Unicode low surrogate must follow a high surrogate."
 msgstr "Unicodeのローサロゲートはハイサロゲートに続かなければなりません。"
+
+#: ../../common/jsonapi.c:2433
+msgid "out of memory while constructing error description"
+msgstr "エラー記述の構築中にメモリ不足"
 
 #: ../../common/parse_manifest.c:159 ../../common/parse_manifest.c:855
 #, c-format
@@ -325,8 +330,8 @@ msgid "unexpected manifest version"
 msgstr "予期しない目録バージョン"
 
 #: ../../common/parse_manifest.c:637
-msgid "manifest system identifier not an integer"
-msgstr "目録のシステム識別子が整数ではありません"
+msgid "system identifier in manifest not an integer"
+msgstr "目録中のシステム識別子が整数ではありません"
 
 #: ../../common/parse_manifest.c:662
 msgid "missing path name"
@@ -464,13 +469,13 @@ msgstr "%s: %sが見つかりませんでした"
 msgid "%s: %s requires %s"
 msgstr "%s: %sは%sを必要とします"
 
-#: backup_label.c:162 reconstruct.c:748 write_manifest.c:262
+#: backup_label.c:162 reconstruct.c:761 write_manifest.c:263
 #, c-format
 msgid "could not write file \"%s\": wrote %d of %d"
 msgstr "ファイル\"%1$s\"の書き込みができませんでした: %3$dバイト中%2$dバイト書き込みました"
 
-#: backup_label.c:166 copy_file.c:146 copy_file.c:193 reconstruct.c:708
-#: reconstruct.c:754 write_manifest.c:270
+#: backup_label.c:166 copy_file.c:146 copy_file.c:193 reconstruct.c:721
+#: reconstruct.c:767 write_manifest.c:271
 #, c-format
 msgid "could not update checksum of file \"%s\""
 msgstr "ファイル\"%s\"のチェックサムの更新ができませんでした"
@@ -485,7 +490,7 @@ msgstr "ファイル\"%s\"を書き出せませんでした: %m"
 msgid "could not write to file \"%s\", offset %u: wrote %d of %d"
 msgstr "ファイル \"%1$s\"、オフセット%2$uで書き込みができませんでした: %4$dバイト中%3$dバイト書き込みました"
 
-#: copy_file.c:199 reconstruct.c:771
+#: copy_file.c:199 reconstruct.c:784
 #, c-format
 msgid "could not read from file \"%s\": %m"
 msgstr "ファイル\"%s\"から読み取れませんでした: %m"
@@ -510,12 +515,12 @@ msgstr "ファイル\"%s\"の\"%s\"へのクローニング中のエラー: %s"
 msgid "file cloning not supported on this platform"
 msgstr "このプラットフォームではファイルのクローンはサポートされません"
 
-#: copy_file.c:278 reconstruct.c:691
+#: copy_file.c:278 reconstruct.c:704
 #, c-format
 msgid "error while copying file range from \"%s\" to \"%s\": %m"
 msgstr "\"%s\"の\"%s\"へのファイル範囲のコピー中のエラー: %m"
 
-#: copy_file.c:285 pg_combinebackup.c:264 reconstruct.c:711
+#: copy_file.c:285 pg_combinebackup.c:264 reconstruct.c:724
 #, c-format
 msgid "copy_file_range not supported on this platform"
 msgstr "このプラットフォームではcopy_file_rangeはサポートされません"
@@ -572,7 +577,7 @@ msgstr "%s: 目録のシステム識別子が%lluですが、制御ファイル�
 
 #: pg_combinebackup.c:340
 #, c-format
-msgid "can't generate a manifest because no manifest is available for the final input backup"
+msgid "cannot generate a manifest because no manifest is available for the final input backup"
 msgstr "最後の入力バックアップに目録がないため目録を生成できません"
 
 #: pg_combinebackup.c:387
@@ -647,8 +652,8 @@ msgstr "一部のバックアップのみチェックサムが有効化されて
 
 #: pg_combinebackup.c:658
 #, c-format
-msgid "disable, and optionally reenable, checksums on the output directory to avoid failures"
-msgstr "失敗を防止するためには出力先ディレクトリでのチェックサムを無効にして、必要に応じて再度有効にしてください"
+msgid "Disable, and optionally reenable, checksums on the output directory to avoid failures."
+msgstr "失敗を防止するためには出力先ディレクトリでのチェックサムを無効にして、必要に応じて再度有効にしてください。"
 
 #: pg_combinebackup.c:693
 #, c-format
@@ -739,10 +744,10 @@ msgstr ""
 
 #: pg_combinebackup.c:769
 #, c-format
-msgid "      --clone               clone (reflink) instead of copying files\n"
+msgid "      --clone               clone (reflink) files instead of copying\n"
 msgstr ""
-"      --clone               ファイルコピーではなくクローニング(またはreflink)を\n"
-"                            行う\n"
+"      --clone               ファイルをコピーするのではなくクローニング(reflink)\n"
+"                            を行う\n"
 
 #: pg_combinebackup.c:770
 #, c-format
@@ -751,7 +756,7 @@ msgstr "      --copy                ファイルをコピーする(デフォル�
 
 #: pg_combinebackup.c:771
 #, c-format
-msgid "      --copy-file-range     copy using copy_file_range() syscall\n"
+msgid "      --copy-file-range     copy using copy_file_range() system call\n"
 msgstr "      --copy-file-range     copy_file_range()システムコールでコピーする\n"
 
 #: pg_combinebackup.c:772
@@ -807,10 +812,10 @@ msgstr "シンボリックリンク\"%s\"をスキップします"
 msgid "skipping special file \"%s\""
 msgstr "スペシャルファイル\"%s\"をスキップしています"
 
-#: pg_combinebackup.c:1073
+#: pg_combinebackup.c:1073 reconstruct.c:305
 #, c-format
-msgid "\"%s\" contains no entry for \"%s\""
-msgstr "\"%s\" には\"%s\"のエントリがありません"
+msgid "manifest file \"%s\" contains no entry for file \"%s\""
+msgstr "目録ファイル\"%s\" にはファイル\"%s\"のエントリがありません"
 
 #: pg_combinebackup.c:1189
 #, c-format
@@ -862,37 +867,37 @@ msgstr "ファイル\"%s\"は大きすぎます"
 msgid "could not read file \"%s\": read %zd of %lld"
 msgstr "ファイル\"%1$s\"を読み込めませんでした: %3$lldバイトのうち%2$zdバイトを読み込みました"
 
-#: reconstruct.c:300
+#: reconstruct.c:339
 #, c-format
-msgid "manifest file \"%s\" contains no entry for file \"%s\""
-msgstr "目録ファイル\"%s\" にはファイル\"%s\"のエントリがありません"
+msgid "full backup contains unexpected incremental file \"%s\""
+msgstr "フルバックアップに予期しない差分ファイル\"%s\"が含まれています"
 
-#: reconstruct.c:410
+#: reconstruct.c:423
 #, c-format
 msgid "file \"%s\" is too short: expected %llu, found %llu"
 msgstr "ファイル\"%s\"が短すぎます: %lluを期待していましたが%lluでした"
 
-#: reconstruct.c:452
+#: reconstruct.c:465
 #, c-format
-msgid "file \"%s\" has bad incremental magic number (0x%x not 0x%x)"
-msgstr "ファイル\"%1$s\"の差分マジックナンバーが正しくありません (0x%3$xではなく0x%2$xでした)"
+msgid "file \"%s\" has bad incremental magic number (0x%x, expected 0x%x)"
+msgstr "ファイル\"%1$s\"の差分マジックナンバーが正しくありません (0x%3$xを期待していましたが0x%2$xでした)"
 
-#: reconstruct.c:458
+#: reconstruct.c:471
 #, c-format
 msgid "file \"%s\" has block count %u in excess of segment size %u"
 msgstr "ファイル\"%s\"のブロック数%uがセグメントサイズ%uを超えています"
 
-#: reconstruct.c:465
+#: reconstruct.c:478
 #, c-format
 msgid "file \"%s\" has truncation block length %u in excess of segment size %u"
 msgstr "ファイル\"%s\"の切り詰めブロック長%uがセグメントサイズ%uを超えています"
 
-#: reconstruct.c:529
+#: reconstruct.c:542
 #, c-format
 msgid "could not read file \"%s\": read %d of %u"
 msgstr "ファイル\"%1$s\"を読み込めませんでした: %3$uバイトのうち%2$dバイトを読み込みました"
 
-#: reconstruct.c:773
+#: reconstruct.c:786
 #, c-format
 msgid "could not read from file \"%s\", offset %llu: read %d of %d"
 msgstr "ファイル \"%1$s\"、オフセット%2$lluから読み取れませんでした: %4$d中%3$d"

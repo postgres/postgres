@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: libpq (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-09-02 09:29+0300\n"
+"POT-Creation-Date: 2024-11-02 08:21+0300\n"
 "PO-Revision-Date: 2024-09-07 13:49+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
@@ -555,11 +555,6 @@ msgid "could not set socket to close-on-exec mode: %s"
 msgstr ""
 "не удалось перевести сокет в режим закрытия при выполнении (close-on-exec): "
 "%s"
-
-#: fe-connect.c:3086
-#, c-format
-msgid "keepalives parameter must be an integer"
-msgstr "параметр keepalives должен быть целым числом"
 
 #: fe-connect.c:3225
 #, c-format
@@ -1625,6 +1620,10 @@ msgstr "не удалось передать данные серверу: %s"
 #, c-format
 msgid "unrecognized socket error: 0x%08X/%d"
 msgstr "нераспознанная ошибка сокета: 0x%08X/%d"
+
+#, c-format
+#~ msgid "keepalives parameter must be an integer"
+#~ msgstr "параметр keepalives должен быть целым числом"
 
 #~ msgid "SCM_CRED authentication method not supported\n"
 #~ msgstr "аутентификация SCM_CRED не поддерживается\n"

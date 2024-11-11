@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: postgresql\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2022-08-12 10:39+0000\n"
-"PO-Revision-Date: 2022-09-13 11:52\n"
+"POT-Creation-Date: 2024-02-24 00:09+0000\n"
+"PO-Revision-Date: 2024-09-23 19:38\n"
 "Last-Translator: \n"
 "Language-Team: Ukrainian\n"
 "Language: uk_UA\n"
@@ -14,18 +14,18 @@ msgstr ""
 "X-Crowdin-Project: postgresql\n"
 "X-Crowdin-Project-ID: 324573\n"
 "X-Crowdin-Language: uk\n"
-"X-Crowdin-File: /REL_15_STABLE/ecpglib.pot\n"
-"X-Crowdin-File-ID: 890\n"
+"X-Crowdin-File: /REL_17_STABLE/ecpglib.pot\n"
+"X-Crowdin-File-ID: 1022\n"
 
-#: connect.c:243
+#: connect.c:221
 msgid "empty message text"
 msgstr "пусте повідомлення"
 
-#: connect.c:410 connect.c:675
+#: connect.c:386 connect.c:645
 msgid "<DEFAULT>"
 msgstr "<ЗА_ЗАМОВЧУВАННЯМ>"
 
-#: descriptor.c:876 misc.c:119
+#: descriptor.c:866 misc.c:88
 msgid "NULL"
 msgstr "NULL"
 
@@ -194,7 +194,7 @@ msgstr "з'єднання із сервером втрачено"
 msgid "SQL error: %s\n"
 msgstr "помилка SQL: %s\n"
 
-#: execute.c:2189 execute.c:2196
+#: execute.c:2186 execute.c:2193
 msgid "<empty>"
 msgstr "<пусто>"
 

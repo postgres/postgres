@@ -7,16 +7,16 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-08-29 17:53+0000\n"
-"PO-Revision-Date: 2024-09-16 16:28+0200\n"
+"POT-Creation-Date: 2024-11-11 01:52+0000\n"
+"PO-Revision-Date: 2024-11-11 09:55+0100\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team: French <guillaume@lelarge.info>\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 3.5\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"X-Generator: Poedit 3.5\n"
 
 #: ../../../src/common/logging.c:276
 #, c-format
@@ -44,7 +44,7 @@ msgid "could not open file \"%s\" for reading: %m"
 msgstr "n'a pas pu ouvrir le fichier « %s » pour une lecture : %m"
 
 #: ../../common/controldata_utils.c:110 copy_file.c:150 load_manifest.c:161
-#: load_manifest.c:199 pg_combinebackup.c:1400 reconstruct.c:527
+#: load_manifest.c:199 pg_combinebackup.c:1400 reconstruct.c:540
 #, c-format
 msgid "could not read file \"%s\": %m"
 msgstr "n'a pas pu lire le fichier « %s » : %m"
@@ -56,7 +56,7 @@ msgstr "n'a pas pu lire le fichier « %s » : a lu %d sur %zu"
 
 #: ../../common/controldata_utils.c:132 ../../common/controldata_utils.c:280
 #: backup_label.c:174 copy_file.c:68 pg_combinebackup.c:538
-#: pg_combinebackup.c:1175 reconstruct.c:356 reconstruct.c:727
+#: pg_combinebackup.c:1175 reconstruct.c:369 reconstruct.c:740
 #: write_manifest.c:187
 #, c-format
 msgid "could not close file \"%s\": %m"
@@ -85,13 +85,13 @@ msgstr ""
 #: ../../common/file_utils.c:480 backup_label.c:143 copy_file.c:66
 #: copy_file.c:139 copy_file.c:171 copy_file.c:175 copy_file.c:225
 #: copy_file.c:268 load_manifest.c:128 pg_combinebackup.c:523
-#: pg_combinebackup.c:1167 reconstruct.c:510 reconstruct.c:625
+#: pg_combinebackup.c:1167 reconstruct.c:523 reconstruct.c:638
 #: write_manifest.c:250
 #, c-format
 msgid "could not open file \"%s\": %m"
 msgstr "n'a pas pu ouvrir le fichier « %s » : %m"
 
-#: ../../common/controldata_utils.c:249 backup_label.c:160 reconstruct.c:746
+#: ../../common/controldata_utils.c:249 backup_label.c:160 reconstruct.c:759
 #: write_manifest.c:260
 #, c-format
 msgid "could not write file \"%s\": %m"
@@ -140,8 +140,8 @@ msgstr "n'a pas pu synchroniser sur disque (fsync) le système de fichiers pour 
 
 #: ../../common/file_utils.c:120 ../../common/file_utils.c:566
 #: backup_label.c:187 load_manifest.c:133 pg_combinebackup.c:676
-#: pg_combinebackup.c:1131 pg_combinebackup.c:1383 reconstruct.c:199
-#: reconstruct.c:408
+#: pg_combinebackup.c:1131 pg_combinebackup.c:1383 reconstruct.c:204
+#: reconstruct.c:421
 #, c-format
 msgid "could not stat file \"%s\": %m"
 msgstr "n'a pas pu tester le fichier « %s » : %m"
@@ -466,13 +466,13 @@ msgstr "%s : n'a pas pu trouver %s"
 msgid "%s: %s requires %s"
 msgstr "%s : %s requiert %s"
 
-#: backup_label.c:162 reconstruct.c:748 write_manifest.c:262
+#: backup_label.c:162 reconstruct.c:761 write_manifest.c:262
 #, c-format
 msgid "could not write file \"%s\": wrote %d of %d"
 msgstr "n'a pas pu écrire le fichier « %s » : a écrit %d sur %d"
 
-#: backup_label.c:166 copy_file.c:146 copy_file.c:193 reconstruct.c:708
-#: reconstruct.c:754 write_manifest.c:270
+#: backup_label.c:166 copy_file.c:146 copy_file.c:193 reconstruct.c:721
+#: reconstruct.c:767 write_manifest.c:270
 #, c-format
 msgid "could not update checksum of file \"%s\""
 msgstr "n'a pas pu mettre à jour la somme de contrôle du fichier « %s »"
@@ -487,7 +487,7 @@ msgstr "n'a pas pu écrire dans le fichier « %s » : %m"
 msgid "could not write to file \"%s\", offset %u: wrote %d of %d"
 msgstr "n'a pas pu écrire dans le fichier « %s », à la position %u : a écrit %d sur %d"
 
-#: copy_file.c:199 reconstruct.c:771
+#: copy_file.c:199 reconstruct.c:784
 #, c-format
 msgid "could not read from file \"%s\": %m"
 msgstr "n'a pas pu lire à partir du fichier « %s » : %m"
@@ -512,12 +512,12 @@ msgstr "erreur lors du clonage du fichier « %s » en «%s » : %s"
 msgid "file cloning not supported on this platform"
 msgstr "clonage de fichiers non supporté sur cette plateforme"
 
-#: copy_file.c:278 reconstruct.c:691
+#: copy_file.c:278 reconstruct.c:704
 #, c-format
 msgid "error while copying file range from \"%s\" to \"%s\": %m"
 msgstr "erreur lors de l'opération copy_file_range de « %s » à « %s » : %m"
 
-#: copy_file.c:285 pg_combinebackup.c:264 reconstruct.c:711
+#: copy_file.c:285 pg_combinebackup.c:264 reconstruct.c:724
 #, c-format
 msgid "copy_file_range not supported on this platform"
 msgstr "copy_file_range non supporté sur cette plateforme"
@@ -809,7 +809,7 @@ msgstr "ignore le lien symbolique « %s »"
 msgid "skipping special file \"%s\""
 msgstr "ignore le fichier spécial « %s »"
 
-#: pg_combinebackup.c:1073 reconstruct.c:300
+#: pg_combinebackup.c:1073 reconstruct.c:305
 #, c-format
 msgid "manifest file \"%s\" contains no entry for file \"%s\""
 msgstr "le fichier manifeste « %s » ne contient aucune entrée pour le fichier « %s »"
@@ -864,32 +864,37 @@ msgstr "le fichier « %s » est trop gros"
 msgid "could not read file \"%s\": read %zd of %lld"
 msgstr "n'a pas pu lire le fichier « %s » : a lu %zd sur %lld"
 
-#: reconstruct.c:410
+#: reconstruct.c:339
+#, c-format
+msgid "full backup contains unexpected incremental file \"%s\""
+msgstr "la sauvegarde complète contient un fichier incrémental inattendu « %s »"
+
+#: reconstruct.c:423
 #, c-format
 msgid "file \"%s\" is too short: expected %llu, found %llu"
 msgstr "le fichier « %s » est trop court : attendait %llu, a trouvé %llu"
 
-#: reconstruct.c:452
+#: reconstruct.c:465
 #, c-format
 msgid "file \"%s\" has bad incremental magic number (0x%x, expected 0x%x)"
 msgstr "le fichier « %s » a un mauvaise numéro magique incrémental (0x%x et non pas 0x%x)"
 
-#: reconstruct.c:458
+#: reconstruct.c:471
 #, c-format
 msgid "file \"%s\" has block count %u in excess of segment size %u"
 msgstr "le fichier « %s » a %u blocs en plus de la taille de segment %u"
 
-#: reconstruct.c:465
+#: reconstruct.c:478
 #, c-format
 msgid "file \"%s\" has truncation block length %u in excess of segment size %u"
 msgstr "le fichier « %s » a une longueur de bloc %u pour la troncation en excès de la taille de segment %u"
 
-#: reconstruct.c:529
+#: reconstruct.c:542
 #, c-format
 msgid "could not read file \"%s\": read %d of %u"
 msgstr "n'a pas pu lire le fichier « %s » : a lu %d sur %u"
 
-#: reconstruct.c:773
+#: reconstruct.c:786
 #, c-format
 msgid "could not read from file \"%s\", offset %llu: read %d of %d"
 msgstr "n'a pas pu lire le fichier « %s » à la position %llu : a lu %d sur %d"
