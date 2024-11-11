@@ -124,6 +124,39 @@ SET ROLE pg_read_all_stats;     -- fail, granted without SET option
 RESET ROLE;
 
 RESET SESSION AUTHORIZATION;
+
+-- test interaction of SET SESSION AUTHORIZATION and SET ROLE,
+-- as well as propagation of these settings to parallel workers
+GRANT regress_priv_user9 TO regress_priv_user8;
+
+SET SESSION AUTHORIZATION regress_priv_user8;
+SET ROLE regress_priv_user9;
+SET debug_parallel_query = 0;
+SELECT session_user, current_role, current_user, current_setting('role') as role;
+SET debug_parallel_query = 1;
+SELECT session_user, current_role, current_user, current_setting('role') as role;
+
+BEGIN;
+SET SESSION AUTHORIZATION regress_priv_user10;
+SET debug_parallel_query = 0;
+SELECT session_user, current_role, current_user, current_setting('role') as role;
+SET debug_parallel_query = 1;
+SELECT session_user, current_role, current_user, current_setting('role') as role;
+ROLLBACK;
+SET debug_parallel_query = 0;
+SELECT session_user, current_role, current_user, current_setting('role') as role;
+SET debug_parallel_query = 1;
+SELECT session_user, current_role, current_user, current_setting('role') as role;
+
+RESET SESSION AUTHORIZATION;
+-- session_user at this point is installation-dependent
+SET debug_parallel_query = 0;
+SELECT session_user = current_role as c_r_ok, session_user = current_user as c_u_ok, current_setting('role') as role;
+SET debug_parallel_query = 1;
+SELECT session_user = current_role as c_r_ok, session_user = current_user as c_u_ok, current_setting('role') as role;
+
+RESET debug_parallel_query;
+
 REVOKE pg_read_all_settings FROM regress_priv_user8;
 
 DROP USER regress_priv_user10;
