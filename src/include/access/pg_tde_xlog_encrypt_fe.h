@@ -24,6 +24,6 @@
 	TDEInitGlobalKeys(kring_dir);	\
 	TDEXLogSmgrInit()
 
-#endif							/* PERCONA_EXT */
+#endif /* PERCONA_EXT */
 
-#endif							/* PG_TDE_XLOGENCRYPT_FE_H */
+#endif /* PG_TDE_XLOGENCRYPT_FE_H */

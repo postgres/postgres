@@ -18,7 +18,7 @@
 #define MAP_ENTRY_EMPTY         0x00
 #define TDE_KEY_TYPE_HEAP_BASIC 0x01
 #define TDE_KEY_TYPE_SMGR       0x02
-#define TDE_KEY_TYPE_GLOBAL 0x04
+#define TDE_KEY_TYPE_GLOBAL     0x04
 #define MAP_ENTRY_VALID (TDE_KEY_TYPE_HEAP_BASIC | TDE_KEY_TYPE_SMGR | TDE_KEY_TYPE_GLOBAL)
 
 typedef struct InternalKey
@@ -37,8 +37,8 @@ typedef struct InternalKey
 
 typedef struct RelKeyData
 {
-    TDEPrincipalKeyId  principal_key_id;
-    InternalKey     internal_key;
+	TDEPrincipalKeyId principal_key_id;
+	InternalKey internal_key;
 } RelKeyData;
 
 
@@ -76,8 +76,8 @@ extern bool pg_tde_move_rel_key(const RelFileLocator *newrlocator, const RelFile
 
 extern void pg_tde_set_db_file_paths(Oid dbOid, Oid spcOid, char *map_path, char *keydata_path);
 
-const char * tde_sprint_key(InternalKey *k);
+const char *tde_sprint_key(InternalKey *k);
 
 extern RelKeyData *pg_tde_put_key_into_cache(RelFileNumber rel_num, RelKeyData *key);
 
-#endif /*PG_TDE_MAP_H*/
+#endif /* PG_TDE_MAP_H */

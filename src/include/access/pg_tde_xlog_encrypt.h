@@ -30,6 +30,6 @@ static const XLogSmgr tde_xlog_smgr = {
 extern void TDEXLogSmgrInit(void);
 extern void XLogInitGUC(void);
 
-#endif							/* PERCONA_EXT */
+#endif /* PERCONA_EXT */
 
-#endif							/* PG_TDE_XLOGENCRYPT_H */
+#endif /* PG_TDE_XLOGENCRYPT_H */

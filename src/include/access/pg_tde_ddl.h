@@ -14,4 +14,4 @@
 
 extern void SetupTdeDDLHooks(void);
 
-#endif							/* PG_TDE_DDL_H */
+#endif /* PG_TDE_DDL_H */

@@ -19,16 +19,15 @@ typedef struct TdeSharedState
 {
 	LWLock *principalKeyLock;
 	int principalKeyHashTrancheId;
-	void *rawDsaArea; /* DSA area pointer to store cache hashes */
+	void *rawDsaArea;		/* DSA area pointer to store cache hashes */
 	dshash_table_handle principalKeyHashHandle;
 } TdeSharedState;
 
 typedef struct TDELocalState
 {
 	TdeSharedState *sharedTdeState;
-	dsa_area **dsa; /* local dsa area for backend attached to the
-					 * dsa area created by postmaster at startup.
-					 */
+	dsa_area **dsa;			/* local dsa area for backend attached to the
+								 * dsa area created by postmaster at startup. */
 	dshash_table *principalKeySharedHash;
 } TDELocalState;
 
@@ -37,19 +36,23 @@ static void tde_shmem_shutdown(int code, Datum arg);
 List *registeredShmemRequests = NIL;
 bool shmemInited = false;
 
-void RegisterShmemRequest(const TDEShmemSetupRoutine *routine)
+void
+RegisterShmemRequest(const TDEShmemSetupRoutine *routine)
 {
 	Assert(shmemInited == false);
-	registeredShmemRequests = lappend(registeredShmemRequests, (void *)routine);
+	registeredShmemRequests = lappend(registeredShmemRequests, (void *) routine);
 }
 
-Size TdeRequiredSharedMemorySize(void)
+Size
+TdeRequiredSharedMemorySize(void)
 {
 	Size sz = 0;
 	ListCell *lc;
-	foreach (lc, registeredShmemRequests)
+
+	foreach(lc, registeredShmemRequests)
 	{
-		TDEShmemSetupRoutine *routine = (TDEShmemSetupRoutine *)lfirst(lc);
+		TDEShmemSetupRoutine *routine = (TDEShmemSetupRoutine *) lfirst(lc);
+
 		if (routine->required_shared_mem_size)
 			sz = add_size(sz, routine->required_shared_mem_size());
 	}
@@ -57,12 +60,14 @@ Size TdeRequiredSharedMemorySize(void)
 	return MAXALIGN(sz);
 }
 
-int TdeRequiredLocksCount(void)
+int
+TdeRequiredLocksCount(void)
 {
 	return TDE_LWLOCK_COUNT;
 }
 
-void TdeShmemInit(void)
+void
+TdeShmemInit(void)
 {
 	bool found;
 	TdeSharedState *tdeState;
@@ -76,7 +81,7 @@ void TdeShmemInit(void)
 	if (!found)
 	{
 		/* First time through ... */
-		char *p = (char *)tdeState;
+		char *p = (char *) tdeState;
 		dsa_area *dsa;
 		ListCell *lc;
 		Size used_size = 0;
@@ -85,10 +90,11 @@ void TdeShmemInit(void)
 		p += MAXALIGN(sizeof(TdeSharedState));
 		used_size += MAXALIGN(sizeof(TdeSharedState));
 		/* Now place all shared state structures */
-		foreach (lc, registeredShmemRequests)
+		foreach(lc, registeredShmemRequests)
 		{
-			Size sz = 0;
-			TDEShmemSetupRoutine *routine = (TDEShmemSetupRoutine *)lfirst(lc);
+			Size		sz = 0;
+			TDEShmemSetupRoutine *routine = (TDEShmemSetupRoutine *) lfirst(lc);
+
 			if (routine->init_shared_state)
 			{
 				sz = routine->init_shared_state(p);
@@ -110,29 +116,33 @@ void TdeShmemInit(void)
 		dsa_set_size_limit(dsa, dsa_area_size);
 
 		/* Initialize all DSA area objects */
-		foreach (lc, registeredShmemRequests)
+		foreach(lc, registeredShmemRequests)
 		{
-			TDEShmemSetupRoutine *routine = (TDEShmemSetupRoutine *)lfirst(lc);
+			TDEShmemSetupRoutine *routine = (TDEShmemSetupRoutine *) lfirst(lc);
+
 			if (routine->init_dsa_area_objects)
 				routine->init_dsa_area_objects(dsa, tdeState->rawDsaArea);
 		}
 		ereport(LOG, (errmsg("setting no limit to DSA area of size %lu", dsa_area_size)));
 
-		dsa_set_size_limit(dsa, -1); /* Let it grow outside the shared memory */
+		dsa_set_size_limit(dsa, -1);	/* Let it grow outside the shared
+										 * memory */
 
 		shmemInited = true;
 	}
 	LWLockRelease(AddinShmemInitLock);
-	on_shmem_exit(tde_shmem_shutdown, (Datum)0);
+	on_shmem_exit(tde_shmem_shutdown, (Datum) 0);
 }
 
 static void
 tde_shmem_shutdown(int code, Datum arg)
 {
 	ListCell *lc;
-	foreach (lc, registeredShmemRequests)
+
+	foreach(lc, registeredShmemRequests)
 	{
-		TDEShmemSetupRoutine *routine = (TDEShmemSetupRoutine *)lfirst(lc);
+		TDEShmemSetupRoutine *routine = (TDEShmemSetupRoutine *) lfirst(lc);
+
 		if (routine->shmem_kill)
 			routine->shmem_kill(code, arg);
 	}

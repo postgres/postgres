@@ -14,4 +14,4 @@
 
 extern bool InstallFileKeyring(void);
 
-#endif /*KEYRING_FILE_H*/
+#endif /* KEYRING_FILE_H */

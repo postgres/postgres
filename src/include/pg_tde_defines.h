@@ -19,10 +19,10 @@
  * ----------
 */
 
-//#define ENCRYPTION_DEBUG 1
-//#define KEYRING_DEBUG 1
-//#define TDE_FORK_DEBUG 1
-// #define TDE_XLOG_DEBUG 1
+/* #define ENCRYPTION_DEBUG 1 */
+/* #define KEYRING_DEBUG 1 */
+/* #define TDE_FORK_DEBUG 1 */
+/*  #define TDE_XLOG_DEBUG 1 */
 
 #define tdeheap_fill_tuple heap_fill_tuple
 #define tdeheap_form_tuple heap_form_tuple
@@ -47,4 +47,4 @@
 
 /* ---------- */
 
-#endif                          /* PG_TDE_DEFINES_H */
+#endif	/* PG_TDE_DEFINES_H */

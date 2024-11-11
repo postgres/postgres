@@ -10,13 +10,13 @@
 
 typedef struct XLogExtensionInstall
 {
-    Oid database_id;
-    Oid tablespace_id;
+	Oid	database_id;
+	Oid	tablespace_id;
 } XLogExtensionInstall;
 
-typedef void (*pg_tde_on_ext_install_callback)(int tde_tbl_count, XLogExtensionInstall* ext_info, bool redo, void *arg);
+typedef void (*pg_tde_on_ext_install_callback) (int tde_tbl_count, XLogExtensionInstall *ext_info, bool redo, void *arg);
 
-extern void on_ext_install(pg_tde_on_ext_install_callback function, void* arg);
+extern void on_ext_install(pg_tde_on_ext_install_callback function, void *arg);
 
 extern void extension_install_redo(XLogExtensionInstall *xlrec);
-#endif /*PG_TDE_H*/
+#endif	/* PG_TDE_H */

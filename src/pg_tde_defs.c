@@ -18,7 +18,7 @@
 
 
 /* Returns package version */
-const char*
+const char *
 pg_tde_package_string(void)
 {
 	return PACKAGE_STRING;
@@ -29,7 +29,7 @@ pg_tde_package_name(void)
 {
 	return PACKAGE_NAME;
 }
-const char*
+const char *
 pg_tde_package_version(void)
 {
 	return PACKAGE_VERSION;

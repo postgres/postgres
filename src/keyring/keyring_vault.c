@@ -18,7 +18,7 @@
 #include "common/jsonapi.h"
 #include "mb/pg_wchar.h"
 #include "utils/builtins.h"
-	
+
 #include <stdio.h>
 
 #include <curl/curl.h>
@@ -49,18 +49,18 @@ typedef enum
 
 typedef struct JsonVaultRespState
 {
-	JsonVaultRespSemState	state;
-	JsonVaultRespField		field;
-	int		level;
-	
-	char	*key;
+	JsonVaultRespSemState state;
+	JsonVaultRespField field;
+	int			level;
+
+	char	   *key;
 } JsonVaultRespState;
 
 static JsonParseErrorType json_resp_object_start(void *state);
 static JsonParseErrorType json_resp_object_end(void *state);
 static JsonParseErrorType json_resp_scalar(void *state, char *token, JsonTokenType tokentype);
 static JsonParseErrorType json_resp_object_field_start(void *state, char *fname, bool isnull);
-static JsonParseErrorType parse_json_response(JsonVaultRespState	*parse, JsonLexContext *lex);
+static JsonParseErrorType parse_json_response(JsonVaultRespState *parse, JsonLexContext *lex);
 
 struct curl_slist *curlList = NULL;
 
@@ -69,7 +69,7 @@ static char *get_keyring_vault_url(VaultV2Keyring *keyring, const char *key_name
 static bool curl_perform(VaultV2Keyring *keyring, const char *url, CurlString *outStr, long *httpCode, const char *postData);
 
 static KeyringReturnCodes set_key_by_name(GenericKeyring *keyring, keyInfo *key, bool throw_error);
-static keyInfo *get_key_by_name(GenericKeyring *keyring, const char *key_name, bool throw_error, KeyringReturnCodes *return_code);
+static keyInfo *get_key_by_name(GenericKeyring *keyring, const char *key_name, bool throw_error, KeyringReturnCodes * return_code);
 
 const TDEKeyringRoutine keyringVaultV2Routine = {
 	.keyring_get_key = get_key_by_name,
@@ -77,7 +77,8 @@ const TDEKeyringRoutine keyringVaultV2Routine = {
 };
 
 
-bool InstallVaultV2Keyring(void)
+bool
+InstallVaultV2Keyring(void)
 {
 	return RegisterKeyProvider(&keyringVaultV2Routine, VAULT_V2_KEY_PROVIDER);
 }
@@ -85,20 +86,24 @@ bool InstallVaultV2Keyring(void)
 static bool
 curl_setup_token(VaultV2Keyring *keyring)
 {
-	if(curlList == NULL)
+	if (curlList == NULL)
 	{
 		char tokenHeader[256];
+
 		strcpy(tokenHeader, "X-Vault-Token:");
 		strcat(tokenHeader, keyring->vault_token);
 
 		curlList = curl_slist_append(curlList, tokenHeader);
-		if(curlList == NULL) return 0;
+		if (curlList == NULL)
+			return 0;
 
 		curlList = curl_slist_append(curlList, "Content-Type: application/json");
-		if(curlList == NULL) return 0;
+		if (curlList == NULL)
+			return 0;
 	}
 
-	if(curl_easy_setopt(keyringCurl, CURLOPT_HTTPHEADER, curlList) != CURLE_OK) return 0;
+	if (curl_easy_setopt(keyringCurl, CURLOPT_HTTPHEADER, curlList) != CURLE_OK)
+		return 0;
 
 	return 1;
 }
@@ -106,10 +111,10 @@ curl_setup_token(VaultV2Keyring *keyring)
 static bool
 curl_perform(VaultV2Keyring *keyring, const char *url, CurlString *outStr, long *httpCode, const char *postData)
 {
-	CURLcode ret;
+	CURLcode	ret;
 #if KEYRING_DEBUG
 	elog(DEBUG1, "Performing Vault HTTP [%s] request to '%s'", postData != NULL ? "POST" : "GET", url);
-	if(postData != NULL)
+	if (postData != NULL)
 	{
 		elog(DEBUG2, "Postdata: '%s'", postData);
 	}
@@ -123,9 +128,10 @@ curl_perform(VaultV2Keyring *keyring, const char *url, CurlString *outStr, long 
 	if (!curl_setup_token(keyring))
 		return 0;
 
-	if(postData != NULL)
+	if (postData != NULL)
 	{
-		if(curl_easy_setopt(keyringCurl, CURLOPT_POSTFIELDS, postData) != CURLE_OK) return 0;
+		if (curl_easy_setopt(keyringCurl, CURLOPT_POSTFIELDS, postData) != CURLE_OK)
+			return 0;
 	}
 
 	ret = curl_easy_perform(keyringCurl);
@@ -135,7 +141,8 @@ curl_perform(VaultV2Keyring *keyring, const char *url, CurlString *outStr, long 
 		return 0;
 	}
 
-	if(curl_easy_getinfo(keyringCurl, CURLINFO_RESPONSE_CODE, httpCode) != CURLE_OK) return 0;
+	if (curl_easy_getinfo(keyringCurl, CURLINFO_RESPONSE_CODE, httpCode) != CURLE_OK)
+		return 0;
 
 #if KEYRING_DEBUG
 	elog(DEBUG2, "Vault response [%li] '%s'", *httpCode, outStr->ptr != NULL ? outStr->ptr : "");
@@ -160,23 +167,26 @@ get_keyring_vault_url(VaultV2Keyring *keyring, const char *key_name, char *out, 
 }
 
 static KeyringReturnCodes
-set_key_by_name(GenericKeyring* keyring, keyInfo *key, bool throw_error)
+set_key_by_name(GenericKeyring *keyring, keyInfo *key, bool throw_error)
 {
-	VaultV2Keyring *vault_keyring = (VaultV2Keyring *)keyring;
+	VaultV2Keyring *vault_keyring = (VaultV2Keyring *) keyring;
 	char url[VAULT_URL_MAX_LEN];
 	CurlString str;
 	long httpCode = 0;
 	char jsonText[512];
 	char keyData[64];
-	int keyLen = 0;
+	int	keyLen = 0;
 
 	Assert(key != NULL);
 
-	// Since we are only building a very limited JSON with a single base64 string, we build it by hand
-	// Simpler than using the limited pg json api
-	keyLen = pg_b64_encode((char *)key->data.data, key->data.len, keyData, 64);
+	/*
+	 * Since we are only building a very limited JSON with a single base64
+	 * string, we build it by hand
+	 */
+	/* Simpler than using the limited pg json api */
+	keyLen = pg_b64_encode((char *) key->data.data, key->data.len, keyData, 64);
 	keyData[keyLen] = 0;
-	
+
 	snprintf(jsonText, 512, "{\"data\":{\"key\":\"%s\"}}", keyData);
 
 #if KEYRING_DEBUG
@@ -207,18 +217,18 @@ set_key_by_name(GenericKeyring* keyring, keyInfo *key, bool throw_error)
 }
 
 static keyInfo *
-get_key_by_name(GenericKeyring *keyring, const char *key_name, bool throw_error, KeyringReturnCodes *return_code)
+get_key_by_name(GenericKeyring *keyring, const char *key_name, bool throw_error, KeyringReturnCodes * return_code)
 {
-	VaultV2Keyring *vault_keyring = (VaultV2Keyring *)keyring;
-	keyInfo* key = NULL;
+	VaultV2Keyring *vault_keyring = (VaultV2Keyring *) keyring;
+	keyInfo *key = NULL;
 	char url[VAULT_URL_MAX_LEN];
 	CurlString str;
 	long httpCode = 0;
-	JsonParseErrorType	json_error;
-	JsonLexContext		*jlex = NULL;
-	JsonVaultRespState	parse;
+	JsonParseErrorType json_error;
+	JsonLexContext *jlex = NULL;
+	JsonVaultRespState parse;
 
-	const char* responseKey;
+	const char *responseKey;
 
 	*return_code = KEYRING_CODE_SUCCESS;
 
@@ -271,7 +281,7 @@ get_key_by_name(GenericKeyring *keyring, const char *key_name, bool throw_error,
 #endif
 
 	key = palloc(sizeof(keyInfo));
-	key->data.len = pg_b64_decode(responseKey, strlen(responseKey), (char *)key->data.data, MAX_KEY_DATA_SIZE);
+	key->data.len = pg_b64_decode(responseKey, strlen(responseKey), (char *) key->data.data, MAX_KEY_DATA_SIZE);
 
 	if (key->data.len > MAX_KEY_DATA_SIZE)
 	{
@@ -285,7 +295,7 @@ get_key_by_name(GenericKeyring *keyring, const char *key_name, bool throw_error,
 	}
 
 cleanup:
-	if(str.ptr != NULL) 
+	if (str.ptr != NULL)
 		pfree(str.ptr);
 #if PG_VERSION_NUM >= 170000
 	if (jlex != NULL)
@@ -296,7 +306,7 @@ cleanup:
 
 /*
  * JSON parser routines
- * 
+ *
  * We expect the response in the form of:
  * {
  * ...
@@ -307,14 +317,14 @@ cleanup:
  *   }
  * ...
  * }
- * 
+ *
  * the rest fields are ignored
  */
 
 static JsonParseErrorType
-parse_json_response(JsonVaultRespState	*parse, JsonLexContext *lex)
+parse_json_response(JsonVaultRespState *parse, JsonLexContext *lex)
 {
-	JsonSemAction		sem;
+	JsonSemAction sem;
 
 	parse->state = JRESP_EXPECT_TOP_DATA;
 	parse->level = -1;
@@ -408,6 +418,6 @@ json_resp_object_field_start(void *state, char *fname, bool isnull)
 				parse->field = JRESP_F_KEY;
 			break;
 	}
-		
+
 	return JSON_SUCCESS;
 }

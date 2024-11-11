@@ -14,4 +14,4 @@
 
 extern bool InstallVaultV2Keyring(void);
 
-#endif // KEYRING_FILE_H
+#endif	/* KEYRING_FILE_H */

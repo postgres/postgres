@@ -9,3 +9,7 @@ __pycache__
 /autom4te.cache
 /configure~
 t/results
+src/include/config.h
+
+# tools files
+typedefs-full.list

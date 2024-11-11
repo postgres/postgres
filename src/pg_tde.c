@@ -45,11 +45,11 @@ PG_MODULE_MAGIC;
 struct OnExtInstall
 {
 	pg_tde_on_ext_install_callback function;
-	void* arg;
+	void *arg;
 };
 
 static struct OnExtInstall on_ext_install_list[MAX_ON_INSTALLS];
-static int on_ext_install_index = 0;
+static int	on_ext_install_index = 0;
 static void run_extension_install_callbacks(XLogExtensionInstall *xlrec, bool redo);
 void _PG_init(void);
 Datum pg_tde_extension_initialize(PG_FUNCTION_ARGS);
@@ -63,8 +63,8 @@ PG_FUNCTION_INFO_V1(pg_tde_version);
 static void
 tde_shmem_request(void)
 {
-	Size sz = TdeRequiredSharedMemorySize();
-	int required_locks = TdeRequiredLocksCount();
+	Size		sz = TdeRequiredSharedMemorySize();
+	int			required_locks = TdeRequiredLocksCount();
 
 #ifdef PERCONA_EXT
 	sz = add_size(sz, XLOG_TDE_ENC_BUFF_ALIGNED_SIZE);
@@ -122,16 +122,22 @@ _PG_init(void)
 	RegisterStorageMgr();
 }
 
-Datum pg_tde_extension_initialize(PG_FUNCTION_ARGS)
+Datum
+pg_tde_extension_initialize(PG_FUNCTION_ARGS)
 {
 	/* Initialize the TDE map */
 	XLogExtensionInstall xlrec;
+
 	xlrec.database_id = MyDatabaseId;
 	xlrec.tablespace_id = MyDatabaseTableSpace;
 	run_extension_install_callbacks(&xlrec, false);
-	/* Also put this info in xlog, so we can replicate the same on the other side */
+
+	/*
+	 * Also put this info in xlog, so we can replicate the same on the other
+	 * side
+	 */
 	XLogBeginInsert();
-	XLogRegisterData((char *)&xlrec, sizeof(XLogExtensionInstall));
+	XLogRegisterData((char *) &xlrec, sizeof(XLogExtensionInstall));
 	XLogInsert(RM_TDERMGR_ID, XLOG_TDE_EXTENSION_INSTALL_KEY);
 
 	PG_RETURN_NULL();
@@ -149,12 +155,13 @@ extension_install_redo(XLogExtensionInstall *xlrec)
  *		run at the time of pg_tde extension installs.
  * ----------------------------------------------------------------
  */
-void on_ext_install(pg_tde_on_ext_install_callback function, void *arg)
+void
+on_ext_install(pg_tde_on_ext_install_callback function, void *arg)
 {
 	if (on_ext_install_index >= MAX_ON_INSTALLS)
 		ereport(FATAL,
-			(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-				errmsg_internal("out of on extension install slots")));
+				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+				 errmsg_internal("out of on extension install slots")));
 
 	on_ext_install_list[on_ext_install_index].function = function;
 	on_ext_install_list[on_ext_install_index].arg = arg;
@@ -167,14 +174,14 @@ void on_ext_install(pg_tde_on_ext_install_callback function, void *arg)
  * ------------------
  */
 static void
-run_extension_install_callbacks(XLogExtensionInstall* xlrec , bool redo)
+run_extension_install_callbacks(XLogExtensionInstall *xlrec, bool redo)
 {
-	int i;
-	int tde_table_count =0;
+	int	i;
+	int	tde_table_count = 0;
+
 	/*
-	 * Get the number of tde tables in this database
-	 * should always be zero. But still, it prevents
-	 * the cleanup if someone explicitly calls this
+	 * Get the number of tde tables in this database should always be zero.
+	 * But still, it prevents the cleanup if someone explicitly calls this
 	 * function.
 	 */
 	if (!redo)

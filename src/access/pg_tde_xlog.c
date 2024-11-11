@@ -33,7 +33,7 @@
 void
 tdeheap_rmgr_redo(XLogReaderState *record)
 {
-	uint8		info = XLogRecGetInfo(record) & ~XLR_INFO_MASK;
+	uint8 info = XLogRecGetInfo(record) & ~XLR_INFO_MASK;
 
 	if (info == XLOG_TDE_ADD_RELATION_KEY)
 	{
@@ -57,14 +57,15 @@ tdeheap_rmgr_redo(XLogReaderState *record)
 	}
 	else if (info == XLOG_TDE_EXTENSION_INSTALL_KEY)
 	{
-		XLogExtensionInstall *xlrec = (XLogExtensionInstall *)XLogRecGetData(record);
+		XLogExtensionInstall *xlrec = (XLogExtensionInstall *) XLogRecGetData(record);
 
 		extension_install_redo(xlrec);
 	}
 
 	else if (info == XLOG_TDE_ADD_KEY_PROVIDER_KEY)
 	{
-		KeyringProviderXLRecord *xlrec = (KeyringProviderXLRecord *)XLogRecGetData(record);
+		KeyringProviderXLRecord *xlrec = (KeyringProviderXLRecord *) XLogRecGetData(record);
+
 		redo_key_provider_info(xlrec);
 	}
 
@@ -95,7 +96,7 @@ tdeheap_rmgr_redo(XLogReaderState *record)
 void
 tdeheap_rmgr_desc(StringInfo buf, XLogReaderState *record)
 {
-	uint8		info = XLogRecGetInfo(record) & ~XLR_INFO_MASK;
+	uint8 info = XLogRecGetInfo(record) & ~XLR_INFO_MASK;
 
 	if (info == XLOG_TDE_ADD_RELATION_KEY)
 	{
@@ -111,7 +112,7 @@ tdeheap_rmgr_desc(StringInfo buf, XLogReaderState *record)
 	}
 	if (info == XLOG_TDE_EXTENSION_INSTALL_KEY)
 	{
-		XLogExtensionInstall *xlrec = (XLogExtensionInstall *)XLogRecGetData(record);
+		XLogExtensionInstall *xlrec = (XLogExtensionInstall *) XLogRecGetData(record);
 
 		appendStringInfo(buf, "tde extension install for db %u/%u", xlrec->database_id, xlrec->tablespace_id);
 	}
@@ -123,7 +124,7 @@ tdeheap_rmgr_desc(StringInfo buf, XLogReaderState *record)
 	}
 	if (info == XLOG_TDE_ADD_KEY_PROVIDER_KEY)
 	{
-		KeyringProviderXLRecord *xlrec = (KeyringProviderXLRecord *)XLogRecGetData(record);
+		KeyringProviderXLRecord *xlrec = (KeyringProviderXLRecord *) XLogRecGetData(record);
 
 		appendStringInfo(buf, "add key provider %s for %u", xlrec->provider.provider_name, xlrec->database_id);
 	}

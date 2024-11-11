@@ -26,8 +26,8 @@
 #include <stdio.h>
 #include <unistd.h>
 
-static keyInfo* get_key_by_name(GenericKeyring* keyring, const char* key_name, bool throw_error, KeyringReturnCodes *return_code);
-static KeyringReturnCodes set_key_by_name(GenericKeyring* keyring, keyInfo *key, bool throw_error);
+static keyInfo *get_key_by_name(GenericKeyring *keyring, const char *key_name, bool throw_error, KeyringReturnCodes * return_code);
+static KeyringReturnCodes set_key_by_name(GenericKeyring *keyring, keyInfo *key, bool throw_error);
 
 const TDEKeyringRoutine keyringFileRoutine = {
 	.keyring_get_key = get_key_by_name,
@@ -41,12 +41,12 @@ InstallFileKeyring(void)
 }
 
 
-static keyInfo*
-get_key_by_name(GenericKeyring* keyring, const char* key_name, bool throw_error, KeyringReturnCodes *return_code)
+static keyInfo *
+get_key_by_name(GenericKeyring *keyring, const char *key_name, bool throw_error, KeyringReturnCodes * return_code)
 {
-	keyInfo* key = NULL;
+	keyInfo *key = NULL;
 	int fd = -1;
-	FileKeyring* file_keyring = (FileKeyring*)keyring;
+	FileKeyring *file_keyring = (FileKeyring *) keyring;
 	off_t bytes_read = 0;
 	off_t curr_pos = 0;
 
@@ -57,15 +57,16 @@ get_key_by_name(GenericKeyring* keyring, const char* key_name, bool throw_error,
 		return NULL;
 
 	key = palloc(sizeof(keyInfo));
-	while(true)
+	while (true)
 	{
 		bytes_read = pg_pread(fd, key, sizeof(keyInfo), curr_pos);
 		curr_pos += bytes_read;
 
-		if (bytes_read == 0 )
+		if (bytes_read == 0)
 		{
 			/*
-			 * Empty keyring file is considered as a valid keyring file that has no keys
+			 * Empty keyring file is considered as a valid keyring file that
+			 * has no keys
 			 */
 			close(fd);
 			pfree(key);
@@ -77,11 +78,11 @@ get_key_by_name(GenericKeyring* keyring, const char* key_name, bool throw_error,
 			pfree(key);
 			/* Corrupt file */
 			*return_code = KEYRING_CODE_DATA_CORRUPTED;
-			ereport(throw_error?ERROR:WARNING,
-				(errcode_for_file_access(),
-					errmsg("keyring file \"%s\" is corrupted: %m",
-						file_keyring->file_name),
-						errdetail("invalid key size %llu expected %lu", bytes_read, sizeof(keyInfo))));
+			ereport(throw_error ? ERROR : WARNING,
+					(errcode_for_file_access(),
+					 errmsg("keyring file \"%s\" is corrupted: %m",
+							file_keyring->file_name),
+					 errdetail("invalid key size %llu expected %lu", bytes_read, sizeof(keyInfo))));
 			return NULL;
 		}
 		if (strncasecmp(key->name.name, key_name, sizeof(key->name.name)) == 0)
@@ -96,13 +97,13 @@ get_key_by_name(GenericKeyring* keyring, const char* key_name, bool throw_error,
 }
 
 static KeyringReturnCodes
-set_key_by_name(GenericKeyring* keyring, keyInfo *key, bool throw_error)
+set_key_by_name(GenericKeyring *keyring, keyInfo *key, bool throw_error)
 {
 	off_t bytes_written = 0;
 	off_t curr_pos = 0;
-	int fd;
-	FileKeyring* file_keyring = (FileKeyring*)keyring;
-	keyInfo *existing_key;
+	int	fd;
+	FileKeyring *file_keyring = (FileKeyring *) keyring;
+	keyInfo    *existing_key;
 	KeyringReturnCodes return_code = KEYRING_CODE_SUCCESS;
 
 	Assert(key != NULL);
@@ -119,9 +120,9 @@ set_key_by_name(GenericKeyring* keyring, keyInfo *key, bool throw_error)
 	fd = BasicOpenFile(file_keyring->file_name, O_CREAT | O_RDWR | PG_BINARY);
 	if (fd < 0)
 	{
-		ereport(throw_error?ERROR:WARNING,
-			(errcode_for_file_access(),
-			errmsg("Failed to open keyring file %s :%m", file_keyring->file_name)));
+		ereport(throw_error ? ERROR : WARNING,
+				(errcode_for_file_access(),
+				 errmsg("Failed to open keyring file %s :%m", file_keyring->file_name)));
 		return KEYRING_CODE_RESOURCE_NOT_ACCESSABLE;
 	}
 	/* Write key to the end of file */
@@ -130,20 +131,20 @@ set_key_by_name(GenericKeyring* keyring, keyInfo *key, bool throw_error)
 	if (bytes_written != sizeof(keyInfo))
 	{
 		close(fd);
-		ereport(throw_error?ERROR:WARNING,
-				 (errcode_for_file_access(),
-				  errmsg("keyring file \"%s\" can't be written: %m",
-					 file_keyring->file_name)));
+		ereport(throw_error ? ERROR : WARNING,
+				(errcode_for_file_access(),
+				 errmsg("keyring file \"%s\" can't be written: %m",
+						file_keyring->file_name)));
 		return KEYRING_CODE_RESOURCE_NOT_ACCESSABLE;
 	}
 
 	if (pg_fsync(fd) != 0)
 	{
 		close(fd);
-		ereport(throw_error?ERROR:WARNING,
+		ereport(throw_error ? ERROR : WARNING,
 				(errcode_for_file_access(),
 				 errmsg("could not fsync file \"%s\": %m",
-				 	file_keyring->file_name)));
+						file_keyring->file_name)));
 		return KEYRING_CODE_RESOURCE_NOT_ACCESSABLE;
 	}
 	close(fd);

@@ -29,8 +29,8 @@ typedef struct TDEBufferHeapTupleTableSlot
 	 * reference to that buffer.  (TTS_FLAG_SHOULDFREE should not be set in
 	 * such a case, since presumably base.tuple is pointing into the buffer.)
 	 */
-	Buffer		buffer;			/* tuple's buffer, or InvalidBuffer */
-	char		decrypted_buffer[BLCKSZ];
+	Buffer buffer;			/* tuple's buffer, or InvalidBuffer */
+	char decrypted_buffer[BLCKSZ];
 	RelKeyData *cached_relation_key;
 } TDEBufferHeapTupleTableSlot;
 
@@ -39,12 +39,12 @@ extern PGDLLIMPORT const TupleTableSlotOps TTSOpsTDEBufferHeapTuple;
 #define TTS_IS_TDE_BUFFERTUPLE(slot) ((slot)->tts_ops == &TTSOpsTDEBufferHeapTuple)
 
 extern TupleTableSlot *PGTdeExecStorePinnedBufferHeapTuple(Relation rel,
-						HeapTuple tuple,
-						TupleTableSlot *slot,
-						Buffer buffer);
+														   HeapTuple tuple,
+														   TupleTableSlot *slot,
+														   Buffer buffer);
 extern TupleTableSlot *PGTdeExecStoreBufferHeapTuple(Relation rel,
-                         HeapTuple tuple,
-						 TupleTableSlot *slot,
-						 Buffer buffer);
+													 HeapTuple tuple,
+													 TupleTableSlot *slot,
+													 Buffer buffer);
 
 #endif /* PG_TDE_SLOT_H */

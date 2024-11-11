@@ -1,0 +1,57 @@
+name: Checks
+on:
+  pull_request:
+
+jobs:
+  format:
+    name: Format
+    runs-on: ubuntu-22.04
+    timeout-minutes: 5
+
+    steps:
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libcurl4-openssl-dev
+
+      - name: Clone postgres repository
+        uses: actions/checkout@v4
+        with:
+          repository: 'postgres/postgres'
+          ref: 'REL_17_STABLE'
+
+      - name: Checkout sources
+        uses: actions/checkout@v4
+        with:
+          path: 'contrib/pg_tde'
+
+      - name: Configure postgres
+        run: ./configure
+
+      - name: Configure pg_tde
+        run: ./configure
+        working-directory: contrib/pg_tde
+
+      - name: Install perltidy
+        run: sudo cpan -T SHANCOCK/Perl-Tidy-20230309.tar.gz
+
+      - name: Install pg_bsd_indent
+        working-directory: src/tools/pg_bsd_indent
+        run: sudo make install
+
+      - name: Add pg_bsd_indent and pgindent to path
+        run: |
+          echo "/usr/local/pgsql/bin" >> $GITHUB_PATH
+          echo "${{ github.workspace }}/src/tools/pgindent" >> $GITHUB_PATH
+
+      - name: Format sources
+        working-directory: contrib/pg_tde
+        run: |
+          make update-typedefs
+          make indent
+
+      - name: Check files are formatted and no source code changes
+        working-directory: contrib/pg_tde
+        run: |
+          git status
+          git diff --exit-code

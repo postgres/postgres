@@ -34,4 +34,4 @@
 
 extern void TDEInitGlobalKeys(const char *dir);
 
-#endif							/* TDE_GLOBAL_CATALOG_H */
+#endif /* TDE_GLOBAL_CATALOG_H */

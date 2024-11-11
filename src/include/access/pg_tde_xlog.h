@@ -38,5 +38,5 @@ static const RmgrData tdeheap_rmgr = {
 	.rm_identify = tdeheap_rmgr_identify
 };
 
-#endif							/* !FRONTEND */
-#endif							/* PG_TDE_XLOG_H */
+#endif /* !FRONTEND */
+#endif /* PG_TDE_XLOG_H */
