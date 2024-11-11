@@ -1,4 +1,4 @@
-# Alexander Lakhin <a.lakhin@postgrespro.ru>, 2019, 2020, 2021, 2022.
+# Alexander Lakhin <a.lakhin@postgrespro.ru>, 2019, 2020, 2021, 2022, 2024.
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_verify_checksums (PostgreSQL) 11\n"

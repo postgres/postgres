@@ -7,10 +7,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_upgrade (PostgreSQL) 12\n"
+"Project-Id-Version: pg_upgrade (PostgreSQL) 13\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-08-02 10:22+0000\n"
-"PO-Revision-Date: 2020-09-18 18:34-0300\n"
+"POT-Creation-Date: 2024-11-09 06:51+0000\n"
+"PO-Revision-Date: 2024-11-09 10:01+0100\n"
 "Last-Translator: Álvaro Herrera <alvherre@alvh.no-ip.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
 "Language: es\n"

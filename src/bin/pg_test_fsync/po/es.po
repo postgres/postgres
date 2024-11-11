@@ -7,10 +7,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_test_fsync (PostgreSQL) 10\n"
+"Project-Id-Version: pg_test_fsync (PostgreSQL) 13\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-08-02 10:24+0000\n"
-"PO-Revision-Date: 2019-06-06 17:25-0400\n"
+"POT-Creation-Date: 2024-11-09 06:53+0000\n"
+"PO-Revision-Date: 2024-11-09 10:01+0100\n"
 "Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
 "Language: es\n"

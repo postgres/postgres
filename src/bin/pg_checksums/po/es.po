@@ -7,10 +7,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_checksums (PostgreSQL) 12\n"
+"Project-Id-Version: pg_checksums (PostgreSQL) 13\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-08-02 10:25+0000\n"
-"PO-Revision-Date: 2020-09-12 10:54-0500\n"
+"POT-Creation-Date: 2024-11-09 06:53+0000\n"
+"PO-Revision-Date: 2024-11-09 10:00+0100\n"
 "Last-Translator: Álvaro Herrera <alvherre@alvh.no-ip.org>\n"
 "Language-Team: pgsql-es-ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
 "Language: es\n"

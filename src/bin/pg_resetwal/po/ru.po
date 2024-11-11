@@ -5,13 +5,13 @@
 # Oleg Bartunov <oleg@sai.msu.su>, 2004.
 # Sergey Burladyan <eshkinkot@gmail.com>, 2009.
 # Dmitriy Olshevskiy <olshevskiy87@bk.ru>, 2014.
-# Alexander Lakhin <exclusion@gmail.com>, 2012-2017, 2018, 2019, 2020, 2021, 2022, 2023.
+# Alexander Lakhin <exclusion@gmail.com>, 2012-2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024.
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_resetxlog (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2021-08-14 06:30+0300\n"
-"PO-Revision-Date: 2021-09-04 12:13+0300\n"
+"PO-Revision-Date: 2024-09-05 12:19+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -165,7 +165,7 @@ msgstr "Запускать %s нужно от имени суперпользо�
 #: pg_resetwal.c:373
 #, c-format
 msgid "could not read permissions of directory \"%s\": %m"
-msgstr "не удалось считать права на каталог \"%s\": %m"
+msgstr "не удалось прочитать права на каталог \"%s\": %m"
 
 #: pg_resetwal.c:382
 #, c-format
@@ -195,8 +195,8 @@ msgid ""
 "If these values seem acceptable, use -f to force reset.\n"
 msgstr ""
 "\n"
-"Если эти значения приемлемы, выполните сброс принудительно, добавив ключ -"
-"f.\n"
+"Если эти значения всё же приемлемы, выполните сброс принудительно, добавив "
+"ключ -f.\n"
 
 #: pg_resetwal.c:513
 #, c-format
@@ -596,7 +596,7 @@ msgid ""
 "\n"
 msgstr ""
 "Использование:\n"
-"  %s [ПАРАМЕТР]... КАТ_ДАННЫХ\n"
+"  %s [ПАРАМЕТР]... КАТАЛОГ-ДАННЫХ\n"
 "\n"
 
 #: pg_resetwal.c:1219

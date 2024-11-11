@@ -8,10 +8,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_rewind (PostgreSQL) 12\n"
+"Project-Id-Version: pg_rewind (PostgreSQL) 13\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-08-02 10:24+0000\n"
-"PO-Revision-Date: 2020-10-16 15:59-0300\n"
+"POT-Creation-Date: 2024-11-09 06:53+0000\n"
+"PO-Revision-Date: 2024-11-09 10:00+0100\n"
 "Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
 "Language: es\n"
@@ -702,34 +702,34 @@ msgstr "%*s/%s kB (%d%%) copiados"
 msgid "invalid control file"
 msgstr "archivo de control no válido"
 
-#: pg_rewind.c:726
+#: pg_rewind.c:724
 #, c-format
 msgid "could not find common ancestor of the source and target cluster's timelines"
 msgstr "no se pudo encontrar un ancestro común en el timeline de los clusters de origen y destino"
 
-#: pg_rewind.c:767
+#: pg_rewind.c:765
 #, c-format
 msgid "backup label buffer too small"
 msgstr "el búfer del backup label es demasiado pequeño"
 
-#: pg_rewind.c:790
+#: pg_rewind.c:788
 #, c-format
 msgid "unexpected control file CRC"
 msgstr "CRC de archivo de control inesperado"
 
-#: pg_rewind.c:800
+#: pg_rewind.c:798
 #, c-format
 msgid "unexpected control file size %d, expected %d"
 msgstr "tamaño del archivo de control %d inesperado, se esperaba %d"
 
-#: pg_rewind.c:809
+#: pg_rewind.c:807
 #, c-format
 msgid "WAL segment size must be a power of two between 1 MB and 1 GB, but the control file specifies %d byte"
 msgid_plural "WAL segment size must be a power of two between 1 MB and 1 GB, but the control file specifies %d bytes"
 msgstr[0] "El tamaño del segmento de WAL debe ser una potencia de dos entre 1 MB y 1 GB, pero el archivo de control especifica %d byte"
 msgstr[1] "El tamaño del segmento de WAL debe ser una potencia de dos entre 1 MB y 1 GB, pero el archivo de control especifica %d bytes"
 
-#: pg_rewind.c:866 pg_rewind.c:924
+#: pg_rewind.c:864 pg_rewind.c:922
 #, c-format
 msgid ""
 "The program \"%s\" is needed by %s but was not found in the\n"
@@ -740,7 +740,7 @@ msgstr ""
 "directorio que «%s».\n"
 "Verifique su instalación."
 
-#: pg_rewind.c:871 pg_rewind.c:929
+#: pg_rewind.c:869 pg_rewind.c:927
 #, c-format
 msgid ""
 "The program \"%s\" was found by \"%s\"\n"
@@ -751,22 +751,22 @@ msgstr ""
 "pero no es de la misma versión que %s.\n"
 "Verifique su instalación."
 
-#: pg_rewind.c:892
+#: pg_rewind.c:890
 #, c-format
 msgid "restore_command is not set in the target cluster"
 msgstr "restore_command no está definido en el clúster de destino"
 
-#: pg_rewind.c:935
+#: pg_rewind.c:933
 #, c-format
 msgid "executing \"%s\" for target server to complete crash recovery"
 msgstr "ejecutando «%s» en el servidor de destino para completar la recuperación de caídas"
 
-#: pg_rewind.c:955
+#: pg_rewind.c:953
 #, c-format
 msgid "postgres single-user mode in target cluster failed"
 msgstr "el modo «single-user» en el servidor de destino falló"
 
-#: pg_rewind.c:956
+#: pg_rewind.c:954
 #, c-format
 msgid "Command was: %s"
 msgstr "La orden era: % s"

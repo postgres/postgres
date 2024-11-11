@@ -6,10 +6,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 12\n"
+"Project-Id-Version: PostgreSQL 13\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2020-09-17 00:39+0000\n"
-"PO-Revision-Date: 2020-09-17 08:31+0200\n"
+"PO-Revision-Date: 2024-09-16 16:37+0200\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team: French <guillaume@lelarge.info>\n"
 "Language: fr\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
-"X-Generator: Poedit 2.4.1\n"
+"X-Generator: Poedit 3.5\n"
 
 #: pl_comp.c:436 pl_handler.c:471
 #, c-format
@@ -67,7 +67,7 @@ msgstr "le nom du paramètre « %s » est utilisé plus d'une fois"
 #: pl_comp.c:1132
 #, c-format
 msgid "column reference \"%s\" is ambiguous"
-msgstr "la référence à la colonne « %s » est ambigüe"
+msgstr "la référence à la colonne « %s » est ambiguë"
 
 #: pl_comp.c:1134
 #, c-format
@@ -399,7 +399,7 @@ msgstr "l'argument de la requête d'EXECUTE est NULL"
 #: pl_exec.c:4414
 #, c-format
 msgid "EXECUTE of SELECT ... INTO is not implemented"
-msgstr "EXECUTE n'est pas implementé pour SELECT ... INTO"
+msgstr "EXECUTE n'est pas implémenté pour SELECT ... INTO"
 
 #: pl_exec.c:4415
 #, c-format
@@ -855,136 +855,3 @@ msgstr "%s à la fin de l'entrée"
 #, c-format
 msgid "%s at or near \"%s\""
 msgstr "%s sur ou près de « %s »"
-
-#~ msgid "label does not exist"
-#~ msgstr "le label n'existe pas"
-
-#~ msgid "RETURN must specify a record or row variable in function returning row"
-#~ msgstr ""
-#~ "RETURN ne peut pas indiquer une variable RECORD ou ROW dans une fonction\n"
-#~ "renvoyant une ligne"
-
-#~ msgid "RETURN NEXT must specify a record or row variable in function returning row"
-#~ msgstr ""
-#~ "RETURN NEXT doit indiquer une variable RECORD ou ROW dans une fonction\n"
-#~ "renvoyant une ligne"
-
-#~ msgid "unterminated dollar-quoted string"
-#~ msgstr "chaîne entre dollars non terminée"
-
-#~ msgid "unterminated quoted string"
-#~ msgstr "chaîne entre guillemets non terminée"
-
-#~ msgid "unterminated /* comment"
-#~ msgstr "commentaire /* non terminé"
-
-#~ msgid "unterminated quoted identifier"
-#~ msgstr "identifiant entre guillemets non terminé"
-
-#~ msgid "qualified identifier cannot be used here: %s"
-#~ msgstr "l'identifiant qualifié ne peut pas être utilisé ici : %s"
-
-#~ msgid "unterminated \" in identifier: %s"
-#~ msgstr "\" non terminé dans l'identifiant : %s"
-
-#~ msgid "variable \"%s\" does not exist in the current block"
-#~ msgstr "la variable « %s » n'existe pas dans le bloc actuel"
-
-#~ msgid "expected \")\""
-#~ msgstr "« ) » attendu"
-
-#~ msgid "string literal in PL/PgSQL function \"%s\" near line %d"
-#~ msgstr "chaîne littérale dans la fonction PL/pgsql « %s » près de la ligne %d"
-
-#~ msgid "SQL statement in PL/PgSQL function \"%s\" near line %d"
-#~ msgstr "instruction SQL dans la fonction PL/pgsql « %s » près de la ligne %d"
-
-#~ msgid "Expected record variable, row variable, or list of scalar variables following INTO."
-#~ msgstr ""
-#~ "Attendait une variable RECORD, ROW ou une liste de variables scalaires\n"
-#~ "suivant INTO."
-
-#~ msgid "cannot assign to tg_argv"
-#~ msgstr "ne peut pas affecter à tg_argv"
-
-#~ msgid "RETURN cannot have a parameter in function returning set; use RETURN NEXT or RETURN QUERY"
-#~ msgstr ""
-#~ "RETURN ne peut pas avoir un paramètre dans une fonction renvoyant des\n"
-#~ "lignes ; utilisez RETURN NEXT ou RETURN QUERY"
-
-#~ msgid "too many variables specified in SQL statement"
-#~ msgstr "trop de variables spécifiées dans l'instruction SQL"
-
-#~ msgid "expected a cursor or refcursor variable"
-#~ msgstr "attendait une variable de type cursor ou refcursor"
-
-#~ msgid "Expected \"FOR\", to open a cursor for an unbound cursor variable."
-#~ msgstr "Attendait « FOR » pour ouvrir un curseur pour une variable sans limite."
-
-#~ msgid "syntax error at \"%s\""
-#~ msgstr "erreur de syntaxe à « %s »"
-
-#~ msgid "expected an integer variable"
-#~ msgstr "attend une variable entière"
-
-#~ msgid "function has no parameter \"%s\""
-#~ msgstr "la fonction n'a pas de paramètre « %s »"
-
-#~ msgid "only positional parameters can be aliased"
-#~ msgstr "seuls les paramètres de position peuvent avoir un alias"
-
-#~ msgid "Returned type %s does not match expected type %s in column \"%s\"."
-#~ msgstr "Le type %s renvoyé ne correspond pas au type %s attendu dans la colonne « %s »."
-
-#~ msgid "Number of returned columns (%d) does not match expected column count (%d)."
-#~ msgstr ""
-#~ "Le nombre de colonnes renvoyées (%d) ne correspond pas au nombre de colonnes\n"
-#~ "attendues (%d)."
-
-#~ msgid "N/A (dropped column)"
-#~ msgstr "N/A (colonne supprimée)"
-
-#~ msgid "type of tg_argv[%d] does not match that when preparing the plan"
-#~ msgstr "le type de tg_argv[%d] ne correspond pas à ce qui est préparé dans le plan"
-
-#~ msgid "type of \"%s.%s\" does not match that when preparing the plan"
-#~ msgstr "le type de « %s.%s » ne correspond pas à ce qui est préparé dans le plan"
-
-#~ msgid "type of \"%s\" does not match that when preparing the plan"
-#~ msgstr "le type de « %s » ne correspond pas à ce qui est préparé dans le plan"
-
-#~ msgid "expected \"[\""
-#~ msgstr "« [ » attendu"
-
-#~ msgid "row \"%s.%s\" has no field \"%s\""
-#~ msgstr "la ligne « %s.%s » n'a aucun champ « %s »"
-
-#~ msgid "row \"%s\" has no field \"%s\""
-#~ msgstr "la ligne « %s » n'a aucun champ « %s »"
-
-#~ msgid "cursor \"%s\" closed unexpectedly"
-#~ msgstr "le curseur « %s » a été fermé de façon inattendu"
-
-#~ msgid "relation \"%s.%s\" does not exist"
-#~ msgstr "la relation « %s.%s » n'existe pas"
-
-#~ msgid "EXECUTE statement"
-#~ msgstr "instruction EXECUTE"
-
-#~ msgid "default value for row or record variable is not supported"
-#~ msgstr "la valeur par défaut de variable ROW ou RECORD n'est pas supportée"
-
-#~ msgid "row or record variable cannot be NOT NULL"
-#~ msgstr "la variable ROW ou RECORD ne peut pas être NOT NULL"
-
-#~ msgid "row or record variable cannot be CONSTANT"
-#~ msgstr "la variable ROW ou RECORD ne peut pas être CONSTANT"
-
-#~ msgid "Use a BEGIN block with an EXCEPTION clause instead."
-#~ msgstr "Utiliser un bloc BEGIN dans une clause EXCEPTION à la place."
-
-#~ msgid "variable \"%s\" declared NOT NULL cannot default to NULL"
-#~ msgstr "la variable « %s » déclarée NOT NULL ne peut pas valoir NULL par défaut"
-
-#~ msgid "relation \"%s\" is not a table"
-#~ msgstr "la relation « %s » n'est pas une table"

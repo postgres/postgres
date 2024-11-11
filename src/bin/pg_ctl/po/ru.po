@@ -6,13 +6,13 @@
 # Sergey Burladyan <eshkinkot@gmail.com>, 2009, 2012.
 # Andrey Sudnik <sudnikand@gmail.com>, 2010.
 # Dmitriy Olshevskiy <olshevskiy87@bk.ru>, 2014.
-# Alexander Lakhin <exclusion@gmail.com>, 2012-2017, 2018, 2019, 2020, 2021, 2022, 2023.
+# Alexander Lakhin <exclusion@gmail.com>, 2012-2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024.
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_ctl (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2023-05-03 05:56+0300\n"
-"PO-Revision-Date: 2021-08-14 07:35+0300\n"
+"PO-Revision-Date: 2024-09-07 06:47+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -101,7 +101,7 @@ msgstr "дочерний процесс завершён по сигналу %d:
 #: ../../common/wait_error.c:72
 #, c-format
 msgid "child process exited with unrecognized status %d"
-msgstr "дочерний процесс завершился с нераспознанным состоянием %d"
+msgstr "дочерний процесс завершился с нераспознанным кодом состояния %d"
 
 #: ../../port/path.c:654
 #, c-format
@@ -116,7 +116,7 @@ msgstr "%s: каталог \"%s\" не существует\n"
 #: pg_ctl.c:263
 #, c-format
 msgid "%s: could not access directory \"%s\": %s\n"
-msgstr "%s: ошибка доступа к каталогу \"%s\": %s\n"
+msgstr "%s: ошибка при обращении к каталогу \"%s\": %s\n"
 
 #: pg_ctl.c:276
 #, c-format

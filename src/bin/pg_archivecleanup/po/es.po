@@ -6,10 +6,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_archivecleanup (PostgreSQL) 12\n"
+"Project-Id-Version: pg_archivecleanup (PostgreSQL) 13\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-08-02 10:24+0000\n"
-"PO-Revision-Date: 2020-09-12 23:13-0300\n"
+"POT-Creation-Date: 2024-11-09 06:52+0000\n"
+"PO-Revision-Date: 2024-11-09 10:00+0100\n"
 "Last-Translator: Carlos Chapi <carlos.chapi@2ndquadrant.com>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
 "Language: es\n"

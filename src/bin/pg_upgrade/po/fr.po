@@ -5,17 +5,18 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_upgrade (PostgreSQL) 12\n"
+"Project-Id-Version: PostgreSQL 13\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2024-07-20 19:22+0000\n"
-"PO-Revision-Date: 2024-07-22 14:43+0200\n"
-"Last-Translator: \n"
-"Language-Team: \n"
+"PO-Revision-Date: 2024-09-16 16:37+0200\n"
+"Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
+"Language-Team: French <guillaume@lelarge.info>\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 3.4.4\n"
+"X-Generator: Poedit 3.5\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
 
 #: check.c:71
 #, c-format
@@ -1897,70 +1898,3 @@ msgstr ""
 "when executed by psql by the database superuser will update\n"
 "these extensions.\n"
 "\n"
-
-#~ msgid ""
-#~ "\n"
-#~ "Report bugs to <pgsql-bugs@lists.postgresql.org>.\n"
-#~ msgstr ""
-#~ "\n"
-#~ "Rapporter les bogues à <pgsql-bugs@lists.postgresql.org>.\n"
-
-#~ msgid "%s is not a directory\n"
-#~ msgstr "%s n'est pas un répertoire\n"
-
-#~ msgid "----------------\n"
-#~ msgstr "----------------\n"
-
-#~ msgid "------------------\n"
-#~ msgstr "------------------\n"
-
-#~ msgid "-----------------------------\n"
-#~ msgstr "-----------------------------\n"
-
-#~ msgid "------------------------------------------------\n"
-#~ msgstr "------------------------------------------------\n"
-
-#~ msgid "Cannot open file %s: %m\n"
-#~ msgstr "Ne peut pas ouvrir le fichier %s : %m\n"
-
-#~ msgid "Cannot read line %d from %s: %m\n"
-#~ msgstr "Ne peut pas lire la ligne %d à partir de %s : %m\n"
-
-#~ msgid ""
-#~ "Optimizer statistics and free space information are not transferred\n"
-#~ "by pg_upgrade so, once you start the new server, consider running:\n"
-#~ "    %s\n"
-#~ "\n"
-#~ msgstr ""
-#~ "Les statistiques de l'optimiseur et les informations sur l'espace libre\n"
-#~ "ne sont pas transférées par pg_upgrade, donc une fois le nouveau\n"
-#~ "serveur démarré, pensez à exécuter :\n"
-#~ "    %s\n"
-#~ "\n"
-
-#~ msgid ""
-#~ "This utility can only upgrade to PostgreSQL version 9.0 after 2010-01-11\n"
-#~ "because of backend API changes made during development.\n"
-#~ msgstr ""
-#~ "Cet outil peut seulement mettre à jour à partir de la version 9.0 de PostgreSQL (après le 11 janvier 2010)\n"
-#~ "à cause de changements dans l'API du moteur fait lors du développement.\n"
-
-#~ msgid "cannot find current directory\n"
-#~ msgstr "ne peut pas trouver le répertoire courant\n"
-
-#~ msgid "cannot write to log file %s\n"
-#~ msgstr "ne peut pas écrire dans le fichier de traces %s\n"
-
-#~ msgid ""
-#~ "could not load library \"%s\":\n"
-#~ "%s\n"
-#~ msgstr ""
-#~ "n'a pas pu charger la biblothèque « %s »:\n"
-#~ "%s\n"
-
-#~ msgid "could not parse PG_VERSION file from %s\n"
-#~ msgstr "n'a pas pu analyser le fichier PG_VERSION à partir de %s\n"
-
-#, c-format
-#~ msgid "fatal"
-#~ msgstr "fatal"
