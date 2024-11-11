@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: postgresql\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2023-04-19 11:17+0000\n"
-"PO-Revision-Date: 2023-12-19 15:37\n"
+"POT-Creation-Date: 2024-08-31 06:18+0000\n"
+"PO-Revision-Date: 2024-09-23 19:38\n"
 "Last-Translator: \n"
 "Language-Team: Ukrainian\n"
 "Language: uk_UA\n"
@@ -14,8 +14,8 @@ msgstr ""
 "X-Crowdin-Project: postgresql\n"
 "X-Crowdin-Project-ID: 324573\n"
 "X-Crowdin-Language: uk\n"
-"X-Crowdin-File: /REL_16_STABLE/pg_verifybackup.pot\n"
-"X-Crowdin-File-ID: 959\n"
+"X-Crowdin-File: /REL_17_STABLE/pg_verifybackup.pot\n"
+"X-Crowdin-File-ID: 1004\n"
 
 #: ../../../src/common/logging.c:276
 #, c-format
@@ -37,6 +37,76 @@ msgstr "деталі: "
 msgid "hint: "
 msgstr "підказка: "
 
+#: ../../common/controldata_utils.c:97
+#, c-format
+msgid "could not open file \"%s\" for reading: %m"
+msgstr "не вдалося відкрити файл \"%s\" для читання: %m"
+
+#: ../../common/controldata_utils.c:110 pg_verifybackup.c:438
+#: pg_verifybackup.c:476 pg_verifybackup.c:896
+#, c-format
+msgid "could not read file \"%s\": %m"
+msgstr "не вдалося прочитати файл \"%s\": %m"
+
+#: ../../common/controldata_utils.c:119
+#, c-format
+msgid "could not read file \"%s\": read %d of %zu"
+msgstr "не вдалося прочитати файл \"%s\": прочитано %d з %zu"
+
+#: ../../common/controldata_utils.c:132 ../../common/controldata_utils.c:280
+#: pg_verifybackup.c:902
+#, c-format
+msgid "could not close file \"%s\": %m"
+msgstr "неможливо закрити файл \"%s\": %m"
+
+#: ../../common/controldata_utils.c:168
+msgid "byte ordering mismatch"
+msgstr "неправильний порядок байтів"
+
+#: ../../common/controldata_utils.c:170
+#, c-format
+msgid "possible byte ordering mismatch\n"
+"The byte ordering used to store the pg_control file might not match the one\n"
+"used by this program.  In that case the results below would be incorrect, and\n"
+"the PostgreSQL installation would be incompatible with this data directory."
+msgstr "можлива помилка у послідовності байтів.\n"
+"Порядок байтів, що використовують для зберігання файлу pg_control, може не відповідати тому, який використовується цією програмою. У такому випадку результати нижче будуть неправильним, і інсталяція PostgreSQL буде несумісною з цим каталогом даних."
+
+#: ../../common/controldata_utils.c:230 pg_verifybackup.c:406
+#: pg_verifybackup.c:865
+#, c-format
+msgid "could not open file \"%s\": %m"
+msgstr "не можливо відкрити файл \"%s\": %m"
+
+#: ../../common/controldata_utils.c:249
+#, c-format
+msgid "could not write file \"%s\": %m"
+msgstr "не вдалося записати файл \"%s\": %m"
+
+#: ../../common/controldata_utils.c:268
+#, c-format
+msgid "could not fsync file \"%s\": %m"
+msgstr "не вдалося fsync файл \"%s\": %m"
+
+#: ../../common/cryptohash.c:261 ../../common/cryptohash_openssl.c:356
+#: ../../common/parse_manifest.c:157 ../../common/parse_manifest.c:853
+#, c-format
+msgid "out of memory"
+msgstr "недостатньо пам'яті"
+
+#: ../../common/cryptohash.c:266 ../../common/cryptohash.c:272
+#: ../../common/cryptohash_openssl.c:368 ../../common/cryptohash_openssl.c:376
+msgid "success"
+msgstr "успіх"
+
+#: ../../common/cryptohash.c:268 ../../common/cryptohash_openssl.c:370
+msgid "destination buffer too small"
+msgstr "буфер призначення занадто малий"
+
+#: ../../common/cryptohash_openssl.c:372
+msgid "OpenSSL failure"
+msgstr "Помилка OpenSSL"
+
 #: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
 #: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:161
 #, c-format
@@ -48,463 +118,479 @@ msgstr "недостатньо пам'яті\n"
 msgid "cannot duplicate null pointer (internal error)\n"
 msgstr "неможливо дублювати нульовий покажчик (внутрішня помилка)\n"
 
-#: ../../common/jsonapi.c:1144
-#, c-format
-msgid "Escape sequence \"\\%s\" is invalid."
-msgstr "Неприпустима спеціальна послідовність \"\\%s\"."
+#: ../../common/jsonapi.c:2121
+msgid "Recursive descent parser cannot use incremental lexer."
+msgstr "Рекурсивний спуск не може використовувати інкрементний лексичний аналізатор."
 
-#: ../../common/jsonapi.c:1147
+#: ../../common/jsonapi.c:2123
+msgid "Incremental parser requires incremental lexer."
+msgstr "Інкрементний аналізатор потребує Інкрементний лексичний аналізатор."
+
+#: ../../common/jsonapi.c:2125
+msgid "JSON nested too deep, maximum permitted depth is 6400."
+msgstr "JSON вкладений занадто глибокий, максимально дозволена глибина - 6400."
+
+#: ../../common/jsonapi.c:2127
+#, c-format
+msgid "Escape sequence \"\\%.*s\" is invalid."
+msgstr "Неприпустима спеціальна послідовність \"\\%.*s\"."
+
+#: ../../common/jsonapi.c:2131
 #, c-format
 msgid "Character with value 0x%02x must be escaped."
 msgstr "Символ зі значенням 0x%02x повинен бути пропущений."
 
-#: ../../common/jsonapi.c:1150
+#: ../../common/jsonapi.c:2135
 #, c-format
-msgid "Expected end of input, but found \"%s\"."
-msgstr "Очікувався кінець введення, але знайдено \"%s\"."
+msgid "Expected end of input, but found \"%.*s\"."
+msgstr "Очікувався кінець введення, але знайдено \"%.*s\"."
 
-#: ../../common/jsonapi.c:1153
+#: ../../common/jsonapi.c:2138
 #, c-format
-msgid "Expected array element or \"]\", but found \"%s\"."
-msgstr "Очікувався елемент масиву або \"]\", але знайдено \"%s\"."
+msgid "Expected array element or \"]\", but found \"%.*s\"."
+msgstr "Очікувався елемент масиву або \"]\", але знайдено \"%.*s\"."
 
-#: ../../common/jsonapi.c:1156
+#: ../../common/jsonapi.c:2141
 #, c-format
-msgid "Expected \",\" or \"]\", but found \"%s\"."
-msgstr "Очікувалось \",\" або \"]\", але знайдено \"%s\"."
+msgid "Expected \",\" or \"]\", but found \"%.*s\"."
+msgstr "Очікувалось \",\" або \"]\", але знайдено \"%.*s\"."
 
-#: ../../common/jsonapi.c:1159
+#: ../../common/jsonapi.c:2144
 #, c-format
-msgid "Expected \":\", but found \"%s\"."
-msgstr "Очікувалось \":\", але знайдено \"%s\"."
+msgid "Expected \":\", but found \"%.*s\"."
+msgstr "Очікувалось \":\", але знайдено \"%.*s\"."
 
-#: ../../common/jsonapi.c:1162
+#: ../../common/jsonapi.c:2147
 #, c-format
-msgid "Expected JSON value, but found \"%s\"."
-msgstr "Очікувалось значення JSON, але знайдено \"%s\"."
+msgid "Expected JSON value, but found \"%.*s\"."
+msgstr "Очікувалось значення JSON, але знайдено \"%.*s\"."
 
-#: ../../common/jsonapi.c:1165
+#: ../../common/jsonapi.c:2150
 msgid "The input string ended unexpectedly."
 msgstr "Несподіваний кінець вхідного рядка."
 
-#: ../../common/jsonapi.c:1167
+#: ../../common/jsonapi.c:2152
 #, c-format
-msgid "Expected string or \"}\", but found \"%s\"."
-msgstr "Очікувався рядок або \"}\", але знайдено \"%s\"."
+msgid "Expected string or \"}\", but found \"%.*s\"."
+msgstr "Очікувався рядок або \"}\", але знайдено \"%.*s\"."
 
-#: ../../common/jsonapi.c:1170
+#: ../../common/jsonapi.c:2155
 #, c-format
-msgid "Expected \",\" or \"}\", but found \"%s\"."
-msgstr "Очікувалось \",\" або \"}\", але знайдено \"%s\"."
+msgid "Expected \",\" or \"}\", but found \"%.*s\"."
+msgstr "Очікувалось \",\" або \"}\", але знайдено \"%.*s\"."
 
-#: ../../common/jsonapi.c:1173
+#: ../../common/jsonapi.c:2158
 #, c-format
-msgid "Expected string, but found \"%s\"."
-msgstr "Очікувався рядок, але знайдено \"%s\"."
+msgid "Expected string, but found \"%.*s\"."
+msgstr "Очікувався рядок, але знайдено \"%.*s\"."
 
-#: ../../common/jsonapi.c:1176
+#: ../../common/jsonapi.c:2161
 #, c-format
-msgid "Token \"%s\" is invalid."
-msgstr "Неприпустимий маркер \"%s\"."
+msgid "Token \"%.*s\" is invalid."
+msgstr "Неприпустимий маркер \"%.*s\"."
 
-#: ../../common/jsonapi.c:1179
+#: ../../common/jsonapi.c:2164
 msgid "\\u0000 cannot be converted to text."
 msgstr "\\u0000 не можна перетворити в текст."
 
-#: ../../common/jsonapi.c:1181
+#: ../../common/jsonapi.c:2166
 msgid "\"\\u\" must be followed by four hexadecimal digits."
 msgstr "За \"\\u\" повинні прямувати чотири шістнадцяткових числа."
 
-#: ../../common/jsonapi.c:1184
+#: ../../common/jsonapi.c:2169
 msgid "Unicode escape values cannot be used for code point values above 007F when the encoding is not UTF8."
 msgstr "Значення виходу Unicode не можна використовувати для значень кодових точок більше 007F, якщо кодування не UTF8."
 
-#: ../../common/jsonapi.c:1187
+#: ../../common/jsonapi.c:2178
 #, c-format
 msgid "Unicode escape value could not be translated to the server's encoding %s."
 msgstr "Значення символу Unicode не вдалося перекласти в кодування сервера %s."
 
-#: ../../common/jsonapi.c:1190
+#: ../../common/jsonapi.c:2185
 msgid "Unicode high surrogate must not follow a high surrogate."
 msgstr "Старший сурогат Unicode не повинен прямувати за іншим старшим сурогатом."
 
-#: ../../common/jsonapi.c:1192
+#: ../../common/jsonapi.c:2187
 msgid "Unicode low surrogate must follow a high surrogate."
 msgstr "Молодший сурогат Unicode не повинен прямувати за іншим молодшим сурогатом."
 
-#: parse_manifest.c:150
-msgid "parsing failed"
-msgstr "помилка парсингу"
-
-#: parse_manifest.c:152
-msgid "manifest ended unexpectedly"
-msgstr "маніфест закінчився несподівано"
-
-#: parse_manifest.c:191
-msgid "unexpected object start"
-msgstr "неочікуваний початок об'єкта"
-
-#: parse_manifest.c:226
-msgid "unexpected object end"
-msgstr "неочікуваний кінець об'єкта"
-
-#: parse_manifest.c:255
-msgid "unexpected array start"
-msgstr "неочікуваний початок масиву"
-
-#: parse_manifest.c:280
-msgid "unexpected array end"
-msgstr "неочікуваний кінець масиву"
-
-#: parse_manifest.c:307
-msgid "expected version indicator"
-msgstr "індикатор очікуваної версії"
-
-#: parse_manifest.c:336
-msgid "unrecognized top-level field"
-msgstr "нерозпізнане поле верхнього рівня"
-
-#: parse_manifest.c:355
-msgid "unexpected file field"
-msgstr "неочікуване поле файлу"
-
-#: parse_manifest.c:369
-msgid "unexpected WAL range field"
-msgstr "неочікуване поле діапазону WAL"
-
-#: parse_manifest.c:375
-msgid "unexpected object field"
-msgstr "неочікуване поле об'єкта"
-
-#: parse_manifest.c:407
-msgid "unexpected manifest version"
-msgstr "неочікувана версія маніфесту"
-
-#: parse_manifest.c:458
-msgid "unexpected scalar"
-msgstr "неочікуваний скаляр"
-
-#: parse_manifest.c:484
-msgid "missing path name"
-msgstr "пропущено шлях"
-
-#: parse_manifest.c:487
-msgid "both path name and encoded path name"
-msgstr "і ім'я шляху, і закодований шлях"
-
-#: parse_manifest.c:489
-msgid "missing size"
-msgstr "відсутній розмір"
-
-#: parse_manifest.c:492
-msgid "checksum without algorithm"
-msgstr "контрольна сума без алгоритму"
-
-#: parse_manifest.c:506
-msgid "could not decode file name"
-msgstr "не вдалося декодувати ім'я файлу"
-
-#: parse_manifest.c:516
-msgid "file size is not an integer"
-msgstr "розмір файлу не є цілим числом"
-
-#: parse_manifest.c:522
-#, c-format
-msgid "unrecognized checksum algorithm: \"%s\""
-msgstr "нерозпізнаний алгоритм контрольної суми: \"%s\""
-
-#: parse_manifest.c:541
-#, c-format
-msgid "invalid checksum for file \"%s\": \"%s\""
-msgstr "неприпустима контрольна сума для файлу \"%s\": \"%s\""
-
-#: parse_manifest.c:584
-msgid "missing timeline"
-msgstr "відсутня часова шкала"
-
-#: parse_manifest.c:586
-msgid "missing start LSN"
-msgstr "відсутній LSN початку"
-
-#: parse_manifest.c:588
-msgid "missing end LSN"
-msgstr "відсутній LSN кінця"
-
-#: parse_manifest.c:594
-msgid "timeline is not an integer"
-msgstr "часова лінія не є цілим числом"
-
-#: parse_manifest.c:597
-msgid "could not parse start LSN"
-msgstr "не вдалося проаналізувати початковий LSN"
-
-#: parse_manifest.c:600
-msgid "could not parse end LSN"
-msgstr "не вдалося проаналізувати кінцевий LSN"
-
-#: parse_manifest.c:661
-msgid "expected at least 2 lines"
-msgstr "очікувалося принаймні 2 рядки"
-
-#: parse_manifest.c:664
-msgid "last line not newline-terminated"
-msgstr "останній рядок не завершений новим рядком"
-
-#: parse_manifest.c:669
-#, c-format
-msgid "out of memory"
-msgstr "недостатньо пам'яті"
-
-#: parse_manifest.c:671
+#: ../../common/parse_manifest.c:159 ../../common/parse_manifest.c:855
 #, c-format
 msgid "could not initialize checksum of manifest"
 msgstr "не вдалося ініціалізувати контрольну суму маніфесту"
 
-#: parse_manifest.c:673
+#: ../../common/parse_manifest.c:204 ../../common/parse_manifest.c:261
+msgid "manifest ended unexpectedly"
+msgstr "маніфест закінчився несподівано"
+
+#: ../../common/parse_manifest.c:210 ../../common/parse_manifest.c:862
 #, c-format
 msgid "could not update checksum of manifest"
 msgstr "не вдалося оновити контрольну суму маніфесту"
 
-#: parse_manifest.c:676
+#: ../../common/parse_manifest.c:302
+msgid "unexpected object start"
+msgstr "неочікуваний початок об'єкта"
+
+#: ../../common/parse_manifest.c:337
+msgid "unexpected object end"
+msgstr "неочікуваний кінець об'єкта"
+
+#: ../../common/parse_manifest.c:366
+msgid "unexpected array start"
+msgstr "неочікуваний початок масиву"
+
+#: ../../common/parse_manifest.c:391
+msgid "unexpected array end"
+msgstr "неочікуваний кінець масиву"
+
+#: ../../common/parse_manifest.c:418
+msgid "expected version indicator"
+msgstr "індикатор очікуваної версії"
+
+#: ../../common/parse_manifest.c:454
+msgid "unrecognized top-level field"
+msgstr "нерозпізнане поле верхнього рівня"
+
+#: ../../common/parse_manifest.c:473
+msgid "unexpected file field"
+msgstr "неочікуване поле файлу"
+
+#: ../../common/parse_manifest.c:487
+msgid "unexpected WAL range field"
+msgstr "неочікуване поле діапазону WAL"
+
+#: ../../common/parse_manifest.c:493
+msgid "unexpected object field"
+msgstr "неочікуване поле об'єкта"
+
+#: ../../common/parse_manifest.c:583
+msgid "unexpected scalar"
+msgstr "неочікуваний скаляр"
+
+#: ../../common/parse_manifest.c:609
+msgid "manifest version not an integer"
+msgstr "версія маніфесту не ціле число"
+
+#: ../../common/parse_manifest.c:613
+msgid "unexpected manifest version"
+msgstr "неочікувана версія маніфесту"
+
+#: ../../common/parse_manifest.c:637
+msgid "system identifier in manifest not an integer"
+msgstr "системний ідентифікатор в маніфесті не ціле число"
+
+#: ../../common/parse_manifest.c:662
+msgid "missing path name"
+msgstr "пропущено шлях"
+
+#: ../../common/parse_manifest.c:665
+msgid "both path name and encoded path name"
+msgstr "і ім'я шляху, і закодований шлях"
+
+#: ../../common/parse_manifest.c:667
+msgid "missing size"
+msgstr "відсутній розмір"
+
+#: ../../common/parse_manifest.c:670
+msgid "checksum without algorithm"
+msgstr "контрольна сума без алгоритму"
+
+#: ../../common/parse_manifest.c:684
+msgid "could not decode file name"
+msgstr "не вдалося декодувати ім'я файлу"
+
+#: ../../common/parse_manifest.c:694
+msgid "file size is not an integer"
+msgstr "розмір файлу не є цілим числом"
+
+#: ../../common/parse_manifest.c:700
+#, c-format
+msgid "unrecognized checksum algorithm: \"%s\""
+msgstr "нерозпізнаний алгоритм контрольної суми: \"%s\""
+
+#: ../../common/parse_manifest.c:719
+#, c-format
+msgid "invalid checksum for file \"%s\": \"%s\""
+msgstr "неприпустима контрольна сума для файлу \"%s\": \"%s\""
+
+#: ../../common/parse_manifest.c:762
+msgid "missing timeline"
+msgstr "відсутня часова шкала"
+
+#: ../../common/parse_manifest.c:764
+msgid "missing start LSN"
+msgstr "відсутній LSN початку"
+
+#: ../../common/parse_manifest.c:766
+msgid "missing end LSN"
+msgstr "відсутній LSN кінця"
+
+#: ../../common/parse_manifest.c:772
+msgid "timeline is not an integer"
+msgstr "часова лінія не є цілим числом"
+
+#: ../../common/parse_manifest.c:775
+msgid "could not parse start LSN"
+msgstr "не вдалося проаналізувати початковий LSN"
+
+#: ../../common/parse_manifest.c:778
+msgid "could not parse end LSN"
+msgstr "не вдалося проаналізувати кінцевий LSN"
+
+#: ../../common/parse_manifest.c:843
+msgid "expected at least 2 lines"
+msgstr "очікувалося принаймні 2 рядки"
+
+#: ../../common/parse_manifest.c:846
+msgid "last line not newline-terminated"
+msgstr "останній рядок не завершений новим рядком"
+
+#: ../../common/parse_manifest.c:865
 #, c-format
 msgid "could not finalize checksum of manifest"
 msgstr "не вдалося остаточно завершити контрольну суму маніфесту"
 
-#: parse_manifest.c:680
+#: ../../common/parse_manifest.c:869
 #, c-format
 msgid "manifest has no checksum"
 msgstr "у маніфесті немає контрольної суми"
 
-#: parse_manifest.c:684
+#: ../../common/parse_manifest.c:873
 #, c-format
 msgid "invalid manifest checksum: \"%s\""
 msgstr "неприпустима контрольна сума маніфесту: \"%s\""
 
-#: parse_manifest.c:688
+#: ../../common/parse_manifest.c:877
 #, c-format
 msgid "manifest checksum mismatch"
 msgstr "невідповідність контрольної суми маніфесту"
 
-#: parse_manifest.c:703
+#: ../../common/parse_manifest.c:892
 #, c-format
 msgid "could not parse backup manifest: %s"
 msgstr "не вдалося проаналізувати маніфест резервної копії: %s"
 
-#: pg_verifybackup.c:273 pg_verifybackup.c:282 pg_verifybackup.c:293
+#: pg_verifybackup.c:277 pg_verifybackup.c:286 pg_verifybackup.c:297
 #, c-format
 msgid "Try \"%s --help\" for more information."
 msgstr "Спробуйте \"%s --help\" для додаткової інформації."
 
-#: pg_verifybackup.c:281
+#: pg_verifybackup.c:285
 #, c-format
 msgid "no backup directory specified"
 msgstr "не вказано папку резервної копії"
 
-#: pg_verifybackup.c:291
+#: pg_verifybackup.c:295
 #, c-format
 msgid "too many command-line arguments (first is \"%s\")"
 msgstr "забагато аргументів у командному рядку (перший \"%s\")"
 
-#: pg_verifybackup.c:299
+#: pg_verifybackup.c:303
 #, c-format
 msgid "cannot specify both %s and %s"
 msgstr "не можна вказати як %s, так і %s"
 
-#: pg_verifybackup.c:319
+#: pg_verifybackup.c:323
 #, c-format
 msgid "program \"%s\" is needed by %s but was not found in the same directory as \"%s\""
 msgstr "програма \"%s\" потрібна для %s, але не знайдена в тому ж каталозі, що й \"%s\""
 
-#: pg_verifybackup.c:322
+#: pg_verifybackup.c:326
 #, c-format
 msgid "program \"%s\" was found by \"%s\" but was not the same version as %s"
 msgstr "програма \"%s\" знайдена для \"%s\", але має відмінну версію від %s"
 
-#: pg_verifybackup.c:378
+#: pg_verifybackup.c:381
 #, c-format
 msgid "backup successfully verified\n"
 msgstr "резервну копію успішно перевірено\n"
 
-#: pg_verifybackup.c:404 pg_verifybackup.c:748
-#, c-format
-msgid "could not open file \"%s\": %m"
-msgstr "не можливо відкрити файл \"%s\": %m"
-
-#: pg_verifybackup.c:408
+#: pg_verifybackup.c:410
 #, c-format
 msgid "could not stat file \"%s\": %m"
 msgstr "не вдалося отримати інформацію від файлу \"%s\": %m"
 
-#: pg_verifybackup.c:428 pg_verifybackup.c:779
-#, c-format
-msgid "could not read file \"%s\": %m"
-msgstr "не вдалося прочитати файл \"%s\": %m"
-
-#: pg_verifybackup.c:431
+#: pg_verifybackup.c:440
 #, c-format
 msgid "could not read file \"%s\": read %d of %lld"
 msgstr "не вдалося прочитати файл \"%s\": прочитано %d з %lld"
 
-#: pg_verifybackup.c:491
+#: pg_verifybackup.c:478
+#, c-format
+msgid "could not read file \"%s\": read %lld of %lld"
+msgstr "не вдалося прочитати файл \"%s\": прочитано %lld з %lld"
+
+#: pg_verifybackup.c:561
 #, c-format
 msgid "duplicate path name in backup manifest: \"%s\""
 msgstr "дубльований шлях у маніфесті резервного копіювання: \"%s\""
 
-#: pg_verifybackup.c:554 pg_verifybackup.c:561
+#: pg_verifybackup.c:624 pg_verifybackup.c:631
 #, c-format
 msgid "could not open directory \"%s\": %m"
 msgstr "не вдалося відкрити каталог \"%s\": %m"
 
-#: pg_verifybackup.c:593
+#: pg_verifybackup.c:663
 #, c-format
 msgid "could not close directory \"%s\": %m"
 msgstr "не вдалося закрити каталог \"%s\": %m"
 
-#: pg_verifybackup.c:613
+#: pg_verifybackup.c:683
 #, c-format
 msgid "could not stat file or directory \"%s\": %m"
 msgstr "не вдалося отримати інформацію про файл або каталог \"%s\": %m"
 
-#: pg_verifybackup.c:636
+#: pg_verifybackup.c:706
 #, c-format
 msgid "\"%s\" is not a file or directory"
 msgstr "\"%s\" не є файлом або каталогом"
 
-#: pg_verifybackup.c:646
+#: pg_verifybackup.c:716
 #, c-format
 msgid "\"%s\" is present on disk but not in the manifest"
 msgstr "\"%s\" присутній на диску, але не у маніфесті"
 
-#: pg_verifybackup.c:658
+#: pg_verifybackup.c:728
 #, c-format
 msgid "\"%s\" has size %lld on disk but size %zu in the manifest"
 msgstr "\"%s\" має розмір %lld на диску, але розмір %zu у маніфесті"
 
-#: pg_verifybackup.c:689
+#: pg_verifybackup.c:768
+#, c-format
+msgid "%s: CRC is incorrect"
+msgstr "%s: CRC невірний"
+
+#: pg_verifybackup.c:772
+#, c-format
+msgid "%s: unexpected control file version"
+msgstr "%s: неочікувана версія контрольного файлу"
+
+#: pg_verifybackup.c:777
+#, c-format
+msgid "%s: manifest system identifier is %llu, but control file has %llu"
+msgstr "%s: маніфестовий ідентифікатор системи - %llu, але контрольний файл має %llu"
+
+#: pg_verifybackup.c:801
 #, c-format
 msgid "\"%s\" is present in the manifest but not on disk"
 msgstr "\"%s\" присутній у маніфесті, але не на диску"
 
-#: pg_verifybackup.c:756
+#: pg_verifybackup.c:873
 #, c-format
 msgid "could not initialize checksum of file \"%s\""
 msgstr "не вдалося ініціалізувати контрольну суму файлу \"%s\""
 
-#: pg_verifybackup.c:768
+#: pg_verifybackup.c:885
 #, c-format
 msgid "could not update checksum of file \"%s\""
 msgstr "не вдалося оновити контрольну суму файлу \"%s\""
 
-#: pg_verifybackup.c:785
-#, c-format
-msgid "could not close file \"%s\": %m"
-msgstr "неможливо закрити файл \"%s\": %m"
-
-#: pg_verifybackup.c:804
+#: pg_verifybackup.c:921
 #, c-format
 msgid "file \"%s\" should contain %zu bytes, but read %zu bytes"
 msgstr "файл \"%s\" мусить містити %zu байтів, але прочитано %zu байтів"
 
-#: pg_verifybackup.c:814
+#: pg_verifybackup.c:931
 #, c-format
 msgid "could not finalize checksum of file \"%s\""
 msgstr "не вдалося остаточно завершити контрольну суму файлу \"%s\""
 
-#: pg_verifybackup.c:822
+#: pg_verifybackup.c:939
 #, c-format
 msgid "file \"%s\" has checksum of length %d, but expected %d"
 msgstr "файл \"%s\" має контрольну суму довжини %d, але очікувалось %d"
 
-#: pg_verifybackup.c:826
+#: pg_verifybackup.c:943
 #, c-format
 msgid "checksum mismatch for file \"%s\""
 msgstr "невідповідність контрольної суми для файлу \"%s\""
 
-#: pg_verifybackup.c:851
+#: pg_verifybackup.c:969
 #, c-format
 msgid "WAL parsing failed for timeline %u"
 msgstr "не вдалося проаналізувати WAL для часової шкали %u"
 
-#: pg_verifybackup.c:965
+#: pg_verifybackup.c:1072
 #, c-format
 msgid "%*s/%s kB (%d%%) verified"
 msgstr "%*s/%s MB (%d%%) перевірено"
 
-#: pg_verifybackup.c:982
+#: pg_verifybackup.c:1089
 #, c-format
 msgid "%s verifies a backup against the backup manifest.\n\n"
 msgstr "%s перевіряє резервну копію відповідно до маніфесту резервного копіювання.\n\n"
 
-#: pg_verifybackup.c:983
+#: pg_verifybackup.c:1090
 #, c-format
 msgid "Usage:\n"
 "  %s [OPTION]... BACKUPDIR\n\n"
 msgstr "Використання:\n"
 "  %s [OPTION]... КАТАЛОГ_КОПІЮВАННЯ\n\n"
 
-#: pg_verifybackup.c:984
+#: pg_verifybackup.c:1091
 #, c-format
 msgid "Options:\n"
 msgstr "Параметри:\n"
 
-#: pg_verifybackup.c:985
+#: pg_verifybackup.c:1092
 #, c-format
 msgid "  -e, --exit-on-error         exit immediately on error\n"
 msgstr "  -e, --exit-on-error вийти при помилці\n"
 
-#: pg_verifybackup.c:986
+#: pg_verifybackup.c:1093
 #, c-format
 msgid "  -i, --ignore=RELATIVE_PATH  ignore indicated path\n"
 msgstr "  -i, --ignore=RELATIVE_PATH ігнорувати вказаний шлях\n"
 
-#: pg_verifybackup.c:987
+#: pg_verifybackup.c:1094
 #, c-format
 msgid "  -m, --manifest-path=PATH    use specified path for manifest\n"
 msgstr "  -m, --manifest-path=PATH використовувати вказаний шлях для маніфесту\n"
 
-#: pg_verifybackup.c:988
+#: pg_verifybackup.c:1095
 #, c-format
 msgid "  -n, --no-parse-wal          do not try to parse WAL files\n"
 msgstr "  -n, --no-parse-wal не намагатися аналізувати файли WAL\n"
 
-#: pg_verifybackup.c:989
+#: pg_verifybackup.c:1096
 #, c-format
 msgid "  -P, --progress              show progress information\n"
 msgstr "  -P, --progress                повідомляти про хід процесу\n"
 
-#: pg_verifybackup.c:990
+#: pg_verifybackup.c:1097
 #, c-format
 msgid "  -q, --quiet                 do not print any output, except for errors\n"
 msgstr "  -q, --quiet            не друкувати жодного виводу, окрім помилок\n"
 
-#: pg_verifybackup.c:991
+#: pg_verifybackup.c:1098
 #, c-format
 msgid "  -s, --skip-checksums        skip checksum verification\n"
 msgstr "  -s, --skip-checksums не перевіряти контрольні суми\n"
 
-#: pg_verifybackup.c:992
+#: pg_verifybackup.c:1099
 #, c-format
 msgid "  -w, --wal-directory=PATH    use specified path for WAL files\n"
 msgstr "  -w, --wal-directory=PATH використовувати вказаний шлях для файлів WAL\n"
 
-#: pg_verifybackup.c:993
+#: pg_verifybackup.c:1100
 #, c-format
 msgid "  -V, --version               output version information, then exit\n"
 msgstr "  -V, --version                вивести інформацію про версію, потім вийти\n"
 
-#: pg_verifybackup.c:994
+#: pg_verifybackup.c:1101
 #, c-format
 msgid "  -?, --help                  show this help, then exit\n"
 msgstr "  -?, --help                   показати цю довідку, потім вийти\n"
 
-#: pg_verifybackup.c:995
+#: pg_verifybackup.c:1102
 #, c-format
 msgid "\n"
 "Report bugs to <%s>.\n"
 msgstr "\n"
 "Повідомляти про помилки на <%s>.\n"
 
-#: pg_verifybackup.c:996
+#: pg_verifybackup.c:1103
 #, c-format
 msgid "%s home page: <%s>\n"
 msgstr "Домашня сторінка %s: <%s>\n"

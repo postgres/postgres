@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_upgrade (PostgreSQL) 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-08-27 16:50+0000\n"
-"PO-Revision-Date: 2024-08-28 06:05+0200\n"
+"POT-Creation-Date: 2024-10-12 00:20+0000\n"
+"PO-Revision-Date: 2024-10-12 06:50+0200\n"
 "Last-Translator: Temuri Doghonadze <temuri.doghonadze@gmail.com>\n"
 "Language-Team: Georgian <nothing>\n"
 "Language: ka\n"
@@ -16,7 +16,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 3.3.2\n"
+"X-Generator: Poedit 3.5\n"
 
 #: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
 #: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:161
@@ -233,8 +233,8 @@ msgstr "მონაცემის ტიპის გამოყენებ�
 
 #: check.c:480
 #, c-format
-msgid "    failed check: %s"
-msgstr "    ჩავარდა შემოწმება: %s"
+msgid "failed check: %s"
+msgstr "ჩავარდა შემოწმება: %s"
 
 #: check.c:483
 msgid "A list of the problem columns is in the file:"

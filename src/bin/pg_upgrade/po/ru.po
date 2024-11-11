@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_upgrade (PostgreSQL) 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-09-02 09:29+0300\n"
-"PO-Revision-Date: 2024-09-07 12:05+0300\n"
+"POT-Creation-Date: 2024-11-02 08:21+0300\n"
+"PO-Revision-Date: 2024-11-02 08:31+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -257,8 +257,8 @@ msgstr "Проверка использования типов данных"
 
 #: check.c:480
 #, c-format
-msgid "    failed check: %s"
-msgstr "    ошибка: %s"
+msgid "failed check: %s"
+msgstr "не пройдена проверка: %s"
 
 #: check.c:483
 msgid "A list of the problem columns is in the file:"

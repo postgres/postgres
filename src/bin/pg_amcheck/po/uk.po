@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: postgresql\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2022-08-12 10:50+0000\n"
-"PO-Revision-Date: 2022-09-13 11:52\n"
+"POT-Creation-Date: 2024-08-31 06:23+0000\n"
+"PO-Revision-Date: 2024-09-23 19:38\n"
 "Last-Translator: \n"
 "Language-Team: Ukrainian\n"
 "Language: uk_UA\n"
@@ -14,8 +14,8 @@ msgstr ""
 "X-Crowdin-Project: postgresql\n"
 "X-Crowdin-Project-ID: 324573\n"
 "X-Crowdin-Language: uk\n"
-"X-Crowdin-File: /REL_15_STABLE/pg_amcheck.pot\n"
-"X-Crowdin-File-ID: 892\n"
+"X-Crowdin-File: /REL_17_STABLE/pg_amcheck.pot\n"
+"X-Crowdin-File-ID: 1036\n"
 
 #: ../../../src/common/logging.c:276
 #, c-format
@@ -37,11 +37,78 @@ msgstr "деталі: "
 msgid "hint: "
 msgstr "підказка: "
 
-#: ../../fe_utils/cancel.c:189 ../../fe_utils/cancel.c:238
+#: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:161
+#, c-format
+msgid "out of memory\n"
+msgstr "недостатньо пам'яті\n"
+
+#: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:153
+#, c-format
+msgid "cannot duplicate null pointer (internal error)\n"
+msgstr "неможливо дублювати нульовий покажчик (внутрішня помилка)\n"
+
+#: ../../common/file_utils.c:70 ../../common/file_utils.c:347
+#: ../../common/file_utils.c:406 ../../common/file_utils.c:480
+#, c-format
+msgid "could not open file \"%s\": %m"
+msgstr "не можливо відкрити файл \"%s\": %m"
+
+#: ../../common/file_utils.c:76
+#, c-format
+msgid "could not synchronize file system for file \"%s\": %m"
+msgstr "не вдалося синхронізувати файлову систему для файлу \"%s\": %m"
+
+#: ../../common/file_utils.c:120 ../../common/file_utils.c:566
+#, c-format
+msgid "could not stat file \"%s\": %m"
+msgstr "не вдалося отримати інформацію від файлу \"%s\": %m"
+
+#: ../../common/file_utils.c:130 ../../common/file_utils.c:227
+#: ../../fe_utils/option_utils.c:99
+#, c-format
+msgid "this build does not support sync method \"%s\""
+msgstr "ця збірка не підтримує метод синхронізації \"%s\""
+
+#: ../../common/file_utils.c:151 ../../common/file_utils.c:281
+#, c-format
+msgid "could not open directory \"%s\": %m"
+msgstr "не вдалося відкрити каталог \"%s\": %m"
+
+#: ../../common/file_utils.c:169 ../../common/file_utils.c:315
+#, c-format
+msgid "could not read directory \"%s\": %m"
+msgstr "не вдалося прочитати каталог \"%s\": %m"
+
+#: ../../common/file_utils.c:418 ../../common/file_utils.c:488
+#, c-format
+msgid "could not fsync file \"%s\": %m"
+msgstr "не вдалося fsync файл \"%s\": %m"
+
+#: ../../common/file_utils.c:498
+#, c-format
+msgid "could not rename file \"%s\" to \"%s\": %m"
+msgstr "не вдалося перейменувати файл \"%s\" на \"%s\": %m"
+
+#: ../../common/username.c:43
+#, c-format
+msgid "could not look up effective user ID %ld: %s"
+msgstr "не можу знайти користувача з ефективним ID %ld: %s"
+
+#: ../../common/username.c:45
+msgid "user does not exist"
+msgstr "користувача не існує"
+
+#: ../../common/username.c:60
+#, c-format
+msgid "user name lookup failure: error code %lu"
+msgstr "невдала підстановка імені користувача: код помилки %lu"
+
+#: ../../fe_utils/cancel.c:186 ../../fe_utils/cancel.c:235
 msgid "Cancel request sent\n"
 msgstr "Запит на скасування відправлений\n"
 
-#: ../../fe_utils/cancel.c:190 ../../fe_utils/cancel.c:239
+#: ../../fe_utils/cancel.c:187 ../../fe_utils/cancel.c:236
 msgid "Could not send cancel request: "
 msgstr "Не вдалося надіслати запит на скасування: "
 
@@ -50,7 +117,7 @@ msgstr "Не вдалося надіслати запит на скасуван�
 msgid "could not connect to database %s: out of memory"
 msgstr "не можливо під'єднатися до бази даних %s: не вистачає пам'яті"
 
-#: ../../fe_utils/connect_utils.c:117
+#: ../../fe_utils/connect_utils.c:116
 #, c-format
 msgid "%s"
 msgstr "%s"
@@ -65,451 +132,496 @@ msgstr "неприпустиме значення \"%s\" для параметр
 msgid "%s must be in range %d..%d"
 msgstr "%s має бути в діапазоні %d..%d"
 
+#: ../../fe_utils/option_utils.c:106
+#, c-format
+msgid "unrecognized sync method: %s"
+msgstr "нерозпізнаний метод синхронізації: %s"
+
+#: ../../fe_utils/parallel_slot.c:317
+#, c-format
+msgid "too many jobs for this platform: %d"
+msgstr "занадто багато завдань для цієї платформи: %d"
+
+#: ../../fe_utils/parallel_slot.c:326
+#, c-format
+msgid "socket file descriptor out of range for select(): %d"
+msgstr "дескриптор файлу сокету поза діапазоном для select(): %d"
+
+#: ../../fe_utils/parallel_slot.c:328
+#, c-format
+msgid "Try fewer jobs."
+msgstr "Спробуйте менше робочих завдань."
+
+#: ../../fe_utils/parallel_slot.c:553
+#, c-format
+msgid "processing of database \"%s\" failed: %s"
+msgstr "обробка бази даних \"%s\" не вдалась: %s"
+
 #: ../../fe_utils/query_utils.c:33 ../../fe_utils/query_utils.c:58
-#: pg_amcheck.c:1647 pg_amcheck.c:2092
+#: pg_amcheck.c:1693 pg_amcheck.c:2138
 #, c-format
 msgid "query failed: %s"
 msgstr "запит не вдався: %s"
 
 #: ../../fe_utils/query_utils.c:34 ../../fe_utils/query_utils.c:59
-#: pg_amcheck.c:571 pg_amcheck.c:1102 pg_amcheck.c:1648 pg_amcheck.c:2093
+#: pg_amcheck.c:578 pg_amcheck.c:1147 pg_amcheck.c:1694 pg_amcheck.c:2139
 #, c-format
 msgid "Query was: %s"
 msgstr "Запит був: %s"
 
-#: pg_amcheck.c:399
+#: ../../fe_utils/string_utils.c:434
+#, c-format
+msgid "shell command argument contains a newline or carriage return: \"%s\"\n"
+msgstr "аргумент командної оболонки містить символ нового рядка або повернення каретки: \"%s\"\n"
+
+#: ../../fe_utils/string_utils.c:607
+#, c-format
+msgid "database name contains a newline or carriage return: \"%s\"\n"
+msgstr "назва бази даних містить символ нового рядка або повернення каретки: \"%s\"\n"
+
+#: pg_amcheck.c:403
 #, c-format
 msgid "invalid argument for option %s"
 msgstr "неприпустимий аргумент для параметру %s"
 
-#: pg_amcheck.c:405
+#: pg_amcheck.c:409
 #, c-format
 msgid "invalid start block"
 msgstr "неприпустимий початковий блок"
 
-#: pg_amcheck.c:407
+#: pg_amcheck.c:411
 #, c-format
 msgid "start block out of bounds"
 msgstr "початковий блок поза межами"
 
-#: pg_amcheck.c:414
+#: pg_amcheck.c:418
 #, c-format
 msgid "invalid end block"
 msgstr "неприпустимий кінцевий блок"
 
-#: pg_amcheck.c:416
+#: pg_amcheck.c:420
 #, c-format
 msgid "end block out of bounds"
 msgstr "кінцевий блок поза межами"
 
-#: pg_amcheck.c:439 pg_amcheck.c:461
+#: pg_amcheck.c:446 pg_amcheck.c:468
 #, c-format
 msgid "Try \"%s --help\" for more information."
 msgstr "Спробуйте \"%s --help\" для додаткової інформації."
 
-#: pg_amcheck.c:445
+#: pg_amcheck.c:452
 #, c-format
 msgid "end block precedes start block"
 msgstr "кінцевий блок передує початковому блоку"
 
-#: pg_amcheck.c:459
+#: pg_amcheck.c:466
 #, c-format
 msgid "too many command-line arguments (first is \"%s\")"
 msgstr "забагато аргументів у командному рядку (перший \"%s\")"
 
-#: pg_amcheck.c:479
+#: pg_amcheck.c:486
 #, c-format
 msgid "cannot specify a database name with --all"
 msgstr "не можна вказати назву бази даних з --all"
 
-#: pg_amcheck.c:485
+#: pg_amcheck.c:492
 #, c-format
 msgid "cannot specify both a database name and database patterns"
 msgstr "не можна вказати одночасно ім'я бази даних і шаблони бази даних"
 
-#: pg_amcheck.c:513
+#: pg_amcheck.c:520
 #, c-format
 msgid "no databases to check"
 msgstr "немає баз даних для перевірки"
 
-#: pg_amcheck.c:569
+#: pg_amcheck.c:576
 #, c-format
 msgid "database \"%s\": %s"
 msgstr "база даних \"%s\": %s"
 
-#: pg_amcheck.c:580
+#: pg_amcheck.c:587
 #, c-format
 msgid "skipping database \"%s\": amcheck is not installed"
 msgstr "пропуск бази даних \"%s\": amcheck не встановлено"
 
-#: pg_amcheck.c:588
+#: pg_amcheck.c:595
 #, c-format
 msgid "in database \"%s\": using amcheck version \"%s\" in schema \"%s\""
 msgstr "у базі даних \"%s\": використовується amcheck версії \"%s\" у схемі \"%s\""
 
-#: pg_amcheck.c:610
+#: pg_amcheck.c:624
+#, c-format
+msgid "option %s is not supported by amcheck version %s"
+msgstr "параметр %s не підтримується у версії amcheck %s"
+
+#: pg_amcheck.c:650
 #, c-format
 msgid "no heap tables to check matching \"%s\""
 msgstr "немає таблиць в динамічній пам'яті для перевірки відповідності \"%s\""
 
-#: pg_amcheck.c:613
+#: pg_amcheck.c:653
 #, c-format
 msgid "no btree indexes to check matching \"%s\""
 msgstr "немає індексів btree для перевірки відповідності \"%s\""
 
-#: pg_amcheck.c:616
+#: pg_amcheck.c:656
 #, c-format
 msgid "no relations to check in schemas matching \"%s\""
 msgstr "немає відношень для перевірки в схемах, відповідних \"%s\""
 
-#: pg_amcheck.c:619
+#: pg_amcheck.c:659
 #, c-format
 msgid "no relations to check matching \"%s\""
 msgstr "немає відношень для перевірки відповідності \"%s\""
 
-#: pg_amcheck.c:647
+#: pg_amcheck.c:687
 #, c-format
 msgid "no relations to check"
 msgstr "немає зв'язків для перевірки"
 
-#: pg_amcheck.c:730
+#: pg_amcheck.c:770
 #, c-format
 msgid "checking heap table \"%s.%s.%s\""
 msgstr "перевірка таблиць динамічної пам'яті \"%s.%s.%s\""
 
-#: pg_amcheck.c:746
+#: pg_amcheck.c:786
 #, c-format
 msgid "checking btree index \"%s.%s.%s\""
 msgstr "перевірка індексу btree \"%s.%s.%s\""
 
-#: pg_amcheck.c:893
+#: pg_amcheck.c:937
 #, c-format
 msgid "error sending command to database \"%s\": %s"
 msgstr "помилка надсилання команди до бази даних \"%s: %s"
 
-#: pg_amcheck.c:896
+#: pg_amcheck.c:940
 #, c-format
 msgid "Command was: %s"
 msgstr "Команда була: %s"
 
-#: pg_amcheck.c:1015
+#: pg_amcheck.c:1060
 #, c-format
 msgid "heap table \"%s.%s.%s\", block %s, offset %s, attribute %s:\n"
 msgstr "таблиця динамічної пам'яті \"%s.%s.%s\", блок %s, зсув %s, атрибут %s:\n"
 
-#: pg_amcheck.c:1022
+#: pg_amcheck.c:1067
 #, c-format
 msgid "heap table \"%s.%s.%s\", block %s, offset %s:\n"
 msgstr "таблиця динамічної пам'яті \"%s.%s.%s\", блок %s, зсув %s:\n"
 
-#: pg_amcheck.c:1028
+#: pg_amcheck.c:1073
 #, c-format
 msgid "heap table \"%s.%s.%s\", block %s:\n"
 msgstr "таблиця динамічної пам'яті \"%s.%s.%s\", блок %s:\n"
 
-#: pg_amcheck.c:1033 pg_amcheck.c:1044
+#: pg_amcheck.c:1078 pg_amcheck.c:1089
 #, c-format
 msgid "heap table \"%s.%s.%s\":\n"
 msgstr "таблиця динамічної пам'яті \"%s.%s.%s\":\n"
 
-#: pg_amcheck.c:1048 pg_amcheck.c:1117
+#: pg_amcheck.c:1093 pg_amcheck.c:1162
 #, c-format
 msgid "query was: %s\n"
 msgstr "запит був: %s\n"
 
-#: pg_amcheck.c:1099
+#: pg_amcheck.c:1144
 #, c-format
 msgid "btree index \"%s.%s.%s\": btree checking function returned unexpected number of rows: %d"
 msgstr "індекс btree \"%s.%s.%s\": функція перевірки btree повернула неочікувану кількість рядків: %d"
 
-#: pg_amcheck.c:1103
+#: pg_amcheck.c:1148
 #, c-format
 msgid "Are %s's and amcheck's versions compatible?"
 msgstr "Чи сумісні версії %s і amcheck?"
 
-#: pg_amcheck.c:1113
+#: pg_amcheck.c:1158
 #, c-format
 msgid "btree index \"%s.%s.%s\":\n"
 msgstr "індекс btree \"%s.%s.%s\":\n"
 
-#: pg_amcheck.c:1138
+#: pg_amcheck.c:1183
 #, c-format
 msgid "%s checks objects in a PostgreSQL database for corruption.\n\n"
 msgstr "%s перевіряє об'єкти бази даних PostgreSQL на пошкодження.\n\n"
 
-#: pg_amcheck.c:1139
+#: pg_amcheck.c:1184
 #, c-format
 msgid "Usage:\n"
 msgstr "Використання:\n"
 
-#: pg_amcheck.c:1140
+#: pg_amcheck.c:1185
 #, c-format
 msgid "  %s [OPTION]... [DBNAME]\n"
 msgstr "  %s [OPTION]... [DBNAME]\n"
 
-#: pg_amcheck.c:1141
+#: pg_amcheck.c:1186
 #, c-format
 msgid "\n"
 "Target options:\n"
 msgstr "\n"
 "Цільові параметри:\n"
 
-#: pg_amcheck.c:1142
+#: pg_amcheck.c:1187
 #, c-format
 msgid "  -a, --all                       check all databases\n"
 msgstr "  -a, --all                       перевірити всі бази даних\n"
 
-#: pg_amcheck.c:1143
+#: pg_amcheck.c:1188
 #, c-format
 msgid "  -d, --database=PATTERN          check matching database(s)\n"
 msgstr "  -d, --database=PATTERN          перевірити відповідні бази даних\n"
 
-#: pg_amcheck.c:1144
+#: pg_amcheck.c:1189
 #, c-format
 msgid "  -D, --exclude-database=PATTERN  do NOT check matching database(s)\n"
 msgstr "  -D, --exclude-database=PATTERN   НЕ перевіряти відповідні бази даних\n"
 
-#: pg_amcheck.c:1145
+#: pg_amcheck.c:1190
 #, c-format
 msgid "  -i, --index=PATTERN             check matching index(es)\n"
 msgstr "  -i, --index=PATTERN              перевірити відповідні індекси\n"
 
-#: pg_amcheck.c:1146
+#: pg_amcheck.c:1191
 #, c-format
 msgid "  -I, --exclude-index=PATTERN     do NOT check matching index(es)\n"
 msgstr "  -I, --exclude-index=PATTERN     НЕ перевіряти відповідні індекси\n"
 
-#: pg_amcheck.c:1147
+#: pg_amcheck.c:1192
 #, c-format
 msgid "  -r, --relation=PATTERN          check matching relation(s)\n"
 msgstr "  -r, --relation=PATTERN          перевірити відповідні відношення\n"
 
-#: pg_amcheck.c:1148
+#: pg_amcheck.c:1193
 #, c-format
 msgid "  -R, --exclude-relation=PATTERN  do NOT check matching relation(s)\n"
 msgstr "  -R, --exclude-relation=PATTERN  НЕ перевіряти відповідні відношення\n"
 
-#: pg_amcheck.c:1149
+#: pg_amcheck.c:1194
 #, c-format
 msgid "  -s, --schema=PATTERN            check matching schema(s)\n"
 msgstr "  -s, --schema=PATTERN            перевірити відповідні схеми\n"
 
-#: pg_amcheck.c:1150
+#: pg_amcheck.c:1195
 #, c-format
 msgid "  -S, --exclude-schema=PATTERN    do NOT check matching schema(s)\n"
 msgstr "  -S, --exclude-schema=PATTERN    НЕ перевіряти відповідні схеми\n"
 
-#: pg_amcheck.c:1151
+#: pg_amcheck.c:1196
 #, c-format
 msgid "  -t, --table=PATTERN             check matching table(s)\n"
 msgstr "  -t, --table=PATTERN             перевірити відповідні таблиці\n"
 
-#: pg_amcheck.c:1152
+#: pg_amcheck.c:1197
 #, c-format
 msgid "  -T, --exclude-table=PATTERN     do NOT check matching table(s)\n"
 msgstr "  -T, --exclude-table=PATTERN     НЕ перевіряти відповідні таблиці\n"
 
-#: pg_amcheck.c:1153
+#: pg_amcheck.c:1198
 #, c-format
 msgid "      --no-dependent-indexes      do NOT expand list of relations to include indexes\n"
 msgstr "      --no-dependent-indexes      НЕ розширювати список відносин, щоб включити індекси\n"
 
-#: pg_amcheck.c:1154
+#: pg_amcheck.c:1199
 #, c-format
 msgid "      --no-dependent-toast        do NOT expand list of relations to include TOAST tables\n"
 msgstr "      --no-dependent-toast        НЕ розширювати список відносин, щоб включити таблиці TOAST\n"
 
-#: pg_amcheck.c:1155
+#: pg_amcheck.c:1200
 #, c-format
 msgid "      --no-strict-names           do NOT require patterns to match objects\n"
 msgstr "      --no-strict-names           НЕ вимагати відповідності шаблонів об'єктам\n"
 
-#: pg_amcheck.c:1156
+#: pg_amcheck.c:1201
 #, c-format
 msgid "\n"
 "Table checking options:\n"
 msgstr "\n"
 "Параметри перевірки таблиць:\n"
 
-#: pg_amcheck.c:1157
+#: pg_amcheck.c:1202
 #, c-format
 msgid "      --exclude-toast-pointers    do NOT follow relation TOAST pointers\n"
 msgstr "      --exclude-toast-pointers    НЕ слідувати покажчикам відношень TOAST\n"
 
-#: pg_amcheck.c:1158
+#: pg_amcheck.c:1203
 #, c-format
 msgid "      --on-error-stop             stop checking at end of first corrupt page\n"
 msgstr "      --on-error-stop             зупинити перевірку наприкінці першої пошкодженої сторінки\n"
 
-#: pg_amcheck.c:1159
+#: pg_amcheck.c:1204
 #, c-format
 msgid "      --skip=OPTION               do NOT check \"all-frozen\" or \"all-visible\" blocks\n"
 msgstr "      --skip=OPTION               НЕ перевіряти \"всі заморожені\" або \"всі видимі\" блоки\n"
 
-#: pg_amcheck.c:1160
+#: pg_amcheck.c:1205
 #, c-format
 msgid "      --startblock=BLOCK          begin checking table(s) at the given block number\n"
 msgstr "      --startblock=BLOCK          почати перевірку таблиць за поданим номером блоку\n"
 
-#: pg_amcheck.c:1161
+#: pg_amcheck.c:1206
 #, c-format
 msgid "      --endblock=BLOCK            check table(s) only up to the given block number\n"
 msgstr "      --endblock=BLOCK            перевіряти таблиці лише до поданого номеру блоку\n"
 
-#: pg_amcheck.c:1162
+#: pg_amcheck.c:1207
 #, c-format
 msgid "\n"
 "B-tree index checking options:\n"
 msgstr "\n"
 "Параметри перевірки індексів B-tree:\n"
 
-#: pg_amcheck.c:1163
+#: pg_amcheck.c:1208
+#, c-format
+msgid "      --checkunique               check unique constraint if index is unique\n"
+msgstr "      --checkunique               перевіряємо обмеження unique, якщо індекс унікальний\n"
+
+#: pg_amcheck.c:1209
 #, c-format
 msgid "      --heapallindexed            check that all heap tuples are found within indexes\n"
 msgstr "      --heapallindexed            перевірити чи всі кортежі динамічної пам'яті містяться в індексах\n"
 
-#: pg_amcheck.c:1164
+#: pg_amcheck.c:1210
 #, c-format
 msgid "      --parent-check              check index parent/child relationships\n"
 msgstr "      --parent-check              перевірити індекс батьківських/дочірніх відносин\n"
 
-#: pg_amcheck.c:1165
+#: pg_amcheck.c:1211
 #, c-format
 msgid "      --rootdescend               search from root page to refind tuples\n"
 msgstr "      --rootdescend               шукати з кореневої сторінки, для повторного пошуку кортежів\n"
 
-#: pg_amcheck.c:1166
+#: pg_amcheck.c:1212
 #, c-format
 msgid "\n"
 "Connection options:\n"
 msgstr "\n"
 "Налаштування з'єднання:\n"
 
-#: pg_amcheck.c:1167
+#: pg_amcheck.c:1213
 #, c-format
 msgid "  -h, --host=HOSTNAME             database server host or socket directory\n"
 msgstr "  -h, --host=HOSTNAME             хост сервера бази даних або каталог сокетів\n"
 
-#: pg_amcheck.c:1168
+#: pg_amcheck.c:1214
 #, c-format
 msgid "  -p, --port=PORT                 database server port\n"
 msgstr "  -p, --port=PORT                 порт серверу бази даних\n"
 
-#: pg_amcheck.c:1169
+#: pg_amcheck.c:1215
 #, c-format
 msgid "  -U, --username=USERNAME         user name to connect as\n"
 msgstr "  -U, --username=USERNAME         ім'я користувача для з'єднання з сервером\n"
 
-#: pg_amcheck.c:1170
+#: pg_amcheck.c:1216
 #, c-format
 msgid "  -w, --no-password               never prompt for password\n"
 msgstr "  -w, --no-password               ніколи не запитувати пароль\n"
 
-#: pg_amcheck.c:1171
+#: pg_amcheck.c:1217
 #, c-format
 msgid "  -W, --password                  force password prompt\n"
 msgstr "  -W, --password                  примусовий запит пароля\n"
 
-#: pg_amcheck.c:1172
+#: pg_amcheck.c:1218
 #, c-format
 msgid "      --maintenance-db=DBNAME     alternate maintenance database\n"
 msgstr "      --maintenance-db=DBNAME     база даних альтернативного обслуговування\n"
 
-#: pg_amcheck.c:1173
+#: pg_amcheck.c:1219
 #, c-format
 msgid "\n"
 "Other options:\n"
 msgstr "\n"
 "Інші параметри:\n"
 
-#: pg_amcheck.c:1174
+#: pg_amcheck.c:1220
 #, c-format
 msgid "  -e, --echo                      show the commands being sent to the server\n"
 msgstr "  -e, --echo              показати команди, надіслані серверу\n"
 
-#: pg_amcheck.c:1175
+#: pg_amcheck.c:1221
 #, c-format
 msgid "  -j, --jobs=NUM                  use this many concurrent connections to the server\n"
 msgstr "  -j, --jobs=NUM                  використати цю кількість одночасних з'єднань з сервером\n"
 
-#: pg_amcheck.c:1176
+#: pg_amcheck.c:1222
 #, c-format
 msgid "  -P, --progress                  show progress information\n"
 msgstr "  -P, --progress                  показати інформацію про прогрес\n"
 
-#: pg_amcheck.c:1177
+#: pg_amcheck.c:1223
 #, c-format
 msgid "  -v, --verbose                   write a lot of output\n"
 msgstr "  -v, --verbose              виводити багато інформації\n"
 
-#: pg_amcheck.c:1178
+#: pg_amcheck.c:1224
 #, c-format
 msgid "  -V, --version                   output version information, then exit\n"
 msgstr "  -V, --version                  вивести інформацію про версію і вийти\n"
 
-#: pg_amcheck.c:1179
+#: pg_amcheck.c:1225
 #, c-format
 msgid "      --install-missing           install missing extensions\n"
 msgstr "      --install-missing           встановити відсутні розширення\n"
 
-#: pg_amcheck.c:1180
+#: pg_amcheck.c:1226
 #, c-format
 msgid "  -?, --help                      show this help, then exit\n"
 msgstr "  -?, --help                      показати цю справку, потім вийти\n"
 
-#: pg_amcheck.c:1182
+#: pg_amcheck.c:1228
 #, c-format
 msgid "\n"
 "Report bugs to <%s>.\n"
 msgstr "\n"
 "Повідомляти про помилки на <%s>.\n"
 
-#: pg_amcheck.c:1183
+#: pg_amcheck.c:1229
 #, c-format
 msgid "%s home page: <%s>\n"
 msgstr "Домашня сторінка %s: <%s>\n"
 
-#: pg_amcheck.c:1236
+#: pg_amcheck.c:1282
 #, c-format
 msgid "%*s/%s relations (%d%%), %*s/%s pages (%d%%) %*s"
 msgstr "%*s/%s відношень (%d%%), %*s/%s сторінок (%d%%) %*s"
 
-#: pg_amcheck.c:1247
+#: pg_amcheck.c:1293
 #, c-format
 msgid "%*s/%s relations (%d%%), %*s/%s pages (%d%%) (%s%-*.*s)"
 msgstr "%*s/%s відношень (%d%%), %*s/%s сторінок (%d%%) (%s%-*.*s)"
 
-#: pg_amcheck.c:1262
+#: pg_amcheck.c:1308
 #, c-format
 msgid "%*s/%s relations (%d%%), %*s/%s pages (%d%%)"
 msgstr "%*s/%s відношень (%d%%), %*s/%s сторінок (%d%%)"
 
-#: pg_amcheck.c:1321 pg_amcheck.c:1354
+#: pg_amcheck.c:1367 pg_amcheck.c:1400
 #, c-format
 msgid "improper qualified name (too many dotted names): %s"
 msgstr "неправильне повне ім'я (забагато компонентів): %s"
 
-#: pg_amcheck.c:1399
+#: pg_amcheck.c:1445
 #, c-format
 msgid "improper relation name (too many dotted names): %s"
 msgstr "неправильне ім'я зв'язку (забагато компонентів): %s"
 
-#: pg_amcheck.c:1552 pg_amcheck.c:1691
+#: pg_amcheck.c:1598 pg_amcheck.c:1737
 #, c-format
 msgid "including database \"%s\""
 msgstr "включаючи базу даних \"%s\""
 
-#: pg_amcheck.c:1673
+#: pg_amcheck.c:1719
 #, c-format
 msgid "internal error: received unexpected database pattern_id %d"
 msgstr "внутрішня помилка: отримано неочікувану помилку шаблону бази даних %d"
 
-#: pg_amcheck.c:1675
+#: pg_amcheck.c:1721
 #, c-format
 msgid "no connectable databases to check matching \"%s\""
 msgstr "немає бази даних для підключення, щоб перевірити відповідність\"%s\""
 
-#: pg_amcheck.c:2133
+#: pg_amcheck.c:2179
 #, c-format
 msgid "internal error: received unexpected relation pattern_id %d"
 msgstr "внутрішня помилка: отримано неочікувану помилку шаблону відношення %d"

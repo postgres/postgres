@@ -10,8 +10,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-08-26 19:50+0000\n"
-"PO-Revision-Date: 2024-09-16 16:28+0200\n"
+"POT-Creation-Date: 2024-10-29 18:20+0000\n"
+"PO-Revision-Date: 2024-10-30 07:41+0100\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team: French <guillaume@lelarge.info>\n"
 "Language: fr\n"
@@ -236,8 +236,8 @@ msgstr "Vérification de l'utilisation du type de données"
 
 #: check.c:480
 #, c-format
-msgid "    failed check: %s"
-msgstr "échec de la vérification : %s"
+msgid "failed check: %s"
+msgstr "vérification échouée : %s"
 
 #: check.c:483
 msgid "A list of the problem columns is in the file:"

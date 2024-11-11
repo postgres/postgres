@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: postgresql\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2023-04-19 11:17+0000\n"
-"PO-Revision-Date: 2023-12-20 11:53\n"
+"POT-Creation-Date: 2024-08-31 06:19+0000\n"
+"PO-Revision-Date: 2024-09-23 19:38\n"
 "Last-Translator: \n"
 "Language-Team: Ukrainian\n"
 "Language: uk_UA\n"
@@ -14,8 +14,8 @@ msgstr ""
 "X-Crowdin-Project: postgresql\n"
 "X-Crowdin-Project-ID: 324573\n"
 "X-Crowdin-Language: uk\n"
-"X-Crowdin-File: /REL_16_STABLE/pg_config.pot\n"
-"X-Crowdin-File-ID: 973\n"
+"X-Crowdin-File: /REL_17_STABLE/pg_config.pot\n"
+"X-Crowdin-File-ID: 1024\n"
 
 #: ../../common/config_info.c:134 ../../common/config_info.c:142
 #: ../../common/config_info.c:150 ../../common/config_info.c:158
@@ -24,34 +24,60 @@ msgstr ""
 msgid "not recorded"
 msgstr "не записано"
 
-#: ../../common/exec.c:172
+#: ../../common/exec.c:174
 #, c-format
 msgid "invalid binary \"%s\": %m"
 msgstr "невірний бінарний файл \"%s\": %m"
 
-#: ../../common/exec.c:215
+#: ../../common/exec.c:217
 #, c-format
 msgid "could not read binary \"%s\": %m"
 msgstr "не вдалося прочитати бінарний файл \"%s\": %m"
 
-#: ../../common/exec.c:223
+#: ../../common/exec.c:225
 #, c-format
 msgid "could not find a \"%s\" to execute"
 msgstr "неможливо знайти \"%s\" для виконання"
 
-#: ../../common/exec.c:250
+#: ../../common/exec.c:252
 #, c-format
 msgid "could not resolve path \"%s\" to absolute form: %m"
 msgstr "не вдалося знайти абсолютний шлях \"%s\": %m"
 
-#: ../../common/exec.c:412
+#: ../../common/exec.c:382
+#, c-format
+msgid "could not execute command \"%s\": %m"
+msgstr "не вдалося виконати команду \"%s\": %m"
+
+#: ../../common/exec.c:394
+#, c-format
+msgid "could not read from command \"%s\": %m"
+msgstr "не вдалося прочитати висновок команди \"%s\": %m"
+
+#: ../../common/exec.c:397
+#, c-format
+msgid "no data was returned by command \"%s\""
+msgstr "команда \"%s\" не повернула жодних даних"
+
+#: ../../common/exec.c:424
 #, c-format
 msgid "%s() failed: %m"
 msgstr "%s() помилка: %m"
 
-#: ../../common/exec.c:550 ../../common/exec.c:595 ../../common/exec.c:687
+#: ../../common/exec.c:562 ../../common/exec.c:607 ../../common/exec.c:699
 msgid "out of memory"
 msgstr "недостатньо пам'яті"
+
+#: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:161
+#, c-format
+msgid "out of memory\n"
+msgstr "недостатньо пам'яті\n"
+
+#: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:153
+#, c-format
+msgid "cannot duplicate null pointer (internal error)\n"
+msgstr "неможливо дублювати нульовий покажчик (внутрішня помилка)\n"
 
 #: pg_config.c:74
 #, c-format

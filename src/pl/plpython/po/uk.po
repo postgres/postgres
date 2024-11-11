@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: postgresql\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2023-12-17 22:08+0000\n"
-"PO-Revision-Date: 2023-12-20 11:53\n"
+"POT-Creation-Date: 2024-08-31 06:09+0000\n"
+"PO-Revision-Date: 2024-09-23 19:38\n"
 "Last-Translator: \n"
 "Language-Team: Ukrainian\n"
 "Language: uk_UA\n"
@@ -14,8 +14,8 @@ msgstr ""
 "X-Crowdin-Project: postgresql\n"
 "X-Crowdin-Project-ID: 324573\n"
 "X-Crowdin-Language: uk\n"
-"X-Crowdin-File: /REL_16_STABLE/plpython.pot\n"
-"X-Crowdin-File-ID: 933\n"
+"X-Crowdin-File: /REL_17_STABLE/plpython.pot\n"
+"X-Crowdin-File-ID: 1014\n"
 
 #: plpy_cursorobject.c:72
 #, c-format
@@ -106,82 +106,82 @@ msgstr "процедура PL/Python не повернула None"
 msgid "PL/Python function with return type \"void\" did not return None"
 msgstr "PL/Python функція з типом результату \"void\" не повернули None"
 
-#: plpy_exec.c:369 plpy_exec.c:393
-#, c-format
-msgid "unexpected return value from trigger procedure"
-msgstr "неочікуване значення процедури тригера"
-
-#: plpy_exec.c:370
-#, c-format
-msgid "Expected None or a string."
-msgstr "Очікувалось None або рядок."
-
-#: plpy_exec.c:383
-#, c-format
-msgid "PL/Python trigger function returned \"MODIFY\" in a DELETE trigger -- ignored"
-msgstr "Тригерна функція PL/Python повернула \"MODIFY\" в тригері DELETE -- проігноровано"
-
-#: plpy_exec.c:394
-#, c-format
-msgid "Expected None, \"OK\", \"SKIP\", or \"MODIFY\"."
-msgstr "Очікувалось None, \"OK\", \"SKIP\" або \"MODIFY\"."
-
-#: plpy_exec.c:444
-#, c-format
-msgid "PyList_SetItem() failed, while setting up arguments"
-msgstr "помилка PyList_SetItem() під час встановлення параметрів"
-
-#: plpy_exec.c:448
-#, c-format
-msgid "PyDict_SetItemString() failed, while setting up arguments"
-msgstr "помилка PyDict_SetItemString() під час встановлення параметрів"
-
-#: plpy_exec.c:460
+#: plpy_exec.c:246
 #, c-format
 msgid "function returning record called in context that cannot accept type record"
 msgstr "функція, що повертає набір, викликана у контексті, що не приймає тип запис"
 
-#: plpy_exec.c:677
+#: plpy_exec.c:392 plpy_exec.c:416
+#, c-format
+msgid "unexpected return value from trigger procedure"
+msgstr "неочікуване значення процедури тригера"
+
+#: plpy_exec.c:393
+#, c-format
+msgid "Expected None or a string."
+msgstr "Очікувалось None або рядок."
+
+#: plpy_exec.c:406
+#, c-format
+msgid "PL/Python trigger function returned \"MODIFY\" in a DELETE trigger -- ignored"
+msgstr "Тригерна функція PL/Python повернула \"MODIFY\" в тригері DELETE -- проігноровано"
+
+#: plpy_exec.c:417
+#, c-format
+msgid "Expected None, \"OK\", \"SKIP\", or \"MODIFY\"."
+msgstr "Очікувалось None, \"OK\", \"SKIP\" або \"MODIFY\"."
+
+#: plpy_exec.c:468
+#, c-format
+msgid "PyList_SetItem() failed, while setting up arguments"
+msgstr "помилка PyList_SetItem() під час встановлення параметрів"
+
+#: plpy_exec.c:472
+#, c-format
+msgid "PyDict_SetItemString() failed, while setting up arguments"
+msgstr "помилка PyDict_SetItemString() під час встановлення параметрів"
+
+#: plpy_exec.c:701
 #, c-format
 msgid "while creating return value"
 msgstr "під час створення значення результату"
 
-#: plpy_exec.c:924
+#: plpy_exec.c:952
 #, c-format
 msgid "TD[\"new\"] deleted, cannot modify row"
 msgstr "TD[\"new\"] видалено, неможливо змінити рядок"
 
-#: plpy_exec.c:929
+#: plpy_exec.c:957
 #, c-format
 msgid "TD[\"new\"] is not a dictionary"
 msgstr "TD[\"new\"] не є словником"
 
-#: plpy_exec.c:954
+#: plpy_exec.c:982
 #, c-format
 msgid "TD[\"new\"] dictionary key at ordinal position %d is not a string"
 msgstr "ключ словника TD[\"new\"] на порядковий позиції %d не є рядком"
 
-#: plpy_exec.c:961
+#: plpy_exec.c:989
 #, c-format
 msgid "key \"%s\" found in TD[\"new\"] does not exist as a column in the triggering row"
 msgstr "ключ \"%s\" знайдений у TD[\"new\"] не існує як стовпець у рядку тригера"
 
-#: plpy_exec.c:966
+#: plpy_exec.c:994
 #, c-format
 msgid "cannot set system attribute \"%s\""
 msgstr "не вдалося встановити системний атрибут \"%s\""
 
-#: plpy_exec.c:971
+#: plpy_exec.c:999
 #, c-format
 msgid "cannot set generated column \"%s\""
 msgstr "неможливо оновити згенерований стовпець \"%s\""
 
-#: plpy_exec.c:1029
+#: plpy_exec.c:1057
 #, c-format
 msgid "while modifying trigger row"
 msgstr "під час зміни рядка тригера"
 
-#: plpy_exec.c:1087
+#: plpy_exec.c:1115
 #, c-format
 msgid "forcibly aborting a subtransaction that has not been exited"
 msgstr "примусове переривання субтранзакції, яка не вийшла"
@@ -270,27 +270,27 @@ msgstr "'%s' є неприпустимим ключовим словом-арг�
 msgid "invalid SQLSTATE code"
 msgstr "неприпустимий код SQLSTATE"
 
-#: plpy_procedure.c:225
+#: plpy_procedure.c:226
 #, c-format
 msgid "trigger functions can only be called as triggers"
 msgstr "тригер-функція може викликатися лише як тригер"
 
-#: plpy_procedure.c:229
+#: plpy_procedure.c:230
 #, c-format
 msgid "PL/Python functions cannot return type %s"
 msgstr "PL/Python функції не можуть повернути тип %s"
 
-#: plpy_procedure.c:307
+#: plpy_procedure.c:308
 #, c-format
 msgid "PL/Python functions cannot accept type %s"
 msgstr "PL/Python функції не можуть прийняти тип %s"
 
-#: plpy_procedure.c:395
+#: plpy_procedure.c:396
 #, c-format
 msgid "could not compile PL/Python function \"%s\""
 msgstr "не вдалося скомпілювати функцію PL/Python \"%s\""
 
-#: plpy_procedure.c:398
+#: plpy_procedure.c:399
 #, c-format
 msgid "could not compile anonymous PL/Python code block"
 msgstr "не вдалося скомпілювати анонімні коди блоку PL/Python"

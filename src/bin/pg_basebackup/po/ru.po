@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_basebackup (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-09-02 09:29+0300\n"
+"POT-Creation-Date: 2024-11-09 07:47+0300\n"
 "PO-Revision-Date: 2024-09-07 11:12+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
@@ -244,7 +244,7 @@ msgstr "нераспознанный метод синхронизации: %s"
 
 #: ../../fe_utils/recovery_gen.c:39 ../../fe_utils/recovery_gen.c:50
 #: ../../fe_utils/recovery_gen.c:89 ../../fe_utils/recovery_gen.c:109
-#: ../../fe_utils/recovery_gen.c:168 pg_basebackup.c:1636 streamutil.c:331
+#: ../../fe_utils/recovery_gen.c:168 pg_basebackup.c:1636 streamutil.c:334
 #, c-format
 msgid "out of memory"
 msgstr "нехватка памяти"
@@ -833,7 +833,7 @@ msgid "could not read from ready pipe: %m"
 msgstr "не удалось прочитать из готового канала: %m"
 
 #: pg_basebackup.c:491 pg_basebackup.c:633 pg_basebackup.c:2258
-#: streamutil.c:518
+#: streamutil.c:521
 #, c-format
 msgid "could not parse write-ahead log location \"%s\""
 msgstr "не удалось разобрать положение в журнале предзаписи \"%s\""
@@ -1034,8 +1034,8 @@ msgid "server does not support incremental backup"
 msgstr "сервер не поддерживает инкрементальное копирование"
 
 #: pg_basebackup.c:1850 pg_basebackup.c:2008 pg_recvlogical.c:272
-#: receivelog.c:543 receivelog.c:582 streamutil.c:364 streamutil.c:438
-#: streamutil.c:490 streamutil.c:578 streamutil.c:730 streamutil.c:775
+#: receivelog.c:543 receivelog.c:582 streamutil.c:367 streamutil.c:441
+#: streamutil.c:493 streamutil.c:581 streamutil.c:733 streamutil.c:778
 #, c-format
 msgid "could not send replication command \"%s\": %s"
 msgstr "не удалось передать команду репликации \"%s\": %s"
@@ -1184,7 +1184,7 @@ msgstr "сбой при ожидании дочернего процесса: %m
 msgid "child %d died, expected %d"
 msgstr "завершился дочерний процесс %d вместо ожидаемого %d"
 
-#: pg_basebackup.c:2248 streamutil.c:89 streamutil.c:204 streamutil.c:316
+#: pg_basebackup.c:2248 streamutil.c:92 streamutil.c:207 streamutil.c:319
 #, c-format
 msgid "%s"
 msgstr "%s"
@@ -2700,32 +2700,32 @@ msgstr "не удалось записать %d Б в файл WAL \"%s\": %s"
 msgid "could not send copy-end packet: %s"
 msgstr "не удалось отправить пакет \"конец COPY\": %s"
 
-#: streamutil.c:162
+#: streamutil.c:165
 msgid "Password: "
 msgstr "Пароль: "
 
-#: streamutil.c:189
+#: streamutil.c:192
 #, c-format
 msgid "could not connect to server"
 msgstr "не удалось подключиться к серверу"
 
-#: streamutil.c:230
+#: streamutil.c:233
 #, c-format
 msgid "could not clear \"search_path\": %s"
 msgstr "не удалось очистить \"search_path\": %s"
 
-#: streamutil.c:246
+#: streamutil.c:249
 #, c-format
 msgid "could not determine server setting for \"integer_datetimes\""
 msgstr "не удалось получить параметр сервера \"integer_datetimes\""
 
-#: streamutil.c:253
+#: streamutil.c:256
 #, c-format
 msgid "\"integer_datetimes\" compile flag does not match server"
 msgstr ""
 "флаг компиляции \"integer_datetimes\" не соответствует настройке сервера"
 
-#: streamutil.c:372
+#: streamutil.c:375
 #, c-format
 msgid ""
 "could not fetch WAL segment size: got %d rows and %d fields, expected %d "
@@ -2734,12 +2734,12 @@ msgstr ""
 "не удалось извлечь размер сегмента WAL; получено строк: %d, полей: %d "
 "(ожидалось: %d и %d (или более))"
 
-#: streamutil.c:382
+#: streamutil.c:385
 #, c-format
 msgid "WAL segment size could not be parsed"
 msgstr "разобрать размер сегмента WAL не удалось"
 
-#: streamutil.c:400
+#: streamutil.c:403
 #, c-format
 msgid "remote server reported invalid WAL segment size (%d byte)"
 msgid_plural "remote server reported invalid WAL segment size (%d bytes)"
@@ -2747,13 +2747,13 @@ msgstr[0] "удалённый сервер выдал неверный разм�
 msgstr[1] "удалённый сервер выдал неверный размер сегмента WAL: %d Б"
 msgstr[2] "удалённый сервер выдал неверный размер сегмента WAL: %d Б"
 
-#: streamutil.c:404
+#: streamutil.c:407
 #, c-format
 msgid "The WAL segment size must be a power of two between 1 MB and 1 GB."
 msgstr ""
 "Размер сегмента WAL должен задаваться степенью 2 в интервале от 1 МБ до 1 ГБ."
 
-#: streamutil.c:446
+#: streamutil.c:449
 #, c-format
 msgid ""
 "could not fetch group access flag: got %d rows and %d fields, expected %d "
@@ -2762,12 +2762,12 @@ msgstr ""
 "не удалось извлечь флаг доступа группы; получено строк: %d, полей: %d "
 "(ожидалось: %d и %d (или более))"
 
-#: streamutil.c:455
+#: streamutil.c:458
 #, c-format
 msgid "group access flag could not be parsed: %s"
 msgstr "не удалось разобрать флаг доступа группы: %s"
 
-#: streamutil.c:498 streamutil.c:535
+#: streamutil.c:501 streamutil.c:538
 #, c-format
 msgid ""
 "could not identify system: got %d rows and %d fields, expected %d rows and "
@@ -2776,7 +2776,7 @@ msgstr ""
 "не удалось идентифицировать систему; получено строк: %d, полей: %d "
 "(ожидалось: %d и %d (или более))"
 
-#: streamutil.c:587
+#: streamutil.c:590
 #, c-format
 msgid ""
 "could not read replication slot \"%s\": got %d rows and %d fields, expected "
@@ -2785,23 +2785,23 @@ msgstr ""
 "прочитать из слота репликации \"%s\" не удалось; получено строк: %d, полей: "
 "%d (ожидалось: %d и %d)"
 
-#: streamutil.c:599
+#: streamutil.c:602
 #, c-format
 msgid "replication slot \"%s\" does not exist"
 msgstr "слот репликации \"%s\" не существует"
 
-#: streamutil.c:610
+#: streamutil.c:613
 #, c-format
 msgid "expected a physical replication slot, got type \"%s\" instead"
 msgstr "ожидался слот физической репликации, вместо этого получен тип \"%s\""
 
-#: streamutil.c:624
+#: streamutil.c:627
 #, c-format
 msgid "could not parse restart_lsn \"%s\" for replication slot \"%s\""
 msgstr ""
 "не удалось разобрать позицию restart_lsn \"%s\" для слота репликации \"%s\""
 
-#: streamutil.c:741
+#: streamutil.c:744
 #, c-format
 msgid ""
 "could not create replication slot \"%s\": got %d rows and %d fields, "
@@ -2810,7 +2810,7 @@ msgstr ""
 "создать слот репликации \"%s\" не удалось; получено строк: %d, полей: %d "
 "(ожидалось: %d и %d)"
 
-#: streamutil.c:785
+#: streamutil.c:788
 #, c-format
 msgid ""
 "could not drop replication slot \"%s\": got %d rows and %d fields, expected "

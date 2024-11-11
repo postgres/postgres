@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_rewind (PostgreSQL 17)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-06-14 11:24+0900\n"
-"PO-Revision-Date: 2024-06-14 11:29+0900\n"
+"POT-Creation-Date: 2024-09-05 09:59+0900\n"
+"PO-Revision-Date: 2024-09-05 10:40+0900\n"
 "Last-Translator: Kyotaro Horiguchi <horikyota.ntt@gmail.com>\n"
 "Language-Team: Japan PostgreSQL Users Group <jpug-doc@ml.postgresql.jp>\n"
 "Language: ja\n"
@@ -20,22 +20,22 @@ msgstr ""
 "X-Generator: Poedit 1.8.13\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: ../../../src/common/logging.c:276
+#: ../../../src/common/logging.c:278
 #, c-format
 msgid "error: "
 msgstr "エラー: "
 
-#: ../../../src/common/logging.c:283
+#: ../../../src/common/logging.c:285
 #, c-format
 msgid "warning: "
 msgstr "警告: "
 
-#: ../../../src/common/logging.c:294
+#: ../../../src/common/logging.c:296
 #, c-format
 msgid "detail: "
 msgstr "詳細: "
 
-#: ../../../src/common/logging.c:301
+#: ../../../src/common/logging.c:303
 #, c-format
 msgid "hint: "
 msgstr "ヒント: "
@@ -79,9 +79,9 @@ msgstr ""
 "されるものと一致しないようです。この場合以下の結果は不正確になります。また、\n"
 "PostgreSQLインストレーションはこのデータディレクトリと互換性がなくなります。"
 
-#: ../../common/controldata_utils.c:230 ../../common/file_utils.c:70
-#: ../../common/file_utils.c:347 ../../common/file_utils.c:406
-#: ../../common/file_utils.c:480 ../../fe_utils/recovery_gen.c:140
+#: ../../common/controldata_utils.c:230 ../../common/file_utils.c:71
+#: ../../common/file_utils.c:348 ../../common/file_utils.c:407
+#: ../../common/file_utils.c:481 ../../fe_utils/recovery_gen.c:140
 #: parsexlog.c:312
 #, c-format
 msgid "could not open file \"%s\": %m"
@@ -92,8 +92,8 @@ msgstr "ファイル\"%s\"をオープンできませんでした: %m"
 msgid "could not write file \"%s\": %m"
 msgstr "ファイル\"%s\"を書き出せませんでした: %m"
 
-#: ../../common/controldata_utils.c:268 ../../common/file_utils.c:418
-#: ../../common/file_utils.c:488
+#: ../../common/controldata_utils.c:268 ../../common/file_utils.c:419
+#: ../../common/file_utils.c:489
 #, c-format
 msgid "could not fsync file \"%s\": %m"
 msgstr "ファイル\"%s\"をfsyncできませんでした: %m"
@@ -109,34 +109,34 @@ msgstr "メモリ不足です\n"
 msgid "cannot duplicate null pointer (internal error)\n"
 msgstr "null ポインタを複製できません（内部エラー）\n"
 
-#: ../../common/file_utils.c:76
+#: ../../common/file_utils.c:77
 #, c-format
 msgid "could not synchronize file system for file \"%s\": %m"
 msgstr "ファイル\"%s\"に対してファイルシステムを同期できませんでした: %m"
 
-#: ../../common/file_utils.c:120 ../../common/file_utils.c:566
+#: ../../common/file_utils.c:121 ../../common/file_utils.c:567
 #: ../../fe_utils/archive.c:86 file_ops.c:417
 #, c-format
 msgid "could not stat file \"%s\": %m"
 msgstr "ファイル\"%s\"のstatに失敗しました: %m"
 
-#: ../../common/file_utils.c:130 ../../common/file_utils.c:227
+#: ../../common/file_utils.c:131 ../../common/file_utils.c:228
 #: ../../fe_utils/option_utils.c:99
 #, c-format
 msgid "this build does not support sync method \"%s\""
 msgstr "このビルドでは同期方式\"%s\"をサポートしていません"
 
-#: ../../common/file_utils.c:151 ../../common/file_utils.c:281 file_ops.c:388
+#: ../../common/file_utils.c:152 ../../common/file_utils.c:282 file_ops.c:388
 #, c-format
 msgid "could not open directory \"%s\": %m"
 msgstr "ディレクトリ\"%s\"をオープンできませんでした: %m"
 
-#: ../../common/file_utils.c:169 ../../common/file_utils.c:315 file_ops.c:462
+#: ../../common/file_utils.c:170 ../../common/file_utils.c:316 file_ops.c:462
 #, c-format
 msgid "could not read directory \"%s\": %m"
 msgstr "ディレクトリ\"%s\"を読み取れませんでした: %m"
 
-#: ../../common/file_utils.c:498
+#: ../../common/file_utils.c:499
 #, c-format
 msgid "could not rename file \"%s\" to \"%s\": %m"
 msgstr "ファイル\"%s\"の名前を\"%s\"に変更できませんでした: %m"
@@ -814,68 +814,68 @@ msgstr "ソースデータディレクトリはきれいにシャットダウン
 msgid "%*s/%s kB (%d%%) copied"
 msgstr "%*s/%s kB (%d%%) コピーしました"
 
-#: pg_rewind.c:950
+#: pg_rewind.c:948
 #, c-format
 msgid "could not find common ancestor of the source and target cluster's timelines"
 msgstr "ソースクラスタとターゲットクラスタのタイムラインの共通の祖先を見つけられません"
 
-#: pg_rewind.c:991
+#: pg_rewind.c:989
 #, c-format
 msgid "backup label buffer too small"
 msgstr "バックアップラベルのバッファが小さすぎます"
 
-#: pg_rewind.c:1014
+#: pg_rewind.c:1012
 #, c-format
 msgid "unexpected control file CRC"
 msgstr "想定外の制御ファイルCRCです"
 
-#: pg_rewind.c:1026
+#: pg_rewind.c:1024
 #, c-format
 msgid "unexpected control file size %d, expected %d"
 msgstr "想定外の制御ファイルのサイズ%d、想定は%d"
 
-#: pg_rewind.c:1036
+#: pg_rewind.c:1034
 #, c-format
 msgid "invalid WAL segment size in control file (%d byte)"
 msgid_plural "invalid WAL segment size in control file (%d bytes)"
 msgstr[0] "制御ファイル中の不正なWALセグメントサイズ (%dバイト)"
 
-#: pg_rewind.c:1040
+#: pg_rewind.c:1038
 #, c-format
 msgid "The WAL segment size must be a power of two between 1 MB and 1 GB."
 msgstr "WALセグメントサイズは1MBから1GBまでの間の2の累乗でなければなりません。"
 
-#: pg_rewind.c:1077 pg_rewind.c:1145
+#: pg_rewind.c:1075 pg_rewind.c:1143
 #, c-format
 msgid "program \"%s\" is needed by %s but was not found in the same directory as \"%s\""
 msgstr "%2$sには\"%1$s\"プログラムが必要ですが、\"%3$s\"と同じディレクトリにありませんでした。"
 
-#: pg_rewind.c:1080 pg_rewind.c:1148
+#: pg_rewind.c:1078 pg_rewind.c:1146
 #, c-format
 msgid "program \"%s\" was found by \"%s\" but was not the same version as %s"
 msgstr "\"%2$s\"がプログラム\"%1$s\"を見つけましたが、これは%3$sと同じバージョンではありませんでした。"
 
-#: pg_rewind.c:1109
+#: pg_rewind.c:1107
 #, c-format
-msgid "unable to read restore_command from target cluster"
-msgstr "ターゲットクラスタからrestore_commandが読み取れません"
+msgid "could not read \"restore_command\" from target cluster"
+msgstr "ターゲットクラスタから\"restore_command\"が読み取れませんでした"
 
-#: pg_rewind.c:1114
+#: pg_rewind.c:1112
 #, c-format
 msgid "\"restore_command\" is not set in the target cluster"
 msgstr "ターゲットクラスタで\"restore_command\"が設定されていません"
 
-#: pg_rewind.c:1152
+#: pg_rewind.c:1150
 #, c-format
 msgid "executing \"%s\" for target server to complete crash recovery"
 msgstr "ターゲットサーバーに対して\"%s\"を実行してクラッシュリカバリを完了させます"
 
-#: pg_rewind.c:1190
+#: pg_rewind.c:1188
 #, c-format
 msgid "postgres single-user mode in target cluster failed"
 msgstr "ターゲットクラスタでのpostgresコマンドのシングルユーザーモード実行に失敗しました"
 
-#: pg_rewind.c:1191
+#: pg_rewind.c:1189
 #, c-format
 msgid "Command was: %s"
 msgstr "コマンド: %s"
