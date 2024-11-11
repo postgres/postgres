@@ -4488,7 +4488,9 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
 
         <para>
          Note that this parameter also applies on the subscriber side, but with
-         a different meaning.
+         a different meaning. See <xref linkend="guc-max-replication-slots-subscriber"/>
+         in <xref linkend="runtime-config-replication-subscriber"/> for more
+         details.
         </para>
        </listitem>
       </varlistentry>
@@ -5215,7 +5217,9 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
 
        <para>
         Note that this parameter also applies on a sending server, but with
-        a different meaning.
+        a different meaning. See <xref linkend="guc-max-replication-slots"/>
+        in <xref linkend="runtime-config-replication-sender"/> for more
+        details.
        </para>
       </listitem>
      </varlistentry>
