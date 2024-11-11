@@ -51,3 +51,5 @@ $$
 $$ LANGUAGE plperl;
 WARNING:  attempted alteration of $ENV{TEST_PLPERL_ENV_FOO} at line 12.
 NOTICE:  environ unaffected
+-- clean up to simplify cross-version upgrade testing
+DROP FUNCTION get_environ();
