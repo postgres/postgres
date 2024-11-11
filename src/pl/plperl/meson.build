@@ -94,7 +94,9 @@ tests += {
       'plperl_array',
       'plperl_call',
       'plperl_transaction',
+      'plperl_env',
     ],
+    'regress_args': ['--dlpath', meson.build_root() / 'src/test/regress'],
   },
 }
 
