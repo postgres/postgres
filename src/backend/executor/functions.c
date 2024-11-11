@@ -1972,6 +1972,12 @@ tlist_coercion_finished:
 		rtr->rtindex = 1;
 		newquery->jointree = makeFromExpr(list_make1(rtr), NULL);
 
+		/*
+		 * Make sure the new query is marked as having row security if the
+		 * original one does.
+		 */
+		newquery->hasRowSecurity = parse->hasRowSecurity;
+
 		/* Replace original query in the correct element of the query list */
 		lfirst(parse_cell) = newquery;
 	}
