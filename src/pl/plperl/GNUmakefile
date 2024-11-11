@@ -85,7 +85,7 @@ plperl_opmask.h: plperl_opmask.pl
 
 perlchunks.h: $(PERLCHUNKS)
 	@if [ x"$(perl_privlibexp)" = x"" ]; then echo "configure switch --with-perl was not specified."; exit 1; fi
-	$(PERL) $(srcdir)/text2macro.pl --strip='^(\#.*|\s*)$$' $^ > $@
+	$(PERL) $(srcdir)/text2macro.pl $^ > $@
 
 all: all-lib
 

@@ -17,7 +17,7 @@ plperl_sources += custom_target('perlchunks.h',
   input: files('plc_perlboot.pl', 'plc_trusted.pl'),
   output: 'perlchunks.h',
   capture: true,
-  command: [perl, files('text2macro.pl'), '--strip=^(\#.*|\s*)$', '@INPUT@']
+  command: [perl, files('text2macro.pl'), '@INPUT@']
 )
 
 plperl_sources += custom_target('plperl_opmask.h',
