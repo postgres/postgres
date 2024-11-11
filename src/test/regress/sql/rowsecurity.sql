@@ -1889,6 +1889,39 @@ execute q;
 set role regress_rls_bob;
 execute q;
 
+-- make sure RLS dependencies in CTEs are handled
+reset role;
+create or replace function rls_f() returns setof rls_t
+  stable language sql
+  as $$ with cte as (select * from rls_t) select * from cte $$;
+prepare r as select current_user, * from rls_f();
+set role regress_rls_alice;
+execute r;
+set role regress_rls_bob;
+execute r;
+
+-- make sure RLS dependencies in subqueries are handled
+reset role;
+create or replace function rls_f() returns setof rls_t
+  stable language sql
+  as $$ select * from (select * from rls_t) _ $$;
+prepare s as select current_user, * from rls_f();
+set role regress_rls_alice;
+execute s;
+set role regress_rls_bob;
+execute s;
+
+-- make sure RLS dependencies in sublinks are handled
+reset role;
+create or replace function rls_f() returns setof rls_t
+  stable language sql
+  as $$ select exists(select * from rls_t)::text $$;
+prepare t as select current_user, * from rls_f();
+set role regress_rls_alice;
+execute t;
+set role regress_rls_bob;
+execute t;
+
 RESET ROLE;
 DROP FUNCTION rls_f();
 DROP TABLE rls_t;

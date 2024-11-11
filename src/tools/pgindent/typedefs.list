@@ -2866,6 +2866,7 @@ filemap_t
 finalize_primnode_context
 find_dependent_phvs_context
 find_expr_references_context
+fireRIRonSubLink_context
 fix_join_expr_context
 fix_scan_expr_context
 fix_upper_expr_context
