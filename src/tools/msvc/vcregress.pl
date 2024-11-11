@@ -408,13 +408,15 @@ sub plcheck
 		# Move on if no tests are listed.
 		next if (scalar @tests == 0);
 
+		my @opts = fetchRegressOpts();
+
 		print
 		  "============================================================\n";
 		print "Checking $lang\n";
 		my @args = (
 			"$topdir/$Config/pg_regress/pg_regress",
 			"--bindir=$topdir/$Config/psql",
-			"--dbname=pl_regression", @lang_args, @tests);
+			"--dbname=pl_regression", @lang_args, @opts, @tests);
 		system(@args);
 		my $status = $? >> 8;
 		exit $status if $status;
