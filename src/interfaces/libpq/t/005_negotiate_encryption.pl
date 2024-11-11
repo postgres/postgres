@@ -455,7 +455,7 @@ nogssuser   disable      disable      postgres       connect, authok            
 		connect_test(
 			$node,
 			"user=testuser gssencmode=prefer sslmode=disable",
-			'connect, v2error -> fail');
+			'connect, v2error, reconnect, v2error -> fail');
 		$node->restart;
 
 		$node->safe_psql(
