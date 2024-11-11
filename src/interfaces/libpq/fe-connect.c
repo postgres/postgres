@@ -2961,16 +2961,13 @@ keep_going:						/* We will come back to here until there is
 					{
 						/*
 						 * Server failure of some sort, such as failure to
-						 * fork a backend process.  We need to process and
-						 * report the error message, which might be formatted
-						 * according to either protocol 2 or protocol 3.
-						 * Rather than duplicate the code for that, we flip
-						 * into AWAITING_RESPONSE state and let the code there
-						 * deal with it.  Note we have *not* consumed the "E"
-						 * byte here.
+						 * fork a backend process.  Don't bother retrieving
+						 * the error message; we should not trust it as the
+						 * server has not been authenticated yet.
 						 */
-						conn->status = CONNECTION_AWAITING_RESPONSE;
-						goto keep_going;
+						appendPQExpBuffer(&conn->errorMessage,
+										  libpq_gettext("server sent an error response during SSL exchange\n"));
+						goto error_return;
 					}
 					else
 					{
