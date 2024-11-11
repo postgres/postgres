@@ -1,13 +1,13 @@
 # Russian message translation file for pg_rewind
 # Copyright (C) 2015-2016 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# Alexander Lakhin <exclusion@gmail.com>, 2015-2017, 2018, 2019, 2020, 2021, 2022, 2023.
+# Alexander Lakhin <exclusion@gmail.com>, 2015-2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024.
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_rewind (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2023-11-03 09:09+0300\n"
-"PO-Revision-Date: 2023-08-30 15:22+0300\n"
+"POT-Creation-Date: 2024-11-09 07:48+0300\n"
+"PO-Revision-Date: 2024-09-07 13:07+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -221,17 +221,17 @@ msgstr "не удалось прочитать файл \"%s\" (прочитан
 msgid "could not open directory \"%s\": %m"
 msgstr "не удалось открыть каталог \"%s\": %m"
 
-#: file_ops.c:446
+#: file_ops.c:442
 #, c-format
 msgid "could not read symbolic link \"%s\": %m"
 msgstr "не удалось прочитать символическую ссылку \"%s\": %m"
 
-#: file_ops.c:449
+#: file_ops.c:445
 #, c-format
 msgid "symbolic link \"%s\" target is too long"
 msgstr "целевой путь символической ссылки \"%s\" слишком длинный"
 
-#: file_ops.c:464
+#: file_ops.c:460
 #, c-format
 msgid ""
 "\"%s\" is a symbolic link, but symbolic links are not supported on this "
@@ -240,12 +240,12 @@ msgstr ""
 "\"%s\" — символическая ссылка, но в этой ОС символические ссылки не "
 "поддерживаются"
 
-#: file_ops.c:471
+#: file_ops.c:467
 #, c-format
 msgid "could not read directory \"%s\": %m"
 msgstr "не удалось прочитать каталог \"%s\": %m"
 
-#: file_ops.c:475
+#: file_ops.c:471
 #, c-format
 msgid "could not close directory \"%s\": %m"
 msgstr "не удалось закрыть каталог \"%s\": %m"
@@ -643,7 +643,7 @@ msgstr "Запускать %s нужно от имени суперпользо�
 #: pg_rewind.c:267
 #, c-format
 msgid "could not read permissions of directory \"%s\": %m"
-msgstr "не удалось считать права на каталог \"%s\": %m"
+msgstr "не удалось прочитать права на каталог \"%s\": %m"
 
 #: pg_rewind.c:287
 #, c-format
@@ -765,29 +765,29 @@ msgstr "%*s/%s КБ (%d%%) скопировано"
 msgid "invalid control file"
 msgstr "неверный управляющий файл"
 
-#: pg_rewind.c:919
+#: pg_rewind.c:917
 #, c-format
 msgid ""
 "could not find common ancestor of the source and target cluster's timelines"
 msgstr ""
 "не удалось найти общего предка линий времени исходного и целевого кластеров"
 
-#: pg_rewind.c:960
+#: pg_rewind.c:958
 #, c-format
 msgid "backup label buffer too small"
 msgstr "буфер для метки копии слишком мал"
 
-#: pg_rewind.c:983
+#: pg_rewind.c:981
 #, c-format
 msgid "unexpected control file CRC"
 msgstr "неверная контрольная сумма управляющего файла"
 
-#: pg_rewind.c:995
+#: pg_rewind.c:993
 #, c-format
 msgid "unexpected control file size %d, expected %d"
 msgstr "неверный размер управляющего файла (%d), ожидалось: %d"
 
-#: pg_rewind.c:1004
+#: pg_rewind.c:1002
 #, c-format
 msgid ""
 "WAL segment size must be a power of two between 1 MB and 1 GB, but the "
@@ -805,7 +805,7 @@ msgstr[2] ""
 "Размер сегмента WAL должен задаваться степенью 2 в интервале от 1 МБ до 1 "
 "ГБ, но в управляющем файле указано значение: %d"
 
-#: pg_rewind.c:1043 pg_rewind.c:1101
+#: pg_rewind.c:1041 pg_rewind.c:1099
 #, c-format
 msgid ""
 "The program \"%s\" is needed by %s but was not found in the\n"
@@ -816,7 +816,7 @@ msgstr ""
 "в каталоге \"%s\".\n"
 "Проверьте правильность установки СУБД."
 
-#: pg_rewind.c:1048 pg_rewind.c:1106
+#: pg_rewind.c:1046 pg_rewind.c:1104
 #, c-format
 msgid ""
 "The program \"%s\" was found by \"%s\"\n"
@@ -827,25 +827,25 @@ msgstr ""
 "но её версия отличается от версии %s.\n"
 "Проверьте правильность установки СУБД."
 
-#: pg_rewind.c:1069
+#: pg_rewind.c:1067
 #, c-format
 msgid "restore_command is not set in the target cluster"
 msgstr "команда restore_command в целевом кластере не определена"
 
-#: pg_rewind.c:1112
+#: pg_rewind.c:1110
 #, c-format
 msgid "executing \"%s\" for target server to complete crash recovery"
 msgstr ""
 "выполнение \"%s\" для восстановления согласованности на целевом сервере"
 
-#: pg_rewind.c:1132
+#: pg_rewind.c:1130
 #, c-format
 msgid "postgres single-user mode in target cluster failed"
 msgstr ""
 "не удалось запустить postgres в целевом кластере в однопользовательском "
 "режиме"
 
-#: pg_rewind.c:1133
+#: pg_rewind.c:1131
 #, c-format
 msgid "Command was: %s"
 msgstr "Выполнялась команда: %s"

@@ -5,17 +5,17 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_test_fsync (PostgreSQL) 12\n"
+"Project-Id-Version: PostgreSQL 14\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2021-04-15 01:49+0000\n"
-"PO-Revision-Date: 2021-04-15 08:43+0200\n"
-"Last-Translator: \n"
-"Language-Team: \n"
+"PO-Revision-Date: 2024-09-16 16:36+0200\n"
+"Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
+"Language-Team: French <guillaume@lelarge.info>\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 2.4.2\n"
+"X-Generator: Poedit 3.5\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 
 #. translator: maintain alignment with NA_FORMAT
@@ -174,15 +174,3 @@ msgid ""
 msgstr ""
 "\n"
 "%d Ko d'écritures non synchronisées :\n"
-
-#~ msgid "%s: %s\n"
-#~ msgstr "%s : %s\n"
-
-#~ msgid "seek failed"
-#~ msgstr "seek échoué"
-
-#~ msgid "%s: too many command-line arguments (first is \"%s\")\n"
-#~ msgstr "%s : trop d'arguments en ligne de commande (le premier étant « %s »)\n"
-
-#~ msgid "Could not create thread for alarm\n"
-#~ msgstr "N'a pas pu créer un thread pour l'alarme\n"

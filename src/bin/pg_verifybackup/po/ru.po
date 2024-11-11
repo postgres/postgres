@@ -1,10 +1,10 @@
-# Alexander Lakhin <a.lakhin@postgrespro.ru>, 2020, 2021, 2022, 2023.
+# Alexander Lakhin <a.lakhin@postgrespro.ru>, 2020, 2021, 2022, 2023, 2024.
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_verifybackup (PostgreSQL) 13\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2024-08-01 12:51+0300\n"
-"PO-Revision-Date: 2021-09-17 07:33+0300\n"
+"PO-Revision-Date: 2024-09-07 09:48+0300\n"
 "Last-Translator: Alexander Lakhin <a.lakhin@postgrespro.ru>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -98,7 +98,7 @@ msgstr "Ожидалась строка, но обнаружено \"%s\"."
 #: ../../common/jsonapi.c:1116
 #, c-format
 msgid "Token \"%s\" is invalid."
-msgstr "Ошибочный элемент текста \"%s\"."
+msgstr "Ошибочный элемент \"%s\"."
 
 #: ../../common/jsonapi.c:1119
 msgid "\\u0000 cannot be converted to text."
@@ -179,7 +179,7 @@ msgstr "отсутствует указание пути"
 
 #: parse_manifest.c:475
 msgid "both path name and encoded path name"
-msgstr "указание пути задано в обычном виде и в закодированном"
+msgstr "путь задан в обычном виде и в закодированном"
 
 #: parse_manifest.c:477
 msgid "missing size"
@@ -221,7 +221,7 @@ msgstr "отсутствует конечный LSN"
 
 #: parse_manifest.c:582
 msgid "timeline is not an integer"
-msgstr "линия времени задаётся не целым числом"
+msgstr "линия времени задана не целым числом"
 
 #: parse_manifest.c:585
 msgid "could not parse start LSN"

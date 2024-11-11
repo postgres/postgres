@@ -1,9 +1,9 @@
-# Alexander Lakhin <a.lakhin@postgrespro.ru>, 2019, 2020, 2021, 2022.
+# Alexander Lakhin <a.lakhin@postgrespro.ru>, 2019, 2020, 2021, 2022, 2024.
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_verify_checksums (PostgreSQL) 11\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2021-08-14 06:29+0300\n"
+"POT-Creation-Date: 2024-11-09 07:48+0300\n"
 "PO-Revision-Date: 2021-02-08 07:59+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
@@ -198,7 +198,7 @@ msgstr "контрольные суммы в файле \"%s\" включены"
 msgid "could not open directory \"%s\": %m"
 msgstr "не удалось открыть каталог \"%s\": %m"
 
-#: pg_checksums.c:344 pg_checksums.c:423
+#: pg_checksums.c:344 pg_checksums.c:419
 #, c-format
 msgid "could not stat file \"%s\": %m"
 msgstr "не удалось получить информацию о файле \"%s\": %m"
@@ -208,47 +208,47 @@ msgstr "не удалось получить информацию о файле 
 msgid "invalid segment number %d in file name \"%s\""
 msgstr "неверный номер сегмента %d в имени файла \"%s\""
 
-#: pg_checksums.c:504
+#: pg_checksums.c:500
 #, c-format
 msgid "invalid filenode specification, must be numeric: %s"
 msgstr "неверное указание файлового узла, требуется число: %s"
 
-#: pg_checksums.c:522 pg_checksums.c:538 pg_checksums.c:548 pg_checksums.c:557
+#: pg_checksums.c:518 pg_checksums.c:534 pg_checksums.c:544 pg_checksums.c:553
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Для дополнительной информации попробуйте \"%s --help\".\n"
 
-#: pg_checksums.c:537
+#: pg_checksums.c:533
 #, c-format
 msgid "no data directory specified"
 msgstr "каталог данных не указан"
 
-#: pg_checksums.c:546
+#: pg_checksums.c:542
 #, c-format
 msgid "too many command-line arguments (first is \"%s\")"
 msgstr "слишком много аргументов командной строки (первый: \"%s\")"
 
-#: pg_checksums.c:556
+#: pg_checksums.c:552
 #, c-format
 msgid "option -f/--filenode can only be used with --check"
 msgstr "параметр -f/--filenode можно использовать только с --check"
 
-#: pg_checksums.c:566
+#: pg_checksums.c:562
 #, c-format
 msgid "pg_control CRC value is incorrect"
 msgstr "ошибка контрольного значения в pg_control"
 
-#: pg_checksums.c:572
+#: pg_checksums.c:568
 #, c-format
 msgid "cluster is not compatible with this version of pg_checksums"
 msgstr "кластер несовместим с этой версией pg_checksums"
 
-#: pg_checksums.c:578
+#: pg_checksums.c:574
 #, c-format
 msgid "database cluster is not compatible"
 msgstr "несовместимый кластер баз данных"
 
-#: pg_checksums.c:579
+#: pg_checksums.c:575
 #, c-format
 msgid ""
 "The database cluster was initialized with block size %u, but pg_checksums "
@@ -257,67 +257,67 @@ msgstr ""
 "Кластер баз данных был инициализирован с размером блока %u, а утилита "
 "pg_checksums скомпилирована для размера блока %u.\n"
 
-#: pg_checksums.c:592
+#: pg_checksums.c:588
 #, c-format
 msgid "cluster must be shut down"
 msgstr "кластер должен быть отключён"
 
-#: pg_checksums.c:599
+#: pg_checksums.c:595
 #, c-format
 msgid "data checksums are not enabled in cluster"
 msgstr "контрольные суммы в кластере не включены"
 
-#: pg_checksums.c:606
+#: pg_checksums.c:602
 #, c-format
 msgid "data checksums are already disabled in cluster"
 msgstr "контрольные суммы в кластере уже отключены"
 
-#: pg_checksums.c:613
+#: pg_checksums.c:609
 #, c-format
 msgid "data checksums are already enabled in cluster"
 msgstr "контрольные суммы в кластере уже включены"
 
-#: pg_checksums.c:639
+#: pg_checksums.c:635
 #, c-format
 msgid "Checksum operation completed\n"
 msgstr "Обработка контрольных сумм завершена\n"
 
-#: pg_checksums.c:640
+#: pg_checksums.c:636
 #, c-format
 msgid "Files scanned:  %s\n"
 msgstr "Просканировано файлов: %s\n"
 
-#: pg_checksums.c:641
+#: pg_checksums.c:637
 #, c-format
 msgid "Blocks scanned: %s\n"
 msgstr "Просканировано блоков: %s\n"
 
-#: pg_checksums.c:644
+#: pg_checksums.c:640
 #, c-format
 msgid "Bad checksums:  %s\n"
 msgstr "Неверные контрольные суммы: %s\n"
 
-#: pg_checksums.c:645 pg_checksums.c:672
+#: pg_checksums.c:641 pg_checksums.c:668
 #, c-format
 msgid "Data checksum version: %u\n"
 msgstr "Версия контрольных сумм данных: %u\n"
 
-#: pg_checksums.c:664
+#: pg_checksums.c:660
 #, c-format
 msgid "syncing data directory"
 msgstr "синхронизация каталога данных"
 
-#: pg_checksums.c:668
+#: pg_checksums.c:664
 #, c-format
 msgid "updating control file"
 msgstr "модификация управляющего файла"
 
-#: pg_checksums.c:674
+#: pg_checksums.c:670
 #, c-format
 msgid "Checksums enabled in cluster\n"
 msgstr "Контрольные суммы в кластере включены\n"
 
-#: pg_checksums.c:676
+#: pg_checksums.c:672
 #, c-format
 msgid "Checksums disabled in cluster\n"
 msgstr "Контрольные суммы в кластере отключены\n"

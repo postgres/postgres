@@ -1,10 +1,10 @@
-# Alexander Lakhin <a.lakhin@postgrespro.ru>, 2021, 2022.
+# Alexander Lakhin <a.lakhin@postgrespro.ru>, 2021, 2022, 2024.
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_amcheck (PostgreSQL) 14\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2022-08-10 11:56+0300\n"
-"PO-Revision-Date: 2022-05-07 06:16+0300\n"
+"PO-Revision-Date: 2024-09-05 08:23+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -447,8 +447,8 @@ msgstr ""
 msgid ""
 "  -h, --host=HOSTNAME             database server host or socket directory\n"
 msgstr ""
-"  -h, --host=ИМЯ                  имя сервера баз данных или каталог "
-"сокетов\n"
+"  -h, --host=ИМЯ                  компьютер с сервером баз данных или "
+"каталог сокетов\n"
 
 #: pg_amcheck.c:1196
 #, c-format

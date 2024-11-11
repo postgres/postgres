@@ -1,13 +1,13 @@
 # Russian message translation file for pg_basebackup
 # Copyright (C) 2012-2016 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# Alexander Lakhin <exclusion@gmail.com>, 2012-2017, 2018, 2019, 2020, 2021, 2022, 2023.
+# Alexander Lakhin <exclusion@gmail.com>, 2012-2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024.
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_basebackup (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2023-09-11 15:32+0300\n"
-"PO-Revision-Date: 2022-09-05 15:10+0300\n"
+"POT-Creation-Date: 2024-11-09 07:48+0300\n"
+"PO-Revision-Date: 2024-09-07 11:12+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -43,35 +43,35 @@ msgstr "нехватка памяти\n"
 msgid "cannot duplicate null pointer (internal error)\n"
 msgstr "попытка дублирования нулевого указателя (внутренняя ошибка)\n"
 
-#: ../../common/file_utils.c:87 ../../common/file_utils.c:451
+#: ../../common/file_utils.c:86 ../../common/file_utils.c:446
 #: pg_receivewal.c:266 pg_recvlogical.c:339
 #, c-format
 msgid "could not stat file \"%s\": %m"
 msgstr "не удалось получить информацию о файле \"%s\": %m"
 
-#: ../../common/file_utils.c:166 pg_receivewal.c:169
+#: ../../common/file_utils.c:161 pg_receivewal.c:169
 #, c-format
 msgid "could not open directory \"%s\": %m"
 msgstr "не удалось открыть каталог \"%s\": %m"
 
-#: ../../common/file_utils.c:200 pg_receivewal.c:337
+#: ../../common/file_utils.c:195 pg_receivewal.c:337
 #, c-format
 msgid "could not read directory \"%s\": %m"
 msgstr "не удалось прочитать каталог \"%s\": %m"
 
-#: ../../common/file_utils.c:232 ../../common/file_utils.c:291
-#: ../../common/file_utils.c:365 ../../fe_utils/recovery_gen.c:134
+#: ../../common/file_utils.c:227 ../../common/file_utils.c:286
+#: ../../common/file_utils.c:360 ../../fe_utils/recovery_gen.c:134
 #, c-format
 msgid "could not open file \"%s\": %m"
 msgstr "не удалось открыть файл \"%s\": %m"
 
-#: ../../common/file_utils.c:303 ../../common/file_utils.c:373
+#: ../../common/file_utils.c:298 ../../common/file_utils.c:368
 #: pg_recvlogical.c:193
 #, c-format
 msgid "could not fsync file \"%s\": %m"
 msgstr "не удалось синхронизировать с ФС файл \"%s\": %m"
 
-#: ../../common/file_utils.c:383
+#: ../../common/file_utils.c:378
 #, c-format
 msgid "could not rename file \"%s\" to \"%s\": %m"
 msgstr "не удалось переименовать файл \"%s\" в \"%s\": %m"
@@ -409,7 +409,9 @@ msgstr "  -d, --dbname=СТРОКА    строка подключения\n"
 #: pg_basebackup.c:430 pg_receivewal.c:97 pg_recvlogical.c:101
 #, c-format
 msgid "  -h, --host=HOSTNAME    database server host or socket directory\n"
-msgstr "  -h, --host=ИМЯ         имя сервера баз данных или каталог сокетов\n"
+msgstr ""
+"  -h, --host=ИМЯ         компьютер с сервером баз данных или каталог "
+"сокетов\n"
 
 #: pg_basebackup.c:431 pg_receivewal.c:98 pg_recvlogical.c:102
 #, c-format
@@ -515,7 +517,7 @@ msgstr "каталог \"%s\" существует, но он не пуст"
 #: pg_basebackup.c:770
 #, c-format
 msgid "could not access directory \"%s\": %m"
-msgstr "ошибка доступа к каталогу \"%s\": %m"
+msgstr "ошибка при обращении к каталогу \"%s\": %m"
 
 #: pg_basebackup.c:835
 #, c-format

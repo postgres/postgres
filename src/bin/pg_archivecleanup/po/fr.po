@@ -5,17 +5,18 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_archivecleanup (PostgreSQL) 14\n"
+"Project-Id-Version: PostgreSQL 14\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2020-04-16 06:16+0000\n"
-"PO-Revision-Date: 2020-04-16 13:39+0200\n"
-"Last-Translator: \n"
-"Language-Team: \n"
+"PO-Revision-Date: 2024-09-16 16:36+0200\n"
+"Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
+"Language-Team: French <guillaume@lelarge.info>\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 2.3\n"
+"X-Generator: Poedit 3.5\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
 
 #: ../../../src/common/logging.c:236
 #, c-format
@@ -177,25 +178,3 @@ msgstr "doit spécifier le plus ancien journal de transactions conservé"
 #, c-format
 msgid "too many command-line arguments"
 msgstr "trop d'arguments en ligne de commande"
-
-#~ msgid "%s: file \"%s\" would be removed\n"
-#~ msgstr "%s : le fichier « %s » serait supprimé\n"
-
-#~ msgid "%s: removing file \"%s\"\n"
-#~ msgstr "%s : suppression du fichier « %s »\n"
-
-#~ msgid "%s: ERROR: could not remove file \"%s\": %s\n"
-#~ msgstr "%s : ERREUR : n'a pas pu supprimer le fichier « %s » : %s\n"
-
-#~ msgid "%s: keeping WAL file \"%s\" and later\n"
-#~ msgstr "%s : conservation du fichier WAL « %s » et des suivants\n"
-
-#~ msgid "%s: too many parameters\n"
-#~ msgstr "%s : trop de paramètres\n"
-
-#~ msgid ""
-#~ "\n"
-#~ "Report bugs to <pgsql-bugs@lists.postgresql.org>.\n"
-#~ msgstr ""
-#~ "\n"
-#~ "Rapporter les bogues à <pgsql-bugs@lists.postgresql.org>.\n"

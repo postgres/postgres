@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_upgrade (PostgreSQL) 14\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-08-02 10:09+0000\n"
+"POT-Creation-Date: 2024-11-09 06:38+0000\n"
 "PO-Revision-Date: 2024-08-02 19:36-0400\n"
 "Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
@@ -100,7 +100,6 @@ msgstr "Verificando las versiones de los clústers"
 
 #: check.c:325
 #, c-format
-#| msgid "This utility can only upgrade from PostgreSQL version %s and later.\n"
 msgid "This utility can only upgrade from PostgreSQL version 9.0 and later.\n"
 msgstr "Este programa sólo puede actualizar desde PostgreSQL versión 9.0 y posterior.\n"
 

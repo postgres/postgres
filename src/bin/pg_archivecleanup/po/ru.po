@@ -1,13 +1,13 @@
 # Russian message translation file for pg_archivecleanup
 # Copyright (C) 2017 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# Alexander Lakhin <a.lakhin@postgrespro.ru>, 2017, 2019, 2020, 2022.
+# Alexander Lakhin <a.lakhin@postgrespro.ru>, 2017, 2019, 2020, 2022, 2024.
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_archivecleanup (PostgreSQL) 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2021-08-14 06:29+0300\n"
-"PO-Revision-Date: 2020-09-03 12:40+0300\n"
+"PO-Revision-Date: 2024-09-07 06:17+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -119,7 +119,7 @@ msgstr "  -V, --version  показать версию и выйти\n"
 #: pg_archivecleanup.c:261
 #, c-format
 msgid "  -x EXT         clean up files if they have this extension\n"
-msgstr "  -x РСШ         убрать файлы с заданным расширением\n"
+msgstr "  -x РСШ         удалить файлы с заданным расширением\n"
 
 #: pg_archivecleanup.c:262
 #, c-format

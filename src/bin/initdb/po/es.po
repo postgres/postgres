@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: initdb (PostgreSQL) 14\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-08-02 10:09+0000\n"
+"POT-Creation-Date: 2024-11-09 06:38+0000\n"
 "PO-Revision-Date: 2021-10-13 23:44-0500\n"
 "Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
@@ -87,33 +87,33 @@ msgstr "memoria agotada\n"
 msgid "cannot duplicate null pointer (internal error)\n"
 msgstr "no se puede duplicar un puntero nulo (error interno)\n"
 
-#: ../../common/file_utils.c:87 ../../common/file_utils.c:451
+#: ../../common/file_utils.c:86 ../../common/file_utils.c:446
 #, c-format
 msgid "could not stat file \"%s\": %m"
 msgstr "no se pudo hacer stat al archivo «%s»: %m"
 
-#: ../../common/file_utils.c:166 ../../common/pgfnames.c:48
+#: ../../common/file_utils.c:161 ../../common/pgfnames.c:48
 #, c-format
 msgid "could not open directory \"%s\": %m"
 msgstr "no se pudo abrir el directorio «%s»: %m"
 
-#: ../../common/file_utils.c:200 ../../common/pgfnames.c:69
+#: ../../common/file_utils.c:195 ../../common/pgfnames.c:69
 #, c-format
 msgid "could not read directory \"%s\": %m"
 msgstr "no se pudo leer el directorio «%s»: %m"
 
-#: ../../common/file_utils.c:232 ../../common/file_utils.c:291
-#: ../../common/file_utils.c:365
+#: ../../common/file_utils.c:227 ../../common/file_utils.c:286
+#: ../../common/file_utils.c:360
 #, c-format
 msgid "could not open file \"%s\": %m"
 msgstr "no se pudo abrir el archivo «%s»: %m"
 
-#: ../../common/file_utils.c:303 ../../common/file_utils.c:373
+#: ../../common/file_utils.c:298 ../../common/file_utils.c:368
 #, c-format
 msgid "could not fsync file \"%s\": %m"
 msgstr "no se pudo sincronizar (fsync) archivo «%s»: %m"
 
-#: ../../common/file_utils.c:383
+#: ../../common/file_utils.c:378
 #, c-format
 msgid "could not rename file \"%s\" to \"%s\": %m"
 msgstr "no se pudo renombrar el archivo de «%s» a «%s»: %m"
@@ -217,12 +217,12 @@ msgstr "el proceso hijo fue terminado por una señal %d: %s"
 msgid "child process exited with unrecognized status %d"
 msgstr "el proceso hijo terminó con código no reconocido %d"
 
-#: ../../port/dirmod.c:221
+#: ../../port/dirmod.c:247
 #, c-format
 msgid "could not set junction for \"%s\": %s\n"
 msgstr "no se pudo definir un junction para «%s»: %s\n"
 
-#: ../../port/dirmod.c:298
+#: ../../port/dirmod.c:324
 #, c-format
 msgid "could not get junction for \"%s\": %s\n"
 msgstr "no se pudo obtener junction para «%s»: %s\n"

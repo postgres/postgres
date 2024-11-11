@@ -10,15 +10,15 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 14\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2021-08-27 02:09+0000\n"
-"PO-Revision-Date: 2021-08-27 17:30+0200\n"
+"PO-Revision-Date: 2024-09-16 16:36+0200\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
-"Language-Team: PostgreSQLfr <pgsql-fr-generale@postgresql.org>\n"
+"Language-Team: French <guillaume@lelarge.info>\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
-"X-Generator: Poedit 3.0\n"
+"X-Generator: Poedit 3.5\n"
 
 #: descriptor.c:64
 #, c-format
@@ -721,37 +721,3 @@ msgstr "ce type de données ne supporte pas les pointeurs de pointeur"
 #, c-format
 msgid "multidimensional arrays for structures are not supported"
 msgstr "les tableaux multidimensionnels ne sont pas supportés pour les structures"
-
-#~ msgid "declared name %s is already defined"
-#~ msgstr "le nom déclaré %s est déjà défini"
-
-#~ msgid "COPY TO STDIN is not possible"
-#~ msgstr "COPY TO STDIN n'est pas possible"
-
-#~ msgid "COPY FROM STDOUT is not possible"
-#~ msgstr "COPY FROM STDOUT n'est pas possible"
-
-#~ msgid "NEW used in query that is not in a rule"
-#~ msgstr "NEW utilisé dans une requête qui n'est pas dans une règle"
-
-#~ msgid "OLD used in query that is not in a rule"
-#~ msgstr "OLD utilisé dans une requête qui n'est pas dans une règle"
-
-#~ msgid "constraint declared INITIALLY DEFERRED must be DEFERRABLE"
-#~ msgstr "une contrainte déclarée INITIALLY DEFERRED doit être DEFERRABLE"
-
-#~ msgid "AT option not allowed in DEALLOCATE statement"
-#~ msgstr "option AT non autorisée dans une instruction DEALLOCATE"
-
-#~ msgid "  --version      output version information, then exit\n"
-#~ msgstr "  --version      affiche la version et quitte\n"
-
-#~ msgid ""
-#~ "\n"
-#~ "Report bugs to <pgsql-bugs@lists.postgresql.org>.\n"
-#~ msgstr ""
-#~ "\n"
-#~ "Rapporter les bogues à <pgsql-bugs@lists.postgresql.org>.\n"
-
-#~ msgid "using unsupported DESCRIBE statement"
-#~ msgstr "utilisation de l'instruction DESCRIBE non supporté"
