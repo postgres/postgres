@@ -13,7 +13,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 16\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2023-10-29 17:19+0000\n"
-"PO-Revision-Date: 2023-10-30 13:38+0100\n"
+"PO-Revision-Date: 2024-09-16 16:35+0200\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team: French <guillaume@lelarge.info>\n"
 "Language: fr\n"
@@ -21,7 +21,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
-"X-Generator: Poedit 3.4\n"
+"X-Generator: Poedit 3.5\n"
 
 #: ../../../src/common/logging.c:276
 #, c-format
@@ -571,7 +571,7 @@ msgstr "  %s [OPTION]... [RÔLE]\n"
 msgid ""
 "  -a, --with-admin=ROLE     ROLE will be a member of new role with admin\n"
 "                            option\n"
-msgstr "  -a, --with-admin=ROLE     ROLE sera un membre du nouveau rôle avec l'option admin\n"
+msgstr "  -a, --with-admin=ROLE          ROLE sera un membre du nouveau rôle avec l'option admin\n"
 
 #: createuser.c:420
 #, c-format
@@ -595,12 +595,12 @@ msgstr ""
 #: createuser.c:424
 #, c-format
 msgid "  -g, --member-of=ROLE      new role will be a member of ROLE\n"
-msgstr "  -g, --member-of=ROLE      le nouveau rôle sera un membre de ROLE\n"
+msgstr "  -g, --member-of=ROLE           le nouveau rôle sera un membre de ROLE\n"
 
 #: createuser.c:425
 #, c-format
 msgid "  --role=ROLE               (same as --member-of, deprecated)\n"
-msgstr "  --role=ROLE               (identique à --member-of, obsolète)\n"
+msgstr "  --role=ROLE                    (identique à --member-of, obsolète)\n"
 
 #: createuser.c:426
 #, c-format
@@ -629,7 +629,7 @@ msgstr "  -L, --no-login                 le rôle ne peut pas se connecter\n"
 #: createuser.c:431
 #, c-format
 msgid "  -m, --with-member=ROLE    ROLE will be a member of new role\n"
-msgstr "  -m, --with-member=ROLE    ROLE sera un membre du nouveau rôle\n"
+msgstr "  -m, --with-member=ROLE         ROLE sera un membre du nouveau rôle\n"
 
 #: createuser.c:432
 #, c-format
@@ -664,8 +664,7 @@ msgid ""
 "  -v, --valid-until=TIMESTAMP\n"
 "                            password expiration date and time for role\n"
 msgstr ""
-"  -v, --valid-until=TIMESTAMP\n"
-"                            date et heure d'expiration du mot de passe pour le rôle\n"
+"  -v, --valid-until=TIMESTAMP    date et heure d'expiration du mot de passe pour le rôle\n"
 
 #: createuser.c:440
 #, c-format
@@ -679,7 +678,7 @@ msgstr ""
 #: createuser.c:442
 #, c-format
 msgid "  --bypassrls               role can bypass row-level security (RLS) policy\n"
-msgstr "  --bypassrls               le rôle peut contourner la politique de sécurité niveau ligne (RLS)\n"
+msgstr "  --bypassrls                    le rôle peut contourner la politique de sécurité niveau ligne (RLS)\n"
 
 #: createuser.c:443
 #, c-format
@@ -687,8 +686,8 @@ msgid ""
 "  --no-bypassrls            role cannot bypass row-level security (RLS) policy\n"
 "                            (default)\n"
 msgstr ""
-"  --no-bypassrls            le rôle ne peut pas contourner la politique de sécurité niveau ligne (RLS)\n"
-"                            (par défaut)\n"
+"  --no-bypassrls                 le rôle ne peut pas contourner la politique de sécurité niveau ligne (RLS)\n"
+"                                 (par défaut)\n"
 
 #: createuser.c:445
 #, c-format
@@ -1336,203 +1335,3 @@ msgid ""
 msgstr ""
 "\n"
 "Lire la description de la commande SQL VACUUM pour plus d'informations.\n"
-
-#~ msgid ""
-#~ "\n"
-#~ "If one of -d, -D, -r, -R, -s, -S, and ROLENAME is not specified, you will\n"
-#~ "be prompted interactively.\n"
-#~ msgstr ""
-#~ "\n"
-#~ "Si une des options -d, -D, -r, -R, -s, -S et RÔLE n'est pas précisée,\n"
-#~ "elle sera demandée interactivement.\n"
-
-#~ msgid ""
-#~ "\n"
-#~ "Report bugs to <pgsql-bugs@lists.postgresql.org>.\n"
-#~ msgstr ""
-#~ "\n"
-#~ "Rapporter les bogues à <pgsql-bugs@lists.postgresql.org>.\n"
-
-#~ msgid "  %s [OPTION]... LANGNAME [DBNAME]\n"
-#~ msgstr "  %s [OPTION]... NOMLANGAGE [BASE]\n"
-
-#~ msgid "  --help                          show this help, then exit\n"
-#~ msgstr "  --help                          affiche cette aide et quitte\n"
-
-#~ msgid "  --help                       show this help, then exit\n"
-#~ msgstr "  --help                        affiche cette aide et quitte\n"
-
-#~ msgid "  --help                    show this help, then exit\n"
-#~ msgstr "  --help                         affiche cette aide et quitte\n"
-
-#~ msgid "  --version                       output version information, then exit\n"
-#~ msgstr "  --version                       affiche la version et quitte\n"
-
-#~ msgid "  --version                    output version information, then exit\n"
-#~ msgstr "  --version                     affiche la version et quitte\n"
-
-#~ msgid "  --version                 output version information, then exit\n"
-#~ msgstr "  --version                      affiche la version et quitte\n"
-
-#~ msgid "  -E, --encrypted           encrypt stored password\n"
-#~ msgstr "  -E, --encrypted                chiffre le mot de passe stocké\n"
-
-#~ msgid "  -N, --unencrypted         do not encrypt stored password\n"
-#~ msgstr "  -N, --unencrypted              ne chiffre pas le mot de passe stocké\n"
-
-#~ msgid "  -d, --dbname=DBNAME       database from which to remove the language\n"
-#~ msgstr ""
-#~ "  -d, --dbname=BASE           base de données à partir de laquelle\n"
-#~ "                                 supprimer le langage\n"
-
-#~ msgid "  -d, --dbname=DBNAME       database to install language in\n"
-#~ msgstr "  -d, --dbname=BASE           base sur laquelle installer le langage\n"
-
-#~ msgid "  -l, --list                show a list of currently installed languages\n"
-#~ msgstr ""
-#~ "  -l, --list                     affiche la liste des langages déjà\n"
-#~ "                                 installés\n"
-
-#~ msgid ""
-#~ "%s installs a procedural language into a PostgreSQL database.\n"
-#~ "\n"
-#~ msgstr ""
-#~ "%s installe un langage de procédures dans une base de données PostgreSQL.\n"
-#~ "\n"
-
-#~ msgid ""
-#~ "%s removes a procedural language from a database.\n"
-#~ "\n"
-#~ msgstr ""
-#~ "%s supprime un langage procédural d'une base de données.\n"
-#~ "\n"
-
-#~ msgid "%s: \"%s\" is not a valid encoding name\n"
-#~ msgstr "%s : « %s » n'est pas un nom d'encodage valide\n"
-
-#~ msgid "%s: %s"
-#~ msgstr "%s : %s"
-
-#~ msgid "%s: cannot use the \"freeze\" option when performing only analyze\n"
-#~ msgstr ""
-#~ "%s : ne peut utiliser l'option « freeze » lors de l'exécution d'un ANALYZE\n"
-#~ "seul\n"
-
-#~ msgid "%s: could not get current user name: %s\n"
-#~ msgstr "%s : n'a pas pu récupérer le nom de l'utilisateur actuel : %s\n"
-
-#~ msgid "%s: could not obtain information about current user: %s\n"
-#~ msgstr "%s : n'a pas pu obtenir les informations concernant l'utilisateur actuel : %s\n"
-
-#~ msgid "%s: invalid socket: %s"
-#~ msgstr "%s : socket invalide : %s"
-
-#~ msgid "%s: language \"%s\" is already installed in database \"%s\"\n"
-#~ msgstr "%s : le langage « %s » est déjà installé sur la base de données « %s »\n"
-
-#~ msgid "%s: language \"%s\" is not installed in database \"%s\"\n"
-#~ msgstr "%s : le langage « %s » n'est pas installé dans la base de données « %s »\n"
-
-#~ msgid "%s: language installation failed: %s"
-#~ msgstr "%s : l'installation du langage a échoué : %s"
-
-#~ msgid "%s: language removal failed: %s"
-#~ msgstr "%s : la suppression du langage a échoué : %s"
-
-#~ msgid "%s: missing required argument language name\n"
-#~ msgstr "%s : argument nom du langage requis mais manquant\n"
-
-#~ msgid "%s: out of memory\n"
-#~ msgstr "%s : mémoire épuisée\n"
-
-#~ msgid "%s: query failed: %s"
-#~ msgstr "%s : échec de la requête : %s"
-
-#~ msgid "%s: query returned %d row instead of one: %s\n"
-#~ msgid_plural "%s: query returned %d rows instead of one: %s\n"
-#~ msgstr[0] "%s : la requête a renvoyé %d ligne au lieu d'une seule : %s\n"
-#~ msgstr[1] "%s : la requête a renvoyé %d lignes au lieu d'une seule : %s\n"
-
-#~ msgid "%s: query was: %s\n"
-#~ msgstr "%s : la requête était : %s\n"
-
-#~ msgid "%s: still %s functions declared in language \"%s\"; language not removed\n"
-#~ msgstr ""
-#~ "%s : il existe encore %s fonctions déclarées dans le langage « %s » ;\n"
-#~ "langage non supprimé\n"
-
-#~ msgid "%s: too many command-line arguments (first is \"%s\")\n"
-#~ msgstr "%s : trop d'arguments en ligne de commande (le premier étant « %s »)\n"
-
-#~ msgid "%s: too many parallel jobs requested (maximum: %d)\n"
-#~ msgstr "%s : trop de jobs en parallèle demandés (maximum %d)\n"
-
-#~ msgid "Could not send cancel request: %s"
-#~ msgstr "N'a pas pu envoyer la requête d'annulation : %s"
-
-#~ msgid "Name"
-#~ msgstr "Nom"
-
-#~ msgid "Procedural Languages"
-#~ msgstr "Langages procéduraux"
-
-#~ msgid "Trusted?"
-#~ msgstr "De confiance (trusted) ?"
-
-#, c-format
-#~ msgid "Try \"%s --help\" for more information.\n"
-#~ msgstr "Essayer « %s --help » pour plus d'informations.\n"
-
-#, c-format
-#~ msgid "cannot reindex system catalogs concurrently, skipping all"
-#~ msgstr "ne peut pas réindexer les catalogues système de manière concurrente, ignore tout"
-
-#~ msgid "could not connect to database %s: %s"
-#~ msgstr "n'a pas pu se connecter à la base de données %s : %s"
-
-#, c-format
-#~ msgid "fatal: "
-#~ msgstr "fatal : "
-
-#, c-format
-#~ msgid "invalid value for --connection-limit: %s"
-#~ msgstr "valeur invalide pour --connection-limit : %s"
-
-#, c-format
-#~ msgid "minimum multixact ID age must be at least 1"
-#~ msgstr "l'âge minimum de l'identifiant de multitransaction doit au moins être 1"
-
-#, c-format
-#~ msgid "minimum transaction ID age must be at least 1"
-#~ msgstr "l'identifiant de la transaction (-x) doit valoir au moins 1"
-
-#~ msgid "no"
-#~ msgstr "non"
-
-#, c-format
-#~ msgid "number of parallel jobs must be at least 1"
-#~ msgstr "le nombre maximum de jobs en parallèle doit être au moins de 1"
-
-#, c-format
-#~ msgid "only one of --locale and --lc-collate can be specified"
-#~ msgstr "une seule des options --locale et --lc-collate peut être indiquée"
-
-#, c-format
-#~ msgid "only one of --locale and --lc-ctype can be specified"
-#~ msgstr "une seule des options --locale et --lc-ctype peut être indiquée"
-
-#~ msgid "parallel vacuum degree must be a non-negative integer"
-#~ msgstr "le degré de parallélisation du VACUUM doit être un entier non négatif"
-
-#, c-format
-#~ msgid "parallel workers for vacuum must be greater than or equal to zero"
-#~ msgstr "le nombre de processus parallélisés pour l VACUUM doit être supérieur à zéro"
-
-#~ msgid "pg_strdup: cannot duplicate null pointer (internal error)\n"
-#~ msgstr "pg_strdup : ne peut pas dupliquer un pointeur nul (erreur interne)\n"
-
-#~ msgid "reindexing of system catalogs failed: %s"
-#~ msgstr "la réindexation des catalogues système a échoué : %s"
-
-#~ msgid "yes"
-#~ msgstr "oui"

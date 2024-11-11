@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: libpq (PostgreSQL) 16\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-08-01 12:10+0000\n"
+"POT-Creation-Date: 2024-11-09 05:58+0000\n"
 "PO-Revision-Date: 2023-10-06 13:28+0200\n"
 "Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
@@ -484,11 +484,6 @@ msgstr "no se pudo establecer el socket en modo no bloqueante: %s"
 #, c-format
 msgid "could not set socket to close-on-exec mode: %s"
 msgstr "no se pudo poner el socket en modo close-on-exec: %s"
-
-#: fe-connect.c:2961
-#, c-format
-msgid "keepalives parameter must be an integer"
-msgstr "el parámetro de keepalives debe ser un entero"
 
 #: fe-connect.c:3100
 #, c-format
@@ -1475,3 +1470,7 @@ msgstr "no se pudo enviar datos al servidor: %s"
 #, c-format
 msgid "unrecognized socket error: 0x%08X/%d"
 msgstr "código de error de socket no reconocido: 0x%08X/%d"
+
+#, c-format
+#~ msgid "keepalives parameter must be an integer"
+#~ msgstr "el parámetro de keepalives debe ser un entero"

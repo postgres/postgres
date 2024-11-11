@@ -8,10 +8,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 15\n"
+"Project-Id-Version: PostgreSQL 16\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2024-07-20 21:27+0000\n"
-"PO-Revision-Date: 2024-07-22 14:45+0200\n"
+"PO-Revision-Date: 2024-09-16 16:35+0200\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team: French <guillaume@lelarge.info>\n"
 "Language: fr\n"
@@ -19,7 +19,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
-"X-Generator: Poedit 3.4.4\n"
+"X-Generator: Poedit 3.5\n"
 
 #: pltcl.c:462
 msgid "PL/Tcl function to call once when pltcl is first used."
@@ -125,25 +125,3 @@ msgstr "ne peut pas initialiser l'attribut système « %s »"
 #, c-format
 msgid "cannot set generated column \"%s\""
 msgstr "ne peut pas initialiser la colonne générée « %s »"
-
-#~ msgid "PL/Tcl functions cannot return composite types"
-#~ msgstr "les fonctions PL/Tcl ne peuvent pas renvoyer des types composites"
-
-#~ msgid "could not load module \"unknown\": %s"
-#~ msgstr "n'a pas pu charger le module « unknown » : %s"
-
-#, c-format
-#~ msgid "could not split return value from trigger: %s"
-#~ msgstr "n'a pas pu séparer la valeur de retour du trigger : %s"
-
-#~ msgid "module \"unknown\" not found in pltcl_modules"
-#~ msgstr "module « unkown » introuvable dans pltcl_modules"
-
-#~ msgid "out of memory"
-#~ msgstr "mémoire épuisée"
-
-#~ msgid "trigger's return list must have even number of elements"
-#~ msgstr "la liste de retour du trigger doit avoir un nombre pair d'éléments"
-
-#~ msgid "unrecognized attribute \"%s\""
-#~ msgstr "attribut « %s » non reconnu"

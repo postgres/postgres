@@ -4,13 +4,13 @@
 # Serguei A. Mokhov <mokhov@cs.concordia.ca>, 2001-2004.
 # Oleg Bartunov <oleg@sai.msu.su>, 2005.
 # Andrey Sudnik <sudnikand@yandex.ru>, 2010.
-# Alexander Lakhin <exclusion@gmail.com>, 2012-2017, 2018, 2019, 2020, 2021, 2022, 2023.
+# Alexander Lakhin <exclusion@gmail.com>, 2012-2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024.
 # Maxim Yablokov <m.yablokov@postgrespro.ru>, 2021.
 msgid ""
 msgstr ""
 "Project-Id-Version: libpq (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-08-01 12:50+0300\n"
+"POT-Creation-Date: 2024-11-02 08:21+0300\n"
 "PO-Revision-Date: 2023-08-30 15:09+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
@@ -515,11 +515,6 @@ msgid "could not set socket to close-on-exec mode: %s"
 msgstr ""
 "не удалось перевести сокет в режим закрытия при выполнении (close-on-exec): "
 "%s"
-
-#: fe-connect.c:2961
-#, c-format
-msgid "keepalives parameter must be an integer"
-msgstr "параметр keepalives должен быть целым числом"
 
 #: fe-connect.c:3100
 #, c-format
@@ -1570,6 +1565,10 @@ msgstr "не удалось передать данные серверу: %s"
 #, c-format
 msgid "unrecognized socket error: 0x%08X/%d"
 msgstr "нераспознанная ошибка сокета: 0x%08X/%d"
+
+#, c-format
+#~ msgid "keepalives parameter must be an integer"
+#~ msgstr "параметр keepalives должен быть целым числом"
 
 #~ msgid "SCM_CRED authentication method not supported\n"
 #~ msgstr "аутентификация SCM_CRED не поддерживается\n"

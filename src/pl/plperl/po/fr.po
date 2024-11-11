@@ -8,10 +8,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 15\n"
+"Project-Id-Version: PostgreSQL 16\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2022-04-12 05:16+0000\n"
-"PO-Revision-Date: 2022-04-12 17:29+0200\n"
+"PO-Revision-Date: 2024-09-16 16:35+0200\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team: French <guillaume@lelarge.info>\n"
 "Language: fr\n"
@@ -19,7 +19,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
-"X-Generator: Poedit 3.0.1\n"
+"X-Generator: Poedit 3.5\n"
 
 #: plperl.c:408
 msgid "If true, trusted and untrusted Perl code will be compiled in strict mode."
@@ -242,23 +242,3 @@ msgstr "compilation de la fonction PL/Perl « %s »"
 #, c-format
 msgid "PL/Perl anonymous code block"
 msgstr "bloc de code PL/Perl anonyme"
-
-#~ msgid "PL/Perl function must return reference to hash or array"
-#~ msgstr "la fonction PL/perl doit renvoyer la référence à un hachage ou à un tableau"
-
-#~ msgid "composite-returning PL/Perl function must return reference to hash"
-#~ msgstr ""
-#~ "la fonction PL/perl renvoyant des valeurs composites doit renvoyer la\n"
-#~ "référence à un hachage"
-
-#~ msgid "creation of Perl function \"%s\" failed: %s"
-#~ msgstr "échec de la création de la fonction Perl « %s » : %s"
-
-#~ msgid "error from Perl function \"%s\": %s"
-#~ msgstr "échec dans la fonction Perl « %s » : %s"
-
-#~ msgid "out of memory"
-#~ msgstr "mémoire épuisée"
-
-#~ msgid "while executing PLC_SAFE_OK"
-#~ msgstr "lors de l'exécution de PLC_SAFE_OK"
