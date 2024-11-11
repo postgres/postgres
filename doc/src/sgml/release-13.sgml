@@ -26,7 +26,7 @@
     However, if you have ever detached a partition from a partitioned
     table that has a foreign-key reference to another partitioned table,
     and not dropped the former partition, then you may have catalog and/or
-    data corruption to repair, as detailed in the first changelog entry
+    data corruption to repair, as detailed in the fifth changelog entry
     below.
    </para>
 
@@ -40,6 +40,184 @@
    <title>Changes</title>
 
    <itemizedlist>
+
+    <listitem>
+<!--
+Author: Nathan Bossart <nathan@postgresql.org>
+Branch: master [cd7ab5753] 2024-11-11 09:00:00 -0600
+Branch: REL_17_STABLE [edcda9bb4] 2024-11-11 09:00:00 -0600
+Branch: REL_16_STABLE [562289460] 2024-11-11 09:00:00 -0600
+Branch: REL_15_STABLE [6db5ea8de] 2024-11-11 09:00:00 -0600
+Branch: REL_14_STABLE [4e51030af] 2024-11-11 09:00:00 -0600
+Branch: REL_13_STABLE [952ff31e2] 2024-11-11 09:00:00 -0600
+Branch: REL_12_STABLE [448525e8a] 2024-11-11 09:00:00 -0600
+-->
+     <para>
+      Ensure cached plans are marked as dependent on the calling role when
+      RLS applies to a non-top-level table reference (Nathan Bossart)
+      <ulink url="&commit_baseurl;952ff31e2">&sect;</ulink>
+     </para>
+
+     <para>
+      If a CTE, subquery, sublink, security invoker view, or coercion
+      projection in a query references a table with row-level security
+      policies, we neglected to mark the resulting plan as potentially
+      dependent on which role is executing it.  This could lead to later
+      query executions in the same session using the wrong plan, and then
+      returning or hiding rows that should have been hidden or returned
+      instead.
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks
+      Wolfgang Walther for reporting this problem.
+      (CVE-2024-10976)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Michael Paquier <michael@paquier.xyz>
+Branch: master [bf8835ea9] 2024-11-11 10:19:52 +0900
+Branch: REL_17_STABLE [a5cc4c667] 2024-11-11 10:19:56 +0900
+Branch: REL_16_STABLE [67d28bd02] 2024-11-11 10:19:58 +0900
+Branch: REL_15_STABLE [d2c3e31c1] 2024-11-11 10:19:59 +0900
+Branch: REL_14_STABLE [e6c945476] 2024-11-11 10:20:01 +0900
+Branch: REL_13_STABLE [7b49707b7] 2024-11-11 10:20:02 +0900
+Branch: REL_12_STABLE [2a951ef0a] 2024-11-11 10:20:03 +0900
+-->
+     <para>
+      Make <application>libpq</application> discard error messages
+      received during SSL or GSS protocol negotiation (Jacob Champion)
+      <ulink url="&commit_baseurl;7b49707b7">&sect;</ulink>
+     </para>
+
+     <para>
+      An error message received before encryption negotiation is completed
+      might have been injected by a man-in-the-middle, rather than being
+      real server output.  Reporting it opens the door to various security
+      hazards; for example, the message might spoof a query result that a
+      careless user could mistake for correct output.  The best answer
+      seems to be to discard such data and rely only
+      on <application>libpq</application>'s own report of the connection
+      failure.
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks
+      Jacob Champion for reporting this problem.
+      (CVE-2024-10977)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [5a2fed911] 2024-11-11 10:29:54 -0500
+Branch: REL_17_STABLE [cd82afdda] 2024-11-11 10:29:54 -0500
+Branch: REL_16_STABLE [ae340d031] 2024-11-11 10:29:54 -0500
+Branch: REL_15_STABLE [a5d2e6205] 2024-11-11 10:29:54 -0500
+Branch: REL_14_STABLE [2a68808e2] 2024-11-11 10:29:54 -0500
+Branch: REL_13_STABLE [76123ded6] 2024-11-11 10:29:54 -0500
+Branch: REL_12_STABLE [4c9d96f74] 2024-11-11 10:29:54 -0500
+Branch: master [73c9f91a1] 2024-11-11 17:05:53 -0500
+Branch: REL_17_STABLE [f4f5d27d8] 2024-11-11 17:05:53 -0500
+Branch: REL_16_STABLE [95f5a5237] 2024-11-11 17:05:53 -0500
+Branch: REL_15_STABLE [109a32380] 2024-11-11 17:05:53 -0500
+Branch: REL_14_STABLE [00b94e8e2] 2024-11-11 17:05:53 -0500
+Branch: REL_13_STABLE [dc7378793] 2024-11-11 17:05:53 -0500
+Branch: REL_12_STABLE [0edad8654] 2024-11-11 17:05:53 -0500
+-->
+     <para>
+      Fix unintended interactions between <command>SET SESSION
+      AUTHORIZATION</command> and <command>SET ROLE</command> (Tom Lane)
+      <ulink url="&commit_baseurl;76123ded6">&sect;</ulink>
+      <ulink url="&commit_baseurl;dc7378793">&sect;</ulink>
+     </para>
+
+     <para>
+      The SQL standard mandates that <command>SET SESSION
+      AUTHORIZATION</command> have a side-effect of doing <command>SET
+      ROLE NONE</command>.  Our implementation of that was flawed,
+      creating more interaction between the two settings than intended.
+      Notably, rolling back a transaction that had done <command>SET
+      SESSION AUTHORIZATION</command> would revert <literal>ROLE</literal>
+      to <literal>NONE</literal> even if that had not been the previous
+      state, so that the effective user ID might now be different from
+      what it had been before the transaction.  Transiently
+      setting <varname>session_authorization</varname> in a
+      function <literal>SET</literal> clause had a similar effect.
+      A related bug was that if a parallel worker
+      inspected <literal>current_setting('role')</literal>, it
+      saw <literal>none</literal> even when it should see something else.
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks
+      Tom Lane for reporting this problem.
+      (CVE-2024-10978)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Noah Misch <noah@leadboat.com>
+Branch: master [b7e3a52a8] 2024-11-11 06:23:43 -0800
+Branch: REL_17_STABLE [3ebcfa54d] 2024-11-11 06:23:46 -0800
+Branch: REL_16_STABLE [8fe3e697a] 2024-11-11 06:23:47 -0800
+Branch: REL_15_STABLE [e530835c6] 2024-11-11 06:23:47 -0800
+Branch: REL_14_STABLE [d15ec27c9] 2024-11-11 06:23:47 -0800
+Branch: REL_13_STABLE [e428cd058] 2024-11-11 06:23:48 -0800
+Branch: REL_12_STABLE [2ab12d860] 2024-11-11 06:23:48 -0800
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: REL_14_STABLE [f89bd92c9] 2024-11-11 10:42:32 -0500
+Branch: REL_13_STABLE [6bccd7b03] 2024-11-11 10:42:32 -0500
+Branch: REL_12_STABLE [b1e58defb] 2024-11-11 10:42:32 -0500
+Branch: master [a34c33fd2] 2024-11-11 12:20:08 -0500
+Branch: REL_17_STABLE [4cd4f3b97] 2024-11-11 12:20:08 -0500
+Branch: REL_16_STABLE [88269df4d] 2024-11-11 12:20:08 -0500
+Branch: REL_16_STABLE [168579e23] 2024-11-11 12:27:06 -0500
+Author: Noah Misch <noah@leadboat.com>
+Branch: REL_16_STABLE [c335264c9] 2024-11-11 10:55:18 -0800
+Branch: REL_15_STABLE [16ed4f4d0] 2024-11-11 10:56:05 -0800
+Branch: REL_14_STABLE [c1fff7b1b] 2024-11-11 10:56:09 -0800
+Branch: REL_13_STABLE [9f97c31c2] 2024-11-11 10:56:12 -0800
+Branch: REL_12_STABLE [1e457468f] 2024-11-11 10:56:14 -0800
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [c4252c9ef] 2024-11-11 13:57:21 -0500
+Branch: REL_17_STABLE [8d19f3fea] 2024-11-11 13:57:21 -0500
+Branch: REL_16_STABLE [64df88700] 2024-11-11 13:57:40 -0500
+Branch: REL_15_STABLE [c834b375a] 2024-11-11 13:57:41 -0500
+Branch: REL_14_STABLE [256e34653] 2024-11-11 13:57:41 -0500
+Branch: REL_13_STABLE [0bd9560d9] 2024-11-11 13:57:41 -0500
+Branch: REL_12_STABLE [9fc1c3a02] 2024-11-11 13:57:41 -0500
+-->
+     <para>
+      Prevent trusted PL/Perl code from changing environment variables
+      (Andrew Dunstan, Noah Misch)
+      <ulink url="&commit_baseurl;e428cd058">&sect;</ulink>
+      <ulink url="&commit_baseurl;6bccd7b03">&sect;</ulink>
+      <ulink url="&commit_baseurl;9f97c31c2">&sect;</ulink>
+      <ulink url="&commit_baseurl;0bd9560d9">&sect;</ulink>
+     </para>
+
+     <para>
+      The ability to manipulate process environment variables such
+      as <literal>PATH</literal> gives an attacker opportunities to
+      execute arbitrary code.  Therefore, <quote>trusted</quote> PLs must
+      not offer the ability to do that.  To fix <literal>plperl</literal>,
+      replace <varname>%ENV</varname> with a tied hash that rejects any
+      modification attempt with a warning.
+      Untrusted <literal>plperlu</literal> retains the ability to change
+      the environment.
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks
+      Coby Abrams for reporting this problem.
+      (CVE-2024-10979)
+     </para>
+    </listitem>
 
     <listitem>
 <!--
