@@ -1869,9 +1869,14 @@ pg_stat_statements_internal(FunctionCallInfo fcinfo,
 		/* copy counters to a local variable to keep locking time short */
 		SpinLockAcquire(&entry->mutex);
 		tmp = entry->counters;
+		SpinLockRelease(&entry->mutex);
+
+		/*
+		 * The spinlock is not required when reading these two as they are
+		 * always updated when holding pgss->lock exclusively.
+		 */
 		stats_since = entry->stats_since;
 		minmax_stats_since = entry->minmax_stats_since;
-		SpinLockRelease(&entry->mutex);
 
 		/* Skip entry if unexecuted (ie, it's a pending "sticky" entry) */
 		if (IS_STICKY(tmp))
