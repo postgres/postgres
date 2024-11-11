@@ -60,6 +60,39 @@ SET ROLE pg_read_all_settings;
 RESET ROLE;
 
 RESET SESSION AUTHORIZATION;
+
+-- test interaction of SET SESSION AUTHORIZATION and SET ROLE,
+-- as well as propagation of these settings to parallel workers
+GRANT regress_priv_user9 TO regress_priv_user8;
+
+SET SESSION AUTHORIZATION regress_priv_user8;
+SET ROLE regress_priv_user9;
+SET force_parallel_mode = 0;
+SELECT session_user, current_role, current_user, current_setting('role') as role;
+SET force_parallel_mode = 1;
+SELECT session_user, current_role, current_user, current_setting('role') as role;
+
+BEGIN;
+SET SESSION AUTHORIZATION regress_priv_user10;
+SET force_parallel_mode = 0;
+SELECT session_user, current_role, current_user, current_setting('role') as role;
+SET force_parallel_mode = 1;
+SELECT session_user, current_role, current_user, current_setting('role') as role;
+ROLLBACK;
+SET force_parallel_mode = 0;
+SELECT session_user, current_role, current_user, current_setting('role') as role;
+SET force_parallel_mode = 1;
+SELECT session_user, current_role, current_user, current_setting('role') as role;
+
+RESET SESSION AUTHORIZATION;
+-- session_user at this point is installation-dependent
+SET force_parallel_mode = 0;
+SELECT session_user = current_role as c_r_ok, session_user = current_user as c_u_ok, current_setting('role') as role;
+SET force_parallel_mode = 1;
+SELECT session_user = current_role as c_r_ok, session_user = current_user as c_u_ok, current_setting('role') as role;
+
+RESET force_parallel_mode;
+
 REVOKE pg_read_all_settings FROM regress_priv_user8;
 
 DROP USER regress_priv_user10;
