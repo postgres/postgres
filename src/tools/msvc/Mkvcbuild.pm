@@ -759,7 +759,6 @@ sub mkvcbuild
 			system( $solution->{options}->{perl}
 				  . '/bin/perl '
 				  . 'text2macro.pl '
-				  . '--strip="^(\#.*|\s*)$$" '
 				  . 'plc_perlboot.pl plc_trusted.pl '
 				  . '>perlchunks.h');
 			chdir $basedir;
