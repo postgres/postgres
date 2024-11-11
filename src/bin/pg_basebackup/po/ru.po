@@ -1,13 +1,13 @@
 # Russian message translation file for pg_basebackup
 # Copyright (C) 2012-2016 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# Alexander Lakhin <exclusion@gmail.com>, 2012-2017, 2018, 2019, 2020, 2021, 2022, 2023.
+# Alexander Lakhin <exclusion@gmail.com>, 2012-2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024.
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_basebackup (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2023-09-11 15:33+0300\n"
-"PO-Revision-Date: 2022-09-05 15:10+0300\n"
+"PO-Revision-Date: 2024-09-07 11:12+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -358,7 +358,9 @@ msgstr "  -d, --dbname=СТРОКА    строка подключения\n"
 #: pg_basebackup.c:372 pg_receivewal.c:99 pg_recvlogical.c:104
 #, c-format
 msgid "  -h, --host=HOSTNAME    database server host or socket directory\n"
-msgstr "  -h, --host=ИМЯ         имя сервера баз данных или каталог сокетов\n"
+msgstr ""
+"  -h, --host=ИМЯ         компьютер с сервером баз данных или каталог "
+"сокетов\n"
 
 #: pg_basebackup.c:373 pg_receivewal.c:100 pg_recvlogical.c:105
 #, c-format
@@ -459,7 +461,7 @@ msgstr "каталог \"%s\" существует, но он не пуст"
 #: pg_basebackup.c:711
 #, c-format
 msgid "could not access directory \"%s\": %m"
-msgstr "ошибка доступа к каталогу \"%s\": %m"
+msgstr "ошибка при обращении к каталогу \"%s\": %m"
 
 #: pg_basebackup.c:776
 #, c-format

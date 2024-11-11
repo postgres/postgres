@@ -10,8 +10,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_rewind (PostgreSQL) 12\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-08-02 10:36+0000\n"
-"PO-Revision-Date: 2019-09-29 22:26-0300\n"
+"POT-Creation-Date: 2024-11-09 07:05+0000\n"
+"PO-Revision-Date: 2024-11-09 10:06+0100\n"
 "Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
 "Language: es\n"
@@ -619,27 +619,27 @@ msgstr "%*s/%s kB (%d%%) copiados"
 msgid "invalid control file"
 msgstr "archivo de control no válido"
 
-#: pg_rewind.c:659
+#: pg_rewind.c:657
 #, c-format
 msgid "could not find common ancestor of the source and target cluster's timelines"
 msgstr "no se pudo encontrar un ancestro común en el timeline de los clusters de origen y destino"
 
-#: pg_rewind.c:700
+#: pg_rewind.c:698
 #, c-format
 msgid "backup label buffer too small"
 msgstr "el búfer del backup label es demasiado pequeño"
 
-#: pg_rewind.c:723
+#: pg_rewind.c:721
 #, c-format
 msgid "unexpected control file CRC"
 msgstr "CRC de archivo de control inesperado"
 
-#: pg_rewind.c:733
+#: pg_rewind.c:731
 #, c-format
 msgid "unexpected control file size %d, expected %d"
 msgstr "tamaño del archivo de control %d inesperado, se esperaba %d"
 
-#: pg_rewind.c:742
+#: pg_rewind.c:740
 #, c-format
 msgid "WAL segment size must be a power of two between 1 MB and 1 GB, but the control file specifies %d byte"
 msgid_plural "WAL segment size must be a power of two between 1 MB and 1 GB, but the control file specifies %d bytes"

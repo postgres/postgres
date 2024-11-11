@@ -10,14 +10,15 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 12\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2022-03-31 19:06+0000\n"
-"PO-Revision-Date: 2022-04-05 08:32+0200\n"
+"PO-Revision-Date: 2024-09-16 16:38+0200\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
-"Language-Team: PostgreSQLfr <pgsql-fr-generale@postgresql.org>\n"
+"Language-Team: French <guillaume@lelarge.info>\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 3.0.1\n"
+"X-Generator: Poedit 3.5\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
 
 #: fe-auth-scram.c:183
 msgid "malformed SCRAM message (empty message)\n"
@@ -1251,90 +1252,3 @@ msgstr "n'a pas pu transmettre les données au serveur : %s\n"
 #, c-format
 msgid "unrecognized socket error: 0x%08X/%d"
 msgstr "erreur de socket non reconnue : 0x%08X/%d"
-
-#~ msgid "Kerberos 5 authentication rejected: %*s\n"
-#~ msgstr "authentification Kerberos 5 rejetée : %*s\n"
-
-#~ msgid "could not acquire mutex: %s\n"
-#~ msgstr "n'a pas pu acquérir le mutex : %s\n"
-
-#~ msgid "could not get home directory to locate client certificate files\n"
-#~ msgstr ""
-#~ "n'a pas pu récupérer le répertoire personnel pour trouver les certificats\n"
-#~ "du client\n"
-
-#~ msgid "could not get home directory to locate password file\n"
-#~ msgstr ""
-#~ "n'a pas pu obtenir le répertoire personnel pour trouver le fichier de\n"
-#~ "mot de passe\n"
-
-#~ msgid "could not get home directory to locate service definition file"
-#~ msgstr ""
-#~ "n'a pas pu obtenir le répertoire personnel pour trouver le certificat de\n"
-#~ "définition du service"
-
-#~ msgid "could not open private key file \"%s\": %s\n"
-#~ msgstr "n'a pas pu ouvrir le fichier de clé privée « %s » : %s\n"
-
-#~ msgid "could not read private key file \"%s\": %s\n"
-#~ msgstr "n'a pas pu lire la clé privée « %s » : %s\n"
-
-#~ msgid "could not restore nonblocking mode on socket: %s\n"
-#~ msgstr "n'a pas pu rétablir le mode non-bloquant pour la socket : %s\n"
-
-#~ msgid "could not set socket to blocking mode: %s\n"
-#~ msgstr "n'a pas pu activer le mode bloquant pour la socket : %s\n"
-
-#~ msgid "extraneous data in \"D\" message"
-#~ msgstr "données supplémentaires dans le message « D »"
-
-#~ msgid "extraneous data in \"T\" message"
-#~ msgstr "données supplémentaires dans le message « T »"
-
-#~ msgid "extraneous data in \"t\" message"
-#~ msgstr "données supplémentaires dans le message « t »"
-
-#~ msgid "failed to generate nonce\n"
-#~ msgstr "échec pour la génération de nonce\n"
-
-#~ msgid "invalid appname state %d, probably indicative of memory corruption\n"
-#~ msgstr "état appname %d invalide, indiquant probablement une corruption de la mémoire\n"
-
-#~ msgid "invalid sslverify value: \"%s\"\n"
-#~ msgstr "valeur sslverify invalide : « %s »\n"
-
-#~ msgid "no GSSAPI support; cannot require GSSAPI\n"
-#~ msgstr "pas de support de GSSAPI : ne peut pas nécessiter GSSAPI\n"
-
-#~ msgid "private key file \"%s\" changed during execution\n"
-#~ msgstr "la clé privée « %s » a été modifiée durant l'exécution\n"
-
-#, c-format
-#~ msgid "private key file \"%s\" has group or world access; permissions should be u=rw (0600) or less\n"
-#~ msgstr ""
-#~ "le fichier de la clé privée « %s » a des droits d'accès en lecture\n"
-#~ "pour le groupe ou universel ; les droits devraient être u=rw (0600)\n"
-#~ "ou inférieur\n"
-
-#~ msgid "setsockopt(SO_KEEPALIVE) failed: %s\n"
-#~ msgstr "setsockopt(SO_KEEPALIVE) a échoué : %s\n"
-
-#~ msgid "setsockopt(TCP_KEEPALIVE) failed: %s\n"
-#~ msgstr "setsockopt(TCP_KEEPALIVE) a échoué : %s\n"
-
-#~ msgid "setsockopt(TCP_KEEPIDLE) failed: %s\n"
-#~ msgstr "setsockopt(TCP_KEEPIDLE) a échoué : %s\n"
-
-#~ msgid "setsockopt(TCP_KEEPINTVL) failed: %s\n"
-#~ msgstr "setsockopt(TCP_KEEPINTVL) a échoué : %s\n"
-
-#~ msgid "socket not open\n"
-#~ msgstr "socket non ouvert\n"
-
-#~ msgid "unrecognized return value from row processor"
-#~ msgstr "valeur de retour du traitement de la ligne non reconnue"
-
-#~ msgid "verified SSL connections are only supported when connecting to a host name\n"
-#~ msgstr ""
-#~ "les connexions SSL vérifiées ne sont supportées que lors de la connexion\n"
-#~ "à un alias hôte\n"

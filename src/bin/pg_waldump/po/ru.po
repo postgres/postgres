@@ -1,13 +1,13 @@
 # Russian message translation file for pg_waldump
 # Copyright (C) 2017 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# Alexander Lakhin <a.lakhin@postgrespro.ru>, 2017, 2018, 2019, 2020, 2022, 2023.
+# Alexander Lakhin <a.lakhin@postgrespro.ru>, 2017, 2018, 2019, 2020, 2022, 2023, 2024.
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_waldump (PostgreSQL) 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2023-11-03 09:10+0300\n"
-"PO-Revision-Date: 2023-08-30 15:41+0300\n"
+"PO-Revision-Date: 2024-09-07 08:59+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -88,14 +88,14 @@ msgstr "не удалось переместиться в файле журна�
 #: pg_waldump.c:402
 #, c-format
 msgid "could not read from log file %s, offset %u, length %d: %s"
-msgstr "не удалось прочитать из файла журнала %s по смещению %u, длина %d: %s"
+msgstr "не удалось прочитать файл журнала %s по смещению %u, длина %d: %s"
 
 #: pg_waldump.c:405
 #, c-format
 msgid "could not read from log file %s, offset %u: read %d of %zu"
 msgstr ""
-"не удалось прочитать из файла журнала %s по смещению %u (прочитано байт: %d "
-"из %zu)"
+"не удалось прочитать файл журнала %s по смещению %u (прочитано байт: %d из "
+"%zu)"
 
 #: pg_waldump.c:794
 #, c-format
@@ -321,7 +321,7 @@ msgstr "нехватка памяти"
 #: pg_waldump.c:1119
 #, c-format
 msgid "could not find a valid record after %X/%X"
-msgstr "не удалось найти действительную запись после позиции %X/%X"
+msgstr "не удалось найти корректную запись после %X/%X"
 
 #: pg_waldump.c:1130
 #, c-format
