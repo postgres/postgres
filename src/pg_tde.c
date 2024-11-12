@@ -11,7 +11,6 @@
  */
 
 #include "postgres.h"
-#include "utils/percona.h"
 #include "funcapi.h"
 #include "pg_tde.h"
 #include "transam/pg_tde_xact_handler.h"
@@ -37,6 +36,7 @@
 #include "smgr/pg_tde_smgr.h"
 #ifdef PERCONA_EXT
 #include "catalog/tde_global_space.h"
+#include "utils/percona.h"
 #endif
 
 #define MAX_ON_INSTALLS 5
@@ -103,7 +103,9 @@ _PG_init(void)
 		elog(WARNING, "pg_tde can only be loaded at server startup. Restart required.");
 	}
 
+#ifdef PERCONA_EXT
 	check_percona_api_version();
+#endif
 
 	InitializePrincipalKeyInfo();
 	InitializeKeyProviderInfo();
