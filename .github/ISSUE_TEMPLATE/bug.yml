@@ -1,0 +1,57 @@
+name: Bug Report
+description: File a bug report
+labels: ["bug"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report! Please provide as much information as possible, it will help us to address this problem faster.
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: Please describe the problem.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Results
+      description: What did you expect to happen?
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual Results
+      description: What actually happened?
+    validations:
+      required: true
+  - type: textarea
+    id: version
+    attributes:
+      label: Version
+      description: What version of PostgreSQL and pg_tde are you running?
+      placeholder: PostgreSQL 17.0, pg_tde v1.0.0
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Which steps do we need to take to reproduce this error?
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs
+      description: Please copy and paste any relevant log output. This will be automatically formatted into code, so no need for backticks.
+      render: Shell
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Code of Conduct
+      description: By submitting this issue, you agree to follow [Percona Community Code of Conduct](https://github.com/percona/community/blob/main/content/contribute/coc.md)
+      options:
+        - label: I agree to follow Percona Community Code of Conduct
+          required: true

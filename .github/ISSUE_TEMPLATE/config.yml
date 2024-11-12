@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Forum
+    url: https://forums.percona.com/
+    about: Please join our forums for general questions ans discussions.
