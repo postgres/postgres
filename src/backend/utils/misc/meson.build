@@ -7,6 +7,7 @@ backend_sources += files(
   'guc_tables.c',
   'help_config.c',
   'injection_point.c',
+  'percona.c',
   'pg_config.c',
   'pg_controldata.c',
   'pg_rusage.c',
