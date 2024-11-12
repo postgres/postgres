@@ -27,7 +27,7 @@
  * descriptors.)
  *
  * An SMgrRelation may be "pinned", to prevent it from being destroyed while
- * it's in use.  We use this to prevent pointers relcache to smgr from being
+ * it's in use.  We use this to prevent pointers in relcache to smgr from being
  * invalidated.  SMgrRelations that are not pinned are deleted at end of
  * transaction.
  */
