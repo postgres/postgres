@@ -11,6 +11,7 @@
  */
 
 #include "postgres.h"
+#include "utils/percona.h"
 #include "funcapi.h"
 #include "pg_tde.h"
 #include "transam/pg_tde_xact_handler.h"
@@ -101,6 +102,8 @@ _PG_init(void)
 	{
 		elog(WARNING, "pg_tde can only be loaded at server startup. Restart required.");
 	}
+
+	check_percona_api_version();
 
 	InitializePrincipalKeyInfo();
 	InitializeKeyProviderInfo();
