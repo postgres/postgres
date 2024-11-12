@@ -18,7 +18,7 @@ static inline bool check_percona_api_version(void)
 {
     if (PERCONA_API_VERSION != percona_api_version)
     {
-        elog(FATAL, "Percona API version mismatch, the extension was built againts a different PostgreSQL version!");
+        elog(FATAL, "Percona API version mismatch, the extension was built against a different PostgreSQL version!");
         return false;
     }
 
