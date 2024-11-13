@@ -42,6 +42,7 @@ static int	_bt_setuppostingitems(BTScanOpaque so, int itemIndex,
 static inline void _bt_savepostingitem(BTScanOpaque so, int itemIndex,
 									   OffsetNumber offnum,
 									   ItemPointer heapTid, int tupleOffset);
+static inline void _bt_returnitem(IndexScanDesc scan, BTScanOpaque so);
 static bool _bt_steppage(IndexScanDesc scan, ScanDirection dir);
 static bool _bt_readfirstpage(IndexScanDesc scan, OffsetNumber offnum,
 							  ScanDirection dir);
@@ -867,8 +868,7 @@ _bt_compare(Relation rel,
  *		matching tuple(s) on the page has been loaded into so->currPos.  We'll
  *		drop all locks and hold onto a pin on page's buffer, except when
  *		_bt_drop_lock_and_maybe_pin dropped the pin to avoid blocking VACUUM.
- *		scan->xs_heaptid is set to the heap TID of the current tuple, and if
- *		requested, scan->xs_itup points to a copy of the index tuple.
+ *		_bt_returnitem sets the next item to return to scan on success exit.
  *
  * If there are no matching items in the index, we return false, with no
  * pins or locks held.  so->currPos will remain invalid.
@@ -890,7 +890,6 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	ScanKeyData notnullkeys[INDEX_MAX_KEYS];
 	int			keysz = 0;
 	StrategyNumber strat_total;
-	BTScanPosItem *currItem;
 
 	Assert(!BTScanPosIsValid(so->currPos));
 
@@ -950,7 +949,9 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 			 */
 			if (!_bt_readnextpage(scan, blkno, lastcurrblkno, dir, true))
 				return false;
-			goto readcomplete;
+
+			_bt_returnitem(scan, so);
+			return true;
 		}
 	}
 	else if (so->numArrayKeys && !so->needPrimScan)
@@ -1438,14 +1439,7 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	if (!_bt_readfirstpage(scan, offnum, dir))
 		return false;
 
-readcomplete:
-	/* OK, itemIndex says what to return */
-	Assert(BTScanPosIsValid(so->currPos));
-	currItem = &so->currPos.items[so->currPos.itemIndex];
-	scan->xs_heaptid = currItem->heapTid;
-	if (scan->xs_want_itup)
-		scan->xs_itup = (IndexTuple) (so->currTuples + currItem->tupleOffset);
-
+	_bt_returnitem(scan, so);
 	return true;
 }
 
@@ -1456,9 +1450,8 @@ readcomplete:
  *		but is not locked, and so->currPos.itemIndex identifies which item was
  *		previously returned.
  *
- *		On successful exit, scan->xs_heaptid is set to the TID of the next
- *		heap tuple, and if requested, scan->xs_itup points to a copy of the
- *		index tuple.  so->currPos is updated as needed.
+ *		On success exit, so->currPos is updated as needed, and _bt_returnitem
+ *		sets the next item to return to the scan.  so->currPos remains valid.
  *
  *		On failure exit (no more tuples), we invalidate so->currPos.  It'll
  *		still be possible for the scan to return tuples by changing direction,
@@ -1468,7 +1461,6 @@ bool
 _bt_next(IndexScanDesc scan, ScanDirection dir)
 {
 	BTScanOpaque so = (BTScanOpaque) scan->opaque;
-	BTScanPosItem *currItem;
 
 	Assert(BTScanPosIsValid(so->currPos));
 
@@ -1493,13 +1485,7 @@ _bt_next(IndexScanDesc scan, ScanDirection dir)
 		}
 	}
 
-	/* OK, itemIndex says what to return */
-	Assert(BTScanPosIsValid(so->currPos));
-	currItem = &so->currPos.items[so->currPos.itemIndex];
-	scan->xs_heaptid = currItem->heapTid;
-	if (scan->xs_want_itup)
-		scan->xs_itup = (IndexTuple) (so->currTuples + currItem->tupleOffset);
-
+	_bt_returnitem(scan, so);
 	return true;
 }
 
@@ -1560,10 +1546,13 @@ _bt_readpage(IndexScanDesc scan, ScanDirection dir, OffsetNumber offnum,
 								 so->currPos.currPage);
 	}
 
-	/* initialize remaining currPos fields (before moreLeft/moreRight) */
+	/* initialize remaining currPos fields related to current page */
 	so->currPos.lsn = BufferGetLSNAtomic(so->currPos.buf);
 	so->currPos.dir = dir;
 	so->currPos.nextTupleOffset = 0;
+	/* either moreLeft or moreRight should be set now (may be unset later) */
+	Assert(ScanDirectionIsForward(dir) ? so->currPos.moreRight :
+		   so->currPos.moreLeft);
 
 	PredicateLockPage(rel, so->currPos.currPage, scan->xs_snapshot);
 
@@ -2000,6 +1989,26 @@ _bt_savepostingitem(BTScanOpaque so, int itemIndex, OffsetNumber offnum,
 	 */
 	if (so->currTuples)
 		currItem->tupleOffset = tupleOffset;
+}
+
+/*
+ * Return the index item from so->currPos.items[so->currPos.itemIndex] to the
+ * index scan by setting the relevant fields in caller's index scan descriptor
+ */
+static inline void
+_bt_returnitem(IndexScanDesc scan, BTScanOpaque so)
+{
+	BTScanPosItem *currItem = &so->currPos.items[so->currPos.itemIndex];
+
+	/* Most recent _bt_readpage must have succeeded */
+	Assert(BTScanPosIsValid(so->currPos));
+	Assert(so->currPos.itemIndex >= so->currPos.firstItem);
+	Assert(so->currPos.itemIndex <= so->currPos.lastItem);
+
+	/* Return next item, per amgettuple contract */
+	scan->xs_heaptid = currItem->heapTid;
+	if (so->currTuples)
+		scan->xs_itup = (IndexTuple) (so->currTuples + currItem->tupleOffset);
 }
 
 /*
@@ -2543,7 +2552,6 @@ _bt_endpoint(IndexScanDesc scan, ScanDirection dir)
 	Page		page;
 	BTPageOpaque opaque;
 	OffsetNumber start;
-	BTScanPosItem *currItem;
 
 	Assert(!BTScanPosIsValid(so->currPos));
 
@@ -2593,12 +2601,6 @@ _bt_endpoint(IndexScanDesc scan, ScanDirection dir)
 	if (!_bt_readfirstpage(scan, start, dir))
 		return false;
 
-	/* OK, itemIndex says what to return */
-	Assert(BTScanPosIsValid(so->currPos));
-	currItem = &so->currPos.items[so->currPos.itemIndex];
-	scan->xs_heaptid = currItem->heapTid;
-	if (scan->xs_want_itup)
-		scan->xs_itup = (IndexTuple) (so->currTuples + currItem->tupleOffset);
-
+	_bt_returnitem(scan, so);
 	return true;
 }
