@@ -982,9 +982,9 @@ btree_xlog_newroot(XLogReaderState *record)
  * As far as any backend operating during original execution is concerned, the
  * FSM is a cache of recycle-safe pages; the mere presence of the page in the
  * FSM indicates that the page must already be safe to recycle (actually,
- * _bt_getbuf() verifies it's safe using BTPageIsRecyclable(), but that's just
- * because it would be unwise to completely trust the FSM, given its current
- * limitations).
+ * _bt_allocbuf() verifies it's safe using BTPageIsRecyclable(), but that's
+ * just because it would be unwise to completely trust the FSM, given its
+ * current limitations).
  *
  * This isn't sufficient to prevent similar concurrent recycling race
  * conditions during Hot Standby, though.  For that we need to log a
