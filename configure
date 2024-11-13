@@ -722,7 +722,6 @@ with_tcl
 ICU_LIBS
 ICU_CFLAGS
 with_icu
-INCLUDES
 autodepend
 PKG_CONFIG_LIBDIR
 PKG_CONFIG_PATH
@@ -7951,7 +7950,6 @@ $as_echo "$as_me: WARNING: *** Include directory $dir does not exist." >&2;}
   fi
 done
 IFS=$ac_save_IFS
-
 
 
 #
