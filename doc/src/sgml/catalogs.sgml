@@ -2806,7 +2806,8 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        (references <link linkend="catalog-pg-operator"><structname>pg_operator</structname></link>.<structfield>oid</structfield>)
       </para>
       <para>
-       If an exclusion constraint, list of the per-column exclusion operators
+       If an exclusion constraint or <literal>WITHOUT OVERLAPS</literal>
+       primary key/unique constraint, list of the per-column exclusion operators.
       </para></entry>
      </row>
 
