@@ -121,6 +121,7 @@ blgetbitmap(IndexScanDesc scan, TIDBitmap *tbm)
 	 */
 	bas = GetAccessStrategy(BAS_BULKREAD);
 	npages = RelationGetNumberOfBlocks(scan->indexRelation);
+	pgstat_count_index_scan(scan->indexRelation);
 
 	for (blkno = BLOOM_HEAD_BLKNO; blkno < npages; blkno++)
 	{
