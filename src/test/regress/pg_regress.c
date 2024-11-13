@@ -103,6 +103,7 @@ char	   *expecteddir = ".";
 char	   *bindir = PGBINDIR;
 char	   *launcher = NULL;
 static _stringlist *loadextension = NULL;
+char		*exec_sql = NULL;
 static int	max_connections = 0;
 static int	max_concurrent_tests = 0;
 static char *encoding = NULL;
@@ -1983,6 +1984,25 @@ create_database(const char *dbname)
 	 */
 	for (sl = loadextension; sl != NULL; sl = sl->next)
 		psql_command(dbname, "CREATE EXTENSION IF NOT EXISTS \"%s\"", sl->str);
+	/*
+	 * Percona extension
+	 * Execute any additional sql commands provided by caller
+	 */
+	if (exec_sql)
+	{
+		FILE	   *sql_file;
+		char		line_buf[2048];
+
+		sql_file = fopen(exec_sql, "r");
+		if (sql_file == NULL)
+		{
+			bail("could not open \"%s\" to read extra setup file: %s",
+					exec_sql, strerror(errno));
+		}
+		while (fgets(line_buf, sizeof(line_buf), sql_file) != NULL)
+			psql_command(dbname,"%s",line_buf);
+		fclose(sql_file);
+	}
 }
 
 static void
@@ -2032,6 +2052,8 @@ help(void)
 	printf(_("      --launcher=CMD            use CMD as launcher of psql\n"));
 	printf(_("      --load-extension=EXT      load the named extension before running the\n"));
 	printf(_("                                tests; can appear multiple times\n"));
+	printf(_("      --extra-setup=FILE        file containing optional SQL commands to run before running the\n"));
+	printf(_("                                tests;\n"));
 	printf(_("      --max-connections=N       maximum number of concurrent connections\n"));
 	printf(_("                                (default is 0, meaning unlimited)\n"));
 	printf(_("      --max-concurrent-tests=N  maximum number of concurrent tests in schedule\n"));
@@ -2091,6 +2113,7 @@ regression_main(int argc, char *argv[],
 		{"config-auth", required_argument, NULL, 24},
 		{"max-concurrent-tests", required_argument, NULL, 25},
 		{"expecteddir", required_argument, NULL, 26},
+		{"extra-setup", required_argument, NULL, 27},
 		{NULL, 0, NULL, 0}
 	};
 
@@ -2218,6 +2241,9 @@ regression_main(int argc, char *argv[],
 				break;
 			case 26:
 				expecteddir = pg_strdup(optarg);
+				break;
+			case 27:
+				exec_sql = pg_strdup(optarg);
 				break;
 			default:
 				/* getopt_long already emitted a complaint */
