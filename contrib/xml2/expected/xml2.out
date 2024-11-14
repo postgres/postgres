@@ -207,6 +207,45 @@ SELECT xslt_process('<employee><name>cim</name><age>30</age><pay>400</pay></empl
  
 (1 row)
 
+-- xpath_nodeset()
+SELECT xpath_nodeset(article_xml::text, '/article/author|/article/pages')
+  FROM articles;
+             xpath_nodeset              
+----------------------------------------
+ <author>test</author><pages>37</pages>
+(1 row)
+
+SELECT xpath_nodeset(article_xml::text, '/article/author|/article/pages',
+                     'item_without_toptag')
+  FROM articles;
+                                                        xpath_nodeset                                                         
+------------------------------------------------------------------------------------------------------------------------------
+ <item_without_toptag><author>test</author></item_without_toptag><item_without_toptag><pages>37</pages></item_without_toptag>
+(1 row)
+
+SELECT xpath_nodeset(article_xml::text, '/article/author|/article/pages',
+                     'result', 'item')
+  FROM articles;
+                                   xpath_nodeset                                   
+-----------------------------------------------------------------------------------
+ <result><item><author>test</author></item><item><pages>37</pages></item></result>
+(1 row)
+
+-- xpath_list()
+SELECT xpath_list(article_xml::text, '/article/author|/article/pages')
+  FROM articles;
+ xpath_list 
+------------
+ test,37
+(1 row)
+
+SELECT xpath_list(article_xml::text, '/article/author|/article/pages', '|')
+  FROM articles;
+ xpath_list 
+------------
+ test|37
+(1 row)
+
 -- possible security exploit
 SELECT xslt_process('<xml><foo>Hello from XML</foo></xml>',
 $$<xsl:stylesheet version="1.0"
