@@ -2985,10 +2985,11 @@ PostmasterStateMachine(void)
 			if (Shutdown >= ImmediateShutdown || FatalError)
 			{
 				/*
-				 * Start waiting for dead_end children to die.  This state
-				 * change causes ServerLoop to stop creating new ones.
+				 * Stop any dead_end children and stop creating new ones.
 				 */
 				pmState = PM_WAIT_DEAD_END;
+				ConfigurePostmasterWaitSet(false);
+				SignalChildren(SIGQUIT, btmask(B_DEAD_END_BACKEND));
 
 				/*
 				 * We already SIGQUIT'd the archiver and stats processes, if
@@ -3027,9 +3028,10 @@ PostmasterStateMachine(void)
 					 */
 					FatalError = true;
 					pmState = PM_WAIT_DEAD_END;
+					ConfigurePostmasterWaitSet(false);
 
 					/* Kill the walsenders and archiver too */
-					SignalChildren(SIGQUIT, btmask_all_except(B_DEAD_END_BACKEND));
+					SignalChildren(SIGQUIT, BTYPE_MASK_ALL);
 					if (PgArchPID != 0)
 						signal_child(PgArchPID, SIGQUIT);
 				}
@@ -3048,14 +3050,13 @@ PostmasterStateMachine(void)
 		if (PgArchPID == 0 && CountChildren(btmask_all_except(B_DEAD_END_BACKEND)) == 0)
 		{
 			pmState = PM_WAIT_DEAD_END;
+			ConfigurePostmasterWaitSet(false);
+			SignalChildren(SIGTERM, BTYPE_MASK_ALL);
 		}
 	}
 
 	if (pmState == PM_WAIT_DEAD_END)
 	{
-		/* Don't allow any new socket connection events. */
-		ConfigurePostmasterWaitSet(false);
-
 		/*
 		 * PM_WAIT_DEAD_END state ends when the BackendList is entirely empty
 		 * (ie, no dead_end children remain), and the archiver is gone too.
@@ -3381,12 +3382,12 @@ SignalChildren(int signal, BackendTypeMask targetMask)
 
 /*
  * Send a termination signal to children.  This considers all of our children
- * processes, except syslogger and dead_end backends.
+ * processes, except syslogger.
  */
 static void
 TerminateChildren(int signal)
 {
-	SignalChildren(signal, btmask_all_except(B_DEAD_END_BACKEND));
+	SignalChildren(signal, BTYPE_MASK_ALL);
 	if (StartupPID != 0)
 	{
 		signal_child(StartupPID, signal);

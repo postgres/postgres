@@ -1194,6 +1194,9 @@ this to fail.  Otherwise, tests might fail to detect server crashes.
 With optional extra param fail_ok => 1, returns 0 for failure
 instead of bailing out.
 
+The optional extra param timeout can be used to pass the pg_ctl
+--timeout option.
+
 =cut
 
 sub stop
@@ -1209,8 +1212,11 @@ sub stop
 	return 1 unless defined $self->{_pid};
 
 	print "### Stopping node \"$name\" using mode $mode\n";
-	$ret = PostgreSQL::Test::Utils::system_log('pg_ctl', '-D', $pgdata,
-		'-m', $mode, 'stop');
+	my @cmd = ('pg_ctl', '-D', $pgdata, '-m', $mode, 'stop');
+	if ($params{timeout}) {
+		push(@cmd, ('--timeout', $params{timeout}));
+	}
+	$ret = PostgreSQL::Test::Utils::system_log(@cmd);
 
 	if ($ret != 0)
 	{
