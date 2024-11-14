@@ -590,7 +590,7 @@ SysLoggerMain(char *startup_data, size_t startup_data_len)
  * Postmaster subroutine to start a syslogger subprocess.
  */
 int
-SysLogger_Start(void)
+SysLogger_Start(int child_slot)
 {
 	pid_t		sysloggerPid;
 	char	   *filename;
@@ -598,8 +598,7 @@ SysLogger_Start(void)
 	SysloggerStartupData startup_data;
 #endif							/* EXEC_BACKEND */
 
-	if (!Logging_collector)
-		return 0;
+	Assert(Logging_collector);
 
 	/*
 	 * If first time through, create the pipe which will receive stderr
@@ -695,6 +694,7 @@ SysLogger_Start(void)
 		pfree(filename);
 	}
 
+	MyPMChildSlot = child_slot;
 #ifdef EXEC_BACKEND
 	startup_data.syslogFile = syslogger_fdget(syslogFile);
 	startup_data.csvlogFile = syslogger_fdget(csvlogFile);

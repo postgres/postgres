@@ -118,6 +118,7 @@ typedef struct
 	bool		query_id_enabled;
 	int			max_safe_fds;
 	int			MaxBackends;
+	int			num_pmchild_slots;
 #ifdef WIN32
 	HANDLE		PostmasterHandle;
 	HANDLE		initial_signal_pipe;
@@ -735,6 +736,7 @@ save_backend_variables(BackendParameters *param, ClientSocket *client_sock,
 	param->max_safe_fds = max_safe_fds;
 
 	param->MaxBackends = MaxBackends;
+	param->num_pmchild_slots = num_pmchild_slots;
 
 #ifdef WIN32
 	param->PostmasterHandle = PostmasterHandle;
@@ -994,6 +996,7 @@ restore_backend_variables(BackendParameters *param)
 	max_safe_fds = param->max_safe_fds;
 
 	MaxBackends = param->MaxBackends;
+	num_pmchild_slots = param->num_pmchild_slots;
 
 #ifdef WIN32
 	PostmasterHandle = param->PostmasterHandle;

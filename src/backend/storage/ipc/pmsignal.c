@@ -47,11 +47,11 @@
  * exited without performing proper shutdown.  The per-child-process flags
  * have three possible states: UNUSED, ASSIGNED, ACTIVE.  An UNUSED slot is
  * available for assignment.  An ASSIGNED slot is associated with a postmaster
- * child process, but either the process has not touched shared memory yet,
- * or it has successfully cleaned up after itself.  A ACTIVE slot means the
- * process is actively using shared memory.  The slots are assigned to
- * child processes at random, and postmaster.c is responsible for tracking
- * which one goes with which PID.
+ * child process, but either the process has not touched shared memory yet, or
+ * it has successfully cleaned up after itself.  An ACTIVE slot means the
+ * process is actively using shared memory.  The slots are assigned to child
+ * processes by postmaster, and pmchild.c is responsible for tracking which
+ * one goes with which PID.
  *
  * Actually there is a fourth state, WALSENDER.  This is just like ACTIVE,
  * but carries the extra information that the child is a WAL sender.
@@ -84,13 +84,11 @@ struct PMSignalData
 NON_EXEC_STATIC volatile PMSignalData *PMSignalState = NULL;
 
 /*
- * These static variables are valid only in the postmaster.  We keep a
- * duplicative private array so that we can trust its state even if some
- * failing child has clobbered the PMSignalData struct in shared memory.
+ * Local copy of PMSignalState->num_child_flags, only valid in the
+ * postmaster.  Postmaster keeps a local copy so that it doesn't need to
+ * trust the value in shared memory.
  */
-static int	num_child_inuse;	/* # of entries in PMChildInUse[] */
-static int	next_child_inuse;	/* next slot to try to assign */
-static bool *PMChildInUse;		/* true if i'th flag slot is assigned */
+static int	num_child_flags;
 
 /*
  * Signal handler to be notified if postmaster dies.
@@ -155,25 +153,8 @@ PMSignalShmemInit(void)
 	{
 		/* initialize all flags to zeroes */
 		MemSet(unvolatize(PMSignalData *, PMSignalState), 0, PMSignalShmemSize());
-		num_child_inuse = MaxLivePostmasterChildren();
-		PMSignalState->num_child_flags = num_child_inuse;
-
-		/*
-		 * Also allocate postmaster's private PMChildInUse[] array.  We
-		 * might've already done that in a previous shared-memory creation
-		 * cycle, in which case free the old array to avoid a leak.  (Do it
-		 * like this to support the possibility that MaxLivePostmasterChildren
-		 * changed.)  In a standalone backend, we do not need this.
-		 */
-		if (PostmasterContext != NULL)
-		{
-			if (PMChildInUse)
-				pfree(PMChildInUse);
-			PMChildInUse = (bool *)
-				MemoryContextAllocZero(PostmasterContext,
-									   num_child_inuse * sizeof(bool));
-		}
-		next_child_inuse = 0;
+		num_child_flags = MaxLivePostmasterChildren();
+		PMSignalState->num_child_flags = num_child_flags;
 	}
 }
 
@@ -239,56 +220,37 @@ GetQuitSignalReason(void)
 
 
 /*
- * AssignPostmasterChildSlot - select an unused slot for a new postmaster
- * child process, and set its state to ASSIGNED.  Returns a slot number
- * (one to N).
+ * MarkPostmasterChildSlotAssigned - mark the given slot as ASSIGNED for a
+ * new postmaster child process.
  *
  * Only the postmaster is allowed to execute this routine, so we need no
  * special locking.
  */
-int
-AssignPostmasterChildSlot(void)
+void
+MarkPostmasterChildSlotAssigned(int slot)
 {
-	int			slot = next_child_inuse;
-	int			n;
+	Assert(slot > 0 && slot <= num_child_flags);
+	slot--;
 
-	/*
-	 * Scan for a free slot.  Notice that we trust nothing about the contents
-	 * of PMSignalState, but use only postmaster-local data for this decision.
-	 * We track the last slot assigned so as not to waste time repeatedly
-	 * rescanning low-numbered slots.
-	 */
-	for (n = num_child_inuse; n > 0; n--)
-	{
-		if (--slot < 0)
-			slot = num_child_inuse - 1;
-		if (!PMChildInUse[slot])
-		{
-			PMChildInUse[slot] = true;
-			PMSignalState->PMChildFlags[slot] = PM_CHILD_ASSIGNED;
-			next_child_inuse = slot;
-			return slot + 1;
-		}
-	}
+	if (PMSignalState->PMChildFlags[slot] != PM_CHILD_UNUSED)
+		elog(FATAL, "postmaster child slot is already in use");
 
-	/* Out of slots ... should never happen, else postmaster.c messed up */
-	elog(FATAL, "no free slots in PMChildFlags array");
-	return 0;					/* keep compiler quiet */
+	PMSignalState->PMChildFlags[slot] = PM_CHILD_ASSIGNED;
 }
 
 /*
- * ReleasePostmasterChildSlot - release a slot after death of a postmaster
- * child process.  This must be called in the postmaster process.
+ * MarkPostmasterChildSlotUnassigned - release a slot after death of a
+ * postmaster child process.  This must be called in the postmaster process.
  *
  * Returns true if the slot had been in ASSIGNED state (the expected case),
  * false otherwise (implying that the child failed to clean itself up).
  */
 bool
-ReleasePostmasterChildSlot(int slot)
+MarkPostmasterChildSlotUnassigned(int slot)
 {
 	bool		result;
 
-	Assert(slot > 0 && slot <= num_child_inuse);
+	Assert(slot > 0 && slot <= num_child_flags);
 	slot--;
 
 	/*
@@ -298,7 +260,6 @@ ReleasePostmasterChildSlot(int slot)
 	 */
 	result = (PMSignalState->PMChildFlags[slot] == PM_CHILD_ASSIGNED);
 	PMSignalState->PMChildFlags[slot] = PM_CHILD_UNUSED;
-	PMChildInUse[slot] = false;
 	return result;
 }
 
@@ -309,7 +270,7 @@ ReleasePostmasterChildSlot(int slot)
 bool
 IsPostmasterChildWalSender(int slot)
 {
-	Assert(slot > 0 && slot <= num_child_inuse);
+	Assert(slot > 0 && slot <= num_child_flags);
 	slot--;
 
 	if (PMSignalState->PMChildFlags[slot] == PM_CHILD_WALSENDER)

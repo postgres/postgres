@@ -353,14 +353,9 @@ InitProcess(void)
 	/*
 	 * Before we start accessing the shared memory in a serious way, mark
 	 * ourselves as an active postmaster child; this is so that the postmaster
-	 * can detect it if we exit without cleaning up.  (XXX autovac launcher
-	 * currently doesn't participate in this; it probably should.)
-	 *
-	 * Slot sync worker also does not participate in it, see comments atop
-	 * 'struct bkend' in postmaster.c.
+	 * can detect it if we exit without cleaning up.
 	 */
-	if (IsUnderPostmaster && !AmAutoVacuumLauncherProcess() &&
-		!AmLogicalSlotSyncWorkerProcess())
+	if (IsUnderPostmaster)
 		RegisterPostmasterChildActive();
 
 	/* Decide which list should supply our PGPROC. */
@@ -577,6 +572,9 @@ InitAuxiliaryProcess(void)
 
 	if (MyProc != NULL)
 		elog(ERROR, "you already exist");
+
+	if (IsUnderPostmaster)
+		RegisterPostmasterChildActive();
 
 	/*
 	 * We use the ProcStructLock to protect assignment and releasing of

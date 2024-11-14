@@ -31,6 +31,7 @@
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "pg_getopt.h"
+#include "postmaster/postmaster.h"
 #include "storage/bufpage.h"
 #include "storage/ipc.h"
 #include "storage/proc.h"
@@ -308,6 +309,13 @@ BootstrapModeMain(int argc, char *argv[], bool check_only)
 	IgnoreSystemIndexes = true;
 
 	InitializeMaxBackends();
+
+	/*
+	 * Even though bootstrapping runs in single-process mode, initialize
+	 * postmaster child slots array so that --check can detect running out of
+	 * shared memory or other resources if max_connections is set too high.
+	 */
+	InitPostmasterChildSlots();
 
 	InitializeFastPathLocks();
 

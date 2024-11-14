@@ -13,7 +13,43 @@
 #ifndef _POSTMASTER_H
 #define _POSTMASTER_H
 
+#include "lib/ilist.h"
 #include "miscadmin.h"
+
+/*
+ * A struct representing an active postmaster child process.  This is used
+ * mainly to keep track of how many children we have and send them appropriate
+ * signals when necessary.  All postmaster child processes are assigned a
+ * PMChild entry.  That includes "normal" client sessions, but also autovacuum
+ * workers, walsenders, background workers, and aux processes.  (Note that at
+ * the time of launch, walsenders are labeled B_BACKEND; we relabel them to
+ * B_WAL_SENDER upon noticing they've changed their PMChildFlags entry.  Hence
+ * that check must be done before any operation that needs to distinguish
+ * walsenders from normal backends.)
+ *
+ * "dead-end" children are also allocated a PMChild entry: these are children
+ * launched just for the purpose of sending a friendly rejection message to a
+ * would-be client.  We must track them because they are attached to shared
+ * memory, but we know they will never become live backends.
+ *
+ * child_slot is an identifier that is unique across all running child
+ * processes.  It is used as an index into the PMChildFlags array.  dead-end
+ * children are not assigned a child_slot and have child_slot == 0 (valid
+ * child_slot ids start from 1).
+ */
+typedef struct
+{
+	pid_t		pid;			/* process id of backend */
+	int			child_slot;		/* PMChildSlot for this backend, if any */
+	BackendType bkend_type;		/* child process flavor, see above */
+	struct RegisteredBgWorker *rw;	/* bgworker info, if this is a bgworker */
+	bool		bgworker_notify;	/* gets bgworker start/stop notifications */
+	dlist_node	elem;			/* list link in ActiveChildList */
+} PMChild;
+
+#ifdef EXEC_BACKEND
+extern int	num_pmchild_slots;
+#endif
 
 /* GUC options */
 extern PGDLLIMPORT bool EnableSSL;
@@ -79,6 +115,15 @@ const char *PostmasterChildName(BackendType child_type);
 #ifdef EXEC_BACKEND
 extern void SubPostmasterMain(int argc, char *argv[]) pg_attribute_noreturn();
 #endif
+
+/* defined in pmchild.c */
+extern dlist_head ActiveChildList;
+
+extern void InitPostmasterChildSlots(void);
+extern PMChild *AssignPostmasterChildSlot(BackendType btype);
+extern PMChild *AllocDeadEndChild(void);
+extern bool ReleasePostmasterChildSlot(PMChild *pmchild);
+extern PMChild *FindPostmasterChildByPid(int pid);
 
 /*
  * Note: MAX_BACKENDS is limited to 2^18-1 because that's the width reserved

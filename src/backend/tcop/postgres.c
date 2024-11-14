@@ -4189,6 +4189,12 @@ PostgresSingleUserMain(int argc, char *argv[],
 	/* Initialize MaxBackends */
 	InitializeMaxBackends();
 
+	/*
+	 * We don't need postmaster child slots in single-user mode, but
+	 * initialize them anyway to avoid having special handling.
+	 */
+	InitPostmasterChildSlots();
+
 	/* Initialize size of fast-path lock cache. */
 	InitializeFastPathLocks();
 
