@@ -34,6 +34,12 @@ CREATE TABLE table_name (
 
 The `tde_heap` is a custom table access method that comes with the `pg_tde` extension to provide data encryption. It is automatically created **only** for the databases where you [enabled the `pg_tde` extension](setup.md) and configured the key provider.
 
+### How does it work? 
+
+The `tde_heap` access method works on top of the default heap access method and is a marker to point which tables require encryption. It uses the custom storage manager TDE SMGR, which becomes active only after you installed the `pg_tde` extension. 
+
+When a table requires encryption, every data block is encrypted before it is written to disk and decrypted after reading before it is sent to the PostgreSQL core and then to the client. The encryption is done at the storage manager level. 
+
 
 ## Changing the default table access method
 
