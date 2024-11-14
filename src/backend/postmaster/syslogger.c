@@ -694,14 +694,15 @@ SysLogger_Start(int child_slot)
 		pfree(filename);
 	}
 
-	MyPMChildSlot = child_slot;
 #ifdef EXEC_BACKEND
 	startup_data.syslogFile = syslogger_fdget(syslogFile);
 	startup_data.csvlogFile = syslogger_fdget(csvlogFile);
 	startup_data.jsonlogFile = syslogger_fdget(jsonlogFile);
-	sysloggerPid = postmaster_child_launch(B_LOGGER, (char *) &startup_data, sizeof(startup_data), NULL);
+	sysloggerPid = postmaster_child_launch(B_LOGGER, child_slot,
+										   (char *) &startup_data, sizeof(startup_data), NULL);
 #else
-	sysloggerPid = postmaster_child_launch(B_LOGGER, NULL, 0, NULL);
+	sysloggerPid = postmaster_child_launch(B_LOGGER, child_slot,
+										   NULL, 0, NULL);
 #endif							/* EXEC_BACKEND */
 
 	if (sysloggerPid == -1)
