@@ -330,6 +330,8 @@ pgstat_io_snapshot_cb(void)
 *
 * The following BackendTypes do not participate in the cumulative stats
 * subsystem or do not perform IO on which we currently track:
+* - Dead-end backend because it is not connected to shared memory and
+*   doesn't do any IO
 * - Syslogger because it is not connected to shared memory
 * - Archiver because most relevant archiving IO is delegated to a
 *   specialized command or module
@@ -352,6 +354,7 @@ pgstat_tracks_io_bktype(BackendType bktype)
 	switch (bktype)
 	{
 		case B_INVALID:
+		case B_DEAD_END_BACKEND:
 		case B_ARCHIVER:
 		case B_LOGGER:
 		case B_WAL_RECEIVER:

@@ -260,60 +260,69 @@ SwitchBackToLocalLatch(void)
 	SetLatch(MyLatch);
 }
 
+/*
+ * Return a human-readable string representation of a BackendType.
+ *
+ * The string is not localized here, but we mark the strings for translation
+ * so that callers can invoke _() on the result.
+ */
 const char *
 GetBackendTypeDesc(BackendType backendType)
 {
-	const char *backendDesc = "unknown process type";
+	const char *backendDesc = gettext_noop("unknown process type");
 
 	switch (backendType)
 	{
 		case B_INVALID:
-			backendDesc = "not initialized";
+			backendDesc = gettext_noop("not initialized");
 			break;
 		case B_ARCHIVER:
-			backendDesc = "archiver";
+			backendDesc = gettext_noop("archiver");
 			break;
 		case B_AUTOVAC_LAUNCHER:
-			backendDesc = "autovacuum launcher";
+			backendDesc = gettext_noop("autovacuum launcher");
 			break;
 		case B_AUTOVAC_WORKER:
-			backendDesc = "autovacuum worker";
+			backendDesc = gettext_noop("autovacuum worker");
 			break;
 		case B_BACKEND:
-			backendDesc = "client backend";
+			backendDesc = gettext_noop("client backend");
+			break;
+		case B_DEAD_END_BACKEND:
+			backendDesc = gettext_noop("dead-end client backend");
 			break;
 		case B_BG_WORKER:
-			backendDesc = "background worker";
+			backendDesc = gettext_noop("background worker");
 			break;
 		case B_BG_WRITER:
-			backendDesc = "background writer";
+			backendDesc = gettext_noop("background writer");
 			break;
 		case B_CHECKPOINTER:
-			backendDesc = "checkpointer";
+			backendDesc = gettext_noop("checkpointer");
 			break;
 		case B_LOGGER:
-			backendDesc = "logger";
+			backendDesc = gettext_noop("logger");
 			break;
 		case B_SLOTSYNC_WORKER:
-			backendDesc = "slotsync worker";
+			backendDesc = gettext_noop("slotsync worker");
 			break;
 		case B_STANDALONE_BACKEND:
-			backendDesc = "standalone backend";
+			backendDesc = gettext_noop("standalone backend");
 			break;
 		case B_STARTUP:
-			backendDesc = "startup";
+			backendDesc = gettext_noop("startup");
 			break;
 		case B_WAL_RECEIVER:
-			backendDesc = "walreceiver";
+			backendDesc = gettext_noop("walreceiver");
 			break;
 		case B_WAL_SENDER:
-			backendDesc = "walsender";
+			backendDesc = gettext_noop("walsender");
 			break;
 		case B_WAL_SUMMARIZER:
-			backendDesc = "walsummarizer";
+			backendDesc = gettext_noop("walsummarizer");
 			break;
 		case B_WAL_WRITER:
-			backendDesc = "walwriter";
+			backendDesc = gettext_noop("walwriter");
 			break;
 	}
 

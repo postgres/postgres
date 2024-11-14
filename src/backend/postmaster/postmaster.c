@@ -126,15 +126,71 @@
 
 
 /*
- * Possible types of a backend. Beyond being the possible bkend_type values in
- * struct bkend, these are OR-able request flag bits for SignalSomeChildren()
- * and CountChildren().
+ * CountChildren and SignalChildren take a bitmask argument to represent
+ * BackendTypes to count or signal.  Define a separate type and functions to
+ * work with the bitmasks, to avoid accidentally passing a plain BackendType
+ * in place of a bitmask or vice versa.
  */
-#define BACKEND_TYPE_NORMAL		0x0001	/* normal backend */
-#define BACKEND_TYPE_AUTOVAC	0x0002	/* autovacuum worker process */
-#define BACKEND_TYPE_WALSND		0x0004	/* walsender process */
-#define BACKEND_TYPE_BGWORKER	0x0008	/* bgworker process */
-#define BACKEND_TYPE_ALL		0x000F	/* OR of all the above */
+typedef struct
+{
+	uint32		mask;
+} BackendTypeMask;
+
+StaticAssertDecl(BACKEND_NUM_TYPES < 32, "too many backend types for uint32");
+
+static const BackendTypeMask BTYPE_MASK_ALL = {(1 << BACKEND_NUM_TYPES) - 1};
+#if 0							/* unused */
+static const BackendTypeMask BTYPE_MASK_NONE = {0};
+#endif
+
+static inline BackendTypeMask
+btmask(BackendType t)
+{
+	BackendTypeMask mask = {.mask = 1 << t};
+
+	return mask;
+}
+
+#if 0							/* unused */
+static inline BackendTypeMask
+btmask_add(BackendTypeMask mask, BackendType t)
+{
+	mask.mask |= 1 << t;
+	return mask;
+}
+#endif
+
+static inline BackendTypeMask
+btmask_del(BackendTypeMask mask, BackendType t)
+{
+	mask.mask &= ~(1 << t);
+	return mask;
+}
+
+static inline BackendTypeMask
+btmask_all_except(BackendType t)
+{
+	BackendTypeMask mask = BTYPE_MASK_ALL;
+
+	mask = btmask_del(mask, t);
+	return mask;
+}
+
+static inline BackendTypeMask
+btmask_all_except2(BackendType t1, BackendType t2)
+{
+	BackendTypeMask mask = BTYPE_MASK_ALL;
+
+	mask = btmask_del(mask, t1);
+	mask = btmask_del(mask, t2);
+	return mask;
+}
+
+static inline bool
+btmask_contains(BackendTypeMask mask, BackendType t)
+{
+	return (mask.mask & (1 << t)) != 0;
+}
 
 /*
  * List of active backends (or child processes anyway; we don't actually
@@ -145,7 +201,7 @@
  * As shown in the above set of backend types, this list includes not only
  * "normal" client sessions, but also autovacuum workers, walsenders, and
  * background workers.  (Note that at the time of launch, walsenders are
- * labeled BACKEND_TYPE_NORMAL; we relabel them to BACKEND_TYPE_WALSND
+ * labeled B_BACKEND; we relabel them to B_WAL_SENDER
  * upon noticing they've changed their PMChildFlags entry.  Hence that check
  * must be done before any operation that needs to distinguish walsenders
  * from normal backends.)
@@ -154,7 +210,7 @@
  * the purpose of sending a friendly rejection message to a would-be client.
  * We must track them because they are attached to shared memory, but we know
  * they will never become live backends.  dead_end children are not assigned a
- * PMChildSlot.  dead_end children have bkend_type NORMAL.
+ * PMChildSlot.  dead_end children have bkend_type B_DEAD_END_BACKEND.
  *
  * "Special" children such as the startup, bgwriter, autovacuum launcher, and
  * slot sync worker tasks are not in this list.  They are tracked via StartupPID
@@ -166,8 +222,7 @@ typedef struct bkend
 {
 	pid_t		pid;			/* process id of backend */
 	int			child_slot;		/* PMChildSlot for this backend, if any */
-	int			bkend_type;		/* child process flavor, see above */
-	bool		dead_end;		/* is it going to send an error and quit? */
+	BackendType bkend_type;		/* child process flavor, see above */
 	RegisteredBgWorker *rw;		/* bgworker info, if this is a bgworker */
 	bool		bgworker_notify;	/* gets bgworker start/stop notifications */
 	dlist_node	elem;			/* list link in BackendList */
@@ -404,15 +459,12 @@ static void ExitPostmaster(int status) pg_attribute_noreturn();
 static int	ServerLoop(void);
 static int	BackendStartup(ClientSocket *client_sock);
 static void report_fork_failure_to_client(ClientSocket *client_sock, int errnum);
-static CAC_state canAcceptConnections(int backend_type);
+static CAC_state canAcceptConnections(BackendType backend_type);
 static void signal_child(pid_t pid, int signal);
 static void sigquit_child(pid_t pid);
-static bool SignalSomeChildren(int signal, int target);
+static bool SignalChildren(int signal, BackendTypeMask targetMask);
 static void TerminateChildren(int signal);
-
-#define SignalChildren(sig)			   SignalSomeChildren(sig, BACKEND_TYPE_ALL)
-
-static int	CountChildren(int target);
+static int	CountChildren(BackendTypeMask targetMask);
 static Backend *assign_backendlist_entry(void);
 static void LaunchMissingBackgroundProcesses(void);
 static void maybe_start_bgworkers(void);
@@ -1751,12 +1803,12 @@ ServerLoop(void)
 
 /*
  * canAcceptConnections --- check to see if database state allows connections
- * of the specified type.  backend_type can be BACKEND_TYPE_NORMAL,
- * BACKEND_TYPE_AUTOVAC, or BACKEND_TYPE_BGWORKER.  (Note that we don't yet
- * know whether a NORMAL connection might turn into a walsender.)
+ * of the specified type.  backend_type can be B_BACKEND, B_AUTOVAC_WORKER, or
+ * B_BG_WORKER.  (Note that we don't yet know whether a normal B_BACKEND
+ * connection might turn into a walsender.)
  */
 static CAC_state
-canAcceptConnections(int backend_type)
+canAcceptConnections(BackendType backend_type)
 {
 	CAC_state	result = CAC_OK;
 
@@ -1767,7 +1819,7 @@ canAcceptConnections(int backend_type)
 	 * bgworker_should_start_now() decided whether the DB state allows them.
 	 */
 	if (pmState != PM_RUN && pmState != PM_HOT_STANDBY &&
-		backend_type != BACKEND_TYPE_BGWORKER)
+		backend_type != B_BG_WORKER)
 	{
 		if (Shutdown > NoShutdown)
 			return CAC_SHUTDOWN;	/* shutdown is pending */
@@ -1784,7 +1836,7 @@ canAcceptConnections(int backend_type)
 	 * "Smart shutdown" restrictions are applied only to normal connections,
 	 * not to autovac workers or bgworkers.
 	 */
-	if (!connsAllowed && backend_type == BACKEND_TYPE_NORMAL)
+	if (!connsAllowed && backend_type == B_BACKEND)
 		return CAC_SHUTDOWN;	/* shutdown is pending */
 
 	/*
@@ -1799,7 +1851,7 @@ canAcceptConnections(int backend_type)
 	 * The limit here must match the sizes of the per-child-process arrays;
 	 * see comments for MaxLivePostmasterChildren().
 	 */
-	if (CountChildren(BACKEND_TYPE_ALL) >= MaxLivePostmasterChildren())
+	if (CountChildren(btmask_all_except(B_DEAD_END_BACKEND)) >= MaxLivePostmasterChildren())
 		result = CAC_TOOMANY;
 
 	return result;
@@ -1968,7 +2020,7 @@ process_pm_reload_request(void)
 		ereport(LOG,
 				(errmsg("received SIGHUP, reloading configuration files")));
 		ProcessConfigFile(PGC_SIGHUP);
-		SignalChildren(SIGHUP);
+		SignalChildren(SIGHUP, btmask_all_except(B_DEAD_END_BACKEND));
 		if (StartupPID != 0)
 			signal_child(StartupPID, SIGHUP);
 		if (BgWriterPID != 0)
@@ -2386,7 +2438,7 @@ process_pm_child_exit(void)
 				 * Waken walsenders for the last time. No regular backends
 				 * should be around anymore.
 				 */
-				SignalChildren(SIGUSR2);
+				SignalChildren(SIGUSR2, btmask(B_WAL_SENDER));
 
 				pmState = PM_SHUTDOWN_2;
 			}
@@ -2552,23 +2604,19 @@ CleanupBackend(Backend *bp,
 			   int exitstatus)	/* child's exit status. */
 {
 	char		namebuf[MAXPGPATH];
-	char	   *procname;
+	const char *procname;
 	bool		crashed = false;
 	bool		logged = false;
 
-	/* Construct a process name for log message */
-	if (bp->dead_end)
-	{
-		procname = _("dead end backend");
-	}
-	else if (bp->bkend_type == BACKEND_TYPE_BGWORKER)
+	/* Construct a process name for the log message */
+	if (bp->bkend_type == B_BG_WORKER)
 	{
 		snprintf(namebuf, MAXPGPATH, _("background worker \"%s\""),
 				 bp->rw->rw_worker.bgw_type);
 		procname = namebuf;
 	}
 	else
-		procname = _("server process");
+		procname = _(GetBackendTypeDesc(bp->bkend_type));
 
 	/*
 	 * If a backend dies in an ugly way then we must signal all other backends
@@ -2600,7 +2648,7 @@ CleanupBackend(Backend *bp,
 	 * If the process attached to shared memory, check that it detached
 	 * cleanly.
 	 */
-	if (!bp->dead_end)
+	if (bp->bkend_type != B_DEAD_END_BACKEND)
 	{
 		if (!ReleasePostmasterChildSlot(bp->child_slot))
 		{
@@ -2633,7 +2681,7 @@ CleanupBackend(Backend *bp,
 	 * If it was a background worker, also update its RegisteredBgWorker
 	 * entry.
 	 */
-	if (bp->bkend_type == BACKEND_TYPE_BGWORKER)
+	if (bp->bkend_type == B_BG_WORKER)
 	{
 		RegisteredBgWorker *rw = bp->rw;
 
@@ -2861,7 +2909,7 @@ PostmasterStateMachine(void)
 			 * This state ends when we have no normal client backends running.
 			 * Then we're ready to stop other children.
 			 */
-			if (CountChildren(BACKEND_TYPE_NORMAL) == 0)
+			if (CountChildren(btmask(B_BACKEND)) == 0)
 				pmState = PM_STOP_BACKENDS;
 		}
 	}
@@ -2880,9 +2928,8 @@ PostmasterStateMachine(void)
 		 */
 		ForgetUnstartedBackgroundWorkers();
 
-		/* Signal all backend children except walsenders */
-		SignalSomeChildren(SIGTERM,
-						   BACKEND_TYPE_ALL - BACKEND_TYPE_WALSND);
+		/* Signal all backend children except walsenders and dead-end backends */
+		SignalChildren(SIGTERM, btmask_all_except2(B_WAL_SENDER, B_DEAD_END_BACKEND));
 		/* and the autovac launcher too */
 		if (AutoVacPID != 0)
 			signal_child(AutoVacPID, SIGTERM);
@@ -2924,7 +2971,7 @@ PostmasterStateMachine(void)
 		 * here. Walsenders and archiver are also disregarded, they will be
 		 * terminated later after writing the checkpoint record.
 		 */
-		if (CountChildren(BACKEND_TYPE_ALL - BACKEND_TYPE_WALSND) == 0 &&
+		if (CountChildren(btmask_all_except2(B_WAL_SENDER, B_DEAD_END_BACKEND)) == 0 &&
 			StartupPID == 0 &&
 			WalReceiverPID == 0 &&
 			WalSummarizerPID == 0 &&
@@ -2982,7 +3029,7 @@ PostmasterStateMachine(void)
 					pmState = PM_WAIT_DEAD_END;
 
 					/* Kill the walsenders and archiver too */
-					SignalChildren(SIGQUIT);
+					SignalChildren(SIGQUIT, btmask_all_except(B_DEAD_END_BACKEND));
 					if (PgArchPID != 0)
 						signal_child(PgArchPID, SIGQUIT);
 				}
@@ -2998,7 +3045,7 @@ PostmasterStateMachine(void)
 		 * left by now anyway; what we're really waiting for is walsenders and
 		 * archiver.
 		 */
-		if (PgArchPID == 0 && CountChildren(BACKEND_TYPE_ALL) == 0)
+		if (PgArchPID == 0 && CountChildren(btmask_all_except(B_DEAD_END_BACKEND)) == 0)
 		{
 			pmState = PM_WAIT_DEAD_END;
 		}
@@ -3296,11 +3343,10 @@ sigquit_child(pid_t pid)
 }
 
 /*
- * Send a signal to the targeted children (but NOT special children;
- * dead_end children are never signaled, either).
+ * Send a signal to the targeted children (but NOT special children).
  */
 static bool
-SignalSomeChildren(int signal, int target)
+SignalChildren(int signal, BackendTypeMask targetMask)
 {
 	dlist_iter	iter;
 	bool		signaled = false;
@@ -3309,30 +3355,24 @@ SignalSomeChildren(int signal, int target)
 	{
 		Backend    *bp = dlist_container(Backend, elem, iter.cur);
 
-		if (bp->dead_end)
-			continue;
-
 		/*
-		 * Since target == BACKEND_TYPE_ALL is the most common case, we test
-		 * it first and avoid touching shared memory for every child.
+		 * If we need to distinguish between B_BACKEND and B_WAL_SENDER, check
+		 * if any B_BACKEND backends have recently announced that they are
+		 * actually WAL senders.
 		 */
-		if (target != BACKEND_TYPE_ALL)
+		if (btmask_contains(targetMask, B_WAL_SENDER) != btmask_contains(targetMask, B_BACKEND) &&
+			bp->bkend_type == B_BACKEND)
 		{
-			/*
-			 * Assign bkend_type for any recently announced WAL Sender
-			 * processes.
-			 */
-			if (bp->bkend_type == BACKEND_TYPE_NORMAL &&
-				IsPostmasterChildWalSender(bp->child_slot))
-				bp->bkend_type = BACKEND_TYPE_WALSND;
-
-			if (!(target & bp->bkend_type))
-				continue;
+			if (IsPostmasterChildWalSender(bp->child_slot))
+				bp->bkend_type = B_WAL_SENDER;
 		}
 
+		if (!btmask_contains(targetMask, bp->bkend_type))
+			continue;
+
 		ereport(DEBUG4,
-				(errmsg_internal("sending signal %d to process %d",
-								 signal, (int) bp->pid)));
+				(errmsg_internal("sending signal %d to %s process %d",
+								 signal, GetBackendTypeDesc(bp->bkend_type), (int) bp->pid)));
 		signal_child(bp->pid, signal);
 		signaled = true;
 	}
@@ -3346,7 +3386,7 @@ SignalSomeChildren(int signal, int target)
 static void
 TerminateChildren(int signal)
 {
-	SignalChildren(signal);
+	SignalChildren(signal, btmask_all_except(B_DEAD_END_BACKEND));
 	if (StartupPID != 0)
 	{
 		signal_child(StartupPID, signal);
@@ -3399,22 +3439,27 @@ BackendStartup(ClientSocket *client_sock)
 	}
 
 	/* Pass down canAcceptConnections state */
-	startup_data.canAcceptConnections = canAcceptConnections(BACKEND_TYPE_NORMAL);
-	bn->dead_end = (startup_data.canAcceptConnections != CAC_OK);
+	startup_data.canAcceptConnections = canAcceptConnections(B_BACKEND);
 	bn->rw = NULL;
 
 	/*
 	 * Unless it's a dead_end child, assign it a child slot number
 	 */
-	if (!bn->dead_end)
+	if (startup_data.canAcceptConnections == CAC_OK)
+	{
+		bn->bkend_type = B_BACKEND; /* Can change later to B_WAL_SENDER */
 		bn->child_slot = MyPMChildSlot = AssignPostmasterChildSlot();
+	}
 	else
+	{
+		bn->bkend_type = B_DEAD_END_BACKEND;
 		bn->child_slot = 0;
+	}
 
 	/* Hasn't asked to be notified about any bgworkers yet */
 	bn->bgworker_notify = false;
 
-	pid = postmaster_child_launch(B_BACKEND,
+	pid = postmaster_child_launch(bn->bkend_type,
 								  (char *) &startup_data, sizeof(startup_data),
 								  client_sock);
 	if (pid < 0)
@@ -3422,7 +3467,7 @@ BackendStartup(ClientSocket *client_sock)
 		/* in parent, fork failed */
 		int			save_errno = errno;
 
-		if (!bn->dead_end)
+		if (bn->child_slot != 0)
 			(void) ReleasePostmasterChildSlot(bn->child_slot);
 		pfree(bn);
 		errno = save_errno;
@@ -3434,7 +3479,8 @@ BackendStartup(ClientSocket *client_sock)
 
 	/* in parent, successful fork */
 	ereport(DEBUG2,
-			(errmsg_internal("forked new backend, pid=%d socket=%d",
+			(errmsg_internal("forked new %s, pid=%d socket=%d",
+							 GetBackendTypeDesc(bn->bkend_type),
 							 (int) pid, (int) client_sock->sock)));
 
 	/*
@@ -3442,7 +3488,6 @@ BackendStartup(ClientSocket *client_sock)
 	 * of backends.
 	 */
 	bn->pid = pid;
-	bn->bkend_type = BACKEND_TYPE_NORMAL;	/* Can change later to WALSND */
 	dlist_push_head(&BackendList, &bn->elem);
 
 	return STATUS_OK;
@@ -3676,11 +3721,11 @@ dummy_handler(SIGNAL_ARGS)
 }
 
 /*
- * Count up number of child processes of specified types (dead_end children
- * are always excluded).
+ * Count up number of child processes of specified types (but NOT special
+ * children).
  */
 static int
-CountChildren(int target)
+CountChildren(BackendTypeMask targetMask)
 {
 	dlist_iter	iter;
 	int			cnt = 0;
@@ -3689,26 +3734,20 @@ CountChildren(int target)
 	{
 		Backend    *bp = dlist_container(Backend, elem, iter.cur);
 
-		if (bp->dead_end)
-			continue;
-
 		/*
-		 * Since target == BACKEND_TYPE_ALL is the most common case, we test
-		 * it first and avoid touching shared memory for every child.
+		 * If we need to distinguish between B_BACKEND and B_WAL_SENDER, check
+		 * if any B_BACKEND backends have recently announced that they are
+		 * actually WAL senders.
 		 */
-		if (target != BACKEND_TYPE_ALL)
+		if (btmask_contains(targetMask, B_WAL_SENDER) != btmask_contains(targetMask, B_BACKEND) &&
+			bp->bkend_type == B_BACKEND)
 		{
-			/*
-			 * Assign bkend_type for any recently announced WAL Sender
-			 * processes.
-			 */
-			if (bp->bkend_type == BACKEND_TYPE_NORMAL &&
-				IsPostmasterChildWalSender(bp->child_slot))
-				bp->bkend_type = BACKEND_TYPE_WALSND;
-
-			if (!(target & bp->bkend_type))
-				continue;
+			if (IsPostmasterChildWalSender(bp->child_slot))
+				bp->bkend_type = B_WAL_SENDER;
 		}
+
+		if (!btmask_contains(targetMask, bp->bkend_type))
+			continue;
 
 		cnt++;
 	}
@@ -3773,13 +3812,13 @@ StartAutovacuumWorker(void)
 	 * we have to check to avoid race-condition problems during DB state
 	 * changes.
 	 */
-	if (canAcceptConnections(BACKEND_TYPE_AUTOVAC) == CAC_OK)
+	if (canAcceptConnections(B_AUTOVAC_WORKER) == CAC_OK)
 	{
 		bn = (Backend *) palloc_extended(sizeof(Backend), MCXT_ALLOC_NO_OOM);
 		if (bn)
 		{
-			/* Autovac workers are not dead_end and need a child slot */
-			bn->dead_end = false;
+			/* Autovac workers need a child slot */
+			bn->bkend_type = B_AUTOVAC_WORKER;
 			bn->child_slot = MyPMChildSlot = AssignPostmasterChildSlot();
 			bn->bgworker_notify = false;
 			bn->rw = NULL;
@@ -3787,7 +3826,6 @@ StartAutovacuumWorker(void)
 			bn->pid = StartChildProcess(B_AUTOVAC_WORKER);
 			if (bn->pid > 0)
 			{
-				bn->bkend_type = BACKEND_TYPE_AUTOVAC;
 				dlist_push_head(&BackendList, &bn->elem);
 				/* all OK */
 				return;
@@ -3993,7 +4031,7 @@ assign_backendlist_entry(void)
 	 * only possible failure is CAC_TOOMANY, so we just log an error message
 	 * based on that rather than checking the error code precisely.
 	 */
-	if (canAcceptConnections(BACKEND_TYPE_BGWORKER) != CAC_OK)
+	if (canAcceptConnections(B_BG_WORKER) != CAC_OK)
 	{
 		ereport(LOG,
 				(errcode(ERRCODE_CONFIGURATION_LIMIT_EXCEEDED),
@@ -4011,8 +4049,7 @@ assign_backendlist_entry(void)
 	}
 
 	bn->child_slot = MyPMChildSlot = AssignPostmasterChildSlot();
-	bn->bkend_type = BACKEND_TYPE_BGWORKER;
-	bn->dead_end = false;
+	bn->bkend_type = B_BG_WORKER;
 	bn->bgworker_notify = false;
 
 	return bn;

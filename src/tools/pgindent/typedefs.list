@@ -235,6 +235,7 @@ BackendParameters
 BackendStartupData
 BackendState
 BackendType
+BackendTypeMask
 BackgroundWorker
 BackgroundWorkerArray
 BackgroundWorkerHandle
