@@ -1,29 +1,28 @@
-name: Build pg_tde documentation
+name: Docs
 on:
   push:
-    branches: 
+    branches:
       - main
     paths:
-      - 'documentation/**'
-     
-jobs:
-  build:
-    name: Deploy docs
-    runs-on: ubuntu-latest
+      - "documentation/**"
 
-    steps: 
-      #Pull the latest changes
-      - name: Chekout code
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ github.workspace }}/documentation
+
+    steps:
+      - name: Chekout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      #Prepare the env
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.x'
-      
-      #Configure git
+          python-version: "3.x"
+
       - name: Configure git
         env:
           ROBOT_TOKEN: ${{ secrets.ROBOT_TOKEN }}
@@ -34,21 +33,14 @@ jobs:
           git config user.password "${ROBOT_TOKEN}"
           echo "GIT_USER=percona-platform-robot:${ROBOT_TOKEN}" >> $GITHUB_ENV
 
-      #Set up MkDocs
       - name: Install MkDocs
         run: |
-          cd documentation
           python -m pip install --upgrade pip
           pip install wheel
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
-
-     
-     
-      # Deploy docs
-      - name: Deploy docs
+      - name: Deploy
         run: |
-          cd documentation
           mike deploy main -p
           mike set-default main -p
           mike retitle main "Beta" -p

@@ -70,5 +70,6 @@ jobs:
         with:
           name: Regressions diff and postgresql log
           path: |
-            src/build/testrun/pg_tde/regress/
+            src/build/testrun/pg_tde/
+            src/contrib/pg_tde/t/results/
           retention-days: 3

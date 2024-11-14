@@ -1,0 +1,48 @@
+name: Docker
+
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-push:
+    name: Build and Push
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build
+        uses: docker/build-push-action@v6
+        with:
+          file: docker/Dockerfile
+          load: true # Put image in local docker
+          tags: perconalab/pg_tde:latest
+
+      - name: Test
+        run: |
+          docker run --pull=never --name pg-tde -e POSTGRES_PASSWORD=mysecretpassword -d perconalab/pg_tde:latest
+          sleep 10
+          IP=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' pg-tde)
+          echo $IP
+          echo "CREATE TABLE test_enc(id SERIAL, k INTEGER DEFAULT '0' NOT NULL, PRIMARY KEY (id)) USING pg_tde;" | docker run -e PGPASSWORD=mysecretpassword --rm postgres psql -h $IP -U postgres
+          echo "SELECT * FROM test_enc;" | docker run -e PGPASSWORD=mysecretpassword --rm postgres psql -h $IP -U postgres
+
+      - name: Login to Docker Hub
+        if: ${{ github.ref == 'refs/heads/main' }}
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Push
+        if: ${{ github.ref == 'refs/heads/main' }}
+        uses: docker/build-push-action@v6
+        with:
+          file: docker/Dockerfile
+          push: true
+          tags: perconalab/pg_tde:latest
