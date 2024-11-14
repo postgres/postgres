@@ -27,4 +27,6 @@ DELETE FROM image;
 
 SELECT lo_get(43214);
 
+SELECT lo_oid(1::lo);
+
 DROP TABLE image;
