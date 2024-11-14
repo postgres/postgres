@@ -1,6 +1,9 @@
 name: postgresql-16-src-make-ssl11
 on: [pull_request, workflow_dispatch]
 
+permissions:
+  contents: read
+
 jobs:
   build:
     name: pg-16-src-make-test-ssl11
@@ -34,14 +37,14 @@ jobs:
           sudo apt update && sudo apt install -y vault
 
       - name: Clone postgres repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           repository: 'postgres/postgres'
           ref: 'a81e5516fa4bc53e332cb35eefe231147c0e1749'
           path: 'src'
 
       - name: Clone pg_tde repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           path: 'src/contrib/pg_tde'
 
@@ -82,7 +85,7 @@ jobs:
         working-directory: src/contrib/pg_tde
 
       - name: Report on test fail
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
         if: ${{ failure() }}
         with:
           name: Regressions diff and postgresql log

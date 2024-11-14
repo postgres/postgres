@@ -5,8 +5,13 @@ on:
   push:
     branches: [main]
 
+permissions:
+  contents: read
+
 jobs:
   build:
+    permissions:
+      contents: write  # for ncipollo/release-action to create a release
     name: pg-16-ppg-package-pgxs-build
     runs-on: ubuntu-22.04
     steps:
@@ -55,7 +60,7 @@ jobs:
             percona-postgis percona-pg-stat-monitor16
 
       - name: Clone pg_tde repository
-        uses: actions/checkout@master
+        uses: actions/checkout@61b9e3751b92087fd0b06925ba6dd6314e06f089 # master
         with:
           path: 'src/pg_tde'
 
@@ -90,7 +95,7 @@ jobs:
         working-directory: src/pg_tde
 
       - name: Report on test fail
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
         if: ${{ failure() }}
         with:
           name: Regressions diff and postgresql log
@@ -113,7 +118,7 @@ jobs:
           sudo cp /usr/lib/postgresql/16/lib/pg_tde* pgtde-ppg16/usr/lib/postgresql/16/lib/
 
       - name: Upload tgz
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
         with:
           name: pg_tde_ppg16_binary
           path: pgtde-ppg16
@@ -135,7 +140,7 @@ jobs:
           sudo dpkg -i --debug=7777 pgtde-ppg16.deb
 
       - name: Upload deb
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
         with:
           name: pg_tde_deb
           path: pgtde-ppg16.deb
@@ -145,7 +150,7 @@ jobs:
           cd pgtde-ppg16 && sudo tar -czvf ../pgtde-ppg16.tar.gz .
 
       - name: Publish release
-        uses: ncipollo/release-action@v1
+        uses: ncipollo/release-action@2c591bcc8ecdcd2db72b97d6147f871fcd833ba5 # v1.14.0
         # Only try and deploy on merged code
         if: "github.repository == 'percona/pg_tde' && github.ref_name == 'main' && (github.event_name == 'push' || github.event_name == 'schedule')"
         with:

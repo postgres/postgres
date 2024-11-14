@@ -2,6 +2,9 @@ name: Checks
 on:
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   format:
     name: Format
@@ -15,13 +18,13 @@ jobs:
           sudo apt-get install -y libcurl4-openssl-dev
 
       - name: Clone postgres repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           repository: 'postgres/postgres'
           ref: 'REL_17_STABLE'
 
       - name: Checkout sources
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           path: 'contrib/pg_tde'
 
