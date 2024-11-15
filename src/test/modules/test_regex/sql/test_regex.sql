@@ -619,6 +619,9 @@ select * from test_regex('[^1\D0]', 'abc0123456789*', 'LPE');
 select * from test_regex('\W', '0123456789abc_*', 'LP');
 select * from test_regex('[\W]', '0123456789abc_*', 'LPE');
 select * from test_regex('[\s\S]*', '012  3456789abc_*', 'LNPE');
+-- bug #18708:
+select * from test_regex('(?:[^\d\D]){0}', '0123456789abc*', 'LNPQE');
+select * from test_regex('[^\d\D]', '0123456789abc*', 'ILPE');
 
 -- check char classes' handling of newlines
 select * from test_regex('\s+', E'abc  \n  def', 'LP');
