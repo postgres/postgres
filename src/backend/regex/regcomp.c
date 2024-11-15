@@ -215,6 +215,7 @@ static void clonesuccessorstates(struct nfa *nfa, struct state *ssource,
 								 struct state *spredecessor,
 								 struct arc *refarc, char *curdonemap,
 								 char *outerdonemap, int nstates);
+static void removecantmatch(struct nfa *nfa);
 static void cleanup(struct nfa *nfa);
 static void markreachable(struct nfa *nfa, struct state *s,
 						  struct state *okay, struct state *mark);
@@ -342,6 +343,7 @@ struct vars
 #define BEHIND	'r'				/* color-lookbehind arc */
 #define WBDRY	'w'				/* word boundary constraint */
 #define NWBDRY	'W'				/* non-word-boundary constraint */
+#define CANTMATCH 'x'			/* arc that cannot match anything */
 #define SBEGIN	'A'				/* beginning of string (even if not BOL) */
 #define SEND	'Z'				/* end of string (even if not EOL) */
 
@@ -2368,6 +2370,7 @@ nfanode(struct vars *v,
 	nfa = newnfa(v, v->cm, v->nfa);
 	NOERRZ();
 	dupnfa(nfa, t->begin, t->end, nfa->init, nfa->final);
+	nfa->flags = v->nfa->flags;
 	if (!ISERR())
 		specialcolors(nfa);
 	if (!ISERR())
