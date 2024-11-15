@@ -177,6 +177,7 @@ static void breakconstraintloop(struct nfa *, struct state *);
 static void clonesuccessorstates(struct nfa *, struct state *, struct state *,
 								 struct state *, struct arc *,
 								 char *, char *, int);
+static void removecantmatch(struct nfa *);
 static void cleanup(struct nfa *);
 static void markreachable(struct nfa *, struct state *, struct state *, struct state *);
 static void markcanreach(struct nfa *, struct state *, struct state *, struct state *);
@@ -299,6 +300,7 @@ struct vars
 #define BEHIND	'r'				/* color-lookbehind arc */
 #define WBDRY	'w'				/* word boundary constraint */
 #define NWBDRY	'W'				/* non-word-boundary constraint */
+#define CANTMATCH 'x'			/* arc that cannot match anything */
 #define SBEGIN	'A'				/* beginning of string (even if not BOL) */
 #define SEND	'Z'				/* end of string (even if not EOL) */
 
@@ -2288,6 +2290,7 @@ nfanode(struct vars *v,
 	nfa = newnfa(v, v->cm, v->nfa);
 	NOERRZ();
 	dupnfa(nfa, t->begin, t->end, nfa->init, nfa->final);
+	nfa->flags = v->nfa->flags;
 	if (!ISERR())
 		specialcolors(nfa);
 	if (!ISERR())
