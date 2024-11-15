@@ -1206,6 +1206,13 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
      </para>
 
      <para>
+      For each pair of referencing and referenced column, if they are of a
+      collatable data type, then the collations must either be both
+      deterministic or else both the same.  This ensures that both columns
+      have a consistent notion of equality.
+     </para>
+
+     <para>
       The user
       must have <literal>REFERENCES</literal> permission on the referenced
       table (either the whole table, or the specific referenced columns).  The

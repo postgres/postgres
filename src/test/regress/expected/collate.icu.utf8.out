@@ -1840,101 +1840,15 @@ SELECT * FROM test4 WHERE b = 'Cote' COLLATE case_insensitive;
  1 | cote
 (1 row)
 
--- foreign keys (should use collation of primary key)
--- PK is case-sensitive, FK is case-insensitive
+-- foreign keys (mixing different nondeterministic collations not allowed)
 CREATE TABLE test10pk (x text COLLATE case_sensitive PRIMARY KEY);
-INSERT INTO test10pk VALUES ('abc'), ('def'), ('ghi');
-CREATE TABLE test10fk (x text COLLATE case_insensitive REFERENCES test10pk (x) ON UPDATE CASCADE ON DELETE CASCADE);
-INSERT INTO test10fk VALUES ('abc');  -- ok
-INSERT INTO test10fk VALUES ('ABC');  -- error
-ERROR:  insert or update on table "test10fk" violates foreign key constraint "test10fk_x_fkey"
-DETAIL:  Key (x)=(ABC) is not present in table "test10pk".
-INSERT INTO test10fk VALUES ('xyz');  -- error
-ERROR:  insert or update on table "test10fk" violates foreign key constraint "test10fk_x_fkey"
-DETAIL:  Key (x)=(xyz) is not present in table "test10pk".
-SELECT * FROM test10pk;
-  x  
------
- abc
- def
- ghi
-(3 rows)
-
-SELECT * FROM test10fk;
-  x  
------
- abc
-(1 row)
-
--- restrict update even though the values are "equal" in the FK table
-UPDATE test10fk SET x = 'ABC' WHERE x = 'abc';  -- error
-ERROR:  insert or update on table "test10fk" violates foreign key constraint "test10fk_x_fkey"
-DETAIL:  Key (x)=(ABC) is not present in table "test10pk".
-SELECT * FROM test10fk;
-  x  
------
- abc
-(1 row)
-
-DELETE FROM test10pk WHERE x = 'abc';
-SELECT * FROM test10pk;
-  x  
------
- def
- ghi
-(2 rows)
-
-SELECT * FROM test10fk;
- x 
----
-(0 rows)
-
--- PK is case-insensitive, FK is case-sensitive
+CREATE TABLE test10fk (x text COLLATE case_insensitive REFERENCES test10pk (x) ON UPDATE CASCADE ON DELETE CASCADE);  -- error
+ERROR:  foreign key constraint "test10fk_x_fkey" cannot be implemented
+DETAIL:  Key columns "x" of the referencing table and "x" of the referenced table have incompatible collations: "case_insensitive" and "case_sensitive".  If either collation is nondeterministic, then both collations have to be the same.
 CREATE TABLE test11pk (x text COLLATE case_insensitive PRIMARY KEY);
-INSERT INTO test11pk VALUES ('abc'), ('def'), ('ghi');
-CREATE TABLE test11fk (x text COLLATE case_sensitive REFERENCES test11pk (x) ON UPDATE CASCADE ON DELETE CASCADE);
-INSERT INTO test11fk VALUES ('abc');  -- ok
-INSERT INTO test11fk VALUES ('ABC');  -- ok
-INSERT INTO test11fk VALUES ('xyz');  -- error
-ERROR:  insert or update on table "test11fk" violates foreign key constraint "test11fk_x_fkey"
-DETAIL:  Key (x)=(xyz) is not present in table "test11pk".
-SELECT * FROM test11pk;
-  x  
------
- abc
- def
- ghi
-(3 rows)
-
-SELECT * FROM test11fk;
-  x  
------
- abc
- ABC
-(2 rows)
-
--- cascade update even though the values are "equal" in the PK table
-UPDATE test11pk SET x = 'ABC' WHERE x = 'abc';
-SELECT * FROM test11fk;
-  x  
------
- ABC
- ABC
-(2 rows)
-
-DELETE FROM test11pk WHERE x = 'abc';
-SELECT * FROM test11pk;
-  x  
------
- def
- ghi
-(2 rows)
-
-SELECT * FROM test11fk;
- x 
----
-(0 rows)
-
+CREATE TABLE test11fk (x text COLLATE case_sensitive REFERENCES test11pk (x) ON UPDATE CASCADE ON DELETE CASCADE);  -- error
+ERROR:  foreign key constraint "test11fk_x_fkey" cannot be implemented
+DETAIL:  Key columns "x" of the referencing table and "x" of the referenced table have incompatible collations: "case_sensitive" and "case_insensitive".  If either collation is nondeterministic, then both collations have to be the same.
 -- partitioning
 CREATE TABLE test20 (a int, b text COLLATE case_insensitive) PARTITION BY LIST (b);
 CREATE TABLE test20_1 PARTITION OF test20 FOR VALUES IN ('abc');

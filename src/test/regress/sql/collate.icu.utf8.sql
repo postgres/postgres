@@ -687,39 +687,12 @@ SELECT * FROM test4 WHERE b = 'cote' COLLATE ignore_accents;
 SELECT * FROM test4 WHERE b = 'Cote' COLLATE ignore_accents;  -- still case-sensitive
 SELECT * FROM test4 WHERE b = 'Cote' COLLATE case_insensitive;
 
--- foreign keys (should use collation of primary key)
-
--- PK is case-sensitive, FK is case-insensitive
+-- foreign keys (mixing different nondeterministic collations not allowed)
 CREATE TABLE test10pk (x text COLLATE case_sensitive PRIMARY KEY);
-INSERT INTO test10pk VALUES ('abc'), ('def'), ('ghi');
-CREATE TABLE test10fk (x text COLLATE case_insensitive REFERENCES test10pk (x) ON UPDATE CASCADE ON DELETE CASCADE);
-INSERT INTO test10fk VALUES ('abc');  -- ok
-INSERT INTO test10fk VALUES ('ABC');  -- error
-INSERT INTO test10fk VALUES ('xyz');  -- error
-SELECT * FROM test10pk;
-SELECT * FROM test10fk;
--- restrict update even though the values are "equal" in the FK table
-UPDATE test10fk SET x = 'ABC' WHERE x = 'abc';  -- error
-SELECT * FROM test10fk;
-DELETE FROM test10pk WHERE x = 'abc';
-SELECT * FROM test10pk;
-SELECT * FROM test10fk;
+CREATE TABLE test10fk (x text COLLATE case_insensitive REFERENCES test10pk (x) ON UPDATE CASCADE ON DELETE CASCADE);  -- error
 
--- PK is case-insensitive, FK is case-sensitive
 CREATE TABLE test11pk (x text COLLATE case_insensitive PRIMARY KEY);
-INSERT INTO test11pk VALUES ('abc'), ('def'), ('ghi');
-CREATE TABLE test11fk (x text COLLATE case_sensitive REFERENCES test11pk (x) ON UPDATE CASCADE ON DELETE CASCADE);
-INSERT INTO test11fk VALUES ('abc');  -- ok
-INSERT INTO test11fk VALUES ('ABC');  -- ok
-INSERT INTO test11fk VALUES ('xyz');  -- error
-SELECT * FROM test11pk;
-SELECT * FROM test11fk;
--- cascade update even though the values are "equal" in the PK table
-UPDATE test11pk SET x = 'ABC' WHERE x = 'abc';
-SELECT * FROM test11fk;
-DELETE FROM test11pk WHERE x = 'abc';
-SELECT * FROM test11pk;
-SELECT * FROM test11fk;
+CREATE TABLE test11fk (x text COLLATE case_sensitive REFERENCES test11pk (x) ON UPDATE CASCADE ON DELETE CASCADE);  -- error
 
 -- partitioning
 CREATE TABLE test20 (a int, b text COLLATE case_insensitive) PARTITION BY LIST (b);
