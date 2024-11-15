@@ -720,11 +720,6 @@ llvm_compile_expr(ExprState *state)
 					v_boolnull = l_load(b, TypeStorageBool, v_resnullp, "");
 					v_boolvalue = l_load(b, TypeSizeT, v_resvaluep, "");
 
-					/* set resnull to boolnull */
-					LLVMBuildStore(b, v_boolnull, v_resnullp);
-					/* set revalue to boolvalue */
-					LLVMBuildStore(b, v_boolvalue, v_resvaluep);
-
 					/* check if current input is NULL */
 					LLVMBuildCondBr(b,
 									LLVMBuildICmp(b, LLVMIntEQ, v_boolnull,
@@ -816,11 +811,6 @@ llvm_compile_expr(ExprState *state)
 					v_boolnull = l_load(b, TypeStorageBool, v_resnullp, "");
 					v_boolvalue = l_load(b, TypeSizeT, v_resvaluep, "");
 
-					/* set resnull to boolnull */
-					LLVMBuildStore(b, v_boolnull, v_resnullp);
-					/* set revalue to boolvalue */
-					LLVMBuildStore(b, v_boolvalue, v_resvaluep);
-
 					LLVMBuildCondBr(b,
 									LLVMBuildICmp(b, LLVMIntEQ, v_boolnull,
 												  l_sbool_const(1), ""),
@@ -875,21 +865,22 @@ llvm_compile_expr(ExprState *state)
 			case EEOP_BOOL_NOT_STEP:
 				{
 					LLVMValueRef v_boolvalue;
-					LLVMValueRef v_boolnull;
 					LLVMValueRef v_negbool;
 
-					v_boolnull = l_load(b, TypeStorageBool, v_resnullp, "");
+					/* compute !boolvalue */
 					v_boolvalue = l_load(b, TypeSizeT, v_resvaluep, "");
-
 					v_negbool = LLVMBuildZExt(b,
 											  LLVMBuildICmp(b, LLVMIntEQ,
 															v_boolvalue,
 															l_sizet_const(0),
 															""),
 											  TypeSizeT, "");
-					/* set resnull to boolnull */
-					LLVMBuildStore(b, v_boolnull, v_resnullp);
-					/* set revalue to !boolvalue */
+
+					/*
+					 * Store it back in resvalue.  We can ignore resnull here;
+					 * if it was true, it stays true, and the value we store
+					 * in resvalue doesn't matter.
+					 */
 					LLVMBuildStore(b, v_negbool, v_resvaluep);
 
 					LLVMBuildBr(b, opblocks[opno + 1]);
@@ -1615,7 +1606,6 @@ llvm_compile_expr(ExprState *state)
 					LLVMPositionBuilderAtEnd(b, b_argsequal);
 					LLVMBuildStore(b, l_sbool_const(1), v_resnullp);
 					LLVMBuildStore(b, l_sizet_const(0), v_resvaluep);
-					LLVMBuildStore(b, v_retval, v_resvaluep);
 
 					LLVMBuildBr(b, opblocks[opno + 1]);
 					break;
