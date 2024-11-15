@@ -410,6 +410,8 @@ struct cnfa
 	int			flags;			/* bitmask of the following flags: */
 #define  HASLACONS	01			/* uses lookaround constraints */
 #define  MATCHALL	02			/* matches all strings of a range of lengths */
+#define  HASCANTMATCH 04		/* contains CANTMATCH arcs */
+	/* Note: HASCANTMATCH appears in nfa structs' flags, but never in cnfas */
 	int			pre;			/* setup state number */
 	int			post;			/* teardown state number */
 	color		bos[2];			/* colors, if any, assigned to BOS and BOL */
