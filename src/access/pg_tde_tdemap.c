@@ -727,13 +727,9 @@ pg_tde_perform_rotate_key(TDEPrincipalKey *principal_key, TDEPrincipalKey *new_p
 		if (found == false)
 			continue;
 
-		/*
-		 * Set the relNumber of rlocator. Ignore the tablespace Oid since we
-		 * only place our files under the default.
-		 */
 		rloc.relNumber = read_map_entry.relNumber;
 		rloc.dbOid = principal_key->keyInfo.databaseId;
-		rloc.spcOid = DEFAULTTABLESPACE_OID;	/* TODO. Revisit */
+		rloc.spcOid = principal_key->keyInfo.tablespaceId;
 
 		/* Let's get the decrypted key and re-encrypt it with the new key. */
 		enc_rel_key_data[OLD_PRINCIPAL_KEY] = pg_tde_read_one_keydata(k_fd[OLD_PRINCIPAL_KEY], key_index[OLD_PRINCIPAL_KEY], principal_key);

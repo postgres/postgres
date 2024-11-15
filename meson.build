@@ -110,6 +110,7 @@ tap_tests = [
       't/005_multiple_extensions.pl',
       't/006_remote_vault_config.pl',
       't/007_access_control.pl',
+      't/009_key_rotate_tablespace.pl',
     ]
 
 if get_variable('percona_ext', false)
