@@ -175,6 +175,8 @@ findLastCheckpoint(const char *datadir, XLogRecPtr forkptr, int tliIndex,
 	XLogReaderState *xlogreader;
 	char	   *errormsg;
 	XLogPageReadPrivate private;
+	XLogSegNo	current_segno = 0;
+	TimeLineID	current_tli = 0;
 
 	/*
 	 * The given fork pointer points to the end of the last common record,
@@ -215,6 +217,25 @@ findLastCheckpoint(const char *datadir, XLogRecPtr forkptr, int tliIndex,
 			else
 				pg_fatal("could not find previous WAL record at %X/%X",
 						 LSN_FORMAT_ARGS(searchptr));
+		}
+
+		/* Detect if a new WAL file has been opened */
+		if (xlogreader->seg.ws_tli != current_tli ||
+			xlogreader->seg.ws_segno != current_segno)
+		{
+			char		xlogfname[MAXFNAMELEN];
+
+			snprintf(xlogfname, MAXFNAMELEN, XLOGDIR "/");
+
+			/* update curent values */
+			current_tli = xlogreader->seg.ws_tli;
+			current_segno = xlogreader->seg.ws_segno;
+
+			XLogFileName(xlogfname + sizeof(XLOGDIR),
+						 current_tli, current_segno, WalSegSz);
+
+			/* Track this filename as one to not remove */
+			keepwal_add_entry(xlogfname);
 		}
 
 		/*
