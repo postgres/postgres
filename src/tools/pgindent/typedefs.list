@@ -3572,6 +3572,8 @@ json_manifest_version_callback
 json_ofield_action
 json_scalar_action
 json_struct_action
+keepwal_entry
+keepwal_hash
 keyEntryData
 key_t
 lclContext
