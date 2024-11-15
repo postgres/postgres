@@ -2071,6 +2071,20 @@ select * from test_regex('[\s\S]*', '012  3456789abc_*', 'LNPE');
  {"012  3456789abc_*"}
 (2 rows)
 
+-- bug #18708:
+select * from test_regex('(?:[^\d\D]){0}', '0123456789abc*', 'LNPQE');
+                             test_regex                             
+--------------------------------------------------------------------
+ {0,REG_UBOUNDS,REG_UBBS,REG_UNONPOSIX,REG_ULOCALE,REG_UEMPTYMATCH}
+ {""}
+(2 rows)
+
+select * from test_regex('[^\d\D]', '0123456789abc*', 'ILPE');
+                       test_regex                       
+--------------------------------------------------------
+ {0,REG_UBBS,REG_UNONPOSIX,REG_ULOCALE,REG_UIMPOSSIBLE}
+(1 row)
+
 -- check char classes' handling of newlines
 select * from test_regex('\s+', E'abc  \n  def', 'LP');
           test_regex           
