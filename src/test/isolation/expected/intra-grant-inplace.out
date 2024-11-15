@@ -248,6 +248,6 @@ relhasindex
 -----------
 (0 rows)
 
-s4: WARNING:  got: cache lookup failed for relation REDACTED
+s4: WARNING:  got: relation "intra_grant_inplace" does not exist
 step revoke4: <... completed>
 step r3: ROLLBACK;
