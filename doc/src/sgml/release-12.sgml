@@ -1,6 +1,75 @@
 <!-- doc/src/sgml/release-12.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+ <sect1 id="release-12-22">
+  <title>Release 12.22</title>
+
+  <formalpara>
+  <title>Release date:</title>
+  <para>2024-11-21</para>
+  </formalpara>
+
+  <para>
+   This release contains a single fix from 12.21.
+   For information about new features in major release 12, see
+   <xref linkend="release-12"/>.
+  </para>
+
+  <para>
+   This is expected to be the last <productname>PostgreSQL</productname>
+   release in the 12.X series.  Users are encouraged to update to a newer
+   release branch soon.
+  </para>
+
+  <sect2>
+   <title>Migration to Version 12.22</title>
+
+   <para>
+    A dump/restore is not required for those running 12.X.
+   </para>
+
+   <para>
+    However, if you are upgrading from a version earlier than 12.18,
+    see <xref linkend="release-12-18"/>.
+   </para>
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <itemizedlist>
+
+    <listitem>
+<!--
+Author: Noah Misch <noah@leadboat.com>
+Branch: master [7b88529f4] 2024-11-15 20:39:56 -0800
+Branch: REL_17_STABLE [1c05004a8] 2024-11-15 20:39:59 -0800
+Branch: REL_16_STABLE [b0918c128] 2024-11-15 20:39:59 -0800
+Branch: REL_15_STABLE [edf80895f] 2024-11-15 20:39:59 -0800
+Branch: REL_14_STABLE [be062bfa5] 2024-11-15 20:40:00 -0800
+Branch: REL_13_STABLE [07c6e0f61] 2024-11-15 20:40:00 -0800
+Branch: REL_12_STABLE [c46333865] 2024-11-15 20:40:00 -0800
+-->
+     <para>
+      Restore functionality of <command>ALTER {ROLE|DATABASE} SET
+      role</command> (Tom Lane, Noah Misch)
+      <ulink url="&commit_baseurl;c46333865">&sect;</ulink>
+     </para>
+
+     <para>
+      The fix for CVE-2024-10978 accidentally caused settings
+      for <varname>role</varname> to not be applied if they come from
+      non-interactive sources, including previous <command>ALTER
+      {ROLE|DATABASE}</command> commands and
+      the <varname>PGOPTIONS</varname> environment variable.
+     </para>
+    </listitem>
+
+   </itemizedlist>
+
+  </sect2>
+ </sect1>
+
  <sect1 id="release-12-21">
   <title>Release 12.21</title>
 
