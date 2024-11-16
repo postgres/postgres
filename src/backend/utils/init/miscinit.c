@@ -775,7 +775,25 @@ InitializeSessionUserId(const char *rolename, Oid roleid)
 	{
 		SetAuthenticatedUserId(roleid, is_superuser);
 
-		/* Set SessionUserId and related variables via the GUC mechanisms */
+		/*
+		 * Set SessionUserId and related variables, including "role", via the
+		 * GUC mechanisms.
+		 *
+		 * Note: ideally we would use PGC_S_DYNAMIC_DEFAULT here, so that
+		 * session_authorization could subsequently be changed from
+		 * pg_db_role_setting entries.  Instead, session_authorization in
+		 * pg_db_role_setting has no effect.  Changing that would require
+		 * solving two problems:
+		 *
+		 * 1. If pg_db_role_setting has values for both session_authorization
+		 * and role, we could not be sure which order those would be applied
+		 * in, and it would matter.
+		 *
+		 * 2. Sites may have years-old session_authorization entries.  There's
+		 * not been any particular reason to remove them.  Ending the dormancy
+		 * of those entries could seriously change application behavior, so
+		 * only a major release should do that.
+		 */
 		SetConfigOption("session_authorization", rname,
 						PGC_BACKEND, PGC_S_OVERRIDE);
 	}
