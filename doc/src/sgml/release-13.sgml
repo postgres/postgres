@@ -1,6 +1,138 @@
 <!-- doc/src/sgml/release-13.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+ <sect1 id="release-13-18">
+  <title>Release 13.18</title>
+
+  <formalpara>
+  <title>Release date:</title>
+  <para>2024-11-21</para>
+  </formalpara>
+
+  <para>
+   This release contains a few fixes from 13.17.
+   For information about new features in major release 13, see
+   <xref linkend="release-13"/>.
+  </para>
+
+  <sect2>
+   <title>Migration to Version 13.18</title>
+
+   <para>
+    A dump/restore is not required for those running 13.X.
+   </para>
+
+   <para>
+    However, if you are upgrading from a version earlier than 13.17,
+    see <xref linkend="release-13-17"/>.
+   </para>
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <itemizedlist>
+
+    <listitem>
+<!--
+Author: Noah Misch <noah@leadboat.com>
+Branch: master [7b88529f4] 2024-11-15 20:39:56 -0800
+Branch: REL_17_STABLE [1c05004a8] 2024-11-15 20:39:59 -0800
+Branch: REL_16_STABLE [b0918c128] 2024-11-15 20:39:59 -0800
+Branch: REL_15_STABLE [edf80895f] 2024-11-15 20:39:59 -0800
+Branch: REL_14_STABLE [be062bfa5] 2024-11-15 20:40:00 -0800
+Branch: REL_13_STABLE [07c6e0f61] 2024-11-15 20:40:00 -0800
+Branch: REL_12_STABLE [c46333865] 2024-11-15 20:40:00 -0800
+-->
+     <para>
+      Restore functionality of <command>ALTER {ROLE|DATABASE} SET
+      role</command> (Tom Lane, Noah Misch)
+      <ulink url="&commit_baseurl;07c6e0f61">&sect;</ulink>
+     </para>
+
+     <para>
+      The fix for CVE-2024-10978 accidentally caused settings
+      for <varname>role</varname> to not be applied if they come from
+      non-interactive sources, including previous <command>ALTER
+      {ROLE|DATABASE}</command> commands and
+      the <varname>PGOPTIONS</varname> environment variable.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Masahiko Sawada <msawada@postgresql.org>
+Branch: master [e5ed873b1] 2024-11-15 17:06:11 -0800
+Branch: REL_17_STABLE [568e78a65] 2024-11-15 17:06:08 -0800
+Branch: REL_16_STABLE [f35391133] 2024-11-15 17:06:05 -0800
+Branch: REL_15_STABLE [91771b3fb] 2024-11-15 17:06:02 -0800
+Branch: REL_14_STABLE [26c4e8968] 2024-11-15 17:06:00 -0800
+Branch: REL_13_STABLE [15dc1abb1] 2024-11-15 17:05:57 -0800
+-->
+     <para>
+      Fix cases where a logical replication
+      slot's <structfield>restart_lsn</structfield> could go backwards
+      (Masahiko Sawada)
+      <ulink url="&commit_baseurl;15dc1abb1">&sect;</ulink>
+     </para>
+
+     <para>
+      Previously, restarting logical replication could sometimes cause the
+      slot's restart point to be recomputed as an older value than had
+      previously been advertised
+      in <structname>pg_replication_slots</structname>.  This is bad,
+      since for example WAL files might have been removed on the basis of
+      the later <structfield>restart_lsn</structfield> value, in which
+      case replication would fail to restart.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Peter Geoghegan <pg@bowt.ie>
+Branch: master [93063e2e4] 2024-11-12 20:57:45 -0500
+Branch: REL_17_STABLE [7af6d1306] 2024-11-12 20:57:43 -0500
+Branch: REL_16_STABLE [05aac2e83] 2024-11-12 20:57:41 -0500
+Branch: REL_15_STABLE [16a2bb079] 2024-11-12 20:57:39 -0500
+Branch: REL_14_STABLE [2a30b6836] 2024-11-12 20:57:37 -0500
+Branch: REL_13_STABLE [e493ea866] 2024-11-12 20:57:35 -0500
+-->
+     <para>
+      Count index scans in <filename>contrib/bloom</filename> indexes in
+      the statistics views, such as the
+      <structname>pg_stat_user_indexes</structname>.<structfield>idx_scan</structfield>
+      counter (Masahiro Ikeda)
+      <ulink url="&commit_baseurl;e493ea866">&sect;</ulink>
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Alexander Korotkov <akorotkov@postgresql.org>
+Branch: master [db22b9002] 2024-11-12 01:44:20 +0200
+Branch: REL_17_STABLE [a6fa869cf] 2024-11-12 01:51:20 +0200
+Branch: REL_16_STABLE [b242aba02] 2024-11-12 01:53:40 +0200
+Branch: REL_15_STABLE [713b8546a] 2024-11-12 01:54:30 +0200
+Branch: REL_14_STABLE [247e7647f] 2024-11-12 01:54:35 +0200
+Branch: REL_13_STABLE [5411e8213] 2024-11-12 01:54:38 +0200
+-->
+     <para>
+      Fix crash when checking to see if an index's opclass options have
+      changed (Alexander Korotkov)
+      <ulink url="&commit_baseurl;5411e8213">&sect;</ulink>
+     </para>
+
+     <para>
+      Some forms of <command>ALTER TABLE</command> would fail if the
+      table has an index with non-default operator class options.
+     </para>
+    </listitem>
+
+   </itemizedlist>
+
+  </sect2>
+ </sect1>
+
  <sect1 id="release-13-17">
   <title>Release 13.17</title>
 
