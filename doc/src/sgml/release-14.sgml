@@ -1,6 +1,211 @@
 <!-- doc/src/sgml/release-14.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+ <sect1 id="release-14-15">
+  <title>Release 14.15</title>
+
+  <formalpara>
+  <title>Release date:</title>
+  <para>2024-11-21</para>
+  </formalpara>
+
+  <para>
+   This release contains a few fixes from 14.14.
+   For information about new features in major release 14, see
+   <xref linkend="release-14"/>.
+  </para>
+
+  <sect2>
+   <title>Migration to Version 14.15</title>
+
+   <para>
+    A dump/restore is not required for those running 14.X.
+   </para>
+
+   <para>
+    However, if you are upgrading from a version earlier than 14.14,
+    see <xref linkend="release-14-14"/>.
+   </para>
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <itemizedlist>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: REL_17_STABLE [6bfacd368] 2024-11-16 12:58:26 -0500
+Branch: REL_16_STABLE [ee33d5847] 2024-11-16 12:58:26 -0500
+Branch: REL_15_STABLE [17db248f3] 2024-11-16 12:58:26 -0500
+Branch: REL_14_STABLE [099e711b7] 2024-11-16 12:58:26 -0500
+-->
+     <para>
+      Repair ABI break for extensions that work with
+      struct <structname>ResultRelInfo</structname> (Tom Lane)
+      <ulink url="&commit_baseurl;099e711b7">&sect;</ulink>
+     </para>
+
+     <para>
+      Last week's minor releases unintentionally broke binary
+      compatibility with <application>timescaledb</application> and
+      several other extensions.  Restore the affected structure to its
+      previous size, so that such extensions need not be rebuilt.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Noah Misch <noah@leadboat.com>
+Branch: master [7b88529f4] 2024-11-15 20:39:56 -0800
+Branch: REL_17_STABLE [1c05004a8] 2024-11-15 20:39:59 -0800
+Branch: REL_16_STABLE [b0918c128] 2024-11-15 20:39:59 -0800
+Branch: REL_15_STABLE [edf80895f] 2024-11-15 20:39:59 -0800
+Branch: REL_14_STABLE [be062bfa5] 2024-11-15 20:40:00 -0800
+Branch: REL_13_STABLE [07c6e0f61] 2024-11-15 20:40:00 -0800
+Branch: REL_12_STABLE [c46333865] 2024-11-15 20:40:00 -0800
+-->
+     <para>
+      Restore functionality of <command>ALTER {ROLE|DATABASE} SET
+      role</command> (Tom Lane, Noah Misch)
+      <ulink url="&commit_baseurl;be062bfa5">&sect;</ulink>
+     </para>
+
+     <para>
+      The fix for CVE-2024-10978 accidentally caused settings
+      for <varname>role</varname> to not be applied if they come from
+      non-interactive sources, including previous <command>ALTER
+      {ROLE|DATABASE}</command> commands and
+      the <varname>PGOPTIONS</varname> environment variable.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Masahiko Sawada <msawada@postgresql.org>
+Branch: master [e5ed873b1] 2024-11-15 17:06:11 -0800
+Branch: REL_17_STABLE [568e78a65] 2024-11-15 17:06:08 -0800
+Branch: REL_16_STABLE [f35391133] 2024-11-15 17:06:05 -0800
+Branch: REL_15_STABLE [91771b3fb] 2024-11-15 17:06:02 -0800
+Branch: REL_14_STABLE [26c4e8968] 2024-11-15 17:06:00 -0800
+Branch: REL_13_STABLE [15dc1abb1] 2024-11-15 17:05:57 -0800
+-->
+     <para>
+      Fix cases where a logical replication
+      slot's <structfield>restart_lsn</structfield> could go backwards
+      (Masahiko Sawada)
+      <ulink url="&commit_baseurl;26c4e8968">&sect;</ulink>
+     </para>
+
+     <para>
+      Previously, restarting logical replication could sometimes cause the
+      slot's restart point to be recomputed as an older value than had
+      previously been advertised
+      in <structname>pg_replication_slots</structname>.  This is bad,
+      since for example WAL files might have been removed on the basis of
+      the later <structfield>restart_lsn</structfield> value, in which
+      case replication would fail to restart.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Álvaro Herrera <alvherre@alvh.no-ip.org>
+Branch: master [90bcc7c2d] 2024-11-15 12:53:12 +0100
+Branch: REL_17_STABLE [cb844d66b] 2024-11-15 12:53:12 +0100
+Branch: REL_16_STABLE [ea1649c35] 2024-11-15 12:53:12 +0100
+Branch: REL_15_STABLE [e28cf2fbc] 2024-11-15 12:53:12 +0100
+Branch: REL_14_STABLE [ba2535841] 2024-11-15 12:53:12 +0100
+-->
+     <para>
+      Avoid deleting still-needed WAL files
+      during <application>pg_rewind</application>
+      (Polina Bungina, Alexander Kukushkin)
+      <ulink url="&commit_baseurl;ba2535841">&sect;</ulink>
+     </para>
+
+     <para>
+      Previously, in unlucky cases, it was possible
+      for <application>pg_rewind</application> to remove important WAL
+      files from the rewound demoted primary.  In particular this happens
+      if those files have been marked for archival (i.e.,
+      their <filename>.ready</filename> files were created) but not yet
+      archived.  Then the newly promoted node no longer has such files
+      because of them having been recycled, but likely they are needed
+      for recovery in the demoted node.
+      If <application>pg_rewind</application> removes them, recovery is
+      not possible anymore.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Peter Geoghegan <pg@bowt.ie>
+Branch: master [93063e2e4] 2024-11-12 20:57:45 -0500
+Branch: REL_17_STABLE [7af6d1306] 2024-11-12 20:57:43 -0500
+Branch: REL_16_STABLE [05aac2e83] 2024-11-12 20:57:41 -0500
+Branch: REL_15_STABLE [16a2bb079] 2024-11-12 20:57:39 -0500
+Branch: REL_14_STABLE [2a30b6836] 2024-11-12 20:57:37 -0500
+Branch: REL_13_STABLE [e493ea866] 2024-11-12 20:57:35 -0500
+-->
+     <para>
+      Count index scans in <filename>contrib/bloom</filename> indexes in
+      the statistics views, such as the
+      <structname>pg_stat_user_indexes</structname>.<structfield>idx_scan</structfield>
+      counter (Masahiro Ikeda)
+      <ulink url="&commit_baseurl;2a30b6836">&sect;</ulink>
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Alexander Korotkov <akorotkov@postgresql.org>
+Branch: master [db22b9002] 2024-11-12 01:44:20 +0200
+Branch: REL_17_STABLE [a6fa869cf] 2024-11-12 01:51:20 +0200
+Branch: REL_16_STABLE [b242aba02] 2024-11-12 01:53:40 +0200
+Branch: REL_15_STABLE [713b8546a] 2024-11-12 01:54:30 +0200
+Branch: REL_14_STABLE [247e7647f] 2024-11-12 01:54:35 +0200
+Branch: REL_13_STABLE [5411e8213] 2024-11-12 01:54:38 +0200
+-->
+     <para>
+      Fix crash when checking to see if an index's opclass options have
+      changed (Alexander Korotkov)
+      <ulink url="&commit_baseurl;247e7647f">&sect;</ulink>
+     </para>
+
+     <para>
+      Some forms of <command>ALTER TABLE</command> would fail if the
+      table has an index with non-default operator class options.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [b69bdcee9] 2024-11-15 18:23:38 -0500
+Branch: REL_17_STABLE [5f28e6ba7] 2024-11-15 18:23:38 -0500
+Branch: REL_16_STABLE [b6312becc] 2024-11-15 18:23:38 -0500
+Branch: REL_15_STABLE [2496c3f6f] 2024-11-15 18:23:38 -0500
+Branch: REL_14_STABLE [2bdd3b248] 2024-11-15 18:23:38 -0500
+-->
+     <para>
+      Avoid assertion failure caused by disconnected NFA sub-graphs in
+      regular expression parsing (Tom Lane)
+      <ulink url="&commit_baseurl;2bdd3b248">&sect;</ulink>
+     </para>
+
+     <para>
+      This bug does not appear to have any visible consequences in
+      non-assert builds.
+     </para>
+    </listitem>
+
+   </itemizedlist>
+
+  </sect2>
+ </sect1>
+
  <sect1 id="release-14-14">
   <title>Release 14.14</title>
 
