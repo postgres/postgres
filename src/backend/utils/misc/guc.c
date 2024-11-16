@@ -4102,6 +4102,12 @@ set_config_with_handle(const char *name, config_handle *handle,
 					 * expect that if "role" isn't supposed to be default, it
 					 * has been or will be set by a separate reload action.
 					 *
+					 * Also, for the call from InitializeSessionUserId with
+					 * source == PGC_S_OVERRIDE, use PGC_S_DYNAMIC_DEFAULT for
+					 * "role"'s source, so that it's still possible to set
+					 * "role" from pg_db_role_setting entries.  (See notes in
+					 * InitializeSessionUserId before changing this.)
+					 *
 					 * A fine point: for RESET session_authorization, we do
 					 * "RESET role" not "SET ROLE NONE" (by passing down NULL
 					 * rather than "none" for the value).  This would have the
@@ -4114,7 +4120,9 @@ set_config_with_handle(const char *name, config_handle *handle,
 						(void) set_config_with_handle("role", NULL,
 													  value ? "none" : NULL,
 													  orig_context,
-													  orig_source,
+													  (orig_source == PGC_S_OVERRIDE)
+													  ? PGC_S_DYNAMIC_DEFAULT
+													  : orig_source,
 													  orig_srole,
 													  action,
 													  true,
