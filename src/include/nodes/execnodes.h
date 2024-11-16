@@ -434,6 +434,9 @@ typedef struct ResultRelInfo
 	/* Have the projection and the slots above been initialized? */
 	bool		ri_projectNewInfoValid;
 
+	/* updates do LockTuple() before oldtup read; see README.tuplock */
+	bool		ri_needLockTagTuple;
+
 	/* triggers to be fired, if any */
 	TriggerDesc *ri_TrigDesc;
 
@@ -524,9 +527,6 @@ typedef struct ResultRelInfo
 
 	/* for use by copyfrom.c when performing multi-inserts */
 	struct CopyMultiInsertBuffer *ri_CopyMultiInsertBuffer;
-
-	/* updates do LockTuple() before oldtup read; see README.tuplock */
-	bool		ri_needLockTagTuple;
 } ResultRelInfo;
 
 /*
