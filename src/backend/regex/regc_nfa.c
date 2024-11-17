@@ -2172,9 +2172,12 @@ fixempties(struct nfa *nfa,
 	 * current target state.  totalinarcs is probably a considerable
 	 * overestimate of the space needed, but the NFA is unlikely to be large
 	 * enough at this point to make it worth being smarter.
+	 *
+	 * Note: totalinarcs could be zero, and some machines return NULL for
+	 * malloc(0).  Don't throw an error if so.
 	 */
 	arcarray = (struct arc **) MALLOC(totalinarcs * sizeof(struct arc *));
-	if (arcarray == NULL)
+	if (arcarray == NULL && totalinarcs != 0)
 	{
 		NERR(REG_ESPACE);
 		FREE(inarcsorig);
