@@ -32,6 +32,14 @@ You need the `percona-release` repository management tool that enables the desir
     sudo percona-release enable-only ppg-{{pgversion17}} experimental
     ```
 
+3. ### For `percona-postgresql{{pgversion}}-devel` package
+
+You need to install the `percona-postgresql{{pgversion}}-devel` package when working with pg_tde. This package requires dependencies that are not part of the Distribution, but can be installed from the specific repositories:
+
+    ```
+    $ sudo dnf config-manager --set-enabled ol9_codeready_builder
+    ```
+
 ## Install `pg_tde`
 
 1. Install Percona Distribution for PostgreSQL 17 and the required packages, run the following command:
