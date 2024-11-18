@@ -1810,8 +1810,7 @@ _bt_readpage(IndexScanDesc scan, ScanDirection dir, OffsetNumber offnum,
 			 */
 			if (scan->ignore_killed_tuples && ItemIdIsDead(iid))
 			{
-				Assert(offnum >= P_FIRSTDATAKEY(opaque));
-				if (offnum > P_FIRSTDATAKEY(opaque))
+				if (offnum > minoff)
 				{
 					offnum = OffsetNumberPrev(offnum);
 					continue;
