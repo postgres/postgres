@@ -2628,7 +2628,8 @@ GRANT SELECT (col1), UPDATE (col1) ON mytable TO miriam_rw;
    When multiple policies apply to a given query, they are combined using
    either <literal>OR</literal> (for permissive policies, which are the
    default) or using <literal>AND</literal> (for restrictive policies).
-   This is similar to the rule that a given role has the privileges
+   The <literal>OR</literal> behavior is similar to the rule that a given
+   role has the privileges
    of all roles that they are a member of.  Permissive vs. restrictive
    policies are discussed further below.
   </para>
