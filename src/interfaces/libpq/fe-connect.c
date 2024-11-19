@@ -6825,7 +6825,9 @@ end:
 	/* Not at the end of the string yet?  Fail. */
 	if (*q != '\0')
 	{
-		libpq_append_error(errorMessage, "trailing data found: \"%s\"", str);
+		libpq_append_error(errorMessage,
+						   "unexpected spaces found in \"%s\", use percent-encoded spaces (%%20) instead",
+						   str);
 		free(buf);
 		return NULL;
 	}
