@@ -30029,6 +30029,7 @@ postgres=# SELECT '0/0'::pg_lsn + pd.segment_number * ps.setting::int + :offset 
    <para>
     <xref linkend="functions-admin-statsmod"/> lists functions used to
     manipulate statistics.
+    These functions cannot be executed during recovery.
     <warning>
      <para>
       Changes made by these statistics manipulation functions are likely to be
