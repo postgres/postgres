@@ -23,8 +23,8 @@
 #define XLOG_TDE_ADD_KEY_PROVIDER_KEY 	0x40
 #define XLOG_TDE_FREE_MAP_ENTRY		 	0x50
 
-/* TODO: ID has to be registedred and changed: https://wiki.postgresql.org/wiki/CustomWALResourceManagers */
-#define RM_TDERMGR_ID	RM_EXPERIMENTAL_ID
+/* ID 140 is registered for Percona TDE extension: https://wiki.postgresql.org/wiki/CustomWALResourceManagers */
+#define RM_TDERMGR_ID	140
 #define RM_TDERMGR_NAME	"test_tdeheap_custom_rmgr"
 
 extern void tdeheap_rmgr_redo(XLogReaderState *record);
