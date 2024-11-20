@@ -38,7 +38,7 @@ tde_is_encryption_required(TDESMgrRelation tdereln, ForkNumber forknum)
 }
 
 static RelKeyData *
-tde_smgr_get_key(SMgrRelation reln, RelFileLocator* old_locator)
+tde_smgr_get_key(SMgrRelation reln, RelFileLocator* old_locator, bool can_create)
 {
 	TdeCreateEvent *event;
 	RelKeyData *rkd;
@@ -69,13 +69,13 @@ tde_smgr_get_key(SMgrRelation reln, RelFileLocator* old_locator)
 	}
 
 	/* if this is a CREATE TABLE, we have to generate the key */
-	if (event->encryptMode == true && event->eventType == TDE_TABLE_CREATE_EVENT)
+	if (event->encryptMode == true && event->eventType == TDE_TABLE_CREATE_EVENT && can_create)
 	{
 		return pg_tde_create_smgr_key(&reln->smgr_rlocator.locator);
 	}
 
 	/* if this is a CREATE INDEX, we have to load the key based on the table */
-	if (event->encryptMode == true && event->eventType == TDE_INDEX_CREATE_EVENT)
+	if (event->encryptMode == true && event->eventType == TDE_INDEX_CREATE_EVENT && can_create)
 	{
 		/* For now keep it simple and create separate key for indexes */
 		/*
@@ -86,7 +86,7 @@ tde_smgr_get_key(SMgrRelation reln, RelFileLocator* old_locator)
 	}
 
 	/* check if we had a key for the old locator, if there's one */
-	if(old_locator != NULL)
+	if(old_locator != NULL && can_create)
 	{
 		RelKeyData *rkd2 = GetSMGRRelationKey(*old_locator);
 		if(rkd2!=NULL)
@@ -240,7 +240,7 @@ tde_mdcreate(RelFileLocator relold, SMgrRelation reln, ForkNumber forknum, bool 
 	 * Later calls then decide to encrypt or not based on the existence of the
 	 * key
 	 */
-	RelKeyData *key = tde_smgr_get_key(reln, &relold);
+	RelKeyData *key = tde_smgr_get_key(reln, &relold, true);
 
 	if (key)
 	{
@@ -260,7 +260,7 @@ static void
 tde_mdopen(SMgrRelation reln)
 {
 	TDESMgrRelation tdereln = (TDESMgrRelation) reln;
-	RelKeyData *key = tde_smgr_get_key(reln, NULL);
+	RelKeyData *key = tde_smgr_get_key(reln, NULL, false);
 
 	if (key)
 	{
