@@ -17178,8 +17178,8 @@ ERROR:  value too long for type character(2)
         <returnvalue>boolean</returnvalue>
        </para>
        <para>
-        Returns the result of a JSON path predicate check for the specified
-        JSON value.
+        Returns the SQL boolean result of a JSON path predicate check
+        for the specified JSON value.
         (This is useful only
         with <link linkend="functions-sqljson-check-expressions">predicate
         check expressions</link>, not SQL-standard JSON path expressions,
@@ -17646,9 +17646,9 @@ SELECT '{
      Boolean predicate, whereas the SQL standard allows predicates only within
      filters. While SQL-standard path expressions return the relevant
      element(s) of the queried JSON value, predicate check expressions
-     return the single three-valued result of the
+     return the single three-valued <type>jsonb</type> result of the
      predicate: <literal>true</literal>,
-     <literal>false</literal>, or <literal>unknown</literal>.
+     <literal>false</literal>, or <literal>null</literal>.
      For example, we could write this SQL-standard filter expression:
 <screen>
 <prompt>=&gt;</prompt> <userinput>select jsonb_path_query(:'json', '$.track.segments ?(@[*].HR &gt; 130)');</userinput>
