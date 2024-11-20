@@ -139,6 +139,18 @@
   </varlistentry>
 
   <varlistentry>
+   <term><literal>reject_limit</literal></term>
+
+   <listitem>
+    <para>
+     Specifies the maximum number of errors tolerated while converting a column's
+     input value to its data type, the same as <command>COPY</command>'s
+    <literal>REJECT_LIMIT</literal> option.
+    </para>
+   </listitem>
+  </varlistentry>
+
+  <varlistentry>
    <term><literal>log_verbosity</literal></term>
 
    <listitem>

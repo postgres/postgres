@@ -77,6 +77,7 @@ static const struct FileFdwOption valid_options[] = {
 	{"encoding", ForeignTableRelationId},
 	{"on_error", ForeignTableRelationId},
 	{"log_verbosity", ForeignTableRelationId},
+	{"reject_limit", ForeignTableRelationId},
 	{"force_not_null", AttributeRelationId},
 	{"force_null", AttributeRelationId},
 
@@ -787,6 +788,13 @@ retry:
 			 * evaluations etc.
 			 */
 			ResetPerTupleExprContext(estate);
+
+			if (cstate->opts.reject_limit > 0 &&
+				cstate->num_errors > cstate->opts.reject_limit)
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+						 errmsg("skipped more than REJECT_LIMIT (%lld) rows due to data type incompatibility",
+								(long long) cstate->opts.reject_limit)));
 
 			/* Repeat NextCopyFrom() until no soft error occurs */
 			goto retry;
