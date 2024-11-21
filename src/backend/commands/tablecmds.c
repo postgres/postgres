@@ -17296,6 +17296,7 @@ ATExecReplicaIdentity(Relation rel, ReplicaIdentityStmt *stmt, LOCKMODE lockmode
 				 errmsg("\"%s\" is not an index for table \"%s\"",
 						RelationGetRelationName(indexRel),
 						RelationGetRelationName(rel))));
+
 	/*
 	 * The AM must support uniqueness, and the index must in fact be unique.
 	 * If we have a WITHOUT OVERLAPS constraint (identified by uniqueness +
