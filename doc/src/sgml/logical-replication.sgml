@@ -24,10 +24,11 @@
  </para>
 
  <para>
-  Logical replication of a table typically starts with taking a snapshot
-  of the data on the publisher database and copying that to the subscriber.
-  Once that is done, the changes on the publisher are sent to the subscriber
-  as they occur in real-time.  The subscriber applies the data in the same
+  When logical replication of a table typically starts, PostgreSQL takes
+  a snapshot of the table's data on the publisher database and copies it
+  to the subscriber.  Once complete, changes on the publisher since the
+  initial copy are sent continually to the subscriber.  The subscriber
+  applies the data in the same
   order as the publisher so that transactional consistency is guaranteed for
   publications within a single subscription.  This method of data replication
   is sometimes referred to as transactional replication.
@@ -165,7 +166,7 @@
    The individual tables can be added and removed dynamically using
    <link linkend="sql-alterpublication"><command>ALTER PUBLICATION</command></link>.  Both the <literal>ADD
    TABLE</literal> and <literal>DROP TABLE</literal> operations are
-   transactional; so the table will start or stop replicating at the correct
+   transactional, so the table will start or stop replicating at the correct
    snapshot once the transaction has committed.
   </para>
  </sect1>
@@ -1953,15 +1954,6 @@ CONTEXT:  processing remote data for replication origin "pg_16395" during "INSER
 
  <sect1 id="logical-replication-architecture">
   <title>Architecture</title>
-
-  <para>
-   Logical replication starts by copying a snapshot of the data on the
-   publisher database.  Once that is done, changes on the publisher are sent
-   to the subscriber as they occur in real time.  The subscriber applies data
-   in the order in which commits were made on the publisher so that
-   transactional consistency is guaranteed for the publications within any
-   single subscription.
-  </para>
 
   <para>
    Logical replication is built with an architecture similar to physical
