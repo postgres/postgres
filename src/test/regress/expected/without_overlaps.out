@@ -978,9 +978,25 @@ SELECT * FROM tp2 ORDER BY id, valid_at;
 
 DROP TABLE temporal_partitioned;
 -- ALTER TABLE REPLICA IDENTITY
--- (should fail)
+\d temporal_rng
+              Table "public.temporal_rng"
+  Column  |   Type    | Collation | Nullable | Default 
+----------+-----------+-----------+----------+---------
+ id       | int4range |           | not null | 
+ valid_at | daterange |           | not null | 
+Indexes:
+    "temporal_rng_pk" PRIMARY KEY (id, valid_at WITHOUT OVERLAPS)
+
 ALTER TABLE temporal_rng REPLICA IDENTITY USING INDEX temporal_rng_pk;
-ERROR:  cannot use non-unique index "temporal_rng_pk" as replica identity
+\d temporal_rng
+              Table "public.temporal_rng"
+  Column  |   Type    | Collation | Nullable | Default 
+----------+-----------+-----------+----------+---------
+ id       | int4range |           | not null | 
+ valid_at | daterange |           | not null | 
+Indexes:
+    "temporal_rng_pk" PRIMARY KEY (id, valid_at WITHOUT OVERLAPS) REPLICA IDENTITY
+
 --
 -- ON CONFLICT: ranges
 --

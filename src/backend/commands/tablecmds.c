@@ -17296,9 +17296,14 @@ ATExecReplicaIdentity(Relation rel, ReplicaIdentityStmt *stmt, LOCKMODE lockmode
 				 errmsg("\"%s\" is not an index for table \"%s\"",
 						RelationGetRelationName(indexRel),
 						RelationGetRelationName(rel))));
-	/* The AM must support uniqueness, and the index must in fact be unique. */
-	if (!indexRel->rd_indam->amcanunique ||
-		!indexRel->rd_index->indisunique)
+	/*
+	 * The AM must support uniqueness, and the index must in fact be unique.
+	 * If we have a WITHOUT OVERLAPS constraint (identified by uniqueness +
+	 * exclusion), we can use that too.
+	 */
+	if ((!indexRel->rd_indam->amcanunique ||
+		 !indexRel->rd_index->indisunique) &&
+		!(indexRel->rd_index->indisunique && indexRel->rd_index->indisexclusion))
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("cannot use non-unique index \"%s\" as replica identity",

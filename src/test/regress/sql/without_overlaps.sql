@@ -691,8 +691,9 @@ SELECT * FROM tp2 ORDER BY id, valid_at;
 DROP TABLE temporal_partitioned;
 
 -- ALTER TABLE REPLICA IDENTITY
--- (should fail)
+\d temporal_rng
 ALTER TABLE temporal_rng REPLICA IDENTITY USING INDEX temporal_rng_pk;
+\d temporal_rng
 
 --
 -- ON CONFLICT: ranges
