@@ -23,9 +23,9 @@ $node_standby->reload();
 
 RewindTest::primary_psql("CHECKPOINT");    # last common checkpoint
 
-# We use "perl -e 'exit(1)'" as an alternative to "false", because the latter
+# We use `perl -e "exit(1)"` as an alternative to "false", because the latter
 # might not be available on Windows.
-my $false = "$^X -e 'exit(1)'";
+my $false = "$^X -e \"exit(1)\"";
 $node_primary->append_conf(
 	'postgresql.conf', qq(
 archive_command = '$false'
