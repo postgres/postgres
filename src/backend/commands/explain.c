@@ -287,7 +287,7 @@ ExplainQuery(ParseState *pstate, ExplainStmt *stmt,
 	if (es->wal && !es->analyze)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("EXPLAIN option WAL requires ANALYZE")));
+				 errmsg("EXPLAIN option %s requires ANALYZE", "WAL")));
 
 	/* if the timing was not set explicitly, set default value */
 	es->timing = (timing_set) ? es->timing : es->analyze;
@@ -296,13 +296,13 @@ ExplainQuery(ParseState *pstate, ExplainStmt *stmt,
 	if (es->timing && !es->analyze)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("EXPLAIN option TIMING requires ANALYZE")));
+				 errmsg("EXPLAIN option %s requires ANALYZE", "TIMING")));
 
 	/* check that serialize is used with EXPLAIN ANALYZE */
 	if (es->serialize != EXPLAIN_SERIALIZE_NONE && !es->analyze)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("EXPLAIN option SERIALIZE requires ANALYZE")));
+				 errmsg("EXPLAIN option %s requires ANALYZE", "SERIALIZE")));
 
 	/* check that GENERIC_PLAN is not used with EXPLAIN ANALYZE */
 	if (es->generic && es->analyze)
