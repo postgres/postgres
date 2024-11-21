@@ -2095,9 +2095,33 @@ get_rel_sync_entry(PGOutputData *data, Relation relation)
 		 * Tuple slots cleanups. (Will be rebuilt later if needed).
 		 */
 		if (entry->old_slot)
+		{
+			TupleDesc	desc = entry->old_slot->tts_tupleDescriptor;
+
+			Assert(desc->tdrefcount == -1);
+
 			ExecDropSingleTupleTableSlot(entry->old_slot);
+
+			/*
+			 * ExecDropSingleTupleTableSlot() would not free the TupleDesc, so
+			 * do it now to avoid any leaks.
+			 */
+			FreeTupleDesc(desc);
+		}
 		if (entry->new_slot)
+		{
+			TupleDesc	desc = entry->new_slot->tts_tupleDescriptor;
+
+			Assert(desc->tdrefcount == -1);
+
 			ExecDropSingleTupleTableSlot(entry->new_slot);
+
+			/*
+			 * ExecDropSingleTupleTableSlot() would not free the TupleDesc, so
+			 * do it now to avoid any leaks.
+			 */
+			FreeTupleDesc(desc);
+		}
 
 		entry->old_slot = NULL;
 		entry->new_slot = NULL;
