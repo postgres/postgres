@@ -189,7 +189,8 @@ typedef struct Port
 	/*
 	 * If GSSAPI is supported and used on this connection, store GSSAPI
 	 * information.  Even when GSSAPI is not compiled in, store a NULL pointer
-	 * to keep struct offsets the same (for extension ABI compatibility).
+	 * to keep struct offsets of the "SSL structures" below the same (for
+	 * extension ABI compatibility).
 	 */
 	pg_gssinfo *gss;
 #else
@@ -206,8 +207,7 @@ typedef struct Port
 	bool		alpn_used;
 
 	/*
-	 * OpenSSL structures. (Keep these last so that the locations of other
-	 * fields are the same whether or not you build with SSL enabled.)
+	 * OpenSSL structures.
 	 */
 #ifdef USE_OPENSSL
 	SSL		   *ssl;
@@ -222,6 +222,9 @@ typedef struct Port
 	 * There's no API to "unread", the upper layer just places the data in the
 	 * Port structure in raw_buf and sets raw_buf_remaining to the amount of
 	 * bytes unread and raw_buf_consumed to 0.
+	 *
+	 * NB: the offsets of these fields depend on USE_OPENSSL.  These should
+	 * not be accessed in an extension because of the ABI incompatibility.
 	 */
 	char	   *raw_buf;
 	ssize_t		raw_buf_consumed,
