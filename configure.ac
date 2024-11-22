@@ -1723,6 +1723,8 @@ AC_CHECK_FUNCS(m4_normalize([
 	backtrace_symbols
 	copyfile
 	copy_file_range
+	elf_aux_info
+	getauxval
 	getifaddrs
 	getpeerucred
 	inet_pton

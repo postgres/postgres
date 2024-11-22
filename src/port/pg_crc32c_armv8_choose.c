@@ -24,57 +24,37 @@
 #include "postgres_fe.h"
 #endif
 
-#include <setjmp.h>
-#include <signal.h>
+#if defined(HAVE_ELF_AUX_INFO) || defined(HAVE_GETAUXVAL)
+#include <sys/auxv.h>
+#if defined(__linux__) && !defined(__aarch64__) && !defined(HWCAP2_CRC32)
+#include <asm/hwcap.h>
+#endif
+#endif
 
 #include "port/pg_crc32c.h"
-
-
-static sigjmp_buf illegal_instruction_jump;
-
-/*
- * Probe by trying to execute pg_comp_crc32c_armv8().  If the instruction
- * isn't available, we expect to get SIGILL, which we can trap.
- */
-static void
-illegal_instruction_handler(SIGNAL_ARGS)
-{
-	siglongjmp(illegal_instruction_jump, 1);
-}
 
 static bool
 pg_crc32c_armv8_available(void)
 {
-	uint64		data = 42;
-	int			result;
+#if defined(HAVE_ELF_AUX_INFO)
+	unsigned long value;
 
-	/*
-	 * Be careful not to do anything that might throw an error while we have
-	 * the SIGILL handler set to a nonstandard value.
-	 */
-	pqsignal(SIGILL, illegal_instruction_handler);
-	if (sigsetjmp(illegal_instruction_jump, 1) == 0)
-	{
-		/* Rather than hard-wiring an expected result, compare to SB8 code */
-		result = (pg_comp_crc32c_armv8(0, &data, sizeof(data)) ==
-				  pg_comp_crc32c_sb8(0, &data, sizeof(data)));
-	}
-	else
-	{
-		/* We got the SIGILL trap */
-		result = -1;
-	}
-	pqsignal(SIGILL, SIG_DFL);
-
-#ifndef FRONTEND
-	/* We don't expect this case, so complain loudly */
-	if (result == 0)
-		elog(ERROR, "crc32 hardware and software results disagree");
-
-	elog(DEBUG1, "using armv8 crc32 hardware = %d", (result > 0));
+#ifdef __aarch64__
+	return elf_aux_info(AT_HWCAP, &value, sizeof(value)) == 0 &&
+		(value & HWCAP_CRC32) != 0;
+#else
+	return elf_aux_info(AT_HWCAP2, &value, sizeof(value)) == 0 &&
+		(value & HWCAP2_CRC32) != 0;
 #endif
-
-	return (result > 0);
+#elif defined(HAVE_GETAUXVAL)
+#ifdef __aarch64__
+	return (getauxval(AT_HWCAP) & HWCAP_CRC32) != 0;
+#else
+	return (getauxval(AT_HWCAP2) & HWCAP2_CRC32) != 0;
+#endif
+#else
+	return false;
+#endif
 }
 
 /*
