@@ -168,7 +168,7 @@ write_jsonlog(ErrorData *edata)
 	}
 
 	/* Session id */
-	appendJSONKeyValueFmt(&buf, "session_id", true, "%" INT64_MODIFIER "x.%x",
+	appendJSONKeyValueFmt(&buf, "session_id", true, INT64_HEX_FORMAT ".%x",
 						  MyStartTime, MyProcPid);
 
 	/* Line number */

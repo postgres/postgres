@@ -550,6 +550,8 @@ typedef unsigned long long int uint64;
 /* snprintf format strings to use for 64-bit integers */
 #define INT64_FORMAT "%" INT64_MODIFIER "d"
 #define UINT64_FORMAT "%" INT64_MODIFIER "u"
+#define INT64_HEX_FORMAT "%" INT64_MODIFIER "x"
+#define UINT64_HEX_FORMAT "%" INT64_MODIFIER "x"
 
 /*
  * 128-bit signed and unsigned integers

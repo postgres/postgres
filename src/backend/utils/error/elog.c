@@ -2947,12 +2947,12 @@ log_status_format(StringInfo buf, const char *format, ErrorData *edata)
 				{
 					char		strfbuf[128];
 
-					snprintf(strfbuf, sizeof(strfbuf) - 1, "%" INT64_MODIFIER "x.%x",
+					snprintf(strfbuf, sizeof(strfbuf) - 1, INT64_HEX_FORMAT ".%x",
 							 MyStartTime, MyProcPid);
 					appendStringInfo(buf, "%*s", padding, strfbuf);
 				}
 				else
-					appendStringInfo(buf, "%" INT64_MODIFIER "x.%x", MyStartTime, MyProcPid);
+					appendStringInfo(buf, INT64_HEX_FORMAT ".%x", MyStartTime, MyProcPid);
 				break;
 			case 'p':
 				if (padding != 0)

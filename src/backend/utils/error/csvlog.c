@@ -120,7 +120,7 @@ write_csvlog(ErrorData *edata)
 	appendStringInfoChar(&buf, ',');
 
 	/* session id */
-	appendStringInfo(&buf, "%" INT64_MODIFIER "x.%x", MyStartTime, MyProcPid);
+	appendStringInfo(&buf, INT64_HEX_FORMAT ".%x", MyStartTime, MyProcPid);
 	appendStringInfoChar(&buf, ',');
 
 	/* Line number */
