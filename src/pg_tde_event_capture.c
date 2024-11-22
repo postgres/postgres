@@ -21,7 +21,6 @@
 #include "commands/event_trigger.h"
 #include "common/pg_tde_utils.h"
 #include "pg_tde_event_capture.h"
-#include "commands/tablespace.h"
 #include "catalog/tde_principal_key.h"
 #include "miscadmin.h"
 #include "access/tableam.h"
@@ -102,7 +101,6 @@ pg_tde_ddl_command_start_capture(PG_FUNCTION_ARGS)
 	{
 		CreateStmt *stmt = (CreateStmt *) parsetree;
 		TDEPrincipalKey *principal_key;
-		Oid			tablespace_oid;
 
 		tdeCurrentCreateEvent.eventType = TDE_TABLE_CREATE_EVENT;
 		tdeCurrentCreateEvent.relation = stmt->relation;
@@ -118,10 +116,8 @@ pg_tde_ddl_command_start_capture(PG_FUNCTION_ARGS)
 
 		if (tdeCurrentCreateEvent.encryptMode)
 		{
-			tablespace_oid = stmt->tablespacename != NULL ? get_tablespace_oid(stmt->tablespacename, false)
-				: MyDatabaseTableSpace;
 			LWLockAcquire(tde_lwlock_enc_keys(), LW_SHARED);
-			principal_key = GetPrincipalKey(MyDatabaseId, tablespace_oid, LW_SHARED);
+			principal_key = GetPrincipalKey(MyDatabaseId, LW_SHARED);
 			LWLockRelease(tde_lwlock_enc_keys());
 			if (principal_key == NULL)
 			{
@@ -152,21 +148,15 @@ pg_tde_ddl_command_start_capture(PG_FUNCTION_ARGS)
 			}
 		}
 
-		/*
-		 * TODO: also check for tablespace change, if current or new AM is
-		 * tde_heap!
-		 */
-
 		if (tdeCurrentCreateEvent.encryptMode)
 		{
 			TDEPrincipalKey * principal_key;
 			Oid		relationId = RangeVarGetRelid(stmt->relation, NoLock, true);
 			Relation	rel = table_open(relationId, lockmode);
-			Oid tablespace_oid = rel->rd_locator.spcOid;
 			table_close(rel, lockmode);
 
 			LWLockAcquire(tde_lwlock_enc_keys(), LW_SHARED);
-			principal_key = GetPrincipalKey(MyDatabaseId, tablespace_oid, LW_SHARED);
+			principal_key = GetPrincipalKey(MyDatabaseId, LW_SHARED);
 			LWLockRelease(tde_lwlock_enc_keys());
 			if (principal_key == NULL)
 			{

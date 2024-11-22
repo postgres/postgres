@@ -51,7 +51,7 @@ tde_smgr_get_key(SMgrRelation reln, RelFileLocator* old_locator, bool can_create
 	}
 
 	LWLockAcquire(tde_lwlock_enc_keys(), LW_SHARED);
-	pk = GetPrincipalKey(reln->smgr_rlocator.locator.dbOid, reln->smgr_rlocator.locator.spcOid, LW_SHARED);
+	pk = GetPrincipalKey(reln->smgr_rlocator.locator.dbOid, LW_SHARED);
 	LWLockRelease(tde_lwlock_enc_keys());
 	if (pk == NULL)
 	{

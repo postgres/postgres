@@ -9282,7 +9282,7 @@ tdeheap_xlog_insert(XLogReaderState *record)
 		HeapTupleHeaderSetCmin(htup, FirstCommandId);
 		htup->t_ctid = target_tid;
 
-		if (TDE_PageAddItem(target_locator, target_locator.spcOid, blkno, page, (Item) htup, newlen, xlrec->offnum,
+		if (TDE_PageAddItem(target_locator, blkno, page, (Item) htup, newlen, xlrec->offnum,
 						true, true) == InvalidOffsetNumber)
 			elog(PANIC, "failed to add tuple");
 
@@ -9426,7 +9426,7 @@ tdeheap_xlog_multi_insert(XLogReaderState *record)
 			ItemPointerSetBlockNumber(&htup->t_ctid, blkno);
 			ItemPointerSetOffsetNumber(&htup->t_ctid, offnum);
 
-			offnum = TDE_PageAddItem(rlocator, rlocator.spcOid, blkno, page, (Item) htup, newlen, offnum, true, true);
+			offnum = TDE_PageAddItem(rlocator, blkno, page, (Item) htup, newlen, offnum, true, true);
 			if (offnum == InvalidOffsetNumber)
 				elog(PANIC, "failed to add tuple");
 		}
@@ -9700,7 +9700,7 @@ tdeheap_xlog_update(XLogReaderState *record, bool hot_update)
 		/* Make sure there is no forward chain link in t_ctid */
 		htup->t_ctid = newtid;
 
-		offnum = TDE_PageAddItem(rlocator, rlocator.spcOid, newblk, page, (Item) htup, newlen, offnum, true, true);
+		offnum = TDE_PageAddItem(rlocator, newblk, page, (Item) htup, newlen, offnum, true, true);
 		if (offnum == InvalidOffsetNumber)
 			elog(PANIC, "failed to add tuple");
 

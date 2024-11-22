@@ -24,7 +24,7 @@ extern void
 
 /* A wrapper to encrypt a tuple before adding it to the buffer */
 extern OffsetNumber
-			PGTdePageAddItemExtended(RelFileLocator rel, Oid oid, BlockNumber bn, Page page,
+			PGTdePageAddItemExtended(RelFileLocator rel, BlockNumber bn, Page page,
 									 Item item,
 									 Size size,
 									 OffsetNumber offsetNumber,
@@ -52,7 +52,7 @@ extern OffsetNumber
 		pg_tde_crypt(_iv_prefix, _start_offset, _data, _data_len, _out, _key, "ENCRYPT-PAGE-ITEM"); \
 	} while(0)
 
-extern void AesEncryptKey(const TDEPrincipalKey *principal_key, const RelFileLocator *rlocator, RelKeyData *rel_key_data, RelKeyData **p_enc_rel_key_data, size_t *enc_key_bytes);
-extern void AesDecryptKey(const TDEPrincipalKey *principal_key, const RelFileLocator *rlocator, RelKeyData **p_rel_key_data, RelKeyData *enc_rel_key_data, size_t *key_bytes);
+extern void AesEncryptKey(const TDEPrincipalKey *principal_key, Oid dbOid, RelKeyData *rel_key_data, RelKeyData **p_enc_rel_key_data, size_t *enc_key_bytes);
+extern void AesDecryptKey(const TDEPrincipalKey *principal_key, Oid dbOid, RelKeyData **p_rel_key_data, RelKeyData *enc_rel_key_data, size_t *key_bytes);
 
 #endif /* ENC_TDE_H */

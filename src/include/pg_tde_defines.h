@@ -40,8 +40,8 @@
 #define pgstat_count_tdeheap_delete pgstat_count_heap_delete
 #define pgstat_count_tdeheap_insert pgstat_count_heap_insert
 
-#define TDE_PageAddItem(rel, oid, blkno, page, item, size, offsetNumber, overwrite, is_heap) \
-	PGTdePageAddItemExtended(rel, oid, blkno, page, item, size, offsetNumber, \
+#define TDE_PageAddItem(rel, blkno, page, item, size, offsetNumber, overwrite, is_heap) \
+	PGTdePageAddItemExtended(rel, blkno, page, item, size, offsetNumber, \
 						((overwrite) ? PAI_OVERWRITE : 0) | \
 						((is_heap) ? PAI_IS_HEAP : 0))
 

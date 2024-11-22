@@ -65,7 +65,7 @@ tdeheap_RelationPutHeapTuple(Relation relation,
 	pageHeader = BufferGetPage(buffer);
 
 	if (encrypt)
-		offnum = TDE_PageAddItem(relation->rd_locator, tuple->t_tableOid, BufferGetBlockNumber(buffer), pageHeader, (Item) tuple->t_data,
+		offnum = TDE_PageAddItem(relation->rd_locator, BufferGetBlockNumber(buffer), pageHeader, (Item) tuple->t_data,
 							tuple->t_len, InvalidOffsetNumber, false, true);
 	else
 		offnum = PageAddItem(pageHeader, (Item) tuple->t_data,

@@ -47,24 +47,24 @@ typedef enum ProviderScanType
 	PROVIDER_SCAN_ALL
 } ProviderScanType;
 
-#define PG_TDE_KEYRING_FILENAME "pg_tde_keyrings"
+#define PG_TDE_KEYRING_FILENAME "pg_tde_%d_keyring"
 
 static FileKeyring *load_file_keyring_provider_options(char *keyring_options);
 static GenericKeyring *load_keyring_provider_options(ProviderType provider_type, char *keyring_options);
 static VaultV2Keyring *load_vaultV2_keyring_provider_options(char *keyring_options);
 static void debug_print_kerying(GenericKeyring *keyring);
 static GenericKeyring *load_keyring_provider_from_record(KeyringProvideRecord *provider);
-static char *get_keyring_infofile_path(char *resPath, Oid dbOid, Oid spcOid);
+static inline void get_keyring_infofile_path(char *resPath, Oid dbOid);
 static bool fetch_next_key_provider(int fd, off_t *curr_pos, KeyringProvideRecord *provider);
 
 #ifdef FRONTEND
 
-static SimplePtrList *scan_key_provider_file(ProviderScanType scanType, void *scanKey, Oid dbOid, Oid spcOid);
+static SimplePtrList *scan_key_provider_file(ProviderScanType scanType, void *scanKey, Oid dbOid);
 static void simple_list_free(SimplePtrList *list);
 
 #else
 
-static List *scan_key_provider_file(ProviderScanType scanType, void *scanKey, Oid dbOid, Oid spcOid);
+static List *scan_key_provider_file(ProviderScanType scanType, void *scanKey, Oid dbOid);
 
 PG_FUNCTION_INFO_V1(pg_tde_add_key_provider_internal);
 Datum pg_tde_add_key_provider_internal(PG_FUNCTION_ARGS);
@@ -77,9 +77,8 @@ Datum pg_tde_list_all_key_providers(PG_FUNCTION_ARGS);
 static void key_provider_startup_cleanup(int tde_tbl_count, XLogExtensionInstall *ext_info, bool redo, void *arg);
 static const char *get_keyring_provider_typename(ProviderType p_type);
 static uint32 write_key_provider_info(KeyringProvideRecord *provider, 
-									Oid database_id, Oid tablespace_id,
-									off_t position, bool error_if_exists, 
-									bool write_xlog);
+									Oid database_id, off_t position, 
+									bool error_if_exists, bool write_xlog);
 
 static Size initialize_shared_state(void *start_address);
 static Size required_shared_mem_size(void);
@@ -137,7 +136,7 @@ key_provider_startup_cleanup(int tde_tbl_count, XLogExtensionInstall *ext_info, 
 				(errmsg("failed to perform initialization. database already has %d TDE tables", tde_tbl_count)));
 		return;
 	}
-	cleanup_key_provider_info(ext_info->database_id, ext_info->tablespace_id);
+	cleanup_key_provider_info(ext_info->database_id);
 }
 
 ProviderType
@@ -169,16 +168,16 @@ get_keyring_provider_typename(ProviderType p_type)
 }
 
 List *
-GetAllKeyringProviders(Oid dbOid, Oid spcOid)
+GetAllKeyringProviders(Oid dbOid)
 {
-	return scan_key_provider_file(PROVIDER_SCAN_ALL, NULL, dbOid, spcOid);
+	return scan_key_provider_file(PROVIDER_SCAN_ALL, NULL, dbOid);
 }
 
 GenericKeyring *
-GetKeyProviderByName(const char *provider_name, Oid dbOid, Oid spcOid)
+GetKeyProviderByName(const char *provider_name, Oid dbOid)
 {
 	GenericKeyring *keyring = NULL;
-	List *providers = scan_key_provider_file(PROVIDER_SCAN_BY_NAME, (void *) provider_name, dbOid, spcOid);
+	List *providers = scan_key_provider_file(PROVIDER_SCAN_BY_NAME, (void *) provider_name, dbOid);
 
 	if (providers != NIL)
 	{
@@ -197,8 +196,8 @@ GetKeyProviderByName(const char *provider_name, Oid dbOid, Oid spcOid)
 
 
 static uint32
-write_key_provider_info(KeyringProvideRecord *provider, Oid database_id, 
-					Oid tablespace_id, off_t position, bool error_if_exists, bool write_xlog)
+write_key_provider_info(KeyringProvideRecord *provider, Oid database_id,
+						off_t position, bool error_if_exists, bool write_xlog)
 {
 	off_t bytes_written = 0;
 	off_t curr_pos = 0;
@@ -209,7 +208,7 @@ write_key_provider_info(KeyringProvideRecord *provider, Oid database_id,
 
 	Assert(provider != NULL);
 
-	get_keyring_infofile_path(kp_info_path, database_id, tablespace_id);
+	get_keyring_infofile_path(kp_info_path, database_id);
 
 	LWLockAcquire(tde_provider_info_lock(), LW_EXCLUSIVE);
 
@@ -258,7 +257,6 @@ write_key_provider_info(KeyringProvideRecord *provider, Oid database_id,
 			KeyringProviderXLRecord xlrec;
 
 			xlrec.database_id = database_id;
-			xlrec.tablespace_id = tablespace_id;
 			xlrec.offset_in_file = curr_pos;
 			memcpy(&xlrec.provider, provider, sizeof(KeyringProvideRecord));
 
@@ -308,33 +306,24 @@ write_key_provider_info(KeyringProvideRecord *provider, Oid database_id,
  * Save the key provider info to the file
  */
 uint32
-save_new_key_provider_info(KeyringProvideRecord* provider, Oid databaseId, Oid tablespaceId, bool write_xlog)
+save_new_key_provider_info(KeyringProvideRecord* provider, Oid databaseId, bool write_xlog)
 {
-	return write_key_provider_info(provider, databaseId, tablespaceId, -1, true, write_xlog);
-}
-
-/*
- * Save the key provider info to the file but don't fail if it is already exists.
- */
-uint32
-copy_key_provider_info(KeyringProvideRecord* provider, Oid newdatabaseId, Oid newtablespaceId, bool write_xlog)
-{
-	return write_key_provider_info(provider, newdatabaseId, newtablespaceId, -1, false, write_xlog);
+	return write_key_provider_info(provider, databaseId, -1, true, write_xlog);
 }
 
 uint32
 redo_key_provider_info(KeyringProviderXLRecord *xlrec)
 {
-	return write_key_provider_info(&xlrec->provider, xlrec->database_id, xlrec->tablespace_id, xlrec->offset_in_file, true, false);
+	return write_key_provider_info(&xlrec->provider, xlrec->database_id, xlrec->offset_in_file, true, false);
 }
 
 void
-cleanup_key_provider_info(Oid databaseId, Oid tablespaceId)
+cleanup_key_provider_info(Oid databaseId)
 {
 	/* Remove the key provider info file */
 	char		kp_info_path[MAXPGPATH] = {0};
 
-	get_keyring_infofile_path(kp_info_path, databaseId, tablespaceId);
+	get_keyring_infofile_path(kp_info_path, databaseId);
 	PathNameDeleteTemporaryFile(kp_info_path, false);
 }
 
@@ -346,19 +335,12 @@ pg_tde_add_key_provider_internal(PG_FUNCTION_ARGS)
 	char *options = text_to_cstring(PG_GETARG_TEXT_PP(2));
 	bool is_global = PG_GETARG_BOOL(3);
 	KeyringProvideRecord provider;
-	Oid dbOid = MyDatabaseId;
-	Oid spcOid = MyDatabaseTableSpace;
-
-	if (is_global)
-	{
-		dbOid = GLOBAL_DATA_TDE_OID;
-		spcOid = GLOBALTABLESPACE_OID;
-	}
+	Oid dbOid = is_global ? GLOBAL_DATA_TDE_OID : MyDatabaseId;
 
 	strncpy(provider.options, options, sizeof(provider.options));
 	strncpy(provider.provider_name, provider_name, sizeof(provider.provider_name));
 	provider.provider_type = get_keyring_provider_from_typename(provider_type);
-	save_new_key_provider_info(&provider, dbOid, spcOid, true);
+	save_new_key_provider_info(&provider, dbOid, true);
 
 	PG_RETURN_INT32(provider.provider_id);
 }
@@ -366,7 +348,7 @@ pg_tde_add_key_provider_internal(PG_FUNCTION_ARGS)
 Datum
 pg_tde_list_all_key_providers(PG_FUNCTION_ARGS)
 {
-	List *all_providers = GetAllKeyringProviders(MyDatabaseId, MyDatabaseTableSpace);
+	List *all_providers = GetAllKeyringProviders(MyDatabaseId);
 	ListCell *lc;
 	Tuplestorestate *tupstore;
 	TupleDesc tupdesc;
@@ -419,10 +401,10 @@ pg_tde_list_all_key_providers(PG_FUNCTION_ARGS)
 }
 
 GenericKeyring *
-GetKeyProviderByID(int provider_id, Oid dbOid, Oid spcOid)
+GetKeyProviderByID(int provider_id, Oid dbOid)
 {
 	GenericKeyring *keyring = NULL;
-	List *providers = scan_key_provider_file(PROVIDER_SCAN_BY_ID, &provider_id, dbOid, spcOid);
+	List *providers = scan_key_provider_file(PROVIDER_SCAN_BY_ID, &provider_id, dbOid);
 
 	if (providers != NIL)
 	{
@@ -436,10 +418,10 @@ GetKeyProviderByID(int provider_id, Oid dbOid, Oid spcOid)
 
 #ifdef FRONTEND
 GenericKeyring *
-GetKeyProviderByID(int provider_id, Oid dbOid, Oid spcOid)
+GetKeyProviderByID(int provider_id, Oid dbOid)
 {
 	GenericKeyring *keyring = NULL;
-	SimplePtrList *providers = scan_key_provider_file(PROVIDER_SCAN_BY_ID, &provider_id, dbOid, spcOid);
+	SimplePtrList *providers = scan_key_provider_file(PROVIDER_SCAN_BY_ID, &provider_id, dbOid);
 
 	if (providers != NULL)
 	{
@@ -474,7 +456,7 @@ static List *
 #else
 static SimplePtrList *
 #endif
-scan_key_provider_file(ProviderScanType scanType, void *scanKey, Oid dbOid, Oid spcOid)
+scan_key_provider_file(ProviderScanType scanType, void *scanKey, Oid dbOid)
 {
 	off_t curr_pos = 0;
 	int fd;
@@ -489,7 +471,7 @@ scan_key_provider_file(ProviderScanType scanType, void *scanKey, Oid dbOid, Oid 
 	if (scanType != PROVIDER_SCAN_ALL)
 		Assert(scanKey != NULL);
 
-	get_keyring_infofile_path(kp_info_path, dbOid, spcOid);
+	get_keyring_infofile_path(kp_info_path, dbOid);
 
 	LWLockAcquire(tde_provider_info_lock(), LW_SHARED);
 
@@ -661,15 +643,10 @@ debug_print_kerying(GenericKeyring *keyring)
 	}
 }
 
-static char *
-get_keyring_infofile_path(char *resPath, Oid dbOid, Oid spcOid)
+static inline void
+get_keyring_infofile_path(char *resPath, Oid dbOid)
 {
-	char *db_path = pg_tde_get_tde_file_dir(dbOid, spcOid);
-
-	Assert(db_path != NULL);
-	join_path_components(resPath, db_path, PG_TDE_KEYRING_FILENAME);
-	pfree(db_path);
-	return resPath;
+	join_path_components(resPath, PG_TDE_DATA_DIR, psprintf(PG_TDE_KEYRING_FILENAME, dbOid));
 }
 
 /*

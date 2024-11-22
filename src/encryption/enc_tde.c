@@ -205,7 +205,6 @@ pg_tde_crypt_tuple(HeapTuple tuple, HeapTuple out_tuple, RelKeyData *key, const 
 
 OffsetNumber
 PGTdePageAddItemExtended(RelFileLocator rel,
-						 Oid oid,
 						 BlockNumber bn,
 						 Page page,
 						 Item item,
@@ -241,15 +240,14 @@ PGTdePageAddItemExtended(RelFileLocator rel,
  * short lifespan until it is written to disk.
  */
 void
-AesEncryptKey(const TDEPrincipalKey *principal_key, const RelFileLocator *rlocator, RelKeyData *rel_key_data, RelKeyData **p_enc_rel_key_data, size_t *enc_key_bytes)
+AesEncryptKey(const TDEPrincipalKey *principal_key, Oid dbOid, RelKeyData *rel_key_data, RelKeyData **p_enc_rel_key_data, size_t *enc_key_bytes)
 {
 	unsigned char iv[16] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 
 	/* Ensure we are getting a valid pointer here */
 	Assert(principal_key);
 
-	memcpy(iv, &rlocator->spcOid, sizeof(Oid));
-	memcpy(iv + sizeof(Oid), &rlocator->dbOid, sizeof(Oid));
+	memcpy(iv, &dbOid, sizeof(Oid));
 
 	*p_enc_rel_key_data = (RelKeyData *) palloc(sizeof(RelKeyData));
 	memcpy(*p_enc_rel_key_data, rel_key_data, sizeof(RelKeyData));
@@ -267,15 +265,14 @@ AesEncryptKey(const TDEPrincipalKey *principal_key, const RelFileLocator *rlocat
  * to our key cache.
  */
 void
-AesDecryptKey(const TDEPrincipalKey *principal_key, const RelFileLocator *rlocator, RelKeyData **p_rel_key_data, RelKeyData *enc_rel_key_data, size_t *key_bytes)
+AesDecryptKey(const TDEPrincipalKey *principal_key, Oid dbOid, RelKeyData **p_rel_key_data, RelKeyData *enc_rel_key_data, size_t *key_bytes)
 {
 	unsigned char iv[16] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 
 	/* Ensure we are getting a valid pointer here */
 	Assert(principal_key);
 
-	memcpy(iv, &rlocator->spcOid, sizeof(Oid));
-	memcpy(iv + sizeof(Oid), &rlocator->dbOid, sizeof(Oid));
+	memcpy(iv, &dbOid, sizeof(Oid));
 
 #ifndef FRONTEND
 	MemoryContext oldcontext;

@@ -39,6 +39,8 @@
 #include "utils/percona.h"
 #endif
 
+#include <sys/stat.h>
+
 #define MAX_ON_INSTALLS 5
 
 PG_MODULE_MAGIC;
@@ -130,11 +132,12 @@ _PG_init(void)
 Datum
 pg_tde_extension_initialize(PG_FUNCTION_ARGS)
 {
+	pg_tde_init_data_dir();
+	
 	/* Initialize the TDE map */
 	XLogExtensionInstall xlrec;
 
 	xlrec.database_id = MyDatabaseId;
-	xlrec.tablespace_id = MyDatabaseTableSpace;
 	run_extension_install_callbacks(&xlrec, false);
 
 	/*
@@ -172,6 +175,22 @@ on_ext_install(pg_tde_on_ext_install_callback function, void *arg)
 	on_ext_install_list[on_ext_install_index].arg = arg;
 
 	++on_ext_install_index;
+}
+
+/* Creates a tde directory for internal files if not exists */
+void
+pg_tde_init_data_dir(void)
+{
+	struct stat st;
+
+	if (stat(PG_TDE_DATA_DIR, &st) < 0)
+	{
+		if (MakePGDirectory(PG_TDE_DATA_DIR) < 0)
+			ereport(ERROR,
+					(errcode_for_file_access(),
+						errmsg("could not create tde directory \"%s\": %m",
+							PG_TDE_DATA_DIR)));
+	}
 }
 
 /* ------------------

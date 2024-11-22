@@ -14,7 +14,6 @@
 
 #ifdef PERCONA_EXT
 
-#include "catalog/pg_tablespace_d.h"
 #include "utils/memutils.h"
 
 #include "access/pg_tde_tdemap.h"
@@ -36,14 +35,13 @@
 #define KEYRING_DEFAULT_FILE_NAME "pg_tde_default_keyring_CHANGE_AND_REMOVE_IT"
 
 #define DefaultKeyProvider GetKeyProviderByName(KEYRING_DEFAULT_NAME, \
-										GLOBAL_DATA_TDE_OID, GLOBALTABLESPACE_OID)
+												GLOBAL_DATA_TDE_OID)
 
 #ifndef FRONTEND
 static void init_keys(void);
 static void init_default_keyring(void);
 static TDEPrincipalKey *create_principal_key(const char *key_name,
-											 GenericKeyring *keyring, Oid dbOid,
-											 Oid spcOid);
+											 GenericKeyring *keyring, Oid dbOid);
 #endif /* !FRONTEND */
 
 
@@ -53,7 +51,7 @@ TDEInitGlobalKeys(const char *dir)
 #ifndef FRONTEND
 	char db_map_path[MAXPGPATH] = {0};
 
-	pg_tde_set_db_file_paths(GLOBAL_DATA_TDE_OID, GLOBALTABLESPACE_OID, db_map_path, NULL);
+	pg_tde_set_db_file_paths(GLOBAL_DATA_TDE_OID, db_map_path, NULL);
 	if (access(db_map_path, F_OK) == -1)
 	{
 		init_default_keyring();
@@ -87,7 +85,7 @@ TDEInitGlobalKeys(const char *dir)
 static void
 init_default_keyring(void)
 {
-	if (GetAllKeyringProviders(GLOBAL_DATA_TDE_OID, GLOBALTABLESPACE_OID) == NIL)
+	if (GetAllKeyringProviders(GLOBAL_DATA_TDE_OID) == NIL)
 	{
 		char path[MAXPGPATH] = {0};
 		static KeyringProvideRecord provider =
@@ -100,7 +98,7 @@ init_default_keyring(void)
 			elog(WARNING, "unable to get current working dir");
 
 		/* TODO: not sure about the location. Currently it's in $PGDATA */
-		join_path_components(path, path, KEYRING_DEFAULT_FILE_NAME);
+		join_path_components(path, PG_TDE_DATA_DIR, KEYRING_DEFAULT_FILE_NAME);
 
 		snprintf(provider.options, MAX_KEYRING_OPTION_LEN,
 				 "{"
@@ -109,11 +107,13 @@ init_default_keyring(void)
 				 "}", path
 			);
 
+		pg_tde_init_data_dir();
+
 		/*
 		 * TODO: should we remove it automaticaly on
 		 * pg_tde_rotate_principal_key() ?
 		 */
-		save_new_key_provider_info(&provider, GLOBAL_DATA_TDE_OID, GLOBALTABLESPACE_OID, false);
+		save_new_key_provider_info(&provider, GLOBAL_DATA_TDE_OID, false);
 		elog(INFO,
 			 "default keyring has been created for the global tablespace (WAL)."
 			 " Change it with pg_tde_add_key_provider_* and run pg_tde_rotate_principal_key."
@@ -142,7 +142,7 @@ init_keys(void)
 
 	mkey = create_principal_key(PRINCIPAL_KEY_DEFAULT_NAME,
 								DefaultKeyProvider,
-								GLOBAL_DATA_TDE_OID, GLOBALTABLESPACE_OID);
+								GLOBAL_DATA_TDE_OID);
 
 	memset(&int_key, 0, sizeof(InternalKey));
 
@@ -159,7 +159,7 @@ init_keys(void)
 
 	rlocator = &GLOBAL_SPACE_RLOCATOR(XLOG_TDE_OID);
 	rel_key_data = tde_create_rel_key(rlocator->relNumber, &int_key, &mkey->keyInfo);
-	enc_rel_key_data = tde_encrypt_rel_key(mkey, rel_key_data, rlocator);
+	enc_rel_key_data = tde_encrypt_rel_key(mkey, rel_key_data, rlocator->dbOid);
 	pg_tde_write_key_map_entry(rlocator, enc_rel_key_data, &mkey->keyInfo);
 	pfree(enc_rel_key_data);
 	pfree(mkey);
@@ -175,15 +175,13 @@ init_keys(void)
  *   first.
  */
 static TDEPrincipalKey *
-create_principal_key(const char *key_name, GenericKeyring *keyring,
-					 Oid dbOid, Oid spcOid)
+create_principal_key(const char *key_name, GenericKeyring *keyring, Oid dbOid)
 {
 	TDEPrincipalKey *principalKey;
 	keyInfo *keyInfo = NULL;
 
 	principalKey = palloc(sizeof(TDEPrincipalKey));
 	principalKey->keyInfo.databaseId = dbOid;
-	principalKey->keyInfo.tablespaceId = spcOid;
 	principalKey->keyInfo.keyId.version = DEFAULT_PRINCIPAL_KEY_VERSION;
 	principalKey->keyInfo.keyringId = keyring->key_id;
 	strncpy(principalKey->keyInfo.keyId.name, key_name, TDE_KEY_NAME_LEN);

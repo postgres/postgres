@@ -18,7 +18,6 @@
 #include "access/xlog.h"
 #include "access/xlog_internal.h"
 #include "access/xloginsert.h"
-#include "catalog/pg_tablespace_d.h"
 #include "storage/bufmgr.h"
 #include "storage/shmem.h"
 #include "utils/guc.h"

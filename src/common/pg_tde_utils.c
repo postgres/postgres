@@ -11,7 +11,6 @@
 
 #include "postgres.h"
 
-#include "catalog/pg_tablespace_d.h"
 #include "utils/snapmgr.h"
 #include "commands/defrem.h"
 #include "common/pg_tde_utils.h"
@@ -92,23 +91,4 @@ pg_tde_set_globalspace_dir(const char *dir)
 {
 	Assert(dir != NULL);
 	strncpy(globalspace_dir, dir, sizeof(globalspace_dir));
-}
-
-/* returns the palloc'd string */
-char *
-pg_tde_get_tde_file_dir(Oid dbOid, Oid spcOid)
-{
-	/*
-	 * `dbOid` is set to a value for the XLog keys caching but
-	 * GetDatabasePath() expects it (`dbOid`) to be `0` if this is a global
-	 * space.
-	 */
-	if (spcOid == GLOBALTABLESPACE_OID)
-	{
-		if (strlen(globalspace_dir) > 0)
-			return pstrdup(globalspace_dir);
-
-		return pstrdup("global");
-	}
-	return GetDatabasePath(dbOid, spcOid);
 }

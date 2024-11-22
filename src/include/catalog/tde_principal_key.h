@@ -33,7 +33,6 @@ typedef struct TDEPrincipalKeyId
 typedef struct TDEPrincipalKeyInfo
 {
 	Oid	databaseId;
-	Oid	tablespaceId;
 	Oid	userId;
 	Oid	keyringId;
 	struct timeval creationTime;
@@ -58,13 +57,13 @@ typedef struct XLogPrincipalKeyRotate
 #define SizeoOfXLogPrincipalKeyRotate	offsetof(XLogPrincipalKeyRotate, buff)
 
 extern void InitializePrincipalKeyInfo(void);
-extern void cleanup_principal_key_info(Oid databaseId, Oid tablespaceId);
+extern void cleanup_principal_key_info(Oid databaseId);
 
 #ifndef FRONTEND
 extern LWLock *tde_lwlock_enc_keys(void);
-extern TDEPrincipalKey *GetPrincipalKey(Oid dbOid, Oid spcOid, LWLockMode lockMode);
+extern TDEPrincipalKey *GetPrincipalKey(Oid dbOid, LWLockMode lockMode);
 #else
-extern TDEPrincipalKey *GetPrincipalKey(Oid dbOid, Oid spcOid, void *lockMode);
+extern TDEPrincipalKey *GetPrincipalKey(Oid dbOid, void *lockMode);
 #endif
 
 extern bool save_principal_key_info(TDEPrincipalKeyInfo *principalKeyInfo);
