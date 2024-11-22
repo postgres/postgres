@@ -195,6 +195,15 @@ SELECT pg_catalog.pg_set_attribute_stats(
     avg_width => 2::integer,
     n_distinct => 0.3::real);
 ERROR:  "relation" cannot be NULL
+-- error: attribute is system column
+SELECT pg_catalog.pg_set_attribute_stats(
+    relation => 'stats_import.test'::regclass,
+    attname => 'xmin'::name,
+    inherited => false::boolean,
+    null_frac => 0.1::real,
+    avg_width => 2::integer,
+    n_distinct => 0.3::real);
+ERROR:  cannot modify statistics on system column "xmin"
 -- error: attname doesn't exist
 SELECT pg_catalog.pg_set_attribute_stats(
     relation => 'stats_import.test'::regclass,
@@ -204,6 +213,12 @@ SELECT pg_catalog.pg_set_attribute_stats(
     avg_width => 2::integer,
     n_distinct => 0.3::real);
 ERROR:  column "nope" of relation "test" does not exist
+-- error: attribute is system column
+SELECT pg_catalog.pg_clear_attribute_stats(
+    relation => 'stats_import.test'::regclass,
+    attname => 'ctid'::name,
+    inherited => false::boolean);
+ERROR:  cannot clear statistics on system column "ctid"
 -- error: attname doesn't exist
 SELECT pg_catalog.pg_clear_attribute_stats(
     relation => 'stats_import.test'::regclass,
