@@ -4,8 +4,10 @@
  *	  Efficiently and reliably populate a new relation
  *
  * The assumption is that no other backends access the relation while we are
- * loading it, so we can take some shortcuts.  Do not mix operations through
- * the regular buffer manager and the bulk loading interface!
+ * loading it, so we can take some shortcuts.  Pages already present in the
+ * indicated fork when the bulk write operation is started are not modified
+ * unless explicitly written to.  Do not mix operations through the regular
+ * buffer manager and the bulk loading interface!
  *
  * We bypass the buffer manager to avoid the locking overhead, and call
  * smgrextend() directly.  A downside is that the pages will need to be
@@ -68,7 +70,7 @@ struct BulkWriteState
 	PendingWrite pending_writes[MAX_PENDING_WRITES];
 
 	/* Current size of the relation */
-	BlockNumber pages_written;
+	BlockNumber relsize;
 
 	/* The RedoRecPtr at the time that the bulk operation started */
 	XLogRecPtr	start_RedoRecPtr;
@@ -105,7 +107,7 @@ smgr_bulk_start_smgr(SMgrRelation smgr, ForkNumber forknum, bool use_wal)
 	state->use_wal = use_wal;
 
 	state->npending = 0;
-	state->pages_written = 0;
+	state->relsize = smgrnblocks(smgr, forknum);
 
 	state->start_RedoRecPtr = GetRedoRecPtr();
 
@@ -279,7 +281,7 @@ smgr_bulk_flush(BulkWriteState *bulkstate)
 
 		PageSetChecksumInplace(page, blkno);
 
-		if (blkno >= bulkstate->pages_written)
+		if (blkno >= bulkstate->relsize)
 		{
 			/*
 			 * If we have to write pages nonsequentially, fill in the space
@@ -288,17 +290,18 @@ smgr_bulk_flush(BulkWriteState *bulkstate)
 			 * space will read as zeroes anyway), but it should help to avoid
 			 * fragmentation.  The dummy pages aren't WAL-logged though.
 			 */
-			while (blkno > bulkstate->pages_written)
+			while (blkno > bulkstate->relsize)
 			{
 				/* don't set checksum for all-zero page */
 				smgrextend(bulkstate->smgr, bulkstate->forknum,
-						   bulkstate->pages_written++,
+						   bulkstate->relsize,
 						   &zero_buffer,
 						   true);
+				bulkstate->relsize++;
 			}
 
 			smgrextend(bulkstate->smgr, bulkstate->forknum, blkno, page, true);
-			bulkstate->pages_written = pending_writes[i].blkno + 1;
+			bulkstate->relsize++;
 		}
 		else
 			smgrwrite(bulkstate->smgr, bulkstate->forknum, blkno, page, true);
