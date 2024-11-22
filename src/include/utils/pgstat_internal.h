@@ -213,6 +213,9 @@ typedef struct PgStat_KindInfo
 	 */
 	bool		accessed_across_databases:1;
 
+	/* Should stats be written to the on-disk stats file? */
+	bool		write_to_file:1;
+
 	/*
 	 * The size of an entry in the shared stats hash table (pointed to by
 	 * PgStatShared_HashEntry->body).  For fixed-numbered statistics, this is

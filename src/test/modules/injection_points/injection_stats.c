@@ -39,6 +39,7 @@ static bool injection_stats_flush_cb(PgStat_EntryRef *entry_ref, bool nowait);
 static const PgStat_KindInfo injection_stats = {
 	.name = "injection_points",
 	.fixed_amount = false,		/* Bounded by the number of points */
+	.write_to_file = true,
 
 	/* Injection points are system-wide */
 	.accessed_across_databases = true,
