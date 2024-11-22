@@ -174,6 +174,7 @@ slashUsage(unsigned short int pager)
 	HELP0("  \\gexec                 execute query, then execute each value in its result\n");
 	HELP0("  \\gset [PREFIX]         execute query and store result in psql variables\n");
 	HELP0("  \\gx [(OPTIONS)] [FILE] as \\g, but forces expanded output mode\n");
+	HELP0("  \\parse STMT_NAME       create a prepared statement\n");
 	HELP0("  \\q                     quit psql\n");
 	HELP0("  \\watch [[i=]SEC] [c=N] [m=MIN]\n"
 		  "                         execute query every SEC seconds, up to N times,\n"
@@ -312,7 +313,6 @@ slashUsage(unsigned short int pager)
 			  "                         connect to new database (currently no connection)\n");
 	HELP0("  \\conninfo              display information about current connection\n");
 	HELP0("  \\encoding [ENCODING]   show or set client encoding\n");
-	HELP0("  \\parse STMT_NAME       create a prepared statement\n");
 	HELP0("  \\password [USERNAME]   securely change the password for a user\n");
 	HELP0("\n");
 
