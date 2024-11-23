@@ -4296,20 +4296,20 @@ select * from tenk1 a join tenk1 b on
  Nested Loop
    Join Filter: (((a.unique1 = 1) AND (b.unique1 = 2)) OR ((a.unique2 = 3) AND (b.hundred = 4)))
    ->  Bitmap Heap Scan on tenk1 b
-         Recheck Cond: ((unique1 = 2) OR (hundred = 4))
+         Recheck Cond: ((hundred = 4) OR (unique1 = 2))
          ->  BitmapOr
-               ->  Bitmap Index Scan on tenk1_unique1
-                     Index Cond: (unique1 = 2)
                ->  Bitmap Index Scan on tenk1_hundred
                      Index Cond: (hundred = 4)
+               ->  Bitmap Index Scan on tenk1_unique1
+                     Index Cond: (unique1 = 2)
    ->  Materialize
          ->  Bitmap Heap Scan on tenk1 a
-               Recheck Cond: ((unique1 = 1) OR (unique2 = 3))
+               Recheck Cond: ((unique2 = 3) OR (unique1 = 1))
                ->  BitmapOr
-                     ->  Bitmap Index Scan on tenk1_unique1
-                           Index Cond: (unique1 = 1)
                      ->  Bitmap Index Scan on tenk1_unique2
                            Index Cond: (unique2 = 3)
+                     ->  Bitmap Index Scan on tenk1_unique1
+                           Index Cond: (unique1 = 1)
 (17 rows)
 
 explain (costs off)
@@ -4323,12 +4323,12 @@ select * from tenk1 a join tenk1 b on
          Filter: ((unique1 = 2) OR (ten = 4))
    ->  Materialize
          ->  Bitmap Heap Scan on tenk1 a
-               Recheck Cond: ((unique1 = 1) OR (unique2 = 3))
+               Recheck Cond: ((unique2 = 3) OR (unique1 = 1))
                ->  BitmapOr
-                     ->  Bitmap Index Scan on tenk1_unique1
-                           Index Cond: (unique1 = 1)
                      ->  Bitmap Index Scan on tenk1_unique2
                            Index Cond: (unique2 = 3)
+                     ->  Bitmap Index Scan on tenk1_unique1
+                           Index Cond: (unique1 = 1)
 (12 rows)
 
 explain (costs off)
@@ -4340,21 +4340,21 @@ select * from tenk1 a join tenk1 b on
  Nested Loop
    Join Filter: (((a.unique1 = 1) AND (b.unique1 = 2)) OR (((a.unique2 = 3) OR (a.unique2 = 7)) AND (b.hundred = 4)))
    ->  Bitmap Heap Scan on tenk1 b
-         Recheck Cond: ((unique1 = 2) OR (hundred = 4))
+         Recheck Cond: ((hundred = 4) OR (unique1 = 2))
          ->  BitmapOr
-               ->  Bitmap Index Scan on tenk1_unique1
-                     Index Cond: (unique1 = 2)
                ->  Bitmap Index Scan on tenk1_hundred
                      Index Cond: (hundred = 4)
+               ->  Bitmap Index Scan on tenk1_unique1
+                     Index Cond: (unique1 = 2)
    ->  Materialize
          ->  Bitmap Heap Scan on tenk1 a
-               Recheck Cond: ((unique1 = 1) OR ((unique2 = 3) OR (unique2 = 7)))
+               Recheck Cond: (((unique2 = 3) OR (unique2 = 7)) OR (unique1 = 1))
                Filter: ((unique1 = 1) OR (unique2 = 3) OR (unique2 = 7))
                ->  BitmapOr
-                     ->  Bitmap Index Scan on tenk1_unique1
-                           Index Cond: (unique1 = 1)
                      ->  Bitmap Index Scan on tenk1_unique2
                            Index Cond: (unique2 = ANY ('{3,7}'::integer[]))
+                     ->  Bitmap Index Scan on tenk1_unique1
+                           Index Cond: (unique1 = 1)
 (18 rows)
 
 explain (costs off)
@@ -4366,21 +4366,21 @@ select * from tenk1 a join tenk1 b on
  Nested Loop
    Join Filter: (((a.unique1 = 1) AND (b.unique1 = 2)) OR (((a.unique2 = 3) OR (a.unique2 = 7)) AND (b.hundred = 4)))
    ->  Bitmap Heap Scan on tenk1 b
-         Recheck Cond: ((unique1 = 2) OR (hundred = 4))
+         Recheck Cond: ((hundred = 4) OR (unique1 = 2))
          ->  BitmapOr
-               ->  Bitmap Index Scan on tenk1_unique1
-                     Index Cond: (unique1 = 2)
                ->  Bitmap Index Scan on tenk1_hundred
                      Index Cond: (hundred = 4)
+               ->  Bitmap Index Scan on tenk1_unique1
+                     Index Cond: (unique1 = 2)
    ->  Materialize
          ->  Bitmap Heap Scan on tenk1 a
-               Recheck Cond: ((unique1 = 1) OR ((unique2 = 3) OR (unique2 = 7)))
+               Recheck Cond: (((unique2 = 3) OR (unique2 = 7)) OR (unique1 = 1))
                Filter: ((unique1 = 1) OR (unique2 = 3) OR (unique2 = 7))
                ->  BitmapOr
-                     ->  Bitmap Index Scan on tenk1_unique1
-                           Index Cond: (unique1 = 1)
                      ->  Bitmap Index Scan on tenk1_unique2
                            Index Cond: (unique2 = ANY ('{3,7}'::integer[]))
+                     ->  Bitmap Index Scan on tenk1_unique1
+                           Index Cond: (unique1 = 1)
 (18 rows)
 
 explain (costs off)
@@ -4394,18 +4394,16 @@ select * from tenk1 a join tenk1 b on
    ->  Seq Scan on tenk1 b
    ->  Materialize
          ->  Bitmap Heap Scan on tenk1 a
-               Recheck Cond: ((unique1 < 20) OR (unique1 = 3) OR (unique1 = 1) OR ((unique2 = 3) OR (unique2 = 7)))
+               Recheck Cond: (((unique2 = 3) OR (unique2 = 7)) OR ((unique1 = 3) OR (unique1 = 1)) OR (unique1 < 20))
                Filter: ((unique1 < 20) OR (unique1 = 3) OR (unique1 = 1) OR (unique2 = 3) OR (unique2 = 7))
                ->  BitmapOr
-                     ->  Bitmap Index Scan on tenk1_unique1
-                           Index Cond: (unique1 < 20)
-                     ->  Bitmap Index Scan on tenk1_unique1
-                           Index Cond: (unique1 = 3)
-                     ->  Bitmap Index Scan on tenk1_unique1
-                           Index Cond: (unique1 = 1)
                      ->  Bitmap Index Scan on tenk1_unique2
                            Index Cond: (unique2 = ANY ('{3,7}'::integer[]))
-(16 rows)
+                     ->  Bitmap Index Scan on tenk1_unique1
+                           Index Cond: (unique1 = ANY ('{3,1}'::integer[]))
+                     ->  Bitmap Index Scan on tenk1_unique1
+                           Index Cond: (unique1 < 20)
+(14 rows)
 
 --
 -- test placement of movable quals in a parameterized join tree
