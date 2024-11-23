@@ -3254,6 +3254,8 @@ CREATE OPERATOR <<< (procedure = op_leak, leftarg = int, rightarg = int,
                      restrict = scalarltsel);
 SELECT * FROM tststats.priv_test_tbl WHERE a <<< 0 AND b <<< 0; -- Permission denied
 ERROR:  permission denied for table priv_test_tbl
+SELECT * FROM tststats.priv_test_tbl WHERE a <<< 0 OR b <<< 0;
+ERROR:  permission denied for table priv_test_tbl
 DELETE FROM tststats.priv_test_tbl WHERE a <<< 0 AND b <<< 0; -- Permission denied
 ERROR:  permission denied for table priv_test_tbl
 -- Grant access via a security barrier view, but hide all data
@@ -3268,6 +3270,11 @@ SELECT * FROM tststats.priv_test_view WHERE a <<< 0 AND b <<< 0; -- Should not l
 ---+---
 (0 rows)
 
+SELECT * FROM tststats.priv_test_view WHERE a <<< 0 OR b <<< 0; -- Should not leak
+ a | b 
+---+---
+(0 rows)
+
 DELETE FROM tststats.priv_test_view WHERE a <<< 0 AND b <<< 0; -- Should not leak
 -- Grant table access, but hide all data with RLS
 RESET SESSION AUTHORIZATION;
@@ -3276,6 +3283,11 @@ GRANT SELECT, DELETE ON tststats.priv_test_tbl TO regress_stats_user1;
 -- Should now have direct table access, but see nothing and leak nothing
 SET SESSION AUTHORIZATION regress_stats_user1;
 SELECT * FROM tststats.priv_test_tbl WHERE a <<< 0 AND b <<< 0; -- Should not leak
+ a | b 
+---+---
+(0 rows)
+
+SELECT * FROM tststats.priv_test_tbl WHERE a <<< 0 OR b <<< 0;
  a | b 
 ---+---
 (0 rows)

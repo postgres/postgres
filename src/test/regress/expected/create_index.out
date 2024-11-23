@@ -1844,21 +1844,32 @@ DROP TABLE onek_with_null;
 EXPLAIN (COSTS OFF)
 SELECT * FROM tenk1
   WHERE thousand = 42 AND (tenthous = 1 OR tenthous = 3 OR tenthous = 42);
-                                                               QUERY PLAN                                                                
------------------------------------------------------------------------------------------------------------------------------------------
- Bitmap Heap Scan on tenk1
-   Recheck Cond: (((thousand = 42) AND (tenthous = 1)) OR ((thousand = 42) AND (tenthous = 3)) OR ((thousand = 42) AND (tenthous = 42)))
-   ->  BitmapOr
-         ->  Bitmap Index Scan on tenk1_thous_tenthous
-               Index Cond: ((thousand = 42) AND (tenthous = 1))
-         ->  Bitmap Index Scan on tenk1_thous_tenthous
-               Index Cond: ((thousand = 42) AND (tenthous = 3))
-         ->  Bitmap Index Scan on tenk1_thous_tenthous
-               Index Cond: ((thousand = 42) AND (tenthous = 42))
-(9 rows)
+                                  QUERY PLAN                                  
+------------------------------------------------------------------------------
+ Index Scan using tenk1_thous_tenthous on tenk1
+   Index Cond: ((thousand = 42) AND (tenthous = ANY ('{1,3,42}'::integer[])))
+(2 rows)
 
 SELECT * FROM tenk1
   WHERE thousand = 42 AND (tenthous = 1 OR tenthous = 3 OR tenthous = 42);
+ unique1 | unique2 | two | four | ten | twenty | hundred | thousand | twothousand | fivethous | tenthous | odd | even | stringu1 | stringu2 | string4 
+---------+---------+-----+------+-----+--------+---------+----------+-------------+-----------+----------+-----+------+----------+----------+---------
+      42 |    5530 |   0 |    2 |   2 |      2 |      42 |       42 |          42 |        42 |       42 |  84 |   85 | QBAAAA   | SEIAAA   | OOOOxx
+(1 row)
+
+EXPLAIN (COSTS OFF)
+SELECT * FROM tenk1
+  WHERE thousand = 42 AND (tenthous = 1 OR tenthous = (SELECT 1 + 2) OR tenthous = 42);
+                                       QUERY PLAN                                       
+----------------------------------------------------------------------------------------
+ Index Scan using tenk1_thous_tenthous on tenk1
+   Index Cond: ((thousand = 42) AND (tenthous = ANY (ARRAY[1, (InitPlan 1).col1, 42])))
+   InitPlan 1
+     ->  Result
+(4 rows)
+
+SELECT * FROM tenk1
+  WHERE thousand = 42 AND (tenthous = 1 OR tenthous = (SELECT 1 + 2) OR tenthous = 42);
  unique1 | unique2 | two | four | ten | twenty | hundred | thousand | twothousand | fivethous | tenthous | odd | even | stringu1 | stringu2 | string4 
 ---------+---------+-----+------+-----+--------+---------+----------+-------------+-----------+----------+-----+------+----------+----------+---------
       42 |    5530 |   0 |    2 |   2 |      2 |      42 |       42 |          42 |        42 |       42 |  84 |   85 | QBAAAA   | SEIAAA   | OOOOxx
@@ -1875,12 +1886,9 @@ SELECT count(*) FROM tenk1
          ->  BitmapAnd
                ->  Bitmap Index Scan on tenk1_hundred
                      Index Cond: (hundred = 42)
-               ->  BitmapOr
-                     ->  Bitmap Index Scan on tenk1_thous_tenthous
-                           Index Cond: (thousand = 42)
-                     ->  Bitmap Index Scan on tenk1_thous_tenthous
-                           Index Cond: (thousand = 99)
-(11 rows)
+               ->  Bitmap Index Scan on tenk1_thous_tenthous
+                     Index Cond: (thousand = ANY ('{42,99}'::integer[]))
+(8 rows)
 
 SELECT count(*) FROM tenk1
   WHERE hundred = 42 AND (thousand = 42 OR thousand = 99);
@@ -1888,6 +1896,238 @@ SELECT count(*) FROM tenk1
 -------
     10
 (1 row)
+
+EXPLAIN (COSTS OFF)
+SELECT * FROM tenk1
+  WHERE thousand = 42 AND (tenthous = 1 OR tenthous = 3 OR tenthous = 42);
+                                  QUERY PLAN                                  
+------------------------------------------------------------------------------
+ Index Scan using tenk1_thous_tenthous on tenk1
+   Index Cond: ((thousand = 42) AND (tenthous = ANY ('{1,3,42}'::integer[])))
+(2 rows)
+
+SELECT * FROM tenk1
+  WHERE thousand = 42 AND (tenthous = 1 OR tenthous = 3 OR tenthous = 42);
+ unique1 | unique2 | two | four | ten | twenty | hundred | thousand | twothousand | fivethous | tenthous | odd | even | stringu1 | stringu2 | string4 
+---------+---------+-----+------+-----+--------+---------+----------+-------------+-----------+----------+-----+------+----------+----------+---------
+      42 |    5530 |   0 |    2 |   2 |      2 |      42 |       42 |          42 |        42 |       42 |  84 |   85 | QBAAAA   | SEIAAA   | OOOOxx
+(1 row)
+
+EXPLAIN (COSTS OFF)
+SELECT * FROM tenk1
+  WHERE thousand = 42 AND (tenthous = 1::numeric OR tenthous = 3::int4 OR tenthous = 42::numeric);
+                                                 QUERY PLAN                                                  
+-------------------------------------------------------------------------------------------------------------
+ Bitmap Heap Scan on tenk1
+   Recheck Cond: (thousand = 42)
+   Filter: (((tenthous)::numeric = '1'::numeric) OR (tenthous = 3) OR ((tenthous)::numeric = '42'::numeric))
+   ->  Bitmap Index Scan on tenk1_thous_tenthous
+         Index Cond: (thousand = 42)
+(5 rows)
+
+EXPLAIN (COSTS OFF)
+SELECT * FROM tenk1
+  WHERE tenthous = 1::numeric OR tenthous = 3::int4 OR tenthous = 42::numeric;
+                                                 QUERY PLAN                                                  
+-------------------------------------------------------------------------------------------------------------
+ Seq Scan on tenk1
+   Filter: (((tenthous)::numeric = '1'::numeric) OR (tenthous = 3) OR ((tenthous)::numeric = '42'::numeric))
+(2 rows)
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM tenk1
+  WHERE hundred = 42 AND (thousand = 42 OR thousand = 99);
+                                   QUERY PLAN                                    
+---------------------------------------------------------------------------------
+ Aggregate
+   ->  Bitmap Heap Scan on tenk1
+         Recheck Cond: ((hundred = 42) AND ((thousand = 42) OR (thousand = 99)))
+         ->  BitmapAnd
+               ->  Bitmap Index Scan on tenk1_hundred
+                     Index Cond: (hundred = 42)
+               ->  Bitmap Index Scan on tenk1_thous_tenthous
+                     Index Cond: (thousand = ANY ('{42,99}'::integer[]))
+(8 rows)
+
+SELECT count(*) FROM tenk1
+  WHERE hundred = 42 AND (thousand = 42 OR thousand = 99);
+ count 
+-------
+    10
+(1 row)
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM tenk1
+  WHERE hundred = 42 AND (thousand < 42 OR thousand < 99 OR 43 > thousand OR 42 > thousand);
+                                                      QUERY PLAN                                                       
+-----------------------------------------------------------------------------------------------------------------------
+ Aggregate
+   ->  Bitmap Heap Scan on tenk1
+         Recheck Cond: ((hundred = 42) AND ((thousand < 42) OR (thousand < 99) OR (43 > thousand) OR (42 > thousand)))
+         ->  BitmapAnd
+               ->  Bitmap Index Scan on tenk1_hundred
+                     Index Cond: (hundred = 42)
+               ->  Bitmap Index Scan on tenk1_thous_tenthous
+                     Index Cond: (thousand < ANY ('{42,99,43,42}'::integer[]))
+(8 rows)
+
+SELECT count(*) FROM tenk1
+  WHERE hundred = 42 AND (thousand < 42 OR thousand < 99 OR 43 > thousand OR 42 > thousand);
+ count 
+-------
+    10
+(1 row)
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM tenk1
+  WHERE thousand = 42 AND (tenthous = 1 OR tenthous = 3) OR thousand = 41;
+                                             QUERY PLAN                                              
+-----------------------------------------------------------------------------------------------------
+ Aggregate
+   ->  Bitmap Heap Scan on tenk1
+         Recheck Cond: (((thousand = 42) AND ((tenthous = 1) OR (tenthous = 3))) OR (thousand = 41))
+         ->  BitmapOr
+               ->  Bitmap Index Scan on tenk1_thous_tenthous
+                     Index Cond: ((thousand = 42) AND (tenthous = ANY ('{1,3}'::integer[])))
+               ->  Bitmap Index Scan on tenk1_thous_tenthous
+                     Index Cond: (thousand = 41)
+(8 rows)
+
+SELECT count(*) FROM tenk1
+  WHERE thousand = 42 AND (tenthous = 1 OR tenthous = 3) OR thousand = 41;
+ count 
+-------
+    10
+(1 row)
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM tenk1
+  WHERE hundred = 42 AND (thousand = 42 OR thousand = 99 OR tenthous < 2) OR thousand = 41;
+                                                       QUERY PLAN                                                       
+------------------------------------------------------------------------------------------------------------------------
+ Aggregate
+   ->  Bitmap Heap Scan on tenk1
+         Recheck Cond: (((hundred = 42) AND ((thousand = 42) OR (thousand = 99) OR (tenthous < 2))) OR (thousand = 41))
+         ->  BitmapOr
+               ->  BitmapAnd
+                     ->  Bitmap Index Scan on tenk1_hundred
+                           Index Cond: (hundred = 42)
+                     ->  BitmapOr
+                           ->  Bitmap Index Scan on tenk1_thous_tenthous
+                                 Index Cond: (thousand = 42)
+                           ->  Bitmap Index Scan on tenk1_thous_tenthous
+                                 Index Cond: (thousand = 99)
+                           ->  Bitmap Index Scan on tenk1_thous_tenthous
+                                 Index Cond: (tenthous < 2)
+               ->  Bitmap Index Scan on tenk1_thous_tenthous
+                     Index Cond: (thousand = 41)
+(16 rows)
+
+SELECT count(*) FROM tenk1
+  WHERE hundred = 42 AND (thousand = 42 OR thousand = 99 OR tenthous < 2) OR thousand = 41;
+ count 
+-------
+    20
+(1 row)
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM tenk1
+  WHERE hundred = 42 AND (thousand = 42 OR thousand = 41 OR thousand = 99 AND tenthous = 2);
+                                                       QUERY PLAN                                                        
+-------------------------------------------------------------------------------------------------------------------------
+ Aggregate
+   ->  Bitmap Heap Scan on tenk1
+         Recheck Cond: ((hundred = 42) AND ((thousand = 42) OR (thousand = 41) OR ((thousand = 99) AND (tenthous = 2))))
+         ->  BitmapAnd
+               ->  Bitmap Index Scan on tenk1_hundred
+                     Index Cond: (hundred = 42)
+               ->  BitmapOr
+                     ->  Bitmap Index Scan on tenk1_thous_tenthous
+                           Index Cond: (thousand = 42)
+                     ->  Bitmap Index Scan on tenk1_thous_tenthous
+                           Index Cond: (thousand = 41)
+                     ->  Bitmap Index Scan on tenk1_thous_tenthous
+                           Index Cond: ((thousand = 99) AND (tenthous = 2))
+(13 rows)
+
+SELECT count(*) FROM tenk1
+  WHERE hundred = 42 AND (thousand = 42 OR thousand = 41 OR thousand = 99 AND tenthous = 2);
+ count 
+-------
+    10
+(1 row)
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM tenk1, tenk2
+  WHERE tenk1.hundred = 42 AND (tenk2.thousand = 42 OR tenk1.thousand = 41 OR tenk2.tenthous = 2) AND
+  tenk2.hundred = tenk1.hundred;
+                                          QUERY PLAN                                           
+-----------------------------------------------------------------------------------------------
+ Aggregate
+   ->  Nested Loop
+         Join Filter: ((tenk2.thousand = 42) OR (tenk1.thousand = 41) OR (tenk2.tenthous = 2))
+         ->  Bitmap Heap Scan on tenk1
+               Recheck Cond: (hundred = 42)
+               ->  Bitmap Index Scan on tenk1_hundred
+                     Index Cond: (hundred = 42)
+         ->  Materialize
+               ->  Bitmap Heap Scan on tenk2
+                     Recheck Cond: (hundred = 42)
+                     ->  Bitmap Index Scan on tenk2_hundred
+                           Index Cond: (hundred = 42)
+(12 rows)
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM tenk1, tenk2
+  WHERE tenk1.hundred = 42 AND (tenk2.thousand = 42 OR tenk2.thousand = 41 OR tenk2.tenthous = 2) AND
+  tenk2.hundred = tenk1.hundred;
+                                  QUERY PLAN                                  
+------------------------------------------------------------------------------
+ Aggregate
+   ->  Nested Loop
+         ->  Bitmap Heap Scan on tenk2
+               Recheck Cond: (hundred = 42)
+               Filter: ((thousand = 42) OR (thousand = 41) OR (tenthous = 2))
+               ->  Bitmap Index Scan on tenk2_hundred
+                     Index Cond: (hundred = 42)
+         ->  Index Only Scan using tenk1_hundred on tenk1
+               Index Cond: (hundred = 42)
+(9 rows)
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM tenk1 JOIN tenk2 ON
+  tenk1.hundred = 42 AND (tenk2.thousand = 42 OR tenk2.thousand = 41 OR tenk2.tenthous = 2) AND
+  tenk2.hundred = tenk1.hundred;
+                                  QUERY PLAN                                  
+------------------------------------------------------------------------------
+ Aggregate
+   ->  Nested Loop
+         ->  Bitmap Heap Scan on tenk2
+               Recheck Cond: (hundred = 42)
+               Filter: ((thousand = 42) OR (thousand = 41) OR (tenthous = 2))
+               ->  Bitmap Index Scan on tenk2_hundred
+                     Index Cond: (hundred = 42)
+         ->  Index Only Scan using tenk1_hundred on tenk1
+               Index Cond: (hundred = 42)
+(9 rows)
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM tenk1 LEFT JOIN tenk2 ON
+  tenk1.hundred = 42 AND (tenk2.thousand = 42 OR tenk2.thousand = 41 OR tenk2.tenthous = 2) AND
+  tenk2.hundred = tenk1.hundred;
+                                     QUERY PLAN                                     
+------------------------------------------------------------------------------------
+ Aggregate
+   ->  Nested Loop Left Join
+         Join Filter: (tenk1.hundred = 42)
+         ->  Index Only Scan using tenk1_hundred on tenk1
+         ->  Memoize
+               Cache Key: tenk1.hundred
+               Cache Mode: logical
+               ->  Index Scan using tenk2_hundred on tenk2
+                     Index Cond: (hundred = tenk1.hundred)
+                     Filter: ((thousand = 42) OR (thousand = 41) OR (tenthous = 2))
+(10 rows)
 
 --
 -- Check behavior with duplicate index column contents
