@@ -3430,7 +3430,7 @@ match_orclause_to_indexcol(PlannerInfo *root,
 		elems = (Datum *) palloc(sizeof(Datum) * list_length(consts));
 		foreach_node(Const, value, consts)
 		{
-			Assert(!value->constisnull && value->constvalue);
+			Assert(!value->constisnull);
 
 			elems[i++] = value->constvalue;
 		}

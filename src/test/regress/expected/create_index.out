@@ -1843,15 +1843,15 @@ DROP TABLE onek_with_null;
 --
 EXPLAIN (COSTS OFF)
 SELECT * FROM tenk1
-  WHERE thousand = 42 AND (tenthous = 1 OR tenthous = 3 OR tenthous = 42);
-                                  QUERY PLAN                                  
-------------------------------------------------------------------------------
+  WHERE thousand = 42 AND (tenthous = 1 OR tenthous = 3 OR tenthous = 42 OR tenthous = 0);
+                                   QUERY PLAN                                   
+--------------------------------------------------------------------------------
  Index Scan using tenk1_thous_tenthous on tenk1
-   Index Cond: ((thousand = 42) AND (tenthous = ANY ('{1,3,42}'::integer[])))
+   Index Cond: ((thousand = 42) AND (tenthous = ANY ('{1,3,42,0}'::integer[])))
 (2 rows)
 
 SELECT * FROM tenk1
-  WHERE thousand = 42 AND (tenthous = 1 OR tenthous = 3 OR tenthous = 42);
+  WHERE thousand = 42 AND (tenthous = 1 OR tenthous = 3 OR tenthous = 42 OR tenthous = 0);
  unique1 | unique2 | two | four | ten | twenty | hundred | thousand | twothousand | fivethous | tenthous | odd | even | stringu1 | stringu2 | string4 
 ---------+---------+-----+------+-----+--------+---------+----------+-------------+-----------+----------+-----+------+----------+----------+---------
       42 |    5530 |   0 |    2 |   2 |      2 |      42 |       42 |          42 |        42 |       42 |  84 |   85 | QBAAAA   | SEIAAA   | OOOOxx
