@@ -14,7 +14,7 @@ readable to the postgres process.
 To use the file provider with a file location specified by the `remote` method,
 use the following command:
 
-```sql
+```
 SELECT pg_tde_add_key_provider_file(
     'file-provider', 
     json_object( 'type' VALUE 'remote', 'url' VALUE 'http://localhost:8888/hello' )
@@ -23,7 +23,7 @@ SELECT pg_tde_add_key_provider_file(
 
 Or to use the `file` method, use the following command:
 
-```sql
+```
 SELECT pg_tde_add_key_provider_file(
     'file-provider', 
     json_object( 'type' VALUE 'remote', 'path' VALUE '/tmp/datafile-location' )

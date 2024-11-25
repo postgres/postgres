@@ -8,7 +8,7 @@ Here's how to do it:
 
    <i warning>:material-alert: Warning:</i> The use of the CASCADE parameter deletes all tables that were created in the database with `pg_tde` enabled and also all dependencies upon the encrypted table (e.g. foreign keys in a non-encrypted table used in the encrypted one).
 
-   ```sql
+   ```
    DROP EXTENSION pg_tde CASCADE
    ```
 
@@ -16,16 +16,16 @@ Here's how to do it:
 
 3. Modify the `shared_preload_libraries` and remove the 'pg_tde' from it. Use the `ALTER SYSTEM SET` command for this purpose
 
-4. Start or restart the `postgresql` instance to apply the changes.
+4. Start or restart the `postgre` instance to apply the changes.
 
     * On Debian and Ubuntu:    
 
        ```sh
-       sudo systemctl restart postgresql.service
+       sudo systemctl restart postgre.service
        ```
     
     * On RHEL and derivatives
 
        ```sh
-       sudo systemctl restart postgresql-17
+       sudo systemctl restart postgre-17
        ```

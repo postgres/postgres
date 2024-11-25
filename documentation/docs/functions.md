@@ -8,7 +8,7 @@ Creates a new key provider for the database using a local file.
 
 This function is intended for development, and stores the keys unencrypted in the specified data file.
 
-```sql
+```
 SELECT pg_tde_add_key_provider_file('provider-name','/path/to/the/keyring/data.file');
 ```
 
@@ -20,7 +20,7 @@ Creates a new key provider for the database using a remote HashiCorp Vault serve
 
 The specified access parameters require permission to read and write keys at the location.
 
-```sql
+```
 SELECT pg_tde_add_key_provider_vault_v2('provider-name',:'secret_token','url','mount','ca_path');
 ```
 
@@ -41,7 +41,7 @@ The principal key name is also used for constructing the name in the provider, f
 
 You can use this function only to a principal key. For changes in the principal key, use the [`pg_tde_rotate_principal_key`](#pg_tde_rotate_principal_key) function.
 
-```sql
+```
 SELECT pg_tde_set_principal_key('name-of-the-principal-key', 'provider-name');
 ```
 
@@ -52,19 +52,19 @@ Creates a new version of the specified principal key and updates the database so
 When used without any parameters, the function will just create a new version of the current database
 principal key, using the same provider:
 
-```sql
+```
 SELECT pg_tde_rotate_principal_key();
 ```
 
 Alternatively, you can pass two parameters to the function, specifying both a new key name and a new provider name:
 
-```sql
+```
 SELECT pg_tde_rotate_principal_key('name-of-the-new-principal-key', 'name-of-the-new-provider');
 ```
 
 Both parameters support the `NULL` value, which means that the parameter won't be changed:
 
-```sql
+```
 -- creates  new principal key on the same provider as before
 SELECT pg_tde_rotate_principal_key('name-of-the-new-principal-key', NULL);
 
@@ -76,7 +76,7 @@ SELECT pg_tde_rotate_principal_key(NULL, 'name-of-the-new-provider');
 
 Tells if a table is using the `pg_tde` access method or not.
 
-```sql
+```
 SELECT pg_tde_is_encrypted('table_name');
 ```
 
