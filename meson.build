@@ -2284,6 +2284,13 @@ int main(void)
     # Use ARM CRC Extension unconditionally
     cdata.set('USE_ARMV8_CRC32C', 1)
     have_optimized_crc = true
+  elif cc.links(prog, name: '__crc32cb, __crc32ch, __crc32cw, and __crc32cd with -march=armv8-a+crc+simd',
+      args: test_c_args + ['-march=armv8-a+crc+simd'])
+    # Use ARM CRC Extension, with runtime check
+    cflags_crc += '-march=armv8-a+crc+simd'
+    cdata.set('USE_ARMV8_CRC32C', false)
+    cdata.set('USE_ARMV8_CRC32C_WITH_RUNTIME_CHECK', 1)
+    have_optimized_crc = true
   elif cc.links(prog, name: '__crc32cb, __crc32ch, __crc32cw, and __crc32cd with -march=armv8-a+crc',
       args: test_c_args + ['-march=armv8-a+crc'])
     # Use ARM CRC Extension, with runtime check

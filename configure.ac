@@ -2088,11 +2088,15 @@ AC_COMPILE_IFELSE([AC_LANG_PROGRAM([], [
 # Check for ARMv8 CRC Extension intrinsics to do CRC calculations.
 #
 # First check if __crc32c* intrinsics can be used with the default compiler
-# flags. If not, check if adding -march=armv8-a+crc flag helps.
+# flags. If not, check if adding "-march=armv8-a+crc+simd" flag helps.
+# On systems using soft-float ABI, "-march=armv8-a+crc" is required instead.
 # CFLAGS_CRC is set if the extra flag is required.
 PGAC_ARMV8_CRC32C_INTRINSICS([])
 if test x"$pgac_armv8_crc32c_intrinsics" != x"yes"; then
-  PGAC_ARMV8_CRC32C_INTRINSICS([-march=armv8-a+crc])
+  PGAC_ARMV8_CRC32C_INTRINSICS([-march=armv8-a+crc+simd])
+  if test x"$pgac_armv8_crc32c_intrinsics" != x"yes"; then
+    PGAC_ARMV8_CRC32C_INTRINSICS([-march=armv8-a+crc])
+  fi
 fi
 
 # Check for LoongArch CRC intrinsics to do CRC calculations.

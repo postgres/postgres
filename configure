@@ -17482,7 +17482,8 @@ rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 # Check for ARMv8 CRC Extension intrinsics to do CRC calculations.
 #
 # First check if __crc32c* intrinsics can be used with the default compiler
-# flags. If not, check if adding -march=armv8-a+crc flag helps.
+# flags. If not, check if adding "-march=armv8-a+crc+simd" flag helps.
+# On systems using soft-float ABI, "-march=armv8-a+crc" is required instead.
 # CFLAGS_CRC is set if the extra flag is required.
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for __crc32cb, __crc32ch, __crc32cw, and __crc32cd with CFLAGS=" >&5
 $as_echo_n "checking for __crc32cb, __crc32ch, __crc32cw, and __crc32cd with CFLAGS=... " >&6; }
@@ -17525,7 +17526,48 @@ if test x"$pgac_cv_armv8_crc32c_intrinsics_" = x"yes"; then
 fi
 
 if test x"$pgac_armv8_crc32c_intrinsics" != x"yes"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for __crc32cb, __crc32ch, __crc32cw, and __crc32cd with CFLAGS=-march=armv8-a+crc" >&5
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for __crc32cb, __crc32ch, __crc32cw, and __crc32cd with CFLAGS=-march=armv8-a+crc+simd" >&5
+$as_echo_n "checking for __crc32cb, __crc32ch, __crc32cw, and __crc32cd with CFLAGS=-march=armv8-a+crc+simd... " >&6; }
+if ${pgac_cv_armv8_crc32c_intrinsics__march_armv8_apcrcpsimd+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  pgac_save_CFLAGS=$CFLAGS
+CFLAGS="$pgac_save_CFLAGS -march=armv8-a+crc+simd"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <arm_acle.h>
+int
+main ()
+{
+unsigned int crc = 0;
+   crc = __crc32cb(crc, 0);
+   crc = __crc32ch(crc, 0);
+   crc = __crc32cw(crc, 0);
+   crc = __crc32cd(crc, 0);
+   /* return computed value, to prevent the above being optimized away */
+   return crc == 0;
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  pgac_cv_armv8_crc32c_intrinsics__march_armv8_apcrcpsimd=yes
+else
+  pgac_cv_armv8_crc32c_intrinsics__march_armv8_apcrcpsimd=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+CFLAGS="$pgac_save_CFLAGS"
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $pgac_cv_armv8_crc32c_intrinsics__march_armv8_apcrcpsimd" >&5
+$as_echo "$pgac_cv_armv8_crc32c_intrinsics__march_armv8_apcrcpsimd" >&6; }
+if test x"$pgac_cv_armv8_crc32c_intrinsics__march_armv8_apcrcpsimd" = x"yes"; then
+  CFLAGS_CRC="-march=armv8-a+crc+simd"
+  pgac_armv8_crc32c_intrinsics=yes
+fi
+
+  if test x"$pgac_armv8_crc32c_intrinsics" != x"yes"; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for __crc32cb, __crc32ch, __crc32cw, and __crc32cd with CFLAGS=-march=armv8-a+crc" >&5
 $as_echo_n "checking for __crc32cb, __crc32ch, __crc32cw, and __crc32cd with CFLAGS=-march=armv8-a+crc... " >&6; }
 if ${pgac_cv_armv8_crc32c_intrinsics__march_armv8_apcrc+:} false; then :
   $as_echo_n "(cached) " >&6
@@ -17565,6 +17607,7 @@ if test x"$pgac_cv_armv8_crc32c_intrinsics__march_armv8_apcrc" = x"yes"; then
   pgac_armv8_crc32c_intrinsics=yes
 fi
 
+  fi
 fi
 
 # Check for LoongArch CRC intrinsics to do CRC calculations.
