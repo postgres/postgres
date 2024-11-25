@@ -31,6 +31,13 @@
 #endif
 #endif
 
+#if defined(__NetBSD__)
+#include <sys/sysctl.h>
+#if defined(__aarch64__)
+#include <aarch64/armreg.h>
+#endif
+#endif
+
 #include "port/pg_crc32c.h"
 
 static bool
@@ -52,6 +59,49 @@ pg_crc32c_armv8_available(void)
 #else
 	return (getauxval(AT_HWCAP2) & HWCAP2_CRC32) != 0;
 #endif
+#elif defined(__NetBSD__)
+	/*
+	 * On NetBSD we can read the Instruction Set Attribute Registers via
+	 * sysctl.  For doubtless-historical reasons the sysctl interface is
+	 * completely different on 64-bit than 32-bit, but the underlying
+	 * registers contain the same fields.
+	 */
+#define ISAR0_CRC32_BITPOS 16
+#define ISAR0_CRC32_BITWIDTH 4
+#define WIDTHMASK(w)	((1 << (w)) - 1)
+#define SYSCTL_CPU_ID_MAXSIZE 64
+
+	size_t		len;
+	uint64		sysctlbuf[SYSCTL_CPU_ID_MAXSIZE];
+#if defined(__aarch64__)
+	/* We assume cpu0 is representative of all the machine's CPUs. */
+	const char *path = "machdep.cpu0.cpu_id";
+	size_t		expected_len = sizeof(struct aarch64_sysctl_cpu_id);
+#define ISAR0 ((struct aarch64_sysctl_cpu_id *) sysctlbuf)->ac_aa64isar0
+#else
+	const char *path = "machdep.id_isar";
+	size_t		expected_len = 6 * sizeof(int);
+#define ISAR0 ((int *) sysctlbuf)[5]
+#endif
+	uint64		fld;
+
+	/* Fetch the appropriate set of register values. */
+	len = sizeof(sysctlbuf);
+	memset(sysctlbuf, 0, len);
+	if (sysctlbyname(path, sysctlbuf, &len, NULL, 0) != 0)
+		return false;			/* perhaps kernel is 64-bit and we aren't? */
+	if (len != expected_len)
+		return false;			/* kernel API change? */
+
+	/* Fetch the CRC32 field from ISAR0. */
+	fld = (ISAR0 >> ISAR0_CRC32_BITPOS) & WIDTHMASK(ISAR0_CRC32_BITWIDTH);
+
+	/*
+	 * Current documentation defines only the field values 0 (No CRC32) and 1
+	 * (CRC32B/CRC32H/CRC32W/CRC32X/CRC32CB/CRC32CH/CRC32CW/CRC32CX).  Assume
+	 * that any future nonzero value will be a superset of 1.
+	 */
+	return (fld != 0);
 #else
 	return false;
 #endif
