@@ -242,6 +242,11 @@ SELECT CASE make_ad(1,2)
   WHEN array[1,2]::arrdomain THEN 'right'
   END;
 
+-- While we're here, also test handling of a NULLIF arg that is a read/write
+-- object (bug #18722)
+
+SELECT NULLIF(make_ad(1,2), array[2,3]::arrdomain);
+
 ROLLBACK;
 
 -- Test interaction of CASE with ArrayCoerceExpr (bug #15471)
