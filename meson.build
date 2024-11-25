@@ -1755,12 +1755,9 @@ if cc.compiles('''
 endif
 
 
-# We use <stdbool.h> if we have it and it declares type bool as having
-# size 1.  Otherwise, c.h will fall back to declaring bool as unsigned char.
-if cc.has_type('_Bool', args: test_c_args) \
-    and cc.has_type('bool', prefix: '#include <stdbool.h>', args: test_c_args) \
-    and cc.sizeof('bool', prefix: '#include <stdbool.h>', args: test_c_args) == 1
-  cdata.set('HAVE__BOOL', 1)
+# We use <stdbool.h> if bool has size 1 after including it.  Otherwise, c.h
+# will fall back to declaring bool as unsigned char.
+if cc.sizeof('bool', prefix: '#include <stdbool.h>', args: test_c_args) == 1
   cdata.set('PG_USE_STDBOOL', 1)
 endif
 
