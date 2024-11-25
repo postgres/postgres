@@ -395,11 +395,6 @@
 /* Define to 1 if you have the `SSL_get_current_compression' function. */
 #define HAVE_SSL_GET_CURRENT_COMPRESSION 1
 
-/* Define to 1 if stdbool.h conforms to C99. */
-#if (_MSC_VER >= 1800)
-#define HAVE_STDBOOL_H 1
-#endif
-
 /* Define to 1 if you have the <stdint.h> header file. */
 /* #undef HAVE_STDINT_H */
 
@@ -580,9 +575,6 @@
 
 /* Define to 1 if the assembler supports X86_64's POPCNTQ instruction. */
 /* #undef HAVE_X86_64_POPCNTQ */
-
-/* Define to 1 if the system has the type `_Bool'. */
-/* #undef HAVE__BOOL */
 
 /* Define to 1 if your compiler understands __builtin_bswap16. */
 /* #undef HAVE__BUILTIN_BSWAP16 */

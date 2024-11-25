@@ -1397,8 +1397,6 @@ AC_SUBST(UUID_LIBS)
 ## Header files
 ##
 
-AC_HEADER_STDBOOL
-
 AC_CHECK_HEADERS(m4_normalize([
 	atomic.h
 	copyfile.h
@@ -1695,10 +1693,7 @@ if test "$ac_cv_sizeof_off_t" -lt 8 -a "$segsize" != "1"; then
    AC_MSG_ERROR([Large file support is not enabled. Segment size cannot be larger than 1GB.])
 fi
 
-AC_CHECK_SIZEOF([bool], [],
-[#ifdef HAVE_STDBOOL_H
-#include <stdbool.h>
-#endif])
+AC_CHECK_SIZEOF([bool], [], [#include <stdbool.h>])
 
 
 ##
