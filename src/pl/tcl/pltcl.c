@@ -55,6 +55,10 @@ PG_MODULE_MAGIC;
 #define CONST86
 #endif
 
+#if !HAVE_TCL_VERSION(8,7)
+typedef int Tcl_Size;
+#endif
+
 /* define our text domain for translations */
 #undef TEXTDOMAIN
 #define TEXTDOMAIN PG_TEXTDOMAIN("pltcl")
@@ -987,7 +991,7 @@ pltcl_func_handler(PG_FUNCTION_ARGS, pltcl_call_state *call_state,
 		HeapTuple	tup;
 		Tcl_Obj    *resultObj;
 		Tcl_Obj   **resultObjv;
-		int			resultObjc;
+		Tcl_Size	resultObjc;
 
 		/*
 		 * Set up data about result type.  XXX it's tempting to consider
@@ -1063,7 +1067,7 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS, pltcl_call_state *call_state,
 	int			tcl_rc;
 	int			i;
 	const char *result;
-	int			result_Objc;
+	Tcl_Size	result_Objc;
 	Tcl_Obj   **result_Objv;
 	int			rc PG_USED_FOR_ASSERTS_ONLY;
 
@@ -2089,7 +2093,7 @@ pltcl_quote(ClientData cdata, Tcl_Interp *interp,
 	char	   *tmp;
 	const char *cp1;
 	char	   *cp2;
-	int			length;
+	Tcl_Size	length;
 
 	/************************************************************
 	 * Check call syntax
@@ -2283,7 +2287,7 @@ pltcl_returnnext(ClientData cdata, Tcl_Interp *interp,
 		if (prodesc->fn_retistuple)
 		{
 			Tcl_Obj   **rowObjv;
-			int			rowObjc;
+			Tcl_Size	rowObjc;
 
 			/* result should be a list, so break it down */
 			if (Tcl_ListObjGetElements(interp, objv[1], &rowObjc, &rowObjv) == TCL_ERROR)
@@ -2625,7 +2629,7 @@ pltcl_SPI_prepare(ClientData cdata, Tcl_Interp *interp,
 				  int objc, Tcl_Obj *const objv[])
 {
 	volatile MemoryContext plan_cxt = NULL;
-	int			nargs;
+	Tcl_Size	nargs;
 	Tcl_Obj   **argsObj;
 	pltcl_query_desc *qdesc;
 	int			i;
@@ -2763,7 +2767,7 @@ pltcl_SPI_execute_plan(ClientData cdata, Tcl_Interp *interp,
 	const char *arrayname = NULL;
 	Tcl_Obj    *loop_body = NULL;
 	int			count = 0;
-	int			callObjc;
+	Tcl_Size	callObjc;
 	Tcl_Obj   **callObjv = NULL;
 	Datum	   *argvalues;
 	MemoryContext oldcontext = CurrentMemoryContext;
