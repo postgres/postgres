@@ -2416,7 +2416,6 @@ header_checks = [
   'ifaddrs.h',
   'langinfo.h',
   'mbarrier.h',
-  'stdbool.h',
   'strings.h',
   'sys/epoll.h',
   'sys/event.h',
