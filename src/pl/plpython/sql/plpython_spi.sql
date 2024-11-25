@@ -218,12 +218,9 @@ assert len(res.fetch(3)) == 1
 assert len(res.fetch(3)) == 0
 assert len(res.fetch(3)) == 0
 try:
-    # use next() or __next__(), the method name changed in
+    # use next() and not __next__(), the method name changed in
     # http://www.python.org/dev/peps/pep-3114/
-    try:
-        res.next()
-    except AttributeError:
-        res.__next__()
+    next(res)
 except StopIteration:
     pass
 else:
@@ -234,11 +231,7 @@ CREATE FUNCTION cursor_mix_next_and_fetch() RETURNS int AS $$
 res = plpy.cursor("select fname, lname from users order by fname")
 assert len(res.fetch(2)) == 2
 
-item = None
-try:
-    item = res.next()
-except AttributeError:
-    item = res.__next__()
+item = next(res)
 assert item['fname'] == 'rick'
 
 assert len(res.fetch(2)) == 1
@@ -259,10 +252,7 @@ CREATE FUNCTION next_after_close() RETURNS int AS $$
 res = plpy.cursor("select fname, lname from users")
 res.close()
 try:
-    try:
-        res.next()
-    except AttributeError:
-        res.__next__()
+    next(res)
 except ValueError:
     pass
 else:
@@ -273,10 +263,7 @@ CREATE FUNCTION cursor_fetch_next_empty() RETURNS int AS $$
 res = plpy.cursor("select fname, lname from users where false")
 assert len(res.fetch(1)) == 0
 try:
-    try:
-        res.next()
-    except AttributeError:
-        res.__next__()
+    next(res)
 except StopIteration:
     pass
 else:
