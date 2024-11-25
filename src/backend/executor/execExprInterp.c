@@ -1273,11 +1273,23 @@ ExecInterpExpr(ExprState *state, ExprContext *econtext, bool *isnull)
 			 * The arguments are already evaluated into fcinfo->args.
 			 */
 			FunctionCallInfo fcinfo = op->d.func.fcinfo_data;
+			Datum		save_arg0 = fcinfo->args[0].value;
 
 			/* if either argument is NULL they can't be equal */
 			if (!fcinfo->args[0].isnull && !fcinfo->args[1].isnull)
 			{
 				Datum		result;
+
+				/*
+				 * If first argument is of varlena type, it might be an
+				 * expanded datum.  We need to ensure that the value passed to
+				 * the comparison function is a read-only pointer.  However,
+				 * if we end by returning the first argument, that will be the
+				 * original read-write pointer if it was read-write.
+				 */
+				if (op->d.func.make_ro)
+					fcinfo->args[0].value =
+						MakeExpandedObjectReadOnlyInternal(save_arg0);
 
 				fcinfo->isnull = false;
 				result = op->d.func.fn_addr(fcinfo);
@@ -1293,7 +1305,7 @@ ExecInterpExpr(ExprState *state, ExprContext *econtext, bool *isnull)
 			}
 
 			/* Arguments aren't equal, so return the first one */
-			*op->resvalue = fcinfo->args[0].value;
+			*op->resvalue = save_arg0;
 			*op->resnull = fcinfo->args[0].isnull;
 
 			EEO_NEXT();
