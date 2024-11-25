@@ -90,7 +90,9 @@ Load the `pg_tde` at the start time. The extension requires additional shared me
 
 ## WAL encryption configuration (tech preview)
 
-After you [enabled `pg_tde`](#enable-extension) and started the Percona Server for PostgreSQL, a principal key and a keyring for WAL are created. Now you need to instruct `pg_tde ` to encrypt WAL files by configuring WAL encryption. Here's how to do it:
+After you [enabled `pg_tde`](#enable-extension) and started the Percona Server for PostgreSQL, a principal key and a keyring for WAL encryption are created. 
+
+Now you need to instruct `pg_tde ` to encrypt WAL files by configuring WAL encryption. Here's how to do it:
 
 1. Enable WAL level encryption using the `ALTER SYSTEM SET` command. You need the privileges of the superuser to run this command:
 
@@ -114,11 +116,13 @@ After you [enabled `pg_tde`](#enable-extension) and started the Percona Server f
 
 3. We highly recommend you to create your own keyring and rotate the principal key. This is because the default principal key is created from the local keyfile and is stored unencrypted. 
 
+    Rotating the principal key means re-encrypting internal keys internal keys used for WAL encryption with the new principal key. This process doesn't break the encryption flow nor prevents reading encrypted WAL files. During the key rotation, PostgreSQL uses lock on WAL to ensure that data is reachable and accessible.
+
     Set up the key provider for WAL encryption
 
     === "With HashiCorp Vault"
     
-        ```sql
+        ```
         SELECT pg_tde_add_key_provider_vault_v2('PG_TDE_GLOBAL','provider-name',:'secret_token','url','mount','ca_path');
         ``` 
 
@@ -136,13 +140,13 @@ After you [enabled `pg_tde`](#enable-extension) and started the Percona Server f
 
         This setup is intended for development and stores the keys unencrypted in the specified data file.    
 
-        ```sql
+        ```
         SELECT pg_tde_add_key_provider_file('provider-name','/path/to/the/keyring/data.file');
         ```
 
 4. Rotate the principal key. Don't forget to specify the `PG_TDE_GLOBAL` constant to rotate only the principal key for WAL.
 
-    ```sql
+    ```
     SELECT pg_tde_rotate_principal_key('PG_TDE_GLOBAL', 'new-principal-key', 'provider-name');
     ```
 
