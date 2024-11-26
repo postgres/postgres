@@ -182,9 +182,8 @@ json_parse_manifest_incremental_shutdown(JsonManifestParseIncrementalState *incs
  */
 
 void
-json_parse_manifest_incremental_chunk(
-									  JsonManifestParseIncrementalState *incstate, const char *chunk, size_t size,
-									  bool is_last)
+json_parse_manifest_incremental_chunk(JsonManifestParseIncrementalState *incstate,
+									  const char *chunk, size_t size, bool is_last)
 {
 	JsonParseErrorType res,
 				expected;

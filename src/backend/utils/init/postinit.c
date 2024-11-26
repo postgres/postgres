@@ -431,8 +431,7 @@ CheckMyDatabase(const char *name, bool am_superuser, bool override_allow_connect
 
 		builtin_validate_locale(dbform->encoding, datlocale);
 
-		default_locale.info.builtin.locale = MemoryContextStrdup(
-																 TopMemoryContext, datlocale);
+		default_locale.info.builtin.locale = MemoryContextStrdup(TopMemoryContext, datlocale);
 	}
 	else if (dbform->datlocprovider == COLLPROVIDER_ICU)
 	{

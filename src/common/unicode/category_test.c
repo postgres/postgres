@@ -74,22 +74,14 @@ icu_test()
 		bool		prop_hex_digit = pg_u_prop_hex_digit(code);
 		bool		prop_join_control = pg_u_prop_join_control(code);
 
-		bool		icu_prop_alphabetic = u_hasBinaryProperty(
-															  code, UCHAR_ALPHABETIC);
-		bool		icu_prop_lowercase = u_hasBinaryProperty(
-															 code, UCHAR_LOWERCASE);
-		bool		icu_prop_uppercase = u_hasBinaryProperty(
-															 code, UCHAR_UPPERCASE);
-		bool		icu_prop_cased = u_hasBinaryProperty(
-														 code, UCHAR_CASED);
-		bool		icu_prop_case_ignorable = u_hasBinaryProperty(
-																  code, UCHAR_CASE_IGNORABLE);
-		bool		icu_prop_white_space = u_hasBinaryProperty(
-															   code, UCHAR_WHITE_SPACE);
-		bool		icu_prop_hex_digit = u_hasBinaryProperty(
-															 code, UCHAR_HEX_DIGIT);
-		bool		icu_prop_join_control = u_hasBinaryProperty(
-																code, UCHAR_JOIN_CONTROL);
+		bool		icu_prop_alphabetic = u_hasBinaryProperty(code, UCHAR_ALPHABETIC);
+		bool		icu_prop_lowercase = u_hasBinaryProperty(code, UCHAR_LOWERCASE);
+		bool		icu_prop_uppercase = u_hasBinaryProperty(code, UCHAR_UPPERCASE);
+		bool		icu_prop_cased = u_hasBinaryProperty(code, UCHAR_CASED);
+		bool		icu_prop_case_ignorable = u_hasBinaryProperty(code, UCHAR_CASE_IGNORABLE);
+		bool		icu_prop_white_space = u_hasBinaryProperty(code, UCHAR_WHITE_SPACE);
+		bool		icu_prop_hex_digit = u_hasBinaryProperty(code, UCHAR_HEX_DIGIT);
+		bool		icu_prop_join_control = u_hasBinaryProperty(code, UCHAR_JOIN_CONTROL);
 
 		/*
 		 * Compare with ICU for character classes using:
