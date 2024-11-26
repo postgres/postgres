@@ -155,7 +155,6 @@ extra:
 
 nav:
   - Home: index.md
-  - tde.md
   - Get started:
     - "Install": "install.md"
     - "Via apt": apt.md
@@ -163,6 +162,10 @@ nav:
     - "Set up": "setup.md"
     - "Test TDE": "test.md"
   - functions.md
+  - Concepts:
+    - "What is TDE": tde.md
+  #  - wal-encryption.md
+    - table-access-method.md
   - How to:
     - Use reference to external parameters: external-parameters.md
     - Decrypt an encrypted table: decrypt.md
