@@ -205,8 +205,8 @@ AppendIncrementalManifestData(IncrementalBackupInfo *ib, const char *data,
 		 * time for an incremental parse. We'll do all but the last MIN_CHUNK
 		 * so that we have enough left for the final piece.
 		 */
-		json_parse_manifest_incremental_chunk(
-											  ib->inc_state, ib->buf.data, ib->buf.len - MIN_CHUNK, false);
+		json_parse_manifest_incremental_chunk(ib->inc_state, ib->buf.data,
+											  ib->buf.len - MIN_CHUNK, false);
 		/* now remove what we just parsed  */
 		memmove(ib->buf.data, ib->buf.data + (ib->buf.len - MIN_CHUNK),
 				MIN_CHUNK + 1);
@@ -232,8 +232,8 @@ FinalizeIncrementalManifest(IncrementalBackupInfo *ib)
 	oldcontext = MemoryContextSwitchTo(ib->mcxt);
 
 	/* Parse the last chunk of the manifest */
-	json_parse_manifest_incremental_chunk(
-										  ib->inc_state, ib->buf.data, ib->buf.len, true);
+	json_parse_manifest_incremental_chunk(ib->inc_state, ib->buf.data,
+										  ib->buf.len, true);
 
 	/* Done with the buffer, so release memory. */
 	pfree(ib->buf.data);

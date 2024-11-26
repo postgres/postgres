@@ -5643,8 +5643,7 @@ RelationGetExclusionInfo(Relation indexRelation,
 
 		/* We want the exclusion constraint owning the index */
 		if ((conform->contype != CONSTRAINT_EXCLUSION &&
-			 !(conform->conperiod && (
-									  conform->contype == CONSTRAINT_PRIMARY
+			 !(conform->conperiod && (conform->contype == CONSTRAINT_PRIMARY
 									  || conform->contype == CONSTRAINT_UNIQUE))) ||
 			conform->conindid != RelationGetRelid(indexRelation))
 			continue;

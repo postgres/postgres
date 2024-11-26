@@ -1374,8 +1374,8 @@ init_database_collation(void)
 		default_locale.collate_is_c = true;
 		default_locale.ctype_is_c = (strcmp(datlocale, "C") == 0);
 
-		default_locale.info.builtin.locale = MemoryContextStrdup(
-																 TopMemoryContext, datlocale);
+		default_locale.info.builtin.locale = MemoryContextStrdup(TopMemoryContext,
+																 datlocale);
 	}
 	else if (dbform->datlocprovider == COLLPROVIDER_ICU)
 	{
