@@ -48,10 +48,10 @@ SELECT DISTINCT ON (four) four,hundred
 -- the input path's ordering
 --
 
-CREATE TABLE distinct_tbl (x int, y int, z int);
-INSERT INTO distinct_tbl SELECT i%10, i%10, i%10 FROM generate_series(1, 1000) AS i;
-CREATE INDEX distinct_tbl_x_y_idx ON distinct_tbl (x, y);
-ANALYZE distinct_tbl;
+CREATE TABLE distinct_on_tbl (x int, y int, z int);
+INSERT INTO distinct_on_tbl SELECT i%10, i%10, i%10 FROM generate_series(1, 1000) AS i;
+CREATE INDEX distinct_on_tbl_x_y_idx ON distinct_on_tbl (x, y);
+ANALYZE distinct_on_tbl;
 
 -- Produce results with sorting.
 SET enable_hashagg TO OFF;
@@ -59,26 +59,26 @@ SET enable_hashagg TO OFF;
 -- Ensure we avoid the need to re-sort by reordering the distinctClause
 -- Pathkeys to match the ordering of the input path
 EXPLAIN (COSTS OFF)
-SELECT DISTINCT ON (y, x) x, y FROM distinct_tbl;
-SELECT DISTINCT ON (y, x) x, y FROM distinct_tbl;
+SELECT DISTINCT ON (y, x) x, y FROM distinct_on_tbl;
+SELECT DISTINCT ON (y, x) x, y FROM distinct_on_tbl;
 
 -- Ensure we leverage incremental-sort by reordering the distinctClause
 -- Pathkeys to partially match the ordering of the input path
 EXPLAIN (COSTS OFF)
-SELECT DISTINCT ON (y, x) x, y FROM (SELECT * FROM distinct_tbl ORDER BY x) s;
-SELECT DISTINCT ON (y, x) x, y FROM (SELECT * FROM distinct_tbl ORDER BY x) s;
+SELECT DISTINCT ON (y, x) x, y FROM (SELECT * FROM distinct_on_tbl ORDER BY x) s;
+SELECT DISTINCT ON (y, x) x, y FROM (SELECT * FROM distinct_on_tbl ORDER BY x) s;
 
 -- Ensure we reorder the distinctClause Pathkeys to match the ordering of the
 -- input path even if there is ORDER BY clause
 EXPLAIN (COSTS OFF)
-SELECT DISTINCT ON (y, x) x, y FROM distinct_tbl ORDER BY y;
-SELECT DISTINCT ON (y, x) x, y FROM distinct_tbl ORDER BY y;
+SELECT DISTINCT ON (y, x) x, y FROM distinct_on_tbl ORDER BY y;
+SELECT DISTINCT ON (y, x) x, y FROM distinct_on_tbl ORDER BY y;
 
 -- Ensure the resulting pathkey list matches the initial distinctClause Pathkeys
 EXPLAIN (COSTS OFF)
-SELECT DISTINCT ON (y, x) x, y FROM (select * from distinct_tbl order by x, z, y) s ORDER BY y, x, z;
-SELECT DISTINCT ON (y, x) x, y FROM (select * from distinct_tbl order by x, z, y) s ORDER BY y, x, z;
+SELECT DISTINCT ON (y, x) x, y FROM (select * from distinct_on_tbl order by x, z, y) s ORDER BY y, x, z;
+SELECT DISTINCT ON (y, x) x, y FROM (select * from distinct_on_tbl order by x, z, y) s ORDER BY y, x, z;
 
 RESET enable_hashagg;
 
-DROP TABLE distinct_tbl;
+DROP TABLE distinct_on_tbl;
