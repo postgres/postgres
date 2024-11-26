@@ -67,6 +67,7 @@
 double		cursor_tuple_fraction = DEFAULT_CURSOR_TUPLE_FRACTION;
 int			debug_parallel_query = DEBUG_PARALLEL_OFF;
 bool		parallel_leader_participation = true;
+bool		enable_distinct_reordering = true;
 
 /* Hook for plugins to get control in planner() */
 planner_hook_type planner_hook = NULL;
@@ -198,6 +199,9 @@ static void create_partial_distinct_paths(PlannerInfo *root,
 static RelOptInfo *create_final_distinct_paths(PlannerInfo *root,
 											   RelOptInfo *input_rel,
 											   RelOptInfo *distinct_rel);
+static List *get_useful_pathkeys_for_distinct(PlannerInfo *root,
+											  List *needed_pathkeys,
+											  List *path_pathkeys);
 static RelOptInfo *create_ordered_paths(PlannerInfo *root,
 										RelOptInfo *input_rel,
 										PathTarget *target,
@@ -235,6 +239,12 @@ static RelOptInfo *create_partial_grouping_paths(PlannerInfo *root,
 												 grouping_sets_data *gd,
 												 GroupPathExtraData *extra,
 												 bool force_rel_creation);
+static Path *make_ordered_path(PlannerInfo *root,
+							   RelOptInfo *rel,
+							   Path *path,
+							   Path *cheapest_path,
+							   List *pathkeys,
+							   double limit_tuples);
 static void gather_grouping_paths(PlannerInfo *root, RelOptInfo *rel);
 static bool can_partial_agg(PlannerInfo *root);
 static void apply_scanjoin_target_to_paths(PlannerInfo *root,
@@ -4938,7 +4948,10 @@ create_partial_distinct_paths(PlannerInfo *root, RelOptInfo *input_rel,
 
 	/*
 	 * Try sorting the cheapest path and incrementally sorting any paths with
-	 * presorted keys and put a unique paths atop of those.
+	 * presorted keys and put a unique paths atop of those.  We'll also
+	 * attempt to reorder the required pathkeys to match the input path's
+	 * pathkeys as much as possible, in hopes of avoiding a possible need to
+	 * re-sort.
 	 */
 	if (grouping_is_sortable(root->processed_distinctClause))
 	{
@@ -4946,86 +4959,67 @@ create_partial_distinct_paths(PlannerInfo *root, RelOptInfo *input_rel,
 		{
 			Path	   *input_path = (Path *) lfirst(lc);
 			Path	   *sorted_path;
-			bool		is_sorted;
-			int			presorted_keys;
+			List	   *useful_pathkeys_list = NIL;
 
-			is_sorted = pathkeys_count_contained_in(root->distinct_pathkeys,
-													input_path->pathkeys,
-													&presorted_keys);
+			useful_pathkeys_list =
+				get_useful_pathkeys_for_distinct(root,
+												 root->distinct_pathkeys,
+												 input_path->pathkeys);
+			Assert(list_length(useful_pathkeys_list) > 0);
 
-			if (is_sorted)
-				sorted_path = input_path;
-			else
+			foreach_node(List, useful_pathkeys, useful_pathkeys_list)
 			{
-				/*
-				 * Try at least sorting the cheapest path and also try
-				 * incrementally sorting any path which is partially sorted
-				 * already (no need to deal with paths which have presorted
-				 * keys when incremental sort is disabled unless it's the
-				 * cheapest partial path).
-				 */
-				if (input_path != cheapest_partial_path &&
-					(presorted_keys == 0 || !enable_incremental_sort))
+				sorted_path = make_ordered_path(root,
+												partial_distinct_rel,
+												input_path,
+												cheapest_partial_path,
+												useful_pathkeys,
+												-1.0);
+
+				if (sorted_path == NULL)
 					continue;
 
 				/*
-				 * We've no need to consider both a sort and incremental sort.
-				 * We'll just do a sort if there are no presorted keys and an
-				 * incremental sort when there are presorted keys.
+				 * An empty distinct_pathkeys means all tuples have the same
+				 * value for the DISTINCT clause.  See
+				 * create_final_distinct_paths()
 				 */
-				if (presorted_keys == 0 || !enable_incremental_sort)
-					sorted_path = (Path *) create_sort_path(root,
-															partial_distinct_rel,
-															input_path,
-															root->distinct_pathkeys,
-															-1.0);
+				if (root->distinct_pathkeys == NIL)
+				{
+					Node	   *limitCount;
+
+					limitCount = (Node *) makeConst(INT8OID, -1, InvalidOid,
+													sizeof(int64),
+													Int64GetDatum(1), false,
+													FLOAT8PASSBYVAL);
+
+					/*
+					 * Apply a LimitPath onto the partial path to restrict the
+					 * tuples from each worker to 1.
+					 * create_final_distinct_paths will need to apply an
+					 * additional LimitPath to restrict this to a single row
+					 * after the Gather node.  If the query already has a
+					 * LIMIT clause, then we could end up with three Limit
+					 * nodes in the final plan.  Consolidating the top two of
+					 * these could be done, but does not seem worth troubling
+					 * over.
+					 */
+					add_partial_path(partial_distinct_rel, (Path *)
+									 create_limit_path(root, partial_distinct_rel,
+													   sorted_path,
+													   NULL,
+													   limitCount,
+													   LIMIT_OPTION_COUNT,
+													   0, 1));
+				}
 				else
-					sorted_path = (Path *) create_incremental_sort_path(root,
-																		partial_distinct_rel,
-																		input_path,
-																		root->distinct_pathkeys,
-																		presorted_keys,
-																		-1.0);
-			}
-
-			/*
-			 * An empty distinct_pathkeys means all tuples have the same value
-			 * for the DISTINCT clause.  See create_final_distinct_paths()
-			 */
-			if (root->distinct_pathkeys == NIL)
-			{
-				Node	   *limitCount;
-
-				limitCount = (Node *) makeConst(INT8OID, -1, InvalidOid,
-												sizeof(int64),
-												Int64GetDatum(1), false,
-												FLOAT8PASSBYVAL);
-
-				/*
-				 * Apply a LimitPath onto the partial path to restrict the
-				 * tuples from each worker to 1.  create_final_distinct_paths
-				 * will need to apply an additional LimitPath to restrict this
-				 * to a single row after the Gather node.  If the query
-				 * already has a LIMIT clause, then we could end up with three
-				 * Limit nodes in the final plan.  Consolidating the top two
-				 * of these could be done, but does not seem worth troubling
-				 * over.
-				 */
-				add_partial_path(partial_distinct_rel, (Path *)
-								 create_limit_path(root, partial_distinct_rel,
-												   sorted_path,
-												   NULL,
-												   limitCount,
-												   LIMIT_OPTION_COUNT,
-												   0, 1));
-			}
-			else
-			{
-				add_partial_path(partial_distinct_rel, (Path *)
-								 create_upper_unique_path(root, partial_distinct_rel,
-														  sorted_path,
-														  list_length(root->distinct_pathkeys),
-														  numDistinctRows));
+				{
+					add_partial_path(partial_distinct_rel, (Path *)
+									 create_upper_unique_path(root, partial_distinct_rel,
+															  sorted_path,
+															  list_length(root->distinct_pathkeys),
+															  numDistinctRows));
+				}
 			}
 		}
 	}
@@ -5134,7 +5128,9 @@ create_final_distinct_paths(PlannerInfo *root, RelOptInfo *input_rel,
 		 * Unique node on those.  We also, consider doing an explicit sort of
 		 * the cheapest input path and Unique'ing that.  If any paths have
 		 * presorted keys then we'll create an incremental sort atop of those
-		 * before adding a unique node on the top.
+		 * before adding a unique node on the top.  We'll also attempt to
+		 * reorder the required pathkeys to match the input path's pathkeys as
+		 * much as possible, in hopes of avoiding a possible need to re-sort.
 		 *
 		 * When we have DISTINCT ON, we must sort by the more rigorous of
 		 * DISTINCT and ORDER BY, else it won't have the desired behavior.
@@ -5158,86 +5154,66 @@ create_final_distinct_paths(PlannerInfo *root, RelOptInfo *input_rel,
 		{
 			Path	   *input_path = (Path *) lfirst(lc);
 			Path	   *sorted_path;
-			bool		is_sorted;
-			int			presorted_keys;
+			List	   *useful_pathkeys_list = NIL;
 
-			is_sorted = pathkeys_count_contained_in(needed_pathkeys,
-													input_path->pathkeys,
-													&presorted_keys);
+			useful_pathkeys_list =
+				get_useful_pathkeys_for_distinct(root,
+												 needed_pathkeys,
+												 input_path->pathkeys);
+			Assert(list_length(useful_pathkeys_list) > 0);
 
-			if (is_sorted)
-				sorted_path = input_path;
-			else
+			foreach_node(List, useful_pathkeys, useful_pathkeys_list)
 			{
-				/*
-				 * Try at least sorting the cheapest path and also try
-				 * incrementally sorting any path which is partially sorted
-				 * already (no need to deal with paths which have presorted
-				 * keys when incremental sort is disabled unless it's the
-				 * cheapest input path).
-				 */
-				if (input_path != cheapest_input_path &&
-					(presorted_keys == 0 || !enable_incremental_sort))
+				sorted_path = make_ordered_path(root,
+												distinct_rel,
+												input_path,
+												cheapest_input_path,
+												useful_pathkeys,
+												limittuples);
+
+				if (sorted_path == NULL)
 					continue;
 
 				/*
-				 * We've no need to consider both a sort and incremental sort.
-				 * We'll just do a sort if there are no presorted keys and an
-				 * incremental sort when there are presorted keys.
+				 * distinct_pathkeys may have become empty if all of the
+				 * pathkeys were determined to be redundant.  If all of the
+				 * pathkeys are redundant then each DISTINCT target must only
+				 * allow a single value, therefore all resulting tuples must
+				 * be identical (or at least indistinguishable by an equality
+				 * check).  We can uniquify these tuples simply by just taking
+				 * the first tuple.  All we do here is add a path to do "LIMIT
+				 * 1" atop of 'sorted_path'.  When doing a DISTINCT ON we may
+				 * still have a non-NIL sort_pathkeys list, so we must still
+				 * only do this with paths which are correctly sorted by
+				 * sort_pathkeys.
 				 */
-				if (presorted_keys == 0 || !enable_incremental_sort)
-					sorted_path = (Path *) create_sort_path(root,
-															distinct_rel,
-															input_path,
-															needed_pathkeys,
-															limittuples);
+				if (root->distinct_pathkeys == NIL)
+				{
+					Node	   *limitCount;
+
+					limitCount = (Node *) makeConst(INT8OID, -1, InvalidOid,
+													sizeof(int64),
+													Int64GetDatum(1), false,
+													FLOAT8PASSBYVAL);
+
+					/*
+					 * If the query already has a LIMIT clause, then we could
+					 * end up with a duplicate LimitPath in the final plan.
+					 * That does not seem worth troubling over too much.
+					 */
+					add_path(distinct_rel, (Path *)
+							 create_limit_path(root, distinct_rel, sorted_path,
+											   NULL, limitCount,
+											   LIMIT_OPTION_COUNT, 0, 1));
+				}
 				else
-					sorted_path = (Path *) create_incremental_sort_path(root,
-																		distinct_rel,
-																		input_path,
-																		needed_pathkeys,
-																		presorted_keys,
-																		limittuples);
-			}
-
-			/*
-			 * distinct_pathkeys may have become empty if all of the pathkeys
-			 * were determined to be redundant.  If all of the pathkeys are
-			 * redundant then each DISTINCT target must only allow a single
-			 * value, therefore all resulting tuples must be identical (or at
-			 * least indistinguishable by an equality check).  We can uniquify
-			 * these tuples simply by just taking the first tuple.  All we do
-			 * here is add a path to do "LIMIT 1" atop of 'sorted_path'.  When
-			 * doing a DISTINCT ON we may still have a non-NIL sort_pathkeys
-			 * list, so we must still only do this with paths which are
-			 * correctly sorted by sort_pathkeys.
-			 */
-			if (root->distinct_pathkeys == NIL)
-			{
-				Node	   *limitCount;
-
-				limitCount = (Node *) makeConst(INT8OID, -1, InvalidOid,
-												sizeof(int64),
-												Int64GetDatum(1), false,
-												FLOAT8PASSBYVAL);
-
-				/*
-				 * If the query already has a LIMIT clause, then we could end
-				 * up with a duplicate LimitPath in the final plan. That does
-				 * not seem worth troubling over too much.
-				 */
-				add_path(distinct_rel, (Path *)
-						 create_limit_path(root, distinct_rel, sorted_path,
-										   NULL, limitCount,
-										   LIMIT_OPTION_COUNT, 0, 1));
-			}
-			else
-			{
-				add_path(distinct_rel, (Path *)
-						 create_upper_unique_path(root, distinct_rel,
-												  sorted_path,
-												  list_length(root->distinct_pathkeys),
-												  numDistinctRows));
+				{
+					add_path(distinct_rel, (Path *)
+							 create_upper_unique_path(root, distinct_rel,
+													  sorted_path,
+													  list_length(root->distinct_pathkeys),
+													  numDistinctRows));
+				}
 			}
 		}
 	}
@@ -5278,6 +5254,82 @@ create_final_distinct_paths(PlannerInfo *root, RelOptInfo *input_rel,
 	}
 
 	return distinct_rel;
+}
+
+/*
+ * get_useful_pathkeys_for_distinct
+ * 	  Get useful orderings of pathkeys for distinctClause by reordering
+ * 	  'needed_pathkeys' to match the given 'path_pathkeys' as much as possible.
+ *
+ * This returns a list of pathkeys that can be useful for DISTINCT or DISTINCT
+ * ON clause.  For convenience, it always includes the given 'needed_pathkeys'.
+ */
+static List *
+get_useful_pathkeys_for_distinct(PlannerInfo *root, List *needed_pathkeys,
+								 List *path_pathkeys)
+{
+	List	   *useful_pathkeys_list = NIL;
+	List	   *useful_pathkeys = NIL;
+
+	/* always include the given 'needed_pathkeys' */
+	useful_pathkeys_list = lappend(useful_pathkeys_list,
+								   needed_pathkeys);
+
+	if (!enable_distinct_reordering)
+		return useful_pathkeys_list;
+
+	/*
+	 * Scan the given 'path_pathkeys' and construct a list of PathKey nodes
+	 * that match 'needed_pathkeys', but only up to the longest matching
+	 * prefix.
+	 *
+	 * When we have DISTINCT ON, we must ensure that the resulting pathkey
+	 * list matches initial distinctClause pathkeys; otherwise, it won't have
+	 * the desired behavior.
+	 */
+	foreach_node(PathKey, pathkey, path_pathkeys)
+	{
+		/*
+		 * The PathKey nodes are canonical, so they can be checked for
+		 * equality by simple pointer comparison.
+		 */
+		if (!list_member_ptr(needed_pathkeys, pathkey))
+			break;
+		if (root->parse->hasDistinctOn &&
+			!list_member_ptr(root->distinct_pathkeys, pathkey))
+			break;
+
+		useful_pathkeys = lappend(useful_pathkeys, pathkey);
+	}
+
+	/* If no match at all, no point in reordering needed_pathkeys */
+	if (useful_pathkeys == NIL)
+		return useful_pathkeys_list;
+
+	/*
+	 * If not full match, the resulting pathkey list is not useful without
+	 * incremental sort.
+	 */
+	if (list_length(useful_pathkeys) < list_length(needed_pathkeys) &&
+		!enable_incremental_sort)
+		return useful_pathkeys_list;
+
+	/* Append the remaining PathKey nodes in needed_pathkeys */
+	useful_pathkeys = list_concat_unique_ptr(useful_pathkeys,
+											 needed_pathkeys);
+
+	/*
+	 * If the resulting pathkey list is the same as the 'needed_pathkeys',
+	 * just drop it.
+	 */
+	if (compare_pathkeys(needed_pathkeys,
+						 useful_pathkeys) == PATHKEYS_EQUAL)
+		return useful_pathkeys_list;
+
+	useful_pathkeys_list = lappend(useful_pathkeys_list,
+								   useful_pathkeys);
+
+	return useful_pathkeys_list;
 }
 
 /*
@@ -7009,58 +7061,6 @@ done:
 }
 
 /*
- * make_ordered_path
- *		Return a path ordered by 'pathkeys' based on the given 'path'.  May
- *		return NULL if it doesn't make sense to generate an ordered path in
- *		this case.
- */
-static Path *
-make_ordered_path(PlannerInfo *root, RelOptInfo *rel, Path *path,
-				  Path *cheapest_path, List *pathkeys)
-{
-	bool		is_sorted;
-	int			presorted_keys;
-
-	is_sorted = pathkeys_count_contained_in(pathkeys,
-											path->pathkeys,
-											&presorted_keys);
-
-	if (!is_sorted)
-	{
-		/*
-		 * Try at least sorting the cheapest path and also try incrementally
-		 * sorting any path which is partially sorted already (no need to deal
-		 * with paths which have presorted keys when incremental sort is
-		 * disabled unless it's the cheapest input path).
-		 */
-		if (path != cheapest_path &&
-			(presorted_keys == 0 || !enable_incremental_sort))
-			return NULL;
-
-		/*
-		 * We've no need to consider both a sort and incremental sort. We'll
-		 * just do a sort if there are no presorted keys and an incremental
-		 * sort when there are presorted keys.
-		 */
-		if (presorted_keys == 0 || !enable_incremental_sort)
-			path = (Path *) create_sort_path(root,
-											 rel,
-											 path,
-											 pathkeys,
-											 -1.0);
-		else
-			path = (Path *) create_incremental_sort_path(root,
-														 rel,
-														 path,
-														 pathkeys,
-														 presorted_keys,
-														 -1.0);
-	}
-
-	return path;
-}
-
-/*
  * add_paths_to_grouping_rel
  *
  * Add non-partial paths to grouping relation.
@@ -7111,7 +7111,8 @@ add_paths_to_grouping_rel(PlannerInfo *root, RelOptInfo *input_rel,
 										 grouped_rel,
 										 path,
 										 cheapest_path,
-										 info->pathkeys);
+										 info->pathkeys,
+										 -1.0);
 				if (path == NULL)
 					continue;
 
@@ -7192,7 +7193,8 @@ add_paths_to_grouping_rel(PlannerInfo *root, RelOptInfo *input_rel,
 											 grouped_rel,
 											 path,
 											 partially_grouped_rel->cheapest_total_path,
-											 info->pathkeys);
+											 info->pathkeys,
+											 -1.0);
 
 					if (path == NULL)
 						continue;
@@ -7443,7 +7445,8 @@ create_partial_grouping_paths(PlannerInfo *root,
 										 partially_grouped_rel,
 										 path,
 										 cheapest_total_path,
-										 info->pathkeys);
+										 info->pathkeys,
+										 -1.0);
 
 				if (path == NULL)
 					continue;
@@ -7500,7 +7503,8 @@ create_partial_grouping_paths(PlannerInfo *root,
 										 partially_grouped_rel,
 										 path,
 										 cheapest_partial_path,
-										 info->pathkeys);
+										 info->pathkeys,
+										 -1.0);
 
 				if (path == NULL)
 					continue;
@@ -7584,6 +7588,58 @@ create_partial_grouping_paths(PlannerInfo *root,
 	}
 
 	return partially_grouped_rel;
+}
+
+/*
+ * make_ordered_path
+ *		Return a path ordered by 'pathkeys' based on the given 'path'.  May
+ *		return NULL if it doesn't make sense to generate an ordered path in
+ *		this case.
+ */
+static Path *
+make_ordered_path(PlannerInfo *root, RelOptInfo *rel, Path *path,
+				  Path *cheapest_path, List *pathkeys, double limit_tuples)
+{
+	bool		is_sorted;
+	int			presorted_keys;
+
+	is_sorted = pathkeys_count_contained_in(pathkeys,
+											path->pathkeys,
+											&presorted_keys);
+
+	if (!is_sorted)
+	{
+		/*
+		 * Try at least sorting the cheapest path and also try incrementally
+		 * sorting any path which is partially sorted already (no need to deal
+		 * with paths which have presorted keys when incremental sort is
+		 * disabled unless it's the cheapest input path).
+		 */
+		if (path != cheapest_path &&
+			(presorted_keys == 0 || !enable_incremental_sort))
+			return NULL;
+
+		/*
+		 * We've no need to consider both a sort and incremental sort. We'll
+		 * just do a sort if there are no presorted keys and an incremental
+		 * sort when there are presorted keys.
+		 */
+		if (presorted_keys == 0 || !enable_incremental_sort)
+			path = (Path *) create_sort_path(root,
+											 rel,
+											 path,
+											 pathkeys,
+											 limit_tuples);
+		else
+			path = (Path *) create_incremental_sort_path(root,
+														 rel,
+														 path,
+														 pathkeys,
+														 presorted_keys,
+														 limit_tuples);
+	}
+
+	return path;
 }
 
 /*
