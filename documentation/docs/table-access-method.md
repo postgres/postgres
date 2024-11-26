@@ -32,7 +32,12 @@ CREATE TABLE table_name (
 
 The `tde_heap` access method works on top of the default `heap` access method and is a marker to point which tables require encryption. It uses the custom storage manager TDE SMGR, which becomes active only after you installed the `pg_tde` extension. 
 
-When a table requires encryption, every data block is encrypted before it is written to disk and decrypted after reading before it is sent to the PostgreSQL core and then to the client. The encryption is done at the storage manager level. 
+WEvery data modification operation is first sent to the Buffer Manager, which updates the buffer cache. Then, it is passed to the storage manager, which then writes it to disk. When a table requires encryption,  the data is sent to the TDE storage manager, where it is encrypted before written to disk. 
+
+Similarly, when a client queries the database, the PostgreSQL core sends the request to the Buffer Manager which checks if the requested data is already in the buffer cache. If it’s not there, the Buffer Manager requests the data from the storage manager. The TDE storage manager  reads the encrypted data from disk, decrypts it and loads it to the buffer cache. The Buffer Manager sends the requested data to the PostgreSQL core and then to the client. 
+
+
+Thus, the encryption is done at the storage manager level. 
 
 ## Changing the default table access method
 
