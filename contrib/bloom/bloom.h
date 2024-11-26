@@ -110,12 +110,9 @@ typedef struct BloomOptions
  * FreeBlockNumberArray - array of block numbers sized so that metadata fill
  * all space in metapage.
  */
-typedef BlockNumber FreeBlockNumberArray[
-										 MAXALIGN_DOWN(
-													   BLCKSZ - SizeOfPageHeaderData - MAXALIGN(sizeof(BloomPageOpaqueData))
-													   - MAXALIGN(sizeof(uint16) * 2 + sizeof(uint32) + sizeof(BloomOptions))
-													   ) / sizeof(BlockNumber)
-];
+typedef BlockNumber FreeBlockNumberArray[MAXALIGN_DOWN(BLCKSZ - SizeOfPageHeaderData - MAXALIGN(sizeof(BloomPageOpaqueData))
+													   - MAXALIGN(sizeof(uint16) * 2 + sizeof(uint32) + sizeof(BloomOptions)))
+										 / sizeof(BlockNumber)];
 
 /* Metadata of bloom index */
 typedef struct BloomMetaPageData
