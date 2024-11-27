@@ -429,6 +429,17 @@ alter domain dnotnulltest drop not null;
 
 update domnotnull set col1 = null;
 
+update domnotnull set col1 = 5;
+
+-- these constraints can also be added and removed by name
+alter domain dnotnulltest add constraint dnotnulltest_notnull not null;
+update domnotnull set col1 = null;		-- fails
+select conname, pg_get_constraintdef(oid) from pg_constraint
+ where contypid = 'dnotnulltest'::regtype;
+
+alter domain dnotnulltest drop constraint dnotnulltest_notnull;
+update domnotnull set col1 = null;
+
 drop domain dnotnulltest cascade;
 
 -- Test ALTER DOMAIN .. DEFAULT ..
