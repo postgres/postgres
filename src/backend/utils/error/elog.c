@@ -2183,7 +2183,7 @@ check_backtrace_functions(char **newval, void **extra, GucSource source)
 					  ", \n\t");
 	if (validlen != newvallen)
 	{
-		GUC_check_errdetail("Invalid character");
+		GUC_check_errdetail("Invalid character.");
 		return false;
 	}
 

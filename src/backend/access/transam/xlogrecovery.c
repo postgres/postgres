@@ -4933,7 +4933,7 @@ check_recovery_target_time(char **newval, void **extra, GucSource source)
 
 			if (tm2timestamp(tm, fsec, &tz, &timestamp) != 0)
 			{
-				GUC_check_errdetail("timestamp out of range: \"%s\"", str);
+				GUC_check_errdetail("Timestamp out of range: \"%s\".", str);
 				return false;
 			}
 		}

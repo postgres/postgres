@@ -2478,7 +2478,7 @@ validate_sync_standby_slots(char *rawname, List **elemlist)
 
 			if (!slot)
 			{
-				GUC_check_errdetail("replication slot \"%s\" does not exist",
+				GUC_check_errdetail("Replication slot \"%s\" does not exist.",
 									name);
 				ok = false;
 				break;
@@ -2486,7 +2486,7 @@ validate_sync_standby_slots(char *rawname, List **elemlist)
 
 			if (!SlotIsPhysical(slot))
 			{
-				GUC_check_errdetail("\"%s\" is not a physical replication slot",
+				GUC_check_errdetail("\"%s\" is not a physical replication slot.",
 									name);
 				ok = false;
 				break;
