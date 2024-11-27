@@ -4033,8 +4033,7 @@ _bt_check_rowcompare(ScanKey skey, IndexTuple tuple, int tupnatts,
 			result = (cmpresult > 0);
 			break;
 		default:
-			elog(ERROR, "unrecognized RowCompareType: %d",
-				 (int) subkey->sk_strategy);
+			elog(ERROR, "unexpected strategy number %d", subkey->sk_strategy);
 			result = 0;			/* keep compiler quiet */
 			break;
 	}
