@@ -1755,13 +1755,6 @@ if cc.compiles('''
 endif
 
 
-# We use <stdbool.h> if bool has size 1 after including it.  Otherwise, c.h
-# will fall back to declaring bool as unsigned char.
-if cc.sizeof('bool', prefix: '#include <stdbool.h>', args: test_c_args) == 1
-  cdata.set('PG_USE_STDBOOL', 1)
-endif
-
-
 # Need to check a call with %m because netbsd supports gnu_printf but emits a
 # warning for each use of %m.
 printf_attributes = ['gnu_printf', '__syslog__', 'printf']

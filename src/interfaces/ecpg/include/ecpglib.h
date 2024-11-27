@@ -7,41 +7,13 @@
 #ifndef _ECPGLIB_H
 #define _ECPGLIB_H
 
+#include <stdbool.h>
 #include <string.h>
 
 #include "ecpg_config.h"
 #include "ecpgtype.h"
 #include "libpq-fe.h"
 #include "sqlca.h"
-
-/*
- * This is a small extract from c.h since we don't want to leak all postgres
- * definitions into ecpg programs; but we need to know what bool is.
- */
-#ifndef __cplusplus
-
-#ifdef PG_USE_STDBOOL
-#include <stdbool.h>
-#else
-
-/*
- * We assume bool has been defined if true and false are.  This avoids
- * duplicate-typedef errors if this file is included after c.h.
- */
-#if !(defined(true) && defined(false))
-typedef unsigned char bool;
-#endif
-
-#ifndef true
-#define true	((bool) 1)
-#endif
-
-#ifndef false
-#define false	((bool) 0)
-#endif
-
-#endif							/* not PG_USE_STDBOOL */
-#endif							/* not C++ */
 
 
 #ifdef __cplusplus

@@ -1691,15 +1691,6 @@ if test "$ac_cv_sizeof_off_t" -lt 8; then
   fi
 fi
 
-AC_CHECK_SIZEOF([bool], [], [#include <stdbool.h>])
-
-dnl We use <stdbool.h> if bool has size 1 after including it.  Otherwise, c.h
-dnl will fall back to declaring bool as unsigned char.
-if test "$ac_cv_sizeof_bool" = 1; then
-  AC_DEFINE([PG_USE_STDBOOL], 1,
-            [Define to 1 to use <stdbool.h> to define type bool.])
-fi
-
 
 ##
 ## Functions, global variables

@@ -597,9 +597,6 @@
 /* Define to best printf format archetype, usually gnu_printf if available. */
 #undef PG_PRINTF_ATTRIBUTE
 
-/* Define to 1 to use <stdbool.h> to define type bool. */
-#undef PG_USE_STDBOOL
-
 /* PostgreSQL version as a string */
 #undef PG_VERSION
 
@@ -629,9 +626,6 @@
    save a few cycles in md.c, but is not absolutely required. Changing
    RELSEG_SIZE requires an initdb. */
 #undef RELSEG_SIZE
-
-/* The size of `bool', as computed by sizeof. */
-#undef SIZEOF_BOOL
 
 /* The size of `long', as computed by sizeof. */
 #undef SIZEOF_LONG

@@ -14958,47 +14958,6 @@ if test "$ac_cv_sizeof_off_t" -lt 8; then
   fi
 fi
 
-# The cast to long int works around a bug in the HP C Compiler
-# version HP92453-01 B.11.11.23709.GP, which incorrectly rejects
-# declarations like `int a3[[(sizeof (unsigned char)) >= 0]];'.
-# This bug is HP SR number 8606223364.
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking size of bool" >&5
-$as_echo_n "checking size of bool... " >&6; }
-if ${ac_cv_sizeof_bool+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  if ac_fn_c_compute_int "$LINENO" "(long int) (sizeof (bool))" "ac_cv_sizeof_bool"        "#include <stdbool.h>
-"; then :
-
-else
-  if test "$ac_cv_type_bool" = yes; then
-     { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
-$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
-as_fn_error 77 "cannot compute sizeof (bool)
-See \`config.log' for more details" "$LINENO" 5; }
-   else
-     ac_cv_sizeof_bool=0
-   fi
-fi
-
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_sizeof_bool" >&5
-$as_echo "$ac_cv_sizeof_bool" >&6; }
-
-
-
-cat >>confdefs.h <<_ACEOF
-#define SIZEOF_BOOL $ac_cv_sizeof_bool
-_ACEOF
-
-
-
-if test "$ac_cv_sizeof_bool" = 1; then
-
-$as_echo "#define PG_USE_STDBOOL 1" >>confdefs.h
-
-fi
-
 
 ##
 ## Functions, global variables

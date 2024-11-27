@@ -5,7 +5,6 @@ ecpg_inc = include_directories('.')
 ecpg_conf_keys = [
   'HAVE_LONG_INT_64',
   'HAVE_LONG_LONG_INT_64',
-  'PG_USE_STDBOOL',
 ]
 
 ecpg_conf_data = configuration_data()

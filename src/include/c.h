@@ -450,37 +450,11 @@ typedef void (*pg_funcptr_t) (void);
  * bool
  *		Boolean value, either true or false.
  *
- * We use stdbool.h if bool has size 1 after including it.  That's useful for
- * better compiler and debugger output and for compatibility with third-party
- * libraries.  But PostgreSQL currently cannot deal with bool of other sizes;
- * there are static assertions around the code to prevent that.
- *
- * For C++ compilers, we assume the compiler has a compatible built-in
- * definition of bool.
- *
- * See also the version of this code in src/interfaces/ecpg/include/ecpglib.h.
+ * PostgreSQL currently cannot deal with bool of size other than 1; there are
+ * static assertions around the code to prevent that.
  */
 
-#ifndef __cplusplus
-
-#ifdef PG_USE_STDBOOL
 #include <stdbool.h>
-#else
-
-#ifndef bool
-typedef unsigned char bool;
-#endif
-
-#ifndef true
-#define true	((bool) 1)
-#endif
-
-#ifndef false
-#define false	((bool) 0)
-#endif
-
-#endif							/* not PG_USE_STDBOOL */
-#endif							/* not C++ */
 
 
 /* ----------------------------------------------------------------
