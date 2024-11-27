@@ -1070,16 +1070,17 @@ SELCT 1/0;<!-- this typo is intentional -->
 
    <para>
     If the client has not issued an explicit <command>BEGIN</command>,
-    then each Sync ordinarily causes an implicit <command>COMMIT</command>
-    if the preceding step(s) succeeded, or an
-    implicit <command>ROLLBACK</command> if they failed.  However, there
-    are a few DDL commands (such as <command>CREATE DATABASE</command>)
-    that cannot be executed inside a transaction block.  If one of
-    these is executed in a pipeline, it will fail unless it is the first
-    command in the pipeline.  Furthermore, upon success it will force an
-    immediate commit to preserve database consistency.  Thus a Sync
-    immediately following one of these commands has no effect except to
-    respond with ReadyForQuery.
+    then an implicit transaction block is started and each Sync ordinarily
+    causes an implicit <command>COMMIT</command> if the preceding step(s)
+    succeeded, or an implicit <command>ROLLBACK</command> if they failed.
+    This implicit transaction block will only be detected by the server
+    when the first command ends without a sync.  There are a few DDL
+    commands (such as <command>CREATE DATABASE</command>) that cannot be
+    executed inside a transaction block. If one of these is executed in a
+    pipeline, it will fail unless it is the first command after a Sync.
+    Furthermore, upon success it will force an immediate commit to preserve
+    database consistency. Thus a Sync immediately following one of these
+    commands has no effect except to respond with ReadyForQuery.
    </para>
 
    <para>
