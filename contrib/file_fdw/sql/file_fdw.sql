@@ -77,7 +77,11 @@ CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (format 'csv', delimiter 
 ');       -- ERROR
 CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (format 'csv', null '
 ');       -- ERROR
+CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (on_error 'unsupported');       -- ERROR
+CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (format 'binary', on_error 'ignore');       -- ERROR
+CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (log_verbosity 'unsupported');       -- ERROR
 CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (reject_limit '1');       -- ERROR
+CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (on_error 'ignore', reject_limit '0');       -- ERROR
 CREATE FOREIGN TABLE tbl () SERVER file_server;  -- ERROR
 
 \set filename :abs_srcdir '/data/agg.data'
