@@ -1,5 +1,6 @@
 *		whitespace=space-before-tab,trailing-space
 *.[chly]	whitespace=space-before-tab,trailing-space,indent-with-non-tab,tabwidth=4
+*.cpp		whitespace=space-before-tab,trailing-space,indent-with-non-tab,tabwidth=4
 *.pl		whitespace=space-before-tab,trailing-space,tabwidth=4
 *.pm		whitespace=space-before-tab,trailing-space,tabwidth=4
 *.po		whitespace=space-before-tab,trailing-space,tab-in-indent,-blank-at-eof
