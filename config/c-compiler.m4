@@ -605,24 +605,26 @@ fi])# PGAC_HAVE_GCC__ATOMIC_INT64_CAS
 # test the 8-byte variant, _mm_crc32_u64, but it is assumed to be present if
 # the other ones are, on x86-64 platforms)
 #
-# An optional compiler flag can be passed as argument (e.g. -msse4.2). If the
-# intrinsics are supported, sets pgac_sse42_crc32_intrinsics, and CFLAGS_CRC.
+# If the intrinsics are supported, sets pgac_sse42_crc32_intrinsics.
 AC_DEFUN([PGAC_SSE42_CRC32_INTRINSICS],
-[define([Ac_cachevar], [AS_TR_SH([pgac_cv_sse42_crc32_intrinsics_$1])])dnl
-AC_CACHE_CHECK([for _mm_crc32_u8 and _mm_crc32_u32 with CFLAGS=$1], [Ac_cachevar],
-[pgac_save_CFLAGS=$CFLAGS
-CFLAGS="$pgac_save_CFLAGS $1"
-AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <nmmintrin.h>],
-  [unsigned int crc = 0;
-   crc = _mm_crc32_u8(crc, 0);
-   crc = _mm_crc32_u32(crc, 0);
-   /* return computed value, to prevent the above being optimized away */
-   return crc == 0;])],
+[define([Ac_cachevar], [AS_TR_SH([pgac_cv_sse42_crc32_intrinsics])])dnl
+AC_CACHE_CHECK([for _mm_crc32_u8 and _mm_crc32_u32], [Ac_cachevar],
+[AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <nmmintrin.h>
+    #if defined(__has_attribute) && __has_attribute (target)
+    __attribute__((target("sse4.2")))
+    #endif
+    static int crc32_sse42_test(void)
+    {
+      unsigned int crc = 0;
+      crc = _mm_crc32_u8(crc, 0);
+      crc = _mm_crc32_u32(crc, 0);
+      /* return computed value, to prevent the above being optimized away */
+      return crc == 0;
+    }],
+  [return crc32_sse42_test();])],
   [Ac_cachevar=yes],
-  [Ac_cachevar=no])
-CFLAGS="$pgac_save_CFLAGS"])
+  [Ac_cachevar=no])])
 if test x"$Ac_cachevar" = x"yes"; then
-  CFLAGS_CRC="$1"
   pgac_sse42_crc32_intrinsics=yes
 fi
 undefine([Ac_cachevar])dnl

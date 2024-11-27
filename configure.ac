@@ -2068,13 +2068,7 @@ fi
 
 # Check for Intel SSE 4.2 intrinsics to do CRC calculations.
 #
-# First check if the _mm_crc32_u8 and _mm_crc32_u64 intrinsics can be used
-# with the default compiler flags. If not, check if adding the -msse4.2
-# flag helps. CFLAGS_CRC is set to -msse4.2 if that's required.
-PGAC_SSE42_CRC32_INTRINSICS([])
-if test x"$pgac_sse42_crc32_intrinsics" != x"yes"; then
-  PGAC_SSE42_CRC32_INTRINSICS([-msse4.2])
-fi
+PGAC_SSE42_CRC32_INTRINSICS()
 
 # Are we targeting a processor that supports SSE 4.2? gcc, clang and icc all
 # define __SSE4_2__ in that case.
@@ -2111,14 +2105,19 @@ AC_SUBST(CFLAGS_CRC)
 # If we are targeting a processor that has Intel SSE 4.2 instructions, we can
 # use the special CRC instructions for calculating CRC-32C. If we're not
 # targeting such a processor, but we can nevertheless produce code that uses
-# the SSE intrinsics, perhaps with some extra CFLAGS, compile both
-# implementations and select which one to use at runtime, depending on whether
-# SSE 4.2 is supported by the processor we're running on.
+# the SSE intrinsics, compile both implementations and select which one to use
+# at runtime, depending on whether SSE 4.2 is supported by the processor we're
+# running on.
 #
 # Similarly, if we are targeting an ARM processor that has the CRC
 # instructions that are part of the ARMv8 CRC Extension, use them. And if
 # we're not targeting such a processor, but can nevertheless produce code that
 # uses the CRC instructions, compile both, and select at runtime.
+#
+# Note that we do not use __attribute__((target("..."))) for the ARM CRC
+# instructions because until clang 16, using the ARM intrinsics still requires
+# special -march flags.  Perhaps we can re-evaluate this decision after some
+# time has passed.
 #
 # You can skip the runtime check by setting the appropriate USE_*_CRC32 flag to 1
 # in the template or configure command line.
