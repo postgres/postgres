@@ -315,10 +315,12 @@ remove_variables(int brace_level)
 			for (ptr = cur; ptr != NULL; ptr = ptr->next)
 			{
 				struct arguments *varptr,
-						   *prevvar;
+						   *prevvar,
+						   *nextvar;
 
-				for (varptr = prevvar = ptr->argsinsert; varptr != NULL; varptr = varptr->next)
+				for (varptr = prevvar = ptr->argsinsert; varptr != NULL; varptr = nextvar)
 				{
+					nextvar = varptr->next;
 					if (p == varptr->variable)
 					{
 						/* remove from list */
@@ -326,10 +328,12 @@ remove_variables(int brace_level)
 							ptr->argsinsert = varptr->next;
 						else
 							prevvar->next = varptr->next;
+						free(varptr);
 					}
 				}
-				for (varptr = prevvar = ptr->argsresult; varptr != NULL; varptr = varptr->next)
+				for (varptr = prevvar = ptr->argsresult; varptr != NULL; varptr = nextvar)
 				{
+					nextvar = varptr->next;
 					if (p == varptr->variable)
 					{
 						/* remove from list */
@@ -337,6 +341,7 @@ remove_variables(int brace_level)
 							ptr->argsresult = varptr->next;
 						else
 							prevvar->next = varptr->next;
+						free(varptr);
 					}
 				}
 			}
@@ -376,7 +381,20 @@ struct arguments *argsresult = NULL;
 void
 reset_variables(void)
 {
+	struct arguments *p,
+			   *next;
+
+	for (p = argsinsert; p; p = next)
+	{
+		next = p->next;
+		free(p);
+	}
 	argsinsert = NULL;
+	for (p = argsresult; p; p = next)
+	{
+		next = p->next;
+		free(p);
+	}
 	argsresult = NULL;
 }
 
@@ -435,6 +453,7 @@ remove_variable_from_list(struct arguments **list, struct variable *var)
 			prev->next = p->next;
 		else
 			*list = p->next;
+		free(p);
 	}
 }
 

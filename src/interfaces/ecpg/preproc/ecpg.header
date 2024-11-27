@@ -71,6 +71,7 @@ struct variable no_indicator = {"no_indicator", &ecpg_no_indicator, 0, NULL};
 static struct ECPGtype ecpg_query = {ECPGt_char_variable, NULL, NULL, NULL, {NULL}, 0};
 
 static bool check_declared_list(const char *name);
+static void update_connection(const char *newconn);
 
 
 /*
@@ -558,11 +559,25 @@ check_declared_list(const char *name)
 		{
 			if (connection && strcmp(ptr->connection, connection) != 0)
 				mmerror(PARSE_ERROR, ET_WARNING, "connection %s is overwritten with %s by DECLARE statement %s", connection, ptr->connection, name);
-			connection = mm_strdup(ptr->connection);
+			update_connection(ptr->connection);
 			return true;
 		}
 	}
 	return false;
+}
+
+/*
+ * If newconn isn't NULL, update the global "connection" variable to that;
+ * otherwise do nothing.
+ */
+static void
+update_connection(const char *newconn)
+{
+	if (newconn)
+	{
+		free(connection);
+		connection = mm_strdup(newconn);
+	}
 }
 %}
 

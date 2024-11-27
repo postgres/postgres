@@ -20,6 +20,7 @@ bool		autocommit = false,
 			regression_mode = false,
 			auto_prepare = false;
 
+static const char *progname;
 char	   *output_filename;
 
 enum COMPAT_MODE compat = ECPG_COMPAT_PGSQL;
@@ -139,7 +140,6 @@ main(int argc, char *const argv[])
 	bool		verbose = false,
 				header_mode = false;
 	struct _include_path *ip;
-	const char *progname;
 	char		my_exec_path[MAXPGPATH];
 	char		include_path[MAXPGPATH];
 

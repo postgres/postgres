@@ -135,6 +135,7 @@ ECPG: rule stmt ViewStmt
 
 		fprintf(base_yyout, "{ ECPGdescribe(__LINE__, %d, %d, %s, %s,", compat, $1.input, connection ? connection : "NULL", $1.stmt_name);
 		dump_variables(argsresult, 1);
+		argsresult = NULL;
 		fputs("ECPGt_EORT);", base_yyout);
 		fprintf(base_yyout, "}");
 		output_line_number();
@@ -181,6 +182,7 @@ ECPG: rule stmt ViewStmt
 
 		if ((ptr = add_additional_variables(@1, true)) != NULL)
 		{
+			free(connection);
 			connection = ptr->connection ? mm_strdup(ptr->connection) : NULL;
 			output_statement(ptr->command, 0, ECPGst_normal);
 			ptr->opened = true;
@@ -247,15 +249,13 @@ ECPG: addon var_value NumericOnly
 ECPG: addon fetch_args cursor_name
 		struct cursor *ptr = add_additional_variables(@1, false);
 
-		if (ptr->connection)
-			connection = mm_strdup(ptr->connection);
+		update_connection(ptr->connection);
 		if (@1[0] == ':')
 			@$ = "$0";
 ECPG: addon fetch_args from_in cursor_name
 		struct cursor *ptr = add_additional_variables(@2, false);
 
-		if (ptr->connection)
-			connection = mm_strdup(ptr->connection);
+		update_connection(ptr->connection);
 		if (@2[0] == ':')
 			@$ = cat2_str(@1, "$0");
 ECPG: addon fetch_args NEXT opt_from_in cursor_name
@@ -265,16 +265,14 @@ ECPG: addon fetch_args LAST_P opt_from_in cursor_name
 ECPG: addon fetch_args ALL opt_from_in cursor_name
 		struct cursor *ptr = add_additional_variables(@3, false);
 
-		if (ptr->connection)
-			connection = mm_strdup(ptr->connection);
+		update_connection(ptr->connection);
 		if (@3[0] == ':')
 			@$ = cat_str(3, @1, @2, "$0");
 ECPG: addon fetch_args SignedIconst opt_from_in cursor_name
 		struct cursor *ptr = add_additional_variables(@3, false);
 		bool	replace = false;
 
-		if (ptr->connection)
-			connection = mm_strdup(ptr->connection);
+		update_connection(ptr->connection);
 		if (@3[0] == ':')
 		{
 			@3 = "$0";
@@ -291,8 +289,7 @@ ECPG: addon fetch_args FORWARD ALL opt_from_in cursor_name
 ECPG: addon fetch_args BACKWARD ALL opt_from_in cursor_name
 		struct cursor *ptr = add_additional_variables(@4, false);
 
-		if (ptr->connection)
-			connection = mm_strdup(ptr->connection);
+		update_connection(ptr->connection);
 		if (@4[0] == ':')
 			@$ = cat_str(4, @1, @2, @3, "$0");
 ECPG: addon fetch_args ABSOLUTE_P SignedIconst opt_from_in cursor_name
@@ -302,8 +299,7 @@ ECPG: addon fetch_args BACKWARD SignedIconst opt_from_in cursor_name
 		struct cursor *ptr = add_additional_variables(@4, false);
 		bool	replace = false;
 
-		if (ptr->connection)
-			connection = mm_strdup(ptr->connection);
+		update_connection(ptr->connection);
 		if (@4[0] == ':')
 		{
 			@4 = "$0";
@@ -412,8 +408,7 @@ ECPG: block ClosePortalStmt CLOSE cursor_name
 		{
 			if (strcmp(@2, ptr->name) == 0)
 			{
-				if (ptr->connection)
-					connection = mm_strdup(ptr->connection);
+				update_connection(ptr->connection);
 				break;
 			}
 		}
@@ -483,8 +478,7 @@ ECPG: rule FetchStmt MOVE fetch_args
 		const char *cursor_marker = @3[0] == ':' ? "$0" : @3;
 		struct cursor *ptr = add_additional_variables(@3, false);
 
-		if (ptr->connection)
-			connection = mm_strdup(ptr->connection);
+		update_connection(ptr->connection);
 
 		@$ = cat_str(2, "fetch forward", cursor_marker);
 	}
@@ -493,8 +487,7 @@ ECPG: rule FetchStmt MOVE fetch_args
 		const char *cursor_marker = @4[0] == ':' ? "$0" : @4;
 		struct cursor *ptr = add_additional_variables(@4, false);
 
-		if (ptr->connection)
-			connection = mm_strdup(ptr->connection);
+		update_connection(ptr->connection);
 
 		@$ = cat_str(2, "fetch forward from", cursor_marker);
 	}
@@ -503,8 +496,7 @@ ECPG: rule FetchStmt MOVE fetch_args
 		const char *cursor_marker = @3[0] == ':' ? "$0" : @3;
 		struct cursor *ptr = add_additional_variables(@3, false);
 
-		if (ptr->connection)
-			connection = mm_strdup(ptr->connection);
+		update_connection(ptr->connection);
 
 		@$ = cat_str(2, "fetch backward", cursor_marker);
 	}
@@ -513,8 +505,7 @@ ECPG: rule FetchStmt MOVE fetch_args
 		const char *cursor_marker = @4[0] == ':' ? "$0" : @4;
 		struct cursor *ptr = add_additional_variables(@4, false);
 
-		if (ptr->connection)
-			connection = mm_strdup(ptr->connection);
+		update_connection(ptr->connection);
 
 		@$ = cat_str(2, "fetch backward from", cursor_marker);
 	}
@@ -523,8 +514,7 @@ ECPG: rule FetchStmt MOVE fetch_args
 		const char *cursor_marker = @3[0] == ':' ? "$0" : @3;
 		struct cursor *ptr = add_additional_variables(@3, false);
 
-		if (ptr->connection)
-			connection = mm_strdup(ptr->connection);
+		update_connection(ptr->connection);
 
 		@$ = cat_str(2, "move forward", cursor_marker);
 	}
@@ -533,8 +523,7 @@ ECPG: rule FetchStmt MOVE fetch_args
 		const char *cursor_marker = @4[0] == ':' ? "$0" : @4;
 		struct cursor *ptr = add_additional_variables(@4, false);
 
-		if (ptr->connection)
-			connection = mm_strdup(ptr->connection);
+		update_connection(ptr->connection);
 
 		@$ = cat_str(2, "move forward from", cursor_marker);
 	}
@@ -543,8 +532,7 @@ ECPG: rule FetchStmt MOVE fetch_args
 		const char *cursor_marker = @3[0] == ':' ? "$0" : @3;
 		struct cursor *ptr = add_additional_variables(@3, false);
 
-		if (ptr->connection)
-			connection = mm_strdup(ptr->connection);
+		update_connection(ptr->connection);
 
 		@$ = cat_str(2, "move backward", cursor_marker);
 	}
@@ -553,8 +541,7 @@ ECPG: rule FetchStmt MOVE fetch_args
 		const char *cursor_marker = @4[0] == ':' ? "$0" : @4;
 		struct cursor *ptr = add_additional_variables(@4, false);
 
-		if (ptr->connection)
-			connection = mm_strdup(ptr->connection);
+		update_connection(ptr->connection);
 
 		@$ = cat_str(2, "move backward from", cursor_marker);
 	}

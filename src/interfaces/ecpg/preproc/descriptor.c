@@ -344,11 +344,17 @@ descriptor_variable(const char *name, int input)
 struct variable *
 sqlda_variable(const char *name)
 {
-	struct variable *p = (struct variable *) mm_alloc(sizeof(struct variable));
+	/*
+	 * Presently, sqlda variables are only needed for the duration of the
+	 * current statement.  Rather than add infrastructure to manage them,
+	 * let's just loc_alloc them.
+	 */
+	struct variable *p = (struct variable *) loc_alloc(sizeof(struct variable));
 
-	p->name = mm_strdup(name);
-	p->type = (struct ECPGtype *) mm_alloc(sizeof(struct ECPGtype));
+	p->name = loc_strdup(name);
+	p->type = (struct ECPGtype *) loc_alloc(sizeof(struct ECPGtype));
 	p->type->type = ECPGt_sqlda;
+	p->type->type_name = NULL;
 	p->type->size = NULL;
 	p->type->struct_sizeof = NULL;
 	p->type->u.element = NULL;
