@@ -23,8 +23,11 @@ src/interfaces/ecpg/test/expected/*	-whitespace
 # These files are maintained or generated elsewhere.  We take them as is.
 configure				-whitespace
 ppport.h				-whitespace
+src/backend/jit/llvm/SectionMemoryManager.cpp		-whitespace
+src/backend/jit/llvm/SectionMemoryManager.LICENSE	-whitespace
 src/backend/regex/COPYRIGHT		-whitespace
 src/backend/snowball/libstemmer/*.c	-whitespace
 src/backend/utils/mb/Unicode/*-std.txt	-whitespace
+src/include/jit/SectionMemoryManager.h	-whitespace
 src/include/snowball/libstemmer/*	-whitespace
 src/timezone/data/*			-whitespace
