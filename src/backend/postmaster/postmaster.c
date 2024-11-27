@@ -839,20 +839,20 @@ PostmasterMain(int argc, char *argv[])
 #endif
 
 	/* For debugging: display postmaster environment */
+	if (message_level_is_interesting(DEBUG3))
 	{
 		extern char **environ;
 		char	  **p;
+		StringInfoData si;
 
-		ereport(DEBUG3,
-				(errmsg_internal("%s: PostmasterMain: initial environment dump:",
-								 progname)));
-		ereport(DEBUG3,
-				(errmsg_internal("-----------------------------------------")));
+		initStringInfo(&si);
+
+		appendStringInfoString(&si, "initial environment dump:");
 		for (p = environ; *p; ++p)
-			ereport(DEBUG3,
-					(errmsg_internal("\t%s", *p)));
-		ereport(DEBUG3,
-				(errmsg_internal("-----------------------------------------")));
+			appendStringInfo(&si, "\n%s", *p);
+
+		ereport(DEBUG3, errmsg_internal("%s", si.data));
+		pfree(si.data);
 	}
 
 	/*
