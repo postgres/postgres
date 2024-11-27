@@ -161,6 +161,7 @@ struct JsonParserStack
  */
 struct JsonIncrementalState
 {
+	bool		started;
 	bool		is_last_chunk;
 	bool		partial_completed;
 	jsonapi_StrValType partial_token;
@@ -280,6 +281,7 @@ static JsonParseErrorType parse_array_element(JsonLexContext *lex, const JsonSem
 static JsonParseErrorType parse_array(JsonLexContext *lex, const JsonSemAction *sem);
 static JsonParseErrorType report_parse_error(JsonParseContext ctx, JsonLexContext *lex);
 static bool allocate_incremental_state(JsonLexContext *lex);
+static inline void set_fname(JsonLexContext *lex, char *fname);
 
 /* the null action object used for pure validation */
 const JsonSemAction nullSemAction =
@@ -437,7 +439,7 @@ allocate_incremental_state(JsonLexContext *lex)
 			   *fnull;
 
 	lex->inc_state = ALLOC0(sizeof(JsonIncrementalState));
-	pstack = ALLOC(sizeof(JsonParserStack));
+	pstack = ALLOC0(sizeof(JsonParserStack));
 	prediction = ALLOC(JS_STACK_CHUNK_SIZE * JS_MAX_PROD_LEN);
 	fnames = ALLOC(JS_STACK_CHUNK_SIZE * sizeof(char *));
 	fnull = ALLOC(JS_STACK_CHUNK_SIZE * sizeof(bool));
@@ -464,9 +466,16 @@ allocate_incremental_state(JsonLexContext *lex)
 	lex->pstack = pstack;
 	lex->pstack->stack_size = JS_STACK_CHUNK_SIZE;
 	lex->pstack->prediction = prediction;
-	lex->pstack->pred_index = 0;
 	lex->pstack->fnames = fnames;
 	lex->pstack->fnull = fnull;
+
+	/*
+	 * fnames between 0 and lex_level must always be defined so that
+	 * freeJsonLexContext() can handle them safely. inc/dec_lex_level() handle
+	 * the rest.
+	 */
+	Assert(lex->lex_level == 0);
+	lex->pstack->fnames[0] = NULL;
 
 	lex->incremental = true;
 	return true;
@@ -530,6 +539,25 @@ makeJsonLexContextIncremental(JsonLexContext *lex, int encoding,
 	return lex;
 }
 
+void
+setJsonLexContextOwnsTokens(JsonLexContext *lex, bool owned_by_context)
+{
+	if (lex->incremental && lex->inc_state->started)
+	{
+		/*
+		 * Switching this flag after parsing has already started is a
+		 * programming error.
+		 */
+		Assert(false);
+		return;
+	}
+
+	if (owned_by_context)
+		lex->flags |= JSONLEX_CTX_OWNS_TOKENS;
+	else
+		lex->flags &= ~JSONLEX_CTX_OWNS_TOKENS;
+}
+
 static inline bool
 inc_lex_level(JsonLexContext *lex)
 {
@@ -569,12 +597,23 @@ inc_lex_level(JsonLexContext *lex)
 	}
 
 	lex->lex_level += 1;
+
+	if (lex->incremental)
+	{
+		/*
+		 * Ensure freeJsonLexContext() remains safe even if no fname is
+		 * assigned at this level.
+		 */
+		lex->pstack->fnames[lex->lex_level] = NULL;
+	}
+
 	return true;
 }
 
 static inline void
 dec_lex_level(JsonLexContext *lex)
 {
+	set_fname(lex, NULL);		/* free the current level's fname, if needed */
 	lex->lex_level -= 1;
 }
 
@@ -608,6 +647,15 @@ have_prediction(JsonParserStack *pstack)
 static inline void
 set_fname(JsonLexContext *lex, char *fname)
 {
+	if (lex->flags & JSONLEX_CTX_OWNS_TOKENS)
+	{
+		/*
+		 * Don't leak prior fnames. If one hasn't been assigned yet,
+		 * inc_lex_level ensured that it's NULL (and therefore safe to free).
+		 */
+		FREE(lex->pstack->fnames[lex->lex_level]);
+	}
+
 	lex->pstack->fnames[lex->lex_level] = fname;
 }
 
@@ -655,8 +703,19 @@ freeJsonLexContext(JsonLexContext *lex)
 		jsonapi_termStringInfo(&lex->inc_state->partial_token);
 		FREE(lex->inc_state);
 		FREE(lex->pstack->prediction);
+
+		if (lex->flags & JSONLEX_CTX_OWNS_TOKENS)
+		{
+			int			i;
+
+			/* Clean up any tokens that were left behind. */
+			for (i = 0; i <= lex->lex_level; i++)
+				FREE(lex->pstack->fnames[i]);
+		}
+
 		FREE(lex->pstack->fnames);
 		FREE(lex->pstack->fnull);
+		FREE(lex->pstack->scalar_val);
 		FREE(lex->pstack);
 	}
 
@@ -826,6 +885,7 @@ pg_parse_json_incremental(JsonLexContext *lex,
 	lex->input = lex->token_terminator = lex->line_start = json;
 	lex->input_length = len;
 	lex->inc_state->is_last_chunk = is_last;
+	lex->inc_state->started = true;
 
 	/* get the initial token */
 	result = json_lex(lex);
@@ -1086,6 +1146,17 @@ pg_parse_json_incremental(JsonLexContext *lex,
 						if (sfunc != NULL)
 						{
 							result = (*sfunc) (sem->semstate, pstack->scalar_val, pstack->scalar_tok);
+
+							/*
+							 * Either ownership of the token passed to the
+							 * callback, or we need to free it now. Either
+							 * way, clear our pointer to it so it doesn't get
+							 * freed in the future.
+							 */
+							if (lex->flags & JSONLEX_CTX_OWNS_TOKENS)
+								FREE(pstack->scalar_val);
+							pstack->scalar_val = NULL;
+
 							if (result != JSON_SUCCESS)
 								return result;
 						}
@@ -1221,10 +1292,16 @@ parse_scalar(JsonLexContext *lex, const JsonSemAction *sem)
 	/* consume the token */
 	result = json_lex(lex);
 	if (result != JSON_SUCCESS)
+	{
+		FREE(val);
 		return result;
+	}
 
-	/* invoke the callback */
+	/* invoke the callback, which may take ownership of val */
 	result = (*sfunc) (sem->semstate, val, tok);
+
+	if (lex->flags & JSONLEX_CTX_OWNS_TOKENS)
+		FREE(val);
 
 	return result;
 }
@@ -1238,7 +1315,7 @@ parse_object_field(JsonLexContext *lex, const JsonSemAction *sem)
 	 * generally call a field name a "key".
 	 */
 
-	char	   *fname = NULL;	/* keep compiler quiet */
+	char	   *fname = NULL;
 	json_ofield_action ostart = sem->object_field_start;
 	json_ofield_action oend = sem->object_field_end;
 	bool		isnull;
@@ -1255,11 +1332,17 @@ parse_object_field(JsonLexContext *lex, const JsonSemAction *sem)
 	}
 	result = json_lex(lex);
 	if (result != JSON_SUCCESS)
+	{
+		FREE(fname);
 		return result;
+	}
 
 	result = lex_expect(JSON_PARSE_OBJECT_LABEL, lex, JSON_TOKEN_COLON);
 	if (result != JSON_SUCCESS)
+	{
+		FREE(fname);
 		return result;
+	}
 
 	tok = lex_peek(lex);
 	isnull = tok == JSON_TOKEN_NULL;
@@ -1268,7 +1351,7 @@ parse_object_field(JsonLexContext *lex, const JsonSemAction *sem)
 	{
 		result = (*ostart) (sem->semstate, fname, isnull);
 		if (result != JSON_SUCCESS)
-			return result;
+			goto ofield_cleanup;
 	}
 
 	switch (tok)
@@ -1283,16 +1366,19 @@ parse_object_field(JsonLexContext *lex, const JsonSemAction *sem)
 			result = parse_scalar(lex, sem);
 	}
 	if (result != JSON_SUCCESS)
-		return result;
+		goto ofield_cleanup;
 
 	if (oend != NULL)
 	{
 		result = (*oend) (sem->semstate, fname, isnull);
 		if (result != JSON_SUCCESS)
-			return result;
+			goto ofield_cleanup;
 	}
 
-	return JSON_SUCCESS;
+ofield_cleanup:
+	if (lex->flags & JSONLEX_CTX_OWNS_TOKENS)
+		FREE(fname);
+	return result;
 }
 
 static JsonParseErrorType

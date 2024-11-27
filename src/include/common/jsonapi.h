@@ -92,9 +92,11 @@ typedef struct JsonIncrementalState JsonIncrementalState;
  * conjunction with token_start.
  *
  * JSONLEX_FREE_STRUCT/STRVAL are used to drive freeJsonLexContext.
+ * JSONLEX_CTX_OWNS_TOKENS is used by setJsonLexContextOwnsTokens.
  */
 #define JSONLEX_FREE_STRUCT			(1 << 0)
 #define JSONLEX_FREE_STRVAL			(1 << 1)
+#define JSONLEX_CTX_OWNS_TOKENS		(1 << 2)
 typedef struct JsonLexContext
 {
 	const char *input;
@@ -130,9 +132,10 @@ typedef JsonParseErrorType (*json_scalar_action) (void *state, char *token, Json
  * to doing a pure parse with no side-effects, and is therefore exactly
  * what the json input routines do.
  *
- * The 'fname' and 'token' strings passed to these actions are palloc'd.
- * They are not free'd or used further by the parser, so the action function
- * is free to do what it wishes with them.
+ * By default, the 'fname' and 'token' strings passed to these actions are
+ * palloc'd.  They are not free'd or used further by the parser, so the action
+ * function is free to do what it wishes with them. This behavior may be
+ * modified by setJsonLexContextOwnsTokens().
  *
  * All action functions return JsonParseErrorType.  If the result isn't
  * JSON_SUCCESS, the parse is abandoned and that error code is returned.
@@ -215,6 +218,25 @@ extern JsonLexContext *makeJsonLexContextCstringLen(JsonLexContext *lex,
 extern JsonLexContext *makeJsonLexContextIncremental(JsonLexContext *lex,
 													 int encoding,
 													 bool need_escapes);
+
+/*
+ * Sets whether tokens passed to semantic action callbacks are owned by the
+ * context (in which case, the callback must duplicate the tokens for long-term
+ * storage) or by the callback (in which case, the callback must explicitly
+ * free tokens to avoid leaks).
+ *
+ * By default, this setting is false: the callback owns the tokens that are
+ * passed to it (and if parsing fails between the two object-field callbacks,
+ * the field name token will likely leak). If set to true, tokens will be freed
+ * by the lexer after the callback completes.
+ *
+ * Setting this to true is important for long-lived clients (such as libpq)
+ * that must not leak memory during a parse failure. For a server backend using
+ * memory contexts, or a client application which will exit on parse failure,
+ * this setting is less critical.
+ */
+extern void setJsonLexContextOwnsTokens(JsonLexContext *lex,
+										bool owned_by_context);
 
 extern void freeJsonLexContext(JsonLexContext *lex);
 

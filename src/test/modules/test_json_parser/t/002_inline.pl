@@ -13,7 +13,7 @@ use Test::More;
 use File::Temp qw(tempfile);
 
 my $dir = PostgreSQL::Test::Utils::tempdir;
-my $exe;
+my @exe;
 
 sub test
 {
@@ -35,7 +35,7 @@ sub test
 
 	foreach my $size (reverse(1 .. $chunk))
 	{
-		my ($stdout, $stderr) = run_command([ $exe, "-c", $size, $fname ]);
+		my ($stdout, $stderr) = run_command([ @exe, "-c", $size, $fname ]);
 
 		if (defined($params{error}))
 		{
@@ -53,13 +53,16 @@ sub test
 	}
 }
 
-my @exes =
-  ("test_json_parser_incremental", "test_json_parser_incremental_shlib");
+my @exes = (
+	[ "test_json_parser_incremental", ],
+	[ "test_json_parser_incremental", "-o", ],
+	[ "test_json_parser_incremental_shlib", ],
+	[ "test_json_parser_incremental_shlib", "-o", ]);
 
 foreach (@exes)
 {
-	$exe = $_;
-	note "testing executable $exe";
+	@exe = @$_;
+	note "testing executable @exe";
 
 	test("number", "12345");
 	test("string", '"hello"');

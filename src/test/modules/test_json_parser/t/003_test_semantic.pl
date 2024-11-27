@@ -16,14 +16,17 @@ use File::Temp qw(tempfile);
 my $test_file = "$FindBin::RealBin/../tiny.json";
 my $test_out = "$FindBin::RealBin/../tiny.out";
 
-my @exes =
-  ("test_json_parser_incremental", "test_json_parser_incremental_shlib");
+my @exes = (
+	[ "test_json_parser_incremental", ],
+	[ "test_json_parser_incremental", "-o", ],
+	[ "test_json_parser_incremental_shlib", ],
+	[ "test_json_parser_incremental_shlib", "-o", ]);
 
 foreach my $exe (@exes)
 {
-	note "testing executable $exe";
+	note "testing executable @$exe";
 
-	my ($stdout, $stderr) = run_command([ $exe, "-s", $test_file ]);
+	my ($stdout, $stderr) = run_command([ @$exe, "-s", $test_file ]);
 
 	is($stderr, "", "no error output");
 
