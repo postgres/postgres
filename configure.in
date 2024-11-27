@@ -434,6 +434,26 @@ else
   fi
 fi
 
+# We use C constructs that became invalid in C23.  Check if the compiler
+# reports a standard higher than C17, with the flags selected above (so the
+# user can control the language level explicitly to avoid the gcc/clang-only
+# fallback logic below if preferred).
+AC_MSG_CHECKING([whether $CC reports a C standard higher than ISO C17])
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([], [@%:@if __STDC_VERSION__ > 201710L
+choke me
+@%:@endif])], [POSTC17=no], [POSTC17=yes])
+AC_MSG_RESULT(${POSTC17})
+
+# If a too recent standard was detected with the user's CFLAGS, try asking for
+# C17 with GNU extensions explicitly.
+if test "$POSTC17" = yes; then
+  old_CFLAGS="$CFLAGS"
+  PGAC_PROG_CC_CFLAGS_OPT([-std=gnu17])
+  if test "$CFLAGS" = "$old_CFLAGS"; then
+    AC_MSG_ERROR([cannot proceed])
+  fi
+fi
+
 # CFLAGS we determined above will be added back at the end
 user_CFLAGS=$CFLAGS
 CFLAGS=""
