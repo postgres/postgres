@@ -2780,6 +2780,17 @@ start_xact_command(void)
 
 		xact_started = true;
 	}
+	else if (MyXactFlags & XACT_FLAGS_PIPELINING)
+	{
+		/*
+		 * When the first Execute message is completed, following commands
+		 * will be done in an implicit transaction block created via
+		 * pipelining. The transaction state needs to be updated to an
+		 * implicit block if we're not already in a transaction block (like
+		 * one started by an explicit BEGIN).
+		 */
+		BeginImplicitTransactionBlock();
+	}
 
 	/*
 	 * Start statement timeout if necessary.  Note that this'll intentionally
@@ -4991,6 +5002,13 @@ PostgresMain(const char *dbname, const char *username)
 
 			case PqMsg_Sync:
 				pq_getmsgend(&input_message);
+
+				/*
+				 * If pipelining was used, we may be in an implicit
+				 * transaction block. Close it before calling
+				 * finish_xact_command.
+				 */
+				EndImplicitTransactionBlock();
 				finish_xact_command();
 				valgrind_report_error_query("SYNC message");
 				send_ready_for_query = true;
