@@ -1995,7 +1995,7 @@ ecpg_do_prologue(int lineno, const int compat, const int force_indicator,
 		return false;
 	}
 #else
-#ifdef HAVE__CONFIGTHREADLOCALE
+#ifdef WIN32
 	stmt->oldthreadlocale = _configthreadlocale(_ENABLE_PER_THREAD_LOCALE);
 #endif
 	stmt->oldlocale = ecpg_strdup(setlocale(LC_NUMERIC, NULL), lineno);
@@ -2219,7 +2219,7 @@ ecpg_do_epilogue(struct statement *stmt)
 #else
 	if (stmt->oldlocale)
 		setlocale(LC_NUMERIC, stmt->oldlocale);
-#ifdef HAVE__CONFIGTHREADLOCALE
+#ifdef WIN32
 
 	/*
 	 * This is a bit trickier than it looks: if we failed partway through

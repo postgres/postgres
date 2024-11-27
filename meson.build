@@ -2617,7 +2617,6 @@ endif
 # XXX: Might be worth conditioning some checks on the OS, to avoid doing
 # unnecessary checks over and over, particularly on windows.
 func_checks = [
-  ['_configthreadlocale', {'skip': host_system != 'windows'}],
   ['backtrace_symbols', {'dependencies': [execinfo_dep]}],
   ['clock_gettime', {'dependencies': [rt_dep], 'define': false}],
   ['copyfile'],

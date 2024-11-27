@@ -15821,17 +15821,6 @@ fi
 
 # Win32 (really MinGW) support
 if test "$PORTNAME" = "win32"; then
-  for ac_func in _configthreadlocale
-do :
-  ac_fn_c_check_func "$LINENO" "_configthreadlocale" "ac_cv_func__configthreadlocale"
-if test "x$ac_cv_func__configthreadlocale" = xyes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE__CONFIGTHREADLOCALE 1
-_ACEOF
-
-fi
-done
-
   case " $LIBOBJS " in
   *" dirmod.$ac_objext "* ) ;;
   *) LIBOBJS="$LIBOBJS dirmod.$ac_objext"
