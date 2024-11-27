@@ -755,6 +755,7 @@ var_type: simple_type
 			else
 				$$.type_sizeof = cat_str(3, "sizeof(", this->name, ")");
 
+			ECPGfree_struct_member(struct_member_list[struct_level]);
 			struct_member_list[struct_level] = ECPGstruct_member_dup(this->struct_member_list);
 		}
 	}
@@ -882,6 +883,7 @@ var_type: simple_type
 			else
 				$$.type_sizeof = cat_str(3, "sizeof(", this->name, ")");
 
+			ECPGfree_struct_member(struct_member_list[struct_level]);
 			struct_member_list[struct_level] = ECPGstruct_member_dup(this->struct_member_list);
 		}
 	}
@@ -904,6 +906,7 @@ var_type: simple_type
 			$$.type_dimension = this->type->type_dimension;
 			$$.type_index = this->type->type_index;
 			$$.type_sizeof = this->type->type_sizeof;
+			ECPGfree_struct_member(struct_member_list[struct_level]);
 			struct_member_list[struct_level] = ECPGstruct_member_dup(this->struct_member_list);
 		}
 		else
@@ -913,6 +916,7 @@ var_type: simple_type
 			$$.type_dimension = "-1";
 			$$.type_index = "-1";
 			$$.type_sizeof = "";
+			ECPGfree_struct_member(struct_member_list[struct_level]);
 			struct_member_list[struct_level] = NULL;
 		}
 	}
@@ -928,6 +932,7 @@ enum_definition: '{' c_list '}'
 
 struct_union_type_with_symbol: s_struct_union_symbol
 	{
+		ECPGfree_struct_member(struct_member_list[struct_level]);
 		struct_member_list[struct_level++] = NULL;
 		if (struct_level >= STRUCT_DEPTH)
 			mmerror(PARSE_ERROR, ET_ERROR, "too many levels in nested structure/union definition");
@@ -969,12 +974,13 @@ struct_union_type_with_symbol: s_struct_union_symbol
 		this->name = mm_strdup(su_type.type_str);
 		this->brace_level = braces_open;
 		this->type = (struct this_type *) mm_alloc(sizeof(struct this_type));
+		this->type->type_storage = NULL;
 		this->type->type_enum = su_type.type_enum;
 		this->type->type_str = mm_strdup(su_type.type_str);
 		this->type->type_dimension = mm_strdup("-1");	/* dimension of array */
 		this->type->type_index = mm_strdup("-1");	/* length of string */
-		this->type->type_sizeof = ECPGstruct_sizeof;
-		this->struct_member_list = struct_member_list[struct_level];
+		this->type->type_sizeof = ECPGstruct_sizeof ? mm_strdup(ECPGstruct_sizeof) : NULL;
+		this->struct_member_list = ECPGstruct_member_dup(struct_member_list[struct_level]);
 
 		types = this;
 		@$ = cat_str(4, su_type.type_str, "{", @4, "}");
@@ -984,6 +990,7 @@ struct_union_type_with_symbol: s_struct_union_symbol
 struct_union_type: struct_union_type_with_symbol
 	| s_struct_union
 	{
+		ECPGfree_struct_member(struct_member_list[struct_level]);
 		struct_member_list[struct_level++] = NULL;
 		if (struct_level >= STRUCT_DEPTH)
 			mmerror(PARSE_ERROR, ET_ERROR, "too many levels in nested structure/union definition");

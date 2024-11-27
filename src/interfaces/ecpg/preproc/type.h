@@ -38,8 +38,9 @@ void		ECPGmake_struct_member(const char *name, struct ECPGtype *type,
 struct ECPGtype *ECPGmake_simple_type(enum ECPGttype type, const char *size, int counter);
 struct ECPGtype *ECPGmake_array_type(struct ECPGtype *type, const char *size);
 struct ECPGtype *ECPGmake_struct_type(struct ECPGstruct_member *rm,
-									  enum ECPGttype type, char *type_name,
-									  char *struct_sizeof);
+									  enum ECPGttype type,
+									  const char *type_name,
+									  const char *struct_sizeof);
 struct ECPGstruct_member *ECPGstruct_member_dup(struct ECPGstruct_member *rm);
 
 /* Frees a type. */

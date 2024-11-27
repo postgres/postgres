@@ -94,13 +94,14 @@ ECPGmake_array_type(struct ECPGtype *type, const char *size)
 }
 
 struct ECPGtype *
-ECPGmake_struct_type(struct ECPGstruct_member *rm, enum ECPGttype type, char *type_name, char *struct_sizeof)
+ECPGmake_struct_type(struct ECPGstruct_member *rm, enum ECPGttype type,
+					 const char *type_name, const char *struct_sizeof)
 {
 	struct ECPGtype *ne = ECPGmake_simple_type(type, "1", 0);
 
 	ne->type_name = mm_strdup(type_name);
 	ne->u.members = ECPGstruct_member_dup(rm);
-	ne->struct_sizeof = struct_sizeof;
+	ne->struct_sizeof = mm_strdup(struct_sizeof);
 
 	return ne;
 }
@@ -622,7 +623,7 @@ ECPGfree_struct_member(struct ECPGstruct_member *rm)
 
 		rm = rm->next;
 		free(p->name);
-		free(p->type);
+		ECPGfree_type(p->type);
 		free(p);
 	}
 }
@@ -643,14 +644,13 @@ ECPGfree_type(struct ECPGtype *type)
 					case ECPGt_struct:
 					case ECPGt_union:
 						/* Array of structs. */
-						ECPGfree_struct_member(type->u.element->u.members);
-						free(type->u.element);
+						ECPGfree_type(type->u.element);
 						break;
 					default:
 						if (!IS_SIMPLE_TYPE(type->u.element->type))
 							base_yyerror("internal error: unknown datatype, please report this to <" PACKAGE_BUGREPORT ">");
 
-						free(type->u.element);
+						ECPGfree_type(type->u.element);
 				}
 				break;
 			case ECPGt_struct:
@@ -662,6 +662,9 @@ ECPGfree_type(struct ECPGtype *type)
 				break;
 		}
 	}
+	free(type->type_name);
+	free(type->size);
+	free(type->struct_sizeof);
 	free(type);
 }
 

@@ -277,7 +277,12 @@ remove_typedefs(int brace_level)
 				prev->next = p->next;
 
 			if (p->type->type_enum == ECPGt_struct || p->type->type_enum == ECPGt_union)
-				free(p->struct_member_list);
+				ECPGfree_struct_member(p->struct_member_list);
+			free(p->type->type_storage);
+			free(p->type->type_str);
+			free(p->type->type_dimension);
+			free(p->type->type_index);
+			free(p->type->type_sizeof);
 			free(p->type);
 			free(p->name);
 			free(p);
