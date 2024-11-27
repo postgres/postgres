@@ -1197,7 +1197,7 @@ CREATE COLLATION ignore_accents (provider = icu, locale = 'und-u-ks-level1-kc-tr
      to a performance penalty.  Note, in particular, that B-tree cannot use
      deduplication with indexes that use a nondeterministic collation.  Also,
      certain operations are not possible with nondeterministic collations,
-     such as pattern matching operations.  Therefore, they should be used
+     such as some pattern matching operations.  Therefore, they should be used
      only in cases where they are specifically wanted.
     </para>
 
