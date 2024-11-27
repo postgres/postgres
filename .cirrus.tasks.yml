@@ -427,6 +427,20 @@ task:
     CCACHE_DIR: ${HOME}/ccache
     MACPORTS_CACHE: ${HOME}/macports-cache
 
+    MACOS_PACKAGE_LIST: >-
+      ccache
+      icu
+      kerberos5
+      lz4
+      meson
+      openldap
+      openssl
+      p5.34-io-tty
+      p5.34-ipc-run
+      python312
+      tcl
+      zstd
+
     CC: ccache cc
     CXX: ccache c++
     CFLAGS: -Og -ggdb
@@ -463,26 +477,14 @@ task:
   macports_cache:
     folder: ${MACPORTS_CACHE}
     fingerprint_script: |
-      # Include the OS major version in the cache key.  If the OS image changes
-      # to a different major version, we need to reinstall.
+      # Reinstall packages if the OS major version, the list of the packages
+      # to install or the MacPorts install script changes.
       sw_vers -productVersion | sed 's/\..*//'
-      # Also start afresh if we change our MacPorts install script.
+      echo $MACOS_PACKAGE_LIST
       md5 src/tools/ci/ci_macports_packages.sh
     reupload_on_changes: true
   setup_additional_packages_script: |
-    sh src/tools/ci/ci_macports_packages.sh \
-      ccache \
-      icu \
-      kerberos5 \
-      lz4 \
-      meson \
-      openldap \
-      openssl \
-      p5.34-io-tty \
-      p5.34-ipc-run \
-      python312 \
-      tcl \
-      zstd
+    sh src/tools/ci/ci_macports_packages.sh $MACOS_PACKAGE_LIST
     # system python doesn't provide headers
     sudo /opt/local/bin/port select python3 python312
     # Make macports install visible for subsequent steps
