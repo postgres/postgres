@@ -59,11 +59,18 @@ if [ -n "$(port -q installed installed)" ] ; then
     sudo port unsetrequested installed
 fi
 
-# if setting all the required packages as requested fails, we need
-# to install at least one of them
-if ! sudo port setrequested $packages > /dev/null 2>&1 ; then
-    echo not all required packages installed, doing so now
+# If setting all the required packages as requested fails, we need
+# to install at least one of them. Need to do so one-by-one as
+# port setrequested only reports failures for the first package.
+echo "checking if all required packages are installed"
+for package in $packages ; do
+  if ! sudo port setrequested $package > /dev/null 2>&1 ; then
     update_cached_image=1
+  fi
+done
+echo "done"
+if [ "$update_cached_image" -eq 1 ]; then
+    echo not all required packages installed, doing so now
     # to keep the image small, we deleted the ports tree from the image...
     sudo port selfupdate
     # XXX likely we'll need some other way to force an upgrade at some
