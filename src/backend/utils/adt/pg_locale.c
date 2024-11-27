@@ -1017,21 +1017,12 @@ cache_locale_time(void)
  * get ISO Locale name directly by using GetLocaleInfoEx() with LCType as
  * LOCALE_SNAME.
  *
- * MinGW headers declare _create_locale(), but msvcrt.dll lacks that symbol in
- * releases before Windows 8. IsoLocaleName() always fails in a MinGW-built
- * postgres.exe, so only Unix-style values of the lc_messages GUC can elicit
- * localized messages. In particular, every lc_messages setting that initdb
- * can select automatically will yield only C-locale messages. XXX This could
- * be fixed by running the fully-qualified locale name through a lookup table.
- *
  * This function returns a pointer to a static buffer bearing the converted
  * name or NULL if conversion fails.
  *
  * [1] https://docs.microsoft.com/en-us/windows/win32/intl/locale-identifiers
  * [2] https://docs.microsoft.com/en-us/windows/win32/intl/locale-names
  */
-
-#if defined(_MSC_VER)
 
 /*
  * Callback function for EnumSystemLocalesEx() in get_iso_localename().
@@ -1200,16 +1191,6 @@ IsoLocaleName(const char *winlocname)
 	else
 		return get_iso_localename(winlocname);
 }
-
-#else							/* !defined(_MSC_VER) */
-
-static char *
-IsoLocaleName(const char *winlocname)
-{
-	return NULL;				/* Not supported on MinGW */
-}
-
-#endif							/* defined(_MSC_VER) */
 
 #endif							/* WIN32 && LC_MESSAGES */
 
