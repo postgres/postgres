@@ -512,7 +512,7 @@ ECPGget_desc(int lineno, const char *desc_name, int index,...)
 		}
 #ifdef WIN32
 		if (stmt.oldthreadlocale != -1)
-			(void) _configthreadlocale(stmt.oldthreadlocale);
+			_configthreadlocale(stmt.oldthreadlocale);
 #endif
 #endif
 	}
