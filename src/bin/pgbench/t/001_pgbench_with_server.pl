@@ -968,6 +968,180 @@ $node->pgbench(
 }
 	});
 
+# Try SET LOCAL as first pipeline command.  This succeeds and the first
+# command is not executed inside an implicit transaction block, causing
+# a WARNING.
+$node->pgbench(
+	'-t 1 -n -M extended',
+	0,
+	[],
+	[qr{WARNING:  SET LOCAL can only be used in transaction blocks}],
+	'SET LOCAL outside implicit transaction block of pipeline',
+	{
+		'001_pgbench_pipeline_set_local_1' => q{
+\startpipeline
+SET LOCAL statement_timeout='1h';
+\endpipeline
+}
+	});
+
+# Try SET LOCAL as second pipeline command.  This succeeds and the second
+# command does not cause a WARNING to be generated.
+$node->pgbench(
+	'-t 1 -n -M extended',
+	0,
+	[],
+	[qr{^$}],
+	'SET LOCAL inside implicit transaction block of pipeline',
+	{
+		'001_pgbench_pipeline_set_local_2' => q{
+\startpipeline
+SELECT 1;
+SET LOCAL statement_timeout='1h';
+\endpipeline
+}
+	});
+
+# Try SET LOCAL with \syncpipeline.  This succeeds and the command
+# launched after the sync is outside the implicit transaction block
+# of the pipeline, causing a WARNING.
+$node->pgbench(
+	'-t 1 -n -M extended',
+	0,
+	[],
+	[qr{WARNING:  SET LOCAL can only be used in transaction blocks}],
+	'SET LOCAL and \syncpipeline',
+	{
+		'001_pgbench_pipeline_set_local_3' => q{
+\startpipeline
+SELECT 1;
+\syncpipeline
+SET LOCAL statement_timeout='1h';
+\endpipeline
+}
+	});
+
+# Try REINDEX CONCURRENTLY as first pipeline command.  This succeeds
+# as the first command is outside the implicit transaction block of
+# a pipeline.
+$node->pgbench(
+	'-t 1 -n -M extended',
+	0,
+	[],
+	[],
+	'REINDEX CONCURRENTLY outside implicit transaction block of pipeline',
+	{
+		'001_pgbench_pipeline_reindex_1' => q{
+\startpipeline
+REINDEX TABLE CONCURRENTLY pgbench_accounts;
+SELECT 1;
+\endpipeline
+}
+	});
+
+# Try REINDEX CONCURRENTLY as second pipeline command.  This fails
+# as the second command is inside an implicit transaction block.
+$node->pgbench(
+	'-t 1 -n -M extended',
+	2,
+	[],
+	[],
+	'error: REINDEX CONCURRENTLY inside implicit transaction block of pipeline',
+	{
+		'001_pgbench_pipeline_reindex_2' => q{
+\startpipeline
+SELECT 1;
+REINDEX TABLE CONCURRENTLY pgbench_accounts;
+\endpipeline
+}
+	});
+
+# Try VACUUM as first pipeline command.  Like REINDEX CONCURRENTLY, this
+# succeeds as this is outside the implicit transaction block of a pipeline.
+$node->pgbench(
+	'-t 1 -n -M extended',
+	0,
+	[],
+	[],
+	'VACUUM outside implicit transaction block of pipeline',
+	{
+		'001_pgbench_pipeline_vacuum_1' => q{
+\startpipeline
+VACUUM pgbench_accounts;
+\endpipeline
+}
+	});
+
+# Try VACUUM as second pipeline command.  This fails, as the second command
+# of a pipeline is inside an implicit transaction block.
+$node->pgbench(
+	'-t 1 -n -M extended',
+	2,
+	[],
+	[],
+	'error: VACUUM inside implicit transaction block of pipeline',
+	{
+		'001_pgbench_pipeline_vacuum_2' => q{
+\startpipeline
+SELECT 1;
+VACUUM pgbench_accounts;
+\endpipeline
+}
+	});
+
+# Try subtransactions in a pipeline.  These are forbidden in implicit
+# transaction blocks.
+$node->pgbench(
+	'-t 1 -n -M extended',
+	2,
+	[],
+	[],
+	'error: subtransactions not allowed in pipeline',
+	{
+		'001_pgbench_pipeline_subtrans' => q{
+\startpipeline
+SAVEPOINT a;
+SELECT 1;
+ROLLBACK TO SAVEPOINT a;
+SELECT 2;
+\endpipeline
+}
+	});
+
+# Try LOCK TABLE as first pipeline command.  This fails as LOCK is outside
+# an implicit transaction block.
+$node->pgbench(
+	'-t 1 -n -M extended',
+	2,
+	[],
+	[],
+	'error: LOCK TABLE outside implicit transaction block of pipeline',
+	{
+		'001_pgbench_pipeline_lock_1' => q{
+\startpipeline
+LOCK pgbench_accounts;
+SELECT 1;
+\endpipeline
+}
+	});
+
+# Try LOCK TABLE as second pipeline command.  This succeeds as LOCK is inside
+# an implicit transaction block.
+$node->pgbench(
+	'-t 1 -n -M extended',
+	0,
+	[],
+	[],
+	'LOCK TABLE inside implicit transaction block of pipeline',
+	{
+		'001_pgbench_pipeline_lock_2' => q{
+\startpipeline
+SELECT 1;
+LOCK pgbench_accounts;
+\endpipeline
+}
+	});
+
 # Working \startpipeline in prepared query mode with serializable
 $node->pgbench(
 	'-c4 -t 10 -n -M prepared',
