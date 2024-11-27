@@ -361,7 +361,7 @@ $node_subscriber->safe_psql(
 # Verify that an error occurs.
 my $offset = -s $node_subscriber->logfile;
 $node_subscriber->wait_for_log(
-	qr/ERROR: ( [A-Z0-9]:)? logical replication target relation "public.t1" has incompatible generated columns: "c2", "c3"/,
+	qr/ERROR: ( [A-Z0-9]+:)? logical replication target relation "public.t1" has incompatible generated columns: "c2", "c3"/,
 	$offset);
 
 # cleanup
