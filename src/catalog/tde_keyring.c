@@ -52,6 +52,7 @@ typedef enum ProviderScanType
 static FileKeyring *load_file_keyring_provider_options(char *keyring_options);
 static GenericKeyring *load_keyring_provider_options(ProviderType provider_type, char *keyring_options);
 static VaultV2Keyring *load_vaultV2_keyring_provider_options(char *keyring_options);
+static KmipKeyring *load_kmip_keyring_provider_options(char *keyring_options);
 static void debug_print_kerying(GenericKeyring *keyring);
 static GenericKeyring *load_keyring_provider_from_record(KeyringProvideRecord *provider);
 static inline void get_keyring_infofile_path(char *resPath, Oid dbOid);
@@ -149,6 +150,8 @@ get_keyring_provider_from_typename(char *provider_type)
 		return FILE_KEY_PROVIDER;
 	if (strcmp(VAULTV2_KEYRING_TYPE, provider_type) == 0)
 		return VAULT_V2_KEY_PROVIDER;
+	if (strcmp(KMIP_KEYRING_TYPE, provider_type) == 0)
+		return KMIP_KEY_PROVIDER;
 	return UNKNOWN_KEY_PROVIDER;
 }
 
@@ -161,6 +164,8 @@ get_keyring_provider_typename(ProviderType p_type)
 			return FILE_KEYRING_TYPE;
 		case VAULT_V2_KEY_PROVIDER:
 			return VAULTV2_KEYRING_TYPE;
+		case KMIP_KEY_PROVIDER:
+			return KMIP_KEYRING_TYPE;
 		default:
 			break;
 	}
@@ -559,6 +564,9 @@ load_keyring_provider_options(ProviderType provider_type, char *keyring_options)
 		case VAULT_V2_KEY_PROVIDER:
 			return (GenericKeyring *) load_vaultV2_keyring_provider_options(keyring_options);
 			break;
+		case KMIP_KEY_PROVIDER:
+			return (GenericKeyring *)load_kmip_keyring_provider_options(keyring_options);
+			break;
 		default:
 			break;
 	}
@@ -618,6 +626,35 @@ load_vaultV2_keyring_provider_options(char *keyring_options)
 	return vaultV2_keyring;
 }
 
+static KmipKeyring *
+load_kmip_keyring_provider_options(char *keyring_options)
+{
+	KmipKeyring *kmip_keyring = palloc0(sizeof(KmipKeyring));
+
+	kmip_keyring->keyring.type = KMIP_KEY_PROVIDER;
+
+	if (!ParseKeyringJSONOptions(KMIP_KEY_PROVIDER, kmip_keyring,
+								 keyring_options, strlen(keyring_options)))
+	{
+		return NULL;
+	}
+
+	if (strlen(kmip_keyring->kmip_host) == 0 ||
+		strlen(kmip_keyring->kmip_ca_path) == 0 ||
+		strlen(kmip_keyring->kmip_cert_path) == 0)
+	{
+		ereport(WARNING,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("missing in the keyring options:%s%s%s",
+						*(kmip_keyring->kmip_host) ? "" : " kmip_host",
+						*(kmip_keyring->kmip_ca_path) ? "" : " kmip_ca_path",
+						*(kmip_keyring->kmip_cert_path) ? "" : " kmip_cert_path")));
+		return NULL;
+	}
+
+	return kmip_keyring;
+}
+
 static void
 debug_print_kerying(GenericKeyring *keyring)
 {
@@ -637,6 +674,12 @@ debug_print_kerying(GenericKeyring *keyring)
 			elog(debug_level, "Vault Keyring Mount Path: %s", ((VaultV2Keyring *) keyring)->vault_mount_path);
 			elog(debug_level, "Vault Keyring CA Path: %s", ((VaultV2Keyring *) keyring)->vault_ca_path);
 			break;
+       case KMIP_KEY_PROVIDER:                                                                                                   
+            elog(debug_level, "KMIP Keyring Host: %s", ((KmipKeyring *)keyring)->kmip_host);                                  
+            elog(debug_level, "KMIP Keyring Port: %s", ((KmipKeyring *)keyring)->kmip_port);                                  
+            elog(debug_level, "KMIP Keyring CA Path: %s", ((KmipKeyring *)keyring)->kmip_ca_path);                            
+            elog(debug_level, "KMIP Keyring Cert Path: %s", ((KmipKeyring *)keyring)->kmip_cert_path);                        
+            break; 
 		case UNKNOWN_KEY_PROVIDER:
 			elog(debug_level, "Unknown Keyring ");
 			break;

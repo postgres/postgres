@@ -30,7 +30,7 @@ jobs:
             libsystemd-dev gettext tcl-dev libperl-dev pkg-config clang-11 \
             llvm-11 llvm-11-dev libselinux1-dev python3-dev \
             uuid-dev liblz4-dev meson ninja-build  \
-            gpg wget libcurl4-openssl-dev libhttp-server-simple-perl
+            gpg wget libcurl4-openssl-dev libhttp-server-simple-perl python3-pykmip
           sudo /usr/bin/perl -MCPAN -e 'install IPC::Run'
           sudo /usr/bin/perl -MCPAN -e 'install Text::Trim'
           wget -O- https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
@@ -49,20 +49,32 @@ jobs:
         with:
           path: 'src/contrib/pg_tde'
 
+      - name: Checkout libkmip submodule
+        run: |
+          git submodule update --init --recursive
+        working-directory: src/contrib/pg_tde
+
       - name: Build postgres
         run: |
           meson setup build --prefix `pwd`/../inst --buildtype=debug -Dcassert=true
           cd build && ninja && ninja install
         working-directory: src
 
+      - name: Setup kmip 1
+        run: |
+          wget https://raw.githubusercontent.com/OpenKMIP/PyKMIP/refs/heads/master/bin/create_certificates.py
+          python3 create_certificates.py
+          cat client_certificate_jane_doe.pem >> client_key_jane_doe.pem
+        working-directory: /tmp
+
       - name: Test pg_tde
         run: |
           TV=$(mktemp)
           { exec >$TV; vault server -dev; } &
+          pykmip-server -f `pwd`/../contrib/pg_tde/pykmip-server.conf -l /tmp/kmip-server.log &
           sleep 10
           export ROOT_TOKEN=$(cat $TV | grep "Root Token" | cut -d ":" -f 2 | xargs echo -n)
           echo "Root token: $ROOT_TOKEN"
-
           meson test --suite setup -v
           meson test --suite pg_tde -v --num-processes 1
         working-directory: src/build

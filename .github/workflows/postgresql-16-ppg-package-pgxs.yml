@@ -29,7 +29,7 @@ jobs:
         run: |
           sudo apt-get install -y libreadline6-dev systemtap-sdt-dev wget \
             zlib1g-dev libssl-dev libpam0g-dev bison flex libipc-run-perl \
-            libcurl4-openssl-dev  libhttp-server-simple-perl
+            libcurl4-openssl-dev  libhttp-server-simple-perl python3-pykmip
           sudo /usr/bin/perl -MCPAN -e 'install IPC::Run'
           sudo /usr/bin/perl -MCPAN -e 'install Text::Trim'
           wget -O- https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
@@ -64,6 +64,11 @@ jobs:
         with:
           path: 'src/pg_tde'
 
+      - name: Checkout libkmip submodule
+        run: |
+          git submodule update --init --recursive
+        working-directory: src/pg_tde
+
       - name: Change src owner to postgres
         run: |
           sudo chmod o+rx ~
@@ -76,10 +81,18 @@ jobs:
           sudo make USE_PGXS=1 install
         working-directory: src/pg_tde
 
+      - name: Setup kmip 1
+        run: |
+          wget https://raw.githubusercontent.com/OpenKMIP/PyKMIP/refs/heads/master/bin/create_certificates.py
+          python3 create_certificates.py
+          cat client_certificate_jane_doe.pem >> client_key_jane_doe.pem
+        working-directory: /tmp
+
       - name: Start pg_tde tests
         run: |
           TV=$(mktemp)
           { exec >$TV; vault server -dev; } &
+          pykmip-server -f `pwd`/../contrib/pg_tde/pykmip-server.conf -l /tmp/kmip-server.log &
           sleep 10
           export ROOT_TOKEN=$(cat $TV | grep "Root Token" | cut -d ":" -f 2 | xargs echo -n)
           echo "Root token: $ROOT_TOKEN"

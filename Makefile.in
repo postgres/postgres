@@ -46,6 +46,8 @@ src/transam/pg_tde_xact_handler.o \
 src/keyring/keyring_curl.o \
 src/keyring/keyring_file.o \
 src/keyring/keyring_vault.o \
+src/keyring/keyring_kmip.o \
+src/keyring/keyring_kmip_ereport.o \
 src/keyring/keyring_api.o \
 src/catalog/tde_global_space.o \
 src/catalog/tde_keyring.o \
@@ -56,19 +58,23 @@ src/common/pg_tde_utils.o \
 src/smgr/pg_tde_smgr.o \
 src/pg_tde_defs.o \
 src/pg_tde_event_capture.o \
-src/pg_tde.o
+src/pg_tde.o \
+src/libkmip/libkmip/src/kmip.o \
+src/libkmip/libkmip/src/kmip_bio.o \
+src/libkmip/libkmip/src/kmip_locate.o \
+src/libkmip/libkmip/src/kmip_memset.o
 
 override PG_CPPFLAGS += @tde_CPPFLAGS@
 
 ifdef USE_PGXS
 PG_CONFIG = pg_config
 PGXS := $(shell $(PG_CONFIG) --pgxs)
-override PG_CPPFLAGS += -I$(CURDIR)/src/include -I$(CURDIR)/src$(MAJORVERSION)/include
+override PG_CPPFLAGS += -I$(CURDIR)/src/include -I$(CURDIR)/src/libkmip/libkmip/include -I$(CURDIR)/src$(MAJORVERSION)/include
 include $(PGXS)
 else
 subdir = contrib/pg_tde
 top_builddir = ../..
-override PG_CPPFLAGS += -I$(top_srcdir)/$(subdir)/src/include -I$(top_srcdir)/$(subdir)/src$(MAJORVERSION)/include
+override PG_CPPFLAGS += -I$(top_srcdir)/$(subdir)/src/include  -I$(top_srcdir)/$(subdir)/src/libkmip/libkmip/include -I$(top_srcdir)/$(subdir)/src$(MAJORVERSION)/include
 include $(top_builddir)/src/Makefile.global
 include $(top_srcdir)/contrib/contrib-global.mk
 endif

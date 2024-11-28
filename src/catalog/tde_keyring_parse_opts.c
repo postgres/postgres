@@ -69,6 +69,11 @@ typedef enum JsonKeyringField
 	JK_VAULT_MOUNT_PATH,
 	JK_VAULT_CA_PATH,
 
+	JK_KMIP_HOST,
+	JK_KMIP_PORT,
+	JK_KMIP_CA_PATH,
+	JK_KMIP_CERT_PATH,
+
 	/* must be the last */
 	JK_FIELDS_TOTAL
 } JsonKeyringField;
@@ -89,6 +94,11 @@ static const char *JK_FIELD_NAMES[JK_FIELDS_TOTAL] = {
 	[JK_VAULT_URL] = "url",
 	[JK_VAULT_MOUNT_PATH] = "mountPath",
 	[JK_VAULT_CA_PATH] = "caPath",
+
+	[JK_KMIP_HOST] = "host",
+	[JK_KMIP_PORT] = "port",
+	[JK_KMIP_CA_PATH] = "caPath",
+	[JK_KMIP_CERT_PATH] = "certPath",
 };
 
 #define MAX_JSON_DEPTH 64
@@ -331,6 +341,26 @@ json_kring_object_field_start(void *state, char *fname, bool isnull)
 						elog(DEBUG1, "parse json keyring config: unexpected field %s", fname);
 					}
 					break;
+
+				case KMIP_KEY_PROVIDER:
+					if (strcmp(fname, JK_FIELD_NAMES[JK_KMIP_HOST]) == 0)
+						*field = JK_KMIP_HOST;
+					else if (strcmp(fname, JK_FIELD_NAMES[JK_KMIP_PORT]) == 0)
+						*field = JK_KMIP_PORT;
+					else if (strcmp(fname, JK_FIELD_NAMES[JK_KMIP_CA_PATH]) == 0)
+						*field = JK_KMIP_CA_PATH;
+					else if (strcmp(fname, JK_FIELD_NAMES[JK_KMIP_CERT_PATH]) == 0)
+						*field = JK_KMIP_CERT_PATH;
+					else
+					{
+						*field = JK_FIELD_UNKNOWN;
+						elog(DEBUG1, "parse json keyring config: unexpected field %s", fname);
+					}
+					break;
+
+				case UNKNOWN_KEY_PROVIDER:
+					Assert(0);
+					break;
 			}
 			break;
 
@@ -368,6 +398,7 @@ json_kring_assign_scalar(JsonKeyringState *parse, JsonKeyringField field, char *
 {
 	VaultV2Keyring *vault = parse->provider_opts;
 	FileKeyring *file = parse->provider_opts;
+	KmipKeyring *kmip = parse->provider_opts;
 
 	switch (field)
 	{
@@ -401,6 +432,19 @@ json_kring_assign_scalar(JsonKeyringState *parse, JsonKeyringField field, char *
 		case JK_VAULT_CA_PATH:
 			strncpy(vault->vault_ca_path, value, sizeof(vault->vault_ca_path));
 			break;
+
+       case JK_KMIP_HOST:
+               strncpy(kmip->kmip_host, value, sizeof(kmip->kmip_host));                                                         
+               break;                                                                                                            
+       case JK_KMIP_PORT:                                                                                                        
+               strncpy(kmip->kmip_port, value, sizeof(kmip->kmip_port));                                                         
+               break;                                                                                                            
+       case JK_KMIP_CA_PATH:                                                                                                     
+               strncpy(kmip->kmip_ca_path, value, sizeof(kmip->kmip_ca_path));                                                   
+               break;                                                                                                            
+       case JK_KMIP_CERT_PATH:                                                                                                   
+               strncpy(kmip->kmip_cert_path, value, sizeof(kmip->kmip_cert_path));                                               
+               break;           
 
 		default:
 			elog(DEBUG1, "json keyring: unexpected scalar field %d", field);

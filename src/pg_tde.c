@@ -31,6 +31,7 @@
 #include "catalog/tde_principal_key.h"
 #include "keyring/keyring_file.h"
 #include "keyring/keyring_vault.h"
+#include "keyring/keyring_kmip.h"
 #include "utils/builtins.h"
 #include "pg_tde_defs.h"
 #include "smgr/pg_tde_smgr.h"
@@ -125,6 +126,7 @@ _PG_init(void)
 	SetupTdeDDLHooks();
 	InstallFileKeyring();
 	InstallVaultV2Keyring();
+	InstallKmipKeyring();
 	RegisterCustomRmgr(RM_TDERMGR_ID, &tdeheap_rmgr);
 
 	RegisterStorageMgr();

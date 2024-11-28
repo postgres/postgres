@@ -15,15 +15,17 @@
 #include "encryption/enc_aes.h"
 #include "keyring/keyring_file.h"
 #include "keyring/keyring_vault.h"
+#include "keyring/keyring_kmip.h"
 
 /* Frontend has to call it needs to read an encrypted XLog */
 #define TDE_XLOG_INIT(kring_dir)	\
 	AesInit();						\
 	InstallFileKeyring();			\
 	InstallVaultV2Keyring();		\
+	InstallKmipKeyring();		    \
 	TDEInitGlobalKeys(kring_dir);	\
 	TDEXLogSmgrInit()
 
 #endif /* PERCONA_EXT */
 
-#endif /* PG_TDE_XLOGENCRYPT_FE_H */
+#endif							/* PG_TDE_XLOGENCRYPT_FE_H */

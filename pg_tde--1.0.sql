@@ -75,6 +75,41 @@ AS $$
 $$
 LANGUAGE SQL;
 
+CREATE OR REPLACE FUNCTION pg_tde_add_key_provider_kmip(provider_name VARCHAR(128),
+                                                        kmip_host TEXT,
+                                                        kmip_port INT,
+                                                        kmip_ca_path TEXT,
+                                                        kmip_cert_path TEXT)
+RETURNS INT
+AS $$
+-- JSON keys in the options must be matched to the keys in
+-- load_kmip_keyring_provider_options function.
+    SELECT pg_tde_add_key_provider('kmip', provider_name,
+                            json_object('type' VALUE 'kmip',
+                            'host' VALUE COALESCE(kmip_host,''),
+                            'port' VALUE kmip_port,
+                            'caPath' VALUE COALESCE(kmip_ca_path,''),
+                            'certPath' VALUE COALESCE(kmip_cert_path,'')));
+$$
+LANGUAGE SQL;
+CREATE OR REPLACE FUNCTION pg_tde_add_key_provider_kmip(provider_name VARCHAR(128),
+                                                        kmip_host JSON,
+                                                        kmip_port JSON,
+                                                        kmip_ca_path JSON,
+                                                        kmip_cert_path JSON)
+RETURNS INT
+AS $$
+-- JSON keys in the options must be matched to the keys in
+-- load_kmip_keyring_provider_options function.
+    SELECT pg_tde_add_key_provider('kmip', provider_name,
+                            json_object('type' VALUE 'kmip',
+                            'host' VALUE kmip_host,
+                            'port' VALUE kmip_port,
+                            'caPath' VALUE kmip_ca_path,
+                            'certPath' VALUE kmip_cert_path));
+$$
+LANGUAGE SQL;
+
 CREATE FUNCTION pg_tde_list_all_key_providers
     (OUT id INT,
     OUT provider_name VARCHAR(128),
@@ -149,6 +184,43 @@ AS $$
                             'token' VALUE vault_token,
                             'mountPath' VALUE vault_mount_path,
                             'caPath' VALUE vault_ca_path));
+$$
+LANGUAGE SQL;
+
+CREATE OR REPLACE FUNCTION pg_tde_add_key_provider_kmip(PG_TDE_GLOBAL, 
+                                                        provider_name VARCHAR(128),
+                                                        kmip_host TEXT,
+                                                        kmip_port INT,
+                                                        kmip_ca_path TEXT,
+                                                        kmip_cert_path TEXT)
+RETURNS INT
+AS $$
+-- JSON keys in the options must be matched to the keys in
+-- load_kmip_keyring_provider_options function.
+    SELECT pg_tde_add_key_provider('PG_TDE_GLOBAL', 'kmip', provider_name,
+                            json_object('type' VALUE 'kmip',
+                            'host' VALUE COALESCE(kmip_host,''),
+                            'port' VALUE kmip_port,
+                            'caPath' VALUE COALESCE(kmip_ca_path,''),
+                            'certPath' VALUE COALESCE(vault_cert_path,'')));
+$$
+LANGUAGE SQL;
+CREATE OR REPLACE FUNCTION pg_tde_add_key_provider_kmip(PG_TDE_GLOBAL, 
+                                                        provider_name VARCHAR(128),
+                                                        kmip_host JSON,
+                                                        kmip_port JSON,
+                                                        kmip_ca_path JSON,
+                                                        kmip_cert_path JSON)
+RETURNS INT
+AS $$
+-- JSON keys in the options must be matched to the keys in
+-- load_kmip_keyring_provider_options function.
+    SELECT pg_tde_add_key_provider('PG_TDE_GLOBAL', 'vault-v2', provider_name,
+                            json_object('type' VALUE 'vault-v2',
+                            'host' VALUE kmip_host,
+                            'port' VALUE kmip_port,
+                            'caPath' VALUE kmip_ca_path,
+                            'certPath' VALUE kmip_cert_path));
 $$
 LANGUAGE SQL;
 
