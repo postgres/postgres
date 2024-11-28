@@ -2611,6 +2611,17 @@ pullup_replace_vars_callback(Var *var,
 				 * the plan in cases where the nullingrels get removed again
 				 * later by outer join reduction.
 				 *
+				 * Note that we don't force wrapping of expressions containing
+				 * lateral references, so long as they also contain Vars/PHVs
+				 * of the subquery.  This is okay because of the restriction
+				 * to strict constructs: if the subquery's Vars/PHVs have been
+				 * forced to NULL by an outer join then the end result of the
+				 * expression will be NULL too, regardless of the lateral
+				 * references.  So it's not necessary to force the expression
+				 * to be evaluated below the outer join.  This can be a very
+				 * valuable optimization, because it may allow us to avoid
+				 * using a nested loop to pass the lateral reference down.
+				 *
 				 * This analysis could be tighter: in particular, a non-strict
 				 * construct hidden within a lower-level PlaceHolderVar is not
 				 * reason to add another PHV.  But for now it doesn't seem
@@ -2675,9 +2686,13 @@ pullup_replace_vars_callback(Var *var,
 		}
 		else
 		{
-			/* There should be lower-level Vars/PHVs we can modify */
+			/*
+			 * There should be Vars/PHVs within the expression that we can
+			 * modify.  Per above discussion, modify only Vars/PHVs of the
+			 * subquery, not lateral references.
+			 */
 			newnode = add_nulling_relids(newnode,
-										 NULL,	/* modify all Vars/PHVs */
+										 rcon->relids,
 										 var->varnullingrels);
 			/* Assert we did put the varnullingrels into the expression */
 			Assert(bms_is_subset(var->varnullingrels,
