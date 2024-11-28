@@ -198,7 +198,7 @@ typedef struct ReorderBufferChange
 	((txn)->txn_flags & RBTXN_IS_SERIALIZED_CLEAR) != 0 \
 )
 
-/* Has this transaction contains partial changes? */
+/* Does this transaction contain partial changes? */
 #define rbtxn_has_partial_change(txn) \
 ( \
 	((txn)->txn_flags & RBTXN_HAS_PARTIAL_CHANGE) != 0 \
