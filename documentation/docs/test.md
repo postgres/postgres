@@ -10,13 +10,13 @@ Here's how to do it:
 
 1. Create a table in the database for which you have [enabled `pg_tde`](setup.md) using the `tde_heap` access method as follows:
 
-    ```sql
+    ```
     CREATE TABLE <table_name> (<field> <datatype>) USING tde_heap;
     ```
 
     <i warning>:material-information: Warning:</i> Example for testing purposes only:
 
-    ```sql
+    ```
     CREATE TABLE albums (
     album_id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     artist_id INTEGER,
@@ -29,7 +29,7 @@ Here's how to do it:
 
 2. To check if the data is encrypted, run the following function:
 
-    ```sql
+    ```
     SELECT pg_tde_is_encrypted('table_name');
     ```
 
@@ -37,7 +37,7 @@ Here's how to do it:
 
 3. Rotate the principal key when needed:
 
-    ```sql
+    ```
     SELECT pg_tde_rotate_principal_key(); -- uses automatic key versionin
     -- or
     SELECT pg_tde_rotate_principal_key('new-principal-key', NULL); -- specify new key name
@@ -47,8 +47,8 @@ Here's how to do it:
 
 4. You can encrypt an existing table. It requires rewriting the table, so for large tables, it might take a considerable amount of time.
 
-    ```sql
-    ALTER TABLE table_name SET access method tde_heap;
+    ```
+    ALTER TABLE table_name SET access method  tde_heap;
     ```
 
 !!! hint

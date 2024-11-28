@@ -6,7 +6,7 @@ Load the `pg_tde` at the start time. The extension requires additional shared me
 
 1. Use the [ALTER SYSTEM](https://www.postgresql.org/docs/current/sql-altersystem.html) command from `psql` terminal to modify the `shared_preload_libraries` parameter.
 
-    ```sql
+    ```
     ALTER SYSTEM SET shared_preload_libraries = 'pg_tde';
     ```
 
@@ -14,19 +14,19 @@ Load the `pg_tde` at the start time. The extension requires additional shared me
 
     * On Debian and Ubuntu:    
 
-       ```sh
-       sudo systemctl restart postgresql.service
+       ```{.bash data-prompt="$"}
+       $ sudo systemctl restart postgresql.service
        ```
     
     * On RHEL and derivatives
 
-       ```sh
-       sudo systemctl restart postgresql-17
+       ```{.bash data-prompt="$"}
+       $ sudo systemctl restart postgresql-17
        ```
 
 3. Create the extension using the [CREATE EXTENSION](https://www.postgresql.org/docs/current/sql-createextension.html) command. You must have the privileges of a superuser or a database owner to use this command. Connect to `psql` as a superuser for a database and run the following command:
 
-    ```sql
+    ```
     CREATE EXTENSION pg_tde;
     ```
     
@@ -46,7 +46,7 @@ Load the `pg_tde` at the start time. The extension requires additional shared me
 
     === "With HashiCorp Vault"
 
-        ```sql
+        ```
         SELECT pg_tde_add_key_provider_vault_v2('provider-name',:'secret_token','url','mount','ca_path');
         ``` 
 
@@ -62,26 +62,26 @@ Load the `pg_tde` at the start time. The extension requires additional shared me
 
         This setup is intended for development and stores the keys unencrypted in the specified data file.    
 
-        ```sql
+        ```
         SELECT pg_tde_add_key_provider_file('provider-name','/path/to/the/keyring/data.file');
         ```
 
 	<i warning>:material-information: Warning:</i> Example for testing purposes only:
 
-	```sql
+	```
 	SELECT pg_tde_add_key_provider_file('file-vault','/tmp/pg_tde_test_local_keyring.per');
 	```
        
        
 2. Add a principal key
 
-    ```sql
+    ```
     SELECT pg_tde_set_principal_key('name-of-the-principal-key', 'provider-name');
     ```
 
     <i warning>:material-information: Warning:</i> Example for testing purposes only:
 
-    ```sql
+    ```
     SELECT pg_tde_set_principal_key('test-db-master-key','file-vault');
     ```
 
@@ -98,7 +98,7 @@ Now you need to instruct `pg_tde ` to encrypt WAL files by configuring WAL encry
 
 1.  Use the `ALTER SYSTEM SET` command. You need the privileges of the superuser to run this command:
 
-    ```sql
+    ```
     ALTER SYSTEM set pg_tde.wal_encrypt = on;
     ```
 
@@ -106,14 +106,14 @@ Now you need to instruct `pg_tde ` to encrypt WAL files by configuring WAL encry
 
     * On Debian and Ubuntu:    
 
-       ```sh
-       sudo systemctl restart postgresql.service
+       ```{.bash data-prompt="$"}
+       $ sudo systemctl restart postgresql.service
        ```
     
     * On RHEL and derivatives
 
-       ```sh
-       sudo systemctl restart postgresql-17
+       ```{.bash data-prompt="$"}
+       $ sudo systemctl restart postgresql-17
        ```
 
 On the server start 
