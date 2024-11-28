@@ -125,6 +125,9 @@ do
 	test "$f" = src/pl/plpgsql/src/pl_gram.h && continue
 	test "$f" = src/interfaces/ecpg/preproc/preproc.h && continue
 
+	# SectionMemoryManager.h is C++
+	test "$f" = src/include/jit/SectionMemoryManager.h && continue
+
 	# ppport.h is not under our control, so we can't make it standalone.
 	test "$f" = src/pl/plperl/ppport.h && continue
 
