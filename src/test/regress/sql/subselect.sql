@@ -908,6 +908,22 @@ select relname::information_schema.sql_identifier as tname, * from
   right join pg_attribute a on a.attrelid = ss2.oid
 where tname = 'tenk1' and attnum = 1;
 
+-- Check behavior when there's a lateral reference in the output expression
+explain (verbose, costs off)
+select t1.ten, sum(x) from
+  tenk1 t1 left join lateral (
+    select t1.ten + t2.ten as x, t2.fivethous from tenk1 t2
+  ) ss on t1.unique1 = ss.fivethous
+group by t1.ten
+order by t1.ten;
+
+select t1.ten, sum(x) from
+  tenk1 t1 left join lateral (
+    select t1.ten + t2.ten as x, t2.fivethous from tenk1 t2
+  ) ss on t1.unique1 = ss.fivethous
+group by t1.ten
+order by t1.ten;
+
 --
 -- Tests for CTE inlining behavior
 --
