@@ -2463,7 +2463,7 @@ match_eclass_clauses_to_index(PlannerInfo *root, IndexOptInfo *index,
 		clauses = generate_implied_equalities_for_column(root,
 														 index->rel,
 														 ec_member_matches_indexcol,
-														 (void *) &arg,
+														 &arg,
 														 index->rel->lateral_referencers);
 
 		/*

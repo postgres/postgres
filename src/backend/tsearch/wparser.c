@@ -63,7 +63,7 @@ tt_setup_firstcall(FuncCallContext *funcctx, FunctionCallInfo fcinfo,
 	/* lextype takes one dummy argument */
 	st->list = (LexDescr *) DatumGetPointer(OidFunctionCall1(prs->lextypeOid,
 															 (Datum) 0));
-	funcctx->user_fctx = (void *) st;
+	funcctx->user_fctx = st;
 
 	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
 		elog(ERROR, "return type must be a row type");
@@ -178,9 +178,9 @@ prs_setup_firstcall(FuncCallContext *funcctx, FunctionCallInfo fcinfo,
 	st->len = 16;
 	st->list = (LexemeEntry *) palloc(sizeof(LexemeEntry) * st->len);
 
-	prsdata = (void *) DatumGetPointer(FunctionCall2(&prs->prsstart,
-													 PointerGetDatum(VARDATA_ANY(txt)),
-													 Int32GetDatum(VARSIZE_ANY_EXHDR(txt))));
+	prsdata = DatumGetPointer(FunctionCall2(&prs->prsstart,
+											PointerGetDatum(VARDATA_ANY(txt)),
+											Int32GetDatum(VARSIZE_ANY_EXHDR(txt))));
 
 	while ((type = DatumGetInt32(FunctionCall3(&prs->prstoken,
 											   PointerGetDatum(prsdata),

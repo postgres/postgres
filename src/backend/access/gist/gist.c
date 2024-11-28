@@ -173,7 +173,7 @@ gistinsert(Relation r, Datum *values, bool *isnull,
 		oldCxt = MemoryContextSwitchTo(indexInfo->ii_Context);
 		giststate = initGISTstate(r);
 		giststate->tempCxt = createTempGistContext();
-		indexInfo->ii_AmCache = (void *) giststate;
+		indexInfo->ii_AmCache = giststate;
 		MemoryContextSwitchTo(oldCxt);
 	}
 

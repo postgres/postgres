@@ -413,7 +413,7 @@ AssertCheckRanges(Ranges *ranges, FmgrInfo *cmpFn, Oid colloid)
 
 			Assert(bsearch_arg(&value, &ranges->values[2 * ranges->nranges],
 							   ranges->nsorted, sizeof(Datum),
-							   compare_values, (void *) &cxt) == NULL);
+							   compare_values, &cxt) == NULL);
 		}
 	}
 #endif
@@ -550,7 +550,7 @@ range_deduplicate_values(Ranges *range)
 		/* same as preceding value, so store it */
 		if (compare_values(&range->values[start + i - 1],
 						   &range->values[start + i],
-						   (void *) &cxt) == 0)
+						   &cxt) == 0)
 			continue;
 
 		range->values[start + n] = range->values[start + i];
@@ -1085,7 +1085,7 @@ range_contains_value(BrinDesc *bdesc, Oid colloid,
 
 		if (bsearch_arg(&newval, &ranges->values[2 * ranges->nranges],
 						ranges->nsorted, sizeof(Datum),
-						compare_values, (void *) &cxt) != NULL)
+						compare_values, &cxt) != NULL)
 			return true;
 	}
 	else
@@ -1206,7 +1206,7 @@ sort_expanded_ranges(FmgrInfo *cmp, Oid colloid,
 	for (i = 1; i < neranges; i++)
 	{
 		/* if the current range is equal to the preceding one, do nothing */
-		if (!compare_expanded_ranges(&eranges[i - 1], &eranges[i], (void *) &cxt))
+		if (!compare_expanded_ranges(&eranges[i - 1], &eranges[i], &cxt))
 			continue;
 
 		/* otherwise, copy it to n-th place (if not already there) */

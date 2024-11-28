@@ -44,7 +44,7 @@ extern bool pg_prng_seed_check(pg_prng_state *state);
  * pg_strong_random.c and thence OpenSSL.
  */
 #define pg_prng_strong_seed(state) \
-	(pg_strong_random((void *) (state), sizeof(pg_prng_state)) ? \
+	(pg_strong_random(state, sizeof(pg_prng_state)) ? \
 	 pg_prng_seed_check(state) : false)
 
 extern uint64 pg_prng_uint64(pg_prng_state *state);

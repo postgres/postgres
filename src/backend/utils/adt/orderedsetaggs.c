@@ -270,7 +270,7 @@ ordered_set_startup(FunctionCallInfo fcinfo, bool use_tuples)
 								 &qstate->typAlign);
 		}
 
-		fcinfo->flinfo->fn_extra = (void *) qstate;
+		fcinfo->flinfo->fn_extra = qstate;
 
 		MemoryContextSwitchTo(oldcontext);
 	}

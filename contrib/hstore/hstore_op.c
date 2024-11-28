@@ -858,7 +858,7 @@ setup_firstcall(FuncCallContext *funcctx, HStore *hs,
 	st = (HStore *) palloc(VARSIZE(hs));
 	memcpy(st, hs, VARSIZE(hs));
 
-	funcctx->user_fctx = (void *) st;
+	funcctx->user_fctx = st;
 
 	if (fcinfo)
 	{

@@ -207,7 +207,7 @@ ShmemAllocRaw(Size size, Size *allocated_size)
 	newFree = newStart + size;
 	if (newFree <= ShmemSegHdr->totalsize)
 	{
-		newSpace = (void *) ((char *) ShmemBase + newStart);
+		newSpace = (char *) ShmemBase + newStart;
 		ShmemSegHdr->freeoffset = newFree;
 	}
 	else
@@ -253,7 +253,7 @@ ShmemAllocUnlocked(Size size)
 						size)));
 	ShmemSegHdr->freeoffset = newFree;
 
-	newSpace = (void *) ((char *) ShmemBase + newStart);
+	newSpace = (char *) ShmemBase + newStart;
 
 	Assert(newSpace == (void *) MAXALIGN(newSpace));
 

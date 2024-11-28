@@ -873,7 +873,7 @@ fmgr_sql_validator(PG_FUNCTION_ARGS)
 		callback_arg.prosrc = prosrc;
 
 		sqlerrcontext.callback = sql_function_parse_error_callback;
-		sqlerrcontext.arg = (void *) &callback_arg;
+		sqlerrcontext.arg = &callback_arg;
 		sqlerrcontext.previous = error_context_stack;
 		error_context_stack = &sqlerrcontext;
 

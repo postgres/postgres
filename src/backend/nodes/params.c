@@ -55,7 +55,7 @@ makeParamList(int numParams)
 	retval->paramCompile = NULL;
 	retval->paramCompileArg = NULL;
 	retval->parserSetup = paramlist_parser_setup;
-	retval->parserSetupArg = (void *) retval;
+	retval->parserSetupArg = retval;
 	retval->paramValuesStr = NULL;
 	retval->numParams = numParams;
 

@@ -719,7 +719,7 @@ bt_check_every_level(Relation rel, Relation heaprel, bool heapkeyspace,
 			 RelationGetRelationName(state->heaprel));
 
 		table_index_build_scan(state->heaprel, state->rel, indexinfo, true, false,
-							   bt_tuple_present_callback, (void *) state, scan);
+							   bt_tuple_present_callback, state, scan);
 
 		ereport(DEBUG1,
 				(errmsg_internal("finished verifying presence of " INT64_FORMAT " tuples from table \"%s\" with bitset %.2f%% set",

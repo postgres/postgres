@@ -257,7 +257,7 @@ jsonb_from_cstring(char *json, int len, bool unique_keys, Node *escontext)
 
 	state.unique_keys = unique_keys;
 	state.escontext = escontext;
-	sem.semstate = (void *) &state;
+	sem.semstate = &state;
 
 	sem.object_start = jsonb_in_object_start;
 	sem.array_start = jsonb_in_array_start;
@@ -758,7 +758,7 @@ datum_to_jsonb_internal(Datum val, bool is_null, JsonbInState *result,
 
 					memset(&sem, 0, sizeof(sem));
 
-					sem.semstate = (void *) result;
+					sem.semstate = result;
 
 					sem.object_start = jsonb_in_object_start;
 					sem.array_start = jsonb_in_array_start;

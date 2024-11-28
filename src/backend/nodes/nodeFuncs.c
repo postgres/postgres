@@ -2020,7 +2020,7 @@ check_functions_in_node(Node *node, check_function_callback checker,
  *			... do special actions for other node types
  *		}
  *		// for any node type not specially processed, do:
- *		return expression_tree_walker(node, my_walker, (void *) context);
+ *		return expression_tree_walker(node, my_walker, context);
  * }
  *
  * The "context" argument points to a struct that holds whatever context
@@ -2893,7 +2893,7 @@ range_table_entry_walker_impl(RangeTblEntry *rte,
  *			... do special transformations of other node types
  *		}
  *		// for any node type not specially processed, do:
- *		return expression_tree_mutator(node, my_mutator, (void *) context);
+ *		return expression_tree_mutator(node, my_mutator, context);
  * }
  *
  * The "context" argument points to a struct that holds whatever context

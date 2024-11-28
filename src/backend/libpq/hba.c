@@ -702,7 +702,7 @@ tokenize_auth_file(const char *filename, FILE *file, List **tok_lines,
 	callback_arg.linenum = line_number;
 
 	tokenerrcontext.callback = tokenize_error_callback;
-	tokenerrcontext.arg = (void *) &callback_arg;
+	tokenerrcontext.arg = &callback_arg;
 	tokenerrcontext.previous = error_context_stack;
 	error_context_stack = &tokenerrcontext;
 

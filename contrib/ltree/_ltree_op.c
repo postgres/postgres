@@ -73,7 +73,7 @@ _ltree_isparent(PG_FUNCTION_ARGS)
 {
 	ArrayType  *la = PG_GETARG_ARRAYTYPE_P(0);
 	ltree	   *query = PG_GETARG_LTREE_P(1);
-	bool		res = array_iterator(la, ltree_isparent, (void *) query, NULL);
+	bool		res = array_iterator(la, ltree_isparent, query, NULL);
 
 	PG_FREE_IF_COPY(la, 0);
 	PG_FREE_IF_COPY(query, 1);
@@ -94,7 +94,7 @@ _ltree_risparent(PG_FUNCTION_ARGS)
 {
 	ArrayType  *la = PG_GETARG_ARRAYTYPE_P(0);
 	ltree	   *query = PG_GETARG_LTREE_P(1);
-	bool		res = array_iterator(la, ltree_risparent, (void *) query, NULL);
+	bool		res = array_iterator(la, ltree_risparent, query, NULL);
 
 	PG_FREE_IF_COPY(la, 0);
 	PG_FREE_IF_COPY(query, 1);
@@ -115,7 +115,7 @@ _ltq_regex(PG_FUNCTION_ARGS)
 {
 	ArrayType  *la = PG_GETARG_ARRAYTYPE_P(0);
 	lquery	   *query = PG_GETARG_LQUERY_P(1);
-	bool		res = array_iterator(la, ltq_regex, (void *) query, NULL);
+	bool		res = array_iterator(la, ltq_regex, query, NULL);
 
 	PG_FREE_IF_COPY(la, 0);
 	PG_FREE_IF_COPY(query, 1);
@@ -151,7 +151,7 @@ _lt_q_regex(PG_FUNCTION_ARGS)
 
 	while (num > 0)
 	{
-		if (array_iterator(_tree, ltq_regex, (void *) query, NULL))
+		if (array_iterator(_tree, ltq_regex, query, NULL))
 		{
 			res = true;
 			break;
@@ -180,7 +180,7 @@ _ltxtq_exec(PG_FUNCTION_ARGS)
 {
 	ArrayType  *la = PG_GETARG_ARRAYTYPE_P(0);
 	ltxtquery  *query = PG_GETARG_LTXTQUERY_P(1);
-	bool		res = array_iterator(la, ltxtq_exec, (void *) query, NULL);
+	bool		res = array_iterator(la, ltxtq_exec, query, NULL);
 
 	PG_FREE_IF_COPY(la, 0);
 	PG_FREE_IF_COPY(query, 1);
@@ -205,7 +205,7 @@ _ltree_extract_isparent(PG_FUNCTION_ARGS)
 	ltree	   *found,
 			   *item;
 
-	if (!array_iterator(la, ltree_isparent, (void *) query, &found))
+	if (!array_iterator(la, ltree_isparent, query, &found))
 	{
 		PG_FREE_IF_COPY(la, 0);
 		PG_FREE_IF_COPY(query, 1);
@@ -228,7 +228,7 @@ _ltree_extract_risparent(PG_FUNCTION_ARGS)
 	ltree	   *found,
 			   *item;
 
-	if (!array_iterator(la, ltree_risparent, (void *) query, &found))
+	if (!array_iterator(la, ltree_risparent, query, &found))
 	{
 		PG_FREE_IF_COPY(la, 0);
 		PG_FREE_IF_COPY(query, 1);
@@ -251,7 +251,7 @@ _ltq_extract_regex(PG_FUNCTION_ARGS)
 	ltree	   *found,
 			   *item;
 
-	if (!array_iterator(la, ltq_regex, (void *) query, &found))
+	if (!array_iterator(la, ltq_regex, query, &found))
 	{
 		PG_FREE_IF_COPY(la, 0);
 		PG_FREE_IF_COPY(query, 1);
@@ -274,7 +274,7 @@ _ltxtq_extract_exec(PG_FUNCTION_ARGS)
 	ltree	   *found,
 			   *item;
 
-	if (!array_iterator(la, ltxtq_exec, (void *) query, &found))
+	if (!array_iterator(la, ltxtq_exec, query, &found))
 	{
 		PG_FREE_IF_COPY(la, 0);
 		PG_FREE_IF_COPY(query, 1);

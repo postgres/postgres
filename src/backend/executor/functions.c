@@ -268,7 +268,7 @@ sql_fn_parser_setup(struct ParseState *pstate, SQLFunctionParseInfoPtr pinfo)
 	pstate->p_post_columnref_hook = sql_fn_post_column_ref;
 	pstate->p_paramref_hook = sql_fn_param_ref;
 	/* no need to use p_coerce_param_hook */
-	pstate->p_ref_hook_state = (void *) pinfo;
+	pstate->p_ref_hook_state = pinfo;
 }
 
 /*
@@ -614,7 +614,7 @@ init_sql_fcache(FunctionCallInfo fcinfo, Oid collation, bool lazyEvalOK)
 	 */
 	fcache = (SQLFunctionCachePtr) palloc0(sizeof(SQLFunctionCache));
 	fcache->fcontext = fcontext;
-	finfo->fn_extra = (void *) fcache;
+	finfo->fn_extra = fcache;
 
 	/*
 	 * get the procedure tuple corresponding to the given function Oid

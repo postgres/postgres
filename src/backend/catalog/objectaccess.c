@@ -42,7 +42,7 @@ RunObjectPostCreateHook(Oid classId, Oid objectId, int subId,
 
 	(*object_access_hook) (OAT_POST_CREATE,
 						   classId, objectId, subId,
-						   (void *) &pc_arg);
+						   &pc_arg);
 }
 
 /*
@@ -64,7 +64,7 @@ RunObjectDropHook(Oid classId, Oid objectId, int subId,
 
 	(*object_access_hook) (OAT_DROP,
 						   classId, objectId, subId,
-						   (void *) &drop_arg);
+						   &drop_arg);
 }
 
 /*
@@ -103,7 +103,7 @@ RunObjectPostAlterHook(Oid classId, Oid objectId, int subId,
 
 	(*object_access_hook) (OAT_POST_ALTER,
 						   classId, objectId, subId,
-						   (void *) &pa_arg);
+						   &pa_arg);
 }
 
 /*
@@ -125,7 +125,7 @@ RunNamespaceSearchHook(Oid objectId, bool ereport_on_violation)
 
 	(*object_access_hook) (OAT_NAMESPACE_SEARCH,
 						   NamespaceRelationId, objectId, 0,
-						   (void *) &ns_arg);
+						   &ns_arg);
 
 	return ns_arg.result;
 }
@@ -168,7 +168,7 @@ RunObjectPostCreateHookStr(Oid classId, const char *objectName, int subId,
 
 	(*object_access_hook_str) (OAT_POST_CREATE,
 							   classId, objectName, subId,
-							   (void *) &pc_arg);
+							   &pc_arg);
 }
 
 /*
@@ -190,7 +190,7 @@ RunObjectDropHookStr(Oid classId, const char *objectName, int subId,
 
 	(*object_access_hook_str) (OAT_DROP,
 							   classId, objectName, subId,
-							   (void *) &drop_arg);
+							   &drop_arg);
 }
 
 /*
@@ -229,7 +229,7 @@ RunObjectPostAlterHookStr(Oid classId, const char *objectName, int subId,
 
 	(*object_access_hook_str) (OAT_POST_ALTER,
 							   classId, objectName, subId,
-							   (void *) &pa_arg);
+							   &pa_arg);
 }
 
 /*
@@ -251,7 +251,7 @@ RunNamespaceSearchHookStr(const char *objectName, bool ereport_on_violation)
 
 	(*object_access_hook_str) (OAT_NAMESPACE_SEARCH,
 							   NamespaceRelationId, objectName, 0,
-							   (void *) &ns_arg);
+							   &ns_arg);
 
 	return ns_arg.result;
 }

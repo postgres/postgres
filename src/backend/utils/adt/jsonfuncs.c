@@ -617,7 +617,7 @@ jsonb_object_keys(PG_FUNCTION_ARGS)
 		}
 
 		MemoryContextSwitchTo(oldcontext);
-		funcctx->user_fctx = (void *) state;
+		funcctx->user_fctx = state;
 	}
 
 	funcctx = SRF_PERCALL_SETUP();
@@ -752,7 +752,7 @@ json_object_keys(PG_FUNCTION_ARGS)
 		state->sent_count = 0;
 		state->result = palloc(256 * sizeof(char *));
 
-		sem->semstate = (void *) state;
+		sem->semstate = state;
 		sem->array_start = okeys_array_start;
 		sem->scalar = okeys_scalar;
 		sem->object_field_start = okeys_object_field_start;
@@ -765,7 +765,7 @@ json_object_keys(PG_FUNCTION_ARGS)
 		pfree(sem);
 
 		MemoryContextSwitchTo(oldcontext);
-		funcctx->user_fctx = (void *) state;
+		funcctx->user_fctx = state;
 	}
 
 	funcctx = SRF_PERCALL_SETUP();
@@ -1123,7 +1123,7 @@ get_worker(text *json,
 	if (npath > 0)
 		state->pathok[0] = true;
 
-	sem->semstate = (void *) state;
+	sem->semstate = state;
 
 	/*
 	 * Not all variants need all the semantic routines. Only set the ones that
@@ -1863,7 +1863,7 @@ json_array_length(PG_FUNCTION_ARGS)
 #endif
 
 	sem = palloc0(sizeof(JsonSemAction));
-	sem->semstate = (void *) state;
+	sem->semstate = state;
 	sem->object_start = alen_object_start;
 	sem->scalar = alen_scalar;
 	sem->array_element_start = alen_array_element_start;
@@ -2071,7 +2071,7 @@ each_worker(FunctionCallInfo fcinfo, bool as_text)
 	state->tuple_store = rsi->setResult;
 	state->ret_tdesc = rsi->setDesc;
 
-	sem->semstate = (void *) state;
+	sem->semstate = state;
 	sem->array_start = each_array_start;
 	sem->scalar = each_scalar;
 	sem->object_field_start = each_object_field_start;
@@ -2323,7 +2323,7 @@ elements_worker(FunctionCallInfo fcinfo, const char *funcname, bool as_text)
 	state->tuple_store = rsi->setResult;
 	state->ret_tdesc = rsi->setDesc;
 
-	sem->semstate = (void *) state;
+	sem->semstate = state;
 	sem->object_start = elements_object_start;
 	sem->scalar = elements_scalar;
 	sem->array_element_start = elements_array_element_start;
@@ -2795,7 +2795,7 @@ populate_array_json(PopulateArrayContext *ctx, const char *json, int len)
 	state.ctx = ctx;
 
 	memset(&sem, 0, sizeof(sem));
-	sem.semstate = (void *) &state;
+	sem.semstate = &state;
 	sem.object_start = populate_array_object_start;
 	sem.array_end = populate_array_array_end;
 	sem.array_element_start = populate_array_element_start;
@@ -3831,7 +3831,7 @@ get_json_object_as_hash(const char *json, int len, const char *funcname,
 	state->lex = makeJsonLexContextCstringLen(NULL, json, len,
 											  GetDatabaseEncoding(), true);
 
-	sem->semstate = (void *) state;
+	sem->semstate = state;
 	sem->array_start = hash_array_start;
 	sem->scalar = hash_scalar;
 	sem->object_field_start = hash_object_field_start;
@@ -4144,7 +4144,7 @@ populate_recordset_worker(FunctionCallInfo fcinfo, const char *funcname,
 
 		makeJsonLexContext(&lex, json, true);
 
-		sem->semstate = (void *) state;
+		sem->semstate = state;
 		sem->array_start = populate_recordset_array_start;
 		sem->array_element_start = populate_recordset_array_element_start;
 		sem->scalar = populate_recordset_scalar;
@@ -4504,7 +4504,7 @@ json_strip_nulls(PG_FUNCTION_ARGS)
 	state->strval = makeStringInfo();
 	state->skip_next_null = false;
 
-	sem->semstate = (void *) state;
+	sem->semstate = state;
 	sem->object_start = sn_object_start;
 	sem->object_end = sn_object_end;
 	sem->array_start = sn_array_start;
@@ -5718,7 +5718,7 @@ iterate_json_values(text *json, uint32 flags, void *action_state,
 	state->action_state = action_state;
 	state->flags = flags;
 
-	sem->semstate = (void *) state;
+	sem->semstate = state;
 	sem->scalar = iterate_values_scalar;
 	sem->object_field_start = iterate_values_object_field_start;
 
@@ -5839,7 +5839,7 @@ transform_json_string_values(text *json, void *action_state,
 	state->action = transform_action;
 	state->action_state = action_state;
 
-	sem->semstate = (void *) state;
+	sem->semstate = state;
 	sem->object_start = transform_string_values_object_start;
 	sem->object_end = transform_string_values_object_end;
 	sem->array_start = transform_string_values_array_start;

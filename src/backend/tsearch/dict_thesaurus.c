@@ -859,7 +859,7 @@ thesaurus_lexize(PG_FUNCTION_ARGS)
 		info = NULL;			/* word isn't recognized */
 	}
 
-	dstate->private_state = (void *) info;
+	dstate->private_state = info;
 
 	if (!info)
 	{

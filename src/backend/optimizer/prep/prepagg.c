@@ -359,8 +359,7 @@ preprocess_aggrefs_walker(Node *node, PlannerInfo *root)
 		return false;
 	}
 	Assert(!IsA(node, SubLink));
-	return expression_tree_walker(node, preprocess_aggrefs_walker,
-								  (void *) root);
+	return expression_tree_walker(node, preprocess_aggrefs_walker, root);
 }
 
 

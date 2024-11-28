@@ -531,7 +531,7 @@ fileGetForeignRelSize(PlannerInfo *root,
 				   &fdw_private->filename,
 				   &fdw_private->is_program,
 				   &fdw_private->options);
-	baserel->fdw_private = (void *) fdw_private;
+	baserel->fdw_private = fdw_private;
 
 	/* Estimate relation size */
 	estimate_size(root, baserel, fdw_private);
@@ -713,7 +713,7 @@ fileBeginForeignScan(ForeignScanState *node, int eflags)
 	festate->options = options;
 	festate->cstate = cstate;
 
-	node->fdw_state = (void *) festate;
+	node->fdw_state = festate;
 }
 
 /*
@@ -734,7 +734,7 @@ fileIterateForeignScan(ForeignScanState *node)
 
 	/* Set up callback to identify error line number. */
 	errcallback.callback = CopyFromErrorCallback;
-	errcallback.arg = (void *) cstate;
+	errcallback.arg = cstate;
 	errcallback.previous = error_context_stack;
 	error_context_stack = &errcallback;
 
@@ -1228,7 +1228,7 @@ file_acquire_sample_rows(Relation onerel, int elevel,
 
 	/* Set up callback to identify error line number. */
 	errcallback.callback = CopyFromErrorCallback;
-	errcallback.arg = (void *) cstate;
+	errcallback.arg = cstate;
 	errcallback.previous = error_context_stack;
 	error_context_stack = &errcallback;
 

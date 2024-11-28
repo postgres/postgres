@@ -2916,8 +2916,7 @@ expr_setup_walker(Node *node, ExprSetupInfo *info)
 		return false;
 	if (IsA(node, GroupingFunc))
 		return false;
-	return expression_tree_walker(node, expr_setup_walker,
-								  (void *) info);
+	return expression_tree_walker(node, expr_setup_walker, info);
 }
 
 /*

@@ -140,7 +140,7 @@ InitArchiveFmt_Directory(ArchiveHandle *AH)
 
 	/* Set up our private context */
 	ctx = (lclContext *) pg_malloc0(sizeof(lclContext));
-	AH->formatData = (void *) ctx;
+	AH->formatData = ctx;
 
 	ctx->dataFH = NULL;
 	ctx->LOsTocFH = NULL;
@@ -246,7 +246,7 @@ _ArchiveEntry(ArchiveHandle *AH, TocEntry *te)
 	else
 		tctx->filename = NULL;
 
-	te->formatData = (void *) tctx;
+	te->formatData = tctx;
 }
 
 /*
@@ -285,7 +285,7 @@ _ReadExtraToc(ArchiveHandle *AH, TocEntry *te)
 	if (tctx == NULL)
 	{
 		tctx = (lclTocEntry *) pg_malloc0(sizeof(lclTocEntry));
-		te->formatData = (void *) tctx;
+		te->formatData = tctx;
 	}
 
 	tctx->filename = ReadStr(AH);

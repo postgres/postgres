@@ -3365,8 +3365,7 @@ pull_exec_paramids_walker(Node *node, Bitmapset **context)
 			*context = bms_add_member(*context, param->paramid);
 		return false;
 	}
-	return expression_tree_walker(node, pull_exec_paramids_walker,
-								  (void *) context);
+	return expression_tree_walker(node, pull_exec_paramids_walker, context);
 }
 
 /*

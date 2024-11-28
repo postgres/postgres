@@ -1029,7 +1029,7 @@ check_synchronous_standby_names(char **newval, void **extra, GucSource source)
 			return false;
 		memcpy(pconf, syncrep_parse_result, syncrep_parse_result->config_size);
 
-		*extra = (void *) pconf;
+		*extra = pconf;
 
 		/*
 		 * We need not explicitly clean up syncrep_parse_result.  It, and any

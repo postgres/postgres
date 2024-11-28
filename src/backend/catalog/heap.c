@@ -3118,7 +3118,7 @@ check_nested_generated_walker(Node *node, void *context)
 	}
 	else
 		return expression_tree_walker(node, check_nested_generated_walker,
-									  (void *) context);
+									  context);
 }
 
 static void

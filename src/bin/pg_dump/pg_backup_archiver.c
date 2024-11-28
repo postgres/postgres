@@ -1466,7 +1466,7 @@ StartRestoreLO(ArchiveHandle *AH, Oid oid, bool drop)
 	{
 		/* First time through (in this process) so allocate the buffer */
 		AH->lo_buf_size = LOBBUFSIZE;
-		AH->lo_buf = (void *) pg_malloc(LOBBUFSIZE);
+		AH->lo_buf = pg_malloc(LOBBUFSIZE);
 	}
 	AH->lo_buf_used = 0;
 
@@ -2182,7 +2182,7 @@ ReadStr(ArchiveHandle *AH)
 	else
 	{
 		buf = (char *) pg_malloc(l + 1);
-		AH->ReadBufPtr(AH, (void *) buf, l);
+		AH->ReadBufPtr(AH, buf, l);
 
 		buf[l] = '\0';
 	}

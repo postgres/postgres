@@ -507,5 +507,5 @@ nodeRead(const char *token, int tok_len)
 			break;
 	}
 
-	return (void *) result;
+	return result;
 }

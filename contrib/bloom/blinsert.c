@@ -139,7 +139,7 @@ blbuild(Relation heap, Relation index, IndexInfo *indexInfo)
 
 	/* Do the heap scan */
 	reltuples = table_index_build_scan(heap, index, indexInfo, true, true,
-									   bloomBuildCallback, (void *) &buildstate,
+									   bloomBuildCallback, &buildstate,
 									   NULL);
 
 	/* Flush last page if needed (it will be, unless heap was empty) */

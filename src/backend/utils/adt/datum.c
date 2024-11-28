@@ -149,7 +149,7 @@ datumCopy(Datum value, bool typByVal, int typLen)
 
 			resultsize = EOH_get_flat_size(eoh);
 			resultptr = (char *) palloc(resultsize);
-			EOH_flatten_into(eoh, (void *) resultptr, resultsize);
+			EOH_flatten_into(eoh, resultptr, resultsize);
 			res = PointerGetDatum(resultptr);
 		}
 		else
@@ -495,7 +495,7 @@ datumSerialize(Datum value, bool isnull, bool typByVal, int typLen,
 			 * so we can't store directly to *start_address.
 			 */
 			tmp = (char *) palloc(header);
-			EOH_flatten_into(eoh, (void *) tmp, header);
+			EOH_flatten_into(eoh, tmp, header);
 			memcpy(*start_address, tmp, header);
 			*start_address += header;
 

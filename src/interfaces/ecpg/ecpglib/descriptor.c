@@ -435,7 +435,7 @@ ECPGget_desc(int lineno, const char *desc_name, int index,...)
 				/* allocate storage if needed */
 				if (arrsize == 0 && *(void **) var == NULL)
 				{
-					void	   *mem = (void *) ecpg_auto_alloc(offset * ntuples, lineno);
+					void	   *mem = ecpg_auto_alloc(offset * ntuples, lineno);
 
 					if (!mem)
 					{
@@ -540,7 +540,7 @@ ECPGget_desc(int lineno, const char *desc_name, int index,...)
 		/* allocate storage if needed */
 		if (data_var.ind_arrsize == 0 && data_var.ind_value == NULL)
 		{
-			void	   *mem = (void *) ecpg_auto_alloc(data_var.ind_offset * ntuples, lineno);
+			void	   *mem = ecpg_auto_alloc(data_var.ind_offset * ntuples, lineno);
 
 			if (!mem)
 			{

@@ -286,7 +286,7 @@ static void
 IpcMemoryDetach(int status, Datum shmaddr)
 {
 	/* Detach System V shared memory block. */
-	if (shmdt((void *) DatumGetPointer(shmaddr)) < 0)
+	if (shmdt(DatumGetPointer(shmaddr)) < 0)
 		elog(LOG, "shmdt(%p) failed: %m", DatumGetPointer(shmaddr));
 }
 
@@ -320,7 +320,7 @@ PGSharedMemoryIsInUse(unsigned long id1, unsigned long id2)
 	IpcMemoryState state;
 
 	state = PGSharedMemoryAttach((IpcMemoryId) id2, NULL, &memAddress);
-	if (memAddress && shmdt((void *) memAddress) < 0)
+	if (memAddress && shmdt(memAddress) < 0)
 		elog(LOG, "shmdt(%p) failed: %m", memAddress);
 	switch (state)
 	{
@@ -835,7 +835,7 @@ PGSharedMemoryCreate(Size size,
 				break;
 		}
 
-		if (oldhdr && shmdt((void *) oldhdr) < 0)
+		if (oldhdr && shmdt(oldhdr) < 0)
 			elog(LOG, "shmdt(%p) failed: %m", oldhdr);
 	}
 

@@ -1130,7 +1130,7 @@ index_expression_changed_walker(Node *node, Bitmapset *allUpdatedCols)
 	}
 
 	return expression_tree_walker(node, index_expression_changed_walker,
-								  (void *) allUpdatedCols);
+								  allUpdatedCols);
 }
 
 /*

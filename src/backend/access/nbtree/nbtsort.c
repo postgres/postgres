@@ -475,7 +475,7 @@ _bt_spools_heapscan(Relation heap, Relation index, BTBuildState *buildstate,
 	/* Fill spool using either serial or parallel heap scan */
 	if (!buildstate->btleader)
 		reltuples = table_index_build_scan(heap, index, indexInfo, true, true,
-										   _bt_build_callback, (void *) buildstate,
+										   _bt_build_callback, buildstate,
 										   NULL);
 	else
 		reltuples = _bt_parallel_heapscan(buildstate,
@@ -1930,7 +1930,7 @@ _bt_parallel_scan_and_sort(BTSpool *btspool, BTSpool *btspool2,
 									ParallelTableScanFromBTShared(btshared));
 	reltuples = table_index_build_scan(btspool->heap, btspool->index, indexInfo,
 									   true, progress, _bt_build_callback,
-									   (void *) &buildstate, scan);
+									   &buildstate, scan);
 
 	/* Execute this worker's part of the sort */
 	if (progress)

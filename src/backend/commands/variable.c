@@ -232,7 +232,7 @@ check_datestyle(char **newval, void **extra, GucSource source)
 		return false;
 	myextra[0] = newDateStyle;
 	myextra[1] = newDateOrder;
-	*extra = (void *) myextra;
+	*extra = myextra;
 
 	return true;
 }
@@ -901,7 +901,7 @@ check_session_authorization(char **newval, void **extra, GucSource source)
 		return false;
 	myextra->roleid = roleid;
 	myextra->is_superuser = is_superuser;
-	*extra = (void *) myextra;
+	*extra = myextra;
 
 	return true;
 }
@@ -1015,7 +1015,7 @@ check_role(char **newval, void **extra, GucSource source)
 		return false;
 	myextra->roleid = roleid;
 	myextra->is_superuser = is_superuser;
-	*extra = (void *) myextra;
+	*extra = myextra;
 
 	return true;
 }

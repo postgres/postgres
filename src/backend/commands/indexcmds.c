@@ -3344,7 +3344,7 @@ ReindexPartitions(const ReindexStmt *stmt, Oid relid, const ReindexParams *param
 	errinfo.relnamespace = pstrdup(relnamespace);
 	errinfo.relkind = relkind;
 	errcallback.callback = reindex_error_callback;
-	errcallback.arg = (void *) &errinfo;
+	errcallback.arg = &errinfo;
 	errcallback.previous = error_context_stack;
 	error_context_stack = &errcallback;
 

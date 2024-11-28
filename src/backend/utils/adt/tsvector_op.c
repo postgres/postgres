@@ -2452,7 +2452,7 @@ ts_setup_firstcall(FunctionCallInfo fcinfo, FuncCallContext *funcctx,
 	MemoryContext oldcontext;
 	StatEntry  *node;
 
-	funcctx->user_fctx = (void *) stat;
+	funcctx->user_fctx = stat;
 
 	oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 

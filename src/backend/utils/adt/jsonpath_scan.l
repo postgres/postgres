@@ -564,7 +564,7 @@ parsejsonpath(const char *str, int len, struct Node *escontext)
 
 	jsonpath_scanner_init(str, len);
 
-	if (jsonpath_yyparse((void *) &parseresult, escontext) != 0)
+	if (jsonpath_yyparse(&parseresult, escontext) != 0)
 		jsonpath_yyerror(NULL, escontext, "invalid input"); /* shouldn't happen */
 
 	jsonpath_scanner_finish();

@@ -2285,7 +2285,7 @@ check_log_destination(char **newval, void **extra, GucSource source)
 
 	myextra = (int *) guc_malloc(ERROR, sizeof(int));
 	*myextra = newlogdest;
-	*extra = (void *) myextra;
+	*extra = myextra;
 
 	return true;
 }

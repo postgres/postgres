@@ -1816,7 +1816,7 @@ exec_bind_message(StringInfo input_message)
 		one_param_data.paramval = NULL;
 		params_errcxt.previous = error_context_stack;
 		params_errcxt.callback = bind_param_error_callback;
-		params_errcxt.arg = (void *) &one_param_data;
+		params_errcxt.arg = &one_param_data;
 		error_context_stack = &params_errcxt;
 
 		params = makeParamList(numParams);
@@ -2006,7 +2006,7 @@ exec_bind_message(StringInfo input_message)
 	params_data.params = params;
 	params_errcxt.previous = error_context_stack;
 	params_errcxt.callback = ParamsErrorCallback;
-	params_errcxt.arg = (void *) &params_data;
+	params_errcxt.arg = &params_data;
 	error_context_stack = &params_errcxt;
 
 	/* Get the result format codes */
@@ -2251,7 +2251,7 @@ exec_execute_message(const char *portal_name, long max_rows)
 	params_data.params = portalParams;
 	params_errcxt.previous = error_context_stack;
 	params_errcxt.callback = ParamsErrorCallback;
-	params_errcxt.arg = (void *) &params_data;
+	params_errcxt.arg = &params_data;
 	error_context_stack = &params_errcxt;
 
 	if (max_rows <= 0)

@@ -2450,7 +2450,7 @@ pullup_replace_vars(Node *expr, pullup_replace_vars_context *context)
 	return replace_rte_variables(expr,
 								 context->varno, 0,
 								 pullup_replace_vars_callback,
-								 (void *) context,
+								 context,
 								 context->outer_hasSubLinks);
 }
 
@@ -2707,7 +2707,7 @@ pullup_replace_vars_subquery(Query *query,
 	return (Query *) replace_rte_variables((Node *) query,
 										   context->varno, 1,
 										   pullup_replace_vars_callback,
-										   (void *) context,
+										   context,
 										   NULL);
 }
 
@@ -3775,7 +3775,7 @@ find_dependent_phvs_walker(Node *node,
 		context->sublevels_up++;
 		result = query_tree_walker((Query *) node,
 								   find_dependent_phvs_walker,
-								   (void *) context, 0);
+								   context, 0);
 		context->sublevels_up--;
 		return result;
 	}
@@ -3784,8 +3784,7 @@ find_dependent_phvs_walker(Node *node,
 	Assert(!IsA(node, PlaceHolderInfo));
 	Assert(!IsA(node, MinMaxAggInfo));
 
-	return expression_tree_walker(node, find_dependent_phvs_walker,
-								  (void *) context);
+	return expression_tree_walker(node, find_dependent_phvs_walker, context);
 }
 
 static bool
@@ -3800,15 +3799,12 @@ find_dependent_phvs(PlannerInfo *root, int varno)
 	context.relids = bms_make_singleton(varno);
 	context.sublevels_up = 0;
 
-	if (query_tree_walker(root->parse,
-						  find_dependent_phvs_walker,
-						  (void *) &context,
-						  0))
+	if (query_tree_walker(root->parse, find_dependent_phvs_walker, &context, 0))
 		return true;
 	/* The append_rel_list could be populated already, so check it too */
 	if (expression_tree_walker((Node *) root->append_rel_list,
 							   find_dependent_phvs_walker,
-							   (void *) &context))
+							   &context))
 		return true;
 	return false;
 }
@@ -3847,10 +3843,7 @@ find_dependent_phvs_in_jointree(PlannerInfo *root, Node *node, int varno)
 		RangeTblEntry *rte = rt_fetch(relid, root->parse->rtable);
 
 		if (rte->lateral &&
-			range_table_entry_walker(rte,
-									 find_dependent_phvs_walker,
-									 (void *) &context,
-									 0))
+			range_table_entry_walker(rte, find_dependent_phvs_walker, &context, 0))
 			return true;
 	}
 
@@ -3907,7 +3900,7 @@ substitute_phv_relids_walker(Node *node,
 		context->sublevels_up++;
 		result = query_tree_walker((Query *) node,
 								   substitute_phv_relids_walker,
-								   (void *) context, 0);
+								   context, 0);
 		context->sublevels_up--;
 		return result;
 	}
@@ -3917,8 +3910,7 @@ substitute_phv_relids_walker(Node *node,
 	Assert(!IsA(node, PlaceHolderInfo));
 	Assert(!IsA(node, MinMaxAggInfo));
 
-	return expression_tree_walker(node, substitute_phv_relids_walker,
-								  (void *) context);
+	return expression_tree_walker(node, substitute_phv_relids_walker, context);
 }
 
 static void
@@ -3935,7 +3927,7 @@ substitute_phv_relids(Node *node, int varno, Relids subrelids)
 	 */
 	query_or_expression_tree_walker(node,
 									substitute_phv_relids_walker,
-									(void *) &context,
+									&context,
 									0);
 }
 

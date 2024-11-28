@@ -2453,7 +2453,7 @@ lazy_vacuum_one_index(Relation indrel, IndexBulkDeleteResult *istat,
 							 InvalidBlockNumber, InvalidOffsetNumber);
 
 	/* Do bulk deletion */
-	istat = vac_bulkdel_one_index(&ivinfo, istat, (void *) vacrel->dead_items,
+	istat = vac_bulkdel_one_index(&ivinfo, istat, vacrel->dead_items,
 								  vacrel->dead_items_info);
 
 	/* Revert to the previous phase information for error traceback */

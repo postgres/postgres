@@ -199,7 +199,7 @@ initBloomState(BloomState *state, Relation index)
 
 		UnlockReleaseBuffer(buffer);
 
-		index->rd_amcache = (void *) opts;
+		index->rd_amcache = opts;
 	}
 
 	memcpy(&state->opts, index->rd_amcache, sizeof(state->opts));

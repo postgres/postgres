@@ -1205,7 +1205,7 @@ setup_scanner_errposition_callback(ScannerCallbackState *scbstate,
 	scbstate->yyscanner = yyscanner;
 	scbstate->location = location;
 	scbstate->errcallback.callback = scb_error_callback;
-	scbstate->errcallback.arg = (void *) scbstate;
+	scbstate->errcallback.arg = scbstate;
 	scbstate->errcallback.previous = error_context_stack;
 	error_context_stack = &scbstate->errcallback;
 }

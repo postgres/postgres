@@ -2546,7 +2546,7 @@ check_synchronized_standby_slots(char **newval, void **extra, GucSource source)
 		ptr += strlen(slot_name) + 1;
 	}
 
-	*extra = (void *) config;
+	*extra = config;
 
 	pfree(rawname);
 	list_free(elemlist);

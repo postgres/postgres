@@ -359,7 +359,7 @@ get_range_io_data(FunctionCallInfo fcinfo, Oid rngtypid, IOFuncSelector func)
 		fmgr_info_cxt(typiofunc, &cache->typioproc,
 					  fcinfo->flinfo->fn_mcxt);
 
-		fcinfo->flinfo->fn_extra = (void *) cache;
+		fcinfo->flinfo->fn_extra = cache;
 	}
 
 	return cache;
@@ -1710,7 +1710,7 @@ range_get_typcache(FunctionCallInfo fcinfo, Oid rngtypid)
 		typcache = lookup_type_cache(rngtypid, TYPECACHE_RANGE_INFO);
 		if (typcache->rngelemtype == NULL)
 			elog(ERROR, "type %u is not a range type", rngtypid);
-		fcinfo->flinfo->fn_extra = (void *) typcache;
+		fcinfo->flinfo->fn_extra = typcache;
 	}
 
 	return typcache;

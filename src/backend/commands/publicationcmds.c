@@ -256,7 +256,7 @@ contain_invalid_rfcolumn_walker(Node *node, rf_context *context)
 	}
 
 	return expression_tree_walker(node, contain_invalid_rfcolumn_walker,
-								  (void *) context);
+								  context);
 }
 
 /*
@@ -570,7 +570,7 @@ check_simple_rowfilter_expr_walker(Node *node, ParseState *pstate)
 		if (exprType(node) >= FirstNormalObjectId)
 			errdetail_msg = _("User-defined types are not allowed.");
 		else if (check_functions_in_node(node, contain_mutable_or_user_functions_checker,
-										 (void *) pstate))
+										 pstate))
 			errdetail_msg = _("User-defined or built-in mutable functions are not allowed.");
 		else if (exprCollation(node) >= FirstNormalObjectId ||
 				 exprInputCollation(node) >= FirstNormalObjectId)
@@ -589,7 +589,7 @@ check_simple_rowfilter_expr_walker(Node *node, ParseState *pstate)
 				 parser_errposition(pstate, exprLocation(node))));
 
 	return expression_tree_walker(node, check_simple_rowfilter_expr_walker,
-								  (void *) pstate);
+								  pstate);
 }
 
 /*

@@ -339,7 +339,7 @@ advance_windowaggregate(WindowAggState *winstate,
 	InitFunctionCallInfoData(*fcinfo, &(peraggstate->transfn),
 							 numArguments + 1,
 							 perfuncstate->winCollation,
-							 (void *) winstate, NULL);
+							 (Node *) winstate, NULL);
 	fcinfo->args[0].value = peraggstate->transValue;
 	fcinfo->args[0].isnull = peraggstate->transValueIsNull;
 	winstate->curaggcontext = peraggstate->aggcontext;
@@ -510,7 +510,7 @@ advance_windowaggregate_base(WindowAggState *winstate,
 	InitFunctionCallInfoData(*fcinfo, &(peraggstate->invtransfn),
 							 numArguments + 1,
 							 perfuncstate->winCollation,
-							 (void *) winstate, NULL);
+							 (Node *) winstate, NULL);
 	fcinfo->args[0].value = peraggstate->transValue;
 	fcinfo->args[0].isnull = peraggstate->transValueIsNull;
 	winstate->curaggcontext = peraggstate->aggcontext;
@@ -601,7 +601,7 @@ finalize_windowaggregate(WindowAggState *winstate,
 		InitFunctionCallInfoData(fcinfodata.fcinfo, &(peraggstate->finalfn),
 								 numFinalArgs,
 								 perfuncstate->winCollation,
-								 (void *) winstate, NULL);
+								 (Node *) winstate, NULL);
 		fcinfo->args[0].value =
 			MakeExpandedObjectReadOnly(peraggstate->transValue,
 									   peraggstate->transValueIsNull,
@@ -1047,7 +1047,7 @@ eval_windowfunction(WindowAggState *winstate, WindowStatePerFunc perfuncstate,
 	InitFunctionCallInfoData(*fcinfo, &(perfuncstate->flinfo),
 							 perfuncstate->numArguments,
 							 perfuncstate->winCollation,
-							 (void *) perfuncstate->winobj, NULL);
+							 (Node *) perfuncstate->winobj, NULL);
 	/* Just in case, make all the regular argument slots be null */
 	for (int argno = 0; argno < perfuncstate->numArguments; argno++)
 		fcinfo->args[argno].isnull = true;

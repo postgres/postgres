@@ -1038,7 +1038,7 @@ hash_search_with_hash_value(HTAB *hashp,
 	{
 		case HASH_FIND:
 			if (currBucket != NULL)
-				return (void *) ELEMENTKEY(currBucket);
+				return ELEMENTKEY(currBucket);
 			return NULL;
 
 		case HASH_REMOVE:
@@ -1067,7 +1067,7 @@ hash_search_with_hash_value(HTAB *hashp,
 				 * element, because someone else is going to reuse it the next
 				 * time something is added to the table
 				 */
-				return (void *) ELEMENTKEY(currBucket);
+				return ELEMENTKEY(currBucket);
 			}
 			return NULL;
 
@@ -1075,7 +1075,7 @@ hash_search_with_hash_value(HTAB *hashp,
 		case HASH_ENTER_NULL:
 			/* Return existing element if found, else create one */
 			if (currBucket != NULL)
-				return (void *) ELEMENTKEY(currBucket);
+				return ELEMENTKEY(currBucket);
 
 			/* disallow inserts if frozen */
 			if (hashp->frozen)
@@ -1114,7 +1114,7 @@ hash_search_with_hash_value(HTAB *hashp,
 			 * caller's data structure.
 			 */
 
-			return (void *) ELEMENTKEY(currBucket);
+			return ELEMENTKEY(currBucket);
 	}
 
 	elog(ERROR, "unrecognized hash action code: %d", (int) action);
@@ -1453,7 +1453,7 @@ hash_seq_search(HASH_SEQ_STATUS *status)
 		status->curEntry = curElem->link;
 		if (status->curEntry == NULL)	/* end of this bucket */
 			++status->curBucket;
-		return (void *) ELEMENTKEY(curElem);
+		return ELEMENTKEY(curElem);
 	}
 
 	/*
@@ -1507,7 +1507,7 @@ hash_seq_search(HASH_SEQ_STATUS *status)
 	if (status->curEntry == NULL)	/* end of this bucket */
 		++curBucket;
 	status->curBucket = curBucket;
-	return (void *) ELEMENTKEY(curElem);
+	return ELEMENTKEY(curElem);
 }
 
 void

@@ -1581,7 +1581,7 @@ RemoveRelations(DropStmt *drop)
 
 		relOid = RangeVarGetRelidExtended(rel, lockmode, RVR_MISSING_OK,
 										  RangeVarCallbackForDropRelation,
-										  (void *) &state);
+										  &state);
 
 		/* Not there? */
 		if (!OidIsValid(relOid))
@@ -4142,7 +4142,7 @@ RenameRelation(RenameStmt *stmt)
 		relid = RangeVarGetRelidExtended(stmt->relation, lockmode,
 										 stmt->missing_ok ? RVR_MISSING_OK : 0,
 										 RangeVarCallbackForAlterRelation,
-										 (void *) stmt);
+										 stmt);
 
 		if (!OidIsValid(relid))
 		{
@@ -4390,7 +4390,7 @@ AlterTableLookupRelation(AlterTableStmt *stmt, LOCKMODE lockmode)
 	return RangeVarGetRelidExtended(stmt->relation, lockmode,
 									stmt->missing_ok ? RVR_MISSING_OK : 0,
 									RangeVarCallbackForAlterRelation,
-									(void *) stmt);
+									stmt);
 }
 
 /*
@@ -17719,7 +17719,7 @@ AlterTableNamespace(AlterObjectSchemaStmt *stmt, Oid *oldschema)
 	relid = RangeVarGetRelidExtended(stmt->relation, AccessExclusiveLock,
 									 stmt->missing_ok ? RVR_MISSING_OK : 0,
 									 RangeVarCallbackForAlterRelation,
-									 (void *) stmt);
+									 stmt);
 
 	if (!OidIsValid(relid))
 	{
@@ -20350,7 +20350,7 @@ ATExecAttachPartitionIdx(List **wqueue, Relation parentIdx, RangeVar *name)
 	partIdxId =
 		RangeVarGetRelidExtended(name, AccessExclusiveLock, 0,
 								 RangeVarCallbackForAttachIndex,
-								 (void *) &state);
+								 &state);
 	/* Not there? */
 	if (!OidIsValid(partIdxId))
 		ereport(ERROR,

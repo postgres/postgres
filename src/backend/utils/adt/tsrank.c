@@ -185,7 +185,7 @@ SortAndUniqItems(TSQuery q, int *size)
 	/* remove duplicates */
 	while (ptr - res < *size)
 	{
-		if (compareQueryOperand((void *) ptr, (void *) prevptr, (void *) operand) != 0)
+		if (compareQueryOperand(ptr, prevptr, operand) != 0)
 		{
 			prevptr++;
 			*prevptr = *ptr;
@@ -671,7 +671,7 @@ Cover(DocRepresentation *doc, int len, QueryRepresentation *qr, CoverExt *ext)
 	{
 		fillQueryRepresentationData(qr, ptr);
 
-		if (TS_execute(GETQUERY(qr->query), (void *) qr,
+		if (TS_execute(GETQUERY(qr->query), qr,
 					   TS_EXEC_EMPTY, checkcondition_QueryOperand))
 		{
 			if (WEP_GETPOS(ptr->pos) > ext->q)
@@ -701,7 +701,7 @@ Cover(DocRepresentation *doc, int len, QueryRepresentation *qr, CoverExt *ext)
 		 */
 		fillQueryRepresentationData(qr, ptr);
 
-		if (TS_execute(GETQUERY(qr->query), (void *) qr,
+		if (TS_execute(GETQUERY(qr->query), qr,
 					   TS_EXEC_EMPTY, checkcondition_QueryOperand))
 		{
 			if (WEP_GETPOS(ptr->pos) < ext->p)

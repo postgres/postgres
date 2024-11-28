@@ -2518,7 +2518,7 @@ vac_bulkdel_one_index(IndexVacuumInfo *ivinfo, IndexBulkDeleteResult *istat,
 {
 	/* Do bulk deletion */
 	istat = index_bulk_delete(ivinfo, istat, vac_tid_reaped,
-							  (void *) dead_items);
+							  dead_items);
 
 	ereport(ivinfo->message_level,
 			(errmsg("scanned index \"%s\" to remove %lld row versions",

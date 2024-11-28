@@ -1202,7 +1202,7 @@ pg_get_publication_tables(PG_FUNCTION_ARGS)
 						   PG_NODE_TREEOID, -1, 0);
 
 		funcctx->tuple_desc = BlessTupleDesc(tupdesc);
-		funcctx->user_fctx = (void *) table_infos;
+		funcctx->user_fctx = table_infos;
 
 		MemoryContextSwitchTo(oldcontext);
 	}

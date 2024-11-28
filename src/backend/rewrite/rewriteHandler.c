@@ -1988,8 +1988,7 @@ fireRIRonSubLink(Node *node, fireRIRonSubLink_context *context)
 	 * Do NOT recurse into Query nodes, because fireRIRrules already processed
 	 * subselects of subselects for us.
 	 */
-	return expression_tree_walker(node, fireRIRonSubLink,
-								  (void *) context);
+	return expression_tree_walker(node, fireRIRonSubLink, context);
 }
 
 
@@ -2189,7 +2188,7 @@ fireRIRrules(Query *parsetree, List *activeRIRs)
 		context.activeRIRs = activeRIRs;
 		context.hasRowSecurity = false;
 
-		query_tree_walker(parsetree, fireRIRonSubLink, (void *) &context,
+		query_tree_walker(parsetree, fireRIRonSubLink, &context,
 						  QTW_IGNORE_RC_SUBQUERIES);
 
 		/*
@@ -2272,10 +2271,10 @@ fireRIRrules(Query *parsetree, List *activeRIRs)
 				fire_context.hasRowSecurity = false;
 
 				expression_tree_walker((Node *) securityQuals,
-									   fireRIRonSubLink, (void *) &fire_context);
+									   fireRIRonSubLink, &fire_context);
 
 				expression_tree_walker((Node *) withCheckOptions,
-									   fireRIRonSubLink, (void *) &fire_context);
+									   fireRIRonSubLink, &fire_context);
 
 				/*
 				 * We can ignore the value of fire_context.hasRowSecurity

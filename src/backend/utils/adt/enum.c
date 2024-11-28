@@ -295,7 +295,7 @@ enum_cmp_internal(Oid arg1, Oid arg2, FunctionCallInfo fcinfo)
 		ReleaseSysCache(enum_tup);
 		/* Now locate and remember the typcache entry */
 		tcache = lookup_type_cache(typeoid, 0);
-		fcinfo->flinfo->fn_extra = (void *) tcache;
+		fcinfo->flinfo->fn_extra = tcache;
 	}
 
 	/* The remaining comparison logic is in typcache.c */

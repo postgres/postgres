@@ -747,7 +747,7 @@ pg_prepared_xact(PG_FUNCTION_ARGS)
 		 * out as a result set.
 		 */
 		status = (Working_State *) palloc(sizeof(Working_State));
-		funcctx->user_fctx = (void *) status;
+		funcctx->user_fctx = status;
 
 		status->ngxacts = GetPreparedTransactionList(&status->array);
 		status->currIdx = 0;
@@ -1707,8 +1707,7 @@ ProcessRecords(char *bufptr, TransactionId xid,
 		bufptr += MAXALIGN(sizeof(TwoPhaseRecordOnDisk));
 
 		if (callbacks[record->rmid] != NULL)
-			callbacks[record->rmid] (xid, record->info,
-									 (void *) bufptr, record->len);
+			callbacks[record->rmid] (xid, record->info, bufptr, record->len);
 
 		bufptr += MAXALIGN(record->len);
 	}

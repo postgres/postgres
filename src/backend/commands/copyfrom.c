@@ -959,7 +959,7 @@ CopyFrom(CopyFromState cstate)
 
 	/* Set up callback to identify error line number */
 	errcallback.callback = CopyFromErrorCallback;
-	errcallback.arg = (void *) cstate;
+	errcallback.arg = cstate;
 	errcallback.previous = error_context_stack;
 	error_context_stack = &errcallback;
 

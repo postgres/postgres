@@ -799,7 +799,7 @@ check_agg_arguments_walker(Node *node,
 		context->sublevels_up++;
 		result = query_tree_walker((Query *) node,
 								   check_agg_arguments_walker,
-								   (void *) context,
+								   context,
 								   0);
 		context->sublevels_up--;
 		return result;
@@ -807,7 +807,7 @@ check_agg_arguments_walker(Node *node,
 
 	return expression_tree_walker(node,
 								  check_agg_arguments_walker,
-								  (void *) context);
+								  context);
 }
 
 /*
@@ -1517,13 +1517,13 @@ substitute_grouped_columns_mutator(Node *node,
 		context->sublevels_up++;
 		newnode = query_tree_mutator((Query *) node,
 									 substitute_grouped_columns_mutator,
-									 (void *) context,
+									 context,
 									 0);
 		context->sublevels_up--;
 		return (Node *) newnode;
 	}
 	return expression_tree_mutator(node, substitute_grouped_columns_mutator,
-								   (void *) context);
+								   context);
 }
 
 /*
@@ -1691,13 +1691,13 @@ finalize_grouping_exprs_walker(Node *node,
 		context->sublevels_up++;
 		result = query_tree_walker((Query *) node,
 								   finalize_grouping_exprs_walker,
-								   (void *) context,
+								   context,
 								   0);
 		context->sublevels_up--;
 		return result;
 	}
 	return expression_tree_walker(node, finalize_grouping_exprs_walker,
-								  (void *) context);
+								  context);
 }
 
 /*

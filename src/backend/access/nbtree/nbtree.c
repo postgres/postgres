@@ -566,7 +566,7 @@ btparallelrescan(IndexScanDesc scan)
 
 	Assert(parallel_scan);
 
-	btscan = (BTParallelScanDesc) OffsetToPointer((void *) parallel_scan,
+	btscan = (BTParallelScanDesc) OffsetToPointer(parallel_scan,
 												  parallel_scan->ps_offset);
 
 	/*
@@ -644,7 +644,7 @@ _bt_parallel_seize(IndexScanDesc scan, BlockNumber *next_scan_page,
 			return false;
 	}
 
-	btscan = (BTParallelScanDesc) OffsetToPointer((void *) parallel_scan,
+	btscan = (BTParallelScanDesc) OffsetToPointer(parallel_scan,
 												  parallel_scan->ps_offset);
 
 	while (1)
@@ -752,7 +752,7 @@ _bt_parallel_release(IndexScanDesc scan, BlockNumber next_scan_page,
 
 	Assert(BlockNumberIsValid(next_scan_page));
 
-	btscan = (BTParallelScanDesc) OffsetToPointer((void *) parallel_scan,
+	btscan = (BTParallelScanDesc) OffsetToPointer(parallel_scan,
 												  parallel_scan->ps_offset);
 
 	SpinLockAcquire(&btscan->btps_mutex);
@@ -791,7 +791,7 @@ _bt_parallel_done(IndexScanDesc scan)
 	if (so->needPrimScan)
 		return;
 
-	btscan = (BTParallelScanDesc) OffsetToPointer((void *) parallel_scan,
+	btscan = (BTParallelScanDesc) OffsetToPointer(parallel_scan,
 												  parallel_scan->ps_offset);
 
 	/*
@@ -829,7 +829,7 @@ _bt_parallel_primscan_schedule(IndexScanDesc scan, BlockNumber curr_page)
 
 	Assert(so->numArrayKeys);
 
-	btscan = (BTParallelScanDesc) OffsetToPointer((void *) parallel_scan,
+	btscan = (BTParallelScanDesc) OffsetToPointer(parallel_scan,
 												  parallel_scan->ps_offset);
 
 	SpinLockAcquire(&btscan->btps_mutex);

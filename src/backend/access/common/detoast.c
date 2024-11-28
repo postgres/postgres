@@ -88,7 +88,7 @@ detoast_external_attr(struct varlena *attr)
 		eoh = DatumGetEOHP(PointerGetDatum(attr));
 		resultsize = EOH_get_flat_size(eoh);
 		result = (struct varlena *) palloc(resultsize);
-		EOH_flatten_into(eoh, (void *) result, resultsize);
+		EOH_flatten_into(eoh, result, resultsize);
 	}
 	else
 	{

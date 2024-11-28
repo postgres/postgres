@@ -667,7 +667,7 @@ ECPGconnect(int lineno, int c, const char *name, const char *user, const char *p
 
 	this->autocommit = autocommit;
 
-	PQsetNoticeReceiver(this->connection, &ECPGnoticeReceiver, (void *) this);
+	PQsetNoticeReceiver(this->connection, &ECPGnoticeReceiver, this);
 
 	return true;
 }

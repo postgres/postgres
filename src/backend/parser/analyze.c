@@ -1687,7 +1687,7 @@ transformValuesClause(ParseState *pstate, SelectStmt *stmt)
 			Node	   *col = (Node *) lfirst(lc);
 
 			col = coerce_to_common_type(pstate, col, coltype, "VALUES");
-			lfirst(lc) = (void *) col;
+			lfirst(lc) = col;
 		}
 
 		coltypmod = select_common_typmod(pstate, colexprs[i], coltype);

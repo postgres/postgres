@@ -203,7 +203,7 @@ px_find_digest(const char *name, PX_MD **res)
 	h->update = digest_update;
 	h->finish = digest_finish;
 	h->free = digest_free;
-	h->p.ptr = (void *) digest;
+	h->p.ptr = digest;
 
 	*res = h;
 	return 0;

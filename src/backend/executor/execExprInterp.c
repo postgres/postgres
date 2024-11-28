@@ -281,44 +281,44 @@ ExecReadyInterpretedExpr(ExprState *state)
 		if (step0 == EEOP_INNER_FETCHSOME &&
 			step1 == EEOP_INNER_VAR)
 		{
-			state->evalfunc_private = (void *) ExecJustInnerVar;
+			state->evalfunc_private = ExecJustInnerVar;
 			return;
 		}
 		else if (step0 == EEOP_OUTER_FETCHSOME &&
 				 step1 == EEOP_OUTER_VAR)
 		{
-			state->evalfunc_private = (void *) ExecJustOuterVar;
+			state->evalfunc_private = ExecJustOuterVar;
 			return;
 		}
 		else if (step0 == EEOP_SCAN_FETCHSOME &&
 				 step1 == EEOP_SCAN_VAR)
 		{
-			state->evalfunc_private = (void *) ExecJustScanVar;
+			state->evalfunc_private = ExecJustScanVar;
 			return;
 		}
 		else if (step0 == EEOP_INNER_FETCHSOME &&
 				 step1 == EEOP_ASSIGN_INNER_VAR)
 		{
-			state->evalfunc_private = (void *) ExecJustAssignInnerVar;
+			state->evalfunc_private = ExecJustAssignInnerVar;
 			return;
 		}
 		else if (step0 == EEOP_OUTER_FETCHSOME &&
 				 step1 == EEOP_ASSIGN_OUTER_VAR)
 		{
-			state->evalfunc_private = (void *) ExecJustAssignOuterVar;
+			state->evalfunc_private = ExecJustAssignOuterVar;
 			return;
 		}
 		else if (step0 == EEOP_SCAN_FETCHSOME &&
 				 step1 == EEOP_ASSIGN_SCAN_VAR)
 		{
-			state->evalfunc_private = (void *) ExecJustAssignScanVar;
+			state->evalfunc_private = ExecJustAssignScanVar;
 			return;
 		}
 		else if (step0 == EEOP_CASE_TESTVAL &&
 				 step1 == EEOP_FUNCEXPR_STRICT &&
 				 state->steps[0].d.casetest.value)
 		{
-			state->evalfunc_private = (void *) ExecJustApplyFuncToCase;
+			state->evalfunc_private = ExecJustApplyFuncToCase;
 			return;
 		}
 	}
@@ -328,37 +328,37 @@ ExecReadyInterpretedExpr(ExprState *state)
 
 		if (step0 == EEOP_CONST)
 		{
-			state->evalfunc_private = (void *) ExecJustConst;
+			state->evalfunc_private = ExecJustConst;
 			return;
 		}
 		else if (step0 == EEOP_INNER_VAR)
 		{
-			state->evalfunc_private = (void *) ExecJustInnerVarVirt;
+			state->evalfunc_private = ExecJustInnerVarVirt;
 			return;
 		}
 		else if (step0 == EEOP_OUTER_VAR)
 		{
-			state->evalfunc_private = (void *) ExecJustOuterVarVirt;
+			state->evalfunc_private = ExecJustOuterVarVirt;
 			return;
 		}
 		else if (step0 == EEOP_SCAN_VAR)
 		{
-			state->evalfunc_private = (void *) ExecJustScanVarVirt;
+			state->evalfunc_private = ExecJustScanVarVirt;
 			return;
 		}
 		else if (step0 == EEOP_ASSIGN_INNER_VAR)
 		{
-			state->evalfunc_private = (void *) ExecJustAssignInnerVarVirt;
+			state->evalfunc_private = ExecJustAssignInnerVarVirt;
 			return;
 		}
 		else if (step0 == EEOP_ASSIGN_OUTER_VAR)
 		{
-			state->evalfunc_private = (void *) ExecJustAssignOuterVarVirt;
+			state->evalfunc_private = ExecJustAssignOuterVarVirt;
 			return;
 		}
 		else if (step0 == EEOP_ASSIGN_SCAN_VAR)
 		{
-			state->evalfunc_private = (void *) ExecJustAssignScanVarVirt;
+			state->evalfunc_private = ExecJustAssignScanVarVirt;
 			return;
 		}
 	}
@@ -379,7 +379,7 @@ ExecReadyInterpretedExpr(ExprState *state)
 	state->flags |= EEO_FLAG_DIRECT_THREADED;
 #endif							/* EEO_USE_COMPUTED_GOTO */
 
-	state->evalfunc_private = (void *) ExecInterpExpr;
+	state->evalfunc_private = ExecInterpExpr;
 }
 
 
@@ -2226,7 +2226,7 @@ get_cached_rowtype(Oid type_id, int32 typmod,
 						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 						 errmsg("type %s is not composite",
 								format_type_be(type_id))));
-			rowcache->cacheptr = (void *) typentry;
+			rowcache->cacheptr = typentry;
 			rowcache->tupdesc_id = typentry->tupDesc_identifier;
 			if (changed)
 				*changed = true;
@@ -2251,7 +2251,7 @@ get_cached_rowtype(Oid type_id, int32 typmod,
 			tupDesc = lookup_rowtype_tupdesc(type_id, typmod);
 			/* Drop pin acquired by lookup_rowtype_tupdesc */
 			ReleaseTupleDesc(tupDesc);
-			rowcache->cacheptr = (void *) tupDesc;
+			rowcache->cacheptr = tupDesc;
 			rowcache->tupdesc_id = 0;	/* not a valid value for non-RECORD */
 			if (changed)
 				*changed = true;

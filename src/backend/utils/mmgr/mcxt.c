@@ -886,7 +886,7 @@ MemoryContextStatsInternal(MemoryContext context, int level,
 	/* Examine the context itself */
 	context->methods->stats(context,
 							MemoryContextStatsPrint,
-							(void *) &level,
+							&level,
 							totals, print_to_stderr);
 
 	/*

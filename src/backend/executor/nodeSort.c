@@ -122,7 +122,7 @@ ExecSort(PlanState *pstate)
 												  tuplesortopts);
 		if (node->bounded)
 			tuplesort_set_bound(tuplesortstate, node->bound);
-		node->tuplesortstate = (void *) tuplesortstate;
+		node->tuplesortstate = tuplesortstate;
 
 		/*
 		 * Scan the subplan and feed all the tuples to tuplesort using the
