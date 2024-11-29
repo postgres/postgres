@@ -513,6 +513,10 @@ pg_SASL_init(PGconn *conn, int payloadlen)
 				}
 #endif
 			}
+			else if (conn->channel_binding[0] == 'd')
+			{
+			    selected_mechanism = SCRAM_SHA_256_NAME;
+			}
 			else
 			{
 				/*
