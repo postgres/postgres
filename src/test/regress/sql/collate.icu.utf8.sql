@@ -743,6 +743,36 @@ CREATE TABLE test10fk (x text COLLATE case_insensitive REFERENCES test10pk (x) O
 CREATE TABLE test11pk (x text COLLATE case_insensitive PRIMARY KEY);
 CREATE TABLE test11fk (x text COLLATE case_sensitive REFERENCES test11pk (x) ON UPDATE CASCADE ON DELETE CASCADE);  -- error
 
+-- foreign key actions
+-- Some of the behaviors are most easily visible with a
+-- case-insensitive collation.
+CREATE TABLE test12pk (x text COLLATE case_insensitive PRIMARY KEY);
+CREATE TABLE test12fk (a int, b text COLLATE case_insensitive REFERENCES test12pk (x) ON UPDATE NO ACTION);
+INSERT INTO test12pk VALUES ('abc');
+INSERT INTO test12fk VALUES (1, 'abc'), (2, 'ABC');
+UPDATE test12pk SET x = 'ABC' WHERE x = 'abc';  -- ok
+SELECT * FROM test12pk;
+SELECT * FROM test12fk;  -- no updates here
+DROP TABLE test12pk, test12fk;
+
+CREATE TABLE test12pk (x text COLLATE case_insensitive PRIMARY KEY);
+CREATE TABLE test12fk (a int, b text COLLATE case_insensitive REFERENCES test12pk (x) ON UPDATE RESTRICT);
+INSERT INTO test12pk VALUES ('abc');
+INSERT INTO test12fk VALUES (1, 'abc'), (2, 'ABC');
+UPDATE test12pk SET x = 'ABC' WHERE x = 'abc';  -- restrict violation
+SELECT * FROM test12pk;
+SELECT * FROM test12fk;
+DROP TABLE test12pk, test12fk;
+
+CREATE TABLE test12pk (x text COLLATE case_insensitive PRIMARY KEY);
+CREATE TABLE test12fk (a int, b text COLLATE case_insensitive REFERENCES test12pk (x) ON UPDATE CASCADE);
+INSERT INTO test12pk VALUES ('abc');
+INSERT INTO test12fk VALUES (1, 'abc'), (2, 'ABC');
+UPDATE test12pk SET x = 'ABC' WHERE x = 'abc';  -- ok
+SELECT * FROM test12pk;
+SELECT * FROM test12fk;  -- was updated
+DROP TABLE test12pk, test12fk;
+
 -- partitioning
 CREATE TABLE test20 (a int, b text COLLATE case_insensitive) PARTITION BY LIST (b);
 CREATE TABLE test20_1 PARTITION OF test20 FOR VALUES IN ('abc');
