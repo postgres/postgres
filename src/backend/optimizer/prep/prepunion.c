@@ -181,7 +181,7 @@ plan_set_operations(PlannerInfo *root)
  * set_operation_ordered_results_useful
  *		Return true if the given SetOperationStmt can be executed by utilizing
  *		paths that provide sorted input according to the setop's targetlist.
- *		Returns false when sorted paths are not any more useful then unsorted
+ *		Returns false when sorted paths are not any more useful than unsorted
  *		ones.
  */
 bool
