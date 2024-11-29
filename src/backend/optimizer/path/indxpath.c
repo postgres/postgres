@@ -1354,8 +1354,11 @@ group_similar_or_args(PlannerInfo *root, RelOptInfo *rel, RestrictInfo *rinfo)
 		{
 			IndexOptInfo *index = (IndexOptInfo *) lfirst(lc2);
 
-			/* Ignore index if it doesn't support bitmap scans */
-			if (!index->amhasgetbitmap)
+			/*
+			 * Ignore index if it doesn't support bitmap scans or SAOP
+			 * clauses.
+			 */
+			if (!index->amhasgetbitmap || !index->amsearcharray)
 				continue;
 
 			for (colnum = 0; colnum < index->nkeycolumns; colnum++)
@@ -3247,6 +3250,10 @@ match_orclause_to_indexcol(PlannerInfo *root,
 
 	Assert(IsA(orclause, BoolExpr));
 	Assert(orclause->boolop == OR_EXPR);
+
+	/* Ignore index if it doesn't support SAOP clauses */
+	if (!index->amsearcharray)
+		return NULL;
 
 	/*
 	 * Try to convert a list of OR-clauses to a single SAOP expression. Each

@@ -1233,6 +1233,24 @@ SELECT count(*) FROM tenk1 WHERE stringu1 = 'TVAAAA';
     14
 (1 row)
 
+-- OR-clauses shouldn't be transformed into SAOP because hash indexes don't
+-- support SAOP scans.
+SET enable_seqscan = off;
+EXPLAIN (COSTS OFF)
+SELECT COUNT(*) FROM tenk1 WHERE stringu1 = 'TVAAAA' OR  stringu1 = 'TVAAAB';
+                                     QUERY PLAN                                     
+------------------------------------------------------------------------------------
+ Aggregate
+   ->  Bitmap Heap Scan on tenk1
+         Recheck Cond: ((stringu1 = 'TVAAAA'::name) OR (stringu1 = 'TVAAAB'::name))
+         ->  BitmapOr
+               ->  Bitmap Index Scan on hash_tuplesort_idx
+                     Index Cond: (stringu1 = 'TVAAAA'::name)
+               ->  Bitmap Index Scan on hash_tuplesort_idx
+                     Index Cond: (stringu1 = 'TVAAAB'::name)
+(8 rows)
+
+RESET enable_seqscan;
 DROP INDEX hash_tuplesort_idx;
 RESET maintenance_work_mem;
 --
