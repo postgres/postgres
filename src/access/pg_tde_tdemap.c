@@ -115,7 +115,7 @@ static int pg_tde_open_file_basic(char *tde_filename, int fileFlags, bool ignore
 static int pg_tde_file_header_read(char *tde_filename, int fd, TDEFileHeader *fheader, bool *is_new_file, off_t *bytes_read);
 static bool pg_tde_read_one_map_entry(int fd, const RelFileLocator *rlocator, int flags, TDEMapEntry *map_entry, off_t *offset);
 static RelKeyData *pg_tde_read_one_keydata(int keydata_fd, int32 key_index, TDEPrincipalKey *principal_key);
-static int pg_tde_open_file(char *tde_filename, TDEPrincipalKeyInfo *principal_key_info, bool should_fill_info, int fileFlags, bool *is_new_file, off_t *offset);
+static int pg_tde_open_file(char *tde_filename, TDEPrincipalKeyInfo *principal_key_info, bool update_header, int fileFlags, bool *is_new_file, off_t *curr_pos);
 static RelKeyData *pg_tde_get_key_from_cache(RelFileNumber rel_number, uint32 key_type);
 
 #ifndef FRONTEND
@@ -279,7 +279,7 @@ pg_tde_delete_tde_files(Oid dbOid)
  * The caller must have an EXCLUSIVE LOCK on the files before calling this function.
  */
 bool
-pg_tde_save_principal_key(TDEPrincipalKeyInfo *principal_key_info)
+pg_tde_save_principal_key(TDEPrincipalKeyInfo *principal_key_info, bool truncate_existing, bool update_header)
 {
 	int map_fd = -1;
 	int keydata_fd = -1;
@@ -288,16 +288,23 @@ pg_tde_save_principal_key(TDEPrincipalKeyInfo *principal_key_info)
 	bool is_new_key_data = false;
 	char db_map_path[MAXPGPATH] = {0};
 	char db_keydata_path[MAXPGPATH] = {0};
+	int file_flags = O_RDWR | O_CREAT;
 
 	/* Set the file paths */
 	pg_tde_set_db_file_paths(principal_key_info->databaseId,
 							 db_map_path, db_keydata_path);
 
-	ereport(LOG, (errmsg("pg_tde_save_principal_key")));
+	ereport(DEBUG2,
+		(errmsg("pg_tde_save_principal_key"),
+			errdetail("truncate_existing:%s update_header:%s", truncate_existing?"YES":"NO", update_header?"YES":"NO")));
+	/*
+	 * Create or truncate these map and keydata files.
+	 */
+	if (truncate_existing)
+		file_flags |= O_TRUNC;
 
-	/* Create or truncate these map and keydata files. */
-	map_fd = pg_tde_open_file(db_map_path, principal_key_info, false, O_RDWR | O_CREAT | O_TRUNC, &is_new_map, &curr_pos);
-	keydata_fd = pg_tde_open_file(db_keydata_path, principal_key_info, false, O_RDWR | O_CREAT | O_TRUNC, &is_new_key_data, &curr_pos);
+	map_fd = pg_tde_open_file(db_map_path, principal_key_info, update_header, file_flags, &is_new_map, &curr_pos);
+	keydata_fd = pg_tde_open_file(db_keydata_path, principal_key_info, update_header, file_flags, &is_new_key_data, &curr_pos);
 
 	/* Closing files. */
 	close(map_fd);
@@ -341,6 +348,8 @@ pg_tde_file_header_write(char *tde_filename, int fd, TDEPrincipalKeyInfo *princi
 				(errcode_for_file_access(),
 				 errmsg("could not fsync file \"%s\": %m", tde_filename)));
 	}
+	ereport(DEBUG2,
+			(errmsg("Wrote the header to %s", tde_filename)));
 
 	return fd;
 }
@@ -1124,7 +1133,7 @@ tde_decrypt_rel_key(TDEPrincipalKey *principal_key, RelKeyData *enc_rel_key_data
  * or an error is thrown if the file does not exist.
  */
 static int
-pg_tde_open_file(char *tde_filename, TDEPrincipalKeyInfo *principal_key_info, bool should_fill_info, int fileFlags, bool *is_new_file, off_t *curr_pos)
+pg_tde_open_file(char *tde_filename, TDEPrincipalKeyInfo *principal_key_info, bool update_header, int fileFlags, bool *is_new_file, off_t *curr_pos)
 {
 	int fd = -1;
 	TDEFileHeader fheader;
@@ -1141,7 +1150,7 @@ pg_tde_open_file(char *tde_filename, TDEPrincipalKeyInfo *principal_key_info, bo
 
 #ifndef FRONTEND
 	/* In case it's a new file, let's add the header now. */
-	if (*is_new_file && principal_key_info)
+	if ((*is_new_file || update_header) && principal_key_info)
 		pg_tde_file_header_write(tde_filename, fd, principal_key_info, &bytes_written);
 #endif							/* FRONTEND */
 

@@ -266,6 +266,11 @@ RETURNS boolean
 AS 'MODULE_PATHNAME'
 LANGUAGE C;
 
+CREATE FUNCTION pg_tde_alter_principal_key_keyring(new_provider_name VARCHAR(255))
+RETURNS boolean
+AS 'MODULE_PATHNAME'
+LANGUAGE C;
+
 CREATE FUNCTION pg_tde_extension_initialize()
 RETURNS VOID
 AS 'MODULE_PATHNAME'
@@ -414,6 +419,7 @@ BEGIN
     PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_add_key_provider_vault_v2', 'varchar, JSON, JSON,JSON,JSON');
 
     PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_set_principal_key', 'varchar, varchar, BOOLEAN');
+    PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_alter_principal_key_keyring', 'varchar');
 
     PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_rotate_principal_key', 'pg_tde_global, varchar, varchar');
     PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_rotate_principal_key', 'varchar, varchar');
@@ -482,6 +488,7 @@ BEGIN
     PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_add_key_provider_vault_v2', 'varchar, JSON, JSON,JSON,JSON');
 
     PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_set_principal_key', 'varchar, varchar, BOOLEAN');
+    PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_alter_principal_key_keyring', 'varchar');
 
     PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_rotate_principal_key', 'pg_tde_global, varchar, varchar');
     PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_rotate_principal_key', 'varchar, varchar');
