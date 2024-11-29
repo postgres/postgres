@@ -1248,17 +1248,16 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       clause specifies the action to perform when a referenced column
       in the referenced table is being updated to a new value. If the
       row is updated, but the referenced column is not actually
-      changed, no action is done. Referential actions other than the
-      <literal>NO ACTION</literal> check cannot be deferred, even if
-      the constraint is declared deferrable. There are the following possible
-      actions for each clause:
+      changed, no action is done. Referential actions are executed as part of
+      the data changing command, even if the constraint is deferred.  There
+      are the following possible actions for each clause:
 
       <variablelist>
        <varlistentry id="sql-createtable-parms-references-refact-no-action">
         <term><literal>NO ACTION</literal></term>
         <listitem>
          <para>
-          Produce an error indicating that the deletion or update
+          Produce an error if the deletion or update
           would create a foreign key constraint violation.
           If the constraint is deferred, this
           error will be produced at constraint check time if there still
@@ -1271,10 +1270,13 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
         <term><literal>RESTRICT</literal></term>
         <listitem>
          <para>
-          Produce an error indicating that the deletion or update
-          would create a foreign key constraint violation.
-          This is the same as <literal>NO ACTION</literal> except that
-          the check is not deferrable.
+          Produce an error if a row to be deleted or updated matches a row in
+          the referencing table.  This prevents the action even if the state
+          after the action would not violate the foreign key constraint.  In
+          particular, it prevents updates of referenced rows to values that
+          are distinct but compare as equal.  (But it does not prevent
+          <quote>no-op</quote> updates that update a column to the same
+          value.)
          </para>
         </listitem>
        </varlistentry>

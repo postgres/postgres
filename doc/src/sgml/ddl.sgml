@@ -1233,16 +1233,32 @@ CREATE TABLE order_items (
    </para>
 
    <para>
-    Restricting and cascading deletes are the two most common options.
-    <literal>RESTRICT</literal> prevents deletion of a
-    referenced row. <literal>NO ACTION</literal> means that if any
-    referencing rows still exist when the constraint is checked, an error
-    is raised; this is the default behavior if you do not specify anything.
-    (The essential difference between these two choices is that
-    <literal>NO ACTION</literal> allows the check to be deferred until
-    later in the transaction, whereas <literal>RESTRICT</literal> does not.)
+    The default <literal>ON DELETE</literal> action is <literal>ON DELETE NO
+    ACTION</literal>; this does not need to be specified.  This means that the
+    deletion in the referenced table is allowed to proceed.  But the
+    foreign-key constraint is still required to be satisfied, so this
+    operation will usually result in an error.  But checking of foreign-key
+    constraints can also be deferred to later in the transaction (not covered
+    in this chapter).  In that case, the <literal>NO ACTION</literal> setting
+    would allow other commands to <quote>fix</quote> the situation before the
+    constraint is checked, for example by inserting another suitable row into
+    the referenced table or by deleting the now-dangling rows from the
+    referencing table.
+   </para>
+
+   <para>
+    <literal>RESTRICT</literal> is a stricter setting than <literal>NO
+    ACTION</literal>.  It prevents deletion of a referenced row.
+    <literal>RESTRICT</literal> does not allow the check to be deferred until
+    later in the transaction.
+   </para>
+
+   <para>
     <literal>CASCADE</literal> specifies that when a referenced row is deleted,
     row(s) referencing it should be automatically deleted as well.
+   </para>
+
+   <para>
     There are two other options:
     <literal>SET NULL</literal> and <literal>SET DEFAULT</literal>.
     These cause the referencing column(s) in the referencing row(s)
@@ -1312,6 +1328,15 @@ CREATE TABLE posts (
     NULL</literal> and <literal>SET DEFAULT</literal>.
     In this case, <literal>CASCADE</literal> means that the updated values of the
     referenced column(s) should be copied into the referencing row(s).
+    There is also a noticeable difference between <literal>ON UPDATE NO
+    ACTION</literal> (the default) and <literal>NO UPDATE RESTRICT</literal>.
+    The former will allow the update to proceed and the foreign-key constraint
+    will be checked against the state after the update.  The latter will
+    prevent the update to run even if the state after the update would still
+    satisfy the constraint.  This prevents updating a referenced row to a
+    value that is distinct but compares as equal (for example, a character
+    string with a different case variant, if a character string type with a
+    case-insensitive collation is used).
    </para>
 
    <para>
