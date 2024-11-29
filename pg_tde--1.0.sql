@@ -230,15 +230,21 @@ RETURNS table_am_handler
 AS 'MODULE_PATHNAME'
 LANGUAGE C;
 
+CREATE FUNCTION pg_tde_internal_has_key(oid OID)
+RETURNS boolean
+AS 'MODULE_PATHNAME'
+LANGUAGE C;
+
 CREATE FUNCTION pg_tde_is_encrypted(table_name VARCHAR)
 RETURNS boolean
 AS $$
 SELECT EXISTS (
     SELECT 1
     FROM   pg_catalog.pg_class
-    WHERE  relname = table_name
+    WHERE  oid = table_name::regclass::oid
     AND    (relam = (SELECT oid FROM pg_catalog.pg_am WHERE amname = 'tde_heap_basic')
-        OR relam = (SELECT oid FROM pg_catalog.pg_am WHERE amname = 'tde_heap'))
+        OR (relam = (SELECT oid FROM pg_catalog.pg_am WHERE amname = 'tde_heap'))
+            AND pg_tde_internal_has_key(table_name::regclass::oid))
     )$$
 LANGUAGE SQL;
 
