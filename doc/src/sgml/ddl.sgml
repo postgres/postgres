@@ -1329,7 +1329,7 @@ CREATE TABLE posts (
     In this case, <literal>CASCADE</literal> means that the updated values of the
     referenced column(s) should be copied into the referencing row(s).
     There is also a noticeable difference between <literal>ON UPDATE NO
-    ACTION</literal> (the default) and <literal>NO UPDATE RESTRICT</literal>.
+    ACTION</literal> (the default) and <literal>ON UPDATE RESTRICT</literal>.
     The former will allow the update to proceed and the foreign-key constraint
     will be checked against the state after the update.  The latter will
     prevent the update to run even if the state after the update would still
