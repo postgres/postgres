@@ -39,7 +39,6 @@ jobs:
           cd contrib/pg_tde
           git checkout main
           git pull
-          ./configure
         working-directory: src
 
       - name: Build postgres

@@ -1322,6 +1322,11 @@ if sslopt == 'auto' and auto_features.disabled()
   sslopt = 'none'
 endif
 
+# OpenSSL is required for Percona extentions
+if percona_ext == true
+  sslopt = 'openssl'
+endif
+
 if sslopt in ['auto', 'openssl']
   openssl_required = (sslopt == 'openssl')
 

@@ -9,6 +9,7 @@ pg_waldump_sources = files(
 pg_waldump_sources += rmgr_desc_sources
 pg_waldump_sources += xlogreader_sources
 pg_waldump_sources += files('../../backend/access/transam/xlogstats.c')
+pg_waldump_sources += tde_decrypt_sources
 
 if host_system == 'windows'
   pg_waldump_sources += rc_bin_gen.process(win32ver_rc, extra_args: [
@@ -18,9 +19,10 @@ endif
 
 pg_waldump = executable('pg_waldump',
   pg_waldump_sources,
-  dependencies: [frontend_code, lz4, zstd],
+  dependencies: [frontend_code, lz4, zstd, tde_deps],
   c_args: ['-DFRONTEND'], # needed for xlogreader et al
   kwargs: default_bin_args,
+  include_directories: [postgres_inc, tde_include],
 )
 bin_targets += pg_waldump
 
@@ -32,6 +34,8 @@ tests += {
     'tests': [
       't/001_basic.pl',
       't/002_save_fullpage.pl',
+      't/003_basic_encrypted.pl',
+      't/004_save_fullpage_encrypted.pl',
     ],
   },
 }
