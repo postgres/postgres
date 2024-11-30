@@ -31,10 +31,6 @@ jobs:
       - name: Configure postgres
         run: ./configure
 
-      - name: Configure pg_tde
-        run: ./configure
-        working-directory: contrib/pg_tde
-
       - name: Install perltidy
         run: sudo cpan -T SHANCOCK/Perl-Tidy-20230309.tar.gz
 

@@ -56,7 +56,6 @@ Install `pg_tde` using one of available installation methods:
 
         ```
         cd pg_tde
-        ./configure
         make USE_PGXS=1
         sudo make USE_PGXS=1 install
         ```

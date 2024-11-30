@@ -76,7 +76,6 @@ jobs:
 
       - name: Build pg_tde
         run: |
-          sudo -u postgres bash -c './configure'
           sudo -u postgres bash -c 'make USE_PGXS=1'
           sudo make USE_PGXS=1 install
         working-directory: src/pg_tde

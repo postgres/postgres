@@ -71,7 +71,6 @@ Percona provides binary packages of `pg_tde` extension only for Percona Server f
 
       ```sh
       cd pg_tde
-      ./configure
       make USE_PGXS=1
       sudo make USE_PGXS=1 install
       ```

@@ -1,18 +1,6 @@
 
 curldep = dependency('libcurl')
 
-pg_tde_version = '1.0.0-beta2'
-
-conf_data = configuration_data()
-conf_data.set_quoted('PACKAGE_NAME', 'pg_tde')
-conf_data.set_quoted('PACKAGE_BUGREPORT', 'https://github.com/percona/pg_tde/issues')
-conf_data.set_quoted('PACKAGE_VERSION', pg_tde_version)
-conf_data.set_quoted('PACKAGE_STRING', 'pg_tde ' + pg_tde_version)
-conf_data.set_quoted('PACKAGE_TARNAME', 'pg_tde')
-
-configure_file(output : 'config.h',
-               configuration : conf_data)
-
 pg_version = meson.project_version().substring(0,2)
 src_version = 'src' + pg_version
 

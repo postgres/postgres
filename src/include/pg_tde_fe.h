@@ -76,7 +76,7 @@ static int	tde_fe_error_level = 0;
 
 #define LWLockAcquire(lock, mode) NULL
 #define LWLockRelease(lock_files) NULL
-#define LWLockHeldByMeInMode(lock, mode) NULL
+#define LWLockHeldByMeInMode(lock, mode) true
 #define LWLock void
 #define LWLockMode void*
 #define LW_SHARED NULL

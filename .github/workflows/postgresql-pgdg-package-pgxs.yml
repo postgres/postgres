@@ -71,7 +71,6 @@ jobs:
         env:
           POSTGRESQL_VERSION: ${{ matrix.postgresql-version }}
         run: |
-          sudo -u postgres bash -c './configure'
           sudo -u postgres bash -c 'make USE_PGXS=1'
           sudo make USE_PGXS=1 MAJORVERSION=$POSTGRESQL_VERSION install
         working-directory: src/pg_tde

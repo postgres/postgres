@@ -17,6 +17,7 @@
 #include "miscadmin.h"
 #include "catalog/tde_principal_key.h"
 #include "access/pg_tde_tdemap.h"
+#include "pg_tde.h"
 
 #ifndef FRONTEND
 #include "access/genam.h"
@@ -137,11 +138,18 @@ get_tde_tables_count(void)
 
 #endif							/* !FRONTEND */
 
-static char globalspace_dir[MAXPGPATH] = {0};
+static char globalspace_dir[MAXPGPATH] = PG_TDE_DATA_DIR;
 
 void
-pg_tde_set_globalspace_dir(const char *dir)
+pg_tde_set_data_dir(const char *dir)
 {
 	Assert(dir != NULL);
 	strncpy(globalspace_dir, dir, sizeof(globalspace_dir));
+}
+
+/* returns the palloc'd string */
+char *
+pg_tde_get_tde_data_dir()
+{
+	return globalspace_dir;
 }

@@ -55,7 +55,6 @@ To run the tests, use the following command:
 
 ```
 cd pg_tde
-./configure
 make USE_PGXS=1 installcheck
 ```
 

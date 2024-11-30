@@ -58,14 +58,13 @@ jobs:
 
       - name: Build postgres
         run: |
-          ./configure --with-openssl  --enable-tap-tests=no --enable-cassert
+          ./configure --with-openssl --enable-tap-tests=no --enable-cassert
           make -j
           sudo make install
         working-directory: src
 
       - name: Build pg_tde
         run: |
-          ./configure
           make -j MAJORVERSION=17
           sudo make install
         working-directory: src/contrib/pg_tde

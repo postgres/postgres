@@ -689,7 +689,7 @@ debug_print_kerying(GenericKeyring *keyring)
 static inline void
 get_keyring_infofile_path(char *resPath, Oid dbOid)
 {
-	join_path_components(resPath, PG_TDE_DATA_DIR, psprintf(PG_TDE_KEYRING_FILENAME, dbOid));
+	join_path_components(resPath, pg_tde_get_tde_data_dir(), psprintf(PG_TDE_KEYRING_FILENAME, dbOid));
 }
 
 /*
