@@ -1231,12 +1231,14 @@ exec_simple_query(const char *query_string)
 		 * we are passing here is in MessageContext or the
 		 * per_parsetree_context, and so will outlive the portal anyway.
 		 */
-		PortalDefineQuery(portal,
-						  NULL,
-						  query_string,
-						  commandTag,
-						  plantree_list,
-						  NULL);
+		PortalDefineQuery(
+			portal,          /* portal */
+			NULL,            /* prepStmtName */
+			query_string,    /* sourceText */
+			commandTag,      /* commandTag */
+			plantree_list,   /* stmts */
+			NULL             /* cplan */
+		);
 
 		/*
 		 * Start the portal.  No parameters here.
