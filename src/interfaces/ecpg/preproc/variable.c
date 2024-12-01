@@ -260,33 +260,28 @@ void
 remove_typedefs(int brace_level)
 {
 	struct typedefs *p,
-			   *prev;
+			   *prev,
+			   *next;
 
-	for (p = prev = types; p;)
+	for (p = types, prev = NULL; p; p = next)
 	{
+		next = p->next;
 		if (p->brace_level >= brace_level)
 		{
 			/* remove it */
-			if (p == types)
-				prev = types = p->next;
+			if (prev)
+				prev->next = next;
 			else
-				prev->next = p->next;
+				types = next;
 
 			if (p->type->type_enum == ECPGt_struct || p->type->type_enum == ECPGt_union)
 				free(p->struct_member_list);
 			free(p->type);
 			free(p->name);
 			free(p);
-			if (prev == types)
-				p = types;
-			else
-				p = prev ? prev->next : NULL;
 		}
 		else
-		{
 			prev = p;
-			p = prev->next;
-		}
 	}
 }
 
@@ -294,63 +289,67 @@ void
 remove_variables(int brace_level)
 {
 	struct variable *p,
-			   *prev;
+			   *prev,
+			   *next;
 
-	for (p = prev = allvariables; p;)
+	for (p = allvariables, prev = NULL; p; p = next)
 	{
+		next = p->next;
 		if (p->brace_level >= brace_level)
 		{
-			/* is it still referenced by a cursor? */
+			/* remove it, but first remove any references from cursors */
 			struct cursor *ptr;
 
 			for (ptr = cur; ptr != NULL; ptr = ptr->next)
 			{
 				struct arguments *varptr,
-						   *prevvar;
+						   *prevvar,
+						   *nextvar;
 
-				for (varptr = prevvar = ptr->argsinsert; varptr != NULL; varptr = varptr->next)
+				for (varptr = ptr->argsinsert, prevvar = NULL;
+					 varptr != NULL; varptr = nextvar)
 				{
+					nextvar = varptr->next;
 					if (p == varptr->variable)
 					{
 						/* remove from list */
-						if (varptr == ptr->argsinsert)
-							ptr->argsinsert = varptr->next;
+						if (prevvar)
+							prevvar->next = nextvar;
 						else
-							prevvar->next = varptr->next;
+							ptr->argsinsert = nextvar;
 					}
+					else
+						prevvar = varptr;
 				}
-				for (varptr = prevvar = ptr->argsresult; varptr != NULL; varptr = varptr->next)
+				for (varptr = ptr->argsresult, prevvar = NULL;
+					 varptr != NULL; varptr = nextvar)
 				{
+					nextvar = varptr->next;
 					if (p == varptr->variable)
 					{
 						/* remove from list */
-						if (varptr == ptr->argsresult)
-							ptr->argsresult = varptr->next;
+						if (prevvar)
+							prevvar->next = nextvar;
 						else
-							prevvar->next = varptr->next;
+							ptr->argsresult = nextvar;
 					}
+					else
+						prevvar = varptr;
 				}
 			}
 
 			/* remove it */
-			if (p == allvariables)
-				prev = allvariables = p->next;
+			if (prev)
+				prev->next = next;
 			else
-				prev->next = p->next;
+				allvariables = next;
 
 			ECPGfree_type(p->type);
 			free(p->name);
 			free(p);
-			if (prev == allvariables)
-				p = allvariables;
-			else
-				p = prev ? prev->next : NULL;
 		}
 		else
-		{
 			prev = p;
-			p = prev->next;
-		}
 	}
 }
 
