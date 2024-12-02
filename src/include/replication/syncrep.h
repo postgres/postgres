@@ -100,10 +100,15 @@ extern void SyncRepUpdateSyncStandbysDefined(void);
  * Internal functions for parsing synchronous_standby_names grammar,
  * in syncrep_gram.y and syncrep_scanner.l
  */
-extern int	syncrep_yyparse(void);
-extern int	syncrep_yylex(void);
-extern void syncrep_yyerror(const char *str);
-extern void syncrep_scanner_init(const char *str);
-extern void syncrep_scanner_finish(void);
+union YYSTYPE;
+#ifndef YY_TYPEDEF_YY_SCANNER_T
+#define YY_TYPEDEF_YY_SCANNER_T
+typedef void *yyscan_t;
+#endif
+extern int	syncrep_yyparse(yyscan_t yyscanner);
+extern int	syncrep_yylex(union YYSTYPE *yylval_param, yyscan_t yyscanner);
+extern void syncrep_yyerror(yyscan_t yyscanner, const char *str);
+extern void syncrep_scanner_init(const char *str, yyscan_t *yyscannerp);
+extern void syncrep_scanner_finish(yyscan_t yyscanner);
 
 #endif							/* _SYNCREP_H */

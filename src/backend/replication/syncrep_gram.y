@@ -26,10 +26,6 @@ char	   *syncrep_parse_error_msg;
 static SyncRepConfigData *create_syncrep_config(const char *num_sync,
 					List *members, uint8 syncrep_method);
 
-/* silence -Wmissing-variable-declarations */
-extern int syncrep_yychar;
-extern int syncrep_yynerrs;
-
 /*
  * Bison doesn't allocate anything that needs to live across parser calls,
  * so we can easily have it use palloc instead of malloc.  This prevents
@@ -40,6 +36,9 @@ extern int syncrep_yynerrs;
 
 %}
 
+%parse-param {yyscan_t yyscanner}
+%lex-param   {yyscan_t yyscanner}
+%pure-parser
 %expect 0
 %name-prefix="syncrep_yy"
 
@@ -60,7 +59,10 @@ extern int syncrep_yynerrs;
 
 %%
 result:
-		standby_config				{ syncrep_parse_result = $1; }
+		standby_config				{
+										syncrep_parse_result = $1;
+										(void) yynerrs; /* suppress compiler warning */
+									}
 	;
 
 standby_config:

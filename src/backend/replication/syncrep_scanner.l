@@ -37,21 +37,27 @@ fprintf_to_ereport(const char *fmt, const char *msg)
 	ereport(ERROR, (errmsg_internal("%s", msg)));
 }
 
-/* Handles to the buffer that the lexer uses internally */
-static YY_BUFFER_STATE scanbufhandle;
-
-static StringInfoData xdbuf;
+struct syncrep_yy_extra_type
+{
+	StringInfoData xdbuf;
+};
+#define YY_EXTRA_TYPE struct syncrep_yy_extra_type *
 
 /* LCOV_EXCL_START */
 
 %}
 
+%option reentrant
+%option bison-bridge
 %option 8bit
 %option never-interactive
 %option nodefault
 %option noinput
 %option nounput
 %option noyywrap
+%option noyyalloc
+%option noyyrealloc
+%option noyyfree
 %option warn
 %option prefix="syncrep_yy"
 
@@ -82,38 +88,38 @@ xdinside		[^"]+
 [Ff][Ii][Rr][Ss][Tt]	{ return FIRST; }
 
 {xdstart}	{
-				initStringInfo(&xdbuf);
+				initStringInfo(&yyextra->xdbuf);
 				BEGIN(xd);
 		}
 <xd>{xddouble} {
-				appendStringInfoChar(&xdbuf, '"');
+				appendStringInfoChar(&yyextra->xdbuf, '"');
 		}
 <xd>{xdinside} {
-				appendStringInfoString(&xdbuf, yytext);
+				appendStringInfoString(&yyextra->xdbuf, yytext);
 		}
 <xd>{xdstop} {
-				syncrep_yylval.str = xdbuf.data;
-				xdbuf.data = NULL;
+				yylval->str = yyextra->xdbuf.data;
+				yyextra->xdbuf.data = NULL;
 				BEGIN(INITIAL);
 				return NAME;
 		}
 <xd><<EOF>> {
-				syncrep_yyerror("unterminated quoted identifier");
+				syncrep_yyerror(yyscanner, "unterminated quoted identifier");
 				return JUNK;
 		}
 
 {identifier} {
-				syncrep_yylval.str = pstrdup(yytext);
+				yylval->str = pstrdup(yytext);
 				return NAME;
 		}
 
 {digit}+	{
-				syncrep_yylval.str = pstrdup(yytext);
+				yylval->str = pstrdup(yytext);
 				return NUM;
 		}
 
 "*"		{
-				syncrep_yylval.str = "*";
+				yylval->str = "*";
 				return NAME;
 		}
 
@@ -126,10 +132,16 @@ xdinside		[^"]+
 
 /* LCOV_EXCL_STOP */
 
+/* see scan.l */
+#undef yyextra
+#define yyextra (((struct yyguts_t *) yyscanner)->yyextra_r)
+
 /* Needs to be here for access to yytext */
 void
-syncrep_yyerror(const char *message)
+syncrep_yyerror(yyscan_t yyscanner, const char *message)
 {
+	struct yyguts_t * yyg = (struct yyguts_t *) yyscanner;	/* needed for yytext macro */
+
 	/* report only the first error in a parse operation */
 	if (syncrep_parse_error_msg)
 		return;
@@ -142,32 +154,51 @@ syncrep_yyerror(const char *message)
 }
 
 void
-syncrep_scanner_init(const char *str)
+syncrep_scanner_init(const char *str, yyscan_t *yyscannerp)
 {
-	Size		slen = strlen(str);
-	char	   *scanbuf;
+	yyscan_t	yyscanner;
+	struct syncrep_yy_extra_type *yyext = palloc0_object(struct syncrep_yy_extra_type);
 
-	/*
-	 * Might be left over after ereport()
-	 */
-	if (YY_CURRENT_BUFFER)
-		yy_delete_buffer(YY_CURRENT_BUFFER);
+	if (yylex_init(yyscannerp) != 0)
+		elog(ERROR, "yylex_init() failed: %m");
 
-	/*
-	 * Make a scan buffer with special termination needed by flex.
-	 */
-	scanbuf = (char *) palloc(slen + 2);
-	memcpy(scanbuf, str, slen);
-	scanbuf[slen] = scanbuf[slen + 1] = YY_END_OF_BUFFER_CHAR;
-	scanbufhandle = yy_scan_buffer(scanbuf, slen + 2);
+	yyscanner = *yyscannerp;
 
-	/* Make sure we start in proper state */
-	BEGIN(INITIAL);
+	yyset_extra(yyext, yyscanner);
+
+	yy_scan_string(str, yyscanner);
 }
 
 void
-syncrep_scanner_finish(void)
+syncrep_scanner_finish(yyscan_t yyscanner)
 {
-	yy_delete_buffer(scanbufhandle);
-	scanbufhandle = NULL;
+	pfree(yyextra);
+	yylex_destroy(yyscanner);
+}
+
+/*
+ * Interface functions to make flex use palloc() instead of malloc().
+ * It'd be better to make these static, but flex insists otherwise.
+ */
+
+void *
+yyalloc(yy_size_t size, yyscan_t yyscanner)
+{
+	return palloc(size);
+}
+
+void *
+yyrealloc(void *ptr, yy_size_t size, yyscan_t yyscanner)
+{
+	if (ptr)
+		return repalloc(ptr, size);
+	else
+		return palloc(size);
+}
+
+void
+yyfree(void *ptr, yyscan_t yyscanner)
+{
+	if (ptr)
+		pfree(ptr);
 }

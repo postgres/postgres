@@ -992,6 +992,7 @@ check_synchronous_standby_names(char **newval, void **extra, GucSource source)
 {
 	if (*newval != NULL && (*newval)[0] != '\0')
 	{
+		yyscan_t	scanner;
 		int			parse_rc;
 		SyncRepConfigData *pconf;
 
@@ -1000,9 +1001,9 @@ check_synchronous_standby_names(char **newval, void **extra, GucSource source)
 		syncrep_parse_error_msg = NULL;
 
 		/* Parse the synchronous_standby_names string */
-		syncrep_scanner_init(*newval);
-		parse_rc = syncrep_yyparse();
-		syncrep_scanner_finish();
+		syncrep_scanner_init(*newval, &scanner);
+		parse_rc = syncrep_yyparse(scanner);
+		syncrep_scanner_finish(scanner);
 
 		if (parse_rc != 0 || syncrep_parse_result == NULL)
 		{
