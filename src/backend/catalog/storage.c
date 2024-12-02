@@ -337,20 +337,33 @@ RelationTruncate(Relation rel, BlockNumber nblocks)
 	RelationPreTruncate(rel);
 
 	/*
-	 * Make sure that a concurrent checkpoint can't complete while truncation
-	 * is in progress.
+	 * The code which follows can interact with concurrent checkpoints in two
+	 * separate ways.
 	 *
-	 * The truncation operation might drop buffers that the checkpoint
+	 * First, the truncation operation might drop buffers that the checkpoint
 	 * otherwise would have flushed. If it does, then it's essential that the
 	 * files actually get truncated on disk before the checkpoint record is
 	 * written. Otherwise, if reply begins from that checkpoint, the
 	 * to-be-truncated blocks might still exist on disk but have older
 	 * contents than expected, which can cause replay to fail. It's OK for the
 	 * blocks to not exist on disk at all, but not for them to have the wrong
-	 * contents.
+	 * contents. For this reason, we need to set DELAY_CHKPT_COMPLETE while
+	 * this code executes.
+	 *
+	 * Second, the call to smgrtruncate() below will in turn call
+	 * RegisterSyncRequest(). We need the sync request created by that call to
+	 * be processed before the checkpoint completes. CheckPointGuts() will
+	 * call ProcessSyncRequests(), but if we register our sync request after
+	 * that happens, then the WAL record for the truncation could end up
+	 * preceding the checkpoint record, while the actual sync doesn't happen
+	 * until the next checkpoint. To prevent that, we need to set
+	 * DELAY_CHKPT_START here. That way, if the XLOG_SMGR_TRUNCATE precedes
+	 * the redo pointer of a concurrent checkpoint, we're guaranteed that the
+	 * corresponding sync request will be processed before the checkpoint
+	 * completes.
 	 */
-	Assert((MyProc->delayChkptFlags & DELAY_CHKPT_COMPLETE) == 0);
-	MyProc->delayChkptFlags |= DELAY_CHKPT_COMPLETE;
+	Assert((MyProc->delayChkptFlags & (DELAY_CHKPT_START | DELAY_CHKPT_COMPLETE)) == 0);
+	MyProc->delayChkptFlags |= DELAY_CHKPT_START | DELAY_CHKPT_COMPLETE;
 
 	/*
 	 * We WAL-log the truncation before actually truncating, which means
@@ -398,7 +411,7 @@ RelationTruncate(Relation rel, BlockNumber nblocks)
 	smgrtruncate(RelationGetSmgr(rel), forks, nforks, blocks);
 
 	/* We've done all the critical work, so checkpoints are OK now. */
-	MyProc->delayChkptFlags &= ~DELAY_CHKPT_COMPLETE;
+	MyProc->delayChkptFlags &= ~(DELAY_CHKPT_START | DELAY_CHKPT_COMPLETE);
 
 	/*
 	 * Update upper-level FSM pages to account for the truncation. This is
