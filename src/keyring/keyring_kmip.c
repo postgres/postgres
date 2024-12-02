@@ -11,6 +11,7 @@
 
 #include <openssl/err.h>
 #include <openssl/ssl.h>
+#include <string.h>
 #include <kmip.h>
 #include <kmip_bio.h>
 #include <kmip_locate.h>
