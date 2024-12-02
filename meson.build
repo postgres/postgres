@@ -1337,12 +1337,12 @@ if sslopt in ['auto', 'openssl']
 
   # via library + headers
   if not ssl.found()
-    ssl_lib = cc.find_library('ssl',
+    ssl_lib = cc.find_library(['ssl', 'ssleay32'],
       dirs: test_lib_d,
       header_include_directories: postgres_inc,
       has_headers: ['openssl/ssl.h', 'openssl/err.h'],
       required: openssl_required)
-    crypto_lib = cc.find_library('crypto',
+    crypto_lib = cc.find_library(['crypto', 'libeay32'],
       dirs: test_lib_d,
       required: openssl_required)
     if ssl_lib.found() and crypto_lib.found()
