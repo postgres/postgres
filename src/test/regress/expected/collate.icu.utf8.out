@@ -2051,8 +2051,8 @@ CREATE TABLE test12fk (a int, b text COLLATE case_insensitive REFERENCES test12p
 INSERT INTO test12pk VALUES ('abc');
 INSERT INTO test12fk VALUES (1, 'abc'), (2, 'ABC');
 UPDATE test12pk SET x = 'ABC' WHERE x = 'abc';  -- restrict violation
-ERROR:  update or delete on table "test12pk" violates foreign key constraint "test12fk_b_fkey" on table "test12fk"
-DETAIL:  Key (x)=(abc) is still referenced from table "test12fk".
+ERROR:  update or delete on table "test12pk" violates RESTRICT setting of foreign key constraint "test12fk_b_fkey" on table "test12fk"
+DETAIL:  Key (x)=(abc) is referenced from table "test12fk".
 SELECT * FROM test12pk;
   x  
 -----

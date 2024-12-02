@@ -228,6 +228,7 @@ static bool ri_PerformCheck(const RI_ConstraintInfo *riinfo,
 							RI_QueryKey *qkey, SPIPlanPtr qplan,
 							Relation fk_rel, Relation pk_rel,
 							TupleTableSlot *oldslot, TupleTableSlot *newslot,
+							bool is_restrict,
 							bool detectNewRows, int expect_OK);
 static void ri_ExtractValues(Relation rel, TupleTableSlot *slot,
 							 const RI_ConstraintInfo *riinfo, bool rel_is_pk,
@@ -235,7 +236,7 @@ static void ri_ExtractValues(Relation rel, TupleTableSlot *slot,
 static void ri_ReportViolation(const RI_ConstraintInfo *riinfo,
 							   Relation pk_rel, Relation fk_rel,
 							   TupleTableSlot *violatorslot, TupleDesc tupdesc,
-							   int queryno, bool partgone) pg_attribute_noreturn();
+							   int queryno, bool is_restrict, bool partgone) pg_attribute_noreturn();
 
 
 /*
@@ -449,6 +450,7 @@ RI_FKey_check(TriggerData *trigdata)
 	ri_PerformCheck(riinfo, &qkey, qplan,
 					fk_rel, pk_rel,
 					NULL, newslot,
+					false,
 					pk_rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE,
 					SPI_OK_SELECT);
 
@@ -613,6 +615,7 @@ ri_Check_Pk_Match(Relation pk_rel, Relation fk_rel,
 	result = ri_PerformCheck(riinfo, &qkey, qplan,
 							 fk_rel, pk_rel,
 							 oldslot, NULL,
+							 false,
 							 true,	/* treat like update */
 							 SPI_OK_SELECT);
 
@@ -800,6 +803,7 @@ ri_restrict(TriggerData *trigdata, bool is_no_action)
 	ri_PerformCheck(riinfo, &qkey, qplan,
 					fk_rel, pk_rel,
 					oldslot, NULL,
+					!is_no_action,
 					true,		/* must detect new rows */
 					SPI_OK_SELECT);
 
@@ -901,6 +905,7 @@ RI_FKey_cascade_del(PG_FUNCTION_ARGS)
 	ri_PerformCheck(riinfo, &qkey, qplan,
 					fk_rel, pk_rel,
 					oldslot, NULL,
+					false,
 					true,		/* must detect new rows */
 					SPI_OK_DELETE);
 
@@ -1017,6 +1022,7 @@ RI_FKey_cascade_upd(PG_FUNCTION_ARGS)
 	ri_PerformCheck(riinfo, &qkey, qplan,
 					fk_rel, pk_rel,
 					oldslot, newslot,
+					false,
 					true,		/* must detect new rows */
 					SPI_OK_UPDATE);
 
@@ -1244,6 +1250,7 @@ ri_set(TriggerData *trigdata, bool is_set_null, int tgkind)
 	ri_PerformCheck(riinfo, &qkey, qplan,
 					fk_rel, pk_rel,
 					oldslot, NULL,
+					false,
 					true,		/* must detect new rows */
 					SPI_OK_UPDATE);
 
@@ -1690,7 +1697,7 @@ RI_Initial_Check(Trigger *trigger, Relation fk_rel, Relation pk_rel)
 		ri_ReportViolation(&fake_riinfo,
 						   pk_rel, fk_rel,
 						   slot, tupdesc,
-						   RI_PLAN_CHECK_LOOKUPPK, false);
+						   RI_PLAN_CHECK_LOOKUPPK, false, false);
 
 		ExecDropSingleTupleTableSlot(slot);
 	}
@@ -1906,7 +1913,7 @@ RI_PartitionRemove_Check(Trigger *trigger, Relation fk_rel, Relation pk_rel)
 			fake_riinfo.pk_attnums[i] = i + 1;
 
 		ri_ReportViolation(&fake_riinfo, pk_rel, fk_rel,
-						   slot, tupdesc, 0, true);
+						   slot, tupdesc, 0, false, true);
 	}
 
 	if (SPI_finish() != SPI_OK_FINISH)
@@ -2387,6 +2394,7 @@ ri_PerformCheck(const RI_ConstraintInfo *riinfo,
 				RI_QueryKey *qkey, SPIPlanPtr qplan,
 				Relation fk_rel, Relation pk_rel,
 				TupleTableSlot *oldslot, TupleTableSlot *newslot,
+				bool is_restrict,
 				bool detectNewRows, int expect_OK)
 {
 	Relation	query_rel,
@@ -2511,7 +2519,7 @@ ri_PerformCheck(const RI_ConstraintInfo *riinfo,
 						   pk_rel, fk_rel,
 						   newslot ? newslot : oldslot,
 						   NULL,
-						   qkey->constr_queryno, false);
+						   qkey->constr_queryno, is_restrict, false);
 
 	return SPI_processed != 0;
 }
@@ -2552,7 +2560,7 @@ static void
 ri_ReportViolation(const RI_ConstraintInfo *riinfo,
 				   Relation pk_rel, Relation fk_rel,
 				   TupleTableSlot *violatorslot, TupleDesc tupdesc,
-				   int queryno, bool partgone)
+				   int queryno, bool is_restrict, bool partgone)
 {
 	StringInfoData key_names;
 	StringInfoData key_values;
@@ -2681,6 +2689,20 @@ ri_ReportViolation(const RI_ConstraintInfo *riinfo,
 						   RelationGetRelationName(pk_rel)) :
 				 errdetail("Key is not present in table \"%s\".",
 						   RelationGetRelationName(pk_rel)),
+				 errtableconstraint(fk_rel, NameStr(riinfo->conname))));
+	else if (is_restrict)
+		ereport(ERROR,
+				(errcode(ERRCODE_RESTRICT_VIOLATION),
+				 errmsg("update or delete on table \"%s\" violates RESTRICT setting of foreign key constraint \"%s\" on table \"%s\"",
+						RelationGetRelationName(pk_rel),
+						NameStr(riinfo->conname),
+						RelationGetRelationName(fk_rel)),
+				 has_perm ?
+				 errdetail("Key (%s)=(%s) is referenced from table \"%s\".",
+						   key_names.data, key_values.data,
+						   RelationGetRelationName(fk_rel)) :
+				 errdetail("Key is referenced from table \"%s\".",
+						   RelationGetRelationName(fk_rel)),
 				 errtableconstraint(fk_rel, NameStr(riinfo->conname))));
 	else
 		ereport(ERROR,
