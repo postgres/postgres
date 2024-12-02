@@ -1951,6 +1951,7 @@ WalSndWaitForWal(XLogRecPtr loc)
 bool
 exec_replication_command(const char *cmd_string)
 {
+	yyscan_t	scanner;
 	int			parse_rc;
 	Node	   *cmd_node;
 	const char *cmdtag;
@@ -1990,15 +1991,15 @@ exec_replication_command(const char *cmd_string)
 										ALLOCSET_DEFAULT_SIZES);
 	old_context = MemoryContextSwitchTo(cmd_context);
 
-	replication_scanner_init(cmd_string);
+	replication_scanner_init(cmd_string, &scanner);
 
 	/*
 	 * Is it a WalSender command?
 	 */
-	if (!replication_scanner_is_replication_command())
+	if (!replication_scanner_is_replication_command(scanner))
 	{
 		/* Nope; clean up and get out. */
-		replication_scanner_finish();
+		replication_scanner_finish(scanner);
 
 		MemoryContextSwitchTo(old_context);
 		MemoryContextDelete(cmd_context);
@@ -2016,13 +2017,13 @@ exec_replication_command(const char *cmd_string)
 	/*
 	 * Looks like a WalSender command, so parse it.
 	 */
-	parse_rc = replication_yyparse();
+	parse_rc = replication_yyparse(scanner);
 	if (parse_rc != 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg_internal("replication command parser returned %d",
 								 parse_rc)));
-	replication_scanner_finish();
+	replication_scanner_finish(scanner);
 
 	cmd_node = replication_parse_result;
 

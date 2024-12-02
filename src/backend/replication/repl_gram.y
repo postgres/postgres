@@ -24,10 +24,6 @@
 
 #include "repl_gram.h"
 
-/* silence -Wmissing-variable-declarations */
-extern int replication_yychar;
-extern int replication_yynerrs;
-
 
 /* Result of the parsing is returned here */
 Node *replication_parse_result;
@@ -43,6 +39,9 @@ Node *replication_parse_result;
 
 %}
 
+%parse-param {yyscan_t yyscanner}
+%lex-param   {yyscan_t yyscanner}
+%pure-parser
 %expect 0
 %name-prefix="replication_yy"
 
@@ -106,6 +105,8 @@ Node *replication_parse_result;
 firstcmd: command opt_semicolon
 				{
 					replication_parse_result = $1;
+
+					(void) yynerrs; /* suppress compiler warning */
 				}
 			;
 
