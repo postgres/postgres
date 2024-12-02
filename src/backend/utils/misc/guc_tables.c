@@ -2086,6 +2086,15 @@ struct config_bool ConfigureNamesBool[] =
 		NULL, NULL, NULL
 	},
 
+	{
+		{"md5_password_warnings", PGC_USERSET, CONN_AUTH_AUTH,
+			gettext_noop("Enables deprecation warnings for MD5 passwords."),
+		},
+		&md5_password_warnings,
+		true,
+		NULL, NULL, NULL
+	},
+
 	/* End-of-list marker */
 	{
 		{NULL, 0, 0, NULL, NULL}, NULL, false, NULL, NULL, NULL

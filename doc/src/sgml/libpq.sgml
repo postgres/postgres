@@ -1341,6 +1341,15 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
            <para>
             The server must request MD5 hashed password authentication.
            </para>
+           <warning>
+            <para>
+             Support for MD5-encrypted passwords is deprecated and will be
+             removed in a future release of
+             <productname>PostgreSQL</productname>.  Refer to
+             <xref linkend="auth-password"/> for details about migrating to
+             another password type.
+            </para>
+           </warning>
           </listitem>
          </varlistentry>
 

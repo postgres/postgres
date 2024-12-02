@@ -2053,6 +2053,16 @@ pg_dumpall -p 5432 | psql -d postgres -p 5433
      is an Internet standard and is more secure than the PostgreSQL-specific
      MD5 authentication protocol.
     </para>
+
+    <warning>
+     <para>
+      Support for MD5-encrypted passwords is deprecated and will be removed in
+      a future release of <productname>PostgreSQL</productname>.  Refer to
+      <xref linkend="auth-password"/> for details about migrating to another
+      password type.
+     </para>
+    </warning>
+
    </listitem>
   </varlistentry>
 

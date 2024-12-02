@@ -312,6 +312,14 @@
         (Keep in mind the <function>md5()</function> function returns its
         result as a hex string.)
        </para>
+        <warning>
+         <para>
+          Support for MD5-encrypted passwords is deprecated and will be removed
+          in a future release of <productname>PostgreSQL</productname>.  Refer
+          to <xref linkend="auth-password"/> for details about migrating to
+          another password type.
+         </para>
+        </warning>
       </listitem>
      </varlistentry>
 

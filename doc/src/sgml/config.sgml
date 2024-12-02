@@ -1124,6 +1124,14 @@ include_dir 'conf.d'
         mechanism, and hence not work with passwords encrypted with
         SCRAM-SHA-256.  See <xref linkend="auth-password"/> for more details.
        </para>
+       <warning>
+        <para>
+         Support for MD5-encrypted passwords is deprecated and will be removed
+         in a future release of <productname>PostgreSQL</productname>.  Refer
+         to <xref linkend="auth-password"/> for details about migrating to
+         another password type.
+        </para>
+       </warning>
       </listitem>
      </varlistentry>
 
@@ -7909,6 +7917,22 @@ log_line_prefix = '%m [%p] %q%u@%d/%a '
         See <xref linkend="datatype-timezones"/> for more information.
         This parameter can only be set in the <filename>postgresql.conf</filename>
         file or on the server command line.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-md5-password-warnings" xreflabel="md5_password_warnings">
+      <term><varname>md5_password_warnings</varname> (<type>boolean</type>)
+      <indexterm>
+       <primary><varname>md5_password_warnings</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Controls whether a <literal>WARNING</literal> about MD5 password
+        deprecation is produced when a <command>CREATE ROLE</command> or
+        <command>ALTER ROLE</command> statement sets an MD5-encrypted password.
+        The default value is <literal>on</literal>.
        </para>
       </listitem>
      </varlistentry>

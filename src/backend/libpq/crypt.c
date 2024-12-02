@@ -24,6 +24,8 @@
 #include "utils/syscache.h"
 #include "utils/timestamp.h"
 
+/* Enables deprecation warnings for MD5 passwords. */
+bool		md5_password_warnings = true;
 
 /*
  * Fetch stored password for a user, for authentication.
@@ -173,6 +175,14 @@ encrypt_password(PasswordType target_type, const char *role,
 				 errdetail("Encrypted passwords must be no longer than %d bytes.",
 						   MAX_ENCRYPTED_PASSWORD_LEN)));
 	}
+
+	if (md5_password_warnings &&
+		get_password_type(encrypted_password) == PASSWORD_TYPE_MD5)
+		ereport(WARNING,
+				(errcode(ERRCODE_WARNING_DEPRECATED_FEATURE),
+				 errmsg("setting an MD5-encrypted password"),
+				 errdetail("MD5 password support is deprecated and will be removed in a future release of PostgreSQL."),
+				 errhint("Refer to the PostgreSQL documentation for details about migrating to another password type.")));
 
 	return encrypted_password;
 }

@@ -1618,6 +1618,15 @@
    will store the md5 hash of <literal>xyzzyjoe</literal>.
   </para>
 
+  <warning>
+   <para>
+    Support for MD5-encrypted passwords is deprecated and will be removed in a
+    future release of <productname>PostgreSQL</productname>.  Refer to
+    <xref linkend="auth-password"/> for details about migrating to another
+    password type.
+   </para>
+  </warning>
+
   <para>
    If the password is encrypted with SCRAM-SHA-256, it has the format:
 <synopsis>
