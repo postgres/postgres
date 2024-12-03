@@ -156,7 +156,9 @@ XSLTPROC_FO_FLAGS += --stringparam img.src.path '$(srcdir)/'
 	$(XSLTPROC) $(XMLINCLUDE) $(XSLTPROCFLAGS) $(XSLTPROC_FO_FLAGS) --stringparam paper.type USletter -o $@ $^
 
 %.pdf: %.fo $(ALL_IMAGES)
-	$(FOP) -fo $< -pdf $@
+	LANG=C $(FOP) -fo $< -pdf $@ 2>&1 | \
+	awk 'BEGIN { warn = 0 }  { print }  /not available in font/ { warn = 1 }  \
+	END { if (warn != 0) print("\nFound characters that cannot be output in the PDF document;  see README.non-ASCII") }' 1>&2
 
 
 ##
