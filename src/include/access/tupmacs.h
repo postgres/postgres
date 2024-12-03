@@ -14,6 +14,7 @@
 #ifndef TUPMACS_H
 #define TUPMACS_H
 
+#include "access/tupdesc.h"
 #include "catalog/pg_type_d.h"	/* for TYPALIGN macros */
 
 
@@ -30,8 +31,8 @@ att_isnull(int ATT, const bits8 *BITS)
 
 #ifndef FRONTEND
 /*
- * Given a Form_pg_attribute and a pointer into a tuple's data area,
- * return the correct value or pointer.
+ * Given a Form_pg_attribute or CompactAttribute and a pointer into a tuple's
+ * data area, return the correct value or pointer.
  *
  * We return a Datum value in all cases.  If the attribute has "byval" false,
  * we return the same pointer into the tuple data area that we're passed.
