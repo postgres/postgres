@@ -11,10 +11,16 @@
 
 #include "postgres.h"
 
+#include "access/htup_details.h"
+#include "catalog/pg_database.h"
 #include "catalog/pg_collation.h"
 #include "mb/pg_wchar.h"
+#include "miscadmin.h"
+#include "utils/builtins.h"
 #include "utils/formatting.h"
+#include "utils/memutils.h"
 #include "utils/pg_locale.h"
+#include "utils/syscache.h"
 
 /*
  * Size of stack buffer to use for string transformations, used to avoid heap
@@ -24,15 +30,16 @@
  */
 #define		TEXTBUFLEN			1024
 
-extern locale_t make_libc_collator(const char *collate,
-								   const char *ctype);
+extern pg_locale_t create_pg_locale_libc(Oid collid, MemoryContext context);
+
 extern int	strncoll_libc(const char *arg1, ssize_t len1,
 						  const char *arg2, ssize_t len2,
 						  pg_locale_t locale);
 extern size_t strnxfrm_libc(char *dest, size_t destsize,
 							const char *src, ssize_t srclen,
 							pg_locale_t locale);
-
+static locale_t make_libc_collator(const char *collate,
+								   const char *ctype);
 static void report_newlocale_failure(const char *localename);
 
 #ifdef WIN32
@@ -40,6 +47,65 @@ static int	strncoll_libc_win32_utf8(const char *arg1, ssize_t len1,
 									 const char *arg2, ssize_t len2,
 									 pg_locale_t locale);
 #endif
+
+pg_locale_t
+create_pg_locale_libc(Oid collid, MemoryContext context)
+{
+	const char *collate;
+	const char *ctype;
+	locale_t	loc;
+	pg_locale_t result;
+
+	if (collid == DEFAULT_COLLATION_OID)
+	{
+		HeapTuple	tp;
+		Datum		datum;
+
+		tp = SearchSysCache1(DATABASEOID, ObjectIdGetDatum(MyDatabaseId));
+		if (!HeapTupleIsValid(tp))
+			elog(ERROR, "cache lookup failed for database %u", MyDatabaseId);
+		datum = SysCacheGetAttrNotNull(DATABASEOID, tp,
+									   Anum_pg_database_datcollate);
+		collate = TextDatumGetCString(datum);
+		datum = SysCacheGetAttrNotNull(DATABASEOID, tp,
+									   Anum_pg_database_datctype);
+		ctype = TextDatumGetCString(datum);
+
+		ReleaseSysCache(tp);
+	}
+	else
+	{
+		HeapTuple	tp;
+		Datum		datum;
+
+		tp = SearchSysCache1(COLLOID, ObjectIdGetDatum(collid));
+		if (!HeapTupleIsValid(tp))
+			elog(ERROR, "cache lookup failed for collation %u", collid);
+
+		datum = SysCacheGetAttrNotNull(COLLOID, tp,
+									   Anum_pg_collation_collcollate);
+		collate = TextDatumGetCString(datum);
+		datum = SysCacheGetAttrNotNull(COLLOID, tp,
+									   Anum_pg_collation_collctype);
+		ctype = TextDatumGetCString(datum);
+
+		ReleaseSysCache(tp);
+	}
+
+
+	loc = make_libc_collator(collate, ctype);
+
+	result = MemoryContextAllocZero(context, sizeof(struct pg_locale_struct));
+	result->provider = COLLPROVIDER_LIBC;
+	result->deterministic = true;
+	result->collate_is_c = (strcmp(collate, "C") == 0) ||
+		(strcmp(collate, "POSIX") == 0);
+	result->ctype_is_c = (strcmp(ctype, "C") == 0) ||
+		(strcmp(ctype, "POSIX") == 0);
+	result->info.lt = loc;
+
+	return result;
+}
 
 /*
  * Create a locale_t with the given collation and ctype.
@@ -49,7 +115,7 @@ static int	strncoll_libc_win32_utf8(const char *arg1, ssize_t len1,
  *
  * Ensure that no path leaks a locale_t.
  */
-locale_t
+static locale_t
 make_libc_collator(const char *collate, const char *ctype)
 {
 	locale_t	loc = 0;
