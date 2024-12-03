@@ -82,6 +82,7 @@ struct pg_locale_struct
 	bool		deterministic;
 	bool		collate_is_c;
 	bool		ctype_is_c;
+	bool		is_default;
 	union
 	{
 		struct

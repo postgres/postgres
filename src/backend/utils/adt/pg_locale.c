@@ -1216,6 +1216,7 @@ create_pg_locale(Oid collid, MemoryContext context)
 
 	result->provider = collform->collprovider;
 	result->deterministic = collform->collisdeterministic;
+	result->is_default = false;
 
 	if (collform->collprovider == COLLPROVIDER_BUILTIN)
 	{
@@ -1409,6 +1410,7 @@ init_database_collation(void)
 
 
 	default_locale.provider = dbform->datlocprovider;
+	default_locale.is_default = true;
 
 	/*
 	 * Default locale is currently always deterministic.  Nondeterministic
