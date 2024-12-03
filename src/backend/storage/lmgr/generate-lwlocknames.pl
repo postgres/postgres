@@ -107,6 +107,7 @@ while (<$lwlocklist>)
 	$lastlockidx = $lockidx;
 	$continue = ",\n";
 
+	# Add a "Lock" suffix to each lock name, as the C code depends on that
 	print $h "#define ${lockname}Lock (&MainLWLockArray[$lockidx].lock)\n";
 }
 
