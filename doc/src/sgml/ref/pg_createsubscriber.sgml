@@ -407,11 +407,11 @@ PostgreSQL documentation
       Create a publication and replication slot for each specified database on
       the source server.  Each publication is created using <link
       linkend="sql-createpublication-params-for-all-tables"><literal>FOR ALL
-      TABLES</literal></link>.  If <option>publication-name</option> option is
-      not specified, it has the following name pattern:
+      TABLES</literal></link>.  If the <option>--publication</option> option
+      is not specified, the publication has the following name pattern:
       <quote><literal>pg_createsubscriber_%u_%x</literal></quote> (parameter:
       database <parameter>oid</parameter>, random <parameter>int</parameter>).
-      If <option>replication-slot-name</option> is not specified, the
+      If the <option>--replication-slot</option> option is not specified, the
       replication slot has the following name pattern:
       <quote><literal>pg_createsubscriber_%u_%x</literal></quote> (parameters:
       database <parameter>oid</parameter>, random <parameter>int</parameter>).
@@ -446,8 +446,8 @@ PostgreSQL documentation
     <step>
      <para>
       Create a subscription for each specified database on the target server.
-      If <option>subscription-name</option> is not specified, the subscription
-      has the following name pattern:
+      If the <option>--subscription</option> option is not specified, the
+      subscription has the following name pattern:
       <quote><literal>pg_createsubscriber_%u_%x</literal></quote> (parameters:
       database <parameter>oid</parameter>, random <parameter>int</parameter>).
       It does not copy existing data from the source server.  It does not
