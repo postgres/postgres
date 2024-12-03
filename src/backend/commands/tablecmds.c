@@ -980,8 +980,6 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 			cookedDefaults = lappend(cookedDefaults, cooked);
 			attr->atthasdef = true;
 		}
-
-		populate_compact_attribute(descriptor, attnum - 1);
 	}
 
 	/*
@@ -1398,8 +1396,6 @@ BuildDescForRelation(const List *columns)
 			att->attstorage = entry->storage;
 		else if (entry->storage_name)
 			att->attstorage = GetAttributeStorage(att->atttypid, entry->storage_name);
-
-		populate_compact_attribute(desc, attnum - 1);
 	}
 
 	return desc;

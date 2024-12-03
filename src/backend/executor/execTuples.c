@@ -1044,7 +1044,7 @@ slot_deform_heap_tuple(TupleTableSlot *slot, HeapTuple tuple, uint32 *offp,
 
 	for (; attnum < natts; attnum++)
 	{
-		CompactAttribute *thisatt = TupleDescCompactAttr(tupleDesc, attnum);
+		Form_pg_attribute thisatt = TupleDescAttr(tupleDesc, attnum);
 
 		if (hasnulls && att_isnull(attnum, bp))
 		{
@@ -2237,7 +2237,7 @@ BuildTupleFromCStrings(AttInMetadata *attinmeta, char **values)
 	 */
 	for (i = 0; i < natts; i++)
 	{
-		if (!TupleDescCompactAttr(tupdesc, i)->attisdropped)
+		if (!TupleDescAttr(tupdesc, i)->attisdropped)
 		{
 			/* Non-dropped attributes */
 			dvalues[i] = InputFunctionCall(&attinmeta->attinfuncs[i],

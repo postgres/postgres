@@ -585,8 +585,6 @@ RelationBuildTupleDesc(Relation relation)
 			   attp,
 			   ATTRIBUTE_FIXED_PART_SIZE);
 
-		populate_compact_attribute(relation->rd_att, attnum - 1);
-
 		/* Update constraint/default info */
 		if (attp->attnotnull)
 			constr->has_not_null = true;
@@ -676,12 +674,12 @@ RelationBuildTupleDesc(Relation relation)
 #endif
 
 	/*
-	 * We can easily set the attcacheoff value for the first attribute: it
-	 * must be zero.  This eliminates the need for special cases for attnum=1
-	 * that used to exist in fastgetattr() and index_getattr().
+	 * However, we can easily set the attcacheoff value for the first
+	 * attribute: it must be zero.  This eliminates the need for special cases
+	 * for attnum=1 that used to exist in fastgetattr() and index_getattr().
 	 */
 	if (RelationGetNumberOfAttributes(relation) > 0)
-		TupleDescCompactAttr(relation->rd_att, 0)->attcacheoff = 0;
+		TupleDescAttr(relation->rd_att, 0)->attcacheoff = 0;
 
 	/*
 	 * Set up constraint/default info
@@ -1967,12 +1965,10 @@ formrdesc(const char *relationName, Oid relationReltype,
 		has_not_null |= attrs[i].attnotnull;
 		/* make sure attcacheoff is valid */
 		TupleDescAttr(relation->rd_att, i)->attcacheoff = -1;
-
-		populate_compact_attribute(relation->rd_att, i);
 	}
 
 	/* initialize first attribute's attcacheoff, cf RelationBuildTupleDesc */
-	TupleDescCompactAttr(relation->rd_att, 0)->attcacheoff = 0;
+	TupleDescAttr(relation->rd_att, 0)->attcacheoff = 0;
 
 	/* mark not-null status */
 	if (has_not_null)
@@ -3583,7 +3579,6 @@ RelationBuildLocalRelation(const char *relname,
 		datt->attgenerated = satt->attgenerated;
 		datt->attnotnull = satt->attnotnull;
 		has_not_null |= satt->attnotnull;
-		populate_compact_attribute(rel->rd_att, i);
 	}
 
 	if (has_not_null)
@@ -4404,12 +4399,10 @@ BuildHardcodedDescriptor(int natts, const FormData_pg_attribute *attrs)
 		memcpy(TupleDescAttr(result, i), &attrs[i], ATTRIBUTE_FIXED_PART_SIZE);
 		/* make sure attcacheoff is valid */
 		TupleDescAttr(result, i)->attcacheoff = -1;
-
-		populate_compact_attribute(result, i);
 	}
 
 	/* initialize first attribute's attcacheoff, cf RelationBuildTupleDesc */
-	TupleDescCompactAttr(result, 0)->attcacheoff = 0;
+	TupleDescAttr(result, 0)->attcacheoff = 0;
 
 	/* Note: we don't bother to set up a TupleConstr entry */
 
@@ -6173,8 +6166,6 @@ load_relcache_init_file(bool shared)
 				goto read_failed;
 
 			has_not_null |= attr->attnotnull;
-
-			populate_compact_attribute(rel->rd_att, i);
 		}
 
 		/* next read the access method specific field */

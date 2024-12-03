@@ -331,9 +331,7 @@ getSpGistTupleDesc(Relation index, SpGistTypeDesc *keyType)
 		att->attcollation = InvalidOid;
 		/* In case we changed typlen, we'd better reset following offsets */
 		for (int i = spgFirstIncludeColumn; i < outTupDesc->natts; i++)
-			TupleDescCompactAttr(outTupDesc, i)->attcacheoff = -1;
-
-		populate_compact_attribute(outTupDesc, spgKeyColumn);
+			TupleDescAttr(outTupDesc, i)->attcacheoff = -1;
 	}
 	return outTupDesc;
 }
