@@ -1225,7 +1225,7 @@ CREATE COLLATION ignore_accents (provider = icu, locale = 'und-u-ks-level1-kc-tr
 <programlisting>
 -- ignore differences in accents and case
 CREATE COLLATION ignore_accent_case (provider = icu, deterministic = false, locale = 'und-u-ks-level1');
-SELECT '&Aring;' = 'A' COLLATE ignore_accent_case; -- true
+SELECT 'Å' = 'A' COLLATE ignore_accent_case; -- true
 SELECT 'z' = 'Z' COLLATE ignore_accent_case; -- true
 
 -- upper case letters sort before lower case.
@@ -1282,7 +1282,7 @@ SELECT 'w;x*y-z' = 'wxyz' COLLATE num_ignore_punct; -- true
          <entry><literal>'ab' = U&amp;'a\2063b'</literal></entry>
          <entry><literal>'x-y' = 'x_y'</literal></entry>
          <entry><literal>'g' = 'G'</literal></entry>
-         <entry><literal>'n' = '&ntilde;'</literal></entry>
+         <entry><literal>'n' = 'ñ'</literal></entry>
          <entry><literal>'y' = 'z'</literal></entry>
         </row>
        </thead>
@@ -1346,7 +1346,7 @@ SELECT 'w;x*y-z' = 'wxyz' COLLATE num_ignore_punct; -- true
 
     <para>
      At every level, even with full normalization off, basic normalization is
-     performed. For example, <literal>'&aacute;'</literal> may be composed of the
+     performed. For example, <literal>'á'</literal> may be composed of the
      code points <literal>U&amp;'\0061\0301'</literal> or the single code
      point <literal>U&amp;'\00E1'</literal>, and those sequences will be
      considered equal even at the <literal>identic</literal> level. To treat
@@ -1430,8 +1430,8 @@ SELECT 'x-y' = 'x_y' COLLATE level4; -- false
          <entry><literal>false</literal></entry>
          <entry>
           Backwards comparison for the level 2 differences. For example,
-          locale <literal>und-u-kb</literal> sorts <literal>'&agrave;e'</literal>
-          before <literal>'a&eacute;'</literal>.
+          locale <literal>und-u-kb</literal> sorts <literal>'àe'</literal>
+          before <literal>'aé'</literal>.
          </entry>
         </row>
 
