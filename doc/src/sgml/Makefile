@@ -156,9 +156,11 @@ XSLTPROC_FO_FLAGS += --stringparam img.src.path '$(srcdir)/'
 	$(XSLTPROC) $(XMLINCLUDE) $(XSLTPROCFLAGS) $(XSLTPROC_FO_FLAGS) --stringparam paper.type USletter -o $@ $^
 
 %.pdf: %.fo $(ALL_IMAGES)
-	LANG=C $(FOP) -fo $< -pdf $@ 2>&1 | \
-	awk 'BEGIN { warn = 0 }  { print }  /not available in font/ { warn = 1 }  \
-	END { if (warn != 0) print("\nFound characters that cannot be output in the PDF document;  see README.non-ASCII") }' 1>&2
+	@# There is no easy way to pipe output and capture its return code, so output a special string on failure.
+	{ LANG=C $(FOP) -fo $< -pdf $@ 2>&1; [ "$$?" -ne 0 ] && echo "FOP_ERROR"; } | \
+	awk 'BEGIN { warn = 0 }  ! /^FOP_ERROR$$/ { print }  /not available in font/ { warn = 1 }  \
+	END { if (warn != 0) print("\nFound characters that cannot be output in the PDF document;  see README.non-ASCII"); \
+	if ($$0 ~ /^FOP_ERROR$$/) { exit 1} }' 1>&2
 
 
 ##
