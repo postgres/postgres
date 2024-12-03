@@ -693,10 +693,10 @@ if test "$enable_profiling" = yes && test "$ac_cv_prog_cc_g" = yes; then
   fi
 fi
 
-# On Solaris, we need this #define to get POSIX-conforming versions
-# of many interfaces (sigwait, getpwuid_r, ...).
+# On Solaris, we need these #defines to get POSIX-conforming versions
+# of many interfaces (sigwait, getpwuid_r, shmdt, ...).
 if test "$PORTNAME" = "solaris"; then
-  CPPFLAGS="$CPPFLAGS -D_POSIX_PTHREAD_SEMANTICS"
+  CPPFLAGS="$CPPFLAGS -D_POSIX_C_SOURCE=200112L -D_POSIX_PTHREAD_SEMANTICS"
 fi
 
 # We already have this in Makefile.win32, but configure needs it too
