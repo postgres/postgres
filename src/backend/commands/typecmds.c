@@ -1011,10 +1011,14 @@ DefineDomain(CreateDomainStmt *stmt)
 						 errmsg("specifying constraint deferrability not supported for domains")));
 				break;
 
-			default:
-				elog(ERROR, "unrecognized constraint subtype: %d",
-					 (int) constr->contype);
+			case CONSTR_GENERATED:
+			case CONSTR_IDENTITY:
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("specifying GENERATED not supported for domains")));
 				break;
+
+				/* no default, to let compiler warn about missing case */
 		}
 	}
 
