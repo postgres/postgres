@@ -25,6 +25,7 @@
 #include "catalog/pg_default_acl_d.h"
 #include "catalog/pg_proc_d.h"
 #include "catalog/pg_statistic_ext_d.h"
+#include "catalog/pg_subscription_d.h"
 #include "catalog/pg_type_d.h"
 #include "common.h"
 #include "common/logging.h"
@@ -6679,9 +6680,9 @@ describeSubscriptions(const char *pattern, bool verbose)
 			if (pset.sversion >= 160000)
 				appendPQExpBuffer(&buf,
 								  ", (CASE substream\n"
-								  "    WHEN 'f' THEN 'off'\n"
-								  "    WHEN 't' THEN 'on'\n"
-								  "    WHEN 'p' THEN 'parallel'\n"
+								  "    WHEN " CppAsString2(LOGICALREP_STREAM_OFF) " THEN 'off'\n"
+								  "    WHEN " CppAsString2(LOGICALREP_STREAM_ON) " THEN 'on'\n"
+								  "    WHEN " CppAsString2(LOGICALREP_STREAM_PARALLEL) " THEN 'parallel'\n"
 								  "   END) AS \"%s\"\n",
 								  gettext_noop("Streaming"));
 			else
