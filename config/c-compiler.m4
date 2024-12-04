@@ -38,60 +38,6 @@ ac_c_werror_flag=$ac_save_c_werror_flag
 ])# PGAC_TEST_PRINTF_ARCHETYPE
 
 
-# PGAC_TYPE_64BIT_INT(TYPE)
-# -------------------------
-# Check if TYPE is a working 64 bit integer type. Set HAVE_TYPE_64 to
-# yes or no respectively, and define HAVE_TYPE_64 if yes.
-AC_DEFUN([PGAC_TYPE_64BIT_INT],
-[define([Ac_define], [translit([have_$1_64], [a-z *], [A-Z_P])])dnl
-define([Ac_cachevar], [translit([pgac_cv_type_$1_64], [ *], [_p])])dnl
-AC_CACHE_CHECK([whether $1 is 64 bits], [Ac_cachevar],
-[AC_RUN_IFELSE([AC_LANG_SOURCE(
-[typedef $1 ac_int64;
-
-/*
- * These are globals to discourage the compiler from folding all the
- * arithmetic tests down to compile-time constants.
- */
-ac_int64 a = 20000001;
-ac_int64 b = 40000005;
-
-int does_int64_work()
-{
-  ac_int64 c,d;
-
-  if (sizeof(ac_int64) != 8)
-    return 0;			/* definitely not the right size */
-
-  /* Do perfunctory checks to see if 64-bit arithmetic seems to work */
-  c = a * b;
-  d = (c + b) / b;
-  if (d != a+1)
-    return 0;
-  return 1;
-}
-
-int
-main() {
-  return (! does_int64_work());
-}])],
-[Ac_cachevar=yes],
-[Ac_cachevar=no],
-[# If cross-compiling, check the size reported by the compiler and
-# trust that the arithmetic works.
-AC_COMPILE_IFELSE([AC_LANG_BOOL_COMPILE_TRY([], [sizeof($1) == 8])],
-                  Ac_cachevar=yes,
-                  Ac_cachevar=no)])])
-
-Ac_define=$Ac_cachevar
-if test x"$Ac_cachevar" = xyes ; then
-  AC_DEFINE(Ac_define, 1, [Define to 1 if `]$1[' works and is 64 bits.])
-fi
-undefine([Ac_define])dnl
-undefine([Ac_cachevar])dnl
-])# PGAC_TYPE_64BIT_INT
-
-
 # PGAC_TYPE_128BIT_INT
 # --------------------
 # Check if __int128 is a working 128 bit integer type, and if so
@@ -270,9 +216,10 @@ fi])# PGAC_C_BUILTIN_CONSTANT_P
 AC_DEFUN([PGAC_C_BUILTIN_OP_OVERFLOW],
 [AC_CACHE_CHECK(for __builtin_mul_overflow, pgac_cv__builtin_op_overflow,
 [AC_LINK_IFELSE([AC_LANG_PROGRAM([
-PG_INT64_TYPE a = 1;
-PG_INT64_TYPE b = 1;
-PG_INT64_TYPE result;
+#include <stdint.h>
+int64_t a = 1;
+int64_t b = 1;
+int64_t result;
 int oflo;
 ],
 [oflo = __builtin_mul_overflow(a, b, &result);])],
@@ -557,13 +504,13 @@ fi])# PGAC_HAVE_GCC__SYNC_INT32_CAS
 # types, and define HAVE_GCC__SYNC_INT64_CAS if so.
 AC_DEFUN([PGAC_HAVE_GCC__SYNC_INT64_CAS],
 [AC_CACHE_CHECK(for builtin __sync int64 atomic operations, pgac_cv_gcc_sync_int64_cas,
-[AC_LINK_IFELSE([AC_LANG_PROGRAM([],
-  [PG_INT64_TYPE lock = 0;
-   __sync_val_compare_and_swap(&lock, 0, (PG_INT64_TYPE) 37);])],
+[AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <stdint.h>],
+  [int64_t lock = 0;
+   __sync_val_compare_and_swap(&lock, 0, (int64_t) 37);])],
   [pgac_cv_gcc_sync_int64_cas="yes"],
   [pgac_cv_gcc_sync_int64_cas="no"])])
 if test x"$pgac_cv_gcc_sync_int64_cas" = x"yes"; then
-  AC_DEFINE(HAVE_GCC__SYNC_INT64_CAS, 1, [Define to 1 if you have __sync_val_compare_and_swap(int64 *, int64, int64).])
+  AC_DEFINE(HAVE_GCC__SYNC_INT64_CAS, 1, [Define to 1 if you have __sync_val_compare_and_swap(int64_t *, int64_t, int64_t).])
 fi])# PGAC_HAVE_GCC__SYNC_INT64_CAS
 
 # PGAC_HAVE_GCC__ATOMIC_INT32_CAS
@@ -588,9 +535,9 @@ fi])# PGAC_HAVE_GCC__ATOMIC_INT32_CAS
 # types, and define HAVE_GCC__ATOMIC_INT64_CAS if so.
 AC_DEFUN([PGAC_HAVE_GCC__ATOMIC_INT64_CAS],
 [AC_CACHE_CHECK(for builtin __atomic int64 atomic operations, pgac_cv_gcc_atomic_int64_cas,
-[AC_LINK_IFELSE([AC_LANG_PROGRAM([],
-  [PG_INT64_TYPE val = 0;
-   PG_INT64_TYPE expect = 0;
+[AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <stdint.h>],
+  [int64_t val = 0;
+   int64_t expect = 0;
    __atomic_compare_exchange_n(&val, &expect, 37, 0, __ATOMIC_SEQ_CST, __ATOMIC_RELAXED);])],
   [pgac_cv_gcc_atomic_int64_cas="yes"],
   [pgac_cv_gcc_atomic_int64_cas="no"])])
@@ -734,13 +681,14 @@ AC_DEFUN([PGAC_AVX512_POPCNT_INTRINSICS],
 [define([Ac_cachevar], [AS_TR_SH([pgac_cv_avx512_popcnt_intrinsics])])dnl
 AC_CACHE_CHECK([for _mm512_popcnt_epi64], [Ac_cachevar],
 [AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <immintrin.h>
+    #include <stdint.h>
     #if defined(__has_attribute) && __has_attribute (target)
     __attribute__((target("avx512vpopcntdq,avx512bw")))
     #endif
     static int popcount_test(void)
     {
       const char buf@<:@sizeof(__m512i)@:>@;
-      PG_INT64_TYPE popcnt = 0;
+      int64_t popcnt = 0;
       __m512i accum = _mm512_setzero_si512();
       const __m512i val = _mm512_maskz_loadu_epi8((__mmask64) 0xf0f0f0f0f0f0f0f0, (const __m512i *) buf);
       const __m512i cnt = _mm512_popcnt_epi64(val);

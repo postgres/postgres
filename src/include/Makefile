@@ -13,7 +13,7 @@ top_builddir = ../..
 include $(top_builddir)/src/Makefile.global
 
 
-all: pg_config.h pg_config_ext.h pg_config_os.h
+all: pg_config.h pg_config_os.h
 
 
 # Subdirectories containing installable headers
@@ -32,7 +32,6 @@ install: all installdirs
 	$(INSTALL_DATA) $(srcdir)/postgres_ext.h   '$(DESTDIR)$(includedir)'
 	$(INSTALL_DATA) $(srcdir)/libpq/libpq-fs.h '$(DESTDIR)$(includedir)/libpq'
 	$(INSTALL_DATA) pg_config.h     '$(DESTDIR)$(includedir)'
-	$(INSTALL_DATA) pg_config_ext.h '$(DESTDIR)$(includedir)'
 	$(INSTALL_DATA) pg_config_os.h  '$(DESTDIR)$(includedir)'
 	$(INSTALL_DATA) $(srcdir)/pg_config_manual.h '$(DESTDIR)$(includedir)'
 # These headers are needed by the not-so-public headers of the interfaces.
@@ -43,7 +42,6 @@ install: all installdirs
 	$(INSTALL_DATA) $(srcdir)/libpq/protocol.h '$(DESTDIR)$(includedir_internal)/libpq'
 # These headers are needed for server-side development
 	$(INSTALL_DATA) pg_config.h     '$(DESTDIR)$(includedir_server)'
-	$(INSTALL_DATA) pg_config_ext.h '$(DESTDIR)$(includedir_server)'
 	$(INSTALL_DATA) pg_config_os.h  '$(DESTDIR)$(includedir_server)'
 	$(INSTALL_DATA) nodes/nodetags.h '$(DESTDIR)$(includedir_server)/nodes'
 	$(INSTALL_DATA) utils/errcodes.h '$(DESTDIR)$(includedir_server)/utils'
@@ -66,7 +64,7 @@ installdirs:
 
 
 uninstall:
-	rm -f $(addprefix '$(DESTDIR)$(includedir)'/, pg_config.h pg_config_ext.h pg_config_os.h pg_config_manual.h postgres_ext.h libpq/libpq-fs.h)
+	rm -f $(addprefix '$(DESTDIR)$(includedir)'/, pg_config.h pg_config_os.h pg_config_manual.h postgres_ext.h libpq/libpq-fs.h)
 	rm -f $(addprefix '$(DESTDIR)$(includedir_internal)'/, c.h port.h postgres_fe.h libpq/pqcomm.h libpq/protocol.h)
 # heuristic...
 	rm -rf $(addprefix '$(DESTDIR)$(includedir_server)'/, $(SUBDIRS) *.h)
@@ -80,4 +78,4 @@ clean:
 	$(MAKE) -C catalog clean
 
 distclean: clean
-	rm -f pg_config.h pg_config_ext.h pg_config_os.h stamp-h stamp-ext-h
+	rm -f pg_config.h pg_config_os.h stamp-h

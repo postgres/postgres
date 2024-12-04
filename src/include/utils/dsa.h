@@ -66,7 +66,7 @@ typedef pg_atomic_uint64 dsa_pointer_atomic;
 #define dsa_pointer_atomic_write pg_atomic_write_u64
 #define dsa_pointer_atomic_fetch_add pg_atomic_fetch_add_u64
 #define dsa_pointer_atomic_compare_exchange pg_atomic_compare_exchange_u64
-#define DSA_POINTER_FORMAT "%016" INT64_MODIFIER "x"
+#define DSA_POINTER_FORMAT "%016" PRIx64
 #endif
 
 /* Flags for dsa_allocate_extended. */

@@ -1594,21 +1594,6 @@ if not cc.compiles(c99_test, name: 'c99', args: test_c_args)
   endif
 endif
 
-sizeof_long = cc.sizeof('long', args: test_c_args)
-cdata.set('SIZEOF_LONG', sizeof_long)
-if sizeof_long == 8
-  cdata.set('HAVE_LONG_INT_64', 1)
-  pg_int64_type = 'long int'
-  cdata.set_quoted('INT64_MODIFIER', 'l')
-elif sizeof_long == 4 and cc.sizeof('long long', args: test_c_args) == 8
-  cdata.set('HAVE_LONG_LONG_INT_64', 1)
-  pg_int64_type = 'long long int'
-  cdata.set_quoted('INT64_MODIFIER', 'll')
-else
-  error('do not know how to get a 64bit int')
-endif
-cdata.set('PG_INT64_TYPE', pg_int64_type)
-
 if host_machine.endian() == 'big'
   cdata.set('WORDS_BIGENDIAN', 1)
 endif
@@ -1632,16 +1617,18 @@ endforeach
 # of MAXIMUM_ALIGNOF to avoid that, but we no longer support any platforms
 # where TYPALIGN_DOUBLE != MAXIMUM_ALIGNOF.
 #
-# We assume without checking that int64's alignment is at least as strong
+# We assume without checking that int64_t's alignment is at least as strong
 # as long, char, short, or int.  Note that we intentionally do not consider
 # any types wider than 64 bits, as allowing MAXIMUM_ALIGNOF to exceed 8
 # would be too much of a penalty for disk and memory space.
 alignof_double = cdata.get('ALIGNOF_DOUBLE')
-if cc.alignment(pg_int64_type, args: test_c_args) > alignof_double
-  error('alignment of int64 is greater than the alignment of double')
+if cc.alignment('int64_t', args: test_c_args, prefix: '#include <stdint.h>') > alignof_double
+  error('alignment of int64_t is greater than the alignment of double')
 endif
 cdata.set('MAXIMUM_ALIGNOF', alignof_double)
 
+cdata.set('SIZEOF_LONG', cc.sizeof('long', args: test_c_args))
+cdata.set('SIZEOF_LONG_LONG', cc.sizeof('long long', args: test_c_args))
 cdata.set('SIZEOF_VOID_P', cc.sizeof('void *', args: test_c_args))
 cdata.set('SIZEOF_SIZE_T', cc.sizeof('size_t', args: test_c_args))
 
@@ -1840,17 +1827,17 @@ endif
 # compile, and store the results in global variables so the compiler doesn't
 # optimize away the call.
 if cc.links('''
-    INT64 a = 1;
-    INT64 b = 1;
-    INT64 result;
+    #include <stdint.h>
+    int64_t a = 1;
+    int64_t b = 1;
+    int64_t result;
 
     int main(void)
     {
         return __builtin_mul_overflow(a, b, &result);
     }''',
     name: '__builtin_mul_overflow',
-    args: test_c_args + ['-DINT64=@0@'.format(cdata.get('PG_INT64_TYPE'))],
-    )
+    args: test_c_args)
   cdata.set('HAVE__BUILTIN_OP_OVERFLOW', 1)
 endif
 
@@ -2140,7 +2127,7 @@ int main(void)
   cdata.set(check['name'],
     cc.links(test,
       name: check['desc'],
-      args: test_c_args + ['-DINT64=@0@'.format(cdata.get('PG_INT64_TYPE'))]) ? 1 : false
+      args: test_c_args) ? 1 : false
   )
 endforeach
 
@@ -2178,6 +2165,7 @@ if host_cpu == 'x86_64'
 
   prog = '''
 #include <immintrin.h>
+#include <stdint.h>
 
 #if defined(__has_attribute) && __has_attribute (target)
 __attribute__((target("avx512vpopcntdq,avx512bw")))
@@ -2185,7 +2173,7 @@ __attribute__((target("avx512vpopcntdq,avx512bw")))
 int main(void)
 {
     const char buf[sizeof(__m512i)];
-    INT64 popcnt = 0;
+    int64_t popcnt = 0;
     __m512i accum = _mm512_setzero_si512();
     const __m512i val = _mm512_maskz_loadu_epi8((__mmask64) 0xf0f0f0f0f0f0f0f0, (const __m512i *) buf);
     const __m512i cnt = _mm512_popcnt_epi64(val);
@@ -2196,8 +2184,7 @@ int main(void)
 }
 '''
 
-  if cc.links(prog, name: 'AVX-512 popcount',
-        args: test_c_args + ['-DINT64=@0@'.format(cdata.get('PG_INT64_TYPE'))])
+  if cc.links(prog, name: 'AVX-512 popcount', args: test_c_args)
     cdata.set('USE_AVX512_POPCNT_WITH_RUNTIME_CHECK', 1)
   endif
 
