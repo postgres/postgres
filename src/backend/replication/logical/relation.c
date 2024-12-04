@@ -781,11 +781,9 @@ FindUsableIndexForReplicaIdentityFull(Relation localrel, AttrMap *attrmap)
 	{
 		bool		isUsableIdx;
 		Relation	idxRel;
-		IndexInfo  *idxInfo;
 
 		idxRel = index_open(idxoid, AccessShareLock);
-		idxInfo = BuildIndexInfo(idxRel);
-		isUsableIdx = IsIndexUsableForReplicaIdentityFull(idxInfo, attrmap);
+		isUsableIdx = IsIndexUsableForReplicaIdentityFull(idxRel, attrmap);
 		index_close(idxRel, AccessShareLock);
 
 		/* Return the first eligible index found */
@@ -832,22 +830,22 @@ FindUsableIndexForReplicaIdentityFull(Relation localrel, AttrMap *attrmap)
  * to sequential execution, which might not be a good idea in some cases.
  */
 bool
-IsIndexUsableForReplicaIdentityFull(IndexInfo *indexInfo, AttrMap *attrmap)
+IsIndexUsableForReplicaIdentityFull(Relation idxrel, AttrMap *attrmap)
 {
 	AttrNumber	keycol;
 
 	/* Ensure that the index access method has a valid equal strategy */
-	if (get_equal_strategy_number_for_am(indexInfo->ii_Am) == InvalidStrategy)
+	if (get_equal_strategy_number_for_am(idxrel->rd_rel->relam) == InvalidStrategy)
 		return false;
 
 	/* The index must not be a partial index */
-	if (indexInfo->ii_Predicate != NIL)
+	if (!heap_attisnull(idxrel->rd_indextuple, Anum_pg_index_indpred, NULL))
 		return false;
 
-	Assert(indexInfo->ii_NumIndexAttrs >= 1);
+	Assert(idxrel->rd_index->indnatts >= 1);
 
 	/* The leftmost index field must not be an expression */
-	keycol = indexInfo->ii_IndexAttrNumbers[0];
+	keycol = idxrel->rd_index->indkey.values[0];
 	if (!AttributeNumberIsValid(keycol))
 		return false;
 
@@ -865,7 +863,7 @@ IsIndexUsableForReplicaIdentityFull(IndexInfo *indexInfo, AttrMap *attrmap)
 		IndexAmRoutine *amroutine;
 
 		/* The given index access method must implement amgettuple. */
-		amroutine = GetIndexAmRoutineByAmId(indexInfo->ii_Am, false);
+		amroutine = GetIndexAmRoutineByAmId(idxrel->rd_rel->relam, false);
 		Assert(amroutine->amgettuple != NULL);
 	}
 #endif
