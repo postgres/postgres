@@ -828,8 +828,6 @@ lazy_scan_heap(LVRelState *vacrel)
 				next_fsm_block_to_vacuum = 0;
 	bool		all_visible_according_to_vm;
 
-	TidStore   *dead_items = vacrel->dead_items;
-	VacDeadItemsInfo *dead_items_info = vacrel->dead_items_info;
 	Buffer		vmbuffer = InvalidBuffer;
 	const int	initprog_index[] = {
 		PROGRESS_VACUUM_PHASE,
@@ -841,7 +839,7 @@ lazy_scan_heap(LVRelState *vacrel)
 	/* Report that we're scanning the heap, advertising total # of blocks */
 	initprog_val[0] = PROGRESS_VACUUM_PHASE_SCAN_HEAP;
 	initprog_val[1] = rel_pages;
-	initprog_val[2] = dead_items_info->max_bytes;
+	initprog_val[2] = vacrel->dead_items_info->max_bytes;
 	pgstat_progress_update_multi_param(3, initprog_index, initprog_val);
 
 	/* Initialize for the first heap_vac_scan_next_block() call */
@@ -884,7 +882,7 @@ lazy_scan_heap(LVRelState *vacrel)
 		 * dead_items TIDs, pause and do a cycle of vacuuming before we tackle
 		 * this page.
 		 */
-		if (TidStoreMemoryUsage(dead_items) > dead_items_info->max_bytes)
+		if (TidStoreMemoryUsage(vacrel->dead_items) > vacrel->dead_items_info->max_bytes)
 		{
 			/*
 			 * Before beginning index vacuuming, we release any pin we may
@@ -1054,7 +1052,7 @@ lazy_scan_heap(LVRelState *vacrel)
 	 * Do index vacuuming (call each index's ambulkdelete routine), then do
 	 * related heap vacuuming
 	 */
-	if (dead_items_info->num_items > 0)
+	if (vacrel->dead_items_info->num_items > 0)
 		lazy_vacuum(vacrel);
 
 	/*
@@ -2895,19 +2893,18 @@ static void
 dead_items_add(LVRelState *vacrel, BlockNumber blkno, OffsetNumber *offsets,
 			   int num_offsets)
 {
-	TidStore   *dead_items = vacrel->dead_items;
 	const int	prog_index[2] = {
 		PROGRESS_VACUUM_NUM_DEAD_ITEM_IDS,
 		PROGRESS_VACUUM_DEAD_TUPLE_BYTES
 	};
 	int64		prog_val[2];
 
-	TidStoreSetBlockOffsets(dead_items, blkno, offsets, num_offsets);
+	TidStoreSetBlockOffsets(vacrel->dead_items, blkno, offsets, num_offsets);
 	vacrel->dead_items_info->num_items += num_offsets;
 
 	/* update the progress information */
 	prog_val[0] = vacrel->dead_items_info->num_items;
-	prog_val[1] = TidStoreMemoryUsage(dead_items);
+	prog_val[1] = TidStoreMemoryUsage(vacrel->dead_items);
 	pgstat_progress_update_multi_param(2, prog_index, prog_val);
 }
 
@@ -2917,8 +2914,6 @@ dead_items_add(LVRelState *vacrel, BlockNumber blkno, OffsetNumber *offsets,
 static void
 dead_items_reset(LVRelState *vacrel)
 {
-	TidStore   *dead_items = vacrel->dead_items;
-
 	if (ParallelVacuumIsActive(vacrel))
 	{
 		parallel_vacuum_reset_dead_items(vacrel->pvs);
@@ -2926,7 +2921,7 @@ dead_items_reset(LVRelState *vacrel)
 	}
 
 	/* Recreate the tidstore with the same max_bytes limitation */
-	TidStoreDestroy(dead_items);
+	TidStoreDestroy(vacrel->dead_items);
 	vacrel->dead_items = TidStoreCreateLocal(vacrel->dead_items_info->max_bytes, true);
 
 	/* Reset the counter */
