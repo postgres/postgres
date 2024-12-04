@@ -619,6 +619,7 @@ DirectoryMethodFile
 DisableTimeoutParams
 DiscardMode
 DiscardStmt
+DispatchOption
 DistanceValue
 DistinctExpr
 DoState

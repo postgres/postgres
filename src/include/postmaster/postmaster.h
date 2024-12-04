@@ -138,4 +138,21 @@ extern PMChild *FindPostmasterChildByPid(int pid);
  */
 #define MAX_BACKENDS	0x3FFFF
 
+/*
+ * These values correspond to the special must-be-first options for dispatching
+ * to various subprograms.  parse_dispatch_option() can be used to convert an
+ * option name to one of these values.
+ */
+typedef enum DispatchOption
+{
+	DISPATCH_CHECK,
+	DISPATCH_BOOT,
+	DISPATCH_FORKCHILD,
+	DISPATCH_DESCRIBE_CONFIG,
+	DISPATCH_SINGLE,
+	DISPATCH_POSTMASTER,		/* must be last */
+} DispatchOption;
+
+extern DispatchOption parse_dispatch_option(const char *name);
+
 #endif							/* _POSTMASTER_H */
