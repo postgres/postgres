@@ -89,8 +89,8 @@ postgres_lib_d = get_option('extra_lib_dirs')
 
 cppflags = []
 
-cflags = []
-cxxflags = []
+cflags = ['-Werror']
+cxxflags = ['-Werror']
 cflags_warn = []
 cxxflags_warn = []
 cflags_mod = []
@@ -3149,6 +3149,8 @@ test_install_libs = []
 subdir('src')
 
 subdir('contrib')
+
+subdir('src/bin')
 
 subdir('src/test')
 subdir('src/interfaces/libpq/test')

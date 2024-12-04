@@ -18,7 +18,7 @@ static const XLogSmgr xlog_smgr_standard = {
 	.seg_write = pg_pwrite,
 };
 
-extern XLogSmgr *xlog_smgr;
-extern void SetXLogSmgr(XLogSmgr *xlsmgr);
+extern const XLogSmgr *xlog_smgr;
+extern void SetXLogSmgr(const XLogSmgr *xlsmgr);
 
 #endif							/* XLOG_SMGR_H */
