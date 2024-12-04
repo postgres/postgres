@@ -785,16 +785,27 @@ CheckCmdReplicaIdentity(Relation rel, CmdType cmd)
 		return;
 
 	/*
-	 * It is only safe to execute UPDATE/DELETE when all columns, referenced
-	 * in the row filters from publications which the relation is in, are
-	 * valid - i.e. when all referenced columns are part of REPLICA IDENTITY
-	 * or the table does not publish UPDATEs or DELETEs.
+	 * It is only safe to execute UPDATE/DELETE if the relation does not
+	 * publish UPDATEs or DELETEs, or all the following conditions are
+	 * satisfied:
+	 *
+	 * 1. All columns, referenced in the row filters from publications which
+	 * the relation is in, are valid - i.e. when all referenced columns are
+	 * part of REPLICA IDENTITY.
+	 *
+	 * 2. All columns, referenced in the column lists are valid - i.e. when
+	 * all columns referenced in the REPLICA IDENTITY are covered by the
+	 * column list.
+	 *
+	 * 3. All generated columns in REPLICA IDENTITY of the relation, are valid
+	 * - i.e. when all these generated columns are published.
 	 *
 	 * XXX We could optimize it by first checking whether any of the
-	 * publications have a row filter for this relation. If not and relation
-	 * has replica identity then we can avoid building the descriptor but as
-	 * this happens only one time it doesn't seem worth the additional
-	 * complexity.
+	 * publications have a row filter or column list for this relation, or if
+	 * the relation contains a generated column. If none of these exist and
+	 * the relation has replica identity then we can avoid building the
+	 * descriptor but as this happens only one time it doesn't seem worth the
+	 * additional complexity.
 	 */
 	RelationBuildPublicationDesc(rel, &pubdesc);
 	if (cmd == CMD_UPDATE && !pubdesc.rf_valid_for_update)
@@ -809,6 +820,12 @@ CheckCmdReplicaIdentity(Relation rel, CmdType cmd)
 				 errmsg("cannot update table \"%s\"",
 						RelationGetRelationName(rel)),
 				 errdetail("Column list used by the publication does not cover the replica identity.")));
+	else if (cmd == CMD_UPDATE && !pubdesc.gencols_valid_for_update)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
+				 errmsg("cannot update table \"%s\"",
+						RelationGetRelationName(rel)),
+				 errdetail("Replica identity consists of an unpublished generated column.")));
 	else if (cmd == CMD_DELETE && !pubdesc.rf_valid_for_delete)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
@@ -821,6 +838,12 @@ CheckCmdReplicaIdentity(Relation rel, CmdType cmd)
 				 errmsg("cannot delete from table \"%s\"",
 						RelationGetRelationName(rel)),
 				 errdetail("Column list used by the publication does not cover the replica identity.")));
+	else if (cmd == CMD_DELETE && !pubdesc.gencols_valid_for_delete)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
+				 errmsg("cannot delete from table \"%s\"",
+						RelationGetRelationName(rel)),
+				 errdetail("Replica identity consists of an unpublished generated column.")));
 
 	/* If relation has replica identity we are always good. */
 	if (OidIsValid(RelationGetReplicaIndex(rel)))

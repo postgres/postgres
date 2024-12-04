@@ -98,6 +98,13 @@ typedef struct PublicationDesc
 	 */
 	bool		cols_valid_for_update;
 	bool		cols_valid_for_delete;
+
+	/*
+	 * true if all generated columns that are part of replica identity are
+	 * published or the publication actions do not include UPDATE or DELETE.
+	 */
+	bool		gencols_valid_for_update;
+	bool		gencols_valid_for_delete;
 } PublicationDesc;
 
 typedef struct Publication
