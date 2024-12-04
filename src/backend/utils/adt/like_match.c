@@ -333,13 +333,14 @@ MatchText(const char *t, int tlen, const char *p, int plen, pg_locale_t locale)
 				 * fails.  Otherwise, try again with a longer substring.
 				 */
 				if (t1len == 0)
+				{
+					if (buf)
+						pfree(buf);
 					return LIKE_FALSE;
+				}
 				else
 					NextChar(t1, t1len);
 			}
-			if (buf)
-				pfree(buf);
-			continue;
 		}
 		else if (GETCHAR(*p, locale) != GETCHAR(*t, locale))
 		{
