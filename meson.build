@@ -263,7 +263,11 @@ elif host_system == 'sunos'
   export_fmt = '-Wl,-M@0@'
   # We need these #defines to get POSIX-conforming versions
   # of many interfaces (sigwait, getpwuid_r, shmdt, ...).
-  cppflags += [ '-D_POSIX_C_SOURCE=200112L', '-D_POSIX_PTHREAD_SEMANTICS' ]
+  cppflags += [
+    '-D_POSIX_C_SOURCE=200112L',
+    '-D__EXTENSIONS__',
+    '-D_POSIX_PTHREAD_SEMANTICS',
+  ]
 
 elif host_system == 'windows'
   portname = 'win32'
