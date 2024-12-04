@@ -596,7 +596,6 @@ pg_tde_free_key_map_entry(const RelFileLocator *rlocator, uint32 key_type, off_t
 {
 	int32	key_index = 0;
 	char	db_map_path[MAXPGPATH] = {0};
-	off_t	start = 0;
 
 	Assert(rlocator);
 
@@ -680,6 +679,7 @@ pg_tde_perform_rotate_key(TDEPrincipalKey *principal_key, TDEPrincipalKey *new_p
 	off_t xlrec_size;
 	char db_map_path[MAXPGPATH] = {0};
 	char db_keydata_path[MAXPGPATH] = {0};
+	bool success = true;
 
 	/* Set the file paths */
 	pg_tde_set_db_file_paths(principal_key->keyInfo.databaseId,
@@ -757,8 +757,8 @@ pg_tde_perform_rotate_key(TDEPrincipalKey *principal_key, TDEPrincipalKey *new_p
 
 	/* TODO: pgstat_report_wait_start / pgstat_report_wait_end */
 	/* TODO: error handling */
-	pg_pread(m_fd[NEW_PRINCIPAL_KEY], xlrec->buff, xlrec->map_size, 0);
-	pg_pread(k_fd[NEW_PRINCIPAL_KEY], &xlrec->buff[xlrec->map_size], xlrec->keydata_size, 0);
+	if(pg_pread(m_fd[NEW_PRINCIPAL_KEY], xlrec->buff, xlrec->map_size, 0) == -1) success = false;
+	if(pg_pread(k_fd[NEW_PRINCIPAL_KEY], &xlrec->buff[xlrec->map_size], xlrec->keydata_size, 0) == -1) success = false;
 
 	/* Close the files */
 	close(m_fd[NEW_PRINCIPAL_KEY]);
@@ -776,7 +776,7 @@ pg_tde_perform_rotate_key(TDEPrincipalKey *principal_key, TDEPrincipalKey *new_p
 	/* Free up the palloc'ed data */
 	pfree(xlrec);
 
-	return true;
+	return success;
 
 #undef OLD_PRINCIPAL_KEY
 #undef NEW_PRINCIPAL_KEY
@@ -864,14 +864,12 @@ FINALIZE:
  * Saves the relation key with the new relfilenode.
  * Needed by ALTER TABLE SET TABLESPACE for example.
  */
-bool
+void
 pg_tde_move_rel_key(const RelFileLocator *newrlocator, const RelFileLocator *oldrlocator)
 {
 	RelKeyData 	*rel_key;
 	RelKeyData 	*enc_key;
 	TDEPrincipalKey *principal_key;
-	KeyringProvideRecord provider_rec;
-    GenericKeyring *keyring;
 	XLogRelKey	xlrec;
 	char		db_map_path[MAXPGPATH] = {0};
 	char		db_keydata_path[MAXPGPATH] = {0};

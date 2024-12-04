@@ -43,14 +43,21 @@ pg_tde_sources = files(
         'src/pg_tde_defs.c',
         'src/pg_tde.c',
         'src/pg_tde_event_capture.c',
-
-        'src/libkmip/libkmip/src/kmip.c',
-        'src/libkmip/libkmip/src/kmip_bio.c',
-        'src/libkmip/libkmip/src/kmip_locate.c',
-        'src/libkmip/libkmip/src/kmip_memset.c',
 )
 
 incdir = include_directories(src_version / 'include', 'src/include', '.', 'src/libkmip/libkmip/include/')
+
+kmip = static_library(
+  'kmip',
+  files( 
+        'src/libkmip/libkmip/src/kmip.c',
+        'src/libkmip/libkmip/src/kmip_bio.c',
+        'src/libkmip/libkmip/src/kmip_locate.c',
+        'src/libkmip/libkmip/src/kmip_memset.c'
+        ),
+  c_args: [ '-w' ], # This is a 3rd party, disable warnings completely
+  include_directories: incdir
+)
 
 deps_update = {'dependencies': contrib_mod_args.get('dependencies') + [curldep]}
 
@@ -61,6 +68,7 @@ pg_tde = shared_module('pg_tde',
   c_pch: pch_postgres_h,
   kwargs: mod_args,
   include_directories: incdir,
+  link_whole: [kmip]
 )
 contrib_targets += pg_tde
 
@@ -136,8 +144,6 @@ if get_variable('percona_ext', false)
   ]
 endif
 
-
-
 tests += {
   'name': 'pg_tde',
   'sd': meson.current_source_dir(),
@@ -150,3 +156,33 @@ tests += {
   'tap': {
     'tests': tap_tests  },
 }
+
+# TODO: do not duplicate
+tde_decrypt_sources = files(
+   'src/access/pg_tde_tdemap.c',
+   'src/access/pg_tde_xlog_encrypt.c',
+   'src/catalog/tde_global_space.c',
+   'src/catalog/tde_keyring.c',
+   'src/catalog/tde_keyring_parse_opts.c',
+   'src/catalog/tde_principal_key.c',
+   'src/common/pg_tde_utils.c',
+   'src/encryption/enc_aes.c',
+   'src/encryption/enc_tde.c',
+   'src/keyring/keyring_api.c',
+   'src/keyring/keyring_curl.c',
+   'src/keyring/keyring_file.c',
+   'src/keyring/keyring_vault.c',
+   'src/keyring/keyring_kmip.c',
+   'src/keyring/keyring_kmip_ereport.c',
+ )
+
+pg_tde_inc = incdir
+
+pg_tde_frontend = static_library('pg_tde_frontend',
+  tde_decrypt_sources,
+  c_pch: pch_postgres_h,
+  c_args: ['-DFRONTEND'],
+  kwargs: mod_args,
+  include_directories: incdir,
+  link_whole: [kmip]
+)

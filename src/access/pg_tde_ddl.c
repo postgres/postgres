@@ -40,8 +40,6 @@ tdeheap_object_access_hook(ObjectAccessType access, Oid classId, Oid objectId,
 
 	if (access == OAT_DROP && classId == RelationRelationId)
 	{
-		ObjectAccessDrop *drop_arg = (ObjectAccessDrop *) arg;
-
 		rel = relation_open(objectId, AccessShareLock);
 	}
 	if (rel != NULL)

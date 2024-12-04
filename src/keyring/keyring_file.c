@@ -49,6 +49,7 @@ get_key_by_name(GenericKeyring *keyring, const char *key_name, bool throw_error,
 	FileKeyring *file_keyring = (FileKeyring *) keyring;
 	off_t bytes_read = 0;
 	off_t curr_pos = 0;
+	int ereport_level = throw_error ? ERROR : WARNING;
 
 	*return_code = KEYRING_CODE_SUCCESS;
 
@@ -78,11 +79,11 @@ get_key_by_name(GenericKeyring *keyring, const char *key_name, bool throw_error,
 			pfree(key);
 			/* Corrupt file */
 			*return_code = KEYRING_CODE_DATA_CORRUPTED;
-			ereport(throw_error ? ERROR : WARNING,
+			ereport(ereport_level,
 					(errcode_for_file_access(),
 					 errmsg("keyring file \"%s\" is corrupted: %m",
 							file_keyring->file_name),
-					 errdetail("invalid key size %llu expected %lu", bytes_read, sizeof(keyInfo))));
+					 errdetail("invalid key size %lu expected %lu", bytes_read, sizeof(keyInfo))));
 			return NULL;
 		}
 		if (strncasecmp(key->name.name, key_name, sizeof(key->name.name)) == 0)
@@ -105,6 +106,7 @@ set_key_by_name(GenericKeyring *keyring, keyInfo *key, bool throw_error)
 	FileKeyring *file_keyring = (FileKeyring *) keyring;
 	keyInfo    *existing_key;
 	KeyringReturnCodes return_code = KEYRING_CODE_SUCCESS;
+	int ereport_level = throw_error ? ERROR : WARNING;
 
 	Assert(key != NULL);
 	/* See if the key with same name already exists */
@@ -112,7 +114,7 @@ set_key_by_name(GenericKeyring *keyring, keyInfo *key, bool throw_error)
 	if (existing_key)
 	{
 		pfree(existing_key);
-		ereport(throw_error ? ERROR : WARNING,
+		ereport(ereport_level,
 				(errmsg("Key with name %s already exists in keyring", key->name.name)));
 		return KEYRING_CODE_INVALID_OPERATION;
 	}
@@ -120,7 +122,7 @@ set_key_by_name(GenericKeyring *keyring, keyInfo *key, bool throw_error)
 	fd = BasicOpenFile(file_keyring->file_name, O_CREAT | O_RDWR | PG_BINARY);
 	if (fd < 0)
 	{
-		ereport(throw_error ? ERROR : WARNING,
+		ereport(ereport_level,
 				(errcode_for_file_access(),
 				 errmsg("Failed to open keyring file %s :%m", file_keyring->file_name)));
 		return KEYRING_CODE_RESOURCE_NOT_ACCESSABLE;
@@ -131,7 +133,7 @@ set_key_by_name(GenericKeyring *keyring, keyInfo *key, bool throw_error)
 	if (bytes_written != sizeof(keyInfo))
 	{
 		close(fd);
-		ereport(throw_error ? ERROR : WARNING,
+		ereport(ereport_level,
 				(errcode_for_file_access(),
 				 errmsg("keyring file \"%s\" can't be written: %m",
 						file_keyring->file_name)));
@@ -141,7 +143,7 @@ set_key_by_name(GenericKeyring *keyring, keyInfo *key, bool throw_error)
 	if (pg_fsync(fd) != 0)
 	{
 		close(fd);
-		ereport(throw_error ? ERROR : WARNING,
+		ereport(ereport_level,
 				(errcode_for_file_access(),
 				 errmsg("could not fsync file \"%s\": %m",
 						file_keyring->file_name)));

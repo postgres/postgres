@@ -845,7 +845,7 @@ pg_tde_get_key_info(PG_FUNCTION_ARGS, Oid dbOid)
  * Gets principal key form the keyring and pops it into cache if key exists
  * Caller should hold an exclusive tde_lwlock_enc_keys lock
  */
-TDEPrincipalKey *
+static TDEPrincipalKey *
 get_principal_key_from_keyring(Oid dbOid)
 {
 	GenericKeyring *keyring;

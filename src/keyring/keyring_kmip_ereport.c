@@ -9,12 +9,17 @@
 
 void kmip_ereport(bool throw_error, const char *msg, int errCode)
 {
+    int ereport_level = throw_error ? ERROR : WARNING;
     if (errCode != 0)
     {
-        ereport(throw_error, msg, errCode);
+        ereport(ereport_level, (errmsg(msg, errCode)));
     }
     else
     {
-        ereport(throw_error, msg);
+        #pragma GCC diagnostic push
+        #pragma GCC diagnostic ignored "-Wformat-security"
+        // TODO: how to do this properly?
+        elog(ereport_level, (msg));
+        #pragma GCC diagnostic pop
     }
 }

@@ -69,6 +69,9 @@ bool
 RegisterKeyProvider(const TDEKeyringRoutine *routine, ProviderType type)
 {
 	KeyProviders *kp;
+#ifndef FRONTEND
+	MemoryContext oldcontext;
+#endif
 
 	Assert(routine != NULL);
 	Assert(routine->keyring_get_key != NULL);
@@ -83,8 +86,6 @@ RegisterKeyProvider(const TDEKeyringRoutine *routine, ProviderType type)
 	}
 
 #ifndef FRONTEND
-	MemoryContext oldcontext;
-
 	oldcontext = MemoryContextSwitchTo(TopMemoryContext);
 #endif
 	kp = palloc(sizeof(KeyProviders));
@@ -104,10 +105,11 @@ keyInfo *
 KeyringGetKey(GenericKeyring *keyring, const char *key_name, bool throw_error, KeyringReturnCodes * returnCode)
 {
 	KeyProviders *kp = find_key_provider(keyring->type);
+	int ereport_level = throw_error ? ERROR : WARNING;
 
 	if (kp == NULL)
 	{
-		ereport(throw_error ? ERROR : WARNING,
+		ereport(ereport_level,
 				(errmsg("Key provider of type %d not registered", keyring->type)));
 		*returnCode = KEYRING_CODE_INVALID_PROVIDER;
 		return NULL;
@@ -119,10 +121,11 @@ KeyringReturnCodes
 KeyringStoreKey(GenericKeyring *keyring, keyInfo *key, bool throw_error)
 {
 	KeyProviders *kp = find_key_provider(keyring->type);
+	int ereport_level = throw_error ? ERROR : WARNING;
 
 	if (kp == NULL)
 	{
-		ereport(throw_error ? ERROR : WARNING,
+		ereport(ereport_level,
 				(errmsg("Key provider of type %d not registered", keyring->type)));
 		return KEYRING_CODE_INVALID_PROVIDER;
 	}
@@ -150,10 +153,11 @@ keyInfo *
 KeyringGenerateNewKeyAndStore(GenericKeyring *keyring, const char *key_name, unsigned key_len, bool throw_error)
 {
 	keyInfo *key = KeyringGenerateNewKey(key_name, key_len);
+	int ereport_level = throw_error ? ERROR : WARNING;
 
 	if (key == NULL)
 	{
-		ereport(throw_error ? ERROR : WARNING,
+		ereport(ereport_level,
 				(errmsg("Failed to generate key")));
 		return NULL;
 	}

@@ -149,7 +149,7 @@ pg_tde_set_data_dir(const char *dir)
 
 /* returns the palloc'd string */
 char *
-pg_tde_get_tde_data_dir()
+pg_tde_get_tde_data_dir(void)
 {
 	return globalspace_dir;
 }

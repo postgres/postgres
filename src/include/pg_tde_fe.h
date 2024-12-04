@@ -54,6 +54,7 @@
 			exit(1);				\
 	} while(0)
 
+#undef elog
 #define elog(elevel, fmt, ...) \
 	do {							\
 		tde_fe_error_level = elevel;	\
@@ -61,6 +62,7 @@
 		tde_error_handle_exit(elevel);	\
 	} while(0)
 
+#undef ereport
 #define ereport(elevel,...)		\
 	do {							\
 		tde_fe_error_level = elevel;	\

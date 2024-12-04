@@ -112,28 +112,28 @@ tde_mdwritev(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 	}
 	else
 	{
-		char	   *local_blocks = palloc(BLCKSZ * (nblocks + 1));
-		char	   *local_blocks_aligned = (char *) TYPEALIGN(PG_IO_ALIGN_SIZE, local_blocks);
-		const void **local_buffers = palloc(sizeof(void *) * nblocks);
+		unsigned char	   *local_blocks = palloc(BLCKSZ * (nblocks + 1));
+		unsigned char	   *local_blocks_aligned = (unsigned char *) TYPEALIGN(PG_IO_ALIGN_SIZE, local_blocks);
+		void **local_buffers = palloc(sizeof(void *) * nblocks);
 
 		AesInit();
 
 		for (int i = 0; i < nblocks; ++i)
 		{
 			int			out_len = BLCKSZ;
-
-			local_buffers[i] = &local_blocks_aligned[i * BLCKSZ];
-
 			BlockNumber bn = blocknum + i;
 			unsigned char iv[16] = {0,};
 
+			local_buffers[i] = &local_blocks_aligned[i * BLCKSZ];
+
+			
 			memcpy(iv + 4, &bn, sizeof(BlockNumber));
 
-			AesEncrypt(rkd->internal_key.key, iv, ((char **) buffers)[i], BLCKSZ, local_buffers[i], &out_len);
+			AesEncrypt(rkd->internal_key.key, iv, ((unsigned char **) buffers)[i], BLCKSZ, local_buffers[i], &out_len);
 		}
 
 		mdwritev(reln, forknum, blocknum,
-				 local_buffers, nblocks, skipFsync);
+				 (const void**) local_buffers, nblocks, skipFsync);
 
 		pfree(local_blocks);
 		pfree(local_buffers);
@@ -153,8 +153,8 @@ tde_mdextend(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 	}
 	else
 	{
-		char *local_blocks = palloc(BLCKSZ * (1 + 1));
-		char *local_blocks_aligned = (char *) TYPEALIGN(PG_IO_ALIGN_SIZE, local_blocks);
+		unsigned char *local_blocks = palloc(BLCKSZ * (1 + 1));
+		unsigned char *local_blocks_aligned = (unsigned char *) TYPEALIGN(PG_IO_ALIGN_SIZE, local_blocks);
 		int	out_len = BLCKSZ;
 		unsigned char iv[16] = {
 			0,
@@ -163,7 +163,7 @@ tde_mdextend(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 		AesInit();
 		memcpy(iv + 4, &blocknum, sizeof(BlockNumber));
 
-		AesEncrypt(rkd->internal_key.key, iv, ((char *) buffer), BLCKSZ, local_blocks_aligned, &out_len);
+		AesEncrypt(rkd->internal_key.key, iv, ((unsigned char *) buffer), BLCKSZ, local_blocks_aligned, &out_len);
 
 		mdextend(reln, forknum, blocknum, local_blocks_aligned, skipFsync);
 
@@ -219,7 +219,7 @@ tde_mdreadv(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 
 		memcpy(iv + 4, &bn, sizeof(BlockNumber));
 
-		AesDecrypt(rkd->internal_key.key, iv, ((char **) buffers)[i], BLCKSZ, ((char **) buffers)[i], &out_len);
+		AesDecrypt(rkd->internal_key.key, iv, ((unsigned char **) buffers)[i], BLCKSZ, ((unsigned char **) buffers)[i], &out_len);
 	}
 }
 
@@ -227,7 +227,7 @@ static void
 tde_mdcreate(RelFileLocator relold, SMgrRelation reln, ForkNumber forknum, bool isRedo)
 {
 	TDESMgrRelation tdereln = (TDESMgrRelation) reln;
-
+	RelKeyData *key;
 	/*
 	 * This is the only function that gets called during actual CREATE
 	 * TABLE/INDEX (EVENT TRIGGER)
@@ -240,7 +240,7 @@ tde_mdcreate(RelFileLocator relold, SMgrRelation reln, ForkNumber forknum, bool 
 	 * Later calls then decide to encrypt or not based on the existence of the
 	 * key
 	 */
-	RelKeyData *key = tde_smgr_get_key(reln, &relold, true);
+	key = tde_smgr_get_key(reln, &relold, true);
 
 	if (key)
 	{
