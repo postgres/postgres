@@ -9,7 +9,6 @@ pg_waldump_sources = files(
 pg_waldump_sources += rmgr_desc_sources
 pg_waldump_sources += xlogreader_sources
 pg_waldump_sources += files('../../backend/access/transam/xlogstats.c')
-pg_waldump_sources += tde_decrypt_sources
 
 if host_system == 'windows'
   pg_waldump_sources += rc_bin_gen.process(win32ver_rc, extra_args: [
@@ -17,12 +16,21 @@ if host_system == 'windows'
     '--FILEDESC', 'pg_waldump - decode and display WA'])
 endif
 
+link_w  = []
+include_dirs = [postgres_inc]
+
+if percona_ext == true
+  link_w = [pg_tde_frontend]
+  include_dirs = [postgres_inc, pg_tde_inc]
+endif
+
 pg_waldump = executable('pg_waldump',
   pg_waldump_sources,
-  dependencies: [frontend_code, lz4, zstd, tde_deps],
+  dependencies: [frontend_code, lz4, zstd],
   c_args: ['-DFRONTEND'], # needed for xlogreader et al
   kwargs: default_bin_args,
-  include_directories: [postgres_inc, tde_include],
+  include_directories: include_dirs,
+  link_with: link_w
 )
 bin_targets += pg_waldump
 
