@@ -56,7 +56,7 @@ tdeheap_tts_buffer_heap_init(TupleTableSlot *slot)
 static void
 tdeheap_tts_buffer_heap_release(TupleTableSlot *slot)
 {
-	TDEBufferHeapTupleTableSlot *bslot = (TDEBufferHeapTupleTableSlot *) slot;
+	// nop
 }
 
 static void

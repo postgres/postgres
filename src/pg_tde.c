@@ -135,10 +135,10 @@ _PG_init(void)
 Datum
 pg_tde_extension_initialize(PG_FUNCTION_ARGS)
 {
-	pg_tde_init_data_dir();
-	
 	/* Initialize the TDE map */
 	XLogExtensionInstall xlrec;
+
+	pg_tde_init_data_dir();
 
 	xlrec.database_id = MyDatabaseId;
 	run_extension_install_callbacks(&xlrec, false);

@@ -22,6 +22,7 @@ iv_prefix_debug(const char *iv_prefix, char *out_hex)
 }
 #endif
 
+#ifndef FRONTEND
 static void
 SetIVPrefix(ItemPointerData *ip, char *iv_prefix)
 {
@@ -39,6 +40,7 @@ SetIVPrefix(ItemPointerData *ip, char *iv_prefix)
 	iv_prefix[4] = ip->ip_posid / 256;
 	iv_prefix[5] = ip->ip_posid % 256;
 }
+#endif
 
 /*
  * ================================================================
@@ -269,14 +271,16 @@ AesDecryptKey(const TDEPrincipalKey *principal_key, Oid dbOid, RelKeyData **p_re
 {
 	unsigned char iv[16] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 
+#ifndef FRONTEND
+	MemoryContext oldcontext;
+#endif
+
 	/* Ensure we are getting a valid pointer here */
 	Assert(principal_key);
 
 	memcpy(iv, &dbOid, sizeof(Oid));
 
 #ifndef FRONTEND
-	MemoryContext oldcontext;
-
 	oldcontext = MemoryContextSwitchTo(TopMemoryContext);
 #endif
 

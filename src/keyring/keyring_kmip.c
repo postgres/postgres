@@ -179,7 +179,7 @@ static keyInfo *get_key_by_name(GenericKeyring *keyring, const char *key_name, b
 
     {
         int upto = 0;
-        int all = 1;
+        int result;
         LocateResponse locate_result;
         Name ts;
         TextString ts2 = {0, 0};
@@ -202,7 +202,7 @@ static keyInfo *get_key_by_name(GenericKeyring *keyring, const char *key_name, b
         a[1].value = &ts;
 
         // 16 is hard coded: seems like the most vault supports?
-        int result = kmip_bio_locate(ctx.bio, a, 2, &locate_result, 16, upto);
+        result = kmip_bio_locate(ctx.bio, a, 2, &locate_result, 16, upto);
 
         if (result != 0)
         {
@@ -212,8 +212,16 @@ static keyInfo *get_key_by_name(GenericKeyring *keyring, const char *key_name, b
             return NULL;
         }
 
-        if (locate_result.ids_size != 1)
+        if (locate_result.ids_size == 0)
         {
+            BIO_free_all(ctx.bio);
+            SSL_CTX_free(ctx.ssl);
+            return NULL;
+        }
+
+        if (locate_result.ids_size > 1)
+        {
+            fprintf(stderr, "KMIP ERR: %li\n", locate_result.ids_size);
             kmip_ereport(throw_error, "KMIP server contains multiple results for key, ignoring", 0);
             *return_code = KEYRING_CODE_RESOURCE_NOT_AVAILABLE;
             BIO_free_all(ctx.bio);

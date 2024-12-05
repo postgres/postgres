@@ -494,13 +494,19 @@ get_file_kring_value(const char *path, const char *field_name)
 	fd = BasicOpenFile(path, O_RDONLY);
 	if (fd < 0)
 	{
-		elog(WARNING, "filed to open file %s for %s", path, field_name);
+		elog(WARNING, "failed to open file %s for %s", path, field_name);
 		return NULL;
 	}
 
 	/* TODO: we never pfree it */
 	val = palloc0(MAX_CONFIG_FILE_DATA_LENGTH);
-	pg_pread(fd, val, MAX_CONFIG_FILE_DATA_LENGTH, 0);
+	if(pg_pread(fd, val, MAX_CONFIG_FILE_DATA_LENGTH, 0) == -1)
+	{
+		elog(WARNING, "failed to read file %s for %s", path, field_name);
+		pfree(val);
+		close(fd);
+		return NULL;
+	}
 	/* remove trailing whitespace */
 	val[strcspn(val, " \t\n\r")] = '\0';
 
