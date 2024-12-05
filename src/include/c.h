@@ -46,11 +46,14 @@
 #ifndef C_H
 #define C_H
 
-#include "postgres_ext.h"
-
+/*
+ * These headers must be included before any system headers, because on some
+ * platforms they affect the behavior of the system headers (for example, by
+ * defining _FILE_OFFSET_BITS).
+ */
 #include "pg_config.h"
 #include "pg_config_manual.h"	/* must be after pg_config.h */
-#include "pg_config_os.h"		/* must be before any system header files */
+#include "pg_config_os.h"		/* config from include/port/PORTNAME.h */
 
 /* System header files that should be available everywhere in Postgres */
 #include <inttypes.h>
@@ -75,6 +78,9 @@
 #ifdef ENABLE_NLS
 #include <libintl.h>
 #endif
+
+ /* Pull in fundamental symbols that we also expose to applications */
+#include "postgres_ext.h"
 
 /* Define before including zlib.h to add const decorations to zlib API. */
 #ifdef HAVE_LIBZ
