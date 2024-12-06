@@ -2830,7 +2830,7 @@ AbortTransaction(void)
 	pgstat_report_wait_end();
 	pgstat_progress_end_command();
 
-	/* Clean up buffer context locks, too */
+	/* Clean up buffer content locks, too */
 	UnlockBuffers();
 
 	/* Reset WAL record construction state */
