@@ -4292,7 +4292,7 @@ DropRelationsAllBuffers(SMgrRelation *smgr_reln, int nlocators)
 			RelFileLocator locator;
 
 			locator = BufTagGetRelFileLocator(&bufHdr->tag);
-			rlocator = bsearch((const void *) &(locator),
+			rlocator = bsearch(&locator,
 							   locators, n, sizeof(RelFileLocator),
 							   rlocator_comparator);
 		}
@@ -4646,7 +4646,7 @@ FlushRelationsAllBuffers(SMgrRelation *smgrs, int nrels)
 			RelFileLocator rlocator;
 
 			rlocator = BufTagGetRelFileLocator(&bufHdr->tag);
-			srelent = bsearch((const void *) &(rlocator),
+			srelent = bsearch(&rlocator,
 							  srels, nrels, sizeof(SMgrSortArray),
 							  rlocator_comparator);
 		}

@@ -1822,7 +1822,7 @@ ahwrite(const void *ptr, size_t size, size_t nmemb, ArchiveHandle *AH)
 			size_t		avail = AH->lo_buf_size - AH->lo_buf_used;
 
 			memcpy((char *) AH->lo_buf + AH->lo_buf_used, ptr, avail);
-			ptr = (const void *) ((const char *) ptr + avail);
+			ptr = (const char *) ptr + avail;
 			remaining -= avail;
 			AH->lo_buf_used += avail;
 			dump_lo_buf(AH);
