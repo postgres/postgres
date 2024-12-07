@@ -3052,6 +3052,12 @@ getObjectDescription(const ObjectAddress *object)
 				initStringInfo(&opfam);
 				getOpFamilyDescription(&opfam, amopForm->amopfamily);
 
+				/*
+				 * We use FORMAT_TYPE_ALLOW_INVALID here so as not to fail
+				 * completely if the type links are dangling, which is a form
+				 * of catalog corruption that could occur due to old bugs.
+				 */
+
 				/*------
 				   translator: %d is the operator strategy (a number), the
 				   first two %s's are data type names, the third %s is the
@@ -3059,8 +3065,10 @@ getObjectDescription(const ObjectAddress *object)
 				   textual form of the operator with arguments.  */
 				appendStringInfo(&buffer, _("operator %d (%s, %s) of %s: %s"),
 								 amopForm->amopstrategy,
-								 format_type_be(amopForm->amoplefttype),
-								 format_type_be(amopForm->amoprighttype),
+								 format_type_extended(amopForm->amoplefttype,
+													  -1, FORMAT_TYPE_ALLOW_INVALID),
+								 format_type_extended(amopForm->amoprighttype,
+													  -1, FORMAT_TYPE_ALLOW_INVALID),
 								 opfam.data,
 								 format_operator(amopForm->amopopr));
 
@@ -3102,6 +3110,12 @@ getObjectDescription(const ObjectAddress *object)
 				initStringInfo(&opfam);
 				getOpFamilyDescription(&opfam, amprocForm->amprocfamily);
 
+				/*
+				 * We use FORMAT_TYPE_ALLOW_INVALID here so as not to fail
+				 * completely if the type links are dangling, which is a form
+				 * of catalog corruption that could occur due to old bugs.
+				 */
+
 				/*------
 				   translator: %d is the function number, the first two %s's
 				   are data type names, the third %s is the description of the
@@ -3109,8 +3123,10 @@ getObjectDescription(const ObjectAddress *object)
 				   function with arguments.  */
 				appendStringInfo(&buffer, _("function %d (%s, %s) of %s: %s"),
 								 amprocForm->amprocnum,
-								 format_type_be(amprocForm->amproclefttype),
-								 format_type_be(amprocForm->amprocrighttype),
+								 format_type_extended(amprocForm->amproclefttype,
+													  -1, FORMAT_TYPE_ALLOW_INVALID),
+								 format_type_extended(amprocForm->amprocrighttype,
+													  -1, FORMAT_TYPE_ALLOW_INVALID),
 								 opfam.data,
 								 format_procedure(amprocForm->amproc));
 
