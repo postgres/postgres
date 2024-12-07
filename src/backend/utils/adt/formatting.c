@@ -653,7 +653,7 @@ typedef enum
 	DCH_Day,
 	DCH_Dy,
 	DCH_D,
-	DCH_FF1,
+	DCH_FF1,					/* FFn codes must be consecutive */
 	DCH_FF2,
 	DCH_FF3,
 	DCH_FF4,
@@ -819,12 +819,12 @@ static const KeyWord DCH_keywords[] = {
 	{"Day", 3, DCH_Day, false, FROM_CHAR_DATE_NONE},
 	{"Dy", 2, DCH_Dy, false, FROM_CHAR_DATE_NONE},
 	{"D", 1, DCH_D, true, FROM_CHAR_DATE_GREGORIAN},
-	{"FF1", 3, DCH_FF1, false, FROM_CHAR_DATE_NONE},	/* F */
-	{"FF2", 3, DCH_FF2, false, FROM_CHAR_DATE_NONE},
-	{"FF3", 3, DCH_FF3, false, FROM_CHAR_DATE_NONE},
-	{"FF4", 3, DCH_FF4, false, FROM_CHAR_DATE_NONE},
-	{"FF5", 3, DCH_FF5, false, FROM_CHAR_DATE_NONE},
-	{"FF6", 3, DCH_FF6, false, FROM_CHAR_DATE_NONE},
+	{"FF1", 3, DCH_FF1, true, FROM_CHAR_DATE_NONE}, /* F */
+	{"FF2", 3, DCH_FF2, true, FROM_CHAR_DATE_NONE},
+	{"FF3", 3, DCH_FF3, true, FROM_CHAR_DATE_NONE},
+	{"FF4", 3, DCH_FF4, true, FROM_CHAR_DATE_NONE},
+	{"FF5", 3, DCH_FF5, true, FROM_CHAR_DATE_NONE},
+	{"FF6", 3, DCH_FF6, true, FROM_CHAR_DATE_NONE},
 	{"FX", 2, DCH_FX, false, FROM_CHAR_DATE_NONE},
 	{"HH24", 4, DCH_HH24, true, FROM_CHAR_DATE_NONE},	/* H */
 	{"HH12", 4, DCH_HH12, true, FROM_CHAR_DATE_NONE},
@@ -875,12 +875,12 @@ static const KeyWord DCH_keywords[] = {
 	{"dd", 2, DCH_DD, true, FROM_CHAR_DATE_GREGORIAN},
 	{"dy", 2, DCH_dy, false, FROM_CHAR_DATE_NONE},
 	{"d", 1, DCH_D, true, FROM_CHAR_DATE_GREGORIAN},
-	{"ff1", 3, DCH_FF1, false, FROM_CHAR_DATE_NONE},	/* f */
-	{"ff2", 3, DCH_FF2, false, FROM_CHAR_DATE_NONE},
-	{"ff3", 3, DCH_FF3, false, FROM_CHAR_DATE_NONE},
-	{"ff4", 3, DCH_FF4, false, FROM_CHAR_DATE_NONE},
-	{"ff5", 3, DCH_FF5, false, FROM_CHAR_DATE_NONE},
-	{"ff6", 3, DCH_FF6, false, FROM_CHAR_DATE_NONE},
+	{"ff1", 3, DCH_FF1, true, FROM_CHAR_DATE_NONE}, /* f */
+	{"ff2", 3, DCH_FF2, true, FROM_CHAR_DATE_NONE},
+	{"ff3", 3, DCH_FF3, true, FROM_CHAR_DATE_NONE},
+	{"ff4", 3, DCH_FF4, true, FROM_CHAR_DATE_NONE},
+	{"ff5", 3, DCH_FF5, true, FROM_CHAR_DATE_NONE},
+	{"ff6", 3, DCH_FF6, true, FROM_CHAR_DATE_NONE},
 	{"fx", 2, DCH_FX, false, FROM_CHAR_DATE_NONE},
 	{"hh24", 4, DCH_HH24, true, FROM_CHAR_DATE_NONE},	/* h */
 	{"hh12", 4, DCH_HH12, true, FROM_CHAR_DATE_NONE},

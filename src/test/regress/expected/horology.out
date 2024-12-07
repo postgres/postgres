@@ -3054,6 +3054,17 @@ SELECT i, to_timestamp('2018-11-02 12:34:56.123456', 'YYYY-MM-DD HH24:MI:SS.FF' 
 
 SELECT i, to_timestamp('2018-11-02 12:34:56.123456789', 'YYYY-MM-DD HH24:MI:SS.FF' || i) FROM generate_series(1, 6) i;
 ERROR:  date/time field value out of range: "2018-11-02 12:34:56.123456789"
+SELECT i, to_timestamp('20181102123456123456', 'YYYYMMDDHH24MISSFF' || i) FROM generate_series(1, 6) i;
+ i |            to_timestamp             
+---+-------------------------------------
+ 1 | Fri Nov 02 12:34:56.1 2018 PDT
+ 2 | Fri Nov 02 12:34:56.12 2018 PDT
+ 3 | Fri Nov 02 12:34:56.123 2018 PDT
+ 4 | Fri Nov 02 12:34:56.1235 2018 PDT
+ 5 | Fri Nov 02 12:34:56.12346 2018 PDT
+ 6 | Fri Nov 02 12:34:56.123456 2018 PDT
+(6 rows)
+
 SELECT to_date('1 4 1902', 'Q MM YYYY');  -- Q is ignored
   to_date   
 ------------
