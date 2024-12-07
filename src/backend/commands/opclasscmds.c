@@ -69,6 +69,7 @@ static void storeOperators(List *opfamilyname, Oid amoid,
 static void storeProcedures(List *opfamilyname, Oid amoid,
 							Oid opfamilyoid, Oid opclassoid,
 							List *procedures, bool isAdd);
+static bool typeDepNeeded(Oid typid, OpFamilyMember *member, bool isProc);
 static void dropOperators(List *opfamilyname, Oid amoid, Oid opfamilyoid,
 						  List *operators);
 static void dropProcedures(List *opfamilyname, Oid amoid, Oid opfamilyoid,
@@ -1390,6 +1391,7 @@ storeOperators(List *opfamilyname, Oid amoid,
 	foreach(l, operators)
 	{
 		OpFamilyMember *op = (OpFamilyMember *) lfirst(l);
+		DependencyType opdeptype;
 		char		oppurpose;
 
 		/*
@@ -1446,6 +1448,7 @@ storeOperators(List *opfamilyname, Oid amoid,
 		if (OidIsValid(opclassoid))
 		{
 			/* if contained in an opclass, use a NORMAL dep on operator */
+			opdeptype = DEPENDENCY_NORMAL;
 			recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
 
 			/* ... and an INTERNAL dep on the opclass */
@@ -1457,6 +1460,7 @@ storeOperators(List *opfamilyname, Oid amoid,
 		else
 		{
 			/* if "loose" in the opfamily, use a AUTO dep on operator */
+			opdeptype = DEPENDENCY_AUTO;
 			recordDependencyOn(&myself, &referenced, DEPENDENCY_AUTO);
 
 			/* ... and an AUTO dep on the opfamily */
@@ -1464,6 +1468,27 @@ storeOperators(List *opfamilyname, Oid amoid,
 			referenced.objectId = opfamilyoid;
 			referenced.objectSubId = 0;
 			recordDependencyOn(&myself, &referenced, DEPENDENCY_AUTO);
+		}
+
+		if (typeDepNeeded(op->lefttype, op, false))
+		{
+			referenced.classId = TypeRelationId;
+			referenced.objectId = op->lefttype;
+			referenced.objectSubId = 0;
+
+			/* use same dependency type as for operator */
+			recordDependencyOn(&myself, &referenced, opdeptype);
+		}
+
+		if (op->lefttype != op->righttype &&
+			typeDepNeeded(op->righttype, op, false))
+		{
+			referenced.classId = TypeRelationId;
+			referenced.objectId = op->righttype;
+			referenced.objectSubId = 0;
+
+			/* use same dependency type as for operator */
+			recordDependencyOn(&myself, &referenced, opdeptype);
 		}
 
 		/* A search operator also needs a dep on the referenced opfamily */
@@ -1508,6 +1533,7 @@ storeProcedures(List *opfamilyname, Oid amoid,
 	foreach(l, procedures)
 	{
 		OpFamilyMember *proc = (OpFamilyMember *) lfirst(l);
+		DependencyType procdeptype;
 
 		/*
 		 * If adding to an existing family, check for conflict with an
@@ -1558,6 +1584,7 @@ storeProcedures(List *opfamilyname, Oid amoid,
 		if (OidIsValid(opclassoid))
 		{
 			/* if contained in an opclass, use a NORMAL dep on procedure */
+			procdeptype = DEPENDENCY_NORMAL;
 			recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
 
 			/* ... and an INTERNAL dep on the opclass */
@@ -1569,6 +1596,7 @@ storeProcedures(List *opfamilyname, Oid amoid,
 		else
 		{
 			/* if "loose" in the opfamily, use a AUTO dep on procedure */
+			procdeptype = DEPENDENCY_AUTO;
 			recordDependencyOn(&myself, &referenced, DEPENDENCY_AUTO);
 
 			/* ... and an AUTO dep on the opfamily */
@@ -1577,12 +1605,75 @@ storeProcedures(List *opfamilyname, Oid amoid,
 			referenced.objectSubId = 0;
 			recordDependencyOn(&myself, &referenced, DEPENDENCY_AUTO);
 		}
+
+		if (typeDepNeeded(proc->lefttype, proc, true))
+		{
+			referenced.classId = TypeRelationId;
+			referenced.objectId = proc->lefttype;
+			referenced.objectSubId = 0;
+
+			/* use same dependency type as for procedure */
+			recordDependencyOn(&myself, &referenced, procdeptype);
+		}
+
+		if (proc->lefttype != proc->righttype &&
+			typeDepNeeded(proc->righttype, proc, true))
+		{
+			referenced.classId = TypeRelationId;
+			referenced.objectId = proc->righttype;
+			referenced.objectSubId = 0;
+
+			/* use same dependency type as for procedure */
+			recordDependencyOn(&myself, &referenced, procdeptype);
+		}
+
 		/* Post create hook of access method procedure */
 		InvokeObjectPostCreateHook(AccessMethodProcedureRelationId,
 								   entryoid, 0);
 	}
 
 	table_close(rel, RowExclusiveLock);
+}
+
+/*
+ * Detect whether a pg_amop or pg_amproc entry needs an explicit dependency
+ * on its lefttype or righttype.
+ *
+ * We make such a dependency unless the entry has an indirect dependency
+ * via its referenced operator or function.  That's nearly always true
+ * for operators, but might well not be true for support functions.
+ */
+static bool
+typeDepNeeded(Oid typid, OpFamilyMember *member, bool isProc)
+{
+	bool		result = true;
+
+	if (isProc)
+	{
+		Oid		   *argtypes;
+		int			nargs;
+
+		(void) get_func_signature(member->object, &argtypes, &nargs);
+		for (int i = 0; i < nargs; i++)
+		{
+			if (typid == argtypes[i])
+			{
+				result = false; /* match, no dependency needed */
+				break;
+			}
+		}
+		pfree(argtypes);
+	}
+	else
+	{
+		Oid			lefttype,
+					righttype;
+
+		op_input_types(member->object, &lefttype, &righttype);
+		if (typid == lefttype || typid == righttype)
+			result = false;		/* match, no dependency needed */
+	}
+	return result;
 }
 
 
