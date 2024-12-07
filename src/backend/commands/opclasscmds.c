@@ -65,6 +65,7 @@ static void storeOperators(List *opfamilyname, Oid amoid, Oid opfamilyoid,
 						   List *operators, bool isAdd);
 static void storeProcedures(List *opfamilyname, Oid amoid, Oid opfamilyoid,
 							List *procedures, bool isAdd);
+static bool typeDepNeeded(Oid typid, OpFamilyMember *member);
 static void dropOperators(List *opfamilyname, Oid amoid, Oid opfamilyoid,
 						  List *operators);
 static void dropProcedures(List *opfamilyname, Oid amoid, Oid opfamilyoid,
@@ -1507,6 +1508,29 @@ storeOperators(List *opfamilyname, Oid amoid, Oid opfamilyoid,
 		recordDependencyOn(&myself, &referenced,
 						   op->ref_is_hard ? DEPENDENCY_INTERNAL : DEPENDENCY_AUTO);
 
+		if (typeDepNeeded(op->lefttype, op))
+		{
+			referenced.classId = TypeRelationId;
+			referenced.objectId = op->lefttype;
+			referenced.objectSubId = 0;
+
+			/* see comments in amapi.h about dependency strength */
+			recordDependencyOn(&myself, &referenced,
+							   op->ref_is_hard ? DEPENDENCY_NORMAL : DEPENDENCY_AUTO);
+		}
+
+		if (op->lefttype != op->righttype &&
+			typeDepNeeded(op->righttype, op))
+		{
+			referenced.classId = TypeRelationId;
+			referenced.objectId = op->righttype;
+			referenced.objectSubId = 0;
+
+			/* see comments in amapi.h about dependency strength */
+			recordDependencyOn(&myself, &referenced,
+							   op->ref_is_hard ? DEPENDENCY_NORMAL : DEPENDENCY_AUTO);
+		}
+
 		/* A search operator also needs a dep on the referenced opfamily */
 		if (OidIsValid(op->sortfamily))
 		{
@@ -1608,12 +1632,86 @@ storeProcedures(List *opfamilyname, Oid amoid, Oid opfamilyoid,
 		recordDependencyOn(&myself, &referenced,
 						   proc->ref_is_hard ? DEPENDENCY_INTERNAL : DEPENDENCY_AUTO);
 
+		if (typeDepNeeded(proc->lefttype, proc))
+		{
+			referenced.classId = TypeRelationId;
+			referenced.objectId = proc->lefttype;
+			referenced.objectSubId = 0;
+
+			/* see comments in amapi.h about dependency strength */
+			recordDependencyOn(&myself, &referenced,
+							   proc->ref_is_hard ? DEPENDENCY_NORMAL : DEPENDENCY_AUTO);
+		}
+
+		if (proc->lefttype != proc->righttype &&
+			typeDepNeeded(proc->righttype, proc))
+		{
+			referenced.classId = TypeRelationId;
+			referenced.objectId = proc->righttype;
+			referenced.objectSubId = 0;
+
+			/* see comments in amapi.h about dependency strength */
+			recordDependencyOn(&myself, &referenced,
+							   proc->ref_is_hard ? DEPENDENCY_NORMAL : DEPENDENCY_AUTO);
+		}
+
 		/* Post create hook of access method procedure */
 		InvokeObjectPostCreateHook(AccessMethodProcedureRelationId,
 								   entryoid, 0);
 	}
 
 	table_close(rel, RowExclusiveLock);
+}
+
+/*
+ * Detect whether a pg_amop or pg_amproc entry needs an explicit dependency
+ * on its lefttype or righttype.
+ *
+ * We make such a dependency unless the entry has an indirect dependency
+ * via its referenced operator or function.  That's nearly always true
+ * for operators, but might well not be true for support functions.
+ */
+static bool
+typeDepNeeded(Oid typid, OpFamilyMember *member)
+{
+	bool		result = true;
+
+	/*
+	 * If the type is pinned, we don't need a dependency.  This is a bit of a
+	 * layering violation perhaps (recordDependencyOn would ignore the request
+	 * anyway), but it's a cheap test and will frequently save a syscache
+	 * lookup here.
+	 */
+	if (IsPinnedObject(TypeRelationId, typid))
+		return false;
+
+	/* Nope, so check the input types of the function or operator. */
+	if (member->is_func)
+	{
+		Oid		   *argtypes;
+		int			nargs;
+
+		(void) get_func_signature(member->object, &argtypes, &nargs);
+		for (int i = 0; i < nargs; i++)
+		{
+			if (typid == argtypes[i])
+			{
+				result = false; /* match, no dependency needed */
+				break;
+			}
+		}
+		pfree(argtypes);
+	}
+	else
+	{
+		Oid			lefttype,
+					righttype;
+
+		op_input_types(member->object, &lefttype, &righttype);
+		if (typid == lefttype || typid == righttype)
+			result = false;		/* match, no dependency needed */
+	}
+	return result;
 }
 
 
