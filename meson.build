@@ -1351,8 +1351,8 @@ if sslopt in ['auto', 'openssl']
       'has_headers': ['openssl/ssl.h', 'openssl/err.h'],
     }
     ssl_lib = cc.find_library('ssl',
-        kwargs: ssl_lib_common_params,
-        required: openssl_required and not is_windows
+      kwargs: ssl_lib_common_params,
+      required: openssl_required and not is_windows
     )
     # if 'ssl' is not found and it's windows, try 'ssleay32'
     if not ssl_lib.found() and is_windows
