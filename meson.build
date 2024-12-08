@@ -1346,9 +1346,9 @@ if sslopt in ['auto', 'openssl']
     is_windows = build_system == 'windows'
 
     ssl_lib_common_params = {
-        'dirs': test_lib_d,
-        'header_include_directories': postgres_inc,
-        'has_headers': ['openssl/ssl.h', 'openssl/err.h'],
+      'dirs': test_lib_d,
+      'header_include_directories': postgres_inc,
+      'has_headers': ['openssl/ssl.h', 'openssl/err.h'],
     }
     ssl_lib = cc.find_library('ssl',
         kwargs: ssl_lib_common_params,
@@ -1356,10 +1356,10 @@ if sslopt in ['auto', 'openssl']
     )
     # if 'ssl' is not found and it's windows, try 'ssleay32'
     if not ssl_lib.found() and is_windows
-        ssl_lib = cc.find_library('ssleay32',
-            kwargs: ssl_lib_common_params,
-            required: openssl_required
-        )
+      ssl_lib = cc.find_library('ssleay32',
+        kwargs: ssl_lib_common_params,
+        required: openssl_required
+      )
     endif
 
     crypto_lib = cc.find_library('crypto',
