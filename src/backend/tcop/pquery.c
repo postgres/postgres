@@ -667,6 +667,8 @@ PortalSetResultFormat(Portal portal, int nFormats, int16 *formats)
  * isTopLevel: true if query is being executed at backend "top level"
  * (that is, directly from a client command message)
  *
+ * run_once: ignored, present only to avoid an API break in stable branches.
+ *
  * dest: where to send output of primary (canSetTag) query
  *
  * altdest: where to send output of non-primary queries
@@ -710,10 +712,6 @@ PortalRun(Portal portal, long count, bool isTopLevel, bool run_once,
 	 * Check for improper portal use, and mark portal active.
 	 */
 	MarkPortalActive(portal);
-
-	/* Set run_once flag.  Shouldn't be clear if previously set. */
-	Assert(!portal->run_once || run_once);
-	portal->run_once = run_once;
 
 	/*
 	 * Set up global portal context pointers.
@@ -919,7 +917,7 @@ PortalRunSelect(Portal portal,
 		{
 			PushActiveSnapshot(queryDesc->snapshot);
 			ExecutorRun(queryDesc, direction, (uint64) count,
-						portal->run_once);
+						false);
 			nprocessed = queryDesc->estate->es_processed;
 			PopActiveSnapshot();
 		}
@@ -959,7 +957,7 @@ PortalRunSelect(Portal portal,
 		{
 			PushActiveSnapshot(queryDesc->snapshot);
 			ExecutorRun(queryDesc, direction, (uint64) count,
-						portal->run_once);
+						false);
 			nprocessed = queryDesc->estate->es_processed;
 			PopActiveSnapshot();
 		}
@@ -1402,9 +1400,6 @@ PortalRunFetch(Portal portal,
 	 * Check for improper portal use, and mark portal active.
 	 */
 	MarkPortalActive(portal);
-
-	/* If supporting FETCH, portal can't be run-once. */
-	Assert(!portal->run_once);
 
 	/*
 	 * Set up global portal context pointers.

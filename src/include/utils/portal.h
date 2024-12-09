@@ -144,7 +144,7 @@ typedef struct PortalData
 	/* Features/options */
 	PortalStrategy strategy;	/* see above */
 	int			cursorOptions;	/* DECLARE CURSOR option bits */
-	bool		run_once;		/* portal will only be run once */
+	bool		run_once;		/* unused */
 
 	/* Status data */
 	PortalStatus status;		/* see above */
