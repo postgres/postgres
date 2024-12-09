@@ -3036,6 +3036,69 @@ where not exists (select 1 from tbl_ra t2 where t2.b = t1.a) and t1.b < 2;
 reset enable_hashjoin;
 reset enable_nestloop;
 --
+-- regression test for bug with hash-right-semi join
+--
+create temp table tbl_rs(a int, b int);
+insert into tbl_rs select i, i from generate_series(1,10)i;
+analyze tbl_rs;
+set enable_nestloop to off;
+set enable_hashagg to off;
+-- ensure we get a hash right semi join with SubPlan in hash clauses
+explain (costs off)
+select * from tbl_rs t1
+where (select a from tbl_rs t2
+       where exists (select 1 from
+                     (select (b in (select b from tbl_rs t3)) as c from tbl_rs t4 where t4.a = 1) s
+                     where c in (select t1.a = 1 from tbl_rs t5 union all select true))
+       order by a limit 1) >= 0;
+                                      QUERY PLAN                                      
+--------------------------------------------------------------------------------------
+ Seq Scan on tbl_rs t1
+   Filter: ((SubPlan 3) >= 0)
+   SubPlan 3
+     ->  Limit
+           InitPlan 2
+             ->  Hash Right Semi Join
+                   Hash Cond: (((t1.a = 1)) = (ANY (t4.b = (hashed SubPlan 1).col1)))
+                   ->  Append
+                         ->  Seq Scan on tbl_rs t5
+                         ->  Result
+                   ->  Hash
+                         ->  Seq Scan on tbl_rs t4
+                               Filter: (a = 1)
+                         SubPlan 1
+                           ->  Seq Scan on tbl_rs t3
+           ->  Sort
+                 Sort Key: t2.a
+                 ->  Result
+                       One-Time Filter: (InitPlan 2).col1
+                       ->  Seq Scan on tbl_rs t2
+(20 rows)
+
+-- and check we get the expected results
+select * from tbl_rs t1
+where (select a from tbl_rs t2
+       where exists (select 1 from
+                     (select (b in (select b from tbl_rs t3)) as c from tbl_rs t4 where t4.a = 1) s
+                     where c in (select t1.a = 1 from tbl_rs t5 union all select true))
+       order by a limit 1) >= 0;
+ a  | b  
+----+----
+  1 |  1
+  2 |  2
+  3 |  3
+  4 |  4
+  5 |  5
+  6 |  6
+  7 |  7
+  8 |  8
+  9 |  9
+ 10 | 10
+(10 rows)
+
+reset enable_nestloop;
+reset enable_hashagg;
+--
 -- regression test for bug #13908 (hash join with skew tuples & nbatch increase)
 --
 set work_mem to '64kB';
