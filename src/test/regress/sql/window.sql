@@ -1345,6 +1345,13 @@ SELECT * FROM
    FROM empsalary) emp
 WHERE c = 1;
 
+-- Try another case with a WindowFunc with a byref return type
+SELECT * FROM
+  (SELECT row_number() OVER (PARTITION BY salary) AS rn,
+          lead(depname) OVER (PARTITION BY salary) || ' Department' AS n_dep
+   FROM empsalary) emp
+WHERE rn < 1;
+
 -- Some more complex cases with multiple window clauses
 EXPLAIN (COSTS OFF)
 SELECT * FROM
