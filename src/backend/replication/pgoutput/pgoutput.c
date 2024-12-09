@@ -436,6 +436,10 @@ pgoutput_startup(LogicalDecodingContext *ctx, OutputPluginOptions *opt,
 										   "logical replication cache context",
 										   ALLOCSET_DEFAULT_SIZES);
 
+	data->pubctx = AllocSetContextCreate(ctx->context,
+										 "logical replication publication list context",
+										 ALLOCSET_SMALL_SIZES);
+
 	ctx->output_plugin_private = data;
 
 	/* This plugin uses binary protocol. */
@@ -1734,9 +1738,9 @@ pgoutput_origin_filter(LogicalDecodingContext *ctx,
 /*
  * Shutdown the output plugin.
  *
- * Note, we don't need to clean the data->context and data->cachectx as
- * they are child contexts of the ctx->context so they will be cleaned up by
- * logical decoding machinery.
+ * Note, we don't need to clean the data->context, data->cachectx, and
+ * data->pubctx as they are child contexts of the ctx->context so they
+ * will be cleaned up by logical decoding machinery.
  */
 static void
 pgoutput_shutdown(LogicalDecodingContext *ctx)
@@ -2063,12 +2067,9 @@ get_rel_sync_entry(PGOutputData *data, Relation relation)
 		/* Reload publications if needed before use. */
 		if (!publications_valid)
 		{
-			oldctx = MemoryContextSwitchTo(CacheMemoryContext);
-			if (data->publications)
-			{
-				list_free_deep(data->publications);
-				data->publications = NIL;
-			}
+			MemoryContextReset(data->pubctx);
+
+			oldctx = MemoryContextSwitchTo(data->pubctx);
 			data->publications = LoadPublications(data->publication_names);
 			MemoryContextSwitchTo(oldctx);
 			publications_valid = true;
