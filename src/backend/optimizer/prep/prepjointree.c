@@ -2598,26 +2598,47 @@ pullup_replace_vars_callback(Var *var,
 				/*
 				 * Simple Vars always escape being wrapped, unless they are
 				 * lateral references to something outside the subquery being
-				 * pulled up.  (Even then, we could omit the PlaceHolderVar if
-				 * the referenced rel is under the same lowest outer join, but
-				 * it doesn't seem worth the trouble to check that.)
+				 * pulled up and the referenced rel is not under the same
+				 * lowest nulling outer join.
 				 */
+				wrap = false;
 				if (rcon->target_rte->lateral &&
 					!bms_is_member(((Var *) newnode)->varno, rcon->relids))
-					wrap = true;
-				else
-					wrap = false;
+				{
+					nullingrel_info *nullinfo = rcon->nullinfo;
+					int			lvarno = ((Var *) newnode)->varno;
+
+					Assert(lvarno > 0 && lvarno <= nullinfo->rtlength);
+					if (!bms_is_subset(nullinfo->nullingrels[rcon->varno],
+									   nullinfo->nullingrels[lvarno]))
+						wrap = true;
+				}
 			}
 			else if (newnode && IsA(newnode, PlaceHolderVar) &&
 					 ((PlaceHolderVar *) newnode)->phlevelsup == 0)
 			{
 				/* The same rules apply for a PlaceHolderVar */
+				wrap = false;
 				if (rcon->target_rte->lateral &&
 					!bms_is_subset(((PlaceHolderVar *) newnode)->phrels,
 								   rcon->relids))
-					wrap = true;
-				else
-					wrap = false;
+				{
+					nullingrel_info *nullinfo = rcon->nullinfo;
+					Relids		lvarnos = ((PlaceHolderVar *) newnode)->phrels;
+					int			lvarno;
+
+					lvarno = -1;
+					while ((lvarno = bms_next_member(lvarnos, lvarno)) >= 0)
+					{
+						Assert(lvarno > 0 && lvarno <= nullinfo->rtlength);
+						if (!bms_is_subset(nullinfo->nullingrels[rcon->varno],
+										   nullinfo->nullingrels[lvarno]))
+						{
+							wrap = true;
+							break;
+						}
+					}
+				}
 			}
 			else if (rcon->wrap_non_vars)
 			{
