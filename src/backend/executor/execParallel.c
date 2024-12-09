@@ -1471,8 +1471,7 @@ ParallelQueryMain(dsm_segment *seg, shm_toc *toc)
 	 */
 	ExecutorRun(queryDesc,
 				ForwardScanDirection,
-				fpes->tuples_needed < 0 ? (int64) 0 : fpes->tuples_needed,
-				true);
+				fpes->tuples_needed < 0 ? (int64) 0 : fpes->tuples_needed);
 
 	/* Shut down the executor */
 	ExecutorFinish(queryDesc);

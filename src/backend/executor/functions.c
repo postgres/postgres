@@ -894,7 +894,7 @@ postquel_getnext(execution_state *es, SQLFunctionCachePtr fcache)
 		/* Run regular commands to completion unless lazyEval */
 		uint64		count = (es->lazyEval) ? 1 : 0;
 
-		ExecutorRun(es->qd, ForwardScanDirection, count, !fcache->returnsSet || !es->lazyEval);
+		ExecutorRun(es->qd, ForwardScanDirection, count);
 
 		/*
 		 * If we requested run to completion OR there was no tuple returned,

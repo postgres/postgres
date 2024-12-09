@@ -427,7 +427,7 @@ PersistHoldablePortal(Portal portal)
 										NULL);
 
 		/* Fetch the result set into the tuplestore */
-		ExecutorRun(queryDesc, direction, 0, false);
+		ExecutorRun(queryDesc, direction, 0);
 
 		queryDesc->dest->rDestroy(queryDesc->dest);
 		queryDesc->dest = NULL;

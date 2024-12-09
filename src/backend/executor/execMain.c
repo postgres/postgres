@@ -77,14 +77,12 @@ static void InitPlan(QueryDesc *queryDesc, int eflags);
 static void CheckValidRowMarkRel(Relation rel, RowMarkType markType);
 static void ExecPostprocessPlan(EState *estate);
 static void ExecEndPlan(PlanState *planstate, EState *estate);
-static void ExecutePlan(EState *estate, PlanState *planstate,
-						bool use_parallel_mode,
+static void ExecutePlan(QueryDesc *queryDesc,
 						CmdType operation,
 						bool sendTuples,
 						uint64 numberTuples,
 						ScanDirection direction,
-						DestReceiver *dest,
-						bool execute_once);
+						DestReceiver *dest);
 static bool ExecCheckOneRelPerms(RTEPermissionInfo *perminfo);
 static bool ExecCheckPermissionsModified(Oid relOid, Oid userid,
 										 Bitmapset *modifiedCols,
@@ -294,18 +292,17 @@ standard_ExecutorStart(QueryDesc *queryDesc, int eflags)
  */
 void
 ExecutorRun(QueryDesc *queryDesc,
-			ScanDirection direction, uint64 count,
-			bool execute_once)
+			ScanDirection direction, uint64 count)
 {
 	if (ExecutorRun_hook)
-		(*ExecutorRun_hook) (queryDesc, direction, count, execute_once);
+		(*ExecutorRun_hook) (queryDesc, direction, count);
 	else
-		standard_ExecutorRun(queryDesc, direction, count, execute_once);
+		standard_ExecutorRun(queryDesc, direction, count);
 }
 
 void
 standard_ExecutorRun(QueryDesc *queryDesc,
-					 ScanDirection direction, uint64 count, bool execute_once)
+					 ScanDirection direction, uint64 count)
 {
 	EState	   *estate;
 	CmdType		operation;
@@ -354,21 +351,12 @@ standard_ExecutorRun(QueryDesc *queryDesc,
 	 * run plan
 	 */
 	if (!ScanDirectionIsNoMovement(direction))
-	{
-		if (execute_once && queryDesc->already_executed)
-			elog(ERROR, "can't re-execute query flagged for single execution");
-		queryDesc->already_executed = true;
-
-		ExecutePlan(estate,
-					queryDesc->planstate,
-					queryDesc->plannedstmt->parallelModeNeeded,
+		ExecutePlan(queryDesc,
 					operation,
 					sendTuples,
 					count,
 					direction,
-					dest,
-					execute_once);
-	}
+					dest);
 
 	/*
 	 * Update es_total_processed to keep track of the number of tuples
@@ -1601,22 +1589,19 @@ ExecCloseRangeTableRelations(EState *estate)
  *		moving in the specified direction.
  *
  *		Runs to completion if numberTuples is 0
- *
- * Note: the ctid attribute is a 'junk' attribute that is removed before the
- * user can see it
  * ----------------------------------------------------------------
  */
 static void
-ExecutePlan(EState *estate,
-			PlanState *planstate,
-			bool use_parallel_mode,
+ExecutePlan(QueryDesc *queryDesc,
 			CmdType operation,
 			bool sendTuples,
 			uint64 numberTuples,
 			ScanDirection direction,
-			DestReceiver *dest,
-			bool execute_once)
+			DestReceiver *dest)
 {
+	EState	   *estate = queryDesc->estate;
+	PlanState  *planstate = queryDesc->planstate;
+	bool		use_parallel_mode;
 	TupleTableSlot *slot;
 	uint64		current_tuple_count;
 
@@ -1631,11 +1616,17 @@ ExecutePlan(EState *estate,
 	estate->es_direction = direction;
 
 	/*
-	 * If the plan might potentially be executed multiple times, we must force
-	 * it to run without parallelism, because we might exit early.
+	 * Set up parallel mode if appropriate.
+	 *
+	 * Parallel mode only supports complete execution of a plan.  If we've
+	 * already partially executed it, or if the caller asks us to exit early,
+	 * we must force the plan to run without parallelism.
 	 */
-	if (!execute_once)
+	if (queryDesc->already_executed || numberTuples != 0)
 		use_parallel_mode = false;
+	else
+		use_parallel_mode = queryDesc->plannedstmt->parallelModeNeeded;
+	queryDesc->already_executed = true;
 
 	estate->es_use_parallel_mode = use_parallel_mode;
 	if (use_parallel_mode)
