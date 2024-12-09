@@ -729,7 +729,8 @@ pgstat_gc_entry_refs(void)
 	Assert(curage != 0);
 
 	/*
-	 * Some entries have been dropped. Invalidate cache pointer to them.
+	 * Some entries have been dropped or reinitialized.  Invalidate cache
+	 * pointer to them.
 	 */
 	pgstat_entry_ref_hash_start_iterate(pgStatEntryRefHash, &i);
 	while ((ent = pgstat_entry_ref_hash_iterate(pgStatEntryRefHash, &i)) != NULL)
@@ -739,7 +740,13 @@ pgstat_gc_entry_refs(void)
 		Assert(!entry_ref->shared_stats ||
 			   entry_ref->shared_stats->magic == 0xdeadbeef);
 
-		if (!entry_ref->shared_entry->dropped)
+		/*
+		 * "generation" checks for the case of entries being reinitialized,
+		 * and "dropped" for the case where these are..  dropped.
+		 */
+		if (!entry_ref->shared_entry->dropped &&
+			pg_atomic_read_u32(&entry_ref->shared_entry->generation) ==
+			entry_ref->generation)
 			continue;
 
 		/* cannot gc shared ref that has pending data */
