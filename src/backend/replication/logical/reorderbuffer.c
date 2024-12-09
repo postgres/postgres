@@ -2468,7 +2468,7 @@ ReorderBufferSerializeTXN(ReorderBuffer *rb, ReorderBufferTXN *txn)
 	dlist_mutable_iter change_i;
 	int			fd = -1;
 	XLogSegNo	curOpenSegNo = 0;
-	Size		spilled = 0;
+	Size		spilled PG_USED_FOR_ASSERTS_ONLY = 0;
 
 	elog(DEBUG2, "spill %u changes in XID %u to disk",
 		 (uint32) txn->nentries_mem, txn->xid);
