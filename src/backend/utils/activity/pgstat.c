@@ -1655,7 +1655,15 @@ pgstat_write_statsfile(XLogRecPtr redo)
 
 		CHECK_FOR_INTERRUPTS();
 
-		/* we may have some "dropped" entries not yet removed, skip them */
+		/*
+		 * We should not see any "dropped" entries when writing the stats
+		 * file, as all backends and auxiliary processes should have cleaned
+		 * up their references before they terminated.
+		 *
+		 * However, since we are already shutting down, it is not worth
+		 * crashing the server over any potential cleanup issues, so we simply
+		 * skip such entries if encountered.
+		 */
 		Assert(!ps->dropped);
 		if (ps->dropped)
 			continue;
