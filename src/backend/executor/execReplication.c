@@ -825,7 +825,7 @@ CheckCmdReplicaIdentity(Relation rel, CmdType cmd)
 				(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
 				 errmsg("cannot update table \"%s\"",
 						RelationGetRelationName(rel)),
-				 errdetail("Replica identity consists of an unpublished generated column.")));
+				 errdetail("Replica identity must not contain unpublished generated columns.")));
 	else if (cmd == CMD_DELETE && !pubdesc.rf_valid_for_delete)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
@@ -843,7 +843,7 @@ CheckCmdReplicaIdentity(Relation rel, CmdType cmd)
 				(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
 				 errmsg("cannot delete from table \"%s\"",
 						RelationGetRelationName(rel)),
-				 errdetail("Replica identity consists of an unpublished generated column.")));
+				 errdetail("Replica identity must not contain unpublished generated columns.")));
 
 	/* If relation has replica identity we are always good. */
 	if (OidIsValid(RelationGetReplicaIndex(rel)))
