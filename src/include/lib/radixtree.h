@@ -151,13 +151,15 @@
  *-------------------------------------------------------------------------
  */
 
-#include "postgres.h"
-
 #include "nodes/bitmapset.h"
 #include "port/pg_bitutils.h"
 #include "port/simd.h"
 #include "utils/dsa.h"
 #include "utils/memutils.h"
+#ifdef RT_SHMEM
+#include "miscadmin.h"
+#include "storage/lwlock.h"
+#endif
 
 /* helpers */
 #define RT_MAKE_PREFIX(a) CppConcat(a,_)
