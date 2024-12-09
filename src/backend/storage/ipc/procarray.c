@@ -2135,8 +2135,6 @@ GetSnapshotDataReuse(Snapshot snapshot)
 	snapshot->active_count = 0;
 	snapshot->regd_count = 0;
 	snapshot->copied = false;
-	snapshot->lsn = InvalidXLogRecPtr;
-	snapshot->whenTaken = 0;
 
 	return true;
 }
@@ -2516,8 +2514,6 @@ GetSnapshotData(Snapshot snapshot)
 	snapshot->active_count = 0;
 	snapshot->regd_count = 0;
 	snapshot->copied = false;
-	snapshot->lsn = InvalidXLogRecPtr;
-	snapshot->whenTaken = 0;
 
 	return snapshot;
 }

@@ -1767,7 +1767,6 @@ check_tuple_attribute(HeapCheckContext *ctx)
 static void
 check_toasted_attribute(HeapCheckContext *ctx, ToastedAttribute *ta)
 {
-	SnapshotData SnapshotToast;
 	ScanKeyData toastkey;
 	SysScanDesc toastscan;
 	bool		found_toasttup;
@@ -1791,10 +1790,9 @@ check_toasted_attribute(HeapCheckContext *ctx, ToastedAttribute *ta)
 	 * Check if any chunks for this toasted object exist in the toast table,
 	 * accessible via the index.
 	 */
-	init_toast_snapshot(&SnapshotToast);
 	toastscan = systable_beginscan_ordered(ctx->toast_rel,
 										   ctx->valid_toast_index,
-										   &SnapshotToast, 1,
+										   get_toast_snapshot(), 1,
 										   &toastkey);
 	found_toasttup = false;
 	while ((toasttup =

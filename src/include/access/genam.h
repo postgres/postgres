@@ -14,9 +14,11 @@
 #ifndef GENAM_H
 #define GENAM_H
 
+#include "access/htup.h"
 #include "access/sdir.h"
 #include "access/skey.h"
 #include "nodes/tidbitmap.h"
+#include "storage/buf.h"
 #include "storage/lockdefs.h"
 #include "utils/relcache.h"
 #include "utils/snapshot.h"
