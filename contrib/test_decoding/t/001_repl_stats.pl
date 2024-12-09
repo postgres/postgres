@@ -118,4 +118,64 @@ $node->safe_psql('postgres',
 # shutdown
 $node->stop;
 
+# Test replication slot stats persistence in a single session.  The slot
+# is dropped and created concurrently of a session peeking at its data
+# repeatedly, hence holding in its local cache a reference to the stats.
+$node->start;
+
+my $slot_name_restart = 'regression_slot5';
+$node->safe_psql('postgres',
+	"SELECT pg_create_logical_replication_slot('$slot_name_restart', 'test_decoding');"
+);
+
+# Look at slot data, with a persistent connection.
+my $bpgsql = $node->background_psql('postgres', on_error_stop => 1);
+
+# Launch query and look at slot data, incrementing the refcount of the
+# stats entry.
+$bpgsql->query_safe(
+	"SELECT pg_logical_slot_peek_binary_changes('$slot_name_restart', NULL, NULL)"
+);
+
+# Drop the slot entry.  The stats entry is not dropped yet as the previous
+# session still holds a reference to it.
+$node->safe_psql('postgres',
+	"SELECT pg_drop_replication_slot('$slot_name_restart')");
+
+# Create again the same slot.  The stats entry is reinitialized, not marked
+# as dropped anymore.
+$node->safe_psql('postgres',
+	"SELECT pg_create_logical_replication_slot('$slot_name_restart', 'test_decoding');"
+);
+
+# Look again at the slot data.  The local stats reference should be refreshed
+# to the reinitialized entry.
+$bpgsql->query_safe(
+	"SELECT pg_logical_slot_peek_binary_changes('$slot_name_restart', NULL, NULL)"
+);
+# Drop again the slot, the entry is not dropped yet as the previous session
+# still has a refcount on it.
+$node->safe_psql('postgres',
+	"SELECT pg_drop_replication_slot('$slot_name_restart')");
+
+# Shutdown the node, which should happen cleanly with the stats file written
+# to disk.  Note that the background session created previously needs to be
+# hold *while* the node is shutting down to check that it drops the stats
+# entry of the slot before writing the stats file.
+$node->stop;
+
+# Make sure that the node is correctly shut down.  Checking the control file
+# is not enough, as the node may detect that something is incorrect after the
+# control file has been updated and the shutdown checkpoint is finished, so
+# also check that the stats file has been written out.
+command_like(
+	[ 'pg_controldata', $node->data_dir ],
+	qr/Database cluster state:\s+shut down\n/,
+	'node shut down ok');
+
+my $stats_file = "$datadir/pg_stat/pgstat.stat";
+ok(-f "$stats_file", "stats file must exist after shutdown");
+
+$bpgsql->quit;
+
 done_testing();
