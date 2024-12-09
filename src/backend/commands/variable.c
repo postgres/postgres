@@ -1082,6 +1082,8 @@ check_application_name(char **newval, void **extra, GucSource source)
 		return false;
 	}
 
+	guc_free(*newval);
+
 	pfree(clean);
 	*newval = ret;
 	return true;
@@ -1117,6 +1119,8 @@ check_cluster_name(char **newval, void **extra, GucSource source)
 		pfree(clean);
 		return false;
 	}
+
+	guc_free(*newval);
 
 	pfree(clean);
 	*newval = ret;
