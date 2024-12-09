@@ -77,6 +77,7 @@
 
 #include "catalog/pg_collation.h"
 #include "catalog/pg_type.h"
+#include "common/int.h"
 #include "common/unicode_case.h"
 #include "common/unicode_category.h"
 #include "mb/pg_wchar.h"
@@ -3826,7 +3827,14 @@ DCH_from_char(FormatNode *node, const char *in, TmFromChar *out,
 						ereturn(escontext,,
 								(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
 								 errmsg("invalid input string for \"Y,YYY\"")));
-					years += (millennia * 1000);
+
+					/* years += (millennia * 1000); */
+					if (pg_mul_s32_overflow(millennia, 1000, &millennia) ||
+						pg_add_s32_overflow(years, millennia, &years))
+						ereturn(escontext,,
+								(errcode(ERRCODE_DATETIME_FIELD_OVERFLOW),
+								 errmsg("value for \"Y,YYY\" in source string is out of range")));
+
 					if (!from_char_set_int(&out->year, years, n, escontext))
 						return;
 					out->yysz = 4;
@@ -4785,10 +4793,35 @@ do_to_timestamp(text *date_txt, text *fmt, Oid collid, bool std,
 			tm->tm_year = tmfc.year % 100;
 			if (tm->tm_year)
 			{
+				int			tmp;
+
 				if (tmfc.cc >= 0)
-					tm->tm_year += (tmfc.cc - 1) * 100;
+				{
+					/* tm->tm_year += (tmfc.cc - 1) * 100; */
+					tmp = tmfc.cc - 1;
+					if (pg_mul_s32_overflow(tmp, 100, &tmp) ||
+						pg_add_s32_overflow(tm->tm_year, tmp, &tm->tm_year))
+					{
+						DateTimeParseError(DTERR_FIELD_OVERFLOW, NULL,
+										   text_to_cstring(date_txt), "timestamp",
+										   escontext);
+						goto fail;
+					}
+				}
 				else
-					tm->tm_year = (tmfc.cc + 1) * 100 - tm->tm_year + 1;
+				{
+					/* tm->tm_year = (tmfc.cc + 1) * 100 - tm->tm_year + 1; */
+					tmp = tmfc.cc + 1;
+					if (pg_mul_s32_overflow(tmp, 100, &tmp) ||
+						pg_sub_s32_overflow(tmp, tm->tm_year, &tmp) ||
+						pg_add_s32_overflow(tmp, 1, &tm->tm_year))
+					{
+						DateTimeParseError(DTERR_FIELD_OVERFLOW, NULL,
+										   text_to_cstring(date_txt), "timestamp",
+										   escontext);
+						goto fail;
+					}
+				}
 			}
 			else
 			{
@@ -4814,11 +4847,31 @@ do_to_timestamp(text *date_txt, text *fmt, Oid collid, bool std,
 		if (tmfc.bc)
 			tmfc.cc = -tmfc.cc;
 		if (tmfc.cc >= 0)
+		{
 			/* +1 because 21st century started in 2001 */
-			tm->tm_year = (tmfc.cc - 1) * 100 + 1;
+			/* tm->tm_year = (tmfc.cc - 1) * 100 + 1; */
+			if (pg_mul_s32_overflow(tmfc.cc - 1, 100, &tm->tm_year) ||
+				pg_add_s32_overflow(tm->tm_year, 1, &tm->tm_year))
+			{
+				DateTimeParseError(DTERR_FIELD_OVERFLOW, NULL,
+								   text_to_cstring(date_txt), "timestamp",
+								   escontext);
+				goto fail;
+			}
+		}
 		else
+		{
 			/* +1 because year == 599 is 600 BC */
-			tm->tm_year = tmfc.cc * 100 + 1;
+			/* tm->tm_year = tmfc.cc * 100 + 1; */
+			if (pg_mul_s32_overflow(tmfc.cc, 100, &tm->tm_year) ||
+				pg_add_s32_overflow(tm->tm_year, 1, &tm->tm_year))
+			{
+				DateTimeParseError(DTERR_FIELD_OVERFLOW, NULL,
+								   text_to_cstring(date_txt), "timestamp",
+								   escontext);
+				goto fail;
+			}
+		}
 		fmask |= DTK_M(YEAR);
 	}
 
@@ -4843,11 +4896,31 @@ do_to_timestamp(text *date_txt, text *fmt, Oid collid, bool std,
 			fmask |= DTK_DATE_M;
 		}
 		else
-			tmfc.ddd = (tmfc.ww - 1) * 7 + 1;
+		{
+			/* tmfc.ddd = (tmfc.ww - 1) * 7 + 1; */
+			if (pg_sub_s32_overflow(tmfc.ww, 1, &tmfc.ddd) ||
+				pg_mul_s32_overflow(tmfc.ddd, 7, &tmfc.ddd) ||
+				pg_add_s32_overflow(tmfc.ddd, 1, &tmfc.ddd))
+			{
+				DateTimeParseError(DTERR_FIELD_OVERFLOW, NULL,
+								   date_str, "timestamp", escontext);
+				goto fail;
+			}
+		}
 	}
 
 	if (tmfc.w)
-		tmfc.dd = (tmfc.w - 1) * 7 + 1;
+	{
+		/* tmfc.dd = (tmfc.w - 1) * 7 + 1; */
+		if (pg_sub_s32_overflow(tmfc.w, 1, &tmfc.dd) ||
+			pg_mul_s32_overflow(tmfc.dd, 7, &tmfc.dd) ||
+			pg_add_s32_overflow(tmfc.dd, 1, &tmfc.dd))
+		{
+			DateTimeParseError(DTERR_FIELD_OVERFLOW, NULL,
+							   date_str, "timestamp", escontext);
+			goto fail;
+		}
+	}
 	if (tmfc.dd)
 	{
 		tm->tm_mday = tmfc.dd;
@@ -4912,7 +4985,18 @@ do_to_timestamp(text *date_txt, text *fmt, Oid collid, bool std,
 	}
 
 	if (tmfc.ms)
-		*fsec += tmfc.ms * 1000;
+	{
+		int			tmp = 0;
+
+		/* *fsec += tmfc.ms * 1000; */
+		if (pg_mul_s32_overflow(tmfc.ms, 1000, &tmp) ||
+			pg_add_s32_overflow(*fsec, tmp, fsec))
+		{
+			DateTimeParseError(DTERR_FIELD_OVERFLOW, NULL,
+							   date_str, "timestamp", escontext);
+			goto fail;
+		}
+	}
 	if (tmfc.us)
 		*fsec += tmfc.us;
 	if (fprec)

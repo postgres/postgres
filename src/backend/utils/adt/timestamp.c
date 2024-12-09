@@ -5104,6 +5104,10 @@ interval_trunc(PG_FUNCTION_ARGS)
  *
  *	Return the Julian day which corresponds to the first day (Monday) of the given ISO 8601 year and week.
  *	Julian days are used to convert between ISO week dates and Gregorian dates.
+ *
+ *	XXX: This function has integer overflow hazards, but restructuring it to
+ *	work with the soft-error handling that its callers do is likely more
+ *	trouble than it's worth.
  */
 int
 isoweek2j(int year, int week)

@@ -651,6 +651,10 @@ SELECT to_timestamp('2015-02-11 86000', 'YYYY-MM-DD SSSS');  -- ok
 SELECT to_timestamp('2015-02-11 86400', 'YYYY-MM-DD SSSS');
 SELECT to_timestamp('2015-02-11 86000', 'YYYY-MM-DD SSSSS');  -- ok
 SELECT to_timestamp('2015-02-11 86400', 'YYYY-MM-DD SSSSS');
+SELECT to_timestamp('1000000000,999', 'Y,YYY');
+SELECT to_timestamp('0.-2147483648', 'SS.MS');
+SELECT to_timestamp('613566758', 'W');
+SELECT to_timestamp('2024 613566758 1', 'YYYY WW D');
 SELECT to_date('2016-13-10', 'YYYY-MM-DD');
 SELECT to_date('2016-02-30', 'YYYY-MM-DD');
 SELECT to_date('2016-02-29', 'YYYY-MM-DD');  -- ok
@@ -661,6 +665,10 @@ SELECT to_date('2016 365', 'YYYY DDD');  -- ok
 SELECT to_date('2016 366', 'YYYY DDD');  -- ok
 SELECT to_date('2016 367', 'YYYY DDD');
 SELECT to_date('0000-02-01','YYYY-MM-DD');  -- allowed, though it shouldn't be
+SELECT to_date('100000000', 'CC');
+SELECT to_date('-100000000', 'CC');
+SELECT to_date('-2147483648 01', 'CC YY');
+SELECT to_date('2147483647 01', 'CC YY');
 
 -- to_char's TZ format code produces zone abbrev if known
 SELECT to_char('2012-12-12 12:00'::timestamptz, 'YYYY-MM-DD HH:MI:SS TZ');
