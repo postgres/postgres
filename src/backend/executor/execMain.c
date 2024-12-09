@@ -80,14 +80,12 @@ static void InitPlan(QueryDesc *queryDesc, int eflags);
 static void CheckValidRowMarkRel(Relation rel, RowMarkType markType);
 static void ExecPostprocessPlan(EState *estate);
 static void ExecEndPlan(PlanState *planstate, EState *estate);
-static void ExecutePlan(EState *estate, PlanState *planstate,
-						bool use_parallel_mode,
+static void ExecutePlan(QueryDesc *queryDesc,
 						CmdType operation,
 						bool sendTuples,
 						uint64 numberTuples,
 						ScanDirection direction,
-						DestReceiver *dest,
-						bool execute_once);
+						DestReceiver *dest);
 static bool ExecCheckRTEPerms(RangeTblEntry *rte);
 static bool ExecCheckRTEPermsModified(Oid relOid, Oid userid,
 									  Bitmapset *modifiedCols,
@@ -272,6 +270,9 @@ standard_ExecutorStart(QueryDesc *queryDesc, int eflags)
  *		retrieved tuples, not for instance to those inserted/updated/deleted
  *		by a ModifyTable plan node.
  *
+ *		execute_once is ignored, and is present only to avoid an API break
+ *		in stable branches.
+ *
  *		There is no return value, but output tuples (if any) are sent to
  *		the destination receiver specified in the QueryDesc; and the number
  *		of tuples processed at the top level can be found in
@@ -342,21 +343,12 @@ standard_ExecutorRun(QueryDesc *queryDesc,
 	 * run plan
 	 */
 	if (!ScanDirectionIsNoMovement(direction))
-	{
-		if (execute_once && queryDesc->already_executed)
-			elog(ERROR, "can't re-execute query flagged for single execution");
-		queryDesc->already_executed = true;
-
-		ExecutePlan(estate,
-					queryDesc->planstate,
-					queryDesc->plannedstmt->parallelModeNeeded,
+		ExecutePlan(queryDesc,
 					operation,
 					sendTuples,
 					count,
 					direction,
-					dest,
-					execute_once);
-	}
+					dest);
 
 	/*
 	 * shutdown tuple receiver, if we started it
@@ -1578,22 +1570,19 @@ ExecEndPlan(PlanState *planstate, EState *estate)
  *		moving in the specified direction.
  *
  *		Runs to completion if numberTuples is 0
- *
- * Note: the ctid attribute is a 'junk' attribute that is removed before the
- * user can see it
  * ----------------------------------------------------------------
  */
 static void
-ExecutePlan(EState *estate,
-			PlanState *planstate,
-			bool use_parallel_mode,
+ExecutePlan(QueryDesc *queryDesc,
 			CmdType operation,
 			bool sendTuples,
 			uint64 numberTuples,
 			ScanDirection direction,
-			DestReceiver *dest,
-			bool execute_once)
+			DestReceiver *dest)
 {
+	EState	   *estate = queryDesc->estate;
+	PlanState  *planstate = queryDesc->planstate;
+	bool		use_parallel_mode;
 	TupleTableSlot *slot;
 	uint64		current_tuple_count;
 
@@ -1608,11 +1597,17 @@ ExecutePlan(EState *estate,
 	estate->es_direction = direction;
 
 	/*
-	 * If the plan might potentially be executed multiple times, we must force
-	 * it to run without parallelism, because we might exit early.
+	 * Set up parallel mode if appropriate.
+	 *
+	 * Parallel mode only supports complete execution of a plan.  If we've
+	 * already partially executed it, or if the caller asks us to exit early,
+	 * we must force the plan to run without parallelism.
 	 */
-	if (!execute_once)
+	if (queryDesc->already_executed || numberTuples != 0)
 		use_parallel_mode = false;
+	else
+		use_parallel_mode = queryDesc->plannedstmt->parallelModeNeeded;
+	queryDesc->already_executed = true;
 
 	estate->es_use_parallel_mode = use_parallel_mode;
 	if (use_parallel_mode)
