@@ -1726,6 +1726,10 @@ HandleNotifyInterrupt(void)
 	 * you do here.
 	 */
 
+	/* Do nothing else if we aren't actively listening */
+	if (listenChannels == NIL)
+		return;
+
 	/* signal that work needs to be done */
 	notifyInterruptPending = true;
 
