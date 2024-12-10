@@ -2646,7 +2646,7 @@ ClosePostmasterPorts(bool am_syslogger)
 
 
 /*
- * InitProcessGlobals -- set MyProcPid, MyStartTime[stamp], random seeds
+ * InitProcessGlobals -- set MyStartTime[stamp], random seeds
  *
  * Called early in the postmaster and every backend.
  */
@@ -2655,7 +2655,6 @@ InitProcessGlobals(void)
 {
 	unsigned int rseed;
 
-	MyProcPid = getpid();
 	MyStartTimestamp = GetCurrentTimestamp();
 	MyStartTime = timestamptz_to_time_t(MyStartTimestamp);
 
