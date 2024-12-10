@@ -39,7 +39,7 @@ static bool tuples_equal(TupleTableSlot *slot1, TupleTableSlot *slot2,
 
 /*
  * Returns the fixed strategy number, if any, of the equality operator for the
- * given index access method, otherwise, InvalidStrategy.
+ * given operator class, otherwise, InvalidStrategy.
  *
  * Currently, only Btree and Hash indexes are supported. The other index access
  * methods don't have a fixed strategy for equality operation - instead, the
@@ -47,8 +47,9 @@ static bool tuples_equal(TupleTableSlot *slot1, TupleTableSlot *slot2,
  * according to the operator class's definition.
  */
 StrategyNumber
-get_equal_strategy_number_for_am(Oid am)
+get_equal_strategy_number(Oid opclass)
 {
+	Oid			am = get_opclass_method(opclass);
 	int			ret;
 
 	switch (am)
@@ -66,18 +67,6 @@ get_equal_strategy_number_for_am(Oid am)
 	}
 
 	return ret;
-}
-
-/*
- * Return the appropriate strategy number which corresponds to the equality
- * operator.
- */
-static StrategyNumber
-get_equal_strategy_number(Oid opclass)
-{
-	Oid			am = get_opclass_method(opclass);
-
-	return get_equal_strategy_number_for_am(am);
 }
 
 /*

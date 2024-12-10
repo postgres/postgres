@@ -29,6 +29,7 @@
 #include "replication/logicalrelation.h"
 #include "replication/worker_internal.h"
 #include "utils/inval.h"
+#include "utils/syscache.h"
 
 
 static MemoryContext LogicalRepRelMapContext = NULL;
@@ -815,7 +816,7 @@ FindUsableIndexForReplicaIdentityFull(Relation localrel, AttrMap *attrmap)
  * The reasons why only Btree and Hash indexes can be considered as usable are:
  *
  * 1) Other index access methods don't have a fixed strategy for equality
- * operation. Refer get_equal_strategy_number_for_am().
+ * operation. Refer get_equal_strategy_number().
  *
  * 2) For indexes other than PK and REPLICA IDENTITY, we need to match the
  * local and remote tuples. The equality routine tuples_equal() cannot accept
@@ -833,16 +834,24 @@ bool
 IsIndexUsableForReplicaIdentityFull(Relation idxrel, AttrMap *attrmap)
 {
 	AttrNumber	keycol;
-
-	/* Ensure that the index access method has a valid equal strategy */
-	if (get_equal_strategy_number_for_am(idxrel->rd_rel->relam) == InvalidStrategy)
-		return false;
+	oidvector  *indclass;
 
 	/* The index must not be a partial index */
 	if (!heap_attisnull(idxrel->rd_indextuple, Anum_pg_index_indpred, NULL))
 		return false;
 
 	Assert(idxrel->rd_index->indnatts >= 1);
+
+	indclass = (oidvector *) DatumGetPointer(SysCacheGetAttrNotNull(INDEXRELID,
+																	idxrel->rd_indextuple,
+																	Anum_pg_index_indclass));
+
+	/* Ensure that the index has a valid equal strategy for each key column */
+	for (int i = 0; i < idxrel->rd_index->indnkeyatts; i++)
+	{
+		if (get_equal_strategy_number(indclass->values[i]) == InvalidStrategy)
+			return false;
+	}
 
 	/* The leftmost index field must not be an expression */
 	keycol = idxrel->rd_index->indkey.values[0];
