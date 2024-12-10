@@ -348,7 +348,16 @@ standard_ExecutorRun(QueryDesc *queryDesc,
 		dest->rStartup(dest, operation, queryDesc->tupDesc);
 
 	/*
-	 * run plan
+	 * Run plan, unless direction is NoMovement.
+	 *
+	 * Note: pquery.c selects NoMovement if a prior call already reached
+	 * end-of-data in the user-specified fetch direction.  This is important
+	 * because various parts of the executor can misbehave if called again
+	 * after reporting EOF.  For example, heapam.c would actually restart a
+	 * heapscan and return all its data afresh.  There is also some doubt
+	 * about whether a parallel plan would operate properly if an additional,
+	 * necessarily non-parallel execution request occurs after completing a
+	 * parallel execution.  (That case should work, but it's untested.)
 	 */
 	if (!ScanDirectionIsNoMovement(direction))
 		ExecutePlan(queryDesc,
