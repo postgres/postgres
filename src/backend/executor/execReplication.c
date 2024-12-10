@@ -15,6 +15,7 @@
 #include "postgres.h"
 
 #include "access/genam.h"
+#include "access/gist.h"
 #include "access/relscan.h"
 #include "access/tableam.h"
 #include "access/transam.h"
@@ -40,11 +41,6 @@ static bool tuples_equal(TupleTableSlot *slot1, TupleTableSlot *slot2,
 /*
  * Returns the fixed strategy number, if any, of the equality operator for the
  * given operator class, otherwise, InvalidStrategy.
- *
- * Currently, only Btree and Hash indexes are supported. The other index access
- * methods don't have a fixed strategy for equality operation - instead, the
- * support routines of each operator class interpret the strategy numbers
- * according to the operator class's definition.
  */
 StrategyNumber
 get_equal_strategy_number(Oid opclass)
@@ -60,8 +56,10 @@ get_equal_strategy_number(Oid opclass)
 		case HASH_AM_OID:
 			ret = HTEqualStrategyNumber;
 			break;
+		case GIST_AM_OID:
+			ret = GistTranslateStratnum(opclass, RTEqualStrategyNumber);
+			break;
 		default:
-			/* XXX: Only Btree and Hash indexes are supported */
 			ret = InvalidStrategy;
 			break;
 	}
