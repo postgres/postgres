@@ -134,6 +134,8 @@ build_replindex_scan_key(ScanKey skey, Relation rel, Relation idxrel,
 		optype = get_opclass_input_type(opclass->values[index_attoff]);
 		opfamily = get_opclass_family(opclass->values[index_attoff]);
 		eq_strategy = get_equal_strategy_number(opclass->values[index_attoff]);
+		if (!eq_strategy)
+			elog(ERROR, "missing equal strategy for opclass %u", opclass->values[index_attoff]);
 
 		operator = get_opfamily_member(opfamily, optype,
 									   optype,
