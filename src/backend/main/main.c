@@ -32,6 +32,7 @@
 
 #include "bootstrap/bootstrap.h"
 #include "common/username.h"
+#include "miscadmin.h"
 #include "postmaster/postmaster.h"
 #include "tcop/tcopprot.h"
 #include "utils/help_config.h"
@@ -109,6 +110,7 @@ main(int argc, char *argv[])
 	 * localization of messages may not work right away, and messages won't go
 	 * anywhere but stderr until GUC settings get loaded.
 	 */
+	MyProcPid = getpid();
 	MemoryContextInit();
 
 	/*
