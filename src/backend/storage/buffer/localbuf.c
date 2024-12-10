@@ -379,7 +379,7 @@ ExtendBufferedRelLocal(BufferManagerRelation bmr,
 		InitBufferTag(&tag, &bmr.smgr->smgr_rlocator.locator, fork, first_block + i);
 
 		hresult = (LocalBufferLookupEnt *)
-			hash_search(LocalBufHash, (void *) &tag, HASH_ENTER, &found);
+			hash_search(LocalBufHash, &tag, HASH_ENTER, &found);
 		if (found)
 		{
 			BufferDesc *existing_hdr;

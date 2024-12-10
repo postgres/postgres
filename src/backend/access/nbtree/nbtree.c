@@ -566,7 +566,7 @@ btparallelrescan(IndexScanDesc scan)
 
 	Assert(parallel_scan);
 
-	btscan = (BTParallelScanDesc) OffsetToPointer((void *) parallel_scan,
+	btscan = (BTParallelScanDesc) OffsetToPointer(parallel_scan,
 												  parallel_scan->ps_offset);
 
 	/*
@@ -596,9 +596,7 @@ btparallelrescan(IndexScanDesc scan)
  * scan, and *last_curr_page returns the page that *next_scan_page came from.
  * An invalid *next_scan_page means the scan hasn't yet started, or that
  * caller needs to start the next primitive index scan (if it's the latter
- * case we'll set so.needPrimScan).  The first time a participating process
- * reaches the last page, it will return true and set *next_scan_page to
- * P_NONE; after that, further attempts to seize the scan will return false.
+ * case we'll set so.needPrimScan).
  *
  * Callers should ignore the value of *next_scan_page and *last_curr_page if
  * the return value is false.
@@ -608,12 +606,13 @@ _bt_parallel_seize(IndexScanDesc scan, BlockNumber *next_scan_page,
 				   BlockNumber *last_curr_page, bool first)
 {
 	BTScanOpaque so = (BTScanOpaque) scan->opaque;
-	bool		exit_loop = false;
-	bool		status = true;
+	bool		exit_loop = false,
+				status = true,
+				endscan = false;
 	ParallelIndexScanDesc parallel_scan = scan->parallel_scan;
 	BTParallelScanDesc btscan;
 
-	*next_scan_page = P_NONE;
+	*next_scan_page = InvalidBlockNumber;
 	*last_curr_page = InvalidBlockNumber;
 
 	/*
@@ -645,7 +644,7 @@ _bt_parallel_seize(IndexScanDesc scan, BlockNumber *next_scan_page,
 			return false;
 	}
 
-	btscan = (BTParallelScanDesc) OffsetToPointer((void *) parallel_scan,
+	btscan = (BTParallelScanDesc) OffsetToPointer(parallel_scan,
 												  parallel_scan->ps_offset);
 
 	while (1)
@@ -656,6 +655,13 @@ _bt_parallel_seize(IndexScanDesc scan, BlockNumber *next_scan_page,
 		{
 			/* We're done with this parallel index scan */
 			status = false;
+		}
+		else if (btscan->btps_pageStatus == BTPARALLEL_IDLE &&
+				 btscan->btps_nextScanPage == P_NONE)
+		{
+			/* End this parallel index scan */
+			status = false;
+			endscan = true;
 		}
 		else if (btscan->btps_pageStatus == BTPARALLEL_NEED_PRIMSCAN)
 		{
@@ -673,7 +679,6 @@ _bt_parallel_seize(IndexScanDesc scan, BlockNumber *next_scan_page,
 					array->cur_elem = btscan->btps_arrElems[i];
 					skey->sk_argument = array->elem_values[array->cur_elem];
 				}
-				*next_scan_page = InvalidBlockNumber;
 				exit_loop = true;
 			}
 			else
@@ -701,6 +706,7 @@ _bt_parallel_seize(IndexScanDesc scan, BlockNumber *next_scan_page,
 			 * of advancing it to a new page!
 			 */
 			btscan->btps_pageStatus = BTPARALLEL_ADVANCING;
+			Assert(btscan->btps_nextScanPage != P_NONE);
 			*next_scan_page = btscan->btps_nextScanPage;
 			*last_curr_page = btscan->btps_lastCurrPage;
 			exit_loop = true;
@@ -711,6 +717,10 @@ _bt_parallel_seize(IndexScanDesc scan, BlockNumber *next_scan_page,
 		ConditionVariableSleep(&btscan->btps_cv, WAIT_EVENT_BTREE_PAGE);
 	}
 	ConditionVariableCancelSleep();
+
+	/* When the scan has reached the rightmost (or leftmost) page, end it */
+	if (endscan)
+		_bt_parallel_done(scan);
 
 	return status;
 }
@@ -724,6 +734,10 @@ _bt_parallel_seize(IndexScanDesc scan, BlockNumber *next_scan_page,
  * that it can be passed to _bt_parallel_primscan_schedule, should caller
  * determine that another primitive index scan is required.
  *
+ * If caller's next_scan_page is P_NONE, the scan has reached the index's
+ * rightmost/leftmost page.  This is treated as reaching the end of the scan
+ * within _bt_parallel_seize.
+ *
  * Note: unlike the serial case, parallel scans don't need to remember both
  * sibling links.  next_scan_page is whichever link is next given the scan's
  * direction.  That's all we'll ever need, since the direction of a parallel
@@ -736,7 +750,9 @@ _bt_parallel_release(IndexScanDesc scan, BlockNumber next_scan_page,
 	ParallelIndexScanDesc parallel_scan = scan->parallel_scan;
 	BTParallelScanDesc btscan;
 
-	btscan = (BTParallelScanDesc) OffsetToPointer((void *) parallel_scan,
+	Assert(BlockNumberIsValid(next_scan_page));
+
+	btscan = (BTParallelScanDesc) OffsetToPointer(parallel_scan,
 												  parallel_scan->ps_offset);
 
 	SpinLockAcquire(&btscan->btps_mutex);
@@ -770,12 +786,12 @@ _bt_parallel_done(IndexScanDesc scan)
 
 	/*
 	 * Should not mark parallel scan done when there's still a pending
-	 * primitive index scan (defensive)
+	 * primitive index scan
 	 */
 	if (so->needPrimScan)
 		return;
 
-	btscan = (BTParallelScanDesc) OffsetToPointer((void *) parallel_scan,
+	btscan = (BTParallelScanDesc) OffsetToPointer(parallel_scan,
 												  parallel_scan->ps_offset);
 
 	/*
@@ -813,7 +829,7 @@ _bt_parallel_primscan_schedule(IndexScanDesc scan, BlockNumber curr_page)
 
 	Assert(so->numArrayKeys);
 
-	btscan = (BTParallelScanDesc) OffsetToPointer((void *) parallel_scan,
+	btscan = (BTParallelScanDesc) OffsetToPointer(parallel_scan,
 												  parallel_scan->ps_offset);
 
 	SpinLockAcquire(&btscan->btps_mutex);

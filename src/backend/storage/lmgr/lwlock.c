@@ -108,7 +108,7 @@ StaticAssertDecl(LW_VAL_EXCLUSIVE > (uint32) MAX_BACKENDS,
 /*
  * There are three sorts of LWLock "tranches":
  *
- * 1. The individually-named locks defined in lwlocknames.h each have their
+ * 1. The individually-named locks defined in lwlocklist.h each have their
  * own tranche.  We absorb the names of these tranches from there into
  * BuiltinTrancheNames here.
  *
@@ -124,7 +124,7 @@ StaticAssertDecl(LW_VAL_EXCLUSIVE > (uint32) MAX_BACKENDS,
  * ... and do not forget to update the documentation's list of wait events.
  */
 static const char *const BuiltinTrancheNames[] = {
-#define PG_LWLOCK(id, lockname) [id] = CppAsString(lockname) "Lock",
+#define PG_LWLOCK(id, lockname) [id] = CppAsString(lockname),
 #include "storage/lwlocklist.h"
 #undef PG_LWLOCK
 	[LWTRANCHE_XACT_BUFFER] = "XactBuffer",

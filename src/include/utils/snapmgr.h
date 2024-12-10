@@ -27,10 +27,13 @@ extern PGDLLIMPORT TransactionId RecentXmin;
 /* Variables representing various special snapshot semantics */
 extern PGDLLIMPORT SnapshotData SnapshotSelfData;
 extern PGDLLIMPORT SnapshotData SnapshotAnyData;
+extern PGDLLIMPORT SnapshotData SnapshotToastData;
 extern PGDLLIMPORT SnapshotData CatalogSnapshotData;
 
 #define SnapshotSelf		(&SnapshotSelfData)
 #define SnapshotAny			(&SnapshotAnyData)
+
+/* Use get_toast_snapshot() for the TOAST snapshot */
 
 /*
  * We don't provide a static SnapshotDirty variable because it would be
@@ -49,15 +52,6 @@ extern PGDLLIMPORT SnapshotData CatalogSnapshotData;
 	((snapshotdata).snapshot_type = SNAPSHOT_NON_VACUUMABLE, \
 	 (snapshotdata).vistest = (vistestp))
 
-/*
- * Similarly, some initialization is required for SnapshotToast.  We need
- * to set lsn and whenTaken correctly to support snapshot_too_old.
- */
-#define InitToastSnapshot(snapshotdata, l, w)  \
-	((snapshotdata).snapshot_type = SNAPSHOT_TOAST, \
-	 (snapshotdata).lsn = (l),					\
-	 (snapshotdata).whenTaken = (w))
-
 /* This macro encodes the knowledge of which snapshots are MVCC-safe */
 #define IsMVCCSnapshot(snapshot)  \
 	((snapshot)->snapshot_type == SNAPSHOT_MVCC || \
@@ -66,7 +60,6 @@ extern PGDLLIMPORT SnapshotData CatalogSnapshotData;
 extern Snapshot GetTransactionSnapshot(void);
 extern Snapshot GetLatestSnapshot(void);
 extern void SnapshotSetCommandId(CommandId curcid);
-extern Snapshot GetOldestSnapshot(void);
 
 extern Snapshot GetCatalogSnapshot(Oid relid);
 extern Snapshot GetNonHistoricCatalogSnapshot(Oid relid);

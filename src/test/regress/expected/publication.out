@@ -672,6 +672,32 @@ DROP TABLE rf_tbl_abcd_pk;
 DROP TABLE rf_tbl_abcd_nopk;
 DROP TABLE rf_tbl_abcd_part_pk;
 -- ======================================================
+-- ======================================================
+-- Tests with generated column
+SET client_min_messages = 'ERROR';
+CREATE TABLE testpub_gencol (a INT, b INT GENERATED ALWAYS AS (a + 1) STORED NOT NULL);
+CREATE UNIQUE INDEX testpub_gencol_idx ON testpub_gencol (b);
+ALTER TABLE testpub_gencol REPLICA IDENTITY USING index testpub_gencol_idx;
+-- error - generated column "b" must be published explicitly as it is
+-- part of the REPLICA IDENTITY index.
+CREATE PUBLICATION pub_gencol FOR TABLE testpub_gencol;
+UPDATE testpub_gencol SET a = 100 WHERE a = 1;
+ERROR:  cannot update table "testpub_gencol"
+DETAIL:  Replica identity must not contain unpublished generated columns.
+-- error - generated column "b" must be published explicitly as it is
+-- part of the REPLICA IDENTITY.
+ALTER TABLE testpub_gencol REPLICA IDENTITY FULL;
+UPDATE testpub_gencol SET a = 100 WHERE a = 1;
+ERROR:  cannot update table "testpub_gencol"
+DETAIL:  Replica identity must not contain unpublished generated columns.
+DROP PUBLICATION pub_gencol;
+-- ok - generated column "b" is published explicitly
+CREATE PUBLICATION pub_gencol FOR TABLE testpub_gencol with (publish_generated_columns = true);
+UPDATE testpub_gencol SET a = 100 WHERE a = 1;
+DROP PUBLICATION pub_gencol;
+DROP TABLE testpub_gencol;
+RESET client_min_messages;
+-- ======================================================
 -- fail - duplicate tables are not allowed if that table has any column lists
 SET client_min_messages = 'ERROR';
 CREATE PUBLICATION testpub_dups FOR TABLE testpub_tbl1 (a), testpub_tbl1 WITH (publish = 'insert');

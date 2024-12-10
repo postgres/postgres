@@ -1011,10 +1011,14 @@ DefineDomain(CreateDomainStmt *stmt)
 						 errmsg("specifying constraint deferrability not supported for domains")));
 				break;
 
-			default:
-				elog(ERROR, "unrecognized constraint subtype: %d",
-					 (int) constr->contype);
+			case CONSTR_GENERATED:
+			case CONSTR_IDENTITY:
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("specifying GENERATED not supported for domains")));
 				break;
+
+				/* no default, to let compiler warn about missing case */
 		}
 	}
 
@@ -3562,7 +3566,7 @@ domainAddCheckConstraint(Oid domainOid, Oid domainNamespace, Oid baseTypeOid,
 	domVal->location = -1;		/* will be set when/if used */
 
 	pstate->p_pre_columnref_hook = replace_domain_constraint_value;
-	pstate->p_ref_hook_state = (void *) domVal;
+	pstate->p_ref_hook_state = domVal;
 
 	expr = transformExpr(pstate, constr->raw_expr, EXPR_KIND_DOMAIN_CHECK);
 

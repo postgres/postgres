@@ -99,7 +99,7 @@ geqo(PlannerInfo *root, int number_of_rels, List *initial_rels)
 #endif
 
 /* set up private information */
-	root->join_search_private = (void *) &private;
+	root->join_search_private = &private;
 	private.initial_rels = initial_rels;
 
 /* initialize private number generator */

@@ -77,6 +77,7 @@ static const struct FileFdwOption valid_options[] = {
 	{"encoding", ForeignTableRelationId},
 	{"on_error", ForeignTableRelationId},
 	{"log_verbosity", ForeignTableRelationId},
+	{"reject_limit", ForeignTableRelationId},
 	{"force_not_null", AttributeRelationId},
 	{"force_null", AttributeRelationId},
 
@@ -530,7 +531,7 @@ fileGetForeignRelSize(PlannerInfo *root,
 				   &fdw_private->filename,
 				   &fdw_private->is_program,
 				   &fdw_private->options);
-	baserel->fdw_private = (void *) fdw_private;
+	baserel->fdw_private = fdw_private;
 
 	/* Estimate relation size */
 	estimate_size(root, baserel, fdw_private);
@@ -712,7 +713,7 @@ fileBeginForeignScan(ForeignScanState *node, int eflags)
 	festate->options = options;
 	festate->cstate = cstate;
 
-	node->fdw_state = (void *) festate;
+	node->fdw_state = festate;
 }
 
 /*
@@ -733,7 +734,7 @@ fileIterateForeignScan(ForeignScanState *node)
 
 	/* Set up callback to identify error line number. */
 	errcallback.callback = CopyFromErrorCallback;
-	errcallback.arg = (void *) cstate;
+	errcallback.arg = cstate;
 	errcallback.previous = error_context_stack;
 	error_context_stack = &errcallback;
 
@@ -787,6 +788,13 @@ retry:
 			 * evaluations etc.
 			 */
 			ResetPerTupleExprContext(estate);
+
+			if (cstate->opts.reject_limit > 0 &&
+				cstate->num_errors > cstate->opts.reject_limit)
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+						 errmsg("skipped more than REJECT_LIMIT (%lld) rows due to data type incompatibility",
+								(long long) cstate->opts.reject_limit)));
 
 			/* Repeat NextCopyFrom() until no soft error occurs */
 			goto retry;
@@ -1220,7 +1228,7 @@ file_acquire_sample_rows(Relation onerel, int elevel,
 
 	/* Set up callback to identify error line number. */
 	errcallback.callback = CopyFromErrorCallback;
-	errcallback.arg = (void *) cstate;
+	errcallback.arg = cstate;
 	errcallback.previous = error_context_stack;
 	error_context_stack = &errcallback;
 

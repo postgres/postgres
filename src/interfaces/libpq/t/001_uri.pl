@@ -96,13 +96,13 @@ my @tests = (
 		# Trailing data in parameter.
 		q{postgresql://host?  user user  =  uri  & port = 12345 12 },
 		q{},
-		q{libpq_uri_regress: trailing data found: "  user user  "},
+		q{libpq_uri_regress: unexpected spaces found in "  user user  ", use percent-encoded spaces (%20) instead},
 	],
 	[
 		# Trailing data in value.
 		q{postgresql://host?  user  =  uri-user  & port = 12345 12 },
 		q{},
-		q{libpq_uri_regress: trailing data found: " 12345 12 "},
+		q{libpq_uri_regress: unexpected spaces found in " 12345 12 ", use percent-encoded spaces (%20) instead},
 	],
 	[ q{postgresql://host?}, q{host='host' (inet)}, q{}, ],
 	[

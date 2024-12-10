@@ -5414,9 +5414,10 @@ cast(-44 as bit(12))           <lineannotation>111111010100</lineannotation>
    </caution>
 
    <para>
-    The pattern matching operators of all three kinds do not support
-    nondeterministic collations.  If required, apply a different collation to
-    the expression to work around this limitation.
+    <function>SIMILAR TO</function> and <acronym>POSIX</acronym>-style regular
+    expressions do not support nondeterministic collations.  If required, use
+    <function>LIKE</function> or apply a different collation to the expression
+    to work around this limitation.
    </para>
 
   <sect2 id="functions-like">
@@ -5463,6 +5464,46 @@ cast(-44 as bit(12))           <lineannotation>111111010100</lineannotation>
    </para>
 
    <para>
+    <function>LIKE</function> pattern matching supports nondeterministic
+    collations (see <xref linkend="collation-nondeterministic"/>), such as
+    case-insensitive collations or collations that, say, ignore punctuation.
+    So with a case-insensitive collation, one could have:
+<programlisting>
+'AbC' LIKE 'abc' COLLATE case_insensitive    <lineannotation>true</lineannotation>
+'AbC' LIKE 'a%' COLLATE case_insensitive     <lineannotation>true</lineannotation>
+</programlisting>
+    With collations that ignore certain characters or in general that consider
+    strings of different lengths equal, the semantics can become a bit more
+    complicated.  Consider these examples:
+<programlisting>
+'.foo.' LIKE 'foo' COLLATE ign_punct    <lineannotation>true</lineannotation>
+'.foo.' LIKE 'f_o' COLLATE ign_punct    <lineannotation>true</lineannotation>
+'.foo.' LIKE '_oo' COLLATE ign_punct    <lineannotation>false</lineannotation>
+</programlisting>
+    The way the matching works is that the pattern is partitioned into
+    sequences of wildcards and non-wildcard strings (wildcards being
+    <literal>_</literal> and <literal>%</literal>).  For example, the pattern
+    <literal>f_o</literal> is partitioned into <literal>f, _, o</literal>, the
+    pattern <literal>_oo</literal> is partitioned into <literal>_,
+    oo</literal>.  The input string matches the pattern if it can be
+    partitioned in such a way that the wildcards match one character or any
+    number of characters respectively and the non-wildcard partitions are
+    equal under the applicable collation.  So for example, <literal>'.foo.'
+    LIKE 'f_o' COLLATE ign_punct</literal> is true because one can partition
+    <literal>.foo.</literal> into <literal>.f, o, o.</literal>, and then
+    <literal>'.f' = 'f' COLLATE ign_punct</literal>, <literal>'o'</literal>
+    matches the <literal>_</literal> wildcard, and <literal>'o.' = 'o' COLLATE
+    ign_punct</literal>.  But <literal>'.foo.' LIKE '_oo' COLLATE
+    ign_punct</literal> is false because <literal>.foo.</literal> cannot be
+    partitioned in a way that the first character is any character and the
+    rest of the string compares equal to <literal>oo</literal>.  (Note that
+    the single-character wildcard always matches exactly one character,
+    independent of the collation.  So in this example, the
+    <literal>_</literal> would match <literal>.</literal>, but then the rest
+    of the input string won't match the rest of the pattern.)
+   </para>
+
+   <para>
     <function>LIKE</function> pattern matching always covers the entire
     string.  Therefore, if it's desired to match a sequence anywhere within
     a string, the pattern must start and end with a percent sign.
@@ -5503,8 +5544,9 @@ cast(-44 as bit(12))           <lineannotation>111111010100</lineannotation>
 
    <para>
     The key word <token>ILIKE</token> can be used instead of
-    <token>LIKE</token> to make the match case-insensitive according
-    to the active locale.  This is not in the <acronym>SQL</acronym> standard but is a
+    <token>LIKE</token> to make the match case-insensitive according to the
+    active locale.  (But this does not support nondeterministic collations.)
+    This is not in the <acronym>SQL</acronym> standard but is a
     <productname>PostgreSQL</productname> extension.
    </para>
 
@@ -17178,8 +17220,8 @@ ERROR:  value too long for type character(2)
         <returnvalue>boolean</returnvalue>
        </para>
        <para>
-        Returns the result of a JSON path predicate check for the specified
-        JSON value.
+        Returns the SQL boolean result of a JSON path predicate check
+        for the specified JSON value.
         (This is useful only
         with <link linkend="functions-sqljson-check-expressions">predicate
         check expressions</link>, not SQL-standard JSON path expressions,
@@ -17646,9 +17688,9 @@ SELECT '{
      Boolean predicate, whereas the SQL standard allows predicates only within
      filters. While SQL-standard path expressions return the relevant
      element(s) of the queried JSON value, predicate check expressions
-     return the single three-valued result of the
+     return the single three-valued <type>jsonb</type> result of the
      predicate: <literal>true</literal>,
-     <literal>false</literal>, or <literal>unknown</literal>.
+     <literal>false</literal>, or <literal>null</literal>.
      For example, we could write this SQL-standard filter expression:
 <screen>
 <prompt>=&gt;</prompt> <userinput>select jsonb_path_query(:'json', '$.track.segments ?(@[*].HR &gt; 130)');</userinput>
@@ -27141,6 +27183,34 @@ acl      | {postgres=arwdDxtm/postgres,foo=r/postgres}
       <row>
        <entry role="func_table_entry"><para role="func_signature">
         <indexterm>
+         <primary>age</primary>
+        </indexterm>
+        <function>age</function>  ( <type>xid</type> )
+        <returnvalue>integer</returnvalue>
+       </para>
+       <para>
+        Returns the number of transactions between the supplied
+        transaction id and the current transaction counter.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>mxid_age</primary>
+        </indexterm>
+        <function>mxid_age</function>  ( <type>xid</type> )
+        <returnvalue>integer</returnvalue>
+       </para>
+       <para>
+        Returns the number of multixacts IDs between the supplied
+        multixact ID and the current multixacts counter.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
          <primary>pg_current_xact_id</primary>
         </indexterm>
         <function>pg_current_xact_id</function> ()
@@ -27282,7 +27352,8 @@ acl      | {postgres=arwdDxtm/postgres,foo=r/postgres}
    <para>
     The internal transaction ID type <type>xid</type> is 32 bits wide and
     wraps around every 4 billion transactions.  However,
-    the functions shown in <xref linkend="functions-pg-snapshot"/> use a
+    the functions shown in <xref linkend="functions-pg-snapshot"/>, except
+    <function>age</function> and <function>mxid_age</function>, use a
     64-bit type <type>xid8</type> that does not wrap around during the life
     of an installation and can be converted to <type>xid</type> by casting if
     required;  see <xref linkend="transaction-id"/> for details.
@@ -27364,33 +27435,6 @@ acl      | {postgres=arwdDxtm/postgres,foo=r/postgres}
      </thead>
 
      <tbody>
-      <row>
-       <entry role="func_table_entry"><para role="func_signature">
-        <indexterm>
-         <primary>age</primary>
-        </indexterm>
-        <function>age</function>  ( <type>xid</type> )
-        <returnvalue>integer</returnvalue>
-       </para>
-       <para>
-        Returns the number of transactions between the supplied
-        transaction id and the current transaction counter.
-       </para></entry>
-      </row>
-
-      <row>
-       <entry role="func_table_entry"><para role="func_signature">
-        <indexterm>
-         <primary>mxid_age</primary>
-        </indexterm>
-        <function>mxid_age</function>  ( <type>xid</type> )
-        <returnvalue>integer</returnvalue>
-       </para>
-       <para>
-        Returns the number of multixacts IDs between the supplied
-        multixact ID and the current multixacts counter.
-       </para></entry>
-      </row>
 
       <row>
        <entry role="func_table_entry"><para role="func_signature">
@@ -30029,6 +30073,7 @@ postgres=# SELECT '0/0'::pg_lsn + pd.segment_number * ps.setting::int + :offset 
    <para>
     <xref linkend="functions-admin-statsmod"/> lists functions used to
     manipulate statistics.
+    These functions cannot be executed during recovery.
     <warning>
      <para>
       Changes made by these statistics manipulation functions are likely to be

@@ -205,7 +205,11 @@ typedef struct ReplicationSlot
 	 */
 	XLogRecPtr	last_saved_confirmed_flush;
 
-	/* The time since the slot has become inactive */
+	/*
+	 * The time when the slot became inactive. For synced slots on a standby
+	 * server, it represents the time when slot synchronization was most
+	 * recently stopped.
+	 */
 	TimestampTz inactive_since;
 } ReplicationSlot;
 

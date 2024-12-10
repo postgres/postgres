@@ -72,7 +72,7 @@ setup_parse_fixed_parameters(ParseState *pstate,
 
 	parstate->paramTypes = paramTypes;
 	parstate->numParams = numParams;
-	pstate->p_ref_hook_state = (void *) parstate;
+	pstate->p_ref_hook_state = parstate;
 	pstate->p_paramref_hook = fixed_paramref_hook;
 	/* no need to use p_coerce_param_hook */
 }
@@ -88,7 +88,7 @@ setup_parse_variable_parameters(ParseState *pstate,
 
 	parstate->paramTypes = paramTypes;
 	parstate->numParams = numParams;
-	pstate->p_ref_hook_state = (void *) parstate;
+	pstate->p_ref_hook_state = parstate;
 	pstate->p_paramref_hook = variable_paramref_hook;
 	pstate->p_coerce_param_hook = variable_coerce_param_hook;
 }
@@ -274,7 +274,7 @@ check_variable_parameters(ParseState *pstate, Query *query)
 	if (*parstate->numParams > 0)
 		(void) query_tree_walker(query,
 								 check_parameter_resolution_walker,
-								 (void *) pstate, 0);
+								 pstate, 0);
 }
 
 /*
@@ -318,10 +318,10 @@ check_parameter_resolution_walker(Node *node, ParseState *pstate)
 		/* Recurse into RTE subquery or not-yet-planned sublink subquery */
 		return query_tree_walker((Query *) node,
 								 check_parameter_resolution_walker,
-								 (void *) pstate, 0);
+								 pstate, 0);
 	}
 	return expression_tree_walker(node, check_parameter_resolution_walker,
-								  (void *) pstate);
+								  pstate);
 }
 
 /*

@@ -959,7 +959,7 @@ CopyFrom(CopyFromState cstate)
 
 	/* Set up callback to identify error line number */
 	errcallback.callback = CopyFromErrorCallback;
-	errcallback.arg = (void *) cstate;
+	errcallback.arg = cstate;
 	errcallback.previous = error_context_stack;
 	error_context_stack = &errcallback;
 
@@ -1018,7 +1018,7 @@ CopyFrom(CopyFromState cstate)
 			pgstat_progress_update_param(PROGRESS_COPY_TUPLES_SKIPPED,
 										 cstate->num_errors);
 
-			if (cstate->opts.reject_limit > 0 && \
+			if (cstate->opts.reject_limit > 0 &&
 				cstate->num_errors > cstate->opts.reject_limit)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),

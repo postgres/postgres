@@ -3615,7 +3615,7 @@ JsonbType(JsonbValue *jb)
 
 	if (jb->type == jbvBinary)
 	{
-		JsonbContainer *jbc = (void *) jb->val.binary.data;
+		JsonbContainer *jbc = jb->val.binary.data;
 
 		/* Scalars should be always extracted during jsonpath execution. */
 		Assert(!JsonContainerIsScalar(jbc));

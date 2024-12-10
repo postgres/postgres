@@ -3,7 +3,7 @@
 MODULES = lo
 
 EXTENSION = lo
-DATA = lo--1.1.sql lo--1.0--1.1.sql
+DATA = lo--1.1.sql lo--1.0--1.1.sql lo--1.1--1.2.sql
 PGFILEDESC = "lo - management for large objects"
 
 REGRESS = lo

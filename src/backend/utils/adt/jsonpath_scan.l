@@ -191,15 +191,15 @@ hex_fail	\\x{hexdigit}{0,1}
 <xnq,xq,xvq>\\.				{ addchar(false, yytext[1]); }
 
 <xnq,xq,xvq>\\				{
-							  jsonpath_yyerror(NULL, escontext,
-											   "unexpected end after backslash");
-							  yyterminate();
+								jsonpath_yyerror(NULL, escontext,
+												 "unexpected end after backslash");
+								yyterminate();
 							}
 
 <xq,xvq><<EOF>>				{
-							  jsonpath_yyerror(NULL, escontext,
-											   "unterminated quoted string");
-							  yyterminate();
+								jsonpath_yyerror(NULL, escontext,
+												 "unterminated quoted string");
+								yyterminate();
 							}
 
 <xq>\"							{
@@ -223,9 +223,8 @@ hex_fail	\\x{hexdigit}{0,1}
 <xc>\*							{ }
 
 <xc><<EOF>>						{
-									jsonpath_yyerror(
-										NULL, escontext,
-										"unexpected end of comment");
+									jsonpath_yyerror(NULL, escontext,
+													 "unexpected end of comment");
 									yyterminate();
 								}
 \&\&							{ return AND_P; }
@@ -314,27 +313,23 @@ hex_fail	\\x{hexdigit}{0,1}
 								}
 
 {realfail}						{
-									jsonpath_yyerror(
-										NULL, escontext,
-										"invalid numeric literal");
+									jsonpath_yyerror(NULL, escontext,
+													 "invalid numeric literal");
 									yyterminate();
 								}
 {decinteger_junk}				{
-									jsonpath_yyerror(
-										NULL, escontext,
-										"trailing junk after numeric literal");
+									jsonpath_yyerror(NULL, escontext,
+													 "trailing junk after numeric literal");
 									yyterminate();
 								}
 {decimal_junk}					{
-									jsonpath_yyerror(
-										NULL, escontext,
-										"trailing junk after numeric literal");
+									jsonpath_yyerror(NULL, escontext,
+													 "trailing junk after numeric literal");
 									yyterminate();
 								}
 {real_junk}						{
-									jsonpath_yyerror(
-										NULL, escontext,
-										"trailing junk after numeric literal");
+									jsonpath_yyerror(NULL, escontext,
+													 "trailing junk after numeric literal");
 									yyterminate();
 								}
 \"								{
@@ -564,7 +559,7 @@ parsejsonpath(const char *str, int len, struct Node *escontext)
 
 	jsonpath_scanner_init(str, len);
 
-	if (jsonpath_yyparse((void *) &parseresult, escontext) != 0)
+	if (jsonpath_yyparse(&parseresult, escontext) != 0)
 		jsonpath_yyerror(NULL, escontext, "invalid input"); /* shouldn't happen */
 
 	jsonpath_scanner_finish();

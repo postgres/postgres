@@ -760,7 +760,7 @@ copy_read_data(void *outbuf, int minread, int maxread)
 				if (avail > maxread)
 					avail = maxread;
 				memcpy(outbuf, &copybuf->data[copybuf->cursor], avail);
-				outbuf = (void *) ((char *) outbuf + avail);
+				outbuf = (char *) outbuf + avail;
 				copybuf->cursor += avail;
 				maxread -= avail;
 				bytesread += avail;

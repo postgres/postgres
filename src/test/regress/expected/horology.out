@@ -3453,6 +3453,17 @@ SELECT i, to_timestamp('2018-11-02 12:34:56.123456', 'YYYY-MM-DD HH24:MI:SS.FF' 
 
 SELECT i, to_timestamp('2018-11-02 12:34:56.123456789', 'YYYY-MM-DD HH24:MI:SS.FF' || i) FROM generate_series(1, 6) i;
 ERROR:  date/time field value out of range: "2018-11-02 12:34:56.123456789"
+SELECT i, to_timestamp('20181102123456123456', 'YYYYMMDDHH24MISSFF' || i) FROM generate_series(1, 6) i;
+ i |            to_timestamp             
+---+-------------------------------------
+ 1 | Fri Nov 02 12:34:56.1 2018 PDT
+ 2 | Fri Nov 02 12:34:56.12 2018 PDT
+ 3 | Fri Nov 02 12:34:56.123 2018 PDT
+ 4 | Fri Nov 02 12:34:56.1235 2018 PDT
+ 5 | Fri Nov 02 12:34:56.12346 2018 PDT
+ 6 | Fri Nov 02 12:34:56.123456 2018 PDT
+(6 rows)
+
 SELECT to_date('1 4 1902', 'Q MM YYYY');  -- Q is ignored
   to_date   
 ------------
@@ -3743,6 +3754,14 @@ SELECT to_timestamp('2015-02-11 86000', 'YYYY-MM-DD SSSSS');  -- ok
 
 SELECT to_timestamp('2015-02-11 86400', 'YYYY-MM-DD SSSSS');
 ERROR:  date/time field value out of range: "2015-02-11 86400"
+SELECT to_timestamp('1000000000,999', 'Y,YYY');
+ERROR:  value for "Y,YYY" in source string is out of range
+SELECT to_timestamp('0.-2147483648', 'SS.MS');
+ERROR:  date/time field value out of range: "0.-2147483648"
+SELECT to_timestamp('613566758', 'W');
+ERROR:  date/time field value out of range: "613566758"
+SELECT to_timestamp('2024 613566758 1', 'YYYY WW D');
+ERROR:  date/time field value out of range: "2024 613566758 1"
 SELECT to_date('2016-13-10', 'YYYY-MM-DD');
 ERROR:  date/time field value out of range: "2016-13-10"
 SELECT to_date('2016-02-30', 'YYYY-MM-DD');
@@ -3783,6 +3802,14 @@ SELECT to_date('0000-02-01','YYYY-MM-DD');  -- allowed, though it shouldn't be
  02-01-0001 BC
 (1 row)
 
+SELECT to_date('100000000', 'CC');
+ERROR:  date/time field value out of range: "100000000"
+SELECT to_date('-100000000', 'CC');
+ERROR:  date/time field value out of range: "-100000000"
+SELECT to_date('-2147483648 01', 'CC YY');
+ERROR:  date/time field value out of range: "-2147483648 01"
+SELECT to_date('2147483647 01', 'CC YY');
+ERROR:  date/time field value out of range: "2147483647 01"
 -- to_char's TZ format code produces zone abbrev if known
 SELECT to_char('2012-12-12 12:00'::timestamptz, 'YYYY-MM-DD HH:MI:SS TZ');
          to_char         

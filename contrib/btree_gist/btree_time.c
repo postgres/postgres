@@ -216,7 +216,7 @@ gbt_time_consistent(PG_FUNCTION_ARGS)
 	key.lower = (GBT_NUMKEY *) &kkk->lower;
 	key.upper = (GBT_NUMKEY *) &kkk->upper;
 
-	PG_RETURN_BOOL(gbt_num_consistent(&key, (void *) &query, &strategy,
+	PG_RETURN_BOOL(gbt_num_consistent(&key, &query, &strategy,
 									  GIST_LEAF(entry), &tinfo, fcinfo->flinfo));
 }
 
@@ -233,7 +233,7 @@ gbt_time_distance(PG_FUNCTION_ARGS)
 	key.lower = (GBT_NUMKEY *) &kkk->lower;
 	key.upper = (GBT_NUMKEY *) &kkk->upper;
 
-	PG_RETURN_FLOAT8(gbt_num_distance(&key, (void *) &query, GIST_LEAF(entry),
+	PG_RETURN_FLOAT8(gbt_num_distance(&key, &query, GIST_LEAF(entry),
 									  &tinfo, fcinfo->flinfo));
 }
 
@@ -258,7 +258,7 @@ gbt_timetz_consistent(PG_FUNCTION_ARGS)
 	key.lower = (GBT_NUMKEY *) &kkk->lower;
 	key.upper = (GBT_NUMKEY *) &kkk->upper;
 
-	PG_RETURN_BOOL(gbt_num_consistent(&key, (void *) &qqq, &strategy,
+	PG_RETURN_BOOL(gbt_num_consistent(&key, &qqq, &strategy,
 									  GIST_LEAF(entry), &tinfo, fcinfo->flinfo));
 }
 
@@ -270,7 +270,7 @@ gbt_time_union(PG_FUNCTION_ARGS)
 	void	   *out = palloc(sizeof(timeKEY));
 
 	*(int *) PG_GETARG_POINTER(1) = sizeof(timeKEY);
-	PG_RETURN_POINTER(gbt_num_union((void *) out, entryvec, &tinfo, fcinfo->flinfo));
+	PG_RETURN_POINTER(gbt_num_union(out, entryvec, &tinfo, fcinfo->flinfo));
 }
 
 

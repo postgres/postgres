@@ -43,6 +43,7 @@ tests += {
       't/007_standby_source.pl',
       't/008_min_recovery_point.pl',
       't/009_growing_files.pl',
+      't/010_keep_recycled_wals.pl',
     ],
   },
 }

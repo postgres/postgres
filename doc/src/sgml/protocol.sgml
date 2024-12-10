@@ -312,6 +312,14 @@
         (Keep in mind the <function>md5()</function> function returns its
         result as a hex string.)
        </para>
+        <warning>
+         <para>
+          Support for MD5-encrypted passwords is deprecated and will be removed
+          in a future release of <productname>PostgreSQL</productname>.  Refer
+          to <xref linkend="auth-password"/> for details about migrating to
+          another password type.
+         </para>
+        </warning>
       </listitem>
      </varlistentry>
 
@@ -1070,16 +1078,17 @@ SELCT 1/0;<!-- this typo is intentional -->
 
    <para>
     If the client has not issued an explicit <command>BEGIN</command>,
-    then each Sync ordinarily causes an implicit <command>COMMIT</command>
-    if the preceding step(s) succeeded, or an
-    implicit <command>ROLLBACK</command> if they failed.  However, there
-    are a few DDL commands (such as <command>CREATE DATABASE</command>)
-    that cannot be executed inside a transaction block.  If one of
-    these is executed in a pipeline, it will fail unless it is the first
-    command in the pipeline.  Furthermore, upon success it will force an
-    immediate commit to preserve database consistency.  Thus a Sync
-    immediately following one of these commands has no effect except to
-    respond with ReadyForQuery.
+    then an implicit transaction block is started and each Sync ordinarily
+    causes an implicit <command>COMMIT</command> if the preceding step(s)
+    succeeded, or an implicit <command>ROLLBACK</command> if they failed.
+    This implicit transaction block will only be detected by the server
+    when the first command ends without a sync.  There are a few DDL
+    commands (such as <command>CREATE DATABASE</command>) that cannot be
+    executed inside a transaction block. If one of these is executed in a
+    pipeline, it will fail unless it is the first command after a Sync.
+    Furthermore, upon success it will force an immediate commit to preserve
+    database consistency. Thus a Sync immediately following one of these
+    commands has no effect except to respond with ReadyForQuery.
    </para>
 
    <para>
@@ -1508,10 +1517,10 @@ SELCT 1/0;<!-- this typo is intentional -->
 
    <para>
     The frontend should also be prepared to handle an ErrorMessage
-    response to SSLRequest from the server.  This would only occur if
-    the server predates the addition of <acronym>SSL</acronym> support
-    to <productname>PostgreSQL</productname>.  (Such servers are now very ancient,
-    and likely do not exist in the wild anymore.)
+    response to SSLRequest from the server. The frontend should not display
+    this error message to the user/application, since the server has not been
+    authenticated
+    (<ulink url="https://www.postgresql.org/support/security/CVE-2024-10977/">CVE-2024-10977</ulink>).
     In this case the connection must
     be closed, but the frontend might choose to open a fresh connection
     and proceed without requesting <acronym>SSL</acronym>.
@@ -1621,12 +1630,13 @@ SELCT 1/0;<!-- this typo is intentional -->
 
    <para>
     The frontend should also be prepared to handle an ErrorMessage
-    response to GSSENCRequest from the server.  This would only occur if
-    the server predates the addition of <acronym>GSSAPI</acronym> encryption
-    support to <productname>PostgreSQL</productname>.  In this case the
-    connection must be closed, but the frontend might choose to open a fresh
-    connection and proceed without requesting <acronym>GSSAPI</acronym>
-    encryption.
+    response to GSSENCRequest from the server.  The frontend should not display
+    this error message to the user/application, since the server has not been
+    authenticated
+    (<ulink url="https://www.postgresql.org/support/security/CVE-2024-10977/">CVE-2024-10977</ulink>).
+    In this case the connection must be closed, but the frontend might choose
+    to open a fresh connection and proceed without requesting
+    <acronym>GSSAPI</acronym> encryption.
    </para>
 
    <para>

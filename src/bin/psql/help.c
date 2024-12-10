@@ -174,6 +174,7 @@ slashUsage(unsigned short int pager)
 	HELP0("  \\gexec                 execute query, then execute each value in its result\n");
 	HELP0("  \\gset [PREFIX]         execute query and store result in psql variables\n");
 	HELP0("  \\gx [(OPTIONS)] [FILE] as \\g, but forces expanded output mode\n");
+	HELP0("  \\parse STMT_NAME       create a prepared statement\n");
 	HELP0("  \\q                     quit psql\n");
 	HELP0("  \\watch [[i=]SEC] [c=N] [m=MIN]\n"
 		  "                         execute query every SEC seconds, up to N times,\n"
@@ -294,7 +295,7 @@ slashUsage(unsigned short int pager)
 		  "                         numericlocale|pager|pager_min_lines|recordsep|\n"
 		  "                         recordsep_zero|tableattr|title|tuples_only|\n"
 		  "                         unicode_border_linestyle|unicode_column_linestyle|\n"
-		  "                         unicode_header_linestyle)\n");
+		  "                         unicode_header_linestyle|xheader_width)\n");
 	HELPN("  \\t [on|off]            show only rows (currently %s)\n",
 		  ON(pset.popt.topt.tuples_only));
 	HELP0("  \\T [STRING]            set HTML <table> tag attributes, or unset if none\n");
@@ -312,7 +313,6 @@ slashUsage(unsigned short int pager)
 			  "                         connect to new database (currently no connection)\n");
 	HELP0("  \\conninfo              display information about current connection\n");
 	HELP0("  \\encoding [ENCODING]   show or set client encoding\n");
-	HELP0("  \\parse STMT_NAME       create a prepared statement\n");
 	HELP0("  \\password [USERNAME]   securely change the password for a user\n");
 	HELP0("\n");
 
@@ -495,6 +495,9 @@ helpVariables(unsigned short int pager)
 		  "  unicode_column_linestyle\n"
 		  "  unicode_header_linestyle\n"
 		  "    set the style of Unicode line drawing [single, double]\n");
+	HELP0("  xheader_width\n"
+		  "    set the maximum width of the header for expanded output\n"
+		  "    [full, column, page, integer value]\n");
 
 	HELP0("\nEnvironment variables:\n");
 	HELP0("Usage:\n");

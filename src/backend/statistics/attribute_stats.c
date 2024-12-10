@@ -155,12 +155,25 @@ attribute_statistics_update(FunctionCallInfo fcinfo, int elevel)
 	stats_check_required_arg(fcinfo, attarginfo, ATTRELATION_ARG);
 	reloid = PG_GETARG_OID(ATTRELATION_ARG);
 
+	if (RecoveryInProgress())
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("recovery is in progress"),
+				 errhint("Statistics cannot be modified during recovery.")));
+
 	/* lock before looking up attribute */
 	stats_lock_check_privileges(reloid);
 
 	stats_check_required_arg(fcinfo, attarginfo, ATTNAME_ARG);
 	attname = PG_GETARG_NAME(ATTNAME_ARG);
 	attnum = get_attnum(reloid, NameStr(*attname));
+
+	if (attnum < 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("cannot modify statistics on system column \"%s\"",
+						NameStr(*attname))));
+
 	if (attnum == InvalidAttrNumber)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_COLUMN),
@@ -865,11 +878,24 @@ pg_clear_attribute_stats(PG_FUNCTION_ARGS)
 	stats_check_required_arg(fcinfo, attarginfo, ATTRELATION_ARG);
 	reloid = PG_GETARG_OID(ATTRELATION_ARG);
 
+	if (RecoveryInProgress())
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("recovery is in progress"),
+				 errhint("Statistics cannot be modified during recovery.")));
+
 	stats_lock_check_privileges(reloid);
 
 	stats_check_required_arg(fcinfo, attarginfo, ATTNAME_ARG);
 	attname = PG_GETARG_NAME(ATTNAME_ARG);
 	attnum = get_attnum(reloid, NameStr(*attname));
+
+	if (attnum < 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("cannot clear statistics on system column \"%s\"",
+						NameStr(*attname))));
+
 	if (attnum == InvalidAttrNumber)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_COLUMN),

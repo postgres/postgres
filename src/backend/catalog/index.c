@@ -3395,7 +3395,7 @@ validate_index(Oid heapId, Oid indexId, Snapshot snapshot)
 
 	/* ambulkdelete updates progress metrics */
 	(void) index_bulk_delete(&ivinfo, NULL,
-							 validate_index_callback, (void *) &state);
+							 validate_index_callback, &state);
 
 	/* Execute the sort */
 	{

@@ -1075,9 +1075,19 @@ colorcomplement(struct nfa *nfa,
 
 	assert(of != from);
 
-	/* A RAINBOW arc matches all colors, making the complement empty */
+	/*
+	 * A RAINBOW arc matches all colors, making the complement empty.  But we
+	 * can't just return without making any arcs, because that would leave the
+	 * NFA disconnected which would break any future delsub().  Instead, make
+	 * a CANTMATCH arc.  Also set the HASCANTMATCH flag so we know we need to
+	 * clean that up at the start of NFA optimization.
+	 */
 	if (findarc(of, PLAIN, RAINBOW) != NULL)
+	{
+		newarc(nfa, CANTMATCH, 0, from, to);
+		nfa->flags |= HASCANTMATCH;
 		return;
+	}
 
 	/* Otherwise, transiently mark the colors that appear in of's out-arcs */
 	for (a = of->outs; a != NULL; a = a->outchain)
@@ -1089,6 +1099,12 @@ colorcomplement(struct nfa *nfa,
 			assert(!UNUSEDCOLOR(cd));
 			cd->flags |= COLMARK;
 		}
+
+		/*
+		 * There's no syntax for re-complementing a color set, so we cannot
+		 * see CANTMATCH arcs here.
+		 */
+		assert(a->type != CANTMATCH);
 	}
 
 	/* Scan colors, clear transient marks, add arcs for unmarked colors */

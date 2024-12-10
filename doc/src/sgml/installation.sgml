@@ -3582,33 +3582,9 @@ xcrun --show-sdk-path
 
    <para>
     PostgreSQL for Windows can be built using MinGW, a Unix-like build
-    environment for Microsoft operating systems.
-    The MinGW build procedure uses the normal build system described in
-    this chapter.
-   </para>
-
-   <para>
-    MinGW, the Unix-like build tools, and MSYS, a collection
-    of Unix tools required to run shell scripts
-    like <command>configure</command>, can be downloaded
-    from <ulink url="http://www.mingw.org/"></ulink>.  Neither is
-    required to run the resulting binaries; they are needed only for
-    creating the binaries.
-   </para>
-
-   <para>
-     To build 64 bit binaries using MinGW, install the 64 bit tool set
-     from <ulink url="https://mingw-w64.org/"></ulink>, put its bin
-     directory in the <envar>PATH</envar>, and run
-     <command>configure</command> with the
-     <command>--host=x86_64-w64-mingw32</command> option.
-   </para>
-
-   <para>
-    After you have everything installed, it is suggested that you
-    run <application>psql</application>
-    under <command>CMD.EXE</command>, as the MSYS console has
-    buffering issues.
+    environment for Windows.  It is recommended to use the <ulink
+    url="https://www.msys2.org/">MSYS2</ulink> environment for this and also
+    to install any prerequisite packages.
    </para>
 
    <sect3 id="mingw-crash-dumps">
@@ -3838,35 +3814,9 @@ make: *** [postgres] Error 1
         <productname>Bison</productname> and <productname>Flex</productname> are
         required.  Only <productname>Bison</productname> versions 2.3 and later
         will work. <productname>Flex</productname> must be version 2.5.35 or later.
+        Binaries can be downloaded from <ulink
+        url="https://github.com/lexxmark/winflexbison"></ulink>.
        </para>
-
-       <para>
-        Both <productname>Bison</productname> and <productname>Flex</productname>
-        are included in the <productname>msys</productname> tool suite, available
-        from <ulink url="http://www.mingw.org/wiki/MSYS"></ulink> as part of the
-        <productname>MinGW</productname> compiler suite.
-       </para>
-
-       <para>
-        You will need to add the directory containing
-        <filename>flex.exe</filename> and <filename>bison.exe</filename> to the
-        PATH environment variable. In the case of MinGW, the directory is the
-        <filename>\msys\1.0\bin</filename> subdirectory of your MinGW
-        installation directory.
-       </para>
-
-       <note>
-        <para>
-          The Bison distribution from GnuWin32 appears to have a bug that
-          causes Bison to malfunction when installed in a directory with
-          spaces in the name, such as the default location on English
-          installations <filename>C:\Program Files\GnuWin32</filename>.
-          Consider installing into <filename>C:\GnuWin32</filename> or use the
-          NTFS short name path to GnuWin32 in your PATH environment setting
-          (e.g., <filename>C:\PROGRA~1\GnuWin32</filename>).
-         </para>
-       </note>
-
        </listitem>
       </varlistentry>
      </variablelist>

@@ -1907,8 +1907,7 @@ ScanQueryForLocks(Query *parsetree, bool acquire)
 	 */
 	if (parsetree->hasSubLinks)
 	{
-		query_tree_walker(parsetree, ScanQueryWalker,
-						  (void *) &acquire,
+		query_tree_walker(parsetree, ScanQueryWalker, &acquire,
 						  QTW_IGNORE_RC_SUBQUERIES);
 	}
 }
@@ -1934,8 +1933,7 @@ ScanQueryWalker(Node *node, bool *acquire)
 	 * Do NOT recurse into Query nodes, because ScanQueryForLocks already
 	 * processed subselects of subselects for us.
 	 */
-	return expression_tree_walker(node, ScanQueryWalker,
-								  (void *) acquire);
+	return expression_tree_walker(node, ScanQueryWalker, acquire);
 }
 
 /*

@@ -145,6 +145,15 @@ SELECT pg_catalog.pg_set_attribute_stats(
     avg_width => 2::integer,
     n_distinct => 0.3::real);
 
+-- error: attribute is system column
+SELECT pg_catalog.pg_set_attribute_stats(
+    relation => 'stats_import.test'::regclass,
+    attname => 'xmin'::name,
+    inherited => false::boolean,
+    null_frac => 0.1::real,
+    avg_width => 2::integer,
+    n_distinct => 0.3::real);
+
 -- error: attname doesn't exist
 SELECT pg_catalog.pg_set_attribute_stats(
     relation => 'stats_import.test'::regclass,
@@ -153,6 +162,12 @@ SELECT pg_catalog.pg_set_attribute_stats(
     null_frac => 0.1::real,
     avg_width => 2::integer,
     n_distinct => 0.3::real);
+
+-- error: attribute is system column
+SELECT pg_catalog.pg_clear_attribute_stats(
+    relation => 'stats_import.test'::regclass,
+    attname => 'ctid'::name,
+    inherited => false::boolean);
 
 -- error: attname doesn't exist
 SELECT pg_catalog.pg_clear_attribute_stats(

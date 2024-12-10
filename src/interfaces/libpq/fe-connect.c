@@ -3509,22 +3509,12 @@ keep_going:						/* We will come back to here until there is
 					{
 						/*
 						 * Server failure of some sort, such as failure to
-						 * fork a backend process.  We need to process and
-						 * report the error message, which might be formatted
-						 * according to either protocol 2 or protocol 3.
-						 * Rather than duplicate the code for that, we flip
-						 * into AWAITING_RESPONSE state and let the code there
-						 * deal with it.  Note we have *not* consumed the "E"
-						 * byte here.
+						 * fork a backend process.  Don't bother retrieving
+						 * the error message; we should not trust it as the
+						 * server has not been authenticated yet.
 						 */
-						conn->status = CONNECTION_AWAITING_RESPONSE;
-
-						/*
-						 * Don't fall back to a plaintext connection after
-						 * reading the error.
-						 */
-						conn->failed_enc_methods |= conn->allowed_enc_methods & (~conn->current_enc_method);
-						goto keep_going;
+						libpq_append_conn_error(conn, "server sent an error response during SSL exchange");
+						goto error_return;
 					}
 					else
 					{
@@ -3600,13 +3590,9 @@ keep_going:						/* We will come back to here until there is
 					{
 						/*
 						 * Server failure of some sort, possibly protocol
-						 * version support failure.  We need to process and
-						 * report the error message, which might be formatted
-						 * according to either protocol 2 or protocol 3.
-						 * Rather than duplicate the code for that, we flip
-						 * into AWAITING_RESPONSE state and let the code there
-						 * deal with it.  Note we have *not* consumed the "E"
-						 * byte here.
+						 * version support failure.  Don't bother retrieving
+						 * the error message; we should not trust it anyway as
+						 * the server has not authenticated yet.
 						 *
 						 * Note that unlike on an error response to
 						 * SSLRequest, we allow falling back to SSL or
@@ -3615,8 +3601,8 @@ keep_going:						/* We will come back to here until there is
 						 * response might mean that we are connecting to a
 						 * pre-v12 server.
 						 */
-						conn->status = CONNECTION_AWAITING_RESPONSE;
-						goto keep_going;
+						libpq_append_conn_error(conn, "server sent an error response during GSS encryption exchange");
+						CONNECTION_FAILED();
 					}
 
 					/* mark byte consumed */
@@ -6839,7 +6825,9 @@ end:
 	/* Not at the end of the string yet?  Fail. */
 	if (*q != '\0')
 	{
-		libpq_append_error(errorMessage, "trailing data found: \"%s\"", str);
+		libpq_append_error(errorMessage,
+						   "unexpected spaces found in \"%s\", use percent-encoded spaces (%%20) instead",
+						   str);
 		free(buf);
 		return NULL;
 	}

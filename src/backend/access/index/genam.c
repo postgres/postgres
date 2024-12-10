@@ -449,6 +449,8 @@ systable_beginscan(Relation heapRelation,
 										 snapshot, nkeys, 0);
 		index_rescan(sysscan->iscan, idxkey, nkeys, NULL, 0);
 		sysscan->scan = NULL;
+
+		pfree(idxkey);
 	}
 	else
 	{
@@ -712,6 +714,8 @@ systable_beginscan_ordered(Relation heapRelation,
 									 snapshot, nkeys, 0);
 	index_rescan(sysscan->iscan, idxkey, nkeys, NULL, 0);
 	sysscan->scan = NULL;
+
+	pfree(idxkey);
 
 	/*
 	 * If CheckXidAlive is set then set a flag to indicate that system table

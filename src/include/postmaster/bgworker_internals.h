@@ -27,7 +27,7 @@
  * List of background workers, private to postmaster.
  *
  * All workers that are currently running will also have an entry in
- * BackendList.
+ * ActiveChildList.
  */
 typedef struct RegisteredBgWorker
 {

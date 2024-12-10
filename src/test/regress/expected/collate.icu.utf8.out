@@ -1274,6 +1274,30 @@ CREATE COLLATION ctest_det (provider = icu, locale = '', deterministic = true);
 NOTICE:  using standard form "und" for ICU locale ""
 CREATE COLLATION ctest_nondet (provider = icu, locale = '', deterministic = false);
 NOTICE:  using standard form "und" for ICU locale ""
+SELECT 'abc' LIKE 'abc' COLLATE ctest_det;
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT 'abc' LIKE 'a\bc' COLLATE ctest_det;
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT 'abc' LIKE 'abc' COLLATE ctest_nondet;
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT 'abc' LIKE 'a\bc' COLLATE ctest_nondet;
+ ?column? 
+----------
+ t
+(1 row)
+
 CREATE TABLE test6 (a int, b text);
 -- same string in different normal forms
 INSERT INTO test6 VALUES (1, U&'\00E4bc');
@@ -1292,6 +1316,19 @@ SELECT * FROM test6 WHERE b = 'äbc' COLLATE ctest_det;
 (1 row)
 
 SELECT * FROM test6 WHERE b = 'äbc' COLLATE ctest_nondet;
+ a |  b  
+---+-----
+ 1 | äbc
+ 2 | äbc
+(2 rows)
+
+SELECT * FROM test6 WHERE b LIKE 'äbc' COLLATE ctest_det;
+ a |  b  
+---+-----
+ 1 | äbc
+(1 row)
+
+SELECT * FROM test6 WHERE b LIKE 'äbc' COLLATE ctest_nondet;
  a |  b  
 ---+-----
  1 | äbc
@@ -1514,7 +1551,12 @@ SELECT x FROM test3ci WHERE x <> 'abc';
 (2 rows)
 
 SELECT x FROM test3ci WHERE x LIKE 'a%';
-ERROR:  nondeterministic collations are not supported for LIKE
+  x  
+-----
+ abc
+ ABC
+(2 rows)
+
 SELECT x FROM test3ci WHERE x ILIKE 'a%';
 ERROR:  nondeterministic collations are not supported for ILIKE
 SELECT x FROM test3ci WHERE x SIMILAR TO 'a%';
@@ -1632,7 +1674,12 @@ SELECT x FROM test3bpci WHERE x <> 'abc';
 (2 rows)
 
 SELECT x FROM test3bpci WHERE x LIKE 'a%';
-ERROR:  nondeterministic collations are not supported for LIKE
+  x  
+-----
+ abc
+ ABC
+(2 rows)
+
 SELECT x FROM test3bpci WHERE x ILIKE 'a%';
 ERROR:  nondeterministic collations are not supported for ILIKE
 SELECT x FROM test3bpci WHERE x SIMILAR TO 'a%';
@@ -1729,7 +1776,7 @@ SELECT string_to_array('ABCDEFGHI'::char(9) COLLATE case_insensitive, NULL, 'b')
 -- This tests the issue described in match_pattern_prefix().  In the
 -- absence of that check, the case_insensitive tests below would
 -- return no rows where they should logically return one.
-CREATE TABLE test4c (x text COLLATE "C");
+CREATE TABLE test4c (x text COLLATE case_insensitive);
 INSERT INTO test4c VALUES ('abc');
 CREATE INDEX ON test4c (x);
 SET enable_seqscan = off;
@@ -1743,10 +1790,18 @@ SELECT x FROM test4c WHERE x LIKE 'ABC%' COLLATE case_sensitive;  -- ok, no rows
 ---
 (0 rows)
 
-SELECT x FROM test4c WHERE x LIKE 'ABC' COLLATE case_insensitive;  -- error
-ERROR:  nondeterministic collations are not supported for LIKE
-SELECT x FROM test4c WHERE x LIKE 'ABC%' COLLATE case_insensitive;  -- error
-ERROR:  nondeterministic collations are not supported for LIKE
+SELECT x FROM test4c WHERE x LIKE 'ABC' COLLATE case_insensitive;  -- ok
+  x  
+-----
+ abc
+(1 row)
+
+SELECT x FROM test4c WHERE x LIKE 'ABC%' COLLATE case_insensitive;  -- ok
+  x  
+-----
+ abc
+(1 row)
+
 RESET enable_seqscan;
 -- Unicode special case: different variants of Greek lower case sigma.
 -- A naive implementation like citext that just does lower(x) =
@@ -1840,101 +1895,197 @@ SELECT * FROM test4 WHERE b = 'Cote' COLLATE case_insensitive;
  1 | cote
 (1 row)
 
--- foreign keys (should use collation of primary key)
--- PK is case-sensitive, FK is case-insensitive
+-- This is a tricky one.  A naive implementation would first test
+-- \00E4 matches \0061, which is true under ignore_accents, but then
+-- the rest of the string won't match anymore.  Therefore, the
+-- algorithm has to test whether the rest of the string matches, and
+-- if not try matching \00E4 against a longer substring like
+-- \0061\0308, which will then work out.
+SELECT U&'\0061\0308bc' LIKE U&'\00E4_c' COLLATE ignore_accents;
+ ?column? 
+----------
+ t
+(1 row)
+
+-- and in reverse:
+SELECT U&'\00E4bc' LIKE U&'\0061\0308_c' COLLATE ignore_accents;
+ ?column? 
+----------
+ t
+(1 row)
+
+-- inner % matches b:
+SELECT U&'\0061\0308bc' LIKE U&'\00E4%c' COLLATE ignore_accents;
+ ?column? 
+----------
+ t
+(1 row)
+
+-- inner %% matches b then zero:
+SELECT U&'\0061\0308bc' LIKE U&'\00E4%%c' COLLATE ignore_accents;
+ ?column? 
+----------
+ t
+(1 row)
+
+-- inner %% matches b then zero:
+SELECT U&'cb\0061\0308' LIKE U&'c%%\00E4' COLLATE ignore_accents;
+ ?column? 
+----------
+ t
+(1 row)
+
+-- trailing _ matches two codepoints that form one grapheme:
+SELECT U&'cb\0061\0308' LIKE U&'cb_' COLLATE ignore_accents;
+ ?column? 
+----------
+ f
+(1 row)
+
+-- trailing __ matches two codepoints that form one grapheme:
+SELECT U&'cb\0061\0308' LIKE U&'cb__' COLLATE ignore_accents;
+ ?column? 
+----------
+ t
+(1 row)
+
+-- leading % matches zero:
+SELECT U&'\0061\0308bc' LIKE U&'%\00E4bc' COLLATE ignore_accents;
+ ?column? 
+----------
+ t
+(1 row)
+
+-- leading % matches zero (with later %):
+SELECT U&'\0061\0308bc' LIKE U&'%\00E4%c' COLLATE ignore_accents;
+ ?column? 
+----------
+ t
+(1 row)
+
+-- trailing % matches zero:
+SELECT U&'\0061\0308bc' LIKE U&'\00E4bc%' COLLATE ignore_accents;
+ ?column? 
+----------
+ t
+(1 row)
+
+-- trailing % matches zero (with previous %):
+SELECT U&'\0061\0308bc' LIKE U&'\00E4%c%' COLLATE ignore_accents;
+ ?column? 
+----------
+ t
+(1 row)
+
+-- _ versus two codepoints that form one grapheme:
+SELECT U&'\0061\0308bc' LIKE U&'_bc' COLLATE ignore_accents;
+ ?column? 
+----------
+ t
+(1 row)
+
+-- (actually this matches because)
+SELECT U&'\0308bc' = 'bc' COLLATE ignore_accents;
+ ?column? 
+----------
+ t
+(1 row)
+
+-- __ matches two codepoints that form one grapheme:
+SELECT U&'\0061\0308bc' LIKE U&'__bc' COLLATE ignore_accents;
+ ?column? 
+----------
+ t
+(1 row)
+
+-- _ matches one codepoint that forms half a grapheme:
+SELECT U&'\0061\0308bc' LIKE U&'_\0308bc' COLLATE ignore_accents;
+ ?column? 
+----------
+ t
+(1 row)
+
+-- doesn't match because \00e4 doesn't match only \0308
+SELECT U&'\0061\0308bc' LIKE U&'_\00e4bc' COLLATE ignore_accents;
+ ?column? 
+----------
+ f
+(1 row)
+
+-- escape character at end of pattern
+SELECT 'foox' LIKE 'foo\' COLLATE ignore_accents;
+ERROR:  LIKE pattern must not end with escape character
+-- foreign keys (mixing different nondeterministic collations not allowed)
 CREATE TABLE test10pk (x text COLLATE case_sensitive PRIMARY KEY);
-INSERT INTO test10pk VALUES ('abc'), ('def'), ('ghi');
-CREATE TABLE test10fk (x text COLLATE case_insensitive REFERENCES test10pk (x) ON UPDATE CASCADE ON DELETE CASCADE);
-INSERT INTO test10fk VALUES ('abc');  -- ok
-INSERT INTO test10fk VALUES ('ABC');  -- error
-ERROR:  insert or update on table "test10fk" violates foreign key constraint "test10fk_x_fkey"
-DETAIL:  Key (x)=(ABC) is not present in table "test10pk".
-INSERT INTO test10fk VALUES ('xyz');  -- error
-ERROR:  insert or update on table "test10fk" violates foreign key constraint "test10fk_x_fkey"
-DETAIL:  Key (x)=(xyz) is not present in table "test10pk".
-SELECT * FROM test10pk;
-  x  
------
- abc
- def
- ghi
-(3 rows)
-
-SELECT * FROM test10fk;
-  x  
------
- abc
-(1 row)
-
--- restrict update even though the values are "equal" in the FK table
-UPDATE test10fk SET x = 'ABC' WHERE x = 'abc';  -- error
-ERROR:  insert or update on table "test10fk" violates foreign key constraint "test10fk_x_fkey"
-DETAIL:  Key (x)=(ABC) is not present in table "test10pk".
-SELECT * FROM test10fk;
-  x  
------
- abc
-(1 row)
-
-DELETE FROM test10pk WHERE x = 'abc';
-SELECT * FROM test10pk;
-  x  
------
- def
- ghi
-(2 rows)
-
-SELECT * FROM test10fk;
- x 
----
-(0 rows)
-
--- PK is case-insensitive, FK is case-sensitive
+CREATE TABLE test10fk (x text COLLATE case_insensitive REFERENCES test10pk (x) ON UPDATE CASCADE ON DELETE CASCADE);  -- error
+ERROR:  foreign key constraint "test10fk_x_fkey" cannot be implemented
+DETAIL:  Key columns "x" of the referencing table and "x" of the referenced table have incompatible collations: "case_insensitive" and "case_sensitive".  If either collation is nondeterministic, then both collations have to be the same.
 CREATE TABLE test11pk (x text COLLATE case_insensitive PRIMARY KEY);
-INSERT INTO test11pk VALUES ('abc'), ('def'), ('ghi');
-CREATE TABLE test11fk (x text COLLATE case_sensitive REFERENCES test11pk (x) ON UPDATE CASCADE ON DELETE CASCADE);
-INSERT INTO test11fk VALUES ('abc');  -- ok
-INSERT INTO test11fk VALUES ('ABC');  -- ok
-INSERT INTO test11fk VALUES ('xyz');  -- error
-ERROR:  insert or update on table "test11fk" violates foreign key constraint "test11fk_x_fkey"
-DETAIL:  Key (x)=(xyz) is not present in table "test11pk".
-SELECT * FROM test11pk;
+CREATE TABLE test11fk (x text COLLATE case_sensitive REFERENCES test11pk (x) ON UPDATE CASCADE ON DELETE CASCADE);  -- error
+ERROR:  foreign key constraint "test11fk_x_fkey" cannot be implemented
+DETAIL:  Key columns "x" of the referencing table and "x" of the referenced table have incompatible collations: "case_sensitive" and "case_insensitive".  If either collation is nondeterministic, then both collations have to be the same.
+-- foreign key actions
+-- Some of the behaviors are most easily visible with a
+-- case-insensitive collation.
+CREATE TABLE test12pk (x text COLLATE case_insensitive PRIMARY KEY);
+CREATE TABLE test12fk (a int, b text COLLATE case_insensitive REFERENCES test12pk (x) ON UPDATE NO ACTION);
+INSERT INTO test12pk VALUES ('abc');
+INSERT INTO test12fk VALUES (1, 'abc'), (2, 'ABC');
+UPDATE test12pk SET x = 'ABC' WHERE x = 'abc';  -- ok
+SELECT * FROM test12pk;
+  x  
+-----
+ ABC
+(1 row)
+
+SELECT * FROM test12fk;  -- no updates here
+ a |  b  
+---+-----
+ 1 | abc
+ 2 | ABC
+(2 rows)
+
+DROP TABLE test12pk, test12fk;
+CREATE TABLE test12pk (x text COLLATE case_insensitive PRIMARY KEY);
+CREATE TABLE test12fk (a int, b text COLLATE case_insensitive REFERENCES test12pk (x) ON UPDATE RESTRICT);
+INSERT INTO test12pk VALUES ('abc');
+INSERT INTO test12fk VALUES (1, 'abc'), (2, 'ABC');
+UPDATE test12pk SET x = 'ABC' WHERE x = 'abc';  -- restrict violation
+ERROR:  update or delete on table "test12pk" violates RESTRICT setting of foreign key constraint "test12fk_b_fkey" on table "test12fk"
+DETAIL:  Key (x)=(abc) is referenced from table "test12fk".
+SELECT * FROM test12pk;
   x  
 -----
  abc
- def
- ghi
-(3 rows)
+(1 row)
 
-SELECT * FROM test11fk;
-  x  
------
- abc
- ABC
+SELECT * FROM test12fk;
+ a |  b  
+---+-----
+ 1 | abc
+ 2 | ABC
 (2 rows)
 
--- cascade update even though the values are "equal" in the PK table
-UPDATE test11pk SET x = 'ABC' WHERE x = 'abc';
-SELECT * FROM test11fk;
+DROP TABLE test12pk, test12fk;
+CREATE TABLE test12pk (x text COLLATE case_insensitive PRIMARY KEY);
+CREATE TABLE test12fk (a int, b text COLLATE case_insensitive REFERENCES test12pk (x) ON UPDATE CASCADE);
+INSERT INTO test12pk VALUES ('abc');
+INSERT INTO test12fk VALUES (1, 'abc'), (2, 'ABC');
+UPDATE test12pk SET x = 'ABC' WHERE x = 'abc';  -- ok
+SELECT * FROM test12pk;
   x  
 -----
  ABC
- ABC
+(1 row)
+
+SELECT * FROM test12fk;  -- was updated
+ a |  b  
+---+-----
+ 1 | ABC
+ 2 | ABC
 (2 rows)
 
-DELETE FROM test11pk WHERE x = 'abc';
-SELECT * FROM test11pk;
-  x  
------
- def
- ghi
-(2 rows)
-
-SELECT * FROM test11fk;
- x 
----
-(0 rows)
-
+DROP TABLE test12pk, test12fk;
 -- partitioning
 CREATE TABLE test20 (a int, b text COLLATE case_insensitive) PARTITION BY LIST (b);
 CREATE TABLE test20_1 PARTITION OF test20 FOR VALUES IN ('abc');

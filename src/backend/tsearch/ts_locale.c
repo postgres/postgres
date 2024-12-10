@@ -142,7 +142,7 @@ tsearch_readline_begin(tsearch_readline_state *stp,
 	stp->curline = NULL;
 	/* Setup error traceback support for ereport() */
 	stp->cb.callback = tsearch_readline_callback;
-	stp->cb.arg = (void *) stp;
+	stp->cb.arg = stp;
 	stp->cb.previous = error_context_stack;
 	error_context_stack = &stp->cb;
 	return true;

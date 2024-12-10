@@ -74,13 +74,13 @@ pg_leftmost_one_pos64(uint64 word)
 #ifdef HAVE__BUILTIN_CLZ
 	Assert(word != 0);
 
-#if defined(HAVE_LONG_INT_64)
+#if SIZEOF_LONG == 8
 	return 63 - __builtin_clzl(word);
-#elif defined(HAVE_LONG_LONG_INT_64)
+#elif SIZEOF_LONG_LONG == 8
 	return 63 - __builtin_clzll(word);
 #else
-#error must have a working 64-bit integer datatype
-#endif							/* HAVE_LONG_INT_64 */
+#error "cannot find integer type of the same size as uint64_t"
+#endif
 
 #elif defined(_MSC_VER) && (defined(_M_AMD64) || defined(_M_ARM64))
 	unsigned long result;
@@ -147,13 +147,13 @@ pg_rightmost_one_pos64(uint64 word)
 #ifdef HAVE__BUILTIN_CTZ
 	Assert(word != 0);
 
-#if defined(HAVE_LONG_INT_64)
+#if SIZEOF_LONG == 8
 	return __builtin_ctzl(word);
-#elif defined(HAVE_LONG_LONG_INT_64)
+#elif SIZEOF_LONG_LONG == 8
 	return __builtin_ctzll(word);
 #else
-#error must have a working 64-bit integer datatype
-#endif							/* HAVE_LONG_INT_64 */
+#error "cannot find integer type of the same size as uint64_t"
+#endif
 
 #elif defined(_MSC_VER) && (defined(_M_AMD64) || defined(_M_ARM64))
 	unsigned long result;

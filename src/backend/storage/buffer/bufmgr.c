@@ -3801,7 +3801,7 @@ FlushBuffer(BufferDesc *buf, SMgrRelation reln, IOObject io_object,
 
 	/* Setup error traceback support for ereport() */
 	errcallback.callback = shared_buffer_write_error_callback;
-	errcallback.arg = (void *) buf;
+	errcallback.arg = buf;
 	errcallback.previous = error_context_stack;
 	error_context_stack = &errcallback;
 
@@ -4292,7 +4292,7 @@ DropRelationsAllBuffers(SMgrRelation *smgr_reln, int nlocators)
 			RelFileLocator locator;
 
 			locator = BufTagGetRelFileLocator(&bufHdr->tag);
-			rlocator = bsearch((const void *) &(locator),
+			rlocator = bsearch(&locator,
 							   locators, n, sizeof(RelFileLocator),
 							   rlocator_comparator);
 		}
@@ -4514,7 +4514,7 @@ FlushRelationBuffers(Relation rel)
 
 				/* Setup error traceback support for ereport() */
 				errcallback.callback = local_buffer_write_error_callback;
-				errcallback.arg = (void *) bufHdr;
+				errcallback.arg = bufHdr;
 				errcallback.previous = error_context_stack;
 				error_context_stack = &errcallback;
 
@@ -4646,7 +4646,7 @@ FlushRelationsAllBuffers(SMgrRelation *smgrs, int nrels)
 			RelFileLocator rlocator;
 
 			rlocator = BufTagGetRelFileLocator(&bufHdr->tag);
-			srelent = bsearch((const void *) &(rlocator),
+			srelent = bsearch(&rlocator,
 							  srels, nrels, sizeof(SMgrSortArray),
 							  rlocator_comparator);
 		}

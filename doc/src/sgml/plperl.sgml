@@ -1093,6 +1093,19 @@ $$ LANGUAGE plperl;
    be permitted to use this language.
   </para>
 
+  <warning>
+   <para>
+    Trusted PL/Perl relies on the Perl <literal>Opcode</literal> module to
+    preserve security.
+    Perl
+    <ulink url="https://perldoc.perl.org/Opcode#WARNING">documents</ulink>
+    that the module is not effective for the trusted PL/Perl use case.  If
+    your security needs are incompatible with the uncertainty in that warning,
+    consider executing <literal>REVOKE USAGE ON LANGUAGE plperl FROM
+    PUBLIC</literal>.
+   </para>
+  </warning>
+
   <para>
    Here is an example of a function that will not work because file
    system operations are not allowed for security reasons:

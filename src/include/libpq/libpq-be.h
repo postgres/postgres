@@ -207,12 +207,17 @@ typedef struct Port
 	bool		last_read_was_eof;
 
 	/*
-	 * OpenSSL structures. (Keep these last so that the locations of other
-	 * fields are the same whether or not you build with SSL enabled.)
+	 * OpenSSL structures.  As with GSSAPI above, to keep struct offsets
+	 * constant, NULL pointers are stored when SSL support is not enabled.
+	 * (Although extensions should have no business accessing the raw_buf
+	 * fields anyway.)
 	 */
 #ifdef USE_OPENSSL
 	SSL		   *ssl;
 	X509	   *peer;
+#else
+	void	   *ssl;
+	void	   *peer;
 #endif
 
 	/*

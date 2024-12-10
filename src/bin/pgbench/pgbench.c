@@ -4944,6 +4944,7 @@ initPopulateTable(PGconn *con, const char *table, int64 base,
 	int			n;
 	int64		k;
 	int			chars = 0;
+	int			prev_chars = 0;
 	PGresult   *res;
 	PQExpBufferData sql;
 	char		copy_statement[256];
@@ -5004,10 +5005,10 @@ initPopulateTable(PGconn *con, const char *table, int64 base,
 			double		elapsed_sec = PG_TIME_GET_DOUBLE(pg_time_now() - start);
 			double		remaining_sec = ((double) total - j) * elapsed_sec / j;
 
-			chars = fprintf(stderr, INT64_FORMAT " of " INT64_FORMAT " tuples (%d%%) of %s done (elapsed %.2f s, remaining %.2f s)%c",
+			chars = fprintf(stderr, INT64_FORMAT " of " INT64_FORMAT " tuples (%d%%) of %s done (elapsed %.2f s, remaining %.2f s)",
 							j, total,
 							(int) ((j * 100) / total),
-							table, elapsed_sec, remaining_sec, eol);
+							table, elapsed_sec, remaining_sec);
 		}
 		/* let's not call the timing for each row, but only each 100 rows */
 		else if (use_quiet && (j % 100 == 0))
@@ -5018,19 +5019,29 @@ initPopulateTable(PGconn *con, const char *table, int64 base,
 			/* have we reached the next interval (or end)? */
 			if ((j == total) || (elapsed_sec >= log_interval * LOG_STEP_SECONDS))
 			{
-				chars = fprintf(stderr, INT64_FORMAT " of " INT64_FORMAT " tuples (%d%%) of %s done (elapsed %.2f s, remaining %.2f s)%c",
+				chars = fprintf(stderr, INT64_FORMAT " of " INT64_FORMAT " tuples (%d%%) of %s done (elapsed %.2f s, remaining %.2f s)",
 								j, total,
 								(int) ((j * 100) / total),
-								table, elapsed_sec, remaining_sec, eol);
+								table, elapsed_sec, remaining_sec);
 
 				/* skip to the next interval */
 				log_interval = (int) ceil(elapsed_sec / LOG_STEP_SECONDS);
 			}
 		}
+
+		/*
+		 * If the previous progress message is longer than the current one,
+		 * add spaces to the current line to fully overwrite any remaining
+		 * characters from the previous message.
+		 */
+		if (prev_chars > chars)
+			fprintf(stderr, "%*c", prev_chars - chars, ' ');
+		fputc(eol, stderr);
+		prev_chars = chars;
 	}
 
 	if (chars != 0 && eol != '\n')
-		fprintf(stderr, "%*c\r", chars - 1, ' ');	/* Clear the current line */
+		fprintf(stderr, "%*c\r", chars, ' ');	/* Clear the current line */
 
 	if (PQputline(con, "\\.\n"))
 		pg_fatal("very last PQputline failed");
@@ -6557,13 +6568,13 @@ printResults(StatsData *total,
 					SimpleStats *cstats = &(*commands)->stats;
 
 					if (max_tries == 1)
-						printf("   %11.3f  %10" INT64_MODIFIER "d  %s\n",
+						printf("   %11.3f  %10" PRId64 " %s\n",
 							   (cstats->count > 0) ?
 							   1000.0 * cstats->sum / cstats->count : 0.0,
 							   (*commands)->failures,
 							   (*commands)->first_line);
 					else
-						printf("   %11.3f  %10" INT64_MODIFIER "d  %10" INT64_MODIFIER "d  %s\n",
+						printf("   %11.3f  %10" PRId64 " %10" PRId64 " %s\n",
 							   (cstats->count > 0) ?
 							   1000.0 * cstats->sum / cstats->count : 0.0,
 							   (*commands)->failures,

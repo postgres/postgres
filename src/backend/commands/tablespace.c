@@ -1290,7 +1290,7 @@ check_temp_tablespaces(char **newval, void **extra, GucSource source)
 			return false;
 		myextra->numSpcs = numSpcs;
 		memcpy(myextra->tblSpcs, tblSpcs, numSpcs * sizeof(Oid));
-		*extra = (void *) myextra;
+		*extra = myextra;
 
 		pfree(tblSpcs);
 	}

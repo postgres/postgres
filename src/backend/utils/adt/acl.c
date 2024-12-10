@@ -1808,7 +1808,7 @@ aclexplode(PG_FUNCTION_ARGS)
 		idx = (int *) palloc(sizeof(int[2]));
 		idx[0] = 0;				/* ACL array item index */
 		idx[1] = -1;			/* privilege type counter */
-		funcctx->user_fctx = (void *) idx;
+		funcctx->user_fctx = idx;
 
 		MemoryContextSwitchTo(oldcontext);
 	}

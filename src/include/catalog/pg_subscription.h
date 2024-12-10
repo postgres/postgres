@@ -23,26 +23,6 @@
 #include "lib/stringinfo.h"
 #include "nodes/pg_list.h"
 
-/*
- * two_phase tri-state values. See comments atop worker.c to know more about
- * these states.
- */
-#define LOGICALREP_TWOPHASE_STATE_DISABLED 'd'
-#define LOGICALREP_TWOPHASE_STATE_PENDING 'p'
-#define LOGICALREP_TWOPHASE_STATE_ENABLED 'e'
-
-/*
- * The subscription will request the publisher to only send changes that do not
- * have any origin.
- */
-#define LOGICALREP_ORIGIN_NONE "none"
-
-/*
- * The subscription will request the publisher to send changes regardless
- * of their origin.
- */
-#define LOGICALREP_ORIGIN_ANY "any"
-
 /* ----------------
  *		pg_subscription definition. cpp turns this into
  *		typedef struct FormData_pg_subscription
@@ -159,6 +139,28 @@ typedef struct Subscription
 								 * specified origin */
 } Subscription;
 
+#ifdef EXPOSE_TO_CLIENT_CODE
+
+/*
+ * two_phase tri-state values. See comments atop worker.c to know more about
+ * these states.
+ */
+#define LOGICALREP_TWOPHASE_STATE_DISABLED 'd'
+#define LOGICALREP_TWOPHASE_STATE_PENDING 'p'
+#define LOGICALREP_TWOPHASE_STATE_ENABLED 'e'
+
+/*
+ * The subscription will request the publisher to only send changes that do not
+ * have any origin.
+ */
+#define LOGICALREP_ORIGIN_NONE "none"
+
+/*
+ * The subscription will request the publisher to send changes regardless
+ * of their origin.
+ */
+#define LOGICALREP_ORIGIN_ANY "any"
+
 /* Disallow streaming in-progress transactions. */
 #define LOGICALREP_STREAM_OFF 'f'
 
@@ -173,6 +175,8 @@ typedef struct Subscription
  * apply worker.
  */
 #define LOGICALREP_STREAM_PARALLEL 'p'
+
+#endif							/* EXPOSE_TO_CLIENT_CODE */
 
 extern Subscription *GetSubscription(Oid subid, bool missing_ok);
 extern void FreeSubscription(Subscription *sub);

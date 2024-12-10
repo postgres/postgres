@@ -1913,7 +1913,7 @@ ApplyWalRecord(XLogReaderState *xlogreader, XLogRecord *record, TimeLineID *repl
 
 	/* Setup error traceback support for ereport() */
 	errcallback.callback = rm_redo_error_callback;
-	errcallback.arg = (void *) xlogreader;
+	errcallback.arg = xlogreader;
 	errcallback.previous = error_context_stack;
 	error_context_stack = &errcallback;
 
@@ -4821,7 +4821,7 @@ check_recovery_target_lsn(char **newval, void **extra, GucSource source)
 
 		myextra = (XLogRecPtr *) guc_malloc(ERROR, sizeof(XLogRecPtr));
 		*myextra = lsn;
-		*extra = (void *) myextra;
+		*extra = myextra;
 	}
 	return true;
 }
@@ -4933,7 +4933,7 @@ check_recovery_target_time(char **newval, void **extra, GucSource source)
 
 			if (tm2timestamp(tm, fsec, &tz, &timestamp) != 0)
 			{
-				GUC_check_errdetail("timestamp out of range: \"%s\"", str);
+				GUC_check_errdetail("Timestamp out of range: \"%s\".", str);
 				return false;
 			}
 		}
@@ -4985,7 +4985,7 @@ check_recovery_target_timeline(char **newval, void **extra, GucSource source)
 
 	myextra = (RecoveryTargetTimeLineGoal *) guc_malloc(ERROR, sizeof(RecoveryTargetTimeLineGoal));
 	*myextra = rttg;
-	*extra = (void *) myextra;
+	*extra = myextra;
 
 	return true;
 }
@@ -5021,7 +5021,7 @@ check_recovery_target_xid(char **newval, void **extra, GucSource source)
 
 		myextra = (TransactionId *) guc_malloc(ERROR, sizeof(TransactionId));
 		*myextra = xid;
-		*extra = (void *) myextra;
+		*extra = myextra;
 	}
 	return true;
 }

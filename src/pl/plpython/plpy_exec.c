@@ -80,10 +80,10 @@ PLy_exec_function(FunctionCallInfo fcinfo, PLyProcedure *proc)
 										   sizeof(PLySRFState));
 				/* Immediately register cleanup callback */
 				srfstate->callback.func = plpython_srf_cleanup_callback;
-				srfstate->callback.arg = (void *) srfstate;
+				srfstate->callback.arg = srfstate;
 				MemoryContextRegisterResetCallback(funcctx->multi_call_memory_ctx,
 												   &srfstate->callback);
-				funcctx->user_fctx = (void *) srfstate;
+				funcctx->user_fctx = srfstate;
 			}
 			/* Every call setup */
 			funcctx = SRF_PERCALL_SETUP();

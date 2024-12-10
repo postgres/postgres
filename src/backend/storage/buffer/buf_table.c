@@ -77,7 +77,7 @@ InitBufTable(int size)
 uint32
 BufTableHashCode(BufferTag *tagPtr)
 {
-	return get_hash_value(SharedBufHash, (void *) tagPtr);
+	return get_hash_value(SharedBufHash, tagPtr);
 }
 
 /*

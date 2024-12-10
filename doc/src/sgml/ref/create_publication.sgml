@@ -312,6 +312,14 @@ CREATE PUBLICATION <replaceable class="parameter">name</replaceable>
   </para>
 
   <para>
+   The generated columns that are part of <literal>REPLICA IDENTITY</literal>
+   must be published explicitly either by listing them in the column list or
+   by enabling the <literal>publish_generated_columns</literal> option, in
+   order for <command>UPDATE</command> and <command>DELETE</command> operations
+   to be published.
+  </para>
+
+  <para>
    The row filter on a table becomes redundant if
    <literal>FOR TABLES IN SCHEMA</literal> is specified and the table
    belongs to the referred schema.

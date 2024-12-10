@@ -751,7 +751,7 @@ tuplestore_puttupleslot(Tuplestorestate *state,
 	tuple = ExecCopySlotMinimalTuple(slot);
 	USEMEM(state, GetMemoryChunkSpace(tuple));
 
-	tuplestore_puttuple_common(state, (void *) tuple);
+	tuplestore_puttuple_common(state, tuple);
 
 	MemoryContextSwitchTo(oldcxt);
 }
@@ -771,7 +771,7 @@ tuplestore_puttuple(Tuplestorestate *state, HeapTuple tuple)
 	 */
 	tuple = COPYTUP(state, tuple);
 
-	tuplestore_puttuple_common(state, (void *) tuple);
+	tuplestore_puttuple_common(state, tuple);
 
 	MemoryContextSwitchTo(oldcxt);
 }
@@ -790,7 +790,7 @@ tuplestore_putvalues(Tuplestorestate *state, TupleDesc tdesc,
 	tuple = heap_form_minimal_tuple(tdesc, values, isnull);
 	USEMEM(state, GetMemoryChunkSpace(tuple));
 
-	tuplestore_puttuple_common(state, (void *) tuple);
+	tuplestore_puttuple_common(state, tuple);
 
 	MemoryContextSwitchTo(oldcxt);
 }
@@ -1592,7 +1592,7 @@ copytup_heap(Tuplestorestate *state, void *tup)
 
 	tuple = minimal_tuple_from_heap_tuple((HeapTuple) tup);
 	USEMEM(state, GetMemoryChunkSpace(tuple));
-	return (void *) tuple;
+	return tuple;
 }
 
 static void
@@ -1629,5 +1629,5 @@ readtup_heap(Tuplestorestate *state, unsigned int len)
 	BufFileReadExact(state->myfile, tupbody, tupbodylen);
 	if (state->backward)		/* need trailing length word? */
 		BufFileReadExact(state->myfile, &tuplen, sizeof(tuplen));
-	return (void *) tuple;
+	return tuple;
 }

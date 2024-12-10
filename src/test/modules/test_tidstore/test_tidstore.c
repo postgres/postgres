@@ -292,13 +292,13 @@ check_set_block_offsets(PG_FUNCTION_ARGS)
 	qsort(items.lookup_tids, items.num_tids, sizeof(ItemPointerData), itemptr_cmp);
 	for (int i = 0; i < items.num_tids; i++)
 	{
-		if (itemptr_cmp((const void *) &items.insert_tids[i], (const void *) &items.iter_tids[i]) != 0)
+		if (itemptr_cmp(&items.insert_tids[i], &items.iter_tids[i]) != 0)
 			elog(ERROR, "TID iter array doesn't match verification array, got (%u,%u) expected (%u,%u)",
 				 ItemPointerGetBlockNumber(&items.iter_tids[i]),
 				 ItemPointerGetOffsetNumber(&items.iter_tids[i]),
 				 ItemPointerGetBlockNumber(&items.insert_tids[i]),
 				 ItemPointerGetOffsetNumber(&items.insert_tids[i]));
-		if (itemptr_cmp((const void *) &items.insert_tids[i], (const void *) &items.lookup_tids[i]) != 0)
+		if (itemptr_cmp(&items.insert_tids[i], &items.lookup_tids[i]) != 0)
 			elog(ERROR, "TID lookup array doesn't match verification array, got (%u,%u) expected (%u,%u)",
 				 ItemPointerGetBlockNumber(&items.lookup_tids[i]),
 				 ItemPointerGetOffsetNumber(&items.lookup_tids[i]),

@@ -1283,7 +1283,6 @@ exec_simple_query(const char *query_string)
 		(void) PortalRun(portal,
 						 FETCH_ALL,
 						 true,	/* always top level */
-						 true,
 						 receiver,
 						 receiver,
 						 &qc);
@@ -1816,7 +1815,7 @@ exec_bind_message(StringInfo input_message)
 		one_param_data.paramval = NULL;
 		params_errcxt.previous = error_context_stack;
 		params_errcxt.callback = bind_param_error_callback;
-		params_errcxt.arg = (void *) &one_param_data;
+		params_errcxt.arg = &one_param_data;
 		error_context_stack = &params_errcxt;
 
 		params = makeParamList(numParams);
@@ -2006,7 +2005,7 @@ exec_bind_message(StringInfo input_message)
 	params_data.params = params;
 	params_errcxt.previous = error_context_stack;
 	params_errcxt.callback = ParamsErrorCallback;
-	params_errcxt.arg = (void *) &params_data;
+	params_errcxt.arg = &params_data;
 	error_context_stack = &params_errcxt;
 
 	/* Get the result format codes */
@@ -2251,7 +2250,7 @@ exec_execute_message(const char *portal_name, long max_rows)
 	params_data.params = portalParams;
 	params_errcxt.previous = error_context_stack;
 	params_errcxt.callback = ParamsErrorCallback;
-	params_errcxt.arg = (void *) &params_data;
+	params_errcxt.arg = &params_data;
 	error_context_stack = &params_errcxt;
 
 	if (max_rows <= 0)
@@ -2260,7 +2259,6 @@ exec_execute_message(const char *portal_name, long max_rows)
 	completed = PortalRun(portal,
 						  max_rows,
 						  true, /* always top level */
-						  !execute_is_fetch && max_rows == FETCH_ALL,
 						  receiver,
 						  receiver,
 						  &qc);
@@ -2779,6 +2777,17 @@ start_xact_command(void)
 		StartTransactionCommand();
 
 		xact_started = true;
+	}
+	else if (MyXactFlags & XACT_FLAGS_PIPELINING)
+	{
+		/*
+		 * When the first Execute message is completed, following commands
+		 * will be done in an implicit transaction block created via
+		 * pipelining. The transaction state needs to be updated to an
+		 * implicit block if we're not already in a transaction block (like
+		 * one started by an explicit BEGIN).
+		 */
+		BeginImplicitTransactionBlock();
 	}
 
 	/*
@@ -3936,8 +3945,21 @@ process_postgres_switches(int argc, char *argv[], GucContext ctx,
 				/* ignored for consistency with the postmaster */
 				break;
 
-			case 'c':
 			case '-':
+
+				/*
+				 * Error if the user misplaced a special must-be-first option
+				 * for dispatching to a subprogram.  parse_dispatch_option()
+				 * returns DISPATCH_POSTMASTER if it doesn't find a match, so
+				 * error for anything else.
+				 */
+				if (parse_dispatch_option(optarg) != DISPATCH_POSTMASTER)
+					ereport(ERROR,
+							(errcode(ERRCODE_SYNTAX_ERROR),
+							 errmsg("--%s must be first argument", optarg)));
+
+				/* FALLTHROUGH */
+			case 'c':
 				{
 					char	   *name,
 							   *value;
@@ -4188,6 +4210,12 @@ PostgresSingleUserMain(int argc, char *argv[],
 
 	/* Initialize MaxBackends */
 	InitializeMaxBackends();
+
+	/*
+	 * We don't need postmaster child slots in single-user mode, but
+	 * initialize them anyway to avoid having special handling.
+	 */
+	InitPostmasterChildSlots();
 
 	/* Initialize size of fast-path lock cache. */
 	InitializeFastPathLocks();
@@ -4985,6 +5013,13 @@ PostgresMain(const char *dbname, const char *username)
 
 			case PqMsg_Sync:
 				pq_getmsgend(&input_message);
+
+				/*
+				 * If pipelining was used, we may be in an implicit
+				 * transaction block. Close it before calling
+				 * finish_xact_command.
+				 */
+				EndImplicitTransactionBlock();
 				finish_xact_command();
 				valgrind_report_error_query("SYNC message");
 				send_ready_for_query = true;

@@ -1,0 +1,73 @@
+-- This is borderline unsafe in that an additional login-capable user exists
+-- during the test run.  Under installcheck, a too-permissive pg_hba.conf
+-- might allow unwanted logins as regress_authenticated_user_ssa.
+
+-- Setup catalog state.
+ALTER USER regress_authenticated_user_db_ssa superuser;
+ALTER USER regress_authenticated_user_ssa superuser;
+CREATE ROLE regress_session_user;
+CREATE ROLE regress_current_user;
+GRANT regress_current_user TO regress_authenticated_user_db_sr;
+GRANT regress_current_user TO regress_authenticated_user_sr;
+GRANT regress_session_user TO regress_authenticated_user_db_ssa;
+GRANT regress_session_user TO regress_authenticated_user_ssa;
+DO $$BEGIN EXECUTE format(
+	'ALTER DATABASE %I SET session_authorization = regress_session_user',
+	current_catalog); END$$;
+ALTER ROLE regress_authenticated_user_ssa
+	SET session_authorization = regress_session_user;
+ALTER ROLE regress_authenticated_user_sr SET ROLE = regress_current_user;
+
+
+-- Test ALTER DATABASE consequences
+
+-- The longstanding historical behavior is that session_authorization in
+-- setconfig has no effect.  Hence, session_user remains
+-- regress_authenticated_user_ssa.  See comment in InitializeSessionUserId().
+\c - regress_authenticated_user_db_ssa
+SELECT current_user, session_user;
+-- We document "The DEFAULT and RESET forms reset the session and current user
+-- identifiers to be the originally authenticated user name."  If we let
+-- session_authorization in setconfig have an effect, we'll need to decide
+-- whether to make RESET differ from DEFAULT.
+RESET SESSION AUTHORIZATION;
+SELECT current_user, session_user;
+DO $$BEGIN
+	EXECUTE format(
+		'ALTER DATABASE %I RESET session_authorization', current_catalog);
+	EXECUTE format(
+		'ALTER DATABASE %I SET role = regress_current_user', current_catalog);
+END$$;
+
+\c - regress_authenticated_user_db_sr
+SELECT current_user, session_user;
+
+-- Back to superuser, to reverse ALTER DATABASE
+\c - regress_authenticated_user_db_ssa
+SELECT current_user, session_user;
+SET ROLE NONE;
+DO $$BEGIN EXECUTE format(
+	'ALTER DATABASE %I RESET role', current_catalog); END$$;
+
+
+-- Test connection string options
+
+\c -reuse-previous=on "user=regress_authenticated_user_db_sr options=-crole=regress_current_user"
+SELECT current_user, session_user;
+
+-- As above, session_authorization has no effect.
+\c -reuse-previous=on "user=regress_authenticated_user_db_ssa options=-csession_authorization=regress_session_user"
+SELECT current_user, session_user;
+
+
+-- Test ALTER ROLE consequences
+
+\c  -reuse-previous=on "user=regress_authenticated_user_sr options="
+SELECT current_user, session_user;
+
+-- As above, session_authorization has no effect.
+\c - regress_authenticated_user_ssa
+SELECT current_user, session_user;
+RESET SESSION AUTHORIZATION;
+DROP USER regress_session_user;
+DROP USER regress_current_user;

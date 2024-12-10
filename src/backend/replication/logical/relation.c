@@ -17,9 +17,7 @@
 
 #include "postgres.h"
 
-#ifdef USE_ASSERT_CHECKING
 #include "access/amapi.h"
-#endif
 #include "access/genam.h"
 #include "access/table.h"
 #include "catalog/namespace.h"
@@ -29,6 +27,7 @@
 #include "replication/logicalrelation.h"
 #include "replication/worker_internal.h"
 #include "utils/inval.h"
+#include "utils/syscache.h"
 
 
 static MemoryContext LogicalRepRelMapContext = NULL;
@@ -220,41 +219,63 @@ logicalrep_rel_att_by_name(LogicalRepRelation *remoterel, const char *attname)
 }
 
 /*
- * Report error with names of the missing local relation column(s), if any.
+ * Returns a comma-separated string of attribute names based on the provided
+ * relation and bitmap indicating which attributes to include.
+ */
+static char *
+logicalrep_get_attrs_str(LogicalRepRelation *remoterel, Bitmapset *atts)
+{
+	StringInfoData attsbuf;
+	int			attcnt = 0;
+	int			i = -1;
+
+	Assert(!bms_is_empty(atts));
+
+	initStringInfo(&attsbuf);
+
+	while ((i = bms_next_member(atts, i)) >= 0)
+	{
+		attcnt++;
+		if (attcnt > 1)
+			appendStringInfo(&attsbuf, _(", "));
+
+		appendStringInfo(&attsbuf, _("\"%s\""), remoterel->attnames[i]);
+	}
+
+	return attsbuf.data;
+}
+
+/*
+ * If attempting to replicate missing or generated columns, report an error.
+ * Prioritize 'missing' errors if both occur though the prioritization is
+ * arbitrary.
  */
 static void
-logicalrep_report_missing_attrs(LogicalRepRelation *remoterel,
-								Bitmapset *missingatts)
+logicalrep_report_missing_or_gen_attrs(LogicalRepRelation *remoterel,
+									   Bitmapset *missingatts,
+									   Bitmapset *generatedatts)
 {
 	if (!bms_is_empty(missingatts))
-	{
-		StringInfoData missingattsbuf;
-		int			missingattcnt = 0;
-		int			i;
-
-		initStringInfo(&missingattsbuf);
-
-		i = -1;
-		while ((i = bms_next_member(missingatts, i)) >= 0)
-		{
-			missingattcnt++;
-			if (missingattcnt == 1)
-				appendStringInfo(&missingattsbuf, _("\"%s\""),
-								 remoterel->attnames[i]);
-			else
-				appendStringInfo(&missingattsbuf, _(", \"%s\""),
-								 remoterel->attnames[i]);
-		}
-
 		ereport(ERROR,
-				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg_plural("logical replication target relation \"%s.%s\" is missing replicated column: %s",
-							   "logical replication target relation \"%s.%s\" is missing replicated columns: %s",
-							   missingattcnt,
-							   remoterel->nspname,
-							   remoterel->relname,
-							   missingattsbuf.data)));
-	}
+				errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				errmsg_plural("logical replication target relation \"%s.%s\" is missing replicated column: %s",
+							  "logical replication target relation \"%s.%s\" is missing replicated columns: %s",
+							  bms_num_members(missingatts),
+							  remoterel->nspname,
+							  remoterel->relname,
+							  logicalrep_get_attrs_str(remoterel,
+													   missingatts)));
+
+	if (!bms_is_empty(generatedatts))
+		ereport(ERROR,
+				errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				errmsg_plural("logical replication target relation \"%s.%s\" has incompatible generated column: %s",
+							  "logical replication target relation \"%s.%s\" has incompatible generated columns: %s",
+							  bms_num_members(generatedatts),
+							  remoterel->nspname,
+							  remoterel->relname,
+							  logicalrep_get_attrs_str(remoterel,
+													   generatedatts)));
 }
 
 /*
@@ -380,6 +401,7 @@ logicalrep_rel_open(LogicalRepRelId remoteid, LOCKMODE lockmode)
 		MemoryContext oldctx;
 		int			i;
 		Bitmapset  *missingatts;
+		Bitmapset  *generatedattrs = NULL;
 
 		/* Release the no-longer-useful attrmap, if any. */
 		if (entry->attrmap)
@@ -421,7 +443,7 @@ logicalrep_rel_open(LogicalRepRelId remoteid, LOCKMODE lockmode)
 			int			attnum;
 			Form_pg_attribute attr = TupleDescAttr(desc, i);
 
-			if (attr->attisdropped || attr->attgenerated)
+			if (attr->attisdropped)
 			{
 				entry->attrmap->attnums[i] = -1;
 				continue;
@@ -432,12 +454,20 @@ logicalrep_rel_open(LogicalRepRelId remoteid, LOCKMODE lockmode)
 
 			entry->attrmap->attnums[i] = attnum;
 			if (attnum >= 0)
+			{
+				/* Remember which subscriber columns are generated. */
+				if (attr->attgenerated)
+					generatedattrs = bms_add_member(generatedattrs, attnum);
+
 				missingatts = bms_del_member(missingatts, attnum);
+			}
 		}
 
-		logicalrep_report_missing_attrs(remoterel, missingatts);
+		logicalrep_report_missing_or_gen_attrs(remoterel, missingatts,
+											   generatedattrs);
 
 		/* be tidy */
+		bms_free(generatedattrs);
 		bms_free(missingatts);
 
 		/*
@@ -750,11 +780,9 @@ FindUsableIndexForReplicaIdentityFull(Relation localrel, AttrMap *attrmap)
 	{
 		bool		isUsableIdx;
 		Relation	idxRel;
-		IndexInfo  *idxInfo;
 
 		idxRel = index_open(idxoid, AccessShareLock);
-		idxInfo = BuildIndexInfo(idxRel);
-		isUsableIdx = IsIndexUsableForReplicaIdentityFull(idxInfo, attrmap);
+		isUsableIdx = IsIndexUsableForReplicaIdentityFull(idxRel, attrmap);
 		index_close(idxRel, AccessShareLock);
 
 		/* Return the first eligible index found */
@@ -768,9 +796,10 @@ FindUsableIndexForReplicaIdentityFull(Relation localrel, AttrMap *attrmap)
 /*
  * Returns true if the index is usable for replica identity full.
  *
- * The index must be btree or hash, non-partial, and the leftmost field must be
- * a column (not an expression) that references the remote relation column. These
- * limitations help to keep the index scan similar to PK/RI index scans.
+ * The index must have an equal strategy for each key column, be non-partial,
+ * and the leftmost field must be a column (not an expression) that references
+ * the remote relation column. These limitations help to keep the index scan
+ * similar to PK/RI index scans.
  *
  * attrmap is a map of local attributes to remote ones. We can consult this
  * map to check whether the local index attribute has a corresponding remote
@@ -783,40 +812,50 @@ FindUsableIndexForReplicaIdentityFull(Relation localrel, AttrMap *attrmap)
  * compare the tuples for non-PK/RI index scans. See
  * RelationFindReplTupleByIndex().
  *
- * The reasons why only Btree and Hash indexes can be considered as usable are:
- *
- * 1) Other index access methods don't have a fixed strategy for equality
- * operation. Refer get_equal_strategy_number_for_am().
- *
- * 2) For indexes other than PK and REPLICA IDENTITY, we need to match the
- * local and remote tuples. The equality routine tuples_equal() cannot accept
- * a datatype (e.g. point or box) that does not have a default operator class
- * for Btree or Hash.
- *
- * XXX: Note that BRIN and GIN indexes do not implement "amgettuple" which
- * will be used later to fetch the tuples. See RelationFindReplTupleByIndex().
- *
  * XXX: To support partial indexes, the required changes are likely to be larger.
  * If none of the tuples satisfy the expression for the index scan, we fall-back
  * to sequential execution, which might not be a good idea in some cases.
  */
 bool
-IsIndexUsableForReplicaIdentityFull(IndexInfo *indexInfo, AttrMap *attrmap)
+IsIndexUsableForReplicaIdentityFull(Relation idxrel, AttrMap *attrmap)
 {
 	AttrNumber	keycol;
-
-	/* Ensure that the index access method has a valid equal strategy */
-	if (get_equal_strategy_number_for_am(indexInfo->ii_Am) == InvalidStrategy)
-		return false;
+	oidvector  *indclass;
 
 	/* The index must not be a partial index */
-	if (indexInfo->ii_Predicate != NIL)
+	if (!heap_attisnull(idxrel->rd_indextuple, Anum_pg_index_indpred, NULL))
 		return false;
 
-	Assert(indexInfo->ii_NumIndexAttrs >= 1);
+	Assert(idxrel->rd_index->indnatts >= 1);
+
+	indclass = (oidvector *) DatumGetPointer(SysCacheGetAttrNotNull(INDEXRELID,
+																	idxrel->rd_indextuple,
+																	Anum_pg_index_indclass));
+
+	/* Ensure that the index has a valid equal strategy for each key column */
+	for (int i = 0; i < idxrel->rd_index->indnkeyatts; i++)
+	{
+		if (get_equal_strategy_number(indclass->values[i]) == InvalidStrategy)
+			return false;
+	}
+
+	/*
+	 * For indexes other than PK and REPLICA IDENTITY, we need to match the
+	 * local and remote tuples.  The equality routine tuples_equal() cannot
+	 * accept a data type where the type cache cannot provide an equality
+	 * operator.
+	 */
+	for (int i = 0; i < idxrel->rd_att->natts; i++)
+	{
+		TypeCacheEntry *typentry;
+
+		typentry = lookup_type_cache(TupleDescAttr(idxrel->rd_att, i)->atttypid, TYPECACHE_EQ_OPR_FINFO);
+		if (!OidIsValid(typentry->eq_opr_finfo.fn_oid))
+			return false;
+	}
 
 	/* The leftmost index field must not be an expression */
-	keycol = indexInfo->ii_IndexAttrNumbers[0];
+	keycol = idxrel->rd_index->indkey.values[0];
 	if (!AttributeNumberIsValid(keycol))
 		return false;
 
@@ -829,15 +868,12 @@ IsIndexUsableForReplicaIdentityFull(IndexInfo *indexInfo, AttrMap *attrmap)
 		attrmap->attnums[AttrNumberGetAttrOffset(keycol)] < 0)
 		return false;
 
-#ifdef USE_ASSERT_CHECKING
-	{
-		IndexAmRoutine *amroutine;
-
-		/* The given index access method must implement amgettuple. */
-		amroutine = GetIndexAmRoutineByAmId(indexInfo->ii_Am, false);
-		Assert(amroutine->amgettuple != NULL);
-	}
-#endif
+	/*
+	 * The given index access method must implement "amgettuple", which will
+	 * be used later to fetch the tuples.  See RelationFindReplTupleByIndex().
+	 */
+	if (GetIndexAmRoutineByAmId(idxrel->rd_rel->relam, false)->amgettuple == NULL)
+		return false;
 
 	return true;
 }

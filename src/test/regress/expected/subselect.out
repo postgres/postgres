@@ -1750,6 +1750,379 @@ where tname = 'tenk1' and attnum = 1;
  tenk1 | unique1
 (1 row)
 
+-- Check behavior when there's a lateral reference in the output expression
+explain (verbose, costs off)
+select t1.ten, sum(x) from
+  tenk1 t1 left join lateral (
+    select t1.ten + t2.ten as x, t2.fivethous from tenk1 t2
+  ) ss on t1.unique1 = ss.fivethous
+group by t1.ten
+order by t1.ten;
+                                                                                                    QUERY PLAN                                                                                                     
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort
+   Output: t1.ten, (sum((t1.ten + t2.ten)))
+   Sort Key: t1.ten
+   ->  HashAggregate
+         Output: t1.ten, sum((t1.ten + t2.ten))
+         Group Key: t1.ten
+         ->  Hash Right Join
+               Output: t1.ten, t2.ten
+               Hash Cond: (t2.fivethous = t1.unique1)
+               ->  Seq Scan on public.tenk1 t2
+                     Output: t2.unique1, t2.unique2, t2.two, t2.four, t2.ten, t2.twenty, t2.hundred, t2.thousand, t2.twothousand, t2.fivethous, t2.tenthous, t2.odd, t2.even, t2.stringu1, t2.stringu2, t2.string4
+               ->  Hash
+                     Output: t1.ten, t1.unique1
+                     ->  Seq Scan on public.tenk1 t1
+                           Output: t1.ten, t1.unique1
+(15 rows)
+
+select t1.ten, sum(x) from
+  tenk1 t1 left join lateral (
+    select t1.ten + t2.ten as x, t2.fivethous from tenk1 t2
+  ) ss on t1.unique1 = ss.fivethous
+group by t1.ten
+order by t1.ten;
+ ten |  sum  
+-----+-------
+   0 |     0
+   1 |  2000
+   2 |  4000
+   3 |  6000
+   4 |  8000
+   5 | 10000
+   6 | 12000
+   7 | 14000
+   8 | 16000
+   9 | 18000
+(10 rows)
+
+explain (verbose, costs off)
+select t1.q1, x from
+  int8_tbl t1 left join
+  (int8_tbl t2 left join
+   lateral (select t2.q1+t3.q1 as x, * from int8_tbl t3) t3 on t2.q2 = t3.q2)
+  on t1.q2 = t2.q2
+order by 1, 2;
+                       QUERY PLAN                       
+--------------------------------------------------------
+ Sort
+   Output: t1.q1, ((t2.q1 + t3.q1))
+   Sort Key: t1.q1, ((t2.q1 + t3.q1))
+   ->  Hash Left Join
+         Output: t1.q1, (t2.q1 + t3.q1)
+         Hash Cond: (t2.q2 = t3.q2)
+         ->  Hash Left Join
+               Output: t1.q1, t2.q1, t2.q2
+               Hash Cond: (t1.q2 = t2.q2)
+               ->  Seq Scan on public.int8_tbl t1
+                     Output: t1.q1, t1.q2
+               ->  Hash
+                     Output: t2.q1, t2.q2
+                     ->  Seq Scan on public.int8_tbl t2
+                           Output: t2.q1, t2.q2
+         ->  Hash
+               Output: t3.q1, t3.q2
+               ->  Seq Scan on public.int8_tbl t3
+                     Output: t3.q1, t3.q2
+(19 rows)
+
+select t1.q1, x from
+  int8_tbl t1 left join
+  (int8_tbl t2 left join
+   lateral (select t2.q1+t3.q1 as x, * from int8_tbl t3) t3 on t2.q2 = t3.q2)
+  on t1.q2 = t2.q2
+order by 1, 2;
+        q1        |        x         
+------------------+------------------
+              123 |              246
+              123 |              246
+              123 | 4567890123456912
+              123 | 4567890123456912
+              123 | 9135780246913578
+ 4567890123456789 |              246
+ 4567890123456789 | 4567890123456912
+ 4567890123456789 | 4567890123456912
+ 4567890123456789 | 9135780246913578
+ 4567890123456789 | 9135780246913578
+ 4567890123456789 | 9135780246913578
+(11 rows)
+
+-- lateral references for simple Vars can escape being wrapped if the
+-- referenced rel is under the same lowest nulling outer join
+explain (verbose, costs off)
+select t1.q1, x from
+  int8_tbl t1 left join
+  (int8_tbl t2 inner join
+   lateral (select t2.q2 as x, * from int8_tbl t3) ss on t2.q2 = ss.q1)
+  on t1.q1 = t2.q1
+order by 1, 2;
+                       QUERY PLAN                       
+--------------------------------------------------------
+ Sort
+   Output: t1.q1, t2.q2
+   Sort Key: t1.q1, t2.q2
+   ->  Hash Right Join
+         Output: t1.q1, t2.q2
+         Hash Cond: (t2.q1 = t1.q1)
+         ->  Hash Join
+               Output: t2.q2, t2.q1
+               Hash Cond: (t2.q2 = t3.q1)
+               ->  Seq Scan on public.int8_tbl t2
+                     Output: t2.q1, t2.q2
+               ->  Hash
+                     Output: t3.q1
+                     ->  Seq Scan on public.int8_tbl t3
+                           Output: t3.q1
+         ->  Hash
+               Output: t1.q1
+               ->  Seq Scan on public.int8_tbl t1
+                     Output: t1.q1
+(19 rows)
+
+select t1.q1, x from
+  int8_tbl t1 left join
+  (int8_tbl t2 inner join
+   lateral (select t2.q2 as x, * from int8_tbl t3) ss on t2.q2 = ss.q1)
+  on t1.q1 = t2.q1
+order by 1, 2;
+        q1        |        x         
+------------------+------------------
+              123 | 4567890123456789
+              123 | 4567890123456789
+              123 | 4567890123456789
+              123 | 4567890123456789
+              123 | 4567890123456789
+              123 | 4567890123456789
+ 4567890123456789 |              123
+ 4567890123456789 |              123
+ 4567890123456789 |              123
+ 4567890123456789 |              123
+ 4567890123456789 |              123
+ 4567890123456789 |              123
+ 4567890123456789 | 4567890123456789
+ 4567890123456789 | 4567890123456789
+ 4567890123456789 | 4567890123456789
+ 4567890123456789 | 4567890123456789
+ 4567890123456789 | 4567890123456789
+ 4567890123456789 | 4567890123456789
+ 4567890123456789 | 4567890123456789
+ 4567890123456789 | 4567890123456789
+ 4567890123456789 | 4567890123456789
+(21 rows)
+
+-- otherwise we need to wrap the Vars
+explain (verbose, costs off)
+select t1.q1, x from
+  int8_tbl t1 left join
+  (int8_tbl t2 left join
+   lateral (select t2.q2 as x, * from int8_tbl t3) ss on t2.q2 = ss.q1)
+  on t1.q1 = t2.q1
+order by 1, 2;
+                    QUERY PLAN                    
+--------------------------------------------------
+ Sort
+   Output: t1.q1, (t2.q2)
+   Sort Key: t1.q1, (t2.q2)
+   ->  Hash Right Join
+         Output: t1.q1, (t2.q2)
+         Hash Cond: (t2.q1 = t1.q1)
+         ->  Nested Loop Left Join
+               Output: t2.q1, (t2.q2)
+               ->  Seq Scan on public.int8_tbl t2
+                     Output: t2.q1, t2.q2
+               ->  Seq Scan on public.int8_tbl t3
+                     Output: t3.q1, t2.q2
+                     Filter: (t2.q2 = t3.q1)
+         ->  Hash
+               Output: t1.q1
+               ->  Seq Scan on public.int8_tbl t1
+                     Output: t1.q1
+(17 rows)
+
+select t1.q1, x from
+  int8_tbl t1 left join
+  (int8_tbl t2 left join
+   lateral (select t2.q2 as x, * from int8_tbl t3) ss on t2.q2 = ss.q1)
+  on t1.q1 = t2.q1
+order by 1, 2;
+        q1        |        x         
+------------------+------------------
+              123 | 4567890123456789
+              123 | 4567890123456789
+              123 | 4567890123456789
+              123 | 4567890123456789
+              123 | 4567890123456789
+              123 | 4567890123456789
+              123 |                 
+              123 |                 
+ 4567890123456789 |              123
+ 4567890123456789 |              123
+ 4567890123456789 |              123
+ 4567890123456789 |              123
+ 4567890123456789 |              123
+ 4567890123456789 |              123
+ 4567890123456789 | 4567890123456789
+ 4567890123456789 | 4567890123456789
+ 4567890123456789 | 4567890123456789
+ 4567890123456789 | 4567890123456789
+ 4567890123456789 | 4567890123456789
+ 4567890123456789 | 4567890123456789
+ 4567890123456789 | 4567890123456789
+ 4567890123456789 | 4567890123456789
+ 4567890123456789 | 4567890123456789
+ 4567890123456789 |                 
+ 4567890123456789 |                 
+ 4567890123456789 |                 
+(26 rows)
+
+-- lateral references for PHVs can also escape being wrapped if the
+-- referenced rel is under the same lowest nulling outer join
+explain (verbose, costs off)
+select ss2.* from
+  int8_tbl t1 left join
+  (int8_tbl t2 left join
+   (select coalesce(q1) as x, * from int8_tbl t3) ss1 on t2.q1 = ss1.q2 inner join
+   lateral (select ss1.x as y, * from int8_tbl t4) ss2 on t2.q2 = ss2.q1)
+  on t1.q2 = ss2.q1
+order by 1, 2, 3;
+                           QUERY PLAN                           
+----------------------------------------------------------------
+ Sort
+   Output: (COALESCE(t3.q1)), t4.q1, t4.q2
+   Sort Key: (COALESCE(t3.q1)), t4.q1, t4.q2
+   ->  Hash Right Join
+         Output: (COALESCE(t3.q1)), t4.q1, t4.q2
+         Hash Cond: (t4.q1 = t1.q2)
+         ->  Hash Join
+               Output: (COALESCE(t3.q1)), t4.q1, t4.q2
+               Hash Cond: (t2.q2 = t4.q1)
+               ->  Hash Left Join
+                     Output: t2.q2, (COALESCE(t3.q1))
+                     Hash Cond: (t2.q1 = t3.q2)
+                     ->  Seq Scan on public.int8_tbl t2
+                           Output: t2.q1, t2.q2
+                     ->  Hash
+                           Output: t3.q2, (COALESCE(t3.q1))
+                           ->  Seq Scan on public.int8_tbl t3
+                                 Output: t3.q2, COALESCE(t3.q1)
+               ->  Hash
+                     Output: t4.q1, t4.q2
+                     ->  Seq Scan on public.int8_tbl t4
+                           Output: t4.q1, t4.q2
+         ->  Hash
+               Output: t1.q2
+               ->  Seq Scan on public.int8_tbl t1
+                     Output: t1.q2
+(26 rows)
+
+select ss2.* from
+  int8_tbl t1 left join
+  (int8_tbl t2 left join
+   (select coalesce(q1) as x, * from int8_tbl t3) ss1 on t2.q1 = ss1.q2 inner join
+   lateral (select ss1.x as y, * from int8_tbl t4) ss2 on t2.q2 = ss2.q1)
+  on t1.q2 = ss2.q1
+order by 1, 2, 3;
+        y         |        q1        |        q2         
+------------------+------------------+-------------------
+              123 |              123 |               456
+              123 |              123 |  4567890123456789
+              123 | 4567890123456789 | -4567890123456789
+              123 | 4567890123456789 | -4567890123456789
+              123 | 4567890123456789 |               123
+              123 | 4567890123456789 |               123
+              123 | 4567890123456789 |  4567890123456789
+              123 | 4567890123456789 |  4567890123456789
+ 4567890123456789 |              123 |               456
+ 4567890123456789 |              123 |  4567890123456789
+ 4567890123456789 | 4567890123456789 | -4567890123456789
+ 4567890123456789 | 4567890123456789 | -4567890123456789
+ 4567890123456789 | 4567890123456789 | -4567890123456789
+ 4567890123456789 | 4567890123456789 | -4567890123456789
+ 4567890123456789 | 4567890123456789 |               123
+ 4567890123456789 | 4567890123456789 |               123
+ 4567890123456789 | 4567890123456789 |               123
+ 4567890123456789 | 4567890123456789 |               123
+ 4567890123456789 | 4567890123456789 |  4567890123456789
+ 4567890123456789 | 4567890123456789 |  4567890123456789
+ 4567890123456789 | 4567890123456789 |  4567890123456789
+ 4567890123456789 | 4567890123456789 |  4567890123456789
+                  |                  |                  
+                  |                  |                  
+(24 rows)
+
+-- otherwise we need to wrap the PHVs
+explain (verbose, costs off)
+select ss2.* from
+  int8_tbl t1 left join
+  (int8_tbl t2 left join
+   (select coalesce(q1) as x, * from int8_tbl t3) ss1 on t2.q1 = ss1.q2 left join
+   lateral (select ss1.x as y, * from int8_tbl t4) ss2 on t2.q2 = ss2.q1)
+  on t1.q2 = ss2.q1
+order by 1, 2, 3;
+                           QUERY PLAN                           
+----------------------------------------------------------------
+ Sort
+   Output: ((COALESCE(t3.q1))), t4.q1, t4.q2
+   Sort Key: ((COALESCE(t3.q1))), t4.q1, t4.q2
+   ->  Hash Right Join
+         Output: ((COALESCE(t3.q1))), t4.q1, t4.q2
+         Hash Cond: (t4.q1 = t1.q2)
+         ->  Nested Loop
+               Output: t4.q1, t4.q2, ((COALESCE(t3.q1)))
+               Join Filter: (t2.q2 = t4.q1)
+               ->  Hash Left Join
+                     Output: t2.q2, (COALESCE(t3.q1))
+                     Hash Cond: (t2.q1 = t3.q2)
+                     ->  Seq Scan on public.int8_tbl t2
+                           Output: t2.q1, t2.q2
+                     ->  Hash
+                           Output: t3.q2, (COALESCE(t3.q1))
+                           ->  Seq Scan on public.int8_tbl t3
+                                 Output: t3.q2, COALESCE(t3.q1)
+               ->  Seq Scan on public.int8_tbl t4
+                     Output: t4.q1, t4.q2, (COALESCE(t3.q1))
+         ->  Hash
+               Output: t1.q2
+               ->  Seq Scan on public.int8_tbl t1
+                     Output: t1.q2
+(24 rows)
+
+select ss2.* from
+  int8_tbl t1 left join
+  (int8_tbl t2 left join
+   (select coalesce(q1) as x, * from int8_tbl t3) ss1 on t2.q1 = ss1.q2 left join
+   lateral (select ss1.x as y, * from int8_tbl t4) ss2 on t2.q2 = ss2.q1)
+  on t1.q2 = ss2.q1
+order by 1, 2, 3;
+        y         |        q1        |        q2         
+------------------+------------------+-------------------
+              123 |              123 |               456
+              123 |              123 |  4567890123456789
+              123 | 4567890123456789 | -4567890123456789
+              123 | 4567890123456789 | -4567890123456789
+              123 | 4567890123456789 |               123
+              123 | 4567890123456789 |               123
+              123 | 4567890123456789 |  4567890123456789
+              123 | 4567890123456789 |  4567890123456789
+ 4567890123456789 |              123 |               456
+ 4567890123456789 |              123 |  4567890123456789
+ 4567890123456789 | 4567890123456789 | -4567890123456789
+ 4567890123456789 | 4567890123456789 | -4567890123456789
+ 4567890123456789 | 4567890123456789 | -4567890123456789
+ 4567890123456789 | 4567890123456789 | -4567890123456789
+ 4567890123456789 | 4567890123456789 |               123
+ 4567890123456789 | 4567890123456789 |               123
+ 4567890123456789 | 4567890123456789 |               123
+ 4567890123456789 | 4567890123456789 |               123
+ 4567890123456789 | 4567890123456789 |  4567890123456789
+ 4567890123456789 | 4567890123456789 |  4567890123456789
+ 4567890123456789 | 4567890123456789 |  4567890123456789
+ 4567890123456789 | 4567890123456789 |  4567890123456789
+                  |                  |                  
+                  |                  |                  
+(24 rows)
+
 --
 -- Tests for CTE inlining behavior
 --

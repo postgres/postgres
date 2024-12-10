@@ -24,57 +24,87 @@
 #include "postgres_fe.h"
 #endif
 
-#include <setjmp.h>
-#include <signal.h>
+#if defined(HAVE_ELF_AUX_INFO) || defined(HAVE_GETAUXVAL)
+#include <sys/auxv.h>
+#if defined(__linux__) && !defined(__aarch64__) && !defined(HWCAP2_CRC32)
+#include <asm/hwcap.h>
+#endif
+#endif
+
+#if defined(__NetBSD__)
+#include <sys/sysctl.h>
+#if defined(__aarch64__)
+#include <aarch64/armreg.h>
+#endif
+#endif
 
 #include "port/pg_crc32c.h"
-
-
-static sigjmp_buf illegal_instruction_jump;
-
-/*
- * Probe by trying to execute pg_comp_crc32c_armv8().  If the instruction
- * isn't available, we expect to get SIGILL, which we can trap.
- */
-static void
-illegal_instruction_handler(SIGNAL_ARGS)
-{
-	siglongjmp(illegal_instruction_jump, 1);
-}
 
 static bool
 pg_crc32c_armv8_available(void)
 {
-	uint64		data = 42;
-	int			result;
+#if defined(HAVE_ELF_AUX_INFO)
+	unsigned long value;
+
+#ifdef __aarch64__
+	return elf_aux_info(AT_HWCAP, &value, sizeof(value)) == 0 &&
+		(value & HWCAP_CRC32) != 0;
+#else
+	return elf_aux_info(AT_HWCAP2, &value, sizeof(value)) == 0 &&
+		(value & HWCAP2_CRC32) != 0;
+#endif
+#elif defined(HAVE_GETAUXVAL)
+#ifdef __aarch64__
+	return (getauxval(AT_HWCAP) & HWCAP_CRC32) != 0;
+#else
+	return (getauxval(AT_HWCAP2) & HWCAP2_CRC32) != 0;
+#endif
+#elif defined(__NetBSD__)
+	/*
+	 * On NetBSD we can read the Instruction Set Attribute Registers via
+	 * sysctl.  For doubtless-historical reasons the sysctl interface is
+	 * completely different on 64-bit than 32-bit, but the underlying
+	 * registers contain the same fields.
+	 */
+#define ISAR0_CRC32_BITPOS 16
+#define ISAR0_CRC32_BITWIDTH 4
+#define WIDTHMASK(w)	((1 << (w)) - 1)
+#define SYSCTL_CPU_ID_MAXSIZE 64
+
+	size_t		len;
+	uint64		sysctlbuf[SYSCTL_CPU_ID_MAXSIZE];
+#if defined(__aarch64__)
+	/* We assume cpu0 is representative of all the machine's CPUs. */
+	const char *path = "machdep.cpu0.cpu_id";
+	size_t		expected_len = sizeof(struct aarch64_sysctl_cpu_id);
+#define ISAR0 ((struct aarch64_sysctl_cpu_id *) sysctlbuf)->ac_aa64isar0
+#else
+	const char *path = "machdep.id_isar";
+	size_t		expected_len = 6 * sizeof(int);
+#define ISAR0 ((int *) sysctlbuf)[5]
+#endif
+	uint64		fld;
+
+	/* Fetch the appropriate set of register values. */
+	len = sizeof(sysctlbuf);
+	memset(sysctlbuf, 0, len);
+	if (sysctlbyname(path, sysctlbuf, &len, NULL, 0) != 0)
+		return false;			/* perhaps kernel is 64-bit and we aren't? */
+	if (len != expected_len)
+		return false;			/* kernel API change? */
+
+	/* Fetch the CRC32 field from ISAR0. */
+	fld = (ISAR0 >> ISAR0_CRC32_BITPOS) & WIDTHMASK(ISAR0_CRC32_BITWIDTH);
 
 	/*
-	 * Be careful not to do anything that might throw an error while we have
-	 * the SIGILL handler set to a nonstandard value.
+	 * Current documentation defines only the field values 0 (No CRC32) and 1
+	 * (CRC32B/CRC32H/CRC32W/CRC32X/CRC32CB/CRC32CH/CRC32CW/CRC32CX).  Assume
+	 * that any future nonzero value will be a superset of 1.
 	 */
-	pqsignal(SIGILL, illegal_instruction_handler);
-	if (sigsetjmp(illegal_instruction_jump, 1) == 0)
-	{
-		/* Rather than hard-wiring an expected result, compare to SB8 code */
-		result = (pg_comp_crc32c_armv8(0, &data, sizeof(data)) ==
-				  pg_comp_crc32c_sb8(0, &data, sizeof(data)));
-	}
-	else
-	{
-		/* We got the SIGILL trap */
-		result = -1;
-	}
-	pqsignal(SIGILL, SIG_DFL);
-
-#ifndef FRONTEND
-	/* We don't expect this case, so complain loudly */
-	if (result == 0)
-		elog(ERROR, "crc32 hardware and software results disagree");
-
-	elog(DEBUG1, "using armv8 crc32 hardware = %d", (result > 0));
+	return (fld != 0);
+#else
+	return false;
 #endif
-
-	return (result > 0);
 }
 
 /*

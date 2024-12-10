@@ -365,6 +365,7 @@ typedef struct ExprEvalStep
 			/* faster to access without additional indirection: */
 			PGFunction	fn_addr;	/* actual call address */
 			int			nargs;	/* number of arguments */
+			bool		make_ro;	/* make arg0 R/O (used only for NULLIF) */
 		}			func;
 
 		/* for EEOP_BOOL_*_STEP */

@@ -639,7 +639,6 @@ heap_fetch_toast_slice(Relation toastrel, Oid valueid, int32 attrsize,
 	int			endchunk;
 	int			num_indexes;
 	int			validIndex;
-	SnapshotData SnapshotToast;
 
 	/* Look for the valid index of toast relation */
 	validIndex = toast_open_indexes(toastrel,
@@ -685,9 +684,8 @@ heap_fetch_toast_slice(Relation toastrel, Oid valueid, int32 attrsize,
 	}
 
 	/* Prepare for scan */
-	init_toast_snapshot(&SnapshotToast);
 	toastscan = systable_beginscan_ordered(toastrel, toastidxs[validIndex],
-										   &SnapshotToast, nscankeys, toastkey);
+										   get_toast_snapshot(), nscankeys, toastkey);
 
 	/*
 	 * Read the chunks by index

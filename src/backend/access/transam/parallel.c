@@ -83,12 +83,14 @@ typedef struct FixedParallelState
 	/* Fixed-size state that workers must restore. */
 	Oid			database_id;
 	Oid			authenticated_user_id;
-	Oid			current_user_id;
+	Oid			session_user_id;
 	Oid			outer_user_id;
+	Oid			current_user_id;
 	Oid			temp_namespace_id;
 	Oid			temp_toast_namespace_id;
 	int			sec_context;
-	bool		is_superuser;
+	bool		session_user_is_superuser;
+	bool		role_is_superuser;
 	PGPROC	   *parallel_leader_pgproc;
 	pid_t		parallel_leader_pid;
 	ProcNumber	parallel_leader_proc_number;
@@ -231,6 +233,15 @@ InitializeParallelDSM(ParallelContext *pcxt)
 	shm_toc_estimate_keys(&pcxt->estimator, 1);
 
 	/*
+	 * If we manage to reach here while non-interruptible, it's unsafe to
+	 * launch any workers: we would fail to process interrupts sent by them.
+	 * We can deal with that edge case by pretending no workers were
+	 * requested.
+	 */
+	if (!INTERRUPTS_CAN_BE_PROCESSED())
+		pcxt->nworkers = 0;
+
+	/*
 	 * Normally, the user will have requested at least one worker process, but
 	 * if by chance they have not, we can skip a bunch of things here.
 	 */
@@ -327,9 +338,11 @@ InitializeParallelDSM(ParallelContext *pcxt)
 		shm_toc_allocate(pcxt->toc, sizeof(FixedParallelState));
 	fps->database_id = MyDatabaseId;
 	fps->authenticated_user_id = GetAuthenticatedUserId();
+	fps->session_user_id = GetSessionUserId();
 	fps->outer_user_id = GetCurrentRoleId();
-	fps->is_superuser = current_role_is_superuser;
 	GetUserIdAndSecContext(&fps->current_user_id, &fps->sec_context);
+	fps->session_user_is_superuser = GetSessionUserIsSuperuser();
+	fps->role_is_superuser = current_role_is_superuser;
 	GetTempNamespaceState(&fps->temp_namespace_id,
 						  &fps->temp_toast_namespace_id);
 	fps->parallel_leader_pgproc = MyProc;
@@ -476,6 +489,9 @@ InitializeParallelDSM(ParallelContext *pcxt)
 		shm_toc_insert(pcxt->toc, PARALLEL_KEY_ENTRYPOINT, entrypointstate);
 	}
 
+	/* Update nworkers_to_launch, in case we changed nworkers above. */
+	pcxt->nworkers_to_launch = pcxt->nworkers;
+
 	/* Restore previous memory context. */
 	MemoryContextSwitchTo(oldcontext);
 }
@@ -539,10 +555,11 @@ ReinitializeParallelWorkers(ParallelContext *pcxt, int nworkers_to_launch)
 {
 	/*
 	 * The number of workers that need to be launched must be less than the
-	 * number of workers with which the parallel context is initialized.
+	 * number of workers with which the parallel context is initialized.  But
+	 * the caller might not know that InitializeParallelDSM reduced nworkers,
+	 * so just silently trim the request.
 	 */
-	Assert(pcxt->nworkers >= nworkers_to_launch);
-	pcxt->nworkers_to_launch = nworkers_to_launch;
+	pcxt->nworkers_to_launch = Min(pcxt->nworkers, nworkers_to_launch);
 }
 
 /*
@@ -1391,6 +1408,17 @@ ParallelWorkerMain(Datum main_arg)
 
 	entrypt = LookupParallelWorkerFunction(library_name, function_name);
 
+	/*
+	 * Restore current session authorization and role id.  No verification
+	 * happens here, we just blindly adopt the leader's state.  Note that this
+	 * has to happen before InitPostgres, since InitializeSessionUserId will
+	 * not set these variables.
+	 */
+	SetAuthenticatedUserId(fps->authenticated_user_id);
+	SetSessionAuthorization(fps->session_user_id,
+							fps->session_user_is_superuser);
+	SetCurrentRoleId(fps->outer_user_id, fps->role_is_superuser);
+
 	/* Restore database connection. */
 	BackgroundWorkerInitializeConnectionByOid(fps->database_id,
 											  fps->authenticated_user_id,
@@ -1470,19 +1498,21 @@ ParallelWorkerMain(Datum main_arg)
 	/*
 	 * Restore GUC values from launching backend.  We can't do this earlier,
 	 * because GUC check hooks that do catalog lookups need to see the same
-	 * database state as the leader.
+	 * database state as the leader.  Also, the check hooks for
+	 * session_authorization and role assume we already set the correct role
+	 * OIDs.
 	 */
 	gucspace = shm_toc_lookup(toc, PARALLEL_KEY_GUC, false);
 	RestoreGUCState(gucspace);
 
 	/*
-	 * Restore current role id.  Skip verifying whether session user is
-	 * allowed to become this role and blindly restore the leader's state for
-	 * current role.
+	 * Restore current user ID and security context.  No verification happens
+	 * here, we just blindly adopt the leader's state.  We can't do this till
+	 * after restoring GUCs, else we'll get complaints about restoring
+	 * session_authorization and role.  (In effect, we're assuming that all
+	 * the restored values are okay to set, even if we are now inside a
+	 * restricted context.)
 	 */
-	SetCurrentRoleId(fps->outer_user_id, fps->is_superuser);
-
-	/* Restore user ID and security context. */
 	SetUserIdAndSecContext(fps->current_user_id, fps->sec_context);
 
 	/* Restore temp-namespace state to ensure search path matches leader's. */

@@ -34,6 +34,7 @@
 #include "miscadmin.h"
 #include "nodes/nodeFuncs.h"
 #include "nodes/supportnodes.h"
+#include "optimizer/optimizer.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/float.h"
@@ -1825,6 +1826,126 @@ generate_series_step_numeric(PG_FUNCTION_ARGS)
 	else
 		/* do when there is no more left */
 		SRF_RETURN_DONE(funcctx);
+}
+
+/*
+ * Planner support function for generate_series(numeric, numeric [, numeric])
+ */
+Datum
+generate_series_numeric_support(PG_FUNCTION_ARGS)
+{
+	Node	   *rawreq = (Node *) PG_GETARG_POINTER(0);
+	Node	   *ret = NULL;
+
+	if (IsA(rawreq, SupportRequestRows))
+	{
+		/* Try to estimate the number of rows returned */
+		SupportRequestRows *req = (SupportRequestRows *) rawreq;
+
+		if (is_funcclause(req->node))	/* be paranoid */
+		{
+			List	   *args = ((FuncExpr *) req->node)->args;
+			Node	   *arg1,
+					   *arg2,
+					   *arg3;
+
+			/* We can use estimated argument values here */
+			arg1 = estimate_expression_value(req->root, linitial(args));
+			arg2 = estimate_expression_value(req->root, lsecond(args));
+			if (list_length(args) >= 3)
+				arg3 = estimate_expression_value(req->root, lthird(args));
+			else
+				arg3 = NULL;
+
+			/*
+			 * If any argument is constant NULL, we can safely assume that
+			 * zero rows are returned.  Otherwise, if they're all non-NULL
+			 * constants, we can calculate the number of rows that will be
+			 * returned.
+			 */
+			if ((IsA(arg1, Const) &&
+				 ((Const *) arg1)->constisnull) ||
+				(IsA(arg2, Const) &&
+				 ((Const *) arg2)->constisnull) ||
+				(arg3 != NULL && IsA(arg3, Const) &&
+				 ((Const *) arg3)->constisnull))
+			{
+				req->rows = 0;
+				ret = (Node *) req;
+			}
+			else if (IsA(arg1, Const) &&
+					 IsA(arg2, Const) &&
+					 (arg3 == NULL || IsA(arg3, Const)))
+			{
+				Numeric		start_num;
+				Numeric		stop_num;
+				NumericVar	step = const_one;
+
+				/*
+				 * If any argument is NaN or infinity, generate_series() will
+				 * error out, so we needn't produce an estimate.
+				 */
+				start_num = DatumGetNumeric(((Const *) arg1)->constvalue);
+				stop_num = DatumGetNumeric(((Const *) arg2)->constvalue);
+
+				if (NUMERIC_IS_SPECIAL(start_num) ||
+					NUMERIC_IS_SPECIAL(stop_num))
+					PG_RETURN_POINTER(NULL);
+
+				if (arg3)
+				{
+					Numeric		step_num;
+
+					step_num = DatumGetNumeric(((Const *) arg3)->constvalue);
+
+					if (NUMERIC_IS_SPECIAL(step_num))
+						PG_RETURN_POINTER(NULL);
+
+					init_var_from_num(step_num, &step);
+				}
+
+				/*
+				 * The number of rows that will be returned is given by
+				 * floor((stop - start) / step) + 1, if the sign of step
+				 * matches the sign of stop - start.  Otherwise, no rows will
+				 * be returned.
+				 */
+				if (cmp_var(&step, &const_zero) != 0)
+				{
+					NumericVar	start;
+					NumericVar	stop;
+					NumericVar	res;
+
+					init_var_from_num(start_num, &start);
+					init_var_from_num(stop_num, &stop);
+
+					init_var(&res);
+					sub_var(&stop, &start, &res);
+
+					if (step.sign != res.sign)
+					{
+						/* no rows will be returned */
+						req->rows = 0;
+						ret = (Node *) req;
+					}
+					else
+					{
+						if (arg3)
+							div_var(&res, &step, &res, 0, false, false);
+						else
+							trunc_var(&res, 0); /* step = 1 */
+
+						req->rows = numericvar_to_double_no_overflow(&res) + 1;
+						ret = (Node *) req;
+					}
+
+					free_var(&res);
+				}
+			}
+		}
+	}
+
+	PG_RETURN_POINTER(ret);
 }
 
 

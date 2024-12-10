@@ -2402,6 +2402,8 @@ _bt_advance_array_keys(IndexScanDesc scan, BTReadPageState *pstate,
 
 new_prim_scan:
 
+	Assert(pstate->finaltup);	/* not on rightmost/leftmost page */
+
 	/*
 	 * End this primitive index scan, but schedule another.
 	 *
@@ -2666,8 +2668,14 @@ _bt_preprocess_keys(IndexScanDesc scan)
 
 			/*
 			 * If = has been specified, all other keys can be eliminated as
-			 * redundant.  If we have a case like key = 1 AND key > 2, we can
-			 * set qual_ok to false and abandon further processing.
+			 * redundant.  Note that this is no less true if the = key is
+			 * SEARCHARRAY; the only real difference is that the inequality
+			 * key _becomes_ redundant by making _bt_compare_scankey_args
+			 * eliminate the subset of elements that won't need to be matched.
+			 *
+			 * If we have a case like "key = 1 AND key > 2", we set qual_ok to
+			 * false and abandon further processing.  We'll do the same thing
+			 * given a case like "key IN (0, 1) AND key > 2".
 			 *
 			 * We also have to deal with the case of "key IS NULL", which is
 			 * unsatisfiable in combination with any other index condition. By
@@ -4025,8 +4033,7 @@ _bt_check_rowcompare(ScanKey skey, IndexTuple tuple, int tupnatts,
 			result = (cmpresult > 0);
 			break;
 		default:
-			elog(ERROR, "unrecognized RowCompareType: %d",
-				 (int) subkey->sk_strategy);
+			elog(ERROR, "unexpected strategy number %d", subkey->sk_strategy);
 			result = 0;			/* keep compiler quiet */
 			break;
 	}

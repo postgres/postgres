@@ -92,18 +92,13 @@ static HTAB *ShmemIndex = NULL; /* primary index hashtable for shmem */
 
 /*
  *	InitShmemAccess() --- set up basic pointers to shared memory.
- *
- * Note: the argument should be declared "PGShmemHeader *seghdr",
- * but we use void to avoid having to include ipc.h in shmem.h.
  */
 void
-InitShmemAccess(void *seghdr)
+InitShmemAccess(PGShmemHeader *seghdr)
 {
-	PGShmemHeader *shmhdr = (PGShmemHeader *) seghdr;
-
-	ShmemSegHdr = shmhdr;
-	ShmemBase = (void *) shmhdr;
-	ShmemEnd = (char *) ShmemBase + shmhdr->totalsize;
+	ShmemSegHdr = seghdr;
+	ShmemBase = seghdr;
+	ShmemEnd = (char *) ShmemBase + seghdr->totalsize;
 }
 
 /*
@@ -212,7 +207,7 @@ ShmemAllocRaw(Size size, Size *allocated_size)
 	newFree = newStart + size;
 	if (newFree <= ShmemSegHdr->totalsize)
 	{
-		newSpace = (void *) ((char *) ShmemBase + newStart);
+		newSpace = (char *) ShmemBase + newStart;
 		ShmemSegHdr->freeoffset = newFree;
 	}
 	else
@@ -258,7 +253,7 @@ ShmemAllocUnlocked(Size size)
 						size)));
 	ShmemSegHdr->freeoffset = newFree;
 
-	newSpace = (void *) ((char *) ShmemBase + newStart);
+	newSpace = (char *) ShmemBase + newStart;
 
 	Assert(newSpace == (void *) MAXALIGN(newSpace));
 

@@ -89,11 +89,12 @@
 
 #define		MAX_L10N_DATA		80
 
+/* pg_locale_builtin.c */
+extern pg_locale_t create_pg_locale_builtin(Oid collid, MemoryContext context);
+
 /* pg_locale_icu.c */
 #ifdef USE_ICU
 extern UCollator *pg_ucol_open(const char *loc_str);
-extern UCollator *make_icu_collator(const char *iculocstr,
-									const char *icurules);
 extern int	strncoll_icu(const char *arg1, ssize_t len1,
 						 const char *arg2, ssize_t len2,
 						 pg_locale_t locale);
@@ -104,10 +105,10 @@ extern size_t strnxfrm_prefix_icu(char *dest, size_t destsize,
 								  const char *src, ssize_t srclen,
 								  pg_locale_t locale);
 #endif
+extern pg_locale_t create_pg_locale_icu(Oid collid, MemoryContext context);
 
 /* pg_locale_libc.c */
-extern locale_t make_libc_collator(const char *collate,
-								   const char *ctype);
+extern pg_locale_t create_pg_locale_libc(Oid collid, MemoryContext context);
 extern int	strncoll_libc(const char *arg1, ssize_t len1,
 						  const char *arg2, ssize_t len2,
 						  pg_locale_t locale);
@@ -138,7 +139,7 @@ char	   *localized_full_months[12 + 1];
 /* is the databases's LC_CTYPE the C locale? */
 bool		database_ctype_is_c = false;
 
-static struct pg_locale_struct default_locale;
+static pg_locale_t default_locale = NULL;
 
 /* indicates whether locale information cache is valid */
 static bool CurrentLocaleConvValid = false;
@@ -1017,21 +1018,12 @@ cache_locale_time(void)
  * get ISO Locale name directly by using GetLocaleInfoEx() with LCType as
  * LOCALE_SNAME.
  *
- * MinGW headers declare _create_locale(), but msvcrt.dll lacks that symbol in
- * releases before Windows 8. IsoLocaleName() always fails in a MinGW-built
- * postgres.exe, so only Unix-style values of the lc_messages GUC can elicit
- * localized messages. In particular, every lc_messages setting that initdb
- * can select automatically will yield only C-locale messages. XXX This could
- * be fixed by running the fully-qualified locale name through a lookup table.
- *
  * This function returns a pointer to a static buffer bearing the converted
  * name or NULL if conversion fails.
  *
  * [1] https://docs.microsoft.com/en-us/windows/win32/intl/locale-identifiers
  * [2] https://docs.microsoft.com/en-us/windows/win32/intl/locale-names
  */
-
-#if defined(_MSC_VER)
 
 /*
  * Callback function for EnumSystemLocalesEx() in get_iso_localename().
@@ -1201,18 +1193,7 @@ IsoLocaleName(const char *winlocname)
 		return get_iso_localename(winlocname);
 }
 
-#else							/* !defined(_MSC_VER) */
-
-static char *
-IsoLocaleName(const char *winlocname)
-{
-	return NULL;				/* Not supported on MinGW */
-}
-
-#endif							/* defined(_MSC_VER) */
-
 #endif							/* WIN32 && LC_MESSAGES */
-
 
 /*
  * Create a new pg_locale_t struct for the given collation oid.
@@ -1226,78 +1207,22 @@ create_pg_locale(Oid collid, MemoryContext context)
 	Datum		datum;
 	bool		isnull;
 
-	result = MemoryContextAllocZero(context, sizeof(struct pg_locale_struct));
-
 	tp = SearchSysCache1(COLLOID, ObjectIdGetDatum(collid));
 	if (!HeapTupleIsValid(tp))
 		elog(ERROR, "cache lookup failed for collation %u", collid);
 	collform = (Form_pg_collation) GETSTRUCT(tp);
 
-	result->provider = collform->collprovider;
-	result->deterministic = collform->collisdeterministic;
-
 	if (collform->collprovider == COLLPROVIDER_BUILTIN)
-	{
-		const char *locstr;
-
-		datum = SysCacheGetAttrNotNull(COLLOID, tp, Anum_pg_collation_colllocale);
-		locstr = TextDatumGetCString(datum);
-
-		result->collate_is_c = true;
-		result->ctype_is_c = (strcmp(locstr, "C") == 0);
-
-		builtin_validate_locale(GetDatabaseEncoding(), locstr);
-
-		result->info.builtin.locale = MemoryContextStrdup(context,
-														  locstr);
-	}
+		result = create_pg_locale_builtin(collid, context);
 	else if (collform->collprovider == COLLPROVIDER_ICU)
-	{
-#ifdef USE_ICU
-		const char *iculocstr;
-		const char *icurules;
-
-		datum = SysCacheGetAttrNotNull(COLLOID, tp, Anum_pg_collation_colllocale);
-		iculocstr = TextDatumGetCString(datum);
-
-		result->collate_is_c = false;
-		result->ctype_is_c = false;
-
-		datum = SysCacheGetAttr(COLLOID, tp, Anum_pg_collation_collicurules, &isnull);
-		if (!isnull)
-			icurules = TextDatumGetCString(datum);
-		else
-			icurules = NULL;
-
-		result->info.icu.locale = MemoryContextStrdup(context, iculocstr);
-		result->info.icu.ucol = make_icu_collator(iculocstr, icurules);
-#else
-		/* could get here if a collation was created by a build with ICU */
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("ICU is not supported in this build")));
-#endif
-	}
+		result = create_pg_locale_icu(collid, context);
 	else if (collform->collprovider == COLLPROVIDER_LIBC)
-	{
-		const char *collcollate;
-		const char *collctype;
-
-		datum = SysCacheGetAttrNotNull(COLLOID, tp, Anum_pg_collation_collcollate);
-		collcollate = TextDatumGetCString(datum);
-		datum = SysCacheGetAttrNotNull(COLLOID, tp, Anum_pg_collation_collctype);
-		collctype = TextDatumGetCString(datum);
-
-		result->collate_is_c = (strcmp(collcollate, "C") == 0) ||
-			(strcmp(collcollate, "POSIX") == 0);
-		result->ctype_is_c = (strcmp(collctype, "C") == 0) ||
-			(strcmp(collctype, "POSIX") == 0);
-
-		result->info.lt = make_libc_collator(collcollate, collctype);
-	}
+		result = create_pg_locale_libc(collid, context);
 	else
 		/* shouldn't happen */
 		PGLOCALE_SUPPORT_ERROR(collform->collprovider);
+
+	result->is_default = false;
 
 	datum = SysCacheGetAttr(COLLOID, tp, Anum_pg_collation_collversion,
 							&isnull);
@@ -1354,7 +1279,9 @@ init_database_collation(void)
 {
 	HeapTuple	tup;
 	Form_pg_database dbform;
-	Datum		datum;
+	pg_locale_t result;
+
+	Assert(default_locale == NULL);
 
 	/* Fetch our pg_database row normally, via syscache */
 	tup = SearchSysCache1(DATABASEOID, ObjectIdGetDatum(MyDatabaseId));
@@ -1363,80 +1290,22 @@ init_database_collation(void)
 	dbform = (Form_pg_database) GETSTRUCT(tup);
 
 	if (dbform->datlocprovider == COLLPROVIDER_BUILTIN)
-	{
-		char	   *datlocale;
-
-		datum = SysCacheGetAttrNotNull(DATABASEOID, tup, Anum_pg_database_datlocale);
-		datlocale = TextDatumGetCString(datum);
-
-		builtin_validate_locale(dbform->encoding, datlocale);
-
-		default_locale.collate_is_c = true;
-		default_locale.ctype_is_c = (strcmp(datlocale, "C") == 0);
-
-		default_locale.info.builtin.locale = MemoryContextStrdup(
-																 TopMemoryContext, datlocale);
-	}
+		result = create_pg_locale_builtin(DEFAULT_COLLATION_OID,
+										  TopMemoryContext);
 	else if (dbform->datlocprovider == COLLPROVIDER_ICU)
-	{
-#ifdef USE_ICU
-		char	   *datlocale;
-		char	   *icurules;
-		bool		isnull;
-
-		datum = SysCacheGetAttrNotNull(DATABASEOID, tup, Anum_pg_database_datlocale);
-		datlocale = TextDatumGetCString(datum);
-
-		default_locale.collate_is_c = false;
-		default_locale.ctype_is_c = false;
-
-		datum = SysCacheGetAttr(DATABASEOID, tup, Anum_pg_database_daticurules, &isnull);
-		if (!isnull)
-			icurules = TextDatumGetCString(datum);
-		else
-			icurules = NULL;
-
-		default_locale.info.icu.locale = MemoryContextStrdup(TopMemoryContext, datlocale);
-		default_locale.info.icu.ucol = make_icu_collator(datlocale, icurules);
-#else
-		/* could get here if a collation was created by a build with ICU */
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("ICU is not supported in this build")));
-#endif
-	}
+		result = create_pg_locale_icu(DEFAULT_COLLATION_OID,
+									  TopMemoryContext);
 	else if (dbform->datlocprovider == COLLPROVIDER_LIBC)
-	{
-		const char *datcollate;
-		const char *datctype;
-
-		datum = SysCacheGetAttrNotNull(DATABASEOID, tup, Anum_pg_database_datcollate);
-		datcollate = TextDatumGetCString(datum);
-		datum = SysCacheGetAttrNotNull(DATABASEOID, tup, Anum_pg_database_datctype);
-		datctype = TextDatumGetCString(datum);
-
-		default_locale.collate_is_c = (strcmp(datcollate, "C") == 0) ||
-			(strcmp(datcollate, "POSIX") == 0);
-		default_locale.ctype_is_c = (strcmp(datctype, "C") == 0) ||
-			(strcmp(datctype, "POSIX") == 0);
-
-		default_locale.info.lt = make_libc_collator(datcollate, datctype);
-	}
+		result = create_pg_locale_libc(DEFAULT_COLLATION_OID,
+									   TopMemoryContext);
 	else
 		/* shouldn't happen */
 		PGLOCALE_SUPPORT_ERROR(dbform->datlocprovider);
 
-
-	default_locale.provider = dbform->datlocprovider;
-
-	/*
-	 * Default locale is currently always deterministic.  Nondeterministic
-	 * locales currently don't support pattern matching, which would break a
-	 * lot of things if applied globally.
-	 */
-	default_locale.deterministic = true;
-
+	result->is_default = true;
 	ReleaseSysCache(tup);
+
+	default_locale = result;
 }
 
 /*
@@ -1454,7 +1323,7 @@ pg_newlocale_from_collation(Oid collid)
 	bool		found;
 
 	if (collid == DEFAULT_COLLATION_OID)
-		return &default_locale;
+		return default_locale;
 
 	if (!OidIsValid(collid))
 		elog(ERROR, "cache lookup failed for collation %u", collid);

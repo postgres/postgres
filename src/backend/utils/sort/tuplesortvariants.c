@@ -664,7 +664,7 @@ tuplesort_puttupleslot(Tuplesortstate *state, TupleTableSlot *slot)
 
 	/* copy the tuple into sort storage */
 	tuple = ExecCopySlotMinimalTuple(slot);
-	stup.tuple = (void *) tuple;
+	stup.tuple = tuple;
 	/* set up first-column key value */
 	htup.t_len = tuple->t_len + MINIMAL_TUPLE_OFFSET;
 	htup.t_data = (HeapTupleHeader) ((char *) tuple - MINIMAL_TUPLE_OFFSET);
@@ -702,7 +702,7 @@ tuplesort_putheaptuple(Tuplesortstate *state, HeapTuple tup)
 
 	/* copy the tuple into sort storage */
 	tup = heap_copytuple(tup);
-	stup.tuple = (void *) tup;
+	stup.tuple = tup;
 
 	/*
 	 * set up first-column key value, and potentially abbreviate, if it's a
@@ -1175,7 +1175,7 @@ readtup_heap(Tuplesortstate *state, SortTuple *stup,
 	LogicalTapeReadExact(tape, tupbody, tupbodylen);
 	if (base->sortopt & TUPLESORT_RANDOMACCESS) /* need trailing length word? */
 		LogicalTapeReadExact(tape, &tuplen, sizeof(tuplen));
-	stup->tuple = (void *) tuple;
+	stup->tuple = tuple;
 	/* set up first-column key value */
 	htup.t_len = tuple->t_len + MINIMAL_TUPLE_OFFSET;
 	htup.t_data = (HeapTupleHeader) ((char *) tuple - MINIMAL_TUPLE_OFFSET);
@@ -1372,7 +1372,7 @@ readtup_cluster(Tuplesortstate *state, SortTuple *stup,
 	LogicalTapeReadExact(tape, tuple->t_data, tuple->t_len);
 	if (base->sortopt & TUPLESORT_RANDOMACCESS) /* need trailing length word? */
 		LogicalTapeReadExact(tape, &tuplen, sizeof(tuplen));
-	stup->tuple = (void *) tuple;
+	stup->tuple = tuple;
 	/* set up first-column key value, if it's a simple column */
 	if (base->haveDatum1)
 		stup->datum1 = heap_getattr(tuple,
@@ -1681,7 +1681,7 @@ readtup_index(Tuplesortstate *state, SortTuple *stup,
 	LogicalTapeReadExact(tape, tuple, tuplen);
 	if (base->sortopt & TUPLESORT_RANDOMACCESS) /* need trailing length word? */
 		LogicalTapeReadExact(tape, &tuplen, sizeof(tuplen));
-	stup->tuple = (void *) tuple;
+	stup->tuple = tuple;
 	/* set up first-column key value */
 	stup->datum1 = index_getattr(tuple,
 								 1,
@@ -1757,7 +1757,7 @@ readtup_index_brin(Tuplesortstate *state, SortTuple *stup,
 	LogicalTapeReadExact(tape, &tuple->tuple, tuplen);
 	if (base->sortopt & TUPLESORT_RANDOMACCESS) /* need trailing length word? */
 		LogicalTapeReadExact(tape, &tuplen, sizeof(tuplen));
-	stup->tuple = (void *) tuple;
+	stup->tuple = tuple;
 
 	/* set up first-column key value, which is block number */
 	stup->datum1 = tuple->tuple.bt_blkno;

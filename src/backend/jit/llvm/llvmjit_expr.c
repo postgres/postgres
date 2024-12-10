@@ -720,11 +720,6 @@ llvm_compile_expr(ExprState *state)
 					v_boolnull = l_load(b, TypeStorageBool, v_resnullp, "");
 					v_boolvalue = l_load(b, TypeSizeT, v_resvaluep, "");
 
-					/* set resnull to boolnull */
-					LLVMBuildStore(b, v_boolnull, v_resnullp);
-					/* set revalue to boolvalue */
-					LLVMBuildStore(b, v_boolvalue, v_resvaluep);
-
 					/* check if current input is NULL */
 					LLVMBuildCondBr(b,
 									LLVMBuildICmp(b, LLVMIntEQ, v_boolnull,
@@ -816,11 +811,6 @@ llvm_compile_expr(ExprState *state)
 					v_boolnull = l_load(b, TypeStorageBool, v_resnullp, "");
 					v_boolvalue = l_load(b, TypeSizeT, v_resvaluep, "");
 
-					/* set resnull to boolnull */
-					LLVMBuildStore(b, v_boolnull, v_resnullp);
-					/* set revalue to boolvalue */
-					LLVMBuildStore(b, v_boolvalue, v_resvaluep);
-
 					LLVMBuildCondBr(b,
 									LLVMBuildICmp(b, LLVMIntEQ, v_boolnull,
 												  l_sbool_const(1), ""),
@@ -875,21 +865,22 @@ llvm_compile_expr(ExprState *state)
 			case EEOP_BOOL_NOT_STEP:
 				{
 					LLVMValueRef v_boolvalue;
-					LLVMValueRef v_boolnull;
 					LLVMValueRef v_negbool;
 
-					v_boolnull = l_load(b, TypeStorageBool, v_resnullp, "");
+					/* compute !boolvalue */
 					v_boolvalue = l_load(b, TypeSizeT, v_resvaluep, "");
-
 					v_negbool = LLVMBuildZExt(b,
 											  LLVMBuildICmp(b, LLVMIntEQ,
 															v_boolvalue,
 															l_sizet_const(0),
 															""),
 											  TypeSizeT, "");
-					/* set resnull to boolnull */
-					LLVMBuildStore(b, v_boolnull, v_resnullp);
-					/* set revalue to !boolvalue */
+
+					/*
+					 * Store it back in resvalue.  We can ignore resnull here;
+					 * if it was true, it stays true, and the value we store
+					 * in resvalue doesn't matter.
+					 */
 					LLVMBuildStore(b, v_negbool, v_resvaluep);
 
 					LLVMBuildBr(b, opblocks[opno + 1]);
@@ -1568,6 +1559,9 @@ llvm_compile_expr(ExprState *state)
 
 					v_fcinfo = l_ptr_const(fcinfo, l_ptr(StructFunctionCallInfoData));
 
+					/* save original arg[0] */
+					v_arg0 = l_funcvalue(b, v_fcinfo, 0);
+
 					/* if either argument is NULL they can't be equal */
 					v_argnull0 = l_funcnull(b, v_fcinfo, 0);
 					v_argnull1 = l_funcnull(b, v_fcinfo, 1);
@@ -1584,7 +1578,6 @@ llvm_compile_expr(ExprState *state)
 
 					/* one (or both) of the arguments are null, return arg[0] */
 					LLVMPositionBuilderAtEnd(b, b_hasnull);
-					v_arg0 = l_funcvalue(b, v_fcinfo, 0);
 					LLVMBuildStore(b, v_argnull0, v_resnullp);
 					LLVMBuildStore(b, v_arg0, v_resvaluep);
 					LLVMBuildBr(b, opblocks[opno + 1]);
@@ -1592,12 +1585,35 @@ llvm_compile_expr(ExprState *state)
 					/* build block to invoke function and check result */
 					LLVMPositionBuilderAtEnd(b, b_nonull);
 
+					/*
+					 * If first argument is of varlena type, it might be an
+					 * expanded datum.  We need to ensure that the value
+					 * passed to the comparison function is a read-only
+					 * pointer.  However, if we end by returning the first
+					 * argument, that will be the original read-write pointer
+					 * if it was read-write.
+					 */
+					if (op->d.func.make_ro)
+					{
+						LLVMValueRef v_params[1];
+						LLVMValueRef v_arg0_ro;
+
+						v_params[0] = v_arg0;
+						v_arg0_ro =
+							l_call(b,
+								   llvm_pg_var_func_type("MakeExpandedObjectReadOnlyInternal"),
+								   llvm_pg_func(mod, "MakeExpandedObjectReadOnlyInternal"),
+								   v_params, lengthof(v_params), "");
+						LLVMBuildStore(b, v_arg0_ro,
+									   l_funcvaluep(b, v_fcinfo, 0));
+					}
+
 					v_retval = BuildV1Call(context, b, mod, fcinfo, &v_fcinfo_isnull);
 
 					/*
-					 * If result not null, and arguments are equal return null
-					 * (same result as if there'd been NULLs, hence reuse
-					 * b_hasnull).
+					 * If result not null and arguments are equal return null,
+					 * else return arg[0] (same result as if there'd been
+					 * NULLs, hence reuse b_hasnull).
 					 */
 					v_argsequal = LLVMBuildAnd(b,
 											   LLVMBuildICmp(b, LLVMIntEQ,
@@ -1615,7 +1631,6 @@ llvm_compile_expr(ExprState *state)
 					LLVMPositionBuilderAtEnd(b, b_argsequal);
 					LLVMBuildStore(b, l_sbool_const(1), v_resnullp);
 					LLVMBuildStore(b, l_sizet_const(0), v_resvaluep);
-					LLVMBuildStore(b, v_retval, v_resvaluep);
 
 					LLVMBuildBr(b, opblocks[opno + 1]);
 					break;

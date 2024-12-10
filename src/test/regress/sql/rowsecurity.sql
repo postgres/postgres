@@ -2177,6 +2177,7 @@ CREATE FUNCTION op_leak(int, int) RETURNS bool
 CREATE OPERATOR <<< (procedure = op_leak, leftarg = int, rightarg = int,
                      restrict = scalarltsel);
 SELECT * FROM rls_tbl WHERE a <<< 1000;
+EXPLAIN (COSTS OFF) SELECT * FROM rls_tbl WHERE a <<< 1000 or a <<< 900;
 DROP OPERATOR <<< (int, int);
 DROP FUNCTION op_leak(int, int);
 RESET SESSION AUTHORIZATION;
@@ -2217,8 +2218,66 @@ execute q;
 set role regress_rls_bob;
 execute q;
 
+-- make sure RLS dependencies in CTEs are handled
+reset role;
+create or replace function rls_f() returns setof rls_t
+  stable language sql
+  as $$ with cte as (select * from rls_t) select * from cte $$;
+prepare r as select current_user, * from rls_f();
+set role regress_rls_alice;
+execute r;
+set role regress_rls_bob;
+execute r;
+
+-- make sure RLS dependencies in subqueries are handled
+reset role;
+create or replace function rls_f() returns setof rls_t
+  stable language sql
+  as $$ select * from (select * from rls_t) _ $$;
+prepare s as select current_user, * from rls_f();
+set role regress_rls_alice;
+execute s;
+set role regress_rls_bob;
+execute s;
+
+-- make sure RLS dependencies in sublinks are handled
+reset role;
+create or replace function rls_f() returns setof rls_t
+  stable language sql
+  as $$ select exists(select * from rls_t)::text $$;
+prepare t as select current_user, * from rls_f();
+set role regress_rls_alice;
+execute t;
+set role regress_rls_bob;
+execute t;
+
+-- make sure RLS dependencies are handled when coercion projections are inserted
+reset role;
+create or replace function rls_f() returns setof rls_t
+  stable language sql
+  as $$ select * from (select array_agg(c) as cs from rls_t) _ group by cs $$;
+prepare u as select current_user, * from rls_f();
+set role regress_rls_alice;
+execute u;
+set role regress_rls_bob;
+execute u;
+
+-- make sure RLS dependencies in security invoker views are handled
+reset role;
+create view rls_v with (security_invoker) as select * from rls_t;
+grant select on rls_v to regress_rls_alice, regress_rls_bob;
+create or replace function rls_f() returns setof rls_t
+  stable language sql
+  as $$ select * from rls_v $$;
+prepare v as select current_user, * from rls_f();
+set role regress_rls_alice;
+execute v;
+set role regress_rls_bob;
+execute v;
+
 RESET ROLE;
 DROP FUNCTION rls_f();
+DROP VIEW rls_v;
 DROP TABLE rls_t;
 
 --

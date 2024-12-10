@@ -75,6 +75,8 @@ main(int argc, char **argv)
 	static int	no_security_labels = 0;
 	static int	no_subscriptions = 0;
 	static int	strict_names = 0;
+	bool		data_only = false;
+	bool		schema_only = false;
 
 	struct option cmdopts[] = {
 		{"clean", 0, NULL, 'c'},
@@ -160,7 +162,7 @@ main(int argc, char **argv)
 		switch (c)
 		{
 			case 'a':			/* Dump data only */
-				opts->dataOnly = 1;
+				data_only = true;
 				break;
 			case 'c':			/* clean (i.e., drop) schema prior to create */
 				opts->dropSchema = 1;
@@ -236,7 +238,7 @@ main(int argc, char **argv)
 				simple_string_list_append(&opts->triggerNames, optarg);
 				break;
 			case 's':			/* dump schema only */
-				opts->schemaOnly = 1;
+				schema_only = true;
 				break;
 			case 'S':			/* Superuser username */
 				if (strlen(optarg) != 0)
@@ -339,10 +341,10 @@ main(int argc, char **argv)
 		opts->useDB = 1;
 	}
 
-	if (opts->dataOnly && opts->schemaOnly)
+	if (data_only && schema_only)
 		pg_fatal("options -s/--schema-only and -a/--data-only cannot be used together");
 
-	if (opts->dataOnly && opts->dropSchema)
+	if (data_only && opts->dropSchema)
 		pg_fatal("options -c/--clean and -a/--data-only cannot be used together");
 
 	if (opts->single_txn && opts->txn_size > 0)
@@ -358,6 +360,10 @@ main(int argc, char **argv)
 	/* Can't do single-txn mode with multiple connections */
 	if (opts->single_txn && numWorkers > 1)
 		pg_fatal("cannot specify both --single-transaction and multiple jobs");
+
+	/* set derivative flags */
+	opts->dumpSchema = (!data_only);
+	opts->dumpData = (!schema_only);
 
 	opts->disable_triggers = disable_triggers;
 	opts->enable_row_security = enable_row_security;
@@ -484,7 +490,7 @@ usage(const char *progname)
 	printf(_("  --filter=FILENAME            restore or skip objects based on expressions\n"
 			 "                               in FILENAME\n"));
 	printf(_("  --if-exists                  use IF EXISTS when dropping objects\n"));
-	printf(_("  --no-comments                do not restore comments\n"));
+	printf(_("  --no-comments                do not restore comment commands\n"));
 	printf(_("  --no-data-for-failed-tables  do not restore data of tables that could not be\n"
 			 "                               created\n"));
 	printf(_("  --no-publications            do not restore publications\n"));

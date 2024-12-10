@@ -14,11 +14,8 @@
  * src/backend/jit/llvm/SectionMemoryManager.cpp for the patched replacement
  * class llvm::backport::SectionMemoryManager that we use as a workaround.
  * This header controls whether we use it.
- *
- * We have adjusted it to compile against a range of LLVM versions, but not
- * further back than 12 for now.
  */
-#if defined(__aarch64__) && LLVM_VERSION_MAJOR > 11
+#if defined(__aarch64__)
 #define USE_LLVM_BACKPORT_SECTION_MEMORY_MANAGER
 #endif
 

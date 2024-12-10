@@ -299,7 +299,7 @@ gtrgm_consistent(PG_FUNCTION_ARGS)
 
 		if (cache)
 			pfree(cache);
-		fcinfo->flinfo->fn_extra = (void *) newcache;
+		fcinfo->flinfo->fn_extra = newcache;
 		cache = newcache;
 	}
 

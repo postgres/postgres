@@ -77,6 +77,7 @@
 
 #include "catalog/pg_collation.h"
 #include "catalog/pg_type.h"
+#include "common/int.h"
 #include "common/unicode_case.h"
 #include "common/unicode_category.h"
 #include "mb/pg_wchar.h"
@@ -622,7 +623,7 @@ typedef enum
 	DCH_Day,
 	DCH_Dy,
 	DCH_D,
-	DCH_FF1,
+	DCH_FF1,					/* FFn codes must be consecutive */
 	DCH_FF2,
 	DCH_FF3,
 	DCH_FF4,
@@ -788,12 +789,12 @@ static const KeyWord DCH_keywords[] = {
 	{"Day", 3, DCH_Day, false, FROM_CHAR_DATE_NONE},
 	{"Dy", 2, DCH_Dy, false, FROM_CHAR_DATE_NONE},
 	{"D", 1, DCH_D, true, FROM_CHAR_DATE_GREGORIAN},
-	{"FF1", 3, DCH_FF1, false, FROM_CHAR_DATE_NONE},	/* F */
-	{"FF2", 3, DCH_FF2, false, FROM_CHAR_DATE_NONE},
-	{"FF3", 3, DCH_FF3, false, FROM_CHAR_DATE_NONE},
-	{"FF4", 3, DCH_FF4, false, FROM_CHAR_DATE_NONE},
-	{"FF5", 3, DCH_FF5, false, FROM_CHAR_DATE_NONE},
-	{"FF6", 3, DCH_FF6, false, FROM_CHAR_DATE_NONE},
+	{"FF1", 3, DCH_FF1, true, FROM_CHAR_DATE_NONE}, /* F */
+	{"FF2", 3, DCH_FF2, true, FROM_CHAR_DATE_NONE},
+	{"FF3", 3, DCH_FF3, true, FROM_CHAR_DATE_NONE},
+	{"FF4", 3, DCH_FF4, true, FROM_CHAR_DATE_NONE},
+	{"FF5", 3, DCH_FF5, true, FROM_CHAR_DATE_NONE},
+	{"FF6", 3, DCH_FF6, true, FROM_CHAR_DATE_NONE},
 	{"FX", 2, DCH_FX, false, FROM_CHAR_DATE_NONE},
 	{"HH24", 4, DCH_HH24, true, FROM_CHAR_DATE_NONE},	/* H */
 	{"HH12", 4, DCH_HH12, true, FROM_CHAR_DATE_NONE},
@@ -844,12 +845,12 @@ static const KeyWord DCH_keywords[] = {
 	{"dd", 2, DCH_DD, true, FROM_CHAR_DATE_GREGORIAN},
 	{"dy", 2, DCH_dy, false, FROM_CHAR_DATE_NONE},
 	{"d", 1, DCH_D, true, FROM_CHAR_DATE_GREGORIAN},
-	{"ff1", 3, DCH_FF1, false, FROM_CHAR_DATE_NONE},	/* f */
-	{"ff2", 3, DCH_FF2, false, FROM_CHAR_DATE_NONE},
-	{"ff3", 3, DCH_FF3, false, FROM_CHAR_DATE_NONE},
-	{"ff4", 3, DCH_FF4, false, FROM_CHAR_DATE_NONE},
-	{"ff5", 3, DCH_FF5, false, FROM_CHAR_DATE_NONE},
-	{"ff6", 3, DCH_FF6, false, FROM_CHAR_DATE_NONE},
+	{"ff1", 3, DCH_FF1, true, FROM_CHAR_DATE_NONE}, /* f */
+	{"ff2", 3, DCH_FF2, true, FROM_CHAR_DATE_NONE},
+	{"ff3", 3, DCH_FF3, true, FROM_CHAR_DATE_NONE},
+	{"ff4", 3, DCH_FF4, true, FROM_CHAR_DATE_NONE},
+	{"ff5", 3, DCH_FF5, true, FROM_CHAR_DATE_NONE},
+	{"ff6", 3, DCH_FF6, true, FROM_CHAR_DATE_NONE},
 	{"fx", 2, DCH_FX, false, FROM_CHAR_DATE_NONE},
 	{"hh24", 4, DCH_HH24, true, FROM_CHAR_DATE_NONE},	/* h */
 	{"hh12", 4, DCH_HH12, true, FROM_CHAR_DATE_NONE},
@@ -1755,7 +1756,12 @@ str_tolower(const char *buff, size_t nbytes, Oid collid)
 				 * collations you get exactly what the collation says.
 				 */
 				for (p = result; *p; p++)
-					*p = tolower_l((unsigned char) *p, mylocale->info.lt);
+				{
+					if (mylocale->is_default)
+						*p = pg_tolower((unsigned char) *p);
+					else
+						*p = tolower_l((unsigned char) *p, mylocale->info.lt);
+				}
 			}
 		}
 	}
@@ -1892,7 +1898,12 @@ str_toupper(const char *buff, size_t nbytes, Oid collid)
 				 * collations you get exactly what the collation says.
 				 */
 				for (p = result; *p; p++)
-					*p = toupper_l((unsigned char) *p, mylocale->info.lt);
+				{
+					if (mylocale->is_default)
+						*p = pg_toupper((unsigned char) *p);
+					else
+						*p = toupper_l((unsigned char) *p, mylocale->info.lt);
+				}
 			}
 		}
 	}
@@ -2090,10 +2101,20 @@ str_initcap(const char *buff, size_t nbytes, Oid collid)
 				 */
 				for (p = result; *p; p++)
 				{
-					if (wasalnum)
-						*p = tolower_l((unsigned char) *p, mylocale->info.lt);
+					if (mylocale->is_default)
+					{
+						if (wasalnum)
+							*p = pg_tolower((unsigned char) *p);
+						else
+							*p = pg_toupper((unsigned char) *p);
+					}
 					else
-						*p = toupper_l((unsigned char) *p, mylocale->info.lt);
+					{
+						if (wasalnum)
+							*p = tolower_l((unsigned char) *p, mylocale->info.lt);
+						else
+							*p = toupper_l((unsigned char) *p, mylocale->info.lt);
+					}
 					wasalnum = isalnum_l((unsigned char) *p, mylocale->info.lt);
 				}
 			}
@@ -3806,7 +3827,14 @@ DCH_from_char(FormatNode *node, const char *in, TmFromChar *out,
 						ereturn(escontext,,
 								(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
 								 errmsg("invalid input string for \"Y,YYY\"")));
-					years += (millennia * 1000);
+
+					/* years += (millennia * 1000); */
+					if (pg_mul_s32_overflow(millennia, 1000, &millennia) ||
+						pg_add_s32_overflow(years, millennia, &years))
+						ereturn(escontext,,
+								(errcode(ERRCODE_DATETIME_FIELD_OVERFLOW),
+								 errmsg("value for \"Y,YYY\" in source string is out of range")));
+
 					if (!from_char_set_int(&out->year, years, n, escontext))
 						return;
 					out->yysz = 4;
@@ -4765,10 +4793,35 @@ do_to_timestamp(text *date_txt, text *fmt, Oid collid, bool std,
 			tm->tm_year = tmfc.year % 100;
 			if (tm->tm_year)
 			{
+				int			tmp;
+
 				if (tmfc.cc >= 0)
-					tm->tm_year += (tmfc.cc - 1) * 100;
+				{
+					/* tm->tm_year += (tmfc.cc - 1) * 100; */
+					tmp = tmfc.cc - 1;
+					if (pg_mul_s32_overflow(tmp, 100, &tmp) ||
+						pg_add_s32_overflow(tm->tm_year, tmp, &tm->tm_year))
+					{
+						DateTimeParseError(DTERR_FIELD_OVERFLOW, NULL,
+										   text_to_cstring(date_txt), "timestamp",
+										   escontext);
+						goto fail;
+					}
+				}
 				else
-					tm->tm_year = (tmfc.cc + 1) * 100 - tm->tm_year + 1;
+				{
+					/* tm->tm_year = (tmfc.cc + 1) * 100 - tm->tm_year + 1; */
+					tmp = tmfc.cc + 1;
+					if (pg_mul_s32_overflow(tmp, 100, &tmp) ||
+						pg_sub_s32_overflow(tmp, tm->tm_year, &tmp) ||
+						pg_add_s32_overflow(tmp, 1, &tm->tm_year))
+					{
+						DateTimeParseError(DTERR_FIELD_OVERFLOW, NULL,
+										   text_to_cstring(date_txt), "timestamp",
+										   escontext);
+						goto fail;
+					}
+				}
 			}
 			else
 			{
@@ -4794,11 +4847,31 @@ do_to_timestamp(text *date_txt, text *fmt, Oid collid, bool std,
 		if (tmfc.bc)
 			tmfc.cc = -tmfc.cc;
 		if (tmfc.cc >= 0)
+		{
 			/* +1 because 21st century started in 2001 */
-			tm->tm_year = (tmfc.cc - 1) * 100 + 1;
+			/* tm->tm_year = (tmfc.cc - 1) * 100 + 1; */
+			if (pg_mul_s32_overflow(tmfc.cc - 1, 100, &tm->tm_year) ||
+				pg_add_s32_overflow(tm->tm_year, 1, &tm->tm_year))
+			{
+				DateTimeParseError(DTERR_FIELD_OVERFLOW, NULL,
+								   text_to_cstring(date_txt), "timestamp",
+								   escontext);
+				goto fail;
+			}
+		}
 		else
+		{
 			/* +1 because year == 599 is 600 BC */
-			tm->tm_year = tmfc.cc * 100 + 1;
+			/* tm->tm_year = tmfc.cc * 100 + 1; */
+			if (pg_mul_s32_overflow(tmfc.cc, 100, &tm->tm_year) ||
+				pg_add_s32_overflow(tm->tm_year, 1, &tm->tm_year))
+			{
+				DateTimeParseError(DTERR_FIELD_OVERFLOW, NULL,
+								   text_to_cstring(date_txt), "timestamp",
+								   escontext);
+				goto fail;
+			}
+		}
 		fmask |= DTK_M(YEAR);
 	}
 
@@ -4823,11 +4896,31 @@ do_to_timestamp(text *date_txt, text *fmt, Oid collid, bool std,
 			fmask |= DTK_DATE_M;
 		}
 		else
-			tmfc.ddd = (tmfc.ww - 1) * 7 + 1;
+		{
+			/* tmfc.ddd = (tmfc.ww - 1) * 7 + 1; */
+			if (pg_sub_s32_overflow(tmfc.ww, 1, &tmfc.ddd) ||
+				pg_mul_s32_overflow(tmfc.ddd, 7, &tmfc.ddd) ||
+				pg_add_s32_overflow(tmfc.ddd, 1, &tmfc.ddd))
+			{
+				DateTimeParseError(DTERR_FIELD_OVERFLOW, NULL,
+								   date_str, "timestamp", escontext);
+				goto fail;
+			}
+		}
 	}
 
 	if (tmfc.w)
-		tmfc.dd = (tmfc.w - 1) * 7 + 1;
+	{
+		/* tmfc.dd = (tmfc.w - 1) * 7 + 1; */
+		if (pg_sub_s32_overflow(tmfc.w, 1, &tmfc.dd) ||
+			pg_mul_s32_overflow(tmfc.dd, 7, &tmfc.dd) ||
+			pg_add_s32_overflow(tmfc.dd, 1, &tmfc.dd))
+		{
+			DateTimeParseError(DTERR_FIELD_OVERFLOW, NULL,
+							   date_str, "timestamp", escontext);
+			goto fail;
+		}
+	}
 	if (tmfc.dd)
 	{
 		tm->tm_mday = tmfc.dd;
@@ -4892,7 +4985,18 @@ do_to_timestamp(text *date_txt, text *fmt, Oid collid, bool std,
 	}
 
 	if (tmfc.ms)
-		*fsec += tmfc.ms * 1000;
+	{
+		int			tmp = 0;
+
+		/* *fsec += tmfc.ms * 1000; */
+		if (pg_mul_s32_overflow(tmfc.ms, 1000, &tmp) ||
+			pg_add_s32_overflow(*fsec, tmp, fsec))
+		{
+			DateTimeParseError(DTERR_FIELD_OVERFLOW, NULL,
+							   date_str, "timestamp", escontext);
+			goto fail;
+		}
+	}
 	if (tmfc.us)
 		*fsec += tmfc.us;
 	if (fprec)

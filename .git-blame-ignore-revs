@@ -14,6 +14,12 @@
 #
 # $ git log --pretty=format:"%H # %cd%n# %s" $PGINDENTGITHASH -1 --date=iso
 
+53dcba9be5746cc126bdb949bf81c29ea2cfc24d # 2024-11-21 21:40:17 +0100
+# pgindent run
+
+a7f2f6adc240a2823c2344b89e90bb630dea8803 # 2024-10-16 12:21:13 -0700
+# Whitespace fixup from generated unicode tables.
+
 7f7474a8e4002ac9fd4979cc7b16b50b70b70c28 # 2024-09-27 11:14:31 -0400
 # Reindent pg_verifybackup.c.
 

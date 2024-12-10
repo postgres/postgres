@@ -458,7 +458,7 @@ get_multirange_io_data(FunctionCallInfo fcinfo, Oid mltrngtypid, IOFuncSelector 
 		fmgr_info_cxt(typiofunc, &cache->typioproc,
 					  fcinfo->flinfo->fn_mcxt);
 
-		fcinfo->flinfo->fn_extra = (void *) cache;
+		fcinfo->flinfo->fn_extra = cache;
 	}
 
 	return cache;
@@ -555,7 +555,7 @@ multirange_get_typcache(FunctionCallInfo fcinfo, Oid mltrngtypid)
 		typcache = lookup_type_cache(mltrngtypid, TYPECACHE_MULTIRANGE_INFO);
 		if (typcache->rngtype == NULL)
 			elog(ERROR, "type %u is not a multirange type", mltrngtypid);
-		fcinfo->flinfo->fn_extra = (void *) typcache;
+		fcinfo->flinfo->fn_extra = typcache;
 	}
 
 	return typcache;

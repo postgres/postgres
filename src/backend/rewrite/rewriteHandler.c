@@ -58,6 +58,12 @@ typedef struct acquireLocksOnSubLinks_context
 	bool		for_execute;	/* AcquireRewriteLocks' forExecute param */
 } acquireLocksOnSubLinks_context;
 
+typedef struct fireRIRonSubLink_context
+{
+	List	   *activeRIRs;
+	bool		hasRowSecurity;
+} fireRIRonSubLink_context;
+
 static bool acquireLocksOnSubLinks(Node *node,
 								   acquireLocksOnSubLinks_context *context);
 static Query *rewriteRuleAction(Query *parsetree,
@@ -1840,6 +1846,12 @@ ApplyRetrieveRule(Query *parsetree,
 	rule_action = fireRIRrules(rule_action, activeRIRs);
 
 	/*
+	 * Make sure the query is marked as having row security if the view query
+	 * does.
+	 */
+	parsetree->hasRowSecurity |= rule_action->hasRowSecurity;
+
+	/*
 	 * Now, plug the view query in as a subselect, converting the relation's
 	 * original RTE to a subquery RTE.
 	 */
@@ -1952,7 +1964,7 @@ markQueryForLocking(Query *qry, Node *jtnode,
  * the SubLink's subselect link with the possibly-rewritten subquery.
  */
 static bool
-fireRIRonSubLink(Node *node, List *activeRIRs)
+fireRIRonSubLink(Node *node, fireRIRonSubLink_context *context)
 {
 	if (node == NULL)
 		return false;
@@ -1962,7 +1974,13 @@ fireRIRonSubLink(Node *node, List *activeRIRs)
 
 		/* Do what we came for */
 		sub->subselect = (Node *) fireRIRrules((Query *) sub->subselect,
-											   activeRIRs);
+											   context->activeRIRs);
+
+		/*
+		 * Remember if any of the sublinks have row security.
+		 */
+		context->hasRowSecurity |= ((Query *) sub->subselect)->hasRowSecurity;
+
 		/* Fall through to process lefthand args of SubLink */
 	}
 
@@ -1970,8 +1988,7 @@ fireRIRonSubLink(Node *node, List *activeRIRs)
 	 * Do NOT recurse into Query nodes, because fireRIRrules already processed
 	 * subselects of subselects for us.
 	 */
-	return expression_tree_walker(node, fireRIRonSubLink,
-								  (void *) activeRIRs);
+	return expression_tree_walker(node, fireRIRonSubLink, context);
 }
 
 
@@ -2032,6 +2049,13 @@ fireRIRrules(Query *parsetree, List *activeRIRs)
 		if (rte->rtekind == RTE_SUBQUERY)
 		{
 			rte->subquery = fireRIRrules(rte->subquery, activeRIRs);
+
+			/*
+			 * While we are here, make sure the query is marked as having row
+			 * security if any of its subqueries do.
+			 */
+			parsetree->hasRowSecurity |= rte->subquery->hasRowSecurity;
+
 			continue;
 		}
 
@@ -2145,6 +2169,12 @@ fireRIRrules(Query *parsetree, List *activeRIRs)
 
 		cte->ctequery = (Node *)
 			fireRIRrules((Query *) cte->ctequery, activeRIRs);
+
+		/*
+		 * While we are here, make sure the query is marked as having row
+		 * security if any of its CTEs do.
+		 */
+		parsetree->hasRowSecurity |= ((Query *) cte->ctequery)->hasRowSecurity;
 	}
 
 	/*
@@ -2152,8 +2182,21 @@ fireRIRrules(Query *parsetree, List *activeRIRs)
 	 * the rtable and cteList.
 	 */
 	if (parsetree->hasSubLinks)
-		query_tree_walker(parsetree, fireRIRonSubLink, (void *) activeRIRs,
+	{
+		fireRIRonSubLink_context context;
+
+		context.activeRIRs = activeRIRs;
+		context.hasRowSecurity = false;
+
+		query_tree_walker(parsetree, fireRIRonSubLink, &context,
 						  QTW_IGNORE_RC_SUBQUERIES);
+
+		/*
+		 * Make sure the query is marked as having row security if any of its
+		 * sublinks do.
+		 */
+		parsetree->hasRowSecurity |= context.hasRowSecurity;
+	}
 
 	/*
 	 * Apply any row-level security policies.  We do this last because it
@@ -2193,6 +2236,7 @@ fireRIRrules(Query *parsetree, List *activeRIRs)
 			if (hasSubLinks)
 			{
 				acquireLocksOnSubLinks_context context;
+				fireRIRonSubLink_context fire_context;
 
 				/*
 				 * Recursively process the new quals, checking for infinite
@@ -2223,11 +2267,21 @@ fireRIRrules(Query *parsetree, List *activeRIRs)
 				 * Now that we have the locks on anything added by
 				 * get_row_security_policies, fire any RIR rules for them.
 				 */
+				fire_context.activeRIRs = activeRIRs;
+				fire_context.hasRowSecurity = false;
+
 				expression_tree_walker((Node *) securityQuals,
-									   fireRIRonSubLink, (void *) activeRIRs);
+									   fireRIRonSubLink, &fire_context);
 
 				expression_tree_walker((Node *) withCheckOptions,
-									   fireRIRonSubLink, (void *) activeRIRs);
+									   fireRIRonSubLink, &fire_context);
+
+				/*
+				 * We can ignore the value of fire_context.hasRowSecurity
+				 * since we only reach this code in cases where hasRowSecurity
+				 * is already true.
+				 */
+				Assert(hasRowSecurity);
 
 				activeRIRs = list_delete_last(activeRIRs);
 			}

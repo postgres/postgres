@@ -1,5 +1,6 @@
 *		whitespace=space-before-tab,trailing-space
 *.[chly]	whitespace=space-before-tab,trailing-space,indent-with-non-tab,tabwidth=4
+*.cpp		whitespace=space-before-tab,trailing-space,indent-with-non-tab,tabwidth=4
 *.pl		whitespace=space-before-tab,trailing-space,tabwidth=4
 *.pm		whitespace=space-before-tab,trailing-space,tabwidth=4
 *.po		whitespace=space-before-tab,trailing-space,tab-in-indent,-blank-at-eof
@@ -22,9 +23,12 @@ src/interfaces/ecpg/test/expected/*	-whitespace
 # These files are maintained or generated elsewhere.  We take them as is.
 configure				-whitespace
 ppport.h				-whitespace
+src/backend/jit/llvm/SectionMemoryManager.cpp		-whitespace
+src/backend/jit/llvm/SectionMemoryManager.LICENSE	-whitespace
 src/backend/regex/COPYRIGHT		-whitespace
 src/backend/snowball/libstemmer/*.c	-whitespace
 src/backend/utils/mb/Unicode/*-std.txt	-whitespace
+src/include/jit/SectionMemoryManager.h	-whitespace
 src/include/snowball/libstemmer/*	-whitespace
 src/timezone/data/*			-whitespace
 src/tools/pg_bsd_indent/*		-whitespace

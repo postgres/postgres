@@ -137,7 +137,7 @@ InitArchiveFmt_Custom(ArchiveHandle *AH)
 
 	/* Set up a private area. */
 	ctx = (lclContext *) pg_malloc0(sizeof(lclContext));
-	AH->formatData = (void *) ctx;
+	AH->formatData = ctx;
 
 	/*
 	 * Now open the file
@@ -205,7 +205,7 @@ _ArchiveEntry(ArchiveHandle *AH, TocEntry *te)
 	else
 		ctx->dataState = K_OFFSET_NO_DATA;
 
-	te->formatData = (void *) ctx;
+	te->formatData = ctx;
 }
 
 /*
@@ -241,7 +241,7 @@ _ReadExtraToc(ArchiveHandle *AH, TocEntry *te)
 	if (ctx == NULL)
 	{
 		ctx = (lclTocEntry *) pg_malloc0(sizeof(lclTocEntry));
-		te->formatData = (void *) ctx;
+		te->formatData = ctx;
 	}
 
 	ctx->dataState = ReadOffset(AH, &(ctx->dataPos));

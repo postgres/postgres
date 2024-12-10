@@ -746,7 +746,7 @@ makeDependencyGraphWalker(Node *node, CteState *cstate)
 				}
 				(void) raw_expression_tree_walker(node,
 												  makeDependencyGraphWalker,
-												  (void *) cstate);
+												  cstate);
 				cstate->innerwiths = list_delete_first(cstate->innerwiths);
 			}
 			else
@@ -768,7 +768,7 @@ makeDependencyGraphWalker(Node *node, CteState *cstate)
 				}
 				(void) raw_expression_tree_walker(node,
 												  makeDependencyGraphWalker,
-												  (void *) cstate);
+												  cstate);
 				cstate->innerwiths = list_delete_first(cstate->innerwiths);
 			}
 			/* We're done examining the SelectStmt */
@@ -787,7 +787,7 @@ makeDependencyGraphWalker(Node *node, CteState *cstate)
 	}
 	return raw_expression_tree_walker(node,
 									  makeDependencyGraphWalker,
-									  (void *) cstate);
+									  cstate);
 }
 
 /*
@@ -1130,7 +1130,7 @@ checkWellFormedRecursionWalker(Node *node, CteState *cstate)
 	}
 	return raw_expression_tree_walker(node,
 									  checkWellFormedRecursionWalker,
-									  (void *) cstate);
+									  cstate);
 }
 
 /*
@@ -1147,7 +1147,7 @@ checkWellFormedSelectStmt(SelectStmt *stmt, CteState *cstate)
 		/* just recurse without changing state */
 		raw_expression_tree_walker((Node *) stmt,
 								   checkWellFormedRecursionWalker,
-								   (void *) cstate);
+								   cstate);
 	}
 	else
 	{
@@ -1157,7 +1157,7 @@ checkWellFormedSelectStmt(SelectStmt *stmt, CteState *cstate)
 			case SETOP_UNION:
 				raw_expression_tree_walker((Node *) stmt,
 										   checkWellFormedRecursionWalker,
-										   (void *) cstate);
+										   cstate);
 				break;
 			case SETOP_INTERSECT:
 				if (stmt->all)

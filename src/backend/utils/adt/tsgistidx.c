@@ -355,7 +355,7 @@ gtsvector_consistent(PG_FUNCTION_ARGS)
 		chkval.arrb = GETARR(key);
 		chkval.arre = chkval.arrb + ARRNELEM(key);
 		PG_RETURN_BOOL(TS_execute(GETQUERY(query),
-								  (void *) &chkval,
+								  &chkval,
 								  TS_EXEC_PHRASE_NO_POS,
 								  checkcondition_arr));
 	}

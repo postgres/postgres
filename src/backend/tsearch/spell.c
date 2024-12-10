@@ -148,7 +148,7 @@ compact_palloc0(IspellDict *Conf, size_t size)
 		Conf->avail = COMPACT_ALLOC_CHUNK;
 	}
 
-	result = (void *) Conf->firstfree;
+	result = Conf->firstfree;
 	Conf->firstfree += size;
 	Conf->avail -= size;
 

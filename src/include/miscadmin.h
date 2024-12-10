@@ -333,6 +333,7 @@ typedef enum BackendType
 
 	/* Backends and other backend-like processes */
 	B_BACKEND,
+	B_DEAD_END_BACKEND,
 	B_AUTOVAC_LAUNCHER,
 	B_AUTOVAC_WORKER,
 	B_BG_WORKER,
@@ -392,7 +393,9 @@ extern char *GetUserNameFromId(Oid roleid, bool noerr);
 extern Oid	GetUserId(void);
 extern Oid	GetOuterUserId(void);
 extern Oid	GetSessionUserId(void);
+extern bool GetSessionUserIsSuperuser(void);
 extern Oid	GetAuthenticatedUserId(void);
+extern void SetAuthenticatedUserId(Oid userid);
 extern void GetUserIdAndSecContext(Oid *userid, int *sec_context);
 extern void SetUserIdAndSecContext(Oid userid, int sec_context);
 extern bool InLocalUserIdChange(void);

@@ -1226,7 +1226,7 @@ pg_xml_init(PgXmlStrictness strictness)
 	errcxt->saved_errcxt = xmlGenericErrorContext;
 #endif
 
-	xmlSetStructuredErrorFunc((void *) errcxt, xml_errorHandler);
+	xmlSetStructuredErrorFunc(errcxt, xml_errorHandler);
 
 	/*
 	 * Verify that xmlSetStructuredErrorFunc set the context variable we
@@ -1248,7 +1248,7 @@ pg_xml_init(PgXmlStrictness strictness)
 	new_errcxt = xmlGenericErrorContext;
 #endif
 
-	if (new_errcxt != (void *) errcxt)
+	if (new_errcxt != errcxt)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("could not set up XML error handler"),
@@ -1302,7 +1302,7 @@ pg_xml_done(PgXmlErrorContext *errcxt, bool isError)
 	cur_errcxt = xmlGenericErrorContext;
 #endif
 
-	if (cur_errcxt != (void *) errcxt)
+	if (cur_errcxt != errcxt)
 		elog(WARNING, "libxml error handling state is out of sync with xml.c");
 
 	/* Restore the saved handlers */
@@ -2197,7 +2197,7 @@ xml_errorHandler(void *data, PgXmlErrorPtr error)
 		xmlGenericErrorFunc errFuncSaved = xmlGenericError;
 		void	   *errCtxSaved = xmlGenericErrorContext;
 
-		xmlSetGenericErrorFunc((void *) errorBuf,
+		xmlSetGenericErrorFunc(errorBuf,
 							   (xmlGenericErrorFunc) appendStringInfo);
 
 		/* Add context information to errorBuf */
@@ -4885,7 +4885,7 @@ XmlTableFetchRow(TableFuncScanState *state)
 	xtCxt = GetXmlTableBuilderPrivateData(state, "XmlTableFetchRow");
 
 	/* Propagate our own error context to libxml2 */
-	xmlSetStructuredErrorFunc((void *) xtCxt->xmlerrcxt, xml_errorHandler);
+	xmlSetStructuredErrorFunc(xtCxt->xmlerrcxt, xml_errorHandler);
 
 	if (xtCxt->xpathobj == NULL)
 	{
@@ -4939,7 +4939,7 @@ XmlTableGetValue(TableFuncScanState *state, int colnum,
 		   xtCxt->xpathobj->nodesetval != NULL);
 
 	/* Propagate our own error context to libxml2 */
-	xmlSetStructuredErrorFunc((void *) xtCxt->xmlerrcxt, xml_errorHandler);
+	xmlSetStructuredErrorFunc(xtCxt->xmlerrcxt, xml_errorHandler);
 
 	*isnull = false;
 
@@ -5082,7 +5082,7 @@ XmlTableDestroyOpaque(TableFuncScanState *state)
 	xtCxt = GetXmlTableBuilderPrivateData(state, "XmlTableDestroyOpaque");
 
 	/* Propagate our own error context to libxml2 */
-	xmlSetStructuredErrorFunc((void *) xtCxt->xmlerrcxt, xml_errorHandler);
+	xmlSetStructuredErrorFunc(xtCxt->xmlerrcxt, xml_errorHandler);
 
 	if (xtCxt->xpathscomp != NULL)
 	{

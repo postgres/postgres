@@ -18,16 +18,6 @@
 
 #ifndef WIN32
 #include <dlfcn.h>
-
-/*
- * On macOS, <dlfcn.h> insists on including <stdbool.h>.  If we're not
- * using stdbool, undef bool to undo the damage.
- */
-#ifndef PG_USE_STDBOOL
-#ifdef bool
-#undef bool
-#endif
-#endif
 #endif							/* !WIN32 */
 
 #include "fmgr.h"

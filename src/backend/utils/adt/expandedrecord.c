@@ -161,7 +161,7 @@ make_expanded_record_from_typeid(Oid type_id, int32 typmod,
 	{
 		/* Register callback to release the refcount */
 		erh->er_mcb.func = ER_mc_callback;
-		erh->er_mcb.arg = (void *) erh;
+		erh->er_mcb.arg = erh;
 		MemoryContextRegisterResetCallback(erh->hdr.eoh_context,
 										   &erh->er_mcb);
 
@@ -289,7 +289,7 @@ make_expanded_record_from_tupdesc(TupleDesc tupdesc,
 	{
 		/* Register callback to release the refcount */
 		erh->er_mcb.func = ER_mc_callback;
-		erh->er_mcb.arg = (void *) erh;
+		erh->er_mcb.arg = erh;
 		MemoryContextRegisterResetCallback(erh->hdr.eoh_context,
 										   &erh->er_mcb);
 
@@ -385,7 +385,7 @@ make_expanded_record_from_exprecord(ExpandedRecordHeader *olderh,
 	{
 		/* Register callback to release the refcount */
 		erh->er_mcb.func = ER_mc_callback;
-		erh->er_mcb.arg = (void *) erh;
+		erh->er_mcb.arg = erh;
 		MemoryContextRegisterResetCallback(erh->hdr.eoh_context,
 										   &erh->er_mcb);
 
@@ -844,7 +844,7 @@ expanded_record_fetch_tupdesc(ExpandedRecordHeader *erh)
 		if (erh->er_mcb.arg == NULL)
 		{
 			erh->er_mcb.func = ER_mc_callback;
-			erh->er_mcb.arg = (void *) erh;
+			erh->er_mcb.arg = erh;
 			MemoryContextRegisterResetCallback(erh->hdr.eoh_context,
 											   &erh->er_mcb);
 		}

@@ -633,6 +633,13 @@ if test "$with_llvm" = yes ; then
   PGAC_PROG_VARCC_VARFLAGS_OPT(CLANG, BITCODE_CFLAGS, [-fexcess-precision=standard])
   PGAC_PROG_VARCXX_VARFLAGS_OPT(CLANGXX, BITCODE_CXXFLAGS, [-fexcess-precision=standard])
 
+  # Ideally bitcode should perhaps match $CC's use, or not, of outline atomic
+  # functions, but for now we err on the side of suppressing them in bitcode,
+  # because we can't assume they're available at runtime.  This affects aarch64
+  # builds using the basic armv8-a ISA without LSE support.
+  PGAC_PROG_VARCXX_VARFLAGS_OPT(CLANG, BITCODE_CFLAGS, [-mno-outline-atomics])
+  PGAC_PROG_VARCXX_VARFLAGS_OPT(CLANG, BITCODE_CXXFLAGS, [-mno-outline-atomics])
+
   NOT_THE_CFLAGS=""
   PGAC_PROG_VARCC_VARFLAGS_OPT(CLANG, NOT_THE_CFLAGS, [-Wunused-command-line-argument])
   if test -n "$NOT_THE_CFLAGS"; then
@@ -686,10 +693,10 @@ if test "$enable_profiling" = yes && test "$ac_cv_prog_cc_g" = yes; then
   fi
 fi
 
-# On Solaris, we need this #define to get POSIX-conforming versions
-# of many interfaces (sigwait, getpwuid_r, ...).
+# On Solaris, we need these #defines to get POSIX-conforming versions
+# of many interfaces (sigwait, getpwuid_r, shmdt, ...).
 if test "$PORTNAME" = "solaris"; then
-  CPPFLAGS="$CPPFLAGS -D_POSIX_PTHREAD_SEMANTICS"
+  CPPFLAGS="$CPPFLAGS -D_POSIX_C_SOURCE=200112L -D__EXTENSIONS__ -D_POSIX_PTHREAD_SEMANTICS"
 fi
 
 # We already have this in Makefile.win32, but configure needs it too
@@ -800,7 +807,6 @@ for dir in $with_includes $SRCH_INC; do
   fi
 done
 IFS=$ac_save_IFS
-AC_SUBST(INCLUDES)
 
 
 #
@@ -1426,8 +1432,6 @@ AC_SUBST(UUID_LIBS)
 ## Header files
 ##
 
-AC_HEADER_STDBOOL
-
 AC_CHECK_HEADERS(m4_normalize([
 	atomic.h
 	copyfile.h
@@ -1600,6 +1604,7 @@ PGAC_C_STATIC_ASSERT
 PGAC_C_TYPEOF
 PGAC_C_TYPES_COMPATIBLE
 PGAC_C_BUILTIN_CONSTANT_P
+PGAC_C_BUILTIN_OP_OVERFLOW
 PGAC_C_BUILTIN_UNREACHABLE
 PGAC_C_COMPUTED_GOTO
 PGAC_STRUCT_TIMEZONE
@@ -1687,18 +1692,6 @@ if test "$ac_cv_sizeof_off_t" -lt 8; then
   fi
 fi
 
-AC_CHECK_SIZEOF([bool], [],
-[#ifdef HAVE_STDBOOL_H
-#include <stdbool.h>
-#endif])
-
-dnl We use <stdbool.h> if we have it and it declares type bool as having
-dnl size 1.  Otherwise, c.h will fall back to declaring bool as unsigned char.
-if test "$ac_cv_header_stdbool_h" = yes -a "$ac_cv_sizeof_bool" = 1; then
-  AC_DEFINE([PG_USE_STDBOOL], 1,
-            [Define to 1 to use <stdbool.h> to define type bool.])
-fi
-
 
 ##
 ## Functions, global variables
@@ -1717,6 +1710,8 @@ AC_CHECK_FUNCS(m4_normalize([
 	backtrace_symbols
 	copyfile
 	copy_file_range
+	elf_aux_info
+	getauxval
 	getifaddrs
 	getpeerucred
 	inet_pton
@@ -1817,7 +1812,6 @@ fi
 
 # Win32 (really MinGW) support
 if test "$PORTNAME" = "win32"; then
-  AC_CHECK_FUNCS(_configthreadlocale)
   AC_LIBOBJ(dirmod)
   AC_LIBOBJ(kill)
   AC_LIBOBJ(open)
@@ -1913,54 +1907,18 @@ for the exact reason.]])],
 # Run tests below here
 # --------------------
 
-dnl Check to see if we have a working 64-bit integer type.
-dnl Since Postgres 8.4, we no longer support compilers without a working
-dnl 64-bit type; but we have to determine whether that type is called
-dnl "long int" or "long long int".
-
-PGAC_TYPE_64BIT_INT([long int])
-
-if test x"$HAVE_LONG_INT_64" = x"yes" ; then
-  pg_int64_type="long int"
-else
-  PGAC_TYPE_64BIT_INT([long long int])
-  if test x"$HAVE_LONG_LONG_INT_64" = x"yes" ; then
-    pg_int64_type="long long int"
-  else
-    AC_MSG_ERROR([Cannot find a working 64-bit integer type.])
-  fi
-fi
-
-AC_DEFINE_UNQUOTED(PG_INT64_TYPE, $pg_int64_type,
-  [Define to the name of a signed 64-bit integer type.])
-
-# Select the printf length modifier that goes with that, too.
-if test x"$pg_int64_type" = x"long long int" ; then
-  INT64_MODIFIER='"ll"'
-else
-  INT64_MODIFIER='"l"'
-fi
-
-AC_DEFINE_UNQUOTED(INT64_MODIFIER, $INT64_MODIFIER,
-                   [Define to the appropriate printf length modifier for 64-bit ints.])
-
-# has to be down here, rather than with the other builtins, because
-# the test uses PG_INT64_TYPE.
-PGAC_C_BUILTIN_OP_OVERFLOW
-
 # Check size of void *, size_t (enables tweaks for > 32bit address space)
 AC_CHECK_SIZEOF([void *])
 AC_CHECK_SIZEOF([size_t])
 AC_CHECK_SIZEOF([long])
+AC_CHECK_SIZEOF([long long])
 
 # Determine memory alignment requirements for the basic C data types.
 
 AC_CHECK_ALIGNOF(short)
 AC_CHECK_ALIGNOF(int)
 AC_CHECK_ALIGNOF(long)
-if test x"$HAVE_LONG_LONG_INT_64" = x"yes" ; then
-  AC_CHECK_ALIGNOF(long long int)
-fi
+AC_CHECK_ALIGNOF(int64_t)
 AC_CHECK_ALIGNOF(double)
 
 # Compute maximum alignment of any basic type.
@@ -1984,11 +1942,10 @@ MAX_ALIGNOF=$ac_cv_alignof_double
 if test $ac_cv_alignof_long -gt $MAX_ALIGNOF ; then
   AC_MSG_ERROR([alignment of 'long' is greater than the alignment of 'double'])
 fi
-if test x"$HAVE_LONG_LONG_INT_64" = xyes && test $ac_cv_alignof_long_long_int -gt $MAX_ALIGNOF ; then
-  AC_MSG_ERROR([alignment of 'long long int' is greater than the alignment of 'double'])
+if test $ac_cv_alignof_int64_t -gt $MAX_ALIGNOF ; then
+  AC_MSG_ERROR([alignment of 'int64_t' is greater than the alignment of 'double'])
 fi
 AC_DEFINE_UNQUOTED(MAXIMUM_ALIGNOF, $MAX_ALIGNOF, [Define as the maximum alignment requirement of any C data type.])
-
 
 # Some compilers offer a 128-bit integer scalar type.
 PGAC_TYPE_128BIT_INT
@@ -2066,13 +2023,7 @@ fi
 
 # Check for Intel SSE 4.2 intrinsics to do CRC calculations.
 #
-# First check if the _mm_crc32_u8 and _mm_crc32_u64 intrinsics can be used
-# with the default compiler flags. If not, check if adding the -msse4.2
-# flag helps. CFLAGS_CRC is set to -msse4.2 if that's required.
-PGAC_SSE42_CRC32_INTRINSICS([])
-if test x"$pgac_sse42_crc32_intrinsics" != x"yes"; then
-  PGAC_SSE42_CRC32_INTRINSICS([-msse4.2])
-fi
+PGAC_SSE42_CRC32_INTRINSICS()
 
 # Are we targeting a processor that supports SSE 4.2? gcc, clang and icc all
 # define __SSE4_2__ in that case.
@@ -2085,11 +2036,15 @@ AC_COMPILE_IFELSE([AC_LANG_PROGRAM([], [
 # Check for ARMv8 CRC Extension intrinsics to do CRC calculations.
 #
 # First check if __crc32c* intrinsics can be used with the default compiler
-# flags. If not, check if adding -march=armv8-a+crc flag helps.
+# flags. If not, check if adding "-march=armv8-a+crc+simd" flag helps.
+# On systems using soft-float ABI, "-march=armv8-a+crc" is required instead.
 # CFLAGS_CRC is set if the extra flag is required.
 PGAC_ARMV8_CRC32C_INTRINSICS([])
 if test x"$pgac_armv8_crc32c_intrinsics" != x"yes"; then
-  PGAC_ARMV8_CRC32C_INTRINSICS([-march=armv8-a+crc])
+  PGAC_ARMV8_CRC32C_INTRINSICS([-march=armv8-a+crc+simd])
+  if test x"$pgac_armv8_crc32c_intrinsics" != x"yes"; then
+    PGAC_ARMV8_CRC32C_INTRINSICS([-march=armv8-a+crc])
+  fi
 fi
 
 # Check for LoongArch CRC intrinsics to do CRC calculations.
@@ -2105,14 +2060,19 @@ AC_SUBST(CFLAGS_CRC)
 # If we are targeting a processor that has Intel SSE 4.2 instructions, we can
 # use the special CRC instructions for calculating CRC-32C. If we're not
 # targeting such a processor, but we can nevertheless produce code that uses
-# the SSE intrinsics, perhaps with some extra CFLAGS, compile both
-# implementations and select which one to use at runtime, depending on whether
-# SSE 4.2 is supported by the processor we're running on.
+# the SSE intrinsics, compile both implementations and select which one to use
+# at runtime, depending on whether SSE 4.2 is supported by the processor we're
+# running on.
 #
 # Similarly, if we are targeting an ARM processor that has the CRC
 # instructions that are part of the ARMv8 CRC Extension, use them. And if
 # we're not targeting such a processor, but can nevertheless produce code that
 # uses the CRC instructions, compile both, and select at runtime.
+#
+# Note that we do not use __attribute__((target("..."))) for the ARM CRC
+# instructions because until clang 16, using the ARM intrinsics still requires
+# special -march flags.  Perhaps we can re-evaluate this decision after some
+# time has passed.
 #
 # You can skip the runtime check by setting the appropriate USE_*_CRC32 flag to 1
 # in the template or configure command line.
@@ -2474,12 +2434,6 @@ AC_CONFIG_HEADERS([src/include/pg_config.h],
 [
 # Update timestamp for pg_config.h (see Makefile.global)
 echo >src/include/stamp-h
-])
-
-AC_CONFIG_HEADERS([src/include/pg_config_ext.h],
-[
-# Update timestamp for pg_config_ext.h (see Makefile.global)
-echo >src/include/stamp-ext-h
 ])
 
 AC_CONFIG_HEADERS([src/interfaces/ecpg/include/ecpg_config.h],

@@ -279,7 +279,7 @@ spgGetCache(Relation index)
 			UnlockReleaseBuffer(metabuffer);
 		}
 
-		index->rd_amcache = (void *) cache;
+		index->rd_amcache = cache;
 	}
 	else
 	{

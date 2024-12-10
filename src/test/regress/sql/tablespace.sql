@@ -396,6 +396,12 @@ ALTER INDEX testschema.part_a_idx SET TABLESPACE pg_default;
 -- Fail, not empty
 DROP TABLESPACE regress_tblspace;
 
+-- Adequate cache initialization before GRANT
+\c -
+BEGIN;
+GRANT ALL ON TABLESPACE regress_tblspace TO PUBLIC;
+ROLLBACK;
+
 CREATE ROLE regress_tablespace_user1 login;
 CREATE ROLE regress_tablespace_user2 login;
 GRANT USAGE ON SCHEMA testschema TO regress_tablespace_user2;

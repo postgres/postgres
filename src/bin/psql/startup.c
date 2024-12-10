@@ -399,7 +399,7 @@ main(int argc, char *argv[])
 								cell->val, strlen(cell->val),
 								pset.encoding, standard_strings());
 				cond_stack = conditional_stack_create();
-				psql_scan_set_passthrough(scan_state, (void *) cond_stack);
+				psql_scan_set_passthrough(scan_state, cond_stack);
 
 				successResult = HandleSlashCmds(scan_state,
 												cond_stack,

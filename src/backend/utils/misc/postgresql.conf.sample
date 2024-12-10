@@ -96,6 +96,7 @@
 #authentication_timeout = 1min		# 1s-600s
 #password_encryption = scram-sha-256	# scram-sha-256 or md5
 #scram_iterations = 4096
+#md5_password_warnings = on
 
 # GSSAPI using Kerberos
 #krb_server_keyfile = 'FILE:${sysconfdir}/krb5.keytab'
@@ -414,6 +415,7 @@
 #enable_sort = on
 #enable_tidscan = on
 #enable_group_by_reordering = on
+#enable_distinct_reordering = on
 
 # - Planner Cost Constants -
 

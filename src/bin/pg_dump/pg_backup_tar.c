@@ -152,7 +152,7 @@ InitArchiveFmt_Tar(ArchiveHandle *AH)
 	 * Set up some special context used in compressing data.
 	 */
 	ctx = pg_malloc0_object(lclContext);
-	AH->formatData = (void *) ctx;
+	AH->formatData = ctx;
 	ctx->filePos = 0;
 	ctx->isSpecialScript = 0;
 
@@ -219,7 +219,7 @@ InitArchiveFmt_Tar(ArchiveHandle *AH)
 
 		ctx->hasSeek = checkSeek(ctx->tarFH);
 
-		ctx->FH = (void *) tarOpen(AH, "toc.dat", 'r');
+		ctx->FH = tarOpen(AH, "toc.dat", 'r');
 		ReadHead(AH);
 		ReadToc(AH);
 		tarClose(AH, ctx->FH);	/* Nothing else in the file... */
@@ -247,7 +247,7 @@ _ArchiveEntry(ArchiveHandle *AH, TocEntry *te)
 		ctx->filename = NULL;
 		ctx->TH = NULL;
 	}
-	te->formatData = (void *) ctx;
+	te->formatData = ctx;
 }
 
 static void
@@ -269,7 +269,7 @@ _ReadExtraToc(ArchiveHandle *AH, TocEntry *te)
 	if (ctx == NULL)
 	{
 		ctx = pg_malloc0_object(lclTocEntry);
-		te->formatData = (void *) ctx;
+		te->formatData = ctx;
 	}
 
 	ctx->filename = ReadStr(AH);

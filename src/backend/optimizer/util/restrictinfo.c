@@ -21,17 +21,6 @@
 #include "optimizer/restrictinfo.h"
 
 
-static RestrictInfo *make_restrictinfo_internal(PlannerInfo *root,
-												Expr *clause,
-												Expr *orclause,
-												bool is_pushed_down,
-												bool has_clone,
-												bool is_clone,
-												bool pseudoconstant,
-												Index security_level,
-												Relids required_relids,
-												Relids incompatible_relids,
-												Relids outer_relids);
 static Expr *make_sub_restrictinfos(PlannerInfo *root,
 									Expr *clause,
 									bool is_pushed_down,
@@ -90,36 +79,38 @@ make_restrictinfo(PlannerInfo *root,
 	/* Shouldn't be an AND clause, else AND/OR flattening messed up */
 	Assert(!is_andclause(clause));
 
-	return make_restrictinfo_internal(root,
-									  clause,
-									  NULL,
-									  is_pushed_down,
-									  has_clone,
-									  is_clone,
-									  pseudoconstant,
-									  security_level,
-									  required_relids,
-									  incompatible_relids,
-									  outer_relids);
+	return make_plain_restrictinfo(root,
+								   clause,
+								   NULL,
+								   is_pushed_down,
+								   has_clone,
+								   is_clone,
+								   pseudoconstant,
+								   security_level,
+								   required_relids,
+								   incompatible_relids,
+								   outer_relids);
 }
 
 /*
- * make_restrictinfo_internal
+ * make_plain_restrictinfo
  *
- * Common code for the main entry points and the recursive cases.
+ * Common code for the main entry points and the recursive cases.  Also,
+ * useful while contrucitng RestrictInfos above OR clause, which already has
+ * RestrictInfos above its subclauses.
  */
-static RestrictInfo *
-make_restrictinfo_internal(PlannerInfo *root,
-						   Expr *clause,
-						   Expr *orclause,
-						   bool is_pushed_down,
-						   bool has_clone,
-						   bool is_clone,
-						   bool pseudoconstant,
-						   Index security_level,
-						   Relids required_relids,
-						   Relids incompatible_relids,
-						   Relids outer_relids)
+RestrictInfo *
+make_plain_restrictinfo(PlannerInfo *root,
+						Expr *clause,
+						Expr *orclause,
+						bool is_pushed_down,
+						bool has_clone,
+						bool is_clone,
+						bool pseudoconstant,
+						Index security_level,
+						Relids required_relids,
+						Relids incompatible_relids,
+						Relids outer_relids)
 {
 	RestrictInfo *restrictinfo = makeNode(RestrictInfo);
 	Relids		baserels;
@@ -296,17 +287,17 @@ make_sub_restrictinfos(PlannerInfo *root,
 													NULL,
 													incompatible_relids,
 													outer_relids));
-		return (Expr *) make_restrictinfo_internal(root,
-												   clause,
-												   make_orclause(orlist),
-												   is_pushed_down,
-												   has_clone,
-												   is_clone,
-												   pseudoconstant,
-												   security_level,
-												   required_relids,
-												   incompatible_relids,
-												   outer_relids);
+		return (Expr *) make_plain_restrictinfo(root,
+												clause,
+												make_orclause(orlist),
+												is_pushed_down,
+												has_clone,
+												is_clone,
+												pseudoconstant,
+												security_level,
+												required_relids,
+												incompatible_relids,
+												outer_relids);
 	}
 	else if (is_andclause(clause))
 	{
@@ -328,17 +319,17 @@ make_sub_restrictinfos(PlannerInfo *root,
 		return make_andclause(andlist);
 	}
 	else
-		return (Expr *) make_restrictinfo_internal(root,
-												   clause,
-												   NULL,
-												   is_pushed_down,
-												   has_clone,
-												   is_clone,
-												   pseudoconstant,
-												   security_level,
-												   required_relids,
-												   incompatible_relids,
-												   outer_relids);
+		return (Expr *) make_plain_restrictinfo(root,
+												clause,
+												NULL,
+												is_pushed_down,
+												has_clone,
+												is_clone,
+												pseudoconstant,
+												security_level,
+												required_relids,
+												incompatible_relids,
+												outer_relids);
 }
 
 /*

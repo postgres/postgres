@@ -46,16 +46,17 @@
 #ifndef C_H
 #define C_H
 
-#include "postgres_ext.h"
-
-/* Must undef pg_config_ext.h symbols before including pg_config.h */
-#undef PG_INT64_TYPE
-
+/*
+ * These headers must be included before any system headers, because on some
+ * platforms they affect the behavior of the system headers (for example, by
+ * defining _FILE_OFFSET_BITS).
+ */
 #include "pg_config.h"
 #include "pg_config_manual.h"	/* must be after pg_config.h */
-#include "pg_config_os.h"		/* must be before any system header files */
+#include "pg_config_os.h"		/* config from include/port/PORTNAME.h */
 
 /* System header files that should be available everywhere in Postgres */
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -77,6 +78,9 @@
 #ifdef ENABLE_NLS
 #include <libintl.h>
 #endif
+
+ /* Pull in fundamental symbols that we also expose to applications */
+#include "postgres_ext.h"
 
 /* Define before including zlib.h to add const decorations to zlib API. */
 #ifdef HAVE_LIBZ
@@ -450,37 +454,11 @@ typedef void (*pg_funcptr_t) (void);
  * bool
  *		Boolean value, either true or false.
  *
- * We use stdbool.h if available and its bool has size 1.  That's useful for
- * better compiler and debugger output and for compatibility with third-party
- * libraries.  But PostgreSQL currently cannot deal with bool of other sizes;
- * there are static assertions around the code to prevent that.
- *
- * For C++ compilers, we assume the compiler has a compatible built-in
- * definition of bool.
- *
- * See also the version of this code in src/interfaces/ecpg/include/ecpglib.h.
+ * PostgreSQL currently cannot deal with bool of size other than 1; there are
+ * static assertions around the code to prevent that.
  */
 
-#ifndef __cplusplus
-
-#ifdef PG_USE_STDBOOL
 #include <stdbool.h>
-#else
-
-#ifndef bool
-typedef unsigned char bool;
-#endif
-
-#ifndef true
-#define true	((bool) 1)
-#endif
-
-#ifndef false
-#define false	((bool) 0)
-#endif
-
-#endif							/* not PG_USE_STDBOOL */
-#endif							/* not C++ */
 
 
 /* ----------------------------------------------------------------
@@ -497,25 +475,15 @@ typedef unsigned char bool;
  */
 typedef char *Pointer;
 
-/*
- * intN
- *		Signed integer, EXACTLY N BITS IN SIZE,
- *		used for numerical computations and the
- *		frontend/backend protocol.
- */
-typedef signed char int8;		/* == 8 bits */
-typedef signed short int16;		/* == 16 bits */
-typedef signed int int32;		/* == 32 bits */
-
-/*
- * uintN
- *		Unsigned integer, EXACTLY N BITS IN SIZE,
- *		used for numerical computations and the
- *		frontend/backend protocol.
- */
-typedef unsigned char uint8;	/* == 8 bits */
-typedef unsigned short uint16;	/* == 16 bits */
-typedef unsigned int uint32;	/* == 32 bits */
+/* Historical names for types in <stdint.h>. */
+typedef int8_t int8;
+typedef int16_t int16;
+typedef int32_t int32;
+typedef int64_t int64;
+typedef uint8_t uint8;
+typedef uint16_t uint16;
+typedef uint32_t uint32;
+typedef uint64_t uint64;
 
 /*
  * bitsN
@@ -528,28 +496,14 @@ typedef uint32 bits32;			/* >= 32 bits */
 /*
  * 64-bit integers
  */
-#ifdef HAVE_LONG_INT_64
-/* Plain "long int" fits, use it */
-
-typedef long int int64;
-typedef unsigned long int uint64;
-#define INT64CONST(x)  (x##L)
-#define UINT64CONST(x) (x##UL)
-#elif defined(HAVE_LONG_LONG_INT_64)
-/* We have working support for "long long int", use that */
-
-typedef long long int int64;
-typedef unsigned long long int uint64;
-#define INT64CONST(x)  (x##LL)
-#define UINT64CONST(x) (x##ULL)
-#else
-/* neither HAVE_LONG_INT_64 nor HAVE_LONG_LONG_INT_64 */
-#error must have a working 64-bit integer datatype
-#endif
+#define INT64CONST(x)  INT64_C(x)
+#define UINT64CONST(x) UINT64_C(x)
 
 /* snprintf format strings to use for 64-bit integers */
-#define INT64_FORMAT "%" INT64_MODIFIER "d"
-#define UINT64_FORMAT "%" INT64_MODIFIER "u"
+#define INT64_FORMAT "%" PRId64
+#define UINT64_FORMAT "%" PRIu64
+#define INT64_HEX_FORMAT "%" PRIx64
+#define UINT64_HEX_FORMAT "%" PRIx64
 
 /*
  * 128-bit signed and unsigned integers
@@ -578,22 +532,19 @@ typedef unsigned PG_INT128_TYPE uint128
 #endif
 #endif
 
-/*
- * stdint.h limits aren't guaranteed to have compatible types with our fixed
- * width types. So just define our own.
- */
-#define PG_INT8_MIN		(-0x7F-1)
-#define PG_INT8_MAX		(0x7F)
-#define PG_UINT8_MAX	(0xFF)
-#define PG_INT16_MIN	(-0x7FFF-1)
-#define PG_INT16_MAX	(0x7FFF)
-#define PG_UINT16_MAX	(0xFFFF)
-#define PG_INT32_MIN	(-0x7FFFFFFF-1)
-#define PG_INT32_MAX	(0x7FFFFFFF)
-#define PG_UINT32_MAX	(0xFFFFFFFFU)
-#define PG_INT64_MIN	(-INT64CONST(0x7FFFFFFFFFFFFFFF) - 1)
-#define PG_INT64_MAX	INT64CONST(0x7FFFFFFFFFFFFFFF)
-#define PG_UINT64_MAX	UINT64CONST(0xFFFFFFFFFFFFFFFF)
+/* Historical names for limits in <stdint.h>. */
+#define PG_INT8_MIN		INT8_MIN
+#define PG_INT8_MAX		INT8_MAX
+#define PG_UINT8_MAX	UINT8_MAX
+#define PG_INT16_MIN	INT16_MIN
+#define PG_INT16_MAX	INT16_MAX
+#define PG_UINT16_MAX	UINT16_MAX
+#define PG_INT32_MIN	INT32_MIN
+#define PG_INT32_MAX	INT32_MAX
+#define PG_UINT32_MAX	UINT32_MAX
+#define PG_INT64_MIN	INT64_MIN
+#define PG_INT64_MAX	INT64_MAX
+#define PG_UINT64_MAX	UINT64_MAX
 
 /*
  * We now always use int64 timestamps, but keep this symbol defined for the
@@ -1296,21 +1247,25 @@ extern int	fdatasync(int fildes);
  * definition of int64.  (For the naming, compare that POSIX has
  * strtoimax()/strtoumax() which return intmax_t/uintmax_t.)
  */
-#ifdef HAVE_LONG_INT_64
+#if SIZEOF_LONG == 8
 #define strtoi64(str, endptr, base) ((int64) strtol(str, endptr, base))
 #define strtou64(str, endptr, base) ((uint64) strtoul(str, endptr, base))
-#else
+#elif SIZEOF_LONG_LONG == 8
 #define strtoi64(str, endptr, base) ((int64) strtoll(str, endptr, base))
 #define strtou64(str, endptr, base) ((uint64) strtoull(str, endptr, base))
+#else
+#error "cannot find integer type of the same size as int64_t"
 #endif
 
 /*
  * Similarly, wrappers around labs()/llabs() matching our int64.
  */
-#ifdef HAVE_LONG_INT_64
+#if SIZEOF_LONG == 8
 #define i64abs(i) labs(i)
-#else
+#elif SIZEOF_LONG_LONG == 8
 #define i64abs(i) llabs(i)
+#else
+#error "cannot find integer type of the same size as int64_t"
 #endif
 
 /*

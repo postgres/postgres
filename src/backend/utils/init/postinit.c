@@ -22,6 +22,7 @@
 #include "access/genam.h"
 #include "access/heapam.h"
 #include "access/htup_details.h"
+#include "access/parallel.h"
 #include "access/session.h"
 #include "access/tableam.h"
 #include "access/xact.h"
@@ -875,7 +876,23 @@ InitPostgres(const char *in_dbname, Oid dboid,
 		{
 			InitializeSessionUserId(username, useroid,
 									(flags & INIT_PG_OVERRIDE_ROLE_LOGIN) != 0);
-			am_superuser = superuser();
+
+			/*
+			 * In a parallel worker, set am_superuser based on the
+			 * authenticated user ID, not the current role.  This is pretty
+			 * dubious but it matches our historical behavior.  Note that this
+			 * value of am_superuser is used only for connection-privilege
+			 * checks here and in CheckMyDatabase (we won't reach
+			 * process_startup_options in a background worker).
+			 *
+			 * In other cases, there's been no opportunity for the current
+			 * role to diverge from the authenticated user ID yet, so we can
+			 * just rely on superuser() and avoid an extra catalog lookup.
+			 */
+			if (InitializingParallelWorker)
+				am_superuser = superuser_arg(GetAuthenticatedUserId());
+			else
+				am_superuser = superuser();
 		}
 	}
 	else

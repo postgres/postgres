@@ -1,6 +1,6 @@
 # lo extension
 comment = 'Large Object maintenance'
-default_version = '1.1'
+default_version = '1.2'
 module_pathname = '$libdir/lo'
 relocatable = true
 trusted = true

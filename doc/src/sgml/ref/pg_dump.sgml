@@ -1075,7 +1075,7 @@ PostgreSQL documentation
       <term><option>--no-comments</option></term>
       <listitem>
        <para>
-        Do not dump comments.
+        Do not dump <command>COMMENT</command> commands.
        </para>
       </listitem>
      </varlistentry>

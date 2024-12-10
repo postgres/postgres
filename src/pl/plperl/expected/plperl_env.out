@@ -1,0 +1,55 @@
+--
+-- Test the environment setting
+--
+-- directory path and dlsuffix are passed to us in environment variables
+\getenv libdir PG_LIBDIR
+\getenv dlsuffix PG_DLSUFFIX
+\set regresslib :libdir '/regress' :dlsuffix
+CREATE FUNCTION get_environ()
+   RETURNS text[]
+   AS :'regresslib', 'get_environ'
+   LANGUAGE C STRICT;
+-- fetch the process environment
+CREATE FUNCTION process_env () RETURNS text[]
+LANGUAGE plpgsql AS
+$$
+
+declare
+   res text[];
+   tmp text[];
+   f record;
+begin
+    for f in select unnest(get_environ()) as t loop
+         tmp := regexp_split_to_array(f.t, '=');
+         if array_length(tmp, 1) = 2 then
+            res := res || tmp;
+         end if;
+    end loop;
+    return res;
+end
+
+$$;
+-- plperl should not be able to affect the process environment
+DO
+$$
+   $ENV{TEST_PLPERL_ENV_FOO} = "shouldfail";
+   untie %ENV;
+   $ENV{TEST_PLPERL_ENV_FOO} = "testval";
+   my $penv = spi_exec_query("select unnest(process_env()) as pe");
+   my %received;
+   for (my $f = 0; $f < $penv->{processed}; $f += 2)
+   {
+      my $k = $penv->{rows}[$f]->{pe};
+      my $v = $penv->{rows}[$f+1]->{pe};
+      $received{$k} = $v;
+   }
+   unless (exists $received{TEST_PLPERL_ENV_FOO})
+   {
+      elog(NOTICE, "environ unaffected")
+   }
+
+$$ LANGUAGE plperl;
+WARNING:  attempted alteration of $ENV{TEST_PLPERL_ENV_FOO} at line 12.
+NOTICE:  environ unaffected
+-- clean up to simplify cross-version upgrade testing
+DROP FUNCTION get_environ();

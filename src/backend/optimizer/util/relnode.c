@@ -1911,6 +1911,13 @@ get_param_path_clause_serials(Path *path)
 {
 	if (path->param_info == NULL)
 		return NULL;			/* not parameterized */
+
+	/*
+	 * We don't currently support parameterized MergeAppend paths, as
+	 * explained in the comments for generate_orderedappend_paths.
+	 */
+	Assert(!IsA(path, MergeAppendPath));
+
 	if (IsA(path, NestPath) ||
 		IsA(path, MergePath) ||
 		IsA(path, HashPath))
@@ -1947,27 +1954,6 @@ get_param_path_clause_serials(Path *path)
 		 * enforced in each input path.
 		 */
 		AppendPath *apath = (AppendPath *) path;
-		Bitmapset  *pserials;
-		ListCell   *lc;
-
-		pserials = NULL;
-		foreach(lc, apath->subpaths)
-		{
-			Path	   *subpath = (Path *) lfirst(lc);
-			Bitmapset  *subserials;
-
-			subserials = get_param_path_clause_serials(subpath);
-			if (lc == list_head(apath->subpaths))
-				pserials = bms_copy(subserials);
-			else
-				pserials = bms_int_members(pserials, subserials);
-		}
-		return pserials;
-	}
-	else if (IsA(path, MergeAppendPath))
-	{
-		/* Same as AppendPath case */
-		MergeAppendPath *apath = (MergeAppendPath *) path;
 		Bitmapset  *pserials;
 		ListCell   *lc;
 

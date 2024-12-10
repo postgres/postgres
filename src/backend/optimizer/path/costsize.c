@@ -5029,8 +5029,7 @@ cost_qual_eval_walker(Node *node, cost_qual_eval_context *context)
 	}
 
 	/* recurse into children */
-	return expression_tree_walker(node, cost_qual_eval_walker,
-								  (void *) context);
+	return expression_tree_walker(node, cost_qual_eval_walker, context);
 }
 
 /*

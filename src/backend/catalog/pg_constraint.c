@@ -688,7 +688,6 @@ findDomainNotNullConstraint(Oid typid)
 AttrNumber
 extractNotNullColumn(HeapTuple constrTup)
 {
-	AttrNumber	colnum;
 	Datum		adatum;
 	ArrayType  *arr;
 
@@ -704,13 +703,9 @@ extractNotNullColumn(HeapTuple constrTup)
 		ARR_DIMS(arr)[0] != 1)
 		elog(ERROR, "conkey is not a 1-D smallint array");
 
-	memcpy(&colnum, ARR_DATA_PTR(arr), sizeof(AttrNumber));
-	Assert(colnum > 0 && colnum <= MaxAttrNumber);
+	/* We leak the detoasted datum, but we don't care */
 
-	if ((Pointer) arr != DatumGetPointer(adatum))
-		pfree(arr);				/* free de-toasted copy, if any */
-
-	return colnum;
+	return ((AttrNumber *) ARR_DATA_PTR(arr))[0];
 }
 
 /*

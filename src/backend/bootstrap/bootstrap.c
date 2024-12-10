@@ -31,6 +31,7 @@
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "pg_getopt.h"
+#include "postmaster/postmaster.h"
 #include "storage/bufpage.h"
 #include "storage/ipc.h"
 #include "storage/proc.h"
@@ -223,8 +224,21 @@ BootstrapModeMain(int argc, char *argv[], bool check_only)
 			case 'B':
 				SetConfigOption("shared_buffers", optarg, PGC_POSTMASTER, PGC_S_ARGV);
 				break;
-			case 'c':
 			case '-':
+
+				/*
+				 * Error if the user misplaced a special must-be-first option
+				 * for dispatching to a subprogram.  parse_dispatch_option()
+				 * returns DISPATCH_POSTMASTER if it doesn't find a match, so
+				 * error for anything else.
+				 */
+				if (parse_dispatch_option(optarg) != DISPATCH_POSTMASTER)
+					ereport(ERROR,
+							(errcode(ERRCODE_SYNTAX_ERROR),
+							 errmsg("--%s must be first argument", optarg)));
+
+				/* FALLTHROUGH */
+			case 'c':
 				{
 					char	   *name,
 							   *value;
@@ -308,6 +322,13 @@ BootstrapModeMain(int argc, char *argv[], bool check_only)
 	IgnoreSystemIndexes = true;
 
 	InitializeMaxBackends();
+
+	/*
+	 * Even though bootstrapping runs in single-process mode, initialize
+	 * postmaster child slots array so that --check can detect running out of
+	 * shared memory or other resources if max_connections is set too high.
+	 */
+	InitPostmasterChildSlots();
 
 	InitializeFastPathLocks();
 

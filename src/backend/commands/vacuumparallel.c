@@ -474,7 +474,6 @@ parallel_vacuum_get_dead_items(ParallelVacuumState *pvs, VacDeadItemsInfo **dead
 void
 parallel_vacuum_reset_dead_items(ParallelVacuumState *pvs)
 {
-	TidStore   *dead_items = pvs->dead_items;
 	VacDeadItemsInfo *dead_items_info = &(pvs->shared->dead_items_info);
 
 	/*
@@ -482,13 +481,13 @@ parallel_vacuum_reset_dead_items(ParallelVacuumState *pvs)
 	 * operating system. Then we recreate the tidstore with the same max_bytes
 	 * limitation we just used.
 	 */
-	TidStoreDestroy(dead_items);
+	TidStoreDestroy(pvs->dead_items);
 	pvs->dead_items = TidStoreCreateShared(dead_items_info->max_bytes,
 										   LWTRANCHE_PARALLEL_VACUUM_DSA);
 
 	/* Update the DSA pointer for dead_items to the new one */
-	pvs->shared->dead_items_dsa_handle = dsa_get_handle(TidStoreGetDSA(dead_items));
-	pvs->shared->dead_items_handle = TidStoreGetHandle(dead_items);
+	pvs->shared->dead_items_dsa_handle = dsa_get_handle(TidStoreGetDSA(pvs->dead_items));
+	pvs->shared->dead_items_handle = TidStoreGetHandle(pvs->dead_items);
 
 	/* Reset the counter */
 	dead_items_info->num_items = 0;

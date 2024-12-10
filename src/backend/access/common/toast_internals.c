@@ -393,7 +393,6 @@ toast_delete_datum(Relation rel, Datum value, bool is_speculative)
 	HeapTuple	toasttup;
 	int			num_indexes;
 	int			validIndex;
-	SnapshotData SnapshotToast;
 
 	if (!VARATT_IS_EXTERNAL_ONDISK(attr))
 		return;
@@ -425,9 +424,8 @@ toast_delete_datum(Relation rel, Datum value, bool is_speculative)
 	 * sequence or not, but since we've already locked the index we might as
 	 * well use systable_beginscan_ordered.)
 	 */
-	init_toast_snapshot(&SnapshotToast);
 	toastscan = systable_beginscan_ordered(toastrel, toastidxs[validIndex],
-										   &SnapshotToast, 1, &toastkey);
+										   get_toast_snapshot(), 1, &toastkey);
 	while ((toasttup = systable_getnext_ordered(toastscan, ForwardScanDirection)) != NULL)
 	{
 		/*
@@ -631,41 +629,28 @@ toast_close_indexes(Relation *toastidxs, int num_indexes, LOCKMODE lock)
 }
 
 /* ----------
- * init_toast_snapshot
+ * get_toast_snapshot
  *
- *	Initialize an appropriate TOAST snapshot.  We must use an MVCC snapshot
- *	to initialize the TOAST snapshot; since we don't know which one to use,
- *	just use the oldest one.
+ *	Return the TOAST snapshot. Detoasting *must* happen in the same
+ *	transaction that originally fetched the toast pointer.
  */
-void
-init_toast_snapshot(Snapshot toast_snapshot)
+Snapshot
+get_toast_snapshot(void)
 {
-	Snapshot	snapshot = GetOldestSnapshot();
-
 	/*
-	 * GetOldestSnapshot returns NULL if the session has no active snapshots.
-	 * We can get that if, for example, a procedure fetches a toasted value
-	 * into a local variable, commits, and then tries to detoast the value.
-	 * Such coding is unsafe, because once we commit there is nothing to
-	 * prevent the toast data from being deleted.  Detoasting *must* happen in
-	 * the same transaction that originally fetched the toast pointer.  Hence,
-	 * rather than trying to band-aid over the problem, throw an error.  (This
-	 * is not very much protection, because in many scenarios the procedure
-	 * would have already created a new transaction snapshot, preventing us
-	 * from detecting the problem.  But it's better than nothing, and for sure
-	 * we shouldn't expend code on masking the problem more.)
+	 * We cannot directly check that detoasting happens in the same
+	 * transaction that originally fetched the toast pointer, but at least
+	 * check that the session has some active snapshots. It might not if, for
+	 * example, a procedure fetches a toasted value into a local variable,
+	 * commits, and then tries to detoast the value. Such coding is unsafe,
+	 * because once we commit there is nothing to prevent the toast data from
+	 * being deleted. (This is not very much protection, because in many
+	 * scenarios the procedure would have already created a new transaction
+	 * snapshot, preventing us from detecting the problem. But it's better
+	 * than nothing.)
 	 */
-	if (snapshot == NULL)
+	if (!HaveRegisteredOrActiveSnapshot())
 		elog(ERROR, "cannot fetch toast data without an active snapshot");
 
-	/*
-	 * Catalog snapshots can be returned by GetOldestSnapshot() even if not
-	 * registered or active. That easily hides bugs around not having a
-	 * snapshot set up - most of the time there is a valid catalog snapshot.
-	 * So additionally insist that the current snapshot is registered or
-	 * active.
-	 */
-	Assert(HaveRegisteredOrActiveSnapshot());
-
-	InitToastSnapshot(*toast_snapshot, snapshot->lsn, snapshot->whenTaken);
+	return &SnapshotToastData;
 }

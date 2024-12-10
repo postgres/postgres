@@ -36,6 +36,7 @@ digraph {
 
 	// edges
 	a1 -> a2 -> a3 -> a4;
+	// these trailing spaces output as "nbsp" (UTF8 NO-BREAK SPACE)
 	a4 -> a5[xlabel="false   ", fontsize=10];
 	a4 -> end[xlabel="true  ",  fontsize=10];
 	a5 -> a6 -> a7 -> a8 -> a9;

@@ -95,6 +95,8 @@ SB_lower_char(unsigned char c, pg_locale_t locale)
 {
 	if (locale->ctype_is_c)
 		return pg_ascii_tolower(c);
+	else if (locale->is_default)
+		return pg_tolower(c);
 	else
 		return tolower_l(c, locale->info.lt);
 }
@@ -147,22 +149,28 @@ SB_lower_char(unsigned char c, pg_locale_t locale)
 static inline int
 GenericMatchText(const char *s, int slen, const char *p, int plen, Oid collation)
 {
-	if (collation)
-	{
-		pg_locale_t locale = pg_newlocale_from_collation(collation);
+	pg_locale_t locale;
 
-		if (!locale->deterministic)
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("nondeterministic collations are not supported for LIKE")));
+	if (!OidIsValid(collation))
+	{
+		/*
+		 * This typically means that the parser could not resolve a conflict
+		 * of implicit collations, so report it that way.
+		 */
+		ereport(ERROR,
+				(errcode(ERRCODE_INDETERMINATE_COLLATION),
+				 errmsg("could not determine which collation to use for LIKE"),
+				 errhint("Use the COLLATE clause to set the collation explicitly.")));
 	}
 
+	locale = pg_newlocale_from_collation(collation);
+
 	if (pg_database_encoding_max_length() == 1)
-		return SB_MatchText(s, slen, p, plen, 0);
+		return SB_MatchText(s, slen, p, plen, locale);
 	else if (GetDatabaseEncoding() == PG_UTF8)
-		return UTF8_MatchText(s, slen, p, plen, 0);
+		return UTF8_MatchText(s, slen, p, plen, locale);
 	else
-		return MB_MatchText(s, slen, p, plen, 0);
+		return MB_MatchText(s, slen, p, plen, locale);
 }
 
 static inline int

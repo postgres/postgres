@@ -550,7 +550,7 @@ GetLockTagsMethodTable(const LOCKTAG *locktag)
 uint32
 LockTagHashCode(const LOCKTAG *locktag)
 {
-	return get_hash_value(LockMethodLockHash, (const void *) locktag);
+	return get_hash_value(LockMethodLockHash, locktag);
 }
 
 /*

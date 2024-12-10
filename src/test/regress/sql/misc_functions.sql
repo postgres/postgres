@@ -311,6 +311,44 @@ false, true, false, true);
 -- the support function.
 SELECT * FROM generate_series(TIMESTAMPTZ '2024-02-01', TIMESTAMPTZ '2024-03-01', INTERVAL '0 day') g(s);
 
+--
+-- Test the SupportRequestRows support function for generate_series_numeric()
+--
+
+-- Ensure the row estimate matches the actual rows
+SELECT explain_mask_costs($$
+SELECT * FROM generate_series(1.0, 25.0) g(s);$$,
+true, true, false, true);
+
+-- As above but with non-default step
+SELECT explain_mask_costs($$
+SELECT * FROM generate_series(1.0, 25.0, 2.0) g(s);$$,
+true, true, false, true);
+
+-- Ensure the estimates match when step is decreasing
+SELECT explain_mask_costs($$
+SELECT * FROM generate_series(25.0, 1.0, -1.0) g(s);$$,
+true, true, false, true);
+
+-- Ensure an empty range estimates 1 row
+SELECT explain_mask_costs($$
+SELECT * FROM generate_series(25.0, 1.0, 1.0) g(s);$$,
+true, true, false, true);
+
+-- Ensure we get the default row estimate for error cases (infinity/NaN values
+-- and zero step size)
+SELECT explain_mask_costs($$
+SELECT * FROM generate_series('-infinity'::NUMERIC, 'infinity'::NUMERIC, 1.0) g(s);$$,
+false, true, false, true);
+
+SELECT explain_mask_costs($$
+SELECT * FROM generate_series(1.0, 25.0, 'NaN'::NUMERIC) g(s);$$,
+false, true, false, true);
+
+SELECT explain_mask_costs($$
+SELECT * FROM generate_series(25.0, 2.0, 0.0) g(s);$$,
+false, true, false, true);
+
 -- Test functions for control data
 SELECT count(*) > 0 AS ok FROM pg_control_checkpoint();
 SELECT count(*) > 0 AS ok FROM pg_control_init();

@@ -366,9 +366,9 @@ parsetext(Oid cfgId, ParsedText *prs, char *buf, int buflen)
 	cfg = lookup_ts_config_cache(cfgId);
 	prsobj = lookup_ts_parser_cache(cfg->prsId);
 
-	prsdata = (void *) DatumGetPointer(FunctionCall2(&prsobj->prsstart,
-													 PointerGetDatum(buf),
-													 Int32GetDatum(buflen)));
+	prsdata = DatumGetPointer(FunctionCall2(&prsobj->prsstart,
+											PointerGetDatum(buf),
+											Int32GetDatum(buflen)));
 
 	LexizeInit(&ldata, cfg);
 
@@ -552,9 +552,9 @@ hlparsetext(Oid cfgId, HeadlineParsedText *prs, TSQuery query, char *buf, int bu
 	cfg = lookup_ts_config_cache(cfgId);
 	prsobj = lookup_ts_parser_cache(cfg->prsId);
 
-	prsdata = (void *) DatumGetPointer(FunctionCall2(&(prsobj->prsstart),
-													 PointerGetDatum(buf),
-													 Int32GetDatum(buflen)));
+	prsdata = DatumGetPointer(FunctionCall2(&(prsobj->prsstart),
+											PointerGetDatum(buf),
+											Int32GetDatum(buflen)));
 
 	LexizeInit(&ldata, cfg);
 

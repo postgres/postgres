@@ -44,7 +44,19 @@ static char *actual_startline[STRUCT_DEPTH];
 static int	varchar_counter = 1;
 static int	bytea_counter = 1;
 
-/* temporarily store struct members while creating the data structure */
+/*
+ * We temporarily store struct members here while parsing struct declarations.
+ * The struct_member_list (at a given nesting depth) is constructed while
+ * scanning the fields within "struct { .... }", but we can't remove it upon
+ * seeing the right brace.  It's kept around and copied into the variables
+ * or typedefs that follow, in order to handle cases like
+ * "struct foo { ... } foovar1, foovar2;".  We recycle the storage only
+ * upon closing the current nesting level or starting the next struct
+ * declaration within the same nesting level.
+ * For cases like "struct foo foovar1, foovar2;", we copy the saved struct
+ * field list for the typedef or struct tag into the struct_member_list
+ * global variable, and then copy it again to the newly-declared variables.
+ */
 struct ECPGstruct_member *struct_member_list[STRUCT_DEPTH] = {NULL};
 
 /* also store struct type so we can do a sizeof() later */
@@ -59,6 +71,7 @@ struct variable no_indicator = {"no_indicator", &ecpg_no_indicator, 0, NULL};
 static struct ECPGtype ecpg_query = {ECPGt_char_variable, NULL, NULL, NULL, {NULL}, 0};
 
 static bool check_declared_list(const char *name);
+static void update_connection(const char *newconn);
 
 
 /*
@@ -507,11 +520,12 @@ add_typedef(const char *name, const char *dimension, const char *length,
 		this->name = mm_strdup(name);
 		this->brace_level = braces_open;
 		this->type = (struct this_type *) mm_alloc(sizeof(struct this_type));
+		this->type->type_storage = NULL;
 		this->type->type_enum = type_enum;
 		this->type->type_str = mm_strdup(name);
 		this->type->type_dimension = mm_strdup(dimension); /* dimension of array */
 		this->type->type_index = mm_strdup(length);	/* length of string */
-		this->type->type_sizeof = ECPGstruct_sizeof;
+		this->type->type_sizeof = ECPGstruct_sizeof ? mm_strdup(ECPGstruct_sizeof) : NULL;
 		this->struct_member_list = (type_enum == ECPGt_struct || type_enum == ECPGt_union) ?
 			ECPGstruct_member_dup(struct_member_list[struct_level]) : NULL;
 
@@ -545,11 +559,25 @@ check_declared_list(const char *name)
 		{
 			if (connection && strcmp(ptr->connection, connection) != 0)
 				mmerror(PARSE_ERROR, ET_WARNING, "connection %s is overwritten with %s by DECLARE statement %s", connection, ptr->connection, name);
-			connection = mm_strdup(ptr->connection);
+			update_connection(ptr->connection);
 			return true;
 		}
 	}
 	return false;
+}
+
+/*
+ * If newconn isn't NULL, update the global "connection" variable to that;
+ * otherwise do nothing.
+ */
+static void
+update_connection(const char *newconn)
+{
+	if (newconn)
+	{
+		free(connection);
+		connection = mm_strdup(newconn);
+	}
 }
 %}
 

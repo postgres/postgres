@@ -117,11 +117,9 @@ ExecEvalBoolSubroutineTemplate(ExprState *state,
 }
 
 /*
- * Clang represents stdbool.h style booleans that are returned by functions
- * differently (as i1) than stored ones (as i8). Therefore we do not just need
- * TypeBool (above), but also a way to determine the width of a returned
- * integer. This allows us to keep compatible with non-stdbool using
- * architectures.
+ * Clang represents bool returned by functions differently (as i1) than stored
+ * ones (as i8).  Therefore we do not just need TypeStorageBool (above), but
+ * also a way to determine the width of a returned integer.
  */
 extern bool FunctionReturningBool(void);
 bool

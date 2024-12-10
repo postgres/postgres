@@ -30,3 +30,27 @@ require Carp;
 require Carp::Heavy;
 require warnings;
 require feature if $] >= 5.010000;
+
+#<<< protect next line from perltidy so perlcritic annotation works
+package PostgreSQL::InServer::WarnEnv; ## no critic (RequireFilenameMatchesPackage)
+#>>>
+
+use strict;
+use warnings;
+use Tie::Hash;
+our @ISA = qw(Tie::StdHash);
+
+sub STORE  { warn "attempted alteration of \$ENV{$_[1]}"; }
+sub DELETE { warn "attempted deletion of \$ENV{$_[1]}"; }
+sub CLEAR  { warn "attempted clearance of ENV hash"; }
+
+# Remove magic property of %ENV. Changes to this will now not be reflected in
+# the process environment.
+*main::ENV = {%ENV};
+
+# Block %ENV changes from trusted PL/Perl, and warn. We changed %ENV to just a
+# normal hash, yet the application may be expecting the usual Perl %ENV
+# magic. Blocking and warning avoids silent application breakage. The user can
+# untie or otherwise disable this, e.g. if the lost mutation is unimportant
+# and modifying the code to stop that mutation would be onerous.
+tie %main::ENV, 'PostgreSQL::InServer::WarnEnv', %ENV or die $!;

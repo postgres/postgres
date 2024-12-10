@@ -1124,6 +1124,14 @@ include_dir 'conf.d'
         mechanism, and hence not work with passwords encrypted with
         SCRAM-SHA-256.  See <xref linkend="auth-password"/> for more details.
        </para>
+       <warning>
+        <para>
+         Support for MD5-encrypted passwords is deprecated and will be removed
+         in a future release of <productname>PostgreSQL</productname>.  Refer
+         to <xref linkend="auth-password"/> for details about migrating to
+         another password type.
+        </para>
+       </warning>
       </listitem>
      </varlistentry>
 
@@ -4488,7 +4496,9 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
 
         <para>
          Note that this parameter also applies on the subscriber side, but with
-         a different meaning.
+         a different meaning. See <xref linkend="guc-max-replication-slots-subscriber"/>
+         in <xref linkend="runtime-config-replication-subscriber"/> for more
+         details.
         </para>
        </listitem>
       </varlistentry>
@@ -5215,7 +5225,9 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
 
        <para>
         Note that this parameter also applies on a sending server, but with
-        a different meaning.
+        a different meaning. See <xref linkend="guc-max-replication-slots"/>
+        in <xref linkend="runtime-config-replication-sender"/> for more
+        details.
        </para>
       </listitem>
      </varlistentry>
@@ -5352,6 +5364,20 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
        <para>
         Enables or disables the query planner's use of bitmap-scan plan
         types. The default is <literal>on</literal>.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-enable-distinct-reordering" xreflabel="enable_distinct_reordering">
+      <term><varname>enable_distinct_reordering</varname> (<type>boolean</type>)
+      <indexterm>
+       <primary><varname>enable_distinct_reordering</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Enables or disables the query planner's ability to reorder DISTINCT
+        keys to match the input path's pathkeys. The default is <literal>on</literal>.
        </para>
       </listitem>
      </varlistentry>
@@ -7891,6 +7917,22 @@ log_line_prefix = '%m [%p] %q%u@%d/%a '
         See <xref linkend="datatype-timezones"/> for more information.
         This parameter can only be set in the <filename>postgresql.conf</filename>
         file or on the server command line.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-md5-password-warnings" xreflabel="md5_password_warnings">
+      <term><varname>md5_password_warnings</varname> (<type>boolean</type>)
+      <indexterm>
+       <primary><varname>md5_password_warnings</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Controls whether a <literal>WARNING</literal> about MD5 password
+        deprecation is produced when a <command>CREATE ROLE</command> or
+        <command>ALTER ROLE</command> statement sets an MD5-encrypted password.
+        The default value is <literal>on</literal>.
        </para>
       </listitem>
      </varlistentry>

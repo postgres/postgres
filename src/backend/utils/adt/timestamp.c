@@ -27,9 +27,9 @@
 #include "funcapi.h"
 #include "libpq/pqformat.h"
 #include "miscadmin.h"
-#include "optimizer/optimizer.h"
 #include "nodes/nodeFuncs.h"
 #include "nodes/supportnodes.h"
+#include "optimizer/optimizer.h"
 #include "parser/scansup.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
@@ -5104,6 +5104,10 @@ interval_trunc(PG_FUNCTION_ARGS)
  *
  *	Return the Julian day which corresponds to the first day (Monday) of the given ISO 8601 year and week.
  *	Julian days are used to convert between ISO week dates and Gregorian dates.
+ *
+ *	XXX: This function has integer overflow hazards, but restructuring it to
+ *	work with the soft-error handling that its callers do is likely more
+ *	trouble than it's worth.
  */
 int
 isoweek2j(int year, int week)

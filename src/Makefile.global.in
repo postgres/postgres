@@ -840,12 +840,6 @@ $(top_builddir)/src/include/pg_config.h: $(top_builddir)/src/include/stamp-h ;
 $(top_builddir)/src/include/stamp-h: $(top_srcdir)/src/include/pg_config.h.in $(top_builddir)/config.status
 	cd $(top_builddir) && ./config.status src/include/pg_config.h
 
-# Also remake pg_config_ext.h from pg_config_ext.h.in, same logic as above.
-$(top_builddir)/src/include/pg_config_ext.h: $(top_builddir)/src/include/stamp-ext-h ;
-
-$(top_builddir)/src/include/stamp-ext-h: $(top_srcdir)/src/include/pg_config_ext.h.in $(top_builddir)/config.status
-	cd $(top_builddir) && ./config.status src/include/pg_config_ext.h
-
 # Also remake ecpg_config.h from ecpg_config.h.in if the latter changed, same
 # logic as above.
 $(top_builddir)/src/interfaces/ecpg/include/ecpg_config.h: $(top_builddir)/src/interfaces/ecpg/include/stamp-h ;

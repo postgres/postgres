@@ -10,6 +10,7 @@ backend_sources += files(
   'interrupt.c',
   'launch_backend.c',
   'pgarch.c',
+  'pmchild.c',
   'postmaster.c',
   'startup.c',
   'syslogger.c',

@@ -14,7 +14,7 @@
 
 # Note: only bootstrap catalogs, ie those marked BKI_BOOTSTRAP, need to
 # have entries here.  Be sure that the OIDs listed here match those given in
-# their CATALOG and BKI_ROWTYPE_OID macros.
+# the corresponding CATALOG macros.
 
 { oid => '1247',
   relname => 'pg_type', reltype => 'pg_type' },

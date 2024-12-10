@@ -1,6 +1,11 @@
 # src/test/modules/unsafe_tests/Makefile
 
-REGRESS = rolenames alter_system_table guc_privs
+REGRESS = rolenames setconfig alter_system_table guc_privs
+REGRESS_OPTS = \
+	--create-role=regress_authenticated_user_db_sr \
+	--create-role=regress_authenticated_user_db_ssa \
+	--create-role=regress_authenticated_user_sr \
+	--create-role=regress_authenticated_user_ssa
 
 # the whole point of these tests is to not run installcheck
 NO_INSTALLCHECK = 1

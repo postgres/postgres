@@ -60,7 +60,7 @@ typedef struct InjectionPointEntry
 	 */
 	pg_atomic_uint64 generation;
 
-	char		name[INJ_NAME_MAXLEN];	/* hash key */
+	char		name[INJ_NAME_MAXLEN];	/* point name */
 	char		library[INJ_LIB_MAXLEN];	/* library */
 	char		function[INJ_FUNC_MAXLEN];	/* function */
 

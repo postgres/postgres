@@ -1863,6 +1863,8 @@ pg_stat_database| SELECT oid AS datid,
     pg_stat_get_db_sessions_abandoned(oid) AS sessions_abandoned,
     pg_stat_get_db_sessions_fatal(oid) AS sessions_fatal,
     pg_stat_get_db_sessions_killed(oid) AS sessions_killed,
+    pg_stat_get_db_parallel_workers_to_launch(oid) AS parallel_workers_to_launch,
+    pg_stat_get_db_parallel_workers_launched(oid) AS parallel_workers_launched,
     pg_stat_get_db_stat_reset_time(oid) AS stats_reset
    FROM ( SELECT 0 AS oid,
             NULL::name AS datname

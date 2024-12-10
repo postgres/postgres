@@ -14,6 +14,7 @@
 #ifndef PREDICATE_H
 #define PREDICATE_H
 
+#include "storage/itemptr.h"
 #include "storage/lock.h"
 #include "utils/relcache.h"
 #include "utils/snapshot.h"

@@ -697,9 +697,7 @@ convert_testexpr_mutator(Node *node,
 		 */
 		return node;
 	}
-	return expression_tree_mutator(node,
-								   convert_testexpr_mutator,
-								   (void *) context);
+	return expression_tree_mutator(node, convert_testexpr_mutator, context);
 }
 
 /*
@@ -1121,14 +1119,13 @@ contain_outer_selfref_walker(Node *node, Index *depth)
 		(*depth)++;
 
 		result = query_tree_walker(query, contain_outer_selfref_walker,
-								   (void *) depth, QTW_EXAMINE_RTES_BEFORE);
+								   depth, QTW_EXAMINE_RTES_BEFORE);
 
 		(*depth)--;
 
 		return result;
 	}
-	return expression_tree_walker(node, contain_outer_selfref_walker,
-								  (void *) depth);
+	return expression_tree_walker(node, contain_outer_selfref_walker, depth);
 }
 
 /*
@@ -1927,9 +1924,7 @@ replace_correlation_vars_mutator(Node *node, PlannerInfo *root)
 			return (Node *) replace_outer_merge_support(root,
 														(MergeSupportFunc *) node);
 	}
-	return expression_tree_mutator(node,
-								   replace_correlation_vars_mutator,
-								   (void *) root);
+	return expression_tree_mutator(node, replace_correlation_vars_mutator, root);
 }
 
 /*
@@ -2077,7 +2072,7 @@ process_sublinks_mutator(Node *node, process_sublinks_context *context)
 
 	return expression_tree_mutator(node,
 								   process_sublinks_mutator,
-								   (void *) &locContext);
+								   &locContext);
 }
 
 /*
@@ -2985,8 +2980,7 @@ finalize_primnode(Node *node, finalize_primnode_context *context)
 
 		return false;			/* no more to do here */
 	}
-	return expression_tree_walker(node, finalize_primnode,
-								  (void *) context);
+	return expression_tree_walker(node, finalize_primnode, context);
 }
 
 /*
@@ -3008,8 +3002,7 @@ finalize_agg_primnode(Node *node, finalize_primnode_context *context)
 		finalize_primnode((Node *) agg->aggfilter, context);
 		return false;			/* there can't be any Aggrefs below here */
 	}
-	return expression_tree_walker(node, finalize_agg_primnode,
-								  (void *) context);
+	return expression_tree_walker(node, finalize_agg_primnode, context);
 }
 
 /*

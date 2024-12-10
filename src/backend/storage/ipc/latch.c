@@ -811,10 +811,7 @@ CreateWaitEventSet(ResourceOwner resowner, int nevents)
 
 #if defined(WAIT_USE_EPOLL)
 	if (!AcquireExternalFD())
-	{
-		/* treat this as though epoll_create1 itself returned EMFILE */
-		elog(ERROR, "epoll_create1 failed: %m");
-	}
+		elog(ERROR, "AcquireExternalFD, for epoll_create1, failed: %m");
 	set->epoll_fd = epoll_create1(EPOLL_CLOEXEC);
 	if (set->epoll_fd < 0)
 	{
@@ -823,10 +820,7 @@ CreateWaitEventSet(ResourceOwner resowner, int nevents)
 	}
 #elif defined(WAIT_USE_KQUEUE)
 	if (!AcquireExternalFD())
-	{
-		/* treat this as though kqueue itself returned EMFILE */
-		elog(ERROR, "kqueue failed: %m");
-	}
+		elog(ERROR, "AcquireExternalFD, for kqueue, failed: %m");
 	set->kqueue_fd = kqueue();
 	if (set->kqueue_fd < 0)
 	{

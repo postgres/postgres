@@ -74,7 +74,6 @@ typedef enum
 
 static PG_Locale_Strategy pg_regex_strategy;
 static pg_locale_t pg_regex_locale;
-static Oid	pg_regex_collation;
 
 /*
  * Hard-wired character properties for C locale
@@ -254,7 +253,7 @@ pg_set_regex_collation(Oid collation)
 		 * pg_newlocale_from_collation().
 		 */
 		strategy = PG_REGEX_STRATEGY_C;
-		collation = C_COLLATION_OID;
+		locale = 0;
 	}
 	else
 	{
@@ -273,7 +272,6 @@ pg_set_regex_collation(Oid collation)
 			 */
 			strategy = PG_REGEX_STRATEGY_C;
 			locale = 0;
-			collation = C_COLLATION_OID;
 		}
 		else if (locale->provider == COLLPROVIDER_BUILTIN)
 		{
@@ -298,7 +296,6 @@ pg_set_regex_collation(Oid collation)
 
 	pg_regex_strategy = strategy;
 	pg_regex_locale = locale;
-	pg_regex_collation = collation;
 }
 
 static int
@@ -628,7 +625,7 @@ typedef int (*pg_wc_probefunc) (pg_wchar c);
 typedef struct pg_ctype_cache
 {
 	pg_wc_probefunc probefunc;	/* pg_wc_isalpha or a sibling */
-	Oid			collation;		/* collation this entry is for */
+	pg_locale_t locale;			/* locale this entry is for */
 	struct cvec cv;				/* cache entry contents */
 	struct pg_ctype_cache *next;	/* chain link */
 } pg_ctype_cache;
@@ -697,7 +694,7 @@ pg_ctype_get_cache(pg_wc_probefunc probefunc, int cclasscode)
 	for (pcc = pg_ctype_cache_list; pcc != NULL; pcc = pcc->next)
 	{
 		if (pcc->probefunc == probefunc &&
-			pcc->collation == pg_regex_collation)
+			pcc->locale == pg_regex_locale)
 			return &pcc->cv;
 	}
 
@@ -708,7 +705,7 @@ pg_ctype_get_cache(pg_wc_probefunc probefunc, int cclasscode)
 	if (pcc == NULL)
 		return NULL;
 	pcc->probefunc = probefunc;
-	pcc->collation = pg_regex_collation;
+	pcc->locale = pg_regex_locale;
 	pcc->cv.nchrs = 0;
 	pcc->cv.chrspace = 128;
 	pcc->cv.chrs = (chr *) malloc(pcc->cv.chrspace * sizeof(chr));

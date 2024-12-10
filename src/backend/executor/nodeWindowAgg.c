@@ -339,7 +339,7 @@ advance_windowaggregate(WindowAggState *winstate,
 	InitFunctionCallInfoData(*fcinfo, &(peraggstate->transfn),
 							 numArguments + 1,
 							 perfuncstate->winCollation,
-							 (void *) winstate, NULL);
+							 (Node *) winstate, NULL);
 	fcinfo->args[0].value = peraggstate->transValue;
 	fcinfo->args[0].isnull = peraggstate->transValueIsNull;
 	winstate->curaggcontext = peraggstate->aggcontext;
@@ -510,7 +510,7 @@ advance_windowaggregate_base(WindowAggState *winstate,
 	InitFunctionCallInfoData(*fcinfo, &(peraggstate->invtransfn),
 							 numArguments + 1,
 							 perfuncstate->winCollation,
-							 (void *) winstate, NULL);
+							 (Node *) winstate, NULL);
 	fcinfo->args[0].value = peraggstate->transValue;
 	fcinfo->args[0].isnull = peraggstate->transValueIsNull;
 	winstate->curaggcontext = peraggstate->aggcontext;
@@ -601,7 +601,7 @@ finalize_windowaggregate(WindowAggState *winstate,
 		InitFunctionCallInfoData(fcinfodata.fcinfo, &(peraggstate->finalfn),
 								 numFinalArgs,
 								 perfuncstate->winCollation,
-								 (void *) winstate, NULL);
+								 (Node *) winstate, NULL);
 		fcinfo->args[0].value =
 			MakeExpandedObjectReadOnly(peraggstate->transValue,
 									   peraggstate->transValueIsNull,
@@ -1047,7 +1047,7 @@ eval_windowfunction(WindowAggState *winstate, WindowStatePerFunc perfuncstate,
 	InitFunctionCallInfoData(*fcinfo, &(perfuncstate->flinfo),
 							 perfuncstate->numArguments,
 							 perfuncstate->winCollation,
-							 (void *) perfuncstate->winobj, NULL);
+							 (Node *) perfuncstate->winobj, NULL);
 	/* Just in case, make all the regular argument slots be null */
 	for (int argno = 0; argno < perfuncstate->numArguments; argno++)
 		fcinfo->args[argno].isnull = true;
@@ -2354,6 +2354,23 @@ ExecWindowAgg(PlanState *pstate)
 				if (winstate->use_pass_through)
 				{
 					/*
+					 * When switching into a pass-through mode, we'd better
+					 * NULLify the aggregate results as these are no longer
+					 * updated and NULLifying them avoids the old stale
+					 * results lingering.  Some of these might be byref types
+					 * so we can't have them pointing to free'd memory.  The
+					 * planner insisted that quals used in the runcondition
+					 * are strict, so the top-level WindowAgg will always
+					 * filter these NULLs out in the filter clause.
+					 */
+					numfuncs = winstate->numfuncs;
+					for (i = 0; i < numfuncs; i++)
+					{
+						econtext->ecxt_aggvalues[i] = (Datum) 0;
+						econtext->ecxt_aggnulls[i] = true;
+					}
+
+					/*
 					 * STRICT pass-through mode is required for the top window
 					 * when there is a PARTITION BY clause.  Otherwise we must
 					 * ensure we store tuples that don't match the
@@ -2367,24 +2384,6 @@ ExecWindowAgg(PlanState *pstate)
 					else
 					{
 						winstate->status = WINDOWAGG_PASSTHROUGH;
-
-						/*
-						 * If we're not the top-window, we'd better NULLify
-						 * the aggregate results.  In pass-through mode we no
-						 * longer update these and this avoids the old stale
-						 * results lingering.  Some of these might be byref
-						 * types so we can't have them pointing to free'd
-						 * memory.  The planner insisted that quals used in
-						 * the runcondition are strict, so the top-level
-						 * WindowAgg will filter these NULLs out in the filter
-						 * clause.
-						 */
-						numfuncs = winstate->numfuncs;
-						for (i = 0; i < numfuncs; i++)
-						{
-							econtext->ecxt_aggvalues[i] = (Datum) 0;
-							econtext->ecxt_aggnulls[i] = true;
-						}
 					}
 				}
 				else

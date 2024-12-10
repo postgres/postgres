@@ -1192,6 +1192,14 @@ ExecInitExprRec(Expr *node, ExprState *state,
 							 state);
 
 				/*
+				 * If first argument is of varlena type, we'll need to ensure
+				 * that the value passed to the comparison function is a
+				 * read-only pointer.
+				 */
+				scratch.d.func.make_ro =
+					(get_typlen(exprType((Node *) linitial(op->args))) == -1);
+
+				/*
 				 * Change opcode of call instruction to EEOP_NULLIF.
 				 *
 				 * XXX: historically we've not called the function usage
@@ -2908,8 +2916,7 @@ expr_setup_walker(Node *node, ExprSetupInfo *info)
 		return false;
 	if (IsA(node, GroupingFunc))
 		return false;
-	return expression_tree_walker(node, expr_setup_walker,
-								  (void *) info);
+	return expression_tree_walker(node, expr_setup_walker, info);
 }
 
 /*

@@ -180,6 +180,10 @@ if ($oldnode->pg_version >= 15)
 	}
 }
 
+# Since checksums are now enabled by default, and weren't before 18,
+# pass '-k' to initdb on old versions so that upgrades work.
+push @initdb_params, '-k' if $oldnode->pg_version < 18;
+
 $node_params{extra} = \@initdb_params;
 $oldnode->init(%node_params);
 $oldnode->start;

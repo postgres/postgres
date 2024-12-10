@@ -380,8 +380,7 @@ ginbuild(Relation heap, Relation index, IndexInfo *indexInfo)
 	 * prefers to receive tuples in TID order.
 	 */
 	reltuples = table_index_build_scan(heap, index, indexInfo, false, true,
-									   ginBuildCallback, (void *) &buildstate,
-									   NULL);
+									   ginBuildCallback, &buildstate, NULL);
 
 	/* dump remaining entries to the index */
 	oldCtx = MemoryContextSwitchTo(buildstate.tmpCtx);
@@ -497,7 +496,7 @@ gininsert(Relation index, Datum *values, bool *isnull,
 		oldCtx = MemoryContextSwitchTo(indexInfo->ii_Context);
 		ginstate = (GinState *) palloc(sizeof(GinState));
 		initGinState(ginstate, index);
-		indexInfo->ii_AmCache = (void *) ginstate;
+		indexInfo->ii_AmCache = ginstate;
 		MemoryContextSwitchTo(oldCtx);
 	}
 

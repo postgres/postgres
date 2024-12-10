@@ -485,7 +485,7 @@ flatten_unplanned_rtes(PlannerGlobal *glob, RangeTblEntry *rte)
 	/* Use query_tree_walker to find all RTEs in the parse tree */
 	(void) query_tree_walker(rte->subquery,
 							 flatten_rtes_walker,
-							 (void *) &cxt,
+							 &cxt,
 							 QTW_EXAMINE_RTES_BEFORE);
 }
 
@@ -516,13 +516,12 @@ flatten_rtes_walker(Node *node, flatten_rtes_walker_context *cxt)
 		cxt->query = (Query *) node;
 		result = query_tree_walker((Query *) node,
 								   flatten_rtes_walker,
-								   (void *) cxt,
+								   cxt,
 								   QTW_EXAMINE_RTES_BEFORE);
 		cxt->query = save_query;
 		return result;
 	}
-	return expression_tree_walker(node, flatten_rtes_walker,
-								  (void *) cxt);
+	return expression_tree_walker(node, flatten_rtes_walker, cxt);
 }
 
 /*
@@ -2243,8 +2242,7 @@ fix_scan_expr_mutator(Node *node, fix_scan_expr_context *context)
 															 context->num_exec),
 									 context);
 	fix_expr_common(context->root, node);
-	return expression_tree_mutator(node, fix_scan_expr_mutator,
-								   (void *) context);
+	return expression_tree_mutator(node, fix_scan_expr_mutator, context);
 }
 
 static bool
@@ -2256,8 +2254,7 @@ fix_scan_expr_walker(Node *node, fix_scan_expr_context *context)
 	Assert(!IsA(node, PlaceHolderVar));
 	Assert(!IsA(node, AlternativeSubPlan));
 	fix_expr_common(context->root, node);
-	return expression_tree_walker(node, fix_scan_expr_walker,
-								  (void *) context);
+	return expression_tree_walker(node, fix_scan_expr_walker, context);
 }
 
 /*
@@ -2612,8 +2609,7 @@ convert_combining_aggrefs(Node *node, void *context)
 
 		return (Node *) parent_agg;
 	}
-	return expression_tree_mutator(node, convert_combining_aggrefs,
-								   (void *) context);
+	return expression_tree_mutator(node, convert_combining_aggrefs, context);
 }
 
 /*
@@ -3165,9 +3161,7 @@ fix_join_expr_mutator(Node *node, fix_join_expr_context *context)
 															 context->num_exec),
 									 context);
 	fix_expr_common(context->root, node);
-	return expression_tree_mutator(node,
-								   fix_join_expr_mutator,
-								   (void *) context);
+	return expression_tree_mutator(node, fix_join_expr_mutator, context);
 }
 
 /*
@@ -3292,9 +3286,7 @@ fix_upper_expr_mutator(Node *node, fix_upper_expr_context *context)
 															  context->num_exec),
 									  context);
 	fix_expr_common(context->root, node);
-	return expression_tree_mutator(node,
-								   fix_upper_expr_mutator,
-								   (void *) context);
+	return expression_tree_mutator(node, fix_upper_expr_mutator, context);
 }
 
 /*
@@ -3390,7 +3382,7 @@ fix_windowagg_condition_expr_mutator(Node *node,
 
 	return expression_tree_mutator(node,
 								   fix_windowagg_condition_expr_mutator,
-								   (void *) context);
+								   context);
 }
 
 /*
@@ -3656,10 +3648,10 @@ extract_query_dependencies_walker(Node *node, PlannerInfo *context)
 
 		/* And recurse into the query's subexpressions */
 		return query_tree_walker(query, extract_query_dependencies_walker,
-								 (void *) context, 0);
+								 context, 0);
 	}
 	/* Extract function dependencies and check for regclass Consts */
 	fix_expr_common(context, node);
 	return expression_tree_walker(node, extract_query_dependencies_walker,
-								  (void *) context);
+								  context);
 }

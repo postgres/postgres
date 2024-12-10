@@ -204,8 +204,7 @@ load_backup_manifest(char *backup_directory)
 							 (long long int) statbuf.st_size);
 			}
 			bytes_left -= rc;
-			json_parse_manifest_incremental_chunk(
-												  inc_state, buffer, rc, bytes_left == 0);
+			json_parse_manifest_incremental_chunk(inc_state, buffer, rc, bytes_left == 0);
 		}
 
 		/* Release the incremental state memory */

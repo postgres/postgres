@@ -455,6 +455,9 @@ main(int argc, char **argv)
 		exit(0);
 	}
 
+	/* Initialize hashtable that tracks WAL files protected from removal */
+	keepwal_init();
+
 	findLastCheckpoint(datadir_target, divergerec, lastcommontliIndex,
 					   &chkptrec, &chkpttli, &chkptredo, restore_command);
 	pg_log_info("rewinding from last common checkpoint at %X/%X on timeline %u",

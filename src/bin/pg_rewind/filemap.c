@@ -38,14 +38,14 @@
  * Define a hash table which we can use to store information about the files
  * appearing in source and target systems.
  */
-#define SH_PREFIX		filehash
-#define SH_ELEMENT_TYPE	file_entry_t
-#define SH_KEY_TYPE		const char *
-#define	SH_KEY			path
+#define SH_PREFIX				filehash
+#define SH_ELEMENT_TYPE			file_entry_t
+#define SH_KEY_TYPE				const char *
+#define SH_KEY					path
 #define SH_HASH_KEY(tb, key)	hash_string(key)
 #define SH_EQUAL(tb, a, b)		(strcmp(a, b) == 0)
-#define	SH_SCOPE		static inline
-#define SH_RAW_ALLOCATOR	pg_malloc0
+#define SH_SCOPE				static inline
+#define SH_RAW_ALLOCATOR		pg_malloc0
 #define SH_DECLARE
 #define SH_DEFINE
 #include "lib/simplehash.h"
@@ -60,7 +60,36 @@ static char *datasegpath(RelFileLocator rlocator, ForkNumber forknum,
 
 static file_entry_t *insert_filehash_entry(const char *path);
 static file_entry_t *lookup_filehash_entry(const char *path);
+
+/*
+ * A separate hash table which tracks WAL files that must not be deleted.
+ */
+typedef struct keepwal_entry
+{
+	const char *path;
+	uint32		status;
+} keepwal_entry;
+
+#define SH_PREFIX				keepwal
+#define SH_ELEMENT_TYPE			keepwal_entry
+#define SH_KEY_TYPE				const char *
+#define SH_KEY					path
+#define SH_HASH_KEY(tb, key)	hash_string(key)
+#define SH_EQUAL(tb, a, b)		(strcmp(a, b) == 0)
+#define SH_SCOPE				static inline
+#define SH_RAW_ALLOCATOR		pg_malloc0
+#define SH_DECLARE
+#define SH_DEFINE
+#include "lib/simplehash.h"
+
+#define KEEPWAL_INITIAL_SIZE	1000
+
+
+static keepwal_hash *keepwal = NULL;
+static bool keepwal_entry_exists(const char *path);
+
 static int	final_filemap_cmp(const void *a, const void *b);
+
 static bool check_file_excluded(const char *path, bool is_source);
 
 /*
@@ -204,6 +233,39 @@ static file_entry_t *
 lookup_filehash_entry(const char *path)
 {
 	return filehash_lookup(filehash, path);
+}
+
+/*
+ * Initialize a hash table to store WAL file names that must be kept.
+ */
+void
+keepwal_init(void)
+{
+	/* An initial hash size out of thin air */
+	keepwal = keepwal_create(KEEPWAL_INITIAL_SIZE, NULL);
+}
+
+/* Mark the given file to prevent its removal */
+void
+keepwal_add_entry(const char *path)
+{
+	keepwal_entry *entry;
+	bool		found;
+
+	/* Should only be called with keepwal initialized */
+	Assert(keepwal != NULL);
+
+	entry = keepwal_insert(keepwal, path, &found);
+
+	if (!found)
+		entry->path = pg_strdup(path);
+}
+
+/* Return true if file is marked as not to be removed, false otherwise */
+static bool
+keepwal_entry_exists(const char *path)
+{
+	return keepwal_lookup(keepwal, path) != NULL;
 }
 
 /*
@@ -685,7 +747,15 @@ decide_file_action(file_entry_t *entry)
 	}
 	else if (entry->target_exists && !entry->source_exists)
 	{
-		/* File exists in target, but not source. Remove it. */
+		/*
+		 * For files that exist in target but not in source, we check the
+		 * keepwal hash table; any files listed therein must not be removed.
+		 */
+		if (keepwal_entry_exists(path))
+		{
+			pg_log_debug("Not removing file \"%s\" because it is required for recovery", path);
+			return FILE_ACTION_NONE;
+		}
 		return FILE_ACTION_REMOVE;
 	}
 	else if (!entry->target_exists && !entry->source_exists)

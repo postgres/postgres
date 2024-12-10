@@ -397,6 +397,14 @@ SELECT CASE make_ad(1,2)
  right
 (1 row)
 
+-- While we're here, also test handling of a NULLIF arg that is a read/write
+-- object (bug #18722)
+SELECT NULLIF(make_ad(1,2), array[2,3]::arrdomain);
+ nullif 
+--------
+ {1,2}
+(1 row)
+
 ROLLBACK;
 -- Test interaction of CASE with ArrayCoerceExpr (bug #15471)
 BEGIN;

@@ -88,9 +88,9 @@ pg_signal_backend(int pid, int sig)
 	if (!OidIsValid(proc->roleId) || superuser_arg(proc->roleId))
 	{
 		ProcNumber	procNumber = GetNumberFromPGProc(proc);
-		PgBackendStatus *procStatus = pgstat_get_beentry_by_proc_number(procNumber);
+		BackendType backendType = pgstat_get_backend_type_by_proc_number(procNumber);
 
-		if (procStatus && procStatus->st_backendType == B_AUTOVAC_WORKER)
+		if (backendType == B_AUTOVAC_WORKER)
 		{
 			if (!has_privs_of_role(GetUserId(), ROLE_PG_SIGNAL_AUTOVACUUM_WORKER))
 				return SIGNAL_BACKEND_NOAUTOVAC;

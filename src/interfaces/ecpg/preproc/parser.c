@@ -203,7 +203,9 @@ filtered_base_yylex(void)
 				base_yytext = cur_yytext;
 
 				/* Combine 3 tokens into 1 */
-				base_yylval.str = psprintf("%s UESCAPE %s", base_yylval.str, escstr);
+				base_yylval.str = make3_str(base_yylval.str,
+											" UESCAPE ",
+											escstr);
 				base_yylloc = loc_strdup(base_yylval.str);
 
 				/* Clear have_lookahead, thereby consuming all three tokens */

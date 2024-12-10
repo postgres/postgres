@@ -43,7 +43,7 @@ static void gistprunepage(Relation rel, Page page, Buffer buffer,
 
 
 #define ROTATEDIST(d) do { \
-	SplitPageLayout *tmp=(SplitPageLayout*)palloc0(sizeof(SplitPageLayout)); \
+	SplitPageLayout *tmp = (SplitPageLayout *) palloc0(sizeof(SplitPageLayout)); \
 	tmp->block.blkno = InvalidBlockNumber;	\
 	tmp->buffer = InvalidBuffer;	\
 	tmp->next = (d); \
@@ -173,7 +173,7 @@ gistinsert(Relation r, Datum *values, bool *isnull,
 		oldCxt = MemoryContextSwitchTo(indexInfo->ii_Context);
 		giststate = initGISTstate(r);
 		giststate->tempCxt = createTempGistContext();
-		indexInfo->ii_AmCache = (void *) giststate;
+		indexInfo->ii_AmCache = giststate;
 		MemoryContextSwitchTo(oldCxt);
 	}
 

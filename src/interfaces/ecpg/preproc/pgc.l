@@ -641,26 +641,26 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})((\/\*[^*/]*\*+
 						case xb:
 							if (literalbuf[strspn(literalbuf, "01")] != '\0')
 								mmerror(PARSE_ERROR, ET_ERROR, "invalid bit string literal");
-							base_yylval.str = psprintf("b'%s'", literalbuf);
+							base_yylval.str = make3_str("b'", literalbuf, "'");
 							return BCONST;
 						case xh:
 							if (literalbuf[strspn(literalbuf, "0123456789abcdefABCDEF")] != '\0')
 								mmerror(PARSE_ERROR, ET_ERROR, "invalid hexadecimal string literal");
-							base_yylval.str = psprintf("x'%s'", literalbuf);
+							base_yylval.str = make3_str("x'", literalbuf, "'");
 							return XCONST;
 						case xq:
 							/* fallthrough */
 						case xqc:
-							base_yylval.str = psprintf("'%s'", literalbuf);
+							base_yylval.str = make3_str("'", literalbuf, "'");
 							return SCONST;
 						case xe:
-							base_yylval.str = psprintf("E'%s'", literalbuf);
+							base_yylval.str = make3_str("E'", literalbuf, "'");
 							return SCONST;
 						case xn:
-							base_yylval.str = psprintf("N'%s'", literalbuf);
+							base_yylval.str = make3_str("N'", literalbuf, "'");
 							return SCONST;
 						case xus:
-							base_yylval.str = psprintf("U&'%s'", literalbuf);
+							base_yylval.str = make3_str("U&'", literalbuf, "'");
 							return USCONST;
 						default:
 							mmfatal(PARSE_ERROR, "unhandled previous state in xqs\n");
@@ -724,7 +724,7 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})((\/\*[^*/]*\*+
 						free(dolqstart);
 						dolqstart = NULL;
 						BEGIN(SQL);
-						base_yylval.str = mm_strdup(literalbuf);
+						base_yylval.str = loc_strdup(literalbuf);
 						return SCONST;
 					}
 					else
@@ -778,12 +778,12 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})((\/\*[^*/]*\*+
 					 * PREPARE and EXECUTE IMMEDIATE, which can certainly be
 					 * longer than NAMEDATALEN.
 					 */
-					base_yylval.str = mm_strdup(literalbuf);
+					base_yylval.str = loc_strdup(literalbuf);
 					return CSTRING;
 				}
 <xdc>{xdstop}	{
 					BEGIN(state_before_str_start);
-					base_yylval.str = mm_strdup(literalbuf);
+					base_yylval.str = loc_strdup(literalbuf);
 					return CSTRING;
 				}
 <xui>{dquote}	{
@@ -795,7 +795,7 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})((\/\*[^*/]*\*+
 					 * The backend will truncate the identifier here. We do
 					 * not as it does not change the result.
 					 */
-					base_yylval.str = psprintf("U&\"%s\"", literalbuf);
+					base_yylval.str = make3_str("U&\"", literalbuf, "\"");
 					return UIDENT;
 				}
 <xd,xui>{xddouble} {
@@ -971,7 +971,7 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})((\/\*[^*/]*\*+
 						}
 					}
 
-					base_yylval.str = mm_strdup(yytext);
+					base_yylval.str = loc_strdup(yytext);
 					return Op;
 				}
 
@@ -990,7 +990,7 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})((\/\*[^*/]*\*+
 				}
 
 {ip}			{
-					base_yylval.str = mm_strdup(yytext);
+					base_yylval.str = loc_strdup(yytext);
 					return IP;
 				}
 }  /* <SQL> */
@@ -1003,7 +1003,7 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})((\/\*[^*/]*\*+
 					return process_integer_literal(yytext, &base_yylval, 16);
 				}
 {numeric}		{
-					base_yylval.str = mm_strdup(yytext);
+					base_yylval.str = loc_strdup(yytext);
 					return FCONST;
 				}
 {numericfail}	{
@@ -1012,7 +1012,7 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})((\/\*[^*/]*\*+
 					return process_integer_literal(yytext, &base_yylval, 10);
 				}
 {real}			{
-					base_yylval.str = mm_strdup(yytext);
+					base_yylval.str = loc_strdup(yytext);
 					return FCONST;
 				}
 {realfail}		{
@@ -1048,7 +1048,7 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})((\/\*[^*/]*\*+
 				}
 
 :{identifier}((("->"|\.){identifier})|(\[{array}\]))*	{
-					base_yylval.str = mm_strdup(yytext + 1);
+					base_yylval.str = loc_strdup(yytext + 1);
 					return CVARIABLE;
 				}
 
@@ -1085,7 +1085,7 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})((\/\*[^*/]*\*+
 						 * to do so; that's just another way that ecpg could
 						 * get out of step with the backend.
 						 */
-						base_yylval.str = mm_strdup(yytext);
+						base_yylval.str = loc_strdup(yytext);
 						return IDENT;
 					}
 				}
@@ -1124,7 +1124,7 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})((\/\*[^*/]*\*+
 					}
 					else
 					{
-						base_yylval.str = mm_strdup(yytext);
+						base_yylval.str = loc_strdup(yytext);
 						return CPP_LINE;
 					}
 				}
@@ -1136,12 +1136,12 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})((\/\*[^*/]*\*+
 					}
 					else
 					{
-						base_yylval.str = mm_strdup(yytext);
+						base_yylval.str = loc_strdup(yytext);
 						return CPP_LINE;
 					}
 				}
 <C,SQL>{cppline} {
-					base_yylval.str = mm_strdup(yytext);
+					base_yylval.str = loc_strdup(yytext);
 					return CPP_LINE;
 				}
 <C>{identifier}	{
@@ -1167,7 +1167,7 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})((\/\*[^*/]*\*+
 							return kwvalue;
 						else
 						{
-							base_yylval.str = mm_strdup(yytext);
+							base_yylval.str = loc_strdup(yytext);
 							return IDENT;
 						}
 					}
@@ -1685,7 +1685,7 @@ process_integer_literal(const char *token, YYSTYPE *lval, int base)
 	if (*endptr != '\0' || errno == ERANGE)
 	{
 		/* integer too large (or contains decimal pt), treat it as a float */
-		lval->str = mm_strdup(token);
+		lval->str = loc_strdup(token);
 		return FCONST;
 	}
 	lval->ival = val;

@@ -1528,6 +1528,8 @@ select make_date(2013, 13, 1);
 ERROR:  date field value out of range: 2013-13-01
 select make_date(2013, 11, -1);
 ERROR:  date field value out of range: 2013-11--1
+SELECT make_date(-2147483648, 1, 1);
+ERROR:  date field value out of range: -2147483648-01-01
 select make_time(10, 55, 100.1);
 ERROR:  time field value out of range: 10:55:100.1
 select make_time(24, 0, 2.1);

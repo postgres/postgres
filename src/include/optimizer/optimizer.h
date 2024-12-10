@@ -111,6 +111,7 @@ typedef enum
 /* GUC parameters */
 extern PGDLLIMPORT int debug_parallel_query;
 extern PGDLLIMPORT bool parallel_leader_participation;
+extern PGDLLIMPORT bool enable_distinct_reordering;
 
 extern struct PlannedStmt *planner(Query *parse, const char *query_string,
 								   int cursorOptions,

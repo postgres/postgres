@@ -60,10 +60,10 @@ ifeq ($(PORTNAME), cygwin)
 SHLIB_LINK += -Wl,--export-all-symbols
 endif
 
-REGRESS_OPTS = --dbname=$(PL_TESTDB)
+REGRESS_OPTS = --dbname=$(PL_TESTDB) --dlpath=$(top_builddir)/src/test/regress
 REGRESS = plperl_setup plperl plperl_lc plperl_trigger plperl_shared \
 	plperl_elog plperl_util plperl_init plperlu plperl_array \
-	plperl_call plperl_transaction
+	plperl_call plperl_transaction plperl_env
 # if Perl can support two interpreters in one backend,
 # test plperl-and-plperlu cases
 ifneq ($(PERL),)
@@ -85,7 +85,7 @@ plperl_opmask.h: plperl_opmask.pl
 
 perlchunks.h: $(PERLCHUNKS)
 	@if [ x"$(perl_privlibexp)" = x"" ]; then echo "configure switch --with-perl was not specified."; exit 1; fi
-	$(PERL) $(srcdir)/text2macro.pl --strip='^(\#.*|\s*)$$' $^ > $@
+	$(PERL) $(srcdir)/text2macro.pl $^ > $@
 
 all: all-lib
 

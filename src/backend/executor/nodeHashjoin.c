@@ -1511,10 +1511,11 @@ ExecReScanHashJoin(HashJoinState *node)
 			/*
 			 * Okay to reuse the hash table; needn't rescan inner, either.
 			 *
-			 * However, if it's a right/right-anti/full join, we'd better
-			 * reset the inner-tuple match flags contained in the table.
+			 * However, if it's a right/right-anti/right-semi/full join, we'd
+			 * better reset the inner-tuple match flags contained in the
+			 * table.
 			 */
-			if (HJ_FILL_INNER(node))
+			if (HJ_FILL_INNER(node) || node->js.jointype == JOIN_RIGHT_SEMI)
 				ExecHashTableResetMatchFlags(node->hj_HashTable);
 
 			/*
@@ -1713,8 +1714,13 @@ void
 ExecHashJoinReInitializeDSM(HashJoinState *state, ParallelContext *pcxt)
 {
 	int			plan_node_id = state->js.ps.plan->plan_node_id;
-	ParallelHashJoinState *pstate =
-		shm_toc_lookup(pcxt->toc, plan_node_id, false);
+	ParallelHashJoinState *pstate;
+
+	/* Nothing to do if we failed to create a DSM segment. */
+	if (pcxt->seg == NULL)
+		return;
+
+	pstate = shm_toc_lookup(pcxt->toc, plan_node_id, false);
 
 	/*
 	 * It would be possible to reuse the shared hash table in single-batch

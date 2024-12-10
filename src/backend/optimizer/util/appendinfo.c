@@ -425,7 +425,7 @@ adjust_appendrel_attrs_mutator(Node *node,
 
 		phv = (PlaceHolderVar *) expression_tree_mutator(node,
 														 adjust_appendrel_attrs_mutator,
-														 (void *) context);
+														 context);
 		/* now fix PlaceHolderVar's relid sets */
 		if (phv->phlevelsup == 0)
 		{
@@ -509,8 +509,7 @@ adjust_appendrel_attrs_mutator(Node *node,
 	Assert(!IsA(node, RangeTblRef));
 	Assert(!IsA(node, JoinExpr));
 
-	return expression_tree_mutator(node, adjust_appendrel_attrs_mutator,
-								   (void *) context);
+	return expression_tree_mutator(node, adjust_appendrel_attrs_mutator, context);
 }
 
 /*

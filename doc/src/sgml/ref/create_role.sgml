@@ -273,6 +273,14 @@ in sync when changing the above synopsis!
         different format).  This allows reloading of encrypted passwords
         during dump/restore.
        </para>
+       <warning>
+        <para>
+         Support for MD5-encrypted passwords is deprecated and will be removed
+         in a future release of <productname>PostgreSQL</productname>.  Refer
+         to <xref linkend="auth-password"/> for details about migrating to
+         another password type.
+        </para>
+       </warning>
       </listitem>
      </varlistentry>
 

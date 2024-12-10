@@ -77,6 +77,11 @@ CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (format 'csv', delimiter 
 ');       -- ERROR
 CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (format 'csv', null '
 ');       -- ERROR
+CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (on_error 'unsupported');       -- ERROR
+CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (format 'binary', on_error 'ignore');       -- ERROR
+CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (log_verbosity 'unsupported');       -- ERROR
+CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (reject_limit '1');       -- ERROR
+CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (on_error 'ignore', reject_limit '0');       -- ERROR
 CREATE FOREIGN TABLE tbl () SERVER file_server;  -- ERROR
 
 \set filename :abs_srcdir '/data/agg.data'
@@ -150,10 +155,14 @@ SELECT * FROM agg_csv c JOIN agg_text t ON (t.a = c.a) ORDER BY c.a;
 -- error context report tests
 SELECT * FROM agg_bad;               -- ERROR
 
--- on_error and log_verbosity tests
+-- on_error, log_verbosity and reject_limit tests
 ALTER FOREIGN TABLE agg_bad OPTIONS (ADD on_error 'ignore');
 SELECT * FROM agg_bad;
 ALTER FOREIGN TABLE agg_bad OPTIONS (ADD log_verbosity 'silent');
+SELECT * FROM agg_bad;
+ALTER FOREIGN TABLE agg_bad OPTIONS (ADD reject_limit '1'); -- ERROR
+SELECT * FROM agg_bad;
+ALTER FOREIGN TABLE agg_bad OPTIONS (SET reject_limit '2');
 SELECT * FROM agg_bad;
 ANALYZE agg_bad;
 

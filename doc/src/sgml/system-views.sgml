@@ -2435,7 +2435,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
        <structfield>active</structfield> <type>bool</type>
       </para>
       <para>
-       True if this slot is currently actively being used
+       True if this slot is currently being streamed
       </para></entry>
      </row>
 
@@ -2444,9 +2444,8 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
        <structfield>active_pid</structfield> <type>int4</type>
       </para>
       <para>
-       The process ID of the session using this slot if the slot
-       is currently actively being used. <literal>NULL</literal> if
-       inactive.
+       The process ID of the session streaming data for this slot.
+       <literal>NULL</literal> if inactive.
       </para></entry>
      </row>
 
@@ -2566,15 +2565,18 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
        <structfield>inactive_since</structfield> <type>timestamptz</type>
       </para>
       <para>
-        The time since the slot has become inactive.
-        <literal>NULL</literal> if the slot is currently being used.
+        The time when the slot became inactive. <literal>NULL</literal> if the
+        slot is currently being streamed.
         Note that for slots on the standby that are being synced from a
         primary server (whose <structfield>synced</structfield> field is
-        <literal>true</literal>), the
-        <structfield>inactive_since</structfield> indicates the last
-        synchronization (see
-        <xref linkend="logicaldecoding-replication-slots-synchronization"/>)
-        time.
+        <literal>true</literal>), the <structfield>inactive_since</structfield>
+        indicates the time when slot synchronization (see <xref
+        linkend="logicaldecoding-replication-slots-synchronization"/>)
+        was most recently stopped.  <literal>NULL</literal> if the slot
+        has always been synchronized. On standby, this is useful for slots
+        that are being synced from a primary server (whose
+        <structfield>synced</structfield> field is <literal>true</literal>)
+        so they know when the slot stopped being synchronized.
       </para></entry>
      </row>
 

@@ -5037,9 +5037,7 @@ replace_nestloop_params_mutator(Node *node, PlannerInfo *root)
 		/* Replace the PlaceHolderVar with a nestloop Param */
 		return (Node *) replace_nestloop_param_placeholdervar(root, phv);
 	}
-	return expression_tree_mutator(node,
-								   replace_nestloop_params_mutator,
-								   (void *) root);
+	return expression_tree_mutator(node, replace_nestloop_params_mutator, root);
 }
 
 /*

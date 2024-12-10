@@ -117,6 +117,22 @@ pg_mul_s16_overflow(int16 a, int16 b, int16 *result)
 #endif
 }
 
+static inline bool
+pg_neg_s16_overflow(int16 a, int16 *result)
+{
+#if defined(HAVE__BUILTIN_OP_OVERFLOW)
+	return __builtin_sub_overflow(0, a, result);
+#else
+	if (unlikely(a == PG_INT16_MIN))
+	{
+		*result = 0x5EED;		/* to avoid spurious warnings */
+		return true;
+	}
+	*result = -a;
+	return false;
+#endif
+}
+
 static inline uint16
 pg_abs_s16(int16 a)
 {
@@ -181,6 +197,22 @@ pg_mul_s32_overflow(int32 a, int32 b, int32 *result)
 		return true;
 	}
 	*result = (int32) res;
+	return false;
+#endif
+}
+
+static inline bool
+pg_neg_s32_overflow(int32 a, int32 *result)
+{
+#if defined(HAVE__BUILTIN_OP_OVERFLOW)
+	return __builtin_sub_overflow(0, a, result);
+#else
+	if (unlikely(a == PG_INT32_MIN))
+	{
+		*result = 0x5EED;		/* to avoid spurious warnings */
+		return true;
+	}
+	*result = -a;
 	return false;
 #endif
 }
@@ -296,6 +328,22 @@ pg_mul_s64_overflow(int64 a, int64 b, int64 *result)
 		return true;
 	}
 	*result = a * b;
+	return false;
+#endif
+}
+
+static inline bool
+pg_neg_s64_overflow(int64 a, int64 *result)
+{
+#if defined(HAVE__BUILTIN_OP_OVERFLOW)
+	return __builtin_sub_overflow(0, a, result);
+#else
+	if (unlikely(a == PG_INT64_MIN))
+	{
+		*result = 0x5EED;		/* to avoid spurious warnings */
+		return true;
+	}
+	*result = -a;
 	return false;
 #endif
 }

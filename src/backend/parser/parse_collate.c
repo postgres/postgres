@@ -108,7 +108,7 @@ assign_query_collations(ParseState *pstate, Query *query)
 	 */
 	(void) query_tree_walker(query,
 							 assign_query_collations_walker,
-							 (void *) pstate,
+							 pstate,
 							 QTW_IGNORE_RANGE_TABLE |
 							 QTW_IGNORE_CTE_SUBQUERIES);
 }
@@ -295,7 +295,7 @@ assign_collations_walker(Node *node, assign_collations_context *context)
 
 				(void) expression_tree_walker(node,
 											  assign_collations_walker,
-											  (void *) &loccontext);
+											  &loccontext);
 
 				collation = expr->collOid;
 				Assert(OidIsValid(collation));
@@ -317,7 +317,7 @@ assign_collations_walker(Node *node, assign_collations_context *context)
 				/* ... but first, recurse */
 				(void) expression_tree_walker(node,
 											  assign_collations_walker,
-											  (void *) &loccontext);
+											  &loccontext);
 
 				if (OidIsValid(expr->resultcollid))
 				{
@@ -403,7 +403,7 @@ assign_collations_walker(Node *node, assign_collations_context *context)
 				/* ... but first, recurse */
 				(void) expression_tree_walker(node,
 											  assign_collations_walker,
-											  (void *) &loccontext);
+											  &loccontext);
 
 				if (OidIsValid(typcollation))
 				{
@@ -444,7 +444,7 @@ assign_collations_walker(Node *node, assign_collations_context *context)
 		case T_TargetEntry:
 			(void) expression_tree_walker(node,
 										  assign_collations_walker,
-										  (void *) &loccontext);
+										  &loccontext);
 
 			/*
 			 * TargetEntry can have only one child, and should bubble that
@@ -488,7 +488,7 @@ assign_collations_walker(Node *node, assign_collations_context *context)
 		case T_MergeAction:
 			(void) expression_tree_walker(node,
 										  assign_collations_walker,
-										  (void *) &loccontext);
+										  &loccontext);
 
 			/*
 			 * When we're invoked on a query's jointree, we don't need to do
@@ -528,7 +528,7 @@ assign_collations_walker(Node *node, assign_collations_context *context)
 		case T_List:
 			(void) expression_tree_walker(node,
 										  assign_collations_walker,
-										  (void *) &loccontext);
+										  &loccontext);
 
 			/*
 			 * When processing a list, collation state just bubbles up from
@@ -699,7 +699,7 @@ assign_collations_walker(Node *node, assign_collations_context *context)
 						 */
 						(void) expression_tree_walker(node,
 													  assign_collations_walker,
-													  (void *) &loccontext);
+													  &loccontext);
 						break;
 				}
 

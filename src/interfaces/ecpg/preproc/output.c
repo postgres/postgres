@@ -155,10 +155,11 @@ output_statement(const char *stmt, int whenever_mode, enum ECPG_statement_type s
 
 	/* dump variables to C file */
 	dump_variables(argsinsert, 1);
+	argsinsert = NULL;
 	fputs("ECPGt_EOIT, ", base_yyout);
 	dump_variables(argsresult, 1);
+	argsresult = NULL;
 	fputs("ECPGt_EORT);", base_yyout);
-	reset_variables();
 
 	whenever_action(whenever_mode | 2);
 }

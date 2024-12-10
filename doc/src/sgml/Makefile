@@ -155,8 +155,13 @@ XSLTPROC_FO_FLAGS += --stringparam img.src.path '$(srcdir)/'
 %-US.fo: stylesheet-fo.xsl %-full.xml
 	$(XSLTPROC) $(XMLINCLUDE) $(XSLTPROCFLAGS) $(XSLTPROC_FO_FLAGS) --stringparam paper.type USletter -o $@ $^
 
+# There is no easy way to pipe output and capture its return code,
+# so add a final line to report the return code.
 %.pdf: %.fo $(ALL_IMAGES)
-	$(FOP) -fo $< -pdf $@
+	{ LANG=C $(FOP) -fo $< -pdf $@ 2>&1; echo "FOP_RETURN $$?"; } | \
+	$(AWK) 'BEGIN { warn = 0 }  $$1 != "FOP_RETURN" { print }  /not available in font/ { warn = 1 }  \
+	END { if (warn != 0) print("\nFound characters that cannot be output in the PDF document;  see README.non-ASCII"); \
+	if ($$2 != 0) { exit $$2} }' 1>&2
 
 
 ##

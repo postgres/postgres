@@ -1939,7 +1939,6 @@ formrdesc(const char *relationName, Oid relationReltype,
 	relation->rd_rel->relallvisible = 0;
 	relation->rd_rel->relkind = RELKIND_RELATION;
 	relation->rd_rel->relnatts = (int16) natts;
-	relation->rd_rel->relam = HEAP_TABLE_AM_OID;
 
 	/*
 	 * initialize attribute tuple form
@@ -5643,8 +5642,7 @@ RelationGetExclusionInfo(Relation indexRelation,
 
 		/* We want the exclusion constraint owning the index */
 		if ((conform->contype != CONSTRAINT_EXCLUSION &&
-			 !(conform->conperiod && (
-									  conform->contype == CONSTRAINT_PRIMARY
+			 !(conform->conperiod && (conform->contype == CONSTRAINT_PRIMARY
 									  || conform->contype == CONSTRAINT_UNIQUE))) ||
 			conform->conindid != RelationGetRelid(indexRelation))
 			continue;
@@ -5708,12 +5706,19 @@ RelationGetExclusionInfo(Relation indexRelation,
  * Get the publication information for the given relation.
  *
  * Traverse all the publications which the relation is in to get the
- * publication actions and validate the row filter expressions for such
- * publications if any. We consider the row filter expression as invalid if it
- * references any column which is not part of REPLICA IDENTITY.
+ * publication actions and validate:
+ * 1. The row filter expressions for such publications if any. We consider the
+ *    row filter expression as invalid if it references any column which is not
+ *    part of REPLICA IDENTITY.
+ * 2. The column list for such publication if any. We consider the column list
+ * 	  invalid if REPLICA IDENTITY contains any column that is not part of it.
+ * 3. The generated columns of the relation for such publications. We consider
+ *    any reference of an unpublished generated column in REPLICA IDENTITY as
+ *    invalid.
  *
  * To avoid fetching the publication information repeatedly, we cache the
- * publication actions and row filter validation information.
+ * publication actions, row filter validation information, column list
+ * validation information, and generated column validation information.
  */
 void
 RelationBuildPublicationDesc(Relation relation, PublicationDesc *pubdesc)
@@ -5736,6 +5741,8 @@ RelationBuildPublicationDesc(Relation relation, PublicationDesc *pubdesc)
 		pubdesc->rf_valid_for_delete = true;
 		pubdesc->cols_valid_for_update = true;
 		pubdesc->cols_valid_for_delete = true;
+		pubdesc->gencols_valid_for_update = true;
+		pubdesc->gencols_valid_for_delete = true;
 		return;
 	}
 
@@ -5750,6 +5757,8 @@ RelationBuildPublicationDesc(Relation relation, PublicationDesc *pubdesc)
 	pubdesc->rf_valid_for_delete = true;
 	pubdesc->cols_valid_for_update = true;
 	pubdesc->cols_valid_for_delete = true;
+	pubdesc->gencols_valid_for_update = true;
+	pubdesc->gencols_valid_for_delete = true;
 
 	/* Fetch the publication membership info. */
 	puboids = GetRelationPublications(relid);
@@ -5779,6 +5788,8 @@ RelationBuildPublicationDesc(Relation relation, PublicationDesc *pubdesc)
 		Oid			pubid = lfirst_oid(lc);
 		HeapTuple	tup;
 		Form_pg_publication pubform;
+		bool		invalid_column_list;
+		bool		invalid_gen_col;
 
 		tup = SearchSysCache1(PUBLICATIONOID, ObjectIdGetDatum(pubid));
 
@@ -5813,18 +5824,27 @@ RelationBuildPublicationDesc(Relation relation, PublicationDesc *pubdesc)
 		/*
 		 * Check if all columns are part of the REPLICA IDENTITY index or not.
 		 *
-		 * If the publication is FOR ALL TABLES then it means the table has no
-		 * column list and we can skip the validation.
+		 * Check if all generated columns included in the REPLICA IDENTITY are
+		 * published.
 		 */
-		if (!pubform->puballtables &&
-			(pubform->pubupdate || pubform->pubdelete) &&
-			pub_collist_contains_invalid_column(pubid, relation, ancestors,
-												pubform->pubviaroot))
+		if ((pubform->pubupdate || pubform->pubdelete) &&
+			pub_contains_invalid_column(pubid, relation, ancestors,
+										pubform->pubviaroot,
+										pubform->pubgencols,
+										&invalid_column_list,
+										&invalid_gen_col))
 		{
 			if (pubform->pubupdate)
-				pubdesc->cols_valid_for_update = false;
+			{
+				pubdesc->cols_valid_for_update = !invalid_column_list;
+				pubdesc->gencols_valid_for_update = !invalid_gen_col;
+			}
+
 			if (pubform->pubdelete)
-				pubdesc->cols_valid_for_delete = false;
+			{
+				pubdesc->cols_valid_for_delete = !invalid_column_list;
+				pubdesc->gencols_valid_for_delete = !invalid_gen_col;
+			}
 		}
 
 		ReleaseSysCache(tup);
@@ -5847,6 +5867,17 @@ RelationBuildPublicationDesc(Relation relation, PublicationDesc *pubdesc)
 		if (pubdesc->pubactions.pubinsert && pubdesc->pubactions.pubupdate &&
 			pubdesc->pubactions.pubdelete && pubdesc->pubactions.pubtruncate &&
 			!pubdesc->cols_valid_for_update && !pubdesc->cols_valid_for_delete)
+			break;
+
+		/*
+		 * If we know everything is replicated and replica identity has an
+		 * unpublished generated column, there is no point to check for other
+		 * publications.
+		 */
+		if (pubdesc->pubactions.pubinsert && pubdesc->pubactions.pubupdate &&
+			pubdesc->pubactions.pubdelete && pubdesc->pubactions.pubtruncate &&
+			!pubdesc->gencols_valid_for_update &&
+			!pubdesc->gencols_valid_for_delete)
 			break;
 	}
 

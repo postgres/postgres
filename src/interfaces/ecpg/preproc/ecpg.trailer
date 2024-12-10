@@ -77,6 +77,8 @@ CreateAsStmt: CREATE OptTemp TABLE create_as_target AS
 
 at: AT connection_object
 	{
+		if (connection)
+			free(connection);
 		connection = mm_strdup(@2);
 
 		/*
@@ -560,13 +562,12 @@ type_declaration: S_TYPEDEF
 var_declaration:
 	storage_declaration var_type
 	{
-		actual_type[struct_level].type_storage = mm_strdup(@1);
+		actual_type[struct_level].type_storage = loc_strdup(@1);
 		actual_type[struct_level].type_enum = $2.type_enum;
-		actual_type[struct_level].type_str = mm_strdup($2.type_str);
-		actual_type[struct_level].type_dimension = mm_strdup($2.type_dimension);
-		actual_type[struct_level].type_index = mm_strdup($2.type_index);
-		actual_type[struct_level].type_sizeof =
-			$2.type_sizeof ? mm_strdup($2.type_sizeof) : NULL;
+		actual_type[struct_level].type_str = $2.type_str;
+		actual_type[struct_level].type_dimension = $2.type_dimension;
+		actual_type[struct_level].type_index = $2.type_index;
+		actual_type[struct_level].type_sizeof = $2.type_sizeof;
 
 		actual_startline[struct_level] = hashline_number();
 	}
@@ -576,13 +577,12 @@ var_declaration:
 	}
 	| var_type
 	{
-		actual_type[struct_level].type_storage = mm_strdup("");
+		actual_type[struct_level].type_storage = loc_strdup("");
 		actual_type[struct_level].type_enum = $1.type_enum;
-		actual_type[struct_level].type_str = mm_strdup($1.type_str);
-		actual_type[struct_level].type_dimension = mm_strdup($1.type_dimension);
-		actual_type[struct_level].type_index = mm_strdup($1.type_index);
-		actual_type[struct_level].type_sizeof =
-			$1.type_sizeof ? mm_strdup($1.type_sizeof) : NULL;
+		actual_type[struct_level].type_str = $1.type_str;
+		actual_type[struct_level].type_dimension = $1.type_dimension;
+		actual_type[struct_level].type_index = $1.type_index;
+		actual_type[struct_level].type_sizeof = $1.type_sizeof;
 
 		actual_startline[struct_level] = hashline_number();
 	}
@@ -755,6 +755,7 @@ var_type: simple_type
 			else
 				$$.type_sizeof = cat_str(3, "sizeof(", this->name, ")");
 
+			ECPGfree_struct_member(struct_member_list[struct_level]);
 			struct_member_list[struct_level] = ECPGstruct_member_dup(this->struct_member_list);
 		}
 	}
@@ -873,7 +874,7 @@ var_type: simple_type
 			/* Otherwise, it must be a user-defined typedef name */
 			struct typedefs *this = get_typedef(@1, false);
 
-			$$.type_str = (this->type->type_enum == ECPGt_varchar || this->type->type_enum == ECPGt_bytea) ? mm_strdup("") : mm_strdup(this->name);
+			$$.type_str = (this->type->type_enum == ECPGt_varchar || this->type->type_enum == ECPGt_bytea) ? "" : this->name;
 			$$.type_enum = this->type->type_enum;
 			$$.type_dimension = this->type->type_dimension;
 			$$.type_index = this->type->type_index;
@@ -882,6 +883,7 @@ var_type: simple_type
 			else
 				$$.type_sizeof = cat_str(3, "sizeof(", this->name, ")");
 
+			ECPGfree_struct_member(struct_member_list[struct_level]);
 			struct_member_list[struct_level] = ECPGstruct_member_dup(this->struct_member_list);
 		}
 	}
@@ -904,6 +906,7 @@ var_type: simple_type
 			$$.type_dimension = this->type->type_dimension;
 			$$.type_index = this->type->type_index;
 			$$.type_sizeof = this->type->type_sizeof;
+			ECPGfree_struct_member(struct_member_list[struct_level]);
 			struct_member_list[struct_level] = ECPGstruct_member_dup(this->struct_member_list);
 		}
 		else
@@ -913,6 +916,7 @@ var_type: simple_type
 			$$.type_dimension = "-1";
 			$$.type_index = "-1";
 			$$.type_sizeof = "";
+			ECPGfree_struct_member(struct_member_list[struct_level]);
 			struct_member_list[struct_level] = NULL;
 		}
 	}
@@ -928,6 +932,7 @@ enum_definition: '{' c_list '}'
 
 struct_union_type_with_symbol: s_struct_union_symbol
 	{
+		ECPGfree_struct_member(struct_member_list[struct_level]);
 		struct_member_list[struct_level++] = NULL;
 		if (struct_level >= STRUCT_DEPTH)
 			mmerror(PARSE_ERROR, ET_ERROR, "too many levels in nested structure/union definition");
@@ -969,12 +974,13 @@ struct_union_type_with_symbol: s_struct_union_symbol
 		this->name = mm_strdup(su_type.type_str);
 		this->brace_level = braces_open;
 		this->type = (struct this_type *) mm_alloc(sizeof(struct this_type));
+		this->type->type_storage = NULL;
 		this->type->type_enum = su_type.type_enum;
 		this->type->type_str = mm_strdup(su_type.type_str);
 		this->type->type_dimension = mm_strdup("-1");	/* dimension of array */
 		this->type->type_index = mm_strdup("-1");	/* length of string */
-		this->type->type_sizeof = ECPGstruct_sizeof;
-		this->struct_member_list = struct_member_list[struct_level];
+		this->type->type_sizeof = ECPGstruct_sizeof ? mm_strdup(ECPGstruct_sizeof) : NULL;
+		this->struct_member_list = ECPGstruct_member_dup(struct_member_list[struct_level]);
 
 		types = this;
 		@$ = cat_str(4, su_type.type_str, "{", @4, "}");
@@ -984,6 +990,7 @@ struct_union_type_with_symbol: s_struct_union_symbol
 struct_union_type: struct_union_type_with_symbol
 	| s_struct_union
 	{
+		ECPGfree_struct_member(struct_member_list[struct_level]);
 		struct_member_list[struct_level++] = NULL;
 		if (struct_level >= STRUCT_DEPTH)
 			mmerror(PARSE_ERROR, ET_ERROR, "too many levels in nested structure/union definition");
@@ -1001,6 +1008,7 @@ s_struct_union_symbol: SQL_STRUCT symbol
 	{
 		$$.su = "struct";
 		$$.symbol = @2;
+		free(ECPGstruct_sizeof);
 		ECPGstruct_sizeof = mm_strdup(cat_str(3, "sizeof(",
 											  cat2_str($$.su, $$.symbol),
 											  ")"));
@@ -1014,6 +1022,7 @@ s_struct_union_symbol: SQL_STRUCT symbol
 
 s_struct_union: SQL_STRUCT
 	{
+		free(ECPGstruct_sizeof);
 		ECPGstruct_sizeof = mm_strdup("");	/* This must not be NULL to
 											 * distinguish from simple types. */
 		@$ = "struct";
@@ -1693,18 +1702,21 @@ ECPGVar: SQL_VAR
 ECPGWhenever: SQL_WHENEVER SQL_SQLERROR action
 	{
 		when_error.code = $3.code;
+		free(when_error.command);
 		when_error.command = $3.command ? mm_strdup($3.command) : NULL;
 		@$ = cat_str(3, "/* exec sql whenever sqlerror ", $3.str, "; */");
 	}
 	| SQL_WHENEVER NOT SQL_FOUND action
 	{
 		when_nf.code = $4.code;
+		free(when_nf.command);
 		when_nf.command = $4.command ? mm_strdup($4.command) : NULL;
 		@$ = cat_str(3, "/* exec sql whenever not found ", $4.str, "; */");
 	}
 	| SQL_WHENEVER SQL_SQLWARNING action
 	{
 		when_warn.code = $3.code;
+		free(when_warn.command);
 		when_warn.command = $3.command ? mm_strdup($3.command) : NULL;
 		@$ = cat_str(3, "/* exec sql whenever sql_warning ", $3.str, "; */");
 	}
