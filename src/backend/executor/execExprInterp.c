@@ -168,6 +168,12 @@ static Datum ExecJustScanVarVirt(ExprState *state, ExprContext *econtext, bool *
 static Datum ExecJustAssignInnerVarVirt(ExprState *state, ExprContext *econtext, bool *isnull);
 static Datum ExecJustAssignOuterVarVirt(ExprState *state, ExprContext *econtext, bool *isnull);
 static Datum ExecJustAssignScanVarVirt(ExprState *state, ExprContext *econtext, bool *isnull);
+static Datum ExecJustHashInnerVarWithIV(ExprState *state, ExprContext *econtext, bool *isnull);
+static Datum ExecJustHashOuterVar(ExprState *state, ExprContext *econtext, bool *isnull);
+static Datum ExecJustHashInnerVar(ExprState *state, ExprContext *econtext, bool *isnull);
+static Datum ExecJustHashOuterVarVirt(ExprState *state, ExprContext *econtext, bool *isnull);
+static Datum ExecJustHashInnerVarVirt(ExprState *state, ExprContext *econtext, bool *isnull);
+static Datum ExecJustHashOuterVarStrict(ExprState *state, ExprContext *econtext, bool *isnull);
 
 /* execution helper functions */
 static pg_attribute_always_inline void ExecAggPlainTransByVal(AggState *aggstate,
@@ -273,7 +279,51 @@ ExecReadyInterpretedExpr(ExprState *state)
 	 * the full interpreter is a measurable overhead for these, and these
 	 * patterns occur often enough to be worth optimizing.
 	 */
-	if (state->steps_len == 3)
+	if (state->steps_len == 5)
+	{
+		ExprEvalOp	step0 = state->steps[0].opcode;
+		ExprEvalOp	step1 = state->steps[1].opcode;
+		ExprEvalOp	step2 = state->steps[2].opcode;
+		ExprEvalOp	step3 = state->steps[3].opcode;
+
+		if (step0 == EEOP_INNER_FETCHSOME &&
+			step1 == EEOP_HASHDATUM_SET_INITVAL &&
+			step2 == EEOP_INNER_VAR &&
+			step3 == EEOP_HASHDATUM_NEXT32)
+		{
+			state->evalfunc_private = (void *) ExecJustHashInnerVarWithIV;
+			return;
+		}
+	}
+	else if (state->steps_len == 4)
+	{
+		ExprEvalOp	step0 = state->steps[0].opcode;
+		ExprEvalOp	step1 = state->steps[1].opcode;
+		ExprEvalOp	step2 = state->steps[2].opcode;
+
+		if (step0 == EEOP_OUTER_FETCHSOME &&
+			step1 == EEOP_OUTER_VAR &&
+			step2 == EEOP_HASHDATUM_FIRST)
+		{
+			state->evalfunc_private = (void *) ExecJustHashOuterVar;
+			return;
+		}
+		else if (step0 == EEOP_INNER_FETCHSOME &&
+				 step1 == EEOP_INNER_VAR &&
+				 step2 == EEOP_HASHDATUM_FIRST)
+		{
+			state->evalfunc_private = (void *) ExecJustHashInnerVar;
+			return;
+		}
+		else if (step0 == EEOP_OUTER_FETCHSOME &&
+				 step1 == EEOP_OUTER_VAR &&
+				 step2 == EEOP_HASHDATUM_FIRST_STRICT)
+		{
+			state->evalfunc_private = (void *) ExecJustHashOuterVarStrict;
+			return;
+		}
+	}
+	else if (state->steps_len == 3)
 	{
 		ExprEvalOp	step0 = state->steps[0].opcode;
 		ExprEvalOp	step1 = state->steps[1].opcode;
@@ -319,6 +369,18 @@ ExecReadyInterpretedExpr(ExprState *state)
 				 state->steps[0].d.casetest.value)
 		{
 			state->evalfunc_private = ExecJustApplyFuncToCase;
+			return;
+		}
+		else if (step0 == EEOP_INNER_VAR &&
+				 step1 == EEOP_HASHDATUM_FIRST)
+		{
+			state->evalfunc_private = (void *) ExecJustHashInnerVarVirt;
+			return;
+		}
+		else if (step0 == EEOP_OUTER_VAR &&
+				 step1 == EEOP_HASHDATUM_FIRST)
+		{
+			state->evalfunc_private = (void *) ExecJustHashOuterVarVirt;
 			return;
 		}
 	}
@@ -2482,6 +2544,148 @@ static Datum
 ExecJustAssignScanVarVirt(ExprState *state, ExprContext *econtext, bool *isnull)
 {
 	return ExecJustAssignVarVirtImpl(state, econtext->ecxt_scantuple, isnull);
+}
+
+/*
+ * implementation for hashing an inner Var, seeding with an initial value.
+ */
+static Datum
+ExecJustHashInnerVarWithIV(ExprState *state, ExprContext *econtext,
+						   bool *isnull)
+{
+	ExprEvalStep *fetchop = &state->steps[0];
+	ExprEvalStep *setivop = &state->steps[1];
+	ExprEvalStep *innervar = &state->steps[2];
+	ExprEvalStep *hashop = &state->steps[3];
+	FunctionCallInfo fcinfo = hashop->d.hashdatum.fcinfo_data;
+	int			attnum = innervar->d.var.attnum;
+	uint32		hashkey;
+
+	CheckOpSlotCompatibility(fetchop, econtext->ecxt_innertuple);
+	slot_getsomeattrs(econtext->ecxt_innertuple, fetchop->d.fetch.last_var);
+
+	fcinfo->args[0].value = econtext->ecxt_innertuple->tts_values[attnum];
+	fcinfo->args[0].isnull = econtext->ecxt_innertuple->tts_isnull[attnum];
+
+	hashkey = DatumGetUInt32(setivop->d.hashdatum_initvalue.init_value);
+	hashkey = pg_rotate_left32(hashkey, 1);
+
+	if (!fcinfo->args[0].isnull)
+	{
+		uint32		hashvalue;
+
+		hashvalue = DatumGetUInt32(hashop->d.hashdatum.fn_addr(fcinfo));
+		hashkey = hashkey ^ hashvalue;
+	}
+
+	*isnull = false;
+	return UInt32GetDatum(hashkey);
+}
+
+/* implementation of ExecJustHash(Inner|Outer)Var */
+static pg_attribute_always_inline Datum
+ExecJustHashVarImpl(ExprState *state, TupleTableSlot *slot, bool *isnull)
+{
+	ExprEvalStep *fetchop = &state->steps[0];
+	ExprEvalStep *var = &state->steps[1];
+	ExprEvalStep *hashop = &state->steps[2];
+	FunctionCallInfo fcinfo = hashop->d.hashdatum.fcinfo_data;
+	int			attnum = var->d.var.attnum;
+
+	CheckOpSlotCompatibility(fetchop, slot);
+	slot_getsomeattrs(slot, fetchop->d.fetch.last_var);
+
+	fcinfo->args[0].value = slot->tts_values[attnum];
+	fcinfo->args[0].isnull = slot->tts_isnull[attnum];
+
+	*isnull = false;
+
+	if (!fcinfo->args[0].isnull)
+		return DatumGetUInt32(hashop->d.hashdatum.fn_addr(fcinfo));
+	else
+		return (Datum) 0;
+}
+
+/* implementation for hashing an outer Var */
+static Datum
+ExecJustHashOuterVar(ExprState *state, ExprContext *econtext, bool *isnull)
+{
+	return ExecJustHashVarImpl(state, econtext->ecxt_outertuple, isnull);
+}
+
+/* implementation for hashing an inner Var */
+static Datum
+ExecJustHashInnerVar(ExprState *state, ExprContext *econtext, bool *isnull)
+{
+	return ExecJustHashVarImpl(state, econtext->ecxt_innertuple, isnull);
+}
+
+/* implementation of ExecJustHash(Inner|Outer)VarVirt */
+static pg_attribute_always_inline Datum
+ExecJustHashVarVirtImpl(ExprState *state, TupleTableSlot *slot, bool *isnull)
+{
+	ExprEvalStep *var = &state->steps[0];
+	ExprEvalStep *hashop = &state->steps[1];
+	FunctionCallInfo fcinfo = hashop->d.hashdatum.fcinfo_data;
+	int			attnum = var->d.var.attnum;
+
+	fcinfo->args[0].value = slot->tts_values[attnum];
+	fcinfo->args[0].isnull = slot->tts_isnull[attnum];
+
+	*isnull = false;
+
+	if (!fcinfo->args[0].isnull)
+		return DatumGetUInt32(hashop->d.hashdatum.fn_addr(fcinfo));
+	else
+		return (Datum) 0;
+}
+
+/* Like ExecJustHashInnerVar, optimized for virtual slots */
+static Datum
+ExecJustHashInnerVarVirt(ExprState *state, ExprContext *econtext,
+						 bool *isnull)
+{
+	return ExecJustHashVarVirtImpl(state, econtext->ecxt_innertuple, isnull);
+}
+
+/* Like ExecJustHashOuterVar, optimized for virtual slots */
+static Datum
+ExecJustHashOuterVarVirt(ExprState *state, ExprContext *econtext,
+						 bool *isnull)
+{
+	return ExecJustHashVarVirtImpl(state, econtext->ecxt_outertuple, isnull);
+}
+
+/*
+ * implementation for hashing an outer Var.  Returns NULL on NULL input.
+ */
+static Datum
+ExecJustHashOuterVarStrict(ExprState *state, ExprContext *econtext,
+						   bool *isnull)
+{
+	ExprEvalStep *fetchop = &state->steps[0];
+	ExprEvalStep *var = &state->steps[1];
+	ExprEvalStep *hashop = &state->steps[2];
+	FunctionCallInfo fcinfo = hashop->d.hashdatum.fcinfo_data;
+	int			attnum = var->d.var.attnum;
+
+	CheckOpSlotCompatibility(fetchop, econtext->ecxt_outertuple);
+	slot_getsomeattrs(econtext->ecxt_outertuple, fetchop->d.fetch.last_var);
+
+	fcinfo->args[0].value = econtext->ecxt_outertuple->tts_values[attnum];
+	fcinfo->args[0].isnull = econtext->ecxt_outertuple->tts_isnull[attnum];
+
+	if (!fcinfo->args[0].isnull)
+	{
+		*isnull = false;
+		return DatumGetUInt32(hashop->d.hashdatum.fn_addr(fcinfo));
+	}
+	else
+	{
+		/* return NULL on NULL input */
+		*isnull = true;
+		return (Datum) 0;
+	}
 }
 
 #if defined(EEO_USE_COMPUTED_GOTO)
