@@ -1,5 +1,6 @@
 *.so
 *.o
+*.frontend
 __pycache__
 
 /config.cache
