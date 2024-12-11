@@ -3979,6 +3979,161 @@ ExecBuildAggTransCall(ExprState *state, AggState *aggstate,
 }
 
 /*
+ * Build an ExprState that calls the given hash function(s) on the attnums
+ * given by 'keyColIdx' .  When numCols > 1, the hash values returned by each
+ * hash function are combined to produce a single hash value.
+ *
+ * desc: tuple descriptor for the to-be-hashed columns
+ * ops: TupleTableSlotOps to use for the give TupleDesc
+ * hashfunctions: FmgrInfos for each hash function to call, one per numCols.
+ * These are used directly in the returned ExprState so must remain allocated.
+ * collations: collation to use when calling the hash function.
+ * numCols: array length of hashfunctions, collations and keyColIdx.
+ * parent: PlanState node that the resulting ExprState will be evaluated at
+ * init_value: Normally 0, but can be set to other values to seed the hash
+ * with.  Non-zero is marginally slower, so best to only use if it's provably
+ * worthwhile.
+ */
+ExprState *
+ExecBuildHash32FromAttrs(TupleDesc desc, const TupleTableSlotOps *ops,
+						 FmgrInfo *hashfunctions, Oid *collations,
+						 int numCols, AttrNumber *keyColIdx,
+						 PlanState *parent, uint32 init_value)
+{
+	ExprState  *state = makeNode(ExprState);
+	ExprEvalStep scratch = {0};
+	NullableDatum *iresult = NULL;
+	intptr_t	opcode;
+	AttrNumber	last_attnum = 0;
+
+	Assert(numCols >= 0);
+
+	state->parent = parent;
+
+	/*
+	 * Make a place to store intermediate hash values between subsequent
+	 * hashing of individual columns.  We only need this if there is more than
+	 * one column to hash or an initial value plus one column.
+	 */
+	if ((int64) numCols + (init_value != 0) > 1)
+		iresult = palloc(sizeof(NullableDatum));
+
+	/* find the highest attnum so we deform the tuple to that point */
+	for (int i = 0; i < numCols; i++)
+		last_attnum = Max(last_attnum, keyColIdx[i]);
+
+	scratch.opcode = EEOP_INNER_FETCHSOME;
+	scratch.d.fetch.last_var = last_attnum;
+	scratch.d.fetch.fixed = false;
+	scratch.d.fetch.kind = ops;
+	scratch.d.fetch.known_desc = desc;
+	if (ExecComputeSlotInfo(state, &scratch))
+		ExprEvalPushStep(state, &scratch);
+
+	if (init_value == 0)
+	{
+		/*
+		 * No initial value, so we can assign the result of the hash function
+		 * for the first attribute without having to concern ourselves with
+		 * combining the result with any initial value.
+		 */
+		opcode = EEOP_HASHDATUM_FIRST;
+	}
+	else
+	{
+		/*
+		 * Set up operation to set the initial value.  Normally we store this
+		 * in the intermediate hash value location, but if there are no
+		 * columns to hash, store it in the ExprState's result field.
+		 */
+		scratch.opcode = EEOP_HASHDATUM_SET_INITVAL;
+		scratch.d.hashdatum_initvalue.init_value = UInt32GetDatum(init_value);
+		scratch.resvalue = numCols > 0 ? &iresult->value : &state->resvalue;
+		scratch.resnull = numCols > 0 ? &iresult->isnull : &state->resnull;
+
+		ExprEvalPushStep(state, &scratch);
+
+		/*
+		 * When using an initial value use the NEXT32 ops as the FIRST ops
+		 * would overwrite the stored initial value.
+		 */
+		opcode = EEOP_HASHDATUM_NEXT32;
+	}
+
+	for (int i = 0; i < numCols; i++)
+	{
+		FmgrInfo   *finfo;
+		FunctionCallInfo fcinfo;
+		Oid			inputcollid = collations[i];
+		AttrNumber	attnum = keyColIdx[i] - 1;
+
+		finfo = &hashfunctions[i];
+		fcinfo = palloc0(SizeForFunctionCallInfo(1));
+
+		/* Initialize function call parameter structure too */
+		InitFunctionCallInfoData(*fcinfo, finfo, 1, inputcollid, NULL, NULL);
+
+		/*
+		 * Fetch inner Var for this attnum and store it in the 1st arg of the
+		 * hash func.
+		 */
+		scratch.opcode = EEOP_INNER_VAR;
+		scratch.resvalue = &fcinfo->args[0].value;
+		scratch.resnull = &fcinfo->args[0].isnull;
+		scratch.d.var.attnum = attnum;
+		scratch.d.var.vartype = TupleDescAttr(desc, attnum)->atttypid;
+
+		ExprEvalPushStep(state, &scratch);
+
+		/* Call the hash function */
+		scratch.opcode = opcode;
+
+		if (i == numCols - 1)
+		{
+			/*
+			 * The result for hashing the final column is stored in the
+			 * ExprState.
+			 */
+			scratch.resvalue = &state->resvalue;
+			scratch.resnull = &state->resnull;
+		}
+		else
+		{
+			Assert(iresult != NULL);
+
+			/* intermediate values are stored in an intermediate result */
+			scratch.resvalue = &iresult->value;
+			scratch.resnull = &iresult->isnull;
+		}
+
+		/*
+		 * NEXT32 opcodes need to look at the intermediate result.  We might
+		 * as well just set this for all ops.  FIRSTs won't look at it.
+		 */
+		scratch.d.hashdatum.iresult = iresult;
+
+		scratch.d.hashdatum.finfo = finfo;
+		scratch.d.hashdatum.fcinfo_data = fcinfo;
+		scratch.d.hashdatum.fn_addr = finfo->fn_addr;
+		scratch.d.hashdatum.jumpdone = -1;
+
+		ExprEvalPushStep(state, &scratch);
+
+		/* subsequent attnums must be combined with the previous */
+		opcode = EEOP_HASHDATUM_NEXT32;
+	}
+
+	scratch.resvalue = NULL;
+	scratch.resnull = NULL;
+	scratch.opcode = EEOP_DONE;
+	ExprEvalPushStep(state, &scratch);
+
+	ExecReadyExpr(state);
+
+	return state;
+}
+
+/*
  * Build an ExprState that calls the given hash function(s) on the given
  * 'hash_exprs'.  When multiple expressions are present, the hash values
  * returned by each hash function are combined to produce a single hash value.
