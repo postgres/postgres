@@ -11,7 +11,7 @@ declare
     ln text;
 begin
     for ln in
-        execute format('explain (analyze, costs off, summary off, timing off) %s',
+        execute format('explain (analyze, costs off, summary off, timing off, buffers off) %s',
             query)
     loop
         ln := regexp_replace(ln, 'Maximum Storage: \d+', 'Maximum Storage: N');
@@ -2127,7 +2127,7 @@ create table ab_a3_b3 partition of ab_a3 for values in (3);
 set enable_indexonlyscan = off;
 prepare ab_q1 (int, int, int) as
 select * from ab where a between $1 and $2 and b <= $3;
-explain (analyze, costs off, summary off, timing off) execute ab_q1 (2, 2, 3);
+explain (analyze, costs off, summary off, timing off, buffers off) execute ab_q1 (2, 2, 3);
                        QUERY PLAN                        
 ---------------------------------------------------------
  Append (actual rows=0 loops=1)
@@ -2140,7 +2140,7 @@ explain (analyze, costs off, summary off, timing off) execute ab_q1 (2, 2, 3);
          Filter: ((a >= $1) AND (a <= $2) AND (b <= $3))
 (8 rows)
 
-explain (analyze, costs off, summary off, timing off) execute ab_q1 (1, 2, 3);
+explain (analyze, costs off, summary off, timing off, buffers off) execute ab_q1 (1, 2, 3);
                        QUERY PLAN                        
 ---------------------------------------------------------
  Append (actual rows=0 loops=1)
@@ -2163,7 +2163,7 @@ deallocate ab_q1;
 -- Runtime pruning after optimizer pruning
 prepare ab_q1 (int, int) as
 select a from ab where a between $1 and $2 and b < 3;
-explain (analyze, costs off, summary off, timing off) execute ab_q1 (2, 2);
+explain (analyze, costs off, summary off, timing off, buffers off) execute ab_q1 (2, 2);
                        QUERY PLAN                        
 ---------------------------------------------------------
  Append (actual rows=0 loops=1)
@@ -2174,7 +2174,7 @@ explain (analyze, costs off, summary off, timing off) execute ab_q1 (2, 2);
          Filter: ((a >= $1) AND (a <= $2) AND (b < 3))
 (6 rows)
 
-explain (analyze, costs off, summary off, timing off) execute ab_q1 (2, 4);
+explain (analyze, costs off, summary off, timing off, buffers off) execute ab_q1 (2, 4);
                        QUERY PLAN                        
 ---------------------------------------------------------
  Append (actual rows=0 loops=1)
@@ -2193,7 +2193,7 @@ explain (analyze, costs off, summary off, timing off) execute ab_q1 (2, 4);
 -- different levels of partitioning.
 prepare ab_q2 (int, int) as
 select a from ab where a between $1 and $2 and b < (select 3);
-explain (analyze, costs off, summary off, timing off) execute ab_q2 (2, 2);
+explain (analyze, costs off, summary off, timing off, buffers off) execute ab_q2 (2, 2);
                               QUERY PLAN                               
 -----------------------------------------------------------------------
  Append (actual rows=0 loops=1)
@@ -2211,7 +2211,7 @@ explain (analyze, costs off, summary off, timing off) execute ab_q2 (2, 2);
 -- As above, but swap the PARAM_EXEC Param to the first partition level
 prepare ab_q3 (int, int) as
 select a from ab where b between $1 and $2 and a < (select 3);
-explain (analyze, costs off, summary off, timing off) execute ab_q3 (2, 2);
+explain (analyze, costs off, summary off, timing off, buffers off) execute ab_q3 (2, 2);
                               QUERY PLAN                               
 -----------------------------------------------------------------------
  Append (actual rows=0 loops=1)
@@ -2273,7 +2273,7 @@ begin;
 -- Test run-time pruning using stable functions
 create function list_part_fn(int) returns int as $$ begin return $1; end;$$ language plpgsql stable;
 -- Ensure pruning works using a stable function containing no Vars
-explain (analyze, costs off, summary off, timing off) select * from list_part where a = list_part_fn(1);
+explain (analyze, costs off, summary off, timing off, buffers off) select * from list_part where a = list_part_fn(1);
                             QUERY PLAN                            
 ------------------------------------------------------------------
  Append (actual rows=1 loops=1)
@@ -2283,7 +2283,7 @@ explain (analyze, costs off, summary off, timing off) select * from list_part wh
 (4 rows)
 
 -- Ensure pruning does not take place when the function has a Var parameter
-explain (analyze, costs off, summary off, timing off) select * from list_part where a = list_part_fn(a);
+explain (analyze, costs off, summary off, timing off, buffers off) select * from list_part where a = list_part_fn(a);
                             QUERY PLAN                            
 ------------------------------------------------------------------
  Append (actual rows=4 loops=1)
@@ -2298,7 +2298,7 @@ explain (analyze, costs off, summary off, timing off) select * from list_part wh
 (9 rows)
 
 -- Ensure pruning does not take place when the expression contains a Var.
-explain (analyze, costs off, summary off, timing off) select * from list_part where a = list_part_fn(1) + a;
+explain (analyze, costs off, summary off, timing off, buffers off) select * from list_part where a = list_part_fn(1) + a;
                             QUERY PLAN                            
 ------------------------------------------------------------------
  Append (actual rows=0 loops=1)
@@ -2334,7 +2334,7 @@ declare
     ln text;
 begin
     for ln in
-        execute format('explain (analyze, costs off, summary off, timing off) %s',
+        execute format('explain (analyze, costs off, summary off, timing off, buffers off) %s',
             $1)
     loop
         ln := regexp_replace(ln, 'Workers Launched: \d+', 'Workers Launched: N');
@@ -2641,7 +2641,7 @@ reset parallel_tuple_cost;
 reset min_parallel_table_scan_size;
 reset max_parallel_workers_per_gather;
 -- Test run-time partition pruning with an initplan
-explain (analyze, costs off, summary off, timing off)
+explain (analyze, costs off, summary off, timing off, buffers off)
 select * from ab where a = (select max(a) from lprt_a) and b = (select max(a)-1 from lprt_a);
                                QUERY PLAN                                
 -------------------------------------------------------------------------
@@ -2700,7 +2700,7 @@ select * from ab where a = (select max(a) from lprt_a) and b = (select max(a)-1 
 (52 rows)
 
 -- Test run-time partition pruning with UNION ALL parents
-explain (analyze, costs off, summary off, timing off)
+explain (analyze, costs off, summary off, timing off, buffers off)
 select * from (select * from ab where a = 1 union all select * from ab) ab where b = (select 1);
                                   QUERY PLAN                                   
 -------------------------------------------------------------------------------
@@ -2744,7 +2744,7 @@ select * from (select * from ab where a = 1 union all select * from ab) ab where
 (37 rows)
 
 -- A case containing a UNION ALL with a non-partitioned child.
-explain (analyze, costs off, summary off, timing off)
+explain (analyze, costs off, summary off, timing off, buffers off)
 select * from (select * from ab where a = 1 union all (values(10,5)) union all select * from ab) ab where b = (select 1);
                                   QUERY PLAN                                   
 -------------------------------------------------------------------------------
@@ -2803,7 +2803,7 @@ union all
 	select tableoid::regclass,a,b from ab
 ) ab where a = $1 and b = (select -10);
 -- Ensure the xy_1 subplan is not pruned.
-explain (analyze, costs off, summary off, timing off) execute ab_q6(1);
+explain (analyze, costs off, summary off, timing off, buffers off) execute ab_q6(1);
                        QUERY PLAN                       
 --------------------------------------------------------
  Append (actual rows=0 loops=1)
@@ -2952,7 +2952,7 @@ create index tprt6_idx on tprt_6 (col1);
 insert into tprt values (10), (20), (501), (502), (505), (1001), (4500);
 set enable_hashjoin = off;
 set enable_mergejoin = off;
-explain (analyze, costs off, summary off, timing off)
+explain (analyze, costs off, summary off, timing off, buffers off)
 select * from tbl1 join tprt on tbl1.col1 > tprt.col1;
                                 QUERY PLAN                                
 --------------------------------------------------------------------------
@@ -2973,7 +2973,7 @@ select * from tbl1 join tprt on tbl1.col1 > tprt.col1;
                Index Cond: (col1 < tbl1.col1)
 (15 rows)
 
-explain (analyze, costs off, summary off, timing off)
+explain (analyze, costs off, summary off, timing off, buffers off)
 select * from tbl1 join tprt on tbl1.col1 = tprt.col1;
                                 QUERY PLAN                                
 --------------------------------------------------------------------------
@@ -3018,7 +3018,7 @@ order by tbl1.col1, tprt.col1;
 
 -- Multiple partitions
 insert into tbl1 values (1001), (1010), (1011);
-explain (analyze, costs off, summary off, timing off)
+explain (analyze, costs off, summary off, timing off, buffers off)
 select * from tbl1 inner join tprt on tbl1.col1 > tprt.col1;
                                 QUERY PLAN                                
 --------------------------------------------------------------------------
@@ -3039,7 +3039,7 @@ select * from tbl1 inner join tprt on tbl1.col1 > tprt.col1;
                Index Cond: (col1 < tbl1.col1)
 (15 rows)
 
-explain (analyze, costs off, summary off, timing off)
+explain (analyze, costs off, summary off, timing off, buffers off)
 select * from tbl1 inner join tprt on tbl1.col1 = tprt.col1;
                                 QUERY PLAN                                
 --------------------------------------------------------------------------
@@ -3103,7 +3103,7 @@ order by tbl1.col1, tprt.col1;
 -- Last partition
 delete from tbl1;
 insert into tbl1 values (4400);
-explain (analyze, costs off, summary off, timing off)
+explain (analyze, costs off, summary off, timing off, buffers off)
 select * from tbl1 join tprt on tbl1.col1 < tprt.col1;
                                 QUERY PLAN                                
 --------------------------------------------------------------------------
@@ -3135,7 +3135,7 @@ order by tbl1.col1, tprt.col1;
 -- No matching partition
 delete from tbl1;
 insert into tbl1 values (10000);
-explain (analyze, costs off, summary off, timing off)
+explain (analyze, costs off, summary off, timing off, buffers off)
 select * from tbl1 join tprt on tbl1.col1 = tprt.col1;
                             QUERY PLAN                             
 -------------------------------------------------------------------
@@ -3175,7 +3175,7 @@ alter table part_cab attach partition part_abc_p1 for values in(3);
 prepare part_abc_q1 (int, int, int) as
 select * from part_abc where a = $1 and b = $2 and c = $3;
 -- Single partition should be scanned.
-explain (analyze, costs off, summary off, timing off) execute part_abc_q1 (1, 2, 3);
+explain (analyze, costs off, summary off, timing off, buffers off) execute part_abc_q1 (1, 2, 3);
                         QUERY PLAN                        
 ----------------------------------------------------------
  Seq Scan on part_abc_p1 part_abc (actual rows=0 loops=1)
@@ -3200,7 +3200,7 @@ select * from listp where b = 1;
 -- partitions before finally detecting the correct set of 2nd level partitions
 -- which match the given parameter.
 prepare q1 (int,int) as select * from listp where b in ($1,$2);
-explain (analyze, costs off, summary off, timing off)  execute q1 (1,1);
+explain (analyze, costs off, summary off, timing off, buffers off)  execute q1 (1,1);
                          QUERY PLAN                          
 -------------------------------------------------------------
  Append (actual rows=0 loops=1)
@@ -3209,7 +3209,7 @@ explain (analyze, costs off, summary off, timing off)  execute q1 (1,1);
          Filter: (b = ANY (ARRAY[$1, $2]))
 (4 rows)
 
-explain (analyze, costs off, summary off, timing off)  execute q1 (2,2);
+explain (analyze, costs off, summary off, timing off, buffers off)  execute q1 (2,2);
                          QUERY PLAN                          
 -------------------------------------------------------------
  Append (actual rows=0 loops=1)
@@ -3219,7 +3219,7 @@ explain (analyze, costs off, summary off, timing off)  execute q1 (2,2);
 (4 rows)
 
 -- Try with no matching partitions.
-explain (analyze, costs off, summary off, timing off)  execute q1 (0,0);
+explain (analyze, costs off, summary off, timing off, buffers off)  execute q1 (0,0);
            QUERY PLAN           
 --------------------------------
  Append (actual rows=0 loops=1)
@@ -3230,7 +3230,7 @@ deallocate q1;
 -- Test more complex cases where a not-equal condition further eliminates partitions.
 prepare q1 (int,int,int,int) as select * from listp where b in($1,$2) and $3 <> b and $4 <> b;
 -- Both partitions allowed by IN clause, but one disallowed by <> clause
-explain (analyze, costs off, summary off, timing off)  execute q1 (1,2,2,0);
+explain (analyze, costs off, summary off, timing off, buffers off)  execute q1 (1,2,2,0);
                                QUERY PLAN                                
 -------------------------------------------------------------------------
  Append (actual rows=0 loops=1)
@@ -3240,7 +3240,7 @@ explain (analyze, costs off, summary off, timing off)  execute q1 (1,2,2,0);
 (4 rows)
 
 -- Both partitions allowed by IN clause, then both excluded again by <> clauses.
-explain (analyze, costs off, summary off, timing off)  execute q1 (1,2,2,1);
+explain (analyze, costs off, summary off, timing off, buffers off)  execute q1 (1,2,2,1);
            QUERY PLAN           
 --------------------------------
  Append (actual rows=0 loops=1)
@@ -3248,7 +3248,7 @@ explain (analyze, costs off, summary off, timing off)  execute q1 (1,2,2,1);
 (2 rows)
 
 -- Ensure Params that evaluate to NULL properly prune away all partitions
-explain (analyze, costs off, summary off, timing off)
+explain (analyze, costs off, summary off, timing off, buffers off)
 select * from listp where a = (select null::int);
                       QUERY PLAN                      
 ------------------------------------------------------
@@ -3273,7 +3273,7 @@ create table stable_qual_pruning2 partition of stable_qual_pruning
 create table stable_qual_pruning3 partition of stable_qual_pruning
   for values from ('3000-02-01') to ('3000-03-01');
 -- comparison against a stable value requires run-time pruning
-explain (analyze, costs off, summary off, timing off)
+explain (analyze, costs off, summary off, timing off, buffers off)
 select * from stable_qual_pruning where a < localtimestamp;
                                       QUERY PLAN                                      
 --------------------------------------------------------------------------------------
@@ -3286,7 +3286,7 @@ select * from stable_qual_pruning where a < localtimestamp;
 (6 rows)
 
 -- timestamp < timestamptz comparison is only stable, not immutable
-explain (analyze, costs off, summary off, timing off)
+explain (analyze, costs off, summary off, timing off, buffers off)
 select * from stable_qual_pruning where a < '2000-02-01'::timestamptz;
                                       QUERY PLAN                                      
 --------------------------------------------------------------------------------------
@@ -3297,7 +3297,7 @@ select * from stable_qual_pruning where a < '2000-02-01'::timestamptz;
 (4 rows)
 
 -- check ScalarArrayOp cases
-explain (analyze, costs off, summary off, timing off)
+explain (analyze, costs off, summary off, timing off, buffers off)
 select * from stable_qual_pruning
   where a = any(array['2010-02-01', '2020-01-01']::timestamp[]);
            QUERY PLAN           
@@ -3306,7 +3306,7 @@ select * from stable_qual_pruning
    One-Time Filter: false
 (2 rows)
 
-explain (analyze, costs off, summary off, timing off)
+explain (analyze, costs off, summary off, timing off, buffers off)
 select * from stable_qual_pruning
   where a = any(array['2000-02-01', '2010-01-01']::timestamp[]);
                                                    QUERY PLAN                                                   
@@ -3315,7 +3315,7 @@ select * from stable_qual_pruning
    Filter: (a = ANY ('{"Tue Feb 01 00:00:00 2000","Fri Jan 01 00:00:00 2010"}'::timestamp without time zone[]))
 (2 rows)
 
-explain (analyze, costs off, summary off, timing off)
+explain (analyze, costs off, summary off, timing off, buffers off)
 select * from stable_qual_pruning
   where a = any(array['2000-02-01', localtimestamp]::timestamp[]);
                                                  QUERY PLAN                                                 
@@ -3326,7 +3326,7 @@ select * from stable_qual_pruning
          Filter: (a = ANY (ARRAY['Tue Feb 01 00:00:00 2000'::timestamp without time zone, LOCALTIMESTAMP]))
 (4 rows)
 
-explain (analyze, costs off, summary off, timing off)
+explain (analyze, costs off, summary off, timing off, buffers off)
 select * from stable_qual_pruning
   where a = any(array['2010-02-01', '2020-01-01']::timestamptz[]);
            QUERY PLAN           
@@ -3335,7 +3335,7 @@ select * from stable_qual_pruning
    Subplans Removed: 3
 (2 rows)
 
-explain (analyze, costs off, summary off, timing off)
+explain (analyze, costs off, summary off, timing off, buffers off)
 select * from stable_qual_pruning
   where a = any(array['2000-02-01', '2010-01-01']::timestamptz[]);
                                                         QUERY PLAN                                                         
@@ -3346,7 +3346,7 @@ select * from stable_qual_pruning
          Filter: (a = ANY ('{"Tue Feb 01 00:00:00 2000 PST","Fri Jan 01 00:00:00 2010 PST"}'::timestamp with time zone[]))
 (4 rows)
 
-explain (analyze, costs off, summary off, timing off)
+explain (analyze, costs off, summary off, timing off, buffers off)
 select * from stable_qual_pruning
   where a = any(null::timestamptz[]);
                                       QUERY PLAN                                      
@@ -3374,7 +3374,7 @@ create table mc3p1 partition of mc3p
 create table mc3p2 partition of mc3p
   for values from (2, minvalue, minvalue) to (3, maxvalue, maxvalue);
 insert into mc3p values (0, 1, 1), (1, 1, 1), (2, 1, 1);
-explain (analyze, costs off, summary off, timing off)
+explain (analyze, costs off, summary off, timing off, buffers off)
 select * from mc3p where a < 3 and abs(b) = 1;
                        QUERY PLAN                       
 --------------------------------------------------------
@@ -3394,7 +3394,7 @@ select * from mc3p where a < 3 and abs(b) = 1;
 --
 prepare ps1 as
   select * from mc3p where a = $1 and abs(b) < (select 3);
-explain (analyze, costs off, summary off, timing off)
+explain (analyze, costs off, summary off, timing off, buffers off)
 execute ps1(1);
                          QUERY PLAN                          
 -------------------------------------------------------------
@@ -3409,7 +3409,7 @@ execute ps1(1);
 deallocate ps1;
 prepare ps2 as
   select * from mc3p where a <= $1 and abs(b) < (select 3);
-explain (analyze, costs off, summary off, timing off)
+explain (analyze, costs off, summary off, timing off, buffers off)
 execute ps2(1);
                           QUERY PLAN                          
 --------------------------------------------------------------
@@ -3431,7 +3431,7 @@ insert into boolvalues values('t'),('f');
 create table boolp (a bool) partition by list (a);
 create table boolp_t partition of boolp for values in('t');
 create table boolp_f partition of boolp for values in('f');
-explain (analyze, costs off, summary off, timing off)
+explain (analyze, costs off, summary off, timing off, buffers off)
 select * from boolp where a = (select value from boolvalues where value);
                         QUERY PLAN                         
 -----------------------------------------------------------
@@ -3446,7 +3446,7 @@ select * from boolp where a = (select value from boolvalues where value);
          Filter: (a = (InitPlan 1).col1)
 (9 rows)
 
-explain (analyze, costs off, summary off, timing off)
+explain (analyze, costs off, summary off, timing off, buffers off)
 select * from boolp where a = (select value from boolvalues where not value);
                         QUERY PLAN                         
 -----------------------------------------------------------
@@ -3475,7 +3475,7 @@ insert into ma_test select x,x from generate_series(0,29) t(x);
 create index on ma_test (b);
 analyze ma_test;
 prepare mt_q1 (int) as select a from ma_test where a >= $1 and a % 10 = 5 order by b;
-explain (analyze, costs off, summary off, timing off) execute mt_q1(15);
+explain (analyze, costs off, summary off, timing off, buffers off) execute mt_q1(15);
                                        QUERY PLAN                                        
 -----------------------------------------------------------------------------------------
  Merge Append (actual rows=2 loops=1)
@@ -3496,7 +3496,7 @@ execute mt_q1(15);
  25
 (2 rows)
 
-explain (analyze, costs off, summary off, timing off) execute mt_q1(25);
+explain (analyze, costs off, summary off, timing off, buffers off) execute mt_q1(25);
                                        QUERY PLAN                                        
 -----------------------------------------------------------------------------------------
  Merge Append (actual rows=1 loops=1)
@@ -3514,7 +3514,7 @@ execute mt_q1(25);
 (1 row)
 
 -- Ensure MergeAppend behaves correctly when no subplans match
-explain (analyze, costs off, summary off, timing off) execute mt_q1(35);
+explain (analyze, costs off, summary off, timing off, buffers off) execute mt_q1(35);
               QUERY PLAN              
 --------------------------------------
  Merge Append (actual rows=0 loops=1)
@@ -3530,7 +3530,7 @@ execute mt_q1(35);
 deallocate mt_q1;
 prepare mt_q2 (int) as select * from ma_test where a >= $1 order by b limit 1;
 -- Ensure output list looks sane when the MergeAppend has no subplans.
-explain (analyze, verbose, costs off, summary off, timing off) execute mt_q2 (35);
+explain (analyze, verbose, costs off, summary off, timing off, buffers off) execute mt_q2 (35);
                  QUERY PLAN                 
 --------------------------------------------
  Limit (actual rows=0 loops=1)
@@ -3542,7 +3542,7 @@ explain (analyze, verbose, costs off, summary off, timing off) execute mt_q2 (35
 
 deallocate mt_q2;
 -- ensure initplan params properly prune partitions
-explain (analyze, costs off, summary off, timing off) select * from ma_test where a >= (select min(b) from ma_test_p2) order by b;
+explain (analyze, costs off, summary off, timing off, buffers off) select * from ma_test where a >= (select min(b) from ma_test_p2) order by b;
                                           QUERY PLAN                                           
 -----------------------------------------------------------------------------------------------
  Merge Append (actual rows=20 loops=1)
@@ -3992,7 +3992,7 @@ create table listp (a int, b int) partition by list (a);
 create table listp1 partition of listp for values in(1);
 create table listp2 partition of listp for values in(2) partition by list(b);
 create table listp2_10 partition of listp2 for values in (10);
-explain (analyze, costs off, summary off, timing off)
+explain (analyze, costs off, summary off, timing off, buffers off)
 select * from listp where a = (select 2) and b <> 10;
                     QUERY PLAN                     
 ---------------------------------------------------
@@ -4117,7 +4117,7 @@ create table rangep_0_to_100_3 partition of rangep_0_to_100 for values in(3);
 create table rangep_100_to_200 partition of rangep for values from (100) to (200);
 create index on rangep (a);
 -- Ensure run-time pruning works on the nested Merge Append
-explain (analyze on, costs off, timing off, summary off)
+explain (analyze on, costs off, timing off, summary off, buffers off)
 select * from rangep where b IN((select 1),(select 2)) order by a;
                                                  QUERY PLAN                                                 
 ------------------------------------------------------------------------------------------------------------

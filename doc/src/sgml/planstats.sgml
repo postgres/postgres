@@ -489,7 +489,7 @@ SELECT relpages, reltuples FROM pg_class WHERE relname = 't';
     condition on the <structfield>a</structfield> column:
 
 <programlisting>
-EXPLAIN (ANALYZE, TIMING OFF) SELECT * FROM t WHERE a = 1;
+EXPLAIN (ANALYZE, TIMING OFF, BUFFERS OFF) SELECT * FROM t WHERE a = 1;
                                  QUERY PLAN
 -------------------------------------------------------------------&zwsp;------------
  Seq Scan on t  (cost=0.00..170.00 rows=100 width=8) (actual rows=100 loops=1)
@@ -506,7 +506,7 @@ EXPLAIN (ANALYZE, TIMING OFF) SELECT * FROM t WHERE a = 1;
     condition on both columns, combining them with <literal>AND</literal>:
 
 <programlisting>
-EXPLAIN (ANALYZE, TIMING OFF) SELECT * FROM t WHERE a = 1 AND b = 1;
+EXPLAIN (ANALYZE, TIMING OFF, BUFFERS OFF) SELECT * FROM t WHERE a = 1 AND b = 1;
                                  QUERY PLAN
 -------------------------------------------------------------------&zwsp;----------
  Seq Scan on t  (cost=0.00..195.00 rows=1 width=8) (actual rows=100 loops=1)
@@ -530,7 +530,7 @@ EXPLAIN (ANALYZE, TIMING OFF) SELECT * FROM t WHERE a = 1 AND b = 1;
 <programlisting>
 CREATE STATISTICS stts (dependencies) ON a, b FROM t;
 ANALYZE t;
-EXPLAIN (ANALYZE, TIMING OFF) SELECT * FROM t WHERE a = 1 AND b = 1;
+EXPLAIN (ANALYZE, TIMING OFF, BUFFERS OFF) SELECT * FROM t WHERE a = 1 AND b = 1;
                                   QUERY PLAN
 -------------------------------------------------------------------&zwsp;------------
  Seq Scan on t  (cost=0.00..195.00 rows=100 width=8) (actual rows=100 loops=1)
@@ -551,7 +551,7 @@ EXPLAIN (ANALYZE, TIMING OFF) SELECT * FROM t WHERE a = 1 AND b = 1;
     estimated number of rows returned by the HashAggregate node) is very
     accurate:
 <programlisting>
-EXPLAIN (ANALYZE, TIMING OFF) SELECT COUNT(*) FROM t GROUP BY a;
+EXPLAIN (ANALYZE, TIMING OFF, BUFFERS OFF) SELECT COUNT(*) FROM t GROUP BY a;
                                        QUERY PLAN
 -------------------------------------------------------------------&zwsp;----------------------
  HashAggregate  (cost=195.00..196.00 rows=100 width=12) (actual rows=100 loops=1)
@@ -562,7 +562,7 @@ EXPLAIN (ANALYZE, TIMING OFF) SELECT COUNT(*) FROM t GROUP BY a;
     groups in a query with two columns in <command>GROUP BY</command>, as
     in the following example, is off by an order of magnitude:
 <programlisting>
-EXPLAIN (ANALYZE, TIMING OFF) SELECT COUNT(*) FROM t GROUP BY a, b;
+EXPLAIN (ANALYZE, TIMING OFF, BUFFERS OFF) SELECT COUNT(*) FROM t GROUP BY a, b;
                                        QUERY PLAN
 -------------------------------------------------------------------&zwsp;-------------------------
  HashAggregate  (cost=220.00..230.00 rows=1000 width=16) (actual rows=100 loops=1)
@@ -575,7 +575,7 @@ EXPLAIN (ANALYZE, TIMING OFF) SELECT COUNT(*) FROM t GROUP BY a, b;
 DROP STATISTICS stts;
 CREATE STATISTICS stts (dependencies, ndistinct) ON a, b FROM t;
 ANALYZE t;
-EXPLAIN (ANALYZE, TIMING OFF) SELECT COUNT(*) FROM t GROUP BY a, b;
+EXPLAIN (ANALYZE, TIMING OFF, BUFFERS OFF) SELECT COUNT(*) FROM t GROUP BY a, b;
                                        QUERY PLAN
 -------------------------------------------------------------------&zwsp;-------------------------
  HashAggregate  (cost=220.00..221.00 rows=100 width=16) (actual rows=100 loops=1)
@@ -615,7 +615,7 @@ EXPLAIN (ANALYZE, TIMING OFF) SELECT COUNT(*) FROM t GROUP BY a, b;
 DROP STATISTICS stts;
 CREATE STATISTICS stts2 (mcv) ON a, b FROM t;
 ANALYZE t;
-EXPLAIN (ANALYZE, TIMING OFF) SELECT * FROM t WHERE a = 1 AND b = 1;
+EXPLAIN (ANALYZE, TIMING OFF, BUFFERS OFF) SELECT * FROM t WHERE a = 1 AND b = 1;
                                    QUERY PLAN
 -------------------------------------------------------------------&zwsp;------------
  Seq Scan on t  (cost=0.00..195.00 rows=100 width=8) (actual rows=100 loops=1)
@@ -672,7 +672,7 @@ SELECT m.* FROM pg_statistic_ext join pg_statistic_ext_data on (oid = stxoid),
     to decide which combinations are compatible.
 
 <programlisting>
-EXPLAIN (ANALYZE, TIMING OFF) SELECT * FROM t WHERE a = 1 AND b = 10;
+EXPLAIN (ANALYZE, TIMING OFF, BUFFERS OFF) SELECT * FROM t WHERE a = 1 AND b = 10;
                                  QUERY PLAN
 -------------------------------------------------------------------&zwsp;--------
  Seq Scan on t  (cost=0.00..195.00 rows=1 width=8) (actual rows=0 loops=1)
@@ -685,7 +685,7 @@ EXPLAIN (ANALYZE, TIMING OFF) SELECT * FROM t WHERE a = 1 AND b = 10;
     consider the following range query for the same table:
 
 <programlisting>
-EXPLAIN (ANALYZE, TIMING OFF) SELECT * FROM t WHERE a &lt;= 49 AND b &gt; 49;
+EXPLAIN (ANALYZE, TIMING OFF, BUFFERS OFF) SELECT * FROM t WHERE a &lt;= 49 AND b &gt; 49;
                                 QUERY PLAN
 -------------------------------------------------------------------&zwsp;--------
  Seq Scan on t  (cost=0.00..195.00 rows=1 width=8) (actual rows=0 loops=1)

@@ -196,7 +196,7 @@ explain (costs off)
 select * from onek2 where unique2 = 11 and stringu1 = 'ATAAAA';
 select * from onek2 where unique2 = 11 and stringu1 = 'ATAAAA';
 -- actually run the query with an analyze to use the partial index
-explain (costs off, analyze on, timing off, summary off)
+explain (costs off, analyze on, timing off, summary off, buffers off)
 select * from onek2 where unique2 = 11 and stringu1 = 'ATAAAA';
 explain (costs off)
 select unique2 from onek2 where unique2 = 11 and stringu1 = 'ATAAAA';

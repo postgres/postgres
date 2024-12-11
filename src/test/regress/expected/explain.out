@@ -60,7 +60,7 @@ select explain_filter('explain select * from int8_tbl i8');
  Seq Scan on int8_tbl i8  (cost=N.N..N.N rows=N width=N)
 (1 row)
 
-select explain_filter('explain (analyze) select * from int8_tbl i8');
+select explain_filter('explain (analyze, buffers off) select * from int8_tbl i8');
                                         explain_filter                                         
 -----------------------------------------------------------------------------------------------
  Seq Scan on int8_tbl i8  (cost=N.N..N.N rows=N width=N) (actual time=N.N..N.N rows=N loops=N)
@@ -68,7 +68,7 @@ select explain_filter('explain (analyze) select * from int8_tbl i8');
  Execution Time: N.N ms
 (3 rows)
 
-select explain_filter('explain (analyze, verbose) select * from int8_tbl i8');
+select explain_filter('explain (analyze, buffers off, verbose) select * from int8_tbl i8');
                                             explain_filter                                            
 ------------------------------------------------------------------------------------------------------
  Seq Scan on public.int8_tbl i8  (cost=N.N..N.N rows=N width=N) (actual time=N.N..N.N rows=N loops=N)
@@ -352,7 +352,7 @@ select explain_filter('explain (memory) select * from int8_tbl i8');
    Memory: used=NkB  allocated=NkB
 (2 rows)
 
-select explain_filter('explain (memory, analyze) select * from int8_tbl i8');
+select explain_filter('explain (memory, analyze, buffers off) select * from int8_tbl i8');
                                         explain_filter                                         
 -----------------------------------------------------------------------------------------------
  Seq Scan on int8_tbl i8  (cost=N.N..N.N rows=N width=N) (actual time=N.N..N.N rows=N loops=N)
@@ -400,9 +400,29 @@ select explain_filter('explain (memory, analyze, format json) select * from int8
        "Actual Total Time": N.N,   +
        "Actual Rows": N,           +
        "Actual Loops": N,          +
-       "Disabled": false           +
+       "Disabled": false,          +
+       "Shared Hit Blocks": N,     +
+       "Shared Read Blocks": N,    +
+       "Shared Dirtied Blocks": N, +
+       "Shared Written Blocks": N, +
+       "Local Hit Blocks": N,      +
+       "Local Read Blocks": N,     +
+       "Local Dirtied Blocks": N,  +
+       "Local Written Blocks": N,  +
+       "Temp Read Blocks": N,      +
+       "Temp Written Blocks": N    +
      },                            +
      "Planning": {                 +
+       "Shared Hit Blocks": N,     +
+       "Shared Read Blocks": N,    +
+       "Shared Dirtied Blocks": N, +
+       "Shared Written Blocks": N, +
+       "Local Hit Blocks": N,      +
+       "Local Read Blocks": N,     +
+       "Local Dirtied Blocks": N,  +
+       "Local Written Blocks": N,  +
+       "Temp Read Blocks": N,      +
+       "Temp Written Blocks": N,   +
        "Memory Used": N,           +
        "Memory Allocated": N       +
      },                            +
@@ -680,7 +700,7 @@ select explain_filter('explain (verbose) create table test_ctas as select 1');
 (3 rows)
 
 -- Test SERIALIZE option
-select explain_filter('explain (analyze,serialize) select * from int8_tbl i8');
+select explain_filter('explain (analyze,buffers off,serialize) select * from int8_tbl i8');
                                         explain_filter                                         
 -----------------------------------------------------------------------------------------------
  Seq Scan on int8_tbl i8  (cost=N.N..N.N rows=N width=N) (actual time=N.N..N.N rows=N loops=N)
@@ -708,7 +728,7 @@ select explain_filter('explain (analyze,serialize binary,buffers,timing) select 
 (4 rows)
 
 -- this tests an edge case where we have no data to return
-select explain_filter('explain (analyze,serialize) create temp table explain_temp as select * from int8_tbl i8');
+select explain_filter('explain (analyze,buffers off,serialize) create temp table explain_temp as select * from int8_tbl i8');
                                         explain_filter                                         
 -----------------------------------------------------------------------------------------------
  Seq Scan on int8_tbl i8  (cost=N.N..N.N rows=N width=N) (actual time=N.N..N.N rows=N loops=N)
@@ -718,7 +738,7 @@ select explain_filter('explain (analyze,serialize) create temp table explain_tem
 (4 rows)
 
 -- Test tuplestore storage usage in Window aggregate (memory case)
-select explain_filter('explain (analyze,costs off) select sum(n) over() from generate_series(1,10) a(n)');
+select explain_filter('explain (analyze,buffers off,costs off) select sum(n) over() from generate_series(1,10) a(n)');
                                  explain_filter                                 
 --------------------------------------------------------------------------------
  WindowAgg (actual time=N.N..N.N rows=N loops=N)
@@ -730,7 +750,7 @@ select explain_filter('explain (analyze,costs off) select sum(n) over() from gen
 
 -- Test tuplestore storage usage in Window aggregate (disk case)
 set work_mem to 64;
-select explain_filter('explain (analyze,costs off) select sum(n) over() from generate_series(1,2000) a(n)');
+select explain_filter('explain (analyze,buffers off,costs off) select sum(n) over() from generate_series(1,2000) a(n)');
                                  explain_filter                                 
 --------------------------------------------------------------------------------
  WindowAgg (actual time=N.N..N.N rows=N loops=N)
@@ -741,7 +761,7 @@ select explain_filter('explain (analyze,costs off) select sum(n) over() from gen
 (5 rows)
 
 -- Test tuplestore storage usage in Window aggregate (memory and disk case, final result is disk)
-select explain_filter('explain (analyze,costs off) select sum(n) over(partition by m) from (SELECT n < 3 as m, n from generate_series(1,2000) a(n))');
+select explain_filter('explain (analyze,buffers off,costs off) select sum(n) over(partition by m) from (SELECT n < 3 as m, n from generate_series(1,2000) a(n))');
                                     explain_filter                                    
 --------------------------------------------------------------------------------------
  WindowAgg (actual time=N.N..N.N rows=N loops=N)

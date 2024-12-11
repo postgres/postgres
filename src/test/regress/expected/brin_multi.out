@@ -845,7 +845,7 @@ INSERT INTO brin_date_test SELECT '5874897-12-01'::date + i FROM generate_series
 CREATE INDEX ON brin_date_test USING brin (a date_minmax_multi_ops) WITH (pages_per_range=1);
 SET enable_seqscan = off;
 -- make sure the ranges were built correctly and 2023-01-01 eliminates all
-EXPLAIN (ANALYZE, TIMING OFF, COSTS OFF, SUMMARY OFF)
+EXPLAIN (ANALYZE, TIMING OFF, COSTS OFF, SUMMARY OFF, BUFFERS OFF)
 SELECT * FROM brin_date_test WHERE a = '2023-01-01'::date;
                                QUERY PLAN                                
 -------------------------------------------------------------------------
@@ -864,7 +864,7 @@ INSERT INTO brin_timestamp_test
 SELECT i FROM generate_series('2000-01-01'::timestamp, '2000-02-09'::timestamp, '1 day'::interval) s(i);
 CREATE INDEX ON brin_timestamp_test USING brin (a timestamp_minmax_multi_ops) WITH (pages_per_range=1);
 SET enable_seqscan = off;
-EXPLAIN (ANALYZE, TIMING OFF, COSTS OFF, SUMMARY OFF)
+EXPLAIN (ANALYZE, TIMING OFF, COSTS OFF, SUMMARY OFF, BUFFERS OFF)
 SELECT * FROM brin_timestamp_test WHERE a = '2023-01-01'::timestamp;
                                   QUERY PLAN                                  
 ------------------------------------------------------------------------------
@@ -874,7 +874,7 @@ SELECT * FROM brin_timestamp_test WHERE a = '2023-01-01'::timestamp;
          Index Cond: (a = '2023-01-01 00:00:00'::timestamp without time zone)
 (4 rows)
 
-EXPLAIN (ANALYZE, TIMING OFF, COSTS OFF, SUMMARY OFF)
+EXPLAIN (ANALYZE, TIMING OFF, COSTS OFF, SUMMARY OFF, BUFFERS OFF)
 SELECT * FROM brin_timestamp_test WHERE a = '1900-01-01'::timestamp;
                                   QUERY PLAN                                  
 ------------------------------------------------------------------------------
@@ -892,7 +892,7 @@ INSERT INTO brin_date_test VALUES ('-infinity'), ('infinity');
 INSERT INTO brin_date_test SELECT '2000-01-01'::date + i FROM generate_series(1, 40) s(i);
 CREATE INDEX ON brin_date_test USING brin (a date_minmax_multi_ops) WITH (pages_per_range=1);
 SET enable_seqscan = off;
-EXPLAIN (ANALYZE, TIMING OFF, COSTS OFF, SUMMARY OFF)
+EXPLAIN (ANALYZE, TIMING OFF, COSTS OFF, SUMMARY OFF, BUFFERS OFF)
 SELECT * FROM brin_date_test WHERE a = '2023-01-01'::date;
                                QUERY PLAN                                
 -------------------------------------------------------------------------
@@ -902,7 +902,7 @@ SELECT * FROM brin_date_test WHERE a = '2023-01-01'::date;
          Index Cond: (a = '2023-01-01'::date)
 (4 rows)
 
-EXPLAIN (ANALYZE, TIMING OFF, COSTS OFF, SUMMARY OFF)
+EXPLAIN (ANALYZE, TIMING OFF, COSTS OFF, SUMMARY OFF, BUFFERS OFF)
 SELECT * FROM brin_date_test WHERE a = '1900-01-01'::date;
                                QUERY PLAN                                
 -------------------------------------------------------------------------
@@ -921,7 +921,7 @@ INSERT INTO brin_interval_test SELECT (i || ' years')::interval FROM generate_se
 INSERT INTO brin_interval_test SELECT (i || ' years')::interval FROM generate_series( 177999980,  178000000) s(i);
 CREATE INDEX ON brin_interval_test USING brin (a interval_minmax_multi_ops) WITH (pages_per_range=1);
 SET enable_seqscan = off;
-EXPLAIN (ANALYZE, TIMING OFF, COSTS OFF, SUMMARY OFF)
+EXPLAIN (ANALYZE, TIMING OFF, COSTS OFF, SUMMARY OFF, BUFFERS OFF)
 SELECT * FROM brin_interval_test WHERE a = '-30 years'::interval;
                                  QUERY PLAN                                  
 -----------------------------------------------------------------------------
@@ -931,7 +931,7 @@ SELECT * FROM brin_interval_test WHERE a = '-30 years'::interval;
          Index Cond: (a = '@ 30 years ago'::interval)
 (4 rows)
 
-EXPLAIN (ANALYZE, TIMING OFF, COSTS OFF, SUMMARY OFF)
+EXPLAIN (ANALYZE, TIMING OFF, COSTS OFF, SUMMARY OFF, BUFFERS OFF)
 SELECT * FROM brin_interval_test WHERE a = '30 years'::interval;
                                  QUERY PLAN                                  
 -----------------------------------------------------------------------------
@@ -949,7 +949,7 @@ INSERT INTO brin_interval_test VALUES ('-infinity'), ('infinity');
 INSERT INTO brin_interval_test SELECT (i || ' days')::interval FROM generate_series(100, 140) s(i);
 CREATE INDEX ON brin_interval_test USING brin (a interval_minmax_multi_ops) WITH (pages_per_range=1);
 SET enable_seqscan = off;
-EXPLAIN (ANALYZE, TIMING OFF, COSTS OFF, SUMMARY OFF)
+EXPLAIN (ANALYZE, TIMING OFF, COSTS OFF, SUMMARY OFF, BUFFERS OFF)
 SELECT * FROM brin_interval_test WHERE a = '-30 years'::interval;
                                  QUERY PLAN                                  
 -----------------------------------------------------------------------------
@@ -959,7 +959,7 @@ SELECT * FROM brin_interval_test WHERE a = '-30 years'::interval;
          Index Cond: (a = '@ 30 years ago'::interval)
 (4 rows)
 
-EXPLAIN (ANALYZE, TIMING OFF, COSTS OFF, SUMMARY OFF)
+EXPLAIN (ANALYZE, TIMING OFF, COSTS OFF, SUMMARY OFF, BUFFERS OFF)
 SELECT * FROM brin_interval_test WHERE a = '30 years'::interval;
                                  QUERY PLAN                                  
 -----------------------------------------------------------------------------

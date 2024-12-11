@@ -619,7 +619,7 @@ CREATE INDEX ON brin_date_test USING brin (a date_minmax_multi_ops) WITH (pages_
 SET enable_seqscan = off;
 
 -- make sure the ranges were built correctly and 2023-01-01 eliminates all
-EXPLAIN (ANALYZE, TIMING OFF, COSTS OFF, SUMMARY OFF)
+EXPLAIN (ANALYZE, TIMING OFF, COSTS OFF, SUMMARY OFF, BUFFERS OFF)
 SELECT * FROM brin_date_test WHERE a = '2023-01-01'::date;
 
 DROP TABLE brin_date_test;
@@ -636,10 +636,10 @@ CREATE INDEX ON brin_timestamp_test USING brin (a timestamp_minmax_multi_ops) WI
 
 SET enable_seqscan = off;
 
-EXPLAIN (ANALYZE, TIMING OFF, COSTS OFF, SUMMARY OFF)
+EXPLAIN (ANALYZE, TIMING OFF, COSTS OFF, SUMMARY OFF, BUFFERS OFF)
 SELECT * FROM brin_timestamp_test WHERE a = '2023-01-01'::timestamp;
 
-EXPLAIN (ANALYZE, TIMING OFF, COSTS OFF, SUMMARY OFF)
+EXPLAIN (ANALYZE, TIMING OFF, COSTS OFF, SUMMARY OFF, BUFFERS OFF)
 SELECT * FROM brin_timestamp_test WHERE a = '1900-01-01'::timestamp;
 
 DROP TABLE brin_timestamp_test;
@@ -655,10 +655,10 @@ CREATE INDEX ON brin_date_test USING brin (a date_minmax_multi_ops) WITH (pages_
 
 SET enable_seqscan = off;
 
-EXPLAIN (ANALYZE, TIMING OFF, COSTS OFF, SUMMARY OFF)
+EXPLAIN (ANALYZE, TIMING OFF, COSTS OFF, SUMMARY OFF, BUFFERS OFF)
 SELECT * FROM brin_date_test WHERE a = '2023-01-01'::date;
 
-EXPLAIN (ANALYZE, TIMING OFF, COSTS OFF, SUMMARY OFF)
+EXPLAIN (ANALYZE, TIMING OFF, COSTS OFF, SUMMARY OFF, BUFFERS OFF)
 SELECT * FROM brin_date_test WHERE a = '1900-01-01'::date;
 
 DROP TABLE brin_date_test;
@@ -676,10 +676,10 @@ CREATE INDEX ON brin_interval_test USING brin (a interval_minmax_multi_ops) WITH
 
 SET enable_seqscan = off;
 
-EXPLAIN (ANALYZE, TIMING OFF, COSTS OFF, SUMMARY OFF)
+EXPLAIN (ANALYZE, TIMING OFF, COSTS OFF, SUMMARY OFF, BUFFERS OFF)
 SELECT * FROM brin_interval_test WHERE a = '-30 years'::interval;
 
-EXPLAIN (ANALYZE, TIMING OFF, COSTS OFF, SUMMARY OFF)
+EXPLAIN (ANALYZE, TIMING OFF, COSTS OFF, SUMMARY OFF, BUFFERS OFF)
 SELECT * FROM brin_interval_test WHERE a = '30 years'::interval;
 
 DROP TABLE brin_interval_test;
@@ -695,10 +695,10 @@ CREATE INDEX ON brin_interval_test USING brin (a interval_minmax_multi_ops) WITH
 
 SET enable_seqscan = off;
 
-EXPLAIN (ANALYZE, TIMING OFF, COSTS OFF, SUMMARY OFF)
+EXPLAIN (ANALYZE, TIMING OFF, COSTS OFF, SUMMARY OFF, BUFFERS OFF)
 SELECT * FROM brin_interval_test WHERE a = '-30 years'::interval;
 
-EXPLAIN (ANALYZE, TIMING OFF, COSTS OFF, SUMMARY OFF)
+EXPLAIN (ANALYZE, TIMING OFF, COSTS OFF, SUMMARY OFF, BUFFERS OFF)
 SELECT * FROM brin_interval_test WHERE a = '30 years'::interval;
 
 DROP TABLE brin_interval_test;

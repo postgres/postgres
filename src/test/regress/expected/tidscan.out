@@ -189,7 +189,7 @@ FETCH NEXT FROM c;
 (1 row)
 
 -- perform update
-EXPLAIN (ANALYZE, COSTS OFF, SUMMARY OFF, TIMING OFF)
+EXPLAIN (ANALYZE, COSTS OFF, SUMMARY OFF, TIMING OFF, BUFFERS OFF)
 UPDATE tidscan SET id = -id WHERE CURRENT OF c RETURNING *;
                     QUERY PLAN                     
 ---------------------------------------------------
@@ -205,7 +205,7 @@ FETCH NEXT FROM c;
 (1 row)
 
 -- perform update
-EXPLAIN (ANALYZE, COSTS OFF, SUMMARY OFF, TIMING OFF)
+EXPLAIN (ANALYZE, COSTS OFF, SUMMARY OFF, TIMING OFF, BUFFERS OFF)
 UPDATE tidscan SET id = -id WHERE CURRENT OF c RETURNING *;
                     QUERY PLAN                     
 ---------------------------------------------------
@@ -229,7 +229,7 @@ FETCH NEXT FROM c;
 (0 rows)
 
 -- should error out
-EXPLAIN (ANALYZE, COSTS OFF, SUMMARY OFF, TIMING OFF)
+EXPLAIN (ANALYZE, COSTS OFF, SUMMARY OFF, TIMING OFF, BUFFERS OFF)
 UPDATE tidscan SET id = -id WHERE CURRENT OF c RETURNING *;
 ERROR:  cursor "c" is not positioned on a row
 ROLLBACK;
