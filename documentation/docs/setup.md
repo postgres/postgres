@@ -42,9 +42,11 @@ Load the `pg_tde` at the start time. The extension requires additional shared me
 
 ## Key provider configuration
 
-1. Set up a key provider for the database where you have enabled the extension
+1. Set up a key provider for the database where you have enabled the extension.
 
     === "With HashiCorp Vault"
+
+        The Vault server setup is out of scope of this document.
 
         ```
         SELECT pg_tde_add_key_provider_vault_v2('provider-name',:'secret_token','url','mount','ca_path');
@@ -66,7 +68,7 @@ Load the `pg_tde` at the start time. The extension requires additional shared me
         SELECT pg_tde_add_key_provider_file('provider-name','/path/to/the/keyring/data.file');
         ```
 
-	<i warning>:material-information: Warning:</i> Example for testing purposes only:
+	<i warning>:material-information: Warning:</i> This example is for testing purposes only:
 
 	```
 	SELECT pg_tde_add_key_provider_file('file-vault','/tmp/pg_tde_test_local_keyring.per');
@@ -79,11 +81,13 @@ Load the `pg_tde` at the start time. The extension requires additional shared me
     SELECT pg_tde_set_principal_key('name-of-the-principal-key', 'provider-name');
     ```
 
-    <i warning>:material-information: Warning:</i> Example for testing purposes only:
+    <i warning>:material-information: Warning:</i> This example is for testing purposes only:
 
     ```
     SELECT pg_tde_set_principal_key('test-db-master-key','file-vault');
     ```
+
+    The key is auto-generated.
 
    <i info>:material-information: Info:</i> The key provider configuration is stored in the database catalog in an unencrypted table. See [how to use external reference to parameters](external-parameters.md) to add an extra security layer to your setup.
 

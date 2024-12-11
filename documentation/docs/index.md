@@ -1,8 +1,10 @@
 # `pg_tde` documentation
 
-`pg_tde` is the extension that brings in [Transparent Data Encryption (TDE)](tde.md) to PostgreSQL and enables users to keep sensitive data safe and secure. The encryption is transparent for users allowing them to access and manipulate the data and not to worry about the encryption process.
+`pg_tde` is the open source PostgreSQL extension that provides Transparent Data Encryption (TDE) to protect data at rest. This ensures that the data stored on disk is encrypted, and no one can read it without the proper encryption keys, even if they gain access to the physical storage media. 
 
-Users can configure encryption differently for each database, encrypting specific tables in some databases with different encryption keys, while keeping others non encrypted. 
+You can configure encryption differently for each database, encrypting specific tables in some databases with different encryption keys while keeping others unencrypted.
+
+Lear more [what is Transparent Data Encryption](tde.md#how-does-it-work) and [why you need it](tde.md#why-do-you-need-tde).
 
 !!! important 
 
@@ -22,7 +24,7 @@ Users can configure encryption differently for each database, encrypting specifi
 
 ## Known limitations
 
-* Keys in the local keyfile are stored unencrypted.
+* Keys in the local keyfile are stored unencrypted. For better security we recommend using the Key management storage. 
 * System tables are currently not encrypted.
 
 <i warning>:material-alert: Warning:</i> Note that introducing encryption/decryption affects performance. Our benchmark tests show less than 10% performance overhead for most situations. However, in some specific applications such as those using JSONB operations, performance degradation might be higher.
@@ -41,7 +43,7 @@ The `pg_tde` extension comes in two distinct versions with specific access metho
 
 ### Which version to chose?
 
-The answer is pretty straightforward: if you don't use indexes and don't need index encryption, use the community version and the `tde_heap_basic` access method. Check the [upstream documentation :octicons-link-external-16:](https://github.com/percona/pg_tde/blob/main/README.md) how to get started.
+The answer is pretty straightforward: for data sets where indexing is not mandatory or index encryption is not required, use the community version and the `tde_heap_basic` access method. Check the [upstream documentation :octicons-link-external-16:](https://github.com/percona/pg_tde/blob/main/README.md) how to get started.
 
 Otherwise, enjoy full encryption with the Percona Server for PostgreSQL version and the `tde_heap` access method. 
 
@@ -55,10 +57,3 @@ The following is planned for future releases of `pg_tde`:
 
 * KMIP integration for key management
 * Global principal key management
-
-
-
-## Useful links
-
-* [What is Transparent Data Encryption](tde.md)
-

@@ -2,10 +2,6 @@
 
 Enabling `pg_tde` extension for a database creates the table access method `tde_heap` . This access method enables you to encrypt the data.
 
-!!! warning
-
-    This is the tech preview functionality. Its scope is not yet finalized and can change anytime. **Use it only for testing purposes.**
-
 Here's how to do it:
 
 1. Create a table in the database for which you have [enabled `pg_tde`](setup.md) using the `tde_heap` access method as follows:

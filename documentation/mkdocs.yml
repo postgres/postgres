@@ -169,6 +169,7 @@ nav:
   - How to:
     - Use reference to external parameters: external-parameters.md
     - Decrypt an encrypted table: decrypt.md
+  - faq.md
   - Release notes:
     - "pg_tde release notes": release-notes/release-notes.md
   - uninstall.md
