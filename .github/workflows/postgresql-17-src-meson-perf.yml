@@ -1,9 +1,7 @@
 name: Perf test
 on: [pull_request]
 permissions:
-  contents: write
-  pull-requests: write
-  repository-projects: write
+  contents: read
 
 jobs:
   build:
