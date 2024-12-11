@@ -399,6 +399,13 @@ FROM pg_proc p1 JOIN pg_namespace pn
 WHERE nspname = 'pg_catalog' AND proleakproof
 ORDER BY 1;
 
+-- Check that functions without argument are not marked as leakproof.
+SELECT p1.oid::regprocedure
+FROM pg_proc p1 JOIN pg_namespace pn
+     ON pronamespace = pn.oid
+WHERE nspname = 'pg_catalog' AND proleakproof AND pronargs = 0
+ORDER BY 1;
+
 -- restore normal output mode
 \a\t
 
