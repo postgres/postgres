@@ -175,8 +175,8 @@ SELECT toplevel, calls, query FROM pg_stat_statements
 -- Explain analyze, all-level tracking.
 SET pg_stat_statements.track = 'all';
 SELECT pg_stat_statements_reset() IS NOT NULL AS t;
-EXPLAIN (ANALYZE, COSTS OFF, SUMMARY OFF, TIMING OFF) SELECT 100;
-EXPLAIN (ANALYZE, COSTS OFF, SUMMARY OFF, TIMING OFF)
+EXPLAIN (ANALYZE, COSTS OFF, SUMMARY OFF, TIMING OFF, BUFFERS OFF) SELECT 100;
+EXPLAIN (ANALYZE, COSTS OFF, SUMMARY OFF, TIMING OFF, BUFFERS OFF)
   DECLARE foocur CURSOR FOR SELECT * FROM stats_track_tab;
 SELECT toplevel, calls, query FROM pg_stat_statements
   ORDER BY query COLLATE "C";
@@ -184,8 +184,8 @@ SELECT toplevel, calls, query FROM pg_stat_statements
 -- Explain analyze, top tracking.
 SET pg_stat_statements.track = 'top';
 SELECT pg_stat_statements_reset() IS NOT NULL AS t;
-EXPLAIN (ANALYZE, COSTS OFF, SUMMARY OFF, TIMING OFF) SELECT 100;
-EXPLAIN (ANALYZE, COSTS OFF, SUMMARY OFF, TIMING OFF)
+EXPLAIN (ANALYZE, COSTS OFF, SUMMARY OFF, TIMING OFF, BUFFERS OFF) SELECT 100;
+EXPLAIN (ANALYZE, COSTS OFF, SUMMARY OFF, TIMING OFF, BUFFERS OFF)
   DECLARE foocur CURSOR FOR SELECT * FROM stats_track_tab;
 SELECT toplevel, calls, query FROM pg_stat_statements
   ORDER BY query COLLATE "C";
