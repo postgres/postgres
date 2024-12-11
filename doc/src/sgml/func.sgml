@@ -30176,6 +30176,14 @@ postgres=# SELECT '0/0'::pg_lsn + pd.segment_number * ps.setting::int + :offset 
          errors when restoring statistics from previous versions.
         </para>
         <para>
+         To match the behavior of <xref linkend="sql-vacuum"/> and <xref
+         linkend="sql-analyze"/> when updating relation statistics,
+         <function>pg_restore_relation_stats()</function> does not follow MVCC
+         transactional semantics (see <xref linkend="mvcc"/>). New relation
+         statistics may be durable even if the transaction aborts, and the
+         changes are not isolated from other transactions.
+        </para>
+        <para>
          Arguments are passed as pairs of <replaceable>argname</replaceable>
          and <replaceable>argvalue</replaceable>, where
          <replaceable>argname</replaceable> corresponds to a named argument in

@@ -20,6 +20,7 @@
 #include "access/heapam.h"
 #include "catalog/indexing.h"
 #include "statistics/stat_utils.h"
+#include "utils/fmgroids.h"
 #include "utils/fmgrprotos.h"
 #include "utils/syscache.h"
 
@@ -50,24 +51,74 @@ static struct StatsArgInfo relarginfo[] =
 	[NUM_RELATION_STATS_ARGS] = {0}
 };
 
-static bool relation_statistics_update(FunctionCallInfo fcinfo, int elevel);
+static bool relation_statistics_update(FunctionCallInfo fcinfo, int elevel,
+									   bool inplace);
 
 /*
  * Internal function for modifying statistics for a relation.
  */
 static bool
-relation_statistics_update(FunctionCallInfo fcinfo, int elevel)
+relation_statistics_update(FunctionCallInfo fcinfo, int elevel, bool inplace)
 {
 	Oid			reloid;
 	Relation	crel;
-	HeapTuple	ctup;
-	Form_pg_class pgcform;
-	int			replaces[3] = {0};
-	Datum		values[3] = {0};
-	bool		nulls[3] = {0};
-	int			ncols = 0;
-	TupleDesc	tupdesc;
+	int32		relpages = DEFAULT_RELPAGES;
+	bool		update_relpages = false;
+	float		reltuples = DEFAULT_RELTUPLES;
+	bool		update_reltuples = false;
+	int32		relallvisible = DEFAULT_RELALLVISIBLE;
+	bool		update_relallvisible = false;
 	bool		result = true;
+
+	if (!PG_ARGISNULL(RELPAGES_ARG))
+	{
+		relpages = PG_GETARG_INT32(RELPAGES_ARG);
+
+		/*
+		 * Partitioned tables may have relpages=-1. Note: for relations with
+		 * no storage, relpages=-1 is not used consistently, but must be
+		 * supported here.
+		 */
+		if (relpages < -1)
+		{
+			ereport(elevel,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("relpages cannot be < -1")));
+			result = false;
+		}
+		else
+			update_relpages = true;
+	}
+
+	if (!PG_ARGISNULL(RELTUPLES_ARG))
+	{
+		reltuples = PG_GETARG_FLOAT4(RELTUPLES_ARG);
+
+		if (reltuples < -1.0)
+		{
+			ereport(elevel,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("reltuples cannot be < -1.0")));
+			result = false;
+		}
+		else
+			update_reltuples = true;
+	}
+
+	if (!PG_ARGISNULL(RELALLVISIBLE_ARG))
+	{
+		relallvisible = PG_GETARG_INT32(RELALLVISIBLE_ARG);
+
+		if (relallvisible < 0)
+		{
+			ereport(elevel,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("relallvisible cannot be < 0")));
+			result = false;
+		}
+		else
+			update_relallvisible = true;
+	}
 
 	stats_check_required_arg(fcinfo, relarginfo, RELATION_ARG);
 	reloid = PG_GETARG_OID(RELATION_ARG);
@@ -86,92 +137,99 @@ relation_statistics_update(FunctionCallInfo fcinfo, int elevel)
 	 */
 	crel = table_open(RelationRelationId, RowExclusiveLock);
 
-	tupdesc = RelationGetDescr(crel);
-	ctup = SearchSysCacheCopy1(RELOID, ObjectIdGetDatum(reloid));
-	if (!HeapTupleIsValid(ctup))
+	if (inplace)
 	{
-		ereport(elevel,
-				(errcode(ERRCODE_OBJECT_IN_USE),
-				 errmsg("pg_class entry for relid %u not found", reloid)));
-		table_close(crel, RowExclusiveLock);
-		return false;
+		HeapTuple	ctup = NULL;
+		ScanKeyData key[1];
+		Form_pg_class pgcform;
+		void	   *inplace_state = NULL;
+		bool		dirty = false;
+
+		ScanKeyInit(&key[0], Anum_pg_class_oid, BTEqualStrategyNumber, F_OIDEQ,
+					ObjectIdGetDatum(reloid));
+		systable_inplace_update_begin(crel, ClassOidIndexId, true, NULL, 1, key,
+									  &ctup, &inplace_state);
+		if (!HeapTupleIsValid(ctup))
+			elog(ERROR, "pg_class entry for relid %u vanished while updating statistics",
+				 reloid);
+		pgcform = (Form_pg_class) GETSTRUCT(ctup);
+
+		if (update_relpages && pgcform->relpages != relpages)
+		{
+			pgcform->relpages = relpages;
+			dirty = true;
+		}
+		if (update_reltuples && pgcform->reltuples != reltuples)
+		{
+			pgcform->reltuples = reltuples;
+			dirty = true;
+		}
+		if (update_relallvisible && pgcform->relallvisible != relallvisible)
+		{
+			pgcform->relallvisible = relallvisible;
+			dirty = true;
+		}
+
+		if (dirty)
+			systable_inplace_update_finish(inplace_state, ctup);
+		else
+			systable_inplace_update_cancel(inplace_state);
+
+		heap_freetuple(ctup);
 	}
-
-	pgcform = (Form_pg_class) GETSTRUCT(ctup);
-
-	/* relpages */
-	if (!PG_ARGISNULL(RELPAGES_ARG))
+	else
 	{
-		int32		relpages = PG_GETARG_INT32(RELPAGES_ARG);
+		TupleDesc	tupdesc = RelationGetDescr(crel);
+		HeapTuple	ctup;
+		Form_pg_class pgcform;
+		int			replaces[3] = {0};
+		Datum		values[3] = {0};
+		bool		nulls[3] = {0};
+		int			nreplaces = 0;
 
-		/*
-		 * Partitioned tables may have relpages=-1. Note: for relations with
-		 * no storage, relpages=-1 is not used consistently, but must be
-		 * supported here.
-		 */
-		if (relpages < -1)
+		ctup = SearchSysCache1(RELOID, ObjectIdGetDatum(reloid));
+		if (!HeapTupleIsValid(ctup))
 		{
 			ereport(elevel,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("relpages cannot be < -1")));
-			result = false;
+					(errcode(ERRCODE_OBJECT_IN_USE),
+					 errmsg("pg_class entry for relid %u not found", reloid)));
+			table_close(crel, RowExclusiveLock);
+			return false;
 		}
-		else if (relpages != pgcform->relpages)
+		pgcform = (Form_pg_class) GETSTRUCT(ctup);
+
+		if (update_relpages && relpages != pgcform->relpages)
 		{
-			replaces[ncols] = Anum_pg_class_relpages;
-			values[ncols] = Int32GetDatum(relpages);
-			ncols++;
+			replaces[nreplaces] = Anum_pg_class_relpages;
+			values[nreplaces] = Int32GetDatum(relpages);
+			nreplaces++;
 		}
-	}
 
-	if (!PG_ARGISNULL(RELTUPLES_ARG))
-	{
-		float		reltuples = PG_GETARG_FLOAT4(RELTUPLES_ARG);
-
-		if (reltuples < -1.0)
+		if (update_reltuples && reltuples != pgcform->reltuples)
 		{
-			ereport(elevel,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("reltuples cannot be < -1.0")));
-			result = false;
+			replaces[nreplaces] = Anum_pg_class_reltuples;
+			values[nreplaces] = Float4GetDatum(reltuples);
+			nreplaces++;
 		}
-		else if (reltuples != pgcform->reltuples)
+
+		if (update_relallvisible && relallvisible != pgcform->relallvisible)
 		{
-			replaces[ncols] = Anum_pg_class_reltuples;
-			values[ncols] = Float4GetDatum(reltuples);
-			ncols++;
+			replaces[nreplaces] = Anum_pg_class_relallvisible;
+			values[nreplaces] = Int32GetDatum(relallvisible);
+			nreplaces++;
 		}
 
-	}
-
-	if (!PG_ARGISNULL(RELALLVISIBLE_ARG))
-	{
-		int32		relallvisible = PG_GETARG_INT32(RELALLVISIBLE_ARG);
-
-		if (relallvisible < 0)
+		if (nreplaces > 0)
 		{
-			ereport(elevel,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("relallvisible cannot be < 0")));
-			result = false;
-		}
-		else if (relallvisible != pgcform->relallvisible)
-		{
-			replaces[ncols] = Anum_pg_class_relallvisible;
-			values[ncols] = Int32GetDatum(relallvisible);
-			ncols++;
-		}
-	}
+			HeapTuple	newtup;
 
-	/* only update pg_class if there is a meaningful change */
-	if (ncols > 0)
-	{
-		HeapTuple	newtup;
+			newtup = heap_modify_tuple_by_cols(ctup, tupdesc, nreplaces,
+											   replaces, values, nulls);
+			CatalogTupleUpdate(crel, &newtup->t_self, newtup);
+			heap_freetuple(newtup);
+		}
 
-		newtup = heap_modify_tuple_by_cols(ctup, tupdesc, ncols, replaces, values,
-										   nulls);
-		CatalogTupleUpdate(crel, &newtup->t_self, newtup);
-		heap_freetuple(newtup);
+		ReleaseSysCache(ctup);
 	}
 
 	/* release the lock, consistent with vac_update_relstats() */
@@ -188,7 +246,7 @@ relation_statistics_update(FunctionCallInfo fcinfo, int elevel)
 Datum
 pg_set_relation_stats(PG_FUNCTION_ARGS)
 {
-	relation_statistics_update(fcinfo, ERROR);
+	relation_statistics_update(fcinfo, ERROR, false);
 	PG_RETURN_VOID();
 }
 
@@ -212,7 +270,7 @@ pg_clear_relation_stats(PG_FUNCTION_ARGS)
 	newfcinfo->args[3].value = DEFAULT_RELALLVISIBLE;
 	newfcinfo->args[3].isnull = false;
 
-	relation_statistics_update(newfcinfo, ERROR);
+	relation_statistics_update(newfcinfo, ERROR, false);
 	PG_RETURN_VOID();
 }
 
@@ -230,7 +288,7 @@ pg_restore_relation_stats(PG_FUNCTION_ARGS)
 										  relarginfo, WARNING))
 		result = false;
 
-	if (!relation_statistics_update(positional_fcinfo, WARNING))
+	if (!relation_statistics_update(positional_fcinfo, WARNING, true))
 		result = false;
 
 	PG_RETURN_BOOL(result);

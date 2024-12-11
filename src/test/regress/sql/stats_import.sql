@@ -76,6 +76,31 @@ SELECT relpages, reltuples, relallvisible
 FROM pg_class
 WHERE oid = 'stats_import.test'::regclass;
 
+-- test MVCC behavior: changes do not persist after abort (in contrast
+-- to pg_restore_relation_stats(), which uses in-place updates).
+BEGIN;
+SELECT
+    pg_catalog.pg_set_relation_stats(
+        relation => 'stats_import.test'::regclass,
+        relpages => NULL::integer,
+        reltuples => 4000.0::real,
+        relallvisible => 4::integer);
+ABORT;
+
+SELECT relpages, reltuples, relallvisible
+FROM pg_class
+WHERE oid = 'stats_import.test'::regclass;
+
+BEGIN;
+SELECT
+    pg_catalog.pg_clear_relation_stats(
+        'stats_import.test'::regclass);
+ABORT;
+
+SELECT relpages, reltuples, relallvisible
+FROM pg_class
+WHERE oid = 'stats_import.test'::regclass;
+
 -- clear
 SELECT
     pg_catalog.pg_clear_relation_stats(
@@ -568,7 +593,19 @@ WHERE oid = 'stats_import.test'::regclass;
 SELECT pg_restore_relation_stats(
         'relation', 'stats_import.test'::regclass,
         'version', 150000::integer,
+        'relpages', '15'::integer);
+
+SELECT relpages, reltuples, relallvisible
+FROM pg_class
+WHERE oid = 'stats_import.test'::regclass;
+
+-- test non-MVCC behavior: new value should persist after abort
+BEGIN;
+SELECT pg_restore_relation_stats(
+        'relation', 'stats_import.test'::regclass,
+        'version', 150000::integer,
         'relpages', '16'::integer);
+ABORT;
 
 SELECT relpages, reltuples, relallvisible
 FROM pg_class
