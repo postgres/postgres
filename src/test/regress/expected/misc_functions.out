@@ -22,7 +22,7 @@ BEGIN
     SET LOCAL jit = 0;
 
     FOR ln IN
-        EXECUTE format('explain (analyze %s, costs on, summary off, timing off) %s',
+        EXECUTE format('explain (analyze %s, costs on, summary off, timing off, buffers off) %s',
             analyze_str, query)
     LOOP
         IF hide_costs = true THEN
