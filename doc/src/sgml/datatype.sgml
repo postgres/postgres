@@ -4380,7 +4380,7 @@ SELECT to_tsvector( 'postgraduate' ), to_tsquery( 'postgres:*' );
 
    <para>
     The data type <type>uuid</type> stores Universally Unique Identifiers
-    (UUID) as defined by <ulink url="https://datatracker.ietf.org/doc/html/rfc4122">RFC 4122</ulink>,
+    (UUID) as defined by <ulink url="https://datatracker.ietf.org/doc/html/rfc9562">RFC 9562</ulink>,
     ISO/IEC 9834-8:2005, and related standards.
     (Some systems refer to this data type as a globally unique identifier, or
     GUID,<indexterm><primary>GUID</primary></indexterm> instead.)  This

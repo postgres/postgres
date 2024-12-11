@@ -10,6 +10,11 @@ CREATE TABLE guid2
 	guid_field UUID,
 	text_field TEXT DEFAULT(now())
 );
+CREATE TABLE guid3
+(
+	id SERIAL,
+	guid_field UUID
+);
 
 -- inserting invalid data tests
 -- too long
@@ -97,6 +102,22 @@ INSERT INTO guid1 (guid_field) VALUES (gen_random_uuid());
 INSERT INTO guid1 (guid_field) VALUES (gen_random_uuid());
 SELECT count(DISTINCT guid_field) FROM guid1;
 
+-- test of uuidv4() alias
+TRUNCATE guid1;
+INSERT INTO guid1 (guid_field) VALUES (uuidv4());
+INSERT INTO guid1 (guid_field) VALUES (uuidv4());
+SELECT count(DISTINCT guid_field) FROM guid1;
+
+-- generation test for v7
+TRUNCATE guid1;
+INSERT INTO guid1 (guid_field) VALUES (uuidv7());
+INSERT INTO guid1 (guid_field) VALUES (uuidv7());
+INSERT INTO guid1 (guid_field) VALUES (uuidv7(INTERVAL '1 day'));
+SELECT count(DISTINCT guid_field) FROM guid1;
+
+-- test sortability of v7
+INSERT INTO guid3 (guid_field) SELECT uuidv7() FROM generate_series(1, 10);
+SELECT array_agg(id ORDER BY guid_field) FROM guid3;
 
 -- extract functions
 
@@ -104,12 +125,15 @@ SELECT count(DISTINCT guid_field) FROM guid1;
 SELECT uuid_extract_version('11111111-1111-5111-8111-111111111111');  -- 5
 SELECT uuid_extract_version(gen_random_uuid());  -- 4
 SELECT uuid_extract_version('11111111-1111-1111-1111-111111111111');  -- null
+SELECT uuid_extract_version(uuidv4());  -- 4
+SELECT uuid_extract_version(uuidv7());  -- 7
 
 -- timestamp
-SELECT uuid_extract_timestamp('C232AB00-9414-11EC-B3C8-9F6BDECED846') = 'Tuesday, February 22, 2022 2:22:22.00 PM GMT+05:00';  -- RFC 4122bis test vector
+SELECT uuid_extract_timestamp('C232AB00-9414-11EC-B3C8-9F6BDECED846') = 'Tuesday, February 22, 2022 2:22:22.00 PM GMT+05:00';  -- RFC 9562 test vector for v1
+SELECT uuid_extract_timestamp('017F22E2-79B0-7CC3-98C4-DC0C0C07398F') = 'Tuesday, February 22, 2022 2:22:22.00 PM GMT+05:00';  -- RFC 9562 test vector for v7
 SELECT uuid_extract_timestamp(gen_random_uuid());  -- null
 SELECT uuid_extract_timestamp('11111111-1111-1111-1111-111111111111');  -- null
 
 
 -- clean up
-DROP TABLE guid1, guid2 CASCADE;
+DROP TABLE guid1, guid2, guid3 CASCADE;
