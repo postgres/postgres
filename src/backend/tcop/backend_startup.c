@@ -830,6 +830,15 @@ ProcessStartupPacket(Port *port, bool ssl_done, bool gss_done)
 	if (port->database_name == NULL || port->database_name[0] == '\0')
 		port->database_name = pstrdup(port->user_name);
 
+	/*
+	 * Truncate given database and user names to length of a Postgres name.
+	 * This avoids lookup failures when overlength names are given.
+	 */
+	if (strlen(port->database_name) >= NAMEDATALEN)
+		port->database_name[NAMEDATALEN - 1] = '\0';
+	if (strlen(port->user_name) >= NAMEDATALEN)
+		port->user_name[NAMEDATALEN - 1] = '\0';
+
 	if (am_walsender)
 		MyBackendType = B_WAL_SENDER;
 	else
