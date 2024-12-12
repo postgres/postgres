@@ -41,8 +41,8 @@ jobs:
 
       - name: 'Create comment'
         run: |
-          gh pr comment ${PR_NUMBER} -R ${{ github.repository }} -F pr_perf_results --edit-last || \
-            gh pr comment ${PR_NUMBER} -R ${{ github.repository }} -F pr_perf_results
+          gh pr comment ${PR_NUMBER} -F pr_perf_results --repo ${{ github.repository }}  --edit-last || \
+            gh pr comment ${PR_NUMBER} -F pr_perf_results --repo ${{ github.repository }}
         env:
           PR_NUMBER: ${{ github.event.number }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
