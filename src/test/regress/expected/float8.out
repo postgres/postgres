@@ -1024,6 +1024,8 @@ create function xfloat8out(xfloat8) returns cstring immutable strict
 NOTICE:  argument type xfloat8 is only a shell
 LINE 1: create function xfloat8out(xfloat8) returns cstring immutabl...
                                    ^
+create type xfloat8 (input = xfloat8in, output = xfloat8out, like = no_such_type);
+ERROR:  type "no_such_type" does not exist
 create type xfloat8 (input = xfloat8in, output = xfloat8out, like = float8);
 create cast (xfloat8 as float8) without function;
 create cast (float8 as xfloat8) without function;

@@ -2145,6 +2145,11 @@ ALTER TABLE comment_test ALTER COLUMN id SET DATA TYPE text;
 ALTER TABLE comment_test ALTER COLUMN positive_col SET DATA TYPE int;
 ALTER TABLE comment_test ALTER COLUMN positive_col SET DATA TYPE bigint;
 
+-- Some error cases.
+ALTER TABLE comment_test ALTER COLUMN xmin SET DATA TYPE x;
+ALTER TABLE comment_test ALTER COLUMN id SET DATA TYPE x;
+ALTER TABLE comment_test ALTER COLUMN id SET DATA TYPE int COLLATE "C";
+
 -- Check that the comments are intact.
 SELECT col_description('comment_test'::regclass, 1) as comment;
 SELECT indexrelid::regclass::text as index, obj_description(indexrelid, 'pg_class') as comment FROM pg_index where indrelid = 'comment_test'::regclass ORDER BY 1, 2;

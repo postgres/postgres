@@ -328,6 +328,7 @@ create function xfloat8in(cstring) returns xfloat8 immutable strict
   language internal as 'int8in';
 create function xfloat8out(xfloat8) returns cstring immutable strict
   language internal as 'int8out';
+create type xfloat8 (input = xfloat8in, output = xfloat8out, like = no_such_type);
 create type xfloat8 (input = xfloat8in, output = xfloat8out, like = float8);
 create cast (xfloat8 as float8) without function;
 create cast (float8 as xfloat8) without function;
