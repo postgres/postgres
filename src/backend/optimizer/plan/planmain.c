@@ -169,6 +169,9 @@ query_planner(PlannerInfo *root,
 	 */
 	add_base_rels_to_query(root, (Node *) parse->jointree);
 
+	/* Remove any redundant GROUP BY columns */
+	remove_useless_groupby_columns(root);
+
 	/*
 	 * Examine the targetlist and join tree, adding entries to baserel
 	 * targetlists for all referenced Vars, and generating PlaceHolderInfo
