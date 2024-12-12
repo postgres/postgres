@@ -128,9 +128,6 @@ typedef int64 PgStat_Counter;
 /* ----------
  * PgStat_FunctionCounts	The actual per-function counts kept by a backend
  *
- * This struct should contain only actual event counters, because we memcmp
- * it against zeroes to detect whether there are any pending stats.
- *
  * Note that the time counters are in instr_time format here.  We convert to
  * microseconds in PgStat_Counter format when flushing out pending statistics.
  * ----------
@@ -172,8 +169,10 @@ typedef struct PgStat_BackendSubEntry
 /* ----------
  * PgStat_TableCounts			The actual per-table counts kept by a backend
  *
- * This struct should contain only actual event counters, because we memcmp
- * it against zeroes to detect whether there are any stats updates to apply.
+ * This struct should contain only actual event counters, because we make use
+ * of pg_memory_is_all_zeros() to detect whether there are any stats updates
+ * to apply.
+ *
  * It is a component of PgStat_TableStatus (within-backend state).
  *
  * Note: for a table, tuples_returned is the number of tuples successfully
@@ -282,6 +281,14 @@ typedef struct PgStat_ArchiverStats
 	TimestampTz stat_reset_timestamp;
 } PgStat_ArchiverStats;
 
+/* ---------
+ * PgStat_BgWriterStats			Background Writer statistics
+ *
+ * This struct should contain only actual event counters, because we make use
+ * of pg_memory_is_all_zeros() to detect whether there are any stats updates
+ * to apply.
+ * ---------
+ */
 typedef struct PgStat_BgWriterStats
 {
 	PgStat_Counter buf_written_clean;
@@ -290,6 +297,14 @@ typedef struct PgStat_BgWriterStats
 	TimestampTz stat_reset_timestamp;
 } PgStat_BgWriterStats;
 
+/* --------
+ * PgStat_CheckpointerStats		Checkpoint statistics
+ *
+ * This struct should contain only actual event counters, because we make use
+ * of pg_memory_is_all_zeros() to detect whether there are any stats updates to
+ * apply.
+ * ---------
+ */
 typedef struct PgStat_CheckpointerStats
 {
 	PgStat_Counter num_timed;
