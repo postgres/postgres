@@ -400,17 +400,13 @@ add_vars_to_attr_needed(PlannerInfo *root, List *vars,
  *
  * Since some other DBMSes do not allow references to ungrouped columns, it's
  * not unusual to find all columns listed in GROUP BY even though listing the
- * primary-key columns would be sufficient.  Deleting such excess columns
- * avoids redundant sorting work, so it's worth doing.
+ * primary-key columns, or columns of a unique constraint would be sufficient.
+ * Deleting such excess columns avoids redundant sorting or hashing work, so
+ * it's worth doing.
  *
  * Relcache invalidations will ensure that cached plans become invalidated
- * when the underlying index of the pkey constraint is dropped.
- *
- * Currently, we only make use of pkey constraints for this, however, we may
- * wish to take this further in the future and also use unique constraints
- * which have NOT NULL columns.  In that case, plan invalidation will still
- * work since relations will receive a relcache invalidation when a NOT NULL
- * constraint is dropped.
+ * when the underlying supporting indexes are dropped or if a column's NOT
+ * NULL attribute is removed.
  */
 void
 remove_useless_groupby_columns(PlannerInfo *root)
@@ -418,6 +414,7 @@ remove_useless_groupby_columns(PlannerInfo *root)
 	Query	   *parse = root->parse;
 	Bitmapset **groupbyattnos;
 	Bitmapset **surplusvars;
+	bool		tryremove = false;
 	ListCell   *lc;
 	int			relid;
 
@@ -457,9 +454,23 @@ remove_useless_groupby_columns(PlannerInfo *root)
 		/* OK, remember we have this Var */
 		relid = var->varno;
 		Assert(relid <= list_length(parse->rtable));
+
+		/*
+		 * If this isn't the first column for this relation then we now have
+		 * multiple columns.  That means there might be some that can be
+		 * removed.
+		 */
+		tryremove |= !bms_is_empty(groupbyattnos[relid]);
 		groupbyattnos[relid] = bms_add_member(groupbyattnos[relid],
 											  var->varattno - FirstLowInvalidHeapAttributeNumber);
 	}
+
+	/*
+	 * No Vars or didn't find multiple Vars for any relation in the GROUP BY?
+	 * If so, nothing can be removed, so don't waste more effort trying.
+	 */
+	if (!tryremove)
+		return;
 
 	/*
 	 * Consider each relation and see if it is possible to remove some of its
@@ -472,9 +483,10 @@ remove_useless_groupby_columns(PlannerInfo *root)
 	foreach(lc, parse->rtable)
 	{
 		RangeTblEntry *rte = lfirst_node(RangeTblEntry, lc);
+		RelOptInfo *rel;
 		Bitmapset  *relattnos;
-		Bitmapset  *pkattnos;
-		Oid			constraintOid;
+		Bitmapset  *best_keycolumns = NULL;
+		int32		best_nkeycolumns = PG_INT32_MAX;
 
 		relid++;
 
@@ -495,19 +507,83 @@ remove_useless_groupby_columns(PlannerInfo *root)
 		if (bms_membership(relattnos) != BMS_MULTIPLE)
 			continue;
 
-		/*
-		 * Can't remove any columns for this rel if there is no suitable
-		 * (i.e., nondeferrable) primary key constraint.
-		 */
-		pkattnos = get_primary_key_attnos(rte->relid, false, &constraintOid);
-		if (pkattnos == NULL)
-			continue;
+		rel = root->simple_rel_array[relid];
 
 		/*
-		 * If the primary key is a proper subset of relattnos then we have
-		 * some items in the GROUP BY that can be removed.
+		 * Now check each index for this relation to see if there are any with
+		 * columns which are a proper subset of the grouping columns for this
+		 * relation.
 		 */
-		if (bms_subset_compare(pkattnos, relattnos) == BMS_SUBSET1)
+		foreach_node(IndexOptInfo, index, rel->indexlist)
+		{
+			Bitmapset  *ind_attnos;
+			bool		nulls_check_ok;
+
+			/*
+			 * Skip any non-unique and deferrable indexes.  Predicate indexes
+			 * have not been checked yet, so we must skip those too as the
+			 * predOK check that's done later might fail.
+			 */
+			if (!index->unique || !index->immediate || index->indpred != NIL)
+				continue;
+
+			/* For simplicity, we currently don't support expression indexes */
+			if (index->indexprs != NIL)
+				continue;
+
+			ind_attnos = NULL;
+			nulls_check_ok = true;
+			for (int i = 0; i < index->nkeycolumns; i++)
+			{
+				/*
+				 * We must insist that the index columns are all defined NOT
+				 * NULL otherwise duplicate NULLs could exist.  However, we
+				 * can relax this check when the index is defined with NULLS
+				 * NOT DISTINCT as there can only be 1 NULL row, therefore
+				 * functional dependency on the unique columns is maintained,
+				 * despite the NULL.
+				 */
+				if (!index->nullsnotdistinct &&
+					!bms_is_member(index->indexkeys[i],
+								   rel->notnullattnums))
+				{
+					nulls_check_ok = false;
+					break;
+				}
+
+				ind_attnos =
+					bms_add_member(ind_attnos,
+								   index->indexkeys[i] -
+								   FirstLowInvalidHeapAttributeNumber);
+			}
+
+			if (!nulls_check_ok)
+				continue;
+
+			/*
+			 * Skip any indexes where the indexed columns aren't a proper
+			 * subset of the GROUP BY.
+			 */
+			if (bms_subset_compare(ind_attnos, relattnos) != BMS_SUBSET1)
+				continue;
+
+			/*
+			 * Record the attribute numbers from the index with the fewest
+			 * columns.  This allows the largest number of columns to be
+			 * removed from the GROUP BY clause.  In the future, we may wish
+			 * to consider using the narrowest set of columns and looking at
+			 * pg_statistic.stawidth as it might be better to use an index
+			 * with, say two INT4s, rather than, say, one long varlena column.
+			 */
+			if (index->nkeycolumns < best_nkeycolumns)
+			{
+				best_keycolumns = ind_attnos;
+				best_nkeycolumns = index->nkeycolumns;
+			}
+		}
+
+		/* Did we find a suitable index? */
+		if (!bms_is_empty(best_keycolumns))
 		{
 			/*
 			 * To easily remember whether we've found anything to do, we don't
@@ -518,7 +594,7 @@ remove_useless_groupby_columns(PlannerInfo *root)
 													 (list_length(parse->rtable) + 1));
 
 			/* Remember the attnos of the removable columns */
-			surplusvars[relid] = bms_difference(relattnos, pkattnos);
+			surplusvars[relid] = bms_difference(relattnos, best_keycolumns);
 		}
 	}
 
