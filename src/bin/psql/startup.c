@@ -838,7 +838,7 @@ process_psqlrc_file(char *filename)
 static void
 showVersion(void)
 {
-	puts("psql (Percona Server for PostgreSQL) " PG_VERSION);
+	puts("psql (PostgreSQL) " PG_VERSION);
 }
 
 

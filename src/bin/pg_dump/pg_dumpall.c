@@ -31,7 +31,7 @@
 #include "pg_backup.h"
 
 /* version string we expect back from pg_dump */
-#define PGDUMP_VERSIONSTR "pg_dump (Percona Server for PostgreSQL) " PG_VERSION "\n"
+#define PGDUMP_VERSIONSTR "pg_dump (PostgreSQL) " PG_VERSION "\n"
 
 typedef struct
 {
@@ -214,7 +214,7 @@ main(int argc, char *argv[])
 		}
 		if (strcmp(argv[1], "--version") == 0 || strcmp(argv[1], "-V") == 0)
 		{
-			puts("pg_dumpall (Percona Server for PostgreSQL) " PG_VERSION);
+			puts("pg_dumpall (PostgreSQL) " PG_VERSION);
 			exit_nicely(0);
 		}
 	}
