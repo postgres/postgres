@@ -7253,20 +7253,15 @@ getOwnedSeqs(Archive *fout, TableInfo tblinfo[], int numTables)
 					 seqinfo->owning_tab, seqinfo->dobj.catId.oid);
 
 		/*
-		 * Only dump identity sequences if we're going to dump the table that
-		 * it belongs to.
-		 */
-		if (owning_tab->dobj.dump == DUMP_COMPONENT_NONE &&
-			seqinfo->is_identity_sequence)
-		{
-			seqinfo->dobj.dump = DUMP_COMPONENT_NONE;
-			continue;
-		}
-
-		/*
-		 * Otherwise we need to dump the components that are being dumped for
-		 * the table and any components which the sequence is explicitly
-		 * marked with.
+		 * For an identity sequence, dump exactly the same components for the
+		 * sequence as for the owning table.  This is important because we
+		 * treat the identity sequence as an integral part of the table.  For
+		 * example, there is not any DDL command that allows creation of such
+		 * a sequence independently of the table.
+		 *
+		 * For other owned sequences such as serial sequences, we need to dump
+		 * the components that are being dumped for the table and any
+		 * components that the sequence is explicitly marked with.
 		 *
 		 * We can't simply use the set of components which are being dumped
 		 * for the table as the table might be in an extension (and only the
@@ -7279,10 +7274,17 @@ getOwnedSeqs(Archive *fout, TableInfo tblinfo[], int numTables)
 		 * marked by checkExtensionMembership() and this will be a no-op as
 		 * the table will be equivalently marked.
 		 */
-		seqinfo->dobj.dump = seqinfo->dobj.dump | owning_tab->dobj.dump;
+		if (seqinfo->is_identity_sequence)
+			seqinfo->dobj.dump = owning_tab->dobj.dump;
+		else
+			seqinfo->dobj.dump |= owning_tab->dobj.dump;
 
+		/* Make sure that necessary data is available if we're dumping it */
 		if (seqinfo->dobj.dump != DUMP_COMPONENT_NONE)
+		{
 			seqinfo->interesting = true;
+			owning_tab->interesting = true;
+		}
 	}
 }
 
