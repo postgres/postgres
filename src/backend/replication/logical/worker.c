@@ -3948,7 +3948,10 @@ apply_worker_exit(void)
 }
 
 /*
- * Reread subscription info if needed. Most changes will be exit.
+ * Reread subscription info if needed.
+ *
+ * For significant changes, we react by exiting the current process; a new
+ * one will be launched afterwards if needed.
  */
 void
 maybe_reread_subscription(void)
