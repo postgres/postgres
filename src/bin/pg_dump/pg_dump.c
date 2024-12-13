@@ -16220,6 +16220,38 @@ dumpTableSchema(Archive *fout, const TableInfo *tbinfo)
 											  fmtQualifiedDumpable(coll));
 					}
 				}
+
+				/*
+				 * On the other hand, if we choose not to print a column
+				 * (likely because it is created by inheritance), but the
+				 * column has a locally-defined not-null constraint, we need
+				 * to dump the constraint as a standalone object.
+				 *
+				 * This syntax isn't SQL-conforming, but if you wanted
+				 * standard output you wouldn't be creating non-standard
+				 * objects to begin with.
+				 */
+				if (!shouldPrintColumn(dopt, tbinfo, j) &&
+					!tbinfo->attisdropped[j] &&
+					tbinfo->notnull_constrs[j] != NULL &&
+					tbinfo->notnull_islocal[j])
+				{
+					/* Format properly if not first attr */
+					if (actual_atts == 0)
+						appendPQExpBufferStr(q, " (");
+					else
+						appendPQExpBufferChar(q, ',');
+					appendPQExpBufferStr(q, "\n    ");
+					actual_atts++;
+
+					if (tbinfo->notnull_constrs[j][0] == '\0')
+						appendPQExpBuffer(q, "NOT NULL %s",
+										  fmtId(tbinfo->attnames[j]));
+					else
+						appendPQExpBuffer(q, "CONSTRAINT %s NOT NULL %s",
+										  tbinfo->notnull_constrs[j],
+										  fmtId(tbinfo->attnames[j]));
+				}
 			}
 
 			/*
@@ -16660,29 +16692,6 @@ dumpTableSchema(Archive *fout, const TableInfo *tbinfo)
 			/* None of this applies to dropped columns */
 			if (tbinfo->attisdropped[j])
 				continue;
-
-			/*
-			 * If we didn't dump the column definition explicitly above, and
-			 * it is not-null and did not inherit that property from a parent,
-			 * we have to mark it separately.
-			 */
-			if (!shouldPrintColumn(dopt, tbinfo, j) &&
-				tbinfo->notnull_constrs[j] != NULL &&
-				(tbinfo->notnull_islocal[j] && !tbinfo->ispartition && !dopt->binary_upgrade))
-			{
-				/* No constraint name desired? */
-				if (tbinfo->notnull_constrs[j][0] == '\0')
-					appendPQExpBuffer(q,
-									  "ALTER %sTABLE ONLY %s ALTER COLUMN %s SET NOT NULL;\n",
-									  foreign, qualrelname,
-									  fmtId(tbinfo->attnames[j]));
-				else
-					appendPQExpBuffer(q,
-									  "ALTER %sTABLE ONLY %s ADD CONSTRAINT %s NOT NULL %s;\n",
-									  foreign, qualrelname,
-									  tbinfo->notnull_constrs[j],
-									  fmtId(tbinfo->attnames[j]));
-			}
 
 			/*
 			 * Dump per-column statistics information. We only issue an ALTER
