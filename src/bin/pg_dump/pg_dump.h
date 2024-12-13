@@ -88,8 +88,16 @@ typedef enum
 /*
  * DumpComponents is a bitmask of the potentially dumpable components of
  * a database object: its core definition, plus optional attributes such
- * as ACL, comments, etc.  The NONE and ALL symbols are convenient
- * shorthands.
+ * as ACL, comments, etc.
+ *
+ * The NONE and ALL symbols are convenient shorthands for assigning values,
+ * but be careful about using them in tests.  For example, a test like
+ * "if (dobj->dump == DUMP_COMPONENT_NONE)" is probably wrong; you likely want
+ * "if (!(dobj->dump & DUMP_COMPONENT_DEFINITION))" instead.  This is because
+ * we aren't too careful about the values of irrelevant bits, as indeed can be
+ * seen in the definition of DUMP_COMPONENT_ALL.  It's also possible that an
+ * object has only subsidiary bits such as DUMP_COMPONENT_ACL set, leading to
+ * unexpected behavior of a test against NONE.
  */
 typedef uint32 DumpComponents;
 #define DUMP_COMPONENT_NONE			(0)
