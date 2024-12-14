@@ -27,10 +27,10 @@ AS 'SELECT ''6378168''::float8';
 -- and that the point must be very near the surface of the sphere
 -- centered about the origin with the radius of the earth.
 
-CREATE DOMAIN earth AS cube
-  CONSTRAINT not_point check(cube_is_point(value))
-  CONSTRAINT not_3d check(cube_dim(value) <= 3)
-  CONSTRAINT on_surface check(abs(cube_distance(value, '(0)'::cube) /
+CREATE DOMAIN earth AS @extschema:cube@.cube
+  CONSTRAINT not_point CHECK(@extschema:cube@.cube_is_point(VALUE))
+  CONSTRAINT not_3d CHECK(@extschema:cube@.cube_dim(VALUE) <= 3)
+  CONSTRAINT on_surface CHECK(abs(@extschema:cube@.cube_distance(VALUE, '(0)'::@extschema:cube@.cube) /
   earth() - '1'::float8) < '10e-7'::float8);
 
 CREATE FUNCTION sec_to_gc(float8)
