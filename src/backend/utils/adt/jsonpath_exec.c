@@ -1162,8 +1162,8 @@ executeItemOptUnwrapTarget(JsonPathExecContext *cxt, JsonPathItem *jsp,
 					if (escontext.error_occurred)
 						RETURN_ERROR(ereport(ERROR,
 											 (errcode(ERRCODE_NON_NUMERIC_SQL_JSON_ITEM),
-											  errmsg("argument \"%s\" of jsonpath item method .%s() is invalid for type double precision",
-													 tmp, jspOperationName(jsp->type)))));
+											  errmsg("argument \"%s\" of jsonpath item method .%s() is invalid for type %s",
+													 tmp, jspOperationName(jsp->type), "double precision"))));
 					if (isinf(val) || isnan(val))
 						RETURN_ERROR(ereport(ERROR,
 											 (errcode(ERRCODE_NON_NUMERIC_SQL_JSON_ITEM),
@@ -1188,8 +1188,8 @@ executeItemOptUnwrapTarget(JsonPathExecContext *cxt, JsonPathItem *jsp,
 					if (escontext.error_occurred)
 						RETURN_ERROR(ereport(ERROR,
 											 (errcode(ERRCODE_NON_NUMERIC_SQL_JSON_ITEM),
-											  errmsg("argument \"%s\" of jsonpath item method .%s() is invalid for type double precision",
-													 tmp, jspOperationName(jsp->type)))));
+											  errmsg("argument \"%s\" of jsonpath item method .%s() is invalid for type %s",
+													 tmp, jspOperationName(jsp->type), "double precision"))));
 					if (isinf(val) || isnan(val))
 						RETURN_ERROR(ereport(ERROR,
 											 (errcode(ERRCODE_NON_NUMERIC_SQL_JSON_ITEM),
@@ -1276,10 +1276,11 @@ executeItemOptUnwrapTarget(JsonPathExecContext *cxt, JsonPathItem *jsp,
 					if (have_error)
 						RETURN_ERROR(ereport(ERROR,
 											 (errcode(ERRCODE_NON_NUMERIC_SQL_JSON_ITEM),
-											  errmsg("argument \"%s\" of jsonpath item method .%s() is invalid for type bigint",
+											  errmsg("argument \"%s\" of jsonpath item method .%s() is invalid for type %s",
 													 DatumGetCString(DirectFunctionCall1(numeric_out,
 																						 NumericGetDatum(jb->val.numeric))),
-													 jspOperationName(jsp->type)))));
+													 jspOperationName(jsp->type),
+													 "bigint"))));
 
 					datum = Int64GetDatum(val);
 					res = jperOk;
@@ -1300,8 +1301,8 @@ executeItemOptUnwrapTarget(JsonPathExecContext *cxt, JsonPathItem *jsp,
 					if (!noerr || escontext.error_occurred)
 						RETURN_ERROR(ereport(ERROR,
 											 (errcode(ERRCODE_NON_NUMERIC_SQL_JSON_ITEM),
-											  errmsg("argument \"%s\" of jsonpath item method .%s() is invalid for type bigint",
-													 tmp, jspOperationName(jsp->type)))));
+											  errmsg("argument \"%s\" of jsonpath item method .%s() is invalid for type %s",
+													 tmp, jspOperationName(jsp->type), "bigint"))));
 					res = jperOk;
 				}
 
@@ -1352,8 +1353,8 @@ executeItemOptUnwrapTarget(JsonPathExecContext *cxt, JsonPathItem *jsp,
 					if (!noerr || escontext.error_occurred)
 						RETURN_ERROR(ereport(ERROR,
 											 (errcode(ERRCODE_NON_NUMERIC_SQL_JSON_ITEM),
-											  errmsg("argument \"%s\" of jsonpath item method .%s() is invalid for type boolean",
-													 tmp, jspOperationName(jsp->type)))));
+											  errmsg("argument \"%s\" of jsonpath item method .%s() is invalid for type %s",
+													 tmp, jspOperationName(jsp->type), "boolean"))));
 
 					ival = DatumGetInt32(datum);
 					if (ival == 0)
@@ -1372,8 +1373,8 @@ executeItemOptUnwrapTarget(JsonPathExecContext *cxt, JsonPathItem *jsp,
 					if (!parse_bool(tmp, &bval))
 						RETURN_ERROR(ereport(ERROR,
 											 (errcode(ERRCODE_NON_NUMERIC_SQL_JSON_ITEM),
-											  errmsg("argument \"%s\" of jsonpath item method .%s() is invalid for type boolean",
-													 tmp, jspOperationName(jsp->type)))));
+											  errmsg("argument \"%s\" of jsonpath item method .%s() is invalid for type %s",
+													 tmp, jspOperationName(jsp->type), "boolean"))));
 
 					res = jperOk;
 				}
@@ -1434,8 +1435,8 @@ executeItemOptUnwrapTarget(JsonPathExecContext *cxt, JsonPathItem *jsp,
 					if (!noerr || escontext.error_occurred)
 						RETURN_ERROR(ereport(ERROR,
 											 (errcode(ERRCODE_NON_NUMERIC_SQL_JSON_ITEM),
-											  errmsg("argument \"%s\" of jsonpath item method .%s() is invalid for type numeric",
-													 numstr, jspOperationName(jsp->type)))));
+											  errmsg("argument \"%s\" of jsonpath item method .%s() is invalid for type %s",
+													 numstr, jspOperationName(jsp->type), "numeric"))));
 
 					num = DatumGetNumeric(datum);
 					if (numeric_is_nan(num) || numeric_is_inf(num))
@@ -1523,8 +1524,8 @@ executeItemOptUnwrapTarget(JsonPathExecContext *cxt, JsonPathItem *jsp,
 					if (!noerr || escontext.error_occurred)
 						RETURN_ERROR(ereport(ERROR,
 											 (errcode(ERRCODE_NON_NUMERIC_SQL_JSON_ITEM),
-											  errmsg("argument \"%s\" of jsonpath item method .%s() is invalid for type numeric",
-													 numstr, jspOperationName(jsp->type)))));
+											  errmsg("argument \"%s\" of jsonpath item method .%s() is invalid for type %s",
+													 numstr, jspOperationName(jsp->type), "numeric"))));
 
 					num = DatumGetNumeric(numdatum);
 					pfree(arrtypmod);
@@ -1556,10 +1557,10 @@ executeItemOptUnwrapTarget(JsonPathExecContext *cxt, JsonPathItem *jsp,
 					if (have_error)
 						RETURN_ERROR(ereport(ERROR,
 											 (errcode(ERRCODE_NON_NUMERIC_SQL_JSON_ITEM),
-											  errmsg("argument \"%s\" of jsonpath item method .%s() is invalid for type integer",
+											  errmsg("argument \"%s\" of jsonpath item method .%s() is invalid for type %s",
 													 DatumGetCString(DirectFunctionCall1(numeric_out,
 																						 NumericGetDatum(jb->val.numeric))),
-													 jspOperationName(jsp->type)))));
+													 jspOperationName(jsp->type), "integer"))));
 
 					datum = Int32GetDatum(val);
 					res = jperOk;
@@ -1580,8 +1581,8 @@ executeItemOptUnwrapTarget(JsonPathExecContext *cxt, JsonPathItem *jsp,
 					if (!noerr || escontext.error_occurred)
 						RETURN_ERROR(ereport(ERROR,
 											 (errcode(ERRCODE_NON_NUMERIC_SQL_JSON_ITEM),
-											  errmsg("argument \"%s\" of jsonpath item method .%s() is invalid for type integer",
-													 tmp, jspOperationName(jsp->type)))));
+											  errmsg("argument \"%s\" of jsonpath item method .%s() is invalid for type %s",
+													 tmp, jspOperationName(jsp->type), "integer"))));
 					res = jperOk;
 				}
 
