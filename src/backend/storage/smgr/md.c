@@ -106,14 +106,6 @@ static MemoryContext MdCxt;		/* context for all MdfdVec objects */
 #define EXTENSION_CREATE			(1 << 2)
 /* create new segments if needed during recovery */
 #define EXTENSION_CREATE_RECOVERY	(1 << 3)
-/*
- * Allow opening segments which are preceded by segments smaller than
- * RELSEG_SIZE, e.g. inactive segments (see above). Note that this breaks
- * mdnblocks() and related functionality henceforth - which currently is ok,
- * because this is only required in the checkpointer which never uses
- * mdnblocks().
- */
-#define EXTENSION_DONT_CHECK_SIZE	(1 << 4)
 /* don't try to open a segment, if not already open */
 #define EXTENSION_DONT_OPEN			(1 << 5)
 
@@ -1683,14 +1675,12 @@ _mdfd_getseg(SMgrRelation reln, ForkNumber forknum, BlockNumber blkno,
 			}
 			flags = O_CREAT;
 		}
-		else if (!(behavior & EXTENSION_DONT_CHECK_SIZE) &&
-				 nblocks < ((BlockNumber) RELSEG_SIZE))
+		else if (nblocks < ((BlockNumber) RELSEG_SIZE))
 		{
 			/*
-			 * When not extending (or explicitly including truncated
-			 * segments), only open the next segment if the current one is
-			 * exactly RELSEG_SIZE.  If not (this branch), either return NULL
-			 * or fail.
+			 * When not extending, only open the next segment if the current
+			 * one is exactly RELSEG_SIZE.  If not (this branch), either
+			 * return NULL or fail.
 			 */
 			if (behavior & EXTENSION_RETURN_NULL)
 			{
