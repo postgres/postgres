@@ -668,6 +668,56 @@ SELECT :v0, :v1, :v2, :v3;
 }
 	});
 
+# test nested \if constructs
+$node->pgbench(
+	'--no-vacuum --client=1 --exit-on-abort --transactions=1',
+	0,
+	[qr{actually processed}],
+	[qr{^$}],
+	'nested ifs',
+	{
+		'pgbench_nested_if' => q(
+			\if false
+				SELECT 1 / 0;
+				\if true
+					SELECT 1 / 0;
+				\elif true
+					SELECT 1 / 0;
+				\else
+					SELECT 1 / 0;
+				\endif
+				SELECT 1 / 0;
+			\elif false
+				\if true
+					SELECT 1 / 0;
+				\elif true
+					SELECT 1 / 0;
+				\else
+					SELECT 1 / 0;
+				\endif
+			\else
+				\if false
+					SELECT 1 / 0;
+				\elif false
+					SELECT 1 / 0;
+				\else
+					SELECT 'correct';
+				\endif
+			\endif
+			\if true
+				SELECT 'correct';
+			\else
+				\if true
+					SELECT 1 / 0;
+				\elif true
+					SELECT 1 / 0;
+				\else
+					SELECT 1 / 0;
+				\endif
+			\endif
+		)
+	});
+
 # random determinism when seeded
 $node->safe_psql('postgres',
 	'CREATE UNLOGGED TABLE seeded_random(seed INT8 NOT NULL, rand TEXT NOT NULL, val INTEGER NOT NULL);'
