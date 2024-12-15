@@ -4926,10 +4926,8 @@ XmlTableGetValue(TableFuncScanState *state, int colnum,
 				 Oid typid, int32 typmod, bool *isnull)
 {
 #ifdef USE_LIBXML
-	XmlTableBuilderData *xtCxt;
 	Datum		result = (Datum) 0;
-	xmlNodePtr	cur;
-	char	   *cstr = NULL;
+	XmlTableBuilderData *xtCxt;
 	volatile xmlXPathObjectPtr xpathobj = NULL;
 
 	xtCxt = GetXmlTableBuilderPrivateData(state, "XmlTableGetValue");
@@ -4943,13 +4941,15 @@ XmlTableGetValue(TableFuncScanState *state, int colnum,
 
 	*isnull = false;
 
-	cur = xtCxt->xpathobj->nodesetval->nodeTab[xtCxt->row_count - 1];
-
 	Assert(xtCxt->xpathscomp[colnum] != NULL);
 
 	PG_TRY();
 	{
+		xmlNodePtr	cur;
+		char	   *cstr = NULL;
+
 		/* Set current node as entry point for XPath evaluation */
+		cur = xtCxt->xpathobj->nodesetval->nodeTab[xtCxt->row_count - 1];
 		xtCxt->xpathcxt->node = cur;
 
 		/* Evaluate column path */
