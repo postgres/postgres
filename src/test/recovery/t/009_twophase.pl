@@ -312,6 +312,7 @@ $cur_master->psql('postgres', "COMMIT PREPARED 'xact_009_12'");
 
 $cur_master->psql(
 	'postgres', "
+	SET synchronous_commit='remote_apply'; -- To ensure the standby is caught up
 	CREATE TABLE t_009_tbl_standby_mvcc (id int, msg text);
 	BEGIN;
 	INSERT INTO t_009_tbl_standby_mvcc VALUES (1, 'issued to ${cur_master_name}');
