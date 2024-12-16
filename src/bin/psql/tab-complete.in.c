@@ -5167,6 +5167,18 @@ match_previous_words(int pattern_id,
 /* ... JOIN ... */
 	else if (TailMatches("JOIN"))
 		COMPLETE_WITH_SCHEMA_QUERY_PLUS(Query_for_list_of_selectables, "LATERAL");
+	else if (TailMatches("JOIN", MatchAny) && !TailMatches("CROSS|NATURAL", "JOIN", MatchAny))
+		COMPLETE_WITH("ON", "USING (");
+	else if (TailMatches("JOIN", MatchAny, MatchAny) &&
+			 !TailMatches("CROSS|NATURAL", "JOIN", MatchAny, MatchAny) && !TailMatches("ON|USING"))
+		COMPLETE_WITH("ON", "USING (");
+	else if (TailMatches("JOIN", "LATERAL", MatchAny, MatchAny) &&
+			 !TailMatches("CROSS|NATURAL", "JOIN", "LATERAL", MatchAny, MatchAny) && !TailMatches("ON|USING"))
+		COMPLETE_WITH("ON", "USING (");
+	else if (TailMatches("JOIN", MatchAny, "USING") ||
+			 TailMatches("JOIN", MatchAny, MatchAny, "USING") ||
+			 TailMatches("JOIN", "LATERAL", MatchAny, MatchAny, "USING"))
+		COMPLETE_WITH("(");
 
 /* ... AT [ LOCAL | TIME ZONE ] ... */
 	else if (TailMatches("AT"))
