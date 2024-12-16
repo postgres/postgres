@@ -5166,7 +5166,7 @@ match_previous_words(int pattern_id,
 
 /* ... JOIN ... */
 	else if (TailMatches("JOIN"))
-		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_selectables);
+		COMPLETE_WITH_SCHEMA_QUERY_PLUS(Query_for_list_of_selectables, "LATERAL");
 
 /* ... AT [ LOCAL | TIME ZONE ] ... */
 	else if (TailMatches("AT"))
