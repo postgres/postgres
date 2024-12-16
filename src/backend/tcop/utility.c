@@ -1712,7 +1712,7 @@ ProcessUtilitySlow(ParseState *pstate,
 				break;
 
 			case T_CreateDomainStmt:
-				address = DefineDomain((CreateDomainStmt *) parsetree);
+				address = DefineDomain(pstate, (CreateDomainStmt *) parsetree);
 				break;
 
 			case T_CreateConversionStmt:

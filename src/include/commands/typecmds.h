@@ -23,7 +23,7 @@
 
 extern ObjectAddress DefineType(ParseState *pstate, List *names, List *parameters);
 extern void RemoveTypeById(Oid typeOid);
-extern ObjectAddress DefineDomain(CreateDomainStmt *stmt);
+extern ObjectAddress DefineDomain(ParseState *pstate, CreateDomainStmt *stmt);
 extern ObjectAddress DefineEnum(CreateEnumStmt *stmt);
 extern ObjectAddress DefineRange(ParseState *pstate, CreateRangeStmt *stmt);
 extern ObjectAddress AlterEnum(AlterEnumStmt *stmt);

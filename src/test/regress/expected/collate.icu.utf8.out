@@ -120,6 +120,8 @@ LINE 1: ...* FROM collate_test1 WHERE b COLLATE "C" >= 'bbc' COLLATE "e...
 CREATE DOMAIN testdomain_sv AS text COLLATE "sv-x-icu";
 CREATE DOMAIN testdomain_i AS int COLLATE "sv-x-icu"; -- fails
 ERROR:  collations are not supported by type integer
+LINE 1: CREATE DOMAIN testdomain_i AS int COLLATE "sv-x-icu";
+                                      ^
 CREATE TABLE collate_test4 (
     a int,
     b testdomain_sv
