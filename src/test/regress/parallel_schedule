@@ -36,7 +36,7 @@ test: geometry horology tstypes regex type_sanity opr_sanity misc_sanity comment
 # execute two copy tests in parallel, to check that copy itself
 # is concurrent safe.
 # ----------
-test: copy copyselect copydml insert insert_conflict
+test: copy copyselect copydml copyencoding insert insert_conflict
 
 # ----------
 # More groups of parallel tests
