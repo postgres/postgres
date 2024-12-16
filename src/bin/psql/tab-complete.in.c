@@ -2999,6 +2999,9 @@ match_previous_words(int pattern_id,
 	 */
 	else if (Matches("ALTER", "TYPE", MatchAny, "ALTER|DROP|RENAME", "ATTRIBUTE"))
 		COMPLETE_WITH_ATTR(prev3_wd);
+	/* complete ALTER TYPE ADD ATTRIBUTE <foo> with list of types */
+	else if (Matches("ALTER", "TYPE", MatchAny, "ADD", "ATTRIBUTE", MatchAny))
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_datatypes);
 	/* ALTER TYPE ALTER ATTRIBUTE <foo> */
 	else if (Matches("ALTER", "TYPE", MatchAny, "ALTER", "ATTRIBUTE", MatchAny))
 		COMPLETE_WITH("TYPE");
