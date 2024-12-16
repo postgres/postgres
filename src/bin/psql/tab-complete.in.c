@@ -2992,6 +2992,9 @@ match_previous_words(int pattern_id,
 	/* ALTER TYPE xxx RENAME (ATTRIBUTE|VALUE) yyy */
 	else if (Matches("ALTER", "TYPE", MatchAny, "RENAME", "ATTRIBUTE|VALUE", MatchAny))
 		COMPLETE_WITH("TO");
+	/* ALTER TYPE xxx RENAME ATTRIBUTE yyy TO zzz */
+	else if (Matches("ALTER", "TYPE", MatchAny, "RENAME", "ATTRIBUTE", MatchAny, "TO", MatchAny))
+		COMPLETE_WITH("CASCADE", "RESTRICT");
 
 	/*
 	 * If we have ALTER TYPE <sth> ALTER/DROP/RENAME ATTRIBUTE, provide list
@@ -3002,9 +3005,18 @@ match_previous_words(int pattern_id,
 	/* complete ALTER TYPE ADD ATTRIBUTE <foo> with list of types */
 	else if (Matches("ALTER", "TYPE", MatchAny, "ADD", "ATTRIBUTE", MatchAny))
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_datatypes);
+	/* complete ALTER TYPE ADD ATTRIBUTE <foo> <footype> with CASCADE/RESTRICT */
+	else if (Matches("ALTER", "TYPE", MatchAny, "ADD", "ATTRIBUTE", MatchAny, MatchAny))
+		COMPLETE_WITH("CASCADE", "RESTRICT");
+	/* complete ALTER TYPE DROP ATTRIBUTE <foo> with CASCADE/RESTRICT */
+	else if (Matches("ALTER", "TYPE", MatchAny, "DROP", "ATTRIBUTE", MatchAny))
+		COMPLETE_WITH("CASCADE", "RESTRICT");
 	/* ALTER TYPE ALTER ATTRIBUTE <foo> */
 	else if (Matches("ALTER", "TYPE", MatchAny, "ALTER", "ATTRIBUTE", MatchAny))
 		COMPLETE_WITH("TYPE");
+	/* ALTER TYPE ALTER ATTRIBUTE <foo> TYPE <footype> */
+	else if (Matches("ALTER", "TYPE", MatchAny, "ALTER", "ATTRIBUTE", MatchAny, "TYPE", MatchAny))
+		COMPLETE_WITH("CASCADE", "RESTRICT");
 	/* complete ALTER TYPE <sth> RENAME VALUE with list of enum values */
 	else if (Matches("ALTER", "TYPE", MatchAny, "RENAME", "VALUE"))
 		COMPLETE_WITH_ENUM_VALUE(prev3_wd);
