@@ -262,7 +262,7 @@ set_principal_key_with_keyring(const char *key_name, GenericKeyring *keyring,
 		keyInfo = load_latest_versioned_key_name(&principalKey->keyInfo, keyring, ensure_new_key);
 
 		if (keyInfo == NULL)
-			keyInfo = KeyringGenerateNewKeyAndStore(keyring, principalKey->keyInfo.keyId.versioned_name, INTERNAL_KEY_LEN, false);
+			keyInfo = KeyringGenerateNewKeyAndStore(keyring, principalKey->keyInfo.keyId.versioned_name, INTERNAL_KEY_LEN, true);
 
 		if (keyInfo == NULL)
 		{
@@ -424,7 +424,7 @@ RotatePrincipalKey(TDEPrincipalKey *current_key, const char *new_key_name, const
 	keyInfo = load_latest_versioned_key_name(&new_principal_key.keyInfo, keyring, ensure_new_key);
 
 	if (keyInfo == NULL)
-		keyInfo = KeyringGenerateNewKeyAndStore(keyring, new_principal_key.keyInfo.keyId.versioned_name, INTERNAL_KEY_LEN, false);
+		keyInfo = KeyringGenerateNewKeyAndStore(keyring, new_principal_key.keyInfo.keyId.versioned_name, INTERNAL_KEY_LEN, true);
 
 	if (keyInfo == NULL)
 	{
@@ -496,9 +496,10 @@ load_latest_versioned_key_name(TDEPrincipalKeyInfo *principal_key_info, GenericK
 		 */
 		if (kr_ret != KEYRING_CODE_SUCCESS && kr_ret != KEYRING_CODE_RESOURCE_NOT_AVAILABLE)
 		{
-			ereport(FATAL,
+			ereport(ERROR,
 					(errmsg("failed to retrieve principal key from keyring provider :\"%s\"", keyring->provider_name),
 					 errdetail("Error code: %d", kr_ret)));
+			return NULL;
 		}
 		if (keyInfo == NULL)
 		{
@@ -531,6 +532,7 @@ load_latest_versioned_key_name(TDEPrincipalKeyInfo *principal_key_info, GenericK
 		{
 			ereport(ERROR,
 					(errmsg("failed to retrieve principal key. %d versions already exist", MAX_PRINCIPAL_KEY_VERSION_NUM)));
+			return NULL;
 		}
 	}
 	return NULL;				/* Just to keep compiler quite */

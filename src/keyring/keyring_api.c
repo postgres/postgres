@@ -164,6 +164,8 @@ KeyringGenerateNewKeyAndStore(GenericKeyring *keyring, const char *key_name, uns
 	if (KeyringStoreKey(keyring, key, throw_error) != KEYRING_CODE_SUCCESS)
 	{
 		pfree(key);
+		ereport(ereport_level,
+			(errmsg("Failed to store key on keyring. Please check the keyring configuration.")));
 		return NULL;
 	}
 	return key;

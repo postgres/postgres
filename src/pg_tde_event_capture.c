@@ -68,7 +68,6 @@ pg_tde_ddl_command_start_capture(PG_FUNCTION_ARGS)
 	trigdata = (EventTriggerData *) fcinfo->context;
 	parsetree = trigdata->parsetree;
 
-	elog(LOG, "EVENT TRIGGER (%s) %s", trigdata->event, nodeToString(parsetree));
 	reset_current_tde_create_event();
 
 	if (IsA(parsetree, IndexStmt))

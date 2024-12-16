@@ -177,7 +177,7 @@ pg_tde_create_key_map_entry(const RelFileLocator *newrlocator, uint32 entry_type
 	if (!RAND_bytes(int_key.key, INTERNAL_KEY_LEN))
 	{
 		LWLockRelease(lock_pk);
-		ereport(FATAL,
+		ereport(ERROR,
 				(errcode(ERRCODE_INTERNAL_ERROR),
 				 errmsg("could not generate internal key for relation \"%s\": %s",
 						"TODO", ERR_error_string(ERR_get_error(), NULL))));
@@ -439,8 +439,9 @@ pg_tde_write_one_map_entry(int fd, const RelFileLocator *rlocator, uint32 flags,
 	{
 		char db_map_path[MAXPGPATH] = {0};
 
+		// TODO: this seems like a bad idea?
 		pg_tde_set_db_file_paths(rlocator->dbOid, db_map_path, NULL);
-		ereport(FATAL,
+		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not write tde map file \"%s\": %m",
 						db_map_path)));
@@ -449,6 +450,7 @@ pg_tde_write_one_map_entry(int fd, const RelFileLocator *rlocator, uint32 flags,
 	{
 		char db_map_path[MAXPGPATH] = {0};
 
+		// TODO: this seems like a bad idea?
 		pg_tde_set_db_file_paths(rlocator->dbOid, db_map_path, NULL);
 		ereport(data_sync_elevel(ERROR),
 				(errcode_for_file_access(),
@@ -500,7 +502,8 @@ pg_tde_write_one_keydata(int fd, int32 key_index, RelKeyData *enc_rel_key_data)
 	/* TODO: pgstat_report_wait_start / pgstat_report_wait_end */
 	if (pg_pwrite(fd, &enc_rel_key_data->internal_key, INTERNAL_KEY_DAT_LEN, curr_pos) != INTERNAL_KEY_DAT_LEN)
 	{
-		ereport(FATAL,
+		// TODO: what now? File is corrupted
+		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not write tde key data file: %m")));
 	}
@@ -1022,10 +1025,11 @@ pg_tde_process_map_entry(const RelFileLocator *rlocator, uint32 key_type, char *
 
 		if (curr_pos == -1)
 		{
-			ereport(FATAL,
+			ereport(ERROR,
 					(errcode_for_file_access(),
 					 errmsg("could not seek in tde map file \"%s\": %m",
 							db_map_path)));
+			return curr_pos;
 		}
 	}
 	else
@@ -1117,7 +1121,7 @@ tde_decrypt_rel_key(TDEPrincipalKey *principal_key, RelKeyData *enc_rel_key_data
  * Open and Validate File Header [pg_tde.*]:
  * 		header: {Format Version, Principal Key Name}
  *
- * Returns the file descriptor in case of a success. Otherwise, fatal error
+ * Returns the file descriptor in case of a success. Otherwise, error
  * is raised.
  *
  * Also, it sets the is_new_file to true if the file is just created. This is
@@ -1160,7 +1164,7 @@ pg_tde_open_file(char *tde_filename, TDEPrincipalKeyInfo *principal_key_info, bo
 /*
  * Open a TDE file [pg_tde.*]:
  *
- * Returns the file descriptor in case of a success. Otherwise, fatal error
+ * Returns the file descriptor in case of a success. Otherwise, error
  * is raised except when ignore_missing is true and the file does not exit.
  */
 static int
