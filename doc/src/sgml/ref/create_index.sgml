@@ -808,7 +808,7 @@ Indexes:
    leveraging multiple CPUs in order to process the table rows faster.
    This feature is known as <firstterm>parallel index
    build</firstterm>.  For index methods that support building indexes
-   in parallel (currently, only B-tree),
+   in parallel (currently, B-tree and BRIN),
    <varname>maintenance_work_mem</varname> specifies the maximum
    amount of memory that can be used by each index build operation as
    a whole, regardless of how many worker processes were started.
