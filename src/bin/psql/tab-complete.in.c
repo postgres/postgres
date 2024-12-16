@@ -3629,7 +3629,7 @@ match_previous_words(int pattern_id,
 			 TailMatches("CREATE", "UNLOGGED", "TABLE", MatchAny, "(*)"))
 		COMPLETE_WITH("AS", "INHERITS (", "PARTITION BY", "USING", "TABLESPACE", "WITH (");
 	else if (TailMatches("CREATE", "TEMP|TEMPORARY", "TABLE", MatchAny, "(*)"))
-		COMPLETE_WITH("AS", "INHERITS (", "ON COMMIT", "PARTITION BY",
+		COMPLETE_WITH("AS", "INHERITS (", "ON COMMIT", "PARTITION BY", "USING",
 					  "TABLESPACE", "WITH (");
 	/* Complete CREATE TABLE (...) USING with table access methods */
 	else if (TailMatches("CREATE", "TABLE", MatchAny, "(*)", "USING") ||
