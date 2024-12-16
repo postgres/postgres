@@ -1571,52 +1571,6 @@ str_numth(char *dest, char *num, int type)
  *			upper/lower/initcap functions
  *****************************************************************************/
 
-#ifdef USE_ICU
-
-typedef int32_t (*ICU_Convert_Func) (UChar *dest, int32_t destCapacity,
-									 const UChar *src, int32_t srcLength,
-									 const char *locale,
-									 UErrorCode *pErrorCode);
-
-static int32_t
-icu_convert_case(ICU_Convert_Func func, pg_locale_t mylocale,
-				 UChar **buff_dest, UChar *buff_source, int32_t len_source)
-{
-	UErrorCode	status;
-	int32_t		len_dest;
-
-	len_dest = len_source;		/* try first with same length */
-	*buff_dest = palloc(len_dest * sizeof(**buff_dest));
-	status = U_ZERO_ERROR;
-	len_dest = func(*buff_dest, len_dest, buff_source, len_source,
-					mylocale->info.icu.locale, &status);
-	if (status == U_BUFFER_OVERFLOW_ERROR)
-	{
-		/* try again with adjusted length */
-		pfree(*buff_dest);
-		*buff_dest = palloc(len_dest * sizeof(**buff_dest));
-		status = U_ZERO_ERROR;
-		len_dest = func(*buff_dest, len_dest, buff_source, len_source,
-						mylocale->info.icu.locale, &status);
-	}
-	if (U_FAILURE(status))
-		ereport(ERROR,
-				(errmsg("case conversion failed: %s", u_errorName(status))));
-	return len_dest;
-}
-
-static int32_t
-u_strToTitle_default_BI(UChar *dest, int32_t destCapacity,
-						const UChar *src, int32_t srcLength,
-						const char *locale,
-						UErrorCode *pErrorCode)
-{
-	return u_strToTitle(dest, destCapacity, src, srcLength,
-						NULL, locale, pErrorCode);
-}
-
-#endif							/* USE_ICU */
-
 /*
  * If the system provides the needed functions for wide-character manipulation
  * (which are all standardized by C99), then we implement upper/lower/initcap
@@ -1664,106 +1618,28 @@ str_tolower(const char *buff, size_t nbytes, Oid collid)
 	}
 	else
 	{
-#ifdef USE_ICU
-		if (mylocale->provider == COLLPROVIDER_ICU)
+		const char *src = buff;
+		size_t		srclen = nbytes;
+		size_t		dstsize;
+		char	   *dst;
+		size_t		needed;
+
+		/* first try buffer of equal size plus terminating NUL */
+		dstsize = srclen + 1;
+		dst = palloc(dstsize);
+
+		needed = pg_strlower(dst, dstsize, src, srclen, mylocale);
+		if (needed + 1 > dstsize)
 		{
-			int32_t		len_uchar;
-			int32_t		len_conv;
-			UChar	   *buff_uchar;
-			UChar	   *buff_conv;
-
-			len_uchar = icu_to_uchar(&buff_uchar, buff, nbytes);
-			len_conv = icu_convert_case(u_strToLower, mylocale,
-										&buff_conv, buff_uchar, len_uchar);
-			icu_from_uchar(&result, buff_conv, len_conv);
-			pfree(buff_uchar);
-			pfree(buff_conv);
+			/* grow buffer if needed and retry */
+			dstsize = needed + 1;
+			dst = repalloc(dst, dstsize);
+			needed = pg_strlower(dst, dstsize, src, srclen, mylocale);
+			Assert(needed + 1 <= dstsize);
 		}
-		else
-#endif
-		if (mylocale->provider == COLLPROVIDER_BUILTIN)
-		{
-			const char *src = buff;
-			size_t		srclen = nbytes;
-			size_t		dstsize;
-			char	   *dst;
-			size_t		needed;
 
-			Assert(GetDatabaseEncoding() == PG_UTF8);
-
-			/* first try buffer of equal size plus terminating NUL */
-			dstsize = srclen + 1;
-			dst = palloc(dstsize);
-
-			needed = unicode_strlower(dst, dstsize, src, srclen);
-			if (needed + 1 > dstsize)
-			{
-				/* grow buffer if needed and retry */
-				dstsize = needed + 1;
-				dst = repalloc(dst, dstsize);
-				needed = unicode_strlower(dst, dstsize, src, srclen);
-				Assert(needed + 1 == dstsize);
-			}
-
-			Assert(dst[needed] == '\0');
-			result = dst;
-		}
-		else
-		{
-			Assert(mylocale->provider == COLLPROVIDER_LIBC);
-
-			if (pg_database_encoding_max_length() > 1)
-			{
-				wchar_t    *workspace;
-				size_t		curr_char;
-				size_t		result_size;
-
-				/* Overflow paranoia */
-				if ((nbytes + 1) > (INT_MAX / sizeof(wchar_t)))
-					ereport(ERROR,
-							(errcode(ERRCODE_OUT_OF_MEMORY),
-							 errmsg("out of memory")));
-
-				/* Output workspace cannot have more codes than input bytes */
-				workspace = (wchar_t *) palloc((nbytes + 1) * sizeof(wchar_t));
-
-				char2wchar(workspace, nbytes + 1, buff, nbytes, mylocale);
-
-				for (curr_char = 0; workspace[curr_char] != 0; curr_char++)
-					workspace[curr_char] = towlower_l(workspace[curr_char], mylocale->info.lt);
-
-				/*
-				 * Make result large enough; case change might change number
-				 * of bytes
-				 */
-				result_size = curr_char * pg_database_encoding_max_length() + 1;
-				result = palloc(result_size);
-
-				wchar2char(result, workspace, result_size, mylocale);
-				pfree(workspace);
-			}
-			else
-			{
-				char	   *p;
-
-				result = pnstrdup(buff, nbytes);
-
-				/*
-				 * Note: we assume that tolower_l() will not be so broken as
-				 * to need an isupper_l() guard test.  When using the default
-				 * collation, we apply the traditional Postgres behavior that
-				 * forces ASCII-style treatment of I/i, but in non-default
-				 * collations you get exactly what the collation says.
-				 */
-				for (p = result; *p; p++)
-				{
-					if (mylocale->is_default)
-						*p = pg_tolower((unsigned char) *p);
-					else
-						*p = tolower_l((unsigned char) *p, mylocale->info.lt);
-				}
-			}
-		}
+		Assert(dst[needed] == '\0');
+		result = dst;
 	}
 
 	return result;
@@ -1806,150 +1682,31 @@ str_toupper(const char *buff, size_t nbytes, Oid collid)
 	}
 	else
 	{
-#ifdef USE_ICU
-		if (mylocale->provider == COLLPROVIDER_ICU)
+		const char *src = buff;
+		size_t		srclen = nbytes;
+		size_t		dstsize;
+		char	   *dst;
+		size_t		needed;
+
+		/* first try buffer of equal size plus terminating NUL */
+		dstsize = srclen + 1;
+		dst = palloc(dstsize);
+
+		needed = pg_strupper(dst, dstsize, src, srclen, mylocale);
+		if (needed + 1 > dstsize)
 		{
-			int32_t		len_uchar,
-						len_conv;
-			UChar	   *buff_uchar;
-			UChar	   *buff_conv;
-
-			len_uchar = icu_to_uchar(&buff_uchar, buff, nbytes);
-			len_conv = icu_convert_case(u_strToUpper, mylocale,
-										&buff_conv, buff_uchar, len_uchar);
-			icu_from_uchar(&result, buff_conv, len_conv);
-			pfree(buff_uchar);
-			pfree(buff_conv);
+			/* grow buffer if needed and retry */
+			dstsize = needed + 1;
+			dst = repalloc(dst, dstsize);
+			needed = pg_strupper(dst, dstsize, src, srclen, mylocale);
+			Assert(needed + 1 <= dstsize);
 		}
-		else
-#endif
-		if (mylocale->provider == COLLPROVIDER_BUILTIN)
-		{
-			const char *src = buff;
-			size_t		srclen = nbytes;
-			size_t		dstsize;
-			char	   *dst;
-			size_t		needed;
 
-			Assert(GetDatabaseEncoding() == PG_UTF8);
-
-			/* first try buffer of equal size plus terminating NUL */
-			dstsize = srclen + 1;
-			dst = palloc(dstsize);
-
-			needed = unicode_strupper(dst, dstsize, src, srclen);
-			if (needed + 1 > dstsize)
-			{
-				/* grow buffer if needed and retry */
-				dstsize = needed + 1;
-				dst = repalloc(dst, dstsize);
-				needed = unicode_strupper(dst, dstsize, src, srclen);
-				Assert(needed + 1 == dstsize);
-			}
-
-			Assert(dst[needed] == '\0');
-			result = dst;
-		}
-		else
-		{
-			Assert(mylocale->provider == COLLPROVIDER_LIBC);
-
-			if (pg_database_encoding_max_length() > 1)
-			{
-				wchar_t    *workspace;
-				size_t		curr_char;
-				size_t		result_size;
-
-				/* Overflow paranoia */
-				if ((nbytes + 1) > (INT_MAX / sizeof(wchar_t)))
-					ereport(ERROR,
-							(errcode(ERRCODE_OUT_OF_MEMORY),
-							 errmsg("out of memory")));
-
-				/* Output workspace cannot have more codes than input bytes */
-				workspace = (wchar_t *) palloc((nbytes + 1) * sizeof(wchar_t));
-
-				char2wchar(workspace, nbytes + 1, buff, nbytes, mylocale);
-
-				for (curr_char = 0; workspace[curr_char] != 0; curr_char++)
-					workspace[curr_char] = towupper_l(workspace[curr_char], mylocale->info.lt);
-
-				/*
-				 * Make result large enough; case change might change number
-				 * of bytes
-				 */
-				result_size = curr_char * pg_database_encoding_max_length() + 1;
-				result = palloc(result_size);
-
-				wchar2char(result, workspace, result_size, mylocale);
-				pfree(workspace);
-			}
-			else
-			{
-				char	   *p;
-
-				result = pnstrdup(buff, nbytes);
-
-				/*
-				 * Note: we assume that toupper_l() will not be so broken as
-				 * to need an islower_l() guard test.  When using the default
-				 * collation, we apply the traditional Postgres behavior that
-				 * forces ASCII-style treatment of I/i, but in non-default
-				 * collations you get exactly what the collation says.
-				 */
-				for (p = result; *p; p++)
-				{
-					if (mylocale->is_default)
-						*p = pg_toupper((unsigned char) *p);
-					else
-						*p = toupper_l((unsigned char) *p, mylocale->info.lt);
-				}
-			}
-		}
+		Assert(dst[needed] == '\0');
+		result = dst;
 	}
 
 	return result;
-}
-
-struct WordBoundaryState
-{
-	const char *str;
-	size_t		len;
-	size_t		offset;
-	bool		init;
-	bool		prev_alnum;
-};
-
-/*
- * Simple word boundary iterator that draws boundaries each time the result of
- * pg_u_isalnum() changes.
- */
-static size_t
-initcap_wbnext(void *state)
-{
-	struct WordBoundaryState *wbstate = (struct WordBoundaryState *) state;
-
-	while (wbstate->offset < wbstate->len &&
-		   wbstate->str[wbstate->offset] != '\0')
-	{
-		pg_wchar	u = utf8_to_unicode((unsigned char *) wbstate->str +
-										wbstate->offset);
-		bool		curr_alnum = pg_u_isalnum(u, true);
-
-		if (!wbstate->init || curr_alnum != wbstate->prev_alnum)
-		{
-			size_t		prev_offset = wbstate->offset;
-
-			wbstate->init = true;
-			wbstate->offset += unicode_utf8len(u);
-			wbstate->prev_alnum = curr_alnum;
-			return prev_offset;
-		}
-
-		wbstate->offset += unicode_utf8len(u);
-	}
-
-	return wbstate->len;
 }
 
 /*
@@ -1962,7 +1719,6 @@ char *
 str_initcap(const char *buff, size_t nbytes, Oid collid)
 {
 	char	   *result;
-	int			wasalnum = false;
 	pg_locale_t mylocale;
 
 	if (!buff)
@@ -1990,135 +1746,28 @@ str_initcap(const char *buff, size_t nbytes, Oid collid)
 	}
 	else
 	{
-#ifdef USE_ICU
-		if (mylocale->provider == COLLPROVIDER_ICU)
+		const char *src = buff;
+		size_t		srclen = nbytes;
+		size_t		dstsize;
+		char	   *dst;
+		size_t		needed;
+
+		/* first try buffer of equal size plus terminating NUL */
+		dstsize = srclen + 1;
+		dst = palloc(dstsize);
+
+		needed = pg_strtitle(dst, dstsize, src, srclen, mylocale);
+		if (needed + 1 > dstsize)
 		{
-			int32_t		len_uchar,
-						len_conv;
-			UChar	   *buff_uchar;
-			UChar	   *buff_conv;
-
-			len_uchar = icu_to_uchar(&buff_uchar, buff, nbytes);
-			len_conv = icu_convert_case(u_strToTitle_default_BI, mylocale,
-										&buff_conv, buff_uchar, len_uchar);
-			icu_from_uchar(&result, buff_conv, len_conv);
-			pfree(buff_uchar);
-			pfree(buff_conv);
+			/* grow buffer if needed and retry */
+			dstsize = needed + 1;
+			dst = repalloc(dst, dstsize);
+			needed = pg_strtitle(dst, dstsize, src, srclen, mylocale);
+			Assert(needed + 1 <= dstsize);
 		}
-		else
-#endif
-		if (mylocale->provider == COLLPROVIDER_BUILTIN)
-		{
-			const char *src = buff;
-			size_t		srclen = nbytes;
-			size_t		dstsize;
-			char	   *dst;
-			size_t		needed;
-			struct WordBoundaryState wbstate = {
-				.str = src,
-				.len = srclen,
-				.offset = 0,
-				.init = false,
-				.prev_alnum = false,
-			};
 
-			Assert(GetDatabaseEncoding() == PG_UTF8);
-
-			/* first try buffer of equal size plus terminating NUL */
-			dstsize = srclen + 1;
-			dst = palloc(dstsize);
-
-			needed = unicode_strtitle(dst, dstsize, src, srclen,
-									  initcap_wbnext, &wbstate);
-			if (needed + 1 > dstsize)
-			{
-				/* reset iterator */
-				wbstate.offset = 0;
-				wbstate.init = false;
-
-				/* grow buffer if needed and retry */
-				dstsize = needed + 1;
-				dst = repalloc(dst, dstsize);
-				needed = unicode_strtitle(dst, dstsize, src, srclen,
-										  initcap_wbnext, &wbstate);
-				Assert(needed + 1 == dstsize);
-			}
-
-			result = dst;
-		}
-		else
-		{
-			Assert(mylocale->provider == COLLPROVIDER_LIBC);
-
-			if (pg_database_encoding_max_length() > 1)
-			{
-				wchar_t    *workspace;
-				size_t		curr_char;
-				size_t		result_size;
-
-				/* Overflow paranoia */
-				if ((nbytes + 1) > (INT_MAX / sizeof(wchar_t)))
-					ereport(ERROR,
-							(errcode(ERRCODE_OUT_OF_MEMORY),
-							 errmsg("out of memory")));
-
-				/* Output workspace cannot have more codes than input bytes */
-				workspace = (wchar_t *) palloc((nbytes + 1) * sizeof(wchar_t));
-
-				char2wchar(workspace, nbytes + 1, buff, nbytes, mylocale);
-
-				for (curr_char = 0; workspace[curr_char] != 0; curr_char++)
-				{
-					if (wasalnum)
-						workspace[curr_char] = towlower_l(workspace[curr_char], mylocale->info.lt);
-					else
-						workspace[curr_char] = towupper_l(workspace[curr_char], mylocale->info.lt);
-					wasalnum = iswalnum_l(workspace[curr_char], mylocale->info.lt);
-				}
-
-				/*
-				 * Make result large enough; case change might change number
-				 * of bytes
-				 */
-				result_size = curr_char * pg_database_encoding_max_length() + 1;
-				result = palloc(result_size);
-
-				wchar2char(result, workspace, result_size, mylocale);
-				pfree(workspace);
-			}
-			else
-			{
-				char	   *p;
-
-				result = pnstrdup(buff, nbytes);
-
-				/*
-				 * Note: we assume that toupper_l()/tolower_l() will not be so
-				 * broken as to need guard tests.  When using the default
-				 * collation, we apply the traditional Postgres behavior that
-				 * forces ASCII-style treatment of I/i, but in non-default
-				 * collations you get exactly what the collation says.
-				 */
-				for (p = result; *p; p++)
-				{
-					if (mylocale->is_default)
-					{
-						if (wasalnum)
-							*p = pg_tolower((unsigned char) *p);
-						else
-							*p = pg_toupper((unsigned char) *p);
-					}
-					else
-					{
-						if (wasalnum)
-							*p = tolower_l((unsigned char) *p, mylocale->info.lt);
-						else
-							*p = toupper_l((unsigned char) *p, mylocale->info.lt);
-					}
-					wasalnum = isalnum_l((unsigned char) *p, mylocale->info.lt);
-				}
-			}
-		}
+		Assert(dst[needed] == '\0');
+		result = dst;
 	}
 
 	return result;
