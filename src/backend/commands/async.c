@@ -211,6 +211,15 @@ typedef struct QueuePosition
 	 (x).page != (y).page ? (x) : \
 	 (x).offset > (y).offset ? (x) : (y))
 
+/* Struct holding an array of hash values of active channels */
+#define LISTEN_HASH_BITS	8
+#define LISTEN_HASH_LENGTH	(1 << LISTEN_HASH_BITS)
+#define LISTEN_HASH_MASK	(LISTEN_HASH_LENGTH - 1)
+typedef struct ListenHashValues
+{
+	bool	hit[1 << LISTEN_HASH_BITS];
+} ListenHashValues;
+
 /*
  * Struct describing a listening backend's status
  */
@@ -218,7 +227,11 @@ typedef struct QueueBackendStatus
 {
 	int32		pid;			/* either a PID or InvalidPid */
 	Oid			dboid;			/* backend's database OID, or InvalidOid */
+	int			nextListener;	/* backendid of next listener, 0=last */
 	QueuePosition pos;			/* backend has read queue up to here */
+	ListenHashValues	listenHash;	/* backend actively listening to a notify with this hash */
+	bool signal;
+	bool signalled;
 } QueueBackendStatus;
 
 /*
@@ -253,6 +266,7 @@ typedef struct AsyncQueueControl
 	int			stopPage;		/* oldest unrecycled page; must be <=
 								 * tail.page */
 	TimestampTz lastQueueFillWarn;	/* time of last queue-full msg */
+	int			firstListener;	/* backendId of first listener, 0=none */
 	QueueBackendStatus backend[FLEXIBLE_ARRAY_MEMBER];
 	/* backend[0] is not used; used entries are from [1] to [MaxBackends] */
 } AsyncQueueControl;
@@ -264,7 +278,14 @@ static AsyncQueueControl *asyncQueueControl;
 #define QUEUE_STOP_PAGE				(asyncQueueControl->stopPage)
 #define QUEUE_BACKEND_PID(i)		(asyncQueueControl->backend[i].pid)
 #define QUEUE_BACKEND_DBOID(i)		(asyncQueueControl->backend[i].dboid)
-#define QUEUE_BACKEND_POS(i)		(asyncQueueControl->backend[i].pos)
+#define QUEUE_LISTENER_NEXT(i)		(asyncQueueControl->backend[i].nextListener)
+#define QUEUE_BACKEND_POS_VAL(i)	(asyncQueueControl->backend[i].pos)
+#define QUEUE_BACKEND_POS(i)		(QUEUE_POS_MAX(QUEUE_TAIL, asyncQueueControl->backend[i].pos))
+#define QUEUE_BACKEND_HASH(i,h)		(asyncQueueControl->backend[i].listenHash.hit[h])
+#define QUEUE_BACKEND_SIGNAL(i)		(asyncQueueControl->backend[i].signal)
+#define QUEUE_BACKEND_SIGNALLED(i)	(asyncQueueControl->backend[i].signalled)
+
+#define QUEUE_FIRST_LISTENER		(asyncQueueControl->firstListener)
 
 /*
  * The SLRU buffer area through which we access the notification queue
@@ -402,6 +423,18 @@ static void ProcessIncomingNotify(void);
 static bool AsyncExistsPendingNotify(const char *channel, const char *payload);
 static void ClearPendingActionsAndNotifies(void);
 
+static unsigned long
+listen_hash(const char *channel)
+{
+	unsigned char c;
+	unsigned long hash = 5381;
+
+	while ( (c = (unsigned char)(*channel++)) )
+		hash = hash * 33 ^ c;
+
+	return hash&LISTEN_HASH_MASK;
+}
+
 /*
  * We will work on the page range of 0..QUEUE_MAX_PAGE.
  *
@@ -476,12 +509,14 @@ AsyncShmemInit(void)
 		SET_QUEUE_POS(QUEUE_TAIL, 0, 0);
 		QUEUE_STOP_PAGE = 0;
 		asyncQueueControl->lastQueueFillWarn = 0;
+		QUEUE_FIRST_LISTENER = 0;
 		/* zero'th entry won't be used, but let's initialize it anyway */
 		for (i = 0; i <= MaxBackends; i++)
 		{
 			QUEUE_BACKEND_PID(i) = InvalidPid;
 			QUEUE_BACKEND_DBOID(i) = InvalidOid;
-			SET_QUEUE_POS(QUEUE_BACKEND_POS(i), 0, 0);
+			QUEUE_LISTENER_NEXT(i) = InvalidBackendId;
+			SET_QUEUE_POS(QUEUE_BACKEND_POS_VAL(i), 0, 0);
 		}
 	}
 
@@ -763,7 +798,8 @@ AtPrepare_Notify(void)
 	if (pendingActions || pendingNotifies)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("cannot PREPARE a transaction that has executed LISTEN, UNLISTEN, or NOTIFY")));
+				 errmsg("cannot PREPARE a transaction that has executed LISTEN,"
+					 " UNLISTEN, or NOTIFY")));
 }
 
 /*
@@ -933,6 +969,7 @@ Exec_ListenPreCommit(void)
 	QueuePosition head;
 	QueuePosition max;
 	int			i;
+	int			prevListener;
 
 	/*
 	 * Nothing to do if we are already listening to something, nor if we
@@ -978,17 +1015,30 @@ Exec_ListenPreCommit(void)
 	LWLockAcquire(AsyncQueueLock, LW_EXCLUSIVE);
 	head = QUEUE_HEAD;
 	max = QUEUE_TAIL;
+	prevListener = 0;
 	if (QUEUE_POS_PAGE(max) != QUEUE_POS_PAGE(head))
 	{
-		for (i = 1; i <= MaxBackends; i++)
+		for (i = QUEUE_FIRST_LISTENER; i; i = QUEUE_LISTENER_NEXT(i))
 		{
+			/* Find last listening backend before this one */
+			if (i < MyBackendId)
+				prevListener = i;
 			if (QUEUE_BACKEND_DBOID(i) == MyDatabaseId)
 				max = QUEUE_POS_MAX(max, QUEUE_BACKEND_POS(i));
 		}
 	}
-	QUEUE_BACKEND_POS(MyBackendId) = max;
+	QUEUE_BACKEND_POS_VAL(MyBackendId) = max;
 	QUEUE_BACKEND_PID(MyBackendId) = MyProcPid;
 	QUEUE_BACKEND_DBOID(MyBackendId) = MyDatabaseId;
+
+	/* Insert backend into list of listeners */
+	if (prevListener == 0) {
+		QUEUE_LISTENER_NEXT(MyBackendId) = QUEUE_FIRST_LISTENER;
+		QUEUE_FIRST_LISTENER = MyBackendId;
+	} else {
+		QUEUE_LISTENER_NEXT(MyBackendId) = QUEUE_LISTENER_NEXT(prevListener);
+		QUEUE_LISTENER_NEXT(prevListener) = MyBackendId;
+	}
 	LWLockRelease(AsyncQueueLock);
 
 	/* Now we are listed in the global array, so remember we're listening */
@@ -1035,6 +1085,12 @@ Exec_ListenCommit(const char *channel)
 	oldcontext = MemoryContextSwitchTo(TopMemoryContext);
 	listenChannels = lappend(listenChannels, pstrdup(channel));
 	MemoryContextSwitchTo(oldcontext);
+
+	/* Mark the listen hash to true */
+	QUEUE_BACKEND_HASH(MyBackendId, listen_hash(channel)) = true;
+	elog(WARNING, "=====> set hash 0x%04lx on %d for channel %s <=====",
+			listen_hash(channel), MyBackendId, channel);
+
 }
 
 /*
@@ -1198,19 +1254,33 @@ static void
 asyncQueueUnregister(void)
 {
 	bool		advanceTail;
+	int		i;
 
 	Assert(listenChannels == NIL);	/* else caller error */
 
 	if (!amRegisteredListener)	/* nothing to do */
 		return;
 
-	LWLockAcquire(AsyncQueueLock, LW_SHARED);
+	LWLockAcquire(AsyncQueueLock, LW_EXCLUSIVE);
 	/* check if entry is valid and oldest ... */
 	advanceTail = (MyProcPid == QUEUE_BACKEND_PID(MyBackendId)) &&
 		QUEUE_POS_EQUAL(QUEUE_BACKEND_POS(MyBackendId), QUEUE_TAIL);
 	/* ... then mark it invalid */
 	QUEUE_BACKEND_PID(MyBackendId) = InvalidPid;
 	QUEUE_BACKEND_DBOID(MyBackendId) = InvalidOid;
+	/* and remove it from the list */
+	if (QUEUE_FIRST_LISTENER == MyBackendId)
+		QUEUE_FIRST_LISTENER = QUEUE_LISTENER_NEXT(MyBackendId);
+	else {
+		for (i = QUEUE_FIRST_LISTENER; i; i = QUEUE_LISTENER_NEXT(i))
+		{
+			if (QUEUE_LISTENER_NEXT(i) == MyBackendId) {
+				QUEUE_LISTENER_NEXT(i) = QUEUE_LISTENER_NEXT(QUEUE_LISTENER_NEXT(i));
+				break;
+			}
+		}
+	}
+	QUEUE_LISTENER_NEXT(MyBackendId) = InvalidBackendId;
 	LWLockRelease(AsyncQueueLock);
 
 	/* mark ourselves as no longer listed in the global array */
@@ -1363,6 +1433,7 @@ asyncQueueAddEntries(ListCell *nextNotify)
 	while (nextNotify != NULL)
 	{
 		Notification *n = (Notification *) lfirst(nextNotify);
+		unsigned long h = listen_hash(n->channel);
 
 		/* Construct a valid queue entry in local variable qe */
 		asyncQueueNotificationToEntry(n, &qe);
@@ -1408,6 +1479,15 @@ asyncQueueAddEntries(ListCell *nextNotify)
 			/* And exit the loop */
 			break;
 		}
+
+		/* Set signal flag so that we know to signal any listening processes.
+		 */
+		for (int i = QUEUE_FIRST_LISTENER; i; i = QUEUE_LISTENER_NEXT(i)) {
+			if (QUEUE_BACKEND_HASH(i, h)) {
+				QUEUE_BACKEND_SIGNAL(i) = true;
+			}
+		}
+
 	}
 
 	/* Success, so update the global QUEUE_HEAD */
@@ -1492,7 +1572,7 @@ asyncQueueFillWarning(void)
 		int32		minPid = InvalidPid;
 		int			i;
 
-		for (i = 1; i <= MaxBackends; i++)
+		for (i = QUEUE_FIRST_LISTENER; i; i = QUEUE_LISTENER_NEXT(i))
 		{
 			if (QUEUE_BACKEND_PID(i) != InvalidPid)
 			{
@@ -1505,10 +1585,12 @@ asyncQueueFillWarning(void)
 		ereport(WARNING,
 				(errmsg("NOTIFY queue is %.0f%% full", fillDegree * 100),
 				 (minPid != InvalidPid ?
-				  errdetail("The server process with PID %d is among those with the oldest transactions.", minPid)
+				  errdetail("The server process with PID %d is among those"
+					  " with the oldest transactions.", minPid)
 				  : 0),
 				 (minPid != InvalidPid ?
-				  errhint("The NOTIFY queue cannot be emptied until that process ends its current transaction.")
+				  errhint("The NOTIFY queue cannot be emptied until that"
+					  " process ends its current transaction.")
 				  : 0)));
 
 		asyncQueueControl->lastQueueFillWarn = t;
@@ -1516,7 +1598,7 @@ asyncQueueFillWarning(void)
 }
 
 /*
- * Send signals to all listening backends (except our own).
+ * Send signals to listening backends (except our own).
  *
  * Returns true if we sent at least one signal.
  *
@@ -1552,15 +1634,18 @@ SignalBackends(void)
 	count = 0;
 
 	LWLockAcquire(AsyncQueueLock, LW_EXCLUSIVE);
-	for (i = 1; i <= MaxBackends; i++)
+	for (i = QUEUE_FIRST_LISTENER; i; i = QUEUE_LISTENER_NEXT(i))
 	{
 		pid = QUEUE_BACKEND_PID(i);
 		if (pid != InvalidPid && pid != MyProcPid)
 		{
 			QueuePosition pos = QUEUE_BACKEND_POS(i);
 
-			if (!QUEUE_POS_EQUAL(pos, QUEUE_HEAD))
+			if (!QUEUE_POS_EQUAL(pos, QUEUE_HEAD) && QUEUE_BACKEND_SIGNAL(i))
 			{
+				QUEUE_BACKEND_SIGNAL(i) = false;
+				QUEUE_BACKEND_SIGNALLED(i) = true;
+
 				pids[count] = pid;
 				ids[count] = i;
 				count++;
@@ -1888,7 +1973,7 @@ asyncQueueReadAllNotifications(void)
 	{
 		/* Update shared state */
 		LWLockAcquire(AsyncQueueLock, LW_SHARED);
-		QUEUE_BACKEND_POS(MyBackendId) = pos;
+		QUEUE_BACKEND_POS_VAL(MyBackendId) = pos;
 		advanceTail = QUEUE_POS_EQUAL(oldpos, QUEUE_TAIL);
 		LWLockRelease(AsyncQueueLock);
 
@@ -1896,19 +1981,23 @@ asyncQueueReadAllNotifications(void)
 		if (advanceTail)
 			asyncQueueAdvanceTail();
 
+		QUEUE_BACKEND_SIGNALLED(MyBackendId) = false;
+
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
 
 	/* Update shared state */
 	LWLockAcquire(AsyncQueueLock, LW_SHARED);
-	QUEUE_BACKEND_POS(MyBackendId) = pos;
+	QUEUE_BACKEND_POS_VAL(MyBackendId) = pos;
 	advanceTail = QUEUE_POS_EQUAL(oldpos, QUEUE_TAIL);
 	LWLockRelease(AsyncQueueLock);
 
 	/* If we were the laziest backend, try to advance the tail pointer */
 	if (advanceTail)
 		asyncQueueAdvanceTail();
+
+	QUEUE_BACKEND_SIGNALLED(MyBackendId) = false;
 
 	/* Done with snapshot */
 	UnregisterSnapshot(snapshot);
@@ -2050,9 +2139,9 @@ asyncQueueAdvanceTail(void)
 	 */
 	LWLockAcquire(AsyncQueueLock, LW_EXCLUSIVE);
 	min = QUEUE_HEAD;
-	for (i = 1; i <= MaxBackends; i++)
+	for (i = QUEUE_FIRST_LISTENER; i; i = QUEUE_LISTENER_NEXT(i))
 	{
-		if (QUEUE_BACKEND_PID(i) != InvalidPid)
+		if ((QUEUE_BACKEND_PID(i) != InvalidPid) && QUEUE_BACKEND_SIGNALLED(i))
 			min = QUEUE_POS_MIN(min, QUEUE_BACKEND_POS(i));
 	}
 	QUEUE_TAIL = min;
