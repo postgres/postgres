@@ -37,8 +37,10 @@ build_hash_table(RecursiveUnionState *rustate)
 	Assert(node->numCols > 0);
 	Assert(node->numGroups > 0);
 
+	/* XXX is it worth working a bit harder to determine the inputOps here? */
 	rustate->hashtable = BuildTupleHashTableExt(&rustate->ps,
 												desc,
+												NULL,
 												node->numCols,
 												node->dupColIdx,
 												rustate->eqfuncoids,

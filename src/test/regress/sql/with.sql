@@ -216,6 +216,20 @@ WITH RECURSIVE subdepartment AS
 )
 SELECT * FROM subdepartment ORDER BY name;
 
+-- exercise the deduplication code of a UNION with mixed input slot types
+WITH RECURSIVE subdepartment AS
+(
+	-- select all columns to prevent projection
+	SELECT id, parent_department, name FROM department WHERE name = 'A'
+
+	UNION
+
+	-- joins do projection
+	SELECT d.id, d.parent_department, d.name FROM department AS d
+	INNER JOIN subdepartment AS sd ON d.parent_department = sd.id
+)
+SELECT * FROM subdepartment ORDER BY name;
+
 -- inside subqueries
 SELECT count(*) FROM (
     WITH RECURSIVE t(n) AS (

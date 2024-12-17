@@ -1520,6 +1520,7 @@ build_hash_table(AggState *aggstate, int setno, long nbuckets)
 
 	perhash->hashtable = BuildTupleHashTableExt(&aggstate->ss.ps,
 												perhash->hashslot->tts_tupleDescriptor,
+												perhash->hashslot->tts_ops,
 												perhash->numCols,
 												perhash->hashGrpColIdxHash,
 												perhash->eqfuncoids,

@@ -128,6 +128,7 @@ build_hash_table(SetOpState *setopstate)
 
 	setopstate->hashtable = BuildTupleHashTableExt(&setopstate->ps,
 												   desc,
+												   NULL,
 												   node->numCols,
 												   node->dupColIdx,
 												   setopstate->eqfuncoids,

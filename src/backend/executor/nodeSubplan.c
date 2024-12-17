@@ -519,6 +519,11 @@ buildSubPlanHash(SubPlanState *node, ExprContext *econtext)
 	 *
 	 * If it's not necessary to distinguish FALSE and UNKNOWN, then we don't
 	 * need to store subplan output rows that contain NULL.
+	 *
+	 * Because the input slot for each hash table is always the slot resulting
+	 * from an ExecProject(), we can use TTSOpsVirtual for the input ops. This
+	 * saves a needless fetch inner op step for the hashing ExprState created
+	 * in BuildTupleHashTableExt().
 	 */
 	MemoryContextReset(node->hashtablecxt);
 	node->havehashrows = false;
@@ -533,6 +538,7 @@ buildSubPlanHash(SubPlanState *node, ExprContext *econtext)
 	else
 		node->hashtable = BuildTupleHashTableExt(node->parent,
 												 node->descRight,
+												 &TTSOpsVirtual,
 												 ncols,
 												 node->keyColIdx,
 												 node->tab_eq_funcoids,
@@ -561,6 +567,7 @@ buildSubPlanHash(SubPlanState *node, ExprContext *econtext)
 		else
 			node->hashnulls = BuildTupleHashTableExt(node->parent,
 													 node->descRight,
+													 &TTSOpsVirtual,
 													 ncols,
 													 node->keyColIdx,
 													 node->tab_eq_funcoids,

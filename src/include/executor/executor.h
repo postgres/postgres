@@ -140,6 +140,7 @@ extern TupleHashTable BuildTupleHashTable(PlanState *parent,
 										  MemoryContext tempcxt, bool use_variable_hash_iv);
 extern TupleHashTable BuildTupleHashTableExt(PlanState *parent,
 											 TupleDesc inputDesc,
+											 const TupleTableSlotOps *inputOps,
 											 int numCols, AttrNumber *keyColIdx,
 											 const Oid *eqfuncoids,
 											 FmgrInfo *hashfunctions,

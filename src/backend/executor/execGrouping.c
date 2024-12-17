@@ -135,6 +135,7 @@ execTuplesHashPrepare(int numCols,
 /*
  * Construct an empty TupleHashTable
  *
+ *  inputOps: slot ops for input hash values, or NULL if unknown or not fixed
  *	numCols, keyColIdx: identify the tuple fields to use as lookup key
  *	eqfunctions: equality comparison functions to use
  *	hashfunctions: datatype-specific hashing functions to use
@@ -154,6 +155,7 @@ execTuplesHashPrepare(int numCols,
 TupleHashTable
 BuildTupleHashTableExt(PlanState *parent,
 					   TupleDesc inputDesc,
+					   const TupleTableSlotOps *inputOps,
 					   int numCols, AttrNumber *keyColIdx,
 					   const Oid *eqfuncoids,
 					   FmgrInfo *hashfunctions,
@@ -225,7 +227,7 @@ BuildTupleHashTableExt(PlanState *parent,
 
 	/* build hash ExprState for all columns */
 	hashtable->tab_hash_expr = ExecBuildHash32FromAttrs(inputDesc,
-														&TTSOpsMinimalTuple,
+														inputOps,
 														hashfunctions,
 														collations,
 														numCols,
@@ -274,6 +276,7 @@ BuildTupleHashTable(PlanState *parent,
 {
 	return BuildTupleHashTableExt(parent,
 								  inputDesc,
+								  NULL,
 								  numCols, keyColIdx,
 								  eqfuncoids,
 								  hashfunctions,
