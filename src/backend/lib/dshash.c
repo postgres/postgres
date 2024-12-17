@@ -844,8 +844,10 @@ resize(dshash_table *hash_table, size_t new_size_log2)
 	Assert(new_size_log2 == hash_table->control->size_log2 + 1);
 
 	/* Allocate the space for the new table. */
-	new_buckets_shared = dsa_allocate0(hash_table->area,
-									   sizeof(dsa_pointer) * new_size);
+	new_buckets_shared =
+		dsa_allocate_extended(hash_table->area,
+							  sizeof(dsa_pointer) * new_size,
+							  DSA_ALLOC_HUGE | DSA_ALLOC_ZERO);
 	new_buckets = dsa_get_address(hash_table->area, new_buckets_shared);
 
 	/*
