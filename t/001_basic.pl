@@ -30,6 +30,9 @@ my ($cmdret, $stdout, $stderr) = $node->psql('postgres', 'CREATE EXTENSION pg_td
 ok($cmdret == 0, "CREATE PGTDE EXTENSION");
 PGTDE::append_to_file($stdout);
 
+my ($cmdret, $stdout, $stderr) = $node->psql('postgres', 'SELECT extname, extversion FROM pg_extension WHERE extname = \'pg_tde\';', extra_params => ['-a']);
+ok($cmdret == 0, "SELECT PGTDE VERSION");
+PGTDE::append_to_file($stdout);
 
 $rt_value = $node->psql('postgres', 'CREATE TABLE test_enc(id SERIAL,k INTEGER,PRIMARY KEY (id)) USING tde_heap_basic;', extra_params => ['-a']);
 ok($rt_value == 3, "Failing query");
