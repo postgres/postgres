@@ -1088,8 +1088,6 @@ Exec_ListenCommit(const char *channel)
 
 	/* Mark the listen hash to true */
 	QUEUE_BACKEND_HASH(MyBackendId, listen_hash(channel)) = true;
-	elog(WARNING, "=====> set hash 0x%04lx on %d for channel %s <=====",
-			listen_hash(channel), MyBackendId, channel);
 
 }
 
