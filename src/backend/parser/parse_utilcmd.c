@@ -1615,7 +1615,7 @@ transformOfType(CreateStmtContext *cxt, TypeName *ofTypename)
 
 	Assert(ofTypename);
 
-	tuple = typenameType(NULL, ofTypename, NULL);
+	tuple = typenameType(cxt->pstate, ofTypename, NULL);
 	check_of_type(tuple);
 	ofTypeId = ((Form_pg_type) GETSTRUCT(tuple))->oid;
 	ofTypename->typeOid = ofTypeId; /* cached for later */

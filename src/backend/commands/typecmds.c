@@ -348,7 +348,7 @@ DefineType(ParseState *pstate, List *names, List *parameters)
 		Type		likeType;
 		Form_pg_type likeForm;
 
-		likeType = typenameType(NULL, defGetTypeName(likeTypeEl), NULL);
+		likeType = typenameType(pstate, defGetTypeName(likeTypeEl), NULL);
 		likeForm = (Form_pg_type) GETSTRUCT(likeType);
 		internalLength = likeForm->typlen;
 		byValue = likeForm->typbyval;
