@@ -986,11 +986,6 @@ PostmasterMain(int argc, char *argv[])
 	set_max_safe_fds();
 
 	/*
-	 * Set reference point for stack-depth checking.
-	 */
-	(void) set_stack_base();
-
-	/*
 	 * Initialize pipe (or process handle on Windows) that allows children to
 	 * wake up from sleep on postmaster death.
 	 */

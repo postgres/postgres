@@ -21,12 +21,8 @@
 #include "utils/queryenvironment.h"
 
 
-/* Required daylight between max_stack_depth and the kernel limit, in bytes */
-#define STACK_DEPTH_SLOP (512 * 1024L)
-
 extern PGDLLIMPORT CommandDest whereToSendOutput;
 extern PGDLLIMPORT const char *debug_query_string;
-extern PGDLLIMPORT int max_stack_depth;
 extern PGDLLIMPORT int PostAuthDelay;
 extern PGDLLIMPORT int client_connection_check_interval;
 
@@ -86,7 +82,6 @@ extern void PostgresSingleUserMain(int argc, char *argv[],
 								   const char *username) pg_attribute_noreturn();
 extern void PostgresMain(const char *dbname,
 						 const char *username) pg_attribute_noreturn();
-extern long get_stack_depth_rlimit(void);
 extern void ResetUsage(void);
 extern void ShowUsage(const char *title);
 extern int	check_log_duration(char *msec_str, bool was_logged);

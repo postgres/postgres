@@ -106,13 +106,6 @@ InitPostmasterChild(void)
 	pgwin32_signal_initialize();
 #endif
 
-	/*
-	 * Set reference point for stack-depth checking.  This might seem
-	 * redundant in !EXEC_BACKEND builds, but it's better to keep the depth
-	 * logic the same with and without that build option.
-	 */
-	(void) set_stack_base();
-
 	InitProcessGlobals();
 
 	/*

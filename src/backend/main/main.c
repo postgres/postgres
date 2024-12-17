@@ -114,6 +114,12 @@ main(int argc, char *argv[])
 	MemoryContextInit();
 
 	/*
+	 * Set reference point for stack-depth checking.  (There's no point in
+	 * enabling this before error reporting works.)
+	 */
+	(void) set_stack_base();
+
+	/*
 	 * Set up locale information
 	 */
 	set_pglocale_pgservice(argv[0], PG_TEXTDOMAIN("postgres"));
