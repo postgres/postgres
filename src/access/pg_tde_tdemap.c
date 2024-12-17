@@ -1460,40 +1460,49 @@ pg_tde_put_key_into_cache(RelFileNumber rel_num, RelKeyData *key)
 			elog(ERROR, "could not mlock internal key initial cache page: %m");
 
 		tde_rel_key_cache->len = 0;
-		tde_rel_key_cache->cap = pageSize / sizeof(RelKeyCacheRec);
+		tde_rel_key_cache->cap = (pageSize - 1) / sizeof(RelKeyCacheRec);
 	}
 
 	/*
 	 * Add another mem page if there is no more room left for another key. We
 	 * allocate `current_memory_size` + 1 page and copy data there.
 	 */
-	if (tde_rel_key_cache->len + 1 >
-		(tde_rel_key_cache->cap * sizeof(RelKeyCacheRec)) / sizeof(RelKeyCacheRec))
+	if (tde_rel_key_cache->len == tde_rel_key_cache->cap)
 	{
 		size_t size;
 		size_t old_size;
-		RelKeyCacheRec *chachePage;
+		RelKeyCacheRec *cachePage;
 
-		size = TYPEALIGN(pageSize, (tde_rel_key_cache->cap + 1) * sizeof(RelKeyCacheRec));
 		old_size = TYPEALIGN(pageSize, (tde_rel_key_cache->cap) * sizeof(RelKeyCacheRec));
+
+		/* TODO: consider some formula for less allocations when  caching a lot
+		 * of objects. But on the other, hand it'll use more memory...
+		 * E.g.:
+		 *	if (old_size < 0x8000)
+		 *		size = old_size * 2;
+		 *	else
+		 *		size = TYPEALIGN(pageSize, old_size + ((old_size + 3*256) >> 2));
+		 *		
+		 */
+		size = old_size + pageSize;
 
 #ifndef FRONTEND
 		oldCtx = MemoryContextSwitchTo(TopMemoryContext);
-		chachePage = palloc_aligned(size, pageSize, MCXT_ALLOC_ZERO);
+		cachePage = palloc_aligned(size, pageSize, MCXT_ALLOC_ZERO);
 		MemoryContextSwitchTo(oldCtx);
 #else
-		chachePage = aligned_alloc(pageSize, size);
-		memset(chachePage, 0, size);
+		cachePage = aligned_alloc(pageSize, size);
+		memset(cachePage, 0, size);
 #endif
 
-		memcpy(chachePage, tde_rel_key_cache->data, old_size);
+		memcpy(cachePage, tde_rel_key_cache->data, old_size);
 		pfree(tde_rel_key_cache->data);
-		tde_rel_key_cache->data = chachePage;
+		tde_rel_key_cache->data = cachePage;
 
-		if (mlock(tde_rel_key_cache->data, pageSize) == -1)
-			elog(ERROR, "could not mlock internal key cache page: %m");
+		if (mlock(tde_rel_key_cache->data, size) == -1)
+			elog(WARNING, "could not mlock internal key cache pages: %m");
 
-		tde_rel_key_cache->cap = size / sizeof(RelKeyCacheRec);
+		tde_rel_key_cache->cap = (size - 1) / sizeof(RelKeyCacheRec);
 	}
 
 	rec = tde_rel_key_cache->data + tde_rel_key_cache->len;
