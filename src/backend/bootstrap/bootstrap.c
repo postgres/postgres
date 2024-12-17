@@ -335,6 +335,12 @@ BootstrapModeMain(int argc, char *argv[], bool check_only)
 	CreateSharedMemoryAndSemaphores();
 
 	/*
+	 * Estimate number of openable files.  This is essential too in --check
+	 * mode, because on some platforms semaphores count as open files.
+	 */
+	set_max_safe_fds();
+
+	/*
 	 * XXX: It might make sense to move this into its own function at some
 	 * point. Right now it seems like it'd cause more code duplication than
 	 * it's worth.

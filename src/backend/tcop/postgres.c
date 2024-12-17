@@ -4099,7 +4099,17 @@ PostgresSingleUserMain(int argc, char *argv[],
 	 */
 	InitializeWalConsistencyChecking();
 
+	/*
+	 * Create shared memory etc.  (Nothing's really "shared" in single-user
+	 * mode, but we must have these data structures anyway.)
+	 */
 	CreateSharedMemoryAndSemaphores();
+
+	/*
+	 * Estimate number of openable files.  This must happen after setting up
+	 * semaphores, because on some platforms semaphores count as open files.
+	 */
+	set_max_safe_fds();
 
 	/*
 	 * Remember stand-alone backend startup time,roughly at the same point
