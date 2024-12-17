@@ -1,5 +1,6 @@
 name: Docs
 on:
+  workflow_dispatch: {}
   push:
     branches:
       - main
@@ -7,7 +8,7 @@ on:
       - "documentation/**"
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   release:
@@ -25,16 +26,6 @@ jobs:
         uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
         with:
           python-version: "3.x"
-
-      - name: Configure git
-        env:
-          ROBOT_TOKEN: ${{ secrets.ROBOT_TOKEN }}
-        run: |
-          git config --global url."https://percona-platform-robot:${ROBOT_TOKEN}@github.com".insteadOf "https://github.com"
-          git config user.name "GitHub Action"
-          git config user.email "github-action@users.noreply.github.com"
-          git config user.password "${ROBOT_TOKEN}"
-          echo "GIT_USER=percona-platform-robot:${ROBOT_TOKEN}" >> $GITHUB_ENV
 
       - name: Install MkDocs
         run: |
