@@ -768,7 +768,7 @@ pgstat_report_stat(bool force)
 
 	partial_flush = false;
 
-	/* flush database / relation / function / ... stats */
+	/* flush of variable-numbered stats */
 	partial_flush |= pgstat_flush_pending_entries(nowait);
 
 	/* flush of fixed-numbered stats */
@@ -1342,8 +1342,7 @@ pgstat_delete_pending_entry(PgStat_EntryRef *entry_ref)
 }
 
 /*
- * Flush out pending stats for database objects (databases, relations,
- * functions).
+ * Flush out pending variable-numbered stats.
  */
 static bool
 pgstat_flush_pending_entries(bool nowait)
