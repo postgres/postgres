@@ -52,5 +52,19 @@ SELECT pagesize, version FROM page_header(get_raw_page('test1', 0));
      8192 |       4
 (1 row)
 
+-- brin_page_items() added a new "empty" flag in 1.12, make sure we detect
+-- an old function definition
+ALTER EXTENSION pageinspect UPDATE TO '1.11';
+CREATE INDEX test_1_a_brin_idx ON test1 USING BRIN (a);
+SELECT * FROM brin_page_items(get_raw_page('test_1_a_brin_idx', 2), 'test_1_a_brin_idx');
+ERROR:  function has wrong number of declared columns
+HINT:  To resolve the problem, update the "pageinspect" extension to the latest version.
+ALTER EXTENSION pageinspect UPDATE TO '1.12';
+SELECT * FROM brin_page_items(get_raw_page('test_1_a_brin_idx', 2), 'test_1_a_brin_idx');
+ itemoffset | blknum | attnum | allnulls | hasnulls | placeholder | empty |                  value                   
+------------+--------+--------+----------+----------+-------------+-------+------------------------------------------
+          1 |      0 |      1 | f        | f        | f           | f     | {72057594037927937 .. 72057594037927937}
+(1 row)
+
 DROP TABLE test1;
 DROP EXTENSION pageinspect;
