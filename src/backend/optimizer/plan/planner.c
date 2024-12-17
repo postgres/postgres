@@ -6758,7 +6758,8 @@ plan_cluster_use_sort(Oid tableOid, Oid indexOid)
  *		CREATE INDEX should request for use
  *
  * tableOid is the table on which the index is to be built.  indexOid is the
- * OID of an index to be created or reindexed (which must be a btree index).
+ * OID of an index to be created or reindexed (which must be an index with
+ * support for parallel builds - currently btree or BRIN).
  *
  * Return value is the number of parallel worker processes to request.  It
  * may be unsafe to proceed if this is 0.  Note that this does not include the
