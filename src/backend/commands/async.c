@@ -1979,7 +1979,9 @@ asyncQueueReadAllNotifications(void)
 		if (advanceTail)
 			asyncQueueAdvanceTail();
 
+		LWLockAcquire(AsyncQueueLock, LW_SHARED);
 		QUEUE_BACKEND_SIGNALLED(MyBackendId) = false;
+		LWLockRelease(AsyncQueueLock);
 
 		PG_RE_THROW();
 	}
@@ -1995,7 +1997,9 @@ asyncQueueReadAllNotifications(void)
 	if (advanceTail)
 		asyncQueueAdvanceTail();
 
+	LWLockAcquire(AsyncQueueLock, LW_SHARED);
 	QUEUE_BACKEND_SIGNALLED(MyBackendId) = false;
+	LWLockRelease(AsyncQueueLock);
 
 	/* Done with snapshot */
 	UnregisterSnapshot(snapshot);
