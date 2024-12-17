@@ -2649,11 +2649,12 @@ pullup_replace_vars_callback(Var *var,
 			{
 				/*
 				 * If the node contains Var(s) or PlaceHolderVar(s) of the
-				 * subquery being pulled up, and does not contain any
-				 * non-strict constructs, then instead of adding a PHV on top
-				 * we can add the required nullingrels to those Vars/PHVs.
-				 * (This is fundamentally a generalization of the above cases
-				 * for bare Vars and PHVs.)
+				 * subquery being pulled up, or of rels that are under the
+				 * same lowest nulling outer join as the subquery, and does
+				 * not contain any non-strict constructs, then instead of
+				 * adding a PHV on top we can add the required nullingrels to
+				 * those Vars/PHVs.  (This is fundamentally a generalization
+				 * of the above cases for bare Vars and PHVs.)
 				 *
 				 * This test is somewhat expensive, but it avoids pessimizing
 				 * the plan in cases where the nullingrels get removed again
@@ -2661,14 +2662,16 @@ pullup_replace_vars_callback(Var *var,
 				 *
 				 * Note that we don't force wrapping of expressions containing
 				 * lateral references, so long as they also contain Vars/PHVs
-				 * of the subquery.  This is okay because of the restriction
-				 * to strict constructs: if the subquery's Vars/PHVs have been
-				 * forced to NULL by an outer join then the end result of the
-				 * expression will be NULL too, regardless of the lateral
-				 * references.  So it's not necessary to force the expression
-				 * to be evaluated below the outer join.  This can be a very
-				 * valuable optimization, because it may allow us to avoid
-				 * using a nested loop to pass the lateral reference down.
+				 * of the subquery, or of rels that are under the same lowest
+				 * nulling outer join as the subquery.  This is okay because
+				 * of the restriction to strict constructs: if those Vars/PHVs
+				 * have been forced to NULL by an outer join then the end
+				 * result of the expression will be NULL too, regardless of
+				 * the lateral references.  So it's not necessary to force the
+				 * expression to be evaluated below the outer join.  This can
+				 * be a very valuable optimization, because it may allow us to
+				 * avoid using a nested loop to pass the lateral reference
+				 * down.
 				 *
 				 * This analysis could be tighter: in particular, a non-strict
 				 * construct hidden within a lower-level PlaceHolderVar is not
@@ -2679,10 +2682,40 @@ pullup_replace_vars_callback(Var *var,
 				 * membership of the node, but if it's non-lateral then any
 				 * level-zero var must belong to the subquery.
 				 */
-				if ((rcon->target_rte->lateral ?
-					 bms_overlap(pull_varnos(rcon->root, newnode),
-								 rcon->relids) :
-					 contain_vars_of_level(newnode, 0)) &&
+				bool		contain_nullable_vars = false;
+
+				if (!rcon->target_rte->lateral)
+				{
+					if (contain_vars_of_level(newnode, 0))
+						contain_nullable_vars = true;
+				}
+				else
+				{
+					Relids		all_varnos;
+
+					all_varnos = pull_varnos(rcon->root, newnode);
+					if (bms_overlap(all_varnos, rcon->relids))
+						contain_nullable_vars = true;
+					else
+					{
+						nullingrel_info *nullinfo = rcon->nullinfo;
+						int			varno;
+
+						varno = -1;
+						while ((varno = bms_next_member(all_varnos, varno)) >= 0)
+						{
+							Assert(varno > 0 && varno <= nullinfo->rtlength);
+							if (bms_is_subset(nullinfo->nullingrels[rcon->varno],
+											  nullinfo->nullingrels[varno]))
+							{
+								contain_nullable_vars = true;
+								break;
+							}
+						}
+					}
+				}
+
+				if (contain_nullable_vars &&
 					!contain_nonstrict_functions(newnode))
 				{
 					/* No wrap needed */

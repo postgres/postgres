@@ -1848,6 +1848,109 @@ order by 1, 2;
  4567890123456789 | 9135780246913578
 (11 rows)
 
+-- strict expressions containing variables of rels under the same lowest
+-- nulling outer join can escape being wrapped
+explain (verbose, costs off)
+select t1.q1, x from
+  int8_tbl t1 left join
+  (int8_tbl t2 inner join
+   lateral (select t2.q1+1 as x, * from int8_tbl t3) t3 on t2.q2 = t3.q2)
+  on t1.q2 = t2.q2
+order by 1, 2;
+                       QUERY PLAN                       
+--------------------------------------------------------
+ Sort
+   Output: t1.q1, ((t2.q1 + 1))
+   Sort Key: t1.q1, ((t2.q1 + 1))
+   ->  Hash Right Join
+         Output: t1.q1, (t2.q1 + 1)
+         Hash Cond: (t2.q2 = t1.q2)
+         ->  Hash Join
+               Output: t2.q1, t2.q2
+               Hash Cond: (t2.q2 = t3.q2)
+               ->  Seq Scan on public.int8_tbl t2
+                     Output: t2.q1, t2.q2
+               ->  Hash
+                     Output: t3.q2
+                     ->  Seq Scan on public.int8_tbl t3
+                           Output: t3.q2
+         ->  Hash
+               Output: t1.q1, t1.q2
+               ->  Seq Scan on public.int8_tbl t1
+                     Output: t1.q1, t1.q2
+(19 rows)
+
+select t1.q1, x from
+  int8_tbl t1 left join
+  (int8_tbl t2 inner join
+   lateral (select t2.q1+1 as x, * from int8_tbl t3) t3 on t2.q2 = t3.q2)
+  on t1.q2 = t2.q2
+order by 1, 2;
+        q1        |        x         
+------------------+------------------
+              123 |              124
+              123 |              124
+              123 |              124
+              123 | 4567890123456790
+              123 | 4567890123456790
+ 4567890123456789 |              124
+ 4567890123456789 |              124
+ 4567890123456789 | 4567890123456790
+ 4567890123456789 | 4567890123456790
+ 4567890123456789 | 4567890123456790
+ 4567890123456789 | 4567890123456790
+(11 rows)
+
+-- otherwise we need to wrap the strict expressions
+explain (verbose, costs off)
+select t1.q1, x from
+  int8_tbl t1 left join
+  (int8_tbl t2 left join
+   lateral (select t2.q1+1 as x, * from int8_tbl t3) t3 on t2.q2 = t3.q2)
+  on t1.q2 = t2.q2
+order by 1, 2;
+                    QUERY PLAN                    
+--------------------------------------------------
+ Sort
+   Output: t1.q1, ((t2.q1 + 1))
+   Sort Key: t1.q1, ((t2.q1 + 1))
+   ->  Hash Right Join
+         Output: t1.q1, ((t2.q1 + 1))
+         Hash Cond: (t2.q2 = t1.q2)
+         ->  Nested Loop Left Join
+               Output: t2.q2, ((t2.q1 + 1))
+               ->  Seq Scan on public.int8_tbl t2
+                     Output: t2.q1, t2.q2
+               ->  Seq Scan on public.int8_tbl t3
+                     Output: t3.q2, (t2.q1 + 1)
+                     Filter: (t2.q2 = t3.q2)
+         ->  Hash
+               Output: t1.q1, t1.q2
+               ->  Seq Scan on public.int8_tbl t1
+                     Output: t1.q1, t1.q2
+(17 rows)
+
+select t1.q1, x from
+  int8_tbl t1 left join
+  (int8_tbl t2 left join
+   lateral (select t2.q1+1 as x, * from int8_tbl t3) t3 on t2.q2 = t3.q2)
+  on t1.q2 = t2.q2
+order by 1, 2;
+        q1        |        x         
+------------------+------------------
+              123 |              124
+              123 |              124
+              123 |              124
+              123 | 4567890123456790
+              123 | 4567890123456790
+ 4567890123456789 |              124
+ 4567890123456789 |              124
+ 4567890123456789 | 4567890123456790
+ 4567890123456789 | 4567890123456790
+ 4567890123456789 | 4567890123456790
+ 4567890123456789 | 4567890123456790
+(11 rows)
+
 -- lateral references for simple Vars can escape being wrapped if the
 -- referenced rel is under the same lowest nulling outer join
 explain (verbose, costs off)
