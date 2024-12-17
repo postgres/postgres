@@ -27,6 +27,11 @@ jobs:
         with:
           python-version: "3.x"
 
+      - name: Configure git
+        run: |
+          git config user.name "GitHub Action"
+          git config user.email "github-action@users.noreply.github.com"
+
       - name: Install MkDocs
         run: |
           python -m pip install --upgrade pip
