@@ -191,9 +191,11 @@
  */
 #include "postgres.h"
 
+#include "catalog/pg_collation_d.h"
 #include "regex/regexport.h"
 #include "trgm.h"
 #include "tsearch/ts_locale.h"
+#include "utils/formatting.h"
 #include "utils/hsearch.h"
 #include "utils/memutils.h"
 #include "varatt.h"
@@ -847,16 +849,16 @@ convertPgWchar(pg_wchar c, trgm_mb_char *result)
 	 * within each color, since we used the REG_ICASE option; so there's no
 	 * need to process the uppercase version.
 	 *
-	 * XXX this code is dependent on the assumption that lowerstr() works the
-	 * same as the regex engine's internal case folding machinery.  Might be
-	 * wiser to expose pg_wc_tolower and test whether c == pg_wc_tolower(c).
-	 * On the other hand, the trigrams in the index were created using
-	 * lowerstr(), so we're probably screwed if there's any incompatibility
-	 * anyway.
+	 * XXX this code is dependent on the assumption that str_tolower() works
+	 * the same as the regex engine's internal case folding machinery.  Might
+	 * be wiser to expose pg_wc_tolower and test whether c ==
+	 * pg_wc_tolower(c). On the other hand, the trigrams in the index were
+	 * created using str_tolower(), so we're probably screwed if there's any
+	 * incompatibility anyway.
 	 */
 #ifdef IGNORECASE
 	{
-		char	   *lowerCased = lowerstr(s);
+		char	   *lowerCased = str_tolower(s, strlen(s), DEFAULT_COLLATION_OID);
 
 		if (strcmp(lowerCased, s) != 0)
 		{

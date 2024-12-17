@@ -66,6 +66,7 @@
 #include "miscadmin.h"
 #include "tsearch/dicts/spell.h"
 #include "tsearch/ts_locale.h"
+#include "utils/formatting.h"
 #include "utils/memutils.h"
 
 
@@ -169,7 +170,7 @@ cpstrdup(IspellDict *Conf, const char *str)
 
 
 /*
- * Apply lowerstr(), producing a temporary result (in the buildCxt).
+ * Apply str_tolower(), producing a temporary result (in the buildCxt).
  */
 static char *
 lowerstr_ctx(IspellDict *Conf, const char *src)
@@ -178,7 +179,7 @@ lowerstr_ctx(IspellDict *Conf, const char *src)
 	char	   *dst;
 
 	saveCtx = MemoryContextSwitchTo(Conf->buildCxt);
-	dst = lowerstr(src);
+	dst = str_tolower(src, strlen(src), DEFAULT_COLLATION_OID);
 	MemoryContextSwitchTo(saveCtx);
 
 	return dst;
@@ -1449,7 +1450,7 @@ NIImportAffixes(IspellDict *Conf, const char *filename)
 
 	while ((recoded = tsearch_readline(&trst)) != NULL)
 	{
-		pstr = lowerstr(recoded);
+		pstr = str_tolower(recoded, strlen(recoded), DEFAULT_COLLATION_OID);
 
 		/* Skip comments and empty lines */
 		if (*pstr == '#' || *pstr == '\n')

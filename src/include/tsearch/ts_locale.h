@@ -42,9 +42,6 @@ typedef struct
 extern int	t_isalpha(const char *ptr);
 extern int	t_isalnum(const char *ptr);
 
-extern char *lowerstr(const char *str);
-extern char *lowerstr_with_len(const char *str, int len);
-
 extern bool tsearch_readline_begin(tsearch_readline_state *stp,
 								   const char *filename);
 extern char *tsearch_readline(tsearch_readline_state *stp);

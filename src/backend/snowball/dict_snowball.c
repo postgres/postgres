@@ -12,9 +12,11 @@
  */
 #include "postgres.h"
 
+#include "catalog/pg_collation_d.h"
 #include "commands/defrem.h"
-#include "tsearch/ts_locale.h"
+#include "mb/pg_wchar.h"
 #include "tsearch/ts_public.h"
+#include "utils/formatting.h"
 
 /* Some platforms define MAXINT and/or MININT, causing conflicts */
 #ifdef MAXINT
@@ -236,7 +238,7 @@ dsnowball_init(PG_FUNCTION_ARGS)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 						 errmsg("multiple StopWords parameters")));
-			readstoplist(defGetString(defel), &d->stoplist, lowerstr);
+			readstoplist(defGetString(defel), &d->stoplist, str_tolower);
 			stoploaded = true;
 		}
 		else if (strcmp(defel->defname, "language") == 0)
@@ -272,7 +274,7 @@ dsnowball_lexize(PG_FUNCTION_ARGS)
 	DictSnowball *d = (DictSnowball *) PG_GETARG_POINTER(0);
 	char	   *in = (char *) PG_GETARG_POINTER(1);
 	int32		len = PG_GETARG_INT32(2);
-	char	   *txt = lowerstr_with_len(in, len);
+	char	   *txt = str_tolower(in, len, DEFAULT_COLLATION_OID);
 	TSLexeme   *res = palloc0(sizeof(TSLexeme) * 2);
 
 	/*

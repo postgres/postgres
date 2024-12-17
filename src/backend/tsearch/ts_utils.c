@@ -16,6 +16,7 @@
 
 #include <ctype.h>
 
+#include "catalog/pg_collation_d.h"
 #include "miscadmin.h"
 #include "tsearch/ts_locale.h"
 #include "tsearch/ts_public.h"
@@ -65,7 +66,7 @@ get_tsearch_config_filename(const char *basename,
  * or palloc a new version.
  */
 void
-readstoplist(const char *fname, StopList *s, char *(*wordop) (const char *))
+readstoplist(const char *fname, StopList *s, char *(*wordop) (const char *, size_t, Oid))
 {
 	char	  **stop = NULL;
 
@@ -115,7 +116,7 @@ readstoplist(const char *fname, StopList *s, char *(*wordop) (const char *))
 
 			if (wordop)
 			{
-				stop[s->len] = wordop(line);
+				stop[s->len] = wordop(line, strlen(line), DEFAULT_COLLATION_OID);
 				if (stop[s->len] != line)
 					pfree(line);
 			}

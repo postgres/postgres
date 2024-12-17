@@ -13,10 +13,11 @@
  */
 #include "postgres.h"
 
+#include "catalog/pg_collation_d.h"
 #include "commands/defrem.h"
-#include "tsearch/ts_locale.h"
 #include "tsearch/ts_public.h"
 #include "utils/fmgrprotos.h"
+#include "utils/formatting.h"
 
 
 typedef struct
@@ -47,7 +48,7 @@ dsimple_init(PG_FUNCTION_ARGS)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 						 errmsg("multiple StopWords parameters")));
-			readstoplist(defGetString(defel), &d->stoplist, lowerstr);
+			readstoplist(defGetString(defel), &d->stoplist, str_tolower);
 			stoploaded = true;
 		}
 		else if (strcmp(defel->defname, "accept") == 0)
@@ -80,7 +81,7 @@ dsimple_lexize(PG_FUNCTION_ARGS)
 	char	   *txt;
 	TSLexeme   *res;
 
-	txt = lowerstr_with_len(in, len);
+	txt = str_tolower(in, len, DEFAULT_COLLATION_OID);
 
 	if (*txt == '\0' || searchstoplist(&(d->stoplist), txt))
 	{

@@ -13,10 +13,12 @@
  */
 #include "postgres.h"
 
+#include "catalog/pg_collation_d.h"
 #include "commands/defrem.h"
 #include "tsearch/ts_locale.h"
 #include "tsearch/ts_public.h"
 #include "utils/fmgrprotos.h"
+#include "utils/formatting.h"
 
 typedef struct
 {
@@ -183,8 +185,8 @@ dsynonym_init(PG_FUNCTION_ARGS)
 		}
 		else
 		{
-			d->syn[cur].in = lowerstr(starti);
-			d->syn[cur].out = lowerstr(starto);
+			d->syn[cur].in = str_tolower(starti, strlen(starti), DEFAULT_COLLATION_OID);
+			d->syn[cur].out = str_tolower(starto, strlen(starto), DEFAULT_COLLATION_OID);
 		}
 
 		d->syn[cur].outlen = strlen(starto);
@@ -223,7 +225,7 @@ dsynonym_lexize(PG_FUNCTION_ARGS)
 	if (d->case_sensitive)
 		key.in = pnstrdup(in, len);
 	else
-		key.in = lowerstr_with_len(in, len);
+		key.in = str_tolower(in, len, DEFAULT_COLLATION_OID);
 
 	key.out = NULL;
 
