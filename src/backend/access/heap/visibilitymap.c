@@ -239,8 +239,10 @@ visibilitymap_pin_ok(BlockNumber heapBlk, Buffer vmbuf)
  * You must pass a buffer containing the correct map page to this function.
  * Call visibilitymap_pin first to pin the right one. This function doesn't do
  * any I/O.
+ *
+ * Returns the state of the page's VM bits before setting flags.
  */
-void
+uint8
 visibilitymap_set(Relation rel, BlockNumber heapBlk, Buffer heapBuf,
 				  XLogRecPtr recptr, Buffer vmBuf, TransactionId cutoff_xid,
 				  uint8 flags)
@@ -250,6 +252,7 @@ visibilitymap_set(Relation rel, BlockNumber heapBlk, Buffer heapBuf,
 	uint8		mapOffset = HEAPBLK_TO_OFFSET(heapBlk);
 	Page		page;
 	uint8	   *map;
+	uint8		status;
 
 #ifdef TRACE_VISIBILITYMAP
 	elog(DEBUG1, "vm_set %s %d", RelationGetRelationName(rel), heapBlk);
@@ -274,7 +277,8 @@ visibilitymap_set(Relation rel, BlockNumber heapBlk, Buffer heapBuf,
 	map = (uint8 *) PageGetContents(page);
 	LockBuffer(vmBuf, BUFFER_LOCK_EXCLUSIVE);
 
-	if (flags != (map[mapByte] >> mapOffset & VISIBILITYMAP_VALID_BITS))
+	status = (map[mapByte] >> mapOffset) & VISIBILITYMAP_VALID_BITS;
+	if (flags != status)
 	{
 		START_CRIT_SECTION();
 
@@ -311,6 +315,7 @@ visibilitymap_set(Relation rel, BlockNumber heapBlk, Buffer heapBuf,
 	}
 
 	LockBuffer(vmBuf, BUFFER_LOCK_UNLOCK);
+	return status;
 }
 
 /*
