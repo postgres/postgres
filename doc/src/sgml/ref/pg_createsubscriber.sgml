@@ -49,7 +49,8 @@ PostgreSQL documentation
   <para>
    <application>pg_createsubscriber</application> creates a new logical
    replica from a physical standby server.  All tables in the specified
-   database are included in the logical replication setup.  A pair of
+   database are included in the <link linkend="logical-replication">logical
+   replication</link> setup.  A pair of
    publication and subscription objects are created for each database.  It
    must be run at the target server.
   </para>
@@ -70,8 +71,11 @@ PostgreSQL documentation
    spent synchronizing data is usually a large amount of changes to be applied
    (that were produced during the initial data copy), which increases even
    more the time when the logical replica will be available. For smaller
-   databases, <link linkend="logical-replication-row-filter-initial-data-sync">
-   initial data synchronization</link> is recommended.
+   databases, it is recommended to set up logical replication with initial data
+   synchronization.  For details, see the <command>CREATE SUBSCRIPTION</command>
+   <link linkend="sql-createsubscription-params-with-copy-data">
+   <literal>copy_data</literal></link> option.
+
   </para>
  </refsect1>
 
