@@ -190,7 +190,7 @@ thesaurusRead(const char *filename, DictThesaurus *d)
 		ptr = line;
 
 		/* is it a comment? */
-		while (*ptr && t_isspace(ptr))
+		while (*ptr && isspace((unsigned char) *ptr))
 			ptr += pg_mblen(ptr);
 
 		if (t_iseq(ptr, '#') || *ptr == '\0' ||
@@ -212,7 +212,7 @@ thesaurusRead(const char *filename, DictThesaurus *d)
 								 errmsg("unexpected delimiter")));
 					state = TR_WAITSUBS;
 				}
-				else if (!t_isspace(ptr))
+				else if (!isspace((unsigned char) *ptr))
 				{
 					beginwrd = ptr;
 					state = TR_INLEX;
@@ -225,7 +225,7 @@ thesaurusRead(const char *filename, DictThesaurus *d)
 					newLexeme(d, beginwrd, ptr, idsubst, posinsubst++);
 					state = TR_WAITSUBS;
 				}
-				else if (t_isspace(ptr))
+				else if (isspace((unsigned char) *ptr))
 				{
 					newLexeme(d, beginwrd, ptr, idsubst, posinsubst++);
 					state = TR_WAITLEX;
@@ -245,7 +245,7 @@ thesaurusRead(const char *filename, DictThesaurus *d)
 					state = TR_INSUBS;
 					beginwrd = ptr + pg_mblen(ptr);
 				}
-				else if (!t_isspace(ptr))
+				else if (!isspace((unsigned char) *ptr))
 				{
 					useasis = false;
 					beginwrd = ptr;
@@ -254,7 +254,7 @@ thesaurusRead(const char *filename, DictThesaurus *d)
 			}
 			else if (state == TR_INSUBS)
 			{
-				if (t_isspace(ptr))
+				if (isspace((unsigned char) *ptr))
 				{
 					if (ptr == beginwrd)
 						ereport(ERROR,

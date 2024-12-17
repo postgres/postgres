@@ -39,11 +39,8 @@ typedef struct
 
 #define COPYCHAR(d,s)	memcpy(d, s, pg_mblen(s))
 
-extern int	t_isdigit(const char *ptr);
-extern int	t_isspace(const char *ptr);
 extern int	t_isalpha(const char *ptr);
 extern int	t_isalnum(const char *ptr);
-extern int	t_isprint(const char *ptr);
 
 extern char *lowerstr(const char *str);
 extern char *lowerstr_with_len(const char *str, int len);

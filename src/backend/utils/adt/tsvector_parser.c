@@ -206,7 +206,7 @@ gettoken_tsvector(TSVectorParseState state,
 			else if ((state->oprisdelim && ISOPERATOR(state->prsbuf)) ||
 					 (state->is_web && t_iseq(state->prsbuf, '"')))
 				PRSSYNTAXERROR;
-			else if (!t_isspace(state->prsbuf))
+			else if (!isspace((unsigned char) *state->prsbuf))
 			{
 				COPYCHAR(curpos, state->prsbuf);
 				curpos += pg_mblen(state->prsbuf);
@@ -236,7 +236,7 @@ gettoken_tsvector(TSVectorParseState state,
 				statecode = WAITNEXTCHAR;
 				oldstate = WAITENDWORD;
 			}
-			else if (t_isspace(state->prsbuf) || *(state->prsbuf) == '\0' ||
+			else if (isspace((unsigned char) *state->prsbuf) || *(state->prsbuf) == '\0' ||
 					 (state->oprisdelim && ISOPERATOR(state->prsbuf)) ||
 					 (state->is_web && t_iseq(state->prsbuf, '"')))
 			{
@@ -317,7 +317,7 @@ gettoken_tsvector(TSVectorParseState state,
 		}
 		else if (statecode == INPOSINFO)
 		{
-			if (t_isdigit(state->prsbuf))
+			if (isdigit((unsigned char) *state->prsbuf))
 			{
 				if (posalen == 0)
 				{
@@ -372,10 +372,10 @@ gettoken_tsvector(TSVectorParseState state,
 					PRSSYNTAXERROR;
 				WEP_SETWEIGHT(pos[npos - 1], 0);
 			}
-			else if (t_isspace(state->prsbuf) ||
+			else if (isspace((unsigned char) *state->prsbuf) ||
 					 *(state->prsbuf) == '\0')
 				RETURN_TOKEN;
-			else if (!t_isdigit(state->prsbuf))
+			else if (!isdigit((unsigned char) *state->prsbuf))
 				PRSSYNTAXERROR;
 		}
 		else					/* internal error */

@@ -155,7 +155,7 @@ initTrie(const char *filename)
 				{
 					ptrlen = pg_mblen(ptr);
 					/* ignore whitespace, but end src or trg */
-					if (t_isspace(ptr))
+					if (isspace((unsigned char) *ptr))
 					{
 						if (state == 1)
 							state = 2;

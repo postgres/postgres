@@ -15,7 +15,6 @@
  */
 #define LPADDING		2
 #define RPADDING		1
-#define KEEPONLYALNUM
 /*
  * Caution: IGNORECASE macro means that trigrams are case-insensitive.
  * If this macro is disabled, the ~* and ~~* operators must be removed from
@@ -51,13 +50,8 @@ typedef char trgm[3];
 	*(((char*)(a))+2) = *(((char*)(b))+2);	\
 } while(0)
 
-#ifdef KEEPONLYALNUM
 #define ISWORDCHR(c)	(t_isalnum(c))
 #define ISPRINTABLECHAR(a)	( isascii( *(unsigned char*)(a) ) && (isalnum( *(unsigned char*)(a) ) || *(unsigned char*)(a)==' ') )
-#else
-#define ISWORDCHR(c)	(!t_isspace(c))
-#define ISPRINTABLECHAR(a)	( isascii( *(unsigned char*)(a) ) && isprint( *(unsigned char*)(a) ) )
-#endif
 #define ISPRINTABLETRGM(t)	( ISPRINTABLECHAR( ((char*)(t)) ) && ISPRINTABLECHAR( ((char*)(t))+1 ) && ISPRINTABLECHAR( ((char*)(t))+2 ) )
 
 #define ISESCAPECHAR(x) (*(x) == '\\')	/* Wildcard escape character */

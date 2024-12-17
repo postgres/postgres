@@ -32,36 +32,6 @@ static void tsearch_readline_callback(void *arg);
 #define WC_BUF_LEN  3
 
 int
-t_isdigit(const char *ptr)
-{
-	int			clen = pg_mblen(ptr);
-	wchar_t		character[WC_BUF_LEN];
-	pg_locale_t mylocale = 0;	/* TODO */
-
-	if (clen == 1 || database_ctype_is_c)
-		return isdigit(TOUCHAR(ptr));
-
-	char2wchar(character, WC_BUF_LEN, ptr, clen, mylocale);
-
-	return iswdigit((wint_t) character[0]);
-}
-
-int
-t_isspace(const char *ptr)
-{
-	int			clen = pg_mblen(ptr);
-	wchar_t		character[WC_BUF_LEN];
-	pg_locale_t mylocale = 0;	/* TODO */
-
-	if (clen == 1 || database_ctype_is_c)
-		return isspace(TOUCHAR(ptr));
-
-	char2wchar(character, WC_BUF_LEN, ptr, clen, mylocale);
-
-	return iswspace((wint_t) character[0]);
-}
-
-int
 t_isalpha(const char *ptr)
 {
 	int			clen = pg_mblen(ptr);
@@ -89,21 +59,6 @@ t_isalnum(const char *ptr)
 	char2wchar(character, WC_BUF_LEN, ptr, clen, mylocale);
 
 	return iswalnum((wint_t) character[0]);
-}
-
-int
-t_isprint(const char *ptr)
-{
-	int			clen = pg_mblen(ptr);
-	wchar_t		character[WC_BUF_LEN];
-	pg_locale_t mylocale = 0;	/* TODO */
-
-	if (clen == 1 || database_ctype_is_c)
-		return isprint(TOUCHAR(ptr));
-
-	char2wchar(character, WC_BUF_LEN, ptr, clen, mylocale);
-
-	return iswprint((wint_t) character[0]);
 }
 
 

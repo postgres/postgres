@@ -411,7 +411,7 @@ parse_lquery(const char *buf, struct Node *escontext)
 			case LQPRS_WAITFNUM:
 				if (t_iseq(ptr, ','))
 					state = LQPRS_WAITSNUM;
-				else if (t_isdigit(ptr))
+				else if (isdigit((unsigned char) *ptr))
 				{
 					int			low = atoi(ptr);
 
@@ -429,7 +429,7 @@ parse_lquery(const char *buf, struct Node *escontext)
 					UNCHAR;
 				break;
 			case LQPRS_WAITSNUM:
-				if (t_isdigit(ptr))
+				if (isdigit((unsigned char) *ptr))
 				{
 					int			high = atoi(ptr);
 
@@ -460,7 +460,7 @@ parse_lquery(const char *buf, struct Node *escontext)
 			case LQPRS_WAITCLOSE:
 				if (t_iseq(ptr, '}'))
 					state = LQPRS_WAITEND;
-				else if (!t_isdigit(ptr))
+				else if (!isdigit((unsigned char) *ptr))
 					UNCHAR;
 				break;
 			case LQPRS_WAITND:
@@ -471,7 +471,7 @@ parse_lquery(const char *buf, struct Node *escontext)
 				}
 				else if (t_iseq(ptr, ','))
 					state = LQPRS_WAITSNUM;
-				else if (!t_isdigit(ptr))
+				else if (!isdigit((unsigned char) *ptr))
 					UNCHAR;
 				break;
 			case LQPRS_WAITEND:

@@ -197,7 +197,7 @@ parse_phrase_operator(TSQueryParserState pstate, int16 *distance)
 					continue;
 				}
 
-				if (!t_isdigit(ptr))
+				if (!isdigit((unsigned char) *ptr))
 					return false;
 
 				errno = 0;
@@ -274,7 +274,7 @@ parse_or_operator(TSQueryParserState pstate)
 		 * So we still treat OR literal as operation with possibly incorrect
 		 * operand and will not search it as lexeme
 		 */
-		if (!t_isspace(ptr))
+		if (!isspace((unsigned char) *ptr))
 			break;
 	}
 
@@ -315,7 +315,7 @@ gettoken_query_standard(TSQueryParserState state, int8 *operator,
 					/* generic syntax error message is fine */
 					return PT_ERR;
 				}
-				else if (!t_isspace(state->buf))
+				else if (!isspace((unsigned char) *state->buf))
 				{
 					/*
 					 * We rely on the tsvector parser to parse the value for
@@ -383,7 +383,7 @@ gettoken_query_standard(TSQueryParserState state, int8 *operator,
 				{
 					return (state->count) ? PT_ERR : PT_END;
 				}
-				else if (!t_isspace(state->buf))
+				else if (!isspace((unsigned char) *state->buf))
 				{
 					return PT_ERR;
 				}
@@ -444,7 +444,7 @@ gettoken_query_websearch(TSQueryParserState state, int8 *operator,
 					state->state = WAITOPERAND;
 					continue;
 				}
-				else if (!t_isspace(state->buf))
+				else if (!isspace((unsigned char) *state->buf))
 				{
 					/*
 					 * We rely on the tsvector parser to parse the value for
@@ -492,7 +492,7 @@ gettoken_query_websearch(TSQueryParserState state, int8 *operator,
 					state->buf++;
 					continue;
 				}
-				else if (!t_isspace(state->buf))
+				else if (!isspace((unsigned char) *state->buf))
 				{
 					/* insert implicit AND between operands */
 					state->state = WAITOPERAND;
