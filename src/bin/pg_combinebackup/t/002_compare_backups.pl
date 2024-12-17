@@ -2,7 +2,7 @@
 
 use strict;
 use warnings FATAL => 'all';
-use File::Compare;
+use File::Compare qw(compare_text);
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
 use Test::More;
@@ -175,17 +175,23 @@ $pitr1->command_ok(
 		$pitr1->connstr('postgres'),
 	],
 	'dump from PITR 1');
-$pitr1->command_ok(
+$pitr2->command_ok(
 	[
 		'pg_dumpall', '-f',
 		$dump2, '--no-sync',
 		'--no-unlogged-table-data', '-d',
-		$pitr1->connstr('postgres'),
+		$pitr2->connstr('postgres'),
 	],
 	'dump from PITR 2');
 
-# Compare the two dumps, there should be no differences.
-my $compare_res = compare($dump1, $dump2);
+# Compare the two dumps, there should be no differences other than
+# the tablespace paths.
+my $compare_res = compare_text(
+	$dump1, $dump2,
+	sub {
+		s{create tablespace .* location .*\btspitr\K[12]}{N}i for @_;
+		return $_[0] ne $_[1];
+	});
 note($dump1);
 note($dump2);
 is($compare_res, 0, "dumps are identical");
