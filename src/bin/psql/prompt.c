@@ -33,6 +33,7 @@
  * %p - backend pid
  * %> - database server port number
  * %n - database user name
+ * %s - service
  * %/ - current database
  * %~ - like %/ but "~" when database name equals user name
  * %w - whitespace of the same width as the most recent output of PROMPT1
@@ -164,6 +165,11 @@ get_prompt(promptStatus_t status, ConditionalStack cstack)
 				case 'n':
 					if (pset.db)
 						strlcpy(buf, session_username(), sizeof(buf));
+					break;
+					/* service name */
+				case 's':
+					if (pset.db && PQservice(pset.db))
+						strlcpy(buf, PQservice(pset.db), sizeof(buf));
 					break;
 					/* backend pid */
 				case 'p':

@@ -4380,6 +4380,15 @@ bar
         </listitem>
       </varlistentry>
 
+      <varlistentry id="app-psql-variables-service">
+        <term><varname>SERVICE</varname></term>
+        <listitem>
+        <para>
+        The service name, if applicable.
+        </para>
+        </listitem>
+      </varlistentry>
+
       <varlistentry id="app-psql-variables-shell-error">
        <term><varname>SHELL_ERROR</varname></term>
        <listitem>
@@ -4672,6 +4681,11 @@ testdb=&gt; <userinput>INSERT INTO my_table VALUES (:'content');</userinput>
           AUTHORIZATION</command>.)
          </para>
         </listitem>
+      </varlistentry>
+
+      <varlistentry id="app-psql-prompting-s">
+        <term><literal>%s</literal></term>
+        <listitem><para>The name of the service.</para></listitem>
       </varlistentry>
 
       <varlistentry id="app-psql-prompting-slash">

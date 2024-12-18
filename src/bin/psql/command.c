@@ -4082,6 +4082,7 @@ SyncVariables(void)
 	pset.sversion = PQserverVersion(pset.db);
 
 	SetVariable(pset.vars, "DBNAME", PQdb(pset.db));
+	SetVariable(pset.vars, "SERVICE", PQservice(pset.db));
 	SetVariable(pset.vars, "USER", PQuser(pset.db));
 	SetVariable(pset.vars, "HOST", PQhost(pset.db));
 	SetVariable(pset.vars, "PORT", PQport(pset.db));
@@ -4115,6 +4116,7 @@ void
 UnsyncVariables(void)
 {
 	SetVariable(pset.vars, "DBNAME", NULL);
+	SetVariable(pset.vars, "SERVICE", NULL);
 	SetVariable(pset.vars, "USER", NULL);
 	SetVariable(pset.vars, "HOST", NULL);
 	SetVariable(pset.vars, "PORT", NULL);
