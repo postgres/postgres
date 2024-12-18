@@ -120,13 +120,14 @@ cube_in(PG_FUNCTION_ARGS)
 	char	   *str = PG_GETARG_CSTRING(0);
 	NDBOX	   *result;
 	Size		scanbuflen;
+	yyscan_t	scanner;
 
-	cube_scanner_init(str, &scanbuflen);
+	cube_scanner_init(str, &scanbuflen, &scanner);
 
-	cube_yyparse(&result, scanbuflen, fcinfo->context);
+	cube_yyparse(&result, scanbuflen, fcinfo->context, scanner);
 
 	/* We might as well run this even on failure. */
-	cube_scanner_finish();
+	cube_scanner_finish(scanner);
 
 	PG_RETURN_NDBOX_P(result);
 }

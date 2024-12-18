@@ -59,14 +59,21 @@ typedef struct NDBOX
 #define CubeKNNDistanceEuclid			17	/* <-> */
 #define CubeKNNDistanceChebyshev		18	/* <=> */
 
+/* for cubescan.l and cubeparse.y */
+/* All grammar constructs return strings */
+#define YYSTYPE char *
+typedef void *yyscan_t;
+
 /* in cubescan.l */
-extern int	cube_yylex(void);
+extern int	cube_yylex(YYSTYPE *yylval_param, yyscan_t yyscanner);
 extern void cube_yyerror(NDBOX **result, Size scanbuflen,
 						 struct Node *escontext,
+						 yyscan_t yyscanner,
 						 const char *message);
-extern void cube_scanner_init(const char *str, Size *scanbuflen);
-extern void cube_scanner_finish(void);
+extern void cube_scanner_init(const char *str, Size *scanbuflen, yyscan_t *yyscannerp);
+extern void cube_scanner_finish(yyscan_t yyscanner);
 
 /* in cubeparse.y */
 extern int	cube_yyparse(NDBOX **result, Size scanbuflen,
-						 struct Node *escontext);
+						 struct Node *escontext,
+						 yyscan_t yyscanner);
