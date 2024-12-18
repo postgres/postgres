@@ -92,4 +92,14 @@ extern void tbm_end_iterate(TBMIterator *iterator);
 
 extern TBMIterateResult *tbm_iterate(TBMIterator *iterator);
 
+static inline bool
+tbm_exhausted(TBMIterator *iterator)
+{
+	/*
+	 * It doesn't matter if we check the private or shared iterator here. If
+	 * tbm_end_iterate() was called, they will be NULL
+	 */
+	return !iterator->i.private_iterator;
+}
+
 #endif							/* TIDBITMAP_H */

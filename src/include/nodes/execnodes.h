@@ -1838,7 +1838,6 @@ typedef struct SharedBitmapHeapInstrumentation
  *		prefetch_target    current target prefetch distance
  *		prefetch_maximum   maximum value for prefetch_target
  *		initialized		   is node is ready to iterate
- *		shared_prefetch_iterator shared iterator for prefetching
  *		pstate			   shared state for parallel bitmap scan
  *		sinstrument		   statistics for parallel workers
  *		recheck			   do current page's tuples need recheck
@@ -1853,12 +1852,11 @@ typedef struct BitmapHeapScanState
 	TIDBitmap  *tbm;
 	Buffer		pvmbuffer;
 	BitmapHeapScanInstrumentation stats;
-	TBMPrivateIterator *prefetch_iterator;
+	TBMIterator prefetch_iterator;
 	int			prefetch_pages;
 	int			prefetch_target;
 	int			prefetch_maximum;
 	bool		initialized;
-	TBMSharedIterator *shared_prefetch_iterator;
 	ParallelBitmapHeapState *pstate;
 	SharedBitmapHeapInstrumentation *sinstrument;
 	bool		recheck;

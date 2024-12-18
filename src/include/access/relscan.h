@@ -16,6 +16,7 @@
 
 #include "access/htup_details.h"
 #include "access/itup.h"
+#include "nodes/tidbitmap.h"
 #include "port/atomics.h"
 #include "storage/buf.h"
 #include "storage/relfilelocator.h"
@@ -24,9 +25,6 @@
 
 
 struct ParallelTableScanDescData;
-
-struct TBMPrivateIterator;
-struct TBMSharedIterator;
 
 /*
  * Generic descriptor for table scans. This is the base-class for table scans,
@@ -45,12 +43,8 @@ typedef struct TableScanDescData
 	 */
 	union
 	{
-		/* Iterators for Bitmap Table Scans */
-		struct
-		{
-			struct TBMPrivateIterator *rs_iterator;
-			struct TBMSharedIterator *rs_shared_iterator;
-		}			bitmap;
+		/* Iterator for Bitmap Table Scans */
+		TBMIterator rs_tbmiterator;
 
 		/*
 		 * Range of ItemPointers for table_scan_getnextslot_tidrange() to
