@@ -378,6 +378,8 @@ initscan(HeapScanDesc scan, ScanKey key, bool keep_startblock)
 	ItemPointerSetInvalid(&scan->rs_ctup.t_self);
 	scan->rs_cbuf = InvalidBuffer;
 	scan->rs_cblock = InvalidBlockNumber;
+	scan->rs_ntuples = 0;
+	scan->rs_cindex = 0;
 
 	/*
 	 * Initialize to ForwardScanDirection because it is most common and
@@ -943,8 +945,8 @@ heapgettup_pagemode(HeapScanDesc scan,
 {
 	HeapTuple	tuple = &(scan->rs_ctup);
 	Page		page;
-	int			lineindex;
-	int			linesleft;
+	uint32		lineindex;
+	uint32		linesleft;
 
 	if (likely(scan->rs_inited))
 	{
@@ -989,6 +991,7 @@ continue_page:
 			ItemId		lpp;
 			OffsetNumber lineoff;
 
+			Assert(lineindex <= scan->rs_ntuples);
 			lineoff = scan->rs_vistuples[lineindex];
 			lpp = PageGetItemId(page, lineoff);
 			Assert(ItemIdIsNormal(lpp));
