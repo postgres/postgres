@@ -2530,6 +2530,26 @@ char *PQport(const PGconn *conn);
      </listitem>
     </varlistentry>
 
+    <varlistentry id="libpq-PQservice">
+     <term><function>PQservice</function><indexterm><primary>PQservice</primary></indexterm></term>
+
+     <listitem>
+      <para>
+       Returns the service of the active connection.
+
+<synopsis>
+char *PQservice(const PGconn *conn);
+</synopsis>
+      </para>
+
+      <para>
+       <xref linkend="libpq-PQservice"/> returns <symbol>NULL</symbol> if the
+       <parameter>conn</parameter> argument is <symbol>NULL</symbol>.
+       Otherwise, if there was no service provided, it returns an empty string.
+      </para>
+     </listitem>
+    </varlistentry>
+
     <varlistentry id="libpq-PQtty">
      <term><function>PQtty</function><indexterm><primary>PQtty</primary></indexterm></term>
 

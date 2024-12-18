@@ -394,6 +394,7 @@ struct pg_conn
 	char	   *fbappname;		/* fallback application name */
 	char	   *dbName;			/* database name */
 	char	   *replication;	/* connect as the replication standby? */
+	char	   *pgservice;		/* Postgres service, if any */
 	char	   *pguser;			/* Postgres username and password, if any */
 	char	   *pgpass;
 	char	   *pgpassfile;		/* path to a file containing password(s) */

@@ -205,3 +205,4 @@ PQcancelFinish            202
 PQsocketPoll              203
 PQsetChunkedRowsMode      204
 PQgetCurrentTimeUSec      205
+PQservice                 206

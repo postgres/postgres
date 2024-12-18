@@ -190,7 +190,8 @@ typedef struct _internalPQconninfoOption
 
 static const internalPQconninfoOption PQconninfoOptions[] = {
 	{"service", "PGSERVICE", NULL, NULL,
-	"Database-Service", "", 20, -1},
+		"Database-Service", "", 20,
+	offsetof(struct pg_conn, pgservice)},
 
 	{"user", "PGUSER", NULL, NULL,
 		"Database-User", "", 20,
@@ -7038,6 +7039,14 @@ PQdb(const PGconn *conn)
 	if (!conn)
 		return NULL;
 	return conn->dbName;
+}
+
+char *
+PQservice(const PGconn *conn)
+{
+	if (!conn)
+		return NULL;
+	return conn->pgservice;
 }
 
 char *
