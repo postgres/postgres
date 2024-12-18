@@ -6,12 +6,8 @@
 
 #include "nodes/miscnodes.h"
 
-/*
- * NB: include segparse.h only AFTER including segdata.h, because segdata.h
- * contains the definition for SEG.
- */
 #include "segdata.h"
-#include "segparse.h"
+#include "segparse.h"	/* must be after segdata.h for SEG */
 }
 
 %{
@@ -29,18 +25,19 @@ fprintf_to_ereport(const char *fmt, const char *msg)
 {
 	ereport(ERROR, (errmsg_internal("%s", msg)));
 }
-
-/* Handles to the buffer that the lexer uses internally */
-static YY_BUFFER_STATE scanbufhandle;
-static char *scanbuf;
 %}
 
+%option reentrant
+%option bison-bridge
 %option 8bit
 %option never-interactive
 %option nodefault
 %option noinput
 %option nounput
 %option noyywrap
+%option noyyalloc
+%option noyyrealloc
+%option noyyfree
 %option warn
 %option prefix="seg_yy"
 
@@ -53,12 +50,12 @@ float        ({integer}|{real})([eE]{integer})?
 
 %%
 
-{range}      seg_yylval.text = yytext; return RANGE;
-{plumin}     seg_yylval.text = yytext; return PLUMIN;
-{float}      seg_yylval.text = yytext; return SEGFLOAT;
-\<           seg_yylval.text = "<"; return EXTENSION;
-\>           seg_yylval.text = ">"; return EXTENSION;
-\~           seg_yylval.text = "~"; return EXTENSION;
+{range}      yylval->text = yytext; return RANGE;
+{plumin}     yylval->text = yytext; return PLUMIN;
+{float}      yylval->text = yytext; return SEGFLOAT;
+\<           yylval->text = "<"; return EXTENSION;
+\>           yylval->text = ">"; return EXTENSION;
+\~           yylval->text = "~"; return EXTENSION;
 [ \t\n\r\f\v]+ /* discard spaces */
 .            return yytext[0]; /* alert parser of the garbage */
 
@@ -67,8 +64,10 @@ float        ({integer}|{real})([eE]{integer})?
 /* LCOV_EXCL_STOP */
 
 void
-seg_yyerror(SEG *result, struct Node *escontext, const char *message)
+seg_yyerror(SEG *result, struct Node *escontext, yyscan_t yyscanner, const char *message)
 {
+	struct yyguts_t * yyg = (struct yyguts_t *) yyscanner;	/* needed for yytext macro */
+
 	/* if we already reported an error, don't overwrite it */
 	if (SOFT_ERROR_OCCURRED(escontext))
 		return;
@@ -96,25 +95,16 @@ seg_yyerror(SEG *result, struct Node *escontext, const char *message)
  * Called before any actual parsing is done
  */
 void
-seg_scanner_init(const char *str)
+seg_scanner_init(const char *str, yyscan_t *yyscannerp)
 {
-	Size	slen = strlen(str);
+	yyscan_t yyscanner;
 
-	/*
-	 * Might be left over after ereport()
-	 */
-	if (YY_CURRENT_BUFFER)
-		yy_delete_buffer(YY_CURRENT_BUFFER);
+	if (yylex_init(yyscannerp) != 0)
+		elog(ERROR, "yylex_init() failed: %m");
 
-	/*
-	 * Make a scan buffer with special termination needed by flex.
-	 */
-	scanbuf = palloc(slen + 2);
-	memcpy(scanbuf, str, slen);
-	scanbuf[slen] = scanbuf[slen + 1] = YY_END_OF_BUFFER_CHAR;
-	scanbufhandle = yy_scan_buffer(scanbuf, slen + 2);
+	yyscanner = *yyscannerp;
 
-	BEGIN(INITIAL);
+	yy_scan_string(str, yyscanner);
 }
 
 
@@ -122,8 +112,34 @@ seg_scanner_init(const char *str)
  * Called after parsing is done to clean up after seg_scanner_init()
  */
 void
-seg_scanner_finish(void)
+seg_scanner_finish(yyscan_t yyscanner)
 {
-	yy_delete_buffer(scanbufhandle);
-	pfree(scanbuf);
+	yylex_destroy(yyscanner);
+}
+
+/*
+ * Interface functions to make flex use palloc() instead of malloc().
+ * It'd be better to make these static, but flex insists otherwise.
+ */
+
+void *
+yyalloc(yy_size_t size, yyscan_t yyscanner)
+{
+	return palloc(size);
+}
+
+void *
+yyrealloc(void *ptr, yy_size_t size, yyscan_t yyscanner)
+{
+	if (ptr)
+		return repalloc(ptr, size);
+	else
+		return palloc(size);
+}
+
+void
+yyfree(void *ptr, yyscan_t yyscanner)
+{
+	if (ptr)
+		pfree(ptr);
 }

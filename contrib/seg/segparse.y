@@ -14,10 +14,6 @@
 #include "segdata.h"
 #include "segparse.h"
 
-/* silence -Wmissing-variable-declarations */
-extern int seg_yychar;
-extern int seg_yynerrs;
-
 /*
  * Bison doesn't allocate anything that needs to live across parser calls,
  * so we can easily have it use palloc instead of malloc.  This prevents
@@ -35,6 +31,9 @@ static int sig_digits(const char *value);
 /* BISON Declarations */
 %parse-param {SEG *result}
 %parse-param {struct Node *escontext}
+%parse-param {yyscan_t yyscanner}
+%lex-param   {yyscan_t yyscanner}
+%pure-parser
 %expect 0
 %name-prefix="seg_yy"
 
@@ -72,6 +71,8 @@ range: boundary PLUMIN deviation
 		result->u_sigd = Max(sig_digits(strbuf), Max($1.sigd, $3.sigd));
 		result->l_ext = '\0';
 		result->u_ext = '\0';
+
+		(void) yynerrs; /* suppress compiler warning */
 	}
 
 	| boundary RANGE boundary
