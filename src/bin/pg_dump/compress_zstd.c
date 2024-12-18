@@ -137,9 +137,10 @@ EndCompressorZstd(ArchiveHandle *AH, CompressorState *cs)
 		Assert(zstdcs->dstream == NULL);
 		_ZstdWriteCommon(AH, cs, true);
 		ZSTD_freeCStream(zstdcs->cstream);
-		pg_free(zstdcs->output.dst);
 	}
 
+	/* output buffer may be allocated in either mode */
+	pg_free(zstdcs->output.dst);
 	pg_free(zstdcs);
 }
 
