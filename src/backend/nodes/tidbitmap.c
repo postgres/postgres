@@ -170,12 +170,12 @@ struct TIDBitmap
 };
 
 /*
- * When iterating over a bitmap in sorted order, a TBMIterator is used to
- * track our progress.  There can be several iterators scanning the same
- * bitmap concurrently.  Note that the bitmap becomes read-only as soon as
- * any iterator is created.
+ * When iterating over a backend-local bitmap in sorted order, a
+ * TBMPrivateIterator is used to track our progress.  There can be several
+ * iterators scanning the same bitmap concurrently.  Note that the bitmap
+ * becomes read-only as soon as any iterator is created.
  */
-struct TBMIterator
+struct TBMPrivateIterator
 {
 	TIDBitmap  *tbm;			/* TIDBitmap we're iterating over */
 	int			spageptr;		/* next spages index */
@@ -213,8 +213,8 @@ typedef struct PTIterationArray
 } PTIterationArray;
 
 /*
- * same as TBMIterator, but it is used for joint iteration, therefore this
- * also holds a reference to the shared state.
+ * same as TBMPrivateIterator, but it is used for joint iteration, therefore
+ * this also holds a reference to the shared state.
  */
 struct TBMSharedIterator
 {
@@ -673,31 +673,32 @@ tbm_is_empty(const TIDBitmap *tbm)
 }
 
 /*
- * tbm_begin_iterate - prepare to iterate through a TIDBitmap
+ * tbm_begin_private_iterate - prepare to iterate through a TIDBitmap
  *
- * The TBMIterator struct is created in the caller's memory context.
- * For a clean shutdown of the iteration, call tbm_end_iterate; but it's
- * okay to just allow the memory context to be released, too.  It is caller's
- * responsibility not to touch the TBMIterator anymore once the TIDBitmap
- * is freed.
+ * The TBMPrivateIterator struct is created in the caller's memory context.
+ * For a clean shutdown of the iteration, call tbm_end_private_iterate; but
+ * it's okay to just allow the memory context to be released, too.  It is
+ * caller's responsibility not to touch the TBMPrivateIterator anymore once
+ * the TIDBitmap is freed.
  *
  * NB: after this is called, it is no longer allowed to modify the contents
  * of the bitmap.  However, you can call this multiple times to scan the
  * contents repeatedly, including parallel scans.
  */
-TBMIterator *
-tbm_begin_iterate(TIDBitmap *tbm)
+TBMPrivateIterator *
+tbm_begin_private_iterate(TIDBitmap *tbm)
 {
-	TBMIterator *iterator;
+	TBMPrivateIterator *iterator;
 
 	Assert(tbm->iterating != TBM_ITERATING_SHARED);
 
 	/*
-	 * Create the TBMIterator struct, with enough trailing space to serve the
-	 * needs of the TBMIterateResult sub-struct.
+	 * Create the TBMPrivateIterator struct, with enough trailing space to
+	 * serve the needs of the TBMIterateResult sub-struct.
 	 */
-	iterator = (TBMIterator *) palloc(sizeof(TBMIterator) +
-									  MAX_TUPLES_PER_PAGE * sizeof(OffsetNumber));
+	iterator = (TBMPrivateIterator *) palloc(sizeof(TBMPrivateIterator) +
+											 MAX_TUPLES_PER_PAGE *
+											 sizeof(OffsetNumber));
 	iterator->tbm = tbm;
 
 	/*
@@ -878,7 +879,7 @@ tbm_prepare_shared_iterate(TIDBitmap *tbm)
 	ptchunks = dsa_get_address(tbm->dsa, tbm->ptchunks);
 
 	/*
-	 * For every shared iterator, referring to pagetable and iterator array,
+	 * For every shared iterator referring to pagetable and iterator array,
 	 * increase the refcount by 1 so that while freeing the shared iterator we
 	 * don't free pagetable and iterator array until its refcount becomes 0.
 	 */
@@ -956,7 +957,7 @@ tbm_advance_schunkbit(PagetableEntry *chunk, int *schunkbitp)
 }
 
 /*
- * tbm_iterate - scan through next page of a TIDBitmap
+ * tbm_private_iterate - scan through next page of a TIDBitmap
  *
  * Returns a TBMIterateResult representing one page, or NULL if there are
  * no more pages to scan.  Pages are guaranteed to be delivered in numerical
@@ -968,7 +969,7 @@ tbm_advance_schunkbit(PagetableEntry *chunk, int *schunkbitp)
  * testing, recheck is always set true when ntuples < 0.)
  */
 TBMIterateResult *
-tbm_iterate(TBMIterator *iterator)
+tbm_private_iterate(TBMPrivateIterator *iterator)
 {
 	TIDBitmap  *tbm = iterator->tbm;
 	TBMIterateResult *output = &(iterator->output);
@@ -1136,14 +1137,14 @@ tbm_shared_iterate(TBMSharedIterator *iterator)
 }
 
 /*
- * tbm_end_iterate - finish an iteration over a TIDBitmap
+ * tbm_end_private_iterate - finish an iteration over a TIDBitmap
  *
  * Currently this is just a pfree, but it might do more someday.  (For
  * instance, it could be useful to count open iterators and allow the
  * bitmap to return to read/write status when there are no more iterators.)
  */
 void
-tbm_end_iterate(TBMIterator *iterator)
+tbm_end_private_iterate(TBMPrivateIterator *iterator)
 {
 	pfree(iterator);
 }
@@ -1555,4 +1556,67 @@ tbm_calculate_entries(double maxbytes)
 	nbuckets = Max(nbuckets, 16);	/* sanity limit */
 
 	return nbuckets;
+}
+
+/*
+ * Create a shared or private bitmap iterator and start iteration.
+ *
+ * `tbm` is only used to create the private iterator and dsa and dsp are only
+ * used to create the shared iterator.
+ *
+ * Before invoking tbm_begin_iterate() to create a shared iterator, one
+ * process must already have invoked tbm_prepare_shared_iterate() to create
+ * and set up the TBMSharedIteratorState.
+ */
+TBMIterator
+tbm_begin_iterate(TIDBitmap *tbm, dsa_area *dsa, dsa_pointer dsp)
+{
+	TBMIterator iterator = {0};
+
+	/* Allocate a private iterator and attach the shared state to it */
+	if (DsaPointerIsValid(dsp))
+	{
+		iterator.shared = true;
+		iterator.i.shared_iterator = tbm_attach_shared_iterate(dsa, dsp);
+	}
+	else
+	{
+		iterator.shared = false;
+		iterator.i.private_iterator = tbm_begin_private_iterate(tbm);
+	}
+
+	return iterator;
+}
+
+/*
+ * Clean up shared or private bitmap iterator.
+ */
+void
+tbm_end_iterate(TBMIterator *iterator)
+{
+	Assert(iterator);
+
+	if (iterator->shared)
+		tbm_end_shared_iterate(iterator->i.shared_iterator);
+	else
+		tbm_end_private_iterate(iterator->i.private_iterator);
+
+	*iterator = (TBMIterator)
+	{
+		0
+	};
+}
+
+/*
+ * Get the next TBMIterateResult from the shared or private bitmap iterator.
+ */
+TBMIterateResult *
+tbm_iterate(TBMIterator *iterator)
+{
+	Assert(iterator);
+
+	if (iterator->shared)
+		return tbm_shared_iterate(iterator->i.shared_iterator);
+	else
+		return tbm_private_iterate(iterator->i.private_iterator);
 }

@@ -352,7 +352,7 @@ typedef struct GinScanEntryData
 
 	/* for a partial-match or full-scan query, we accumulate all TIDs here */
 	TIDBitmap  *matchBitmap;
-	TBMIterator *matchIterator;
+	TBMPrivateIterator *matchIterator;
 	TBMIterateResult *matchResult;
 
 	/* used for Posting list and one page in Posting tree */

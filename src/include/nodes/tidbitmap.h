@@ -32,9 +32,23 @@
  */
 typedef struct TIDBitmap TIDBitmap;
 
-/* Likewise, TBMIterator is private */
-typedef struct TBMIterator TBMIterator;
+/* Likewise, TBMPrivateIterator is private */
+typedef struct TBMPrivateIterator TBMPrivateIterator;
 typedef struct TBMSharedIterator TBMSharedIterator;
+
+/*
+ * Callers with both private and shared implementations can use this unified
+ * API.
+ */
+typedef struct TBMIterator
+{
+	bool		shared;
+	union
+	{
+		TBMPrivateIterator *private_iterator;
+		TBMSharedIterator *shared_iterator;
+	}			i;
+} TBMIterator;
 
 /* Result structure for tbm_iterate */
 typedef struct TBMIterateResult
@@ -62,14 +76,20 @@ extern void tbm_intersect(TIDBitmap *a, const TIDBitmap *b);
 
 extern bool tbm_is_empty(const TIDBitmap *tbm);
 
-extern TBMIterator *tbm_begin_iterate(TIDBitmap *tbm);
+extern TBMPrivateIterator *tbm_begin_private_iterate(TIDBitmap *tbm);
 extern dsa_pointer tbm_prepare_shared_iterate(TIDBitmap *tbm);
-extern TBMIterateResult *tbm_iterate(TBMIterator *iterator);
+extern TBMIterateResult *tbm_private_iterate(TBMPrivateIterator *iterator);
 extern TBMIterateResult *tbm_shared_iterate(TBMSharedIterator *iterator);
-extern void tbm_end_iterate(TBMIterator *iterator);
+extern void tbm_end_private_iterate(TBMPrivateIterator *iterator);
 extern void tbm_end_shared_iterate(TBMSharedIterator *iterator);
 extern TBMSharedIterator *tbm_attach_shared_iterate(dsa_area *dsa,
 													dsa_pointer dp);
 extern long tbm_calculate_entries(double maxbytes);
+
+extern TBMIterator tbm_begin_iterate(TIDBitmap *tbm,
+									 dsa_area *dsa, dsa_pointer dsp);
+extern void tbm_end_iterate(TBMIterator *iterator);
+
+extern TBMIterateResult *tbm_iterate(TBMIterator *iterator);
 
 #endif							/* TIDBITMAP_H */

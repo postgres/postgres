@@ -25,7 +25,7 @@
 
 struct ParallelTableScanDescData;
 
-struct TBMIterator;
+struct TBMPrivateIterator;
 struct TBMSharedIterator;
 
 /*
@@ -48,7 +48,7 @@ typedef struct TableScanDescData
 		/* Iterators for Bitmap Table Scans */
 		struct
 		{
-			struct TBMIterator *rs_iterator;
+			struct TBMPrivateIterator *rs_iterator;
 			struct TBMSharedIterator *rs_shared_iterator;
 		}			bitmap;
 

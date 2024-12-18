@@ -373,7 +373,7 @@ restartScanEntry:
 			if (entry->matchBitmap)
 			{
 				if (entry->matchIterator)
-					tbm_end_iterate(entry->matchIterator);
+					tbm_end_private_iterate(entry->matchIterator);
 				entry->matchIterator = NULL;
 				tbm_free(entry->matchBitmap);
 				entry->matchBitmap = NULL;
@@ -385,7 +385,8 @@ restartScanEntry:
 
 		if (entry->matchBitmap && !tbm_is_empty(entry->matchBitmap))
 		{
-			entry->matchIterator = tbm_begin_iterate(entry->matchBitmap);
+			entry->matchIterator =
+				tbm_begin_private_iterate(entry->matchBitmap);
 			entry->isFinished = false;
 		}
 	}
@@ -832,12 +833,13 @@ entryGetItem(GinState *ginstate, GinScanEntry entry,
 				   (ItemPointerIsLossyPage(&advancePast) &&
 					entry->matchResult->blockno == advancePastBlk))
 			{
-				entry->matchResult = tbm_iterate(entry->matchIterator);
+				entry->matchResult =
+					tbm_private_iterate(entry->matchIterator);
 
 				if (entry->matchResult == NULL)
 				{
 					ItemPointerSetInvalid(&entry->curItem);
-					tbm_end_iterate(entry->matchIterator);
+					tbm_end_private_iterate(entry->matchIterator);
 					entry->matchIterator = NULL;
 					entry->isFinished = true;
 					break;

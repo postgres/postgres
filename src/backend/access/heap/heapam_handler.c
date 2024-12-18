@@ -2138,7 +2138,7 @@ heapam_scan_bitmap_next_block(TableScanDesc scan,
 		if (scan->st.bitmap.rs_shared_iterator)
 			tbmres = tbm_shared_iterate(scan->st.bitmap.rs_shared_iterator);
 		else
-			tbmres = tbm_iterate(scan->st.bitmap.rs_iterator);
+			tbmres = tbm_private_iterate(scan->st.bitmap.rs_iterator);
 
 		if (tbmres == NULL)
 			return false;
