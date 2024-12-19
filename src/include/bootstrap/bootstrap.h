@@ -55,9 +55,15 @@ extern void boot_get_type_io_data(Oid typid,
 								  Oid *typinput,
 								  Oid *typoutput);
 
-extern int	boot_yyparse(void);
+union YYSTYPE;
+#ifndef YY_TYPEDEF_YY_SCANNER_T
+#define YY_TYPEDEF_YY_SCANNER_T
+typedef void *yyscan_t;
+#endif
 
-extern int	boot_yylex(void);
-extern void boot_yyerror(const char *message) pg_attribute_noreturn();
+extern int	boot_yyparse(yyscan_t yyscanner);
+extern int	boot_yylex_init(yyscan_t *yyscannerp);
+extern int	boot_yylex(union YYSTYPE *yylval_param, yyscan_t yyscanner);
+extern void boot_yyerror(yyscan_t yyscanner, const char *message) pg_attribute_noreturn();
 
 #endif							/* BOOTSTRAP_H */

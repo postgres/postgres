@@ -39,17 +39,19 @@ fprintf_to_ereport(const char *fmt, const char *msg)
 	ereport(ERROR, (errmsg_internal("%s", msg)));
 }
 
-
-static int	yyline = 1;			/* line number for error reporting */
-
 %}
 
+%option reentrant
+%option bison-bridge
 %option 8bit
 %option never-interactive
 %option nodefault
 %option noinput
 %option nounput
 %option noyywrap
+%option noyyalloc
+%option noyyrealloc
+%option noyyfree
 %option warn
 %option prefix="boot_yy"
 
@@ -58,7 +60,7 @@ id		[-A-Za-z0-9_]+
 sid		\'([^']|\'\')*\'
 
 /*
- * Keyword tokens return the keyword text (as a constant string) in boot_yylval.kw,
+ * Keyword tokens return the keyword text (as a constant string) in yylval->kw,
  * just in case that's needed because we want to treat the keyword as an
  * unreserved identifier.  Note that _null_ is not treated as a keyword
  * for this purpose; it's the one "reserved word" in the bootstrap syntax.
@@ -66,23 +68,23 @@ sid		\'([^']|\'\')*\'
  * Notice that all the keywords are case-sensitive, and for historical
  * reasons some must be upper case.
  *
- * String tokens return a palloc'd string in boot_yylval.str.
+ * String tokens return a palloc'd string in yylval->str.
  */
 
 %%
 
-open			{ boot_yylval.kw = "open"; return OPEN; }
+open			{ yylval->kw = "open"; return OPEN; }
 
-close			{ boot_yylval.kw = "close"; return XCLOSE; }
+close			{ yylval->kw = "close"; return XCLOSE; }
 
-create			{ boot_yylval.kw = "create"; return XCREATE; }
+create			{ yylval->kw = "create"; return XCREATE; }
 
-OID				{ boot_yylval.kw = "OID"; return OBJ_ID; }
-bootstrap		{ boot_yylval.kw = "bootstrap"; return XBOOTSTRAP; }
-shared_relation	{ boot_yylval.kw = "shared_relation"; return XSHARED_RELATION; }
-rowtype_oid		{ boot_yylval.kw = "rowtype_oid"; return XROWTYPE_OID; }
+OID				{ yylval->kw = "OID"; return OBJ_ID; }
+bootstrap		{ yylval->kw = "bootstrap"; return XBOOTSTRAP; }
+shared_relation	{ yylval->kw = "shared_relation"; return XSHARED_RELATION; }
+rowtype_oid		{ yylval->kw = "rowtype_oid"; return XROWTYPE_OID; }
 
-insert			{ boot_yylval.kw = "insert"; return INSERT_TUPLE; }
+insert			{ yylval->kw = "insert"; return INSERT_TUPLE; }
 
 _null_			{ return NULLVAL; }
 
@@ -91,35 +93,35 @@ _null_			{ return NULLVAL; }
 "("				{ return LPAREN; }
 ")"				{ return RPAREN; }
 
-[\n]			{ yyline++; }
+[\n]			{ yylineno++; }
 [\r\t ]			;
 
 ^\#[^\n]*		;		/* drop everything after "#" for comments */
 
-declare			{ boot_yylval.kw = "declare"; return XDECLARE; }
-build			{ boot_yylval.kw = "build"; return XBUILD; }
-indices			{ boot_yylval.kw = "indices"; return INDICES; }
-unique			{ boot_yylval.kw = "unique"; return UNIQUE; }
-index			{ boot_yylval.kw = "index"; return INDEX; }
-on				{ boot_yylval.kw = "on"; return ON; }
-using			{ boot_yylval.kw = "using"; return USING; }
-toast			{ boot_yylval.kw = "toast"; return XTOAST; }
-FORCE			{ boot_yylval.kw = "FORCE"; return XFORCE; }
-NOT				{ boot_yylval.kw = "NOT"; return XNOT; }
-NULL			{ boot_yylval.kw = "NULL"; return XNULL; }
+declare			{ yylval->kw = "declare"; return XDECLARE; }
+build			{ yylval->kw = "build"; return XBUILD; }
+indices			{ yylval->kw = "indices"; return INDICES; }
+unique			{ yylval->kw = "unique"; return UNIQUE; }
+index			{ yylval->kw = "index"; return INDEX; }
+on				{ yylval->kw = "on"; return ON; }
+using			{ yylval->kw = "using"; return USING; }
+toast			{ yylval->kw = "toast"; return XTOAST; }
+FORCE			{ yylval->kw = "FORCE"; return XFORCE; }
+NOT				{ yylval->kw = "NOT"; return XNOT; }
+NULL			{ yylval->kw = "NULL"; return XNULL; }
 
 {id}			{
-					boot_yylval.str = pstrdup(yytext);
+					yylval->str = pstrdup(yytext);
 					return ID;
 				}
 {sid}			{
 					/* strip quotes and escapes */
-					boot_yylval.str = DeescapeQuotedString(yytext);
+					yylval->str = DeescapeQuotedString(yytext);
 					return ID;
 				}
 
 .				{
-					elog(ERROR, "syntax error at line %d: unexpected character \"%s\"", yyline, yytext);
+					elog(ERROR, "syntax error at line %d: unexpected character \"%s\"", yylineno, yytext);
 				}
 
 %%
@@ -127,7 +129,36 @@ NULL			{ boot_yylval.kw = "NULL"; return XNULL; }
 /* LCOV_EXCL_STOP */
 
 void
-boot_yyerror(const char *message)
+boot_yyerror(yyscan_t yyscanner, const char *message)
 {
-	elog(ERROR, "%s at line %d", message, yyline);
+	struct yyguts_t * yyg = (struct yyguts_t *) yyscanner;	/* needed for yylineno macro */
+
+	elog(ERROR, "%s at line %d", message, yylineno);
+}
+
+/*
+ * Interface functions to make flex use palloc() instead of malloc().
+ * It'd be better to make these static, but flex insists otherwise.
+ */
+
+void *
+yyalloc(yy_size_t size, yyscan_t yyscanner)
+{
+	return palloc(size);
+}
+
+void *
+yyrealloc(void *ptr, yy_size_t size, yyscan_t yyscanner)
+{
+	if (ptr)
+		return repalloc(ptr, size);
+	else
+		return palloc(size);
+}
+
+void
+yyfree(void *ptr, yyscan_t yyscanner)
+{
+   if (ptr)
+	   pfree(ptr);
 }

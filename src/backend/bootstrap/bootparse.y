@@ -34,10 +34,6 @@
 
 #include "bootparse.h"
 
-/* silence -Wmissing-variable-declarations */
-extern int boot_yychar;
-extern int boot_yynerrs;
-
 
 /*
  * Bison doesn't allocate anything that needs to live across parser calls,
@@ -81,6 +77,9 @@ static int num_columns_read = 0;
 
 %}
 
+%parse-param {yyscan_t yyscanner}
+%lex-param   {yyscan_t yyscanner}
+%pure-parser
 %expect 0
 %name-prefix="boot_yy"
 
@@ -141,6 +140,8 @@ Boot_OpenStmt:
 					do_start();
 					boot_openrel($2);
 					do_end();
+
+					(void) yynerrs; /* suppress compiler warning */
 				}
 		;
 
