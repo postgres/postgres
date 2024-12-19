@@ -37,10 +37,14 @@ build_hash_table(RecursiveUnionState *rustate)
 	Assert(node->numCols > 0);
 	Assert(node->numGroups > 0);
 
-	/* XXX is it worth working a bit harder to determine the inputOps here? */
+	/*
+	 * If both child plans deliver the same fixed tuple slot type, we can tell
+	 * BuildTupleHashTableExt to expect that slot type as input.  Otherwise,
+	 * we'll pass NULL denoting that any slot type is possible.
+	 */
 	rustate->hashtable = BuildTupleHashTableExt(&rustate->ps,
 												desc,
-												NULL,
+												ExecGetCommonChildSlotOps(&rustate->ps),
 												node->numCols,
 												node->dupColIdx,
 												rustate->eqfuncoids,

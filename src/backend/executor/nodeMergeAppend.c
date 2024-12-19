@@ -66,6 +66,7 @@ ExecInitMergeAppend(MergeAppend *node, EState *estate, int eflags)
 {
 	MergeAppendState *mergestate = makeNode(MergeAppendState);
 	PlanState **mergeplanstates;
+	const TupleTableSlotOps *mergeops;
 	Bitmapset  *validsubplans;
 	int			nplans;
 	int			i,
@@ -129,18 +130,6 @@ ExecInitMergeAppend(MergeAppend *node, EState *estate, int eflags)
 											  mergestate);
 
 	/*
-	 * Miscellaneous initialization
-	 *
-	 * MergeAppend nodes do have Result slots, which hold pointers to tuples,
-	 * so we have to initialize them.  FIXME
-	 */
-	ExecInitResultTupleSlotTL(&mergestate->ps, &TTSOpsVirtual);
-
-	/* node returns slots from each of its subnodes, therefore not fixed */
-	mergestate->ps.resultopsset = true;
-	mergestate->ps.resultopsfixed = false;
-
-	/*
 	 * call ExecInitNode on each of the valid plans to be executed and save
 	 * the results into the mergeplanstates array.
 	 */
@@ -153,6 +142,31 @@ ExecInitMergeAppend(MergeAppend *node, EState *estate, int eflags)
 		mergeplanstates[j++] = ExecInitNode(initNode, estate, eflags);
 	}
 
+	/*
+	 * Initialize MergeAppend's result tuple type and slot.  If the child
+	 * plans all produce the same fixed slot type, we can use that slot type;
+	 * otherwise make a virtual slot.  (Note that the result slot itself is
+	 * used only to return a null tuple at end of execution; real tuples are
+	 * returned to the caller in the children's own result slots.  What we are
+	 * doing here is allowing the parent plan node to optimize if the
+	 * MergeAppend will return only one kind of slot.)
+	 */
+	mergeops = ExecGetCommonSlotOps(mergeplanstates, j);
+	if (mergeops != NULL)
+	{
+		ExecInitResultTupleSlotTL(&mergestate->ps, mergeops);
+	}
+	else
+	{
+		ExecInitResultTupleSlotTL(&mergestate->ps, &TTSOpsVirtual);
+		/* show that the output slot type is not fixed */
+		mergestate->ps.resultopsset = true;
+		mergestate->ps.resultopsfixed = false;
+	}
+
+	/*
+	 * Miscellaneous initialization
+	 */
 	mergestate->ps.ps_ProjInfo = NULL;
 
 	/*
