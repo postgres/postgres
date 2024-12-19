@@ -39,23 +39,23 @@ build_hash_table(RecursiveUnionState *rustate)
 
 	/*
 	 * If both child plans deliver the same fixed tuple slot type, we can tell
-	 * BuildTupleHashTableExt to expect that slot type as input.  Otherwise,
+	 * BuildTupleHashTable to expect that slot type as input.  Otherwise,
 	 * we'll pass NULL denoting that any slot type is possible.
 	 */
-	rustate->hashtable = BuildTupleHashTableExt(&rustate->ps,
-												desc,
-												ExecGetCommonChildSlotOps(&rustate->ps),
-												node->numCols,
-												node->dupColIdx,
-												rustate->eqfuncoids,
-												rustate->hashfunctions,
-												node->dupCollations,
-												node->numGroups,
-												0,
-												rustate->ps.state->es_query_cxt,
-												rustate->tableContext,
-												rustate->tempContext,
-												false);
+	rustate->hashtable = BuildTupleHashTable(&rustate->ps,
+											 desc,
+											 ExecGetCommonChildSlotOps(&rustate->ps),
+											 node->numCols,
+											 node->dupColIdx,
+											 rustate->eqfuncoids,
+											 rustate->hashfunctions,
+											 node->dupCollations,
+											 node->numGroups,
+											 0,
+											 rustate->ps.state->es_query_cxt,
+											 rustate->tableContext,
+											 rustate->tempContext,
+											 false);
 }
 
 

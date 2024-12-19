@@ -135,36 +135,43 @@ execTuplesHashPrepare(int numCols,
 /*
  * Construct an empty TupleHashTable
  *
- *  inputOps: slot ops for input hash values, or NULL if unknown or not fixed
- *	numCols, keyColIdx: identify the tuple fields to use as lookup key
- *	eqfunctions: equality comparison functions to use
- *	hashfunctions: datatype-specific hashing functions to use
+ *	parent: PlanState node that will own this hash table
+ *	inputDesc: tuple descriptor for input tuples
+ *	inputOps: slot ops for input tuples, or NULL if unknown or not fixed
+ *	numCols: number of columns to be compared (length of next 4 arrays)
+ *	keyColIdx: indexes of tuple columns to compare
+ *	eqfuncoids: OIDs of equality comparison functions to use
+ *	hashfunctions: FmgrInfos of datatype-specific hashing functions to use
+ *	collations: collations to use in comparisons
  *	nbuckets: initial estimate of hashtable size
  *	additionalsize: size of data stored in ->additional
  *	metacxt: memory context for long-lived allocation, but not per-entry data
  *	tablecxt: memory context in which to store table entries
  *	tempcxt: short-lived context for evaluation hash and comparison functions
+ *	use_variable_hash_iv: if true, adjust hash IV per-parallel-worker
  *
- * The function arrays may be made with execTuplesHashPrepare().  Note they
+ * The hashfunctions array may be made with execTuplesHashPrepare().  Note they
  * are not cross-type functions, but expect to see the table datatype(s)
  * on both sides.
  *
- * Note that keyColIdx, eqfunctions, and hashfunctions must be allocated in
- * storage that will live as long as the hashtable does.
+ * Note that the keyColIdx, hashfunctions, and collations arrays must be
+ * allocated in storage that will live as long as the hashtable does.
  */
 TupleHashTable
-BuildTupleHashTableExt(PlanState *parent,
-					   TupleDesc inputDesc,
-					   const TupleTableSlotOps *inputOps,
-					   int numCols, AttrNumber *keyColIdx,
-					   const Oid *eqfuncoids,
-					   FmgrInfo *hashfunctions,
-					   Oid *collations,
-					   long nbuckets, Size additionalsize,
-					   MemoryContext metacxt,
-					   MemoryContext tablecxt,
-					   MemoryContext tempcxt,
-					   bool use_variable_hash_iv)
+BuildTupleHashTable(PlanState *parent,
+					TupleDesc inputDesc,
+					const TupleTableSlotOps *inputOps,
+					int numCols,
+					AttrNumber *keyColIdx,
+					const Oid *eqfuncoids,
+					FmgrInfo *hashfunctions,
+					Oid *collations,
+					long nbuckets,
+					Size additionalsize,
+					MemoryContext metacxt,
+					MemoryContext tablecxt,
+					MemoryContext tempcxt,
+					bool use_variable_hash_iv)
 {
 	TupleHashTable hashtable;
 	Size		entrysize = sizeof(TupleHashEntryData) + additionalsize;
@@ -216,14 +223,14 @@ BuildTupleHashTableExt(PlanState *parent,
 													&TTSOpsMinimalTuple);
 
 	/*
-	 * If the old reset interface is used (i.e. BuildTupleHashTable, rather
-	 * than BuildTupleHashTableExt), allowing JIT would lead to the generated
-	 * functions to a) live longer than the query b) be re-generated each time
-	 * the table is being reset. Therefore prevent JIT from being used in that
-	 * case, by not providing a parent node (which prevents accessing the
-	 * JitContext in the EState).
+	 * If the caller fails to make the metacxt different from the tablecxt,
+	 * allowing JIT would lead to the generated functions to a) live longer
+	 * than the query or b) be re-generated each time the table is being
+	 * reset. Therefore prevent JIT from being used in that case, by not
+	 * providing a parent node (which prevents accessing the JitContext in the
+	 * EState).
 	 */
-	allow_jit = metacxt != tablecxt;
+	allow_jit = (metacxt != tablecxt);
 
 	/* build hash ExprState for all columns */
 	hashtable->tab_hash_expr = ExecBuildHash32FromAttrs(inputDesc,
@@ -257,40 +264,8 @@ BuildTupleHashTableExt(PlanState *parent,
 }
 
 /*
- * BuildTupleHashTable is a backwards-compatibility wrapper for
- * BuildTupleHashTableExt(), that allocates the hashtable's metadata in
- * tablecxt. Note that hashtables created this way cannot be reset leak-free
- * with ResetTupleHashTable().
- */
-TupleHashTable
-BuildTupleHashTable(PlanState *parent,
-					TupleDesc inputDesc,
-					int numCols, AttrNumber *keyColIdx,
-					const Oid *eqfuncoids,
-					FmgrInfo *hashfunctions,
-					Oid *collations,
-					long nbuckets, Size additionalsize,
-					MemoryContext tablecxt,
-					MemoryContext tempcxt,
-					bool use_variable_hash_iv)
-{
-	return BuildTupleHashTableExt(parent,
-								  inputDesc,
-								  NULL,
-								  numCols, keyColIdx,
-								  eqfuncoids,
-								  hashfunctions,
-								  collations,
-								  nbuckets, additionalsize,
-								  tablecxt,
-								  tablecxt,
-								  tempcxt,
-								  use_variable_hash_iv);
-}
-
-/*
  * Reset contents of the hashtable to be empty, preserving all the non-content
- * state. Note that the tablecxt passed to BuildTupleHashTableExt() should
+ * state. Note that the tablecxt passed to BuildTupleHashTable() should
  * also be reset, otherwise there will be leaks.
  */
 void

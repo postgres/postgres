@@ -523,7 +523,7 @@ buildSubPlanHash(SubPlanState *node, ExprContext *econtext)
 	 * Because the input slot for each hash table is always the slot resulting
 	 * from an ExecProject(), we can use TTSOpsVirtual for the input ops. This
 	 * saves a needless fetch inner op step for the hashing ExprState created
-	 * in BuildTupleHashTableExt().
+	 * in BuildTupleHashTable().
 	 */
 	MemoryContextReset(node->hashtablecxt);
 	node->havehashrows = false;
@@ -536,20 +536,20 @@ buildSubPlanHash(SubPlanState *node, ExprContext *econtext)
 	if (node->hashtable)
 		ResetTupleHashTable(node->hashtable);
 	else
-		node->hashtable = BuildTupleHashTableExt(node->parent,
-												 node->descRight,
-												 &TTSOpsVirtual,
-												 ncols,
-												 node->keyColIdx,
-												 node->tab_eq_funcoids,
-												 node->tab_hash_funcs,
-												 node->tab_collations,
-												 nbuckets,
-												 0,
-												 node->planstate->state->es_query_cxt,
-												 node->hashtablecxt,
-												 node->hashtempcxt,
-												 false);
+		node->hashtable = BuildTupleHashTable(node->parent,
+											  node->descRight,
+											  &TTSOpsVirtual,
+											  ncols,
+											  node->keyColIdx,
+											  node->tab_eq_funcoids,
+											  node->tab_hash_funcs,
+											  node->tab_collations,
+											  nbuckets,
+											  0,
+											  node->planstate->state->es_query_cxt,
+											  node->hashtablecxt,
+											  node->hashtempcxt,
+											  false);
 
 	if (!subplan->unknownEqFalse)
 	{
@@ -565,20 +565,20 @@ buildSubPlanHash(SubPlanState *node, ExprContext *econtext)
 		if (node->hashnulls)
 			ResetTupleHashTable(node->hashnulls);
 		else
-			node->hashnulls = BuildTupleHashTableExt(node->parent,
-													 node->descRight,
-													 &TTSOpsVirtual,
-													 ncols,
-													 node->keyColIdx,
-													 node->tab_eq_funcoids,
-													 node->tab_hash_funcs,
-													 node->tab_collations,
-													 nbuckets,
-													 0,
-													 node->planstate->state->es_query_cxt,
-													 node->hashtablecxt,
-													 node->hashtempcxt,
-													 false);
+			node->hashnulls = BuildTupleHashTable(node->parent,
+												  node->descRight,
+												  &TTSOpsVirtual,
+												  ncols,
+												  node->keyColIdx,
+												  node->tab_eq_funcoids,
+												  node->tab_hash_funcs,
+												  node->tab_collations,
+												  nbuckets,
+												  0,
+												  node->planstate->state->es_query_cxt,
+												  node->hashtablecxt,
+												  node->hashtempcxt,
+												  false);
 	}
 	else
 		node->hashnulls = NULL;

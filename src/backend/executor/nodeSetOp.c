@@ -92,23 +92,23 @@ build_hash_table(SetOpState *setopstate)
 
 	/*
 	 * If both child plans deliver the same fixed tuple slot type, we can tell
-	 * BuildTupleHashTableExt to expect that slot type as input.  Otherwise,
+	 * BuildTupleHashTable to expect that slot type as input.  Otherwise,
 	 * we'll pass NULL denoting that any slot type is possible.
 	 */
-	setopstate->hashtable = BuildTupleHashTableExt(&setopstate->ps,
-												   desc,
-												   ExecGetCommonChildSlotOps(&setopstate->ps),
-												   node->numCols,
-												   node->cmpColIdx,
-												   setopstate->eqfuncoids,
-												   setopstate->hashfunctions,
-												   node->cmpCollations,
-												   node->numGroups,
-												   0,
-												   setopstate->ps.state->es_query_cxt,
-												   setopstate->tableContext,
-												   econtext->ecxt_per_tuple_memory,
-												   false);
+	setopstate->hashtable = BuildTupleHashTable(&setopstate->ps,
+												desc,
+												ExecGetCommonChildSlotOps(&setopstate->ps),
+												node->numCols,
+												node->cmpColIdx,
+												setopstate->eqfuncoids,
+												setopstate->hashfunctions,
+												node->cmpCollations,
+												node->numGroups,
+												0,
+												setopstate->ps.state->es_query_cxt,
+												setopstate->tableContext,
+												econtext->ecxt_per_tuple_memory,
+												false);
 }
 
 /*

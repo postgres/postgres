@@ -1518,20 +1518,20 @@ build_hash_table(AggState *aggstate, int setno, long nbuckets)
 	 */
 	additionalsize = aggstate->numtrans * sizeof(AggStatePerGroupData);
 
-	perhash->hashtable = BuildTupleHashTableExt(&aggstate->ss.ps,
-												perhash->hashslot->tts_tupleDescriptor,
-												perhash->hashslot->tts_ops,
-												perhash->numCols,
-												perhash->hashGrpColIdxHash,
-												perhash->eqfuncoids,
-												perhash->hashfunctions,
-												perhash->aggnode->grpCollations,
-												nbuckets,
-												additionalsize,
-												metacxt,
-												hashcxt,
-												tmpcxt,
-												DO_AGGSPLIT_SKIPFINAL(aggstate->aggsplit));
+	perhash->hashtable = BuildTupleHashTable(&aggstate->ss.ps,
+											 perhash->hashslot->tts_tupleDescriptor,
+											 perhash->hashslot->tts_ops,
+											 perhash->numCols,
+											 perhash->hashGrpColIdxHash,
+											 perhash->eqfuncoids,
+											 perhash->hashfunctions,
+											 perhash->aggnode->grpCollations,
+											 nbuckets,
+											 additionalsize,
+											 metacxt,
+											 hashcxt,
+											 tmpcxt,
+											 DO_AGGSPLIT_SKIPFINAL(aggstate->aggsplit));
 }
 
 /*
