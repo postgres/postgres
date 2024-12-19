@@ -105,15 +105,6 @@ BitmapHeapNext(BitmapHeapScanState *node)
 				elog(ERROR, "unrecognized result from subplan");
 
 			node->tbm = tbm;
-
-#ifdef USE_PREFETCH
-			if (node->prefetch_maximum > 0)
-				node->prefetch_iterator =
-					tbm_begin_iterate(node->tbm, dsa,
-									  pstate ?
-									  pstate->prefetch_iterator :
-									  InvalidDsaPointer);
-#endif							/* USE_PREFETCH */
 		}
 		else if (BitmapShouldInitializeSharedState(pstate))
 		{
