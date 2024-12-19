@@ -80,7 +80,7 @@
  */
 static SnapshotData CurrentSnapshotData = {SNAPSHOT_MVCC};
 static SnapshotData SecondarySnapshotData = {SNAPSHOT_MVCC};
-SnapshotData CatalogSnapshotData = {SNAPSHOT_MVCC};
+static SnapshotData CatalogSnapshotData = {SNAPSHOT_MVCC};
 SnapshotData SnapshotSelfData = {SNAPSHOT_SELF};
 SnapshotData SnapshotAnyData = {SNAPSHOT_ANY};
 SnapshotData SnapshotToastData = {SNAPSHOT_TOAST};
