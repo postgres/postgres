@@ -5,6 +5,7 @@ backend_sources += files(
   'backend_status.c',
   'pgstat.c',
   'pgstat_archiver.c',
+  'pgstat_backend.c',
   'pgstat_bgwriter.c',
   'pgstat_checkpointer.c',
   'pgstat_database.c',

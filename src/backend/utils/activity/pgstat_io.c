@@ -20,14 +20,6 @@
 #include "storage/bufmgr.h"
 #include "utils/pgstat_internal.h"
 
-
-typedef struct PgStat_PendingIO
-{
-	PgStat_Counter counts[IOOBJECT_NUM_TYPES][IOCONTEXT_NUM_TYPES][IOOP_NUM_TYPES];
-	instr_time	pending_times[IOOBJECT_NUM_TYPES][IOCONTEXT_NUM_TYPES][IOOP_NUM_TYPES];
-} PgStat_PendingIO;
-
-
 static PgStat_PendingIO PendingIOStats;
 static bool have_iostats = false;
 
@@ -86,6 +78,14 @@ pgstat_count_io_op_n(IOObject io_object, IOContext io_context, IOOp io_op, uint3
 	Assert((unsigned int) io_context < IOCONTEXT_NUM_TYPES);
 	Assert((unsigned int) io_op < IOOP_NUM_TYPES);
 	Assert(pgstat_tracks_io_op(MyBackendType, io_object, io_context, io_op));
+
+	if (pgstat_tracks_backend_bktype(MyBackendType))
+	{
+		PgStat_PendingIO *entry_ref;
+
+		entry_ref = pgstat_prep_backend_pending(MyProcNumber);
+		entry_ref->counts[io_object][io_context][io_op] += cnt;
+	}
 
 	PendingIOStats.counts[io_object][io_context][io_op] += cnt;
 
@@ -148,6 +148,15 @@ pgstat_count_io_op_time(IOObject io_object, IOContext io_context, IOOp io_op,
 
 		INSTR_TIME_ADD(PendingIOStats.pending_times[io_object][io_context][io_op],
 					   io_time);
+
+		if (pgstat_tracks_backend_bktype(MyBackendType))
+		{
+			PgStat_PendingIO *entry_ref;
+
+			entry_ref = pgstat_prep_backend_pending(MyProcNumber);
+			INSTR_TIME_ADD(entry_ref->pending_times[io_object][io_context][io_op],
+						   io_time);
+		}
 	}
 
 	pgstat_count_io_op_n(io_object, io_context, io_op, cnt);

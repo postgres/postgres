@@ -4791,6 +4791,27 @@ description | Waiting for a newly initialized WAL file to reach durable storage
       </row>
 
       <row>
+       <entry id="pg-stat-get-backend-io" role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_stat_get_backend_io</primary>
+        </indexterm>
+        <function>pg_stat_get_backend_io</function> ( <type>integer</type> )
+        <returnvalue>setof record</returnvalue>
+       </para>
+       <para>
+        Returns I/O statistics about the backend with the specified
+        process ID. The output fields are exactly the same as the ones in the
+        <structname>pg_stat_io</structname> view.
+       </para>
+       <para>
+        The function does not return I/O statistics for the checkpointer,
+        the background writer, the startup process and the autovacuum launcher
+        as they are already visible in the <structname>pg_stat_io</structname>
+        view and there is only one of each.
+       </para></entry>
+      </row>
+
+      <row>
        <entry role="func_table_entry"><para role="func_signature">
         <indexterm>
          <primary>pg_stat_get_activity</primary>
@@ -4964,6 +4985,24 @@ description | Waiting for a newly initialized WAL file to reach durable storage
        <para>
         Resets statistics for a single table or index in the current database
         or shared across all databases in the cluster to zero.
+       </para>
+       <para>
+        This function is restricted to superusers by default, but other users
+        can be granted EXECUTE to run the function.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_stat_reset_backend_stats</primary>
+        </indexterm>
+        <function>pg_stat_reset_backend_stats</function> ( <type>integer</type> )
+        <returnvalue>void</returnvalue>
+       </para>
+       <para>
+        Resets statistics for a single backend with the specified process ID
+        to zero.
        </para>
        <para>
         This function is restricted to superusers by default, but other users

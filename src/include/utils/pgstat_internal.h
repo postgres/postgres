@@ -450,6 +450,11 @@ typedef struct PgStatShared_ReplSlot
 	PgStat_StatReplSlotEntry stats;
 } PgStatShared_ReplSlot;
 
+typedef struct PgStatShared_Backend
+{
+	PgStatShared_Common header;
+	PgStat_Backend stats;
+} PgStatShared_Backend;
 
 /*
  * Central shared memory entry for the cumulative stats system.
@@ -604,6 +609,15 @@ extern void pgstat_archiver_init_shmem_cb(void *stats);
 extern void pgstat_archiver_reset_all_cb(TimestampTz ts);
 extern void pgstat_archiver_snapshot_cb(void);
 
+/*
+ * Functions in pgstat_backend.c
+ */
+
+extern void pgstat_flush_backend(bool nowait);
+
+extern PgStat_BackendPendingIO *pgstat_prep_backend_pending(ProcNumber procnum);
+extern bool pgstat_backend_flush_cb(PgStat_EntryRef *entry_ref, bool nowait);
+extern void pgstat_backend_reset_timestamp_cb(PgStatShared_Common *header, TimestampTz ts);
 
 /*
  * Functions in pgstat_bgwriter.c

@@ -1274,8 +1274,9 @@ pg_stat_get_buf_alloc(PG_FUNCTION_ARGS)
 }
 
 /*
-* When adding a new column to the pg_stat_io view, add a new enum value
-* here above IO_NUM_COLUMNS.
+* When adding a new column to the pg_stat_io view and the
+* pg_stat_get_backend_io() function, add a new enum value here above
+* IO_NUM_COLUMNS.
 */
 typedef enum io_stat_col
 {
@@ -1368,9 +1369,9 @@ pg_stat_us_to_ms(PgStat_Counter val_ms)
 /*
  * pg_stat_io_build_tuples
  *
- * Helper routine for pg_stat_get_io() filling a result tuplestore with one
- * tuple for each object and each context supported by the caller, based on the
- * contents of bktype_stats.
+ * Helper routine for pg_stat_get_io() and pg_stat_get_backend_io()
+ * filling a result tuplestore with one tuple for each object and each
+ * context supported by the caller, based on the contents of bktype_stats.
  */
 static void
 pg_stat_io_build_tuples(ReturnSetInfo *rsinfo,
@@ -1491,6 +1492,70 @@ pg_stat_get_io(PG_FUNCTION_ARGS)
 								backends_io_stats->stat_reset_timestamp);
 	}
 
+	return (Datum) 0;
+}
+
+/*
+ * Returns I/O statistics for a backend with given PID.
+ */
+Datum
+pg_stat_get_backend_io(PG_FUNCTION_ARGS)
+{
+	ReturnSetInfo *rsinfo;
+	BackendType bktype;
+	int			pid;
+	PGPROC	   *proc;
+	ProcNumber	procNumber;
+	PgStat_Backend *backend_stats;
+	PgStat_BktypeIO *bktype_stats;
+	PgBackendStatus *beentry;
+
+	InitMaterializedSRF(fcinfo, 0);
+	rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
+
+	pid = PG_GETARG_INT32(0);
+	proc = BackendPidGetProc(pid);
+
+	/*
+	 * This could be an auxiliary process but these do not report backend
+	 * statistics due to pgstat_tracks_backend_bktype(), so there is no need
+	 * for an extra call to AuxiliaryPidGetProc().
+	 */
+	if (!proc)
+		return (Datum) 0;
+
+	procNumber = GetNumberFromPGProc(proc);
+
+	beentry = pgstat_get_beentry_by_proc_number(procNumber);
+	if (!beentry)
+		return (Datum) 0;
+
+	backend_stats = pgstat_fetch_stat_backend(procNumber);
+	if (!backend_stats)
+		return (Datum) 0;
+
+	bktype = beentry->st_backendType;
+
+	/* if PID does not match, leave */
+	if (beentry->st_procpid != pid)
+		return (Datum) 0;
+
+	/* backend may be gone, so recheck in case */
+	if (bktype == B_INVALID)
+		return (Datum) 0;
+
+	bktype_stats = &backend_stats->stats;
+
+	/*
+	 * In Assert builds, we can afford an extra loop through all of the
+	 * counters (in pg_stat_io_build_tuples()), checking that only expected
+	 * stats are non-zero, since it keeps the non-Assert code cleaner.
+	 */
+	Assert(pgstat_bktype_io_stats_valid(bktype_stats, bktype));
+
+	/* save tuples with data from this PgStat_BktypeIO */
+	pg_stat_io_build_tuples(rsinfo, bktype_stats, bktype,
+							backend_stats->stat_reset_timestamp);
 	return (Datum) 0;
 }
 
@@ -1795,6 +1860,30 @@ pg_stat_reset_single_function_counters(PG_FUNCTION_ARGS)
 	Oid			funcoid = PG_GETARG_OID(0);
 
 	pgstat_reset(PGSTAT_KIND_FUNCTION, MyDatabaseId, funcoid);
+
+	PG_RETURN_VOID();
+}
+
+/*
+ * Reset statistics of backend with given PID.
+ */
+Datum
+pg_stat_reset_backend_stats(PG_FUNCTION_ARGS)
+{
+	PGPROC	   *proc;
+	int			backend_pid = PG_GETARG_INT32(0);
+
+	proc = BackendPidGetProc(backend_pid);
+
+	/*
+	 * This could be an auxiliary process but these do not report backend
+	 * statistics due to pgstat_tracks_backend_bktype(), so there is no need
+	 * for an extra call to AuxiliaryPidGetProc().
+	 */
+	if (!proc)
+		PG_RETURN_VOID();
+
+	pgstat_reset(PGSTAT_KIND_BACKEND, InvalidOid, GetNumberFromPGProc(proc));
 
 	PG_RETURN_VOID();
 }

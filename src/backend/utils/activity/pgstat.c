@@ -77,6 +77,7 @@
  *
  * Each statistics kind is handled in a dedicated file:
  * - pgstat_archiver.c
+ * - pgstat_backend.c
  * - pgstat_bgwriter.c
  * - pgstat_checkpointer.c
  * - pgstat_database.c
@@ -358,6 +359,22 @@ static const PgStat_KindInfo pgstat_kind_builtin_infos[PGSTAT_KIND_BUILTIN_SIZE]
 		.reset_timestamp_cb = pgstat_subscription_reset_timestamp_cb,
 	},
 
+	[PGSTAT_KIND_BACKEND] = {
+		.name = "backend",
+
+		.fixed_amount = false,
+		.write_to_file = false,
+
+		.accessed_across_databases = true,
+
+		.shared_size = sizeof(PgStatShared_Backend),
+		.shared_data_off = offsetof(PgStatShared_Backend, stats),
+		.shared_data_len = sizeof(((PgStatShared_Backend *) 0)->stats),
+		.pending_size = sizeof(PgStat_BackendPendingIO),
+
+		.flush_pending_cb = pgstat_backend_flush_cb,
+		.reset_timestamp_cb = pgstat_backend_reset_timestamp_cb,
+	},
 
 	/* stats for fixed-numbered (mostly 1) objects */
 
@@ -601,6 +618,10 @@ pgstat_shutdown_hook(int code, Datum arg)
 	/* there shouldn't be any pending changes left */
 	Assert(dlist_is_empty(&pgStatPending));
 	dlist_init(&pgStatPending);
+
+	/* drop the backend stats entry */
+	if (!pgstat_drop_entry(PGSTAT_KIND_BACKEND, InvalidOid, MyProcNumber))
+		pgstat_request_entry_refs_gc();
 
 	pgstat_detach_shmem();
 

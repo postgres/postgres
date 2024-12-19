@@ -595,7 +595,8 @@ SELECT pg_stat_get_replication_slot(NULL);
 SELECT pg_stat_get_subscription_stats(NULL);
 
 
--- Test that the following operations are tracked in pg_stat_io:
+-- Test that the following operations are tracked in pg_stat_io and in
+-- backend stats:
 -- - reads of target blocks into shared buffers
 -- - writes of shared buffers to permanent storage
 -- - extends of relations using shared buffers
@@ -607,20 +608,32 @@ SELECT pg_stat_get_subscription_stats(NULL);
 
 -- Create a regular table and insert some data to generate IOCONTEXT_NORMAL
 -- extends.
+SELECT pid AS checkpointer_pid FROM pg_stat_activity
+  WHERE backend_type = 'checkpointer' \gset
 SELECT sum(extends) AS io_sum_shared_before_extends
   FROM pg_stat_io WHERE context = 'normal' AND object = 'relation' \gset
+SELECT sum(extends) AS my_io_sum_shared_before_extends
+  FROM pg_stat_get_backend_io(pg_backend_pid())
+  WHERE context = 'normal' AND object = 'relation' \gset
 SELECT sum(writes) AS writes, sum(fsyncs) AS fsyncs
   FROM pg_stat_io
   WHERE object = 'relation' \gset io_sum_shared_before_
+SELECT sum(writes) AS writes, sum(fsyncs) AS fsyncs
+  FROM pg_stat_get_backend_io(pg_backend_pid())
+  WHERE object = 'relation' \gset my_io_sum_shared_before_
 CREATE TABLE test_io_shared(a int);
 INSERT INTO test_io_shared SELECT i FROM generate_series(1,100)i;
 SELECT pg_stat_force_next_flush();
 SELECT sum(extends) AS io_sum_shared_after_extends
   FROM pg_stat_io WHERE context = 'normal' AND object = 'relation' \gset
 SELECT :io_sum_shared_after_extends > :io_sum_shared_before_extends;
+SELECT sum(extends) AS my_io_sum_shared_after_extends
+  FROM pg_stat_get_backend_io(pg_backend_pid())
+  WHERE context = 'normal' AND object = 'relation' \gset
+SELECT :my_io_sum_shared_after_extends > :my_io_sum_shared_before_extends;
 
 -- After a checkpoint, there should be some additional IOCONTEXT_NORMAL writes
--- and fsyncs.
+-- and fsyncs in the global stats (not for the backend).
 -- See comment above for rationale for two explicit CHECKPOINTs.
 CHECKPOINT;
 CHECKPOINT;
@@ -630,6 +643,13 @@ SELECT sum(writes) AS writes, sum(fsyncs) AS fsyncs
 SELECT :io_sum_shared_after_writes > :io_sum_shared_before_writes;
 SELECT current_setting('fsync') = 'off'
   OR :io_sum_shared_after_fsyncs > :io_sum_shared_before_fsyncs;
+SELECT sum(writes) AS writes, sum(fsyncs) AS fsyncs
+  FROM pg_stat_get_backend_io(pg_backend_pid())
+  WHERE object = 'relation' \gset my_io_sum_shared_after_
+SELECT :my_io_sum_shared_after_writes >= :my_io_sum_shared_before_writes;
+SELECT current_setting('fsync') = 'off'
+  OR (:my_io_sum_shared_after_fsyncs = :my_io_sum_shared_before_fsyncs
+      AND :my_io_sum_shared_after_fsyncs= 0);
 
 -- Change the tablespace so that the table is rewritten directly, then SELECT
 -- from it to cause it to be read back into shared buffers.
@@ -762,11 +782,27 @@ SELECT :io_sum_bulkwrite_strategy_extends_after > :io_sum_bulkwrite_strategy_ext
 SELECT pg_stat_have_stats('io', 0, 0);
 SELECT sum(evictions) + sum(reuses) + sum(extends) + sum(fsyncs) + sum(reads) + sum(writes) + sum(writebacks) + sum(hits) AS io_stats_pre_reset
   FROM pg_stat_io \gset
+SELECT sum(evictions) + sum(reuses) + sum(extends) + sum(fsyncs) + sum(reads) + sum(writes) + sum(writebacks) + sum(hits) AS my_io_stats_pre_reset
+  FROM pg_stat_get_backend_io(pg_backend_pid()) \gset
 SELECT pg_stat_reset_shared('io');
 SELECT sum(evictions) + sum(reuses) + sum(extends) + sum(fsyncs) + sum(reads) + sum(writes) + sum(writebacks) + sum(hits) AS io_stats_post_reset
   FROM pg_stat_io \gset
 SELECT :io_stats_post_reset < :io_stats_pre_reset;
+SELECT sum(evictions) + sum(reuses) + sum(extends) + sum(fsyncs) + sum(reads) + sum(writes) + sum(writebacks) + sum(hits) AS my_io_stats_post_reset
+  FROM pg_stat_get_backend_io(pg_backend_pid()) \gset
+-- pg_stat_reset_shared() did not reset backend IO stats
+SELECT :my_io_stats_pre_reset <= :my_io_stats_post_reset;
+-- but pg_stat_reset_backend_stats() does
+SELECT pg_stat_reset_backend_stats(pg_backend_pid());
+SELECT sum(evictions) + sum(reuses) + sum(extends) + sum(fsyncs) + sum(reads) + sum(writes) + sum(writebacks) + sum(hits) AS my_io_stats_post_backend_reset
+  FROM pg_stat_get_backend_io(pg_backend_pid()) \gset
+SELECT :my_io_stats_pre_reset > :my_io_stats_post_backend_reset;
 
+-- Check invalid input for pg_stat_get_backend_io()
+SELECT pg_stat_get_backend_io(NULL);
+SELECT pg_stat_get_backend_io(0);
+-- Auxiliary processes return no data.
+SELECT pg_stat_get_backend_io(:checkpointer_pid);
 
 -- test BRIN index doesn't block HOT update
 CREATE TABLE brin_hot (

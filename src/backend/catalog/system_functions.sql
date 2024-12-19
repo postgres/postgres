@@ -711,6 +711,8 @@ REVOKE EXECUTE ON FUNCTION pg_stat_reset_single_table_counters(oid) FROM public;
 
 REVOKE EXECUTE ON FUNCTION pg_stat_reset_single_function_counters(oid) FROM public;
 
+REVOKE EXECUTE ON FUNCTION pg_stat_reset_backend_stats(integer) FROM public;
+
 REVOKE EXECUTE ON FUNCTION pg_stat_reset_replication_slot(text) FROM public;
 
 REVOKE EXECUTE ON FUNCTION pg_stat_have_stats(text, oid, int8) FROM public;
