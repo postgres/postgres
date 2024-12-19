@@ -572,9 +572,11 @@ ExecReScanBitmapHeapScan(BitmapHeapScanState *node)
 	if (scan)
 	{
 		/*
-		 * End iteration on iterators saved in scan descriptor.
+		 * End iteration on iterators saved in scan descriptor if they have
+		 * not already been cleaned up.
 		 */
-		tbm_end_iterate(&scan->st.rs_tbmiterator);
+		if (!tbm_exhausted(&scan->st.rs_tbmiterator))
+			tbm_end_iterate(&scan->st.rs_tbmiterator);
 
 		/* rescan to release any page pin */
 		table_rescan(node->ss.ss_currentScanDesc, NULL);
@@ -654,9 +656,11 @@ ExecEndBitmapHeapScan(BitmapHeapScanState *node)
 	if (scanDesc)
 	{
 		/*
-		 * End iteration on iterators saved in scan descriptor.
+		 * End iteration on iterators saved in scan descriptor if they have
+		 * not already been cleaned up.
 		 */
-		tbm_end_iterate(&scanDesc->st.rs_tbmiterator);
+		if (!tbm_exhausted(&scanDesc->st.rs_tbmiterator))
+			tbm_end_iterate(&scanDesc->st.rs_tbmiterator);
 
 		/*
 		 * close table scan

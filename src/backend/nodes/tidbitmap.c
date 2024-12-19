@@ -1594,7 +1594,7 @@ tbm_begin_iterate(TIDBitmap *tbm, dsa_area *dsa, dsa_pointer dsp)
 void
 tbm_end_iterate(TBMIterator *iterator)
 {
-	Assert(iterator);
+	Assert(iterator && !tbm_exhausted(iterator));
 
 	if (iterator->shared)
 		tbm_end_shared_iterate(iterator->i.shared_iterator);
