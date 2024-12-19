@@ -1800,6 +1800,12 @@ _bt_advance_array_keys(IndexScanDesc scan, BTReadPageState *pstate,
 				all_required_satisfied = true,
 				all_satisfied = true;
 
+	/*
+	 * Unset so->scanBehind in case it is still set from back when we dealt
+	 * with the previous page's high key/finaltup
+	 */
+	so->scanBehind = false;
+
 	if (sktrig_required)
 	{
 		/*
@@ -1807,8 +1813,6 @@ _bt_advance_array_keys(IndexScanDesc scan, BTReadPageState *pstate,
 		 */
 		Assert(!_bt_tuple_before_array_skeys(scan, dir, tuple, tupdesc,
 											 tupnatts, false, 0, NULL));
-
-		so->scanBehind = false; /* reset */
 
 		/*
 		 * Required scan key wasn't satisfied, so required arrays will have to
