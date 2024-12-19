@@ -1365,29 +1365,117 @@ pg_stat_us_to_ms(PgStat_Counter val_ms)
 	return val_ms * (double) 0.001;
 }
 
+/*
+ * pg_stat_io_build_tuples
+ *
+ * Helper routine for pg_stat_get_io() filling a result tuplestore with one
+ * tuple for each object and each context supported by the caller, based on the
+ * contents of bktype_stats.
+ */
+static void
+pg_stat_io_build_tuples(ReturnSetInfo *rsinfo,
+						PgStat_BktypeIO *bktype_stats,
+						BackendType bktype,
+						TimestampTz stat_reset_timestamp)
+{
+	Datum		bktype_desc = CStringGetTextDatum(GetBackendTypeDesc(bktype));
+
+	for (int io_obj = 0; io_obj < IOOBJECT_NUM_TYPES; io_obj++)
+	{
+		const char *obj_name = pgstat_get_io_object_name(io_obj);
+
+		for (int io_context = 0; io_context < IOCONTEXT_NUM_TYPES; io_context++)
+		{
+			const char *context_name = pgstat_get_io_context_name(io_context);
+
+			Datum		values[IO_NUM_COLUMNS] = {0};
+			bool		nulls[IO_NUM_COLUMNS] = {0};
+
+			/*
+			 * Some combinations of BackendType, IOObject, and IOContext are
+			 * not valid for any type of IOOp. In such cases, omit the entire
+			 * row from the view.
+			 */
+			if (!pgstat_tracks_io_object(bktype, io_obj, io_context))
+				continue;
+
+			values[IO_COL_BACKEND_TYPE] = bktype_desc;
+			values[IO_COL_CONTEXT] = CStringGetTextDatum(context_name);
+			values[IO_COL_OBJECT] = CStringGetTextDatum(obj_name);
+			if (stat_reset_timestamp != 0)
+				values[IO_COL_RESET_TIME] = TimestampTzGetDatum(stat_reset_timestamp);
+			else
+				nulls[IO_COL_RESET_TIME] = true;
+
+			/*
+			 * Hard-code this to the value of BLCKSZ for now. Future values
+			 * could include XLOG_BLCKSZ, once WAL IO is tracked, and constant
+			 * multipliers, once non-block-oriented IO (e.g. temporary file
+			 * IO) is tracked.
+			 */
+			values[IO_COL_CONVERSION] = Int64GetDatum(BLCKSZ);
+
+			for (int io_op = 0; io_op < IOOP_NUM_TYPES; io_op++)
+			{
+				int			op_idx = pgstat_get_io_op_index(io_op);
+				int			time_idx = pgstat_get_io_time_index(io_op);
+
+				/*
+				 * Some combinations of BackendType and IOOp, of IOContext and
+				 * IOOp, and of IOObject and IOOp are not tracked. Set these
+				 * cells in the view NULL.
+				 */
+				if (pgstat_tracks_io_op(bktype, io_obj, io_context, io_op))
+				{
+					PgStat_Counter count =
+						bktype_stats->counts[io_obj][io_context][io_op];
+
+					values[op_idx] = Int64GetDatum(count);
+				}
+				else
+					nulls[op_idx] = true;
+
+				/* not every operation is timed */
+				if (time_idx == IO_COL_INVALID)
+					continue;
+
+				if (!nulls[op_idx])
+				{
+					PgStat_Counter time =
+						bktype_stats->times[io_obj][io_context][io_op];
+
+					values[time_idx] = Float8GetDatum(pg_stat_us_to_ms(time));
+				}
+				else
+					nulls[time_idx] = true;
+			}
+
+			tuplestore_putvalues(rsinfo->setResult, rsinfo->setDesc,
+								 values, nulls);
+		}
+	}
+}
+
 Datum
 pg_stat_get_io(PG_FUNCTION_ARGS)
 {
 	ReturnSetInfo *rsinfo;
 	PgStat_IO  *backends_io_stats;
-	Datum		reset_time;
 
 	InitMaterializedSRF(fcinfo, 0);
 	rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
 
 	backends_io_stats = pgstat_fetch_stat_io();
 
-	reset_time = TimestampTzGetDatum(backends_io_stats->stat_reset_timestamp);
-
 	for (int bktype = 0; bktype < BACKEND_NUM_TYPES; bktype++)
 	{
-		Datum		bktype_desc = CStringGetTextDatum(GetBackendTypeDesc(bktype));
 		PgStat_BktypeIO *bktype_stats = &backends_io_stats->stats[bktype];
 
 		/*
 		 * In Assert builds, we can afford an extra loop through all of the
-		 * counters checking that only expected stats are non-zero, since it
-		 * keeps the non-Assert code cleaner.
+		 * counters (in pg_stat_io_build_tuples()), checking that only
+		 * expected stats are non-zero, since it keeps the non-Assert code
+		 * cleaner.
 		 */
 		Assert(pgstat_bktype_io_stats_valid(bktype_stats, bktype));
 
@@ -1398,77 +1486,9 @@ pg_stat_get_io(PG_FUNCTION_ARGS)
 		if (!pgstat_tracks_io_bktype(bktype))
 			continue;
 
-		for (int io_obj = 0; io_obj < IOOBJECT_NUM_TYPES; io_obj++)
-		{
-			const char *obj_name = pgstat_get_io_object_name(io_obj);
-
-			for (int io_context = 0; io_context < IOCONTEXT_NUM_TYPES; io_context++)
-			{
-				const char *context_name = pgstat_get_io_context_name(io_context);
-
-				Datum		values[IO_NUM_COLUMNS] = {0};
-				bool		nulls[IO_NUM_COLUMNS] = {0};
-
-				/*
-				 * Some combinations of BackendType, IOObject, and IOContext
-				 * are not valid for any type of IOOp. In such cases, omit the
-				 * entire row from the view.
-				 */
-				if (!pgstat_tracks_io_object(bktype, io_obj, io_context))
-					continue;
-
-				values[IO_COL_BACKEND_TYPE] = bktype_desc;
-				values[IO_COL_CONTEXT] = CStringGetTextDatum(context_name);
-				values[IO_COL_OBJECT] = CStringGetTextDatum(obj_name);
-				values[IO_COL_RESET_TIME] = reset_time;
-
-				/*
-				 * Hard-code this to the value of BLCKSZ for now. Future
-				 * values could include XLOG_BLCKSZ, once WAL IO is tracked,
-				 * and constant multipliers, once non-block-oriented IO (e.g.
-				 * temporary file IO) is tracked.
-				 */
-				values[IO_COL_CONVERSION] = Int64GetDatum(BLCKSZ);
-
-				for (int io_op = 0; io_op < IOOP_NUM_TYPES; io_op++)
-				{
-					int			op_idx = pgstat_get_io_op_index(io_op);
-					int			time_idx = pgstat_get_io_time_index(io_op);
-
-					/*
-					 * Some combinations of BackendType and IOOp, of IOContext
-					 * and IOOp, and of IOObject and IOOp are not tracked. Set
-					 * these cells in the view NULL.
-					 */
-					if (pgstat_tracks_io_op(bktype, io_obj, io_context, io_op))
-					{
-						PgStat_Counter count =
-							bktype_stats->counts[io_obj][io_context][io_op];
-
-						values[op_idx] = Int64GetDatum(count);
-					}
-					else
-						nulls[op_idx] = true;
-
-					/* not every operation is timed */
-					if (time_idx == IO_COL_INVALID)
-						continue;
-
-					if (!nulls[op_idx])
-					{
-						PgStat_Counter time =
-							bktype_stats->times[io_obj][io_context][io_op];
-
-						values[time_idx] = Float8GetDatum(pg_stat_us_to_ms(time));
-					}
-					else
-						nulls[time_idx] = true;
-				}
-
-				tuplestore_putvalues(rsinfo->setResult, rsinfo->setDesc,
-									 values, nulls);
-			}
-		}
+		/* save tuples with data from this PgStat_BktypeIO */
+		pg_stat_io_build_tuples(rsinfo, bktype_stats, bktype,
+								backends_io_stats->stat_reset_timestamp);
 	}
 
 	return (Datum) 0;
