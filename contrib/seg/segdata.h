@@ -16,7 +16,10 @@ extern int	significant_digits(const char *s);
 
 /* for segscan.l and segparse.y */
 union YYSTYPE;
+#ifndef YY_TYPEDEF_YY_SCANNER_T
+#define YY_TYPEDEF_YY_SCANNER_T
 typedef void *yyscan_t;
+#endif
 
 /* in segscan.l */
 extern int	seg_yylex(union YYSTYPE *yylval_param, yyscan_t yyscanner);
