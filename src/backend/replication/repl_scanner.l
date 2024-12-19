@@ -250,7 +250,6 @@ replication_yyerror(const char *message)
 			 errmsg_internal("%s", message)));
 }
 
-
 void
 replication_scanner_init(const char *str)
 {
