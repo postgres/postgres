@@ -39,9 +39,9 @@
 
 
 static RelOptInfo *recurse_set_operations(Node *setOp, PlannerInfo *root,
+										  SetOperationStmt *parentOp,
 										  List *colTypes, List *colCollations,
-										  bool junkOK,
-										  int flag, List *refnames_tlist,
+										  List *refnames_tlist,
 										  List **pTargetList,
 										  bool *istrivial_tlist);
 static RelOptInfo *generate_recursion_path(SetOperationStmt *setOp,
@@ -64,19 +64,13 @@ static List *plan_union_children(PlannerInfo *root,
 								 List **tlist_list,
 								 List **istrivial_tlist);
 static void postprocess_setop_rel(PlannerInfo *root, RelOptInfo *rel);
-static bool choose_hashed_setop(PlannerInfo *root, List *groupClauses,
-								Path *lpath, Path *rpath,
-								double dNumGroups, double dNumOutputRows,
-								const char *construct);
 static List *generate_setop_tlist(List *colTypes, List *colCollations,
-								  int flag,
 								  Index varno,
 								  bool hack_constants,
 								  List *input_tlist,
 								  List *refnames_tlist,
 								  bool *trivial_tlist);
 static List *generate_append_tlist(List *colTypes, List *colCollations,
-								   bool flag,
 								   List *input_tlists,
 								   List *refnames_tlist);
 static List *generate_setop_grouplist(SetOperationStmt *op, List *targetlist);
@@ -160,12 +154,11 @@ plan_set_operations(PlannerInfo *root)
 		/*
 		 * Recurse on setOperations tree to generate paths for set ops. The
 		 * final output paths should have just the column types shown as the
-		 * output from the top-level node, plus possibly resjunk working
-		 * columns (we can rely on upper-level nodes to deal with that).
+		 * output from the top-level node.
 		 */
 		setop_rel = recurse_set_operations((Node *) topop, root,
+										   NULL,	/* no parent */
 										   topop->colTypes, topop->colCollations,
-										   true, -1,
 										   leftmostQuery->targetList,
 										   &top_tlist,
 										   &trivial_tlist);
@@ -178,49 +171,35 @@ plan_set_operations(PlannerInfo *root)
 }
 
 /*
- * set_operation_ordered_results_useful
- *		Return true if the given SetOperationStmt can be executed by utilizing
- *		paths that provide sorted input according to the setop's targetlist.
- *		Returns false when sorted paths are not any more useful than unsorted
- *		ones.
- */
-bool
-set_operation_ordered_results_useful(SetOperationStmt *setop)
-{
-	/*
-	 * Paths sorted by the targetlist are useful for UNION as we can opt to
-	 * MergeAppend the sorted paths then Unique them.  Ordered paths are no
-	 * more useful than unordered ones for UNION ALL.
-	 */
-	if (!setop->all && setop->op == SETOP_UNION)
-		return true;
-
-	/*
-	 * EXCEPT / EXCEPT ALL / INTERSECT / INTERSECT ALL cannot yet utilize
-	 * correctly sorted input paths.
-	 */
-	return false;
-}
-
-/*
  * recurse_set_operations
  *	  Recursively handle one step in a tree of set operations
  *
+ * setOp: current step (could be a SetOperationStmt or a leaf RangeTblRef)
+ * parentOp: parent step, or NULL if none (but see below)
  * colTypes: OID list of set-op's result column datatypes
  * colCollations: OID list of set-op's result column collations
- * junkOK: if true, child resjunk columns may be left in the result
- * flag: if >= 0, add a resjunk output column indicating value of flag
  * refnames_tlist: targetlist to take column names from
+ *
+ * parentOp should be passed as NULL unless that step is interested in
+ * getting sorted output from this step.  ("Sorted" means "sorted according
+ * to the default btree opclasses of the result column datatypes".)
  *
  * Returns a RelOptInfo for the subtree, as well as these output parameters:
  * *pTargetList: receives the fully-fledged tlist for the subtree's top plan
  * *istrivial_tlist: true if, and only if, datatypes between parent and child
  * match.
  *
+ * If setOp is a leaf node, this function plans the sub-query but does
+ * not populate the pathlist of the returned RelOptInfo.  The caller will
+ * generate SubqueryScan paths using useful path(s) of the subquery (see
+ * build_setop_child_paths).  But this function does build the paths for
+ * set-operation nodes.
+ *
  * The pTargetList output parameter is mostly redundant with the pathtarget
  * of the returned RelOptInfo, but for the moment we need it because much of
  * the logic in this file depends on flag columns being marked resjunk.
- * Pending a redesign of how that works, this is the easy way out.
+ * XXX Now that there are no flag columns and hence no resjunk columns, we
+ * could probably refactor this file to deal only in pathtargets.
  *
  * We don't have to care about typmods here: the only allowed difference
  * between set-op input and output typmods is input is a specific typmod
@@ -228,9 +207,9 @@ set_operation_ordered_results_useful(SetOperationStmt *setop)
  */
 static RelOptInfo *
 recurse_set_operations(Node *setOp, PlannerInfo *root,
+					   SetOperationStmt *parentOp,
 					   List *colTypes, List *colCollations,
-					   bool junkOK,
-					   int flag, List *refnames_tlist,
+					   List *refnames_tlist,
 					   List **pTargetList,
 					   bool *istrivial_tlist)
 {
@@ -245,7 +224,6 @@ recurse_set_operations(Node *setOp, PlannerInfo *root,
 	{
 		RangeTblRef *rtr = (RangeTblRef *) setOp;
 		RangeTblEntry *rte = root->simple_rte_array[rtr->rtindex];
-		SetOperationStmt *setops;
 		Query	   *subquery = rte->subquery;
 		PlannerInfo *subroot;
 		List	   *tlist;
@@ -260,15 +238,13 @@ recurse_set_operations(Node *setOp, PlannerInfo *root,
 		Assert(root->plan_params == NIL);
 
 		/*
-		 * Pass the set operation details to the subquery_planner to have it
-		 * consider generating Paths correctly ordered for the set operation.
+		 * Generate a subroot and Paths for the subquery.  If we have a
+		 * parentOp, pass that down to encourage subquery_planner to consider
+		 * suitably-sorted Paths.
 		 */
-		setops = castNode(SetOperationStmt, root->parse->setOperations);
-
-		/* Generate a subroot and Paths for the subquery */
 		subroot = rel->subroot = subquery_planner(root->glob, subquery, root,
 												  false, root->tuple_fraction,
-												  setops);
+												  parentOp);
 
 		/*
 		 * It should not be possible for the primitive query to contain any
@@ -279,7 +255,6 @@ recurse_set_operations(Node *setOp, PlannerInfo *root,
 
 		/* Figure out the appropriate target list for this subquery. */
 		tlist = generate_setop_tlist(colTypes, colCollations,
-									 flag,
 									 rtr->rtindex,
 									 true,
 									 subroot->processed_tlist,
@@ -318,16 +293,14 @@ recurse_set_operations(Node *setOp, PlannerInfo *root,
 		 * generate_append_tlist() or generate_setop_tlist(), this will work.
 		 * We just tell generate_setop_tlist() to use varno 0.
 		 */
-		if (flag >= 0 ||
-			!tlist_same_datatypes(*pTargetList, colTypes, junkOK) ||
-			!tlist_same_collations(*pTargetList, colCollations, junkOK))
+		if (!tlist_same_datatypes(*pTargetList, colTypes, false) ||
+			!tlist_same_collations(*pTargetList, colCollations, false))
 		{
 			PathTarget *target;
 			bool		trivial_tlist;
 			ListCell   *lc;
 
 			*pTargetList = generate_setop_tlist(colTypes, colCollations,
-												flag,
 												0,
 												false,
 												*pTargetList,
@@ -410,8 +383,8 @@ generate_recursion_path(SetOperationStmt *setOp, PlannerInfo *root,
 	 * separately without any intention of combining them into one Append.
 	 */
 	lrel = recurse_set_operations(setOp->larg, root,
+								  NULL, /* no value in sorted results */
 								  setOp->colTypes, setOp->colCollations,
-								  false, -1,
 								  refnames_tlist,
 								  &lpath_tlist,
 								  &lpath_trivial_tlist);
@@ -422,8 +395,8 @@ generate_recursion_path(SetOperationStmt *setOp, PlannerInfo *root,
 	/* The right path will want to look at the left one ... */
 	root->non_recursive_path = lpath;
 	rrel = recurse_set_operations(setOp->rarg, root,
+								  NULL, /* no value in sorted results */
 								  setOp->colTypes, setOp->colCollations,
-								  false, -1,
 								  refnames_tlist,
 								  &rpath_tlist,
 								  &rpath_trivial_tlist);
@@ -436,7 +409,7 @@ generate_recursion_path(SetOperationStmt *setOp, PlannerInfo *root,
 	/*
 	 * Generate tlist for RecursiveUnion path node --- same as in Append cases
 	 */
-	tlist = generate_append_tlist(setOp->colTypes, setOp->colCollations, false,
+	tlist = generate_append_tlist(setOp->colTypes, setOp->colCollations,
 								  list_make2(lpath_tlist, rpath_tlist),
 								  refnames_tlist);
 
@@ -494,6 +467,10 @@ generate_recursion_path(SetOperationStmt *setOp, PlannerInfo *root,
 /*
  * build_setop_child_paths
  *		Build paths for the set op child relation denoted by 'rel'.
+ *
+ * 'rel' is an RTE_SUBQUERY relation.  We have already generated paths within
+ * the subquery's subroot; the task here is to create SubqueryScan paths for
+ * 'rel', representing scans of the useful subquery paths.
  *
  * interesting_pathkeys: if not NIL, also include paths that suit these
  * pathkeys, sorting any unsorted paths as required.
@@ -736,7 +713,7 @@ generate_union_paths(SetOperationStmt *op, PlannerInfo *root,
 	 * concerned, but we must make it look real anyway for the benefit of the
 	 * next plan level up.
 	 */
-	tlist = generate_append_tlist(op->colTypes, op->colCollations, false,
+	tlist = generate_append_tlist(op->colTypes, op->colCollations,
 								  tlist_list, refnames_tlist);
 	*pTargetList = tlist;
 
@@ -1033,11 +1010,13 @@ generate_nonunion_paths(SetOperationStmt *op, PlannerInfo *root,
 	bool		lpath_trivial_tlist,
 				rpath_trivial_tlist,
 				result_trivial_tlist;
+	List	   *nonunion_pathkeys = NIL;
 	double		dLeftGroups,
 				dRightGroups,
 				dNumGroups,
 				dNumOutputRows;
-	bool		use_hash;
+	bool		can_sort;
+	bool		can_hash;
 	SetOpCmd	cmd;
 
 	/*
@@ -1047,26 +1026,69 @@ generate_nonunion_paths(SetOperationStmt *op, PlannerInfo *root,
 
 	/* Recurse on children */
 	lrel = recurse_set_operations(op->larg, root,
+								  op,
 								  op->colTypes, op->colCollations,
-								  false, -1,
 								  refnames_tlist,
 								  &lpath_tlist,
 								  &lpath_trivial_tlist);
-	if (lrel->rtekind == RTE_SUBQUERY)
-		build_setop_child_paths(root, lrel, lpath_trivial_tlist, lpath_tlist,
-								NIL, &dLeftGroups);
-	else
-		dLeftGroups = lrel->rows;
 
 	rrel = recurse_set_operations(op->rarg, root,
+								  op,
 								  op->colTypes, op->colCollations,
-								  false, -1,
 								  refnames_tlist,
 								  &rpath_tlist,
 								  &rpath_trivial_tlist);
+
+	/*
+	 * Generate tlist for SetOp plan node.
+	 *
+	 * The tlist for a SetOp plan isn't important so far as the SetOp is
+	 * concerned, but we must make it look real anyway for the benefit of the
+	 * next plan level up.
+	 */
+	tlist = generate_setop_tlist(op->colTypes, op->colCollations,
+								 0, false, lpath_tlist, refnames_tlist,
+								 &result_trivial_tlist);
+
+	/* We should not have needed any type coercions in the tlist */
+	Assert(result_trivial_tlist);
+
+	*pTargetList = tlist;
+
+	/* Identify the grouping semantics */
+	groupList = generate_setop_grouplist(op, tlist);
+
+	/* Check whether the operators support sorting or hashing */
+	can_sort = grouping_is_sortable(groupList);
+	can_hash = grouping_is_hashable(groupList);
+	if (!can_sort && !can_hash)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+		/* translator: %s is INTERSECT or EXCEPT */
+				 errmsg("could not implement %s",
+						(op->op == SETOP_INTERSECT) ? "INTERSECT" : "EXCEPT"),
+				 errdetail("Some of the datatypes only support hashing, while others only support sorting.")));
+
+	if (can_sort)
+	{
+		/* Determine the pathkeys for sorting by the whole target list */
+		nonunion_pathkeys = make_pathkeys_for_sortclauses(root, groupList,
+														  tlist);
+
+		root->query_pathkeys = nonunion_pathkeys;
+	}
+
+	/*
+	 * Now that we've got all that info, we can build the child paths.
+	 */
+	if (lrel->rtekind == RTE_SUBQUERY)
+		build_setop_child_paths(root, lrel, lpath_trivial_tlist, lpath_tlist,
+								nonunion_pathkeys, &dLeftGroups);
+	else
+		dLeftGroups = lrel->rows;
 	if (rrel->rtekind == RTE_SUBQUERY)
 		build_setop_child_paths(root, rrel, rpath_trivial_tlist, rpath_tlist,
-								NIL, &dRightGroups);
+								nonunion_pathkeys, &dRightGroups);
 	else
 		dRightGroups = rrel->rows;
 
@@ -1102,29 +1124,10 @@ generate_nonunion_paths(SetOperationStmt *op, PlannerInfo *root,
 	lpath = lrel->cheapest_total_path;
 	rpath = rrel->cheapest_total_path;
 
-	/*
-	 * Generate tlist for SetOp plan node.
-	 *
-	 * The tlist for a SetOp plan isn't important so far as the SetOp is
-	 * concerned, but we must make it look real anyway for the benefit of the
-	 * next plan level up.
-	 */
-	tlist = generate_setop_tlist(op->colTypes, op->colCollations, -1,
-								 0, false, lpath_tlist, refnames_tlist,
-								 &result_trivial_tlist);
-
-	/* We should not have needed any type coercions in the tlist */
-	Assert(result_trivial_tlist);
-
-	*pTargetList = tlist;
-
 	/* Build result relation. */
 	result_rel = fetch_upper_rel(root, UPPERREL_SETOP,
 								 bms_union(lrel->relids, rrel->relids));
 	result_rel->reltarget = create_pathtarget(root, tlist);
-
-	/* Identify the grouping semantics */
-	groupList = generate_setop_grouplist(op, tlist);
 
 	/*
 	 * Estimate number of distinct groups that we'll need hashtable entries
@@ -1144,41 +1147,9 @@ generate_nonunion_paths(SetOperationStmt *op, PlannerInfo *root,
 		dNumGroups = dLeftGroups;
 		dNumOutputRows = op->all ? Min(lpath->rows, rpath->rows) : dNumGroups;
 	}
+	result_rel->rows = dNumOutputRows;
 
-	/*
-	 * Decide whether to hash or sort, and add sort nodes if needed.
-	 */
-	use_hash = choose_hashed_setop(root, groupList, lpath, rpath,
-								   dNumGroups, dNumOutputRows,
-								   (op->op == SETOP_INTERSECT) ? "INTERSECT" : "EXCEPT");
-
-	if (groupList && !use_hash)
-	{
-		List	   *pathkeys;
-
-		pathkeys = make_pathkeys_for_sortclauses(root,
-												 groupList,
-												 lpath_tlist);
-		if (!pathkeys_contained_in(pathkeys, lpath->pathkeys))
-			lpath = (Path *) create_sort_path(root,
-											  lpath->parent,
-											  lpath,
-											  pathkeys,
-											  -1.0);
-		pathkeys = make_pathkeys_for_sortclauses(root,
-												 groupList,
-												 rpath_tlist);
-		if (!pathkeys_contained_in(pathkeys, rpath->pathkeys))
-			rpath = (Path *) create_sort_path(root,
-											  rpath->parent,
-											  rpath,
-											  pathkeys,
-											  -1.0);
-	}
-
-	/*
-	 * Finally, add a SetOp path node to generate the correct output.
-	 */
+	/* Select the SetOpCmd type */
 	switch (op->op)
 	{
 		case SETOP_INTERSECT:
@@ -1192,18 +1163,90 @@ generate_nonunion_paths(SetOperationStmt *op, PlannerInfo *root,
 			cmd = SETOPCMD_INTERSECT;	/* keep compiler quiet */
 			break;
 	}
-	path = (Path *) create_setop_path(root,
-									  result_rel,
-									  lpath,
-									  rpath,
-									  cmd,
-									  use_hash ? SETOP_HASHED : SETOP_SORTED,
-									  groupList,
-									  dNumGroups,
-									  dNumOutputRows);
 
-	result_rel->rows = path->rows;
-	add_path(result_rel, path);
+	/*
+	 * If we can hash, that just requires a SetOp atop the cheapest inputs.
+	 */
+	if (can_hash)
+	{
+		path = (Path *) create_setop_path(root,
+										  result_rel,
+										  lpath,
+										  rpath,
+										  cmd,
+										  SETOP_HASHED,
+										  groupList,
+										  dNumGroups,
+										  dNumOutputRows);
+		add_path(result_rel, path);
+	}
+
+	/*
+	 * If we can sort, generate the cheapest sorted input paths, and add a
+	 * SetOp atop those.
+	 */
+	if (can_sort)
+	{
+		List	   *pathkeys;
+		Path	   *slpath,
+				   *srpath;
+
+		/* First the left input ... */
+		pathkeys = make_pathkeys_for_sortclauses(root,
+												 groupList,
+												 lpath_tlist);
+		if (pathkeys_contained_in(pathkeys, lpath->pathkeys))
+			slpath = lpath;		/* cheapest path is already sorted */
+		else
+		{
+			slpath = get_cheapest_path_for_pathkeys(lrel->pathlist,
+													nonunion_pathkeys,
+													NULL,
+													TOTAL_COST,
+													false);
+			/* Subquery failed to produce any presorted paths? */
+			if (slpath == NULL)
+				slpath = (Path *) create_sort_path(root,
+												   lpath->parent,
+												   lpath,
+												   pathkeys,
+												   -1.0);
+		}
+
+		/* and now the same for the right. */
+		pathkeys = make_pathkeys_for_sortclauses(root,
+												 groupList,
+												 rpath_tlist);
+		if (pathkeys_contained_in(pathkeys, rpath->pathkeys))
+			srpath = rpath;		/* cheapest path is already sorted */
+		else
+		{
+			srpath = get_cheapest_path_for_pathkeys(rrel->pathlist,
+													nonunion_pathkeys,
+													NULL,
+													TOTAL_COST,
+													false);
+			/* Subquery failed to produce any presorted paths? */
+			if (srpath == NULL)
+				srpath = (Path *) create_sort_path(root,
+												   rpath->parent,
+												   rpath,
+												   pathkeys,
+												   -1.0);
+		}
+
+		path = (Path *) create_setop_path(root,
+										  result_rel,
+										  slpath,
+										  srpath,
+										  cmd,
+										  SETOP_SORTED,
+										  groupList,
+										  dNumGroups,
+										  dNumOutputRows);
+		add_path(result_rel, path);
+	}
+
 	return result_rel;
 }
 
@@ -1259,17 +1302,15 @@ plan_union_children(PlannerInfo *root,
 		/*
 		 * Not same, so plan this child separately.
 		 *
-		 * Note we disallow any resjunk columns in child results.  This is
-		 * necessary since the Append node that implements the union won't do
-		 * any projection, and upper levels will get confused if some of our
-		 * output tuples have junk and some don't.  This case only arises when
-		 * we have an EXCEPT or INTERSECT as child, else there won't be
-		 * resjunk anyway.
+		 * If top_union isn't a UNION ALL, then we are interested in sorted
+		 * output from the child, so pass top_union as parentOp.  Note that
+		 * this isn't necessarily the child node's immediate SetOperationStmt
+		 * parent, but that's fine: it's the effective parent.
 		 */
 		result = lappend(result, recurse_set_operations(setOp, root,
+														top_union->all ? NULL : top_union,
 														top_union->colTypes,
 														top_union->colCollations,
-														false, -1,
 														refnames_tlist,
 														&child_tlist,
 														&trivial_tlist));
@@ -1299,120 +1340,10 @@ postprocess_setop_rel(PlannerInfo *root, RelOptInfo *rel)
 }
 
 /*
- * choose_hashed_setop - should we use hashing for a set operation?
- *
- * XXX probably this should go away: just make both paths and let
- * add_path sort it out.
- */
-static bool
-choose_hashed_setop(PlannerInfo *root, List *groupClauses,
-					Path *lpath, Path *rpath,
-					double dNumGroups, double dNumOutputRows,
-					const char *construct)
-{
-	int			numGroupCols = list_length(groupClauses);
-	Size		hash_mem_limit = get_hash_memory_limit();
-	bool		can_sort;
-	bool		can_hash;
-	Size		hashentrysize;
-	Path		hashed_p;
-	Path		sorted_p;
-	double		tuple_fraction;
-
-	/* Check whether the operators support sorting or hashing */
-	can_sort = grouping_is_sortable(groupClauses);
-	can_hash = grouping_is_hashable(groupClauses);
-	if (can_hash && can_sort)
-	{
-		/* we have a meaningful choice to make, continue ... */
-	}
-	else if (can_hash)
-		return true;
-	else if (can_sort)
-		return false;
-	else
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-		/* translator: %s is UNION, INTERSECT, or EXCEPT */
-				 errmsg("could not implement %s", construct),
-				 errdetail("Some of the datatypes only support hashing, while others only support sorting.")));
-
-	/* Prefer sorting when enable_hashagg is off */
-	if (!enable_hashagg)
-		return false;
-
-	/*
-	 * Don't do it if it doesn't look like the hashtable will fit into
-	 * hash_mem.
-	 */
-	hashentrysize = MAXALIGN(lpath->pathtarget->width) + MAXALIGN(SizeofMinimalTupleHeader);
-
-	if (hashentrysize * dNumGroups > hash_mem_limit)
-		return false;
-
-	/*
-	 * See if the estimated cost is no more than doing it the other way.
-	 *
-	 * We need to consider input_plan + hashagg versus input_plan + sort +
-	 * group. XXX NOT TRUE: Note that the actual result plan might involve a
-	 * SetOp or Unique node, not Agg or Group, but the cost estimates for Agg
-	 * and Group should be close enough for our purposes here.
-	 *
-	 * These path variables are dummies that just hold cost fields; we don't
-	 * make actual Paths for these steps.
-	 */
-	cost_agg(&hashed_p, root, AGG_HASHED, NULL,
-			 numGroupCols, dNumGroups,
-			 NIL,
-			 lpath->disabled_nodes + rpath->disabled_nodes,
-			 lpath->startup_cost + rpath->startup_cost,
-			 lpath->total_cost + rpath->total_cost,
-			 lpath->rows + rpath->rows,
-			 lpath->pathtarget->width);
-
-	/*
-	 * Now for the sorted case.  XXX NOT TRUE: Note that the input is *always*
-	 * unsorted, since it was made by appending unrelated sub-relations
-	 * together.
-	 */
-	sorted_p.disabled_nodes = lpath->disabled_nodes + rpath->disabled_nodes;
-	sorted_p.startup_cost = lpath->startup_cost + rpath->startup_cost;
-	sorted_p.total_cost = lpath->total_cost + rpath->total_cost;
-	/* XXX cost_sort doesn't actually look at pathkeys, so just pass NIL */
-	cost_sort(&sorted_p, root, NIL, sorted_p.disabled_nodes,
-			  sorted_p.total_cost,
-			  lpath->rows + rpath->rows,
-			  lpath->pathtarget->width,
-			  0.0, work_mem, -1.0);
-	cost_group(&sorted_p, root, numGroupCols, dNumGroups,
-			   NIL,
-			   sorted_p.disabled_nodes,
-			   sorted_p.startup_cost, sorted_p.total_cost,
-			   lpath->rows + rpath->rows);
-
-	/*
-	 * Now make the decision using the top-level tuple fraction.  First we
-	 * have to convert an absolute count (LIMIT) into fractional form.
-	 */
-	tuple_fraction = root->tuple_fraction;
-	if (tuple_fraction >= 1.0)
-		tuple_fraction /= dNumOutputRows;
-
-	if (compare_fractional_path_costs(&hashed_p, &sorted_p,
-									  tuple_fraction) < 0)
-	{
-		/* Hashed is cheaper, so use it */
-		return true;
-	}
-	return false;
-}
-
-/*
  * Generate targetlist for a set-operation plan node
  *
  * colTypes: OID list of set-op's result column datatypes
  * colCollations: OID list of set-op's result column collations
- * flag: -1 if no flag column needed, 0 or 1 to create a const flag column
  * varno: varno to use in generated Vars
  * hack_constants: true to copy up constants (see comments in code)
  * input_tlist: targetlist of this node's input node
@@ -1421,7 +1352,6 @@ choose_hashed_setop(PlannerInfo *root, List *groupClauses,
  */
 static List *
 generate_setop_tlist(List *colTypes, List *colCollations,
-					 int flag,
 					 Index varno,
 					 bool hack_constants,
 					 List *input_tlist,
@@ -1520,32 +1450,13 @@ generate_setop_tlist(List *colTypes, List *colCollations,
 							  false);
 
 		/*
-		 * By convention, all non-resjunk columns in a setop tree have
+		 * By convention, all output columns in a setop tree have
 		 * ressortgroupref equal to their resno.  In some cases the ref isn't
 		 * needed, but this is a cleaner way than modifying the tlist later.
 		 */
 		tle->ressortgroupref = tle->resno;
 
 		tlist = lappend(tlist, tle);
-	}
-
-	if (flag >= 0)
-	{
-		/* Add a resjunk flag column */
-		/* flag value is the given constant */
-		expr = (Node *) makeConst(INT4OID,
-								  -1,
-								  InvalidOid,
-								  sizeof(int32),
-								  Int32GetDatum(flag),
-								  false,
-								  true);
-		tle = makeTargetEntry((Expr *) expr,
-							  (AttrNumber) resno++,
-							  pstrdup("flag"),
-							  true);
-		tlist = lappend(tlist, tle);
-		*trivial_tlist = false; /* the extra entry makes it not trivial */
 	}
 
 	return tlist;
@@ -1556,7 +1467,6 @@ generate_setop_tlist(List *colTypes, List *colCollations,
  *
  * colTypes: OID list of set-op's result column datatypes
  * colCollations: OID list of set-op's result column collations
- * flag: true to create a flag column copied up from subplans
  * input_tlists: list of tlists for sub-plans of the Append
  * refnames_tlist: targetlist to take column names from
  *
@@ -1570,7 +1480,6 @@ generate_setop_tlist(List *colTypes, List *colCollations,
  */
 static List *
 generate_append_tlist(List *colTypes, List *colCollations,
-					  bool flag,
 					  List *input_tlists,
 					  List *refnames_tlist)
 {
@@ -1604,8 +1513,7 @@ generate_append_tlist(List *colTypes, List *colCollations,
 		{
 			TargetEntry *subtle = (TargetEntry *) lfirst(subtlistl);
 
-			if (subtle->resjunk)
-				continue;
+			Assert(!subtle->resjunk);
 			Assert(curColType != NULL);
 			if (exprType((Node *) subtle->expr) == lfirst_oid(curColType))
 			{
@@ -1654,29 +1562,12 @@ generate_append_tlist(List *colTypes, List *colCollations,
 							  false);
 
 		/*
-		 * By convention, all non-resjunk columns in a setop tree have
+		 * By convention, all output columns in a setop tree have
 		 * ressortgroupref equal to their resno.  In some cases the ref isn't
 		 * needed, but this is a cleaner way than modifying the tlist later.
 		 */
 		tle->ressortgroupref = tle->resno;
 
-		tlist = lappend(tlist, tle);
-	}
-
-	if (flag)
-	{
-		/* Add a resjunk flag column */
-		/* flag value is shown as copied up from subplan */
-		expr = (Node *) makeVar(0,
-								resno,
-								INT4OID,
-								-1,
-								InvalidOid,
-								0);
-		tle = makeTargetEntry((Expr *) expr,
-							  (AttrNumber) resno++,
-							  pstrdup("flag"),
-							  true);
 		tlist = lappend(tlist, tle);
 	}
 
@@ -1709,12 +1600,7 @@ generate_setop_grouplist(SetOperationStmt *op, List *targetlist)
 		TargetEntry *tle = (TargetEntry *) lfirst(lt);
 		SortGroupClause *sgc;
 
-		if (tle->resjunk)
-		{
-			/* resjunk columns should not have sortgrouprefs */
-			Assert(tle->ressortgroupref == 0);
-			continue;			/* ignore resjunk columns */
-		}
+		Assert(!tle->resjunk);
 
 		/* non-resjunk columns should have sortgroupref = resno */
 		Assert(tle->ressortgroupref == tle->resno);

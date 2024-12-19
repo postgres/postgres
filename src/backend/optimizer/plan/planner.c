@@ -616,7 +616,7 @@ standard_planner(Query *parse, const char *query_string, int cursorOptions,
  * setops is used for set operation subqueries to provide the subquery with
  * the context in which it's being used so that Paths correctly sorted for the
  * set operation can be generated.  NULL when not planning a set operation
- * child.
+ * child, or when a child of a set op that isn't interested in sorted input.
  *
  * Basically, this routine does the stuff that should only be done once
  * per Query object.  It then calls grouping_planner.  At one time,
@@ -1350,7 +1350,7 @@ preprocess_phv_expression(PlannerInfo *root, Expr *expr)
  * setops is used for set operation subqueries to provide the subquery with
  * the context in which it's being used so that Paths correctly sorted for the
  * set operation can be generated.  NULL when not planning a set operation
- * child.
+ * child, or when a child of a set op that isn't interested in sorted input.
  *
  * Returns nothing; the useful output is in the Paths we attach to the
  * (UPPERREL_FINAL, NULL) upperrel in *root.  In addition,
@@ -3467,8 +3467,7 @@ standard_qp_callback(PlannerInfo *root, void *extra)
 									  tlist);
 
 	/* setting setop_pathkeys might be useful to the union planner */
-	if (qp_extra->setop != NULL &&
-		set_operation_ordered_results_useful(qp_extra->setop))
+	if (qp_extra->setop != NULL)
 	{
 		List	   *groupClauses;
 		bool		sortable;

@@ -3681,17 +3681,70 @@ create_setop_path(PlannerInfo *root,
 	pathnode->numGroups = numGroups;
 
 	/*
-	 * Charge one cpu_operator_cost per comparison per input tuple. We assume
-	 * all columns get compared at most of the tuples.
-	 *
-	 * XXX all wrong for hashing
+	 * Compute cost estimates.  As things stand, we end up with the same total
+	 * cost in this node for sort and hash methods, but different startup
+	 * costs.  This could be refined perhaps, but it'll do for now.
 	 */
 	pathnode->path.disabled_nodes =
 		leftpath->disabled_nodes + rightpath->disabled_nodes;
-	pathnode->path.startup_cost =
-		leftpath->startup_cost + rightpath->startup_cost;
-	pathnode->path.total_cost = leftpath->total_cost + rightpath->total_cost +
-		cpu_operator_cost * (leftpath->rows + rightpath->rows) * list_length(groupList);
+	if (strategy == SETOP_SORTED)
+	{
+		/*
+		 * In sorted mode, we can emit output incrementally.  Charge one
+		 * cpu_operator_cost per comparison per input tuple.  Like cost_group,
+		 * we assume all columns get compared at most of the tuples.
+		 */
+		pathnode->path.startup_cost =
+			leftpath->startup_cost + rightpath->startup_cost;
+		pathnode->path.total_cost =
+			leftpath->total_cost + rightpath->total_cost +
+			cpu_operator_cost * (leftpath->rows + rightpath->rows) * list_length(groupList);
+
+		/*
+		 * Also charge a small amount per extracted tuple.  Like cost_sort,
+		 * charge only operator cost not cpu_tuple_cost, since SetOp does no
+		 * qual-checking or projection.
+		 */
+		pathnode->path.total_cost += cpu_operator_cost * outputRows;
+	}
+	else
+	{
+		Size		hashentrysize;
+
+		/*
+		 * In hashed mode, we must read all the input before we can emit
+		 * anything.  Also charge comparison costs to represent the cost of
+		 * hash table lookups.
+		 */
+		pathnode->path.startup_cost =
+			leftpath->total_cost + rightpath->total_cost +
+			cpu_operator_cost * (leftpath->rows + rightpath->rows) * list_length(groupList);
+		pathnode->path.total_cost = pathnode->path.startup_cost;
+
+		/*
+		 * Also charge a small amount per extracted tuple.  Like cost_sort,
+		 * charge only operator cost not cpu_tuple_cost, since SetOp does no
+		 * qual-checking or projection.
+		 */
+		pathnode->path.total_cost += cpu_operator_cost * outputRows;
+
+		/*
+		 * Mark the path as disabled if enable_hashagg is off.  While this
+		 * isn't exactly a HashAgg node, it seems close enough to justify
+		 * letting that switch control it.
+		 */
+		if (!enable_hashagg)
+			pathnode->path.disabled_nodes++;
+
+		/*
+		 * Also disable if it doesn't look like the hashtable will fit into
+		 * hash_mem.
+		 */
+		hashentrysize = MAXALIGN(leftpath->pathtarget->width) +
+			MAXALIGN(SizeofMinimalTupleHeader);
+		if (hashentrysize * numGroups > get_hash_memory_limit())
+			pathnode->path.disabled_nodes++;
+	}
 	pathnode->path.rows = outputRows;
 
 	return pathnode;

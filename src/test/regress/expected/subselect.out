@@ -1221,8 +1221,10 @@ where o.ten = 0;
 (1 row)
 
 --
--- Test rescan of a SetOp node
+-- Test rescan of a hashed SetOp node
 --
+begin;
+set local enable_sort = off;
 explain (costs off)
 select count(*) from
   onek o cross join lateral (
@@ -1256,6 +1258,50 @@ where o.ten = 1;
    100
 (1 row)
 
+rollback;
+--
+-- Test rescan of a sorted SetOp node
+--
+begin;
+set local enable_hashagg = off;
+explain (costs off)
+select count(*) from
+  onek o cross join lateral (
+    select * from onek i1 where i1.unique1 = o.unique1
+    except
+    select * from onek i2 where i2.unique1 = o.unique2
+  ) ss
+where o.ten = 1;
+                                                                                                     QUERY PLAN                                                                                                      
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Aggregate
+   ->  Nested Loop
+         ->  Seq Scan on onek o
+               Filter: (ten = 1)
+         ->  SetOp Except
+               ->  Sort
+                     Sort Key: i1.unique1, i1.unique2, i1.two, i1.four, i1.ten, i1.twenty, i1.hundred, i1.thousand, i1.twothousand, i1.fivethous, i1.tenthous, i1.odd, i1.even, i1.stringu1, i1.stringu2, i1.string4
+                     ->  Index Scan using onek_unique1 on onek i1
+                           Index Cond: (unique1 = o.unique1)
+               ->  Sort
+                     Sort Key: i2.unique1, i2.unique2, i2.two, i2.four, i2.ten, i2.twenty, i2.hundred, i2.thousand, i2.twothousand, i2.fivethous, i2.tenthous, i2.odd, i2.even, i2.stringu1, i2.stringu2, i2.string4
+                     ->  Index Scan using onek_unique1 on onek i2
+                           Index Cond: (unique1 = o.unique2)
+(13 rows)
+
+select count(*) from
+  onek o cross join lateral (
+    select * from onek i1 where i1.unique1 = o.unique1
+    except
+    select * from onek i2 where i2.unique1 = o.unique2
+  ) ss
+where o.ten = 1;
+ count 
+-------
+   100
+(1 row)
+
+rollback;
 --
 -- Test rescan of a RecursiveUnion node
 --

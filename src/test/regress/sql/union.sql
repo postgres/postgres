@@ -134,9 +134,14 @@ select count(*) from
 select count(*) from
   ( select unique1 from tenk1 intersect select fivethous from tenk1 ) ss;
 
+-- this query will prefer a sorted setop unless we force it.
+set enable_indexscan to off;
+
 explain (costs off)
 select unique1 from tenk1 except select unique2 from tenk1 where unique2 != 10;
 select unique1 from tenk1 except select unique2 from tenk1 where unique2 != 10;
+
+reset enable_indexscan;
 
 -- the hashed implementation is sensitive to child plans' tuple slot types
 explain (costs off)
@@ -161,6 +166,10 @@ select count(*) from
 explain (costs off)
 select unique1 from tenk1 except select unique2 from tenk1 where unique2 != 10;
 select unique1 from tenk1 except select unique2 from tenk1 where unique2 != 10;
+
+explain (costs off)
+select f1 from int4_tbl union all
+  (select unique1 from tenk1 union select unique2 from tenk1);
 
 reset enable_hashagg;
 
