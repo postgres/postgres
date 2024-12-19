@@ -237,7 +237,8 @@ BuildTupleHashTableExt(PlanState *parent,
 
 	/* build comparator for all columns */
 	hashtable->tab_eq_func = ExecBuildGroupingEqual(inputDesc, inputDesc,
-													NULL, &TTSOpsMinimalTuple,
+													inputOps,
+													&TTSOpsMinimalTuple,
 													numCols,
 													keyColIdx, eqfuncoids, collations,
 													allow_jit ? parent : NULL);
