@@ -585,6 +585,9 @@ extern void ExecAssignExprContext(EState *estate, PlanState *planstate);
 extern TupleDesc ExecGetResultType(PlanState *planstate);
 extern const TupleTableSlotOps *ExecGetResultSlotOps(PlanState *planstate,
 													 bool *isfixed);
+extern const TupleTableSlotOps *ExecGetCommonSlotOps(PlanState **planstates,
+													 int nplans);
+extern const TupleTableSlotOps *ExecGetCommonChildSlotOps(PlanState *ps);
 extern void ExecAssignProjectionInfo(PlanState *planstate,
 									 TupleDesc inputDesc);
 extern void ExecConditionalAssignProjectionInfo(PlanState *planstate,

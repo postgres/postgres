@@ -649,7 +649,7 @@ RelOptInfo      - a relation or joined relations
   GroupingSetsPath - an Agg plan node used to implement GROUPING SETS
   MinMaxAggPath - a Result plan node with subplans performing MIN/MAX
   WindowAggPath - a WindowAgg plan node applied to some sub-path
-  SetOpPath     - a SetOp plan node applied to some sub-path
+  SetOpPath     - a SetOp plan node applied to two sub-paths
   RecursiveUnionPath - a RecursiveUnion plan node applied to two sub-paths
   LockRowsPath  - a LockRows plan node applied to some sub-path
   ModifyTablePath - a ModifyTable plan node applied to some sub-path(s)

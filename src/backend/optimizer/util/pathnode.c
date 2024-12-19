@@ -3634,25 +3634,26 @@ create_windowagg_path(PlannerInfo *root,
  *	  Creates a pathnode that represents computation of INTERSECT or EXCEPT
  *
  * 'rel' is the parent relation associated with the result
- * 'subpath' is the path representing the source of data
+ * 'leftpath' is the path representing the left-hand source of data
+ * 'rightpath' is the path representing the right-hand source of data
  * 'cmd' is the specific semantics (INTERSECT or EXCEPT, with/without ALL)
  * 'strategy' is the implementation strategy (sorted or hashed)
- * 'distinctList' is a list of SortGroupClause's representing the grouping
- * 'flagColIdx' is the column number where the flag column will be, if any
- * 'firstFlag' is the flag value for the first input relation when hashing;
- *		or -1 when sorting
- * 'numGroups' is the estimated number of distinct groups
+ * 'groupList' is a list of SortGroupClause's representing the grouping
+ * 'numGroups' is the estimated number of distinct groups in left-hand input
  * 'outputRows' is the estimated number of output rows
+ *
+ * leftpath and rightpath must produce the same columns.  Moreover, if
+ * strategy is SETOP_SORTED, leftpath and rightpath must both be sorted
+ * by all the grouping columns.
  */
 SetOpPath *
 create_setop_path(PlannerInfo *root,
 				  RelOptInfo *rel,
-				  Path *subpath,
+				  Path *leftpath,
+				  Path *rightpath,
 				  SetOpCmd cmd,
 				  SetOpStrategy strategy,
-				  List *distinctList,
-				  AttrNumber flagColIdx,
-				  int firstFlag,
+				  List *groupList,
 				  double numGroups,
 				  double outputRows)
 {
@@ -3660,34 +3661,37 @@ create_setop_path(PlannerInfo *root,
 
 	pathnode->path.pathtype = T_SetOp;
 	pathnode->path.parent = rel;
-	/* SetOp doesn't project, so use source path's pathtarget */
-	pathnode->path.pathtarget = subpath->pathtarget;
+	pathnode->path.pathtarget = rel->reltarget;
 	/* For now, assume we are above any joins, so no parameterization */
 	pathnode->path.param_info = NULL;
 	pathnode->path.parallel_aware = false;
 	pathnode->path.parallel_safe = rel->consider_parallel &&
-		subpath->parallel_safe;
-	pathnode->path.parallel_workers = subpath->parallel_workers;
+		leftpath->parallel_safe && rightpath->parallel_safe;
+	pathnode->path.parallel_workers =
+		leftpath->parallel_workers + rightpath->parallel_workers;
 	/* SetOp preserves the input sort order if in sort mode */
 	pathnode->path.pathkeys =
-		(strategy == SETOP_SORTED) ? subpath->pathkeys : NIL;
+		(strategy == SETOP_SORTED) ? leftpath->pathkeys : NIL;
 
-	pathnode->subpath = subpath;
+	pathnode->leftpath = leftpath;
+	pathnode->rightpath = rightpath;
 	pathnode->cmd = cmd;
 	pathnode->strategy = strategy;
-	pathnode->distinctList = distinctList;
-	pathnode->flagColIdx = flagColIdx;
-	pathnode->firstFlag = firstFlag;
+	pathnode->groupList = groupList;
 	pathnode->numGroups = numGroups;
 
 	/*
 	 * Charge one cpu_operator_cost per comparison per input tuple. We assume
 	 * all columns get compared at most of the tuples.
+	 *
+	 * XXX all wrong for hashing
 	 */
-	pathnode->path.disabled_nodes = subpath->disabled_nodes;
-	pathnode->path.startup_cost = subpath->startup_cost;
-	pathnode->path.total_cost = subpath->total_cost +
-		cpu_operator_cost * subpath->rows * list_length(distinctList);
+	pathnode->path.disabled_nodes =
+		leftpath->disabled_nodes + rightpath->disabled_nodes;
+	pathnode->path.startup_cost =
+		leftpath->startup_cost + rightpath->startup_cost;
+	pathnode->path.total_cost = leftpath->total_cost + rightpath->total_cost +
+		cpu_operator_cost * (leftpath->rows + rightpath->rows) * list_length(groupList);
 	pathnode->path.rows = outputRows;
 
 	return pathnode;

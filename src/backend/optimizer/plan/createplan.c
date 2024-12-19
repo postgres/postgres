@@ -301,9 +301,9 @@ static Unique *make_unique_from_pathkeys(Plan *lefttree,
 										 List *pathkeys, int numCols);
 static Gather *make_gather(List *qptlist, List *qpqual,
 						   int nworkers, int rescan_param, bool single_copy, Plan *subplan);
-static SetOp *make_setop(SetOpCmd cmd, SetOpStrategy strategy, Plan *lefttree,
-						 List *distinctList, AttrNumber flagColIdx, int firstFlag,
-						 long numGroups);
+static SetOp *make_setop(SetOpCmd cmd, SetOpStrategy strategy,
+						 List *tlist, Plan *lefttree, Plan *righttree,
+						 List *groupList, long numGroups);
 static LockRows *make_lockrows(Plan *lefttree, List *rowMarks, int epqParam);
 static Result *make_result(List *tlist, Node *resconstantqual, Plan *subplan);
 static ProjectSet *make_project_set(List *tlist, Plan *subplan);
@@ -2719,25 +2719,29 @@ static SetOp *
 create_setop_plan(PlannerInfo *root, SetOpPath *best_path, int flags)
 {
 	SetOp	   *plan;
-	Plan	   *subplan;
+	List	   *tlist = build_path_tlist(root, &best_path->path);
+	Plan	   *leftplan;
+	Plan	   *rightplan;
 	long		numGroups;
 
 	/*
 	 * SetOp doesn't project, so tlist requirements pass through; moreover we
 	 * need grouping columns to be labeled.
 	 */
-	subplan = create_plan_recurse(root, best_path->subpath,
-								  flags | CP_LABEL_TLIST);
+	leftplan = create_plan_recurse(root, best_path->leftpath,
+								   flags | CP_LABEL_TLIST);
+	rightplan = create_plan_recurse(root, best_path->rightpath,
+									flags | CP_LABEL_TLIST);
 
 	/* Convert numGroups to long int --- but 'ware overflow! */
 	numGroups = clamp_cardinality_to_long(best_path->numGroups);
 
 	plan = make_setop(best_path->cmd,
 					  best_path->strategy,
-					  subplan,
-					  best_path->distinctList,
-					  best_path->flagColIdx,
-					  best_path->firstFlag,
+					  tlist,
+					  leftplan,
+					  rightplan,
+					  best_path->groupList,
 					  numGroups);
 
 	copy_generic_path_info(&plan->plan, (Path *) best_path);
@@ -6950,57 +6954,62 @@ make_gather(List *qptlist,
 }
 
 /*
- * distinctList is a list of SortGroupClauses, identifying the targetlist
- * items that should be considered by the SetOp filter.  The input path must
- * already be sorted accordingly.
+ * groupList is a list of SortGroupClauses, identifying the targetlist
+ * items that should be considered by the SetOp filter.  The input plans must
+ * already be sorted accordingly, if we're doing SETOP_SORTED mode.
  */
 static SetOp *
-make_setop(SetOpCmd cmd, SetOpStrategy strategy, Plan *lefttree,
-		   List *distinctList, AttrNumber flagColIdx, int firstFlag,
-		   long numGroups)
+make_setop(SetOpCmd cmd, SetOpStrategy strategy,
+		   List *tlist, Plan *lefttree, Plan *righttree,
+		   List *groupList, long numGroups)
 {
 	SetOp	   *node = makeNode(SetOp);
 	Plan	   *plan = &node->plan;
-	int			numCols = list_length(distinctList);
+	int			numCols = list_length(groupList);
 	int			keyno = 0;
-	AttrNumber *dupColIdx;
-	Oid		   *dupOperators;
-	Oid		   *dupCollations;
+	AttrNumber *cmpColIdx;
+	Oid		   *cmpOperators;
+	Oid		   *cmpCollations;
+	bool	   *cmpNullsFirst;
 	ListCell   *slitem;
 
-	plan->targetlist = lefttree->targetlist;
+	plan->targetlist = tlist;
 	plan->qual = NIL;
 	plan->lefttree = lefttree;
-	plan->righttree = NULL;
+	plan->righttree = righttree;
 
 	/*
-	 * convert SortGroupClause list into arrays of attr indexes and equality
+	 * convert SortGroupClause list into arrays of attr indexes and comparison
 	 * operators, as wanted by executor
 	 */
-	dupColIdx = (AttrNumber *) palloc(sizeof(AttrNumber) * numCols);
-	dupOperators = (Oid *) palloc(sizeof(Oid) * numCols);
-	dupCollations = (Oid *) palloc(sizeof(Oid) * numCols);
+	cmpColIdx = (AttrNumber *) palloc(sizeof(AttrNumber) * numCols);
+	cmpOperators = (Oid *) palloc(sizeof(Oid) * numCols);
+	cmpCollations = (Oid *) palloc(sizeof(Oid) * numCols);
+	cmpNullsFirst = (bool *) palloc(sizeof(bool) * numCols);
 
-	foreach(slitem, distinctList)
+	foreach(slitem, groupList)
 	{
 		SortGroupClause *sortcl = (SortGroupClause *) lfirst(slitem);
 		TargetEntry *tle = get_sortgroupclause_tle(sortcl, plan->targetlist);
 
-		dupColIdx[keyno] = tle->resno;
-		dupOperators[keyno] = sortcl->eqop;
-		dupCollations[keyno] = exprCollation((Node *) tle->expr);
-		Assert(OidIsValid(dupOperators[keyno]));
+		cmpColIdx[keyno] = tle->resno;
+		if (strategy == SETOP_HASHED)
+			cmpOperators[keyno] = sortcl->eqop;
+		else
+			cmpOperators[keyno] = sortcl->sortop;
+		Assert(OidIsValid(cmpOperators[keyno]));
+		cmpCollations[keyno] = exprCollation((Node *) tle->expr);
+		cmpNullsFirst[keyno] = sortcl->nulls_first;
 		keyno++;
 	}
 
 	node->cmd = cmd;
 	node->strategy = strategy;
 	node->numCols = numCols;
-	node->dupColIdx = dupColIdx;
-	node->dupOperators = dupOperators;
-	node->dupCollations = dupCollations;
-	node->flagColIdx = flagColIdx;
-	node->firstFlag = firstFlag;
+	node->cmpColIdx = cmpColIdx;
+	node->cmpOperators = cmpOperators;
+	node->cmpCollations = cmpCollations;
+	node->cmpNullsFirst = cmpNullsFirst;
 	node->numGroups = numGroups;
 
 	return node;

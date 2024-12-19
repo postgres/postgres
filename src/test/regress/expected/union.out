@@ -370,17 +370,13 @@ select count(*) from
 explain (costs off)
 select count(*) from
   ( select unique1 from tenk1 intersect select fivethous from tenk1 ) ss;
-                                     QUERY PLAN                                     
-------------------------------------------------------------------------------------
+                            QUERY PLAN                            
+------------------------------------------------------------------
  Aggregate
-   ->  Subquery Scan on ss
-         ->  HashSetOp Intersect
-               ->  Append
-                     ->  Subquery Scan on "*SELECT* 2"
-                           ->  Seq Scan on tenk1
-                     ->  Subquery Scan on "*SELECT* 1"
-                           ->  Index Only Scan using tenk1_unique1 on tenk1 tenk1_1
-(8 rows)
+   ->  HashSetOp Intersect
+         ->  Seq Scan on tenk1
+         ->  Index Only Scan using tenk1_unique1 on tenk1 tenk1_1
+(4 rows)
 
 select count(*) from
   ( select unique1 from tenk1 intersect select fivethous from tenk1 ) ss;
@@ -391,22 +387,47 @@ select count(*) from
 
 explain (costs off)
 select unique1 from tenk1 except select unique2 from tenk1 where unique2 != 10;
-                               QUERY PLAN                               
-------------------------------------------------------------------------
+                         QUERY PLAN                         
+------------------------------------------------------------
  HashSetOp Except
-   ->  Append
-         ->  Subquery Scan on "*SELECT* 1"
-               ->  Index Only Scan using tenk1_unique1 on tenk1
-         ->  Subquery Scan on "*SELECT* 2"
-               ->  Index Only Scan using tenk1_unique2 on tenk1 tenk1_1
-                     Filter: (unique2 <> 10)
-(7 rows)
+   ->  Index Only Scan using tenk1_unique1 on tenk1
+   ->  Index Only Scan using tenk1_unique2 on tenk1 tenk1_1
+         Filter: (unique2 <> 10)
+(4 rows)
 
 select unique1 from tenk1 except select unique2 from tenk1 where unique2 != 10;
  unique1 
 ---------
       10
 (1 row)
+
+-- the hashed implementation is sensitive to child plans' tuple slot types
+explain (costs off)
+select * from int8_tbl intersect select q2, q1 from int8_tbl order by 1, 2;
+                 QUERY PLAN                  
+---------------------------------------------
+ Sort
+   Sort Key: int8_tbl.q1, int8_tbl.q2
+   ->  HashSetOp Intersect
+         ->  Seq Scan on int8_tbl
+         ->  Seq Scan on int8_tbl int8_tbl_1
+(5 rows)
+
+select * from int8_tbl intersect select q2, q1 from int8_tbl order by 1, 2;
+        q1        |        q2        
+------------------+------------------
+              123 | 4567890123456789
+ 4567890123456789 |              123
+ 4567890123456789 | 4567890123456789
+(3 rows)
+
+select q2, q1 from int8_tbl intersect select * from int8_tbl order by 1, 2;
+        q2        |        q1        
+------------------+------------------
+              123 | 4567890123456789
+ 4567890123456789 |              123
+ 4567890123456789 | 4567890123456789
+(3 rows)
 
 set enable_hashagg to off;
 explain (costs off)
@@ -434,19 +455,17 @@ select count(*) from
 explain (costs off)
 select count(*) from
   ( select unique1 from tenk1 intersect select fivethous from tenk1 ) ss;
-                                        QUERY PLAN                                        
-------------------------------------------------------------------------------------------
+                               QUERY PLAN                               
+------------------------------------------------------------------------
  Aggregate
-   ->  Subquery Scan on ss
-         ->  SetOp Intersect
-               ->  Sort
-                     Sort Key: "*SELECT* 2".fivethous
-                     ->  Append
-                           ->  Subquery Scan on "*SELECT* 2"
-                                 ->  Seq Scan on tenk1
-                           ->  Subquery Scan on "*SELECT* 1"
-                                 ->  Index Only Scan using tenk1_unique1 on tenk1 tenk1_1
-(10 rows)
+   ->  SetOp Intersect
+         ->  Sort
+               Sort Key: tenk1.fivethous
+               ->  Seq Scan on tenk1
+         ->  Sort
+               Sort Key: tenk1_1.unique1
+               ->  Index Only Scan using tenk1_unique1 on tenk1 tenk1_1
+(8 rows)
 
 select count(*) from
   ( select unique1 from tenk1 intersect select fivethous from tenk1 ) ss;
@@ -457,18 +476,17 @@ select count(*) from
 
 explain (costs off)
 select unique1 from tenk1 except select unique2 from tenk1 where unique2 != 10;
-                                  QUERY PLAN                                  
-------------------------------------------------------------------------------
+                            QUERY PLAN                            
+------------------------------------------------------------------
  SetOp Except
    ->  Sort
-         Sort Key: "*SELECT* 1".unique1
-         ->  Append
-               ->  Subquery Scan on "*SELECT* 1"
-                     ->  Index Only Scan using tenk1_unique1 on tenk1
-               ->  Subquery Scan on "*SELECT* 2"
-                     ->  Index Only Scan using tenk1_unique2 on tenk1 tenk1_1
-                           Filter: (unique2 <> 10)
-(9 rows)
+         Sort Key: tenk1.unique1
+         ->  Index Only Scan using tenk1_unique1 on tenk1
+   ->  Sort
+         Sort Key: tenk1_1.unique2
+         ->  Index Only Scan using tenk1_unique2 on tenk1 tenk1_1
+               Filter: (unique2 <> 10)
+(8 rows)
 
 select unique1 from tenk1 except select unique2 from tenk1 where unique2 != 10;
  unique1 
@@ -528,15 +546,12 @@ select x from (values (array[1, 2]), (array[1, 3])) _(x) union select x from (va
 
 explain (costs off)
 select x from (values (array[1, 2]), (array[1, 3])) _(x) intersect select x from (values (array[1, 2]), (array[1, 4])) _(x);
-                  QUERY PLAN                   
------------------------------------------------
+            QUERY PLAN             
+-----------------------------------
  HashSetOp Intersect
-   ->  Append
-         ->  Subquery Scan on "*SELECT* 1"
-               ->  Values Scan on "*VALUES*"
-         ->  Subquery Scan on "*SELECT* 2"
-               ->  Values Scan on "*VALUES*_1"
-(6 rows)
+   ->  Values Scan on "*VALUES*"
+   ->  Values Scan on "*VALUES*_1"
+(3 rows)
 
 select x from (values (array[1, 2]), (array[1, 3])) _(x) intersect select x from (values (array[1, 2]), (array[1, 4])) _(x);
    x   
@@ -546,15 +561,12 @@ select x from (values (array[1, 2]), (array[1, 3])) _(x) intersect select x from
 
 explain (costs off)
 select x from (values (array[1, 2]), (array[1, 3])) _(x) except select x from (values (array[1, 2]), (array[1, 4])) _(x);
-                  QUERY PLAN                   
------------------------------------------------
+            QUERY PLAN             
+-----------------------------------
  HashSetOp Except
-   ->  Append
-         ->  Subquery Scan on "*SELECT* 1"
-               ->  Values Scan on "*VALUES*"
-         ->  Subquery Scan on "*SELECT* 2"
-               ->  Values Scan on "*VALUES*_1"
-(6 rows)
+   ->  Values Scan on "*VALUES*"
+   ->  Values Scan on "*VALUES*_1"
+(3 rows)
 
 select x from (values (array[1, 2]), (array[1, 3])) _(x) except select x from (values (array[1, 2]), (array[1, 4])) _(x);
    x   
@@ -606,17 +618,16 @@ select x from (values (array[1, 2]), (array[1, 3])) _(x) union select x from (va
 
 explain (costs off)
 select x from (values (array[1, 2]), (array[1, 3])) _(x) intersect select x from (values (array[1, 2]), (array[1, 4])) _(x);
-                     QUERY PLAN                      
------------------------------------------------------
+               QUERY PLAN                
+-----------------------------------------
  SetOp Intersect
    ->  Sort
-         Sort Key: "*SELECT* 1".x
-         ->  Append
-               ->  Subquery Scan on "*SELECT* 1"
-                     ->  Values Scan on "*VALUES*"
-               ->  Subquery Scan on "*SELECT* 2"
-                     ->  Values Scan on "*VALUES*_1"
-(8 rows)
+         Sort Key: "*VALUES*".column1
+         ->  Values Scan on "*VALUES*"
+   ->  Sort
+         Sort Key: "*VALUES*_1".column1
+         ->  Values Scan on "*VALUES*_1"
+(7 rows)
 
 select x from (values (array[1, 2]), (array[1, 3])) _(x) intersect select x from (values (array[1, 2]), (array[1, 4])) _(x);
    x   
@@ -626,17 +637,16 @@ select x from (values (array[1, 2]), (array[1, 3])) _(x) intersect select x from
 
 explain (costs off)
 select x from (values (array[1, 2]), (array[1, 3])) _(x) except select x from (values (array[1, 2]), (array[1, 4])) _(x);
-                     QUERY PLAN                      
------------------------------------------------------
+               QUERY PLAN                
+-----------------------------------------
  SetOp Except
    ->  Sort
-         Sort Key: "*SELECT* 1".x
-         ->  Append
-               ->  Subquery Scan on "*SELECT* 1"
-                     ->  Values Scan on "*VALUES*"
-               ->  Subquery Scan on "*SELECT* 2"
-                     ->  Values Scan on "*VALUES*_1"
-(8 rows)
+         Sort Key: "*VALUES*".column1
+         ->  Values Scan on "*VALUES*"
+   ->  Sort
+         Sort Key: "*VALUES*_1".column1
+         ->  Values Scan on "*VALUES*_1"
+(7 rows)
 
 select x from (values (array[1, 2]), (array[1, 3])) _(x) except select x from (values (array[1, 2]), (array[1, 4])) _(x);
    x   
@@ -669,17 +679,16 @@ select x from (values (row(1, 2)), (row(1, 3))) _(x) union select x from (values
 
 explain (costs off)
 select x from (values (row(1, 2)), (row(1, 3))) _(x) intersect select x from (values (row(1, 2)), (row(1, 4))) _(x);
-                     QUERY PLAN                      
------------------------------------------------------
+               QUERY PLAN                
+-----------------------------------------
  SetOp Intersect
    ->  Sort
-         Sort Key: "*SELECT* 1".x
-         ->  Append
-               ->  Subquery Scan on "*SELECT* 1"
-                     ->  Values Scan on "*VALUES*"
-               ->  Subquery Scan on "*SELECT* 2"
-                     ->  Values Scan on "*VALUES*_1"
-(8 rows)
+         Sort Key: "*VALUES*".column1
+         ->  Values Scan on "*VALUES*"
+   ->  Sort
+         Sort Key: "*VALUES*_1".column1
+         ->  Values Scan on "*VALUES*_1"
+(7 rows)
 
 select x from (values (row(1, 2)), (row(1, 3))) _(x) intersect select x from (values (row(1, 2)), (row(1, 4))) _(x);
    x   
@@ -689,17 +698,16 @@ select x from (values (row(1, 2)), (row(1, 3))) _(x) intersect select x from (va
 
 explain (costs off)
 select x from (values (row(1, 2)), (row(1, 3))) _(x) except select x from (values (row(1, 2)), (row(1, 4))) _(x);
-                     QUERY PLAN                      
------------------------------------------------------
+               QUERY PLAN                
+-----------------------------------------
  SetOp Except
    ->  Sort
-         Sort Key: "*SELECT* 1".x
-         ->  Append
-               ->  Subquery Scan on "*SELECT* 1"
-                     ->  Values Scan on "*VALUES*"
-               ->  Subquery Scan on "*SELECT* 2"
-                     ->  Values Scan on "*VALUES*_1"
-(8 rows)
+         Sort Key: "*VALUES*".column1
+         ->  Values Scan on "*VALUES*"
+   ->  Sort
+         Sort Key: "*VALUES*_1".column1
+         ->  Values Scan on "*VALUES*_1"
+(7 rows)
 
 select x from (values (row(1, 2)), (row(1, 3))) _(x) except select x from (values (row(1, 2)), (row(1, 4))) _(x);
    x   
@@ -777,17 +785,16 @@ select x from (values (row(1, 2)), (row(1, 3))) _(x) union select x from (values
 
 explain (costs off)
 select x from (values (row(1, 2)), (row(1, 3))) _(x) intersect select x from (values (row(1, 2)), (row(1, 4))) _(x);
-                     QUERY PLAN                      
------------------------------------------------------
+               QUERY PLAN                
+-----------------------------------------
  SetOp Intersect
    ->  Sort
-         Sort Key: "*SELECT* 1".x
-         ->  Append
-               ->  Subquery Scan on "*SELECT* 1"
-                     ->  Values Scan on "*VALUES*"
-               ->  Subquery Scan on "*SELECT* 2"
-                     ->  Values Scan on "*VALUES*_1"
-(8 rows)
+         Sort Key: "*VALUES*".column1
+         ->  Values Scan on "*VALUES*"
+   ->  Sort
+         Sort Key: "*VALUES*_1".column1
+         ->  Values Scan on "*VALUES*_1"
+(7 rows)
 
 select x from (values (row(1, 2)), (row(1, 3))) _(x) intersect select x from (values (row(1, 2)), (row(1, 4))) _(x);
    x   
@@ -797,17 +804,16 @@ select x from (values (row(1, 2)), (row(1, 3))) _(x) intersect select x from (va
 
 explain (costs off)
 select x from (values (row(1, 2)), (row(1, 3))) _(x) except select x from (values (row(1, 2)), (row(1, 4))) _(x);
-                     QUERY PLAN                      
------------------------------------------------------
+               QUERY PLAN                
+-----------------------------------------
  SetOp Except
    ->  Sort
-         Sort Key: "*SELECT* 1".x
-         ->  Append
-               ->  Subquery Scan on "*SELECT* 1"
-                     ->  Values Scan on "*VALUES*"
-               ->  Subquery Scan on "*SELECT* 2"
-                     ->  Values Scan on "*VALUES*_1"
-(8 rows)
+         Sort Key: "*VALUES*".column1
+         ->  Values Scan on "*VALUES*"
+   ->  Sort
+         Sort Key: "*VALUES*_1".column1
+         ->  Values Scan on "*VALUES*_1"
+(7 rows)
 
 select x from (values (row(1, 2)), (row(1, 3))) _(x) except select x from (values (row(1, 2)), (row(1, 4))) _(x);
    x   
@@ -970,15 +976,12 @@ set enable_sort = false;
 -- no means to disable Unique.
 explain (costs off)
 select from generate_series(1,5) intersect select from generate_series(1,3);
-                              QUERY PLAN                              
-----------------------------------------------------------------------
+                        QUERY PLAN                        
+----------------------------------------------------------
  HashSetOp Intersect
-   ->  Append
-         ->  Subquery Scan on "*SELECT* 1"
-               ->  Function Scan on generate_series
-         ->  Subquery Scan on "*SELECT* 2"
-               ->  Function Scan on generate_series generate_series_1
-(6 rows)
+   ->  Function Scan on generate_series
+   ->  Function Scan on generate_series generate_series_1
+(3 rows)
 
 select from generate_series(1,5) union all select from generate_series(1,3);
 --
@@ -1015,15 +1018,12 @@ select from generate_series(1,5) union select from generate_series(1,3);
 
 explain (costs off)
 select from generate_series(1,5) intersect select from generate_series(1,3);
-                              QUERY PLAN                              
-----------------------------------------------------------------------
+                        QUERY PLAN                        
+----------------------------------------------------------
  SetOp Intersect
-   ->  Append
-         ->  Subquery Scan on "*SELECT* 1"
-               ->  Function Scan on generate_series
-         ->  Subquery Scan on "*SELECT* 2"
-               ->  Function Scan on generate_series generate_series_1
-(6 rows)
+   ->  Function Scan on generate_series
+   ->  Function Scan on generate_series generate_series_1
+(3 rows)
 
 select from generate_series(1,5) union select from generate_series(1,3);
 --

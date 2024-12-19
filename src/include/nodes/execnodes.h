@@ -2803,27 +2803,34 @@ typedef struct HashState
 /* ----------------
  *	 SetOpState information
  *
- *		Even in "sorted" mode, SetOp nodes are more complex than a simple
- *		Unique, since we have to count how many duplicates to return.  But
- *		we also support hashing, so this is really more like a cut-down
- *		form of Agg.
+ *		SetOp nodes support either sorted or hashed de-duplication.
+ *		The sorted mode is a bit like MergeJoin, the hashed mode like Agg.
  * ----------------
  */
-/* this struct is private in nodeSetOp.c: */
-typedef struct SetOpStatePerGroupData *SetOpStatePerGroup;
+typedef struct SetOpStatePerInput
+{
+	TupleTableSlot *firstTupleSlot; /* first tuple of current group */
+	int64		numTuples;		/* number of tuples in current group */
+	TupleTableSlot *nextTupleSlot;	/* next input tuple, if already read */
+	bool		needGroup;		/* do we need to load a new group? */
+} SetOpStatePerInput;
 
 typedef struct SetOpState
 {
 	PlanState	ps;				/* its first field is NodeTag */
-	ExprState  *eqfunction;		/* equality comparator */
+	bool		setop_done;		/* indicates completion of output scan */
+	int64		numOutput;		/* number of dups left to output */
+	int			numCols;		/* number of grouping columns */
+
+	/* these fields are used in SETOP_SORTED mode: */
+	SortSupport sortKeys;		/* per-grouping-field sort data */
+	SetOpStatePerInput leftInput;	/* current outer-relation input state */
+	SetOpStatePerInput rightInput;	/* current inner-relation input state */
+	bool		need_init;		/* have we read the first tuples yet? */
+
+	/* these fields are used in SETOP_HASHED mode: */
 	Oid		   *eqfuncoids;		/* per-grouping-field equality fns */
 	FmgrInfo   *hashfunctions;	/* per-grouping-field hash fns */
-	bool		setop_done;		/* indicates completion of output scan */
-	long		numOutput;		/* number of dups left to output */
-	/* these fields are used in SETOP_SORTED mode: */
-	SetOpStatePerGroup pergroup;	/* per-group working state */
-	HeapTuple	grp_firstTuple; /* copy of first tuple of current group */
-	/* these fields are used in SETOP_HASHED mode: */
 	TupleHashTable hashtable;	/* hash table with one entry per group */
 	MemoryContext tableContext; /* memory context containing hash table */
 	bool		table_filled;	/* hash table filled yet? */

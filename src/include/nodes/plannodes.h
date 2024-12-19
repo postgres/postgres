@@ -1225,23 +1225,20 @@ typedef struct SetOp
 	/* how to do it, see nodes.h */
 	SetOpStrategy strategy;
 
-	/* number of columns to check for duplicate-ness */
+	/* number of columns to compare */
 	int			numCols;
 
 	/* their indexes in the target list */
-	AttrNumber *dupColIdx pg_node_attr(array_size(numCols));
+	AttrNumber *cmpColIdx pg_node_attr(array_size(numCols));
 
-	/* equality operators to compare with */
-	Oid		   *dupOperators pg_node_attr(array_size(numCols));
-	Oid		   *dupCollations pg_node_attr(array_size(numCols));
+	/* comparison operators (either equality operators or sort operators) */
+	Oid		   *cmpOperators pg_node_attr(array_size(numCols));
+	Oid		   *cmpCollations pg_node_attr(array_size(numCols));
 
-	/* where is the flag column, if any */
-	AttrNumber	flagColIdx;
+	/* nulls-first flags if sorting, otherwise not interesting */
+	bool	   *cmpNullsFirst pg_node_attr(array_size(numCols));
 
-	/* flag value for first input relation */
-	int			firstFlag;
-
-	/* estimated number of groups in input */
+	/* estimated number of groups in left input */
 	long		numGroups;
 } SetOp;
 

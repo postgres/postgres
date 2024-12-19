@@ -138,6 +138,12 @@ explain (costs off)
 select unique1 from tenk1 except select unique2 from tenk1 where unique2 != 10;
 select unique1 from tenk1 except select unique2 from tenk1 where unique2 != 10;
 
+-- the hashed implementation is sensitive to child plans' tuple slot types
+explain (costs off)
+select * from int8_tbl intersect select q2, q1 from int8_tbl order by 1, 2;
+select * from int8_tbl intersect select q2, q1 from int8_tbl order by 1, 2;
+select q2, q1 from int8_tbl intersect select * from int8_tbl order by 1, 2;
+
 set enable_hashagg to off;
 
 explain (costs off)

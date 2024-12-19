@@ -1231,22 +1231,18 @@ select count(*) from
     select * from onek i2 where i2.unique1 = o.unique2
   ) ss
 where o.ten = 1;
-                                  QUERY PLAN                                  
-------------------------------------------------------------------------------
+                         QUERY PLAN                         
+------------------------------------------------------------
  Aggregate
    ->  Nested Loop
          ->  Seq Scan on onek o
                Filter: (ten = 1)
-         ->  Subquery Scan on ss
-               ->  HashSetOp Except
-                     ->  Append
-                           ->  Subquery Scan on "*SELECT* 1"
-                                 ->  Index Scan using onek_unique1 on onek i1
-                                       Index Cond: (unique1 = o.unique1)
-                           ->  Subquery Scan on "*SELECT* 2"
-                                 ->  Index Scan using onek_unique1 on onek i2
-                                       Index Cond: (unique1 = o.unique2)
-(13 rows)
+         ->  HashSetOp Except
+               ->  Index Scan using onek_unique1 on onek i1
+                     Index Cond: (unique1 = o.unique1)
+               ->  Index Scan using onek_unique1 on onek i2
+                     Index Cond: (unique1 = o.unique2)
+(9 rows)
 
 select count(*) from
   onek o cross join lateral (

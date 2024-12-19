@@ -2615,6 +2615,8 @@ SetOpCmd
 SetOpPath
 SetOpState
 SetOpStatePerGroup
+SetOpStatePerGroupData
+SetOpStatePerInput
 SetOpStrategy
 SetOperation
 SetOperationStmt
