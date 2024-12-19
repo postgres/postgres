@@ -225,9 +225,8 @@ BuildTupleHashTableExt(PlanState *parent,
 	allow_jit = metacxt != tablecxt;
 
 	/* build comparator for all columns */
-	/* XXX: should we support non-minimal tuples for the inputslot? */
 	hashtable->tab_eq_func = ExecBuildGroupingEqual(inputDesc, inputDesc,
-													&TTSOpsMinimalTuple, &TTSOpsMinimalTuple,
+													NULL, &TTSOpsMinimalTuple,
 													numCols,
 													keyColIdx, eqfuncoids, collations,
 													allow_jit ? parent : NULL);
