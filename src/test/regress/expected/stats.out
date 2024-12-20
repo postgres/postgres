@@ -1299,7 +1299,7 @@ SELECT :my_io_sum_shared_after_extends > :my_io_sum_shared_before_extends;
 (1 row)
 
 -- After a checkpoint, there should be some additional IOCONTEXT_NORMAL writes
--- and fsyncs in the global stats (not for the backend).
+-- and fsyncs in the global stats (usually not for the backend).
 -- See comment above for rationale for two explicit CHECKPOINTs.
 CHECKPOINT;
 CHECKPOINT;
@@ -1329,8 +1329,7 @@ SELECT :my_io_sum_shared_after_writes >= :my_io_sum_shared_before_writes;
 (1 row)
 
 SELECT current_setting('fsync') = 'off'
-  OR (:my_io_sum_shared_after_fsyncs = :my_io_sum_shared_before_fsyncs
-      AND :my_io_sum_shared_after_fsyncs= 0);
+  OR :my_io_sum_shared_after_fsyncs >= :my_io_sum_shared_before_fsyncs;
  ?column? 
 ----------
  t

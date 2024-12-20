@@ -633,7 +633,7 @@ SELECT sum(extends) AS my_io_sum_shared_after_extends
 SELECT :my_io_sum_shared_after_extends > :my_io_sum_shared_before_extends;
 
 -- After a checkpoint, there should be some additional IOCONTEXT_NORMAL writes
--- and fsyncs in the global stats (not for the backend).
+-- and fsyncs in the global stats (usually not for the backend).
 -- See comment above for rationale for two explicit CHECKPOINTs.
 CHECKPOINT;
 CHECKPOINT;
@@ -648,8 +648,7 @@ SELECT sum(writes) AS writes, sum(fsyncs) AS fsyncs
   WHERE object = 'relation' \gset my_io_sum_shared_after_
 SELECT :my_io_sum_shared_after_writes >= :my_io_sum_shared_before_writes;
 SELECT current_setting('fsync') = 'off'
-  OR (:my_io_sum_shared_after_fsyncs = :my_io_sum_shared_before_fsyncs
-      AND :my_io_sum_shared_after_fsyncs= 0);
+  OR :my_io_sum_shared_after_fsyncs >= :my_io_sum_shared_before_fsyncs;
 
 -- Change the tablespace so that the table is rewritten directly, then SELECT
 -- from it to cause it to be read back into shared buffers.
