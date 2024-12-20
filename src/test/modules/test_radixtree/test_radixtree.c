@@ -313,9 +313,10 @@ test_random(void)
 #else
 	MemoryContext radixtree_ctx;
 
-	radixtree_ctx = AllocSetContextCreate(CurrentMemoryContext,
-										  "test_radix_tree",
-										  ALLOCSET_SMALL_SIZES);
+	radixtree_ctx = SlabContextCreate(CurrentMemoryContext,
+									  "test_radix_tree",
+									  SLAB_DEFAULT_BLOCK_SIZE,
+									  sizeof(TestValueType));
 	radixtree = rt_create(radixtree_ctx);
 #endif
 

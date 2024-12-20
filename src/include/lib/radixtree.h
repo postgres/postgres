@@ -1849,21 +1849,7 @@ RT_CREATE(MemoryContext ctx)
 												size_class.allocsize);
 	}
 
-	/* By default we use the passed context for leaves. */
 	tree->leaf_context = ctx;
-
-#ifndef RT_VARLEN_VALUE_SIZE
-
-	/*
-	 * For leaves storing fixed-length values, we use a slab context to avoid
-	 * the possibility of space wastage by power-of-2 rounding up.
-	 */
-	if (sizeof(RT_VALUE_TYPE) > sizeof(RT_PTR_ALLOC))
-		tree->leaf_context = SlabContextCreate(ctx,
-											   RT_STR(RT_PREFIX) "_radix_tree leaf context",
-											   RT_SLAB_BLOCK_SIZE(sizeof(RT_VALUE_TYPE)),
-											   sizeof(RT_VALUE_TYPE));
-#endif							/* !RT_VARLEN_VALUE_SIZE */
 #endif							/* RT_SHMEM */
 
 	/* add root node now so that RT_SET can assume it exists */
