@@ -662,19 +662,6 @@ RelationBuildTupleDesc(Relation relation)
 			 need, RelationGetRelid(relation));
 
 	/*
-	 * The attcacheoff values we read from pg_attribute should all be -1
-	 * ("unknown").  Verify this if assert checking is on.
-	 */
-#ifdef USE_ASSERT_CHECKING
-	{
-		int			i;
-
-		for (i = 0; i < RelationGetNumberOfAttributes(relation); i++)
-			Assert(TupleDescAttr(relation->rd_att, i)->attcacheoff == -1);
-	}
-#endif
-
-	/*
 	 * We can easily set the attcacheoff value for the first attribute: it
 	 * must be zero.  This eliminates the need for special cases for attnum=1
 	 * that used to exist in fastgetattr() and index_getattr().
@@ -1964,8 +1951,6 @@ formrdesc(const char *relationName, Oid relationReltype,
 			   &attrs[i],
 			   ATTRIBUTE_FIXED_PART_SIZE);
 		has_not_null |= attrs[i].attnotnull;
-		/* make sure attcacheoff is valid */
-		TupleDescAttr(relation->rd_att, i)->attcacheoff = -1;
 
 		populate_compact_attribute(relation->rd_att, i);
 	}
@@ -4401,8 +4386,6 @@ BuildHardcodedDescriptor(int natts, const FormData_pg_attribute *attrs)
 	for (i = 0; i < natts; i++)
 	{
 		memcpy(TupleDescAttr(result, i), &attrs[i], ATTRIBUTE_FIXED_PART_SIZE);
-		/* make sure attcacheoff is valid */
-		TupleDescAttr(result, i)->attcacheoff = -1;
 
 		populate_compact_attribute(result, i);
 	}

@@ -320,7 +320,6 @@ ConstructTupleDescriptor(Relation heapRelation,
 
 		MemSet(to, 0, ATTRIBUTE_FIXED_PART_SIZE);
 		to->attnum = i + 1;
-		to->attcacheoff = -1;
 		to->attislocal = true;
 		to->attcollation = (i < numkeyatts) ? collationIds[i] : InvalidOid;
 

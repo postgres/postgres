@@ -74,15 +74,6 @@ CATALOG(pg_attribute,1249,AttributeRelationId) BKI_BOOTSTRAP BKI_ROWTYPE_OID(75,
 	int16		attnum;
 
 	/*
-	 * fastgetattr() uses attcacheoff to cache byte offsets of attributes in
-	 * heap tuples.  The value actually stored in pg_attribute (-1) indicates
-	 * no cached value.  But when we copy these tuples into a tuple
-	 * descriptor, we may then update attcacheoff in the copies. This speeds
-	 * up the attribute walking process.
-	 */
-	int32		attcacheoff BKI_DEFAULT(-1);
-
-	/*
 	 * atttypmod records type-specific data supplied at table creation time
 	 * (for example, the max length of a varchar field).  It is passed to
 	 * type-specific input and output functions as the third argument. The

@@ -388,17 +388,7 @@ TupleDescCopyEntry(TupleDesc dst, AttrNumber dstAttno,
 
 	memcpy(dstAtt, srcAtt, ATTRIBUTE_FIXED_PART_SIZE);
 
-	/*
-	 * Aside from updating the attno, we'd better reset attcacheoff.
-	 *
-	 * XXX Actually, to be entirely safe we'd need to reset the attcacheoff of
-	 * all following columns in dst as well.  Current usage scenarios don't
-	 * require that though, because all following columns will get initialized
-	 * by other uses of this function or TupleDescInitEntry.  So we cheat a
-	 * bit to avoid a useless O(N^2) penalty.
-	 */
 	dstAtt->attnum = dstAttno;
-	dstAtt->attcacheoff = -1;
 
 	/* since we're not copying constraints or defaults, clear these */
 	dstAtt->attnotnull = false;
@@ -528,9 +518,8 @@ equalTupleDescs(TupleDesc tupdesc1, TupleDesc tupdesc2)
 		 * them (since atttypid will be zero for all dropped columns) and in
 		 * general it seems safer to check them always.
 		 *
-		 * attcacheoff must NOT be checked since it's possibly not set in both
-		 * copies.  We also intentionally ignore atthasmissing, since that's
-		 * not very relevant in tupdescs, which lack the attmissingval field.
+		 * We intentionally ignore atthasmissing, since that's not very
+		 * relevant in tupdescs, which lack the attmissingval field.
 		 */
 		if (strcmp(NameStr(attr1->attname), NameStr(attr2->attname)) != 0)
 			return false;
@@ -771,7 +760,6 @@ TupleDescInitEntry(TupleDesc desc,
 	else if (attributeName != NameStr(att->attname))
 		namestrcpy(&(att->attname), attributeName);
 
-	att->attcacheoff = -1;
 	att->atttypmod = typmod;
 
 	att->attnum = attributeNumber;
@@ -835,7 +823,6 @@ TupleDescInitBuiltinEntry(TupleDesc desc,
 	Assert(attributeName != NULL);
 	namestrcpy(&(att->attname), attributeName);
 
-	att->attcacheoff = -1;
 	att->atttypmod = typmod;
 
 	att->attnum = attributeNumber;

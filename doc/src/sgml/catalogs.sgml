@@ -1188,17 +1188,6 @@
 
      <row>
       <entry role="catalog_table_entry"><para role="column_definition">
-       <structfield>attcacheoff</structfield> <type>int4</type>
-      </para>
-      <para>
-       Always -1 in storage, but when loaded into a row descriptor
-       in memory this might be updated to cache the offset of the attribute
-       within the row
-      </para></entry>
-     </row>
-
-     <row>
-      <entry role="catalog_table_entry"><para role="column_definition">
        <structfield>atttypmod</structfield> <type>int4</type>
       </para>
       <para>

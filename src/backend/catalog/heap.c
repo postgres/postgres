@@ -144,7 +144,6 @@ static const FormData_pg_attribute a1 = {
 	.atttypid = TIDOID,
 	.attlen = sizeof(ItemPointerData),
 	.attnum = SelfItemPointerAttributeNumber,
-	.attcacheoff = -1,
 	.atttypmod = -1,
 	.attbyval = false,
 	.attalign = TYPALIGN_SHORT,
@@ -158,7 +157,6 @@ static const FormData_pg_attribute a2 = {
 	.atttypid = XIDOID,
 	.attlen = sizeof(TransactionId),
 	.attnum = MinTransactionIdAttributeNumber,
-	.attcacheoff = -1,
 	.atttypmod = -1,
 	.attbyval = true,
 	.attalign = TYPALIGN_INT,
@@ -172,7 +170,6 @@ static const FormData_pg_attribute a3 = {
 	.atttypid = CIDOID,
 	.attlen = sizeof(CommandId),
 	.attnum = MinCommandIdAttributeNumber,
-	.attcacheoff = -1,
 	.atttypmod = -1,
 	.attbyval = true,
 	.attalign = TYPALIGN_INT,
@@ -186,7 +183,6 @@ static const FormData_pg_attribute a4 = {
 	.atttypid = XIDOID,
 	.attlen = sizeof(TransactionId),
 	.attnum = MaxTransactionIdAttributeNumber,
-	.attcacheoff = -1,
 	.atttypmod = -1,
 	.attbyval = true,
 	.attalign = TYPALIGN_INT,
@@ -200,7 +196,6 @@ static const FormData_pg_attribute a5 = {
 	.atttypid = CIDOID,
 	.attlen = sizeof(CommandId),
 	.attnum = MaxCommandIdAttributeNumber,
-	.attcacheoff = -1,
 	.atttypmod = -1,
 	.attbyval = true,
 	.attalign = TYPALIGN_INT,
@@ -220,7 +215,6 @@ static const FormData_pg_attribute a6 = {
 	.atttypid = OIDOID,
 	.attlen = sizeof(Oid),
 	.attnum = TableOidAttributeNumber,
-	.attcacheoff = -1,
 	.atttypmod = -1,
 	.attbyval = true,
 	.attalign = TYPALIGN_INT,
@@ -684,11 +678,10 @@ CheckAttributeType(const char *attname,
  *		Construct and insert a set of tuples in pg_attribute.
  *
  * Caller has already opened and locked pg_attribute.  tupdesc contains the
- * attributes to insert.  attcacheoff is always initialized to -1.
- * tupdesc_extra supplies the values for certain variable-length/nullable
- * pg_attribute fields and must contain the same number of elements as tupdesc
- * or be NULL.  The other variable-length fields of pg_attribute are always
- * initialized to null values.
+ * attributes to insert.  tupdesc_extra supplies the values for certain
+ * variable-length/nullable pg_attribute fields and must contain the same
+ * number of elements as tupdesc or be NULL.  The other variable-length fields
+ * of pg_attribute are always initialized to null values.
  *
  * indstate is the index state for CatalogTupleInsertWithInfo.  It can be
  * passed as NULL, in which case we'll fetch the necessary info.  (Don't do
@@ -740,7 +733,6 @@ InsertPgAttributeTuples(Relation pg_attribute_rel,
 		slot[slotCount]->tts_values[Anum_pg_attribute_atttypid - 1] = ObjectIdGetDatum(attrs->atttypid);
 		slot[slotCount]->tts_values[Anum_pg_attribute_attlen - 1] = Int16GetDatum(attrs->attlen);
 		slot[slotCount]->tts_values[Anum_pg_attribute_attnum - 1] = Int16GetDatum(attrs->attnum);
-		slot[slotCount]->tts_values[Anum_pg_attribute_attcacheoff - 1] = Int32GetDatum(-1);
 		slot[slotCount]->tts_values[Anum_pg_attribute_atttypmod - 1] = Int32GetDatum(attrs->atttypmod);
 		slot[slotCount]->tts_values[Anum_pg_attribute_attndims - 1] = Int16GetDatum(attrs->attndims);
 		slot[slotCount]->tts_values[Anum_pg_attribute_attbyval - 1] = BoolGetDatum(attrs->attbyval);

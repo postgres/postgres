@@ -580,7 +580,6 @@ DefineAttr(char *name, char *type, int attnum, int nullness)
 	if (OidIsValid(attrtypes[attnum]->attcollation))
 		attrtypes[attnum]->attcollation = C_COLLATION_OID;
 
-	attrtypes[attnum]->attcacheoff = -1;
 	attrtypes[attnum]->atttypmod = -1;
 	attrtypes[attnum]->attislocal = true;
 
