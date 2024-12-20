@@ -175,12 +175,12 @@ get_relation_info(PlannerInfo *root, Oid relationObjectId, bool inhparent,
 	{
 		for (int i = 0; i < relation->rd_att->natts; i++)
 		{
-			Form_pg_attribute attr = TupleDescAttr(relation->rd_att, i);
+			CompactAttribute *attr = TupleDescCompactAttr(relation->rd_att, i);
 
 			if (attr->attnotnull)
 			{
 				rel->notnullattnums = bms_add_member(rel->notnullattnums,
-													 attr->attnum);
+													 i + 1);
 
 				/*
 				 * Per RemoveAttributeById(), dropped columns will have their

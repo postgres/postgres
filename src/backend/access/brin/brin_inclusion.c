@@ -146,12 +146,12 @@ brin_inclusion_add_value(PG_FUNCTION_ARGS)
 	Datum		result;
 	bool		new = false;
 	AttrNumber	attno;
-	Form_pg_attribute attr;
+	CompactAttribute *attr;
 
 	Assert(!isnull);
 
 	attno = column->bv_attno;
-	attr = TupleDescAttr(bdesc->bd_tupdesc, attno - 1);
+	attr = TupleDescCompactAttr(bdesc->bd_tupdesc, attno - 1);
 
 	/*
 	 * If the recorded value is null, copy the new value (which we know to be
@@ -479,7 +479,7 @@ brin_inclusion_union(PG_FUNCTION_ARGS)
 	BrinValues *col_b = (BrinValues *) PG_GETARG_POINTER(2);
 	Oid			colloid = PG_GET_COLLATION();
 	AttrNumber	attno;
-	Form_pg_attribute attr;
+	CompactAttribute *attr;
 	FmgrInfo   *finfo;
 	Datum		result;
 
@@ -487,7 +487,7 @@ brin_inclusion_union(PG_FUNCTION_ARGS)
 	Assert(!col_a->bv_allnulls && !col_b->bv_allnulls);
 
 	attno = col_a->bv_attno;
-	attr = TupleDescAttr(bdesc->bd_tupdesc, attno - 1);
+	attr = TupleDescCompactAttr(bdesc->bd_tupdesc, attno - 1);
 
 	/* If B includes empty elements, mark A similarly, if needed. */
 	if (!DatumGetBool(col_a->bv_values[INCLUSION_CONTAINS_EMPTY]) &&

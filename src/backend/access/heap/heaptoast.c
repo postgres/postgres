@@ -369,7 +369,7 @@ toast_flatten_tuple(HeapTuple tup, TupleDesc tupleDesc)
 		/*
 		 * Look at non-null varlena attributes
 		 */
-		if (!toast_isnull[i] && TupleDescAttr(tupleDesc, i)->attlen == -1)
+		if (!toast_isnull[i] && TupleDescCompactAttr(tupleDesc, i)->attlen == -1)
 		{
 			struct varlena *new_value;
 
@@ -483,7 +483,7 @@ toast_flatten_tuple_to_datum(HeapTupleHeader tup,
 		 */
 		if (toast_isnull[i])
 			has_nulls = true;
-		else if (TupleDescAttr(tupleDesc, i)->attlen == -1)
+		else if (TupleDescCompactAttr(tupleDesc, i)->attlen == -1)
 		{
 			struct varlena *new_value;
 
@@ -584,7 +584,7 @@ toast_build_flattened_tuple(TupleDesc tupleDesc,
 		/*
 		 * Look at non-null varlena attributes
 		 */
-		if (!isnull[i] && TupleDescAttr(tupleDesc, i)->attlen == -1)
+		if (!isnull[i] && TupleDescCompactAttr(tupleDesc, i)->attlen == -1)
 		{
 			struct varlena *new_value;
 

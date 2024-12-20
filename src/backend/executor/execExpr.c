@@ -598,7 +598,7 @@ ExecBuildUpdateProjection(List *targetList,
 	 */
 	for (int attnum = relDesc->natts; attnum > 0; attnum--)
 	{
-		Form_pg_attribute attr = TupleDescAttr(relDesc, attnum - 1);
+		CompactAttribute *attr = TupleDescCompactAttr(relDesc, attnum - 1);
 
 		if (attr->attisdropped)
 			continue;
@@ -694,7 +694,7 @@ ExecBuildUpdateProjection(List *targetList,
 	 */
 	for (int attnum = 1; attnum <= relDesc->natts; attnum++)
 	{
-		Form_pg_attribute attr = TupleDescAttr(relDesc, attnum - 1);
+		CompactAttribute *attr = TupleDescCompactAttr(relDesc, attnum - 1);
 
 		if (attr->attisdropped)
 		{

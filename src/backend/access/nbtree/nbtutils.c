@@ -4890,11 +4890,11 @@ _bt_keep_natts_fast(Relation rel, IndexTuple lastleft, IndexTuple firstright)
 					datum2;
 		bool		isNull1,
 					isNull2;
-		Form_pg_attribute att;
+		CompactAttribute *att;
 
 		datum1 = index_getattr(lastleft, attnum, itupdesc, &isNull1);
 		datum2 = index_getattr(firstright, attnum, itupdesc, &isNull2);
-		att = TupleDescAttr(itupdesc, attnum - 1);
+		att = TupleDescCompactAttr(itupdesc, attnum - 1);
 
 		if (isNull1 != isNull2)
 			break;

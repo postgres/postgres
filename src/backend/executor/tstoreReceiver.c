@@ -65,7 +65,7 @@ tstoreStartupReceiver(DestReceiver *self, int operation, TupleDesc typeinfo)
 	{
 		for (i = 0; i < natts; i++)
 		{
-			Form_pg_attribute attr = TupleDescAttr(typeinfo, i);
+			CompactAttribute *attr = TupleDescCompactAttr(typeinfo, i);
 
 			if (attr->attisdropped)
 				continue;
@@ -154,7 +154,7 @@ tstoreReceiveSlot_detoast(TupleTableSlot *slot, DestReceiver *self)
 	for (i = 0; i < natts; i++)
 	{
 		Datum		val = slot->tts_values[i];
-		Form_pg_attribute attr = TupleDescAttr(typeinfo, i);
+		CompactAttribute *attr = TupleDescCompactAttr(typeinfo, i);
 
 		if (!attr->attisdropped && attr->attlen == -1 && !slot->tts_isnull[i])
 		{

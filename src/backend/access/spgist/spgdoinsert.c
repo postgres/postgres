@@ -1974,7 +1974,7 @@ spgdoinsert(Relation index, SpGistState *state,
 	{
 		if (!isnulls[i])
 		{
-			if (TupleDescAttr(leafDescriptor, i)->attlen == -1)
+			if (TupleDescCompactAttr(leafDescriptor, i)->attlen == -1)
 				leafDatums[i] = PointerGetDatum(PG_DETOAST_DATUM(datums[i]));
 			else
 				leafDatums[i] = datums[i];

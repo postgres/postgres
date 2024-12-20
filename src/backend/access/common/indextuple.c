@@ -303,13 +303,13 @@ nocache_index_getattr(IndexTuple tup,
 
 	if (!slow)
 	{
-		Form_pg_attribute att;
+		CompactAttribute *att;
 
 		/*
 		 * If we get here, there are no nulls up to and including the target
 		 * attribute.  If we have a cached offset, we can use it.
 		 */
-		att = TupleDescAttr(tupleDesc, attnum);
+		att = TupleDescCompactAttr(tupleDesc, attnum);
 		if (att->attcacheoff >= 0)
 			return fetchatt(att, tp + att->attcacheoff);
 
@@ -324,7 +324,7 @@ nocache_index_getattr(IndexTuple tup,
 
 			for (j = 0; j <= attnum; j++)
 			{
-				if (TupleDescAttr(tupleDesc, j)->attlen <= 0)
+				if (TupleDescCompactAttr(tupleDesc, j)->attlen <= 0)
 				{
 					slow = true;
 					break;
@@ -347,18 +347,18 @@ nocache_index_getattr(IndexTuple tup,
 		 * fixed-width columns, in hope of avoiding future visits to this
 		 * routine.
 		 */
-		TupleDescAttr(tupleDesc, 0)->attcacheoff = 0;
+		TupleDescCompactAttr(tupleDesc, 0)->attcacheoff = 0;
 
 		/* we might have set some offsets in the slow path previously */
-		while (j < natts && TupleDescAttr(tupleDesc, j)->attcacheoff > 0)
+		while (j < natts && TupleDescCompactAttr(tupleDesc, j)->attcacheoff > 0)
 			j++;
 
-		off = TupleDescAttr(tupleDesc, j - 1)->attcacheoff +
-			TupleDescAttr(tupleDesc, j - 1)->attlen;
+		off = TupleDescCompactAttr(tupleDesc, j - 1)->attcacheoff +
+			TupleDescCompactAttr(tupleDesc, j - 1)->attlen;
 
 		for (; j < natts; j++)
 		{
-			Form_pg_attribute att = TupleDescAttr(tupleDesc, j);
+			CompactAttribute *att = TupleDescCompactAttr(tupleDesc, j);
 
 			if (att->attlen <= 0)
 				break;
@@ -372,7 +372,7 @@ nocache_index_getattr(IndexTuple tup,
 
 		Assert(j > attnum);
 
-		off = TupleDescAttr(tupleDesc, attnum)->attcacheoff;
+		off = TupleDescCompactAttr(tupleDesc, attnum)->attcacheoff;
 	}
 	else
 	{
@@ -392,7 +392,7 @@ nocache_index_getattr(IndexTuple tup,
 		off = 0;
 		for (i = 0;; i++)		/* loop exit is at "break" */
 		{
-			Form_pg_attribute att = TupleDescAttr(tupleDesc, i);
+			CompactAttribute *att = TupleDescCompactAttr(tupleDesc, i);
 
 			if (IndexTupleHasNulls(tup) && att_isnull(i, bp))
 			{
@@ -440,7 +440,7 @@ nocache_index_getattr(IndexTuple tup,
 		}
 	}
 
-	return fetchatt(TupleDescAttr(tupleDesc, attnum), tp + off);
+	return fetchatt(TupleDescCompactAttr(tupleDesc, attnum), tp + off);
 }
 
 /*
@@ -490,7 +490,7 @@ index_deform_tuple_internal(TupleDesc tupleDescriptor,
 
 	for (attnum = 0; attnum < natts; attnum++)
 	{
-		Form_pg_attribute thisatt = TupleDescAttr(tupleDescriptor, attnum);
+		CompactAttribute *thisatt = TupleDescCompactAttr(tupleDescriptor, attnum);
 
 		if (hasnulls && att_isnull(attnum, bp))
 		{
@@ -587,10 +587,8 @@ index_truncate_tuple(TupleDesc sourceDescriptor, IndexTuple source,
 	if (leavenatts == sourceDescriptor->natts)
 		return CopyIndexTuple(source);
 
-	/* Create temporary descriptor to scribble on */
-	truncdesc = palloc(TupleDescSize(sourceDescriptor));
-	TupleDescCopy(truncdesc, sourceDescriptor);
-	truncdesc->natts = leavenatts;
+	/* Create temporary truncated tuple descriptor */
+	truncdesc = CreateTupleDescTruncatedCopy(sourceDescriptor, leavenatts);
 
 	/* Deform, form copy of tuple with fewer attributes */
 	index_deform_tuple(source, truncdesc, values, isnull);

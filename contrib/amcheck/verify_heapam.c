@@ -1571,11 +1571,11 @@ check_tuple_attribute(HeapCheckContext *ctx)
 	struct varlena *attr;
 	char	   *tp;				/* pointer to the tuple data */
 	uint16		infomask;
-	Form_pg_attribute thisatt;
+	CompactAttribute *thisatt;
 	struct varatt_external toast_pointer;
 
 	infomask = ctx->tuphdr->t_infomask;
-	thisatt = TupleDescAttr(RelationGetDescr(ctx->rel), ctx->attnum);
+	thisatt = TupleDescCompactAttr(RelationGetDescr(ctx->rel), ctx->attnum);
 
 	tp = (char *) ctx->tuphdr + ctx->tuphdr->t_hoff;
 

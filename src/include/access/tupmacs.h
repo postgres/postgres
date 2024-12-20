@@ -30,13 +30,14 @@ att_isnull(int ATT, const bits8 *BITS)
 
 #ifndef FRONTEND
 /*
- * Given a Form_pg_attribute and a pointer into a tuple's data area,
- * return the correct value or pointer.
+ * Given an attbyval and an attlen from either a Form_pg_attribute or
+ * CompactAttribute and a pointer into a tuple's data area, return the
+ * correct value or pointer.
  *
- * We return a Datum value in all cases.  If the attribute has "byval" false,
- * we return the same pointer into the tuple data area that we're passed.
- * Otherwise, we return the correct number of bytes fetched from the data
- * area and extended to Datum form.
+ * We return a Datum value in all cases.  If attbyval is false,  we return the
+ * same pointer into the tuple data area that we're passed.  Otherwise, we
+ * return the correct number of bytes fetched from the data area and extended
+ * to Datum form.
  *
  * On machines where Datum is 8 bytes, we support fetching 8-byte byval
  * attributes; otherwise, only 1, 2, and 4-byte values are supported.

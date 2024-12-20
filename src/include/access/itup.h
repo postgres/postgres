@@ -124,11 +124,13 @@ index_getattr(IndexTuple tup, int attnum, TupleDesc tupleDesc, bool *isnull)
 
 	if (!IndexTupleHasNulls(tup))
 	{
-		if (TupleDescAttr(tupleDesc, attnum - 1)->attcacheoff >= 0)
+		CompactAttribute *attr = TupleDescCompactAttr(tupleDesc, attnum - 1);
+
+		if (attr->attcacheoff >= 0)
 		{
-			return fetchatt(TupleDescAttr(tupleDesc, attnum - 1),
-							(char *) tup + IndexInfoFindDataOffset(tup->t_info)
-							+ TupleDescAttr(tupleDesc, attnum - 1)->attcacheoff);
+			return fetchatt(attr,
+							(char *) tup + IndexInfoFindDataOffset(tup->t_info) +
+							attr->attcacheoff);
 		}
 		else
 			return nocache_index_getattr(tup, attnum, tupleDesc);

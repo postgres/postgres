@@ -1818,7 +1818,7 @@ postgresPlanForeignModify(PlannerInfo *root,
 
 		for (attnum = 1; attnum <= tupdesc->natts; attnum++)
 		{
-			Form_pg_attribute attr = TupleDescAttr(tupdesc, attnum - 1);
+			CompactAttribute *attr = TupleDescCompactAttr(tupdesc, attnum - 1);
 
 			if (!attr->attisdropped)
 				targetAttrs = lappend_int(targetAttrs, attnum);
@@ -2191,7 +2191,7 @@ postgresBeginForeignInsert(ModifyTableState *mtstate,
 	/* We transmit all columns that are defined in the foreign table. */
 	for (attnum = 1; attnum <= tupdesc->natts; attnum++)
 	{
-		Form_pg_attribute attr = TupleDescAttr(tupdesc, attnum - 1);
+		CompactAttribute *attr = TupleDescCompactAttr(tupdesc, attnum - 1);
 
 		if (!attr->attisdropped)
 			targetAttrs = lappend_int(targetAttrs, attnum);
@@ -4311,7 +4311,7 @@ convert_prep_stmt_params(PgFdwModifyState *fmstate,
 			foreach(lc, fmstate->target_attrs)
 			{
 				int			attnum = lfirst_int(lc);
-				Form_pg_attribute attr = TupleDescAttr(tupdesc, attnum - 1);
+				CompactAttribute *attr = TupleDescCompactAttr(tupdesc, attnum - 1);
 				Datum		value;
 				bool		isnull;
 

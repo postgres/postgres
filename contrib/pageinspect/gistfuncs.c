@@ -242,8 +242,8 @@ gist_page_items(PG_FUNCTION_ARGS)
 	}
 	else
 	{
-		tupdesc = CreateTupleDescCopy(RelationGetDescr(indexRel));
-		tupdesc->natts = IndexRelationGetNumberOfKeyAttributes(indexRel);
+		tupdesc = CreateTupleDescTruncatedCopy(RelationGetDescr(indexRel),
+											   IndexRelationGetNumberOfKeyAttributes(indexRel));
 		printflags |= RULE_INDEXDEF_KEYS_ONLY;
 	}
 

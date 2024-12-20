@@ -334,11 +334,11 @@ tuple_data_split_internal(Oid relid, char *tupdata,
 
 	for (i = 0; i < nattrs; i++)
 	{
-		Form_pg_attribute attr;
+		CompactAttribute *attr;
 		bool		is_null;
 		bytea	   *attr_data = NULL;
 
-		attr = TupleDescAttr(tupdesc, i);
+		attr = TupleDescCompactAttr(tupdesc, i);
 
 		/*
 		 * Tuple header can specify fewer attributes than tuple descriptor as

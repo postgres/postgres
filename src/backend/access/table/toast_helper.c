@@ -324,7 +324,7 @@ toast_delete_external(Relation rel, const Datum *values, const bool *isnull,
 
 	for (i = 0; i < numAttrs; i++)
 	{
-		if (TupleDescAttr(tupleDesc, i)->attlen == -1)
+		if (TupleDescCompactAttr(tupleDesc, i)->attlen == -1)
 		{
 			Datum		value = values[i];
 

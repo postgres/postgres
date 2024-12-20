@@ -1886,7 +1886,7 @@ check_sql_fn_retval(List *queryTreeLists,
 		/* remaining columns in rettupdesc had better all be dropped */
 		for (colindex++; colindex <= tupnatts; colindex++)
 		{
-			if (!TupleDescAttr(rettupdesc, colindex - 1)->attisdropped)
+			if (!TupleDescCompactAttr(rettupdesc, colindex - 1)->attisdropped)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
 						 errmsg("return type mismatch in function declared to return %s",

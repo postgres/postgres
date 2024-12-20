@@ -122,7 +122,7 @@ collectMatchBitmap(GinBtreeData *btree, GinBtreeStack *stack,
 				   GinScanEntry scanEntry, Snapshot snapshot)
 {
 	OffsetNumber attnum;
-	Form_pg_attribute attr;
+	CompactAttribute *attr;
 
 	/* Initialize empty bitmap result */
 	scanEntry->matchBitmap = tbm_create(work_mem * 1024L, NULL);
@@ -134,7 +134,7 @@ collectMatchBitmap(GinBtreeData *btree, GinBtreeStack *stack,
 
 	/* Locate tupdesc entry for key column (for attbyval/attlen data) */
 	attnum = scanEntry->attnum;
-	attr = TupleDescAttr(btree->ginstate->origTupdesc, attnum - 1);
+	attr = TupleDescCompactAttr(btree->ginstate->origTupdesc, attnum - 1);
 
 	/*
 	 * Predicate lock entry leaf page, following pages will be locked by

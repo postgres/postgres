@@ -1344,7 +1344,7 @@ pgoutput_row_filter(Relation relation, TupleTableSlot *old_slot,
 	 */
 	for (i = 0; i < desc->natts; i++)
 	{
-		Form_pg_attribute att = TupleDescAttr(desc, i);
+		CompactAttribute *att = TupleDescCompactAttr(desc, i);
 
 		/*
 		 * if the column in the new tuple or old tuple is null, nothing to do
