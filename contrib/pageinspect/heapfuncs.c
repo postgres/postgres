@@ -357,8 +357,8 @@ tuple_data_split_internal(Oid relid, char *tupdata,
 
 			if (attr->attlen == -1)
 			{
-				off = att_align_pointer(off, attr->attalign, -1,
-										tupdata + off);
+				off = att_pointer_alignby(off, attr->attalignby, -1,
+										  tupdata + off);
 
 				/*
 				 * As VARSIZE_ANY throws an exception if it can't properly
@@ -376,7 +376,7 @@ tuple_data_split_internal(Oid relid, char *tupdata,
 			}
 			else
 			{
-				off = att_align_nominal(off, attr->attalign);
+				off = att_nominal_alignby(off, attr->attalignby);
 				len = attr->attlen;
 			}
 

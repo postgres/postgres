@@ -703,13 +703,15 @@ brin_deconstruct_tuple(BrinDesc *brdesc,
 
 			if (thisatt->attlen == -1)
 			{
-				off = att_align_pointer(off, thisatt->attalign, -1,
-										tp + off);
+				off = att_pointer_alignby(off,
+										  thisatt->attalignby,
+										  -1,
+										  tp + off);
 			}
 			else
 			{
-				/* not varlena, so safe to use att_align_nominal */
-				off = att_align_nominal(off, thisatt->attalign);
+				/* not varlena, so safe to use att_nominal_alignby */
+				off = att_nominal_alignby(off, thisatt->attalignby);
 			}
 
 			values[stored++] = fetchatt(thisatt, tp + off);

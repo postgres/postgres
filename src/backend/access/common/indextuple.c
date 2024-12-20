@@ -363,7 +363,7 @@ nocache_index_getattr(IndexTuple tup,
 			if (att->attlen <= 0)
 				break;
 
-			off = att_align_nominal(off, att->attalign);
+			off = att_nominal_alignby(off, att->attalignby);
 
 			att->attcacheoff = off;
 
@@ -412,19 +412,19 @@ nocache_index_getattr(IndexTuple tup,
 				 * either an aligned or unaligned value.
 				 */
 				if (usecache &&
-					off == att_align_nominal(off, att->attalign))
+					off == att_nominal_alignby(off, att->attalignby))
 					att->attcacheoff = off;
 				else
 				{
-					off = att_align_pointer(off, att->attalign, -1,
-											tp + off);
+					off = att_pointer_alignby(off, att->attalignby, -1,
+											  tp + off);
 					usecache = false;
 				}
 			}
 			else
 			{
-				/* not varlena, so safe to use att_align_nominal */
-				off = att_align_nominal(off, att->attalign);
+				/* not varlena, so safe to use att_nominal_alignby */
+				off = att_nominal_alignby(off, att->attalignby);
 
 				if (usecache)
 					att->attcacheoff = off;
@@ -513,19 +513,19 @@ index_deform_tuple_internal(TupleDesc tupleDescriptor,
 			 * an aligned or unaligned value.
 			 */
 			if (!slow &&
-				off == att_align_nominal(off, thisatt->attalign))
+				off == att_nominal_alignby(off, thisatt->attalignby))
 				thisatt->attcacheoff = off;
 			else
 			{
-				off = att_align_pointer(off, thisatt->attalign, -1,
-										tp + off);
+				off = att_pointer_alignby(off, thisatt->attalignby, -1,
+										  tp + off);
 				slow = true;
 			}
 		}
 		else
 		{
-			/* not varlena, so safe to use att_align_nominal */
-			off = att_align_nominal(off, thisatt->attalign);
+			/* not varlena, so safe to use att_nominal_alignby */
+			off = att_nominal_alignby(off, thisatt->attalignby);
 
 			if (!slow)
 				thisatt->attcacheoff = off;

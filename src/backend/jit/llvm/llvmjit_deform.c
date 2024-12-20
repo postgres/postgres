@@ -395,7 +395,7 @@ slot_compile_deform(LLVMJitContext *context, TupleDesc desc,
 	{
 		CompactAttribute *att = TupleDescCompactAttr(desc, attnum);
 		LLVMValueRef v_incby;
-		int			alignto;
+		int			alignto = att->attalignby;
 		LLVMValueRef l_attno = l_int16_const(lc, attnum);
 		LLVMValueRef v_attdatap;
 		LLVMValueRef v_resultp;
@@ -493,21 +493,6 @@ slot_compile_deform(LLVMJitContext *context, TupleDesc desc,
 			LLVMBuildBr(b, attcheckalignblocks[attnum]);
 		}
 		LLVMPositionBuilderAtEnd(b, attcheckalignblocks[attnum]);
-
-		/* determine required alignment */
-		if (att->attalign == TYPALIGN_INT)
-			alignto = ALIGNOF_INT;
-		else if (att->attalign == TYPALIGN_CHAR)
-			alignto = 1;
-		else if (att->attalign == TYPALIGN_DOUBLE)
-			alignto = ALIGNOF_DOUBLE;
-		else if (att->attalign == TYPALIGN_SHORT)
-			alignto = ALIGNOF_SHORT;
-		else
-		{
-			elog(ERROR, "unknown alignment");
-			alignto = 0;
-		}
 
 		/* ------
 		 * Even if alignment is required, we can skip doing it if provably
