@@ -101,7 +101,7 @@ typedef struct f_smgr
 								   BlockNumber blocknum, BlockNumber nblocks);
 	BlockNumber (*smgr_nblocks) (SMgrRelation reln, ForkNumber forknum);
 	void		(*smgr_truncate) (SMgrRelation reln, ForkNumber forknum,
-								  BlockNumber nblocks);
+								  BlockNumber old_blocks, BlockNumber nblocks);
 	void		(*smgr_immedsync) (SMgrRelation reln, ForkNumber forknum);
 	void		(*smgr_registersync) (SMgrRelation reln, ForkNumber forknum);
 } f_smgr;
@@ -719,10 +719,15 @@ smgrnblocks_cached(SMgrRelation reln, ForkNumber forknum)
  *
  * The caller must hold AccessExclusiveLock on the relation, to ensure that
  * other backends receive the smgr invalidation event that this function sends
- * before they access any forks of the relation again.
+ * before they access any forks of the relation again.  The current size of
+ * the forks should be provided in old_nblocks.  This function should normally
+ * be called in a critical section, but the current size must be checked
+ * outside the critical section, and no interrupts or smgr functions relating
+ * to this relation should be called in between.
  */
 void
-smgrtruncate(SMgrRelation reln, ForkNumber *forknum, int nforks, BlockNumber *nblocks)
+smgrtruncate(SMgrRelation reln, ForkNumber *forknum, int nforks,
+			 BlockNumber *old_nblocks, BlockNumber *nblocks)
 {
 	int			i;
 
@@ -750,7 +755,8 @@ smgrtruncate(SMgrRelation reln, ForkNumber *forknum, int nforks, BlockNumber *nb
 		/* Make the cached size is invalid if we encounter an error. */
 		reln->smgr_cached_nblocks[forknum[i]] = InvalidBlockNumber;
 
-		smgrsw[reln->smgr_which].smgr_truncate(reln, forknum[i], nblocks[i]);
+		smgrsw[reln->smgr_which].smgr_truncate(reln, forknum[i],
+											   old_nblocks[i], nblocks[i]);
 
 		/*
 		 * We might as well update the local smgr_cached_nblocks values. The

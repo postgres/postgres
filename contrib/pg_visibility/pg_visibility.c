@@ -19,6 +19,7 @@
 #include "funcapi.h"
 #include "miscadmin.h"
 #include "storage/bufmgr.h"
+#include "storage/proc.h"
 #include "storage/procarray.h"
 #include "storage/read_stream.h"
 #include "storage/smgr.h"
@@ -390,6 +391,7 @@ pg_truncate_visibility_map(PG_FUNCTION_ARGS)
 	Relation	rel;
 	ForkNumber	fork;
 	BlockNumber block;
+	BlockNumber old_block;
 
 	rel = relation_open(relid, AccessExclusiveLock);
 
@@ -399,15 +401,22 @@ pg_truncate_visibility_map(PG_FUNCTION_ARGS)
 	/* Forcibly reset cached file size */
 	RelationGetSmgr(rel)->smgr_cached_nblocks[VISIBILITYMAP_FORKNUM] = InvalidBlockNumber;
 
+	/* Compute new and old size before entering critical section. */
+	fork = VISIBILITYMAP_FORKNUM;
 	block = visibilitymap_prepare_truncate(rel, 0);
-	if (BlockNumberIsValid(block))
-	{
-		fork = VISIBILITYMAP_FORKNUM;
-		smgrtruncate(RelationGetSmgr(rel), &fork, 1, &block);
-	}
+	old_block = BlockNumberIsValid(block) ? smgrnblocks(RelationGetSmgr(rel), fork) : 0;
+
+	/*
+	 * WAL-logging, buffer dropping, file truncation must be atomic and all on
+	 * one side of a checkpoint.  See RelationTruncate() for discussion.
+	 */
+	Assert((MyProc->delayChkptFlags & (DELAY_CHKPT_START | DELAY_CHKPT_COMPLETE)) == 0);
+	MyProc->delayChkptFlags |= DELAY_CHKPT_START | DELAY_CHKPT_COMPLETE;
+	START_CRIT_SECTION();
 
 	if (RelationNeedsWAL(rel))
 	{
+		XLogRecPtr	lsn;
 		xl_smgr_truncate xlrec;
 
 		xlrec.blkno = 0;
@@ -417,8 +426,16 @@ pg_truncate_visibility_map(PG_FUNCTION_ARGS)
 		XLogBeginInsert();
 		XLogRegisterData((char *) &xlrec, sizeof(xlrec));
 
-		XLogInsert(RM_SMGR_ID, XLOG_SMGR_TRUNCATE | XLR_SPECIAL_REL_UPDATE);
+		lsn = XLogInsert(RM_SMGR_ID,
+						 XLOG_SMGR_TRUNCATE | XLR_SPECIAL_REL_UPDATE);
+		XLogFlush(lsn);
 	}
+
+	if (BlockNumberIsValid(block))
+		smgrtruncate(RelationGetSmgr(rel), &fork, 1, &old_block, &block);
+
+	END_CRIT_SECTION();
+	MyProc->delayChkptFlags &= ~(DELAY_CHKPT_START | DELAY_CHKPT_COMPLETE);
 
 	/*
 	 * Release the lock right away, not at commit time.
