@@ -120,25 +120,22 @@ PG_FUNCTION_INFO_V1(test_radixtree);
 static void
 test_empty(void)
 {
-	MemoryContext radixtree_ctx;
 	rt_radix_tree *radixtree;
 	rt_iter    *iter;
 	uint64		key;
 #ifdef TEST_SHARED_RT
 	int			tranche_id = LWLockNewTrancheId();
 	dsa_area   *dsa;
-#endif
+
+	LWLockRegisterTranche(tranche_id, "test_radix_tree");
+	dsa = dsa_create(tranche_id);
+	radixtree = rt_create(dsa, tranche_id);
+#else
+	MemoryContext radixtree_ctx;
 
 	radixtree_ctx = AllocSetContextCreate(CurrentMemoryContext,
 										  "test_radix_tree",
 										  ALLOCSET_SMALL_SIZES);
-
-#ifdef TEST_SHARED_RT
-	LWLockRegisterTranche(tranche_id, "test_radix_tree");
-	dsa = dsa_create(tranche_id);
-
-	radixtree = rt_create(radixtree_ctx, dsa, tranche_id);
-#else
 	radixtree = rt_create(radixtree_ctx);
 #endif
 
@@ -165,7 +162,6 @@ test_empty(void)
 static void
 test_basic(rt_node_class_test_elem *test_info, int shift, bool asc)
 {
-	MemoryContext radixtree_ctx;
 	rt_radix_tree *radixtree;
 	rt_iter    *iter;
 	uint64	   *keys;
@@ -173,18 +169,16 @@ test_basic(rt_node_class_test_elem *test_info, int shift, bool asc)
 #ifdef TEST_SHARED_RT
 	int			tranche_id = LWLockNewTrancheId();
 	dsa_area   *dsa;
-#endif
+
+	LWLockRegisterTranche(tranche_id, "test_radix_tree");
+	dsa = dsa_create(tranche_id);
+	radixtree = rt_create(dsa, tranche_id);
+#else
+	MemoryContext radixtree_ctx;
 
 	radixtree_ctx = AllocSetContextCreate(CurrentMemoryContext,
 										  "test_radix_tree",
 										  ALLOCSET_SMALL_SIZES);
-
-#ifdef TEST_SHARED_RT
-	LWLockRegisterTranche(tranche_id, "test_radix_tree");
-	dsa = dsa_create(tranche_id);
-
-	radixtree = rt_create(radixtree_ctx, dsa, tranche_id);
-#else
 	radixtree = rt_create(radixtree_ctx);
 #endif
 
@@ -300,7 +294,6 @@ key_cmp(const void *a, const void *b)
 static void
 test_random(void)
 {
-	MemoryContext radixtree_ctx;
 	rt_radix_tree *radixtree;
 	rt_iter    *iter;
 	pg_prng_state state;
@@ -313,18 +306,16 @@ test_random(void)
 #ifdef TEST_SHARED_RT
 	int			tranche_id = LWLockNewTrancheId();
 	dsa_area   *dsa;
-#endif
+
+	LWLockRegisterTranche(tranche_id, "test_radix_tree");
+	dsa = dsa_create(tranche_id);
+	radixtree = rt_create(dsa, tranche_id);
+#else
+	MemoryContext radixtree_ctx;
 
 	radixtree_ctx = AllocSetContextCreate(CurrentMemoryContext,
 										  "test_radix_tree",
 										  ALLOCSET_SMALL_SIZES);
-
-#ifdef TEST_SHARED_RT
-	LWLockRegisterTranche(tranche_id, "test_radix_tree");
-	dsa = dsa_create(tranche_id);
-
-	radixtree = rt_create(radixtree_ctx, dsa, tranche_id);
-#else
 	radixtree = rt_create(radixtree_ctx);
 #endif
 

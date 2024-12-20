@@ -275,7 +275,7 @@ typedef dsa_pointer RT_HANDLE;
 #endif
 
 #ifdef RT_SHMEM
-RT_SCOPE	RT_RADIX_TREE *RT_CREATE(MemoryContext ctx, dsa_area *dsa, int tranche_id);
+RT_SCOPE	RT_RADIX_TREE *RT_CREATE(dsa_area *dsa, int tranche_id);
 RT_SCOPE	RT_RADIX_TREE *RT_ATTACH(dsa_area *dsa, dsa_pointer dp);
 RT_SCOPE void RT_DETACH(RT_RADIX_TREE * tree);
 RT_SCOPE	RT_HANDLE RT_GET_HANDLE(RT_RADIX_TREE * tree);
@@ -706,8 +706,6 @@ typedef struct RT_RADIX_TREE_CONTROL
 /* Entry point for allocating and accessing the tree */
 struct RT_RADIX_TREE
 {
-	MemoryContext context;
-
 	/* pointing to either local memory or DSA */
 	RT_RADIX_TREE_CONTROL *ctl;
 
@@ -1809,31 +1807,25 @@ have_slot:
 /***************** SETUP / TEARDOWN *****************/
 
 /*
- * Create the radix tree in the given memory context and return it.
+ * Create the radix tree root in the caller's memory context and return it.
  *
- * All local memory required for a radix tree is allocated in the given
- * memory context and its children. Note that RT_FREE() will delete all
- * allocated space within the given memory context, so the dsa_area should
- * be created in a different context.
+ * The tree's nodes and leaves are allocated in "ctx" and its children for
+ * local memory, or in "dsa" for shared memory.
  */
 RT_SCOPE	RT_RADIX_TREE *
 #ifdef RT_SHMEM
-RT_CREATE(MemoryContext ctx, dsa_area *dsa, int tranche_id)
+RT_CREATE(dsa_area *dsa, int tranche_id)
 #else
 RT_CREATE(MemoryContext ctx)
 #endif
 {
 	RT_RADIX_TREE *tree;
-	MemoryContext old_ctx;
 	RT_CHILD_PTR rootnode;
 #ifdef RT_SHMEM
 	dsa_pointer dp;
 #endif
 
-	old_ctx = MemoryContextSwitchTo(ctx);
-
 	tree = (RT_RADIX_TREE *) palloc0(sizeof(RT_RADIX_TREE));
-	tree->context = ctx;
 
 #ifdef RT_SHMEM
 	tree->dsa = dsa;
@@ -1858,7 +1850,7 @@ RT_CREATE(MemoryContext ctx)
 	}
 
 	/* By default we use the passed context for leaves. */
-	tree->leaf_context = tree->context;
+	tree->leaf_context = ctx;
 
 #ifndef RT_VARLEN_VALUE_SIZE
 
@@ -1879,8 +1871,6 @@ RT_CREATE(MemoryContext ctx)
 	tree->ctl->root = rootnode.alloc;
 	tree->ctl->start_shift = 0;
 	tree->ctl->max_val = RT_SHIFT_GET_MAX_VAL(0);
-
-	MemoryContextSwitchTo(old_ctx);
 
 	return tree;
 }
@@ -2054,13 +2044,16 @@ RT_FREE(RT_RADIX_TREE * tree)
 	 */
 	tree->ctl->magic = 0;
 	dsa_free(tree->dsa, tree->ctl->handle);
-#endif
-
+#else
 	/*
-	 * Free all space allocated within the tree's context and delete all child
+	 * Free all space allocated within the leaf context and delete all child
 	 * contexts such as those used for nodes.
 	 */
-	MemoryContextReset(tree->context);
+	MemoryContextReset(tree->leaf_context);
+
+	pfree(tree->ctl);
+#endif
+	pfree(tree);
 }
 
 /***************** ITERATION *****************/
@@ -2674,7 +2667,7 @@ RT_MEMORY_USAGE(RT_RADIX_TREE * tree)
 	Assert(tree->ctl->magic == RT_RADIX_TREE_MAGIC);
 	total = dsa_get_total_size(tree->dsa);
 #else
-	total = MemoryContextMemAllocated(tree->context, true);
+	total = MemoryContextMemAllocated(tree->leaf_context, true);
 #endif
 
 	return total;

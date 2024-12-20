@@ -113,10 +113,10 @@ typedef struct BlocktableEntry
 /* Per-backend state for a TidStore */
 struct TidStore
 {
-	/* MemoryContext where the TidStore is allocated */
-	MemoryContext context;
-
-	/* MemoryContext that the radix tree uses */
+	/*
+	 * MemoryContext for the radix tree when using local memory, NULL for
+	 * shared memory
+	 */
 	MemoryContext rt_context;
 
 	/* Storage for TIDs. Use either one depending on TidStoreIsShared() */
@@ -167,7 +167,6 @@ TidStoreCreateLocal(size_t max_bytes, bool insert_only)
 	size_t		maxBlockSize = ALLOCSET_DEFAULT_MAXSIZE;
 
 	ts = palloc0(sizeof(TidStore));
-	ts->context = CurrentMemoryContext;
 
 	/* choose the maxBlockSize to be no larger than 1/16 of max_bytes */
 	while (16 * maxBlockSize > max_bytes)
@@ -201,8 +200,7 @@ TidStoreCreateLocal(size_t max_bytes, bool insert_only)
 
 /*
  * Similar to TidStoreCreateLocal() but create a shared TidStore on a
- * DSA area. The TID storage will live in the DSA area, and the memory
- * context rt_context will have only meta data of the radix tree.
+ * DSA area.
  *
  * The returned object is allocated in backend-local memory.
  */
@@ -215,11 +213,6 @@ TidStoreCreateShared(size_t max_bytes, int tranche_id)
 	size_t		dsa_max_size = DSA_MAX_SEGMENT_SIZE;
 
 	ts = palloc0(sizeof(TidStore));
-	ts->context = CurrentMemoryContext;
-
-	ts->rt_context = AllocSetContextCreate(CurrentMemoryContext,
-										   "TID storage meta data",
-										   ALLOCSET_SMALL_SIZES);
 
 	/*
 	 * Choose the initial and maximum DSA segment sizes to be no longer than
@@ -235,8 +228,7 @@ TidStoreCreateShared(size_t max_bytes, int tranche_id)
 		dsa_init_size = dsa_max_size;
 
 	area = dsa_create_ext(tranche_id, dsa_init_size, dsa_max_size);
-	ts->tree.shared = shared_ts_create(ts->rt_context, area,
-									   tranche_id);
+	ts->tree.shared = shared_ts_create(area, tranche_id);
 	ts->area = area;
 
 	return ts;
@@ -328,13 +320,13 @@ TidStoreDestroy(TidStore *ts)
 	if (TidStoreIsShared(ts))
 	{
 		shared_ts_free(ts->tree.shared);
-
 		dsa_detach(ts->area);
 	}
 	else
+	{
 		local_ts_free(ts->tree.local);
-
-	MemoryContextDelete(ts->rt_context);
+		MemoryContextDelete(ts->rt_context);
+	}
 
 	pfree(ts);
 }
