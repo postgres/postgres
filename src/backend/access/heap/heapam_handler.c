@@ -2574,11 +2574,8 @@ SampleHeapTupleVisible(TableScanDesc scan, Buffer buffer,
 
 	if (scan->rs_flags & SO_ALLOW_PAGEMODE)
 	{
-		uint32		start,
-					end;
-
-		if (hscan->rs_ntuples == 0)
-			return false;
+		uint32		start = 0,
+					end = hscan->rs_ntuples;
 
 		/*
 		 * In pageatatime mode, heap_prepare_pagescan() already did visibility
@@ -2589,18 +2586,15 @@ SampleHeapTupleVisible(TableScanDesc scan, Buffer buffer,
 		 * in increasing order, but it's not clear that there would be enough
 		 * gain to justify the restriction.
 		 */
-		start = 0;
-		end = hscan->rs_ntuples - 1;
-
-		while (start <= end)
+		while (start < end)
 		{
-			uint32		mid = (start + end) / 2;
+			uint32		mid = start + (end - start) / 2;
 			OffsetNumber curoffset = hscan->rs_vistuples[mid];
 
 			if (tupoffset == curoffset)
 				return true;
 			else if (tupoffset < curoffset)
-				end = mid - 1;
+				end = mid;
 			else
 				start = mid + 1;
 		}
