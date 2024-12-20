@@ -1861,9 +1861,9 @@ ReorderBufferCopySnap(ReorderBuffer *rb, Snapshot orig_snap,
 	snap->subxip[i++] = txn->xid;
 
 	/*
-	 * subxcnt isn't decreased when subtransactions abort, so count manually.
-	 * Since it's an upper boundary it is safe to use it for the allocation
-	 * above.
+	 * txn->nsubtxns isn't decreased when subtransactions abort, so count
+	 * manually. Since it's an upper boundary it is safe to use it for the
+	 * allocation above.
 	 */
 	snap->subxcnt = 1;
 
