@@ -719,7 +719,6 @@ struct RT_RADIX_TREE
 	/* leaf_context is used only for single-value leaves */
 	MemoryContextData *leaf_context;
 #endif
-	MemoryContextData *iter_context;
 };
 
 /*
@@ -1836,14 +1835,6 @@ RT_CREATE(MemoryContext ctx)
 	tree = (RT_RADIX_TREE *) palloc0(sizeof(RT_RADIX_TREE));
 	tree->context = ctx;
 
-	/*
-	 * Separate context for iteration in case the tree context doesn't support
-	 * pfree
-	 */
-	tree->iter_context = AllocSetContextCreate(ctx,
-											   RT_STR(RT_PREFIX) "_radix_tree iter context",
-											   ALLOCSET_SMALL_SIZES);
-
 #ifdef RT_SHMEM
 	tree->dsa = dsa;
 	dp = dsa_allocate0(dsa, sizeof(RT_RADIX_TREE_CONTROL));
@@ -2075,7 +2066,8 @@ RT_FREE(RT_RADIX_TREE * tree)
 /***************** ITERATION *****************/
 
 /*
- * Create and return the iterator for the given radix tree.
+ * Create and return an iterator for the given radix tree
+ * in the caller's memory context.
  *
  * Taking a lock in shared mode during the iteration is the caller's
  * responsibility.
@@ -2086,8 +2078,7 @@ RT_BEGIN_ITERATE(RT_RADIX_TREE * tree)
 	RT_ITER    *iter;
 	RT_CHILD_PTR root;
 
-	iter = (RT_ITER *) MemoryContextAllocZero(tree->iter_context,
-											  sizeof(RT_ITER));
+	iter = (RT_ITER *) palloc0(sizeof(RT_ITER));
 	iter->tree = tree;
 
 	Assert(RT_PTR_ALLOC_IS_VALID(tree->ctl->root));
