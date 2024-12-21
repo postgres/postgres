@@ -1045,7 +1045,7 @@ SnapshotResetXmin(void)
 
 	if (pairingheap_is_empty(&RegisteredSnapshots))
 	{
-		MyPgXact->xmin = InvalidTransactionId;
+		MyPgXact->xmin = TransactionXmin = InvalidTransactionId;
 		return;
 	}
 
@@ -1053,7 +1053,7 @@ SnapshotResetXmin(void)
 										pairingheap_first(&RegisteredSnapshots));
 
 	if (TransactionIdPrecedes(MyPgXact->xmin, minSnapshot->xmin))
-		MyPgXact->xmin = minSnapshot->xmin;
+		MyPgXact->xmin = TransactionXmin = minSnapshot->xmin;
 }
 
 /*
