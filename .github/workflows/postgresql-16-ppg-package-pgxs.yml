@@ -107,7 +107,7 @@ jobs:
         working-directory: src/pg_tde
 
       - name: Report on test fail
-        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
+        uses: actions/upload-artifact@6f51ac03b9356f520e9adb1b1b7802705f340c2b # v4.5.0
         if: ${{ failure() }}
         with:
           name: Regressions diff and postgresql log
@@ -130,7 +130,7 @@ jobs:
           sudo cp /usr/lib/postgresql/16/lib/pg_tde* pgtde-ppg16/usr/lib/postgresql/16/lib/
 
       - name: Upload tgz
-        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
+        uses: actions/upload-artifact@6f51ac03b9356f520e9adb1b1b7802705f340c2b # v4.5.0
         with:
           name: pg_tde_ppg16_binary
           path: pgtde-ppg16
@@ -152,7 +152,7 @@ jobs:
           sudo dpkg -i --debug=7777 pgtde-ppg16.deb
 
       - name: Upload deb
-        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
+        uses: actions/upload-artifact@6f51ac03b9356f520e9adb1b1b7802705f340c2b # v4.5.0
         with:
           name: pg_tde_deb
           path: pgtde-ppg16.deb

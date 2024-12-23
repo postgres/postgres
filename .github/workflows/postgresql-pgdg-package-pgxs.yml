@@ -104,7 +104,7 @@ jobs:
         working-directory: src/pg_tde
 
       - name: Report on test fail
-        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
+        uses: actions/upload-artifact@6f51ac03b9356f520e9adb1b1b7802705f340c2b # v4.5.0
         if: ${{ failure() }}
         with:
           name: Regressions diff and postgresql log
@@ -131,7 +131,7 @@ jobs:
       - name: Upload tgz
         env:
           POSTGRESQL_VERSION: ${{ matrix.postgresql-version }}
-        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
+        uses: actions/upload-artifact@6f51ac03b9356f520e9adb1b1b7802705f340c2b # v4.5.0
         with:
           name: pg_tde_pgdg$POSTGRESQL_VERSION_binary
           path: pgtde-pgdg$POSTGRESQL_VERSION
@@ -159,7 +159,7 @@ jobs:
       - name: Upload deb
         env:
           POSTGRESQL_VERSION: ${{ matrix.postgresql-version }}
-        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
+        uses: actions/upload-artifact@6f51ac03b9356f520e9adb1b1b7802705f340c2b # v4.5.0
         with:
           name: pg_tde_deb
           path: pgtde-pgdg$POSTGRESQL_VERSION.deb
