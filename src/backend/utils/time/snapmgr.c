@@ -212,16 +212,12 @@ Snapshot
 GetTransactionSnapshot(void)
 {
 	/*
-	 * Return historic snapshot if doing logical decoding. We'll never need a
-	 * non-historic transaction snapshot in this (sub-)transaction, so there's
-	 * no need to be careful to set one up for later calls to
-	 * GetTransactionSnapshot().
+	 * This should not be called while doing logical decoding.  Historic
+	 * snapshots are only usable for catalog access, not for general-purpose
+	 * queries.
 	 */
 	if (HistoricSnapshotActive())
-	{
-		Assert(!FirstSnapshotSet);
-		return HistoricSnapshot;
-	}
+		elog(ERROR, "cannot take query snapshot during logical decoding");
 
 	/* First call in transaction? */
 	if (!FirstSnapshotSet)
