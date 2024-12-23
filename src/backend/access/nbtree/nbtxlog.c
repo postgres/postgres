@@ -634,10 +634,11 @@ btree_xlog_vacuum(XLogReaderState *record)
 			PageIndexMultiDelete(page, (OffsetNumber *) ptr, xlrec->ndeleted);
 
 		/*
-		 * Mark the page as not containing any LP_DEAD items --- see comments
-		 * in _bt_delitems_vacuum().
+		 * Clear the vacuum cycle ID, and mark the page as not containing any
+		 * LP_DEAD items
 		 */
 		opaque = BTPageGetOpaque(page);
+		opaque->btpo_cycleid = 0;
 		opaque->btpo_flags &= ~BTP_HAS_GARBAGE;
 
 		PageSetLSN(page, lsn);
@@ -698,7 +699,10 @@ btree_xlog_delete(XLogReaderState *record)
 		if (xlrec->ndeleted > 0)
 			PageIndexMultiDelete(page, (OffsetNumber *) ptr, xlrec->ndeleted);
 
-		/* Mark the page as not containing any LP_DEAD items */
+		/*
+		 * Do *not* clear the vacuum cycle ID, but do mark the page as not
+		 * containing any LP_DEAD items
+		 */
 		opaque = BTPageGetOpaque(page);
 		opaque->btpo_flags &= ~BTP_HAS_GARBAGE;
 
