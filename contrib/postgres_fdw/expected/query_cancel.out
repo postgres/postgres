@@ -24,8 +24,10 @@ SELECT count(*) FROM ft1 a;
    822
 (1 row)
 
--- Timeout needs to be long enough to be sure that we've sent the slow query.
-SET LOCAL statement_timeout = '100ms';
+-- On most machines, 10ms will be enough to be sure that we've sent the slow
+-- query.  We may sometimes exercise the race condition where we send cancel
+-- before the remote side starts the query, but that's fine too.
+SET LOCAL statement_timeout = '10ms';
 -- This would take very long if not canceled:
 SELECT count(*) FROM ft1 a CROSS JOIN ft1 b CROSS JOIN ft1 c CROSS JOIN ft1 d;
 ERROR:  canceling statement due to statement timeout
