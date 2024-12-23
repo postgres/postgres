@@ -122,7 +122,7 @@ CommandIsReadOnly(PlannedStmt *pstmt)
 /*
  * Determine the degree to which a utility command is read only.
  *
- * Note the definitions of the relevant flags in src/include/utility/tcop.h.
+ * Note the definitions of the relevant flags in src/include/tcop/utility.h.
  */
 static int
 ClassifyUtilityCommandAsReadOnly(Node *parsetree)

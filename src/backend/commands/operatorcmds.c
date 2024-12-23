@@ -14,7 +14,7 @@
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
  *	  appropriate arguments/flags, passing the results to the
- *	  corresponding "FooDefine" routines (in src/catalog) that do
+ *	  corresponding "FooCreate" routines (in src/backend/catalog) that do
  *	  the actual catalog-munging.  These routines also verify permission
  *	  of the user to execute the command.
  *

@@ -20,7 +20,7 @@
  * Portions Copyright (c) 1996-2024, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *		  src/bin/pg_basebackup/astreamer_gzip.c
+ *		  src/fe_utils/astreamer_gzip.c
  *-------------------------------------------------------------------------
  */
 

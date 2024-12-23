@@ -12,11 +12,11 @@
  *	  src/backend/commands/aggregatecmds.c
  *
  * DESCRIPTION
- *	  The "DefineFoo" routines take the parse tree and pick out the
+ *	  The "DefineAggregate" routine takes the parse tree and picks out the
  *	  appropriate arguments/flags, passing the results to the
- *	  corresponding "FooDefine" routines (in src/catalog) that do
- *	  the actual catalog-munging.  These routines also verify permission
- *	  of the user to execute the command.
+ *	  "AggregateCreate" routine (in src/backend/catalog), which does the
+ *	  actual catalog-munging.  DefineAggregate also verifies the permission of
+ *	  the user to execute the command.
  *
  *-------------------------------------------------------------------------
  */

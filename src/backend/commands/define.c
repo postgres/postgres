@@ -12,20 +12,7 @@
  *	  src/backend/commands/define.c
  *
  * DESCRIPTION
- *	  The "DefineFoo" routines take the parse tree and pick out the
- *	  appropriate arguments/flags, passing the results to the
- *	  corresponding "FooDefine" routines (in src/catalog) that do
- *	  the actual catalog-munging.  These routines also verify permission
- *	  of the user to execute the command.
- *
- * NOTES
- *	  These things must be defined and committed in the following order:
- *		"create function":
- *				input/output, recv/send procedures
- *		"create type":
- *				type
- *		"create operator":
- *				operators
+ *	  Support routines for dealing with DefElem nodes.
  *
  *
  *-------------------------------------------------------------------------

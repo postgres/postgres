@@ -6,7 +6,7 @@
  *
  * Copyright (c) 2000-2024, PostgreSQL Global Development Group
  *
- * src/include/utils/guc_internal.h
+ * src/backend/utils/misc/guc_internal.h
  *--------------------------------------------------------------------
  */
 #ifndef GUC_INTERNAL_H
