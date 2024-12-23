@@ -26,7 +26,7 @@
 
 PG_MODULE_MAGIC;
 
-/* Saved hook value in case of unload */
+/* Saved hook value */
 static check_password_hook_type prev_check_password_hook = NULL;
 
 /* passwords shorter than this will be rejected */

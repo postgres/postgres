@@ -256,7 +256,7 @@ typedef struct pgssSharedState
 /* Current nesting depth of planner/ExecutorRun/ProcessUtility calls */
 static int	nesting_level = 0;
 
-/* Saved hook values in case of unload */
+/* Saved hook values */
 static shmem_request_hook_type prev_shmem_request_hook = NULL;
 static shmem_startup_hook_type prev_shmem_startup_hook = NULL;
 static post_parse_analyze_hook_type prev_post_parse_analyze_hook = NULL;

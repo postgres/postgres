@@ -394,7 +394,7 @@ sepgsql_utility_command(PlannedStmt *pstmt,
 }
 
 /*
- * Module load/unload callback
+ * Module load callback
  */
 void
 _PG_init(void)

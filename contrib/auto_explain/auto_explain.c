@@ -70,7 +70,7 @@ static bool current_query_sampled = false;
 	 (nesting_level == 0 || auto_explain_log_nested_statements) && \
 	 current_query_sampled)
 
-/* Saved hook values in case of unload */
+/* Saved hook values */
 static ExecutorStart_hook_type prev_ExecutorStart = NULL;
 static ExecutorRun_hook_type prev_ExecutorRun = NULL;
 static ExecutorFinish_hook_type prev_ExecutorFinish = NULL;
