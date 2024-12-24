@@ -246,6 +246,9 @@
 /* Define to 1 if you have the `crypto' library (-lcrypto). */
 #undef HAVE_LIBCRYPTO
 
+/* Define to 1 if you have the `curl' library (-lcurl). */
+#undef HAVE_LIBCURL
+
 /* Define to 1 if you have the `ldap' library (-lldap). */
 #undef HAVE_LIBLDAP
 
@@ -630,6 +633,9 @@
 /* PostgreSQL minor version number */
 #undef PG_MINORVERSION_NUM
 
+/* PostgreSQL Percona version as a string */
+#undef PG_PERCONAVERSION
+
 /* Define to best printf format archetype, usually gnu_printf if available. */
 #undef PG_PRINTF_ATTRIBUTE
 
@@ -704,6 +710,9 @@
 
 /* Define to 1 to build with BSD Authentication support. (--with-bsd-auth) */
 #undef USE_BSD_AUTH
+
+/* Define to 1 to build with curl support. (--with-curl) */
+#undef USE_CURL
 
 /* Define to build with ICU support. (--with-icu) */
 #undef USE_ICU
