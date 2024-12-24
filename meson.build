@@ -145,7 +145,7 @@ cdata.set_quoted('PACKAGE_VERSION', pg_version)
 cdata.set_quoted('PACKAGE_STRING', 'PostgreSQL @0@'.format(pg_version))
 cdata.set_quoted('PACKAGE_TARNAME', 'postgresql')
 
-pg_version += ' - PostgreSQL ' + pg_version_major.to_string() + '.' + pg_version_minor.to_string() + '.' + pg_percona_ver
+pg_version += ' - Percona Server for PostgreSQL ' + pg_version_major.to_string() + '.' + pg_version_minor.to_string() + '.' + pg_percona_ver
 pg_version += get_option('extra_version')
 cdata.set_quoted('PG_VERSION', pg_version)
 cdata.set_quoted('PG_MAJORVERSION', pg_version_major.to_string())
@@ -2777,7 +2777,7 @@ cdata.set_quoted('DLSUFFIX', dlsuffix)
 
 # built later than the rest of the version metadata, we need SIZEOF_VOID_P
 cdata.set_quoted('PG_VERSION_STR',
-  'Percona Server for PostgreSQL @0@ on @1@-@2@, compiled by @3@-@4@, @5@-bit'.format(
+  'PostgreSQL @0@ on @1@-@2@, compiled by @3@-@4@, @5@-bit'.format(
     pg_version, host_machine.cpu_family(), host_system,
     cc.get_id(), cc.version(), cdata.get('SIZEOF_VOID_P') * 8,
   )
