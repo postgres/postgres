@@ -46,7 +46,7 @@ static const struct rerr
 
 {
 	/* the actual table is built from regex.h */
-#include "regex/regerrs.h"		/* pgrminclude ignore */
+#include "regex/regerrs.h"
 	{
 		-1, "", "oops"
 	},							/* explanation special-cased in code */

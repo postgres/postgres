@@ -38,7 +38,7 @@
 #endif
 
 /* Now we can include the original Snowball header.h */
-#include "snowball/libstemmer/header.h" /* pgrminclude ignore */
+#include "snowball/libstemmer/header.h"
 
 /*
  * Redefine standard memory allocation interface to pgsql's one.

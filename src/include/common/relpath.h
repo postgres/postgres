@@ -14,10 +14,10 @@
 #define RELPATH_H
 
 /*
- *	'pgrminclude ignore' needed here because CppAsString2() does not throw
- *	an error if the symbol is not defined.
+ *	Required here; note that CppAsString2() does not throw an error if the
+ *	symbol is not defined.
  */
-#include "catalog/catversion.h" /* pgrminclude ignore */
+#include "catalog/catversion.h"
 
 /*
  * RelFileNumber data type identifies the specific relation file name.

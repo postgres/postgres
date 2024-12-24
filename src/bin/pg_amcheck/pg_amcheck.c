@@ -26,7 +26,7 @@
 #include "fe_utils/query_utils.h"
 #include "fe_utils/simple_list.h"
 #include "fe_utils/string_utils.h"
-#include "getopt_long.h"		/* pgrminclude ignore */
+#include "getopt_long.h"
 #include "pgtime.h"
 #include "storage/block.h"
 

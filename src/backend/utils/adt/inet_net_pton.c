@@ -29,8 +29,7 @@ static const char rcsid[] = "Id: inet_net_pton.c,v 1.4.2.3 2004/03/17 00:40:11 m
 #include <assert.h>
 #include <ctype.h>
 
-#include "utils/builtins.h" /* pgrminclude ignore */	/* needed on some
-														 * platforms */
+#include "utils/builtins.h"		/* needed on some platforms */
 #include "utils/inet.h"
 
 

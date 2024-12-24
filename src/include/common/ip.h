@@ -17,7 +17,7 @@
 #include <netdb.h>
 #include <sys/socket.h>
 
-#include "libpq/pqcomm.h"		/* pgrminclude ignore */
+#include "libpq/pqcomm.h"
 
 
 extern int	pg_getaddrinfo_all(const char *hostname, const char *servname,

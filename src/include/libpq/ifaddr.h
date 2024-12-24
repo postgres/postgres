@@ -12,7 +12,7 @@
 #ifndef IFADDR_H
 #define IFADDR_H
 
-#include "libpq/pqcomm.h"		/* pgrminclude ignore */
+#include "libpq/pqcomm.h"
 
 typedef void (*PgIfAddrCallback) (struct sockaddr *addr,
 								  struct sockaddr *netmask,

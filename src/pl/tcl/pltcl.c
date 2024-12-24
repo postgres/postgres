@@ -259,7 +259,7 @@ typedef struct
 } TclExceptionNameMap;
 
 static const TclExceptionNameMap exception_name_map[] = {
-#include "pltclerrcodes.h"		/* pgrminclude ignore */
+#include "pltclerrcodes.h"
 	{NULL, 0}
 };
 
