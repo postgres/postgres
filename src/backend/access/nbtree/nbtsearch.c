@@ -2063,8 +2063,8 @@ _bt_steppage(IndexScanDesc scan, ScanDirection dir)
 		 * markPos state.  But depending on the current array state like this
 		 * would add complexity.  Instead, we just unset markPos's copy of
 		 * moreRight or moreLeft (whichever might be affected), while making
-		 * btrestpos reset the scan's arrays to their initial scan positions.
-		 * In effect, btrestpos leaves advancing the arrays up to the first
+		 * btrestrpos reset the scan's arrays to their initial scan positions.
+		 * In effect, btrestrpos leaves advancing the arrays up to the first
 		 * _bt_readpage call (that takes place after it has restored markPos).
 		 */
 		if (so->needPrimScan)
