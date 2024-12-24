@@ -60,8 +60,10 @@ static bool makeItemLikeRegex(JsonPathParseItem *expr,
 %name-prefix="jsonpath_yy"
 %parse-param {JsonPathParseResult **result}
 %parse-param {struct Node *escontext}
+%parse-param {yyscan_t yyscanner}
 %lex-param {JsonPathParseResult **result}
 %lex-param {struct Node *escontext}
+%lex-param {yyscan_t yyscanner}
 
 %union
 {

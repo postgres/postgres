@@ -7,7 +7,7 @@ GETTEXT_TRIGGERS = $(BACKEND_COMMON_GETTEXT_TRIGGERS) \
                    GUC_check_errhint \
                    write_stderr \
                    yyerror \
-                   jsonpath_yyerror:3 \
+                   jsonpath_yyerror:4 \
                    parser_yyerror \
                    replication_yyerror:2 \
                    scanner_yyerror \
