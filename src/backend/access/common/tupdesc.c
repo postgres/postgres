@@ -57,17 +57,13 @@ ResourceOwnerForgetTupleDesc(ResourceOwner owner, TupleDesc tupdesc)
 }
 
 /*
- * populate_compact_attribute
- *		Fill in the corresponding CompactAttribute element from the
- *		Form_pg_attribute for the given attribute number.  This must be called
- *		whenever a change is made to a Form_pg_attribute in the TupleDesc.
+ * populate_compact_attribute_internal
+ *		Helper function for populate_compact_attribute()
  */
-void
-populate_compact_attribute(TupleDesc tupdesc, int attnum)
+static inline void
+populate_compact_attribute_internal(Form_pg_attribute src,
+									CompactAttribute *dst)
 {
-	Form_pg_attribute src = TupleDescAttr(tupdesc, attnum);
-	CompactAttribute *dst = &tupdesc->compact_attrs[attnum];
-
 	memset(dst, 0, sizeof(CompactAttribute));
 
 	dst->attcacheoff = -1;
@@ -100,6 +96,63 @@ populate_compact_attribute(TupleDesc tupdesc, int attnum)
 			break;
 	}
 }
+
+/*
+ * populate_compact_attribute
+ *		Fill in the corresponding CompactAttribute element from the
+ *		Form_pg_attribute for the given attribute number.  This must be called
+ *		whenever a change is made to a Form_pg_attribute in the TupleDesc.
+ */
+void
+populate_compact_attribute(TupleDesc tupdesc, int attnum)
+{
+	Form_pg_attribute src = TupleDescAttr(tupdesc, attnum);
+	CompactAttribute *dst;
+
+	/*
+	 * Don't use TupleDescCompactAttr to prevent infinite recursion in assert
+	 * builds.
+	 */
+	dst = &tupdesc->compact_attrs[attnum];
+
+	populate_compact_attribute_internal(src, dst);
+}
+
+#ifdef USE_ASSERT_CHECKING
+/*
+ * verify_compact_attribute
+ *		In Assert enabled builds, we verify that the CompactAttribute is
+ *		populated correctly.  This helps find bugs in places such as ALTER
+ *		TABLE where code makes changes to the FormData_pg_attribute but
+ *		forgets to call populate_compact_attribute().
+ *
+ * This is used in TupleDescCompactAttr(), but declared here to allow access
+ * to populate_compact_attribute_internal().
+ */
+void
+verify_compact_attribute(TupleDesc tupdesc, int attnum)
+{
+	CompactAttribute *cattr = &tupdesc->compact_attrs[attnum];
+	Form_pg_attribute attr = TupleDescAttr(tupdesc, attnum);
+	CompactAttribute tmp;
+
+	/*
+	 * Populate the temporary CompactAttribute from the corresponding
+	 * Form_pg_attribute
+	 */
+	populate_compact_attribute_internal(attr, &tmp);
+
+	/*
+	 * Make the attcacheoff match since it's been reset to -1 by
+	 * populate_compact_attribute_internal.
+	 */
+	tmp.attcacheoff = cattr->attcacheoff;
+
+	/* Check the freshly populated CompactAttribute matches the TupleDesc's */
+	Assert(memcmp(&tmp, cattr, sizeof(CompactAttribute)) == 0);
+}
+#endif
+
 
 /*
  * CreateTemplateTupleDesc

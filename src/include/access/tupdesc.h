@@ -158,6 +158,10 @@ TupleDescAttr(TupleDesc tupdesc, int i)
 
 #undef TupleDescAttrAddress
 
+#ifdef USE_ASSERT_CHECKING
+extern void verify_compact_attribute(TupleDesc, int attnum);
+#endif
+
 /*
  * Accessor for the i'th CompactAttribute element of tupdesc.
  */
@@ -165,30 +169,11 @@ static inline CompactAttribute *
 TupleDescCompactAttr(TupleDesc tupdesc, int i)
 {
 	CompactAttribute *cattr = &tupdesc->compact_attrs[i];
+
 #ifdef USE_ASSERT_CHECKING
-	CompactAttribute snapshot;
 
-	/*
-	 * In Assert enabled builds we verify that the CompactAttribute is
-	 * populated correctly.  This helps find bugs in places such as ALTER
-	 * TABLE where code makes changes to the FormData_pg_attribute but forgets
-	 * to call populate_compact_attribute.
-	 */
-
-	/*
-	 * Take a snapshot of how the CompactAttribute is now before calling
-	 * populate_compact_attribute to make it up-to-date with the
-	 * FormData_pg_attribute.
-	 */
-	memcpy(&snapshot, cattr, sizeof(CompactAttribute));
-
-	populate_compact_attribute(tupdesc, i);
-
-	/* reset attcacheoff back to what it was */
-	cattr->attcacheoff = snapshot.attcacheoff;
-
-	/* Ensure the snapshot matches the freshly populated CompactAttribute */
-	Assert(memcmp(&snapshot, cattr, sizeof(CompactAttribute)) == 0);
+	/* Check that the CompactAttribute is correctly populated */
+	verify_compact_attribute(tupdesc, i);
 #endif
 
 	return cattr;
