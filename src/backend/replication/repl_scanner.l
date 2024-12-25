@@ -341,6 +341,6 @@ yyrealloc(void *ptr, yy_size_t size, yyscan_t yyscanner)
 void
 yyfree(void *ptr, yyscan_t yyscanner)
 {
-   if (ptr)
-	   pfree(ptr);
+	if (ptr)
+		pfree(ptr);
 }

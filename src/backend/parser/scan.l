@@ -1468,9 +1468,9 @@ check_escape_warning(core_yyscan_t yyscanner)
 		ereport(WARNING,
 				(errcode(ERRCODE_NONSTANDARD_USE_OF_ESCAPE_CHARACTER),
 				 errmsg("nonstandard use of escape in a string literal"),
-		errhint("Use the escape string syntax for escapes, e.g., E'\\r\\n'."),
+				 errhint("Use the escape string syntax for escapes, e.g., E'\\r\\n'."),
 				 lexer_errposition()));
-	yyextra->warn_on_first_escape = false;		/* warn only once per string */
+	yyextra->warn_on_first_escape = false;	/* warn only once per string */
 }
 
 /*

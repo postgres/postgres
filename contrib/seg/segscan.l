@@ -66,7 +66,8 @@ float        ({integer}|{real})([eE]{integer})?
 void
 seg_yyerror(SEG *result, struct Node *escontext, yyscan_t yyscanner, const char *message)
 {
-	struct yyguts_t * yyg = (struct yyguts_t *) yyscanner;	/* needed for yytext macro */
+	struct yyguts_t *yyg = (struct yyguts_t *) yyscanner;	/* needed for yytext
+															 * macro */
 
 	/* if we already reported an error, don't overwrite it */
 	if (SOFT_ERROR_OCCURRED(escontext))
@@ -77,7 +78,7 @@ seg_yyerror(SEG *result, struct Node *escontext, yyscan_t yyscanner, const char 
 		errsave(escontext,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("bad seg representation"),
-				 /* translator: %s is typically "syntax error" */
+		/* translator: %s is typically "syntax error" */
 				 errdetail("%s at end of input", message)));
 	}
 	else
@@ -85,7 +86,7 @@ seg_yyerror(SEG *result, struct Node *escontext, yyscan_t yyscanner, const char 
 		errsave(escontext,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("bad seg representation"),
-				 /* translator: first %s is typically "syntax error" */
+		/* translator: first %s is typically "syntax error" */
 				 errdetail("%s at or near \"%s\"", message, yytext)));
 	}
 }
@@ -97,7 +98,7 @@ seg_yyerror(SEG *result, struct Node *escontext, yyscan_t yyscanner, const char 
 void
 seg_scanner_init(const char *str, yyscan_t *yyscannerp)
 {
-	yyscan_t yyscanner;
+	yyscan_t	yyscanner;
 
 	if (yylex_init(yyscannerp) != 0)
 		elog(ERROR, "yylex_init() failed: %m");

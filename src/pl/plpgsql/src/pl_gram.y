@@ -2707,7 +2707,7 @@ read_sql_construct(int until,
 	for (;;)
 	{
 		tok = yylex();
-		if (startlocation < 0)			/* remember loc of first token */
+		if (startlocation < 0)	/* remember loc of first token */
 			startlocation = yylloc;
 		if (tok == until && parenlevel == 0)
 			break;
@@ -2723,10 +2723,11 @@ read_sql_construct(int until,
 			if (parenlevel < 0)
 				yyerror("mismatched parentheses");
 		}
+
 		/*
-		 * End of function definition is an error, and we don't expect to
-		 * hit a semicolon either (unless it's the until symbol, in which
-		 * case we should have fallen out above).
+		 * End of function definition is an error, and we don't expect to hit
+		 * a semicolon either (unless it's the until symbol, in which case we
+		 * should have fallen out above).
 		 */
 		if (tok == 0 || tok == ';')
 		{
@@ -2983,8 +2984,8 @@ make_execsql_stmt(int firsttoken, int location, PLword *word)
 	plpgsql_IdentifierLookup = IDENTIFIER_LOOKUP_EXPR;
 
 	/*
-	 * Scan to the end of the SQL command.  Identify any INTO-variables
-	 * clause lurking within it, and parse that via read_into_target().
+	 * Scan to the end of the SQL command.  Identify any INTO-variables clause
+	 * lurking within it, and parse that via read_into_target().
 	 *
 	 * The end of the statement is defined by a semicolon ... except that
 	 * semicolons within parentheses or BEGIN/END blocks don't terminate a
@@ -3006,12 +3007,12 @@ make_execsql_stmt(int firsttoken, int location, PLword *word)
 	 * but it's not very likely.
 	 *
 	 * 3. IMPORT FOREIGN SCHEMA ... INTO.  This is not allowed in CREATE RULE
-	 * or WITH, so we just check for IMPORT as the command's first token.
-	 * (If IMPORT FOREIGN SCHEMA returned data someone might wish to capture
-	 * with an INTO-variables clause, we'd have to work much harder here.)
+	 * or WITH, so we just check for IMPORT as the command's first token. (If
+	 * IMPORT FOREIGN SCHEMA returned data someone might wish to capture with
+	 * an INTO-variables clause, we'd have to work much harder here.)
 	 *
-	 * Fortunately, INTO is a fully reserved word in the main grammar, so
-	 * at least we need not worry about it appearing as an identifier.
+	 * Fortunately, INTO is a fully reserved word in the main grammar, so at
+	 * least we need not worry about it appearing as an identifier.
 	 *
 	 * Any future additional uses of INTO in the main grammar will doubtless
 	 * break this logic again ... beware!
@@ -3026,7 +3027,7 @@ make_execsql_stmt(int firsttoken, int location, PLword *word)
 		prev_tok = tok;
 		tok = yylex();
 		if (have_into && into_end_loc < 0)
-			into_end_loc = yylloc;		/* token after the INTO part */
+			into_end_loc = yylloc;	/* token after the INTO part */
 		/* Detect CREATE [OR REPLACE] {FUNCTION|PROCEDURE} */
 		if (tokens[0] == 'c' && token_count < sizeof(tokens))
 		{
@@ -3087,9 +3088,9 @@ make_execsql_stmt(int firsttoken, int location, PLword *word)
 	if (have_into)
 	{
 		/*
-		 * Insert an appropriate number of spaces corresponding to the
-		 * INTO text, so that locations within the redacted SQL statement
-		 * still line up with those in the original source text.
+		 * Insert an appropriate number of spaces corresponding to the INTO
+		 * text, so that locations within the redacted SQL statement still
+		 * line up with those in the original source text.
 		 */
 		plpgsql_append_source_text(&ds, location, into_start_loc);
 		appendStringInfoSpaces(&ds, into_end_loc - into_start_loc);
@@ -3137,8 +3138,8 @@ read_fetch_direction(void)
 	bool		check_FROM = true;
 
 	/*
-	 * We create the PLpgSQL_stmt_fetch struct here, but only fill in
-	 * the fields arising from the optional direction clause
+	 * We create the PLpgSQL_stmt_fetch struct here, but only fill in the
+	 * fields arising from the optional direction clause
 	 */
 	fetch = (PLpgSQL_stmt_fetch *) palloc0(sizeof(PLpgSQL_stmt_fetch));
 	fetch->cmd_type = PLPGSQL_STMT_FETCH;
@@ -3172,7 +3173,7 @@ read_fetch_direction(void)
 							K_LAST, "last"))
 	{
 		fetch->direction = FETCH_ABSOLUTE;
-		fetch->how_many  = -1;
+		fetch->how_many = -1;
 	}
 	else if (tok_is_keyword(tok, &yylval,
 							K_ABSOLUTE, "absolute"))
@@ -3223,12 +3224,12 @@ read_fetch_direction(void)
 	else
 	{
 		/*
-		 * Assume it's a count expression with no preceding keyword.
-		 * Note: we allow this syntax because core SQL does, but it's
-		 * ambiguous with the case of an omitted direction clause; for
-		 * instance, "MOVE n IN c" will fail if n is a variable, because the
-		 * preceding else-arm will trigger.  Perhaps this can be improved
-		 * someday, but it hardly seems worth a lot of work.
+		 * Assume it's a count expression with no preceding keyword. Note: we
+		 * allow this syntax because core SQL does, but it's ambiguous with
+		 * the case of an omitted direction clause; for instance, "MOVE n IN
+		 * c" will fail if n is a variable, because the preceding else-arm
+		 * will trigger.  Perhaps this can be improved someday, but it hardly
+		 * seems worth a lot of work.
 		 */
 		plpgsql_push_back_token(tok);
 		fetch->expr = read_sql_expression2(K_FROM, K_IN,
@@ -3256,7 +3257,7 @@ read_fetch_direction(void)
  *   BACKWARD expr, BACKWARD ALL, BACKWARD
  */
 static void
-complete_direction(PLpgSQL_stmt_fetch *fetch,  bool *check_FROM)
+complete_direction(PLpgSQL_stmt_fetch *fetch, bool *check_FROM)
 {
 	int			tok;
 
@@ -3295,7 +3296,7 @@ make_return_stmt(int location)
 	new = palloc0(sizeof(PLpgSQL_stmt_return));
 	new->cmd_type = PLPGSQL_STMT_RETURN;
 	new->lineno = plpgsql_location_to_lineno(location);
-	new->stmtid  = ++plpgsql_curr_compile->nstatements;
+	new->stmtid = ++plpgsql_curr_compile->nstatements;
 	new->expr = NULL;
 	new->retvarno = -1;
 
@@ -3357,8 +3358,8 @@ make_return_stmt(int location)
 			/*
 			 * Not (just) a variable name, so treat as expression.
 			 *
-			 * Note that a well-formed expression is _required_ here;
-			 * anything else is a compile-time error.
+			 * Note that a well-formed expression is _required_ here; anything
+			 * else is a compile-time error.
 			 */
 			plpgsql_push_back_token(tok);
 			new->expr = read_sql_expression(';', ";");
@@ -3420,8 +3421,8 @@ make_return_next_stmt(int location)
 			/*
 			 * Not (just) a variable name, so treat as expression.
 			 *
-			 * Note that a well-formed expression is _required_ here;
-			 * anything else is a compile-time error.
+			 * Note that a well-formed expression is _required_ here; anything
+			 * else is a compile-time error.
 			 */
 			plpgsql_push_back_token(tok);
 			new->expr = read_sql_expression(';', ";");
@@ -3540,11 +3541,11 @@ read_into_target(PLpgSQL_variable **target, bool *strict)
 	}
 
 	/*
-	 * Currently, a row or record variable can be the single INTO target,
-	 * but not a member of a multi-target list.  So we throw error if there
-	 * is a comma after it, because that probably means the user tried to
-	 * write a multi-target list.  If this ever gets generalized, we should
-	 * probably refactor read_into_scalar_list so it handles all cases.
+	 * Currently, a row or record variable can be the single INTO target, but
+	 * not a member of a multi-target list.  So we throw error if there is a
+	 * comma after it, because that probably means the user tried to write a
+	 * multi-target list.  If this ever gets generalized, we should probably
+	 * refactor read_into_scalar_list so it handles all cases.
 	 */
 	switch (tok)
 	{
@@ -3590,7 +3591,7 @@ read_into_scalar_list(char *initial_name,
 	int			nfields;
 	char	   *fieldnames[1024];
 	int			varnos[1024];
-	PLpgSQL_row	*row;
+	PLpgSQL_row *row;
 	int			tok;
 
 	check_assignable(initial_datum, initial_location);
@@ -3620,7 +3621,7 @@ read_into_scalar_list(char *initial_name,
 									NameOfDatum(&(yylval.wdatum))),
 							 parser_errposition(yylloc)));
 				fieldnames[nfields] = NameOfDatum(&(yylval.wdatum));
-				varnos[nfields++]	= yylval.wdatum.datum->dno;
+				varnos[nfields++] = yylval.wdatum.datum->dno;
 				break;
 
 			default:
@@ -3630,8 +3631,8 @@ read_into_scalar_list(char *initial_name,
 	}
 
 	/*
-	 * We read an extra, non-comma token from yylex(), so push it
-	 * back onto the input stream
+	 * We read an extra, non-comma token from yylex(), so push it back onto
+	 * the input stream
 	 */
 	plpgsql_push_back_token(tok);
 
@@ -3712,7 +3713,7 @@ static void
 check_sql_expr(const char *stmt, RawParseMode parseMode, int location)
 {
 	sql_error_callback_arg cbarg;
-	ErrorContextCallback  syntax_errcontext;
+	ErrorContextCallback syntax_errcontext;
 	MemoryContext oldCxt;
 
 	if (!plpgsql_check_syntax)
@@ -3741,14 +3742,14 @@ plpgsql_sql_error_callback(void *arg)
 
 	/*
 	 * First, set up internalerrposition to point to the start of the
-	 * statement text within the function text.  Note this converts
-	 * location (a byte offset) to a character number.
+	 * statement text within the function text.  Note this converts location
+	 * (a byte offset) to a character number.
 	 */
 	parser_errposition(cbarg->location);
 
 	/*
-	 * If the core parser provided an error position, transpose it.
-	 * Note we are dealing with 1-based character numbers at this point.
+	 * If the core parser provided an error position, transpose it. Note we
+	 * are dealing with 1-based character numbers at this point.
 	 */
 	errpos = geterrposition();
 	if (errpos > 0)
@@ -3779,7 +3780,7 @@ parse_datatype(const char *string, int location)
 	Oid			type_id;
 	int32		typmod;
 	sql_error_callback_arg cbarg;
-	ErrorContextCallback  syntax_errcontext;
+	ErrorContextCallback syntax_errcontext;
 
 	cbarg.location = location;
 
@@ -3890,7 +3891,7 @@ read_cursor_args(PLpgSQL_var *cursor, int until)
 		plpgsql_peek2(&tok1, &tok2, &arglocation, NULL);
 		if (tok1 == IDENT && tok2 == COLON_EQUALS)
 		{
-			char   *argname;
+			char	   *argname;
 			IdentifierLookup save_IdentifierLookup;
 
 			/* Read the argument name, ignoring any matching variable */
@@ -4088,11 +4089,11 @@ check_raise_parameters(PLpgSQL_stmt_raise *stmt)
 	if (expected_nparams < list_length(stmt->params))
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
-				errmsg("too many parameters specified for RAISE")));
+				 errmsg("too many parameters specified for RAISE")));
 	if (expected_nparams > list_length(stmt->params))
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
-				errmsg("too few parameters specified for RAISE")));
+				 errmsg("too few parameters specified for RAISE")));
 }
 
 /*
@@ -4121,9 +4122,9 @@ make_case(int location, PLpgSQL_expr *t_expr,
 	/*
 	 * When test expression is present, we create a var for it and then
 	 * convert all the WHEN expressions to "VAR IN (original_expression)".
-	 * This is a bit klugy, but okay since we haven't yet done more than
-	 * read the expressions as text.  (Note that previous parsing won't
-	 * have complained if the WHEN ... THEN expression contained multiple
+	 * This is a bit klugy, but okay since we haven't yet done more than read
+	 * the expressions as text.  (Note that previous parsing won't have
+	 * complained if the WHEN ... THEN expression contained multiple
 	 * comma-separated values.)
 	 */
 	if (t_expr)

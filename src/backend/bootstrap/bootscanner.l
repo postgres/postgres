@@ -131,7 +131,8 @@ NULL			{ yylval->kw = "NULL"; return XNULL; }
 void
 boot_yyerror(yyscan_t yyscanner, const char *message)
 {
-	struct yyguts_t * yyg = (struct yyguts_t *) yyscanner;	/* needed for yylineno macro */
+	struct yyguts_t *yyg = (struct yyguts_t *) yyscanner;	/* needed for yylineno
+															 * macro */
 
 	elog(ERROR, "%s at line %d", message, yylineno);
 }
@@ -159,6 +160,6 @@ yyrealloc(void *ptr, yy_size_t size, yyscan_t yyscanner)
 void
 yyfree(void *ptr, yyscan_t yyscanner)
 {
-   if (ptr)
-	   pfree(ptr);
+	if (ptr)
+		pfree(ptr);
 }

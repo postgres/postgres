@@ -1847,9 +1847,9 @@ isdefine(void)
 			ptr->used = yb;
 
 			/*
-			 * We use yy_scan_string which will copy the value, so there's
-			 * no need to worry about a possible undef happening while we
-			 * are still scanning it.
+			 * We use yy_scan_string which will copy the value, so there's no
+			 * need to worry about a possible undef happening while we are
+			 * still scanning it.
 			 */
 			yy_scan_string(ptr->value);
 			return true;

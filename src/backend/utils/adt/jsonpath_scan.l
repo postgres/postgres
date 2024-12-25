@@ -363,7 +363,8 @@ jsonpath_yyerror(JsonPathParseResult **result, struct Node *escontext,
 				 yyscan_t yyscanner,
 				 const char *message)
 {
-	struct yyguts_t * yyg = (struct yyguts_t *) yyscanner;	/* needed for yytext macro */
+	struct yyguts_t *yyg = (struct yyguts_t *) yyscanner;	/* needed for yytext
+															 * macro */
 
 	/* don't overwrite escontext if it's already been set */
 	if (SOFT_ERROR_OCCURRED(escontext))
@@ -373,14 +374,14 @@ jsonpath_yyerror(JsonPathParseResult **result, struct Node *escontext,
 	{
 		errsave(escontext,
 				(errcode(ERRCODE_SYNTAX_ERROR),
-				 /* translator: %s is typically "syntax error" */
+		/* translator: %s is typically "syntax error" */
 				 errmsg("%s at end of jsonpath input", _(message))));
 	}
 	else
 	{
 		errsave(escontext,
 				(errcode(ERRCODE_SYNTAX_ERROR),
-				 /* translator: first %s is typically "syntax error" */
+		/* translator: first %s is typically "syntax error" */
 				 errmsg("%s at or near \"%s\" of jsonpath input",
 						_(message), yytext)));
 	}
@@ -399,39 +400,39 @@ typedef struct JsonPathKeyword
  * alphabetical order
  */
 static const JsonPathKeyword keywords[] = {
-	{ 2, false,	IS_P,		"is"},
-	{ 2, false,	TO_P,		"to"},
-	{ 3, false,	ABS_P,		"abs"},
-	{ 3, false,	LAX_P,		"lax"},
-	{ 4, false,	DATE_P,		"date"},
-	{ 4, false,	FLAG_P,		"flag"},
-	{ 4, false,	LAST_P,		"last"},
-	{ 4, true,	NULL_P,		"null"},
-	{ 4, false,	SIZE_P,		"size"},
-	{ 4, false,	TIME_P,		"time"},
-	{ 4, true,	TRUE_P,		"true"},
-	{ 4, false,	TYPE_P,		"type"},
-	{ 4, false,	WITH_P,		"with"},
-	{ 5, true,	FALSE_P,	"false"},
-	{ 5, false,	FLOOR_P,	"floor"},
-	{ 6, false,	BIGINT_P,	"bigint"},
-	{ 6, false,	DOUBLE_P,	"double"},
-	{ 6, false,	EXISTS_P,	"exists"},
-	{ 6, false,	NUMBER_P,	"number"},
-	{ 6, false,	STARTS_P,	"starts"},
-	{ 6, false,	STRICT_P,	"strict"},
-	{ 6, false,	STRINGFUNC_P, "string"},
-	{ 7, false,	BOOLEAN_P,	"boolean"},
-	{ 7, false,	CEILING_P,	"ceiling"},
-	{ 7, false,	DECIMAL_P,	"decimal"},
-	{ 7, false,	INTEGER_P,	"integer"},
-	{ 7, false,	TIME_TZ_P,	"time_tz"},
-	{ 7, false,	UNKNOWN_P,	"unknown"},
-	{ 8, false,	DATETIME_P,	"datetime"},
-	{ 8, false,	KEYVALUE_P,	"keyvalue"},
-	{ 9, false,	TIMESTAMP_P, "timestamp"},
-	{ 10,false, LIKE_REGEX_P, "like_regex"},
-	{ 12,false, TIMESTAMP_TZ_P, "timestamp_tz"},
+	{2, false, IS_P, "is"},
+	{2, false, TO_P, "to"},
+	{3, false, ABS_P, "abs"},
+	{3, false, LAX_P, "lax"},
+	{4, false, DATE_P, "date"},
+	{4, false, FLAG_P, "flag"},
+	{4, false, LAST_P, "last"},
+	{4, true, NULL_P, "null"},
+	{4, false, SIZE_P, "size"},
+	{4, false, TIME_P, "time"},
+	{4, true, TRUE_P, "true"},
+	{4, false, TYPE_P, "type"},
+	{4, false, WITH_P, "with"},
+	{5, true, FALSE_P, "false"},
+	{5, false, FLOOR_P, "floor"},
+	{6, false, BIGINT_P, "bigint"},
+	{6, false, DOUBLE_P, "double"},
+	{6, false, EXISTS_P, "exists"},
+	{6, false, NUMBER_P, "number"},
+	{6, false, STARTS_P, "starts"},
+	{6, false, STRICT_P, "strict"},
+	{6, false, STRINGFUNC_P, "string"},
+	{7, false, BOOLEAN_P, "boolean"},
+	{7, false, CEILING_P, "ceiling"},
+	{7, false, DECIMAL_P, "decimal"},
+	{7, false, INTEGER_P, "integer"},
+	{7, false, TIME_TZ_P, "time_tz"},
+	{7, false, UNKNOWN_P, "unknown"},
+	{8, false, DATETIME_P, "datetime"},
+	{8, false, KEYVALUE_P, "keyvalue"},
+	{9, false, TIMESTAMP_P, "timestamp"},
+	{10, false, LIKE_REGEX_P, "like_regex"},
+	{12, false, TIMESTAMP_TZ_P, "timestamp_tz"},
 };
 
 /*
@@ -442,9 +443,9 @@ checkKeyword(yyscan_t yyscanner)
 {
 	int			res = IDENT_P;
 	int			diff;
-	const JsonPathKeyword  *StopLow = keywords,
-						   *StopHigh = keywords + lengthof(keywords),
-						   *StopMiddle;
+	const JsonPathKeyword *StopLow = keywords,
+			   *StopHigh = keywords + lengthof(keywords),
+			   *StopMiddle;
 
 	if (yyextra->scanstring.len > keywords[lengthof(keywords) - 1].len)
 		return res;
@@ -526,7 +527,7 @@ addchar(bool init, char c, yyscan_t yyscanner)
 JsonPathParseResult *
 parsejsonpath(const char *str, int len, struct Node *escontext)
 {
-	JsonPathParseResult	*parseresult;
+	JsonPathParseResult *parseresult;
 	yyscan_t	scanner;
 	struct jsonpath_yy_extra_type yyext;
 
@@ -541,7 +542,7 @@ parsejsonpath(const char *str, int len, struct Node *escontext)
 	jsonpath_yy_scan_bytes(str, len, scanner);
 
 	if (jsonpath_yyparse(&parseresult, escontext, scanner) != 0)
-		jsonpath_yyerror(NULL, escontext, scanner, "invalid input"); /* shouldn't happen */
+		jsonpath_yyerror(NULL, escontext, scanner, "invalid input");	/* shouldn't happen */
 
 	jsonpath_yylex_destroy(scanner);
 
@@ -581,7 +582,7 @@ addUnicodeChar(int ch, struct Node *escontext, yyscan_t yyscanner)
 		ereturn(escontext, false,
 				(errcode(ERRCODE_UNTRANSLATABLE_CHARACTER),
 				 errmsg("unsupported Unicode escape sequence"),
-				  errdetail("\\u0000 cannot be converted to text.")));
+				 errdetail("\\u0000 cannot be converted to text.")));
 	}
 	else
 	{
@@ -593,7 +594,7 @@ addUnicodeChar(int ch, struct Node *escontext, yyscan_t yyscanner)
 		 * more detailed errors.
 		 */
 
-		if (! escontext  || ! IsA(escontext, ErrorSaveContext))
+		if (!escontext || !IsA(escontext, ErrorSaveContext))
 			pg_unicode_to_server(ch, (unsigned char *) cbuf);
 		else if (!pg_unicode_to_server_noerror(ch, (unsigned char *) cbuf))
 			ereturn(escontext, false,
@@ -655,9 +656,10 @@ parseUnicode(char *s, int l, struct Node *escontext, yyscan_t yyscanner)
 	for (i = 2; i < l; i += 2)	/* skip '\u' */
 	{
 		int			ch = 0;
-		int			j, si;
+		int			j,
+					si;
 
-		if (s[i] == '{')	/* parse '\u{XX...}' */
+		if (s[i] == '{')		/* parse '\u{XX...}' */
 		{
 			while (s[++i] != '}' && i < l)
 			{
@@ -665,9 +667,9 @@ parseUnicode(char *s, int l, struct Node *escontext, yyscan_t yyscanner)
 					return false;
 				ch = (ch << 4) | si;
 			}
-			i++;	/* skip '}' */
+			i++;				/* skip '}' */
 		}
-		else		/* parse '\uXXXX' */
+		else					/* parse '\uXXXX' */
 		{
 			for (j = 0; j < 4 && i < l; j++)
 			{
@@ -677,7 +679,7 @@ parseUnicode(char *s, int l, struct Node *escontext, yyscan_t yyscanner)
 			}
 		}
 
-		if (! addUnicode(ch, &hi_surrogate, escontext, yyscanner))
+		if (!addUnicode(ch, &hi_surrogate, escontext, yyscanner))
 			return false;
 	}
 
@@ -697,7 +699,10 @@ parseUnicode(char *s, int l, struct Node *escontext, yyscan_t yyscanner)
 static bool
 parseHexChar(char *s, struct Node *escontext, yyscan_t yyscanner)
 {
-	int s2, s3, ch;
+	int			s2,
+				s3,
+				ch;
+
 	if (!hexval(s[2], &s2, escontext, yyscanner))
 		return false;
 	if (!hexval(s[3], &s3, escontext, yyscanner))

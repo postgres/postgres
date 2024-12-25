@@ -140,7 +140,8 @@ xdinside		[^"]+
 void
 syncrep_yyerror(yyscan_t yyscanner, const char *message)
 {
-	struct yyguts_t * yyg = (struct yyguts_t *) yyscanner;	/* needed for yytext macro */
+	struct yyguts_t *yyg = (struct yyguts_t *) yyscanner;	/* needed for yytext
+															 * macro */
 
 	/* report only the first error in a parse operation */
 	if (syncrep_parse_error_msg)

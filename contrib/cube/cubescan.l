@@ -73,14 +73,15 @@ cube_yyerror(NDBOX **result, Size scanbuflen,
 			 yyscan_t yyscanner,
 			 const char *message)
 {
-	struct yyguts_t * yyg = (struct yyguts_t *) yyscanner;	/* needed for yytext macro */
+	struct yyguts_t *yyg = (struct yyguts_t *) yyscanner;	/* needed for yytext
+															 * macro */
 
 	if (*yytext == YY_END_OF_BUFFER_CHAR)
 	{
 		errsave(escontext,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 				 errmsg("invalid input syntax for cube"),
-				 /* translator: %s is typically "syntax error" */
+		/* translator: %s is typically "syntax error" */
 				 errdetail("%s at end of input", message)));
 	}
 	else
@@ -88,7 +89,7 @@ cube_yyerror(NDBOX **result, Size scanbuflen,
 		errsave(escontext,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 				 errmsg("invalid input syntax for cube"),
-				 /* translator: first %s is typically "syntax error" */
+		/* translator: first %s is typically "syntax error" */
 				 errdetail("%s at or near \"%s\"", message, yytext)));
 	}
 }

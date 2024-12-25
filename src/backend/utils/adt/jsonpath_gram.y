@@ -562,7 +562,7 @@ makeAny(int first, int last)
 
 static bool
 makeItemLikeRegex(JsonPathParseItem *expr, JsonPathString *pattern,
-				  JsonPathString *flags, JsonPathParseItem ** result,
+				  JsonPathString *flags, JsonPathParseItem **result,
 				  struct Node *escontext)
 {
 	JsonPathParseItem *v = makeItemType(jpiLikeRegex);
@@ -605,15 +605,15 @@ makeItemLikeRegex(JsonPathParseItem *expr, JsonPathString *pattern,
 	}
 
 	/* Convert flags to what pg_regcomp needs */
-	if ( !jspConvertRegexFlags(v->value.like_regex.flags, &cflags, escontext))
-		 return false;
+	if (!jspConvertRegexFlags(v->value.like_regex.flags, &cflags, escontext))
+		return false;
 
 	/* check regex validity */
 	{
-		regex_t     re_tmp;
+		regex_t		re_tmp;
 		pg_wchar   *wpattern;
-		int         wpattern_len;
-		int         re_result;
+		int			wpattern_len;
+		int			re_result;
 
 		wpattern = (pg_wchar *) palloc((pattern->len + 1) * sizeof(pg_wchar));
 		wpattern_len = pg_mb2wchar_with_len(pattern->val,
@@ -623,7 +623,7 @@ makeItemLikeRegex(JsonPathParseItem *expr, JsonPathString *pattern,
 		if ((re_result = pg_regcomp(&re_tmp, wpattern, wpattern_len, cflags,
 									DEFAULT_COLLATION_OID)) != REG_OKAY)
 		{
-			char        errMsg[100];
+			char		errMsg[100];
 
 			pg_regerror(re_result, &re_tmp, errMsg, sizeof(errMsg));
 			ereturn(escontext, false,

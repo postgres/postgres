@@ -1317,7 +1317,7 @@ bool
 psql_scan_in_quote(PsqlScanState state)
 {
 	return state->start_state != INITIAL &&
-			state->start_state != xqs;
+		state->start_state != xqs;
 }
 
 /*
@@ -1568,8 +1568,8 @@ psqlscan_escape_variable(PsqlScanState state, const char *txt, int len,
 void
 psqlscan_test_variable(PsqlScanState state, const char *txt, int len)
 {
-	char	*varname;
-	char	*value;
+	char	   *varname;
+	char	   *value;
 
 	varname = psqlscan_extract_substring(state, txt + 3, len - 4);
 	if (state->callbacks->get_variable)

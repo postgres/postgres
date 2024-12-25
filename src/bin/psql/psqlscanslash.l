@@ -598,9 +598,9 @@ psql_scan_slash_option(PsqlScanState state,
 	psql_scan_reselect_sql_lexer(state);
 
 	/*
-	 * Check the lex result: we should have gotten back either LEXRES_OK
-	 * or LEXRES_EOL (the latter indicating end of string).  If we were inside
-	 * a quoted string, as indicated by final_state, EOL is an error.
+	 * Check the lex result: we should have gotten back either LEXRES_OK or
+	 * LEXRES_EOL (the latter indicating end of string).  If we were inside a
+	 * quoted string, as indicated by final_state, EOL is an error.
 	 */
 	Assert(lexresult == LEXRES_EOL || lexresult == LEXRES_OK);
 
@@ -642,6 +642,7 @@ psql_scan_slash_option(PsqlScanState state,
 			termPQExpBuffer(&mybuf);
 			return NULL;
 		case xslashwholeline:
+
 			/*
 			 * In whole-line mode, we interpret semicolon = true as stripping
 			 * trailing whitespace as well as semicolons; this gives the

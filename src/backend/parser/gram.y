@@ -18646,31 +18646,31 @@ updatePreparableStmtEnd(Node *n, int end_location)
 {
 	if (IsA(n, SelectStmt))
 	{
-		SelectStmt *stmt = (SelectStmt *)n;
+		SelectStmt *stmt = (SelectStmt *) n;
 
 		stmt->stmt_len = end_location - stmt->stmt_location;
 	}
 	else if (IsA(n, InsertStmt))
 	{
-		InsertStmt *stmt = (InsertStmt *)n;
+		InsertStmt *stmt = (InsertStmt *) n;
 
 		stmt->stmt_len = end_location - stmt->stmt_location;
 	}
 	else if (IsA(n, UpdateStmt))
 	{
-		UpdateStmt *stmt = (UpdateStmt *)n;
+		UpdateStmt *stmt = (UpdateStmt *) n;
 
 		stmt->stmt_len = end_location - stmt->stmt_location;
 	}
 	else if (IsA(n, DeleteStmt))
 	{
-		DeleteStmt *stmt = (DeleteStmt *)n;
+		DeleteStmt *stmt = (DeleteStmt *) n;
 
 		stmt->stmt_len = end_location - stmt->stmt_location;
 	}
 	else if (IsA(n, MergeStmt))
 	{
-		MergeStmt *stmt = (MergeStmt *)n;
+		MergeStmt  *stmt = (MergeStmt *) n;
 
 		stmt->stmt_len = end_location - stmt->stmt_location;
 	}
@@ -18683,10 +18683,10 @@ makeColumnRef(char *colname, List *indirection,
 			  int location, core_yyscan_t yyscanner)
 {
 	/*
-	 * Generate a ColumnRef node, with an A_Indirection node added if there
-	 * is any subscripting in the specified indirection list.  However,
-	 * any field selection at the start of the indirection list must be
-	 * transposed into the "fields" part of the ColumnRef node.
+	 * Generate a ColumnRef node, with an A_Indirection node added if there is
+	 * any subscripting in the specified indirection list.  However, any field
+	 * selection at the start of the indirection list must be transposed into
+	 * the "fields" part of the ColumnRef node.
 	 */
 	ColumnRef  *c = makeNode(ColumnRef);
 	int			nfields = 0;
@@ -18752,55 +18752,55 @@ makeStringConstCast(char *str, int location, TypeName *typename)
 static Node *
 makeIntConst(int val, int location)
 {
-	A_Const	   *n = makeNode(A_Const);
+	A_Const    *n = makeNode(A_Const);
 
 	n->val.ival.type = T_Integer;
 	n->val.ival.ival = val;
 	n->location = location;
 
-   return (Node *) n;
+	return (Node *) n;
 }
 
 static Node *
 makeFloatConst(char *str, int location)
 {
-	A_Const	   *n = makeNode(A_Const);
+	A_Const    *n = makeNode(A_Const);
 
 	n->val.fval.type = T_Float;
 	n->val.fval.fval = str;
 	n->location = location;
 
-   return (Node *) n;
+	return (Node *) n;
 }
 
 static Node *
 makeBoolAConst(bool state, int location)
 {
-	A_Const	   *n = makeNode(A_Const);
+	A_Const    *n = makeNode(A_Const);
 
 	n->val.boolval.type = T_Boolean;
 	n->val.boolval.boolval = state;
 	n->location = location;
 
-   return (Node *) n;
+	return (Node *) n;
 }
 
 static Node *
 makeBitStringConst(char *str, int location)
 {
-	A_Const	   *n = makeNode(A_Const);
+	A_Const    *n = makeNode(A_Const);
 
 	n->val.bsval.type = T_BitString;
 	n->val.bsval.bsval = str;
 	n->location = location;
 
-   return (Node *) n;
+	return (Node *) n;
 }
 
 static Node *
 makeNullAConst(int location)
 {
-	A_Const	   *n = makeNode(A_Const);
+	A_Const    *n = makeNode(A_Const);
 
 	n->isnull = true;
 	n->location = location;
@@ -18889,7 +18889,7 @@ check_func_name(List *names, core_yyscan_t yyscanner)
 static List *
 check_indirection(List *indirection, core_yyscan_t yyscanner)
 {
-	ListCell *l;
+	ListCell   *l;
 
 	foreach(l, indirection)
 	{
@@ -18944,7 +18944,7 @@ makeOrderedSetArgs(List *directargs, List *orderedargs,
 				   core_yyscan_t yyscanner)
 {
 	FunctionParameter *lastd = (FunctionParameter *) llast(directargs);
-	Integer	   *ndirectargs;
+	Integer    *ndirectargs;
 
 	/* No restriction unless last direct arg is VARIADIC */
 	if (lastd->mode == FUNC_PARAM_VARIADIC)
@@ -18952,8 +18952,8 @@ makeOrderedSetArgs(List *directargs, List *orderedargs,
 		FunctionParameter *firsto = (FunctionParameter *) linitial(orderedargs);
 
 		/*
-		 * We ignore the names, though the aggr_arg production allows them;
-		 * it doesn't allow default values, so those need not be checked.
+		 * We ignore the names, though the aggr_arg production allows them; it
+		 * doesn't allow default values, so those need not be checked.
 		 */
 		if (list_length(orderedargs) != 1 ||
 			firsto->mode != FUNC_PARAM_VARIADIC ||
@@ -19115,7 +19115,7 @@ doNegate(Node *n, int location)
 {
 	if (IsA(n, A_Const))
 	{
-		A_Const	   *con = (A_Const *) n;
+		A_Const    *con = (A_Const *) n;
 
 		/* report the constant's location as that of the '-' sign */
 		con->location = location;
@@ -19143,7 +19143,7 @@ doNegateFloat(Float *v)
 	if (*oldval == '+')
 		oldval++;
 	if (*oldval == '-')
-		v->fval = oldval+1;	/* just strip the '-' */
+		v->fval = oldval + 1;	/* just strip the '-' */
 	else
 		v->fval = psprintf("-%s", oldval);
 }
@@ -19214,10 +19214,11 @@ static Node *
 makeXmlExpr(XmlExprOp op, char *name, List *named_args, List *args,
 			int location)
 {
-	XmlExpr		*x = makeNode(XmlExpr);
+	XmlExpr    *x = makeNode(XmlExpr);
 
 	x->op = op;
 	x->name = name;
+
 	/*
 	 * named_args is a list of ResTarget; it'll be split apart into separate
 	 * expression and name lists in transformXmlExpr().
@@ -19227,7 +19228,7 @@ makeXmlExpr(XmlExprOp op, char *name, List *named_args, List *args,
 	x->args = args;
 	/* xmloption, if relevant, must be filled in by caller */
 	/* type and typmod will be filled in during parse analysis */
-	x->type = InvalidOid;			/* marks the node as not analyzed */
+	x->type = InvalidOid;		/* marks the node as not analyzed */
 	x->location = location;
 	return (Node *) x;
 }
@@ -19352,7 +19353,7 @@ makeRangeVarFromQualifiedName(char *name, List *namelist, int location,
 					errcode(ERRCODE_SYNTAX_ERROR),
 					errmsg("improper qualified name (too many dotted names): %s",
 						   NameListToString(lcons(makeString(name), namelist))),
-						   parser_errposition(location));
+					parser_errposition(location));
 			break;
 	}
 
@@ -19421,7 +19422,7 @@ processCASbits(int cas_bits, int location, const char *constrType,
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 /* translator: %s is CHECK, UNIQUE, or similar */
+			/* translator: %s is CHECK, UNIQUE, or similar */
 					 errmsg("%s constraints cannot be marked DEFERRABLE",
 							constrType),
 					 parser_errposition(location)));
@@ -19434,7 +19435,7 @@ processCASbits(int cas_bits, int location, const char *constrType,
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 /* translator: %s is CHECK, UNIQUE, or similar */
+			/* translator: %s is CHECK, UNIQUE, or similar */
 					 errmsg("%s constraints cannot be marked DEFERRABLE",
 							constrType),
 					 parser_errposition(location)));
@@ -19447,7 +19448,7 @@ processCASbits(int cas_bits, int location, const char *constrType,
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 /* translator: %s is CHECK, UNIQUE, or similar */
+			/* translator: %s is CHECK, UNIQUE, or similar */
 					 errmsg("%s constraints cannot be marked NOT VALID",
 							constrType),
 					 parser_errposition(location)));
@@ -19460,7 +19461,7 @@ processCASbits(int cas_bits, int location, const char *constrType,
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 /* translator: %s is CHECK, UNIQUE, or similar */
+			/* translator: %s is CHECK, UNIQUE, or similar */
 					 errmsg("%s constraints cannot be marked NO INHERIT",
 							constrType),
 					 parser_errposition(location)));
@@ -19485,7 +19486,7 @@ parsePartitionStrategy(char *strategy, int location, core_yyscan_t yyscanner)
 			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 			 errmsg("unrecognized partitioning strategy \"%s\"", strategy),
 			 parser_errposition(location)));
-	return PARTITION_STRATEGY_LIST;		/* keep compiler quiet */
+	return PARTITION_STRATEGY_LIST; /* keep compiler quiet */
 
 }
 
@@ -19556,8 +19557,8 @@ preprocess_pubobj_list(List *pubobjspec_list, core_yyscan_t yyscanner)
 						parser_errposition(pubobj->location));
 
 			/*
-			 * We can distinguish between the different type of schema
-			 * objects based on whether name and pubtable is set.
+			 * We can distinguish between the different type of schema objects
+			 * based on whether name and pubtable is set.
 			 */
 			if (pubobj->name)
 				pubobj->pubobjtype = PUBLICATIONOBJ_TABLES_IN_SCHEMA;
@@ -19612,11 +19613,13 @@ makeRecursiveViewSelect(char *relname, List *aliases, Node *query)
 	w->ctes = list_make1(cte);
 	w->location = -1;
 
-	/* create target list for the new SELECT from the alias list of the
-	 * recursive view specification */
-	foreach (lc, aliases)
+	/*
+	 * create target list for the new SELECT from the alias list of the
+	 * recursive view specification
+	 */
+	foreach(lc, aliases)
 	{
-		ResTarget *rt = makeNode(ResTarget);
+		ResTarget  *rt = makeNode(ResTarget);
 
 		rt->name = NULL;
 		rt->indirection = NIL;
@@ -19626,8 +19629,10 @@ makeRecursiveViewSelect(char *relname, List *aliases, Node *query)
 		tl = lappend(tl, rt);
 	}
 
-	/* create new SELECT combining WITH clause, target list, and fake FROM
-	 * clause */
+	/*
+	 * create new SELECT combining WITH clause, target list, and fake FROM
+	 * clause
+	 */
 	s->withClause = w;
 	s->targetList = tl;
 	s->fromClause = list_make1(makeRangeVar(NULL, relname, -1));

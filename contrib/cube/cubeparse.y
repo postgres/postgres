@@ -244,8 +244,8 @@ write_box(int dim, char *str1, char *str2,
 		 * The value turned out to be a point, ie. all the upper-right
 		 * coordinates were equal to the lower-left coordinates. Resize the
 		 * cube we constructed.  Note: we don't bother to repalloc() it
-		 * smaller, as it's unlikely that the tiny amount of memory freed
-		 * that way would be useful, and the output is always short-lived.
+		 * smaller, as it's unlikely that the tiny amount of memory freed that
+		 * way would be useful, and the output is always short-lived.
 		 */
 		size = POINT_SIZE(dim);
 		SET_VARSIZE(bp, size);
@@ -260,7 +260,7 @@ static bool
 write_point_as_box(int dim, char *str,
 				   NDBOX **result, struct Node *escontext)
 {
-	NDBOX		*bp;
+	NDBOX	   *bp;
 	int			i,
 				size;
 	char	   *s;

@@ -515,8 +515,8 @@ parse_error:
 		{
 			ereport(elevel,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-			  errmsg("syntax error in file \"%s\" line %u, near end of line",
-					 config_file, ConfigFileLineno - 1)));
+					 errmsg("syntax error in file \"%s\" line %u, near end of line",
+							config_file, ConfigFileLineno - 1)));
 			record_config_file_error("syntax error",
 									 config_file, ConfigFileLineno - 1,
 									 head_p, tail_p);
@@ -525,8 +525,8 @@ parse_error:
 		{
 			ereport(elevel,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-			 errmsg("syntax error in file \"%s\" line %u, near token \"%s\"",
-					config_file, ConfigFileLineno, yytext)));
+					 errmsg("syntax error in file \"%s\" line %u, near token \"%s\"",
+							config_file, ConfigFileLineno, yytext)));
 			record_config_file_error("syntax error",
 									 config_file, ConfigFileLineno,
 									 head_p, tail_p);
@@ -545,8 +545,8 @@ parse_error:
 		{
 			ereport(elevel,
 					(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-			   errmsg("too many syntax errors found, abandoning file \"%s\"",
-					  config_file)));
+					 errmsg("too many syntax errors found, abandoning file \"%s\"",
+							config_file)));
 			break;
 		}
 
@@ -589,7 +589,7 @@ ParseConfigDirectory(const char *includedir,
 	int			num_filenames;
 
 	filenames = GetConfFilesInDir(includedir, calling_file, elevel,
-							   &num_filenames, &err_msg);
+								  &num_filenames, &err_msg);
 
 	if (!filenames)
 	{
