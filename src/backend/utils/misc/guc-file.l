@@ -57,6 +57,7 @@ static int	GUC_flex_fatal(const char *msg);
 
 %}
 
+%option reentrant
 %option 8bit
 %option never-interactive
 %option nodefault
@@ -353,6 +354,8 @@ ParseConfigFp(FILE *fp, const char *config_file, int depth, int elevel,
 	unsigned int save_ConfigFileLineno = ConfigFileLineno;
 	sigjmp_buf *save_GUC_flex_fatal_jmp = GUC_flex_fatal_jmp;
 	sigjmp_buf	flex_fatal_jmp;
+	yyscan_t	scanner;
+	struct yyguts_t *yyg;		/* needed for yytext macro */
 	volatile YY_BUFFER_STATE lex_buffer = NULL;
 	int			errorcount;
 	int			token;
@@ -381,11 +384,15 @@ ParseConfigFp(FILE *fp, const char *config_file, int depth, int elevel,
 	ConfigFileLineno = 1;
 	errorcount = 0;
 
-	lex_buffer = yy_create_buffer(fp, YY_BUF_SIZE);
-	yy_switch_to_buffer(lex_buffer);
+	if (yylex_init(&scanner) != 0)
+		elog(elevel, "yylex_init() failed: %m");
+	yyg = (struct yyguts_t *) scanner;
+
+	lex_buffer = yy_create_buffer(fp, YY_BUF_SIZE, scanner);
+	yy_switch_to_buffer(lex_buffer, scanner);
 
 	/* This loop iterates once per logical line */
-	while ((token = yylex()))
+	while ((token = yylex(scanner)))
 	{
 		char	   *opt_name = NULL;
 		char	   *opt_value = NULL;
@@ -400,9 +407,9 @@ ParseConfigFp(FILE *fp, const char *config_file, int depth, int elevel,
 		opt_name = pstrdup(yytext);
 
 		/* next we have an optional equal sign; discard if present */
-		token = yylex();
+		token = yylex(scanner);
 		if (token == GUC_EQUALS)
-			token = yylex();
+			token = yylex(scanner);
 
 		/* now we must have the option value */
 		if (token != GUC_ID &&
@@ -417,7 +424,7 @@ ParseConfigFp(FILE *fp, const char *config_file, int depth, int elevel,
 			opt_value = pstrdup(yytext);
 
 		/* now we'd like an end of line, or possibly EOF */
-		token = yylex();
+		token = yylex(scanner);
 		if (token != GUC_EOL)
 		{
 			if (token != 0)
@@ -438,7 +445,7 @@ ParseConfigFp(FILE *fp, const char *config_file, int depth, int elevel,
 									  depth + 1, elevel,
 									  head_p, tail_p))
 				OK = false;
-			yy_switch_to_buffer(lex_buffer);
+			yy_switch_to_buffer(lex_buffer, scanner);
 			pfree(opt_name);
 			pfree(opt_value);
 		}
@@ -453,7 +460,7 @@ ParseConfigFp(FILE *fp, const char *config_file, int depth, int elevel,
 								 depth + 1, elevel,
 								 head_p, tail_p))
 				OK = false;
-			yy_switch_to_buffer(lex_buffer);
+			yy_switch_to_buffer(lex_buffer, scanner);
 			pfree(opt_name);
 			pfree(opt_value);
 		}
@@ -468,7 +475,7 @@ ParseConfigFp(FILE *fp, const char *config_file, int depth, int elevel,
 								 depth + 1, elevel,
 								 head_p, tail_p))
 				OK = false;
-			yy_switch_to_buffer(lex_buffer);
+			yy_switch_to_buffer(lex_buffer, scanner);
 			pfree(opt_name);
 			pfree(opt_value);
 		}
@@ -545,14 +552,15 @@ parse_error:
 
 		/* resync to next end-of-line or EOF */
 		while (token != GUC_EOL && token != 0)
-			token = yylex();
+			token = yylex(scanner);
 		/* break out of loop on EOF */
 		if (token == 0)
 			break;
 	}
 
 cleanup:
-	yy_delete_buffer(lex_buffer);
+	yy_delete_buffer(lex_buffer, scanner);
+	yylex_destroy(scanner);
 	/* Each recursion level must save and restore these static variables. */
 	ConfigFileLineno = save_ConfigFileLineno;
 	GUC_flex_fatal_jmp = save_GUC_flex_fatal_jmp;
