@@ -14,6 +14,9 @@
 #
 # $ git log --pretty=format:"%H # %cd%n# %s" $PGINDENTGITHASH -1 --date=iso
 
+301de6a6f609cb3ad2d9d31fd8db9ae6c71e6dea # 2024-12-25 17:55:42 +0100
+# Partial pgindent of .l and .y files
+
 53dcba9be5746cc126bdb949bf81c29ea2cfc24d # 2024-11-21 21:40:17 +0100
 # pgindent run
 
