@@ -89,9 +89,8 @@ typedef struct AnlExprData
 	VacAttrStats *vacattrstat;	/* statistics attrs to analyze */
 } AnlExprData;
 
-static void compute_expr_stats(Relation onerel, double totalrows,
-							   AnlExprData *exprdata, int nexprs,
-							   HeapTuple *rows, int numrows);
+static void compute_expr_stats(Relation onerel, AnlExprData *exprdata,
+							   int nexprs, HeapTuple *rows, int numrows);
 static Datum serialize_expr_stats(AnlExprData *exprdata, int nexprs);
 static Datum expr_fetch_func(VacAttrStatsP stats, int rownum, bool *isNull);
 static AnlExprData *build_expr_data(List *exprs, int stattarget);
@@ -220,9 +219,7 @@ BuildRelationExtStatistics(Relation onerel, bool inh, double totalrows,
 				exprdata = build_expr_data(stat->exprs, stattarget);
 				nexprs = list_length(stat->exprs);
 
-				compute_expr_stats(onerel, totalrows,
-								   exprdata, nexprs,
-								   rows, numrows);
+				compute_expr_stats(onerel, exprdata, nexprs, rows, numrows);
 
 				exprstats = serialize_expr_stats(exprdata, nexprs);
 			}
@@ -2107,8 +2104,7 @@ examine_opclause_args(List *args, Node **exprp, Const **cstp,
  * Compute statistics about expressions of a relation.
  */
 static void
-compute_expr_stats(Relation onerel, double totalrows,
-				   AnlExprData *exprdata, int nexprs,
+compute_expr_stats(Relation onerel, AnlExprData *exprdata, int nexprs,
 				   HeapTuple *rows, int numrows)
 {
 	MemoryContext expr_context,
