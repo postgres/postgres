@@ -8,14 +8,6 @@ This tutorial shows how to install `pg_tde` with [Percona Distribution for Postg
 
 ## Preconditions
 
-### Enable / disable modules
-
-For RHEL8/Oracle Linux 8/Rocky Linux 8, disable the ``postgresql``  and ``llvm-toolset``modules:    
-
-```bash
-sudo dnf module disable postgresql llvm-toolset
-```
-
 ### Install `percona-release`
 
 You need the `percona-release` repository management tool that enables the desired Percona repository for you.
@@ -26,34 +18,34 @@ You need the `percona-release` repository management tool that enables the desir
     sudo yum -y install https://repo.percona.com/yum/percona-release-latest.noarch.rpm 
     ```
 
-2. Enable the repository
+2. Enable the repository.
+
+    Percona provides [two repositories](repo-overview.md) for Percona Distribution for PostgreSQL. We recommend enabling the Major release repository to timely receive the latest updates.
 
     ```bash
-    sudo percona-release enable-only ppg-{{pgversion17}} experimental
-    ```
-
-3. ### For `percona-postgresql{{pgversion}}-devel` package
-
-You need to install the `percona-postgresql{{pgversion}}-devel` package when working with pg_tde. This package requires dependencies that are not part of the Distribution, but can be installed from the specific repositories:
-
-    ```
-    $ sudo dnf config-manager --set-enabled ol9_codeready_builder
+    sudo percona-release enable-only ppg-{{pgversion17}} 
     ```
 
 ## Install `pg_tde`
 
-1. Install Percona Distribution for PostgreSQL 17 and the required packages, run the following command:
+!!! important
 
-    ```bash
-    sudo yum -y install percona-postgresql-client-common percona-postgresql-common percona-postgresql-server-dev-all percona-postgresql17 percona-postgresql17-contrib percona-postgresql17-devel percona-postgresql17-libs
-    ```
+    The `pg_tde` {{release}} extension is a part of the `percona-postgresql17` package. If you installed a previous version of `pg_tde` from the `percona-pg_tde_17` package, do the following:
+
+    * Drop the extension using the `DROP EXTENSION` with `CASCADE` command.
+
+       <i warning>:material-alert: Warning:</i> The use of the `CASCADE` parameter deletes all tables that were created in the database with `pg_tde` enabled and also all dependencies upon the encrypted table (e.g. foreign keys in a non-encrypted table used in the encrypted one).    
+
+       ```sql
+       DROP EXTENSION pg_tde CASCADE
+       ```
+
+    * Uninstall the `percona-pg_tde_17` package.  
     
-2. Install `pg_tde` packages
-        
-    ```bash
-    sudo yum install percona-pg_tde_17
-    ```
 
+```bash
+sudo yum -y install percona-postgresql17 
+```
 
 ## Next steps
 
