@@ -164,7 +164,6 @@ nav:
   - functions.md
   - Concepts:
     - "What is TDE": tde.md
-  #  - wal-encryption.md
     - table-access-method.md
   - How to:
     - Use reference to external parameters: external-parameters.md

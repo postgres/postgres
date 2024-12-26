@@ -21,7 +21,7 @@ Creates a new key provider for the database using a remote HashiCorp Vault serve
 The specified access parameters require permission to read and write keys at the location.
 
 ```
-SELECT pg_tde_add_key_provider_vault_v2('provider-name',:'secret_token','url','mount','ca_path');
+SELECT pg_tde_add_key_provider_vault_v2('provider-name','secret_token','url','mount','ca_path');
 ```
 
 where:
@@ -32,6 +32,24 @@ where:
 * [optional] `ca_path` is the path of the CA file used for SSL verification
 
 All parameters can be either strings, or JSON objects [referencing remote parameters](external-parameters.md).
+
+## pg_tde_add_key_provider_kmip
+
+Creates a new key provider for the database using a remote KMIP server.
+
+The specified access parameters require permission to read and write keys at the server.
+
+```
+SELECT pg_tde_add_key_provider_kmip('provider-name','kmip-IP', 5696, '/path_to/server_certificate.pem', '/path_to/client_key.pem');
+```
+
+where:
+
+* `provider-name` is the name of the provider. You can specify any name, it's for you to identify the provider.
+* `kmip-IP` is the IP address of a domain name of the KMIP server
+* The port to communicate with the KMIP server. The default port is `5696`.
+* `server-certificate` is the path to the certificate file for the KMIP server.
+* `client key` is the path to the client key.
 
 ## pg_tde_set_principal_key
 
