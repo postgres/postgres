@@ -105,6 +105,7 @@ markdown_extensions:
 plugins:
   - search:
       separator: '[\s\-,:!=\[\]()"/]+|(?!\b)(?=[A-Z][a-z])|\.(?!\d)|&[lg]t;'
+  - open-in-new-tab:
   - git-revision-date-localized:
       enable_creation_date: true
       enabled: !ENV [ENABLED_GIT_REVISION_DATE, True]
@@ -155,6 +156,7 @@ extra:
 
 nav:
   - Home: index.md
+  - features.md
   - Get started:
     - "Install": "install.md"
     - "Via apt": apt.md
