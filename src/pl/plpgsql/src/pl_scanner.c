@@ -104,7 +104,7 @@ typedef struct
 
 /* The stuff the core lexer needs */
 static core_yyscan_t yyscanner = NULL;
-static core_yy_extra_type core_yy;
+static core_yy_extra_type core_yy_extra;
 
 /* The original input string */
 static const char *scanorig;
@@ -224,7 +224,7 @@ plpgsql_yylex(void)
 				push_back_token(tok3, &aux3);
 				push_back_token(tok2, &aux2);
 				if (plpgsql_parse_word(aux1.lval.str,
-									   core_yy.scanbuf + aux1.lloc,
+									   core_yy_extra.scanbuf + aux1.lloc,
 									   true,
 									   &aux1.lval.wdatum,
 									   &aux1.lval.word))
@@ -264,7 +264,7 @@ plpgsql_yylex(void)
 			 * non-variable cases.
 			 */
 			if (plpgsql_parse_word(aux1.lval.str,
-								   core_yy.scanbuf + aux1.lloc,
+								   core_yy_extra.scanbuf + aux1.lloc,
 								   (!AT_STMT_START(plpgsql_yytoken) ||
 									(tok2 == '=' || tok2 == COLON_EQUALS ||
 									 tok2 == '[')),
@@ -340,7 +340,7 @@ internal_yylex(TokenAuxData *auxdata)
 						   yyscanner);
 
 		/* remember the length of yytext before it gets changed */
-		yytext = core_yy.scanbuf + auxdata->lloc;
+		yytext = core_yy_extra.scanbuf + auxdata->lloc;
 		auxdata->leng = strlen(yytext);
 
 		/* Check for << >> and #, which the core considers operators */
@@ -515,7 +515,7 @@ plpgsql_scanner_errposition(int location)
 void
 plpgsql_yyerror(const char *message)
 {
-	char	   *yytext = core_yy.scanbuf + plpgsql_yylloc;
+	char	   *yytext = core_yy_extra.scanbuf + plpgsql_yylloc;
 
 	if (*yytext == '\0')
 	{
@@ -603,7 +603,7 @@ void
 plpgsql_scanner_init(const char *str)
 {
 	/* Start up the core scanner */
-	yyscanner = scanner_init(str, &core_yy,
+	yyscanner = scanner_init(str, &core_yy_extra,
 							 &ReservedPLKeywords, ReservedPLKeywordTokens);
 
 	/*
