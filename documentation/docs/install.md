@@ -42,7 +42,7 @@ Install `pg_tde` using one of available installation methods:
         sudo apt install make gcc postgresql-server-dev-17 libcurl4-openssl-dev
         ```
 
-    2. [Install Percona Distribution for PostgreSQL 17](https://docs.percona.com/postgresql/17/installing.html) or [upstream PostgreSQL 17](https://www.postgresql.org/download/)
+    2. [Install Percona Distribution for PostgreSQL 17 :octicons-link-external-16:](https://docs.percona.com/postgresql/17/installing.html) or [upstream PostgreSQL 17 :octicons-link-external-16:](https://www.postgresql.org/download/)
 
     3. If PostgreSQL is installed in a non standard directory, set the `PG_CONFIG` environment variable to point to the `pg_config` executable.
 
@@ -66,7 +66,9 @@ Install `pg_tde` using one of available installation methods:
 
         The steps below are for the `pg_tde` community version. 
 
-    You can find Docker images built from the current main branch on [Docker Hub](https://hub.docker.com/r/perconalab/pg_tde). Images are built on top of [postgres:17](https://hub.docker.com/_/postgres) official image.     
+        To run `pg_tde` version for Percona Server for PostgreSQL, [use the Percona Distribution for PostgreSQL Docker image :octicons-link-external-16:](https://docs.percona.com/postgresql/17/docker.html). 
+
+    You can find Docker images built from the current main branch on [Docker Hub](https://hub.docker.com/r/perconalab/pg_tde). Images are built on top of [postgres:16](https://hub.docker.com/_/postgres) official image.     
 
     To run `pg_tde` in Docker, use the following command:    
 
@@ -74,7 +76,7 @@ Install `pg_tde` using one of available installation methods:
     docker run --name pg-tde -e POSTGRES_PASSWORD=mysecretpassword -d perconalab/pg_tde
     ```    
 
-    It builds and adds `pg_tde` extension to PostgreSQL 17. The `postgresql.conf` contains the required modifications. The `pg_tde` extension is added to `template1` so that all new databases automatically have the `pg_tde` extension loaded. 
+    It builds and adds `pg_tde` extension to PostgreSQL 16. The `postgresql.conf` contains the required modifications. The `pg_tde` extension is added to `template1` so that all new databases automatically have the `pg_tde` extension loaded. 
 
     Keys are not created automatically. You must configure a key provider and a principal key for each database  where you wish to use encrypted tables. See the instructions in the [Setup](setup.md) section, starting with the 4th point, as the first 3 steps are already completed in the Docker image.
 
