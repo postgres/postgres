@@ -26,6 +26,7 @@ Lear more [what is Transparent Data Encryption](tde.md#how-does-it-work) and [wh
 
 * Keys in the local keyfile are stored unencrypted. For better security we recommend using the Key management storage. 
 * System tables are currently not encrypted.
+* `pg_rewind` doesn't work with encrypted WAL for now. We plan to fix it in future releases.
 
 <i warning>:material-alert: Warning:</i> Note that introducing encryption/decryption affects performance. Our benchmark tests show less than 10% performance overhead for most situations. However, in some specific applications such as those using JSONB operations, performance degradation might be higher.
 
