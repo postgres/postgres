@@ -2219,6 +2219,15 @@ SELECT i AS interval, date_trunc('hour', i)
  -infinity | -infinity
 (2 rows)
 
+SELECT i AS interval, date_trunc('week', i)
+    FROM INFINITE_INTERVAL_TBL
+    WHERE NOT isfinite(i);
+ERROR:  unit "week" not supported for type interval
+DETAIL:  Months usually have fractional weeks.
+SELECT i AS interval, date_trunc('ago', i)
+    FROM INFINITE_INTERVAL_TBL
+    WHERE NOT isfinite(i);
+ERROR:  unit "ago" not recognized for type interval
 SELECT i AS interval, justify_days(i), justify_hours(i), justify_interval(i)
     FROM INFINITE_INTERVAL_TBL
     WHERE NOT isfinite(i);

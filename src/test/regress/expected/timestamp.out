@@ -591,6 +591,8 @@ SELECT date_trunc( 'week', timestamp '2004-02-29 15:44:17.71393' ) AS week_trunc
  Mon Feb 23 00:00:00 2004
 (1 row)
 
+SELECT date_trunc( 'ago', timestamp 'infinity' ) AS invalid_trunc;
+ERROR:  unit "ago" not recognized for type timestamp without time zone
 -- verify date_bin behaves the same as date_trunc for relevant intervals
 -- case 1: AD dates, origin < input
 SELECT

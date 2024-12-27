@@ -701,6 +701,8 @@ SELECT date_trunc( 'week', timestamp with time zone '2004-02-29 15:44:17.71393' 
  Mon Feb 23 00:00:00 2004 PST
 (1 row)
 
+SELECT date_trunc( 'ago', timestamp with time zone 'infinity' ) AS invalid_trunc;
+ERROR:  unit "ago" not recognized for type timestamp with time zone
 SELECT date_trunc('day', timestamp with time zone '2001-02-16 20:38:40+00', 'Australia/Sydney') as sydney_trunc;  -- zone name
          sydney_trunc         
 ------------------------------
@@ -719,6 +721,8 @@ SELECT date_trunc('day', timestamp with time zone '2001-02-16 20:38:40+00', 'VET
  Thu Feb 15 20:00:00 2001 PST
 (1 row)
 
+SELECT date_trunc('ago', timestamp with time zone 'infinity', 'GMT') AS invalid_zone_trunc;
+ERROR:  unit "ago" not recognized for type timestamp with time zone
 -- verify date_bin behaves the same as date_trunc for relevant intervals
 SELECT
   str,

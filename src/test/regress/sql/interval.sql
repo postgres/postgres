@@ -776,6 +776,14 @@ SELECT i AS interval, date_trunc('hour', i)
     FROM INFINITE_INTERVAL_TBL
     WHERE NOT isfinite(i);
 
+SELECT i AS interval, date_trunc('week', i)
+    FROM INFINITE_INTERVAL_TBL
+    WHERE NOT isfinite(i);
+
+SELECT i AS interval, date_trunc('ago', i)
+    FROM INFINITE_INTERVAL_TBL
+    WHERE NOT isfinite(i);
+
 SELECT i AS interval, justify_days(i), justify_hours(i), justify_interval(i)
     FROM INFINITE_INTERVAL_TBL
     WHERE NOT isfinite(i);

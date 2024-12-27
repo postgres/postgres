@@ -176,6 +176,8 @@ SELECT d1 - timestamp without time zone '1997-01-02' AS diff
 
 SELECT date_trunc( 'week', timestamp '2004-02-29 15:44:17.71393' ) AS week_trunc;
 
+SELECT date_trunc( 'ago', timestamp 'infinity' ) AS invalid_trunc;
+
 -- verify date_bin behaves the same as date_trunc for relevant intervals
 
 -- case 1: AD dates, origin < input
