@@ -1426,10 +1426,15 @@ ParallelWorkerMain(Datum main_arg)
 							fps->session_user_is_superuser);
 	SetCurrentRoleId(fps->outer_user_id, fps->role_is_superuser);
 
-	/* Restore database connection. */
+	/*
+	 * Restore database connection.  We skip connection authorization checks,
+	 * reasoning that (a) the leader checked these things when it started, and
+	 * (b) we do not want parallel mode to cause these failures, because that
+	 * would make use of parallel query plans not transparent to applications.
+	 */
 	BackgroundWorkerInitializeConnectionByOid(fps->database_id,
 											  fps->authenticated_user_id,
-											  0);
+											  BGWORKER_BYPASS_ALLOWCONN);
 
 	/*
 	 * Set the client encoding to the database encoding, since that is what
