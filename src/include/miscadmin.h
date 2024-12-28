@@ -340,6 +340,8 @@ typedef enum BackendType
 
 extern BackendType MyBackendType;
 
+#define AmRegularBackendProcess()	(MyBackendType == B_BACKEND)
+
 extern const char *GetBackendTypeDesc(BackendType backendType);
 
 extern void SetDatabasePath(const char *path);
