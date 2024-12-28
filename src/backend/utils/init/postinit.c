@@ -544,9 +544,9 @@ InitializeMaxBackends(void)
 {
 	Assert(MaxBackends == 0);
 
-	/* the extra unit accounts for the autovacuum launcher */
-	MaxBackends = MaxConnections + autovacuum_max_workers + 1 +
-		max_worker_processes + max_wal_senders;
+	/* Note that this does not include "auxiliary" processes */
+	MaxBackends = MaxConnections + autovacuum_max_workers +
+		max_worker_processes + max_wal_senders + NUM_SPECIAL_WORKER_PROCS;
 
 	if (MaxBackends > MAX_BACKENDS)
 		ereport(ERROR,
@@ -555,7 +555,7 @@ InitializeMaxBackends(void)
 				 errdetail("\"max_connections\" (%d) plus \"autovacuum_max_workers\" (%d) plus \"max_worker_processes\" (%d) plus \"max_wal_senders\" (%d) must be less than %d.",
 						   MaxConnections, autovacuum_max_workers,
 						   max_worker_processes, max_wal_senders,
-						   MAX_BACKENDS)));
+						   MAX_BACKENDS - (NUM_SPECIAL_WORKER_PROCS - 1))));
 }
 
 /*
