@@ -4161,7 +4161,7 @@ BackgroundWorkerInitializeConnection(const char *dbname, const char *username, u
 	BackgroundWorker *worker = MyBgworkerEntry;
 	bits32		init_flags = 0; /* never honor session_preload_libraries */
 
-	/* ignore datallowconn? */
+	/* ignore datallowconn and ACL_CONNECT? */
 	if (flags & BGWORKER_BYPASS_ALLOWCONN)
 		init_flags |= INIT_PG_OVERRIDE_ALLOW_CONNS;
 	/* ignore rolcanlogin? */
@@ -4195,7 +4195,7 @@ BackgroundWorkerInitializeConnectionByOid(Oid dboid, Oid useroid, uint32 flags)
 	BackgroundWorker *worker = MyBgworkerEntry;
 	bits32		init_flags = 0; /* never honor session_preload_libraries */
 
-	/* ignore datallowconn? */
+	/* ignore datallowconn and ACL_CONNECT? */
 	if (flags & BGWORKER_BYPASS_ALLOWCONN)
 		init_flags |= INIT_PG_OVERRIDE_ALLOW_CONNS;
 	/* ignore rolcanlogin? */
