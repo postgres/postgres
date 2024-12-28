@@ -1551,12 +1551,16 @@ AutoVacWorkerMain(char *startup_data, size_t startup_data_len)
 		pgstat_report_autovac(dbid);
 
 		/*
-		 * Connect to the selected database, specifying no particular user
+		 * Connect to the selected database, specifying no particular user,
+		 * and ignoring datallowconn.  Collect the database's name for
+		 * display.
 		 *
 		 * Note: if we have selected a just-deleted database (due to using
 		 * stale stats info), we'll fail and exit here.
 		 */
-		InitPostgres(NULL, dbid, NULL, InvalidOid, 0, dbname);
+		InitPostgres(NULL, dbid, NULL, InvalidOid,
+					 INIT_PG_OVERRIDE_ALLOW_CONNS,
+					 dbname);
 		SetProcessingMode(NormalProcessing);
 		set_ps_display(dbname);
 		ereport(DEBUG1,

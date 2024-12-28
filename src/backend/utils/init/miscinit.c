@@ -755,12 +755,26 @@ has_rolreplication(Oid roleid)
  * Initialize user identity during normal backend startup
  */
 void
-InitializeSessionUserId(const char *rolename, Oid roleid, bool bypass_login_check)
+InitializeSessionUserId(const char *rolename, Oid roleid,
+						bool bypass_login_check)
 {
 	HeapTuple	roleTup;
 	Form_pg_authid rform;
 	char	   *rname;
 	bool		is_superuser;
+
+	/*
+	 * In a parallel worker, we don't have to do anything here.
+	 * ParallelWorkerMain already set our output variables, and we aren't
+	 * going to enforce either rolcanlogin or rolconnlimit.  Furthermore, we
+	 * don't really want to perform a catalog lookup for the role: we don't
+	 * want to fail if it's been dropped.
+	 */
+	if (InitializingParallelWorker)
+	{
+		Assert(bypass_login_check);
+		return;
+	}
 
 	/*
 	 * Don't do scans if we're bootstrapping, none of the system catalogs
@@ -777,34 +791,22 @@ InitializeSessionUserId(const char *rolename, Oid roleid, bool bypass_login_chec
 
 	/*
 	 * Look up the role, either by name if that's given or by OID if not.
-	 * Normally we have to fail if we don't find it, but in parallel workers
-	 * just return without doing anything: all the critical work has been done
-	 * already.  The upshot of that is that if the role has been deleted, we
-	 * will not enforce its rolconnlimit against parallel workers anymore.
 	 */
 	if (rolename != NULL)
 	{
 		roleTup = SearchSysCache1(AUTHNAME, PointerGetDatum(rolename));
 		if (!HeapTupleIsValid(roleTup))
-		{
-			if (InitializingParallelWorker)
-				return;
 			ereport(FATAL,
 					(errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
 					 errmsg("role \"%s\" does not exist", rolename)));
-		}
 	}
 	else
 	{
 		roleTup = SearchSysCache1(AUTHOID, ObjectIdGetDatum(roleid));
 		if (!HeapTupleIsValid(roleTup))
-		{
-			if (InitializingParallelWorker)
-				return;
 			ereport(FATAL,
 					(errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
 					 errmsg("role with OID %u does not exist", roleid)));
-		}
 	}
 
 	rform = (Form_pg_authid) GETSTRUCT(roleTup);
@@ -812,33 +814,29 @@ InitializeSessionUserId(const char *rolename, Oid roleid, bool bypass_login_chec
 	rname = NameStr(rform->rolname);
 	is_superuser = rform->rolsuper;
 
-	/* In a parallel worker, ParallelWorkerMain already set these variables */
-	if (!InitializingParallelWorker)
-	{
-		SetAuthenticatedUserId(roleid);
+	SetAuthenticatedUserId(roleid);
 
-		/*
-		 * Set SessionUserId and related variables, including "role", via the
-		 * GUC mechanisms.
-		 *
-		 * Note: ideally we would use PGC_S_DYNAMIC_DEFAULT here, so that
-		 * session_authorization could subsequently be changed from
-		 * pg_db_role_setting entries.  Instead, session_authorization in
-		 * pg_db_role_setting has no effect.  Changing that would require
-		 * solving two problems:
-		 *
-		 * 1. If pg_db_role_setting has values for both session_authorization
-		 * and role, we could not be sure which order those would be applied
-		 * in, and it would matter.
-		 *
-		 * 2. Sites may have years-old session_authorization entries.  There's
-		 * not been any particular reason to remove them.  Ending the dormancy
-		 * of those entries could seriously change application behavior, so
-		 * only a major release should do that.
-		 */
-		SetConfigOption("session_authorization", rname,
-						PGC_BACKEND, PGC_S_OVERRIDE);
-	}
+	/*
+	 * Set SessionUserId and related variables, including "role", via the GUC
+	 * mechanisms.
+	 *
+	 * Note: ideally we would use PGC_S_DYNAMIC_DEFAULT here, so that
+	 * session_authorization could subsequently be changed from
+	 * pg_db_role_setting entries.  Instead, session_authorization in
+	 * pg_db_role_setting has no effect.  Changing that would require solving
+	 * two problems:
+	 *
+	 * 1. If pg_db_role_setting has values for both session_authorization and
+	 * role, we could not be sure which order those would be applied in, and
+	 * it would matter.
+	 *
+	 * 2. Sites may have years-old session_authorization entries.  There's not
+	 * been any particular reason to remove them.  Ending the dormancy of
+	 * those entries could seriously change application behavior, so only a
+	 * major release should do that.
+	 */
+	SetConfigOption("session_authorization", rname,
+					PGC_BACKEND, PGC_S_OVERRIDE);
 
 	/*
 	 * These next checks are not enforced when in standalone mode, so that
@@ -848,7 +846,8 @@ InitializeSessionUserId(const char *rolename, Oid roleid, bool bypass_login_chec
 	if (IsUnderPostmaster)
 	{
 		/*
-		 * Is role allowed to login at all?
+		 * Is role allowed to login at all?  (But background workers can
+		 * override this by setting bypass_login_check.)
 		 */
 		if (!bypass_login_check && !rform->rolcanlogin)
 			ereport(FATAL,
@@ -857,7 +856,9 @@ InitializeSessionUserId(const char *rolename, Oid roleid, bool bypass_login_chec
 							rname)));
 
 		/*
-		 * Check connection limit for this role.
+		 * Check connection limit for this role.  We enforce the limit only
+		 * for regular backends, since other process types have their own
+		 * PGPROC pools.
 		 *
 		 * There is a race condition here --- we create our PGPROC before
 		 * checking for other PGPROCs.  If two backends did this at about the
@@ -867,6 +868,7 @@ InitializeSessionUserId(const char *rolename, Oid roleid, bool bypass_login_chec
 		 * just document that the connection limit is approximate.
 		 */
 		if (rform->rolconnlimit >= 0 &&
+			AmRegularBackendProcess() &&
 			!is_superuser &&
 			CountUserBackends(roleid) > rform->rolconnlimit)
 			ereport(FATAL,
