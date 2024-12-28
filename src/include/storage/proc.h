@@ -404,7 +404,7 @@ typedef struct PROC_HDR
 	uint32		allProcCount;
 	/* Head of list of free PGPROC structures */
 	dlist_head	freeProcs;
-	/* Head of list of autovacuum's free PGPROC structures */
+	/* Head of list of autovacuum & special worker free PGPROC structures */
 	dlist_head	autovacFreeProcs;
 	/* Head of list of bgworker free PGPROC structures */
 	dlist_head	bgworkerFreeProcs;
@@ -435,8 +435,18 @@ extern PGDLLIMPORT PGPROC *PreparedXactProcs;
 #define GetNumberFromPGProc(proc) ((proc) - &ProcGlobal->allProcs[0])
 
 /*
+ * We set aside some extra PGPROC structures for "special worker" processes,
+ * which are full-fledged backends (they can run transactions)
+ * but are unique animals that there's never more than one of.
+ * Currently there are two such processes: the autovacuum launcher
+ * and the slotsync worker.
+ */
+#define NUM_SPECIAL_WORKER_PROCS	2
+
+/*
  * We set aside some extra PGPROC structures for auxiliary processes,
- * ie things that aren't full-fledged backends but need shmem access.
+ * ie things that aren't full-fledged backends (they cannot run transactions
+ * or take heavyweight locks) but need shmem access.
  *
  * Background writer, checkpointer, WAL writer, WAL summarizer, and archiver
  * run during normal operation.  Startup process and WAL receiver also consume
