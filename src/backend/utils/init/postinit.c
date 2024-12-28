@@ -576,9 +576,9 @@ InitializeMaxBackends(void)
 {
 	Assert(MaxBackends == 0);
 
-	/* the extra unit accounts for the autovacuum launcher */
-	MaxBackends = MaxConnections + autovacuum_max_workers + 1 +
-		max_worker_processes + max_wal_senders;
+	/* Note that this does not include "auxiliary" processes */
+	MaxBackends = MaxConnections + autovacuum_max_workers +
+		max_worker_processes + max_wal_senders + NUM_SPECIAL_WORKER_PROCS;
 
 	/* internal error because the values were all checked previously */
 	if (MaxBackends > MAX_BACKENDS)
