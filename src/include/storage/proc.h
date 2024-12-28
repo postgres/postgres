@@ -212,7 +212,7 @@ struct PGPROC
 	Oid			tempNamespaceId;	/* OID of temp schema this backend is
 									 * using */
 
-	bool		isBackgroundWorker; /* true if background worker. */
+	bool		isBackgroundWorker; /* true if not a regular backend. */
 
 	/*
 	 * While in hot standby mode, shows that a conflict signal has been sent
