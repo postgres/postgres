@@ -69,6 +69,10 @@ extern bool get_object_namensp_unique(Oid class_id);
 
 extern HeapTuple get_catalog_object_by_oid(Relation catalog,
 										   AttrNumber oidcol, Oid objectId);
+extern HeapTuple get_catalog_object_by_oid_extended(Relation catalog,
+													AttrNumber oidcol,
+													Oid objectId,
+													bool locktup);
 
 extern char *getObjectDescription(const ObjectAddress *object,
 								  bool missing_ok);

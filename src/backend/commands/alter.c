@@ -62,6 +62,7 @@
 #include "parser/parse_func.h"
 #include "replication/logicalworker.h"
 #include "rewrite/rewriteDefine.h"
+#include "storage/lmgr.h"
 #include "tcop/utility.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
@@ -975,7 +976,9 @@ AlterObjectOwner_internal(Relation rel, Oid objectId, Oid new_ownerId)
 	Oid			old_ownerId;
 	Oid			namespaceId = InvalidOid;
 
-	oldtup = get_catalog_object_by_oid(rel, Anum_oid, objectId);
+	/* Search tuple and lock it. */
+	oldtup =
+		get_catalog_object_by_oid_extended(rel, Anum_oid, objectId, true);
 	if (oldtup == NULL)
 		elog(ERROR, "cache lookup failed for object %u of catalog \"%s\"",
 			 objectId, RelationGetRelationName(rel));
@@ -1074,6 +1077,8 @@ AlterObjectOwner_internal(Relation rel, Oid objectId, Oid new_ownerId)
 		/* Perform actual update */
 		CatalogTupleUpdate(rel, &newtup->t_self, newtup);
 
+		UnlockTuple(rel, &oldtup->t_self, InplaceUpdateTupleLock);
+
 		/*
 		 * Update owner dependency reference.  When working on a large object,
 		 * we have to translate back to the OID conventionally used for LOs'
@@ -1091,6 +1096,8 @@ AlterObjectOwner_internal(Relation rel, Oid objectId, Oid new_ownerId)
 	}
 	else
 	{
+		UnlockTuple(rel, &oldtup->t_self, InplaceUpdateTupleLock);
+
 		/*
 		 * No need to change anything.  But when working on a large object, we
 		 * have to translate back to the OID conventionally used for LOs'

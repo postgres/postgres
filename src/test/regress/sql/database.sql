@@ -14,4 +14,11 @@ WHERE datname = 'regression_utf8';
 ALTER DATABASE regression_utf8 RESET TABLESPACE;
 ROLLBACK;
 
+CREATE ROLE regress_datdba_before;
+CREATE ROLE regress_datdba_after;
+ALTER DATABASE regression_utf8 OWNER TO regress_datdba_before;
+REASSIGN OWNED BY regress_datdba_before TO regress_datdba_after;
+
 DROP DATABASE regression_utf8;
+DROP ROLE regress_datdba_before;
+DROP ROLE regress_datdba_after;
