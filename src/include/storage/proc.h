@@ -149,7 +149,7 @@ typedef enum
  * but its myProcLocks[] lists are valid.
  *
  * We allow many fields of this struct to be accessed without locks, such as
- * delayChkptFlags and isBackgroundWorker. However, keep in mind that writing
+ * delayChkptFlags and isRegularBackend. However, keep in mind that writing
  * mirrored ones (see below) requires holding ProcArrayLock or XidGenLock in
  * at least shared mode, so that pgxactoff does not change concurrently.
  *
@@ -216,7 +216,7 @@ struct PGPROC
 	Oid			tempNamespaceId;	/* OID of temp schema this backend is
 									 * using */
 
-	bool		isBackgroundWorker; /* true if not a regular backend. */
+	bool		isRegularBackend;	/* true if it's a regular backend. */
 
 	/*
 	 * While in hot standby mode, shows that a conflict signal has been sent
