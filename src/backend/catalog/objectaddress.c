@@ -2785,13 +2785,34 @@ get_object_property_data(Oid class_id)
 HeapTuple
 get_catalog_object_by_oid(Relation catalog, AttrNumber oidcol, Oid objectId)
 {
+	return
+		get_catalog_object_by_oid_extended(catalog, oidcol, objectId, false);
+}
+
+/*
+ * Same as get_catalog_object_by_oid(), but with an additional "locktup"
+ * argument controlling whether to acquire a LOCKTAG_TUPLE at mode
+ * InplaceUpdateTupleLock.  See README.tuplock section "Locking to write
+ * inplace-updated tables".
+ */
+HeapTuple
+get_catalog_object_by_oid_extended(Relation catalog,
+								   AttrNumber oidcol,
+								   Oid objectId,
+								   bool locktup)
+{
 	HeapTuple	tuple;
 	Oid			classId = RelationGetRelid(catalog);
 	int			oidCacheId = get_object_catcache_oid(classId);
 
 	if (oidCacheId > 0)
 	{
-		tuple = SearchSysCacheCopy1(oidCacheId, ObjectIdGetDatum(objectId));
+		if (locktup)
+			tuple = SearchSysCacheLockedCopy1(oidCacheId,
+											  ObjectIdGetDatum(objectId));
+		else
+			tuple = SearchSysCacheCopy1(oidCacheId,
+										ObjectIdGetDatum(objectId));
 		if (!HeapTupleIsValid(tuple))	/* should not happen */
 			return NULL;
 	}
@@ -2816,6 +2837,10 @@ get_catalog_object_by_oid(Relation catalog, AttrNumber oidcol, Oid objectId)
 			systable_endscan(scan);
 			return NULL;
 		}
+
+		if (locktup)
+			LockTuple(catalog, &tuple->t_self, InplaceUpdateTupleLock);
+
 		tuple = heap_copytuple(tuple);
 
 		systable_endscan(scan);
