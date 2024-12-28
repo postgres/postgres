@@ -395,7 +395,7 @@ InitProcess(void)
 	MyProc->databaseId = InvalidOid;
 	MyProc->roleId = InvalidOid;
 	MyProc->tempNamespaceId = InvalidOid;
-	MyProc->isBackgroundWorker = IsBackgroundWorker;
+	MyProc->isBackgroundWorker = !AmRegularBackendProcess();
 	MyProc->delayChkpt = false;
 	MyProc->delayChkptEnd = false;
 	MyPgXact->vacuumFlags = 0;
@@ -578,7 +578,7 @@ InitAuxiliaryProcess(void)
 	MyProc->databaseId = InvalidOid;
 	MyProc->roleId = InvalidOid;
 	MyProc->tempNamespaceId = InvalidOid;
-	MyProc->isBackgroundWorker = IsBackgroundWorker;
+	MyProc->isBackgroundWorker = true;
 	MyProc->delayChkpt = false;
 	MyProc->delayChkptEnd = false;
 	MyPgXact->vacuumFlags = 0;
