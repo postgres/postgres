@@ -7,7 +7,7 @@ use warnings;
 
 use PostgresNode;
 use TestLib;
-use Test::More tests => 27;
+use Test::More tests => 28;
 
 my $psql_out = '';
 my $psql_rc  = '';
@@ -527,3 +527,26 @@ $cur_standby->psql(
 is( $psql_out,
 	qq{27|issued to paris},
 	"Check expected t_009_tbl2 data on standby");
+
+###############################################################################
+# Check handling of orphaned 2PC files at recovery.
+###############################################################################
+
+$cur_primary->teardown_node;
+
+# Grab location in logs of primary
+my $log_offset = -s $cur_primary->logfile;
+
+# Create a fake file with a transaction ID large enough to be in the future,
+# then check that the primary is able to start and remove this file at
+# recovery.
+
+my $future_2pc_file = $cur_primary->data_dir . '/pg_twophase/00FFFFFF';
+append_to_file $future_2pc_file, "";
+
+$cur_primary->start;
+$cur_primary->log_check(
+	"future two-phase file removed at recovery",
+	$log_offset,
+	log_like =>
+	  [qr/removing future two-phase state file for transaction 16777215/]);
