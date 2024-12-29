@@ -13,7 +13,8 @@ OBJS = \
 	rawpage.o
 
 EXTENSION = pageinspect
-DATA =  pageinspect--1.11--1.12.sql pageinspect--1.10--1.11.sql \
+DATA =  pageinspect--1.12--1.13.sql \
+	pageinspect--1.11--1.12.sql pageinspect--1.10--1.11.sql \
 	pageinspect--1.9--1.10.sql pageinspect--1.8--1.9.sql \
 	pageinspect--1.7--1.8.sql pageinspect--1.6--1.7.sql \
 	pageinspect--1.5.sql pageinspect--1.5--1.6.sql \
