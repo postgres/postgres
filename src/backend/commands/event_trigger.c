@@ -276,8 +276,8 @@ insert_event_trigger_tuple(const char *trigname, const char *eventname, Oid evtO
 	Relation	tgrel;
 	Oid			trigoid;
 	HeapTuple	tuple;
-	Datum		values[Natts_pg_trigger];
-	bool		nulls[Natts_pg_trigger];
+	Datum		values[Natts_pg_event_trigger];
+	bool		nulls[Natts_pg_event_trigger];
 	NameData	evtnamedata,
 				evteventdata;
 	ObjectAddress myself,
