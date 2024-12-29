@@ -7,7 +7,9 @@ OBJS = \
 	xslt_proc.o
 
 EXTENSION = xml2
-DATA = xml2--1.1.sql xml2--1.0--1.1.sql
+DATA = xml2--1.1.sql \
+	xml2--1.1--1.2.sql \
+	xml2--1.0--1.1.sql
 PGFILEDESC = "xml2 - XPath querying and XSLT"
 
 REGRESS = xml2

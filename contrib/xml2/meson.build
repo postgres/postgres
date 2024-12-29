@@ -27,6 +27,7 @@ contrib_targets += xml2
 install_data(
   'xml2--1.0--1.1.sql',
   'xml2--1.1.sql',
+  'xml2--1.1--1.2.sql',
   'xml2.control',
   kwargs: contrib_data_args,
 )

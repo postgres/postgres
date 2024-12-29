@@ -1,6 +1,6 @@
 # xml2 extension
 comment = 'XPath querying and XSLT'
-default_version = '1.1'
+default_version = '1.2'
 module_pathname = '$libdir/pgxml'
 # XXX do we still need this to be non-relocatable?
 relocatable = false
