@@ -1333,7 +1333,7 @@ extern void plpgsql_scanner_init(const char *str);
 extern void plpgsql_scanner_finish(void);
 
 /*
- * Externs in gram.y
+ * Externs in pl_gram.y
  */
 extern int	plpgsql_yyparse(void);
 
