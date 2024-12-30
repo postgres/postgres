@@ -1197,8 +1197,8 @@ init_tuple_slot(PGOutputData *data, Relation relation,
 		TupleDesc	indesc = RelationGetDescr(relation);
 		TupleDesc	outdesc = RelationGetDescr(ancestor);
 
-		/* Map must live as long as the session does. */
-		oldctx = MemoryContextSwitchTo(CacheMemoryContext);
+		/* Map must live as long as the logical decoding context. */
+		oldctx = MemoryContextSwitchTo(data->cachectx);
 
 		entry->attrmap = build_attrmap_by_name_if_req(indesc, outdesc, false);
 
