@@ -183,9 +183,9 @@ DECLARE_FOREIGN_KEY((starelid, staattnum), pg_attribute, (attrelid, attnum));
  * the K most common non-null values appearing in the column, and stanumbers
  * contains their frequencies (fractions of total row count).  The values
  * shall be ordered in decreasing frequency.  Note that since the arrays are
- * variable-size, K may be chosen may be chosen at ANALYZE time.  Values should
- * not appear in MCV unless they have been observed to occur more than once;
- * a unique column will have no MCV slot.
+ * variable-size, K may be chosen at ANALYZE time.  Values should not appear
+ * in MCV unless they have been observed to occur more than once; a unique
+ * column will have no MCV slot.
  */
 #define STATISTIC_KIND_MCV	1
 
