@@ -80,6 +80,9 @@ injection_stats_flush_cb(PgStat_EntryRef *entry_ref, bool nowait)
 		return false;
 
 	shfuncent->stats.numcalls += localent->numcalls;
+
+	pgstat_unlock_entry(entry_ref);
+
 	return true;
 }
 
@@ -127,13 +130,13 @@ pgstat_create_inj(const char *name)
 	if (!inj_stats_loaded || !inj_stats_enabled)
 		return;
 
-	entry_ref = pgstat_get_entry_ref_locked(PGSTAT_KIND_INJECTION, InvalidOid,
-											PGSTAT_INJ_IDX(name), false);
+	entry_ref = pgstat_prep_pending_entry(PGSTAT_KIND_INJECTION, InvalidOid,
+										  PGSTAT_INJ_IDX(name), NULL);
+
 	shstatent = (PgStatShared_InjectionPoint *) entry_ref->shared_stats;
 
 	/* initialize shared memory data */
 	memset(&shstatent->stats, 0, sizeof(shstatent->stats));
-	pgstat_unlock_entry(entry_ref);
 }
 
 /*
@@ -168,16 +171,14 @@ pgstat_report_inj(const char *name)
 	if (!inj_stats_loaded || !inj_stats_enabled)
 		return;
 
-	entry_ref = pgstat_get_entry_ref_locked(PGSTAT_KIND_INJECTION, InvalidOid,
-											PGSTAT_INJ_IDX(name), false);
+	entry_ref = pgstat_prep_pending_entry(PGSTAT_KIND_INJECTION, InvalidOid,
+										  PGSTAT_INJ_IDX(name), NULL);
 
 	shstatent = (PgStatShared_InjectionPoint *) entry_ref->shared_stats;
 	statent = &shstatent->stats;
 
 	/* Update the injection point statistics */
 	statent->numcalls++;
-
-	pgstat_unlock_entry(entry_ref);
 }
 
 /*
