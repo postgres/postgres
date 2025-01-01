@@ -35,7 +35,7 @@ static bool isObjectPinned(const ObjectAddress *object);
 
 
 /*
- * Record a dependency between 2 objects via their respective objectAddress.
+ * Record a dependency between 2 objects via their respective ObjectAddress.
  * The first argument is the dependent object, the second the one it
  * references.
  *

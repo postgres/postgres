@@ -85,7 +85,7 @@ append_num_word(StringInfo buf, Cash value)
 		else
 			appendStringInfo(buf, "%s %s", big[tu / 10], small[tu % 10]);
 	}
-}								/* num_word() */
+}
 
 static inline Cash
 cash_pl_cash(Cash c1, Cash c2)

@@ -1384,8 +1384,8 @@ ExplainPreScanNode(PlanState *planstate, Bitmapset **rels_used)
 /*
  * plan_is_disabled
  *		Checks if the given plan node type was disabled during query planning.
- *		This is evident by the disable_node field being higher than the sum of
- *		the disabled_node field from the plan's children.
+ *		This is evident by the disabled_nodes field being higher than the sum of
+ *		the disabled_nodes field from the plan's children.
  */
 static bool
 plan_is_disabled(Plan *plan)
@@ -1462,8 +1462,8 @@ plan_is_disabled(Plan *plan)
 	}
 
 	/*
-	 * It's disabled if the plan's disable_nodes is higher than the sum of its
-	 * child's plan disabled_nodes.
+	 * It's disabled if the plan's disabled_nodes is higher than the sum of
+	 * its child's plan disabled_nodes.
 	 */
 	if (plan->disabled_nodes > child_disabled_nodes)
 		return true;

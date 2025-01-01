@@ -2584,7 +2584,7 @@ _bt_preprocess_keys(IndexScanDesc scan)
 	{
 		inkeys = arrayKeyData;
 
-		/* Also maintain keyDataMap for remapping so->orderProc[] later */
+		/* Also maintain keyDataMap for remapping so->orderProcs[] later */
 		keyDataMap = MemoryContextAlloc(so->arrayContext,
 										numberOfKeys * sizeof(int));
 	}

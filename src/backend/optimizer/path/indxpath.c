@@ -2620,7 +2620,7 @@ match_clause_to_index(PlannerInfo *root,
  *
  *	  It is also possible to match a list of OR clauses if it might be
  *	  transformed into a single ScalarArrayOpExpr clause.  On success,
- *	  the returning index clause will contain a trasformed clause.
+ *	  the returning index clause will contain a transformed clause.
  *
  *	  For boolean indexes, it is also possible to match the clause directly
  *	  to the indexkey; or perhaps the clause is (NOT indexkey).

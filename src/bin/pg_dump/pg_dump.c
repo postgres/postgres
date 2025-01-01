@@ -9347,8 +9347,8 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
  * constraints and the columns in the child don't have their own NOT NULL
  * declarations, we suppress printing constraints in the child: the
  * constraints are acquired at the point where the child is attached to the
- * parent.  This is tracked in ->notnull_inh (which is set in flagInhAttrs for
- * servers pre-18).
+ * parent.  This is tracked in ->notnull_islocal (which is set in flagInhAttrs
+ * for servers pre-18).
  *
  * Any of these constraints might have the NO INHERIT bit.  If so we set
  * ->notnull_noinh and NO INHERIT will be printed by dumpTableSchema.
@@ -16513,7 +16513,7 @@ dumpTableSchema(Archive *fout, const TableInfo *tbinfo)
 				 * conislocal.  The inhcount is fixed by ALTER TABLE INHERIT,
 				 * below.  Special hack: in versions < 18, columns with no
 				 * local definition need their constraint to be matched by
-				 * column number in conkeys instead of by contraint name,
+				 * column number in conkeys instead of by constraint name,
 				 * because the latter is not available.  (We distinguish the
 				 * case because the constraint name is the empty string.)
 				 */

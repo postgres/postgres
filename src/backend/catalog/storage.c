@@ -380,7 +380,7 @@ RelationTruncate(Relation rel, BlockNumber nblocks)
 	 * replay or visibility invariants downstream.  The critical section also
 	 * suppresses interrupts.
 	 *
-	 * (See also pg_visibilitymap.c if changing this code.)
+	 * (See also visibilitymap.c if changing this code.)
 	 */
 	START_CRIT_SECTION();
 

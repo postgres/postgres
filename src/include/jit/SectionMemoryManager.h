@@ -153,7 +153,7 @@ public:
   /// a default alignment of 16 will be used.
   uint8_t *allocateDataSection(uintptr_t Size, unsigned Alignment,
                                unsigned SectionID, StringRef SectionName,
-                               bool isReadOnly) override;
+                               bool IsReadOnly) override;
 
   /// Update section-specific memory permissions and other attributes.
   ///

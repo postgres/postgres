@@ -84,7 +84,7 @@ foreach my $datfile (@ARGV)
 # if you need to. In the following example, the "next if !ref $row"
 # check below is a hack to filter out non-hash objects. This is because
 # we build the lookup tables from data that we read using the
-# "preserve_formatting" parameter.
+# "preserve_comments" parameter.
 #
 ##Index access method lookup.
 #my %amnames;

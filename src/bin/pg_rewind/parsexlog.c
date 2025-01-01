@@ -227,7 +227,7 @@ findLastCheckpoint(const char *datadir, XLogRecPtr forkptr, int tliIndex,
 
 			snprintf(xlogfname, MAXFNAMELEN, XLOGDIR "/");
 
-			/* update curent values */
+			/* update current values */
 			current_tli = xlogreader->seg.ws_tli;
 			current_segno = xlogreader->seg.ws_segno;
 

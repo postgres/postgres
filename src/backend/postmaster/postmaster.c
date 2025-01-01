@@ -2827,7 +2827,7 @@ PostmasterStateMachine(void)
 
 	/*
 	 * In the PM_WAIT_BACKENDS state, wait for all the regular backends and
-	 * procesess like autovacuum and background workers that are comparable to
+	 * processes like autovacuum and background workers that are comparable to
 	 * backends to exit.
 	 *
 	 * PM_STOP_BACKENDS is a transient state that means the same as
