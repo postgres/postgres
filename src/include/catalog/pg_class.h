@@ -20,6 +20,7 @@
 
 #include "catalog/genbki.h"
 #include "catalog/pg_class_d.h"
+#include "utils/syscache.h"
 
 /* ----------------
  *		pg_class definition.  cpp turns this into
@@ -158,6 +159,27 @@ DECLARE_INDEX(pg_class_tblspc_relfilenode_index, 3455, ClassTblspcRelfilenodeInd
 
 MAKE_SYSCACHE(RELOID, pg_class_oid_index, 128);
 MAKE_SYSCACHE(RELNAMENSP, pg_class_relname_nsp_index, 128);
+
+/* Customized wrapper around SearchSysCache1() for RELOID cache. */
+static inline HeapTuple
+SearchRELOIDCache(Oid reloid)
+{
+	HeapTuple	tup;
+
+	tup = SearchSysCache1(RELOID, ObjectIdGetDatum(reloid));
+	if (!HeapTupleIsValid(tup))
+		elog(ERROR, "cache lookup failed for relation %u", reloid);
+
+	return tup;
+}
+
+#define with_reloid_cachetup(tup, classform, reloid) \
+	for (HeapTuple tup = SearchRELOIDCache(ObjectIdGetDatum(reloid)); \
+		 tup != NULL; \
+		 ReleaseSysCache(tup), tup = NULL) \
+		for (Form_pg_class classform = (Form_pg_class) GETSTRUCT(tup); \
+			 classForm != NULL; \
+			 classForm = NULL) \
 
 #ifdef EXPOSE_TO_CLIENT_CODE
 

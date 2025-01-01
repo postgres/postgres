@@ -354,15 +354,11 @@ find_all_inheritors(Oid parentrelId, LOCKMODE lockmode, List **numparents)
 bool
 has_subclass(Oid relationId)
 {
-	HeapTuple	tuple;
 	bool		result;
 
-	tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(relationId));
-	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "cache lookup failed for relation %u", relationId);
+	with_reloid_cachetup(tup, classForm, relationId)
+		result = classForm->relhassubclass;
 
-	result = ((Form_pg_class) GETSTRUCT(tuple))->relhassubclass;
-	ReleaseSysCache(tuple);
 	return result;
 }
 

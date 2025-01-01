@@ -181,16 +181,11 @@ index_get_partition(Relation partition, Oid indexId)
 	foreach(l, idxlist)
 	{
 		Oid			partIdx = lfirst_oid(l);
-		HeapTuple	tup;
-		Form_pg_class classForm;
 		bool		ispartition;
 
-		tup = SearchSysCache1(RELOID, ObjectIdGetDatum(partIdx));
-		if (!HeapTupleIsValid(tup))
-			elog(ERROR, "cache lookup failed for relation %u", partIdx);
-		classForm = (Form_pg_class) GETSTRUCT(tup);
-		ispartition = classForm->relispartition;
-		ReleaseSysCache(tup);
+		with_reloid_cachetup(tup, classForm, partIdx)
+			ispartition = classForm->relispartition;
+
 		if (!ispartition)
 			continue;
 		if (get_partition_parent(partIdx, false) == indexId)

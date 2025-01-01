@@ -39,7 +39,6 @@ static Bitmapset *
 fixup_whole_row_references(Oid relOid, Bitmapset *columns)
 {
 	Bitmapset  *result;
-	HeapTuple	tuple;
 	AttrNumber	natts;
 	AttrNumber	attno;
 	int			index;
@@ -50,11 +49,8 @@ fixup_whole_row_references(Oid relOid, Bitmapset *columns)
 		return columns;
 
 	/* obtain number of attributes */
-	tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(relOid));
-	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "cache lookup failed for relation %u", relOid);
-	natts = ((Form_pg_class) GETSTRUCT(tuple))->relnatts;
-	ReleaseSysCache(tuple);
+	with_reloid_cachetup(tup, classForm, relOid)
+		natts = classForm->relnatts;
 
 	/* remove bit 0 from column set, add in all the non-dropped columns */
 	result = bms_copy(columns);
