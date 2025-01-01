@@ -3,7 +3,7 @@
  * test_json_parser_incremental.c
  *    Test program for incremental JSON parser
  *
- * Copyright (c) 2024, PostgreSQL Global Development Group
+ * Copyright (c) 2024-2025, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *    src/test/modules/test_json_parser/test_json_parser_incremental.c

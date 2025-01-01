@@ -2,7 +2,7 @@
  *	fe_memutils.h
  *		memory management support for frontend code
  *
- *	Copyright (c) 2003-2024, PostgreSQL Global Development Group
+ *	Copyright (c) 2003-2025, PostgreSQL Global Development Group
  *
  *	src/include/common/fe_memutils.h
  */

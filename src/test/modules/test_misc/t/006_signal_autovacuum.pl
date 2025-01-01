@@ -1,4 +1,4 @@
-# Copyright (c) 2024, PostgreSQL Global Development Group
+# Copyright (c) 2024-2025, PostgreSQL Global Development Group
 
 # Test signaling autovacuum worker with pg_signal_autovacuum_worker.
 #

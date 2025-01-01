@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2024, PostgreSQL Global Development Group
+# Copyright (c) 2021-2025, PostgreSQL Global Development Group
 #
 # This test aims to validate that restoring an incremental backup works
 # properly even when the reference backup is on a different timeline.

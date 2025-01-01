@@ -143,7 +143,7 @@
  * RT_DELETE		- Delete a key-value pair. Declared/defined if RT_USE_DELETE is defined
  *
  *
- * Copyright (c) 2024, PostgreSQL Global Development Group
+ * Copyright (c) 2024-2025, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/include/lib/radixtree.h

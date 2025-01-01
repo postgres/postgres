@@ -2,7 +2,7 @@
  * ginblock.h
  *	  details of structures stored in GIN index blocks
  *
- *	Copyright (c) 2006-2024, PostgreSQL Global Development Group
+ *	Copyright (c) 2006-2025, PostgreSQL Global Development Group
  *
  *	src/include/access/ginblock.h
  *--------------------------------------------------------------------------

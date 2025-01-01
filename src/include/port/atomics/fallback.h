@@ -4,7 +4,7 @@
  *    Fallback for platforms without 64 bit atomics support. Slower
  *    than native atomics support, but not unusably slow.
  *
- * Portions Copyright (c) 1996-2024, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2025, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/port/atomics/fallback.h

@@ -1,4 +1,4 @@
-# Copyright (c) 2022-2024, PostgreSQL Global Development Group
+# Copyright (c) 2022-2025, PostgreSQL Global Development Group
 
 # Test recovering to a point-in-time using WAL archive, such that the
 # target point is physically in a WAL segment with a higher TLI than

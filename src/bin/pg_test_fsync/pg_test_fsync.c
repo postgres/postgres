@@ -2,7 +2,7 @@
  *
  * pg_test_fsync --- tests all supported fsync() methods
  *
- * Portions Copyright (c) 1996-2024, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2025, PostgreSQL Global Development Group
  *
  * src/bin/pg_test_fsync/pg_test_fsync.c
  *

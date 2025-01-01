@@ -4,7 +4,7 @@
  *
  * Routines corresponding to procedure objects
  *
- * Copyright (c) 2010-2024, PostgreSQL Global Development Group
+ * Copyright (c) 2010-2025, PostgreSQL Global Development Group
  *
  * -------------------------------------------------------------------------
  */

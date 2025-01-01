@@ -1,4 +1,4 @@
-# Copyright (c) 2022-2024, PostgreSQL Global Development Group
+# Copyright (c) 2022-2025, PostgreSQL Global Development Group
 
 # can't run ecpg to build test dependencies, at least not without an emulator
 if meson.is_cross_build()

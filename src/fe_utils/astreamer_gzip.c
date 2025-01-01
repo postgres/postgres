@@ -17,7 +17,7 @@
  * the same APIs that astreamer_gzip_writer now uses, and it didn't seem
  * necessary to change anything at the time.
  *
- * Portions Copyright (c) 1996-2024, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2025, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *		  src/fe_utils/astreamer_gzip.c

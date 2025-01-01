@@ -1,5 +1,5 @@
 
-# Copyright (c) 2021-2024, PostgreSQL Global Development Group
+# Copyright (c) 2021-2025, PostgreSQL Global Development Group
 
 # This test checks behaviour of ALTER SUBSCRIPTION ... ADD/DROP PUBLICATION
 use strict;

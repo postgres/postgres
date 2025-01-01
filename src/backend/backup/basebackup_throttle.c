@@ -5,7 +5,7 @@
  *	  next base backup sink in the chain at a rate no greater than the
  *	  configured maximum.
  *
- * Portions Copyright (c) 2010-2024, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2010-2025, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/backend/backup/basebackup_throttle.c

@@ -14,7 +14,7 @@
  * the limit block number should be set to the length in blocks to
  * which it was truncated.
  *
- * Portions Copyright (c) 2010-2024, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2010-2025, PostgreSQL Global Development Group
  *
  * src/include/common/blkreftable.h
  *

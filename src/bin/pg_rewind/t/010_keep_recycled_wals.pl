@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2024, PostgreSQL Global Development Group
+# Copyright (c) 2021-2025, PostgreSQL Global Development Group
 #
 # Test situation where a target data directory contains
 # WAL files that were already recycled by the new primary.

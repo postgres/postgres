@@ -3,7 +3,7 @@
  * generic-sunpro.h
  *	  Atomic operations for solaris' CC
  *
- * Portions Copyright (c) 2013-2024, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2013-2025, PostgreSQL Global Development Group
  *
  * NOTES:
  *

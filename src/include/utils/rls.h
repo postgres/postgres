@@ -4,7 +4,7 @@
  *	  Header file for Row Level Security (RLS) utility commands to be used
  *	  with the rowsecurity feature.
  *
- * Copyright (c) 2007-2024, PostgreSQL Global Development Group
+ * Copyright (c) 2007-2025, PostgreSQL Global Development Group
  *
  * src/include/utils/rls.h
  *

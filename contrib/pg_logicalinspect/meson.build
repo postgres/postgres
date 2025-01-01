@@ -1,4 +1,4 @@
-# Copyright (c) 2024, PostgreSQL Global Development Group
+# Copyright (c) 2024-2025, PostgreSQL Global Development Group
 
 pg_logicalinspect_sources = files('pg_logicalinspect.c')
 

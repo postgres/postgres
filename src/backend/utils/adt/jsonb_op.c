@@ -3,7 +3,7 @@
  * jsonb_op.c
  *	 Special operators for jsonb only, used by various index access methods
  *
- * Copyright (c) 2014-2024, PostgreSQL Global Development Group
+ * Copyright (c) 2014-2025, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION

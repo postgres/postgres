@@ -3,7 +3,7 @@
  * pg_combinebackup.c
  *		Combine incremental backups with prior backups.
  *
- * Copyright (c) 2017-2024, PostgreSQL Global Development Group
+ * Copyright (c) 2017-2025, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/bin/pg_combinebackup/pg_combinebackup.c

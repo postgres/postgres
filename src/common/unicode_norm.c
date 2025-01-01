@@ -5,7 +5,7 @@
  * This implements Unicode normalization, per the documentation at
  * https://www.unicode.org/reports/tr15/.
  *
- * Portions Copyright (c) 2017-2024, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2017-2025, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/common/unicode_norm.c

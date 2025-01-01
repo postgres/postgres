@@ -3,7 +3,7 @@
  * be-secure-gssapi.c
  *  GSSAPI encryption support
  *
- * Portions Copyright (c) 2018-2024, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2018-2025, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *  src/backend/libpq/be-secure-gssapi.c

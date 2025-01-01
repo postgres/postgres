@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2024, PostgreSQL Global Development Group
+# Copyright (c) 2021-2025, PostgreSQL Global Development Group
 #
 # This test aims to validate that taking an incremental backup fails when
 # wal_level has been changed to minimal between the full backup and the

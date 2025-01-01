@@ -38,7 +38,7 @@
  * words, it only ever initiates one connection to each database in the
  * cluster for a given run.
  *
- * Copyright (c) 2024, PostgreSQL Global Development Group
+ * Copyright (c) 2024-2025, PostgreSQL Global Development Group
  * src/bin/pg_upgrade/task.c
  */
 

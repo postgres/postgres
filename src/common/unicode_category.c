@@ -4,7 +4,7 @@
  *		characters. Encoding must be UTF8, where we assume that the pg_wchar
  *		representation is a code point.
  *
- * Portions Copyright (c) 2017-2024, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2017-2025, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/common/unicode_category.c

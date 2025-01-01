@@ -15,7 +15,7 @@
  * allows the caller to decide how big is too big to bother with.
  *
  *
- * Portions Copyright (c) 2013-2024, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2013-2025, PostgreSQL Global Development Group
  * Portions Copyright (c) 1998, 1999 Henry Spencer
  *
  * IDENTIFICATION

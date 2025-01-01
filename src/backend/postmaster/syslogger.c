@@ -13,7 +13,7 @@
  *
  * Author: Andreas Pflug <pgadmin@pse-consulting.de>
  *
- * Copyright (c) 2004-2024, PostgreSQL Global Development Group
+ * Copyright (c) 2004-2025, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION

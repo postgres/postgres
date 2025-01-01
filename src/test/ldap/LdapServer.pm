@@ -5,7 +5,7 @@
 #
 # Module to set up an LDAP server for testing pg_hba.conf ldap authentication
 #
-# Copyright (c) 2023-2024, PostgreSQL Global Development Group
+# Copyright (c) 2023-2025, PostgreSQL Global Development Group
 #
 ############################################################################
 

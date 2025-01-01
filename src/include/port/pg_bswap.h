@@ -11,7 +11,7 @@
  * return the same.  Use caution when using these wrapper macros with signed
  * integers.
  *
- * Copyright (c) 2015-2024, PostgreSQL Global Development Group
+ * Copyright (c) 2015-2025, PostgreSQL Global Development Group
  *
  * src/include/port/pg_bswap.h
  *

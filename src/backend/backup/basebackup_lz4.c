@@ -3,7 +3,7 @@
  * basebackup_lz4.c
  *	  Basebackup sink implementing lz4 compression.
  *
- * Portions Copyright (c) 2010-2024, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2010-2025, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/backend/backup/basebackup_lz4.c

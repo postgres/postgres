@@ -3,7 +3,7 @@
  * blvacuum.c
  *		Bloom VACUUM functions.
  *
- * Copyright (c) 2016-2024, PostgreSQL Global Development Group
+ * Copyright (c) 2016-2025, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  contrib/bloom/blvacuum.c

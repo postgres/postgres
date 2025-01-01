@@ -8,7 +8,7 @@
  * with minimal memory wastage and fragmentation.
  *
  *
- * Portions Copyright (c) 2017-2024, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2017-2025, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/backend/utils/mmgr/slab.c

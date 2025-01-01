@@ -7,7 +7,7 @@
  * or GUC_DISALLOW_IN_FILE are not displayed, unless the user specifically
  * requests that variable by name
  *
- * Portions Copyright (c) 1996-2024, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2025, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/backend/utils/misc/help_config.c

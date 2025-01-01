@@ -3,7 +3,7 @@
  * mac.c
  *	  PostgreSQL type definitions for 6 byte, EUI-48, MAC addresses.
  *
- * Portions Copyright (c) 1998-2024, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1998-2025, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *		  src/backend/utils/adt/mac.c

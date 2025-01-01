@@ -3,7 +3,7 @@
  * fe-cancel.c
  *	  functions related to setting up a connection to the backend
  *
- * Portions Copyright (c) 1996-2024, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2025, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *

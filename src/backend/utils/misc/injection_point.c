@@ -6,7 +6,7 @@
  * Injection points can be used to run arbitrary code by attaching callbacks
  * that would be executed in place of the named injection point.
  *
- * Portions Copyright (c) 1996-2024, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2025, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *

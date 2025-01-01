@@ -21,7 +21,7 @@
  * make further decisions about how to process the data; for example,
  * it might choose to modify the archive contents.
  *
- * Portions Copyright (c) 1996-2024, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2025, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *		  src/include/fe_utils/astreamer.h

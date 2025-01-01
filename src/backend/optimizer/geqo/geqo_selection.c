@@ -3,7 +3,7 @@
  * geqo_selection.c
  *	  linear selection scheme for the genetic query optimizer
  *
- * Portions Copyright (c) 1996-2024, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2025, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/backend/optimizer/geqo/geqo_selection.c

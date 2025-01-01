@@ -6,7 +6,7 @@
 # Input: UnicodeData.txt and CompositionExclusions.txt
 # Output: unicode_norm_table.h and unicode_norm_hashfunc.h
 #
-# Copyright (c) 2000-2024, PostgreSQL Global Development Group
+# Copyright (c) 2000-2025, PostgreSQL Global Development Group
 
 use strict;
 use warnings FATAL => 'all';
@@ -88,7 +88,7 @@ print $OT <<HEADER;
  * unicode_norm_table.h
  *	  Composition table used for Unicode normalization
  *
- * Portions Copyright (c) 1996-2024, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2025, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/common/unicode_norm_table.h
@@ -131,7 +131,7 @@ print $OF <<HEADER;
  * unicode_norm_hashfunc.h
  *	  Perfect hash functions used for Unicode normalization
  *
- * Portions Copyright (c) 1996-2024, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2025, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/common/unicode_norm_hashfunc.h

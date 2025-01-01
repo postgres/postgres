@@ -3,7 +3,7 @@
  *
  * A simple HyperLogLog cardinality estimator implementation
  *
- * Portions Copyright (c) 2014-2024, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2014-2025, PostgreSQL Global Development Group
  *
  * Based on Hideaki Ohno's C++ implementation.  The copyright terms of Ohno's
  * original version (the MIT license) follow.

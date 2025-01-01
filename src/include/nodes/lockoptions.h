@@ -4,7 +4,7 @@
  *	  Common header for some locking-related declarations.
  *
  *
- * Copyright (c) 2014-2024, PostgreSQL Global Development Group
+ * Copyright (c) 2014-2025, PostgreSQL Global Development Group
  *
  * src/include/nodes/lockoptions.h
  *

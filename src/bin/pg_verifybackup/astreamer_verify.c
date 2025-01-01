@@ -5,7 +5,7 @@
  * Archive streamer for verification of a tar format backup (including
  * compressed tar format backups).
  *
- * Portions Copyright (c) 1996-2024, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2025, PostgreSQL Global Development Group
  *
  * src/bin/pg_verifybackup/astreamer_verify.c
  *

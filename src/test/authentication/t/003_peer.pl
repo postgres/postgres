@@ -1,5 +1,5 @@
 
-# Copyright (c) 2021-2024, PostgreSQL Global Development Group
+# Copyright (c) 2021-2025, PostgreSQL Global Development Group
 
 # Tests for peer authentication and user name map.
 # The test is skipped if the platform does not support peer authentication,

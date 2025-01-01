@@ -2,7 +2,7 @@
 # wait_event_names.txt
 #      PostgreSQL wait events
 #
-# Copyright (c) 2023-2024, PostgreSQL Global Development Group
+# Copyright (c) 2023-2025, PostgreSQL Global Development Group
 #
 # This list serves as the basis for generating source and documentation files
 # related to wait events.

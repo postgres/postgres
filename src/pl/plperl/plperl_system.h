@@ -8,7 +8,7 @@
  * declarations should be put here.  However, we do include some stuff
  * that is meant to prevent conflicts between our code and Perl.
  *
- * Portions Copyright (c) 1996-2024, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2025, PostgreSQL Global Development Group
  * Portions Copyright (c) 1995, Regents of the University of California
  *
  * src/pl/plperl/plperl_system.h

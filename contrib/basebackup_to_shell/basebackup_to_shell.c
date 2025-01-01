@@ -3,7 +3,7 @@
  * basebackup_to_shell.c
  *	  target base backup files to a shell command
  *
- * Copyright (c) 2016-2024, PostgreSQL Global Development Group
+ * Copyright (c) 2016-2025, PostgreSQL Global Development Group
  *
  *	  contrib/basebackup_to_shell/basebackup_to_shell.c
  *-------------------------------------------------------------------------

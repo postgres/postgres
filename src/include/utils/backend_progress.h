@@ -6,7 +6,7 @@
  * backend's command progress counters, without ascribing meaning to the
  * individual fields. See commands/progress.h and system_views.sql for that.
  *
- * Copyright (c) 2001-2024, PostgreSQL Global Development Group
+ * Copyright (c) 2001-2025, PostgreSQL Global Development Group
  *
  * src/include/utils/backend_progress.h
  * ----------

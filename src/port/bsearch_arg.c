@@ -1,7 +1,7 @@
 /*
  * bsearch_arg.c: bsearch variant with a user-supplied pointer
  *
- * Copyright (c) 2021-2024, PostgreSQL Global Development Group
+ * Copyright (c) 2021-2025, PostgreSQL Global Development Group
  * Copyright (c) 1990 Regents of the University of California.
  * All rights reserved.
  *

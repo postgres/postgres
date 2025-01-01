@@ -1,4 +1,4 @@
-# Copyright (c) 2024, PostgreSQL Global Development Group
+# Copyright (c) 2024-2025, PostgreSQL Global Development Group
 
 test_json_parser_incremental_sources = files(
   'test_json_parser_incremental.c',

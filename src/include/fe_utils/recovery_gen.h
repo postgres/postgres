@@ -2,7 +2,7 @@
  *
  * Generator for recovery configuration
  *
- * Portions Copyright (c) 2011-2024, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2011-2025, PostgreSQL Global Development Group
  *
  * src/include/fe_utils/recovery_gen.h
  *

@@ -1,4 +1,4 @@
-# Copyright (c) 2024, PostgreSQL Global Development Group
+# Copyright (c) 2024-2025, PostgreSQL Global Development Group
 
 # This test verifies edge case of reading a multixact:
 # when we have multixact that is followed by exactly one another multixact,

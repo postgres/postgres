@@ -10,7 +10,7 @@
  * therefore, even when built for backend, it cannot rely on backend
  * infrastructure such as elog() or palloc().
  *
- * Copyright (c) 1996-2024, PostgreSQL Global Development Group
+ * Copyright (c) 1996-2025, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/port/pg_strong_random.c

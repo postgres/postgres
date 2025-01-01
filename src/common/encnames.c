@@ -3,7 +3,7 @@
  * encnames.c
  *	  Encoding names and routines for working with them.
  *
- * Portions Copyright (c) 2001-2024, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2001-2025, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/common/encnames.c

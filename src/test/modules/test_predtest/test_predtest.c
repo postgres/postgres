@@ -3,7 +3,7 @@
  * test_predtest.c
  *		Test correctness of optimizer's predicate proof logic.
  *
- * Copyright (c) 2018-2024, PostgreSQL Global Development Group
+ * Copyright (c) 2018-2025, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *		src/test/modules/test_predtest/test_predtest.c

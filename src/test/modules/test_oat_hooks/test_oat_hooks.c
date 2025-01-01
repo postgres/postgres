@@ -3,7 +3,7 @@
  * test_oat_hooks.c
  *		Code for testing mandatory access control (MAC) using object access hooks.
  *
- * Copyright (c) 2015-2024, PostgreSQL Global Development Group
+ * Copyright (c) 2015-2025, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *		src/test/modules/test_oat_hooks/test_oat_hooks.c

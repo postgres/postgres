@@ -1,4 +1,4 @@
-# Copyright (c) 2023-2024, PostgreSQL Global Development Group
+# Copyright (c) 2023-2025, PostgreSQL Global Development Group
 
 # Test for pg_upgrade of logical subscription. Note that after the successful
 # upgrade test, we can't use the old cluster to prevent failing in --link mode.

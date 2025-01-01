@@ -3,7 +3,7 @@
  * base64.c
  *	  Encoding and decoding routines for base64 without whitespace.
  *
- * Copyright (c) 2001-2024, PostgreSQL Global Development Group
+ * Copyright (c) 2001-2025, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION

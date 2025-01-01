@@ -2,7 +2,7 @@
  * injection_point.h
  *	  Definitions related to injection points.
  *
- * Copyright (c) 2001-2024, PostgreSQL Global Development Group
+ * Copyright (c) 2001-2025, PostgreSQL Global Development Group
  *
  * src/include/utils/injection_point.h
  *-------------------------------------------------------------------------

@@ -1,7 +1,7 @@
 /*
  * Utilities for working with hash values.
  *
- * Portions Copyright (c) 2017-2024, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2017-2025, PostgreSQL Global Development Group
  */
 
 #ifndef HASHFN_H

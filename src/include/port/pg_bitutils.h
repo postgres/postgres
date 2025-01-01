@@ -4,7 +4,7 @@
  *	  Miscellaneous functions for bit-wise operations.
  *
  *
- * Copyright (c) 2019-2024, PostgreSQL Global Development Group
+ * Copyright (c) 2019-2025, PostgreSQL Global Development Group
  *
  * src/include/port/pg_bitutils.h
  *

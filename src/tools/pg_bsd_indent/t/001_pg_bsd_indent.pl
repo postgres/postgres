@@ -1,7 +1,7 @@
 # pg_bsd_indent: some simple tests
 
 # The test cases come from FreeBSD upstream, but this test scaffolding is ours.
-# Copyright (c) 2017-2024, PostgreSQL Global Development Group
+# Copyright (c) 2017-2025, PostgreSQL Global Development Group
 
 use strict;
 use warnings FATAL => 'all';

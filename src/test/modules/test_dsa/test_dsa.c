@@ -3,7 +3,7 @@
  * test_dsa.c
  *		Test dynamic shared memory areas (DSAs)
  *
- * Copyright (c) 2022-2024, PostgreSQL Global Development Group
+ * Copyright (c) 2022-2025, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *		src/test/modules/test_dsa/test_dsa.c

@@ -7,7 +7,7 @@
  * a single process to use the TidStore. It is meant to be an example of
  * usage.
  *
- * Copyright (c) 2024, PostgreSQL Global Development Group
+ * Copyright (c) 2024-2025, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *		src/test/modules/test_tidstore/test_tidstore.c

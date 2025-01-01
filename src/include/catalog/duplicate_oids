@@ -9,7 +9,7 @@
 #    the same catalog, our project policy is that manually assigned OIDs
 #    should be globally unique, to avoid confusion.
 #
-# Portions Copyright (c) 1996-2024, PostgreSQL Global Development Group
+# Portions Copyright (c) 1996-2025, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
 # src/include/catalog/duplicate_oids

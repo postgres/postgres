@@ -7,7 +7,7 @@
  * declarations should be put here.  However, we do include some stuff
  * that is meant to prevent conflicts between our code and Python.
  *
- * Portions Copyright (c) 1996-2024, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2025, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/pl/plpython/plpython_system.h

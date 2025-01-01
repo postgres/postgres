@@ -2,7 +2,7 @@
  * libpq_testclient.c
  *		A test program for the libpq public API
  *
- * Copyright (c) 2022-2024, PostgreSQL Global Development Group
+ * Copyright (c) 2022-2025, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *		src/interfaces/libpq/test/libpq_testclient.c

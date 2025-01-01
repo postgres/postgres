@@ -4,7 +4,7 @@
  *	  Optimized linear search routines using SIMD intrinsics where
  *	  available.
  *
- * Copyright (c) 2022-2024, PostgreSQL Global Development Group
+ * Copyright (c) 2022-2025, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/include/port/pg_lfind.h

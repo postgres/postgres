@@ -1,5 +1,5 @@
 
-# Copyright (c) 2021-2024, PostgreSQL Global Development Group
+# Copyright (c) 2021-2025, PostgreSQL Global Development Group
 
 # Test the JSON parser performance tester. Here we are just checking that
 # the performance tester can run, both with the standard parser and the

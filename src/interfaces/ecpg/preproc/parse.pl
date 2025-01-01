@@ -9,7 +9,7 @@
 #   --parser: the backend gram.y file to read (required, no default)
 #   --output: where to write preproc.y (required, no default)
 #
-# Copyright (c) 2007-2024, PostgreSQL Global Development Group
+# Copyright (c) 2007-2025, PostgreSQL Global Development Group
 #
 # Written by Mike Aubury <mike.aubury@aubit.com>
 #            Michael Meskes <meskes@postgresql.org>

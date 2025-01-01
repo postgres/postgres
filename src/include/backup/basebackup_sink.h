@@ -17,7 +17,7 @@
  * single task e.g. command progress reporting, throttling, or
  * communication with the client.
  *
- * Portions Copyright (c) 2010-2024, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2010-2025, PostgreSQL Global Development Group
  *
  * src/include/backup/basebackup_sink.h
  *

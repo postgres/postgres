@@ -4,7 +4,7 @@
 # and East Asian Fullwidth (F) characters, using Unicode data files as input.
 # Pass EastAsianWidth.txt as argument.  The output is on stdout.
 #
-# Copyright (c) 2019-2024, PostgreSQL Global Development Group
+# Copyright (c) 2019-2025, PostgreSQL Global Development Group
 
 use strict;
 use warnings FATAL => 'all';

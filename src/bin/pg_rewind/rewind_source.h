@@ -8,7 +8,7 @@
  * operations to fetch data from the source system, so that the rest of
  * the code doesn't need to care what kind of a source its dealing with.
  *
- * Copyright (c) 2013-2024, PostgreSQL Global Development Group
+ * Copyright (c) 2013-2025, PostgreSQL Global Development Group
  *
  *-------------------------------------------------------------------------
  */

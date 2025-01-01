@@ -3,7 +3,7 @@
  * pg_logicalinspect.c
  *		  Functions to inspect contents of PostgreSQL logical snapshots
  *
- * Copyright (c) 2024, PostgreSQL Global Development Group
+ * Copyright (c) 2024-2025, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *		  contrib/pg_logicalinspect/pg_logicalinspect.c

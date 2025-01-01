@@ -7,7 +7,7 @@
  *	  constants, you probably also need to update the views based on them
  *	  in system_views.sql.
  *
- * Portions Copyright (c) 1996-2024, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2025, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/commands/progress.h

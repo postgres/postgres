@@ -3,7 +3,7 @@
  * rmgrdesc_utils.h
  *	  Support functions for rmgrdesc routines
  *
- * Copyright (c) 2023-2024, PostgreSQL Global Development Group
+ * Copyright (c) 2023-2025, PostgreSQL Global Development Group
  *
  * src/include/access/rmgrdesc_utils.h
  *

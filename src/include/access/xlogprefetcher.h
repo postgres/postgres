@@ -3,7 +3,7 @@
  * xlogprefetcher.h
  *		Declarations for the recovery prefetching module.
  *
- * Portions Copyright (c) 2022-2024, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2022-2025, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION

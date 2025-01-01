@@ -2,7 +2,7 @@
 #
 # Makefile for src/interfaces/ecpg/preproc
 #
-# Copyright (c) 1998-2024, PostgreSQL Global Development Group
+# Copyright (c) 1998-2025, PostgreSQL Global Development Group
 #
 # src/interfaces/ecpg/preproc/Makefile
 #

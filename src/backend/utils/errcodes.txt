@@ -2,7 +2,7 @@
 # errcodes.txt
 #      PostgreSQL error codes
 #
-# Copyright (c) 2003-2024, PostgreSQL Global Development Group
+# Copyright (c) 2003-2025, PostgreSQL Global Development Group
 #
 # This list serves as the basis for generating source files containing error
 # codes. It is kept in a common format to make sure all these source files have

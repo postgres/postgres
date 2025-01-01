@@ -7,7 +7,7 @@
  * from pgstat.c to enforce the line between the statistics access / storage
  * implementation and the details about individual types of statistics.
  *
- * Copyright (c) 2021-2024, PostgreSQL Global Development Group
+ * Copyright (c) 2021-2025, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/backend/utils/activity/pgstat_io.c

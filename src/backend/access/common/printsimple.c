@@ -8,7 +8,7 @@
  *	  doesn't handle standalone backends or protocol versions other than
  *	  3.0, because we don't need such handling for current applications.
  *
- * Portions Copyright (c) 1996-2024, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2025, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION

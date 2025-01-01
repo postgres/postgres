@@ -3,7 +3,7 @@
  * sha2_int.h
  *	  Internal headers for fallback implementation of SHA{224,256,384,512}
  *
- * Portions Copyright (c) 2016-2024, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2016-2025, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *		  src/common/sha2_int.h

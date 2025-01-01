@@ -8,7 +8,7 @@
  * operations such as pfree() and repalloc() to work correctly on a memory
  * chunk that was allocated by palloc_aligned().
  *
- * Portions Copyright (c) 2022-2024, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2022-2025, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/backend/utils/mmgr/alignedalloc.c

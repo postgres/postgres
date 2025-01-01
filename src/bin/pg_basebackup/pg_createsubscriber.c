@@ -3,7 +3,7 @@
  * pg_createsubscriber.c
  *	  Create a new logical replica from a standby server
  *
- * Copyright (C) 2024, PostgreSQL Global Development Group
+ * Copyright (c) 2024-2025, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/bin/pg_basebackup/pg_createsubscriber.c

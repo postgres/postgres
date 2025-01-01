@@ -3,7 +3,7 @@
  * waitfuncs.c
  *		Functions for SQL access to syntheses of multiple contention types.
  *
- * Copyright (c) 2002-2024, PostgreSQL Global Development Group
+ * Copyright (c) 2002-2025, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *		src/backend/utils/adt/waitfuncs.c

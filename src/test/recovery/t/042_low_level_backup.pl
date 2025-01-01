@@ -1,5 +1,5 @@
 
-# Copyright (c) 2024, PostgreSQL Global Development Group
+# Copyright (c) 2024-2025, PostgreSQL Global Development Group
 
 # Test low-level backup method by using pg_backup_start() and pg_backup_stop()
 # to create backups.

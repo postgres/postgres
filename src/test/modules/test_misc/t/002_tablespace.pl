@@ -1,5 +1,5 @@
 
-# Copyright (c) 2024, PostgreSQL Global Development Group
+# Copyright (c) 2024-2025, PostgreSQL Global Development Group
 
 # Simple tablespace tests that can't be replicated on the same host
 # due to the use of absolute paths, so we keep them out of the regular

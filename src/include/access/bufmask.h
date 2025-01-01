@@ -7,7 +7,7 @@
  *	  individual rmgr, but we make things easier by providing some
  *	  common routines to handle cases which occur in multiple rmgrs.
  *
- * Portions Copyright (c) 2016-2024, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2016-2025, PostgreSQL Global Development Group
  *
  * src/include/access/bufmask.h
  *

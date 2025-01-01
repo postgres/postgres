@@ -1,7 +1,7 @@
 /*
  * Daitch-Mokotoff Soundex
  *
- * Copyright (c) 2023-2024, PostgreSQL Global Development Group
+ * Copyright (c) 2023-2025, PostgreSQL Global Development Group
  *
  * This module was originally sponsored by Finance Norway /
  * Trafikkforsikringsforeningen, and implemented by Dag Lem <dag@nimrod.no>

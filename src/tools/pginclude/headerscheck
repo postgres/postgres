@@ -13,7 +13,7 @@
 # No output if everything is OK, else compiler errors.
 #
 # src/tools/pginclude/headerscheck
-# Copyright (c) 2009-2024, PostgreSQL Global Development Group
+# Copyright (c) 2009-2025, PostgreSQL Global Development Group
 
 # option to check for C++ compatibility
 if [ "$1" = "--cplusplus" ]; then

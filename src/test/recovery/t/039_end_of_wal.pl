@@ -1,4 +1,4 @@
-# Copyright (c) 2023-2024, PostgreSQL Global Development Group
+# Copyright (c) 2023-2025, PostgreSQL Global Development Group
 #
 # Test detecting end-of-WAL conditions.  This test suite generates
 # fake defective page and record headers to trigger various failure

@@ -3,7 +3,7 @@
  * ts_utils.h
  *	  helper utilities for tsearch
  *
- * Copyright (c) 1998-2024, PostgreSQL Global Development Group
+ * Copyright (c) 1998-2025, PostgreSQL Global Development Group
  *
  * src/include/tsearch/ts_utils.h
  *

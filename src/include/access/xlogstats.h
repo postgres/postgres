@@ -3,7 +3,7 @@
  * xlogstats.h
  *		Definitions for WAL Statitstics
  *
- * Copyright (c) 2022-2024, PostgreSQL Global Development Group
+ * Copyright (c) 2022-2025, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *		src/include/access/xlogstats.h

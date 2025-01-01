@@ -10,7 +10,7 @@
  * About these generators: https://prng.di.unimi.it/
  * See also https://en.wikipedia.org/wiki/List_of_random_number_generators
  *
- * Copyright (c) 2021-2024, PostgreSQL Global Development Group
+ * Copyright (c) 2021-2025, PostgreSQL Global Development Group
  *
  * src/common/pg_prng.c
  *

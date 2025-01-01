@@ -13,7 +13,7 @@
  * functions or functions using nonportable collations.  Those considerations
  * need not be accounted for here.
  *
- * Portions Copyright (c) 1996-2024, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2025, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  contrib/postgres_fdw/shippable.c

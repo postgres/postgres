@@ -11,7 +11,7 @@
  * the 64 bit cases can be considerably faster with intrinsics. In case no
  * intrinsics are available 128 bit math is used where available.
  *
- * Copyright (c) 2017-2024, PostgreSQL Global Development Group
+ * Copyright (c) 2017-2025, PostgreSQL Global Development Group
  *
  * src/include/common/int.h
  *

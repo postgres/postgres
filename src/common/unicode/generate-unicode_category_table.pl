@@ -6,7 +6,7 @@
 # Input: UnicodeData.txt
 # Output: unicode_category_table.h
 #
-# Copyright (c) 2000-2024, PostgreSQL Global Development Group
+# Copyright (c) 2000-2025, PostgreSQL Global Development Group
 
 use strict;
 use warnings FATAL => 'all';
@@ -349,7 +349,7 @@ print $OT <<"EOS";
  * unicode_category_table.h
  *	  Category table for Unicode character classification.
  *
- * Portions Copyright (c) 1996-2024, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2025, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/common/unicode_category_table.h

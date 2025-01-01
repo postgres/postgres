@@ -3,7 +3,7 @@
  * pg_walinspect.c
  *		  Functions to inspect contents of PostgreSQL Write-Ahead Log
  *
- * Copyright (c) 2022-2024, PostgreSQL Global Development Group
+ * Copyright (c) 2022-2025, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *		  contrib/pg_walinspect/pg_walinspect.c

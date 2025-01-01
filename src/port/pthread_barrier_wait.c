@@ -3,7 +3,7 @@
  * pthread_barrier_wait.c
  *    Implementation of pthread_barrier_t support for platforms lacking it.
  *
- * Portions Copyright (c) 1996-2024, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2025, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *    src/port/pthread_barrier_wait.c

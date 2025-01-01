@@ -2,7 +2,7 @@
  * conflict.c
  *	   Support routines for logging conflicts.
  *
- * Copyright (c) 2024, PostgreSQL Global Development Group
+ * Copyright (c) 2024-2025, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/backend/replication/logical/conflict.c

@@ -3,7 +3,7 @@
  * amapi.c
  *	  Support routines for API for Postgres index access methods.
  *
- * Copyright (c) 2015-2024, PostgreSQL Global Development Group
+ * Copyright (c) 2015-2025, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION

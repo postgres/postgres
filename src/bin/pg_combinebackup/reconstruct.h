@@ -3,7 +3,7 @@
  * reconstruct.h
  *		Reconstruct full file from incremental file and backup chain.
  *
- * Copyright (c) 2017-2024, PostgreSQL Global Development Group
+ * Copyright (c) 2017-2025, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/bin/pg_combinebackup/reconstruct.h

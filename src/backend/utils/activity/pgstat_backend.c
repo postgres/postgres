@@ -13,7 +13,7 @@
  * dropped when the process exits.  These are not written to the pgstats file
  * on disk.
  *
- * Copyright (c) 2001-2024, PostgreSQL Global Development Group
+ * Copyright (c) 2001-2025, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/backend/utils/activity/pgstat_backend.c

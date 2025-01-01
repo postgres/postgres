@@ -3,7 +3,7 @@
  * mem.h
  *	  portability definitions for various memory operations
  *
- * Copyright (c) 2001-2024, PostgreSQL Global Development Group
+ * Copyright (c) 2001-2025, PostgreSQL Global Development Group
  *
  * src/include/portability/mem.h
  *

@@ -5,7 +5,7 @@
 #
 # NormalizationTest.txt is part of the Unicode Character Database.
 #
-# Copyright (c) 2000-2024, PostgreSQL Global Development Group
+# Copyright (c) 2000-2025, PostgreSQL Global Development Group
 
 use strict;
 use warnings FATAL => 'all';
@@ -30,7 +30,7 @@ print $OUTPUT <<HEADER;
  * norm_test_table.h
  *	  Test strings for Unicode normalization.
  *
- * Portions Copyright (c) 1996-2024, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2025, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/common/unicode/norm_test_table.h

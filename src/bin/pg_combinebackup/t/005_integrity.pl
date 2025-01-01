@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2024, PostgreSQL Global Development Group
+# Copyright (c) 2021-2025, PostgreSQL Global Development Group
 #
 # This test aims to validate that an incremental backup can be combined
 # with a valid prior backup and that it cannot be combined with an invalid

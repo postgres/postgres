@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 #
 # Generate the targets-meson.sgml file from targets-meson.txt
-# Copyright (c) 2000-2024, PostgreSQL Global Development Group
+# Copyright (c) 2000-2025, PostgreSQL Global Development Group
 
 use strict;
 use warnings FATAL => 'all';

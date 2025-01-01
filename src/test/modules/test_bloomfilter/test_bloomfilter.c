@@ -3,7 +3,7 @@
  * test_bloomfilter.c
  *		Test false positive rate of Bloom filter.
  *
- * Copyright (c) 2018-2024, PostgreSQL Global Development Group
+ * Copyright (c) 2018-2025, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *		src/test/modules/test_bloomfilter/test_bloomfilter.c

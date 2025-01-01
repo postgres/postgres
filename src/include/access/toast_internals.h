@@ -3,7 +3,7 @@
  * toast_internals.h
  *	  Internal definitions for the TOAST system.
  *
- * Copyright (c) 2000-2024, PostgreSQL Global Development Group
+ * Copyright (c) 2000-2025, PostgreSQL Global Development Group
  *
  * src/include/access/toast_internals.h
  *

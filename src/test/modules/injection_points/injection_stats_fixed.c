@@ -3,7 +3,7 @@
  * injection_stats_fixed.c
  *		Code for fixed-numbered statistics of injection points.
  *
- * Portions Copyright (c) 1996-2024, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2025, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION

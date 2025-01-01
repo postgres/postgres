@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2024, PostgreSQL Global Development Group
+# Copyright (c) 2021-2025, PostgreSQL Global Development Group
 #
 # Test whether WAL summaries are complete such that incremental backup
 # can be performed after promoting a standby at an arbitrary LSN.

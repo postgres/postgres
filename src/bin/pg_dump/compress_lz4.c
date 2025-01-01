@@ -3,7 +3,7 @@
  * compress_lz4.c
  *	 Routines for archivers to write a LZ4 compressed data stream.
  *
- * Portions Copyright (c) 1996-2024, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2025, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
