@@ -272,6 +272,7 @@
 #include "utils/logtape.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
+#include "utils/memutils_memorychunk.h"
 #include "utils/syscache.h"
 #include "utils/tuplesort.h"
 
@@ -314,10 +315,9 @@
 #define HASHAGG_HLL_BIT_WIDTH 5
 
 /*
- * Estimate chunk overhead as a constant 16 bytes. XXX: should this be
- * improved?
+ * Assume the palloc overhead always uses sizeof(MemoryChunk) bytes.
  */
-#define CHUNKHDRSZ 16
+#define CHUNKHDRSZ sizeof(MemoryChunk)
 
 /*
  * Represents partitioned spill data for a single hashtable. Contains the
