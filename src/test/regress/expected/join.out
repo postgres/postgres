@@ -2573,10 +2573,11 @@ where t1.f1 = coalesce(t2.f1, 1);
                ->  Materialize
                      ->  Seq Scan on int4_tbl t2
                            Filter: (f1 > 1)
-         ->  Seq Scan on int4_tbl t3
+         ->  Materialize
+               ->  Seq Scan on int4_tbl t3
    ->  Materialize
          ->  Seq Scan on int4_tbl t4
-(13 rows)
+(14 rows)
 
 explain (costs off)
 select * from int4_tbl t1
@@ -8217,3 +8218,24 @@ SELECT * FROM rescan_bhs t1 LEFT JOIN rescan_bhs t2 ON t1.a IN
 
 RESET enable_seqscan;
 RESET enable_indexscan;
+-- Test that we do not account for nullingrels when looking up statistics
+CREATE TABLE group_tbl (a INT, b INT);
+INSERT INTO group_tbl SELECT 1, 1;
+CREATE STATISTICS group_tbl_stat (ndistinct) ON a, b FROM group_tbl;
+ANALYZE group_tbl;
+EXPLAIN (COSTS OFF)
+SELECT 1 FROM group_tbl t1
+    LEFT JOIN (SELECT a c1, COALESCE(a) c2 FROM group_tbl t2) s ON TRUE
+GROUP BY s.c1, s.c2;
+                 QUERY PLAN                 
+--------------------------------------------
+ Group
+   Group Key: t2.a, (COALESCE(t2.a))
+   ->  Sort
+         Sort Key: t2.a, (COALESCE(t2.a))
+         ->  Nested Loop Left Join
+               ->  Seq Scan on group_tbl t1
+               ->  Seq Scan on group_tbl t2
+(7 rows)
+
+DROP TABLE group_tbl;
