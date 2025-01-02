@@ -120,6 +120,7 @@
 #include "optimizer/plancat.h"
 #include "parser/parse_clause.h"
 #include "parser/parsetree.h"
+#include "rewrite/rewriteManip.h"
 #include "statistics/statistics.h"
 #include "storage/bufmgr.h"
 #include "utils/acl.h"
@@ -3273,6 +3274,15 @@ add_unique_group_var(PlannerInfo *root, List *varinfos,
 
 	ndistinct = get_variable_numdistinct(vardata, &isdefault);
 
+	/*
+	 * The nullingrels bits within the var could cause the same var to be
+	 * counted multiple times if it's marked with different nullingrels.  They
+	 * could also prevent us from matching the var to the expressions in
+	 * extended statistics (see estimate_multivariate_ndistinct).  So strip
+	 * them out first.
+	 */
+	var = remove_nulling_relids(var, root->outer_join_rels, NULL);
+
 	foreach(lc, varinfos)
 	{
 		varinfo = (GroupVarInfo *) lfirst(lc);
@@ -4980,6 +4990,7 @@ examine_variable(PlannerInfo *root, Node *node, int varRelid,
 {
 	Node	   *basenode;
 	Relids		varnos;
+	Relids		basevarnos;
 	RelOptInfo *onerel;
 
 	/* Make sure we don't return dangling pointers in vardata */
@@ -5021,10 +5032,11 @@ examine_variable(PlannerInfo *root, Node *node, int varRelid,
 	 * relation are considered "real" vars.
 	 */
 	varnos = pull_varnos(root, basenode);
+	basevarnos = bms_difference(varnos, root->outer_join_rels);
 
 	onerel = NULL;
 
-	switch (bms_membership(varnos))
+	switch (bms_membership(basevarnos))
 	{
 		case BMS_EMPTY_SET:
 			/* No Vars at all ... must be pseudo-constant clause */
@@ -5033,7 +5045,7 @@ examine_variable(PlannerInfo *root, Node *node, int varRelid,
 			if (varRelid == 0 || bms_is_member(varRelid, varnos))
 			{
 				onerel = find_base_rel(root,
-									   (varRelid ? varRelid : bms_singleton_member(varnos)));
+									   (varRelid ? varRelid : bms_singleton_member(basevarnos)));
 				vardata->rel = onerel;
 				node = basenode;	/* strip any relabeling */
 			}
@@ -5057,7 +5069,7 @@ examine_variable(PlannerInfo *root, Node *node, int varRelid,
 			break;
 	}
 
-	bms_free(varnos);
+	bms_free(basevarnos);
 
 	vardata->var = node;
 	vardata->atttype = exprType(node);
@@ -5081,6 +5093,14 @@ examine_variable(PlannerInfo *root, Node *node, int varRelid,
 		ListCell   *ilist;
 		ListCell   *slist;
 		Oid			userid;
+
+		/*
+		 * The nullingrels bits within the expression could prevent us from
+		 * matching it to expressional index columns or to the expressions in
+		 * extended statistics.  So strip them out first.
+		 */
+		if (bms_overlap(varnos, root->outer_join_rels))
+			node = remove_nulling_relids(node, root->outer_join_rels, NULL);
 
 		/*
 		 * Determine the user ID to use for privilege checks: either
@@ -5352,6 +5372,8 @@ examine_variable(PlannerInfo *root, Node *node, int varRelid,
 			}
 		}
 	}
+
+	bms_free(varnos);
 }
 
 /*
