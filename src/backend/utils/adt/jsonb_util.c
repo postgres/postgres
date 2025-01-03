@@ -246,6 +246,13 @@ compareJsonbContainers(JsonbContainer *a, JsonbContainer *b)
 						 */
 						if (va.val.array.rawScalar != vb.val.array.rawScalar)
 							res = (va.val.array.rawScalar) ? -1 : 1;
+
+						/*
+						 * There should be an "else" here, to prevent us from
+						 * overriding the above, but we can't change the sort
+						 * order now, so there is a mild anomaly that an empty
+						 * top level array sorts less than null.
+						 */
 						if (va.val.array.nElems != vb.val.array.nElems)
 							res = (va.val.array.nElems > vb.val.array.nElems) ? 1 : -1;
 						break;
