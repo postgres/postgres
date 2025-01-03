@@ -584,12 +584,13 @@ SELECT jdoc->'guid', jdoc->'name' FROM api WHERE jdoc @@ '$.tags[*] == "qui"';
     The <literal>btree</literal> ordering for <type>jsonb</type> datums is seldom
     of great interest, but for completeness it is:
 <synopsis>
-<replaceable>Object</replaceable> > <replaceable>Array</replaceable> > <replaceable>Boolean</replaceable> > <replaceable>Number</replaceable> > <replaceable>String</replaceable> > <replaceable>Null</replaceable>
+<replaceable>Object</replaceable> > <replaceable>Array</replaceable> > <replaceable>Boolean</replaceable> > <replaceable>Number</replaceable> > <replaceable>String</replaceable> > <replaceable>null</replaceable>
 
 <replaceable>Object with n pairs</replaceable> > <replaceable>object with n - 1 pairs</replaceable>
 
 <replaceable>Array with n elements</replaceable> > <replaceable>array with n - 1 elements</replaceable>
 </synopsis>
+      with the exception that (for historical reasons) an empty top level array sorts less than <replaceable>null</replaceable>.
       Objects with equal numbers of pairs are compared in the order:
 <synopsis>
 <replaceable>key-1</replaceable>, <replaceable>value-1</replaceable>, <replaceable>key-2</replaceable> ...
