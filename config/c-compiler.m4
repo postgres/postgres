@@ -142,7 +142,7 @@ fi])# PGAC_C_STATIC_ASSERT
 AC_DEFUN([PGAC_C_TYPEOF],
 [AC_CACHE_CHECK(for typeof, pgac_cv_c_typeof,
 [pgac_cv_c_typeof=no
-for pgac_kw in typeof __typeof__ decltype; do
+for pgac_kw in typeof __typeof__; do
   AC_COMPILE_IFELSE([AC_LANG_PROGRAM([],
 [int x = 0;
 $pgac_kw(x) y;

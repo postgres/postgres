@@ -2540,7 +2540,7 @@ endif
 
 # Check if the C compiler understands typeof or a variant.  Define
 # HAVE_TYPEOF if so, and define 'typeof' to the actual key word.
-foreach kw : ['typeof', '__typeof__', 'decltype']
+foreach kw : ['typeof', '__typeof__']
   if cc.compiles('''
 int main(void)
 {
