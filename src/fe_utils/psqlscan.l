@@ -52,12 +52,6 @@
  */
 typedef int YYSTYPE;
 
-/*
- * Set the type of yyextra; we use it as a pointer back to the containing
- * PsqlScanState.
- */
-#define YY_EXTRA_TYPE PsqlScanState
-
 
 /* Return values from yylex() */
 #define LEXRES_EOL			0	/* end of input */
@@ -88,6 +82,12 @@ extern void psql_yyset_column(int column_no, yyscan_t yyscanner);
 %option noyywrap
 %option warn
 %option prefix="psql_yy"
+
+/*
+ * Set the type of yyextra; we use it as a pointer back to the containing
+ * PsqlScanState.
+ */
+%option extra-type="PsqlScanState"
 
 /*
  * All of the following definitions and rules should exactly match

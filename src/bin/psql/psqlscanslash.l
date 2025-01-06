@@ -39,12 +39,6 @@
 typedef int YYSTYPE;
 
 /*
- * Set the type of yyextra; we use it as a pointer back to the containing
- * PsqlScanState.
- */
-#define YY_EXTRA_TYPE PsqlScanState
-
-/*
  * These variables do not need to be saved across calls.  Yeah, it's a bit
  * of a hack, but putting them into PsqlScanStateData would be klugy too.
  */
@@ -87,6 +81,12 @@ extern void slash_yyset_column(int column_no, yyscan_t yyscanner);
 %option noyywrap
 %option warn
 %option prefix="slash_yy"
+
+/*
+ * Set the type of yyextra; we use it as a pointer back to the containing
+ * PsqlScanState.
+ */
+%option extra-type="PsqlScanState"
 
 /*
  * OK, here is a short description of lex/flex rules behavior.

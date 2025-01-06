@@ -34,7 +34,6 @@ struct jsonpath_yy_extra_type
 {
 	JsonPathString scanstring;
 };
-#define YY_EXTRA_TYPE struct jsonpath_yy_extra_type *
 
 static void addstring(bool init, char *s, int l, yyscan_t yyscanner);
 static void addchar(bool init, char c, yyscan_t yyscanner);
@@ -64,6 +63,7 @@ fprintf_to_ereport(const char *fmt, const char *msg)
 %option noyywrap
 %option warn
 %option prefix="jsonpath_yy"
+%option extra-type="struct jsonpath_yy_extra_type *"
 %option reentrant
 %option bison-bridge
 %option noyyalloc

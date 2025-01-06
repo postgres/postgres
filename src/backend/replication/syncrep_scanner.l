@@ -41,7 +41,6 @@ struct syncrep_yy_extra_type
 {
 	StringInfoData xdbuf;
 };
-#define YY_EXTRA_TYPE struct syncrep_yy_extra_type *
 
 /* LCOV_EXCL_START */
 
@@ -60,6 +59,7 @@ struct syncrep_yy_extra_type
 %option noyyfree
 %option warn
 %option prefix="syncrep_yy"
+%option extra-type="struct syncrep_yy_extra_type *"
 
 /*
  * <xd> delimited identifiers (double-quoted identifiers)

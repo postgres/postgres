@@ -46,7 +46,6 @@ struct replication_yy_extra_type
 	/* Work area for collecting literals */
 	StringInfoData litbuf;
 };
-#define YY_EXTRA_TYPE struct replication_yy_extra_type *
 
 static void startlit(yyscan_t yyscanner);
 static char *litbufdup(yyscan_t yyscanner);
@@ -70,6 +69,7 @@ static void addlitchar(unsigned char ychar, yyscan_t yyscanner);
 %option noyyfree
 %option warn
 %option prefix="replication_yy"
+%option extra-type="struct replication_yy_extra_type *"
 
 /*
  * Exclusive states:
