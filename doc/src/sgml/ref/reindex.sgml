@@ -194,7 +194,8 @@ REINDEX [ ( <replaceable class="parameter">option</replaceable> [, ...] ) ] { DA
     <term><literal>VERBOSE</literal></term>
     <listitem>
      <para>
-      Prints a progress report as each index is reindexed.
+      Prints a progress report as each index is reindexed
+      at <literal>INFO</literal> level.
      </para>
     </listitem>
    </varlistentry>

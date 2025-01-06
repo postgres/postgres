@@ -106,7 +106,8 @@ CLUSTER [ ( <replaceable class="parameter">option</replaceable> [, ...] ) ] [ <r
     <term><literal>VERBOSE</literal></term>
     <listitem>
      <para>
-      Prints a progress report as each table is clustered.
+      Prints a progress report as each table is clustered
+      at <literal>INFO</literal> level.
      </para>
     </listitem>
    </varlistentry>
