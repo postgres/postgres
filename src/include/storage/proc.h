@@ -317,19 +317,6 @@ struct PGPROC
 
 extern PGDLLIMPORT PGPROC *MyProc;
 
-/* Proc number of this backend. Equal to GetNumberFromPGProc(MyProc). */
-extern PGDLLIMPORT ProcNumber MyProcNumber;
-
-/* Our parallel session leader, or INVALID_PROC_NUMBER if none */
-extern PGDLLIMPORT ProcNumber ParallelLeaderProcNumber;
-
-/*
- * The proc number to use for our session's temp relations is normally our own,
- * but parallel workers should use their leader's ID.
- */
-#define ProcNumberForTempRelations() \
-	(ParallelLeaderProcNumber == INVALID_PROC_NUMBER ? MyProcNumber : ParallelLeaderProcNumber)
-
 /*
  * There is one ProcGlobal struct for the whole database cluster.
  *
