@@ -661,8 +661,9 @@
 
 #autovacuum = on			# Enable autovacuum subprocess?  'on'
 					# requires track_counts to also be on.
-#autovacuum_max_workers = 3		# max number of autovacuum subprocesses
+autovacuum_worker_slots = 16	# autovacuum worker slots to allocate
 					# (change requires restart)
+#autovacuum_max_workers = 3		# max number of autovacuum subprocesses
 #autovacuum_naptime = 1min		# time between autovacuum runs
 #autovacuum_vacuum_threshold = 50	# min number of row updates before
 					# vacuum

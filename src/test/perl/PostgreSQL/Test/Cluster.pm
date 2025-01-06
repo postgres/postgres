@@ -707,6 +707,7 @@ sub init
 		}
 		print $conf "max_wal_senders = 10\n";
 		print $conf "max_replication_slots = 10\n";
+		print $conf "autovacuum_worker_slots = 3\n";
 		print $conf "wal_log_hints = on\n";
 		print $conf "hot_standby = on\n";
 		# conservative settings to ensure we can run multiple postmasters:

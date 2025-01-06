@@ -150,7 +150,7 @@ ProcGlobalSemas(void)
  *	  So, now we grab enough semaphores to support the desired max number
  *	  of backends immediately at initialization --- if the sysadmin has set
  *	  MaxConnections, max_worker_processes, max_wal_senders, or
- *	  autovacuum_max_workers higher than his kernel will support, he'll
+ *	  autovacuum_worker_slots higher than his kernel will support, he'll
  *	  find out sooner rather than later.
  *
  *	  Another reason for creating semaphores here is that the semaphore
@@ -284,13 +284,13 @@ InitProcGlobal(void)
 			dlist_push_tail(&ProcGlobal->freeProcs, &proc->links);
 			proc->procgloballist = &ProcGlobal->freeProcs;
 		}
-		else if (i < MaxConnections + autovacuum_max_workers + NUM_SPECIAL_WORKER_PROCS)
+		else if (i < MaxConnections + autovacuum_worker_slots + NUM_SPECIAL_WORKER_PROCS)
 		{
 			/* PGPROC for AV or special worker, add to autovacFreeProcs list */
 			dlist_push_tail(&ProcGlobal->autovacFreeProcs, &proc->links);
 			proc->procgloballist = &ProcGlobal->autovacFreeProcs;
 		}
-		else if (i < MaxConnections + autovacuum_max_workers + NUM_SPECIAL_WORKER_PROCS + max_worker_processes)
+		else if (i < MaxConnections + autovacuum_worker_slots + NUM_SPECIAL_WORKER_PROCS + max_worker_processes)
 		{
 			/* PGPROC for bgworker, add to bgworkerFreeProcs list */
 			dlist_push_tail(&ProcGlobal->bgworkerFreeProcs, &proc->links);

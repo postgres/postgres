@@ -8630,6 +8630,25 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
       </listitem>
      </varlistentry>
 
+     <varlistentry id="guc-autovacuum-worker-slots" xreflabel="autovacuum_worker_slots">
+      <term><varname>autovacuum_worker_slots</varname> (<type>integer</type>)
+      <indexterm>
+       <primary><varname>autovacuum_worker_slots</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Specifies the number of backend slots to reserve for autovacuum worker
+        processes.  The default is 16.  This parameter can only be set at server
+        start.
+       </para>
+       <para>
+        When changing this value, consider also adjusting
+        <xref linkend="guc-autovacuum-max-workers"/>.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="guc-autovacuum-max-workers" xreflabel="autovacuum_max_workers">
       <term><varname>autovacuum_max_workers</varname> (<type>integer</type>)
       <indexterm>
@@ -8640,7 +8659,14 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
        <para>
         Specifies the maximum number of autovacuum processes (other than the
         autovacuum launcher) that may be running at any one time.  The default
-        is three.  This parameter can only be set at server start.
+        is three.  This parameter can only be set in the
+        <filename>postgresql.conf</filename> file or on the server command line.
+       </para>
+       <para>
+        Note that a setting for this value which is higher than
+        <xref linkend="guc-autovacuum-worker-slots"/> will have no effect,
+        since autovacuum workers are taken from the pool of slots established
+        by that setting.
        </para>
       </listitem>
      </varlistentry>

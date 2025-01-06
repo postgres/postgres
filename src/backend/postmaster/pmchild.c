@@ -8,7 +8,7 @@
  * child process is allocated a PMChild struct from a fixed pool of structs.
  * The size of the pool is determined by various settings that configure how
  * many worker processes and backend connections are allowed, i.e.
- * autovacuum_max_workers, max_worker_processes, max_wal_senders, and
+ * autovacuum_worker_slots, max_worker_processes, max_wal_senders, and
  * max_connections.
  *
  * Dead-end backends are handled slightly differently.  There is no limit
@@ -99,7 +99,7 @@ InitPostmasterChildSlots(void)
 	 */
 	pmchild_pools[B_BACKEND].size = 2 * (MaxConnections + max_wal_senders);
 
-	pmchild_pools[B_AUTOVAC_WORKER].size = autovacuum_max_workers;
+	pmchild_pools[B_AUTOVAC_WORKER].size = autovacuum_worker_slots;
 	pmchild_pools[B_BG_WORKER].size = max_worker_processes;
 
 	/*

@@ -28,6 +28,7 @@ typedef enum
 
 /* GUC variables */
 extern PGDLLIMPORT bool autovacuum_start_daemon;
+extern PGDLLIMPORT int autovacuum_worker_slots;
 extern PGDLLIMPORT int autovacuum_max_workers;
 extern PGDLLIMPORT int autovacuum_work_mem;
 extern PGDLLIMPORT int autovacuum_naptime;
