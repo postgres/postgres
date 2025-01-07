@@ -47,6 +47,7 @@ AggSplit
 AggState
 AggStatePerAgg
 AggStatePerGroup
+AggStatePerGroupData
 AggStatePerHash
 AggStatePerPhase
 AggStatePerTrans
