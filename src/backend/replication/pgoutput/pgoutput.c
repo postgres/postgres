@@ -50,11 +50,13 @@ static bool pgoutput_origin_filter(LogicalDecodingContext *ctx,
 static bool publications_valid;
 
 /*
- * Private memory context for publication data, created in
- * PGOutputData->context when starting pgoutput, and set to NULL when its
- * parent context is reset via a dedicated MemoryContextCallback.
+ * Private memory contexts for publication data and relation attribute
+ * map, created in PGOutputData->context when starting pgoutput, and set
+ * to NULL when its parent context is reset via a dedicated
+ * MemoryContextCallback.
  */
 static MemoryContext pubctx = NULL;
+static MemoryContext cachectx = NULL;
 
 static List *LoadPublications(List *pubnames);
 static void publication_invalidation_cb(Datum arg, int cacheid,
@@ -182,12 +184,14 @@ parse_output_parameters(List *options, uint32 *protocol_version,
 }
 
 /*
- * Callback of PGOutputData->context in charge of cleaning pubctx.
+ * Callback of PGOutputData->context in charge of cleaning pubctx and
+ * cachectx.
  */
 static void
-pgoutput_pubctx_reset_callback(void *arg)
+pgoutput_ctx_reset_callback(void *arg)
 {
 	pubctx = NULL;
+	cachectx = NULL;
 }
 
 /*
@@ -211,8 +215,13 @@ pgoutput_startup(LogicalDecodingContext *ctx, OutputPluginOptions *opt,
 								   "logical replication publication list context",
 								   ALLOCSET_SMALL_SIZES);
 
+	Assert(cachectx == NULL);
+	cachectx = AllocSetContextCreate(ctx->context,
+									 "logical replication cache context",
+									 ALLOCSET_SMALL_SIZES);
+
 	mcallback = palloc0(sizeof(MemoryContextCallback));
-	mcallback->func = pgoutput_pubctx_reset_callback;
+	mcallback->func = pgoutput_ctx_reset_callback;
 	MemoryContextRegisterResetCallback(ctx->context, mcallback);
 
 	ctx->output_plugin_private = data;
@@ -347,8 +356,8 @@ maybe_send_schema(LogicalDecodingContext *ctx,
 		TupleDesc	outdesc = RelationGetDescr(ancestor);
 		MemoryContext oldctx;
 
-		/* Map must live as long as the session does. */
-		oldctx = MemoryContextSwitchTo(CacheMemoryContext);
+		/* Map must live as long as the logical decoding context. */
+		oldctx = MemoryContextSwitchTo(cachectx);
 
 		/*
 		 * Make copies of the TupleDescs that will live as long as the map
@@ -613,8 +622,8 @@ pgoutput_origin_filter(LogicalDecodingContext *ctx,
 /*
  * Shutdown the output plugin.
  *
- * Note, we don't need to clean the data->context and pubctx as they are
- * child contexts of the ctx->context so they will be cleaned up by logical
+ * Note, we don't need to clean the data->context, pubctx and cachectx as they
+ * are child contexts of the ctx->context so they will be cleaned up by logical
  * decoding machinery.
  */
 static void
@@ -628,6 +637,7 @@ pgoutput_shutdown(LogicalDecodingContext *ctx)
 
 	/* Better safe than sorry */
 	pubctx = NULL;
+	cachectx = NULL;
 }
 
 /*
