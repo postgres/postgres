@@ -3379,8 +3379,8 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 		max_aggno = Max(max_aggno, aggref->aggno);
 		max_transno = Max(max_transno, aggref->aggtransno);
 	}
-	numaggs = max_aggno + 1;
-	numtrans = max_transno + 1;
+	aggstate->numaggs = numaggs = max_aggno + 1;
+	aggstate->numtrans = numtrans = max_transno + 1;
 
 	/*
 	 * For each phase, prepare grouping set data and fmgr lookup data for
@@ -3942,13 +3942,6 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 			pertrans->aggshared = true;
 		ReleaseSysCache(aggTuple);
 	}
-
-	/*
-	 * Update aggstate->numaggs to be the number of unique aggregates found.
-	 * Also set numstates to the number of unique transition states found.
-	 */
-	aggstate->numaggs = numaggs;
-	aggstate->numtrans = numtrans;
 
 	/*
 	 * Last, check whether any more aggregates got added onto the node while
