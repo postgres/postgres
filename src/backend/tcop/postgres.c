@@ -310,7 +310,7 @@ InteractiveBackend(StringInfo inBuf)
 		printf("statement: %s\n", inBuf->data);
 	fflush(stdout);
 
-	return 'Q';
+	return PqMsg_Query;
 }
 
 /*
@@ -4897,9 +4897,9 @@ PostgresMain(const char *dbname, const char *username)
 				break;
 
 				/*
-				 * 'X' means that the frontend is closing down the socket. EOF
-				 * means unexpected loss of frontend connection. Either way,
-				 * perform normal shutdown.
+				 * PqMsg_Terminate means that the frontend is closing down the
+				 * socket. EOF means unexpected loss of frontend connection.
+				 * Either way, perform normal shutdown.
 				 */
 			case EOF:
 
