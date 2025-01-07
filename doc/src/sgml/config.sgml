@@ -8639,8 +8639,9 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
       <listitem>
        <para>
         Specifies the number of backend slots to reserve for autovacuum worker
-        processes.  The default is 16.  This parameter can only be set at server
-        start.
+        processes.  The default is typically 16 slots, but might be less if
+        your kernel settings will not support it (as determined during initdb).
+        This parameter can only be set at server start.
        </para>
        <para>
         When changing this value, consider also adjusting

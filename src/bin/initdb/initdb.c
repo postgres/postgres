@@ -196,6 +196,7 @@ static char *pgdata_native;
 
 /* defaults */
 static int	n_connections = 10;
+static int	n_av_slots = 16;
 static int	n_buffers = 50;
 static const char *dynamic_shared_memory_type = NULL;
 static const char *default_timezone = NULL;
@@ -273,7 +274,8 @@ static void check_input(char *path);
 static void write_version_file(const char *extrapath);
 static void set_null_conf(void);
 static void test_config_settings(void);
-static bool test_specific_config_settings(int test_conns, int test_buffs);
+static bool test_specific_config_settings(int test_conns, int test_av_slots,
+										  int test_buffs);
 static void setup_config(void);
 static void bootstrap_template1(void);
 static void setup_auth(FILE *cmdfd);
@@ -1118,6 +1120,18 @@ test_config_settings(void)
 	 */
 #define MIN_BUFS_FOR_CONNS(nconns)	((nconns) * 10)
 
+	/*
+	 * This macro defines the default value of autovacuum_worker_slots we want
+	 * for a given max_connections value.  Note that it has been carefully
+	 * crafted to provide specific values for the associated values in
+	 * trial_conns.  We want it to return autovacuum_worker_slots's initial
+	 * default value (16) for the maximum value in trial_conns (100), and we
+	 * want it to return close to the minimum value we'd consider (3, which is
+	 * the default of autovacuum_max_workers) for the minimum value in
+	 * trial_conns (25).
+	 */
+#define AV_SLOTS_FOR_CONNS(nconns)	((nconns) / 6)
+
 	static const int trial_conns[] = {
 		100, 50, 40, 30, 25
 	};
@@ -1145,7 +1159,8 @@ test_config_settings(void)
 
 	/*
 	 * Probe for max_connections before shared_buffers, since it is subject to
-	 * more constraints than shared_buffers.
+	 * more constraints than shared_buffers.  We also choose the default
+	 * autovacuum_worker_slots here.
 	 */
 	printf(_("selecting default \"max_connections\" ... "));
 	fflush(stdout);
@@ -1153,9 +1168,10 @@ test_config_settings(void)
 	for (i = 0; i < connslen; i++)
 	{
 		test_conns = trial_conns[i];
+		n_av_slots = AV_SLOTS_FOR_CONNS(test_conns);
 		test_buffs = MIN_BUFS_FOR_CONNS(test_conns);
 
-		if (test_specific_config_settings(test_conns, test_buffs))
+		if (test_specific_config_settings(test_conns, n_av_slots, test_buffs))
 		{
 			ok_buffers = test_buffs;
 			break;
@@ -1166,6 +1182,13 @@ test_config_settings(void)
 	n_connections = trial_conns[i];
 
 	printf("%d\n", n_connections);
+
+	/*
+	 * We chose the default for autovacuum_worker_slots during the
+	 * max_connections tests above, but we print a progress message anyway.
+	 */
+	printf(_("selecting default \"autovacuum_worker_slots\" ... %d\n"),
+		   n_av_slots);
 
 	printf(_("selecting default \"shared_buffers\" ... "));
 	fflush(stdout);
@@ -1180,7 +1203,7 @@ test_config_settings(void)
 			break;
 		}
 
-		if (test_specific_config_settings(n_connections, test_buffs))
+		if (test_specific_config_settings(n_connections, n_av_slots, test_buffs))
 			break;
 	}
 	n_buffers = test_buffs;
@@ -1200,7 +1223,7 @@ test_config_settings(void)
  * Test a specific combination of configuration settings.
  */
 static bool
-test_specific_config_settings(int test_conns, int test_buffs)
+test_specific_config_settings(int test_conns, int test_av_slots, int test_buffs)
 {
 	PQExpBufferData cmd;
 	_stringlist *gnames,
@@ -1213,10 +1236,11 @@ test_specific_config_settings(int test_conns, int test_buffs)
 	printfPQExpBuffer(&cmd,
 					  "\"%s\" --check %s %s "
 					  "-c max_connections=%d "
+					  "-c autovacuum_worker_slots=%d "
 					  "-c shared_buffers=%d "
 					  "-c dynamic_shared_memory_type=%s",
 					  backend_exec, boot_options, extra_options,
-					  test_conns, test_buffs,
+					  test_conns, test_av_slots, test_buffs,
 					  dynamic_shared_memory_type);
 
 	/* Add any user-given setting overrides */
@@ -1278,6 +1302,10 @@ setup_config(void)
 
 	snprintf(repltok, sizeof(repltok), "%d", n_connections);
 	conflines = replace_guc_value(conflines, "max_connections",
+								  repltok, false);
+
+	snprintf(repltok, sizeof(repltok), "%d", n_av_slots);
+	conflines = replace_guc_value(conflines, "autovacuum_worker_slots",
 								  repltok, false);
 
 	if ((n_buffers * (BLCKSZ / 1024)) % 1024 == 0)
