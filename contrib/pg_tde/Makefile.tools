@@ -1,0 +1,23 @@
+TDE_OBJS = \
+ 	src/access/pg_tde_tdemap.frontend \
+ 	src/access/pg_tde_xlog_encrypt.frontend \
+ 	src/catalog/tde_global_space.frontend \
+ 	src/catalog/tde_keyring.frontend \
+ 	src/catalog/tde_keyring_parse_opts.frontend \
+ 	src/catalog/tde_principal_key.frontend \
+ 	src/common/pg_tde_utils.frontend \
+ 	src/encryption/enc_aes.frontend \
+ 	src/encryption/enc_tde.frontend \
+ 	src/keyring/keyring_api.frontend \
+ 	src/keyring/keyring_curl.frontend \
+ 	src/keyring/keyring_file.frontend \
+ 	src/keyring/keyring_vault.frontend \
+	src/keyring/keyring_kmip.frontend \
+	src/keyring/keyring_kmip_ereport.frontend \
+	src/libkmip/libkmip/src/kmip.frontend \
+	src/libkmip/libkmip/src/kmip_bio.frontend \
+	src/libkmip/libkmip/src/kmip_locate.frontend \
+	src/libkmip/libkmip/src/kmip_memset.frontend
+
+%.frontend: %.c
+	$(CC) $(CPPFLAGS) -c $< -o $@

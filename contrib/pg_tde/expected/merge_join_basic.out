@@ -1,0 +1,97 @@
+\set tde_am tde_heap_basic
+\i sql/merge_join.inc
+CREATE EXTENSION pg_tde;
+SELECT pg_tde_add_key_provider_file('file-vault','/tmp/pg_tde_test_keyring.per');
+ pg_tde_add_key_provider_file 
+------------------------------
+                            1
+(1 row)
+
+SELECT pg_tde_set_principal_key('test-db-principal-key','file-vault');
+ pg_tde_set_principal_key 
+--------------------------
+ t
+(1 row)
+
+\getenv abs_srcdir PG_ABS_SRCDIR
+CREATE TABLE tenk1 (
+	unique1		int4,
+	unique2		int4,
+	two			int4,
+	four		int4,
+	ten			int4,
+	twenty		int4,
+	hundred		int4,
+	thousand	int4,
+	twothousand	int4,
+	fivethous	int4,
+	tenthous	int4,
+	odd			int4,
+	even		int4,
+	stringu1	name,
+	stringu2	name,
+	string4		name
+) using :tde_am;
+\set filename :abs_srcdir '/data/tenk.data'
+COPY tenk1 FROM :'filename';
+VACUUM ANALYZE tenk1;
+CREATE INDEX tenk1_unique1 ON tenk1 USING btree(unique1 int4_ops);
+CREATE INDEX tenk1_unique2 ON tenk1 USING btree(unique2 int4_ops);
+CREATE INDEX tenk1_hundred ON tenk1 USING btree(hundred int4_ops);
+CREATE INDEX tenk1_thous_tenthous ON tenk1 (thousand, tenthous);
+--
+-- regression test: check a case where join_clause_is_movable_into()
+-- used to give an imprecise result, causing an assertion failure
+--
+SELECT count(*)
+FROM
+  (SELECT t3.tenthous as x1, coalesce(t1.stringu1, t2.stringu1) as x2
+   FROM tenk1 t1
+   LEFT JOIN tenk1 t2 on t1.unique1 = t2.unique1
+   JOIN tenk1 t3 on t1.unique2 = t3.unique2) ss,
+  tenk1 t4,
+  tenk1 t5
+WHERE t4.thousand = t5.unique1 and ss.x1 = t4.tenthous and ss.x2 = t5.stringu1;
+ count 
+-------
+  1000
+(1 row)
+
+--
+-- check that we haven't screwed the data
+--
+SELECT *
+FROM
+  (SELECT t3.tenthous as x1, coalesce(t1.stringu1, t2.stringu1) as x2
+   FROM tenk1 t1
+   LEFT JOIN tenk1 t2 on t1.unique1 = t2.unique1
+   JOIN tenk1 t3 on t1.unique2 = t3.unique2) ss,
+  tenk1 t4,
+  tenk1 t5
+WHERE t4.thousand = t5.unique1 and ss.x1 = t4.tenthous and ss.x2 = t5.stringu1 LIMIT 20 OFFSET 432;
+ x1  |   x2   | unique1 | unique2 | two | four | ten | twenty | hundred | thousand | twothousand | fivethous | tenthous | odd | even | stringu1 | stringu2 | string4 | unique1 | unique2 | two | four | ten | twenty | hundred | thousand | twothousand | fivethous | tenthous | odd | even | stringu1 | stringu2 | string4 
+-----+--------+---------+---------+-----+------+-----+--------+---------+----------+-------------+-----------+----------+-----+------+----------+----------+---------+---------+---------+-----+------+-----+--------+---------+----------+-------------+-----------+----------+-----+------+----------+----------+---------
+  31 | FBAAAA |      31 |    4200 |   1 |    3 |   1 |     11 |      31 |       31 |          31 |        31 |       31 |  62 |   63 | FBAAAA   | OFGAAA   | AAAAxx  |      31 |    4200 |   1 |    3 |   1 |     11 |      31 |       31 |          31 |        31 |       31 |  62 |   63 | FBAAAA   | OFGAAA   | AAAAxx
+ 501 | HTAAAA |     501 |    4203 |   1 |    1 |   1 |      1 |       1 |      501 |         501 |       501 |      501 |   2 |    3 | HTAAAA   | RFGAAA   | VVVVxx  |     501 |    4203 |   1 |    1 |   1 |      1 |       1 |      501 |         501 |       501 |      501 |   2 |    3 | HTAAAA   | RFGAAA   | VVVVxx
+ 111 | HEAAAA |     111 |    4217 |   1 |    3 |   1 |     11 |      11 |      111 |         111 |       111 |      111 |  22 |   23 | HEAAAA   | FGGAAA   | HHHHxx  |     111 |    4217 |   1 |    3 |   1 |     11 |      11 |      111 |         111 |       111 |      111 |  22 |   23 | HEAAAA   | FGGAAA   | HHHHxx
+  98 | UDAAAA |      98 |    4226 |   0 |    2 |   8 |     18 |      98 |       98 |          98 |        98 |       98 | 196 |  197 | UDAAAA   | OGGAAA   | OOOOxx  |      98 |    4226 |   0 |    2 |   8 |     18 |      98 |       98 |          98 |        98 |       98 | 196 |  197 | UDAAAA   | OGGAAA   | OOOOxx
+ 689 | NAAAAA |     689 |    4228 |   1 |    1 |   9 |      9 |      89 |      689 |         689 |       689 |      689 | 178 |  179 | NAAAAA   | QGGAAA   | AAAAxx  |     689 |    4228 |   1 |    1 |   9 |      9 |      89 |      689 |         689 |       689 |      689 | 178 |  179 | NAAAAA   | QGGAAA   | AAAAxx
+ 391 | BPAAAA |     391 |    4234 |   1 |    3 |   1 |     11 |      91 |      391 |         391 |       391 |      391 | 182 |  183 | BPAAAA   | WGGAAA   | OOOOxx  |     391 |    4234 |   1 |    3 |   1 |     11 |      91 |      391 |         391 |       391 |      391 | 182 |  183 | BPAAAA   | WGGAAA   | OOOOxx
+  93 | PDAAAA |      93 |    4238 |   1 |    1 |   3 |     13 |      93 |       93 |          93 |        93 |       93 | 186 |  187 | PDAAAA   | AHGAAA   | OOOOxx  |      93 |    4238 |   1 |    1 |   3 |     13 |      93 |       93 |          93 |        93 |       93 | 186 |  187 | PDAAAA   | AHGAAA   | OOOOxx
+ 618 | UXAAAA |     618 |    4252 |   0 |    2 |   8 |     18 |      18 |      618 |         618 |       618 |      618 |  36 |   37 | UXAAAA   | OHGAAA   | AAAAxx  |     618 |    4252 |   0 |    2 |   8 |     18 |      18 |      618 |         618 |       618 |      618 |  36 |   37 | UXAAAA   | OHGAAA   | AAAAxx
+ 328 | QMAAAA |     328 |    4255 |   0 |    0 |   8 |      8 |      28 |      328 |         328 |       328 |      328 |  56 |   57 | QMAAAA   | RHGAAA   | VVVVxx  |     328 |    4255 |   0 |    0 |   8 |      8 |      28 |      328 |         328 |       328 |      328 |  56 |   57 | QMAAAA   | RHGAAA   | VVVVxx
+ 943 | HKAAAA |     943 |    4265 |   1 |    3 |   3 |      3 |      43 |      943 |         943 |       943 |      943 |  86 |   87 | HKAAAA   | BIGAAA   | HHHHxx  |     943 |    4265 |   1 |    3 |   3 |      3 |      43 |      943 |         943 |       943 |      943 |  86 |   87 | HKAAAA   | BIGAAA   | HHHHxx
+ 775 | VDAAAA |     775 |    4266 |   1 |    3 |   5 |     15 |      75 |      775 |         775 |       775 |      775 | 150 |  151 | VDAAAA   | CIGAAA   | OOOOxx  |     775 |    4266 |   1 |    3 |   5 |     15 |      75 |      775 |         775 |       775 |      775 | 150 |  151 | VDAAAA   | CIGAAA   | OOOOxx
+ 491 | XSAAAA |     491 |    4277 |   1 |    3 |   1 |     11 |      91 |      491 |         491 |       491 |      491 | 182 |  183 | XSAAAA   | NIGAAA   | HHHHxx  |     491 |    4277 |   1 |    3 |   1 |     11 |      91 |      491 |         491 |       491 |      491 | 182 |  183 | XSAAAA   | NIGAAA   | HHHHxx
+ 212 | EIAAAA |     212 |    4280 |   0 |    0 |   2 |     12 |      12 |      212 |         212 |       212 |      212 |  24 |   25 | EIAAAA   | QIGAAA   | AAAAxx  |     212 |    4280 |   0 |    0 |   2 |     12 |      12 |      212 |         212 |       212 |      212 |  24 |   25 | EIAAAA   | QIGAAA   | AAAAxx
+ 340 | CNAAAA |     340 |    4293 |   0 |    0 |   0 |      0 |      40 |      340 |         340 |       340 |      340 |  80 |   81 | CNAAAA   | DJGAAA   | HHHHxx  |     340 |    4293 |   0 |    0 |   0 |      0 |      40 |      340 |         340 |       340 |      340 |  80 |   81 | CNAAAA   | DJGAAA   | HHHHxx
+ 445 | DRAAAA |     445 |    4316 |   1 |    1 |   5 |      5 |      45 |      445 |         445 |       445 |      445 |  90 |   91 | DRAAAA   | AKGAAA   | AAAAxx  |     445 |    4316 |   1 |    1 |   5 |      5 |      45 |      445 |         445 |       445 |      445 |  90 |   91 | DRAAAA   | AKGAAA   | AAAAxx
+ 472 | ESAAAA |     472 |    4321 |   0 |    0 |   2 |     12 |      72 |      472 |         472 |       472 |      472 | 144 |  145 | ESAAAA   | FKGAAA   | HHHHxx  |     472 |    4321 |   0 |    0 |   2 |     12 |      72 |      472 |         472 |       472 |      472 | 144 |  145 | ESAAAA   | FKGAAA   | HHHHxx
+ 760 | GDAAAA |     760 |    4329 |   0 |    0 |   0 |      0 |      60 |      760 |         760 |       760 |      760 | 120 |  121 | GDAAAA   | NKGAAA   | HHHHxx  |     760 |    4329 |   0 |    0 |   0 |      0 |      60 |      760 |         760 |       760 |      760 | 120 |  121 | GDAAAA   | NKGAAA   | HHHHxx
+  14 | OAAAAA |      14 |    4341 |   0 |    2 |   4 |     14 |      14 |       14 |          14 |        14 |       14 |  28 |   29 | OAAAAA   | ZKGAAA   | HHHHxx  |      14 |    4341 |   0 |    2 |   4 |     14 |      14 |       14 |          14 |        14 |       14 |  28 |   29 | OAAAAA   | ZKGAAA   | HHHHxx
+  65 | NCAAAA |      65 |    4348 |   1 |    1 |   5 |      5 |      65 |       65 |          65 |        65 |       65 | 130 |  131 | NCAAAA   | GLGAAA   | AAAAxx  |      65 |    4348 |   1 |    1 |   5 |      5 |      65 |       65 |          65 |        65 |       65 | 130 |  131 | NCAAAA   | GLGAAA   | AAAAxx
+ 459 | RRAAAA |     459 |    4350 |   1 |    3 |   9 |     19 |      59 |      459 |         459 |       459 |      459 | 118 |  119 | RRAAAA   | ILGAAA   | OOOOxx  |     459 |    4350 |   1 |    3 |   9 |     19 |      59 |      459 |         459 |       459 |      459 | 118 |  119 | RRAAAA   | ILGAAA   | OOOOxx
+(20 rows)
+
+DROP TABLE tenk1;
+DROP EXTENSION pg_tde;

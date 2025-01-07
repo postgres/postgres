@@ -1,0 +1,7 @@
+@media print {
+    /* Adjusts positioning of admonition icon */
+    .md-typeset :is(.admonition-title,summary):before {
+      top: 0.6rem;
+      left: 0.6rem;
+    }
+  }

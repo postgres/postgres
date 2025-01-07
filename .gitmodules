@@ -1,0 +1,3 @@
+[submodule "contrib/pg_tde/src/libkmip"]
+	path = contrib/pg_tde/src/libkmip
+	url = https://github.com/Percona-Lab/libkmip.git

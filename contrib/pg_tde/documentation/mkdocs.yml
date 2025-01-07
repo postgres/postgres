@@ -1,0 +1,179 @@
+# MkDocs general configuration
+
+site_name: pg_tde documentation
+site_description: Documentation
+site_author: Percona LLC
+copyright: >
+  <a href="https://www.percona.com/about">Percona LLC</a> and/or its affiliates © 2023 — <a href="#__consent">Cookie Consent</a>
+
+ 
+repo_name: percona/pg_tde
+repo_url: https://github.com/percona/pg_tde
+edit_uri: edit/main/documentation/docs/
+
+use_directory_urls: false
+
+# Theme settings
+theme:
+  name: material
+  logo: _images/postgresql-mark.svg
+  favicon: _images/postgresql-fav.svg
+  custom_dir: _resource/overrides
+  font:
+    text: Roboto
+  palette:
+    - media: "(prefers-color-scheme)"
+      toggle:
+        icon: material/brightness-auto
+        name: Color theme set to Automatic. Click to change
+    - media: "(prefers-color-scheme: light)"
+      scheme: percona-light
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/brightness-7
+        name: Color theme set to Light Mode. Click to change
+    - media: "(prefers-color-scheme: dark)"
+      scheme: percona-dark
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/brightness-4
+        name: Color theme set to Dark Mode. Click to change
+
+# Theme features
+
+  features:
+    - search.share
+    - search.highlight
+    - content.code.copy
+    - content.action.view
+    - content.action.edit
+    - content.tabs.link
+    - navigation.top
+    - navigation.tracking
+
+
+
+extra_css:
+  - https://unicons.iconscout.com/release/v3.0.3/css/line.css
+  - https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.4.0/css/font-awesome.min.css
+  - css/percona.css
+  - css/design.css
+  - css/osano.css
+  - css/postgresql.css
+  - css/landing.css
+
+extra_javascript:
+  - js/version-select.js
+  - js/promptremover.js
+  - js/consent.js
+
+markdown_extensions:
+  - attr_list
+  - toc:
+      permalink: True
+  - admonition
+  - md_in_html
+  - footnotes
+  - def_list   # https://michelf.ca/projects/php-markdown/extra/#def-list
+  - meta
+  - smarty:
+      smart_angled_quotes: true
+  - pymdownx.mark
+  - pymdownx.smartsymbols
+  - pymdownx.tilde
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tilde
+  - pymdownx.details
+  - pymdownx.highlight:
+      linenums: false
+  - pymdownx.snippets:
+      base_path: ["snippets"]
+      auto_append:
+        - services-banner.md
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+      options:
+        custom_icons:
+         - _resource/.icons
+
+
+plugins:
+  - search:
+      separator: '[\s\-,:!=\[\]()"/]+|(?!\b)(?=[A-Z][a-z])|\.(?!\d)|&[lg]t;'
+  - open-in-new-tab:
+  - git-revision-date-localized:
+      enable_creation_date: true
+      enabled: !ENV [ENABLED_GIT_REVISION_DATE, True]
+  - meta-descriptions:
+      export_csv: false
+      quiet: false
+      enable_checks: false
+      min_length: 50
+      max_length: 160
+  - section-index # Adds links to nodes - comment out when creating PDF
+#  - htmlproofer # Uncomment to check links - but extends build time significantly
+  - glightbox
+  - macros:
+      include_yaml:
+        - 'variables.yml' # Use in markdown as '{{ VAR }}'
+  - with-pdf: # https://github.com/orzih/mkdocs-with-pdf
+          output_path: '_pdf/PerconaTDE.pdf'
+          cover_title: 'Percona Transparent Data Encryption'
+          cover_subtitle: Alpha 1 (2024-03-28)
+          author: 'Percona Technical Documentation Team'
+          cover_logo: docs/_images/Percona_Logo_Color.png
+          debug_html: false
+#          two_columns_level: 3
+          custom_template_path: _resource/templates
+          enabled_if_env: ENABLE_PDF_EXPORT   
+
+extra:
+  version:
+    provider: mike
+  analytics:
+    provider: google
+    property: G-J4J70BNH0G
+    feedback:
+      title: Was this page helpful?
+      ratings:
+        - icon: material/emoticon-happy-outline
+          name: This page was helpful
+          data: 1
+          note: >-
+            Thanks for your feedback!
+        - icon: material/emoticon-sad-outline
+          name: This page could be improved
+          data: 0
+          note: >- 
+            Thank you for your feedback! Help us improve by using our 
+            <a href="https://docs.google.com/forms/d/1bkWACehjqlwA0AKf-qTJcXvYbOSYgze8iTPXjntqmNo/edit" target="_blank" rel="noopener">
+            feedback form</a>.
+
+nav:
+  - Home: index.md
+  - features.md
+  - Get started:
+    - "Install": "install.md"
+    - "Via apt": apt.md
+    - "Via yum": yum.md   
+    - "Set up": "setup.md"
+    - "Test TDE": "test.md"
+  - functions.md
+  - Concepts:
+    - "What is TDE": tde.md
+    - table-access-method.md
+  - How to:
+    - Use reference to external parameters: external-parameters.md
+    - Decrypt an encrypted table: decrypt.md
+  - faq.md
+  - Release notes:
+    - "pg_tde release notes": release-notes/release-notes.md
+  - uninstall.md
+  - contribute.md
+
+

@@ -1,0 +1,11 @@
+EXPLAIN ANALYZE SELECT * FROM land_registry_price_paid_uk_tde;
+EXPLAIN ANALYZE SELECT * FROM land_registry_price_paid_uk_tde;
+EXPLAIN ANALYZE SELECT * FROM land_registry_price_paid_uk_tde;
+EXPLAIN ANALYZE SELECT * FROM land_registry_price_paid_uk_tde;
+EXPLAIN ANALYZE SELECT * FROM land_registry_price_paid_uk_tde;
+EXPLAIN ANALYZE SELECT * FROM land_registry_price_paid_uk_tde;
+EXPLAIN ANALYZE SELECT * FROM land_registry_price_paid_uk_tde;
+EXPLAIN ANALYZE SELECT * FROM land_registry_price_paid_uk_tde;
+EXPLAIN ANALYZE SELECT * FROM land_registry_price_paid_uk_tde;
+EXPLAIN ANALYZE SELECT * FROM land_registry_price_paid_uk_tde;
+EXPLAIN ANALYZE SELECT * FROM land_registry_price_paid_uk_tde;

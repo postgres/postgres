@@ -1,0 +1,37 @@
+CREATE EXTENSION pg_tde;
+CREATE USER test_access;
+grant all ON database postgres TO test_access;
+-- server restart
+-- pg_tde_add_key_provider_file should throw access denied
+psql:<stdin>:1: ERROR:  permission denied for function pg_tde_add_key_provider_file
+-- pg_tde_set_principal_key should also fail
+psql:<stdin>:1: ERROR:  permission denied for function pg_tde_set_principal_key
+-- pg_tde_rotate_principal_key should give access denied error
+psql:<stdin>:1: ERROR:  permission denied for function pg_tde_rotate_principal_key
+-- grant key management access to test_access
+select pg_tde_grant_key_management_to_role('test_access');
+t
+3
+SELECT pg_tde_add_key_provider_file('file-vault','/tmp/pg_tde_test_keyring.per');
+1
+SELECT pg_tde_add_key_provider_file('file-2','/tmp/pg_tde_test_keyring_2.per');
+2
+SELECT pg_tde_set_principal_key('test-db-principal-key','file-vault');
+t
+SELECT pg_tde_rotate_principal_key('rotated-principal-key','file-2');
+t
+3
+SELECT pg_tde_list_all_key_providers();
+(1,file-vault,file,"{""type"" : ""file"", ""path"" : ""/tmp/pg_tde_test_keyring.per""}")
+(2,file-2,file,"{""type"" : ""file"", ""path"" : ""/tmp/pg_tde_test_keyring_2.per""}")
+-- pg_tde_list_all_key_providers should also fail
+psql:<stdin>:1: ERROR:  permission denied for function pg_tde_list_all_key_providers
+-- pg_tde_principal_key_info should also fail
+psql:<stdin>:1: ERROR:  permission denied for function pg_tde_principal_key_info
+CREATE SCHEMA test_access;
+CREATE TABLE test_access.test_enc1(id SERIAL,k INTEGER,PRIMARY KEY (id)) USING tde_heap_basic;
+INSERT INTO test_access.test_enc1 (k) VALUES (5),(6);
+SELECT * FROM test_access.test_enc1 ORDER BY id ASC;
+1|5
+2|6
+DROP EXTENSION pg_tde CASCADE;

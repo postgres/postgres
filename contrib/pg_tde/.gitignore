@@ -1,0 +1,14 @@
+*.so
+*.o
+*.frontend
+__pycache__
+
+/config.cache
+/config.log
+/config.status
+/autom4te.cache
+/configure~
+t/results
+
+# tools files
+typedefs-full.list
