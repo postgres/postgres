@@ -1343,7 +1343,7 @@ if sslopt in ['auto', 'openssl']
 
   # via library + headers
   if not ssl.found()
-    is_windows = build_system == 'windows'
+    is_windows = host_system == 'windows'
 
     ssl_lib_common_params = {
       'dirs': test_lib_d,
@@ -1354,7 +1354,10 @@ if sslopt in ['auto', 'openssl']
       kwargs: ssl_lib_common_params,
       required: openssl_required and not is_windows
     )
-    # if 'ssl' is not found and it's windows, try 'ssleay32'
+    # before openssl version 1.1.0, there was a different naming convention for libraries on win
+    # the counterpart for libssl.[lib|dll] was ssleay32.[lib|dll]
+    # more details in https://github.com/openssl/openssl/issues/10332#issuecomment-549027653
+    # hence if 'ssl' is not found and it's windows, try 'ssleay32'
     if not ssl_lib.found() and is_windows
       ssl_lib = cc.find_library('ssleay32',
         kwargs: ssl_lib_common_params,
@@ -1365,7 +1368,10 @@ if sslopt in ['auto', 'openssl']
     crypto_lib = cc.find_library('crypto',
       dirs: test_lib_d,
       required: openssl_required and not is_windows)
-    # if 'crypto' is not found and it's windows, try 'libeay32'
+    # before openssl version 1.1.0, there was a different naming convention for libraries on win
+    # the counterpart for libcrypto.[lib|dll] was libeay32.[lib|dll]
+    # more details in https://github.com/openssl/openssl/issues/10332#issuecomment-549027653
+    # hence if 'crypto' is not found and it's windows, try 'libeay32'
     if not crypto_lib.found() and is_windows
       crypto_lib = cc.find_library('libeay32',
         dirs: test_lib_d,
