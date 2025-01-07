@@ -111,6 +111,85 @@ SELECT b.*
    WHERE b.seqno = '4500'::float8;
 
 --
+-- Add coverage of RowCompare quals whose row omits a column ("proargtypes")
+-- that's after the first column, but before the final column.  The scan's
+-- initial positioning strategy must become >= here (it's not the > strategy,
+-- since the absence of "proargtypes" makes that tighter constraint unsafe).
+--
+explain (costs off)
+SELECT proname, proargtypes, pronamespace
+   FROM pg_proc
+   WHERE (proname, pronamespace) > ('abs', 0)
+ORDER BY proname, proargtypes, pronamespace LIMIT 1;
+
+SELECT proname, proargtypes, pronamespace
+   FROM pg_proc
+   WHERE (proname, pronamespace) > ('abs', 0)
+ORDER BY proname, proargtypes, pronamespace LIMIT 1;
+
+--
+-- Similar to the previous test case, but this time it's a backwards scan
+-- using a < RowCompare.  Must use the <= strategy (and not the < strategy).
+--
+explain (costs off)
+SELECT proname, proargtypes, pronamespace
+   FROM pg_proc
+   WHERE (proname, pronamespace) < ('abs', 1_000_000)
+ORDER BY proname DESC, proargtypes DESC, pronamespace DESC LIMIT 1;
+
+SELECT proname, proargtypes, pronamespace
+   FROM pg_proc
+   WHERE (proname, pronamespace) < ('abs', 1_000_000)
+ORDER BY proname DESC, proargtypes DESC, pronamespace DESC LIMIT 1;
+
+--
+-- Add coverage for RowCompare quals whose rhs row has a NULL that ends scan
+--
+explain (costs off)
+SELECT proname, proargtypes, pronamespace
+   FROM pg_proc
+   WHERE proname = 'abs' AND (proname, proargtypes) < ('abs', NULL)
+ORDER BY proname, proargtypes, pronamespace;
+
+SELECT proname, proargtypes, pronamespace
+   FROM pg_proc
+   WHERE proname = 'abs' AND (proname, proargtypes) < ('abs', NULL)
+ORDER BY proname, proargtypes, pronamespace;
+
+--
+-- Add coverage for backwards scan RowCompare quals whose rhs row has a NULL
+-- that ends scan
+--
+explain (costs off)
+SELECT proname, proargtypes, pronamespace
+   FROM pg_proc
+   WHERE proname = 'abs' AND (proname, proargtypes) > ('abs', NULL)
+ORDER BY proname DESC, proargtypes DESC, pronamespace DESC;
+
+SELECT proname, proargtypes, pronamespace
+   FROM pg_proc
+   WHERE proname = 'abs' AND (proname, proargtypes) > ('abs', NULL)
+ORDER BY proname DESC, proargtypes DESC, pronamespace DESC;
+
+--
+-- Add coverage for recheck of > key following array advancement on previous
+-- (left sibling) page that used a high key whose attribute value corresponding
+-- to the > key was -inf (due to being truncated when the high key was created).
+--
+-- XXX This relies on the assumption that tenk1_thous_tenthous has a truncated
+-- high key "(183, -inf)" on the first page that we'll scan.  The test will only
+-- provide useful coverage when the default 8K BLCKSZ is in use.
+--
+explain (costs off)
+SELECT thousand, tenthous
+  FROM tenk1
+  WHERE thousand IN (182, 183) AND tenthous > 7550;
+
+SELECT thousand, tenthous
+  FROM tenk1
+  WHERE thousand IN (182, 183) AND tenthous > 7550;
+
+--
 -- Add coverage for optimization of backwards scan index descents
 --
 -- Here we expect _bt_search to descend straight to a leaf page containing a

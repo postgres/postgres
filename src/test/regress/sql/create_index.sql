@@ -931,6 +931,11 @@ SELECT unique1 FROM tenk1 WHERE unique1 IN (1, 42, 7) and unique1 < (-1)::bigint
 
 SELECT unique1 FROM tenk1 WHERE unique1 IN (1, 42, 7) and unique1 < (-1)::bigint;
 
+explain (costs off)
+SELECT unique1 FROM tenk1 WHERE (thousand, tenthous) > (NULL, 5);
+
+SELECT unique1 FROM tenk1 WHERE (thousand, tenthous) > (NULL, 5);
+
 --
 -- Check elimination of constant-NULL subexpressions
 --

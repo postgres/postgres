@@ -1162,23 +1162,23 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 		if (cur->sk_flags & SK_ROW_HEADER)
 		{
 			/*
-			 * Row comparison header: look to the first row member instead.
-			 *
-			 * The member scankeys are already in insertion format (ie, they
-			 * have sk_func = 3-way-comparison function), but we have to watch
-			 * out for nulls, which _bt_preprocess_keys didn't check. A null
-			 * in the first row member makes the condition unmatchable, just
-			 * like qual_ok = false.
+			 * Row comparison header: look to the first row member instead
 			 */
 			ScanKey		subkey = (ScanKey) DatumGetPointer(cur->sk_argument);
 
+			/*
+			 * Cannot be a NULL in the first row member: _bt_preprocess_keys
+			 * would've marked the qual as unsatisfiable, preventing us from
+			 * ever getting this far
+			 */
 			Assert(subkey->sk_flags & SK_ROW_MEMBER);
-			if (subkey->sk_flags & SK_ISNULL)
-			{
-				Assert(!so->needPrimScan);
-				_bt_parallel_done(scan);
-				return false;
-			}
+			Assert(subkey->sk_attno == cur->sk_attno);
+			Assert(!(subkey->sk_flags & SK_ISNULL));
+
+			/*
+			 * The member scankeys are already in insertion format (ie, they
+			 * have sk_func = 3-way-comparison function)
+			 */
 			memcpy(inskey.scankeys + i, subkey, sizeof(ScanKeyData));
 
 			/*

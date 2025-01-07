@@ -2428,6 +2428,19 @@ SELECT unique1 FROM tenk1 WHERE unique1 IN (1, 42, 7) and unique1 < (-1)::bigint
 ---------
 (0 rows)
 
+explain (costs off)
+SELECT unique1 FROM tenk1 WHERE (thousand, tenthous) > (NULL, 5);
+                           QUERY PLAN                            
+-----------------------------------------------------------------
+ Index Scan using tenk1_thous_tenthous on tenk1
+   Index Cond: (ROW(thousand, tenthous) > ROW(NULL::integer, 5))
+(2 rows)
+
+SELECT unique1 FROM tenk1 WHERE (thousand, tenthous) > (NULL, 5);
+ unique1 
+---------
+(0 rows)
+
 --
 -- Check elimination of constant-NULL subexpressions
 --

@@ -3371,6 +3371,13 @@ _bt_fix_scankey_strategy(ScanKey skey, int16 *indoption)
 	{
 		ScanKey		subkey = (ScanKey) DatumGetPointer(skey->sk_argument);
 
+		if (subkey->sk_flags & SK_ISNULL)
+		{
+			/* First row member is NULL, so RowCompare is unsatisfiable */
+			Assert(subkey->sk_flags & SK_ROW_MEMBER);
+			return false;
+		}
+
 		for (;;)
 		{
 			Assert(subkey->sk_flags & SK_ROW_MEMBER);
@@ -3982,13 +3989,14 @@ _bt_check_rowcompare(ScanKey skey, IndexTuple tuple, int tupnatts,
 		if (subkey->sk_flags & SK_ISNULL)
 		{
 			/*
-			 * Unlike the simple-scankey case, this isn't a disallowed case.
+			 * Unlike the simple-scankey case, this isn't a disallowed case
+			 * (except when it's the first row element that has the NULL arg).
 			 * But it can never match.  If all the earlier row comparison
 			 * columns are required for the scan direction, we can stop the
 			 * scan, because there can't be another tuple that will succeed.
 			 */
-			if (subkey != (ScanKey) DatumGetPointer(skey->sk_argument))
-				subkey--;
+			Assert(subkey != (ScanKey) DatumGetPointer(skey->sk_argument));
+			subkey--;
 			if ((subkey->sk_flags & SK_BT_REQFWD) &&
 				ScanDirectionIsForward(dir))
 				*continuescan = false;
