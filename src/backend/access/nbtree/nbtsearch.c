@@ -890,6 +890,8 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	ScanKeyData notnullkeys[INDEX_MAX_KEYS];
 	int			keysz = 0;
 	StrategyNumber strat_total;
+	BlockNumber blkno = InvalidBlockNumber,
+				lastcurrblkno;
 
 	Assert(!BTScanPosIsValid(so->currPos));
 
@@ -905,64 +907,42 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	 */
 	if (!so->qual_ok)
 	{
+		Assert(!so->needPrimScan);
 		_bt_parallel_done(scan);
 		return false;
 	}
 
 	/*
-	 * For parallel scans, get the starting page from shared state. If the
-	 * scan has not started, proceed to find out first leaf page in the usual
-	 * way while keeping other participating processes waiting.  If the scan
-	 * has already begun, use the page number from the shared structure.
-	 *
-	 * When a parallel scan has another primitive index scan scheduled, a
-	 * parallel worker will seize the scan for that purpose now.  This is
-	 * similar to the case where the top-level scan hasn't started.
+	 * If this is a parallel scan, we must seize the scan.  _bt_readfirstpage
+	 * will likely release the parallel scan later on.
 	 */
-	if (scan->parallel_scan != NULL)
-	{
-		BlockNumber blkno,
-					lastcurrblkno;
+	if (scan->parallel_scan != NULL &&
+		!_bt_parallel_seize(scan, &blkno, &lastcurrblkno, true))
+		return false;
 
-		if (!_bt_parallel_seize(scan, &blkno, &lastcurrblkno, true))
+	/*
+	 * Initialize the scan's arrays (if any) for the current scan direction
+	 * (except when they were already set to later values as part of
+	 * scheduling the primitive index scan that is now underway)
+	 */
+	if (so->numArrayKeys && !so->needPrimScan)
+		_bt_start_array_keys(scan, dir);
+
+	if (blkno != InvalidBlockNumber)
+	{
+		/*
+		 * We anticipated calling _bt_search, but another worker bet us to it.
+		 * _bt_readnextpage releases the scan for us (not _bt_readfirstpage).
+		 */
+		Assert(scan->parallel_scan != NULL);
+		Assert(!so->needPrimScan);
+		Assert(blkno != P_NONE);
+
+		if (!_bt_readnextpage(scan, blkno, lastcurrblkno, dir, true))
 			return false;
 
-		/*
-		 * Successfully seized the scan, which _bt_readfirstpage or possibly
-		 * _bt_readnextpage will release (unless the scan ends right away, in
-		 * which case we'll call _bt_parallel_done directly).
-		 *
-		 * Initialize arrays (when _bt_parallel_seize didn't already set up
-		 * the next primitive index scan).
-		 */
-		if (so->numArrayKeys && !so->needPrimScan)
-			_bt_start_array_keys(scan, dir);
-
-		Assert(blkno != P_NONE);
-		if (blkno != InvalidBlockNumber)
-		{
-			Assert(!so->needPrimScan);
-
-			/*
-			 * We anticipated starting another primitive scan, but some other
-			 * worker bet us to it
-			 */
-			if (!_bt_readnextpage(scan, blkno, lastcurrblkno, dir, true))
-				return false;
-
-			_bt_returnitem(scan, so);
-			return true;
-		}
-	}
-	else if (so->numArrayKeys && !so->needPrimScan)
-	{
-		/*
-		 * First _bt_first call (for current btrescan) without parallelism.
-		 *
-		 * Initialize arrays, and the corresponding scan keys that were just
-		 * output by _bt_preprocess_keys.
-		 */
-		_bt_start_array_keys(scan, dir);
+		_bt_returnitem(scan, so);
+		return true;
 	}
 
 	/*
@@ -1090,7 +1070,12 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 					break;
 				startKeys[keysz++] = chosen;
 
-				/* Quit if we have stored a > or < key */
+				/*
+				 * We can only consider adding more boundary keys when the one
+				 * that we just chose to add uses either the = or >= strategy
+				 * (during backwards scans we can only do so when the key that
+				 * we just added to startKeys[] uses the = or <= strategy)
+				 */
 				strat_total = chosen->sk_strategy;
 				if (strat_total == BTGreaterStrategyNumber ||
 					strat_total == BTLessStrategyNumber)
@@ -1190,6 +1175,7 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 			Assert(subkey->sk_flags & SK_ROW_MEMBER);
 			if (subkey->sk_flags & SK_ISNULL)
 			{
+				Assert(!so->needPrimScan);
 				_bt_parallel_done(scan);
 				return false;
 			}
@@ -1408,6 +1394,7 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 
 		if (!BufferIsValid(so->currPos.buf))
 		{
+			Assert(!so->needPrimScan);
 			_bt_parallel_done(scan);
 			return false;
 		}
@@ -2553,6 +2540,7 @@ _bt_endpoint(IndexScanDesc scan, ScanDirection dir)
 	OffsetNumber start;
 
 	Assert(!BTScanPosIsValid(so->currPos));
+	Assert(!so->needPrimScan);
 
 	/*
 	 * Scan down to the leftmost or rightmost leaf page.  This is a simplified
