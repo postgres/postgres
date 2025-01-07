@@ -418,7 +418,7 @@ RelationTruncate(Relation rel, BlockNumber nblocks)
 	 * longer exist after truncation is complete, and then truncate the
 	 * corresponding files on disk.
 	 */
-	smgrtruncate(RelationGetSmgr(rel), forks, nforks, old_blocks, blocks);
+	smgrtruncate2(RelationGetSmgr(rel), forks, nforks, old_blocks, blocks);
 
 	END_CRIT_SECTION();
 
@@ -1059,7 +1059,7 @@ smgr_redo(XLogReaderState *record)
 		if (nforks > 0)
 		{
 			START_CRIT_SECTION();
-			smgrtruncate(reln, forks, nforks, old_blocks, blocks);
+			smgrtruncate2(reln, forks, nforks, old_blocks, blocks);
 			END_CRIT_SECTION();
 		}
 
