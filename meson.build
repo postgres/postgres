@@ -2101,7 +2101,7 @@ __sync_val_compare_and_swap(&val, 0, 37);'''},
   {'name': 'HAVE_GCC__SYNC_INT64_CAS',
    'desc': '__sync_val_compare_and_swap(int64)',
    'test': '''
-INT64 val = 0;
+int64_t val = 0;
 __sync_val_compare_and_swap(&val, 0, 37);'''},
 
   {'name': 'HAVE_GCC__ATOMIC_INT32_CAS',
@@ -2114,13 +2114,14 @@ __atomic_compare_exchange_n(&val, &expect, 37, 0, __ATOMIC_SEQ_CST, __ATOMIC_REL
   {'name': 'HAVE_GCC__ATOMIC_INT64_CAS',
    'desc': ' __atomic_compare_exchange_n(int64)',
    'test': '''
-INT64 val = 0;
-INT64 expect = 0;
+int64_t val = 0;
+int64_t expect = 0;
 __atomic_compare_exchange_n(&val, &expect, 37, 0, __ATOMIC_SEQ_CST, __ATOMIC_RELAXED);'''},
 ]
 
 foreach check : atomic_checks
   test = '''
+#include <stdint.h>
 int main(void)
 {
 @0@
