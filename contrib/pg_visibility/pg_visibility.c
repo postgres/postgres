@@ -429,7 +429,7 @@ pg_truncate_visibility_map(PG_FUNCTION_ARGS)
 	}
 
 	if (BlockNumberIsValid(block))
-		smgrtruncate(RelationGetSmgr(rel), &fork, 1, &old_block, &block);
+		smgrtruncate2(RelationGetSmgr(rel), &fork, 1, &old_block, &block);
 
 	END_CRIT_SECTION();
 	MyProc->delayChkpt = false;
