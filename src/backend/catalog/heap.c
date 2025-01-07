@@ -427,7 +427,7 @@ heap_create(const char *relname,
  *		6) AddNewAttributeTuples() is called to register the
  *		   new relation's schema in pg_attribute.
  *
- *		7) StoreConstraints is called ()		- vadim 08/22/97
+ *		7) StoreConstraints() is called			- vadim 08/22/97
  *
  *		8) the relations are closed and the new relation's oid
  *		   is returned.
@@ -1481,7 +1481,7 @@ heap_create_with_catalog(const char *relname,
 	InvokeObjectPostCreateHookArg(RelationRelationId, relid, 0, is_internal);
 
 	/*
-	 * Store any supplied constraints and defaults.
+	 * Store any supplied CHECK constraints and defaults.
 	 *
 	 * NB: this may do a CommandCounterIncrement and rebuild the relcache
 	 * entry, so the relation must be valid and self-consistent at this point.
@@ -2216,7 +2216,7 @@ StoreRelNotNull(Relation rel, const char *nnname, AttrNumber attnum,
 }
 
 /*
- * Store defaults and constraints (passed as a list of CookedConstraint).
+ * Store defaults and CHECK constraints (passed as a list of CookedConstraint).
  *
  * Each CookedConstraint struct is modified to store the new catalog tuple OID.
  *
@@ -2258,13 +2258,6 @@ StoreConstraints(Relation rel, List *cooked_constraints, bool is_internal)
 								  con->inhcount, con->is_no_inherit,
 								  is_internal);
 				numchecks++;
-				break;
-
-			case CONSTR_NOTNULL:
-				con->conoid =
-					StoreRelNotNull(rel, con->name, con->attnum,
-									!con->skip_validation, con->is_local,
-									con->inhcount, con->is_no_inherit);
 				break;
 
 			default:

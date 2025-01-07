@@ -1007,9 +1007,9 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 	}
 
 	/*
-	 * Create the relation.  Inherited defaults and constraints are passed in
-	 * for immediate handling --- since they don't need parsing, they can be
-	 * stored immediately.
+	 * Create the relation.  Inherited defaults and CHECK constraints are
+	 * passed in for immediate handling --- since they don't need parsing,
+	 * they can be stored immediately.
 	 */
 	relationId = heap_create_with_catalog(relname,
 										  namespaceId,
@@ -2437,10 +2437,11 @@ storage_name(char c)
  * 'is_partition' tells if the table is a partition.
  *
  * Output arguments:
- * 'supconstr' receives a list of constraints belonging to the parents,
- *		updated as necessary to be valid for the child.
- * 'supnotnulls' receives a list of CookedConstraints that corresponds to
- *		constraints coming from inheritance parents.
+ * 'supconstr' receives a list of CookedConstraint representing
+ *		CHECK constraints belonging to parent relations, updated as
+ *		necessary to be valid for the child.
+ * 'supnotnulls' receives a list of CookedConstraint representing
+ *		not-null constraints based on those from parent relations.
  *
  * Return value:
  * Completed schema list.
