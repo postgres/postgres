@@ -9,6 +9,10 @@ ALTER USER regress_passwordcheck_user1 PASSWORD 'a_nice_long_password';
 -- error: too short
 ALTER USER regress_passwordcheck_user1 PASSWORD 'tooshrt';
 
+-- ok
+SET passwordcheck.min_password_length = 6;
+ALTER USER regress_passwordcheck_user1 PASSWORD 'v_shrt';
+
 -- error: contains user name
 ALTER USER regress_passwordcheck_user1 PASSWORD 'xyzregress_passwordcheck_user1';
 
