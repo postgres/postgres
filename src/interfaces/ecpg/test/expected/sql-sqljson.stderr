@@ -240,12 +240,12 @@ SQL error: null value without indicator on line 84
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 99: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_check_PQresult on line 99: bad response - ERROR:  cannot use RETURNING type jsonb in JSON_SERIALIZE()
+[NO_PID]: ecpg_check_PQresult on line 99: bad response - ERROR:  cannot use type jsonb in RETURNING clause of JSON_SERIALIZE()
 HINT:  Try returning a string type or bytea.
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: raising sqlstate 42804 (sqlcode -400): cannot use RETURNING type jsonb in JSON_SERIALIZE() on line 99
+[NO_PID]: raising sqlstate 42804 (sqlcode -400): cannot use type jsonb in RETURNING clause of JSON_SERIALIZE() on line 99
 [NO_PID]: sqlca: code: -400, state: 42804
-SQL error: cannot use RETURNING type jsonb in JSON_SERIALIZE() on line 99
+SQL error: cannot use type jsonb in RETURNING clause of JSON_SERIALIZE() on line 99
 [NO_PID]: ecpg_execute on line 102: query: with val ( js ) as ( values ( '{ "a": 1, "b": [{ "a": 1, "b": 0, "a": 2 }] }' ) ) select js is json "IS JSON" , js is not json "IS NOT JSON" , js is json value "IS VALUE" , js is json object "IS OBJECT" , js is json array "IS ARRAY" , js is json scalar "IS SCALAR" , js is json without unique keys "WITHOUT UNIQUE" , js is json with unique keys "WITH UNIQUE" from val; with 0 parameter(s) on connection ecpg1_regression
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 102: using PQexec
