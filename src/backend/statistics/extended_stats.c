@@ -74,7 +74,7 @@ typedef struct StatExtEntry
 
 
 static List *fetch_statentries_for_relation(Relation pg_statext, Oid relid);
-static VacAttrStats **lookup_var_attr_stats(Relation rel, Bitmapset *attrs, List *exprs,
+static VacAttrStats **lookup_var_attr_stats(Bitmapset *attrs, List *exprs,
 											int nvacatts, VacAttrStats **vacatts);
 static void statext_store(Oid statOid, bool inh,
 						  MVNDistinct *ndistinct, MVDependencies *dependencies,
@@ -165,7 +165,7 @@ BuildRelationExtStatistics(Relation onerel, bool inh, double totalrows,
 		 * Check if we can build these stats based on the column analyzed. If
 		 * not, report this fact (except in autovacuum) and move on.
 		 */
-		stats = lookup_var_attr_stats(onerel, stat->columns, stat->exprs,
+		stats = lookup_var_attr_stats(stat->columns, stat->exprs,
 									  natts, vacattrstats);
 		if (!stats)
 		{
@@ -293,7 +293,7 @@ ComputeExtStatisticsRows(Relation onerel,
 		 * analyzed. If not, ignore it (don't report anything, we'll do that
 		 * during the actual build BuildRelationExtStatistics).
 		 */
-		stats = lookup_var_attr_stats(onerel, stat->columns, stat->exprs,
+		stats = lookup_var_attr_stats(stat->columns, stat->exprs,
 									  natts, vacattrstats);
 
 		if (!stats)
@@ -687,7 +687,7 @@ examine_expression(Node *expr, int stattarget)
  * indicate to the caller that the stats should not be built.
  */
 static VacAttrStats **
-lookup_var_attr_stats(Relation rel, Bitmapset *attrs, List *exprs,
+lookup_var_attr_stats(Bitmapset *attrs, List *exprs,
 					  int nvacatts, VacAttrStats **vacatts)
 {
 	int			i = 0;
