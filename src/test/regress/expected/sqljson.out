@@ -272,7 +272,7 @@ SELECT pg_typeof(JSON_SERIALIZE(NULL));
 
 -- only string types or bytea allowed
 SELECT JSON_SERIALIZE('{ "a" : 1 } ' RETURNING jsonb);
-ERROR:  cannot use RETURNING type jsonb in JSON_SERIALIZE()
+ERROR:  cannot use type jsonb in RETURNING clause of JSON_SERIALIZE()
 HINT:  Try returning a string type or bytea.
 EXPLAIN (VERBOSE, COSTS OFF) SELECT JSON_SERIALIZE('{}');
                      QUERY PLAN                      
