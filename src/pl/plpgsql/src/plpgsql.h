@@ -1315,7 +1315,6 @@ extern void plpgsql_dumptree(PLpgSQL_function *func);
 /*
  * Scanner functions in pl_scanner.c
  */
-extern int	plpgsql_base_yylex(void);
 extern int	plpgsql_yylex(void);
 extern int	plpgsql_token_length(void);
 extern void plpgsql_push_back_token(int token);
