@@ -70,8 +70,6 @@
 /* Must be here to avoid conflicting with prototype in windows.h */
 #define mkdir(a,b)	mkdir(a)
 
-#define ftruncate(a,b)	chsize(a,b)
-
 /* Windows doesn't have fsync() as such, use _commit() */
 #define fsync(fd) _commit(fd)
 
