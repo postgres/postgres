@@ -9,5 +9,5 @@ RETURNS SETOF RECORD
 LANGUAGE SQL PARALLEL SAFE
 BEGIN ATOMIC
   SELECT blkno, pg_freespace($1, blkno) AS avail
-  FROM generate_series(0, pg_relation_size($1) / current_setting('block_size')::bigint - 1) AS blkno;
+  FROM generate_series('0'::bigint, pg_relation_size($1) / current_setting('block_size'::text)::bigint - '1'::bigint) AS blkno;
 END;
