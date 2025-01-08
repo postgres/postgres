@@ -69,10 +69,6 @@
 #include "utils/pg_locale.h"
 #include "utils/syscache.h"
 
-#ifdef __GLIBC__
-#include <gnu/libc-version.h>
-#endif
-
 #ifdef WIN32
 #include <shlwapi.h>
 #endif
@@ -91,6 +87,7 @@
 
 /* pg_locale_builtin.c */
 extern pg_locale_t create_pg_locale_builtin(Oid collid, MemoryContext context);
+extern char *get_collation_actual_version_builtin(const char *collcollate);
 
 /* pg_locale_icu.c */
 #ifdef USE_ICU
@@ -104,6 +101,7 @@ extern size_t strnxfrm_icu(char *dest, size_t destsize,
 extern size_t strnxfrm_prefix_icu(char *dest, size_t destsize,
 								  const char *src, ssize_t srclen,
 								  pg_locale_t locale);
+extern char *get_collation_actual_version_icu(const char *collcollate);
 #endif
 extern pg_locale_t create_pg_locale_icu(Oid collid, MemoryContext context);
 
@@ -115,6 +113,7 @@ extern int	strncoll_libc(const char *arg1, ssize_t len1,
 extern size_t strnxfrm_libc(char *dest, size_t destsize,
 							const char *src, ssize_t srclen,
 							pg_locale_t locale);
+extern char *get_collation_actual_version_libc(const char *collcollate);
 
 extern size_t strlower_builtin(char *dst, size_t dstsize, const char *src,
 							   ssize_t srclen, pg_locale_t locale);
@@ -1391,100 +1390,14 @@ get_collation_actual_version(char collprovider, const char *collcollate)
 {
 	char	   *collversion = NULL;
 
-	/*
-	 * The only two supported locales (C and C.UTF-8) are both based on memcmp
-	 * and are not expected to change, but track the version anyway.
-	 *
-	 * Note that the character semantics may change for some locales, but the
-	 * collation version only tracks changes to sort order.
-	 */
 	if (collprovider == COLLPROVIDER_BUILTIN)
-	{
-		if (strcmp(collcollate, "C") == 0)
-			return "1";
-		else if (strcmp(collcollate, "C.UTF-8") == 0)
-			return "1";
-		else
-			ereport(ERROR,
-					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-					 errmsg("invalid locale name \"%s\" for builtin provider",
-							collcollate)));
-	}
-
+		collversion = get_collation_actual_version_builtin(collcollate);
 #ifdef USE_ICU
-	if (collprovider == COLLPROVIDER_ICU)
-	{
-		UCollator  *collator;
-		UVersionInfo versioninfo;
-		char		buf[U_MAX_VERSION_STRING_LENGTH];
-
-		collator = pg_ucol_open(collcollate);
-
-		ucol_getVersion(collator, versioninfo);
-		ucol_close(collator);
-
-		u_versionToString(versioninfo, buf);
-		collversion = pstrdup(buf);
-	}
-	else
+	else if (collprovider == COLLPROVIDER_ICU)
+		collversion = get_collation_actual_version_icu(collcollate);
 #endif
-		if (collprovider == COLLPROVIDER_LIBC &&
-			pg_strcasecmp("C", collcollate) != 0 &&
-			pg_strncasecmp("C.", collcollate, 2) != 0 &&
-			pg_strcasecmp("POSIX", collcollate) != 0)
-	{
-#if defined(__GLIBC__)
-		/* Use the glibc version because we don't have anything better. */
-		collversion = pstrdup(gnu_get_libc_version());
-#elif defined(LC_VERSION_MASK)
-		locale_t	loc;
-
-		/* Look up FreeBSD collation version. */
-		loc = newlocale(LC_COLLATE_MASK, collcollate, NULL);
-		if (loc)
-		{
-			collversion =
-				pstrdup(querylocale(LC_COLLATE_MASK | LC_VERSION_MASK, loc));
-			freelocale(loc);
-		}
-		else
-			ereport(ERROR,
-					(errmsg("could not load locale \"%s\"", collcollate)));
-#elif defined(WIN32)
-		/*
-		 * If we are targeting Windows Vista and above, we can ask for a name
-		 * given a collation name (earlier versions required a location code
-		 * that we don't have).
-		 */
-		NLSVERSIONINFOEX version = {sizeof(NLSVERSIONINFOEX)};
-		WCHAR		wide_collcollate[LOCALE_NAME_MAX_LENGTH];
-
-		MultiByteToWideChar(CP_ACP, 0, collcollate, -1, wide_collcollate,
-							LOCALE_NAME_MAX_LENGTH);
-		if (!GetNLSVersionEx(COMPARE_STRING, wide_collcollate, &version))
-		{
-			/*
-			 * GetNLSVersionEx() wants a language tag such as "en-US", not a
-			 * locale name like "English_United States.1252".  Until those
-			 * values can be prevented from entering the system, or 100%
-			 * reliably converted to the more useful tag format, tolerate the
-			 * resulting error and report that we have no version data.
-			 */
-			if (GetLastError() == ERROR_INVALID_PARAMETER)
-				return NULL;
-
-			ereport(ERROR,
-					(errmsg("could not get collation version for locale \"%s\": error code %lu",
-							collcollate,
-							GetLastError())));
-		}
-		collversion = psprintf("%lu.%lu,%lu.%lu",
-							   (version.dwNLSVersion >> 8) & 0xFFFF,
-							   version.dwNLSVersion & 0xFF,
-							   (version.dwDefinedVersion >> 8) & 0xFFFF,
-							   version.dwDefinedVersion & 0xFF);
-#endif
-	}
+	else if (collprovider == COLLPROVIDER_LIBC)
+		collversion = get_collation_actual_version_libc(collcollate);
 
 	return collversion;
 }

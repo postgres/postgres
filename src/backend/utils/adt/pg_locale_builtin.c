@@ -24,6 +24,7 @@
 
 extern pg_locale_t create_pg_locale_builtin(Oid collid,
 											MemoryContext context);
+extern char *get_collation_actual_version_builtin(const char *collcollate);
 extern size_t strlower_builtin(char *dst, size_t dstsize, const char *src,
 							   ssize_t srclen, pg_locale_t locale);
 extern size_t strtitle_builtin(char *dst, size_t dstsize, const char *src,
@@ -147,4 +148,27 @@ create_pg_locale_builtin(Oid collid, MemoryContext context)
 	result->ctype_is_c = (strcmp(locstr, "C") == 0);
 
 	return result;
+}
+
+char *
+get_collation_actual_version_builtin(const char *collcollate)
+{
+	/*
+	 * The only two supported locales (C and C.UTF-8) are both based on memcmp
+	 * and are not expected to change, but track the version anyway.
+	 *
+	 * Note that the character semantics may change for some locales, but the
+	 * collation version only tracks changes to sort order.
+	 */
+	if (strcmp(collcollate, "C") == 0)
+		return "1";
+	else if (strcmp(collcollate, "C.UTF-8") == 0)
+		return "1";
+	else
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("invalid locale name \"%s\" for builtin provider",
+						collcollate)));
+
+	return NULL;				/* keep compiler quiet */
 }
