@@ -50,10 +50,10 @@ extern size_t strtitle_libc(char *dst, size_t dstsize, const char *src,
 extern size_t strupper_libc(char *dst, size_t dstsize, const char *src,
 							ssize_t srclen, pg_locale_t locale);
 
-extern int	strncoll_libc(const char *arg1, ssize_t len1,
+static int	strncoll_libc(const char *arg1, ssize_t len1,
 						  const char *arg2, ssize_t len2,
 						  pg_locale_t locale);
-extern size_t strnxfrm_libc(char *dest, size_t destsize,
+static size_t strnxfrm_libc(char *dest, size_t destsize,
 							const char *src, ssize_t srclen,
 							pg_locale_t locale);
 extern char *get_collation_actual_version_libc(const char *collcollate);
@@ -85,6 +85,40 @@ static size_t strupper_libc_sb(char *dest, size_t destsize,
 static size_t strupper_libc_mb(char *dest, size_t destsize,
 							   const char *src, ssize_t srclen,
 							   pg_locale_t locale);
+
+static const struct collate_methods collate_methods_libc = {
+	.strncoll = strncoll_libc,
+	.strnxfrm = strnxfrm_libc,
+	.strnxfrm_prefix = NULL,
+
+	/*
+	 * Unfortunately, it seems that strxfrm() for non-C collations is broken
+	 * on many common platforms; testing of multiple versions of glibc reveals
+	 * that, for many locales, strcoll() and strxfrm() do not return
+	 * consistent results. While no other libc other than Cygwin has so far
+	 * been shown to have a problem, we take the conservative course of action
+	 * for right now and disable this categorically.  (Users who are certain
+	 * this isn't a problem on their system can define TRUST_STRXFRM.)
+	 */
+#ifdef TRUST_STRXFRM
+	.strxfrm_is_safe = true,
+#else
+	.strxfrm_is_safe = false,
+#endif
+};
+
+#ifdef WIN32
+static const struct collate_methods collate_methods_libc_win32_utf8 = {
+	.strncoll = strncoll_libc_win32_utf8,
+	.strnxfrm = strnxfrm_libc,
+	.strnxfrm_prefix = NULL,
+#ifdef TRUST_STRXFRM
+	.strxfrm_is_safe = true,
+#else
+	.strxfrm_is_safe = false,
+#endif
+};
+#endif
 
 size_t
 strlower_libc(char *dst, size_t dstsize, const char *src,
@@ -439,6 +473,15 @@ create_pg_locale_libc(Oid collid, MemoryContext context)
 	result->ctype_is_c = (strcmp(ctype, "C") == 0) ||
 		(strcmp(ctype, "POSIX") == 0);
 	result->info.lt = loc;
+	if (!result->collate_is_c)
+	{
+#ifdef WIN32
+		if (GetDatabaseEncoding() == PG_UTF8)
+			result->collate = &collate_methods_libc_win32_utf8;
+		else
+#endif
+			result->collate = &collate_methods_libc;
+	}
 
 	return result;
 }
@@ -535,12 +578,6 @@ strncoll_libc(const char *arg1, ssize_t len1, const char *arg2, ssize_t len2,
 	int			result;
 
 	Assert(locale->provider == COLLPROVIDER_LIBC);
-
-#ifdef WIN32
-	/* check for this case before doing the work for nul-termination */
-	if (GetDatabaseEncoding() == PG_UTF8)
-		return strncoll_libc_win32_utf8(arg1, len1, arg2, len2, locale);
-#endif							/* WIN32 */
 
 	if (bufsize1 + bufsize2 > TEXTBUFLEN)
 		buf = palloc(bufsize1 + bufsize2);

@@ -47,6 +47,36 @@ extern struct lconv *PGLC_localeconv(void);
 extern void cache_locale_time(void);
 
 
+struct pg_locale_struct;
+typedef struct pg_locale_struct *pg_locale_t;
+
+/* methods that define collation behavior */
+struct collate_methods
+{
+	/* required */
+	int			(*strncoll) (const char *arg1, ssize_t len1,
+							 const char *arg2, ssize_t len2,
+							 pg_locale_t locale);
+
+	/* required */
+	size_t		(*strnxfrm) (char *dest, size_t destsize,
+							 const char *src, ssize_t srclen,
+							 pg_locale_t locale);
+
+	/* optional */
+	size_t		(*strnxfrm_prefix) (char *dest, size_t destsize,
+									const char *src, ssize_t srclen,
+									pg_locale_t locale);
+
+	/*
+	 * If the strnxfrm method is not trusted to return the correct results,
+	 * set strxfrm_is_safe to false. It set to false, the method will not be
+	 * used in most cases, but the planner still expects it to be there for
+	 * estimation purposes (where incorrect results are acceptable).
+	 */
+	bool		strxfrm_is_safe;
+};
+
 /*
  * We use a discriminated union to hold either a locale_t or an ICU collator.
  * pg_locale_t is occasionally checked for truth, so make it a pointer.
@@ -70,6 +100,9 @@ struct pg_locale_struct
 	bool		collate_is_c;
 	bool		ctype_is_c;
 	bool		is_default;
+
+	const struct collate_methods *collate;	/* NULL if collate_is_c */
+
 	union
 	{
 		struct
