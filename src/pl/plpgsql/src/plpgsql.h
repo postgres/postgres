@@ -1315,25 +1315,32 @@ extern void plpgsql_dumptree(PLpgSQL_function *func);
 /*
  * Scanner functions in pl_scanner.c
  */
-extern int	plpgsql_yylex(void);
-extern int	plpgsql_token_length(void);
-extern void plpgsql_push_back_token(int token);
+union YYSTYPE;
+#define YYLTYPE int
+#ifndef YY_TYPEDEF_YY_SCANNER_T
+#define YY_TYPEDEF_YY_SCANNER_T
+typedef void *yyscan_t;
+#endif
+extern int	plpgsql_yylex(union YYSTYPE *yylvalp, YYLTYPE *yyllocp, yyscan_t yyscanner);
+extern int	plpgsql_token_length(yyscan_t yyscanner);
+extern void plpgsql_push_back_token(int token, union YYSTYPE *yylvalp, YYLTYPE *yyllocp, yyscan_t yyscanner);
 extern bool plpgsql_token_is_unreserved_keyword(int token);
 extern void plpgsql_append_source_text(StringInfo buf,
-									   int startlocation, int endlocation);
-extern int	plpgsql_peek(void);
+									   int startlocation, int endlocation,
+									   yyscan_t yyscanner);
+extern int	plpgsql_peek(yyscan_t yyscanner);
 extern void plpgsql_peek2(int *tok1_p, int *tok2_p, int *tok1_loc,
-						  int *tok2_loc);
-extern int	plpgsql_scanner_errposition(int location);
-extern void plpgsql_yyerror(const char *message) pg_attribute_noreturn();
-extern int	plpgsql_location_to_lineno(int location);
-extern int	plpgsql_latest_lineno(void);
-extern void plpgsql_scanner_init(const char *str);
-extern void plpgsql_scanner_finish(void);
+						  int *tok2_loc, yyscan_t yyscanner);
+extern int	plpgsql_scanner_errposition(int location, yyscan_t yyscanner);
+extern void plpgsql_yyerror(YYLTYPE *yyllocp, yyscan_t yyscanner, const char *message) pg_attribute_noreturn();
+extern int	plpgsql_location_to_lineno(int location, yyscan_t yyscanner);
+extern int	plpgsql_latest_lineno(yyscan_t yyscanner);
+extern yyscan_t plpgsql_scanner_init(const char *str);
+extern void plpgsql_scanner_finish(yyscan_t yyscanner);
 
 /*
  * Externs in pl_gram.y
  */
-extern int	plpgsql_yyparse(void);
+extern int	plpgsql_yyparse(yyscan_t yyscanner);
 
 #endif							/* PLPGSQL_H */

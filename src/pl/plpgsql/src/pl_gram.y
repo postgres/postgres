@@ -28,10 +28,6 @@
 
 #include "pl_gram.h"
 
-/* silence -Wmissing-variable-declarations */
-extern int plpgsql_yychar;
-extern int plpgsql_yynerrs;
-
 /* Location tracking support --- simpler than bison's default */
 #define YYLLOC_DEFAULT(Current, Rhs, N) \
 	do { \
@@ -53,17 +49,18 @@ extern int plpgsql_yynerrs;
 typedef struct
 {
 	int			location;
+	yyscan_t	yyscanner;
 } sql_error_callback_arg;
 
-#define parser_errposition(pos)  plpgsql_scanner_errposition(pos)
+#define parser_errposition(pos)  plpgsql_scanner_errposition(pos, yyscanner)
 
 union YYSTYPE;					/* need forward reference for tok_is_keyword */
 
 static	bool			tok_is_keyword(int token, union YYSTYPE *lval,
 									   int kw_token, const char *kw_str);
-static	void			word_is_not_variable(PLword *word, int location);
-static	void			cword_is_not_variable(PLcword *cword, int location);
-static	void			current_token_is_not_variable(int tok);
+static	void			word_is_not_variable(PLword *word, int location, yyscan_t yyscanner);
+static	void			cword_is_not_variable(PLcword *cword, int location, yyscan_t yyscanner);
+static	void			current_token_is_not_variable(int tok, YYSTYPE *yylvalp, YYLTYPE *yyllocp, yyscan_t yyscanner);
 static	PLpgSQL_expr	*read_sql_construct(int until,
 											int until2,
 											int until3,
@@ -72,48 +69,56 @@ static	PLpgSQL_expr	*read_sql_construct(int until,
 											bool isexpression,
 											bool valid_sql,
 											int *startloc,
-											int *endtoken);
-static	PLpgSQL_expr	*read_sql_expression(int until,
-											 const char *expected);
+											int *endtoken,
+											YYSTYPE *yylvalp, YYLTYPE *yyllocp,
+											yyscan_t yyscanner);
+static	PLpgSQL_expr	*read_sql_expression(int until, const char *expected,
+											 YYSTYPE *yylvalp, YYLTYPE *yyllocp, yyscan_t yyscanner);
 static	PLpgSQL_expr	*read_sql_expression2(int until, int until2,
-											  const char *expected,
-											  int *endtoken);
-static	PLpgSQL_expr	*read_sql_stmt(void);
-static	PLpgSQL_type	*read_datatype(int tok);
+											  const char *expected, int *endtoken,
+											  YYSTYPE *yylvalp, YYLTYPE *yyllocp, yyscan_t yyscanner);
+static	PLpgSQL_expr	*read_sql_stmt(YYSTYPE *yylvalp, YYLTYPE *yyllocp, yyscan_t yyscanner);
+static	PLpgSQL_type	*read_datatype(int tok, YYSTYPE *yylvalp, YYLTYPE *yyllocp, yyscan_t yyscanner);
 static	PLpgSQL_stmt	*make_execsql_stmt(int firsttoken, int location,
-										   PLword *word);
-static	PLpgSQL_stmt_fetch *read_fetch_direction(void);
+										   PLword *word, YYSTYPE *yylvalp, YYLTYPE *yyllocp, yyscan_t yyscanner);
+static	PLpgSQL_stmt_fetch *read_fetch_direction(YYSTYPE *yylvalp, YYLTYPE *yyllocp, yyscan_t yyscanner);
 static	void			 complete_direction(PLpgSQL_stmt_fetch *fetch,
-											bool *check_FROM);
-static	PLpgSQL_stmt	*make_return_stmt(int location);
-static	PLpgSQL_stmt	*make_return_next_stmt(int location);
-static	PLpgSQL_stmt	*make_return_query_stmt(int location);
+											bool *check_FROM, YYSTYPE *yylvalp, YYLTYPE *yyllocp, yyscan_t yyscanner);
+static	PLpgSQL_stmt	*make_return_stmt(int location, YYSTYPE *yylvalp, YYLTYPE *yyllocp, yyscan_t yyscanner);
+static	PLpgSQL_stmt	*make_return_next_stmt(int location, YYSTYPE *yylvalp, YYLTYPE *yyllocp, yyscan_t yyscanner);
+static	PLpgSQL_stmt	*make_return_query_stmt(int location, YYSTYPE *yylvalp, YYLTYPE *yyllocp, yyscan_t yyscanner);
 static  PLpgSQL_stmt	*make_case(int location, PLpgSQL_expr *t_expr,
-								   List *case_when_list, List *else_stmts);
+								   List *case_when_list, List *else_stmts, yyscan_t yyscanner);
 static	char			*NameOfDatum(PLwdatum *wdatum);
-static	void			 check_assignable(PLpgSQL_datum *datum, int location);
-static	void			 read_into_target(PLpgSQL_variable **target,
-										  bool *strict);
+static	void			 check_assignable(PLpgSQL_datum *datum, int location, yyscan_t yyscanner);
+static	void			 read_into_target(PLpgSQL_variable **target, bool *strict,
+										  YYSTYPE *yylvalp, YYLTYPE *yyllocp, yyscan_t yyscanner);
 static	PLpgSQL_row		*read_into_scalar_list(char *initial_name,
 											   PLpgSQL_datum *initial_datum,
-											   int initial_location);
+											   int initial_location,
+											   YYSTYPE *yylvalp, YYLTYPE *yyllocp,
+											   yyscan_t yyscanner);
 static	PLpgSQL_row		*make_scalar_list1(char *initial_name,
 										   PLpgSQL_datum *initial_datum,
-										   int lineno, int location);
+										   int lineno, int location, yyscan_t yyscanner);
 static	void			 check_sql_expr(const char *stmt,
-										RawParseMode parseMode, int location);
+										RawParseMode parseMode, int location, yyscan_t yyscanner);
 static	void			 plpgsql_sql_error_callback(void *arg);
-static	PLpgSQL_type	*parse_datatype(const char *string, int location);
+static	PLpgSQL_type	*parse_datatype(const char *string, int location, yyscan_t yyscanner);
 static	void			 check_labels(const char *start_label,
 									  const char *end_label,
-									  int end_location);
-static	PLpgSQL_expr	*read_cursor_args(PLpgSQL_var *cursor,
-										  int until);
-static	List			*read_raise_options(void);
+									  int end_location,
+									  yyscan_t yyscanner);
+static	PLpgSQL_expr	*read_cursor_args(PLpgSQL_var *cursor, int until,
+										  YYSTYPE *yylvalp, YYLTYPE *yyllocp, yyscan_t yyscanner);
+static	List			*read_raise_options(YYSTYPE *yylvalp, YYLTYPE *yyllocp, yyscan_t yyscanner);
 static	void			check_raise_parameters(PLpgSQL_stmt_raise *stmt);
 
 %}
 
+%parse-param {yyscan_t yyscanner}
+%lex-param   {yyscan_t yyscanner}
+%pure-parser
 %expect 0
 %name-prefix="plpgsql_yy"
 %locations
@@ -364,6 +369,7 @@ static	void			check_raise_parameters(PLpgSQL_stmt_raise *stmt);
 pl_function		: comp_options pl_block opt_semi
 					{
 						plpgsql_parse_result = (PLpgSQL_stmt_block *) $2;
+						(void) yynerrs;		/* suppress compiler warning */
 					}
 				;
 
@@ -418,7 +424,7 @@ pl_block		: decl_sect K_BEGIN proc_sect exception_sect K_END opt_label
 						new = palloc0(sizeof(PLpgSQL_stmt_block));
 
 						new->cmd_type	= PLPGSQL_STMT_BLOCK;
-						new->lineno		= plpgsql_location_to_lineno(@2);
+						new->lineno		= plpgsql_location_to_lineno(@2, yyscanner);
 						new->stmtid		= ++plpgsql_curr_compile->nstatements;
 						new->label		= $1.label;
 						new->n_initvars = $1.n_initvars;
@@ -426,7 +432,7 @@ pl_block		: decl_sect K_BEGIN proc_sect exception_sect K_END opt_label
 						new->body		= $3;
 						new->exceptions	= $4;
 
-						check_labels($1.label, $6, @6);
+						check_labels($1.label, $6, @6, yyscanner);
 						plpgsql_ns_pop();
 
 						$$ = (PLpgSQL_stmt *) new;
@@ -577,7 +583,7 @@ opt_scrollable :
 
 decl_cursor_query :
 					{
-						$$ = read_sql_stmt();
+						$$ = read_sql_stmt(&yylval, &yylloc, yyscanner);
 					}
 				;
 
@@ -594,7 +600,7 @@ decl_cursor_args :
 						new = palloc0(sizeof(PLpgSQL_row));
 						new->dtype = PLPGSQL_DTYPE_ROW;
 						new->refname = "(unnamed row)";
-						new->lineno = plpgsql_location_to_lineno(@1);
+						new->lineno = plpgsql_location_to_lineno(@1, yyscanner);
 						new->rowtupdesc = NULL;
 						new->nfields = list_length($2);
 						new->fieldnames = palloc(new->nfields * sizeof(char *));
@@ -698,7 +704,7 @@ decl_aliasitem	: T_WORD
 decl_varname	: T_WORD
 					{
 						$$.name = $1.ident;
-						$$.lineno = plpgsql_location_to_lineno(@1);
+						$$.lineno = plpgsql_location_to_lineno(@1, yyscanner);
 						/*
 						 * Check to make sure name isn't already declared
 						 * in the current block.
@@ -706,7 +712,7 @@ decl_varname	: T_WORD
 						if (plpgsql_ns_lookup(plpgsql_ns_top(), true,
 											  $1.ident, NULL, NULL,
 											  NULL) != NULL)
-							yyerror("duplicate declaration");
+							yyerror(&yylloc, yyscanner, "duplicate declaration");
 
 						if (plpgsql_curr_compile->extra_warnings & PLPGSQL_XCHECK_SHADOWVAR ||
 							plpgsql_curr_compile->extra_errors & PLPGSQL_XCHECK_SHADOWVAR)
@@ -726,7 +732,7 @@ decl_varname	: T_WORD
 				| unreserved_keyword
 					{
 						$$.name = pstrdup($1);
-						$$.lineno = plpgsql_location_to_lineno(@1);
+						$$.lineno = plpgsql_location_to_lineno(@1, yyscanner);
 						/*
 						 * Check to make sure name isn't already declared
 						 * in the current block.
@@ -734,7 +740,7 @@ decl_varname	: T_WORD
 						if (plpgsql_ns_lookup(plpgsql_ns_top(), true,
 											  $1, NULL, NULL,
 											  NULL) != NULL)
-							yyerror("duplicate declaration");
+							yyerror(&yylloc, yyscanner, "duplicate declaration");
 
 						if (plpgsql_curr_compile->extra_warnings & PLPGSQL_XCHECK_SHADOWVAR ||
 							plpgsql_curr_compile->extra_errors & PLPGSQL_XCHECK_SHADOWVAR)
@@ -766,7 +772,7 @@ decl_datatype	:
 						 * consume it, and then we must tell bison to forget
 						 * it.
 						 */
-						$$ = read_datatype(yychar);
+						$$ = read_datatype(yychar, &yylval, &yylloc, yyscanner);
 						yyclearin;
 					}
 				;
@@ -799,7 +805,7 @@ decl_defval		: ';'
 					{ $$ = NULL; }
 				| decl_defkey
 					{
-						$$ = read_sql_expression(';', ";");
+						$$ = read_sql_expression(';', ";", &yylval, &yylloc, yyscanner);
 					}
 				;
 
@@ -885,9 +891,9 @@ stmt_perform	: K_PERFORM
 
 						new = palloc0(sizeof(PLpgSQL_stmt_perform));
 						new->cmd_type = PLPGSQL_STMT_PERFORM;
-						new->lineno   = plpgsql_location_to_lineno(@1);
+						new->lineno   = plpgsql_location_to_lineno(@1, yyscanner);
 						new->stmtid = ++plpgsql_curr_compile->nstatements;
-						plpgsql_push_back_token(K_PERFORM);
+						plpgsql_push_back_token(K_PERFORM, &yylval, &yylloc, yyscanner);
 
 						/*
 						 * Since PERFORM isn't legal SQL, we have to cheat to
@@ -900,7 +906,8 @@ stmt_perform	: K_PERFORM
 						new->expr = read_sql_construct(';', 0, 0, ";",
 													   RAW_PARSE_DEFAULT,
 													   false, false,
-													   &startloc, NULL);
+													   &startloc, NULL,
+													   &yylval, &yylloc, yyscanner);
 						/* overwrite "perform" ... */
 						memcpy(new->expr->query, " SELECT", 7);
 						/* left-justify to get rid of the leading space */
@@ -908,7 +915,7 @@ stmt_perform	: K_PERFORM
 								strlen(new->expr->query));
 						/* offset syntax error position to account for that */
 						check_sql_expr(new->expr->query, new->expr->parseMode,
-									   startloc + 1);
+									   startloc + 1, yyscanner);
 
 						$$ = (PLpgSQL_stmt *) new;
 					}
@@ -920,10 +927,10 @@ stmt_call		: K_CALL
 
 						new = palloc0(sizeof(PLpgSQL_stmt_call));
 						new->cmd_type = PLPGSQL_STMT_CALL;
-						new->lineno = plpgsql_location_to_lineno(@1);
+						new->lineno = plpgsql_location_to_lineno(@1, yyscanner);
 						new->stmtid = ++plpgsql_curr_compile->nstatements;
-						plpgsql_push_back_token(K_CALL);
-						new->expr = read_sql_stmt();
+						plpgsql_push_back_token(K_CALL, &yylval, &yylloc, yyscanner);
+						new->expr = read_sql_stmt(&yylval, &yylloc, yyscanner);
 						new->is_call = true;
 
 						/* Remember we may need a procedure resource owner */
@@ -939,10 +946,10 @@ stmt_call		: K_CALL
 
 						new = palloc0(sizeof(PLpgSQL_stmt_call));
 						new->cmd_type = PLPGSQL_STMT_CALL;
-						new->lineno = plpgsql_location_to_lineno(@1);
+						new->lineno = plpgsql_location_to_lineno(@1, yyscanner);
 						new->stmtid = ++plpgsql_curr_compile->nstatements;
-						plpgsql_push_back_token(K_DO);
-						new->expr = read_sql_stmt();
+						plpgsql_push_back_token(K_DO, &yylval, &yylloc, yyscanner);
+						new->expr = read_sql_stmt(&yylval, &yylloc, yyscanner);
 						new->is_call = false;
 
 						/* Remember we may need a procedure resource owner */
@@ -975,18 +982,19 @@ stmt_assign		: T_DATUM
 								pmode = 0; /* keep compiler quiet */
 						}
 
-						check_assignable($1.datum, @1);
+						check_assignable($1.datum, @1, yyscanner);
 						new = palloc0(sizeof(PLpgSQL_stmt_assign));
 						new->cmd_type = PLPGSQL_STMT_ASSIGN;
-						new->lineno = plpgsql_location_to_lineno(@1);
+						new->lineno = plpgsql_location_to_lineno(@1, yyscanner);
 						new->stmtid = ++plpgsql_curr_compile->nstatements;
 						new->varno = $1.datum->dno;
 						/* Push back the head name to include it in the stmt */
-						plpgsql_push_back_token(T_DATUM);
+						plpgsql_push_back_token(T_DATUM, &yylval, &yylloc, yyscanner);
 						new->expr = read_sql_construct(';', 0, 0, ";",
 													   pmode,
 													   false, true,
-													   NULL, NULL);
+													   NULL, NULL,
+													   &yylval, &yylloc, yyscanner);
 
 						$$ = (PLpgSQL_stmt *) new;
 					}
@@ -999,7 +1007,7 @@ stmt_getdiag	: K_GET getdiag_area_opt K_DIAGNOSTICS getdiag_list ';'
 
 						new = palloc0(sizeof(PLpgSQL_stmt_getdiag));
 						new->cmd_type = PLPGSQL_STMT_GETDIAG;
-						new->lineno = plpgsql_location_to_lineno(@1);
+						new->lineno = plpgsql_location_to_lineno(@1, yyscanner);
 						new->stmtid = ++plpgsql_curr_compile->nstatements;
 						new->is_stacked = $2;
 						new->diag_items = $4;
@@ -1093,7 +1101,7 @@ getdiag_list_item : getdiag_target assign_operator getdiag_item
 
 getdiag_item :
 					{
-						int			tok = yylex();
+						int			tok = yylex(&yylval, &yylloc, yyscanner);
 
 						if (tok_is_keyword(tok, &yylval,
 										   K_ROW_COUNT, "row_count"))
@@ -1135,7 +1143,7 @@ getdiag_item :
 												K_RETURNED_SQLSTATE, "returned_sqlstate"))
 							$$ = PLPGSQL_GETDIAG_RETURNED_SQLSTATE;
 						else
-							yyerror("unrecognized GET DIAGNOSTICS item");
+							yyerror(&yylloc, yyscanner, "unrecognized GET DIAGNOSTICS item");
 					}
 				;
 
@@ -1148,24 +1156,24 @@ getdiag_target	: T_DATUM
 						 */
 						if ($1.datum->dtype == PLPGSQL_DTYPE_ROW ||
 							$1.datum->dtype == PLPGSQL_DTYPE_REC ||
-							plpgsql_peek() == '[')
+							plpgsql_peek(yyscanner) == '[')
 							ereport(ERROR,
 									(errcode(ERRCODE_SYNTAX_ERROR),
 									 errmsg("\"%s\" is not a scalar variable",
 											NameOfDatum(&($1))),
 									 parser_errposition(@1)));
-						check_assignable($1.datum, @1);
+						check_assignable($1.datum, @1, yyscanner);
 						$$ = $1.datum;
 					}
 				| T_WORD
 					{
 						/* just to give a better message than "syntax error" */
-						word_is_not_variable(&($1), @1);
+						word_is_not_variable(&($1), @1, yyscanner);
 					}
 				| T_CWORD
 					{
 						/* just to give a better message than "syntax error" */
-						cword_is_not_variable(&($1), @1);
+						cword_is_not_variable(&($1), @1, yyscanner);
 					}
 				;
 
@@ -1175,7 +1183,7 @@ stmt_if			: K_IF expr_until_then proc_sect stmt_elsifs stmt_else K_END K_IF ';'
 
 						new = palloc0(sizeof(PLpgSQL_stmt_if));
 						new->cmd_type = PLPGSQL_STMT_IF;
-						new->lineno = plpgsql_location_to_lineno(@1);
+						new->lineno = plpgsql_location_to_lineno(@1, yyscanner);
 						new->stmtid = ++plpgsql_curr_compile->nstatements;
 						new->cond = $2;
 						new->then_body = $3;
@@ -1195,7 +1203,7 @@ stmt_elsifs		:
 						PLpgSQL_if_elsif *new;
 
 						new = palloc0(sizeof(PLpgSQL_if_elsif));
-						new->lineno = plpgsql_location_to_lineno(@2);
+						new->lineno = plpgsql_location_to_lineno(@2, yyscanner);
 						new->cond = $3;
 						new->stmts = $4;
 
@@ -1215,21 +1223,21 @@ stmt_else		:
 
 stmt_case		: K_CASE opt_expr_until_when case_when_list opt_case_else K_END K_CASE ';'
 					{
-						$$ = make_case(@1, $2, $3, $4);
+						$$ = make_case(@1, $2, $3, $4, yyscanner);
 					}
 				;
 
 opt_expr_until_when	:
 					{
 						PLpgSQL_expr *expr = NULL;
-						int			tok = yylex();
+						int			tok = yylex(&yylval, &yylloc, yyscanner);
 
 						if (tok != K_WHEN)
 						{
-							plpgsql_push_back_token(tok);
-							expr = read_sql_expression(K_WHEN, "WHEN");
+							plpgsql_push_back_token(tok, &yylval, &yylloc, yyscanner);
+							expr = read_sql_expression(K_WHEN, "WHEN", &yylval, &yylloc, yyscanner);
 						}
-						plpgsql_push_back_token(K_WHEN);
+						plpgsql_push_back_token(K_WHEN, &yylval, &yylloc, yyscanner);
 						$$ = expr;
 					}
 				;
@@ -1248,7 +1256,7 @@ case_when		: K_WHEN expr_until_then proc_sect
 					{
 						PLpgSQL_case_when *new = palloc(sizeof(PLpgSQL_case_when));
 
-						new->lineno	= plpgsql_location_to_lineno(@1);
+						new->lineno	= plpgsql_location_to_lineno(@1, yyscanner);
 						new->expr = $2;
 						new->stmts = $3;
 						$$ = new;
@@ -1280,12 +1288,12 @@ stmt_loop		: opt_loop_label K_LOOP loop_body
 
 						new = palloc0(sizeof(PLpgSQL_stmt_loop));
 						new->cmd_type = PLPGSQL_STMT_LOOP;
-						new->lineno = plpgsql_location_to_lineno(@2);
+						new->lineno = plpgsql_location_to_lineno(@2, yyscanner);
 						new->stmtid = ++plpgsql_curr_compile->nstatements;
 						new->label = $1;
 						new->body = $3.stmts;
 
-						check_labels($1, $3.end_label, $3.end_label_location);
+						check_labels($1, $3.end_label, $3.end_label_location, yyscanner);
 						plpgsql_ns_pop();
 
 						$$ = (PLpgSQL_stmt *) new;
@@ -1298,13 +1306,13 @@ stmt_while		: opt_loop_label K_WHILE expr_until_loop loop_body
 
 						new = palloc0(sizeof(PLpgSQL_stmt_while));
 						new->cmd_type = PLPGSQL_STMT_WHILE;
-						new->lineno = plpgsql_location_to_lineno(@2);
+						new->lineno = plpgsql_location_to_lineno(@2, yyscanner);
 						new->stmtid	= ++plpgsql_curr_compile->nstatements;
 						new->label = $1;
 						new->cond = $3;
 						new->body = $4.stmts;
 
-						check_labels($1, $4.end_label, $4.end_label_location);
+						check_labels($1, $4.end_label, $4.end_label_location, yyscanner);
 						plpgsql_ns_pop();
 
 						$$ = (PLpgSQL_stmt *) new;
@@ -1319,7 +1327,7 @@ stmt_for		: opt_loop_label K_FOR for_control loop_body
 							PLpgSQL_stmt_fori *new;
 
 							new = (PLpgSQL_stmt_fori *) $3;
-							new->lineno = plpgsql_location_to_lineno(@2);
+							new->lineno = plpgsql_location_to_lineno(@2, yyscanner);
 							new->label = $1;
 							new->body = $4.stmts;
 							$$ = (PLpgSQL_stmt *) new;
@@ -1333,13 +1341,13 @@ stmt_for		: opt_loop_label K_FOR for_control loop_body
 								   $3->cmd_type == PLPGSQL_STMT_DYNFORS);
 							/* forq is the common supertype of all three */
 							new = (PLpgSQL_stmt_forq *) $3;
-							new->lineno = plpgsql_location_to_lineno(@2);
+							new->lineno = plpgsql_location_to_lineno(@2, yyscanner);
 							new->label = $1;
 							new->body = $4.stmts;
 							$$ = (PLpgSQL_stmt *) new;
 						}
 
-						check_labels($1, $4.end_label, $4.end_label_location);
+						check_labels($1, $4.end_label, $4.end_label_location, yyscanner);
 						/* close namespace started in opt_loop_label */
 						plpgsql_ns_pop();
 					}
@@ -1347,7 +1355,7 @@ stmt_for		: opt_loop_label K_FOR for_control loop_body
 
 for_control		: for_variable K_IN
 					{
-						int			tok = yylex();
+						int			tok = yylex(&yylval, &yylloc, yyscanner);
 						int			tokloc = yylloc;
 
 						if (tok == K_EXECUTE)
@@ -1359,7 +1367,7 @@ for_control		: for_variable K_IN
 
 							expr = read_sql_expression2(K_LOOP, K_USING,
 														"LOOP or USING",
-														&term);
+														&term, &yylval, &yylloc, yyscanner);
 
 							new = palloc0(sizeof(PLpgSQL_stmt_dynfors));
 							new->cmd_type = PLPGSQL_STMT_DYNFORS;
@@ -1367,14 +1375,14 @@ for_control		: for_variable K_IN
 							if ($1.row)
 							{
 								new->var = (PLpgSQL_variable *) $1.row;
-								check_assignable($1.row, @1);
+								check_assignable($1.row, @1, yyscanner);
 							}
 							else if ($1.scalar)
 							{
 								/* convert single scalar to list */
 								new->var = (PLpgSQL_variable *)
 									make_scalar_list1($1.name, $1.scalar,
-													  $1.lineno, @1);
+													  $1.lineno, @1, yyscanner);
 								/* make_scalar_list1 did check_assignable */
 							}
 							else
@@ -1392,7 +1400,7 @@ for_control		: for_variable K_IN
 								{
 									expr = read_sql_expression2(',', K_LOOP,
 																", or LOOP",
-																&term);
+																&term, &yylval, &yylloc, yyscanner);
 									new->params = lappend(new->params, expr);
 								} while (term == ',');
 							}
@@ -1427,8 +1435,7 @@ for_control		: for_variable K_IN
 										 parser_errposition(tokloc)));
 
 							/* collect cursor's parameters if any */
-							new->argquery = read_cursor_args(cursor,
-															 K_LOOP);
+							new->argquery = read_cursor_args(cursor, K_LOOP, &yylval, &yylloc, yyscanner);
 
 							/* create loop's private RECORD variable */
 							new->var = (PLpgSQL_variable *)
@@ -1462,7 +1469,7 @@ for_control		: for_variable K_IN
 											   K_REVERSE, "reverse"))
 								reverse = true;
 							else
-								plpgsql_push_back_token(tok);
+								plpgsql_push_back_token(tok, &yylval, &yylloc, yyscanner);
 
 							/*
 							 * Read tokens until we see either a ".."
@@ -1479,7 +1486,8 @@ for_control		: for_variable K_IN
 													   true,
 													   false,
 													   &expr1loc,
-													   &tok);
+													   &tok,
+													   &yylval, &yylloc, yyscanner);
 
 							if (tok == DOT_DOT)
 							{
@@ -1495,17 +1503,17 @@ for_control		: for_variable K_IN
 								 */
 								expr1->parseMode = RAW_PARSE_PLPGSQL_EXPR;
 								check_sql_expr(expr1->query, expr1->parseMode,
-											   expr1loc);
+											   expr1loc, yyscanner);
 
 								/* Read and check the second one */
 								expr2 = read_sql_expression2(K_LOOP, K_BY,
 															 "LOOP",
-															 &tok);
+															 &tok, &yylval, &yylloc, yyscanner);
 
 								/* Get the BY clause if any */
 								if (tok == K_BY)
 									expr_by = read_sql_expression(K_LOOP,
-																  "LOOP");
+																  "LOOP", &yylval, &yylloc, yyscanner);
 								else
 									expr_by = NULL;
 
@@ -1552,7 +1560,7 @@ for_control		: for_variable K_IN
 
 								/* Check syntax as a regular query */
 								check_sql_expr(expr1->query, expr1->parseMode,
-											   expr1loc);
+											   expr1loc, yyscanner);
 
 								new = palloc0(sizeof(PLpgSQL_stmt_fors));
 								new->cmd_type = PLPGSQL_STMT_FORS;
@@ -1560,14 +1568,14 @@ for_control		: for_variable K_IN
 								if ($1.row)
 								{
 									new->var = (PLpgSQL_variable *) $1.row;
-									check_assignable($1.row, @1);
+									check_assignable($1.row, @1, yyscanner);
 								}
 								else if ($1.scalar)
 								{
 									/* convert single scalar to list */
 									new->var = (PLpgSQL_variable *)
 										make_scalar_list1($1.name, $1.scalar,
-														  $1.lineno, @1);
+														  $1.lineno, @1, yyscanner);
 									/* make_scalar_list1 did check_assignable */
 								}
 								else
@@ -1606,7 +1614,7 @@ for_control		: for_variable K_IN
 for_variable	: T_DATUM
 					{
 						$$.name = NameOfDatum(&($1));
-						$$.lineno = plpgsql_location_to_lineno(@1);
+						$$.lineno = plpgsql_location_to_lineno(@1, yyscanner);
 						if ($1.datum->dtype == PLPGSQL_DTYPE_ROW ||
 							$1.datum->dtype == PLPGSQL_DTYPE_REC)
 						{
@@ -1620,13 +1628,15 @@ for_variable	: T_DATUM
 							$$.scalar = $1.datum;
 							$$.row = NULL;
 							/* check for comma-separated list */
-							tok = yylex();
-							plpgsql_push_back_token(tok);
+							tok = yylex(&yylval, &yylloc, yyscanner);
+							plpgsql_push_back_token(tok, &yylval, &yylloc, yyscanner);
 							if (tok == ',')
 								$$.row = (PLpgSQL_datum *)
 									read_into_scalar_list($$.name,
 														  $$.scalar,
-														  @1);
+														  @1,
+														  &yylval, &yylloc,
+														  yyscanner);
 						}
 					}
 				| T_WORD
@@ -1634,19 +1644,19 @@ for_variable	: T_DATUM
 						int			tok;
 
 						$$.name = $1.ident;
-						$$.lineno = plpgsql_location_to_lineno(@1);
+						$$.lineno = plpgsql_location_to_lineno(@1, yyscanner);
 						$$.scalar = NULL;
 						$$.row = NULL;
 						/* check for comma-separated list */
-						tok = yylex();
-						plpgsql_push_back_token(tok);
+						tok = yylex(&yylval, &yylloc, yyscanner);
+						plpgsql_push_back_token(tok, &yylval, &yylloc, yyscanner);
 						if (tok == ',')
-							word_is_not_variable(&($1), @1);
+							word_is_not_variable(&($1), @1, yyscanner);
 					}
 				| T_CWORD
 					{
 						/* just to give a better message than "syntax error" */
-						cword_is_not_variable(&($1), @1);
+						cword_is_not_variable(&($1), @1, yyscanner);
 					}
 				;
 
@@ -1656,7 +1666,7 @@ stmt_foreach_a	: opt_loop_label K_FOREACH for_variable foreach_slice K_IN K_ARRA
 
 						new = palloc0(sizeof(PLpgSQL_stmt_foreach_a));
 						new->cmd_type = PLPGSQL_STMT_FOREACH_A;
-						new->lineno = plpgsql_location_to_lineno(@2);
+						new->lineno = plpgsql_location_to_lineno(@2, yyscanner);
 						new->stmtid = ++plpgsql_curr_compile->nstatements;
 						new->label = $1;
 						new->slice = $4;
@@ -1666,12 +1676,12 @@ stmt_foreach_a	: opt_loop_label K_FOREACH for_variable foreach_slice K_IN K_ARRA
 						if ($3.row)
 						{
 							new->varno = $3.row->dno;
-							check_assignable($3.row, @3);
+							check_assignable($3.row, @3, yyscanner);
 						}
 						else if ($3.scalar)
 						{
 							new->varno = $3.scalar->dno;
-							check_assignable($3.scalar, @3);
+							check_assignable($3.scalar, @3, yyscanner);
 						}
 						else
 						{
@@ -1681,7 +1691,7 @@ stmt_foreach_a	: opt_loop_label K_FOREACH for_variable foreach_slice K_IN K_ARRA
 											 parser_errposition(@3)));
 						}
 
-						check_labels($1, $8.end_label, $8.end_label_location);
+						check_labels($1, $8.end_label, $8.end_label_location, yyscanner);
 						plpgsql_ns_pop();
 
 						$$ = (PLpgSQL_stmt *) new;
@@ -1706,7 +1716,7 @@ stmt_exit		: exit_type opt_label opt_exitcond
 						new->cmd_type = PLPGSQL_STMT_EXIT;
 						new->stmtid = ++plpgsql_curr_compile->nstatements;
 						new->is_exit = $1;
-						new->lineno	= plpgsql_location_to_lineno(@1);
+						new->lineno	= plpgsql_location_to_lineno(@1, yyscanner);
 						new->label = $2;
 						new->cond = $3;
 
@@ -1765,24 +1775,24 @@ stmt_return		: K_RETURN
 					{
 						int			tok;
 
-						tok = yylex();
+						tok = yylex(&yylval, &yylloc, yyscanner);
 						if (tok == 0)
-							yyerror("unexpected end of function definition");
+							yyerror(&yylloc, yyscanner, "unexpected end of function definition");
 
 						if (tok_is_keyword(tok, &yylval,
 										   K_NEXT, "next"))
 						{
-							$$ = make_return_next_stmt(@1);
+							$$ = make_return_next_stmt(@1, &yylval, &yylloc, yyscanner);
 						}
 						else if (tok_is_keyword(tok, &yylval,
 												K_QUERY, "query"))
 						{
-							$$ = make_return_query_stmt(@1);
+							$$ = make_return_query_stmt(@1, &yylval, &yylloc, yyscanner);
 						}
 						else
 						{
-							plpgsql_push_back_token(tok);
-							$$ = make_return_stmt(@1);
+							plpgsql_push_back_token(tok, &yylval, &yylloc, yyscanner);
+							$$ = make_return_stmt(@1, &yylval, &yylloc, yyscanner);
 						}
 					}
 				;
@@ -1795,7 +1805,7 @@ stmt_raise		: K_RAISE
 						new = palloc(sizeof(PLpgSQL_stmt_raise));
 
 						new->cmd_type = PLPGSQL_STMT_RAISE;
-						new->lineno = plpgsql_location_to_lineno(@1);
+						new->lineno = plpgsql_location_to_lineno(@1, yyscanner);
 						new->stmtid	= ++plpgsql_curr_compile->nstatements;
 						new->elog_level = ERROR;	/* default */
 						new->condname = NULL;
@@ -1803,9 +1813,9 @@ stmt_raise		: K_RAISE
 						new->params = NIL;
 						new->options = NIL;
 
-						tok = yylex();
+						tok = yylex(&yylval, &yylloc, yyscanner);
 						if (tok == 0)
-							yyerror("unexpected end of function definition");
+							yyerror(&yylloc, yyscanner, "unexpected end of function definition");
 
 						/*
 						 * We could have just RAISE, meaning to re-throw
@@ -1820,40 +1830,40 @@ stmt_raise		: K_RAISE
 											   K_EXCEPTION, "exception"))
 							{
 								new->elog_level = ERROR;
-								tok = yylex();
+								tok = yylex(&yylval, &yylloc, yyscanner);
 							}
 							else if (tok_is_keyword(tok, &yylval,
 													K_WARNING, "warning"))
 							{
 								new->elog_level = WARNING;
-								tok = yylex();
+								tok = yylex(&yylval, &yylloc, yyscanner);
 							}
 							else if (tok_is_keyword(tok, &yylval,
 													K_NOTICE, "notice"))
 							{
 								new->elog_level = NOTICE;
-								tok = yylex();
+								tok = yylex(&yylval, &yylloc, yyscanner);
 							}
 							else if (tok_is_keyword(tok, &yylval,
 													K_INFO, "info"))
 							{
 								new->elog_level = INFO;
-								tok = yylex();
+								tok = yylex(&yylval, &yylloc, yyscanner);
 							}
 							else if (tok_is_keyword(tok, &yylval,
 													K_LOG, "log"))
 							{
 								new->elog_level = LOG;
-								tok = yylex();
+								tok = yylex(&yylval, &yylloc, yyscanner);
 							}
 							else if (tok_is_keyword(tok, &yylval,
 													K_DEBUG, "debug"))
 							{
 								new->elog_level = DEBUG1;
-								tok = yylex();
+								tok = yylex(&yylval, &yylloc, yyscanner);
 							}
 							if (tok == 0)
-								yyerror("unexpected end of function definition");
+								yyerror(&yylloc, yyscanner, "unexpected end of function definition");
 
 							/*
 							 * Next we can have a condition name, or
@@ -1871,9 +1881,9 @@ stmt_raise		: K_RAISE
 								 * begins the list of parameter expressions,
 								 * or USING to begin the options list.
 								 */
-								tok = yylex();
+								tok = yylex(&yylval, &yylloc, yyscanner);
 								if (tok != ',' && tok != ';' && tok != K_USING)
-									yyerror("syntax error");
+									yyerror(&yylloc, yyscanner, "syntax error");
 
 								while (tok == ',')
 								{
@@ -1883,7 +1893,8 @@ stmt_raise		: K_RAISE
 															  ", or ; or USING",
 															  RAW_PARSE_PLPGSQL_EXPR,
 															  true, true,
-															  NULL, &tok);
+															  NULL, &tok,
+															  &yylval, &yylloc, yyscanner);
 									new->params = lappend(new->params, expr);
 								}
 							}
@@ -1896,14 +1907,14 @@ stmt_raise		: K_RAISE
 									/* next token should be a string literal */
 									char	   *sqlstatestr;
 
-									if (yylex() != SCONST)
-										yyerror("syntax error");
+									if (yylex(&yylval, &yylloc, yyscanner) != SCONST)
+										yyerror(&yylloc, yyscanner, "syntax error");
 									sqlstatestr = yylval.str;
 
 									if (strlen(sqlstatestr) != 5)
-										yyerror("invalid SQLSTATE code");
+										yyerror(&yylloc, yyscanner, "invalid SQLSTATE code");
 									if (strspn(sqlstatestr, "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ") != 5)
-										yyerror("invalid SQLSTATE code");
+										yyerror(&yylloc, yyscanner, "invalid SQLSTATE code");
 									new->condname = sqlstatestr;
 								}
 								else
@@ -1913,17 +1924,17 @@ stmt_raise		: K_RAISE
 									else if (plpgsql_token_is_unreserved_keyword(tok))
 										new->condname = pstrdup(yylval.keyword);
 									else
-										yyerror("syntax error");
+										yyerror(&yylloc, yyscanner, "syntax error");
 									plpgsql_recognize_err_condition(new->condname,
 																	false);
 								}
-								tok = yylex();
+								tok = yylex(&yylval, &yylloc, yyscanner);
 								if (tok != ';' && tok != K_USING)
-									yyerror("syntax error");
+									yyerror(&yylloc, yyscanner, "syntax error");
 							}
 
 							if (tok == K_USING)
-								new->options = read_raise_options();
+								new->options = read_raise_options(&yylval, &yylloc, yyscanner);
 						}
 
 						check_raise_parameters(new);
@@ -1940,15 +1951,15 @@ stmt_assert		: K_ASSERT
 						new = palloc(sizeof(PLpgSQL_stmt_assert));
 
 						new->cmd_type = PLPGSQL_STMT_ASSERT;
-						new->lineno = plpgsql_location_to_lineno(@1);
+						new->lineno = plpgsql_location_to_lineno(@1, yyscanner);
 						new->stmtid = ++plpgsql_curr_compile->nstatements;
 
 						new->cond = read_sql_expression2(',', ';',
 														 ", or ;",
-														 &tok);
+														 &tok, &yylval, &yylloc, yyscanner);
 
 						if (tok == ',')
-							new->message = read_sql_expression(';', ";");
+							new->message = read_sql_expression(';', ";", &yylval, &yylloc, yyscanner);
 						else
 							new->message = NULL;
 
@@ -1976,37 +1987,37 @@ loop_body		: proc_sect K_END K_LOOP opt_label ';'
  */
 stmt_execsql	: K_IMPORT
 					{
-						$$ = make_execsql_stmt(K_IMPORT, @1, NULL);
+						$$ = make_execsql_stmt(K_IMPORT, @1, NULL, &yylval, &yylloc, yyscanner);
 					}
 				| K_INSERT
 					{
-						$$ = make_execsql_stmt(K_INSERT, @1, NULL);
+						$$ = make_execsql_stmt(K_INSERT, @1, NULL, &yylval, &yylloc, yyscanner);
 					}
 				| K_MERGE
 					{
-						$$ = make_execsql_stmt(K_MERGE, @1, NULL);
+						$$ = make_execsql_stmt(K_MERGE, @1, NULL, &yylval, &yylloc, yyscanner);
 					}
 				| T_WORD
 					{
 						int			tok;
 
-						tok = yylex();
-						plpgsql_push_back_token(tok);
+						tok = yylex(&yylval, &yylloc, yyscanner);
+						plpgsql_push_back_token(tok, &yylval, &yylloc, yyscanner);
 						if (tok == '=' || tok == COLON_EQUALS ||
 							tok == '[' || tok == '.')
-							word_is_not_variable(&($1), @1);
-						$$ = make_execsql_stmt(T_WORD, @1, &($1));
+							word_is_not_variable(&($1), @1, yyscanner);
+						$$ = make_execsql_stmt(T_WORD, @1, &($1), &yylval, &yylloc, yyscanner);
 					}
 				| T_CWORD
 					{
 						int			tok;
 
-						tok = yylex();
-						plpgsql_push_back_token(tok);
+						tok = yylex(&yylval, &yylloc, yyscanner);
+						plpgsql_push_back_token(tok, &yylval, &yylloc, yyscanner);
 						if (tok == '=' || tok == COLON_EQUALS ||
 							tok == '[' || tok == '.')
-							cword_is_not_variable(&($1), @1);
-						$$ = make_execsql_stmt(T_CWORD, @1, NULL);
+							cword_is_not_variable(&($1), @1, yyscanner);
+						$$ = make_execsql_stmt(T_CWORD, @1, NULL, &yylval, &yylloc, yyscanner);
 					}
 				;
 
@@ -2020,11 +2031,12 @@ stmt_dynexecute : K_EXECUTE
 												  "INTO or USING or ;",
 												  RAW_PARSE_PLPGSQL_EXPR,
 												  true, true,
-												  NULL, &endtoken);
+												  NULL, &endtoken,
+												  &yylval, &yylloc, yyscanner);
 
 						new = palloc(sizeof(PLpgSQL_stmt_dynexecute));
 						new->cmd_type = PLPGSQL_STMT_DYNEXECUTE;
-						new->lineno = plpgsql_location_to_lineno(@1);
+						new->lineno = plpgsql_location_to_lineno(@1, yyscanner);
 						new->stmtid = ++plpgsql_curr_compile->nstatements;
 						new->query = expr;
 						new->into = false;
@@ -2044,29 +2056,30 @@ stmt_dynexecute : K_EXECUTE
 							if (endtoken == K_INTO)
 							{
 								if (new->into)			/* multiple INTO */
-									yyerror("syntax error");
+									yyerror(&yylloc, yyscanner, "syntax error");
 								new->into = true;
-								read_into_target(&new->target, &new->strict);
-								endtoken = yylex();
+								read_into_target(&new->target, &new->strict, &yylval, &yylloc, yyscanner);
+								endtoken = yylex(&yylval, &yylloc, yyscanner);
 							}
 							else if (endtoken == K_USING)
 							{
 								if (new->params)		/* multiple USING */
-									yyerror("syntax error");
+									yyerror(&yylloc, yyscanner, "syntax error");
 								do
 								{
 									expr = read_sql_construct(',', ';', K_INTO,
 															  ", or ; or INTO",
 															  RAW_PARSE_PLPGSQL_EXPR,
 															  true, true,
-															  NULL, &endtoken);
+															  NULL, &endtoken,
+															  &yylval, &yylloc, yyscanner);
 									new->params = lappend(new->params, expr);
 								} while (endtoken == ',');
 							}
 							else if (endtoken == ';')
 								break;
 							else
-								yyerror("syntax error");
+								yyerror(&yylloc, yyscanner, "syntax error");
 						}
 
 						$$ = (PLpgSQL_stmt *) new;
@@ -2081,7 +2094,7 @@ stmt_open		: K_OPEN cursor_variable
 
 						new = palloc0(sizeof(PLpgSQL_stmt_open));
 						new->cmd_type = PLPGSQL_STMT_OPEN;
-						new->lineno = plpgsql_location_to_lineno(@1);
+						new->lineno = plpgsql_location_to_lineno(@1, yyscanner);
 						new->stmtid = ++plpgsql_curr_compile->nstatements;
 						new->curvar = $2->dno;
 						new->cursor_options = CURSOR_OPT_FAST_PLAN;
@@ -2089,29 +2102,29 @@ stmt_open		: K_OPEN cursor_variable
 						if ($2->cursor_explicit_expr == NULL)
 						{
 							/* be nice if we could use opt_scrollable here */
-							tok = yylex();
+							tok = yylex(&yylval, &yylloc, yyscanner);
 							if (tok_is_keyword(tok, &yylval,
 											   K_NO, "no"))
 							{
-								tok = yylex();
+								tok = yylex(&yylval, &yylloc, yyscanner);
 								if (tok_is_keyword(tok, &yylval,
 												   K_SCROLL, "scroll"))
 								{
 									new->cursor_options |= CURSOR_OPT_NO_SCROLL;
-									tok = yylex();
+									tok = yylex(&yylval, &yylloc, yyscanner);
 								}
 							}
 							else if (tok_is_keyword(tok, &yylval,
 													K_SCROLL, "scroll"))
 							{
 								new->cursor_options |= CURSOR_OPT_SCROLL;
-								tok = yylex();
+								tok = yylex(&yylval, &yylloc, yyscanner);
 							}
 
 							if (tok != K_FOR)
-								yyerror("syntax error, expected \"FOR\"");
+								yyerror(&yylloc, yyscanner, "syntax error, expected \"FOR\"");
 
-							tok = yylex();
+							tok = yylex(&yylval, &yylloc, yyscanner);
 							if (tok == K_EXECUTE)
 							{
 								int			endtoken;
@@ -2119,7 +2132,7 @@ stmt_open		: K_OPEN cursor_variable
 								new->dynquery =
 									read_sql_expression2(K_USING, ';',
 														 "USING or ;",
-														 &endtoken);
+														 &endtoken, &yylval, &yylloc, yyscanner);
 
 								/* If we found "USING", collect argument(s) */
 								if (endtoken == K_USING)
@@ -2130,7 +2143,7 @@ stmt_open		: K_OPEN cursor_variable
 									{
 										expr = read_sql_expression2(',', ';',
 																	", or ;",
-																	&endtoken);
+																	&endtoken, &yylval, &yylloc, yyscanner);
 										new->params = lappend(new->params,
 															  expr);
 									} while (endtoken == ',');
@@ -2138,14 +2151,14 @@ stmt_open		: K_OPEN cursor_variable
 							}
 							else
 							{
-								plpgsql_push_back_token(tok);
-								new->query = read_sql_stmt();
+								plpgsql_push_back_token(tok, &yylval, &yylloc, yyscanner);
+								new->query = read_sql_stmt(&yylval, &yylloc, yyscanner);
 							}
 						}
 						else
 						{
 							/* predefined cursor query, so read args */
-							new->argquery = read_cursor_args($2, ';');
+							new->argquery = read_cursor_args($2, ';', &yylval, &yylloc, yyscanner);
 						}
 
 						$$ = (PLpgSQL_stmt *) new;
@@ -2158,10 +2171,10 @@ stmt_fetch		: K_FETCH opt_fetch_direction cursor_variable K_INTO
 						PLpgSQL_variable *target;
 
 						/* We have already parsed everything through the INTO keyword */
-						read_into_target(&target, NULL);
+						read_into_target(&target, NULL, &yylval, &yylloc, yyscanner);
 
-						if (yylex() != ';')
-							yyerror("syntax error");
+						if (yylex(&yylval, &yylloc, yyscanner) != ';')
+							yyerror(&yylloc, yyscanner, "syntax error");
 
 						/*
 						 * We don't allow multiple rows in PL/pgSQL's FETCH
@@ -2173,7 +2186,7 @@ stmt_fetch		: K_FETCH opt_fetch_direction cursor_variable K_INTO
 									 errmsg("FETCH statement cannot return multiple rows"),
 									 parser_errposition(@1)));
 
-						fetch->lineno = plpgsql_location_to_lineno(@1);
+						fetch->lineno = plpgsql_location_to_lineno(@1, yyscanner);
 						fetch->target	= target;
 						fetch->curvar	= $3->dno;
 						fetch->is_move	= false;
@@ -2186,7 +2199,7 @@ stmt_move		: K_MOVE opt_fetch_direction cursor_variable ';'
 					{
 						PLpgSQL_stmt_fetch *fetch = $2;
 
-						fetch->lineno = plpgsql_location_to_lineno(@1);
+						fetch->lineno = plpgsql_location_to_lineno(@1, yyscanner);
 						fetch->curvar = $3->dno;
 						fetch->is_move = true;
 
@@ -2196,7 +2209,7 @@ stmt_move		: K_MOVE opt_fetch_direction cursor_variable ';'
 
 opt_fetch_direction	:
 					{
-						$$ = read_fetch_direction();
+						$$ = read_fetch_direction(&yylval, &yylloc, yyscanner);
 					}
 				;
 
@@ -2206,7 +2219,7 @@ stmt_close		: K_CLOSE cursor_variable ';'
 
 						new = palloc(sizeof(PLpgSQL_stmt_close));
 						new->cmd_type = PLPGSQL_STMT_CLOSE;
-						new->lineno = plpgsql_location_to_lineno(@1);
+						new->lineno = plpgsql_location_to_lineno(@1, yyscanner);
 						new->stmtid = ++plpgsql_curr_compile->nstatements;
 						new->curvar = $2->dno;
 
@@ -2227,7 +2240,7 @@ stmt_commit		: K_COMMIT opt_transaction_chain ';'
 
 						new = palloc(sizeof(PLpgSQL_stmt_commit));
 						new->cmd_type = PLPGSQL_STMT_COMMIT;
-						new->lineno = plpgsql_location_to_lineno(@1);
+						new->lineno = plpgsql_location_to_lineno(@1, yyscanner);
 						new->stmtid = ++plpgsql_curr_compile->nstatements;
 						new->chain = $2;
 
@@ -2241,7 +2254,7 @@ stmt_rollback	: K_ROLLBACK opt_transaction_chain ';'
 
 						new = palloc(sizeof(PLpgSQL_stmt_rollback));
 						new->cmd_type = PLPGSQL_STMT_ROLLBACK;
-						new->lineno = plpgsql_location_to_lineno(@1);
+						new->lineno = plpgsql_location_to_lineno(@1, yyscanner);
 						new->stmtid = ++plpgsql_curr_compile->nstatements;
 						new->chain = $2;
 
@@ -2264,7 +2277,7 @@ cursor_variable	: T_DATUM
 						 * just throw an error if next token is '['.
 						 */
 						if ($1.datum->dtype != PLPGSQL_DTYPE_VAR ||
-							plpgsql_peek() == '[')
+							plpgsql_peek(yyscanner) == '[')
 							ereport(ERROR,
 									(errcode(ERRCODE_DATATYPE_MISMATCH),
 									 errmsg("cursor variable must be a simple variable"),
@@ -2281,12 +2294,12 @@ cursor_variable	: T_DATUM
 				| T_WORD
 					{
 						/* just to give a better message than "syntax error" */
-						word_is_not_variable(&($1), @1);
+						word_is_not_variable(&($1), @1, yyscanner);
 					}
 				| T_CWORD
 					{
 						/* just to give a better message than "syntax error" */
-						cword_is_not_variable(&($1), @1);
+						cword_is_not_variable(&($1), @1, yyscanner);
 					}
 				;
 
@@ -2301,7 +2314,7 @@ exception_sect	:
 						 * scope of the names extends to the end of the
 						 * current block.
 						 */
-						int			lineno = plpgsql_location_to_lineno(@1);
+						int			lineno = plpgsql_location_to_lineno(@1, yyscanner);
 						PLpgSQL_exception_block *new = palloc(sizeof(PLpgSQL_exception_block));
 						PLpgSQL_variable *var;
 
@@ -2349,7 +2362,7 @@ proc_exception	: K_WHEN proc_conditions K_THEN proc_sect
 						PLpgSQL_exception *new;
 
 						new = palloc0(sizeof(PLpgSQL_exception));
-						new->lineno = plpgsql_location_to_lineno(@1);
+						new->lineno = plpgsql_location_to_lineno(@1, yyscanner);
 						new->conditions = $2;
 						new->action = $4;
 
@@ -2384,14 +2397,14 @@ proc_condition	: any_identifier
 								char   *sqlstatestr;
 
 								/* next token should be a string literal */
-								if (yylex() != SCONST)
-									yyerror("syntax error");
+								if (yylex(&yylval, &yylloc, yyscanner) != SCONST)
+									yyerror(&yylloc, yyscanner, "syntax error");
 								sqlstatestr = yylval.str;
 
 								if (strlen(sqlstatestr) != 5)
-									yyerror("invalid SQLSTATE code");
+									yyerror(&yylloc, yyscanner, "invalid SQLSTATE code");
 								if (strspn(sqlstatestr, "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ") != 5)
-									yyerror("invalid SQLSTATE code");
+									yyerror(&yylloc, yyscanner, "invalid SQLSTATE code");
 
 								new = palloc(sizeof(PLpgSQL_condition));
 								new->sqlerrstate =
@@ -2409,15 +2422,15 @@ proc_condition	: any_identifier
 				;
 
 expr_until_semi :
-					{ $$ = read_sql_expression(';', ";"); }
+					{ $$ = read_sql_expression(';', ";", &yylval, &yylloc, yyscanner); }
 				;
 
 expr_until_then :
-					{ $$ = read_sql_expression(K_THEN, "THEN"); }
+					{ $$ = read_sql_expression(K_THEN, "THEN", &yylval, &yylloc, yyscanner); }
 				;
 
 expr_until_loop :
-					{ $$ = read_sql_expression(K_LOOP, "LOOP"); }
+					{ $$ = read_sql_expression(K_LOOP, "LOOP", &yylval, &yylloc, yyscanner); }
 				;
 
 opt_block_label	:
@@ -2475,7 +2488,7 @@ any_identifier	: T_WORD
 				| T_DATUM
 					{
 						if ($1.ident == NULL) /* composite name not OK */
-							yyerror("syntax error");
+							yyerror(&yylloc, yyscanner, "syntax error");
 						$$ = $1.ident;
 					}
 				;
@@ -2601,7 +2614,7 @@ tok_is_keyword(int token, union YYSTYPE *lval,
  * ie, unrecognized variable.
  */
 static void
-word_is_not_variable(PLword *word, int location)
+word_is_not_variable(PLword *word, int location, yyscan_t yyscanner)
 {
 	ereport(ERROR,
 			(errcode(ERRCODE_SYNTAX_ERROR),
@@ -2612,7 +2625,7 @@ word_is_not_variable(PLword *word, int location)
 
 /* Same, for a CWORD */
 static void
-cword_is_not_variable(PLcword *cword, int location)
+cword_is_not_variable(PLcword *cword, int location, yyscan_t yyscanner)
 {
 	ereport(ERROR,
 			(errcode(ERRCODE_SYNTAX_ERROR),
@@ -2627,42 +2640,45 @@ cword_is_not_variable(PLcword *cword, int location)
  * look at yylval and yylloc.
  */
 static void
-current_token_is_not_variable(int tok)
+current_token_is_not_variable(int tok, YYSTYPE *yylvalp, YYLTYPE *yyllocp, yyscan_t yyscanner)
 {
 	if (tok == T_WORD)
-		word_is_not_variable(&(yylval.word), yylloc);
+		word_is_not_variable(&(yylvalp->word), *yyllocp, yyscanner);
 	else if (tok == T_CWORD)
-		cword_is_not_variable(&(yylval.cword), yylloc);
+		cword_is_not_variable(&(yylvalp->cword), *yyllocp, yyscanner);
 	else
-		yyerror("syntax error");
+		yyerror(yyllocp, yyscanner, "syntax error");
 }
 
 /* Convenience routine to read an expression with one possible terminator */
 static PLpgSQL_expr *
-read_sql_expression(int until, const char *expected)
+read_sql_expression(int until, const char *expected, YYSTYPE *yylvalp, YYLTYPE *yyllocp, yyscan_t yyscanner)
 {
 	return read_sql_construct(until, 0, 0, expected,
 							  RAW_PARSE_PLPGSQL_EXPR,
-							  true, true, NULL, NULL);
+							  true, true, NULL, NULL,
+							  yylvalp, yyllocp, yyscanner);
 }
 
 /* Convenience routine to read an expression with two possible terminators */
 static PLpgSQL_expr *
 read_sql_expression2(int until, int until2, const char *expected,
-					 int *endtoken)
+					 int *endtoken, YYSTYPE *yylvalp, YYLTYPE *yyllocp, yyscan_t yyscanner)
 {
 	return read_sql_construct(until, until2, 0, expected,
 							  RAW_PARSE_PLPGSQL_EXPR,
-							  true, true, NULL, endtoken);
+							  true, true, NULL, endtoken,
+							  yylvalp, yyllocp, yyscanner);
 }
 
 /* Convenience routine to read a SQL statement that must end with ';' */
 static PLpgSQL_expr *
-read_sql_stmt(void)
+read_sql_stmt(YYSTYPE *yylvalp, YYLTYPE *yyllocp, yyscan_t yyscanner)
 {
 	return read_sql_construct(';', 0, 0, ";",
 							  RAW_PARSE_DEFAULT,
-							  false, true, NULL, NULL);
+							  false, true, NULL, NULL,
+							  yylvalp, yyllocp, yyscanner);
 }
 
 /*
@@ -2688,7 +2704,9 @@ read_sql_construct(int until,
 				   bool isexpression,
 				   bool valid_sql,
 				   int *startloc,
-				   int *endtoken)
+				   int *endtoken,
+				   YYSTYPE *yylvalp, YYLTYPE *yyllocp,
+				   yyscan_t yyscanner)
 {
 	int			tok;
 	StringInfoData ds;
@@ -2706,9 +2724,9 @@ read_sql_construct(int until,
 
 	for (;;)
 	{
-		tok = yylex();
+		tok = yylex(yylvalp, yyllocp, yyscanner);
 		if (startlocation < 0)	/* remember loc of first token */
-			startlocation = yylloc;
+			startlocation = *yyllocp;
 		if (tok == until && parenlevel == 0)
 			break;
 		if (tok == until2 && parenlevel == 0)
@@ -2721,7 +2739,7 @@ read_sql_construct(int until,
 		{
 			parenlevel--;
 			if (parenlevel < 0)
-				yyerror("mismatched parentheses");
+				yyerror(yyllocp, yyscanner, "mismatched parentheses");
 		}
 
 		/*
@@ -2732,22 +2750,22 @@ read_sql_construct(int until,
 		if (tok == 0 || tok == ';')
 		{
 			if (parenlevel != 0)
-				yyerror("mismatched parentheses");
+				yyerror(yyllocp, yyscanner, "mismatched parentheses");
 			if (isexpression)
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("missing \"%s\" at end of SQL expression",
 								expected),
-						 parser_errposition(yylloc)));
+						 parser_errposition(*yyllocp)));
 			else
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("missing \"%s\" at end of SQL statement",
 								expected),
-						 parser_errposition(yylloc)));
+						 parser_errposition(*yyllocp)));
 		}
 		/* Remember end+1 location of last accepted token */
-		endlocation = yylloc + plpgsql_token_length();
+		endlocation = *yyllocp + plpgsql_token_length(yyscanner);
 	}
 
 	plpgsql_IdentifierLookup = save_IdentifierLookup;
@@ -2761,9 +2779,9 @@ read_sql_construct(int until,
 	if (startlocation >= endlocation)
 	{
 		if (isexpression)
-			yyerror("missing expression");
+			yyerror(yyllocp, yyscanner, "missing expression");
 		else
-			yyerror("missing SQL statement");
+			yyerror(yyllocp, yyscanner, "missing SQL statement");
 	}
 
 	/*
@@ -2773,7 +2791,7 @@ read_sql_construct(int until,
 	 * whitespace by hand, but that causes problems if there's a "-- comment"
 	 * in front of said whitespace.)
 	 */
-	plpgsql_append_source_text(&ds, startlocation, endlocation);
+	plpgsql_append_source_text(&ds, startlocation, endlocation, yyscanner);
 
 	expr = palloc0(sizeof(PLpgSQL_expr));
 	expr->query = pstrdup(ds.data);
@@ -2785,7 +2803,7 @@ read_sql_construct(int until,
 	pfree(ds.data);
 
 	if (valid_sql)
-		check_sql_expr(expr->query, expr->parseMode, startlocation);
+		check_sql_expr(expr->query, expr->parseMode, startlocation, yyscanner);
 
 	return expr;
 }
@@ -2795,7 +2813,7 @@ read_sql_construct(int until,
  * Returns a PLpgSQL_type struct.
  */
 static PLpgSQL_type *
-read_datatype(int tok)
+read_datatype(int tok, YYSTYPE *yylvalp, YYLTYPE *yyllocp, yyscan_t yyscanner)
 {
 	StringInfoData ds;
 	char	   *type_name;
@@ -2808,10 +2826,10 @@ read_datatype(int tok)
 
 	/* Often there will be a lookahead token, but if not, get one */
 	if (tok == YYEMPTY)
-		tok = yylex();
+		tok = yylex(yylvalp, yyllocp, yyscanner);
 
 	/* The current token is the start of what we'll pass to parse_datatype */
-	startlocation = yylloc;
+	startlocation = *yyllocp;
 
 	/*
 	 * If we have a simple or composite identifier, check for %TYPE and
@@ -2819,48 +2837,48 @@ read_datatype(int tok)
 	 */
 	if (tok == T_WORD)
 	{
-		char	   *dtname = yylval.word.ident;
+		char	   *dtname = yylvalp->word.ident;
 
-		tok = yylex();
+		tok = yylex(yylvalp, yyllocp, yyscanner);
 		if (tok == '%')
 		{
-			tok = yylex();
-			if (tok_is_keyword(tok, &yylval,
+			tok = yylex(yylvalp, yyllocp, yyscanner);
+			if (tok_is_keyword(tok, yylvalp,
 							   K_TYPE, "type"))
 				result = plpgsql_parse_wordtype(dtname);
-			else if (tok_is_keyword(tok, &yylval,
+			else if (tok_is_keyword(tok, yylvalp,
 									K_ROWTYPE, "rowtype"))
 				result = plpgsql_parse_wordrowtype(dtname);
 		}
 	}
 	else if (plpgsql_token_is_unreserved_keyword(tok))
 	{
-		char	   *dtname = pstrdup(yylval.keyword);
+		char	   *dtname = pstrdup(yylvalp->keyword);
 
-		tok = yylex();
+		tok = yylex(yylvalp, yyllocp, yyscanner);
 		if (tok == '%')
 		{
-			tok = yylex();
-			if (tok_is_keyword(tok, &yylval,
+			tok = yylex(yylvalp, yyllocp, yyscanner);
+			if (tok_is_keyword(tok, yylvalp,
 							   K_TYPE, "type"))
 				result = plpgsql_parse_wordtype(dtname);
-			else if (tok_is_keyword(tok, &yylval,
+			else if (tok_is_keyword(tok, yylvalp,
 									K_ROWTYPE, "rowtype"))
 				result = plpgsql_parse_wordrowtype(dtname);
 		}
 	}
 	else if (tok == T_CWORD)
 	{
-		List	   *dtnames = yylval.cword.idents;
+		List	   *dtnames = yylvalp->cword.idents;
 
-		tok = yylex();
+		tok = yylex(yylvalp, yyllocp, yyscanner);
 		if (tok == '%')
 		{
-			tok = yylex();
-			if (tok_is_keyword(tok, &yylval,
+			tok = yylex(yylvalp, yyllocp, yyscanner);
+			if (tok_is_keyword(tok, yylvalp,
 							   K_TYPE, "type"))
 				result = plpgsql_parse_cwordtype(dtnames);
-			else if (tok_is_keyword(tok, &yylval,
+			else if (tok_is_keyword(tok, yylvalp,
 									K_ROWTYPE, "rowtype"))
 				result = plpgsql_parse_cwordrowtype(dtnames);
 		}
@@ -2878,24 +2896,24 @@ read_datatype(int tok)
 	{
 		bool		is_array = false;
 
-		tok = yylex();
-		if (tok_is_keyword(tok, &yylval,
+		tok = yylex(yylvalp, yyllocp, yyscanner);
+		if (tok_is_keyword(tok, yylvalp,
 						   K_ARRAY, "array"))
 		{
 			is_array = true;
-			tok = yylex();
+			tok = yylex(yylvalp, yyllocp, yyscanner);
 		}
 		while (tok == '[')
 		{
 			is_array = true;
-			tok = yylex();
+			tok = yylex(yylvalp, yyllocp, yyscanner);
 			if (tok == ICONST)
-				tok = yylex();
+				tok = yylex(yylvalp, yyllocp, yyscanner);
 			if (tok != ']')
-				yyerror("syntax error, expected \"]\"");
-			tok = yylex();
+				yyerror(yyllocp, yyscanner, "syntax error, expected \"]\"");
+			tok = yylex(yylvalp, yyllocp, yyscanner);
 		}
-		plpgsql_push_back_token(tok);
+		plpgsql_push_back_token(tok, yylvalp, yyllocp, yyscanner);
 
 		if (is_array)
 			result = plpgsql_build_datatype_arrayof(result);
@@ -2914,9 +2932,9 @@ read_datatype(int tok)
 		if (tok == 0)
 		{
 			if (parenlevel != 0)
-				yyerror("mismatched parentheses");
+				yyerror(yyllocp, yyscanner, "mismatched parentheses");
 			else
-				yyerror("incomplete data type declaration");
+				yyerror(yyllocp, yyscanner, "incomplete data type declaration");
 		}
 		/* Possible followers for datatype in a declaration */
 		if (tok == K_COLLATE || tok == K_NOT ||
@@ -2930,22 +2948,22 @@ read_datatype(int tok)
 		else if (tok == ')')
 			parenlevel--;
 
-		tok = yylex();
+		tok = yylex(yylvalp, yyllocp, yyscanner);
 	}
 
 	/* set up ds to contain complete typename text */
 	initStringInfo(&ds);
-	plpgsql_append_source_text(&ds, startlocation, yylloc);
+	plpgsql_append_source_text(&ds, startlocation, *yyllocp, yyscanner);
 	type_name = ds.data;
 
 	if (type_name[0] == '\0')
-		yyerror("missing data type declaration");
+		yyerror(yyllocp, yyscanner, "missing data type declaration");
 
-	result = parse_datatype(type_name, startlocation);
+	result = parse_datatype(type_name, startlocation, yyscanner);
 
 	pfree(ds.data);
 
-	plpgsql_push_back_token(tok);
+	plpgsql_push_back_token(tok, yylvalp, yyllocp, yyscanner);
 
 	return result;
 }
@@ -2956,7 +2974,7 @@ read_datatype(int tok)
  * If firsttoken == T_WORD, pass its yylval value as "word", else pass NULL.
  */
 static PLpgSQL_stmt *
-make_execsql_stmt(int firsttoken, int location, PLword *word)
+make_execsql_stmt(int firsttoken, int location, PLword *word, YYSTYPE *yylvalp, YYLTYPE *yyllocp, yyscan_t yyscanner)
 {
 	StringInfoData ds;
 	IdentifierLookup save_IdentifierLookup;
@@ -3025,22 +3043,22 @@ make_execsql_stmt(int firsttoken, int location, PLword *word)
 	for (;;)
 	{
 		prev_tok = tok;
-		tok = yylex();
+		tok = yylex(yylvalp, yyllocp, yyscanner);
 		if (have_into && into_end_loc < 0)
-			into_end_loc = yylloc;	/* token after the INTO part */
+			into_end_loc = *yyllocp;	/* token after the INTO part */
 		/* Detect CREATE [OR REPLACE] {FUNCTION|PROCEDURE} */
 		if (tokens[0] == 'c' && token_count < sizeof(tokens))
 		{
 			if (tok == K_OR)
 				tokens[token_count] = 'o';
 			else if (tok == T_WORD &&
-					 strcmp(yylval.word.ident, "replace") == 0)
+					 strcmp(yylvalp->word.ident, "replace") == 0)
 				tokens[token_count] = 'r';
 			else if (tok == T_WORD &&
-					 strcmp(yylval.word.ident, "function") == 0)
+					 strcmp(yylvalp->word.ident, "function") == 0)
 				tokens[token_count] = 'f';
 			else if (tok == T_WORD &&
-					 strcmp(yylval.word.ident, "procedure") == 0)
+					 strcmp(yylvalp->word.ident, "procedure") == 0)
 				tokens[token_count] = 'f';	/* treat same as "function" */
 			if (tokens[1] == 'f' ||
 				(tokens[1] == 'o' && tokens[2] == 'r' && tokens[3] == 'f'))
@@ -3064,7 +3082,7 @@ make_execsql_stmt(int firsttoken, int location, PLword *word)
 		if (tok == ';' && paren_depth == 0 && begin_depth == 0)
 			break;
 		if (tok == 0)
-			yyerror("unexpected end of function definition");
+			yyerror(yyllocp, yyscanner, "unexpected end of function definition");
 		if (tok == K_INTO)
 		{
 			if (prev_tok == K_INSERT)
@@ -3074,11 +3092,11 @@ make_execsql_stmt(int firsttoken, int location, PLword *word)
 			if (firsttoken == K_IMPORT)
 				continue;		/* IMPORT ... INTO is not an INTO-target */
 			if (have_into)
-				yyerror("INTO specified more than once");
+				yyerror(yyllocp, yyscanner, "INTO specified more than once");
 			have_into = true;
-			into_start_loc = yylloc;
+			into_start_loc = *yyllocp;
 			plpgsql_IdentifierLookup = IDENTIFIER_LOOKUP_NORMAL;
-			read_into_target(&target, &have_strict);
+			read_into_target(&target, &have_strict, yylvalp, yyllocp, yyscanner);
 			plpgsql_IdentifierLookup = IDENTIFIER_LOOKUP_EXPR;
 		}
 	}
@@ -3092,12 +3110,12 @@ make_execsql_stmt(int firsttoken, int location, PLword *word)
 		 * text, so that locations within the redacted SQL statement still
 		 * line up with those in the original source text.
 		 */
-		plpgsql_append_source_text(&ds, location, into_start_loc);
+		plpgsql_append_source_text(&ds, location, into_start_loc, yyscanner);
 		appendStringInfoSpaces(&ds, into_end_loc - into_start_loc);
-		plpgsql_append_source_text(&ds, into_end_loc, yylloc);
+		plpgsql_append_source_text(&ds, into_end_loc, *yyllocp, yyscanner);
 	}
 	else
-		plpgsql_append_source_text(&ds, location, yylloc);
+		plpgsql_append_source_text(&ds, location, *yyllocp, yyscanner);
 
 	/* trim any trailing whitespace, for neatness */
 	while (ds.len > 0 && scanner_isspace(ds.data[ds.len - 1]))
@@ -3112,11 +3130,11 @@ make_execsql_stmt(int firsttoken, int location, PLword *word)
 	expr->ns = plpgsql_ns_top();
 	pfree(ds.data);
 
-	check_sql_expr(expr->query, expr->parseMode, location);
+	check_sql_expr(expr->query, expr->parseMode, location, yyscanner);
 
 	execsql = palloc0(sizeof(PLpgSQL_stmt_execsql));
 	execsql->cmd_type = PLPGSQL_STMT_EXECSQL;
-	execsql->lineno = plpgsql_location_to_lineno(location);
+	execsql->lineno = plpgsql_location_to_lineno(location, yyscanner);
 	execsql->stmtid = ++plpgsql_curr_compile->nstatements;
 	execsql->sqlstmt = expr;
 	execsql->into = have_into;
@@ -3131,7 +3149,7 @@ make_execsql_stmt(int firsttoken, int location, PLword *word)
  * Read FETCH or MOVE direction clause (everything through FROM/IN).
  */
 static PLpgSQL_stmt_fetch *
-read_fetch_direction(void)
+read_fetch_direction(YYSTYPE *yylvalp, YYLTYPE *yyllocp, yyscan_t yyscanner)
 {
 	PLpgSQL_stmt_fetch *fetch;
 	int			tok;
@@ -3150,65 +3168,65 @@ read_fetch_direction(void)
 	fetch->expr = NULL;
 	fetch->returns_multiple_rows = false;
 
-	tok = yylex();
+	tok = yylex(yylvalp, yyllocp, yyscanner);
 	if (tok == 0)
-		yyerror("unexpected end of function definition");
+		yyerror(yyllocp, yyscanner, "unexpected end of function definition");
 
-	if (tok_is_keyword(tok, &yylval,
+	if (tok_is_keyword(tok, yylvalp,
 					   K_NEXT, "next"))
 	{
 		/* use defaults */
 	}
-	else if (tok_is_keyword(tok, &yylval,
+	else if (tok_is_keyword(tok, yylvalp,
 							K_PRIOR, "prior"))
 	{
 		fetch->direction = FETCH_BACKWARD;
 	}
-	else if (tok_is_keyword(tok, &yylval,
+	else if (tok_is_keyword(tok, yylvalp,
 							K_FIRST, "first"))
 	{
 		fetch->direction = FETCH_ABSOLUTE;
 	}
-	else if (tok_is_keyword(tok, &yylval,
+	else if (tok_is_keyword(tok, yylvalp,
 							K_LAST, "last"))
 	{
 		fetch->direction = FETCH_ABSOLUTE;
 		fetch->how_many = -1;
 	}
-	else if (tok_is_keyword(tok, &yylval,
+	else if (tok_is_keyword(tok, yylvalp,
 							K_ABSOLUTE, "absolute"))
 	{
 		fetch->direction = FETCH_ABSOLUTE;
 		fetch->expr = read_sql_expression2(K_FROM, K_IN,
 										   "FROM or IN",
-										   NULL);
+										   NULL, yylvalp, yyllocp, yyscanner);
 		check_FROM = false;
 	}
-	else if (tok_is_keyword(tok, &yylval,
+	else if (tok_is_keyword(tok, yylvalp,
 							K_RELATIVE, "relative"))
 	{
 		fetch->direction = FETCH_RELATIVE;
 		fetch->expr = read_sql_expression2(K_FROM, K_IN,
 										   "FROM or IN",
-										   NULL);
+										   NULL, yylvalp, yyllocp, yyscanner);
 		check_FROM = false;
 	}
-	else if (tok_is_keyword(tok, &yylval,
+	else if (tok_is_keyword(tok, yylvalp,
 							K_ALL, "all"))
 	{
 		fetch->how_many = FETCH_ALL;
 		fetch->returns_multiple_rows = true;
 	}
-	else if (tok_is_keyword(tok, &yylval,
+	else if (tok_is_keyword(tok, yylvalp,
 							K_FORWARD, "forward"))
 	{
-		complete_direction(fetch, &check_FROM);
+		complete_direction(fetch, &check_FROM, yylvalp, yyllocp, yyscanner);
 	}
-	else if (tok_is_keyword(tok, &yylval,
+	else if (tok_is_keyword(tok, yylvalp,
 							K_BACKWARD, "backward"))
 	{
 		fetch->direction = FETCH_BACKWARD;
-		complete_direction(fetch, &check_FROM);
+		complete_direction(fetch, &check_FROM, yylvalp, yyllocp, yyscanner);
 	}
 	else if (tok == K_FROM || tok == K_IN)
 	{
@@ -3218,7 +3236,7 @@ read_fetch_direction(void)
 	else if (tok == T_DATUM)
 	{
 		/* Assume there's no direction clause and tok is a cursor name */
-		plpgsql_push_back_token(tok);
+		plpgsql_push_back_token(tok, yylvalp, yyllocp, yyscanner);
 		check_FROM = false;
 	}
 	else
@@ -3231,10 +3249,10 @@ read_fetch_direction(void)
 		 * will trigger.  Perhaps this can be improved someday, but it hardly
 		 * seems worth a lot of work.
 		 */
-		plpgsql_push_back_token(tok);
+		plpgsql_push_back_token(tok, yylvalp, yyllocp, yyscanner);
 		fetch->expr = read_sql_expression2(K_FROM, K_IN,
 										   "FROM or IN",
-										   NULL);
+										   NULL, yylvalp, yyllocp, yyscanner);
 		fetch->returns_multiple_rows = true;
 		check_FROM = false;
 	}
@@ -3242,9 +3260,9 @@ read_fetch_direction(void)
 	/* check FROM or IN keyword after direction's specification */
 	if (check_FROM)
 	{
-		tok = yylex();
+		tok = yylex(yylvalp, yyllocp, yyscanner);
 		if (tok != K_FROM && tok != K_IN)
-			yyerror("expected FROM or IN");
+			yyerror(yyllocp, yyscanner, "expected FROM or IN");
 	}
 
 	return fetch;
@@ -3257,13 +3275,13 @@ read_fetch_direction(void)
  *   BACKWARD expr, BACKWARD ALL, BACKWARD
  */
 static void
-complete_direction(PLpgSQL_stmt_fetch *fetch, bool *check_FROM)
+complete_direction(PLpgSQL_stmt_fetch *fetch, bool *check_FROM, YYSTYPE *yylvalp, YYLTYPE *yyllocp, yyscan_t yyscanner)
 {
 	int			tok;
 
-	tok = yylex();
+	tok = yylex(yylvalp, yyllocp, yyscanner);
 	if (tok == 0)
-		yyerror("unexpected end of function definition");
+		yyerror(yyllocp, yyscanner, "unexpected end of function definition");
 
 	if (tok == K_FROM || tok == K_IN)
 	{
@@ -3279,59 +3297,59 @@ complete_direction(PLpgSQL_stmt_fetch *fetch, bool *check_FROM)
 		return;
 	}
 
-	plpgsql_push_back_token(tok);
+	plpgsql_push_back_token(tok, yylvalp, yyllocp, yyscanner);
 	fetch->expr = read_sql_expression2(K_FROM, K_IN,
 									   "FROM or IN",
-									   NULL);
+									   NULL, yylvalp, yyllocp, yyscanner);
 	fetch->returns_multiple_rows = true;
 	*check_FROM = false;
 }
 
 
 static PLpgSQL_stmt *
-make_return_stmt(int location)
+make_return_stmt(int location, YYSTYPE *yylvalp, YYLTYPE *yyllocp, yyscan_t yyscanner)
 {
 	PLpgSQL_stmt_return *new;
 
 	new = palloc0(sizeof(PLpgSQL_stmt_return));
 	new->cmd_type = PLPGSQL_STMT_RETURN;
-	new->lineno = plpgsql_location_to_lineno(location);
+	new->lineno = plpgsql_location_to_lineno(location, yyscanner);
 	new->stmtid = ++plpgsql_curr_compile->nstatements;
 	new->expr = NULL;
 	new->retvarno = -1;
 
 	if (plpgsql_curr_compile->fn_retset)
 	{
-		if (yylex() != ';')
+		if (yylex(yylvalp, yyllocp, yyscanner) != ';')
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
 					 errmsg("RETURN cannot have a parameter in function returning set"),
 					 errhint("Use RETURN NEXT or RETURN QUERY."),
-					 parser_errposition(yylloc)));
+					 parser_errposition(*yyllocp)));
 	}
 	else if (plpgsql_curr_compile->fn_rettype == VOIDOID)
 	{
-		if (yylex() != ';')
+		if (yylex(yylvalp, yyllocp, yyscanner) != ';')
 		{
 			if (plpgsql_curr_compile->fn_prokind == PROKIND_PROCEDURE)
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("RETURN cannot have a parameter in a procedure"),
-						 parser_errposition(yylloc)));
+						 parser_errposition(*yyllocp)));
 			else
 				ereport(ERROR,
 						(errcode(ERRCODE_DATATYPE_MISMATCH),
 						 errmsg("RETURN cannot have a parameter in function returning void"),
-						 parser_errposition(yylloc)));
+						 parser_errposition(*yyllocp)));
 		}
 	}
 	else if (plpgsql_curr_compile->out_param_varno >= 0)
 	{
-		if (yylex() != ';')
+		if (yylex(yylvalp, yyllocp, yyscanner) != ';')
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
 					 errmsg("RETURN cannot have a parameter in function with OUT parameters"),
-					 parser_errposition(yylloc)));
+					 parser_errposition(*yyllocp)));
 		new->retvarno = plpgsql_curr_compile->out_param_varno;
 	}
 	else
@@ -3340,17 +3358,17 @@ make_return_stmt(int location)
 		 * We want to special-case simple variable references for efficiency.
 		 * So peek ahead to see if that's what we have.
 		 */
-		int			tok = yylex();
+		int			tok = yylex(yylvalp, yyllocp, yyscanner);
 
-		if (tok == T_DATUM && plpgsql_peek() == ';' &&
-			(yylval.wdatum.datum->dtype == PLPGSQL_DTYPE_VAR ||
-			 yylval.wdatum.datum->dtype == PLPGSQL_DTYPE_PROMISE ||
-			 yylval.wdatum.datum->dtype == PLPGSQL_DTYPE_ROW ||
-			 yylval.wdatum.datum->dtype == PLPGSQL_DTYPE_REC))
+		if (tok == T_DATUM && plpgsql_peek(yyscanner) == ';' &&
+			(yylvalp->wdatum.datum->dtype == PLPGSQL_DTYPE_VAR ||
+			 yylvalp->wdatum.datum->dtype == PLPGSQL_DTYPE_PROMISE ||
+			 yylvalp->wdatum.datum->dtype == PLPGSQL_DTYPE_ROW ||
+			 yylvalp->wdatum.datum->dtype == PLPGSQL_DTYPE_REC))
 		{
-			new->retvarno = yylval.wdatum.datum->dno;
+			new->retvarno = yylvalp->wdatum.datum->dno;
 			/* eat the semicolon token that we only peeked at above */
-			tok = yylex();
+			tok = yylex(yylvalp, yyllocp, yyscanner);
 			Assert(tok == ';');
 		}
 		else
@@ -3361,8 +3379,8 @@ make_return_stmt(int location)
 			 * Note that a well-formed expression is _required_ here; anything
 			 * else is a compile-time error.
 			 */
-			plpgsql_push_back_token(tok);
-			new->expr = read_sql_expression(';', ";");
+			plpgsql_push_back_token(tok, yylvalp, yyllocp, yyscanner);
+			new->expr = read_sql_expression(';', ";", yylvalp, yyllocp, yyscanner);
 		}
 	}
 
@@ -3371,7 +3389,7 @@ make_return_stmt(int location)
 
 
 static PLpgSQL_stmt *
-make_return_next_stmt(int location)
+make_return_next_stmt(int location, YYSTYPE *yylvalp, YYLTYPE *yyllocp, yyscan_t yyscanner)
 {
 	PLpgSQL_stmt_return_next *new;
 
@@ -3383,18 +3401,18 @@ make_return_next_stmt(int location)
 
 	new = palloc0(sizeof(PLpgSQL_stmt_return_next));
 	new->cmd_type = PLPGSQL_STMT_RETURN_NEXT;
-	new->lineno = plpgsql_location_to_lineno(location);
+	new->lineno = plpgsql_location_to_lineno(location, yyscanner);
 	new->stmtid = ++plpgsql_curr_compile->nstatements;
 	new->expr = NULL;
 	new->retvarno = -1;
 
 	if (plpgsql_curr_compile->out_param_varno >= 0)
 	{
-		if (yylex() != ';')
+		if (yylex(yylvalp, yyllocp, yyscanner) != ';')
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
 					 errmsg("RETURN NEXT cannot have a parameter in function with OUT parameters"),
-					 parser_errposition(yylloc)));
+					 parser_errposition(*yyllocp)));
 		new->retvarno = plpgsql_curr_compile->out_param_varno;
 	}
 	else
@@ -3403,17 +3421,17 @@ make_return_next_stmt(int location)
 		 * We want to special-case simple variable references for efficiency.
 		 * So peek ahead to see if that's what we have.
 		 */
-		int			tok = yylex();
+		int			tok = yylex(yylvalp, yyllocp, yyscanner);
 
-		if (tok == T_DATUM && plpgsql_peek() == ';' &&
-			(yylval.wdatum.datum->dtype == PLPGSQL_DTYPE_VAR ||
-			 yylval.wdatum.datum->dtype == PLPGSQL_DTYPE_PROMISE ||
-			 yylval.wdatum.datum->dtype == PLPGSQL_DTYPE_ROW ||
-			 yylval.wdatum.datum->dtype == PLPGSQL_DTYPE_REC))
+		if (tok == T_DATUM && plpgsql_peek(yyscanner) == ';' &&
+			(yylvalp->wdatum.datum->dtype == PLPGSQL_DTYPE_VAR ||
+			 yylvalp->wdatum.datum->dtype == PLPGSQL_DTYPE_PROMISE ||
+			 yylvalp->wdatum.datum->dtype == PLPGSQL_DTYPE_ROW ||
+			 yylvalp->wdatum.datum->dtype == PLPGSQL_DTYPE_REC))
 		{
-			new->retvarno = yylval.wdatum.datum->dno;
+			new->retvarno = yylvalp->wdatum.datum->dno;
 			/* eat the semicolon token that we only peeked at above */
-			tok = yylex();
+			tok = yylex(yylvalp, yyllocp, yyscanner);
 			Assert(tok == ';');
 		}
 		else
@@ -3424,8 +3442,8 @@ make_return_next_stmt(int location)
 			 * Note that a well-formed expression is _required_ here; anything
 			 * else is a compile-time error.
 			 */
-			plpgsql_push_back_token(tok);
-			new->expr = read_sql_expression(';', ";");
+			plpgsql_push_back_token(tok, yylvalp, yyllocp, yyscanner);
+			new->expr = read_sql_expression(';', ";", yylvalp, yyllocp, yyscanner);
 		}
 	}
 
@@ -3434,7 +3452,7 @@ make_return_next_stmt(int location)
 
 
 static PLpgSQL_stmt *
-make_return_query_stmt(int location)
+make_return_query_stmt(int location, YYSTYPE *yylvalp, YYLTYPE *yyllocp, yyscan_t yyscanner)
 {
 	PLpgSQL_stmt_return_query *new;
 	int			tok;
@@ -3447,15 +3465,15 @@ make_return_query_stmt(int location)
 
 	new = palloc0(sizeof(PLpgSQL_stmt_return_query));
 	new->cmd_type = PLPGSQL_STMT_RETURN_QUERY;
-	new->lineno = plpgsql_location_to_lineno(location);
+	new->lineno = plpgsql_location_to_lineno(location, yyscanner);
 	new->stmtid = ++plpgsql_curr_compile->nstatements;
 
 	/* check for RETURN QUERY EXECUTE */
-	if ((tok = yylex()) != K_EXECUTE)
+	if ((tok = yylex(yylvalp, yyllocp, yyscanner)) != K_EXECUTE)
 	{
 		/* ordinary static query */
-		plpgsql_push_back_token(tok);
-		new->query = read_sql_stmt();
+		plpgsql_push_back_token(tok, yylvalp, yyllocp, yyscanner);
+		new->query = read_sql_stmt(yylvalp, yyllocp, yyscanner);
 	}
 	else
 	{
@@ -3463,14 +3481,14 @@ make_return_query_stmt(int location)
 		int			term;
 
 		new->dynquery = read_sql_expression2(';', K_USING, "; or USING",
-											 &term);
+											 &term, yylvalp, yyllocp, yyscanner);
 		if (term == K_USING)
 		{
 			do
 			{
 				PLpgSQL_expr *expr;
 
-				expr = read_sql_expression2(',', ';', ", or ;", &term);
+				expr = read_sql_expression2(',', ';', ", or ;", &term, yylvalp, yyllocp, yyscanner);
 				new->params = lappend(new->params, expr);
 			} while (term == ',');
 		}
@@ -3491,7 +3509,7 @@ NameOfDatum(PLwdatum *wdatum)
 }
 
 static void
-check_assignable(PLpgSQL_datum *datum, int location)
+check_assignable(PLpgSQL_datum *datum, int location, yyscan_t yyscanner)
 {
 	switch (datum->dtype)
 	{
@@ -3511,7 +3529,7 @@ check_assignable(PLpgSQL_datum *datum, int location)
 		case PLPGSQL_DTYPE_RECFIELD:
 			/* assignable if parent record is */
 			check_assignable(plpgsql_Datums[((PLpgSQL_recfield *) datum)->recparentno],
-							 location);
+							 location, yyscanner);
 			break;
 		default:
 			elog(ERROR, "unrecognized dtype: %d", datum->dtype);
@@ -3524,7 +3542,7 @@ check_assignable(PLpgSQL_datum *datum, int location)
  * INTO keyword.
  */
 static void
-read_into_target(PLpgSQL_variable **target, bool *strict)
+read_into_target(PLpgSQL_variable **target, bool *strict, YYSTYPE *yylvalp, YYLTYPE *yyllocp, yyscan_t yyscanner)
 {
 	int			tok;
 
@@ -3533,11 +3551,11 @@ read_into_target(PLpgSQL_variable **target, bool *strict)
 	if (strict)
 		*strict = false;
 
-	tok = yylex();
+	tok = yylex(yylvalp, yyllocp, yyscanner);
 	if (strict && tok == K_STRICT)
 	{
 		*strict = true;
-		tok = yylex();
+		tok = yylex(yylvalp, yyllocp, yyscanner);
 	}
 
 	/*
@@ -3550,30 +3568,30 @@ read_into_target(PLpgSQL_variable **target, bool *strict)
 	switch (tok)
 	{
 		case T_DATUM:
-			if (yylval.wdatum.datum->dtype == PLPGSQL_DTYPE_ROW ||
-				yylval.wdatum.datum->dtype == PLPGSQL_DTYPE_REC)
+			if (yylvalp->wdatum.datum->dtype == PLPGSQL_DTYPE_ROW ||
+				yylvalp->wdatum.datum->dtype == PLPGSQL_DTYPE_REC)
 			{
-				check_assignable(yylval.wdatum.datum, yylloc);
-				*target = (PLpgSQL_variable *) yylval.wdatum.datum;
+				check_assignable(yylvalp->wdatum.datum, *yyllocp, yyscanner);
+				*target = (PLpgSQL_variable *) yylvalp->wdatum.datum;
 
-				if ((tok = yylex()) == ',')
+				if ((tok = yylex(yylvalp, yyllocp, yyscanner)) == ',')
 					ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
 							 errmsg("record variable cannot be part of multiple-item INTO list"),
-							 parser_errposition(yylloc)));
-				plpgsql_push_back_token(tok);
+							 parser_errposition(*yyllocp)));
+				plpgsql_push_back_token(tok, yylvalp, yyllocp, yyscanner);
 			}
 			else
 			{
 				*target = (PLpgSQL_variable *)
-					read_into_scalar_list(NameOfDatum(&(yylval.wdatum)),
-										  yylval.wdatum.datum, yylloc);
+					read_into_scalar_list(NameOfDatum(&(yylvalp->wdatum)),
+										  yylvalp->wdatum.datum, *yyllocp, yylvalp, yyllocp, yyscanner);
 			}
 			break;
 
 		default:
 			/* just to give a better message than "syntax error" */
-			current_token_is_not_variable(tok);
+			current_token_is_not_variable(tok, yylvalp, yyllocp, yyscanner);
 	}
 }
 
@@ -3586,7 +3604,9 @@ read_into_target(PLpgSQL_variable **target, bool *strict)
 static PLpgSQL_row *
 read_into_scalar_list(char *initial_name,
 					  PLpgSQL_datum *initial_datum,
-					  int initial_location)
+					  int initial_location,
+					  YYSTYPE *yylvalp, YYLTYPE *yyllocp,
+					  yyscan_t yyscanner)
 {
 	int			nfields;
 	char	   *fieldnames[1024];
@@ -3594,39 +3614,39 @@ read_into_scalar_list(char *initial_name,
 	PLpgSQL_row *row;
 	int			tok;
 
-	check_assignable(initial_datum, initial_location);
+	check_assignable(initial_datum, initial_location, yyscanner);
 	fieldnames[0] = initial_name;
 	varnos[0] = initial_datum->dno;
 	nfields = 1;
 
-	while ((tok = yylex()) == ',')
+	while ((tok = yylex(yylvalp, yyllocp, yyscanner)) == ',')
 	{
 		/* Check for array overflow */
 		if (nfields >= 1024)
 			ereport(ERROR,
 					(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 					 errmsg("too many INTO variables specified"),
-					 parser_errposition(yylloc)));
+					 parser_errposition(*yyllocp)));
 
-		tok = yylex();
+		tok = yylex(yylvalp, yyllocp, yyscanner);
 		switch (tok)
 		{
 			case T_DATUM:
-				check_assignable(yylval.wdatum.datum, yylloc);
-				if (yylval.wdatum.datum->dtype == PLPGSQL_DTYPE_ROW ||
-					yylval.wdatum.datum->dtype == PLPGSQL_DTYPE_REC)
+				check_assignable(yylvalp->wdatum.datum, *yyllocp, yyscanner);
+				if (yylvalp->wdatum.datum->dtype == PLPGSQL_DTYPE_ROW ||
+					yylvalp->wdatum.datum->dtype == PLPGSQL_DTYPE_REC)
 					ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
 							 errmsg("\"%s\" is not a scalar variable",
-									NameOfDatum(&(yylval.wdatum))),
-							 parser_errposition(yylloc)));
-				fieldnames[nfields] = NameOfDatum(&(yylval.wdatum));
-				varnos[nfields++] = yylval.wdatum.datum->dno;
+									NameOfDatum(&(yylvalp->wdatum))),
+							 parser_errposition(*yyllocp)));
+				fieldnames[nfields] = NameOfDatum(&(yylvalp->wdatum));
+				varnos[nfields++] = yylvalp->wdatum.datum->dno;
 				break;
 
 			default:
 				/* just to give a better message than "syntax error" */
-				current_token_is_not_variable(tok);
+				current_token_is_not_variable(tok, yylvalp, yyllocp, yyscanner);
 		}
 	}
 
@@ -3634,12 +3654,12 @@ read_into_scalar_list(char *initial_name,
 	 * We read an extra, non-comma token from yylex(), so push it back onto
 	 * the input stream
 	 */
-	plpgsql_push_back_token(tok);
+	plpgsql_push_back_token(tok, yylvalp, yyllocp, yyscanner);
 
 	row = palloc0(sizeof(PLpgSQL_row));
 	row->dtype = PLPGSQL_DTYPE_ROW;
 	row->refname = "(unnamed row)";
-	row->lineno = plpgsql_location_to_lineno(initial_location);
+	row->lineno = plpgsql_location_to_lineno(initial_location, yyscanner);
 	row->rowtupdesc = NULL;
 	row->nfields = nfields;
 	row->fieldnames = palloc(sizeof(char *) * nfields);
@@ -3665,11 +3685,11 @@ read_into_scalar_list(char *initial_name,
 static PLpgSQL_row *
 make_scalar_list1(char *initial_name,
 				  PLpgSQL_datum *initial_datum,
-				  int lineno, int location)
+				  int lineno, int location, yyscan_t yyscanner)
 {
 	PLpgSQL_row *row;
 
-	check_assignable(initial_datum, location);
+	check_assignable(initial_datum, location, yyscanner);
 
 	row = palloc0(sizeof(PLpgSQL_row));
 	row->dtype = PLPGSQL_DTYPE_ROW;
@@ -3710,7 +3730,7 @@ make_scalar_list1(char *initial_name,
  * If no error cursor is provided, we'll just point at "location".
  */
 static void
-check_sql_expr(const char *stmt, RawParseMode parseMode, int location)
+check_sql_expr(const char *stmt, RawParseMode parseMode, int location, yyscan_t yyscanner)
 {
 	sql_error_callback_arg cbarg;
 	ErrorContextCallback syntax_errcontext;
@@ -3720,6 +3740,7 @@ check_sql_expr(const char *stmt, RawParseMode parseMode, int location)
 		return;
 
 	cbarg.location = location;
+	cbarg.yyscanner = yyscanner;
 
 	syntax_errcontext.callback = plpgsql_sql_error_callback;
 	syntax_errcontext.arg = &cbarg;
@@ -3738,6 +3759,7 @@ static void
 plpgsql_sql_error_callback(void *arg)
 {
 	sql_error_callback_arg *cbarg = (sql_error_callback_arg *) arg;
+	yyscan_t	yyscanner = cbarg->yyscanner;
 	int			errpos;
 
 	/*
@@ -3774,7 +3796,7 @@ plpgsql_sql_error_callback(void *arg)
  * expect that the given string is a copy from the source text.
  */
 static PLpgSQL_type *
-parse_datatype(const char *string, int location)
+parse_datatype(const char *string, int location, yyscan_t yyscanner)
 {
 	TypeName   *typeName;
 	Oid			type_id;
@@ -3783,6 +3805,7 @@ parse_datatype(const char *string, int location)
 	ErrorContextCallback syntax_errcontext;
 
 	cbarg.location = location;
+	cbarg.yyscanner = yyscanner;
 
 	syntax_errcontext.callback = plpgsql_sql_error_callback;
 	syntax_errcontext.arg = &cbarg;
@@ -3806,7 +3829,7 @@ parse_datatype(const char *string, int location)
  * Check block starting and ending labels match.
  */
 static void
-check_labels(const char *start_label, const char *end_label, int end_location)
+check_labels(const char *start_label, const char *end_label, int end_location, yyscan_t yyscanner)
 {
 	if (end_label)
 	{
@@ -3837,7 +3860,7 @@ check_labels(const char *start_label, const char *end_label, int end_location)
  * parens).
  */
 static PLpgSQL_expr *
-read_cursor_args(PLpgSQL_var *cursor, int until)
+read_cursor_args(PLpgSQL_var *cursor, int until, YYSTYPE *yylvalp, YYLTYPE *yyllocp, yyscan_t yyscanner)
 {
 	PLpgSQL_expr *expr;
 	PLpgSQL_row *row;
@@ -3847,7 +3870,7 @@ read_cursor_args(PLpgSQL_var *cursor, int until)
 	StringInfoData ds;
 	bool		any_named = false;
 
-	tok = yylex();
+	tok = yylex(yylvalp, yyllocp, yyscanner);
 	if (cursor->cursor_explicit_argrow < 0)
 	{
 		/* No arguments expected */
@@ -3856,10 +3879,10 @@ read_cursor_args(PLpgSQL_var *cursor, int until)
 					(errcode(ERRCODE_SYNTAX_ERROR),
 					 errmsg("cursor \"%s\" has no arguments",
 							cursor->refname),
-					 parser_errposition(yylloc)));
+					 parser_errposition(*yyllocp)));
 
 		if (tok != until)
-			yyerror("syntax error");
+			yyerror(yyllocp, yyscanner, "syntax error");
 
 		return NULL;
 	}
@@ -3870,7 +3893,7 @@ read_cursor_args(PLpgSQL_var *cursor, int until)
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("cursor \"%s\" has arguments",
 						cursor->refname),
-				 parser_errposition(yylloc)));
+				 parser_errposition(*yyllocp)));
 
 	/*
 	 * Read the arguments, one by one.
@@ -3888,7 +3911,7 @@ read_cursor_args(PLpgSQL_var *cursor, int until)
 		int			arglocation;
 
 		/* Check if it's a named parameter: "param := value" */
-		plpgsql_peek2(&tok1, &tok2, &arglocation, NULL);
+		plpgsql_peek2(&tok1, &tok2, &arglocation, NULL, yyscanner);
 		if (tok1 == IDENT && tok2 == COLON_EQUALS)
 		{
 			char	   *argname;
@@ -3897,8 +3920,8 @@ read_cursor_args(PLpgSQL_var *cursor, int until)
 			/* Read the argument name, ignoring any matching variable */
 			save_IdentifierLookup = plpgsql_IdentifierLookup;
 			plpgsql_IdentifierLookup = IDENTIFIER_LOOKUP_DECLARE;
-			yylex();
-			argname = yylval.str;
+			yylex(yylvalp, yyllocp, yyscanner);
+			argname = yylvalp->str;
 			plpgsql_IdentifierLookup = save_IdentifierLookup;
 
 			/* Match argument name to cursor arguments */
@@ -3912,15 +3935,15 @@ read_cursor_args(PLpgSQL_var *cursor, int until)
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("cursor \"%s\" has no argument named \"%s\"",
 								cursor->refname, argname),
-						 parser_errposition(yylloc)));
+						 parser_errposition(*yyllocp)));
 
 			/*
 			 * Eat the ":=". We already peeked, so the error should never
 			 * happen.
 			 */
-			tok2 = yylex();
+			tok2 = yylex(yylvalp, yyllocp, yyscanner);
 			if (tok2 != COLON_EQUALS)
-				yyerror("syntax error");
+				yyerror(yyllocp, yyscanner, "syntax error");
 
 			any_named = true;
 		}
@@ -3944,7 +3967,8 @@ read_cursor_args(PLpgSQL_var *cursor, int until)
 								  ",\" or \")",
 								  RAW_PARSE_PLPGSQL_EXPR,
 								  true, true,
-								  NULL, &endtoken);
+								  NULL, &endtoken,
+								  yylvalp, yyllocp, yyscanner);
 
 		argv[argpos] = item->query;
 
@@ -3953,14 +3977,14 @@ read_cursor_args(PLpgSQL_var *cursor, int until)
 					(errcode(ERRCODE_SYNTAX_ERROR),
 					 errmsg("not enough arguments for cursor \"%s\"",
 							cursor->refname),
-					 parser_errposition(yylloc)));
+					 parser_errposition(*yyllocp)));
 
 		if (endtoken == ',' && (argc == row->nfields - 1))
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
 					 errmsg("too many arguments for cursor \"%s\"",
 							cursor->refname),
-					 parser_errposition(yylloc)));
+					 parser_errposition(*yyllocp)));
 	}
 
 	/* Make positional argument list */
@@ -3991,9 +4015,9 @@ read_cursor_args(PLpgSQL_var *cursor, int until)
 	pfree(ds.data);
 
 	/* Next we'd better find the until token */
-	tok = yylex();
+	tok = yylex(yylvalp, yyllocp, yyscanner);
 	if (tok != until)
-		yyerror("syntax error");
+		yyerror(yyllocp, yyscanner, "syntax error");
 
 	return expr;
 }
@@ -4002,7 +4026,7 @@ read_cursor_args(PLpgSQL_var *cursor, int until)
  * Parse RAISE ... USING options
  */
 static List *
-read_raise_options(void)
+read_raise_options(YYSTYPE *yylvalp, YYLTYPE *yyllocp, yyscan_t yyscanner)
 {
 	List	   *result = NIL;
 
@@ -4011,46 +4035,46 @@ read_raise_options(void)
 		PLpgSQL_raise_option *opt;
 		int			tok;
 
-		if ((tok = yylex()) == 0)
-			yyerror("unexpected end of function definition");
+		if ((tok = yylex(yylvalp, yyllocp, yyscanner)) == 0)
+			yyerror(yyllocp, yyscanner, "unexpected end of function definition");
 
 		opt = (PLpgSQL_raise_option *) palloc(sizeof(PLpgSQL_raise_option));
 
-		if (tok_is_keyword(tok, &yylval,
+		if (tok_is_keyword(tok, yylvalp,
 						   K_ERRCODE, "errcode"))
 			opt->opt_type = PLPGSQL_RAISEOPTION_ERRCODE;
-		else if (tok_is_keyword(tok, &yylval,
+		else if (tok_is_keyword(tok, yylvalp,
 								K_MESSAGE, "message"))
 			opt->opt_type = PLPGSQL_RAISEOPTION_MESSAGE;
-		else if (tok_is_keyword(tok, &yylval,
+		else if (tok_is_keyword(tok, yylvalp,
 								K_DETAIL, "detail"))
 			opt->opt_type = PLPGSQL_RAISEOPTION_DETAIL;
-		else if (tok_is_keyword(tok, &yylval,
+		else if (tok_is_keyword(tok, yylvalp,
 								K_HINT, "hint"))
 			opt->opt_type = PLPGSQL_RAISEOPTION_HINT;
-		else if (tok_is_keyword(tok, &yylval,
+		else if (tok_is_keyword(tok, yylvalp,
 								K_COLUMN, "column"))
 			opt->opt_type = PLPGSQL_RAISEOPTION_COLUMN;
-		else if (tok_is_keyword(tok, &yylval,
+		else if (tok_is_keyword(tok, yylvalp,
 								K_CONSTRAINT, "constraint"))
 			opt->opt_type = PLPGSQL_RAISEOPTION_CONSTRAINT;
-		else if (tok_is_keyword(tok, &yylval,
+		else if (tok_is_keyword(tok, yylvalp,
 								K_DATATYPE, "datatype"))
 			opt->opt_type = PLPGSQL_RAISEOPTION_DATATYPE;
-		else if (tok_is_keyword(tok, &yylval,
+		else if (tok_is_keyword(tok, yylvalp,
 								K_TABLE, "table"))
 			opt->opt_type = PLPGSQL_RAISEOPTION_TABLE;
-		else if (tok_is_keyword(tok, &yylval,
+		else if (tok_is_keyword(tok, yylvalp,
 								K_SCHEMA, "schema"))
 			opt->opt_type = PLPGSQL_RAISEOPTION_SCHEMA;
 		else
-			yyerror("unrecognized RAISE statement option");
+			yyerror(yyllocp, yyscanner, "unrecognized RAISE statement option");
 
-		tok = yylex();
+		tok = yylex(yylvalp, yyllocp, yyscanner);
 		if (tok != '=' && tok != COLON_EQUALS)
-			yyerror("syntax error, expected \"=\"");
+			yyerror(yyllocp, yyscanner, "syntax error, expected \"=\"");
 
-		opt->expr = read_sql_expression2(',', ';', ", or ;", &tok);
+		opt->expr = read_sql_expression2(',', ';', ", or ;", &tok, yylvalp, yyllocp, yyscanner);
 
 		result = lappend(result, opt);
 
@@ -4101,13 +4125,13 @@ check_raise_parameters(PLpgSQL_stmt_raise *stmt)
  */
 static PLpgSQL_stmt *
 make_case(int location, PLpgSQL_expr *t_expr,
-		  List *case_when_list, List *else_stmts)
+		  List *case_when_list, List *else_stmts, yyscan_t yyscanner)
 {
 	PLpgSQL_stmt_case *new;
 
 	new = palloc(sizeof(PLpgSQL_stmt_case));
 	new->cmd_type = PLPGSQL_STMT_CASE;
-	new->lineno = plpgsql_location_to_lineno(location);
+	new->lineno = plpgsql_location_to_lineno(location, yyscanner);
 	new->stmtid = ++plpgsql_curr_compile->nstatements;
 	new->t_expr = t_expr;
 	new->t_varno = 0;
