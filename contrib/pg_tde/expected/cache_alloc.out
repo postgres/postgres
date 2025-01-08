@@ -1,0 +1,125 @@
+-- We test cache so AM doesn't matter
+-- Just checking there are no mem debug WARNINGs during the cache population
+CREATE EXTENSION pg_tde;
+SELECT pg_tde_add_key_provider_file('file-vault','/tmp/pg_tde_test_keyring.per');
+ pg_tde_add_key_provider_file 
+------------------------------
+                            1
+(1 row)
+
+SELECT pg_tde_set_principal_key('test-db-principal-key','file-vault');
+ pg_tde_set_principal_key 
+--------------------------
+ t
+(1 row)
+
+do $$
+    DECLARE idx integer;
+begin
+    for idx in 0..700 loop
+        EXECUTE format('CREATE TABLE t%s (c1 int) USING tde_heap_basic', idx);
+    end loop;
+end; $$;
+DROP EXTENSION pg_tde cascade;
+NOTICE:  drop cascades to 701 other objects
+DETAIL:  drop cascades to table t0
+drop cascades to table t1
+drop cascades to table t2
+drop cascades to table t3
+drop cascades to table t4
+drop cascades to table t5
+drop cascades to table t6
+drop cascades to table t7
+drop cascades to table t8
+drop cascades to table t9
+drop cascades to table t10
+drop cascades to table t11
+drop cascades to table t12
+drop cascades to table t13
+drop cascades to table t14
+drop cascades to table t15
+drop cascades to table t16
+drop cascades to table t17
+drop cascades to table t18
+drop cascades to table t19
+drop cascades to table t20
+drop cascades to table t21
+drop cascades to table t22
+drop cascades to table t23
+drop cascades to table t24
+drop cascades to table t25
+drop cascades to table t26
+drop cascades to table t27
+drop cascades to table t28
+drop cascades to table t29
+drop cascades to table t30
+drop cascades to table t31
+drop cascades to table t32
+drop cascades to table t33
+drop cascades to table t34
+drop cascades to table t35
+drop cascades to table t36
+drop cascades to table t37
+drop cascades to table t38
+drop cascades to table t39
+drop cascades to table t40
+drop cascades to table t41
+drop cascades to table t42
+drop cascades to table t43
+drop cascades to table t44
+drop cascades to table t45
+drop cascades to table t46
+drop cascades to table t47
+drop cascades to table t48
+drop cascades to table t49
+drop cascades to table t50
+drop cascades to table t51
+drop cascades to table t52
+drop cascades to table t53
+drop cascades to table t54
+drop cascades to table t55
+drop cascades to table t56
+drop cascades to table t57
+drop cascades to table t58
+drop cascades to table t59
+drop cascades to table t60
+drop cascades to table t61
+drop cascades to table t62
+drop cascades to table t63
+drop cascades to table t64
+drop cascades to table t65
+drop cascades to table t66
+drop cascades to table t67
+drop cascades to table t68
+drop cascades to table t69
+drop cascades to table t70
+drop cascades to table t71
+drop cascades to table t72
+drop cascades to table t73
+drop cascades to table t74
+drop cascades to table t75
+drop cascades to table t76
+drop cascades to table t77
+drop cascades to table t78
+drop cascades to table t79
+drop cascades to table t80
+drop cascades to table t81
+drop cascades to table t82
+drop cascades to table t83
+drop cascades to table t84
+drop cascades to table t85
+drop cascades to table t86
+drop cascades to table t87
+drop cascades to table t88
+drop cascades to table t89
+drop cascades to table t90
+drop cascades to table t91
+drop cascades to table t92
+drop cascades to table t93
+drop cascades to table t94
+drop cascades to table t95
+drop cascades to table t96
+drop cascades to table t97
+drop cascades to table t98
+drop cascades to table t99
+and 601 other objects (see server log for list)

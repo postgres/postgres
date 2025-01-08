@@ -1,0 +1,206 @@
+/* General styling */
+
+.osano-cm-window {
+    font-family: "Roboto", Arial, Helvetica, sans-serif;
+    font-size: 20px;
+}
+.osano-cm-dialog--type_bar {
+    justify-content: center;
+    color: #000;
+    background: #fff;
+    box-shadow: 0 0 0 100vmax rgba(0,0,0,0.66)
+}
+
+.osano-cm-dialog {
+    font-size: 0.75em;
+    padding: 2em 1em;
+    color: var(--md-typeset-color);	
+    background: var(--md-footer-bg-color--dark);
+}
+.osano-cm-header,
+.osano-cm-info-dialog-header {
+    background: var(--md-default-bg-color);
+}
+.osano-cm-link,
+.osano-cm-disclosure__toggle,
+.osano-cm-expansion-panel__toggle {
+    color: var(--md-typeset-a-color);
+}
+.osano-cm-link:hover,
+.osano-cm-link:active,
+.osano-cm-disclosure__toggle:hover,
+.osano-cm-disclosure__toggle:active,
+.osano-cm-disclosure__toggle:focus,
+.osano-cm-expansion-panel__toggle:hover,
+.osano-cm-expansion-panel__toggle:active,
+.osano-cm-expansion-panel__toggle:focus {
+    color: var(--md-accent-fg-color);
+}
+.osano-cm-drawer-links {
+    display: inline-block;
+}
+.osano-cm-link.osano-cm-storage-policy {
+    margin-right: 0.5em;
+}
+.osano-cm-description {
+    font-weight: 400;
+}
+.osano-cm-info {
+    color: var(--md-typeset-color);
+    background: var(--md-default-bg-color);
+    box-shadow: unset;
+}
+.osano-cm-dialog--hidden,
+.osano-cm-info-dialog--hidden {
+    transition-delay: 0ms, 0ms;
+}
+.osano-cm-disclosure {
+    padding-top: 0;
+}
+.osano-cm-disclosure--collapse {
+    border-color: var(--md-default-fg-color--lightest);
+}
+
+/* Closing button */
+
+.osano-cm-dialog__close,
+.osano-cm-dialog__close:hover,
+.osano-cm-dialog__close:focus,
+.osano-cm-dialog__close:focus:hover {
+    color: var(--md-typeset-color);
+    stroke: var(--md-typeset-color);
+    border-color: transparent;
+    outline: initial;
+}
+.osano-cm-dialog__close:focus {
+    background-color: var(--md-default-fg-color--lightest);
+}
+.osano-cm-close {
+    padding: 0.25em;
+    margin: 0.5em;
+    stroke-width: 2px;
+    border-width: 2px;
+    opacity: 0.4;
+}
+.osano-cm-close:focus,
+.osano-cm-close:hover {
+    stroke-width: 2px;
+    opacity: 1;
+}
+.osano-cm-info-dialog-header__close:focus {
+    background-color: var(--md-typeset-color);
+}
+
+/* Switch buttons */
+
+.osano-cm-toggle__switch {
+    background-color: var(--md-default-fg-color--lightest);
+    transition: all 0.1s ease-out;
+}
+.osano-cm-toggle__input:hover + .osano-cm-toggle__switch {
+    background-color: var(--md-default-fg-color--light);
+    border-color: transparent;
+}
+.osano-cm-toggle__input:focus + .osano-cm-toggle__switch {
+    background-color: var(--md-default-fg-color--lightest);
+    border-color: transparent;
+}
+.osano-cm-toggle__input:focus + .osano-cm-toggle__switch::before {
+    border-color: var(--md-accent-fg-color);
+}
+.osano-cm-toggle__input:focus:hover + .osano-cm-toggle__switch {
+    background-color: var(--md-default-fg-color--light);
+    border-color: transparent;
+}
+.osano-cm-toggle__input:checked + .osano-cm-toggle__switch,
+.osano-cm-toggle__input:disabled:checked + .osano-cm-toggle__switch {
+    background-color: var(--md-primary-fg-color);
+    border-color: var(--md-primary-fg-color);
+}
+.osano-cm-toggle__input:checked:hover + .osano-cm-toggle__switch,
+.osano-cm-toggle__input:disabled:checked:hover + .osano-cm-toggle__switch {
+    background-color: var(--md-accent-fg-color);
+    border-color: var(--md-accent-fg-color);
+}
+.osano-cm-toggle__input:checked:focus + .osano-cm-toggle__switch,
+.osano-cm-toggle__input:disabled:checked:focus + .osano-cm-toggle__switch {
+    background-color: var(--md-primary-fg-color);
+    border-color: var(--md-primary-fg-color);
+}
+.osano-cm-toggle__input:checked:focus + .osano-cm-toggle__switch::before {
+    border-color: var(--md-accent-fg-color);
+}
+.osano-cm-toggle__input:checked:focus:hover + .osano-cm-toggle__switch {
+    background-color: var(--md-accent-fg-color);
+    border-color: var(--md-accent-fg-color);
+}
+.osano-cm-toggle__input:disabled:checked + .osano-cm-toggle__switch,
+.osano-cm-toggle__input:disabled:checked:focus + .osano-cm-toggle__switch,
+.osano-cm-toggle__input:disabled:checked:hover + .osano-cm-toggle__switch {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+.osano-cm-toggle__input + .osano-cm-toggle__switch::after {
+    background-color: var(--md-default-bg-color) !important;
+}
+.osano-cm-toggle__input:checked + .osano-cm-toggle__switch::before {
+    border-color: transparent;
+}
+.osano-cm-list {
+    gap: 0.75em;
+}
+
+/* CTA Buttons */
+
+.osano-cm-dialog__buttons {
+    display: flex;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    gap: 0.5em 0.75em;
+}
+.osano-cm-button {
+    font-family: var(--fHeading);
+    flex: 1 1 20em;
+    color: var(--md-primary-fg-color);
+    background-color: transparent;
+    border-width: 2px;
+    border-color: var(--md-primary-fg-color);
+    border-radius: 20em;
+}
+.osano-cm-button:hover {
+    color: var(--md-accent-fg-color);
+    background-color: transparent;
+    border-color: var(--md-accent-fg-color);
+}
+
+/* Widget */
+
+.osano-cm-widget {
+    display: none;
+    opacity: 0.5;
+    border-radius: 10em;
+    bottom: 3em;
+}
+.osano-cm-widget:focus {
+    outline-offset: 0.125em;
+    outline-color: var(--md-default-fg-color--lighter);
+    outline-width: 0.1875em;
+}
+.osano-cm-widget__outline {
+    fill: transparent;
+    stroke: var(--md-typeset-color);
+}
+.osano-cm-widget__dot {
+    fill: var(--md-typeset-color);
+}
+
+/* Media conditions */
+
+@media screen and (min-width: 768px) {
+    .osano-cm-dialog--type_bar .osano-cm-dialog__content {
+        max-width: 50em;
+    }
+    .osano-cm-dialog--type_bar .osano-cm-dialog__buttons {
+        max-width: 20em;
+    }
+}

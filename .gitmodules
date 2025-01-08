@@ -1,4 +1,3 @@
-[submodule "contrib/pg_tde"]
-	path = contrib/pg_tde
-	url = https://github.com/Percona-Lab/pg_tde.git
-	branch = main
+[submodule "contrib/pg_tde/src/libkmip"]
+	path = contrib/pg_tde/src/libkmip
+	url = https://github.com/Percona-Lab/libkmip.git

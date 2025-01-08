@@ -1,0 +1,44 @@
+CREATE EXTENSION pg_tde;
+SELECT pg_tde_add_key_provider_file('file-vault','/tmp/pg_tde_test_keyring.per');
+1
+SELECT pg_tde_set_principal_key('test-db-principal-key','file-vault');
+t
+CREATE TABLE country_table (
+     country_id        serial primary key,
+     country_name    text unique not null,
+     continent        text not null
+) USING tde_heap_basic;
+INSERT INTO country_table (country_name, continent)
+     VALUES ('Japan', 'Asia'),
+            ('UK', 'Europe'),
+            ('USA', 'North America');
+SELECT * FROM country_table;
+1|Japan|Asia
+2|UK|Europe
+3|USA|North America
+CREATE EXTENSION pg_tde;
+SELECT pg_tde_add_key_provider_file('file-vault','/tmp/pg_tde_test_keyring.per');
+1
+SELECT pg_tde_set_principal_key('test-db-principal-key','file-vault');
+t
+CREATE TABLE country_table (
+     country_id        serial primary key,
+     country_name    text unique not null,
+     continent        text not null
+) USING tde_heap_basic;
+INSERT INTO country_table (country_name, continent)
+     VALUES ('Japan', 'Asia'),
+            ('UK', 'Europe'),
+            ('USA', 'North America');
+SELECT * FROM country_table;
+1|Japan|Asia
+2|UK|Europe
+3|USA|North America
+-- server restart
+SELECT * FROM country_table;
+1|Japan|Asia
+2|UK|Europe
+3|USA|North America
+DROP EXTENSION pg_tde CASCADE;
+DROP DATABASE tbc;
+DROP TABLESPACE test_tblspace;

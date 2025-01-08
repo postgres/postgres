@@ -1,0 +1,61 @@
+/* Overrides */
+
+:root {
+    --md-primary-fg-color--dark: var(--night400);
+}
+.md-header,
+.md-tabs {
+    background:
+        -o-linear-gradient(
+            340deg,
+            rgba(0,0,0,0.3) 33%,
+            rgba(0,0,0,0.2) 95%
+        ),
+        -o-linear-gradient(
+            340deg,
+            rgb(78,91,150) 33%,
+            rgb(67,158,255) 95%
+        );
+    background:
+        linear-gradient(
+            110deg,
+            rgba(0,0,0,0.3) 33%,
+            rgba(0,0,0,0.2) 95%
+        ),
+        linear-gradient(
+            110deg,
+            rgb(78,91,150) 33%,
+            rgb(67,158,255) 95%
+        );
+}
+@media screen and (max-width: 76.1875em) {
+    .md-nav--primary .md-nav__title[for="__drawer"],
+    .md-nav--primary .md-nav__title {
+        background:
+            -o-linear-gradient(
+                340deg,
+                rgba(0,0,0,0.3) 33%,
+                rgba(0,0,0,0.2) 95%
+            ),
+            -o-linear-gradient(
+                340deg,
+                rgb(78,91,150) 33%,
+                rgb(67,158,255) 95%
+            );
+        background:
+            linear-gradient(
+                110deg,
+                rgba(0,0,0,0.3) 33%,
+                rgba(0,0,0,0.2) 95%
+            ),
+            linear-gradient(
+                110deg,
+                rgb(78,91,150) 33%,
+                rgb(67,158,255) 95%
+            );
+    }
+}
+.superNav,
+.md-nav__source {
+    background-color: var(--night500);
+}

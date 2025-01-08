@@ -1,0 +1,216 @@
+\set tde_am tde_heap_basic
+\i sql/trigger_on_view.inc
+CREATE extension pg_tde;
+SELECT pg_tde_add_key_provider_file('file-vault','/tmp/pg_tde_test_keyring.per');
+ pg_tde_add_key_provider_file 
+------------------------------
+                            1
+(1 row)
+
+SELECT pg_tde_set_principal_key('test-db-principal-key','file-vault');
+ pg_tde_set_principal_key 
+--------------------------
+ t
+(1 row)
+
+--
+-- 2 -- Test triggers on a join view
+--
+SET default_table_access_method TO ':tde_am';
+psql:sql/trigger_on_view.inc:9: ERROR:  invalid value for parameter "default_table_access_method": ":tde_am"
+DETAIL:  Table access method ":tde_am" does not exist.
+DROP VIEW IF EXISTS city_view CASCADE;
+psql:sql/trigger_on_view.inc:11: NOTICE:  view "city_view" does not exist, skipping
+DROP TABLE IF exists country_table CASCADE;
+psql:sql/trigger_on_view.inc:12: NOTICE:  table "country_table" does not exist, skipping
+DROP TABLE IF exists city_table cascade;
+psql:sql/trigger_on_view.inc:13: NOTICE:  table "city_table" does not exist, skipping
+ CREATE TABLE country_table (
+     country_id        serial primary key,
+     country_name    text unique not null,
+     continent        text not null
+ ) using :tde_am;
+ 
+ INSERT INTO country_table (country_name, continent)
+     VALUES ('Japan', 'Asia'),
+            ('UK', 'Europe'),
+            ('USA', 'North America')
+     RETURNING *;
+ country_id | country_name |   continent   
+------------+--------------+---------------
+          1 | Japan        | Asia
+          2 | UK           | Europe
+          3 | USA          | North America
+(3 rows)
+
+ 
+ CREATE TABLE city_table (
+     city_id        serial primary key,
+     city_name    text not null,
+     population    bigint, 
+     country_id    int references country_table
+ ) using :tde_am;
+ 
+ CREATE VIEW city_view AS
+     SELECT city_id, city_name, population, country_name, continent
+     FROM city_table ci
+     LEFT JOIN country_table co ON co.country_id = ci.country_id;
+ 
+CREATE OR REPLACE FUNCTION city_insert() RETURNS trigger LANGUAGE plpgsql AS $$
+ declare
+     ctry_id int;
+ begin
+     if NEW.country_name IS NOT NULL then
+         SELECT country_id, continent INTO ctry_id, NEW.continent
+             FROM country_table WHERE country_name = NEW.country_name;
+         if NOT FOUND then 
+             raise exception 'No such country: "%"', NEW.country_name;
+         end if;
+     else
+         NEW.continent := NULL;
+     end if;
+ 
+     if NEW.city_id IS NOT NULL then
+         INSERT INTO city_table
+             VALUES(NEW.city_id, NEW.city_name, NEW.population, ctry_id);
+     else
+         INSERT INTO city_table(city_name, population, country_id)
+             VALUES(NEW.city_name, NEW.population, ctry_id)
+             RETURNING city_id INTO NEW.city_id;
+     end if;
+ 
+     RETURN NEW;
+ end;
+ $$;
+  CREATE TRIGGER city_insert_trig INSTEAD OF INSERT ON city_view
+ FOR EACH ROW EXECUTE PROCEDURE city_insert();
+ 
+ CREATE OR REPLACE FUNCTION city_delete() RETURNS trigger LANGUAGE plpgsql AS $$
+ begin
+     DELETE FROM city_table WHERE city_id = OLD.city_id;
+     if NOT FOUND then RETURN NULL; end if;
+     RETURN OLD;
+ end;
+ $$;
+ 
+ CREATE TRIGGER city_delete_trig INSTEAD OF DELETE ON city_view
+ FOR EACH ROW EXECUTE PROCEDURE city_delete();
+ 
+ CREATE OR REPLACE FUNCTION city_update() RETURNS trigger LANGUAGE plpgsql AS $$
+ declare
+     ctry_id int;
+ begin
+     if NEW.country_name IS DISTINCT FROM OLD.country_name then
+         SELECT country_id, continent INTO ctry_id, NEW.continent
+             FROM country_table WHERE country_name = NEW.country_name;
+         if NOT FOUND then
+             raise exception 'No such country: "%"', NEW.country_name;
+         end if;
+ 
+         UPDATE city_table SET city_name = NEW.city_name,
+                               population = NEW.population,
+                               country_id = ctry_id
+             WHERE city_id = OLD.city_id;
+     else
+         UPDATE city_table SET city_name = NEW.city_name,
+                               population = NEW.population
+             WHERE city_id = OLD.city_id;
+         NEW.continent := OLD.continent;
+     end if;
+ 
+     if NOT FOUND then RETURN NULL; end if;
+     RETURN NEW;
+ end;
+ $$;
+ CREATE TRIGGER city_update_trig INSTEAD OF UPDATE ON city_view
+ FOR EACH ROW EXECUTE PROCEDURE city_update();
+ 
+-- INSERT .. RETURNING
+ INSERT INTO city_view(city_name) VALUES('Tokyo') RETURNING *;
+ city_id | city_name | population | country_name | continent 
+---------+-----------+------------+--------------+-----------
+       1 | Tokyo     |            |              | 
+(1 row)
+
+ INSERT INTO city_view(city_name, population) VALUES('London', 7556900) RETURNING *;
+ city_id | city_name | population | country_name | continent 
+---------+-----------+------------+--------------+-----------
+       2 | London    |    7556900 |              | 
+(1 row)
+
+ INSERT INTO city_view(city_name, country_name) VALUES('Washington DC', 'USA') RETURNING *;
+ city_id |   city_name   | population | country_name |   continent   
+---------+---------------+------------+--------------+---------------
+       3 | Washington DC |            | USA          | North America
+(1 row)
+
+ INSERT INTO city_view(city_id, city_name) VALUES(123456, 'New York') RETURNING *;
+ city_id | city_name | population | country_name | continent 
+---------+-----------+------------+--------------+-----------
+  123456 | New York  |            |              | 
+(1 row)
+
+ INSERT INTO city_view VALUES(234567, 'Birmingham', 1016800, 'UK', 'EU') RETURNING *;
+ city_id | city_name  | population | country_name | continent 
+---------+------------+------------+--------------+-----------
+  234567 | Birmingham |    1016800 | UK           | Europe
+(1 row)
+
+ 
+ -- UPDATE .. RETURNING
+ UPDATE city_view SET country_name = 'Japon' WHERE city_name = 'Tokyo'; -- error
+psql:sql/trigger_on_view.inc:118: ERROR:  No such country: "Japon"
+CONTEXT:  PL/pgSQL function city_update() line 9 at RAISE
+ UPDATE city_view SET country_name = 'Japan' WHERE city_name = 'Takyo'; -- no match
+ UPDATE city_view SET country_name = 'Japan' WHERE city_name = 'Tokyo' RETURNING *; -- OK
+ city_id | city_name | population | country_name | continent 
+---------+-----------+------------+--------------+-----------
+       1 | Tokyo     |            | Japan        | Asia
+(1 row)
+
+ 
+ UPDATE city_view SET population = 13010279 WHERE city_name = 'Tokyo' RETURNING *;
+ city_id | city_name | population | country_name | continent 
+---------+-----------+------------+--------------+-----------
+       1 | Tokyo     |   13010279 | Japan        | Asia
+(1 row)
+
+ UPDATE city_view SET country_name = 'UK' WHERE city_name = 'New York' RETURNING *;
+ city_id | city_name | population | country_name | continent 
+---------+-----------+------------+--------------+-----------
+  123456 | New York  |            | UK           | Europe
+(1 row)
+
+ UPDATE city_view SET country_name = 'USA', population = 8391881 WHERE city_name = 'New York' RETURNING *;
+ city_id | city_name | population | country_name |   continent   
+---------+-----------+------------+--------------+---------------
+  123456 | New York  |    8391881 | USA          | North America
+(1 row)
+
+ UPDATE city_view SET continent = 'EU' WHERE continent = 'Europe' RETURNING *;
+ city_id | city_name  | population | country_name | continent 
+---------+------------+------------+--------------+-----------
+  234567 | Birmingham |    1016800 | UK           | Europe
+(1 row)
+
+ UPDATE city_view v1 SET country_name = v2.country_name FROM city_view v2
+     WHERE v2.city_name = 'Birmingham' AND v1.city_name = 'London' RETURNING *;
+ city_id | city_name | population | country_name | continent | city_id | city_name  | population | country_name | continent 
+---------+-----------+------------+--------------+-----------+---------+------------+------------+--------------+-----------
+       2 | London    |    7556900 | UK           | Europe    |  234567 | Birmingham |    1016800 | UK           | Europe
+(1 row)
+
+ 
+ -- DELETE .. RETURNING
+ DELETE FROM city_view WHERE city_name = 'Birmingham' RETURNING *;
+ city_id | city_name  | population | country_name | continent 
+---------+------------+------------+--------------+-----------
+  234567 | Birmingham |    1016800 | UK           | Europe
+(1 row)
+
+ 
+DROP extension pg_tde CASCADE;
+psql:sql/trigger_on_view.inc:133: NOTICE:  drop cascades to 3 other objects
+DETAIL:  drop cascades to table country_table
+drop cascades to table city_table
+drop cascades to view city_view

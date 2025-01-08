@@ -1,0 +1,105 @@
+\set tde_am tde_heap_basic
+\i sql/multi_insert.inc
+-- trigger multi_insert path
+-- 
+CREATE EXTENSION pg_tde;
+SELECT pg_tde_add_key_provider_file('file-vault','/tmp/pg_tde_test_keyring.per');
+ pg_tde_add_key_provider_file 
+------------------------------
+                            1
+(1 row)
+
+SELECT pg_tde_set_principal_key('test-db-principal-key','file-vault');
+ pg_tde_set_principal_key 
+--------------------------
+ t
+(1 row)
+
+CREATE TABLE albums (
+    album_id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    artist_id INTEGER,
+    title TEXT NOT NULL,
+    released DATE NOT NULL
+) USING :tde_am;
+COPY albums FROM stdin CSV HEADER;
+SELECT * FROM albums;
+ album_id | artist_id |       title        |  released  
+----------+-----------+--------------------+------------
+        1 |         1 | Mirror             | 06-24-2009
+        2 |         2 | Pretzel Logic      | 02-20-1974
+        3 |         3 | Under Construction | 11-12-2002
+        4 |         4 | Return to Wherever | 07-11-2019
+        5 |         5 | The Nightfly       | 10-01-1982
+        6 |         6 | It's Alive         | 10-15-2013
+        7 |         7 | Pure Ella          | 02-15-1994
+(7 rows)
+
+SELECT * FROM albums where album_id > 5;
+ album_id | artist_id |   title    |  released  
+----------+-----------+------------+------------
+        6 |         6 | It's Alive | 10-15-2013
+        7 |         7 | Pure Ella  | 02-15-1994
+(2 rows)
+
+-- On replica:
+-- SELECT * FROM albums;
+--  album_id | artist_id |       title        |  released
+-- ----------+-----------+--------------------+------------
+--         1 |         1 | Mirror             | 2009-06-24
+--         2 |         2 | Pretzel Logic      | 1974-02-20
+--         3 |         3 | Under Construction | 2002-11-12
+--         4 |         4 | Return to Wherever | 2019-07-11
+--         5 |         5 | The Nightfly       | 1982-10-01
+--         6 |         6 | It's Alive         | 2013-10-15
+--         7 |         7 | Pure Ella          | 1994-02-15
+-- (7 rows)
+-- 
+--  SELECT * FROM albums where album_id > 5;
+--  album_id | artist_id |   title    |  released
+-- ----------+-----------+------------+------------
+--         6 |         6 | It's Alive | 2013-10-15
+--         7 |         7 | Pure Ella  | 1994-02-15
+-- (2 rows)
+-- 
+DROP TABLE albums;
+-- multi_insert2
+-- more data to take multiple pages
+CREATE TABLE Towns (
+   id SERIAL UNIQUE NOT NULL,
+   code VARCHAR(10) NOT NULL,
+   article TEXT,
+   name TEXT NOT NULL,
+   department VARCHAR(4) NOT NULL,
+   UNIQUE (code, department)
+)  USING :tde_am;
+COPY towns (id, code, article, name, department) FROM stdin;
+SELECT count(*) FROM towns;
+ count 
+-------
+  1313
+(1 row)
+
+SELECT * FROM towns where id in (13, 666);
+ id  | code |  article  |      name      | department 
+-----+------+-----------+----------------+------------
+  13 | 014  | some_text | Arbent         | 01
+ 666 | 252  | some_text | Cuissy-et-Geny | 02
+(2 rows)
+
+-- ON REPLICA
+-- 
+-- select count(*) from towns;
+--  count
+-- -------
+--   1313
+-- (1 row)
+-- 
+-- select * from towns where id in (13, 666);
+--  id  | code |  article  |      name      | department
+-- -----+------+-----------+----------------+------------
+--   13 | 014  | some_text | Arbent         | 01
+--  666 | 252  | some_text | Cuissy-et-Geny | 02
+-- (2 rows)
+-- 
+DROP TABLE towns;
+DROP EXTENSION pg_tde;

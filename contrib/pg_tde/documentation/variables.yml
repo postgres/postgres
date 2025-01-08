@@ -1,0 +1,4 @@
+#Variables used throughout the docs
+
+release: 'Beta'
+pgversion17: '17.2'

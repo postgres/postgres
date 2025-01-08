@@ -1,0 +1,36 @@
+\set tde_am tde_heap_basic
+\i sql/keyprovider_dependency.inc
+CREATE EXTENSION pg_tde;
+SELECT pg_tde_add_key_provider_file('mk-file','/tmp/pg_tde_test_keyring.per');
+ pg_tde_add_key_provider_file 
+------------------------------
+                            1
+(1 row)
+
+SELECT pg_tde_add_key_provider_file('free-file','/tmp/pg_tde_test_keyring_2.per');
+ pg_tde_add_key_provider_file 
+------------------------------
+                            2
+(1 row)
+
+SELECT pg_tde_add_key_provider_vault_v2('V2-vault','vault-token','percona.com/vault-v2/percona','/mount/dev','ca-cert-auth');
+ pg_tde_add_key_provider_vault_v2 
+----------------------------------
+                                3
+(1 row)
+
+SELECT * FROM pg_tde_list_all_key_providers();
+ id | provider_name | provider_type |                                                                    options                                                                    
+----+---------------+---------------+-----------------------------------------------------------------------------------------------------------------------------------------------
+  1 | mk-file       | file          | {"type" : "file", "path" : "/tmp/pg_tde_test_keyring.per"}
+  2 | free-file     | file          | {"type" : "file", "path" : "/tmp/pg_tde_test_keyring_2.per"}
+  3 | V2-vault      | vault-v2      | {"type" : "vault-v2", "url" : "percona.com/vault-v2/percona", "token" : "vault-token", "mountPath" : "/mount/dev", "caPath" : "ca-cert-auth"}
+(3 rows)
+
+SELECT pg_tde_set_principal_key('test-db-principal-key','mk-file');
+ pg_tde_set_principal_key 
+--------------------------
+ t
+(1 row)
+
+DROP EXTENSION pg_tde;
