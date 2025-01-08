@@ -706,7 +706,7 @@ smgrtruncate(SMgrRelation reln, ForkNumber *forknum, int nforks,
 	for (int i = 0; i < nforks; ++i)
 		old_nblocks[i] = smgrnblocks(reln, forknum[i]);
 
-	return smgrtruncate2(reln, forknum, nforks, old_nblocks, nblocks);
+	smgrtruncate2(reln, forknum, nforks, old_nblocks, nblocks);
 }
 
 /*
