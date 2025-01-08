@@ -120,8 +120,6 @@ struct pg_locale_struct
 	}			info;
 };
 
-typedef struct pg_locale_struct *pg_locale_t;
-
 extern void init_database_collation(void);
 extern pg_locale_t pg_newlocale_from_collation(Oid collid);
 
