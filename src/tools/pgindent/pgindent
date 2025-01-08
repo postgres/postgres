@@ -2,6 +2,13 @@
 
 # Copyright (c) 2021-2025, PostgreSQL Global Development Group
 
+# Program to maintain uniform layout style in our C code.
+# Exit codes:
+#   0 -- all OK
+#   1 -- error invoking pgindent, nothing done
+#   2 -- --check mode and at least one file requires changes
+#   3 -- pg_bsd_indent failed on at least one file
+
 use strict;
 use warnings FATAL => 'all';
 
@@ -408,6 +415,7 @@ foreach my $source_filename (@files)
 	if ($source eq "")
 	{
 		print STDERR "Failure in $source_filename: " . $error_message . "\n";
+		$status = 3;
 		next;
 	}
 
@@ -428,7 +436,7 @@ foreach my $source_filename (@files)
 
 			if ($check)
 			{
-				$status = 2;
+				$status ||= 2;
 				last unless $diff;
 			}
 		}
