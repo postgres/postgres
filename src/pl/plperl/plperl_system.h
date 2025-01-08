@@ -103,6 +103,7 @@
 #undef fstat
 #undef kill
 #undef listen
+#undef lseek
 #undef lstat
 #undef mkdir
 #undef open
