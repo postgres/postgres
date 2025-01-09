@@ -17,7 +17,7 @@ typedef struct WalWriteMethod WalWriteMethod;
 typedef struct
 {
 	WalWriteMethod *wwmethod;
-	off_t		currpos;
+	pgoff_t		currpos;
 	char	   *pathname;
 
 	/*
