@@ -1348,15 +1348,11 @@ SELECT * FROM pg_extension_update_paths('<replaceable>extension_name</replaceabl
      </para>
 
      <para>
-      Cross-extension references are extremely difficult to make fully
-      secure, partially because of uncertainty about which schema the other
-      extension is in.  The hazards are reduced if both extensions are
-      installed in the same schema, because then a hostile object cannot be
-      placed ahead of the referenced extension in the installation-time
-      <varname>search_path</varname>.  However, no mechanism currently exists
-      to require that.  For now, best practice is to not mark an extension
-      trusted if it depends on another one, unless that other one is always
-      installed in <literal>pg_catalog</literal>.
+      Secure cross-extension references typically require schema-qualification
+      of the names of the other extension's objects, using the
+      <literal>@extschema:<replaceable>name</replaceable>@</literal>
+      syntax, in addition to careful matching of argument types for functions
+      and operators.
      </para>
     </sect3>
    </sect2>

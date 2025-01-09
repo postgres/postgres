@@ -946,15 +946,6 @@ ALTER TABLE tablename ALTER hstorecol TYPE hstore USING hstorecol || '';
    extension for PL/Python is called <literal>hstore_plpython3u</literal>.
    If you use it, <type>hstore</type> values are mapped to Python dictionaries.
   </para>
-
-  <caution>
-   <para>
-    It is strongly recommended that the transform extensions be installed in
-    the same schema as <filename>hstore</filename>.  Otherwise there are
-    installation-time security hazards if a transform extension's schema
-    contains objects defined by a hostile user.
-   </para>
-  </caution>
  </sect2>
 
  <sect2 id="hstore-authors">

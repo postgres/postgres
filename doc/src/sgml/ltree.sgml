@@ -841,15 +841,6 @@ ltreetest=&gt; SELECT ins_label(path,2,'Space') FROM test WHERE path &lt;@ 'Top.
    creating a function, <type>ltree</type> values are mapped to Python lists.
    (The reverse is currently not supported, however.)
   </para>
-
-  <caution>
-   <para>
-    It is strongly recommended that the transform extension be installed in
-    the same schema as <filename>ltree</filename>.  Otherwise there are
-    installation-time security hazards if a transform extension's schema
-    contains objects defined by a hostile user.
-   </para>
-  </caution>
  </sect2>
 
  <sect2 id="ltree-authors">
