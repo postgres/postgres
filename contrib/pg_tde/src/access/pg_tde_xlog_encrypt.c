@@ -122,7 +122,7 @@ TDEXLogWriteEncryptedPages(int fd, const void *buf, size_t count, off_t offset)
 	char iv_prefix[16] = {0,};
 	size_t data_size = 0;
 	XLogPageHeader curr_page_hdr = &EncryptCurrentPageHrd;
-	XLogPageHeader enc_buf_page;
+	XLogPageHeader enc_buf_page = NULL;
 	RelKeyData *key = GetTdeGlobaleRelationKey(GLOBAL_SPACE_RLOCATOR(XLOG_TDE_OID));
 	off_t enc_off;
 	size_t page_size = XLOG_BLCKSZ - offset % XLOG_BLCKSZ;
@@ -175,7 +175,7 @@ TDEXLogWriteEncryptedPages(int fd, const void *buf, size_t count, off_t offset)
 		}
 
 		/*
-		 * The page is zeroed (no data), no sense to enctypt. This may happen
+		 * The page is zeroed (no data), no sense to encrypt. This may happen
 		 * when base_backup or other requests XLOG SWITCH and some pages in
 		 * XLog buffer still not used.
 		 */
@@ -185,6 +185,7 @@ TDEXLogWriteEncryptedPages(int fd, const void *buf, size_t count, off_t offset)
 			Assert((*((char *) buf + enc_off) == 0) &&
 				   memcmp((char *) buf + enc_off, (char *) buf + enc_off + 1, data_size - 1) == 0);
 
+			enc_buf_page = (XLogPageHeader) (TDEXLogEncryptBuf + enc_off);
 			memcpy((char *) enc_buf_page, (char *) buf + enc_off, data_size);
 		}
 		else
