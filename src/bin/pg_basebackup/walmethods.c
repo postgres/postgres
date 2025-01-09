@@ -63,7 +63,7 @@ static DirectoryMethodData *dir_data = NULL;
 typedef struct DirectoryMethodFile
 {
 	int			fd;
-	off_t		currpos;
+	pgoff_t		currpos;
 	char	   *pathname;
 	char	   *fullpath;
 	char	   *temp_suffix;
@@ -370,7 +370,7 @@ dir_write(Walfile f, const void *buf, size_t count)
 	return r;
 }
 
-static off_t
+static pgoff_t
 dir_get_current_pos(Walfile f)
 {
 	Assert(f != NULL);
@@ -666,8 +666,8 @@ FreeWalDirectoryMethod(void)
 
 typedef struct TarMethodFile
 {
-	off_t		ofs_start;		/* Where does the *header* for this file start */
-	off_t		currpos;
+	pgoff_t		ofs_start;		/* Where does the *header* for this file start */
+	pgoff_t		currpos;
 	char		header[TAR_BLOCK_SIZE];
 	char	   *pathname;
 	size_t		pad_to_size;
@@ -1005,7 +1005,7 @@ tar_compression_algorithm(void)
 	return tar_data->compression_algorithm;
 }
 
-static off_t
+static pgoff_t
 tar_get_current_pos(Walfile f)
 {
 	Assert(f != NULL);

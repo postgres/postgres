@@ -69,7 +69,7 @@ struct WalWriteMethod
 	ssize_t		(*write) (Walfile f, const void *buf, size_t count);
 
 	/* Return the current position in a file or -1 on error */
-	off_t		(*get_current_pos) (Walfile f);
+	pgoff_t		(*get_current_pos) (Walfile f);
 
 	/*
 	 * fsync the contents of the specified file. Returns 0 on success.

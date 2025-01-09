@@ -191,7 +191,7 @@ static bool
 close_walfile(StreamCtl *stream, XLogRecPtr pos)
 {
 	char	   *fn;
-	off_t		currpos;
+	pgoff_t		currpos;
 	int			r;
 
 	if (walfile == NULL)
