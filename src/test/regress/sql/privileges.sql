@@ -169,6 +169,9 @@ CREATE GROUP regress_priv_group2 WITH ADMIN regress_priv_user1 USER regress_priv
 ALTER GROUP regress_priv_group1 ADD USER regress_priv_user4;
 
 GRANT regress_priv_group2 TO regress_priv_user2 GRANTED BY regress_priv_user1;
+SET SESSION AUTHORIZATION regress_priv_user3;
+ALTER GROUP regress_priv_group2 ADD USER regress_priv_user2;	-- fail
+ALTER GROUP regress_priv_group2 DROP USER regress_priv_user2;	-- fail
 SET SESSION AUTHORIZATION regress_priv_user1;
 ALTER GROUP regress_priv_group2 ADD USER regress_priv_user2;
 ALTER GROUP regress_priv_group2 ADD USER regress_priv_user2;	-- duplicate
