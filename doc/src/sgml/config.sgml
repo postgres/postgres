@@ -4715,6 +4715,8 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
         wait for replies from,
         and <replaceable class="parameter">standby_name</replaceable>
         is the name of a standby server.
+        <replaceable class="parameter">num_sync</replaceable>
+        must be an integer value greater than zero.
         <literal>FIRST</literal> and <literal>ANY</literal> specify the method to choose
         synchronous standbys from the listed servers.
        </para>
