@@ -99,9 +99,9 @@ cannot miss any items it should have seen, nor accidentally return the same
 item twice.  The scan must remember the page's right-link at the time it
 was scanned, since that is the page to move right to; if we move right to
 the current right-link then we'd re-scan any items moved by a page split.
-We don't similarly remember the left-link, since it's best to use the most
-up-to-date left-link when trying to move left (see detailed move-left
-algorithm below).
+We also remember the left-link, and follow it when the scan moves backwards
+(though this requires extra handling to account for concurrent splits of
+the left sibling; see detailed move-left algorithm below).
 
 In most cases we release our lock and pin on a page before attempting
 to acquire pin and lock on the page we are moving to.  In a few places
