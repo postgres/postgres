@@ -150,11 +150,18 @@ btmask(BackendType t)
 }
 
 static inline BackendTypeMask
-btmask_add(BackendTypeMask mask, BackendType t)
+btmask_add_n(BackendTypeMask mask, int nargs, BackendType *t)
 {
-	mask.mask |= 1 << t;
+	for (int i = 0; i < nargs; i++)
+		mask.mask |= 1 << t[i];
 	return mask;
 }
+
+#define btmask_add(mask, ...) \
+	btmask_add_n(mask, \
+		lengthof(((BackendType[]){__VA_ARGS__})), \
+		(BackendType[]){__VA_ARGS__} \
+	)
 
 static inline BackendTypeMask
 btmask_del(BackendTypeMask mask, BackendType t)
@@ -2840,22 +2847,27 @@ PostmasterStateMachine(void)
 		/*
 		 * PM_WAIT_BACKENDS state ends when we have no regular backends, no
 		 * autovac launcher or workers, and no bgworkers (including
-		 * unconnected ones).  No walwriter, bgwriter, slot sync worker, or
-		 * WAL summarizer either.
+		 * unconnected ones).
 		 */
-		targetMask = btmask_add(targetMask, B_BACKEND);
-		targetMask = btmask_add(targetMask, B_AUTOVAC_LAUNCHER);
-		targetMask = btmask_add(targetMask, B_AUTOVAC_WORKER);
-		targetMask = btmask_add(targetMask, B_BG_WORKER);
+		targetMask = btmask_add(targetMask,
+								B_BACKEND,
+								B_AUTOVAC_LAUNCHER,
+								B_AUTOVAC_WORKER,
+								B_BG_WORKER);
 
-		targetMask = btmask_add(targetMask, B_WAL_WRITER);
-		targetMask = btmask_add(targetMask, B_BG_WRITER);
-		targetMask = btmask_add(targetMask, B_SLOTSYNC_WORKER);
-		targetMask = btmask_add(targetMask, B_WAL_SUMMARIZER);
+		/*
+		 * No walwriter, bgwriter, slot sync worker, or WAL summarizer either.
+		 */
+		targetMask = btmask_add(targetMask,
+								B_WAL_WRITER,
+								B_BG_WRITER,
+								B_SLOTSYNC_WORKER,
+								B_WAL_SUMMARIZER);
 
 		/* If we're in recovery, also stop startup and walreceiver procs */
-		targetMask = btmask_add(targetMask, B_STARTUP);
-		targetMask = btmask_add(targetMask, B_WAL_RECEIVER);
+		targetMask = btmask_add(targetMask,
+								B_STARTUP,
+								B_WAL_RECEIVER);
 
 		/*
 		 * If we are doing crash recovery or an immediate shutdown then we
@@ -2878,17 +2890,19 @@ PostmasterStateMachine(void)
 		{
 			BackendTypeMask remainMask = BTYPE_MASK_NONE;
 
-			remainMask = btmask_add(remainMask, B_WAL_SENDER);
-			remainMask = btmask_add(remainMask, B_ARCHIVER);
-			remainMask = btmask_add(remainMask, B_DEAD_END_BACKEND);
-			remainMask = btmask_add(remainMask, B_LOGGER);
+			remainMask = btmask_add(remainMask,
+									B_WAL_SENDER,
+									B_ARCHIVER,
+									B_DEAD_END_BACKEND,
+									B_LOGGER);
 
 			/* checkpointer may or may not be in targetMask already */
 			remainMask = btmask_add(remainMask, B_CHECKPOINTER);
 
 			/* these are not real postmaster children */
-			remainMask = btmask_add(remainMask, B_INVALID);
-			remainMask = btmask_add(remainMask, B_STANDALONE_BACKEND);
+			remainMask = btmask_add(remainMask,
+									B_INVALID,
+									B_STANDALONE_BACKEND);
 
 			/* All types should be included in targetMask or remainMask */
 			Assert((remainMask.mask | targetMask.mask) == BTYPE_MASK_ALL.mask);
