@@ -2367,149 +2367,6 @@ include_dir 'conf.d'
      </variablelist>
     </sect2>
 
-    <sect2 id="runtime-config-resource-vacuum-cost">
-     <title>Cost-based Vacuum Delay</title>
-
-     <para>
-      During the execution of <xref linkend="sql-vacuum"/>
-      and <xref linkend="sql-analyze"/>
-      commands, the system maintains an
-      internal counter that keeps track of the estimated cost of the
-      various I/O operations that are performed.  When the accumulated
-      cost reaches a limit (specified by
-      <varname>vacuum_cost_limit</varname>), the process performing
-      the operation will sleep for a short period of time, as specified by
-      <varname>vacuum_cost_delay</varname>. Then it will reset the
-      counter and continue execution.
-     </para>
-
-     <para>
-      The intent of this feature is to allow administrators to reduce
-      the I/O impact of these commands on concurrent database
-      activity. There are many situations where it is not
-      important that maintenance commands like
-      <command>VACUUM</command> and <command>ANALYZE</command> finish
-      quickly; however, it is usually very important that these
-      commands do not significantly interfere with the ability of the
-      system to perform other database operations. Cost-based vacuum
-      delay provides a way for administrators to achieve this.
-     </para>
-
-     <para>
-      This feature is disabled by default for manually issued
-      <command>VACUUM</command> commands. To enable it, set the
-      <varname>vacuum_cost_delay</varname> variable to a nonzero
-      value.
-     </para>
-
-     <variablelist>
-      <varlistentry id="guc-vacuum-cost-delay" xreflabel="vacuum_cost_delay">
-       <term><varname>vacuum_cost_delay</varname> (<type>floating point</type>)
-       <indexterm>
-        <primary><varname>vacuum_cost_delay</varname> configuration parameter</primary>
-       </indexterm>
-       </term>
-       <listitem>
-        <para>
-         The amount of time that the process will sleep
-         when the cost limit has been exceeded.
-         If this value is specified without units, it is taken as milliseconds.
-         The default value is zero, which disables the cost-based vacuum
-         delay feature.  Positive values enable cost-based vacuuming.
-        </para>
-
-        <para>
-         When using cost-based vacuuming, appropriate values for
-         <varname>vacuum_cost_delay</varname> are usually quite small, perhaps
-         less than 1 millisecond.  While <varname>vacuum_cost_delay</varname>
-         can be set to fractional-millisecond values, such delays may not be
-         measured accurately on older platforms.  On such platforms,
-         increasing <command>VACUUM</command>'s throttled resource consumption
-         above what you get at 1ms will require changing the other vacuum cost
-         parameters.  You should, nonetheless,
-         keep <varname>vacuum_cost_delay</varname> as small as your platform
-         will consistently measure; large delays are not helpful.
-        </para>
-       </listitem>
-      </varlistentry>
-
-      <varlistentry id="guc-vacuum-cost-page-hit" xreflabel="vacuum_cost_page_hit">
-       <term><varname>vacuum_cost_page_hit</varname> (<type>integer</type>)
-       <indexterm>
-        <primary><varname>vacuum_cost_page_hit</varname> configuration parameter</primary>
-       </indexterm>
-       </term>
-       <listitem>
-        <para>
-         The estimated cost for vacuuming a buffer found in the shared buffer
-         cache. It represents the cost to lock the buffer pool, lookup
-         the shared hash table and scan the content of the page. The
-         default value is one.
-        </para>
-       </listitem>
-      </varlistentry>
-
-      <varlistentry id="guc-vacuum-cost-page-miss" xreflabel="vacuum_cost_page_miss">
-       <term><varname>vacuum_cost_page_miss</varname> (<type>integer</type>)
-       <indexterm>
-        <primary><varname>vacuum_cost_page_miss</varname> configuration parameter</primary>
-       </indexterm>
-       </term>
-       <listitem>
-        <para>
-         The estimated cost for vacuuming a buffer that has to be read from
-         disk.  This represents the effort to lock the buffer pool,
-         lookup the shared hash table, read the desired block in from
-         the disk and scan its content. The default value is 2.
-        </para>
-       </listitem>
-      </varlistentry>
-
-      <varlistentry id="guc-vacuum-cost-page-dirty" xreflabel="vacuum_cost_page_dirty">
-       <term><varname>vacuum_cost_page_dirty</varname> (<type>integer</type>)
-       <indexterm>
-        <primary><varname>vacuum_cost_page_dirty</varname> configuration parameter</primary>
-       </indexterm>
-       </term>
-       <listitem>
-        <para>
-         The estimated cost charged when vacuum modifies a block that was
-         previously clean. It represents the extra I/O required to
-         flush the dirty block out to disk again. The default value is
-         20.
-        </para>
-       </listitem>
-      </varlistentry>
-
-      <varlistentry id="guc-vacuum-cost-limit" xreflabel="vacuum_cost_limit">
-       <term><varname>vacuum_cost_limit</varname> (<type>integer</type>)
-       <indexterm>
-        <primary><varname>vacuum_cost_limit</varname> configuration parameter</primary>
-       </indexterm>
-       </term>
-       <listitem>
-        <para>
-         This is the accumulated cost that will cause the vacuuming process to sleep
-         for <varname>vacuum_cost_delay</varname>.  The default is 200.
-        </para>
-       </listitem>
-      </varlistentry>
-     </variablelist>
-
-     <note>
-      <para>
-       There are certain operations that hold critical locks and should
-       therefore complete as quickly as possible.  Cost-based vacuum
-       delays do not occur during such operations.  Therefore it is
-       possible that the cost accumulates far higher than the specified
-       limit.  To avoid uselessly long delays in such cases, the actual
-       delay is calculated as <varname>vacuum_cost_delay</varname> *
-       <varname>accumulated_balance</varname> /
-       <varname>vacuum_cost_limit</varname> with a maximum of
-       <varname>vacuum_cost_delay</varname> * 4.
-      </para>
-     </note>
-    </sect2>
 
     <sect2 id="runtime-config-resource-background-writer">
      <title>Background Writer</title>
@@ -8590,13 +8447,21 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
     </sect2>
    </sect1>
 
-   <sect1 id="runtime-config-autovacuum">
-    <title>Automatic Vacuuming</title>
+   <sect1 id="runtime-config-vacuum">
+    <title>Vacuuming</title>
 
     <indexterm>
-     <primary>autovacuum</primary>
+     <primary>vacuum</primary>
      <secondary>configuration parameters</secondary>
     </indexterm>
+
+    <para>
+     These parameters control vacuuming behavior. For more information on the
+     purpose and responsibilities of vacuum, see <xref linkend="routine-vacuuming"/>.
+    </para>
+
+    <sect2 id="runtime-config-autovacuum">
+     <title>Automatic Vacuuming</title>
 
      <para>
       These settings control the behavior of the <firstterm>autovacuum</firstterm>
@@ -8605,325 +8470,654 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
       basis; see <xref linkend="sql-createtable-storage-parameters"/>.
      </para>
 
-    <variablelist>
+     <variablelist>
 
-     <varlistentry id="guc-autovacuum" xreflabel="autovacuum">
-      <term><varname>autovacuum</varname> (<type>boolean</type>)
-      <indexterm>
-       <primary><varname>autovacuum</varname> configuration parameter</primary>
-      </indexterm>
-      </term>
-      <listitem>
-       <para>
-        Controls whether the server should run the
-        autovacuum launcher daemon.  This is on by default; however,
-        <xref linkend="guc-track-counts"/> must also be enabled for
-        autovacuum to work.
-        This parameter can only be set in the <filename>postgresql.conf</filename>
-        file or on the server command line; however, autovacuuming can be
-        disabled for individual tables by changing table storage parameters.
-       </para>
-       <para>
-        Note that even when this parameter is disabled, the system
-        will launch autovacuum processes if necessary to
-        prevent transaction ID wraparound.  See <xref
-        linkend="vacuum-for-wraparound"/> for more information.
-       </para>
-      </listitem>
-     </varlistentry>
+      <varlistentry id="guc-autovacuum" xreflabel="autovacuum">
+       <term><varname>autovacuum</varname> (<type>boolean</type>)
+       <indexterm>
+        <primary><varname>autovacuum</varname> configuration parameter</primary>
+       </indexterm>
+       </term>
+       <listitem>
+        <para>
+         Controls whether the server should run the
+         autovacuum launcher daemon.  This is on by default; however,
+         <xref linkend="guc-track-counts"/> must also be enabled for
+         autovacuum to work.
+         This parameter can only be set in the <filename>postgresql.conf</filename>
+         file or on the server command line; however, autovacuuming can be
+         disabled for individual tables by changing table storage parameters.
+        </para>
+        <para>
+         Note that even when this parameter is disabled, the system
+         will launch autovacuum processes if necessary to
+         prevent transaction ID wraparound.  See <xref
+         linkend="vacuum-for-wraparound"/> for more information.
+        </para>
+       </listitem>
+      </varlistentry>
 
-     <varlistentry id="guc-autovacuum-worker-slots" xreflabel="autovacuum_worker_slots">
-      <term><varname>autovacuum_worker_slots</varname> (<type>integer</type>)
-      <indexterm>
-       <primary><varname>autovacuum_worker_slots</varname> configuration parameter</primary>
-      </indexterm>
-      </term>
-      <listitem>
-       <para>
-        Specifies the number of backend slots to reserve for autovacuum worker
-        processes.  The default is typically 16 slots, but might be less if
-        your kernel settings will not support it (as determined during initdb).
-        This parameter can only be set at server start.
-       </para>
-       <para>
-        When changing this value, consider also adjusting
-        <xref linkend="guc-autovacuum-max-workers"/>.
-       </para>
-      </listitem>
-     </varlistentry>
+      <varlistentry id="guc-autovacuum-worker-slots" xreflabel="autovacuum_worker_slots">
+       <term><varname>autovacuum_worker_slots</varname> (<type>integer</type>)
+       <indexterm>
+        <primary><varname>autovacuum_worker_slots</varname> configuration parameter</primary>
+       </indexterm>
+       </term>
+       <listitem>
+        <para>
+         Specifies the number of backend slots to reserve for autovacuum worker
+         processes.  The default is typically 16 slots, but might be less if
+         your kernel settings will not support it (as determined during initdb).
+         This parameter can only be set at server start.
+        </para>
+        <para>
+         When changing this value, consider also adjusting
+         <xref linkend="guc-autovacuum-max-workers"/>.
+        </para>
+       </listitem>
+      </varlistentry>
 
-     <varlistentry id="guc-autovacuum-max-workers" xreflabel="autovacuum_max_workers">
-      <term><varname>autovacuum_max_workers</varname> (<type>integer</type>)
-      <indexterm>
-       <primary><varname>autovacuum_max_workers</varname> configuration parameter</primary>
-      </indexterm>
-      </term>
-      <listitem>
-       <para>
-        Specifies the maximum number of autovacuum processes (other than the
-        autovacuum launcher) that may be running at any one time.  The default
-        is three.  This parameter can only be set in the
-        <filename>postgresql.conf</filename> file or on the server command line.
-       </para>
-       <para>
-        Note that a setting for this value which is higher than
-        <xref linkend="guc-autovacuum-worker-slots"/> will have no effect,
-        since autovacuum workers are taken from the pool of slots established
-        by that setting.
-       </para>
-      </listitem>
-     </varlistentry>
+      <varlistentry id="guc-autovacuum-max-workers" xreflabel="autovacuum_max_workers">
+       <term><varname>autovacuum_max_workers</varname> (<type>integer</type>)
+       <indexterm>
+        <primary><varname>autovacuum_max_workers</varname> configuration parameter</primary>
+       </indexterm>
+       </term>
+       <listitem>
+        <para>
+         Specifies the maximum number of autovacuum processes (other than the
+         autovacuum launcher) that may be running at any one time.  The default
+         is <literal>3</literal>.  This parameter can only be set in the
+         <filename>postgresql.conf</filename> file or on the server command line.
+        </para>
+        <para>
+         Note that a setting for this value which is higher than
+         <xref linkend="guc-autovacuum-worker-slots"/> will have no effect,
+         since autovacuum workers are taken from the pool of slots established
+         by that setting.
+        </para>
+       </listitem>
+      </varlistentry>
 
-     <varlistentry id="guc-autovacuum-naptime" xreflabel="autovacuum_naptime">
-      <term><varname>autovacuum_naptime</varname> (<type>integer</type>)
-      <indexterm>
-       <primary><varname>autovacuum_naptime</varname> configuration parameter</primary>
-      </indexterm>
-      </term>
-      <listitem>
-       <para>
-        Specifies the minimum delay between autovacuum runs on any given
-        database.  In each round the daemon examines the
-        database and issues <command>VACUUM</command> and <command>ANALYZE</command> commands
-        as needed for tables in that database.
-        If this value is specified without units, it is taken as seconds.
-        The default is one minute (<literal>1min</literal>).
-        This parameter can only be set in the <filename>postgresql.conf</filename>
-        file or on the server command line.
-       </para>
-      </listitem>
-     </varlistentry>
+      <varlistentry id="guc-autovacuum-naptime" xreflabel="autovacuum_naptime">
+       <term><varname>autovacuum_naptime</varname> (<type>integer</type>)
+       <indexterm>
+        <primary><varname>autovacuum_naptime</varname> configuration parameter</primary>
+       </indexterm>
+       </term>
+       <listitem>
+        <para>
+         Specifies the minimum delay between autovacuum runs on any given
+         database.  In each round the daemon examines the
+         database and issues <command>VACUUM</command> and <command>ANALYZE</command> commands
+         as needed for tables in that database.
+         If this value is specified without units, it is taken as seconds.
+         The default is one minute (<literal>1min</literal>).
+         This parameter can only be set in the <filename>postgresql.conf</filename>
+         file or on the server command line.
+        </para>
+       </listitem>
+      </varlistentry>
 
-     <varlistentry id="guc-autovacuum-vacuum-threshold" xreflabel="autovacuum_vacuum_threshold">
-      <term><varname>autovacuum_vacuum_threshold</varname> (<type>integer</type>)
-      <indexterm>
-       <primary><varname>autovacuum_vacuum_threshold</varname></primary>
-       <secondary>configuration parameter</secondary>
-      </indexterm>
-      </term>
-      <listitem>
-       <para>
-        Specifies the minimum number of updated or deleted tuples needed
-        to trigger a <command>VACUUM</command> in any one table.
-        The default is 50 tuples.
-        This parameter can only be set in the <filename>postgresql.conf</filename>
-        file or on the server command line;
-        but the setting can be overridden for individual tables by
-        changing table storage parameters.
-       </para>
-      </listitem>
-     </varlistentry>
+      <varlistentry id="guc-autovacuum-vacuum-threshold" xreflabel="autovacuum_vacuum_threshold">
+       <term><varname>autovacuum_vacuum_threshold</varname> (<type>integer</type>)
+       <indexterm>
+        <primary><varname>autovacuum_vacuum_threshold</varname></primary>
+        <secondary>configuration parameter</secondary>
+       </indexterm>
+       </term>
+       <listitem>
+        <para>
+         Specifies the minimum number of updated or deleted tuples needed
+         to trigger a <command>VACUUM</command> in any one table.
+         The default is 50 tuples.
+         This parameter can only be set in the <filename>postgresql.conf</filename>
+         file or on the server command line;
+         but the setting can be overridden for individual tables by
+         changing table storage parameters.
+        </para>
+       </listitem>
+      </varlistentry>
 
-     <varlistentry id="guc-autovacuum-vacuum-insert-threshold" xreflabel="autovacuum_vacuum_insert_threshold">
-      <term><varname>autovacuum_vacuum_insert_threshold</varname> (<type>integer</type>)
-      <indexterm>
-       <primary><varname>autovacuum_vacuum_insert_threshold</varname></primary>
-       <secondary>configuration parameter</secondary>
-      </indexterm>
-      </term>
-      <listitem>
-       <para>
-        Specifies the number of inserted tuples needed to trigger a
-        <command>VACUUM</command> in any one table.
-        The default is 1000 tuples.  If -1 is specified, autovacuum will not
-        trigger a <command>VACUUM</command> operation on any tables based on
-        the number of inserts.
-        This parameter can only be set in the <filename>postgresql.conf</filename>
-        file or on the server command line;
-        but the setting can be overridden for individual tables by
-        changing table storage parameters.
-       </para>
-      </listitem>
-     </varlistentry>
+      <varlistentry id="guc-autovacuum-vacuum-insert-threshold" xreflabel="autovacuum_vacuum_insert_threshold">
+       <term><varname>autovacuum_vacuum_insert_threshold</varname> (<type>integer</type>)
+       <indexterm>
+        <primary><varname>autovacuum_vacuum_insert_threshold</varname></primary>
+        <secondary>configuration parameter</secondary>
+       </indexterm>
+       </term>
+       <listitem>
+        <para>
+         Specifies the number of inserted tuples needed to trigger a
+         <command>VACUUM</command> in any one table.
+         The default is 1000 tuples.  If -1 is specified, autovacuum will not
+         trigger a <command>VACUUM</command> operation on any tables based on
+         the number of inserts.
+         This parameter can only be set in the <filename>postgresql.conf</filename>
+         file or on the server command line;
+         but the setting can be overridden for individual tables by
+         changing table storage parameters.
+        </para>
+       </listitem>
+      </varlistentry>
 
-     <varlistentry id="guc-autovacuum-analyze-threshold" xreflabel="autovacuum_analyze_threshold">
-      <term><varname>autovacuum_analyze_threshold</varname> (<type>integer</type>)
-      <indexterm>
-       <primary><varname>autovacuum_analyze_threshold</varname></primary>
-       <secondary>configuration parameter</secondary>
-      </indexterm>
-      </term>
-      <listitem>
-       <para>
-        Specifies the minimum number of inserted, updated or deleted tuples
-        needed to trigger an <command>ANALYZE</command> in any one table.
-        The default is 50 tuples.
-        This parameter can only be set in the <filename>postgresql.conf</filename>
-        file or on the server command line;
-        but the setting can be overridden for individual tables by
-        changing table storage parameters.
-       </para>
-      </listitem>
-     </varlistentry>
+      <varlistentry id="guc-autovacuum-analyze-threshold" xreflabel="autovacuum_analyze_threshold">
+       <term><varname>autovacuum_analyze_threshold</varname> (<type>integer</type>)
+       <indexterm>
+        <primary><varname>autovacuum_analyze_threshold</varname></primary>
+        <secondary>configuration parameter</secondary>
+       </indexterm>
+       </term>
+       <listitem>
+        <para>
+         Specifies the minimum number of inserted, updated or deleted tuples
+         needed to trigger an <command>ANALYZE</command> in any one table.
+         The default is 50 tuples.
+         This parameter can only be set in the <filename>postgresql.conf</filename>
+         file or on the server command line;
+         but the setting can be overridden for individual tables by
+         changing table storage parameters.
+        </para>
+       </listitem>
+      </varlistentry>
 
-     <varlistentry id="guc-autovacuum-vacuum-scale-factor" xreflabel="autovacuum_vacuum_scale_factor">
-      <term><varname>autovacuum_vacuum_scale_factor</varname> (<type>floating point</type>)
-      <indexterm>
-       <primary><varname>autovacuum_vacuum_scale_factor</varname></primary>
-       <secondary>configuration parameter</secondary>
-      </indexterm>
-      </term>
-      <listitem>
-       <para>
-        Specifies a fraction of the table size to add to
-        <varname>autovacuum_vacuum_threshold</varname>
-        when deciding whether to trigger a <command>VACUUM</command>.
-        The default is 0.2 (20% of table size).
-        This parameter can only be set in the <filename>postgresql.conf</filename>
-        file or on the server command line;
-        but the setting can be overridden for individual tables by
-        changing table storage parameters.
-       </para>
-      </listitem>
-     </varlistentry>
+      <varlistentry id="guc-autovacuum-vacuum-scale-factor" xreflabel="autovacuum_vacuum_scale_factor">
+       <term><varname>autovacuum_vacuum_scale_factor</varname> (<type>floating point</type>)
+       <indexterm>
+        <primary><varname>autovacuum_vacuum_scale_factor</varname></primary>
+        <secondary>configuration parameter</secondary>
+       </indexterm>
+       </term>
+       <listitem>
+        <para>
+         Specifies a fraction of the table size to add to
+         <varname>autovacuum_vacuum_threshold</varname>
+         when deciding whether to trigger a <command>VACUUM</command>.
+         The default is <literal>0.2</literal> (20% of table size).
+         This parameter can only be set in the <filename>postgresql.conf</filename>
+         file or on the server command line;
+         but the setting can be overridden for individual tables by
+         changing table storage parameters.
+        </para>
+       </listitem>
+      </varlistentry>
 
-     <varlistentry id="guc-autovacuum-vacuum-insert-scale-factor" xreflabel="autovacuum_vacuum_insert_scale_factor">
-      <term><varname>autovacuum_vacuum_insert_scale_factor</varname> (<type>floating point</type>)
-      <indexterm>
-       <primary><varname>autovacuum_vacuum_insert_scale_factor</varname></primary>
-       <secondary>configuration parameter</secondary>
-      </indexterm>
-      </term>
-      <listitem>
-       <para>
-        Specifies a fraction of the table size to add to
-        <varname>autovacuum_vacuum_insert_threshold</varname>
-        when deciding whether to trigger a <command>VACUUM</command>.
-        The default is 0.2 (20% of table size).
-        This parameter can only be set in the <filename>postgresql.conf</filename>
-        file or on the server command line;
-        but the setting can be overridden for individual tables by
-        changing table storage parameters.
-       </para>
-      </listitem>
-     </varlistentry>
+      <varlistentry id="guc-autovacuum-vacuum-insert-scale-factor" xreflabel="autovacuum_vacuum_insert_scale_factor">
+       <term><varname>autovacuum_vacuum_insert_scale_factor</varname> (<type>floating point</type>)
+       <indexterm>
+        <primary><varname>autovacuum_vacuum_insert_scale_factor</varname></primary>
+        <secondary>configuration parameter</secondary>
+       </indexterm>
+       </term>
+       <listitem>
+        <para>
+         Specifies a fraction of the table size to add to
+         <varname>autovacuum_vacuum_insert_threshold</varname>
+         when deciding whether to trigger a <command>VACUUM</command>.
+         The default is <literal>0.2</literal> (20% of table size).
+         This parameter can only be set in the <filename>postgresql.conf</filename>
+         file or on the server command line;
+         but the setting can be overridden for individual tables by
+         changing table storage parameters.
+        </para>
+       </listitem>
+      </varlistentry>
 
-     <varlistentry id="guc-autovacuum-analyze-scale-factor" xreflabel="autovacuum_analyze_scale_factor">
-      <term><varname>autovacuum_analyze_scale_factor</varname> (<type>floating point</type>)
-      <indexterm>
-       <primary><varname>autovacuum_analyze_scale_factor</varname></primary>
-       <secondary>configuration parameter</secondary>
-      </indexterm>
-      </term>
-      <listitem>
-       <para>
-        Specifies a fraction of the table size to add to
-        <varname>autovacuum_analyze_threshold</varname>
-        when deciding whether to trigger an <command>ANALYZE</command>.
-        The default is 0.1 (10% of table size).
-        This parameter can only be set in the <filename>postgresql.conf</filename>
-        file or on the server command line;
-        but the setting can be overridden for individual tables by
-        changing table storage parameters.
-       </para>
-      </listitem>
-     </varlistentry>
+      <varlistentry id="guc-autovacuum-analyze-scale-factor" xreflabel="autovacuum_analyze_scale_factor">
+       <term><varname>autovacuum_analyze_scale_factor</varname> (<type>floating point</type>)
+       <indexterm>
+        <primary><varname>autovacuum_analyze_scale_factor</varname></primary>
+        <secondary>configuration parameter</secondary>
+       </indexterm>
+       </term>
+       <listitem>
+        <para>
+         Specifies a fraction of the table size to add to
+         <varname>autovacuum_analyze_threshold</varname>
+         when deciding whether to trigger an <command>ANALYZE</command>.
+         The default is <literal>0.1</literal> (10% of table size).
+         This parameter can only be set in the <filename>postgresql.conf</filename>
+         file or on the server command line;
+         but the setting can be overridden for individual tables by
+         changing table storage parameters.
+        </para>
+       </listitem>
+      </varlistentry>
 
-     <varlistentry id="guc-autovacuum-freeze-max-age" xreflabel="autovacuum_freeze_max_age">
-      <term><varname>autovacuum_freeze_max_age</varname> (<type>integer</type>)
-      <indexterm>
-       <primary><varname>autovacuum_freeze_max_age</varname></primary>
-       <secondary>configuration parameter</secondary>
-      </indexterm>
-      </term>
-      <listitem>
-       <para>
-        Specifies the maximum age (in transactions) that a table's
-        <structname>pg_class</structname>.<structfield>relfrozenxid</structfield> field can
-        attain before a <command>VACUUM</command> operation is forced
-        to prevent transaction ID wraparound within the table.
-        Note that the system will launch autovacuum processes to
-        prevent wraparound even when autovacuum is otherwise disabled.
-       </para>
+      <varlistentry id="guc-autovacuum-freeze-max-age" xreflabel="autovacuum_freeze_max_age">
+       <term><varname>autovacuum_freeze_max_age</varname> (<type>integer</type>)
+       <indexterm>
+        <primary><varname>autovacuum_freeze_max_age</varname></primary>
+        <secondary>configuration parameter</secondary>
+       </indexterm>
+       </term>
+       <listitem>
+        <para>
+         Specifies the maximum age (in transactions) that a table's
+         <structname>pg_class</structname>.<structfield>relfrozenxid</structfield> field can
+         attain before a <command>VACUUM</command> operation is forced
+         to prevent transaction ID wraparound within the table.
+         Note that the system will launch autovacuum processes to
+         prevent wraparound even when autovacuum is otherwise disabled.
+        </para>
 
-       <para>
-        Vacuum also allows removal of old files from the
-        <filename>pg_xact</filename> subdirectory, which is why the default
-        is a relatively low 200 million transactions.
-        This parameter can only be set at server start, but the setting
-        can be reduced for individual tables by
-        changing table storage parameters.
-        For more information see <xref linkend="vacuum-for-wraparound"/>.
-       </para>
-      </listitem>
-     </varlistentry>
+        <para>
+         Vacuum also allows removal of old files from the
+         <filename>pg_xact</filename> subdirectory, which is why the default
+         is a relatively low 200 million transactions.
+         This parameter can only be set at server start, but the setting
+         can be reduced for individual tables by
+         changing table storage parameters.
+         For more information see <xref linkend="vacuum-for-wraparound"/>.
+        </para>
+       </listitem>
+      </varlistentry>
 
-     <varlistentry id="guc-autovacuum-multixact-freeze-max-age" xreflabel="autovacuum_multixact_freeze_max_age">
-      <term><varname>autovacuum_multixact_freeze_max_age</varname> (<type>integer</type>)
-      <indexterm>
-       <primary><varname>autovacuum_multixact_freeze_max_age</varname></primary>
-       <secondary>configuration parameter</secondary>
-      </indexterm>
-      </term>
-      <listitem>
-       <para>
-        Specifies the maximum age (in multixacts) that a table's
-        <structname>pg_class</structname>.<structfield>relminmxid</structfield> field can
-        attain before a <command>VACUUM</command> operation is forced to
-        prevent multixact ID wraparound within the table.
-        Note that the system will launch autovacuum processes to
-        prevent wraparound even when autovacuum is otherwise disabled.
-       </para>
+      <varlistentry id="guc-autovacuum-multixact-freeze-max-age" xreflabel="autovacuum_multixact_freeze_max_age">
+       <term><varname>autovacuum_multixact_freeze_max_age</varname> (<type>integer</type>)
+       <indexterm>
+        <primary><varname>autovacuum_multixact_freeze_max_age</varname></primary>
+        <secondary>configuration parameter</secondary>
+       </indexterm>
+       </term>
+       <listitem>
+        <para>
+         Specifies the maximum age (in multixacts) that a table's
+         <structname>pg_class</structname>.<structfield>relminmxid</structfield> field can
+         attain before a <command>VACUUM</command> operation is forced to
+         prevent multixact ID wraparound within the table.
+         Note that the system will launch autovacuum processes to
+         prevent wraparound even when autovacuum is otherwise disabled.
+        </para>
 
-       <para>
-        Vacuuming multixacts also allows removal of old files from the
-        <filename>pg_multixact/members</filename> and <filename>pg_multixact/offsets</filename>
-        subdirectories, which is why the default is a relatively low
-        400 million multixacts.
-        This parameter can only be set at server start, but the setting can
-        be reduced for individual tables by changing table storage parameters.
-        For more information see <xref linkend="vacuum-for-multixact-wraparound"/>.
-       </para>
-      </listitem>
-     </varlistentry>
+        <para>
+         Vacuuming multixacts also allows removal of old files from the
+         <filename>pg_multixact/members</filename> and <filename>pg_multixact/offsets</filename>
+         subdirectories, which is why the default is a relatively low
+         400 million multixacts.
+         This parameter can only be set at server start, but the setting can
+         be reduced for individual tables by changing table storage parameters.
+         For more information see <xref linkend="vacuum-for-multixact-wraparound"/>.
+        </para>
+       </listitem>
+      </varlistentry>
 
-     <varlistentry id="guc-autovacuum-vacuum-cost-delay" xreflabel="autovacuum_vacuum_cost_delay">
-      <term><varname>autovacuum_vacuum_cost_delay</varname> (<type>floating point</type>)
-      <indexterm>
-       <primary><varname>autovacuum_vacuum_cost_delay</varname></primary>
-       <secondary>configuration parameter</secondary>
-      </indexterm>
-      </term>
-      <listitem>
-       <para>
-        Specifies the cost delay value that will be used in automatic
-        <command>VACUUM</command> operations.  If -1 is specified, the regular
-        <xref linkend="guc-vacuum-cost-delay"/> value will be used.
-        If this value is specified without units, it is taken as milliseconds.
-        The default value is 2 milliseconds.
-        This parameter can only be set in the <filename>postgresql.conf</filename>
-        file or on the server command line;
-        but the setting can be overridden for individual tables by
-        changing table storage parameters.
-       </para>
-      </listitem>
-     </varlistentry>
+      <varlistentry id="guc-autovacuum-vacuum-cost-delay" xreflabel="autovacuum_vacuum_cost_delay">
+       <term><varname>autovacuum_vacuum_cost_delay</varname> (<type>floating point</type>)
+       <indexterm>
+        <primary><varname>autovacuum_vacuum_cost_delay</varname></primary>
+        <secondary>configuration parameter</secondary>
+       </indexterm>
+       </term>
+       <listitem>
+        <para>
+         Specifies the cost delay value that will be used in automatic
+         <command>VACUUM</command> operations.  If -1 is specified, the regular
+         <xref linkend="guc-vacuum-cost-delay"/> value will be used.
+         If this value is specified without units, it is taken as milliseconds.
+         The default value is 2 milliseconds.
+         This parameter can only be set in the <filename>postgresql.conf</filename>
+         file or on the server command line;
+         but the setting can be overridden for individual tables by
+         changing table storage parameters.
+        </para>
+       </listitem>
+      </varlistentry>
 
-     <varlistentry id="guc-autovacuum-vacuum-cost-limit" xreflabel="autovacuum_vacuum_cost_limit">
-      <term><varname>autovacuum_vacuum_cost_limit</varname> (<type>integer</type>)
-      <indexterm>
-       <primary><varname>autovacuum_vacuum_cost_limit</varname></primary>
-       <secondary>configuration parameter</secondary>
-      </indexterm>
-      </term>
-      <listitem>
-       <para>
-        Specifies the cost limit value that will be used in automatic
-        <command>VACUUM</command> operations.  If -1 is specified (which is the
-        default), the regular
-        <xref linkend="guc-vacuum-cost-limit"/> value will be used.  Note that
-        the value is distributed proportionally among the running autovacuum
-        workers, if there is more than one, so that the sum of the limits for
-        each worker does not exceed the value of this variable.
-        This parameter can only be set in the <filename>postgresql.conf</filename>
-        file or on the server command line;
-        but the setting can be overridden for individual tables by
-        changing table storage parameters.
-       </para>
-      </listitem>
-     </varlistentry>
+      <varlistentry id="guc-autovacuum-vacuum-cost-limit" xreflabel="autovacuum_vacuum_cost_limit">
+       <term><varname>autovacuum_vacuum_cost_limit</varname> (<type>integer</type>)
+       <indexterm>
+        <primary><varname>autovacuum_vacuum_cost_limit</varname></primary>
+        <secondary>configuration parameter</secondary>
+       </indexterm>
+       </term>
+       <listitem>
+        <para>
+         Specifies the cost limit value that will be used in automatic
+         <command>VACUUM</command> operations.  If <literal>-1</literal>
+         is specified (which is the default), the regular
+         <xref linkend="guc-vacuum-cost-limit"/> value will be used.  Note that
+         the value is distributed proportionally among the running autovacuum
+         workers, if there is more than one, so that the sum of the limits for
+         each worker does not exceed the value of this variable.
+         This parameter can only be set in the <filename>postgresql.conf</filename>
+         file or on the server command line;
+         but the setting can be overridden for individual tables by
+         changing table storage parameters.
+        </para>
+       </listitem>
+      </varlistentry>
 
-    </variablelist>
+     </variablelist>
+    </sect2>
+
+    <sect2 id="runtime-config-resource-vacuum-cost">
+     <title>Cost-based Vacuum Delay</title>
+
+     <para>
+      During the execution of <xref linkend="sql-vacuum"/>
+      and <xref linkend="sql-analyze"/>
+      commands, the system maintains an
+      internal counter that keeps track of the estimated cost of the
+      various I/O operations that are performed.  When the accumulated
+      cost reaches a limit (specified by
+      <varname>vacuum_cost_limit</varname>), the process performing
+      the operation will sleep for a short period of time, as specified by
+      <varname>vacuum_cost_delay</varname>. Then it will reset the
+      counter and continue execution.
+     </para>
+
+     <para>
+      The intent of this feature is to allow administrators to reduce
+      the I/O impact of these commands on concurrent database
+      activity. There are many situations where it is not
+      important that maintenance commands like
+      <command>VACUUM</command> and <command>ANALYZE</command> finish
+      quickly; however, it is usually very important that these
+      commands do not significantly interfere with the ability of the
+      system to perform other database operations. Cost-based vacuum
+      delay provides a way for administrators to achieve this.
+     </para>
+
+     <para>
+      This feature is disabled by default for manually issued
+      <command>VACUUM</command> commands. To enable it, set the
+      <varname>vacuum_cost_delay</varname> variable to a nonzero
+      value.
+     </para>
+
+     <variablelist>
+      <varlistentry id="guc-vacuum-cost-delay" xreflabel="vacuum_cost_delay">
+       <term><varname>vacuum_cost_delay</varname> (<type>floating point</type>)
+       <indexterm>
+        <primary><varname>vacuum_cost_delay</varname> configuration parameter</primary>
+       </indexterm>
+       </term>
+       <listitem>
+        <para>
+         The amount of time that the process will sleep when the cost
+         limit has been exceeded. If this value is specified without
+         units, it is taken as milliseconds. The default value is
+         <literal>0</literal>, which disables the cost-based vacuum delay
+         feature.  Positive values enable cost-based vacuuming.
+        </para>
+
+        <para>
+         When using cost-based vacuuming, appropriate values for
+         <varname>vacuum_cost_delay</varname> are usually quite small, perhaps
+         less than 1 millisecond.  While <varname>vacuum_cost_delay</varname>
+         can be set to fractional-millisecond values, such delays may not be
+         measured accurately on older platforms.  On such platforms,
+         increasing <command>VACUUM</command>'s throttled resource consumption
+         above what you get at 1ms will require changing the other vacuum cost
+         parameters.  You should, nonetheless,
+         keep <varname>vacuum_cost_delay</varname> as small as your platform
+         will consistently measure; large delays are not helpful.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry id="guc-vacuum-cost-page-hit" xreflabel="vacuum_cost_page_hit">
+       <term><varname>vacuum_cost_page_hit</varname> (<type>integer</type>)
+       <indexterm>
+        <primary><varname>vacuum_cost_page_hit</varname> configuration parameter</primary>
+       </indexterm>
+       </term>
+       <listitem>
+        <para>
+         The estimated cost for vacuuming a buffer found in the shared
+         buffer cache. It represents the cost to lock the buffer pool,
+         lookup the shared hash table and scan the content of the page.
+         The default value is <literal>1</literal>.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry id="guc-vacuum-cost-page-miss" xreflabel="vacuum_cost_page_miss">
+       <term><varname>vacuum_cost_page_miss</varname> (<type>integer</type>)
+       <indexterm>
+        <primary><varname>vacuum_cost_page_miss</varname> configuration parameter</primary>
+       </indexterm>
+       </term>
+       <listitem>
+        <para>
+         The estimated cost for vacuuming a buffer that has to be read from
+         disk.  This represents the effort to lock the buffer pool,
+         lookup the shared hash table, read the desired block in from
+         the disk and scan its content. The default value is
+         <literal>2</literal>.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry id="guc-vacuum-cost-page-dirty" xreflabel="vacuum_cost_page_dirty">
+       <term><varname>vacuum_cost_page_dirty</varname> (<type>integer</type>)
+       <indexterm>
+        <primary><varname>vacuum_cost_page_dirty</varname> configuration parameter</primary>
+       </indexterm>
+       </term>
+       <listitem>
+        <para>
+         The estimated cost charged when vacuum modifies a block that was
+         previously clean. It represents the extra I/O required to
+         flush the dirty block out to disk again. The default value is
+         <literal>20</literal>.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry id="guc-vacuum-cost-limit" xreflabel="vacuum_cost_limit">
+       <term><varname>vacuum_cost_limit</varname> (<type>integer</type>)
+       <indexterm>
+        <primary><varname>vacuum_cost_limit</varname> configuration parameter</primary>
+       </indexterm>
+       </term>
+       <listitem>
+        <para>
+         This is the accumulated cost that will cause the vacuuming
+         process to sleep for <varname>vacuum_cost_delay</varname>.  The
+         default is <literal>200</literal>.
+        </para>
+       </listitem>
+      </varlistentry>
+     </variablelist>
+
+     <note>
+      <para>
+       There are certain operations that hold critical locks and should
+       therefore complete as quickly as possible.  Cost-based vacuum
+       delays do not occur during such operations.  Therefore it is
+       possible that the cost accumulates far higher than the specified
+       limit.  To avoid uselessly long delays in such cases, the actual
+       delay is calculated as <varname>vacuum_cost_delay</varname> *
+       <varname>accumulated_balance</varname> /
+       <varname>vacuum_cost_limit</varname> with a maximum of
+       <varname>vacuum_cost_delay</varname> * 4.
+      </para>
+     </note>
+    </sect2>
+
+    <sect2 id="runtime-config-vacuum-freezing">
+     <title>Freezing</title>
+
+     <para>
+      To maintain correctness even after transaction IDs wrap around,
+      <productname>PostgreSQL</productname> marks rows that are sufficiently
+      old as <emphasis>frozen</emphasis>. These rows are visible to everyone;
+      other transactions do not need to examine their inserting XID to
+      determine visibility. <command>VACUUM</command> is responsible for
+      marking rows as frozen. The following settings control
+      <command>VACUUM</command>'s freezing behavior and should be tuned based
+      on the XID consumption rate of the system and data access patterns of the
+      dominant workloads. See <xref linkend="vacuum-for-wraparound"/> for more
+      information on transaction ID wraparound and tuning these parameters.
+     </para>
+
+     <variablelist>
+      <varlistentry id="guc-vacuum-freeze-table-age" xreflabel="vacuum_freeze_table_age">
+       <term><varname>vacuum_freeze_table_age</varname> (<type>integer</type>)
+       <indexterm>
+        <primary><varname>vacuum_freeze_table_age</varname> configuration parameter</primary>
+       </indexterm>
+       </term>
+       <listitem>
+        <para>
+         <command>VACUUM</command> performs an aggressive scan if the table's
+         <structname>pg_class</structname>.<structfield>relfrozenxid</structfield> field has reached
+         the age specified by this setting.  An aggressive scan differs from
+         a regular <command>VACUUM</command> in that it visits every page that might
+         contain unfrozen XIDs or MXIDs, not just those that might contain dead
+         tuples.  The default is 150 million transactions.  Although users can
+         set this value anywhere from zero to two billion, <command>VACUUM</command>
+         will silently limit the effective value to 95% of
+         <xref linkend="guc-autovacuum-freeze-max-age"/>, so that a
+         periodic manual <command>VACUUM</command> has a chance to run before an
+         anti-wraparound autovacuum is launched for the table. For more
+         information see
+         <xref linkend="vacuum-for-wraparound"/>.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry id="guc-vacuum-freeze-min-age" xreflabel="vacuum_freeze_min_age">
+       <term><varname>vacuum_freeze_min_age</varname> (<type>integer</type>)
+       <indexterm>
+        <primary><varname>vacuum_freeze_min_age</varname> configuration parameter</primary>
+       </indexterm>
+       </term>
+       <listitem>
+        <para>
+         Specifies the cutoff age (in transactions) that
+         <command>VACUUM</command> should use to decide whether to
+         trigger freezing of pages that have an older XID.
+         The default is 50 million transactions.  Although
+         users can set this value anywhere from zero to one billion,
+         <command>VACUUM</command> will silently limit the effective value to half
+         the value of <xref linkend="guc-autovacuum-freeze-max-age"/>, so
+         that there is not an unreasonably short time between forced
+         autovacuums.  For more information see <xref
+         linkend="vacuum-for-wraparound"/>.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry id="guc-vacuum-failsafe-age" xreflabel="vacuum_failsafe_age">
+       <term><varname>vacuum_failsafe_age</varname> (<type>integer</type>)
+       <indexterm>
+        <primary><varname>vacuum_failsafe_age</varname> configuration parameter</primary>
+       </indexterm>
+       </term>
+       <listitem>
+        <para>
+         Specifies the maximum age (in transactions) that a table's
+         <structname>pg_class</structname>.<structfield>relfrozenxid</structfield>
+         field can attain before <command>VACUUM</command> takes
+         extraordinary measures to avoid system-wide transaction ID
+         wraparound failure.  This is <command>VACUUM</command>'s
+         strategy of last resort.  The failsafe typically triggers
+         when an autovacuum to prevent transaction ID wraparound has
+         already been running for some time, though it's possible for
+         the failsafe to trigger during any <command>VACUUM</command>.
+        </para>
+        <para>
+         When the failsafe is triggered, any cost-based delay that is
+         in effect will no longer be applied, further non-essential
+         maintenance tasks (such as index vacuuming) are bypassed, and any
+         <glossterm linkend="glossary-buffer-access-strategy">Buffer Access Strategy</glossterm>
+         in use will be disabled resulting in <command>VACUUM</command> being
+         free to make use of all of
+         <glossterm linkend="glossary-shared-memory">shared buffers</glossterm>.
+        </para>
+        <para>
+         The default is 1.6 billion transactions.  Although users can
+         set this value anywhere from zero to 2.1 billion,
+         <command>VACUUM</command> will silently adjust the effective
+         value to no less than 105% of <xref
+          linkend="guc-autovacuum-freeze-max-age"/>.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry id="guc-vacuum-multixact-freeze-table-age" xreflabel="vacuum_multixact_freeze_table_age">
+       <term><varname>vacuum_multixact_freeze_table_age</varname> (<type>integer</type>)
+       <indexterm>
+        <primary><varname>vacuum_multixact_freeze_table_age</varname> configuration parameter</primary>
+       </indexterm>
+       </term>
+       <listitem>
+        <para>
+         <command>VACUUM</command> performs an aggressive scan if the table's
+         <structname>pg_class</structname>.<structfield>relminmxid</structfield> field has reached
+         the age specified by this setting.  An aggressive scan differs from
+         a regular <command>VACUUM</command> in that it visits every page that might
+         contain unfrozen XIDs or MXIDs, not just those that might contain dead
+         tuples.  The default is 150 million multixacts.
+         Although users can set this value anywhere from zero to two billion,
+         <command>VACUUM</command> will silently limit the effective value to 95% of
+         <xref linkend="guc-autovacuum-multixact-freeze-max-age"/>, so that a
+         periodic manual <command>VACUUM</command> has a chance to run before an
+         anti-wraparound is launched for the table.
+         For more information see <xref linkend="vacuum-for-multixact-wraparound"/>.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry id="guc-vacuum-multixact-freeze-min-age" xreflabel="vacuum_multixact_freeze_min_age">
+       <term><varname>vacuum_multixact_freeze_min_age</varname> (<type>integer</type>)
+       <indexterm>
+        <primary><varname>vacuum_multixact_freeze_min_age</varname> configuration parameter</primary>
+       </indexterm>
+       </term>
+       <listitem>
+        <para>
+         Specifies the cutoff age (in multixacts) that <command>VACUUM</command>
+         should use to decide whether to trigger freezing of pages with
+         an older multixact ID.  The default is 5 million multixacts.
+         Although users can set this value anywhere from zero to one billion,
+         <command>VACUUM</command> will silently limit the effective value to half
+         the value of <xref linkend="guc-autovacuum-multixact-freeze-max-age"/>,
+         so that there is not an unreasonably short time between forced
+         autovacuums.
+         For more information see <xref linkend="vacuum-for-multixact-wraparound"/>.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry id="guc-vacuum-multixact-failsafe-age" xreflabel="vacuum_multixact_failsafe_age">
+       <term><varname>vacuum_multixact_failsafe_age</varname> (<type>integer</type>)
+       <indexterm>
+        <primary><varname>vacuum_multixact_failsafe_age</varname> configuration parameter</primary>
+       </indexterm>
+       </term>
+       <listitem>
+        <para>
+         Specifies the maximum age (in multixacts) that a table's
+         <structname>pg_class</structname>.<structfield>relminmxid</structfield>
+         field can attain before <command>VACUUM</command> takes
+         extraordinary measures to avoid system-wide multixact ID
+         wraparound failure.  This is <command>VACUUM</command>'s
+         strategy of last resort.  The failsafe typically triggers when
+         an autovacuum to prevent transaction ID wraparound has already
+         been running for some time, though it's possible for the
+         failsafe to trigger during any <command>VACUUM</command>.
+        </para>
+        <para>
+         When the failsafe is triggered, any cost-based delay that is
+         in effect will no longer be applied, and further non-essential
+         maintenance tasks (such as index vacuuming) are bypassed.
+        </para>
+        <para>
+         The default is 1.6 billion multixacts.  Although users can set
+         this value anywhere from zero to 2.1 billion,
+         <command>VACUUM</command> will silently adjust the effective
+         value to no less than 105% of <xref
+          linkend="guc-autovacuum-multixact-freeze-max-age"/>.
+        </para>
+       </listitem>
+      </varlistentry>
+
+     </variablelist>
+    </sect2>
    </sect1>
 
    <sect1 id="runtime-config-client">
@@ -9591,168 +9785,6 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         may not react well to unexpected connection closure.  It may be
         helpful to enable this timeout only for interactive sessions,
         perhaps by applying it only to particular users.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry id="guc-vacuum-freeze-table-age" xreflabel="vacuum_freeze_table_age">
-      <term><varname>vacuum_freeze_table_age</varname> (<type>integer</type>)
-      <indexterm>
-       <primary><varname>vacuum_freeze_table_age</varname> configuration parameter</primary>
-      </indexterm>
-      </term>
-      <listitem>
-       <para>
-        <command>VACUUM</command> performs an aggressive scan if the table's
-        <structname>pg_class</structname>.<structfield>relfrozenxid</structfield> field has reached
-        the age specified by this setting.  An aggressive scan differs from
-        a regular <command>VACUUM</command> in that it visits every page that might
-        contain unfrozen XIDs or MXIDs, not just those that might contain dead
-        tuples.  The default is 150 million transactions.  Although users can
-        set this value anywhere from zero to two billion, <command>VACUUM</command>
-        will silently limit the effective value to 95% of
-        <xref linkend="guc-autovacuum-freeze-max-age"/>, so that a
-        periodic manual <command>VACUUM</command> has a chance to run before an
-        anti-wraparound autovacuum is launched for the table. For more
-        information see
-        <xref linkend="vacuum-for-wraparound"/>.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry id="guc-vacuum-freeze-min-age" xreflabel="vacuum_freeze_min_age">
-      <term><varname>vacuum_freeze_min_age</varname> (<type>integer</type>)
-      <indexterm>
-       <primary><varname>vacuum_freeze_min_age</varname> configuration parameter</primary>
-      </indexterm>
-      </term>
-      <listitem>
-       <para>
-        Specifies the cutoff age (in transactions) that
-        <command>VACUUM</command> should use to decide whether to
-        trigger freezing of pages that have an older XID.
-        The default is 50 million transactions.  Although
-        users can set this value anywhere from zero to one billion,
-        <command>VACUUM</command> will silently limit the effective value to half
-        the value of <xref linkend="guc-autovacuum-freeze-max-age"/>, so
-        that there is not an unreasonably short time between forced
-        autovacuums.  For more information see <xref
-        linkend="vacuum-for-wraparound"/>.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry id="guc-vacuum-failsafe-age" xreflabel="vacuum_failsafe_age">
-      <term><varname>vacuum_failsafe_age</varname> (<type>integer</type>)
-      <indexterm>
-       <primary><varname>vacuum_failsafe_age</varname> configuration parameter</primary>
-      </indexterm>
-      </term>
-      <listitem>
-       <para>
-        Specifies the maximum age (in transactions) that a table's
-        <structname>pg_class</structname>.<structfield>relfrozenxid</structfield>
-        field can attain before <command>VACUUM</command> takes
-        extraordinary measures to avoid system-wide transaction ID
-        wraparound failure.  This is <command>VACUUM</command>'s
-        strategy of last resort.  The failsafe typically triggers
-        when an autovacuum to prevent transaction ID wraparound has
-        already been running for some time, though it's possible for
-        the failsafe to trigger during any <command>VACUUM</command>.
-       </para>
-       <para>
-        When the failsafe is triggered, any cost-based delay that is
-        in effect will no longer be applied, further non-essential
-        maintenance tasks (such as index vacuuming) are bypassed, and any
-        <glossterm linkend="glossary-buffer-access-strategy">Buffer Access Strategy</glossterm>
-        in use will be disabled resulting in <command>VACUUM</command> being
-        free to make use of all of
-        <glossterm linkend="glossary-shared-memory">shared buffers</glossterm>.
-       </para>
-       <para>
-        The default is 1.6 billion transactions.  Although users can
-        set this value anywhere from zero to 2.1 billion,
-        <command>VACUUM</command> will silently adjust the effective
-        value to no less than 105% of <xref
-         linkend="guc-autovacuum-freeze-max-age"/>.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry id="guc-vacuum-multixact-freeze-table-age" xreflabel="vacuum_multixact_freeze_table_age">
-      <term><varname>vacuum_multixact_freeze_table_age</varname> (<type>integer</type>)
-      <indexterm>
-       <primary><varname>vacuum_multixact_freeze_table_age</varname> configuration parameter</primary>
-      </indexterm>
-      </term>
-      <listitem>
-       <para>
-        <command>VACUUM</command> performs an aggressive scan if the table's
-        <structname>pg_class</structname>.<structfield>relminmxid</structfield> field has reached
-        the age specified by this setting.  An aggressive scan differs from
-        a regular <command>VACUUM</command> in that it visits every page that might
-        contain unfrozen XIDs or MXIDs, not just those that might contain dead
-        tuples.  The default is 150 million multixacts.
-        Although users can set this value anywhere from zero to two billion,
-        <command>VACUUM</command> will silently limit the effective value to 95% of
-        <xref linkend="guc-autovacuum-multixact-freeze-max-age"/>, so that a
-        periodic manual <command>VACUUM</command> has a chance to run before an
-        anti-wraparound is launched for the table.
-        For more information see <xref linkend="vacuum-for-multixact-wraparound"/>.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry id="guc-vacuum-multixact-freeze-min-age" xreflabel="vacuum_multixact_freeze_min_age">
-      <term><varname>vacuum_multixact_freeze_min_age</varname> (<type>integer</type>)
-      <indexterm>
-       <primary><varname>vacuum_multixact_freeze_min_age</varname> configuration parameter</primary>
-      </indexterm>
-      </term>
-      <listitem>
-       <para>
-        Specifies the cutoff age (in multixacts) that <command>VACUUM</command>
-        should use to decide whether to trigger freezing of pages with
-        an older multixact ID.  The default is 5 million multixacts.
-        Although users can set this value anywhere from zero to one billion,
-        <command>VACUUM</command> will silently limit the effective value to half
-        the value of <xref linkend="guc-autovacuum-multixact-freeze-max-age"/>,
-        so that there is not an unreasonably short time between forced
-        autovacuums.
-        For more information see <xref linkend="vacuum-for-multixact-wraparound"/>.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry id="guc-vacuum-multixact-failsafe-age" xreflabel="vacuum_multixact_failsafe_age">
-      <term><varname>vacuum_multixact_failsafe_age</varname> (<type>integer</type>)
-      <indexterm>
-       <primary><varname>vacuum_multixact_failsafe_age</varname> configuration parameter</primary>
-      </indexterm>
-      </term>
-      <listitem>
-       <para>
-        Specifies the maximum age (in multixacts) that a table's
-        <structname>pg_class</structname>.<structfield>relminmxid</structfield>
-        field can attain before <command>VACUUM</command> takes
-        extraordinary measures to avoid system-wide multixact ID
-        wraparound failure.  This is <command>VACUUM</command>'s
-        strategy of last resort.  The failsafe typically triggers when
-        an autovacuum to prevent transaction ID wraparound has already
-        been running for some time, though it's possible for the
-        failsafe to trigger during any <command>VACUUM</command>.
-       </para>
-       <para>
-        When the failsafe is triggered, any cost-based delay that is
-        in effect will no longer be applied, and further non-essential
-        maintenance tasks (such as index vacuuming) are bypassed.
-       </para>
-       <para>
-        The default is 1.6 billion multixacts.  Although users can set
-        this value anywhere from zero to 2.1 billion,
-        <command>VACUUM</command> will silently adjust the effective
-        value to no less than 105% of <xref
-         linkend="guc-autovacuum-multixact-freeze-max-age"/>.
        </para>
       </listitem>
      </varlistentry>
