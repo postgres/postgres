@@ -45,8 +45,8 @@ shutdown checkpoint and terminating pgarch and other auxiliary processes, but
 that's not desirable for walsenders, because we want the standby servers to
 receive all the WAL, including the shutdown checkpoint, before the primary
 is shut down. Therefore postmaster treats walsenders like the pgarch process,
-and instructs them to terminate at PM_SHUTDOWN_2 phase, after all regular
-backends have died and checkpointer has issued the shutdown checkpoint.
+and instructs them to terminate at the PM_WAIT_XLOG_ARCHIVAL phase, after all
+regular backends have died and checkpointer has issued the shutdown checkpoint.
 
 When postmaster accepts a connection, it immediately forks a new process
 to handle the handshake and authentication, and the process initializes to
