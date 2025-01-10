@@ -1693,7 +1693,7 @@ ServerLoop(void)
 		{
 			avlauncher_needs_signal = false;
 			if (AutoVacLauncherPMChild != NULL)
-				kill(AutoVacLauncherPMChild->pid, SIGUSR2);
+				signal_child(AutoVacLauncherPMChild, SIGUSR2);
 		}
 
 #ifdef HAVE_PTHREAD_IS_THREADED_NP
@@ -3257,6 +3257,38 @@ LaunchMissingBackgroundProcesses(void)
 }
 
 /*
+ * Return string representation of signal.
+ *
+ * Because this is only implemented for signals we already rely on in this
+ * file we don't need to deal with unimplemented or same-numeric-value signals
+ * (as we'd e.g. have to for EWOULDBLOCK / EAGAIN).
+ */
+static const char *
+pm_signame(int signal)
+{
+#define PM_TOSTR_CASE(sym) case sym: return #sym
+	switch (signal)
+	{
+			PM_TOSTR_CASE(SIGABRT);
+			PM_TOSTR_CASE(SIGCHLD);
+			PM_TOSTR_CASE(SIGHUP);
+			PM_TOSTR_CASE(SIGINT);
+			PM_TOSTR_CASE(SIGKILL);
+			PM_TOSTR_CASE(SIGQUIT);
+			PM_TOSTR_CASE(SIGTERM);
+			PM_TOSTR_CASE(SIGUSR1);
+			PM_TOSTR_CASE(SIGUSR2);
+		default:
+			/* all signals sent by postmaster should be listed here */
+			Assert(false);
+			return "(unknown)";
+	}
+#undef PM_TOSTR_CASE
+
+	return "";					/* silence compiler */
+}
+
+/*
  * Send a signal to a postmaster child process
  *
  * On systems that have setsid(), each child process sets itself up as a
@@ -3276,6 +3308,12 @@ static void
 signal_child(PMChild *pmchild, int signal)
 {
 	pid_t		pid = pmchild->pid;
+
+	ereport(DEBUG3,
+			(errmsg_internal("sending signal %d/%s to %s process with pid %d",
+							 signal, pm_signame(signal),
+							 GetBackendTypeDesc(pmchild->bkend_type),
+							 (int) pmchild->pid)));
 
 	if (kill(pid, signal) < 0)
 		elog(DEBUG3, "kill(%ld,%d) failed: %m", (long) pid, signal);
@@ -3298,19 +3336,14 @@ signal_child(PMChild *pmchild, int signal)
 
 /*
  * Convenience function for killing a child process after a crash of some
- * other child process.  We log the action at a higher level than we would
- * otherwise do, and we apply send_abort_for_crash to decide which signal
- * to send.  Normally it's SIGQUIT -- and most other comments in this file
- * are written on the assumption that it is -- but developers might prefer
- * to use SIGABRT to collect per-child core dumps.
+ * other child process.  We apply send_abort_for_crash to decide which signal
+ * to send.  Normally it's SIGQUIT -- and most other comments in this file are
+ * written on the assumption that it is -- but developers might prefer to use
+ * SIGABRT to collect per-child core dumps.
  */
 static void
 sigquit_child(PMChild *pmchild)
 {
-	ereport(DEBUG2,
-			(errmsg_internal("sending %s to process %d",
-							 (send_abort_for_crash ? "SIGABRT" : "SIGQUIT"),
-							 (int) pmchild->pid)));
 	signal_child(pmchild, (send_abort_for_crash ? SIGABRT : SIGQUIT));
 }
 
@@ -3342,9 +3375,6 @@ SignalChildren(int signal, BackendTypeMask targetMask)
 		if (!btmask_contains(targetMask, bp->bkend_type))
 			continue;
 
-		ereport(DEBUG4,
-				(errmsg_internal("sending signal %d to %s process %d",
-								 signal, GetBackendTypeDesc(bp->bkend_type), (int) bp->pid)));
 		signal_child(bp, signal);
 		signaled = true;
 	}
