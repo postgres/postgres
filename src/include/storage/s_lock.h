@@ -263,18 +263,24 @@ tas(volatile slock_t *lock)
 
 #define S_UNLOCK(lock) __sync_lock_release(lock)
 
-/*
- * Using an ISB instruction to delay in spinlock loops appears beneficial on
- * high-core-count ARM64 processors.  It seems mostly a wash for smaller gear,
- * and ISB doesn't exist at all on pre-v7 ARM chips.
- */
 #if defined(__aarch64__)
+
+/*
+ * On ARM64, it's a win to use a non-locking test before the TAS proper.  It
+ * may be a win on 32-bit ARM, too, but nobody's tested it yet.
+ */
+#define TAS_SPIN(lock)	(*(lock) ? 1 : TAS(lock))
 
 #define SPIN_DELAY() spin_delay()
 
 static __inline__ void
 spin_delay(void)
 {
+	/*
+	 * Using an ISB instruction to delay in spinlock loops appears beneficial
+	 * on high-core-count ARM64 processors.  It seems mostly a wash for smaller
+	 * gear, and ISB doesn't exist at all on pre-v7 ARM chips.
+	 */
 	__asm__ __volatile__(
 		" isb;				\n");
 }
