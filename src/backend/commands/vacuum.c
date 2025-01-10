@@ -2218,15 +2218,14 @@ vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params,
 		{
 			ClusterParams cluster_params = {0};
 
-			/* close relation before vacuuming, but hold lock until commit */
-			relation_close(rel, NoLock);
-			rel = NULL;
-
 			if ((params->options & VACOPT_VERBOSE) != 0)
 				cluster_params.options |= CLUOPT_VERBOSE;
 
 			/* VACUUM FULL is now a variant of CLUSTER; see cluster.c */
-			cluster_rel(relid, InvalidOid, &cluster_params);
+			cluster_rel(rel, InvalidOid, &cluster_params);
+			/* cluster_rel closes the relation, but keeps lock */
+
+			rel = NULL;
 		}
 		else
 			table_relation_vacuum(rel, params, bstrategy);
