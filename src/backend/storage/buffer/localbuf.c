@@ -279,7 +279,7 @@ GetLocalVictimBuffer(void)
 		ClearBufferTag(&bufHdr->tag);
 		buf_state &= ~(BUF_FLAG_MASK | BUF_USAGECOUNT_MASK);
 		pg_atomic_unlocked_write_u32(&bufHdr->state, buf_state);
-		pgstat_count_io_op(IOOBJECT_TEMP_RELATION, IOCONTEXT_NORMAL, IOOP_EVICT);
+		pgstat_count_io_op(IOOBJECT_TEMP_RELATION, IOCONTEXT_NORMAL, IOOP_EVICT, 1);
 	}
 
 	return BufferDescriptorGetBuffer(bufHdr);

@@ -66,13 +66,7 @@ pgstat_bktype_io_stats_valid(PgStat_BktypeIO *backend_io,
 }
 
 void
-pgstat_count_io_op(IOObject io_object, IOContext io_context, IOOp io_op)
-{
-	pgstat_count_io_op_n(io_object, io_context, io_op, 1);
-}
-
-void
-pgstat_count_io_op_n(IOObject io_object, IOContext io_context, IOOp io_op, uint32 cnt)
+pgstat_count_io_op(IOObject io_object, IOContext io_context, IOOp io_op, uint32 cnt)
 {
 	Assert((unsigned int) io_object < IOOBJECT_NUM_TYPES);
 	Assert((unsigned int) io_context < IOCONTEXT_NUM_TYPES);
@@ -116,7 +110,7 @@ pgstat_prepare_io_time(bool track_io_guc)
 }
 
 /*
- * Like pgstat_count_io_op_n() except it also accumulates time.
+ * Like pgstat_count_io_op() except it also accumulates time.
  */
 void
 pgstat_count_io_op_time(IOObject io_object, IOContext io_context, IOOp io_op,
@@ -159,7 +153,7 @@ pgstat_count_io_op_time(IOObject io_object, IOContext io_context, IOOp io_op,
 		}
 	}
 
-	pgstat_count_io_op_n(io_object, io_context, io_op, cnt);
+	pgstat_count_io_op(io_object, io_context, io_op, cnt);
 }
 
 PgStat_IO *

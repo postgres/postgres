@@ -1165,7 +1165,7 @@ PinBufferForBlock(Relation rel,
 	}
 	if (*foundPtr)
 	{
-		pgstat_count_io_op(io_object, io_context, IOOP_HIT);
+		pgstat_count_io_op(io_object, io_context, IOOP_HIT, 1);
 		if (VacuumCostActive)
 			VacuumCostBalance += VacuumCostPageHit;
 
@@ -2073,7 +2073,7 @@ again:
 		 * pinners or erroring out.
 		 */
 		pgstat_count_io_op(IOOBJECT_RELATION, io_context,
-						   from_ring ? IOOP_REUSE : IOOP_EVICT);
+						   from_ring ? IOOP_REUSE : IOOP_EVICT, 1);
 	}
 
 	/*
