@@ -39,23 +39,21 @@ pgstat_fetch_stat_backend(ProcNumber procNumber)
 }
 
 /*
- * Flush out locally pending backend statistics
- *
- * If no stats have been recorded, this function returns false.
+ * Flush out locally pending backend IO statistics.  Locking is managed
+ * by the caller.
  */
-bool
-pgstat_backend_flush_cb(PgStat_EntryRef *entry_ref, bool nowait)
+static void
+pgstat_flush_backend_entry_io(PgStat_EntryRef *entry_ref)
 {
-	PgStatShared_Backend *shbackendioent;
-	PgStat_BackendPendingIO *pendingent;
+	PgStatShared_Backend *shbackendent;
+	PgStat_BackendPending *pendingent;
 	PgStat_BktypeIO *bktype_shstats;
+	PgStat_PendingIO *pending_io;
 
-	if (!pgstat_lock_entry(entry_ref, nowait))
-		return false;
-
-	shbackendioent = (PgStatShared_Backend *) entry_ref->shared_stats;
-	bktype_shstats = &shbackendioent->stats.stats;
-	pendingent = (PgStat_BackendPendingIO *) entry_ref->pending;
+	shbackendent = (PgStatShared_Backend *) entry_ref->shared_stats;
+	pendingent = (PgStat_BackendPending *) entry_ref->pending;
+	bktype_shstats = &shbackendent->stats.io_stats;
+	pending_io = &pendingent->pending_io;
 
 	for (int io_object = 0; io_object < IOOBJECT_NUM_TYPES; io_object++)
 	{
@@ -66,15 +64,33 @@ pgstat_backend_flush_cb(PgStat_EntryRef *entry_ref, bool nowait)
 				instr_time	time;
 
 				bktype_shstats->counts[io_object][io_context][io_op] +=
-					pendingent->counts[io_object][io_context][io_op];
+					pending_io->counts[io_object][io_context][io_op];
 
-				time = pendingent->pending_times[io_object][io_context][io_op];
+				time = pending_io->pending_times[io_object][io_context][io_op];
 
 				bktype_shstats->times[io_object][io_context][io_op] +=
 					INSTR_TIME_GET_MICROSEC(time);
 			}
 		}
 	}
+}
+
+/*
+ * Wrapper routine to flush backend statistics.
+ */
+static bool
+pgstat_flush_backend_entry(PgStat_EntryRef *entry_ref, bool nowait,
+						   bits32 flags)
+{
+	if (!pgstat_tracks_backend_bktype(MyBackendType))
+		return false;
+
+	if (!pgstat_lock_entry(entry_ref, nowait))
+		return false;
+
+	/* Flush requested statistics */
+	if (flags & PGSTAT_BACKEND_FLUSH_IO)
+		pgstat_flush_backend_entry_io(entry_ref);
 
 	pgstat_unlock_entry(entry_ref);
 
@@ -82,10 +98,23 @@ pgstat_backend_flush_cb(PgStat_EntryRef *entry_ref, bool nowait)
 }
 
 /*
- * Simpler wrapper of pgstat_backend_flush_cb()
+ * Callback to flush out locally pending backend statistics.
+ *
+ * If no stats have been recorded, this function returns false.
+ */
+bool
+pgstat_backend_flush_cb(PgStat_EntryRef *entry_ref, bool nowait)
+{
+	return pgstat_flush_backend_entry(entry_ref, nowait, PGSTAT_BACKEND_FLUSH_ALL);
+}
+
+/*
+ * Flush out locally pending backend statistics
+ *
+ * "flags" parameter controls which statistics to flush.
  */
 void
-pgstat_flush_backend(bool nowait)
+pgstat_flush_backend(bool nowait, bits32 flags)
 {
 	PgStat_EntryRef *entry_ref;
 
@@ -94,7 +123,7 @@ pgstat_flush_backend(bool nowait)
 
 	entry_ref = pgstat_get_entry_ref(PGSTAT_KIND_BACKEND, InvalidOid,
 									 MyProcNumber, false, NULL);
-	(void) pgstat_backend_flush_cb(entry_ref, nowait);
+	(void) pgstat_flush_backend_entry(entry_ref, nowait, flags);
 }
 
 /*
@@ -119,9 +148,9 @@ pgstat_create_backend(ProcNumber procnum)
 }
 
 /*
- * Find or create a local PgStat_BackendPendingIO entry for proc number.
+ * Find or create a local PgStat_BackendPending entry for proc number.
  */
-PgStat_BackendPendingIO *
+PgStat_BackendPending *
 pgstat_prep_backend_pending(ProcNumber procnum)
 {
 	PgStat_EntryRef *entry_ref;

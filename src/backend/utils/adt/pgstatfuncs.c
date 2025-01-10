@@ -1544,7 +1544,7 @@ pg_stat_get_backend_io(PG_FUNCTION_ARGS)
 	if (bktype == B_INVALID)
 		return (Datum) 0;
 
-	bktype_stats = &backend_stats->stats;
+	bktype_stats = &backend_stats->io_stats;
 
 	/*
 	 * In Assert builds, we can afford an extra loop through all of the

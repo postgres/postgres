@@ -613,9 +613,12 @@ extern void pgstat_archiver_snapshot_cb(void);
  * Functions in pgstat_backend.c
  */
 
-extern void pgstat_flush_backend(bool nowait);
+/* flags for pgstat_flush_backend() */
+#define PGSTAT_BACKEND_FLUSH_IO		(1 << 0)	/* Flush I/O statistics */
+#define PGSTAT_BACKEND_FLUSH_ALL	(PGSTAT_BACKEND_FLUSH_IO)
 
-extern PgStat_BackendPendingIO *pgstat_prep_backend_pending(ProcNumber procnum);
+extern void pgstat_flush_backend(bool nowait, bits32 flags);
+extern PgStat_BackendPending *pgstat_prep_backend_pending(ProcNumber procnum);
 extern bool pgstat_backend_flush_cb(PgStat_EntryRef *entry_ref, bool nowait);
 extern void pgstat_backend_reset_timestamp_cb(PgStatShared_Common *header, TimestampTz ts);
 

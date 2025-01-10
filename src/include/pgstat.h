@@ -375,14 +375,23 @@ typedef struct PgStat_IO
 	PgStat_BktypeIO stats[BACKEND_NUM_TYPES];
 } PgStat_IO;
 
-/* Backend statistics store the same amount of IO data as PGSTAT_KIND_IO */
-typedef PgStat_PendingIO PgStat_BackendPendingIO;
-
 typedef struct PgStat_Backend
 {
 	TimestampTz stat_reset_timestamp;
-	PgStat_BktypeIO stats;
+	PgStat_BktypeIO io_stats;
 } PgStat_Backend;
+
+/* ---------
+ * PgStat_BackendPending	Non-flushed backend stats.
+ * ---------
+ */
+typedef struct PgStat_BackendPending
+{
+	/*
+	 * Backend statistics store the same amount of IO data as PGSTAT_KIND_IO.
+	 */
+	PgStat_PendingIO pending_io;
+} PgStat_BackendPending;
 
 typedef struct PgStat_StatDBEntry
 {
