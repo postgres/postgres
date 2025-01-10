@@ -164,23 +164,20 @@ btmask_del(BackendTypeMask mask, BackendType t)
 }
 
 static inline BackendTypeMask
-btmask_all_except(BackendType t)
+btmask_all_except_n(int nargs, BackendType *t)
 {
 	BackendTypeMask mask = BTYPE_MASK_ALL;
 
-	mask = btmask_del(mask, t);
+	for (int i = 0; i < nargs; i++)
+		mask = btmask_del(mask, t[i]);
 	return mask;
 }
 
-static inline BackendTypeMask
-btmask_all_except2(BackendType t1, BackendType t2)
-{
-	BackendTypeMask mask = BTYPE_MASK_ALL;
-
-	mask = btmask_del(mask, t1);
-	mask = btmask_del(mask, t2);
-	return mask;
-}
+#define btmask_all_except(...) \
+	btmask_all_except_n( \
+		lengthof(((BackendType[]){__VA_ARGS__})), \
+		(BackendType[]){__VA_ARGS__} \
+	)
 
 static inline bool
 btmask_contains(BackendTypeMask mask, BackendType t)
@@ -2979,7 +2976,7 @@ PostmasterStateMachine(void)
 		 * left by now anyway; what we're really waiting for is walsenders and
 		 * archiver.
 		 */
-		if (CountChildren(btmask_all_except2(B_LOGGER, B_DEAD_END_BACKEND)) == 0)
+		if (CountChildren(btmask_all_except(B_LOGGER, B_DEAD_END_BACKEND)) == 0)
 		{
 			UpdatePMState(PM_WAIT_DEAD_END);
 			ConfigurePostmasterWaitSet(false);
