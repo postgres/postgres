@@ -25,6 +25,9 @@
 #include "access/pg_tde_xlog.h"
 #include <sys/mman.h>
 #include <sys/time.h>
+#include "utils/fmgroids.h"
+#include "utils/guc.h"
+
 
 #include "access/pg_tde_tdemap.h"
 #include "catalog/tde_global_space.h"
@@ -37,6 +40,8 @@
 #endif
 
 #include <sys/time.h>
+
+bool AllowInheritGlobalProviders = true;
 
 #ifndef FRONTEND
 
@@ -79,11 +84,9 @@ static TDEPrincipalKey *get_principal_key_from_keyring(Oid dbOid);
 static TDEPrincipalKey *get_principal_key_from_cache(Oid dbOid);
 static void push_principal_key_to_cache(TDEPrincipalKey *principalKey);
 static Datum pg_tde_get_key_info(PG_FUNCTION_ARGS, Oid dbOid);
-static keyInfo *load_latest_versioned_key_name(TDEPrincipalKeyInfo *principal_key_info,
-											   GenericKeyring *keyring,
-											   bool ensure_new_key);
-static TDEPrincipalKey *set_principal_key_with_keyring(const char *key_name,
-													   GenericKeyring *keyring,
+static bool set_principal_key_with_keyring(const char *key_name,
+													   const char *provider_name,
+													   Oid providerOid,
 													   Oid dbOid,
 													   bool ensure_new_key);
 static TDEPrincipalKey *alter_keyprovider_for_principal_key(GenericKeyring *newKeyring,Oid dbOid);
@@ -210,7 +213,7 @@ shared_memory_shutdown(int code, Datum arg)
 }
 
 bool
-save_principal_key_info(TDEPrincipalKeyInfo *principal_key_info)
+create_principal_key_info(TDEPrincipalKeyInfo *principal_key_info)
 {
 	Assert(principal_key_info != NULL);
 
@@ -224,84 +227,126 @@ update_principal_key_info(TDEPrincipalKeyInfo *principal_key_info)
 	return pg_tde_save_principal_key(principal_key_info, false, true);
 }
 
-/*
- * SetPrincipalkey:
- * We need to ensure that only one principal key is set for a database.
- */
-TDEPrincipalKey *
-set_principal_key_with_keyring(const char *key_name, GenericKeyring *keyring,
-							   Oid dbOid, bool ensure_new_key)
+bool
+set_principal_key_with_keyring(const char *key_name, const char* provider_name,
+							   Oid providerOid, Oid dbOid, bool ensure_new_key)
 {
-	TDEPrincipalKey *principalKey = NULL;
+	TDEPrincipalKey *curr_principal_key = NULL;
+	TDEPrincipalKey *new_principal_key = NULL;
 	LWLock	   *lock_files = tde_lwlock_enc_keys();
-	bool		is_dup_key = false;
+	bool		already_has_key = false;
+	GenericKeyring* new_keyring;
+	const keyInfo *keyInfo = NULL;
+	bool success = true;
+
+	if(AllowInheritGlobalProviders == false && providerOid != dbOid)
+	{
+		ereport(ERROR,
+				(errmsg("Usage of global key providers is disabled. Enable it with pg_tde.inherit_global_providers = ON")));
+	}
 
 	/*
 	 * Try to get principal key from cache.
 	 */
 	LWLockAcquire(lock_files, LW_EXCLUSIVE);
 
-	principalKey = get_principal_key_from_cache(dbOid);
-	is_dup_key = (principalKey != NULL);
+	curr_principal_key = GetPrincipalKey(dbOid, LW_EXCLUSIVE);
+	already_has_key = (curr_principal_key != NULL);
 
-	/* TODO: Add the key in the cache? */
-	if (!is_dup_key)
-		is_dup_key = (pg_tde_get_principal_key_info(dbOid) != NULL);
-
-	if (!is_dup_key)
+	if (provider_name == NULL && !already_has_key)
 	{
-		const keyInfo *keyInfo = NULL;
+		LWLockRelease(lock_files);
 
-		principalKey = palloc(sizeof(TDEPrincipalKey));
-		principalKey->keyInfo.databaseId = dbOid;
-		principalKey->keyInfo.keyId.version = DEFAULT_PRINCIPAL_KEY_VERSION;
-		principalKey->keyInfo.keyringId = keyring->key_id;
-		strncpy(principalKey->keyInfo.keyId.name, key_name, TDE_KEY_NAME_LEN);
-		gettimeofday(&principalKey->keyInfo.creationTime, NULL);
+		ereport(ERROR,
+				(errmsg("provider_name is a required parameter when creating the first principal key for a database")));
+	}
 
-		keyInfo = load_latest_versioned_key_name(&principalKey->keyInfo, keyring, ensure_new_key);
+	if (provider_name != NULL)
+	{
+		new_keyring = GetKeyProviderByName(provider_name, providerOid);
+	} else 
+	{
+		new_keyring = GetKeyProviderByID(curr_principal_key->keyInfo.keyringId,
+								 curr_principal_key->keyInfo.databaseId);
+	}
 
-		if (keyInfo == NULL)
-			keyInfo = KeyringGenerateNewKeyAndStore(keyring, principalKey->keyInfo.keyId.versioned_name, INTERNAL_KEY_LEN, true);
+	if (providerOid != dbOid && new_keyring->keyring_id > 0)
+	{
+		ereport(ERROR,
+				(errmsg("Global keys created with the beta2 release can't be used for databases! Please create a new global provider.")));
+	}
 
-		if (keyInfo == NULL)
+	{
+		KeyringReturnCodes kr_ret;
+		keyInfo = KeyringGetKey(new_keyring, key_name, false, &kr_ret);
+		if (kr_ret != KEYRING_CODE_SUCCESS && kr_ret != KEYRING_CODE_RESOURCE_NOT_AVAILABLE)
 		{
-			LWLockRelease(lock_files);
-
 			ereport(ERROR,
-					(errmsg("failed to retrieve principal key. Create one using pg_tde_set_principal_key before using encrypted tables.")));
+					(errmsg("failed to retrieve principal key from keyring provider :\"%s\"", new_keyring->provider_name),
+					 errdetail("Error code: %d", kr_ret)));
+			return false;
 		}
+	}
 
-		principalKey->keyLength = keyInfo->data.len;
+	if (keyInfo != NULL && ensure_new_key)
+	{
+		LWLockRelease(lock_files);
 
-		memcpy(principalKey->keyData, keyInfo->data.data, keyInfo->data.len);
+		ereport(ERROR,
+				(errmsg("failed to create principal key: already exists")));
 
-		save_principal_key_info(&principalKey->keyInfo);
+		return false;
+	}
+
+	if (keyInfo == NULL)
+		keyInfo = KeyringGenerateNewKeyAndStore(new_keyring, key_name, INTERNAL_KEY_LEN, true);
+
+	if (keyInfo == NULL)
+	{
+		LWLockRelease(lock_files);
+
+		ereport(ERROR,
+				(errmsg("failed to retrieve/create principal key.")));
+
+		return false;
+	}
+
+	new_principal_key = palloc(sizeof(TDEPrincipalKey));
+	new_principal_key->keyInfo.databaseId = dbOid;
+	new_principal_key->keyInfo.keyringId = new_keyring->keyring_id;
+	strncpy(new_principal_key->keyInfo.keyId.name, key_name, TDE_KEY_NAME_LEN);
+	strncpy(new_principal_key->keyInfo.keyId.versioned_name, key_name, TDE_KEY_NAME_LEN);
+	gettimeofday(&new_principal_key->keyInfo.creationTime, NULL);
+	new_principal_key->keyLength = keyInfo->data.len;
+	memcpy(new_principal_key->keyData, keyInfo->data.data, keyInfo->data.len);
+
+	if (!already_has_key)
+	{
+		/* First key created for the database */
+		create_principal_key_info(&new_principal_key->keyInfo);
 
 		/* XLog the new key */
 		XLogBeginInsert();
-		XLogRegisterData((char *) &principalKey->keyInfo, sizeof(TDEPrincipalKeyInfo));
+		XLogRegisterData((char *) &new_principal_key->keyInfo, sizeof(TDEPrincipalKeyInfo));
 		XLogInsert(RM_TDERMGR_ID, XLOG_TDE_ADD_PRINCIPAL_KEY);
 
-		push_principal_key_to_cache(principalKey);
+		push_principal_key_to_cache(new_principal_key);
+	} else 
+	{
+		/* key rotation */
+		bool is_rotated = pg_tde_perform_rotate_key(curr_principal_key, new_principal_key);
+		if (is_rotated && !TDEisInGlobalSpace(curr_principal_key->keyInfo.databaseId))
+		{
+			clear_principal_key_cache(curr_principal_key->keyInfo.databaseId);
+			push_principal_key_to_cache(new_principal_key);
+		}
+
+		success = is_rotated;
 	}
 
 	LWLockRelease(lock_files);
 
-	if (is_dup_key)
-	{
-		/*
-		 * Seems like just before we got the lock, the key was installed by
-		 * some other caller Throw an error and mover no
-		 */
-
-		ereport(ERROR,
-				(errcode(ERRCODE_DUPLICATE_OBJECT),
-				 errmsg("Principal key already exists for the database"),
-				 errhint("Use rotate_key interface to change the principal key")));
-	}
-
-	return principalKey;
+	return success;
 }
 
 /*
@@ -328,7 +373,7 @@ alter_keyprovider_for_principal_key(GenericKeyring *newKeyring, Oid dbOid)
 				errhint("Use set_principal_key interface to set the principal key")));
 	}
 
-	if (newKeyring->key_id == principalKeyInfo->keyringId)
+	if (newKeyring->keyring_id == principalKeyInfo->keyringId)
 	{
         LWLockRelease(lock_files);
         ereport(ERROR,
@@ -337,9 +382,9 @@ alter_keyprovider_for_principal_key(GenericKeyring *newKeyring, Oid dbOid)
     /* update the key provider in principal key info */
 
 	ereport(DEBUG2,
-			(errmsg("Changing keyprovider ID from :%d to %d", principalKeyInfo->keyringId, newKeyring->key_id)));
+			(errmsg("Changing keyprovider ID from :%d to %d", principalKeyInfo->keyringId, newKeyring->keyring_id)));
 
-	principalKeyInfo->keyringId = newKeyring->key_id;
+	principalKeyInfo->keyringId = newKeyring->keyring_id;
 
 	update_principal_key_info(principalKeyInfo);
 
@@ -359,93 +404,12 @@ alter_keyprovider_for_principal_key(GenericKeyring *newKeyring, Oid dbOid)
 }
 
 bool
-SetPrincipalKey(const char *key_name, const char *provider_name, bool ensure_new_key)
-{
-	TDEPrincipalKey *principal_key = set_principal_key_with_keyring(key_name,
-																	GetKeyProviderByName(provider_name, MyDatabaseId),
-																	MyDatabaseId,
-																	ensure_new_key);
-
-	return (principal_key != NULL);
-}
-
-bool
 AlterPrincipalKeyKeyring(const char *provider_name)
 {
     TDEPrincipalKey *principal_key = alter_keyprovider_for_principal_key(GetKeyProviderByName(provider_name, MyDatabaseId),
                                                                     MyDatabaseId);
 
     return (principal_key != NULL);
-}
-
-bool
-RotatePrincipalKey(TDEPrincipalKey *current_key, const char *new_key_name, const char *new_provider_name, bool ensure_new_key)
-{
-	TDEPrincipalKey new_principal_key;
-	const keyInfo *keyInfo = NULL;
-	GenericKeyring *keyring;
-	bool is_rotated;
-	MemoryContext keyRotateCtx;
-	MemoryContext oldCtx;
-
-	Assert(current_key != NULL);
-
-	keyRotateCtx = AllocSetContextCreate(CurrentMemoryContext,
-										 "TDE key rotation temporary context",
-										 ALLOCSET_DEFAULT_SIZES);
-	oldCtx = MemoryContextSwitchTo(keyRotateCtx);
-
-	/*
-	 * Let's set everything the same as the older principal key and update
-	 * only the required attributes.
-	 */
-	memcpy(&new_principal_key, current_key, sizeof(TDEPrincipalKey));
-
-	if (new_key_name == NULL)
-	{
-		new_principal_key.keyInfo.keyId.version++;
-	}
-	else
-	{
-		strncpy(new_principal_key.keyInfo.keyId.name, new_key_name, sizeof(new_principal_key.keyInfo.keyId.name));
-		new_principal_key.keyInfo.keyId.version = DEFAULT_PRINCIPAL_KEY_VERSION;
-
-		if (new_provider_name != NULL)
-		{
-			new_principal_key.keyInfo.keyringId = GetKeyProviderByName(new_provider_name,
-																	   new_principal_key.keyInfo.databaseId)->key_id;
-		}
-	}
-
-	/* We need a valid keyring structure */
-	keyring = GetKeyProviderByID(new_principal_key.keyInfo.keyringId,
-								 new_principal_key.keyInfo.databaseId);
-
-	keyInfo = load_latest_versioned_key_name(&new_principal_key.keyInfo, keyring, ensure_new_key);
-
-	if (keyInfo == NULL)
-		keyInfo = KeyringGenerateNewKeyAndStore(keyring, new_principal_key.keyInfo.keyId.versioned_name, INTERNAL_KEY_LEN, true);
-
-	if (keyInfo == NULL)
-	{
-		ereport(ERROR,
-				(errmsg("Failed to generate new key name")));
-	}
-
-	new_principal_key.keyLength = keyInfo->data.len;
-
-	memcpy(new_principal_key.keyData, keyInfo->data.data, keyInfo->data.len);
-	is_rotated = pg_tde_perform_rotate_key(current_key, &new_principal_key);
-	if (is_rotated && !TDEisInGlobalSpace(current_key->keyInfo.databaseId))
-	{
-		clear_principal_key_cache(current_key->keyInfo.databaseId);
-		push_principal_key_to_cache(&new_principal_key);
-	}
-
-	MemoryContextSwitchTo(oldCtx);
-	MemoryContextDelete(keyRotateCtx);
-
-	return is_rotated;
 }
 
 /*
@@ -460,82 +424,6 @@ xl_tde_perform_rotate_key(XLogPrincipalKeyRotate *xlrec)
 	clear_principal_key_cache(xlrec->databaseId);
 
 	return ret;
-}
-
-/*
-* Load the latest versioned key name for the principal key
-* If ensure_new_key is true, then we will keep on incrementing the version number
-* till we get a key name that is not present in the keyring
-*/
-keyInfo *
-load_latest_versioned_key_name(TDEPrincipalKeyInfo *principal_key_info, GenericKeyring *keyring, bool ensure_new_key)
-{
-	KeyringReturnCodes kr_ret;
-	keyInfo *keyInfo = NULL;
-	int	base_version = principal_key_info->keyId.version;
-
-	Assert(principal_key_info != NULL);
-	Assert(keyring != NULL);
-	Assert(strlen(principal_key_info->keyId.name) > 0);
-
-	/*
-	 * Start with the passed in version number We expect the name and the
-	 * version number are already properly initialized and contain the correct
-	 * values
-	 */
-	snprintf(principal_key_info->keyId.versioned_name, TDE_KEY_NAME_LEN,
-			 "%s_%d", principal_key_info->keyId.name, principal_key_info->keyId.version);
-
-	while (true)
-	{
-		keyInfo = KeyringGetKey(keyring, principal_key_info->keyId.versioned_name, false, &kr_ret);
-
-		/*
-		 * vault-v2 returns 404 (KEYRING_CODE_RESOURCE_NOT_AVAILABLE) when key
-		 * is not found
-		 */
-		if (kr_ret != KEYRING_CODE_SUCCESS && kr_ret != KEYRING_CODE_RESOURCE_NOT_AVAILABLE)
-		{
-			ereport(ERROR,
-					(errmsg("failed to retrieve principal key from keyring provider :\"%s\"", keyring->provider_name),
-					 errdetail("Error code: %d", kr_ret)));
-			return NULL;
-		}
-		if (keyInfo == NULL)
-		{
-			if (ensure_new_key == false)
-			{
-				/*
-				 * If ensure_key is false and we are not at the base version,
-				 * We should return the last existent version.
-				 */
-				if (base_version < principal_key_info->keyId.version)
-				{
-					/* Not optimal but keep the things simple */
-					principal_key_info->keyId.version -= 1;
-					snprintf(principal_key_info->keyId.versioned_name, TDE_KEY_NAME_LEN,
-							 "%s_%d", principal_key_info->keyId.name, principal_key_info->keyId.version);
-					keyInfo = KeyringGetKey(keyring, principal_key_info->keyId.versioned_name, false, &kr_ret);
-				}
-			}
-			return keyInfo;
-		}
-
-		principal_key_info->keyId.version++;
-		snprintf(principal_key_info->keyId.versioned_name, TDE_KEY_NAME_LEN, "%s_%d", principal_key_info->keyId.name, principal_key_info->keyId.version);
-
-		/*
-		 * Not really required. Just to break the infinite loop in case the
-		 * key provider is not behaving sane.
-		 */
-		if (principal_key_info->keyId.version > MAX_PRINCIPAL_KEY_VERSION_NUM)
-		{
-			ereport(ERROR,
-					(errmsg("failed to retrieve principal key. %d versions already exist", MAX_PRINCIPAL_KEY_VERSION_NUM)));
-			return NULL;
-		}
-	}
-	return NULL;				/* Just to keep compiler quite */
 }
 
 /*
@@ -686,20 +574,38 @@ clear_principal_key_cache(Oid databaseId)
 /*
  * SQL interface to set principal key
  */
-PG_FUNCTION_INFO_V1(pg_tde_set_principal_key);
-Datum		pg_tde_set_principal_key(PG_FUNCTION_ARGS);
+PG_FUNCTION_INFO_V1(pg_tde_set_principal_key_internal);
+Datum		pg_tde_set_principal_key_internal(PG_FUNCTION_ARGS);
 
 Datum
-pg_tde_set_principal_key(PG_FUNCTION_ARGS)
+pg_tde_set_principal_key_internal(PG_FUNCTION_ARGS)
 {
 	char *principal_key_name = text_to_cstring(PG_GETARG_TEXT_PP(0));
-	char *provider_name = text_to_cstring(PG_GETARG_TEXT_PP(1));
-	bool ensure_new_key = PG_GETARG_BOOL(2);
-	bool ret;
-
+	int  is_global = PG_GETARG_INT32(1);
+	char *provider_name = PG_ARGISNULL(2) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(2));
+	bool ensure_new_key = PG_GETARG_BOOL(3);
+	bool success;
+	Oid	providerOid = MyDatabaseId;
+	Oid	dbOid = MyDatabaseId;
+	
 	ereport(LOG, (errmsg("Setting principal key [%s : %s] for the database", principal_key_name, provider_name)));
-	ret = SetPrincipalKey(principal_key_name, provider_name, ensure_new_key);
-	PG_RETURN_BOOL(ret);
+	
+	if (is_global == 1) /* using a global provider for the current database */
+	{
+		providerOid = GLOBAL_DATA_TDE_OID;
+	}
+	if (is_global == 2) /* using a globla provider for the global (wal) database */
+	{
+		providerOid = GLOBAL_DATA_TDE_OID;
+		dbOid = GLOBAL_DATA_TDE_OID;
+	}
+	success = set_principal_key_with_keyring(principal_key_name,
+																	provider_name,
+																	providerOid,
+																	dbOid,
+																	ensure_new_key);
+
+	PG_RETURN_BOOL(success);
 }
 
 PG_FUNCTION_INFO_V1(pg_tde_alter_principal_key_keyring);
@@ -712,48 +618,6 @@ Datum pg_tde_alter_principal_key_keyring(PG_FUNCTION_ARGS)
 
 	ereport(LOG, (errmsg("Altering principal key provider to \"%s\" for the database", provider_name)));
 	ret = AlterPrincipalKeyKeyring(provider_name);
-	PG_RETURN_BOOL(ret);
-}
-
-/*
- * SQL interface for key rotation
- */
-PG_FUNCTION_INFO_V1(pg_tde_rotate_principal_key_internal);
-Datum
-pg_tde_rotate_principal_key_internal(PG_FUNCTION_ARGS)
-{
-	char *new_principal_key_name = NULL;
-	char *new_provider_name = NULL;
-	bool ensure_new_key;
-	bool is_global;
-	bool ret;
-	TDEPrincipalKey *current_key;
-	Oid	dbOid = MyDatabaseId;
-
-	if (!PG_ARGISNULL(0))
-		new_principal_key_name = text_to_cstring(PG_GETARG_TEXT_PP(0));
-	if (!PG_ARGISNULL(1))
-		new_provider_name = text_to_cstring(PG_GETARG_TEXT_PP(1));
-	ensure_new_key = PG_GETARG_BOOL(2);
-	is_global = PG_GETARG_BOOL(3);
-
-#ifdef PERCONA_EXT
-	if (is_global)
-	{
-		dbOid = GLOBAL_DATA_TDE_OID;
-	}
-#endif
-
-	ereport(LOG, (errmsg("rotating principal key to [%s : %s] the for the %s",
-						 new_principal_key_name,
-						 new_provider_name,
-						 is_global ? "cluster" : "database")));
-
-	LWLockAcquire(tde_lwlock_enc_keys(), LW_EXCLUSIVE);
-	current_key = GetPrincipalKey(dbOid, LW_EXCLUSIVE);
-	ret = RotatePrincipalKey(current_key, new_principal_key_name, new_provider_name, ensure_new_key);
-	LWLockRelease(tde_lwlock_enc_keys());
-
 	PG_RETURN_BOOL(ret);
 }
 
@@ -801,7 +665,7 @@ pg_tde_get_key_info(PG_FUNCTION_ARGS, Oid dbOid)
 		PG_RETURN_NULL();
 	}
 
-	keyring = GetKeyProviderByID(principal_key->keyInfo.keyringId, dbOid);
+	keyring = GetKeyProviderByID(principal_key->keyInfo.keyringId, principal_key->keyInfo.databaseId);	
 
 	/* Initialize the values and null flags */
 
@@ -821,17 +685,11 @@ pg_tde_get_key_info(PG_FUNCTION_ARGS, Oid dbOid)
 	values[2] = Int32GetDatum(principal_key->keyInfo.keyringId);
 	isnull[2] = false;
 
-	/* TEXT: Principal key versioned name */
-	values[3] = CStringGetTextDatum(principal_key->keyInfo.keyId.versioned_name);
-	isnull[3] = false;
-	/* INTEGERT: Principal key version */
-	values[4] = Int32GetDatum(principal_key->keyInfo.keyId.version);
-	isnull[4] = false;
 	/* TIMESTAMP TZ: Principal key creation time */
 	ts = (TimestampTz) principal_key->keyInfo.creationTime.tv_sec - ((POSTGRES_EPOCH_JDATE - UNIX_EPOCH_JDATE) * SECS_PER_DAY);
 	ts = (ts * USECS_PER_SEC) + principal_key->keyInfo.creationTime.tv_usec;
-	values[5] = TimestampTzGetDatum(ts);
-	isnull[5] = false;
+	values[3] = TimestampTzGetDatum(ts);
+	isnull[3] = false;
 
 	/* Form the tuple */
 	tuple = heap_form_tuple(tupdesc, values, isnull);
@@ -947,3 +805,22 @@ GetPrincipalKey(Oid dbOid, LWLockMode lockMode)
 
 	return get_principal_key_from_keyring(dbOid);
 }
+
+#ifndef FRONTEND
+
+void PrincipalKeyGucInit()
+{
+	DefineCustomBoolVariable("pg_tde.inherit_global_providers",	/* name */
+							 "Allow using global key providers for databases.",	/* short_desc */
+							 NULL,	/* long_desc */
+							 &AllowInheritGlobalProviders,	/* value address */
+							 true, /* boot value */
+							 PGC_POSTMASTER,	/* context */
+							 0, /* flags */
+							 NULL,	/* check_hook */
+							 NULL,	/* assign_hook */
+							 NULL	/* show_hook */
+		);
+}
+
+#endif

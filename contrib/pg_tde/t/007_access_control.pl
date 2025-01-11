@@ -55,11 +55,6 @@ PGTDE::append_to_file("-- pg_tde_set_principal_key should also fail");
 ($cmdret, $stdout, $stderr) = $node->psql('postgres', "SELECT pg_tde_set_principal_key('test-db-principal-key','file-vault');", extra_params => ['-a', '-U', 'test_access']);
 PGTDE::append_to_file($stderr);
 
-PGTDE::append_to_file("-- pg_tde_rotate_principal_key should give access denied error");
-($cmdret, $stdout, $stderr) = $node->psql('postgres', "SELECT pg_tde_rotate_principal_key('rotated-principal-key','file-2');", extra_params => ['-a', '-U', 'test_access']);
-PGTDE::append_to_file($stderr);
-
-
 # now give key management access to test_access user
 PGTDE::append_to_file("-- grant key management access to test_access");
 $stdout = $node->safe_psql('postgres', "select pg_tde_grant_key_management_to_role('test_access');", extra_params => ['-a']);
@@ -76,10 +71,7 @@ PGTDE::append_to_file($stdout);
 $stdout = $node->safe_psql('postgres', "SELECT pg_tde_set_principal_key('test-db-principal-key','file-vault');", extra_params => ['-a', '-U', 'test_access']);
 PGTDE::append_to_file($stdout);
 
-$stdout = $node->safe_psql('postgres', "SELECT pg_tde_rotate_principal_key('rotated-principal-key','file-2');", extra_params => ['-a', '-U', 'test_access']);
-PGTDE::append_to_file($stdout);
-
-$stdout = $node->safe_psql('postgres', "SELECT principal_key_name,key_provider_name,key_provider_id,principal_key_internal_name, principal_key_version from pg_tde_principal_key_info();", extra_params => ['-a', '-U', 'test_access']);
+$stdout = $node->safe_psql('postgres', "SELECT principal_key_name,key_provider_name,key_provider_id from pg_tde_principal_key_info();", extra_params => ['-a', '-U', 'test_access']);
 PGTDE::append_to_file($cmdret);
 
 
@@ -96,7 +88,7 @@ PGTDE::append_to_file("-- pg_tde_list_all_key_providers should also fail");
 PGTDE::append_to_file($stderr);
 
 PGTDE::append_to_file("-- pg_tde_principal_key_info should also fail");
-($cmdret, $stdout, $stderr) = $node->psql('postgres', "SELECT principal_key_name,key_provider_name,key_provider_id,principal_key_internal_name, principal_key_version from pg_tde_principal_key_info();", extra_params => ['-a', '-U', 'test_access']);
+($cmdret, $stdout, $stderr) = $node->psql('postgres', "SELECT principal_key_name,key_provider_name,key_provider_id from pg_tde_principal_key_info();", extra_params => ['-a', '-U', 'test_access']);
 PGTDE::append_to_file($stderr);
 
 

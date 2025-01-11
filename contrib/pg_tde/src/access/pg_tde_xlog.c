@@ -52,7 +52,7 @@ tdeheap_rmgr_redo(XLogReaderState *record)
 
 		LWLockAcquire(tde_lwlock_enc_keys(), LW_EXCLUSIVE);
 		if (info == XLOG_TDE_ADD_PRINCIPAL_KEY)
-			save_principal_key_info(mkey);
+			create_principal_key_info(mkey);
 		else
 			update_principal_key_info(mkey);
 

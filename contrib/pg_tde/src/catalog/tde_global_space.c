@@ -181,11 +181,10 @@ create_principal_key(const char *key_name, GenericKeyring *keyring, Oid dbOid)
 
 	principalKey = palloc(sizeof(TDEPrincipalKey));
 	principalKey->keyInfo.databaseId = dbOid;
-	principalKey->keyInfo.keyId.version = DEFAULT_PRINCIPAL_KEY_VERSION;
-	principalKey->keyInfo.keyringId = keyring->key_id;
+	principalKey->keyInfo.keyringId = keyring->keyring_id;
 	strncpy(principalKey->keyInfo.keyId.name, key_name, TDE_KEY_NAME_LEN);
 	snprintf(principalKey->keyInfo.keyId.versioned_name, TDE_KEY_NAME_LEN,
-			 "%s_%d", principalKey->keyInfo.keyId.name, principalKey->keyInfo.keyId.version);
+			 "%s", principalKey->keyInfo.keyId.name);
 	gettimeofday(&principalKey->keyInfo.creationTime, NULL);
 
 	keyInfo = KeyringGenerateNewKeyAndStore(keyring, principalKey->keyInfo.keyId.versioned_name, INTERNAL_KEY_LEN, false);

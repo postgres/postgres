@@ -57,7 +57,7 @@ SELECT * FROM country_table;
 PGTDE::append_to_file($stdout);
 
 
-$cmdret = $node->psql('tbc', "SELECT pg_tde_rotate_principal_key('new-k', 'file-vault');", extra_params => ['-a']);
+$cmdret = $node->psql('tbc', "SELECT pg_tde_set_principal_key('new-k', 'file-vault');", extra_params => ['-a']);
 ok($cmdret == 0, "ROTATE KEY");
 PGTDE::append_to_file($stdout);
 
