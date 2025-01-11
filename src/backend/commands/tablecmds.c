@@ -373,7 +373,7 @@ static void RangeVarCallbackForTruncate(const RangeVar *relation,
 static List *MergeAttributes(List *columns, const List *supers, char relpersistence,
 							 bool is_partition, List **supconstr,
 							 List **supnotnulls);
-static List *MergeCheckConstraint(List *constraints, const char *name, Node *expr);
+static List *MergeCheckConstraint(List *constraints, const char *name, Node *expr, bool is_enforced);
 static void MergeChildAttribute(List *inh_columns, int exist_attno, int newcol_attno, const ColumnDef *newdef);
 static ColumnDef *MergeInheritedAttribute(List *inh_columns, int exist_attno, const ColumnDef *newdef);
 static void MergeAttributesIntoExisting(Relation child_rel, Relation parent_rel, bool ispartition);
@@ -973,6 +973,7 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 			cooked->name = NULL;
 			cooked->attnum = attnum;
 			cooked->expr = colDef->cooked_default;
+			cooked->is_enforced = true;
 			cooked->skip_validation = false;
 			cooked->is_local = true;	/* not used for defaults */
 			cooked->inhcount = 0;	/* ditto */
@@ -2890,7 +2891,8 @@ MergeAttributes(List *columns, const List *supers, char relpersistence,
 									   name,
 									   RelationGetRelationName(relation))));
 
-				constraints = MergeCheckConstraint(constraints, name, expr);
+				constraints = MergeCheckConstraint(constraints, name, expr,
+												   check[i].ccenforced);
 			}
 		}
 
@@ -3104,7 +3106,7 @@ MergeAttributes(List *columns, const List *supers, char relpersistence,
  * the list.
  */
 static List *
-MergeCheckConstraint(List *constraints, const char *name, Node *expr)
+MergeCheckConstraint(List *constraints, const char *name, Node *expr, bool is_enforced)
 {
 	ListCell   *lc;
 	CookedConstraint *newcon;
@@ -3127,6 +3129,17 @@ MergeCheckConstraint(List *constraints, const char *name, Node *expr)
 				ereport(ERROR,
 						errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 						errmsg("too many inheritance parents"));
+
+			/*
+			 * When enforceability differs, the merged constraint should be
+			 * marked as ENFORCED because one of the parents is ENFORCED.
+			 */
+			if (!ccon->is_enforced && is_enforced)
+			{
+				ccon->is_enforced = true;
+				ccon->skip_validation = false;
+			}
+
 			return constraints;
 		}
 
@@ -3145,6 +3158,8 @@ MergeCheckConstraint(List *constraints, const char *name, Node *expr)
 	newcon->name = pstrdup(name);
 	newcon->expr = expr;
 	newcon->inhcount = 1;
+	newcon->is_enforced = is_enforced;
+	newcon->skip_validation = !is_enforced;
 	return lappend(constraints, newcon);
 }
 
@@ -10428,6 +10443,7 @@ addFkConstraint(addFkConstraintSides fkside,
 									  CONSTRAINT_FOREIGN,
 									  fkconstraint->deferrable,
 									  fkconstraint->initdeferred,
+									  true, /* Is Enforced */
 									  fkconstraint->initially_valid,
 									  parentConstr,
 									  RelationGetRelid(rel),
@@ -12013,6 +12029,11 @@ ATExecValidateConstraint(List **wqueue, Relation rel, char *constrName,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("constraint \"%s\" of relation \"%s\" is not a foreign key or check constraint",
 						constrName, RelationGetRelationName(rel))));
+
+	if (!con->conenforced)
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("cannot validate NOT ENFORCED constraint")));
 
 	if (!con->convalidated)
 	{
@@ -16259,6 +16280,9 @@ decompile_conbin(HeapTuple contup, TupleDesc tupdesc)
  * The test we apply is to see whether they reverse-compile to the same
  * source string.  This insulates us from issues like whether attributes
  * have the same physical column numbers in parent and child relations.
+ *
+ * Note that we ignore enforceability as there are cases where constraints
+ * with differing enforceability are allowed.
  */
 static bool
 constraints_equivalent(HeapTuple a, HeapTuple b, TupleDesc tupleDesc)
@@ -16528,10 +16552,22 @@ MergeConstraintsIntoExisting(Relation child_rel, Relation parent_rel)
 			 * If the child constraint is "not valid" then cannot merge with a
 			 * valid parent constraint
 			 */
-			if (parent_con->convalidated && !child_con->convalidated)
+			if (parent_con->convalidated && child_con->conenforced &&
+				!child_con->convalidated)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 						 errmsg("constraint \"%s\" conflicts with NOT VALID constraint on child table \"%s\"",
+								NameStr(child_con->conname), RelationGetRelationName(child_rel))));
+
+			/*
+			 * A non-enforced child constraint cannot be merged with an
+			 * enforced parent constraint. However, the reverse is allowed,
+			 * where the child constraint is enforced.
+			 */
+			if (parent_con->conenforced && !child_con->conenforced)
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+						 errmsg("constraint \"%s\" conflicts with NOT ENFORCED constraint on child table \"%s\"",
 								NameStr(child_con->conname), RelationGetRelationName(child_rel))));
 
 			/*
@@ -18885,6 +18921,12 @@ ConstraintImpliedByRelConstraint(Relation scanrel, List *testConstraint, List *p
 		if (!constr->check[i].ccvalid)
 			continue;
 
+		/*
+		 * NOT ENFORCED constraints are always marked as invalid, which should
+		 * have been ignored.
+		 */
+		Assert(constr->check[i].ccenforced);
+
 		cexpr = stringToNode(constr->check[i].ccbin);
 
 		/*
@@ -20195,6 +20237,7 @@ DetachAddConstraintIfNeeded(List **wqueue, Relation partRel)
 		n->is_no_inherit = false;
 		n->raw_expr = NULL;
 		n->cooked_expr = nodeToString(make_ands_explicit(constraintExpr));
+		n->is_enforced = true;
 		n->initially_valid = true;
 		n->skip_validation = true;
 		/* It's a re-add, since it nominally already exists */

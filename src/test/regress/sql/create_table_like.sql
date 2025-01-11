@@ -128,7 +128,8 @@ CREATE TABLE inhz (x text REFERENCES inhz, LIKE inhx INCLUDING INDEXES);
 DROP TABLE inhz;
 
 -- including storage and comments
-CREATE TABLE ctlt1 (a text CHECK (length(a) > 2) PRIMARY KEY, b text);
+CREATE TABLE ctlt1 (a text CHECK (length(a) > 2) ENFORCED PRIMARY KEY,
+	b text CHECK (length(b) > 100) NOT ENFORCED);
 CREATE INDEX ctlt1_b_key ON ctlt1 (b);
 CREATE INDEX ctlt1_fnidx ON ctlt1 ((a || b));
 CREATE STATISTICS ctlt1_a_b_stat ON a,b FROM ctlt1;

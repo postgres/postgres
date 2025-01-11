@@ -2736,6 +2736,8 @@ typedef enum ConstrType			/* types of constraints */
 	CONSTR_ATTR_NOT_DEFERRABLE,
 	CONSTR_ATTR_DEFERRED,
 	CONSTR_ATTR_IMMEDIATE,
+	CONSTR_ATTR_ENFORCED,
+	CONSTR_ATTR_NOT_ENFORCED,
 } ConstrType;
 
 /* Foreign key action codes */
@@ -2757,6 +2759,7 @@ typedef struct Constraint
 	char	   *conname;		/* Constraint name, or NULL if unnamed */
 	bool		deferrable;		/* DEFERRABLE? */
 	bool		initdeferred;	/* INITIALLY DEFERRED? */
+	bool		is_enforced;	/* enforced constraint? */
 	bool		skip_validation;	/* skip validation of existing rows? */
 	bool		initially_valid;	/* mark the new constraint as valid? */
 	bool		is_no_inherit;	/* is constraint non-inheritable? */

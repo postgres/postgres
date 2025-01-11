@@ -1304,8 +1304,19 @@ get_relation_constraints(PlannerInfo *root,
 			 */
 			if (!constr->check[i].ccvalid)
 				continue;
+
+			/*
+			 * NOT ENFORCED constraints are always marked as invalid, which
+			 * should have been ignored.
+			 */
+			Assert(constr->check[i].ccenforced);
+
+			/*
+			 * Also ignore if NO INHERIT and we weren't told that that's safe.
+			 */
 			if (constr->check[i].ccnoinherit && !include_noinherit)
 				continue;
+
 
 			cexpr = stringToNode(constr->check[i].ccbin);
 

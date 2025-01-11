@@ -1319,19 +1319,97 @@ NOTICE:  merging constraint "inh_check_constraint1" with inherited definition
 alter table p1_c1 add constraint inh_check_constraint2 check (f1 < 10);
 alter table p1 add constraint inh_check_constraint2 check (f1 < 10);
 NOTICE:  merging constraint "inh_check_constraint2" with inherited definition
-select conrelid::regclass::text as relname, conname, conislocal, coninhcount
+alter table p1 add constraint inh_check_constraint3 check (f1 > 0) not enforced;
+alter table p1_c1 add constraint inh_check_constraint3 check (f1 > 0) not enforced;
+NOTICE:  merging constraint "inh_check_constraint3" with inherited definition
+alter table p1_c1 add constraint inh_check_constraint4 check (f1 < 10) not enforced;
+alter table p1 add constraint inh_check_constraint4 check (f1 < 10) not enforced;
+NOTICE:  merging constraint "inh_check_constraint4" with inherited definition
+-- allowed to merge enforced constraint with parent's not enforced constraint
+alter table p1_c1 add constraint inh_check_constraint5 check (f1 < 10) enforced;
+alter table p1 add constraint inh_check_constraint5 check (f1 < 10) not enforced;
+NOTICE:  merging constraint "inh_check_constraint5" with inherited definition
+alter table p1 add constraint inh_check_constraint6 check (f1 < 10) not enforced;
+alter table p1_c1 add constraint inh_check_constraint6 check (f1 < 10) enforced;
+NOTICE:  merging constraint "inh_check_constraint6" with inherited definition
+create table p1_c2(f1 int constraint inh_check_constraint4 check (f1 < 10)) inherits(p1);
+NOTICE:  merging column "f1" with inherited definition
+NOTICE:  merging constraint "inh_check_constraint4" with inherited definition
+-- but reverse is not allowed
+alter table p1_c1 add constraint inh_check_constraint7 check (f1 < 10) not enforced;
+alter table p1 add constraint inh_check_constraint7 check (f1 < 10) enforced;
+ERROR:  constraint "inh_check_constraint7" conflicts with NOT ENFORCED constraint on relation "p1_c1"
+alter table p1 add constraint inh_check_constraint8 check (f1 < 10) enforced;
+alter table p1_c1 add constraint inh_check_constraint8 check (f1 < 10) not enforced;
+ERROR:  constraint "inh_check_constraint8" conflicts with NOT ENFORCED constraint on relation "p1_c1"
+create table p1_fail(f1 int constraint inh_check_constraint2 check (f1 < 10) not enforced) inherits(p1);
+NOTICE:  merging column "f1" with inherited definition
+ERROR:  constraint "inh_check_constraint2" conflicts with NOT ENFORCED constraint on relation "p1_fail"
+-- constraints with different enforceability can be merged by marking them as ENFORCED
+create table p1_c3() inherits(p1, p1_c1);
+NOTICE:  merging multiple inherited definitions of column "f1"
+-- but not allowed if the child constraint is explicitly asked to be NOT ENFORCED
+create table p1_fail(f1 int constraint inh_check_constraint6 check (f1 < 10) not enforced) inherits(p1, p1_c1);
+NOTICE:  merging multiple inherited definitions of column "f1"
+NOTICE:  merging column "f1" with inherited definition
+ERROR:  constraint "inh_check_constraint6" conflicts with NOT ENFORCED constraint on relation "p1_fail"
+select conrelid::regclass::text as relname, conname, conislocal, coninhcount, conenforced
 from pg_constraint where conname like 'inh\_check\_constraint%'
 order by 1, 2;
- relname |        conname        | conislocal | coninhcount 
----------+-----------------------+------------+-------------
- p1      | inh_check_constraint1 | t          |           0
- p1      | inh_check_constraint2 | t          |           0
- p1_c1   | inh_check_constraint1 | t          |           1
- p1_c1   | inh_check_constraint2 | t          |           1
-(4 rows)
+ relname |        conname        | conislocal | coninhcount | conenforced 
+---------+-----------------------+------------+-------------+-------------
+ p1      | inh_check_constraint1 | t          |           0 | t
+ p1      | inh_check_constraint2 | t          |           0 | t
+ p1      | inh_check_constraint3 | t          |           0 | f
+ p1      | inh_check_constraint4 | t          |           0 | f
+ p1      | inh_check_constraint5 | t          |           0 | f
+ p1      | inh_check_constraint6 | t          |           0 | f
+ p1      | inh_check_constraint8 | t          |           0 | t
+ p1_c1   | inh_check_constraint1 | t          |           1 | t
+ p1_c1   | inh_check_constraint2 | t          |           1 | t
+ p1_c1   | inh_check_constraint3 | t          |           1 | f
+ p1_c1   | inh_check_constraint4 | t          |           1 | f
+ p1_c1   | inh_check_constraint5 | t          |           1 | t
+ p1_c1   | inh_check_constraint6 | t          |           1 | t
+ p1_c1   | inh_check_constraint7 | t          |           0 | f
+ p1_c1   | inh_check_constraint8 | f          |           1 | t
+ p1_c2   | inh_check_constraint1 | f          |           1 | t
+ p1_c2   | inh_check_constraint2 | f          |           1 | t
+ p1_c2   | inh_check_constraint3 | f          |           1 | f
+ p1_c2   | inh_check_constraint4 | t          |           1 | t
+ p1_c2   | inh_check_constraint5 | f          |           1 | f
+ p1_c2   | inh_check_constraint6 | f          |           1 | f
+ p1_c2   | inh_check_constraint8 | f          |           1 | t
+ p1_c3   | inh_check_constraint1 | f          |           2 | t
+ p1_c3   | inh_check_constraint2 | f          |           2 | t
+ p1_c3   | inh_check_constraint3 | f          |           2 | f
+ p1_c3   | inh_check_constraint4 | f          |           2 | f
+ p1_c3   | inh_check_constraint5 | f          |           2 | t
+ p1_c3   | inh_check_constraint6 | f          |           2 | t
+ p1_c3   | inh_check_constraint7 | f          |           1 | f
+ p1_c3   | inh_check_constraint8 | f          |           2 | t
+(30 rows)
 
 drop table p1 cascade;
+NOTICE:  drop cascades to 3 other objects
+DETAIL:  drop cascades to table p1_c1
+drop cascades to table p1_c2
+drop cascades to table p1_c3
+--
+-- Similarly, check the merging of existing constraints; a parent constraint
+-- marked as NOT ENFORCED can merge with an ENFORCED child constraint, but the
+-- reverse is not allowed.
+--
+create table p1(f1 int constraint p1_a_check check (f1 > 0) not enforced);
+create table p1_c1(f1 int constraint p1_a_check check (f1 > 0) enforced);
+alter table p1_c1 inherit p1;
+drop table p1 cascade;
 NOTICE:  drop cascades to table p1_c1
+create table p1(f1 int constraint p1_a_check check (f1 > 0) enforced);
+create table p1_c1(f1 int constraint p1_a_check check (f1 > 0) not enforced);
+alter table p1_c1 inherit p1;
+ERROR:  constraint "p1_a_check" conflicts with NOT ENFORCED constraint on child table "p1_c1"
+drop table p1, p1_c1;
 --
 -- Test DROP behavior of multiply-defined CHECK constraints
 --

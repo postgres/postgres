@@ -507,11 +507,14 @@ ALTER TABLE attmp3 validate constraint attmpconstr;
 ALTER TABLE attmp3 ADD CONSTRAINT b_greater_than_ten CHECK (b > 10); -- fail
 ERROR:  check constraint "b_greater_than_ten" of relation "attmp3" is violated by some row
 ALTER TABLE attmp3 ADD CONSTRAINT b_greater_than_ten CHECK (b > 10) NOT VALID; -- succeeds
+ALTER TABLE attmp3 ADD CONSTRAINT b_greater_than_ten_not_enforced CHECK (b > 10) NOT ENFORCED; -- succeeds
 ALTER TABLE attmp3 VALIDATE CONSTRAINT b_greater_than_ten; -- fails
 ERROR:  check constraint "b_greater_than_ten" of relation "attmp3" is violated by some row
 DELETE FROM attmp3 WHERE NOT b > 10;
 ALTER TABLE attmp3 VALIDATE CONSTRAINT b_greater_than_ten; -- succeeds
 ALTER TABLE attmp3 VALIDATE CONSTRAINT b_greater_than_ten; -- succeeds
+ALTER TABLE attmp3 VALIDATE CONSTRAINT b_greater_than_ten_not_enforced; -- fail
+ERROR:  cannot validate NOT ENFORCED constraint
 -- Test inherited NOT VALID CHECK constraints
 select * from attmp3;
  a | b  
@@ -1689,6 +1692,13 @@ alter table renameColumn add column w int;
 -- this should fail
 alter table only renameColumn add column x int;
 ERROR:  column must be added to child tables too
+-- this should work
+alter table renameColumn add column x int check (x > 0) not enforced;
+-- this should fail
+alter table renameColumn add column y int check (x > 0) not enforced enforced;
+ERROR:  multiple ENFORCED/NOT ENFORCED clauses not allowed
+LINE 1: ...Column add column y int check (x > 0) not enforced enforced;
+                                                              ^
 -- Test corner cases in dropping of inherited columns
 create table p1 (f1 int, f2 int);
 create table c1 (f1 int not null) inherits(p1);

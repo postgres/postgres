@@ -880,6 +880,16 @@ select pg_basetype(1);  -- expect NULL not error
 
 drop domain mytext cascade;
 
+--
+-- Explicit enforceability specification not allowed
+---
+CREATE DOMAIN constraint_enforced_dom AS int CONSTRAINT the_constraint CHECK (value > 0) ENFORCED;
+CREATE DOMAIN constraint_not_enforced_dom AS int CONSTRAINT the_constraint CHECK (value > 0) NOT ENFORCED;
+CREATE DOMAIN constraint_enforced_dom AS int;
+-- XXX misleading error messages
+ALTER DOMAIN constraint_enforced_dom ADD CONSTRAINT the_constraint CHECK (value > 0) ENFORCED;
+ALTER DOMAIN constraint_enforced_dom ADD CONSTRAINT the_constraint CHECK (value > 0) NOT ENFORCED;
+DROP DOMAIN constraint_enforced_dom;
 
 --
 -- Information schema

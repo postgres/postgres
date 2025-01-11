@@ -87,6 +87,25 @@ SELECT * FROM CHECK_TBL;
  6
 (3 rows)
 
+CREATE TABLE NE_CHECK_TBL (x int,
+	CONSTRAINT CHECK_CON CHECK (x > 3) NOT ENFORCED);
+INSERT INTO NE_CHECK_TBL VALUES (5);
+INSERT INTO NE_CHECK_TBL VALUES (4);
+INSERT INTO NE_CHECK_TBL VALUES (3);
+INSERT INTO NE_CHECK_TBL VALUES (2);
+INSERT INTO NE_CHECK_TBL VALUES (6);
+INSERT INTO NE_CHECK_TBL VALUES (1);
+SELECT * FROM NE_CHECK_TBL;
+ x 
+---
+ 5
+ 4
+ 3
+ 2
+ 6
+ 1
+(6 rows)
+
 CREATE SEQUENCE CHECK_SEQ;
 CREATE TABLE CHECK2_TBL (x int, y text, z int,
 	CONSTRAINT SEQUENCE_CON
@@ -120,7 +139,8 @@ CREATE TABLE INSERT_TBL (x INT DEFAULT nextval('insert_seq'),
 	y TEXT DEFAULT '-NULL-',
 	z INT DEFAULT -1 * currval('insert_seq'),
 	CONSTRAINT INSERT_TBL_CON CHECK (x >= 3 AND y <> 'check failed' AND x < 8),
-	CHECK (x + z = 0));
+	CHECK (x + z = 0) ENFORCED, /* no change it is a default */
+	CONSTRAINT NE_INSERT_TBL_CON CHECK (x + z = 1) NOT ENFORCED);
 INSERT INTO INSERT_TBL(x,z) VALUES (2, -2);
 ERROR:  new row for relation "insert_tbl" violates check constraint "insert_tbl_con"
 DETAIL:  Failing row contains (2, -NULL-, -2).
@@ -715,6 +735,24 @@ SELECT * FROM unique_tbl;
  3 | threex
 (5 rows)
 
+-- enforcibility cannot be specified or set for unique constrain
+CREATE TABLE UNIQUE_EN_TBL(i int UNIQUE ENFORCED);
+ERROR:  misplaced ENFORCED clause
+LINE 1: CREATE TABLE UNIQUE_EN_TBL(i int UNIQUE ENFORCED);
+                                                ^
+CREATE TABLE UNIQUE_NOTEN_TBL(i int UNIQUE NOT ENFORCED);
+ERROR:  misplaced NOT ENFORCED clause
+LINE 1: CREATE TABLE UNIQUE_NOTEN_TBL(i int UNIQUE NOT ENFORCED);
+                                                   ^
+-- XXX: error message is misleading here
+ALTER TABLE unique_tbl ALTER CONSTRAINT unique_tbl_i_key ENFORCED;
+ERROR:  ALTER CONSTRAINT statement constraints cannot be marked ENFORCED
+LINE 1: ...TABLE unique_tbl ALTER CONSTRAINT unique_tbl_i_key ENFORCED;
+                                                              ^
+ALTER TABLE unique_tbl ALTER CONSTRAINT unique_tbl_i_key NOT ENFORCED;
+ERROR:  ALTER CONSTRAINT statement constraints cannot be marked NOT ENFORCED
+LINE 1: ...ABLE unique_tbl ALTER CONSTRAINT unique_tbl_i_key NOT ENFORC...
+                                                             ^
 DROP TABLE unique_tbl;
 --
 -- EXCLUDE constraints

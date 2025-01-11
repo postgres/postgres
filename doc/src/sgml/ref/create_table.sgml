@@ -71,7 +71,7 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
   PRIMARY KEY <replaceable class="parameter">index_parameters</replaceable> |
   REFERENCES <replaceable class="parameter">reftable</replaceable> [ ( <replaceable class="parameter">refcolumn</replaceable> ) ] [ MATCH FULL | MATCH PARTIAL | MATCH SIMPLE ]
     [ ON DELETE <replaceable class="parameter">referential_action</replaceable> ] [ ON UPDATE <replaceable class="parameter">referential_action</replaceable> ] }
-[ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY IMMEDIATE ]
+[ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY IMMEDIATE ] [ ENFORCED | NOT ENFORCED ]
 
 <phrase>and <replaceable class="parameter">table_constraint</replaceable> is:</phrase>
 
@@ -84,7 +84,7 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
   FOREIGN KEY ( <replaceable class="parameter">column_name</replaceable> [, ... ] [, PERIOD <replaceable class="parameter">column_name</replaceable> ] ) REFERENCES <replaceable class="parameter">reftable</replaceable> [ ( <replaceable class="parameter">refcolumn</replaceable> [, ... ] [, PERIOD <replaceable class="parameter">refcolumn</replaceable> ] ) ]
     [ MATCH FULL | MATCH PARTIAL | MATCH SIMPLE ] [ ON DELETE <replaceable
 class="parameter">referential_action</replaceable> ] [ ON UPDATE <replaceable class="parameter">referential_action</replaceable> ] }
-[ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY IMMEDIATE ]
+[ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY IMMEDIATE ] [ ENFORCED | NOT ENFORCED ]
 
 <phrase>and <replaceable class="parameter">like_option</replaceable> is:</phrase>
 
@@ -1373,6 +1373,36 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       <literal>INITIALLY DEFERRED</literal>, it is checked only at the
       end of the transaction.  The constraint check time can be
       altered with the <link linkend="sql-set-constraints"><command>SET CONSTRAINTS</command></link> command.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry id="sql-createtable-parms-enforced">
+    <term><literal>ENFORCED</literal></term>
+    <term><literal>NOT ENFORCED</literal></term>
+    <listitem>
+     <para>
+      When the constraint is <literal>ENFORCED</literal>, then the database
+      system will ensure that the constraint is satisfied, by checking the
+      constraint at appropriate times (after each statement or at the end of
+      the transaction, as appropriate).  That is the default.  If the
+      constraint is <literal>NOT ENFORCED</literal>, the database system will
+      not check the constraint.  It is then up to the application code to
+      ensure that the constraints are satisfied.  The database system might
+      still assume that the data actually satisfies the constraint for
+      optimization decisions where this does not affect the correctness of the
+      result.
+     </para>
+
+     <para>
+      <literal>NOT ENFORCED</literal> constraints can be useful as
+      documentation if the actual checking of the constraint at run time is
+      too expensive.
+     </para>
+
+     <para>
+      This is currently only supported for <literal>CHECK</literal>
+      constraints.
      </para>
     </listitem>
    </varlistentry>

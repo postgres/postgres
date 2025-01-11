@@ -48,12 +48,14 @@ CREATE FOREIGN TABLE [ IF NOT EXISTS ] <replaceable class="parameter">table_name
   CHECK ( <replaceable class="parameter">expression</replaceable> ) [ NO INHERIT ] |
   DEFAULT <replaceable>default_expr</replaceable> |
   GENERATED ALWAYS AS ( <replaceable>generation_expr</replaceable> ) STORED }
+[ ENFORCED | NOT ENFORCED ]
 
 <phrase>and <replaceable class="parameter">table_constraint</replaceable> is:</phrase>
 
 [ CONSTRAINT <replaceable class="parameter">constraint_name</replaceable> ]
-  NOT NULL <replaceable class="parameter">column_name</replaceable> [ NO INHERIT ] |
-CHECK ( <replaceable class="parameter">expression</replaceable> ) [ NO INHERIT ]
+{  NOT NULL <replaceable class="parameter">column_name</replaceable> [ NO INHERIT ] |
+   CHECK ( <replaceable class="parameter">expression</replaceable> ) [ NO INHERIT ] }
+[ ENFORCED | NOT ENFORCED ]
 
 <phrase>and <replaceable class="parameter">partition_bound_spec</replaceable> is:</phrase>
 

@@ -376,6 +376,7 @@ CreateTupleDescCopyConstr(TupleDesc tupdesc)
 			{
 				cpy->check[i].ccname = pstrdup(constr->check[i].ccname);
 				cpy->check[i].ccbin = pstrdup(constr->check[i].ccbin);
+				cpy->check[i].ccenforced = constr->check[i].ccenforced;
 				cpy->check[i].ccvalid = constr->check[i].ccvalid;
 				cpy->check[i].ccnoinherit = constr->check[i].ccnoinherit;
 			}
@@ -692,6 +693,7 @@ equalTupleDescs(TupleDesc tupdesc1, TupleDesc tupdesc2)
 
 			if (!(strcmp(check1->ccname, check2->ccname) == 0 &&
 				  strcmp(check1->ccbin, check2->ccbin) == 0 &&
+				  check1->ccenforced == check2->ccenforced &&
 				  check1->ccvalid == check2->ccvalid &&
 				  check1->ccnoinherit == check2->ccnoinherit))
 				return false;

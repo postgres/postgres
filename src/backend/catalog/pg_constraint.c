@@ -53,6 +53,7 @@ CreateConstraintEntry(const char *constraintName,
 					  char constraintType,
 					  bool isDeferrable,
 					  bool isDeferred,
+					  bool isEnforced,
 					  bool isValidated,
 					  Oid parentConstrId,
 					  Oid relId,
@@ -98,6 +99,11 @@ CreateConstraintEntry(const char *constraintName,
 	ObjectAddress conobject;
 	ObjectAddresses *addrs_auto;
 	ObjectAddresses *addrs_normal;
+
+	/* Only CHECK constraint can be not enforced */
+	Assert(isEnforced || constraintType == CONSTRAINT_CHECK);
+	/* NOT ENFORCED constraint must be NOT VALID */
+	Assert(isEnforced || !isValidated);
 
 	conDesc = table_open(ConstraintRelationId, RowExclusiveLock);
 
@@ -182,6 +188,7 @@ CreateConstraintEntry(const char *constraintName,
 	values[Anum_pg_constraint_contype - 1] = CharGetDatum(constraintType);
 	values[Anum_pg_constraint_condeferrable - 1] = BoolGetDatum(isDeferrable);
 	values[Anum_pg_constraint_condeferred - 1] = BoolGetDatum(isDeferred);
+	values[Anum_pg_constraint_conenforced - 1] = BoolGetDatum(isEnforced);
 	values[Anum_pg_constraint_convalidated - 1] = BoolGetDatum(isValidated);
 	values[Anum_pg_constraint_conrelid - 1] = ObjectIdGetDatum(relId);
 	values[Anum_pg_constraint_contypid - 1] = ObjectIdGetDatum(domainId);
@@ -822,6 +829,7 @@ RelationGetNotNullConstraints(Oid relid, bool cooked, bool include_noinh)
 			cooked->name = pstrdup(NameStr(conForm->conname));
 			cooked->attnum = colnum;
 			cooked->expr = NULL;
+			cooked->is_enforced = true;
 			cooked->skip_validation = false;
 			cooked->is_local = true;
 			cooked->inhcount = 0;
@@ -841,6 +849,7 @@ RelationGetNotNullConstraints(Oid relid, bool cooked, bool include_noinh)
 			constr->location = -1;
 			constr->keys = list_make1(makeString(get_attname(relid, colnum,
 															 false)));
+			constr->is_enforced = true;
 			constr->skip_validation = false;
 			constr->initially_valid = true;
 			constr->is_no_inherit = conForm->connoinherit;

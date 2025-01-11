@@ -453,6 +453,7 @@ makeNotNullConstraint(String *colname)
 	notnull->initdeferred = false;
 	notnull->location = -1;
 	notnull->keys = list_make1(colname);
+	notnull->is_enforced = true;
 	notnull->skip_validation = false;
 	notnull->initially_valid = true;
 
