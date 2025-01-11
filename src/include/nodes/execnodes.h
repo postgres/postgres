@@ -806,16 +806,9 @@ typedef struct ExecAuxRowMark
  * point to tab_hash_expr and tab_eq_func respectively.
  * ----------------------------------------------------------------
  */
+typedef struct TupleHashEntryData TupleHashEntryData;
 typedef struct TupleHashEntryData *TupleHashEntry;
 typedef struct TupleHashTableData *TupleHashTable;
-
-typedef struct TupleHashEntryData
-{
-	MinimalTuple firstTuple;	/* copy of first tuple in this group */
-	void	   *additional;		/* user data */
-	uint32		status;			/* hash status */
-	uint32		hash;			/* hash value (cached) */
-} TupleHashEntryData;
 
 /* define parameters necessary to generate the tuple hash table interface */
 #define SH_PREFIX tuplehash
@@ -835,6 +828,7 @@ typedef struct TupleHashTableData
 	Oid		   *tab_collations; /* collations for hash and comparison */
 	MemoryContext tablecxt;		/* memory context containing table */
 	MemoryContext tempcxt;		/* context for function evaluations */
+	Size		additionalsize;	/* size of additional data */
 	TupleTableSlot *tableslot;	/* slot for referencing table entries */
 	/* The following fields are set transiently for each table search: */
 	TupleTableSlot *inputslot;	/* current input tuple's slot */
