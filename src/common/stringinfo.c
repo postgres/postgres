@@ -96,7 +96,7 @@ makeStringInfoExt(int initsize)
 void
 initStringInfo(StringInfo str)
 {
-	return initStringInfoInternal(str, STRINGINFO_DEFAULT_SIZE);
+	initStringInfoInternal(str, STRINGINFO_DEFAULT_SIZE);
 }
 
 /*
