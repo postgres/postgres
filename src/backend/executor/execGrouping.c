@@ -20,12 +20,12 @@
 #include "miscadmin.h"
 #include "utils/lsyscache.h"
 
-typedef struct TupleHashEntryData
+struct TupleHashEntryData
 {
 	MinimalTuple firstTuple;	/* copy of first tuple in this group */
 	uint32		status;			/* hash status */
 	uint32		hash;			/* hash value (cached) */
-} TupleHashEntryData;
+};
 
 static int	TupleHashTableMatch(struct tuplehash_hash *tb, const MinimalTuple tuple1, const MinimalTuple tuple2);
 static inline uint32 TupleHashTableHash_internal(struct tuplehash_hash *tb,
