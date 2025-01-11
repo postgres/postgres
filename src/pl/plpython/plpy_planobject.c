@@ -54,7 +54,6 @@ PLy_plan_new(void)
 	ob->plan = NULL;
 	ob->nargs = 0;
 	ob->types = NULL;
-	ob->values = NULL;
 	ob->args = NULL;
 	ob->mcxt = NULL;
 
