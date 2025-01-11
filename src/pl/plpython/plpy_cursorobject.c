@@ -142,7 +142,6 @@ PLy_cursor_plan(PyObject *ob, PyObject *args)
 {
 	PLyCursorObject *cursor;
 	volatile int nargs;
-	int			i;
 	PLyPlanObject *plan;
 	PLyExecutionContext *exec_ctx = PLy_current_execution_context();
 	volatile MemoryContext oldcontext;
@@ -201,13 +200,30 @@ PLy_cursor_plan(PyObject *ob, PyObject *args)
 	PG_TRY();
 	{
 		Portal		portal;
+		MemoryContext tmpcontext;
+		Datum	   *volatile values;
 		char	   *volatile nulls;
 		volatile int j;
 
+		/*
+		 * Converted arguments and associated cruft will be in this context,
+		 * which is local to our subtransaction.
+		 */
+		tmpcontext = AllocSetContextCreate(CurTransactionContext,
+										   "PL/Python temporary context",
+										   ALLOCSET_SMALL_SIZES);
+		MemoryContextSwitchTo(tmpcontext);
+
 		if (nargs > 0)
-			nulls = palloc(nargs * sizeof(char));
+		{
+			values = (Datum *) palloc(nargs * sizeof(Datum));
+			nulls = (char *) palloc(nargs * sizeof(char));
+		}
 		else
+		{
+			values = NULL;
 			nulls = NULL;
+		}
 
 		for (j = 0; j < nargs; j++)
 		{
@@ -219,7 +235,7 @@ PLy_cursor_plan(PyObject *ob, PyObject *args)
 			{
 				bool		isnull;
 
-				plan->values[j] = PLy_output_convert(arg, elem, &isnull);
+				values[j] = PLy_output_convert(arg, elem, &isnull);
 				nulls[j] = isnull ? 'n' : ' ';
 			}
 			PG_FINALLY();
@@ -229,7 +245,9 @@ PLy_cursor_plan(PyObject *ob, PyObject *args)
 			PG_END_TRY();
 		}
 
-		portal = SPI_cursor_open(NULL, plan->plan, plan->values, nulls,
+		MemoryContextSwitchTo(oldcontext);
+
+		portal = SPI_cursor_open(NULL, plan->plan, values, nulls,
 								 exec_ctx->curr_proc->fn_readonly);
 		if (portal == NULL)
 			elog(ERROR, "SPI_cursor_open() failed: %s",
@@ -239,39 +257,17 @@ PLy_cursor_plan(PyObject *ob, PyObject *args)
 
 		PinPortal(portal);
 
+		MemoryContextDelete(tmpcontext);
 		PLy_spi_subtransaction_commit(oldcontext, oldowner);
 	}
 	PG_CATCH();
 	{
-		int			k;
-
-		/* cleanup plan->values array */
-		for (k = 0; k < nargs; k++)
-		{
-			if (!plan->args[k].typbyval &&
-				(plan->values[k] != PointerGetDatum(NULL)))
-			{
-				pfree(DatumGetPointer(plan->values[k]));
-				plan->values[k] = PointerGetDatum(NULL);
-			}
-		}
-
 		Py_DECREF(cursor);
-
+		/* Subtransaction abort will remove the tmpcontext */
 		PLy_spi_subtransaction_abort(oldcontext, oldowner);
 		return NULL;
 	}
 	PG_END_TRY();
-
-	for (i = 0; i < nargs; i++)
-	{
-		if (!plan->args[i].typbyval &&
-			(plan->values[i] != PointerGetDatum(NULL)))
-		{
-			pfree(DatumGetPointer(plan->values[i]));
-			plan->values[i] = PointerGetDatum(NULL);
-		}
-	}
 
 	Assert(cursor->portalname != NULL);
 	return (PyObject *) cursor;
