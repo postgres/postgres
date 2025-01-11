@@ -118,7 +118,6 @@ populate_compact_attribute(TupleDesc tupdesc, int attnum)
 	populate_compact_attribute_internal(src, dst);
 }
 
-#ifdef USE_ASSERT_CHECKING
 /*
  * verify_compact_attribute
  *		In Assert enabled builds, we verify that the CompactAttribute is
@@ -132,6 +131,7 @@ populate_compact_attribute(TupleDesc tupdesc, int attnum)
 void
 verify_compact_attribute(TupleDesc tupdesc, int attnum)
 {
+#ifdef USE_ASSERT_CHECKING
 	CompactAttribute *cattr = &tupdesc->compact_attrs[attnum];
 	Form_pg_attribute attr = TupleDescAttr(tupdesc, attnum);
 	CompactAttribute tmp;
@@ -150,9 +150,8 @@ verify_compact_attribute(TupleDesc tupdesc, int attnum)
 
 	/* Check the freshly populated CompactAttribute matches the TupleDesc's */
 	Assert(memcmp(&tmp, cattr, sizeof(CompactAttribute)) == 0);
-}
 #endif
-
+}
 
 /*
  * CreateTemplateTupleDesc
