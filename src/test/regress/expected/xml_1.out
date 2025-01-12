@@ -1046,10 +1046,10 @@ ERROR:  unsupported XML feature
 LINE 3:                       PASSING '<rows xmlns="http://x.y"><row...
                                       ^
 DETAIL:  This functionality requires the server to be built with libxml support.
-CREATE VIEW xmltableview2 AS SELECT * FROM XMLTABLE(XMLNAMESPACES('http://x.y' AS zz),
-                      '/zz:rows/zz:row'
+CREATE VIEW xmltableview2 AS SELECT * FROM XMLTABLE(XMLNAMESPACES('http://x.y' AS "Zz"),
+                      '/Zz:rows/Zz:row'
                       PASSING '<rows xmlns="http://x.y"><row><a>10</a></row></rows>'
-                      COLUMNS a int PATH 'zz:a');
+                      COLUMNS a int PATH 'Zz:a');
 ERROR:  unsupported XML feature
 LINE 3:                       PASSING '<rows xmlns="http://x.y"><row...
                                       ^
@@ -1058,6 +1058,8 @@ SELECT * FROM xmltableview2;
 ERROR:  relation "xmltableview2" does not exist
 LINE 1: SELECT * FROM xmltableview2;
                       ^
+\sv xmltableview2
+ERROR:  relation "xmltableview2" does not exist
 SELECT * FROM XMLTABLE(XMLNAMESPACES(DEFAULT 'http://x.y'),
                       '/rows/row'
                       PASSING '<rows xmlns="http://x.y"><row><a>10</a></row></rows>'
