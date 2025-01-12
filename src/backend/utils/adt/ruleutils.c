@@ -10443,7 +10443,7 @@ get_rule_expr(Node *node, deparse_context *context,
 
 						get_rule_expr((Node *) lfirst(lc2), context, showimplicit);
 						appendStringInfo(buf, " AS %s",
-										 ((String *) lfirst_node(String, lc1))->sval);
+										 quote_identifier(lfirst_node(String, lc1)->sval));
 					}
 				}
 

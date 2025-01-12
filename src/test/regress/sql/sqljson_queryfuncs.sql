@@ -327,7 +327,7 @@ CREATE TABLE test_jsonb_constraints (
 	CONSTRAINT test_jsonb_constraint1
 		CHECK (js IS JSON)
 	CONSTRAINT test_jsonb_constraint2
-		CHECK (JSON_EXISTS(js::jsonb, '$.a' PASSING i + 5 AS int, i::text AS txt, array[1,2,3] as arr))
+		CHECK (JSON_EXISTS(js::jsonb, '$.a' PASSING i + 5 AS int, i::text AS "TXT", array[1,2,3] as arr))
 	CONSTRAINT test_jsonb_constraint3
 		CHECK (JSON_VALUE(js::jsonb, '$.a' RETURNING int DEFAULT '12' ON EMPTY ERROR ON ERROR) > i)
 	CONSTRAINT test_jsonb_constraint4
@@ -465,6 +465,9 @@ SELECT json_value('"aaa"', path RETURNING json) FROM jsonpaths;
 SELECT JSON_QUERY(jsonb 'null', '$xyz' PASSING 1 AS xy);
 SELECT JSON_QUERY(jsonb 'null', '$xy' PASSING 1 AS xyz);
 SELECT JSON_QUERY(jsonb 'null', '$xyz' PASSING 1 AS xyz);
+SELECT JSON_QUERY(jsonb 'null', '$Xyz' PASSING 1 AS Xyz);
+SELECT JSON_QUERY(jsonb 'null', '$Xyz' PASSING 1 AS "Xyz");
+SELECT JSON_QUERY(jsonb 'null', '$"Xyz"' PASSING 1 AS "Xyz");
 
 -- Test ON ERROR / EMPTY value validity for the function; all fail.
 SELECT JSON_EXISTS(jsonb '1', '$' DEFAULT 1 ON ERROR);
