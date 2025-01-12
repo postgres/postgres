@@ -1084,7 +1084,7 @@ CREATE TABLE test_jsonb_constraints (
 	CONSTRAINT test_jsonb_constraint1
 		CHECK (js IS JSON)
 	CONSTRAINT test_jsonb_constraint2
-		CHECK (JSON_EXISTS(js::jsonb, '$.a' PASSING i + 5 AS int, i::text AS txt, array[1,2,3] as arr))
+		CHECK (JSON_EXISTS(js::jsonb, '$.a' PASSING i + 5 AS int, i::text AS "TXT", array[1,2,3] as arr))
 	CONSTRAINT test_jsonb_constraint3
 		CHECK (JSON_VALUE(js::jsonb, '$.a' RETURNING int DEFAULT '12' ON EMPTY ERROR ON ERROR) > i)
 	CONSTRAINT test_jsonb_constraint4
@@ -1101,7 +1101,7 @@ CREATE TABLE test_jsonb_constraints (
  x      | jsonb   |           |          | JSON_QUERY('[1, 2]'::jsonb, '$[*]' RETURNING jsonb WITH UNCONDITIONAL WRAPPER KEEP QUOTES)
 Check constraints:
     "test_jsonb_constraint1" CHECK (js IS JSON)
-    "test_jsonb_constraint2" CHECK (JSON_EXISTS(js::jsonb, '$."a"' PASSING i + 5 AS int, i::text AS txt, ARRAY[1, 2, 3] AS arr))
+    "test_jsonb_constraint2" CHECK (JSON_EXISTS(js::jsonb, '$."a"' PASSING i + 5 AS "int", i::text AS "TXT", ARRAY[1, 2, 3] AS arr))
     "test_jsonb_constraint3" CHECK (JSON_VALUE(js::jsonb, '$."a"' RETURNING integer DEFAULT 12 ON EMPTY ERROR ON ERROR) > i)
     "test_jsonb_constraint4" CHECK (JSON_QUERY(js::jsonb, '$."a"' RETURNING jsonb WITH CONDITIONAL WRAPPER KEEP QUOTES EMPTY OBJECT ON ERROR) = '[10]'::jsonb)
     "test_jsonb_constraint5" CHECK (JSON_QUERY(js::jsonb, '$."a"' RETURNING character(5) WITHOUT WRAPPER OMIT QUOTES EMPTY ARRAY ON EMPTY) > ('a'::bpchar COLLATE "C"))
@@ -1116,7 +1116,7 @@ ORDER BY 1;
  (JSON_QUERY((js)::jsonb, '$."a"' RETURNING jsonb WITH CONDITIONAL WRAPPER KEEP QUOTES EMPTY OBJECT ON ERROR) = '[10]'::jsonb)
  (JSON_VALUE((js)::jsonb, '$."a"' RETURNING integer DEFAULT 12 ON EMPTY ERROR ON ERROR) > i)
  (js IS JSON)
- JSON_EXISTS((js)::jsonb, '$."a"' PASSING (i + 5) AS int, (i)::text AS txt, ARRAY[1, 2, 3] AS arr)
+ JSON_EXISTS((js)::jsonb, '$."a"' PASSING (i + 5) AS "int", (i)::text AS "TXT", ARRAY[1, 2, 3] AS arr)
 (5 rows)
 
 SELECT pg_get_expr(adbin, adrelid)
@@ -1361,6 +1361,20 @@ ERROR:  could not find jsonpath variable "xyz"
 SELECT JSON_QUERY(jsonb 'null', '$xy' PASSING 1 AS xyz);
 ERROR:  could not find jsonpath variable "xy"
 SELECT JSON_QUERY(jsonb 'null', '$xyz' PASSING 1 AS xyz);
+ json_query 
+------------
+ 1
+(1 row)
+
+SELECT JSON_QUERY(jsonb 'null', '$Xyz' PASSING 1 AS Xyz);
+ERROR:  could not find jsonpath variable "Xyz"
+SELECT JSON_QUERY(jsonb 'null', '$Xyz' PASSING 1 AS "Xyz");
+ json_query 
+------------
+ 1
+(1 row)
+
+SELECT JSON_QUERY(jsonb 'null', '$"Xyz"' PASSING 1 AS "Xyz");
  json_query 
 ------------
  1
