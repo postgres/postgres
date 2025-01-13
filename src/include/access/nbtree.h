@@ -702,6 +702,11 @@ BTreeTupleGetMaxHeapTID(IndexTuple itup)
  *	To facilitate B-Tree deduplication, an operator class may choose to
  *	offer a forth amproc procedure (BTEQUALIMAGE_PROC).  For full details,
  *	see doc/src/sgml/btree.sgml.
+ *
+ *	An operator class may choose to offer a fifth amproc procedure
+ *	(BTOPTIONS_PROC).  These procedures define a set of user-visible
+ *	parameters that can be used to control operator class behavior.  None of
+ *	the built-in B-Tree operator classes currently register an "options" proc.
  */
 
 #define BTORDER_PROC		1
