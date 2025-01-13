@@ -513,7 +513,7 @@ LookupTupleHashEntry_internal(TupleHashTable hashtable, TupleTableSlot *slot,
 		else
 		{
 			MinimalTuple firstTuple;
-			size_t totalsize; /* including alignment and additionalsize */
+			size_t		totalsize;	/* including alignment and additionalsize */
 
 			/* created new entry */
 			*isnew = true;

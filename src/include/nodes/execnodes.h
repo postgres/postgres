@@ -828,7 +828,7 @@ typedef struct TupleHashTableData
 	Oid		   *tab_collations; /* collations for hash and comparison */
 	MemoryContext tablecxt;		/* memory context containing table */
 	MemoryContext tempcxt;		/* context for function evaluations */
-	Size		additionalsize;	/* size of additional data */
+	Size		additionalsize; /* size of additional data */
 	TupleTableSlot *tableslot;	/* slot for referencing table entries */
 	/* The following fields are set transiently for each table search: */
 	TupleTableSlot *inputslot;	/* current input tuple's slot */
