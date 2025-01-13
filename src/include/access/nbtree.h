@@ -1261,6 +1261,11 @@ extern void _bt_pendingfsm_init(Relation rel, BTVacState *vstate,
 extern void _bt_pendingfsm_finalize(Relation rel, BTVacState *vstate);
 
 /*
+ * prototypes for functions in nbtpreprocesskeys.c
+ */
+extern void _bt_preprocess_keys(IndexScanDesc scan);
+
+/*
  * prototypes for functions in nbtsearch.c
  */
 extern BTStack _bt_search(Relation rel, Relation heaprel, BTScanInsert key,
@@ -1277,8 +1282,12 @@ extern Buffer _bt_get_endpoint(Relation rel, uint32 level, bool rightmost);
 extern BTScanInsert _bt_mkscankey(Relation rel, IndexTuple itup);
 extern void _bt_freestack(BTStack stack);
 extern bool _bt_start_prim_scan(IndexScanDesc scan, ScanDirection dir);
+extern int	_bt_binsrch_array_skey(FmgrInfo *orderproc,
+								   bool cur_elem_trig, ScanDirection dir,
+								   Datum tupdatum, bool tupnull,
+								   BTArrayKeyInfo *array, ScanKey cur,
+								   int32 *set_elem_result);
 extern void _bt_start_array_keys(IndexScanDesc scan, ScanDirection dir);
-extern void _bt_preprocess_keys(IndexScanDesc scan);
 extern bool _bt_checkkeys(IndexScanDesc scan, BTReadPageState *pstate, bool arrayKeys,
 						  IndexTuple tuple, int tupnatts);
 extern bool _bt_oppodir_checkkeys(IndexScanDesc scan, ScanDirection dir,
