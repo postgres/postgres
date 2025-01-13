@@ -20,13 +20,6 @@
 #include "miscadmin.h"
 #include "utils/lsyscache.h"
 
-struct TupleHashEntryData
-{
-	MinimalTuple firstTuple;	/* copy of first tuple in this group */
-	uint32		status;			/* hash status */
-	uint32		hash;			/* hash value (cached) */
-};
-
 static int	TupleHashTableMatch(struct tuplehash_hash *tb, const MinimalTuple tuple1, const MinimalTuple tuple2);
 static inline uint32 TupleHashTableHash_internal(struct tuplehash_hash *tb,
 												 const MinimalTuple tuple);
@@ -203,7 +196,6 @@ BuildTupleHashTable(PlanState *parent,
 	hashtable->tab_collations = collations;
 	hashtable->tablecxt = tablecxt;
 	hashtable->tempcxt = tempcxt;
-	hashtable->additionalsize = additionalsize;
 	hashtable->tableslot = NULL;	/* will be made on first lookup */
 	hashtable->inputslot = NULL;
 	hashtable->in_hash_expr = NULL;
@@ -282,15 +274,6 @@ ResetTupleHashTable(TupleHashTable hashtable)
 }
 
 /*
- * Return size of the hash bucket. Useful for estimating memory usage.
- */
-size_t
-TupleHashEntrySize(void)
-{
-	return sizeof(TupleHashEntryData);
-}
-
-/*
  * Find or create a hashtable entry for the tuple group containing the
  * given tuple.  The tuple must be the same type as the hashtable entries.
  *
@@ -354,24 +337,6 @@ TupleHashTableHash(TupleHashTable hashtable, TupleTableSlot *slot)
 	MemoryContextSwitchTo(oldContext);
 
 	return hash;
-}
-
-MinimalTuple
-TupleHashEntryGetTuple(TupleHashEntry entry)
-{
-	return entry->firstTuple;
-}
-
-/*
- * Get a pointer into the additional space allocated for this entry. The
- * amount of space available is the additionalsize specified to
- * BuildTupleHashTable(). If additionalsize was specified as zero, no
- * additional space is available and this function should not be called.
- */
-void *
-TupleHashEntryGetAdditional(TupleHashEntry entry)
-{
-	return (char *) entry->firstTuple + MAXALIGN(entry->firstTuple->t_len);
 }
 
 /*
@@ -512,31 +477,13 @@ LookupTupleHashEntry_internal(TupleHashTable hashtable, TupleTableSlot *slot,
 		}
 		else
 		{
-			MinimalTuple firstTuple;
-			size_t		totalsize;	/* including alignment and additionalsize */
-
 			/* created new entry */
 			*isnew = true;
 			/* zero caller data */
+			entry->additional = NULL;
 			MemoryContextSwitchTo(hashtable->tablecxt);
-
 			/* Copy the first tuple into the table context */
-			firstTuple = ExecCopySlotMinimalTuple(slot);
-
-			/*
-			 * Allocate additional space right after the MinimalTuple of size
-			 * additionalsize. The caller can get a pointer to this data with
-			 * TupleHashEntryGetAdditional(), and store arbitrary data there.
-			 *
-			 * This avoids the need to store an extra pointer or allocate an
-			 * additional chunk, which would waste memory.
-			 */
-			totalsize = MAXALIGN(firstTuple->t_len) + hashtable->additionalsize;
-			firstTuple = repalloc(firstTuple, totalsize);
-			memset((char *) firstTuple + firstTuple->t_len, 0,
-				   totalsize - firstTuple->t_len);
-
-			entry->firstTuple = firstTuple;
+			entry->firstTuple = ExecCopySlotMinimalTuple(slot);
 		}
 	}
 	else

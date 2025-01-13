@@ -425,7 +425,6 @@ setop_fill_hash_table(SetOpState *setopstate)
 	{
 		TupleTableSlot *outerslot;
 		TupleHashEntryData *entry;
-		SetOpStatePerGroup pergroup;
 		bool		isnew;
 
 		outerslot = ExecProcNode(outerPlan);
@@ -438,16 +437,16 @@ setop_fill_hash_table(SetOpState *setopstate)
 									 outerslot,
 									 &isnew, NULL);
 
-		pergroup = TupleHashEntryGetAdditional(entry);
 		/* If new tuple group, initialize counts to zero */
 		if (isnew)
 		{
-			pergroup->numLeft = 0;
-			pergroup->numRight = 0;
+			entry->additional = (SetOpStatePerGroup)
+				MemoryContextAllocZero(setopstate->hashtable->tablecxt,
+									   sizeof(SetOpStatePerGroupData));
 		}
 
 		/* Advance the counts */
-		pergroup->numLeft++;
+		((SetOpStatePerGroup) entry->additional)->numLeft++;
 
 		/* Must reset expression context after each hashtable lookup */
 		ResetExprContext(econtext);
@@ -479,7 +478,7 @@ setop_fill_hash_table(SetOpState *setopstate)
 
 			/* Advance the counts if entry is already present */
 			if (entry)
-				((SetOpStatePerGroup) TupleHashEntryGetAdditional(entry))->numRight++;
+				((SetOpStatePerGroup) entry->additional)->numRight++;
 
 			/* Must reset expression context after each hashtable lookup */
 			ResetExprContext(econtext);
@@ -497,7 +496,7 @@ setop_fill_hash_table(SetOpState *setopstate)
 static TupleTableSlot *
 setop_retrieve_hash_table(SetOpState *setopstate)
 {
-	TupleHashEntry entry;
+	TupleHashEntryData *entry;
 	TupleTableSlot *resultTupleSlot;
 
 	/*
@@ -527,12 +526,12 @@ setop_retrieve_hash_table(SetOpState *setopstate)
 		 * See if we should emit any copies of this tuple, and if so return
 		 * the first copy.
 		 */
-		set_output_count(setopstate, (SetOpStatePerGroup) TupleHashEntryGetAdditional(entry));
+		set_output_count(setopstate, (SetOpStatePerGroup) entry->additional);
 
 		if (setopstate->numOutput > 0)
 		{
 			setopstate->numOutput--;
-			return ExecStoreMinimalTuple(TupleHashEntryGetTuple(entry),
+			return ExecStoreMinimalTuple(entry->firstTuple,
 										 resultTupleSlot,
 										 false);
 		}

@@ -753,7 +753,7 @@ findPartialMatch(TupleHashTable hashtable, TupleTableSlot *slot,
 	{
 		CHECK_FOR_INTERRUPTS();
 
-		ExecStoreMinimalTuple(TupleHashEntryGetTuple(entry), hashtable->tableslot, false);
+		ExecStoreMinimalTuple(entry->firstTuple, hashtable->tableslot, false);
 		if (!execTuplesUnequal(slot, hashtable->tableslot,
 							   numCols, keyColIdx,
 							   eqfunctions,
