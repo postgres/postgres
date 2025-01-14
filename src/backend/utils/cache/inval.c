@@ -710,7 +710,7 @@ InvalidateSystemCachesExtended(bool debug_discard)
 	int			i;
 
 	InvalidateCatalogSnapshot();
-	ResetCatalogCaches();
+	ResetCatalogCachesExt(debug_discard);
 	RelationCacheInvalidate(debug_discard); /* gets smgr and relmap too */
 
 	for (i = 0; i < syscache_callback_count; i++)
