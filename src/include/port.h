@@ -564,7 +564,10 @@ extern int	pg_check_dir(const char *dir);
 /* port/pgmkdirp.c */
 extern int	pg_mkdir_p(char *path, int omode);
 
-/* port/pqsignal.c */
+/* port/pqsignal.c (see also interfaces/libpq/legacy-pqsignal.c) */
+#ifdef FRONTEND
+#define pqsignal pqsignal_fe
+#endif
 typedef void (*pqsigfunc) (int signo);
 extern pqsigfunc pqsignal(int signo, pqsigfunc func);
 
