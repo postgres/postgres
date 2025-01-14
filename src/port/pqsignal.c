@@ -35,6 +35,10 @@
  * Set up a signal handler, with SA_RESTART, for signal "signo"
  *
  * Returns the previous handler.
+ *
+ * Note: the actual name of this function is either pqsignal_fe when
+ * compiled with -DFRONTEND, or pqsignal when compiled without that.
+ * This is to avoid a name collision with libpq's legacy-pqsignal.c.
  */
 pqsigfunc
 pqsignal(int signo, pqsigfunc func)
