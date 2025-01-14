@@ -729,6 +729,9 @@ EXPLAIN (ANALYZE, TIMING OFF, BUFFERS OFF) SELECT * FROM t WHERE a &lt;= 49 AND 
    accurately, the function that the operator is based on).  If not, then the
    selectivity estimator will behave as if no statistics are available, and
    the planner will proceed with default or fall-back assumptions.
+   The <xref linkend="app-psql"/> program's
+   <command><link linkend="app-psql-meta-command-do-lc">\do+</link></command>
+   meta-command is useful to determine which operators are marked as leakproof.
   </para>
 
   <para>

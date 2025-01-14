@@ -5184,31 +5184,36 @@ List of access methods
  btree | integer_ops     | smallint, integer, bigint
 (1 row)
 
-\dAo+ btree float_ops
-                                List of operators of operator families
-  AM   | Operator family |               Operator                | Strategy | Purpose | Sort opfamily 
--------+-----------------+---------------------------------------+----------+---------+---------------
- btree | float_ops       | <(double precision,double precision)  |        1 | search  | 
- btree | float_ops       | <=(double precision,double precision) |        2 | search  | 
- btree | float_ops       | =(double precision,double precision)  |        3 | search  | 
- btree | float_ops       | >=(double precision,double precision) |        4 | search  | 
- btree | float_ops       | >(double precision,double precision)  |        5 | search  | 
- btree | float_ops       | <(real,real)                          |        1 | search  | 
- btree | float_ops       | <=(real,real)                         |        2 | search  | 
- btree | float_ops       | =(real,real)                          |        3 | search  | 
- btree | float_ops       | >=(real,real)                         |        4 | search  | 
- btree | float_ops       | >(real,real)                          |        5 | search  | 
- btree | float_ops       | <(double precision,real)              |        1 | search  | 
- btree | float_ops       | <=(double precision,real)             |        2 | search  | 
- btree | float_ops       | =(double precision,real)              |        3 | search  | 
- btree | float_ops       | >=(double precision,real)             |        4 | search  | 
- btree | float_ops       | >(double precision,real)              |        5 | search  | 
- btree | float_ops       | <(real,double precision)              |        1 | search  | 
- btree | float_ops       | <=(real,double precision)             |        2 | search  | 
- btree | float_ops       | =(real,double precision)              |        3 | search  | 
- btree | float_ops       | >=(real,double precision)             |        4 | search  | 
- btree | float_ops       | >(real,double precision)              |        5 | search  | 
-(20 rows)
+\dAo+ btree array_ops|float_ops
+                                      List of operators of operator families
+  AM   | Operator family |               Operator                | Strategy | Purpose | Sort opfamily | Leakproof? 
+-------+-----------------+---------------------------------------+----------+---------+---------------+------------
+ btree | array_ops       | <(anyarray,anyarray)                  |        1 | search  |               | no
+ btree | array_ops       | <=(anyarray,anyarray)                 |        2 | search  |               | no
+ btree | array_ops       | =(anyarray,anyarray)                  |        3 | search  |               | no
+ btree | array_ops       | >=(anyarray,anyarray)                 |        4 | search  |               | no
+ btree | array_ops       | >(anyarray,anyarray)                  |        5 | search  |               | no
+ btree | float_ops       | <(double precision,double precision)  |        1 | search  |               | yes
+ btree | float_ops       | <=(double precision,double precision) |        2 | search  |               | yes
+ btree | float_ops       | =(double precision,double precision)  |        3 | search  |               | yes
+ btree | float_ops       | >=(double precision,double precision) |        4 | search  |               | yes
+ btree | float_ops       | >(double precision,double precision)  |        5 | search  |               | yes
+ btree | float_ops       | <(real,real)                          |        1 | search  |               | yes
+ btree | float_ops       | <=(real,real)                         |        2 | search  |               | yes
+ btree | float_ops       | =(real,real)                          |        3 | search  |               | yes
+ btree | float_ops       | >=(real,real)                         |        4 | search  |               | yes
+ btree | float_ops       | >(real,real)                          |        5 | search  |               | yes
+ btree | float_ops       | <(double precision,real)              |        1 | search  |               | yes
+ btree | float_ops       | <=(double precision,real)             |        2 | search  |               | yes
+ btree | float_ops       | =(double precision,real)              |        3 | search  |               | yes
+ btree | float_ops       | >=(double precision,real)             |        4 | search  |               | yes
+ btree | float_ops       | >(double precision,real)              |        5 | search  |               | yes
+ btree | float_ops       | <(real,double precision)              |        1 | search  |               | yes
+ btree | float_ops       | <=(real,double precision)             |        2 | search  |               | yes
+ btree | float_ops       | =(real,double precision)              |        3 | search  |               | yes
+ btree | float_ops       | >=(real,double precision)             |        4 | search  |               | yes
+ btree | float_ops       | >(real,double precision)              |        5 | search  |               | yes
+(25 rows)
 
 \dAo * pg_catalog.jsonb_path_ops
              List of operators of operator families
@@ -5388,12 +5393,12 @@ create function psql_df_plpgsql ()
   as $$ begin return; end; $$;
 comment on function psql_df_plpgsql () is 'some comment';
 \df+ psql_df_*
-                                                                                       List of functions
- Schema |       Name       | Result data type | Argument data types | Type | Volatility | Parallel |       Owner       | Security | Access privileges | Language | Internal name | Description  
---------+------------------+------------------+---------------------+------+------------+----------+-------------------+----------+-------------------+----------+---------------+--------------
- public | psql_df_internal | double precision | double precision    | func | immutable  | safe     | regress_psql_user | invoker  |                   | internal | dsin          | 
- public | psql_df_plpgsql  | void             |                     | func | volatile   | unsafe   | regress_psql_user | invoker  |                   | plpgsql  |               | some comment
- public | psql_df_sql      | integer          | x integer           | func | volatile   | unsafe   | regress_psql_user | definer  |                   | sql      |               | 
+                                                                                              List of functions
+ Schema |       Name       | Result data type | Argument data types | Type | Volatility | Parallel |       Owner       | Security | Leakproof? | Access privileges | Language | Internal name | Description  
+--------+------------------+------------------+---------------------+------+------------+----------+-------------------+----------+------------+-------------------+----------+---------------+--------------
+ public | psql_df_internal | double precision | double precision    | func | immutable  | safe     | regress_psql_user | invoker  | no         |                   | internal | dsin          | 
+ public | psql_df_plpgsql  | void             |                     | func | volatile   | unsafe   | regress_psql_user | invoker  | no         |                   | plpgsql  |               | some comment
+ public | psql_df_sql      | integer          | x integer           | func | volatile   | unsafe   | regress_psql_user | definer  | no         |                   | sql      |               | 
 (3 rows)
 
 rollback;
@@ -6791,10 +6796,10 @@ REVOKE ALL ON DOMAIN regress_zeropriv_domain FROM CURRENT_USER, PUBLIC;
 CREATE PROCEDURE regress_zeropriv_proc() LANGUAGE sql AS '';
 REVOKE ALL ON PROCEDURE regress_zeropriv_proc() FROM CURRENT_USER, PUBLIC;
 \df+ regress_zeropriv_proc
-                                                                                            List of functions
- Schema |         Name          | Result data type | Argument data types | Type | Volatility | Parallel |         Owner          | Security | Access privileges | Language | Internal name | Description 
---------+-----------------------+------------------+---------------------+------+------------+----------+------------------------+----------+-------------------+----------+---------------+-------------
- public | regress_zeropriv_proc |                  |                     | proc | volatile   | unsafe   | regress_zeropriv_owner | invoker  | (none)            | sql      |               | 
+                                                                                                  List of functions
+ Schema |         Name          | Result data type | Argument data types | Type | Volatility | Parallel |         Owner          | Security | Leakproof? | Access privileges | Language | Internal name | Description 
+--------+-----------------------+------------------+---------------------+------+------------+----------+------------------------+----------+------------+-------------------+----------+---------------+-------------
+ public | regress_zeropriv_proc |                  |                     | proc | volatile   | unsafe   | regress_zeropriv_owner | invoker  | no         | (none)            | sql      |               | 
 (1 row)
 
 CREATE TABLE regress_zeropriv_tbl (a int);

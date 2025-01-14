@@ -304,10 +304,10 @@ describeFunctions(const char *functypes, const char *func_pattern,
 	PQExpBufferData buf;
 	PGresult   *res;
 	printQueryOpt myopt = pset.popt;
-	static const bool translate_columns[] = {false, false, false, false, true, true, true, false, true, false, false, false, false};
+	static const bool translate_columns[] = {false, false, false, false, true, true, true, false, true, true, false, false, false, false};
 
 	/* No "Parallel" column before 9.6 */
-	static const bool translate_columns_pre_96[] = {false, false, false, false, true, true, false, true, false, false, false, false};
+	static const bool translate_columns_pre_96[] = {false, false, false, false, true, true, false, true, true, false, false, false, false};
 
 	if (strlen(functypes) != strspn(functypes, "anptwS+"))
 	{
@@ -409,11 +409,15 @@ describeFunctions(const char *functypes, const char *func_pattern,
 							  gettext_noop("Parallel"));
 		appendPQExpBuffer(&buf,
 						  ",\n pg_catalog.pg_get_userbyid(p.proowner) as \"%s\""
-						  ",\n CASE WHEN prosecdef THEN '%s' ELSE '%s' END AS \"%s\"",
+						  ",\n CASE WHEN prosecdef THEN '%s' ELSE '%s' END AS \"%s\""
+						  ",\n CASE WHEN p.proleakproof THEN '%s' ELSE '%s' END as \"%s\"",
 						  gettext_noop("Owner"),
 						  gettext_noop("definer"),
 						  gettext_noop("invoker"),
-						  gettext_noop("Security"));
+						  gettext_noop("Security"),
+						  gettext_noop("yes"),
+						  gettext_noop("no"),
+						  gettext_noop("Leakproof?"));
 		appendPQExpBufferStr(&buf, ",\n ");
 		printACLColumn(&buf, "p.proacl");
 		appendPQExpBuffer(&buf,
@@ -792,6 +796,7 @@ describeOperators(const char *oper_pattern,
 	PQExpBufferData buf;
 	PGresult   *res;
 	printQueryOpt myopt = pset.popt;
+	static const bool translate_columns[] = {false, false, false, false, false, false, true, false};
 
 	initPQExpBuffer(&buf);
 
@@ -825,8 +830,12 @@ describeOperators(const char *oper_pattern,
 
 	if (verbose)
 		appendPQExpBuffer(&buf,
-						  "  o.oprcode AS \"%s\",\n",
-						  gettext_noop("Function"));
+						  "  o.oprcode AS \"%s\",\n"
+						  "  CASE WHEN p.proleakproof THEN '%s' ELSE '%s' END AS \"%s\",\n",
+						  gettext_noop("Function"),
+						  gettext_noop("yes"),
+						  gettext_noop("no"),
+						  gettext_noop("Leakproof?"));
 
 	appendPQExpBuffer(&buf,
 					  "  coalesce(pg_catalog.obj_description(o.oid, 'pg_operator'),\n"
@@ -850,6 +859,10 @@ describeOperators(const char *oper_pattern,
 							 "     LEFT JOIN pg_catalog.pg_type t0 ON t0.oid = o.oprright\n"
 							 "     LEFT JOIN pg_catalog.pg_namespace nt0 ON nt0.oid = t0.typnamespace\n");
 	}
+
+	if (verbose)
+		appendPQExpBufferStr(&buf,
+							 "     LEFT JOIN pg_catalog.pg_proc p ON p.oid = o.oprcode\n");
 
 	if (!showSystem && !oper_pattern)
 		appendPQExpBufferStr(&buf, "WHERE n.nspname <> 'pg_catalog'\n"
@@ -908,6 +921,8 @@ describeOperators(const char *oper_pattern,
 
 	myopt.title = _("List of operators");
 	myopt.translate_header = true;
+	myopt.translate_columns = translate_columns;
+	myopt.n_translate_columns = lengthof(translate_columns);
 
 	printQuery(res, &myopt, pset.queryFout, false, pset.logfile);
 
@@ -4886,7 +4901,7 @@ listCasts(const char *pattern, bool verbose)
 	PQExpBufferData buf;
 	PGresult   *res;
 	printQueryOpt myopt = pset.popt;
-	static const bool translate_columns[] = {false, false, false, true, false};
+	static const bool translate_columns[] = {false, false, false, true, true, false};
 
 	initPQExpBuffer(&buf);
 
@@ -4924,7 +4939,13 @@ listCasts(const char *pattern, bool verbose)
 
 	if (verbose)
 		appendPQExpBuffer(&buf,
-						  ",\n       d.description AS \"%s\"",
+						  ",\n       CASE WHEN p.proleakproof THEN '%s'\n"
+						  "            ELSE '%s'\n"
+						  "       END AS \"%s\",\n"
+						  "       d.description AS \"%s\"",
+						  gettext_noop("yes"),
+						  gettext_noop("no"),
+						  gettext_noop("Leakproof?"),
 						  gettext_noop("Description"));
 
 	/*
@@ -6987,7 +7008,7 @@ listOpFamilyOperators(const char *access_method_pattern,
 	printQueryOpt myopt = pset.popt;
 	bool		have_where = false;
 
-	static const bool translate_columns[] = {false, false, false, false, false, false};
+	static const bool translate_columns[] = {false, false, false, false, false, false, true};
 
 	initPQExpBuffer(&buf);
 
@@ -7015,8 +7036,15 @@ listOpFamilyOperators(const char *access_method_pattern,
 
 	if (verbose)
 		appendPQExpBuffer(&buf,
-						  ", ofs.opfname AS \"%s\"\n",
-						  gettext_noop("Sort opfamily"));
+						  ", ofs.opfname AS \"%s\",\n"
+						  "  CASE\n"
+						  "    WHEN p.proleakproof THEN '%s'\n"
+						  "    ELSE '%s'\n"
+						  "  END AS \"%s\"\n",
+						  gettext_noop("Sort opfamily"),
+						  gettext_noop("yes"),
+						  gettext_noop("no"),
+						  gettext_noop("Leakproof?"));
 	appendPQExpBufferStr(&buf,
 						 "FROM pg_catalog.pg_amop o\n"
 						 "  LEFT JOIN pg_catalog.pg_opfamily of ON of.oid = o.amopfamily\n"
@@ -7024,7 +7052,9 @@ listOpFamilyOperators(const char *access_method_pattern,
 						 "  LEFT JOIN pg_catalog.pg_namespace nsf ON of.opfnamespace = nsf.oid\n");
 	if (verbose)
 		appendPQExpBufferStr(&buf,
-							 "  LEFT JOIN pg_catalog.pg_opfamily ofs ON ofs.oid = o.amopsortfamily\n");
+							 "  LEFT JOIN pg_catalog.pg_opfamily ofs ON ofs.oid = o.amopsortfamily\n"
+							 "  LEFT JOIN pg_catalog.pg_operator op ON op.oid = o.amopopr\n"
+							 "  LEFT JOIN pg_catalog.pg_proc p ON p.oid = op.oprcode\n");
 
 	if (access_method_pattern)
 	{

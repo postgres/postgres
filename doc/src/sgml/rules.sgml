@@ -2168,6 +2168,17 @@ CREATE VIEW phone_number WITH (security_barrier) AS
 </para>
 
 <para>
+    For example, an index scan cannot be selected for queries on security
+    barrier views (or tables with row-level security policies) if an
+    operator used in the <literal>WHERE</literal> clause is associated with the
+    operator family of the index, but its underlying function is not marked
+    <literal>LEAKPROOF</literal>. The <xref linkend="app-psql"/> program's
+    <command><link linkend="app-psql-meta-command-dao">\dAo+</link></command>
+    meta-command is useful to list operator families and determine which of
+    their operators are marked as leakproof.
+</para>
+
+<para>
     It is important to understand that even a view created with the
     <literal>security_barrier</literal> option is intended to be secure only
     in the limited sense that the contents of the invisible tuples will not be

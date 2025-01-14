@@ -1420,7 +1420,8 @@ SELECT $1 \parse stmt1
         is specified, only members of operator families whose names match that
         pattern are listed.
         If <literal>+</literal> is appended to the command name, each operator
-        is listed with its sort operator family (if it is an ordering operator).
+        is listed with its sort operator family (if it is an ordering operator),
+        and whether its underlying function is leakproof.
         </para>
         </listitem>
       </varlistentry>
@@ -1509,8 +1510,9 @@ SELECT $1 \parse stmt1
         If <replaceable class="parameter">pattern</replaceable>
         is specified, only casts whose source or target types match the
         pattern are listed.
-        If <literal>+</literal> is appended to the command name, each object
-        is listed with its associated description.
+        If <literal>+</literal> is appended to the command name, additional
+        information about each cast is shown, including whether its underlying
+        function is leakproof, and the cast's description.
         </para>
         </listitem>
       </varlistentry>
@@ -1711,9 +1713,9 @@ SELECT $1 \parse stmt1
         modifier to include system objects.
         If the form <literal>\df+</literal> is used, additional information
         about each function is shown, including volatility,
-        parallel safety, owner, security classification, access privileges,
-        language, internal name (for C and internal functions only),
-        and description.
+        parallel safety, owner, security classification, whether it is
+        leakproof, access privileges, language, internal name (for C and
+        internal functions only), and description.
         Source code for a specific function can be seen
         using <literal>\sf</literal>.
         </para>
@@ -1862,8 +1864,8 @@ SELECT $1 \parse stmt1
         pattern or the <literal>S</literal> modifier to include system
         objects.
         If <literal>+</literal> is appended to the command name,
-        additional information about each operator is shown, currently just
-        the name of the underlying function.
+        additional information about each operator is shown, including
+        the name of the underlying function, and whether it is leakproof.
         </para>
         </listitem>
       </varlistentry>
