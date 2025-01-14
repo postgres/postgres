@@ -339,6 +339,7 @@ CaseTestExpr
 CaseWhen
 Cash
 CastInfo
+CatCInProgress
 CatCList
 CatCTup
 CatCache
