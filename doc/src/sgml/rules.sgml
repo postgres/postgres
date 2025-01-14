@@ -2162,7 +2162,7 @@ CREATE VIEW phone_number WITH (security_barrier) AS
     <literal>LEAKPROOF</literal> to be pushed down, as they never receive data
     from the view.  In contrast, a function that might throw an error depending
     on the values received as arguments (such as one that throws an error in the
-    event of overflow or division by zero) is not leak-proof, and could provide
+    event of overflow or division by zero) is not leakproof, and could provide
     significant information about the unseen rows if applied before the security
     view's row filters.
 </para>

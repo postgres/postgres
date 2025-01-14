@@ -1397,7 +1397,7 @@ statext_is_compatible_clause_internal(PlannerInfo *root, Node *clause,
 		/*
 		 * If there are any securityQuals on the RTE from security barrier
 		 * views or RLS policies, then the user may not have access to all the
-		 * table's data, and we must check that the operator is leak-proof.
+		 * table's data, and we must check that the operator is leakproof.
 		 *
 		 * If the operator is leaky, then we must ignore this clause for the
 		 * purposes of estimating with MCV lists, otherwise the operator might
@@ -1464,7 +1464,7 @@ statext_is_compatible_clause_internal(PlannerInfo *root, Node *clause,
 		/*
 		 * If there are any securityQuals on the RTE from security barrier
 		 * views or RLS policies, then the user may not have access to all the
-		 * table's data, and we must check that the operator is leak-proof.
+		 * table's data, and we must check that the operator is leakproof.
 		 *
 		 * If the operator is leaky, then we must ignore this clause for the
 		 * purposes of estimating with MCV lists, otherwise the operator might

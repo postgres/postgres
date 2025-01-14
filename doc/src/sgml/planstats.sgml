@@ -740,7 +740,7 @@ EXPLAIN (ANALYZE, TIMING OFF, BUFFERS OFF) SELECT * FROM t WHERE a &lt;= 49 AND 
    error, in which case this mechanism is invisible in practice.  But if the
    user is reading from a security-barrier view, then the planner might wish
    to check the statistics of an underlying table that is otherwise
-   inaccessible to the user.  In that case, the operator should be leak-proof
+   inaccessible to the user.  In that case, the operator should be leakproof
    or the statistics will not be used.  There is no direct feedback about
    that, except that the plan might be suboptimal.  If one suspects that this
    is the case, one could try running the query as a more privileged user,

@@ -61,7 +61,7 @@ CATALOG(pg_proc,1255,ProcedureRelationId) BKI_BOOTSTRAP BKI_ROWTYPE_OID(81,Proce
 	/* security definer */
 	bool		prosecdef BKI_DEFAULT(f);
 
-	/* is it a leak-proof function? */
+	/* is it a leakproof function? */
 	bool		proleakproof BKI_DEFAULT(f);
 
 	/* strict with respect to NULLs? */

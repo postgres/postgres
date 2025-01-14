@@ -5763,7 +5763,7 @@ examine_simple_variable(PlannerInfo *root, Var *var,
  * Check whether it is permitted to call func_oid passing some of the
  * pg_statistic data in vardata.  We allow this either if the user has SELECT
  * privileges on the table or column underlying the pg_statistic data or if
- * the function is marked leak-proof.
+ * the function is marked leakproof.
  */
 bool
 statistic_proc_security_check(VariableStatData *vardata, Oid func_oid)
@@ -5778,7 +5778,7 @@ statistic_proc_security_check(VariableStatData *vardata, Oid func_oid)
 		return true;
 
 	ereport(DEBUG2,
-			(errmsg_internal("not using statistics because function \"%s\" is not leak-proof",
+			(errmsg_internal("not using statistics because function \"%s\" is not leakproof",
 							 get_func_name(func_oid))));
 	return false;
 }

@@ -6040,7 +6040,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        The function has no side effects.  No information about the
        arguments is conveyed except via the return value.  Any function
        that might throw an error depending on the values of its arguments
-       is not leak-proof.
+       is not leakproof.
       </para></entry>
      </row>
 
