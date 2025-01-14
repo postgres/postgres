@@ -15,6 +15,7 @@ tests += {
       't/004_io_direct.pl',
       't/005_timeouts.pl',
       't/006_signal_autovacuum.pl',
+      't/007_catcache_inval.pl',
     ],
   },
 }
