@@ -78,7 +78,6 @@ pgstat_count_io_op(IOObject io_object, IOContext io_context, IOOp io_op,
 {
 	Assert((unsigned int) io_object < IOOBJECT_NUM_TYPES);
 	Assert((unsigned int) io_context < IOCONTEXT_NUM_TYPES);
-	Assert((unsigned int) io_op < IOOP_NUM_TYPES);
 	Assert(pgstat_is_ioop_tracked_in_bytes(io_op) || bytes == 0);
 	Assert(pgstat_tracks_io_op(MyBackendType, io_object, io_context, io_op));
 
