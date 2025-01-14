@@ -309,9 +309,9 @@ describeFunctions(const char *functypes, const char *func_pattern,
 	/* No "Parallel" column before 9.6 */
 	static const bool translate_columns_pre_96[] = {false, false, false, false, true, true, false, true, true, false, false, false, false};
 
-	if (strlen(functypes) != strspn(functypes, "anptwS+"))
+	if (strlen(functypes) != strspn(functypes, "anptwSx+"))
 	{
-		pg_log_error("\\df only takes [anptwS+] as options");
+		pg_log_error("\\df only takes [anptwSx+] as options");
 		return true;
 	}
 

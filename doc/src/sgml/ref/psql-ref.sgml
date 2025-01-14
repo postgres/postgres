@@ -865,6 +865,13 @@ testdb=&gt;
     </para>
 
     <para>
+    Many of the meta-commands also allow <literal>x</literal> to be appended
+    as an option. This will cause the results to be displayed in expanded
+    mode, as if <command>\x</command> or <command>\pset expanded</command>
+    had been used.
+    </para>
+
+    <para>
     The following meta-commands are defined:
 
     <variablelist>
@@ -1272,7 +1279,7 @@ SELECT $1 \parse stmt1
 
 
       <varlistentry id="app-psql-meta-command-d">
-        <term><literal>\d[S+] [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
+        <term><literal>\d[Sx+] [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
 
         <listitem>
         <para>
@@ -1321,12 +1328,24 @@ SELECT $1 \parse stmt1
         foreign tables.
         This is purely a convenience measure.
         </para>
+        <para>
+        As with many other commands, if <literal>x</literal> is appended to
+        the command name, the results are displayed in expanded mode, but note
+        that this only applies when <command>\d</command> is used without a
+        <replaceable class="parameter">pattern</replaceable> argument, and
+        the <literal>x</literal> modifier cannot appear immediately after the
+        <command>\d</command> (because <command>\dx</command> is a different
+        command); the <literal>x</literal> modifier may only appear after an
+        <literal>S</literal> or <literal>+</literal> modifier. For example,
+        <command>\d+x</command> is equivalent to <command>\dtvmsE+x</command>
+        and will show a list of all relations in expanded mode.
+        </para>
         </note>
         </listitem>
       </varlistentry>
 
       <varlistentry id="app-psql-meta-command-da-lc">
-        <term><literal>\da[S] [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
+        <term><literal>\da[Sx] [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
 
         <listitem>
         <para>
@@ -1337,19 +1356,23 @@ SELECT $1 \parse stmt1
         By default, only user-created objects are shown;  supply a
         pattern or the <literal>S</literal> modifier to include system
         objects.
+        If <literal>x</literal> is appended to the command name, the results
+        are displayed in expanded mode.
         </para>
         </listitem>
       </varlistentry>
 
       <varlistentry id="app-psql-meta-command-da-uc">
-        <term><literal>\dA[+] [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
+        <term><literal>\dA[x+] [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
 
         <listitem>
         <para>
         Lists access methods. If <replaceable
         class="parameter">pattern</replaceable> is specified, only access
-        methods whose names match the pattern are shown. If
-        <literal>+</literal> is appended to the command name, each access
+        methods whose names match the pattern are shown.
+        If <literal>x</literal> is appended to the command name, the results
+        are displayed in expanded mode.
+        If <literal>+</literal> is appended to the command name, each access
         method is listed with its associated handler function and description.
         </para>
         </listitem>
@@ -1357,7 +1380,7 @@ SELECT $1 \parse stmt1
 
       <varlistentry id="app-psql-meta-command-dac">
         <term>
-          <literal>\dAc[+]
+          <literal>\dAc[x+]
             [<link linkend="app-psql-patterns"><replaceable class="parameter">access-method-pattern</replaceable></link>
               [<link linkend="app-psql-patterns"><replaceable class="parameter">input-type-pattern</replaceable></link>]]
           </literal>
@@ -1372,6 +1395,8 @@ SELECT $1 \parse stmt1
         If <replaceable class="parameter">input-type-pattern</replaceable>
         is specified, only operator classes associated with input types whose
         names match that pattern are listed.
+        If <literal>x</literal> is appended to the command name, the results
+        are displayed in expanded mode.
         If <literal>+</literal> is appended to the command name, each operator
         class is listed with its associated operator family and owner.
         </para>
@@ -1380,7 +1405,7 @@ SELECT $1 \parse stmt1
 
       <varlistentry id="app-psql-meta-command-daf">
         <term>
-          <literal>\dAf[+]
+          <literal>\dAf[x+]
             [<link linkend="app-psql-patterns"><replaceable class="parameter">access-method-pattern</replaceable></link>
               [<link linkend="app-psql-patterns"><replaceable class="parameter">input-type-pattern</replaceable></link>]]
           </literal>
@@ -1395,6 +1420,8 @@ SELECT $1 \parse stmt1
         If <replaceable class="parameter">input-type-pattern</replaceable>
         is specified, only operator families associated with input types whose
         names match that pattern are listed.
+        If <literal>x</literal> is appended to the command name, the results
+        are displayed in expanded mode.
         If <literal>+</literal> is appended to the command name, each operator
         family is listed with its owner.
         </para>
@@ -1403,7 +1430,7 @@ SELECT $1 \parse stmt1
 
       <varlistentry id="app-psql-meta-command-dao">
         <term>
-          <literal>\dAo[+]
+          <literal>\dAo[x+]
             [<link linkend="app-psql-patterns"><replaceable class="parameter">access-method-pattern</replaceable></link>
               [<link linkend="app-psql-patterns"><replaceable class="parameter">operator-family-pattern</replaceable></link>]]
           </literal>
@@ -1419,6 +1446,8 @@ SELECT $1 \parse stmt1
         If <replaceable class="parameter">operator-family-pattern</replaceable>
         is specified, only members of operator families whose names match that
         pattern are listed.
+        If <literal>x</literal> is appended to the command name, the results
+        are displayed in expanded mode.
         If <literal>+</literal> is appended to the command name, each operator
         is listed with its sort operator family (if it is an ordering operator),
         and whether its underlying function is leakproof.
@@ -1428,7 +1457,7 @@ SELECT $1 \parse stmt1
 
       <varlistentry id="app-psql-meta-command-dap">
         <term>
-          <literal>\dAp[+]
+          <literal>\dAp[x+]
             [<link linkend="app-psql-patterns"><replaceable class="parameter">access-method-pattern</replaceable></link>
               [<link linkend="app-psql-patterns"><replaceable class="parameter">operator-family-pattern</replaceable></link>]]
           </literal>
@@ -1443,6 +1472,8 @@ SELECT $1 \parse stmt1
         If <replaceable class="parameter">operator-family-pattern</replaceable>
         is specified, only functions of operator families whose names match
         that pattern are listed.
+        If <literal>x</literal> is appended to the command name, the results
+        are displayed in expanded mode.
         If <literal>+</literal> is appended to the command name, functions are
         displayed verbosely, with their actual parameter lists.
         </para>
@@ -1450,13 +1481,15 @@ SELECT $1 \parse stmt1
       </varlistentry>
 
       <varlistentry id="app-psql-meta-command-db">
-        <term><literal>\db[+] [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
+        <term><literal>\db[x+] [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
 
         <listitem>
         <para>
         Lists tablespaces. If <replaceable
         class="parameter">pattern</replaceable>
         is specified, only tablespaces whose names match the pattern are shown.
+        If <literal>x</literal> is appended to the command name, the results
+        are displayed in expanded mode.
         If <literal>+</literal> is appended to the command name, each tablespace
         is listed with its associated options, on-disk size, permissions and
         description.
@@ -1466,7 +1499,7 @@ SELECT $1 \parse stmt1
 
 
       <varlistentry id="app-psql-meta-command-dc-lc">
-        <term><literal>\dc[S+] [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
+        <term><literal>\dc[Sx+] [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
         <listitem>
         <para>
         Lists conversions between character-set encodings.
@@ -1476,6 +1509,8 @@ SELECT $1 \parse stmt1
         By default, only user-created objects are shown;  supply a
         pattern or the <literal>S</literal> modifier to include system
         objects.
+        If <literal>x</literal> is appended to the command name, the results
+        are displayed in expanded mode.
         If <literal>+</literal> is appended to the command name, each object
         is listed with its associated description.
         </para>
@@ -1484,7 +1519,7 @@ SELECT $1 \parse stmt1
 
 
       <varlistentry id="app-psql-meta-command-dconfig">
-        <term><literal>\dconfig[+] [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
+        <term><literal>\dconfig[x+] [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
         <listitem>
         <para>
         Lists server configuration parameters and their values.
@@ -1493,6 +1528,8 @@ SELECT $1 \parse stmt1
         a <replaceable class="parameter">pattern</replaceable>, only
         parameters that are set to non-default values are listed.
         (Use <literal>\dconfig *</literal> to see all parameters.)
+        If <literal>x</literal> is appended to the command name, the results
+        are displayed in expanded mode.
         If <literal>+</literal> is appended to the command name, each
         parameter is listed with its data type, context in which the
         parameter can be set, and access privileges (if non-default access
@@ -1503,13 +1540,15 @@ SELECT $1 \parse stmt1
 
 
       <varlistentry id="app-psql-meta-command-dc-uc">
-        <term><literal>\dC[+] [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
+        <term><literal>\dC[x+] [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
         <listitem>
         <para>
         Lists type casts.
         If <replaceable class="parameter">pattern</replaceable>
         is specified, only casts whose source or target types match the
         pattern are listed.
+        If <literal>x</literal> is appended to the command name, the results
+        are displayed in expanded mode.
         If <literal>+</literal> is appended to the command name, additional
         information about each cast is shown, including whether its underlying
         function is leakproof, and the cast's description.
@@ -1519,7 +1558,7 @@ SELECT $1 \parse stmt1
 
 
       <varlistentry id="app-psql-meta-command-dd-lc">
-        <term><literal>\dd[S] [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
+        <term><literal>\dd[Sx] [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
         <listitem>
         <para>
         Shows the descriptions of objects of type <literal>constraint</literal>,
@@ -1536,6 +1575,8 @@ SELECT $1 \parse stmt1
         By default, only user-created objects are shown;  supply a
         pattern or the <literal>S</literal> modifier to include system
         objects.
+        If <literal>x</literal> is appended to the command name, the results
+        are displayed in expanded mode.
         </para>
 
         <para>
@@ -1548,7 +1589,7 @@ SELECT $1 \parse stmt1
 
 
       <varlistentry id="app-psql-meta-command-dd-uc">
-        <term><literal>\dD[S+] [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
+        <term><literal>\dD[Sx+] [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
         <listitem>
         <para>
         Lists domains. If <replaceable
@@ -1557,6 +1598,8 @@ SELECT $1 \parse stmt1
         By default, only user-created objects are shown;  supply a
         pattern or the <literal>S</literal> modifier to include system
         objects.
+        If <literal>x</literal> is appended to the command name, the results
+        are displayed in expanded mode.
         If <literal>+</literal> is appended to the command name, each object
         is listed with its associated permissions and description.
         </para>
@@ -1565,7 +1608,7 @@ SELECT $1 \parse stmt1
 
 
       <varlistentry id="app-psql-meta-command-ddp">
-        <term><literal>\ddp [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
+        <term><literal>\ddp[x] [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
         <listitem>
         <para>
         Lists default access privilege settings.  An entry is shown for
@@ -1574,6 +1617,8 @@ SELECT $1 \parse stmt1
         If <replaceable class="parameter">pattern</replaceable> is
         specified, only entries whose role name or schema name matches
         the pattern are listed.
+        If <literal>x</literal> is appended to the command name, the results
+        are displayed in expanded mode.
         </para>
 
         <para>
@@ -1587,12 +1632,12 @@ SELECT $1 \parse stmt1
 
 
       <varlistentry id="app-psql-meta-command-de">
-        <term><literal>\dE[S+] [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
-        <term><literal>\di[S+] [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
-        <term><literal>\dm[S+] [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
-        <term><literal>\ds[S+] [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
-        <term><literal>\dt[S+] [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
-        <term><literal>\dv[S+] [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
+        <term><literal>\dE[Sx+] [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
+        <term><literal>\di[Sx+] [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
+        <term><literal>\dm[Sx+] [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
+        <term><literal>\ds[Sx+] [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
+        <term><literal>\dt[Sx+] [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
+        <term><literal>\dv[Sx+] [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
 
         <listitem>
         <para>
@@ -1605,7 +1650,10 @@ SELECT $1 \parse stmt1
         You can specify any or all of
         these letters, in any order, to obtain a listing of objects
         of these types.  For example, <literal>\dti</literal> lists
-        tables and indexes.  If <literal>+</literal> is
+        tables and indexes.
+        If <literal>x</literal> is appended to the command name, the results
+        are displayed in expanded mode.
+        If <literal>+</literal> is
         appended to the command name, each object is listed with its
         persistence status (permanent, temporary, or unlogged),
         physical size on disk, and associated description if any.
@@ -1620,14 +1668,17 @@ SELECT $1 \parse stmt1
 
 
       <varlistentry id="app-psql-meta-command-des">
-        <term><literal>\des[+] [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
+        <term><literal>\des[x+] [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
         <listitem>
         <para>
         Lists foreign servers (mnemonic: <quote>external
         servers</quote>).
         If <replaceable class="parameter">pattern</replaceable> is
         specified, only those servers whose name matches the pattern
-        are listed.  If the form <literal>\des+</literal> is used, a
+        are listed.
+        If <literal>x</literal> is appended to the command name, the results
+        are displayed in expanded mode.
+        If <literal>+</literal> is appended to the command name, a
         full description of each server is shown, including the
         server's access privileges, type, version, options, and description.
         </para>
@@ -1636,14 +1687,17 @@ SELECT $1 \parse stmt1
 
 
       <varlistentry id="app-psql-meta-command-det">
-        <term><literal>\det[+] [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
+        <term><literal>\det[x+] [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
         <listitem>
         <para>
         Lists foreign tables (mnemonic: <quote>external tables</quote>).
         If <replaceable class="parameter">pattern</replaceable> is
         specified, only entries whose table name or schema name matches
-        the pattern are listed.  If the form <literal>\det+</literal>
-        is used, generic options and the foreign table description
+        the pattern are listed.
+        If <literal>x</literal> is appended to the command name, the results
+        are displayed in expanded mode.
+        If <literal>+</literal> is appended to the command name,
+        generic options and the foreign table description
         are also displayed.
         </para>
         </listitem>
@@ -1651,15 +1705,18 @@ SELECT $1 \parse stmt1
 
 
       <varlistentry id="app-psql-meta-command-deu">
-        <term><literal>\deu[+] [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
+        <term><literal>\deu[x+] [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
         <listitem>
         <para>
         Lists user mappings (mnemonic: <quote>external
         users</quote>).
         If <replaceable class="parameter">pattern</replaceable> is
         specified, only those mappings whose user names match the
-        pattern are listed.  If the form <literal>\deu+</literal> is
-        used, additional information about each mapping is shown.
+        pattern are listed.
+        If <literal>x</literal> is appended to the command name, the results
+        are displayed in expanded mode.
+        If <literal>+</literal> is appended to the command name,
+        additional information about each mapping is shown.
         </para>
 
         <caution>
@@ -1674,15 +1731,18 @@ SELECT $1 \parse stmt1
 
 
       <varlistentry id="app-psql-meta-command-dew">
-        <term><literal>\dew[+] [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
+        <term><literal>\dew[x+] [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
         <listitem>
         <para>
         Lists foreign-data wrappers (mnemonic: <quote>external
         wrappers</quote>).
         If <replaceable class="parameter">pattern</replaceable> is
         specified, only those foreign-data wrappers whose name matches
-        the pattern are listed.  If the form <literal>\dew+</literal>
-        is used, the access privileges, options, and description of the
+        the pattern are listed.
+        If <literal>x</literal> is appended to the command name, the results
+        are displayed in expanded mode.
+        If <literal>+</literal> is appended to the command name,
+        the access privileges, options, and description of the
         foreign-data wrapper are also shown.
         </para>
         </listitem>
@@ -1690,7 +1750,7 @@ SELECT $1 \parse stmt1
 
 
       <varlistentry id="app-psql-meta-command-df-lc">
-        <term><literal>\df[anptwS+] [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> [ <replaceable class="parameter">arg_pattern</replaceable> ... ] ]</literal></term>
+        <term><literal>\df[anptwSx+] [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> [ <replaceable class="parameter">arg_pattern</replaceable> ... ] ]</literal></term>
 
         <listitem>
         <para>
@@ -1711,7 +1771,9 @@ SELECT $1 \parse stmt1
         By default, only user-created
         objects are shown; supply a pattern or the <literal>S</literal>
         modifier to include system objects.
-        If the form <literal>\df+</literal> is used, additional information
+        If <literal>x</literal> is appended to the command name, the results
+        are displayed in expanded mode.
+        If <literal>+</literal> is appended to the command name, additional information
         about each function is shown, including volatility,
         parallel safety, owner, security classification, whether it is
         leakproof, access privileges, language, internal name (for C and
@@ -1724,13 +1786,15 @@ SELECT $1 \parse stmt1
       </varlistentry>
 
       <varlistentry id="app-psql-meta-command-df-uc">
-        <term><literal>\dF[+] [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
+        <term><literal>\dF[x+] [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
         <listitem>
         <para>
          Lists text search configurations.
          If <replaceable class="parameter">pattern</replaceable> is specified,
          only configurations whose names match the pattern are shown.
-         If the form <literal>\dF+</literal> is used, a full description of
+         If <literal>x</literal> is appended to the command name, the results
+         are displayed in expanded mode.
+         If <literal>+</literal> is appended to the command name, a full description of
          each configuration is shown, including the underlying text search
          parser and the dictionary list for each parser token type.
         </para>
@@ -1738,13 +1802,15 @@ SELECT $1 \parse stmt1
       </varlistentry>
 
       <varlistentry id="app-psql-meta-command-dfd">
-        <term><literal>\dFd[+] [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
+        <term><literal>\dFd[x+] [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
         <listitem>
         <para>
          Lists text search dictionaries.
          If <replaceable class="parameter">pattern</replaceable> is specified,
          only dictionaries whose names match the pattern are shown.
-         If the form <literal>\dFd+</literal> is used, additional information
+         If <literal>x</literal> is appended to the command name, the results
+         are displayed in expanded mode.
+         If <literal>+</literal> is appended to the command name, additional information
          is shown about each selected dictionary, including the underlying
          text search template and the option values.
         </para>
@@ -1752,13 +1818,15 @@ SELECT $1 \parse stmt1
       </varlistentry>
 
       <varlistentry id="app-psql-meta-command-dfp">
-        <term><literal>\dFp[+] [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
+        <term><literal>\dFp[x+] [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
         <listitem>
         <para>
          Lists text search parsers.
          If <replaceable class="parameter">pattern</replaceable> is specified,
          only parsers whose names match the pattern are shown.
-         If the form <literal>\dFp+</literal> is used, a full description of
+         If <literal>x</literal> is appended to the command name, the results
+         are displayed in expanded mode.
+         If <literal>+</literal> is appended to the command name, a full description of
          each parser is shown, including the underlying functions and the
          list of recognized token types.
         </para>
@@ -1766,13 +1834,15 @@ SELECT $1 \parse stmt1
       </varlistentry>
 
       <varlistentry id="app-psql-meta-command-dft">
-        <term><literal>\dFt[+] [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
+        <term><literal>\dFt[x+] [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
         <listitem>
         <para>
          Lists text search templates.
          If <replaceable class="parameter">pattern</replaceable> is specified,
          only templates whose names match the pattern are shown.
-         If the form <literal>\dFt+</literal> is used, additional information
+         If <literal>x</literal> is appended to the command name, the results
+         are displayed in expanded mode.
+         If <literal>+</literal> is appended to the command name, additional information
          is shown about each template, including the underlying function names.
         </para>
         </listitem>
@@ -1780,7 +1850,7 @@ SELECT $1 \parse stmt1
 
 
       <varlistentry id="app-psql-meta-command-dg">
-        <term><literal>\dg[S+] [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
+        <term><literal>\dg[Sx+] [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
         <listitem>
         <para>
         Lists database roles.
@@ -1791,7 +1861,9 @@ SELECT $1 \parse stmt1
         <literal>S</literal> modifier to include system roles.
         If <replaceable class="parameter">pattern</replaceable> is specified,
         only those roles whose names match the pattern are listed.
-        If the form <literal>\dg+</literal> is used, additional information
+        If <literal>x</literal> is appended to the command name, the results
+        are displayed in expanded mode.
+        If <literal>+</literal> is appended to the command name, additional information
         is shown about each role; currently this adds the comment for each
         role.
         </para>
@@ -1800,11 +1872,13 @@ SELECT $1 \parse stmt1
 
 
       <varlistentry id="app-psql-meta-command-dl-lc">
-        <term><literal>\dl[+]</literal></term>
+        <term><literal>\dl[x+]</literal></term>
         <listitem>
         <para>
         This is an alias for <command>\lo_list</command>, which shows a
         list of large objects.
+        If <literal>x</literal> is appended to the command name, the results
+        are displayed in expanded mode.
         If <literal>+</literal> is appended to the command name,
         each large object is listed with its associated permissions,
         if any.
@@ -1813,7 +1887,7 @@ SELECT $1 \parse stmt1
       </varlistentry>
 
       <varlistentry id="app-psql-meta-command-dl-uc">
-        <term><literal>\dL[S+] [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
+        <term><literal>\dL[Sx+] [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
         <listitem>
         <para>
         Lists procedural languages. If <replaceable
@@ -1821,7 +1895,10 @@ SELECT $1 \parse stmt1
         is specified, only languages whose names match the pattern are listed.
         By default, only user-created languages
         are shown; supply the <literal>S</literal> modifier to include system
-        objects. If <literal>+</literal> is appended to the command name, each
+        objects.
+        If <literal>x</literal> is appended to the command name, the results
+        are displayed in expanded mode.
+        If <literal>+</literal> is appended to the command name, each
         language is listed with its call handler, validator, access privileges,
         and whether it is a system object.
         </para>
@@ -1830,7 +1907,7 @@ SELECT $1 \parse stmt1
 
 
       <varlistentry id="app-psql-meta-command-dn">
-        <term><literal>\dn[S+] [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
+        <term><literal>\dn[Sx+] [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
 
         <listitem>
         <para>
@@ -1839,6 +1916,8 @@ SELECT $1 \parse stmt1
         is specified, only schemas whose names match the pattern are listed.
         By default, only user-created objects are shown; supply a
         pattern or the <literal>S</literal> modifier to include system objects.
+        If <literal>x</literal> is appended to the command name, the results
+        are displayed in expanded mode.
         If <literal>+</literal> is appended to the command name, each object
         is listed with its associated permissions and description, if any.
         </para>
@@ -1847,7 +1926,7 @@ SELECT $1 \parse stmt1
 
 
       <varlistentry id="app-psql-meta-command-do-lc">
-        <term><literal>\do[S+] [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> [ <replaceable class="parameter">arg_pattern</replaceable> [ <replaceable class="parameter">arg_pattern</replaceable> ] ] ]</literal></term>
+        <term><literal>\do[Sx+] [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> [ <replaceable class="parameter">arg_pattern</replaceable> [ <replaceable class="parameter">arg_pattern</replaceable> ] ] ]</literal></term>
         <listitem>
         <para>
         Lists operators with their operand and result types.
@@ -1863,6 +1942,8 @@ SELECT $1 \parse stmt1
         By default, only user-created objects are shown; supply a
         pattern or the <literal>S</literal> modifier to include system
         objects.
+        If <literal>x</literal> is appended to the command name, the results
+        are displayed in expanded mode.
         If <literal>+</literal> is appended to the command name,
         additional information about each operator is shown, including
         the name of the underlying function, and whether it is leakproof.
@@ -1872,7 +1953,7 @@ SELECT $1 \parse stmt1
 
 
       <varlistentry id="app-psql-meta-command-do-uc">
-        <term><literal>\dO[S+] [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
+        <term><literal>\dO[Sx+] [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
         <listitem>
         <para>
         Lists collations.
@@ -1880,7 +1961,10 @@ SELECT $1 \parse stmt1
         specified, only collations whose names match the pattern are
         listed.  By default, only user-created objects are shown;
         supply a pattern or the <literal>S</literal> modifier to
-        include system objects.  If <literal>+</literal> is appended
+        include system objects.
+        If <literal>x</literal> is appended to the command name, the results
+        are displayed in expanded mode.
+        If <literal>+</literal> is appended
         to the command name, each collation is listed with its associated
         description, if any.
         Note that only collations usable with the current database's encoding
@@ -1892,7 +1976,7 @@ SELECT $1 \parse stmt1
 
 
       <varlistentry id="app-psql-meta-command-dp-lc">
-        <term><literal>\dp[S] [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
+        <term><literal>\dp[Sx] [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
         <listitem>
         <para>
         Lists tables, views and sequences with their
@@ -1902,6 +1986,8 @@ SELECT $1 \parse stmt1
         pattern are listed.  By default only user-created objects are shown;
         supply a pattern or the <literal>S</literal> modifier to include
         system objects.
+        If <literal>x</literal> is appended to the command name, the results
+        are displayed in expanded mode.
         </para>
 
         <para>
@@ -1916,7 +2002,7 @@ SELECT $1 \parse stmt1
 
 
       <varlistentry id="app-psql-meta-command-dp-uc">
-        <term><literal>\dP[itn+] [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
+        <term><literal>\dP[itnx+] [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
         <listitem>
         <para>
         Lists partitioned relations.
@@ -1936,6 +2022,8 @@ SELECT $1 \parse stmt1
         </para>
 
         <para>
+        If <literal>x</literal> is appended to the command name, the results
+        are displayed in expanded mode.
         If <literal>+</literal> is appended to the command name, the sum of the
         sizes of each relation's partitions is also displayed, along with the
         relation's description.
@@ -1949,7 +2037,7 @@ SELECT $1 \parse stmt1
 
 
       <varlistentry id="app-psql-meta-command-drds">
-        <term><literal>\drds [ <link linkend="app-psql-patterns"><replaceable class="parameter">role-pattern</replaceable></link> [ <link linkend="app-psql-patterns"><replaceable class="parameter">database-pattern</replaceable></link> ] ]</literal></term>
+        <term><literal>\drds[x] [ <link linkend="app-psql-patterns"><replaceable class="parameter">role-pattern</replaceable></link> [ <link linkend="app-psql-patterns"><replaceable class="parameter">database-pattern</replaceable></link> ] ]</literal></term>
         <listitem>
         <para>
         Lists defined configuration settings.  These settings can be
@@ -1959,6 +2047,8 @@ SELECT $1 \parse stmt1
         specific roles and databases to list, respectively.  If omitted, or if
         <literal>*</literal> is specified, all settings are listed, including those
         not role-specific or database-specific, respectively.
+        If <literal>x</literal> is appended to the command name, the results
+        are displayed in expanded mode.
         </para>
 
         <para>
@@ -1972,7 +2062,7 @@ SELECT $1 \parse stmt1
 
 
       <varlistentry id="app-psql-meta-command-drg">
-        <term><literal>\drg[S] [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
+        <term><literal>\drg[Sx] [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
         <listitem>
         <para>
         Lists information about each granted role membership, including
@@ -1986,19 +2076,23 @@ SELECT $1 \parse stmt1
         <literal>S</literal> modifier to include system roles.
         If <replaceable class="parameter">pattern</replaceable> is specified,
         only grants to those roles whose names match the pattern are listed.
+        If <literal>x</literal> is appended to the command name, the results
+        are displayed in expanded mode.
         </para>
         </listitem>
       </varlistentry>
 
 
       <varlistentry id="app-psql-meta-command-drp">
-        <term><literal>\dRp[+] [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
+        <term><literal>\dRp[x+] [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
         <listitem>
         <para>
         Lists replication publications.
         If <replaceable class="parameter">pattern</replaceable> is
         specified, only those publications whose names match the pattern are
         listed.
+        If <literal>x</literal> is appended to the command name, the results
+        are displayed in expanded mode.
         If <literal>+</literal> is appended to the command name, the tables and
         schemas associated with each publication are shown as well.
         </para>
@@ -2006,13 +2100,15 @@ SELECT $1 \parse stmt1
       </varlistentry>
 
       <varlistentry id="app-psql-meta-command-drs">
-        <term><literal>\dRs[+] [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
+        <term><literal>\dRs[x+] [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
         <listitem>
         <para>
         Lists replication subscriptions.
         If <replaceable class="parameter">pattern</replaceable> is
         specified, only those subscriptions whose names match the pattern are
         listed.
+        If <literal>x</literal> is appended to the command name, the results
+        are displayed in expanded mode.
         If <literal>+</literal> is appended to the command name, additional
         properties of the subscriptions are shown.
         </para>
@@ -2020,12 +2116,14 @@ SELECT $1 \parse stmt1
       </varlistentry>
 
       <varlistentry id="app-psql-meta-command-dt">
-        <term><literal>\dT[S+] [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
+        <term><literal>\dT[Sx+] [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
         <listitem>
         <para>
         Lists data types.
         If <replaceable class="parameter">pattern</replaceable> is
         specified, only types whose names match the pattern are listed.
+        If <literal>x</literal> is appended to the command name, the results
+        are displayed in expanded mode.
         If <literal>+</literal> is appended to the command name, each type is
         listed with its internal name and size, its allowed values
         if it is an <type>enum</type> type, and its associated permissions.
@@ -2037,7 +2135,7 @@ SELECT $1 \parse stmt1
       </varlistentry>
 
       <varlistentry id="app-psql-meta-command-du">
-        <term><literal>\du[S+] [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
+        <term><literal>\du[Sx+] [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
         <listitem>
         <para>
         Lists database roles.
@@ -2048,7 +2146,9 @@ SELECT $1 \parse stmt1
         <literal>S</literal> modifier to include system roles.
         If <replaceable class="parameter">pattern</replaceable> is specified,
         only those roles whose names match the pattern are listed.
-        If the form <literal>\du+</literal> is used, additional information
+        If <literal>x</literal> is appended to the command name, the results
+        are displayed in expanded mode.
+        If <literal>+</literal> is appended to the command name, additional information
         is shown about each role; currently this adds the comment for each
         role.
         </para>
@@ -2056,27 +2156,31 @@ SELECT $1 \parse stmt1
       </varlistentry>
 
       <varlistentry id="app-psql-meta-command-dx-lc">
-        <term><literal>\dx[+] [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
+        <term><literal>\dx[x+] [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
         <listitem>
         <para>
         Lists installed extensions.
         If <replaceable class="parameter">pattern</replaceable>
         is specified, only those extensions whose names match the pattern
         are listed.
-        If the form <literal>\dx+</literal> is used, all the objects belonging
+        If <literal>x</literal> is appended to the command name, the results
+        are displayed in expanded mode.
+        If <literal>+</literal> is appended to the command name, all the objects belonging
         to each matching extension are listed.
         </para>
         </listitem>
       </varlistentry>
 
       <varlistentry id="app-psql-meta-command-dx-uc">
-        <term><literal>\dX [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
+        <term><literal>\dX[x] [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
         <listitem>
         <para>
         Lists extended statistics.
         If <replaceable class="parameter">pattern</replaceable>
         is specified, only those extended statistics whose names match the
         pattern are listed.
+        If <literal>x</literal> is appended to the command name, the results
+        are displayed in expanded mode.
         </para>
 
         <para>
@@ -2092,13 +2196,15 @@ SELECT $1 \parse stmt1
       </varlistentry>
 
       <varlistentry id="app-psql-meta-command-dy">
-        <term><literal>\dy[+] [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
+        <term><literal>\dy[x+] [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
         <listitem>
         <para>
         Lists event triggers.
         If <replaceable class="parameter">pattern</replaceable>
         is specified, only those event triggers whose names match the pattern
         are listed.
+        If <literal>x</literal> is appended to the command name, the results
+        are displayed in expanded mode.
         If <literal>+</literal> is appended to the command name, each object
         is listed with its associated description.
         </para>
@@ -2686,13 +2792,15 @@ SELECT
 
 
       <varlistentry id="app-psql-meta-command-list">
-        <term><literal>\l[+]</literal> or <literal>\list[+] [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
+        <term><literal>\l[x+]</literal> or <literal>\list[x+] [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
         <listitem>
         <para>
         List the databases in the server and show their names, owners,
         character set encodings, and access privileges.
         If <replaceable class="parameter">pattern</replaceable> is specified,
         only databases whose names match the pattern are listed.
+        If <literal>x</literal> is appended to the command name, the results
+        are displayed in expanded mode.
         If <literal>+</literal> is appended to the command name, database
         sizes, default tablespaces, and descriptions are also displayed.
         (Size information is only available for databases that the current
@@ -2756,12 +2864,14 @@ lo_import 152801
       </varlistentry>
 
       <varlistentry id="app-psql-meta-command-lo-list">
-        <term><literal>\lo_list[+]</literal></term>
+        <term><literal>\lo_list[x+]</literal></term>
         <listitem>
         <para>
         Shows a list of all <productname>PostgreSQL</productname>
         large objects currently stored in the database,
         along with any comments provided for them.
+        If <literal>x</literal> is appended to the command name, the results
+        are displayed in expanded mode.
         If <literal>+</literal> is appended to the command name,
         each large object is listed with its associated permissions,
         if any.
@@ -3695,7 +3805,7 @@ testdb=&gt; <userinput>\setenv LESS -imx4F</userinput>
 
 
       <varlistentry id="app-psql-meta-command-z">
-        <term><literal>\z[S] [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
+        <term><literal>\z[Sx] [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
         <listitem>
         <para>
         Lists tables, views and sequences with their
@@ -3705,6 +3815,8 @@ testdb=&gt; <userinput>\setenv LESS -imx4F</userinput>
         pattern are listed.  By default only user-created objects are shown;
         supply a pattern or the <literal>S</literal> modifier to include
         system objects.
+        If <literal>x</literal> is appended to the command name, the results
+        are displayed in expanded mode.
         </para>
 
         <para>
@@ -5385,6 +5497,31 @@ testdb=&gt; <userinput>\df int*pl * bigint</userinput>
  pg_catalog | int48pl | bigint           | integer, bigint     | func
  pg_catalog | int8pl  | bigint           | bigint, bigint      | func
 (3 rows)
+</programlisting>
+  </para>
+
+  <para>
+   Here, the <literal>+</literal> option is used to display additional
+   information about one of these functions, and <literal>x</literal> is used
+   to display the results in expanded mode:
+<programlisting>
+testdb=&gt; <userinput>\df+x int*pl integer bigint</userinput>
+List of functions
+-[ RECORD 1 ]-------+-----------------------------
+Schema              | pg_catalog
+Name                | int48pl
+Result data type    | bigint
+Argument data types | integer, bigint
+Type                | func
+Volatility          | immutable
+Parallel            | safe
+Owner               | postgres
+Security            | invoker
+Leakproof?          | no
+Access privileges   |
+Language            | internal
+Internal name       | int48pl
+Description         | implementation of + operator
 </programlisting>
   </para>
 

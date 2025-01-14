@@ -498,6 +498,7 @@ create table psql_serial_tab (id serial);
 \d psql_serial_tab_id_seq
 \pset tuples_only true
 \df exp
+\dfx exp
 \pset tuples_only false
 \pset expanded on
 \d psql_serial_tab_id_seq
@@ -560,6 +561,9 @@ CREATE MATERIALIZED VIEW mat_view_heap_psql USING heap_psql AS SELECT f1 from tb
 \dv+
 \set HIDE_TABLEAM on
 \d+
+-- \d with 'x' enables expanded mode, but only without a pattern
+\d+x tbl_heap
+\d+x
 RESET ROLE;
 RESET search_path;
 DROP SCHEMA tableam_display CASCADE;
@@ -1309,6 +1313,7 @@ drop role regress_partitioning_role;
 \dAo+ btree array_ops|float_ops
 \dAo * pg_catalog.jsonb_path_ops
 \dAp+ btree float_ops
+\dApx+ btree time_ops
 \dAp * pg_catalog.uuid_ops
 
 -- check \dconfig
@@ -1927,5 +1932,6 @@ ROLLBACK;
 CREATE TABLE defprivs (a int);
 \pset null '(default)'
 \z defprivs
+\zx defprivs
 \pset null ''
 DROP TABLE defprivs;
