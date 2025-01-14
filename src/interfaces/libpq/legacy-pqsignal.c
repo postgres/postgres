@@ -28,10 +28,16 @@
  * with the semantics it had in 9.2; in particular, this has different
  * behavior for SIGALRM than the version in src/port/pqsignal.c.
  *
- * libpq itself uses this only for SIGPIPE (and even then, only in
- * non-ENABLE_THREAD_SAFETY builds), so the incompatibility isn't
- * troublesome for internal references.
+ * libpq itself does not use this, nor does anything else in our code.
+ *
+ * src/include/port.h will #define pqsignal as pqsignal_fe,
+ * but here we want to export just plain "pqsignal".  We can't rely on
+ * port.h's extern declaration either.  (The point of that #define
+ * is to ensure that no in-tree code accidentally calls this version.)
  */
+#undef pqsignal
+extern pqsigfunc pqsignal(int signo, pqsigfunc func);
+
 pqsigfunc
 pqsignal(int signo, pqsigfunc func)
 {
