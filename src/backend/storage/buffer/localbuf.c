@@ -255,7 +255,7 @@ GetLocalVictimBuffer(void)
 
 		/* Temporary table I/O does not use Buffer Access Strategies */
 		pgstat_count_io_op_time(IOOBJECT_TEMP_RELATION, IOCONTEXT_NORMAL,
-								IOOP_WRITE, io_start, 1);
+								IOOP_WRITE, io_start, 1, BLCKSZ);
 
 		/* Mark not-dirty now in case we error out below */
 		buf_state &= ~BM_DIRTY;
@@ -279,7 +279,8 @@ GetLocalVictimBuffer(void)
 		ClearBufferTag(&bufHdr->tag);
 		buf_state &= ~(BUF_FLAG_MASK | BUF_USAGECOUNT_MASK);
 		pg_atomic_unlocked_write_u32(&bufHdr->state, buf_state);
-		pgstat_count_io_op(IOOBJECT_TEMP_RELATION, IOCONTEXT_NORMAL, IOOP_EVICT, 1);
+
+		pgstat_count_io_op(IOOBJECT_TEMP_RELATION, IOCONTEXT_NORMAL, IOOP_EVICT, 1, 0);
 	}
 
 	return BufferDescriptorGetBuffer(bufHdr);
@@ -419,7 +420,7 @@ ExtendBufferedRelLocal(BufferManagerRelation bmr,
 	smgrzeroextend(bmr.smgr, fork, first_block, extend_by, false);
 
 	pgstat_count_io_op_time(IOOBJECT_TEMP_RELATION, IOCONTEXT_NORMAL, IOOP_EXTEND,
-							io_start, extend_by);
+							io_start, 1, extend_by * BLCKSZ);
 
 	for (uint32 i = 0; i < extend_by; i++)
 	{

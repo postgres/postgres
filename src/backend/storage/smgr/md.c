@@ -1401,7 +1401,7 @@ register_dirty_segment(SMgrRelation reln, ForkNumber forknum, MdfdVec *seg)
 		 * backend fsyncs.
 		 */
 		pgstat_count_io_op_time(IOOBJECT_RELATION, IOCONTEXT_NORMAL,
-								IOOP_FSYNC, io_start, 1);
+								IOOP_FSYNC, io_start, 1, 0);
 	}
 }
 
@@ -1796,7 +1796,7 @@ mdsyncfiletag(const FileTag *ftag, char *path)
 		FileClose(file);
 
 	pgstat_count_io_op_time(IOOBJECT_RELATION, IOCONTEXT_NORMAL,
-							IOOP_FSYNC, io_start, 1);
+							IOOP_FSYNC, io_start, 1, 0);
 
 	errno = save_errno;
 	return result;

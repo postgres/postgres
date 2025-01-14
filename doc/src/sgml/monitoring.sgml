@@ -2692,8 +2692,18 @@ description | Waiting for a newly initialized WAL file to reach durable storage
         <structfield>reads</structfield> <type>bigint</type>
        </para>
        <para>
-        Number of read operations, each of the size specified in
-        <varname>op_bytes</varname>.
+        Number of read operations.
+       </para>
+      </entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry">
+       <para role="column_definition">
+        <structfield>read_bytes</structfield> <type>numeric</type>
+       </para>
+       <para>
+        The total size of read operations in bytes.
        </para>
       </entry>
      </row>
@@ -2716,8 +2726,18 @@ description | Waiting for a newly initialized WAL file to reach durable storage
         <structfield>writes</structfield> <type>bigint</type>
        </para>
        <para>
-        Number of write operations, each of the size specified in
-        <varname>op_bytes</varname>.
+        Number of write operations.
+       </para>
+      </entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry">
+       <para role="column_definition">
+        <structfield>write_bytes</structfield> <type>numeric</type>
+       </para>
+       <para>
+        The total size of write operations in bytes.
        </para>
       </entry>
      </row>
@@ -2740,8 +2760,8 @@ description | Waiting for a newly initialized WAL file to reach durable storage
         <structfield>writebacks</structfield> <type>bigint</type>
        </para>
        <para>
-        Number of units of size <varname>op_bytes</varname> which the process
-        requested the kernel write out to permanent storage.
+        Number of units of size <symbol>BLCKSZ</symbol> (typically 8kB) which
+        the process requested the kernel write out to permanent storage.
        </para>
       </entry>
      </row>
@@ -2766,8 +2786,18 @@ description | Waiting for a newly initialized WAL file to reach durable storage
         <structfield>extends</structfield> <type>bigint</type>
        </para>
        <para>
-        Number of relation extend operations, each of the size specified in
-        <varname>op_bytes</varname>.
+        Number of relation extend operations.
+       </para>
+      </entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry">
+       <para role="column_definition">
+        <structfield>extend_bytes</structfield> <type>numeric</type>
+       </para>
+       <para>
+        The total size of relation extend operations in bytes.
        </para>
       </entry>
      </row>
@@ -2780,23 +2810,6 @@ description | Waiting for a newly initialized WAL file to reach durable storage
        <para>
         Time spent in extend operations in milliseconds (if
         <xref linkend="guc-track-io-timing"/> is enabled, otherwise zero)
-       </para>
-      </entry>
-     </row>
-
-     <row>
-      <entry role="catalog_table_entry">
-       <para role="column_definition">
-        <structfield>op_bytes</structfield> <type>bigint</type>
-       </para>
-       <para>
-        The number of bytes per unit of I/O read, written, or extended.
-       </para>
-       <para>
-        Relation data reads, writes, and extends are done in
-        <varname>block_size</varname> units, derived from the build-time
-        parameter <symbol>BLCKSZ</symbol>, which is <literal>8192</literal> by
-        default.
        </para>
       </entry>
      </row>

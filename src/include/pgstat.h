@@ -343,28 +343,42 @@ typedef enum IOContext
 
 #define IOCONTEXT_NUM_TYPES (IOCONTEXT_VACUUM + 1)
 
+/*
+ * Enumeration of IO operations.
+ *
+ * This enum categorizes IO operations into two groups, depending on if
+ * byte operations are supported.
+ *
+ * Ensure IOOP_EXTEND is the first and IOOP_WRITE is the last ones in the
+ * tracked in bytes group and that the groups stay in that order.
+ */
 typedef enum IOOp
 {
+	/* IOs not tracked in bytes */
 	IOOP_EVICT,
-	IOOP_EXTEND,
 	IOOP_FSYNC,
 	IOOP_HIT,
-	IOOP_READ,
 	IOOP_REUSE,
-	IOOP_WRITE,
 	IOOP_WRITEBACK,
+
+	/* IOs tracked in bytes */
+	IOOP_EXTEND,
+	IOOP_READ,
+	IOOP_WRITE,
 } IOOp;
 
-#define IOOP_NUM_TYPES (IOOP_WRITEBACK + 1)
+#define IOOP_NUM_TYPES (IOOP_WRITE + 1)
 
 typedef struct PgStat_BktypeIO
 {
+	uint64		bytes[IOOBJECT_NUM_TYPES][IOCONTEXT_NUM_TYPES][IOOP_NUM_TYPES];
 	PgStat_Counter counts[IOOBJECT_NUM_TYPES][IOCONTEXT_NUM_TYPES][IOOP_NUM_TYPES];
 	PgStat_Counter times[IOOBJECT_NUM_TYPES][IOCONTEXT_NUM_TYPES][IOOP_NUM_TYPES];
 } PgStat_BktypeIO;
 
 typedef struct PgStat_PendingIO
 {
+	uint64		bytes[IOOBJECT_NUM_TYPES][IOCONTEXT_NUM_TYPES][IOOP_NUM_TYPES];
 	PgStat_Counter counts[IOOBJECT_NUM_TYPES][IOCONTEXT_NUM_TYPES][IOOP_NUM_TYPES];
 	instr_time	pending_times[IOOBJECT_NUM_TYPES][IOCONTEXT_NUM_TYPES][IOOP_NUM_TYPES];
 } PgStat_PendingIO;
@@ -604,10 +618,11 @@ extern PgStat_CheckpointerStats *pgstat_fetch_stat_checkpointer(void);
 extern bool pgstat_bktype_io_stats_valid(PgStat_BktypeIO *backend_io,
 										 BackendType bktype);
 extern void pgstat_count_io_op(IOObject io_object, IOContext io_context,
-							   IOOp io_op, uint32 cnt);
+							   IOOp io_op, uint32 cnt, uint64 bytes);
 extern instr_time pgstat_prepare_io_time(bool track_io_guc);
 extern void pgstat_count_io_op_time(IOObject io_object, IOContext io_context,
-									IOOp io_op, instr_time start_time, uint32 cnt);
+									IOOp io_op, instr_time start_time,
+									uint32 cnt, uint64 bytes);
 
 extern PgStat_IO *pgstat_fetch_stat_io(void);
 extern const char *pgstat_get_io_context_name(IOContext io_context);

@@ -1285,14 +1285,16 @@ typedef enum io_stat_col
 	IO_COL_OBJECT,
 	IO_COL_CONTEXT,
 	IO_COL_READS,
+	IO_COL_READ_BYTES,
 	IO_COL_READ_TIME,
 	IO_COL_WRITES,
+	IO_COL_WRITE_BYTES,
 	IO_COL_WRITE_TIME,
 	IO_COL_WRITEBACKS,
 	IO_COL_WRITEBACK_TIME,
 	IO_COL_EXTENDS,
+	IO_COL_EXTEND_BYTES,
 	IO_COL_EXTEND_TIME,
-	IO_COL_CONVERSION,
 	IO_COL_HITS,
 	IO_COL_EVICTIONS,
 	IO_COL_REUSES,
@@ -1334,10 +1336,35 @@ pgstat_get_io_op_index(IOOp io_op)
 }
 
 /*
+ * Get the number of the column containing IO bytes for the specified IOOp.
+ * If an IOOp is not tracked in bytes, IO_COL_INVALID is returned.
+ */
+static io_stat_col
+pgstat_get_io_byte_index(IOOp io_op)
+{
+	switch (io_op)
+	{
+		case IOOP_EXTEND:
+			return IO_COL_EXTEND_BYTES;
+		case IOOP_READ:
+			return IO_COL_READ_BYTES;
+		case IOOP_WRITE:
+			return IO_COL_WRITE_BYTES;
+		case IOOP_EVICT:
+		case IOOP_FSYNC:
+		case IOOP_HIT:
+		case IOOP_REUSE:
+		case IOOP_WRITEBACK:
+			return IO_COL_INVALID;
+	}
+
+	elog(ERROR, "unrecognized IOOp value: %d", io_op);
+	pg_unreachable();
+}
+
+/*
  * Get the number of the column containing IO times for the specified IOOp.
- * This function encodes our assumption that IO time for an IOOp is displayed
- * in the view in the column directly after the IOOp counts. If an op has no
- * associated time, IO_COL_INVALID is returned.
+ * If an op has no associated time, IO_COL_INVALID is returned.
  */
 static io_stat_col
 pgstat_get_io_time_index(IOOp io_op)
@@ -1345,11 +1372,15 @@ pgstat_get_io_time_index(IOOp io_op)
 	switch (io_op)
 	{
 		case IOOP_READ:
+			return IO_COL_READ_TIME;
 		case IOOP_WRITE:
+			return IO_COL_WRITE_TIME;
 		case IOOP_WRITEBACK:
+			return IO_COL_WRITEBACK_TIME;
 		case IOOP_EXTEND:
+			return IO_COL_EXTEND_TIME;
 		case IOOP_FSYNC:
-			return pgstat_get_io_op_index(io_op) + 1;
+			return IO_COL_FSYNC_TIME;
 		case IOOP_EVICT:
 		case IOOP_HIT:
 		case IOOP_REUSE:
@@ -1408,18 +1439,11 @@ pg_stat_io_build_tuples(ReturnSetInfo *rsinfo,
 			else
 				nulls[IO_COL_RESET_TIME] = true;
 
-			/*
-			 * Hard-code this to the value of BLCKSZ for now. Future values
-			 * could include XLOG_BLCKSZ, once WAL IO is tracked, and constant
-			 * multipliers, once non-block-oriented IO (e.g. temporary file
-			 * IO) is tracked.
-			 */
-			values[IO_COL_CONVERSION] = Int64GetDatum(BLCKSZ);
-
 			for (int io_op = 0; io_op < IOOP_NUM_TYPES; io_op++)
 			{
 				int			op_idx = pgstat_get_io_op_index(io_op);
 				int			time_idx = pgstat_get_io_time_index(io_op);
+				int			byte_idx = pgstat_get_io_byte_index(io_op);
 
 				/*
 				 * Some combinations of BackendType and IOOp, of IOContext and
@@ -1436,19 +1460,39 @@ pg_stat_io_build_tuples(ReturnSetInfo *rsinfo,
 				else
 					nulls[op_idx] = true;
 
-				/* not every operation is timed */
-				if (time_idx == IO_COL_INVALID)
-					continue;
-
 				if (!nulls[op_idx])
 				{
-					PgStat_Counter time =
-						bktype_stats->times[io_obj][io_context][io_op];
+					/* not every operation is timed */
+					if (time_idx != IO_COL_INVALID)
+					{
+						PgStat_Counter time =
+							bktype_stats->times[io_obj][io_context][io_op];
 
-					values[time_idx] = Float8GetDatum(pg_stat_us_to_ms(time));
+						values[time_idx] = Float8GetDatum(pg_stat_us_to_ms(time));
+					}
+
+					/* not every IO is tracked in bytes */
+					if (byte_idx != IO_COL_INVALID)
+					{
+						char		buf[256];
+						PgStat_Counter byte =
+							bktype_stats->bytes[io_obj][io_context][io_op];
+
+						/* Convert to numeric */
+						snprintf(buf, sizeof buf, UINT64_FORMAT, byte);
+						values[byte_idx] = DirectFunctionCall3(numeric_in,
+															   CStringGetDatum(buf),
+															   ObjectIdGetDatum(0),
+															   Int32GetDatum(-1));
+					}
 				}
 				else
-					nulls[time_idx] = true;
+				{
+					if (time_idx != IO_COL_INVALID)
+						nulls[time_idx] = true;
+					if (byte_idx != IO_COL_INVALID)
+						nulls[byte_idx] = true;
+				}
 			}
 
 			tuplestore_putvalues(rsinfo->setResult, rsinfo->setDesc,

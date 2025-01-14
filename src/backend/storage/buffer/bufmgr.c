@@ -1165,7 +1165,7 @@ PinBufferForBlock(Relation rel,
 	}
 	if (*foundPtr)
 	{
-		pgstat_count_io_op(io_object, io_context, IOOP_HIT, 1);
+		pgstat_count_io_op(io_object, io_context, IOOP_HIT, 1, 0);
 		if (VacuumCostActive)
 			VacuumCostBalance += VacuumCostPageHit;
 
@@ -1515,7 +1515,7 @@ WaitReadBuffers(ReadBuffersOperation *operation)
 		io_start = pgstat_prepare_io_time(track_io_timing);
 		smgrreadv(operation->smgr, forknum, io_first_block, io_pages, io_buffers_len);
 		pgstat_count_io_op_time(io_object, io_context, IOOP_READ, io_start,
-								io_buffers_len);
+								1, io_buffers_len * BLCKSZ);
 
 		/* Verify each block we read, and terminate the I/O. */
 		for (int j = 0; j < io_buffers_len; ++j)
@@ -2073,7 +2073,7 @@ again:
 		 * pinners or erroring out.
 		 */
 		pgstat_count_io_op(IOOBJECT_RELATION, io_context,
-						   from_ring ? IOOP_REUSE : IOOP_EVICT, 1);
+						   from_ring ? IOOP_REUSE : IOOP_EVICT, 1, 0);
 	}
 
 	/*
@@ -2429,7 +2429,7 @@ ExtendBufferedRelShared(BufferManagerRelation bmr,
 		UnlockRelationForExtension(bmr.rel, ExclusiveLock);
 
 	pgstat_count_io_op_time(IOOBJECT_RELATION, io_context, IOOP_EXTEND,
-							io_start, extend_by);
+							io_start, 1, extend_by * BLCKSZ);
 
 	/* Set BM_VALID, terminate IO, and wake up any waiters */
 	for (uint32 i = 0; i < extend_by; i++)
@@ -3891,7 +3891,7 @@ FlushBuffer(BufferDesc *buf, SMgrRelation reln, IOObject io_object,
 	 * of a dirty shared buffer (IOCONTEXT_NORMAL IOOP_WRITE).
 	 */
 	pgstat_count_io_op_time(IOOBJECT_RELATION, io_context,
-							IOOP_WRITE, io_start, 1);
+							IOOP_WRITE, io_start, 1, BLCKSZ);
 
 	pgBufferUsage.shared_blks_written++;
 
@@ -4530,7 +4530,7 @@ FlushRelationBuffers(Relation rel)
 
 				pgstat_count_io_op_time(IOOBJECT_TEMP_RELATION,
 										IOCONTEXT_NORMAL, IOOP_WRITE,
-										io_start, 1);
+										io_start, 1, BLCKSZ);
 
 				buf_state &= ~(BM_DIRTY | BM_JUST_DIRTIED);
 				pg_atomic_unlocked_write_u32(&bufHdr->state, buf_state);
@@ -6037,7 +6037,7 @@ IssuePendingWritebacks(WritebackContext *wb_context, IOContext io_context)
 	 * blocks of permanent relations.
 	 */
 	pgstat_count_io_op_time(IOOBJECT_RELATION, io_context,
-							IOOP_WRITEBACK, io_start, wb_context->nr_pending);
+							IOOP_WRITEBACK, io_start, wb_context->nr_pending, 0);
 
 	wb_context->nr_pending = 0;
 }

@@ -65,6 +65,8 @@ pgstat_flush_backend_entry_io(PgStat_EntryRef *entry_ref)
 
 				bktype_shstats->counts[io_object][io_context][io_op] +=
 					pending_io->counts[io_object][io_context][io_op];
+				bktype_shstats->bytes[io_object][io_context][io_op] +=
+					pending_io->bytes[io_object][io_context][io_op];
 
 				time = pending_io->pending_times[io_object][io_context][io_op];
 
