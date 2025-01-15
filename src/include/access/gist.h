@@ -21,6 +21,7 @@
 #include "access/transam.h"
 #include "access/xlog.h"
 #include "access/xlogdefs.h"
+#include "nodes/primnodes.h"
 #include "storage/block.h"
 #include "storage/bufpage.h"
 #include "utils/relcache.h"
@@ -247,7 +248,6 @@ typedef struct
 	do { (e).key = (k); (e).rel = (r); (e).page = (pg); \
 		 (e).offset = (o); (e).leafkey = (l); } while (0)
 
-enum CompareType;
-extern StrategyNumber GistTranslateStratnum(Oid opclass, enum CompareType cmp);
+extern StrategyNumber GistTranslateStratnum(Oid opclass, CompareType cmp);
 
 #endif							/* GIST_H */
