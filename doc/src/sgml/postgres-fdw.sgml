@@ -770,6 +770,78 @@ OPTIONS (ADD password_required 'false');
       </listitem>
      </varlistentry>
 
+     <varlistentry>
+      <term><literal>use_scram_passthrough</literal> (<type>boolean</type>)</term>
+      <listitem>
+       <para>
+        This option controls whether <filename>postgres_fdw</filename> will
+        use the SCRAM pass-through authentication to connect to the foreign
+        server.  With SCRAM pass-through authentication,
+        <filename>postgres_fdw</filename> uses SCRAM-hashed secrets instead of
+        plain-text user passwords to connect to the remote server.  This
+        avoids storing plain-text user passwords in PostgreSQL system
+        catalogs.
+       </para>
+
+       <para>
+        To use SCRAM pass-through authentication:
+        <itemizedlist>
+         <listitem>
+          <para>
+           The remote server must request SCRAM authentication.  (If desired,
+           enforce this on the client side (FDW side) with the option
+           <literal>require_auth</literal>.)  If another authentication method
+           is requested by the server, then that one will be used normally.
+          </para>
+         </listitem>
+
+         <listitem>
+          <para>
+           The remote server can be of any PostgreSQL version that supports
+           SCRAM.  Support for <literal>use_scram_passthrough</literal> is
+           only required on the client side (FDW side).
+          </para>
+         </listitem>
+
+         <listitem>
+          <para>
+           The user mapping password is not used.  (It could be set to support
+           other authentication methods, but that would arguably violate the
+           point of this feature, which is to avoid storing plain-text
+           passwords.)
+          </para>
+         </listitem>
+
+         <listitem>
+          <para>
+           The server running <filename>postgres_fdw</filename> and the remote
+           server must have identical SCRAM secrets (encrypted passwords) for
+           the user being used on <filename>postgres_fdw</filename> to
+           authenticate on the foreign server (same salt and iterations, not
+           merely the same password).
+          </para>
+
+          <para>
+           As a corollary, if FDW connections to multiple hosts are to be
+           made, for example for partitioned foreign tables/sharding, then all
+           hosts must have identical SCRAM secrets for the users involved.
+          </para>
+         </listitem>
+
+         <listitem>
+          <para>
+           The current session on the PostgreSQL instance that makes the
+           outgoing FDW connections also must also use SCRAM authentication
+           for its incoming client connection.  (Hence
+           <quote>pass-through</quote>: SCRAM must be used going in and out.)
+           This is a technical requirement of the SCRAM protocol.
+          </para>
+         </listitem>
+        </itemizedlist>
+       </para>
+      </listitem>
+     </varlistentry>
+
     </variablelist>
    </sect3>
  </sect2>

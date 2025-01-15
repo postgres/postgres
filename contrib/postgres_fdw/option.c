@@ -279,6 +279,9 @@ InitPgFdwOptions(void)
 		{"analyze_sampling", ForeignServerRelationId, false},
 		{"analyze_sampling", ForeignTableRelationId, false},
 
+		{"use_scram_passthrough", ForeignServerRelationId, false},
+		{"use_scram_passthrough", UserMappingRelationId, false},
+
 		/*
 		 * sslcert and sslkey are in fact libpq options, but we repeat them
 		 * here to allow them to appear in both foreign server context (when

@@ -41,4 +41,9 @@ tests += {
     ],
     'regress_args': ['--dlpath', meson.build_root() / 'src/test/regress'],
   },
+  'tap': {
+    'tests': [
+      't/001_auth_scram.pl',
+    ],
+  },
 }

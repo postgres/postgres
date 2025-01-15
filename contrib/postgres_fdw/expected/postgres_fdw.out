@@ -10301,7 +10301,7 @@ CREATE FOREIGN TABLE pg_temp.ft1_nopw (
 ) SERVER loopback_nopw OPTIONS (schema_name 'public', table_name 'ft1');
 SELECT 1 FROM ft1_nopw LIMIT 1;
 ERROR:  password or GSSAPI delegated credentials required
-DETAIL:  Non-superusers must delegate GSSAPI credentials or provide a password in the user mapping.
+DETAIL:  Non-superusers must delegate GSSAPI credentials, provide a password, or enable SCRAM pass-through in user mapping.
 -- If we add a password to the connstr it'll fail, because we don't allow passwords
 -- in connstrs only in user mappings.
 ALTER SERVER loopback_nopw OPTIONS (ADD password 'dummypw');
@@ -10351,7 +10351,7 @@ DROP USER MAPPING FOR CURRENT_USER SERVER loopback_nopw;
 -- lacks password_required=false
 SELECT 1 FROM ft1_nopw LIMIT 1;
 ERROR:  password or GSSAPI delegated credentials required
-DETAIL:  Non-superusers must delegate GSSAPI credentials or provide a password in the user mapping.
+DETAIL:  Non-superusers must delegate GSSAPI credentials, provide a password, or enable SCRAM pass-through in user mapping.
 RESET ROLE;
 -- The user mapping for public is passwordless and lacks the password_required=false
 -- mapping option, but will work because the current user is a superuser.

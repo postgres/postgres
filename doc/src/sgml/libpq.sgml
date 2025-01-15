@@ -2199,6 +2199,34 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
       </listitem>
      </varlistentry>
 
+     <varlistentry id="libpq-connect-scram-client-key" xreflabel="scram_client_key">
+      <term><literal>scram_client_key</literal></term>
+      <listitem>
+       <para>
+        The base64-encoded SCRAM client key.  This can be used by foreign-data
+        wrappers or similar middleware to enable pass-through SCRAM
+        authentication. See <xref
+        linkend="postgres-fdw-options-connection-management"/> for one such
+        implementation.  It is not meant to be specified directly by users or
+        client applications.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="libpq-connect-scram-server-key" xreflabel="scram_server_key">
+      <term><literal>scram_server_key</literal></term>
+      <listitem>
+       <para>
+        The base64-encoded SCRAM server key.  This can be used by foreign-data
+        wrappers or similar middleware to enable pass-through SCRAM
+        authentication. See <xref
+        linkend="postgres-fdw-options-connection-management"/> for one such
+        implementation.  It is not meant to be specified directly by users or
+        client applications.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="libpq-connect-service" xreflabel="service">
       <term><literal>service</literal></term>
       <listitem>

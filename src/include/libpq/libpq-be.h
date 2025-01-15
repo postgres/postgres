@@ -18,6 +18,8 @@
 #ifndef LIBPQ_BE_H
 #define LIBPQ_BE_H
 
+#include "common/scram-common.h"
+
 #include <sys/time.h>
 #ifdef USE_OPENSSL
 #include <openssl/ssl.h>
@@ -180,6 +182,13 @@ typedef struct Port
 	int			keepalives_interval;
 	int			keepalives_count;
 	int			tcp_user_timeout;
+
+	/*
+	 * SCRAM structures.
+	 */
+	uint8		scram_ClientKey[SCRAM_MAX_KEY_LEN];
+	uint8		scram_ServerKey[SCRAM_MAX_KEY_LEN];
+	bool		has_scram_keys; /* true if the above two are valid */
 
 	/*
 	 * GSSAPI structures.

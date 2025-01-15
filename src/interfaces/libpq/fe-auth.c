@@ -559,7 +559,7 @@ pg_SASL_init(PGconn *conn, int payloadlen)
 	 * First, select the password to use for the exchange, complaining if
 	 * there isn't one and the selected SASL mechanism needs it.
 	 */
-	if (conn->password_needed)
+	if (conn->password_needed && !conn->scram_client_key_binary)
 	{
 		password = conn->connhost[conn->whichhost].password;
 		if (password == NULL)
