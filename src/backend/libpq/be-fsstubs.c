@@ -317,6 +317,11 @@ be_lo_unlink(PG_FUNCTION_ARGS)
 
 	PreventCommandIfReadOnly("lo_unlink()");
 
+	if (!LargeObjectExists(lobjId))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("large object %u does not exist", lobjId)));
+
 	/*
 	 * Must be owner of the large object.  It would be cleaner to check this
 	 * in inv_drop(), but we want to throw the error before not after closing
