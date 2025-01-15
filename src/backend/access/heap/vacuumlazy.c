@@ -3,6 +3,60 @@
  * vacuumlazy.c
  *	  Concurrent ("lazy") vacuuming.
  *
+ * Heap relations are vacuumed in three main phases. In phase I, vacuum scans
+ * relation pages, pruning and freezing tuples and saving dead tuples' TIDs in
+ * a TID store. If that TID store fills up or vacuum finishes scanning the
+ * relation, it progresses to phase II: index vacuuming. Index vacuuming
+ * deletes the dead index entries referenced in the TID store. In phase III,
+ * vacuum scans the blocks of the relation referred to by the TIDs in the TID
+ * store and reaps the corresponding dead items, freeing that space for future
+ * tuples.
+ *
+ * If there are no indexes or index scanning is disabled, phase II may be
+ * skipped. If phase I identified very few dead index entries or if vacuum's
+ * failsafe mechanism has triggered (to avoid transaction ID wraparound),
+ * vacuum may skip phases II and III.
+ *
+ * If the TID store fills up in phase I, vacuum suspends phase I, proceeds to
+ * phases II and II, cleaning up the dead tuples referenced in the current TID
+ * store. This empties the TID store resumes phase I.
+ *
+ * In a way, the phases are more like states in a state machine, but they have
+ * been referred to colloquially as phases for so long that they are referred
+ * to as such here.
+ *
+ * Manually invoked VACUUMs may scan indexes during phase II in parallel. For
+ * more information on this, see the comment at the top of vacuumparallel.c.
+ *
+ * In between phases, vacuum updates the freespace map (every
+ * VACUUM_FSM_EVERY_PAGES).
+ *
+ * After completing all three phases, vacuum may truncate the relation if it
+ * has emptied pages at the end. Finally, vacuum updates relation statistics
+ * in pg_class and the cumulative statistics subsystem.
+ *
+ * Relation Scanning:
+ *
+ * Vacuum scans the heap relation, starting at the beginning and progressing
+ * to the end, skipping pages as permitted by their visibility status, vacuum
+ * options, and various other requirements.
+ *
+ * When page skipping is not disabled, a non-aggressive vacuum may scan pages
+ * that are marked all-visible (and even all-frozen) in the visibility map if
+ * the range of skippable pages is below SKIP_PAGES_THRESHOLD.
+ *
+ * Once vacuum has decided to scan a given block, it must read the block and
+ * obtain a cleanup lock to prune tuples on the page. A non-aggressive vacuum
+ * may choose to skip pruning and freezing if it cannot acquire a cleanup lock
+ * on the buffer right away. In this case, it may miss cleaning up dead tuples
+ * and their associated index entries (though it is free to reap any existing
+ * dead items on the page).
+ *
+ * After pruning and freezing, pages that are newly all-visible and all-frozen
+ * are marked as such in the visibility map.
+ *
+ * Dead TID Storage:
+ *
  * The major space usage for vacuuming is storage for the dead tuple IDs that
  * are to be removed from indexes.  We want to ensure we can vacuum even the
  * very largest relations with finite memory space usage.  To do that, we set
