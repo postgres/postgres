@@ -170,6 +170,15 @@ pg_database_size_oid(PG_FUNCTION_ARGS)
 	Oid			dbOid = PG_GETARG_OID(0);
 	int64		size;
 
+	/*
+	 * Not needed for correctness, but avoid non-user-facing error message
+	 * later if the database doesn't exist.
+	 */
+	if (!SearchSysCacheExists1(DATABASEOID, ObjectIdGetDatum(dbOid)))
+		ereport(ERROR,
+				errcode(ERRCODE_UNDEFINED_OBJECT),
+				errmsg("database with OID %u does not exist", dbOid));
+
 	size = calculate_database_size(dbOid);
 
 	if (size == 0)
@@ -273,6 +282,15 @@ pg_tablespace_size_oid(PG_FUNCTION_ARGS)
 {
 	Oid			tblspcOid = PG_GETARG_OID(0);
 	int64		size;
+
+	/*
+	 * Not needed for correctness, but avoid non-user-facing error message
+	 * later if the tablespace doesn't exist.
+	 */
+	if (!SearchSysCacheExists1(TABLESPACEOID, ObjectIdGetDatum(tblspcOid)))
+		ereport(ERROR,
+				errcode(ERRCODE_UNDEFINED_OBJECT),
+				errmsg("tablespace with OID %u does not exist", tblspcOid));
 
 	size = calculate_tablespace_size(tblspcOid);
 

@@ -3004,10 +3004,6 @@ pg_aclmask(ObjectType objtype, Oid object_oid, AttrNumber attnum, Oid roleid,
  * Exported routines for examining a user's privileges for various objects
  *
  * See aclmask() for a description of the common API for these functions.
- *
- * Note: we give lookup failure the full ereport treatment because the
- * has_xxx_privilege() family of functions allow users to pass any random
- * OID to these functions.
  * ****************************************************************
  */
 
@@ -3074,10 +3070,8 @@ object_aclmask_ext(Oid classid, Oid objectid, Oid roleid,
 			return 0;
 		}
 		else
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_OBJECT),
-					 errmsg("%s with OID %u does not exist",
-							get_object_class_descr(classid), objectid)));
+			elog(ERROR, "cache lookup failed for %s %u",
+				 get_object_class_descr(classid), objectid);
 	}
 
 	ownerId = DatumGetObjectId(SysCacheGetAttrNotNull(cacheid,
