@@ -25,7 +25,6 @@
 
 typedef struct TDEPrincipalKeyId
 {
-	uint32 version;
 	char name[PRINCIPAL_KEY_NAME_LEN];
 	char versioned_name[PRINCIPAL_KEY_NAME_LEN + 4];
 } TDEPrincipalKeyId;
@@ -66,13 +65,13 @@ extern TDEPrincipalKey *GetPrincipalKey(Oid dbOid, LWLockMode lockMode);
 extern TDEPrincipalKey *GetPrincipalKey(Oid dbOid, void *lockMode);
 #endif
 
-extern bool save_principal_key_info(TDEPrincipalKeyInfo *principalKeyInfo);
+extern bool create_principal_key_info(TDEPrincipalKeyInfo *principalKeyInfo);
 extern bool update_principal_key_info(TDEPrincipalKeyInfo *principal_key_info);
 
 extern Oid	GetPrincipalKeyProviderId(void);
-extern bool SetPrincipalKey(const char *key_name, const char *provider_name, bool ensure_new_key);
 extern bool AlterPrincipalKeyKeyring(const char *provider_name);
-extern bool RotatePrincipalKey(TDEPrincipalKey *current_key, const char *new_key_name, const char *new_provider_name, bool ensure_new_key);
 extern bool xl_tde_perform_rotate_key(XLogPrincipalKeyRotate *xlrec);
+
+extern void PrincipalKeyGucInit(void);
 
 #endif /* PG_TDE_PRINCIPAL_KEY_H */

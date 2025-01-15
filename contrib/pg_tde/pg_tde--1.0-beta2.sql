@@ -1,4 +1,4 @@
-/* contrib/pg_tde/pg_tde--1.0.sql */
+/* contrib/pg_tde/pg_tde--1.0-beta2.sql */
 
 -- complain if script is sourced in psql, rather than via CREATE EXTENSION
 \echo Use "CREATE EXTENSION pg_tde" to load this file. \quit
@@ -112,6 +112,15 @@ LANGUAGE SQL;
 
 CREATE FUNCTION pg_tde_list_all_key_providers
     (OUT id INT,
+    OUT provider_name VARCHAR(128),
+    OUT provider_type VARCHAR(10),
+    OUT options JSON)
+RETURNS SETOF record
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT VOLATILE;
+
+CREATE FUNCTION pg_tde_list_all_key_providers
+    (PG_TDE_GLOBAL, OUT id INT,
     OUT provider_name VARCHAR(128),
     OUT provider_type VARCHAR(10),
     OUT options JSON)
@@ -248,29 +257,31 @@ SELECT EXISTS (
     )$$
 LANGUAGE SQL;
 
-CREATE FUNCTION pg_tde_rotate_principal_key_internal(new_principal_key_name VARCHAR(255) DEFAULT NULL, new_provider_name VARCHAR(255) DEFAULT NULL, ensure_new_key BOOLEAN DEFAULT TRUE, is_global BOOLEAN DEFAULT FALSE)
+CREATE FUNCTION pg_tde_set_principal_key_internal(principal_key_name VARCHAR(255), is_global INT, provider_name VARCHAR(255), ensure_new_key BOOLEAN DEFAULT FALSE)
 RETURNS boolean
 AS 'MODULE_PATHNAME'
 LANGUAGE C;
 
-CREATE FUNCTION pg_tde_rotate_principal_key(new_principal_key_name VARCHAR(255) DEFAULT NULL, new_provider_name VARCHAR(255) DEFAULT NULL)
+CREATE FUNCTION pg_tde_set_principal_key(principal_key_name VARCHAR(255), provider_name VARCHAR(255) DEFAULT NULL, ensure_new_key BOOLEAN DEFAULT FALSE)
 RETURNS boolean
 AS $$
-    SELECT pg_tde_rotate_principal_key_internal(new_principal_key_name, new_provider_name, TRUE, FALSE);
+    SELECT pg_tde_set_principal_key_internal(principal_key_name, 0, provider_name, ensure_new_key);
 $$
 LANGUAGE SQL;
 
-CREATE FUNCTION pg_tde_rotate_principal_key(PG_TDE_GLOBAL, new_principal_key_name VARCHAR(255) DEFAULT NULL, new_provider_name VARCHAR(255) DEFAULT NULL)
+CREATE FUNCTION pg_tde_set_principal_key(principal_key_name VARCHAR(255), PG_TDE_GLOBAL, provider_name VARCHAR(255) DEFAULT NULL, ensure_new_key BOOLEAN DEFAULT FALSE)
 RETURNS boolean
 AS $$
-    SELECT pg_tde_rotate_principal_key_internal(new_principal_key_name, new_provider_name, TRUE, TRUE);
+    SELECT pg_tde_set_principal_key_internal(principal_key_name, 1, provider_name, ensure_new_key);
 $$
 LANGUAGE SQL;
 
-CREATE FUNCTION pg_tde_set_principal_key(principal_key_name VARCHAR(255), provider_name VARCHAR(255), ensure_new_key BOOLEAN DEFAULT FALSE)
+CREATE FUNCTION pg_tde_set_server_principal_key(principal_key_name VARCHAR(255), PG_TDE_GLOBAL, provider_name VARCHAR(255) DEFAULT NULL, ensure_new_key BOOLEAN DEFAULT FALSE)
 RETURNS boolean
-AS 'MODULE_PATHNAME'
-LANGUAGE C;
+AS $$
+    SELECT pg_tde_set_principal_key_internal(principal_key_name, 2, provider_name, ensure_new_key);
+$$
+LANGUAGE SQL;
 
 CREATE FUNCTION pg_tde_alter_principal_key_keyring(new_provider_name VARCHAR(255))
 RETURNS boolean
@@ -286,8 +297,6 @@ CREATE FUNCTION pg_tde_principal_key_info_internal(is_global BOOLEAN)
 RETURNS TABLE ( principal_key_name text,
                 key_provider_name text,
                 key_provider_id integer,
-                principal_key_internal_name text,
-                principal_key_version integer,
                 key_createion_time timestamp with time zone)
 AS 'MODULE_PATHNAME'
 LANGUAGE C;
@@ -296,8 +305,6 @@ CREATE FUNCTION pg_tde_principal_key_info()
 RETURNS TABLE ( principal_key_name text,
                 key_provider_name text,
                 key_provider_id integer,
-                principal_key_internal_name text,
-                principal_key_version integer,
                 key_createion_time timestamp with time zone)
 AS $$
     SELECT pg_tde_principal_key_info_internal(FALSE);
@@ -308,8 +315,6 @@ CREATE FUNCTION pg_tde_principal_key_info(PG_TDE_GLOBAL)
 RETURNS TABLE ( principal_key_name text,
                 key_provider_name text,
                 key_provider_id integer,
-                principal_key_internal_name text,
-                principal_key_version integer,
                 key_createion_time timestamp with time zone)
 AS $$
     SELECT pg_tde_principal_key_info_internal(TRUE);
@@ -425,11 +430,9 @@ BEGIN
     PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_add_key_provider_vault_v2', 'varchar, JSON, JSON,JSON,JSON');
 
     PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_set_principal_key', 'varchar, varchar, BOOLEAN');
+    PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_set_principal_key', 'varchar, pg_tde_global, varchar, BOOLEAN');
+    PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_set_server_principal_key', 'varchar, pg_tde_global, varchar, BOOLEAN');
     PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_alter_principal_key_keyring', 'varchar');
-
-    PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_rotate_principal_key', 'pg_tde_global, varchar, varchar');
-    PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_rotate_principal_key', 'varchar, varchar');
-    PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_rotate_principal_key_internal', 'varchar, varchar, BOOLEAN, BOOLEAN');
 
     PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_grant_key_management_to_role', 'TEXT');
     PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_revoke_key_management_from_role', 'TEXT');
@@ -456,6 +459,7 @@ AS $$
 BEGIN
     -- Start the transaction block for performing grants
     PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_list_all_key_providers', 'OUT INT, OUT varchar, OUT varchar, OUT JSON');
+    PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_list_all_key_providers', 'pg_tde_global, OUT INT, OUT varchar, OUT varchar, OUT JSON');
     PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_is_encrypted', 'VARCHAR');
 
     PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_principal_key_info_internal', 'BOOLEAN');
@@ -494,11 +498,9 @@ BEGIN
     PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_add_key_provider_vault_v2', 'varchar, JSON, JSON,JSON,JSON');
 
     PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_set_principal_key', 'varchar, varchar, BOOLEAN');
+    PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_set_principal_key', 'varchar, pg_tde_global, varchar, BOOLEAN');
+    PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_set_server_principal_key', 'varchar, pg_tde_global, varchar, BOOLEAN');
     PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_alter_principal_key_keyring', 'varchar');
-
-    PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_rotate_principal_key', 'pg_tde_global, varchar, varchar');
-    PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_rotate_principal_key', 'varchar, varchar');
-    PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_rotate_principal_key_internal', 'varchar, varchar, BOOLEAN, BOOLEAN');
 
     PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_grant_key_management_to_role', 'TEXT');
     PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_revoke_key_management_from_role', 'TEXT');

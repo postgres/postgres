@@ -62,7 +62,7 @@ sub resp_url {
 }
  
 }
-my $pid = MyWebServer->new(8888)->background();
+my $pid = MyWebServer->new(8889)->background();
 
 
 # UPDATE postgresql.conf to include/load pg_tde library
@@ -78,7 +78,7 @@ my ($cmdret, $stdout, $stderr) = $node->psql('postgres', 'CREATE EXTENSION pg_td
 ok($cmdret == 0, "CREATE PGTDE EXTENSION");
 PGTDE::append_to_file($stdout);
 
-$rt_value = $node->psql('postgres', "SELECT pg_tde_add_key_provider_vault_v2('vault-provider', json_object( 'type' VALUE 'remote', 'url' VALUE 'http://localhost:8888/token' ), json_object( 'type' VALUE 'remote', 'url' VALUE 'http://localhost:8888/url' ), to_json('secret'::text), NULL);", extra_params => ['-a']);
+$rt_value = $node->psql('postgres', "SELECT pg_tde_add_key_provider_vault_v2('vault-provider', json_object( 'type' VALUE 'remote', 'url' VALUE 'http://localhost:8889/token' ), json_object( 'type' VALUE 'remote', 'url' VALUE 'http://localhost:8889/url' ), to_json('secret'::text), NULL);", extra_params => ['-a']);
 $rt_value = $node->psql('postgres', "SELECT pg_tde_set_principal_key('test-db-principal-key','vault-provider');", extra_params => ['-a']);
 
 $stdout = $node->safe_psql('postgres', 'CREATE TABLE test_enc2(id SERIAL,k INTEGER,PRIMARY KEY (id)) USING tde_heap_basic;', extra_params => ['-a']);
@@ -108,7 +108,7 @@ PGTDE::append_to_file($stdout);
 # Stop the server
 $node->stop();
 
-system("kill $pid");
+system("kill -9 $pid");
 
 # compare the expected and out file
 my $compare = PGTDE->compare_results();

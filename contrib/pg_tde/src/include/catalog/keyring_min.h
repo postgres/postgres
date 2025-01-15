@@ -56,7 +56,7 @@ typedef enum KeyringReturnCodes
 typedef struct GenericKeyring
 {
     ProviderType type; /* Must be the first field */
-    Oid key_id;
+    int keyring_id;
     char provider_name[MAX_PROVIDER_NAME_LEN];
     char options[MAX_KEYRING_OPTION_LEN]; /* User provided options string*/
 } GenericKeyring;

@@ -18,6 +18,7 @@
 #include "catalog/tde_principal_key.h"
 #include "access/skey.h"
 #include "utils/lsyscache.h"
+#include "utils/memutils.h"
 #include "utils/snapmgr.h"
 #include "utils/fmgroids.h"
 #include "common/pg_tde_utils.h"
@@ -207,6 +208,7 @@ write_key_provider_info(KeyringProvideRecord *provider, Oid database_id,
 	off_t bytes_written = 0;
 	off_t curr_pos = 0;
 	int fd;
+	// Named max, but global key provider oids are stored as negative numbers!
 	int max_provider_id = 0;
 	char kp_info_path[MAXPGPATH] = {0};
 	KeyringProvideRecord existing_provider;
@@ -247,10 +249,14 @@ write_key_provider_info(KeyringProvideRecord *provider, Oid database_id,
 					return provider->provider_id;
 				}
 			}
-			if (max_provider_id < existing_provider.provider_id)
-				max_provider_id = existing_provider.provider_id;
+			if (max_provider_id < abs(existing_provider.provider_id))
+				max_provider_id = abs(existing_provider.provider_id);
 		}
 		provider->provider_id = max_provider_id + 1;
+		if(database_id == GLOBAL_DATA_TDE_OID)
+		{
+			provider->provider_id = -provider->provider_id;
+		}
 		curr_pos = lseek(fd, 0, SEEK_END);
 
 		/*
@@ -353,7 +359,7 @@ pg_tde_add_key_provider_internal(PG_FUNCTION_ARGS)
 Datum
 pg_tde_list_all_key_providers(PG_FUNCTION_ARGS)
 {
-	List *all_providers = GetAllKeyringProviders(MyDatabaseId);
+	List *all_providers = GetAllKeyringProviders(PG_NARGS() == 1 ? GLOBAL_DATA_TDE_OID : MyDatabaseId);
 	ListCell *lc;
 	Tuplestorestate *tupstore;
 	TupleDesc tupdesc;
@@ -393,7 +399,7 @@ pg_tde_list_all_key_providers(PG_FUNCTION_ARGS)
 		GenericKeyring *keyring = (GenericKeyring *) lfirst(lc);
 		int i = 0;
 
-		values[i++] = Int32GetDatum(keyring->key_id);
+		values[i++] = Int32GetDatum(keyring->keyring_id);
 		values[i++] = CStringGetTextDatum(keyring->provider_name);
 		values[i++] = CStringGetTextDatum(get_keyring_provider_typename(keyring->type));
 		values[i++] = CStringGetTextDatum(keyring->options);
@@ -408,8 +414,9 @@ pg_tde_list_all_key_providers(PG_FUNCTION_ARGS)
 GenericKeyring *
 GetKeyProviderByID(int provider_id, Oid dbOid)
 {
+	Oid realOid = provider_id < 0 ? GLOBAL_DATA_TDE_OID : dbOid;
 	GenericKeyring *keyring = NULL;
-	List *providers = scan_key_provider_file(PROVIDER_SCAN_BY_ID, &provider_id, dbOid);
+	List *providers = scan_key_provider_file(PROVIDER_SCAN_BY_ID, &provider_id, realOid);
 
 	if (providers != NIL)
 	{
@@ -425,8 +432,9 @@ GetKeyProviderByID(int provider_id, Oid dbOid)
 GenericKeyring *
 GetKeyProviderByID(int provider_id, Oid dbOid)
 {
+	Oid realOid = provider_id < 0 ? GLOBAL_DATA_TDE_OID : dbOid;
 	GenericKeyring *keyring = NULL;
-	SimplePtrList *providers = scan_key_provider_file(PROVIDER_SCAN_BY_ID, &provider_id, dbOid);
+	SimplePtrList *providers = scan_key_provider_file(PROVIDER_SCAN_BY_ID, &provider_id, realOid);
 
 	if (providers != NULL)
 	{
@@ -543,7 +551,7 @@ load_keyring_provider_from_record(KeyringProvideRecord *provider)
 	keyring = load_keyring_provider_options(provider->provider_type, provider->options);
 	if (keyring)
 	{
-		keyring->key_id = provider->provider_id;
+		keyring->keyring_id = provider->provider_id;
 		strncpy(keyring->provider_name, provider->provider_name, sizeof(keyring->provider_name));
 		keyring->type = provider->provider_type;
 		strncpy(keyring->options, provider->options, sizeof(keyring->options));
@@ -662,7 +670,7 @@ debug_print_kerying(GenericKeyring *keyring)
 
 	elog(debug_level, "Keyring type: %d", keyring->type);
 	elog(debug_level, "Keyring name: %s", keyring->provider_name);
-	elog(debug_level, "Keyring id: %d", keyring->key_id);
+	elog(debug_level, "Keyring id: %d", keyring->keyring_id);
 	switch (keyring->type)
 	{
 		case FILE_KEY_PROVIDER:

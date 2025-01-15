@@ -116,6 +116,8 @@ _PG_init(void)
 #ifdef PERCONA_EXT
 	XLogInitGUC();
 #endif
+	
+	PrincipalKeyGucInit();
 	prev_shmem_request_hook = shmem_request_hook;
 	shmem_request_hook = tde_shmem_request;
 	prev_shmem_startup_hook = shmem_startup_hook;

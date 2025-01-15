@@ -40,4 +40,5 @@ jobs:
           name: testlog-ubuntu-${{ matrix.ubuntu_version }}.04-meson-${{ matrix.build_type }}
           path: |
             src/build/testrun/
+            src/contrib/pg_tde/t/
           retention-days: 3
