@@ -12,6 +12,6 @@
 #ifndef PG_TRACE_H
 #define PG_TRACE_H
 
-#include "utils/probes.h"
+#include "utils/probes.h"		/* IWYU pragma: export */
 
 #endif							/* PG_TRACE_H */

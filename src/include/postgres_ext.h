@@ -19,6 +19,7 @@
  *
  *-------------------------------------------------------------------------
  */
+/* IWYU pragma: always_keep */
 
 #ifndef POSTGRES_EXT_H
 #define POSTGRES_EXT_H

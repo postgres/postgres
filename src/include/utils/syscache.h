@@ -20,7 +20,7 @@
 #include "access/htup.h"
 /* we intentionally do not include utils/catcache.h here */
 
-#include "catalog/syscache_ids.h"
+#include "catalog/syscache_ids.h"	/* IWYU pragma: export */
 
 extern void InitCatalogCache(void);
 extern void InitCatalogCachePhase2(void);

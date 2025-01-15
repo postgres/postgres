@@ -15,6 +15,7 @@
  *
  *-------------------------------------------------------------------------
  */
+/* IWYU pragma: always_keep */
 #ifndef POSTGRES_FE_H
 #define POSTGRES_FE_H
 
@@ -22,8 +23,12 @@
 #define FRONTEND 1
 #endif
 
+/* IWYU pragma: begin_exports */
+
 #include "c.h"
 
 #include "common/fe_memutils.h"
+
+/* IWYU pragma: end_exports */
 
 #endif							/* POSTGRES_FE_H */

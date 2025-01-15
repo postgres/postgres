@@ -16,11 +16,11 @@
 #include "portability/instr_time.h"
 #include "postmaster/pgarch.h"	/* for MAX_XFN_CHARS */
 #include "replication/conflict.h"
-#include "utils/backend_progress.h" /* for backward compatibility */
-#include "utils/backend_status.h"	/* for backward compatibility */
+#include "utils/backend_progress.h" /* for backward compatibility */	/* IWYU pragma: export */
+#include "utils/backend_status.h"	/* for backward compatibility */	/* IWYU pragma: export */
 #include "utils/pgstat_kind.h"
 #include "utils/relcache.h"
-#include "utils/wait_event.h"	/* for backward compatibility */
+#include "utils/wait_event.h"	/* for backward compatibility */	/* IWYU pragma: export */
 
 
 /* ----------

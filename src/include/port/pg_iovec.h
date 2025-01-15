@@ -16,7 +16,7 @@
 #ifndef WIN32
 
 #include <limits.h>
-#include <sys/uio.h>
+#include <sys/uio.h>			/* IWYU pragma: export */
 #include <unistd.h>
 
 #else

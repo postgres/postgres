@@ -16,6 +16,7 @@
  *
  *-------------------------------------------------------------------------
  */
+/* IWYU pragma: always_keep */
 /*
  *----------------------------------------------------------------
  *	 TABLE OF CONTENTS
@@ -45,6 +46,8 @@
  */
 #ifndef C_H
 #define C_H
+
+/* IWYU pragma: begin_exports */
 
 /*
  * These headers must be included before any system headers, because on some
@@ -1326,5 +1329,7 @@ typedef intptr_t sigjmp_buf[5];
 
 /* /port compatibility functions */
 #include "port.h"
+
+/* IWYU pragma: end_exports */
 
 #endif							/* C_H */

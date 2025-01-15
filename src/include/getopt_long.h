@@ -6,10 +6,11 @@
  *
  * src/include/getopt_long.h
  */
+/* IWYU pragma: always_keep */
 #ifndef GETOPT_LONG_H
 #define GETOPT_LONG_H
 
-#include "pg_getopt.h"
+#include "pg_getopt.h"			/* IWYU pragma: export */
 
 #ifndef HAVE_STRUCT_OPTION
 

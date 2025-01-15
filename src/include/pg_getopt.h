@@ -15,15 +15,16 @@
  *
  * src/include/pg_getopt.h
  */
+/* IWYU pragma: always_keep */
 #ifndef PG_GETOPT_H
 #define PG_GETOPT_H
 
 /* POSIX says getopt() is provided by unistd.h */
-#include <unistd.h>
+#include <unistd.h>				/* IWYU pragma: export */
 
 /* rely on the system's getopt.h if present */
 #ifdef HAVE_GETOPT_H
-#include <getopt.h>
+#include <getopt.h>				/* IWYU pragma: export */
 #endif
 
 /*

@@ -13,7 +13,7 @@
 #ifndef PG_PTHREAD_H
 #define PG_PTHREAD_H
 
-#include <pthread.h>
+#include <pthread.h>			/* IWYU pragma: export */
 
 #ifndef HAVE_PTHREAD_BARRIER_WAIT
 
