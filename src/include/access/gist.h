@@ -247,6 +247,7 @@ typedef struct
 	do { (e).key = (k); (e).rel = (r); (e).page = (pg); \
 		 (e).offset = (o); (e).leafkey = (l); } while (0)
 
-extern StrategyNumber GistTranslateStratnum(Oid opclass, StrategyNumber strat);
+enum CompareType;
+extern StrategyNumber GistTranslateStratnum(Oid opclass, enum CompareType cmp);
 
 #endif							/* GIST_H */

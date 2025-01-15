@@ -4,6 +4,7 @@
 #include "postgres.h"
 
 #include "access/stratnum.h"
+#include "nodes/primnodes.h"
 #include "utils/builtins.h"
 
 PG_MODULE_MAGIC;
@@ -60,19 +61,19 @@ gbt_decompress(PG_FUNCTION_ARGS)
 Datum
 gist_stratnum_btree(PG_FUNCTION_ARGS)
 {
-	StrategyNumber strat = PG_GETARG_UINT16(0);
+	CompareType cmptype = PG_GETARG_INT32(0);
 
-	switch (strat)
+	switch (cmptype)
 	{
-		case RTEqualStrategyNumber:
+		case COMPARE_EQ:
 			PG_RETURN_UINT16(BTEqualStrategyNumber);
-		case RTLessStrategyNumber:
+		case COMPARE_LT:
 			PG_RETURN_UINT16(BTLessStrategyNumber);
-		case RTLessEqualStrategyNumber:
+		case COMPARE_LE:
 			PG_RETURN_UINT16(BTLessEqualStrategyNumber);
-		case RTGreaterStrategyNumber:
+		case COMPARE_GT:
 			PG_RETURN_UINT16(BTGreaterStrategyNumber);
-		case RTGreaterEqualStrategyNumber:
+		case COMPARE_GE:
 			PG_RETURN_UINT16(BTGreaterEqualStrategyNumber);
 		default:
 			PG_RETURN_UINT16(InvalidStrategy);

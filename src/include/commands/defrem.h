@@ -50,8 +50,8 @@ extern bool CheckIndexCompatible(Oid oldId,
 extern Oid	GetDefaultOpClass(Oid type_id, Oid am_id);
 extern Oid	ResolveOpClass(const List *opclass, Oid attrType,
 						   const char *accessMethodName, Oid accessMethodId);
-extern void GetOperatorFromWellKnownStrategy(Oid opclass, Oid rhstype,
-											 Oid *opid, StrategyNumber *strat);
+extern void GetOperatorFromCompareType(Oid opclass, Oid rhstype, CompareType cmptype,
+									   Oid *opid, StrategyNumber *strat);
 
 /* commands/functioncmds.c */
 extern ObjectAddress CreateFunction(ParseState *pstate, CreateFunctionStmt *stmt);

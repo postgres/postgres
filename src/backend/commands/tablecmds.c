@@ -9997,7 +9997,7 @@ ATAddForeignKeyConstraint(List **wqueue, AlteredTableInfo *tab, Relation rel,
 
 		if (with_period)
 		{
-			StrategyNumber rtstrategy;
+			CompareType cmptype;
 			bool		for_overlaps = with_period && i == numpks - 1;
 
 			/*
@@ -10007,14 +10007,14 @@ ATAddForeignKeyConstraint(List **wqueue, AlteredTableInfo *tab, Relation rel,
 			if (amid != GIST_AM_OID)
 				elog(ERROR, "only GiST indexes are supported for temporal foreign keys");
 
-			rtstrategy = for_overlaps ? RTOverlapStrategyNumber : RTEqualStrategyNumber;
+			cmptype = for_overlaps ? COMPARE_OVERLAP : COMPARE_EQ;
 
 			/*
 			 * An opclass can use whatever strategy numbers it wants, so we
 			 * ask the opclass what number it actually uses instead of our RT*
 			 * constants.
 			 */
-			eqstrategy = GistTranslateStratnum(opclasses[i], rtstrategy);
+			eqstrategy = GistTranslateStratnum(opclasses[i], cmptype);
 			if (eqstrategy == InvalidStrategy)
 			{
 				HeapTuple	tuple;
@@ -10028,8 +10028,8 @@ ATAddForeignKeyConstraint(List **wqueue, AlteredTableInfo *tab, Relation rel,
 						for_overlaps
 						? errmsg("could not identify an overlaps operator for foreign key")
 						: errmsg("could not identify an equality operator for foreign key"),
-						errdetail("Could not translate strategy number %d for operator class \"%s\" for access method \"%s\".",
-								  rtstrategy, NameStr(((Form_pg_opclass) GETSTRUCT(tuple))->opcname), "gist"));
+						errdetail("Could not translate compare type %d for operator class \"%s\" for access method \"%s\".",
+								  cmptype, NameStr(((Form_pg_opclass) GETSTRUCT(tuple))->opcname), "gist"));
 			}
 		}
 		else

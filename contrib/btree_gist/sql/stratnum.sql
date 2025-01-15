@@ -1,3 +1,3 @@
 -- test stratnum support func
-SELECT gist_stratnum_btree(3::smallint);
-SELECT gist_stratnum_btree(18::smallint);
+SELECT gist_stratnum_btree(7);
+SELECT gist_stratnum_btree(3);

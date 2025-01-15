@@ -1058,27 +1058,44 @@ gistGetFakeLSN(Relation rel)
 }
 
 /*
- * Returns the same number that was received.
- *
- * This is for GiST opclasses that use the RT*StrategyNumber constants.
+ * This is a stratnum support function for GiST opclasses that use the
+ * RT*StrategyNumber constants.
  */
 Datum
-gist_stratnum_identity(PG_FUNCTION_ARGS)
+gist_stratnum_common(PG_FUNCTION_ARGS)
 {
-	StrategyNumber strat = PG_GETARG_UINT16(0);
+	CompareType cmptype = PG_GETARG_INT32(0);
 
-	PG_RETURN_UINT16(strat);
+	switch (cmptype)
+	{
+		case COMPARE_EQ:
+			PG_RETURN_UINT16(RTEqualStrategyNumber);
+		case COMPARE_LT:
+			PG_RETURN_UINT16(RTLessStrategyNumber);
+		case COMPARE_LE:
+			PG_RETURN_UINT16(RTLessEqualStrategyNumber);
+		case COMPARE_GT:
+			PG_RETURN_UINT16(RTGreaterStrategyNumber);
+		case COMPARE_GE:
+			PG_RETURN_UINT16(RTGreaterEqualStrategyNumber);
+		case COMPARE_OVERLAP:
+			PG_RETURN_UINT16(RTOverlapStrategyNumber);
+		case COMPARE_CONTAINED_BY:
+			PG_RETURN_UINT16(RTContainedByStrategyNumber);
+		default:
+			PG_RETURN_UINT16(InvalidStrategy);
+	}
 }
 
 /*
- * Returns the opclass's private stratnum used for the given strategy.
+ * Returns the opclass's private stratnum used for the given compare type.
  *
  * Calls the opclass's GIST_STRATNUM_PROC support function, if any,
  * and returns the result.
  * Returns InvalidStrategy if the function is not defined.
  */
 StrategyNumber
-GistTranslateStratnum(Oid opclass, StrategyNumber strat)
+GistTranslateStratnum(Oid opclass, CompareType cmptype)
 {
 	Oid			opfamily;
 	Oid			opcintype;
@@ -1095,6 +1112,6 @@ GistTranslateStratnum(Oid opclass, StrategyNumber strat)
 		return InvalidStrategy;
 
 	/* Ask the translation function */
-	result = OidFunctionCall1Coll(funcid, InvalidOid, UInt16GetDatum(strat));
+	result = OidFunctionCall1Coll(funcid, InvalidOid, Int32GetDatum(cmptype));
 	return DatumGetUInt16(result);
 }

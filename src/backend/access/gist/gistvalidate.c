@@ -148,7 +148,7 @@ gistvalidate(Oid opclassoid)
 				break;
 			case GIST_STRATNUM_PROC:
 				ok = check_amproc_signature(procform->amproc, INT2OID, true,
-											1, 1, INT2OID);
+											1, 1, INT4OID);
 				break;
 			default:
 				ereport(INFO,

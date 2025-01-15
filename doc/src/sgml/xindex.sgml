@@ -592,7 +592,7 @@
       </row>
       <row>
        <entry><function>stratnum</function></entry>
-       <entry>translate well-known strategy numbers to ones
+       <entry>translate compare types to strategy numbers
         used by the operator class (optional)</entry>
        <entry>12</entry>
       </row>

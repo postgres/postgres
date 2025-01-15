@@ -891,15 +891,15 @@ SELECT pg_column_toast_chunk_id(a) IS NULL,
 DROP TABLE test_chunk_id;
 DROP FUNCTION explain_mask_costs(text, bool, bool, bool, bool);
 -- test stratnum support functions
-SELECT gist_stratnum_identity(3::smallint);
- gist_stratnum_identity 
-------------------------
-                      3
+SELECT gist_stratnum_common(7);
+ gist_stratnum_common 
+----------------------
+                    3
 (1 row)
 
-SELECT gist_stratnum_identity(18::smallint);
- gist_stratnum_identity 
-------------------------
-                     18
+SELECT gist_stratnum_common(3);
+ gist_stratnum_common 
+----------------------
+                   18
 (1 row)
 

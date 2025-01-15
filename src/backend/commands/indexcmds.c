@@ -2178,15 +2178,15 @@ ComputeIndexAttrs(IndexInfo *indexInfo,
 		}
 		else if (iswithoutoverlaps)
 		{
+			CompareType cmptype;
 			StrategyNumber strat;
 			Oid			opid;
 
 			if (attn == nkeycols - 1)
-				strat = RTOverlapStrategyNumber;
+				cmptype = COMPARE_OVERLAP;
 			else
-				strat = RTEqualStrategyNumber;
-			GetOperatorFromWellKnownStrategy(opclassOids[attn], InvalidOid,
-											 &opid, &strat);
+				cmptype = COMPARE_EQ;
+			GetOperatorFromCompareType(opclassOids[attn], InvalidOid, cmptype, &opid, &strat);
 			indexInfo->ii_ExclusionOps[attn] = opid;
 			indexInfo->ii_ExclusionProcs[attn] = get_opcode(opid);
 			indexInfo->ii_ExclusionStrats[attn] = strat;
@@ -2422,30 +2422,28 @@ GetDefaultOpClass(Oid type_id, Oid am_id)
 }
 
 /*
- * GetOperatorFromWellKnownStrategy
+ * GetOperatorFromCompareType
  *
  * opclass - the opclass to use
  * rhstype - the type for the right-hand side, or InvalidOid to use the type of the given opclass.
+ * cmptype - kind of operator to find
  * opid - holds the operator we found
- * strat - holds the input and output strategy number
+ * strat - holds the output strategy number
  *
- * Finds an operator from a "well-known" strategy number.  This is used for
- * temporal index constraints (and other temporal features) to look up
- * equality and overlaps operators, since the strategy numbers for non-btree
- * indexams need not follow any fixed scheme.  We ask an opclass support
- * function to translate from the well-known number to the internal value.  If
- * the function isn't defined or it gives no result, we return
- * InvalidStrategy.
+ * Finds an operator from a CompareType.  This is used for temporal index
+ * constraints (and other temporal features) to look up equality and overlaps
+ * operators.  We ask an opclass support function to translate from the
+ * compare type to the internal strategy numbers.  If the function isn't
+ * defined or it gives no result, we set *strat to InvalidStrategy.
  */
 void
-GetOperatorFromWellKnownStrategy(Oid opclass, Oid rhstype,
-								 Oid *opid, StrategyNumber *strat)
+GetOperatorFromCompareType(Oid opclass, Oid rhstype, CompareType cmptype,
+						   Oid *opid, StrategyNumber *strat)
 {
 	Oid			opfamily;
 	Oid			opcintype;
-	StrategyNumber instrat = *strat;
 
-	Assert(instrat == RTEqualStrategyNumber || instrat == RTOverlapStrategyNumber || instrat == RTContainedByStrategyNumber);
+	Assert(cmptype == COMPARE_EQ || cmptype == COMPARE_OVERLAP || cmptype == COMPARE_CONTAINED_BY);
 
 	*opid = InvalidOid;
 
@@ -2457,7 +2455,7 @@ GetOperatorFromWellKnownStrategy(Oid opclass, Oid rhstype,
 		 * For now we only need GiST support, but this could support other
 		 * indexams if we wanted.
 		 */
-		*strat = GistTranslateStratnum(opclass, instrat);
+		*strat = GistTranslateStratnum(opclass, cmptype);
 		if (*strat == InvalidStrategy)
 		{
 			HeapTuple	tuple;
@@ -2468,11 +2466,11 @@ GetOperatorFromWellKnownStrategy(Oid opclass, Oid rhstype,
 
 			ereport(ERROR,
 					errcode(ERRCODE_UNDEFINED_OBJECT),
-					instrat == RTEqualStrategyNumber ? errmsg("could not identify an equality operator for type %s", format_type_be(opcintype)) :
-					instrat == RTOverlapStrategyNumber ? errmsg("could not identify an overlaps operator for type %s", format_type_be(opcintype)) :
-					instrat == RTContainedByStrategyNumber ? errmsg("could not identify a contained-by operator for type %s", format_type_be(opcintype)) : 0,
-					errdetail("Could not translate strategy number %d for operator class \"%s\" for access method \"%s\".",
-							  instrat, NameStr(((Form_pg_opclass) GETSTRUCT(tuple))->opcname), "gist"));
+					cmptype = COMPARE_EQ ? errmsg("could not identify an equality operator for type %s", format_type_be(opcintype)) :
+					cmptype == COMPARE_OVERLAP ? errmsg("could not identify an overlaps operator for type %s", format_type_be(opcintype)) :
+					cmptype == COMPARE_CONTAINED_BY ? errmsg("could not identify a contained-by operator for type %s", format_type_be(opcintype)) : 0,
+					errdetail("Could not translate compare type %d for operator class \"%s\" for access method \"%s\".",
+							  cmptype, NameStr(((Form_pg_opclass) GETSTRUCT(tuple))->opcname), "gist"));
 		}
 
 		/*
@@ -2495,9 +2493,9 @@ GetOperatorFromWellKnownStrategy(Oid opclass, Oid rhstype,
 
 		ereport(ERROR,
 				errcode(ERRCODE_UNDEFINED_OBJECT),
-				instrat == RTEqualStrategyNumber ? errmsg("could not identify an equality operator for type %s", format_type_be(opcintype)) :
-				instrat == RTOverlapStrategyNumber ? errmsg("could not identify an overlaps operator for type %s", format_type_be(opcintype)) :
-				instrat == RTContainedByStrategyNumber ? errmsg("could not identify a contained-by operator for type %s", format_type_be(opcintype)) : 0,
+				cmptype == COMPARE_EQ ? errmsg("could not identify an equality operator for type %s", format_type_be(opcintype)) :
+				cmptype == COMPARE_OVERLAP ? errmsg("could not identify an overlaps operator for type %s", format_type_be(opcintype)) :
+				cmptype == COMPARE_CONTAINED_BY ? errmsg("could not identify a contained-by operator for type %s", format_type_be(opcintype)) : 0,
 				errdetail("There is no suitable operator in operator family \"%s\" for access method \"%s\".",
 						  NameStr(((Form_pg_opfamily) GETSTRUCT(tuple))->opfname), "gist"));
 	}

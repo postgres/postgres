@@ -12425,8 +12425,8 @@
 
 # GiST stratnum implementations
 { oid => '8047', descr => 'GiST support',
-  proname => 'gist_stratnum_identity', prorettype => 'int2',
-  proargtypes => 'int2',
-  prosrc => 'gist_stratnum_identity' },
+  proname => 'gist_stratnum_common', prorettype => 'int2',
+  proargtypes => 'int4',
+  prosrc => 'gist_stratnum_common' },
 
 ]

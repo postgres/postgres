@@ -1647,22 +1647,22 @@ FindFKPeriodOpers(Oid opclass,
 	 * of the old value, then we can treat the attribute as if it didn't
 	 * change, and skip the RI check.
 	 */
-	strat = RTContainedByStrategyNumber;
-	GetOperatorFromWellKnownStrategy(opclass,
-									 InvalidOid,
-									 containedbyoperoid,
-									 &strat);
+	GetOperatorFromCompareType(opclass,
+							   InvalidOid,
+							   COMPARE_CONTAINED_BY,
+							   containedbyoperoid,
+							   &strat);
 
 	/*
 	 * Now look up the ContainedBy operator. Its left arg must be the type of
 	 * the column (or rather of the opclass). Its right arg must match the
 	 * return type of the support proc.
 	 */
-	strat = RTContainedByStrategyNumber;
-	GetOperatorFromWellKnownStrategy(opclass,
-									 ANYMULTIRANGEOID,
-									 aggedcontainedbyoperoid,
-									 &strat);
+	GetOperatorFromCompareType(opclass,
+							   ANYMULTIRANGEOID,
+							   COMPARE_CONTAINED_BY,
+							   aggedcontainedbyoperoid,
+							   &strat);
 }
 
 /*

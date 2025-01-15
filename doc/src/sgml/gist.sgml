@@ -290,8 +290,8 @@ CREATE INDEX ON my_table USING GIST (my_inet_column inet_ops);
    The optional eleventh method <function>sortsupport</function> is used to
    speed up building a <acronym>GiST</acronym> index.
    The optional twelfth method <function>stratnum</function> is used to
-   translate well-known <literal>RT*StrategyNumber</literal>s (from
-   <filename>src/include/access/stratnum.h</filename>) into strategy numbers
+   translate compare types (from
+   <filename>src/include/nodes/primnodes.h</filename>) into strategy numbers
    used by the operator class.  This lets the core code look up operators for
    temporal constraint indexes.
  </para>
@@ -1173,8 +1173,8 @@ my_sortsupport(PG_FUNCTION_ARGS)
      <term><function>stratnum</function></term>
      <listitem>
       <para>
-       Given an <literal>RT*StrategyNumber</literal> value from
-       <filename>src/include/access/stratnum.h</filename>, returns a strategy
+       Given a <literal>CompareType</literal> value from
+       <filename>src/include/nodes/primnodes.h</filename>, returns a strategy
        number used by this operator class for matching functionality.  The
        function should return <literal>InvalidStrategy</literal> if the
        operator class has no matching strategy.
@@ -1184,7 +1184,7 @@ my_sortsupport(PG_FUNCTION_ARGS)
        This is used for temporal index constraints (i.e., <literal>PRIMARY
        KEY</literal> and <literal>UNIQUE</literal>).  If the operator class
        provides this function and it returns results for
-       <literal>RTEqualStrategyNumber</literal>, it can be used in the
+       <literal>COMPARE_EQ</literal>, it can be used in the
        non-<literal>WITHOUT OVERLAPS</literal> part(s) of an index constraint.
       </para>
 
@@ -1194,7 +1194,7 @@ my_sortsupport(PG_FUNCTION_ARGS)
 
 <programlisting>
 CREATE OR REPLACE FUNCTION my_stratnum(integer)
-RETURNS integer
+RETURNS smallint
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT;
 </programlisting>
@@ -1209,12 +1209,12 @@ PG_FUNCTION_INFO_V1(my_stratnum);
 Datum
 my_stratnum(PG_FUNCTION_ARGS)
 {
-    StrategyNumber strategy = (StrategyNumber) PG_GETARG_UINT16(1);
+    CompareType cmptype = PG_GETARG_INT32(0);
     StrategyNumber ret = InvalidStrategy;
 
-    switch (strategy)
+    switch (cmptype)
     {
-        case RTEqualStrategyNumber:
+        case COMPARE_EQ:
             ret = BTEqualStrategyNumber;
     }
 
@@ -1226,9 +1226,9 @@ my_stratnum(PG_FUNCTION_ARGS)
       <para>
        One translation function is provided by
        <productname>PostgreSQL</productname>:
-       <literal>gist_stratnum_identity</literal> is for operator classes that
-       already use the <literal>RT*StrategyNumber</literal> constants.  It
-       returns whatever is passed to it.  The <literal>btree_gist</literal>
+       <literal>gist_stratnum_common</literal> is for operator classes that
+       use the <literal>RT*StrategyNumber</literal> constants.
+       The <literal>btree_gist</literal>
        extension defines a second translation function,
        <literal>gist_stratnum_btree</literal>, for operator classes that use
        the <literal>BT*StrategyNumber</literal> constants.
