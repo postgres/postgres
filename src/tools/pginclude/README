@@ -1,5 +1,47 @@
 src/tools/pginclude/README
 
+This directory contains some scripts and information for managing
+header files and includes in PostgreSQL source code.
+
+
+include-what-you-use
+====================
+
+include-what-you-use (IWYU) (<https://include-what-you-use.org/>) is a
+tool for finding missing or superfluous includes in C source files.
+
+With a compilation database (compile_commands.json, produced by
+meson), it can be run like this, over the whole source tree:
+
+    iwyu_tool.py -p build .
+
+(this will likely be very noisy) or for individual files:
+
+    iwyu_tool.py -p build src/bin/psql/startup.c
+
+Various other invocation options are available.
+
+It is recommended to use at least version 0.23.  Earlier versions give
+advice that is incompatible with the compiler warning option
+-Wmissing-variable-declarations.
+
+clangd (the language server) can automatically give IWYU-style advice;
+see <https://clangd.llvm.org/guides/include-cleaner>.
+
+The source code contains some "IWYU pragma" comments to tell IWYU
+about some PostgreSQL include file conventions (such as that a header
+such as "postgres.h" should always be included, even if it doesn't
+contribute any symbols used by the particular source file) and to
+silence a few warnings that are difficult to fix.  See
+<https://github.com/include-what-you-use/include-what-you-use/blob/master/docs/IWYUPragmas.md>
+for documentation about those.
+
+Of course, any include changes suggested by this or other tools should
+be checked and verified carefully.  Note that some includes are only
+used on some platforms or with some compilation options, so blindly
+following the produced advice is not recommended.
+
+
 headerscheck
 ============
 
