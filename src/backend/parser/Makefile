@@ -59,7 +59,6 @@ gram.c: BISON_CHECK_CMD = $(PERL) $(srcdir)/check_keywords.pl $< $(top_srcdir)/s
 
 scan.c: FLEXFLAGS = -CF -p -p
 scan.c: FLEX_NO_BACKUP=yes
-scan.c: FLEX_FIX_WARNING=yes
 
 
 # Force these dependencies to be known even without dependency info built:

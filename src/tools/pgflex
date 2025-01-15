@@ -4,7 +4,6 @@
 # Wrapper around flex that:
 # - ensures lex.backup is created in a private directory
 # - can error out if lex.backup is created (--no-backup)
-# - can fix warnings (--fix-warnings)
 # - works around concurrency issues with win_flex.exe:
 #   https://github.com/lexxmark/winflexbison/issues/86
 
@@ -28,8 +27,6 @@ parser.add_argument('-o', dest='output_file', type=abspath, required=True,
 parser.add_argument('-i', dest='input_file', type=abspath, help='input file')
 
 
-parser.add_argument('--fix-warnings', action='store_true',
-                    help='whether to fix warnings in generated file')
 parser.add_argument('--no-backup', action='store_true',
                     help='whether no_backup is enabled or not')
 
@@ -71,15 +68,5 @@ if args.no_backup:
         if len(lex.readlines()) != 1:
             sys.exit('Scanner requires backup; see lex.backup.')
     os.remove('lex.backup')
-
-# fix warnings
-if args.fix_warnings:
-    fix_warning_script = os.path.join(args.srcdir,
-                                      'src/tools/fix-old-flex-code.pl')
-
-    command = [args.perl, fix_warning_script, args.output_file]
-    sp = subprocess.run(command)
-    if sp.returncode != 0:
-        sys.exit(sp.returncode)
 
 sys.exit(0)

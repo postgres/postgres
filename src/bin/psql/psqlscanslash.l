@@ -57,15 +57,6 @@ static void evaluate_backtick(PsqlScanState state);
 
 #define ECHO psqlscan_emit(cur_state, yytext, yyleng)
 
-/*
- * Work around a bug in flex 2.5.35: it emits a couple of functions that
- * it forgets to emit declarations for.  Since we use -Wmissing-prototypes,
- * this would cause warnings.  Providing our own declarations should be
- * harmless even when the bug gets fixed.
- */
-extern int	slash_yyget_column(yyscan_t yyscanner);
-extern void slash_yyset_column(int column_no, yyscan_t yyscanner);
-
 /* LCOV_EXCL_START */
 
 %}

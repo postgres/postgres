@@ -51,7 +51,6 @@ libpgfeutils.a: $(OBJS)
 
 psqlscan.c: FLEXFLAGS = -Cfe -p -p
 psqlscan.c: FLEX_NO_BACKUP=yes
-psqlscan.c: FLEX_FIX_WARNING=yes
 
 # libpgfeutils could be useful to contrib, so install it
 install: all installdirs

@@ -60,7 +60,6 @@ sql_help.h: create_help.pl $(wildcard $(REFDOCDIR)/*.sgml)
 
 psqlscanslash.c: FLEXFLAGS = -Cfe -p -p
 psqlscanslash.c: FLEX_NO_BACKUP=yes
-psqlscanslash.c: FLEX_FIX_WARNING=yes
 
 tab-complete.c: gen_tabcomplete.pl tab-complete.in.c
 	$(PERL) $^ --outfile $@
