@@ -3675,7 +3675,7 @@ expand_indexqual_rowcompare(PlannerInfo *root,
 		{
 			RowCompareExpr *rc = makeNode(RowCompareExpr);
 
-			rc->rctype = (RowCompareType) op_strategy;
+			rc->cmptype = (CompareType) op_strategy;
 			rc->opnos = new_ops;
 			rc->opfamilies = list_copy_head(clause->opfamilies,
 											matching_cols);

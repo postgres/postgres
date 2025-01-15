@@ -1436,6 +1436,31 @@ typedef struct RowExpr
 } RowExpr;
 
 /*
+ * CompareType - fundamental semantics of certain operators
+ *
+ * These enum symbols represent the fundamental semantics of certain operators
+ * that the system needs to have some hardcoded knowledge about.  (For
+ * example, RowCompareExpr needs to know which operators can be determined to
+ * act like =, <>, <, etc.)  Index access methods map (some of) strategy
+ * numbers to these values so that the system can know about the meaning of
+ * (some of) the operators without needing hardcoded knowledge of index AM's
+ * strategy numbering.
+ *
+ * XXX Currently, this mapping is not fully developed and the values are
+ * chosen to match btree strategy numbers, which is not going to work very
+ * well for other access methods.
+ */
+typedef enum CompareType
+{
+	COMPARE_LT = 1,				/* BTLessStrategyNumber */
+	COMPARE_LE = 2,				/* BTLessEqualStrategyNumber */
+	COMPARE_EQ = 3,				/* BTEqualStrategyNumber */
+	COMPARE_GE = 4,				/* BTGreaterEqualStrategyNumber */
+	COMPARE_GT = 5,				/* BTGreaterStrategyNumber */
+	COMPARE_NE = 6,				/* no such btree strategy */
+} CompareType;
+
+/*
  * RowCompareExpr - row-wise comparison, such as (a, b) <= (1, 2)
  *
  * We support row comparison for any operator that can be determined to
@@ -1446,26 +1471,14 @@ typedef struct RowExpr
  *
  * A RowCompareExpr node is only generated for the < <= > >= cases;
  * the = and <> cases are translated to simple AND or OR combinations
- * of the pairwise comparisons.  However, we include = and <> in the
- * RowCompareType enum for the convenience of parser logic.
+ * of the pairwise comparisons.
  */
-typedef enum RowCompareType
-{
-	/* Values of this enum are chosen to match btree strategy numbers */
-	ROWCOMPARE_LT = 1,			/* BTLessStrategyNumber */
-	ROWCOMPARE_LE = 2,			/* BTLessEqualStrategyNumber */
-	ROWCOMPARE_EQ = 3,			/* BTEqualStrategyNumber */
-	ROWCOMPARE_GE = 4,			/* BTGreaterEqualStrategyNumber */
-	ROWCOMPARE_GT = 5,			/* BTGreaterStrategyNumber */
-	ROWCOMPARE_NE = 6,			/* no such btree strategy */
-} RowCompareType;
-
 typedef struct RowCompareExpr
 {
 	Expr		xpr;
 
 	/* LT LE GE or GT, never EQ or NE */
-	RowCompareType rctype;
+	CompareType cmptype;
 	/* OID list of pairwise comparison ops */
 	List	   *opnos pg_node_attr(query_jumble_ignore);
 	/* OID list of containing operator families */

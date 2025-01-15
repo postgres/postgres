@@ -595,7 +595,7 @@ get_op_hash_functions(Oid opno,
  *
  * In addition to the normal btree operators, we consider a <> operator to be
  * a "member" of an opfamily if its negator is an equality operator of the
- * opfamily.  ROWCOMPARE_NE is returned as the strategy number for this case.
+ * opfamily.  COMPARE_NE is returned as the strategy number for this case.
  */
 List *
 get_op_btree_interpretation(Oid opno)
@@ -666,11 +666,11 @@ get_op_btree_interpretation(Oid opno)
 				if (op_strategy != BTEqualStrategyNumber)
 					continue;
 
-				/* OK, report it with "strategy" ROWCOMPARE_NE */
+				/* OK, report it with "strategy" COMPARE_NE */
 				thisresult = (OpBtreeInterpretation *)
 					palloc(sizeof(OpBtreeInterpretation));
 				thisresult->opfamily_id = op_form->amopfamily;
-				thisresult->strategy = ROWCOMPARE_NE;
+				thisresult->strategy = COMPARE_NE;
 				thisresult->oplefttype = op_form->amoplefttype;
 				thisresult->oprighttype = op_form->amoprighttype;
 				result = lappend(result, thisresult);

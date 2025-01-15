@@ -458,6 +458,7 @@ CommonEntry
 CommonTableExpr
 CompactAttribute
 CompareScalarsContext
+CompareType
 CompiledExprState
 CompositeIOData
 CompositeTypeStmt
@@ -2494,7 +2495,6 @@ RoleSpecType
 RoleStmtType
 RollupData
 RowCompareExpr
-RowCompareType
 RowExpr
 RowIdentityVarInfo
 RowMarkClause

@@ -1770,7 +1770,7 @@ llvm_compile_expr(ExprState *state)
 
 			case EEOP_ROWCOMPARE_FINAL:
 				{
-					RowCompareType rctype = op->d.rowcompare_final.rctype;
+					CompareType cmptype = op->d.rowcompare_final.cmptype;
 
 					LLVMValueRef v_cmpresult;
 					LLVMValueRef v_result;
@@ -1786,18 +1786,18 @@ llvm_compile_expr(ExprState *state)
 									   l_load(b, TypeSizeT, v_resvaluep, ""),
 									   LLVMInt32TypeInContext(lc), "");
 
-					switch (rctype)
+					switch (cmptype)
 					{
-						case ROWCOMPARE_LT:
+						case COMPARE_LT:
 							predicate = LLVMIntSLT;
 							break;
-						case ROWCOMPARE_LE:
+						case COMPARE_LE:
 							predicate = LLVMIntSLE;
 							break;
-						case ROWCOMPARE_GT:
+						case COMPARE_GT:
 							predicate = LLVMIntSGT;
 							break;
-						case ROWCOMPARE_GE:
+						case COMPARE_GE:
 							predicate = LLVMIntSGE;
 							break;
 						default:

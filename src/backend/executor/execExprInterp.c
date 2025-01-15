@@ -1500,22 +1500,22 @@ ExecInterpExpr(ExprState *state, ExprContext *econtext, bool *isnull)
 		EEO_CASE(EEOP_ROWCOMPARE_FINAL)
 		{
 			int32		cmpresult = DatumGetInt32(*op->resvalue);
-			RowCompareType rctype = op->d.rowcompare_final.rctype;
+			CompareType cmptype = op->d.rowcompare_final.cmptype;
 
 			*op->resnull = false;
-			switch (rctype)
+			switch (cmptype)
 			{
 					/* EQ and NE cases aren't allowed here */
-				case ROWCOMPARE_LT:
+				case COMPARE_LT:
 					*op->resvalue = BoolGetDatum(cmpresult < 0);
 					break;
-				case ROWCOMPARE_LE:
+				case COMPARE_LE:
 					*op->resvalue = BoolGetDatum(cmpresult <= 0);
 					break;
-				case ROWCOMPARE_GE:
+				case COMPARE_GE:
 					*op->resvalue = BoolGetDatum(cmpresult >= 0);
 					break;
-				case ROWCOMPARE_GT:
+				case COMPARE_GT:
 					*op->resvalue = BoolGetDatum(cmpresult > 0);
 					break;
 				default:

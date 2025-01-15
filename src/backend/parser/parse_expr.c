@@ -2807,7 +2807,7 @@ make_row_comparison_op(ParseState *pstate, List *opname,
 					   List *largs, List *rargs, int location)
 {
 	RowCompareExpr *rcexpr;
-	RowCompareType rctype;
+	CompareType cmptype;
 	List	   *opexprs;
 	List	   *opnos;
 	List	   *opfamilies;
@@ -2928,15 +2928,15 @@ make_row_comparison_op(ParseState *pstate, List *opname,
 				 errhint("Row comparison operators must be associated with btree operator families."),
 				 parser_errposition(pstate, location)));
 	}
-	rctype = (RowCompareType) i;
+	cmptype = (CompareType) i;
 
 	/*
 	 * For = and <> cases, we just combine the pairwise operators with AND or
 	 * OR respectively.
 	 */
-	if (rctype == ROWCOMPARE_EQ)
+	if (cmptype == COMPARE_EQ)
 		return (Node *) makeBoolExpr(AND_EXPR, opexprs, location);
-	if (rctype == ROWCOMPARE_NE)
+	if (cmptype == COMPARE_NE)
 		return (Node *) makeBoolExpr(OR_EXPR, opexprs, location);
 
 	/*
@@ -2953,7 +2953,7 @@ make_row_comparison_op(ParseState *pstate, List *opname,
 		{
 			OpBtreeInterpretation *opinfo = lfirst(j);
 
-			if (opinfo->strategy == rctype)
+			if (opinfo->strategy == cmptype)
 			{
 				opfamily = opinfo->opfamily_id;
 				break;
@@ -2989,7 +2989,7 @@ make_row_comparison_op(ParseState *pstate, List *opname,
 	}
 
 	rcexpr = makeNode(RowCompareExpr);
-	rcexpr->rctype = rctype;
+	rcexpr->cmptype = cmptype;
 	rcexpr->opnos = opnos;
 	rcexpr->opfamilies = opfamilies;
 	rcexpr->inputcollids = NIL; /* assign_expr_collations will fix this */
