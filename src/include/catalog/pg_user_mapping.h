@@ -18,7 +18,7 @@
 #define PG_USER_MAPPING_H
 
 #include "catalog/genbki.h"
-#include "catalog/pg_user_mapping_d.h"
+#include "catalog/pg_user_mapping_d.h"	/* IWYU pragma: export */
 
 /* ----------------
  *		pg_user_mapping definition.  cpp turns this into

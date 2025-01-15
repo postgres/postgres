@@ -20,7 +20,7 @@
 #define PG_TS_CONFIG_H
 
 #include "catalog/genbki.h"
-#include "catalog/pg_ts_config_d.h"
+#include "catalog/pg_ts_config_d.h" /* IWYU pragma: export */
 
 /* ----------------
  *		pg_ts_config definition.  cpp turns this into

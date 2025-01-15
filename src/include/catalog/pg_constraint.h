@@ -20,7 +20,7 @@
 
 #include "catalog/dependency.h"
 #include "catalog/genbki.h"
-#include "catalog/pg_constraint_d.h"
+#include "catalog/pg_constraint_d.h"	/* IWYU pragma: export */
 #include "nodes/pg_list.h"
 
 /* ----------------

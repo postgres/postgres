@@ -19,7 +19,7 @@
 #define PG_TRIGGER_H
 
 #include "catalog/genbki.h"
-#include "catalog/pg_trigger_d.h"
+#include "catalog/pg_trigger_d.h"	/* IWYU pragma: export */
 
 /* ----------------
  *		pg_trigger definition.  cpp turns this into

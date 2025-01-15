@@ -39,7 +39,7 @@
 #define PG_OPCLASS_H
 
 #include "catalog/genbki.h"
-#include "catalog/pg_opclass_d.h"
+#include "catalog/pg_opclass_d.h"	/* IWYU pragma: export */
 
 /* ----------------
  *		pg_opclass definition.  cpp turns this into

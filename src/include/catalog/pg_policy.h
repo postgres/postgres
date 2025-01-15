@@ -19,7 +19,7 @@
 #define PG_POLICY_H
 
 #include "catalog/genbki.h"
-#include "catalog/pg_policy_d.h"
+#include "catalog/pg_policy_d.h"	/* IWYU pragma: export */
 
 /* ----------------
  *		pg_policy definition. cpp turns this into

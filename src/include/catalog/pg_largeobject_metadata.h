@@ -20,7 +20,7 @@
 #define PG_LARGEOBJECT_METADATA_H
 
 #include "catalog/genbki.h"
-#include "catalog/pg_largeobject_metadata_d.h"
+#include "catalog/pg_largeobject_metadata_d.h"	/* IWYU pragma: export */
 
 /* ----------------
  *		pg_largeobject_metadata definition. cpp turns this into

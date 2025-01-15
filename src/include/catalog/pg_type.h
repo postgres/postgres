@@ -20,7 +20,7 @@
 
 #include "catalog/genbki.h"
 #include "catalog/objectaddress.h"
-#include "catalog/pg_type_d.h"
+#include "catalog/pg_type_d.h"	/* IWYU pragma: export */
 #include "nodes/nodes.h"
 
 /* ----------------

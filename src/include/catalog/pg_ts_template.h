@@ -19,7 +19,7 @@
 #define PG_TS_TEMPLATE_H
 
 #include "catalog/genbki.h"
-#include "catalog/pg_ts_template_d.h"
+#include "catalog/pg_ts_template_d.h"	/* IWYU pragma: export */
 
 /* ----------------
  *		pg_ts_template definition.  cpp turns this into

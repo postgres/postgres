@@ -19,7 +19,7 @@
 #define PG_AGGREGATE_H
 
 #include "catalog/genbki.h"
-#include "catalog/pg_aggregate_d.h"
+#include "catalog/pg_aggregate_d.h" /* IWYU pragma: export */
 
 #include "catalog/objectaddress.h"
 #include "nodes/pg_list.h"

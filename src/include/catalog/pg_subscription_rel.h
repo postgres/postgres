@@ -20,7 +20,7 @@
 
 #include "access/xlogdefs.h"
 #include "catalog/genbki.h"
-#include "catalog/pg_subscription_rel_d.h"
+#include "catalog/pg_subscription_rel_d.h"	/* IWYU pragma: export */
 #include "nodes/pg_list.h"
 
 /* ----------------

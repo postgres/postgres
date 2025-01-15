@@ -44,7 +44,7 @@
 #define PG_AMOP_H
 
 #include "catalog/genbki.h"
-#include "catalog/pg_amop_d.h"
+#include "catalog/pg_amop_d.h"	/* IWYU pragma: export */
 
 /* ----------------
  *		pg_amop definition.  cpp turns this into

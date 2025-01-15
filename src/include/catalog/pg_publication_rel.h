@@ -19,7 +19,7 @@
 #define PG_PUBLICATION_REL_H
 
 #include "catalog/genbki.h"
-#include "catalog/pg_publication_rel_d.h"
+#include "catalog/pg_publication_rel_d.h"	/* IWYU pragma: export */
 
 /* ----------------
  *		pg_publication_rel definition.  cpp turns this into

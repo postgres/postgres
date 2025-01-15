@@ -20,7 +20,7 @@
 
 #include "access/xlogdefs.h"
 #include "catalog/genbki.h"
-#include "catalog/pg_replication_origin_d.h"
+#include "catalog/pg_replication_origin_d.h"	/* IWYU pragma: export */
 
 /* ----------------
  *		pg_replication_origin.  cpp turns this into

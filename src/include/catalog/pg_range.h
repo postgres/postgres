@@ -19,7 +19,7 @@
 #define PG_RANGE_H
 
 #include "catalog/genbki.h"
-#include "catalog/pg_range_d.h"
+#include "catalog/pg_range_d.h" /* IWYU pragma: export */
 
 /* ----------------
  *		pg_range definition.  cpp turns this into

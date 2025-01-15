@@ -18,7 +18,7 @@
 #define PG_FOREIGN_TABLE_H
 
 #include "catalog/genbki.h"
-#include "catalog/pg_foreign_table_d.h"
+#include "catalog/pg_foreign_table_d.h" /* IWYU pragma: export */
 
 /* ----------------
  *		pg_foreign_table definition.  cpp turns this into

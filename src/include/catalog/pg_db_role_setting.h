@@ -20,7 +20,7 @@
 #define PG_DB_ROLE_SETTING_H
 
 #include "catalog/genbki.h"
-#include "catalog/pg_db_role_setting_d.h"
+#include "catalog/pg_db_role_setting_d.h"	/* IWYU pragma: export */
 
 #include "utils/guc.h"
 #include "utils/relcache.h"

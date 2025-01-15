@@ -18,7 +18,7 @@
 #define PG_SHSECLABEL_H
 
 #include "catalog/genbki.h"
-#include "catalog/pg_shseclabel_d.h"
+#include "catalog/pg_shseclabel_d.h"	/* IWYU pragma: export */
 
 /* ----------------
  *		pg_shseclabel definition. cpp turns this into

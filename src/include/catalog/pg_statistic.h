@@ -19,7 +19,7 @@
 #define PG_STATISTIC_H
 
 #include "catalog/genbki.h"
-#include "catalog/pg_statistic_d.h"
+#include "catalog/pg_statistic_d.h" /* IWYU pragma: export */
 
 /* ----------------
  *		pg_statistic definition.  cpp turns this into

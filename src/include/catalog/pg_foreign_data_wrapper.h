@@ -19,7 +19,7 @@
 #define PG_FOREIGN_DATA_WRAPPER_H
 
 #include "catalog/genbki.h"
-#include "catalog/pg_foreign_data_wrapper_d.h"
+#include "catalog/pg_foreign_data_wrapper_d.h"	/* IWYU pragma: export */
 
 /* ----------------
  *		pg_foreign_data_wrapper definition.  cpp turns this into

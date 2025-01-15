@@ -19,7 +19,7 @@
 #define PG_TRANSFORM_H
 
 #include "catalog/genbki.h"
-#include "catalog/pg_transform_d.h"
+#include "catalog/pg_transform_d.h" /* IWYU pragma: export */
 
 /* ----------------
  *		pg_transform definition.  cpp turns this into

@@ -19,7 +19,7 @@
 
 #include "catalog/genbki.h"
 #include "catalog/objectaddress.h"
-#include "catalog/pg_conversion_d.h"
+#include "catalog/pg_conversion_d.h"	/* IWYU pragma: export */
 
 /* ----------------
  *		pg_conversion definition.  cpp turns this into

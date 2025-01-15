@@ -19,7 +19,7 @@
 #define PG_INHERITS_H
 
 #include "catalog/genbki.h"
-#include "catalog/pg_inherits_d.h"
+#include "catalog/pg_inherits_d.h"	/* IWYU pragma: export */
 
 #include "nodes/pg_list.h"
 #include "storage/lock.h"

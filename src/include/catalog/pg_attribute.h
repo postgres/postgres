@@ -23,7 +23,7 @@
 #define PG_ATTRIBUTE_H
 
 #include "catalog/genbki.h"
-#include "catalog/pg_attribute_d.h"
+#include "catalog/pg_attribute_d.h" /* IWYU pragma: export */
 
 /* ----------------
  *		pg_attribute definition.  cpp turns this into

@@ -18,7 +18,7 @@
 #define PG_SEQUENCE_H
 
 #include "catalog/genbki.h"
-#include "catalog/pg_sequence_d.h"
+#include "catalog/pg_sequence_d.h"	/* IWYU pragma: export */
 
 CATALOG(pg_sequence,2224,SequenceRelationId)
 {

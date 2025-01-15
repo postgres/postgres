@@ -18,7 +18,7 @@
 #define PG_FOREIGN_SERVER_H
 
 #include "catalog/genbki.h"
-#include "catalog/pg_foreign_server_d.h"
+#include "catalog/pg_foreign_server_d.h"	/* IWYU pragma: export */
 
 /* ----------------
  *		pg_foreign_server definition.  cpp turns this into

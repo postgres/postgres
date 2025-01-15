@@ -18,7 +18,7 @@
 #define PG_SECLABEL_H
 
 #include "catalog/genbki.h"
-#include "catalog/pg_seclabel_d.h"
+#include "catalog/pg_seclabel_d.h"	/* IWYU pragma: export */
 
 /* ----------------
  *		pg_seclabel definition.  cpp turns this into

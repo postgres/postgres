@@ -21,7 +21,7 @@
 #define PG_AUTHID_H
 
 #include "catalog/genbki.h"
-#include "catalog/pg_authid_d.h"
+#include "catalog/pg_authid_d.h"	/* IWYU pragma: export */
 
 /* ----------------
  *		pg_authid definition.  cpp turns this into

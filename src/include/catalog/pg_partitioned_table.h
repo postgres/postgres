@@ -20,7 +20,7 @@
 #define PG_PARTITIONED_TABLE_H
 
 #include "catalog/genbki.h"
-#include "catalog/pg_partitioned_table_d.h"
+#include "catalog/pg_partitioned_table_d.h" /* IWYU pragma: export */
 
 /* ----------------
  *		pg_partitioned_table definition.  cpp turns this into

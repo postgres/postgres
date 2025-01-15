@@ -38,7 +38,7 @@
 #define PG_DESCRIPTION_H
 
 #include "catalog/genbki.h"
-#include "catalog/pg_description_d.h"
+#include "catalog/pg_description_d.h"	/* IWYU pragma: export */
 
 /* ----------------
  *		pg_description definition.  cpp turns this into

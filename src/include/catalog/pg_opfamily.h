@@ -19,7 +19,7 @@
 #define PG_OPFAMILY_H
 
 #include "catalog/genbki.h"
-#include "catalog/pg_opfamily_d.h"
+#include "catalog/pg_opfamily_d.h"	/* IWYU pragma: export */
 
 /* ----------------
  *		pg_opfamily definition. cpp turns this into

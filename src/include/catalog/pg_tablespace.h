@@ -19,7 +19,7 @@
 #define PG_TABLESPACE_H
 
 #include "catalog/genbki.h"
-#include "catalog/pg_tablespace_d.h"
+#include "catalog/pg_tablespace_d.h"	/* IWYU pragma: export */
 
 /* ----------------
  *		pg_tablespace definition.  cpp turns this into

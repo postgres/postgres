@@ -22,7 +22,7 @@
 
 #include "catalog/dependency.h"
 #include "catalog/genbki.h"
-#include "catalog/pg_cast_d.h"
+#include "catalog/pg_cast_d.h"	/* IWYU pragma: export */
 
 /* ----------------
  *		pg_cast definition.  cpp turns this into

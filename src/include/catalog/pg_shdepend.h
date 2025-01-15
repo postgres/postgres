@@ -28,7 +28,7 @@
 #define PG_SHDEPEND_H
 
 #include "catalog/genbki.h"
-#include "catalog/pg_shdepend_d.h"
+#include "catalog/pg_shdepend_d.h"	/* IWYU pragma: export */
 
 /* ----------------
  *		pg_shdepend definition.  cpp turns this into

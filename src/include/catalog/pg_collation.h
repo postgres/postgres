@@ -19,7 +19,7 @@
 #define PG_COLLATION_H
 
 #include "catalog/genbki.h"
-#include "catalog/pg_collation_d.h"
+#include "catalog/pg_collation_d.h" /* IWYU pragma: export */
 
 /* ----------------
  *		pg_collation definition.  cpp turns this into

@@ -21,7 +21,7 @@
 #define PG_STATISTIC_EXT_DATA_H
 
 #include "catalog/genbki.h"
-#include "catalog/pg_statistic_ext_data_d.h"
+#include "catalog/pg_statistic_ext_data_d.h"	/* IWYU pragma: export */
 
 /* ----------------
  *		pg_statistic_ext_data definition.  cpp turns this into

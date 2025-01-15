@@ -20,7 +20,7 @@
 
 #include "catalog/genbki.h"
 #include "catalog/objectaddress.h"
-#include "catalog/pg_attrdef_d.h"
+#include "catalog/pg_attrdef_d.h"	/* IWYU pragma: export */
 
 /* ----------------
  *		pg_attrdef definition.  cpp turns this into

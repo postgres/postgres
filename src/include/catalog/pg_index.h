@@ -19,7 +19,7 @@
 #define PG_INDEX_H
 
 #include "catalog/genbki.h"
-#include "catalog/pg_index_d.h"
+#include "catalog/pg_index_d.h" /* IWYU pragma: export */
 
 /* ----------------
  *		pg_index definition.  cpp turns this into

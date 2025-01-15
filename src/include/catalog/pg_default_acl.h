@@ -20,7 +20,7 @@
 #define PG_DEFAULT_ACL_H
 
 #include "catalog/genbki.h"
-#include "catalog/pg_default_acl_d.h"
+#include "catalog/pg_default_acl_d.h"	/* IWYU pragma: export */
 
 /* ----------------
  *		pg_default_acl definition.  cpp turns this into

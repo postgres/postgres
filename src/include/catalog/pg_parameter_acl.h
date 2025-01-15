@@ -20,7 +20,7 @@
 #define PG_PARAMETER_ACL_H
 
 #include "catalog/genbki.h"
-#include "catalog/pg_parameter_acl_d.h"
+#include "catalog/pg_parameter_acl_d.h" /* IWYU pragma: export */
 
 /* ----------------
  *		pg_parameter_acl definition.  cpp turns this into

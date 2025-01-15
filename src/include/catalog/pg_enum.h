@@ -19,7 +19,7 @@
 #define PG_ENUM_H
 
 #include "catalog/genbki.h"
-#include "catalog/pg_enum_d.h"
+#include "catalog/pg_enum_d.h"	/* IWYU pragma: export */
 
 #include "nodes/pg_list.h"
 

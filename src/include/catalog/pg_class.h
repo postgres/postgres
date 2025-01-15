@@ -19,7 +19,7 @@
 #define PG_CLASS_H
 
 #include "catalog/genbki.h"
-#include "catalog/pg_class_d.h"
+#include "catalog/pg_class_d.h" /* IWYU pragma: export */
 
 /* ----------------
  *		pg_class definition.  cpp turns this into

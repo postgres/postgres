@@ -32,7 +32,7 @@
 #define PG_DEPEND_H
 
 #include "catalog/genbki.h"
-#include "catalog/pg_depend_d.h"
+#include "catalog/pg_depend_d.h"	/* IWYU pragma: export */
 
 /* ----------------
  *		pg_depend definition.  cpp turns this into

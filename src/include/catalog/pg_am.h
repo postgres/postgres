@@ -19,7 +19,7 @@
 #define PG_AM_H
 
 #include "catalog/genbki.h"
-#include "catalog/pg_am_d.h"
+#include "catalog/pg_am_d.h"	/* IWYU pragma: export */
 
 /* ----------------
  *		pg_am definition.  cpp turns this into

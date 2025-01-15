@@ -19,7 +19,7 @@
 #define PG_EXTENSION_H
 
 #include "catalog/genbki.h"
-#include "catalog/pg_extension_d.h"
+#include "catalog/pg_extension_d.h" /* IWYU pragma: export */
 
 /* ----------------
  *		pg_extension definition.  cpp turns this into

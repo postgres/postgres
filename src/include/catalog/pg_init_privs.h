@@ -36,7 +36,7 @@
 #define PG_INIT_PRIVS_H
 
 #include "catalog/genbki.h"
-#include "catalog/pg_init_privs_d.h"
+#include "catalog/pg_init_privs_d.h"	/* IWYU pragma: export */
 
 /* ----------------
  *		pg_init_privs definition.  cpp turns this into

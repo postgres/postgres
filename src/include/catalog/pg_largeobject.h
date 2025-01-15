@@ -19,7 +19,7 @@
 #define PG_LARGEOBJECT_H
 
 #include "catalog/genbki.h"
-#include "catalog/pg_largeobject_d.h"
+#include "catalog/pg_largeobject_d.h"	/* IWYU pragma: export */
 #include "utils/snapshot.h"
 
 /* ----------------

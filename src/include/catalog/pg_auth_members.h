@@ -20,7 +20,7 @@
 #define PG_AUTH_MEMBERS_H
 
 #include "catalog/genbki.h"
-#include "catalog/pg_auth_members_d.h"
+#include "catalog/pg_auth_members_d.h"	/* IWYU pragma: export */
 
 /* ----------------
  *		pg_auth_members definition.  cpp turns this into
