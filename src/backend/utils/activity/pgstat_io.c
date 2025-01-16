@@ -24,14 +24,6 @@ static PgStat_PendingIO PendingIOStats;
 static bool have_iostats = false;
 
 /*
- * Check if an IOOp is tracked in bytes.  This relies on the ordering of IOOp
- * defined in pgstat.h, so make sure to update this check when changing its
- * elements.
- */
-#define pgstat_is_ioop_tracked_in_bytes(io_op) \
-	((io_op) < IOOP_NUM_TYPES && (io_op) >= IOOP_EXTEND)
-
-/*
  * Check that stats have not been counted for any combination of IOObject,
  * IOContext, and IOOp which are not tracked for the passed-in BackendType. If
  * stats are tracked for this combination and IO times are non-zero, counts

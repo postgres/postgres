@@ -314,6 +314,10 @@ typedef enum IOOp
 
 #define IOOP_NUM_TYPES (IOOP_WRITE + 1)
 
+#define pgstat_is_ioop_tracked_in_bytes(io_op) \
+	(((unsigned int) (io_op)) < IOOP_NUM_TYPES && \
+	 ((unsigned int) (io_op)) >= IOOP_EXTEND)
+
 typedef struct PgStat_BktypeIO
 {
 	uint64		bytes[IOOBJECT_NUM_TYPES][IOCONTEXT_NUM_TYPES][IOOP_NUM_TYPES];
