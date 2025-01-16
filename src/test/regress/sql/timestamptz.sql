@@ -109,6 +109,23 @@ SELECT '20500110 173201 Europe/Helsinki'::timestamptz; -- non-DST
 SELECT '205000-07-10 17:32:01 Europe/Helsinki'::timestamptz; -- DST
 SELECT '205000-01-10 17:32:01 Europe/Helsinki'::timestamptz; -- non-DST
 
+-- Recognize "LMT" as whatever it means in the current zone
+SELECT 'Jan 01 00:00:00 1000 LMT'::timestamptz;
+SELECT 'Jan 01 00:00:00 2024 LMT'::timestamptz;
+SET timezone = 'Europe/London';
+SELECT 'Jan 01 00:00:00 1000 LMT'::timestamptz;
+SELECT 'Jan 01 00:00:00 2024 LMT'::timestamptz;
+-- which might be nothing
+SET timezone = 'UTC';
+SELECT 'Jan 01 00:00:00 2024 LMT'::timestamptz;  -- fail
+-- Another example of an abbrev that varies across zones
+SELECT '1912-01-01 00:00 MMT'::timestamptz;  -- from timezone_abbreviations
+SET timezone = 'America/Montevideo';
+SELECT '1912-01-01 00:00'::timestamptz;
+SELECT '1912-01-01 00:00 MMT'::timestamptz;
+SELECT '1912-01-01 00:00 MMT'::timestamptz AT TIME ZONE 'UTC';
+RESET timezone;
+
 -- Test non-error-throwing API
 SELECT pg_input_is_valid('now', 'timestamptz');
 SELECT pg_input_is_valid('garbage', 'timestamptz');

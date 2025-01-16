@@ -98,3 +98,6 @@ set timezone_abbreviations = 'Australia';
 select count(distinct utc_offset) >= 24 as ok from pg_timezone_abbrevs;
 set timezone_abbreviations = 'India';
 select count(distinct utc_offset) >= 24 as ok from pg_timezone_abbrevs;
+-- One specific case we can check without much fear of breakage
+-- is the historical local-mean-time value used for America/Los_Angeles.
+select * from pg_timezone_abbrevs where abbrev = 'LMT';

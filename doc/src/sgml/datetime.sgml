@@ -80,7 +80,7 @@
       <step>
        <para>
         See if the token matches any known time zone abbreviation.
-        These abbreviations are supplied by the configuration file
+        These abbreviations are determined by the configuration settings
         described in <xref linkend="datetime-config-files"/>.
        </para>
       </step>
@@ -424,9 +424,43 @@
    <para>
     Since timezone abbreviations are not well standardized,
     <productname>PostgreSQL</productname> provides a means to customize
-    the set of abbreviations accepted by the server.  The
-    <xref linkend="guc-timezone-abbreviations"/> run-time parameter
-    determines the active set of abbreviations.  While this parameter
+    the set of abbreviations accepted in datetime input.
+    There are two sources for these abbreviations:
+
+    <orderedlist>
+     <listitem>
+      <para>
+       The <xref linkend="guc-timezone"/> run-time parameter is usually
+       set to the name of an entry in the IANA time zone database.
+       If that zone has widely-used zone abbreviations, they will appear
+       in the IANA data, and <productname>PostgreSQL</productname> will
+       preferentially recognize those abbreviations with the meanings
+       given in the IANA data.
+       For example, if <varname>timezone</varname> is set
+       to <literal>America/New_York</literal> then <literal>EST</literal>
+       will be understood as UTC-5 and <literal>EDT</literal> will be
+       understood as UTC-4.  (These IANA abbreviations will also be used
+       in datetime output, if <xref linkend="guc-datestyle"/> is set to a
+       style that prefers non-numeric zone abbreviations.)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       If an abbreviation is not found in the current IANA time zone,
+       it is sought in the list specified by the
+       <xref linkend="guc-timezone-abbreviations"/> run-time parameter.
+       The <varname>timezone_abbreviations</varname> list is primarily
+       useful for allowing datetime input to recognize abbreviations for
+       time zones other than the current zone.  (These abbreviations will
+       not be used in datetime output.)
+      </para>
+     </listitem>
+    </orderedlist>
+   </para>
+
+   <para>
+    While the <varname>timezone_abbreviations</varname> parameter
     can be altered by any database user, the possible values for it
     are under the control of the database administrator &mdash; they
     are in fact names of configuration files stored in

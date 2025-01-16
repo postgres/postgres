@@ -2629,10 +2629,19 @@ pg_tables| SELECT n.nspname AS schemaname,
      LEFT JOIN pg_namespace n ON ((n.oid = c.relnamespace)))
      LEFT JOIN pg_tablespace t ON ((t.oid = c.reltablespace)))
   WHERE (c.relkind = ANY (ARRAY['r'::"char", 'p'::"char"]));
-pg_timezone_abbrevs| SELECT abbrev,
-    utc_offset,
-    is_dst
-   FROM pg_timezone_abbrevs() pg_timezone_abbrevs(abbrev, utc_offset, is_dst);
+pg_timezone_abbrevs| SELECT z.abbrev,
+    z.utc_offset,
+    z.is_dst
+   FROM pg_timezone_abbrevs_zone() z(abbrev, utc_offset, is_dst)
+UNION ALL
+ SELECT a.abbrev,
+    a.utc_offset,
+    a.is_dst
+   FROM pg_timezone_abbrevs_abbrevs() a(abbrev, utc_offset, is_dst)
+  WHERE (NOT (EXISTS ( SELECT 1
+           FROM pg_timezone_abbrevs_zone() z2(abbrev, utc_offset, is_dst)
+          WHERE (z2.abbrev = a.abbrev))))
+  ORDER BY 1;
 pg_timezone_names| SELECT name,
     abbrev,
     utc_offset,

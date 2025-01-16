@@ -69,6 +69,13 @@ extern bool pg_interpret_timezone_abbrev(const char *abbrev,
 										 long int *gmtoff,
 										 int *isdst,
 										 const pg_tz *tz);
+extern bool pg_timezone_abbrev_is_known(const char *abbrev,
+										bool *isfixed,
+										long int *gmtoff,
+										int *isdst,
+										const pg_tz *tz);
+extern const char *pg_get_next_timezone_abbrev(int *indx,
+											   const pg_tz *tz);
 extern bool pg_get_timezone_offset(const pg_tz *tz, long int *gmtoff);
 extern const char *pg_get_timezone_name(pg_tz *tz);
 extern bool pg_tz_acceptable(pg_tz *tz);

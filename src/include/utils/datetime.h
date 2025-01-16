@@ -351,6 +351,8 @@ extern pg_tz *DecodeTimezoneNameToTz(const char *tzname);
 extern int	DecodeTimezoneAbbrevPrefix(const char *str,
 									   int *offset, pg_tz **tz);
 
+extern void ClearTimeZoneAbbrevCache(void);
+
 extern int	j2day(int date);
 
 extern struct Node *TemporalSimplify(int32 max_precis, struct Node *node);

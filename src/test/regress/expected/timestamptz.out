@@ -176,6 +176,65 @@ SELECT '205000-01-10 17:32:01 Europe/Helsinki'::timestamptz; -- non-DST
  Fri Jan 10 07:32:01 205000 PST
 (1 row)
 
+-- Recognize "LMT" as whatever it means in the current zone
+SELECT 'Jan 01 00:00:00 1000 LMT'::timestamptz;
+         timestamptz          
+------------------------------
+ Wed Jan 01 00:00:00 1000 LMT
+(1 row)
+
+SELECT 'Jan 01 00:00:00 2024 LMT'::timestamptz;
+         timestamptz          
+------------------------------
+ Sun Dec 31 23:52:58 2023 PST
+(1 row)
+
+SET timezone = 'Europe/London';
+SELECT 'Jan 01 00:00:00 1000 LMT'::timestamptz;
+         timestamptz          
+------------------------------
+ Wed Jan 01 00:00:00 1000 LMT
+(1 row)
+
+SELECT 'Jan 01 00:00:00 2024 LMT'::timestamptz;
+         timestamptz          
+------------------------------
+ Mon Jan 01 00:01:15 2024 GMT
+(1 row)
+
+-- which might be nothing
+SET timezone = 'UTC';
+SELECT 'Jan 01 00:00:00 2024 LMT'::timestamptz;  -- fail
+ERROR:  invalid input syntax for type timestamp with time zone: "Jan 01 00:00:00 2024 LMT"
+LINE 1: SELECT 'Jan 01 00:00:00 2024 LMT'::timestamptz;
+               ^
+-- Another example of an abbrev that varies across zones
+SELECT '1912-01-01 00:00 MMT'::timestamptz;  -- from timezone_abbreviations
+         timestamptz          
+------------------------------
+ Sun Dec 31 17:30:00 1911 UTC
+(1 row)
+
+SET timezone = 'America/Montevideo';
+SELECT '1912-01-01 00:00'::timestamptz;
+         timestamptz          
+------------------------------
+ Mon Jan 01 00:00:00 1912 MMT
+(1 row)
+
+SELECT '1912-01-01 00:00 MMT'::timestamptz;
+         timestamptz          
+------------------------------
+ Mon Jan 01 00:00:00 1912 MMT
+(1 row)
+
+SELECT '1912-01-01 00:00 MMT'::timestamptz AT TIME ZONE 'UTC';
+         timezone         
+--------------------------
+ Mon Jan 01 03:44:51 1912
+(1 row)
+
+RESET timezone;
 -- Test non-error-throwing API
 SELECT pg_input_is_valid('now', 'timestamptz');
  pg_input_is_valid 

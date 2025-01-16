@@ -4566,7 +4566,9 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
    The view <structname>pg_timezone_abbrevs</structname> provides a list
    of time zone abbreviations that are currently recognized by the datetime
    input routines.  The contents of this view change when the
-   <xref linkend="guc-timezone-abbreviations"/> run-time parameter is modified.
+   <xref linkend="guc-timezone"/> or
+   <xref linkend="guc-timezone-abbreviations"/> run-time parameters are
+   modified.
   </para>
 
   <table>

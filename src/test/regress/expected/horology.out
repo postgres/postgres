@@ -3332,6 +3332,12 @@ SELECT to_timestamp('2011-12-18 11:38 MSK', 'YYYY-MM-DD HH12:MI TZ');  -- dyntz
  Sat Dec 17 23:38:00 2011 PST
 (1 row)
 
+SELECT to_timestamp('2011-12-18 00:00 LMT', 'YYYY-MM-DD HH24:MI TZ');  -- dyntz
+         to_timestamp         
+------------------------------
+ Sat Dec 17 23:52:58 2011 PST
+(1 row)
+
 SELECT to_timestamp('2011-12-18 11:38ESTFOO24', 'YYYY-MM-DD HH12:MITZFOOSS');
          to_timestamp         
 ------------------------------

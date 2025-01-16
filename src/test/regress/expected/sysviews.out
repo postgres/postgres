@@ -223,3 +223,11 @@ select count(distinct utc_offset) >= 24 as ok from pg_timezone_abbrevs;
  t
 (1 row)
 
+-- One specific case we can check without much fear of breakage
+-- is the historical local-mean-time value used for America/Los_Angeles.
+select * from pg_timezone_abbrevs where abbrev = 'LMT';
+ abbrev |          utc_offset           | is_dst 
+--------+-------------------------------+--------
+ LMT    | @ 7 hours 52 mins 58 secs ago | f
+(1 row)
+

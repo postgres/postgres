@@ -10054,8 +10054,10 @@ SET XML OPTION { DOCUMENT | CONTENT };
       </term>
       <listitem>
        <para>
-        Sets the collection of time zone abbreviations that will be accepted
-        by the server for datetime input.  The default is <literal>'Default'</literal>,
+        Sets the collection of additional time zone abbreviations that
+        will be accepted by the server for datetime input (beyond any
+        abbreviations defined by the current <varname>TimeZone</varname>
+        setting).  The default is <literal>'Default'</literal>,
         which is a collection that works in most of the world; there are
         also <literal>'Australia'</literal> and <literal>'India'</literal>,
         and other collections can be defined for a particular installation.

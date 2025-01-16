@@ -634,7 +634,12 @@ REVOKE ALL ON pg_ident_file_mappings FROM PUBLIC;
 REVOKE EXECUTE ON FUNCTION pg_ident_file_mappings() FROM PUBLIC;
 
 CREATE VIEW pg_timezone_abbrevs AS
-    SELECT * FROM pg_timezone_abbrevs();
+    SELECT * FROM pg_timezone_abbrevs_zone() z
+    UNION ALL
+    (SELECT * FROM pg_timezone_abbrevs_abbrevs() a
+     WHERE NOT EXISTS (SELECT 1 FROM pg_timezone_abbrevs_zone() z2
+                       WHERE z2.abbrev = a.abbrev))
+    ORDER BY abbrev;
 
 CREATE VIEW pg_timezone_names AS
     SELECT * FROM pg_timezone_names();
