@@ -1776,8 +1776,8 @@ _bt_sort_array_elements(ScanKey skey, FmgrInfo *sortproc, bool reverse,
  * may not be able to determine which elements are contradictory.  If we have
  * the required ORDER proc then we return true (and validly set *nelems_orig),
  * guaranteeing that at least the next array can be considered redundant.  We
- * return false if the required comparisons cannot not be made (caller must
- * keep both arrays when this happens).
+ * return false if the required comparisons cannot be made (caller must keep
+ * both arrays when this happens).
  */
 static bool
 _bt_merge_arrays(IndexScanDesc scan, ScanKey skey, FmgrInfo *sortproc,
