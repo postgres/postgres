@@ -264,6 +264,7 @@ BitmapAndState
 BitmapHeapPath
 BitmapHeapScan
 BitmapHeapScanInstrumentation
+BitmapHeapScanDesc
 BitmapHeapScanState
 BitmapIndexScan
 BitmapIndexScanState

@@ -1048,7 +1048,16 @@ heap_beginscan(Relation relation, Snapshot snapshot,
 	/*
 	 * allocate and initialize scan descriptor
 	 */
-	scan = (HeapScanDesc) palloc(sizeof(HeapScanDescData));
+	if (flags & SO_TYPE_BITMAPSCAN)
+	{
+		BitmapHeapScanDesc bscan = palloc(sizeof(BitmapHeapScanDescData));
+
+		bscan->rs_vmbuffer = InvalidBuffer;
+		bscan->rs_empty_tuples_pending = 0;
+		scan = (HeapScanDesc) bscan;
+	}
+	else
+		scan = (HeapScanDesc) palloc(sizeof(HeapScanDescData));
 
 	scan->rs_base.rs_rd = relation;
 	scan->rs_base.rs_snapshot = snapshot;
@@ -1056,8 +1065,6 @@ heap_beginscan(Relation relation, Snapshot snapshot,
 	scan->rs_base.rs_flags = flags;
 	scan->rs_base.rs_parallel = parallel_scan;
 	scan->rs_strategy = NULL;	/* set in initscan */
-	scan->rs_vmbuffer = InvalidBuffer;
-	scan->rs_empty_tuples_pending = 0;
 
 	/*
 	 * Disable page-at-a-time mode if it's not a MVCC-safe snapshot.
@@ -1173,18 +1180,23 @@ heap_rescan(TableScanDesc sscan, ScanKey key, bool set_params,
 	if (BufferIsValid(scan->rs_cbuf))
 		ReleaseBuffer(scan->rs_cbuf);
 
-	if (BufferIsValid(scan->rs_vmbuffer))
+	if (scan->rs_base.rs_flags & SO_TYPE_BITMAPSCAN)
 	{
-		ReleaseBuffer(scan->rs_vmbuffer);
-		scan->rs_vmbuffer = InvalidBuffer;
-	}
+		BitmapHeapScanDesc bscan = (BitmapHeapScanDesc) scan;
 
-	/*
-	 * Reset rs_empty_tuples_pending, a field only used by bitmap heap scan,
-	 * to avoid incorrectly emitting NULL-filled tuples from a previous scan
-	 * on rescan.
-	 */
-	scan->rs_empty_tuples_pending = 0;
+		/*
+		 * Reset empty_tuples_pending, a field only used by bitmap heap scan,
+		 * to avoid incorrectly emitting NULL-filled tuples from a previous
+		 * scan on rescan.
+		 */
+		bscan->rs_empty_tuples_pending = 0;
+
+		if (BufferIsValid(bscan->rs_vmbuffer))
+		{
+			ReleaseBuffer(bscan->rs_vmbuffer);
+			bscan->rs_vmbuffer = InvalidBuffer;
+		}
+	}
 
 	/*
 	 * The read stream is reset on rescan. This must be done before
@@ -1213,8 +1225,14 @@ heap_endscan(TableScanDesc sscan)
 	if (BufferIsValid(scan->rs_cbuf))
 		ReleaseBuffer(scan->rs_cbuf);
 
-	if (BufferIsValid(scan->rs_vmbuffer))
-		ReleaseBuffer(scan->rs_vmbuffer);
+	if (scan->rs_base.rs_flags & SO_TYPE_BITMAPSCAN)
+	{
+		BitmapHeapScanDesc bscan = (BitmapHeapScanDesc) sscan;
+
+		bscan->rs_empty_tuples_pending = 0;
+		if (BufferIsValid(bscan->rs_vmbuffer))
+			ReleaseBuffer(bscan->rs_vmbuffer);
+	}
 
 	/*
 	 * Must free the read stream before freeing the BufferAccessStrategy.

@@ -2118,12 +2118,15 @@ heapam_scan_bitmap_next_block(TableScanDesc scan,
 							  BlockNumber *blockno, bool *recheck,
 							  uint64 *lossy_pages, uint64 *exact_pages)
 {
-	HeapScanDesc hscan = (HeapScanDesc) scan;
+	BitmapHeapScanDesc bscan = (BitmapHeapScanDesc) scan;
+	HeapScanDesc hscan = (HeapScanDesc) bscan;
 	BlockNumber block;
 	Buffer		buffer;
 	Snapshot	snapshot;
 	int			ntup;
 	TBMIterateResult *tbmres;
+
+	Assert(scan->rs_flags & SO_TYPE_BITMAPSCAN);
 
 	hscan->rs_cindex = 0;
 	hscan->rs_ntuples = 0;
@@ -2162,13 +2165,13 @@ heapam_scan_bitmap_next_block(TableScanDesc scan,
 	 */
 	if (!(scan->rs_flags & SO_NEED_TUPLES) &&
 		!tbmres->recheck &&
-		VM_ALL_VISIBLE(scan->rs_rd, tbmres->blockno, &hscan->rs_vmbuffer))
+		VM_ALL_VISIBLE(scan->rs_rd, tbmres->blockno, &bscan->rs_vmbuffer))
 	{
 		/* can't be lossy in the skip_fetch case */
 		Assert(tbmres->ntuples >= 0);
-		Assert(hscan->rs_empty_tuples_pending >= 0);
+		Assert(bscan->rs_empty_tuples_pending >= 0);
 
-		hscan->rs_empty_tuples_pending += tbmres->ntuples;
+		bscan->rs_empty_tuples_pending += tbmres->ntuples;
 
 		return true;
 	}
@@ -2282,18 +2285,19 @@ static bool
 heapam_scan_bitmap_next_tuple(TableScanDesc scan,
 							  TupleTableSlot *slot)
 {
-	HeapScanDesc hscan = (HeapScanDesc) scan;
+	BitmapHeapScanDesc bscan = (BitmapHeapScanDesc) scan;
+	HeapScanDesc hscan = (HeapScanDesc) bscan;
 	OffsetNumber targoffset;
 	Page		page;
 	ItemId		lp;
 
-	if (hscan->rs_empty_tuples_pending > 0)
+	if (bscan->rs_empty_tuples_pending > 0)
 	{
 		/*
 		 * If we don't have to fetch the tuple, just return nulls.
 		 */
 		ExecStoreAllNullTuple(slot);
-		hscan->rs_empty_tuples_pending--;
+		bscan->rs_empty_tuples_pending--;
 		return true;
 	}
 

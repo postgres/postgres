@@ -92,22 +92,30 @@ typedef struct HeapScanDescData
 	 */
 	ParallelBlockTableScanWorkerData *rs_parallelworkerdata;
 
-	/*
-	 * These fields are only used for bitmap scans for the "skip fetch"
-	 * optimization. Bitmap scans needing no fields from the heap may skip
-	 * fetching an all visible block, instead using the number of tuples per
-	 * block reported by the bitmap to determine how many NULL-filled tuples
-	 * to return.
-	 */
-	Buffer		rs_vmbuffer;
-	int			rs_empty_tuples_pending;
-
 	/* these fields only used in page-at-a-time mode and for bitmap scans */
 	uint32		rs_cindex;		/* current tuple's index in vistuples */
 	uint32		rs_ntuples;		/* number of visible tuples on page */
 	OffsetNumber rs_vistuples[MaxHeapTuplesPerPage];	/* their offsets */
 }			HeapScanDescData;
 typedef struct HeapScanDescData *HeapScanDesc;
+
+typedef struct BitmapHeapScanDescData
+{
+	HeapScanDescData rs_heap_base;
+
+	/*
+	 * These fields are only used for bitmap scans for the "skip fetch"
+	 * optimization. Bitmap scans needing no fields from the heap may skip
+	 * fetching an all visible block, instead using the number of tuples per
+	 * block reported by the bitmap to determine how many NULL-filled tuples
+	 * to return. They are common to parallel and serial BitmapHeapScans
+	 */
+
+	/* page of VM containing info for current block */
+	Buffer		rs_vmbuffer;
+	int			rs_empty_tuples_pending;
+}			BitmapHeapScanDescData;
+typedef struct BitmapHeapScanDescData *BitmapHeapScanDesc;
 
 /*
  * Descriptor for fetches from heap via an index.
