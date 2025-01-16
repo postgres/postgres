@@ -112,11 +112,10 @@ main(int argc, char *argv[])
 	/* Prevent leaving behind the test file */
 	pqsignal(SIGINT, signal_cleanup);
 	pqsignal(SIGTERM, signal_cleanup);
+
+	/* the following are not valid on Windows */
 #ifndef WIN32
 	pqsignal(SIGALRM, process_alarm);
-#endif
-#ifdef SIGHUP
-	/* Not defined on win32 */
 	pqsignal(SIGHUP, signal_cleanup);
 #endif
 
