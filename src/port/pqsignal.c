@@ -112,31 +112,15 @@ wrapper_handler(SIGNAL_ARGS)
 /*
  * Set up a signal handler, with SA_RESTART, for signal "signo"
  *
- * Returns the previous handler.
- *
- * NB: If called within a signal handler, race conditions may lead to bogus
- * return values.  You should either avoid calling this within signal handlers
- * or ignore the return value.
- *
- * XXX: Since no in-tree callers use the return value, and there is little
- * reason to do so, it would be nice if we could convert this to a void
- * function instead of providing potentially-bogus return values.
- * Unfortunately, that requires modifying the pqsignal() in legacy-pqsignal.c,
- * which in turn requires an SONAME bump, which is probably not worth it.
- *
  * Note: the actual name of this function is either pqsignal_fe when
  * compiled with -DFRONTEND, or pqsignal_be when compiled without that.
  * This is to avoid a name collision with libpq's legacy-pqsignal.c.
  */
-pqsigfunc
+void
 pqsignal(int signo, pqsigfunc func)
 {
-	pqsigfunc	orig_func = pqsignal_handlers[signo];	/* assumed atomic */
 #if !(defined(WIN32) && defined(FRONTEND))
-	struct sigaction act,
-				oact;
-#else
-	pqsigfunc	ret;
+	struct sigaction act;
 #endif
 
 	Assert(signo < PG_NSIG);
@@ -155,17 +139,11 @@ pqsignal(int signo, pqsigfunc func)
 	if (signo == SIGCHLD)
 		act.sa_flags |= SA_NOCLDSTOP;
 #endif
-	if (sigaction(signo, &act, &oact) < 0)
-		return SIG_ERR;
-	else if (oact.sa_handler == wrapper_handler)
-		return orig_func;
-	else
-		return oact.sa_handler;
+	if (sigaction(signo, &act, NULL) < 0)
+		Assert(false);			/* probably indicates coding error */
 #else
 	/* Forward to Windows native signal system. */
-	if ((ret = signal(signo, func)) == wrapper_handler)
-		return orig_func;
-	else
-		return ret;
+	if (signal(signo, func) == SIG_ERR)
+		Assert(false);			/* probably indicates coding error */
 #endif
 }
