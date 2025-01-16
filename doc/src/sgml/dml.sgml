@@ -308,7 +308,8 @@ DELETE FROM products;
   </para>
 
   <para>
-   In an <command>INSERT</command>, the data available to <literal>RETURNING</literal> is
+   In an <command>INSERT</command>, the default data available to
+   <literal>RETURNING</literal> is
    the row as it was inserted.  This is not so useful in trivial inserts,
    since it would just repeat the data provided by the client.  But it can
    be very handy when relying on computed default values.  For example,
@@ -325,7 +326,8 @@ INSERT INTO users (firstname, lastname) VALUES ('Joe', 'Cool') RETURNING id;
   </para>
 
   <para>
-   In an <command>UPDATE</command>, the data available to <literal>RETURNING</literal> is
+   In an <command>UPDATE</command>, the default data available to
+   <literal>RETURNING</literal> is
    the new content of the modified row.  For example:
 <programlisting>
 UPDATE products SET price = price * 1.10
@@ -335,7 +337,8 @@ UPDATE products SET price = price * 1.10
   </para>
 
   <para>
-   In a <command>DELETE</command>, the data available to <literal>RETURNING</literal> is
+   In a <command>DELETE</command>, the default data available to
+   <literal>RETURNING</literal> is
    the content of the deleted row.  For example:
 <programlisting>
 DELETE FROM products
@@ -345,7 +348,8 @@ DELETE FROM products
   </para>
 
   <para>
-   In a <command>MERGE</command>, the data available to <literal>RETURNING</literal> is
+   In a <command>MERGE</command>, the default data available to
+   <literal>RETURNING</literal> is
    the content of the source row plus the content of the inserted, updated, or
    deleted target row.  Since it is quite common for the source and target to
    have many of the same columns, specifying <literal>RETURNING *</literal>
@@ -357,6 +361,35 @@ MERGE INTO products p USING new_products n ON p.product_no = n.product_no
   WHEN MATCHED THEN UPDATE SET name = n.name, price = n.price
   RETURNING p.*;
 </programlisting>
+  </para>
+
+  <para>
+   In each of these commands, it is also possible to explicitly return the
+   old and new content of the modified row.  For example:
+<programlisting>
+UPDATE products SET price = price * 1.10
+  WHERE price &lt;= 99.99
+  RETURNING name, old.price AS old_price, new.price AS new_price,
+            new.price - old.price AS price_change;
+</programlisting>
+   In this example, writing <literal>new.price</literal> is the same as
+   just writing <literal>price</literal>, but it makes the meaning clearer.
+  </para>
+
+  <para>
+   This syntax for returning old and new values is available in
+   <command>INSERT</command>, <command>UPDATE</command>,
+   <command>DELETE</command>, and <command>MERGE</command> commands, but
+   typically old values will be <literal>NULL</literal> for an
+   <command>INSERT</command>, and new values will be <literal>NULL</literal>
+   for a <command>DELETE</command>.  However, there are situations where it
+   can still be useful for those commands.  For example, in an
+   <command>INSERT</command> with an
+   <link linkend="sql-on-conflict"><literal>ON CONFLICT DO UPDATE</literal></link>
+   clause, the old values will be non-<literal>NULL</literal> for conflicting
+   rows.  Similarly, if a <command>DELETE</command> is turned into an
+   <command>UPDATE</command> by a <link linkend="sql-createrule">rewrite rule</link>,
+   the new values may be non-<literal>NULL</literal>.
   </para>
 
   <para>

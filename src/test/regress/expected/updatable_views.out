@@ -437,7 +437,8 @@ NOTICE:  drop cascades to view ro_view19
 -- simple updatable view
 CREATE TABLE base_tbl (a int PRIMARY KEY, b text DEFAULT 'Unspecified');
 INSERT INTO base_tbl SELECT i, 'Row ' || i FROM generate_series(-2, 2) g(i);
-CREATE VIEW rw_view1 AS SELECT * FROM base_tbl WHERE a>0;
+CREATE VIEW rw_view1 AS
+  SELECT *, 'Const' AS c, (SELECT concat('b: ', b)) AS d FROM base_tbl WHERE a>0;
 SELECT table_name, is_insertable_into
   FROM information_schema.tables
  WHERE table_name = 'rw_view1';
@@ -462,7 +463,9 @@ SELECT table_name, column_name, is_updatable
 ------------+-------------+--------------
  rw_view1   | a           | YES
  rw_view1   | b           | YES
-(2 rows)
+ rw_view1   | c           | NO
+ rw_view1   | d           | NO
+(4 rows)
 
 INSERT INTO rw_view1 VALUES (3, 'Row 3');
 INSERT INTO rw_view1 (a) VALUES (4);
@@ -479,20 +482,22 @@ SELECT * FROM base_tbl;
   5 | Unspecified
 (6 rows)
 
+SET jit_above_cost = 0;
 MERGE INTO rw_view1 t
   USING (VALUES (0, 'ROW 0'), (1, 'ROW 1'),
                 (2, 'ROW 2'), (3, 'ROW 3')) AS v(a,b) ON t.a = v.a
   WHEN MATCHED AND t.a <= 1 THEN UPDATE SET b = v.b
   WHEN MATCHED THEN DELETE
   WHEN NOT MATCHED AND a > 0 THEN INSERT (a) VALUES (v.a)
-  RETURNING merge_action(), v.*, t.*;
- merge_action | a |   b   | a |      b      
---------------+---+-------+---+-------------
- UPDATE       | 1 | ROW 1 | 1 | ROW 1
- DELETE       | 3 | ROW 3 | 3 | Row 3
- INSERT       | 2 | ROW 2 | 2 | Unspecified
+  RETURNING merge_action(), v.*, old, new, old.*, new.*, t.*;
+ merge_action | a |   b   |             old              |                  new                   | a |   b   |   c   |    d     | a |      b      |   c   |       d        | a |      b      |   c   |       d        
+--------------+---+-------+------------------------------+----------------------------------------+---+-------+-------+----------+---+-------------+-------+----------------+---+-------------+-------+----------------
+ UPDATE       | 1 | ROW 1 | (1,"Row 1",Const,"b: Row 1") | (1,"ROW 1",Const,"b: ROW 1")           | 1 | Row 1 | Const | b: Row 1 | 1 | ROW 1       | Const | b: ROW 1       | 1 | ROW 1       | Const | b: ROW 1
+ DELETE       | 3 | ROW 3 | (3,"Row 3",Const,"b: Row 3") |                                        | 3 | Row 3 | Const | b: Row 3 |   |             |       |                | 3 | Row 3       | Const | b: Row 3
+ INSERT       | 2 | ROW 2 |                              | (2,Unspecified,Const,"b: Unspecified") |   |       |       |          | 2 | Unspecified | Const | b: Unspecified | 2 | Unspecified | Const | b: Unspecified
 (3 rows)
 
+SET jit_above_cost TO DEFAULT;
 SELECT * FROM base_tbl ORDER BY a;
  a  |      b      
 ----+-------------
@@ -511,13 +516,13 @@ MERGE INTO rw_view1 t
   WHEN MATCHED THEN DELETE
   WHEN NOT MATCHED BY SOURCE THEN DELETE
   WHEN NOT MATCHED AND a > 0 THEN INSERT (a) VALUES (v.a)
-  RETURNING merge_action(), v.*, t.*;
- merge_action | a | b  | a |      b      
---------------+---+----+---+-------------
- UPDATE       | 1 | R1 | 1 | R1
- DELETE       |   |    | 5 | Unspecified
- DELETE       | 2 | R2 | 2 | Unspecified
- INSERT       | 3 | R3 | 3 | Unspecified
+  RETURNING merge_action(), v.*, old, new, old.*, new.*, t.*;
+ merge_action | a | b  |                  old                   |                  new                   | a |      b      |   c   |       d        | a |      b      |   c   |       d        | a |      b      |   c   |       d        
+--------------+---+----+----------------------------------------+----------------------------------------+---+-------------+-------+----------------+---+-------------+-------+----------------+---+-------------+-------+----------------
+ UPDATE       | 1 | R1 | (1,"ROW 1",Const,"b: ROW 1")           | (1,R1,Const,"b: R1")                   | 1 | ROW 1       | Const | b: ROW 1       | 1 | R1          | Const | b: R1          | 1 | R1          | Const | b: R1
+ DELETE       |   |    | (5,Unspecified,Const,"b: Unspecified") |                                        | 5 | Unspecified | Const | b: Unspecified |   |             |       |                | 5 | Unspecified | Const | b: Unspecified
+ DELETE       | 2 | R2 | (2,Unspecified,Const,"b: Unspecified") |                                        | 2 | Unspecified | Const | b: Unspecified |   |             |       |                | 2 | Unspecified | Const | b: Unspecified
+ INSERT       | 3 | R3 |                                        | (3,Unspecified,Const,"b: Unspecified") |   |             |       |                | 3 | Unspecified | Const | b: Unspecified | 3 | Unspecified | Const | b: Unspecified
 (4 rows)
 
 SELECT * FROM base_tbl ORDER BY a;
@@ -634,8 +639,10 @@ DROP TABLE base_tbl_hist;
 -- view on top of view
 CREATE TABLE base_tbl (a int PRIMARY KEY, b text DEFAULT 'Unspecified');
 INSERT INTO base_tbl SELECT i, 'Row ' || i FROM generate_series(-2, 2) g(i);
-CREATE VIEW rw_view1 AS SELECT b AS bb, a AS aa FROM base_tbl WHERE a>0;
-CREATE VIEW rw_view2 AS SELECT aa AS aaa, bb AS bbb FROM rw_view1 WHERE aa<10;
+CREATE VIEW rw_view1 AS
+  SELECT b AS bb, a AS aa, 'Const1' AS c FROM base_tbl WHERE a>0;
+CREATE VIEW rw_view2 AS
+  SELECT aa AS aaa, bb AS bbb, c AS c1, 'Const2' AS c2 FROM rw_view1 WHERE aa<10;
 SELECT table_name, is_insertable_into
   FROM information_schema.tables
  WHERE table_name = 'rw_view2';
@@ -660,27 +667,29 @@ SELECT table_name, column_name, is_updatable
 ------------+-------------+--------------
  rw_view2   | aaa         | YES
  rw_view2   | bbb         | YES
-(2 rows)
+ rw_view2   | c1          | NO
+ rw_view2   | c2          | NO
+(4 rows)
 
 INSERT INTO rw_view2 VALUES (3, 'Row 3');
 INSERT INTO rw_view2 (aaa) VALUES (4);
 SELECT * FROM rw_view2;
- aaa |     bbb     
------+-------------
-   1 | Row 1
-   2 | Row 2
-   3 | Row 3
-   4 | Unspecified
+ aaa |     bbb     |   c1   |   c2   
+-----+-------------+--------+--------
+   1 | Row 1       | Const1 | Const2
+   2 | Row 2       | Const1 | Const2
+   3 | Row 3       | Const1 | Const2
+   4 | Unspecified | Const1 | Const2
 (4 rows)
 
 UPDATE rw_view2 SET bbb='Row 4' WHERE aaa=4;
 DELETE FROM rw_view2 WHERE aaa=2;
 SELECT * FROM rw_view2;
- aaa |  bbb  
------+-------
-   1 | Row 1
-   3 | Row 3
-   4 | Row 4
+ aaa |  bbb  |   c1   |   c2   
+-----+-------+--------+--------
+   1 | Row 1 | Const1 | Const2
+   3 | Row 3 | Const1 | Const2
+   4 | Row 4 | Const1 | Const2
 (3 rows)
 
 MERGE INTO rw_view2 t
@@ -688,20 +697,20 @@ MERGE INTO rw_view2 t
   WHEN MATCHED AND aaa = 3 THEN DELETE
   WHEN MATCHED THEN UPDATE SET bbb = v.b
   WHEN NOT MATCHED THEN INSERT (aaa) VALUES (v.a)
-  RETURNING merge_action(), v.*, t.*;
- merge_action | a | b  | aaa |     bbb     
---------------+---+----+-----+-------------
- DELETE       | 3 | R3 |   3 | Row 3
- UPDATE       | 4 | R4 |   4 | R4
- INSERT       | 5 | R5 |   5 | Unspecified
+  RETURNING merge_action(), v.*, (SELECT old), (SELECT (SELECT new)), t.*;
+ merge_action | a | b  |            old            |              new              | aaa |     bbb     |   c1   |   c2   
+--------------+---+----+---------------------------+-------------------------------+-----+-------------+--------+--------
+ DELETE       | 3 | R3 | (3,"Row 3",Const1,Const2) |                               |   3 | Row 3       | Const1 | Const2
+ UPDATE       | 4 | R4 | (4,"Row 4",Const1,Const2) | (4,R4,Const1,Const2)          |   4 | R4          | Const1 | Const2
+ INSERT       | 5 | R5 |                           | (5,Unspecified,Const1,Const2) |   5 | Unspecified | Const1 | Const2
 (3 rows)
 
 SELECT * FROM rw_view2 ORDER BY aaa;
- aaa |     bbb     
------+-------------
-   1 | Row 1
-   4 | R4
-   5 | Unspecified
+ aaa |     bbb     |   c1   |   c2   
+-----+-------------+--------+--------
+   1 | Row 1       | Const1 | Const2
+   4 | R4          | Const1 | Const2
+   5 | Unspecified | Const1 | Const2
 (3 rows)
 
 MERGE INTO rw_view2 t
@@ -710,21 +719,21 @@ MERGE INTO rw_view2 t
   WHEN MATCHED THEN UPDATE SET bbb = v.b
   WHEN NOT MATCHED THEN INSERT (aaa) VALUES (v.a)
   WHEN NOT MATCHED BY SOURCE THEN UPDATE SET bbb = 'Not matched by source'
-  RETURNING merge_action(), v.*, t.*;
- merge_action | a | b  | aaa |          bbb          
---------------+---+----+-----+-----------------------
- UPDATE       |   |    |   1 | Not matched by source
- DELETE       | 4 | r4 |   4 | R4
- UPDATE       | 5 | r5 |   5 | r5
- INSERT       | 6 | r6 |   6 | Unspecified
+  RETURNING merge_action(), v.*, old, (SELECT new FROM (VALUES ((SELECT new)))), t.*;
+ merge_action | a | b  |              old              |                    new                    | aaa |          bbb          |   c1   |   c2   
+--------------+---+----+-------------------------------+-------------------------------------------+-----+-----------------------+--------+--------
+ UPDATE       |   |    | (1,"Row 1",Const1,Const2)     | (1,"Not matched by source",Const1,Const2) |   1 | Not matched by source | Const1 | Const2
+ DELETE       | 4 | r4 | (4,R4,Const1,Const2)          |                                           |   4 | R4                    | Const1 | Const2
+ UPDATE       | 5 | r5 | (5,Unspecified,Const1,Const2) | (5,r5,Const1,Const2)                      |   5 | r5                    | Const1 | Const2
+ INSERT       | 6 | r6 |                               | (6,Unspecified,Const1,Const2)             |   6 | Unspecified           | Const1 | Const2
 (4 rows)
 
 SELECT * FROM rw_view2 ORDER BY aaa;
- aaa |          bbb          
------+-----------------------
-   1 | Not matched by source
-   5 | r5
-   6 | Unspecified
+ aaa |          bbb          |   c1   |   c2   
+-----+-----------------------+--------+--------
+   1 | Not matched by source | Const1 | Const2
+   5 | r5                    | Const1 | Const2
+   6 | Unspecified           | Const1 | Const2
 (3 rows)
 
 EXPLAIN (costs off) UPDATE rw_view2 SET aaa=5 WHERE aaa=4;
@@ -886,16 +895,25 @@ SELECT table_name, column_name, is_updatable
  rw_view2   | b           | YES
 (4 rows)
 
-INSERT INTO rw_view2 VALUES (3, 'Row 3') RETURNING *;
- a |   b   
----+-------
- 3 | Row 3
+INSERT INTO rw_view2 VALUES (3, 'Row 3') RETURNING old.*, new.*;
+ a | b | a |   b   
+---+---+---+-------
+   |   | 3 | Row 3
 (1 row)
 
-UPDATE rw_view2 SET b='Row three' WHERE a=3 RETURNING *;
- a |     b     
----+-----------
- 3 | Row three
+UPDATE rw_view2 SET b='R3' WHERE a=3 RETURNING old.*, new.*; -- rule returns NEW
+ a | b  | a | b  
+---+----+---+----
+ 3 | R3 | 3 | R3
+(1 row)
+
+DROP RULE rw_view1_upd_rule ON rw_view1;
+CREATE RULE rw_view1_upd_rule AS ON UPDATE TO rw_view1
+  DO INSTEAD UPDATE base_tbl SET b=NEW.b WHERE a=OLD.a RETURNING *;
+UPDATE rw_view2 SET b='Row three' WHERE a=3 RETURNING old.*, new.*;
+ a | b  | a |     b     
+---+----+---+-----------
+ 3 | R3 | 3 | Row three
 (1 row)
 
 SELECT * FROM rw_view2;
@@ -906,10 +924,10 @@ SELECT * FROM rw_view2;
  3 | Row three
 (3 rows)
 
-DELETE FROM rw_view2 WHERE a=3 RETURNING *;
- a |     b     
----+-----------
- 3 | Row three
+DELETE FROM rw_view2 WHERE a=3 RETURNING old.*, new.*;
+ a |     b     | a | b 
+---+-----------+---+---
+ 3 | Row three |   | 
 (1 row)
 
 SELECT * FROM rw_view2;
@@ -960,8 +978,10 @@ drop cascades to view rw_view2
 -- view on top of view with triggers
 CREATE TABLE base_tbl (a int PRIMARY KEY, b text DEFAULT 'Unspecified');
 INSERT INTO base_tbl SELECT i, 'Row ' || i FROM generate_series(-2, 2) g(i);
-CREATE VIEW rw_view1 AS SELECT * FROM base_tbl WHERE a>0 OFFSET 0; -- not updatable without rules/triggers
-CREATE VIEW rw_view2 AS SELECT * FROM rw_view1 WHERE a<10;
+CREATE VIEW rw_view1 AS
+  SELECT *, 'Const1' AS c1 FROM base_tbl WHERE a>0 OFFSET 0; -- not updatable without rules/triggers
+CREATE VIEW rw_view2 AS
+  SELECT *, 'Const2' AS c2 FROM rw_view1 WHERE a<10;
 SELECT table_name, is_insertable_into
   FROM information_schema.tables
  WHERE table_name LIKE 'rw_view%'
@@ -992,9 +1012,12 @@ SELECT table_name, column_name, is_updatable
 ------------+-------------+--------------
  rw_view1   | a           | NO
  rw_view1   | b           | NO
+ rw_view1   | c1          | NO
  rw_view2   | a           | NO
  rw_view2   | b           | NO
-(4 rows)
+ rw_view2   | c1          | NO
+ rw_view2   | c2          | NO
+(7 rows)
 
 CREATE FUNCTION rw_view1_trig_fn()
 RETURNS trigger AS
@@ -1002,9 +1025,11 @@ $$
 BEGIN
   IF TG_OP = 'INSERT' THEN
     INSERT INTO base_tbl VALUES (NEW.a, NEW.b);
+    NEW.c1 = 'Trigger Const1';
     RETURN NEW;
   ELSIF TG_OP = 'UPDATE' THEN
     UPDATE base_tbl SET b=NEW.b WHERE a=OLD.a;
+    NEW.c1 = 'Trigger Const1';
     RETURN NEW;
   ELSIF TG_OP = 'DELETE' THEN
     DELETE FROM base_tbl WHERE a=OLD.a;
@@ -1045,9 +1070,12 @@ SELECT table_name, column_name, is_updatable
 ------------+-------------+--------------
  rw_view1   | a           | NO
  rw_view1   | b           | NO
+ rw_view1   | c1          | NO
  rw_view2   | a           | NO
  rw_view2   | b           | NO
-(4 rows)
+ rw_view2   | c1          | NO
+ rw_view2   | c2          | NO
+(7 rows)
 
 CREATE TRIGGER rw_view1_upd_trig INSTEAD OF UPDATE ON rw_view1
   FOR EACH ROW EXECUTE PROCEDURE rw_view1_trig_fn();
@@ -1081,9 +1109,12 @@ SELECT table_name, column_name, is_updatable
 ------------+-------------+--------------
  rw_view1   | a           | NO
  rw_view1   | b           | NO
+ rw_view1   | c1          | NO
  rw_view2   | a           | NO
  rw_view2   | b           | NO
-(4 rows)
+ rw_view2   | c1          | NO
+ rw_view2   | c2          | NO
+(7 rows)
 
 CREATE TRIGGER rw_view1_del_trig INSTEAD OF DELETE ON rw_view1
   FOR EACH ROW EXECUTE PROCEDURE rw_view1_trig_fn();
@@ -1117,41 +1148,44 @@ SELECT table_name, column_name, is_updatable
 ------------+-------------+--------------
  rw_view1   | a           | NO
  rw_view1   | b           | NO
+ rw_view1   | c1          | NO
  rw_view2   | a           | NO
  rw_view2   | b           | NO
-(4 rows)
+ rw_view2   | c1          | NO
+ rw_view2   | c2          | NO
+(7 rows)
 
-INSERT INTO rw_view2 VALUES (3, 'Row 3') RETURNING *;
- a |   b   
----+-------
- 3 | Row 3
+INSERT INTO rw_view2 VALUES (3, 'Row 3') RETURNING old.*, new.*;
+ a | b | c1 | c2 | a |   b   |       c1       |   c2   
+---+---+----+----+---+-------+----------------+--------
+   |   |    |    | 3 | Row 3 | Trigger Const1 | Const2
 (1 row)
 
-UPDATE rw_view2 SET b='Row three' WHERE a=3 RETURNING *;
- a |     b     
----+-----------
- 3 | Row three
+UPDATE rw_view2 SET b='Row three' WHERE a=3 RETURNING old.*, new.*;
+ a |   b   |   c1   |   c2   | a |     b     |       c1       |   c2   
+---+-------+--------+--------+---+-----------+----------------+--------
+ 3 | Row 3 | Const1 | Const2 | 3 | Row three | Trigger Const1 | Const2
 (1 row)
 
 SELECT * FROM rw_view2;
- a |     b     
----+-----------
- 1 | Row 1
- 2 | Row 2
- 3 | Row three
+ a |     b     |   c1   |   c2   
+---+-----------+--------+--------
+ 1 | Row 1     | Const1 | Const2
+ 2 | Row 2     | Const1 | Const2
+ 3 | Row three | Const1 | Const2
 (3 rows)
 
-DELETE FROM rw_view2 WHERE a=3 RETURNING *;
- a |     b     
----+-----------
- 3 | Row three
+DELETE FROM rw_view2 WHERE a=3 RETURNING old.*, new.*;
+ a |     b     |   c1   |   c2   | a | b | c1 | c2 
+---+-----------+--------+--------+---+---+----+----
+ 3 | Row three | Const1 | Const2 |   |   |    | 
 (1 row)
 
 SELECT * FROM rw_view2;
- a |   b   
----+-------
- 1 | Row 1
- 2 | Row 2
+ a |   b   |   c1   |   c2   
+---+-------+--------+--------
+ 1 | Row 1 | Const1 | Const2
+ 2 | Row 2 | Const1 | Const2
 (2 rows)
 
 MERGE INTO rw_view2 t
@@ -1159,12 +1193,12 @@ MERGE INTO rw_view2 t
   WHEN MATCHED AND t.a <= 1 THEN DELETE
   WHEN MATCHED THEN UPDATE SET b = s.b
   WHEN NOT MATCHED AND s.a > 0 THEN INSERT VALUES (s.a, s.b)
-  RETURNING merge_action(), s.*, t.*;
- merge_action | a | b  | a |   b   
---------------+---+----+---+-------
- DELETE       | 1 | R1 | 1 | Row 1
- UPDATE       | 2 | R2 | 2 | R2
- INSERT       | 3 | R3 | 3 | R3
+  RETURNING merge_action(), s.*, old, new, t.*;
+ merge_action | a | b  |            old            |              new               | a |   b   |       c1       |   c2   
+--------------+---+----+---------------------------+--------------------------------+---+-------+----------------+--------
+ DELETE       | 1 | R1 | (1,"Row 1",Const1,Const2) |                                | 1 | Row 1 | Const1         | Const2
+ UPDATE       | 2 | R2 | (2,"Row 2",Const1,Const2) | (2,R2,"Trigger Const1",Const2) | 2 | R2    | Trigger Const1 | Const2
+ INSERT       | 3 | R3 |                           | (3,R3,"Trigger Const1",Const2) | 3 | R3    | Trigger Const1 | Const2
 (3 rows)
 
 SELECT * FROM base_tbl ORDER BY a;
@@ -1182,12 +1216,12 @@ MERGE INTO rw_view2 t
   WHEN MATCHED THEN UPDATE SET b = s.b
   WHEN NOT MATCHED AND s.a > 0 THEN INSERT VALUES (s.a, s.b)
   WHEN NOT MATCHED BY SOURCE THEN UPDATE SET b = 'Not matched by source'
-  RETURNING merge_action(), s.*, t.*;
- merge_action | a | b  | a |           b           
---------------+---+----+---+-----------------------
- UPDATE       | 2 | r2 | 2 | r2
- UPDATE       |   |    | 3 | Not matched by source
- INSERT       | 1 | r1 | 1 | r1
+  RETURNING merge_action(), s.*, old, new, t.*;
+ merge_action | a | b  |         old          |                         new                         | a |           b           |       c1       |   c2   
+--------------+---+----+----------------------+-----------------------------------------------------+---+-----------------------+----------------+--------
+ UPDATE       | 2 | r2 | (2,R2,Const1,Const2) | (2,r2,"Trigger Const1",Const2)                      | 2 | r2                    | Trigger Const1 | Const2
+ UPDATE       |   |    | (3,R3,Const1,Const2) | (3,"Not matched by source","Trigger Const1",Const2) | 3 | Not matched by source | Trigger Const1 | Const2
+ INSERT       | 1 | r1 |                      | (1,r1,"Trigger Const1",Const2)                      | 1 | r1                    | Trigger Const1 | Const2
 (3 rows)
 
 SELECT * FROM base_tbl ORDER BY a;

@@ -29,7 +29,8 @@ UPDATE [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ] [ 
         } [, ...]
     [ FROM <replaceable class="parameter">from_item</replaceable> [, ...] ]
     [ WHERE <replaceable class="parameter">condition</replaceable> | WHERE CURRENT OF <replaceable class="parameter">cursor_name</replaceable> ]
-    [ RETURNING { * | <replaceable class="parameter">output_expression</replaceable> [ [ AS ] <replaceable class="parameter">output_name</replaceable> ] } [, ...] ]
+    [ RETURNING [ WITH ( { OLD | NEW } AS <replaceable class="parameter">output_alias</replaceable> [, ...] ) ]
+                { * | <replaceable class="parameter">output_expression</replaceable> [ [ AS ] <replaceable class="parameter">output_name</replaceable> ] } [, ...] ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -212,6 +213,26 @@ UPDATE [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ] [ 
    </varlistentry>
 
    <varlistentry>
+    <term><replaceable class="parameter">output_alias</replaceable></term>
+    <listitem>
+     <para>
+      An optional substitute name for <literal>OLD</literal> or
+      <literal>NEW</literal> rows in the <literal>RETURNING</literal> list.
+     </para>
+
+     <para>
+      By default, old values from the target table can be returned by writing
+      <literal>OLD.<replaceable class="parameter">column_name</replaceable></literal>
+      or <literal>OLD.*</literal>, and new values can be returned by writing
+      <literal>NEW.<replaceable class="parameter">column_name</replaceable></literal>
+      or <literal>NEW.*</literal>.  When an alias is provided, these names are
+      hidden and the old or new rows must be referred to using the alias.
+      For example <literal>RETURNING WITH (OLD AS o, NEW AS n) o.*, n.*</literal>.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
     <term><replaceable class="parameter">output_expression</replaceable></term>
     <listitem>
      <para>
@@ -220,6 +241,16 @@ UPDATE [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ] [ 
       column names of the table named by <replaceable class="parameter">table_name</replaceable>
       or table(s) listed in <literal>FROM</literal>.
       Write <literal>*</literal> to return all columns.
+     </para>
+
+     <para>
+      A column name or <literal>*</literal> may be qualified using
+      <literal>OLD</literal> or <literal>NEW</literal>, or the corresponding
+      <replaceable class="parameter">output_alias</replaceable> for
+      <literal>OLD</literal> or <literal>NEW</literal>, to cause old or new
+      values to be returned.  An unqualified column name, or
+      <literal>*</literal>, or a column name or <literal>*</literal> qualified
+      using the target table name or alias will return new values.
      </para>
     </listitem>
    </varlistentry>
@@ -348,12 +379,13 @@ UPDATE weather SET temp_lo = temp_lo+1, temp_hi = temp_lo+15, prcp = DEFAULT
   </para>
 
   <para>
-   Perform the same operation and return the updated entries:
+   Perform the same operation and return the updated entries, and the old
+   precipitation value:
 
 <programlisting>
 UPDATE weather SET temp_lo = temp_lo+1, temp_hi = temp_lo+15, prcp = DEFAULT
   WHERE city = 'San Francisco' AND date = '2003-07-03'
-  RETURNING temp_lo, temp_hi, prcp;
+  RETURNING temp_lo, temp_hi, prcp, old.prcp AS old_prcp;
 </programlisting>
   </para>
 

@@ -295,6 +295,11 @@ struct ParseState
  * of SQL:2008 requires us to do it this way.  We also use p_lateral_ok to
  * forbid LATERAL references to an UPDATE/DELETE target table.
  *
+ * While processing the RETURNING clause, special namespace items are added to
+ * refer to the OLD and NEW state of the result relation.  These namespace
+ * items have p_returning_type set appropriately, for use when creating Vars.
+ * For convenience, this information is duplicated on each namespace column.
+ *
  * At no time should a namespace list contain two entries that conflict
  * according to the rules in checkNameSpaceConflicts; but note that those
  * are more complicated than "must have different alias names", so in practice
@@ -312,6 +317,7 @@ struct ParseNamespaceItem
 	bool		p_cols_visible; /* Column names visible as unqualified refs? */
 	bool		p_lateral_only; /* Is only visible to LATERAL expressions? */
 	bool		p_lateral_ok;	/* If so, does join type allow use? */
+	VarReturningType p_returning_type;	/* Is OLD/NEW for use in RETURNING? */
 };
 
 /*
@@ -342,6 +348,7 @@ struct ParseNamespaceColumn
 	Oid			p_vartype;		/* pg_type OID */
 	int32		p_vartypmod;	/* type modifier value */
 	Oid			p_varcollid;	/* OID of collation, or InvalidOid */
+	VarReturningType p_varreturningtype;	/* for RETURNING OLD/NEW */
 	Index		p_varnosyn;		/* rangetable index of syntactic referent */
 	AttrNumber	p_varattnosyn;	/* attribute number of syntactic referent */
 	bool		p_dontexpand;	/* not included in star expansion */

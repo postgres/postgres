@@ -40,12 +40,12 @@ step merge2a:
 	UPDATE set key = t.key + 1, val = t.val || ' updated by ' || s.val
   WHEN NOT MATCHED BY SOURCE THEN
 	UPDATE set key = t.key + 1, val = t.val || ' source not matched by merge2a'
-  RETURNING merge_action(), t.*;
+  RETURNING merge_action(), old, new, t.*;
 
-merge_action|key|val                                                   
-------------+---+------------------------------------------------------
-UPDATE      |  3|setup1 updated by merge1 source not matched by merge2a
-INSERT      |  1|merge2a                                               
+merge_action|old                           |new                                                         |key|val                                                   
+------------+------------------------------+------------------------------------------------------------+---+------------------------------------------------------
+UPDATE      |(2,"setup1 updated by merge1")|(3,"setup1 updated by merge1 source not matched by merge2a")|  3|setup1 updated by merge1 source not matched by merge2a
+INSERT      |                              |(1,merge2a)                                                 |  1|merge2a                                               
 (2 rows)
 
 step select2: SELECT * FROM target;
@@ -98,14 +98,14 @@ step merge2a:
 	UPDATE set key = t.key + 1, val = t.val || ' updated by ' || s.val
   WHEN NOT MATCHED BY SOURCE THEN
 	UPDATE set key = t.key + 1, val = t.val || ' source not matched by merge2a'
-  RETURNING merge_action(), t.*;
+  RETURNING merge_action(), old, new, t.*;
  <waiting ...>
 step c1: COMMIT;
 step merge2a: <... completed>
-merge_action|key|val                                                   
-------------+---+------------------------------------------------------
-UPDATE      |  3|setup1 updated by merge1 source not matched by merge2a
-INSERT      |  1|merge2a                                               
+merge_action|old                           |new                                                         |key|val                                                   
+------------+------------------------------+------------------------------------------------------------+---+------------------------------------------------------
+UPDATE      |(2,"setup1 updated by merge1")|(3,"setup1 updated by merge1 source not matched by merge2a")|  3|setup1 updated by merge1 source not matched by merge2a
+INSERT      |                              |(1,merge2a)                                                 |  1|merge2a                                               
 (2 rows)
 
 step select2: SELECT * FROM target;
@@ -137,13 +137,13 @@ step merge2a:
 	UPDATE set key = t.key + 1, val = t.val || ' updated by ' || s.val
   WHEN NOT MATCHED BY SOURCE THEN
 	UPDATE set key = t.key + 1, val = t.val || ' source not matched by merge2a'
-  RETURNING merge_action(), t.*;
+  RETURNING merge_action(), old, new, t.*;
  <waiting ...>
 step a1: ABORT;
 step merge2a: <... completed>
-merge_action|key|val                      
-------------+---+-------------------------
-UPDATE      |  2|setup1 updated by merge2a
+merge_action|old       |new                            |key|val                      
+------------+----------+-------------------------------+---+-------------------------
+UPDATE      |(1,setup1)|(2,"setup1 updated by merge2a")|  2|setup1 updated by merge2a
 (1 row)
 
 step select2: SELECT * FROM target;
@@ -234,14 +234,14 @@ step pa_merge2a:
 	UPDATE set key = t.key + 1, val = t.val || ' updated by ' || s.val
   WHEN NOT MATCHED BY SOURCE THEN
 	UPDATE set key = t.key + 1, val = t.val || ' source not matched by pa_merge2a'
-  RETURNING merge_action(), t.*;
+  RETURNING merge_action(), old, new, t.*;
  <waiting ...>
 step c1: COMMIT;
 step pa_merge2a: <... completed>
-merge_action|key|val                                               
-------------+---+--------------------------------------------------
-UPDATE      |  2|initial updated by pa_merge1 updated by pa_merge2a
-UPDATE      |  3|initial source not matched by pa_merge2a          
+merge_action|old                               |new                                                     |key|val                                               
+------------+----------------------------------+--------------------------------------------------------+---+--------------------------------------------------
+UPDATE      |(1,"initial updated by pa_merge1")|(2,"initial updated by pa_merge1 updated by pa_merge2a")|  2|initial updated by pa_merge1 updated by pa_merge2a
+UPDATE      |(2,initial)                       |(3,"initial source not matched by pa_merge2a")          |  3|initial source not matched by pa_merge2a          
 (2 rows)
 
 step pa_select2: SELECT * FROM pa_target;
@@ -273,7 +273,7 @@ step pa_merge2a:
 	UPDATE set key = t.key + 1, val = t.val || ' updated by ' || s.val
   WHEN NOT MATCHED BY SOURCE THEN
 	UPDATE set key = t.key + 1, val = t.val || ' source not matched by pa_merge2a'
-  RETURNING merge_action(), t.*;
+  RETURNING merge_action(), old, new, t.*;
  <waiting ...>
 step c1: COMMIT;
 step pa_merge2a: <... completed>
@@ -303,13 +303,13 @@ step pa_merge2a:
 	UPDATE set key = t.key + 1, val = t.val || ' updated by ' || s.val
   WHEN NOT MATCHED BY SOURCE THEN
 	UPDATE set key = t.key + 1, val = t.val || ' source not matched by pa_merge2a'
-  RETURNING merge_action(), t.*;
+  RETURNING merge_action(), old, new, t.*;
 
-merge_action|key|val                                                          
-------------+---+-------------------------------------------------------------
-UPDATE      |  3|initial source not matched by pa_merge2a                     
-UPDATE      |  3|initial updated by pa_merge2 source not matched by pa_merge2a
-INSERT      |  1|pa_merge2a                                                   
+merge_action|old                               |new                                                                |key|val                                                          
+------------+----------------------------------+-------------------------------------------------------------------+---+-------------------------------------------------------------
+UPDATE      |(2,initial)                       |(3,"initial source not matched by pa_merge2a")                     |  3|initial source not matched by pa_merge2a                     
+UPDATE      |(2,"initial updated by pa_merge2")|(3,"initial updated by pa_merge2 source not matched by pa_merge2a")|  3|initial updated by pa_merge2 source not matched by pa_merge2a
+INSERT      |                                  |(1,pa_merge2a)                                                     |  1|pa_merge2a                                                   
 (3 rows)
 
 step pa_select2: SELECT * FROM pa_target;

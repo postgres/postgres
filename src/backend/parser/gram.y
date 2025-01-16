@@ -267,6 +267,8 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 	MergeWhenClause *mergewhen;
 	struct KeyActions *keyactions;
 	struct KeyAction *keyaction;
+	ReturningClause *retclause;
+	ReturningOptionKind retoptionkind;
 }
 
 %type <node>	stmt toplevel_stmt schema_stmt routine_body_stmt
@@ -436,7 +438,8 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 				opclass_purpose opt_opfamily transaction_mode_list_or_empty
 				OptTableFuncElementList TableFuncElementList opt_type_modifiers
 				prep_type_clause
-				execute_param_clause using_clause returning_clause
+				execute_param_clause using_clause
+				returning_with_clause returning_options
 				opt_enum_val_list enum_val_list table_func_column_list
 				create_generic_options alter_generic_options
 				relation_expr_list dostmt_opt_list
@@ -445,6 +448,9 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 				vacuum_relation_list opt_vacuum_relation_list
 				drop_option_list pub_obj_list
 
+%type <retclause> returning_clause
+%type <node>	returning_option
+%type <retoptionkind> returning_option_kind
 %type <node>	opt_routine_body
 %type <groupclause> group_clause
 %type <list>	group_by_list
@@ -12202,7 +12208,7 @@ InsertStmt:
 				{
 					$5->relation = $4;
 					$5->onConflictClause = $6;
-					$5->returningList = $7;
+					$5->returningClause = $7;
 					$5->withClause = $1;
 					$5->stmt_location = @$;
 					$$ = (Node *) $5;
@@ -12336,8 +12342,45 @@ opt_conf_expr:
 		;
 
 returning_clause:
-			RETURNING target_list		{ $$ = $2; }
-			| /* EMPTY */				{ $$ = NIL; }
+			RETURNING returning_with_clause target_list
+				{
+					ReturningClause *n = makeNode(ReturningClause);
+
+					n->options = $2;
+					n->exprs = $3;
+					$$ = n;
+				}
+			| /* EMPTY */
+				{
+					$$ = NULL;
+				}
+		;
+
+returning_with_clause:
+			WITH '(' returning_options ')'		{ $$ = $3; }
+			| /* EMPTY */						{ $$ = NIL; }
+		;
+
+returning_options:
+			returning_option							{ $$ = list_make1($1); }
+			| returning_options ',' returning_option	{ $$ = lappend($1, $3); }
+		;
+
+returning_option:
+			returning_option_kind AS ColId
+				{
+					ReturningOption *n = makeNode(ReturningOption);
+
+					n->option = $1;
+					n->value = $3;
+					n->location = @1;
+					$$ = (Node *) n;
+				}
+		;
+
+returning_option_kind:
+			OLD			{ $$ = RETURNING_OPTION_OLD; }
+			| NEW		{ $$ = RETURNING_OPTION_NEW; }
 		;
 
 
@@ -12356,7 +12399,7 @@ DeleteStmt: opt_with_clause DELETE_P FROM relation_expr_opt_alias
 					n->relation = $4;
 					n->usingClause = $5;
 					n->whereClause = $6;
-					n->returningList = $7;
+					n->returningClause = $7;
 					n->withClause = $1;
 					n->stmt_location = @$;
 					$$ = (Node *) n;
@@ -12431,7 +12474,7 @@ UpdateStmt: opt_with_clause UPDATE relation_expr_opt_alias
 					n->targetList = $5;
 					n->fromClause = $6;
 					n->whereClause = $7;
-					n->returningList = $8;
+					n->returningClause = $8;
 					n->withClause = $1;
 					n->stmt_location = @$;
 					$$ = (Node *) n;
@@ -12510,7 +12553,7 @@ MergeStmt:
 					m->sourceRelation = $6;
 					m->joinCondition = $8;
 					m->mergeWhenClauses = $9;
-					m->returningList = $10;
+					m->returningClause = $10;
 					m->stmt_location = @$;
 
 					$$ = (Node *) m;

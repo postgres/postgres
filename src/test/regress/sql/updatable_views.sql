@@ -154,7 +154,8 @@ DROP SEQUENCE uv_seq CASCADE;
 CREATE TABLE base_tbl (a int PRIMARY KEY, b text DEFAULT 'Unspecified');
 INSERT INTO base_tbl SELECT i, 'Row ' || i FROM generate_series(-2, 2) g(i);
 
-CREATE VIEW rw_view1 AS SELECT * FROM base_tbl WHERE a>0;
+CREATE VIEW rw_view1 AS
+  SELECT *, 'Const' AS c, (SELECT concat('b: ', b)) AS d FROM base_tbl WHERE a>0;
 
 SELECT table_name, is_insertable_into
   FROM information_schema.tables
@@ -175,13 +176,18 @@ UPDATE rw_view1 SET a=5 WHERE a=4;
 DELETE FROM rw_view1 WHERE b='Row 2';
 SELECT * FROM base_tbl;
 
+SET jit_above_cost = 0;
+
 MERGE INTO rw_view1 t
   USING (VALUES (0, 'ROW 0'), (1, 'ROW 1'),
                 (2, 'ROW 2'), (3, 'ROW 3')) AS v(a,b) ON t.a = v.a
   WHEN MATCHED AND t.a <= 1 THEN UPDATE SET b = v.b
   WHEN MATCHED THEN DELETE
   WHEN NOT MATCHED AND a > 0 THEN INSERT (a) VALUES (v.a)
-  RETURNING merge_action(), v.*, t.*;
+  RETURNING merge_action(), v.*, old, new, old.*, new.*, t.*;
+
+SET jit_above_cost TO DEFAULT;
+
 SELECT * FROM base_tbl ORDER BY a;
 
 MERGE INTO rw_view1 t
@@ -191,7 +197,7 @@ MERGE INTO rw_view1 t
   WHEN MATCHED THEN DELETE
   WHEN NOT MATCHED BY SOURCE THEN DELETE
   WHEN NOT MATCHED AND a > 0 THEN INSERT (a) VALUES (v.a)
-  RETURNING merge_action(), v.*, t.*;
+  RETURNING merge_action(), v.*, old, new, old.*, new.*, t.*;
 SELECT * FROM base_tbl ORDER BY a;
 
 EXPLAIN (costs off) UPDATE rw_view1 SET a=6 WHERE a=5;
@@ -240,8 +246,10 @@ DROP TABLE base_tbl_hist;
 CREATE TABLE base_tbl (a int PRIMARY KEY, b text DEFAULT 'Unspecified');
 INSERT INTO base_tbl SELECT i, 'Row ' || i FROM generate_series(-2, 2) g(i);
 
-CREATE VIEW rw_view1 AS SELECT b AS bb, a AS aa FROM base_tbl WHERE a>0;
-CREATE VIEW rw_view2 AS SELECT aa AS aaa, bb AS bbb FROM rw_view1 WHERE aa<10;
+CREATE VIEW rw_view1 AS
+  SELECT b AS bb, a AS aa, 'Const1' AS c FROM base_tbl WHERE a>0;
+CREATE VIEW rw_view2 AS
+  SELECT aa AS aaa, bb AS bbb, c AS c1, 'Const2' AS c2 FROM rw_view1 WHERE aa<10;
 
 SELECT table_name, is_insertable_into
   FROM information_schema.tables
@@ -268,7 +276,7 @@ MERGE INTO rw_view2 t
   WHEN MATCHED AND aaa = 3 THEN DELETE
   WHEN MATCHED THEN UPDATE SET bbb = v.b
   WHEN NOT MATCHED THEN INSERT (aaa) VALUES (v.a)
-  RETURNING merge_action(), v.*, t.*;
+  RETURNING merge_action(), v.*, (SELECT old), (SELECT (SELECT new)), t.*;
 SELECT * FROM rw_view2 ORDER BY aaa;
 
 MERGE INTO rw_view2 t
@@ -277,7 +285,7 @@ MERGE INTO rw_view2 t
   WHEN MATCHED THEN UPDATE SET bbb = v.b
   WHEN NOT MATCHED THEN INSERT (aaa) VALUES (v.a)
   WHEN NOT MATCHED BY SOURCE THEN UPDATE SET bbb = 'Not matched by source'
-  RETURNING merge_action(), v.*, t.*;
+  RETURNING merge_action(), v.*, old, (SELECT new FROM (VALUES ((SELECT new)))), t.*;
 SELECT * FROM rw_view2 ORDER BY aaa;
 
 EXPLAIN (costs off) UPDATE rw_view2 SET aaa=5 WHERE aaa=4;
@@ -362,10 +370,14 @@ SELECT table_name, column_name, is_updatable
  WHERE table_name LIKE 'rw_view%'
  ORDER BY table_name, ordinal_position;
 
-INSERT INTO rw_view2 VALUES (3, 'Row 3') RETURNING *;
-UPDATE rw_view2 SET b='Row three' WHERE a=3 RETURNING *;
+INSERT INTO rw_view2 VALUES (3, 'Row 3') RETURNING old.*, new.*;
+UPDATE rw_view2 SET b='R3' WHERE a=3 RETURNING old.*, new.*; -- rule returns NEW
+DROP RULE rw_view1_upd_rule ON rw_view1;
+CREATE RULE rw_view1_upd_rule AS ON UPDATE TO rw_view1
+  DO INSTEAD UPDATE base_tbl SET b=NEW.b WHERE a=OLD.a RETURNING *;
+UPDATE rw_view2 SET b='Row three' WHERE a=3 RETURNING old.*, new.*;
 SELECT * FROM rw_view2;
-DELETE FROM rw_view2 WHERE a=3 RETURNING *;
+DELETE FROM rw_view2 WHERE a=3 RETURNING old.*, new.*;
 SELECT * FROM rw_view2;
 
 MERGE INTO rw_view2 t USING (VALUES (3, 'Row 3')) AS v(a,b) ON t.a = v.a
@@ -381,8 +393,10 @@ DROP TABLE base_tbl CASCADE;
 CREATE TABLE base_tbl (a int PRIMARY KEY, b text DEFAULT 'Unspecified');
 INSERT INTO base_tbl SELECT i, 'Row ' || i FROM generate_series(-2, 2) g(i);
 
-CREATE VIEW rw_view1 AS SELECT * FROM base_tbl WHERE a>0 OFFSET 0; -- not updatable without rules/triggers
-CREATE VIEW rw_view2 AS SELECT * FROM rw_view1 WHERE a<10;
+CREATE VIEW rw_view1 AS
+  SELECT *, 'Const1' AS c1 FROM base_tbl WHERE a>0 OFFSET 0; -- not updatable without rules/triggers
+CREATE VIEW rw_view2 AS
+  SELECT *, 'Const2' AS c2 FROM rw_view1 WHERE a<10;
 
 SELECT table_name, is_insertable_into
   FROM information_schema.tables
@@ -407,9 +421,11 @@ $$
 BEGIN
   IF TG_OP = 'INSERT' THEN
     INSERT INTO base_tbl VALUES (NEW.a, NEW.b);
+    NEW.c1 = 'Trigger Const1';
     RETURN NEW;
   ELSIF TG_OP = 'UPDATE' THEN
     UPDATE base_tbl SET b=NEW.b WHERE a=OLD.a;
+    NEW.c1 = 'Trigger Const1';
     RETURN NEW;
   ELSIF TG_OP = 'DELETE' THEN
     DELETE FROM base_tbl WHERE a=OLD.a;
@@ -479,10 +495,10 @@ SELECT table_name, column_name, is_updatable
  WHERE table_name LIKE 'rw_view%'
  ORDER BY table_name, ordinal_position;
 
-INSERT INTO rw_view2 VALUES (3, 'Row 3') RETURNING *;
-UPDATE rw_view2 SET b='Row three' WHERE a=3 RETURNING *;
+INSERT INTO rw_view2 VALUES (3, 'Row 3') RETURNING old.*, new.*;
+UPDATE rw_view2 SET b='Row three' WHERE a=3 RETURNING old.*, new.*;
 SELECT * FROM rw_view2;
-DELETE FROM rw_view2 WHERE a=3 RETURNING *;
+DELETE FROM rw_view2 WHERE a=3 RETURNING old.*, new.*;
 SELECT * FROM rw_view2;
 
 MERGE INTO rw_view2 t
@@ -490,7 +506,7 @@ MERGE INTO rw_view2 t
   WHEN MATCHED AND t.a <= 1 THEN DELETE
   WHEN MATCHED THEN UPDATE SET b = s.b
   WHEN NOT MATCHED AND s.a > 0 THEN INSERT VALUES (s.a, s.b)
-  RETURNING merge_action(), s.*, t.*;
+  RETURNING merge_action(), s.*, old, new, t.*;
 SELECT * FROM base_tbl ORDER BY a;
 
 MERGE INTO rw_view2 t
@@ -498,7 +514,7 @@ MERGE INTO rw_view2 t
   WHEN MATCHED THEN UPDATE SET b = s.b
   WHEN NOT MATCHED AND s.a > 0 THEN INSERT VALUES (s.a, s.b)
   WHEN NOT MATCHED BY SOURCE THEN UPDATE SET b = 'Not matched by source'
-  RETURNING merge_action(), s.*, t.*;
+  RETURNING merge_action(), s.*, old, new, t.*;
 SELECT * FROM base_tbl ORDER BY a;
 
 EXPLAIN (costs off) UPDATE rw_view2 SET a=3 WHERE a=2;

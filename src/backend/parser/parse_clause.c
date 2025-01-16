@@ -1585,6 +1585,7 @@ transformFromClauseItem(ParseState *pstate, Node *n,
 			jnsitem->p_cols_visible = true;
 			jnsitem->p_lateral_only = false;
 			jnsitem->p_lateral_ok = true;
+			jnsitem->p_returning_type = VAR_RETURNING_DEFAULT;
 			/* Per SQL, we must check for alias conflicts */
 			checkNameSpaceConflicts(pstate, list_make1(jnsitem), my_namespace);
 			my_namespace = lappend(my_namespace, jnsitem);
@@ -1647,6 +1648,7 @@ buildVarFromNSColumn(ParseState *pstate, ParseNamespaceColumn *nscol)
 				  nscol->p_varcollid,
 				  0);
 	/* makeVar doesn't offer parameters for these, so set by hand: */
+	var->varreturningtype = nscol->p_varreturningtype;
 	var->varnosyn = nscol->p_varnosyn;
 	var->varattnosyn = nscol->p_varattnosyn;
 

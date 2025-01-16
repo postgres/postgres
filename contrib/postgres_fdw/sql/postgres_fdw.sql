@@ -1469,7 +1469,7 @@ EXPLAIN (verbose, costs off)
 INSERT INTO ft2 (c1,c2,c3) SELECT c1+1000,c2+100, c3 || c3 FROM ft2 LIMIT 20;
 INSERT INTO ft2 (c1,c2,c3) SELECT c1+1000,c2+100, c3 || c3 FROM ft2 LIMIT 20;
 INSERT INTO ft2 (c1,c2,c3)
-  VALUES (1101,201,'aaa'), (1102,202,'bbb'), (1103,203,'ccc') RETURNING *;
+  VALUES (1101,201,'aaa'), (1102,202,'bbb'), (1103,203,'ccc') RETURNING old, new, old.*, new.*;
 INSERT INTO ft2 (c1,c2,c3) VALUES (1104,204,'ddd'), (1105,205,'eee');
 EXPLAIN (verbose, costs off)
 UPDATE ft2 SET c2 = c2 + 300, c3 = c3 || '_update3' WHERE c1 % 10 = 3;              -- can be pushed down
@@ -1477,6 +1477,13 @@ UPDATE ft2 SET c2 = c2 + 300, c3 = c3 || '_update3' WHERE c1 % 10 = 3;
 EXPLAIN (verbose, costs off)
 UPDATE ft2 SET c2 = c2 + 400, c3 = c3 || '_update7' WHERE c1 % 10 = 7 RETURNING *;  -- can be pushed down
 UPDATE ft2 SET c2 = c2 + 400, c3 = c3 || '_update7' WHERE c1 % 10 = 7 RETURNING *;
+BEGIN;
+  EXPLAIN (verbose, costs off)
+  UPDATE ft2 SET c2 = c2 + 400, c3 = c3 || '_update7b' WHERE c1 % 10 = 7 AND c1 < 40
+    RETURNING old.*, new.*;                                                         -- can't be pushed down
+  UPDATE ft2 SET c2 = c2 + 400, c3 = c3 || '_update7b' WHERE c1 % 10 = 7 AND c1 < 40
+    RETURNING old.*, new.*;
+ROLLBACK;
 EXPLAIN (verbose, costs off)
 UPDATE ft2 SET c2 = ft2.c2 + 500, c3 = ft2.c3 || '_update9', c7 = DEFAULT
   FROM ft1 WHERE ft1.c1 = ft2.c2 AND ft1.c1 % 10 = 9;                               -- can be pushed down
@@ -1485,6 +1492,11 @@ UPDATE ft2 SET c2 = ft2.c2 + 500, c3 = ft2.c3 || '_update9', c7 = DEFAULT
 EXPLAIN (verbose, costs off)
   DELETE FROM ft2 WHERE c1 % 10 = 5 RETURNING c1, c4;                               -- can be pushed down
 DELETE FROM ft2 WHERE c1 % 10 = 5 RETURNING c1, c4;
+BEGIN;
+  EXPLAIN (verbose, costs off)
+  DELETE FROM ft2 WHERE c1 % 10 = 6 AND c1 < 40 RETURNING old.c1, c4;               -- can't be pushed down
+  DELETE FROM ft2 WHERE c1 % 10 = 6 AND c1 < 40 RETURNING old.c1, c4;
+ROLLBACK;
 EXPLAIN (verbose, costs off)
 DELETE FROM ft2 USING ft1 WHERE ft1.c1 = ft2.c2 AND ft1.c1 % 10 = 2;                -- can be pushed down
 DELETE FROM ft2 USING ft1 WHERE ft1.c1 = ft2.c2 AND ft1.c1 % 10 = 2;
@@ -1511,6 +1523,17 @@ UPDATE ft2 SET c3 = 'foo'
   FROM ft4 INNER JOIN ft5 ON (ft4.c1 = ft5.c1)
   WHERE ft2.c1 > 1200 AND ft2.c2 = ft4.c1
   RETURNING ft2, ft2.*, ft4, ft4.*;
+BEGIN;
+  EXPLAIN (verbose, costs off)
+  UPDATE ft2 SET c3 = 'bar'
+    FROM ft4 INNER JOIN ft5 ON (ft4.c1 = ft5.c1)
+    WHERE ft2.c1 > 1200 AND ft2.c2 = ft4.c1
+    RETURNING old, new, ft2, ft2.*, ft4, ft4.*;  -- can't be pushed down
+  UPDATE ft2 SET c3 = 'bar'
+    FROM ft4 INNER JOIN ft5 ON (ft4.c1 = ft5.c1)
+    WHERE ft2.c1 > 1200 AND ft2.c2 = ft4.c1
+    RETURNING old, new, ft2, ft2.*, ft4, ft4.*;
+ROLLBACK;
 EXPLAIN (verbose, costs off)
 DELETE FROM ft2
   USING ft4 LEFT JOIN ft5 ON (ft4.c1 = ft5.c1)

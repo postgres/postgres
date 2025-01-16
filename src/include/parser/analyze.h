@@ -44,8 +44,9 @@ extern List *transformInsertRow(ParseState *pstate, List *exprlist,
 								bool strip_indirection);
 extern List *transformUpdateTargetList(ParseState *pstate,
 									   List *origTlist);
-extern List *transformReturningList(ParseState *pstate, List *returningList,
-									ParseExprKind exprKind);
+extern void transformReturningClause(ParseState *pstate, Query *qry,
+									 ReturningClause *returningClause,
+									 ParseExprKind exprKind);
 extern Query *transformTopLevelStmt(ParseState *pstate, RawStmt *parseTree);
 extern Query *transformStmt(ParseState *pstate, Node *parseTree);
 

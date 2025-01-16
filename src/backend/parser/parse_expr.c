@@ -2619,6 +2619,13 @@ transformWholeRowRef(ParseState *pstate, ParseNamespaceItem *nsitem,
 	 * point, there seems no harm in expanding it now rather than during
 	 * planning.
 	 *
+	 * Note that if the nsitem is an OLD/NEW alias for the target RTE (as can
+	 * appear in a RETURNING list), its alias won't match the target RTE's
+	 * alias, but we still want to make a whole-row Var here rather than a
+	 * RowExpr, for consistency with direct references to the target RTE, and
+	 * so that any dropped columns are handled correctly.  Thus we also check
+	 * p_returning_type here.
+	 *
 	 * Note that if the RTE is a function returning scalar, we create just a
 	 * plain reference to the function value, not a composite containing a
 	 * single column.  This is pretty inconsistent at first sight, but it's
@@ -2626,12 +2633,16 @@ transformWholeRowRef(ParseState *pstate, ParseNamespaceItem *nsitem,
 	 * "rel.*" mean the same thing for composite relations, so why not for
 	 * scalar functions...
 	 */
-	if (nsitem->p_names == nsitem->p_rte->eref)
+	if (nsitem->p_names == nsitem->p_rte->eref ||
+		nsitem->p_returning_type != VAR_RETURNING_DEFAULT)
 	{
 		Var		   *result;
 
 		result = makeWholeRowVar(nsitem->p_rte, nsitem->p_rtindex,
 								 sublevels_up, true);
+
+		/* mark Var for RETURNING OLD/NEW, as necessary */
+		result->varreturningtype = nsitem->p_returning_type;
 
 		/* location is not filled in by makeWholeRowVar */
 		result->location = location;
@@ -2655,9 +2666,8 @@ transformWholeRowRef(ParseState *pstate, ParseNamespaceItem *nsitem,
 		 * are in the RTE.  We needn't worry about marking the RTE for SELECT
 		 * access, as the common columns are surely so marked already.
 		 */
-		expandRTE(nsitem->p_rte, nsitem->p_rtindex,
-				  sublevels_up, location, false,
-				  NULL, &fields);
+		expandRTE(nsitem->p_rte, nsitem->p_rtindex, sublevels_up,
+				  nsitem->p_returning_type, location, false, NULL, &fields);
 		rowexpr = makeNode(RowExpr);
 		rowexpr->args = list_truncate(fields,
 									  list_length(nsitem->p_names->colnames));

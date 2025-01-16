@@ -105,6 +105,8 @@ llvm_compile_expr(ExprState *state)
 	LLVMValueRef v_innerslot;
 	LLVMValueRef v_outerslot;
 	LLVMValueRef v_scanslot;
+	LLVMValueRef v_oldslot;
+	LLVMValueRef v_newslot;
 	LLVMValueRef v_resultslot;
 
 	/* nulls/values of slots */
@@ -114,6 +116,10 @@ llvm_compile_expr(ExprState *state)
 	LLVMValueRef v_outernulls;
 	LLVMValueRef v_scanvalues;
 	LLVMValueRef v_scannulls;
+	LLVMValueRef v_oldvalues;
+	LLVMValueRef v_oldnulls;
+	LLVMValueRef v_newvalues;
+	LLVMValueRef v_newnulls;
 	LLVMValueRef v_resultvalues;
 	LLVMValueRef v_resultnulls;
 
@@ -200,6 +206,16 @@ llvm_compile_expr(ExprState *state)
 									v_econtext,
 									FIELDNO_EXPRCONTEXT_OUTERTUPLE,
 									"v_outerslot");
+	v_oldslot = l_load_struct_gep(b,
+								  StructExprContext,
+								  v_econtext,
+								  FIELDNO_EXPRCONTEXT_OLDTUPLE,
+								  "v_oldslot");
+	v_newslot = l_load_struct_gep(b,
+								  StructExprContext,
+								  v_econtext,
+								  FIELDNO_EXPRCONTEXT_NEWTUPLE,
+								  "v_newslot");
 	v_resultslot = l_load_struct_gep(b,
 									 StructExprState,
 									 v_state,
@@ -237,6 +253,26 @@ llvm_compile_expr(ExprState *state)
 									 v_outerslot,
 									 FIELDNO_TUPLETABLESLOT_ISNULL,
 									 "v_outernulls");
+	v_oldvalues = l_load_struct_gep(b,
+									StructTupleTableSlot,
+									v_oldslot,
+									FIELDNO_TUPLETABLESLOT_VALUES,
+									"v_oldvalues");
+	v_oldnulls = l_load_struct_gep(b,
+								   StructTupleTableSlot,
+								   v_oldslot,
+								   FIELDNO_TUPLETABLESLOT_ISNULL,
+								   "v_oldnulls");
+	v_newvalues = l_load_struct_gep(b,
+									StructTupleTableSlot,
+									v_newslot,
+									FIELDNO_TUPLETABLESLOT_VALUES,
+									"v_newvalues");
+	v_newnulls = l_load_struct_gep(b,
+								   StructTupleTableSlot,
+								   v_newslot,
+								   FIELDNO_TUPLETABLESLOT_ISNULL,
+								   "v_newnulls");
 	v_resultvalues = l_load_struct_gep(b,
 									   StructTupleTableSlot,
 									   v_resultslot,
@@ -302,6 +338,8 @@ llvm_compile_expr(ExprState *state)
 			case EEOP_INNER_FETCHSOME:
 			case EEOP_OUTER_FETCHSOME:
 			case EEOP_SCAN_FETCHSOME:
+			case EEOP_OLD_FETCHSOME:
+			case EEOP_NEW_FETCHSOME:
 				{
 					TupleDesc	desc = NULL;
 					LLVMValueRef v_slot;
@@ -326,8 +364,12 @@ llvm_compile_expr(ExprState *state)
 						v_slot = v_innerslot;
 					else if (opcode == EEOP_OUTER_FETCHSOME)
 						v_slot = v_outerslot;
-					else
+					else if (opcode == EEOP_SCAN_FETCHSOME)
 						v_slot = v_scanslot;
+					else if (opcode == EEOP_OLD_FETCHSOME)
+						v_slot = v_oldslot;
+					else
+						v_slot = v_newslot;
 
 					/*
 					 * Check if all required attributes are available, or
@@ -396,6 +438,8 @@ llvm_compile_expr(ExprState *state)
 			case EEOP_INNER_VAR:
 			case EEOP_OUTER_VAR:
 			case EEOP_SCAN_VAR:
+			case EEOP_OLD_VAR:
+			case EEOP_NEW_VAR:
 				{
 					LLVMValueRef value,
 								isnull;
@@ -413,10 +457,20 @@ llvm_compile_expr(ExprState *state)
 						v_values = v_outervalues;
 						v_nulls = v_outernulls;
 					}
-					else
+					else if (opcode == EEOP_SCAN_VAR)
 					{
 						v_values = v_scanvalues;
 						v_nulls = v_scannulls;
+					}
+					else if (opcode == EEOP_OLD_VAR)
+					{
+						v_values = v_oldvalues;
+						v_nulls = v_oldnulls;
+					}
+					else
+					{
+						v_values = v_newvalues;
+						v_nulls = v_newnulls;
 					}
 
 					v_attnum = l_int32_const(lc, op->d.var.attnum);
@@ -432,6 +486,8 @@ llvm_compile_expr(ExprState *state)
 			case EEOP_INNER_SYSVAR:
 			case EEOP_OUTER_SYSVAR:
 			case EEOP_SCAN_SYSVAR:
+			case EEOP_OLD_SYSVAR:
+			case EEOP_NEW_SYSVAR:
 				{
 					LLVMValueRef v_slot;
 
@@ -439,8 +495,12 @@ llvm_compile_expr(ExprState *state)
 						v_slot = v_innerslot;
 					else if (opcode == EEOP_OUTER_SYSVAR)
 						v_slot = v_outerslot;
-					else
+					else if (opcode == EEOP_SCAN_SYSVAR)
 						v_slot = v_scanslot;
+					else if (opcode == EEOP_OLD_SYSVAR)
+						v_slot = v_oldslot;
+					else
+						v_slot = v_newslot;
 
 					build_EvalXFunc(b, mod, "ExecEvalSysVar",
 									v_state, op, v_econtext, v_slot);
@@ -458,6 +518,8 @@ llvm_compile_expr(ExprState *state)
 			case EEOP_ASSIGN_INNER_VAR:
 			case EEOP_ASSIGN_OUTER_VAR:
 			case EEOP_ASSIGN_SCAN_VAR:
+			case EEOP_ASSIGN_OLD_VAR:
+			case EEOP_ASSIGN_NEW_VAR:
 				{
 					LLVMValueRef v_value;
 					LLVMValueRef v_isnull;
@@ -478,10 +540,20 @@ llvm_compile_expr(ExprState *state)
 						v_values = v_outervalues;
 						v_nulls = v_outernulls;
 					}
-					else
+					else if (opcode == EEOP_ASSIGN_SCAN_VAR)
 					{
 						v_values = v_scanvalues;
 						v_nulls = v_scannulls;
+					}
+					else if (opcode == EEOP_ASSIGN_OLD_VAR)
+					{
+						v_values = v_oldvalues;
+						v_nulls = v_oldnulls;
+					}
+					else
+					{
+						v_values = v_newvalues;
+						v_nulls = v_newnulls;
 					}
 
 					/* load data */
@@ -1653,6 +1725,45 @@ llvm_compile_expr(ExprState *state)
 								v_state, op);
 				LLVMBuildBr(b, opblocks[opno + 1]);
 				break;
+
+			case EEOP_RETURNINGEXPR:
+				{
+					LLVMBasicBlockRef b_isnull;
+					LLVMValueRef v_flagsp;
+					LLVMValueRef v_flags;
+					LLVMValueRef v_nullflag;
+
+					b_isnull = l_bb_before_v(opblocks[opno + 1],
+											 "op.%d.row.isnull", opno);
+
+					/*
+					 * The next op actually evaluates the expression.  If the
+					 * OLD/NEW row doesn't exist, skip that and return NULL.
+					 */
+					v_flagsp = l_struct_gep(b,
+											StructExprState,
+											v_state,
+											FIELDNO_EXPRSTATE_FLAGS,
+											"v.state.flags");
+					v_flags = l_load(b, TypeStorageBool, v_flagsp, "");
+
+					v_nullflag = l_int8_const(lc, op->d.returningexpr.nullflag);
+
+					LLVMBuildCondBr(b,
+									LLVMBuildICmp(b, LLVMIntEQ,
+												  LLVMBuildAnd(b, v_flags,
+															   v_nullflag, ""),
+												  l_sbool_const(0), ""),
+									opblocks[opno + 1], b_isnull);
+
+					LLVMPositionBuilderAtEnd(b, b_isnull);
+
+					LLVMBuildStore(b, l_sizet_const(0), v_resvaluep);
+					LLVMBuildStore(b, l_sbool_const(1), v_resnullp);
+
+					LLVMBuildBr(b, opblocks[op->d.returningexpr.jumpdone]);
+					break;
+				}
 
 			case EEOP_ARRAYEXPR:
 				build_EvalXFunc(b, mod, "ExecEvalArrayExpr",

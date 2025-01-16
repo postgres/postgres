@@ -91,6 +91,7 @@ assign_param_for_var(PlannerInfo *root, Var *var)
 				pvar->vartype == var->vartype &&
 				pvar->vartypmod == var->vartypmod &&
 				pvar->varcollid == var->varcollid &&
+				pvar->varreturningtype == var->varreturningtype &&
 				bms_equal(pvar->varnullingrels, var->varnullingrels))
 				return pitem->paramId;
 		}
@@ -354,6 +355,52 @@ replace_outer_merge_support(PlannerInfo *root, MergeSupportFunc *msf)
 	retval->paramtypmod = -1;
 	retval->paramcollid = InvalidOid;
 	retval->location = msf->location;
+
+	return retval;
+}
+
+/*
+ * Generate a Param node to replace the given ReturningExpr expression which
+ * is expected to have retlevelsup > 0 (ie, it is not local).  Record the need
+ * for the ReturningExpr in the proper upper-level root->plan_params.
+ */
+Param *
+replace_outer_returning(PlannerInfo *root, ReturningExpr *rexpr)
+{
+	Param	   *retval;
+	PlannerParamItem *pitem;
+	Index		levelsup;
+	Oid			ptype = exprType((Node *) rexpr->retexpr);
+
+	Assert(rexpr->retlevelsup > 0 && rexpr->retlevelsup < root->query_level);
+
+	/* Find the query level the ReturningExpr belongs to */
+	for (levelsup = rexpr->retlevelsup; levelsup > 0; levelsup--)
+		root = root->parent_root;
+
+	/*
+	 * It does not seem worthwhile to try to de-duplicate references to outer
+	 * ReturningExprs.  Just make a new slot every time.
+	 */
+	rexpr = copyObject(rexpr);
+	IncrementVarSublevelsUp((Node *) rexpr, -((int) rexpr->retlevelsup), 0);
+	Assert(rexpr->retlevelsup == 0);
+
+	pitem = makeNode(PlannerParamItem);
+	pitem->item = (Node *) rexpr;
+	pitem->paramId = list_length(root->glob->paramExecTypes);
+	root->glob->paramExecTypes = lappend_oid(root->glob->paramExecTypes,
+											 ptype);
+
+	root->plan_params = lappend(root->plan_params, pitem);
+
+	retval = makeNode(Param);
+	retval->paramkind = PARAM_EXEC;
+	retval->paramid = pitem->paramId;
+	retval->paramtype = ptype;
+	retval->paramtypmod = exprTypmod((Node *) rexpr->retexpr);
+	retval->paramcollid = exprCollation((Node *) rexpr->retexpr);
+	retval->location = exprLocation((Node *) rexpr->retexpr);
 
 	return retval;
 }

@@ -76,6 +76,7 @@ static bool pull_varattnos_walker(Node *node, pull_varattnos_context *context);
 static bool pull_vars_walker(Node *node, pull_vars_context *context);
 static bool contain_var_clause_walker(Node *node, void *context);
 static bool contain_vars_of_level_walker(Node *node, int *sublevels_up);
+static bool contain_vars_returning_old_or_new_walker(Node *node, void *context);
 static bool locate_var_of_level_walker(Node *node,
 									   locate_var_of_level_context *context);
 static bool pull_var_clause_walker(Node *node,
@@ -489,6 +490,49 @@ contain_vars_of_level_walker(Node *node, int *sublevels_up)
 	return expression_tree_walker(node,
 								  contain_vars_of_level_walker,
 								  sublevels_up);
+}
+
+
+/*
+ * contain_vars_returning_old_or_new
+ *	  Recursively scan a clause to discover whether it contains any Var nodes
+ *	  (of the current query level) whose varreturningtype is VAR_RETURNING_OLD
+ *	  or VAR_RETURNING_NEW.
+ *
+ *	  Returns true if any found.
+ *
+ * Any ReturningExprs are also detected --- if an OLD/NEW Var was rewritten,
+ * we still regard this as a clause that returns OLD/NEW values.
+ *
+ * Does not examine subqueries, therefore must only be used after reduction
+ * of sublinks to subplans!
+ */
+bool
+contain_vars_returning_old_or_new(Node *node)
+{
+	return contain_vars_returning_old_or_new_walker(node, NULL);
+}
+
+static bool
+contain_vars_returning_old_or_new_walker(Node *node, void *context)
+{
+	if (node == NULL)
+		return false;
+	if (IsA(node, Var))
+	{
+		if (((Var *) node)->varlevelsup == 0 &&
+			((Var *) node)->varreturningtype != VAR_RETURNING_DEFAULT)
+			return true;		/* abort the tree traversal and return true */
+		return false;
+	}
+	if (IsA(node, ReturningExpr))
+	{
+		if (((ReturningExpr *) node)->retlevelsup == 0)
+			return true;		/* abort the tree traversal and return true */
+		return false;
+	}
+	return expression_tree_walker(node, contain_vars_returning_old_or_new_walker,
+								  context);
 }
 
 

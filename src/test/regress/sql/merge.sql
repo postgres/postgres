@@ -235,7 +235,7 @@ WHEN NOT MATCHED BY SOURCE THEN
 	DELETE
 WHEN NOT MATCHED BY TARGET THEN
 	INSERT VALUES (s.sid, s.delta)
-RETURNING merge_action(), t.*;
+RETURNING merge_action(), old, new, t.*;
 SELECT * FROM target ORDER BY tid;
 ROLLBACK;
 
@@ -677,7 +677,7 @@ WHEN NOT MATCHED BY SOURCE AND tid = 1 THEN
 	UPDATE SET balance = 0
 WHEN NOT MATCHED BY SOURCE THEN
 	DELETE
-RETURNING merge_action(), t.*;
+RETURNING merge_action(), old, new, t.*;
 SELECT * FROM target ORDER BY tid;
 ROLLBACK;
 
@@ -930,7 +930,9 @@ WHEN MATCHED AND tid < 2 THEN
     DELETE
 RETURNING (SELECT abbrev FROM merge_actions
             WHERE action = merge_action()) AS action,
-          t.*,
+          old.tid AS old_tid, old.balance AS old_balance,
+          new.tid AS new_tid, new.balance AS new_balance,
+          (SELECT new.balance - old.balance AS delta_balance), t.*,
           CASE merge_action()
               WHEN 'INSERT' THEN 'Inserted '||t
               WHEN 'UPDATE' THEN 'Added '||delta||' to balance'
@@ -956,7 +958,7 @@ WITH m AS (
         INSERT (balance, tid) VALUES (balance + delta, sid)
     WHEN MATCHED AND tid < 2 THEN
         DELETE
-    RETURNING merge_action() AS action, t.*,
+    RETURNING merge_action() AS action, old AS old_data, new AS new_data, t.*,
               CASE merge_action()
                   WHEN 'INSERT' THEN 'Inserted '||t
                   WHEN 'UPDATE' THEN 'Added '||delta||' to balance'
@@ -970,7 +972,7 @@ WITH m AS (
         UPDATE SET last_change = description
     WHEN NOT MATCHED THEN
         INSERT VALUES (m.tid, description)
-    RETURNING action, merge_action() AS log_action, l.*
+    RETURNING m.*, merge_action() AS log_action, old AS old_log, new AS new_log, l.*
 )
 SELECT * FROM m2;
 SELECT * FROM sq_target_merge_log ORDER BY tid;
@@ -988,7 +990,7 @@ COPY (
         INSERT (balance, tid) VALUES (balance + delta, sid)
     WHEN MATCHED AND tid < 2 THEN
         DELETE
-    RETURNING merge_action(), t.*
+    RETURNING merge_action(), old.*, new.*
 ) TO stdout;
 ROLLBACK;
 
@@ -1265,7 +1267,7 @@ MERGE INTO pa_target t
   ON t.tid = s.sid AND t.tid = 1
   WHEN MATCHED THEN
     UPDATE SET tid = tid + 1, balance = balance + delta, val = val || ' updated by merge'
-  RETURNING merge_action(), t.*;
+  RETURNING merge_action(), old, new, t.*;
 SELECT * FROM pa_target ORDER BY tid;
 ROLLBACK;
 
@@ -1456,7 +1458,7 @@ MERGE INTO pa_target t
     UPDATE SET balance = balance + delta, val = val || ' updated by merge'
   WHEN NOT MATCHED THEN
     INSERT VALUES (slogts::timestamp, sid, delta, 'inserted by merge')
-  RETURNING merge_action(), t.*;
+  RETURNING merge_action(), old, new, t.*;
 SELECT * FROM pa_target ORDER BY tid;
 ROLLBACK;
 

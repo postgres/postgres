@@ -4975,12 +4975,12 @@ INSERT INTO ft2 (c1,c2,c3) SELECT c1+1000,c2+100, c3 || c3 FROM ft2 LIMIT 20;
 
 INSERT INTO ft2 (c1,c2,c3) SELECT c1+1000,c2+100, c3 || c3 FROM ft2 LIMIT 20;
 INSERT INTO ft2 (c1,c2,c3)
-  VALUES (1101,201,'aaa'), (1102,202,'bbb'), (1103,203,'ccc') RETURNING *;
-  c1  | c2  | c3  | c4 | c5 | c6 |     c7     | c8 
-------+-----+-----+----+----+----+------------+----
- 1101 | 201 | aaa |    |    |    | ft2        | 
- 1102 | 202 | bbb |    |    |    | ft2        | 
- 1103 | 203 | ccc |    |    |    | ft2        | 
+  VALUES (1101,201,'aaa'), (1102,202,'bbb'), (1103,203,'ccc') RETURNING old, new, old.*, new.*;
+ old |               new               | c1 | c2 | c3 | c4 | c5 | c6 | c7 | c8 |  c1  | c2  | c3  | c4 | c5 | c6 |     c7     | c8 
+-----+---------------------------------+----+----+----+----+----+----+----+----+------+-----+-----+----+----+----+------------+----
+     | (1101,201,aaa,,,,"ft2       ",) |    |    |    |    |    |    |    |    | 1101 | 201 | aaa |    |    |    | ft2        | 
+     | (1102,202,bbb,,,,"ft2       ",) |    |    |    |    |    |    |    |    | 1102 | 202 | bbb |    |    |    | ft2        | 
+     | (1103,203,ccc,,,,"ft2       ",) |    |    |    |    |    |    |    |    | 1103 | 203 | ccc |    |    |    | ft2        | 
 (3 rows)
 
 INSERT INTO ft2 (c1,c2,c3) VALUES (1104,204,'ddd'), (1105,205,'eee');
@@ -5111,6 +5111,31 @@ UPDATE ft2 SET c2 = c2 + 400, c3 = c3 || '_update7' WHERE c1 % 10 = 7 RETURNING 
  1017 | 507 | 0001700017_update7 |                              |                          |    | ft2        | 
 (102 rows)
 
+BEGIN;
+  EXPLAIN (verbose, costs off)
+  UPDATE ft2 SET c2 = c2 + 400, c3 = c3 || '_update7b' WHERE c1 % 10 = 7 AND c1 < 40
+    RETURNING old.*, new.*;                                                         -- can't be pushed down
+                                                                  QUERY PLAN                                                                  
+----------------------------------------------------------------------------------------------------------------------------------------------
+ Update on public.ft2
+   Output: old.c1, old.c2, old.c3, old.c4, old.c5, old.c6, old.c7, old.c8, new.c1, new.c2, new.c3, new.c4, new.c5, new.c6, new.c7, new.c8
+   Remote SQL: UPDATE "S 1"."T 1" SET c2 = $2, c3 = $3 WHERE ctid = $1 RETURNING "C 1", c2, c3, c4, c5, c6, c7, c8
+   ->  Foreign Scan on public.ft2
+         Output: (c2 + 400), (c3 || '_update7b'::text), ctid, ft2.*
+         Remote SQL: SELECT "C 1", c2, c3, c4, c5, c6, c7, c8, ctid FROM "S 1"."T 1" WHERE (("C 1" < 40)) AND ((("C 1" % 10) = 7)) FOR UPDATE
+(6 rows)
+
+  UPDATE ft2 SET c2 = c2 + 400, c3 = c3 || '_update7b' WHERE c1 % 10 = 7 AND c1 < 40
+    RETURNING old.*, new.*;
+ c1 | c2  |      c3       |              c4              |            c5            | c6 |     c7     | c8  | c1 | c2  |           c3           |              c4              |            c5            | c6 |     c7     | c8  
+----+-----+---------------+------------------------------+--------------------------+----+------------+-----+----+-----+------------------------+------------------------------+--------------------------+----+------------+-----
+  7 | 407 | 00007_update7 | Thu Jan 08 00:00:00 1970 PST | Thu Jan 08 00:00:00 1970 | 7  | 7          | foo |  7 | 807 | 00007_update7_update7b | Thu Jan 08 00:00:00 1970 PST | Thu Jan 08 00:00:00 1970 | 7  | 7          | foo
+ 17 | 407 | 00017_update7 | Sun Jan 18 00:00:00 1970 PST | Sun Jan 18 00:00:00 1970 | 7  | 7          | foo | 17 | 807 | 00017_update7_update7b | Sun Jan 18 00:00:00 1970 PST | Sun Jan 18 00:00:00 1970 | 7  | 7          | foo
+ 27 | 407 | 00027_update7 | Wed Jan 28 00:00:00 1970 PST | Wed Jan 28 00:00:00 1970 | 7  | 7          | foo | 27 | 807 | 00027_update7_update7b | Wed Jan 28 00:00:00 1970 PST | Wed Jan 28 00:00:00 1970 | 7  | 7          | foo
+ 37 | 407 | 00037_update7 | Sat Feb 07 00:00:00 1970 PST | Sat Feb 07 00:00:00 1970 | 7  | 7          | foo | 37 | 807 | 00037_update7_update7b | Sat Feb 07 00:00:00 1970 PST | Sat Feb 07 00:00:00 1970 | 7  | 7          | foo
+(4 rows)
+
+ROLLBACK;
 EXPLAIN (verbose, costs off)
 UPDATE ft2 SET c2 = ft2.c2 + 500, c3 = ft2.c3 || '_update9', c7 = DEFAULT
   FROM ft1 WHERE ft1.c1 = ft2.c2 AND ft1.c1 % 10 = 9;                               -- can be pushed down
@@ -5241,6 +5266,29 @@ DELETE FROM ft2 WHERE c1 % 10 = 5 RETURNING c1, c4;
  1105 | 
 (103 rows)
 
+BEGIN;
+  EXPLAIN (verbose, costs off)
+  DELETE FROM ft2 WHERE c1 % 10 = 6 AND c1 < 40 RETURNING old.c1, c4;               -- can't be pushed down
+                                                QUERY PLAN                                                 
+-----------------------------------------------------------------------------------------------------------
+ Delete on public.ft2
+   Output: old.c1, c4
+   Remote SQL: DELETE FROM "S 1"."T 1" WHERE ctid = $1 RETURNING "C 1", c4
+   ->  Foreign Scan on public.ft2
+         Output: ctid
+         Remote SQL: SELECT ctid FROM "S 1"."T 1" WHERE (("C 1" < 40)) AND ((("C 1" % 10) = 6)) FOR UPDATE
+(6 rows)
+
+  DELETE FROM ft2 WHERE c1 % 10 = 6 AND c1 < 40 RETURNING old.c1, c4;
+ c1 |              c4              
+----+------------------------------
+  6 | Wed Jan 07 00:00:00 1970 PST
+ 16 | Sat Jan 17 00:00:00 1970 PST
+ 26 | Tue Jan 27 00:00:00 1970 PST
+ 36 | Fri Feb 06 00:00:00 1970 PST
+(4 rows)
+
+ROLLBACK;
 EXPLAIN (verbose, costs off)
 DELETE FROM ft2 USING ft1 WHERE ft1.c1 = ft2.c2 AND ft1.c1 % 10 = 2;                -- can be pushed down
                                                          QUERY PLAN                                                         
@@ -6165,6 +6213,70 @@ UPDATE ft2 SET c3 = 'foo'
  (1296,96,foo,,,,"ft2       ",) | 1296 | 96 | foo |    |    |    | ft2        |    | (96,97,AAA096) | 96 | 97 | AAA096
 (16 rows)
 
+BEGIN;
+  EXPLAIN (verbose, costs off)
+  UPDATE ft2 SET c3 = 'bar'
+    FROM ft4 INNER JOIN ft5 ON (ft4.c1 = ft5.c1)
+    WHERE ft2.c1 > 1200 AND ft2.c2 = ft4.c1
+    RETURNING old, new, ft2, ft2.*, ft4, ft4.*;  -- can't be pushed down
+                                                                                                                                                                                                                                     QUERY PLAN                                                                                                                                                                                                                                     
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Update on public.ft2
+   Output: old.*, new.*, ft2.*, ft2.c1, ft2.c2, ft2.c3, ft2.c4, ft2.c5, ft2.c6, ft2.c7, ft2.c8, ft4.*, ft4.c1, ft4.c2, ft4.c3
+   Remote SQL: UPDATE "S 1"."T 1" SET c3 = $2 WHERE ctid = $1 RETURNING "C 1", c2, c3, c4, c5, c6, c7, c8
+   ->  Foreign Scan
+         Output: 'bar'::text, ft2.ctid, ft2.*, ft4.*, ft5.*, ft4.c1, ft4.c2, ft4.c3
+         Relations: ((public.ft2) INNER JOIN (public.ft4)) INNER JOIN (public.ft5)
+         Remote SQL: SELECT r1.ctid, CASE WHEN (r1.*)::text IS NOT NULL THEN ROW(r1."C 1", r1.c2, r1.c3, r1.c4, r1.c5, r1.c6, r1.c7, r1.c8) END, CASE WHEN (r2.*)::text IS NOT NULL THEN ROW(r2.c1, r2.c2, r2.c3) END, CASE WHEN (r3.*)::text IS NOT NULL THEN ROW(r3.c1, r3.c2, r3.c3) END, r2.c1, r2.c2, r2.c3 FROM (("S 1"."T 1" r1 INNER JOIN "S 1"."T 3" r2 ON (((r1.c2 = r2.c1)) AND ((r1."C 1" > 1200)))) INNER JOIN "S 1"."T 4" r3 ON (((r2.c1 = r3.c1)))) FOR UPDATE OF r1
+         ->  Nested Loop
+               Output: ft2.ctid, ft2.*, ft4.*, ft5.*, ft4.c1, ft4.c2, ft4.c3
+               Join Filter: (ft4.c1 = ft5.c1)
+               ->  Sort
+                     Output: ft2.ctid, ft2.*, ft2.c2, ft4.*, ft4.c1, ft4.c2, ft4.c3
+                     Sort Key: ft2.c2
+                     ->  Hash Join
+                           Output: ft2.ctid, ft2.*, ft2.c2, ft4.*, ft4.c1, ft4.c2, ft4.c3
+                           Hash Cond: (ft2.c2 = ft4.c1)
+                           ->  Foreign Scan on public.ft2
+                                 Output: ft2.ctid, ft2.*, ft2.c2
+                                 Remote SQL: SELECT "C 1", c2, c3, c4, c5, c6, c7, c8, ctid FROM "S 1"."T 1" WHERE (("C 1" > 1200)) FOR UPDATE
+                           ->  Hash
+                                 Output: ft4.*, ft4.c1, ft4.c2, ft4.c3
+                                 ->  Foreign Scan on public.ft4
+                                       Output: ft4.*, ft4.c1, ft4.c2, ft4.c3
+                                       Remote SQL: SELECT c1, c2, c3 FROM "S 1"."T 3"
+               ->  Materialize
+                     Output: ft5.*, ft5.c1
+                     ->  Foreign Scan on public.ft5
+                           Output: ft5.*, ft5.c1
+                           Remote SQL: SELECT c1, c2, c3 FROM "S 1"."T 4"
+(29 rows)
+
+  UPDATE ft2 SET c3 = 'bar'
+    FROM ft4 INNER JOIN ft5 ON (ft4.c1 = ft5.c1)
+    WHERE ft2.c1 > 1200 AND ft2.c2 = ft4.c1
+    RETURNING old, new, ft2, ft2.*, ft4, ft4.*;
+              old               |              new               |              ft2               |  c1  | c2 | c3  | c4 | c5 | c6 |     c7     | c8 |      ft4       | c1 | c2 |   c3   
+--------------------------------+--------------------------------+--------------------------------+------+----+-----+----+----+----+------------+----+----------------+----+----+--------
+ (1206,6,foo,,,,"ft2       ",)  | (1206,6,bar,,,,"ft2       ",)  | (1206,6,bar,,,,"ft2       ",)  | 1206 |  6 | bar |    |    |    | ft2        |    | (6,7,AAA006)   |  6 |  7 | AAA006
+ (1212,12,foo,,,,"ft2       ",) | (1212,12,bar,,,,"ft2       ",) | (1212,12,bar,,,,"ft2       ",) | 1212 | 12 | bar |    |    |    | ft2        |    | (12,13,AAA012) | 12 | 13 | AAA012
+ (1224,24,foo,,,,"ft2       ",) | (1224,24,bar,,,,"ft2       ",) | (1224,24,bar,,,,"ft2       ",) | 1224 | 24 | bar |    |    |    | ft2        |    | (24,25,AAA024) | 24 | 25 | AAA024
+ (1230,30,foo,,,,"ft2       ",) | (1230,30,bar,,,,"ft2       ",) | (1230,30,bar,,,,"ft2       ",) | 1230 | 30 | bar |    |    |    | ft2        |    | (30,31,AAA030) | 30 | 31 | AAA030
+ (1242,42,foo,,,,"ft2       ",) | (1242,42,bar,,,,"ft2       ",) | (1242,42,bar,,,,"ft2       ",) | 1242 | 42 | bar |    |    |    | ft2        |    | (42,43,AAA042) | 42 | 43 | AAA042
+ (1248,48,foo,,,,"ft2       ",) | (1248,48,bar,,,,"ft2       ",) | (1248,48,bar,,,,"ft2       ",) | 1248 | 48 | bar |    |    |    | ft2        |    | (48,49,AAA048) | 48 | 49 | AAA048
+ (1260,60,foo,,,,"ft2       ",) | (1260,60,bar,,,,"ft2       ",) | (1260,60,bar,,,,"ft2       ",) | 1260 | 60 | bar |    |    |    | ft2        |    | (60,61,AAA060) | 60 | 61 | AAA060
+ (1266,66,foo,,,,"ft2       ",) | (1266,66,bar,,,,"ft2       ",) | (1266,66,bar,,,,"ft2       ",) | 1266 | 66 | bar |    |    |    | ft2        |    | (66,67,AAA066) | 66 | 67 | AAA066
+ (1278,78,foo,,,,"ft2       ",) | (1278,78,bar,,,,"ft2       ",) | (1278,78,bar,,,,"ft2       ",) | 1278 | 78 | bar |    |    |    | ft2        |    | (78,79,AAA078) | 78 | 79 | AAA078
+ (1284,84,foo,,,,"ft2       ",) | (1284,84,bar,,,,"ft2       ",) | (1284,84,bar,,,,"ft2       ",) | 1284 | 84 | bar |    |    |    | ft2        |    | (84,85,AAA084) | 84 | 85 | AAA084
+ (1296,96,foo,,,,"ft2       ",) | (1296,96,bar,,,,"ft2       ",) | (1296,96,bar,,,,"ft2       ",) | 1296 | 96 | bar |    |    |    | ft2        |    | (96,97,AAA096) | 96 | 97 | AAA096
+ (1218,18,foo,,,,"ft2       ",) | (1218,18,bar,,,,"ft2       ",) | (1218,18,bar,,,,"ft2       ",) | 1218 | 18 | bar |    |    |    | ft2        |    | (18,19,AAA018) | 18 | 19 | AAA018
+ (1236,36,foo,,,,"ft2       ",) | (1236,36,bar,,,,"ft2       ",) | (1236,36,bar,,,,"ft2       ",) | 1236 | 36 | bar |    |    |    | ft2        |    | (36,37,AAA036) | 36 | 37 | AAA036
+ (1254,54,foo,,,,"ft2       ",) | (1254,54,bar,,,,"ft2       ",) | (1254,54,bar,,,,"ft2       ",) | 1254 | 54 | bar |    |    |    | ft2        |    | (54,55,AAA054) | 54 | 55 | AAA054
+ (1272,72,foo,,,,"ft2       ",) | (1272,72,bar,,,,"ft2       ",) | (1272,72,bar,,,,"ft2       ",) | 1272 | 72 | bar |    |    |    | ft2        |    | (72,73,AAA072) | 72 | 73 | AAA072
+ (1290,90,foo,,,,"ft2       ",) | (1290,90,bar,,,,"ft2       ",) | (1290,90,bar,,,,"ft2       ",) | 1290 | 90 | bar |    |    |    | ft2        |    | (90,91,AAA090) | 90 | 91 | AAA090
+(16 rows)
+
+ROLLBACK;
 EXPLAIN (verbose, costs off)
 DELETE FROM ft2
   USING ft4 LEFT JOIN ft5 ON (ft4.c1 = ft5.c1)

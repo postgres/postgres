@@ -1646,6 +1646,23 @@ CREATE RULE shoelace_ins AS ON INSERT TO shoelace
    </para>
 
    <para>
+    Note that in the <literal>RETURNING</literal> clause of a rule,
+    <literal>OLD</literal> and <literal>NEW</literal> refer to the
+    pseudorelations added as extra range table entries to the rewritten
+    query, rather than old/new rows in the result relation.  Thus, for
+    example, in a rule supporting <command>UPDATE</command> queries on this
+    view, if the <literal>RETURNING</literal> clause contained
+    <literal>old.sl_name</literal>, the old name would always be returned,
+    regardless of whether the <literal>RETURNING</literal> clause in the
+    query on the view specified <literal>OLD</literal> or <literal>NEW</literal>,
+    which might be confusing.  To avoid this confusion, and support returning
+    old and new values in queries on the view, the <literal>RETURNING</literal>
+    clause in the rule definition should refer to entries from the result
+    relation such as <literal>shoelace_data.sl_name</literal>, without
+    specifying <literal>OLD</literal> or <literal>NEW</literal>.
+   </para>
+
+   <para>
     Now assume that once in a while, a pack of shoelaces arrives at
     the shop and a big parts list along with it.  But you don't want
     to manually update the <literal>shoelace</literal> view every

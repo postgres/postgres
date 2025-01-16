@@ -95,7 +95,7 @@ step "merge2a"
 	UPDATE set key = t.key + 1, val = t.val || ' updated by ' || s.val
   WHEN NOT MATCHED BY SOURCE THEN
 	UPDATE set key = t.key + 1, val = t.val || ' source not matched by merge2a'
-  RETURNING merge_action(), t.*;
+  RETURNING merge_action(), old, new, t.*;
 }
 step "merge2b"
 {
@@ -128,7 +128,7 @@ step "pa_merge2a"
 	UPDATE set key = t.key + 1, val = t.val || ' updated by ' || s.val
   WHEN NOT MATCHED BY SOURCE THEN
 	UPDATE set key = t.key + 1, val = t.val || ' source not matched by pa_merge2a'
-  RETURNING merge_action(), t.*;
+  RETURNING merge_action(), old, new, t.*;
 }
 # MERGE proceeds only if 'val' unchanged
 step "pa_merge2b_when"

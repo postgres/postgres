@@ -238,6 +238,8 @@ typedef struct ModifyTable
 	List	   *resultRelations;	/* integer list of RT indexes */
 	List	   *updateColnosLists;	/* per-target-table update_colnos lists */
 	List	   *withCheckOptionLists;	/* per-target-table WCO lists */
+	char	   *returningOldAlias;	/* alias for OLD in RETURNING lists */
+	char	   *returningNewAlias;	/* alias for NEW in RETURNING lists */
 	List	   *returningLists; /* per-target-table RETURNING tlists */
 	List	   *fdwPrivLists;	/* per-target-table FDW private data lists */
 	Bitmapset  *fdwDirectModifyPlans;	/* indices of FDW DM plans */

@@ -80,12 +80,14 @@ makeVar(int varno,
 	var->varlevelsup = varlevelsup;
 
 	/*
-	 * Only a few callers need to make Var nodes with non-null varnullingrels,
-	 * or with varnosyn/varattnosyn different from varno/varattno.  We don't
-	 * provide separate arguments for them, but just initialize them to NULL
-	 * and the given varno/varattno.  This reduces code clutter and chance of
-	 * error for most callers.
+	 * Only a few callers need to make Var nodes with varreturningtype
+	 * different from VAR_RETURNING_DEFAULT, non-null varnullingrels, or with
+	 * varnosyn/varattnosyn different from varno/varattno.  We don't provide
+	 * separate arguments for them, but just initialize them to sensible
+	 * default values.  This reduces code clutter and chance of error for most
+	 * callers.
 	 */
+	var->varreturningtype = VAR_RETURNING_DEFAULT;
 	var->varnullingrels = NULL;
 	var->varnosyn = (Index) varno;
 	var->varattnosyn = varattno;

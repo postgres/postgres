@@ -297,13 +297,13 @@ WHEN NOT MATCHED BY SOURCE THEN
 	DELETE
 WHEN NOT MATCHED BY TARGET THEN
 	INSERT VALUES (s.sid, s.delta)
-RETURNING merge_action(), t.*;
- merge_action | tid | balance 
---------------+-----+---------
- DELETE       |   1 |      10
- DELETE       |   2 |      20
- DELETE       |   3 |      30
- INSERT       |   4 |      40
+RETURNING merge_action(), old, new, t.*;
+ merge_action |  old   |  new   | tid | balance 
+--------------+--------+--------+-----+---------
+ DELETE       | (1,10) |        |   1 |      10
+ DELETE       | (2,20) |        |   2 |      20
+ DELETE       | (3,30) |        |   3 |      30
+ INSERT       |        | (4,40) |   4 |      40
 (4 rows)
 
 SELECT * FROM target ORDER BY tid;
@@ -994,7 +994,7 @@ WHEN NOT MATCHED BY SOURCE AND tid = 1 THEN
 	UPDATE SET balance = 0
 WHEN NOT MATCHED BY SOURCE THEN
 	DELETE
-RETURNING merge_action(), t.*;
+RETURNING merge_action(), old, new, t.*;
 NOTICE:  BEFORE INSERT STATEMENT trigger
 NOTICE:  BEFORE UPDATE STATEMENT trigger
 NOTICE:  BEFORE DELETE STATEMENT trigger
@@ -1009,12 +1009,12 @@ NOTICE:  AFTER UPDATE ROW trigger row: (1,10) -> (1,0)
 NOTICE:  AFTER DELETE STATEMENT trigger
 NOTICE:  AFTER UPDATE STATEMENT trigger
 NOTICE:  AFTER INSERT STATEMENT trigger
- merge_action | tid | balance 
---------------+-----+---------
- UPDATE       |   3 |      10
- INSERT       |   4 |      40
- DELETE       |   2 |      20
- UPDATE       |   1 |       0
+ merge_action |  old   |  new   | tid | balance 
+--------------+--------+--------+-----+---------
+ UPDATE       | (3,30) | (3,10) |   3 |      10
+ INSERT       |        | (4,40) |   4 |      40
+ DELETE       | (2,20) |        |   2 |      20
+ UPDATE       | (1,10) | (1,0)  |   1 |       0
 (4 rows)
 
 SELECT * FROM target ORDER BY tid;
@@ -1436,17 +1436,19 @@ WHEN MATCHED AND tid < 2 THEN
     DELETE
 RETURNING (SELECT abbrev FROM merge_actions
             WHERE action = merge_action()) AS action,
-          t.*,
+          old.tid AS old_tid, old.balance AS old_balance,
+          new.tid AS new_tid, new.balance AS new_balance,
+          (SELECT new.balance - old.balance AS delta_balance), t.*,
           CASE merge_action()
               WHEN 'INSERT' THEN 'Inserted '||t
               WHEN 'UPDATE' THEN 'Added '||delta||' to balance'
               WHEN 'DELETE' THEN 'Removed '||t
           END AS description;
- action | tid | balance |     description     
---------+-----+---------+---------------------
- del    |   1 |     100 | Removed (1,100)
- upd    |   2 |     220 | Added 20 to balance
- ins    |   4 |      40 | Inserted (4,40)
+ action | old_tid | old_balance | new_tid | new_balance | delta_balance | tid | balance |     description     
+--------+---------+-------------+---------+-------------+---------------+-----+---------+---------------------
+ del    |       1 |         100 |         |             |               |   1 |     100 | Removed (1,100)
+ upd    |       2 |         200 |       2 |         220 |            20 |   2 |     220 | Added 20 to balance
+ ins    |         |             |       4 |          40 |               |   4 |      40 | Inserted (4,40)
 (3 rows)
 
 ROLLBACK;
@@ -1473,7 +1475,7 @@ WITH m AS (
         INSERT (balance, tid) VALUES (balance + delta, sid)
     WHEN MATCHED AND tid < 2 THEN
         DELETE
-    RETURNING merge_action() AS action, t.*,
+    RETURNING merge_action() AS action, old AS old_data, new AS new_data, t.*,
               CASE merge_action()
                   WHEN 'INSERT' THEN 'Inserted '||t
                   WHEN 'UPDATE' THEN 'Added '||delta||' to balance'
@@ -1487,14 +1489,14 @@ WITH m AS (
         UPDATE SET last_change = description
     WHEN NOT MATCHED THEN
         INSERT VALUES (m.tid, description)
-    RETURNING action, merge_action() AS log_action, l.*
+    RETURNING m.*, merge_action() AS log_action, old AS old_log, new AS new_log, l.*
 )
 SELECT * FROM m2;
- action | log_action | tid |     last_change     
---------+------------+-----+---------------------
- DELETE | UPDATE     |   1 | Removed (1,100)
- UPDATE | INSERT     |   2 | Added 20 to balance
- INSERT | INSERT     |   4 | Inserted (4,40)
+ action | old_data | new_data | tid | balance |     description     | log_action |       old_log        |          new_log          | tid |     last_change     
+--------+----------+----------+-----+---------+---------------------+------------+----------------------+---------------------------+-----+---------------------
+ DELETE | (1,100)  |          |   1 |     100 | Removed (1,100)     | UPDATE     | (1,"Original value") | (1,"Removed (1,100)")     |   1 | Removed (1,100)
+ UPDATE | (2,200)  | (2,220)  |   2 |     220 | Added 20 to balance | INSERT     |                      | (2,"Added 20 to balance") |   2 | Added 20 to balance
+ INSERT |          | (4,40)   |   4 |      40 | Inserted (4,40)     | INSERT     |                      | (4,"Inserted (4,40)")     |   4 | Inserted (4,40)
 (3 rows)
 
 SELECT * FROM sq_target_merge_log ORDER BY tid;
@@ -1518,11 +1520,11 @@ COPY (
         INSERT (balance, tid) VALUES (balance + delta, sid)
     WHEN MATCHED AND tid < 2 THEN
         DELETE
-    RETURNING merge_action(), t.*
+    RETURNING merge_action(), old.*, new.*
 ) TO stdout;
-DELETE	1	100
-UPDATE	2	220
-INSERT	4	40
+DELETE	1	100	\N	\N
+UPDATE	2	200	2	220
+INSERT	\N	\N	4	40
 ROLLBACK;
 -- SQL function with MERGE ... RETURNING
 BEGIN;
@@ -2039,10 +2041,10 @@ MERGE INTO pa_target t
   ON t.tid = s.sid AND t.tid = 1
   WHEN MATCHED THEN
     UPDATE SET tid = tid + 1, balance = balance + delta, val = val || ' updated by merge'
-  RETURNING merge_action(), t.*;
- merge_action | tid | balance |           val            
---------------+-----+---------+--------------------------
- UPDATE       |   2 |     110 | initial updated by merge
+  RETURNING merge_action(), old, new, t.*;
+ merge_action |       old       |                new                 | tid | balance |           val            
+--------------+-----------------+------------------------------------+-----+---------+--------------------------
+ UPDATE       | (1,100,initial) | (2,110,"initial updated by merge") |   2 |     110 | initial updated by merge
 (1 row)
 
 SELECT * FROM pa_target ORDER BY tid;
@@ -2324,18 +2326,18 @@ MERGE INTO pa_target t
     UPDATE SET balance = balance + delta, val = val || ' updated by merge'
   WHEN NOT MATCHED THEN
     INSERT VALUES (slogts::timestamp, sid, delta, 'inserted by merge')
-  RETURNING merge_action(), t.*;
- merge_action |          logts           | tid | balance |           val            
---------------+--------------------------+-----+---------+--------------------------
- UPDATE       | Tue Jan 31 00:00:00 2017 |   1 |     110 | initial updated by merge
- UPDATE       | Tue Feb 28 00:00:00 2017 |   2 |     220 | initial updated by merge
- INSERT       | Sun Jan 15 00:00:00 2017 |   3 |      30 | inserted by merge
- UPDATE       | Tue Jan 31 00:00:00 2017 |   4 |     440 | initial updated by merge
- UPDATE       | Tue Feb 28 00:00:00 2017 |   5 |     550 | initial updated by merge
- INSERT       | Sun Jan 15 00:00:00 2017 |   6 |      60 | inserted by merge
- UPDATE       | Tue Jan 31 00:00:00 2017 |   7 |     770 | initial updated by merge
- UPDATE       | Tue Feb 28 00:00:00 2017 |   8 |     880 | initial updated by merge
- INSERT       | Sun Jan 15 00:00:00 2017 |   9 |      90 | inserted by merge
+  RETURNING merge_action(), old, new, t.*;
+ merge_action |                    old                     |                              new                              |          logts           | tid | balance |           val            
+--------------+--------------------------------------------+---------------------------------------------------------------+--------------------------+-----+---------+--------------------------
+ UPDATE       | ("Tue Jan 31 00:00:00 2017",1,100,initial) | ("Tue Jan 31 00:00:00 2017",1,110,"initial updated by merge") | Tue Jan 31 00:00:00 2017 |   1 |     110 | initial updated by merge
+ UPDATE       | ("Tue Feb 28 00:00:00 2017",2,200,initial) | ("Tue Feb 28 00:00:00 2017",2,220,"initial updated by merge") | Tue Feb 28 00:00:00 2017 |   2 |     220 | initial updated by merge
+ INSERT       |                                            | ("Sun Jan 15 00:00:00 2017",3,30,"inserted by merge")         | Sun Jan 15 00:00:00 2017 |   3 |      30 | inserted by merge
+ UPDATE       | ("Tue Jan 31 00:00:00 2017",4,400,initial) | ("Tue Jan 31 00:00:00 2017",4,440,"initial updated by merge") | Tue Jan 31 00:00:00 2017 |   4 |     440 | initial updated by merge
+ UPDATE       | ("Tue Feb 28 00:00:00 2017",5,500,initial) | ("Tue Feb 28 00:00:00 2017",5,550,"initial updated by merge") | Tue Feb 28 00:00:00 2017 |   5 |     550 | initial updated by merge
+ INSERT       |                                            | ("Sun Jan 15 00:00:00 2017",6,60,"inserted by merge")         | Sun Jan 15 00:00:00 2017 |   6 |      60 | inserted by merge
+ UPDATE       | ("Tue Jan 31 00:00:00 2017",7,700,initial) | ("Tue Jan 31 00:00:00 2017",7,770,"initial updated by merge") | Tue Jan 31 00:00:00 2017 |   7 |     770 | initial updated by merge
+ UPDATE       | ("Tue Feb 28 00:00:00 2017",8,800,initial) | ("Tue Feb 28 00:00:00 2017",8,880,"initial updated by merge") | Tue Feb 28 00:00:00 2017 |   8 |     880 | initial updated by merge
+ INSERT       |                                            | ("Sun Jan 15 00:00:00 2017",9,90,"inserted by merge")         | Sun Jan 15 00:00:00 2017 |   9 |      90 | inserted by merge
 (9 rows)
 
 SELECT * FROM pa_target ORDER BY tid;

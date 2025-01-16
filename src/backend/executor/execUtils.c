@@ -1243,6 +1243,34 @@ ExecGetReturningSlot(EState *estate, ResultRelInfo *relInfo)
 }
 
 /*
+ * Return a relInfo's all-NULL tuple slot for processing returning tuples.
+ *
+ * Note: this slot is intentionally filled with NULLs in every column, and
+ * should be considered read-only --- the caller must not update it.
+ */
+TupleTableSlot *
+ExecGetAllNullSlot(EState *estate, ResultRelInfo *relInfo)
+{
+	if (relInfo->ri_AllNullSlot == NULL)
+	{
+		Relation	rel = relInfo->ri_RelationDesc;
+		MemoryContext oldcontext = MemoryContextSwitchTo(estate->es_query_cxt);
+		TupleTableSlot *slot;
+
+		slot = ExecInitExtraTupleSlot(estate,
+									  RelationGetDescr(rel),
+									  table_slot_callbacks(rel));
+		ExecStoreAllNullTuple(slot);
+
+		relInfo->ri_AllNullSlot = slot;
+
+		MemoryContextSwitchTo(oldcontext);
+	}
+
+	return relInfo->ri_AllNullSlot;
+}
+
+/*
  * Return the map needed to convert given child result relation's tuples to
  * the rowtype of the query's main target ("root") relation.  Note that a
  * NULL result is valid and means that no conversion is needed.

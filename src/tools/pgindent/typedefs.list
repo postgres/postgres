@@ -2479,6 +2479,10 @@ ResultRelInfo
 ResultState
 ReturnSetInfo
 ReturnStmt
+ReturningClause
+ReturningExpr
+ReturningOption
+ReturningOptionKind
 RevmapContents
 RevokeRoleGrantAction
 RewriteMappingDataEntry
@@ -2625,6 +2629,7 @@ SetOperation
 SetOperationStmt
 SetQuantifier
 SetToDefault
+SetVarReturningType_context
 SetupWorkerPtrType
 ShDependObjectInfo
 SharedAggInfo
@@ -3086,6 +3091,7 @@ Var
 VarBit
 VarChar
 VarParamState
+VarReturningType
 VarString
 VarStringSortSupport
 Variable

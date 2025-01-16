@@ -25,7 +25,8 @@ PostgreSQL documentation
 DELETE FROM [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ] [ [ AS ] <replaceable class="parameter">alias</replaceable> ]
     [ USING <replaceable class="parameter">from_item</replaceable> [, ...] ]
     [ WHERE <replaceable class="parameter">condition</replaceable> | WHERE CURRENT OF <replaceable class="parameter">cursor_name</replaceable> ]
-    [ RETURNING { * | <replaceable class="parameter">output_expression</replaceable> [ [ AS ] <replaceable class="parameter">output_name</replaceable> ] } [, ...] ]
+    [ RETURNING [ WITH ( { OLD | NEW } AS <replaceable class="parameter">output_alias</replaceable> [, ...] ) ]
+                { * | <replaceable class="parameter">output_expression</replaceable> [ [ AS ] <replaceable class="parameter">output_name</replaceable> ] } [, ...] ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -161,6 +162,26 @@ DELETE FROM [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ *
    </varlistentry>
 
    <varlistentry>
+    <term><replaceable class="parameter">output_alias</replaceable></term>
+    <listitem>
+     <para>
+      An optional substitute name for <literal>OLD</literal> or
+      <literal>NEW</literal> rows in the <literal>RETURNING</literal> list.
+     </para>
+
+     <para>
+      By default, old values from the target table can be returned by writing
+      <literal>OLD.<replaceable class="parameter">column_name</replaceable></literal>
+      or <literal>OLD.*</literal>, and new values can be returned by writing
+      <literal>NEW.<replaceable class="parameter">column_name</replaceable></literal>
+      or <literal>NEW.*</literal>.  When an alias is provided, these names are
+      hidden and the old or new rows must be referred to using the alias.
+      For example <literal>RETURNING WITH (OLD AS o, NEW AS n) o.*, n.*</literal>.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
     <term><replaceable class="parameter">output_expression</replaceable></term>
     <listitem>
      <para>
@@ -169,6 +190,23 @@ DELETE FROM [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ *
       column names of the table named by <replaceable class="parameter">table_name</replaceable>
       or table(s) listed in <literal>USING</literal>.
       Write <literal>*</literal> to return all columns.
+     </para>
+
+     <para>
+      A column name or <literal>*</literal> may be qualified using
+      <literal>OLD</literal> or <literal>NEW</literal>, or the corresponding
+      <replaceable class="parameter">output_alias</replaceable> for
+      <literal>OLD</literal> or <literal>NEW</literal>, to cause old or new
+      values to be returned.  An unqualified column name, or
+      <literal>*</literal>, or a column name or <literal>*</literal> qualified
+      using the target table name or alias will return old values.
+     </para>
+
+     <para>
+      For a simple <command>DELETE</command>, all new values will be
+      <literal>NULL</literal>.  However, if an <literal>ON DELETE</literal>
+      rule causes an <command>INSERT</command> or <command>UPDATE</command>
+      to be executed instead, the new values may be non-<literal>NULL</literal>.
      </para>
     </listitem>
    </varlistentry>

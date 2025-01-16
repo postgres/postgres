@@ -247,8 +247,8 @@ transformMergeStmt(ParseState *pstate, MergeStmt *stmt)
 	qry->jointree = makeFromExpr(pstate->p_joinlist, NULL);
 
 	/* Transform the RETURNING list, if any */
-	qry->returningList = transformReturningList(pstate, stmt->returningList,
-												EXPR_KIND_MERGE_RETURNING);
+	transformReturningClause(pstate, qry, stmt->returningClause,
+							 EXPR_KIND_MERGE_RETURNING);
 
 	/*
 	 * We now have a good query shape, so now look at the WHEN conditions and

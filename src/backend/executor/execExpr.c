@@ -55,10 +55,15 @@
 
 typedef struct ExprSetupInfo
 {
-	/* Highest attribute numbers fetched from inner/outer/scan tuple slots: */
+	/*
+	 * Highest attribute numbers fetched from inner/outer/scan/old/new tuple
+	 * slots:
+	 */
 	AttrNumber	last_inner;
 	AttrNumber	last_outer;
 	AttrNumber	last_scan;
+	AttrNumber	last_old;
+	AttrNumber	last_new;
 	/* MULTIEXPR SubPlan nodes appearing in the expression: */
 	List	   *multiexpr_subplans;
 } ExprSetupInfo;
@@ -446,8 +451,25 @@ ExecBuildProjectionInfo(List *targetList,
 					/* INDEX_VAR is handled by default case */
 
 				default:
-					/* get the tuple from the relation being scanned */
-					scratch.opcode = EEOP_ASSIGN_SCAN_VAR;
+
+					/*
+					 * Get the tuple from the relation being scanned, or the
+					 * old/new tuple slot, if old/new values were requested.
+					 */
+					switch (variable->varreturningtype)
+					{
+						case VAR_RETURNING_DEFAULT:
+							scratch.opcode = EEOP_ASSIGN_SCAN_VAR;
+							break;
+						case VAR_RETURNING_OLD:
+							scratch.opcode = EEOP_ASSIGN_OLD_VAR;
+							state->flags |= EEO_FLAG_HAS_OLD;
+							break;
+						case VAR_RETURNING_NEW:
+							scratch.opcode = EEOP_ASSIGN_NEW_VAR;
+							state->flags |= EEO_FLAG_HAS_NEW;
+							break;
+					}
 					break;
 			}
 
@@ -535,7 +557,7 @@ ExecBuildUpdateProjection(List *targetList,
 	int			nAssignableCols;
 	bool		sawJunk;
 	Bitmapset  *assignedCols;
-	ExprSetupInfo deform = {0, 0, 0, NIL};
+	ExprSetupInfo deform = {0, 0, 0, 0, 0, NIL};
 	ExprEvalStep scratch = {0};
 	int			outerattnum;
 	ListCell   *lc,
@@ -924,6 +946,7 @@ ExecInitExprRec(Expr *node, ExprState *state,
 					/* system column */
 					scratch.d.var.attnum = variable->varattno;
 					scratch.d.var.vartype = variable->vartype;
+					scratch.d.var.varreturningtype = variable->varreturningtype;
 					switch (variable->varno)
 					{
 						case INNER_VAR:
@@ -936,7 +959,20 @@ ExecInitExprRec(Expr *node, ExprState *state,
 							/* INDEX_VAR is handled by default case */
 
 						default:
-							scratch.opcode = EEOP_SCAN_SYSVAR;
+							switch (variable->varreturningtype)
+							{
+								case VAR_RETURNING_DEFAULT:
+									scratch.opcode = EEOP_SCAN_SYSVAR;
+									break;
+								case VAR_RETURNING_OLD:
+									scratch.opcode = EEOP_OLD_SYSVAR;
+									state->flags |= EEO_FLAG_HAS_OLD;
+									break;
+								case VAR_RETURNING_NEW:
+									scratch.opcode = EEOP_NEW_SYSVAR;
+									state->flags |= EEO_FLAG_HAS_NEW;
+									break;
+							}
 							break;
 					}
 				}
@@ -945,6 +981,7 @@ ExecInitExprRec(Expr *node, ExprState *state,
 					/* regular user column */
 					scratch.d.var.attnum = variable->varattno - 1;
 					scratch.d.var.vartype = variable->vartype;
+					scratch.d.var.varreturningtype = variable->varreturningtype;
 					switch (variable->varno)
 					{
 						case INNER_VAR:
@@ -957,7 +994,20 @@ ExecInitExprRec(Expr *node, ExprState *state,
 							/* INDEX_VAR is handled by default case */
 
 						default:
-							scratch.opcode = EEOP_SCAN_VAR;
+							switch (variable->varreturningtype)
+							{
+								case VAR_RETURNING_DEFAULT:
+									scratch.opcode = EEOP_SCAN_VAR;
+									break;
+								case VAR_RETURNING_OLD:
+									scratch.opcode = EEOP_OLD_VAR;
+									state->flags |= EEO_FLAG_HAS_OLD;
+									break;
+								case VAR_RETURNING_NEW:
+									scratch.opcode = EEOP_NEW_VAR;
+									state->flags |= EEO_FLAG_HAS_NEW;
+									break;
+							}
 							break;
 					}
 				}
@@ -2575,6 +2625,34 @@ ExecInitExprRec(Expr *node, ExprState *state,
 				break;
 			}
 
+		case T_ReturningExpr:
+			{
+				ReturningExpr *rexpr = (ReturningExpr *) node;
+				int			retstep;
+
+				/* Skip expression evaluation if OLD/NEW row doesn't exist */
+				scratch.opcode = EEOP_RETURNINGEXPR;
+				scratch.d.returningexpr.nullflag = rexpr->retold ?
+					EEO_FLAG_OLD_IS_NULL : EEO_FLAG_NEW_IS_NULL;
+				scratch.d.returningexpr.jumpdone = -1;	/* set below */
+				ExprEvalPushStep(state, &scratch);
+				retstep = state->steps_len - 1;
+
+				/* Steps to evaluate expression to return */
+				ExecInitExprRec(rexpr->retexpr, state, resv, resnull);
+
+				/* Jump target used if OLD/NEW row doesn't exist */
+				state->steps[retstep].d.returningexpr.jumpdone = state->steps_len;
+
+				/* Update ExprState flags */
+				if (rexpr->retold)
+					state->flags |= EEO_FLAG_HAS_OLD;
+				else
+					state->flags |= EEO_FLAG_HAS_NEW;
+
+				break;
+			}
+
 		default:
 			elog(ERROR, "unrecognized node type: %d",
 				 (int) nodeTag(node));
@@ -2786,7 +2864,7 @@ ExecInitSubPlanExpr(SubPlan *subplan,
 static void
 ExecCreateExprSetupSteps(ExprState *state, Node *node)
 {
-	ExprSetupInfo info = {0, 0, 0, NIL};
+	ExprSetupInfo info = {0, 0, 0, 0, 0, NIL};
 
 	/* Prescan to find out what we need. */
 	expr_setup_walker(node, &info);
@@ -2809,8 +2887,8 @@ ExecPushExprSetupSteps(ExprState *state, ExprSetupInfo *info)
 	scratch.resnull = NULL;
 
 	/*
-	 * Add steps deforming the ExprState's inner/outer/scan slots as much as
-	 * required by any Vars appearing in the expression.
+	 * Add steps deforming the ExprState's inner/outer/scan/old/new slots as
+	 * much as required by any Vars appearing in the expression.
 	 */
 	if (info->last_inner > 0)
 	{
@@ -2836,6 +2914,26 @@ ExecPushExprSetupSteps(ExprState *state, ExprSetupInfo *info)
 	{
 		scratch.opcode = EEOP_SCAN_FETCHSOME;
 		scratch.d.fetch.last_var = info->last_scan;
+		scratch.d.fetch.fixed = false;
+		scratch.d.fetch.kind = NULL;
+		scratch.d.fetch.known_desc = NULL;
+		if (ExecComputeSlotInfo(state, &scratch))
+			ExprEvalPushStep(state, &scratch);
+	}
+	if (info->last_old > 0)
+	{
+		scratch.opcode = EEOP_OLD_FETCHSOME;
+		scratch.d.fetch.last_var = info->last_old;
+		scratch.d.fetch.fixed = false;
+		scratch.d.fetch.kind = NULL;
+		scratch.d.fetch.known_desc = NULL;
+		if (ExecComputeSlotInfo(state, &scratch))
+			ExprEvalPushStep(state, &scratch);
+	}
+	if (info->last_new > 0)
+	{
+		scratch.opcode = EEOP_NEW_FETCHSOME;
+		scratch.d.fetch.last_var = info->last_new;
 		scratch.d.fetch.fixed = false;
 		scratch.d.fetch.kind = NULL;
 		scratch.d.fetch.known_desc = NULL;
@@ -2888,7 +2986,18 @@ expr_setup_walker(Node *node, ExprSetupInfo *info)
 				/* INDEX_VAR is handled by default case */
 
 			default:
-				info->last_scan = Max(info->last_scan, attnum);
+				switch (variable->varreturningtype)
+				{
+					case VAR_RETURNING_DEFAULT:
+						info->last_scan = Max(info->last_scan, attnum);
+						break;
+					case VAR_RETURNING_OLD:
+						info->last_old = Max(info->last_old, attnum);
+						break;
+					case VAR_RETURNING_NEW:
+						info->last_new = Max(info->last_new, attnum);
+						break;
+				}
 				break;
 		}
 		return false;
@@ -2926,6 +3035,11 @@ expr_setup_walker(Node *node, ExprSetupInfo *info)
  * evaluation of the expression will have the same type of slot, with an
  * equivalent descriptor.
  *
+ * EEOP_OLD_FETCHSOME and EEOP_NEW_FETCHSOME are used to process RETURNING, if
+ * OLD/NEW columns are referred to explicitly.  In both cases, the tuple
+ * descriptor comes from the parent scan node, so we treat them the same as
+ * EEOP_SCAN_FETCHSOME.
+ *
  * Returns true if the deforming step is required, false otherwise.
  */
 static bool
@@ -2939,7 +3053,9 @@ ExecComputeSlotInfo(ExprState *state, ExprEvalStep *op)
 
 	Assert(opcode == EEOP_INNER_FETCHSOME ||
 		   opcode == EEOP_OUTER_FETCHSOME ||
-		   opcode == EEOP_SCAN_FETCHSOME);
+		   opcode == EEOP_SCAN_FETCHSOME ||
+		   opcode == EEOP_OLD_FETCHSOME ||
+		   opcode == EEOP_NEW_FETCHSOME);
 
 	if (op->d.fetch.known_desc != NULL)
 	{
@@ -2991,7 +3107,9 @@ ExecComputeSlotInfo(ExprState *state, ExprEvalStep *op)
 			desc = ExecGetResultType(os);
 		}
 	}
-	else if (opcode == EEOP_SCAN_FETCHSOME)
+	else if (opcode == EEOP_SCAN_FETCHSOME ||
+			 opcode == EEOP_OLD_FETCHSOME ||
+			 opcode == EEOP_NEW_FETCHSOME)
 	{
 		desc = parent->scandesc;
 
@@ -3038,6 +3156,12 @@ ExecInitWholeRowVar(ExprEvalStep *scratch, Var *variable, ExprState *state)
 	scratch->d.wholerow.slow = false;
 	scratch->d.wholerow.tupdesc = NULL; /* filled at runtime */
 	scratch->d.wholerow.junkFilter = NULL;
+
+	/* update ExprState flags if Var refers to OLD/NEW */
+	if (variable->varreturningtype == VAR_RETURNING_OLD)
+		state->flags |= EEO_FLAG_HAS_OLD;
+	else if (variable->varreturningtype == VAR_RETURNING_NEW)
+		state->flags |= EEO_FLAG_HAS_NEW;
 
 	/*
 	 * If the input tuple came from a subquery, it might contain "resjunk"
@@ -3541,7 +3665,7 @@ ExecBuildAggTrans(AggState *aggstate, AggStatePerPhase phase,
 	PlanState  *parent = &aggstate->ss.ps;
 	ExprEvalStep scratch = {0};
 	bool		isCombine = DO_AGGSPLIT_COMBINE(aggstate->aggsplit);
-	ExprSetupInfo deform = {0, 0, 0, NIL};
+	ExprSetupInfo deform = {0, 0, 0, 0, 0, NIL};
 
 	state->expr = (Expr *) aggstate;
 	state->parent = parent;
@@ -4082,6 +4206,7 @@ ExecBuildHash32FromAttrs(TupleDesc desc, const TupleTableSlotOps *ops,
 		scratch.resnull = &fcinfo->args[0].isnull;
 		scratch.d.var.attnum = attnum;
 		scratch.d.var.vartype = TupleDescAttr(desc, attnum)->atttypid;
+		scratch.d.var.varreturningtype = VAR_RETURNING_DEFAULT;
 
 		ExprEvalPushStep(state, &scratch);
 
@@ -4407,6 +4532,7 @@ ExecBuildGroupingEqual(TupleDesc ldesc, TupleDesc rdesc,
 		scratch.opcode = EEOP_INNER_VAR;
 		scratch.d.var.attnum = attno - 1;
 		scratch.d.var.vartype = latt->atttypid;
+		scratch.d.var.varreturningtype = VAR_RETURNING_DEFAULT;
 		scratch.resvalue = &fcinfo->args[0].value;
 		scratch.resnull = &fcinfo->args[0].isnull;
 		ExprEvalPushStep(state, &scratch);
@@ -4415,6 +4541,7 @@ ExecBuildGroupingEqual(TupleDesc ldesc, TupleDesc rdesc,
 		scratch.opcode = EEOP_OUTER_VAR;
 		scratch.d.var.attnum = attno - 1;
 		scratch.d.var.vartype = ratt->atttypid;
+		scratch.d.var.varreturningtype = VAR_RETURNING_DEFAULT;
 		scratch.resvalue = &fcinfo->args[1].value;
 		scratch.resnull = &fcinfo->args[1].isnull;
 		ExprEvalPushStep(state, &scratch);
@@ -4541,6 +4668,7 @@ ExecBuildParamSetEqual(TupleDesc desc,
 		scratch.opcode = EEOP_INNER_VAR;
 		scratch.d.var.attnum = attno;
 		scratch.d.var.vartype = att->atttypid;
+		scratch.d.var.varreturningtype = VAR_RETURNING_DEFAULT;
 		scratch.resvalue = &fcinfo->args[0].value;
 		scratch.resnull = &fcinfo->args[0].isnull;
 		ExprEvalPushStep(state, &scratch);
@@ -4549,6 +4677,7 @@ ExecBuildParamSetEqual(TupleDesc desc,
 		scratch.opcode = EEOP_OUTER_VAR;
 		scratch.d.var.attnum = attno;
 		scratch.d.var.vartype = att->atttypid;
+		scratch.d.var.varreturningtype = VAR_RETURNING_DEFAULT;
 		scratch.resvalue = &fcinfo->args[1].value;
 		scratch.resnull = &fcinfo->args[1].isnull;
 		ExprEvalPushStep(state, &scratch);

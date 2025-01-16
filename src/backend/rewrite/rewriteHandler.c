@@ -641,6 +641,7 @@ rewriteRuleAction(Query *parsetree,
 									  0,
 									  rt_fetch(new_varno, sub_action->rtable),
 									  parsetree->targetList,
+									  sub_action->resultRelation,
 									  (event == CMD_UPDATE) ?
 									  REPLACEVARS_CHANGE_VARNO :
 									  REPLACEVARS_SUBSTITUTE_NULL,
@@ -674,9 +675,14 @@ rewriteRuleAction(Query *parsetree,
 									  rt_fetch(parsetree->resultRelation,
 											   parsetree->rtable),
 									  rule_action->returningList,
+									  rule_action->resultRelation,
 									  REPLACEVARS_REPORT_ERROR,
 									  0,
 									  &rule_action->hasSubLinks);
+
+		/* use triggering query's aliases for OLD and NEW in RETURNING list */
+		rule_action->returningOldAlias = parsetree->returningOldAlias;
+		rule_action->returningNewAlias = parsetree->returningNewAlias;
 
 		/*
 		 * There could have been some SubLinks in parsetree's returningList,
@@ -2358,6 +2364,7 @@ CopyAndAddInvertedQual(Query *parsetree,
 											 rt_fetch(rt_index,
 													  parsetree->rtable),
 											 parsetree->targetList,
+											 parsetree->resultRelation,
 											 (event == CMD_UPDATE) ?
 											 REPLACEVARS_CHANGE_VARNO :
 											 REPLACEVARS_SUBSTITUTE_NULL,
@@ -3582,6 +3589,7 @@ rewriteTargetView(Query *parsetree, Relation view)
 								  0,
 								  view_rte,
 								  view_targetlist,
+								  new_rt_index,
 								  REPLACEVARS_REPORT_ERROR,
 								  0,
 								  NULL);
@@ -3733,6 +3741,7 @@ rewriteTargetView(Query *parsetree, Relation view)
 									  0,
 									  view_rte,
 									  tmp_tlist,
+									  new_rt_index,
 									  REPLACEVARS_REPORT_ERROR,
 									  0,
 									  &parsetree->hasSubLinks);

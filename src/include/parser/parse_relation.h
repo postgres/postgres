@@ -114,6 +114,7 @@ extern void errorMissingRTE(ParseState *pstate, RangeVar *relation) pg_attribute
 extern void errorMissingColumn(ParseState *pstate,
 							   const char *relname, const char *colname, int location) pg_attribute_noreturn();
 extern void expandRTE(RangeTblEntry *rte, int rtindex, int sublevels_up,
+					  VarReturningType returning_type,
 					  int location, bool include_dropped,
 					  List **colnames, List **colvars);
 extern List *expandNSItemVars(ParseState *pstate, ParseNamespaceItem *nsitem,

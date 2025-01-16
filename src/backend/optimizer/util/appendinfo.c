@@ -253,6 +253,13 @@ adjust_appendrel_attrs_mutator(Node *node,
 		 * all non-Var outputs of such subqueries, and then we could look up
 		 * the pre-existing PHV here.  Or perhaps just wrap the translations
 		 * that way to begin with?
+		 *
+		 * If var->varreturningtype is not VAR_RETURNING_DEFAULT, then that
+		 * also needs to be copied to the translated Var.  That too would fail
+		 * if the translation wasn't a Var, but that should never happen since
+		 * a non-default var->varreturningtype is only used for Vars referring
+		 * to the result relation, which should never be a flattened UNION ALL
+		 * subquery.
 		 */
 
 		for (cnt = 0; cnt < nappinfos; cnt++)
@@ -283,9 +290,17 @@ adjust_appendrel_attrs_mutator(Node *node,
 					elog(ERROR, "attribute %d of relation \"%s\" does not exist",
 						 var->varattno, get_rel_name(appinfo->parent_reloid));
 				if (IsA(newnode, Var))
+				{
+					((Var *) newnode)->varreturningtype = var->varreturningtype;
 					((Var *) newnode)->varnullingrels = var->varnullingrels;
-				else if (var->varnullingrels != NULL)
-					elog(ERROR, "failed to apply nullingrels to a non-Var");
+				}
+				else
+				{
+					if (var->varreturningtype != VAR_RETURNING_DEFAULT)
+						elog(ERROR, "failed to apply returningtype to a non-Var");
+					if (var->varnullingrels != NULL)
+						elog(ERROR, "failed to apply nullingrels to a non-Var");
+				}
 				return newnode;
 			}
 			else if (var->varattno == 0)
@@ -339,6 +354,8 @@ adjust_appendrel_attrs_mutator(Node *node,
 					rowexpr->colnames = copyObject(rte->eref->colnames);
 					rowexpr->location = -1;
 
+					if (var->varreturningtype != VAR_RETURNING_DEFAULT)
+						elog(ERROR, "failed to apply returningtype to a non-Var");
 					if (var->varnullingrels != NULL)
 						elog(ERROR, "failed to apply nullingrels to a non-Var");
 
