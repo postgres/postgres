@@ -1624,15 +1624,8 @@ pg_next_dst_boundary(const pg_time_t *timep,
 	sp = &tz->state;
 	if (sp->timecnt == 0)
 	{
-		/* non-DST zone, use lowest-numbered standard type */
-		i = 0;
-		while (sp->ttis[i].tt_isdst)
-			if (++i >= sp->typecnt)
-			{
-				i = 0;
-				break;
-			}
-		ttisp = &sp->ttis[i];
+		/* non-DST zone, use the defaulttype */
+		ttisp = &sp->ttis[sp->defaulttype];
 		*before_gmtoff = ttisp->tt_utoff;
 		*before_isdst = ttisp->tt_isdst;
 		return 0;
@@ -1692,15 +1685,8 @@ pg_next_dst_boundary(const pg_time_t *timep,
 	}
 	if (t < sp->ats[0])
 	{
-		/* For "before", use lowest-numbered standard type */
-		i = 0;
-		while (sp->ttis[i].tt_isdst)
-			if (++i >= sp->typecnt)
-			{
-				i = 0;
-				break;
-			}
-		ttisp = &sp->ttis[i];
+		/* For "before", use the defaulttype */
+		ttisp = &sp->ttis[sp->defaulttype];
 		*before_gmtoff = ttisp->tt_utoff;
 		*before_isdst = ttisp->tt_isdst;
 		*boundary = sp->ats[0];
@@ -1793,7 +1779,9 @@ pg_interpret_timezone_abbrev(const char *abbrev,
 	 * abbreviation should get us what we want, since extrapolation would just
 	 * be repeating the newest or oldest meanings.
 	 *
-	 * Use binary search to locate the first transition > cutoff time.
+	 * Use binary search to locate the first transition > cutoff time.  (Note
+	 * that sp->timecnt could be zero, in which case this loop does nothing
+	 * and only the defaulttype entry will be checked.)
 	 */
 	{
 		int			lo = 0;
@@ -1827,7 +1815,19 @@ pg_interpret_timezone_abbrev(const char *abbrev,
 	}
 
 	/*
-	 * Not there, so scan forwards to find the first one after.
+	 * Not found yet; check the defaulttype, which is notionally the era
+	 * before any of the entries in sp->types[].
+	 */
+	ttisp = &sp->ttis[sp->defaulttype];
+	if (ttisp->tt_desigidx == abbrind)
+	{
+		*gmtoff = ttisp->tt_utoff;
+		*isdst = ttisp->tt_isdst;
+		return true;
+	}
+
+	/*
+	 * Not there, so scan forwards to find the first one after the cutoff.
 	 */
 	for (i = cutoff; i < sp->timecnt; i++)
 	{
