@@ -394,6 +394,12 @@ static ObjectAddress ATExecAlterConstraint(Relation rel, AlterTableCmd *cmd,
 static bool ATExecAlterConstrRecurse(Constraint *cmdcon, Relation conrel, Relation tgrel,
 									 Relation rel, HeapTuple contuple, List **otherrelids,
 									 LOCKMODE lockmode);
+static void AlterConstrTriggerDeferrability(Oid conoid, Relation tgrel, Relation rel,
+											bool deferrable, bool initdeferred,
+											List **otherrelids);
+static void ATExecAlterChildConstr(Constraint *cmdcon, Relation conrel, Relation tgrel,
+								   Relation rel, HeapTuple contuple, List **otherrelids,
+								   LOCKMODE lockmode);
 static ObjectAddress ATExecValidateConstraint(List **wqueue,
 											  Relation rel, char *constrName,
 											  bool recurse, bool recursing, LOCKMODE lockmode);
@@ -11861,9 +11867,6 @@ ATExecAlterConstrRecurse(Constraint *cmdcon, Relation conrel, Relation tgrel,
 	{
 		HeapTuple	copyTuple;
 		Form_pg_constraint copy_con;
-		HeapTuple	tgtuple;
-		ScanKeyData tgkey;
-		SysScanDesc tgscan;
 
 		copyTuple = heap_copytuple(contuple);
 		copy_con = (Form_pg_constraint) GETSTRUCT(copyTuple);
@@ -11884,53 +11887,8 @@ ATExecAlterConstrRecurse(Constraint *cmdcon, Relation conrel, Relation tgrel,
 		 * Now we need to update the multiple entries in pg_trigger that
 		 * implement the constraint.
 		 */
-		ScanKeyInit(&tgkey,
-					Anum_pg_trigger_tgconstraint,
-					BTEqualStrategyNumber, F_OIDEQ,
-					ObjectIdGetDatum(conoid));
-		tgscan = systable_beginscan(tgrel, TriggerConstraintIndexId, true,
-									NULL, 1, &tgkey);
-		while (HeapTupleIsValid(tgtuple = systable_getnext(tgscan)))
-		{
-			Form_pg_trigger tgform = (Form_pg_trigger) GETSTRUCT(tgtuple);
-			Form_pg_trigger copy_tg;
-			HeapTuple	tgCopyTuple;
-
-			/*
-			 * Remember OIDs of other relation(s) involved in FK constraint.
-			 * (Note: it's likely that we could skip forcing a relcache inval
-			 * for other rels that don't have a trigger whose properties
-			 * change, but let's be conservative.)
-			 */
-			if (tgform->tgrelid != RelationGetRelid(rel))
-				*otherrelids = list_append_unique_oid(*otherrelids,
-													  tgform->tgrelid);
-
-			/*
-			 * Update deferrability of RI_FKey_noaction_del,
-			 * RI_FKey_noaction_upd, RI_FKey_check_ins and RI_FKey_check_upd
-			 * triggers, but not others; see createForeignKeyActionTriggers
-			 * and CreateFKCheckTrigger.
-			 */
-			if (tgform->tgfoid != F_RI_FKEY_NOACTION_DEL &&
-				tgform->tgfoid != F_RI_FKEY_NOACTION_UPD &&
-				tgform->tgfoid != F_RI_FKEY_CHECK_INS &&
-				tgform->tgfoid != F_RI_FKEY_CHECK_UPD)
-				continue;
-
-			tgCopyTuple = heap_copytuple(tgtuple);
-			copy_tg = (Form_pg_trigger) GETSTRUCT(tgCopyTuple);
-
-			copy_tg->tgdeferrable = cmdcon->deferrable;
-			copy_tg->tginitdeferred = cmdcon->initdeferred;
-			CatalogTupleUpdate(tgrel, &tgCopyTuple->t_self, tgCopyTuple);
-
-			InvokeObjectPostAlterHook(TriggerRelationId, tgform->oid, 0);
-
-			heap_freetuple(tgCopyTuple);
-		}
-
-		systable_endscan(tgscan);
+		AlterConstrTriggerDeferrability(conoid, tgrel, rel, cmdcon->deferrable,
+										cmdcon->initdeferred, otherrelids);
 	}
 
 	/*
@@ -11943,34 +11901,118 @@ ATExecAlterConstrRecurse(Constraint *cmdcon, Relation conrel, Relation tgrel,
 	 */
 	if (rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE ||
 		get_rel_relkind(refrelid) == RELKIND_PARTITIONED_TABLE)
-	{
-		ScanKeyData pkey;
-		SysScanDesc pscan;
-		HeapTuple	childtup;
-
-		ScanKeyInit(&pkey,
-					Anum_pg_constraint_conparentid,
-					BTEqualStrategyNumber, F_OIDEQ,
-					ObjectIdGetDatum(conoid));
-
-		pscan = systable_beginscan(conrel, ConstraintParentIndexId,
-								   true, NULL, 1, &pkey);
-
-		while (HeapTupleIsValid(childtup = systable_getnext(pscan)))
-		{
-			Form_pg_constraint childcon = (Form_pg_constraint) GETSTRUCT(childtup);
-			Relation	childrel;
-
-			childrel = table_open(childcon->conrelid, lockmode);
-			ATExecAlterConstrRecurse(cmdcon, conrel, tgrel, childrel, childtup,
-									 otherrelids, lockmode);
-			table_close(childrel, NoLock);
-		}
-
-		systable_endscan(pscan);
-	}
+		ATExecAlterChildConstr(cmdcon, conrel, tgrel, rel, contuple,
+							   otherrelids, lockmode);
 
 	return changed;
+}
+
+/*
+ * A subroutine of ATExecAlterConstrRecurse that updated constraint trigger's
+ * deferrability.
+ *
+ * The arguments to this function have the same meaning as the arguments to
+ * ATExecAlterConstrRecurse.
+ */
+static void
+AlterConstrTriggerDeferrability(Oid conoid, Relation tgrel, Relation rel,
+								bool deferrable, bool initdeferred,
+								List **otherrelids)
+{
+	HeapTuple	tgtuple;
+	ScanKeyData tgkey;
+	SysScanDesc tgscan;
+
+	ScanKeyInit(&tgkey,
+				Anum_pg_trigger_tgconstraint,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(conoid));
+	tgscan = systable_beginscan(tgrel, TriggerConstraintIndexId, true,
+								NULL, 1, &tgkey);
+	while (HeapTupleIsValid(tgtuple = systable_getnext(tgscan)))
+	{
+		Form_pg_trigger tgform = (Form_pg_trigger) GETSTRUCT(tgtuple);
+		Form_pg_trigger copy_tg;
+		HeapTuple	tgCopyTuple;
+
+		/*
+		 * Remember OIDs of other relation(s) involved in FK constraint.
+		 * (Note: it's likely that we could skip forcing a relcache inval for
+		 * other rels that don't have a trigger whose properties change, but
+		 * let's be conservative.)
+		 */
+		if (tgform->tgrelid != RelationGetRelid(rel))
+			*otherrelids = list_append_unique_oid(*otherrelids,
+												  tgform->tgrelid);
+
+		/*
+		 * Update enable status and deferrability of RI_FKey_noaction_del,
+		 * RI_FKey_noaction_upd, RI_FKey_check_ins and RI_FKey_check_upd
+		 * triggers, but not others; see createForeignKeyActionTriggers and
+		 * CreateFKCheckTrigger.
+		 */
+		if (tgform->tgfoid != F_RI_FKEY_NOACTION_DEL &&
+			tgform->tgfoid != F_RI_FKEY_NOACTION_UPD &&
+			tgform->tgfoid != F_RI_FKEY_CHECK_INS &&
+			tgform->tgfoid != F_RI_FKEY_CHECK_UPD)
+			continue;
+
+		tgCopyTuple = heap_copytuple(tgtuple);
+		copy_tg = (Form_pg_trigger) GETSTRUCT(tgCopyTuple);
+
+		copy_tg->tgdeferrable = deferrable;
+		copy_tg->tginitdeferred = initdeferred;
+		CatalogTupleUpdate(tgrel, &tgCopyTuple->t_self, tgCopyTuple);
+
+		InvokeObjectPostAlterHook(TriggerRelationId, tgform->oid, 0);
+
+		heap_freetuple(tgCopyTuple);
+	}
+
+	systable_endscan(tgscan);
+}
+
+/*
+ * Invokes ATExecAlterConstrRecurse for each constraint that is a child of the
+ * specified constraint.
+ *
+ * The arguments to this function have the same meaning as the arguments to
+ * ATExecAlterConstrRecurse.
+ */
+static void
+ATExecAlterChildConstr(Constraint *cmdcon, Relation conrel, Relation tgrel,
+					   Relation rel, HeapTuple contuple, List **otherrelids,
+					   LOCKMODE lockmode)
+{
+	Form_pg_constraint currcon;
+	Oid			conoid;
+	ScanKeyData pkey;
+	SysScanDesc pscan;
+	HeapTuple	childtup;
+
+	currcon = (Form_pg_constraint) GETSTRUCT(contuple);
+	conoid = currcon->oid;
+
+	ScanKeyInit(&pkey,
+				Anum_pg_constraint_conparentid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(conoid));
+
+	pscan = systable_beginscan(conrel, ConstraintParentIndexId,
+							   true, NULL, 1, &pkey);
+
+	while (HeapTupleIsValid(childtup = systable_getnext(pscan)))
+	{
+		Form_pg_constraint childcon = (Form_pg_constraint) GETSTRUCT(childtup);
+		Relation	childrel;
+
+		childrel = table_open(childcon->conrelid, lockmode);
+		ATExecAlterConstrRecurse(cmdcon, conrel, tgrel, childrel, childtup,
+								 otherrelids, lockmode);
+		table_close(childrel, NoLock);
+	}
+
+	systable_endscan(pscan);
 }
 
 /*
