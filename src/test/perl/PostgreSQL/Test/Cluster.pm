@@ -2954,6 +2954,154 @@ sub lsn
 
 =pod
 
+=item $node->write_wal($tli, $lsn, $segment_size, $data)
+
+Write some arbitrary data in WAL for the given segment at $lsn (in bytes).
+This should be called while the cluster is not running.
+
+Returns the path of the WAL segment written to.
+
+=cut
+
+sub write_wal
+{
+	my ($self, $tli, $lsn, $segment_size, $data) = @_;
+
+	# Calculate segment number and offset position in segment based on the
+	# input LSN.
+	my $segment = $lsn / $segment_size;
+	my $offset = $lsn % $segment_size;
+	my $path =
+	  sprintf("%s/pg_wal/%08X%08X%08X", $self->data_dir, $tli, 0, $segment);
+
+	open my $fh, "+<:raw", $path or die "could not open WAL segment $path";
+	seek($fh, $offset, SEEK_SET) or die "could not seek WAL segment $path";
+	print $fh $data;
+	close $fh;
+
+	return $path;
+}
+
+=pod
+
+=item $node->emit_wal($size)
+
+Emit a WAL record of arbitrary size, using pg_logical_emit_message().
+
+Returns the end LSN of the record inserted, in bytes.
+
+=cut
+
+sub emit_wal
+{
+	my ($self, $size) = @_;
+
+	return int(
+		$self->safe_psql(
+			'postgres',
+			"SELECT pg_logical_emit_message(true, '', repeat('a', $size)) - '0/0'"
+		));
+}
+
+
+# Private routine returning the current insert LSN of a node, in bytes.
+# Used by the routines below in charge of advancing WAL to arbitrary
+# positions.  The insert LSN is returned in bytes.
+sub _get_insert_lsn
+{
+	my ($self) = @_;
+	return int(
+		$self->safe_psql(
+			'postgres', "SELECT pg_current_wal_insert_lsn() - '0/0'"));
+}
+
+=pod
+
+=item $node->advance_wal_out_of_record_splitting_zone($wal_block_size)
+
+Advance WAL at the end of a page, making sure that we are far away enough
+from the end of a page that we could insert a couple of small records.
+
+This inserts a few records of a fixed size, until the threshold gets close
+enough to the end of the WAL page inserting records to.
+
+Returns the end LSN up to which WAL has advanced, in bytes.
+
+=cut
+
+sub advance_wal_out_of_record_splitting_zone
+{
+	my ($self, $wal_block_size) = @_;
+
+	my $page_threshold = $wal_block_size / 4;
+	my $end_lsn = $self->_get_insert_lsn();
+	my $page_offset = $end_lsn % $wal_block_size;
+	while ($page_offset >= $wal_block_size - $page_threshold)
+	{
+		$self->emit_wal($page_threshold);
+		$end_lsn = $self->_get_insert_lsn();
+		$page_offset = $end_lsn % $wal_block_size;
+	}
+	return $end_lsn;
+}
+
+=pod
+
+=item $node->advance_wal_to_record_splitting_zone($wal_block_size)
+
+Advance WAL so close to the end of a page that an XLogRecordHeader would not
+fit on it.
+
+Returns the end LSN up to which WAL has advanced, in bytes.
+
+=cut
+
+sub advance_wal_to_record_splitting_zone
+{
+	my ($self, $wal_block_size) = @_;
+
+	# Size of record header.
+	my $RECORD_HEADER_SIZE = 24;
+
+	my $end_lsn = $self->_get_insert_lsn();
+	my $page_offset = $end_lsn % $wal_block_size;
+
+	# Get fairly close to the end of a page in big steps
+	while ($page_offset <= $wal_block_size - 512)
+	{
+		$self->emit_wal($wal_block_size - $page_offset - 256);
+		$end_lsn = $self->_get_insert_lsn();
+		$page_offset = $end_lsn % $wal_block_size;
+	}
+
+	# Calibrate our message size so that we can get closer 8 bytes at
+	# a time.
+	my $message_size = $wal_block_size - 80;
+	while ($page_offset <= $wal_block_size - $RECORD_HEADER_SIZE)
+	{
+		$self->emit_wal($message_size);
+		$end_lsn = $self->_get_insert_lsn();
+
+		my $old_offset = $page_offset;
+		$page_offset = $end_lsn % $wal_block_size;
+
+		# Adjust the message size until it causes 8 bytes changes in
+		# offset, enough to be able to split a record header.
+		my $delta = $page_offset - $old_offset;
+		if ($delta > 8)
+		{
+			$message_size -= 8;
+		}
+		elsif ($delta <= 0)
+		{
+			$message_size += 8;
+		}
+	}
+	return $end_lsn;
+}
+
+=pod
+
 =item $node->check_extension(extension_name)
 
 Scan pg_available_extensions to check that an extension is available in an
