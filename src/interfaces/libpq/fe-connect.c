@@ -1805,18 +1805,24 @@ pqConnectOptions2(PGconn *conn)
 		int			len;
 
 		len = pg_b64_dec_len(strlen(conn->scram_client_key));
-		/* Consider the zero-terminator */
-		if (len != SCRAM_MAX_KEY_LEN + 1)
-		{
-			libpq_append_conn_error(conn, "invalid SCRAM client key length: %d", len);
-			return false;
-		}
-		conn->scram_client_key_len = len;
 		conn->scram_client_key_binary = malloc(len);
 		if (!conn->scram_client_key_binary)
 			goto oom_error;
-		pg_b64_decode(conn->scram_client_key, strlen(conn->scram_client_key),
-					  conn->scram_client_key_binary, len);
+		len = pg_b64_decode(conn->scram_client_key, strlen(conn->scram_client_key),
+							conn->scram_client_key_binary, len);
+		if (len < 0)
+		{
+			libpq_append_conn_error(conn, "invalid SCRAM client key");
+			free(conn->scram_client_key_binary);
+			return false;
+		}
+		if (len != SCRAM_MAX_KEY_LEN)
+		{
+			libpq_append_conn_error(conn, "invalid SCRAM client key length: %d", len);
+			free(conn->scram_client_key_binary);
+			return false;
+		}
+		conn->scram_client_key_len = len;
 	}
 
 	if (conn->scram_server_key)
@@ -1824,18 +1830,24 @@ pqConnectOptions2(PGconn *conn)
 		int			len;
 
 		len = pg_b64_dec_len(strlen(conn->scram_server_key));
-		/* Consider the zero-terminator */
-		if (len != SCRAM_MAX_KEY_LEN + 1)
-		{
-			libpq_append_conn_error(conn, "invalid SCRAM server key length: %d", len);
-			return false;
-		}
-		conn->scram_server_key_len = len;
 		conn->scram_server_key_binary = malloc(len);
 		if (!conn->scram_server_key_binary)
 			goto oom_error;
-		pg_b64_decode(conn->scram_server_key, strlen(conn->scram_server_key),
-					  conn->scram_server_key_binary, len);
+		len = pg_b64_decode(conn->scram_server_key, strlen(conn->scram_server_key),
+							conn->scram_server_key_binary, len);
+		if (len < 0)
+		{
+			libpq_append_conn_error(conn, "invalid SCRAM server key");
+			free(conn->scram_server_key_binary);
+			return false;
+		}
+		if (len != SCRAM_MAX_KEY_LEN)
+		{
+			libpq_append_conn_error(conn, "invalid SCRAM server key length: %d", len);
+			free(conn->scram_server_key_binary);
+			return false;
+		}
+		conn->scram_server_key_len = len;
 	}
 
 	/*
