@@ -559,23 +559,28 @@ connect_pg_server(ForeignServer *server, UserMapping *user)
 		if (MyProcPort->has_scram_keys && UseScramPassthrough(server, user))
 		{
 			int			len;
+			int			encoded_len;
 
 			keywords[n] = "scram_client_key";
 			len = pg_b64_enc_len(sizeof(MyProcPort->scram_ClientKey));
 			/* don't forget the zero-terminator */
 			values[n] = palloc0(len + 1);
-			pg_b64_encode((const char *) MyProcPort->scram_ClientKey,
-						  sizeof(MyProcPort->scram_ClientKey),
-						  (char *) values[n], len);
+			encoded_len = pg_b64_encode((const char *) MyProcPort->scram_ClientKey,
+										sizeof(MyProcPort->scram_ClientKey),
+										(char *) values[n], len);
+			if (encoded_len < 0)
+				elog(ERROR, "could not encode SCRAM client key");
 			n++;
 
 			keywords[n] = "scram_server_key";
 			len = pg_b64_enc_len(sizeof(MyProcPort->scram_ServerKey));
 			/* don't forget the zero-terminator */
 			values[n] = palloc0(len + 1);
-			pg_b64_encode((const char *) MyProcPort->scram_ServerKey,
-						  sizeof(MyProcPort->scram_ServerKey),
-						  (char *) values[n], len);
+			encoded_len = pg_b64_encode((const char *) MyProcPort->scram_ServerKey,
+										sizeof(MyProcPort->scram_ServerKey),
+										(char *) values[n], len);
+			if (encoded_len < 0)
+				elog(ERROR, "could not encode SCRAM server key");
 			n++;
 		}
 
