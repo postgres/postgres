@@ -927,8 +927,9 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
        <term><literal>DEFAULT</literal></term>
        <listitem>
         <para>
-         Records the old values of the columns of the primary key, if any.
+         Records the old values of the columns of the primary key.
          This is the default for non-system tables.
+         When there is no primary key, the behavior is the same as <literal>NOTHING</literal>.
         </para>
        </listitem>
       </varlistentry>
