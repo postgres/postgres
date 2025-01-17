@@ -2489,6 +2489,8 @@ setlocales(void)
 		else if (strcmp(datlocale, "C.UTF-8") == 0 ||
 				 strcmp(datlocale, "C.UTF8") == 0)
 			canonname = "C.UTF-8";
+		else if (strcmp(datlocale, "PG_UNICODE_FAST") == 0)
+			canonname = "PG_UNICODE_FAST";
 		else
 			pg_fatal("invalid locale name \"%s\" for builtin provider",
 					 datlocale);
@@ -2782,7 +2784,9 @@ setup_locale_encoding(void)
 
 	if (locale_provider == COLLPROVIDER_BUILTIN)
 	{
-		if (strcmp(datlocale, "C.UTF-8") == 0 && encodingid != PG_UTF8)
+		if ((strcmp(datlocale, "C.UTF-8") == 0 ||
+			 strcmp(datlocale, "PG_UNICODE_FAST") == 0) &&
+			encodingid != PG_UTF8)
 			pg_fatal("builtin provider locale \"%s\" requires encoding \"%s\"",
 					 datlocale, "UTF-8");
 	}

@@ -307,7 +307,7 @@ pg_wc_isdigit(pg_wchar c)
 			return (c <= (pg_wchar) 127 &&
 					(pg_char_properties[c] & PG_ISDIGIT));
 		case PG_REGEX_STRATEGY_BUILTIN:
-			return pg_u_isdigit(c, true);
+			return pg_u_isdigit(c, !pg_regex_locale->info.builtin.casemap_full);
 		case PG_REGEX_STRATEGY_LIBC_WIDE:
 			if (sizeof(wchar_t) >= 4 || c <= (pg_wchar) 0xFFFF)
 				return iswdigit_l((wint_t) c, pg_regex_locale->info.lt);
@@ -361,7 +361,7 @@ pg_wc_isalnum(pg_wchar c)
 			return (c <= (pg_wchar) 127 &&
 					(pg_char_properties[c] & PG_ISALNUM));
 		case PG_REGEX_STRATEGY_BUILTIN:
-			return pg_u_isalnum(c, true);
+			return pg_u_isalnum(c, !pg_regex_locale->info.builtin.casemap_full);
 		case PG_REGEX_STRATEGY_LIBC_WIDE:
 			if (sizeof(wchar_t) >= 4 || c <= (pg_wchar) 0xFFFF)
 				return iswalnum_l((wint_t) c, pg_regex_locale->info.lt);
@@ -505,7 +505,7 @@ pg_wc_ispunct(pg_wchar c)
 			return (c <= (pg_wchar) 127 &&
 					(pg_char_properties[c] & PG_ISPUNCT));
 		case PG_REGEX_STRATEGY_BUILTIN:
-			return pg_u_ispunct(c, true);
+			return pg_u_ispunct(c, !pg_regex_locale->info.builtin.casemap_full);
 		case PG_REGEX_STRATEGY_LIBC_WIDE:
 			if (sizeof(wchar_t) >= 4 || c <= (pg_wchar) 0xFFFF)
 				return iswpunct_l((wint_t) c, pg_regex_locale->info.lt);

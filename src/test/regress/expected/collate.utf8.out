@@ -160,3 +160,163 @@ SELECT 'δ' ~* '[Γ-Λ]' COLLATE PG_C_UTF8; -- same as above with cases reversed
  t
 (1 row)
 
+--
+-- Test PG_UNICODE_FAST
+--
+CREATE COLLATION regress_pg_unicode_fast (
+  provider = builtin, locale = 'unicode'); -- fails
+ERROR:  invalid locale name "unicode" for builtin provider
+CREATE COLLATION regress_pg_unicode_fast (
+  provider = builtin, locale = 'PG_UNICODE_FAST');
+CREATE TABLE test_pg_unicode_fast (
+  t TEXT COLLATE PG_UNICODE_FAST
+);
+INSERT INTO test_pg_unicode_fast VALUES
+  ('abc DEF 123abc'),
+  ('ábc sßs ßss DÉF'),
+  ('ǄxxǄ ǆxxǅ ǅxxǆ'),
+  ('ȺȺȺ'),
+  ('ⱥⱥⱥ'),
+  ('ⱥȺ');
+SELECT
+    t, lower(t), initcap(t), upper(t),
+    length(convert_to(t, 'UTF8')) AS t_bytes,
+    length(convert_to(lower(t), 'UTF8')) AS lower_t_bytes,
+    length(convert_to(initcap(t), 'UTF8')) AS initcap_t_bytes,
+    length(convert_to(upper(t), 'UTF8')) AS upper_t_bytes
+  FROM test_pg_unicode_fast;
+        t        |      lower      |     initcap      |       upper       | t_bytes | lower_t_bytes | initcap_t_bytes | upper_t_bytes 
+-----------------+-----------------+------------------+-------------------+---------+---------------+-----------------+---------------
+ abc DEF 123abc  | abc def 123abc  | Abc Def 123abc   | ABC DEF 123ABC    |      14 |            14 |              14 |            14
+ ábc sßs ßss DÉF | ábc sßs ßss déf | Ábc Sßs Ssss Déf | ÁBC SSSS SSSS DÉF |      19 |            19 |              19 |            19
+ ǄxxǄ ǆxxǅ ǅxxǆ  | ǆxxǆ ǆxxǆ ǆxxǆ  | ǅxxǆ ǅxxǆ ǅxxǆ   | ǄXXǄ ǄXXǄ ǄXXǄ    |      20 |            20 |              20 |            20
+ ȺȺȺ             | ⱥⱥⱥ             | Ⱥⱥⱥ              | ȺȺȺ               |       6 |             9 |               8 |             6
+ ⱥⱥⱥ             | ⱥⱥⱥ             | Ⱥⱥⱥ              | ȺȺȺ               |       9 |             9 |               8 |             6
+ ⱥȺ              | ⱥⱥ              | Ⱥⱥ               | ȺȺ                |       5 |             6 |               5 |             4
+(6 rows)
+
+DROP TABLE test_pg_unicode_fast;
+-- test Final_Sigma
+SELECT lower('ΑΣ' COLLATE PG_UNICODE_FAST); -- 0391 03A3
+ lower 
+-------
+ ας
+(1 row)
+
+SELECT lower('ΑΣ0' COLLATE PG_UNICODE_FAST); -- 0391 03A3 0030
+ lower 
+-------
+ ας0
+(1 row)
+
+SELECT lower('ἈΣ̓' COLLATE PG_UNICODE_FAST); -- 0391 0343 03A3 0343
+ lower 
+-------
+ ἀς̓
+(1 row)
+
+SELECT lower('ᾼΣͅ' COLLATE PG_UNICODE_FAST); -- 0391 0345 03A3 0345
+ lower 
+-------
+ ᾳςͅ
+(1 row)
+
+-- test !Final_Sigma
+SELECT lower('Σ' COLLATE PG_UNICODE_FAST); -- 03A3
+ lower 
+-------
+ σ
+(1 row)
+
+SELECT lower('0Σ' COLLATE PG_UNICODE_FAST); -- 0030 03A3
+ lower 
+-------
+ 0σ
+(1 row)
+
+SELECT lower('ΑΣΑ' COLLATE PG_UNICODE_FAST); -- 0391 03A3 0391
+ lower 
+-------
+ ασα
+(1 row)
+
+SELECT lower('ἈΣ̓Α' COLLATE PG_UNICODE_FAST); -- 0391 0343 03A3 0343 0391
+ lower 
+-------
+ ἀσ̓α
+(1 row)
+
+SELECT lower('ᾼΣͅΑ' COLLATE PG_UNICODE_FAST); -- 0391 0345 03A3 0345 0391
+ lower 
+-------
+ ᾳσͅα
+(1 row)
+
+-- properties
+SELECT 'xyz' ~ '[[:alnum:]]' COLLATE PG_UNICODE_FAST;
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT 'xyz' !~ '[[:upper:]]' COLLATE PG_UNICODE_FAST;
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT '@' !~ '[[:alnum:]]' COLLATE PG_UNICODE_FAST;
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT '=' !~ '[[:punct:]]' COLLATE PG_UNICODE_FAST; -- symbols are not punctuation
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT 'a8a' ~ '[[:digit:]]' COLLATE PG_UNICODE_FAST;
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT '൧' ~ '\d' COLLATE PG_UNICODE_FAST;
+ ?column? 
+----------
+ t
+(1 row)
+
+-- case mapping
+SELECT 'xYz' ~* 'XyZ' COLLATE PG_UNICODE_FAST;
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT 'xAb' ~* '[W-Y]' COLLATE PG_UNICODE_FAST;
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT 'xAb' !~* '[c-d]' COLLATE PG_UNICODE_FAST;
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT 'Δ' ~* '[γ-λ]' COLLATE PG_UNICODE_FAST;
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT 'δ' ~* '[Γ-Λ]' COLLATE PG_UNICODE_FAST; -- same as above with cases reversed
+ ?column? 
+----------
+ t
+(1 row)
+

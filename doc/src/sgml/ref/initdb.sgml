@@ -295,8 +295,8 @@ PostgreSQL documentation
        <para>
         If <option>--locale-provider</option> is <literal>builtin</literal>,
         <option>--locale</option> or <option>--builtin-locale</option> must be
-        specified and set to <literal>C</literal> or
-        <literal>C.UTF-8</literal>.
+        specified and set to <literal>C</literal>, <literal>C.UTF-8</literal>
+        or <literal>PG_UNICODE_FAST</literal>.
        </para>
       </listitem>
      </varlistentry>
