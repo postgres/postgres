@@ -302,7 +302,7 @@ record_config_file_error(const char *errmsg,
 /*
  * Flex fatal errors bring us here.  Stash the error message and jump back to
  * ParseConfigFp().  Assume all msg arguments point to string constants; this
- * holds for flex 2.5.35 (earliest we support). Otherwise, we would need to
+ * holds for all currently known flex versions. Otherwise, we would need to
  * copy the message.
  *
  * We return "int" since this takes the place of calls to fprintf().

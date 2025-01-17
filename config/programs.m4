@@ -59,56 +59,15 @@ AC_SUBST(BISONFLAGS)
 # PGAC_PATH_FLEX
 # --------------
 # Look for Flex, set the output variable FLEX to its path if found.
-# Reject versions before 2.5.35 (the earliest version in the buildfarm
-# as of 2022). Also find Flex if its installed under `lex', but do not
-# accept other Lex programs.
 
 AC_DEFUN([PGAC_PATH_FLEX],
-[AC_CACHE_CHECK([for flex], pgac_cv_path_flex,
-[# Let the user override the test
-if test -n "$FLEX"; then
-  pgac_cv_path_flex=$FLEX
-else
-  pgac_save_IFS=$IFS
-  IFS=$PATH_SEPARATOR
-  for pgac_dir in $PATH; do
-    IFS=$pgac_save_IFS
-    if test -z "$pgac_dir" || test x"$pgac_dir" = x"."; then
-      pgac_dir=`pwd`
-    fi
-    for pgac_prog in flex lex; do
-      pgac_candidate="$pgac_dir/$pgac_prog"
-      if test -f "$pgac_candidate" \
-        && $pgac_candidate --version </dev/null >/dev/null 2>&1
-      then
-        echo '%%'  > conftest.l
-        if $pgac_candidate -t conftest.l 2>/dev/null | grep FLEX_SCANNER >/dev/null 2>&1; then
-          pgac_flex_version=`$pgac_candidate --version 2>/dev/null`
-          if echo "$pgac_flex_version" | sed ['s/[.a-z]/ /g'] | $AWK '{ if ([$]1 == 2 && ([$]2 > 5 || ([$]2 == 5 && [$]3 >= 35))) exit 0; else exit 1;}'
-          then
-            pgac_cv_path_flex=$pgac_candidate
-            break 2
-          else
-            AC_MSG_ERROR([
-*** The installed version of Flex, $pgac_candidate, is too old to use with PostgreSQL.
-*** Flex version 2.5.35 or later is required, but this is $pgac_flex_version.])
-          fi
-        fi
-      fi
-    done
-  done
-  rm -f conftest.l lex.yy.c
-  : ${pgac_cv_path_flex=no}
-fi
-])[]dnl AC_CACHE_CHECK
-
-if test x"$pgac_cv_path_flex" = x"no"; then
+[PGAC_PATH_PROGS(FLEX, flex)
+if test -z "$FLEX"; then
   AC_MSG_ERROR([flex not found])
-else
-  FLEX=$pgac_cv_path_flex
-  pgac_flex_version=`$FLEX --version 2>/dev/null`
-  AC_MSG_NOTICE([using $pgac_flex_version])
 fi
+
+pgac_flex_version=`$FLEX --version 2>/dev/null`
+AC_MSG_NOTICE([using $pgac_flex_version])
 
 AC_SUBST(FLEX)
 AC_SUBST(FLEXFLAGS)

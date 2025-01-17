@@ -100,10 +100,10 @@
        <primary>yacc</primary>
       </indexterm>
 
-      <application>Flex</application> 2.5.35 or later and
-      <application>Bison</application> 2.3 or later are required.  Other
-      <application>lex</application> and <application>yacc</application>
-      programs cannot be used.
+      <application>Flex</application> and <application>Bison</application> are
+      required.  Other <application>lex</application> and
+      <application>yacc</application> programs cannot be used.
+      <application>Bison</application> needs to be at least version 2.3.
      </para>
     </listitem>
 
@@ -3811,10 +3811,8 @@ make: *** [postgres] Error 1
         <productname>Flex</productname></term>
        <listitem>
        <para>
-        <productname>Bison</productname> and <productname>Flex</productname> are
-        required.  Only <productname>Bison</productname> versions 2.3 and later
-        will work. <productname>Flex</productname> must be version 2.5.35 or later.
-        Binaries can be downloaded from <ulink
+        Binaries for <productname>Bison</productname> and
+        <productname>Flex</productname> can be downloaded from <ulink
         url="https://github.com/lexxmark/winflexbison"></ulink>.
        </para>
        </listitem>

@@ -9931,58 +9931,67 @@ if test -z "$BISON"; then
 fi
 
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for flex" >&5
-$as_echo_n "checking for flex... " >&6; }
-if ${pgac_cv_path_flex+:} false; then :
+if test -z "$FLEX"; then
+  for ac_prog in flex
+do
+  # Extract the first word of "$ac_prog", so it can be a program name with args.
+set dummy $ac_prog; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_path_FLEX+:} false; then :
   $as_echo_n "(cached) " >&6
 else
-  # Let the user override the test
-if test -n "$FLEX"; then
-  pgac_cv_path_flex=$FLEX
-else
-  pgac_save_IFS=$IFS
-  IFS=$PATH_SEPARATOR
-  for pgac_dir in $PATH; do
-    IFS=$pgac_save_IFS
-    if test -z "$pgac_dir" || test x"$pgac_dir" = x"."; then
-      pgac_dir=`pwd`
-    fi
-    for pgac_prog in flex lex; do
-      pgac_candidate="$pgac_dir/$pgac_prog"
-      if test -f "$pgac_candidate" \
-        && $pgac_candidate --version </dev/null >/dev/null 2>&1
-      then
-        echo '%%'  > conftest.l
-        if $pgac_candidate -t conftest.l 2>/dev/null | grep FLEX_SCANNER >/dev/null 2>&1; then
-          pgac_flex_version=`$pgac_candidate --version 2>/dev/null`
-          if echo "$pgac_flex_version" | sed 's/[.a-z]/ /g' | $AWK '{ if ($1 == 2 && ($2 > 5 || ($2 == 5 && $3 >= 35))) exit 0; else exit 1;}'
-          then
-            pgac_cv_path_flex=$pgac_candidate
-            break 2
-          else
-            as_fn_error $? "
-*** The installed version of Flex, $pgac_candidate, is too old to use with PostgreSQL.
-*** Flex version 2.5.35 or later is required, but this is $pgac_flex_version." "$LINENO" 5
-          fi
-        fi
-      fi
-    done
+  case $FLEX in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_FLEX="$FLEX" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_FLEX="$as_dir/$ac_word$ac_exec_ext"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
   done
-  rm -f conftest.l lex.yy.c
-  : ${pgac_cv_path_flex=no}
+IFS=$as_save_IFS
+
+  ;;
+esac
+fi
+FLEX=$ac_cv_path_FLEX
+if test -n "$FLEX"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $FLEX" >&5
+$as_echo "$FLEX" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
 fi
 
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $pgac_cv_path_flex" >&5
-$as_echo "$pgac_cv_path_flex" >&6; }
-if test x"$pgac_cv_path_flex" = x"no"; then
-  as_fn_error $? "flex not found" "$LINENO" 5
+
+  test -n "$FLEX" && break
+done
+
 else
-  FLEX=$pgac_cv_path_flex
-  pgac_flex_version=`$FLEX --version 2>/dev/null`
-  { $as_echo "$as_me:${as_lineno-$LINENO}: using $pgac_flex_version" >&5
-$as_echo "$as_me: using $pgac_flex_version" >&6;}
+  # Report the value of FLEX in configure's output in all cases.
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for FLEX" >&5
+$as_echo_n "checking for FLEX... " >&6; }
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $FLEX" >&5
+$as_echo "$FLEX" >&6; }
 fi
+
+if test -z "$FLEX"; then
+  as_fn_error $? "flex not found" "$LINENO" 5
+fi
+
+pgac_flex_version=`$FLEX --version 2>/dev/null`
+{ $as_echo "$as_me:${as_lineno-$LINENO}: using $pgac_flex_version" >&5
+$as_echo "$as_me: using $pgac_flex_version" >&6;}
 
 
 
