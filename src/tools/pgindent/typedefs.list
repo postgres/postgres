@@ -3754,6 +3754,7 @@ pg_sha256_ctx
 pg_sha384_ctx
 pg_sha512_ctx
 pg_snapshot
+pg_special_case
 pg_stack_base_t
 pg_time_t
 pg_time_usec_t
