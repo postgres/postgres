@@ -1405,6 +1405,12 @@ set_append_references(PlannerInfo *root,
 				PartitionedRelPruneInfo *pinfo = lfirst(l2);
 
 				pinfo->rtindex += rtoffset;
+				pinfo->initial_pruning_steps =
+					fix_scan_list(root, pinfo->initial_pruning_steps,
+								  rtoffset);
+				pinfo->exec_pruning_steps =
+					fix_scan_list(root, pinfo->exec_pruning_steps,
+								  rtoffset);
 			}
 		}
 	}
@@ -1477,6 +1483,12 @@ set_mergeappend_references(PlannerInfo *root,
 				PartitionedRelPruneInfo *pinfo = lfirst(l2);
 
 				pinfo->rtindex += rtoffset;
+				pinfo->initial_pruning_steps =
+					fix_scan_list(root, pinfo->initial_pruning_steps,
+								  rtoffset);
+				pinfo->exec_pruning_steps =
+					fix_scan_list(root, pinfo->exec_pruning_steps,
+								  rtoffset);
 			}
 		}
 	}
