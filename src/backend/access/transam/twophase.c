@@ -2185,26 +2185,6 @@ ProcessTwoPhaseBuffer(TransactionId xid,
 	if (!fromdisk)
 		Assert(prepare_start_lsn != InvalidXLogRecPtr);
 
-	/* Reject XID if too new */
-	if (TransactionIdFollowsOrEquals(xid, origNextXid))
-	{
-		if (fromdisk)
-		{
-			ereport(WARNING,
-					(errmsg("removing future two-phase state file for transaction %u",
-							xid)));
-			RemoveTwoPhaseFile(xid, true);
-		}
-		else
-		{
-			ereport(WARNING,
-					(errmsg("removing future two-phase state from memory for transaction %u",
-							xid)));
-			PrepareRedoRemove(xid, true);
-		}
-		return NULL;
-	}
-
 	/* Already processed? */
 	if (TransactionIdDidCommit(xid) || TransactionIdDidAbort(xid))
 	{
@@ -2219,6 +2199,26 @@ ProcessTwoPhaseBuffer(TransactionId xid,
 		{
 			ereport(WARNING,
 					(errmsg("removing stale two-phase state from memory for transaction %u",
+							xid)));
+			PrepareRedoRemove(xid, true);
+		}
+		return NULL;
+	}
+
+	/* Reject XID if too new */
+	if (TransactionIdFollowsOrEquals(xid, origNextXid))
+	{
+		if (fromdisk)
+		{
+			ereport(WARNING,
+					(errmsg("removing future two-phase state file for transaction %u",
+							xid)));
+			RemoveTwoPhaseFile(xid, true);
+		}
+		else
+		{
+			ereport(WARNING,
+					(errmsg("removing future two-phase state from memory for transaction %u",
 							xid)));
 			PrepareRedoRemove(xid, true);
 		}
