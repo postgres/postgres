@@ -312,6 +312,12 @@ DELETE FROM zerocol
             new.tableoid::regclass, new.ctid, ctid, *;
 DROP TABLE zerocol;
 
+-- Test schema-qualified table name in RETURNING list
+CREATE TABLE public.tt(a int, b int);
+INSERT INTO public.tt VALUES (1, 10);
+UPDATE public.tt SET b = b * 2 RETURNING a, b, old.b, new.b, tt.b, public.tt.b;
+DROP TABLE public.tt;
+
 -- Test cross-partition updates and attribute mapping
 CREATE TABLE foo_parted (a int, b float8, c text) PARTITION BY LIST (a);
 CREATE TABLE foo_part_s1 PARTITION OF foo_parted FOR VALUES IN (1);

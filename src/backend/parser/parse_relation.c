@@ -125,7 +125,10 @@ static bool isQueryUsingTempRelation_walker(Node *node, void *context);
  * that (a) has no alias and (b) is for the same relation identified by
  * schemaname.refname.  In this case we convert schemaname.refname to a
  * relation OID and search by relid, rather than by alias name.  This is
- * peculiar, but it's what SQL says to do.
+ * peculiar, but it's what SQL says to do.  While processing a query's
+ * RETURNING list, there may be additional namespace items for OLD and NEW,
+ * with the same relation OID as the target namespace item.  These are
+ * ignored in the search, since they don't match by schemaname.refname.
  */
 ParseNamespaceItem *
 refnameNamespaceItem(ParseState *pstate,
@@ -254,6 +257,9 @@ scanNameSpaceForRelid(ParseState *pstate, Oid relid, int location)
 			continue;
 		/* If not inside LATERAL, ignore lateral-only items */
 		if (nsitem->p_lateral_only && !pstate->p_lateral_active)
+			continue;
+		/* Ignore OLD/NEW namespace items that can appear in RETURNING */
+		if (nsitem->p_returning_type != VAR_RETURNING_DEFAULT)
 			continue;
 
 		/* yes, the test for alias == NULL should be there... */
