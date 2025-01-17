@@ -123,22 +123,33 @@ SELECT * FROM EMP;
 -----------------------------
 
 CREATE FUNCTION add_one(integer) RETURNS integer
-   AS '_OBJWD_/funcs' LANGUAGE C;
+   AS '_OBJWD_/funcs' LANGUAGE C STRICT;
+
+CREATE FUNCTION add_one(double precision) RETURNS double precision
+   AS '_OBJWD_/funcs' LANGUAGE C STRICT;
 
 CREATE FUNCTION makepoint(point, point) RETURNS point
-   AS '_OBJWD_/funcs' LANGUAGE C;
+   AS '_OBJWD_/funcs' LANGUAGE C STRICT;
 
 CREATE FUNCTION copytext(text) RETURNS text
-   AS '_OBJWD_/funcs' LANGUAGE C;
+   AS '_OBJWD_/funcs' LANGUAGE C STRICT;
+
+CREATE FUNCTION concat_text(text, text) RETURNS text
+   AS '_OBJWD_/funcs' LANGUAGE C STRICT;
+
+CREATE FUNCTION t_starts_with(text, text) RETURNS boolean
+   AS '_OBJWD_/funcs' LANGUAGE C STRICT;
 
 CREATE FUNCTION c_overpaid(EMP, integer) RETURNS boolean
-   AS '_OBJWD_/funcs' LANGUAGE C;
+   AS '_OBJWD_/funcs' LANGUAGE C STRICT;
 
 SELECT add_one(3) AS four;
 
 SELECT makepoint('(1,2)'::point, '(3,4)'::point ) AS newpoint;
 
 SELECT copytext('hello world!');
+
+SELECT t_starts_with('foobar', 'foo');
 
 SELECT name, c_overpaid(EMP, 1500) AS overpaid
 FROM EMP
@@ -147,10 +158,13 @@ WHERE name = 'Bill' or name = 'Sam';
 -- remove functions that were created in this file
 
 DROP FUNCTION c_overpaid(EMP, integer);
+DROP FUNCTION t_starts_with(text, text);
+DROP FUNCTION concat_text(text, text);
 DROP FUNCTION copytext(text);
 DROP FUNCTION makepoint(point, point);
+DROP FUNCTION add_one(double precision);
 DROP FUNCTION add_one(integer);
---DROP FUNCTION clean_EMP();
+DROP FUNCTION clean_EMP();
 DROP FUNCTION high_pay();
 DROP FUNCTION new_emp();
 DROP FUNCTION add_em(integer, integer);

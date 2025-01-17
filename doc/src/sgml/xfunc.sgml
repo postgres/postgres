@@ -2385,6 +2385,56 @@ PG_FUNCTION_INFO_V1(funcname);
     </para>
 
     <para>
+     To call another version-1 function, you can use
+     <function>DirectFunctionCall<replaceable>n</replaceable>(func,
+     arg1, ..., argn)</function>.  This is particularly useful when you want
+     to call functions defined in the standard internal library, by using an
+     interface similar to their SQL signature.
+    </para>
+
+    <para>
+     These convenience functions and similar ones can be found
+     in <filename>fmgr.h</filename>.
+     The <function>DirectFunctionCall<replaceable>n</replaceable></function>
+     family expect a C function name as their first argument.  There are also
+     <function>OidFunctionCall<replaceable>n</replaceable></function> which
+     take the OID of the target function, and some other variants.  All of
+     these expect the function's arguments to be supplied
+     as <type>Datum</type>s, and likewise they return <type>Datum</type>.
+     Note that neither arguments nor result are allowed to be NULL when
+     using these convenience functions.
+    </para>
+
+    <para>
+     For example, to call the <function>starts_with(text, text)</function>
+     function from C, you can search through the catalog and find out that
+     its C implementation is the
+     <function>Datum text_starts_with(PG_FUNCTION_ARGS)</function>
+     function.  Typically you would
+     use <literal>DirectFunctionCall2(text_starts_with, ...)</literal> to
+     call such a function.  However, <function>starts_with(text,
+     text)</function> requires collation information, so it will fail
+     with <quote>could not determine which collation to use for string
+     comparison</quote> if called that way.  Instead you must
+     use <literal>DirectFunctionCall2Coll(text_starts_with, ...)</literal>
+     and provide the desired collation, which typically is just passed
+     through from <function>PG_GET_COLLATION()</function>, as shown in the
+     example below.
+    </para>
+
+    <para>
+     <filename>fmgr.h</filename> also supplies macros that facilitate
+     conversions between C types and <type>Datum</type>.  For example to
+     turn <type>Datum</type> into <type>text*</type>, you can
+     use <function>DatumGetTextPP(X)</function>.  While some types have macros
+     named like <function>TypeGetDatum(X)</function> for the reverse
+     conversion, <type>text*</type> does not; it's sufficient to use the
+     generic macro <function>PointerGetDatum(X)</function> for that.
+     If your extension defines additional types, it is usually convenient to
+     define similar macros for your types too.
+    </para>
+
+    <para>
      Here are some examples using the version-1 calling convention:
     </para>
 
@@ -2482,6 +2532,25 @@ concat_text(PG_FUNCTION_ARGS)
     memcpy(VARDATA(new_text) + arg1_size, VARDATA_ANY(arg2), arg2_size);
     PG_RETURN_TEXT_P(new_text);
 }
+
+/* A wrapper around starts_with(text, text) */
+
+PG_FUNCTION_INFO_V1(t_starts_with);
+
+Datum
+t_starts_with(PG_FUNCTION_ARGS)
+{
+    text       *t1 = PG_GETARG_TEXT_PP(0);
+    text       *t2 = PG_GETARG_TEXT_PP(1);
+    Oid         collid = PG_GET_COLLATION();
+    bool        result;
+
+    result = DatumGetBool(DirectFunctionCall2Coll(text_starts_with,
+                                                  collid,
+                                                  PointerGetDatum(t1),
+                                                  PointerGetDatum(t2)));
+    PG_RETURN_BOOL(result);
+}
 ]]>
 </programlisting>
 
@@ -2512,6 +2581,10 @@ CREATE FUNCTION copytext(text) RETURNS text
 
 CREATE FUNCTION concat_text(text, text) RETURNS text
      AS '<replaceable>DIRECTORY</replaceable>/funcs', 'concat_text'
+     LANGUAGE C STRICT;
+
+CREATE FUNCTION t_starts_with(text, text) RETURNS boolean
+     AS '<replaceable>DIRECTORY</replaceable>/funcs', 't_starts_with'
      LANGUAGE C STRICT;
 </programlisting>
 
