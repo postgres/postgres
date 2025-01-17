@@ -154,14 +154,6 @@
 
 #define sigmask(sig) ( 1 << ((sig)-1) )
 
-/* Signal function return values */
-#undef SIG_DFL
-#undef SIG_ERR
-#undef SIG_IGN
-#define SIG_DFL ((pqsigfunc)0)
-#define SIG_ERR ((pqsigfunc)-1)
-#define SIG_IGN ((pqsigfunc)1)
-
 /* Some extra signals */
 #define SIGHUP				1
 #define SIGQUIT				3
