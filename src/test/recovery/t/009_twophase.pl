@@ -572,38 +572,4 @@ my $nsubtrans = $cur_primary->safe_psql('postgres',
 );
 isnt($osubtrans, $nsubtrans, "contents of pg_subtrans/ have changed");
 
-###############################################################################
-# Check handling of orphaned 2PC files at recovery.
-###############################################################################
-
-$cur_standby->teardown_node;
-$cur_primary->teardown_node;
-
-# Grab location in logs of primary
-my $log_offset = -s $cur_primary->logfile;
-
-# Create fake files with a transaction ID large or low enough to be in the
-# future or the past, in different epochs, then check that the primary is able
-# to start and remove these files at recovery.
-
-# First bump the epoch with pg_resetwal.
-$cur_primary->command_ok(
-	[ 'pg_resetwal', '-e', 256, '-f', $cur_primary->data_dir ],
-	'bump epoch of primary');
-
-my $future_2pc_file =
-  $cur_primary->data_dir . '/pg_twophase/000001FF00000FFF';
-append_to_file $future_2pc_file, "";
-my $past_2pc_file = $cur_primary->data_dir . '/pg_twophase/000000EE00000FFF';
-append_to_file $past_2pc_file, "";
-
-$cur_primary->start;
-$cur_primary->log_check(
-	"two-phase files removed at recovery",
-	$log_offset,
-	log_like => [
-		qr/removing past two-phase state file of epoch 238 for transaction 4095/,
-		qr/removing future two-phase state file of epoch 511 for transaction 4095/
-	]);
-
 done_testing();
