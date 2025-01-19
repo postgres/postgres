@@ -1297,7 +1297,10 @@ parse_scalar(JsonLexContext *lex, const JsonSemAction *sem)
 		return result;
 	}
 
-	/* invoke the callback, which may take ownership of val */
+	/*
+	 * invoke the callback, which may take ownership of val. For string
+	 * values, val is NULL if need_escapes is false.
+	 */
 	result = (*sfunc) (sem->semstate, val, tok);
 
 	if (lex->flags & JSONLEX_CTX_OWNS_TOKENS)
@@ -1326,6 +1329,7 @@ parse_object_field(JsonLexContext *lex, const JsonSemAction *sem)
 		return report_parse_error(JSON_PARSE_STRING, lex);
 	if ((ostart != NULL || oend != NULL) && lex->need_escapes)
 	{
+		/* fname is NULL if need_escapes is false */
 		fname = STRDUP(lex->strval->data);
 		if (fname == NULL)
 			return JSON_OUT_OF_MEMORY;

@@ -118,6 +118,12 @@ typedef struct JsonLexContext
 	struct jsonapi_StrValType *errormsg;
 } JsonLexContext;
 
+/*
+ * Function types for custom json parsing actions.
+ *
+ * fname will be NULL if the context has need_escapes=false, as will token for
+ * string type values.
+ */
 typedef JsonParseErrorType (*json_struct_action) (void *state);
 typedef JsonParseErrorType (*json_ofield_action) (void *state, char *fname, bool isnull);
 typedef JsonParseErrorType (*json_aelem_action) (void *state, bool isnull);
@@ -197,12 +203,17 @@ extern JsonParseErrorType json_count_array_elements(JsonLexContext *lex,
  * struct is allocated.
  *
  * If need_escapes is true, ->strval stores the unescaped lexemes.
+ *
+ * Setting need_escapes to true is necessary if the operation needs
+ * to reference field names or scalar string values. This is true of most
+ * operations beyond purely checking the json-validity of the source
+ * document.
+ *
  * Unescaping is expensive, so only request it when necessary.
  *
  * If need_escapes is true or lex was given as NULL, then the caller is
  * responsible for freeing the returned struct, either by calling
- * freeJsonLexContext() or (in backend environment) via memory context
- * cleanup.
+ * freeJsonLexContext() or (in backends) via memory context cleanup.
  */
 extern JsonLexContext *makeJsonLexContextCstringLen(JsonLexContext *lex,
 													const char *json,
