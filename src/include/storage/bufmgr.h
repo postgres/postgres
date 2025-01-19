@@ -275,10 +275,6 @@ extern void DropDatabaseBuffers(Oid dbid);
 
 extern bool BufferIsPermanent(Buffer buffer);
 extern XLogRecPtr BufferGetLSNAtomic(Buffer buffer);
-
-#ifdef NOT_USED
-extern void PrintPinnedBufs(void);
-#endif
 extern void BufferGetTag(Buffer buffer, RelFileLocator *rlocator,
 						 ForkNumber *forknum, BlockNumber *blknum);
 
