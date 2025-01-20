@@ -45,6 +45,7 @@ tests += {
       't/037_invalid_database.pl',
       't/039_end_of_wal.pl',
       't/043_vacuum_horizon_floor.pl',
+      't/043_no_contrecord_switch.pl',
     ],
   },
 }
