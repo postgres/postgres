@@ -78,7 +78,8 @@ extern PGDLLIMPORT bool ignore_checksum_failure;
  * fields.
  */
 
-typedef Pointer Page;
+typedef char PageData;
+typedef PageData *Page;
 
 
 /*
