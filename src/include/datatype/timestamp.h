@@ -135,7 +135,7 @@ struct pg_itm_in
 /*
  * We allow numeric timezone offsets up to 15:59:59 either way from Greenwich.
  * Currently, the record holders for wackiest offsets in actual use are zones
- * Asia/Manila, at -15:56:00 until 1844, and America/Metlakatla, at +15:13:42
+ * Asia/Manila, at -15:56:08 until 1844, and America/Metlakatla, at +15:13:42
  * until 1867.  If we were to reject such values we would fail to dump and
  * restore old timestamptz values with these zone settings.
  */

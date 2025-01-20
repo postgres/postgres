@@ -2342,10 +2342,16 @@ SELECT make_timestamptz(2014, 12, 10, 0, 0, 0, 'Europe/Prague') AT TIME ZONE 'UT
  Tue Dec 09 23:00:00 2014
 (1 row)
 
-SELECT make_timestamptz(1846, 12, 10, 0, 0, 0, 'Asia/Manila') AT TIME ZONE 'UTC';
+SELECT make_timestamptz(1881, 12, 10, 0, 0, 0, 'Asia/Singapore') AT TIME ZONE 'UTC';
          timezone         
 --------------------------
- Wed Dec 09 15:56:00 1846
+ Fri Dec 09 17:04:35 1881
+(1 row)
+
+SELECT make_timestamptz(1881, 12, 10, 0, 0, 0, 'Pacific/Honolulu') AT TIME ZONE 'UTC';
+         timezone         
+--------------------------
+ Sat Dec 10 10:31:26 1881
 (1 row)
 
 SELECT make_timestamptz(1881, 12, 10, 0, 0, 0, 'Europe/Paris') AT TIME ZONE 'UTC';
