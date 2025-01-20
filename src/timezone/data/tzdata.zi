@@ -1,4 +1,4 @@
-# version 2024b
+# version 2025a
 # This zic input file is in the public domain.
 R d 1916 o - Jun 14 23s 1 S
 R d 1916 1919 - O Su>=1 23s 0 -
@@ -721,12 +721,16 @@ R P 2085 o - Ap 21 2 0 -
 R P 2085 o - Jun 9 2 1 S
 R P 2086 o - Ap 13 2 0 -
 R P 2086 o - May 25 2 1 S
-R PH 1936 o - N 1 0 1 D
-R PH 1937 o - F 1 0 0 S
-R PH 1954 o - Ap 12 0 1 D
-R PH 1954 o - Jul 1 0 0 S
-R PH 1978 o - Mar 22 0 1 D
-R PH 1978 o - S 21 0 0 S
+R PH 1936 o - O 31 24 1 D
+R PH 1937 o - Ja 15 24 0 S
+R PH 1941 o - D 15 24 1 D
+R PH 1945 o - N 30 24 0 S
+R PH 1954 o - Ap 11 24 1 D
+R PH 1954 o - Jun 4 24 0 S
+R PH 1977 o - Mar 27 24 1 D
+R PH 1977 o - S 21 24 0 S
+R PH 1990 o - May 21 0 1 D
+R PH 1990 o - Jul 28 24 0 S
 R S 1920 1923 - Ap Su>=15 2 1 S
 R S 1920 1923 - O Su>=1 2 0 -
 R S 1962 o - Ap 29 2 1 S
@@ -1725,7 +1729,7 @@ R Y 1972 2006 - O lastSu 2 0 S
 R Y 1987 2006 - Ap Su>=1 2 1 D
 R Yu 1965 o - Ap lastSu 0 2 DD
 R Yu 1965 o - O lastSu 2 0 S
-R m 1931 o - April 30 0 1 D
+R m 1931 o - Ap 30 0 1 D
 R m 1931 o - O 1 0 0 S
 R m 1939 o - F 5 0 1 D
 R m 1939 o - Jun 25 0 0 S
@@ -2019,9 +2023,9 @@ R y 2002 2004 - Ap Su>=1 0 0 -
 R y 2002 2003 - S Su>=1 0 1 -
 R y 2004 2009 - O Su>=15 0 1 -
 R y 2005 2009 - Mar Su>=8 0 0 -
-R y 2010 ma - O Su>=1 0 1 -
+R y 2010 2024 - O Su>=1 0 1 -
 R y 2010 2012 - Ap Su>=8 0 0 -
-R y 2013 ma - Mar Su>=22 0 0 -
+R y 2013 2024 - Mar Su>=22 0 0 -
 R PE 1938 o - Ja 1 0 1 -
 R PE 1938 o - Ap 1 0 0 -
 R PE 1938 1939 - S lastSu 0 1 -
@@ -2336,7 +2340,8 @@ Z America/Asuncion -3:50:40 - LMT 1890
 -3:50:40 - AMT 1931 O 10
 -4 - %z 1972 O
 -3 - %z 1974 Ap
--4 y %z
+-4 y %z 2024 O 15
+-3 - %z
 Z America/Bahia -2:34:4 - LMT 1914
 -3 B %z 2003 S 24
 -3 - %z 2011 O 16
@@ -3268,10 +3273,10 @@ Z Asia/Makassar 7:57:36 - LMT 1920
 8 - %z 1942 F 9
 9 - %z 1945 S 23
 8 - WITA
-Z Asia/Manila -15:56 - LMT 1844 D 31
-8:4 - LMT 1899 May 11
-8 PH P%sT 1942 May
-9 - JST 1944 N
+Z Asia/Manila -15:56:8 - LMT 1844 D 31
+8:3:52 - LMT 1899 S 6 4u
+8 PH P%sT 1942 F 11 24
+9 - JST 1945 Mar 4
 8 PH P%sT
 Z Asia/Nicosia 2:13:28 - LMT 1921 N 14
 2 CY EE%sT 1998 S
