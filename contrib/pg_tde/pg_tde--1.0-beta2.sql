@@ -14,9 +14,8 @@ LANGUAGE C;
 CREATE OR REPLACE FUNCTION pg_tde_add_key_provider_file(provider_name VARCHAR(128), file_path TEXT)
 RETURNS INT
 AS $$
--- JSON keys in the options must be matched to the keys in
--- load_file_keyring_provider_options function.
-
+    -- JSON keys in the options must be matched to the keys in
+    -- load_file_keyring_provider_options function.
     SELECT pg_tde_add_key_provider('file', provider_name,
                 json_object('type' VALUE 'file', 'path' VALUE COALESCE(file_path, '')));
 $$
@@ -25,9 +24,8 @@ LANGUAGE SQL;
 CREATE OR REPLACE FUNCTION pg_tde_add_key_provider_file(provider_name VARCHAR(128), file_path JSON)
 RETURNS INT
 AS $$
--- JSON keys in the options must be matched to the keys in
--- load_file_keyring_provider_options function.
-
+    -- JSON keys in the options must be matched to the keys in
+    -- load_file_keyring_provider_options function.
     SELECT pg_tde_add_key_provider('file', provider_name,
                 json_object('type' VALUE 'file', 'path' VALUE file_path));
 $$
@@ -40,8 +38,8 @@ CREATE OR REPLACE FUNCTION pg_tde_add_key_provider_vault_v2(provider_name VARCHA
                                                             vault_ca_path TEXT)
 RETURNS INT
 AS $$
--- JSON keys in the options must be matched to the keys in
--- load_vaultV2_keyring_provider_options function.
+    -- JSON keys in the options must be matched to the keys in
+    -- load_vaultV2_keyring_provider_options function.
     SELECT pg_tde_add_key_provider('vault-v2', provider_name,
                             json_object('type' VALUE 'vault-v2',
                             'url' VALUE COALESCE(vault_url, ''),
@@ -58,8 +56,8 @@ CREATE OR REPLACE FUNCTION pg_tde_add_key_provider_vault_v2(provider_name VARCHA
                                                             vault_ca_path JSON)
 RETURNS INT
 AS $$
--- JSON keys in the options must be matched to the keys in
--- load_vaultV2_keyring_provider_options function.
+    -- JSON keys in the options must be matched to the keys in
+    -- load_vaultV2_keyring_provider_options function.
     SELECT pg_tde_add_key_provider('vault-v2', provider_name,
                             json_object('type' VALUE 'vault-v2',
                             'url' VALUE vault_url,
@@ -76,8 +74,8 @@ CREATE OR REPLACE FUNCTION pg_tde_add_key_provider_kmip(provider_name VARCHAR(12
                                                         kmip_cert_path TEXT)
 RETURNS INT
 AS $$
--- JSON keys in the options must be matched to the keys in
--- load_kmip_keyring_provider_options function.
+    -- JSON keys in the options must be matched to the keys in
+    -- load_kmip_keyring_provider_options function.
     SELECT pg_tde_add_key_provider('kmip', provider_name,
                             json_object('type' VALUE 'kmip',
                             'host' VALUE COALESCE(kmip_host, ''),
@@ -94,8 +92,8 @@ CREATE OR REPLACE FUNCTION pg_tde_add_key_provider_kmip(provider_name VARCHAR(12
                                                         kmip_cert_path JSON)
 RETURNS INT
 AS $$
--- JSON keys in the options must be matched to the keys in
--- load_kmip_keyring_provider_options function.
+    -- JSON keys in the options must be matched to the keys in
+    -- load_kmip_keyring_provider_options function.
     SELECT pg_tde_add_key_provider('kmip', provider_name,
                             json_object('type' VALUE 'kmip',
                             'host' VALUE kmip_host,
@@ -132,9 +130,8 @@ LANGUAGE C;
 CREATE OR REPLACE FUNCTION pg_tde_add_key_provider_file(PG_TDE_GLOBAL, provider_name VARCHAR(128), file_path TEXT)
 RETURNS INT
 AS $$
--- JSON keys in the options must be matched to the keys in
--- load_file_keyring_provider_options function.
-
+    -- JSON keys in the options must be matched to the keys in
+    -- load_file_keyring_provider_options function.
     SELECT pg_tde_add_key_provider('PG_TDE_GLOBAL', 'file', provider_name,
                 json_object('type' VALUE 'file', 'path' VALUE COALESCE(file_path, '')));
 $$
@@ -143,9 +140,8 @@ LANGUAGE SQL;
 CREATE OR REPLACE FUNCTION pg_tde_add_key_provider_file(PG_TDE_GLOBAL, provider_name VARCHAR(128), file_path JSON)
 RETURNS INT
 AS $$
--- JSON keys in the options must be matched to the keys in
--- load_file_keyring_provider_options function.
-
+    -- JSON keys in the options must be matched to the keys in
+    -- load_file_keyring_provider_options function.
     SELECT pg_tde_add_key_provider('PG_TDE_GLOBAL', 'file', provider_name,
                 json_object('type' VALUE 'file', 'path' VALUE file_path));
 $$
@@ -159,8 +155,8 @@ CREATE OR REPLACE FUNCTION pg_tde_add_key_provider_vault_v2(PG_TDE_GLOBAL,
                                                             vault_ca_path TEXT)
 RETURNS INT
 AS $$
--- JSON keys in the options must be matched to the keys in
--- load_vaultV2_keyring_provider_options function.
+    -- JSON keys in the options must be matched to the keys in
+    -- load_vaultV2_keyring_provider_options function.
     SELECT pg_tde_add_key_provider('PG_TDE_GLOBAL', 'vault-v2', provider_name,
                             json_object('type' VALUE 'vault-v2',
                             'url' VALUE COALESCE(vault_url, ''),
@@ -178,8 +174,8 @@ CREATE OR REPLACE FUNCTION pg_tde_add_key_provider_vault_v2(PG_TDE_GLOBAL,
                                                             vault_ca_path JSON)
 RETURNS INT
 AS $$
--- JSON keys in the options must be matched to the keys in
--- load_vaultV2_keyring_provider_options function.
+    -- JSON keys in the options must be matched to the keys in
+    -- load_vaultV2_keyring_provider_options function.
     SELECT pg_tde_add_key_provider('PG_TDE_GLOBAL', 'vault-v2', provider_name,
                             json_object('type' VALUE 'vault-v2',
                             'url' VALUE vault_url,
@@ -197,8 +193,8 @@ CREATE OR REPLACE FUNCTION pg_tde_add_key_provider_kmip(PG_TDE_GLOBAL,
                                                         kmip_cert_path TEXT)
 RETURNS INT
 AS $$
--- JSON keys in the options must be matched to the keys in
--- load_kmip_keyring_provider_options function.
+    -- JSON keys in the options must be matched to the keys in
+    -- load_kmip_keyring_provider_options function.
     SELECT pg_tde_add_key_provider('PG_TDE_GLOBAL', 'kmip', provider_name,
                             json_object('type' VALUE 'kmip',
                             'host' VALUE COALESCE(kmip_host, ''),
@@ -216,8 +212,8 @@ CREATE OR REPLACE FUNCTION pg_tde_add_key_provider_kmip(PG_TDE_GLOBAL,
                                                         kmip_cert_path JSON)
 RETURNS INT
 AS $$
--- JSON keys in the options must be matched to the keys in
--- load_kmip_keyring_provider_options function.
+    -- JSON keys in the options must be matched to the keys in
+    -- load_kmip_keyring_provider_options function.
     SELECT pg_tde_add_key_provider('PG_TDE_GLOBAL', 'vault-v2', provider_name,
                             json_object('type' VALUE 'vault-v2',
                             'host' VALUE kmip_host,
@@ -236,9 +232,8 @@ LANGUAGE C;
 CREATE OR REPLACE FUNCTION pg_tde_change_key_provider_file(provider_name VARCHAR(128), file_path TEXT)
 RETURNS INT
 AS $$
--- JSON keys in the options must be matched to the keys in
--- load_file_keyring_provider_options function.
-
+    -- JSON keys in the options must be matched to the keys in
+    -- load_file_keyring_provider_options function.
     SELECT pg_tde_change_key_provider('file', provider_name,
                 json_object('type' VALUE 'file', 'path' VALUE COALESCE(file_path, '')));
 $$
@@ -247,9 +242,8 @@ LANGUAGE SQL;
 CREATE OR REPLACE FUNCTION pg_tde_change_key_provider_file(provider_name VARCHAR(128), file_path JSON)
 RETURNS INT
 AS $$
--- JSON keys in the options must be matched to the keys in
--- load_file_keyring_provider_options function.
-
+    -- JSON keys in the options must be matched to the keys in
+    -- load_file_keyring_provider_options function.
     SELECT pg_tde_change_key_provider('file', provider_name,
                 json_object('type' VALUE 'file', 'path' VALUE file_path));
 $$
@@ -262,8 +256,8 @@ CREATE OR REPLACE FUNCTION pg_tde_change_key_provider_vault_v2(provider_name VAR
                                                                vault_ca_path TEXT)
 RETURNS INT
 AS $$
--- JSON keys in the options must be matched to the keys in
--- load_vaultV2_keyring_provider_options function.
+    -- JSON keys in the options must be matched to the keys in
+    -- load_vaultV2_keyring_provider_options function.
     SELECT pg_tde_change_key_provider('vault-v2', provider_name,
                             json_object('type' VALUE 'vault-v2',
                             'url' VALUE COALESCE(vault_url, ''),
@@ -280,8 +274,8 @@ CREATE OR REPLACE FUNCTION pg_tde_change_key_provider_vault_v2(provider_name VAR
                                                                vault_ca_path JSON)
 RETURNS INT
 AS $$
--- JSON keys in the options must be matched to the keys in
--- load_vaultV2_keyring_provider_options function.
+    -- JSON keys in the options must be matched to the keys in
+    -- load_vaultV2_keyring_provider_options function.
     SELECT pg_tde_change_key_provider('vault-v2', provider_name,
                             json_object('type' VALUE 'vault-v2',
                             'url' VALUE vault_url,
@@ -298,8 +292,8 @@ CREATE OR REPLACE FUNCTION pg_tde_change_key_provider_kmip(provider_name VARCHAR
                                                            kmip_cert_path TEXT)
 RETURNS INT
 AS $$
--- JSON keys in the options must be matched to the keys in
--- load_kmip_keyring_provider_options function.
+    -- JSON keys in the options must be matched to the keys in
+    -- load_kmip_keyring_provider_options function.
     SELECT pg_tde_change_key_provider('kmip', provider_name,
                             json_object('type' VALUE 'kmip',
                             'host' VALUE COALESCE(kmip_host, ''),
@@ -316,8 +310,8 @@ CREATE OR REPLACE FUNCTION pg_tde_change_key_provider_kmip(provider_name VARCHAR
                                                            kmip_cert_path JSON)
 RETURNS INT
 AS $$
--- JSON keys in the options must be matched to the keys in
--- load_kmip_keyring_provider_options function.
+    -- JSON keys in the options must be matched to the keys in
+    -- load_kmip_keyring_provider_options function.
     SELECT pg_tde_change_key_provider('kmip', provider_name,
                             json_object('type' VALUE 'kmip',
                             'host' VALUE kmip_host,
@@ -336,9 +330,8 @@ LANGUAGE C;
 CREATE OR REPLACE FUNCTION pg_tde_change_key_provider_file(PG_TDE_GLOBAL, provider_name VARCHAR(128), file_path TEXT)
 RETURNS INT
 AS $$
--- JSON keys in the options must be matched to the keys in
--- load_file_keyring_provider_options function.
-
+    -- JSON keys in the options must be matched to the keys in
+    -- load_file_keyring_provider_options function.
     SELECT pg_tde_change_key_provider('PG_TDE_GLOBAL', 'file', provider_name,
                 json_object('type' VALUE 'file', 'path' VALUE COALESCE(file_path, '')));
 $$
@@ -347,9 +340,8 @@ LANGUAGE SQL;
 CREATE OR REPLACE FUNCTION pg_tde_change_key_provider_file(PG_TDE_GLOBAL, provider_name VARCHAR(128), file_path JSON)
 RETURNS INT
 AS $$
--- JSON keys in the options must be matched to the keys in
--- load_file_keyring_provider_options function.
-
+    -- JSON keys in the options must be matched to the keys in
+    -- load_file_keyring_provider_options function.
     SELECT pg_tde_change_key_provider('PG_TDE_GLOBAL', 'file', provider_name,
                 json_object('type' VALUE 'file', 'path' VALUE file_path));
 $$
@@ -363,8 +355,8 @@ CREATE OR REPLACE FUNCTION pg_tde_change_key_provider_vault_v2(PG_TDE_GLOBAL,
                                                                vault_ca_path TEXT)
 RETURNS INT
 AS $$
--- JSON keys in the options must be matched to the keys in
--- load_vaultV2_keyring_provider_options function.
+    -- JSON keys in the options must be matched to the keys in
+    -- load_vaultV2_keyring_provider_options function.
     SELECT pg_tde_change_key_provider('PG_TDE_GLOBAL', 'vault-v2', provider_name,
                             json_object('type' VALUE 'vault-v2',
                             'url' VALUE COALESCE(vault_url, ''),
@@ -382,8 +374,8 @@ CREATE OR REPLACE FUNCTION pg_tde_change_key_provider_vault_v2(PG_TDE_GLOBAL,
                                                                vault_ca_path JSON)
 RETURNS INT
 AS $$
--- JSON keys in the options must be matched to the keys in
--- load_vaultV2_keyring_provider_options function.
+    -- JSON keys in the options must be matched to the keys in
+    -- load_vaultV2_keyring_provider_options function.
     SELECT pg_tde_change_key_provider('PG_TDE_GLOBAL', 'vault-v2', provider_name,
                             json_object('type' VALUE 'vault-v2',
                             'url' VALUE vault_url,
@@ -401,8 +393,8 @@ CREATE OR REPLACE FUNCTION pg_tde_change_key_provider_kmip(PG_TDE_GLOBAL,
                                                            kmip_cert_path TEXT)
 RETURNS INT
 AS $$
--- JSON keys in the options must be matched to the keys in
--- load_kmip_keyring_provider_options function.
+    -- JSON keys in the options must be matched to the keys in
+    -- load_kmip_keyring_provider_options function.
     SELECT pg_tde_change_key_provider('PG_TDE_GLOBAL', 'kmip', provider_name,
                             json_object('type' VALUE 'kmip',
                             'host' VALUE COALESCE(kmip_host, ''),
@@ -420,8 +412,8 @@ CREATE OR REPLACE FUNCTION pg_tde_change_key_provider_kmip(PG_TDE_GLOBAL,
                                                            kmip_cert_path JSON)
 RETURNS INT
 AS $$
--- JSON keys in the options must be matched to the keys in
--- load_kmip_keyring_provider_options function.
+    -- JSON keys in the options must be matched to the keys in
+    -- load_kmip_keyring_provider_options function.
     SELECT pg_tde_change_key_provider('PG_TDE_GLOBAL', 'vault-v2', provider_name,
                             json_object('type' VALUE 'vault-v2',
                             'host' VALUE kmip_host,
@@ -445,14 +437,15 @@ LANGUAGE C;
 CREATE FUNCTION pg_tde_is_encrypted(table_name VARCHAR)
 RETURNS boolean
 AS $$
-SELECT EXISTS (
-    SELECT 1
-    FROM   pg_catalog.pg_class
-    WHERE  oid = table_name::regclass::oid
-    AND    (relam = (SELECT oid FROM pg_catalog.pg_am WHERE amname = 'tde_heap_basic')
-        OR (relam = (SELECT oid FROM pg_catalog.pg_am WHERE amname = 'tde_heap'))
-            AND pg_tde_internal_has_key(table_name::regclass::oid))
-    )$$
+    SELECT EXISTS (
+        SELECT 1
+        FROM   pg_catalog.pg_class
+        WHERE  oid = table_name::regclass::oid
+        AND    (relam = (SELECT oid FROM pg_catalog.pg_am WHERE amname = 'tde_heap_basic')
+            OR (relam = (SELECT oid FROM pg_catalog.pg_am WHERE amname = 'tde_heap'))
+                AND pg_tde_internal_has_key(table_name::regclass::oid))
+        )
+$$
 LANGUAGE SQL;
 
 CREATE FUNCTION pg_tde_set_principal_key(principal_key_name VARCHAR(255), provider_name VARCHAR(255) DEFAULT NULL, ensure_new_key BOOLEAN DEFAULT FALSE)
