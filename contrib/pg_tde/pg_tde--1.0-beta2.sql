@@ -623,9 +623,6 @@ BEGIN
     PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_set_principal_key', 'varchar, pg_tde_global, varchar, BOOLEAN');
     PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_set_server_principal_key', 'varchar, pg_tde_global, varchar, BOOLEAN');
     RETURN TRUE;
-EXCEPTION
-    WHEN OTHERS THEN
-        RAISE;
 END;
 $$;
 
@@ -657,9 +654,6 @@ BEGIN
 
     PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_set_principal_key', 'varchar, varchar, BOOLEAN');
     RETURN TRUE;
-EXCEPTION
-    WHEN OTHERS THEN
-        RAISE;
 END;
 $$;
 
@@ -669,7 +663,6 @@ RETURNS BOOLEAN
 LANGUAGE plpgsql
 AS $$
 BEGIN
-    -- Start the transaction block for performing grants
     PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_list_all_key_providers', 'OUT INT, OUT varchar, OUT varchar, OUT JSON');
     PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_list_all_key_providers', 'pg_tde_global, OUT INT, OUT varchar, OUT varchar, OUT JSON');
     PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_is_encrypted', 'VARCHAR');
@@ -678,11 +671,6 @@ BEGIN
     PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_principal_key_info', 'pg_tde_global');
     -- If all statements succeed, return TRUE
     RETURN TRUE;
-
-EXCEPTION
-    -- If any error occurs, re-raise the error to roll back the transaction
-    WHEN OTHERS THEN
-        RAISE;
 END;
 $$;
 
@@ -715,9 +703,6 @@ BEGIN
     PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_set_principal_key', 'varchar, pg_tde_global, varchar, BOOLEAN');
     PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_set_server_principal_key', 'varchar, pg_tde_global, varchar, BOOLEAN');
     RETURN TRUE;
-EXCEPTION
-    WHEN OTHERS THEN
-        RAISE;
 END;
 $$;
 
@@ -749,9 +734,6 @@ BEGIN
 
     PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_set_principal_key', 'varchar, varchar, BOOLEAN');
     RETURN TRUE;
-EXCEPTION
-    WHEN OTHERS THEN
-        RAISE;
 END;
 $$;
 
@@ -761,7 +743,6 @@ RETURNS BOOLEAN
 LANGUAGE plpgsql
 AS $$
 BEGIN
-    -- Start the transaction block for performing grants
     PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_list_all_key_providers', 'OUT INT, OUT varchar, OUT varchar, OUT JSON');
     PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_list_all_key_providers', 'pg_tde_global, OUT INT, OUT varchar, OUT varchar, OUT JSON');
     PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_is_encrypted', 'VARCHAR');
@@ -770,11 +751,6 @@ BEGIN
     PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_principal_key_info', 'pg_tde_global');
     -- If all statements succeed, return TRUE
     RETURN TRUE;
-
-EXCEPTION
-    -- If any error occurs, re-raise the error to roll back the transaction
-    WHEN OTHERS THEN
-        RAISE;
 END;
 $$;
 
@@ -794,9 +770,6 @@ BEGIN
     PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_revoke_grant_management_from_role', 'TEXT');
     PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_revoke_key_viewer_from_role', 'TEXT');
     RETURN TRUE;
-EXCEPTION
-    WHEN OTHERS THEN
-        RAISE;
 END;
 $$;
 
@@ -816,9 +789,6 @@ BEGIN
     PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_revoke_grant_management_from_role', 'TEXT');
     PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_revoke_key_viewer_from_role', 'TEXT');
     RETURN TRUE;
-EXCEPTION
-    WHEN OTHERS THEN
-        RAISE;
 END;
 $$;
 
