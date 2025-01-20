@@ -50,6 +50,7 @@ AS $$
                             'caPath' VALUE COALESCE(vault_ca_path,'')));
 $$
 LANGUAGE SQL;
+
 CREATE OR REPLACE FUNCTION pg_tde_add_key_provider_vault_v2(provider_name VARCHAR(128),
                                                         vault_token JSON,
                                                         vault_url JSON,
@@ -85,6 +86,7 @@ AS $$
                             'certPath' VALUE COALESCE(kmip_cert_path,'')));
 $$
 LANGUAGE SQL;
+
 CREATE OR REPLACE FUNCTION pg_tde_add_key_provider_kmip(provider_name VARCHAR(128),
                                                         kmip_host JSON,
                                                         kmip_port JSON,
@@ -205,6 +207,7 @@ AS $$
                             'certPath' VALUE COALESCE(kmip_cert_path,'')));
 $$
 LANGUAGE SQL;
+
 CREATE OR REPLACE FUNCTION pg_tde_add_key_provider_kmip(PG_TDE_GLOBAL, 
                                                         provider_name VARCHAR(128),
                                                         kmip_host JSON,
@@ -223,10 +226,6 @@ AS $$
                             'certPath' VALUE kmip_cert_path));
 $$
 LANGUAGE SQL;
-
-
-
-
 
 -- Key Provider Management
 CREATE OR REPLACE FUNCTION pg_tde_change_key_provider(provider_type VARCHAR(10), provider_name VARCHAR(128), options JSON)
@@ -273,6 +272,7 @@ AS $$
                             'caPath' VALUE COALESCE(vault_ca_path,'')));
 $$
 LANGUAGE SQL;
+
 CREATE OR REPLACE FUNCTION pg_tde_change_key_provider_vault_v2(provider_name VARCHAR(128),
                                                         vault_token JSON,
                                                         vault_url JSON,
@@ -308,6 +308,7 @@ AS $$
                             'certPath' VALUE COALESCE(kmip_cert_path,'')));
 $$
 LANGUAGE SQL;
+
 CREATE OR REPLACE FUNCTION pg_tde_change_key_provider_kmip(provider_name VARCHAR(128),
                                                         kmip_host JSON,
                                                         kmip_port JSON,
@@ -410,6 +411,7 @@ AS $$
                             'certPath' VALUE COALESCE(kmip_cert_path,'')));
 $$
 LANGUAGE SQL;
+
 CREATE OR REPLACE FUNCTION pg_tde_change_key_provider_kmip(PG_TDE_GLOBAL, 
                                                         provider_name VARCHAR(128),
                                                         kmip_host JSON,
@@ -428,10 +430,6 @@ AS $$
                             'certPath' VALUE kmip_cert_path));
 $$
 LANGUAGE SQL;
-
-
-
-
 
 -- Table access method
 CREATE FUNCTION pg_tdeam_basic_handler(internal)
@@ -551,7 +549,6 @@ $$;
 
 -- Per database extension initialization
 SELECT pg_tde_extension_initialize();
-
 
 CREATE OR REPLACE FUNCTION pg_tde_grant_execute_privilege_on_function(
     target_user_or_role TEXT,
