@@ -6,12 +6,12 @@
 CREATE type PG_TDE_GLOBAL AS ENUM('PG_TDE_GLOBAL');
 
 -- Key Provider Management
-CREATE OR REPLACE FUNCTION pg_tde_add_key_provider(provider_type VARCHAR(10), provider_name VARCHAR(128), options JSON)
+CREATE FUNCTION pg_tde_add_key_provider(provider_type VARCHAR(10), provider_name VARCHAR(128), options JSON)
 RETURNS INT
 AS 'MODULE_PATHNAME'
 LANGUAGE C;
 
-CREATE OR REPLACE FUNCTION pg_tde_add_key_provider_file(provider_name VARCHAR(128), file_path TEXT)
+CREATE FUNCTION pg_tde_add_key_provider_file(provider_name VARCHAR(128), file_path TEXT)
 RETURNS INT
 AS $$
     -- JSON keys in the options must be matched to the keys in
@@ -21,7 +21,7 @@ AS $$
 $$
 LANGUAGE SQL;
 
-CREATE OR REPLACE FUNCTION pg_tde_add_key_provider_file(provider_name VARCHAR(128), file_path JSON)
+CREATE FUNCTION pg_tde_add_key_provider_file(provider_name VARCHAR(128), file_path JSON)
 RETURNS INT
 AS $$
     -- JSON keys in the options must be matched to the keys in
@@ -31,11 +31,11 @@ AS $$
 $$
 LANGUAGE SQL;
 
-CREATE OR REPLACE FUNCTION pg_tde_add_key_provider_vault_v2(provider_name VARCHAR(128),
-                                                            vault_token TEXT,
-                                                            vault_url TEXT,
-                                                            vault_mount_path TEXT,
-                                                            vault_ca_path TEXT)
+CREATE FUNCTION pg_tde_add_key_provider_vault_v2(provider_name VARCHAR(128),
+                                                vault_token TEXT,
+                                                vault_url TEXT,
+                                                vault_mount_path TEXT,
+                                                vault_ca_path TEXT)
 RETURNS INT
 AS $$
     -- JSON keys in the options must be matched to the keys in
@@ -49,11 +49,11 @@ AS $$
 $$
 LANGUAGE SQL;
 
-CREATE OR REPLACE FUNCTION pg_tde_add_key_provider_vault_v2(provider_name VARCHAR(128),
-                                                            vault_token JSON,
-                                                            vault_url JSON,
-                                                            vault_mount_path JSON,
-                                                            vault_ca_path JSON)
+CREATE FUNCTION pg_tde_add_key_provider_vault_v2(provider_name VARCHAR(128),
+                                                vault_token JSON,
+                                                vault_url JSON,
+                                                vault_mount_path JSON,
+                                                vault_ca_path JSON)
 RETURNS INT
 AS $$
     -- JSON keys in the options must be matched to the keys in
@@ -67,11 +67,11 @@ AS $$
 $$
 LANGUAGE SQL;
 
-CREATE OR REPLACE FUNCTION pg_tde_add_key_provider_kmip(provider_name VARCHAR(128),
-                                                        kmip_host TEXT,
-                                                        kmip_port INT,
-                                                        kmip_ca_path TEXT,
-                                                        kmip_cert_path TEXT)
+CREATE FUNCTION pg_tde_add_key_provider_kmip(provider_name VARCHAR(128),
+                                             kmip_host TEXT,
+                                             kmip_port INT,
+                                             kmip_ca_path TEXT,
+                                             kmip_cert_path TEXT)
 RETURNS INT
 AS $$
     -- JSON keys in the options must be matched to the keys in
@@ -85,11 +85,11 @@ AS $$
 $$
 LANGUAGE SQL;
 
-CREATE OR REPLACE FUNCTION pg_tde_add_key_provider_kmip(provider_name VARCHAR(128),
-                                                        kmip_host JSON,
-                                                        kmip_port JSON,
-                                                        kmip_ca_path JSON,
-                                                        kmip_cert_path JSON)
+CREATE FUNCTION pg_tde_add_key_provider_kmip(provider_name VARCHAR(128),
+                                             kmip_host JSON,
+                                             kmip_port JSON,
+                                             kmip_ca_path JSON,
+                                             kmip_cert_path JSON)
 RETURNS INT
 AS $$
     -- JSON keys in the options must be matched to the keys in
@@ -122,12 +122,12 @@ AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT;
 
 -- Global Tablespace Key Provider Management
-CREATE OR REPLACE FUNCTION pg_tde_add_key_provider(PG_TDE_GLOBAL, provider_type VARCHAR(10), provider_name VARCHAR(128), options JSON)
+CREATE FUNCTION pg_tde_add_key_provider(PG_TDE_GLOBAL, provider_type VARCHAR(10), provider_name VARCHAR(128), options JSON)
 RETURNS INT
 AS 'MODULE_PATHNAME', 'pg_tde_add_key_provider_global'
 LANGUAGE C;
 
-CREATE OR REPLACE FUNCTION pg_tde_add_key_provider_file(PG_TDE_GLOBAL, provider_name VARCHAR(128), file_path TEXT)
+CREATE FUNCTION pg_tde_add_key_provider_file(PG_TDE_GLOBAL, provider_name VARCHAR(128), file_path TEXT)
 RETURNS INT
 AS $$
     -- JSON keys in the options must be matched to the keys in
@@ -137,7 +137,7 @@ AS $$
 $$
 LANGUAGE SQL;
 
-CREATE OR REPLACE FUNCTION pg_tde_add_key_provider_file(PG_TDE_GLOBAL, provider_name VARCHAR(128), file_path JSON)
+CREATE FUNCTION pg_tde_add_key_provider_file(PG_TDE_GLOBAL, provider_name VARCHAR(128), file_path JSON)
 RETURNS INT
 AS $$
     -- JSON keys in the options must be matched to the keys in
@@ -147,12 +147,12 @@ AS $$
 $$
 LANGUAGE SQL;
 
-CREATE OR REPLACE FUNCTION pg_tde_add_key_provider_vault_v2(PG_TDE_GLOBAL,
-                                                            provider_name VARCHAR(128),
-                                                            vault_token TEXT,
-                                                            vault_url TEXT,
-                                                            vault_mount_path TEXT,
-                                                            vault_ca_path TEXT)
+CREATE FUNCTION pg_tde_add_key_provider_vault_v2(PG_TDE_GLOBAL,
+                                                 provider_name VARCHAR(128),
+                                                 vault_token TEXT,
+                                                 vault_url TEXT,
+                                                 vault_mount_path TEXT,
+                                                 vault_ca_path TEXT)
 RETURNS INT
 AS $$
     -- JSON keys in the options must be matched to the keys in
@@ -166,12 +166,12 @@ AS $$
 $$
 LANGUAGE SQL;
 
-CREATE OR REPLACE FUNCTION pg_tde_add_key_provider_vault_v2(PG_TDE_GLOBAL,
-                                                            provider_name VARCHAR(128),
-                                                            vault_token JSON,
-                                                            vault_url JSON,
-                                                            vault_mount_path JSON,
-                                                            vault_ca_path JSON)
+CREATE FUNCTION pg_tde_add_key_provider_vault_v2(PG_TDE_GLOBAL,
+                                                 provider_name VARCHAR(128),
+                                                 vault_token JSON,
+                                                 vault_url JSON,
+                                                 vault_mount_path JSON,
+                                                 vault_ca_path JSON)
 RETURNS INT
 AS $$
     -- JSON keys in the options must be matched to the keys in
@@ -185,12 +185,12 @@ AS $$
 $$
 LANGUAGE SQL;
 
-CREATE OR REPLACE FUNCTION pg_tde_add_key_provider_kmip(PG_TDE_GLOBAL,
-                                                        provider_name VARCHAR(128),
-                                                        kmip_host TEXT,
-                                                        kmip_port INT,
-                                                        kmip_ca_path TEXT,
-                                                        kmip_cert_path TEXT)
+CREATE FUNCTION pg_tde_add_key_provider_kmip(PG_TDE_GLOBAL,
+                                             provider_name VARCHAR(128),
+                                             kmip_host TEXT,
+                                             kmip_port INT,
+                                             kmip_ca_path TEXT,
+                                             kmip_cert_path TEXT)
 RETURNS INT
 AS $$
     -- JSON keys in the options must be matched to the keys in
@@ -204,7 +204,7 @@ AS $$
 $$
 LANGUAGE SQL;
 
-CREATE OR REPLACE FUNCTION pg_tde_add_key_provider_kmip(PG_TDE_GLOBAL,
+CREATE FUNCTION pg_tde_add_key_provider_kmip(PG_TDE_GLOBAL,
                                                         provider_name VARCHAR(128),
                                                         kmip_host JSON,
                                                         kmip_port JSON,
@@ -224,12 +224,12 @@ $$
 LANGUAGE SQL;
 
 -- Key Provider Management
-CREATE OR REPLACE FUNCTION pg_tde_change_key_provider(provider_type VARCHAR(10), provider_name VARCHAR(128), options JSON)
+CREATE FUNCTION pg_tde_change_key_provider(provider_type VARCHAR(10), provider_name VARCHAR(128), options JSON)
 RETURNS INT
 AS 'MODULE_PATHNAME'
 LANGUAGE C;
 
-CREATE OR REPLACE FUNCTION pg_tde_change_key_provider_file(provider_name VARCHAR(128), file_path TEXT)
+CREATE FUNCTION pg_tde_change_key_provider_file(provider_name VARCHAR(128), file_path TEXT)
 RETURNS INT
 AS $$
     -- JSON keys in the options must be matched to the keys in
@@ -239,7 +239,7 @@ AS $$
 $$
 LANGUAGE SQL;
 
-CREATE OR REPLACE FUNCTION pg_tde_change_key_provider_file(provider_name VARCHAR(128), file_path JSON)
+CREATE FUNCTION pg_tde_change_key_provider_file(provider_name VARCHAR(128), file_path JSON)
 RETURNS INT
 AS $$
     -- JSON keys in the options must be matched to the keys in
@@ -249,11 +249,11 @@ AS $$
 $$
 LANGUAGE SQL;
 
-CREATE OR REPLACE FUNCTION pg_tde_change_key_provider_vault_v2(provider_name VARCHAR(128),
-                                                               vault_token TEXT,
-                                                               vault_url TEXT,
-                                                               vault_mount_path TEXT,
-                                                               vault_ca_path TEXT)
+CREATE FUNCTION pg_tde_change_key_provider_vault_v2(provider_name VARCHAR(128),
+                                                    vault_token TEXT,
+                                                    vault_url TEXT,
+                                                    vault_mount_path TEXT,
+                                                    vault_ca_path TEXT)
 RETURNS INT
 AS $$
     -- JSON keys in the options must be matched to the keys in
@@ -267,11 +267,11 @@ AS $$
 $$
 LANGUAGE SQL;
 
-CREATE OR REPLACE FUNCTION pg_tde_change_key_provider_vault_v2(provider_name VARCHAR(128),
-                                                               vault_token JSON,
-                                                               vault_url JSON,
-                                                               vault_mount_path JSON,
-                                                               vault_ca_path JSON)
+CREATE FUNCTION pg_tde_change_key_provider_vault_v2(provider_name VARCHAR(128),
+                                                    vault_token JSON,
+                                                    vault_url JSON,
+                                                    vault_mount_path JSON,
+                                                    vault_ca_path JSON)
 RETURNS INT
 AS $$
     -- JSON keys in the options must be matched to the keys in
@@ -285,11 +285,11 @@ AS $$
 $$
 LANGUAGE SQL;
 
-CREATE OR REPLACE FUNCTION pg_tde_change_key_provider_kmip(provider_name VARCHAR(128),
-                                                           kmip_host TEXT,
-                                                           kmip_port INT,
-                                                           kmip_ca_path TEXT,
-                                                           kmip_cert_path TEXT)
+CREATE FUNCTION pg_tde_change_key_provider_kmip(provider_name VARCHAR(128),
+                                                kmip_host TEXT,
+                                                kmip_port INT,
+                                                kmip_ca_path TEXT,
+                                                kmip_cert_path TEXT)
 RETURNS INT
 AS $$
     -- JSON keys in the options must be matched to the keys in
@@ -303,11 +303,11 @@ AS $$
 $$
 LANGUAGE SQL;
 
-CREATE OR REPLACE FUNCTION pg_tde_change_key_provider_kmip(provider_name VARCHAR(128),
-                                                           kmip_host JSON,
-                                                           kmip_port JSON,
-                                                           kmip_ca_path JSON,
-                                                           kmip_cert_path JSON)
+CREATE FUNCTION pg_tde_change_key_provider_kmip(provider_name VARCHAR(128),
+                                                kmip_host JSON,
+                                                kmip_port JSON,
+                                                kmip_ca_path JSON,
+                                                kmip_cert_path JSON)
 RETURNS INT
 AS $$
     -- JSON keys in the options must be matched to the keys in
@@ -322,12 +322,12 @@ $$
 LANGUAGE SQL;
 
 -- Global Tablespace Key Provider Management
-CREATE OR REPLACE FUNCTION pg_tde_change_key_provider(PG_TDE_GLOBAL, provider_type VARCHAR(10), provider_name VARCHAR(128), options JSON)
+CREATE FUNCTION pg_tde_change_key_provider(PG_TDE_GLOBAL, provider_type VARCHAR(10), provider_name VARCHAR(128), options JSON)
 RETURNS INT
 AS 'MODULE_PATHNAME', 'pg_tde_change_key_provider_global'
 LANGUAGE C;
 
-CREATE OR REPLACE FUNCTION pg_tde_change_key_provider_file(PG_TDE_GLOBAL, provider_name VARCHAR(128), file_path TEXT)
+CREATE FUNCTION pg_tde_change_key_provider_file(PG_TDE_GLOBAL, provider_name VARCHAR(128), file_path TEXT)
 RETURNS INT
 AS $$
     -- JSON keys in the options must be matched to the keys in
@@ -337,7 +337,7 @@ AS $$
 $$
 LANGUAGE SQL;
 
-CREATE OR REPLACE FUNCTION pg_tde_change_key_provider_file(PG_TDE_GLOBAL, provider_name VARCHAR(128), file_path JSON)
+CREATE FUNCTION pg_tde_change_key_provider_file(PG_TDE_GLOBAL, provider_name VARCHAR(128), file_path JSON)
 RETURNS INT
 AS $$
     -- JSON keys in the options must be matched to the keys in
@@ -347,12 +347,12 @@ AS $$
 $$
 LANGUAGE SQL;
 
-CREATE OR REPLACE FUNCTION pg_tde_change_key_provider_vault_v2(PG_TDE_GLOBAL,
-                                                               provider_name VARCHAR(128),
-                                                               vault_token TEXT,
-                                                               vault_url TEXT,
-                                                               vault_mount_path TEXT,
-                                                               vault_ca_path TEXT)
+CREATE FUNCTION pg_tde_change_key_provider_vault_v2(PG_TDE_GLOBAL,
+                                                    provider_name VARCHAR(128),
+                                                    vault_token TEXT,
+                                                    vault_url TEXT,
+                                                    vault_mount_path TEXT,
+                                                    vault_ca_path TEXT)
 RETURNS INT
 AS $$
     -- JSON keys in the options must be matched to the keys in
@@ -366,12 +366,12 @@ AS $$
 $$
 LANGUAGE SQL;
 
-CREATE OR REPLACE FUNCTION pg_tde_change_key_provider_vault_v2(PG_TDE_GLOBAL,
-                                                               provider_name VARCHAR(128),
-                                                               vault_token JSON,
-                                                               vault_url JSON,
-                                                               vault_mount_path JSON,
-                                                               vault_ca_path JSON)
+CREATE FUNCTION pg_tde_change_key_provider_vault_v2(PG_TDE_GLOBAL,
+                                                    provider_name VARCHAR(128),
+                                                    vault_token JSON,
+                                                    vault_url JSON,
+                                                    vault_mount_path JSON,
+                                                    vault_ca_path JSON)
 RETURNS INT
 AS $$
     -- JSON keys in the options must be matched to the keys in
@@ -385,12 +385,12 @@ AS $$
 $$
 LANGUAGE SQL;
 
-CREATE OR REPLACE FUNCTION pg_tde_change_key_provider_kmip(PG_TDE_GLOBAL,
-                                                           provider_name VARCHAR(128),
-                                                           kmip_host TEXT,
-                                                           kmip_port INT,
-                                                           kmip_ca_path TEXT,
-                                                           kmip_cert_path TEXT)
+CREATE FUNCTION pg_tde_change_key_provider_kmip(PG_TDE_GLOBAL,
+                                                provider_name VARCHAR(128),
+                                                kmip_host TEXT,
+                                                kmip_port INT,
+                                                kmip_ca_path TEXT,
+                                                kmip_cert_path TEXT)
 RETURNS INT
 AS $$
     -- JSON keys in the options must be matched to the keys in
@@ -404,12 +404,12 @@ AS $$
 $$
 LANGUAGE SQL;
 
-CREATE OR REPLACE FUNCTION pg_tde_change_key_provider_kmip(PG_TDE_GLOBAL,
-                                                           provider_name VARCHAR(128),
-                                                           kmip_host JSON,
-                                                           kmip_port JSON,
-                                                           kmip_ca_path JSON,
-                                                           kmip_cert_path JSON)
+CREATE FUNCTION pg_tde_change_key_provider_kmip(PG_TDE_GLOBAL,
+                                                provider_name VARCHAR(128),
+                                                kmip_host JSON,
+                                                kmip_port JSON,
+                                                kmip_ca_path JSON,
+                                                kmip_cert_path JSON)
 RETURNS INT
 AS $$
     -- JSON keys in the options must be matched to the keys in
@@ -516,12 +516,12 @@ DO $$
         CREATE ACCESS METHOD tde_heap TYPE TABLE HANDLER pg_tdeam_handler;
         COMMENT ON ACCESS METHOD tde_heap IS 'tde_heap table access method';
 
-        CREATE OR REPLACE FUNCTION pg_tde_ddl_command_start_capture()
+        CREATE FUNCTION pg_tde_ddl_command_start_capture()
         RETURNS event_trigger
         AS 'MODULE_PATHNAME'
         LANGUAGE C;
 
-        CREATE OR REPLACE FUNCTION pg_tde_ddl_command_end_capture()
+        CREATE FUNCTION pg_tde_ddl_command_end_capture()
         RETURNS event_trigger
         AS 'MODULE_PATHNAME'
         LANGUAGE C;
@@ -542,7 +542,7 @@ $$;
 -- Per database extension initialization
 SELECT pg_tde_extension_initialize();
 
-CREATE OR REPLACE FUNCTION pg_tde_grant_execute_privilege_on_function(
+CREATE FUNCTION pg_tde_grant_execute_privilege_on_function(
     target_user_or_role TEXT,
     target_function_name TEXT,
     target_function_args TEXT
@@ -563,7 +563,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE OR REPLACE FUNCTION pg_tde_revoke_execute_privilege_on_function(
+CREATE FUNCTION pg_tde_revoke_execute_privilege_on_function(
     target_user_or_role TEXT,
     target_function_name TEXT,
     argument_types TEXT
@@ -584,7 +584,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE OR REPLACE FUNCTION pg_tde_grant_global_key_management_to_role(
+CREATE FUNCTION pg_tde_grant_global_key_management_to_role(
     target_user_or_role TEXT)
 RETURNS BOOLEAN
 LANGUAGE plpgsql
@@ -619,7 +619,7 @@ EXCEPTION
 END;
 $$;
 
-CREATE OR REPLACE FUNCTION pg_tde_grant_local_key_management_to_role(
+CREATE FUNCTION pg_tde_grant_local_key_management_to_role(
     target_user_or_role TEXT)
 RETURNS BOOLEAN
 LANGUAGE plpgsql
@@ -653,7 +653,7 @@ EXCEPTION
 END;
 $$;
 
-CREATE OR REPLACE FUNCTION pg_tde_grant_key_viewer_to_role(
+CREATE FUNCTION pg_tde_grant_key_viewer_to_role(
     target_user_or_role TEXT)
 RETURNS BOOLEAN
 LANGUAGE plpgsql
@@ -676,7 +676,7 @@ EXCEPTION
 END;
 $$;
 
-CREATE OR REPLACE FUNCTION pg_tde_revoke_global_key_management_from_role(
+CREATE FUNCTION pg_tde_revoke_global_key_management_from_role(
     target_user_or_role TEXT)
 RETURNS BOOLEAN
 LANGUAGE plpgsql
@@ -711,7 +711,7 @@ EXCEPTION
 END;
 $$;
 
-CREATE OR REPLACE FUNCTION pg_tde_revoke_local_key_management_from_role(
+CREATE FUNCTION pg_tde_revoke_local_key_management_from_role(
     target_user_or_role TEXT)
 RETURNS BOOLEAN
 LANGUAGE plpgsql
@@ -745,7 +745,7 @@ EXCEPTION
 END;
 $$;
 
-CREATE OR REPLACE FUNCTION pg_tde_revoke_key_viewer_from_role(
+CREATE FUNCTION pg_tde_revoke_key_viewer_from_role(
     target_user_or_role TEXT)
 RETURNS BOOLEAN
 LANGUAGE plpgsql
@@ -768,7 +768,7 @@ EXCEPTION
 END;
 $$;
 
-CREATE OR REPLACE FUNCTION pg_tde_grant_grant_management_to_role(
+CREATE FUNCTION pg_tde_grant_grant_management_to_role(
     target_user_or_role TEXT)
 RETURNS BOOLEAN
 LANGUAGE plpgsql
@@ -790,7 +790,7 @@ EXCEPTION
 END;
 $$;
 
-CREATE OR REPLACE FUNCTION pg_tde_revoke_grant_management_from_role(
+CREATE FUNCTION pg_tde_revoke_grant_management_from_role(
     target_user_or_role TEXT)
 RETURNS BOOLEAN
 LANGUAGE plpgsql
