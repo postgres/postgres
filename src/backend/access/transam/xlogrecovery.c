@@ -3438,12 +3438,12 @@ retry:
 	 * validates the page header anyway, and would propagate the failure up to
 	 * ReadRecord(), which would retry. However, there's a corner case with
 	 * continuation records, if a record is split across two pages such that
-	 * we would need to read the two pages from different sources. For
-	 * example, imagine a scenario where a streaming replica is started up,
-	 * and replay reaches a record that's split across two WAL segments. The
-	 * first page is only available locally, in pg_wal, because it's already
-	 * been recycled on the primary. The second page, however, is not present
-	 * in pg_wal, and we should stream it from the primary. There is a
+	 * we would need to read the two pages from different sources across two
+	 * WAL segments.
+	 *
+	 * The first page is only available locally, in pg_wal, because it's
+	 * already been recycled on the primary. The second page, however, is not
+	 * present in pg_wal, and we should stream it from the primary. There is a
 	 * recycled WAL segment present in pg_wal, with garbage contents, however.
 	 * We would read the first page from the local WAL segment, but when
 	 * reading the second page, we would read the bogus, recycled, WAL
@@ -3465,6 +3465,7 @@ retry:
 	 * responsible for the validation.
 	 */
 	if (StandbyMode &&
+		(targetPagePtr % wal_segment_size) == 0 &&
 		!XLogReaderValidatePageHeader(xlogreader, targetPagePtr, readBuf))
 	{
 		/*
