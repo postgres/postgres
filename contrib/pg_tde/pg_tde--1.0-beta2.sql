@@ -536,7 +536,6 @@ DO $$
         EXECUTE FUNCTION pg_tde_ddl_command_end_capture();
         ALTER EVENT TRIGGER pg_tde_trigger_create_index_2 ENABLE ALWAYS;
     EXCEPTION WHEN OTHERS THEN
-        NULL;
     END;
 $$;
 
