@@ -1,9 +1,3 @@
--- sanity check of system catalog
-SELECT attrelid, attname, attgenerated FROM pg_attribute WHERE attgenerated NOT IN ('', 's');
- attrelid | attname | attgenerated 
-----------+---------+--------------
-(0 rows)
-
 CREATE SCHEMA generated_stored_tests;
 GRANT USAGE ON SCHEMA generated_stored_tests TO PUBLIC;
 SET search_path = generated_stored_tests;
@@ -1355,4 +1349,10 @@ CREATE TABLE gtest28b (LIKE gtest28a INCLUDING GENERATED);
  b      | integer |           |          | 
  c      | integer |           |          | 
  x      | integer |           |          | generated always as (b * 2) stored
+
+-- sanity check of system catalog
+SELECT attrelid, attname, attgenerated FROM pg_attribute WHERE attgenerated NOT IN ('', 's');
+ attrelid | attname | attgenerated 
+----------+---------+--------------
+(0 rows)
 
