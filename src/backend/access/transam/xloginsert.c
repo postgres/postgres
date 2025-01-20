@@ -72,7 +72,7 @@ typedef struct
 	RelFileLocator rlocator;	/* identifies the relation and block */
 	ForkNumber	forkno;
 	BlockNumber block;
-	const char *page;			/* page content */
+	const PageData *page;		/* page content */
 	uint32		rdata_len;		/* total length of data in rdata chain */
 	XLogRecData *rdata_head;	/* head of the chain of data registered with
 								 * this block */
@@ -138,8 +138,8 @@ static XLogRecData *XLogRecordAssemble(RmgrId rmid, uint8 info,
 									   XLogRecPtr RedoRecPtr, bool doPageWrites,
 									   XLogRecPtr *fpw_lsn, int *num_fpi,
 									   bool *topxid_included);
-static bool XLogCompressBackupBlock(const char *page, uint16 hole_offset,
-									uint16 hole_length, char *dest, uint16 *dlen);
+static bool XLogCompressBackupBlock(const PageData *page, uint16 hole_offset,
+									uint16 hole_length, void *dest, uint16 *dlen);
 
 /*
  * Begin constructing a WAL record. This must be called before the
@@ -307,7 +307,7 @@ XLogRegisterBuffer(uint8 block_id, Buffer buffer, uint8 flags)
  */
 void
 XLogRegisterBlock(uint8 block_id, RelFileLocator *rlocator, ForkNumber forknum,
-				  BlockNumber blknum, const char *page, uint8 flags)
+				  BlockNumber blknum, const PageData *page, uint8 flags)
 {
 	registered_buffer *regbuf;
 
@@ -648,7 +648,7 @@ XLogRecordAssemble(RmgrId rmid, uint8 info,
 
 		if (include_image)
 		{
-			const char *page = regbuf->page;
+			const PageData *page = regbuf->page;
 			uint16		compressed_len = 0;
 
 			/*
@@ -941,13 +941,13 @@ XLogRecordAssemble(RmgrId rmid, uint8 info,
  * the length of compressed block image.
  */
 static bool
-XLogCompressBackupBlock(const char *page, uint16 hole_offset, uint16 hole_length,
-						char *dest, uint16 *dlen)
+XLogCompressBackupBlock(const PageData *page, uint16 hole_offset, uint16 hole_length,
+						void *dest, uint16 *dlen)
 {
 	int32		orig_len = BLCKSZ - hole_length;
 	int32		len = -1;
 	int32		extra_bytes = 0;
-	const char *source;
+	const void *source;
 	PGAlignedBlock tmp;
 
 	if (hole_length != 0)

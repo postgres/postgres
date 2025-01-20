@@ -15,6 +15,7 @@
 #include "access/xlogdefs.h"
 #include "storage/block.h"
 #include "storage/buf.h"
+#include "storage/bufpage.h"
 #include "storage/relfilelocator.h"
 #include "utils/relcache.h"
 
@@ -47,16 +48,16 @@ extern void XLogEnsureRecordSpace(int max_block_id, int ndatas);
 extern void XLogRegisterData(const char *data, uint32 len);
 extern void XLogRegisterBuffer(uint8 block_id, Buffer buffer, uint8 flags);
 extern void XLogRegisterBlock(uint8 block_id, RelFileLocator *rlocator,
-							  ForkNumber forknum, BlockNumber blknum, const char *page,
+							  ForkNumber forknum, BlockNumber blknum, const PageData *page,
 							  uint8 flags);
 extern void XLogRegisterBufData(uint8 block_id, const char *data, uint32 len);
 extern void XLogResetInsertion(void);
 extern bool XLogCheckBufferNeedsBackup(Buffer buffer);
 
 extern XLogRecPtr log_newpage(RelFileLocator *rlocator, ForkNumber forknum,
-							  BlockNumber blkno, char *page, bool page_std);
+							  BlockNumber blkno, Page page, bool page_std);
 extern void log_newpages(RelFileLocator *rlocator, ForkNumber forknum, int num_pages,
-						 BlockNumber *blknos, char **pages, bool page_std);
+						 BlockNumber *blknos, Page *pages, bool page_std);
 extern XLogRecPtr log_newpage_buffer(Buffer buffer, bool page_std);
 extern void log_newpage_range(Relation rel, ForkNumber forknum,
 							  BlockNumber startblk, BlockNumber endblk, bool page_std);
