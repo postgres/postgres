@@ -34,28 +34,28 @@ $$
 LANGUAGE SQL;
 
 CREATE OR REPLACE FUNCTION pg_tde_add_key_provider_vault_v2(provider_name VARCHAR(128),
-                                                        vault_token TEXT,
-                                                        vault_url TEXT,
-                                                        vault_mount_path TEXT,
-                                                        vault_ca_path TEXT)
+                                                            vault_token TEXT,
+                                                            vault_url TEXT,
+                                                            vault_mount_path TEXT,
+                                                            vault_ca_path TEXT)
 RETURNS INT
 AS $$
 -- JSON keys in the options must be matched to the keys in
 -- load_vaultV2_keyring_provider_options function.
     SELECT pg_tde_add_key_provider('vault-v2', provider_name,
                             json_object('type' VALUE 'vault-v2',
-                            'url' VALUE COALESCE(vault_url,''),
-                            'token' VALUE COALESCE(vault_token,''),
-                            'mountPath' VALUE COALESCE(vault_mount_path,''),
-                            'caPath' VALUE COALESCE(vault_ca_path,'')));
+                            'url' VALUE COALESCE(vault_url, ''),
+                            'token' VALUE COALESCE(vault_token, ''),
+                            'mountPath' VALUE COALESCE(vault_mount_path, ''),
+                            'caPath' VALUE COALESCE(vault_ca_path, '')));
 $$
 LANGUAGE SQL;
 
 CREATE OR REPLACE FUNCTION pg_tde_add_key_provider_vault_v2(provider_name VARCHAR(128),
-                                                        vault_token JSON,
-                                                        vault_url JSON,
-                                                        vault_mount_path JSON,
-                                                        vault_ca_path JSON)
+                                                            vault_token JSON,
+                                                            vault_url JSON,
+                                                            vault_mount_path JSON,
+                                                            vault_ca_path JSON)
 RETURNS INT
 AS $$
 -- JSON keys in the options must be matched to the keys in
@@ -80,10 +80,10 @@ AS $$
 -- load_kmip_keyring_provider_options function.
     SELECT pg_tde_add_key_provider('kmip', provider_name,
                             json_object('type' VALUE 'kmip',
-                            'host' VALUE COALESCE(kmip_host,''),
+                            'host' VALUE COALESCE(kmip_host, ''),
                             'port' VALUE kmip_port,
-                            'caPath' VALUE COALESCE(kmip_ca_path,''),
-                            'certPath' VALUE COALESCE(kmip_cert_path,'')));
+                            'caPath' VALUE COALESCE(kmip_ca_path, ''),
+                            'certPath' VALUE COALESCE(kmip_cert_path, '')));
 $$
 LANGUAGE SQL;
 
@@ -151,31 +151,31 @@ AS $$
 $$
 LANGUAGE SQL;
 
-CREATE OR REPLACE FUNCTION pg_tde_add_key_provider_vault_v2(PG_TDE_GLOBAL, 
-														provider_name VARCHAR(128),
-                                                        vault_token TEXT,
-                                                        vault_url TEXT,
-                                                        vault_mount_path TEXT,
-                                                        vault_ca_path TEXT)
+CREATE OR REPLACE FUNCTION pg_tde_add_key_provider_vault_v2(PG_TDE_GLOBAL,
+                                                            provider_name VARCHAR(128),
+                                                            vault_token TEXT,
+                                                            vault_url TEXT,
+                                                            vault_mount_path TEXT,
+                                                            vault_ca_path TEXT)
 RETURNS INT
 AS $$
 -- JSON keys in the options must be matched to the keys in
 -- load_vaultV2_keyring_provider_options function.
     SELECT pg_tde_add_key_provider('PG_TDE_GLOBAL', 'vault-v2', provider_name,
                             json_object('type' VALUE 'vault-v2',
-                            'url' VALUE COALESCE(vault_url,''),
-                            'token' VALUE COALESCE(vault_token,''),
-                            'mountPath' VALUE COALESCE(vault_mount_path,''),
-                            'caPath' VALUE COALESCE(vault_ca_path,'')));
+                            'url' VALUE COALESCE(vault_url, ''),
+                            'token' VALUE COALESCE(vault_token, ''),
+                            'mountPath' VALUE COALESCE(vault_mount_path, ''),
+                            'caPath' VALUE COALESCE(vault_ca_path, '')));
 $$
 LANGUAGE SQL;
 
-CREATE OR REPLACE FUNCTION pg_tde_add_key_provider_vault_v2(PG_TDE_GLOBAL, 
-														provider_name VARCHAR(128),
-                                                        vault_token JSON,
-                                                        vault_url JSON,
-                                                        vault_mount_path JSON,
-                                                        vault_ca_path JSON)
+CREATE OR REPLACE FUNCTION pg_tde_add_key_provider_vault_v2(PG_TDE_GLOBAL,
+                                                            provider_name VARCHAR(128),
+                                                            vault_token JSON,
+                                                            vault_url JSON,
+                                                            vault_mount_path JSON,
+                                                            vault_ca_path JSON)
 RETURNS INT
 AS $$
 -- JSON keys in the options must be matched to the keys in
@@ -189,7 +189,7 @@ AS $$
 $$
 LANGUAGE SQL;
 
-CREATE OR REPLACE FUNCTION pg_tde_add_key_provider_kmip(PG_TDE_GLOBAL, 
+CREATE OR REPLACE FUNCTION pg_tde_add_key_provider_kmip(PG_TDE_GLOBAL,
                                                         provider_name VARCHAR(128),
                                                         kmip_host TEXT,
                                                         kmip_port INT,
@@ -201,14 +201,14 @@ AS $$
 -- load_kmip_keyring_provider_options function.
     SELECT pg_tde_add_key_provider('PG_TDE_GLOBAL', 'kmip', provider_name,
                             json_object('type' VALUE 'kmip',
-                            'host' VALUE COALESCE(kmip_host,''),
+                            'host' VALUE COALESCE(kmip_host, ''),
                             'port' VALUE kmip_port,
-                            'caPath' VALUE COALESCE(kmip_ca_path,''),
-                            'certPath' VALUE COALESCE(kmip_cert_path,'')));
+                            'caPath' VALUE COALESCE(kmip_ca_path, ''),
+                            'certPath' VALUE COALESCE(kmip_cert_path, '')));
 $$
 LANGUAGE SQL;
 
-CREATE OR REPLACE FUNCTION pg_tde_add_key_provider_kmip(PG_TDE_GLOBAL, 
+CREATE OR REPLACE FUNCTION pg_tde_add_key_provider_kmip(PG_TDE_GLOBAL,
                                                         provider_name VARCHAR(128),
                                                         kmip_host JSON,
                                                         kmip_port JSON,
@@ -256,28 +256,28 @@ $$
 LANGUAGE SQL;
 
 CREATE OR REPLACE FUNCTION pg_tde_change_key_provider_vault_v2(provider_name VARCHAR(128),
-                                                        vault_token TEXT,
-                                                        vault_url TEXT,
-                                                        vault_mount_path TEXT,
-                                                        vault_ca_path TEXT)
+                                                               vault_token TEXT,
+                                                               vault_url TEXT,
+                                                               vault_mount_path TEXT,
+                                                               vault_ca_path TEXT)
 RETURNS INT
 AS $$
 -- JSON keys in the options must be matched to the keys in
 -- load_vaultV2_keyring_provider_options function.
     SELECT pg_tde_change_key_provider('vault-v2', provider_name,
                             json_object('type' VALUE 'vault-v2',
-                            'url' VALUE COALESCE(vault_url,''),
-                            'token' VALUE COALESCE(vault_token,''),
-                            'mountPath' VALUE COALESCE(vault_mount_path,''),
-                            'caPath' VALUE COALESCE(vault_ca_path,'')));
+                            'url' VALUE COALESCE(vault_url, ''),
+                            'token' VALUE COALESCE(vault_token, ''),
+                            'mountPath' VALUE COALESCE(vault_mount_path, ''),
+                            'caPath' VALUE COALESCE(vault_ca_path, '')));
 $$
 LANGUAGE SQL;
 
 CREATE OR REPLACE FUNCTION pg_tde_change_key_provider_vault_v2(provider_name VARCHAR(128),
-                                                        vault_token JSON,
-                                                        vault_url JSON,
-                                                        vault_mount_path JSON,
-                                                        vault_ca_path JSON)
+                                                               vault_token JSON,
+                                                               vault_url JSON,
+                                                               vault_mount_path JSON,
+                                                               vault_ca_path JSON)
 RETURNS INT
 AS $$
 -- JSON keys in the options must be matched to the keys in
@@ -292,28 +292,28 @@ $$
 LANGUAGE SQL;
 
 CREATE OR REPLACE FUNCTION pg_tde_change_key_provider_kmip(provider_name VARCHAR(128),
-                                                        kmip_host TEXT,
-                                                        kmip_port INT,
-                                                        kmip_ca_path TEXT,
-                                                        kmip_cert_path TEXT)
+                                                           kmip_host TEXT,
+                                                           kmip_port INT,
+                                                           kmip_ca_path TEXT,
+                                                           kmip_cert_path TEXT)
 RETURNS INT
 AS $$
 -- JSON keys in the options must be matched to the keys in
 -- load_kmip_keyring_provider_options function.
     SELECT pg_tde_change_key_provider('kmip', provider_name,
                             json_object('type' VALUE 'kmip',
-                            'host' VALUE COALESCE(kmip_host,''),
+                            'host' VALUE COALESCE(kmip_host, ''),
                             'port' VALUE kmip_port,
-                            'caPath' VALUE COALESCE(kmip_ca_path,''),
-                            'certPath' VALUE COALESCE(kmip_cert_path,'')));
+                            'caPath' VALUE COALESCE(kmip_ca_path, ''),
+                            'certPath' VALUE COALESCE(kmip_cert_path, '')));
 $$
 LANGUAGE SQL;
 
 CREATE OR REPLACE FUNCTION pg_tde_change_key_provider_kmip(provider_name VARCHAR(128),
-                                                        kmip_host JSON,
-                                                        kmip_port JSON,
-                                                        kmip_ca_path JSON,
-                                                        kmip_cert_path JSON)
+                                                           kmip_host JSON,
+                                                           kmip_port JSON,
+                                                           kmip_ca_path JSON,
+                                                           kmip_cert_path JSON)
 RETURNS INT
 AS $$
 -- JSON keys in the options must be matched to the keys in
@@ -355,31 +355,31 @@ AS $$
 $$
 LANGUAGE SQL;
 
-CREATE OR REPLACE FUNCTION pg_tde_change_key_provider_vault_v2(PG_TDE_GLOBAL, 
-														provider_name VARCHAR(128),
-                                                        vault_token TEXT,
-                                                        vault_url TEXT,
-                                                        vault_mount_path TEXT,
-                                                        vault_ca_path TEXT)
+CREATE OR REPLACE FUNCTION pg_tde_change_key_provider_vault_v2(PG_TDE_GLOBAL,
+                                                               provider_name VARCHAR(128),
+                                                               vault_token TEXT,
+                                                               vault_url TEXT,
+                                                               vault_mount_path TEXT,
+                                                               vault_ca_path TEXT)
 RETURNS INT
 AS $$
 -- JSON keys in the options must be matched to the keys in
 -- load_vaultV2_keyring_provider_options function.
     SELECT pg_tde_change_key_provider('PG_TDE_GLOBAL', 'vault-v2', provider_name,
                             json_object('type' VALUE 'vault-v2',
-                            'url' VALUE COALESCE(vault_url,''),
-                            'token' VALUE COALESCE(vault_token,''),
-                            'mountPath' VALUE COALESCE(vault_mount_path,''),
-                            'caPath' VALUE COALESCE(vault_ca_path,'')));
+                            'url' VALUE COALESCE(vault_url, ''),
+                            'token' VALUE COALESCE(vault_token, ''),
+                            'mountPath' VALUE COALESCE(vault_mount_path, ''),
+                            'caPath' VALUE COALESCE(vault_ca_path, '')));
 $$
 LANGUAGE SQL;
 
-CREATE OR REPLACE FUNCTION pg_tde_change_key_provider_vault_v2(PG_TDE_GLOBAL, 
-														provider_name VARCHAR(128),
-                                                        vault_token JSON,
-                                                        vault_url JSON,
-                                                        vault_mount_path JSON,
-                                                        vault_ca_path JSON)
+CREATE OR REPLACE FUNCTION pg_tde_change_key_provider_vault_v2(PG_TDE_GLOBAL,
+                                                               provider_name VARCHAR(128),
+                                                               vault_token JSON,
+                                                               vault_url JSON,
+                                                               vault_mount_path JSON,
+                                                               vault_ca_path JSON)
 RETURNS INT
 AS $$
 -- JSON keys in the options must be matched to the keys in
@@ -393,31 +393,31 @@ AS $$
 $$
 LANGUAGE SQL;
 
-CREATE OR REPLACE FUNCTION pg_tde_change_key_provider_kmip(PG_TDE_GLOBAL, 
-                                                        provider_name VARCHAR(128),
-                                                        kmip_host TEXT,
-                                                        kmip_port INT,
-                                                        kmip_ca_path TEXT,
-                                                        kmip_cert_path TEXT)
+CREATE OR REPLACE FUNCTION pg_tde_change_key_provider_kmip(PG_TDE_GLOBAL,
+                                                           provider_name VARCHAR(128),
+                                                           kmip_host TEXT,
+                                                           kmip_port INT,
+                                                           kmip_ca_path TEXT,
+                                                           kmip_cert_path TEXT)
 RETURNS INT
 AS $$
 -- JSON keys in the options must be matched to the keys in
 -- load_kmip_keyring_provider_options function.
     SELECT pg_tde_change_key_provider('PG_TDE_GLOBAL', 'kmip', provider_name,
                             json_object('type' VALUE 'kmip',
-                            'host' VALUE COALESCE(kmip_host,''),
+                            'host' VALUE COALESCE(kmip_host, ''),
                             'port' VALUE kmip_port,
-                            'caPath' VALUE COALESCE(kmip_ca_path,''),
-                            'certPath' VALUE COALESCE(kmip_cert_path,'')));
+                            'caPath' VALUE COALESCE(kmip_ca_path, ''),
+                            'certPath' VALUE COALESCE(kmip_cert_path, '')));
 $$
 LANGUAGE SQL;
 
-CREATE OR REPLACE FUNCTION pg_tde_change_key_provider_kmip(PG_TDE_GLOBAL, 
-                                                        provider_name VARCHAR(128),
-                                                        kmip_host JSON,
-                                                        kmip_port JSON,
-                                                        kmip_ca_path JSON,
-                                                        kmip_cert_path JSON)
+CREATE OR REPLACE FUNCTION pg_tde_change_key_provider_kmip(PG_TDE_GLOBAL,
+                                                           provider_name VARCHAR(128),
+                                                           kmip_host JSON,
+                                                           kmip_port JSON,
+                                                           kmip_ca_path JSON,
+                                                           kmip_cert_path JSON)
 RETURNS INT
 AS $$
 -- JSON keys in the options must be matched to the keys in
@@ -513,38 +513,38 @@ CREATE ACCESS METHOD tde_heap_basic TYPE TABLE HANDLER pg_tdeam_basic_handler;
 COMMENT ON ACCESS METHOD tde_heap_basic IS 'pg_tde table access method';
 
 DO $$
-	BEGIN
-		-- Table access method
-		CREATE FUNCTION pg_tdeam_handler(internal)
-		RETURNS table_am_handler
-		AS 'MODULE_PATHNAME'
-		LANGUAGE C;
+    BEGIN
+        -- Table access method
+        CREATE FUNCTION pg_tdeam_handler(internal)
+        RETURNS table_am_handler
+        AS 'MODULE_PATHNAME'
+        LANGUAGE C;
 
-		CREATE ACCESS METHOD tde_heap TYPE TABLE HANDLER pg_tdeam_handler;
-		COMMENT ON ACCESS METHOD tde_heap IS 'tde_heap table access method';
+        CREATE ACCESS METHOD tde_heap TYPE TABLE HANDLER pg_tdeam_handler;
+        COMMENT ON ACCESS METHOD tde_heap IS 'tde_heap table access method';
 
-		CREATE OR REPLACE FUNCTION pg_tde_ddl_command_start_capture()
-		RETURNS event_trigger
-		AS 'MODULE_PATHNAME'
-		LANGUAGE C;
+        CREATE OR REPLACE FUNCTION pg_tde_ddl_command_start_capture()
+        RETURNS event_trigger
+        AS 'MODULE_PATHNAME'
+        LANGUAGE C;
 
-		CREATE OR REPLACE FUNCTION pg_tde_ddl_command_end_capture()
-		RETURNS event_trigger
-		AS 'MODULE_PATHNAME'
-		LANGUAGE C;
+        CREATE OR REPLACE FUNCTION pg_tde_ddl_command_end_capture()
+        RETURNS event_trigger
+        AS 'MODULE_PATHNAME'
+        LANGUAGE C;
 
-		CREATE EVENT TRIGGER pg_tde_trigger_create_index
-		ON ddl_command_start
-		EXECUTE FUNCTION pg_tde_ddl_command_start_capture();
-		ALTER EVENT TRIGGER pg_tde_trigger_create_index ENABLE ALWAYS;
+        CREATE EVENT TRIGGER pg_tde_trigger_create_index
+        ON ddl_command_start
+        EXECUTE FUNCTION pg_tde_ddl_command_start_capture();
+        ALTER EVENT TRIGGER pg_tde_trigger_create_index ENABLE ALWAYS;
 
-		CREATE EVENT TRIGGER pg_tde_trigger_create_index_2
-		ON ddl_command_end
-		EXECUTE FUNCTION pg_tde_ddl_command_end_capture();
-		ALTER EVENT TRIGGER pg_tde_trigger_create_index_2 ENABLE ALWAYS;
-	EXCEPTION WHEN OTHERS THEN
-		NULL;
-	END;
+        CREATE EVENT TRIGGER pg_tde_trigger_create_index_2
+        ON ddl_command_end
+        EXECUTE FUNCTION pg_tde_ddl_command_end_capture();
+        ALTER EVENT TRIGGER pg_tde_trigger_create_index_2 ENABLE ALWAYS;
+    EXCEPTION WHEN OTHERS THEN
+        NULL;
+    END;
 $$;
 
 -- Per database extension initialization
@@ -602,19 +602,19 @@ BEGIN
 
     PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_add_key_provider_file', 'pg_tde_global, varchar, json');
     PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_add_key_provider_file', 'pg_tde_global, varchar, text');
-    PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_add_key_provider_vault_v2', 'pg_tde_global, varchar, text, text,text,text');
-    PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_add_key_provider_vault_v2', 'pg_tde_global, varchar, JSON, JSON,JSON,JSON');
-    PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_add_key_provider_kmip', 'pg_tde_global, varchar, text, int,text,text');
-    PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_add_key_provider_kmip', 'pg_tde_global, varchar, JSON, JSON,JSON,JSON');
+    PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_add_key_provider_vault_v2', 'pg_tde_global, varchar, text, text, text, text');
+    PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_add_key_provider_vault_v2', 'pg_tde_global, varchar, JSON, JSON, JSON, JSON');
+    PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_add_key_provider_kmip', 'pg_tde_global, varchar, text, int, text, text');
+    PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_add_key_provider_kmip', 'pg_tde_global, varchar, JSON, JSON, JSON, JSON');
 
     PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_change_key_provider', 'pg_tde_global, varchar, varchar, JSON');
 
     PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_change_key_provider_file', 'pg_tde_global, varchar, json');
     PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_change_key_provider_file', 'pg_tde_global, varchar, text');
-    PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_change_key_provider_vault_v2', 'pg_tde_global, varchar, text, text,text,text');
-    PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_change_key_provider_vault_v2', 'pg_tde_global, varchar, JSON, JSON,JSON,JSON');
-    PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_change_key_provider_kmip', 'pg_tde_global, varchar, text, int,text,text');
-    PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_change_key_provider_kmip', 'pg_tde_global, varchar, JSON, JSON,JSON,JSON');
+    PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_change_key_provider_vault_v2', 'pg_tde_global, varchar, text, text, text, text');
+    PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_change_key_provider_vault_v2', 'pg_tde_global, varchar, JSON, JSON, JSON, JSON');
+    PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_change_key_provider_kmip', 'pg_tde_global, varchar, text, int, text, text');
+    PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_change_key_provider_kmip', 'pg_tde_global, varchar, JSON, JSON, JSON, JSON');
 
     PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_delete_key_provider', 'pg_tde_global, varchar');
 
@@ -637,19 +637,19 @@ BEGIN
 
     PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_add_key_provider_file', 'varchar, json');
     PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_add_key_provider_file', 'varchar, text');
-    PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_add_key_provider_vault_v2', 'varchar, text, text,text,text');
-    PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_add_key_provider_vault_v2', 'varchar, JSON, JSON,JSON,JSON');
-    PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_add_key_provider_kmip', 'varchar, text, int,text,text');
-    PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_add_key_provider_kmip', 'varchar, JSON, JSON,JSON,JSON');
+    PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_add_key_provider_vault_v2', 'varchar, text, text, text, text');
+    PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_add_key_provider_vault_v2', 'varchar, JSON, JSON, JSON, JSON');
+    PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_add_key_provider_kmip', 'varchar, text, int, text, text');
+    PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_add_key_provider_kmip', 'varchar, JSON, JSON, JSON, JSON');
 
     PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_change_key_provider', 'varchar, varchar, JSON');
 
     PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_change_key_provider_file', 'varchar, json');
-    PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_change_key_provider_file', 'varchar, text');    
-    PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_change_key_provider_vault_v2', 'varchar, text, text,text,text');
-    PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_change_key_provider_vault_v2', 'varchar, JSON, JSON,JSON,JSON');
-    PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_change_key_provider_kmip', 'varchar, text, int,text,text');
-    PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_change_key_provider_kmip', 'varchar, JSON, JSON,JSON,JSON');
+    PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_change_key_provider_file', 'varchar, text');
+    PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_change_key_provider_vault_v2', 'varchar, text, text, text, text');
+    PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_change_key_provider_vault_v2', 'varchar, JSON, JSON, JSON, JSON');
+    PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_change_key_provider_kmip', 'varchar, text, int, text, text');
+    PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_change_key_provider_kmip', 'varchar, JSON, JSON, JSON, JSON');
 
     PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_delete_key_provider', 'varchar');
 
@@ -694,19 +694,19 @@ BEGIN
 
     PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_add_key_provider_file', 'pg_tde_global, varchar, json');
     PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_add_key_provider_file', 'pg_tde_global, varchar, text');
-    PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_add_key_provider_vault_v2', 'pg_tde_global, varchar, text, text,text,text');
-    PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_add_key_provider_vault_v2', 'pg_tde_global, varchar, JSON, JSON,JSON,JSON');
-    PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_add_key_provider_kmip', 'pg_tde_global, varchar, text, int,text,text');
-    PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_add_key_provider_kmip', 'pg_tde_global, varchar, JSON, JSON,JSON,JSON');
+    PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_add_key_provider_vault_v2', 'pg_tde_global, varchar, text, text, text, text');
+    PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_add_key_provider_vault_v2', 'pg_tde_global, varchar, JSON, JSON, JSON, JSON');
+    PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_add_key_provider_kmip', 'pg_tde_global, varchar, text, int, text, text');
+    PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_add_key_provider_kmip', 'pg_tde_global, varchar, JSON, JSON, JSON, JSON');
 
     PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_change_key_provider', 'pg_tde_global, varchar, varchar, JSON');
 
     PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_change_key_provider_file', 'pg_tde_global, varchar, json');
     PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_change_key_provider_file', 'pg_tde_global, varchar, text');
-    PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_change_key_provider_vault_v2', 'pg_tde_global, varchar, text, text,text,text');
-    PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_change_key_provider_vault_v2', 'pg_tde_global, varchar, JSON, JSON,JSON,JSON');
-    PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_change_key_provider_kmip', 'pg_tde_global, varchar, text, int,text,text');
-    PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_change_key_provider_kmip', 'pg_tde_global, varchar, JSON, JSON,JSON,JSON');
+    PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_change_key_provider_vault_v2', 'pg_tde_global, varchar, text, text, text, text');
+    PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_change_key_provider_vault_v2', 'pg_tde_global, varchar, JSON, JSON, JSON, JSON');
+    PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_change_key_provider_kmip', 'pg_tde_global, varchar, text, int, text, text');
+    PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_change_key_provider_kmip', 'pg_tde_global, varchar, JSON, JSON, JSON, JSON');
 
     PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_delete_key_provider', 'pg_tde_global, varchar');
 
@@ -729,19 +729,19 @@ BEGIN
 
     PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_add_key_provider_file', 'varchar, json');
     PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_add_key_provider_file', 'varchar, text');
-    PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_add_key_provider_vault_v2', 'varchar, text, text,text,text');
-    PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_add_key_provider_vault_v2', 'varchar, JSON, JSON,JSON,JSON');
-    PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_add_key_provider_kmip', 'varchar, text, int,text,text');
-    PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_add_key_provider_kmip', 'varchar, JSON, JSON,JSON,JSON');
+    PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_add_key_provider_vault_v2', 'varchar, text, text, text, text');
+    PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_add_key_provider_vault_v2', 'varchar, JSON, JSON, JSON, JSON');
+    PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_add_key_provider_kmip', 'varchar, text, int, text, text');
+    PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_add_key_provider_kmip', 'varchar, JSON, JSON, JSON, JSON');
 
     PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_change_key_provider', 'varchar, varchar, JSON');
 
     PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_change_key_provider_file', 'varchar, json');
-    PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_change_key_provider_file', 'varchar, text');    
-    PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_change_key_provider_vault_v2', 'varchar, text, text,text,text');
-    PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_change_key_provider_vault_v2', 'varchar, JSON, JSON,JSON,JSON');
-    PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_change_key_provider_kmip', 'varchar, text, int,text,text');
-    PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_change_key_provider_kmip', 'varchar, JSON, JSON,JSON,JSON');
+    PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_change_key_provider_file', 'varchar, text');
+    PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_change_key_provider_vault_v2', 'varchar, text, text, text, text');
+    PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_change_key_provider_vault_v2', 'varchar, JSON, JSON, JSON, JSON');
+    PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_change_key_provider_kmip', 'varchar, text, int, text, text');
+    PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_change_key_provider_kmip', 'varchar, JSON, JSON, JSON, JSON');
 
     PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_delete_key_provider', 'varchar');
 
