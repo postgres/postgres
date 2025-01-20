@@ -557,7 +557,7 @@ CREATE FUNCTION pg_tde_grant_execute_privilege_on_function(
     target_function_name TEXT,
     target_function_args TEXT
 )
-RETURNS BOOLEAN AS $$
+RETURNS VOID AS $$
 DECLARE
     grant_query TEXT;
 BEGIN
@@ -567,9 +567,6 @@ BEGIN
 
     -- Execute the GRANT statement
     EXECUTE grant_query;
-    -- If execution reaches here, it means the query was successful
-    RETURN TRUE;
-
 END;
 $$ LANGUAGE plpgsql;
 
@@ -578,7 +575,7 @@ CREATE FUNCTION pg_tde_revoke_execute_privilege_on_function(
     target_function_name TEXT,
     argument_types TEXT
 )
-RETURNS BOOLEAN AS $$
+RETURNS VOID AS $$
 DECLARE
     revoke_query TEXT;
 BEGIN
@@ -588,15 +585,12 @@ BEGIN
 
     -- Execute the REVOKE statement
     EXECUTE revoke_query;
-
-    -- If execution reaches here, it means the query was successful
-    RETURN TRUE;
 END;
 $$ LANGUAGE plpgsql;
 
 CREATE FUNCTION pg_tde_grant_global_key_management_to_role(
     target_user_or_role TEXT)
-RETURNS BOOLEAN
+RETURNS VOID
 LANGUAGE plpgsql
 AS $$
 BEGIN
@@ -622,13 +616,12 @@ BEGIN
 
     PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_set_principal_key', 'varchar, pg_tde_global, varchar, BOOLEAN');
     PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_set_server_principal_key', 'varchar, pg_tde_global, varchar, BOOLEAN');
-    RETURN TRUE;
 END;
 $$;
 
 CREATE FUNCTION pg_tde_grant_local_key_management_to_role(
     target_user_or_role TEXT)
-RETURNS BOOLEAN
+RETURNS VOID
 LANGUAGE plpgsql
 AS $$
 BEGIN
@@ -653,13 +646,12 @@ BEGIN
     PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_delete_key_provider', 'varchar');
 
     PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_set_principal_key', 'varchar, varchar, BOOLEAN');
-    RETURN TRUE;
 END;
 $$;
 
 CREATE FUNCTION pg_tde_grant_key_viewer_to_role(
     target_user_or_role TEXT)
-RETURNS BOOLEAN
+RETURNS VOID
 LANGUAGE plpgsql
 AS $$
 BEGIN
@@ -669,14 +661,12 @@ BEGIN
 
     PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_principal_key_info', '');
     PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_principal_key_info', 'pg_tde_global');
-    -- If all statements succeed, return TRUE
-    RETURN TRUE;
 END;
 $$;
 
 CREATE FUNCTION pg_tde_revoke_global_key_management_from_role(
     target_user_or_role TEXT)
-RETURNS BOOLEAN
+RETURNS VOID
 LANGUAGE plpgsql
 AS $$
 BEGIN
@@ -702,13 +692,12 @@ BEGIN
 
     PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_set_principal_key', 'varchar, pg_tde_global, varchar, BOOLEAN');
     PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_set_server_principal_key', 'varchar, pg_tde_global, varchar, BOOLEAN');
-    RETURN TRUE;
 END;
 $$;
 
 CREATE FUNCTION pg_tde_revoke_local_key_management_from_role(
     target_user_or_role TEXT)
-RETURNS BOOLEAN
+RETURNS VOID
 LANGUAGE plpgsql
 AS $$
 BEGIN
@@ -733,13 +722,12 @@ BEGIN
     PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_delete_key_provider', 'varchar');
 
     PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_set_principal_key', 'varchar, varchar, BOOLEAN');
-    RETURN TRUE;
 END;
 $$;
 
 CREATE FUNCTION pg_tde_revoke_key_viewer_from_role(
     target_user_or_role TEXT)
-RETURNS BOOLEAN
+RETURNS VOID
 LANGUAGE plpgsql
 AS $$
 BEGIN
@@ -749,14 +737,12 @@ BEGIN
 
     PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_principal_key_info', '');
     PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_principal_key_info', 'pg_tde_global');
-    -- If all statements succeed, return TRUE
-    RETURN TRUE;
 END;
 $$;
 
 CREATE FUNCTION pg_tde_grant_grant_management_to_role(
     target_user_or_role TEXT)
-RETURNS BOOLEAN
+RETURNS VOID
 LANGUAGE plpgsql
 AS $$
 BEGIN
@@ -769,13 +755,12 @@ BEGIN
     PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_revoke_local_key_management_from_role', 'TEXT');
     PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_revoke_grant_management_from_role', 'TEXT');
     PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_revoke_key_viewer_from_role', 'TEXT');
-    RETURN TRUE;
 END;
 $$;
 
 CREATE FUNCTION pg_tde_revoke_grant_management_from_role(
     target_user_or_role TEXT)
-RETURNS BOOLEAN
+RETURNS VOID
 LANGUAGE plpgsql
 AS $$
 BEGIN
@@ -788,7 +773,6 @@ BEGIN
     PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_revoke_local_key_management_from_role', 'TEXT');
     PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_revoke_grant_management_from_role', 'TEXT');
     PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_revoke_key_viewer_from_role', 'TEXT');
-    RETURN TRUE;
 END;
 $$;
 
