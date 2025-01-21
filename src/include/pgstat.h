@@ -540,6 +540,15 @@ extern PgStat_ArchiverStats *pgstat_fetch_stat_archiver(void);
  * Functions in pgstat_backend.c
  */
 
+/* used by pgstat_io.c for I/O stats tracked in backends */
+extern void pgstat_count_backend_io_op_time(IOObject io_object,
+											IOContext io_context,
+											IOOp io_op,
+											instr_time io_time);
+extern void pgstat_count_backend_io_op(IOObject io_object,
+									   IOContext io_context,
+									   IOOp io_op, uint32 cnt,
+									   uint64 bytes);
 extern PgStat_Backend *pgstat_fetch_stat_backend(ProcNumber procNumber);
 extern bool pgstat_tracks_backend_bktype(BackendType bktype);
 extern void pgstat_create_backend(ProcNumber procnum);

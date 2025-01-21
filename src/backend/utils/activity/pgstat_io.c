@@ -73,17 +73,11 @@ pgstat_count_io_op(IOObject io_object, IOContext io_context, IOOp io_op,
 	Assert(pgstat_is_ioop_tracked_in_bytes(io_op) || bytes == 0);
 	Assert(pgstat_tracks_io_op(MyBackendType, io_object, io_context, io_op));
 
-	if (pgstat_tracks_backend_bktype(MyBackendType))
-	{
-		PgStat_BackendPending *entry_ref;
-
-		entry_ref = pgstat_prep_backend_pending(MyProcNumber);
-		entry_ref->pending_io.counts[io_object][io_context][io_op] += cnt;
-		entry_ref->pending_io.bytes[io_object][io_context][io_op] += bytes;
-	}
-
 	PendingIOStats.counts[io_object][io_context][io_op] += cnt;
 	PendingIOStats.bytes[io_object][io_context][io_op] += bytes;
+
+	/* Add the per-backend counts */
+	pgstat_count_backend_io_op(io_object, io_context, io_op, cnt, bytes);
 
 	have_iostats = true;
 }
@@ -145,14 +139,9 @@ pgstat_count_io_op_time(IOObject io_object, IOContext io_context, IOOp io_op,
 		INSTR_TIME_ADD(PendingIOStats.pending_times[io_object][io_context][io_op],
 					   io_time);
 
-		if (pgstat_tracks_backend_bktype(MyBackendType))
-		{
-			PgStat_BackendPending *entry_ref;
-
-			entry_ref = pgstat_prep_backend_pending(MyProcNumber);
-			INSTR_TIME_ADD(entry_ref->pending_io.pending_times[io_object][io_context][io_op],
-						   io_time);
-		}
+		/* Add the per-backend count */
+		pgstat_count_backend_io_op_time(io_object, io_context, io_op,
+										io_time);
 	}
 
 	pgstat_count_io_op(io_object, io_context, io_op, cnt, bytes);

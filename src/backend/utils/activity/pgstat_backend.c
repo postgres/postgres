@@ -11,7 +11,9 @@
  * This statistics kind uses a proc number as object ID for the hash table
  * of pgstats.  Entries are created each time a process is spawned, and are
  * dropped when the process exits.  These are not written to the pgstats file
- * on disk.
+ * on disk.  Pending statistics are managed without direct interactions with
+ * PgStat_EntryRef->pending, relying on PendingBackendStats instead so as it
+ * is possible to report data within critical sections.
  *
  * Copyright (c) 2001-2025, PostgreSQL Global Development Group
  *
@@ -22,7 +24,48 @@
 
 #include "postgres.h"
 
+#include "storage/bufmgr.h"
+#include "utils/memutils.h"
 #include "utils/pgstat_internal.h"
+
+/*
+ * Backend statistics counts waiting to be flushed out. These counters may be
+ * reported within critical sections so we use static memory in order to avoid
+ * memory allocation.
+ */
+static PgStat_BackendPending PendingBackendStats;
+
+/*
+ * Utility routines to report I/O stats for backends, kept here to avoid
+ * exposing PendingBackendStats to the outside world.
+ */
+void
+pgstat_count_backend_io_op_time(IOObject io_object, IOContext io_context,
+								IOOp io_op, instr_time io_time)
+{
+	Assert(track_io_timing);
+
+	if (!pgstat_tracks_backend_bktype(MyBackendType))
+		return;
+
+	Assert(pgstat_tracks_io_op(MyBackendType, io_object, io_context, io_op));
+
+	INSTR_TIME_ADD(PendingBackendStats.pending_io.pending_times[io_object][io_context][io_op],
+				   io_time);
+}
+
+void
+pgstat_count_backend_io_op(IOObject io_object, IOContext io_context,
+						   IOOp io_op, uint32 cnt, uint64 bytes)
+{
+	if (!pgstat_tracks_backend_bktype(MyBackendType))
+		return;
+
+	Assert(pgstat_tracks_io_op(MyBackendType, io_object, io_context, io_op));
+
+	PendingBackendStats.pending_io.counts[io_object][io_context][io_op] += cnt;
+	PendingBackendStats.pending_io.bytes[io_object][io_context][io_op] += bytes;
+}
 
 /*
  * Returns statistics of a backend by proc number.
@@ -46,14 +89,21 @@ static void
 pgstat_flush_backend_entry_io(PgStat_EntryRef *entry_ref)
 {
 	PgStatShared_Backend *shbackendent;
-	PgStat_BackendPending *pendingent;
 	PgStat_BktypeIO *bktype_shstats;
-	PgStat_PendingIO *pending_io;
+	PgStat_PendingIO pending_io;
+
+	/*
+	 * This function can be called even if nothing at all has happened for IO
+	 * statistics.  In this case, avoid unnecessarily modifying the stats
+	 * entry.
+	 */
+	if (pg_memory_is_all_zeros(&PendingBackendStats.pending_io,
+							   sizeof(struct PgStat_PendingIO)))
+		return;
 
 	shbackendent = (PgStatShared_Backend *) entry_ref->shared_stats;
-	pendingent = (PgStat_BackendPending *) entry_ref->pending;
 	bktype_shstats = &shbackendent->stats.io_stats;
-	pending_io = &pendingent->pending_io;
+	pending_io = PendingBackendStats.pending_io;
 
 	for (int io_object = 0; io_object < IOOBJECT_NUM_TYPES; io_object++)
 	{
@@ -64,31 +114,45 @@ pgstat_flush_backend_entry_io(PgStat_EntryRef *entry_ref)
 				instr_time	time;
 
 				bktype_shstats->counts[io_object][io_context][io_op] +=
-					pending_io->counts[io_object][io_context][io_op];
+					pending_io.counts[io_object][io_context][io_op];
 				bktype_shstats->bytes[io_object][io_context][io_op] +=
-					pending_io->bytes[io_object][io_context][io_op];
-
-				time = pending_io->pending_times[io_object][io_context][io_op];
+					pending_io.bytes[io_object][io_context][io_op];
+				time = pending_io.pending_times[io_object][io_context][io_op];
 
 				bktype_shstats->times[io_object][io_context][io_op] +=
 					INSTR_TIME_GET_MICROSEC(time);
 			}
 		}
 	}
+
+	/*
+	 * Clear out the statistics buffer, so it can be re-used.
+	 */
+	MemSet(&PendingBackendStats.pending_io, 0, sizeof(PgStat_PendingIO));
 }
 
 /*
- * Wrapper routine to flush backend statistics.
+ * Flush out locally pending backend statistics
+ *
+ * "flags" parameter controls which statistics to flush.  Returns true
+ * if some statistics could not be flushed due to lock contention.
  */
-static bool
-pgstat_flush_backend_entry(PgStat_EntryRef *entry_ref, bool nowait,
-						   bits32 flags)
+bool
+pgstat_flush_backend(bool nowait, bits32 flags)
 {
+	PgStat_EntryRef *entry_ref;
+
 	if (!pgstat_tracks_backend_bktype(MyBackendType))
 		return false;
 
-	if (!pgstat_lock_entry(entry_ref, nowait))
+	if (pg_memory_is_all_zeros(&PendingBackendStats,
+							   sizeof(struct PgStat_BackendPending)))
 		return false;
+
+	entry_ref = pgstat_get_entry_ref_locked(PGSTAT_KIND_BACKEND, InvalidOid,
+											MyProcNumber, nowait);
+	if (!entry_ref)
+		return true;
 
 	/* Flush requested statistics */
 	if (flags & PGSTAT_BACKEND_FLUSH_IO)
@@ -96,36 +160,28 @@ pgstat_flush_backend_entry(PgStat_EntryRef *entry_ref, bool nowait,
 
 	pgstat_unlock_entry(entry_ref);
 
-	return true;
+	return false;
+}
+
+/*
+ * Check if there are any backend stats waiting for flush.
+ */
+bool
+pgstat_backend_have_pending_cb(void)
+{
+	return (!pg_memory_is_all_zeros(&PendingBackendStats,
+									sizeof(struct PgStat_BackendPending)));
 }
 
 /*
  * Callback to flush out locally pending backend statistics.
  *
- * If no stats have been recorded, this function returns false.
+ * If some stats could not be flushed due to lock contention, return true.
  */
 bool
-pgstat_backend_flush_cb(PgStat_EntryRef *entry_ref, bool nowait)
+pgstat_backend_flush_cb(bool nowait)
 {
-	return pgstat_flush_backend_entry(entry_ref, nowait, PGSTAT_BACKEND_FLUSH_ALL);
-}
-
-/*
- * Flush out locally pending backend statistics
- *
- * "flags" parameter controls which statistics to flush.
- */
-void
-pgstat_flush_backend(bool nowait, bits32 flags)
-{
-	PgStat_EntryRef *entry_ref;
-
-	if (!pgstat_tracks_backend_bktype(MyBackendType))
-		return;
-
-	entry_ref = pgstat_get_entry_ref(PGSTAT_KIND_BACKEND, InvalidOid,
-									 MyProcNumber, false, NULL);
-	(void) pgstat_flush_backend_entry(entry_ref, nowait, flags);
+	return pgstat_flush_backend(nowait, PGSTAT_BACKEND_FLUSH_ALL);
 }
 
 /*
@@ -137,9 +193,8 @@ pgstat_create_backend(ProcNumber procnum)
 	PgStat_EntryRef *entry_ref;
 	PgStatShared_Backend *shstatent;
 
-	entry_ref = pgstat_prep_pending_entry(PGSTAT_KIND_BACKEND, InvalidOid,
-										  procnum, NULL);
-
+	entry_ref = pgstat_get_entry_ref_locked(PGSTAT_KIND_BACKEND, InvalidOid,
+											MyProcNumber, false);
 	shstatent = (PgStatShared_Backend *) entry_ref->shared_stats;
 
 	/*
@@ -147,20 +202,9 @@ pgstat_create_backend(ProcNumber procnum)
 	 * e.g. if we previously used this proc number.
 	 */
 	memset(&shstatent->stats, 0, sizeof(shstatent->stats));
-}
+	pgstat_unlock_entry(entry_ref);
 
-/*
- * Find or create a local PgStat_BackendPending entry for proc number.
- */
-PgStat_BackendPending *
-pgstat_prep_backend_pending(ProcNumber procnum)
-{
-	PgStat_EntryRef *entry_ref;
-
-	entry_ref = pgstat_prep_pending_entry(PGSTAT_KIND_BACKEND, InvalidOid,
-										  procnum, NULL);
-
-	return entry_ref->pending;
+	MemSet(&PendingBackendStats, 0, sizeof(PgStat_BackendPending));
 }
 
 /*

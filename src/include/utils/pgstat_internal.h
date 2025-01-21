@@ -624,10 +624,11 @@ extern void pgstat_archiver_snapshot_cb(void);
 #define PGSTAT_BACKEND_FLUSH_IO		(1 << 0)	/* Flush I/O statistics */
 #define PGSTAT_BACKEND_FLUSH_ALL	(PGSTAT_BACKEND_FLUSH_IO)
 
-extern void pgstat_flush_backend(bool nowait, bits32 flags);
-extern PgStat_BackendPending *pgstat_prep_backend_pending(ProcNumber procnum);
-extern bool pgstat_backend_flush_cb(PgStat_EntryRef *entry_ref, bool nowait);
-extern void pgstat_backend_reset_timestamp_cb(PgStatShared_Common *header, TimestampTz ts);
+extern bool pgstat_flush_backend(bool nowait, bits32 flags);
+extern bool pgstat_backend_flush_cb(bool nowait);
+extern bool pgstat_backend_have_pending_cb(void);
+extern void pgstat_backend_reset_timestamp_cb(PgStatShared_Common *header,
+											  TimestampTz ts);
 
 /*
  * Functions in pgstat_bgwriter.c
