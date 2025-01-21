@@ -265,26 +265,26 @@ INSERT INTO gtest10a (a) VALUES (1);
 -- privileges
 CREATE USER regress_user11;
 
-CREATE TABLE gtest11s (a int PRIMARY KEY, b int, c int GENERATED ALWAYS AS (b * 2) STORED);
-INSERT INTO gtest11s VALUES (1, 10), (2, 20);
-GRANT SELECT (a, c) ON gtest11s TO regress_user11;
+CREATE TABLE gtest11 (a int PRIMARY KEY, b int, c int GENERATED ALWAYS AS (b * 2) STORED);
+INSERT INTO gtest11 VALUES (1, 10), (2, 20);
+GRANT SELECT (a, c) ON gtest11 TO regress_user11;
 
 CREATE FUNCTION gf1(a int) RETURNS int AS $$ SELECT a * 3 $$ IMMUTABLE LANGUAGE SQL;
 REVOKE ALL ON FUNCTION gf1(int) FROM PUBLIC;
 
-CREATE TABLE gtest12s (a int PRIMARY KEY, b int, c int GENERATED ALWAYS AS (gf1(b)) STORED);
-INSERT INTO gtest12s VALUES (1, 10), (2, 20);
-GRANT SELECT (a, c) ON gtest12s TO regress_user11;
+CREATE TABLE gtest12 (a int PRIMARY KEY, b int, c int GENERATED ALWAYS AS (gf1(b)) STORED);
+INSERT INTO gtest12 VALUES (1, 10), (2, 20);
+GRANT SELECT (a, c) ON gtest12 TO regress_user11;
 
 SET ROLE regress_user11;
-SELECT a, b FROM gtest11s;  -- not allowed
-SELECT a, c FROM gtest11s;  -- allowed
+SELECT a, b FROM gtest11;  -- not allowed
+SELECT a, c FROM gtest11;  -- allowed
 SELECT gf1(10);  -- not allowed
-SELECT a, c FROM gtest12s;  -- allowed
+SELECT a, c FROM gtest12;  -- allowed
 RESET ROLE;
 
 DROP FUNCTION gf1(int);  -- fail
-DROP TABLE gtest11s, gtest12s;
+DROP TABLE gtest11, gtest12;
 DROP FUNCTION gf1(int);
 DROP USER regress_user11;
 
