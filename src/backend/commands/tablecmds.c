@@ -10260,8 +10260,10 @@ ATAddForeignKeyConstraint(List **wqueue, AlteredTableInfo *tab, Relation rel,
 	{
 		Oid			periodoperoid;
 		Oid			aggedperiodoperoid;
+		Oid			intersectoperoid;
 
-		FindFKPeriodOpers(opclasses[numpks - 1], &periodoperoid, &aggedperiodoperoid);
+		FindFKPeriodOpers(opclasses[numpks - 1], &periodoperoid, &aggedperiodoperoid,
+						  &intersectoperoid);
 	}
 
 	/* First, create the constraint catalog entry itself. */

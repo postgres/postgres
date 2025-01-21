@@ -1618,11 +1618,14 @@ DeconstructFkConstraintRow(HeapTuple tuple, int *numfks,
  * aggedcontainedbyoperoid is also a ContainedBy operator,
  * but one whose rhs is a multirange.
  * That way foreign keys can compare fkattr <@ range_agg(pkattr).
+ * intersectoperoid is used by NO ACTION constraints to trim the range being considered
+ * to just what was updated/deleted.
  */
 void
 FindFKPeriodOpers(Oid opclass,
 				  Oid *containedbyoperoid,
-				  Oid *aggedcontainedbyoperoid)
+				  Oid *aggedcontainedbyoperoid,
+				  Oid *intersectoperoid)
 {
 	Oid			opfamily = InvalidOid;
 	Oid			opcintype = InvalidOid;
@@ -1663,6 +1666,18 @@ FindFKPeriodOpers(Oid opclass,
 							   COMPARE_CONTAINED_BY,
 							   aggedcontainedbyoperoid,
 							   &strat);
+
+	switch (opcintype)
+	{
+		case ANYRANGEOID:
+			*intersectoperoid = OID_RANGE_INTERSECT_RANGE_OP;
+			break;
+		case ANYMULTIRANGEOID:
+			*intersectoperoid = OID_MULTIRANGE_INTERSECT_MULTIRANGE_OP;
+			break;
+		default:
+			elog(ERROR, "unexpected opcintype: %u", opcintype);
+	}
 }
 
 /*
