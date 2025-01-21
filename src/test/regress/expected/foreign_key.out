@@ -2351,6 +2351,13 @@ UPDATE pk SET a = 4002 WHERE a = 4000;
 DELETE FROM pk WHERE a = 4002;
 UPDATE pk SET a = 4502 WHERE a = 4500;
 DELETE FROM pk WHERE a = 4502;
+-- Also, detaching a partition that has the FK itself should work
+-- https://postgr.es/m/CAAJ_b97GuPh6wQPbxQS-Zpy16Oh+0aMv-w64QcGrLhCOZZ6p+g@mail.gmail.com
+CREATE TABLE ffk (a int, b int REFERENCES pk) PARTITION BY list (a);
+CREATE TABLE ffk1 PARTITION OF ffk FOR VALUES IN (1);
+ALTER TABLE ffk1 ADD FOREIGN KEY (a) REFERENCES pk;
+ALTER TABLE ffk DETACH PARTITION ffk1;
+DROP TABLE ffk, ffk1;
 CREATE SCHEMA fkpart4;
 SET search_path TO fkpart4;
 -- dropping/detaching PARTITIONs is prevented if that would break
