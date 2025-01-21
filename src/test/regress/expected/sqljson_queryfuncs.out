@@ -344,7 +344,7 @@ SELECT JSON_VALUE(jsonb '[]', '$');
 (1 row)
 
 SELECT JSON_VALUE(jsonb '[]', '$' ERROR ON ERROR);
-ERROR:  JSON path expression in JSON_VALUE should return single scalar item
+ERROR:  JSON path expression in JSON_VALUE must return single scalar item
 SELECT JSON_VALUE(jsonb '{}', '$');
  json_value 
 ------------
@@ -352,7 +352,7 @@ SELECT JSON_VALUE(jsonb '{}', '$');
 (1 row)
 
 SELECT JSON_VALUE(jsonb '{}', '$' ERROR ON ERROR);
-ERROR:  JSON path expression in JSON_VALUE should return single scalar item
+ERROR:  JSON path expression in JSON_VALUE must return single scalar item
 SELECT JSON_VALUE(jsonb '1', '$.a');
  json_value 
 ------------
@@ -408,7 +408,7 @@ SELECT JSON_VALUE(jsonb '1', 'lax $.a' DEFAULT '2' ON EMPTY DEFAULT '3' ON ERROR
 SELECT JSON_VALUE(jsonb '1', 'lax $.a' ERROR ON EMPTY DEFAULT '3' ON ERROR);
 ERROR:  no SQL/JSON item found for specified path
 SELECT JSON_VALUE(jsonb '[1,2]', '$[*]' ERROR ON ERROR);
-ERROR:  JSON path expression in JSON_VALUE should return single scalar item
+ERROR:  JSON path expression in JSON_VALUE must return single scalar item
 SELECT JSON_VALUE(jsonb '[1,2]', '$[*]' DEFAULT '0' ON ERROR);
  json_value 
 ------------
@@ -806,7 +806,7 @@ SELECT JSON_QUERY(jsonb '[]', '$[*]' ERROR ON ERROR);	-- NULL ON EMPTY
 (1 row)
 
 SELECT JSON_QUERY(jsonb '[1,2]', '$[*]' ERROR ON ERROR);
-ERROR:  JSON path expression in JSON_QUERY should return single item without wrapper
+ERROR:  JSON path expression in JSON_QUERY must return single item when no wrapper is requested
 HINT:  Use the WITH WRAPPER clause to wrap SQL/JSON items into an array.
 SELECT JSON_QUERY(jsonb '[1,2]', '$[*]' DEFAULT '"empty"' ON ERROR);
  json_query 

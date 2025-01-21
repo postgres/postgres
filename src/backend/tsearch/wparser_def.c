@@ -2671,19 +2671,19 @@ prsd_headline(PG_FUNCTION_ARGS)
 		if (min_words >= max_words)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("MinWords should be less than MaxWords")));
+					 errmsg("%s must be less than %s", "MinWords", "MaxWords")));
 		if (min_words <= 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("MinWords should be positive")));
+					 errmsg("%s must be positive", "MinWords")));
 		if (shortword < 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("ShortWord should be >= 0")));
+					 errmsg("%s must be >= 0", "ShortWord")));
 		if (max_fragments < 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("MaxFragments should be >= 0")));
+					 errmsg("%s must be >= 0", "MaxFragments")));
 	}
 
 	/* Locate words and phrases matching the query */

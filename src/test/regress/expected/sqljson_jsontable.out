@@ -710,7 +710,7 @@ LINE 1: SELECT * FROM JSON_TABLE(jsonb '{"a": 123}', '$' || '.' || '...
                                                      ^
 -- JsonPathQuery() error message mentioning column name
 SELECT * FROM JSON_TABLE('{"a": [{"b": "1"}, {"b": "2"}]}', '$' COLUMNS (b json path '$.a[*].b' ERROR ON ERROR));
-ERROR:  JSON path expression for column "b" should return single item without wrapper
+ERROR:  JSON path expression for column "b" must return single item when no wrapper is requested
 HINT:  Use the WITH WRAPPER clause to wrap SQL/JSON items into an array.
 -- JSON_TABLE: nested paths
 -- Duplicate path names
