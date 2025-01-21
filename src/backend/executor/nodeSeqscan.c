@@ -29,6 +29,7 @@
 
 #include "access/relscan.h"
 #include "access/tableam.h"
+#include "executor/execScan.h"
 #include "executor/executor.h"
 #include "executor/nodeSeqscan.h"
 #include "utils/rel.h"
@@ -99,9 +100,10 @@ SeqRecheck(SeqScanState *node, TupleTableSlot *slot)
  *		ExecSeqScan(node)
  *
  *		Scans the relation sequentially and returns the next qualifying
- *		tuple.
- *		We call the ExecScan() routine and pass it the appropriate
- *		access method functions.
+ *		tuple. This variant is used when there is no es_eqp_active, no qual
+ *		and no projection.  Passing const-NULLs for these to ExecScanExtended
+ *		allows the compiler to eliminate the additional code that would
+ *		ordinarily be required for the evaluation of these.
  * ----------------------------------------------------------------
  */
 static TupleTableSlot *
@@ -109,11 +111,93 @@ ExecSeqScan(PlanState *pstate)
 {
 	SeqScanState *node = castNode(SeqScanState, pstate);
 
+	Assert(pstate->state->es_epq_active == NULL);
+	Assert(pstate->qual == NULL);
+	Assert(pstate->ps_ProjInfo == NULL);
+
+	return ExecScanExtended(&node->ss,
+							(ExecScanAccessMtd) SeqNext,
+							(ExecScanRecheckMtd) SeqRecheck,
+							NULL,
+							NULL,
+							NULL);
+}
+
+/*
+ * Variant of ExecSeqScan() but when qual evaluation is required.
+ */
+static TupleTableSlot *
+ExecSeqScanWithQual(PlanState *pstate)
+{
+	SeqScanState *node = castNode(SeqScanState, pstate);
+
+	Assert(pstate->state->es_epq_active == NULL);
+	Assert(pstate->qual != NULL);
+	Assert(pstate->ps_ProjInfo == NULL);
+
+	return ExecScanExtended(&node->ss,
+							(ExecScanAccessMtd) SeqNext,
+							(ExecScanRecheckMtd) SeqRecheck,
+							NULL,
+							pstate->qual,
+							NULL);
+}
+
+/*
+ * Variant of ExecSeqScan() but when projection is required.
+ */
+static TupleTableSlot *
+ExecSeqScanWithProject(PlanState *pstate)
+{
+	SeqScanState *node = castNode(SeqScanState, pstate);
+
+	Assert(pstate->state->es_epq_active == NULL);
+	Assert(pstate->qual == NULL);
+	Assert(pstate->ps_ProjInfo != NULL);
+
+	return ExecScanExtended(&node->ss,
+							(ExecScanAccessMtd) SeqNext,
+							(ExecScanRecheckMtd) SeqRecheck,
+							NULL,
+							NULL,
+							pstate->ps_ProjInfo);
+}
+
+/*
+ * Variant of ExecSeqScan() but when qual evaluation and projection are
+ * required.
+ */
+static TupleTableSlot *
+ExecSeqScanWithQualProject(PlanState *pstate)
+{
+	SeqScanState *node = castNode(SeqScanState, pstate);
+
+	Assert(pstate->state->es_epq_active == NULL);
+	Assert(pstate->qual != NULL);
+	Assert(pstate->ps_ProjInfo != NULL);
+
+	return ExecScanExtended(&node->ss,
+							(ExecScanAccessMtd) SeqNext,
+							(ExecScanRecheckMtd) SeqRecheck,
+							NULL,
+							pstate->qual,
+							pstate->ps_ProjInfo);
+}
+
+/*
+ * Variant of ExecSeqScan for when EPQ evaluation is required.  We don't
+ * bother adding variants of this for with/without qual and projection as
+ * EPQ doesn't seem as exciting a case to optimize for.
+ */
+static TupleTableSlot *
+ExecSeqScanEPQ(PlanState *pstate)
+{
+	SeqScanState *node = castNode(SeqScanState, pstate);
+
 	return ExecScan(&node->ss,
 					(ExecScanAccessMtd) SeqNext,
 					(ExecScanRecheckMtd) SeqRecheck);
 }
-
 
 /* ----------------------------------------------------------------
  *		ExecInitSeqScan
@@ -137,7 +221,6 @@ ExecInitSeqScan(SeqScan *node, EState *estate, int eflags)
 	scanstate = makeNode(SeqScanState);
 	scanstate->ss.ps.plan = (Plan *) node;
 	scanstate->ss.ps.state = estate;
-	scanstate->ss.ps.ExecProcNode = ExecSeqScan;
 
 	/*
 	 * Miscellaneous initialization
@@ -170,6 +253,28 @@ ExecInitSeqScan(SeqScan *node, EState *estate, int eflags)
 	 */
 	scanstate->ss.ps.qual =
 		ExecInitQual(node->scan.plan.qual, (PlanState *) scanstate);
+
+	/*
+	 * When EvalPlanQual() is not in use, assign ExecProcNode for this node
+	 * based on the presence of qual and projection. Each ExecSeqScan*()
+	 * variant is optimized for the specific combination of these conditions.
+	 */
+	if (scanstate->ss.ps.state->es_epq_active != NULL)
+		scanstate->ss.ps.ExecProcNode = ExecSeqScanEPQ;
+	else if (scanstate->ss.ps.qual == NULL)
+	{
+		if (scanstate->ss.ps.ps_ProjInfo == NULL)
+			scanstate->ss.ps.ExecProcNode = ExecSeqScan;
+		else
+			scanstate->ss.ps.ExecProcNode = ExecSeqScanWithProject;
+	}
+	else
+	{
+		if (scanstate->ss.ps.ps_ProjInfo == NULL)
+			scanstate->ss.ps.ExecProcNode = ExecSeqScanWithQual;
+		else
+			scanstate->ss.ps.ExecProcNode = ExecSeqScanWithQualProject;
+	}
 
 	return scanstate;
 }
