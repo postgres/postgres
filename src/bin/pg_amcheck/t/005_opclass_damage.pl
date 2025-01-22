@@ -52,7 +52,7 @@ $node->safe_psql(
 ));
 
 # We have not yet broken the index, so we should get no corruption
-$node->command_like([ 'pg_amcheck', '-p', $node->port, 'postgres' ],
+$node->command_like([ 'pg_amcheck', '--port' => $node->port, 'postgres' ],
 	qr/^$/,
 	'pg_amcheck all schemas, tables and indexes reports no corruption');
 
@@ -69,7 +69,7 @@ $node->safe_psql(
 
 # Index corruption should now be reported
 $node->command_checks_all(
-	[ 'pg_amcheck', '-p', $node->port, 'postgres' ],
+	[ 'pg_amcheck', '--port' => $node->port, 'postgres' ],
 	2,
 	[qr/item order invariant violated for index "fickleidx"/],
 	[],
@@ -90,7 +90,7 @@ $node->safe_psql(
 
 # We should get no corruptions
 $node->command_like(
-	[ 'pg_amcheck', '--checkunique', '-p', $node->port, 'postgres' ],
+	[ 'pg_amcheck', '--checkunique', '--port' => $node->port, 'postgres' ],
 	qr/^$/,
 	'pg_amcheck all schemas, tables and indexes reports no corruption');
 
@@ -116,7 +116,7 @@ $node->safe_psql(
 
 # Unique index corruption should now be reported
 $node->command_checks_all(
-	[ 'pg_amcheck', '--checkunique', '-p', $node->port, 'postgres' ],
+	[ 'pg_amcheck', '--checkunique', '--port' => $node->port, 'postgres' ],
 	2,
 	[qr/index uniqueness is violated for index "bttest_unique_idx"/],
 	[],

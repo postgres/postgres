@@ -12,7 +12,8 @@ my $tempdir = PostgreSQL::Test::Utils::tempdir;
 # to keep test times reasonable. Using @pg_basebackup_defs as the first
 # element of the array passed to IPC::Run interpolate the array (as it is
 # not a reference to an array)...
-my @pg_basebackup_defs = ('pg_basebackup', '--no-sync', '-cfast');
+my @pg_basebackup_defs =
+  ('pg_basebackup', '--no-sync', '--checkpoint' => 'fast');
 
 # Set up an instance.
 my $node = PostgreSQL::Test::Cluster->new('main');
@@ -28,7 +29,12 @@ EOM
 # Back it up.
 my $backupdir = $tempdir . '/backup';
 $node->command_ok(
-	[ @pg_basebackup_defs, '-D', $backupdir, '-Ft', '-X', 'none' ],
+	[
+		@pg_basebackup_defs,
+		'--pgdata' => $backupdir,
+		'--format' => 'tar',
+		'--wal-method' => 'none'
+	],
 	'pg_basebackup runs');
 
 # Make sure we got base.tar and one tablespace.

@@ -15,9 +15,11 @@ $primary->start;
 my $backup_path = $primary->backup_dir . '/test_encoding';
 $primary->command_ok(
 	[
-		'pg_basebackup', '-D',
-		$backup_path, '--no-sync',
-		'-cfast', '--manifest-force-encode'
+		'pg_basebackup',
+		'--pgdata' => $backup_path,
+		'--no-sync',
+		'--checkpoint' => 'fast',
+		'--manifest-force-encode',
 	],
 	"backup ok with forced hex encoding");
 
@@ -27,7 +29,7 @@ cmp_ok($count_of_encoded_path_in_manifest,
 	'>', 100, "many paths are encoded in the manifest");
 
 command_like(
-	[ 'pg_verifybackup', '-s', $backup_path ],
+	[ 'pg_verifybackup', '--skip-checksums', $backup_path ],
 	qr/backup successfully verified/,
 	'backup with forced encoding verified');
 

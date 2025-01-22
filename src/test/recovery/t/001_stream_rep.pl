@@ -566,8 +566,11 @@ my $connstr = $node_primary->connstr('postgres') . " replication=database";
 # a replication command and a SQL command.
 $node_primary->command_fails_like(
 	[
-		'psql', '-X', '-c', "SELECT pg_backup_start('backup', true)",
-		'-c', 'BASE_BACKUP', '-d', $connstr
+		'psql',
+		'--no-psqlrc',
+		'--command' => "SELECT pg_backup_start('backup', true)",
+		'--command' => 'BASE_BACKUP',
+		'--dbname' => $connstr
 	],
 	qr/a backup is already in progress in this session/,
 	'BASE_BACKUP cannot run in session already running backup');

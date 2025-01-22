@@ -386,11 +386,12 @@ $node->start;
 
 # Check that pg_amcheck runs against the uncorrupted table without error.
 $node->command_ok(
-	[ 'pg_amcheck', '-p', $port, 'postgres' ],
+	[ 'pg_amcheck', '--port' => $port, 'postgres' ],
 	'pg_amcheck test table, prior to corruption');
 
 # Check that pg_amcheck runs against the uncorrupted table and index without error.
-$node->command_ok([ 'pg_amcheck', '-p', $port, 'postgres' ],
+$node->command_ok(
+	[ 'pg_amcheck', '--port' => $port, 'postgres' ],
 	'pg_amcheck test table and index, prior to corruption');
 
 $node->stop;
@@ -754,7 +755,7 @@ $node->start;
 # Run pg_amcheck against the corrupt table with epoch=0, comparing actual
 # corruption messages against the expected messages
 $node->command_checks_all(
-	[ 'pg_amcheck', '--no-dependent-indexes', '-p', $port, 'postgres' ],
+	[ 'pg_amcheck', '--no-dependent-indexes', '--port' => $port, 'postgres' ],
 	2, [@expected], [], 'Expected corruption message output');
 $node->safe_psql(
 	'postgres', qq(

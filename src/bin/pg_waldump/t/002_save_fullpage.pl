@@ -71,9 +71,10 @@ ok(-f $walfile, "Got a WAL file");
 
 $node->command_ok(
 	[
-		'pg_waldump', '--quiet',
-		'--save-fullpage', "$tmp_folder/raw",
-		'--relation', $relation,
+		'pg_waldump',
+		'--quiet',
+		'--save-fullpage' => "$tmp_folder/raw",
+		'--relation' => $relation,
 		$walfile
 	],
 	'pg_waldump with --save-fullpage runs');

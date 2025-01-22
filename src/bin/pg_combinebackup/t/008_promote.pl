@@ -31,7 +31,12 @@ EOM
 # Take a full backup.
 my $backup1path = $node1->backup_dir . '/backup1';
 $node1->command_ok(
-	[ 'pg_basebackup', '-D', $backup1path, '--no-sync', '-cfast' ],
+	[
+		'pg_basebackup',
+		'--pgdata' => $backup1path,
+		'--no-sync',
+		'--checkpoint' => 'fast',
+	],
 	"full backup from node1");
 
 # Checkpoint and record LSN after.
@@ -70,8 +75,11 @@ EOM
 my $backup2path = $node1->backup_dir . '/backup2';
 $node2->command_ok(
 	[
-		'pg_basebackup', '-D', $backup2path, '--no-sync', '-cfast',
-		'--incremental', $backup1path . '/backup_manifest'
+		'pg_basebackup',
+		'--pgdata' => $backup2path,
+		'--no-sync',
+		'--checkpoint' => 'fast',
+		'--incremental' => $backup1path . '/backup_manifest',
 	],
 	"incremental backup from node2");
 

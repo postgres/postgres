@@ -58,9 +58,11 @@ my $tsbackup1path = $tempdir . '/ts1backup';
 mkdir($tsbackup1path) || die "mkdir $tsbackup1path: $!";
 $primary->command_ok(
 	[
-		'pg_basebackup', '-D',
-		$backup1path, '--no-sync',
-		'-cfast', "-T${tsprimary}=${tsbackup1path}"
+		'pg_basebackup',
+		'--no-sync',
+		'--pgdata' => $backup1path,
+		'--checkpoint' => 'fast',
+		'--tablespace-mapping' => "${tsprimary}=${tsbackup1path}"
 	],
 	"full backup");
 
@@ -89,10 +91,12 @@ my $tsbackup2path = $tempdir . '/tsbackup2';
 mkdir($tsbackup2path) || die "mkdir $tsbackup2path: $!";
 $primary->command_ok(
 	[
-		'pg_basebackup', '-D',
-		$backup2path, '--no-sync',
-		'-cfast', "-T${tsprimary}=${tsbackup2path}",
-		'--incremental', $backup1path . '/backup_manifest'
+		'pg_basebackup',
+		'--no-sync',
+		'--pgdata' => $backup2path,
+		'--checkpoint' => 'fast',
+		'--tablespace-mapping' => "${tsprimary}=${tsbackup2path}",
+		'--incremental' => $backup1path . '/backup_manifest'
 	],
 	"incremental backup");
 
@@ -169,18 +173,20 @@ my $dump1 = $backupdir . '/pitr1.dump';
 my $dump2 = $backupdir . '/pitr2.dump';
 $pitr1->command_ok(
 	[
-		'pg_dumpall', '-f',
-		$dump1, '--no-sync',
-		'--no-unlogged-table-data', '-d',
-		$pitr1->connstr('postgres'),
+		'pg_dumpall',
+		'--no-sync',
+		'--no-unlogged-table-data',
+		'--file' => $dump1,
+		'--dbname' => $pitr1->connstr('postgres'),
 	],
 	'dump from PITR 1');
 $pitr2->command_ok(
 	[
-		'pg_dumpall', '-f',
-		$dump2, '--no-sync',
-		'--no-unlogged-table-data', '-d',
-		$pitr2->connstr('postgres'),
+		'pg_dumpall',
+		'--no-sync',
+		'--no-unlogged-table-data',
+		'--file' => $dump2,
+		'--dbname' => $pitr2->connstr('postgres'),
 	],
 	'dump from PITR 2');
 

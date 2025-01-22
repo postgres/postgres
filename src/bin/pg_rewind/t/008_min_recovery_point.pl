@@ -142,8 +142,10 @@ copy(
 
 command_ok(
 	[
-		'pg_rewind', "--source-server=$node_1_connstr",
-		"--target-pgdata=$node_2_pgdata", "--debug"
+		'pg_rewind',
+		'--source-server' => $node_1_connstr,
+		'--target-pgdata' => $node_2_pgdata,
+		'--debug',
 	],
 	'run pg_rewind');
 

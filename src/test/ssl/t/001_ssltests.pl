@@ -543,12 +543,14 @@ $node->connect_fails(
 # pg_stat_ssl
 command_like(
 	[
-		'psql', '-X',
-		'-A', '-F',
-		',', '-P',
-		'null=_null_', '-d',
-		"$common_connstr sslrootcert=invalid", '-c',
-		"SELECT * FROM pg_stat_ssl WHERE pid = pg_backend_pid()"
+		'psql',
+		'--no-psqlrc',
+		'--no-align',
+		'--field-separator' => ',',
+		'--pset', => 'null=_null_',
+		'--dbname' => "$common_connstr sslrootcert=invalid",
+		'--command' =>
+		  "SELECT * FROM pg_stat_ssl WHERE pid = pg_backend_pid()"
 	],
 	qr{^pid,ssl,version,cipher,bits,client_dn,client_serial,issuer_dn\r?\n
 				^\d+,t,TLSv[\d.]+,[\w-]+,\d+,_null_,_null_,_null_\r?$}mx,
@@ -742,17 +744,15 @@ else
 command_like(
 	[
 		'psql',
-		'-X',
-		'-A',
-		'-F',
-		',',
-		'-P',
-		'null=_null_',
-		'-d',
-		"$common_connstr user=ssltestuser sslcert=ssl/client.crt "
+		'--no-psqlrc',
+		'--no-align',
+		'--field-separator' => ',',
+		'--pset' => 'null=_null_',
+		'--dbname' =>
+		  "$common_connstr user=ssltestuser sslcert=ssl/client.crt "
 		  . sslkey('client.key'),
-		'-c',
-		"SELECT * FROM pg_stat_ssl WHERE pid = pg_backend_pid()"
+		'--command' =>
+		  "SELECT * FROM pg_stat_ssl WHERE pid = pg_backend_pid()"
 	],
 	qr{^pid,ssl,version,cipher,bits,client_dn,client_serial,issuer_dn\r?\n
 				^\d+,t,TLSv[\d.]+,[\w-]+,\d+,/?CN=ssltestuser,$serialno,/?\QCN=Test CA for PostgreSQL SSL regression test client certs\E\r?$}mx,

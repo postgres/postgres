@@ -96,7 +96,7 @@ test1|test1x|OID is unchanged|relfilenode has changed),
 $node->safe_psql('postgres',
 	"TRUNCATE index_relfilenodes; $save_relfilenodes");
 $node->issues_sql_like(
-	[ 'reindexdb', '-s', 'postgres' ],
+	[ 'reindexdb', '--system', 'postgres' ],
 	qr/statement: REINDEX SYSTEM postgres;/,
 	'reindex system tables');
 $relnode_info = $node->safe_psql('postgres', $compare_relfilenodes);
@@ -108,29 +108,37 @@ test1|test1x|OID is unchanged|relfilenode is unchanged),
 	'relfilenode change after REINDEX SYSTEM');
 
 $node->issues_sql_like(
-	[ 'reindexdb', '-t', 'test1', 'postgres' ],
+	[ 'reindexdb', '--table' => 'test1', 'postgres' ],
 	qr/statement: REINDEX TABLE public\.test1;/,
 	'reindex specific table');
 $node->issues_sql_like(
-	[ 'reindexdb', '-t', 'test1', '--tablespace', $tbspace_name, 'postgres' ],
+	[
+		'reindexdb',
+		'--table' => 'test1',
+		'--tablespace' => $tbspace_name,
+		'postgres',
+	],
 	qr/statement: REINDEX \(TABLESPACE $tbspace_name\) TABLE public\.test1;/,
 	'reindex specific table on tablespace');
 $node->issues_sql_like(
-	[ 'reindexdb', '-i', 'test1x', 'postgres' ],
+	[ 'reindexdb', '--index' => 'test1x', 'postgres' ],
 	qr/statement: REINDEX INDEX public\.test1x;/,
 	'reindex specific index');
 $node->issues_sql_like(
-	[ 'reindexdb', '-S', 'pg_catalog', 'postgres' ],
+	[ 'reindexdb', '--schema' => 'pg_catalog', 'postgres' ],
 	qr/statement: REINDEX SCHEMA pg_catalog;/,
 	'reindex specific schema');
 $node->issues_sql_like(
-	[ 'reindexdb', '-v', '-t', 'test1', 'postgres' ],
+	[ 'reindexdb', '--verbose', '--table' => 'test1', 'postgres' ],
 	qr/statement: REINDEX \(VERBOSE\) TABLE public\.test1;/,
 	'reindex with verbose output');
 $node->issues_sql_like(
 	[
-		'reindexdb', '-v', '-t', 'test1',
-		'--tablespace', $tbspace_name, 'postgres'
+		'reindexdb',
+		'--verbose',
+		'--table' => 'test1',
+		'--tablespace' => $tbspace_name,
+		'postgres',
 	],
 	qr/statement: REINDEX \(VERBOSE, TABLESPACE $tbspace_name\) TABLE public\.test1;/,
 	'reindex with verbose output and tablespace');
@@ -153,27 +161,36 @@ test1|test1x|OID has changed|relfilenode has changed),
 	'OID change after REINDEX DATABASE CONCURRENTLY');
 
 $node->issues_sql_like(
-	[ 'reindexdb', '--concurrently', '-t', 'test1', 'postgres' ],
+	[ 'reindexdb', '--concurrently', '--table' => 'test1', 'postgres' ],
 	qr/statement: REINDEX TABLE CONCURRENTLY public\.test1;/,
 	'reindex specific table concurrently');
 $node->issues_sql_like(
-	[ 'reindexdb', '--concurrently', '-i', 'test1x', 'postgres' ],
+	[ 'reindexdb', '--concurrently', '--index' => 'test1x', 'postgres' ],
 	qr/statement: REINDEX INDEX CONCURRENTLY public\.test1x;/,
 	'reindex specific index concurrently');
 $node->issues_sql_like(
-	[ 'reindexdb', '--concurrently', '-S', 'public', 'postgres' ],
+	[ 'reindexdb', '--concurrently', '--schema' => 'public', 'postgres' ],
 	qr/statement: REINDEX SCHEMA CONCURRENTLY public;/,
 	'reindex specific schema concurrently');
-$node->command_fails([ 'reindexdb', '--concurrently', '-s', 'postgres' ],
+$node->command_fails(
+	[ 'reindexdb', '--concurrently', '--system', 'postgres' ],
 	'reindex system tables concurrently');
 $node->issues_sql_like(
-	[ 'reindexdb', '--concurrently', '-v', '-t', 'test1', 'postgres' ],
+	[
+		'reindexdb', '--concurrently', '--verbose',
+		'--table' => 'test1',
+		'postgres',
+	],
 	qr/statement: REINDEX \(VERBOSE\) TABLE CONCURRENTLY public\.test1;/,
 	'reindex with verbose output concurrently');
 $node->issues_sql_like(
 	[
-		'reindexdb', '--concurrently', '-v', '-t',
-		'test1', '--tablespace', $tbspace_name, 'postgres'
+		'reindexdb',
+		'--concurrently',
+		'--verbose',
+		'--table' => 'test1',
+		'--tablespace' => $tbspace_name,
+		'postgres',
 	],
 	qr/statement: REINDEX \(VERBOSE, TABLESPACE $tbspace_name\) TABLE CONCURRENTLY public\.test1;/,
 	'reindex concurrently with verbose output and tablespace');
@@ -185,8 +202,10 @@ $node->issues_sql_like(
 # messages.
 $node->command_checks_all(
 	[
-		'reindexdb', '-t', $toast_table, '--tablespace',
-		$tbspace_name, 'postgres'
+		'reindexdb',
+		'--table' => $toast_table,
+		'--tablespace' => $tbspace_name,
+		'postgres',
 	],
 	1,
 	[],
@@ -194,8 +213,11 @@ $node->command_checks_all(
 	'reindex toast table with tablespace');
 $node->command_checks_all(
 	[
-		'reindexdb', '--concurrently', '-t', $toast_table,
-		'--tablespace', $tbspace_name, 'postgres'
+		'reindexdb',
+		'--concurrently',
+		'--table' => $toast_table,
+		'--tablespace' => $tbspace_name,
+		'postgres',
 	],
 	1,
 	[],
@@ -203,8 +225,10 @@ $node->command_checks_all(
 	'reindex toast table concurrently with tablespace');
 $node->command_checks_all(
 	[
-		'reindexdb', '-i', $toast_index, '--tablespace',
-		$tbspace_name, 'postgres'
+		'reindexdb',
+		'--index' => $toast_index,
+		'--tablespace' => $tbspace_name,
+		'postgres',
 	],
 	1,
 	[],
@@ -212,8 +236,11 @@ $node->command_checks_all(
 	'reindex toast index with tablespace');
 $node->command_checks_all(
 	[
-		'reindexdb', '--concurrently', '-i', $toast_index,
-		'--tablespace', $tbspace_name, 'postgres'
+		'reindexdb',
+		'--concurrently',
+		'--index' => $toast_index,
+		'--tablespace' => $tbspace_name,
+		'postgres',
 	],
 	1,
 	[],
@@ -246,35 +273,51 @@ $node->safe_psql(
 |);
 
 $node->command_fails(
-	[ 'reindexdb', '-j', '2', '-s', 'postgres' ],
+	[ 'reindexdb', '--jobs' => '2', '--system', 'postgres' ],
 	'parallel reindexdb cannot process system catalogs');
 $node->command_ok(
-	[ 'reindexdb', '-j', '2', '-i', 's1.i1', '-i', 's2.i2', 'postgres' ],
+	[
+		'reindexdb',
+		'--jobs' => '2',
+		'--index' => 's1.i1',
+		'--index' => 's2.i2',
+		'postgres',
+	],
 	'parallel reindexdb for indices');
 # Note that the ordering of the commands is not stable, so the second
 # command for s2.t2 is not checked after.
 $node->issues_sql_like(
-	[ 'reindexdb', '-j', '2', '-S', 's1', '-S', 's2', 'postgres' ],
+	[
+		'reindexdb',
+		'--jobs' => '2',
+		'--schema' => 's1',
+		'--schema' => 's2',
+		'postgres',
+	],
 	qr/statement:\ REINDEX TABLE s1.t1;/,
 	'parallel reindexdb for schemas does a per-table REINDEX');
-$node->command_ok(
-	[ 'reindexdb', '-j', '2', '-S', 's3' ],
+$node->command_ok([ 'reindexdb', '--jobs' => '2', '--schema' => 's3' ],
 	'parallel reindexdb with empty schema');
 $node->command_ok(
-	[ 'reindexdb', '-j', '2', '--concurrently', '-d', 'postgres' ],
+	[
+		'reindexdb',
+		'--jobs' => '2',
+		'--concurrently',
+		'--dbname' => 'postgres',
+	],
 	'parallel reindexdb on database, concurrently');
 
 # combinations of objects
 $node->issues_sql_like(
-	[ 'reindexdb', '-s', '-t', 'test1', 'postgres' ],
+	[ 'reindexdb', '--system', '--table' => 'test1', 'postgres' ],
 	qr/statement:\ REINDEX SYSTEM postgres;/,
 	'specify both --system and --table');
 $node->issues_sql_like(
-	[ 'reindexdb', '-s', '-i', 'test1x', 'postgres' ],
+	[ 'reindexdb', '--system', '--index' => 'test1x', 'postgres' ],
 	qr/statement:\ REINDEX INDEX public.test1x;/,
 	'specify both --system and --index');
 $node->issues_sql_like(
-	[ 'reindexdb', '-s', '-S', 'pg_catalog', 'postgres' ],
+	[ 'reindexdb', '--system', '--schema' => 'pg_catalog', 'postgres' ],
 	qr/statement:\ REINDEX SCHEMA pg_catalog;/,
 	'specify both --system and --schema');
 

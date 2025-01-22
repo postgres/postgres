@@ -30,7 +30,12 @@ EOM
 # Take a full backup.
 my $backup1path = $node1->backup_dir . '/backup1';
 $node1->command_ok(
-	[ 'pg_basebackup', '-D', $backup1path, '--no-sync', '-cfast' ],
+	[
+		'pg_basebackup',
+		'--pgdata' => $backup1path,
+		'--no-sync',
+		'--checkpoint' => 'fast'
+	],
 	"full backup from node1");
 
 # Insert a second row on the original node.
@@ -42,8 +47,11 @@ EOM
 my $backup2path = $node1->backup_dir . '/backup2';
 $node1->command_ok(
 	[
-		'pg_basebackup', '-D', $backup2path, '--no-sync', '-cfast',
-		'--incremental', $backup1path . '/backup_manifest'
+		'pg_basebackup',
+		'--pgdata' => $backup2path,
+		'--no-sync',
+		'--checkpoint' => 'fast',
+		'--incremental' => $backup1path . '/backup_manifest'
 	],
 	"incremental backup from node1");
 
@@ -65,8 +73,11 @@ EOM
 my $backup3path = $node1->backup_dir . '/backup3';
 $node2->command_ok(
 	[
-		'pg_basebackup', '-D', $backup3path, '--no-sync', '-cfast',
-		'--incremental', $backup2path . '/backup_manifest'
+		'pg_basebackup',
+		'--pgdata' => $backup3path,
+		'--no-sync',
+		'--checkpoint' => 'fast',
+		'--incremental' => $backup2path . '/backup_manifest'
 	],
 	"incremental backup from node2");
 

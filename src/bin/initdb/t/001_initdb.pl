@@ -22,21 +22,19 @@ program_help_ok('initdb');
 program_version_ok('initdb');
 program_options_handling_ok('initdb');
 
-command_fails([ 'initdb', '-S', "$tempdir/nonexistent" ],
+command_fails([ 'initdb', '--sync-only', "$tempdir/nonexistent" ],
 	'sync missing data directory');
 
 mkdir $xlogdir;
 mkdir "$xlogdir/lost+found";
-command_fails(
-	[ 'initdb', '-X', $xlogdir, $datadir ],
+command_fails([ 'initdb', '--waldir' => $xlogdir, $datadir ],
 	'existing nonempty xlog directory');
 rmdir "$xlogdir/lost+found";
 command_fails(
-	[ 'initdb', '-X', 'pgxlog', $datadir ],
+	[ 'initdb', '--waldir' => 'pgxlog', $datadir ],
 	'relative xlog directory not allowed');
 
-command_fails(
-	[ 'initdb', '-U', 'pg_test', $datadir ],
+command_fails([ 'initdb', '--username' => 'pg_test', $datadir ],
 	'role names cannot begin with "pg_"');
 
 mkdir $datadir;
@@ -49,12 +47,15 @@ mkdir $datadir;
 	local (%ENV) = %ENV;
 	delete $ENV{TZ};
 
-	# while we are here, also exercise -T and -c options
+	# while we are here, also exercise --text-search-config and --set options
 	command_ok(
 		[
-			'initdb', '-N', '-T', 'german', '-c',
-			'default_text_search_config=german',
-			'-X', $xlogdir, $datadir
+			'initdb',
+			'--no-sync',
+			'--text-search-config' => 'german',
+			'--set' => 'default_text_search_config=german',
+			'--waldir' => $xlogdir,
+			$datadir
 		],
 		'successful creation');
 
@@ -75,17 +76,19 @@ command_like(
 	qr/Data page checksum version:.*1/,
 	'checksums are enabled in control file');
 
-command_ok([ 'initdb', '-S', $datadir ], 'sync only');
+command_ok([ 'initdb', '--sync-only', $datadir ], 'sync only');
 command_fails([ 'initdb', $datadir ], 'existing data directory');
 
 if ($supports_syncfs)
 {
-	command_ok([ 'initdb', '-S', $datadir, '--sync-method', 'syncfs' ],
+	command_ok(
+		[ 'initdb', '--sync-only', $datadir, '--sync-method' => 'syncfs' ],
 		'sync method syncfs');
 }
 else
 {
-	command_fails([ 'initdb', '-S', $datadir, '--sync-method', 'syncfs' ],
+	command_fails(
+		[ 'initdb', '--sync-only', $datadir, '--sync-method' => 'syncfs' ],
 		'sync method syncfs');
 }
 
@@ -126,7 +129,7 @@ if ($ENV{with_icu} eq 'yes')
 	command_like(
 		[
 			'initdb', '--no-sync',
-			'-A', 'trust',
+			'-A' => 'trust',
 			'--locale-provider=icu', '--locale=und',
 			'--lc-collate=C', '--lc-ctype=C',
 			'--lc-messages=C', '--lc-numeric=C',
@@ -246,7 +249,8 @@ command_fails(
 	],
 	'fails for invalid option combination');
 
-command_fails([ 'initdb', '--no-sync', '--set', 'foo=bar', "$tempdir/dataX" ],
+command_fails(
+	[ 'initdb', '--no-sync', '--set' => 'foo=bar', "$tempdir/dataX" ],
 	'fails for invalid --set option');
 
 # Make sure multiple invocations of -c parameters are added case insensitive
@@ -279,7 +283,7 @@ command_like(
 # not part of the tests included in pg_checksums to save from
 # the creation of an extra instance.
 command_fails(
-	[ 'pg_checksums', '-D', $datadir_nochecksums ],
+	[ 'pg_checksums', '--pgdata' => $datadir_nochecksums ],
 	"pg_checksums fails with data checksum disabled");
 
 done_testing();

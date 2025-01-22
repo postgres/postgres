@@ -34,7 +34,12 @@ EOM
 # Take a full backup.
 my $backup1path = $node1->backup_dir . '/backup1';
 $node1->command_ok(
-	[ 'pg_basebackup', '-D', $backup1path, '--no-sync', '-cfast' ],
+	[
+		'pg_basebackup',
+		'--pgdata' => $backup1path,
+		'--no-sync',
+		'--checkpoint' => 'fast'
+	],
 	"full backup");
 
 # Switch to wal_level=minimal, which also requires max_wal_senders=0 and
@@ -63,8 +68,11 @@ $node1->restart;
 my $backup2path = $node1->backup_dir . '/backup2';
 $node1->command_fails_like(
 	[
-		'pg_basebackup', '-D', $backup2path, '--no-sync', '-cfast',
-		'--incremental', $backup1path . '/backup_manifest'
+		'pg_basebackup',
+		'--pgdata' => $backup2path,
+		'--no-sync',
+		'--checkpoint' => 'fast',
+		'--incremental' => $backup1path . '/backup_manifest'
 	],
 	qr/WAL summaries are required on timeline 1 from.*are incomplete/,
 	"incremental backup fails");

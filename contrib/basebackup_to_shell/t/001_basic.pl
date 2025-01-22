@@ -25,7 +25,7 @@ my $node = PostgreSQL::Test::Cluster->new('primary');
 # This is only needed on Windows machines that don't use UNIX sockets.
 $node->init(
 	'allows_streaming' => 1,
-	'auth_extra' => [ '--create-role', 'backupuser' ]);
+	'auth_extra' => [ '--create-role' => 'backupuser' ]);
 
 $node->append_conf('postgresql.conf',
 	"shared_preload_libraries = 'basebackup_to_shell'");
@@ -37,15 +37,19 @@ $node->safe_psql('postgres', 'CREATE ROLE trustworthy');
 # to keep test times reasonable. Using @pg_basebackup_defs as the first
 # element of the array passed to IPC::Run interpolate the array (as it is
 # not a reference to an array)...
-my @pg_basebackup_defs = ('pg_basebackup', '--no-sync', '-cfast');
+my @pg_basebackup_defs =
+  ('pg_basebackup', '--no-sync', '--checkpoint' => 'fast');
 
 # This particular test module generally wants to run with -Xfetch, because
 # -Xstream is not supported with a backup target, and with -U backupuser.
-my @pg_basebackup_cmd = (@pg_basebackup_defs, '-U', 'backupuser', '-Xfetch');
+my @pg_basebackup_cmd = (
+	@pg_basebackup_defs,
+	'--username' => 'backupuser',
+	'--wal-method' => 'fetch');
 
 # Can't use this module without setting basebackup_to_shell.command.
 $node->command_fails_like(
-	[ @pg_basebackup_cmd, '--target', 'shell' ],
+	[ @pg_basebackup_cmd, '--target' => 'shell' ],
 	qr/shell command for backup is not configured/,
 	'fails if basebackup_to_shell.command is not set');
 
@@ -64,13 +68,13 @@ $node->reload();
 
 # Should work now.
 $node->command_ok(
-	[ @pg_basebackup_cmd, '--target', 'shell' ],
+	[ @pg_basebackup_cmd, '--target' => 'shell' ],
 	'backup with no detail: pg_basebackup');
 verify_backup('', $backup_path, "backup with no detail");
 
 # Should fail with a detail.
 $node->command_fails_like(
-	[ @pg_basebackup_cmd, '--target', 'shell:foo' ],
+	[ @pg_basebackup_cmd, '--target' => 'shell:foo' ],
 	qr/a target detail is not permitted because the configured command does not include %d/,
 	'fails if detail provided without %d');
 
@@ -87,19 +91,19 @@ $node->reload();
 
 # Should fail due to lack of permission.
 $node->command_fails_like(
-	[ @pg_basebackup_cmd, '--target', 'shell' ],
+	[ @pg_basebackup_cmd, '--target' => 'shell' ],
 	qr/permission denied to use basebackup_to_shell/,
 	'fails if required_role not granted');
 
 # Should fail due to lack of a detail.
 $node->safe_psql('postgres', 'GRANT trustworthy TO backupuser');
 $node->command_fails_like(
-	[ @pg_basebackup_cmd, '--target', 'shell' ],
+	[ @pg_basebackup_cmd, '--target' => 'shell' ],
 	qr/a target detail is required because the configured command includes %d/,
 	'fails if %d is present and detail not given');
 
 # Should work.
-$node->command_ok([ @pg_basebackup_cmd, '--target', 'shell:bar' ],
+$node->command_ok([ @pg_basebackup_cmd, '--target' => 'shell:bar' ],
 	'backup with detail: pg_basebackup');
 verify_backup('bar.', $backup_path, "backup with detail");
 
@@ -133,9 +137,11 @@ sub verify_backup
 		# Verify.
 		$node->command_ok(
 			[
-				'pg_verifybackup', '-n',
-				'-m', "${backup_dir}/${prefix}backup_manifest",
-				'-e', $extract_path
+				'pg_verifybackup',
+				'--no-parse-wal',
+				'--manifest-path' => "${backup_dir}/${prefix}backup_manifest",
+				'--exit-on-error',
+				$extract_path
 			],
 			"$test_name: backup verifies ok");
 	}

@@ -31,7 +31,11 @@ close($fh);
 
 # but then try to use an alternate, nonexisting manifest
 command_fails_like(
-	[ 'pg_verifybackup', '-m', "$tempdir/not_the_manifest", $tempdir ],
+	[
+		'pg_verifybackup',
+		'--manifest-path' => "$tempdir/not_the_manifest",
+		$tempdir,
+	],
 	qr/could not open file.*\/not_the_manifest\"/,
 	'pg_verifybackup respects -m flag');
 

@@ -46,69 +46,75 @@ sub generate_db
 command_fails(['pg_createsubscriber'],
 	'no subscriber data directory specified');
 command_fails(
-	[ 'pg_createsubscriber', '--pgdata', $datadir ],
+	[ 'pg_createsubscriber', '--pgdata' => $datadir ],
 	'no publisher connection string specified');
 command_fails(
 	[
-		'pg_createsubscriber', '--verbose',
-		'--pgdata', $datadir,
-		'--publisher-server', 'port=5432'
+		'pg_createsubscriber',
+		'--verbose',
+		'--pgdata' => $datadir,
+		'--publisher-server' => 'port=5432',
 	],
 	'no database name specified');
 command_fails(
 	[
-		'pg_createsubscriber', '--verbose',
-		'--pgdata', $datadir,
-		'--publisher-server', 'port=5432',
-		'--database', 'pg1',
-		'--database', 'pg1'
+		'pg_createsubscriber',
+		'--verbose',
+		'--pgdata' => $datadir,
+		'--publisher-server' => 'port=5432',
+		'--database' => 'pg1',
+		'--database' => 'pg1',
 	],
 	'duplicate database name');
 command_fails(
 	[
-		'pg_createsubscriber', '--verbose',
-		'--pgdata', $datadir,
-		'--publisher-server', 'port=5432',
-		'--publication', 'foo1',
-		'--publication', 'foo1',
-		'--database', 'pg1',
-		'--database', 'pg2'
+		'pg_createsubscriber',
+		'--verbose',
+		'--pgdata' => $datadir,
+		'--publisher-server' => 'port=5432',
+		'--publication' => 'foo1',
+		'--publication' => 'foo1',
+		'--database' => 'pg1',
+		'--database' => 'pg2',
 	],
 	'duplicate publication name');
 command_fails(
 	[
-		'pg_createsubscriber', '--verbose',
-		'--pgdata', $datadir,
-		'--publisher-server', 'port=5432',
-		'--publication', 'foo1',
-		'--database', 'pg1',
-		'--database', 'pg2'
+		'pg_createsubscriber',
+		'--verbose',
+		'--pgdata' => $datadir,
+		'--publisher-server' => 'port=5432',
+		'--publication' => 'foo1',
+		'--database' => 'pg1',
+		'--database' => 'pg2',
 	],
 	'wrong number of publication names');
 command_fails(
 	[
-		'pg_createsubscriber', '--verbose',
-		'--pgdata', $datadir,
-		'--publisher-server', 'port=5432',
-		'--publication', 'foo1',
-		'--publication', 'foo2',
-		'--subscription', 'bar1',
-		'--database', 'pg1',
-		'--database', 'pg2'
+		'pg_createsubscriber',
+		'--verbose',
+		'--pgdata' => $datadir,
+		'--publisher-server' => 'port=5432',
+		'--publication' => 'foo1',
+		'--publication' => 'foo2',
+		'--subscription' => 'bar1',
+		'--database' => 'pg1',
+		'--database' => 'pg2',
 	],
 	'wrong number of subscription names');
 command_fails(
 	[
-		'pg_createsubscriber', '--verbose',
-		'--pgdata', $datadir,
-		'--publisher-server', 'port=5432',
-		'--publication', 'foo1',
-		'--publication', 'foo2',
-		'--subscription', 'bar1',
-		'--subscription', 'bar2',
-		'--replication-slot', 'baz1',
-		'--database', 'pg1',
-		'--database', 'pg2'
+		'pg_createsubscriber',
+		'--verbose',
+		'--pgdata' => $datadir,
+		'--publisher-server' => 'port=5432',
+		'--publication' => 'foo1',
+		'--publication' => 'foo2',
+		'--subscription' => 'bar1',
+		'--subscription' => 'bar2',
+		'--replication-slot' => 'baz1',
+		'--database' => 'pg1',
+		'--database' => 'pg2',
 	],
 	'wrong number of replication slot names');
 
@@ -168,41 +174,44 @@ $node_t->stop;
 # Run pg_createsubscriber on a promoted server
 command_fails(
 	[
-		'pg_createsubscriber', '--verbose',
-		'--dry-run', '--pgdata',
-		$node_t->data_dir, '--publisher-server',
-		$node_p->connstr($db1), '--socketdir',
-		$node_t->host, '--subscriber-port',
-		$node_t->port, '--database',
-		$db1, '--database',
-		$db2
+		'pg_createsubscriber',
+		'--verbose',
+		'--dry-run',
+		'--pgdata' => $node_t->data_dir,
+		'--publisher-server' => $node_p->connstr($db1),
+		'--socketdir' => $node_t->host,
+		'--subscriber-port' => $node_t->port,
+		'--database' => $db1,
+		'--database' => $db2,
 	],
 	'target server is not in recovery');
 
 # Run pg_createsubscriber when standby is running
 command_fails(
 	[
-		'pg_createsubscriber', '--verbose',
-		'--dry-run', '--pgdata',
-		$node_s->data_dir, '--publisher-server',
-		$node_p->connstr($db1), '--socketdir',
-		$node_s->host, '--subscriber-port',
-		$node_s->port, '--database',
-		$db1, '--database',
-		$db2
+		'pg_createsubscriber',
+		'--verbose',
+		'--dry-run',
+		'--pgdata' => $node_s->data_dir,
+		'--publisher-server' => $node_p->connstr($db1),
+		'--socketdir' => $node_s->host,
+		'--subscriber-port' => $node_s->port,
+		'--database' => $db1,
+		'--database' => $db2,
 	],
 	'standby is up and running');
 
 # Run pg_createsubscriber on about-to-fail node F
 command_fails(
 	[
-		'pg_createsubscriber', '--verbose',
-		'--pgdata', $node_f->data_dir,
-		'--publisher-server', $node_p->connstr($db1),
-		'--socketdir', $node_f->host,
-		'--subscriber-port', $node_f->port,
-		'--database', $db1,
-		'--database', $db2
+		'pg_createsubscriber',
+		'--verbose',
+		'--pgdata' => $node_f->data_dir,
+		'--publisher-server' => $node_p->connstr($db1),
+		'--socketdir' => $node_f->host,
+		'--subscriber-port' => $node_f->port,
+		'--database' => $db1,
+		'--database' => $db2
 	],
 	'subscriber data directory is not a copy of the source database cluster');
 
@@ -216,14 +225,15 @@ $node_c->set_standby_mode();
 # Run pg_createsubscriber on node C (P -> S -> C)
 command_fails(
 	[
-		'pg_createsubscriber', '--verbose',
-		'--dry-run', '--pgdata',
-		$node_c->data_dir, '--publisher-server',
-		$node_s->connstr($db1), '--socketdir',
-		$node_c->host, '--subscriber-port',
-		$node_c->port, '--database',
-		$db1, '--database',
-		$db2
+		'pg_createsubscriber',
+		'--verbose',
+		'--dry-run',
+		'--pgdata' => $node_c->data_dir,
+		'--publisher-server' => $node_s->connstr($db1),
+		'--socketdir' => $node_c->host,
+		'--subscriber-port' => $node_c->port,
+		'--database' => $db1,
+		'--database' => $db2,
 	],
 	'primary server is in recovery');
 
@@ -239,14 +249,16 @@ $node_p->restart;
 $node_s->stop;
 command_fails(
 	[
-		'pg_createsubscriber', '--verbose',
-		'--dry-run', '--pgdata',
-		$node_s->data_dir, '--publisher-server',
-		$node_p->connstr($db1), '--socketdir',
-		$node_s->host, '--subscriber-port',
-		$node_s->port, '--database',
-		$db1, '--database',
-		$db2
+		'pg_createsubscriber',
+		'--verbose',
+		'--dry-run',
+		'--pgdata' => $node_s->data_dir,
+		'--publisher-server' => $node_p->connstr($db1),
+		'--socketdir' => $node_s->host,
+		'--subscriber-port' => $node_s->port,
+		'--database' => $db1,
+		'--database' => $db2,
+
 	],
 	'primary contains unmet conditions on node P');
 # Restore default settings here but only apply it after testing standby. Some
@@ -268,14 +280,15 @@ max_worker_processes = 2
 });
 command_fails(
 	[
-		'pg_createsubscriber', '--verbose',
-		'--dry-run', '--pgdata',
-		$node_s->data_dir, '--publisher-server',
-		$node_p->connstr($db1), '--socketdir',
-		$node_s->host, '--subscriber-port',
-		$node_s->port, '--database',
-		$db1, '--database',
-		$db2
+		'pg_createsubscriber',
+		'--verbose',
+		'--dry-run',
+		'--pgdata' => $node_s->data_dir,
+		'--publisher-server' => $node_p->connstr($db1),
+		'--socketdir' => $node_s->host,
+		'--subscriber-port' => $node_s->port,
+		'--database' => $db1,
+		'--database' => $db2,
 	],
 	'standby contains unmet conditions on node S');
 $node_s->append_conf(
@@ -321,19 +334,20 @@ $node_s->stop;
 # dry run mode on node S
 command_ok(
 	[
-		'pg_createsubscriber', '--verbose',
-		'--recovery-timeout', "$PostgreSQL::Test::Utils::timeout_default",
-		'--dry-run', '--pgdata',
-		$node_s->data_dir, '--publisher-server',
-		$node_p->connstr($db1), '--socketdir',
-		$node_s->host, '--subscriber-port',
-		$node_s->port, '--publication',
-		'pub1', '--publication',
-		'pub2', '--subscription',
-		'sub1', '--subscription',
-		'sub2', '--database',
-		$db1, '--database',
-		$db2
+		'pg_createsubscriber',
+		'--verbose',
+		'--dry-run',
+		'--recovery-timeout' => $PostgreSQL::Test::Utils::timeout_default,
+		'--pgdata' => $node_s->data_dir,
+		'--publisher-server' => $node_p->connstr($db1),
+		'--socketdir' => $node_s->host,
+		'--subscriber-port' => $node_s->port,
+		'--publication' => 'pub1',
+		'--publication' => 'pub2',
+		'--subscription' => 'sub1',
+		'--subscription' => 'sub2',
+		'--database' => $db1,
+		'--database' => $db2,
 	],
 	'run pg_createsubscriber --dry-run on node S');
 
@@ -346,32 +360,34 @@ $node_s->stop;
 # pg_createsubscriber can run without --databases option
 command_ok(
 	[
-		'pg_createsubscriber', '--verbose',
-		'--dry-run', '--pgdata',
-		$node_s->data_dir, '--publisher-server',
-		$node_p->connstr($db1), '--socketdir',
-		$node_s->host, '--subscriber-port',
-		$node_s->port, '--replication-slot',
-		'replslot1'
+		'pg_createsubscriber',
+		'--verbose',
+		'--dry-run',
+		'--pgdata' => $node_s->data_dir,
+		'--publisher-server' => $node_p->connstr($db1),
+		'--socketdir' => $node_s->host,
+		'--subscriber-port' => $node_s->port,
+		'--replication-slot' => 'replslot1',
 	],
 	'run pg_createsubscriber without --databases');
 
-# Run pg_createsubscriber on node S
+# Run pg_createsubscriber on node S.  --verbose is used twice
+# to show more information.
 command_ok(
 	[
-		'pg_createsubscriber', '--verbose',
-		'--recovery-timeout', "$PostgreSQL::Test::Utils::timeout_default",
-		'--verbose', '--pgdata',
-		$node_s->data_dir, '--publisher-server',
-		$node_p->connstr($db1), '--socketdir',
-		$node_s->host, '--subscriber-port',
-		$node_s->port, '--publication',
-		'pub1', '--publication',
-		'Pub2', '--replication-slot',
-		'replslot1', '--replication-slot',
-		'replslot2', '--database',
-		$db1, '--database',
-		$db2
+		'pg_createsubscriber',
+		'--verbose', '--verbose',
+		'--recovery-timeout' => $PostgreSQL::Test::Utils::timeout_default,
+		'--pgdata' => $node_s->data_dir,
+		'--publisher-server' => $node_p->connstr($db1),
+		'--socketdir' => $node_s->host,
+		'--subscriber-port' => $node_s->port,
+		'--publication' => 'pub1',
+		'--publication' => 'pub2',
+		'--replication-slot' => 'replslot1',
+		'--replication-slot' => 'replslot2',
+		'--database' => $db1,
+		'--database' => $db2,
 	],
 	'run pg_createsubscriber on node S');
 

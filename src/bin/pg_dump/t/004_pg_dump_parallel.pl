@@ -48,33 +48,42 @@ insert into tht select (x%10)::text::digit, x from generate_series(1,1000) x;
 
 $node->command_ok(
 	[
-		'pg_dump', '-Fd', '--no-sync', '-j2', '-f', "$backupdir/dump1",
-		$node->connstr($dbname1)
+		'pg_dump',
+		'--format' => 'directory',
+		'--no-sync',
+		'--jobs' => 2,
+		'--file' => "$backupdir/dump1",
+		$node->connstr($dbname1),
 	],
 	'parallel dump');
 
 $node->command_ok(
 	[
-		'pg_restore', '-v',
-		'-d', $node->connstr($dbname2),
-		'-j3', "$backupdir/dump1"
+		'pg_restore', '--verbose',
+		'--dbname' => $node->connstr($dbname2),
+		'--jobs' => 3,
+		"$backupdir/dump1",
 	],
 	'parallel restore');
 
 $node->command_ok(
 	[
-		'pg_dump', '-Fd',
-		'--no-sync', '-j2',
-		'-f', "$backupdir/dump2",
-		'--inserts', $node->connstr($dbname1)
+		'pg_dump',
+		'--format' => 'directory',
+		'--no-sync',
+		'--jobs' => 2,
+		'--file' => "$backupdir/dump2",
+		'--inserts',
+		$node->connstr($dbname1),
 	],
 	'parallel dump as inserts');
 
 $node->command_ok(
 	[
-		'pg_restore', '-v',
-		'-d', $node->connstr($dbname3),
-		'-j3', "$backupdir/dump2"
+		'pg_restore', '--verbose',
+		'--dbname' => $node->connstr($dbname3),
+		'--jobs' => 3,
+		"$backupdir/dump2",
 	],
 	'parallel restore as inserts');
 

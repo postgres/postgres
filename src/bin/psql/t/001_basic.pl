@@ -216,11 +216,12 @@ $node->safe_psql('postgres', "CREATE TABLE tab_psql_single (a int);");
 # Tests with ON_ERROR_STOP.
 $node->command_ok(
 	[
-		'psql', '-X',
-		'--single-transaction', '-v',
-		'ON_ERROR_STOP=1', '-c',
-		'INSERT INTO tab_psql_single VALUES (1)', '-c',
-		'INSERT INTO tab_psql_single VALUES (2)'
+		'psql',
+		'--no-psqlrc',
+		'--single-transaction',
+		'--set' => 'ON_ERROR_STOP=1',
+		'--command' => 'INSERT INTO tab_psql_single VALUES (1)',
+		'--command' => 'INSERT INTO tab_psql_single VALUES (2)',
 	],
 	'ON_ERROR_STOP, --single-transaction and multiple -c switches');
 my $row_count =
@@ -231,11 +232,12 @@ is($row_count, '2',
 
 $node->command_fails(
 	[
-		'psql', '-X',
-		'--single-transaction', '-v',
-		'ON_ERROR_STOP=1', '-c',
-		'INSERT INTO tab_psql_single VALUES (3)', '-c',
-		"\\copy tab_psql_single FROM '$tempdir/nonexistent'"
+		'psql',
+		'--no-psqlrc',
+		'--single-transaction',
+		'--set' => 'ON_ERROR_STOP=1',
+		'--command' => 'INSERT INTO tab_psql_single VALUES (3)',
+		'--command' => "\\copy tab_psql_single FROM '$tempdir/nonexistent'"
 	],
 	'ON_ERROR_STOP, --single-transaction and multiple -c switches, error');
 $row_count =
@@ -252,9 +254,12 @@ append_to_file($copy_sql_file,
 append_to_file($insert_sql_file, 'INSERT INTO tab_psql_single VALUES (4);');
 $node->command_ok(
 	[
-		'psql', '-X', '--single-transaction', '-v',
-		'ON_ERROR_STOP=1', '-f', $insert_sql_file, '-f',
-		$insert_sql_file
+		'psql',
+		'--no-psqlrc',
+		'--single-transaction',
+		'--set' => 'ON_ERROR_STOP=1',
+		'--file' => $insert_sql_file,
+		'--file' => $insert_sql_file
 	],
 	'ON_ERROR_STOP, --single-transaction and multiple -f switches');
 $row_count =
@@ -265,9 +270,12 @@ is($row_count, '4',
 
 $node->command_fails(
 	[
-		'psql', '-X', '--single-transaction', '-v',
-		'ON_ERROR_STOP=1', '-f', $insert_sql_file, '-f',
-		$copy_sql_file
+		'psql',
+		'--no-psqlrc',
+		'--single-transaction',
+		'--set' => 'ON_ERROR_STOP=1',
+		'--file' => $insert_sql_file,
+		'--file' => $copy_sql_file
 	],
 	'ON_ERROR_STOP, --single-transaction and multiple -f switches, error');
 $row_count =
@@ -281,11 +289,12 @@ is($row_count, '4',
 # transaction commits.
 $node->command_fails(
 	[
-		'psql', '-X',
-		'--single-transaction', '-f',
-		$insert_sql_file, '-f',
-		$insert_sql_file, '-c',
-		"\\copy tab_psql_single FROM '$tempdir/nonexistent'"
+		'psql',
+		'--no-psqlrc',
+		'--single-transaction',
+		'--file' => $insert_sql_file,
+		'--file' => $insert_sql_file,
+		'--command' => "\\copy tab_psql_single FROM '$tempdir/nonexistent'"
 	],
 	'no ON_ERROR_STOP, --single-transaction and multiple -f/-c switches');
 $row_count =
@@ -298,9 +307,12 @@ is($row_count, '6',
 # returns a success and the transaction commits.
 $node->command_ok(
 	[
-		'psql', '-X', '--single-transaction', '-f',
-		$insert_sql_file, '-f', $insert_sql_file, '-f',
-		$copy_sql_file
+		'psql',
+		'--no-psqlrc',
+		'--single-transaction',
+		'--file' => $insert_sql_file,
+		'--file' => $insert_sql_file,
+		'--file' => $copy_sql_file
 	],
 	'no ON_ERROR_STOP, --single-transaction and multiple -f switches');
 $row_count =
@@ -313,11 +325,12 @@ is($row_count, '8',
 # the transaction commit even if there is a failure in-between.
 $node->command_ok(
 	[
-		'psql', '-X',
-		'--single-transaction', '-c',
-		'INSERT INTO tab_psql_single VALUES (5)', '-f',
-		$copy_sql_file, '-c',
-		'INSERT INTO tab_psql_single VALUES (6)'
+		'psql',
+		'--no-psqlrc',
+		'--single-transaction',
+		'--command' => 'INSERT INTO tab_psql_single VALUES (5)',
+		'--file' => $copy_sql_file,
+		'--command' => 'INSERT INTO tab_psql_single VALUES (6)'
 	],
 	'no ON_ERROR_STOP, --single-transaction and multiple -c switches');
 $row_count =

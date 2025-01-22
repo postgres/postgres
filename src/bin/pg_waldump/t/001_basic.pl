@@ -21,31 +21,31 @@ command_fails_like(
 
 # invalid option arguments
 command_fails_like(
-	[ 'pg_waldump', '--block', 'bad' ],
+	[ 'pg_waldump', '--block' => 'bad' ],
 	qr/error: invalid block number/,
 	'invalid block number');
 command_fails_like(
-	[ 'pg_waldump', '--fork', 'bad' ],
+	[ 'pg_waldump', '--fork' => 'bad' ],
 	qr/error: invalid fork name/,
 	'invalid fork name');
 command_fails_like(
-	[ 'pg_waldump', '--limit', 'bad' ],
+	[ 'pg_waldump', '--limit' => 'bad' ],
 	qr/error: invalid value/,
 	'invalid limit');
 command_fails_like(
-	[ 'pg_waldump', '--relation', 'bad' ],
+	[ 'pg_waldump', '--relation' => 'bad' ],
 	qr/error: invalid relation/,
 	'invalid relation specification');
 command_fails_like(
-	[ 'pg_waldump', '--rmgr', 'bad' ],
+	[ 'pg_waldump', '--rmgr' => 'bad' ],
 	qr/error: resource manager .* does not exist/,
 	'invalid rmgr name');
 command_fails_like(
-	[ 'pg_waldump', '--start', 'bad' ],
+	[ 'pg_waldump', '--start' => 'bad' ],
 	qr/error: invalid WAL location/,
 	'invalid start LSN');
 command_fails_like(
-	[ 'pg_waldump', '--end', 'bad' ],
+	[ 'pg_waldump', '--end' => 'bad' ],
 	qr/error: invalid WAL location/,
 	'invalid end LSN');
 
@@ -199,18 +199,24 @@ command_like(
 	qr/./,
 	'runs with start and end segment specified');
 command_fails_like(
-	[ 'pg_waldump', '-p', $node->data_dir ],
+	[ 'pg_waldump', '--path' => $node->data_dir ],
 	qr/error: no start WAL location given/,
 	'path option requires start location');
 command_like(
 	[
-		'pg_waldump', '-p', $node->data_dir, '--start',
-		$start_lsn, '--end', $end_lsn
+		'pg_waldump',
+		'--path' => $node->data_dir,
+		'--start' => $start_lsn,
+		'--end' => $end_lsn,
 	],
 	qr/./,
 	'runs with path option and start and end locations');
 command_fails_like(
-	[ 'pg_waldump', '-p', $node->data_dir, '--start', $start_lsn ],
+	[
+		'pg_waldump',
+		'--path' => $node->data_dir,
+		'--start' => $start_lsn,
+	],
 	qr/error: error in WAL record at/,
 	'falling off the end of the WAL results in an error');
 
@@ -222,7 +228,11 @@ command_like(
 	qr/^$/,
 	'no output with --quiet option');
 command_fails_like(
-	[ 'pg_waldump', '--quiet', '-p', $node->data_dir, '--start', $start_lsn ],
+	[
+		'pg_waldump', '--quiet',
+		'--path' => $node->data_dir,
+		'--start' => $start_lsn
+	],
 	qr/error: error in WAL record at/,
 	'errors are shown with --quiet');
 
@@ -240,7 +250,8 @@ command_fails_like(
 	my (@cmd, $stdout, $stderr, $result);
 
 	@cmd = (
-		'pg_waldump', '--start', $new_start,
+		'pg_waldump',
+		'--start' => $new_start,
 		$node->data_dir . '/pg_wal/' . $start_walfile);
 	$result = IPC::Run::run \@cmd, '>', \$stdout, '2>', \$stderr;
 	ok($result, "runs with start segment and start LSN specified");
@@ -258,8 +269,10 @@ sub test_pg_waldump
 	my (@cmd, $stdout, $stderr, $result, @lines);
 
 	@cmd = (
-		'pg_waldump', '-p', $node->data_dir, '--start', $start_lsn, '--end',
-		$end_lsn);
+		'pg_waldump',
+		'--path' => $node->data_dir,
+		'--start' => $start_lsn,
+		'--end' => $end_lsn);
 	push @cmd, @opts;
 	$result = IPC::Run::run \@cmd, '>', \$stdout, '2>', \$stderr;
 	ok($result, "pg_waldump @opts: runs ok");
@@ -274,7 +287,7 @@ my @lines;
 @lines = test_pg_waldump;
 is(grep(!/^rmgr: \w/, @lines), 0, 'all output lines are rmgr lines');
 
-@lines = test_pg_waldump('--limit', 6);
+@lines = test_pg_waldump('--limit' => 6);
 is(@lines, 6, 'limit option observed');
 
 @lines = test_pg_waldump('--fullpage');
@@ -288,21 +301,20 @@ is(grep(/^rmgr:/, @lines), 0, 'no rmgr lines output');
 like($lines[0], qr/WAL statistics/, "statistics on stdout");
 is(grep(/^rmgr:/, @lines), 0, 'no rmgr lines output');
 
-@lines = test_pg_waldump('--rmgr', 'Btree');
+@lines = test_pg_waldump('--rmgr' => 'Btree');
 is(grep(!/^rmgr: Btree/, @lines), 0, 'only Btree lines');
 
-@lines = test_pg_waldump('--fork', 'init');
+@lines = test_pg_waldump('--fork' => 'init');
 is(grep(!/fork init/, @lines), 0, 'only init fork lines');
 
-@lines = test_pg_waldump('--relation',
-	"$default_ts_oid/$postgres_db_oid/$rel_t1_oid");
+@lines = test_pg_waldump(
+	'--relation' => "$default_ts_oid/$postgres_db_oid/$rel_t1_oid");
 is(grep(!/rel $default_ts_oid\/$postgres_db_oid\/$rel_t1_oid/, @lines),
 	0, 'only lines for selected relation');
 
-@lines =
-  test_pg_waldump('--relation',
-	"$default_ts_oid/$postgres_db_oid/$rel_i1a_oid",
-	'--block', 1);
+@lines = test_pg_waldump(
+	'--relation' => "$default_ts_oid/$postgres_db_oid/$rel_i1a_oid",
+	'--block' => 1);
 is(grep(!/\bblk 1\b/, @lines), 0, 'only lines for selected block');
 
 

@@ -17,27 +17,30 @@ my $primary_pgdata = PostgreSQL::Test::Utils::tempdir;
 my $standby_pgdata = PostgreSQL::Test::Utils::tempdir;
 command_fails(
 	[
-		'pg_rewind', '--debug',
-		'--target-pgdata', $primary_pgdata,
-		'--source-pgdata', $standby_pgdata,
+		'pg_rewind',
+		'--debug',
+		'--target-pgdata' => $primary_pgdata,
+		'--source-pgdata' => $standby_pgdata,
 		'extra_arg1'
 	],
 	'too many arguments');
-command_fails([ 'pg_rewind', '--target-pgdata', $primary_pgdata ],
+command_fails([ 'pg_rewind', '--target-pgdata' => $primary_pgdata ],
 	'no source specified');
 command_fails(
 	[
-		'pg_rewind', '--debug',
-		'--target-pgdata', $primary_pgdata,
-		'--source-pgdata', $standby_pgdata,
-		'--source-server', 'incorrect_source'
+		'pg_rewind',
+		'--debug',
+		'--target-pgdata' => $primary_pgdata,
+		'--source-pgdata' => $standby_pgdata,
+		'--source-server' => 'incorrect_source'
 	],
 	'both remote and local sources specified');
 command_fails(
 	[
-		'pg_rewind', '--debug',
-		'--target-pgdata', $primary_pgdata,
-		'--source-pgdata', $standby_pgdata,
+		'pg_rewind',
+		'--debug',
+		'--target-pgdata' => $primary_pgdata,
+		'--source-pgdata' => $standby_pgdata,
 		'--write-recovery-conf'
 	],
 	'no local source with --write-recovery-conf');
