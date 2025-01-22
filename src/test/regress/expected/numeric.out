@@ -2384,6 +2384,84 @@ SELECT to_number('123456', '99999V99');
  1234.560000000000000000
 (1 row)
 
+-- Test for correct conversion between numbers and Roman numerals
+WITH rows AS
+  (SELECT i, to_char(i, 'RN') AS roman FROM generate_series(1, 3999) AS i)
+SELECT
+  bool_and(to_number(roman, 'RN') = i) as valid
+FROM rows;
+ valid 
+-------
+ t
+(1 row)
+
+-- Some additional tests for RN input
+SELECT to_number('CvIiI', 'rn');
+ to_number 
+-----------
+       108
+(1 row)
+
+SELECT to_number('MMXX  ', 'RN');
+ to_number 
+-----------
+      2020
+(1 row)
+
+SELECT to_number('  XIV', '  RN');
+ to_number 
+-----------
+        14
+(1 row)
+
+SELECT to_number('  XIV  ', '  RN');
+ to_number 
+-----------
+        14
+(1 row)
+
+SELECT to_number('M CC', 'RN');
+ to_number 
+-----------
+      1000
+(1 row)
+
+-- error cases
+SELECT to_number('viv', 'RN');
+ERROR:  invalid Roman numeral
+SELECT to_number('DCCCD', 'RN');
+ERROR:  invalid Roman numeral
+SELECT to_number('XIXL', 'RN');
+ERROR:  invalid Roman numeral
+SELECT to_number('MCCM', 'RN');
+ERROR:  invalid Roman numeral
+SELECT to_number('MMMM', 'RN');
+ERROR:  invalid Roman numeral
+SELECT to_number('VV', 'RN');
+ERROR:  invalid Roman numeral
+SELECT to_number('IL', 'RN');
+ERROR:  invalid Roman numeral
+SELECT to_number('VIX', 'RN');
+ERROR:  invalid Roman numeral
+SELECT to_number('LXC', 'RN');
+ERROR:  invalid Roman numeral
+SELECT to_number('DCM', 'RN');
+ERROR:  invalid Roman numeral
+SELECT to_number('MMMDCM', 'RN');
+ERROR:  invalid Roman numeral
+SELECT to_number('CLXC', 'RN');
+ERROR:  invalid Roman numeral
+SELECT to_number('CM', 'MIRN');
+ERROR:  "RN" is incompatible with other formats
+DETAIL:  "RN" may only be used together with "FM".
+SELECT to_number('CM', 'RNRN');
+ERROR:  cannot use "RN" twice
+SELECT to_number('qiv', 'RN');
+ERROR:  invalid Roman numeral
+SELECT to_number('', 'RN');
+ERROR:  invalid input syntax for type numeric: " "
+SELECT to_number(' ', 'RN');
+ERROR:  invalid Roman numeral
 RESET lc_numeric;
 --
 -- Input syntax

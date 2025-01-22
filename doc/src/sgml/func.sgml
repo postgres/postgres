@@ -8669,8 +8669,8 @@ SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
         <entry>plus/minus sign in specified position</entry>
        </row>
        <row>
-        <entry><literal>RN</literal></entry>
-        <entry>Roman numeral (input between 1 and 3999)</entry>
+        <entry><literal>RN</literal> or <literal>rn</literal></entry>
+        <entry>Roman numeral (values between 1 and 3999)</entry>
        </row>
        <row>
         <entry><literal>TH</literal> or <literal>th</literal></entry>
@@ -8796,6 +8796,19 @@ SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
        combination with any of the other formatting patterns or
        modifiers other than digit and decimal point patterns, and must be at the end of the format string
        (e.g., <literal>9.99EEEE</literal> is a valid pattern).
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       In <function>to_number()</function>, the <literal>RN</literal>
+       pattern converts Roman numerals (in standard form) to numbers.
+       Input is case-insensitive, so <literal>RN</literal>
+       and <literal>rn</literal> are equivalent.  <literal>RN</literal>
+       cannot be used in combination with any other formatting patterns or
+       modifiers except <literal>FM</literal>, which is applicable only
+       in <function>to_char()</function> and is ignored
+       in <function>to_number()</function>.
       </para>
      </listitem>
     </itemizedlist>

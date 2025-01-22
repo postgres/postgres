@@ -1085,6 +1085,39 @@ SELECT to_number('1234.56','L99,999.99');
 SELECT to_number('1,234.56','L99,999.99');
 SELECT to_number('42nd', '99th');
 SELECT to_number('123456', '99999V99');
+
+-- Test for correct conversion between numbers and Roman numerals
+WITH rows AS
+  (SELECT i, to_char(i, 'RN') AS roman FROM generate_series(1, 3999) AS i)
+SELECT
+  bool_and(to_number(roman, 'RN') = i) as valid
+FROM rows;
+
+-- Some additional tests for RN input
+SELECT to_number('CvIiI', 'rn');
+SELECT to_number('MMXX  ', 'RN');
+SELECT to_number('  XIV', '  RN');
+SELECT to_number('  XIV  ', '  RN');
+SELECT to_number('M CC', 'RN');
+-- error cases
+SELECT to_number('viv', 'RN');
+SELECT to_number('DCCCD', 'RN');
+SELECT to_number('XIXL', 'RN');
+SELECT to_number('MCCM', 'RN');
+SELECT to_number('MMMM', 'RN');
+SELECT to_number('VV', 'RN');
+SELECT to_number('IL', 'RN');
+SELECT to_number('VIX', 'RN');
+SELECT to_number('LXC', 'RN');
+SELECT to_number('DCM', 'RN');
+SELECT to_number('MMMDCM', 'RN');
+SELECT to_number('CLXC', 'RN');
+SELECT to_number('CM', 'MIRN');
+SELECT to_number('CM', 'RNRN');
+SELECT to_number('qiv', 'RN');
+SELECT to_number('', 'RN');
+SELECT to_number(' ', 'RN');
+
 RESET lc_numeric;
 
 --
