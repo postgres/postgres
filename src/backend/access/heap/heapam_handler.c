@@ -587,7 +587,7 @@ heapam_relation_set_new_filelocator(Relation rel,
 	SMgrRelation srel;
 
 	RelFileLocator oldlocator = rel->rd_locator;
-	
+
 	/*
 	 * Initialize to the minimum XID that could put tuples in the table. We
 	 * know that no xacts older than RecentXmin are still running, so that

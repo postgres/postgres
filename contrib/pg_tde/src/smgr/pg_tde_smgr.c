@@ -19,14 +19,14 @@ typedef struct TDESMgrRelationData
 	 * for md.c; per-fork arrays of the number of open segments
 	 * (md_num_open_segs) and the segments themselves (md_seg_fds).
 	 */
-	int	md_num_open_segs[MAX_FORKNUM + 1];
+	int			md_num_open_segs[MAX_FORKNUM + 1];
 	struct _MdfdVec *md_seg_fds[MAX_FORKNUM + 1];
 
-	bool encrypted_relation;
-	RelKeyData relKey;
-}			TDESMgrRelationData;
+	bool		encrypted_relation;
+	RelKeyData	relKey;
+} TDESMgrRelationData;
 
-typedef TDESMgrRelationData * TDESMgrRelation;
+typedef TDESMgrRelationData *TDESMgrRelation;
 
 /*
  * we only encrypt main and init forks
@@ -38,7 +38,7 @@ tde_is_encryption_required(TDESMgrRelation tdereln, ForkNumber forknum)
 }
 
 static RelKeyData *
-tde_smgr_get_key(SMgrRelation reln, RelFileLocator* old_locator, bool can_create)
+tde_smgr_get_key(SMgrRelation reln, RelFileLocator *old_locator, bool can_create)
 {
 	TdeCreateEvent *event;
 	RelKeyData *rkd;
@@ -86,12 +86,13 @@ tde_smgr_get_key(SMgrRelation reln, RelFileLocator* old_locator, bool can_create
 	}
 
 	/* check if we had a key for the old locator, if there's one */
-	if(old_locator != NULL && can_create)
+	if (old_locator != NULL && can_create)
 	{
 		RelKeyData *rkd2 = GetSMGRRelationKey(*old_locator);
-		if(rkd2!=NULL)
+
+		if (rkd2 != NULL)
 		{
-			// create a new key for the new file
+			/* create a new key for the new file */
 			return pg_tde_create_key_map_entry(&reln->smgr_rlocator.locator, TDE_KEY_TYPE_SMGR);
 		}
 	}
@@ -112,9 +113,9 @@ tde_mdwritev(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 	}
 	else
 	{
-		unsigned char	   *local_blocks = palloc(BLCKSZ * (nblocks + 1));
-		unsigned char	   *local_blocks_aligned = (unsigned char *) TYPEALIGN(PG_IO_ALIGN_SIZE, local_blocks);
-		void **local_buffers = palloc(sizeof(void *) * nblocks);
+		unsigned char *local_blocks = palloc(BLCKSZ * (nblocks + 1));
+		unsigned char *local_blocks_aligned = (unsigned char *) TYPEALIGN(PG_IO_ALIGN_SIZE, local_blocks);
+		void	  **local_buffers = palloc(sizeof(void *) * nblocks);
 
 		AesInit();
 
@@ -126,14 +127,14 @@ tde_mdwritev(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 
 			local_buffers[i] = &local_blocks_aligned[i * BLCKSZ];
 
-			
+
 			memcpy(iv + 4, &bn, sizeof(BlockNumber));
 
 			AesEncrypt(rkd->internal_key.key, iv, ((unsigned char **) buffers)[i], BLCKSZ, local_buffers[i], &out_len);
 		}
 
 		mdwritev(reln, forknum, blocknum,
-				 (const void**) local_buffers, nblocks, skipFsync);
+				 (const void **) local_buffers, nblocks, skipFsync);
 
 		pfree(local_blocks);
 		pfree(local_buffers);
@@ -155,7 +156,7 @@ tde_mdextend(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 	{
 		unsigned char *local_blocks = palloc(BLCKSZ * (1 + 1));
 		unsigned char *local_blocks_aligned = (unsigned char *) TYPEALIGN(PG_IO_ALIGN_SIZE, local_blocks);
-		int	out_len = BLCKSZ;
+		int			out_len = BLCKSZ;
 		unsigned char iv[16] = {
 			0,
 		};
@@ -175,7 +176,7 @@ static void
 tde_mdreadv(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 			void **buffers, BlockNumber nblocks)
 {
-	int	out_len = BLCKSZ;
+	int			out_len = BLCKSZ;
 	TDESMgrRelation tdereln = (TDESMgrRelation) reln;
 	RelKeyData *rkd = &tdereln->relKey;
 
@@ -228,6 +229,7 @@ tde_mdcreate(RelFileLocator relold, SMgrRelation reln, ForkNumber forknum, bool 
 {
 	TDESMgrRelation tdereln = (TDESMgrRelation) reln;
 	RelKeyData *key;
+
 	/*
 	 * This is the only function that gets called during actual CREATE
 	 * TABLE/INDEX (EVENT TRIGGER)

@@ -103,7 +103,7 @@ char	   *expecteddir = ".";
 char	   *bindir = PGBINDIR;
 char	   *launcher = NULL;
 static _stringlist *loadextension = NULL;
-char		*exec_sql = NULL;
+char	   *exec_sql = NULL;
 static int	max_connections = 0;
 static int	max_concurrent_tests = 0;
 static char *encoding = NULL;
@@ -1984,9 +1984,10 @@ create_database(const char *dbname)
 	 */
 	for (sl = loadextension; sl != NULL; sl = sl->next)
 		psql_command(dbname, "CREATE EXTENSION IF NOT EXISTS \"%s\"", sl->str);
+
 	/*
-	 * Percona extension
-	 * Execute any additional sql commands provided by caller
+	 * Percona extension Execute any additional sql commands provided by
+	 * caller
 	 */
 	if (exec_sql)
 	{
@@ -1997,10 +1998,10 @@ create_database(const char *dbname)
 		if (sql_file == NULL)
 		{
 			bail("could not open \"%s\" to read extra setup file: %s",
-					exec_sql, strerror(errno));
+				 exec_sql, strerror(errno));
 		}
 		while (fgets(line_buf, sizeof(line_buf), sql_file) != NULL)
-			psql_command(dbname,"%s",line_buf);
+			psql_command(dbname, "%s", line_buf);
 		fclose(sql_file);
 	}
 }

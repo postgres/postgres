@@ -945,7 +945,7 @@ typedef struct PartitionRangeDatum
 typedef struct SinglePartitionSpec
 {
 	NodeTag		type;
-}			SinglePartitionSpec;
+} SinglePartitionSpec;
 
 /*
  * PartitionCmd - info for ALTER TABLE/INDEX ATTACH/DETACH PARTITION commands

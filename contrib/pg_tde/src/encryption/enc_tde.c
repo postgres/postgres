@@ -184,10 +184,10 @@ pg_tde_crypt(const char *iv_prefix, uint32 start_offset, const char *data, uint3
 void
 pg_tde_crypt_tuple(HeapTuple tuple, HeapTuple out_tuple, RelKeyData *key, const char *context)
 {
-	char iv_prefix[16] = {0};
-	uint32 data_len = tuple->t_len - tuple->t_data->t_hoff;
-	char *tup_data = (char *) tuple->t_data + tuple->t_data->t_hoff;
-	char *out_data = (char *) out_tuple->t_data + out_tuple->t_data->t_hoff;
+	char		iv_prefix[16] = {0};
+	uint32		data_len = tuple->t_len - tuple->t_data->t_hoff;
+	char	   *tup_data = (char *) tuple->t_data + tuple->t_data->t_hoff;
+	char	   *out_data = (char *) out_tuple->t_data + out_tuple->t_data->t_hoff;
 
 	SetIVPrefix(&tuple->t_self, iv_prefix);
 
@@ -215,12 +215,12 @@ PGTdePageAddItemExtended(RelFileLocator rel,
 						 int flags)
 {
 	OffsetNumber off = PageAddItemExtended(page, item, size, offsetNumber, flags);
-	PageHeader phdr = (PageHeader) page;
+	PageHeader	phdr = (PageHeader) page;
 	unsigned long header_size = ((HeapTupleHeader) item)->t_hoff;
-	char iv_prefix[16] = {0,};
-	char *toAddr = ((char *) phdr) + phdr->pd_upper + header_size;
-	char *data = item + header_size;
-	uint32 data_len = size - header_size;
+	char		iv_prefix[16] = {0,};
+	char	   *toAddr = ((char *) phdr) + phdr->pd_upper + header_size;
+	char	   *data = item + header_size;
+	uint32		data_len = size - header_size;
 
 	/* ctid stored in item is incorrect (not set) at this point */
 	ItemPointerData ip;

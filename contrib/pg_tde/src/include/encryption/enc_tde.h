@@ -55,4 +55,4 @@ extern OffsetNumber
 extern void AesEncryptKey(const TDEPrincipalKey *principal_key, Oid dbOid, RelKeyData *rel_key_data, RelKeyData **p_enc_rel_key_data, size_t *enc_key_bytes);
 extern void AesDecryptKey(const TDEPrincipalKey *principal_key, Oid dbOid, RelKeyData **p_rel_key_data, RelKeyData *enc_rel_key_data, size_t *key_bytes);
 
-#endif /* ENC_TDE_H */
+#endif							/* ENC_TDE_H */

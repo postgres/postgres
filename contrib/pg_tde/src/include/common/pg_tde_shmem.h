@@ -23,7 +23,7 @@ typedef enum
 
 	/* Must be the last entry in the enum */
 	TDE_LWLOCK_COUNT
-} TDELockTypes;
+}			TDELockTypes;
 
 typedef struct TDEShmemSetupRoutine
 {
@@ -34,24 +34,24 @@ typedef struct TDEShmemSetupRoutine
 	 * area acquired. The argument to the function is the start of the shared
 	 * memory address that can be used to store the shared data structures.
 	 */
-	Size (*init_shared_state) (void *raw_dsa_area);
+	Size		(*init_shared_state) (void *raw_dsa_area);
 
 	/*
 	 * shmem_startup gets called at the time of postmaster shutdown
 	 */
-	void (*shmem_kill) (int code, Datum arg);
+	void		(*shmem_kill) (int code, Datum arg);
 
 	/*
 	 * The callback must return the size of the shared memory acquired.
 	 */
-	Size (*required_shared_mem_size) (void);
+	Size		(*required_shared_mem_size) (void);
 
 	/*
 	 * Gets called after all shared memory structures are initialized and here
 	 * you can create shared memory hash tables or any other shared objects
 	 * that needs to live in DSA area.
 	 */
-	void (*init_dsa_area_objects) (dsa_area *dsa, void *raw_dsa_area);
+	void		(*init_dsa_area_objects) (dsa_area *dsa, void *raw_dsa_area);
 } TDEShmemSetupRoutine;
 
 /* Interface to register the shared memory requests */
@@ -60,4 +60,4 @@ extern void TdeShmemInit(void);
 extern Size TdeRequiredSharedMemorySize(void);
 extern int	TdeRequiredLocksCount(void);
 
-#endif /* PG_TDE_SHMEM_H */
+#endif							/* PG_TDE_SHMEM_H */

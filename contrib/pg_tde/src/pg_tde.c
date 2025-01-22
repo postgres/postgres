@@ -49,15 +49,15 @@ PG_MODULE_MAGIC;
 struct OnExtInstall
 {
 	pg_tde_on_ext_install_callback function;
-	void *arg;
+	void	   *arg;
 };
 
 static struct OnExtInstall on_ext_install_list[MAX_ON_INSTALLS];
 static int	on_ext_install_index = 0;
 static void run_extension_install_callbacks(XLogExtensionInstall *xlrec, bool redo);
-void _PG_init(void);
-Datum pg_tde_extension_initialize(PG_FUNCTION_ARGS);
-Datum pg_tde_version(PG_FUNCTION_ARGS);
+void		_PG_init(void);
+Datum		pg_tde_extension_initialize(PG_FUNCTION_ARGS);
+Datum		pg_tde_version(PG_FUNCTION_ARGS);
 
 static shmem_startup_hook_type prev_shmem_startup_hook = NULL;
 static shmem_request_hook_type prev_shmem_request_hook = NULL;
@@ -116,7 +116,7 @@ _PG_init(void)
 #ifdef PERCONA_EXT
 	XLogInitGUC();
 #endif
-	
+
 	PrincipalKeyGucInit();
 	prev_shmem_request_hook = shmem_request_hook;
 	shmem_request_hook = tde_shmem_request;
@@ -193,7 +193,7 @@ pg_tde_init_data_dir(void)
 		if (MakePGDirectory(PG_TDE_DATA_DIR) < 0)
 			ereport(ERROR,
 					(errcode_for_file_access(),
-						errmsg("could not create tde directory \"%s\": %m",
+					 errmsg("could not create tde directory \"%s\": %m",
 							PG_TDE_DATA_DIR)));
 	}
 }
@@ -205,8 +205,8 @@ pg_tde_init_data_dir(void)
 static void
 run_extension_install_callbacks(XLogExtensionInstall *xlrec, bool redo)
 {
-	int	i;
-	int	tde_table_count = 0;
+	int			i;
+	int			tde_table_count = 0;
 
 	/*
 	 * Get the number of tde tables in this database should always be zero.

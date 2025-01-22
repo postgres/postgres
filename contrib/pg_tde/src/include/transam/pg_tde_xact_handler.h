@@ -18,4 +18,4 @@ extern void pg_tde_subxact_callback(SubXactEvent event, SubTransactionId mySubid
 extern void RegisterEntryForDeletion(const RelFileLocator *rlocator, off_t map_entry_offset, bool atCommit);
 
 
-#endif /* PG_TDE_XACT_HANDLER_H */
+#endif							/* PG_TDE_XACT_HANDLER_H */

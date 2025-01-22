@@ -42,14 +42,14 @@ static void init_keys(void);
 static void init_default_keyring(void);
 static TDEPrincipalKey *create_principal_key(const char *key_name,
 											 GenericKeyring *keyring, Oid dbOid);
-#endif /* !FRONTEND */
+#endif							/* !FRONTEND */
 
 
 void
 TDEInitGlobalKeys(const char *dir)
 {
 #ifndef FRONTEND
-	char db_map_path[MAXPGPATH] = {0};
+	char		db_map_path[MAXPGPATH] = {0};
 
 	pg_tde_set_db_file_paths(GLOBAL_DATA_TDE_OID, db_map_path, NULL);
 	if (access(db_map_path, F_OK) == -1)
@@ -87,14 +87,14 @@ init_default_keyring(void)
 {
 	if (GetAllKeyringProviders(GLOBAL_DATA_TDE_OID) == NIL)
 	{
-		char path[MAXPGPATH] = {0};
+		char		path[MAXPGPATH] = {0};
 		static KeyringProvideRecord provider =
 		{
 			.provider_name = KEYRING_DEFAULT_NAME,
 			.provider_type = FILE_KEY_PROVIDER,
 		};
 
-		char *data_path = make_absolute_path(PG_TDE_DATA_DIR);
+		char	   *data_path = make_absolute_path(PG_TDE_DATA_DIR);
 
 		join_path_components(path, data_path, KEYRING_DEFAULT_FILE_NAME);
 		free(data_path);
@@ -177,7 +177,7 @@ static TDEPrincipalKey *
 create_principal_key(const char *key_name, GenericKeyring *keyring, Oid dbOid)
 {
 	TDEPrincipalKey *principalKey;
-	keyInfo *keyInfo = NULL;
+	keyInfo    *keyInfo = NULL;
 
 	principalKey = palloc(sizeof(TDEPrincipalKey));
 	principalKey->keyInfo.databaseId = dbOid;
@@ -201,6 +201,6 @@ create_principal_key(const char *key_name, GenericKeyring *keyring, Oid dbOid)
 
 	return principalKey;
 }
-#endif /* FRONTEND */
+#endif							/* FRONTEND */
 
-#endif /* PERCONA_EXT */
+#endif							/* PERCONA_EXT */

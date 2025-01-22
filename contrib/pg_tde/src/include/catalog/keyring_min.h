@@ -8,15 +8,16 @@
 
 typedef unsigned int Oid;
 
-#define MAX_PROVIDER_NAME_LEN 128 /* pg_tde_key_provider's provider_name size*/
-#define MAX_VAULT_V2_KEY_LEN 128  /* From hashi corp docs */
+#define MAX_PROVIDER_NAME_LEN 128	/* pg_tde_key_provider's provider_name
+									 * size */
+#define MAX_VAULT_V2_KEY_LEN 128	/* From hashi corp docs */
 #define MAX_KEYRING_OPTION_LEN 1024
 typedef enum ProviderType
 {
-    UNKNOWN_KEY_PROVIDER,
-    FILE_KEY_PROVIDER,
-    VAULT_V2_KEY_PROVIDER,
-    KMIP_KEY_PROVIDER,
+	UNKNOWN_KEY_PROVIDER,
+	FILE_KEY_PROVIDER,
+	VAULT_V2_KEY_PROVIDER,
+	KMIP_KEY_PROVIDER,
 } ProviderType;
 
 #define TDE_KEY_NAME_LEN 256
@@ -25,19 +26,19 @@ typedef enum ProviderType
 
 typedef struct keyName
 {
-	char name[TDE_KEY_NAME_LEN];
+	char		name[TDE_KEY_NAME_LEN];
 } keyName;
 
 typedef struct keyData
 {
 	unsigned char data[MAX_KEY_DATA_SIZE];
-	unsigned len;
+	unsigned	len;
 } keyData;
 
 typedef struct keyInfo
 {
-	keyName	name;
-	keyData	data;
+	keyName		name;
+	keyData		data;
 } keyInfo;
 
 typedef enum KeyringReturnCodes
@@ -55,16 +56,17 @@ typedef enum KeyringReturnCodes
 /* Base type for all keyring */
 typedef struct GenericKeyring
 {
-    ProviderType type; /* Must be the first field */
-    int keyring_id;
-    char provider_name[MAX_PROVIDER_NAME_LEN];
-    char options[MAX_KEYRING_OPTION_LEN]; /* User provided options string*/
+	ProviderType type;			/* Must be the first field */
+	int			keyring_id;
+	char		provider_name[MAX_PROVIDER_NAME_LEN];
+	char		options[MAX_KEYRING_OPTION_LEN];	/* User provided options
+													 * string */
 } GenericKeyring;
 
 typedef struct TDEKeyringRoutine
 {
-	keyInfo    *(*keyring_get_key) (GenericKeyring *keyring, const char *key_name, bool throw_error, KeyringReturnCodes * returnCode);
-				KeyringReturnCodes(*keyring_store_key) (GenericKeyring *keyring, keyInfo *key, bool throw_error);
+	keyInfo    *(*keyring_get_key) (GenericKeyring *keyring, const char *key_name, bool throw_error, KeyringReturnCodes *returnCode);
+	KeyringReturnCodes (*keyring_store_key) (GenericKeyring *keyring, keyInfo *key, bool throw_error);
 } TDEKeyringRoutine;
 
 /*
@@ -77,26 +79,26 @@ typedef struct TDEKeyringRoutine
 
 typedef struct FileKeyring
 {
-    GenericKeyring keyring; /* Must be the first field */
-    char file_name[MAXPGPATH];
+	GenericKeyring keyring;		/* Must be the first field */
+	char		file_name[MAXPGPATH];
 } FileKeyring;
 
 typedef struct VaultV2Keyring
 {
-    GenericKeyring keyring; /* Must be the first field */
-    char vault_token[MAX_VAULT_V2_KEY_LEN];
-    char vault_url[MAXPGPATH];
-    char vault_ca_path[MAXPGPATH];
-    char vault_mount_path[MAXPGPATH];
+	GenericKeyring keyring;		/* Must be the first field */
+	char		vault_token[MAX_VAULT_V2_KEY_LEN];
+	char		vault_url[MAXPGPATH];
+	char		vault_ca_path[MAXPGPATH];
+	char		vault_mount_path[MAXPGPATH];
 } VaultV2Keyring;
 
 typedef struct KmipKeyring
 {
-    GenericKeyring keyring; /* Must be the first field */
-    char kmip_host[MAXPGPATH];
-    char kmip_port[32];
-    char kmip_ca_path[MAXPGPATH];
-    char kmip_cert_path[MAXPGPATH];
+	GenericKeyring keyring;		/* Must be the first field */
+	char		kmip_host[MAXPGPATH];
+	char		kmip_port[32];
+	char		kmip_ca_path[MAXPGPATH];
+	char		kmip_cert_path[MAXPGPATH];
 } KmipKeyring;
 
 #endif

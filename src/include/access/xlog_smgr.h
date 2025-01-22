@@ -6,10 +6,11 @@
 #include <unistd.h>
 
 /* XLog storage manager interface */
-typedef struct XLogSmgr {
-	ssize_t (*seg_read) (int fd, void *buf, size_t count, off_t offset);
+typedef struct XLogSmgr
+{
+	ssize_t		(*seg_read) (int fd, void *buf, size_t count, off_t offset);
 
- 	ssize_t (*seg_write) (int fd, const void *buf, size_t count, off_t offset);
+	ssize_t		(*seg_write) (int fd, const void *buf, size_t count, off_t offset);
 } XLogSmgr;
 
 /* Default (standard) XLog storage manager */

@@ -69,7 +69,7 @@ static char *get_keyring_vault_url(VaultV2Keyring *keyring, const char *key_name
 static bool curl_perform(VaultV2Keyring *keyring, const char *url, CurlString *outStr, long *httpCode, const char *postData);
 
 static KeyringReturnCodes set_key_by_name(GenericKeyring *keyring, keyInfo *key, bool throw_error);
-static keyInfo *get_key_by_name(GenericKeyring *keyring, const char *key_name, bool throw_error, KeyringReturnCodes * return_code);
+static keyInfo *get_key_by_name(GenericKeyring *keyring, const char *key_name, bool throw_error, KeyringReturnCodes *return_code);
 
 const TDEKeyringRoutine keyringVaultV2Routine = {
 	.keyring_get_key = get_key_by_name,
@@ -88,7 +88,7 @@ curl_setup_token(VaultV2Keyring *keyring)
 {
 	if (curlList == NULL)
 	{
-		char tokenHeader[256];
+		char		tokenHeader[256];
 
 		strcpy(tokenHeader, "X-Vault-Token:");
 		strcat(tokenHeader, keyring->vault_token);
@@ -170,13 +170,13 @@ static KeyringReturnCodes
 set_key_by_name(GenericKeyring *keyring, keyInfo *key, bool throw_error)
 {
 	VaultV2Keyring *vault_keyring = (VaultV2Keyring *) keyring;
-	char url[VAULT_URL_MAX_LEN];
-	CurlString str;
-	long httpCode = 0;
-	char jsonText[512];
+	char		url[VAULT_URL_MAX_LEN];
+	CurlString	str;
+	long		httpCode = 0;
+	char		jsonText[512];
 	char keyData[64];
-	int	keyLen = 0;
-	int ereport_level = throw_error ? ERROR : WARNING;
+	int			keyLen = 0;
+	int			ereport_level = throw_error ? ERROR : WARNING;
 
 	Assert(key != NULL);
 
@@ -186,7 +186,7 @@ set_key_by_name(GenericKeyring *keyring, keyInfo *key, bool throw_error)
 	 */
 	/* Simpler than using the limited pg json api */
 	keyLen = pg_b64_encode((char *) key->data.data, key->data.len, keyData, 64);
-	keyData[keyLen] = 0;
+	keyData[	keyLen] = 0;
 
 	snprintf(jsonText, 512, "{\"data\":{\"key\":\"%s\"}}", keyData);
 
@@ -218,17 +218,17 @@ set_key_by_name(GenericKeyring *keyring, keyInfo *key, bool throw_error)
 }
 
 static keyInfo *
-get_key_by_name(GenericKeyring *keyring, const char *key_name, bool throw_error, KeyringReturnCodes * return_code)
+get_key_by_name(GenericKeyring *keyring, const char *key_name, bool throw_error, KeyringReturnCodes *return_code)
 {
 	VaultV2Keyring *vault_keyring = (VaultV2Keyring *) keyring;
-	keyInfo *key = NULL;
-	char url[VAULT_URL_MAX_LEN];
-	CurlString str;
-	long httpCode = 0;
+	keyInfo    *key = NULL;
+	char		url[VAULT_URL_MAX_LEN];
+	CurlString	str;
+	long		httpCode = 0;
 	JsonParseErrorType json_error;
 	JsonLexContext *jlex = NULL;
 	JsonVaultRespState parse;
-	int ereport_level = throw_error ? ERROR : WARNING;
+	int			ereport_level = throw_error ? ERROR : WARNING;
 
 	const char *responseKey;
 
@@ -391,7 +391,7 @@ json_resp_scalar(void *state, char *token, JsonTokenType tokentype)
 			parse->field = JRESP_F_UNUSED;
 			break;
 		default:
-			// NOP
+			/* NOP */
 			break;
 	}
 	return JSON_SUCCESS;

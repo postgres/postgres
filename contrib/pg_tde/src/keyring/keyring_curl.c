@@ -14,13 +14,13 @@
 #include "keyring/keyring_curl.h"
 #include "pg_tde_defines.h"
 
-CURL *keyringCurl = NULL;
+CURL	   *keyringCurl = NULL;
 
 static
 size_t
 write_func(void *ptr, size_t size, size_t nmemb, struct CurlString *s)
 {
-	size_t new_len = s->len + size * nmemb;
+	size_t		new_len = s->len + size * nmemb;
 
 	s->ptr = repalloc(s->ptr, new_len + 1);
 	if (s->ptr == NULL)

@@ -58,7 +58,8 @@ typedef struct SMgrRelationData
 	 * submodules.  Do not touch them from elsewhere.
 	 */
 	SMgrId		smgr_which;		/* storage manager selector */
-	int			smgrrelation_size;	/* size of this struct, incl. smgr-specific data */
+	int			smgrrelation_size;	/* size of this struct, incl.
+									 * smgr-specific data */
 
 	/*
 	 * Pinning support.  If unpinned (ie. pincount == 0), 'node' is a list

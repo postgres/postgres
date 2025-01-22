@@ -43,7 +43,7 @@ static XLogPageHeaderData EncryptCurrentPageHrd;
 
 static ssize_t TDEXLogWriteEncryptedPages(int fd, const void *buf, size_t count, off_t offset);
 static char *TDEXLogEncryptBuf = NULL;
-static int XLOGChooseNumBuffers(void);
+static int	XLOGChooseNumBuffers(void);
 
 void
 XLogInitGUC(void)
@@ -64,7 +64,7 @@ XLogInitGUC(void)
 static int
 XLOGChooseNumBuffers(void)
 {
-	int xbuffers;
+	int			xbuffers;
 
 	xbuffers = NBuffers / 32;
 	if (xbuffers > (wal_segment_size / XLOG_BLCKSZ))
@@ -80,7 +80,7 @@ XLOGChooseNumBuffers(void)
 Size
 TDEXLogEncryptBuffSize(void)
 {
-	int xbuffers;
+	int			xbuffers;
 
 	xbuffers = (XLOGbuffers == -1) ? XLOGChooseNumBuffers() : XLOGbuffers;
 	return (Size) XLOG_BLCKSZ * xbuffers;
@@ -99,7 +99,7 @@ TDEXLogEncryptBuffSize(void)
 void
 TDEXLogShmemInit(void)
 {
-	bool foundBuf;
+	bool		foundBuf;
 
 	if (EncryptXLog)
 	{
@@ -119,14 +119,14 @@ TDEXLogShmemInit(void)
 static ssize_t
 TDEXLogWriteEncryptedPages(int fd, const void *buf, size_t count, off_t offset)
 {
-	char iv_prefix[16] = {0,};
-	size_t data_size = 0;
+	char		iv_prefix[16] = {0,};
+	size_t		data_size = 0;
 	XLogPageHeader curr_page_hdr = &EncryptCurrentPageHrd;
 	XLogPageHeader enc_buf_page = NULL;
 	RelKeyData *key = GetTdeGlobaleRelationKey(GLOBAL_SPACE_RLOCATOR(XLOG_TDE_OID));
-	off_t enc_off;
-	size_t page_size = XLOG_BLCKSZ - offset % XLOG_BLCKSZ;
-	uint32 iv_ctr = 0;
+	off_t		enc_off;
+	size_t		page_size = XLOG_BLCKSZ - offset % XLOG_BLCKSZ;
+	uint32		iv_ctr = 0;
 
 #ifdef TDE_XLOG_DEBUG
 	elog(DEBUG1, "write encrypted WAL, pages amount: %d, size: %lu offset: %ld", count / (Size) XLOG_BLCKSZ, count, offset);
@@ -226,14 +226,14 @@ tdeheap_xlog_seg_write(int fd, const void *buf, size_t count, off_t offset)
 ssize_t
 tdeheap_xlog_seg_read(int fd, void *buf, size_t count, off_t offset)
 {
-	ssize_t readsz;
-	char iv_prefix[16] = {0,};
-	size_t data_size = 0;
+	ssize_t		readsz;
+	char		iv_prefix[16] = {0,};
+	size_t		data_size = 0;
 	XLogPageHeader curr_page_hdr = &DecryptCurrentPageHrd;
 	RelKeyData *key = GetTdeGlobaleRelationKey(GLOBAL_SPACE_RLOCATOR(XLOG_TDE_OID));
-	size_t page_size = XLOG_BLCKSZ - offset % XLOG_BLCKSZ;
-	off_t dec_off;
-	uint32 iv_ctr = 0;
+	size_t		page_size = XLOG_BLCKSZ - offset % XLOG_BLCKSZ;
+	off_t		dec_off;
+	uint32		iv_ctr = 0;
 
 #ifdef TDE_XLOG_DEBUG
 	elog(DEBUG1, "read from a WAL segment, pages amount: %d, size: %lu offset: %ld", count / (Size) XLOG_BLCKSZ, count, offset);
@@ -312,4 +312,4 @@ SetXLogPageIVPrefix(TimeLineID tli, XLogRecPtr lsn, char *iv_prefix)
 	iv_prefix[11] = (lsn & 0xFF);
 }
 
-#endif /* PERCONA_EXT */
+#endif							/* PERCONA_EXT */

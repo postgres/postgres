@@ -7,19 +7,21 @@
 #include "pg_tde_fe.h"
 #endif
 
-void kmip_ereport(bool throw_error, const char *msg, int errCode)
+void
+kmip_ereport(bool throw_error, const char *msg, int errCode)
 {
-    int ereport_level = throw_error ? ERROR : WARNING;
-    if (errCode != 0)
-    {
-        ereport(ereport_level, (errmsg(msg, errCode)));
-    }
-    else
-    {
-        #pragma GCC diagnostic push
-        #pragma GCC diagnostic ignored "-Wformat-security"
-        // TODO: how to do this properly?
-        elog(ereport_level, (msg));
-        #pragma GCC diagnostic pop
-    }
+	int			ereport_level = throw_error ? ERROR : WARNING;
+
+	if (errCode != 0)
+	{
+		ereport(ereport_level, (errmsg(msg, errCode)));
+	}
+	else
+	{
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat-security"
+		/* TODO: how to do this properly? */
+		elog(ereport_level, (msg));
+#pragma GCC diagnostic pop
+	}
 }

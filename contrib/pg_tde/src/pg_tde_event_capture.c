@@ -136,8 +136,9 @@ pg_tde_ddl_command_start_capture(PG_FUNCTION_ARGS)
 		foreach(lcmd, stmt->cmds)
 		{
 			AlterTableCmd *cmd = (AlterTableCmd *) lfirst(lcmd);
-			if (cmd->subtype == AT_SetAccessMethod && 
-				((cmd->name != NULL && strcmp(cmd->name, "tde_heap")==0) ||
+
+			if (cmd->subtype == AT_SetAccessMethod &&
+				((cmd->name != NULL && strcmp(cmd->name, "tde_heap") == 0) ||
 				 (cmd->name == NULL && strcmp(default_table_access_method, "tde_heap") == 0))
 				)
 			{
@@ -149,9 +150,10 @@ pg_tde_ddl_command_start_capture(PG_FUNCTION_ARGS)
 
 		if (tdeCurrentCreateEvent.encryptMode)
 		{
-			TDEPrincipalKey * principal_key;
-			Oid		relationId = RangeVarGetRelid(stmt->relation, NoLock, true);
+			TDEPrincipalKey *principal_key;
+			Oid			relationId = RangeVarGetRelid(stmt->relation, NoLock, true);
 			Relation	rel = table_open(relationId, lockmode);
+
 			table_close(rel, lockmode);
 
 			LWLockAcquire(tde_lwlock_enc_keys(), LW_SHARED);
