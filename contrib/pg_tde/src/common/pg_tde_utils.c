@@ -29,12 +29,6 @@ get_tde_basic_table_am_oid(void)
 	return get_table_am_oid("tde_heap_basic", false);
 }
 
-Oid
-get_tde_table_am_oid(void)
-{
-	return get_table_am_oid("tde_heap", false);
-}
-
 PG_FUNCTION_INFO_V1(pg_tde_internal_has_key);
 Datum
 pg_tde_internal_has_key(PG_FUNCTION_ARGS)

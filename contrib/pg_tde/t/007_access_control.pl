@@ -25,8 +25,8 @@ close $conf;
 my $rt_value = $node->start;
 ok($rt_value == 1, "Start Server");
 
-# CREATE EXTENSION and change out file permissions
-my ($cmdret, $stdout, $stderr) = $node->psql('postgres', 'CREATE EXTENSION pg_tde;', extra_params => ['-a']);
+# CREATE EXTENSION IF NOT EXISTS and change out file permissions
+my ($cmdret, $stdout, $stderr) = $node->psql('postgres', 'CREATE EXTENSION IF NOT EXISTS pg_tde;', extra_params => ['-a']);
 ok($cmdret == 0, "CREATE PGTDE EXTENSION");
 PGTDE::append_to_file($stdout);
 

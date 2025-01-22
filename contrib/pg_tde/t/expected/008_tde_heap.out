@@ -1,4 +1,4 @@
-CREATE EXTENSION pg_tde;
+CREATE EXTENSION IF NOT EXISTS pg_tde;
 -- server restart
 CREATE TABLE test_enc1(id SERIAL,k VARCHAR(32),PRIMARY KEY (id)) USING tde_heap;
 INSERT INTO test_enc1 (k) VALUES ('foobar'),('barfoo');

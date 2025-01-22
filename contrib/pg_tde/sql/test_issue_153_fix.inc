@@ -1,4 +1,4 @@
-CREATE EXTENSION pg_tde;
+CREATE EXTENSION IF NOT EXISTS pg_tde;
 SET datestyle TO 'iso, dmy';
 
 SELECT  * FROM pg_tde_principal_key_info();

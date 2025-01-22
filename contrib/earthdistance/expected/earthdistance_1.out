@@ -1,0 +1,1220 @@
+--
+--  Test earthdistance extension
+--
+-- In this file we also do some testing of extension create/drop scenarios.
+-- That's really exercising the core database's dependency logic, so ideally
+-- we'd do it in the core regression tests, but we can't for lack of suitable
+-- guaranteed-available extensions.  earthdistance is a good test case because
+-- it has a dependency on the cube extension.
+--
+CREATE EXTENSION earthdistance;  -- fail, must install cube first
+ERROR:  required extension "cube" is not installed
+HINT:  Use CREATE EXTENSION ... CASCADE to install required extensions too.
+CREATE EXTENSION cube;
+CREATE EXTENSION earthdistance;
+--
+-- The radius of the Earth we are using.
+--
+SELECT earth()::numeric(20,5);
+     earth     
+---------------
+ 6378168.00000
+(1 row)
+
+--
+-- Convert straight line distances to great circle distances.
+--
+SELECT (pi()*earth())::numeric(20,5);
+    numeric     
+----------------
+ 20037605.73216
+(1 row)
+
+SELECT sec_to_gc(0)::numeric(20,5);
+ sec_to_gc 
+-----------
+   0.00000
+(1 row)
+
+SELECT sec_to_gc(2*earth())::numeric(20,5);
+   sec_to_gc    
+----------------
+ 20037605.73216
+(1 row)
+
+SELECT sec_to_gc(10*earth())::numeric(20,5);
+   sec_to_gc    
+----------------
+ 20037605.73216
+(1 row)
+
+SELECT sec_to_gc(-earth())::numeric(20,5);
+ sec_to_gc 
+-----------
+   0.00000
+(1 row)
+
+SELECT sec_to_gc(1000)::numeric(20,5);
+ sec_to_gc  
+------------
+ 1000.00000
+(1 row)
+
+SELECT sec_to_gc(10000)::numeric(20,5);
+  sec_to_gc  
+-------------
+ 10000.00102
+(1 row)
+
+SELECT sec_to_gc(100000)::numeric(20,5);
+  sec_to_gc   
+--------------
+ 100001.02426
+(1 row)
+
+SELECT sec_to_gc(1000000)::numeric(20,5);
+   sec_to_gc   
+---------------
+ 1001027.07131
+(1 row)
+
+--
+-- Convert great circle distances to straight line distances.
+--
+SELECT gc_to_sec(0)::numeric(20,5);
+ gc_to_sec 
+-----------
+   0.00000
+(1 row)
+
+SELECT gc_to_sec(sec_to_gc(2*earth()))::numeric(20,5);
+   gc_to_sec    
+----------------
+ 12756336.00000
+(1 row)
+
+SELECT gc_to_sec(10*earth())::numeric(20,5);
+   gc_to_sec    
+----------------
+ 12756336.00000
+(1 row)
+
+SELECT gc_to_sec(pi()*earth())::numeric(20,5);
+   gc_to_sec    
+----------------
+ 12756336.00000
+(1 row)
+
+SELECT gc_to_sec(-1000)::numeric(20,5);
+ gc_to_sec 
+-----------
+   0.00000
+(1 row)
+
+SELECT gc_to_sec(1000)::numeric(20,5);
+ gc_to_sec  
+------------
+ 1000.00000
+(1 row)
+
+SELECT gc_to_sec(10000)::numeric(20,5);
+ gc_to_sec  
+------------
+ 9999.99898
+(1 row)
+
+SELECT gc_to_sec(100000)::numeric(20,5);
+  gc_to_sec  
+-------------
+ 99998.97577
+(1 row)
+
+SELECT gc_to_sec(1000000)::numeric(20,5);
+  gc_to_sec   
+--------------
+ 998976.08618
+(1 row)
+
+--
+-- Set coordinates using latitude and longitude.
+-- Extract each coordinate separately so we can round them.
+--
+SELECT cube_ll_coord(ll_to_earth(0,0),1)::numeric(20,5),
+ cube_ll_coord(ll_to_earth(0,0),2)::numeric(20,5),
+ cube_ll_coord(ll_to_earth(0,0),3)::numeric(20,5);
+ cube_ll_coord | cube_ll_coord | cube_ll_coord 
+---------------+---------------+---------------
+ 6378168.00000 |       0.00000 |       0.00000
+(1 row)
+
+SELECT cube_ll_coord(ll_to_earth(360,360),1)::numeric(20,5),
+ cube_ll_coord(ll_to_earth(360,360),2)::numeric(20,5),
+ cube_ll_coord(ll_to_earth(360,360),3)::numeric(20,5);
+ cube_ll_coord | cube_ll_coord | cube_ll_coord 
+---------------+---------------+---------------
+ 6378168.00000 |       0.00000 |       0.00000
+(1 row)
+
+SELECT cube_ll_coord(ll_to_earth(180,180),1)::numeric(20,5),
+ cube_ll_coord(ll_to_earth(180,180),2)::numeric(20,5),
+ cube_ll_coord(ll_to_earth(180,180),3)::numeric(20,5);
+ cube_ll_coord | cube_ll_coord | cube_ll_coord 
+---------------+---------------+---------------
+ 6378168.00000 |       0.00000 |       0.00000
+(1 row)
+
+SELECT cube_ll_coord(ll_to_earth(180,360),1)::numeric(20,5),
+ cube_ll_coord(ll_to_earth(180,360),2)::numeric(20,5),
+ cube_ll_coord(ll_to_earth(180,360),3)::numeric(20,5);
+ cube_ll_coord  | cube_ll_coord | cube_ll_coord 
+----------------+---------------+---------------
+ -6378168.00000 |       0.00000 |       0.00000
+(1 row)
+
+SELECT cube_ll_coord(ll_to_earth(-180,-360),1)::numeric(20,5),
+ cube_ll_coord(ll_to_earth(-180,-360),2)::numeric(20,5),
+ cube_ll_coord(ll_to_earth(-180,-360),3)::numeric(20,5);
+ cube_ll_coord  | cube_ll_coord | cube_ll_coord 
+----------------+---------------+---------------
+ -6378168.00000 |       0.00000 |       0.00000
+(1 row)
+
+SELECT cube_ll_coord(ll_to_earth(0,180),1)::numeric(20,5),
+ cube_ll_coord(ll_to_earth(0,180),2)::numeric(20,5),
+ cube_ll_coord(ll_to_earth(0,180),3)::numeric(20,5);
+ cube_ll_coord  | cube_ll_coord | cube_ll_coord 
+----------------+---------------+---------------
+ -6378168.00000 |       0.00000 |       0.00000
+(1 row)
+
+SELECT cube_ll_coord(ll_to_earth(0,-180),1)::numeric(20,5),
+ cube_ll_coord(ll_to_earth(0,-180),2)::numeric(20,5),
+ cube_ll_coord(ll_to_earth(0,-180),3)::numeric(20,5);
+ cube_ll_coord  | cube_ll_coord | cube_ll_coord 
+----------------+---------------+---------------
+ -6378168.00000 |       0.00000 |       0.00000
+(1 row)
+
+SELECT cube_ll_coord(ll_to_earth(90,0),1)::numeric(20,5),
+ cube_ll_coord(ll_to_earth(90,0),2)::numeric(20,5),
+ cube_ll_coord(ll_to_earth(90,0),3)::numeric(20,5);
+ cube_ll_coord | cube_ll_coord | cube_ll_coord 
+---------------+---------------+---------------
+       0.00000 |       0.00000 | 6378168.00000
+(1 row)
+
+SELECT cube_ll_coord(ll_to_earth(90,180),1)::numeric(20,5),
+ cube_ll_coord(ll_to_earth(90,180),2)::numeric(20,5),
+ cube_ll_coord(ll_to_earth(90,180),3)::numeric(20,5);
+ cube_ll_coord | cube_ll_coord | cube_ll_coord 
+---------------+---------------+---------------
+       0.00000 |       0.00000 | 6378168.00000
+(1 row)
+
+SELECT cube_ll_coord(ll_to_earth(-90,0),1)::numeric(20,5),
+ cube_ll_coord(ll_to_earth(-90,0),2)::numeric(20,5),
+ cube_ll_coord(ll_to_earth(-90,0),3)::numeric(20,5);
+ cube_ll_coord | cube_ll_coord | cube_ll_coord  
+---------------+---------------+----------------
+       0.00000 |       0.00000 | -6378168.00000
+(1 row)
+
+SELECT cube_ll_coord(ll_to_earth(-90,180),1)::numeric(20,5),
+ cube_ll_coord(ll_to_earth(-90,180),2)::numeric(20,5),
+ cube_ll_coord(ll_to_earth(-90,180),3)::numeric(20,5);
+ cube_ll_coord | cube_ll_coord | cube_ll_coord  
+---------------+---------------+----------------
+       0.00000 |       0.00000 | -6378168.00000
+(1 row)
+
+--
+-- Test getting the latitude of a location.
+--
+SELECT latitude(ll_to_earth(0,0))::numeric(20,10);
+   latitude   
+--------------
+ 0.0000000000
+(1 row)
+
+SELECT latitude(ll_to_earth(45,0))::numeric(20,10);
+   latitude    
+---------------
+ 45.0000000000
+(1 row)
+
+SELECT latitude(ll_to_earth(90,0))::numeric(20,10);
+   latitude    
+---------------
+ 90.0000000000
+(1 row)
+
+SELECT latitude(ll_to_earth(-45,0))::numeric(20,10);
+    latitude    
+----------------
+ -45.0000000000
+(1 row)
+
+SELECT latitude(ll_to_earth(-90,0))::numeric(20,10);
+    latitude    
+----------------
+ -90.0000000000
+(1 row)
+
+SELECT latitude(ll_to_earth(0,90))::numeric(20,10);
+   latitude   
+--------------
+ 0.0000000000
+(1 row)
+
+SELECT latitude(ll_to_earth(45,90))::numeric(20,10);
+   latitude    
+---------------
+ 45.0000000000
+(1 row)
+
+SELECT latitude(ll_to_earth(90,90))::numeric(20,10);
+   latitude    
+---------------
+ 90.0000000000
+(1 row)
+
+SELECT latitude(ll_to_earth(-45,90))::numeric(20,10);
+    latitude    
+----------------
+ -45.0000000000
+(1 row)
+
+SELECT latitude(ll_to_earth(-90,90))::numeric(20,10);
+    latitude    
+----------------
+ -90.0000000000
+(1 row)
+
+SELECT latitude(ll_to_earth(0,180))::numeric(20,10);
+   latitude   
+--------------
+ 0.0000000000
+(1 row)
+
+SELECT latitude(ll_to_earth(45,180))::numeric(20,10);
+   latitude    
+---------------
+ 45.0000000000
+(1 row)
+
+SELECT latitude(ll_to_earth(90,180))::numeric(20,10);
+   latitude    
+---------------
+ 90.0000000000
+(1 row)
+
+SELECT latitude(ll_to_earth(-45,180))::numeric(20,10);
+    latitude    
+----------------
+ -45.0000000000
+(1 row)
+
+SELECT latitude(ll_to_earth(-90,180))::numeric(20,10);
+    latitude    
+----------------
+ -90.0000000000
+(1 row)
+
+SELECT latitude(ll_to_earth(0,-90))::numeric(20,10);
+   latitude   
+--------------
+ 0.0000000000
+(1 row)
+
+SELECT latitude(ll_to_earth(45,-90))::numeric(20,10);
+   latitude    
+---------------
+ 45.0000000000
+(1 row)
+
+SELECT latitude(ll_to_earth(90,-90))::numeric(20,10);
+   latitude    
+---------------
+ 90.0000000000
+(1 row)
+
+SELECT latitude(ll_to_earth(-45,-90))::numeric(20,10);
+    latitude    
+----------------
+ -45.0000000000
+(1 row)
+
+SELECT latitude(ll_to_earth(-90,-90))::numeric(20,10);
+    latitude    
+----------------
+ -90.0000000000
+(1 row)
+
+--
+-- Test getting the longitude of a location.
+--
+SELECT longitude(ll_to_earth(0,0))::numeric(20,10);
+  longitude   
+--------------
+ 0.0000000000
+(1 row)
+
+SELECT longitude(ll_to_earth(45,0))::numeric(20,10);
+  longitude   
+--------------
+ 0.0000000000
+(1 row)
+
+SELECT longitude(ll_to_earth(90,0))::numeric(20,10);
+  longitude   
+--------------
+ 0.0000000000
+(1 row)
+
+SELECT longitude(ll_to_earth(-45,0))::numeric(20,10);
+  longitude   
+--------------
+ 0.0000000000
+(1 row)
+
+SELECT longitude(ll_to_earth(-90,0))::numeric(20,10);
+  longitude   
+--------------
+ 0.0000000000
+(1 row)
+
+SELECT longitude(ll_to_earth(0,90))::numeric(20,10);
+   longitude   
+---------------
+ 90.0000000000
+(1 row)
+
+SELECT longitude(ll_to_earth(45,90))::numeric(20,10);
+   longitude   
+---------------
+ 90.0000000000
+(1 row)
+
+SELECT longitude(ll_to_earth(90,90))::numeric(20,10);
+   longitude   
+---------------
+ 90.0000000000
+(1 row)
+
+SELECT longitude(ll_to_earth(-45,90))::numeric(20,10);
+   longitude   
+---------------
+ 90.0000000000
+(1 row)
+
+SELECT longitude(ll_to_earth(-90,90))::numeric(20,10);
+   longitude   
+---------------
+ 90.0000000000
+(1 row)
+
+SELECT longitude(ll_to_earth(0,180))::numeric(20,10);
+   longitude    
+----------------
+ 180.0000000000
+(1 row)
+
+SELECT longitude(ll_to_earth(45,180))::numeric(20,10);
+   longitude    
+----------------
+ 180.0000000000
+(1 row)
+
+SELECT longitude(ll_to_earth(90,180))::numeric(20,10);
+   longitude    
+----------------
+ 180.0000000000
+(1 row)
+
+SELECT longitude(ll_to_earth(-45,180))::numeric(20,10);
+   longitude    
+----------------
+ 180.0000000000
+(1 row)
+
+SELECT longitude(ll_to_earth(-90,180))::numeric(20,10);
+   longitude    
+----------------
+ 180.0000000000
+(1 row)
+
+SELECT longitude(ll_to_earth(0,-90))::numeric(20,10);
+   longitude    
+----------------
+ -90.0000000000
+(1 row)
+
+SELECT longitude(ll_to_earth(45,-90))::numeric(20,10);
+   longitude    
+----------------
+ -90.0000000000
+(1 row)
+
+SELECT longitude(ll_to_earth(90,-90))::numeric(20,10);
+   longitude    
+----------------
+ -90.0000000000
+(1 row)
+
+SELECT longitude(ll_to_earth(-45,-90))::numeric(20,10);
+   longitude    
+----------------
+ -90.0000000000
+(1 row)
+
+SELECT longitude(ll_to_earth(-90,-90))::numeric(20,10);
+   longitude    
+----------------
+ -90.0000000000
+(1 row)
+
+--
+-- For the distance tests the following is some real life data.
+--
+-- Chicago has a latitude of 41.8 and a longitude of 87.6.
+-- Albuquerque has a latitude of 35.1 and a longitude of 106.7.
+-- (Note that latitude and longitude are specified differently
+-- in the cube based functions than for the point based functions.)
+--
+--
+-- Test getting the distance between two points using earth_distance.
+--
+SELECT earth_distance(ll_to_earth(0,0),ll_to_earth(0,0))::numeric(20,5);
+ earth_distance 
+----------------
+        0.00000
+(1 row)
+
+SELECT earth_distance(ll_to_earth(0,0),ll_to_earth(0,180))::numeric(20,5);
+ earth_distance 
+----------------
+ 20037605.73216
+(1 row)
+
+SELECT earth_distance(ll_to_earth(0,0),ll_to_earth(90,0))::numeric(20,5);
+ earth_distance 
+----------------
+ 10018802.86608
+(1 row)
+
+SELECT earth_distance(ll_to_earth(0,0),ll_to_earth(0,90))::numeric(20,5);
+ earth_distance 
+----------------
+ 10018802.86608
+(1 row)
+
+SELECT earth_distance(ll_to_earth(0,0),ll_to_earth(0,1))::numeric(20,5);
+ earth_distance 
+----------------
+   111320.03185
+(1 row)
+
+SELECT earth_distance(ll_to_earth(0,0),ll_to_earth(1,0))::numeric(20,5);
+ earth_distance 
+----------------
+   111320.03185
+(1 row)
+
+SELECT earth_distance(ll_to_earth(30,0),ll_to_earth(30,1))::numeric(20,5);
+ earth_distance 
+----------------
+    96405.66962
+(1 row)
+
+SELECT earth_distance(ll_to_earth(30,0),ll_to_earth(31,0))::numeric(20,5);
+ earth_distance 
+----------------
+   111320.03185
+(1 row)
+
+SELECT earth_distance(ll_to_earth(60,0),ll_to_earth(60,1))::numeric(20,5);
+ earth_distance 
+----------------
+    55659.48608
+(1 row)
+
+SELECT earth_distance(ll_to_earth(60,0),ll_to_earth(61,0))::numeric(20,5);
+ earth_distance 
+----------------
+   111320.03185
+(1 row)
+
+SELECT earth_distance(ll_to_earth(41.8,87.6),ll_to_earth(35.1,106.7))::numeric(20,5);
+ earth_distance 
+----------------
+  1819303.21265
+(1 row)
+
+SELECT (earth_distance(ll_to_earth(41.8,87.6),ll_to_earth(35.1,106.7))*
+      100./2.54/12./5280.)::numeric(20,5);
+  numeric   
+------------
+ 1130.46261
+(1 row)
+
+--
+-- Test getting the distance between two points using geo_distance.
+--
+SELECT geo_distance('(0,0)'::point,'(0,0)'::point)::numeric(20,5);
+ geo_distance 
+--------------
+      0.00000
+(1 row)
+
+SELECT geo_distance('(0,0)'::point,'(180,0)'::point)::numeric(20,5);
+ geo_distance 
+--------------
+  12436.77274
+(1 row)
+
+SELECT geo_distance('(0,0)'::point,'(0,90)'::point)::numeric(20,5);
+ geo_distance 
+--------------
+   6218.38637
+(1 row)
+
+SELECT geo_distance('(0,0)'::point,'(90,0)'::point)::numeric(20,5);
+ geo_distance 
+--------------
+   6218.38637
+(1 row)
+
+SELECT geo_distance('(0,0)'::point,'(1,0)'::point)::numeric(20,5);
+ geo_distance 
+--------------
+     69.09318
+(1 row)
+
+SELECT geo_distance('(0,0)'::point,'(0,1)'::point)::numeric(20,5);
+ geo_distance 
+--------------
+     69.09318
+(1 row)
+
+SELECT geo_distance('(0,30)'::point,'(1,30)'::point)::numeric(20,5);
+ geo_distance 
+--------------
+     59.83626
+(1 row)
+
+SELECT geo_distance('(0,30)'::point,'(0,31)'::point)::numeric(20,5);
+ geo_distance 
+--------------
+     69.09318
+(1 row)
+
+SELECT geo_distance('(0,60)'::point,'(1,60)'::point)::numeric(20,5);
+ geo_distance 
+--------------
+     34.54626
+(1 row)
+
+SELECT geo_distance('(0,60)'::point,'(0,61)'::point)::numeric(20,5);
+ geo_distance 
+--------------
+     69.09318
+(1 row)
+
+SELECT geo_distance('(87.6,41.8)'::point,'(106.7,35.1)'::point)::numeric(20,5);
+ geo_distance 
+--------------
+   1129.18983
+(1 row)
+
+SELECT (geo_distance('(87.6,41.8)'::point,'(106.7,35.1)'::point)*5280.*12.*2.54/100.)::numeric(20,5);
+    numeric    
+---------------
+ 1817254.87730
+(1 row)
+
+--
+-- Test getting the distance between two points using the <@> operator.
+--
+SELECT ('(0,0)'::point <@> '(0,0)'::point)::numeric(20,5);
+ numeric 
+---------
+ 0.00000
+(1 row)
+
+SELECT ('(0,0)'::point <@> '(180,0)'::point)::numeric(20,5);
+   numeric   
+-------------
+ 12436.77274
+(1 row)
+
+SELECT ('(0,0)'::point <@> '(0,90)'::point)::numeric(20,5);
+  numeric   
+------------
+ 6218.38637
+(1 row)
+
+SELECT ('(0,0)'::point <@> '(90,0)'::point)::numeric(20,5);
+  numeric   
+------------
+ 6218.38637
+(1 row)
+
+SELECT ('(0,0)'::point <@> '(1,0)'::point)::numeric(20,5);
+ numeric  
+----------
+ 69.09318
+(1 row)
+
+SELECT ('(0,0)'::point <@> '(0,1)'::point)::numeric(20,5);
+ numeric  
+----------
+ 69.09318
+(1 row)
+
+SELECT ('(0,30)'::point <@> '(1,30)'::point)::numeric(20,5);
+ numeric  
+----------
+ 59.83626
+(1 row)
+
+SELECT ('(0,30)'::point <@> '(0,31)'::point)::numeric(20,5);
+ numeric  
+----------
+ 69.09318
+(1 row)
+
+SELECT ('(0,60)'::point <@> '(1,60)'::point)::numeric(20,5);
+ numeric  
+----------
+ 34.54626
+(1 row)
+
+SELECT ('(0,60)'::point <@> '(0,61)'::point)::numeric(20,5);
+ numeric  
+----------
+ 69.09318
+(1 row)
+
+SELECT ('(87.6,41.8)'::point <@> '(106.7,35.1)'::point)::numeric(20,5);
+  numeric   
+------------
+ 1129.18983
+(1 row)
+
+SELECT (('(87.6,41.8)'::point <@> '(106.7,35.1)'::point)*5280.*12.*2.54/100.)::numeric(20,5);
+    numeric    
+---------------
+ 1817254.87730
+(1 row)
+
+--
+-- Test getting a bounding box around points.
+--
+SELECT cube_ll_coord(earth_box(ll_to_earth(0,0),112000),1)::numeric(20,5),
+       cube_ll_coord(earth_box(ll_to_earth(0,0),112000),2)::numeric(20,5),
+       cube_ll_coord(earth_box(ll_to_earth(0,0),112000),3)::numeric(20,5),
+       cube_ur_coord(earth_box(ll_to_earth(0,0),112000),1)::numeric(20,5),
+       cube_ur_coord(earth_box(ll_to_earth(0,0),112000),2)::numeric(20,5),
+       cube_ur_coord(earth_box(ll_to_earth(0,0),112000),3)::numeric(20,5);
+ cube_ll_coord | cube_ll_coord | cube_ll_coord | cube_ur_coord | cube_ur_coord | cube_ur_coord 
+---------------+---------------+---------------+---------------+---------------+---------------
+ 6266169.43896 | -111998.56104 | -111998.56104 | 6490166.56104 |  111998.56104 |  111998.56104
+(1 row)
+
+SELECT cube_ll_coord(earth_box(ll_to_earth(0,0),pi()*earth()),1)::numeric(20,5),
+       cube_ll_coord(earth_box(ll_to_earth(0,0),pi()*earth()),2)::numeric(20,5),
+       cube_ll_coord(earth_box(ll_to_earth(0,0),pi()*earth()),3)::numeric(20,5),
+       cube_ur_coord(earth_box(ll_to_earth(0,0),pi()*earth()),1)::numeric(20,5),
+       cube_ur_coord(earth_box(ll_to_earth(0,0),pi()*earth()),2)::numeric(20,5),
+       cube_ur_coord(earth_box(ll_to_earth(0,0),pi()*earth()),3)::numeric(20,5);
+ cube_ll_coord  |  cube_ll_coord  |  cube_ll_coord  | cube_ur_coord  | cube_ur_coord  | cube_ur_coord  
+----------------+-----------------+-----------------+----------------+----------------+----------------
+ -6378168.00000 | -12756336.00000 | -12756336.00000 | 19134504.00000 | 12756336.00000 | 12756336.00000
+(1 row)
+
+SELECT cube_ll_coord(earth_box(ll_to_earth(0,0),10*earth()),1)::numeric(20,5),
+       cube_ll_coord(earth_box(ll_to_earth(0,0),10*earth()),2)::numeric(20,5),
+       cube_ll_coord(earth_box(ll_to_earth(0,0),10*earth()),3)::numeric(20,5),
+       cube_ur_coord(earth_box(ll_to_earth(0,0),10*earth()),1)::numeric(20,5),
+       cube_ur_coord(earth_box(ll_to_earth(0,0),10*earth()),2)::numeric(20,5),
+       cube_ur_coord(earth_box(ll_to_earth(0,0),10*earth()),3)::numeric(20,5);
+ cube_ll_coord  |  cube_ll_coord  |  cube_ll_coord  | cube_ur_coord  | cube_ur_coord  | cube_ur_coord  
+----------------+-----------------+-----------------+----------------+----------------+----------------
+ -6378168.00000 | -12756336.00000 | -12756336.00000 | 19134504.00000 | 12756336.00000 | 12756336.00000
+(1 row)
+
+--
+-- Test for points that should be in bounding boxes.
+--
+SELECT earth_box(ll_to_earth(0,0),
+       earth_distance(ll_to_earth(0,0),ll_to_earth(0,1))*1.00001) @>
+       ll_to_earth(0,1);
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT earth_box(ll_to_earth(0,0),
+       earth_distance(ll_to_earth(0,0),ll_to_earth(0,0.1))*1.00001) @>
+       ll_to_earth(0,0.1);
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT earth_box(ll_to_earth(0,0),
+       earth_distance(ll_to_earth(0,0),ll_to_earth(0,0.01))*1.00001) @>
+       ll_to_earth(0,0.01);
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT earth_box(ll_to_earth(0,0),
+       earth_distance(ll_to_earth(0,0),ll_to_earth(0,0.001))*1.00001) @>
+       ll_to_earth(0,0.001);
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT earth_box(ll_to_earth(0,0),
+       earth_distance(ll_to_earth(0,0),ll_to_earth(0,0.0001))*1.00001) @>
+       ll_to_earth(0,0.0001);
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT earth_box(ll_to_earth(0,0),
+       earth_distance(ll_to_earth(0,0),ll_to_earth(0.0001,0.0001))*1.00001) @>
+       ll_to_earth(0.0001,0.0001);
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT earth_box(ll_to_earth(45,45),
+       earth_distance(ll_to_earth(45,45),ll_to_earth(45.0001,45.0001))*1.00001) @>
+       ll_to_earth(45.0001,45.0001);
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT earth_box(ll_to_earth(90,180),
+       earth_distance(ll_to_earth(90,180),ll_to_earth(90.0001,180.0001))*1.00001) @>
+       ll_to_earth(90.0001,180.0001);
+ ?column? 
+----------
+ t
+(1 row)
+
+--
+-- Test for points that shouldn't be in bounding boxes. Note that we need
+-- to make points way outside, since some points close may be in the box
+-- but further away than the distance we are testing.
+--
+SELECT earth_box(ll_to_earth(0,0),
+       earth_distance(ll_to_earth(0,0),ll_to_earth(0,1))*.57735) @>
+       ll_to_earth(0,1);
+ ?column? 
+----------
+ f
+(1 row)
+
+SELECT earth_box(ll_to_earth(0,0),
+       earth_distance(ll_to_earth(0,0),ll_to_earth(0,0.1))*.57735) @>
+       ll_to_earth(0,0.1);
+ ?column? 
+----------
+ f
+(1 row)
+
+SELECT earth_box(ll_to_earth(0,0),
+       earth_distance(ll_to_earth(0,0),ll_to_earth(0,0.01))*.57735) @>
+       ll_to_earth(0,0.01);
+ ?column? 
+----------
+ f
+(1 row)
+
+SELECT earth_box(ll_to_earth(0,0),
+       earth_distance(ll_to_earth(0,0),ll_to_earth(0,0.001))*.57735) @>
+       ll_to_earth(0,0.001);
+ ?column? 
+----------
+ f
+(1 row)
+
+SELECT earth_box(ll_to_earth(0,0),
+       earth_distance(ll_to_earth(0,0),ll_to_earth(0,0.0001))*.57735) @>
+       ll_to_earth(0,0.0001);
+ ?column? 
+----------
+ f
+(1 row)
+
+SELECT earth_box(ll_to_earth(0,0),
+       earth_distance(ll_to_earth(0,0),ll_to_earth(0.0001,0.0001))*.57735) @>
+       ll_to_earth(0.0001,0.0001);
+ ?column? 
+----------
+ f
+(1 row)
+
+SELECT earth_box(ll_to_earth(45,45),
+       earth_distance(ll_to_earth(45,45),ll_to_earth(45.0001,45.0001))*.57735) @>
+       ll_to_earth(45.0001,45.0001);
+ ?column? 
+----------
+ f
+(1 row)
+
+SELECT earth_box(ll_to_earth(90,180),
+       earth_distance(ll_to_earth(90,180),ll_to_earth(90.0001,180.0001))*.57735) @>
+       ll_to_earth(90.0001,180.0001);
+ ?column? 
+----------
+ f
+(1 row)
+
+--
+-- Test the recommended constraints.
+--
+SELECT cube_is_point(ll_to_earth(0,0));
+ cube_is_point 
+---------------
+ t
+(1 row)
+
+SELECT cube_dim(ll_to_earth(0,0)) <= 3;
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT abs(cube_distance(ll_to_earth(0,0), '(0)'::cube) / earth() - 1) <
+       '10e-12'::float8;
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT cube_is_point(ll_to_earth(30,60));
+ cube_is_point 
+---------------
+ t
+(1 row)
+
+SELECT cube_dim(ll_to_earth(30,60)) <= 3;
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT abs(cube_distance(ll_to_earth(30,60), '(0)'::cube) / earth() - 1) <
+       '10e-12'::float8;
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT cube_is_point(ll_to_earth(60,90));
+ cube_is_point 
+---------------
+ t
+(1 row)
+
+SELECT cube_dim(ll_to_earth(60,90)) <= 3;
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT abs(cube_distance(ll_to_earth(60,90), '(0)'::cube) / earth() - 1) <
+       '10e-12'::float8;
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT cube_is_point(ll_to_earth(-30,-90));
+ cube_is_point 
+---------------
+ t
+(1 row)
+
+SELECT cube_dim(ll_to_earth(-30,-90)) <= 3;
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT abs(cube_distance(ll_to_earth(-30,-90), '(0)'::cube) / earth() - 1) <
+       '10e-12'::float8;
+ ?column? 
+----------
+ t
+(1 row)
+
+--
+-- Now we are going to test extension create/drop scenarios.
+--
+-- list what's installed
+\dT
+                                                  List of data types
+ Schema |     Name      |                                         Description                                         
+--------+---------------+---------------------------------------------------------------------------------------------
+ public | cube          | multi-dimensional cube '(FLOAT-1, FLOAT-2, ..., FLOAT-N), (FLOAT-1, FLOAT-2, ..., FLOAT-N)'
+ public | earth         | 
+ public | pg_tde_global | 
+(3 rows)
+
+drop extension cube;  -- fail, earthdistance requires it
+ERROR:  cannot drop extension cube because other objects depend on it
+DETAIL:  extension earthdistance depends on extension cube
+HINT:  Use DROP ... CASCADE to drop the dependent objects too.
+drop extension earthdistance;
+drop type cube;  -- fail, extension cube requires it
+ERROR:  cannot drop type cube because extension cube requires it
+HINT:  You can drop extension cube instead.
+-- list what's installed
+\dT
+                                                  List of data types
+ Schema |     Name      |                                         Description                                         
+--------+---------------+---------------------------------------------------------------------------------------------
+ public | cube          | multi-dimensional cube '(FLOAT-1, FLOAT-2, ..., FLOAT-N), (FLOAT-1, FLOAT-2, ..., FLOAT-N)'
+ public | pg_tde_global | 
+(2 rows)
+
+create table foo (f1 cube, f2 int);
+drop extension cube;  -- fail, foo.f1 requires it
+ERROR:  cannot drop extension cube because other objects depend on it
+DETAIL:  column f1 of table foo depends on type cube
+HINT:  Use DROP ... CASCADE to drop the dependent objects too.
+drop table foo;
+drop extension cube;
+-- list what's installed
+\dT
+          List of data types
+ Schema |     Name      | Description 
+--------+---------------+-------------
+ public | pg_tde_global | 
+(1 row)
+
+\df
+                                                                                                                                                                    List of functions
+ Schema |                    Name                     |                                                       Result data type                                                       |                                                                    Argument data types                                                                     | Type 
+--------+---------------------------------------------+------------------------------------------------------------------------------------------------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------+------
+ public | pg_tde_add_key_provider                     | integer                                                                                                                      | pg_tde_global, provider_type character varying, provider_name character varying, options json                                                              | func
+ public | pg_tde_add_key_provider                     | integer                                                                                                                      | provider_type character varying, provider_name character varying, options json                                                                             | func
+ public | pg_tde_add_key_provider_file                | integer                                                                                                                      | pg_tde_global, provider_name character varying, file_path json                                                                                             | func
+ public | pg_tde_add_key_provider_file                | integer                                                                                                                      | pg_tde_global, provider_name character varying, file_path text                                                                                             | func
+ public | pg_tde_add_key_provider_file                | integer                                                                                                                      | provider_name character varying, file_path json                                                                                                            | func
+ public | pg_tde_add_key_provider_file                | integer                                                                                                                      | provider_name character varying, file_path text                                                                                                            | func
+ public | pg_tde_add_key_provider_internal            | integer                                                                                                                      | provider_type character varying, provider_name character varying, options json, is_global boolean                                                          | func
+ public | pg_tde_add_key_provider_kmip                | integer                                                                                                                      | pg_tde_global, provider_name character varying, kmip_host json, kmip_port json, kmip_ca_path json, kmip_cert_path json                                     | func
+ public | pg_tde_add_key_provider_kmip                | integer                                                                                                                      | pg_tde_global, provider_name character varying, kmip_host text, kmip_port integer, kmip_ca_path text, kmip_cert_path text                                  | func
+ public | pg_tde_add_key_provider_kmip                | integer                                                                                                                      | provider_name character varying, kmip_host json, kmip_port json, kmip_ca_path json, kmip_cert_path json                                                    | func
+ public | pg_tde_add_key_provider_kmip                | integer                                                                                                                      | provider_name character varying, kmip_host text, kmip_port integer, kmip_ca_path text, kmip_cert_path text                                                 | func
+ public | pg_tde_add_key_provider_vault_v2            | integer                                                                                                                      | pg_tde_global, provider_name character varying, vault_token json, vault_url json, vault_mount_path json, vault_ca_path json                                | func
+ public | pg_tde_add_key_provider_vault_v2            | integer                                                                                                                      | pg_tde_global, provider_name character varying, vault_token text, vault_url text, vault_mount_path text, vault_ca_path text                                | func
+ public | pg_tde_add_key_provider_vault_v2            | integer                                                                                                                      | provider_name character varying, vault_token json, vault_url json, vault_mount_path json, vault_ca_path json                                               | func
+ public | pg_tde_add_key_provider_vault_v2            | integer                                                                                                                      | provider_name character varying, vault_token text, vault_url text, vault_mount_path text, vault_ca_path text                                               | func
+ public | pg_tde_alter_principal_key_keyring          | boolean                                                                                                                      | new_provider_name character varying                                                                                                                        | func
+ public | pg_tde_ddl_command_end_capture              | event_trigger                                                                                                                |                                                                                                                                                            | func
+ public | pg_tde_ddl_command_start_capture            | event_trigger                                                                                                                |                                                                                                                                                            | func
+ public | pg_tde_extension_initialize                 | void                                                                                                                         |                                                                                                                                                            | func
+ public | pg_tde_grant_execute_privilege_on_function  | boolean                                                                                                                      | target_user_or_role text, target_function_name text, target_function_args text                                                                             | func
+ public | pg_tde_grant_key_management_to_role         | boolean                                                                                                                      | target_user_or_role text                                                                                                                                   | func
+ public | pg_tde_grant_key_viewer_to_role             | boolean                                                                                                                      | target_user_or_role text                                                                                                                                   | func
+ public | pg_tde_internal_has_key                     | boolean                                                                                                                      | oid oid                                                                                                                                                    | func
+ public | pg_tde_is_encrypted                         | boolean                                                                                                                      | table_name character varying                                                                                                                               | func
+ public | pg_tde_list_all_key_providers               | SETOF record                                                                                                                 | OUT id integer, OUT provider_name character varying, OUT provider_type character varying, OUT options json                                                 | func
+ public | pg_tde_list_all_key_providers               | SETOF record                                                                                                                 | pg_tde_global, OUT id integer, OUT provider_name character varying, OUT provider_type character varying, OUT options json                                  | func
+ public | pg_tde_principal_key_info                   | TABLE(principal_key_name text, key_provider_name text, key_provider_id integer, key_createion_time timestamp with time zone) |                                                                                                                                                            | func
+ public | pg_tde_principal_key_info                   | TABLE(principal_key_name text, key_provider_name text, key_provider_id integer, key_createion_time timestamp with time zone) | pg_tde_global                                                                                                                                              | func
+ public | pg_tde_principal_key_info_internal          | TABLE(principal_key_name text, key_provider_name text, key_provider_id integer, key_createion_time timestamp with time zone) | is_global boolean                                                                                                                                          | func
+ public | pg_tde_revoke_execute_privilege_on_function | boolean                                                                                                                      | target_user_or_role text, target_function_name text, argument_types text                                                                                   | func
+ public | pg_tde_revoke_key_management_from_role      | boolean                                                                                                                      | target_user_or_role text                                                                                                                                   | func
+ public | pg_tde_revoke_key_viewer_from_role          | boolean                                                                                                                      | target_user_or_role text                                                                                                                                   | func
+ public | pg_tde_set_principal_key                    | boolean                                                                                                                      | principal_key_name character varying, pg_tde_global, provider_name character varying DEFAULT NULL::character varying, ensure_new_key boolean DEFAULT false | func
+ public | pg_tde_set_principal_key                    | boolean                                                                                                                      | principal_key_name character varying, provider_name character varying DEFAULT NULL::character varying, ensure_new_key boolean DEFAULT false                | func
+ public | pg_tde_set_principal_key_internal           | boolean                                                                                                                      | principal_key_name character varying, is_global integer, provider_name character varying, ensure_new_key boolean DEFAULT false                             | func
+ public | pg_tde_set_server_principal_key             | boolean                                                                                                                      | principal_key_name character varying, pg_tde_global, provider_name character varying DEFAULT NULL::character varying, ensure_new_key boolean DEFAULT false | func
+ public | pg_tde_version                              | text                                                                                                                         |                                                                                                                                                            | func
+ public | pg_tdeam_basic_handler                      | table_am_handler                                                                                                             | internal                                                                                                                                                   | func
+ public | pg_tdeam_handler                            | table_am_handler                                                                                                             | internal                                                                                                                                                   | func
+(39 rows)
+
+\do
+                             List of operators
+ Schema | Name | Left arg type | Right arg type | Result type | Description 
+--------+------+---------------+----------------+-------------+-------------
+(0 rows)
+
+create schema c;
+create extension cube with schema c;
+-- list what's installed
+\dT public.*
+          List of data types
+ Schema |     Name      | Description 
+--------+---------------+-------------
+ public | pg_tde_global | 
+(1 row)
+
+\df public.*
+                                                                                                                                                                    List of functions
+ Schema |                    Name                     |                                                       Result data type                                                       |                                                                    Argument data types                                                                     | Type 
+--------+---------------------------------------------+------------------------------------------------------------------------------------------------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------+------
+ public | pg_tde_add_key_provider                     | integer                                                                                                                      | pg_tde_global, provider_type character varying, provider_name character varying, options json                                                              | func
+ public | pg_tde_add_key_provider                     | integer                                                                                                                      | provider_type character varying, provider_name character varying, options json                                                                             | func
+ public | pg_tde_add_key_provider_file                | integer                                                                                                                      | pg_tde_global, provider_name character varying, file_path json                                                                                             | func
+ public | pg_tde_add_key_provider_file                | integer                                                                                                                      | pg_tde_global, provider_name character varying, file_path text                                                                                             | func
+ public | pg_tde_add_key_provider_file                | integer                                                                                                                      | provider_name character varying, file_path json                                                                                                            | func
+ public | pg_tde_add_key_provider_file                | integer                                                                                                                      | provider_name character varying, file_path text                                                                                                            | func
+ public | pg_tde_add_key_provider_internal            | integer                                                                                                                      | provider_type character varying, provider_name character varying, options json, is_global boolean                                                          | func
+ public | pg_tde_add_key_provider_kmip                | integer                                                                                                                      | pg_tde_global, provider_name character varying, kmip_host json, kmip_port json, kmip_ca_path json, kmip_cert_path json                                     | func
+ public | pg_tde_add_key_provider_kmip                | integer                                                                                                                      | pg_tde_global, provider_name character varying, kmip_host text, kmip_port integer, kmip_ca_path text, kmip_cert_path text                                  | func
+ public | pg_tde_add_key_provider_kmip                | integer                                                                                                                      | provider_name character varying, kmip_host json, kmip_port json, kmip_ca_path json, kmip_cert_path json                                                    | func
+ public | pg_tde_add_key_provider_kmip                | integer                                                                                                                      | provider_name character varying, kmip_host text, kmip_port integer, kmip_ca_path text, kmip_cert_path text                                                 | func
+ public | pg_tde_add_key_provider_vault_v2            | integer                                                                                                                      | pg_tde_global, provider_name character varying, vault_token json, vault_url json, vault_mount_path json, vault_ca_path json                                | func
+ public | pg_tde_add_key_provider_vault_v2            | integer                                                                                                                      | pg_tde_global, provider_name character varying, vault_token text, vault_url text, vault_mount_path text, vault_ca_path text                                | func
+ public | pg_tde_add_key_provider_vault_v2            | integer                                                                                                                      | provider_name character varying, vault_token json, vault_url json, vault_mount_path json, vault_ca_path json                                               | func
+ public | pg_tde_add_key_provider_vault_v2            | integer                                                                                                                      | provider_name character varying, vault_token text, vault_url text, vault_mount_path text, vault_ca_path text                                               | func
+ public | pg_tde_alter_principal_key_keyring          | boolean                                                                                                                      | new_provider_name character varying                                                                                                                        | func
+ public | pg_tde_ddl_command_end_capture              | event_trigger                                                                                                                |                                                                                                                                                            | func
+ public | pg_tde_ddl_command_start_capture            | event_trigger                                                                                                                |                                                                                                                                                            | func
+ public | pg_tde_extension_initialize                 | void                                                                                                                         |                                                                                                                                                            | func
+ public | pg_tde_grant_execute_privilege_on_function  | boolean                                                                                                                      | target_user_or_role text, target_function_name text, target_function_args text                                                                             | func
+ public | pg_tde_grant_key_management_to_role         | boolean                                                                                                                      | target_user_or_role text                                                                                                                                   | func
+ public | pg_tde_grant_key_viewer_to_role             | boolean                                                                                                                      | target_user_or_role text                                                                                                                                   | func
+ public | pg_tde_internal_has_key                     | boolean                                                                                                                      | oid oid                                                                                                                                                    | func
+ public | pg_tde_is_encrypted                         | boolean                                                                                                                      | table_name character varying                                                                                                                               | func
+ public | pg_tde_list_all_key_providers               | SETOF record                                                                                                                 | OUT id integer, OUT provider_name character varying, OUT provider_type character varying, OUT options json                                                 | func
+ public | pg_tde_list_all_key_providers               | SETOF record                                                                                                                 | pg_tde_global, OUT id integer, OUT provider_name character varying, OUT provider_type character varying, OUT options json                                  | func
+ public | pg_tde_principal_key_info                   | TABLE(principal_key_name text, key_provider_name text, key_provider_id integer, key_createion_time timestamp with time zone) |                                                                                                                                                            | func
+ public | pg_tde_principal_key_info                   | TABLE(principal_key_name text, key_provider_name text, key_provider_id integer, key_createion_time timestamp with time zone) | pg_tde_global                                                                                                                                              | func
+ public | pg_tde_principal_key_info_internal          | TABLE(principal_key_name text, key_provider_name text, key_provider_id integer, key_createion_time timestamp with time zone) | is_global boolean                                                                                                                                          | func
+ public | pg_tde_revoke_execute_privilege_on_function | boolean                                                                                                                      | target_user_or_role text, target_function_name text, argument_types text                                                                                   | func
+ public | pg_tde_revoke_key_management_from_role      | boolean                                                                                                                      | target_user_or_role text                                                                                                                                   | func
+ public | pg_tde_revoke_key_viewer_from_role          | boolean                                                                                                                      | target_user_or_role text                                                                                                                                   | func
+ public | pg_tde_set_principal_key                    | boolean                                                                                                                      | principal_key_name character varying, pg_tde_global, provider_name character varying DEFAULT NULL::character varying, ensure_new_key boolean DEFAULT false | func
+ public | pg_tde_set_principal_key                    | boolean                                                                                                                      | principal_key_name character varying, provider_name character varying DEFAULT NULL::character varying, ensure_new_key boolean DEFAULT false                | func
+ public | pg_tde_set_principal_key_internal           | boolean                                                                                                                      | principal_key_name character varying, is_global integer, provider_name character varying, ensure_new_key boolean DEFAULT false                             | func
+ public | pg_tde_set_server_principal_key             | boolean                                                                                                                      | principal_key_name character varying, pg_tde_global, provider_name character varying DEFAULT NULL::character varying, ensure_new_key boolean DEFAULT false | func
+ public | pg_tde_version                              | text                                                                                                                         |                                                                                                                                                            | func
+ public | pg_tdeam_basic_handler                      | table_am_handler                                                                                                             | internal                                                                                                                                                   | func
+ public | pg_tdeam_handler                            | table_am_handler                                                                                                             | internal                                                                                                                                                   | func
+(39 rows)
+
+\do public.*
+                             List of operators
+ Schema | Name | Left arg type | Right arg type | Result type | Description 
+--------+------+---------------+----------------+-------------+-------------
+(0 rows)
+
+\dT c.*
+                                              List of data types
+ Schema |  Name  |                                         Description                                         
+--------+--------+---------------------------------------------------------------------------------------------
+ c      | c.cube | multi-dimensional cube '(FLOAT-1, FLOAT-2, ..., FLOAT-N), (FLOAT-1, FLOAT-2, ..., FLOAT-N)'
+(1 row)
+
+create table foo (f1 c.cube, f2 int);
+drop extension cube;  -- fail, foo.f1 requires it
+ERROR:  cannot drop extension cube because other objects depend on it
+DETAIL:  column f1 of table foo depends on type c.cube
+HINT:  Use DROP ... CASCADE to drop the dependent objects too.
+drop schema c;  -- fail, cube requires it
+ERROR:  cannot drop schema c because other objects depend on it
+DETAIL:  extension cube depends on schema c
+column f1 of table foo depends on type c.cube
+HINT:  Use DROP ... CASCADE to drop the dependent objects too.
+drop extension cube cascade;
+NOTICE:  drop cascades to column f1 of table foo
+\d foo
+                Table "public.foo"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ f2     | integer |           |          | 
+
+-- list what's installed
+\dT public.*
+          List of data types
+ Schema |     Name      | Description 
+--------+---------------+-------------
+ public | pg_tde_global | 
+(1 row)
+
+\df public.*
+                                                                                                                                                                    List of functions
+ Schema |                    Name                     |                                                       Result data type                                                       |                                                                    Argument data types                                                                     | Type 
+--------+---------------------------------------------+------------------------------------------------------------------------------------------------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------+------
+ public | pg_tde_add_key_provider                     | integer                                                                                                                      | pg_tde_global, provider_type character varying, provider_name character varying, options json                                                              | func
+ public | pg_tde_add_key_provider                     | integer                                                                                                                      | provider_type character varying, provider_name character varying, options json                                                                             | func
+ public | pg_tde_add_key_provider_file                | integer                                                                                                                      | pg_tde_global, provider_name character varying, file_path json                                                                                             | func
+ public | pg_tde_add_key_provider_file                | integer                                                                                                                      | pg_tde_global, provider_name character varying, file_path text                                                                                             | func
+ public | pg_tde_add_key_provider_file                | integer                                                                                                                      | provider_name character varying, file_path json                                                                                                            | func
+ public | pg_tde_add_key_provider_file                | integer                                                                                                                      | provider_name character varying, file_path text                                                                                                            | func
+ public | pg_tde_add_key_provider_internal            | integer                                                                                                                      | provider_type character varying, provider_name character varying, options json, is_global boolean                                                          | func
+ public | pg_tde_add_key_provider_kmip                | integer                                                                                                                      | pg_tde_global, provider_name character varying, kmip_host json, kmip_port json, kmip_ca_path json, kmip_cert_path json                                     | func
+ public | pg_tde_add_key_provider_kmip                | integer                                                                                                                      | pg_tde_global, provider_name character varying, kmip_host text, kmip_port integer, kmip_ca_path text, kmip_cert_path text                                  | func
+ public | pg_tde_add_key_provider_kmip                | integer                                                                                                                      | provider_name character varying, kmip_host json, kmip_port json, kmip_ca_path json, kmip_cert_path json                                                    | func
+ public | pg_tde_add_key_provider_kmip                | integer                                                                                                                      | provider_name character varying, kmip_host text, kmip_port integer, kmip_ca_path text, kmip_cert_path text                                                 | func
+ public | pg_tde_add_key_provider_vault_v2            | integer                                                                                                                      | pg_tde_global, provider_name character varying, vault_token json, vault_url json, vault_mount_path json, vault_ca_path json                                | func
+ public | pg_tde_add_key_provider_vault_v2            | integer                                                                                                                      | pg_tde_global, provider_name character varying, vault_token text, vault_url text, vault_mount_path text, vault_ca_path text                                | func
+ public | pg_tde_add_key_provider_vault_v2            | integer                                                                                                                      | provider_name character varying, vault_token json, vault_url json, vault_mount_path json, vault_ca_path json                                               | func
+ public | pg_tde_add_key_provider_vault_v2            | integer                                                                                                                      | provider_name character varying, vault_token text, vault_url text, vault_mount_path text, vault_ca_path text                                               | func
+ public | pg_tde_alter_principal_key_keyring          | boolean                                                                                                                      | new_provider_name character varying                                                                                                                        | func
+ public | pg_tde_ddl_command_end_capture              | event_trigger                                                                                                                |                                                                                                                                                            | func
+ public | pg_tde_ddl_command_start_capture            | event_trigger                                                                                                                |                                                                                                                                                            | func
+ public | pg_tde_extension_initialize                 | void                                                                                                                         |                                                                                                                                                            | func
+ public | pg_tde_grant_execute_privilege_on_function  | boolean                                                                                                                      | target_user_or_role text, target_function_name text, target_function_args text                                                                             | func
+ public | pg_tde_grant_key_management_to_role         | boolean                                                                                                                      | target_user_or_role text                                                                                                                                   | func
+ public | pg_tde_grant_key_viewer_to_role             | boolean                                                                                                                      | target_user_or_role text                                                                                                                                   | func
+ public | pg_tde_internal_has_key                     | boolean                                                                                                                      | oid oid                                                                                                                                                    | func
+ public | pg_tde_is_encrypted                         | boolean                                                                                                                      | table_name character varying                                                                                                                               | func
+ public | pg_tde_list_all_key_providers               | SETOF record                                                                                                                 | OUT id integer, OUT provider_name character varying, OUT provider_type character varying, OUT options json                                                 | func
+ public | pg_tde_list_all_key_providers               | SETOF record                                                                                                                 | pg_tde_global, OUT id integer, OUT provider_name character varying, OUT provider_type character varying, OUT options json                                  | func
+ public | pg_tde_principal_key_info                   | TABLE(principal_key_name text, key_provider_name text, key_provider_id integer, key_createion_time timestamp with time zone) |                                                                                                                                                            | func
+ public | pg_tde_principal_key_info                   | TABLE(principal_key_name text, key_provider_name text, key_provider_id integer, key_createion_time timestamp with time zone) | pg_tde_global                                                                                                                                              | func
+ public | pg_tde_principal_key_info_internal          | TABLE(principal_key_name text, key_provider_name text, key_provider_id integer, key_createion_time timestamp with time zone) | is_global boolean                                                                                                                                          | func
+ public | pg_tde_revoke_execute_privilege_on_function | boolean                                                                                                                      | target_user_or_role text, target_function_name text, argument_types text                                                                                   | func
+ public | pg_tde_revoke_key_management_from_role      | boolean                                                                                                                      | target_user_or_role text                                                                                                                                   | func
+ public | pg_tde_revoke_key_viewer_from_role          | boolean                                                                                                                      | target_user_or_role text                                                                                                                                   | func
+ public | pg_tde_set_principal_key                    | boolean                                                                                                                      | principal_key_name character varying, pg_tde_global, provider_name character varying DEFAULT NULL::character varying, ensure_new_key boolean DEFAULT false | func
+ public | pg_tde_set_principal_key                    | boolean                                                                                                                      | principal_key_name character varying, provider_name character varying DEFAULT NULL::character varying, ensure_new_key boolean DEFAULT false                | func
+ public | pg_tde_set_principal_key_internal           | boolean                                                                                                                      | principal_key_name character varying, is_global integer, provider_name character varying, ensure_new_key boolean DEFAULT false                             | func
+ public | pg_tde_set_server_principal_key             | boolean                                                                                                                      | principal_key_name character varying, pg_tde_global, provider_name character varying DEFAULT NULL::character varying, ensure_new_key boolean DEFAULT false | func
+ public | pg_tde_version                              | text                                                                                                                         |                                                                                                                                                            | func
+ public | pg_tdeam_basic_handler                      | table_am_handler                                                                                                             | internal                                                                                                                                                   | func
+ public | pg_tdeam_handler                            | table_am_handler                                                                                                             | internal                                                                                                                                                   | func
+(39 rows)
+
+\do public.*
+                             List of operators
+ Schema | Name | Left arg type | Right arg type | Result type | Description 
+--------+------+---------------+----------------+-------------+-------------
+(0 rows)
+
+\dT c.*
+     List of data types
+ Schema | Name | Description 
+--------+------+-------------
+(0 rows)
+
+\df c.*
+                       List of functions
+ Schema | Name | Result data type | Argument data types | Type 
+--------+------+------------------+---------------------+------
+(0 rows)
+
+\do c.*
+                             List of operators
+ Schema | Name | Left arg type | Right arg type | Result type | Description 
+--------+------+---------------+----------------+-------------+-------------
+(0 rows)
+
+drop schema c;

@@ -1,4 +1,4 @@
-CREATE EXTENSION pg_tde;
+CREATE EXTENSION IF NOT EXISTS pg_tde;
 
 \getenv root_token ROOT_TOKEN
 

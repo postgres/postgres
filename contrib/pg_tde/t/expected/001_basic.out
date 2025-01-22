@@ -1,4 +1,4 @@
-CREATE EXTENSION pg_tde;
+CREATE EXTENSION IF NOT EXISTS pg_tde;
 SELECT extname, extversion FROM pg_extension WHERE extname = 'pg_tde';
 pg_tde|1.0-beta2
 -- server restart

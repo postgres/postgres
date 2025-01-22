@@ -15,6 +15,11 @@ use PostgreSQL::Test::Utils;
 use PostgreSQL::Test::AdjustUpgrade;
 use Test::More;
 
+if (defined($ENV{TDE_MODE}))
+{
+    plan skip_all => "Running with TDE doesn't support special server starts yet";
+}
+
 # Can be changed to test the other modes.
 my $mode = $ENV{PG_TEST_PG_UPGRADE_MODE} || '--copy';
 

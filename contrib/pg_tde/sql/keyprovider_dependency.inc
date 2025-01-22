@@ -1,4 +1,4 @@
-CREATE EXTENSION pg_tde;
+CREATE EXTENSION IF NOT EXISTS pg_tde;
 
 SELECT pg_tde_add_key_provider_file('mk-file','/tmp/pg_tde_test_keyring.per');
 SELECT pg_tde_add_key_provider_file('free-file','/tmp/pg_tde_test_keyring_2.per');

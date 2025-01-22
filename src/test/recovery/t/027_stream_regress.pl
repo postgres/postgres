@@ -9,6 +9,11 @@ use PostgreSQL::Test::Utils;
 use Test::More;
 use File::Basename;
 
+if (defined($ENV{TDE_MODE}))
+{
+    plan skip_all => "Running with TDE doesn't support special server starts yet";
+}
+
 # Initialize primary node
 my $node_primary = PostgreSQL::Test::Cluster->new('primary');
 $node_primary->init(allows_streaming => 1);

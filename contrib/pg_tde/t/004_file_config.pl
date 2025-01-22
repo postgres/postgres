@@ -30,7 +30,7 @@ close $conf2;
 my $rt_value = $node->start();
 ok($rt_value == 1, "Start Server");
 
-my ($cmdret, $stdout, $stderr) = $node->psql('postgres', 'CREATE EXTENSION pg_tde;', extra_params => ['-a']);
+my ($cmdret, $stdout, $stderr) = $node->psql('postgres', 'CREATE EXTENSION IF NOT EXISTS pg_tde;', extra_params => ['-a']);
 ok($cmdret == 0, "CREATE PGTDE EXTENSION");
 PGTDE::append_to_file($stdout);
 

@@ -1,0 +1,19 @@
+name: PSP
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: PSP
+    strategy:
+      matrix:
+        os: ['ubuntu-22.04']
+        build_type: [debug,debugoptimized]
+        build_script: [make, meson]
+    uses: ./.github/workflows/psp-reusable.yml
+    with:
+        os: ${{ matrix.os }}
+        build_type: ${{ matrix.build_type }}
+        build_script: ${{ matrix.build_script }}
+    secrets: inherit

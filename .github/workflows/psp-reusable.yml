@@ -1,0 +1,123 @@
+name: PSP-Reusable
+on:
+  workflow_call:
+    inputs:
+      os:
+        type: string
+        required: true
+      build_type:
+        type: string
+        required: true
+      build_script:
+        type: string
+        required: true
+
+env:
+  artifact_name: build-${{ inputs.os }}-${{ inputs.build_script }}-${{ inputs.build_type }}
+
+jobs:
+  build:
+    name: Build PSP
+    runs-on: ${{ inputs.os }}
+    steps:
+
+      - name: Clone repository
+        uses: actions/checkout@v4
+        with:
+          path: 'src'
+          submodules: recursive
+          ref: ${{ github.ref }}
+
+      - name: Install dependencies
+        run: src/ci_scripts/ubuntu-deps.sh
+
+      - name: Build postgres
+        run: src/ci_scripts/${{ inputs.build_script }}-build.sh ${{ inputs.build_type }}
+
+      - name: 'Tar files'
+        run: tar -czf artifacts.tar src pginst
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.artifact_name }}
+          overwrite: true
+          path: |
+            artifacts.tar
+          retention-days: 1
+
+  test:
+    name: Test PSP
+    runs-on: ${{ inputs.os }}
+    needs: build
+    
+    steps: 
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ env.artifact_name }}
+          path: .
+
+      - name: 'Untar files'
+        run: tar -xzf artifacts.tar
+
+      - name: Install dependencies
+        run: src/ci_scripts/ubuntu-deps.sh
+  
+      - name: Setup kmip and vault
+        run: src/ci_scripts/setup-keyring-servers.sh
+
+      - name: Test postgres
+        run: src/ci_scripts/${{ inputs.build_script }}-test.sh
+
+      - name: Report on test fail
+        uses: actions/upload-artifact@v4
+        if: ${{ failure() }}
+        with:
+          name: testlog-ubuntu-${{ inputs.ubuntu_version }}.04-meson-${{ inputs.build_type }}
+          path: |
+            src/build/testrun/
+            src/contrib/*/t/
+            src/contrib/*/results
+            src/contrib/*/regression.diffs
+            src/contrib/*/regression.out
+          retention-days: 3
+
+  test_tde:
+    name: Test PSP with TDE
+    runs-on: ${{ inputs.os }}
+    if: inputs.build_script == 'make'
+    needs: build
+
+    steps: 
+      
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ env.artifact_name }}
+          path: .
+
+      - name: 'Untar files'
+        run: tar -xzf artifacts.tar
+
+      - name: Install dependencies
+        run: src/ci_scripts/ubuntu-deps.sh 
+  
+      - name: Setup kmip and vault
+        run: src/ci_scripts/setup-keyring-servers.sh
+  
+      - name: Test postgres with TDE
+        run: src/ci_scripts/${{ inputs.build_script }}-test-tde.sh
+
+      - name: Report on test fail
+        uses: actions/upload-artifact@v4
+        if: ${{ failure() }}
+        with:
+          name: testlog-tde-${{ inputs.os }}-${{  inputs.build_script }}-${{ inputs.build_type }}
+          path: |
+            src/build/testrun/
+            src/contrib/*/t/
+            src/contrib/*/results
+            src/contrib/*/regression.diffs
+            src/contrib/*/regression.out
+          retention-days: 3

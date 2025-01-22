@@ -41,7 +41,7 @@ my $rt_value = $node->start;
 ok($rt_value == 1, "Start Server");
 
 # Create PGSM extension
-my ($cmdret, $stdout, $stderr) = $node->psql('postgres', 'CREATE EXTENSION pg_stat_monitor;', extra_params => ['-a']);
+my ($cmdret, $stdout, $stderr) = $node->psql('postgres', 'CREATE EXTENSION IF NOT EXISTS pg_stat_monitor;', extra_params => ['-a']);
 ok($cmdret == 0, "CREATE PGSM EXTENSION");
 PGTDE::append_to_debug_file($stdout);
 
@@ -50,39 +50,39 @@ ok($cmdret == 0, "Reset PGSM EXTENSION");
 PGTDE::append_to_debug_file($stdout);
 
 # Create pg_tde extension
-($cmdret, $stdout, $stderr) = $node->psql('postgres', 'CREATE EXTENSION pg_tde;', extra_params => ['-a']);
+($cmdret, $stdout, $stderr) = $node->psql('postgres', 'CREATE EXTENSION IF NOT EXISTS pg_tde;', extra_params => ['-a']);
 ok($cmdret == 0, "CREATE PGTDE EXTENSION");
 PGTDE::append_to_file($stdout);
 
 # Create Other extensions
-($cmdret, $stdout, $stderr) = $node->psql('postgres', 'CREATE EXTENSION IF NOT EXISTS pgaudit;', extra_params => ['-a']);
+($cmdret, $stdout, $stderr) = $node->psql('postgres', 'CREATE EXTENSION IF NOT EXISTS IF NOT EXISTS pgaudit;', extra_params => ['-a']);
 ok($cmdret == 0, "CREATE pgaudit EXTENSION");
 PGTDE::append_to_debug_file($stdout);
-($cmdret, $stdout, $stderr) = $node->psql('postgres', 'CREATE EXTENSION IF NOT EXISTS set_user;', extra_params => ['-a']);
+($cmdret, $stdout, $stderr) = $node->psql('postgres', 'CREATE EXTENSION IF NOT EXISTS IF NOT EXISTS set_user;', extra_params => ['-a']);
 ok($cmdret == 0, "CREATE set_user EXTENSION");
 PGTDE::append_to_debug_file($stdout);
-($cmdret, $stdout, $stderr) = $node->psql('postgres', 'CREATE EXTENSION IF NOT EXISTS pg_repack;', extra_params => ['-a']);
+($cmdret, $stdout, $stderr) = $node->psql('postgres', 'CREATE EXTENSION IF NOT EXISTS IF NOT EXISTS pg_repack;', extra_params => ['-a']);
 ok($cmdret == 0, "CREATE pg_repack EXTENSION");
 PGTDE::append_to_debug_file($stdout);
-($cmdret, $stdout, $stderr) = $node->psql('postgres', "SET pgaudit.log = 'none'; CREATE EXTENSION IF NOT EXISTS postgis; SET pgaudit.log = 'all';", extra_params => ['-a']);
+($cmdret, $stdout, $stderr) = $node->psql('postgres', "SET pgaudit.log = 'none'; CREATE EXTENSION IF NOT EXISTS IF NOT EXISTS postgis; SET pgaudit.log = 'all';", extra_params => ['-a']);
 ok($cmdret == 0, "CREATE postgis EXTENSION");
 PGTDE::append_to_debug_file($stdout);
-($cmdret, $stdout, $stderr) = $node->psql('postgres', 'CREATE EXTENSION IF NOT EXISTS postgis_raster;', extra_params => ['-a']);
+($cmdret, $stdout, $stderr) = $node->psql('postgres', 'CREATE EXTENSION IF NOT EXISTS IF NOT EXISTS postgis_raster;', extra_params => ['-a']);
 ok($cmdret == 0, "CREATE postgis_raster EXTENSION");
 PGTDE::append_to_debug_file($stdout);
-($cmdret, $stdout, $stderr) = $node->psql('postgres', 'CREATE EXTENSION IF NOT EXISTS postgis_sfcgal;', extra_params => ['-a']);
+($cmdret, $stdout, $stderr) = $node->psql('postgres', 'CREATE EXTENSION IF NOT EXISTS IF NOT EXISTS postgis_sfcgal;', extra_params => ['-a']);
 ok($cmdret == 0, "CREATE postgis_sfcgal EXTENSION");
 PGTDE::append_to_debug_file($stdout);
-($cmdret, $stdout, $stderr) = $node->psql('postgres', 'CREATE EXTENSION IF NOT EXISTS fuzzystrmatch;', extra_params => ['-a']);
+($cmdret, $stdout, $stderr) = $node->psql('postgres', 'CREATE EXTENSION IF NOT EXISTS IF NOT EXISTS fuzzystrmatch;', extra_params => ['-a']);
 ok($cmdret == 0, "CREATE fuzzystrmatch EXTENSION");
 PGTDE::append_to_debug_file($stdout);
-($cmdret, $stdout, $stderr) = $node->psql('postgres', 'CREATE EXTENSION IF NOT EXISTS address_standardizer;', extra_params => ['-a']);
+($cmdret, $stdout, $stderr) = $node->psql('postgres', 'CREATE EXTENSION IF NOT EXISTS IF NOT EXISTS address_standardizer;', extra_params => ['-a']);
 ok($cmdret == 0, "CREATE address_standardizer EXTENSION");
 PGTDE::append_to_debug_file($stdout);
-($cmdret, $stdout, $stderr) = $node->psql('postgres', 'CREATE EXTENSION IF NOT EXISTS address_standardizer_data_us;', extra_params => ['-a']);
+($cmdret, $stdout, $stderr) = $node->psql('postgres', 'CREATE EXTENSION IF NOT EXISTS IF NOT EXISTS address_standardizer_data_us;', extra_params => ['-a']);
 ok($cmdret == 0, "CREATE address_standardizer_data_us EXTENSION");
 PGTDE::append_to_debug_file($stdout);
-($cmdret, $stdout, $stderr) = $node->psql('postgres', 'CREATE EXTENSION IF NOT EXISTS postgis_tiger_geocoder;', extra_params => ['-a']);
+($cmdret, $stdout, $stderr) = $node->psql('postgres', 'CREATE EXTENSION IF NOT EXISTS IF NOT EXISTS postgis_tiger_geocoder;', extra_params => ['-a']);
 ok($cmdret == 0, "CREATE postgis_tiger_geocoder EXTENSION");
 PGTDE::append_to_debug_file($stdout);
 

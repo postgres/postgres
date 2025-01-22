@@ -1,6 +1,6 @@
 \set tde_am tde_heap_basic
 \i sql/trigger_on_view.inc
-CREATE extension pg_tde;
+CREATE EXTENSION IF NOT EXISTS pg_tde;
 SELECT pg_tde_add_key_provider_file('file-vault','/tmp/pg_tde_test_keyring.per');
  pg_tde_add_key_provider_file 
 ------------------------------

@@ -1,6 +1,6 @@
 -- A test case for https://github.com/percona/pg_tde/pull/21
 -- 
-CREATE EXTENSION pg_tde;
+CREATE EXTENSION IF NOT EXISTS pg_tde;
 
 SELECT pg_tde_add_key_provider_file('file-vault','/tmp/pg_tde_test_keyring.per');
 SELECT pg_tde_set_principal_key('test-db-principal-key','file-vault');
@@ -33,7 +33,7 @@ INSERT INTO sbtest1(k) VALUES
 (13);
 
 -- Line pointers (lp) point to non-sorted offsets (lp_off):
--- CREATE EXTENSION pageinspect;
+-- CREATE EXTENSION IF NOT EXISTS pageinspect;
 -- SELECT lp, lp_off, t_ctid FROM heap_page_items(get_raw_page('sbtest1', 0));
 --  lp | lp_off | t_ctid
 -- ----+--------+--------

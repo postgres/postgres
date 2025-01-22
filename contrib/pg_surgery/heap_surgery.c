@@ -112,7 +112,7 @@ heap_force_common(FunctionCallInfo fcinfo, HeapTupleForceOption heap_force_opt)
 						RelationGetRelationName(rel)),
 				 errdetail_relkind_not_supported(rel->rd_rel->relkind)));
 
-	if (rel->rd_rel->relam != HEAP_TABLE_AM_OID)
+	if (rel->rd_rel->relam != HEAP_TABLE_AM_OID && rel->rd_rel->relam != get_tde_table_am_oid())
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("only heap AM is supported")));

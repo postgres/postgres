@@ -27,6 +27,7 @@
 
 #include "access/htup_details.h"
 #include "access/relation.h"
+#include "access/tableam.h"
 #include "catalog/pg_am_d.h"
 #include "catalog/pg_type.h"
 #include "funcapi.h"
@@ -324,7 +325,7 @@ tuple_data_split_internal(Oid relid, char *tupdata,
 	 * Sequences always use heap AM, but they don't show that in the catalogs.
 	 */
 	if (rel->rd_rel->relkind != RELKIND_SEQUENCE &&
-		rel->rd_rel->relam != HEAP_TABLE_AM_OID)
+		rel->rd_rel->relam != HEAP_TABLE_AM_OID && rel->rd_rel->relam != get_tde_table_am_oid())
 		ereport(ERROR, (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 						errmsg("only heap AM is supported")));
 
