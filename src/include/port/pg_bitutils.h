@@ -307,9 +307,7 @@ extern PGDLLIMPORT uint64 (*pg_popcount_masked_optimized) (const char *buf, int 
 
 /*
  * We can also try to use the AVX-512 popcount instruction on some systems.
- * The implementation of that is located in its own file because it may
- * require special compiler flags that we don't want to apply to any other
- * files.
+ * The implementation of that is located in its own file.
  */
 #ifdef USE_AVX512_POPCNT_WITH_RUNTIME_CHECK
 extern bool pg_popcount_avx512_available(void);
