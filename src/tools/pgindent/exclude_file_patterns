@@ -63,3 +63,8 @@ src/tools/pg_bsd_indent/.*
 /tmp_install/
 # ... and for paranoia's sake, don't touch git stuff.
 /\.git/
+# Percona excludes
+contrib/pg_tde/src16/.*
+contrib/pg_tde/src17.*
+contrib/pg_tde/src/libkmip/.*
+src/backend/nodes/nodetags.h
