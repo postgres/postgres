@@ -2017,18 +2017,20 @@ CONTEXT:  processing remote data for replication origin "pg_16395" during "INSER
     <title>Initial Snapshot</title>
     <para>
      The initial data in existing subscribed tables are snapshotted and
-     copied in a parallel instance of a special kind of apply process.
-     This process will create its own replication slot and copy the existing
-     data.  As soon as the copy is finished the table contents will become
-     visible to other backends.  Once existing data is copied, the worker
-     enters synchronization mode, which ensures that the table is brought
-     up to a synchronized state with the main apply process by streaming
-     any changes that happened during the initial data copy using standard
-     logical replication.  During this synchronization phase, the changes
-     are applied and committed in the same order as they happened on the
-     publisher.  Once synchronization is done, control of the
-     replication of the table is given back to the main apply process where
-     replication continues as normal.
+     copied in a parallel instances of a special kind of apply process.
+     These special apply processes are dedicated table synchronization
+     workers, spawned for each table to be synchronized.  Each table
+     synchronization process will create its own replication slot and
+     copy the existing data.  As soon as the copy is finished the table
+     contents will become visible to other backends.  Once existing data
+     is copied, the worker enters synchronization mode, which ensures
+     that the table is brought up to a synchronized state with the main
+     apply process by streaming any changes that happened during the
+     initial data copy using standard logical replication.  During this
+     synchronization phase, the changes are applied and committed in the same
+     order as they happened on the publisher.  Once synchronization is done,
+     control of the replication of the table is given back to the main apply
+     process where replication continues as normal.
     </para>
     <note>
      <para>
@@ -2037,6 +2039,15 @@ CONTEXT:  processing remote data for replication origin "pg_16395" during "INSER
       parameter only affects what DML operations will be replicated. The
       initial data synchronization does not take this parameter into account
       when copying the existing table data.
+     </para>
+    </note>
+    <note>
+     <para>
+      If a table synchronization worker fails during copy, the apply worker
+      detects the failure and respawns the table synchronization worker to
+      continue the synchronization process. This behaviour ensures that
+      transient errors do not permanently disrupt the replication setup. See
+      also <link linkend="guc-wal-retrieve-retry-interval"><varname>wal_retrieve_retry_interval</varname></link>.
      </para>
     </note>
   </sect2>
