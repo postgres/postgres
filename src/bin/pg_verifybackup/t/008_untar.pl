@@ -20,12 +20,14 @@ $primary->start;
 my $source_ts_path = PostgreSQL::Test::Utils::tempdir_short();
 
 # Create a tablespace with table in it.
-$primary->safe_psql('postgres', qq(
+$primary->safe_psql(
+	'postgres', qq(
 		CREATE TABLESPACE regress_ts1 LOCATION '$source_ts_path';
 		SELECT oid FROM pg_tablespace WHERE spcname = 'regress_ts1';
 		CREATE TABLE regress_tbl1(i int) TABLESPACE regress_ts1;
 		INSERT INTO regress_tbl1 VALUES(generate_series(1,5));));
-my $tsoid = $primary->safe_psql('postgres', qq(
+my $tsoid = $primary->safe_psql(
+	'postgres', qq(
 		SELECT oid FROM pg_tablespace WHERE spcname = 'regress_ts1'));
 
 my $backup_path = $primary->backup_dir . '/server-backup';
@@ -35,7 +37,7 @@ my @test_configuration = (
 	{
 		'compression_method' => 'none',
 		'backup_flags' => [],
-		'backup_archive' => ['base.tar', "$tsoid.tar"],
+		'backup_archive' => [ 'base.tar', "$tsoid.tar" ],
 		'enabled' => 1
 	},
 	{
@@ -47,7 +49,7 @@ my @test_configuration = (
 	{
 		'compression_method' => 'lz4',
 		'backup_flags' => [ '--compress', 'server-lz4' ],
-		'backup_archive' => ['base.tar.lz4', "$tsoid.tar.lz4" ],
+		'backup_archive' => [ 'base.tar.lz4', "$tsoid.tar.lz4" ],
 		'enabled' => check_pg_config("#define USE_LZ4 1")
 	},
 	{
@@ -95,7 +97,7 @@ for my $tc (@test_configuration)
 			"found expected backup files, compression $method");
 
 		# Verify tar backup.
-		$primary->command_ok(['pg_verifybackup', '-n', '-e', $backup_path],
+		$primary->command_ok([ 'pg_verifybackup', '-n', '-e', $backup_path ],
 			"verify backup, compression $method");
 
 		# Cleanup.

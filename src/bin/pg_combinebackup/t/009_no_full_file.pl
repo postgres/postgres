@@ -46,9 +46,9 @@ for my $iname (@filelist)
 	if (-f "$backup1path/base/1/$name")
 	{
 		copy("$backup2path/base/1/$iname", "$backup1path/base/1/$iname")
-			|| die "copy $backup2path/base/1/$iname: $!";
+		  || die "copy $backup2path/base/1/$iname: $!";
 		unlink("$backup1path/base/1/$name")
-			|| die "unlink $backup1path/base/1/$name: $!";
+		  || die "unlink $backup1path/base/1/$name: $!";
 		$success = 1;
 		last;
 	}
@@ -57,9 +57,7 @@ for my $iname (@filelist)
 # pg_combinebackup should fail.
 my $outpath = $primary->backup_dir . '/out';
 $primary->command_fails_like(
-	[
-		'pg_combinebackup', $backup1path, $backup2path, '-o', $outpath,
-	],
+	[ 'pg_combinebackup', $backup1path, $backup2path, '-o', $outpath, ],
 	qr/full backup contains unexpected incremental file/,
 	"pg_combinebackup fails");
 

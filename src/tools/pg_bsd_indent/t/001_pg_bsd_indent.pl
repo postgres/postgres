@@ -49,7 +49,8 @@ while (my $test_src = glob("$src_dir/tests/*.0"))
 		],
 		"pg_bsd_indent succeeds on $test");
 	# check result matches, adding any diff to $diffs_file
-	my $result = run_log([ 'diff', @diffopts, "$test_src.stdout", "$test.out" ],
+	my $result =
+	  run_log([ 'diff', @diffopts, "$test_src.stdout", "$test.out" ],
 		'>>', $diffs_file);
 	ok($result, "pg_bsd_indent output matches for $test");
 }

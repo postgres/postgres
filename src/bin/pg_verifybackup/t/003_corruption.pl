@@ -60,12 +60,14 @@ my @scenario = (
 	{
 		'name' => 'append_to_file',
 		'mutilate' => \&mutilate_append_to_file,
-		'fails_like' => qr/has size \d+ (on disk|in "[^"]+") but size \d+ in the manifest/
+		'fails_like' =>
+		  qr/has size \d+ (on disk|in "[^"]+") but size \d+ in the manifest/
 	},
 	{
 		'name' => 'truncate_file',
 		'mutilate' => \&mutilate_truncate_file,
-		'fails_like' => qr/has size 0 (on disk|in "[^"]+") but size \d+ in the manifest/
+		'fails_like' =>
+		  qr/has size 0 (on disk|in "[^"]+") but size \d+ in the manifest/
 	},
 	{
 		'name' => 'replace_file',
@@ -147,8 +149,9 @@ for my $scenario (@scenario)
 		# same problem, unless the scenario needs UNIX permissions or we don't
 		# have a TAR program available. Note that this destructively modifies
 		# the backup directory.
-		if (! $scenario->{'needs_unix_permissions'} ||
-			!defined $tar || $tar eq '')
+		if (   !$scenario->{'needs_unix_permissions'}
+			|| !defined $tar
+			|| $tar eq '')
 		{
 			my $tar_backup_path = $primary->backup_dir . '/tar_' . $name;
 			mkdir($tar_backup_path) || die "mkdir $tar_backup_path: $!";
@@ -156,14 +159,15 @@ for my $scenario (@scenario)
 			# tar and then remove each tablespace. We remove the original files
 			# so that they don't also end up in base.tar.
 			my @tsoid = grep { $_ ne '.' && $_ ne '..' }
-				slurp_dir("$backup_path/pg_tblspc");
+			  slurp_dir("$backup_path/pg_tblspc");
 			my $cwd = getcwd;
 			for my $tsoid (@tsoid)
 			{
 				my $tspath = $backup_path . '/pg_tblspc/' . $tsoid;
 
 				chdir($tspath) || die "chdir: $!";
-				command_ok([ $tar, '-cf', "$tar_backup_path/$tsoid.tar", '.' ]);
+				command_ok(
+					[ $tar, '-cf', "$tar_backup_path/$tsoid.tar", '.' ]);
 				chdir($cwd) || die "chdir: $!";
 				rmtree($tspath);
 			}
@@ -175,9 +179,10 @@ for my $scenario (@scenario)
 			rmtree($backup_path . '/pg_wal');
 
 			# move the backup manifest
-			move($backup_path . '/backup_manifest',
-				$tar_backup_path . '/backup_manifest')
-				or die "could not copy manifest to $tar_backup_path";
+			move(
+				$backup_path . '/backup_manifest',
+				$tar_backup_path . '/backup_manifest'
+			) or die "could not copy manifest to $tar_backup_path";
 
 			# Construct base.tar with what's left.
 			chdir($backup_path) || die "chdir: $!";

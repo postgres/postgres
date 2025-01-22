@@ -42,7 +42,8 @@ sub test_checksums
 	}
 
 	# A backup with a valid algorithm should work.
-	$primary->command_ok(\@backup, "$format format backup ok with algorithm \"$algorithm\"");
+	$primary->command_ok(\@backup,
+		"$format format backup ok with algorithm \"$algorithm\"");
 
 	# We expect each real checksum algorithm to be mentioned on every line of
 	# the backup manifest file except the first and last; for simplicity, we
@@ -50,7 +51,8 @@ sub test_checksums
 	# is none, we just check that the manifest exists.
 	if ($algorithm eq 'none')
 	{
-		ok(-f "$backup_path/backup_manifest", "$format format backup manifest exists");
+		ok( -f "$backup_path/backup_manifest",
+			"$format format backup manifest exists");
 	}
 	else
 	{

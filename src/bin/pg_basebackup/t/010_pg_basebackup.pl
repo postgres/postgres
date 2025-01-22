@@ -364,7 +364,7 @@ my $sys_tempdir = PostgreSQL::Test::Utils::tempdir_short;
 # drives.
 rmdir("$pgdata/pg_replslot")
   or BAIL_OUT "could not remove $pgdata/pg_replslot";
-mkdir("$sys_tempdir/pg_replslot"); # if this fails the symlink will fail
+mkdir("$sys_tempdir/pg_replslot");    # if this fails the symlink will fail
 dir_symlink("$sys_tempdir/pg_replslot", "$pgdata/pg_replslot")
   or BAIL_OUT "could not symlink to $pgdata/pg_replslot";
 

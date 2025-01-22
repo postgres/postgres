@@ -108,7 +108,7 @@ for my $tc (@test_configuration)
 			"found expected backup files, compression $method");
 
 		# Verify tar backup.
-		$primary->command_ok( [ 'pg_verifybackup', '-n', '-e', $backup_path ],
+		$primary->command_ok([ 'pg_verifybackup', '-n', '-e', $backup_path ],
 			"verify backup, compression $method");
 
 		# Cleanup.

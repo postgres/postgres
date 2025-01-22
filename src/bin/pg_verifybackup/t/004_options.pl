@@ -29,8 +29,7 @@ is($stdout, '', "-q succeeds: no stdout");
 is($stderr, '', "-q succeeds: no stderr");
 
 # Should still work if we specify -Fp.
-$primary->command_ok(
-	[ 'pg_verifybackup', '-Fp', $backup_path ],
+$primary->command_ok([ 'pg_verifybackup', '-Fp', $backup_path ],
 	"verifies with -Fp");
 
 # Should not work if we specify -Fy because that's invalid.

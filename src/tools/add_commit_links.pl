@@ -62,8 +62,9 @@ sub process_file
 
 		# skip over commit links because we will add them below
 		next
-		  if (!$in_comment &&
-			m{^\s*<ulink url="&commit_baseurl;[[:xdigit:]]+">&sect;</ulink>\s*$});
+		  if (!$in_comment
+			&& m{^\s*<ulink url="&commit_baseurl;[[:xdigit:]]+">&sect;</ulink>\s*$}
+		  );
 
 		if ($in_comment && m/\[([[:xdigit:]]+)\]/)
 		{
@@ -73,10 +74,10 @@ sub process_file
 			(!m/^Branch:/) && push(@hashes, $hash);
 
 			# minor release item
-			m/^Branch:/ &&
-			  defined($major_version) &&
-			  m/_${major_version}_/ &&
-			  push(@hashes, $hash);
+			m/^Branch:/
+			  && defined($major_version)
+			  && m/_${major_version}_/
+			  && push(@hashes, $hash);
 		}
 
 		if (!$in_comment && m{</para>})
