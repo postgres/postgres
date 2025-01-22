@@ -4003,13 +4003,6 @@ afterTriggerCopyBitmap(Bitmapset *src)
 	if (src == NULL)
 		return NULL;
 
-	/* Create event context if we didn't already */
-	if (afterTriggers.event_cxt == NULL)
-		afterTriggers.event_cxt =
-			AllocSetContextCreate(TopTransactionContext,
-								  "AfterTriggerEvents",
-								  ALLOCSET_DEFAULT_SIZES);
-
 	oldcxt = MemoryContextSwitchTo(afterTriggers.event_cxt);
 
 	dst = bms_copy(src);
@@ -4111,16 +4104,21 @@ afterTriggerAddEvent(AfterTriggerEventList *events,
 		 (char *) newshared >= chunk->endfree;
 		 newshared--)
 	{
+		/* compare fields roughly by probability of them being different */
 		if (newshared->ats_tgoid == evtshared->ats_tgoid &&
-			newshared->ats_relid == evtshared->ats_relid &&
 			newshared->ats_event == evtshared->ats_event &&
+			newshared->ats_firing_id == 0 &&
 			newshared->ats_table == evtshared->ats_table &&
-			newshared->ats_firing_id == 0)
+			newshared->ats_relid == evtshared->ats_relid &&
+			bms_equal(newshared->ats_modifiedcols,
+					  evtshared->ats_modifiedcols))
 			break;
 	}
 	if ((char *) newshared < chunk->endfree)
 	{
 		*newshared = *evtshared;
+		/* now we must make a suitably-long-lived copy of the bitmap */
+		newshared->ats_modifiedcols = afterTriggerCopyBitmap(evtshared->ats_modifiedcols);
 		newshared->ats_firing_id = 0;	/* just to be sure */
 		chunk->endfree = (char *) newshared;
 	}
@@ -6431,7 +6429,7 @@ AfterTriggerSaveEvent(EState *estate, ResultRelInfo *relinfo,
 			new_shared.ats_table = transition_capture->tcs_private;
 		else
 			new_shared.ats_table = NULL;
-		new_shared.ats_modifiedcols = afterTriggerCopyBitmap(modifiedCols);
+		new_shared.ats_modifiedcols = modifiedCols;
 
 		afterTriggerAddEvent(&afterTriggers.query_stack[afterTriggers.query_depth].events,
 							 &new_event, &new_shared);
