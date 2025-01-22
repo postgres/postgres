@@ -6495,12 +6495,23 @@ describePublications(const char *pattern)
 	if (has_pubtruncate)
 		appendPQExpBufferStr(&buf,
 							 ", pubtruncate");
+	else
+		appendPQExpBufferStr(&buf,
+							 ", false AS pubtruncate");
+
 	if (has_pubgencols)
 		appendPQExpBufferStr(&buf,
 							 ", pubgencols");
+	else
+		appendPQExpBufferStr(&buf,
+							 ", false AS pubgencols");
+
 	if (has_pubviaroot)
 		appendPQExpBufferStr(&buf,
 							 ", pubviaroot");
+	else
+		appendPQExpBufferStr(&buf,
+							 ", false AS pubviaroot");
 
 	appendPQExpBufferStr(&buf,
 						 "\nFROM pg_catalog.pg_publication\n");
