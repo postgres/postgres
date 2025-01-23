@@ -324,53 +324,59 @@ $node->command_ok(
 ok(-f "$tempdir/tarbackup/base.tar", 'backup tar was created');
 rmtree("$tempdir/tarbackup");
 
-$node->command_fails(
+$node->command_fails_like(
 	[
 		@pg_basebackup_defs,
 		'--pgdata' => "$tempdir/backup_foo",
 		'--format' => 'plain',
 		'--tablespace-mapping' => '=/foo'
 	],
+	qr/invalid tablespace mapping format/,
 	'--tablespace-mapping with empty old directory fails');
-$node->command_fails(
+$node->command_fails_like(
 	[
 		@pg_basebackup_defs,
 		'--pgdata' => "$tempdir/backup_foo",
 		'--format' => 'plain',
 		'--tablespace-mapping' => '/foo='
 	],
+	qr/invalid tablespace mapping format/,
 	'--tablespace-mapping with empty new directory fails');
-$node->command_fails(
+$node->command_fails_like(
 	[
 		@pg_basebackup_defs,
 		'--pgdata' => "$tempdir/backup_foo",
 		'--format' => 'plain',
 		'--tablespace-mapping' => '/foo=/bar=/baz'
 	],
+	qr/multiple "=" signs in tablespace mapping/,
 	'--tablespace-mapping with multiple = fails');
-$node->command_fails(
+$node->command_fails_like(
 	[
 		@pg_basebackup_defs,
 		'--pgdata' => "$tempdir/backup_foo",
 		'--format' => 'plain',
 		'--tablespace-mapping' => 'foo=/bar'
 	],
+	qr/old directory is not an absolute path in tablespace mapping/,
 	'--tablespace-mapping with old directory not absolute fails');
-$node->command_fails(
+$node->command_fails_like(
 	[
 		@pg_basebackup_defs,
 		'--pgdata' => "$tempdir/backup_foo",
 		'--format' => 'plain',
 		'--tablespace-mapping' => '/foo=bar'
 	],
+	qr/new directory is not an absolute path in tablespace mapping/,
 	'--tablespace-mapping with new directory not absolute fails');
-$node->command_fails(
+$node->command_fails_like(
 	[
 		@pg_basebackup_defs,
 		'--pgdata' => "$tempdir/backup_foo",
 		'--format' => 'plain',
 		'--tablespace-mapping' => 'foo'
 	],
+	qr/invalid tablespace mapping format/,
 	'--tablespace-mapping with invalid format fails');
 
 my $superlongname = "superlongname_" . ("x" x 100);
@@ -709,7 +715,7 @@ $node->command_fails_like(
 		'--format' => 'tar'
 	],
 	qr/cannot specify both format and backup target/,
-	'backup target and output directory');
+	'backup target and format');
 $node->command_ok(
 	[
 		@pg_basebackup_defs,
@@ -742,24 +748,26 @@ ok( -f "$tempdir/backuponserver/base.tar",
 	'backup tar was created as non-superuser');
 rmtree("$tempdir/backuponserver");
 
-$node->command_fails(
+$node->command_fails_like(
 	[
 		@pg_basebackup_defs,
 		'--pgdata' => "$tempdir/backupxs_sl_fail",
 		'--wal-method' => 'stream',
 		'--slot' => 'slot0'
 	],
+	qr/replication slot "slot0" does not exist/,
 	'pg_basebackup fails with nonexistent replication slot');
 
-$node->command_fails(
+$node->command_fails_like(
 	[
 		@pg_basebackup_defs,
 		'--pgdata' => "$tempdir/backupxs_slot",
 		'--create-slot'
 	],
+	qr/--create-slot needs a slot to be specified using --slot/,
 	'pg_basebackup --create-slot fails without slot name');
 
-$node->command_fails(
+$node->command_fails_like(
 	[
 		@pg_basebackup_defs,
 		'--pgdata' => "$tempdir/backupxs_slot",
@@ -767,6 +775,7 @@ $node->command_fails(
 		'--slot' => 'slot0',
 		'--no-slot'
 	],
+	qr/--no-slot cannot be used with slot name/,
 	'pg_basebackup fails with --create-slot --slot --no-slot');
 $node->command_fails_like(
 	[
@@ -784,33 +793,6 @@ $node->command_ok(
 		'--wal-method' => 'none'
 	],
 	'pg_basebackup --wal-method fetch runs');
-
-$node->command_fails(
-	[
-		@pg_basebackup_defs,
-		'--pgdata' => "$tempdir/backupxs_sl_fail",
-		'--wal-method' => 'stream',
-		'--slot' => 'slot0'
-	],
-	'pg_basebackup fails with nonexistent replication slot');
-
-$node->command_fails(
-	[
-		@pg_basebackup_defs,
-		'--pgdata' => "$tempdir/backupxs_slot",
-		'--create-slot'
-	],
-	'pg_basebackup --create-slot fails without slot name');
-
-$node->command_fails(
-	[
-		@pg_basebackup_defs,
-		'--pgdata' => "$tempdir/backupxs_slot",
-		'--create-slot',
-		'--slot' => 'slot0',
-		'--no-slot'
-	],
-	'pg_basebackup fails with --create-slot --slot --no-slot');
 
 $node->command_ok(
 	[
@@ -836,13 +818,14 @@ isnt(
 	'',
 	'restart LSN of new slot is not null');
 
-$node->command_fails(
+$node->command_fails_like(
 	[
 		@pg_basebackup_defs,
 		'--pgdata' => "$tempdir/backupxs_slot1",
 		'--create-slot',
 		'--slot' => 'slot0'
 	],
+	qr/replication slot "slot0" already exists/,
 	'pg_basebackup fails with --create-slot --slot and a previously existing slot'
 );
 
