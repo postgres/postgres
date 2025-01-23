@@ -4104,11 +4104,12 @@ afterTriggerAddEvent(AfterTriggerEventList *events,
 
 	/*
 	 * Try to locate a matching shared-data record already in the chunk. If
-	 * none, make a new one.
+	 * none, make a new one. The search begins with the most recently added
+	 * record, since newer ones are most likely to match.
 	 */
-	for (newshared = ((AfterTriggerShared) chunk->endptr) - 1;
-		 (char *) newshared >= chunk->endfree;
-		 newshared--)
+	for (newshared = (AfterTriggerShared) chunk->endfree;
+		 (char *) newshared < chunk->endptr;
+		 newshared++)
 	{
 		/* compare fields roughly by probability of them being different */
 		if (newshared->ats_tgoid == evtshared->ats_tgoid &&
@@ -4120,8 +4121,9 @@ afterTriggerAddEvent(AfterTriggerEventList *events,
 					  evtshared->ats_modifiedcols))
 			break;
 	}
-	if ((char *) newshared < chunk->endfree)
+	if ((char *) newshared >= chunk->endptr)
 	{
+		newshared = ((AfterTriggerShared) chunk->endfree) - 1;
 		*newshared = *evtshared;
 		/* now we must make a suitably-long-lived copy of the bitmap */
 		newshared->ats_modifiedcols = afterTriggerCopyBitmap(evtshared->ats_modifiedcols);
