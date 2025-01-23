@@ -24,6 +24,7 @@
 #include "catalog/pg_constraint_d.h"
 #include "catalog/pg_default_acl_d.h"
 #include "catalog/pg_proc_d.h"
+#include "catalog/pg_publication_d.h"
 #include "catalog/pg_statistic_ext_d.h"
 #include "catalog/pg_subscription_d.h"
 #include "catalog/pg_type_d.h"
@@ -6372,7 +6373,12 @@ listPublications(const char *pattern)
 						  gettext_noop("Truncates"));
 	if (pset.sversion >= 180000)
 		appendPQExpBuffer(&buf,
-						  ",\n  pubgencols AS \"%s\"",
+						  ",\n (CASE pubgencols_type\n"
+						  "    WHEN '%c' THEN 'none'\n"
+						  "    WHEN '%c' THEN 'stored'\n"
+						  "   END) AS \"%s\"",
+						  PUBLISH_GENCOLS_NONE,
+						  PUBLISH_GENCOLS_STORED,
 						  gettext_noop("Generated columns"));
 	if (pset.sversion >= 130000)
 		appendPQExpBuffer(&buf,
@@ -6500,11 +6506,17 @@ describePublications(const char *pattern)
 							 ", false AS pubtruncate");
 
 	if (has_pubgencols)
-		appendPQExpBufferStr(&buf,
-							 ", pubgencols");
+		appendPQExpBuffer(&buf,
+						  ", (CASE pubgencols_type\n"
+						  "    WHEN '%c' THEN 'none'\n"
+						  "    WHEN '%c' THEN 'stored'\n"
+						  "   END) AS \"%s\"\n",
+						  PUBLISH_GENCOLS_NONE,
+						  PUBLISH_GENCOLS_STORED,
+						  gettext_noop("Generated columns"));
 	else
 		appendPQExpBufferStr(&buf,
-							 ", false AS pubgencols");
+							 ", 'none' AS pubgencols");
 
 	if (has_pubviaroot)
 		appendPQExpBufferStr(&buf,

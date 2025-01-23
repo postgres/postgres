@@ -622,10 +622,11 @@ pub_collist_to_bitmapset(Bitmapset *columns, Datum pubcols, MemoryContext mcxt)
 /*
  * Returns a bitmap representing the columns of the specified table.
  *
- * Generated columns are included if include_gencols is true.
+ * Generated columns are included if include_gencols_type is
+ * PUBLISH_GENCOLS_STORED.
  */
 Bitmapset *
-pub_form_cols_map(Relation relation, bool include_gencols)
+pub_form_cols_map(Relation relation, PublishGencolsType include_gencols_type)
 {
 	Bitmapset  *result = NULL;
 	TupleDesc	desc = RelationGetDescr(relation);
@@ -634,8 +635,19 @@ pub_form_cols_map(Relation relation, bool include_gencols)
 	{
 		Form_pg_attribute att = TupleDescAttr(desc, i);
 
-		if (att->attisdropped || (att->attgenerated && !include_gencols))
+		if (att->attisdropped)
 			continue;
+
+		if (att->attgenerated)
+		{
+			/* We only support replication of STORED generated cols. */
+			if (att->attgenerated != ATTRIBUTE_GENERATED_STORED)
+				continue;
+
+			/* User hasn't requested to replicate STORED generated cols. */
+			if (include_gencols_type != PUBLISH_GENCOLS_STORED)
+				continue;
+		}
 
 		result = bms_add_member(result, att->attnum);
 	}
@@ -1068,7 +1080,7 @@ GetPublication(Oid pubid)
 	pub->pubactions.pubdelete = pubform->pubdelete;
 	pub->pubactions.pubtruncate = pubform->pubtruncate;
 	pub->pubviaroot = pubform->pubviaroot;
-	pub->pubgencols = pubform->pubgencols;
+	pub->pubgencols_type = pubform->pubgencols_type;
 
 	ReleaseSysCache(tup);
 
@@ -1276,8 +1288,22 @@ pg_get_publication_tables(PG_FUNCTION_ARGS)
 			{
 				Form_pg_attribute att = TupleDescAttr(desc, i);
 
-				if (att->attisdropped || (att->attgenerated && !pub->pubgencols))
+				if (att->attisdropped)
 					continue;
+
+				if (att->attgenerated)
+				{
+					/* We only support replication of STORED generated cols. */
+					if (att->attgenerated != ATTRIBUTE_GENERATED_STORED)
+						continue;
+
+					/*
+					 * User hasn't requested to replicate STORED generated
+					 * cols.
+					 */
+					if (pub->pubgencols_type != PUBLISH_GENCOLS_STORED)
+						continue;
+				}
 
 				attnums[nattnums++] = att->attnum;
 			}

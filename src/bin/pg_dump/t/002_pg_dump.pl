@@ -3054,9 +3054,9 @@ my %tests = (
 	'CREATE PUBLICATION pub5' => {
 		create_order => 50,
 		create_sql =>
-		  'CREATE PUBLICATION pub5 WITH (publish_generated_columns = true);',
+		  'CREATE PUBLICATION pub5 WITH (publish_generated_columns = stored);',
 		regexp => qr/^
-			\QCREATE PUBLICATION pub5 WITH (publish = 'insert, update, delete, truncate', publish_generated_columns = true);\E
+			\QCREATE PUBLICATION pub5 WITH (publish = 'insert, update, delete, truncate', publish_generated_columns = stored);\E
 			/xm,
 		like => { %full_runs, section_post_data => 1, },
 	},

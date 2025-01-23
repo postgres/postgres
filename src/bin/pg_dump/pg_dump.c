@@ -50,6 +50,7 @@
 #include "catalog/pg_default_acl_d.h"
 #include "catalog/pg_largeobject_d.h"
 #include "catalog/pg_proc_d.h"
+#include "catalog/pg_publication_d.h"
 #include "catalog/pg_subscription_d.h"
 #include "catalog/pg_type_d.h"
 #include "common/connect.h"
@@ -4290,7 +4291,7 @@ getPublications(Archive *fout)
 	int			i_pubdelete;
 	int			i_pubtruncate;
 	int			i_pubviaroot;
-	int			i_pubgencols;
+	int			i_pubgencols_type;
 	int			i,
 				ntups;
 
@@ -4315,9 +4316,9 @@ getPublications(Archive *fout)
 		appendPQExpBufferStr(query, "false AS pubviaroot, ");
 
 	if (fout->remoteVersion >= 180000)
-		appendPQExpBufferStr(query, "p.pubgencols ");
+		appendPQExpBufferStr(query, "p.pubgencols_type ");
 	else
-		appendPQExpBufferStr(query, "false AS pubgencols ");
+		appendPQExpBufferStr(query, CppAsString2(PUBLISH_GENCOLS_NONE) " AS pubgencols_type ");
 
 	appendPQExpBufferStr(query, "FROM pg_publication p");
 
@@ -4338,7 +4339,7 @@ getPublications(Archive *fout)
 	i_pubdelete = PQfnumber(res, "pubdelete");
 	i_pubtruncate = PQfnumber(res, "pubtruncate");
 	i_pubviaroot = PQfnumber(res, "pubviaroot");
-	i_pubgencols = PQfnumber(res, "pubgencols");
+	i_pubgencols_type = PQfnumber(res, "pubgencols_type");
 
 	pubinfo = pg_malloc(ntups * sizeof(PublicationInfo));
 
@@ -4363,8 +4364,8 @@ getPublications(Archive *fout)
 			(strcmp(PQgetvalue(res, i, i_pubtruncate), "t") == 0);
 		pubinfo[i].pubviaroot =
 			(strcmp(PQgetvalue(res, i, i_pubviaroot), "t") == 0);
-		pubinfo[i].pubgencols =
-			(strcmp(PQgetvalue(res, i, i_pubgencols), "t") == 0);
+		pubinfo[i].pubgencols_type =
+			*(PQgetvalue(res, i, i_pubgencols_type));
 
 		/* Decide whether we want to dump it */
 		selectDumpableObject(&(pubinfo[i].dobj), fout);
@@ -4446,8 +4447,8 @@ dumpPublication(Archive *fout, const PublicationInfo *pubinfo)
 	if (pubinfo->pubviaroot)
 		appendPQExpBufferStr(query, ", publish_via_partition_root = true");
 
-	if (pubinfo->pubgencols)
-		appendPQExpBufferStr(query, ", publish_generated_columns = true");
+	if (pubinfo->pubgencols_type == PUBLISH_GENCOLS_STORED)
+		appendPQExpBufferStr(query, ", publish_generated_columns = stored");
 
 	appendPQExpBufferStr(query, ");\n");
 

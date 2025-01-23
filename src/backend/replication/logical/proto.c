@@ -30,11 +30,12 @@
 #define TRUNCATE_RESTART_SEQS	(1<<1)
 
 static void logicalrep_write_attrs(StringInfo out, Relation rel,
-								   Bitmapset *columns, bool include_gencols);
+								   Bitmapset *columns,
+								   PublishGencolsType include_gencols_type);
 static void logicalrep_write_tuple(StringInfo out, Relation rel,
 								   TupleTableSlot *slot,
 								   bool binary, Bitmapset *columns,
-								   bool include_gencols);
+								   PublishGencolsType include_gencols_type);
 static void logicalrep_read_attrs(StringInfo in, LogicalRepRelation *rel);
 static void logicalrep_read_tuple(StringInfo in, LogicalRepTupleData *tuple);
 
@@ -401,7 +402,8 @@ logicalrep_read_origin(StringInfo in, XLogRecPtr *origin_lsn)
 void
 logicalrep_write_insert(StringInfo out, TransactionId xid, Relation rel,
 						TupleTableSlot *newslot, bool binary,
-						Bitmapset *columns, bool include_gencols)
+						Bitmapset *columns,
+						PublishGencolsType include_gencols_type)
 {
 	pq_sendbyte(out, LOGICAL_REP_MSG_INSERT);
 
@@ -413,7 +415,8 @@ logicalrep_write_insert(StringInfo out, TransactionId xid, Relation rel,
 	pq_sendint32(out, RelationGetRelid(rel));
 
 	pq_sendbyte(out, 'N');		/* new tuple follows */
-	logicalrep_write_tuple(out, rel, newslot, binary, columns, include_gencols);
+	logicalrep_write_tuple(out, rel, newslot, binary, columns,
+						   include_gencols_type);
 }
 
 /*
@@ -446,7 +449,8 @@ logicalrep_read_insert(StringInfo in, LogicalRepTupleData *newtup)
 void
 logicalrep_write_update(StringInfo out, TransactionId xid, Relation rel,
 						TupleTableSlot *oldslot, TupleTableSlot *newslot,
-						bool binary, Bitmapset *columns, bool include_gencols)
+						bool binary, Bitmapset *columns,
+						PublishGencolsType include_gencols_type)
 {
 	pq_sendbyte(out, LOGICAL_REP_MSG_UPDATE);
 
@@ -468,11 +472,12 @@ logicalrep_write_update(StringInfo out, TransactionId xid, Relation rel,
 		else
 			pq_sendbyte(out, 'K');	/* old key follows */
 		logicalrep_write_tuple(out, rel, oldslot, binary, columns,
-							   include_gencols);
+							   include_gencols_type);
 	}
 
 	pq_sendbyte(out, 'N');		/* new tuple follows */
-	logicalrep_write_tuple(out, rel, newslot, binary, columns, include_gencols);
+	logicalrep_write_tuple(out, rel, newslot, binary, columns,
+						   include_gencols_type);
 }
 
 /*
@@ -522,7 +527,8 @@ logicalrep_read_update(StringInfo in, bool *has_oldtuple,
 void
 logicalrep_write_delete(StringInfo out, TransactionId xid, Relation rel,
 						TupleTableSlot *oldslot, bool binary,
-						Bitmapset *columns, bool include_gencols)
+						Bitmapset *columns,
+						PublishGencolsType include_gencols_type)
 {
 	Assert(rel->rd_rel->relreplident == REPLICA_IDENTITY_DEFAULT ||
 		   rel->rd_rel->relreplident == REPLICA_IDENTITY_FULL ||
@@ -542,7 +548,8 @@ logicalrep_write_delete(StringInfo out, TransactionId xid, Relation rel,
 	else
 		pq_sendbyte(out, 'K');	/* old key follows */
 
-	logicalrep_write_tuple(out, rel, oldslot, binary, columns, include_gencols);
+	logicalrep_write_tuple(out, rel, oldslot, binary, columns,
+						   include_gencols_type);
 }
 
 /*
@@ -658,7 +665,8 @@ logicalrep_write_message(StringInfo out, TransactionId xid, XLogRecPtr lsn,
  */
 void
 logicalrep_write_rel(StringInfo out, TransactionId xid, Relation rel,
-					 Bitmapset *columns, bool include_gencols)
+					 Bitmapset *columns,
+					 PublishGencolsType include_gencols_type)
 {
 	char	   *relname;
 
@@ -680,7 +688,7 @@ logicalrep_write_rel(StringInfo out, TransactionId xid, Relation rel,
 	pq_sendbyte(out, rel->rd_rel->relreplident);
 
 	/* send the attribute info */
-	logicalrep_write_attrs(out, rel, columns, include_gencols);
+	logicalrep_write_attrs(out, rel, columns, include_gencols_type);
 }
 
 /*
@@ -757,7 +765,8 @@ logicalrep_read_typ(StringInfo in, LogicalRepTyp *ltyp)
  */
 static void
 logicalrep_write_tuple(StringInfo out, Relation rel, TupleTableSlot *slot,
-					   bool binary, Bitmapset *columns, bool include_gencols)
+					   bool binary, Bitmapset *columns,
+					   PublishGencolsType include_gencols_type)
 {
 	TupleDesc	desc;
 	Datum	   *values;
@@ -771,7 +780,8 @@ logicalrep_write_tuple(StringInfo out, Relation rel, TupleTableSlot *slot,
 	{
 		Form_pg_attribute att = TupleDescAttr(desc, i);
 
-		if (!logicalrep_should_publish_column(att, columns, include_gencols))
+		if (!logicalrep_should_publish_column(att, columns,
+											  include_gencols_type))
 			continue;
 
 		nliveatts++;
@@ -789,7 +799,8 @@ logicalrep_write_tuple(StringInfo out, Relation rel, TupleTableSlot *slot,
 		Form_pg_type typclass;
 		Form_pg_attribute att = TupleDescAttr(desc, i);
 
-		if (!logicalrep_should_publish_column(att, columns, include_gencols))
+		if (!logicalrep_should_publish_column(att, columns,
+											  include_gencols_type))
 			continue;
 
 		if (isnull[i])
@@ -908,7 +919,7 @@ logicalrep_read_tuple(StringInfo in, LogicalRepTupleData *tuple)
  */
 static void
 logicalrep_write_attrs(StringInfo out, Relation rel, Bitmapset *columns,
-					   bool include_gencols)
+					   PublishGencolsType include_gencols_type)
 {
 	TupleDesc	desc;
 	int			i;
@@ -923,7 +934,8 @@ logicalrep_write_attrs(StringInfo out, Relation rel, Bitmapset *columns,
 	{
 		Form_pg_attribute att = TupleDescAttr(desc, i);
 
-		if (!logicalrep_should_publish_column(att, columns, include_gencols))
+		if (!logicalrep_should_publish_column(att, columns,
+											  include_gencols_type))
 			continue;
 
 		nliveatts++;
@@ -941,7 +953,8 @@ logicalrep_write_attrs(StringInfo out, Relation rel, Bitmapset *columns,
 		Form_pg_attribute att = TupleDescAttr(desc, i);
 		uint8		flags = 0;
 
-		if (!logicalrep_should_publish_column(att, columns, include_gencols))
+		if (!logicalrep_should_publish_column(att, columns,
+											  include_gencols_type))
 			continue;
 
 		/* REPLICA IDENTITY FULL means all columns are sent as part of key. */
@@ -1254,16 +1267,17 @@ logicalrep_message_type(LogicalRepMsgType action)
  *
  * 'columns' represents the publication column list (if any) for that table.
  *
- * 'include_gencols' flag indicates whether generated columns should be
+ * 'include_gencols_type' value indicates whether generated columns should be
  * published when there is no column list. Typically, this will have the same
  * value as the 'publish_generated_columns' publication parameter.
  *
  * Note that generated columns can be published only when present in a
- * publication column list, or when include_gencols is true.
+ * publication column list, or when include_gencols_type is
+ * PUBLISH_GENCOLS_STORED.
  */
 bool
 logicalrep_should_publish_column(Form_pg_attribute att, Bitmapset *columns,
-								 bool include_gencols)
+								 PublishGencolsType include_gencols_type)
 {
 	if (att->attisdropped)
 		return false;
@@ -1273,5 +1287,15 @@ logicalrep_should_publish_column(Form_pg_attribute att, Bitmapset *columns,
 		return bms_is_member(att->attnum, columns);
 
 	/* All non-generated columns are always published. */
-	return att->attgenerated ? include_gencols : true;
+	if (!att->attgenerated)
+		return true;
+
+	/*
+	 * Stored generated columns are only published when the user sets
+	 * publish_generated_columns as stored.
+	 */
+	if (att->attgenerated == ATTRIBUTE_GENERATED_STORED)
+		return include_gencols_type == PUBLISH_GENCOLS_STORED;
+
+	return false;
 }

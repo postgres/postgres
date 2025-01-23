@@ -35,7 +35,7 @@ extern bool pub_rf_contains_invalid_column(Oid pubid, Relation relation,
 										   List *ancestors, bool pubviaroot);
 extern bool pub_contains_invalid_column(Oid pubid, Relation relation,
 										List *ancestors, bool pubviaroot,
-										bool pubgencols,
+										char pubgencols_type,
 										bool *invalid_column_list,
 										bool *invalid_gen_col);
 

@@ -15,7 +15,7 @@ COMMENT ON PUBLICATION testpub_default IS 'test publication';
 SELECT obj_description(p.oid, 'pg_publication') FROM pg_publication p;
 
 SET client_min_messages = 'ERROR';
-CREATE PUBLICATION testpib_ins_trunct WITH (publish = insert);
+CREATE PUBLICATION testpub_ins_trunct WITH (publish = insert);
 RESET client_min_messages;
 
 ALTER PUBLICATION testpub_default SET (publish = update);
@@ -24,8 +24,8 @@ ALTER PUBLICATION testpub_default SET (publish = update);
 CREATE PUBLICATION testpub_xxx WITH (foo);
 CREATE PUBLICATION testpub_xxx WITH (publish = 'cluster, vacuum');
 CREATE PUBLICATION testpub_xxx WITH (publish_via_partition_root = 'true', publish_via_partition_root = '0');
-CREATE PUBLICATION testpub_xxx WITH (publish_generated_columns = 'true', publish_generated_columns = '0');
-CREATE PUBLICATION testpub_xxx WITH (publish_generated_columns = 'foo');
+CREATE PUBLICATION testpub_xxx WITH (publish_generated_columns = stored, publish_generated_columns = none);
+CREATE PUBLICATION testpub_xxx WITH (publish_generated_columns = foo);
 
 \dRp
 
@@ -415,7 +415,7 @@ UPDATE testpub_gencol SET a = 100 WHERE a = 1;
 DROP PUBLICATION pub_gencol;
 
 -- ok - generated column "b" is published explicitly
-CREATE PUBLICATION pub_gencol FOR TABLE testpub_gencol with (publish_generated_columns = true);
+CREATE PUBLICATION pub_gencol FOR TABLE testpub_gencol with (publish_generated_columns = stored);
 UPDATE testpub_gencol SET a = 100 WHERE a = 1;
 DROP PUBLICATION pub_gencol;
 
@@ -795,7 +795,7 @@ ALTER PUBLICATION testpub_default ADD TABLE testpub_tbl1;
 ALTER PUBLICATION testpub_default SET TABLE testpub_tbl1;
 ALTER PUBLICATION testpub_default ADD TABLE pub_test.testpub_nopk;
 
-ALTER PUBLICATION testpib_ins_trunct ADD TABLE pub_test.testpub_nopk, testpub_tbl1;
+ALTER PUBLICATION testpub_ins_trunct ADD TABLE pub_test.testpub_nopk, testpub_tbl1;
 
 \d+ pub_test.testpub_nopk
 \d+ testpub_tbl1
@@ -1074,7 +1074,7 @@ CREATE PUBLICATION testpub_error FOR pub_test2.tbl1;
 DROP VIEW testpub_view;
 
 DROP PUBLICATION testpub_default;
-DROP PUBLICATION testpib_ins_trunct;
+DROP PUBLICATION testpub_ins_trunct;
 DROP PUBLICATION testpub_fortbl;
 DROP PUBLICATION testpub1_forschema;
 DROP PUBLICATION testpub2_forschema;
@@ -1142,37 +1142,42 @@ DROP SCHEMA sch1 cascade;
 DROP SCHEMA sch2 cascade;
 -- ======================================================
 
--- Test the publication 'publish_generated_columns' parameter enabled or disabled
+-- Test the 'publish_generated_columns' parameter with the following values:
+-- 'stored', 'none', and the default (no value specified), which defaults to
+-- 'stored'.
 SET client_min_messages = 'ERROR';
-CREATE PUBLICATION pub1 FOR ALL TABLES WITH (publish_generated_columns=1);
+CREATE PUBLICATION pub1 FOR ALL TABLES WITH (publish_generated_columns = stored);
 \dRp+ pub1
-CREATE PUBLICATION pub2 FOR ALL TABLES WITH (publish_generated_columns=0);
+CREATE PUBLICATION pub2 FOR ALL TABLES WITH (publish_generated_columns = none);
 \dRp+ pub2
+CREATE PUBLICATION pub3 FOR ALL TABLES WITH (publish_generated_columns);
+\dRp+ pub3
 
 DROP PUBLICATION pub1;
 DROP PUBLICATION pub2;
+DROP PUBLICATION pub3;
 
--- Test the 'publish_generated_columns' parameter enabled or disabled for
+-- Test the 'publish_generated_columns' parameter as 'none' and 'stored' for
 -- different scenarios with/without generated columns in column lists.
 CREATE TABLE gencols (a int, gen1 int GENERATED ALWAYS AS (a * 2) STORED);
 
--- Generated columns in column list, when 'publish_generated_columns'=false
-CREATE PUBLICATION pub1 FOR table gencols(a, gen1) WITH (publish_generated_columns=false);
+-- Generated columns in column list, when 'publish_generated_columns'='none'
+CREATE PUBLICATION pub1 FOR table gencols(a, gen1) WITH (publish_generated_columns = none);
 \dRp+ pub1
 
--- Generated columns in column list, when 'publish_generated_columns'=true
-CREATE PUBLICATION pub2 FOR table gencols(a, gen1) WITH (publish_generated_columns=true);
+-- Generated columns in column list, when 'publish_generated_columns'='stored'
+CREATE PUBLICATION pub2 FOR table gencols(a, gen1) WITH (publish_generated_columns = stored);
 \dRp+ pub2
 
--- Generated columns in column list, then set 'publication_generate_columns'=false
-ALTER PUBLICATION pub2 SET (publish_generated_columns = false);
+-- Generated columns in column list, then set 'publish_generated_columns'='none'
+ALTER PUBLICATION pub2 SET (publish_generated_columns = none);
 \dRp+ pub2
 
--- Remove generated columns from column list, when 'publish_generated_columns'=false
+-- Remove generated columns from column list, when 'publish_generated_columns'='none'
 ALTER PUBLICATION pub2 SET TABLE gencols(a);
 \dRp+ pub2
 
--- Add generated columns in column list, when 'publish_generated_columns'=false
+-- Add generated columns in column list, when 'publish_generated_columns'='none'
 ALTER PUBLICATION pub2 SET TABLE gencols(a, gen1);
 \dRp+ pub2
 

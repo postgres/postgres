@@ -17,7 +17,7 @@ SELECT obj_description(p.oid, 'pg_publication') FROM pg_publication p;
 (1 row)
 
 SET client_min_messages = 'ERROR';
-CREATE PUBLICATION testpib_ins_trunct WITH (publish = insert);
+CREATE PUBLICATION testpub_ins_trunct WITH (publish = insert);
 RESET client_min_messages;
 ALTER PUBLICATION testpub_default SET (publish = update);
 -- error cases
@@ -29,18 +29,18 @@ CREATE PUBLICATION testpub_xxx WITH (publish_via_partition_root = 'true', publis
 ERROR:  conflicting or redundant options
 LINE 1: ...ub_xxx WITH (publish_via_partition_root = 'true', publish_vi...
                                                              ^
-CREATE PUBLICATION testpub_xxx WITH (publish_generated_columns = 'true', publish_generated_columns = '0');
+CREATE PUBLICATION testpub_xxx WITH (publish_generated_columns = stored, publish_generated_columns = none);
 ERROR:  conflicting or redundant options
-LINE 1: ...pub_xxx WITH (publish_generated_columns = 'true', publish_ge...
+LINE 1: ...pub_xxx WITH (publish_generated_columns = stored, publish_ge...
                                                              ^
-CREATE PUBLICATION testpub_xxx WITH (publish_generated_columns = 'foo');
-ERROR:  publish_generated_columns requires a Boolean value
+CREATE PUBLICATION testpub_xxx WITH (publish_generated_columns = foo);
+ERROR:  publish_generated_columns requires a "none" or "stored" value
 \dRp
                                                         List of publications
         Name        |          Owner           | All tables | Inserts | Updates | Deletes | Truncates | Generated columns | Via root 
 --------------------+--------------------------+------------+---------+---------+---------+-----------+-------------------+----------
- testpib_ins_trunct | regress_publication_user | f          | t       | f       | f       | f         | f                 | f
- testpub_default    | regress_publication_user | f          | f       | t       | f       | f         | f                 | f
+ testpub_default    | regress_publication_user | f          | f       | t       | f       | f         | none              | f
+ testpub_ins_trunct | regress_publication_user | f          | t       | f       | f       | f         | none              | f
 (2 rows)
 
 ALTER PUBLICATION testpub_default SET (publish = 'insert, update, delete');
@@ -48,8 +48,8 @@ ALTER PUBLICATION testpub_default SET (publish = 'insert, update, delete');
                                                         List of publications
         Name        |          Owner           | All tables | Inserts | Updates | Deletes | Truncates | Generated columns | Via root 
 --------------------+--------------------------+------------+---------+---------+---------+-----------+-------------------+----------
- testpib_ins_trunct | regress_publication_user | f          | t       | f       | f       | f         | f                 | f
- testpub_default    | regress_publication_user | f          | t       | t       | t       | f         | f                 | f
+ testpub_default    | regress_publication_user | f          | t       | t       | t       | f         | none              | f
+ testpub_ins_trunct | regress_publication_user | f          | t       | f       | f       | f         | none              | f
 (2 rows)
 
 --- adding tables
@@ -96,7 +96,7 @@ ALTER PUBLICATION testpub_fortable ADD TABLES IN SCHEMA pub_test;
                                           Publication testpub_fortable
           Owner           | All tables | Inserts | Updates | Deletes | Truncates | Generated columns | Via root 
 --------------------------+------------+---------+---------+---------+-----------+-------------------+----------
- regress_publication_user | f          | t       | t       | t       | t         | f                 | f
+ regress_publication_user | f          | t       | t       | t       | t         | none              | f
 Tables:
     "public.testpub_tbl1"
 Tables from schemas:
@@ -108,7 +108,7 @@ ALTER PUBLICATION testpub_fortable DROP TABLES IN SCHEMA pub_test;
                                           Publication testpub_fortable
           Owner           | All tables | Inserts | Updates | Deletes | Truncates | Generated columns | Via root 
 --------------------------+------------+---------+---------+---------+-----------+-------------------+----------
- regress_publication_user | f          | t       | t       | t       | t         | f                 | f
+ regress_publication_user | f          | t       | t       | t       | t         | none              | f
 Tables:
     "public.testpub_tbl1"
 
@@ -118,7 +118,7 @@ ALTER PUBLICATION testpub_fortable SET TABLES IN SCHEMA pub_test;
                                           Publication testpub_fortable
           Owner           | All tables | Inserts | Updates | Deletes | Truncates | Generated columns | Via root 
 --------------------------+------------+---------+---------+---------+-----------+-------------------+----------
- regress_publication_user | f          | t       | t       | t       | t         | f                 | f
+ regress_publication_user | f          | t       | t       | t       | t         | none              | f
 Tables from schemas:
     "pub_test"
 
@@ -132,7 +132,7 @@ RESET client_min_messages;
                                        Publication testpub_for_tbl_schema
           Owner           | All tables | Inserts | Updates | Deletes | Truncates | Generated columns | Via root 
 --------------------------+------------+---------+---------+---------+-----------+-------------------+----------
- regress_publication_user | f          | t       | t       | t       | t         | f                 | f
+ regress_publication_user | f          | t       | t       | t       | t         | none              | f
 Tables:
     "pub_test.testpub_nopk"
 Tables from schemas:
@@ -153,7 +153,7 @@ ALTER PUBLICATION testpub_forschema ADD TABLE pub_test.testpub_nopk;
                                          Publication testpub_forschema
           Owner           | All tables | Inserts | Updates | Deletes | Truncates | Generated columns | Via root 
 --------------------------+------------+---------+---------+---------+-----------+-------------------+----------
- regress_publication_user | f          | t       | t       | t       | t         | f                 | f
+ regress_publication_user | f          | t       | t       | t       | t         | none              | f
 Tables:
     "pub_test.testpub_nopk"
 Tables from schemas:
@@ -165,7 +165,7 @@ ALTER PUBLICATION testpub_forschema DROP TABLE pub_test.testpub_nopk;
                                          Publication testpub_forschema
           Owner           | All tables | Inserts | Updates | Deletes | Truncates | Generated columns | Via root 
 --------------------------+------------+---------+---------+---------+-----------+-------------------+----------
- regress_publication_user | f          | t       | t       | t       | t         | f                 | f
+ regress_publication_user | f          | t       | t       | t       | t         | none              | f
 Tables from schemas:
     "pub_test"
 
@@ -179,7 +179,7 @@ ALTER PUBLICATION testpub_forschema SET TABLE pub_test.testpub_nopk;
                                          Publication testpub_forschema
           Owner           | All tables | Inserts | Updates | Deletes | Truncates | Generated columns | Via root 
 --------------------------+------------+---------+---------+---------+-----------+-------------------+----------
- regress_publication_user | f          | t       | t       | t       | t         | f                 | f
+ regress_publication_user | f          | t       | t       | t       | t         | none              | f
 Tables:
     "pub_test.testpub_nopk"
 
@@ -206,7 +206,7 @@ Not-null constraints:
                                         Publication testpub_foralltables
           Owner           | All tables | Inserts | Updates | Deletes | Truncates | Generated columns | Via root 
 --------------------------+------------+---------+---------+---------+-----------+-------------------+----------
- regress_publication_user | t          | t       | t       | f       | f         | f                 | f
+ regress_publication_user | t          | t       | t       | f       | f         | none              | f
 (1 row)
 
 DROP TABLE testpub_tbl2;
@@ -221,7 +221,7 @@ RESET client_min_messages;
                                               Publication testpub3
           Owner           | All tables | Inserts | Updates | Deletes | Truncates | Generated columns | Via root 
 --------------------------+------------+---------+---------+---------+-----------+-------------------+----------
- regress_publication_user | f          | t       | t       | t       | t         | f                 | f
+ regress_publication_user | f          | t       | t       | t       | t         | none              | f
 Tables:
     "public.testpub_tbl3"
     "public.testpub_tbl3a"
@@ -230,7 +230,7 @@ Tables:
                                               Publication testpub4
           Owner           | All tables | Inserts | Updates | Deletes | Truncates | Generated columns | Via root 
 --------------------------+------------+---------+---------+---------+-----------+-------------------+----------
- regress_publication_user | f          | t       | t       | t       | t         | f                 | f
+ regress_publication_user | f          | t       | t       | t       | t         | none              | f
 Tables:
     "public.testpub_tbl3"
 
@@ -254,7 +254,7 @@ ALTER PUBLICATION testpub_forparted ADD TABLE testpub_parted;
                                          Publication testpub_forparted
           Owner           | All tables | Inserts | Updates | Deletes | Truncates | Generated columns | Via root 
 --------------------------+------------+---------+---------+---------+-----------+-------------------+----------
- regress_publication_user | f          | t       | t       | t       | t         | f                 | f
+ regress_publication_user | f          | t       | t       | t       | t         | none              | f
 Tables:
     "public.testpub_parted"
 
@@ -272,7 +272,7 @@ ALTER PUBLICATION testpub_forparted SET (publish_via_partition_root = true);
                                          Publication testpub_forparted
           Owner           | All tables | Inserts | Updates | Deletes | Truncates | Generated columns | Via root 
 --------------------------+------------+---------+---------+---------+-----------+-------------------+----------
- regress_publication_user | f          | t       | t       | t       | t         | f                 | t
+ regress_publication_user | f          | t       | t       | t       | t         | none              | t
 Tables:
     "public.testpub_parted"
 
@@ -304,7 +304,7 @@ RESET client_min_messages;
                                               Publication testpub5
           Owner           | All tables | Inserts | Updates | Deletes | Truncates | Generated columns | Via root 
 --------------------------+------------+---------+---------+---------+-----------+-------------------+----------
- regress_publication_user | f          | t       | f       | f       | f         | f                 | f
+ regress_publication_user | f          | t       | f       | f       | f         | none              | f
 Tables:
     "public.testpub_rf_tbl1"
     "public.testpub_rf_tbl2" WHERE ((c <> 'test'::text) AND (d < 5))
@@ -320,7 +320,7 @@ ALTER PUBLICATION testpub5 ADD TABLE testpub_rf_tbl3 WHERE (e > 1000 AND e < 200
                                               Publication testpub5
           Owner           | All tables | Inserts | Updates | Deletes | Truncates | Generated columns | Via root 
 --------------------------+------------+---------+---------+---------+-----------+-------------------+----------
- regress_publication_user | f          | t       | f       | f       | f         | f                 | f
+ regress_publication_user | f          | t       | f       | f       | f         | none              | f
 Tables:
     "public.testpub_rf_tbl1"
     "public.testpub_rf_tbl2" WHERE ((c <> 'test'::text) AND (d < 5))
@@ -339,7 +339,7 @@ ALTER PUBLICATION testpub5 DROP TABLE testpub_rf_tbl2;
                                               Publication testpub5
           Owner           | All tables | Inserts | Updates | Deletes | Truncates | Generated columns | Via root 
 --------------------------+------------+---------+---------+---------+-----------+-------------------+----------
- regress_publication_user | f          | t       | f       | f       | f         | f                 | f
+ regress_publication_user | f          | t       | f       | f       | f         | none              | f
 Tables:
     "public.testpub_rf_tbl1"
     "public.testpub_rf_tbl3" WHERE ((e > 1000) AND (e < 2000))
@@ -350,7 +350,7 @@ ALTER PUBLICATION testpub5 SET TABLE testpub_rf_tbl3 WHERE (e > 300 AND e < 500)
                                               Publication testpub5
           Owner           | All tables | Inserts | Updates | Deletes | Truncates | Generated columns | Via root 
 --------------------------+------------+---------+---------+---------+-----------+-------------------+----------
- regress_publication_user | f          | t       | f       | f       | f         | f                 | f
+ regress_publication_user | f          | t       | f       | f       | f         | none              | f
 Tables:
     "public.testpub_rf_tbl3" WHERE ((e > 300) AND (e < 500))
 
@@ -386,7 +386,7 @@ RESET client_min_messages;
                                           Publication testpub_syntax1
           Owner           | All tables | Inserts | Updates | Deletes | Truncates | Generated columns | Via root 
 --------------------------+------------+---------+---------+---------+-----------+-------------------+----------
- regress_publication_user | f          | t       | f       | f       | f         | f                 | f
+ regress_publication_user | f          | t       | f       | f       | f         | none              | f
 Tables:
     "public.testpub_rf_tbl1"
     "public.testpub_rf_tbl3" WHERE (e < 999)
@@ -399,7 +399,7 @@ RESET client_min_messages;
                                           Publication testpub_syntax2
           Owner           | All tables | Inserts | Updates | Deletes | Truncates | Generated columns | Via root 
 --------------------------+------------+---------+---------+---------+-----------+-------------------+----------
- regress_publication_user | f          | t       | f       | f       | f         | f                 | f
+ regress_publication_user | f          | t       | f       | f       | f         | none              | f
 Tables:
     "public.testpub_rf_tbl1"
     "testpub_rf_schema1.testpub_rf_tbl5" WHERE (h < 999)
@@ -517,7 +517,7 @@ RESET client_min_messages;
                                               Publication testpub6
           Owner           | All tables | Inserts | Updates | Deletes | Truncates | Generated columns | Via root 
 --------------------------+------------+---------+---------+---------+-----------+-------------------+----------
- regress_publication_user | f          | t       | t       | t       | t         | f                 | f
+ regress_publication_user | f          | t       | t       | t       | t         | none              | f
 Tables:
     "testpub_rf_schema2.testpub_rf_tbl6" WHERE (i < 99)
 Tables from schemas:
@@ -692,7 +692,7 @@ ERROR:  cannot update table "testpub_gencol"
 DETAIL:  Replica identity must not contain unpublished generated columns.
 DROP PUBLICATION pub_gencol;
 -- ok - generated column "b" is published explicitly
-CREATE PUBLICATION pub_gencol FOR TABLE testpub_gencol with (publish_generated_columns = true);
+CREATE PUBLICATION pub_gencol FOR TABLE testpub_gencol with (publish_generated_columns = stored);
 UPDATE testpub_gencol SET a = 100 WHERE a = 1;
 DROP PUBLICATION pub_gencol;
 DROP TABLE testpub_gencol;
@@ -767,7 +767,7 @@ ALTER PUBLICATION testpub_table_ins ADD TABLE testpub_tbl5 (a);		-- ok
                                          Publication testpub_table_ins
           Owner           | All tables | Inserts | Updates | Deletes | Truncates | Generated columns | Via root 
 --------------------------+------------+---------+---------+---------+-----------+-------------------+----------
- regress_publication_user | f          | t       | f       | f       | t         | f                 | f
+ regress_publication_user | f          | t       | f       | f       | t         | none              | f
 Tables:
     "public.testpub_tbl5" (a)
 
@@ -960,7 +960,7 @@ ALTER PUBLICATION testpub_both_filters ADD TABLE testpub_tbl_both_filters (a,c) 
                                         Publication testpub_both_filters
           Owner           | All tables | Inserts | Updates | Deletes | Truncates | Generated columns | Via root 
 --------------------------+------------+---------+---------+---------+-----------+-------------------+----------
- regress_publication_user | f          | t       | t       | t       | t         | f                 | f
+ regress_publication_user | f          | t       | t       | t       | t         | none              | f
 Tables:
     "public.testpub_tbl_both_filters" (a, c) WHERE (c <> 1)
 
@@ -1171,7 +1171,7 @@ ERROR:  publication "testpub_fortbl" already exists
                                            Publication testpub_fortbl
           Owner           | All tables | Inserts | Updates | Deletes | Truncates | Generated columns | Via root 
 --------------------------+------------+---------+---------+---------+-----------+-------------------+----------
- regress_publication_user | f          | t       | t       | t       | t         | f                 | f
+ regress_publication_user | f          | t       | t       | t       | t         | none              | f
 Tables:
     "pub_test.testpub_nopk"
     "public.testpub_tbl1"
@@ -1183,7 +1183,7 @@ DETAIL:  This operation is not supported for views.
 ALTER PUBLICATION testpub_default ADD TABLE testpub_tbl1;
 ALTER PUBLICATION testpub_default SET TABLE testpub_tbl1;
 ALTER PUBLICATION testpub_default ADD TABLE pub_test.testpub_nopk;
-ALTER PUBLICATION testpib_ins_trunct ADD TABLE pub_test.testpub_nopk, testpub_tbl1;
+ALTER PUBLICATION testpub_ins_trunct ADD TABLE pub_test.testpub_nopk, testpub_tbl1;
 \d+ pub_test.testpub_nopk
                               Table "pub_test.testpub_nopk"
  Column |  Type   | Collation | Nullable | Default | Storage | Stats target | Description 
@@ -1191,9 +1191,9 @@ ALTER PUBLICATION testpib_ins_trunct ADD TABLE pub_test.testpub_nopk, testpub_tb
  foo    | integer |           |          |         | plain   |              | 
  bar    | integer |           |          |         | plain   |              | 
 Publications:
-    "testpib_ins_trunct"
     "testpub_default"
     "testpub_fortbl"
+    "testpub_ins_trunct"
 
 \d+ testpub_tbl1
                                                 Table "public.testpub_tbl1"
@@ -1204,9 +1204,9 @@ Publications:
 Indexes:
     "testpub_tbl1_pkey" PRIMARY KEY, btree (id)
 Publications:
-    "testpib_ins_trunct"
     "testpub_default"
     "testpub_fortbl"
+    "testpub_ins_trunct"
 Not-null constraints:
     "testpub_tbl1_id_not_null" NOT NULL "id"
 
@@ -1214,7 +1214,7 @@ Not-null constraints:
                                           Publication testpub_default
           Owner           | All tables | Inserts | Updates | Deletes | Truncates | Generated columns | Via root 
 --------------------------+------------+---------+---------+---------+-----------+-------------------+----------
- regress_publication_user | f          | t       | t       | t       | f         | f                 | f
+ regress_publication_user | f          | t       | t       | t       | f         | none              | f
 Tables:
     "pub_test.testpub_nopk"
     "public.testpub_tbl1"
@@ -1232,8 +1232,8 @@ ERROR:  relation "testpub_nopk" is not part of the publication
 Indexes:
     "testpub_tbl1_pkey" PRIMARY KEY, btree (id)
 Publications:
-    "testpib_ins_trunct"
     "testpub_fortbl"
+    "testpub_ins_trunct"
 Not-null constraints:
     "testpub_tbl1_id_not_null" NOT NULL "id"
 
@@ -1297,7 +1297,7 @@ DROP TABLE testpub_tbl1;
                                           Publication testpub_default
           Owner           | All tables | Inserts | Updates | Deletes | Truncates | Generated columns | Via root 
 --------------------------+------------+---------+---------+---------+-----------+-------------------+----------
- regress_publication_user | f          | t       | t       | t       | f         | f                 | f
+ regress_publication_user | f          | t       | t       | t       | f         | none              | f
 (1 row)
 
 -- fail - must be owner of publication
@@ -1310,7 +1310,7 @@ ALTER PUBLICATION testpub_default RENAME TO testpub_foo;
                                                      List of publications
     Name     |          Owner           | All tables | Inserts | Updates | Deletes | Truncates | Generated columns | Via root 
 -------------+--------------------------+------------+---------+---------+---------+-----------+-------------------+----------
- testpub_foo | regress_publication_user | f          | t       | t       | t       | f         | f                 | f
+ testpub_foo | regress_publication_user | f          | t       | t       | t       | f         | none              | f
 (1 row)
 
 -- rename back to keep the rest simple
@@ -1320,7 +1320,7 @@ ALTER PUBLICATION testpub_default OWNER TO regress_publication_user2;
                                                        List of publications
       Name       |           Owner           | All tables | Inserts | Updates | Deletes | Truncates | Generated columns | Via root 
 -----------------+---------------------------+------------+---------+---------+---------+-----------+-------------------+----------
- testpub_default | regress_publication_user2 | f          | t       | t       | t       | f         | f                 | f
+ testpub_default | regress_publication_user2 | f          | t       | t       | t       | f         | none              | f
 (1 row)
 
 -- adding schemas and tables
@@ -1339,7 +1339,7 @@ CREATE PUBLICATION testpub1_forschema FOR TABLES IN SCHEMA pub_test1;
                                          Publication testpub1_forschema
           Owner           | All tables | Inserts | Updates | Deletes | Truncates | Generated columns | Via root 
 --------------------------+------------+---------+---------+---------+-----------+-------------------+----------
- regress_publication_user | f          | t       | t       | t       | t         | f                 | f
+ regress_publication_user | f          | t       | t       | t       | t         | none              | f
 Tables from schemas:
     "pub_test1"
 
@@ -1348,7 +1348,7 @@ CREATE PUBLICATION testpub2_forschema FOR TABLES IN SCHEMA pub_test1, pub_test2,
                                          Publication testpub2_forschema
           Owner           | All tables | Inserts | Updates | Deletes | Truncates | Generated columns | Via root 
 --------------------------+------------+---------+---------+---------+-----------+-------------------+----------
- regress_publication_user | f          | t       | t       | t       | t         | f                 | f
+ regress_publication_user | f          | t       | t       | t       | t         | none              | f
 Tables from schemas:
     "pub_test1"
     "pub_test2"
@@ -1365,7 +1365,7 @@ RESET client_min_messages;
                                          Publication testpub3_forschema
           Owner           | All tables | Inserts | Updates | Deletes | Truncates | Generated columns | Via root 
 --------------------------+------------+---------+---------+---------+-----------+-------------------+----------
- regress_publication_user | f          | t       | t       | t       | t         | f                 | f
+ regress_publication_user | f          | t       | t       | t       | t         | none              | f
 Tables from schemas:
     "public"
 
@@ -1373,7 +1373,7 @@ Tables from schemas:
                                          Publication testpub4_forschema
           Owner           | All tables | Inserts | Updates | Deletes | Truncates | Generated columns | Via root 
 --------------------------+------------+---------+---------+---------+-----------+-------------------+----------
- regress_publication_user | f          | t       | t       | t       | t         | f                 | f
+ regress_publication_user | f          | t       | t       | t       | t         | none              | f
 Tables from schemas:
     "CURRENT_SCHEMA"
 
@@ -1381,7 +1381,7 @@ Tables from schemas:
                                          Publication testpub5_forschema
           Owner           | All tables | Inserts | Updates | Deletes | Truncates | Generated columns | Via root 
 --------------------------+------------+---------+---------+---------+-----------+-------------------+----------
- regress_publication_user | f          | t       | t       | t       | t         | f                 | f
+ regress_publication_user | f          | t       | t       | t       | t         | none              | f
 Tables from schemas:
     "CURRENT_SCHEMA"
     "public"
@@ -1390,7 +1390,7 @@ Tables from schemas:
                                          Publication testpub6_forschema
           Owner           | All tables | Inserts | Updates | Deletes | Truncates | Generated columns | Via root 
 --------------------------+------------+---------+---------+---------+-----------+-------------------+----------
- regress_publication_user | f          | t       | t       | t       | t         | f                 | f
+ regress_publication_user | f          | t       | t       | t       | t         | none              | f
 Tables from schemas:
     "CURRENT_SCHEMA"
     "public"
@@ -1399,7 +1399,7 @@ Tables from schemas:
                                           Publication testpub_fortable
           Owner           | All tables | Inserts | Updates | Deletes | Truncates | Generated columns | Via root 
 --------------------------+------------+---------+---------+---------+-----------+-------------------+----------
- regress_publication_user | f          | t       | t       | t       | t         | f                 | f
+ regress_publication_user | f          | t       | t       | t       | t         | none              | f
 Tables:
     "CURRENT_SCHEMA.CURRENT_SCHEMA"
 
@@ -1436,7 +1436,7 @@ DROP SCHEMA pub_test3;
                                          Publication testpub2_forschema
           Owner           | All tables | Inserts | Updates | Deletes | Truncates | Generated columns | Via root 
 --------------------------+------------+---------+---------+---------+-----------+-------------------+----------
- regress_publication_user | f          | t       | t       | t       | t         | f                 | f
+ regress_publication_user | f          | t       | t       | t       | t         | none              | f
 Tables from schemas:
     "pub_test1"
     "pub_test2"
@@ -1447,7 +1447,7 @@ ALTER SCHEMA pub_test1 RENAME to pub_test1_renamed;
                                          Publication testpub2_forschema
           Owner           | All tables | Inserts | Updates | Deletes | Truncates | Generated columns | Via root 
 --------------------------+------------+---------+---------+---------+-----------+-------------------+----------
- regress_publication_user | f          | t       | t       | t       | t         | f                 | f
+ regress_publication_user | f          | t       | t       | t       | t         | none              | f
 Tables from schemas:
     "pub_test1_renamed"
     "pub_test2"
@@ -1457,7 +1457,7 @@ ALTER SCHEMA pub_test1_renamed RENAME to pub_test1;
                                          Publication testpub2_forschema
           Owner           | All tables | Inserts | Updates | Deletes | Truncates | Generated columns | Via root 
 --------------------------+------------+---------+---------+---------+-----------+-------------------+----------
- regress_publication_user | f          | t       | t       | t       | t         | f                 | f
+ regress_publication_user | f          | t       | t       | t       | t         | none              | f
 Tables from schemas:
     "pub_test1"
     "pub_test2"
@@ -1468,7 +1468,7 @@ ALTER PUBLICATION testpub1_forschema ADD TABLES IN SCHEMA pub_test2;
                                          Publication testpub1_forschema
           Owner           | All tables | Inserts | Updates | Deletes | Truncates | Generated columns | Via root 
 --------------------------+------------+---------+---------+---------+-----------+-------------------+----------
- regress_publication_user | f          | t       | t       | t       | t         | f                 | f
+ regress_publication_user | f          | t       | t       | t       | t         | none              | f
 Tables from schemas:
     "pub_test1"
     "pub_test2"
@@ -1480,7 +1480,7 @@ ERROR:  schema "non_existent_schema" does not exist
                                          Publication testpub1_forschema
           Owner           | All tables | Inserts | Updates | Deletes | Truncates | Generated columns | Via root 
 --------------------------+------------+---------+---------+---------+-----------+-------------------+----------
- regress_publication_user | f          | t       | t       | t       | t         | f                 | f
+ regress_publication_user | f          | t       | t       | t       | t         | none              | f
 Tables from schemas:
     "pub_test1"
     "pub_test2"
@@ -1492,7 +1492,7 @@ ERROR:  schema "pub_test1" is already member of publication "testpub1_forschema"
                                          Publication testpub1_forschema
           Owner           | All tables | Inserts | Updates | Deletes | Truncates | Generated columns | Via root 
 --------------------------+------------+---------+---------+---------+-----------+-------------------+----------
- regress_publication_user | f          | t       | t       | t       | t         | f                 | f
+ regress_publication_user | f          | t       | t       | t       | t         | none              | f
 Tables from schemas:
     "pub_test1"
     "pub_test2"
@@ -1503,7 +1503,7 @@ ALTER PUBLICATION testpub1_forschema DROP TABLES IN SCHEMA pub_test2;
                                          Publication testpub1_forschema
           Owner           | All tables | Inserts | Updates | Deletes | Truncates | Generated columns | Via root 
 --------------------------+------------+---------+---------+---------+-----------+-------------------+----------
- regress_publication_user | f          | t       | t       | t       | t         | f                 | f
+ regress_publication_user | f          | t       | t       | t       | t         | none              | f
 Tables from schemas:
     "pub_test1"
 
@@ -1514,7 +1514,7 @@ ERROR:  tables from schema "pub_test2" are not part of the publication
                                          Publication testpub1_forschema
           Owner           | All tables | Inserts | Updates | Deletes | Truncates | Generated columns | Via root 
 --------------------------+------------+---------+---------+---------+-----------+-------------------+----------
- regress_publication_user | f          | t       | t       | t       | t         | f                 | f
+ regress_publication_user | f          | t       | t       | t       | t         | none              | f
 Tables from schemas:
     "pub_test1"
 
@@ -1525,7 +1525,7 @@ ERROR:  schema "non_existent_schema" does not exist
                                          Publication testpub1_forschema
           Owner           | All tables | Inserts | Updates | Deletes | Truncates | Generated columns | Via root 
 --------------------------+------------+---------+---------+---------+-----------+-------------------+----------
- regress_publication_user | f          | t       | t       | t       | t         | f                 | f
+ regress_publication_user | f          | t       | t       | t       | t         | none              | f
 Tables from schemas:
     "pub_test1"
 
@@ -1535,7 +1535,7 @@ ALTER PUBLICATION testpub1_forschema DROP TABLES IN SCHEMA pub_test1;
                                          Publication testpub1_forschema
           Owner           | All tables | Inserts | Updates | Deletes | Truncates | Generated columns | Via root 
 --------------------------+------------+---------+---------+---------+-----------+-------------------+----------
- regress_publication_user | f          | t       | t       | t       | t         | f                 | f
+ regress_publication_user | f          | t       | t       | t       | t         | none              | f
 (1 row)
 
 -- alter publication set multiple schema
@@ -1544,7 +1544,7 @@ ALTER PUBLICATION testpub1_forschema SET TABLES IN SCHEMA pub_test1, pub_test2;
                                          Publication testpub1_forschema
           Owner           | All tables | Inserts | Updates | Deletes | Truncates | Generated columns | Via root 
 --------------------------+------------+---------+---------+---------+-----------+-------------------+----------
- regress_publication_user | f          | t       | t       | t       | t         | f                 | f
+ regress_publication_user | f          | t       | t       | t       | t         | none              | f
 Tables from schemas:
     "pub_test1"
     "pub_test2"
@@ -1556,7 +1556,7 @@ ERROR:  schema "non_existent_schema" does not exist
                                          Publication testpub1_forschema
           Owner           | All tables | Inserts | Updates | Deletes | Truncates | Generated columns | Via root 
 --------------------------+------------+---------+---------+---------+-----------+-------------------+----------
- regress_publication_user | f          | t       | t       | t       | t         | f                 | f
+ regress_publication_user | f          | t       | t       | t       | t         | none              | f
 Tables from schemas:
     "pub_test1"
     "pub_test2"
@@ -1568,7 +1568,7 @@ ALTER PUBLICATION testpub1_forschema SET TABLES IN SCHEMA pub_test1, pub_test1;
                                          Publication testpub1_forschema
           Owner           | All tables | Inserts | Updates | Deletes | Truncates | Generated columns | Via root 
 --------------------------+------------+---------+---------+---------+-----------+-------------------+----------
- regress_publication_user | f          | t       | t       | t       | t         | f                 | f
+ regress_publication_user | f          | t       | t       | t       | t         | none              | f
 Tables from schemas:
     "pub_test1"
 
@@ -1650,7 +1650,7 @@ RESET client_min_messages;
                                          Publication testpub3_forschema
           Owner           | All tables | Inserts | Updates | Deletes | Truncates | Generated columns | Via root 
 --------------------------+------------+---------+---------+---------+-----------+-------------------+----------
- regress_publication_user | f          | t       | t       | t       | t         | f                 | f
+ regress_publication_user | f          | t       | t       | t       | t         | none              | f
 (1 row)
 
 ALTER PUBLICATION testpub3_forschema SET TABLES IN SCHEMA pub_test1;
@@ -1658,7 +1658,7 @@ ALTER PUBLICATION testpub3_forschema SET TABLES IN SCHEMA pub_test1;
                                          Publication testpub3_forschema
           Owner           | All tables | Inserts | Updates | Deletes | Truncates | Generated columns | Via root 
 --------------------------+------------+---------+---------+---------+-----------+-------------------+----------
- regress_publication_user | f          | t       | t       | t       | t         | f                 | f
+ regress_publication_user | f          | t       | t       | t       | t         | none              | f
 Tables from schemas:
     "pub_test1"
 
@@ -1671,7 +1671,7 @@ RESET client_min_messages;
                                      Publication testpub_forschema_fortable
           Owner           | All tables | Inserts | Updates | Deletes | Truncates | Generated columns | Via root 
 --------------------------+------------+---------+---------+---------+-----------+-------------------+----------
- regress_publication_user | f          | t       | t       | t       | t         | f                 | f
+ regress_publication_user | f          | t       | t       | t       | t         | none              | f
 Tables:
     "pub_test2.tbl1"
 Tables from schemas:
@@ -1681,7 +1681,7 @@ Tables from schemas:
                                      Publication testpub_fortable_forschema
           Owner           | All tables | Inserts | Updates | Deletes | Truncates | Generated columns | Via root 
 --------------------------+------------+---------+---------+---------+-----------+-------------------+----------
- regress_publication_user | f          | t       | t       | t       | t         | f                 | f
+ regress_publication_user | f          | t       | t       | t       | t         | none              | f
 Tables:
     "pub_test2.tbl1"
 Tables from schemas:
@@ -1696,7 +1696,7 @@ LINE 1: CREATE PUBLICATION testpub_error FOR pub_test2.tbl1;
 DETAIL:  One of TABLE or TABLES IN SCHEMA must be specified before a standalone table or schema name.
 DROP VIEW testpub_view;
 DROP PUBLICATION testpub_default;
-DROP PUBLICATION testpib_ins_trunct;
+DROP PUBLICATION testpub_ins_trunct;
 DROP PUBLICATION testpub_fortbl;
 DROP PUBLICATION testpub1_forschema;
 DROP PUBLICATION testpub2_forschema;
@@ -1797,76 +1797,87 @@ DROP TABLE sch1.tbl1;
 DROP SCHEMA sch1 cascade;
 DROP SCHEMA sch2 cascade;
 -- ======================================================
--- Test the publication 'publish_generated_columns' parameter enabled or disabled
+-- Test the 'publish_generated_columns' parameter with the following values:
+-- 'stored', 'none', and the default (no value specified), which defaults to
+-- 'stored'.
 SET client_min_messages = 'ERROR';
-CREATE PUBLICATION pub1 FOR ALL TABLES WITH (publish_generated_columns=1);
+CREATE PUBLICATION pub1 FOR ALL TABLES WITH (publish_generated_columns = stored);
 \dRp+ pub1
                                                 Publication pub1
           Owner           | All tables | Inserts | Updates | Deletes | Truncates | Generated columns | Via root 
 --------------------------+------------+---------+---------+---------+-----------+-------------------+----------
- regress_publication_user | t          | t       | t       | t       | t         | t                 | f
+ regress_publication_user | t          | t       | t       | t       | t         | stored            | f
 (1 row)
 
-CREATE PUBLICATION pub2 FOR ALL TABLES WITH (publish_generated_columns=0);
+CREATE PUBLICATION pub2 FOR ALL TABLES WITH (publish_generated_columns = none);
 \dRp+ pub2
                                                 Publication pub2
           Owner           | All tables | Inserts | Updates | Deletes | Truncates | Generated columns | Via root 
 --------------------------+------------+---------+---------+---------+-----------+-------------------+----------
- regress_publication_user | t          | t       | t       | t       | t         | f                 | f
+ regress_publication_user | t          | t       | t       | t       | t         | none              | f
+(1 row)
+
+CREATE PUBLICATION pub3 FOR ALL TABLES WITH (publish_generated_columns);
+\dRp+ pub3
+                                                Publication pub3
+          Owner           | All tables | Inserts | Updates | Deletes | Truncates | Generated columns | Via root 
+--------------------------+------------+---------+---------+---------+-----------+-------------------+----------
+ regress_publication_user | t          | t       | t       | t       | t         | stored            | f
 (1 row)
 
 DROP PUBLICATION pub1;
 DROP PUBLICATION pub2;
--- Test the 'publish_generated_columns' parameter enabled or disabled for
+DROP PUBLICATION pub3;
+-- Test the 'publish_generated_columns' parameter as 'none' and 'stored' for
 -- different scenarios with/without generated columns in column lists.
 CREATE TABLE gencols (a int, gen1 int GENERATED ALWAYS AS (a * 2) STORED);
--- Generated columns in column list, when 'publish_generated_columns'=false
-CREATE PUBLICATION pub1 FOR table gencols(a, gen1) WITH (publish_generated_columns=false);
+-- Generated columns in column list, when 'publish_generated_columns'='none'
+CREATE PUBLICATION pub1 FOR table gencols(a, gen1) WITH (publish_generated_columns = none);
 \dRp+ pub1
                                                 Publication pub1
           Owner           | All tables | Inserts | Updates | Deletes | Truncates | Generated columns | Via root 
 --------------------------+------------+---------+---------+---------+-----------+-------------------+----------
- regress_publication_user | f          | t       | t       | t       | t         | f                 | f
+ regress_publication_user | f          | t       | t       | t       | t         | none              | f
 Tables:
     "public.gencols" (a, gen1)
 
--- Generated columns in column list, when 'publish_generated_columns'=true
-CREATE PUBLICATION pub2 FOR table gencols(a, gen1) WITH (publish_generated_columns=true);
+-- Generated columns in column list, when 'publish_generated_columns'='stored'
+CREATE PUBLICATION pub2 FOR table gencols(a, gen1) WITH (publish_generated_columns = stored);
 \dRp+ pub2
                                                 Publication pub2
           Owner           | All tables | Inserts | Updates | Deletes | Truncates | Generated columns | Via root 
 --------------------------+------------+---------+---------+---------+-----------+-------------------+----------
- regress_publication_user | f          | t       | t       | t       | t         | t                 | f
+ regress_publication_user | f          | t       | t       | t       | t         | stored            | f
 Tables:
     "public.gencols" (a, gen1)
 
--- Generated columns in column list, then set 'publication_generate_columns'=false
-ALTER PUBLICATION pub2 SET (publish_generated_columns = false);
+-- Generated columns in column list, then set 'publish_generated_columns'='none'
+ALTER PUBLICATION pub2 SET (publish_generated_columns = none);
 \dRp+ pub2
                                                 Publication pub2
           Owner           | All tables | Inserts | Updates | Deletes | Truncates | Generated columns | Via root 
 --------------------------+------------+---------+---------+---------+-----------+-------------------+----------
- regress_publication_user | f          | t       | t       | t       | t         | f                 | f
+ regress_publication_user | f          | t       | t       | t       | t         | none              | f
 Tables:
     "public.gencols" (a, gen1)
 
--- Remove generated columns from column list, when 'publish_generated_columns'=false
+-- Remove generated columns from column list, when 'publish_generated_columns'='none'
 ALTER PUBLICATION pub2 SET TABLE gencols(a);
 \dRp+ pub2
                                                 Publication pub2
           Owner           | All tables | Inserts | Updates | Deletes | Truncates | Generated columns | Via root 
 --------------------------+------------+---------+---------+---------+-----------+-------------------+----------
- regress_publication_user | f          | t       | t       | t       | t         | f                 | f
+ regress_publication_user | f          | t       | t       | t       | t         | none              | f
 Tables:
     "public.gencols" (a)
 
--- Add generated columns in column list, when 'publish_generated_columns'=false
+-- Add generated columns in column list, when 'publish_generated_columns'='none'
 ALTER PUBLICATION pub2 SET TABLE gencols(a, gen1);
 \dRp+ pub2
                                                 Publication pub2
           Owner           | All tables | Inserts | Updates | Deletes | Truncates | Generated columns | Via root 
 --------------------------+------------+---------+---------+---------+-----------+-------------------+----------
- regress_publication_user | f          | t       | t       | t       | t         | f                 | f
+ regress_publication_user | f          | t       | t       | t       | t         | none              | f
 Tables:
     "public.gencols" (a, gen1)
 

@@ -15,6 +15,7 @@
 #define PG_DUMP_H
 
 #include "pg_backup.h"
+#include "catalog/pg_publication_d.h"
 
 
 #define oidcmp(x,y) ( ((x) < (y) ? -1 : ((x) > (y)) ?  1 : 0) )
@@ -638,7 +639,7 @@ typedef struct _PublicationInfo
 	bool		pubdelete;
 	bool		pubtruncate;
 	bool		pubviaroot;
-	bool		pubgencols;
+	PublishGencolsType pubgencols_type;
 } PublicationInfo;
 
 /*

@@ -70,6 +70,7 @@ static void PublicationDropTables(Oid pubid, List *rels, bool missing_ok);
 static void PublicationAddSchemas(Oid pubid, List *schemas, bool if_not_exists,
 								  AlterPublicationStmt *stmt);
 static void PublicationDropSchemas(Oid pubid, List *schemas, bool missing_ok);
+static char defGetGeneratedColsOption(DefElem *def);
 
 
 static void
@@ -80,7 +81,7 @@ parse_publication_options(ParseState *pstate,
 						  bool *publish_via_partition_root_given,
 						  bool *publish_via_partition_root,
 						  bool *publish_generated_columns_given,
-						  bool *publish_generated_columns)
+						  char *publish_generated_columns)
 {
 	ListCell   *lc;
 
@@ -94,7 +95,7 @@ parse_publication_options(ParseState *pstate,
 	pubactions->pubdelete = true;
 	pubactions->pubtruncate = true;
 	*publish_via_partition_root = false;
-	*publish_generated_columns = false;
+	*publish_generated_columns = PUBLISH_GENCOLS_NONE;
 
 	/* Parse options */
 	foreach(lc, options)
@@ -160,7 +161,7 @@ parse_publication_options(ParseState *pstate,
 			if (*publish_generated_columns_given)
 				errorConflictingDefElem(defel, pstate);
 			*publish_generated_columns_given = true;
-			*publish_generated_columns = defGetBoolean(defel);
+			*publish_generated_columns = defGetGeneratedColsOption(defel);
 		}
 		else
 			ereport(ERROR,
@@ -344,15 +345,16 @@ pub_rf_contains_invalid_column(Oid pubid, Relation relation, List *ancestors,
  *    by the column list. If any column is missing, *invalid_column_list is set
  *    to true.
  * 2. Ensures that all the generated columns referenced in the REPLICA IDENTITY
- *    are published either by listing them in the column list or by enabling
- *    publish_generated_columns option. If any unpublished generated column is
- *    found, *invalid_gen_col is set to true.
+ *    are published, either by being explicitly named in the column list or, if
+ *    no column list is specified, by setting the option
+ *    publish_generated_columns to stored. If any unpublished
+ *    generated column is found, *invalid_gen_col is set to true.
  *
  * Returns true if any of the above conditions are not met.
  */
 bool
 pub_contains_invalid_column(Oid pubid, Relation relation, List *ancestors,
-							bool pubviaroot, bool pubgencols,
+							bool pubviaroot, char pubgencols_type,
 							bool *invalid_column_list,
 							bool *invalid_gen_col)
 {
@@ -394,10 +396,10 @@ pub_contains_invalid_column(Oid pubid, Relation relation, List *ancestors,
 
 		/*
 		 * As we don't allow a column list with REPLICA IDENTITY FULL, the
-		 * publish_generated_columns option must be set to true if the table
+		 * publish_generated_columns option must be set to stored if the table
 		 * has any stored generated columns.
 		 */
-		if (!pubgencols &&
+		if (pubgencols_type != PUBLISH_GENCOLS_STORED &&
 			relation->rd_att->constr &&
 			relation->rd_att->constr->has_generated_stored)
 			*invalid_gen_col = true;
@@ -425,10 +427,10 @@ pub_contains_invalid_column(Oid pubid, Relation relation, List *ancestors,
 		if (columns == NULL)
 		{
 			/*
-			 * The publish_generated_columns option must be set to true if the
-			 * REPLICA IDENTITY contains any stored generated column.
+			 * The publish_generated_columns option must be set to stored if
+			 * the REPLICA IDENTITY contains any stored generated column.
 			 */
-			if (!pubgencols && att->attgenerated)
+			if (pubgencols_type != PUBLISH_GENCOLS_STORED && att->attgenerated)
 			{
 				*invalid_gen_col = true;
 				break;
@@ -775,7 +777,7 @@ CreatePublication(ParseState *pstate, CreatePublicationStmt *stmt)
 	bool		publish_via_partition_root_given;
 	bool		publish_via_partition_root;
 	bool		publish_generated_columns_given;
-	bool		publish_generated_columns;
+	char		publish_generated_columns;
 	AclResult	aclresult;
 	List	   *relations = NIL;
 	List	   *schemaidlist = NIL;
@@ -834,8 +836,8 @@ CreatePublication(ParseState *pstate, CreatePublicationStmt *stmt)
 		BoolGetDatum(pubactions.pubtruncate);
 	values[Anum_pg_publication_pubviaroot - 1] =
 		BoolGetDatum(publish_via_partition_root);
-	values[Anum_pg_publication_pubgencols - 1] =
-		BoolGetDatum(publish_generated_columns);
+	values[Anum_pg_publication_pubgencols_type - 1] =
+		CharGetDatum(publish_generated_columns);
 
 	tup = heap_form_tuple(RelationGetDescr(rel), values, nulls);
 
@@ -922,7 +924,7 @@ AlterPublicationOptions(ParseState *pstate, AlterPublicationStmt *stmt,
 	bool		publish_via_partition_root_given;
 	bool		publish_via_partition_root;
 	bool		publish_generated_columns_given;
-	bool		publish_generated_columns;
+	char		publish_generated_columns;
 	ObjectAddress obj;
 	Form_pg_publication pubform;
 	List	   *root_relids = NIL;
@@ -1046,8 +1048,8 @@ AlterPublicationOptions(ParseState *pstate, AlterPublicationStmt *stmt,
 
 	if (publish_generated_columns_given)
 	{
-		values[Anum_pg_publication_pubgencols - 1] = BoolGetDatum(publish_generated_columns);
-		replaces[Anum_pg_publication_pubgencols - 1] = true;
+		values[Anum_pg_publication_pubgencols_type - 1] = CharGetDatum(publish_generated_columns);
+		replaces[Anum_pg_publication_pubgencols_type - 1] = true;
 	}
 
 	tup = heap_modify_tuple(tup, RelationGetDescr(rel), values, nulls,
@@ -2042,4 +2044,34 @@ AlterPublicationOwner_oid(Oid subid, Oid newOwnerId)
 	heap_freetuple(tup);
 
 	table_close(rel, RowExclusiveLock);
+}
+
+/*
+ * Extract the publish_generated_columns option value from a DefElem. "stored"
+ * and "none" values are accepted.
+ */
+static char
+defGetGeneratedColsOption(DefElem *def)
+{
+	char	   *sval;
+
+	/*
+	 * If no parameter value given, assume "stored" is meant.
+	 */
+	if (!def->arg)
+		return PUBLISH_GENCOLS_STORED;
+
+	sval = defGetString(def);
+
+	if (pg_strcasecmp(sval, "none") == 0)
+		return PUBLISH_GENCOLS_NONE;
+	if (pg_strcasecmp(sval, "stored") == 0)
+		return PUBLISH_GENCOLS_STORED;
+
+	ereport(ERROR,
+			errcode(ERRCODE_SYNTAX_ERROR),
+			errmsg("%s requires a \"none\" or \"stored\" value",
+				   def->defname));
+
+	return PUBLISH_GENCOLS_NONE;	/* keep compiler quiet */
 }
