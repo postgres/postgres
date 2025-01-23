@@ -3635,6 +3635,7 @@ typedef struct AfterTriggerSharedData
 	TriggerEvent ats_event;		/* event type indicator, see trigger.h */
 	Oid			ats_tgoid;		/* the trigger's ID */
 	Oid			ats_relid;		/* the relation it's on */
+	Oid			ats_rolid;		/* role to execute the trigger */
 	CommandId	ats_firing_id;	/* ID for firing cycle */
 	struct AfterTriggersTableData *ats_table;	/* transition table access */
 	Bitmapset  *ats_modifiedcols;	/* modified columns */
@@ -4117,6 +4118,7 @@ afterTriggerAddEvent(AfterTriggerEventList *events,
 			newshared->ats_firing_id == 0 &&
 			newshared->ats_table == evtshared->ats_table &&
 			newshared->ats_relid == evtshared->ats_relid &&
+			newshared->ats_rolid == evtshared->ats_rolid &&
 			bms_equal(newshared->ats_modifiedcols,
 					  evtshared->ats_modifiedcols))
 			break;
@@ -4289,6 +4291,8 @@ AfterTriggerExecute(EState *estate,
 	AfterTriggerShared evtshared = GetTriggerSharedData(event);
 	Oid			tgoid = evtshared->ats_tgoid;
 	TriggerData LocTriggerData = {0};
+	Oid			save_rolid;
+	int			save_sec_context;
 	HeapTuple	rettuple;
 	int			tgindx;
 	bool		should_free_trig = false;
@@ -4493,6 +4497,17 @@ AfterTriggerExecute(EState *estate,
 	MemoryContextReset(per_tuple_context);
 
 	/*
+	 * If necessary, become the role that was active when the trigger got
+	 * queued.  Note that the role might have been dropped since the trigger
+	 * was queued, but if that is a problem, we will get an error later.
+	 * Checking here would still leave a race condition.
+	 */
+	GetUserIdAndSecContext(&save_rolid, &save_sec_context);
+	if (save_rolid != evtshared->ats_rolid)
+		SetUserIdAndSecContext(evtshared->ats_rolid,
+							   save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
+
+	/*
 	 * Call the trigger and throw away any possibly returned updated tuple.
 	 * (Don't let ExecCallTriggerFunc measure EXPLAIN time.)
 	 */
@@ -4505,6 +4520,10 @@ AfterTriggerExecute(EState *estate,
 		rettuple != LocTriggerData.tg_trigtuple &&
 		rettuple != LocTriggerData.tg_newtuple)
 		heap_freetuple(rettuple);
+
+	/* Restore the current role if necessary */
+	if (save_rolid != evtshared->ats_rolid)
+		SetUserIdAndSecContext(save_rolid, save_sec_context);
 
 	/*
 	 * Release resources
@@ -6431,6 +6450,7 @@ AfterTriggerSaveEvent(EState *estate, ResultRelInfo *relinfo,
 			(trigger->tginitdeferred ? AFTER_TRIGGER_INITDEFERRED : 0);
 		new_shared.ats_tgoid = trigger->tgoid;
 		new_shared.ats_relid = RelationGetRelid(rel);
+		new_shared.ats_rolid = GetUserId();
 		new_shared.ats_firing_id = 0;
 		if ((trigger->tgoldtable || trigger->tgnewtable) &&
 			transition_capture != NULL)
