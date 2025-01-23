@@ -11,7 +11,7 @@ endif
 
 # These files are part of the Unicode Character Database. Download them on
 # demand.
-foreach f : ['CompositionExclusions.txt', 'DerivedCoreProperties.txt', 'DerivedNormalizationProps.txt', 'EastAsianWidth.txt', 'NormalizationTest.txt', 'PropList.txt', 'SpecialCasing.txt', 'UnicodeData.txt']
+foreach f : ['CompositionExclusions.txt', 'CaseFolding.txt', 'DerivedCoreProperties.txt', 'DerivedNormalizationProps.txt', 'EastAsianWidth.txt', 'NormalizationTest.txt', 'PropList.txt', 'SpecialCasing.txt', 'UnicodeData.txt']
   url = unicode_baseurl.format(UNICODE_VERSION, f)
   target = custom_target(f,
     output: f,
@@ -26,7 +26,7 @@ update_unicode_targets = []
 
 update_unicode_targets += \
   custom_target('unicode_case_table.h',
-    input: [unicode_data['SpecialCasing.txt'], unicode_data['UnicodeData.txt']],
+    input: [unicode_data['CaseFolding.txt'], unicode_data['SpecialCasing.txt'], unicode_data['UnicodeData.txt']],
     output: ['unicode_case_table.h'],
     command: [
       perl, files('generate-unicode_case_table.pl'),

@@ -51,6 +51,14 @@ unicode_uppercase_simple(pg_wchar code)
 	return map ? map->simplemap[CaseUpper] : code;
 }
 
+pg_wchar
+unicode_casefold_simple(pg_wchar code)
+{
+	const pg_case_map *map = find_case_map(code);
+
+	return map ? map->simplemap[CaseFold] : code;
+}
+
 /*
  * unicode_strlower()
  *
@@ -139,6 +147,30 @@ unicode_strupper(char *dst, size_t dstsize, const char *src, ssize_t srclen,
 				 bool full)
 {
 	return convert_case(dst, dstsize, src, srclen, CaseUpper, full, NULL,
+						NULL);
+}
+
+/*
+ * unicode_strfold()
+ *
+ * Case fold src, and return the result length (not including terminating
+ * NUL).
+ *
+ * String src must be encoded in UTF-8. If srclen < 0, src must be
+ * NUL-terminated.
+ *
+ * Result string is stored in dst, truncating if larger than dstsize. If
+ * dstsize is greater than the result length, dst will be NUL-terminated;
+ * otherwise not.
+ *
+ * If dstsize is zero, dst may be NULL. This is useful for calculating the
+ * required buffer size before allocating.
+ */
+size_t
+unicode_strfold(char *dst, size_t dstsize, const char *src, ssize_t srclen,
+				bool full)
+{
+	return convert_case(dst, dstsize, src, srclen, CaseFold, full, NULL,
 						NULL);
 }
 

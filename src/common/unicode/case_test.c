@@ -81,17 +81,20 @@ icu_test_simple(pg_wchar code)
 	pg_wchar	lower = unicode_lowercase_simple(code);
 	pg_wchar	title = unicode_titlecase_simple(code);
 	pg_wchar	upper = unicode_uppercase_simple(code);
+	pg_wchar	fold = unicode_casefold_simple(code);
 	pg_wchar	iculower = u_tolower(code);
 	pg_wchar	icutitle = u_totitle(code);
 	pg_wchar	icuupper = u_toupper(code);
+	pg_wchar	icufold = u_foldCase(code, U_FOLD_CASE_DEFAULT);
 
-	if (lower != iculower || title != icutitle || upper != icuupper)
+	if (lower != iculower || title != icutitle || upper != icuupper ||
+		fold != icufold)
 	{
 		printf("case_test: FAILURE for codepoint 0x%06x\n", code);
-		printf("case_test: Postgres lower/title/upper:	0x%06x/0x%06x/0x%06x\n",
-			   lower, title, upper);
-		printf("case_test: ICU lower/title/upper:		0x%06x/0x%06x/0x%06x\n",
-			   iculower, icutitle, icuupper);
+		printf("case_test: Postgres lower/title/upper/fold:	0x%06x/0x%06x/0x%06x/0x%06x\n",
+			   lower, title, upper, fold);
+		printf("case_test: ICU lower/title/upper/fold:		0x%06x/0x%06x/0x%06x/0x%06x\n",
+			   iculower, icutitle, icuupper, icufold);
 		printf("\n");
 		exit(1);
 	}
@@ -103,9 +106,11 @@ icu_test_full(char *str)
 	char		lower[BUFSZ];
 	char		title[BUFSZ];
 	char		upper[BUFSZ];
+	char		fold[BUFSZ];
 	char		icu_lower[BUFSZ];
 	char		icu_title[BUFSZ];
 	char		icu_upper[BUFSZ];
+	char		icu_fold[BUFSZ];
 	UErrorCode	status;
 	struct WordBoundaryState wbstate = {
 		.str = str,
@@ -118,12 +123,15 @@ icu_test_full(char *str)
 	unicode_strlower(lower, BUFSZ, str, -1, true);
 	unicode_strtitle(title, BUFSZ, str, -1, true, initcap_wbnext, &wbstate);
 	unicode_strupper(upper, BUFSZ, str, -1, true);
+	unicode_strfold(fold, BUFSZ, str, -1, true);
 	status = U_ZERO_ERROR;
 	ucasemap_utf8ToLower(casemap, icu_lower, BUFSZ, str, -1, &status);
 	status = U_ZERO_ERROR;
 	ucasemap_utf8ToTitle(casemap, icu_title, BUFSZ, str, -1, &status);
 	status = U_ZERO_ERROR;
 	ucasemap_utf8ToUpper(casemap, icu_upper, BUFSZ, str, -1, &status);
+	status = U_ZERO_ERROR;
+	ucasemap_utf8FoldCase(casemap, icu_fold, BUFSZ, str, -1, &status);
 
 	if (strcmp(lower, icu_lower) != 0)
 	{
@@ -141,6 +149,12 @@ icu_test_full(char *str)
 	{
 		printf("case_test: str='%s' upper='%s' icu_upper='%s'\n", str, upper,
 			   icu_upper);
+		exit(1);
+	}
+	if (strcmp(fold, icu_fold) != 0)
+	{
+		printf("case_test: str='%s' fold='%s' icu_fold='%s'\n", str, fold,
+			   icu_fold);
 		exit(1);
 	}
 }
@@ -302,6 +316,12 @@ tfunc_upper(char *dst, size_t dstsize, const char *src,
 	return unicode_strupper(dst, dstsize, src, srclen, true);
 }
 
+static size_t
+tfunc_fold(char *dst, size_t dstsize, const char *src,
+		   ssize_t srclen)
+{
+	return unicode_strfold(dst, dstsize, src, srclen, true);
+}
 
 static void
 test_convert_case()
@@ -318,10 +338,12 @@ test_convert_case()
 	test_convert(tfunc_upper, "ß", "SS");
 	test_convert(tfunc_lower, "ıiIİ", "ıiii\u0307");
 	test_convert(tfunc_upper, "ıiIİ", "IIIİ");
+	test_convert(tfunc_fold, "ıiIİ", "ıiii\u0307");
 	/* test final sigma */
 	test_convert(tfunc_lower, "σςΣ ΣΣΣ", "σςς σσς");
 	test_convert(tfunc_lower, "σς'Σ' ΣΣ'Σ'", "σς'ς' σσ'ς'");
 	test_convert(tfunc_title, "σςΣ ΣΣΣ", "Σςς Σσς");
+	test_convert(tfunc_fold, "σςΣ ΣΣΣ", "σσσ σσσ");
 
 #ifdef USE_ICU
 	icu_test_full("");
