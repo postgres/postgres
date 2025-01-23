@@ -101,7 +101,7 @@ static CommandId GetRealCmax(CommandId combocid);
  */
 
 CommandId
-HeapTupleHeaderGetCmin(HeapTupleHeader tup)
+HeapTupleHeaderGetCmin(const HeapTupleHeaderData *tup)
 {
 	CommandId	cid = HeapTupleHeaderGetRawCommandId(tup);
 
@@ -115,7 +115,7 @@ HeapTupleHeaderGetCmin(HeapTupleHeader tup)
 }
 
 CommandId
-HeapTupleHeaderGetCmax(HeapTupleHeader tup)
+HeapTupleHeaderGetCmax(const HeapTupleHeaderData *tup)
 {
 	CommandId	cid = HeapTupleHeaderGetRawCommandId(tup);
 
@@ -150,7 +150,7 @@ HeapTupleHeaderGetCmax(HeapTupleHeader tup)
  * changes the tuple in shared buffers.
  */
 void
-HeapTupleHeaderAdjustCmax(HeapTupleHeader tup,
+HeapTupleHeaderAdjustCmax(const HeapTupleHeaderData *tup,
 						  CommandId *cmax,
 						  bool *iscombo)
 {
