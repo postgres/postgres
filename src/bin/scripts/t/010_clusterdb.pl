@@ -21,7 +21,9 @@ $node->issues_sql_like(
 	qr/statement: CLUSTER;/,
 	'SQL CLUSTER run');
 
-$node->command_fails([ 'clusterdb', '--table' => 'nonexistent' ],
+$node->command_fails_like(
+	[ 'clusterdb', '--table' => 'nonexistent' ],
+	qr/relation "nonexistent" does not exist/,
 	'fails with nonexistent table');
 
 $node->safe_psql('postgres',
