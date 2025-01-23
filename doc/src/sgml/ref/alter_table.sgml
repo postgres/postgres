@@ -486,8 +486,6 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
      <para>
       Additional restrictions apply when unique or primary key constraints
       are added to partitioned tables; see <link linkend="sql-createtable"><command>CREATE TABLE</command></link>.
-      Also, foreign key constraints on partitioned
-      tables may not be declared <literal>NOT VALID</literal> at present.
      </para>
 
     </listitem>

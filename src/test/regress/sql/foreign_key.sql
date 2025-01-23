@@ -1200,10 +1200,6 @@ ALTER TABLE fk_partitioned_fk ATTACH PARTITION fk_partitioned_fk_3
 -- a non-partitioned table fails.
 ALTER TABLE ONLY fk_partitioned_fk ADD FOREIGN KEY (a, b)
   REFERENCES fk_notpartitioned_pk;
--- Adding a NOT VALID foreign key on a partitioned table referencing
--- a non-partitioned table fails.
-ALTER TABLE fk_partitioned_fk ADD FOREIGN KEY (a, b)
-  REFERENCES fk_notpartitioned_pk NOT VALID;
 
 -- these inserts, targeting both the partition directly as well as the
 -- partitioned table, should all fail
@@ -1250,6 +1246,74 @@ INSERT INTO fk_partitioned_fk VALUES (1);
 ALTER TABLE fk_notpartitioned_pk ALTER COLUMN a TYPE bigint;
 DELETE FROM fk_notpartitioned_pk WHERE a = 1;
 DROP TABLE fk_notpartitioned_pk, fk_partitioned_fk;
+
+-- NOT VALID foreign keys on partitioned table
+CREATE TABLE fk_notpartitioned_pk (a int, b int, PRIMARY KEY (a, b));
+CREATE TABLE fk_partitioned_fk (b int, a int) PARTITION BY RANGE (a, b);
+ALTER TABLE fk_partitioned_fk ADD FOREIGN KEY (a, b) REFERENCES fk_notpartitioned_pk NOT VALID;
+
+-- Attaching a child table with the same valid foreign key constraint.
+CREATE TABLE fk_partitioned_fk_1 (a int, b int);
+ALTER TABLE fk_partitioned_fk_1 ADD FOREIGN KEY (a, b) REFERENCES fk_notpartitioned_pk;
+ALTER TABLE fk_partitioned_fk ATTACH PARTITION fk_partitioned_fk_1 FOR VALUES FROM (0,0) TO (1000,1000);
+
+-- Child constraint will remain valid.
+SELECT conname, convalidated, conrelid::regclass FROM pg_constraint
+WHERE conrelid::regclass::text like 'fk_partitioned_fk%' ORDER BY oid;
+
+-- Validate the constraint
+ALTER TABLE fk_partitioned_fk VALIDATE CONSTRAINT fk_partitioned_fk_a_b_fkey;
+
+-- All constraints are now valid.
+SELECT conname, convalidated, conrelid::regclass FROM pg_constraint
+WHERE conrelid::regclass::text like 'fk_partitioned_fk%' ORDER BY oid;
+
+-- Attaching a child with a NOT VALID constraint.
+CREATE TABLE fk_partitioned_fk_2 (a int, b int);
+INSERT INTO fk_partitioned_fk_2 VALUES(1000, 1000); -- doesn't exist in referenced table
+ALTER TABLE fk_partitioned_fk_2 ADD FOREIGN KEY (a, b) REFERENCES fk_notpartitioned_pk NOT VALID;
+
+-- It will fail because the attach operation implicitly validates the data.
+ALTER TABLE fk_partitioned_fk ATTACH PARTITION fk_partitioned_fk_2 FOR VALUES FROM (1000,1000) TO (2000,2000);
+
+-- Remove the invalid data and try again.
+TRUNCATE fk_partitioned_fk_2;
+ALTER TABLE fk_partitioned_fk ATTACH PARTITION fk_partitioned_fk_2 FOR VALUES FROM (1000,1000) TO (2000,2000);
+
+-- The child constraint will also be valid.
+SELECT conname, convalidated FROM pg_constraint WHERE conrelid = 'fk_partitioned_fk_2'::regclass;
+
+-- Test case where the child constraint is invalid, the grandchild constraint
+-- is valid, and the validation for the grandchild should be skipped when a
+-- valid constraint is applied to the top parent.
+CREATE TABLE fk_partitioned_fk_3 (a int, b int) PARTITION BY RANGE (a, b);
+ALTER TABLE fk_partitioned_fk_3 ADD FOREIGN KEY (a, b) REFERENCES fk_notpartitioned_pk NOT VALID;
+CREATE TABLE fk_partitioned_fk_3_1 (a int, b int);
+ALTER TABLE fk_partitioned_fk_3_1 ADD FOREIGN KEY (a, b) REFERENCES fk_notpartitioned_pk;
+ALTER TABLE fk_partitioned_fk_3 ATTACH PARTITION fk_partitioned_fk_3_1 FOR VALUES FROM (2000,2000) TO (3000,3000);
+ALTER TABLE fk_partitioned_fk ATTACH PARTITION fk_partitioned_fk_3 FOR VALUES FROM (2000,2000) TO (3000,3000);
+
+-- All constraints are now valid.
+SELECT conname, convalidated, conrelid::regclass FROM pg_constraint
+WHERE conrelid::regclass::text like 'fk_partitioned_fk%' ORDER BY oid;
+
+DROP TABLE fk_partitioned_fk, fk_notpartitioned_pk;
+
+-- NOT VALID foreign key on a non-partitioned table referencing a partitioned table
+CREATE TABLE fk_partitioned_pk (a int, b int, PRIMARY KEY (a, b)) PARTITION BY RANGE (a, b);
+CREATE TABLE fk_partitioned_pk_1 PARTITION OF fk_partitioned_pk FOR VALUES FROM (0,0) TO (1000,1000);
+CREATE TABLE fk_notpartitioned_fk (b int, a int);
+ALTER TABLE fk_notpartitioned_fk ADD FOREIGN KEY (a, b) REFERENCES fk_partitioned_pk NOT VALID;
+
+-- Constraint will be invalid.
+SELECT conname, convalidated FROM pg_constraint WHERE conrelid = 'fk_notpartitioned_fk'::regclass;
+
+ALTER TABLE fk_notpartitioned_fk VALIDATE CONSTRAINT fk_notpartitioned_fk_a_b_fkey;
+
+-- All constraints are now valid.
+SELECT conname, convalidated FROM pg_constraint WHERE conrelid = 'fk_notpartitioned_fk'::regclass;
+
+DROP TABLE fk_notpartitioned_fk, fk_partitioned_pk;
 
 -- Test some other exotic foreign key features: MATCH SIMPLE, ON UPDATE/DELETE
 -- actions
