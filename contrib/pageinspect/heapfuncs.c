@@ -42,13 +42,14 @@
  * was used to upgrade from an older version, tuples might still have an
  * oid. Seems worthwhile to display that.
  */
-#define HeapTupleHeaderGetOidOld(tup) \
-( \
-	((tup)->t_infomask & HEAP_HASOID_OLD) ? \
-	   *((Oid *) ((char *)(tup) + (tup)->t_hoff - sizeof(Oid))) \
-	: \
-		InvalidOid \
-)
+static inline Oid
+HeapTupleHeaderGetOidOld(const HeapTupleHeaderData *tup)
+{
+	if (tup->t_infomask & HEAP_HASOID_OLD)
+		return *((Oid *) ((char *) (tup) + (tup)->t_hoff - sizeof(Oid)));
+	else
+		return InvalidOid;
+}
 
 
 /*
