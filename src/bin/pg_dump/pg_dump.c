@@ -4318,7 +4318,7 @@ getPublications(Archive *fout)
 	if (fout->remoteVersion >= 180000)
 		appendPQExpBufferStr(query, "p.pubgencols_type ");
 	else
-		appendPQExpBufferStr(query, CppAsString2(PUBLISH_GENCOLS_NONE) " AS pubgencols_type ");
+		appendPQExpBuffer(query, "'%c' AS pubgencols_type ", PUBLISH_GENCOLS_NONE);
 
 	appendPQExpBufferStr(query, "FROM pg_publication p");
 
