@@ -30,6 +30,7 @@
 #include "catalog/pg_language.h"
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_opclass.h"
+#include "catalog/pg_opfamily.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_publication.h"
@@ -1271,6 +1272,32 @@ get_opclass_method(Oid opclass)
 	result = cla_tup->opcmethod;
 	ReleaseSysCache(tp);
 	return result;
+}
+
+/*				---------- OPFAMILY CACHE ----------					 */
+
+char *
+get_opfamily_name(Oid opfid, bool missing_ok)
+{
+	HeapTuple	tup;
+	char	   *opfname;
+	Form_pg_opfamily opfform;
+
+	tup = SearchSysCache1(OPFAMILYOID, ObjectIdGetDatum(opfid));
+
+	if (!HeapTupleIsValid(tup))
+	{
+		if (!missing_ok)
+			elog(ERROR, "cache lookup failed for operator family %u", opfid);
+		return NULL;
+	}
+
+	opfform = (Form_pg_opfamily) GETSTRUCT(tup);
+	opfname = pstrdup(NameStr(opfform->opfname));
+
+	ReleaseSysCache(tup);
+
+	return opfname;
 }
 
 /*				---------- OPERATOR CACHE ----------					 */

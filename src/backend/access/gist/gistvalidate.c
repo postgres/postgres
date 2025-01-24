@@ -19,7 +19,6 @@
 #include "catalog/pg_amop.h"
 #include "catalog/pg_amproc.h"
 #include "catalog/pg_opclass.h"
-#include "catalog/pg_opfamily.h"
 #include "catalog/pg_type.h"
 #include "utils/lsyscache.h"
 #include "utils/regproc.h"
@@ -39,8 +38,6 @@ gistvalidate(Oid opclassoid)
 	Oid			opcintype;
 	Oid			opckeytype;
 	char	   *opclassname;
-	HeapTuple	familytup;
-	Form_pg_opfamily familyform;
 	char	   *opfamilyname;
 	CatCList   *proclist,
 			   *oprlist;
@@ -63,12 +60,7 @@ gistvalidate(Oid opclassoid)
 	opclassname = NameStr(classform->opcname);
 
 	/* Fetch opfamily information */
-	familytup = SearchSysCache1(OPFAMILYOID, ObjectIdGetDatum(opfamilyoid));
-	if (!HeapTupleIsValid(familytup))
-		elog(ERROR, "cache lookup failed for operator family %u", opfamilyoid);
-	familyform = (Form_pg_opfamily) GETSTRUCT(familytup);
-
-	opfamilyname = NameStr(familyform->opfname);
+	opfamilyname = get_opfamily_name(opfamilyoid, false);
 
 	/* Fetch all operators and support functions of the opfamily */
 	oprlist = SearchSysCacheList1(AMOPSTRATEGY, ObjectIdGetDatum(opfamilyoid));
@@ -282,7 +274,6 @@ gistvalidate(Oid opclassoid)
 
 	ReleaseCatCacheList(proclist);
 	ReleaseCatCacheList(oprlist);
-	ReleaseSysCache(familytup);
 	ReleaseSysCache(classtup);
 
 	return result;

@@ -35,7 +35,6 @@
 #include "catalog/pg_inherits.h"
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_opclass.h"
-#include "catalog/pg_opfamily.h"
 #include "catalog/pg_tablespace.h"
 #include "catalog/pg_type.h"
 #include "commands/comment.h"
@@ -2147,29 +2146,12 @@ ComputeIndexAttrs(IndexInfo *indexInfo,
 			opfamily = get_opclass_family(opclassOids[attn]);
 			strat = get_op_opfamily_strategy(opid, opfamily);
 			if (strat == 0)
-			{
-				HeapTuple	opftuple;
-				Form_pg_opfamily opfform;
-
-				/*
-				 * attribute->opclass might not explicitly name the opfamily,
-				 * so fetch the name of the selected opfamily for use in the
-				 * error message.
-				 */
-				opftuple = SearchSysCache1(OPFAMILYOID,
-										   ObjectIdGetDatum(opfamily));
-				if (!HeapTupleIsValid(opftuple))
-					elog(ERROR, "cache lookup failed for opfamily %u",
-						 opfamily);
-				opfform = (Form_pg_opfamily) GETSTRUCT(opftuple);
-
 				ereport(ERROR,
 						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 						 errmsg("operator %s is not a member of operator family \"%s\"",
 								format_operator(opid),
-								NameStr(opfform->opfname)),
+								get_opfamily_name(opfamily, false)),
 						 errdetail("The exclusion operator must be related to the index operator class for the constraint.")));
-			}
 
 			indexInfo->ii_ExclusionOps[attn] = opid;
 			indexInfo->ii_ExclusionProcs[attn] = get_opcode(opid);
@@ -2484,21 +2466,13 @@ GetOperatorFromCompareType(Oid opclass, Oid rhstype, CompareType cmptype,
 	}
 
 	if (!OidIsValid(*opid))
-	{
-		HeapTuple	tuple;
-
-		tuple = SearchSysCache1(OPFAMILYOID, ObjectIdGetDatum(opfamily));
-		if (!HeapTupleIsValid(tuple))
-			elog(ERROR, "cache lookup failed for operator family %u", opfamily);
-
 		ereport(ERROR,
 				errcode(ERRCODE_UNDEFINED_OBJECT),
 				cmptype == COMPARE_EQ ? errmsg("could not identify an equality operator for type %s", format_type_be(opcintype)) :
 				cmptype == COMPARE_OVERLAP ? errmsg("could not identify an overlaps operator for type %s", format_type_be(opcintype)) :
 				cmptype == COMPARE_CONTAINED_BY ? errmsg("could not identify a contained-by operator for type %s", format_type_be(opcintype)) : 0,
 				errdetail("There is no suitable operator in operator family \"%s\" for access method \"%s\".",
-						  NameStr(((Form_pg_opfamily) GETSTRUCT(tuple))->opfname), "gist"));
-	}
+						  get_opfamily_name(opfamily, false), "gist"));
 }
 
 /*
