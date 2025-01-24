@@ -159,9 +159,6 @@ static bool ImmediateCheckpointRequested(void);
 static bool CompactCheckpointerRequestQueue(void);
 static void UpdateSharedMemoryConfig(void);
 
-/* Signal handlers */
-static void ReqCheckpointHandler(SIGNAL_ARGS);
-
 
 /*
  * Main entry point for checkpointer process
@@ -191,7 +188,7 @@ CheckpointerMain(char *startup_data, size_t startup_data_len)
 	 * tell us it's okay to shut down (via SIGUSR2).
 	 */
 	pqsignal(SIGHUP, SignalHandlerForConfigReload);
-	pqsignal(SIGINT, ReqCheckpointHandler); /* request checkpoint */
+	pqsignal(SIGINT, SIG_IGN);
 	pqsignal(SIGTERM, SIG_IGN); /* ignore SIGTERM */
 	/* SIGQUIT handler was already set up by InitPostmasterChild */
 	pqsignal(SIGALRM, SIG_IGN);
@@ -861,23 +858,6 @@ IsCheckpointOnSchedule(double progress)
 
 
 /* --------------------------------
- *		signal handler routines
- * --------------------------------
- */
-
-/* SIGINT: set flag to run a normal checkpoint right away */
-static void
-ReqCheckpointHandler(SIGNAL_ARGS)
-{
-	/*
-	 * The signaling process should have set ckpt_flags nonzero, so all we
-	 * need do is ensure that our main loop gets kicked out of any wait.
-	 */
-	SetLatch(MyLatch);
-}
-
-
-/* --------------------------------
  *		communication with backends
  * --------------------------------
  */
@@ -990,38 +970,36 @@ RequestCheckpoint(int flags)
 	SpinLockRelease(&CheckpointerShmem->ckpt_lck);
 
 	/*
-	 * Send signal to request checkpoint.  It's possible that the checkpointer
-	 * hasn't started yet, or is in process of restarting, so we will retry a
-	 * few times if needed.  (Actually, more than a few times, since on slow
-	 * or overloaded buildfarm machines, it's been observed that the
-	 * checkpointer can take several seconds to start.)  However, if not told
-	 * to wait for the checkpoint to occur, we consider failure to send the
-	 * signal to be nonfatal and merely LOG it.  The checkpointer should see
-	 * the request when it does start, with or without getting a signal.
+	 * Set checkpointer's latch to request checkpoint.  It's possible that the
+	 * checkpointer hasn't started yet, so we will retry a few times if
+	 * needed.  (Actually, more than a few times, since on slow or overloaded
+	 * buildfarm machines, it's been observed that the checkpointer can take
+	 * several seconds to start.)  However, if not told to wait for the
+	 * checkpoint to occur, we consider failure to set the latch to be
+	 * nonfatal and merely LOG it.  The checkpointer should see the request
+	 * when it does start, with or without the SetLatch().
 	 */
 #define MAX_SIGNAL_TRIES 600	/* max wait 60.0 sec */
 	for (ntries = 0;; ntries++)
 	{
-		if (CheckpointerShmem->checkpointer_pid == 0)
+		volatile PROC_HDR *procglobal = ProcGlobal;
+		ProcNumber	checkpointerProc = procglobal->checkpointerProc;
+
+		if (checkpointerProc == INVALID_PROC_NUMBER)
 		{
 			if (ntries >= MAX_SIGNAL_TRIES || !(flags & CHECKPOINT_WAIT))
 			{
 				elog((flags & CHECKPOINT_WAIT) ? ERROR : LOG,
-					 "could not signal for checkpoint: checkpointer is not running");
-				break;
-			}
-		}
-		else if (kill(CheckpointerShmem->checkpointer_pid, SIGINT) != 0)
-		{
-			if (ntries >= MAX_SIGNAL_TRIES || !(flags & CHECKPOINT_WAIT))
-			{
-				elog((flags & CHECKPOINT_WAIT) ? ERROR : LOG,
-					 "could not signal for checkpoint: %m");
+					 "could not notify checkpoint: checkpointer is not running");
 				break;
 			}
 		}
 		else
-			break;				/* signal sent successfully */
+		{
+			SetLatch(&GetPGProcByNumber(checkpointerProc)->procLatch);
+			/* notified successfully */
+			break;
+		}
 
 		CHECK_FOR_INTERRUPTS();
 		pg_usleep(100000L);		/* wait 0.1 sec, then retry */
