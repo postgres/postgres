@@ -156,7 +156,7 @@ UPLOAD_MANIFEST		{ return K_UPLOAD_MANIFEST; }
 					uint32	hi,
 							lo;
 					if (sscanf(yytext, "%X/%X", &hi, &lo) != 2)
-						replication_yyerror(yyscanner, "invalid streaming start location");
+						replication_yyerror(NULL, yyscanner, "invalid streaming start location");
 					yylval->recptr = ((uint64) hi) << 32 | lo;
 					return RECPTR;
 				}
@@ -213,7 +213,7 @@ UPLOAD_MANIFEST		{ return K_UPLOAD_MANIFEST; }
 					return yytext[0];
 				}
 
-<xq,xd><<EOF>>	{ replication_yyerror(yyscanner, "unterminated quoted string"); }
+<xq,xd><<EOF>>	{ replication_yyerror(NULL, yyscanner, "unterminated quoted string"); }
 
 
 <<EOF>>			{
@@ -252,8 +252,12 @@ addlitchar(unsigned char ychar, yyscan_t yyscanner)
 	appendStringInfoChar(&yyextra->litbuf, ychar);
 }
 
+/*
+  * (The first argument is enforced by Bison to match the first argument of
+  * yyparse(), but it is not used here.)
+  */
 void
-replication_yyerror(yyscan_t yyscanner, const char *message)
+replication_yyerror(Node **replication_parse_result_p, yyscan_t yyscanner, const char *message)
 {
 	ereport(ERROR,
 			(errcode(ERRCODE_SYNTAX_ERROR),

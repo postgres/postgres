@@ -5706,13 +5706,11 @@ process_backslash_command(PsqlScanState sstate, const char *source)
 		yyscanner = expr_scanner_init(sstate, source, lineno, start_offset,
 									  my_command->argv[0]);
 
-		if (expr_yyparse(yyscanner) != 0)
+		if (expr_yyparse(&my_command->expr, yyscanner) != 0)
 		{
 			/* dead code: exit done from syntax_error called by yyerror */
 			exit(1);
 		}
-
-		my_command->expr = expr_parse_result;
 
 		/* Save line, trimming any trailing newline */
 		my_command->first_line =

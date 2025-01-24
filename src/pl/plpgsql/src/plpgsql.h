@@ -1212,8 +1212,6 @@ extern int	plpgsql_extra_errors;
 extern bool plpgsql_check_syntax;
 extern bool plpgsql_DumpExecTree;
 
-extern PLpgSQL_stmt_block *plpgsql_parse_result;
-
 extern int	plpgsql_nDatums;
 extern PLpgSQL_datum **plpgsql_Datums;
 
@@ -1332,7 +1330,7 @@ extern int	plpgsql_peek(yyscan_t yyscanner);
 extern void plpgsql_peek2(int *tok1_p, int *tok2_p, int *tok1_loc,
 						  int *tok2_loc, yyscan_t yyscanner);
 extern int	plpgsql_scanner_errposition(int location, yyscan_t yyscanner);
-extern void plpgsql_yyerror(YYLTYPE *yyllocp, yyscan_t yyscanner, const char *message) pg_attribute_noreturn();
+extern void plpgsql_yyerror(YYLTYPE *yyllocp, PLpgSQL_stmt_block **plpgsql_parse_result_p, yyscan_t yyscanner, const char *message) pg_attribute_noreturn();
 extern int	plpgsql_location_to_lineno(int location, yyscan_t yyscanner);
 extern int	plpgsql_latest_lineno(yyscan_t yyscanner);
 extern yyscan_t plpgsql_scanner_init(const char *str);
@@ -1341,6 +1339,6 @@ extern void plpgsql_scanner_finish(yyscan_t yyscanner);
 /*
  * Externs in pl_gram.y
  */
-extern int	plpgsql_yyparse(yyscan_t yyscanner);
+extern int	plpgsql_yyparse(PLpgSQL_stmt_block **plpgsql_parse_result_p, yyscan_t yyscanner);
 
 #endif							/* PLPGSQL_H */

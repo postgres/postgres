@@ -42,6 +42,13 @@ struct syncrep_yy_extra_type
 	StringInfoData xdbuf;
 };
 
+/*
+ * Better keep this definition here than put it in replication/syncrep.h and
+ * save a bit of duplication.  Putting it in replication/syncrep.h would leak
+ * the definition to other parts and possibly affect other scanners.
+*/
+#define YY_DECL extern int	syncrep_yylex(union YYSTYPE *yylval_param, char **syncrep_parse_error_msg_p, yyscan_t yyscanner)
+
 /* LCOV_EXCL_START */
 
 %}
@@ -104,7 +111,7 @@ xdinside		[^"]+
 				return NAME;
 		}
 <xd><<EOF>> {
-				syncrep_yyerror(yyscanner, "unterminated quoted identifier");
+				syncrep_yyerror(NULL, syncrep_parse_error_msg_p, yyscanner, "unterminated quoted identifier");
 				return JUNK;
 		}
 
@@ -136,12 +143,21 @@ xdinside		[^"]+
 #undef yyextra
 #define yyextra (((struct yyguts_t *) yyscanner)->yyextra_r)
 
-/* Needs to be here for access to yytext */
+/*
+ * This yyerror() function does not raise an error (elog or similar), it just
+ * collects the error message in *syncrep_parse_error_msg_p and leaves it to
+ * the ultimate caller of the syncrep parser to raise the error.  (The
+ * ultimate caller will do that with special GUC error functions.)
+ *
+ * (The first argument is enforced by Bison to match the first argument of
+ * yyparse(), but it is not used here.)
+ */
 void
-syncrep_yyerror(yyscan_t yyscanner, const char *message)
+syncrep_yyerror(SyncRepConfigData **syncrep_parse_result_p, char **syncrep_parse_error_msg_p, yyscan_t yyscanner, const char *message)
 {
 	struct yyguts_t *yyg = (struct yyguts_t *) yyscanner;	/* needed for yytext
 															 * macro */
+	char *syncrep_parse_error_msg = *syncrep_parse_error_msg_p;
 
 	/* report only the first error in a parse operation */
 	if (syncrep_parse_error_msg)

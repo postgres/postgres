@@ -9,9 +9,9 @@ GETTEXT_TRIGGERS = $(BACKEND_COMMON_GETTEXT_TRIGGERS) \
                    yyerror \
                    jsonpath_yyerror:4 \
                    parser_yyerror \
-                   replication_yyerror:2 \
+                   replication_yyerror:3 \
                    scanner_yyerror \
-                   syncrep_yyerror:2 \
+                   syncrep_yyerror:4 \
                    report_invalid_record:2 \
                    ereport_startup_progress \
                    json_token_error:2 \

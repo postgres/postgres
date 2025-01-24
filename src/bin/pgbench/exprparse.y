@@ -21,8 +21,6 @@
 #define PGBENCH_NARGS_HASH		(-3)
 #define PGBENCH_NARGS_PERMUTE	(-4)
 
-PgBenchExpr *expr_parse_result;
-
 static PgBenchExprList *make_elist(PgBenchExpr *expr, PgBenchExprList *list);
 static PgBenchExpr *make_null_constant(void);
 static PgBenchExpr *make_boolean_constant(bool bval);
@@ -42,6 +40,7 @@ static PgBenchExpr *make_case(yyscan_t yyscanner, PgBenchExprList *when_then_lis
 %expect 0
 %name-prefix="expr_yy"
 
+%parse-param {PgBenchExpr **expr_parse_result_p}
 %parse-param {yyscan_t yyscanner}
 %lex-param   {yyscan_t yyscanner}
 
@@ -81,7 +80,7 @@ static PgBenchExpr *make_case(yyscan_t yyscanner, PgBenchExprList *when_then_lis
 %%
 
 result: expr				{
-								expr_parse_result = $1;
+								*expr_parse_result_p = $1;
 								(void) yynerrs; /* suppress compiler warning */
 							}
 

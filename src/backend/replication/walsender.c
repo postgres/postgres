@@ -2017,15 +2017,13 @@ exec_replication_command(const char *cmd_string)
 	/*
 	 * Looks like a WalSender command, so parse it.
 	 */
-	parse_rc = replication_yyparse(scanner);
+	parse_rc = replication_yyparse(&cmd_node, scanner);
 	if (parse_rc != 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg_internal("replication command parser returned %d",
 								 parse_rc)));
 	replication_scanner_finish(scanner);
-
-	cmd_node = replication_parse_result;
 
 	/*
 	 * Report query to various monitoring facilities.  For this purpose, we

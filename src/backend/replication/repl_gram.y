@@ -25,10 +25,6 @@
 #include "repl_gram.h"
 
 
-/* Result of the parsing is returned here */
-Node *replication_parse_result;
-
-
 /*
  * Bison doesn't allocate anything that needs to live across parser calls,
  * so we can easily have it use palloc instead of malloc.  This prevents
@@ -39,6 +35,7 @@ Node *replication_parse_result;
 
 %}
 
+%parse-param {Node **replication_parse_result_p}
 %parse-param {yyscan_t yyscanner}
 %lex-param   {yyscan_t yyscanner}
 %pure-parser
@@ -104,7 +101,7 @@ Node *replication_parse_result;
 
 firstcmd: command opt_semicolon
 				{
-					replication_parse_result = $1;
+					*replication_parse_result_p = $1;
 
 					(void) yynerrs; /* suppress compiler warning */
 				}

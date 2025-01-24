@@ -19,10 +19,6 @@
 
 #include "syncrep_gram.h"
 
-/* Result of parsing is returned in one of these two variables */
-SyncRepConfigData *syncrep_parse_result;
-char	   *syncrep_parse_error_msg;
-
 static SyncRepConfigData *create_syncrep_config(const char *num_sync,
 					List *members, uint8 syncrep_method);
 
@@ -36,7 +32,10 @@ static SyncRepConfigData *create_syncrep_config(const char *num_sync,
 
 %}
 
+%parse-param {SyncRepConfigData **syncrep_parse_result_p}
+%parse-param {char **syncrep_parse_error_msg_p}
 %parse-param {yyscan_t yyscanner}
+%lex-param   {char **syncrep_parse_error_msg_p}
 %lex-param   {yyscan_t yyscanner}
 %pure-parser
 %expect 0
@@ -60,7 +59,7 @@ static SyncRepConfigData *create_syncrep_config(const char *num_sync,
 %%
 result:
 		standby_config				{
-										syncrep_parse_result = $1;
+										*syncrep_parse_result_p = $1;
 										(void) yynerrs; /* suppress compiler warning */
 									}
 	;
