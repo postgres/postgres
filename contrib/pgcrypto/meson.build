@@ -93,6 +93,7 @@ install_data(
   'pgcrypto--1.1--1.2.sql',
   'pgcrypto--1.2--1.3.sql',
   'pgcrypto--1.3.sql',
+  'pgcrypto--1.3--1.4.sql',
   'pgcrypto.control',
   kwargs: contrib_data_args,
 )

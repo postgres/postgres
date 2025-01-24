@@ -1149,6 +1149,22 @@ gen_random_uuid() returns uuid
   </para>
  </sect2>
 
+ <sect2 id="pgcrypto-openssl-support-funcs">
+  <title>OpenSSL Support Functions</title>
+
+  <indexterm>
+   <primary>fips_mode</primary>
+  </indexterm>
+
+<synopsis>
+fips_mode() returns boolean
+</synopsis>
+  <para>
+   Returns <literal>true</literal> if <productname>OpenSSL</productname> is
+   running with FIPS mode enabled, otherwise <literal>false</literal>.
+  </para>
+ </sect2>
+
  <sect2 id="pgcrypto-notes">
   <title>Notes</title>
 

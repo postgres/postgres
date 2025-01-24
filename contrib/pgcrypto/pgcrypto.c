@@ -450,6 +450,14 @@ pg_random_uuid(PG_FUNCTION_ARGS)
 	return gen_random_uuid(fcinfo);
 }
 
+PG_FUNCTION_INFO_V1(pg_check_fipsmode);
+
+Datum
+pg_check_fipsmode(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_BOOL(CheckFIPSMode());
+}
+
 static void *
 find_provider(text *name,
 			  PFN provider_lookup,
