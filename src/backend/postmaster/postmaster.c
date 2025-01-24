@@ -243,6 +243,13 @@ bool		enable_bonjour = false;
 char	   *bonjour_name;
 bool		restart_after_crash = true;
 bool		remove_temp_files_after_crash = true;
+
+/*
+ * When terminating child processes after fatal errors, like a crash of a
+ * child process, we normally send SIGQUIT -- and most other comments in this
+ * file are written on the assumption that we do -- but developers might
+ * prefer to use SIGABRT to collect per-child core dumps.
+ */
 bool		send_abort_for_crash = false;
 bool		send_abort_for_kill = false;
 
@@ -424,7 +431,6 @@ static int	BackendStartup(ClientSocket *client_sock);
 static void report_fork_failure_to_client(ClientSocket *client_sock, int errnum);
 static CAC_state canAcceptConnections(BackendType backend_type);
 static void signal_child(PMChild *pmchild, int signal);
-static void sigquit_child(PMChild *pmchild);
 static bool SignalChildren(int signal, BackendTypeMask targetMask);
 static void TerminateChildren(int signal);
 static int	CountChildren(BackendTypeMask targetMask);
@@ -2701,32 +2707,12 @@ HandleChildCrash(int pid, int exitstatus, const char *procname)
 	/*
 	 * Signal all other child processes to exit.  The crashed process has
 	 * already been removed from ActiveChildList.
+	 *
+	 * We could exclude dead-end children here, but at least when sending
+	 * SIGABRT it seems better to include them.
 	 */
 	if (take_action)
-	{
-		dlist_iter	iter;
-
-		dlist_foreach(iter, &ActiveChildList)
-		{
-			PMChild    *bp = dlist_container(PMChild, elem, iter.cur);
-
-			/* We do NOT restart the syslogger */
-			if (bp == SysLoggerPMChild)
-				continue;
-
-			if (bp == StartupPMChild)
-				StartupStatus = STARTUP_SIGNALED;
-
-			/*
-			 * This backend is still alive.  Unless we did so already, tell it
-			 * to commit hara-kiri.
-			 *
-			 * We could exclude dead-end children here, but at least when
-			 * sending SIGABRT it seems better to include them.
-			 */
-			sigquit_child(bp);
-		}
-	}
+		TerminateChildren(send_abort_for_crash ? SIGABRT : SIGQUIT);
 
 	if (Shutdown != ImmediateShutdown)
 		FatalError = true;
@@ -3347,19 +3333,6 @@ signal_child(PMChild *pmchild, int signal)
 			break;
 	}
 #endif
-}
-
-/*
- * Convenience function for killing a child process after a crash of some
- * other child process.  We apply send_abort_for_crash to decide which signal
- * to send.  Normally it's SIGQUIT -- and most other comments in this file are
- * written on the assumption that it is -- but developers might prefer to use
- * SIGABRT to collect per-child core dumps.
- */
-static void
-sigquit_child(PMChild *pmchild)
-{
-	signal_child(pmchild, (send_abort_for_crash ? SIGABRT : SIGQUIT));
 }
 
 /*
