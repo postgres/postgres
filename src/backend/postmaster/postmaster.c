@@ -2685,8 +2685,6 @@ CleanupBackend(PMChild *bp,
 static void
 HandleChildCrash(int pid, int exitstatus, const char *procname)
 {
-	bool		take_action;
-
 	/*
 	 * We only log messages and send signals if this is the first process
 	 * crash and we're not doing an immediate shutdown; otherwise, we're only
@@ -2694,15 +2692,13 @@ HandleChildCrash(int pid, int exitstatus, const char *procname)
 	 * signaled children, nonzero exit status is to be expected, so don't
 	 * clutter log.
 	 */
-	take_action = !FatalError && Shutdown != ImmediateShutdown;
+	if (FatalError || Shutdown == ImmediateShutdown)
+		return;
 
-	if (take_action)
-	{
-		LogChildExit(LOG, procname, pid, exitstatus);
-		ereport(LOG,
-				(errmsg("terminating any other active server processes")));
-		SetQuitSignalReason(PMQUIT_FOR_CRASH);
-	}
+	LogChildExit(LOG, procname, pid, exitstatus);
+	ereport(LOG,
+			(errmsg("terminating any other active server processes")));
+	SetQuitSignalReason(PMQUIT_FOR_CRASH);
 
 	/*
 	 * Signal all other child processes to exit.  The crashed process has
@@ -2711,11 +2707,9 @@ HandleChildCrash(int pid, int exitstatus, const char *procname)
 	 * We could exclude dead-end children here, but at least when sending
 	 * SIGABRT it seems better to include them.
 	 */
-	if (take_action)
-		TerminateChildren(send_abort_for_crash ? SIGABRT : SIGQUIT);
+	TerminateChildren(send_abort_for_crash ? SIGABRT : SIGQUIT);
 
-	if (Shutdown != ImmediateShutdown)
-		FatalError = true;
+	FatalError = true;
 
 	/* We now transit into a state of waiting for children to die */
 	if (pmState == PM_RECOVERY ||
