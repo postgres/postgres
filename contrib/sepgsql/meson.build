@@ -37,7 +37,7 @@ contrib_targets += custom_target('sepgsql.sql',
   command: [sed, '-e', 's,MODULE_PATHNAME,$libdir/sepgsql,g', '@INPUT@'],
   capture: true,
   install: true,
-  install_dir: contrib_data_args['install_dir'],
+  install_dir: dir_data / 'contrib',
 )
 
 # TODO: implement sepgsql tests
