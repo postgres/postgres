@@ -15,6 +15,8 @@ OBJS = \
 DATA_built = sepgsql.sql
 PGFILEDESC = "sepgsql - SELinux integration"
 
+TAP_TESTS = 1
+
 # Note: because we don't tell the Makefile there are any regression tests,
 # we have to clean those result files explicitly
 EXTRA_CLEAN = -r $(pg_regress_clean_files) tmp/ *.pp sepgsql-regtest.if sepgsql-regtest.fc

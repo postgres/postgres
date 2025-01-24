@@ -152,13 +152,22 @@ $ for DBNAME in template0 template1 postgres; do
   <title>Regression Tests</title>
 
   <para>
+   The <filename>sepgsql</filename> test suite is run if
+   <literal>PG_TEST_EXTRA</literal> contains <literal>sepgsql</literal> (see
+   <xref linkend="regress-additional"/>).  This method is suitable during
+   development of <productname>PostgreSQL</productname>.  Alternatively, there
+   is a way to run the tests to checks whether a database instance has been
+   set up properly for <literal>sepgsql</literal>.
+  </para>
+
+  <para>
    Due to the nature of <productname>SELinux</productname>, running the
    regression tests for <filename>sepgsql</filename> requires several extra
    configuration steps, some of which must be done as root.
-   The regression tests will not be run by an ordinary
-   <literal>make check</literal> or <literal>make installcheck</literal> command; you must
-   set up the configuration and then invoke the test script manually.
-   The tests must be run in the <filename>contrib/sepgsql</filename> directory
+  </para>
+
+  <para>
+   The manual tests must be run in the <filename>contrib/sepgsql</filename> directory
    of a configured PostgreSQL build tree.  Although they require a build tree,
    the tests are designed to be executed against an installed server,
    that is they are comparable to <literal>make installcheck</literal> not

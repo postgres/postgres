@@ -4,10 +4,10 @@
 # to try to ensure that the SELinux environment is set up appropriately and
 # the database is configured correctly.
 #
-# Note that this must be run against an installed Postgres database.
-# There's no equivalent of "make check", and that wouldn't be terribly useful
-# since much of the value is in checking that you installed sepgsql into
-# your database correctly.
+# This must be run against an installed Postgres database.  The
+# purpose of this script is in checking that you installed sepgsql
+# into your database correctly.  For testing sepgsql during
+# development, "make check", "meson test", etc. are also available.
 #
 # This must be run in the contrib/sepgsql directory of a Postgres build tree.
 #
@@ -302,5 +302,5 @@ if [ -f /sys/fs/selinux/class/db_table/perms/truncate ]; then
 	tests+=" truncate"
 fi
 
-make REGRESS="$tests" REGRESS_OPTS="--launcher ./launcher" installcheck
-# exit with the exit code provided by "make"
+PGXS=`pg_config --pgxs`
+"$(dirname $PGXS)/../../src/test/regress/pg_regress" --inputdir=. --bindir="$PG_BINDIR" --launcher=./launcher $tests

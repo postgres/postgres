@@ -285,6 +285,17 @@ make check-world PG_TEST_EXTRA='kerberos ldap ssl load_balance libpq_encryption'
     </varlistentry>
 
     <varlistentry>
+     <term><literal>sepgsql</literal></term>
+     <listitem>
+      <para>
+       Runs the test suite under <filename>contrib/sepgsql</filename>.  This
+       requires an SELinux environment that is set up in a specific way; see
+       <xref linkend="sepgsql-regression"/>.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
      <term><literal>ssl</literal></term>
      <listitem>
       <para>
