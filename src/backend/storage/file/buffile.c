@@ -459,7 +459,7 @@ BufFileLoadBuffer(BufFile *file)
 	 */
 	file->nbytes = FileRead(thisfile,
 							file->buffer.data,
-							sizeof(file->buffer),
+							sizeof(file->buffer.data),
 							file->curOffset,
 							WAIT_EVENT_BUFFILE_READ);
 	if (file->nbytes < 0)
