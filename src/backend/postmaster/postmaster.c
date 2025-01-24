@@ -2674,6 +2674,55 @@ CleanupBackend(PMChild *bp,
 }
 
 /*
+ * Transition into FatalError state, in response to something bad having
+ * happened. Commonly the caller will have logged the reason for entering
+ * FatalError state.
+ *
+ * This should only be called when not already in FatalError or
+ * ImmediateShutdown state.
+ */
+static void
+HandleFatalError(QuitSignalReason reason, bool consider_sigabrt)
+{
+	int			sigtosend;
+
+	Assert(!FatalError);
+	Assert(Shutdown != ImmediateShutdown);
+
+	SetQuitSignalReason(reason);
+
+	if (consider_sigabrt && send_abort_for_crash)
+		sigtosend = SIGABRT;
+	else
+		sigtosend = SIGQUIT;
+
+	/*
+	 * Signal all other child processes to exit.
+	 *
+	 * We could exclude dead-end children here, but at least when sending
+	 * SIGABRT it seems better to include them.
+	 */
+	TerminateChildren(sigtosend);
+
+	FatalError = true;
+
+	/* We now transit into a state of waiting for children to die */
+	if (pmState == PM_RECOVERY ||
+		pmState == PM_HOT_STANDBY ||
+		pmState == PM_RUN ||
+		pmState == PM_STOP_BACKENDS ||
+		pmState == PM_WAIT_XLOG_SHUTDOWN)
+		UpdatePMState(PM_WAIT_BACKENDS);
+
+	/*
+	 * .. and if this doesn't happen quickly enough, now the clock is ticking
+	 * for us to kill them without mercy.
+	 */
+	if (AbortStartTime == 0)
+		AbortStartTime = time(NULL);
+}
+
+/*
  * HandleChildCrash -- cleanup after failed backend, bgwriter, checkpointer,
  * walwriter, autovacuum, archiver, slot sync worker, or background worker.
  *
@@ -2698,33 +2747,12 @@ HandleChildCrash(int pid, int exitstatus, const char *procname)
 	LogChildExit(LOG, procname, pid, exitstatus);
 	ereport(LOG,
 			(errmsg("terminating any other active server processes")));
-	SetQuitSignalReason(PMQUIT_FOR_CRASH);
 
 	/*
-	 * Signal all other child processes to exit.  The crashed process has
-	 * already been removed from ActiveChildList.
-	 *
-	 * We could exclude dead-end children here, but at least when sending
-	 * SIGABRT it seems better to include them.
+	 * Switch into error state. The crashed process has already been removed
+	 * from ActiveChildList.
 	 */
-	TerminateChildren(send_abort_for_crash ? SIGABRT : SIGQUIT);
-
-	FatalError = true;
-
-	/* We now transit into a state of waiting for children to die */
-	if (pmState == PM_RECOVERY ||
-		pmState == PM_HOT_STANDBY ||
-		pmState == PM_RUN ||
-		pmState == PM_STOP_BACKENDS ||
-		pmState == PM_WAIT_XLOG_SHUTDOWN)
-		UpdatePMState(PM_WAIT_BACKENDS);
-
-	/*
-	 * .. and if this doesn't happen quickly enough, now the clock is ticking
-	 * for us to kill them without mercy.
-	 */
-	if (AbortStartTime == 0)
-		AbortStartTime = time(NULL);
+	HandleFatalError(PMQUIT_FOR_CRASH, true);
 }
 
 /*
