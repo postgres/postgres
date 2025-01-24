@@ -81,6 +81,9 @@ SELECT 'xAb' !~* '[c-d]' COLLATE PG_C_UTF8;
 SELECT 'Δ' ~* '[γ-λ]' COLLATE PG_C_UTF8;
 SELECT 'δ' ~* '[Γ-Λ]' COLLATE PG_C_UTF8; -- same as above with cases reversed
 
+-- case folding
+select casefold('AbCd 123 #$% ıiIİ ẞ ß Ǆǅǆ Σσς' collate PG_C_UTF8);
+
 --
 -- Test PG_UNICODE_FAST
 --
@@ -140,3 +143,6 @@ SELECT 'xAb' ~* '[W-Y]' COLLATE PG_UNICODE_FAST;
 SELECT 'xAb' !~* '[c-d]' COLLATE PG_UNICODE_FAST;
 SELECT 'Δ' ~* '[γ-λ]' COLLATE PG_UNICODE_FAST;
 SELECT 'δ' ~* '[Γ-Λ]' COLLATE PG_UNICODE_FAST; -- same as above with cases reversed
+
+-- case folding
+select casefold('AbCd 123 #$% ıiIİ ẞ ß Ǆǅǆ Σσς' collate PG_UNICODE_FAST);

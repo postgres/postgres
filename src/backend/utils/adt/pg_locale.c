@@ -106,6 +106,8 @@ extern size_t strtitle_builtin(char *dst, size_t dstsize, const char *src,
 							   ssize_t srclen, pg_locale_t locale);
 extern size_t strupper_builtin(char *dst, size_t dstsize, const char *src,
 							   ssize_t srclen, pg_locale_t locale);
+extern size_t strfold_builtin(char *dst, size_t dstsize, const char *src,
+							  ssize_t srclen, pg_locale_t locale);
 
 extern size_t strlower_icu(char *dst, size_t dstsize, const char *src,
 						   ssize_t srclen, pg_locale_t locale);
@@ -113,6 +115,8 @@ extern size_t strtitle_icu(char *dst, size_t dstsize, const char *src,
 						   ssize_t srclen, pg_locale_t locale);
 extern size_t strupper_icu(char *dst, size_t dstsize, const char *src,
 						   ssize_t srclen, pg_locale_t locale);
+extern size_t strfold_icu(char *dst, size_t dstsize, const char *src,
+						  ssize_t srclen, pg_locale_t locale);
 
 extern size_t strlower_libc(char *dst, size_t dstsize, const char *src,
 							ssize_t srclen, pg_locale_t locale);
@@ -1440,6 +1444,26 @@ pg_strupper(char *dst, size_t dstsize, const char *src, ssize_t srclen,
 #endif
 	else if (locale->provider == COLLPROVIDER_LIBC)
 		return strupper_libc(dst, dstsize, src, srclen, locale);
+	else
+		/* shouldn't happen */
+		PGLOCALE_SUPPORT_ERROR(locale->provider);
+
+	return 0;					/* keep compiler quiet */
+}
+
+size_t
+pg_strfold(char *dst, size_t dstsize, const char *src, ssize_t srclen,
+		   pg_locale_t locale)
+{
+	if (locale->provider == COLLPROVIDER_BUILTIN)
+		return strfold_builtin(dst, dstsize, src, srclen, locale);
+#ifdef USE_ICU
+	else if (locale->provider == COLLPROVIDER_ICU)
+		return strfold_icu(dst, dstsize, src, srclen, locale);
+#endif
+	/* for libc, just use strlower */
+	else if (locale->provider == COLLPROVIDER_LIBC)
+		return strlower_libc(dst, dstsize, src, srclen, locale);
 	else
 		/* shouldn't happen */
 		PGLOCALE_SUPPORT_ERROR(locale->provider);

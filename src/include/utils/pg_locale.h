@@ -134,6 +134,9 @@ extern size_t pg_strtitle(char *dest, size_t destsize,
 extern size_t pg_strupper(char *dest, size_t destsize,
 						  const char *src, ssize_t srclen,
 						  pg_locale_t locale);
+extern size_t pg_strfold(char *dest, size_t destsize,
+						 const char *src, ssize_t srclen,
+						 pg_locale_t locale);
 extern int	pg_strcoll(const char *arg1, const char *arg2, pg_locale_t locale);
 extern int	pg_strncoll(const char *arg1, ssize_t len1,
 						const char *arg2, ssize_t len2, pg_locale_t locale);

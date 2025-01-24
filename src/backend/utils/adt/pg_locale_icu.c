@@ -54,6 +54,8 @@ extern size_t strtitle_icu(char *dst, size_t dstsize, const char *src,
 						   ssize_t srclen, pg_locale_t locale);
 extern size_t strupper_icu(char *dst, size_t dstsize, const char *src,
 						   ssize_t srclen, pg_locale_t locale);
+extern size_t strfold_icu(char *dst, size_t dstsize, const char *src,
+						  ssize_t srclen, pg_locale_t locale);
 
 #ifdef USE_ICU
 
@@ -117,6 +119,10 @@ static int32_t u_strToTitle_default_BI(UChar *dest, int32_t destCapacity,
 									   const UChar *src, int32_t srcLength,
 									   const char *locale,
 									   UErrorCode *pErrorCode);
+static int32_t u_strFoldCase_default(UChar *dest, int32_t destCapacity,
+									 const UChar *src, int32_t srcLength,
+									 const char *locale,
+									 UErrorCode *pErrorCode);
 
 static const struct collate_methods collate_methods_icu = {
 	.strncoll = strncoll_icu,
@@ -439,6 +445,26 @@ strupper_icu(char *dest, size_t destsize, const char *src, ssize_t srclen,
 	return result_len;
 }
 
+size_t
+strfold_icu(char *dest, size_t destsize, const char *src, ssize_t srclen,
+			pg_locale_t locale)
+{
+	int32_t		len_uchar;
+	int32_t		len_conv;
+	UChar	   *buff_uchar;
+	UChar	   *buff_conv;
+	size_t		result_len;
+
+	len_uchar = icu_to_uchar(&buff_uchar, src, srclen);
+	len_conv = icu_convert_case(u_strFoldCase_default, locale,
+								&buff_conv, buff_uchar, len_uchar);
+	result_len = icu_from_uchar(dest, destsize, buff_conv, len_conv);
+	pfree(buff_uchar);
+	pfree(buff_conv);
+
+	return result_len;
+}
+
 /*
  * strncoll_icu_utf8
  *
@@ -671,6 +697,38 @@ u_strToTitle_default_BI(UChar *dest, int32_t destCapacity,
 {
 	return u_strToTitle(dest, destCapacity, src, srcLength,
 						NULL, locale, pErrorCode);
+}
+
+static int32_t
+u_strFoldCase_default(UChar *dest, int32_t destCapacity,
+					  const UChar *src, int32_t srcLength,
+					  const char *locale,
+					  UErrorCode *pErrorCode)
+{
+	uint32		options = U_FOLD_CASE_DEFAULT;
+	char		lang[3];
+	UErrorCode	status;
+
+	/*
+	 * Unlike the ICU APIs for lowercasing, titlecasing, and uppercasing, case
+	 * folding does not accept a locale. Instead it just supports a single
+	 * option relevant to Turkic languages 'az' and 'tr'; check for those
+	 * languages to enable the option.
+	 */
+	status = U_ZERO_ERROR;
+	uloc_getLanguage(locale, lang, 3, &status);
+	if (U_SUCCESS(status))
+	{
+		/*
+		 * The option name is confusing, but it causes u_strFoldCase to use
+		 * the 'T' mappings, which are ignored for U_FOLD_CASE_DEFAULT.
+		 */
+		if (strcmp(lang, "tr") == 0 || strcmp(lang, "az") == 0)
+			options = U_FOLD_CASE_EXCLUDE_SPECIAL_I;
+	}
+
+	return u_strFoldCase(dest, destCapacity, src, srcLength,
+						 options, pErrorCode);
 }
 
 /*

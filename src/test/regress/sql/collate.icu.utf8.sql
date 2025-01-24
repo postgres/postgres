@@ -116,6 +116,11 @@ SELECT a, lower(x COLLATE "C"), lower(y COLLATE "C") FROM collate_test10;
 
 SELECT a, x, y FROM collate_test10 ORDER BY lower(y), a;
 
+SELECT lower('AbCd 123 #$% ıiIİ ẞ ß Ǆǅǆ Σσς' COLLATE "en-x-icu");
+SELECT casefold('AbCd 123 #$% ıiIİ ẞ ß Ǆǅǆ Σσς' COLLATE "en-x-icu");
+SELECT lower('AbCd 123 #$% ıiIİ ẞ ß Ǆǅǆ Σσς' COLLATE "tr-x-icu");
+SELECT casefold('AbCd 123 #$% ıiIİ ẞ ß Ǆǅǆ Σσς' COLLATE "tr-x-icu");
+
 -- LIKE/ILIKE
 
 SELECT * FROM collate_test1 WHERE b LIKE 'abc';

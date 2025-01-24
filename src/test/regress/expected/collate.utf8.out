@@ -160,6 +160,13 @@ SELECT 'δ' ~* '[Γ-Λ]' COLLATE PG_C_UTF8; -- same as above with cases reversed
  t
 (1 row)
 
+-- case folding
+select casefold('AbCd 123 #$% ıiIİ ẞ ß Ǆǅǆ Σσς' collate PG_C_UTF8);
+           casefold            
+-------------------------------
+ abcd 123 #$% ıiiİ ß ß ǆǆǆ σσσ
+(1 row)
+
 --
 -- Test PG_UNICODE_FAST
 --
@@ -318,5 +325,12 @@ SELECT 'δ' ~* '[Γ-Λ]' COLLATE PG_UNICODE_FAST; -- same as above with cases re
  ?column? 
 ----------
  t
+(1 row)
+
+-- case folding
+select casefold('AbCd 123 #$% ıiIİ ẞ ß Ǆǅǆ Σσς' collate PG_UNICODE_FAST);
+            casefold             
+---------------------------------
+ abcd 123 #$% ıiii̇ ss ss ǆǆǆ σσσ
 (1 row)
 

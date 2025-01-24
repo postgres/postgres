@@ -1820,6 +1820,75 @@ str_initcap(const char *buff, size_t nbytes, Oid collid)
 }
 
 /*
+ * collation-aware, wide-character-aware case folding
+ *
+ * We pass the number of bytes so we can pass varlena and char*
+ * to this function.  The result is a palloc'd, null-terminated string.
+ */
+char *
+str_casefold(const char *buff, size_t nbytes, Oid collid)
+{
+	char	   *result;
+	pg_locale_t mylocale;
+
+	if (!buff)
+		return NULL;
+
+	if (!OidIsValid(collid))
+	{
+		/*
+		 * This typically means that the parser could not resolve a conflict
+		 * of implicit collations, so report it that way.
+		 */
+		ereport(ERROR,
+				(errcode(ERRCODE_INDETERMINATE_COLLATION),
+				 errmsg("could not determine which collation to use for %s function",
+						"lower()"),
+				 errhint("Use the COLLATE clause to set the collation explicitly.")));
+	}
+
+	if (GetDatabaseEncoding() != PG_UTF8)
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("Unicode case folding can only be performed if server encoding is UTF8")));
+
+	mylocale = pg_newlocale_from_collation(collid);
+
+	/* C/POSIX collations use this path regardless of database encoding */
+	if (mylocale->ctype_is_c)
+	{
+		result = asc_tolower(buff, nbytes);
+	}
+	else
+	{
+		const char *src = buff;
+		size_t		srclen = nbytes;
+		size_t		dstsize;
+		char	   *dst;
+		size_t		needed;
+
+		/* first try buffer of equal size plus terminating NUL */
+		dstsize = srclen + 1;
+		dst = palloc(dstsize);
+
+		needed = pg_strfold(dst, dstsize, src, srclen, mylocale);
+		if (needed + 1 > dstsize)
+		{
+			/* grow buffer if needed and retry */
+			dstsize = needed + 1;
+			dst = repalloc(dst, dstsize);
+			needed = pg_strfold(dst, dstsize, src, srclen, mylocale);
+			Assert(needed + 1 <= dstsize);
+		}
+
+		Assert(dst[needed] == '\0');
+		result = dst;
+	}
+
+	return result;
+}
+
+/*
  * ASCII-only lower function
  *
  * We pass the number of bytes so we can pass varlena and char*

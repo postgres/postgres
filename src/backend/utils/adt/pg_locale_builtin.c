@@ -31,6 +31,8 @@ extern size_t strtitle_builtin(char *dst, size_t dstsize, const char *src,
 							   ssize_t srclen, pg_locale_t locale);
 extern size_t strupper_builtin(char *dst, size_t dstsize, const char *src,
 							   ssize_t srclen, pg_locale_t locale);
+extern size_t strfold_builtin(char *dst, size_t dstsize, const char *src,
+							  ssize_t srclen, pg_locale_t locale);
 
 
 struct WordBoundaryState
@@ -105,6 +107,14 @@ strupper_builtin(char *dest, size_t destsize, const char *src, ssize_t srclen,
 {
 	return unicode_strupper(dest, destsize, src, srclen,
 							locale->info.builtin.casemap_full);
+}
+
+size_t
+strfold_builtin(char *dest, size_t destsize, const char *src, ssize_t srclen,
+				pg_locale_t locale)
+{
+	return unicode_strfold(dest, destsize, src, srclen,
+						   locale->info.builtin.casemap_full);
 }
 
 pg_locale_t

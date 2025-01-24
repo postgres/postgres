@@ -255,6 +255,30 @@ SELECT a, x, y FROM collate_test10 ORDER BY lower(y), a;
  1 | hij | hij
 (2 rows)
 
+SELECT lower('AbCd 123 #$% ıiIİ ẞ ß Ǆǅǆ Σσς' COLLATE "en-x-icu");
+             lower             
+-------------------------------
+ abcd 123 #$% ıiii̇ ß ß ǆǆǆ σσς
+(1 row)
+
+SELECT casefold('AbCd 123 #$% ıiIİ ẞ ß Ǆǅǆ Σσς' COLLATE "en-x-icu");
+            casefold             
+---------------------------------
+ abcd 123 #$% ıiii̇ ss ss ǆǆǆ σσσ
+(1 row)
+
+SELECT lower('AbCd 123 #$% ıiIİ ẞ ß Ǆǅǆ Σσς' COLLATE "tr-x-icu");
+             lower             
+-------------------------------
+ abcd 123 #$% ıiıi ß ß ǆǆǆ σσς
+(1 row)
+
+SELECT casefold('AbCd 123 #$% ıiIİ ẞ ß Ǆǅǆ Σσς' COLLATE "tr-x-icu");
+            casefold             
+---------------------------------
+ abcd 123 #$% ıiıi ss ss ǆǆǆ σσσ
+(1 row)
+
 -- LIKE/ILIKE
 SELECT * FROM collate_test1 WHERE b LIKE 'abc';
  a |  b  

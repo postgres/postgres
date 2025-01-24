@@ -2596,7 +2596,7 @@ SELECT NOT(ROW(table.*) IS NOT NULL) FROM TABLE; -- detect at least one null in 
 
       <row>
        <entry role="func_table_entry"><para role="func_signature">
-        <indexterm>
+        <indexterm id="function-lower">
          <primary>lower</primary>
         </indexterm>
         <function>lower</function> ( <type>text</type> )
@@ -2657,7 +2657,7 @@ SELECT NOT(ROW(table.*) IS NOT NULL) FROM TABLE; -- detect at least one null in 
 
       <row>
        <entry role="func_table_entry"><para role="func_signature">
-        <indexterm>
+        <indexterm id="function-normalize">
          <primary>normalize</primary>
         </indexterm>
         <indexterm>
@@ -3106,6 +3106,48 @@ SELECT NOT(ROW(table.*) IS NOT NULL) FROM TABLE; -- detect at least one null in 
        <para>
         <literal>initcap('hi THOMAS')</literal>
         <returnvalue>Hi Thomas</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>casefold</primary>
+        </indexterm>
+        <function>casefold</function> ( <type>text</type> )
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        Performs case folding of the input string according to the collation.
+        Case folding is similar to case conversion, but the purpose of case
+        folding is to facilitate case-insensitive comparison of strings,
+        whereas the purpose of case conversion is to convert to a particular
+        cased form.  This function can only be used when the server encoding
+        is <literal>UTF8</literal>.
+       </para>
+       <para>
+        Ordinarily, case folding simply converts to lowercase, but there are a
+        few notable exceptions depending on the collation.  For instance, the
+        character <literal>Σ</literal> (U+03A3) has two lowercase forms:
+        <literal>σ</literal> (U+03C3) and <literal>ς</literal> (U+03C2); case
+        folding in the <literal>PG_C_UTF8</literal> collation maps all three
+        forms to <literal>σ</literal>.  Additionally, the result is not
+        necessarily lowercase; some characters may be folded to uppercase.
+       </para>
+       <para>
+        Case folding may change the length of the string.  For instance, in
+        the <literal>PG_UNICODE_FAST</literal> collation, <literal>ß</literal>
+        (U+00DF) folds to <literal>ss</literal>.
+       </para>
+       <para>
+        <function>casefold</function> can be used for Unicode Default Caseless
+        Matching.  It does not always preserve the normalized form of the
+        input string (see <xref linkend="function-normalize"/>).
+       </para>
+       <para>
+        The <literal>libc</literal> provider doesn't support case folding, so
+        <function>casefold</function> is identical to <xref
+        linkend="function-lower"/>.
        </para></entry>
       </row>
 
