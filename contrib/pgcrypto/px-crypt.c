@@ -91,6 +91,8 @@ px_crypt(const char *psw, const char *salt, char *buf, unsigned len)
 {
 	const struct px_crypt_algo *c;
 
+	CheckBuiltinCryptoMode();
+
 	for (c = px_crypt_list; c->id; c++)
 	{
 		if (!c->id_len)
@@ -134,6 +136,8 @@ px_gen_salt(const char *salt_type, char *buf, int rounds)
 	struct generator *g;
 	char	   *p;
 	char		rbuf[16];
+
+	CheckBuiltinCryptoMode();
 
 	for (g = gen_list; g->name; g++)
 		if (pg_strcasecmp(g->name, salt_type) == 0)

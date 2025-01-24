@@ -1165,6 +1165,44 @@ fips_mode() returns boolean
   </para>
  </sect2>
 
+ <sect2 id="pgcrypto-configuration-parameters">
+  <title>Configuration Parameters</title>
+
+ <para>
+  There is one configuration parameter that controls the behavior of
+  <filename>pgcrypto</filename>.
+ </para>
+
+  <variablelist>
+   <varlistentry id="pgcrypto-configuration-parameters-builtin_crypto_enabled">
+    <term>
+     <varname>pgcrypto.builtin_crypto_enabled</varname> (<type>enum</type>)
+     <indexterm>
+      <primary><varname>pgcrypto.builtin_crypto_enabled</varname> configuration
+      parameter</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      <varname>pgcrypto.builtin_crypto_enabled</varname> determines if the
+      built in crypto functions <function>gen_salt()</function>, and
+      <function>crypt()</function> are available for use. Setting this to
+      <literal>off</literal> disables these functions. <literal>on</literal>
+      (the default) enables these functions to work normally.
+      <literal>fips</literal> disables these functions if
+      <productname>OpenSSL</productname> is detected to operate in FIPS mode.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+
+  <para>
+   In ordinary usage, this parameter is set
+   in <filename>postgresql.conf</filename>, although superusers can alter it
+   on-the-fly within their own sessions.
+  </para>
+ </sect2>
+
  <sect2 id="pgcrypto-notes">
   <title>Notes</title>
 

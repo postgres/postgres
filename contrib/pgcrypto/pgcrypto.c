@@ -38,15 +38,46 @@
 #include "px-crypt.h"
 #include "px.h"
 #include "utils/builtins.h"
+#include "utils/guc.h"
 #include "varatt.h"
 
 PG_MODULE_MAGIC;
 
 /* private stuff */
 
+static const struct config_enum_entry builtin_crypto_options[] = {
+	{"on", BC_ON, false},
+	{"off", BC_OFF, false},
+	{"fips", BC_FIPS, false},
+	{NULL, 0, false}
+};
+
 typedef int (*PFN) (const char *name, void **res);
 static void *find_provider(text *name, PFN provider_lookup, const char *desc,
 						   int silent);
+
+int			builtin_crypto_enabled = BC_ON;
+
+/*
+ * Entrypoint of this module.
+ */
+void
+_PG_init(void)
+{
+	DefineCustomEnumVariable("pgcrypto.builtin_crypto_enabled",
+							 "Sets if builtin crypto functions are enabled.",
+							 "\"on\" enables builtin crypto, \"off\" unconditionally disables and \"fips\" "
+							 "will disable builtin crypto if OpenSSL is in FIPS mode",
+							 &builtin_crypto_enabled,
+							 BC_ON,
+							 builtin_crypto_options,
+							 PGC_SUSET,
+							 0,
+							 NULL,
+							 NULL,
+							 NULL);
+	MarkGUCPrefixReserved("pgcrypto");
+}
 
 /* SQL function: hash(bytea, text) returns bytea */
 PG_FUNCTION_INFO_V1(pg_digest);

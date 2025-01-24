@@ -18,4 +18,10 @@ UPDATE ctest SET res = crypt(data, salt);
 SELECT res = crypt(data, res) AS "worked"
 FROM ctest;
 
+-- check disabling of built in crypto functions
+SET pgcrypto.builtin_crypto_enabled = off;
+UPDATE ctest SET salt = gen_salt('des');
+UPDATE ctest SET res = crypt(data, salt);
+RESET pgcrypto.builtin_crypto_enabled;
+
 DROP TABLE ctest;

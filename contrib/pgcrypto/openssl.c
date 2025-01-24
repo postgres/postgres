@@ -31,6 +31,7 @@
 
 #include "postgres.h"
 
+#include <openssl/crypto.h>
 #include <openssl/evp.h>
 #include <openssl/err.h>
 #include <openssl/rand.h>
@@ -820,4 +821,29 @@ CheckFIPSMode(void)
 #endif
 
 	return (fips_enabled == 1);
+}
+
+/*
+ * CheckBuiltinCryptoMode
+ *
+ * Function for erroring out in case built-in crypto is executed when the user
+ * has disabled it. If builtin_crypto_enabled is set to BC_OFF or BC_FIPS and
+ * OpenSSL is operating in FIPS mode the function will error out, else the
+ * query executing built-in crypto can proceed.
+ */
+void
+CheckBuiltinCryptoMode(void)
+{
+	if (builtin_crypto_enabled == BC_ON)
+		return;
+
+	if (builtin_crypto_enabled == BC_OFF)
+		ereport(ERROR,
+				errmsg("use of built-in crypto functions is disabled"));
+
+	Assert(builtin_crypto_enabled == BC_FIPS);
+
+	if (CheckFIPSMode() == true)
+		ereport(ERROR,
+				errmsg("use of non-FIPS validated crypto not allowed when OpenSSL is in FIPS mode"));
 }
