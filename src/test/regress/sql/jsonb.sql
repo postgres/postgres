@@ -1540,12 +1540,25 @@ select ts_headline('[]'::jsonb, tsquery('aaa & bbb'));
 
 -- casts
 select 'true'::jsonb::bool;
+select 'null'::jsonb::bool;
 select '[]'::jsonb::bool;
 select '1.0'::jsonb::float;
+select 'null'::jsonb::float;
 select '[1.0]'::jsonb::float;
+select '1.0'::jsonb::float4;
+select 'null'::jsonb::float4;
+select '[1.0]'::jsonb::float4;
+select '12345'::jsonb::int2;
+select 'null'::jsonb::int2;
+select '"hello"'::jsonb::int2;
 select '12345'::jsonb::int4;
+select 'null'::jsonb::int4;
 select '"hello"'::jsonb::int4;
+select '12345'::jsonb::int8;
+select 'null'::jsonb::int8;
+select '"hello"'::jsonb::int8;
 select '12345'::jsonb::numeric;
+select 'null'::jsonb::numeric;
 select '{}'::jsonb::numeric;
 select '12345.05'::jsonb::numeric;
 select '12345.05'::jsonb::float4;

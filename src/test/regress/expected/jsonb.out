@@ -5617,6 +5617,12 @@ select 'true'::jsonb::bool;
  t
 (1 row)
 
+select 'null'::jsonb::bool;
+ bool 
+------
+ 
+(1 row)
+
 select '[]'::jsonb::bool;
 ERROR:  cannot cast jsonb array to type boolean
 select '1.0'::jsonb::float;
@@ -5625,20 +5631,80 @@ select '1.0'::jsonb::float;
       1
 (1 row)
 
+select 'null'::jsonb::float;
+ float8 
+--------
+       
+(1 row)
+
 select '[1.0]'::jsonb::float;
 ERROR:  cannot cast jsonb array to type double precision
+select '1.0'::jsonb::float4;
+ float4 
+--------
+      1
+(1 row)
+
+select 'null'::jsonb::float4;
+ float4 
+--------
+       
+(1 row)
+
+select '[1.0]'::jsonb::float4;
+ERROR:  cannot cast jsonb array to type real
+select '12345'::jsonb::int2;
+ int2  
+-------
+ 12345
+(1 row)
+
+select 'null'::jsonb::int2;
+ int2 
+------
+     
+(1 row)
+
+select '"hello"'::jsonb::int2;
+ERROR:  cannot cast jsonb string to type smallint
 select '12345'::jsonb::int4;
  int4  
 -------
  12345
 (1 row)
 
+select 'null'::jsonb::int4;
+ int4 
+------
+     
+(1 row)
+
 select '"hello"'::jsonb::int4;
 ERROR:  cannot cast jsonb string to type integer
+select '12345'::jsonb::int8;
+ int8  
+-------
+ 12345
+(1 row)
+
+select 'null'::jsonb::int8;
+ int8 
+------
+     
+(1 row)
+
+select '"hello"'::jsonb::int8;
+ERROR:  cannot cast jsonb string to type bigint
 select '12345'::jsonb::numeric;
  numeric 
 ---------
    12345
+(1 row)
+
+select 'null'::jsonb::numeric;
+ numeric 
+---------
+        
 (1 row)
 
 select '{}'::jsonb::numeric;
