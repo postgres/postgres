@@ -2919,16 +2919,20 @@ PostmasterStateMachine(void)
 
 		/*
 		 * If we are doing crash recovery or an immediate shutdown then we
-		 * expect the checkpointer to exit as well, otherwise not.
+		 * expect archiver, checkpointer and walsender to exit as well,
+		 * otherwise not.
 		 */
 		if (FatalError || Shutdown >= ImmediateShutdown)
-			targetMask = btmask_add(targetMask, B_CHECKPOINTER);
+			targetMask = btmask_add(targetMask,
+									B_CHECKPOINTER,
+									B_ARCHIVER,
+									B_WAL_SENDER);
 
 		/*
-		 * Walsenders and archiver will continue running; they will be
-		 * terminated later after writing the checkpoint record.  We also let
-		 * dead-end children to keep running for now.  The syslogger process
-		 * exits last.
+		 * Normally walsenders and archiver will continue running; they will
+		 * be terminated later after writing the checkpoint record.  We also
+		 * let dead-end children to keep running for now.  The syslogger
+		 * process exits last.
 		 *
 		 * This assertion checks that we have covered all backend types,
 		 * either by including them in targetMask, or by noting here that they
@@ -2939,13 +2943,17 @@ PostmasterStateMachine(void)
 			BackendTypeMask remainMask = BTYPE_MASK_NONE;
 
 			remainMask = btmask_add(remainMask,
-									B_WAL_SENDER,
-									B_ARCHIVER,
 									B_DEAD_END_BACKEND,
 									B_LOGGER);
 
-			/* checkpointer may or may not be in targetMask already */
-			remainMask = btmask_add(remainMask, B_CHECKPOINTER);
+			/*
+			 * Archiver, checkpointer and walsender may or may not be in
+			 * targetMask already.
+			 */
+			remainMask = btmask_add(remainMask,
+									B_ARCHIVER,
+									B_CHECKPOINTER,
+									B_WAL_SENDER);
 
 			/* these are not real postmaster children */
 			remainMask = btmask_add(remainMask,
