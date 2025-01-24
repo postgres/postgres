@@ -124,7 +124,7 @@ blvalidate(Oid opclassoid)
 		{
 			ereport(INFO,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("gist opfamily %s contains function %s with wrong signature for support number %d",
+					 errmsg("bloom opfamily %s contains function %s with wrong signature for support number %d",
 							opfamilyname,
 							format_procedure(procform->amproc),
 							procform->amprocnum)));
