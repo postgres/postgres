@@ -2017,7 +2017,7 @@ CONTEXT:  processing remote data for replication origin "pg_16395" during "INSER
     <title>Initial Snapshot</title>
     <para>
      The initial data in existing subscribed tables are snapshotted and
-     copied in a parallel instances of a special kind of apply process.
+     copied in parallel instances of a special kind of apply process.
      These special apply processes are dedicated table synchronization
      workers, spawned for each table to be synchronized.  Each table
      synchronization process will create its own replication slot and
