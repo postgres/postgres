@@ -2706,13 +2706,50 @@ HandleFatalError(QuitSignalReason reason, bool consider_sigabrt)
 
 	FatalError = true;
 
-	/* We now transit into a state of waiting for children to die */
-	if (pmState == PM_RECOVERY ||
-		pmState == PM_HOT_STANDBY ||
-		pmState == PM_RUN ||
-		pmState == PM_STOP_BACKENDS ||
-		pmState == PM_WAIT_XLOG_SHUTDOWN)
-		UpdatePMState(PM_WAIT_BACKENDS);
+	/*
+	 * Choose the appropriate new state to react to the fatal error. Unless we
+	 * were already in the process of shutting down, we go through
+	 * PM_WAIT_BACKEND. For errors during the shutdown sequence, we directly
+	 * switch to PM_WAIT_DEAD_END.
+	 */
+	switch (pmState)
+	{
+		case PM_INIT:
+			/* shouldn't have any children */
+			Assert(false);
+			break;
+		case PM_STARTUP:
+			/* should have been handled in process_pm_child_exit */
+			Assert(false);
+			break;
+
+			/* wait for children to die */
+		case PM_RECOVERY:
+		case PM_HOT_STANDBY:
+		case PM_RUN:
+		case PM_STOP_BACKENDS:
+			UpdatePMState(PM_WAIT_BACKENDS);
+			break;
+
+		case PM_WAIT_BACKENDS:
+			/* there might be more backends to wait for */
+			break;
+
+		case PM_WAIT_XLOG_SHUTDOWN:
+		case PM_WAIT_XLOG_ARCHIVAL:
+
+			/*
+			 * NB: Similar code exists in PostmasterStateMachine()'s handling
+			 * of FatalError in PM_STOP_BACKENDS/PM_WAIT_BACKENDS states.
+			 */
+			ConfigurePostmasterWaitSet(false);
+			UpdatePMState(PM_WAIT_DEAD_END);
+			break;
+
+		case PM_WAIT_DEAD_END:
+		case PM_NO_CHILDREN:
+			break;
+	}
 
 	/*
 	 * .. and if this doesn't happen quickly enough, now the clock is ticking
@@ -2942,15 +2979,18 @@ PostmasterStateMachine(void)
 			{
 				/*
 				 * Stop any dead-end children and stop creating new ones.
+				 *
+				 * NB: Similar code exists in HandleFatalErrors(), when the
+				 * error happens in pmState > PM_WAIT_BACKENDS.
 				 */
 				UpdatePMState(PM_WAIT_DEAD_END);
 				ConfigurePostmasterWaitSet(false);
 				SignalChildren(SIGQUIT, btmask(B_DEAD_END_BACKEND));
 
 				/*
-				 * We already SIGQUIT'd walsenders and the archiver, if any,
-				 * when we started immediate shutdown or entered FatalError
-				 * state.
+				 * We already SIGQUIT'd auxiliary processes (other than
+				 * logger), if any, when we started immediate shutdown or
+				 * entered FatalError state.
 				 */
 			}
 			else
@@ -2981,13 +3021,15 @@ PostmasterStateMachine(void)
 					 * We don't consult send_abort_for_crash here, as it's
 					 * unlikely that dumping cores would illuminate the reason
 					 * for checkpointer fork failure.
+					 *
+					 * XXX: It may be worth to introduce a different PMQUIT
+					 * value that signals that the cluster is in a bad state,
+					 * without a process having crashed. But right now this
+					 * path is very unlikely to be reached, so it isn't
+					 * obviously worthwhile adding a distinct error message in
+					 * quickdie().
 					 */
-					FatalError = true;
-					UpdatePMState(PM_WAIT_DEAD_END);
-					ConfigurePostmasterWaitSet(false);
-
-					/* Kill the walsenders and archiver too */
-					SignalChildren(SIGQUIT, btmask_all_except(B_LOGGER));
+					HandleFatalError(PMQUIT_FOR_CRASH, false);
 				}
 			}
 		}
