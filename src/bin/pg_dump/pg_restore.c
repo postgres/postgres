@@ -383,27 +383,25 @@ main(int argc, char **argv)
 
 	if (opts->formatName)
 	{
-		switch (opts->formatName[0])
+		if (pg_strcasecmp(opts->formatName, "c") == 0 ||
+			pg_strcasecmp(opts->formatName, "custom") == 0)
+			opts->format = archCustom;
+		else if (pg_strcasecmp(opts->formatName, "d") == 0 ||
+				 pg_strcasecmp(opts->formatName, "directory") == 0)
+			opts->format = archDirectory;
+		else if (pg_strcasecmp(opts->formatName, "t") == 0 ||
+				 pg_strcasecmp(opts->formatName, "tar") == 0)
+			opts->format = archTar;
+		else if (pg_strcasecmp(opts->formatName, "p") == 0 ||
+				 pg_strcasecmp(opts->formatName, "plain") == 0)
 		{
-			case 'c':
-			case 'C':
-				opts->format = archCustom;
-				break;
-
-			case 'd':
-			case 'D':
-				opts->format = archDirectory;
-				break;
-
-			case 't':
-			case 'T':
-				opts->format = archTar;
-				break;
-
-			default:
-				pg_fatal("unrecognized archive format \"%s\"; please specify \"c\", \"d\", or \"t\"",
-						 opts->formatName);
+			/* recognize this for consistency with pg_dump */
+			pg_fatal("archive format \"%s\" is not supported; please use psql",
+					 opts->formatName);
 		}
+		else
+			pg_fatal("unrecognized archive format \"%s\"; please specify \"c\", \"d\", or \"t\"",
+					 opts->formatName);
 	}
 
 	AH = OpenArchive(inputFileSpec, opts->format);
