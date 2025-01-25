@@ -3120,19 +3120,15 @@ SELECT NOT(ROW(table.*) IS NOT NULL) FROM TABLE; -- detect at least one null in 
        <para>
         Performs case folding of the input string according to the collation.
         Case folding is similar to case conversion, but the purpose of case
-        folding is to facilitate case-insensitive comparison of strings,
+        folding is to facilitate case-insensitive matching of strings,
         whereas the purpose of case conversion is to convert to a particular
         cased form.  This function can only be used when the server encoding
         is <literal>UTF8</literal>.
        </para>
        <para>
-        Ordinarily, case folding simply converts to lowercase, but there are a
-        few notable exceptions depending on the collation.  For instance, the
-        character <literal>Σ</literal> (U+03A3) has two lowercase forms:
-        <literal>σ</literal> (U+03C3) and <literal>ς</literal> (U+03C2); case
-        folding in the <literal>PG_C_UTF8</literal> collation maps all three
-        forms to <literal>σ</literal>.  Additionally, the result is not
-        necessarily lowercase; some characters may be folded to uppercase.
+        Ordinarily, case folding simply converts to lowercase, but there may
+        be exceptions depending on the collation.  For instance, some
+        characters have more than two lowercase variants, or fold to uppercase.
        </para>
        <para>
         Case folding may change the length of the string.  For instance, in
