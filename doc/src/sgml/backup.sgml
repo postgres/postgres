@@ -106,10 +106,10 @@ pg_dump <replaceable class="parameter">dbname</replaceable> &gt; <replaceable cl
 
    <para>
     Text files created by <application>pg_dump</application> are intended to
-    be read in by the <application>psql</application> program. The
-    general command form to restore a dump is
+    be read by the <application>psql</application> program using its default
+    settings. The general command form to restore a text dump is
 <synopsis>
-psql <replaceable class="parameter">dbname</replaceable> &lt; <replaceable class="parameter">dumpfile</replaceable>
+psql -X <replaceable class="parameter">dbname</replaceable> &lt; <replaceable class="parameter">dumpfile</replaceable>
 </synopsis>
     where <replaceable class="parameter">dumpfile</replaceable> is the
     file output by the <application>pg_dump</application> command. The database <replaceable
@@ -117,11 +117,17 @@ psql <replaceable class="parameter">dbname</replaceable> &lt; <replaceable class
     command, so you must create it yourself from <literal>template0</literal>
     before executing <application>psql</application> (e.g., with
     <literal>createdb -T template0 <replaceable
-    class="parameter">dbname</replaceable></literal>).  <application>psql</application>
+    class="parameter">dbname</replaceable></literal>).
+    To ensure <application>psql</application> runs with its default settings,
+    use the <option>-X</option> (<option>--no-psqlrc</option>) option.
+    <application>psql</application>
     supports options similar to <application>pg_dump</application> for specifying
     the database server to connect to and the user name to use. See
     the <xref linkend="app-psql"/> reference page for more information.
-    Non-text file dumps are restored using the <xref
+   </para>
+
+   <para>
+    Non-text file dumps should be restored using the <xref
     linkend="app-pgrestore"/> utility.
    </para>
 
@@ -141,7 +147,7 @@ psql <replaceable class="parameter">dbname</replaceable> &lt; <replaceable class
     behavior and have <application>psql</application> exit with an
     exit status of 3 if an SQL error occurs:
 <programlisting>
-psql --set ON_ERROR_STOP=on <replaceable>dbname</replaceable> &lt; <replaceable>dumpfile</replaceable>
+psql -X --set ON_ERROR_STOP=on <replaceable>dbname</replaceable> &lt; <replaceable>dumpfile</replaceable>
 </programlisting>
     Either way, you will only have a partially restored database.
     Alternatively, you can specify that the whole dump should be
@@ -160,7 +166,7 @@ psql --set ON_ERROR_STOP=on <replaceable>dbname</replaceable> &lt; <replaceable>
     write to or read from pipes makes it possible to dump a database
     directly from one server to another, for example:
 <programlisting>
-pg_dump -h <replaceable>host1</replaceable> <replaceable>dbname</replaceable> | psql -h <replaceable>host2</replaceable> <replaceable>dbname</replaceable>
+pg_dump -h <replaceable>host1</replaceable> <replaceable>dbname</replaceable> | psql -X -h <replaceable>host2</replaceable> <replaceable>dbname</replaceable>
 </programlisting>
    </para>
 
@@ -205,7 +211,7 @@ pg_dumpall &gt; <replaceable>dumpfile</replaceable>
 </synopsis>
     The resulting dump can be restored with <application>psql</application>:
 <synopsis>
-psql -f <replaceable class="parameter">dumpfile</replaceable> postgres
+psql -X -f <replaceable class="parameter">dumpfile</replaceable> postgres
 </synopsis>
     (Actually, you can specify any existing database name to start from,
     but if you are loading into an empty cluster then <literal>postgres</literal>
