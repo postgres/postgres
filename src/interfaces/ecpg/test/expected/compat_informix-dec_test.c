@@ -195,6 +195,16 @@ main(void)
 			c = deccmp(decarr[i], decarr[j]);
 			printf("dec[c,%d,%d]: %d\n", i, j, c);
 
+			/*
+			 * decarr[count-1] is risnull(), which makes these functions
+			 * return 0 without changing the output parameter.  Make that
+			 * clear by initializing each output parameter.
+			 */
+			deccvint(7654321, &a);
+			deccvint(7654321, &s);
+			deccvint(7654321, &m);
+			deccvint(7654321, &d);
+
 			r = decadd(decarr[i], decarr[j], &a);
 			if (r)
 			{
