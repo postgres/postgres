@@ -817,6 +817,17 @@ exclude database <replaceable class="parameter">PATTERN</replaceable>
    database creation will fail for databases in non-default
    locations.
   </para>
+
+  <para>
+   It is generally recommended to use the <option>-X</option>
+   (<option>--no-psqlrc</option>) option when restoring a database from a
+   <application>pg_dumpall</application> script to ensure a clean restore
+   process and prevent potential conflicts with non-default
+   <application>psql</application> configurations. Additionally, because
+   the <application>pg_dumpall</application> script may
+   include <application>psql</application> meta-commands, it may be
+   incompatible with clients other than <application>psql</application>.
+  </para>
  </refsect1>
 
 
@@ -833,9 +844,9 @@ exclude database <replaceable class="parameter">PATTERN</replaceable>
   <para>
    To restore database(s) from this file, you can use:
 <screen>
-<prompt>$</prompt> <userinput>psql -f db.out postgres</userinput>
+<prompt>$</prompt> <userinput>psql -X -f db.out -d postgres</userinput>
 </screen>
-   It is not important to which database you connect here since the
+   It is not important which database you connect to here since the
    script file created by <application>pg_dumpall</application> will
    contain the appropriate commands to create and connect to the saved
    databases.  An exception is that if you specified <option>--clean</option>,
