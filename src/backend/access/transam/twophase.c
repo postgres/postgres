@@ -929,32 +929,16 @@ TwoPhaseGetDummyProc(TransactionId xid, bool lock_held)
 /*
  * Compute the FullTransactionId for the given TransactionId.
  *
- * The wrap logic is safe here because the span of active xids cannot exceed one
- * epoch at any given time.
+ * This is safe if the xid has not yet reached COMMIT PREPARED or ROLLBACK
+ * PREPARED.  After those commands, concurrent vac_truncate_clog() may make
+ * the xid cease to qualify as allowable.  XXX Not all callers limit their
+ * calls accordingly.
  */
 static inline FullTransactionId
 AdjustToFullTransactionId(TransactionId xid)
 {
-	FullTransactionId nextFullXid;
-	TransactionId nextXid;
-	uint32		epoch;
-
 	Assert(TransactionIdIsValid(xid));
-
-	LWLockAcquire(XidGenLock, LW_SHARED);
-	nextFullXid = TransamVariables->nextXid;
-	LWLockRelease(XidGenLock);
-
-	nextXid = XidFromFullTransactionId(nextFullXid);
-	epoch = EpochFromFullTransactionId(nextFullXid);
-	if (unlikely(xid > nextXid))
-	{
-		/* Wraparound occurred, must be from a prev epoch. */
-		Assert(epoch > 0);
-		epoch--;
-	}
-
-	return FullTransactionIdFromEpochAndXid(epoch, xid);
+	return FullTransactionIdFromAllowableAt(ReadNextFullTransactionId(), xid);
 }
 
 static inline int
