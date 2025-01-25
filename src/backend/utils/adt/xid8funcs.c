@@ -97,15 +97,11 @@ static bool
 TransactionIdInRecentPast(FullTransactionId fxid, TransactionId *extracted_xid)
 {
 	TransactionId xid = XidFromFullTransactionId(fxid);
-	uint32		now_epoch;
-	TransactionId now_epoch_next_xid;
 	FullTransactionId now_fullxid;
-	TransactionId oldest_xid;
-	FullTransactionId oldest_fxid;
+	TransactionId oldest_clog_xid;
+	FullTransactionId oldest_clog_fxid;
 
 	now_fullxid = ReadNextFullTransactionId();
-	now_epoch_next_xid = XidFromFullTransactionId(now_fullxid);
-	now_epoch = EpochFromFullTransactionId(now_fullxid);
 
 	if (extracted_xid != NULL)
 		*extracted_xid = xid;
@@ -135,52 +131,19 @@ TransactionIdInRecentPast(FullTransactionId fxid, TransactionId *extracted_xid)
 
 	/*
 	 * If fxid is not older than TransamVariables->oldestClogXid, the relevant
-	 * CLOG entry is guaranteed to still exist.  Convert
-	 * TransamVariables->oldestClogXid into a FullTransactionId to compare it
-	 * with fxid.  Determine the right epoch knowing that oldest_fxid
-	 * shouldn't be more than 2^31 older than now_fullxid.
+	 * CLOG entry is guaranteed to still exist.
+	 *
+	 * TransamVariables->oldestXid governs allowable XIDs.  Usually,
+	 * oldestClogXid==oldestXid.  It's also possible for oldestClogXid to
+	 * follow oldestXid, in which case oldestXid might advance after our
+	 * ReadNextFullTransactionId() call.  If oldestXid has advanced, that
+	 * advancement reinstated the usual oldestClogXid==oldestXid.  Whether or
+	 * not that happened, oldestClogXid is allowable relative to now_fullxid.
 	 */
-	oldest_xid = TransamVariables->oldestClogXid;
-	Assert(TransactionIdPrecedesOrEquals(oldest_xid, now_epoch_next_xid));
-	if (oldest_xid <= now_epoch_next_xid)
-	{
-		oldest_fxid = FullTransactionIdFromEpochAndXid(now_epoch, oldest_xid);
-	}
-	else
-	{
-		Assert(now_epoch > 0);
-		oldest_fxid = FullTransactionIdFromEpochAndXid(now_epoch - 1, oldest_xid);
-	}
-	return !FullTransactionIdPrecedes(fxid, oldest_fxid);
-}
-
-/*
- * Convert a TransactionId obtained from a snapshot held by the caller to a
- * FullTransactionId.  Use next_fxid as a reference FullTransactionId, so that
- * we can compute the high order bits.  It must have been obtained by the
- * caller with ReadNextFullTransactionId() after the snapshot was created.
- */
-static FullTransactionId
-widen_snapshot_xid(TransactionId xid, FullTransactionId next_fxid)
-{
-	TransactionId next_xid = XidFromFullTransactionId(next_fxid);
-	uint32		epoch = EpochFromFullTransactionId(next_fxid);
-
-	/* Special transaction ID. */
-	if (!TransactionIdIsNormal(xid))
-		return FullTransactionIdFromEpochAndXid(0, xid);
-
-	/*
-	 * The 64 bit result must be <= next_fxid, since next_fxid hadn't been
-	 * issued yet when the snapshot was created.  Every TransactionId in the
-	 * snapshot must therefore be from the same epoch as next_fxid, or the
-	 * epoch before.  We know this because next_fxid is never allow to get
-	 * more than one epoch ahead of the TransactionIds in any snapshot.
-	 */
-	if (xid > next_xid)
-		epoch--;
-
-	return FullTransactionIdFromEpochAndXid(epoch, xid);
+	oldest_clog_xid = TransamVariables->oldestClogXid;
+	oldest_clog_fxid =
+		FullTransactionIdFromAllowableAt(now_fullxid, oldest_clog_xid);
+	return !FullTransactionIdPrecedes(fxid, oldest_clog_fxid);
 }
 
 /*
@@ -420,12 +383,18 @@ pg_current_snapshot(PG_FUNCTION_ARGS)
 	nxip = cur->xcnt;
 	snap = palloc(PG_SNAPSHOT_SIZE(nxip));
 
-	/* fill */
-	snap->xmin = widen_snapshot_xid(cur->xmin, next_fxid);
-	snap->xmax = widen_snapshot_xid(cur->xmax, next_fxid);
+	/*
+	 * Fill.  This is the current backend's active snapshot, so MyProc->xmin
+	 * is <= all these XIDs.  As long as that remains so, oldestXid can't
+	 * advance past any of these XIDs.  Hence, these XIDs remain allowable
+	 * relative to next_fxid.
+	 */
+	snap->xmin = FullTransactionIdFromAllowableAt(next_fxid, cur->xmin);
+	snap->xmax = FullTransactionIdFromAllowableAt(next_fxid, cur->xmax);
 	snap->nxip = nxip;
 	for (i = 0; i < nxip; i++)
-		snap->xip[i] = widen_snapshot_xid(cur->xip[i], next_fxid);
+		snap->xip[i] =
+			FullTransactionIdFromAllowableAt(next_fxid, cur->xip[i]);
 
 	/*
 	 * We want them guaranteed to be in ascending order.  This also removes
