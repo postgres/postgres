@@ -123,6 +123,7 @@
 #include "storage/sinval.h"
 #include "storage/smgr.h"
 #include "utils/catcache.h"
+#include "utils/injection_point.h"
 #include "utils/inval.h"
 #include "utils/memdebug.h"
 #include "utils/memutils.h"
@@ -1133,6 +1134,8 @@ AtEOXact_Inval(bool isCommit)
 
 	/* Must be at top of stack */
 	Assert(transInvalInfo->my_level == 1 && transInvalInfo->parent == NULL);
+
+	INJECTION_POINT("AtEOXact_Inval-with-transInvalInfo");
 
 	if (isCommit)
 	{

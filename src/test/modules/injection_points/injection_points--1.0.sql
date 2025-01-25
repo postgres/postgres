@@ -97,3 +97,11 @@ CREATE FUNCTION injection_points_stats_fixed(OUT numattach int8,
 RETURNS record
 AS 'MODULE_PATHNAME', 'injection_points_stats_fixed'
 LANGUAGE C STRICT;
+
+--
+-- regress_injection.c functions
+--
+CREATE FUNCTION removable_cutoff(rel regclass)
+RETURNS xid8
+AS 'MODULE_PATHNAME'
+LANGUAGE C CALLED ON NULL INPUT;

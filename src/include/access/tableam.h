@@ -136,7 +136,8 @@ typedef enum TU_UpdateIndexes
  *
  * xmax is the outdating transaction's XID.  If the caller wants to visit the
  * replacement tuple, it must check that this matches before believing the
- * replacement is really a match.
+ * replacement is really a match.  This is InvalidTransactionId if the target
+ * was !LP_NORMAL (expected only for a TID retrieved from syscache).
  *
  * cmax is the outdating command's CID, but only when the failure code is
  * TM_SelfModified (i.e., something in the current transaction outdated the

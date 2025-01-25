@@ -8,6 +8,7 @@ injection_points_sources = files(
   'injection_points.c',
   'injection_stats.c',
   'injection_stats_fixed.c',
+  'regress_injection.c',
 )
 
 if host_system == 'windows'
@@ -44,8 +45,9 @@ tests += {
     'specs': [
       'basic',
       'inplace',
+      'syscache-update-pruned',
     ],
-    'runningcheck': false, # align with GNU make build system
+    'runningcheck': false, # see syscache-update-pruned
   },
   'tap': {
     'env': {

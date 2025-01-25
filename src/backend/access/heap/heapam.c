@@ -49,8 +49,10 @@
 #include "storage/predicate.h"
 #include "storage/procarray.h"
 #include "utils/datum.h"
+#include "utils/injection_point.h"
 #include "utils/inval.h"
 #include "utils/spccache.h"
+#include "utils/syscache.h"
 
 
 static HeapTuple heap_prepare_insert(Relation relation, HeapTuple tup,
@@ -3254,6 +3256,7 @@ heap_update(Relation relation, ItemPointer otid, HeapTuple newtup,
 	interesting_attrs = bms_add_members(interesting_attrs, id_attrs);
 
 	block = ItemPointerGetBlockNumber(otid);
+	INJECTION_POINT("heap_update-before-pin");
 	buffer = ReadBuffer(relation, block);
 	page = BufferGetPage(buffer);
 
@@ -3269,7 +3272,51 @@ heap_update(Relation relation, ItemPointer otid, HeapTuple newtup,
 	LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
 
 	lp = PageGetItemId(page, ItemPointerGetOffsetNumber(otid));
-	Assert(ItemIdIsNormal(lp));
+
+	/*
+	 * Usually, a buffer pin and/or snapshot blocks pruning of otid, ensuring
+	 * we see LP_NORMAL here.  When the otid origin is a syscache, we may have
+	 * neither a pin nor a snapshot.  Hence, we may see other LP_ states, each
+	 * of which indicates concurrent pruning.
+	 *
+	 * Failing with TM_Updated would be most accurate.  However, unlike other
+	 * TM_Updated scenarios, we don't know the successor ctid in LP_UNUSED and
+	 * LP_DEAD cases.  While the distinction between TM_Updated and TM_Deleted
+	 * does matter to SQL statements UPDATE and MERGE, those SQL statements
+	 * hold a snapshot that ensures LP_NORMAL.  Hence, the choice between
+	 * TM_Updated and TM_Deleted affects only the wording of error messages.
+	 * Settle on TM_Deleted, for two reasons.  First, it avoids complicating
+	 * the specification of when tmfd->ctid is valid.  Second, it creates
+	 * error log evidence that we took this branch.
+	 *
+	 * Since it's possible to see LP_UNUSED at otid, it's also possible to see
+	 * LP_NORMAL for a tuple that replaced LP_UNUSED.  If it's a tuple for an
+	 * unrelated row, we'll fail with "duplicate key value violates unique".
+	 * XXX if otid is the live, newer version of the newtup row, we'll discard
+	 * changes originating in versions of this catalog row after the version
+	 * the caller got from syscache.  See syscache-update-pruned.spec.
+	 */
+	if (!ItemIdIsNormal(lp))
+	{
+		Assert(RelationSupportsSysCache(RelationGetRelid(relation)));
+
+		UnlockReleaseBuffer(buffer);
+		Assert(!have_tuple_lock);
+		if (vmbuffer != InvalidBuffer)
+			ReleaseBuffer(vmbuffer);
+		tmfd->ctid = *otid;
+		tmfd->xmax = InvalidTransactionId;
+		tmfd->cmax = InvalidCommandId;
+		*update_indexes = TU_None;
+
+		bms_free(hot_attrs);
+		bms_free(sum_attrs);
+		bms_free(key_attrs);
+		bms_free(id_attrs);
+		/* modified_attrs not yet initialized */
+		bms_free(interesting_attrs);
+		return TM_Deleted;
+	}
 
 	/*
 	 * Fill in enough data in oldtup for HeapDetermineColumnsInfo to work
