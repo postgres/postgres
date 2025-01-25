@@ -1636,6 +1636,14 @@ CREATE DATABASE foo WITH TEMPLATE template0;
    option will be automatically enabled by the subscriber if the subscription
    had been originally created with <literal>two_phase = true</literal> option.
   </para>
+
+  <para>
+   It is generally recommended to use the <option>-X</option>
+   (<option>--no-psqlrc</option>) option when restoring a database from a
+   plain-text <application>pg_dump</application> script to ensure a clean
+   restore process and prevent potential conflicts with
+   non-default <application>psql</application> configurations.
+  </para>
  </refsect1>
 
  <refsect1 id="pg-dump-examples" xreflabel="Examples">
@@ -1653,7 +1661,7 @@ CREATE DATABASE foo WITH TEMPLATE template0;
    <literal>newdb</literal>:
 
 <screen>
-<prompt>$</prompt> <userinput>psql -d newdb -f db.sql</userinput>
+<prompt>$</prompt> <userinput>psql -X -d newdb -f db.sql</userinput>
 </screen>
   </para>
 
