@@ -54,3 +54,11 @@ CREATE FUNCTION injection_points_detach(IN point_name TEXT)
 RETURNS void
 AS 'MODULE_PATHNAME', 'injection_points_detach'
 LANGUAGE C STRICT PARALLEL UNSAFE;
+
+--
+-- regress_injection.c functions
+--
+CREATE FUNCTION removable_cutoff(rel regclass)
+RETURNS xid8
+AS 'MODULE_PATHNAME'
+LANGUAGE C CALLED ON NULL INPUT;
