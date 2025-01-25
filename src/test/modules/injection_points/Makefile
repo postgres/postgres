@@ -1,7 +1,10 @@
 # src/test/modules/injection_points/Makefile
 
-MODULES = injection_points
-
+MODULE_big = injection_points
+OBJS = \
+	$(WIN32RES) \
+	injection_points.o \
+	regress_injection.o
 EXTENSION = injection_points
 DATA = injection_points--1.0.sql
 PGFILEDESC = "injection_points - facility for injection points"
@@ -9,7 +12,7 @@ PGFILEDESC = "injection_points - facility for injection points"
 REGRESS = injection_points reindex_conc
 REGRESS_OPTS = --dlpath=$(top_builddir)/src/test/regress
 
-ISOLATION = inplace
+ISOLATION = inplace syscache-update-pruned
 
 # The injection points are cluster-wide, so disable installcheck
 NO_INSTALLCHECK = 1

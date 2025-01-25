@@ -6,6 +6,7 @@ endif
 
 injection_points_sources = files(
   'injection_points.c',
+  'regress_injection.c',
 )
 
 if host_system == 'windows'
@@ -41,7 +42,8 @@ tests += {
   'isolation': {
     'specs': [
       'inplace',
+      'syscache-update-pruned',
     ],
-    'runningcheck': false, # align with GNU make build system
+    'runningcheck': false, # see syscache-update-pruned
   },
 }

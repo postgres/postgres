@@ -1,0 +1,87 @@
+Parsed test spec with 4 sessions
+
+starting permutation: cachefill1 at2 waitprunable4 vac4 grant1 wakeinval4 wakegrant4
+step cachefill1: SELECT FROM vactest.reloid_catcache_set('vactest.orig50');
+step at2: 
+	CREATE TRIGGER to_set_relhastriggers BEFORE UPDATE ON vactest.orig50
+		FOR EACH ROW EXECUTE PROCEDURE suppress_redundant_updates_trigger();
+ <waiting ...>
+step waitprunable4: CALL vactest.wait_prunable();
+step vac4: VACUUM pg_class;
+step grant1: GRANT SELECT ON vactest.orig50 TO PUBLIC; <waiting ...>
+step wakeinval4: 
+	SELECT FROM injection_points_detach('AtEOXact_Inval-with-transInvalInfo');
+	SELECT FROM injection_points_wakeup('AtEOXact_Inval-with-transInvalInfo');
+ <waiting ...>
+step at2: <... completed>
+step wakeinval4: <... completed>
+step wakegrant4: 
+	SELECT FROM injection_points_detach('heap_update-before-pin');
+	SELECT FROM injection_points_wakeup('heap_update-before-pin');
+ <waiting ...>
+step grant1: <... completed>
+ERROR:  tuple concurrently deleted
+step wakegrant4: <... completed>
+
+starting permutation: cachefill1 at2 waitprunable4 vac4 grant1 wakeinval4 mkrels4 wakegrant4
+step cachefill1: SELECT FROM vactest.reloid_catcache_set('vactest.orig50');
+step at2: 
+	CREATE TRIGGER to_set_relhastriggers BEFORE UPDATE ON vactest.orig50
+		FOR EACH ROW EXECUTE PROCEDURE suppress_redundant_updates_trigger();
+ <waiting ...>
+step waitprunable4: CALL vactest.wait_prunable();
+step vac4: VACUUM pg_class;
+step grant1: GRANT SELECT ON vactest.orig50 TO PUBLIC; <waiting ...>
+step wakeinval4: 
+	SELECT FROM injection_points_detach('AtEOXact_Inval-with-transInvalInfo');
+	SELECT FROM injection_points_wakeup('AtEOXact_Inval-with-transInvalInfo');
+ <waiting ...>
+step at2: <... completed>
+step wakeinval4: <... completed>
+step mkrels4: 
+	SELECT FROM vactest.mkrels('intruder', 1, 100);  -- repopulate LP_UNUSED
+
+step wakegrant4: 
+	SELECT FROM injection_points_detach('heap_update-before-pin');
+	SELECT FROM injection_points_wakeup('heap_update-before-pin');
+ <waiting ...>
+step grant1: <... completed>
+ERROR:  duplicate key value violates unique constraint "pg_class_oid_index"
+step wakegrant4: <... completed>
+
+starting permutation: snap3 cachefill1 at2 mkrels4 r3 waitprunable4 vac4 grant1 wakeinval4 at4 wakegrant4 inspect4
+step snap3: BEGIN ISOLATION LEVEL REPEATABLE READ; SELECT;
+step cachefill1: SELECT FROM vactest.reloid_catcache_set('vactest.orig50');
+step at2: 
+	CREATE TRIGGER to_set_relhastriggers BEFORE UPDATE ON vactest.orig50
+		FOR EACH ROW EXECUTE PROCEDURE suppress_redundant_updates_trigger();
+ <waiting ...>
+step mkrels4: 
+	SELECT FROM vactest.mkrels('intruder', 1, 100);  -- repopulate LP_UNUSED
+
+step r3: ROLLBACK;
+step waitprunable4: CALL vactest.wait_prunable();
+step vac4: VACUUM pg_class;
+step grant1: GRANT SELECT ON vactest.orig50 TO PUBLIC; <waiting ...>
+step wakeinval4: 
+	SELECT FROM injection_points_detach('AtEOXact_Inval-with-transInvalInfo');
+	SELECT FROM injection_points_wakeup('AtEOXact_Inval-with-transInvalInfo');
+ <waiting ...>
+step at2: <... completed>
+step wakeinval4: <... completed>
+step at4: ALTER TABLE vactest.child50 INHERIT vactest.orig50;
+step wakegrant4: 
+	SELECT FROM injection_points_detach('heap_update-before-pin');
+	SELECT FROM injection_points_wakeup('heap_update-before-pin');
+ <waiting ...>
+step grant1: <... completed>
+step wakegrant4: <... completed>
+step inspect4: 
+	SELECT relhastriggers, relhassubclass FROM pg_class
+		WHERE oid = 'vactest.orig50'::regclass;
+
+relhastriggers|relhassubclass
+--------------+--------------
+f             |f             
+(1 row)
+
