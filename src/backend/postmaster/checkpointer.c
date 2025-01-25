@@ -10,10 +10,13 @@
  * fill WAL segments; the checkpointer itself doesn't watch for the
  * condition.)
  *
- * Normal termination is by SIGUSR2, which instructs the checkpointer to
- * execute a shutdown checkpoint and then exit(0).  (All backends must be
- * stopped before SIGUSR2 is issued!)  Emergency termination is by SIGQUIT;
- * like any backend, the checkpointer will simply abort and exit on SIGQUIT.
+ * The normal termination sequence is that checkpointer is instructed to
+ * execute the shutdown checkpoint by SIGINT.  After that checkpointer waits
+ * to be terminated via SIGUSR2, which instructs the checkpointer to exit(0).
+ * All backends must be stopped before SIGINT or SIGUSR2 is issued!
+ *
+ * Emergency termination is by SIGQUIT; like any backend, the checkpointer
+ * will simply abort and exit on SIGQUIT.
  *
  * If the checkpointer exits unexpectedly, the postmaster treats that the same
  * as a backend crash: shared memory may be corrupted, so remaining backends
@@ -51,6 +54,7 @@
 #include "storage/fd.h"
 #include "storage/ipc.h"
 #include "storage/lwlock.h"
+#include "storage/pmsignal.h"
 #include "storage/proc.h"
 #include "storage/procsignal.h"
 #include "storage/shmem.h"
@@ -141,6 +145,7 @@ double		CheckPointCompletionTarget = 0.9;
  * Private state
  */
 static bool ckpt_active = false;
+static volatile sig_atomic_t ShutdownXLOGPending = false;
 
 /* these values are valid when ckpt_active is true: */
 static pg_time_t ckpt_start_time;
@@ -158,6 +163,9 @@ static bool IsCheckpointOnSchedule(double progress);
 static bool ImmediateCheckpointRequested(void);
 static bool CompactCheckpointerRequestQueue(void);
 static void UpdateSharedMemoryConfig(void);
+
+/* Signal handlers */
+static void ReqShutdownXLOG(SIGNAL_ARGS);
 
 
 /*
@@ -188,7 +196,7 @@ CheckpointerMain(char *startup_data, size_t startup_data_len)
 	 * tell us it's okay to shut down (via SIGUSR2).
 	 */
 	pqsignal(SIGHUP, SignalHandlerForConfigReload);
-	pqsignal(SIGINT, SIG_IGN);
+	pqsignal(SIGINT, ReqShutdownXLOG);
 	pqsignal(SIGTERM, SIG_IGN); /* ignore SIGTERM */
 	/* SIGQUIT handler was already set up by InitPostmasterChild */
 	pqsignal(SIGALRM, SIG_IGN);
@@ -211,8 +219,11 @@ CheckpointerMain(char *startup_data, size_t startup_data_len)
 	 * process during a normal shutdown, and since checkpointer is shut down
 	 * very late...
 	 *
-	 * Walsenders are shut down after the checkpointer, but currently don't
-	 * report stats. If that changes, we need a more complicated solution.
+	 * While e.g. walsenders are active after the shutdown checkpoint has been
+	 * written (and thus could produce more stats), checkpointer stays around
+	 * after the shutdown checkpoint has been written. postmaster will only
+	 * signal checkpointer to exit after all processes that could emit stats
+	 * have been shut down.
 	 */
 	before_shmem_exit(pgstat_before_server_shutdown, 0);
 
@@ -327,7 +338,8 @@ CheckpointerMain(char *startup_data, size_t startup_data_len)
 	ProcGlobal->checkpointerProc = MyProcNumber;
 
 	/*
-	 * Loop forever
+	 * Loop until we've been asked to write the shutdown checkpoint or
+	 * terminate.
 	 */
 	for (;;)
 	{
@@ -346,7 +358,10 @@ CheckpointerMain(char *startup_data, size_t startup_data_len)
 		 * Process any requests or signals received recently.
 		 */
 		AbsorbSyncRequests();
+
 		HandleCheckpointerInterrupts();
+		if (ShutdownXLOGPending || ShutdownRequestPending)
+			break;
 
 		/*
 		 * Detect a pending checkpoint request by checking whether the flags
@@ -517,8 +532,13 @@ CheckpointerMain(char *startup_data, size_t startup_data_len)
 
 			ckpt_active = false;
 
-			/* We may have received an interrupt during the checkpoint. */
+			/*
+			 * We may have received an interrupt during the checkpoint and the
+			 * latch might have been reset (e.g. in CheckpointWriteDelay).
+			 */
 			HandleCheckpointerInterrupts();
+			if (ShutdownXLOGPending || ShutdownRequestPending)
+				break;
 		}
 
 		/* Check for archive_timeout and switch xlog files if necessary. */
@@ -557,6 +577,57 @@ CheckpointerMain(char *startup_data, size_t startup_data_len)
 						 cur_timeout * 1000L /* convert to ms */ ,
 						 WAIT_EVENT_CHECKPOINTER_MAIN);
 	}
+
+	/*
+	 * From here on, elog(ERROR) should end with exit(1), not send control
+	 * back to the sigsetjmp block above.
+	 */
+	ExitOnAnyError = true;
+
+	if (ShutdownXLOGPending)
+	{
+		/*
+		 * Close down the database.
+		 *
+		 * Since ShutdownXLOG() creates restartpoint or checkpoint, and
+		 * updates the statistics, increment the checkpoint request and flush
+		 * out pending statistic.
+		 */
+		PendingCheckpointerStats.num_requested++;
+		ShutdownXLOG(0, 0);
+		pgstat_report_checkpointer();
+		pgstat_report_wal(true);
+
+		/*
+		 * Tell postmaster that we're done.
+		 */
+		SendPostmasterSignal(PMSIGNAL_XLOG_IS_SHUTDOWN);
+		ShutdownXLOGPending = false;
+	}
+
+	/*
+	 * Wait until we're asked to shut down. By separating the writing of the
+	 * shutdown checkpoint from checkpointer exiting, checkpointer can perform
+	 * some should-be-as-late-as-possible work like writing out stats.
+	 */
+	for (;;)
+	{
+		/* Clear any already-pending wakeups */
+		ResetLatch(MyLatch);
+
+		HandleCheckpointerInterrupts();
+
+		if (ShutdownRequestPending)
+			break;
+
+		(void) WaitLatch(MyLatch,
+						 WL_LATCH_SET | WL_EXIT_ON_PM_DEATH,
+						 0,
+						 WAIT_EVENT_CHECKPOINTER_SHUTDOWN);
+	}
+
+	/* Normal exit from the checkpointer is here */
+	proc_exit(0);				/* done */
 }
 
 /*
@@ -585,29 +656,6 @@ HandleCheckpointerInterrupts(void)
 		 * because of SIGHUP.
 		 */
 		UpdateSharedMemoryConfig();
-	}
-	if (ShutdownRequestPending)
-	{
-		/*
-		 * From here on, elog(ERROR) should end with exit(1), not send control
-		 * back to the sigsetjmp block above
-		 */
-		ExitOnAnyError = true;
-
-		/*
-		 * Close down the database.
-		 *
-		 * Since ShutdownXLOG() creates restartpoint or checkpoint, and
-		 * updates the statistics, increment the checkpoint request and flush
-		 * out pending statistic.
-		 */
-		PendingCheckpointerStats.num_requested++;
-		ShutdownXLOG(0, 0);
-		pgstat_report_checkpointer();
-		pgstat_report_wal(true);
-
-		/* Normal exit from the checkpointer is here */
-		proc_exit(0);			/* done */
 	}
 
 	/* Perform logging of memory contexts of this process */
@@ -729,6 +777,7 @@ CheckpointWriteDelay(int flags, double progress)
 	 * in which case we just try to catch up as quickly as possible.
 	 */
 	if (!(flags & CHECKPOINT_IMMEDIATE) &&
+		!ShutdownXLOGPending &&
 		!ShutdownRequestPending &&
 		!ImmediateCheckpointRequested() &&
 		IsCheckpointOnSchedule(progress))
@@ -854,6 +903,20 @@ IsCheckpointOnSchedule(double progress)
 
 	/* It looks like we're on schedule. */
 	return true;
+}
+
+
+/* --------------------------------
+ *		signal handler routines
+ * --------------------------------
+ */
+
+/* SIGINT: set flag to trigger writing of shutdown checkpoint */
+static void
+ReqShutdownXLOG(SIGNAL_ARGS)
+{
+	ShutdownXLOGPending = true;
+	SetLatch(MyLatch);
 }
 
 

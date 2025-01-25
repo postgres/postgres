@@ -341,6 +341,7 @@ typedef enum
 								 * ckpt */
 	PM_WAIT_XLOG_ARCHIVAL,		/* waiting for archiver and walsenders to
 								 * finish */
+	PM_WAIT_CHECKPOINTER,		/* waiting for checkpointer to shut down */
 	PM_WAIT_DEAD_END,			/* waiting for dead-end children to exit */
 	PM_NO_CHILDREN,				/* all important children have exited */
 } PMState;
@@ -2363,35 +2364,20 @@ process_pm_child_exit(void)
 		{
 			ReleasePostmasterChildSlot(CheckpointerPMChild);
 			CheckpointerPMChild = NULL;
-			if (EXIT_STATUS_0(exitstatus) && pmState == PM_WAIT_XLOG_SHUTDOWN)
+			if (EXIT_STATUS_0(exitstatus) && pmState == PM_WAIT_CHECKPOINTER)
 			{
 				/*
 				 * OK, we saw normal exit of the checkpointer after it's been
-				 * told to shut down.  We expect that it wrote a shutdown
-				 * checkpoint.  (If for some reason it didn't, recovery will
-				 * occur on next postmaster start.)
+				 * told to shut down.  We know checkpointer wrote a shutdown
+				 * checkpoint, otherwise we'd still be in
+				 * PM_WAIT_XLOG_SHUTDOWN state.
 				 *
-				 * At this point we should have no normal backend children
-				 * left (else we'd not be in PM_WAIT_XLOG_SHUTDOWN state) but
-				 * we might have dead-end children to wait for.
-				 *
-				 * If we have an archiver subprocess, tell it to do a last
-				 * archive cycle and quit. Likewise, if we have walsender
-				 * processes, tell them to send any remaining WAL and quit.
+				 * At this point only dead-end children and logger should be
+				 * left.
 				 */
-				Assert(Shutdown > NoShutdown);
-
-				/* Waken archiver for the last time */
-				if (PgArchPMChild != NULL)
-					signal_child(PgArchPMChild, SIGUSR2);
-
-				/*
-				 * Waken walsenders for the last time. No regular backends
-				 * should be around anymore.
-				 */
-				SignalChildren(SIGUSR2, btmask(B_WAL_SENDER));
-
-				UpdatePMState(PM_WAIT_XLOG_ARCHIVAL);
+				UpdatePMState(PM_WAIT_DEAD_END);
+				ConfigurePostmasterWaitSet(false);
+				SignalChildren(SIGTERM, btmask_all_except(B_LOGGER));
 			}
 			else
 			{
@@ -2737,6 +2723,7 @@ HandleFatalError(QuitSignalReason reason, bool consider_sigabrt)
 
 		case PM_WAIT_XLOG_SHUTDOWN:
 		case PM_WAIT_XLOG_ARCHIVAL:
+		case PM_WAIT_CHECKPOINTER:
 
 			/*
 			 * NB: Similar code exists in PostmasterStateMachine()'s handling
@@ -3012,10 +2999,10 @@ PostmasterStateMachine(void)
 				/* Start the checkpointer if not running */
 				if (CheckpointerPMChild == NULL)
 					CheckpointerPMChild = StartChildProcess(B_CHECKPOINTER);
-				/* And tell it to shut down */
+				/* And tell it to write the shutdown checkpoint */
 				if (CheckpointerPMChild != NULL)
 				{
-					signal_child(CheckpointerPMChild, SIGUSR2);
+					signal_child(CheckpointerPMChild, SIGINT);
 					UpdatePMState(PM_WAIT_XLOG_SHUTDOWN);
 				}
 				else
@@ -3043,21 +3030,39 @@ PostmasterStateMachine(void)
 		}
 	}
 
+	/*
+	 * The state transition from PM_WAIT_XLOG_SHUTDOWN to
+	 * PM_WAIT_XLOG_ARCHIVAL is in process_pm_pmsignal(), in response to
+	 * PMSIGNAL_XLOG_IS_SHUTDOWN.
+	 */
+
 	if (pmState == PM_WAIT_XLOG_ARCHIVAL)
 	{
 		/*
-		 * PM_WAIT_XLOG_ARCHIVAL state ends when there's no other children
-		 * than dead-end children left. There shouldn't be any regular
-		 * backends left by now anyway; what we're really waiting for is
-		 * walsenders and archiver.
+		 * PM_WAIT_XLOG_ARCHIVAL state ends when there are no children other
+		 * than checkpointer, dead-end children and logger left. There
+		 * shouldn't be any regular backends left by now anyway; what we're
+		 * really waiting for is for walsenders and archiver to exit.
 		 */
-		if (CountChildren(btmask_all_except(B_LOGGER, B_DEAD_END_BACKEND)) == 0)
+		if (CountChildren(btmask_all_except(B_CHECKPOINTER, B_LOGGER, B_DEAD_END_BACKEND)) == 0)
 		{
-			UpdatePMState(PM_WAIT_DEAD_END);
-			ConfigurePostmasterWaitSet(false);
-			SignalChildren(SIGTERM, btmask_all_except(B_LOGGER));
+			UpdatePMState(PM_WAIT_CHECKPOINTER);
+
+			/*
+			 * Now that the processes mentioned above are gone, tell
+			 * checkpointer to shut down too. That allows checkpointer to
+			 * perform some last bits of cleanup without other processes
+			 * interfering.
+			 */
+			if (CheckpointerPMChild != NULL)
+				signal_child(CheckpointerPMChild, SIGUSR2);
 		}
 	}
+
+	/*
+	 * The state transition from PM_WAIT_CHECKPOINTER to PM_WAIT_DEAD_END is
+	 * in process_pm_child_exit().
+	 */
 
 	if (pmState == PM_WAIT_DEAD_END)
 	{
@@ -3195,6 +3200,7 @@ pmstate_name(PMState state)
 			PM_TOSTR_CASE(PM_WAIT_XLOG_SHUTDOWN);
 			PM_TOSTR_CASE(PM_WAIT_XLOG_ARCHIVAL);
 			PM_TOSTR_CASE(PM_WAIT_DEAD_END);
+			PM_TOSTR_CASE(PM_WAIT_CHECKPOINTER);
 			PM_TOSTR_CASE(PM_NO_CHILDREN);
 	}
 #undef PM_TOSTR_CASE
@@ -3613,6 +3619,8 @@ ExitPostmaster(int status)
 static void
 process_pm_pmsignal(void)
 {
+	bool		request_state_update = false;
+
 	pending_pm_pmsignal = false;
 
 	ereport(DEBUG2,
@@ -3724,9 +3732,67 @@ process_pm_pmsignal(void)
 		WalReceiverRequested = true;
 	}
 
+	if (CheckPostmasterSignal(PMSIGNAL_XLOG_IS_SHUTDOWN))
+	{
+		/* Checkpointer completed the shutdown checkpoint */
+		if (pmState == PM_WAIT_XLOG_SHUTDOWN)
+		{
+			/*
+			 * If we have an archiver subprocess, tell it to do a last archive
+			 * cycle and quit. Likewise, if we have walsender processes, tell
+			 * them to send any remaining WAL and quit.
+			 */
+			Assert(Shutdown > NoShutdown);
+
+			/* Waken archiver for the last time */
+			if (PgArchPMChild != NULL)
+				signal_child(PgArchPMChild, SIGUSR2);
+
+			/*
+			 * Waken walsenders for the last time. No regular backends should
+			 * be around anymore.
+			 */
+			SignalChildren(SIGUSR2, btmask(B_WAL_SENDER));
+
+			UpdatePMState(PM_WAIT_XLOG_ARCHIVAL);
+		}
+		else if (!FatalError && Shutdown != ImmediateShutdown)
+		{
+			/*
+			 * Checkpointer only ought to perform the shutdown checkpoint
+			 * during shutdown.  If somehow checkpointer did so in another
+			 * situation, we have no choice but to crash-restart.
+			 *
+			 * It's possible however that we get PMSIGNAL_XLOG_IS_SHUTDOWN
+			 * outside of PM_WAIT_XLOG_SHUTDOWN if an orderly shutdown was
+			 * "interrupted" by a crash or an immediate shutdown.
+			 */
+			ereport(LOG,
+					(errmsg("WAL was shut down unexpectedly")));
+
+			/*
+			 * Doesn't seem likely to help to take send_abort_for_crash into
+			 * account here.
+			 */
+			HandleFatalError(PMQUIT_FOR_CRASH, false);
+		}
+
+		/*
+		 * Need to run PostmasterStateMachine() to check if we already can go
+		 * to the next state.
+		 */
+		request_state_update = true;
+	}
+
 	/*
 	 * Try to advance postmaster's state machine, if a child requests it.
-	 *
+	 */
+	if (CheckPostmasterSignal(PMSIGNAL_ADVANCE_STATE_MACHINE))
+	{
+		request_state_update = true;
+	}
+
+	/*
 	 * Be careful about the order of this action relative to this function's
 	 * other actions.  Generally, this should be after other actions, in case
 	 * they have effects PostmasterStateMachine would need to know about.
@@ -3734,7 +3800,7 @@ process_pm_pmsignal(void)
 	 * cannot have any (immediate) effect on the state machine, but does
 	 * depend on what state we're in now.
 	 */
-	if (CheckPostmasterSignal(PMSIGNAL_ADVANCE_STATE_MACHINE))
+	if (request_state_update)
 	{
 		PostmasterStateMachine();
 	}
@@ -4045,6 +4111,7 @@ bgworker_should_start_now(BgWorkerStartTime start_time)
 	switch (pmState)
 	{
 		case PM_NO_CHILDREN:
+		case PM_WAIT_CHECKPOINTER:
 		case PM_WAIT_DEAD_END:
 		case PM_WAIT_XLOG_ARCHIVAL:
 		case PM_WAIT_XLOG_SHUTDOWN:
