@@ -42,5 +42,6 @@ tests += {
     'specs': [
       'inplace',
     ],
+    'runningcheck': false, # align with GNU make build system
   },
 }
