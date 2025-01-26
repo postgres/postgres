@@ -11,7 +11,7 @@ use Test::More;
 # Test set-up
 my ($node, $port);
 $node = PostgreSQL::Test::Cluster->new('test');
-$node->init;
+$node->init(auth_extra => [ '--create-role' => 'no_such_user' ]);
 $node->start;
 $port = $node->port;
 
