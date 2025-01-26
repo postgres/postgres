@@ -6,8 +6,9 @@ tests += {
   'bd': meson.current_build_dir(),
   'tap': {
     'tests': [
-      't/001_connection_limits.pl',
-      't/002_start_stop.pl',
+      't/001_basic.pl',
+      't/002_connection_limits.pl',
+      't/003_start_stop.pl',
     ],
   },
 }
