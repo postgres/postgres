@@ -11564,22 +11564,22 @@ tryAttachPartitionForeignKey(List **wqueue,
 		table_close(pg_constraint, RowShareLock);
 	}
 
+	/*
+	 * We updated this pg_constraint row above to set its parent; validating
+	 * it will cause its convalidated flag to change, so we need CCI here.  In
+	 * addition, we need it unconditionally for the rare case where the parent
+	 * table has *two* identical constraints; when reaching this function for
+	 * the second one, we must have made our changes visible, otherwise we
+	 * would try to attach both to this one.
+	 */
+	CommandCounterIncrement();
+
 	/* If validation is needed, put it in the queue now. */
 	if (queueValidation)
 	{
 		Relation	conrel;
 
-		/*
-		 * We updated this pg_constraint row above to set its parent;
-		 * validating it will cause its convalidated flag to change, so we
-		 * need CCI here.  XXX it might work better to effect the convalidated
-		 * changes for all constraints together during phase 3, but that
-		 * requires more invasive code surgery.
-		 */
-		CommandCounterIncrement();
-
 		conrel = table_open(ConstraintRelationId, RowExclusiveLock);
-
 		partcontup = SearchSysCache1(CONSTROID, ObjectIdGetDatum(fk->conoid));
 		if (!HeapTupleIsValid(partcontup))
 			elog(ERROR, "cache lookup failed for constraint %u", fk->conoid);

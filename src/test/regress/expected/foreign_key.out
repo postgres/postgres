@@ -2062,6 +2062,16 @@ CREATE TABLE fk_partitioned_fk_6 (a int REFERENCES fk_partitioned_pk_6) PARTITIO
 ALTER TABLE fk_partitioned_fk_6 ATTACH PARTITION fk_partitioned_pk_6 FOR VALUES IN (1);
 ERROR:  cannot attach table "fk_partitioned_pk_6" as a partition because it is referenced by foreign key "fk_partitioned_fk_6_a_fkey"
 DROP TABLE fk_partitioned_pk_6, fk_partitioned_fk_6;
+-- Verify that attaching to a parent with two identical constraints work
+CREATE TABLE fk_partitioned_pk_6 (a int PRIMARY KEY);
+CREATE TABLE fk_partitioned_fk_6 (a int,
+	FOREIGN KEY (a) REFERENCES fk_partitioned_pk_6,
+	FOREIGN KEY (a) REFERENCES fk_partitioned_pk_6
+) PARTITION BY LIST (a);
+CREATE TABLE fk_partitioned_fk_6_1 PARTITION OF fk_partitioned_fk_6 FOR VALUES IN (1);
+ALTER TABLE fk_partitioned_fk_6 DETACH PARTITION fk_partitioned_fk_6_1;
+ALTER TABLE fk_partitioned_fk_6 ATTACH PARTITION fk_partitioned_fk_6_1 FOR VALUES IN (1);
+DROP TABLE fk_partitioned_pk_6, fk_partitioned_fk_6;
 -- This case is similar to above, but the referenced relation is one level
 -- lower in the hierarchy.  This one fails in a different way as the above,
 -- because we don't bother to protect against this case explicitly.  If the
