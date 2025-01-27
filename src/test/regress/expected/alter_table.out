@@ -3426,10 +3426,16 @@ ALTER TABLE comment_test ALTER COLUMN positive_col SET DATA TYPE bigint;
 -- Some error cases.
 ALTER TABLE comment_test ALTER COLUMN xmin SET DATA TYPE x;
 ERROR:  cannot alter system column "xmin"
+LINE 1: ALTER TABLE comment_test ALTER COLUMN xmin SET DATA TYPE x;
+                                              ^
 ALTER TABLE comment_test ALTER COLUMN id SET DATA TYPE x;
 ERROR:  type "x" does not exist
+LINE 1: ALTER TABLE comment_test ALTER COLUMN id SET DATA TYPE x;
+                                                               ^
 ALTER TABLE comment_test ALTER COLUMN id SET DATA TYPE int COLLATE "C";
 ERROR:  collations are not supported by type integer
+LINE 1: ...LE comment_test ALTER COLUMN id SET DATA TYPE int COLLATE "C...
+                                                             ^
 -- Check that the comments are intact.
 SELECT col_description('comment_test'::regclass, 1) as comment;
            comment           
@@ -3895,10 +3901,14 @@ ALTER TABLE partitioned DROP COLUMN a;
 ERROR:  cannot drop column "a" because it is part of the partition key of relation "partitioned"
 ALTER TABLE partitioned ALTER COLUMN a TYPE char(5);
 ERROR:  cannot alter column "a" because it is part of the partition key of relation "partitioned"
+LINE 1: ALTER TABLE partitioned ALTER COLUMN a TYPE char(5);
+                                             ^
 ALTER TABLE partitioned DROP COLUMN b;
 ERROR:  cannot drop column "b" because it is part of the partition key of relation "partitioned"
 ALTER TABLE partitioned ALTER COLUMN b TYPE char(5);
 ERROR:  cannot alter column "b" because it is part of the partition key of relation "partitioned"
+LINE 1: ALTER TABLE partitioned ALTER COLUMN b TYPE char(5);
+                                             ^
 -- specifying storage parameters for partitioned tables is not supported
 ALTER TABLE partitioned SET (fillfactor=100);
 ERROR:  cannot specify storage parameters for a partitioned table
@@ -4423,6 +4433,8 @@ ALTER TABLE part_2 RENAME COLUMN b to c;
 ERROR:  cannot rename inherited column "b"
 ALTER TABLE part_2 ALTER COLUMN b TYPE text;
 ERROR:  cannot alter inherited column "b"
+LINE 1: ALTER TABLE part_2 ALTER COLUMN b TYPE text;
+                                        ^
 -- cannot add NOT NULL or check constraints to *only* the parent, when
 -- partitions exist
 ALTER TABLE ONLY list_parted2 ALTER b SET NOT NULL;
@@ -4484,6 +4496,8 @@ ALTER TABLE list_parted2 DROP COLUMN b;
 ERROR:  cannot drop column "b" because it is part of the partition key of relation "part_5"
 ALTER TABLE list_parted2 ALTER COLUMN b TYPE text;
 ERROR:  cannot alter column "b" because it is part of the partition key of relation "part_5"
+LINE 1: ALTER TABLE list_parted2 ALTER COLUMN b TYPE text;
+                                              ^
 -- dropping non-partition key columns should be allowed on the parent table.
 ALTER TABLE list_parted DROP COLUMN b;
 SELECT * FROM list_parted;

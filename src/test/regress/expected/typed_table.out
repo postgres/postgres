@@ -38,6 +38,8 @@ ALTER TABLE persons RENAME COLUMN id TO num;
 ERROR:  cannot rename column of typed table
 ALTER TABLE persons ALTER COLUMN name TYPE varchar;
 ERROR:  cannot alter column type of typed table
+LINE 1: ALTER TABLE persons ALTER COLUMN name TYPE varchar;
+                                         ^
 CREATE TABLE stuff (id int);
 ALTER TABLE persons INHERIT stuff;
 ERROR:  cannot change inheritance of typed table

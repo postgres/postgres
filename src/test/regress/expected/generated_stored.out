@@ -1124,6 +1124,8 @@ SELECT * FROM gtest27;
 
 ALTER TABLE gtest27 ALTER COLUMN x TYPE boolean USING x <> 0;  -- error
 ERROR:  cannot specify USING when altering type of generated column
+LINE 1: ALTER TABLE gtest27 ALTER COLUMN x TYPE boolean USING x <> 0...
+                                         ^
 DETAIL:  Column "x" is a generated column.
 ALTER TABLE gtest27 ALTER COLUMN x DROP DEFAULT;  -- error
 ERROR:  column "x" of relation "gtest27" is a generated column
