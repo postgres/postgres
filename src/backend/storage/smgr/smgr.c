@@ -66,12 +66,12 @@
 
 static f_smgr *smgrsw;
 
-static int NSmgr = 0;
+static int	NSmgr = 0;
 
 static Size LargestSMgrRelationSize = 0;
 
-char *storage_manager_string;
-SMgrId storage_manager_id;
+char	   *storage_manager_string;
+SMgrId		storage_manager_id;
 
 /*
  * Each backend has a hashtable that stores all extant SMgrRelation objects.
@@ -88,7 +88,7 @@ static void smgrdestroy(SMgrRelation reln);
 SMgrId
 smgr_register(const f_smgr *smgr, Size smgrrelation_size)
 {
-	SMgrId my_id;
+	SMgrId		my_id;
 	MemoryContext old;
 
 	if (process_shared_preload_libraries_done)
@@ -202,6 +202,7 @@ smgropen(RelFileLocator rlocator, ProcNumber backend)
 	{
 		/* First time through: initialize the hash table */
 		HASHCTL		ctl;
+
 		LargestSMgrRelationSize = MAXALIGN(LargestSMgrRelationSize);
 		Assert(NSmgr > 0);
 

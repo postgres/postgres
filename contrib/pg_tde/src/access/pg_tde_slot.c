@@ -56,7 +56,7 @@ tdeheap_tts_buffer_heap_init(TupleTableSlot *slot)
 static void
 tdeheap_tts_buffer_heap_release(TupleTableSlot *slot)
 {
-	// nop
+	/* nop */
 }
 
 static void
@@ -242,12 +242,12 @@ tdeheap_tts_buffer_heap_copyslot(TupleTableSlot *dstslot, TupleTableSlot *srcslo
 		bdstslot->base.tuple = &bdstslot->base.tupdata;
 
 		/*
-		 * copy the decrypted buffer content as well
-		 * We only need to copy buffer upto tuple size
+		 * copy the decrypted buffer content as well We only need to copy
+		 * buffer upto tuple size
 		 */
 		memcpy(bdstslot->decrypted_buffer, bsrcslot->decrypted_buffer, HEAPTUPLESIZE + bsrcslot->base.tuple->t_len);
 		slot_copytuple(bdstslot->decrypted_buffer, bsrcslot->base.tuple);
-		bdstslot->base.tuple->t_data = ((HeapTuple)bdstslot->decrypted_buffer)->t_data;
+		bdstslot->base.tuple->t_data = ((HeapTuple) bdstslot->decrypted_buffer)->t_data;
 	}
 }
 
@@ -359,16 +359,16 @@ static pg_attribute_always_inline void
 tdeheap_slot_deform_heap_tuple(TupleTableSlot *slot, HeapTuple tuple, uint32 *offp,
 							   int natts)
 {
-	TupleDesc tupleDesc = slot->tts_tupleDescriptor;
-	Datum *values = slot->tts_values;
-	bool *isnull = slot->tts_isnull;
+	TupleDesc	tupleDesc = slot->tts_tupleDescriptor;
+	Datum	   *values = slot->tts_values;
+	bool	   *isnull = slot->tts_isnull;
 	HeapTupleHeader tup = tuple->t_data;
-	bool hasnulls = HeapTupleHasNulls(tuple);
-	int attnum;
-	char *tp;					/* ptr to tuple data */
-	uint32 off;					/* offset in tuple data */
-	bits8 *bp = tup->t_bits;	/* ptr to null bitmap in tuple */
-	bool slow;					/* can we use/set attcacheoff? */
+	bool		hasnulls = HeapTupleHasNulls(tuple);
+	int			attnum;
+	char	   *tp;				/* ptr to tuple data */
+	uint32		off;			/* offset in tuple data */
+	bits8	   *bp = tup->t_bits;	/* ptr to null bitmap in tuple */
+	bool		slow;			/* can we use/set attcacheoff? */
 
 	/* We can only fetch as many attributes as the tuple has. */
 	natts = Min(HeapTupleHeaderGetNatts(tuple->t_data), natts);
@@ -458,7 +458,7 @@ tdeheap_slot_deform_heap_tuple(TupleTableSlot *slot, HeapTuple tuple, uint32 *of
 static HeapTuple
 slot_copytuple(void *buffer, HeapTuple tuple)
 {
-	HeapTuple newTuple;
+	HeapTuple	newTuple;
 
 	if (!HeapTupleIsValid(tuple) || tuple->t_data == NULL)
 		return NULL;

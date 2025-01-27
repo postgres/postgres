@@ -110,7 +110,7 @@ typedef struct JsonKeyringState
 	 * Caller's options to be set from JSON values. Expected either
 	 * `VaultV2Keyring` or `FileKeyring`
 	 */
-	void *provider_opts;
+	void	   *provider_opts;
 
 	/*
 	 * A field hierarchy of the current branch, field[level] is the current
@@ -119,17 +119,17 @@ typedef struct JsonKeyringState
 	 */
 	JsonKeyringField field[MAX_JSON_DEPTH];
 	JsonKeringSemState state;
-	int	level;
+	int			level;
 
 	/*
 	 * The rest of the scalar fields might be in the JSON document but has no
 	 * direct value for the caller. Although we need them for the values
 	 * extraction or state tracking.
 	 */
-	char *kring_type;
-	char *field_type;
-	char *extern_url;
-	char *extern_path;
+	char	   *kring_type;
+	char	   *field_type;
+	char	   *extern_url;
+	char	   *extern_path;
 } JsonKeyringState;
 
 static JsonParseErrorType json_kring_scalar(void *state, char *token, JsonTokenType tokentype);
@@ -433,18 +433,18 @@ json_kring_assign_scalar(JsonKeyringState *parse, JsonKeyringField field, char *
 			strncpy(vault->vault_ca_path, value, sizeof(vault->vault_ca_path));
 			break;
 
-       case JK_KMIP_HOST:
-               strncpy(kmip->kmip_host, value, sizeof(kmip->kmip_host));                                                         
-               break;                                                                                                            
-       case JK_KMIP_PORT:                                                                                                        
-               strncpy(kmip->kmip_port, value, sizeof(kmip->kmip_port));                                                         
-               break;                                                                                                            
-       case JK_KMIP_CA_PATH:                                                                                                     
-               strncpy(kmip->kmip_ca_path, value, sizeof(kmip->kmip_ca_path));                                                   
-               break;                                                                                                            
-       case JK_KMIP_CERT_PATH:                                                                                                   
-               strncpy(kmip->kmip_cert_path, value, sizeof(kmip->kmip_cert_path));                                               
-               break;           
+		case JK_KMIP_HOST:
+			strncpy(kmip->kmip_host, value, sizeof(kmip->kmip_host));
+			break;
+		case JK_KMIP_PORT:
+			strncpy(kmip->kmip_port, value, sizeof(kmip->kmip_port));
+			break;
+		case JK_KMIP_CA_PATH:
+			strncpy(kmip->kmip_ca_path, value, sizeof(kmip->kmip_ca_path));
+			break;
+		case JK_KMIP_CERT_PATH:
+			strncpy(kmip->kmip_cert_path, value, sizeof(kmip->kmip_cert_path));
+			break;
 
 		default:
 			elog(DEBUG1, "json keyring: unexpected scalar field %d", field);
@@ -488,8 +488,8 @@ get_remote_kring_value(const char *url, const char *field_name)
 static char *
 get_file_kring_value(const char *path, const char *field_name)
 {
-	int	fd = -1;
-	char *val;
+	int			fd = -1;
+	char	   *val;
 
 	fd = BasicOpenFile(path, O_RDONLY);
 	if (fd < 0)
@@ -500,7 +500,7 @@ get_file_kring_value(const char *path, const char *field_name)
 
 	/* TODO: we never pfree it */
 	val = palloc0(MAX_CONFIG_FILE_DATA_LENGTH);
-	if(pg_pread(fd, val, MAX_CONFIG_FILE_DATA_LENGTH, 0) == -1)
+	if (pg_pread(fd, val, MAX_CONFIG_FILE_DATA_LENGTH, 0) == -1)
 	{
 		elog(WARNING, "failed to read file %s for %s", path, field_name);
 		pfree(val);

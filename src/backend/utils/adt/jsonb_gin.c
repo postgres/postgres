@@ -117,7 +117,7 @@ struct JsonPathGinNode
 typedef struct JsonPathGinPathItem
 {
 	struct JsonPathGinPathItem *parent;
-	Datum		keyName;		/* key name (for '.key' path item) or NULL */
+	Datum keyName;				/* key name (for '.key' path item) or NULL */
 	JsonPathItemType type;		/* type of jsonpath item */
 } JsonPathGinPathItem;
 
@@ -278,7 +278,7 @@ static bool
 jsonb_ops__add_path_item(JsonPathGinPath *path, JsonPathItem *jsp)
 {
 	JsonPathGinPathItem *pentry;
-	Datum		keyName;
+	Datum keyName;
 
 	switch (jsp->type)
 	{
@@ -292,6 +292,7 @@ jsonb_ops__add_path_item(JsonPathGinPath *path, JsonPathItem *jsp)
 				char	   *key = jspGetString(jsp, &len);
 
 				keyName = make_text_key(JGINFLAG_KEY, key, len);
+
 				break;
 			}
 
@@ -300,6 +301,7 @@ jsonb_ops__add_path_item(JsonPathGinPath *path, JsonPathItem *jsp)
 		case jpiAnyArray:
 		case jpiIndexArray:
 			keyName = PointerGetDatum(NULL);
+
 			break;
 
 		default:
@@ -311,6 +313,7 @@ jsonb_ops__add_path_item(JsonPathGinPath *path, JsonPathItem *jsp)
 
 	pentry->type = jsp->type;
 	pentry->keyName = keyName;
+
 	pentry->parent = path->items;
 
 	path->items = pentry;

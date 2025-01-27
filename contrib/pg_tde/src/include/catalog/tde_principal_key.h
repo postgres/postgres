@@ -25,15 +25,15 @@
 
 typedef struct TDEPrincipalKeyId
 {
-	char name[PRINCIPAL_KEY_NAME_LEN];
-	char versioned_name[PRINCIPAL_KEY_NAME_LEN + 4];
+	char		name[PRINCIPAL_KEY_NAME_LEN];
+	char		versioned_name[PRINCIPAL_KEY_NAME_LEN + 4];
 } TDEPrincipalKeyId;
 
 typedef struct TDEPrincipalKeyInfo
 {
-	Oid	databaseId;
-	Oid	userId;
-	Oid	keyringId;
+	Oid			databaseId;
+	Oid			userId;
+	Oid			keyringId;
 	struct timeval creationTime;
 	TDEPrincipalKeyId keyId;
 } TDEPrincipalKeyInfo;
@@ -42,15 +42,15 @@ typedef struct TDEPrincipalKey
 {
 	TDEPrincipalKeyInfo keyInfo;
 	unsigned char keyData[MAX_KEY_DATA_SIZE];
-	uint32 keyLength;
+	uint32		keyLength;
 } TDEPrincipalKey;
 
 typedef struct XLogPrincipalKeyRotate
 {
-	Oid databaseId;
-	off_t map_size;
-	off_t keydata_size;
-	char buff[FLEXIBLE_ARRAY_MEMBER];
+	Oid			databaseId;
+	off_t		map_size;
+	off_t		keydata_size;
+	char		buff[FLEXIBLE_ARRAY_MEMBER];
 } XLogPrincipalKeyRotate;
 
 #define SizeoOfXLogPrincipalKeyRotate	offsetof(XLogPrincipalKeyRotate, buff)
@@ -74,4 +74,4 @@ extern bool xl_tde_perform_rotate_key(XLogPrincipalKeyRotate *xlrec);
 
 extern void PrincipalKeyGucInit(void);
 
-#endif /* PG_TDE_PRINCIPAL_KEY_H */
+#endif							/* PG_TDE_PRINCIPAL_KEY_H */

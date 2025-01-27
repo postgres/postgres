@@ -58,7 +58,7 @@ extern PGDLLIMPORT int wal_decode_buffer_size;
 
 extern PGDLLIMPORT int CheckPointSegments;
 
-typedef void (*checkpoint_create_hook_type)(const CheckPoint *);
+typedef void (*checkpoint_create_hook_type) (const CheckPoint *);
 extern PGDLLIMPORT checkpoint_create_hook_type checkpoint_create_hook;
 
 /* Archive modes */

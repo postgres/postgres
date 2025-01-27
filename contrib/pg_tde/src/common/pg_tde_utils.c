@@ -33,16 +33,16 @@ PG_FUNCTION_INFO_V1(pg_tde_internal_has_key);
 Datum
 pg_tde_internal_has_key(PG_FUNCTION_ARGS)
 {
-	Oid tableOid = InvalidOid;
-	Oid	dbOid = MyDatabaseId;
-	TDEPrincipalKey* principalKey = NULL;
-	
+	Oid			tableOid = InvalidOid;
+	Oid			dbOid = MyDatabaseId;
+	TDEPrincipalKey *principalKey = NULL;
+
 	if (!PG_ARGISNULL(0))
 	{
 		tableOid = PG_GETARG_OID(0);
 	}
 
-	if(tableOid == InvalidOid)
+	if (tableOid == InvalidOid)
 	{
 		PG_RETURN_BOOL(false);
 	}
@@ -51,7 +51,7 @@ pg_tde_internal_has_key(PG_FUNCTION_ARGS)
 	principalKey = GetPrincipalKey(dbOid, LW_SHARED);
 	LWLockRelease(tde_lwlock_enc_keys());
 
-	if(principalKey == NULL)
+	if (principalKey == NULL)
 	{
 		PG_RETURN_BOOL(false);
 	}
@@ -62,9 +62,9 @@ pg_tde_internal_has_key(PG_FUNCTION_ARGS)
 		RelKeyData *rkd;
 
 		if (
-			#ifdef PERCONA_EXT
-			rel->rd_rel->relam != get_tde_table_am_oid() && 
-			#endif
+#ifdef PERCONA_EXT
+			rel->rd_rel->relam != get_tde_table_am_oid() &&
+#endif
 			rel->rd_rel->relam != get_tde_basic_table_am_oid())
 		{
 			table_close(rel, lockmode);
@@ -74,7 +74,7 @@ pg_tde_internal_has_key(PG_FUNCTION_ARGS)
 		rkd = GetSMGRRelationKey(rel->rd_locator);
 
 		table_close(rel, lockmode);
-		
+
 		PG_RETURN_BOOL(rkd != NULL);
 	}
 }
@@ -85,11 +85,11 @@ pg_tde_internal_has_key(PG_FUNCTION_ARGS)
 List *
 get_all_tde_tables(void)
 {
-	Relation pg_class;
+	Relation	pg_class;
 	SysScanDesc scan;
-	HeapTuple tuple;
-	List *tde_tables = NIL;
-	Oid	am_oid = get_tde_basic_table_am_oid();
+	HeapTuple	tuple;
+	List	   *tde_tables = NIL;
+	Oid			am_oid = get_tde_basic_table_am_oid();
 
 	/* Open the pg_class table */
 	pg_class = table_open(RelationRelationId, AccessShareLock);
@@ -123,8 +123,8 @@ get_all_tde_tables(void)
 int
 get_tde_tables_count(void)
 {
-	List *tde_tables = get_all_tde_tables();
-	int	count = list_length(tde_tables);
+	List	   *tde_tables = get_all_tde_tables();
+	int			count = list_length(tde_tables);
 
 	list_free(tde_tables);
 	return count;

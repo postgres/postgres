@@ -24,14 +24,14 @@
 
 typedef struct InternalKey
 {
-	/* 
-	 * DO NOT re-arrange fields!
-	 * Any changes should be aligned with pg_tde_read/write_one_keydata()
+	/*
+	 * DO NOT re-arrange fields! Any changes should be aligned with
+	 * pg_tde_read/write_one_keydata()
 	 */
-	uint8   key[INTERNAL_KEY_LEN];
-	uint32	rel_type;
+	uint8		key[INTERNAL_KEY_LEN];
+	uint32		rel_type;
 
-	void*   ctx;
+	void	   *ctx;
 } InternalKey;
 
 #define INTERNAL_KEY_DAT_LEN	offsetof(InternalKey, ctx)
@@ -45,8 +45,8 @@ typedef struct RelKeyData
 
 typedef struct XLogRelKey
 {
-	RelFileLocator  rlocator;
-	RelKeyData      relKey;
+	RelFileLocator rlocator;
+	RelKeyData	relKey;
 	TDEPrincipalKeyInfo pkInfo;
 } XLogRelKey;
 
@@ -91,4 +91,4 @@ const char *tde_sprint_key(InternalKey *k);
 
 extern RelKeyData *pg_tde_put_key_into_cache(RelFileNumber rel_num, RelKeyData *key);
 
-#endif /* PG_TDE_MAP_H */
+#endif							/* PG_TDE_MAP_H */

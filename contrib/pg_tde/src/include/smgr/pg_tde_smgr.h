@@ -12,4 +12,4 @@
 
 extern void RegisterStorageMgr(void);
 
-#endif /* PG_TDE_SMGR_H */
+#endif							/* PG_TDE_SMGR_H */

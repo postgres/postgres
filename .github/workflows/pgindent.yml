@@ -1,0 +1,34 @@
+name: PgIndent
+on:
+  pull_request:
+  workflow_dispatch:
+
+defaults:
+  run:
+    working-directory: ./src
+
+jobs:
+  check:
+    name: Check
+    runs-on: ubuntu-22.04
+    steps:
+
+      - name: Clone repository
+        uses: actions/checkout@v4
+        with:
+          path: 'src'
+          submodules: recursive
+
+      - name: Install dependencies
+        run: ci_scripts/ubuntu-deps.sh
+
+      - name: Build postgres
+        run: ci_scripts/make-build.sh debug
+
+      - name: Update typedefs
+        run: ci_scripts/dump-typedefs.sh
+    
+      - name: Run pgindent
+        run: ci_scripts/run-pgindent.sh --check --diff
+            
+

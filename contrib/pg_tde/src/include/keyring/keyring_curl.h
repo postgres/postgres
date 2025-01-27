@@ -21,12 +21,12 @@
 
 typedef struct CurlString
 {
-	char *ptr;
-	size_t len;
+	char	   *ptr;
+	size_t		len;
 } CurlString;
 
-extern CURL * keyringCurl;
+extern CURL *keyringCurl;
 
-bool curlSetupSession(const char *url, const char *caFile, CurlString *outStr);
+bool		curlSetupSession(const char *url, const char *caFile, CurlString *outStr);
 
-#endif	/* //KEYRING_CURL_H */
+#endif							/* //KEYRING_CURL_H */

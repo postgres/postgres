@@ -20,10 +20,10 @@
 
 typedef struct PendingMapEntryDelete
 {
-	off_t map_entry_offset;	/* map entry offset */
+	off_t		map_entry_offset;	/* map entry offset */
 	RelFileLocator rlocator;	/* main for use as relation OID */
-	bool atCommit;		/* T=delete at commit; F=delete at abort */
-	int	nestLevel;		/* xact nesting level of request */
+	bool		atCommit;		/* T=delete at commit; F=delete at abort */
+	int			nestLevel;		/* xact nesting level of request */
 	struct PendingMapEntryDelete *next; /* linked-list link */
 } PendingMapEntryDelete;
 
@@ -103,18 +103,18 @@ do_pending_deletes(bool isCommit)
 	PendingMapEntryDelete *prev;
 	PendingMapEntryDelete *next;
 
-    LWLockAcquire(tde_lwlock_enc_keys(), LW_EXCLUSIVE);
+	LWLockAcquire(tde_lwlock_enc_keys(), LW_EXCLUSIVE);
 
-    prev = NULL;
-    for (pending = pendingDeletes; pending != NULL; pending = next)
-    {
-        next = pending->next;
-        if (pending->nestLevel != nestLevel)
-        {
-            /* outer-level entries should not be processed yet */
-            prev = pending;
-            continue;
-        }
+	prev = NULL;
+	for (pending = pendingDeletes; pending != NULL; pending = next)
+	{
+		next = pending->next;
+		if (pending->nestLevel != nestLevel)
+		{
+			/* outer-level entries should not be processed yet */
+			prev = pending;
+			continue;
+		}
 
 		/* unlink list entry first, so we don't retry on failure */
 		if (prev)
@@ -132,9 +132,9 @@ do_pending_deletes(bool isCommit)
 		pfree(pending);
 		/* prev does not change */
 
-    }
+	}
 
-    LWLockRelease(tde_lwlock_enc_keys());
+	LWLockRelease(tde_lwlock_enc_keys());
 }
 
 

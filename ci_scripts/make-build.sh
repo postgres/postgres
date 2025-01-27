@@ -15,3 +15,4 @@ fi
 
 ./configure --enable-debug --enable-cassert --enable-tap-tests --prefix=$INSTALL_DIR
 make install-world -j
+

@@ -84,12 +84,13 @@ typedef struct _MdfdVec
 } MdfdVec;
 
 static MemoryContext MdCxt;		/* context for all MdfdVec objects */
-SMgrId MdSMgrId;
+SMgrId		MdSMgrId;
 
 typedef struct MdSMgrRelationData
 {
 	/* parent data */
 	SMgrRelationData reln;
+
 	/*
 	 * for md.c; per-fork arrays of the number of open segments
 	 * (md_num_open_segs) and the segments themselves (md_seg_fds).
@@ -133,10 +134,11 @@ typedef MdSMgrRelationData *MdSMgrRelation;
 #define EXTENSION_DONT_OPEN			(1 << 5)
 
 
-void mdsmgr_register(void)
+void
+mdsmgr_register(void)
 {
 	/* magnetic disk */
-	f_smgr md_smgr = (f_smgr) {
+	f_smgr		md_smgr = (f_smgr) {
 		.name = MdSMgrName,
 		.smgr_init = mdinit,
 		.smgr_shutdown = NULL,
@@ -237,7 +239,8 @@ mdcreate(RelFileLocator relold, SMgrRelation reln, ForkNumber forknum, bool isRe
 	char	   *path;
 	File		fd;
 	MdSMgrRelation mdreln = (MdSMgrRelation) reln;
-	// Assert(reln->smgr_which == MdSMgrId);
+
+	/* Assert(reln->smgr_which == MdSMgrId); */
 
 	if (isRedo && mdreln->md_num_open_segs[forknum] > 0)
 		return;					/* created and opened already... */
@@ -728,6 +731,7 @@ void
 mdopen(SMgrRelation reln)
 {
 	MdSMgrRelation mdreln = (MdSMgrRelation) reln;
+
 	/* mark it not open */
 	for (int forknum = 0; forknum <= MAX_FORKNUM; forknum++)
 		mdreln->md_num_open_segs[forknum] = 0;
@@ -1086,6 +1090,7 @@ mdwriteback(SMgrRelation reln, ForkNumber forknum,
 			BlockNumber blocknum, BlockNumber nblocks)
 {
 	MdSMgrRelation mdreln = (MdSMgrRelation) reln;
+
 	Assert((io_direct_flags & IO_DIRECT_DATA) == 0);
 
 	/*

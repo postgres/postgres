@@ -12,4 +12,4 @@
 #include "postgres.h"
 #include "utils/percona.h"
 
-const int percona_api_version = PERCONA_API_VERSION;
+const int	percona_api_version = PERCONA_API_VERSION;

@@ -69,18 +69,18 @@ static void simple_list_free(SimplePtrList *list);
 static List *scan_key_provider_file(ProviderScanType scanType, void *scanKey, Oid dbOid);
 
 PG_FUNCTION_INFO_V1(pg_tde_add_key_provider_internal);
-Datum pg_tde_add_key_provider_internal(PG_FUNCTION_ARGS);
+Datum		pg_tde_add_key_provider_internal(PG_FUNCTION_ARGS);
 
 PG_FUNCTION_INFO_V1(pg_tde_list_all_key_providers);
-Datum pg_tde_list_all_key_providers(PG_FUNCTION_ARGS);
+Datum		pg_tde_list_all_key_providers(PG_FUNCTION_ARGS);
 
 #define PG_TDE_LIST_PROVIDERS_COLS 4
 
 static void key_provider_startup_cleanup(int tde_tbl_count, XLogExtensionInstall *ext_info, bool redo, void *arg);
 static const char *get_keyring_provider_typename(ProviderType p_type);
-static uint32 write_key_provider_info(KeyringProvideRecord *provider, 
-									Oid database_id, off_t position, 
-									bool error_if_exists, bool write_xlog);
+static uint32 write_key_provider_info(KeyringProvideRecord *provider,
+									  Oid database_id, off_t position,
+									  bool error_if_exists, bool write_xlog);
 
 static Size initialize_shared_state(void *start_address);
 static Size required_shared_mem_size(void);
@@ -183,7 +183,7 @@ GenericKeyring *
 GetKeyProviderByName(const char *provider_name, Oid dbOid)
 {
 	GenericKeyring *keyring = NULL;
-	List *providers = scan_key_provider_file(PROVIDER_SCAN_BY_NAME, (void *) provider_name, dbOid);
+	List	   *providers = scan_key_provider_file(PROVIDER_SCAN_BY_NAME, (void *) provider_name, dbOid);
 
 	if (providers != NIL)
 	{
@@ -205,12 +205,13 @@ static uint32
 write_key_provider_info(KeyringProvideRecord *provider, Oid database_id,
 						off_t position, bool error_if_exists, bool write_xlog)
 {
-	off_t bytes_written = 0;
-	off_t curr_pos = 0;
-	int fd;
-	// Named max, but global key provider oids are stored as negative numbers!
-	int max_provider_id = 0;
-	char kp_info_path[MAXPGPATH] = {0};
+	off_t		bytes_written = 0;
+	off_t		curr_pos = 0;
+	int			fd;
+
+	/* Named max, but global key provider oids are stored as negative numbers! */
+	int			max_provider_id = 0;
+	char		kp_info_path[MAXPGPATH] = {0};
 	KeyringProvideRecord existing_provider;
 
 	Assert(provider != NULL);
@@ -241,7 +242,7 @@ write_key_provider_info(KeyringProvideRecord *provider, Oid database_id,
 				LWLockRelease(tde_provider_info_lock());
 				ereport(error_if_exists ? ERROR : DEBUG1,
 						(errcode(ERRCODE_DUPLICATE_OBJECT),
-						errmsg("key provider \"%s\" already exists", provider->provider_name)));
+						 errmsg("key provider \"%s\" already exists", provider->provider_name)));
 
 				if (!error_if_exists)
 				{
@@ -253,7 +254,7 @@ write_key_provider_info(KeyringProvideRecord *provider, Oid database_id,
 				max_provider_id = abs(existing_provider.provider_id);
 		}
 		provider->provider_id = max_provider_id + 1;
-		if(database_id == GLOBAL_DATA_TDE_OID)
+		if (database_id == GLOBAL_DATA_TDE_OID)
 		{
 			provider->provider_id = -provider->provider_id;
 		}
@@ -317,7 +318,7 @@ write_key_provider_info(KeyringProvideRecord *provider, Oid database_id,
  * Save the key provider info to the file
  */
 uint32
-save_new_key_provider_info(KeyringProvideRecord* provider, Oid databaseId, bool write_xlog)
+save_new_key_provider_info(KeyringProvideRecord *provider, Oid databaseId, bool write_xlog)
 {
 	return write_key_provider_info(provider, databaseId, -1, true, write_xlog);
 }
@@ -341,12 +342,12 @@ cleanup_key_provider_info(Oid databaseId)
 Datum
 pg_tde_add_key_provider_internal(PG_FUNCTION_ARGS)
 {
-	char *provider_type = text_to_cstring(PG_GETARG_TEXT_PP(0));
-	char *provider_name = text_to_cstring(PG_GETARG_TEXT_PP(1));
-	char *options = text_to_cstring(PG_GETARG_TEXT_PP(2));
-	bool is_global = PG_GETARG_BOOL(3);
+	char	   *provider_type = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	char	   *provider_name = text_to_cstring(PG_GETARG_TEXT_PP(1));
+	char	   *options = text_to_cstring(PG_GETARG_TEXT_PP(2));
+	bool		is_global = PG_GETARG_BOOL(3);
 	KeyringProvideRecord provider;
-	Oid dbOid = is_global ? GLOBAL_DATA_TDE_OID : MyDatabaseId;
+	Oid			dbOid = is_global ? GLOBAL_DATA_TDE_OID : MyDatabaseId;
 
 	strncpy(provider.options, options, sizeof(provider.options));
 	strncpy(provider.provider_name, provider_name, sizeof(provider.provider_name));
@@ -359,10 +360,10 @@ pg_tde_add_key_provider_internal(PG_FUNCTION_ARGS)
 Datum
 pg_tde_list_all_key_providers(PG_FUNCTION_ARGS)
 {
-	List *all_providers = GetAllKeyringProviders(PG_NARGS() == 1 ? GLOBAL_DATA_TDE_OID : MyDatabaseId);
-	ListCell *lc;
+	List	   *all_providers = GetAllKeyringProviders(PG_NARGS() == 1 ? GLOBAL_DATA_TDE_OID : MyDatabaseId);
+	ListCell   *lc;
 	Tuplestorestate *tupstore;
-	TupleDesc tupdesc;
+	TupleDesc	tupdesc;
 	MemoryContext per_query_ctx;
 	MemoryContext oldcontext;
 	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
@@ -394,10 +395,10 @@ pg_tde_list_all_key_providers(PG_FUNCTION_ARGS)
 
 	foreach(lc, all_providers)
 	{
-		Datum values[PG_TDE_LIST_PROVIDERS_COLS] = {0};
-		bool nulls[PG_TDE_LIST_PROVIDERS_COLS] = {0};
+		Datum		values[PG_TDE_LIST_PROVIDERS_COLS] = {0};
+		bool		nulls[PG_TDE_LIST_PROVIDERS_COLS] = {0};
 		GenericKeyring *keyring = (GenericKeyring *) lfirst(lc);
-		int i = 0;
+		int			i = 0;
 
 		values[i++] = Int32GetDatum(keyring->keyring_id);
 		values[i++] = CStringGetTextDatum(keyring->provider_name);
@@ -414,9 +415,9 @@ pg_tde_list_all_key_providers(PG_FUNCTION_ARGS)
 GenericKeyring *
 GetKeyProviderByID(int provider_id, Oid dbOid)
 {
-	Oid realOid = provider_id < 0 ? GLOBAL_DATA_TDE_OID : dbOid;
+	Oid			realOid = provider_id < 0 ? GLOBAL_DATA_TDE_OID : dbOid;
 	GenericKeyring *keyring = NULL;
-	List *providers = scan_key_provider_file(PROVIDER_SCAN_BY_ID, &provider_id, realOid);
+	List	   *providers = scan_key_provider_file(PROVIDER_SCAN_BY_ID, &provider_id, realOid);
 
 	if (providers != NIL)
 	{
@@ -426,13 +427,13 @@ GetKeyProviderByID(int provider_id, Oid dbOid)
 	return keyring;
 }
 
-#endif /* !FRONTEND */
+#endif							/* !FRONTEND */
 
 #ifdef FRONTEND
 GenericKeyring *
 GetKeyProviderByID(int provider_id, Oid dbOid)
 {
-	Oid realOid = provider_id < 0 ? GLOBAL_DATA_TDE_OID : dbOid;
+	Oid			realOid = provider_id < 0 ? GLOBAL_DATA_TDE_OID : dbOid;
 	GenericKeyring *keyring = NULL;
 	SimplePtrList *providers = scan_key_provider_file(PROVIDER_SCAN_BY_ID, &provider_id, realOid);
 
@@ -459,7 +460,7 @@ simple_list_free(SimplePtrList *list)
 		cell = next;
 	}
 }
-#endif /* FRONTEND */
+#endif							/* FRONTEND */
 
 /*
  * Scan the key provider info file and can also apply filter based on scanType
@@ -471,12 +472,12 @@ static SimplePtrList *
 #endif
 scan_key_provider_file(ProviderScanType scanType, void *scanKey, Oid dbOid)
 {
-	off_t curr_pos = 0;
-	int fd;
-	char kp_info_path[MAXPGPATH] = {0};
+	off_t		curr_pos = 0;
+	int			fd;
+	char		kp_info_path[MAXPGPATH] = {0};
 	KeyringProvideRecord provider;
 #ifndef FRONTEND
-	List *providers_list = NIL;
+	List	   *providers_list = NIL;
 #else
 	SimplePtrList *providers_list = NULL;
 #endif
@@ -573,7 +574,7 @@ load_keyring_provider_options(ProviderType provider_type, char *keyring_options)
 			return (GenericKeyring *) load_vaultV2_keyring_provider_options(keyring_options);
 			break;
 		case KMIP_KEY_PROVIDER:
-			return (GenericKeyring *)load_kmip_keyring_provider_options(keyring_options);
+			return (GenericKeyring *) load_kmip_keyring_provider_options(keyring_options);
 			break;
 		default:
 			break;
@@ -666,7 +667,7 @@ load_kmip_keyring_provider_options(char *keyring_options)
 static void
 debug_print_kerying(GenericKeyring *keyring)
 {
-	int debug_level = DEBUG2;
+	int			debug_level = DEBUG2;
 
 	elog(debug_level, "Keyring type: %d", keyring->type);
 	elog(debug_level, "Keyring name: %s", keyring->provider_name);
@@ -682,12 +683,12 @@ debug_print_kerying(GenericKeyring *keyring)
 			elog(debug_level, "Vault Keyring Mount Path: %s", ((VaultV2Keyring *) keyring)->vault_mount_path);
 			elog(debug_level, "Vault Keyring CA Path: %s", ((VaultV2Keyring *) keyring)->vault_ca_path);
 			break;
-       case KMIP_KEY_PROVIDER:                                                                                                   
-            elog(debug_level, "KMIP Keyring Host: %s", ((KmipKeyring *)keyring)->kmip_host);                                  
-            elog(debug_level, "KMIP Keyring Port: %s", ((KmipKeyring *)keyring)->kmip_port);                                  
-            elog(debug_level, "KMIP Keyring CA Path: %s", ((KmipKeyring *)keyring)->kmip_ca_path);                            
-            elog(debug_level, "KMIP Keyring Cert Path: %s", ((KmipKeyring *)keyring)->kmip_cert_path);                        
-            break; 
+		case KMIP_KEY_PROVIDER:
+			elog(debug_level, "KMIP Keyring Host: %s", ((KmipKeyring *) keyring)->kmip_host);
+			elog(debug_level, "KMIP Keyring Port: %s", ((KmipKeyring *) keyring)->kmip_port);
+			elog(debug_level, "KMIP Keyring CA Path: %s", ((KmipKeyring *) keyring)->kmip_ca_path);
+			elog(debug_level, "KMIP Keyring Cert Path: %s", ((KmipKeyring *) keyring)->kmip_cert_path);
+			break;
 		case UNKNOWN_KEY_PROVIDER:
 			elog(debug_level, "Unknown Keyring ");
 			break;
@@ -706,7 +707,7 @@ get_keyring_infofile_path(char *resPath, Oid dbOid)
 static bool
 fetch_next_key_provider(int fd, off_t *curr_pos, KeyringProvideRecord *provider)
 {
-	off_t bytes_read = 0;
+	off_t		bytes_read = 0;
 
 	Assert(provider != NULL);
 	Assert(fd >= 0);

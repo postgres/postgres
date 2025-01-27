@@ -4799,7 +4799,7 @@ CreateAndCopyRelationData(RelFileLocator src_rlocator,
 	{
 		if (smgrexists(src_rel, forkNum))
 		{
-			// TODO: for sure?
+			/* TODO: for sure? */
 			smgrcreate(src_rel->smgr_rlocator.locator, dst_rel, forkNum, false);
 
 			/*

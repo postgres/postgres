@@ -64,16 +64,16 @@ static void WALOpenSegmentInit(WALOpenSegment *seg, WALSegmentContext *segcxt,
  */
 #define DEFAULT_DECODE_BUFFER_SIZE (64 * 1024)
 
-/* 
+/*
  * XLog storage manager
  *
  * TODO: should be in xlog.c or new xlog_smgr.c ?
  * Now it's here because pg_rewind and other tools compile only
- * w/ xlogreader.c  
+ * w/ xlogreader.c
  */
 const XLogSmgr *xlog_smgr = &xlog_smgr_standard;
 
-void 
+void
 SetXLogSmgr(const XLogSmgr *xlsmgr)
 {
 	xlog_smgr = xlsmgr;

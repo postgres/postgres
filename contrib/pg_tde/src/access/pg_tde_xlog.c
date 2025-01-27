@@ -32,7 +32,7 @@
 void
 tdeheap_rmgr_redo(XLogReaderState *record)
 {
-	uint8 info = XLogRecGetInfo(record) & ~XLR_INFO_MASK;
+	uint8		info = XLogRecGetInfo(record) & ~XLR_INFO_MASK;
 
 	if (info == XLOG_TDE_ADD_RELATION_KEY)
 	{
@@ -99,7 +99,7 @@ tdeheap_rmgr_redo(XLogReaderState *record)
 void
 tdeheap_rmgr_desc(StringInfo buf, XLogReaderState *record)
 {
-	uint8 info = XLogRecGetInfo(record) & ~XLR_INFO_MASK;
+	uint8		info = XLogRecGetInfo(record) & ~XLR_INFO_MASK;
 
 	if (info == XLOG_TDE_ADD_RELATION_KEY)
 	{

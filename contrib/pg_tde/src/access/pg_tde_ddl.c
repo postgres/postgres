@@ -33,7 +33,7 @@ static void
 tdeheap_object_access_hook(ObjectAccessType access, Oid classId, Oid objectId,
 						   int subId, void *arg)
 {
-	Relation rel = NULL;
+	Relation	rel = NULL;
 
 	if (prev_object_access_hook)
 		prev_object_access_hook(access, classId, objectId, subId, arg);

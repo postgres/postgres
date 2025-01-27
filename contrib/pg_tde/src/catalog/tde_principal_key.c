@@ -41,16 +41,16 @@
 
 #include <sys/time.h>
 
-bool AllowInheritGlobalProviders = true;
+bool		AllowInheritGlobalProviders = true;
 
 #ifndef FRONTEND
 
 typedef struct TdePrincipalKeySharedState
 {
 	LWLockPadded *Locks;
-	int	hashTrancheId;
+	int			hashTrancheId;
 	dshash_table_handle hashHandle;
-	void *rawDsaArea;		/* DSA area pointer */
+	void	   *rawDsaArea;		/* DSA area pointer */
 
 } TdePrincipalKeySharedState;
 
@@ -85,11 +85,11 @@ static TDEPrincipalKey *get_principal_key_from_cache(Oid dbOid);
 static void push_principal_key_to_cache(TDEPrincipalKey *principalKey);
 static Datum pg_tde_get_key_info(PG_FUNCTION_ARGS, Oid dbOid);
 static bool set_principal_key_with_keyring(const char *key_name,
-													   const char *provider_name,
-													   Oid providerOid,
-													   Oid dbOid,
-													   bool ensure_new_key);
-static TDEPrincipalKey *alter_keyprovider_for_principal_key(GenericKeyring *newKeyring,Oid dbOid);
+										   const char *provider_name,
+										   Oid providerOid,
+										   Oid dbOid,
+										   bool ensure_new_key);
+static TDEPrincipalKey *alter_keyprovider_for_principal_key(GenericKeyring *newKeyring, Oid dbOid);
 
 static const TDEShmemSetupRoutine principal_key_info_shmem_routine = {
 	.init_shared_state = initialize_shared_state,
@@ -228,18 +228,18 @@ update_principal_key_info(TDEPrincipalKeyInfo *principal_key_info)
 }
 
 bool
-set_principal_key_with_keyring(const char *key_name, const char* provider_name,
+set_principal_key_with_keyring(const char *key_name, const char *provider_name,
 							   Oid providerOid, Oid dbOid, bool ensure_new_key)
 {
 	TDEPrincipalKey *curr_principal_key = NULL;
 	TDEPrincipalKey *new_principal_key = NULL;
 	LWLock	   *lock_files = tde_lwlock_enc_keys();
 	bool		already_has_key = false;
-	GenericKeyring* new_keyring;
+	GenericKeyring *new_keyring;
 	const keyInfo *keyInfo = NULL;
-	bool success = true;
+	bool		success = true;
 
-	if(AllowInheritGlobalProviders == false && providerOid != dbOid)
+	if (AllowInheritGlobalProviders == false && providerOid != dbOid)
 	{
 		ereport(ERROR,
 				(errmsg("Usage of global key providers is disabled. Enable it with pg_tde.inherit_global_providers = ON")));
@@ -264,10 +264,11 @@ set_principal_key_with_keyring(const char *key_name, const char* provider_name,
 	if (provider_name != NULL)
 	{
 		new_keyring = GetKeyProviderByName(provider_name, providerOid);
-	} else 
+	}
+	else
 	{
 		new_keyring = GetKeyProviderByID(curr_principal_key->keyInfo.keyringId,
-								 curr_principal_key->keyInfo.databaseId);
+										 curr_principal_key->keyInfo.databaseId);
 	}
 
 	if (providerOid != dbOid && new_keyring->keyring_id > 0)
@@ -279,6 +280,7 @@ set_principal_key_with_keyring(const char *key_name, const char* provider_name,
 	{
 		KeyringReturnCodes kr_ret;
 		keyInfo = KeyringGetKey(new_keyring, key_name, false, &kr_ret);
+
 		if (kr_ret != KEYRING_CODE_SUCCESS && kr_ret != KEYRING_CODE_RESOURCE_NOT_AVAILABLE)
 		{
 			ereport(ERROR,
@@ -288,7 +290,7 @@ set_principal_key_with_keyring(const char *key_name, const char* provider_name,
 		}
 	}
 
-	if (keyInfo != NULL && ensure_new_key)
+	if (keyInfo !=NULL && ensure_new_key)
 	{
 		LWLockRelease(lock_files);
 
@@ -318,6 +320,7 @@ set_principal_key_with_keyring(const char *key_name, const char* provider_name,
 	strncpy(new_principal_key->keyInfo.keyId.versioned_name, key_name, TDE_KEY_NAME_LEN);
 	gettimeofday(&new_principal_key->keyInfo.creationTime, NULL);
 	new_principal_key->keyLength = keyInfo->data.len;
+
 	memcpy(new_principal_key->keyData, keyInfo->data.data, keyInfo->data.len);
 
 	if (!already_has_key)
@@ -331,10 +334,12 @@ set_principal_key_with_keyring(const char *key_name, const char* provider_name,
 		XLogInsert(RM_TDERMGR_ID, XLOG_TDE_ADD_PRINCIPAL_KEY);
 
 		push_principal_key_to_cache(new_principal_key);
-	} else 
+	}
+	else
 	{
 		/* key rotation */
-		bool is_rotated = pg_tde_perform_rotate_key(curr_principal_key, new_principal_key);
+		bool		is_rotated = pg_tde_perform_rotate_key(curr_principal_key, new_principal_key);
+
 		if (is_rotated && !TDEisInGlobalSpace(curr_principal_key->keyInfo.databaseId))
 		{
 			clear_principal_key_cache(curr_principal_key->keyInfo.databaseId);
@@ -355,10 +360,10 @@ set_principal_key_with_keyring(const char *key_name, const char* provider_name,
 TDEPrincipalKey *
 alter_keyprovider_for_principal_key(GenericKeyring *newKeyring, Oid dbOid)
 {
-    TDEPrincipalKeyInfo *principalKeyInfo = NULL;
+	TDEPrincipalKeyInfo *principalKeyInfo = NULL;
 	TDEPrincipalKey *principal_key = NULL;
 
-	LWLock *lock_files = tde_lwlock_enc_keys();
+	LWLock	   *lock_files = tde_lwlock_enc_keys();
 
 	Assert(newKeyring != NULL);
 	LWLockAcquire(lock_files, LW_EXCLUSIVE);
@@ -367,19 +372,19 @@ alter_keyprovider_for_principal_key(GenericKeyring *newKeyring, Oid dbOid)
 
 	if (principalKeyInfo == NULL)
 	{
-        LWLockRelease(lock_files);
-        ereport(ERROR,
-			(errmsg("Principal key not set for the database"),
-				errhint("Use set_principal_key interface to set the principal key")));
+		LWLockRelease(lock_files);
+		ereport(ERROR,
+				(errmsg("Principal key not set for the database"),
+				 errhint("Use set_principal_key interface to set the principal key")));
 	}
 
 	if (newKeyring->keyring_id == principalKeyInfo->keyringId)
 	{
-        LWLockRelease(lock_files);
-        ereport(ERROR,
-                (errmsg("New key provider is same as the current key provider")));
-    }
-    /* update the key provider in principal key info */
+		LWLockRelease(lock_files);
+		ereport(ERROR,
+				(errmsg("New key provider is same as the current key provider")));
+	}
+	/* update the key provider in principal key info */
 
 	ereport(DEBUG2,
 			(errmsg("Changing keyprovider ID from :%d to %d", principalKeyInfo->keyringId, newKeyring->keyring_id)));
@@ -388,9 +393,9 @@ alter_keyprovider_for_principal_key(GenericKeyring *newKeyring, Oid dbOid)
 
 	update_principal_key_info(principalKeyInfo);
 
-	/* XLog the new key*/
+	/* XLog the new key */
 	XLogBeginInsert();
-	XLogRegisterData((char *)principalKeyInfo, sizeof(TDEPrincipalKeyInfo));
+	XLogRegisterData((char *) principalKeyInfo, sizeof(TDEPrincipalKeyInfo));
 	XLogInsert(RM_TDERMGR_ID, XLOG_TDE_UPDATE_PRINCIPAL_KEY);
 
 	/* clear the cache as well */
@@ -406,10 +411,10 @@ alter_keyprovider_for_principal_key(GenericKeyring *newKeyring, Oid dbOid)
 bool
 AlterPrincipalKeyKeyring(const char *provider_name)
 {
-    TDEPrincipalKey *principal_key = alter_keyprovider_for_principal_key(GetKeyProviderByName(provider_name, MyDatabaseId),
-                                                                    MyDatabaseId);
+	TDEPrincipalKey *principal_key = alter_keyprovider_for_principal_key(GetKeyProviderByName(provider_name, MyDatabaseId),
+																		 MyDatabaseId);
 
-    return (principal_key != NULL);
+	return (principal_key != NULL);
 }
 
 /*
@@ -418,7 +423,7 @@ AlterPrincipalKeyKeyring(const char *provider_name)
 bool
 xl_tde_perform_rotate_key(XLogPrincipalKeyRotate *xlrec)
 {
-	bool ret;
+	bool		ret;
 
 	ret = pg_tde_write_map_keydata_files(xlrec->map_size, xlrec->buff, xlrec->keydata_size, &xlrec->buff[xlrec->map_size]);
 	clear_principal_key_cache(xlrec->databaseId);
@@ -435,9 +440,9 @@ GetPrincipalKeyProviderId(void)
 {
 	TDEPrincipalKey *principalKey = NULL;
 	TDEPrincipalKeyInfo *principalKeyInfo = NULL;
-	Oid	keyringId = InvalidOid;
-	Oid	dbOid = MyDatabaseId;
-	LWLock *lock_files = tde_lwlock_enc_keys();
+	Oid			keyringId = InvalidOid;
+	Oid			dbOid = MyDatabaseId;
+	LWLock	   *lock_files = tde_lwlock_enc_keys();
 
 	LWLockAcquire(lock_files, LW_SHARED);
 
@@ -506,8 +511,8 @@ static void
 push_principal_key_to_cache(TDEPrincipalKey *principalKey)
 {
 	TDEPrincipalKey *cacheEntry = NULL;
-	Oid databaseId = principalKey->keyInfo.databaseId;
-	bool found = false;
+	Oid			databaseId = principalKey->keyInfo.databaseId;
+	bool		found = false;
 
 	cacheEntry = dshash_find_or_insert(get_principal_key_Hash(),
 									   &databaseId, &found);
@@ -580,41 +585,44 @@ Datum		pg_tde_set_principal_key_internal(PG_FUNCTION_ARGS);
 Datum
 pg_tde_set_principal_key_internal(PG_FUNCTION_ARGS)
 {
-	char *principal_key_name = text_to_cstring(PG_GETARG_TEXT_PP(0));
-	int  is_global = PG_GETARG_INT32(1);
-	char *provider_name = PG_ARGISNULL(2) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(2));
-	bool ensure_new_key = PG_GETARG_BOOL(3);
-	bool success;
-	Oid	providerOid = MyDatabaseId;
-	Oid	dbOid = MyDatabaseId;
-	
+	char	   *principal_key_name = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	int			is_global = PG_GETARG_INT32(1);
+	char	   *provider_name = PG_ARGISNULL(2) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(2));
+	bool		ensure_new_key = PG_GETARG_BOOL(3);
+	bool		success;
+	Oid			providerOid = MyDatabaseId;
+	Oid			dbOid = MyDatabaseId;
+
 	ereport(LOG, (errmsg("Setting principal key [%s : %s] for the database", principal_key_name, provider_name)));
-	
-	if (is_global == 1) /* using a global provider for the current database */
+
+	if (is_global == 1)			/* using a global provider for the current
+								 * database */
 	{
 		providerOid = GLOBAL_DATA_TDE_OID;
 	}
-	if (is_global == 2) /* using a globla provider for the global (wal) database */
+	if (is_global == 2)			/* using a globla provider for the global
+								 * (wal) database */
 	{
 		providerOid = GLOBAL_DATA_TDE_OID;
 		dbOid = GLOBAL_DATA_TDE_OID;
 	}
 	success = set_principal_key_with_keyring(principal_key_name,
-																	provider_name,
-																	providerOid,
-																	dbOid,
-																	ensure_new_key);
+											 provider_name,
+											 providerOid,
+											 dbOid,
+											 ensure_new_key);
 
 	PG_RETURN_BOOL(success);
 }
 
 PG_FUNCTION_INFO_V1(pg_tde_alter_principal_key_keyring);
-Datum pg_tde_alter_principal_key_keyring(PG_FUNCTION_ARGS);
+Datum		pg_tde_alter_principal_key_keyring(PG_FUNCTION_ARGS);
 
-Datum pg_tde_alter_principal_key_keyring(PG_FUNCTION_ARGS)
+Datum
+pg_tde_alter_principal_key_keyring(PG_FUNCTION_ARGS)
 {
-	char *provider_name = text_to_cstring(PG_GETARG_TEXT_PP(0));
-	bool ret;
+	char	   *provider_name = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	bool		ret;
 
 	ereport(LOG, (errmsg("Altering principal key provider to \"%s\" for the database", provider_name)));
 	ret = AlterPrincipalKeyKeyring(provider_name);
@@ -625,8 +633,8 @@ PG_FUNCTION_INFO_V1(pg_tde_principal_key_info_internal);
 Datum
 pg_tde_principal_key_info_internal(PG_FUNCTION_ARGS)
 {
-	Oid	dbOid = MyDatabaseId;
-	bool is_global = PG_GETARG_BOOL(0);
+	Oid			dbOid = MyDatabaseId;
+	bool		is_global = PG_GETARG_BOOL(0);
 
 	if (is_global)
 	{
@@ -639,11 +647,11 @@ pg_tde_principal_key_info_internal(PG_FUNCTION_ARGS)
 static Datum
 pg_tde_get_key_info(PG_FUNCTION_ARGS, Oid dbOid)
 {
-	TupleDesc tupdesc;
-	Datum values[6];
-	bool isnull[6];
-	HeapTuple tuple;
-	Datum result;
+	TupleDesc	tupdesc;
+	Datum		values[6];
+	bool		isnull[6];
+	HeapTuple	tuple;
+	Datum		result;
 	TDEPrincipalKey *principal_key;
 	TimestampTz ts;
 	GenericKeyring *keyring;
@@ -665,7 +673,7 @@ pg_tde_get_key_info(PG_FUNCTION_ARGS, Oid dbOid)
 		PG_RETURN_NULL();
 	}
 
-	keyring = GetKeyProviderByID(principal_key->keyInfo.keyringId, principal_key->keyInfo.databaseId);	
+	keyring = GetKeyProviderByID(principal_key->keyInfo.keyringId, principal_key->keyInfo.databaseId);
 
 	/* Initialize the values and null flags */
 
@@ -744,17 +752,18 @@ get_principal_key_from_keyring(Oid dbOid)
 	Assert(dbOid == principalKey->keyInfo.databaseId);
 
 #ifndef FRONTEND
-    /* We don't store global space key in cache */
-    if (!TDEisInGlobalSpace(dbOid))
-    {
-        push_principal_key_to_cache(principalKey);
+	/* We don't store global space key in cache */
+	if (!TDEisInGlobalSpace(dbOid))
+	{
+		push_principal_key_to_cache(principalKey);
 
-        /* If we do store key in cache we want to return a cache reference 
-         * rather then a palloc'ed copy.
-         */
-        pfree(principalKey);
-        principalKey = get_principal_key_from_cache(dbOid);
-    }
+		/*
+		 * If we do store key in cache we want to return a cache reference
+		 * rather then a palloc'ed copy.
+		 */
+		pfree(principalKey);
+		principalKey = get_principal_key_from_cache(dbOid);
+	}
 #endif
 
 	if (principalKeyInfo)
@@ -808,13 +817,14 @@ GetPrincipalKey(Oid dbOid, LWLockMode lockMode)
 
 #ifndef FRONTEND
 
-void PrincipalKeyGucInit()
+void
+PrincipalKeyGucInit()
 {
-	DefineCustomBoolVariable("pg_tde.inherit_global_providers",	/* name */
-							 "Allow using global key providers for databases.",	/* short_desc */
+	DefineCustomBoolVariable("pg_tde.inherit_global_providers", /* name */
+							 "Allow using global key providers for databases.", /* short_desc */
 							 NULL,	/* long_desc */
 							 &AllowInheritGlobalProviders,	/* value address */
-							 true, /* boot value */
+							 true,	/* boot value */
 							 PGC_POSTMASTER,	/* context */
 							 0, /* flags */
 							 NULL,	/* check_hook */
