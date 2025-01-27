@@ -18,12 +18,21 @@ CREATE TABLE country_table (
      country_name    text unique not null,
      continent        text not null
 ) using :tde_am;
+psql:sql/change_access_method.inc:10: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
+psql:sql/change_access_method.inc:10: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
+psql:sql/change_access_method.inc:10: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
+psql:sql/change_access_method.inc:10: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
+psql:sql/change_access_method.inc:10: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
  
 INSERT INTO country_table (country_name, continent)
      VALUES ('Japan', 'Asia'),
             ('UK', 'Europe'),
             ('USA', 'North America');
+psql:sql/change_access_method.inc:15: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
+psql:sql/change_access_method.inc:15: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
+psql:sql/change_access_method.inc:15: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
 SELECT * FROM country_table;
+psql:sql/change_access_method.inc:17: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
  country_id | country_name |   continent   
 ------------+--------------+---------------
           1 | Japan        | Asia
@@ -39,6 +48,7 @@ SELECT pg_tde_is_encrypted('country_table');
 
 -- Try changing the encrypted table to an unencrypted table
 ALTER TABLE country_table SET access method  heap;
+psql:sql/change_access_method.inc:22: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
 -- Insert some more data 
 INSERT INTO country_table (country_name, continent)
      VALUES ('France', 'Europe'),
@@ -63,11 +73,26 @@ SELECT pg_tde_is_encrypted('country_table');
 
 -- Change it back to encrypted
 ALTER TABLE country_table SET access method  :tde_am;
+psql:sql/change_access_method.inc:33: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
+psql:sql/change_access_method.inc:33: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
+psql:sql/change_access_method.inc:33: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
+psql:sql/change_access_method.inc:33: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
+psql:sql/change_access_method.inc:33: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
+psql:sql/change_access_method.inc:33: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
+psql:sql/change_access_method.inc:33: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
+psql:sql/change_access_method.inc:33: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
+psql:sql/change_access_method.inc:33: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
+psql:sql/change_access_method.inc:33: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
+psql:sql/change_access_method.inc:33: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
 INSERT INTO country_table (country_name, continent)
      VALUES ('China', 'Asia'),
             ('Brazil', 'South America'),
             ('Australia', 'Oceania');
+psql:sql/change_access_method.inc:38: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
+psql:sql/change_access_method.inc:38: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
+psql:sql/change_access_method.inc:38: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
 SELECT * FROM country_table;
+psql:sql/change_access_method.inc:39: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
  country_id | country_name |   continent   
 ------------+--------------+---------------
           1 | Japan        | Asia

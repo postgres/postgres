@@ -604,6 +604,8 @@ pg_tdeam_relation_set_new_filelocator(Relation rel,
 	RelFileLocator oldlocator = rel->rd_locator;
 #endif
 
+	elog(WARNING, "tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.");
+
 	/*
 	 * Initialize to the minimum XID that could put tuples in the table. We
 	 * know that no xacts older than RecentXmin are still running, so that

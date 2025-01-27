@@ -19,6 +19,10 @@ CREATE TABLE albums (
     title TEXT NOT NULL,
     released DATE NOT NULL
 ) USING :tde_am;
+psql:sql/insert_update_delete.inc:11: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
+psql:sql/insert_update_delete.inc:11: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
+psql:sql/insert_update_delete.inc:11: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
+psql:sql/insert_update_delete.inc:11: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
 INSERT INTO albums (artist, title, released) VALUES
 			('Graindelavoix', 'Jisquin The Undead', '2021-06-12'),
 			('Graindelavoix', 'Tenebrae Responsoria - Carlo Gesualdo', '2019-08-06'),
@@ -35,7 +39,23 @@ INSERT INTO albums (artist, title, released) VALUES
 			('Ulthar', 'Anthronomicon', '2023-02-17'),
 			('Τζίμης Πανούσης', 'Κάγκελα Παντού', '1986-01-01'),
 			('Воплі Відоплясова', 'Музіка', '1997-01-01');
+psql:sql/insert_update_delete.inc:28: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
+psql:sql/insert_update_delete.inc:28: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
+psql:sql/insert_update_delete.inc:28: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
+psql:sql/insert_update_delete.inc:28: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
+psql:sql/insert_update_delete.inc:28: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
+psql:sql/insert_update_delete.inc:28: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
+psql:sql/insert_update_delete.inc:28: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
+psql:sql/insert_update_delete.inc:28: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
+psql:sql/insert_update_delete.inc:28: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
+psql:sql/insert_update_delete.inc:28: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
+psql:sql/insert_update_delete.inc:28: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
+psql:sql/insert_update_delete.inc:28: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
+psql:sql/insert_update_delete.inc:28: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
+psql:sql/insert_update_delete.inc:28: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
+psql:sql/insert_update_delete.inc:28: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
 SELECT * FROM albums;
+psql:sql/insert_update_delete.inc:30: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
  id |                    artist                    |                                      title                                      |  released  
 ----+----------------------------------------------+---------------------------------------------------------------------------------+------------
   1 | Graindelavoix                                | Jisquin The Undead                                                              | 06-12-2021
@@ -56,7 +76,12 @@ SELECT * FROM albums;
 (15 rows)
 
 DELETE FROM albums WHERE id % 4 = 0;
+psql:sql/insert_update_delete.inc:32: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
+psql:sql/insert_update_delete.inc:32: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
+psql:sql/insert_update_delete.inc:32: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
+psql:sql/insert_update_delete.inc:32: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
 SELECT * FROM albums;
+psql:sql/insert_update_delete.inc:33: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
  id |           artist            |                                      title                                      |  released  
 ----+-----------------------------+---------------------------------------------------------------------------------+------------
   1 | Graindelavoix               | Jisquin The Undead                                                              | 06-12-2021
@@ -76,6 +101,7 @@ SELECT * FROM albums;
 UPDATE albums SET title='Jisquin The Undead: Laments, Deplorations and Dances of Death', released='2021-10-01' WHERE id=1;
 UPDATE albums SET released='2020-04-01' WHERE id=2;
 SELECT * FROM albums;
+psql:sql/insert_update_delete.inc:38: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
  id |           artist            |                                      title                                      |  released  
 ----+-----------------------------+---------------------------------------------------------------------------------+------------
   3 | Graindelavoix               | Cypriot Vespers                                                                 | 12-20-2015
