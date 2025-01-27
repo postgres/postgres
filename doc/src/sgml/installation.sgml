@@ -55,9 +55,11 @@
       </indexterm>
 
       Alternatively, <productname>PostgreSQL</productname> can be built using
-      <ulink url="https://mesonbuild.com/">Meson</ulink>.  This is currently
-      experimental.  If you choose to use
-      <application>Meson</application>, then you don't need
+      <ulink url="https://mesonbuild.com/">Meson</ulink>.  This is the only
+      option for building <productname>PostgreSQL</productname> on Windows
+      using <productname>Visual Studio</productname>.  For other platforms,
+      using <application>Meson</application> is currently experimental.  If
+      you choose to use <application>Meson</application>, then you don't need
       <acronym>GNU</acronym> <application>make</application>, but the other
       requirements below still apply.
      </para>
