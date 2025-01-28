@@ -21,8 +21,14 @@ CREATE TABLE albums (
     title TEXT NOT NULL,
     released DATE NOT NULL
 ) USING :tde_am;
+psql:sql/multi_insert.inc:13: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
+psql:sql/multi_insert.inc:13: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
+psql:sql/multi_insert.inc:13: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
+psql:sql/multi_insert.inc:13: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
 COPY albums FROM stdin CSV HEADER;
+psql:sql/multi_insert.inc:24: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
 SELECT * FROM albums;
+psql:sql/multi_insert.inc:26: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
  album_id | artist_id |       title        |  released  
 ----------+-----------+--------------------+------------
         1 |         1 | Mirror             | 06-24-2009
@@ -35,6 +41,7 @@ SELECT * FROM albums;
 (7 rows)
 
 SELECT * FROM albums where album_id > 5;
+psql:sql/multi_insert.inc:27: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
  album_id | artist_id |   title    |  released  
 ----------+-----------+------------+------------
         6 |         6 | It's Alive | 10-15-2013
@@ -72,14 +79,23 @@ CREATE TABLE Towns (
    department VARCHAR(4) NOT NULL,
    UNIQUE (code, department)
 )  USING :tde_am;
+psql:sql/multi_insert.inc:59: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
+psql:sql/multi_insert.inc:59: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
+psql:sql/multi_insert.inc:59: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
+psql:sql/multi_insert.inc:59: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
+psql:sql/multi_insert.inc:59: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
 COPY towns (id, code, article, name, department) FROM stdin;
+psql:sql/multi_insert.inc:1375: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
+psql:sql/multi_insert.inc:1375: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
 SELECT count(*) FROM towns;
+psql:sql/multi_insert.inc:1377: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
  count 
 -------
   1313
 (1 row)
 
 SELECT * FROM towns where id in (13, 666);
+psql:sql/multi_insert.inc:1378: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
  id  | code |  article  |      name      | department 
 -----+------+-----------+----------------+------------
   13 | 014  | some_text | Arbent         | 01

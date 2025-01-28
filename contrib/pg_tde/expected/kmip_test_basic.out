@@ -18,10 +18,16 @@ CREATE TABLE test_enc(
 	  k INTEGER DEFAULT '0' NOT NULL,
 	  PRIMARY KEY (id)
 	) USING :tde_am;
+psql:sql/kmip_test.inc:10: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
+psql:sql/kmip_test.inc:10: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
 INSERT INTO test_enc (k) VALUES (1);
+psql:sql/kmip_test.inc:12: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
 INSERT INTO test_enc (k) VALUES (2);
+psql:sql/kmip_test.inc:13: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
 INSERT INTO test_enc (k) VALUES (3);
+psql:sql/kmip_test.inc:14: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
 SELECT * from test_enc;
+psql:sql/kmip_test.inc:16: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
  id | k 
 ----+---
   1 | 1

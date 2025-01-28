@@ -22,6 +22,8 @@ CREATE TABLE test_enc(
 	  k INTEGER DEFAULT '0' NOT NULL,
 	  PRIMARY KEY (id)
 	) USING :tde_am;
+psql:sql/pg_tde_is_encrypted.inc:12: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
+psql:sql/pg_tde_is_encrypted.inc:12: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
 CREATE TABLE test_norm(
 	  id SERIAL,
 	  k INTEGER DEFAULT '0' NOT NULL,

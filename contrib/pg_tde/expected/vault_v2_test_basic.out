@@ -16,6 +16,7 @@ CREATE TABLE test_enc(
 	  k INTEGER DEFAULT '0' NOT NULL,
 	  PRIMARY KEY (id)
 	) USING :tde_am;
+psql:sql/vault_v2_test.inc:13: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
 psql:sql/vault_v2_test.inc:13: ERROR:  failed to retrieve principal key. Create one using pg_tde_set_principal_key before using encrypted tables.
 SELECT pg_tde_add_key_provider_vault_v2('vault-v2',:'root_token','http://127.0.0.1:8200','secret',NULL);
  pg_tde_add_key_provider_vault_v2 
@@ -34,10 +35,16 @@ CREATE TABLE test_enc(
 	  k INTEGER DEFAULT '0' NOT NULL,
 	  PRIMARY KEY (id)
 	) USING :tde_am;
+psql:sql/vault_v2_test.inc:22: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
+psql:sql/vault_v2_test.inc:22: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
 INSERT INTO test_enc (k) VALUES (1);
+psql:sql/vault_v2_test.inc:24: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
 INSERT INTO test_enc (k) VALUES (2);
+psql:sql/vault_v2_test.inc:25: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
 INSERT INTO test_enc (k) VALUES (3);
+psql:sql/vault_v2_test.inc:26: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
 SELECT * from test_enc;
+psql:sql/vault_v2_test.inc:28: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
  id | k 
 ----+---
   1 | 1

@@ -1050,6 +1050,8 @@ tdeheap_beginscan(Relation relation, Snapshot snapshot,
 {
 	HeapScanDesc scan;
 
+	elog(WARNING, "tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.");
+
 	/*
 	 * increment relation ref count while scanning relation
 	 *
@@ -2008,6 +2010,8 @@ tdeheap_insert(Relation relation, HeapTuple tup, CommandId cid,
 	Buffer		vmbuffer = InvalidBuffer;
 	bool		all_visible_cleared = false;
 
+	elog(WARNING, "tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.");
+
 	/* Cheap, simplistic check that the tuple matches the rel's rowtype. */
 	Assert(HeapTupleHeaderGetNatts(tup->t_data) <=
 		   RelationGetNumberOfAttributes(relation));
@@ -2295,6 +2299,8 @@ tdeheap_multi_insert(Relation relation, TupleTableSlot **slots, int ntuples,
 	bool		starting_with_empty_page = false;
 	int			npages = 0;
 	int			npages_used = 0;
+
+	elog(WARNING, "tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.");
 
 	/* currently not needed (thus unsupported) for tdeheap_multi_insert() */
 	Assert(!(options & HEAP_INSERT_NO_LOGICAL));
@@ -2730,6 +2736,8 @@ tdeheap_delete(Relation relation, ItemPointer tid,
 	HeapTuple	decrypted_tuple;
 
 	Assert(ItemPointerIsValid(tid));
+
+	elog(WARNING, "tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.");
 
 	/*
 	 * Forbid this during a parallel operation, lest it allocate a combo CID.

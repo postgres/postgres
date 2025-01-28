@@ -35,6 +35,9 @@ CREATE TABLE dept (
     dname           VARCHAR(14) CONSTRAINT dept_dname_uq UNIQUE,
     loc             VARCHAR(13)
 )using :tde_am;
+psql:sql/test_issue_153_fix.inc:25: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
+psql:sql/test_issue_153_fix.inc:25: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
+psql:sql/test_issue_153_fix.inc:25: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
 --
 --  Create the 'emp' table
 --
@@ -49,6 +52,8 @@ CREATE TABLE emp (
     deptno          NUMERIC(2) CONSTRAINT emp_ref_dept_fk
                         REFERENCES dept(deptno)
 )using :tde_am;
+psql:sql/test_issue_153_fix.inc:39: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
+psql:sql/test_issue_153_fix.inc:39: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
 --
 --  Create the 'jobhist' table
 --
@@ -68,6 +73,8 @@ CREATE TABLE jobhist (
         REFERENCES dept (deptno) ON DELETE SET NULL,
     CONSTRAINT jobhist_date_chk CHECK (startdate <= enddate)
 )using :tde_am;
+psql:sql/test_issue_153_fix.inc:58: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
+psql:sql/test_issue_153_fix.inc:58: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
 --
 --  Create the 'salesemp' view
 --
@@ -89,52 +96,90 @@ GRANT ALL ON next_empno TO PUBLIC;
 --  Load the 'dept' table
 --
 INSERT INTO dept VALUES (10,'ACCOUNTING','NEW YORK');
+psql:sql/test_issue_153_fix.inc:79: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
 INSERT INTO dept VALUES (20,'RESEARCH','DALLAS');
+psql:sql/test_issue_153_fix.inc:80: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
 INSERT INTO dept VALUES (30,'SALES','CHICAGO');
+psql:sql/test_issue_153_fix.inc:81: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
 INSERT INTO dept VALUES (40,'OPERATIONS','BOSTON');
+psql:sql/test_issue_153_fix.inc:82: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
 --
 --  Load the 'emp' table
 --
 INSERT INTO emp VALUES (7369,'SMITH','CLERK',7902,'17-DEC-80',800,NULL,20);
+psql:sql/test_issue_153_fix.inc:86: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
 INSERT INTO emp VALUES (7499,'ALLEN','SALESMAN',7698,'20-FEB-81',1600,300,30);
+psql:sql/test_issue_153_fix.inc:87: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
 INSERT INTO emp VALUES (7521,'WARD','SALESMAN',7698,'22-FEB-81',1250,500,30);
+psql:sql/test_issue_153_fix.inc:88: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
 INSERT INTO emp VALUES (7566,'JONES','MANAGER',7839,'02-APR-81',2975,NULL,20);
+psql:sql/test_issue_153_fix.inc:89: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
 INSERT INTO emp VALUES (7654,'MARTIN','SALESMAN',7698,'28-SEP-81',1250,1400,30);
+psql:sql/test_issue_153_fix.inc:90: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
 INSERT INTO emp VALUES (7698,'BLAKE','MANAGER',7839,'01-MAY-81',2850,NULL,30);
+psql:sql/test_issue_153_fix.inc:91: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
 INSERT INTO emp VALUES (7782,'CLARK','MANAGER',7839,'09-JUN-81',2450,NULL,10);
+psql:sql/test_issue_153_fix.inc:92: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
 INSERT INTO emp VALUES (7788,'SCOTT','ANALYST',7566,'19-APR-87',3000,NULL,20);
+psql:sql/test_issue_153_fix.inc:93: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
 INSERT INTO emp VALUES (7839,'KING','PRESIDENT',NULL,'17-NOV-81',5000,NULL,10);
+psql:sql/test_issue_153_fix.inc:94: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
 INSERT INTO emp VALUES (7844,'TURNER','SALESMAN',7698,'08-SEP-81',1500,0,30);
+psql:sql/test_issue_153_fix.inc:95: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
 INSERT INTO emp VALUES (7876,'ADAMS','CLERK',7788,'23-MAY-87',1100,NULL,20);
+psql:sql/test_issue_153_fix.inc:96: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
 INSERT INTO emp VALUES (7900,'JAMES','CLERK',7698,'03-DEC-81',950,NULL,30);
+psql:sql/test_issue_153_fix.inc:97: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
 INSERT INTO emp VALUES (7902,'FORD','ANALYST',7566,'03-DEC-81',3000,NULL,20);
+psql:sql/test_issue_153_fix.inc:98: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
 INSERT INTO emp VALUES (7934,'MILLER','CLERK',7782,'23-JAN-82',1300,NULL,10);
+psql:sql/test_issue_153_fix.inc:99: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
 --
 --  Load the 'jobhist' table
 --
 INSERT INTO jobhist VALUES (7369,'17-DEC-80',NULL,'CLERK',800,NULL,20,'New Hire');
+psql:sql/test_issue_153_fix.inc:103: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
 INSERT INTO jobhist VALUES (7499,'20-FEB-81',NULL,'SALESMAN',1600,300,30,'New Hire');
+psql:sql/test_issue_153_fix.inc:104: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
 INSERT INTO jobhist VALUES (7521,'22-FEB-81',NULL,'SALESMAN',1250,500,30,'New Hire');
+psql:sql/test_issue_153_fix.inc:105: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
 INSERT INTO jobhist VALUES (7566,'02-APR-81',NULL,'MANAGER',2975,NULL,20,'New Hire');
+psql:sql/test_issue_153_fix.inc:106: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
 INSERT INTO jobhist VALUES (7654,'28-SEP-81',NULL,'SALESMAN',1250,1400,30,'New Hire');
+psql:sql/test_issue_153_fix.inc:107: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
 INSERT INTO jobhist VALUES (7698,'01-MAY-81',NULL,'MANAGER',2850,NULL,30,'New Hire');
+psql:sql/test_issue_153_fix.inc:108: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
 INSERT INTO jobhist VALUES (7782,'09-JUN-81',NULL,'MANAGER',2450,NULL,10,'New Hire');
+psql:sql/test_issue_153_fix.inc:109: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
 INSERT INTO jobhist VALUES (7788,'19-APR-87','12-APR-88','CLERK',1000,NULL,20,'New Hire');
+psql:sql/test_issue_153_fix.inc:110: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
 INSERT INTO jobhist VALUES (7788,'13-APR-88','04-MAY-89','CLERK',1040,NULL,20,'Raise');
+psql:sql/test_issue_153_fix.inc:111: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
 INSERT INTO jobhist VALUES (7788,'05-MAY-90',NULL,'ANALYST',3000,NULL,20,'Promoted to Analyst');
+psql:sql/test_issue_153_fix.inc:112: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
 INSERT INTO jobhist VALUES (7839,'17-NOV-81',NULL,'PRESIDENT',5000,NULL,10,'New Hire');
+psql:sql/test_issue_153_fix.inc:113: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
 INSERT INTO jobhist VALUES (7844,'08-SEP-81',NULL,'SALESMAN',1500,0,30,'New Hire');
+psql:sql/test_issue_153_fix.inc:114: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
 INSERT INTO jobhist VALUES (7876,'23-MAY-87',NULL,'CLERK',1100,NULL,20,'New Hire');
+psql:sql/test_issue_153_fix.inc:115: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
 INSERT INTO jobhist VALUES (7900,'03-DEC-81','14-JAN-83','CLERK',950,NULL,10,'New Hire');
+psql:sql/test_issue_153_fix.inc:116: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
 INSERT INTO jobhist VALUES (7900,'15-JAN-83',NULL,'CLERK',950,NULL,30,'Changed to Dept 30');
+psql:sql/test_issue_153_fix.inc:117: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
 INSERT INTO jobhist VALUES (7902,'03-DEC-81',NULL,'ANALYST',3000,NULL,20,'New Hire');
+psql:sql/test_issue_153_fix.inc:118: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
 INSERT INTO jobhist VALUES (7934,'23-JAN-82',NULL,'CLERK',1300,NULL,10,'New Hire');
+psql:sql/test_issue_153_fix.inc:119: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
 --
 --  Populate statistics table and view (pg_statistic/pg_stats)
 --
 ANALYZE dept;
+psql:sql/test_issue_153_fix.inc:123: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
 ANALYZE emp;
+psql:sql/test_issue_153_fix.inc:124: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
 ANALYZE jobhist;
+psql:sql/test_issue_153_fix.inc:125: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
 --
 --  Function that lists all employees' numbers and names
 --  from the 'emp' table using a cursor.
@@ -469,6 +514,7 @@ CREATE TRIGGER emp_sal_trig
     FOR EACH ROW EXECUTE PROCEDURE emp_sal_trig();
 COMMIT;
 SELECT * FROM emp;
+psql:sql/test_issue_153_fix.inc:460: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
  empno | ename  |    job    | mgr  |  hiredate  |   sal   |  comm   | deptno 
 -------+--------+-----------+------+------------+---------+---------+--------
   7369 | SMITH  | CLERK     | 7902 | 1980-12-17 |  800.00 |         |     20
@@ -488,6 +534,7 @@ SELECT * FROM emp;
 (14 rows)
 
 SELECT * FROM dept;
+psql:sql/test_issue_153_fix.inc:461: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
  deptno |   dname    |   loc    
 --------+------------+----------
      10 | ACCOUNTING | NEW YORK
@@ -497,6 +544,7 @@ SELECT * FROM dept;
 (4 rows)
 
 SELECT * FROM jobhist;
+psql:sql/test_issue_153_fix.inc:462: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
  empno |      startdate      |       enddate       |    job    |   sal   |  comm   | deptno |       chgdesc       
 -------+---------------------+---------------------+-----------+---------+---------+--------+---------------------
   7369 | 1980-12-17 00:00:00 |                     | CLERK     |  800.00 |         |     20 | New Hire
@@ -520,33 +568,67 @@ SELECT * FROM jobhist;
 
 -- Now test the crash fix
 DELETE FROM emp WHERE empno = 7934;
+psql:sql/test_issue_153_fix.inc:465: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
 psql:sql/test_issue_153_fix.inc:465: INFO:  Deleting employee 7934
 psql:sql/test_issue_153_fix.inc:465: INFO:  ..Old salary: 1300.00
+psql:sql/test_issue_153_fix.inc:465: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
+psql:sql/test_issue_153_fix.inc:465: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
+psql:sql/test_issue_153_fix.inc:465: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
 psql:sql/test_issue_153_fix.inc:465: INFO:   User  deleted employee(s) on 
 DELETE FROM emp WHERE empno = 7698;
+psql:sql/test_issue_153_fix.inc:466: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
 psql:sql/test_issue_153_fix.inc:466: INFO:  Deleting employee 7698
 psql:sql/test_issue_153_fix.inc:466: INFO:  ..Old salary: 2850.00
+psql:sql/test_issue_153_fix.inc:466: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
+psql:sql/test_issue_153_fix.inc:466: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
+psql:sql/test_issue_153_fix.inc:466: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
 psql:sql/test_issue_153_fix.inc:466: INFO:   User  deleted employee(s) on 
 DELETE FROM emp WHERE empno = 7782;
+psql:sql/test_issue_153_fix.inc:467: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
 psql:sql/test_issue_153_fix.inc:467: INFO:  Deleting employee 7782
 psql:sql/test_issue_153_fix.inc:467: INFO:  ..Old salary: 2450.00
+psql:sql/test_issue_153_fix.inc:467: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
+psql:sql/test_issue_153_fix.inc:467: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
+psql:sql/test_issue_153_fix.inc:467: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
 psql:sql/test_issue_153_fix.inc:467: INFO:   User  deleted employee(s) on 
 DELETE FROM emp WHERE empno = 7788;
+psql:sql/test_issue_153_fix.inc:468: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
 psql:sql/test_issue_153_fix.inc:468: INFO:  Deleting employee 7788
 psql:sql/test_issue_153_fix.inc:468: INFO:  ..Old salary: 3000.00
+psql:sql/test_issue_153_fix.inc:468: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
+psql:sql/test_issue_153_fix.inc:468: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
+psql:sql/test_issue_153_fix.inc:468: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
+psql:sql/test_issue_153_fix.inc:468: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
+psql:sql/test_issue_153_fix.inc:468: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
 psql:sql/test_issue_153_fix.inc:468: INFO:   User  deleted employee(s) on 
 DELETE FROM emp WHERE empno = 7838;
+psql:sql/test_issue_153_fix.inc:469: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
 psql:sql/test_issue_153_fix.inc:469: INFO:   User  deleted employee(s) on 
 DELETE FROM emp WHERE empno = 7900;
+psql:sql/test_issue_153_fix.inc:470: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
 psql:sql/test_issue_153_fix.inc:470: INFO:  Deleting employee 7900
 psql:sql/test_issue_153_fix.inc:470: INFO:  ..Old salary: 950.00
+psql:sql/test_issue_153_fix.inc:470: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
+psql:sql/test_issue_153_fix.inc:470: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
+psql:sql/test_issue_153_fix.inc:470: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
+psql:sql/test_issue_153_fix.inc:470: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
 psql:sql/test_issue_153_fix.inc:470: INFO:   User  deleted employee(s) on 
 DELETE FROM emp WHERE empno = 7654;
+psql:sql/test_issue_153_fix.inc:471: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
 psql:sql/test_issue_153_fix.inc:471: INFO:  Deleting employee 7654
 psql:sql/test_issue_153_fix.inc:471: INFO:  ..Old salary: 1250.00
+psql:sql/test_issue_153_fix.inc:471: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
+psql:sql/test_issue_153_fix.inc:471: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
+psql:sql/test_issue_153_fix.inc:471: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
 psql:sql/test_issue_153_fix.inc:471: INFO:   User  deleted employee(s) on 
 DELETE FROM dept WHERE deptno = 40;
+psql:sql/test_issue_153_fix.inc:473: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
+psql:sql/test_issue_153_fix.inc:473: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
+psql:sql/test_issue_153_fix.inc:473: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
+psql:sql/test_issue_153_fix.inc:473: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
+psql:sql/test_issue_153_fix.inc:473: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
 SELECT * FROM emp;
+psql:sql/test_issue_153_fix.inc:475: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
  empno | ename  |    job    | mgr  |  hiredate  |   sal   |  comm  | deptno 
 -------+--------+-----------+------+------------+---------+--------+--------
   7369 | SMITH  | CLERK     | 7902 | 1980-12-17 |  800.00 |        |     20
@@ -560,6 +642,7 @@ SELECT * FROM emp;
 (8 rows)
 
 SELECT * FROM dept;
+psql:sql/test_issue_153_fix.inc:476: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
  deptno |   dname    |   loc    
 --------+------------+----------
      10 | ACCOUNTING | NEW YORK
@@ -568,6 +651,7 @@ SELECT * FROM dept;
 (3 rows)
 
 SELECT * FROM jobhist;
+psql:sql/test_issue_153_fix.inc:477: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
  empno |      startdate      | enddate |    job    |   sal   |  comm  | deptno | chgdesc  
 -------+---------------------+---------+-----------+---------+--------+--------+----------
   7369 | 1980-12-17 00:00:00 |         | CLERK     |  800.00 |        |     20 | New Hire
