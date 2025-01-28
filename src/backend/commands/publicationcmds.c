@@ -836,7 +836,7 @@ CreatePublication(ParseState *pstate, CreatePublicationStmt *stmt)
 		BoolGetDatum(pubactions.pubtruncate);
 	values[Anum_pg_publication_pubviaroot - 1] =
 		BoolGetDatum(publish_via_partition_root);
-	values[Anum_pg_publication_pubgencols_type - 1] =
+	values[Anum_pg_publication_pubgencols - 1] =
 		CharGetDatum(publish_generated_columns);
 
 	tup = heap_form_tuple(RelationGetDescr(rel), values, nulls);
@@ -1048,8 +1048,8 @@ AlterPublicationOptions(ParseState *pstate, AlterPublicationStmt *stmt,
 
 	if (publish_generated_columns_given)
 	{
-		values[Anum_pg_publication_pubgencols_type - 1] = CharGetDatum(publish_generated_columns);
-		replaces[Anum_pg_publication_pubgencols_type - 1] = true;
+		values[Anum_pg_publication_pubgencols - 1] = CharGetDatum(publish_generated_columns);
+		replaces[Anum_pg_publication_pubgencols - 1] = true;
 	}
 
 	tup = heap_modify_tuple(tup, RelationGetDescr(rel), values, nulls,

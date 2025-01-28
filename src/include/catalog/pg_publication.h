@@ -59,7 +59,7 @@ CATALOG(pg_publication,6104,PublicationRelationId)
 	 * 'n'(none) if generated column data should not be published. 's'(stored)
 	 * if stored generated column data should be published.
 	 */
-	char		pubgencols_type;
+	char		pubgencols;
 } FormData_pg_publication;
 
 /* ----------------

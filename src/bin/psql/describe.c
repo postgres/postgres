@@ -6373,7 +6373,7 @@ listPublications(const char *pattern)
 						  gettext_noop("Truncates"));
 	if (pset.sversion >= 180000)
 		appendPQExpBuffer(&buf,
-						  ",\n (CASE pubgencols_type\n"
+						  ",\n (CASE pubgencols\n"
 						  "    WHEN '%c' THEN 'none'\n"
 						  "    WHEN '%c' THEN 'stored'\n"
 						  "   END) AS \"%s\"",
@@ -6507,7 +6507,7 @@ describePublications(const char *pattern)
 
 	if (has_pubgencols)
 		appendPQExpBuffer(&buf,
-						  ", (CASE pubgencols_type\n"
+						  ", (CASE pubgencols\n"
 						  "    WHEN '%c' THEN 'none'\n"
 						  "    WHEN '%c' THEN 'stored'\n"
 						  "   END) AS \"%s\"\n",

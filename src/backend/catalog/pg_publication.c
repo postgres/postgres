@@ -1080,7 +1080,7 @@ GetPublication(Oid pubid)
 	pub->pubactions.pubdelete = pubform->pubdelete;
 	pub->pubactions.pubtruncate = pubform->pubtruncate;
 	pub->pubviaroot = pubform->pubviaroot;
-	pub->pubgencols_type = pubform->pubgencols_type;
+	pub->pubgencols_type = pubform->pubgencols;
 
 	ReleaseSysCache(tup);
 

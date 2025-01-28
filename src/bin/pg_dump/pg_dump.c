@@ -4291,7 +4291,7 @@ getPublications(Archive *fout)
 	int			i_pubdelete;
 	int			i_pubtruncate;
 	int			i_pubviaroot;
-	int			i_pubgencols_type;
+	int			i_pubgencols;
 	int			i,
 				ntups;
 
@@ -4316,9 +4316,9 @@ getPublications(Archive *fout)
 		appendPQExpBufferStr(query, "false AS pubviaroot, ");
 
 	if (fout->remoteVersion >= 180000)
-		appendPQExpBufferStr(query, "p.pubgencols_type ");
+		appendPQExpBufferStr(query, "p.pubgencols ");
 	else
-		appendPQExpBuffer(query, "'%c' AS pubgencols_type ", PUBLISH_GENCOLS_NONE);
+		appendPQExpBuffer(query, "'%c' AS pubgencols ", PUBLISH_GENCOLS_NONE);
 
 	appendPQExpBufferStr(query, "FROM pg_publication p");
 
@@ -4339,7 +4339,7 @@ getPublications(Archive *fout)
 	i_pubdelete = PQfnumber(res, "pubdelete");
 	i_pubtruncate = PQfnumber(res, "pubtruncate");
 	i_pubviaroot = PQfnumber(res, "pubviaroot");
-	i_pubgencols_type = PQfnumber(res, "pubgencols_type");
+	i_pubgencols = PQfnumber(res, "pubgencols");
 
 	pubinfo = pg_malloc(ntups * sizeof(PublicationInfo));
 
@@ -4365,7 +4365,7 @@ getPublications(Archive *fout)
 		pubinfo[i].pubviaroot =
 			(strcmp(PQgetvalue(res, i, i_pubviaroot), "t") == 0);
 		pubinfo[i].pubgencols_type =
-			*(PQgetvalue(res, i, i_pubgencols_type));
+			*(PQgetvalue(res, i, i_pubgencols));
 
 		/* Decide whether we want to dump it */
 		selectDumpableObject(&(pubinfo[i].dobj), fout);
