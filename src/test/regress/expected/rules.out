@@ -1804,7 +1804,11 @@ pg_stat_all_tables| SELECT c.oid AS relid,
     pg_stat_get_vacuum_count(c.oid) AS vacuum_count,
     pg_stat_get_autovacuum_count(c.oid) AS autovacuum_count,
     pg_stat_get_analyze_count(c.oid) AS analyze_count,
-    pg_stat_get_autoanalyze_count(c.oid) AS autoanalyze_count
+    pg_stat_get_autoanalyze_count(c.oid) AS autoanalyze_count,
+    pg_stat_get_total_vacuum_time(c.oid) AS total_vacuum_time,
+    pg_stat_get_total_autovacuum_time(c.oid) AS total_autovacuum_time,
+    pg_stat_get_total_analyze_time(c.oid) AS total_analyze_time,
+    pg_stat_get_total_autoanalyze_time(c.oid) AS total_autoanalyze_time
    FROM ((pg_class c
      LEFT JOIN pg_index i ON ((c.oid = i.indrelid)))
      LEFT JOIN pg_namespace n ON ((n.oid = c.relnamespace)))
@@ -2190,7 +2194,11 @@ pg_stat_sys_tables| SELECT relid,
     vacuum_count,
     autovacuum_count,
     analyze_count,
-    autoanalyze_count
+    autoanalyze_count,
+    total_vacuum_time,
+    total_autovacuum_time,
+    total_analyze_time,
+    total_autoanalyze_time
    FROM pg_stat_all_tables
   WHERE ((schemaname = ANY (ARRAY['pg_catalog'::name, 'information_schema'::name])) OR (schemaname ~ '^pg_toast'::text));
 pg_stat_user_functions| SELECT p.oid AS funcid,
@@ -2238,7 +2246,11 @@ pg_stat_user_tables| SELECT relid,
     vacuum_count,
     autovacuum_count,
     analyze_count,
-    autoanalyze_count
+    autoanalyze_count,
+    total_vacuum_time,
+    total_autovacuum_time,
+    total_analyze_time,
+    total_autoanalyze_time
    FROM pg_stat_all_tables
   WHERE ((schemaname <> ALL (ARRAY['pg_catalog'::name, 'information_schema'::name])) AND (schemaname !~ '^pg_toast'::text));
 pg_stat_wal| SELECT wal_records,

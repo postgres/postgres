@@ -106,6 +106,34 @@ PG_STAT_GET_RELENTRY_INT64(tuples_updated)
 /* pg_stat_get_vacuum_count */
 PG_STAT_GET_RELENTRY_INT64(vacuum_count)
 
+#define PG_STAT_GET_RELENTRY_FLOAT8(stat)						\
+Datum															\
+CppConcat(pg_stat_get_,stat)(PG_FUNCTION_ARGS)					\
+{																\
+	Oid			relid = PG_GETARG_OID(0);						\
+	double		result;											\
+	PgStat_StatTabEntry *tabentry;								\
+																\
+	if ((tabentry = pgstat_fetch_stat_tabentry(relid)) == NULL)	\
+		result = 0;												\
+	else														\
+		result = (double) (tabentry->stat);						\
+																\
+	PG_RETURN_FLOAT8(result);									\
+}
+
+/* pg_stat_get_total_vacuum_time */
+PG_STAT_GET_RELENTRY_FLOAT8(total_vacuum_time)
+
+/* pg_stat_get_total_autovacuum_time */
+PG_STAT_GET_RELENTRY_FLOAT8(total_autovacuum_time)
+
+/* pg_stat_get_total_analyze_time */
+PG_STAT_GET_RELENTRY_FLOAT8(total_analyze_time)
+
+/* pg_stat_get_total_autoanalyze_time */
+PG_STAT_GET_RELENTRY_FLOAT8(total_autoanalyze_time)
+
 #define PG_STAT_GET_RELENTRY_TIMESTAMPTZ(stat)					\
 Datum															\
 CppConcat(pg_stat_get_,stat)(PG_FUNCTION_ARGS)					\

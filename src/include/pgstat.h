@@ -212,7 +212,7 @@ typedef struct PgStat_TableXactStatus
  * ------------------------------------------------------------
  */
 
-#define PGSTAT_FILE_FORMAT_ID	0x01A5BCB1
+#define PGSTAT_FILE_FORMAT_ID	0x01A5BCB2
 
 typedef struct PgStat_ArchiverStats
 {
@@ -465,6 +465,11 @@ typedef struct PgStat_StatTabEntry
 	PgStat_Counter analyze_count;
 	TimestampTz last_autoanalyze_time;	/* autovacuum initiated */
 	PgStat_Counter autoanalyze_count;
+
+	PgStat_Counter total_vacuum_time;	/* times in milliseconds */
+	PgStat_Counter total_autovacuum_time;
+	PgStat_Counter total_analyze_time;
+	PgStat_Counter total_autoanalyze_time;
 } PgStat_StatTabEntry;
 
 typedef struct PgStat_WalStats
@@ -649,10 +654,11 @@ extern void pgstat_assoc_relation(Relation rel);
 extern void pgstat_unlink_relation(Relation rel);
 
 extern void pgstat_report_vacuum(Oid tableoid, bool shared,
-								 PgStat_Counter livetuples, PgStat_Counter deadtuples);
+								 PgStat_Counter livetuples, PgStat_Counter deadtuples,
+								 TimestampTz starttime);
 extern void pgstat_report_analyze(Relation rel,
 								  PgStat_Counter livetuples, PgStat_Counter deadtuples,
-								  bool resetcounter);
+								  bool resetcounter, TimestampTz starttime);
 
 /*
  * If stats are enabled, but pending data hasn't been prepared yet, call
