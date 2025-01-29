@@ -997,23 +997,11 @@ rewriteTargetListIU(List *targetList,
 				if (commandType == CMD_INSERT)
 					new_tle = NULL;
 				else
-				{
-					new_expr = (Node *) makeConst(att_tup->atttypid,
-												  -1,
-												  att_tup->attcollation,
-												  att_tup->attlen,
-												  (Datum) 0,
-												  true, /* isnull */
-												  att_tup->attbyval);
-					/* this is to catch a NOT NULL domain constraint */
-					new_expr = coerce_to_domain(new_expr,
-												InvalidOid, -1,
-												att_tup->atttypid,
-												COERCION_IMPLICIT,
-												COERCE_IMPLICIT_CAST,
-												-1,
-												false);
-				}
+					new_expr = coerce_null_to_domain(att_tup->atttypid,
+													 att_tup->atttypmod,
+													 att_tup->attcollation,
+													 att_tup->attlen,
+													 att_tup->attbyval);
 			}
 
 			if (new_expr)
@@ -1575,21 +1563,11 @@ rewriteValuesRTE(Query *parsetree, RangeTblEntry *rte, int rti,
 						continue;
 					}
 
-					new_expr = (Node *) makeConst(att_tup->atttypid,
-												  -1,
-												  att_tup->attcollation,
-												  att_tup->attlen,
-												  (Datum) 0,
-												  true, /* isnull */
-												  att_tup->attbyval);
-					/* this is to catch a NOT NULL domain constraint */
-					new_expr = coerce_to_domain(new_expr,
-												InvalidOid, -1,
-												att_tup->atttypid,
-												COERCION_IMPLICIT,
-												COERCE_IMPLICIT_CAST,
-												-1,
-												false);
+					new_expr = coerce_null_to_domain(att_tup->atttypid,
+													 att_tup->atttypmod,
+													 att_tup->attcollation,
+													 att_tup->attlen,
+													 att_tup->attbyval);
 				}
 				newList = lappend(newList, new_expr);
 			}
