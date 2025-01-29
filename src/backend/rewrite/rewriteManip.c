@@ -22,6 +22,7 @@
 #include "parser/parse_relation.h"
 #include "parser/parsetree.h"
 #include "rewrite/rewriteManip.h"
+#include "utils/lsyscache.h"
 
 
 typedef struct
@@ -1466,20 +1467,21 @@ ReplaceVarsFromTargetList_callback(Var *var,
 				return (Node *) var;
 
 			case REPLACEVARS_SUBSTITUTE_NULL:
+				{
+					/*
+					 * If Var is of domain type, we must add a CoerceToDomain
+					 * node, in case there is a NOT NULL domain constraint.
+					 */
+					int16		vartyplen;
+					bool		vartypbyval;
 
-				/*
-				 * If Var is of domain type, we should add a CoerceToDomain
-				 * node, in case there is a NOT NULL domain constraint.
-				 */
-				return coerce_to_domain((Node *) makeNullConst(var->vartype,
-															   var->vartypmod,
-															   var->varcollid),
-										InvalidOid, -1,
-										var->vartype,
-										COERCION_IMPLICIT,
-										COERCE_IMPLICIT_CAST,
-										-1,
-										false);
+					get_typlenbyval(var->vartype, &vartyplen, &vartypbyval);
+					return coerce_null_to_domain(var->vartype,
+												 var->vartypmod,
+												 var->varcollid,
+												 vartyplen,
+												 vartypbyval);
+				}
 		}
 		elog(ERROR, "could not find replacement targetlist entry for attno %d",
 			 var->varattno);

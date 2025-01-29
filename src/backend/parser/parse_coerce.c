@@ -1264,6 +1264,43 @@ coerce_to_specific_type(ParseState *pstate, Node *node,
 }
 
 /*
+ * coerce_null_to_domain()
+ *		Build a NULL constant, then wrap it in CoerceToDomain
+ *		if the desired type is a domain type.  This allows any
+ *		NOT NULL domain constraint to be enforced at runtime.
+ */
+Node *
+coerce_null_to_domain(Oid typid, int32 typmod, Oid collation,
+					  int typlen, bool typbyval)
+{
+	Node	   *result;
+	Oid			baseTypeId;
+	int32		baseTypeMod = typmod;
+
+	/*
+	 * The constant must appear to have the domain's base type/typmod, else
+	 * coerce_to_domain() will apply a length coercion which is useless.
+	 */
+	baseTypeId = getBaseTypeAndTypmod(typid, &baseTypeMod);
+	result = (Node *) makeConst(baseTypeId,
+								baseTypeMod,
+								collation,
+								typlen,
+								(Datum) 0,
+								true,	/* isnull */
+								typbyval);
+	if (typid != baseTypeId)
+		result = coerce_to_domain(result,
+								  baseTypeId, baseTypeMod,
+								  typid,
+								  COERCION_IMPLICIT,
+								  COERCE_IMPLICIT_CAST,
+								  -1,
+								  false);
+	return result;
+}
+
+/*
  * parser_coercion_errposition - report coercion error location, if possible
  *
  * We prefer to point at the coercion request (CAST, ::, etc) if possible;
