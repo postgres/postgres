@@ -2,13 +2,16 @@
 *.o
 *.frontend
 __pycache__
+.vscode
 
 /config.cache
 /config.log
 /config.status
 /autom4te.cache
 /configure~
-t/results
+/t/results
+/results
+/tmp_check
 
 # tools files
 typedefs-full.list
