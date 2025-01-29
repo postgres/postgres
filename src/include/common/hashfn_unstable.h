@@ -219,13 +219,6 @@ fasthash_accum(fasthash_state *hs, const char *k, size_t len)
 #define haszero64(v) \
 	(((v) - 0x0101010101010101) & ~(v) & 0x8080808080808080)
 
-/* get first byte in memory order */
-#ifdef WORDS_BIGENDIAN
-#define firstbyte64(v) ((v) >> 56)
-#else
-#define firstbyte64(v) ((v) & 0xFF)
-#endif
-
 /*
  * all-purpose workhorse for fasthash_accum_cstring
  */
@@ -262,7 +255,7 @@ static inline size_t
 fasthash_accum_cstring_aligned(fasthash_state *hs, const char *str)
 {
 	const char *const start = str;
-	uint64		chunk;
+	size_t		remainder;
 	uint64		zero_byte_low;
 
 	Assert(PointerIsAligned(start, uint64));
@@ -282,7 +275,7 @@ fasthash_accum_cstring_aligned(fasthash_state *hs, const char *str)
 	 */
 	for (;;)
 	{
-		chunk = *(uint64 *) str;
+		uint64		chunk = *(uint64 *) str;
 
 #ifdef WORDS_BIGENDIAN
 		zero_byte_low = haszero64(pg_bswap64(chunk));
@@ -297,33 +290,14 @@ fasthash_accum_cstring_aligned(fasthash_state *hs, const char *str)
 		str += FH_SIZEOF_ACCUM;
 	}
 
-	if (firstbyte64(chunk) != 0)
-	{
-		size_t		remainder;
-		uint64		mask;
-
-		/*
-		 * The byte corresponding to the NUL will be 0x80, so the rightmost
-		 * bit position will be in the range 15, 23, ..., 63. Turn this into
-		 * byte position by dividing by 8.
-		 */
-		remainder = pg_rightmost_one_pos64(zero_byte_low) / BITS_PER_BYTE;
-
-		/*
-		 * Create a mask for the remaining bytes so we can combine them into
-		 * the hash. This must have the same result as mixing the remaining
-		 * bytes with fasthash_accum().
-		 */
-#ifdef WORDS_BIGENDIAN
-		mask = ~UINT64CONST(0) << BITS_PER_BYTE * (FH_SIZEOF_ACCUM - remainder);
-#else
-		mask = ~UINT64CONST(0) >> BITS_PER_BYTE * (FH_SIZEOF_ACCUM - remainder);
-#endif
-		hs->accum = chunk & mask;
-		fasthash_combine(hs);
-
-		str += remainder;
-	}
+	/*
+	 * The byte corresponding to the NUL will be 0x80, so the rightmost bit
+	 * position will be in the range 7, 15, ..., 63. Turn this into byte
+	 * position by dividing by 8.
+	 */
+	remainder = pg_rightmost_one_pos64(zero_byte_low) / BITS_PER_BYTE;
+	fasthash_accum(hs, str, remainder);
+	str += remainder;
 
 	return str - start;
 }
