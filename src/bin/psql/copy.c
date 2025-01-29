@@ -280,7 +280,7 @@ do_copy(const char *args)
 
 	/* prepare to read or write the target file */
 	if (options->file && !options->program)
-		canonicalize_path(options->file);
+		canonicalize_path_enc(options->file, pset.encoding);
 
 	if (options->from)
 	{

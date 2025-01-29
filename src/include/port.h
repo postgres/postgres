@@ -53,6 +53,7 @@ extern char *first_path_var_separator(const char *pathlist);
 extern void join_path_components(char *ret_path,
 								 const char *head, const char *tail);
 extern void canonicalize_path(char *path);
+extern void canonicalize_path_enc(char *path, int encoding);
 extern void make_native_path(char *filename);
 extern void cleanup_path(char *path);
 extern bool path_contains_parent_reference(const char *path);

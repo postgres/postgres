@@ -1224,7 +1224,7 @@ exec_command_edit(PsqlScanState scan_state, bool active_branch,
 				expand_tilde(&fname);
 				if (fname)
 				{
-					canonicalize_path(fname);
+					canonicalize_path_enc(fname, pset.encoding);
 					/* Always clear buffer if the file isn't modified */
 					discard_on_quit = true;
 				}
@@ -2864,7 +2864,7 @@ exec_command_write(PsqlScanState scan_state, bool active_branch,
 				}
 				else
 				{
-					canonicalize_path(fname);
+					canonicalize_path_enc(fname, pset.encoding);
 					fd = fopen(fname, "w");
 				}
 				if (!fd)
@@ -4479,7 +4479,7 @@ process_file(char *filename, bool use_relative_path)
 	}
 	else if (strcmp(filename, "-") != 0)
 	{
-		canonicalize_path(filename);
+		canonicalize_path_enc(filename, pset.encoding);
 
 		/*
 		 * If we were asked to resolve the pathname relative to the location
@@ -4493,7 +4493,7 @@ process_file(char *filename, bool use_relative_path)
 			strlcpy(relpath, pset.inputfile, sizeof(relpath));
 			get_parent_directory(relpath);
 			join_path_components(relpath, relpath, filename);
-			canonicalize_path(relpath);
+			canonicalize_path_enc(relpath, pset.encoding);
 
 			filename = relpath;
 		}
