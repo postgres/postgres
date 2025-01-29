@@ -59,6 +59,10 @@ static GenericKeyring *load_keyring_provider_from_record(KeyringProvideRecord *p
 static inline void get_keyring_infofile_path(char *resPath, Oid dbOid);
 static bool fetch_next_key_provider(int fd, off_t *curr_pos, KeyringProvideRecord *provider);
 
+static uint32 write_key_provider_info(KeyringProvideRecord *provider,
+									  Oid database_id, off_t position,
+									  bool error_if_exists, bool write_xlog);
+
 #ifdef FRONTEND
 
 static SimplePtrList *scan_key_provider_file(ProviderScanType scanType, void *scanKey, Oid dbOid);
@@ -71,6 +75,9 @@ static List *scan_key_provider_file(ProviderScanType scanType, void *scanKey, Oi
 PG_FUNCTION_INFO_V1(pg_tde_add_key_provider_internal);
 Datum		pg_tde_add_key_provider_internal(PG_FUNCTION_ARGS);
 
+PG_FUNCTION_INFO_V1(pg_tde_change_key_provider_internal);
+Datum		pg_tde_change_key_provider_internal(PG_FUNCTION_ARGS);
+
 PG_FUNCTION_INFO_V1(pg_tde_list_all_key_providers);
 Datum		pg_tde_list_all_key_providers(PG_FUNCTION_ARGS);
 
@@ -78,9 +85,6 @@ Datum		pg_tde_list_all_key_providers(PG_FUNCTION_ARGS);
 
 static void key_provider_startup_cleanup(int tde_tbl_count, XLogExtensionInstall *ext_info, bool redo, void *arg);
 static const char *get_keyring_provider_typename(ProviderType p_type);
-static uint32 write_key_provider_info(KeyringProvideRecord *provider,
-									  Oid database_id, off_t position,
-									  bool error_if_exists, bool write_xlog);
 
 static Size initialize_shared_state(void *start_address);
 static Size required_shared_mem_size(void);
@@ -141,21 +145,6 @@ key_provider_startup_cleanup(int tde_tbl_count, XLogExtensionInstall *ext_info, 
 	cleanup_key_provider_info(ext_info->database_id);
 }
 
-ProviderType
-get_keyring_provider_from_typename(char *provider_type)
-{
-	if (provider_type == NULL)
-		return UNKNOWN_KEY_PROVIDER;
-
-	if (strcmp(FILE_KEYRING_TYPE, provider_type) == 0)
-		return FILE_KEY_PROVIDER;
-	if (strcmp(VAULTV2_KEYRING_TYPE, provider_type) == 0)
-		return VAULT_V2_KEY_PROVIDER;
-	if (strcmp(KMIP_KEYRING_TYPE, provider_type) == 0)
-		return KMIP_KEY_PROVIDER;
-	return UNKNOWN_KEY_PROVIDER;
-}
-
 static const char *
 get_keyring_provider_typename(ProviderType p_type)
 {
@@ -179,150 +168,6 @@ GetAllKeyringProviders(Oid dbOid)
 	return scan_key_provider_file(PROVIDER_SCAN_ALL, NULL, dbOid);
 }
 
-GenericKeyring *
-GetKeyProviderByName(const char *provider_name, Oid dbOid)
-{
-	GenericKeyring *keyring = NULL;
-	List	   *providers = scan_key_provider_file(PROVIDER_SCAN_BY_NAME, (void *) provider_name, dbOid);
-
-	if (providers != NIL)
-	{
-		keyring = (GenericKeyring *) linitial(providers);
-		list_free(providers);
-	}
-	else
-	{
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("key provider \"%s\" does not exists", provider_name),
-				 errhint("Use pg_tde_add_key_provider interface to create the key provider")));
-	}
-	return keyring;
-}
-
-
-static uint32
-write_key_provider_info(KeyringProvideRecord *provider, Oid database_id,
-						off_t position, bool error_if_exists, bool write_xlog)
-{
-	off_t		bytes_written = 0;
-	off_t		curr_pos = 0;
-	int			fd;
-
-	/* Named max, but global key provider oids are stored as negative numbers! */
-	int			max_provider_id = 0;
-	char		kp_info_path[MAXPGPATH] = {0};
-	KeyringProvideRecord existing_provider;
-
-	Assert(provider != NULL);
-
-	get_keyring_infofile_path(kp_info_path, database_id);
-
-	LWLockAcquire(tde_provider_info_lock(), LW_EXCLUSIVE);
-
-	fd = BasicOpenFile(kp_info_path, O_CREAT | O_RDWR | PG_BINARY);
-	if (fd < 0)
-	{
-		LWLockRelease(tde_provider_info_lock());
-		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not open tde file \"%s\": %m", kp_info_path)));
-	}
-	if (position == -1)
-	{
-		/*
-		 * we also need to verify the name conflict and generate the next
-		 * provider ID
-		 */
-		while (fetch_next_key_provider(fd, &curr_pos, &existing_provider))
-		{
-			if (strcmp(existing_provider.provider_name, provider->provider_name) == 0)
-			{
-				close(fd);
-				LWLockRelease(tde_provider_info_lock());
-				ereport(error_if_exists ? ERROR : DEBUG1,
-						(errcode(ERRCODE_DUPLICATE_OBJECT),
-						 errmsg("key provider \"%s\" already exists", provider->provider_name)));
-
-				if (!error_if_exists)
-				{
-					provider->provider_id = existing_provider.provider_id;
-					return provider->provider_id;
-				}
-			}
-			if (max_provider_id < abs(existing_provider.provider_id))
-				max_provider_id = abs(existing_provider.provider_id);
-		}
-		provider->provider_id = max_provider_id + 1;
-		if (database_id == GLOBAL_DATA_TDE_OID)
-		{
-			provider->provider_id = -provider->provider_id;
-		}
-		curr_pos = lseek(fd, 0, SEEK_END);
-
-		/*
-		 * emit the xlog here. So that we can handle partial file write errors
-		 * but cannot make new WAL entries during recovery.
-		 */
-		if (write_xlog)
-		{
-			KeyringProviderXLRecord xlrec;
-
-			xlrec.database_id = database_id;
-			xlrec.offset_in_file = curr_pos;
-			memcpy(&xlrec.provider, provider, sizeof(KeyringProvideRecord));
-
-			XLogBeginInsert();
-			XLogRegisterData((char *) &xlrec, sizeof(KeyringProviderXLRecord));
-			XLogInsert(RM_TDERMGR_ID, XLOG_TDE_ADD_KEY_PROVIDER_KEY);
-		}
-	}
-	else
-	{
-		/*
-		 * we are performing redo, just go to the position received from the
-		 * xlog and write the record there. No need to verify the name
-		 * conflict and generate the provider ID
-		 */
-		curr_pos = lseek(fd, position, SEEK_SET);
-	}
-
-	/*
-	 * All good, Just add a new provider
-	 */
-	bytes_written = pg_pwrite(fd, provider, sizeof(KeyringProvideRecord), curr_pos);
-	if (bytes_written != sizeof(KeyringProvideRecord))
-	{
-		close(fd);
-		LWLockRelease(tde_provider_info_lock());
-		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("key provider info file \"%s\" can't be written: %m",
-						kp_info_path)));
-	}
-	if (pg_fsync(fd) != 0)
-	{
-		close(fd);
-		LWLockRelease(tde_provider_info_lock());
-		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not fsync file \"%s\": %m",
-						kp_info_path)));
-	}
-	close(fd);
-	LWLockRelease(tde_provider_info_lock());
-	return provider->provider_id;
-}
-
-/*
- * Save the key provider info to the file
- */
-uint32
-save_new_key_provider_info(KeyringProvideRecord *provider, Oid databaseId, bool write_xlog)
-{
-	return write_key_provider_info(provider, databaseId, -1, true, write_xlog);
-}
-
 uint32
 redo_key_provider_info(KeyringProviderXLRecord *xlrec)
 {
@@ -337,6 +182,29 @@ cleanup_key_provider_info(Oid databaseId)
 
 	get_keyring_infofile_path(kp_info_path, databaseId);
 	PathNameDeleteTemporaryFile(kp_info_path, false);
+}
+
+Datum
+pg_tde_change_key_provider_internal(PG_FUNCTION_ARGS)
+{
+	char	   *provider_type = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	char	   *provider_name = text_to_cstring(PG_GETARG_TEXT_PP(1));
+	char	   *options = text_to_cstring(PG_GETARG_TEXT_PP(2));
+	bool		is_global = PG_GETARG_BOOL(3);
+	KeyringProvideRecord provider;
+	Oid			dbOid = is_global ? GLOBAL_DATA_TDE_OID : MyDatabaseId;
+
+	/* reports error if not found */
+	GenericKeyring *keyring = GetKeyProviderByName(provider_name, dbOid);
+
+	pfree(keyring);
+
+	strncpy(provider.options, options, sizeof(provider.options));
+	strncpy(provider.provider_name, provider_name, sizeof(provider.provider_name));
+	provider.provider_type = get_keyring_provider_from_typename(provider_type);
+	modify_key_provider_info(&provider, dbOid, true);
+
+	PG_RETURN_INT32(provider.provider_id);
 }
 
 Datum
@@ -429,6 +297,167 @@ GetKeyProviderByID(int provider_id, Oid dbOid)
 
 #endif							/* !FRONTEND */
 
+static uint32
+write_key_provider_info(KeyringProvideRecord *provider, Oid database_id,
+						off_t position, bool error_if_exists, bool write_xlog)
+{
+	off_t		bytes_written = 0;
+	off_t		curr_pos = 0;
+	int			fd;
+	int			seek_pos = -1;
+
+	/* Named max, but global key provider oids are stored as negative numbers! */
+	int			max_provider_id = 0;
+	char		kp_info_path[MAXPGPATH] = {0};
+	KeyringProvideRecord existing_provider;
+	GenericKeyring *record;
+
+	Assert(provider != NULL);
+
+	/* Try to parse the JSON data first: if it doesn't work, don't save it! */
+	record = load_keyring_provider_from_record(provider);
+	if (record == NULL)
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_DATA_EXCEPTION), errmsg("Invalid provider options")));
+	}
+	else
+	{
+		pfree(record);
+	}
+
+	get_keyring_infofile_path(kp_info_path, database_id);
+
+	LWLockAcquire(tde_provider_info_lock(), LW_EXCLUSIVE);
+
+	fd = BasicOpenFile(kp_info_path, O_CREAT | O_RDWR | PG_BINARY);
+	if (fd < 0)
+	{
+		LWLockRelease(tde_provider_info_lock());
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not open tde file \"%s\": %m", kp_info_path)));
+	}
+	if (position == -1)
+	{
+		/*
+		 * we also need to verify the name conflict and generate the next
+		 * provider ID
+		 */
+		int			before_pos = curr_pos;
+
+		while (fetch_next_key_provider(fd, &curr_pos, &existing_provider))
+		{
+			if (strcmp(existing_provider.provider_name, provider->provider_name) == 0)
+			{
+				if (error_if_exists)
+				{
+					close(fd);
+					LWLockRelease(tde_provider_info_lock());
+					ereport(ERROR,
+							(errcode(ERRCODE_DUPLICATE_OBJECT),
+							 errmsg("key provider \"%s\" already exists", provider->provider_name)));
+				}
+				else
+				{
+
+					seek_pos = before_pos;
+					provider->provider_id = existing_provider.provider_id;
+				}
+			}
+			if (max_provider_id < abs(existing_provider.provider_id))
+				max_provider_id = abs(existing_provider.provider_id);
+		}
+		if (seek_pos == -1)
+		{
+			provider->provider_id = max_provider_id + 1;
+
+			if (database_id == GLOBAL_DATA_TDE_OID)
+			{
+				provider->provider_id = -provider->provider_id;
+			}
+			curr_pos = lseek(fd, 0, SEEK_END);
+		}
+		else
+		{
+			curr_pos = lseek(fd, seek_pos, SEEK_CUR);
+		}
+
+
+		/*
+		 * emit the xlog here. So that we can handle partial file write errors
+		 * but cannot make new WAL entries during recovery.
+		 */
+		if (write_xlog)
+		{
+#ifndef FRONTEND
+			KeyringProviderXLRecord xlrec;
+
+			xlrec.database_id = database_id;
+			xlrec.offset_in_file = curr_pos;
+			memcpy(&xlrec.provider, provider, sizeof(KeyringProvideRecord));
+
+			XLogBeginInsert();
+			XLogRegisterData((char *) &xlrec, sizeof(KeyringProviderXLRecord));
+			XLogInsert(RM_TDERMGR_ID, XLOG_TDE_ADD_KEY_PROVIDER_KEY);
+#else
+			Assert(0);
+#endif
+		}
+	}
+	else
+	{
+		/*
+		 * we are performing redo, just go to the position received from the
+		 * xlog and write the record there. No need to verify the name
+		 * conflict and generate the provider ID
+		 */
+		curr_pos = lseek(fd, position, SEEK_SET);
+	}
+
+	/*
+	 * All good, Just add a new provider
+	 */
+	bytes_written = pg_pwrite(fd, provider, sizeof(KeyringProvideRecord), curr_pos);
+	if (bytes_written != sizeof(KeyringProvideRecord))
+	{
+		close(fd);
+		LWLockRelease(tde_provider_info_lock());
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("key provider info file \"%s\" can't be written: %m",
+						kp_info_path)));
+	}
+	if (pg_fsync(fd) != 0)
+	{
+		close(fd);
+		LWLockRelease(tde_provider_info_lock());
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not fsync file \"%s\": %m",
+						kp_info_path)));
+	}
+	close(fd);
+	LWLockRelease(tde_provider_info_lock());
+	return provider->provider_id;
+}
+
+
+/*
+ * Save the key provider info to the file
+ */
+uint32
+save_new_key_provider_info(KeyringProvideRecord *provider, Oid databaseId, bool write_xlog)
+{
+	return write_key_provider_info(provider, databaseId, -1, true, write_xlog);
+}
+
+uint32
+modify_key_provider_info(KeyringProvideRecord *provider, Oid databaseId, bool write_xlog)
+{
+	return write_key_provider_info(provider, databaseId, -1, false, write_xlog);
+}
+
 #ifdef FRONTEND
 GenericKeyring *
 GetKeyProviderByID(int provider_id, Oid dbOid)
@@ -492,6 +521,7 @@ scan_key_provider_file(ProviderScanType scanType, void *scanKey, Oid dbOid)
 	fd = BasicOpenFile(kp_info_path, PG_BINARY);
 	if (fd < 0)
 	{
+		fprintf(stderr, "WTF\n");
 		LWLockRelease(tde_provider_info_lock());
 		ereport(DEBUG2,
 				(errcode_for_file_access(),
@@ -727,4 +757,52 @@ fetch_next_key_provider(int fd, off_t *curr_pos, KeyringProvideRecord *provider)
 				 errdetail("invalid key provider record size %ld expected %lu", bytes_read, sizeof(KeyringProvideRecord))));
 	}
 	return true;
+}
+
+ProviderType
+get_keyring_provider_from_typename(char *provider_type)
+{
+	if (provider_type == NULL)
+		return UNKNOWN_KEY_PROVIDER;
+
+	if (strcmp(FILE_KEYRING_TYPE, provider_type) == 0)
+		return FILE_KEY_PROVIDER;
+	if (strcmp(VAULTV2_KEYRING_TYPE, provider_type) == 0)
+		return VAULT_V2_KEY_PROVIDER;
+	if (strcmp(KMIP_KEYRING_TYPE, provider_type) == 0)
+		return KMIP_KEY_PROVIDER;
+	return UNKNOWN_KEY_PROVIDER;
+}
+
+GenericKeyring *
+GetKeyProviderByName(const char *provider_name, Oid dbOid)
+{
+	GenericKeyring *keyring = NULL;
+
+#ifndef FRONTEND
+	static List *providers;
+#else
+	static SimplePtrList *providers;
+#endif
+
+	providers = scan_key_provider_file(PROVIDER_SCAN_BY_NAME, (void *) provider_name, dbOid);
+
+	if (providers != NULL)
+	{
+#ifndef FRONTEND
+		keyring = (GenericKeyring *) linitial(providers);
+		list_free(providers);
+#else
+		keyring = (GenericKeyring *) providers->head->ptr;
+		simple_list_free(providers);
+#endif
+	}
+	else
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("key provider \"%s\" does not exists", provider_name),
+				 errhint("Use pg_tde_add_key_provider interface to create the key provider")));
+	}
+	return keyring;
 }

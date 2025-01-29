@@ -137,7 +137,7 @@ static JsonParseErrorType json_kring_object_field_start(void *state, char *fname
 static JsonParseErrorType json_kring_object_start(void *state);
 static JsonParseErrorType json_kring_object_end(void *state);
 
-static void json_kring_assign_scalar(JsonKeyringState *parse, JsonKeyringField field, char *value);
+static JsonParseErrorType json_kring_assign_scalar(JsonKeyringState *parse, JsonKeyringField field, char *value);
 static char *get_remote_kring_value(const char *url, const char *field_name);
 static char *get_file_kring_value(const char *path, const char *field_name);
 
@@ -188,7 +188,7 @@ ParseKeyringJSONOptions(ProviderType provider_type, void *out_opts, char *in_buf
 	jerr = pg_parse_json(jlex, &sem);
 	if (jerr != JSON_SUCCESS)
 	{
-		ereport(WARNING,
+		ereport(ERROR,
 				(errmsg("parsing of keyring options failed: %s",
 						json_errdetail(jerr, jlex))));
 
@@ -264,6 +264,7 @@ json_kring_object_end(void *state)
 		if (parse->state == JK_EXPECT_EXTERN_VAL)
 		{
 			JsonKeyringField parent_field = parse->field[0];
+			JsonParseErrorType ret;
 
 			char	   *value = NULL;
 
@@ -272,7 +273,17 @@ json_kring_object_end(void *state)
 			if (strcmp(parse->field_type, KEYRING_FILE_FIELD_TYPE) == 0)
 				value = get_file_kring_value(parse->extern_path, JK_FIELD_NAMES[parent_field]);
 
-			json_kring_assign_scalar(parse, parent_field, value);
+			if (value == NULL)
+			{
+				return JSON_INCOMPLETE;
+			}
+
+			ret = json_kring_assign_scalar(parse, parent_field, value);
+
+			if (ret != JSON_SUCCESS)
+			{
+				return ret;
+			}
 		}
 
 		parse->state = JK_EXPECT_TOP_FIELD;
@@ -322,7 +333,8 @@ json_kring_object_field_start(void *state, char *fname, bool isnull)
 					else
 					{
 						*field = JK_FIELD_UNKNOWN;
-						elog(DEBUG1, "parse file keyring config: unexpected field %s", fname);
+						elog(ERROR, "parse file keyring config: unexpected field %s", fname);
+						return JSON_INVALID_TOKEN;
 					}
 					break;
 
@@ -338,7 +350,8 @@ json_kring_object_field_start(void *state, char *fname, bool isnull)
 					else
 					{
 						*field = JK_FIELD_UNKNOWN;
-						elog(DEBUG1, "parse json keyring config: unexpected field %s", fname);
+						elog(ERROR, "parse json keyring config: unexpected field %s", fname);
+						return JSON_INVALID_TOKEN;
 					}
 					break;
 
@@ -354,13 +367,13 @@ json_kring_object_field_start(void *state, char *fname, bool isnull)
 					else
 					{
 						*field = JK_FIELD_UNKNOWN;
-						elog(DEBUG1, "parse json keyring config: unexpected field %s", fname);
+						elog(ERROR, "parse json keyring config: unexpected field %s", fname);
+						return JSON_INVALID_TOKEN;
 					}
 					break;
 
 				case UNKNOWN_KEY_PROVIDER:
-					Assert(0);
-					break;
+					return JSON_INVALID_TOKEN;
 			}
 			break;
 
@@ -371,6 +384,12 @@ json_kring_object_field_start(void *state, char *fname, bool isnull)
 				*field = JK_REMOTE_URL;
 			else if (strcmp(fname, JK_FIELD_NAMES[JK_FIELD_PATH]) == 0)
 				*field = JK_FIELD_PATH;
+			else
+			{
+				*field = JK_FIELD_UNKNOWN;
+				elog(ERROR, "parse json keyring config: unexpected field %s", fname);
+				return JSON_INVALID_TOKEN;
+			}
 			break;
 	}
 
@@ -388,12 +407,10 @@ json_kring_scalar(void *state, char *token, JsonTokenType tokentype)
 {
 	JsonKeyringState *parse = state;
 
-	json_kring_assign_scalar(parse, parse->field[parse->level], token);
-
-	return JSON_SUCCESS;
+	return json_kring_assign_scalar(parse, parse->field[parse->level], token);
 }
 
-static void
+static JsonParseErrorType
 json_kring_assign_scalar(JsonKeyringState *parse, JsonKeyringField field, char *value)
 {
 	VaultV2Keyring *vault = parse->provider_opts;
@@ -447,10 +464,11 @@ json_kring_assign_scalar(JsonKeyringState *parse, JsonKeyringField field, char *
 			break;
 
 		default:
-			elog(DEBUG1, "json keyring: unexpected scalar field %d", field);
-			Assert(0);
-			break;
+			elog(ERROR, "json keyring: unexpected scalar field %d", field);
+			return JSON_INVALID_TOKEN;
 	}
+
+	return JSON_SUCCESS;
 }
 
 static char *
@@ -465,17 +483,17 @@ get_remote_kring_value(const char *url, const char *field_name)
 
 	if (!curlSetupSession(url, NULL, &outStr))
 	{
-		elog(WARNING, "CURL error for remote object %s", field_name);
+		elog(ERROR, "CURL error for remote object %s", field_name);
 		return NULL;
 	}
 	if (curl_easy_perform(keyringCurl) != CURLE_OK)
 	{
-		elog(WARNING, "HTTP request error for remote object %s", field_name);
+		elog(ERROR, "HTTP request error for remote object %s", field_name);
 		return NULL;
 	}
 	if (curl_easy_getinfo(keyringCurl, CURLINFO_RESPONSE_CODE, &httpCode) != CURLE_OK)
 	{
-		elog(WARNING, "HTTP error for remote object %s, HTTP code %li", field_name, httpCode);
+		elog(ERROR, "HTTP error for remote object %s, HTTP code %li", field_name, httpCode);
 		return NULL;
 	}
 
@@ -494,7 +512,7 @@ get_file_kring_value(const char *path, const char *field_name)
 	fd = BasicOpenFile(path, O_RDONLY);
 	if (fd < 0)
 	{
-		elog(WARNING, "failed to open file %s for %s", path, field_name);
+		elog(ERROR, "failed to open file %s for %s", path, field_name);
 		return NULL;
 	}
 
@@ -502,7 +520,7 @@ get_file_kring_value(const char *path, const char *field_name)
 	val = palloc0(MAX_CONFIG_FILE_DATA_LENGTH);
 	if (pg_pread(fd, val, MAX_CONFIG_FILE_DATA_LENGTH, 0) == -1)
 	{
-		elog(WARNING, "failed to read file %s for %s", path, field_name);
+		elog(ERROR, "failed to read file %s for %s", path, field_name);
 		pfree(val);
 		close(fd);
 		return NULL;

@@ -40,6 +40,8 @@ extern void cleanup_key_provider_info(Oid databaseId);
 extern void InitializeKeyProviderInfo(void);
 extern uint32 save_new_key_provider_info(KeyringProvideRecord *provider,
 										 Oid databaseId, bool write_xlog);
+extern uint32 modify_key_provider_info(KeyringProvideRecord *provider,
+									   Oid databaseId, bool write_xlog);
 extern uint32 redo_key_provider_info(KeyringProviderXLRecord *xlrec);
 
 extern bool ParseKeyringJSONOptions(ProviderType provider_type, void *out_opts,

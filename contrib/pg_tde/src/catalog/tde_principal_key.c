@@ -89,7 +89,6 @@ static bool set_principal_key_with_keyring(const char *key_name,
 										   Oid providerOid,
 										   Oid dbOid,
 										   bool ensure_new_key);
-static TDEPrincipalKey *alter_keyprovider_for_principal_key(GenericKeyring *newKeyring, Oid dbOid);
 
 static const TDEShmemSetupRoutine principal_key_info_shmem_routine = {
 	.init_shared_state = initialize_shared_state,
@@ -294,6 +293,8 @@ set_principal_key_with_keyring(const char *key_name, const char *provider_name,
 	{
 		LWLockRelease(lock_files);
 
+		pfree(new_keyring);
+
 		ereport(ERROR,
 				(errmsg("failed to create principal key: already exists")));
 
@@ -306,6 +307,8 @@ set_principal_key_with_keyring(const char *key_name, const char *provider_name,
 	if (keyInfo == NULL)
 	{
 		LWLockRelease(lock_files);
+
+		pfree(new_keyring);
 
 		ereport(ERROR,
 				(errmsg("failed to retrieve/create principal key.")));
@@ -351,70 +354,9 @@ set_principal_key_with_keyring(const char *key_name, const char *provider_name,
 
 	LWLockRelease(lock_files);
 
+	pfree(new_keyring);
+
 	return success;
-}
-
-/*
- * alter_keyprovider_for_principal_key:
- */
-TDEPrincipalKey *
-alter_keyprovider_for_principal_key(GenericKeyring *newKeyring, Oid dbOid)
-{
-	TDEPrincipalKeyInfo *principalKeyInfo = NULL;
-	TDEPrincipalKey *principal_key = NULL;
-
-	LWLock	   *lock_files = tde_lwlock_enc_keys();
-
-	Assert(newKeyring != NULL);
-	LWLockAcquire(lock_files, LW_EXCLUSIVE);
-
-	principalKeyInfo = pg_tde_get_principal_key_info(dbOid);
-
-	if (principalKeyInfo == NULL)
-	{
-		LWLockRelease(lock_files);
-		ereport(ERROR,
-				(errmsg("Principal key not set for the database"),
-				 errhint("Use set_principal_key interface to set the principal key")));
-	}
-
-	if (newKeyring->keyring_id == principalKeyInfo->keyringId)
-	{
-		LWLockRelease(lock_files);
-		ereport(ERROR,
-				(errmsg("New key provider is same as the current key provider")));
-	}
-	/* update the key provider in principal key info */
-
-	ereport(DEBUG2,
-			(errmsg("Changing keyprovider ID from :%d to %d", principalKeyInfo->keyringId, newKeyring->keyring_id)));
-
-	principalKeyInfo->keyringId = newKeyring->keyring_id;
-
-	update_principal_key_info(principalKeyInfo);
-
-	/* XLog the new key */
-	XLogBeginInsert();
-	XLogRegisterData((char *) principalKeyInfo, sizeof(TDEPrincipalKeyInfo));
-	XLogInsert(RM_TDERMGR_ID, XLOG_TDE_UPDATE_PRINCIPAL_KEY);
-
-	/* clear the cache as well */
-	clear_principal_key_cache(dbOid);
-
-	principal_key = GetPrincipalKey(dbOid, LW_EXCLUSIVE);
-
-	LWLockRelease(lock_files);
-
-	return principal_key;
-}
-
-bool
-AlterPrincipalKeyKeyring(const char *provider_name)
-{
-	TDEPrincipalKey *principal_key = alter_keyprovider_for_principal_key(GetKeyProviderByName(provider_name, MyDatabaseId),
-																		 MyDatabaseId);
-
-	return (principal_key != NULL);
 }
 
 /*
@@ -615,20 +557,6 @@ pg_tde_set_principal_key_internal(PG_FUNCTION_ARGS)
 	PG_RETURN_BOOL(success);
 }
 
-PG_FUNCTION_INFO_V1(pg_tde_alter_principal_key_keyring);
-Datum		pg_tde_alter_principal_key_keyring(PG_FUNCTION_ARGS);
-
-Datum
-pg_tde_alter_principal_key_keyring(PG_FUNCTION_ARGS)
-{
-	char	   *provider_name = text_to_cstring(PG_GETARG_TEXT_PP(0));
-	bool		ret;
-
-	ereport(LOG, (errmsg("Altering principal key provider to \"%s\" for the database", provider_name)));
-	ret = AlterPrincipalKeyKeyring(provider_name);
-	PG_RETURN_BOOL(ret);
-}
-
 PG_FUNCTION_INFO_V1(pg_tde_principal_key_info_internal);
 Datum
 pg_tde_principal_key_info_internal(PG_FUNCTION_ARGS)
@@ -705,6 +633,10 @@ pg_tde_get_key_info(PG_FUNCTION_ARGS, Oid dbOid)
 	/* Make the tuple into a datum */
 	result = HeapTupleGetDatum(tuple);
 
+#ifndef FRONTEND
+	pfree(keyring);
+#endif
+
 	PG_RETURN_DATUM(result);
 }
 #endif							/* FRONTEND */
@@ -764,6 +696,7 @@ get_principal_key_from_keyring(Oid dbOid)
 		pfree(principalKey);
 		principalKey = get_principal_key_from_cache(dbOid);
 	}
+	pfree(keyring);
 #endif
 
 	if (principalKeyInfo)

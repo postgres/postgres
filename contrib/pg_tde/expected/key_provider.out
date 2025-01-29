@@ -1,0 +1,55 @@
+CREATE EXTENSION IF NOT EXISTS pg_tde;
+SELECT  * FROM pg_tde_principal_key_info();
+ERROR:  Principal key does not exists for the database
+HINT:  Use set_principal_key interface to set the principal key
+CONTEXT:  SQL function "pg_tde_principal_key_info" statement 1
+SELECT pg_tde_add_key_provider_file('incorrect-file-provider',  json_object('foo' VALUE '/tmp/pg_tde_test_keyring.per'));
+ERROR:  parse json keyring config: unexpected field foo
+SELECT * FROM pg_tde_list_all_key_providers();
+ id | provider_name | provider_type | options 
+----+---------------+---------------+---------
+(0 rows)
+
+SELECT pg_tde_add_key_provider_file('file-provider','/tmp/pg_tde_test_keyring.per');
+ pg_tde_add_key_provider_file 
+------------------------------
+                            1
+(1 row)
+
+SELECT * FROM pg_tde_list_all_key_providers();
+ id | provider_name | provider_type |                          options                           
+----+---------------+---------------+------------------------------------------------------------
+  1 | file-provider | file          | {"type" : "file", "path" : "/tmp/pg_tde_test_keyring.per"}
+(1 row)
+
+--SELECT pg_tde_set_principal_key('test-db-principal-key','file-provider');
+SELECT pg_tde_change_key_provider_file('not-existent-provider','/tmp/pg_tde_test_keyring.per');
+ERROR:  key provider "not-existent-provider" does not exists
+HINT:  Use pg_tde_add_key_provider interface to create the key provider
+SELECT * FROM pg_tde_list_all_key_providers();
+ id | provider_name | provider_type |                          options                           
+----+---------------+---------------+------------------------------------------------------------
+  1 | file-provider | file          | {"type" : "file", "path" : "/tmp/pg_tde_test_keyring.per"}
+(1 row)
+
+SELECT pg_tde_change_key_provider_file('file-provider','/tmp/pg_tde_test_keyring_other.per');
+ pg_tde_change_key_provider_file 
+---------------------------------
+                               1
+(1 row)
+
+SELECT * FROM pg_tde_list_all_key_providers();
+ id | provider_name | provider_type |                             options                              
+----+---------------+---------------+------------------------------------------------------------------
+  1 | file-provider | file          | {"type" : "file", "path" : "/tmp/pg_tde_test_keyring_other.per"}
+(1 row)
+
+SELECT pg_tde_change_key_provider_file('file-provider',  json_object('foo' VALUE '/tmp/pg_tde_test_keyring.per'));
+ERROR:  parse json keyring config: unexpected field foo
+SELECT * FROM pg_tde_list_all_key_providers();
+ id | provider_name | provider_type |                             options                              
+----+---------------+---------------+------------------------------------------------------------------
+  1 | file-provider | file          | {"type" : "file", "path" : "/tmp/pg_tde_test_keyring_other.per"}
+(1 row)
+
+-- TODO: verify that we can also can change the type of it

@@ -106,6 +106,7 @@ sql_tests = [
       'merge_join_basic',
       'cache_alloc',
       'update_basic',
+      'key_provider',
 ]
 
 tap_tests = [

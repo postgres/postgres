@@ -1,6 +1,8 @@
+TDE_XLOG_OBJS = \
+ 	src/access/pg_tde_xlog_encrypt.frontend
+
 TDE_OBJS = \
  	src/access/pg_tde_tdemap.frontend \
- 	src/access/pg_tde_xlog_encrypt.frontend \
  	src/catalog/tde_global_space.frontend \
  	src/catalog/tde_keyring.frontend \
  	src/catalog/tde_keyring_parse_opts.frontend \
@@ -12,12 +14,27 @@ TDE_OBJS = \
  	src/keyring/keyring_curl.frontend \
  	src/keyring/keyring_file.frontend \
  	src/keyring/keyring_vault.frontend \
-	src/keyring/keyring_kmip.frontend \
-	src/keyring/keyring_kmip_ereport.frontend \
 	src/libkmip/libkmip/src/kmip.frontend \
 	src/libkmip/libkmip/src/kmip_bio.frontend \
 	src/libkmip/libkmip/src/kmip_locate.frontend \
-	src/libkmip/libkmip/src/kmip_memset.frontend
+	src/libkmip/libkmip/src/kmip_memset.frontend \
+	src/keyring/keyring_kmip.frontend \
+	src/keyring/keyring_kmip_ereport.frontend
+
+
+TDE_OBJS2 = $(TDE_OBJS:%=$(top_srcdir)/contrib/pg_tde/%)
+TDE_XLOG_OBJS2 = $(TDE_XLOG_OBJS:%=$(top_srcdir)/contrib/pg_tde/%)
 
 %.frontend: %.c
-	$(CC) $(CPPFLAGS) -c $< -o $@
+	$(CC) $(CPPFLAGS) -DFRONTEND -I$(top_srcdir)/contrib/pg_tde/src/include -I$(top_srcdir)/contrib/pg_tde/src/libkmip/libkmip/include  -c $< -o $@
+
+libtde.a: $(TDE_OBJS2)
+	rm -f $@
+	$(AR) $(AROPT) $@ $^
+
+libtdexlog.a: $(TDE_XLOG_OBJS2)
+	rm -f $@
+	$(AR) $(AROPT) $@ $^
+
+
+tdelibs: libtde.a libtdexlog.a	
