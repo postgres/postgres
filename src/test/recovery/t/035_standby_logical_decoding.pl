@@ -822,7 +822,7 @@ check_pg_recvlogical_stderr($handle,
 );
 
 ##################################################
-# DROP DATABASE should drops it's slots, including active slots.
+# DROP DATABASE should drop its slots, including active slots.
 ##################################################
 
 # drop the logical slots

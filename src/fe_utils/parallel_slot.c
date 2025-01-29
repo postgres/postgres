@@ -347,11 +347,11 @@ connect_slot(ParallelSlotArray *sa, int slotno, const char *dbname)
  * returned allowing the connection to be reused.
  *
  * Otherwise, if any idle slot is not yet connected to any database, the slot
- * will be returned with it's connection opened using the stored cparams and
+ * will be returned with its connection opened using the stored cparams and
  * optionally the given dbname if not null.
  *
  * Otherwise, if any idle slot exists, an idle slot will be chosen and returned
- * after having it's connection disconnected and reconnected using the stored
+ * after having its connection disconnected and reconnected using the stored
  * cparams and optionally the given dbname if not null.
  *
  * Otherwise, if any slots have connections that are busy, we loop on select()

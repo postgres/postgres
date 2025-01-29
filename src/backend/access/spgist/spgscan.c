@@ -865,7 +865,7 @@ redirect:
 
 			if (SpGistPageIsLeaf(page))
 			{
-				/* Page is a leaf - that is, all it's tuples are heap items */
+				/* Page is a leaf - that is, all its tuples are heap items */
 				OffsetNumber max = PageGetMaxOffsetNumber(page);
 
 				if (SpGistBlockIsRoot(blkno))

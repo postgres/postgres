@@ -4092,7 +4092,7 @@ subscription_change_cb(Datum arg, int cacheid, uint32 hashvalue)
  * subxact_info_write
  *	  Store information about subxacts for a toplevel transaction.
  *
- * For each subxact we store offset of it's first change in the main file.
+ * For each subxact we store offset of its first change in the main file.
  * The file is always over-written as a whole.
  *
  * XXX We should only store subxacts that were not aborted yet.

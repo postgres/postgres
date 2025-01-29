@@ -1323,7 +1323,7 @@ SetupLockInTable(LockMethod lockMethodTable, PGPROC *proc,
 		 * on our own behalf, in which case our group leader isn't changing
 		 * because the group leader for a process can only ever be changed by
 		 * the process itself; or else we are transferring a fast-path lock to
-		 * the main lock table, in which case that process can't change it's
+		 * the main lock table, in which case that process can't change its
 		 * lock group leader without first releasing all of its locks (and in
 		 * particular the one we are currently transferring).
 		 */

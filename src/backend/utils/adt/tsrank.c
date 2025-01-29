@@ -812,7 +812,7 @@ get_docrep(TSVector txt, QueryRepresentation *qr, int *doclen)
 		qsort(doc, cur, sizeof(DocRepresentation), compareDocR);
 
 		/*
-		 * Join QueryItem per WordEntry and it's position
+		 * Join QueryItem per WordEntry and its position
 		 */
 		storage.pos = doc->pos;
 		storage.data.query.items = palloc(sizeof(QueryItem *) * qr->query->size);

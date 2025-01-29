@@ -2469,7 +2469,7 @@ bt_child_highkey_check(BtreeCheckState *state,
 				 * So, now we traverse to the right of that cousin page and
 				 * current child level page under consideration still belongs
 				 * to the subtree of target's left sibling.  Thus, we need to
-				 * match child's high key to it's left uncle page high key.
+				 * match child's high key to its left uncle page high key.
 				 * Thankfully we saved it, it's called a "low key" of target
 				 * page.
 				 */

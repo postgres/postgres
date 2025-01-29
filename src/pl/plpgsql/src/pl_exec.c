@@ -4690,7 +4690,7 @@ exec_stmt_open(PLpgSQL_execstate *estate, PLpgSQL_stmt_open *stmt)
 	}
 
 	/* ----------
-	 * Process the OPEN according to it's type.
+	 * Process the OPEN according to its type.
 	 * ----------
 	 */
 	if (stmt->query != NULL)

@@ -1148,7 +1148,7 @@ typedef struct Gather
 	bool		single_copy;	/* don't execute plan more than once */
 	bool		invisible;		/* suppress EXPLAIN display (for testing)? */
 	Bitmapset  *initParam;		/* param id's of initplans which are referred
-								 * at gather or one of it's child node */
+								 * at gather or one of its child nodes */
 } Gather;
 
 /* ------------
@@ -1184,7 +1184,7 @@ typedef struct GatherMerge
 
 	/*
 	 * param id's of initplans which are referred at gather merge or one of
-	 * it's child node
+	 * its child nodes
 	 */
 	Bitmapset  *initParam;
 } GatherMerge;

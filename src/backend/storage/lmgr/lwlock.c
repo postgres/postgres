@@ -60,7 +60,7 @@
  * The attentive reader might have noticed that naively doing the above has a
  * glaring race condition: We try to lock using the atomic operations and
  * notice that we have to wait. Unfortunately by the time we have finished
- * queuing, the former locker very well might have already finished it's
+ * queuing, the former locker very well might have already finished its
  * work. That's problematic because we're now stuck waiting inside the OS.
 
  * To mitigate those races we use a two phased attempt at locking:

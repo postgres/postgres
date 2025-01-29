@@ -5561,7 +5561,7 @@ NUM_numpart_from_char(NUMProc *Np, int id, int input_len)
 		}
 
 		/*
-		 * try read non-locale sign, it's happen only if format is not exact
+		 * try read non-locale sign, which happens only if format is not exact
 		 * and we cannot determine sign position of MI/PL/SG, an example:
 		 *
 		 * FM9.999999MI			   -> 5.01-

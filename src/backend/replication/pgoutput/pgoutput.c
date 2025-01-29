@@ -1849,7 +1849,7 @@ pgoutput_stream_stop(struct LogicalDecodingContext *ctx,
 
 /*
  * Notify downstream to discard the streamed transaction (along with all
- * it's subtransactions, if it's a toplevel transaction).
+ * its subtransactions, if it's a toplevel transaction).
  */
 static void
 pgoutput_stream_abort(struct LogicalDecodingContext *ctx,
@@ -1882,7 +1882,7 @@ pgoutput_stream_abort(struct LogicalDecodingContext *ctx,
 
 /*
  * Notify downstream to apply the streamed transaction (along with all
- * it's subtransactions).
+ * its subtransactions).
  */
 static void
 pgoutput_stream_commit(struct LogicalDecodingContext *ctx,

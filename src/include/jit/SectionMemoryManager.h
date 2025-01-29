@@ -182,7 +182,7 @@ private:
     // The actual block of free memory
     sys::MemoryBlock Free;
     // If there is a pending allocation from the same reservation right before
-    // this block, store it's index in PendingMem, to be able to update the
+    // this block, store its index in PendingMem, to be able to update the
     // pending region if part of this block is allocated, rather than having to
     // create a new one
     unsigned PendingPrefixIndex;

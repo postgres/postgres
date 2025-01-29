@@ -58,7 +58,7 @@ $node->safe_psql('postgres',
 );
 
 # We expect this query to hang in the critical section after generating new
-# multixact, but before filling it's offset into SLRU.
+# multixact, but before filling its offset into SLRU.
 # Running an injection point inside a critical section requires it to be
 # loaded beforehand.
 $creator->query_until(

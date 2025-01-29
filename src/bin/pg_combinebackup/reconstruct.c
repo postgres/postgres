@@ -214,7 +214,7 @@ reconstruct_from_incremental_file(char *input_filename,
 			 * taking no action on those blocks that generated any WAL.
 			 *
 			 * Sadly, we have no way of validating that this is really what
-			 * happened, and neither does the server. From it's perspective,
+			 * happened, and neither does the server.  From its perspective,
 			 * an unmodified block that contains data looks exactly the same
 			 * as a zero-filled block that never had any data: either way,
 			 * it's not mentioned in any WAL summary and the server has no

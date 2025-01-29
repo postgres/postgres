@@ -77,7 +77,7 @@
 #include "utils/timestamp.h"
 
 /*
- * Represents "base object" and it's "id" for .keyvalue() evaluation.
+ * Represents "base object" and its "id" for .keyvalue() evaluation.
  */
 typedef struct JsonBaseObjectInfo
 {

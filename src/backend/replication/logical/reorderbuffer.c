@@ -1663,7 +1663,7 @@ ReorderBufferTruncateTXN(ReorderBuffer *rb, ReorderBufferTXN *txn, bool txn_prep
 		/* Check we're not mixing changes from different transactions. */
 		Assert(change->txn == txn);
 
-		/* remove the change from it's containing list */
+		/* remove the change from its containing list */
 		dlist_delete(&change->node);
 
 		/*
