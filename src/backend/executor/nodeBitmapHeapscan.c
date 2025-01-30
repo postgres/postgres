@@ -48,6 +48,7 @@
 #include "utils/rel.h"
 #include "utils/spccache.h"
 
+static void BitmapTableScanSetup(BitmapHeapScanState *node);
 static TupleTableSlot *BitmapHeapNext(BitmapHeapScanState *node);
 static inline void BitmapDoneInitializingSharedState(ParallelBitmapHeapState *pstate);
 static inline void BitmapAdjustPrefetchIterator(BitmapHeapScanState *node);
@@ -55,6 +56,107 @@ static inline void BitmapAdjustPrefetchTarget(BitmapHeapScanState *node);
 static inline void BitmapPrefetch(BitmapHeapScanState *node,
 								  TableScanDesc scan);
 static bool BitmapShouldInitializeSharedState(ParallelBitmapHeapState *pstate);
+
+
+/*
+ * Do the underlying index scan, build the bitmap, set up the parallel state
+ * needed for parallel workers to iterate through the bitmap, and set up the
+ * underlying table scan descriptor.
+ *
+ * For prefetching, we use *two* iterators, one for the pages we are actually
+ * scanning and another that runs ahead of the first for prefetching.
+ * node->prefetch_pages tracks exactly how many pages ahead the prefetch
+ * iterator is.  Also, node->prefetch_target tracks the desired prefetch
+ * distance, which starts small and increases up to the
+ * node->prefetch_maximum.  This is to avoid doing a lot of prefetching in a
+ * scan that stops after a few tuples because of a LIMIT.
+ */
+static void
+BitmapTableScanSetup(BitmapHeapScanState *node)
+{
+	TBMIterator tbmiterator = {0};
+	ParallelBitmapHeapState *pstate = node->pstate;
+	dsa_area   *dsa = node->ss.ps.state->es_query_dsa;
+
+	if (!pstate)
+	{
+		node->tbm = (TIDBitmap *) MultiExecProcNode(outerPlanState(node));
+
+		if (!node->tbm || !IsA(node->tbm, TIDBitmap))
+			elog(ERROR, "unrecognized result from subplan");
+	}
+	else if (BitmapShouldInitializeSharedState(pstate))
+	{
+		/*
+		 * The leader will immediately come out of the function, but others
+		 * will be blocked until leader populates the TBM and wakes them up.
+		 */
+		node->tbm = (TIDBitmap *) MultiExecProcNode(outerPlanState(node));
+		if (!node->tbm || !IsA(node->tbm, TIDBitmap))
+			elog(ERROR, "unrecognized result from subplan");
+
+		/*
+		 * Prepare to iterate over the TBM. This will return the dsa_pointer
+		 * of the iterator state which will be used by multiple processes to
+		 * iterate jointly.
+		 */
+		pstate->tbmiterator = tbm_prepare_shared_iterate(node->tbm);
+
+#ifdef USE_PREFETCH
+		if (node->prefetch_maximum > 0)
+		{
+			pstate->prefetch_iterator =
+				tbm_prepare_shared_iterate(node->tbm);
+		}
+#endif							/* USE_PREFETCH */
+
+		/* We have initialized the shared state so wake up others. */
+		BitmapDoneInitializingSharedState(pstate);
+	}
+
+	tbmiterator = tbm_begin_iterate(node->tbm, dsa,
+									pstate ?
+									pstate->tbmiterator :
+									InvalidDsaPointer);
+
+#ifdef USE_PREFETCH
+	if (node->prefetch_maximum > 0)
+		node->prefetch_iterator =
+			tbm_begin_iterate(node->tbm, dsa,
+							  pstate ?
+							  pstate->prefetch_iterator :
+							  InvalidDsaPointer);
+#endif							/* USE_PREFETCH */
+
+	/*
+	 * If this is the first scan of the underlying table, create the table
+	 * scan descriptor and begin the scan.
+	 */
+	if (!node->ss.ss_currentScanDesc)
+	{
+		bool		need_tuples = false;
+
+		/*
+		 * We can potentially skip fetching heap pages if we do not need any
+		 * columns of the table, either for checking non-indexable quals or
+		 * for returning data.  This test is a bit simplistic, as it checks
+		 * the stronger condition that there's no qual or return tlist at all.
+		 * But in most cases it's probably not worth working harder than that.
+		 */
+		need_tuples = (node->ss.ps.plan->qual != NIL ||
+					   node->ss.ps.plan->targetlist != NIL);
+
+		node->ss.ss_currentScanDesc =
+			table_beginscan_bm(node->ss.ss_currentRelation,
+							   node->ss.ps.state->es_snapshot,
+							   0,
+							   NULL,
+							   need_tuples);
+	}
+
+	node->ss.ss_currentScanDesc->st.rs_tbmiterator = tbmiterator;
+	node->initialized = true;
+}
 
 
 /* ----------------------------------------------------------------
@@ -68,10 +170,11 @@ BitmapHeapNext(BitmapHeapScanState *node)
 {
 	ExprContext *econtext;
 	TableScanDesc scan;
-	TIDBitmap  *tbm;
 	TupleTableSlot *slot;
+
+#ifdef USE_PREFETCH
 	ParallelBitmapHeapState *pstate = node->pstate;
-	dsa_area   *dsa = node->ss.ps.state->es_query_dsa;
+#endif
 
 	/*
 	 * extract necessary information from index scan node
@@ -79,110 +182,15 @@ BitmapHeapNext(BitmapHeapScanState *node)
 	econtext = node->ss.ps.ps_ExprContext;
 	slot = node->ss.ss_ScanTupleSlot;
 	scan = node->ss.ss_currentScanDesc;
-	tbm = node->tbm;
 
 	/*
 	 * If we haven't yet performed the underlying index scan, do it, and begin
 	 * the iteration over the bitmap.
-	 *
-	 * For prefetching, we use *two* iterators, one for the pages we are
-	 * actually scanning and another that runs ahead of the first for
-	 * prefetching.  node->prefetch_pages tracks exactly how many pages ahead
-	 * the prefetch iterator is.  Also, node->prefetch_target tracks the
-	 * desired prefetch distance, which starts small and increases up to the
-	 * node->prefetch_maximum.  This is to avoid doing a lot of prefetching in
-	 * a scan that stops after a few tuples because of a LIMIT.
 	 */
 	if (!node->initialized)
 	{
-		TBMIterator tbmiterator;
-
-		if (!pstate)
-		{
-			tbm = (TIDBitmap *) MultiExecProcNode(outerPlanState(node));
-
-			if (!tbm || !IsA(tbm, TIDBitmap))
-				elog(ERROR, "unrecognized result from subplan");
-
-			node->tbm = tbm;
-		}
-		else if (BitmapShouldInitializeSharedState(pstate))
-		{
-			/*
-			 * The leader will immediately come out of the function, but
-			 * others will be blocked until leader populates the TBM and wakes
-			 * them up.
-			 */
-			tbm = (TIDBitmap *) MultiExecProcNode(outerPlanState(node));
-			if (!tbm || !IsA(tbm, TIDBitmap))
-				elog(ERROR, "unrecognized result from subplan");
-
-			node->tbm = tbm;
-
-			/*
-			 * Prepare to iterate over the TBM. This will return the
-			 * dsa_pointer of the iterator state which will be used by
-			 * multiple processes to iterate jointly.
-			 */
-			pstate->tbmiterator = tbm_prepare_shared_iterate(tbm);
-
-#ifdef USE_PREFETCH
-			if (node->prefetch_maximum > 0)
-			{
-				pstate->prefetch_iterator =
-					tbm_prepare_shared_iterate(tbm);
-			}
-#endif							/* USE_PREFETCH */
-
-			/* We have initialized the shared state so wake up others. */
-			BitmapDoneInitializingSharedState(pstate);
-		}
-
-		tbmiterator = tbm_begin_iterate(tbm, dsa,
-										pstate ?
-										pstate->tbmiterator :
-										InvalidDsaPointer);
-
-#ifdef USE_PREFETCH
-		if (node->prefetch_maximum > 0)
-			node->prefetch_iterator =
-				tbm_begin_iterate(tbm, dsa,
-								  pstate ?
-								  pstate->prefetch_iterator :
-								  InvalidDsaPointer);
-#endif							/* USE_PREFETCH */
-
-		/*
-		 * If this is the first scan of the underlying table, create the table
-		 * scan descriptor and begin the scan.
-		 */
-		if (!scan)
-		{
-			bool		need_tuples = false;
-
-			/*
-			 * We can potentially skip fetching heap pages if we do not need
-			 * any columns of the table, either for checking non-indexable
-			 * quals or for returning data.  This test is a bit simplistic, as
-			 * it checks the stronger condition that there's no qual or return
-			 * tlist at all. But in most cases it's probably not worth working
-			 * harder than that.
-			 */
-			need_tuples = (node->ss.ps.plan->qual != NIL ||
-						   node->ss.ps.plan->targetlist != NIL);
-
-			scan = table_beginscan_bm(node->ss.ss_currentRelation,
-									  node->ss.ps.state->es_snapshot,
-									  0,
-									  NULL,
-									  need_tuples);
-
-			node->ss.ss_currentScanDesc = scan;
-		}
-
-		scan->st.rs_tbmiterator = tbmiterator;
-		node->initialized = true;
-
+		BitmapTableScanSetup(node);
+		scan = node->ss.ss_currentScanDesc;
 		goto new_page;
 	}
 
