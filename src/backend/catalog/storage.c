@@ -763,7 +763,7 @@ smgrDoPendingSyncs(bool isCommit, bool isParallelWorker)
 	{
 		ForkNumber	fork;
 		BlockNumber nblocks[MAX_FORKNUM + 1];
-		BlockNumber total_blocks = 0;
+		uint64		total_blocks = 0;
 		SMgrRelation srel;
 
 		srel = smgropen(pendingsync->rlocator, INVALID_PROC_NUMBER);
@@ -807,7 +807,7 @@ smgrDoPendingSyncs(bool isCommit, bool isParallelWorker)
 		 * main fork is longer than ever but FSM fork gets shorter.
 		 */
 		if (pendingsync->is_truncated ||
-			total_blocks * BLCKSZ / 1024 >= wal_skip_threshold)
+			total_blocks >= wal_skip_threshold * (uint64) 1024 / BLCKSZ)
 		{
 			/* allocate the initial array, or extend it, if needed */
 			if (maxrels == 0)
