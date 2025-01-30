@@ -519,6 +519,7 @@ CREATE TABLE people (
       <link linkend="sql-createpublication-params-with-publish-generated-columns">
       <literal>publish_generated_columns</literal></link> or by including them
       in the column list of the <command>CREATE PUBLICATION</command> command.
+      See <xref linkend="logical-replication-gencols"/> for details.
      </para>
     </listitem>
    </itemizedlist>

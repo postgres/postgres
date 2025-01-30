@@ -217,6 +217,11 @@ CREATE PUBLICATION <replaceable class="parameter">name</replaceable>
            in the publisher.
           </para>
          </note>
+
+         <para>
+          See <xref linkend="logical-replication-gencols"/> for more details about
+          logical replication of generated columns.
+         </para>
         </listitem>
        </varlistentry>
 

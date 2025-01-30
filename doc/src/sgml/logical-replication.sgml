@@ -1430,6 +1430,14 @@ test_sub=# SELECT * FROM child ORDER BY a;
   </para>
 
   <para>
+   Generated columns can also be specified in a column list. This allows
+   generated columns to be published, regardless of the publication parameter
+   <link linkend="sql-createpublication-params-with-publish-generated-columns">
+   <literal>publish_generated_columns</literal></link>. See
+   <xref linkend="logical-replication-gencols"/> for details.
+  </para>
+
+  <para>
    Specifying a column list when the publication also publishes
    <link linkend="sql-createpublication-params-for-tables-in-schema"><literal>FOR TABLES IN SCHEMA</literal></link>
    is not supported.
@@ -1592,6 +1600,190 @@ test_sub=# SELECT * FROM t1 ORDER BY id;
 
   </sect2>
 
+ </sect1>
+
+ <sect1 id="logical-replication-gencols">
+  <title>Generated Column Replication</title>
+
+  <para>
+   Typically, a table at the subscriber will be defined the same as the
+   publisher table, so if the publisher table has a <link linkend="ddl-generated-columns">
+   <literal>GENERATED column</literal></link> then the subscriber table will
+   have a matching generated column. In this case, it is always the subscriber
+   table generated column value that is used.
+  </para>
+
+  <para>
+   For example, note below that subscriber table generated column value comes from the
+   subscriber column's calculation.
+<programlisting>
+test_pub=# CREATE TABLE tab_gen_to_gen (a int, b int GENERATED ALWAYS AS (a + 1) STORED);
+CREATE TABLE
+test_pub=# INSERT INTO tab_gen_to_gen VALUES (1),(2),(3);
+INSERT 0 3
+test_pub=# CREATE PUBLICATION pub1 FOR TABLE tab_gen_to_gen;
+CREATE PUBLICATION
+test_pub=# SELECT * FROM tab_gen_to_gen;
+ a | b
+---+---
+ 1 | 2
+ 2 | 3
+ 3 | 4
+(3 rows)
+
+test_sub=# CREATE TABLE tab_gen_to_gen (a int, b int GENERATED ALWAYS AS (a * 100) STORED);
+CREATE TABLE
+test_sub=# CREATE SUBSCRIPTION sub1 CONNECTION 'dbname=test_pub' PUBLICATION pub1;
+CREATE SUBSCRIPTION
+test_sub=# SELECT * from tab_gen_to_gen;
+ a | b
+---+----
+ 1 | 100
+ 2 | 200
+ 3 | 300
+(3 rows)
+</programlisting>
+  </para>
+
+  <para>
+   In fact, prior to version 18.0, logical replication does not publish
+   <literal>GENERATED</literal> columns at all.
+  </para>
+
+  <para>
+   But, replicating a generated column to a regular column can sometimes be
+   desirable.
+   <tip>
+    <para>
+     This feature may be useful when replicating data to a
+     non-PostgreSQL database via output plugin, especially if the target database
+     does not support generated columns.
+    </para>
+  </tip>
+  </para>
+
+  <para>
+   Generated columns are not published by default, but users can opt to
+   publish stored generated columns just like regular ones.
+  </para>
+
+  <para>
+   There are two ways to do this:
+   <itemizedlist>
+     <listitem>
+      <para>
+       Set the <command>PUBLICATION</command> parameter
+       <link linkend="sql-createpublication-params-with-publish-generated-columns">
+       <literal>publish_generated_columns</literal></link> to <literal>stored</literal>.
+       This instructs PostgreSQL logical replication to publish current and
+       future stored generated columns of the publication's tables.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Specify a table <link linkend="logical-replication-col-lists">column list</link>
+       to explicitly nominate which stored generated columns will be published.
+      </para>
+
+      <note>
+       <para>
+        When determining which table columns will be published, a column list
+        takes precedence, overriding the effect of the
+        <literal>publish_generated_columns</literal> parameter.
+       </para>
+      </note>
+     </listitem>
+   </itemizedlist>
+  </para>
+
+  <para>
+   The following table summarizes behavior when there are generated columns
+   involved in the logical replication. Results are shown for when
+   publishing generated columns is not enabled, and for when it is
+   enabled.
+  </para>
+
+  <table id="logical-replication-gencols-table-summary">
+   <title>Replication Result Summary</title>
+   <tgroup cols="4">
+
+    <thead>
+     <row>
+      <entry>Publish generated columns?</entry>
+      <entry>Publisher table column</entry>
+      <entry>Subscriber table column</entry>
+      <entry>Result</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry>No</entry>
+      <entry>GENERATED</entry>
+      <entry>GENERATED</entry>
+      <entry>Publisher table column is not replicated. Use the subscriber table generated column value.</entry>
+     </row>
+
+     <row>
+      <entry>No</entry>
+      <entry>GENERATED</entry>
+      <entry>regular</entry>
+      <entry>Publisher table column is not replicated. Use the subscriber table regular column default value.</entry>
+     </row>
+
+     <row>
+      <entry>No</entry>
+      <entry>GENERATED</entry>
+      <entry>--missing--</entry>
+      <entry>Publisher table column is not replicated. Nothing happens.</entry>
+     </row>
+
+     <row>
+      <entry>Yes</entry>
+      <entry>GENERATED</entry>
+      <entry>GENERATED</entry>
+      <entry>ERROR. Not supported.</entry>
+     </row>
+
+     <row>
+      <entry>Yes</entry>
+      <entry>GENERATED</entry>
+      <entry>regular</entry>
+      <entry>Publisher table column value is replicated to the subscriber table column.</entry>
+     </row>
+
+     <row>
+      <entry>Yes</entry>
+      <entry>GENERATED</entry>
+      <entry>--missing--</entry>
+      <entry>ERROR. The column is reported as missing from the subscriber table.</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+  <warning>
+   <para>
+    There's currently no support for subscriptions comprising several
+    publications where the same table has been published with different column
+    lists. See <xref linkend="logical-replication-col-lists"/>.
+   </para>
+
+   <para>
+    This same situation can occur if one publication is publishing generated
+    columns, while another publication in the same subscription is not
+    publishing generated columns for the same table.
+   </para>
+  </warning>
+
+  <note>
+   <para>
+    If the subscriber is from a release prior to 18, then initial table
+    synchronization won't copy generated columns even if they are defined in
+    the publisher.
+   </para>
+  </note>
  </sect1>
 
  <sect1 id="logical-replication-conflicts">
