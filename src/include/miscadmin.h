@@ -293,7 +293,7 @@ extern PGDLLIMPORT bool VacuumCostActive;
 extern PGDLLIMPORT int max_stack_depth;
 
 /* Required daylight between max_stack_depth and the kernel limit, in bytes */
-#define STACK_DEPTH_SLOP (512 * 1024L)
+#define STACK_DEPTH_SLOP (512 * 1024)
 
 typedef char *pg_stack_base_t;
 
@@ -301,7 +301,7 @@ extern pg_stack_base_t set_stack_base(void);
 extern void restore_stack_base(pg_stack_base_t base);
 extern void check_stack_depth(void);
 extern bool stack_is_too_deep(void);
-extern long get_stack_depth_rlimit(void);
+extern ssize_t get_stack_depth_rlimit(void);
 
 /* in tcop/utility.c */
 extern void PreventCommandIfReadOnly(const char *cmdname);

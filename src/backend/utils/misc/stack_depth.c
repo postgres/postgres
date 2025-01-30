@@ -26,7 +26,7 @@
 int			max_stack_depth = 100;
 
 /* max_stack_depth converted to bytes for speed of checking */
-static long max_stack_depth_bytes = 100 * 1024L;
+static ssize_t max_stack_depth_bytes = 100 * (ssize_t) 1024;
 
 /*
  * Stack base pointer -- initialized by set_stack_base(), which
@@ -109,12 +109,12 @@ bool
 stack_is_too_deep(void)
 {
 	char		stack_top_loc;
-	long		stack_depth;
+	ssize_t		stack_depth;
 
 	/*
 	 * Compute distance from reference point to my local variables
 	 */
-	stack_depth = (long) (stack_base_ptr - &stack_top_loc);
+	stack_depth = (ssize_t) (stack_base_ptr - &stack_top_loc);
 
 	/*
 	 * Take abs value, since stacks grow up on some machines, down on others
@@ -141,13 +141,13 @@ stack_is_too_deep(void)
 bool
 check_max_stack_depth(int *newval, void **extra, GucSource source)
 {
-	long		newval_bytes = *newval * 1024L;
-	long		stack_rlimit = get_stack_depth_rlimit();
+	ssize_t		newval_bytes = *newval * (ssize_t) 1024;
+	ssize_t		stack_rlimit = get_stack_depth_rlimit();
 
 	if (stack_rlimit > 0 && newval_bytes > stack_rlimit - STACK_DEPTH_SLOP)
 	{
-		GUC_check_errdetail("\"max_stack_depth\" must not exceed %ldkB.",
-							(stack_rlimit - STACK_DEPTH_SLOP) / 1024L);
+		GUC_check_errdetail("\"max_stack_depth\" must not exceed %zdkB.",
+							(stack_rlimit - STACK_DEPTH_SLOP) / 1024);
 		GUC_check_errhint("Increase the platform's stack depth limit via \"ulimit -s\" or local equivalent.");
 		return false;
 	}
@@ -158,7 +158,7 @@ check_max_stack_depth(int *newval, void **extra, GucSource source)
 void
 assign_max_stack_depth(int newval, void *extra)
 {
-	long		newval_bytes = newval * 1024L;
+	ssize_t		newval_bytes = newval * (ssize_t) 1024;
 
 	max_stack_depth_bytes = newval_bytes;
 }
@@ -167,12 +167,16 @@ assign_max_stack_depth(int newval, void *extra)
  * Obtain platform stack depth limit (in bytes)
  *
  * Return -1 if unknown
+ *
+ * Note: we choose to use ssize_t not size_t as the result type because
+ * callers compute values that could theoretically go negative,
+ * such as "result - STACK_DEPTH_SLOP".
  */
-long
+ssize_t
 get_stack_depth_rlimit(void)
 {
 #if defined(HAVE_GETRLIMIT)
-	static long val = 0;
+	static ssize_t val = 0;
 
 	/* This won't change after process launch, so check just once */
 	if (val == 0)
@@ -182,10 +186,10 @@ get_stack_depth_rlimit(void)
 		if (getrlimit(RLIMIT_STACK, &rlim) < 0)
 			val = -1;
 		else if (rlim.rlim_cur == RLIM_INFINITY)
-			val = LONG_MAX;
+			val = SSIZE_MAX;
 		/* rlim_cur is probably of an unsigned type, so check for overflow */
-		else if (rlim.rlim_cur >= LONG_MAX)
-			val = LONG_MAX;
+		else if (rlim.rlim_cur >= SSIZE_MAX)
+			val = SSIZE_MAX;
 		else
 			val = rlim.rlim_cur;
 	}

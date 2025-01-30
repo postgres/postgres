@@ -1589,7 +1589,7 @@ static void
 InitializeGUCOptionsFromEnvironment(void)
 {
 	char	   *env;
-	long		stack_rlimit;
+	ssize_t		stack_rlimit;
 
 	env = getenv("PGPORT");
 	if (env != NULL)
@@ -1613,7 +1613,7 @@ InitializeGUCOptionsFromEnvironment(void)
 	stack_rlimit = get_stack_depth_rlimit();
 	if (stack_rlimit > 0)
 	{
-		long		new_limit = (stack_rlimit - STACK_DEPTH_SLOP) / 1024L;
+		ssize_t		new_limit = (stack_rlimit - STACK_DEPTH_SLOP) / 1024;
 
 		if (new_limit > 100)
 		{
@@ -1627,7 +1627,7 @@ InitializeGUCOptionsFromEnvironment(void)
 				new_limit = 2048;
 				source = PGC_S_DYNAMIC_DEFAULT;
 			}
-			snprintf(limbuf, sizeof(limbuf), "%ld", new_limit);
+			snprintf(limbuf, sizeof(limbuf), "%d", (int) new_limit);
 			SetConfigOption("max_stack_depth", limbuf,
 							PGC_POSTMASTER, source);
 		}
