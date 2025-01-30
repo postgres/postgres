@@ -207,16 +207,20 @@ static void partkey_datum_from_expr(PartitionPruneContext *context,
 
 /*
  * make_partition_pruneinfo
- *		Builds a PartitionPruneInfo which can be used in the executor to allow
- *		additional partition pruning to take place.  Returns NULL when
- *		partition pruning would be useless.
+ *		Checks if the given set of quals can be used to build pruning steps
+ *		that the executor can use to prune away unneeded partitions.  If
+ *		suitable quals are found then a PartitionPruneInfo is built and tagged
+ *		onto the PlannerInfo's partPruneInfos list.
+ *
+ * The return value is the 0-based index of the item added to the
+ * partPruneInfos list or -1 if nothing was added.
  *
  * 'parentrel' is the RelOptInfo for an appendrel, and 'subpaths' is the list
  * of scan paths for its child rels.
  * 'prunequal' is a list of potential pruning quals (i.e., restriction
  * clauses that are applicable to the appendrel).
  */
-PartitionPruneInfo *
+int
 make_partition_pruneinfo(PlannerInfo *root, RelOptInfo *parentrel,
 						 List *subpaths,
 						 List *prunequal)
@@ -330,10 +334,11 @@ make_partition_pruneinfo(PlannerInfo *root, RelOptInfo *parentrel,
 	 * quals, then we can just not bother with run-time pruning.
 	 */
 	if (prunerelinfos == NIL)
-		return NULL;
+		return -1;
 
 	/* Else build the result data structure */
 	pruneinfo = makeNode(PartitionPruneInfo);
+	pruneinfo->relids = bms_copy(parentrel->relids);
 	pruneinfo->prune_infos = prunerelinfos;
 
 	/*
@@ -356,7 +361,9 @@ make_partition_pruneinfo(PlannerInfo *root, RelOptInfo *parentrel,
 	else
 		pruneinfo->other_subplans = NULL;
 
-	return pruneinfo;
+	root->partPruneInfos = lappend(root->partPruneInfos, pruneinfo);
+
+	return list_length(root->partPruneInfos) - 1;
 }
 
 /*
