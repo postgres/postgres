@@ -1265,41 +1265,30 @@ llvm_compile_expr(ExprState *state)
 
 			case EEOP_CASE_TESTVAL:
 				{
-					LLVMBasicBlockRef b_avail,
-								b_notavail;
 					LLVMValueRef v_casevaluep,
 								v_casevalue;
 					LLVMValueRef v_casenullp,
 								v_casenull;
-					LLVMValueRef v_casevaluenull;
-
-					b_avail = l_bb_before_v(opblocks[opno + 1],
-											"op.%d.avail", opno);
-					b_notavail = l_bb_before_v(opblocks[opno + 1],
-											   "op.%d.notavail", opno);
 
 					v_casevaluep = l_ptr_const(op->d.casetest.value,
 											   l_ptr(TypeSizeT));
 					v_casenullp = l_ptr_const(op->d.casetest.isnull,
 											  l_ptr(TypeStorageBool));
 
-					v_casevaluenull =
-						LLVMBuildICmp(b, LLVMIntEQ,
-									  LLVMBuildPtrToInt(b, v_casevaluep,
-														TypeSizeT, ""),
-									  l_sizet_const(0), "");
-					LLVMBuildCondBr(b, v_casevaluenull, b_notavail, b_avail);
-
-					/* if casetest != NULL */
-					LLVMPositionBuilderAtEnd(b, b_avail);
 					v_casevalue = l_load(b, TypeSizeT, v_casevaluep, "");
 					v_casenull = l_load(b, TypeStorageBool, v_casenullp, "");
 					LLVMBuildStore(b, v_casevalue, v_resvaluep);
 					LLVMBuildStore(b, v_casenull, v_resnullp);
-					LLVMBuildBr(b, opblocks[opno + 1]);
 
-					/* if casetest == NULL */
-					LLVMPositionBuilderAtEnd(b, b_notavail);
+					LLVMBuildBr(b, opblocks[opno + 1]);
+					break;
+				}
+
+			case EEOP_CASE_TESTVAL_EXT:
+				{
+					LLVMValueRef v_casevalue;
+					LLVMValueRef v_casenull;
+
 					v_casevalue =
 						l_load_struct_gep(b,
 										  StructExprContext,
@@ -1958,43 +1947,30 @@ llvm_compile_expr(ExprState *state)
 
 			case EEOP_DOMAIN_TESTVAL:
 				{
-					LLVMBasicBlockRef b_avail,
-								b_notavail;
 					LLVMValueRef v_casevaluep,
 								v_casevalue;
 					LLVMValueRef v_casenullp,
 								v_casenull;
-					LLVMValueRef v_casevaluenull;
-
-					b_avail = l_bb_before_v(opblocks[opno + 1],
-											"op.%d.avail", opno);
-					b_notavail = l_bb_before_v(opblocks[opno + 1],
-											   "op.%d.notavail", opno);
 
 					v_casevaluep = l_ptr_const(op->d.casetest.value,
 											   l_ptr(TypeSizeT));
 					v_casenullp = l_ptr_const(op->d.casetest.isnull,
 											  l_ptr(TypeStorageBool));
 
-					v_casevaluenull =
-						LLVMBuildICmp(b, LLVMIntEQ,
-									  LLVMBuildPtrToInt(b, v_casevaluep,
-														TypeSizeT, ""),
-									  l_sizet_const(0), "");
-					LLVMBuildCondBr(b,
-									v_casevaluenull,
-									b_notavail, b_avail);
-
-					/* if casetest != NULL */
-					LLVMPositionBuilderAtEnd(b, b_avail);
 					v_casevalue = l_load(b, TypeSizeT, v_casevaluep, "");
 					v_casenull = l_load(b, TypeStorageBool, v_casenullp, "");
 					LLVMBuildStore(b, v_casevalue, v_resvaluep);
 					LLVMBuildStore(b, v_casenull, v_resnullp);
-					LLVMBuildBr(b, opblocks[opno + 1]);
 
-					/* if casetest == NULL */
-					LLVMPositionBuilderAtEnd(b, b_notavail);
+					LLVMBuildBr(b, opblocks[opno + 1]);
+					break;
+				}
+
+			case EEOP_DOMAIN_TESTVAL_EXT:
+				{
+					LLVMValueRef v_casevalue;
+					LLVMValueRef v_casenull;
+
 					v_casevalue =
 						l_load_struct_gep(b,
 										  StructExprContext,

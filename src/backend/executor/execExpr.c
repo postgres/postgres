@@ -1901,13 +1901,17 @@ ExecInitExprRec(Expr *node, ExprState *state,
 				 * actually within a CaseExpr, ArrayCoerceExpr, etc structure.
 				 * That can happen because some parts of the system abuse
 				 * CaseTestExpr to cause a read of a value externally supplied
-				 * in econtext->caseValue_datum.  We'll take care of that
-				 * scenario at runtime.
+				 * in econtext->caseValue_datum.  We'll take care of that by
+				 * generating a specialized operation.
 				 */
-				scratch.opcode = EEOP_CASE_TESTVAL;
-				scratch.d.casetest.value = state->innermost_caseval;
-				scratch.d.casetest.isnull = state->innermost_casenull;
-
+				if (state->innermost_caseval == NULL)
+					scratch.opcode = EEOP_CASE_TESTVAL_EXT;
+				else
+				{
+					scratch.opcode = EEOP_CASE_TESTVAL;
+					scratch.d.casetest.value = state->innermost_caseval;
+					scratch.d.casetest.isnull = state->innermost_casenull;
+				}
 				ExprEvalPushStep(state, &scratch);
 				break;
 			}
@@ -2594,14 +2598,18 @@ ExecInitExprRec(Expr *node, ExprState *state,
 				 * that innermost_domainval could be NULL, if we're compiling
 				 * a standalone domain check rather than one embedded in a
 				 * larger expression.  In that case we must read from
-				 * econtext->domainValue_datum.  We'll take care of that
-				 * scenario at runtime.
+				 * econtext->domainValue_datum.  We'll take care of that by
+				 * generating a specialized operation.
 				 */
-				scratch.opcode = EEOP_DOMAIN_TESTVAL;
-				/* we share instruction union variant with case testval */
-				scratch.d.casetest.value = state->innermost_domainval;
-				scratch.d.casetest.isnull = state->innermost_domainnull;
-
+				if (state->innermost_domainval == NULL)
+					scratch.opcode = EEOP_DOMAIN_TESTVAL_EXT;
+				else
+				{
+					scratch.opcode = EEOP_DOMAIN_TESTVAL;
+					/* we share instruction union variant with case testval */
+					scratch.d.casetest.value = state->innermost_domainval;
+					scratch.d.casetest.isnull = state->innermost_domainnull;
+				}
 				ExprEvalPushStep(state, &scratch);
 				break;
 			}

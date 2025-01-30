@@ -173,6 +173,7 @@ typedef enum ExprEvalOp
 
 	/* return CaseTestExpr value */
 	EEOP_CASE_TESTVAL,
+	EEOP_CASE_TESTVAL_EXT,
 
 	/* apply MakeExpandedObjectReadOnly() to target value */
 	EEOP_MAKE_READONLY,
@@ -237,6 +238,7 @@ typedef enum ExprEvalOp
 
 	/* evaluate value for CoerceToDomainValue */
 	EEOP_DOMAIN_TESTVAL,
+	EEOP_DOMAIN_TESTVAL_EXT,
 
 	/* evaluate a domain's NOT NULL constraint */
 	EEOP_DOMAIN_NOTNULL,
