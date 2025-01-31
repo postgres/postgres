@@ -543,6 +543,35 @@ pg_SASL_init(PGconn *conn, int payloadlen)
 		goto error;
 	}
 
+	/* Make sure require_auth is satisfied. */
+	if (conn->require_auth)
+	{
+		bool		allowed = false;
+
+		for (int i = 0; i < lengthof(conn->allowed_sasl_mechs); i++)
+		{
+			if (conn->sasl == conn->allowed_sasl_mechs[i])
+			{
+				allowed = true;
+				break;
+			}
+		}
+
+		if (!allowed)
+		{
+			/*
+			 * TODO: this is dead code until a second SASL mechanism is added;
+			 * the connection can't have proceeded past check_expected_areq()
+			 * if no SASL methods are allowed.
+			 */
+			Assert(false);
+
+			libpq_append_conn_error(conn, "authentication method requirement \"%s\" failed: server requested %s authentication",
+									conn->require_auth, selected_mechanism);
+			goto error;
+		}
+	}
+
 	if (conn->channel_binding[0] == 'r' &&	/* require */
 		strcmp(selected_mechanism, SCRAM_SHA_256_PLUS_NAME) != 0)
 	{

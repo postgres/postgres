@@ -277,6 +277,16 @@ $node->connect_fails(
 	"require_auth methods cannot be duplicated, !none case",
 	expected_stderr =>
 	  qr/require_auth method "!none" is specified more than once/);
+$node->connect_fails(
+	"user=scram_role require_auth=scram-sha-256,scram-sha-256",
+	"require_auth methods cannot be duplicated, scram-sha-256 case",
+	expected_stderr =>
+	  qr/require_auth method "scram-sha-256" is specified more than once/);
+$node->connect_fails(
+	"user=scram_role require_auth=!scram-sha-256,!scram-sha-256",
+	"require_auth methods cannot be duplicated, !scram-sha-256 case",
+	expected_stderr =>
+	  qr/require_auth method "!scram-sha-256" is specified more than once/);
 
 # Unknown value defined in require_auth.
 $node->connect_fails(

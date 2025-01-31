@@ -396,6 +396,12 @@ static const PQEnvironmentOption EnvironmentOptions[] =
 	}
 };
 
+static const pg_fe_sasl_mech *supported_sasl_mechs[] =
+{
+	&pg_scram_mech,
+};
+#define SASL_MECHANISM_COUNT lengthof(supported_sasl_mechs)
+
 /* The connection URI must start with either of the following designators: */
 static const char uri_designator[] = "postgresql://";
 static const char short_uri_designator[] = "postgres://";
@@ -1118,6 +1124,57 @@ libpq_prng_init(PGconn *conn)
 }
 
 /*
+ * Fills the connection's allowed_sasl_mechs list with all supported SASL
+ * mechanisms.
+ */
+static inline void
+fill_allowed_sasl_mechs(PGconn *conn)
+{
+	/*---
+	 * We only support one mechanism at the moment, so rather than deal with a
+	 * linked list, conn->allowed_sasl_mechs is an array of static length. We
+	 * rely on the compile-time assertion here to keep us honest.
+	 *
+	 * To add a new mechanism to require_auth,
+	 * - add it to supported_sasl_mechs,
+	 * - update the length of conn->allowed_sasl_mechs,
+	 * - handle the new mechanism name in the require_auth portion of
+	 *   pqConnectOptions2(), below.
+	 */
+	StaticAssertDecl(lengthof(conn->allowed_sasl_mechs) == SASL_MECHANISM_COUNT,
+					 "conn->allowed_sasl_mechs[] is not sufficiently large for holding all supported SASL mechanisms");
+
+	for (int i = 0; i < SASL_MECHANISM_COUNT; i++)
+		conn->allowed_sasl_mechs[i] = supported_sasl_mechs[i];
+}
+
+/*
+ * Clears the connection's allowed_sasl_mechs list.
+ */
+static inline void
+clear_allowed_sasl_mechs(PGconn *conn)
+{
+	for (int i = 0; i < lengthof(conn->allowed_sasl_mechs); i++)
+		conn->allowed_sasl_mechs[i] = NULL;
+}
+
+/*
+ * Helper routine that searches the static allowed_sasl_mechs list for a
+ * specific mechanism.
+ */
+static inline int
+index_of_allowed_sasl_mech(PGconn *conn, const pg_fe_sasl_mech *mech)
+{
+	for (int i = 0; i < lengthof(conn->allowed_sasl_mechs); i++)
+	{
+		if (conn->allowed_sasl_mechs[i] == mech)
+			return i;
+	}
+
+	return -1;
+}
+
+/*
  *		pqConnectOptions2
  *
  * Compute derived connection options after absorbing all user-supplied info.
@@ -1358,17 +1415,19 @@ pqConnectOptions2(PGconn *conn)
 		bool		negated = false;
 
 		/*
-		 * By default, start from an empty set of allowed options and add to
-		 * it.
+		 * By default, start from an empty set of allowed methods and
+		 * mechanisms, and add to it.
 		 */
 		conn->auth_required = true;
 		conn->allowed_auth_methods = 0;
+		clear_allowed_sasl_mechs(conn);
 
 		for (first = true, more = true; more; first = false)
 		{
 			char	   *method,
 					   *part;
-			uint32		bits;
+			uint32		bits = 0;
+			const pg_fe_sasl_mech *mech = NULL;
 
 			part = parse_comma_separated_list(&s, &more);
 			if (part == NULL)
@@ -1384,11 +1443,12 @@ pqConnectOptions2(PGconn *conn)
 				if (first)
 				{
 					/*
-					 * Switch to a permissive set of allowed options, and
-					 * subtract from it.
+					 * Switch to a permissive set of allowed methods and
+					 * mechanisms, and subtract from it.
 					 */
 					conn->auth_required = false;
 					conn->allowed_auth_methods = -1;
+					fill_allowed_sasl_mechs(conn);
 				}
 				else if (!negated)
 				{
@@ -1413,6 +1473,10 @@ pqConnectOptions2(PGconn *conn)
 				return false;
 			}
 
+			/*
+			 * First group: methods that can be handled solely with the
+			 * authentication request codes.
+			 */
 			if (strcmp(method, "password") == 0)
 			{
 				bits = (1 << AUTH_REQ_PASSWORD);
@@ -1431,13 +1495,21 @@ pqConnectOptions2(PGconn *conn)
 				bits = (1 << AUTH_REQ_SSPI);
 				bits |= (1 << AUTH_REQ_GSS_CONT);
 			}
+
+			/*
+			 * Next group: SASL mechanisms. All of these use the same request
+			 * codes, so the list of allowed mechanisms is tracked separately.
+			 *
+			 * supported_sasl_mechs must contain all mechanisms handled here.
+			 */
 			else if (strcmp(method, "scram-sha-256") == 0)
 			{
-				/* This currently assumes that SCRAM is the only SASL method. */
-				bits = (1 << AUTH_REQ_SASL);
-				bits |= (1 << AUTH_REQ_SASL_CONT);
-				bits |= (1 << AUTH_REQ_SASL_FIN);
+				mech = &pg_scram_mech;
 			}
+
+			/*
+			 * Final group: meta-options.
+			 */
 			else if (strcmp(method, "none") == 0)
 			{
 				/*
@@ -1473,20 +1545,68 @@ pqConnectOptions2(PGconn *conn)
 				return false;
 			}
 
-			/* Update the bitmask. */
-			if (negated)
+			if (mech)
 			{
-				if ((conn->allowed_auth_methods & bits) == 0)
-					goto duplicate;
+				/*
+				 * Update the mechanism set only. The method bitmask will be
+				 * updated for SASL further down.
+				 */
+				Assert(!bits);
 
-				conn->allowed_auth_methods &= ~bits;
+				if (negated)
+				{
+					/* Remove the existing mechanism from the list. */
+					i = index_of_allowed_sasl_mech(conn, mech);
+					if (i < 0)
+						goto duplicate;
+
+					conn->allowed_sasl_mechs[i] = NULL;
+				}
+				else
+				{
+					/*
+					 * Find a space to put the new mechanism (after making
+					 * sure it's not already there).
+					 */
+					i = index_of_allowed_sasl_mech(conn, mech);
+					if (i >= 0)
+						goto duplicate;
+
+					i = index_of_allowed_sasl_mech(conn, NULL);
+					if (i < 0)
+					{
+						/* Should not happen; the pointer list is corrupted. */
+						Assert(false);
+
+						conn->status = CONNECTION_BAD;
+						libpq_append_conn_error(conn,
+												"internal error: no space in allowed_sasl_mechs");
+						free(part);
+						return false;
+					}
+
+					conn->allowed_sasl_mechs[i] = mech;
+				}
 			}
 			else
 			{
-				if ((conn->allowed_auth_methods & bits) == bits)
-					goto duplicate;
+				/* Update the method bitmask. */
+				Assert(bits);
 
-				conn->allowed_auth_methods |= bits;
+				if (negated)
+				{
+					if ((conn->allowed_auth_methods & bits) == 0)
+						goto duplicate;
+
+					conn->allowed_auth_methods &= ~bits;
+				}
+				else
+				{
+					if ((conn->allowed_auth_methods & bits) == bits)
+						goto duplicate;
+
+					conn->allowed_auth_methods |= bits;
+				}
 			}
 
 			free(part);
@@ -1504,6 +1624,36 @@ pqConnectOptions2(PGconn *conn)
 
 			free(part);
 			return false;
+		}
+
+		/*
+		 * Finally, allow SASL authentication requests if (and only if) we've
+		 * allowed any mechanisms.
+		 */
+		{
+			bool		allowed = false;
+			const uint32 sasl_bits =
+				(1 << AUTH_REQ_SASL)
+				| (1 << AUTH_REQ_SASL_CONT)
+				| (1 << AUTH_REQ_SASL_FIN);
+
+			for (i = 0; i < lengthof(conn->allowed_sasl_mechs); i++)
+			{
+				if (conn->allowed_sasl_mechs[i])
+				{
+					allowed = true;
+					break;
+				}
+			}
+
+			/*
+			 * For the standard case, add the SASL bits to the (default-empty)
+			 * set if needed. For the negated case, remove them.
+			 */
+			if (!negated && allowed)
+				conn->allowed_auth_methods |= sasl_bits;
+			else if (negated && !allowed)
+				conn->allowed_auth_methods &= ~sasl_bits;
 		}
 	}
 
