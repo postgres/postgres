@@ -92,11 +92,11 @@ ExecInitMergeAppend(MergeAppend *node, EState *estate, int eflags)
 		 * subplans to initialize (validsubplans) by taking into account the
 		 * result of performing initial pruning if any.
 		 */
-		prunestate = ExecInitPartitionPruning(&mergestate->ps,
-											  list_length(node->mergeplans),
-											  node->part_prune_index,
-											  node->apprelids,
-											  &validsubplans);
+		prunestate = ExecInitPartitionExecPruning(&mergestate->ps,
+												  list_length(node->mergeplans),
+												  node->part_prune_index,
+												  node->apprelids,
+												  &validsubplans);
 		mergestate->ms_prune_state = prunestate;
 		nplans = bms_num_members(validsubplans);
 

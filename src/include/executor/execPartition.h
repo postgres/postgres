@@ -42,6 +42,9 @@ extern void ExecCleanupTupleRouting(ModifyTableState *mtstate,
  * PartitionedRelPruneInfo (see plannodes.h); though note that here,
  * subpart_map contains indexes into PartitionPruningData.partrelprunedata[].
  *
+ * partrel						Partitioned table Relation; obtained by
+ * 								ExecGetRangeTableRelation(estate, rti), where
+ *								rti is PartitionedRelPruneInfo.rtindex.
  * nparts						Length of subplan_map[] and subpart_map[].
  * subplan_map					Subplan index by partition index, or -1.
  * subpart_map					Subpart index by partition index, or -1.
@@ -58,6 +61,7 @@ extern void ExecCleanupTupleRouting(ModifyTableState *mtstate,
  */
 typedef struct PartitionedRelPruningData
 {
+	Relation	partrel;
 	int			nparts;
 	int		   *subplan_map;
 	int		   *subpart_map;
@@ -90,6 +94,8 @@ typedef struct PartitionPruningData
  * the clauses being unable to match to any tuple that the subplan could
  * possibly produce.
  *
+ * econtext				Standalone ExprContext to evaluate expressions in
+ *						the pruning steps
  * execparamids			Contains paramids of PARAM_EXEC Params found within
  *						any of the partprunedata structs.  Pruning must be
  *						done again each time the value of one of these
@@ -112,6 +118,7 @@ typedef struct PartitionPruningData
  */
 typedef struct PartitionPruneState
 {
+	ExprContext *econtext;
 	Bitmapset  *execparamids;
 	Bitmapset  *other_subplans;
 	MemoryContext prune_context;
@@ -121,11 +128,12 @@ typedef struct PartitionPruneState
 	PartitionPruningData *partprunedata[FLEXIBLE_ARRAY_MEMBER];
 } PartitionPruneState;
 
-extern PartitionPruneState *ExecInitPartitionPruning(PlanState *planstate,
-													 int n_total_subplans,
-													 int part_prune_index,
-													 Bitmapset *relids,
-													 Bitmapset **initially_valid_subplans);
+extern void ExecDoInitialPruning(EState *estate);
+extern PartitionPruneState *ExecInitPartitionExecPruning(PlanState *planstate,
+														 int n_total_subplans,
+														 int part_prune_index,
+														 Bitmapset *relids,
+														 Bitmapset **initially_valid_subplans);
 extern Bitmapset *ExecFindMatchingSubPlans(PartitionPruneState *prunestate,
 										   bool initial_prune);
 

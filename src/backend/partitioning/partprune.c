@@ -3783,13 +3783,8 @@ partkey_datum_from_expr(PartitionPruneContext *context,
 		/*
 		 * We should never see a non-Const in a step unless the caller has
 		 * passed a valid ExprContext.
-		 *
-		 * When context->planstate is valid, context->exprcontext is same as
-		 * context->planstate->ps_ExprContext.
 		 */
-		Assert(context->planstate != NULL || context->exprcontext != NULL);
-		Assert(context->planstate == NULL ||
-			   (context->exprcontext == context->planstate->ps_ExprContext));
+		Assert(context->exprcontext != NULL);
 
 		exprstate = context->exprstates[stateidx];
 		ectx = context->exprcontext;

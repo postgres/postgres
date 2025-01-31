@@ -46,6 +46,7 @@
 #include "commands/matview.h"
 #include "commands/trigger.h"
 #include "executor/executor.h"
+#include "executor/execPartition.h"
 #include "executor/nodeSubplan.h"
 #include "foreign/fdwapi.h"
 #include "mb/pg_wchar.h"
@@ -854,6 +855,17 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 
 	estate->es_plannedstmt = plannedstmt;
 	estate->es_part_prune_infos = plannedstmt->partPruneInfos;
+
+	/*
+	 * Perform runtime "initial" pruning to identify which child subplans,
+	 * corresponding to the children of plan nodes that contain
+	 * PartitionPruneInfo such as Append, will not be executed. The results,
+	 * which are bitmapsets of indexes of the child subplans that will be
+	 * executed, are saved in es_part_prune_results.  These results correspond
+	 * to each PartitionPruneInfo entry, and the es_part_prune_results list is
+	 * parallel to es_part_prune_infos.
+	 */
+	ExecDoInitialPruning(estate);
 
 	/*
 	 * Next, build the ExecRowMark array from the PlanRowMark(s), if any.

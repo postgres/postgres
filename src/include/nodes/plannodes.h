@@ -281,7 +281,11 @@ typedef struct Append
 	 */
 	int			first_partial_plan;
 
-	/* Index to PlannerInfo.partPruneInfos or -1 if no run-time pruning */
+	/*
+	 * Index into PlannedStmt.partPruneInfos and parallel lists in EState:
+	 * es_part_prune_states and es_part_prune_results. Set to -1 if no
+	 * run-time pruning is used.
+	 */
 	int			part_prune_index;
 } Append;
 
@@ -316,7 +320,11 @@ typedef struct MergeAppend
 	/* NULLS FIRST/LAST directions */
 	bool	   *nullsFirst pg_node_attr(array_size(numCols));
 
-	/* Index to PlannerInfo.partPruneInfos or -1 if no run-time pruning */
+	/*
+	 * Index into PlannedStmt.partPruneInfos and parallel lists in EState:
+	 * es_part_prune_states and es_part_prune_results. Set to -1 if no
+	 * run-time pruning is used.
+	 */
 	int			part_prune_index;
 } MergeAppend;
 
