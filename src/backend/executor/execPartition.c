@@ -2480,9 +2480,9 @@ ExecFindMatchingSubPlans(PartitionPruneState *prunestate,
 									   &result);
 
 		/*
-		 * Expression eval may have used space in ExprContext too.
-		 * Avoid accessing exec_context during initial pruning, as it is not
-		 * valid at that stage.
+		 * Expression eval may have used space in ExprContext too. Avoid
+		 * accessing exec_context during initial pruning, as it is not valid
+		 * at that stage.
 		 */
 		if (!initial_prune && pprune->exec_pruning_steps)
 			ResetExprContext(pprune->exec_context.exprcontext);
