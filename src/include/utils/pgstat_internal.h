@@ -718,6 +718,8 @@ extern bool pgstat_lock_entry_shared(PgStat_EntryRef *entry_ref, bool nowait);
 extern void pgstat_unlock_entry(PgStat_EntryRef *entry_ref);
 extern bool pgstat_drop_entry(PgStat_Kind kind, Oid dboid, uint64 objid);
 extern void pgstat_drop_all_entries(void);
+extern void pgstat_drop_matching_entries(bool (*do_drop) (PgStatShared_HashEntry *, Datum),
+										 Datum match_data);
 extern PgStat_EntryRef *pgstat_get_entry_ref_locked(PgStat_Kind kind, Oid dboid, uint64 objid,
 													bool nowait);
 extern void pgstat_reset_entry(PgStat_Kind kind, Oid dboid, uint64 objid, TimestampTz ts);
