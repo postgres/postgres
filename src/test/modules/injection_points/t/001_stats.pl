@@ -69,6 +69,19 @@ $fixedstats = $node->safe_psql('postgres',
 	"SELECT * FROM injection_points_stats_fixed();");
 is($fixedstats, '0|0|0|0|0', 'fixed stats after crash');
 
+# On drop all stats are gone
+$node->safe_psql('postgres',
+	"SELECT injection_points_attach('stats-notice', 'notice');");
+$node->safe_psql('postgres', "SELECT injection_points_run('stats-notice');");
+$node->safe_psql('postgres', "SELECT injection_points_run('stats-notice');");
+$numcalls = $node->safe_psql('postgres',
+	"SELECT injection_points_stats_numcalls('stats-notice');");
+is($numcalls, '2', 'number of stats calls');
+$node->safe_psql('postgres', "SELECT injection_points_stats_drop();");
+$numcalls = $node->safe_psql('postgres',
+	"SELECT injection_points_stats_numcalls('stats-notice');");
+is($numcalls, '', 'no stats after drop via SQL function');
+
 # Stop the server, disable the module, then restart.  The server
 # should be able to come up.
 $node->stop;

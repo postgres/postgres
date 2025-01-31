@@ -197,3 +197,22 @@ injection_points_stats_numcalls(PG_FUNCTION_ARGS)
 
 	PG_RETURN_INT64(entry->numcalls);
 }
+
+/* Only used by injection_points_stats_drop() */
+static bool
+match_inj_entries(PgStatShared_HashEntry *entry, Datum match_data)
+{
+	return entry->key.kind == PGSTAT_KIND_INJECTION;
+}
+
+/*
+ * SQL function that drops all injection point statistics.
+ */
+PG_FUNCTION_INFO_V1(injection_points_stats_drop);
+Datum
+injection_points_stats_drop(PG_FUNCTION_ARGS)
+{
+	pgstat_drop_matching_entries(match_inj_entries, 0);
+
+	PG_RETURN_VOID();
+}

@@ -86,6 +86,16 @@ AS 'MODULE_PATHNAME', 'injection_points_stats_numcalls'
 LANGUAGE C STRICT;
 
 --
+-- injection_points_stats_drop()
+--
+-- Drop all statistics of injection points.
+--
+CREATE FUNCTION injection_points_stats_drop()
+RETURNS void
+AS 'MODULE_PATHNAME', 'injection_points_stats_drop'
+LANGUAGE C STRICT;
+
+--
 -- injection_points_stats_fixed()
 --
 -- Reports fixed-numbered statistics for injection points.
