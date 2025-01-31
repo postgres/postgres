@@ -444,19 +444,19 @@ SysLoggerMain(char *startup_data, size_t startup_data_len)
 		if (!rotation_requested && Log_RotationSize > 0 && !rotation_disabled)
 		{
 			/* Do a rotation if file is too big */
-			if (ftell(syslogFile) >= Log_RotationSize * 1024L)
+			if (ftello(syslogFile) >= Log_RotationSize * (pgoff_t) 1024)
 			{
 				rotation_requested = true;
 				size_rotation_for |= LOG_DESTINATION_STDERR;
 			}
 			if (csvlogFile != NULL &&
-				ftell(csvlogFile) >= Log_RotationSize * 1024L)
+				ftello(csvlogFile) >= Log_RotationSize * (pgoff_t) 1024)
 			{
 				rotation_requested = true;
 				size_rotation_for |= LOG_DESTINATION_CSVLOG;
 			}
 			if (jsonlogFile != NULL &&
-				ftell(jsonlogFile) >= Log_RotationSize * 1024L)
+				ftello(jsonlogFile) >= Log_RotationSize * (pgoff_t) 1024)
 			{
 				rotation_requested = true;
 				size_rotation_for |= LOG_DESTINATION_JSONLOG;
@@ -1183,9 +1183,11 @@ pipeThread(void *arg)
 		 */
 		if (Log_RotationSize > 0)
 		{
-			if (ftell(syslogFile) >= Log_RotationSize * 1024L ||
-				(csvlogFile != NULL && ftell(csvlogFile) >= Log_RotationSize * 1024L) ||
-				(jsonlogFile != NULL && ftell(jsonlogFile) >= Log_RotationSize * 1024L))
+			if (ftello(syslogFile) >= Log_RotationSize * (pgoff_t) 1024 ||
+				(csvlogFile != NULL &&
+				 ftello(csvlogFile) >= Log_RotationSize * (pgoff_t) 1024) ||
+				(jsonlogFile != NULL &&
+				 ftello(jsonlogFile) >= Log_RotationSize * (pgoff_t) 1024))
 				SetLatch(MyLatch);
 		}
 		LeaveCriticalSection(&sysloggerSection);
