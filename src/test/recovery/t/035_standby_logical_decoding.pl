@@ -533,7 +533,7 @@ check_slots_conflict_reason('vacuum_full_', 'rows_removed');
 	qq[ALTER_REPLICATION_SLOT vacuum_full_inactiveslot (failover);],
 	replication => 'database');
 ok( $stderr =~
-	  /ERROR:  cannot alter invalid replication slot "vacuum_full_inactiveslot"/
+	  /ERROR:  can no longer access replication slot "vacuum_full_inactiveslot"/
 	  && $stderr =~
 	  /DETAIL:  This replication slot has been invalidated due to "rows_removed"./,
 	"invalidated slot cannot be altered");
@@ -551,8 +551,7 @@ $handle =
 
 # We are not able to read from the slot as it has been invalidated
 check_pg_recvlogical_stderr($handle,
-	"can no longer get changes from replication slot \"vacuum_full_activeslot\""
-);
+	"can no longer access replication slot \"vacuum_full_activeslot\"");
 
 # Turn hot_standby_feedback back on
 change_hot_standby_feedback_and_wait_for_xmins(1, 1);
@@ -632,8 +631,7 @@ $handle =
 
 # We are not able to read from the slot as it has been invalidated
 check_pg_recvlogical_stderr($handle,
-	"can no longer get changes from replication slot \"row_removal_activeslot\""
-);
+	"can no longer access replication slot \"row_removal_activeslot\"");
 
 ##################################################
 # Recovery conflict: Same as Scenario 2 but on a shared catalog table
@@ -668,7 +666,7 @@ $handle = make_slot_active($node_standby, 'shared_row_removal_', 0, \$stdout,
 
 # We are not able to read from the slot as it has been invalidated
 check_pg_recvlogical_stderr($handle,
-	"can no longer get changes from replication slot \"shared_row_removal_activeslot\""
+	"can no longer access replication slot \"shared_row_removal_activeslot\""
 );
 
 ##################################################
@@ -759,7 +757,7 @@ $handle = make_slot_active($node_standby, 'pruning_', 0, \$stdout, \$stderr);
 
 # We are not able to read from the slot as it has been invalidated
 check_pg_recvlogical_stderr($handle,
-	"can no longer get changes from replication slot \"pruning_activeslot\"");
+	"can no longer access replication slot \"pruning_activeslot\"");
 
 # Turn hot_standby_feedback back on
 change_hot_standby_feedback_and_wait_for_xmins(1, 1);
@@ -818,8 +816,7 @@ $handle =
   make_slot_active($node_standby, 'wal_level_', 0, \$stdout, \$stderr);
 # as the slot has been invalidated we should not be able to read
 check_pg_recvlogical_stderr($handle,
-	"can no longer get changes from replication slot \"wal_level_activeslot\""
-);
+	"can no longer access replication slot \"wal_level_activeslot\"");
 
 ##################################################
 # DROP DATABASE should drop its slots, including active slots.
