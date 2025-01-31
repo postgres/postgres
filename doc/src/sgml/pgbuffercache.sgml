@@ -365,7 +365,7 @@
  </sect2>
 
  <sect2 id="pgbuffercache-pg-buffercache-evict">
-  <title>The <structname>pg_buffercache_evict</structname> Function</title>
+  <title>The <function>pg_buffercache_evict()</function> Function</title>
   <para>
    The <function>pg_buffercache_evict()</function> function takes a buffer
    identifier, as shown in the <structfield>bufferid</structfield> column of
