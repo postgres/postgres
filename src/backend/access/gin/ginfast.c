@@ -39,7 +39,7 @@
 int			gin_pending_list_limit = 0;
 
 #define GIN_PAGE_FREESIZE \
-	( BLCKSZ - MAXALIGN(SizeOfPageHeaderData) - MAXALIGN(sizeof(GinPageOpaqueData)) )
+	( (Size) BLCKSZ - MAXALIGN(SizeOfPageHeaderData) - MAXALIGN(sizeof(GinPageOpaqueData)) )
 
 typedef struct KeyArray
 {
@@ -456,7 +456,7 @@ ginHeapTupleFastInsert(GinState *ginstate, GinTupleCollector *collector)
 	 * ginInsertCleanup() should not be called inside our CRIT_SECTION.
 	 */
 	cleanupSize = GinGetPendingListCleanupSize(index);
-	if (metadata->nPendingPages * GIN_PAGE_FREESIZE > cleanupSize * 1024L)
+	if (metadata->nPendingPages * GIN_PAGE_FREESIZE > cleanupSize * (Size) 1024)
 		needCleanup = true;
 
 	UnlockReleaseBuffer(metabuffer);
@@ -795,7 +795,7 @@ ginInsertCleanup(GinState *ginstate, bool full_clean,
 				blknoFinish;
 	bool		cleanupFinish = false;
 	bool		fsm_vac = false;
-	Size		workMemory;
+	int			workMemory;
 
 	/*
 	 * We would like to prevent concurrent cleanup process. For that we will
@@ -901,7 +901,7 @@ ginInsertCleanup(GinState *ginstate, bool full_clean,
 		 */
 		if (GinPageGetOpaque(page)->rightlink == InvalidBlockNumber ||
 			(GinPageHasFullRow(page) &&
-			 (accum.allocatedMemory >= workMemory * 1024L)))
+			 accum.allocatedMemory >= workMemory * (Size) 1024))
 		{
 			ItemPointerData *list;
 			uint32		nlist;

@@ -6887,7 +6887,7 @@ plan_create_index_workers(Oid tableOid, Oid indexOid)
 	 * parallel worker to sort.
 	 */
 	while (parallel_workers > 0 &&
-		   maintenance_work_mem / (parallel_workers + 1) < 32768L)
+		   maintenance_work_mem / (parallel_workers + 1) < 32 * 1024)
 		parallel_workers--;
 
 done:

@@ -265,7 +265,7 @@ tuplestore_begin_common(int eflags, bool interXact, int maxKBytes)
 	state->truncated = false;
 	state->usedDisk = false;
 	state->maxSpace = 0;
-	state->allowedMem = maxKBytes * 1024L;
+	state->allowedMem = maxKBytes * (int64) 1024;
 	state->availMem = state->allowedMem;
 	state->myfile = NULL;
 

@@ -147,7 +147,7 @@ typedef struct HashMemoryChunkData
 
 typedef struct HashMemoryChunkData *HashMemoryChunk;
 
-#define HASH_CHUNK_SIZE			(32 * 1024L)
+#define HASH_CHUNK_SIZE			((Size) (32 * 1024))
 #define HASH_CHUNK_HEADER_SIZE	MAXALIGN(sizeof(HashMemoryChunkData))
 #define HASH_CHUNK_DATA(hc)		(((char *) (hc)) + HASH_CHUNK_HEADER_SIZE)
 /* tuples exceeding HASH_CHUNK_THRESHOLD bytes are put in their own chunk */

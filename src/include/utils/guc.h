@@ -17,9 +17,13 @@
 #include "utils/array.h"
 
 
-/* upper limit for GUC variables measured in kilobytes of memory */
-/* note that various places assume the byte size fits in a "long" variable */
-#if SIZEOF_SIZE_T > 4 && SIZEOF_LONG > 4
+/*
+ * Maximum for integer GUC variables that are measured in kilobytes of memory.
+ * This value is chosen to ensure that the corresponding number of bytes fits
+ * into a variable of type size_t or ssize_t.  Be sure to compute the number
+ * of bytes like "guc_var * (Size) 1024" to avoid int-width overflow.
+ */
+#if SIZEOF_SIZE_T > 4
 #define MAX_KILOBYTES	INT_MAX
 #else
 #define MAX_KILOBYTES	(INT_MAX / 1024)

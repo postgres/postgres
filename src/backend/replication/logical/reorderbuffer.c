@@ -3643,7 +3643,7 @@ ReorderBufferCheckMemoryLimit(ReorderBuffer *rb)
 	 * haven't exceeded the memory limit.
 	 */
 	if (debug_logical_replication_streaming == DEBUG_LOGICAL_REP_STREAMING_BUFFERED &&
-		rb->size < logical_decoding_work_mem * 1024L)
+		rb->size < logical_decoding_work_mem * (Size) 1024)
 		return;
 
 	/*
@@ -3656,7 +3656,7 @@ ReorderBufferCheckMemoryLimit(ReorderBuffer *rb)
 	 * because a user can reduce the logical_decoding_work_mem to a smaller
 	 * value before the most recent change.
 	 */
-	while (rb->size >= logical_decoding_work_mem * 1024L ||
+	while (rb->size >= logical_decoding_work_mem * (Size) 1024 ||
 		   (debug_logical_replication_streaming == DEBUG_LOGICAL_REP_STREAMING_IMMEDIATE &&
 			rb->size > 0))
 	{
@@ -3699,8 +3699,7 @@ ReorderBufferCheckMemoryLimit(ReorderBuffer *rb)
 	}
 
 	/* We must be under the memory limit now. */
-	Assert(rb->size < logical_decoding_work_mem * 1024L);
-
+	Assert(rb->size < logical_decoding_work_mem * (Size) 1024);
 }
 
 /*

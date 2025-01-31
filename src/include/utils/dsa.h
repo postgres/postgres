@@ -97,7 +97,7 @@ typedef pg_atomic_uint64 dsa_pointer_atomic;
 #define DSA_DEFAULT_INIT_SEGMENT_SIZE ((size_t) (1 * 1024 * 1024))
 
 /* The minimum size of a DSM segment. */
-#define DSA_MIN_SEGMENT_SIZE	((size_t) (256 * 1024L))
+#define DSA_MIN_SEGMENT_SIZE	((size_t) (256 * 1024))
 
 /* The maximum size of a DSM segment. */
 #define DSA_MAX_SEGMENT_SIZE ((size_t) 1 << DSA_OFFSET_WIDTH)

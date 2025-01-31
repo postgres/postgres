@@ -2070,7 +2070,7 @@ lazy_vacuum(LVRelState *vacrel)
 		 */
 		threshold = (double) vacrel->rel_pages * BYPASS_THRESHOLD_PAGES;
 		bypass = (vacrel->lpdead_item_pages < threshold &&
-				  (TidStoreMemoryUsage(vacrel->dead_items) < (32L * 1024L * 1024L)));
+				  TidStoreMemoryUsage(vacrel->dead_items) < 32 * 1024 * 1024);
 	}
 
 	if (bypass)
@@ -3037,7 +3037,7 @@ dead_items_alloc(LVRelState *vacrel, int nworkers)
 	 */
 
 	dead_items_info = (VacDeadItemsInfo *) palloc(sizeof(VacDeadItemsInfo));
-	dead_items_info->max_bytes = vac_work_mem * 1024L;
+	dead_items_info->max_bytes = vac_work_mem * (Size) 1024;
 	dead_items_info->num_items = 0;
 	vacrel->dead_items_info = dead_items_info;
 

@@ -1903,7 +1903,7 @@ cost_tuplesort(Cost *startup_cost, Cost *run_cost,
 	double		input_bytes = relation_byte_size(tuples, width);
 	double		output_bytes;
 	double		output_tuples;
-	long		sort_mem_bytes = sort_mem * 1024L;
+	int64		sort_mem_bytes = sort_mem * (int64) 1024;
 
 	/*
 	 * We want to be sure the cost of a sort is never estimated as zero, even
@@ -2488,7 +2488,7 @@ cost_material(Path *path,
 	Cost		startup_cost = input_startup_cost;
 	Cost		run_cost = input_total_cost - input_startup_cost;
 	double		nbytes = relation_byte_size(tuples, width);
-	long		work_mem_bytes = work_mem * 1024L;
+	double		work_mem_bytes = work_mem * (Size) 1024;
 
 	path->rows = tuples;
 
@@ -4028,7 +4028,7 @@ final_cost_mergejoin(PlannerInfo *root, MergePath *path,
 	else if (enable_material && innersortkeys != NIL &&
 			 relation_byte_size(inner_path_rows,
 								inner_path->pathtarget->width) >
-			 (work_mem * 1024L))
+			 work_mem * (Size) 1024)
 		path->materialize_inner = true;
 	else
 		path->materialize_inner = false;
@@ -4663,7 +4663,7 @@ cost_rescan(PlannerInfo *root, Path *path,
 				Cost		run_cost = cpu_tuple_cost * path->rows;
 				double		nbytes = relation_byte_size(path->rows,
 														path->pathtarget->width);
-				long		work_mem_bytes = work_mem * 1024L;
+				double		work_mem_bytes = work_mem * (Size) 1024;
 
 				if (nbytes > work_mem_bytes)
 				{
@@ -4690,7 +4690,7 @@ cost_rescan(PlannerInfo *root, Path *path,
 				Cost		run_cost = cpu_operator_cost * path->rows;
 				double		nbytes = relation_byte_size(path->rows,
 														path->pathtarget->width);
-				long		work_mem_bytes = work_mem * 1024L;
+				double		work_mem_bytes = work_mem * (Size) 1024;
 
 				if (nbytes > work_mem_bytes)
 				{
@@ -6496,7 +6496,7 @@ compute_bitmap_pages(PlannerInfo *root, RelOptInfo *baserel,
 	double		pages_fetched;
 	double		tuples_fetched;
 	double		heap_pages;
-	long		maxentries;
+	double		maxentries;
 
 	/*
 	 * Fetch total cost of obtaining the bitmap, as well as its total
@@ -6527,7 +6527,7 @@ compute_bitmap_pages(PlannerInfo *root, RelOptInfo *baserel,
 	 * the bitmap at one time.)
 	 */
 	heap_pages = Min(pages_fetched, baserel->pages);
-	maxentries = tbm_calculate_entries(work_mem * 1024L);
+	maxentries = tbm_calculate_entries(work_mem * (Size) 1024);
 
 	if (loop_count > 1)
 	{

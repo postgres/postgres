@@ -2953,7 +2953,7 @@ _bt_lock_subtree_parent(Relation rel, Relation heaprel, BlockNumber child,
 void
 _bt_pendingfsm_init(Relation rel, BTVacState *vstate, bool cleanuponly)
 {
-	int64		maxbufsize;
+	Size		maxbufsize;
 
 	/*
 	 * Don't bother with optimization in cleanup-only case -- we don't expect
@@ -2969,12 +2969,13 @@ _bt_pendingfsm_init(Relation rel, BTVacState *vstate, bool cleanuponly)
 	 * int overflow here.
 	 */
 	vstate->bufsize = 256;
-	maxbufsize = (work_mem * 1024L) / sizeof(BTPendingFSM);
-	maxbufsize = Min(maxbufsize, INT_MAX);
+	maxbufsize = (work_mem * (Size) 1024) / sizeof(BTPendingFSM);
 	maxbufsize = Min(maxbufsize, MaxAllocSize / sizeof(BTPendingFSM));
+	/* BTVacState.maxbufsize has type int */
+	maxbufsize = Min(maxbufsize, INT_MAX);
 	/* Stay sane with small work_mem */
 	maxbufsize = Max(maxbufsize, vstate->bufsize);
-	vstate->maxbufsize = maxbufsize;
+	vstate->maxbufsize = (int) maxbufsize;
 
 	/* Allocate buffer, indicate that there are currently 0 pending pages */
 	vstate->pendingpages = palloc(sizeof(BTPendingFSM) * vstate->bufsize);

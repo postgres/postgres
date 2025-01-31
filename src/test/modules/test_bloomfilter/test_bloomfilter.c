@@ -76,7 +76,7 @@ create_and_test_bloom(int power, int64 nelements, int callerseed)
 	int64		nfalsepos;
 	bloom_filter *filter;
 
-	bloom_work_mem = (1L << power) / 8L / 1024L;
+	bloom_work_mem = ((int64) 1 << power) / (8 * 1024);
 
 	elog(DEBUG1, "bloom_work_mem (KB): %d", bloom_work_mem);
 

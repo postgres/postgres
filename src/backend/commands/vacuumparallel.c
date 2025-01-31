@@ -375,7 +375,7 @@ parallel_vacuum_init(Relation rel, Relation *indrels, int nindexes,
 		(nindexes_mwm > 0) ?
 		maintenance_work_mem / Min(parallel_workers, nindexes_mwm) :
 		maintenance_work_mem;
-	shared->dead_items_info.max_bytes = vac_work_mem * 1024L;
+	shared->dead_items_info.max_bytes = vac_work_mem * (size_t) 1024;
 
 	/* Prepare DSA space for dead items */
 	dead_items = TidStoreCreateShared(shared->dead_items_info.max_bytes,

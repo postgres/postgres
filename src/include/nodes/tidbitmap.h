@@ -62,7 +62,7 @@ typedef struct TBMIterateResult
 
 /* function prototypes in nodes/tidbitmap.c */
 
-extern TIDBitmap *tbm_create(long maxbytes, dsa_area *dsa);
+extern TIDBitmap *tbm_create(Size maxbytes, dsa_area *dsa);
 extern void tbm_free(TIDBitmap *tbm);
 extern void tbm_free_shared_area(dsa_area *dsa, dsa_pointer dp);
 
@@ -84,7 +84,7 @@ extern void tbm_end_private_iterate(TBMPrivateIterator *iterator);
 extern void tbm_end_shared_iterate(TBMSharedIterator *iterator);
 extern TBMSharedIterator *tbm_attach_shared_iterate(dsa_area *dsa,
 													dsa_pointer dp);
-extern long tbm_calculate_entries(double maxbytes);
+extern int	tbm_calculate_entries(Size maxbytes);
 
 extern TBMIterator tbm_begin_iterate(TIDBitmap *tbm,
 									 dsa_area *dsa, dsa_pointer dsp);
