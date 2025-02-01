@@ -57,7 +57,7 @@ get_equal_strategy_number(Oid opclass)
 			ret = HTEqualStrategyNumber;
 			break;
 		case GIST_AM_OID:
-			ret = GistTranslateStratnum(opclass, COMPARE_EQ);
+			ret = GistTranslateCompareType(opclass, COMPARE_EQ);
 			break;
 		default:
 			ret = InvalidStrategy;

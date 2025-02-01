@@ -10016,7 +10016,7 @@ ATAddForeignKeyConstraint(List **wqueue, AlteredTableInfo *tab, Relation rel,
 			 * ask the opclass what number it actually uses instead of our RT*
 			 * constants.
 			 */
-			eqstrategy = GistTranslateStratnum(opclasses[i], cmptype);
+			eqstrategy = GistTranslateCompareType(opclasses[i], cmptype);
 			if (eqstrategy == InvalidStrategy)
 			{
 				HeapTuple	tuple;
@@ -10041,7 +10041,7 @@ ATAddForeignKeyConstraint(List **wqueue, AlteredTableInfo *tab, Relation rel,
 			 * other index AMs support unique indexes.  If we ever did have
 			 * other types of unique indexes, we'd need a way to determine
 			 * which operator strategy number is equality.  (We could use
-			 * something like GistTranslateStratnum.)
+			 * something like GistTranslateCompareType.)
 			 */
 			if (amid != BTREE_AM_OID)
 				elog(ERROR, "only b-tree indexes are supported for foreign keys");
