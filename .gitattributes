@@ -1,11 +1,15 @@
+# IMPORTANT: After updating this file, also run src/tools/generate_editorconfig.py
+
 *		whitespace=space-before-tab,trailing-space
 *.[chly]	whitespace=space-before-tab,trailing-space,indent-with-non-tab,tabwidth=4
 *.cpp		whitespace=space-before-tab,trailing-space,indent-with-non-tab,tabwidth=4
 *.pl		whitespace=space-before-tab,trailing-space,tabwidth=4
 *.pm		whitespace=space-before-tab,trailing-space,tabwidth=4
 *.po		whitespace=space-before-tab,trailing-space,tab-in-indent,-blank-at-eof
+*.py		whitespace=space-before-tab,trailing-space,tab-in-indent
 *.sgml		whitespace=space-before-tab,trailing-space,tab-in-indent
-*.x[ms]l	whitespace=space-before-tab,trailing-space,tab-in-indent
+*.xml		whitespace=space-before-tab,trailing-space,tab-in-indent
+*.xsl		whitespace=space-before-tab,trailing-space,tab-in-indent
 
 # Avoid confusing ASCII underlines with leftover merge conflict markers
 README		conflict-marker-size=32
@@ -33,3 +37,4 @@ src/include/snowball/libstemmer/*	-whitespace
 src/timezone/data/*			-whitespace
 src/tools/pg_bsd_indent/*		-whitespace
 src/tools/pg_bsd_indent/tests/*		-whitespace
+src/tools/pg_bsd_indent/*.[ch]		whitespace=-blank-at-eol,-blank-at-eof,tabwidth=8

@@ -1,14 +1,176 @@
 root = true
 
-[*.{c,h,l,y,pl,pm}]
-indent_style = tab
+[*]
 indent_size = tab
+
+[*]
+trim_trailing_whitespace = true
+insert_final_newline = true
+indent_style = unset
+tab_width = unset
+
+[*.[chly]]
+trim_trailing_whitespace = true
+insert_final_newline = true
+indent_style = tab
 tab_width = 4
 
-[*.{sgml,xml}]
+[*.cpp]
+trim_trailing_whitespace = true
+insert_final_newline = true
+indent_style = tab
+tab_width = 4
+
+[*.pl]
+trim_trailing_whitespace = true
+insert_final_newline = true
+indent_style = tab
+tab_width = 4
+
+[*.pm]
+trim_trailing_whitespace = true
+insert_final_newline = true
+indent_style = tab
+tab_width = 4
+
+[*.po]
+trim_trailing_whitespace = true
+insert_final_newline = unset
 indent_style = space
+tab_width = unset
+
+[*.py]
+trim_trailing_whitespace = true
+insert_final_newline = true
+indent_style = space
+tab_width = unset
+indent_size = 4
+
+[*.sgml]
+trim_trailing_whitespace = true
+insert_final_newline = true
+indent_style = space
+tab_width = unset
 indent_size = 1
 
-[*.xsl]
+[*.xml]
+trim_trailing_whitespace = true
+insert_final_newline = true
 indent_style = space
+tab_width = unset
 indent_size = 2
+
+[*.xsl]
+trim_trailing_whitespace = true
+insert_final_newline = true
+indent_style = space
+tab_width = unset
+indent_size = 1
+
+[*.data]
+indent_style = unset
+indent_size = unset
+trim_trailing_whitespace = unset
+insert_final_newline = unset
+
+[contrib/pgcrypto/sql/pgp-armor.sql]
+trim_trailing_whitespace = unset
+insert_final_newline = true
+indent_style = unset
+tab_width = unset
+
+[src/backend/catalog/sql_features.txt]
+trim_trailing_whitespace = unset
+insert_final_newline = true
+indent_style = unset
+tab_width = unset
+
+[*.out]
+indent_style = unset
+indent_size = unset
+trim_trailing_whitespace = unset
+insert_final_newline = unset
+
+[src/interfaces/ecpg/test/expected/*]
+indent_style = unset
+indent_size = unset
+trim_trailing_whitespace = unset
+insert_final_newline = unset
+
+[configure]
+indent_style = unset
+indent_size = unset
+trim_trailing_whitespace = unset
+insert_final_newline = unset
+
+[ppport.h]
+indent_style = unset
+indent_size = unset
+trim_trailing_whitespace = unset
+insert_final_newline = unset
+
+[src/backend/jit/llvm/SectionMemoryManager.cpp]
+indent_style = unset
+indent_size = unset
+trim_trailing_whitespace = unset
+insert_final_newline = unset
+
+[src/backend/jit/llvm/SectionMemoryManager.LICENSE]
+indent_style = unset
+indent_size = unset
+trim_trailing_whitespace = unset
+insert_final_newline = unset
+
+[src/backend/regex/COPYRIGHT]
+indent_style = unset
+indent_size = unset
+trim_trailing_whitespace = unset
+insert_final_newline = unset
+
+[src/backend/snowball/libstemmer/*.c]
+indent_style = unset
+indent_size = unset
+trim_trailing_whitespace = unset
+insert_final_newline = unset
+
+[src/backend/utils/mb/Unicode/*-std.txt]
+indent_style = unset
+indent_size = unset
+trim_trailing_whitespace = unset
+insert_final_newline = unset
+
+[src/include/jit/SectionMemoryManager.h]
+indent_style = unset
+indent_size = unset
+trim_trailing_whitespace = unset
+insert_final_newline = unset
+
+[src/include/snowball/libstemmer/*]
+indent_style = unset
+indent_size = unset
+trim_trailing_whitespace = unset
+insert_final_newline = unset
+
+[src/timezone/data/*]
+indent_style = unset
+indent_size = unset
+trim_trailing_whitespace = unset
+insert_final_newline = unset
+
+[src/tools/pg_bsd_indent/*]
+indent_style = unset
+indent_size = unset
+trim_trailing_whitespace = unset
+insert_final_newline = unset
+
+[src/tools/pg_bsd_indent/tests/*]
+indent_style = unset
+indent_size = unset
+trim_trailing_whitespace = unset
+insert_final_newline = unset
+
+[src/tools/pg_bsd_indent/*.[ch]]
+trim_trailing_whitespace = unset
+insert_final_newline = unset
+indent_style = unset
+tab_width = 8
