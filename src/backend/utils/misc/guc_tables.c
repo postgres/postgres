@@ -1692,7 +1692,7 @@ struct config_bool ConfigureNamesBool[] =
 	},
 	{
 		{"logging_collector", PGC_POSTMASTER, LOGGING_WHERE,
-			gettext_noop("Start a subprocess to capture stderr output and/or csvlogs into log files."),
+			gettext_noop("Start a subprocess to capture stderr, csvlog and/or jsonlog into log files."),
 			NULL
 		},
 		&Logging_collector,
