@@ -58,6 +58,7 @@ my @all_input_files = qw(
   nodes/plannodes.h
   nodes/execnodes.h
   access/amapi.h
+  access/cmptype.h
   access/sdir.h
   access/tableam.h
   access/tsmapi.h

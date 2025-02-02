@@ -3,8 +3,8 @@
  */
 #include "postgres.h"
 
+#include "access/cmptype.h"
 #include "access/stratnum.h"
-#include "nodes/primnodes.h"
 #include "utils/builtins.h"
 
 PG_MODULE_MAGIC;
