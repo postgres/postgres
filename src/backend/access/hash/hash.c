@@ -21,6 +21,7 @@
 #include "access/hash.h"
 #include "access/hash_xlog.h"
 #include "access/relscan.h"
+#include "access/stratnum.h"
 #include "access/tableam.h"
 #include "access/xloginsert.h"
 #include "commands/progress.h"
@@ -105,6 +106,8 @@ hashhandler(PG_FUNCTION_ARGS)
 	amroutine->amestimateparallelscan = NULL;
 	amroutine->aminitparallelscan = NULL;
 	amroutine->amparallelrescan = NULL;
+	amroutine->amtranslatestrategy = hashtranslatestrategy;
+	amroutine->amtranslatecmptype = hashtranslatecmptype;
 
 	PG_RETURN_POINTER(amroutine);
 }
@@ -921,4 +924,20 @@ hashbucketcleanup(Relation rel, Bucket cur_bucket, Buffer bucket_buf,
 							bstrategy);
 	else
 		LockBuffer(bucket_buf, BUFFER_LOCK_UNLOCK);
+}
+
+CompareType
+hashtranslatestrategy(StrategyNumber strategy, Oid opfamily, Oid opcintype)
+{
+	if (strategy == HTEqualStrategyNumber)
+		return COMPARE_EQ;
+	return COMPARE_INVALID;
+}
+
+StrategyNumber
+hashtranslatecmptype(CompareType cmptype, Oid opfamily, Oid opcintype)
+{
+	if (cmptype == COMPARE_EQ)
+		return HTEqualStrategyNumber;
+	return InvalidStrategy;
 }

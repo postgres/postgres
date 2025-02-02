@@ -3318,6 +3318,8 @@ amparallelrescan_function
 amproperty_function
 amrescan_function
 amrestrpos_function
+amtranslate_strategy_function amtranslatestrategy;
+amtranslate_cmptype_function amtranslatecmptype;
 amvacuumcleanup_function
 amvalidate_function
 array_iter

@@ -108,6 +108,56 @@ GetIndexAmRoutineByAmId(Oid amoid, bool noerror)
 
 
 /*
+ * IndexAmTranslateStrategy - given an access method and strategy, get the
+ * corresponding compare type.
+ *
+ * If missing_ok is false, throw an error if no compare type is found.  If
+ * true, just return COMPARE_INVALID.
+ */
+CompareType
+IndexAmTranslateStrategy(StrategyNumber strategy, Oid amoid, Oid opfamily, Oid opcintype, bool missing_ok)
+{
+	CompareType result;
+	IndexAmRoutine *amroutine;
+
+	amroutine = GetIndexAmRoutineByAmId(amoid, false);
+	if (amroutine->amtranslatestrategy)
+		result = amroutine->amtranslatestrategy(strategy, opfamily, opcintype);
+	else
+		result = COMPARE_INVALID;
+
+	if (!missing_ok && result == COMPARE_INVALID)
+		elog(ERROR, "could not translate strategy number %d for index AM %u", strategy, amoid);
+
+	return result;
+}
+
+/*
+ * IndexAmTranslateCompareType - given an access method and compare type, get
+ * the corresponding strategy number.
+ *
+ * If missing_ok is false, throw an error if no strategy is found correlating
+ * to the given cmptype.  If true, just return InvalidStrategy.
+ */
+StrategyNumber
+IndexAmTranslateCompareType(CompareType cmptype, Oid amoid, Oid opfamily, Oid opcintype, bool missing_ok)
+{
+	StrategyNumber result;
+	IndexAmRoutine *amroutine;
+
+	amroutine = GetIndexAmRoutineByAmId(amoid, false);
+	if (amroutine->amtranslatecmptype)
+		result = amroutine->amtranslatecmptype(cmptype, opfamily, opcintype);
+	else
+		result = InvalidStrategy;
+
+	if (!missing_ok && result == InvalidStrategy)
+		elog(ERROR, "could not translate compare type %u for index AM %u", cmptype, amoid);
+
+	return result;
+}
+
+/*
  * Ask appropriate access method to validate the specified opclass.
  */
 Datum

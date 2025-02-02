@@ -164,6 +164,10 @@ typedef struct IndexAmRoutine
     amestimateparallelscan_function amestimateparallelscan;    /* can be NULL */
     aminitparallelscan_function aminitparallelscan;    /* can be NULL */
     amparallelrescan_function amparallelrescan;    /* can be NULL */
+
+    /* interface functions to support planning */
+    amtranslate_strategy_function amtranslatestrategy;  /* can be NULL */
+    amtranslate_cmptype_function amtranslatecmptype;    /* can be NULL */
 } IndexAmRoutine;
 </programlisting>
   </para>
@@ -874,6 +878,28 @@ amparallelrescan (IndexScanDesc scan);
    must be restarted.  It should reset any shared state set up by
    <function>aminitparallelscan</function> such that the scan will be restarted from
    the beginning.
+  </para>
+
+  <para>
+<programlisting>
+CompareType
+amtranslatestrategy (StrategyNumber strategy, Oid opfamily, Oid opcintype);
+
+StrategyNumber
+amtranslatecmptype (CompareType cmptype, Oid opfamily, Oid opcintype);
+</programlisting>
+   These functions, if implemented, will be called by the planer and executor
+   to convert between fixed <type>CompareType</type> values and the specific
+   strategy numbers used by the access method.  These functions can be
+   implemented by access methods that implement functionality similar to the
+   built-in btree or hash access methods, and by implementing these
+   translations, the system can learn about the semantics of the access
+   method's operations and can use them in place of btree or hash indexes in
+   various places.  If the functionality of the access method is not similar
+   to those built-in access methods, these functions do not need to be
+   implemented.  If the functions are not implemented, the access method will
+   be ignored for certain planner and executor decisions, but is otherwise
+   fully functional.
   </para>
 
  </sect1>

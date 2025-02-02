@@ -12,7 +12,9 @@
 #ifndef AMAPI_H
 #define AMAPI_H
 
+#include "access/cmptype.h"
 #include "access/genam.h"
+#include "access/stratnum.h"
 
 /*
  * We don't wish to include planner header files here, since most of an index
@@ -98,6 +100,12 @@ typedef struct OpFamilyMember
 /*
  * Callback function signatures --- see indexam.sgml for more info.
  */
+
+/* translate AM-specific strategies to general operator types */
+typedef CompareType (*amtranslate_strategy_function) (StrategyNumber strategy, Oid opfamily, Oid opcintype);
+
+/* translate general operator types to AM-specific strategies */
+typedef StrategyNumber (*amtranslate_cmptype_function) (CompareType cmptype, Oid opfamily, Oid opcintype);
 
 /* build new index */
 typedef IndexBuildResult *(*ambuild_function) (Relation heapRelation,
@@ -301,11 +309,17 @@ typedef struct IndexAmRoutine
 	amestimateparallelscan_function amestimateparallelscan; /* can be NULL */
 	aminitparallelscan_function aminitparallelscan; /* can be NULL */
 	amparallelrescan_function amparallelrescan; /* can be NULL */
+
+	/* interface functions to support planning */
+	amtranslate_strategy_function amtranslatestrategy;	/* can be NULL */
+	amtranslate_cmptype_function amtranslatecmptype;	/* can be NULL */
 } IndexAmRoutine;
 
 
 /* Functions in access/index/amapi.c */
 extern IndexAmRoutine *GetIndexAmRoutine(Oid amhandler);
 extern IndexAmRoutine *GetIndexAmRoutineByAmId(Oid amoid, bool noerror);
+extern CompareType IndexAmTranslateStrategy(StrategyNumber strategy, Oid amoid, Oid opfamily, Oid opcintype, bool missing_ok);
+extern StrategyNumber IndexAmTranslateCompareType(CompareType cmptype, Oid amoid, Oid opfamily, Oid opcintype, bool missing_ok);
 
 #endif							/* AMAPI_H */

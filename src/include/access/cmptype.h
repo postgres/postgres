@@ -30,6 +30,7 @@
  */
 typedef enum CompareType
 {
+	COMPARE_INVALID = 0,
 	COMPARE_LT = 1,				/* BTLessStrategyNumber */
 	COMPARE_LE = 2,				/* BTLessEqualStrategyNumber */
 	COMPARE_EQ = 3,				/* BTEqualStrategyNumber */

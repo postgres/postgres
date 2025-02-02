@@ -1183,6 +1183,9 @@ extern IndexBulkDeleteResult *btvacuumcleanup(IndexVacuumInfo *info,
 extern bool btcanreturn(Relation index, int attno);
 extern int	btgettreeheight(Relation rel);
 
+extern CompareType bttranslatestrategy(StrategyNumber strategy, Oid opfamily, Oid opcintype);
+extern StrategyNumber bttranslatecmptype(CompareType cmptype, Oid opfamily, Oid opcintype);
+
 /*
  * prototypes for internal functions in nbtree.c
  */

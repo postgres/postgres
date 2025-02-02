@@ -387,6 +387,9 @@ extern void hashadjustmembers(Oid opfamilyoid,
 							  List *operators,
 							  List *functions);
 
+extern CompareType hashtranslatestrategy(StrategyNumber strategy, Oid opfamily, Oid opcintype);
+extern StrategyNumber hashtranslatecmptype(CompareType cmptype, Oid opfamily, Oid opcintype);
+
 /* private routines */
 
 /* hashinsert.c */
