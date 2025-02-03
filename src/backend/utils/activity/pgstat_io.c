@@ -107,6 +107,14 @@ pgstat_prepare_io_time(bool track_io_guc)
 
 /*
  * Like pgstat_count_io_op() except it also accumulates time.
+ *
+ * The calls related to pgstat_count_buffer_*() are for pgstat_database.  As
+ * pg_stat_database only counts block read and write times, these are done for
+ * IOOP_READ, IOOP_WRITE and IOOP_EXTEND.
+ *
+ * pgBufferUsage is used for EXPLAIN.  pgBufferUsage has write and read stats
+ * for shared, local and temporary blocks.  pg_stat_io does not track the
+ * activity of temporary blocks, so these are ignored here.
  */
 void
 pgstat_count_io_op_time(IOObject io_object, IOContext io_context, IOOp io_op,
