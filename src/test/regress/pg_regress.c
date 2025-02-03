@@ -1335,7 +1335,7 @@ make_directory(const char *dir)
 }
 
 /*
- * In: filename.ext, Return: filename_i.ext, where 0 < i <= 9
+ * In: filename.ext, Return: filename_i.ext, where 0 <= i <= 9
  */
 static char *
 get_alternative_expectfile(const char *expectfile, int i)
