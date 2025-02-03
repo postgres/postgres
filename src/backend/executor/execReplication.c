@@ -39,35 +39,6 @@ static bool tuples_equal(TupleTableSlot *slot1, TupleTableSlot *slot2,
 						 TypeCacheEntry **eq);
 
 /*
- * Returns the fixed strategy number, if any, of the equality operator for the
- * given operator class, otherwise, InvalidStrategy.
- */
-StrategyNumber
-get_equal_strategy_number(Oid opclass)
-{
-	Oid			am = get_opclass_method(opclass);
-	int			ret;
-
-	switch (am)
-	{
-		case BTREE_AM_OID:
-			ret = BTEqualStrategyNumber;
-			break;
-		case HASH_AM_OID:
-			ret = HTEqualStrategyNumber;
-			break;
-		case GIST_AM_OID:
-			ret = GistTranslateCompareType(opclass, COMPARE_EQ);
-			break;
-		default:
-			ret = InvalidStrategy;
-			break;
-	}
-
-	return ret;
-}
-
-/*
  * Setup a ScanKey for a search in the relation 'rel' for a tuple 'key' that
  * is setup to match 'rel' (*NOT* idxrel!).
  *
@@ -120,10 +91,7 @@ build_replindex_scan_key(ScanKey skey, Relation rel, Relation idxrel,
 		 */
 		optype = get_opclass_input_type(opclass->values[index_attoff]);
 		opfamily = get_opclass_family(opclass->values[index_attoff]);
-		eq_strategy = get_equal_strategy_number(opclass->values[index_attoff]);
-		if (!eq_strategy)
-			elog(ERROR, "missing equal strategy for opclass %u", opclass->values[index_attoff]);
-
+		eq_strategy = IndexAmTranslateCompareType(COMPARE_EQ, idxrel->rd_rel->relam, opfamily, optype, false);
 		operator = get_opfamily_member(opfamily, optype,
 									   optype,
 									   eq_strategy);

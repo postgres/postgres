@@ -2422,38 +2422,30 @@ void
 GetOperatorFromCompareType(Oid opclass, Oid rhstype, CompareType cmptype,
 						   Oid *opid, StrategyNumber *strat)
 {
+	Oid			amid;
 	Oid			opfamily;
 	Oid			opcintype;
 
 	Assert(cmptype == COMPARE_EQ || cmptype == COMPARE_OVERLAP || cmptype == COMPARE_CONTAINED_BY);
+
+	amid = get_opclass_method(opclass);
 
 	*opid = InvalidOid;
 
 	if (get_opclass_opfamily_and_input_type(opclass, &opfamily, &opcintype))
 	{
 		/*
-		 * Ask the opclass to translate to its internal stratnum
-		 *
-		 * For now we only need GiST support, but this could support other
-		 * indexams if we wanted.
+		 * Ask the index AM to translate to its internal stratnum
 		 */
-		*strat = GistTranslateCompareType(opclass, cmptype);
+		*strat = IndexAmTranslateCompareType(cmptype, amid, opfamily, opcintype, true);
 		if (*strat == InvalidStrategy)
-		{
-			HeapTuple	tuple;
-
-			tuple = SearchSysCache1(CLAOID, ObjectIdGetDatum(opclass));
-			if (!HeapTupleIsValid(tuple))
-				elog(ERROR, "cache lookup failed for operator class %u", opclass);
-
 			ereport(ERROR,
 					errcode(ERRCODE_UNDEFINED_OBJECT),
 					cmptype = COMPARE_EQ ? errmsg("could not identify an equality operator for type %s", format_type_be(opcintype)) :
 					cmptype == COMPARE_OVERLAP ? errmsg("could not identify an overlaps operator for type %s", format_type_be(opcintype)) :
 					cmptype == COMPARE_CONTAINED_BY ? errmsg("could not identify a contained-by operator for type %s", format_type_be(opcintype)) : 0,
-					errdetail("Could not translate compare type %d for operator class \"%s\" for access method \"%s\".",
-							  cmptype, NameStr(((Form_pg_opclass) GETSTRUCT(tuple))->opcname), "gist"));
-		}
+					errdetail("Could not translate compare type %d for operator family \"%s\", input type %s, access method \"%s\".",
+							  cmptype, get_opfamily_name(opfamily, false), format_type_be(opcintype), get_am_name(amid)));
 
 		/*
 		 * We parameterize rhstype so foreign keys can ask for a <@ operator
@@ -2472,7 +2464,7 @@ GetOperatorFromCompareType(Oid opclass, Oid rhstype, CompareType cmptype,
 				cmptype == COMPARE_OVERLAP ? errmsg("could not identify an overlaps operator for type %s", format_type_be(opcintype)) :
 				cmptype == COMPARE_CONTAINED_BY ? errmsg("could not identify a contained-by operator for type %s", format_type_be(opcintype)) : 0,
 				errdetail("There is no suitable operator in operator family \"%s\" for access method \"%s\".",
-						  get_opfamily_name(opfamily, false), "gist"));
+						  get_opfamily_name(opfamily, false), get_am_name(amid)));
 }
 
 /*

@@ -27,6 +27,7 @@
 #include "replication/logicalrelation.h"
 #include "replication/worker_internal.h"
 #include "utils/inval.h"
+#include "utils/lsyscache.h"
 #include "utils/syscache.h"
 
 
@@ -835,7 +836,12 @@ IsIndexUsableForReplicaIdentityFull(Relation idxrel, AttrMap *attrmap)
 	/* Ensure that the index has a valid equal strategy for each key column */
 	for (int i = 0; i < idxrel->rd_index->indnkeyatts; i++)
 	{
-		if (get_equal_strategy_number(indclass->values[i]) == InvalidStrategy)
+		Oid			opfamily;
+		Oid			opcintype;
+
+		if (!get_opclass_opfamily_and_input_type(indclass->values[i], &opfamily, &opcintype))
+			return false;
+		if (IndexAmTranslateCompareType(COMPARE_EQ, idxrel->rd_rel->relam, opfamily, opcintype, true) == InvalidStrategy)
 			return false;
 	}
 

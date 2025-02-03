@@ -108,7 +108,7 @@ gisthandler(PG_FUNCTION_ARGS)
 	amroutine->aminitparallelscan = NULL;
 	amroutine->amparallelrescan = NULL;
 	amroutine->amtranslatestrategy = NULL;
-	amroutine->amtranslatecmptype = NULL;
+	amroutine->amtranslatecmptype = gisttranslatecmptype;
 
 	PG_RETURN_POINTER(amroutine);
 }

@@ -10002,37 +10002,21 @@ ATAddForeignKeyConstraint(List **wqueue, AlteredTableInfo *tab, Relation rel,
 			CompareType cmptype;
 			bool		for_overlaps = with_period && i == numpks - 1;
 
-			/*
-			 * GiST indexes are required to support temporal foreign keys
-			 * because they combine equals and overlaps.
-			 */
-			if (amid != GIST_AM_OID)
-				elog(ERROR, "only GiST indexes are supported for temporal foreign keys");
-
 			cmptype = for_overlaps ? COMPARE_OVERLAP : COMPARE_EQ;
 
 			/*
-			 * An opclass can use whatever strategy numbers it wants, so we
-			 * ask the opclass what number it actually uses instead of our RT*
-			 * constants.
+			 * An index AM can use whatever strategy numbers it wants, so we
+			 * ask it what number it actually uses.
 			 */
-			eqstrategy = GistTranslateCompareType(opclasses[i], cmptype);
+			eqstrategy = IndexAmTranslateCompareType(cmptype, amid, opfamily, opcintype, true);
 			if (eqstrategy == InvalidStrategy)
-			{
-				HeapTuple	tuple;
-
-				tuple = SearchSysCache1(CLAOID, ObjectIdGetDatum(opclasses[i]));
-				if (!HeapTupleIsValid(tuple))
-					elog(ERROR, "cache lookup failed for operator class %u", opclasses[i]);
-
 				ereport(ERROR,
 						errcode(ERRCODE_UNDEFINED_OBJECT),
 						for_overlaps
 						? errmsg("could not identify an overlaps operator for foreign key")
 						: errmsg("could not identify an equality operator for foreign key"),
-						errdetail("Could not translate compare type %d for operator class \"%s\" for access method \"%s\".",
-								  cmptype, NameStr(((Form_pg_opclass) GETSTRUCT(tuple))->opcname), "gist"));
-			}
+						errdetail("Could not translate compare type %d for operator family \"%s\", input type %s, access method \"%s\".",
+								  cmptype, get_opfamily_name(opfamily, false), format_type_be(opcintype), get_am_name(amid)));
 		}
 		else
 		{
@@ -10041,7 +10025,7 @@ ATAddForeignKeyConstraint(List **wqueue, AlteredTableInfo *tab, Relation rel,
 			 * other index AMs support unique indexes.  If we ever did have
 			 * other types of unique indexes, we'd need a way to determine
 			 * which operator strategy number is equality.  (We could use
-			 * something like GistTranslateCompareType.)
+			 * IndexAmTranslateCompareType.)
 			 */
 			if (amid != BTREE_AM_OID)
 				elog(ERROR, "only b-tree indexes are supported for foreign keys");
