@@ -962,6 +962,10 @@ pg_tde_get_key_from_file(const RelFileLocator *rlocator, uint32 key_type, bool n
 	if (principal_key == NULL)
 	{
 		LWLockRelease(lock_pk);
+		if (no_map_ok)
+		{
+			return NULL;
+		}
 		ereport(ERROR,
 				(errmsg("failed to retrieve principal key. Create one using pg_tde_set_principal_key before using encrypted tables.")));
 	}

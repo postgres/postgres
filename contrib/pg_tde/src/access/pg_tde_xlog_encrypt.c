@@ -45,6 +45,42 @@ static ssize_t TDEXLogWriteEncryptedPages(int fd, const void *buf, size_t count,
 static char *TDEXLogEncryptBuf = NULL;
 static int	XLOGChooseNumBuffers(void);
 
+Datum		pg_tde_create_wal_key(PG_FUNCTION_ARGS);
+
+PG_FUNCTION_INFO_V1(pg_tde_create_wal_key);
+
+Datum
+pg_tde_create_wal_key(PG_FUNCTION_ARGS)
+{
+	RelKeyData *key = GetRelationKey(GLOBAL_SPACE_RLOCATOR(XLOG_TDE_OID), TDE_KEY_TYPE_GLOBAL, true);
+
+	if (key != NULL)
+	{
+		ereport(ERROR,
+				(errmsg("WAL key already exists.")));
+		PG_RETURN_BOOL(false);
+	}
+
+	pg_tde_create_global_key(&GLOBAL_SPACE_RLOCATOR(XLOG_TDE_OID));
+	PG_RETURN_BOOL(true);
+}
+
+/*  This can't be a GUC check hook, because that would run too soon during startup */
+void
+TDEXlogCheckSane(void)
+{
+	if (EncryptXLog)
+	{
+		RelKeyData *key = GetRelationKey(GLOBAL_SPACE_RLOCATOR(XLOG_TDE_OID), TDE_KEY_TYPE_GLOBAL, true);
+
+		if (key == NULL)
+		{
+			ereport(ERROR,
+					(errmsg("WAL encryption can only be enabled with a properly configured key. Disable pg_tde.wal_encrypt and create one using pg_tde_crete_wal_key() before enabling it.")));
+		}
+	}
+}
+
 void
 XLogInitGUC(void)
 {
@@ -230,7 +266,7 @@ tdeheap_xlog_seg_read(int fd, void *buf, size_t count, off_t offset)
 	char		iv_prefix[16] = {0,};
 	size_t		data_size = 0;
 	XLogPageHeader curr_page_hdr = &DecryptCurrentPageHrd;
-	RelKeyData *key = GetTdeGlobaleRelationKey(GLOBAL_SPACE_RLOCATOR(XLOG_TDE_OID));
+	RelKeyData *key = NULL;
 	size_t		page_size = XLOG_BLCKSZ - offset % XLOG_BLCKSZ;
 	off_t		dec_off;
 	uint32		iv_ctr = 0;
@@ -280,6 +316,10 @@ tdeheap_xlog_seg_read(int fd, void *buf, size_t count, off_t offset)
 
 		if (curr_page_hdr->xlp_info & XLP_ENCRYPTED)
 		{
+			if (key == NULL)
+			{
+				key = GetTdeGlobaleRelationKey(GLOBAL_SPACE_RLOCATOR(XLOG_TDE_OID));
+			}
 			SetXLogPageIVPrefix(curr_page_hdr->xlp_tli, curr_page_hdr->xlp_pageaddr, iv_prefix);
 			PG_TDE_DECRYPT_DATA(
 								iv_prefix, iv_ctr,

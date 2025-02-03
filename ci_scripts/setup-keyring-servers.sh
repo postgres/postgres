@@ -20,6 +20,8 @@ pykmip-server -f "$SCRIPT_DIR/../contrib/pg_tde/pykmip-server.conf" -l /tmp/kmip
 TV=$(mktemp)
 { exec >$TV; vault server -dev; } &
 sleep 10
-ROOT_TOKEN=$(cat $TV | grep "Root Token" | cut -d ":" -f 2 | xargs echo -n)
-echo "ROOT_TOKEN=$ROOT_TOKEN"  >> $GITHUB_ENV
-echo "Root token: $ROOT_TOKEN"
+export ROOT_TOKEN=$(cat $TV | grep "Root Token" | cut -d ":" -f 2 | xargs echo -n)
+echo "export ROOT_TOKEN=$ROOT_TOKEN"
+if [ -v GITHUB_ACTIONS ]; then
+    echo "ROOT_TOKEN=$ROOT_TOKEN"  >> $GITHUB_ENV
+fi

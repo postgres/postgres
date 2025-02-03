@@ -10,11 +10,36 @@ cd "$SCRIPT_DIR/../"
 export PATH=$INSTALL_DIR/bin:$PATH
 export PGDATA=$INSTALL_DIR/data
 
+if pgrep -x "postgres" > /dev/null; then
+    pg_ctl -D $PGDATA stop
+fi
+
+if pgrep -x "postgres" > /dev/null; then
+    echo "Error: a postgres process is already running"
+    exit 1
+fi
+
+if [ -d $PGDATA ]; then
+    rm -rf $PGDATA
+fi
+
 initdb -D $PGDATA
 
 echo "shared_preload_libraries ='pg_tde'" >> $PGDATA/postgresql.conf
-echo "pg_tde.wal_encrypt = on" >> $PGDATA/postgresql.conf
 
 pg_ctl -D $PGDATA start
 
-EXTRA_REGRESS_OPTS="--extra-setup=$SCRIPT_DIR/tde_setup.sql --load-extension=pg_tde" make installcheck-world -k
+createdb setup_helper
+psql setup_helper < $SCRIPT_DIR/tde_setup_global.sql
+
+echo "pg_tde.wal_encrypt = on" >> $PGDATA/postgresql.conf
+
+pg_ctl -D $PGDATA restart
+
+ADD_FLAGS=
+
+if [ "$1" = "--continue" ]; then
+    ADD_FLAGS="-k"
+fi
+
+EXTRA_REGRESS_OPTS="--extra-setup=$SCRIPT_DIR/tde_setup.sql --load-extension=pg_tde" make installcheck-world $ADD_FLAGS

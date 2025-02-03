@@ -107,7 +107,7 @@ jobs:
         run: src/ci_scripts/setup-keyring-servers.sh
   
       - name: Test postgres with TDE
-        run: src/ci_scripts/${{ inputs.build_script }}-test-tde.sh
+        run: src/ci_scripts/${{ inputs.build_script }}-test-tde.sh --continue
 
       - name: Report on test fail
         uses: actions/upload-artifact@v4

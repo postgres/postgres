@@ -29,6 +29,9 @@ static const XLogSmgr tde_xlog_smgr = {
 
 extern void TDEXLogSmgrInit(void);
 extern void XLogInitGUC(void);
+#ifndef FRONTEND
+extern void TDEXlogCheckSane(void);
+#endif
 
 #endif							/* PERCONA_EXT */
 

@@ -5,9 +5,9 @@ SELECT pg_tde_add_key_provider_file('file-vault','/tmp/pg_tde_test_keyring.per')
 SELECT pg_tde_add_key_provider_file('file-2','/tmp/pg_tde_test_keyring_2.per');
 2
 SELECT pg_tde_add_key_provider_file('PG_TDE_GLOBAL', 'file-2','/tmp/pg_tde_test_keyring_2g.per');
--2
+-1
 SELECT pg_tde_add_key_provider_file('PG_TDE_GLOBAL', 'file-3','/tmp/pg_tde_test_keyring_3.per');
--3
+-2
 SELECT pg_tde_list_all_key_providers();
 (1,file-vault,file,"{""type"" : ""file"", ""path"" : ""/tmp/pg_tde_test_keyring.per""}")
 (2,file-2,file,"{""type"" : ""file"", ""path"" : ""/tmp/pg_tde_test_keyring_2.per""}")
@@ -26,7 +26,9 @@ SELECT * FROM test_enc ORDER BY id ASC;
 SELECT key_provider_id, key_provider_name, principal_key_name FROM pg_tde_principal_key_info();
 1|file-vault|rotated-principal-key1
 SELECT key_provider_id, key_provider_name, principal_key_name FROM pg_tde_principal_key_info('PG_TDE_GLOBAL');
--1|default_global_tablespace_keyring|tde-global-catalog-key
+psql:<stdin>:1: ERROR:  Principal key does not exists for the database
+HINT:  Use set_principal_key interface to set the principal key
+CONTEXT:  SQL function "pg_tde_principal_key_info" statement 1
 SELECT * FROM test_enc ORDER BY id ASC;
 1|5
 2|6
@@ -39,7 +41,9 @@ SELECT * FROM test_enc ORDER BY id ASC;
 SELECT key_provider_id, key_provider_name, principal_key_name FROM pg_tde_principal_key_info();
 2|file-2|rotated-principal-key2
 SELECT key_provider_id, key_provider_name, principal_key_name FROM pg_tde_principal_key_info('PG_TDE_GLOBAL');
--1|default_global_tablespace_keyring|tde-global-catalog-key
+psql:<stdin>:1: ERROR:  Principal key does not exists for the database
+HINT:  Use set_principal_key interface to set the principal key
+CONTEXT:  SQL function "pg_tde_principal_key_info" statement 1
 SELECT * FROM test_enc ORDER BY id ASC;
 1|5
 2|6
@@ -50,9 +54,11 @@ SELECT * FROM test_enc ORDER BY id ASC;
 2|6
 -- server restart
 SELECT key_provider_id, key_provider_name, principal_key_name FROM pg_tde_principal_key_info();
--3|file-3|rotated-principal-key
+-2|file-3|rotated-principal-key
 SELECT key_provider_id, key_provider_name, principal_key_name FROM pg_tde_principal_key_info('PG_TDE_GLOBAL');
--1|default_global_tablespace_keyring|tde-global-catalog-key
+psql:<stdin>:1: ERROR:  Principal key does not exists for the database
+HINT:  Use set_principal_key interface to set the principal key
+CONTEXT:  SQL function "pg_tde_principal_key_info" statement 1
 SELECT * FROM test_enc ORDER BY id ASC;
 1|5
 2|6
@@ -63,9 +69,11 @@ SELECT * FROM test_enc ORDER BY id ASC;
 2|6
 -- server restart
 SELECT key_provider_id, key_provider_name, principal_key_name FROM pg_tde_principal_key_info();
--2|file-2|rotated-principal-keyX
+-1|file-2|rotated-principal-keyX
 SELECT key_provider_id, key_provider_name, principal_key_name FROM pg_tde_principal_key_info('PG_TDE_GLOBAL');
--1|default_global_tablespace_keyring|tde-global-catalog-key
+psql:<stdin>:1: ERROR:  Principal key does not exists for the database
+HINT:  Use set_principal_key interface to set the principal key
+CONTEXT:  SQL function "pg_tde_principal_key_info" statement 1
 SELECT * FROM test_enc ORDER BY id ASC;
 1|5
 2|6
@@ -73,15 +81,19 @@ ALTER SYSTEM SET pg_tde.inherit_global_providers = OFF;
 -- server restart
 psql:<stdin>:1: ERROR:  Usage of global key providers is disabled. Enable it with pg_tde.inherit_global_providers = ON
 SELECT key_provider_id, key_provider_name, principal_key_name FROM pg_tde_principal_key_info();
--2|file-2|rotated-principal-keyX
+-1|file-2|rotated-principal-keyX
 SELECT key_provider_id, key_provider_name, principal_key_name FROM pg_tde_principal_key_info('PG_TDE_GLOBAL');
--1|default_global_tablespace_keyring|tde-global-catalog-key
+psql:<stdin>:1: ERROR:  Principal key does not exists for the database
+HINT:  Use set_principal_key interface to set the principal key
+CONTEXT:  SQL function "pg_tde_principal_key_info" statement 1
 SELECT pg_tde_set_principal_key('rotated-principal-key2','file-2');
 t
 SELECT key_provider_id, key_provider_name, principal_key_name FROM pg_tde_principal_key_info();
 2|file-2|rotated-principal-key2
 SELECT key_provider_id, key_provider_name, principal_key_name FROM pg_tde_principal_key_info('PG_TDE_GLOBAL');
--1|default_global_tablespace_keyring|tde-global-catalog-key
+psql:<stdin>:1: ERROR:  Principal key does not exists for the database
+HINT:  Use set_principal_key interface to set the principal key
+CONTEXT:  SQL function "pg_tde_principal_key_info" statement 1
 DROP TABLE test_enc;
 ALTER SYSTEM RESET pg_tde.inherit_global_providers;
 DROP EXTENSION pg_tde CASCADE;

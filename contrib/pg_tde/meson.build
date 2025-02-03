@@ -107,6 +107,7 @@ sql_tests = [
       'cache_alloc',
       'update_basic',
       'key_provider',
+      'wal_key',
 ]
 
 tap_tests = [
@@ -118,6 +119,7 @@ tap_tests = [
       't/006_remote_vault_config.pl',
       't/007_access_control.pl',
       't/009_key_rotate_tablespace.pl',
+      't/010_wal_encrypt.pl',
     ]
 
 if get_variable('percona_ext', false)
