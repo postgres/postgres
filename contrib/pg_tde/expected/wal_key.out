@@ -2,13 +2,12 @@
 -- doesn't test actual wal encryption, as that requires a server restart,
 -- only sanity checks for the key creation
 CREATE EXTENSION IF NOT EXISTS pg_tde;
-NOTICE:  extension "pg_tde" already exists, skipping
 SELECT pg_tde_create_wal_key();
 ERROR:  failed to retrieve principal key. Create one using pg_tde_set_principal_key before using encrypted tables.
 SELECT pg_tde_add_key_provider_file('PG_TDE_GLOBAL', 'file-keyring','/tmp/pg_tde_test_keyring.per');
  pg_tde_add_key_provider_file 
 ------------------------------
-                           -1
+                           -3
 (1 row)
 
 SELECT pg_tde_create_wal_key();

@@ -539,6 +539,25 @@ AS $$
 $$
 LANGUAGE SQL;
 
+CREATE FUNCTION pg_tde_delete_key_provider_internal(provider_name VARCHAR, is_global boolean)
+RETURNS VOID
+AS 'MODULE_PATHNAME'
+LANGUAGE C;
+
+CREATE FUNCTION pg_tde_delete_key_provider(PG_TDE_GLOBAL, provider_name VARCHAR)
+RETURNS VOID
+AS $$
+    SELECT pg_tde_delete_key_provider_internal(provider_name, true);
+$$
+LANGUAGE SQL;
+
+CREATE FUNCTION pg_tde_delete_key_provider(provider_name VARCHAR)
+RETURNS VOID
+AS $$
+    SELECT pg_tde_delete_key_provider_internal(provider_name, false);
+$$
+LANGUAGE SQL;
+
 CREATE FUNCTION pg_tde_version() RETURNS TEXT AS 'MODULE_PATHNAME' LANGUAGE C;
 
 -- Access method

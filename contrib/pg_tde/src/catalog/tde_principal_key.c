@@ -27,11 +27,13 @@
 #include <sys/time.h>
 #include "utils/fmgroids.h"
 #include "utils/guc.h"
-
+#include "catalog/pg_database.h"
 
 #include "access/pg_tde_tdemap.h"
 #include "catalog/tde_global_space.h"
 #ifndef FRONTEND
+#include "access/genam.h"
+#include "access/table.h"
 #include "common/pg_tde_shmem.h"
 #include "funcapi.h"
 #include "storage/lwlock.h"
@@ -89,6 +91,7 @@ static bool set_principal_key_with_keyring(const char *key_name,
 										   Oid providerOid,
 										   Oid dbOid,
 										   bool ensure_new_key);
+static bool pg_tde_is_provider_used(Oid databaseOid, Oid providerId);
 
 static const TDEShmemSetupRoutine principal_key_info_shmem_routine = {
 	.init_shared_state = initialize_shared_state,
@@ -738,6 +741,10 @@ GetPrincipalKey(Oid dbOid, LWLockMode lockMode)
 		return principalKey;
 	}
 
+	/*
+	 * TODO: WHY? This completely breaks repeated calls with the above
+	 * assertion...
+	 */
 	if (lockMode != LW_EXCLUSIVE)
 	{
 		LWLockRelease(tde_lwlock_enc_keys());
@@ -758,12 +765,121 @@ PrincipalKeyGucInit()
 							 NULL,	/* long_desc */
 							 &AllowInheritGlobalProviders,	/* value address */
 							 true,	/* boot value */
-							 PGC_POSTMASTER,	/* context */
+							 PGC_SUSET, /* context */
 							 0, /* flags */
 							 NULL,	/* check_hook */
 							 NULL,	/* assign_hook */
 							 NULL	/* show_hook */
 		);
+}
+
+static bool
+pg_tde_is_provider_used(Oid databaseOid, Oid providerId)
+{
+	bool		is_global = databaseOid == GLOBAL_DATA_TDE_OID;
+
+	LWLockAcquire(tde_lwlock_enc_keys(), LW_EXCLUSIVE);
+
+	if (is_global)
+	{
+		/* First verify that the global oid doesn't use it */
+
+		Oid			dbOid = GLOBAL_DATA_TDE_OID;
+		TDEPrincipalKey *principal_key = GetPrincipalKey(dbOid, LW_EXCLUSIVE);
+
+		HeapTuple	tuple;
+		SysScanDesc scan;
+		Relation	rel;
+
+		if (principal_key != NULL && providerId == principal_key->keyInfo.keyringId)
+		{
+			LWLockRelease(tde_lwlock_enc_keys());
+
+			return true;
+		}
+
+		/* We have to verify that it isn't currently used by any database */
+
+
+		rel = table_open(DatabaseRelationId, AccessShareLock);
+
+		scan = systable_beginscan(rel, 0, false, NULL, 0, NULL);
+
+		while ((tuple = systable_getnext(scan)) != NULL)
+		{
+			if (!HeapTupleIsValid(tuple))
+			{
+				break;
+			}
+
+			dbOid = ((Form_pg_database) GETSTRUCT(tuple))->oid;
+
+			principal_key = GetPrincipalKey(dbOid, LW_EXCLUSIVE);
+
+			if (principal_key == NULL)
+			{
+				continue;
+			}
+
+			if (providerId == principal_key->keyInfo.keyringId && principal_key->keyInfo.databaseId == GLOBAL_DATA_TDE_OID)
+			{
+				systable_endscan(scan);
+				table_close(rel, AccessShareLock);
+				LWLockRelease(tde_lwlock_enc_keys());
+
+				return true;
+			}
+		}
+
+		systable_endscan(scan);
+		table_close(rel, AccessShareLock);
+		LWLockRelease(tde_lwlock_enc_keys());
+
+		return false;
+	}
+	else
+	{
+		/* database lcal provider, just verify that it isn't currently active */
+
+		TDEPrincipalKey *principal_key = GetPrincipalKey(databaseOid, LW_EXCLUSIVE);
+
+		LWLockRelease(tde_lwlock_enc_keys());
+
+		return principal_key != NULL && providerId == principal_key->keyInfo.keyringId;
+	}
+}
+
+PG_FUNCTION_INFO_V1(pg_tde_delete_key_provider_internal);
+Datum
+pg_tde_delete_key_provider_internal(PG_FUNCTION_ARGS)
+{
+	char	   *provider_name = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	int			is_global = PG_GETARG_INT32(1);
+	Oid			db_oid = is_global ? GLOBAL_DATA_TDE_OID : MyDatabaseId;
+	GenericKeyring *provider = GetKeyProviderByName(provider_name, db_oid);
+	int			provider_id;
+	bool		provider_used;
+
+	if (provider == NULL)
+	{
+		ereport(ERROR,
+				(errmsg("Keyring provider not found")));
+	}
+
+	provider_id = provider->keyring_id;
+	provider_used = pg_tde_is_provider_used(db_oid, provider_id);
+
+	pfree(provider);
+
+	if (provider_used)
+	{
+		ereport(ERROR,
+				(errmsg("Can't delete a provider which is currently in use")));
+	}
+
+	delete_key_provider_info(provider_id, db_oid, true);
+
+	PG_RETURN_VOID();
 }
 
 #endif

@@ -199,6 +199,7 @@ pg_tde_change_key_provider_internal(PG_FUNCTION_ARGS)
 
 	pfree(keyring);
 
+	provider.provider_id = 0;
 	strncpy(provider.options, options, sizeof(provider.options));
 	strncpy(provider.provider_name, provider_name, sizeof(provider.provider_name));
 	provider.provider_type = get_keyring_provider_from_typename(provider_type);
@@ -217,6 +218,7 @@ pg_tde_add_key_provider_internal(PG_FUNCTION_ARGS)
 	KeyringProvideRecord provider;
 	Oid			dbOid = is_global ? GLOBAL_DATA_TDE_OID : MyDatabaseId;
 
+	provider.provider_id = 0;
 	strncpy(provider.options, options, sizeof(provider.options));
 	strncpy(provider.provider_name, provider_name, sizeof(provider.provider_name));
 	provider.provider_type = get_keyring_provider_from_typename(provider_type);
@@ -314,16 +316,25 @@ write_key_provider_info(KeyringProvideRecord *provider, Oid database_id,
 
 	Assert(provider != NULL);
 
-	/* Try to parse the JSON data first: if it doesn't work, don't save it! */
-	record = load_keyring_provider_from_record(provider);
-	if (record == NULL)
+	if (error_if_exists && provider->provider_id != 0)
 	{
 		ereport(ERROR,
-				(errcode(ERRCODE_DATA_EXCEPTION), errmsg("Invalid provider options")));
+				(errcode(ERRCODE_DATA_EXCEPTION), errmsg("Invalid write provider call")));
 	}
-	else
+
+	/* Try to parse the JSON data first: if it doesn't work, don't save it! */
+	if (provider->provider_type != UNKNOWN_KEY_PROVIDER)
 	{
-		pfree(record);
+		record = load_keyring_provider_from_record(provider);
+		if (record == NULL)
+		{
+			ereport(ERROR,
+					(errcode(ERRCODE_DATA_EXCEPTION), errmsg("Invalid provider options")));
+		}
+		else
+		{
+			pfree(record);
+		}
 	}
 
 	get_keyring_infofile_path(kp_info_path, database_id);
@@ -348,6 +359,11 @@ write_key_provider_info(KeyringProvideRecord *provider, Oid database_id,
 
 		while (fetch_next_key_provider(fd, &curr_pos, &existing_provider))
 		{
+			if (provider->provider_id != 0 && existing_provider.provider_id == provider->provider_id)
+			{
+				seek_pos = before_pos;
+				break;
+			}
 			if (strcmp(existing_provider.provider_name, provider->provider_name) == 0)
 			{
 				if (error_if_exists)
@@ -363,10 +379,13 @@ write_key_provider_info(KeyringProvideRecord *provider, Oid database_id,
 
 					seek_pos = before_pos;
 					provider->provider_id = existing_provider.provider_id;
+					break;
 				}
 			}
 			if (max_provider_id < abs(existing_provider.provider_id))
 				max_provider_id = abs(existing_provider.provider_id);
+
+			before_pos = curr_pos;
 		}
 		if (seek_pos == -1)
 		{
@@ -458,6 +477,17 @@ modify_key_provider_info(KeyringProvideRecord *provider, Oid databaseId, bool wr
 	return write_key_provider_info(provider, databaseId, -1, false, write_xlog);
 }
 
+uint32
+delete_key_provider_info(int provider_id, Oid databaseId, bool write_xlog)
+{
+	KeyringProvideRecord kpr;
+
+	memset(&kpr, 0, sizeof(KeyringProvideRecord));
+	kpr.provider_id = provider_id;
+
+	return modify_key_provider_info(&kpr, databaseId, write_xlog);
+}
+
 #ifdef FRONTEND
 GenericKeyring *
 GetKeyProviderByID(int provider_id, Oid dbOid)
@@ -531,6 +561,12 @@ scan_key_provider_file(ProviderScanType scanType, void *scanKey, Oid dbOid)
 	while (fetch_next_key_provider(fd, &curr_pos, &provider))
 	{
 		bool		match = false;
+
+		if (provider.provider_type == UNKNOWN_KEY_PROVIDER)
+		{
+			/* deleted provider */
+			continue;
+		}
 
 		ereport(DEBUG2,
 				(errmsg("read key provider ID=%d %s", provider.provider_id, provider.provider_name)));

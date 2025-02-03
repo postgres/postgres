@@ -22,15 +22,34 @@ SELECT * FROM pg_tde_list_all_key_providers();
   1 | file-provider | file          | {"type" : "file", "path" : "/tmp/pg_tde_test_keyring.per"}
 (1 row)
 
---SELECT pg_tde_set_principal_key('test-db-principal-key','file-provider');
+SELECT pg_tde_add_key_provider_file('file-provider2','/tmp/pg_tde_test_keyring2.per');
+ pg_tde_add_key_provider_file 
+------------------------------
+                            2
+(1 row)
+
+SELECT * FROM pg_tde_list_all_key_providers();
+ id | provider_name  | provider_type |                           options                           
+----+----------------+---------------+-------------------------------------------------------------
+  1 | file-provider  | file          | {"type" : "file", "path" : "/tmp/pg_tde_test_keyring.per"}
+  2 | file-provider2 | file          | {"type" : "file", "path" : "/tmp/pg_tde_test_keyring2.per"}
+(2 rows)
+
+SELECT pg_tde_set_principal_key('test-db-principal-key','file-provider');
+ pg_tde_set_principal_key 
+--------------------------
+ t
+(1 row)
+
 SELECT pg_tde_change_key_provider_file('not-existent-provider','/tmp/pg_tde_test_keyring.per');
 ERROR:  key provider "not-existent-provider" does not exists
 HINT:  Use pg_tde_add_key_provider interface to create the key provider
 SELECT * FROM pg_tde_list_all_key_providers();
- id | provider_name | provider_type |                          options                           
-----+---------------+---------------+------------------------------------------------------------
-  1 | file-provider | file          | {"type" : "file", "path" : "/tmp/pg_tde_test_keyring.per"}
-(1 row)
+ id | provider_name  | provider_type |                           options                           
+----+----------------+---------------+-------------------------------------------------------------
+  1 | file-provider  | file          | {"type" : "file", "path" : "/tmp/pg_tde_test_keyring.per"}
+  2 | file-provider2 | file          | {"type" : "file", "path" : "/tmp/pg_tde_test_keyring2.per"}
+(2 rows)
 
 SELECT pg_tde_change_key_provider_file('file-provider','/tmp/pg_tde_test_keyring_other.per');
  pg_tde_change_key_provider_file 
@@ -39,17 +58,101 @@ SELECT pg_tde_change_key_provider_file('file-provider','/tmp/pg_tde_test_keyring
 (1 row)
 
 SELECT * FROM pg_tde_list_all_key_providers();
- id | provider_name | provider_type |                             options                              
-----+---------------+---------------+------------------------------------------------------------------
-  1 | file-provider | file          | {"type" : "file", "path" : "/tmp/pg_tde_test_keyring_other.per"}
-(1 row)
+ id | provider_name  | provider_type |                             options                              
+----+----------------+---------------+------------------------------------------------------------------
+  1 | file-provider  | file          | {"type" : "file", "path" : "/tmp/pg_tde_test_keyring_other.per"}
+  2 | file-provider2 | file          | {"type" : "file", "path" : "/tmp/pg_tde_test_keyring2.per"}
+(2 rows)
 
 SELECT pg_tde_change_key_provider_file('file-provider',  json_object('foo' VALUE '/tmp/pg_tde_test_keyring.per'));
 ERROR:  parse json keyring config: unexpected field foo
 SELECT * FROM pg_tde_list_all_key_providers();
- id | provider_name | provider_type |                             options                              
-----+---------------+---------------+------------------------------------------------------------------
-  1 | file-provider | file          | {"type" : "file", "path" : "/tmp/pg_tde_test_keyring_other.per"}
+ id | provider_name  | provider_type |                             options                              
+----+----------------+---------------+------------------------------------------------------------------
+  1 | file-provider  | file          | {"type" : "file", "path" : "/tmp/pg_tde_test_keyring_other.per"}
+  2 | file-provider2 | file          | {"type" : "file", "path" : "/tmp/pg_tde_test_keyring2.per"}
+(2 rows)
+
+SELECT pg_tde_add_key_provider_file('PG_TDE_GLOBAL', 'file-keyring','/tmp/pg_tde_test_keyring.per');
+ pg_tde_add_key_provider_file 
+------------------------------
+                           -1
 (1 row)
 
+SELECT pg_tde_add_key_provider_file('PG_TDE_GLOBAL', 'file-keyring2','/tmp/pg_tde_test_keyring2.per');
+ pg_tde_add_key_provider_file 
+------------------------------
+                           -2
+(1 row)
+
+SELECT id, provider_name FROM pg_tde_list_all_key_providers('PG_TDE_GLOBAL');
+ id | provider_name 
+----+---------------
+ -1 | file-keyring
+ -2 | file-keyring2
+(2 rows)
+
 -- TODO: verify that we can also can change the type of it
+-- fails
+SELECT pg_tde_delete_key_provider('file-provider');
+ERROR:  Can't delete a provider which is currently in use
+SELECT id, provider_name FROM pg_tde_list_all_key_providers();
+ id | provider_name  
+----+----------------
+  1 | file-provider
+  2 | file-provider2
+(2 rows)
+
+-- works
+SELECT pg_tde_delete_key_provider('file-provider2');
+ pg_tde_delete_key_provider 
+----------------------------
+ 
+(1 row)
+
+SELECT id, provider_name FROM pg_tde_list_all_key_providers();
+ id | provider_name 
+----+---------------
+  1 | file-provider
+(1 row)
+
+SELECT id, provider_name FROM pg_tde_list_all_key_providers('PG_TDE_GLOBAL');
+ id | provider_name 
+----+---------------
+ -1 | file-keyring
+ -2 | file-keyring2
+(2 rows)
+
+SELECT pg_tde_set_principal_key('test-db-principal-key', 'PG_TDE_GLOBAL', 'file-keyring', false);
+ pg_tde_set_principal_key 
+--------------------------
+ t
+(1 row)
+
+-- fails
+SELECT pg_tde_delete_key_provider('PG_TDE_GLOBAL', 'file-keyring');
+ pg_tde_delete_key_provider 
+----------------------------
+ 
+(1 row)
+
+SELECT id, provider_name FROM pg_tde_list_all_key_providers('PG_TDE_GLOBAL');
+ id | provider_name 
+----+---------------
+ -2 | file-keyring2
+(1 row)
+
+-- works
+SELECT pg_tde_delete_key_provider('PG_TDE_GLOBAL', 'file-keyring2');
+ pg_tde_delete_key_provider 
+----------------------------
+ 
+(1 row)
+
+SELECT id, provider_name FROM pg_tde_list_all_key_providers('PG_TDE_GLOBAL');
+ id | provider_name 
+----+---------------
+ -2 | file-keyring2
+(1 row)
+
+DROP EXTENSION pg_tde;
