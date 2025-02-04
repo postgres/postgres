@@ -211,7 +211,7 @@ AS $$
                             'host' VALUE COALESCE(kmip_host,''),
                             'port' VALUE kmip_port,
                             'caPath' VALUE COALESCE(kmip_ca_path,''),
-                            'certPath' VALUE COALESCE(vault_cert_path,'')));
+                            'certPath' VALUE COALESCE(kmip_cert_path,'')));
 $$
 LANGUAGE SQL;
 CREATE OR REPLACE FUNCTION pg_tde_add_key_provider_kmip(PG_TDE_GLOBAL, 
@@ -425,7 +425,7 @@ AS $$
                             'host' VALUE COALESCE(kmip_host,''),
                             'port' VALUE kmip_port,
                             'caPath' VALUE COALESCE(kmip_ca_path,''),
-                            'certPath' VALUE COALESCE(vault_cert_path,'')));
+                            'certPath' VALUE COALESCE(kmip_cert_path,'')));
 $$
 LANGUAGE SQL;
 CREATE OR REPLACE FUNCTION pg_tde_change_key_provider_kmip(PG_TDE_GLOBAL, 
