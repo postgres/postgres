@@ -12,7 +12,7 @@ fi
 cd src/tools/pg_bsd_indent
 make install
 
-cd "$SCRIPT_DIR/../"
+cd "$SCRIPT_DIR/.."
 
 export PATH=$SCRIPT_DIR/../src/tools/pgindent/:$INSTALL_DIR/bin/:$PATH
 
