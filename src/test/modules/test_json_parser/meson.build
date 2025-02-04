@@ -49,5 +49,9 @@ tests += {
       't/003_test_semantic.pl',
       't/004_test_parser_perf.pl'
     ],
+    'deps': [
+      test_json_parser_incremental,
+      test_json_parser_perf,
+    ],
   },
 }
