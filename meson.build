@@ -3112,15 +3112,21 @@ if libintl.found() and meson.version().version_compare('>=0.60')
 endif
 
 
-all_built = [
+# all targets that 'meson install' needs
+installed_targets = [
   backend_targets,
   bin_targets,
   libpq_st,
   pl_targets,
   contrib_targets,
   nls_mo_targets,
-  testprep_targets,
   ecpg_targets,
+]
+
+# all targets that require building code
+all_built = [
+  installed_targets,
+  testprep_targets,
 ]
 
 # Meson's default install target is quite verbose. Provide one that is quiet.
@@ -3129,7 +3135,7 @@ install_quiet = custom_target('install-quiet',
   build_always_stale: true,
   build_by_default: false,
   command: [meson_bin, meson_args, 'install', '--quiet', '--no-rebuild'],
-  depends: all_built,
+  depends: installed_targets,
 )
 
 # Target to install files used for tests, which aren't installed by default
