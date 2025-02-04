@@ -97,6 +97,7 @@ main(int argc, char *argv[])
 	bool		crc_ok;
 	char	   *DataDir = NULL;
 	time_t		time_tmp;
+	struct tm  *tm_tmp;
 	char		pgctime_str[128];
 	char		ckpttime_str[128];
 	char		mock_auth_nonce_str[MOCK_AUTH_NONCE_LEN * 2 + 1];
@@ -196,20 +197,30 @@ main(int argc, char *argv[])
 	 * about %c
 	 */
 	time_tmp = (time_t) ControlFile->time;
-	strftime(pgctime_str, sizeof(pgctime_str), strftime_fmt,
-			 localtime(&time_tmp));
+	tm_tmp = localtime(&time_tmp);
+
+	if (tm_tmp != NULL)
+		strftime(pgctime_str, sizeof(pgctime_str), strftime_fmt, tm_tmp);
+	else
+		snprintf(pgctime_str, sizeof(pgctime_str), _("???"));
+
 	time_tmp = (time_t) ControlFile->checkPointCopy.time;
-	strftime(ckpttime_str, sizeof(ckpttime_str), strftime_fmt,
-			 localtime(&time_tmp));
+	tm_tmp = localtime(&time_tmp);
+
+	if (tm_tmp != NULL)
+		strftime(ckpttime_str, sizeof(ckpttime_str), strftime_fmt, tm_tmp);
+	else
+		snprintf(ckpttime_str, sizeof(ckpttime_str), _("???"));
 
 	/*
 	 * Calculate name of the WAL file containing the latest checkpoint's REDO
 	 * start point.
 	 *
-	 * A corrupted control file could report a WAL segment size of 0, and to
-	 * guard against division by zero, we need to treat that specially.
+	 * A corrupted control file could report a WAL segment size of 0 or
+	 * negative value, and to guard against division by zero, we need to treat
+	 * that specially.
 	 */
-	if (WalSegSz != 0)
+	if (WalSegSz > 0)
 	{
 		XLogSegNo	segno;
 
