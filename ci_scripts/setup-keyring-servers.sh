@@ -11,7 +11,6 @@ cat client_certificate_jane_doe.pem >> client_key_jane_doe.pem
 mkdir policies
 cd policies
 wget https://raw.githubusercontent.com/OpenKMIP/PyKMIP/refs/heads/master/examples/policy.json
-wget https://raw.githubusercontent.com/OpenKMIP/PyKMIP/refs/heads/master/examples/legacy_policy.json
 cd ..
 
 echo $SCRIPT_DIR
