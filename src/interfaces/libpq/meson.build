@@ -1,8 +1,5 @@
 # Copyright (c) 2022-2025, PostgreSQL Global Development Group
 
-# test/ is entered via top-level meson.build, that way it can use the default
-# args for executables (which depend on libpq).
-
 libpq_sources = files(
   'fe-auth-scram.c',
   'fe-auth.c',
@@ -107,6 +104,7 @@ install_data('pg_service.conf.sample',
   install_dir: dir_data,
 )
 
+subdir('test')
 
 tests += {
   'name': 'libpq',
@@ -125,6 +123,7 @@ tests += {
       'with_gssapi': gssapi.found() ? 'yes' : 'no',
       'with_krb_srvnam': 'postgres',
     },
+    'deps': libpq_test_deps,
   },
 }
 

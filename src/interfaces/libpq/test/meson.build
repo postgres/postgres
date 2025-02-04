@@ -1,5 +1,7 @@
 # Copyright (c) 2022-2025, PostgreSQL Global Development Group
 
+libpq_test_deps = []
+
 libpq_uri_regress_sources = files(
   'libpq_uri_regress.c',
 )
@@ -10,9 +12,9 @@ if host_system == 'windows'
     '--FILEDESC', 'libpq test program',])
 endif
 
-testprep_targets += executable('libpq_uri_regress',
+libpq_test_deps += executable('libpq_uri_regress',
   libpq_uri_regress_sources,
-  dependencies: [frontend_code, libpq],
+  dependencies: [frontend_no_fe_utils_code, libpq],
   kwargs: default_bin_args + {
     'install': false,
   }
@@ -29,10 +31,12 @@ if host_system == 'windows'
     '--FILEDESC', 'libpq test program',])
 endif
 
-testprep_targets += executable('libpq_testclient',
+libpq_test_deps += executable('libpq_testclient',
   libpq_testclient_sources,
-  dependencies: [frontend_code, libpq],
+  dependencies: [frontend_no_fe_utils_code, libpq],
   kwargs: default_bin_args + {
     'install': false,
   }
 )
+
+testprep_targets += libpq_test_deps
