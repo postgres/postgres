@@ -5,6 +5,8 @@ if meson.is_cross_build()
   subdir_done()
 endif
 
+ecpg_test_dependencies = []
+
 pg_regress_ecpg_sources = pg_regress_c + files(
   'pg_regress_ecpg.c',
 )
@@ -23,7 +25,7 @@ pg_regress_ecpg = executable('pg_regress_ecpg',
     'install': false
   },
 )
-testprep_targets += pg_regress_ecpg
+ecpg_test_dependencies += pg_regress_ecpg
 
 # create .c files and executables from .pgc files
 ecpg_test_exec_kw = {
@@ -50,8 +52,6 @@ ecpg_preproc_test_command_start = [
 ecpg_preproc_test_command_end = [
   '-o', '@OUTPUT@', '@INPUT@'
 ]
-
-ecpg_test_dependencies = []
 
 subdir('compat_informix')
 subdir('compat_oracle')
