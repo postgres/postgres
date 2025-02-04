@@ -1,6 +1,6 @@
 #!/bin/bash
 
-SCRIPT_DIR="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
+SCRIPT_DIR="$(cd -- "$(dirname "$0")" >/dev/null 2>&1; pwd -P)"
 
 cd /tmp
 
@@ -23,5 +23,5 @@ sleep 10
 export ROOT_TOKEN=$(cat $TV | grep "Root Token" | cut -d ":" -f 2 | xargs echo -n)
 echo "export ROOT_TOKEN=$ROOT_TOKEN"
 if [ -v GITHUB_ACTIONS ]; then
-    echo "ROOT_TOKEN=$ROOT_TOKEN"  >> $GITHUB_ENV
+    echo "ROOT_TOKEN=$ROOT_TOKEN" >> $GITHUB_ENV
 fi

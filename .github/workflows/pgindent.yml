@@ -12,7 +12,6 @@ jobs:
     name: Check
     runs-on: ubuntu-22.04
     steps:
-
       - name: Clone repository
         uses: actions/checkout@v4
         with:
@@ -30,5 +29,3 @@ jobs:
     
       - name: Run pgindent
         run: ci_scripts/run-pgindent.sh --check --diff
-            
-

@@ -20,7 +20,6 @@ jobs:
     name: Build PSP
     runs-on: ${{ inputs.os }}
     steps:
-
       - name: Clone repository
         uses: actions/checkout@v4
         with:
@@ -89,8 +88,7 @@ jobs:
     if: inputs.build_script == 'make'
     needs: build
 
-    steps: 
-      
+    steps:
       - name: Download build artifacts
         uses: actions/download-artifact@v4
         with:

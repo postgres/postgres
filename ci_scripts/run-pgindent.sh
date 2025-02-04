@@ -1,5 +1,4 @@
-
-SCRIPT_DIR="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
+SCRIPT_DIR="$(cd -- "$(dirname "$0")" >/dev/null 2>&1; pwd -P)"
 INSTALL_DIR="$SCRIPT_DIR/../../pginst"
 cd "$SCRIPT_DIR/../"
 
@@ -12,7 +11,6 @@ cd src/tools/pg_bsd_indent
 make install
 
 cd "$SCRIPT_DIR/../"
-
 
 export PATH=$SCRIPT_DIR/../src/tools/pgindent/:$INSTALL_DIR/bin/:$PATH
 

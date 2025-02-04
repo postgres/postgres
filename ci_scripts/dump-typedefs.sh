@@ -1,4 +1,4 @@
-SCRIPT_DIR="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
+SCRIPT_DIR="$(cd -- "$(dirname "$0")" >/dev/null 2>&1; pwd -P)"
 cd "$SCRIPT_DIR/../"
 
 if ! test -f src/backend/postgres; then
@@ -28,5 +28,4 @@ objdump -W contrib/pg_tde/pg_tde.so |\
     sort | uniq > tde.typedefs
 
 # Combine with original typedefs
-
 cat percona.typedefs tde.typedefs src/tools/pgindent/typedefs.list | sort | uniq > combined.typedefs

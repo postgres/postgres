@@ -7,7 +7,6 @@ sudo apt install -y libreadline6-dev systemtap-sdt-dev zlib1g-dev libssl-dev lib
 bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)"
 
 # Perl test dependencies
-
 sudo apt install -y libipc-run-perl python3-pykmip libhttp-server-simple-perl
 
 sudo /usr/bin/perl -MCPAN -e 'install IPC::Run'
