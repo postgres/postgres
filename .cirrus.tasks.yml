@@ -17,6 +17,9 @@ env:
   CHECK: check-world PROVE_FLAGS=$PROVE_FLAGS
   CHECKFLAGS: -Otarget
   PROVE_FLAGS: --timer
+  # Build test dependencies as part of the build step, to see compiler
+  # errors/warnings in one place.
+  MBUILD_TARGET: all testprep
   MTEST_ARGS: --print-errorlogs --no-rebuild -C build
   PGCTLTIMEOUT: 120 # avoids spurious failures during parallel tests
   TEMP_CONFIG: ${CIRRUS_WORKING_DIR}/src/tools/ci/pg_ci_base.conf
@@ -99,7 +102,7 @@ task:
     EOF
   build_script: |
     su postgres <<-EOF
-      ninja -C build -j${BUILD_JOBS}
+      ninja -C build -j${BUILD_JOBS} ${MBUILD_TARGET}
     EOF
   upload_caches: ccache
 
@@ -178,7 +181,7 @@ task:
         -Dextra_lib_dirs=/usr/local/lib -Dextra_include_dirs=/usr/local/include/ \
         build
     EOF
-  build_script: su postgres -c 'ninja -C build -j${BUILD_JOBS}'
+  build_script: su postgres -c 'ninja -C build -j${BUILD_JOBS} ${MBUILD_TARGET}'
   upload_caches: ccache
 
   test_world_script: |
@@ -381,8 +384,8 @@ task:
             build-32
         EOF
 
-      build_script: su postgres -c 'ninja -C build -j${BUILD_JOBS}'
-      build_32_script: su postgres -c 'ninja -C build-32 -j${BUILD_JOBS}'
+      build_script: su postgres -c 'ninja -C build -j${BUILD_JOBS} ${MBUILD_TARGET}'
+      build_32_script: su postgres -c 'ninja -C build-32 -j${BUILD_JOBS} ${MBUILD_TARGET}'
 
       upload_caches: ccache
 
@@ -503,7 +506,7 @@ task:
       -Duuid=e2fs -Ddtrace=auto \
       build
 
-  build_script: ninja -C build -j${BUILD_JOBS}
+  build_script: ninja -C build -j${BUILD_JOBS} ${MBUILD_TARGET}
   upload_caches: ccache
 
   test_world_script: |
@@ -576,7 +579,7 @@ task:
 
   build_script: |
     vcvarsall x64
-    ninja -C build
+    ninja -C build %MBUILD_TARGET%
 
   check_world_script: |
     vcvarsall x64
@@ -634,7 +637,7 @@ task:
     %BASH% -c "meson setup -Ddebug=true -Doptimization=g -Dcassert=true -Dinjection_points=true -Db_pch=true -Dnls=disabled -DTAR=%TAR% build"
 
   build_script: |
-    %BASH% -c "ninja -C build"
+    %BASH% -c "ninja -C build ${MBUILD_TARGET}"
 
   upload_caches: ccache
 
