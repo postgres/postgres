@@ -2639,8 +2639,9 @@ match_clause_to_index(PlannerInfo *root,
  * Returns an IndexClause if the clause can be used with this index key,
  * or NULL if not.
  *
- * NOTE:  returns NULL if clause is an OR or AND clause; it is the
- * responsibility of higher-level routines to cope with those.
+ * NOTE:  This routine always returns NULL if the clause is an AND clause.
+ * Higher-level routines deal with OR and AND clauses. OR clause can be
+ * matched as a whole by match_orclause_to_indexcol() though.
  */
 static IndexClause *
 match_clause_to_indexcol(PlannerInfo *root,
