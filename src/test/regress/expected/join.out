@@ -3849,14 +3849,11 @@ where q1 = thousand or q2 = thousand;
                ->  Seq Scan on q2
          ->  Bitmap Heap Scan on tenk1
                Recheck Cond: ((q1.q1 = thousand) OR (q2.q2 = thousand))
-               ->  BitmapOr
-                     ->  Bitmap Index Scan on tenk1_thous_tenthous
-                           Index Cond: (thousand = q1.q1)
-                     ->  Bitmap Index Scan on tenk1_thous_tenthous
-                           Index Cond: (thousand = q2.q2)
+               ->  Bitmap Index Scan on tenk1_thous_tenthous
+                     Index Cond: (thousand = ANY (ARRAY[q1.q1, q2.q2]))
    ->  Hash
          ->  Seq Scan on int4_tbl
-(15 rows)
+(12 rows)
 
 explain (costs off)
 select * from
@@ -8239,3 +8236,45 @@ GROUP BY s.c1, s.c2;
 (7 rows)
 
 DROP TABLE group_tbl;
+--
+-- Test for a nested loop join involving index scan, transforming OR-clauses
+-- to SAOP.
+--
+EXPLAIN (COSTS OFF)
+SELECT COUNT(*) FROM tenk1 t1, tenk1 t2
+WHERE t2.thousand = t1.tenthous OR t2.thousand = t1.unique1 OR t2.thousand = t1.unique2;
+                                       QUERY PLAN                                        
+-----------------------------------------------------------------------------------------
+ Aggregate
+   ->  Nested Loop
+         ->  Seq Scan on tenk1 t1
+         ->  Index Only Scan using tenk1_thous_tenthous on tenk1 t2
+               Index Cond: (thousand = ANY (ARRAY[t1.tenthous, t1.unique1, t1.unique2]))
+(5 rows)
+
+SELECT COUNT(*) FROM tenk1 t1, tenk1 t2
+WHERE t2.thousand = t1.tenthous OR t2.thousand = t1.unique1 OR t2.thousand = t1.unique2;
+ count 
+-------
+ 20000
+(1 row)
+
+EXPLAIN (COSTS OFF)
+SELECT COUNT(*) FROM onek t1 LEFT JOIN tenk1 t2
+    ON (t2.thousand = t1.tenthous OR t2.thousand = t1.thousand);
+                                  QUERY PLAN                                  
+------------------------------------------------------------------------------
+ Aggregate
+   ->  Nested Loop Left Join
+         ->  Seq Scan on onek t1
+         ->  Index Only Scan using tenk1_thous_tenthous on tenk1 t2
+               Index Cond: (thousand = ANY (ARRAY[t1.tenthous, t1.thousand]))
+(5 rows)
+
+SELECT COUNT(*) FROM onek t1 LEFT JOIN tenk1 t2
+    ON (t2.thousand = t1.tenthous OR t2.thousand = t1.thousand);
+ count 
+-------
+ 19000
+(1 row)
+

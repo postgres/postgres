@@ -1255,6 +1255,7 @@ group_similar_or_args(PlannerInfo *root, RelOptInfo *rel, RestrictInfo *rinfo)
 	ListCell   *lc2;
 	List	   *orargs;
 	List	   *result = NIL;
+	Index		relid = rel->relid;
 
 	Assert(IsA(rinfo->orclause, BoolExpr));
 	orargs = ((BoolExpr *) rinfo->orclause)->args;
@@ -1319,10 +1320,13 @@ group_similar_or_args(PlannerInfo *root, RelOptInfo *rel, RestrictInfo *rinfo)
 		/*
 		 * Check for clauses of the form: (indexkey operator constant) or
 		 * (constant operator indexkey).  But we don't know a particular index
-		 * yet.  First check for a constant, which must be Const or Param.
-		 * That's cheaper than search for an index key among all indexes.
+		 * yet.  Therefore, we try to distinguish the potential index key and
+		 * constant first, then search for a matching index key among all
+		 * indexes.
 		 */
-		if (IsA(leftop, Const) || IsA(leftop, Param))
+		if (bms_is_member(relid, argrinfo->right_relids) &&
+			!bms_is_member(relid, argrinfo->left_relids) &&
+			!contain_volatile_functions(leftop))
 		{
 			opno = get_commutator(opno);
 
@@ -1333,7 +1337,9 @@ group_similar_or_args(PlannerInfo *root, RelOptInfo *rel, RestrictInfo *rinfo)
 			}
 			nonConstExpr = rightop;
 		}
-		else if (IsA(rightop, Const) || IsA(rightop, Param))
+		else if (bms_is_member(relid, argrinfo->left_relids) &&
+				 !bms_is_member(relid, argrinfo->right_relids) &&
+				 !contain_volatile_functions(rightop))
 		{
 			nonConstExpr = leftop;
 		}
@@ -2414,6 +2420,7 @@ match_restriction_clauses_to_index(PlannerInfo *root,
  *	  Identify join clauses for the rel that match the index.
  *	  Matching clauses are added to *clauseset.
  *	  Also, add any potentially usable join OR clauses to *joinorclauses.
+ *	  They also might be processed by match_clause_to_index() as a whole.
  */
 static void
 match_join_clauses_to_index(PlannerInfo *root,
@@ -2432,11 +2439,15 @@ match_join_clauses_to_index(PlannerInfo *root,
 		if (!join_clause_is_movable_to(rinfo, rel))
 			continue;
 
-		/* Potentially usable, so see if it matches the index or is an OR */
+		/*
+		 * Potentially usable, so see if it matches the index or is an OR. Use
+		 * list_append_unique_ptr() here to avoid possible duplicates when
+		 * processing the same clauses with different indexes.
+		 */
 		if (restriction_is_or_clause(rinfo))
-			*joinorclauses = lappend(*joinorclauses, rinfo);
-		else
-			match_clause_to_index(root, rinfo, index, clauseset);
+			*joinorclauses = list_append_unique_ptr(*joinorclauses, rinfo);
+
+		match_clause_to_index(root, rinfo, index, clauseset);
 	}
 }
 
@@ -2585,10 +2596,7 @@ match_clause_to_index(PlannerInfo *root,
  *	  (3)  must match the collation of the index, if collation is relevant.
  *
  *	  Our definition of "const" is exceedingly liberal: we allow anything that
- *	  doesn't involve a volatile function or a Var of the index's relation
- *	  except for a boolean OR expression input: due to a trade-off between the
- *	  expected execution speedup and planning complexity, we limit or->saop
- *	  transformation by obvious cases when an index scan can get a profit.
+ *	  doesn't involve a volatile function or a Var of the index's relation.
  *	  In particular, Vars belonging to other relations of the query are
  *	  accepted here, since a clause of that form can be used in a
  *	  parameterized indexscan.  It's the responsibility of higher code levels
@@ -3247,7 +3255,8 @@ match_orclause_to_indexcol(PlannerInfo *root,
 	Oid			arraytype = InvalidOid;
 	Oid			inputcollid = InvalidOid;
 	bool		firstTime = true;
-	bool		haveParam = false;
+	bool		haveNonConst = false;
+	Index		indexRelid = index->rel->relid;
 
 	Assert(IsA(orclause, BoolExpr));
 	Assert(orclause->boolop == OR_EXPR);
@@ -3259,10 +3268,9 @@ match_orclause_to_indexcol(PlannerInfo *root,
 	/*
 	 * Try to convert a list of OR-clauses to a single SAOP expression. Each
 	 * OR entry must be in the form: (indexkey operator constant) or (constant
-	 * operator indexkey).  Operators of all the entries must match.  Constant
-	 * might be either Const or Param.  To be effective, give up on the first
-	 * non-matching entry.  Exit is implemented as a break from the loop,
-	 * which is catched afterwards.
+	 * operator indexkey).  Operators of all the entries must match.  To be
+	 * effective, give up on the first non-matching entry.  Exit is
+	 * implemented as a break from the loop, which is catched afterwards.
 	 */
 	foreach(lc, orclause->args)
 	{
@@ -3313,17 +3321,21 @@ match_orclause_to_indexcol(PlannerInfo *root,
 
 		/*
 		 * Check for clauses of the form: (indexkey operator constant) or
-		 * (constant operator indexkey).  Determine indexkey side first, check
-		 * the constant later.
+		 * (constant operator indexkey).  See match_clause_to_indexcol's notes
+		 * about const-ness.
 		 */
 		leftop = (Node *) linitial(subClause->args);
 		rightop = (Node *) lsecond(subClause->args);
-		if (match_index_to_operand(leftop, indexcol, index))
+		if (match_index_to_operand(leftop, indexcol, index) &&
+			!bms_is_member(indexRelid, subRinfo->right_relids) &&
+			!contain_volatile_functions(rightop))
 		{
 			indexExpr = leftop;
 			constExpr = rightop;
 		}
-		else if (match_index_to_operand(rightop, indexcol, index))
+		else if (match_index_to_operand(rightop, indexcol, index) &&
+				 !bms_is_member(indexRelid, subRinfo->left_relids) &&
+				 !contain_volatile_functions(leftop))
 		{
 			opno = get_commutator(opno);
 			if (!OidIsValid(opno))
@@ -3349,10 +3361,6 @@ match_orclause_to_indexcol(PlannerInfo *root,
 			constExpr = (Node *) ((RelabelType *) constExpr)->arg;
 		if (IsA(indexExpr, RelabelType))
 			indexExpr = (Node *) ((RelabelType *) indexExpr)->arg;
-
-		/* We allow constant to be Const or Param */
-		if (!IsA(constExpr, Const) && !IsA(constExpr, Param))
-			break;
 
 		/* Forbid transformation for composite types, records. */
 		if (type_is_rowtype(exprType(constExpr)) ||
@@ -3390,8 +3398,12 @@ match_orclause_to_indexcol(PlannerInfo *root,
 				break;
 		}
 
-		if (IsA(constExpr, Param))
-			haveParam = true;
+		/*
+		 * Check if our list of constants in match_clause_to_indexcol's
+		 * understanding of const-ness have something other than Const.
+		 */
+		if (!IsA(constExpr, Const))
+			haveNonConst = true;
 		consts = lappend(consts, constExpr);
 	}
 
@@ -3408,10 +3420,10 @@ match_orclause_to_indexcol(PlannerInfo *root,
 
 	/*
 	 * Assemble an array from the list of constants.  It seems more profitable
-	 * to build a const array.  But in the presence of parameters, we don't
+	 * to build a const array.  But in the presence of other nodes, we don't
 	 * have a specific value here and must employ an ArrayExpr instead.
 	 */
-	if (haveParam)
+	if (haveNonConst)
 	{
 		ArrayExpr  *arrayExpr = makeNode(ArrayExpr);
 

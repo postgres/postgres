@@ -3016,7 +3016,6 @@ SELECT t1.a FROM skip_fetch t1 LEFT JOIN skip_fetch t2 ON t2.a = 1 WHERE t2.a IS
 
 RESET enable_indexonlyscan;
 RESET enable_seqscan;
-
 -- Test BitmapHeapScan with a rescan releases resources correctly
 SET enable_seqscan = off;
 SET enable_indexscan = off;
@@ -3046,3 +3045,20 @@ SELECT 1 FROM group_tbl t1
 GROUP BY s.c1, s.c2;
 
 DROP TABLE group_tbl;
+
+--
+-- Test for a nested loop join involving index scan, transforming OR-clauses
+-- to SAOP.
+--
+
+EXPLAIN (COSTS OFF)
+SELECT COUNT(*) FROM tenk1 t1, tenk1 t2
+WHERE t2.thousand = t1.tenthous OR t2.thousand = t1.unique1 OR t2.thousand = t1.unique2;
+SELECT COUNT(*) FROM tenk1 t1, tenk1 t2
+WHERE t2.thousand = t1.tenthous OR t2.thousand = t1.unique1 OR t2.thousand = t1.unique2;
+
+EXPLAIN (COSTS OFF)
+SELECT COUNT(*) FROM onek t1 LEFT JOIN tenk1 t2
+    ON (t2.thousand = t1.tenthous OR t2.thousand = t1.thousand);
+SELECT COUNT(*) FROM onek t1 LEFT JOIN tenk1 t2
+    ON (t2.thousand = t1.tenthous OR t2.thousand = t1.thousand);

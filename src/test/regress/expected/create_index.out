@@ -2007,6 +2007,27 @@ SELECT * FROM tenk1
 (2 rows)
 
 EXPLAIN (COSTS OFF)
+SELECT count(*) FROM tenk1 t1
+  WHERE t1.thousand = 42 OR t1.thousand = (SELECT t2.tenthous FROM tenk1 t2 WHERE t2.thousand = t1.tenthous + 1 LIMIT 1);
+                                 QUERY PLAN                                 
+----------------------------------------------------------------------------
+ Aggregate
+   ->  Index Only Scan using tenk1_thous_tenthous on tenk1 t1
+         Filter: ((thousand = 42) OR (thousand = (SubPlan 1)))
+         SubPlan 1
+           ->  Limit
+                 ->  Index Only Scan using tenk1_thous_tenthous on tenk1 t2
+                       Index Cond: (thousand = (t1.tenthous + 1))
+(7 rows)
+
+SELECT count(*) FROM tenk1 t1
+  WHERE t1.thousand = 42 OR t1.thousand = (SELECT t2.tenthous FROM tenk1 t2 WHERE t2.thousand = t1.tenthous + 1 LIMIT 1);
+ count 
+-------
+    10
+(1 row)
+
+EXPLAIN (COSTS OFF)
 SELECT count(*) FROM tenk1
   WHERE hundred = 42 AND (thousand = 42 OR thousand = 99);
                                    QUERY PLAN                                    
@@ -3255,6 +3276,17 @@ CREATE INDEX t_b_c_idx ON bitmap_split_or (b, c);
 CREATE STATISTICS t_a_b_stat (mcv) ON a, b FROM bitmap_split_or;
 CREATE STATISTICS t_b_c_stat (mcv) ON b, c FROM bitmap_split_or;
 ANALYZE bitmap_split_or;
+EXPLAIN (COSTS OFF)
+SELECT * FROM bitmap_split_or t1, bitmap_split_or t2
+WHERE t1.a = t2.b OR t1.a = 2;
+                       QUERY PLAN                       
+--------------------------------------------------------
+ Nested Loop
+   ->  Seq Scan on bitmap_split_or t2
+   ->  Index Scan using t_a_b_idx on bitmap_split_or t1
+         Index Cond: (a = ANY (ARRAY[t2.b, 2]))
+(4 rows)
+
 EXPLAIN (COSTS OFF)
 SELECT * FROM bitmap_split_or WHERE a = 1 AND (b = 1 OR b = 2) AND c = 2;
                             QUERY PLAN                            

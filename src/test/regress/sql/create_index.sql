@@ -782,6 +782,12 @@ SELECT * FROM tenk1
   WHERE tenthous = 1::numeric OR tenthous = 3::int4 OR tenthous = 42::numeric;
 
 EXPLAIN (COSTS OFF)
+SELECT count(*) FROM tenk1 t1
+  WHERE t1.thousand = 42 OR t1.thousand = (SELECT t2.tenthous FROM tenk1 t2 WHERE t2.thousand = t1.tenthous + 1 LIMIT 1);
+SELECT count(*) FROM tenk1 t1
+  WHERE t1.thousand = 42 OR t1.thousand = (SELECT t2.tenthous FROM tenk1 t2 WHERE t2.thousand = t1.tenthous + 1 LIMIT 1);
+
+EXPLAIN (COSTS OFF)
 SELECT count(*) FROM tenk1
   WHERE hundred = 42 AND (thousand = 42 OR thousand = 99);
 SELECT count(*) FROM tenk1
@@ -1366,6 +1372,9 @@ CREATE INDEX t_b_c_idx ON bitmap_split_or (b, c);
 CREATE STATISTICS t_a_b_stat (mcv) ON a, b FROM bitmap_split_or;
 CREATE STATISTICS t_b_c_stat (mcv) ON b, c FROM bitmap_split_or;
 ANALYZE bitmap_split_or;
+EXPLAIN (COSTS OFF)
+SELECT * FROM bitmap_split_or t1, bitmap_split_or t2
+WHERE t1.a = t2.b OR t1.a = 2;
 EXPLAIN (COSTS OFF)
 SELECT * FROM bitmap_split_or WHERE a = 1 AND (b = 1 OR b = 2) AND c = 2;
 DROP TABLE bitmap_split_or;
