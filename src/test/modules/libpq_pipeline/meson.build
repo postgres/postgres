@@ -27,5 +27,6 @@ tests += {
     'tests': [
       't/001_libpq_pipeline.pl',
     ],
+    'deps': [libpq_pipeline],
   },
 }
