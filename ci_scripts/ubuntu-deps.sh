@@ -6,11 +6,8 @@ sudo apt install -y libreadline6-dev systemtap-sdt-dev zlib1g-dev libssl-dev lib
 
 bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)"
 
-# Perl test dependencies
+# Test dependencies
 sudo apt install -y libipc-run-perl python3-pykmip libhttp-server-simple-perl
-
-sudo /usr/bin/perl -MCPAN -e 'install IPC::Run'
-sudo /usr/bin/perl -MCPAN -e 'install Text::Trim'
 
 # Vault
 wget -O- https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
