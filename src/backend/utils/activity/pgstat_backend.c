@@ -236,9 +236,6 @@ pgstat_tracks_backend_bktype(BackendType bktype)
 		case B_DEAD_END_BACKEND:
 		case B_ARCHIVER:
 		case B_LOGGER:
-		case B_WAL_RECEIVER:
-		case B_WAL_WRITER:
-		case B_WAL_SUMMARIZER:
 		case B_BG_WRITER:
 		case B_CHECKPOINTER:
 		case B_STARTUP:
@@ -249,7 +246,10 @@ pgstat_tracks_backend_bktype(BackendType bktype)
 		case B_BG_WORKER:
 		case B_STANDALONE_BACKEND:
 		case B_SLOTSYNC_WORKER:
+		case B_WAL_RECEIVER:
 		case B_WAL_SENDER:
+		case B_WAL_SUMMARIZER:
+		case B_WAL_WRITER:
 			return true;
 	}
 

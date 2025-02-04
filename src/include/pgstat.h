@@ -212,7 +212,7 @@ typedef struct PgStat_TableXactStatus
  * ------------------------------------------------------------
  */
 
-#define PGSTAT_FILE_FORMAT_ID	0x01A5BCB2
+#define PGSTAT_FILE_FORMAT_ID	0x01A5BCB3
 
 typedef struct PgStat_ArchiverStats
 {
@@ -274,14 +274,16 @@ typedef enum IOObject
 {
 	IOOBJECT_RELATION,
 	IOOBJECT_TEMP_RELATION,
+	IOOBJECT_WAL,
 } IOObject;
 
-#define IOOBJECT_NUM_TYPES (IOOBJECT_TEMP_RELATION + 1)
+#define IOOBJECT_NUM_TYPES (IOOBJECT_WAL + 1)
 
 typedef enum IOContext
 {
 	IOCONTEXT_BULKREAD,
 	IOCONTEXT_BULKWRITE,
+	IOCONTEXT_INIT,
 	IOCONTEXT_NORMAL,
 	IOCONTEXT_VACUUM,
 } IOContext;

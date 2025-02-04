@@ -35,6 +35,7 @@
 
 #ifndef FRONTEND
 #include "pgstat.h"
+#include "storage/bufmgr.h"
 #else
 #include "common/logging.h"
 #endif
@@ -1507,6 +1508,9 @@ WALRead(XLogReaderState *state,
 	char	   *p;
 	XLogRecPtr	recptr;
 	Size		nbytes;
+#ifndef FRONTEND
+	instr_time	io_start;
+#endif
 
 	p = buf;
 	recptr = startptr;
@@ -1552,6 +1556,9 @@ WALRead(XLogReaderState *state,
 			segbytes = nbytes;
 
 #ifndef FRONTEND
+		/* Measure I/O timing when reading segment */
+		io_start = pgstat_prepare_io_time(track_io_timing);
+
 		pgstat_report_wait_start(WAIT_EVENT_WAL_READ);
 #endif
 
@@ -1561,6 +1568,9 @@ WALRead(XLogReaderState *state,
 
 #ifndef FRONTEND
 		pgstat_report_wait_end();
+
+		pgstat_count_io_op_time(IOOBJECT_WAL, IOCONTEXT_NORMAL, IOOP_READ,
+								io_start, 1, readbytes);
 #endif
 
 		if (readbytes <= 0)

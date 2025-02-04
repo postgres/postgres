@@ -2435,15 +2435,18 @@ XLogWrite(XLogwrtRqst WriteRqst, TimeLineID tli, bool flexible)
 			{
 				errno = 0;
 
-				/* Measure I/O timing to write WAL data */
-				if (track_wal_io_timing)
-					INSTR_TIME_SET_CURRENT(start);
-				else
-					INSTR_TIME_SET_ZERO(start);
+				/*
+				 * Measure I/O timing to write WAL data, for pg_stat_io and/or
+				 * pg_stat_wal.
+				 */
+				start = pgstat_prepare_io_time(track_io_timing || track_wal_io_timing);
 
 				pgstat_report_wait_start(WAIT_EVENT_WAL_WRITE);
 				written = pg_pwrite(openLogFile, from, nleft, startoffset);
 				pgstat_report_wait_end();
+
+				pgstat_count_io_op_time(IOOBJECT_WAL, IOCONTEXT_NORMAL,
+										IOOP_WRITE, start, 1, written);
 
 				/*
 				 * Increment the I/O timing and the number of times WAL data
@@ -3216,6 +3219,7 @@ XLogFileInitInternal(XLogSegNo logsegno, TimeLineID logtli,
 	int			fd;
 	int			save_errno;
 	int			open_flags = O_RDWR | O_CREAT | O_EXCL | PG_BINARY;
+	instr_time	io_start;
 
 	Assert(logtli != 0);
 
@@ -3259,6 +3263,9 @@ XLogFileInitInternal(XLogSegNo logsegno, TimeLineID logtli,
 				(errcode_for_file_access(),
 				 errmsg("could not create file \"%s\": %m", tmppath)));
 
+	/* Measure I/O timing when initializing segment */
+	io_start = pgstat_prepare_io_time(track_io_timing);
+
 	pgstat_report_wait_start(WAIT_EVENT_WAL_INIT_WRITE);
 	save_errno = 0;
 	if (wal_init_zero)
@@ -3294,6 +3301,14 @@ XLogFileInitInternal(XLogSegNo logsegno, TimeLineID logtli,
 	}
 	pgstat_report_wait_end();
 
+	/*
+	 * A full segment worth of data is written when using wal_init_zero. One
+	 * byte is written when not using it.
+	 */
+	pgstat_count_io_op_time(IOOBJECT_WAL, IOCONTEXT_INIT, IOOP_WRITE,
+							io_start, 1,
+							wal_init_zero ? wal_segment_size : 1);
+
 	if (save_errno)
 	{
 		/*
@@ -3310,6 +3325,9 @@ XLogFileInitInternal(XLogSegNo logsegno, TimeLineID logtli,
 				 errmsg("could not write to file \"%s\": %m", tmppath)));
 	}
 
+	/* Measure I/O timing when flushing segment */
+	io_start = pgstat_prepare_io_time(track_io_timing);
+
 	pgstat_report_wait_start(WAIT_EVENT_WAL_INIT_SYNC);
 	if (pg_fsync(fd) != 0)
 	{
@@ -3321,6 +3339,9 @@ XLogFileInitInternal(XLogSegNo logsegno, TimeLineID logtli,
 				 errmsg("could not fsync file \"%s\": %m", tmppath)));
 	}
 	pgstat_report_wait_end();
+
+	pgstat_count_io_op_time(IOOBJECT_WAL, IOCONTEXT_INIT,
+							IOOP_FSYNC, io_start, 1, 0);
 
 	if (close(fd) != 0)
 		ereport(ERROR,
@@ -8696,11 +8717,11 @@ issue_xlog_fsync(int fd, XLogSegNo segno, TimeLineID tli)
 		wal_sync_method == WAL_SYNC_METHOD_OPEN_DSYNC)
 		return;
 
-	/* Measure I/O timing to sync the WAL file */
-	if (track_wal_io_timing)
-		INSTR_TIME_SET_CURRENT(start);
-	else
-		INSTR_TIME_SET_ZERO(start);
+	/*
+	 * Measure I/O timing to sync the WAL file for pg_stat_io and/or
+	 * pg_stat_wal.
+	 */
+	start = pgstat_prepare_io_time(track_io_timing || track_wal_io_timing);
 
 	pgstat_report_wait_start(WAIT_EVENT_WAL_SYNC);
 	switch (wal_sync_method)
@@ -8756,6 +8777,9 @@ issue_xlog_fsync(int fd, XLogSegNo segno, TimeLineID tli)
 		INSTR_TIME_SET_CURRENT(end);
 		INSTR_TIME_ACCUM_DIFF(PendingWalStats.wal_sync_time, end, start);
 	}
+
+	pgstat_count_io_op_time(IOOBJECT_WAL, IOCONTEXT_NORMAL, IOOP_FSYNC,
+							start, 1, 0);
 
 	PendingWalStats.wal_sync++;
 }

@@ -60,6 +60,7 @@
 #include "utils/datetime.h"
 #include "utils/fmgrprotos.h"
 #include "utils/guc_hooks.h"
+#include "utils/pgstat_internal.h"
 #include "utils/pg_lsn.h"
 #include "utils/ps_status.h"
 #include "utils/pg_rusage.h"
@@ -3306,6 +3307,7 @@ XLogPageRead(XLogReaderState *xlogreader, XLogRecPtr targetPagePtr, int reqLen,
 	uint32		targetPageOff;
 	XLogSegNo	targetSegNo PG_USED_FOR_ASSERTS_ONLY;
 	int			r;
+	instr_time	io_start;
 
 	XLByteToSeg(targetPagePtr, targetSegNo, wal_segment_size);
 	targetPageOff = XLogSegmentOffset(targetPagePtr, wal_segment_size);
@@ -3398,6 +3400,9 @@ retry:
 	/* Read the requested page */
 	readOff = targetPageOff;
 
+	/* Measure I/O timing when reading segment */
+	io_start = pgstat_prepare_io_time(track_io_timing);
+
 	pgstat_report_wait_start(WAIT_EVENT_WAL_READ);
 	r = pg_pread(readFile, readBuf, XLOG_BLCKSZ, (off_t) readOff);
 	if (r != XLOG_BLCKSZ)
@@ -3406,6 +3411,10 @@ retry:
 		int			save_errno = errno;
 
 		pgstat_report_wait_end();
+
+		pgstat_count_io_op_time(IOOBJECT_WAL, IOCONTEXT_NORMAL, IOOP_READ,
+								io_start, 1, r);
+
 		XLogFileName(fname, curFileTLI, readSegNo, wal_segment_size);
 		if (r < 0)
 		{
@@ -3425,6 +3434,9 @@ retry:
 		goto next_record_is_invalid;
 	}
 	pgstat_report_wait_end();
+
+	pgstat_count_io_op_time(IOOBJECT_WAL, IOCONTEXT_NORMAL, IOOP_READ,
+							io_start, 1, r);
 
 	Assert(targetSegNo == readSegNo);
 	Assert(targetPageOff == readOff);

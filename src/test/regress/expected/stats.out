@@ -862,6 +862,33 @@ WHERE pg_stat_get_backend_pid(beid) = pg_backend_pid();
  t
 (1 row)
 
+-- Test pg_stat_io for WAL in an init context, that should do writes
+-- and syncs.
+SELECT sum(writes) AS writes, sum(fsyncs) AS fsyncs
+  FROM pg_stat_io
+  WHERE context = 'init' AND object = 'wal' \gset io_sum_wal_init_
+SELECT :io_sum_wal_init_writes > 0;
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT current_setting('fsync') = 'off'
+  OR :io_sum_wal_init_fsyncs > 0;
+ ?column? 
+----------
+ t
+(1 row)
+
+-- Test pg_stat_io for WAL in a normal context, that should do reads as well.
+SELECT SUM(reads) > 0
+  FROM pg_stat_io
+  WHERE context = 'normal' AND object = 'wal';
+ ?column? 
+----------
+ t
+(1 row)
+
 -----
 -- Test that resetting stats works for reset timestamp
 -----
@@ -1256,6 +1283,7 @@ SELECT pg_stat_get_subscription_stats(NULL);
 -- - extends of relations using shared buffers
 -- - fsyncs done to ensure the durability of data dirtying shared buffers
 -- - shared buffer hits
+-- - WAL writes and fsyncs in IOContext IOCONTEXT_NORMAL
 -- There is no test for blocks evicted from shared buffers, because we cannot
 -- be sure of the state of shared buffers at the point the test is run.
 -- Create a regular table and insert some data to generate IOCONTEXT_NORMAL
@@ -1273,6 +1301,9 @@ SELECT sum(writes) AS writes, sum(fsyncs) AS fsyncs
 SELECT sum(writes) AS writes, sum(fsyncs) AS fsyncs
   FROM pg_stat_get_backend_io(pg_backend_pid())
   WHERE object = 'relation' \gset my_io_sum_shared_before_
+SELECT sum(writes) AS writes, sum(fsyncs) AS fsyncs
+  FROM pg_stat_io
+  WHERE context = 'normal' AND object = 'wal' \gset io_sum_wal_normal_before_
 CREATE TABLE test_io_shared(a int);
 INSERT INTO test_io_shared SELECT i FROM generate_series(1,100)i;
 SELECT pg_stat_force_next_flush();
@@ -1330,6 +1361,28 @@ SELECT :my_io_sum_shared_after_writes >= :my_io_sum_shared_before_writes;
 
 SELECT current_setting('fsync') = 'off'
   OR :my_io_sum_shared_after_fsyncs >= :my_io_sum_shared_before_fsyncs;
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT sum(writes) AS writes, sum(fsyncs) AS fsyncs
+  FROM pg_stat_io
+  WHERE context = 'normal' AND object = 'wal' \gset io_sum_wal_normal_after_
+SELECT current_setting('synchronous_commit') = 'on';
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT :io_sum_wal_normal_after_writes > :io_sum_wal_normal_before_writes;
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT current_setting('fsync') = 'off'
+  OR :io_sum_wal_normal_after_fsyncs > :io_sum_wal_normal_before_fsyncs;
  ?column? 
 ----------
  t

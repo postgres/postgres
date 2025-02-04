@@ -127,21 +127,24 @@ pgstat_count_io_op_time(IOObject io_object, IOContext io_context, IOOp io_op,
 		INSTR_TIME_SET_CURRENT(io_time);
 		INSTR_TIME_SUBTRACT(io_time, start_time);
 
-		if (io_op == IOOP_WRITE || io_op == IOOP_EXTEND)
+		if (io_object != IOOBJECT_WAL)
 		{
-			pgstat_count_buffer_write_time(INSTR_TIME_GET_MICROSEC(io_time));
-			if (io_object == IOOBJECT_RELATION)
-				INSTR_TIME_ADD(pgBufferUsage.shared_blk_write_time, io_time);
-			else if (io_object == IOOBJECT_TEMP_RELATION)
-				INSTR_TIME_ADD(pgBufferUsage.local_blk_write_time, io_time);
-		}
-		else if (io_op == IOOP_READ)
-		{
-			pgstat_count_buffer_read_time(INSTR_TIME_GET_MICROSEC(io_time));
-			if (io_object == IOOBJECT_RELATION)
-				INSTR_TIME_ADD(pgBufferUsage.shared_blk_read_time, io_time);
-			else if (io_object == IOOBJECT_TEMP_RELATION)
-				INSTR_TIME_ADD(pgBufferUsage.local_blk_read_time, io_time);
+			if (io_op == IOOP_WRITE || io_op == IOOP_EXTEND)
+			{
+				pgstat_count_buffer_write_time(INSTR_TIME_GET_MICROSEC(io_time));
+				if (io_object == IOOBJECT_RELATION)
+					INSTR_TIME_ADD(pgBufferUsage.shared_blk_write_time, io_time);
+				else if (io_object == IOOBJECT_TEMP_RELATION)
+					INSTR_TIME_ADD(pgBufferUsage.local_blk_write_time, io_time);
+			}
+			else if (io_op == IOOP_READ)
+			{
+				pgstat_count_buffer_read_time(INSTR_TIME_GET_MICROSEC(io_time));
+				if (io_object == IOOBJECT_RELATION)
+					INSTR_TIME_ADD(pgBufferUsage.shared_blk_read_time, io_time);
+				else if (io_object == IOOBJECT_TEMP_RELATION)
+					INSTR_TIME_ADD(pgBufferUsage.local_blk_read_time, io_time);
+			}
 		}
 
 		INSTR_TIME_ADD(PendingIOStats.pending_times[io_object][io_context][io_op],
@@ -249,6 +252,8 @@ pgstat_get_io_context_name(IOContext io_context)
 			return "bulkread";
 		case IOCONTEXT_BULKWRITE:
 			return "bulkwrite";
+		case IOCONTEXT_INIT:
+			return "init";
 		case IOCONTEXT_NORMAL:
 			return "normal";
 		case IOCONTEXT_VACUUM:
@@ -268,6 +273,8 @@ pgstat_get_io_object_name(IOObject io_object)
 			return "relation";
 		case IOOBJECT_TEMP_RELATION:
 			return "temp relation";
+		case IOOBJECT_WAL:
+			return "wal";
 	}
 
 	elog(ERROR, "unrecognized IOObject value: %d", io_object);
@@ -340,8 +347,6 @@ pgstat_io_snapshot_cb(void)
 * - Syslogger because it is not connected to shared memory
 * - Archiver because most relevant archiving IO is delegated to a
 *   specialized command or module
-* - WAL Receiver, WAL Writer, and WAL Summarizer IO are not tracked in
-*   pg_stat_io for now
 *
 * Function returns true if BackendType participates in the cumulative stats
 * subsystem for IO and false if it does not.
@@ -362,9 +367,6 @@ pgstat_tracks_io_bktype(BackendType bktype)
 		case B_DEAD_END_BACKEND:
 		case B_ARCHIVER:
 		case B_LOGGER:
-		case B_WAL_RECEIVER:
-		case B_WAL_WRITER:
-		case B_WAL_SUMMARIZER:
 			return false;
 
 		case B_AUTOVAC_LAUNCHER:
@@ -376,7 +378,10 @@ pgstat_tracks_io_bktype(BackendType bktype)
 		case B_SLOTSYNC_WORKER:
 		case B_STANDALONE_BACKEND:
 		case B_STARTUP:
+		case B_WAL_RECEIVER:
 		case B_WAL_SENDER:
+		case B_WAL_SUMMARIZER:
+		case B_WAL_WRITER:
 			return true;
 	}
 
@@ -400,6 +405,15 @@ pgstat_tracks_io_object(BackendType bktype, IOObject io_object,
 	 * Some BackendTypes should never track IO statistics.
 	 */
 	if (!pgstat_tracks_io_bktype(bktype))
+		return false;
+
+	/*
+	 * Currently, IO on IOOBJECT_WAL objects can only occur in the
+	 * IOCONTEXT_NORMAL and IOCONTEXT_INIT IOContexts.
+	 */
+	if (io_object == IOOBJECT_WAL &&
+		(io_context != IOCONTEXT_NORMAL &&
+		 io_context != IOCONTEXT_INIT))
 		return false;
 
 	/*
@@ -468,12 +482,26 @@ pgstat_tracks_io_op(BackendType bktype, IOObject io_object,
 	/*
 	 * Some BackendTypes will not do certain IOOps.
 	 */
-	if ((bktype == B_BG_WRITER || bktype == B_CHECKPOINTER) &&
+	if (bktype == B_BG_WRITER &&
 		(io_op == IOOP_READ || io_op == IOOP_EVICT || io_op == IOOP_HIT))
+		return false;
+
+	if (bktype == B_CHECKPOINTER &&
+		((io_object != IOOBJECT_WAL && io_op == IOOP_READ) ||
+		 (io_op == IOOP_EVICT || io_op == IOOP_HIT)))
 		return false;
 
 	if ((bktype == B_AUTOVAC_LAUNCHER || bktype == B_BG_WRITER ||
 		 bktype == B_CHECKPOINTER) && io_op == IOOP_EXTEND)
+		return false;
+
+	/*
+	 * Some BackendTypes do not perform reads with IOOBJECT_WAL.
+	 */
+	if (io_object == IOOBJECT_WAL && io_op == IOOP_READ &&
+		(bktype == B_WAL_RECEIVER || bktype == B_BG_WRITER ||
+		 bktype == B_AUTOVAC_WORKER || bktype == B_AUTOVAC_WORKER ||
+		 bktype == B_WAL_WRITER))
 		return false;
 
 	/*
@@ -498,6 +526,17 @@ pgstat_tracks_io_op(BackendType bktype, IOObject io_object,
 	 * IOOP_REUSE is only relevant when a BufferAccessStrategy is in use.
 	 */
 	if (!strategy_io_context && io_op == IOOP_REUSE)
+		return false;
+
+	/*
+	 * IOOBJECT_WAL IOObject will not do certain IOOps depending on IOContext.
+	 */
+	if (io_object == IOOBJECT_WAL && io_context == IOCONTEXT_INIT &&
+		!(io_op == IOOP_WRITE || io_op == IOOP_FSYNC))
+		return false;
+
+	if (io_object == IOOBJECT_WAL && io_context == IOCONTEXT_NORMAL &&
+		!(io_op == IOOP_WRITE || io_op == IOOP_READ || io_op == IOOP_FSYNC))
 		return false;
 
 	/*

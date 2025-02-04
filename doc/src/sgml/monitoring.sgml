@@ -2581,9 +2581,10 @@ description | Waiting for a newly initialized WAL file to reach durable storage
   </para>
 
   <para>
-   Currently, I/O on relations (e.g. tables, indexes) is tracked. However,
-   relation I/O which bypasses shared buffers (e.g. when moving a table from one
-   tablespace to another) is currently not tracked.
+   Currently, I/O on relations (e.g. tables, indexes) and WAL activity are
+   tracked. However, relation I/O which bypasses shared buffers
+   (e.g. when moving a table from one tablespace to another) is currently
+   not tracked.
   </para>
 
   <table id="pg-stat-io-view" xreflabel="pg_stat_io">
@@ -2636,6 +2637,11 @@ description | Waiting for a newly initialized WAL file to reach durable storage
           <literal>temp relation</literal>: Temporary relations.
          </para>
         </listitem>
+        <listitem>
+         <para>
+          <literal>wal</literal>: Write Ahead Logs.
+         </para>
+        </listitem>
        </itemizedlist>
        </para>
       </entry>
@@ -2658,6 +2664,13 @@ description | Waiting for a newly initialized WAL file to reach durable storage
           shared buffers. Thus, reads and writes of relation data to and from
           shared buffers are tracked in <varname>context</varname>
           <literal>normal</literal>.
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          <literal>init</literal>: I/O operations performed while creating the
+          WAL segments are tracked in <varname>context</varname>
+          <literal>init</literal>.
          </para>
         </listitem>
         <listitem>
