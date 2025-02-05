@@ -57,7 +57,11 @@ PGTDE::append_to_file($stderr);
 
 # now give key management access to test_access user
 PGTDE::append_to_file("-- grant key management access to test_access");
-$stdout = $node->safe_psql('postgres', "select pg_tde_grant_key_management_to_role('test_access');", extra_params => ['-a']);
+$stdout = $node->safe_psql('postgres', "select pg_tde_grant_local_key_management_to_role('test_access');", extra_params => ['-a']);
+PGTDE::append_to_file($stdout);
+
+PGTDE::append_to_file("-- grant key management access to test_access");
+$stdout = $node->safe_psql('postgres', "select pg_tde_grant_key_viewer_to_role('test_access');", extra_params => ['-a']);
 PGTDE::append_to_file($stdout);
 
 # TRY performing key operation with permission

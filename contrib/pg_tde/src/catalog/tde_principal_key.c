@@ -46,6 +46,9 @@
 
 #ifndef FRONTEND
 
+PG_FUNCTION_INFO_V1(pg_tde_delete_key_provider);
+PG_FUNCTION_INFO_V1(pg_tde_delete_key_provider_global);
+
 typedef struct TdePrincipalKeySharedState
 {
 	LWLockPadded *Locks;
@@ -91,6 +94,23 @@ static bool set_principal_key_with_keyring(const char *key_name,
 										   Oid dbOid,
 										   bool ensure_new_key);
 static bool pg_tde_is_provider_used(Oid databaseOid, Oid providerId);
+
+static Datum pg_tde_delete_key_provider_internal(PG_FUNCTION_ARGS, int is_global);
+
+
+PG_FUNCTION_INFO_V1(pg_tde_set_principal_key);
+Datum		pg_tde_set_principal_key(PG_FUNCTION_ARGS);
+
+PG_FUNCTION_INFO_V1(pg_tde_set_principal_key_global);
+Datum		pg_tde_set_principal_key(PG_FUNCTION_ARGS);
+
+PG_FUNCTION_INFO_V1(pg_tde_set_principal_key_server);
+Datum		pg_tde_set_principal_key(PG_FUNCTION_ARGS);
+
+static Datum
+			pg_tde_set_principal_key_internal(char *principal_key_name, int is_global, char *provider_name, bool ensure_new_key);
+
+
 
 static const TDEShmemSetupRoutine principal_key_info_shmem_routine = {
 	.init_shared_state = initialize_shared_state,
@@ -523,16 +543,40 @@ clear_principal_key_cache(Oid databaseId)
 /*
  * SQL interface to set principal key
  */
-PG_FUNCTION_INFO_V1(pg_tde_set_principal_key_internal);
-Datum		pg_tde_set_principal_key_internal(PG_FUNCTION_ARGS);
 
 Datum
-pg_tde_set_principal_key_internal(PG_FUNCTION_ARGS)
+pg_tde_set_principal_key(PG_FUNCTION_ARGS)
 {
 	char	   *principal_key_name = text_to_cstring(PG_GETARG_TEXT_PP(0));
-	int			is_global = PG_GETARG_INT32(1);
+	char	   *provider_name = PG_ARGISNULL(1) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(1));
+	bool		ensure_new_key = PG_GETARG_BOOL(2);
+
+	return pg_tde_set_principal_key_internal(principal_key_name, 0, provider_name, ensure_new_key);
+}
+
+Datum
+pg_tde_set_principal_key_global(PG_FUNCTION_ARGS)
+{
+	char	   *principal_key_name = text_to_cstring(PG_GETARG_TEXT_PP(0));
 	char	   *provider_name = PG_ARGISNULL(2) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(2));
 	bool		ensure_new_key = PG_GETARG_BOOL(3);
+
+	return pg_tde_set_principal_key_internal(principal_key_name, 1, provider_name, ensure_new_key);
+}
+
+Datum
+pg_tde_set_principal_key_server(PG_FUNCTION_ARGS)
+{
+	char	   *principal_key_name = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	char	   *provider_name = PG_ARGISNULL(2) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(2));
+	bool		ensure_new_key = PG_GETARG_BOOL(3);
+
+	return pg_tde_set_principal_key_internal(principal_key_name, 2, provider_name, ensure_new_key);
+}
+
+static Datum
+pg_tde_set_principal_key_internal(char *principal_key_name, int is_global, char *provider_name, bool ensure_new_key)
+{
 	bool		success;
 	Oid			providerOid = MyDatabaseId;
 	Oid			dbOid = MyDatabaseId;
@@ -559,19 +603,18 @@ pg_tde_set_principal_key_internal(PG_FUNCTION_ARGS)
 	PG_RETURN_BOOL(success);
 }
 
-PG_FUNCTION_INFO_V1(pg_tde_principal_key_info_internal);
+PG_FUNCTION_INFO_V1(pg_tde_principal_key_info);
 Datum
-pg_tde_principal_key_info_internal(PG_FUNCTION_ARGS)
+pg_tde_principal_key_info(PG_FUNCTION_ARGS)
 {
-	Oid			dbOid = MyDatabaseId;
-	bool		is_global = PG_GETARG_BOOL(0);
+	return pg_tde_get_key_info(fcinfo, MyDatabaseId);
+}
 
-	if (is_global)
-	{
-		dbOid = GLOBAL_DATA_TDE_OID;
-	}
-
-	return pg_tde_get_key_info(fcinfo, dbOid);
+PG_FUNCTION_INFO_V1(pg_tde_principal_key_info_global);
+Datum
+pg_tde_principal_key_info_global(PG_FUNCTION_ARGS)
+{
+	return pg_tde_get_key_info(fcinfo, GLOBAL_DATA_TDE_OID);
 }
 
 static Datum
@@ -832,13 +875,23 @@ pg_tde_is_provider_used(Oid databaseOid, Oid providerId)
 	}
 }
 
-PG_FUNCTION_INFO_V1(pg_tde_delete_key_provider_internal);
 Datum
-pg_tde_delete_key_provider_internal(PG_FUNCTION_ARGS)
+pg_tde_delete_key_provider(PG_FUNCTION_ARGS)
 {
-	char	   *provider_name = text_to_cstring(PG_GETARG_TEXT_PP(0));
-	int			is_global = PG_GETARG_INT32(1);
-	Oid			db_oid = is_global ? GLOBAL_DATA_TDE_OID : MyDatabaseId;
+	return pg_tde_delete_key_provider_internal(fcinfo, 0);
+}
+
+Datum
+pg_tde_delete_key_provider_global(PG_FUNCTION_ARGS)
+{
+	return pg_tde_delete_key_provider_internal(fcinfo, 1);
+}
+
+Datum
+pg_tde_delete_key_provider_internal(PG_FUNCTION_ARGS, int is_global)
+{
+	char	   *provider_name = text_to_cstring(PG_GETARG_TEXT_PP(0 + is_global));
+	Oid			db_oid = (is_global == 1) ? GLOBAL_DATA_TDE_OID : MyDatabaseId;
 	GenericKeyring *provider = GetKeyProviderByName(provider_name, db_oid);
 	int			provider_id;
 	bool		provider_used;

@@ -6,17 +6,10 @@
 CREATE type PG_TDE_GLOBAL AS ENUM('PG_TDE_GLOBAL');
 
 -- Key Provider Management
-CREATE FUNCTION pg_tde_add_key_provider_internal(provider_type VARCHAR(10), provider_name VARCHAR(128), options JSON, is_global BOOLEAN)
+CREATE OR REPLACE FUNCTION pg_tde_add_key_provider(provider_type VARCHAR(10), provider_name VARCHAR(128), options JSON)
 RETURNS INT
 AS 'MODULE_PATHNAME'
 LANGUAGE C;
-
-CREATE OR REPLACE FUNCTION pg_tde_add_key_provider(provider_type VARCHAR(10), provider_name VARCHAR(128), options JSON)
-RETURNS INT
-AS $$
-    SELECT pg_tde_add_key_provider_internal(provider_type, provider_name, options, FALSE);
-$$
-LANGUAGE SQL;
 
 CREATE OR REPLACE FUNCTION pg_tde_add_key_provider_file(provider_name VARCHAR(128), file_path TEXT)
 RETURNS INT
@@ -131,10 +124,8 @@ LANGUAGE C STRICT VOLATILE;
 -- Global Tablespace Key Provider Management
 CREATE OR REPLACE FUNCTION pg_tde_add_key_provider(PG_TDE_GLOBAL, provider_type VARCHAR(10), provider_name VARCHAR(128), options JSON)
 RETURNS INT
-AS $$
-    SELECT pg_tde_add_key_provider_internal(provider_type, provider_name, options, TRUE);
-$$
-LANGUAGE SQL;
+AS 'MODULE_PATHNAME', 'pg_tde_add_key_provider_global'
+LANGUAGE C;
 
 CREATE OR REPLACE FUNCTION pg_tde_add_key_provider_file(PG_TDE_GLOBAL, provider_name VARCHAR(128), file_path TEXT)
 RETURNS INT
@@ -238,17 +229,10 @@ LANGUAGE SQL;
 
 
 -- Key Provider Management
-CREATE FUNCTION pg_tde_change_key_provider_internal(provider_type VARCHAR(10), provider_name VARCHAR(128), options JSON, is_global BOOLEAN)
+CREATE OR REPLACE FUNCTION pg_tde_change_key_provider(provider_type VARCHAR(10), provider_name VARCHAR(128), options JSON)
 RETURNS INT
 AS 'MODULE_PATHNAME'
 LANGUAGE C;
-
-CREATE OR REPLACE FUNCTION pg_tde_change_key_provider(provider_type VARCHAR(10), provider_name VARCHAR(128), options JSON)
-RETURNS INT
-AS $$
-    SELECT pg_tde_change_key_provider_internal(provider_type, provider_name, options, FALSE);
-$$
-LANGUAGE SQL;
 
 CREATE OR REPLACE FUNCTION pg_tde_change_key_provider_file(provider_name VARCHAR(128), file_path TEXT)
 RETURNS INT
@@ -345,10 +329,8 @@ LANGUAGE SQL;
 -- Global Tablespace Key Provider Management
 CREATE OR REPLACE FUNCTION pg_tde_change_key_provider(PG_TDE_GLOBAL, provider_type VARCHAR(10), provider_name VARCHAR(128), options JSON)
 RETURNS INT
-AS $$
-    SELECT pg_tde_change_key_provider_internal(provider_type, provider_name, options, TRUE);
-$$
-LANGUAGE SQL;
+AS 'MODULE_PATHNAME', 'pg_tde_change_key_provider_global'
+LANGUAGE C;
 
 CREATE OR REPLACE FUNCTION pg_tde_change_key_provider_file(PG_TDE_GLOBAL, provider_name VARCHAR(128), file_path TEXT)
 RETURNS INT
@@ -475,31 +457,20 @@ SELECT EXISTS (
     )$$
 LANGUAGE SQL;
 
-CREATE FUNCTION pg_tde_set_principal_key_internal(principal_key_name VARCHAR(255), is_global INT, provider_name VARCHAR(255), ensure_new_key BOOLEAN DEFAULT FALSE)
+CREATE FUNCTION pg_tde_set_principal_key(principal_key_name VARCHAR(255), provider_name VARCHAR(255) DEFAULT NULL, ensure_new_key BOOLEAN DEFAULT FALSE)
 RETURNS boolean
 AS 'MODULE_PATHNAME'
 LANGUAGE C;
 
-CREATE FUNCTION pg_tde_set_principal_key(principal_key_name VARCHAR(255), provider_name VARCHAR(255) DEFAULT NULL, ensure_new_key BOOLEAN DEFAULT FALSE)
-RETURNS boolean
-AS $$
-    SELECT pg_tde_set_principal_key_internal(principal_key_name, 0, provider_name, ensure_new_key);
-$$
-LANGUAGE SQL;
-
 CREATE FUNCTION pg_tde_set_principal_key(principal_key_name VARCHAR(255), PG_TDE_GLOBAL, provider_name VARCHAR(255) DEFAULT NULL, ensure_new_key BOOLEAN DEFAULT FALSE)
 RETURNS boolean
-AS $$
-    SELECT pg_tde_set_principal_key_internal(principal_key_name, 1, provider_name, ensure_new_key);
-$$
-LANGUAGE SQL;
+AS 'MODULE_PATHNAME', 'pg_tde_set_principal_key_global'
+LANGUAGE C;
 
 CREATE FUNCTION pg_tde_set_server_principal_key(principal_key_name VARCHAR(255), PG_TDE_GLOBAL, provider_name VARCHAR(255) DEFAULT NULL, ensure_new_key BOOLEAN DEFAULT FALSE)
 RETURNS boolean
-AS $$
-    SELECT pg_tde_set_principal_key_internal(principal_key_name, 2, provider_name, ensure_new_key);
-$$
-LANGUAGE SQL;
+AS 'MODULE_PATHNAME', 'pg_tde_set_principal_key_server'
+LANGUAGE C;
 
 CREATE FUNCTION pg_tde_create_wal_key()
 RETURNS boolean
@@ -511,52 +482,31 @@ RETURNS VOID
 AS 'MODULE_PATHNAME'
 LANGUAGE C;
 
-CREATE FUNCTION pg_tde_principal_key_info_internal(is_global BOOLEAN)
+CREATE FUNCTION pg_tde_principal_key_info()
 RETURNS TABLE ( principal_key_name text,
                 key_provider_name text,
                 key_provider_id integer,
                 key_createion_time timestamp with time zone)
 AS 'MODULE_PATHNAME'
 LANGUAGE C;
-
-CREATE FUNCTION pg_tde_principal_key_info()
-RETURNS TABLE ( principal_key_name text,
-                key_provider_name text,
-                key_provider_id integer,
-                key_createion_time timestamp with time zone)
-AS $$
-    SELECT pg_tde_principal_key_info_internal(FALSE);
-$$
-LANGUAGE SQL;
 
 CREATE FUNCTION pg_tde_principal_key_info(PG_TDE_GLOBAL)
 RETURNS TABLE ( principal_key_name text,
                 key_provider_name text,
                 key_provider_id integer,
                 key_createion_time timestamp with time zone)
-AS $$
-    SELECT pg_tde_principal_key_info_internal(TRUE);
-$$
-LANGUAGE SQL;
-
-CREATE FUNCTION pg_tde_delete_key_provider_internal(provider_name VARCHAR, is_global boolean)
-RETURNS VOID
-AS 'MODULE_PATHNAME'
+AS 'MODULE_PATHNAME', 'pg_tde_principal_key_info_global'
 LANGUAGE C;
 
 CREATE FUNCTION pg_tde_delete_key_provider(PG_TDE_GLOBAL, provider_name VARCHAR)
 RETURNS VOID
-AS $$
-    SELECT pg_tde_delete_key_provider_internal(provider_name, true);
-$$
-LANGUAGE SQL;
+AS 'MODULE_PATHNAME', 'pg_tde_delete_key_provider_global'
+LANGUAGE C;
 
 CREATE FUNCTION pg_tde_delete_key_provider(provider_name VARCHAR)
 RETURNS VOID
-AS $$
-    SELECT pg_tde_delete_key_provider_internal(provider_name, false);
-$$
-LANGUAGE SQL;
+AS 'MODULE_PATHNAME'
+LANGUAGE C;
 
 CREATE FUNCTION pg_tde_version() RETURNS TEXT AS 'MODULE_PATHNAME' LANGUAGE C;
 
@@ -645,56 +595,70 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-
-CREATE OR REPLACE FUNCTION pg_tde_grant_key_management_to_role(
+CREATE OR REPLACE FUNCTION pg_tde_grant_global_key_management_to_role(
     target_user_or_role TEXT)
 RETURNS BOOLEAN
 LANGUAGE plpgsql
 AS $$
 BEGIN
-    -- Start the transaction block for performing grants
+    PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_add_key_provider', 'pg_tde_global, varchar, varchar, JSON');
+
     PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_add_key_provider_file', 'pg_tde_global, varchar, json');
     PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_add_key_provider_file', 'pg_tde_global, varchar, text');
-    PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_add_key_provider_file', 'varchar, json');
-    PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_add_key_provider_file', 'varchar, text');
-
-    PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_add_key_provider_internal', 'varchar, varchar, JSON, BOOLEAN');
-    PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_add_key_provider', 'varchar, varchar, JSON');
-
     PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_add_key_provider_vault_v2', 'pg_tde_global, varchar, text, text,text,text');
     PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_add_key_provider_vault_v2', 'pg_tde_global, varchar, JSON, JSON,JSON,JSON');
-    PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_add_key_provider_vault_v2', 'varchar, text, text,text,text');
-    PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_add_key_provider_vault_v2', 'varchar, JSON, JSON,JSON,JSON');
+    PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_add_key_provider_kmip', 'pg_tde_global, varchar, text, int,text,text');
+    PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_add_key_provider_kmip', 'pg_tde_global, varchar, JSON, JSON,JSON,JSON');
+
+    PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_change_key_provider', 'pg_tde_global, varchar, varchar, JSON');
 
     PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_change_key_provider_file', 'pg_tde_global, varchar, json');
     PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_change_key_provider_file', 'pg_tde_global, varchar, text');
-    PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_change_key_provider_file', 'varchar, json');
-    PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_change_key_provider_file', 'varchar, text');
-
-    PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_change_key_provider_internal', 'varchar, varchar, JSON, BOOLEAN');
-    PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_change_key_provider', 'varchar, varchar, JSON');
-
     PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_change_key_provider_vault_v2', 'pg_tde_global, varchar, text, text,text,text');
     PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_change_key_provider_vault_v2', 'pg_tde_global, varchar, JSON, JSON,JSON,JSON');
-    PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_change_key_provider_vault_v2', 'varchar, text, text,text,text');
-    PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_change_key_provider_vault_v2', 'varchar, JSON, JSON,JSON,JSON');
+    PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_change_key_provider_kmip', 'pg_tde_global, varchar, text, int,text,text');
+    PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_change_key_provider_kmip', 'pg_tde_global, varchar, JSON, JSON,JSON,JSON');
 
-    PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_set_principal_key', 'varchar, varchar, BOOLEAN');
+    PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_delete_key_provider', 'pg_tde_global, varchar');
+
     PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_set_principal_key', 'varchar, pg_tde_global, varchar, BOOLEAN');
     PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_set_server_principal_key', 'varchar, pg_tde_global, varchar, BOOLEAN');
-
-    PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_grant_key_management_to_role', 'TEXT');
-    PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_revoke_key_management_from_role', 'TEXT');
-
-    PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_grant_key_viewer_to_role', 'TEXT');
-    PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_revoke_key_viewer_from_role', 'TEXT');
-
-    PERFORM pg_tde_grant_key_viewer_to_role(target_user_or_role);
-
     RETURN TRUE;
-
 EXCEPTION
-    -- If any error occurs, re-raise the error to roll back the transaction
+    WHEN OTHERS THEN
+        RAISE;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION pg_tde_grant_local_key_management_to_role(
+    target_user_or_role TEXT)
+RETURNS BOOLEAN
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_add_key_provider', 'varchar, varchar, JSON');
+
+    PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_add_key_provider_file', 'varchar, json');
+    PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_add_key_provider_file', 'varchar, text');
+    PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_add_key_provider_vault_v2', 'varchar, text, text,text,text');
+    PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_add_key_provider_vault_v2', 'varchar, JSON, JSON,JSON,JSON');
+    PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_add_key_provider_kmip', 'varchar, text, int,text,text');
+    PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_add_key_provider_kmip', 'varchar, JSON, JSON,JSON,JSON');
+
+    PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_change_key_provider', 'varchar, varchar, JSON');
+
+    PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_change_key_provider_file', 'varchar, json');
+    PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_change_key_provider_file', 'varchar, text');    
+    PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_change_key_provider_vault_v2', 'varchar, text, text,text,text');
+    PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_change_key_provider_vault_v2', 'varchar, JSON, JSON,JSON,JSON');
+    PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_change_key_provider_kmip', 'varchar, text, int,text,text');
+    PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_change_key_provider_kmip', 'varchar, JSON, JSON,JSON,JSON');
+
+    PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_delete_key_provider', 'varchar');
+
+    PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_set_principal_key', 'varchar, varchar, BOOLEAN');
+    RETURN TRUE;
+EXCEPTION
     WHEN OTHERS THEN
         RAISE;
 END;
@@ -711,7 +675,6 @@ BEGIN
     PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_list_all_key_providers', 'pg_tde_global, OUT INT, OUT varchar, OUT varchar, OUT JSON');
     PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_is_encrypted', 'VARCHAR');
 
-    PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_principal_key_info_internal', 'BOOLEAN');
     PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_principal_key_info', '');
     PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_principal_key_info', 'pg_tde_global');
     -- If all statements succeed, return TRUE
@@ -724,56 +687,70 @@ EXCEPTION
 END;
 $$;
 
-
-
-CREATE OR REPLACE FUNCTION pg_tde_revoke_key_management_from_role(
+CREATE OR REPLACE FUNCTION pg_tde_revoke_global_key_management_from_role(
     target_user_or_role TEXT)
 RETURNS BOOLEAN
 LANGUAGE plpgsql
 AS $$
 BEGIN
-    -- Start the transaction block for performing grants
+    PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_add_key_provider', 'pg_tde_global, varchar, varchar, JSON');
+
     PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_add_key_provider_file', 'pg_tde_global, varchar, json');
     PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_add_key_provider_file', 'pg_tde_global, varchar, text');
-    PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_add_key_provider_file', 'varchar, json');
-    PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_add_key_provider_file', 'varchar, text');
-
-    PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_add_key_provider_internal', 'varchar, varchar, JSON, BOOLEAN');
-    PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_add_key_provider', 'varchar, varchar, JSON');
-
     PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_add_key_provider_vault_v2', 'pg_tde_global, varchar, text, text,text,text');
     PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_add_key_provider_vault_v2', 'pg_tde_global, varchar, JSON, JSON,JSON,JSON');
-    PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_add_key_provider_vault_v2', 'varchar, text, text,text,text');
-    PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_add_key_provider_vault_v2', 'varchar, JSON, JSON,JSON,JSON');
+    PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_add_key_provider_kmip', 'pg_tde_global, varchar, text, int,text,text');
+    PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_add_key_provider_kmip', 'pg_tde_global, varchar, JSON, JSON,JSON,JSON');
+
+    PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_change_key_provider', 'pg_tde_global, varchar, varchar, JSON');
 
     PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_change_key_provider_file', 'pg_tde_global, varchar, json');
     PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_change_key_provider_file', 'pg_tde_global, varchar, text');
-    PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_change_key_provider_file', 'varchar, json');
-    PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_change_key_provider_file', 'varchar, text');
-
-    PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_change_key_provider_internal', 'varchar, varchar, JSON, BOOLEAN');
-    PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_change_key_provider', 'varchar, varchar, JSON');
-
     PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_change_key_provider_vault_v2', 'pg_tde_global, varchar, text, text,text,text');
     PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_change_key_provider_vault_v2', 'pg_tde_global, varchar, JSON, JSON,JSON,JSON');
-    PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_change_key_provider_vault_v2', 'varchar, text, text,text,text');
-    PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_change_key_provider_vault_v2', 'varchar, JSON, JSON,JSON,JSON');
+    PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_change_key_provider_kmip', 'pg_tde_global, varchar, text, int,text,text');
+    PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_change_key_provider_kmip', 'pg_tde_global, varchar, JSON, JSON,JSON,JSON');
 
-    PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_set_principal_key', 'varchar, varchar, BOOLEAN');
+    PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_delete_key_provider', 'pg_tde_global, varchar');
+
     PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_set_principal_key', 'varchar, pg_tde_global, varchar, BOOLEAN');
     PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_set_server_principal_key', 'varchar, pg_tde_global, varchar, BOOLEAN');
-
-    PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_grant_key_management_to_role', 'TEXT');
-    PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_revoke_key_management_from_role', 'TEXT');
-
-    PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_grant_key_viewer_to_role', 'TEXT');
-    PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_revoke_key_viewer_from_role', 'TEXT');
-
-    -- If all statements succeed, return TRUE
     RETURN TRUE;
-
 EXCEPTION
-    -- If any error occurs, re-raise the error to roll back the transaction
+    WHEN OTHERS THEN
+        RAISE;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION pg_tde_revoke_local_key_management_from_role(
+    target_user_or_role TEXT)
+RETURNS BOOLEAN
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_add_key_provider', 'varchar, varchar, JSON');
+
+    PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_add_key_provider_file', 'varchar, json');
+    PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_add_key_provider_file', 'varchar, text');
+    PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_add_key_provider_vault_v2', 'varchar, text, text,text,text');
+    PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_add_key_provider_vault_v2', 'varchar, JSON, JSON,JSON,JSON');
+    PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_add_key_provider_kmip', 'varchar, text, int,text,text');
+    PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_add_key_provider_kmip', 'varchar, JSON, JSON,JSON,JSON');
+
+    PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_change_key_provider', 'varchar, varchar, JSON');
+
+    PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_change_key_provider_file', 'varchar, json');
+    PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_change_key_provider_file', 'varchar, text');    
+    PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_change_key_provider_vault_v2', 'varchar, text, text,text,text');
+    PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_change_key_provider_vault_v2', 'varchar, JSON, JSON,JSON,JSON');
+    PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_change_key_provider_kmip', 'varchar, text, int,text,text');
+    PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_change_key_provider_kmip', 'varchar, JSON, JSON,JSON,JSON');
+
+    PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_delete_key_provider', 'varchar');
+
+    PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_set_principal_key', 'varchar, varchar, BOOLEAN');
+    RETURN TRUE;
+EXCEPTION
     WHEN OTHERS THEN
         RAISE;
 END;
@@ -787,9 +764,9 @@ AS $$
 BEGIN
     -- Start the transaction block for performing grants
     PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_list_all_key_providers', 'OUT INT, OUT varchar, OUT varchar, OUT JSON');
+    PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_list_all_key_providers', 'pg_tde_global, OUT INT, OUT varchar, OUT varchar, OUT JSON');
     PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_is_encrypted', 'VARCHAR');
 
-    PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_principal_key_info_internal', 'BOOLEAN');
     PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_principal_key_info', '');
     PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_principal_key_info', 'pg_tde_global');
     -- If all statements succeed, return TRUE
@@ -802,6 +779,52 @@ EXCEPTION
 END;
 $$;
 
+CREATE OR REPLACE FUNCTION pg_tde_grant_grant_management_to_role(
+    target_user_or_role TEXT)
+RETURNS BOOLEAN
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_grant_global_key_management_to_role', 'TEXT');
+    PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_grant_local_key_management_to_role', 'TEXT');
+    PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_grant_grant_management_to_role', 'TEXT');
+    PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_grant_key_viewer_to_role', 'TEXT');
+
+    PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_revoke_global_key_management_from_role', 'TEXT');
+    PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_revoke_local_key_management_from_role', 'TEXT');
+    PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_revoke_grant_management_from_role', 'TEXT');
+    PERFORM pg_tde_grant_execute_privilege_on_function(target_user_or_role, 'pg_tde_revoke_key_viewer_from_role', 'TEXT');
+    RETURN TRUE;
+EXCEPTION
+    WHEN OTHERS THEN
+        RAISE;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION pg_tde_revoke_grant_management_from_role(
+    target_user_or_role TEXT)
+RETURNS BOOLEAN
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_grant_global_key_management_to_role', 'TEXT');
+    PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_grant_local_key_management_to_role', 'TEXT');
+    PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_grant_grant_management_to_role', 'TEXT');
+    PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_grant_key_viewer_to_role', 'TEXT');
+
+    PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_revoke_global_key_management_from_role', 'TEXT');
+    PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_revoke_local_key_management_from_role', 'TEXT');
+    PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_revoke_grant_management_from_role', 'TEXT');
+    PERFORM pg_tde_revoke_execute_privilege_on_function(target_user_or_role, 'pg_tde_revoke_key_viewer_from_role', 'TEXT');
+    RETURN TRUE;
+EXCEPTION
+    WHEN OTHERS THEN
+        RAISE;
+END;
+$$;
+
 -- Revoking all the privileges from the public role
-SELECT pg_tde_revoke_key_management_from_role('public');
+SELECT pg_tde_revoke_local_key_management_from_role('public');
+SELECT pg_tde_revoke_global_key_management_from_role('public');
+SELECT pg_tde_revoke_grant_management_from_role('public');
 SELECT pg_tde_revoke_key_viewer_from_role('public');

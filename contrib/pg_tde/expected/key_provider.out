@@ -2,7 +2,6 @@ CREATE EXTENSION IF NOT EXISTS pg_tde;
 SELECT  * FROM pg_tde_principal_key_info();
 ERROR:  Principal key does not exists for the database
 HINT:  Use set_principal_key interface to set the principal key
-CONTEXT:  SQL function "pg_tde_principal_key_info" statement 1
 SELECT pg_tde_add_key_provider_file('incorrect-file-provider',  json_object('foo' VALUE '/tmp/pg_tde_test_keyring.per'));
 ERROR:  parse json keyring config: unexpected field foo
 SELECT * FROM pg_tde_list_all_key_providers();

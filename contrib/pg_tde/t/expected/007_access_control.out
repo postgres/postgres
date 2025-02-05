@@ -7,7 +7,10 @@ psql:<stdin>:1: ERROR:  permission denied for function pg_tde_add_key_provider_f
 -- pg_tde_set_principal_key should also fail
 psql:<stdin>:1: ERROR:  permission denied for function pg_tde_set_principal_key
 -- grant key management access to test_access
-select pg_tde_grant_key_management_to_role('test_access');
+select pg_tde_grant_local_key_management_to_role('test_access');
+t
+-- grant key management access to test_access
+select pg_tde_grant_key_viewer_to_role('test_access');
 t
 3
 SELECT pg_tde_add_key_provider_file('file-vault','/tmp/pg_tde_test_keyring.per');

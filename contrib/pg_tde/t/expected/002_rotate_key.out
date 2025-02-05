@@ -28,7 +28,6 @@ SELECT key_provider_id, key_provider_name, principal_key_name FROM pg_tde_princi
 SELECT key_provider_id, key_provider_name, principal_key_name FROM pg_tde_principal_key_info('PG_TDE_GLOBAL');
 psql:<stdin>:1: ERROR:  Principal key does not exists for the database
 HINT:  Use set_principal_key interface to set the principal key
-CONTEXT:  SQL function "pg_tde_principal_key_info" statement 1
 SELECT * FROM test_enc ORDER BY id ASC;
 1|5
 2|6
@@ -43,7 +42,6 @@ SELECT key_provider_id, key_provider_name, principal_key_name FROM pg_tde_princi
 SELECT key_provider_id, key_provider_name, principal_key_name FROM pg_tde_principal_key_info('PG_TDE_GLOBAL');
 psql:<stdin>:1: ERROR:  Principal key does not exists for the database
 HINT:  Use set_principal_key interface to set the principal key
-CONTEXT:  SQL function "pg_tde_principal_key_info" statement 1
 SELECT * FROM test_enc ORDER BY id ASC;
 1|5
 2|6
@@ -58,7 +56,6 @@ SELECT key_provider_id, key_provider_name, principal_key_name FROM pg_tde_princi
 SELECT key_provider_id, key_provider_name, principal_key_name FROM pg_tde_principal_key_info('PG_TDE_GLOBAL');
 psql:<stdin>:1: ERROR:  Principal key does not exists for the database
 HINT:  Use set_principal_key interface to set the principal key
-CONTEXT:  SQL function "pg_tde_principal_key_info" statement 1
 SELECT * FROM test_enc ORDER BY id ASC;
 1|5
 2|6
@@ -73,7 +70,6 @@ SELECT key_provider_id, key_provider_name, principal_key_name FROM pg_tde_princi
 SELECT key_provider_id, key_provider_name, principal_key_name FROM pg_tde_principal_key_info('PG_TDE_GLOBAL');
 psql:<stdin>:1: ERROR:  Principal key does not exists for the database
 HINT:  Use set_principal_key interface to set the principal key
-CONTEXT:  SQL function "pg_tde_principal_key_info" statement 1
 SELECT * FROM test_enc ORDER BY id ASC;
 1|5
 2|6
@@ -85,7 +81,6 @@ SELECT key_provider_id, key_provider_name, principal_key_name FROM pg_tde_princi
 SELECT key_provider_id, key_provider_name, principal_key_name FROM pg_tde_principal_key_info('PG_TDE_GLOBAL');
 psql:<stdin>:1: ERROR:  Principal key does not exists for the database
 HINT:  Use set_principal_key interface to set the principal key
-CONTEXT:  SQL function "pg_tde_principal_key_info" statement 1
 SELECT pg_tde_set_principal_key('rotated-principal-key2','file-2');
 t
 SELECT key_provider_id, key_provider_name, principal_key_name FROM pg_tde_principal_key_info();
@@ -93,7 +88,6 @@ SELECT key_provider_id, key_provider_name, principal_key_name FROM pg_tde_princi
 SELECT key_provider_id, key_provider_name, principal_key_name FROM pg_tde_principal_key_info('PG_TDE_GLOBAL');
 psql:<stdin>:1: ERROR:  Principal key does not exists for the database
 HINT:  Use set_principal_key interface to set the principal key
-CONTEXT:  SQL function "pg_tde_principal_key_info" statement 1
 DROP TABLE test_enc;
 ALTER SYSTEM RESET pg_tde.inherit_global_providers;
 DROP EXTENSION pg_tde CASCADE;
