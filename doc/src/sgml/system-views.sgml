@@ -2566,7 +2566,8 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
       </para>
       <para>
         The time when the slot became inactive. <literal>NULL</literal> if the
-        slot is currently being streamed.
+        slot is currently being streamed. If the slot becomes invalid,
+        this value will never be updated.
         Note that for slots on the standby that are being synced from a
         primary server (whose <structfield>synced</structfield> field is
         <literal>true</literal>), the <structfield>inactive_since</structfield>

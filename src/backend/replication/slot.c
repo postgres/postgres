@@ -644,9 +644,7 @@ retry:
 	 * Reset the time since the slot has become inactive as the slot is active
 	 * now.
 	 */
-	SpinLockAcquire(&s->mutex);
-	s->inactive_since = 0;
-	SpinLockRelease(&s->mutex);
+	ReplicationSlotSetInactiveSince(s, 0, true);
 
 	if (am_walsender)
 	{
@@ -720,16 +718,12 @@ ReplicationSlotRelease(void)
 		 */
 		SpinLockAcquire(&slot->mutex);
 		slot->active_pid = 0;
-		slot->inactive_since = now;
+		ReplicationSlotSetInactiveSince(slot, now, false);
 		SpinLockRelease(&slot->mutex);
 		ConditionVariableBroadcast(&slot->active_cv);
 	}
 	else
-	{
-		SpinLockAcquire(&slot->mutex);
-		slot->inactive_since = now;
-		SpinLockRelease(&slot->mutex);
-	}
+		ReplicationSlotSetInactiveSince(slot, now, true);
 
 	MyReplicationSlot = NULL;
 
@@ -2218,6 +2212,7 @@ RestoreSlotFromDisk(const char *name)
 	bool		restored = false;
 	int			readBytes;
 	pg_crc32c	checksum;
+	TimestampTz now = 0;
 
 	/* no need to lock here, no concurrent access allowed yet */
 
@@ -2408,9 +2403,13 @@ RestoreSlotFromDisk(const char *name)
 		/*
 		 * Set the time since the slot has become inactive after loading the
 		 * slot from the disk into memory. Whoever acquires the slot i.e.
-		 * makes the slot active will reset it.
+		 * makes the slot active will reset it. Use the same inactive_since
+		 * time for all the slots.
 		 */
-		slot->inactive_since = GetCurrentTimestamp();
+		if (now == 0)
+			now = GetCurrentTimestamp();
+
+		ReplicationSlotSetInactiveSince(slot, now, false);
 
 		restored = true;
 		break;

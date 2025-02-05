@@ -1541,9 +1541,7 @@ update_synced_slots_inactive_since(void)
 			if (now == 0)
 				now = GetCurrentTimestamp();
 
-			SpinLockAcquire(&s->mutex);
-			s->inactive_since = now;
-			SpinLockRelease(&s->mutex);
+			ReplicationSlotSetInactiveSince(s, now, true);
 		}
 	}
 
