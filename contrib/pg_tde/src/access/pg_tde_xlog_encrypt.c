@@ -31,13 +31,14 @@
 #include "pg_tde_fe.h"
 #endif
 
+#include "pg_tde_guc.h"
+
 static XLogPageHeaderData DecryptCurrentPageHrd;
 
 static void SetXLogPageIVPrefix(TimeLineID tli, XLogRecPtr lsn, char *iv_prefix);
 
 #ifndef FRONTEND
 /* GUC */
-static bool EncryptXLog = false;
 
 static XLogPageHeaderData EncryptCurrentPageHrd;
 
@@ -79,22 +80,6 @@ TDEXlogCheckSane(void)
 					(errmsg("WAL encryption can only be enabled with a properly configured key. Disable pg_tde.wal_encrypt and create one using pg_tde_crete_wal_key() before enabling it.")));
 		}
 	}
-}
-
-void
-XLogInitGUC(void)
-{
-	DefineCustomBoolVariable("pg_tde.wal_encrypt",	/* name */
-							 "Enable/Disable encryption of WAL.",	/* short_desc */
-							 NULL,	/* long_desc */
-							 &EncryptXLog,	/* value address */
-							 false, /* boot value */
-							 PGC_POSTMASTER,	/* context */
-							 0, /* flags */
-							 NULL,	/* check_hook */
-							 NULL,	/* assign_hook */
-							 NULL	/* show_hook */
-		);
 }
 
 static int

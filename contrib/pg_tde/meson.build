@@ -41,8 +41,9 @@ pg_tde_sources = files(
         'src/common/pg_tde_shmem.c',
         'src/common/pg_tde_utils.c',
         'src/pg_tde_defs.c',
-        'src/pg_tde.c',
         'src/pg_tde_event_capture.c',
+        'src/pg_tde_guc.c',
+        'src/pg_tde.c',
 )
 
 incdir = include_directories(src_version / 'include', 'src/include', '.', 'src/libkmip/libkmip/include/')

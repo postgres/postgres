@@ -59,6 +59,7 @@ src/common/pg_tde_utils.o \
 src/smgr/pg_tde_smgr.o \
 src/pg_tde_defs.o \
 src/pg_tde_event_capture.o \
+src/pg_tde_guc.o \
 src/pg_tde.o \
 src/libkmip/libkmip/src/kmip.o \
 src/libkmip/libkmip/src/kmip_bio.o \

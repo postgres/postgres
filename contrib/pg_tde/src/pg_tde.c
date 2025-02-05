@@ -39,6 +39,7 @@
 #include "catalog/tde_global_space.h"
 #include "utils/percona.h"
 #endif
+#include "pg_tde_guc.h"
 
 #include <sys/stat.h>
 
@@ -113,13 +114,11 @@ _PG_init(void)
 	check_percona_api_version();
 #endif
 
+	TdeGucInit();
+
 	InitializePrincipalKeyInfo();
 	InitializeKeyProviderInfo();
-#ifdef PERCONA_EXT
-	XLogInitGUC();
-#endif
 
-	PrincipalKeyGucInit();
 	prev_shmem_request_hook = shmem_request_hook;
 	shmem_request_hook = tde_shmem_request;
 	prev_shmem_startup_hook = shmem_startup_hook;

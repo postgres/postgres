@@ -39,5 +39,34 @@ INSERT INTO country_table (country_name, continent)
 SELECT * FROM country_table;
 SELECT pg_tde_is_encrypted('country_table');
 
+CREATE TABLE country_table2 (
+     country_id        serial primary key,
+     country_name    text unique not null,
+     continent        text not null
+);
+
+SET pg_tde.enforce_encryption = ON;
+
+CREATE TABLE country_table3 (
+     country_id        serial primary key,
+     country_name    text unique not null,
+     continent        text not null
+) USING heap;
+ 
+ALTER TABLE country_table SET access method  heap;
+
+ALTER TABLE country_table2 SET access method  :tde_am;
+
+CREATE TABLE country_table3 (
+     country_id        serial primary key,
+     country_name    text unique not null,
+     continent        text not null
+) using :tde_am;
+
 DROP TABLE country_table;
+DROP TABLE country_table2;
+DROP TABLE country_table3;
+
+SET pg_tde.enforce_encryption = OFF;
+
 DROP EXTENSION pg_tde;

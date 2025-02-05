@@ -21,6 +21,7 @@
 #include "commands/event_trigger.h"
 #include "common/pg_tde_utils.h"
 #include "pg_tde_event_capture.h"
+#include "pg_tde_guc.h"
 #include "catalog/tde_principal_key.h"
 #include "miscadmin.h"
 #include "access/tableam.h"
@@ -38,6 +39,40 @@ TdeCreateEvent *
 GetCurrentTdeCreateEvent(void)
 {
 	return &tdeCurrentCreateEvent;
+}
+
+static void
+checkEncryptionClause(const char *accessMethod)
+{
+	TDEPrincipalKey *principal_key;
+
+	if (accessMethod && strcmp(accessMethod, "tde_heap") == 0)
+	{
+		tdeCurrentCreateEvent.encryptMode = true;
+	}
+	else if ((accessMethod == NULL || accessMethod[0] == 0) && strcmp(default_table_access_method, "tde_heap") == 0)
+	{
+		tdeCurrentCreateEvent.encryptMode = true;
+	}
+
+	if (tdeCurrentCreateEvent.encryptMode)
+	{
+		LWLockAcquire(tde_lwlock_enc_keys(), LW_SHARED);
+		principal_key = GetPrincipalKey(MyDatabaseId, LW_SHARED);
+		LWLockRelease(tde_lwlock_enc_keys());
+		if (principal_key == NULL)
+		{
+			ereport(ERROR,
+					(errmsg("failed to retrieve principal key. Create one using pg_tde_set_principal_key before using encrypted tables.")));
+
+		}
+	}
+
+	if (EnforceEncryption && !tdeCurrentCreateEvent.encryptMode)
+	{
+		ereport(ERROR,
+				(errmsg("pg_tde.enforce_encryption is ON, only the tde_heap access method is allowed.")));
+	}
 }
 
 /*
@@ -99,37 +134,25 @@ pg_tde_ddl_command_start_capture(PG_FUNCTION_ARGS)
 	else if (IsA(parsetree, CreateStmt))
 	{
 		CreateStmt *stmt = (CreateStmt *) parsetree;
-		TDEPrincipalKey *principal_key;
+		const char *accessMethod = stmt->accessMethod;
 
 		tdeCurrentCreateEvent.eventType = TDE_TABLE_CREATE_EVENT;
 		tdeCurrentCreateEvent.relation = stmt->relation;
 
-		if (stmt->accessMethod && strcmp(stmt->accessMethod, "tde_heap") == 0)
-		{
-			tdeCurrentCreateEvent.encryptMode = true;
-		}
-		else if ((stmt->accessMethod == NULL || stmt->accessMethod[0] == 0) && strcmp(default_table_access_method, "tde_heap") == 0)
-		{
-			tdeCurrentCreateEvent.encryptMode = true;
-		}
+		checkEncryptionClause(accessMethod);
+	}
+	else if (IsA(parsetree, CreateTableAsStmt))
+	{
+		CreateTableAsStmt *stmt = (CreateTableAsStmt *) parsetree;
+		const char *accessMethod = stmt->into->accessMethod;
 
-		if (tdeCurrentCreateEvent.encryptMode)
-		{
-			LWLockAcquire(tde_lwlock_enc_keys(), LW_SHARED);
-			principal_key = GetPrincipalKey(MyDatabaseId, LW_SHARED);
-			LWLockRelease(tde_lwlock_enc_keys());
-			if (principal_key == NULL)
-			{
-				ereport(ERROR,
-						(errmsg("failed to retrieve principal key. Create one using pg_tde_set_principal_key before using encrypted tables.")));
+		tdeCurrentCreateEvent.eventType = TDE_TABLE_CREATE_EVENT;
+		tdeCurrentCreateEvent.relation = stmt->into->rel;
 
-			}
-		}
-
+		checkEncryptionClause(accessMethod);
 	}
 	else if (IsA(parsetree, AlterTableStmt))
 	{
-		LOCKMODE	lockmode = AccessShareLock; /* TODO. Verify lock mode? */
 		AlterTableStmt *stmt = (AlterTableStmt *) parsetree;
 		ListCell   *lcmd;
 
@@ -137,33 +160,13 @@ pg_tde_ddl_command_start_capture(PG_FUNCTION_ARGS)
 		{
 			AlterTableCmd *cmd = (AlterTableCmd *) lfirst(lcmd);
 
-			if (cmd->subtype == AT_SetAccessMethod &&
-				((cmd->name != NULL && strcmp(cmd->name, "tde_heap") == 0) ||
-				 (cmd->name == NULL && strcmp(default_table_access_method, "tde_heap") == 0))
-				)
+			if (cmd->subtype == AT_SetAccessMethod)
 			{
-				tdeCurrentCreateEvent.encryptMode = true;
+				const char *accessMethod = cmd->name;
+
 				tdeCurrentCreateEvent.eventType = TDE_TABLE_CREATE_EVENT;
 				tdeCurrentCreateEvent.relation = stmt->relation;
-			}
-		}
-
-		if (tdeCurrentCreateEvent.encryptMode)
-		{
-			TDEPrincipalKey *principal_key;
-			Oid			relationId = RangeVarGetRelid(stmt->relation, NoLock, true);
-			Relation	rel = table_open(relationId, lockmode);
-
-			table_close(rel, lockmode);
-
-			LWLockAcquire(tde_lwlock_enc_keys(), LW_SHARED);
-			principal_key = GetPrincipalKey(MyDatabaseId, LW_SHARED);
-			LWLockRelease(tde_lwlock_enc_keys());
-			if (principal_key == NULL)
-			{
-				ereport(ERROR,
-						(errmsg("failed to retrieve principal key. Create one using pg_tde_set_principal_key before using encrypted tables.")));
-
+				checkEncryptionClause(accessMethod);
 			}
 		}
 	}

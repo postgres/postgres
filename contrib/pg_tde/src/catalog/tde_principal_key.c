@@ -40,10 +40,9 @@
 #else
 #include "pg_tde_fe.h"
 #endif
+#include "pg_tde_guc.h"
 
 #include <sys/time.h>
-
-bool		AllowInheritGlobalProviders = true;
 
 #ifndef FRONTEND
 
@@ -756,22 +755,6 @@ GetPrincipalKey(Oid dbOid, LWLockMode lockMode)
 }
 
 #ifndef FRONTEND
-
-void
-PrincipalKeyGucInit()
-{
-	DefineCustomBoolVariable("pg_tde.inherit_global_providers", /* name */
-							 "Allow using global key providers for databases.", /* short_desc */
-							 NULL,	/* long_desc */
-							 &AllowInheritGlobalProviders,	/* value address */
-							 true,	/* boot value */
-							 PGC_SUSET, /* context */
-							 0, /* flags */
-							 NULL,	/* check_hook */
-							 NULL,	/* assign_hook */
-							 NULL	/* show_hook */
-		);
-}
 
 static bool
 pg_tde_is_provider_used(Oid databaseOid, Oid providerId)
