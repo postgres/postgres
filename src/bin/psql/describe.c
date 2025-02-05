@@ -4011,14 +4011,18 @@ listTables(const char *tabtypes, const char *pattern, bool verbose, bool showSys
 	bool		showSeq = strchr(tabtypes, 's') != NULL;
 	bool		showForeign = strchr(tabtypes, 'E') != NULL;
 
+	int			ntypes;
 	PQExpBufferData buf;
 	PGresult   *res;
 	printQueryOpt myopt = pset.popt;
 	int			cols_so_far;
 	bool		translate_columns[] = {false, false, true, false, false, false, false, false, false};
 
-	/* If tabtypes is empty, we default to \dtvmsE (but see also command.c) */
-	if (!(showTables || showIndexes || showViews || showMatViews || showSeq || showForeign))
+	/* Count the number of explicitly-requested relation types */
+	ntypes = showTables + showIndexes + showViews + showMatViews +
+		showSeq + showForeign;
+	/* If none, we default to \dtvmsE (but see also command.c) */
+	if (ntypes == 0)
 		showTables = showViews = showMatViews = showSeq = showForeign = true;
 
 	initPQExpBuffer(&buf);
@@ -4169,14 +4173,63 @@ listTables(const char *tabtypes, const char *pattern, bool verbose, bool showSys
 	if (PQntuples(res) == 0 && !pset.quiet)
 	{
 		if (pattern)
-			pg_log_error("Did not find any relation named \"%s\".",
-						 pattern);
+		{
+			if (ntypes != 1)
+				pg_log_error("Did not find any relations named \"%s\".",
+							 pattern);
+			else if (showTables)
+				pg_log_error("Did not find any tables named \"%s\".",
+							 pattern);
+			else if (showIndexes)
+				pg_log_error("Did not find any indexes named \"%s\".",
+							 pattern);
+			else if (showViews)
+				pg_log_error("Did not find any views named \"%s\".",
+							 pattern);
+			else if (showMatViews)
+				pg_log_error("Did not find any materialized views named \"%s\".",
+							 pattern);
+			else if (showSeq)
+				pg_log_error("Did not find any sequences named \"%s\".",
+							 pattern);
+			else if (showForeign)
+				pg_log_error("Did not find any foreign tables named \"%s\".",
+							 pattern);
+			else				/* should not get here */
+				pg_log_error_internal("Did not find any ??? named \"%s\".",
+									  pattern);
+		}
 		else
-			pg_log_error("Did not find any relations.");
+		{
+			if (ntypes != 1)
+				pg_log_error("Did not find any relations.");
+			else if (showTables)
+				pg_log_error("Did not find any tables.");
+			else if (showIndexes)
+				pg_log_error("Did not find any indexes.");
+			else if (showViews)
+				pg_log_error("Did not find any views.");
+			else if (showMatViews)
+				pg_log_error("Did not find any materialized views.");
+			else if (showSeq)
+				pg_log_error("Did not find any sequences.");
+			else if (showForeign)
+				pg_log_error("Did not find any foreign tables.");
+			else				/* should not get here */
+				pg_log_error_internal("Did not find any ??? relations.");
+		}
 	}
 	else
 	{
-		myopt.title = _("List of relations");
+		myopt.title =
+			(ntypes != 1) ? _("List of relations") :
+			(showTables) ? _("List of tables") :
+			(showIndexes) ? _("List of indexes") :
+			(showViews) ? _("List of views") :
+			(showMatViews) ? _("List of materialized views") :
+			(showSeq) ? _("List of sequences") :
+			(showForeign) ? _("List of foreign tables") :
+			"List of ???";		/* should not get here */
 		myopt.translate_header = true;
 		myopt.translate_columns = translate_columns;
 		myopt.n_translate_columns = lengthof(translate_columns);

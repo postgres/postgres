@@ -153,4 +153,11 @@ void		pg_log_generic_v(enum pg_log_level level, enum pg_log_part part,
 		exit(1); \
 	} while(0)
 
+/*
+ * Use these variants for "can't happen" cases, if it seems translating their
+ * messages would be a waste of effort.
+ */
+#define pg_log_error_internal(...) pg_log_error(__VA_ARGS__)
+#define pg_fatal_internal(...) pg_fatal(__VA_ARGS__)
+
 #endif							/* COMMON_LOGGING_H */

@@ -3027,7 +3027,7 @@ Access method: heap
 (4 rows)
 
 \dt+
-                                                  List of relations
+                                                    List of tables
      Schema      |     Name      | Type  |        Owner         | Persistence | Access method |  Size   | Description 
 -----------------+---------------+-------+----------------------+-------------+---------------+---------+-------------
  tableam_display | tbl_heap      | table | regress_display_role | permanent   | heap          | 0 bytes | 
@@ -3035,7 +3035,7 @@ Access method: heap
 (2 rows)
 
 \dm+
-                                                           List of relations
+                                                      List of materialized views
      Schema      |        Name        |       Type        |        Owner         | Persistence | Access method |  Size   | Description 
 -----------------+--------------------+-------------------+----------------------+-------------+---------------+---------+-------------
  tableam_display | mat_view_heap_psql | materialized view | regress_display_role | permanent   | heap_psql     | 0 bytes | 
@@ -3043,7 +3043,7 @@ Access method: heap
 
 -- But not for views and sequences.
 \dv+
-                                          List of relations
+                                            List of views
      Schema      |      Name      | Type |        Owner         | Persistence |  Size   | Description 
 -----------------+----------------+------+----------------------+-------------+---------+-------------
  tableam_display | view_heap_psql | view | regress_display_role | permanent   | 0 bytes | 
@@ -6244,7 +6244,7 @@ List of access methods
 (0 rows)
 
 \dt "no.such.table.relation"
-      List of relations
+        List of tables
  Schema | Name | Type | Owner 
 --------+------+------+-------
 (0 rows)
@@ -6316,31 +6316,31 @@ List of access methods
 (0 rows)
 
 \di "no.such.index.relation"
-          List of relations
+           List of indexes
  Schema | Name | Type | Owner | Table 
 --------+------+------+-------+-------
 (0 rows)
 
 \dm "no.such.materialized.view"
-      List of relations
+  List of materialized views
  Schema | Name | Type | Owner 
 --------+------+------+-------
 (0 rows)
 
 \ds "no.such.relation"
-      List of relations
+      List of sequences
  Schema | Name | Type | Owner 
 --------+------+------+-------
 (0 rows)
 
 \dt "no.such.relation"
-      List of relations
+        List of tables
  Schema | Name | Type | Owner 
 --------+------+------+-------
 (0 rows)
 
 \dv "no.such.relation"
-      List of relations
+        List of views
  Schema | Name | Type | Owner 
 --------+------+------+-------
 (0 rows)
@@ -6474,7 +6474,7 @@ List of schemas
 \dA "no.such.schema"."no.such.access.method"
 improper qualified name (too many dotted names): "no.such.schema"."no.such.access.method"
 \dt "no.such.schema"."no.such.table.relation"
-      List of relations
+        List of tables
  Schema | Name | Type | Owner 
 --------+------+------+-------
 (0 rows)
@@ -6526,31 +6526,31 @@ improper qualified name (too many dotted names): "no.such.schema"."no.such.table
 (0 rows)
 
 \di "no.such.schema"."no.such.index.relation"
-          List of relations
+           List of indexes
  Schema | Name | Type | Owner | Table 
 --------+------+------+-------+-------
 (0 rows)
 
 \dm "no.such.schema"."no.such.materialized.view"
-      List of relations
+  List of materialized views
  Schema | Name | Type | Owner 
 --------+------+------+-------
 (0 rows)
 
 \ds "no.such.schema"."no.such.relation"
-      List of relations
+      List of sequences
  Schema | Name | Type | Owner 
 --------+------+------+-------
 (0 rows)
 
 \dt "no.such.schema"."no.such.relation"
-      List of relations
+        List of tables
  Schema | Name | Type | Owner 
 --------+------+------+-------
 (0 rows)
 
 \dv "no.such.schema"."no.such.relation"
-      List of relations
+        List of views
  Schema | Name | Type | Owner 
 --------+------+------+-------
 (0 rows)
@@ -6641,7 +6641,7 @@ improper qualified name (too many dotted names): "no.such.schema"."no.such.insta
 improper qualified name (too many dotted names): "no.such.schema"."no.such.event.trigger"
 -- again, but with current database and dotted schema qualifications.
 \dt regression."no.such.schema"."no.such.table.relation"
-      List of relations
+        List of tables
  Schema | Name | Type | Owner 
 --------+------+------+-------
 (0 rows)
@@ -6677,31 +6677,31 @@ improper qualified name (too many dotted names): "no.such.schema"."no.such.event
 (0 rows)
 
 \di regression."no.such.schema"."no.such.index.relation"
-          List of relations
+           List of indexes
  Schema | Name | Type | Owner | Table 
 --------+------+------+-------+-------
 (0 rows)
 
 \dm regression."no.such.schema"."no.such.materialized.view"
-      List of relations
+  List of materialized views
  Schema | Name | Type | Owner 
 --------+------+------+-------
 (0 rows)
 
 \ds regression."no.such.schema"."no.such.relation"
-      List of relations
+      List of sequences
  Schema | Name | Type | Owner 
 --------+------+------+-------
 (0 rows)
 
 \dt regression."no.such.schema"."no.such.relation"
-      List of relations
+        List of tables
  Schema | Name | Type | Owner 
 --------+------+------+-------
 (0 rows)
 
 \dv regression."no.such.schema"."no.such.relation"
-      List of relations
+        List of views
  Schema | Name | Type | Owner 
 --------+------+------+-------
 (0 rows)
