@@ -564,5 +564,23 @@ ssimkovi@ag.or.at
     </confgroup>
    </biblioentry>
 
+   <biblioentry id="ston92">
+   <biblioset relation="article">
+    <title><ulink url="https://dsf.berkeley.edu/papers/S2K-91-05.pdf">
+    An overview of the Sequoia 2000 project
+    </ulink></title>
+    <authorgroup>
+     <author>
+      <firstname>M.</firstname>
+      <surname>Stonebraker</surname>
+     </author>
+    </authorgroup>
+   </biblioset>
+   <biblioset relation="journal">
+    <title>Digest of Papers COMPCON Spring 1992</title>
+    <date>1992</date>
+    <pagenums>383&ndash;388</pagenums>
+   </biblioset>
+   </biblioentry>
   </bibliodiv>
  </bibliography>

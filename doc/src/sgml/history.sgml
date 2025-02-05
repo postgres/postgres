@@ -75,9 +75,8 @@
    url="https://www.ibm.com/">IBM</ulink>) picked up the code and
    commercialized it.  In late 1992,
    <productname>POSTGRES</productname> became the primary data manager
-   for the
-   <ulink url="http://meteora.ucsd.edu/s2k/s2k_home.html">
-   Sequoia 2000 scientific computing project</ulink>.
+   for the Sequoia 2000 scientific computing project described in
+   <xref linkend="ston92"/>.
   </para>
 
   <para>

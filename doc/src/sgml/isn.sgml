@@ -398,9 +398,9 @@ SELECT isbn13(id) FROM test;
    <itemizedlist>
     <listitem><para><ulink url="https://www.gs1.org/standards/id-keys"></ulink></para></listitem>
     <listitem><para><ulink url="https://en.wikipedia.org/wiki/List_of_ISBN_registration_groups"></ulink></para></listitem>
-    <listitem><para><ulink url="https://www.isbn-international.org/content/isbn-users-manual"></ulink></para></listitem>
+    <listitem><para><ulink url="https://www.isbn-international.org/content/isbn-users-manual/29"></ulink></para></listitem>
     <listitem><para><ulink url="https://en.wikipedia.org/wiki/International_Standard_Music_Number"></ulink></para></listitem>
-    <listitem><para><ulink url="https://www.ismn-international.org/ranges.html"></ulink></para></listitem>
+    <listitem><para><ulink url="https://www.ismn-international.org/ranges/tools"></ulink></para></listitem>
    </itemizedlist>
 
    Care was taken during the creation of the algorithms and they
