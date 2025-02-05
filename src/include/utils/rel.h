@@ -309,6 +309,7 @@ typedef struct AutoVacOpts
 {
 	bool		enabled;
 	int			vacuum_threshold;
+	int			vacuum_max_threshold;
 	int			vacuum_ins_threshold;
 	int			analyze_threshold;
 	int			vacuum_cost_limit;

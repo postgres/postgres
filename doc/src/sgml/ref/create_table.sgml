@@ -1712,6 +1712,21 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     </listitem>
    </varlistentry>
 
+   <varlistentry id="reloption-autovacuum-vacuum-max-threshold" xreflabel="autovacuum_vacuum_max_threshold">
+    <term><literal>autovacuum_vacuum_max_threshold</literal>, <literal>toast.autovacuum_vacuum_max_threshold</literal> (<type>integer</type>)
+    <indexterm>
+     <primary><varname>autovacuum_vacuum_max_threshold</varname></primary>
+     <secondary>storage parameter</secondary>
+    </indexterm>
+    </term>
+   <listitem>
+    <para>
+     Per-table value for <xref linkend="guc-autovacuum-vacuum-max-threshold"/>
+     parameter.
+    </para>
+   </listitem>
+  </varlistentry>
+
    <varlistentry id="reloption-autovacuum-vacuum-scale-factor" xreflabel="autovacuum_vacuum_scale_factor">
     <term><literal>autovacuum_vacuum_scale_factor</literal>, <literal>toast.autovacuum_vacuum_scale_factor</literal> (<type>floating point</type>)
     <indexterm>

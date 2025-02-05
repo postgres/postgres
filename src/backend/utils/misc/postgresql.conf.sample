@@ -670,6 +670,9 @@ autovacuum_worker_slots = 16	# autovacuum worker slots to allocate
 #autovacuum_vacuum_insert_scale_factor = 0.2	# fraction of inserts over table
 						# size before insert vacuum
 #autovacuum_analyze_scale_factor = 0.1	# fraction of table size before analyze
+#autovacuum_vacuum_max_threshold = 100000000    # max number of row updates
+						# before vacuum; -1 disables max
+						# threshold
 #autovacuum_freeze_max_age = 200000000	# maximum XID age before forced vacuum
 					# (change requires restart)
 #autovacuum_multixact_freeze_max_age = 400000000	# maximum multixact age

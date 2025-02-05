@@ -895,9 +895,11 @@ HINT:  Execute a database-wide VACUUM in that database.
     <command>VACUUM</command> exceeds the <quote>vacuum threshold</quote>, the
     table is vacuumed.  The vacuum threshold is defined as:
 <programlisting>
-vacuum threshold = vacuum base threshold + vacuum scale factor * number of tuples
+vacuum threshold = Minimum(vacuum max threshold, vacuum base threshold + vacuum scale factor * number of tuples)
 </programlisting>
-    where the vacuum base threshold is
+    where the vacuum max threshold is
+    <xref linkend="guc-autovacuum-vacuum-max-threshold"/>,
+    the vacuum base threshold is
     <xref linkend="guc-autovacuum-vacuum-threshold"/>,
     the vacuum scale factor is
     <xref linkend="guc-autovacuum-vacuum-scale-factor"/>,

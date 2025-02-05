@@ -8685,6 +8685,30 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
        </listitem>
       </varlistentry>
 
+      <varlistentry id="guc-autovacuum-vacuum-max-threshold" xreflabel="autovacuum_vacuum_max_threshold">
+       <term><varname>autovacuum_vacuum_max_threshold</varname> (<type>integer</type>)
+       <indexterm>
+        <primary><varname>autovacuum_vacuum_max_threshold</varname></primary>
+        <secondary>configuration parameter</secondary>
+       </indexterm>
+       </term>
+       <listitem>
+        <para>
+         Specifies the maximum number of updated or deleted tuples needed to
+         trigger a <command>VACUUM</command> in any one table, i.e., a limit on
+         the value calculated with
+         <varname>autovacuum_vacuum_threshold</varname> and
+         <varname>autovacuum_vacuum_scale_factor</varname>.  The default is
+         100,000,000 tuples.  If -1 is specified, autovacuum will not enforce a
+         maximum number of updated or deleted tuples that will trigger a
+         <command>VACUUM</command> operation.  This parameter can only be set
+         in the <filename>postgresql.conf</filename> file or on the server
+         command line; but the setting can be overridden for individual tables
+         by changing storage parameters.
+        </para>
+       </listitem>
+      </varlistentry>
+
       <varlistentry id="guc-autovacuum-freeze-max-age" xreflabel="autovacuum_freeze_max_age">
        <term><varname>autovacuum_freeze_max_age</varname> (<type>integer</type>)
        <indexterm>

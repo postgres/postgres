@@ -33,6 +33,7 @@ extern PGDLLIMPORT int autovacuum_max_workers;
 extern PGDLLIMPORT int autovacuum_work_mem;
 extern PGDLLIMPORT int autovacuum_naptime;
 extern PGDLLIMPORT int autovacuum_vac_thresh;
+extern PGDLLIMPORT int autovacuum_vac_max_thresh;
 extern PGDLLIMPORT double autovacuum_vac_scale;
 extern PGDLLIMPORT int autovacuum_vac_ins_thresh;
 extern PGDLLIMPORT double autovacuum_vac_ins_scale;

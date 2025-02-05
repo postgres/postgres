@@ -233,6 +233,15 @@ static relopt_int intRelOpts[] =
 	},
 	{
 		{
+			"autovacuum_vacuum_max_threshold",
+			"Maximum number of tuple updates or deletes prior to vacuum",
+			RELOPT_KIND_HEAP | RELOPT_KIND_TOAST,
+			ShareUpdateExclusiveLock
+		},
+		-2, -1, INT_MAX
+	},
+	{
+		{
 			"autovacuum_vacuum_insert_threshold",
 			"Minimum number of tuple inserts prior to vacuum, or -1 to disable insert vacuums",
 			RELOPT_KIND_HEAP | RELOPT_KIND_TOAST,
@@ -1843,6 +1852,8 @@ default_reloptions(Datum reloptions, bool validate, relopt_kind kind)
 		offsetof(StdRdOptions, autovacuum) + offsetof(AutoVacOpts, enabled)},
 		{"autovacuum_vacuum_threshold", RELOPT_TYPE_INT,
 		offsetof(StdRdOptions, autovacuum) + offsetof(AutoVacOpts, vacuum_threshold)},
+		{"autovacuum_vacuum_max_threshold", RELOPT_TYPE_INT,
+		offsetof(StdRdOptions, autovacuum) + offsetof(AutoVacOpts, vacuum_max_threshold)},
 		{"autovacuum_vacuum_insert_threshold", RELOPT_TYPE_INT,
 		offsetof(StdRdOptions, autovacuum) + offsetof(AutoVacOpts, vacuum_ins_threshold)},
 		{"autovacuum_analyze_threshold", RELOPT_TYPE_INT,
