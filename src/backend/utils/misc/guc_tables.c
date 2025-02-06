@@ -3428,7 +3428,7 @@ struct config_int ConfigureNamesInt[] =
 	},
 	{
 		{"autovacuum_vacuum_max_threshold", PGC_SIGHUP, VACUUM_AUTOVACUUM,
-			gettext_noop("Maximum number of tuple updates or deletes prior to vacuum."),
+			gettext_noop("Maximum number of tuple updates or deletes prior to vacuum, or -1 to disable maximum threshold."),
 			NULL
 		},
 		&autovacuum_vac_max_thresh,
