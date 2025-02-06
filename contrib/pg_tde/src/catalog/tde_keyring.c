@@ -181,7 +181,7 @@ GetAllKeyringProviders(Oid dbOid)
 uint32
 redo_key_provider_info(KeyringProviderXLRecord *xlrec)
 {
-	return write_key_provider_info(&xlrec->provider, xlrec->database_id, xlrec->offset_in_file, true, false);
+	return write_key_provider_info(&xlrec->provider, xlrec->database_id, xlrec->offset_in_file, false, false);
 }
 
 void
