@@ -1902,6 +1902,7 @@ RT_ATTACH(dsa_area *dsa, RT_HANDLE handle)
 	dsa_pointer control;
 
 	tree = (RT_RADIX_TREE *) palloc0(sizeof(RT_RADIX_TREE));
+	tree->context = CurrentMemoryContext;
 
 	/* Find the control object in shared memory */
 	control = handle;
@@ -1910,6 +1911,14 @@ RT_ATTACH(dsa_area *dsa, RT_HANDLE handle)
 	tree->ctl = (RT_RADIX_TREE_CONTROL *) dsa_get_address(dsa, control);
 	Assert(tree->ctl->magic == RT_RADIX_TREE_MAGIC);
 
+	/*
+	 * Create the iteration context so that the attached backend also can
+	 * begin the iteration.
+	 */
+	tree->iter_context = AllocSetContextCreate(CurrentMemoryContext,
+											   RT_STR(RT_PREFIX) "_radix_tree iter context",
+											   ALLOCSET_SMALL_SIZES);
+
 	return tree;
 }
 
@@ -1917,6 +1926,7 @@ RT_SCOPE void
 RT_DETACH(RT_RADIX_TREE * tree)
 {
 	Assert(tree->ctl->magic == RT_RADIX_TREE_MAGIC);
+	MemoryContextDelete(tree->iter_context);
 	pfree(tree);
 }
 
