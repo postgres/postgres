@@ -12343,8 +12343,7 @@ if test "$with_ssl" = openssl ; then
 
 $as_echo "#define OPENSSL_API_COMPAT 0x10101000L" >>confdefs.h
 
-  if test "$PORTNAME" != "win32"; then
-     { $as_echo "$as_me:${as_lineno-$LINENO}: checking for CRYPTO_new_ex_data in -lcrypto" >&5
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for CRYPTO_new_ex_data in -lcrypto" >&5
 $as_echo_n "checking for CRYPTO_new_ex_data in -lcrypto... " >&6; }
 if ${ac_cv_lib_crypto_CRYPTO_new_ex_data+:} false; then :
   $as_echo_n "(cached) " >&6
@@ -12391,7 +12390,7 @@ else
   as_fn_error $? "library 'crypto' is required for OpenSSL" "$LINENO" 5
 fi
 
-     { $as_echo "$as_me:${as_lineno-$LINENO}: checking for SSL_new in -lssl" >&5
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for SSL_new in -lssl" >&5
 $as_echo_n "checking for SSL_new in -lssl... " >&6; }
 if ${ac_cv_lib_ssl_SSL_new+:} false; then :
   $as_echo_n "(cached) " >&6
@@ -12438,124 +12437,6 @@ else
   as_fn_error $? "library 'ssl' is required for OpenSSL" "$LINENO" 5
 fi
 
-  else
-     { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing CRYPTO_new_ex_data" >&5
-$as_echo_n "checking for library containing CRYPTO_new_ex_data... " >&6; }
-if ${ac_cv_search_CRYPTO_new_ex_data+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_func_search_save_LIBS=$LIBS
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char CRYPTO_new_ex_data ();
-int
-main ()
-{
-return CRYPTO_new_ex_data ();
-  ;
-  return 0;
-}
-_ACEOF
-for ac_lib in '' eay32 crypto; do
-  if test -z "$ac_lib"; then
-    ac_res="none required"
-  else
-    ac_res=-l$ac_lib
-    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
-  fi
-  if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_search_CRYPTO_new_ex_data=$ac_res
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext
-  if ${ac_cv_search_CRYPTO_new_ex_data+:} false; then :
-  break
-fi
-done
-if ${ac_cv_search_CRYPTO_new_ex_data+:} false; then :
-
-else
-  ac_cv_search_CRYPTO_new_ex_data=no
-fi
-rm conftest.$ac_ext
-LIBS=$ac_func_search_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_CRYPTO_new_ex_data" >&5
-$as_echo "$ac_cv_search_CRYPTO_new_ex_data" >&6; }
-ac_res=$ac_cv_search_CRYPTO_new_ex_data
-if test "$ac_res" != no; then :
-  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
-
-else
-  as_fn_error $? "library 'eay32' or 'crypto' is required for OpenSSL" "$LINENO" 5
-fi
-
-     { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing SSL_new" >&5
-$as_echo_n "checking for library containing SSL_new... " >&6; }
-if ${ac_cv_search_SSL_new+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_func_search_save_LIBS=$LIBS
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char SSL_new ();
-int
-main ()
-{
-return SSL_new ();
-  ;
-  return 0;
-}
-_ACEOF
-for ac_lib in '' ssleay32 ssl; do
-  if test -z "$ac_lib"; then
-    ac_res="none required"
-  else
-    ac_res=-l$ac_lib
-    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
-  fi
-  if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_search_SSL_new=$ac_res
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext
-  if ${ac_cv_search_SSL_new+:} false; then :
-  break
-fi
-done
-if ${ac_cv_search_SSL_new+:} false; then :
-
-else
-  ac_cv_search_SSL_new=no
-fi
-rm conftest.$ac_ext
-LIBS=$ac_func_search_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_SSL_new" >&5
-$as_echo "$ac_cv_search_SSL_new" >&6; }
-ac_res=$ac_cv_search_SSL_new
-if test "$ac_res" != no; then :
-  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
-
-else
-  as_fn_error $? "library 'ssleay32' or 'ssl' is required for OpenSSL" "$LINENO" 5
-fi
-
-  fi
   # Functions introduced in OpenSSL 1.1.1.
   for ac_func in SSL_CTX_set_ciphersuites
 do :
