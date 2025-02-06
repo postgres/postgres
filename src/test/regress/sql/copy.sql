@@ -348,3 +348,13 @@ COPY parted_si(id, data) FROM :'filename';
 SELECT tableoid::regclass, id % 2 = 0 is_even, count(*) from parted_si GROUP BY 1, 2 ORDER BY 1;
 
 DROP TABLE parted_si;
+
+-- ensure COPY FREEZE errors for foreign tables
+begin;
+create foreign data wrapper copytest_wrapper;
+create server copytest_server foreign data wrapper copytest_wrapper;
+create foreign table copytest_foreign_table (a int) server copytest_server;
+copy copytest_foreign_table from stdin (freeze);
+1
+\.
+rollback;

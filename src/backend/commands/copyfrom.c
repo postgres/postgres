@@ -740,6 +740,12 @@ CopyFrom(CopyFromState cstate)
 					 errmsg("cannot perform COPY FREEZE on a partitioned table")));
 		}
 
+		/* There's currently no support for COPY FREEZE on foreign tables. */
+		if (cstate->rel->rd_rel->relkind == RELKIND_FOREIGN_TABLE)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("cannot perform COPY FREEZE on a foreign table")));
+
 		/*
 		 * Tolerate one registration for the benefit of FirstXactSnapshot.
 		 * Scan-bearing queries generally create at least two registrations,

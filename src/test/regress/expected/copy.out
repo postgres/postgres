@@ -325,3 +325,11 @@ SELECT tableoid::regclass, id % 2 = 0 is_even, count(*) from parted_si GROUP BY 
 (2 rows)
 
 DROP TABLE parted_si;
+-- ensure COPY FREEZE errors for foreign tables
+begin;
+create foreign data wrapper copytest_wrapper;
+create server copytest_server foreign data wrapper copytest_wrapper;
+create foreign table copytest_foreign_table (a int) server copytest_server;
+copy copytest_foreign_table from stdin (freeze);
+ERROR:  cannot perform COPY FREEZE on a foreign table
+rollback;

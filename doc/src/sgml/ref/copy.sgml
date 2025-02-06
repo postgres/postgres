@@ -237,7 +237,7 @@ COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable 
       or truncated in the current subtransaction, there are no cursors
       open and there are no older snapshots held by this transaction.  It is
       currently not possible to perform a <command>COPY FREEZE</command> on
-      a partitioned table.
+      a partitioned table or foreign table.
       This option is only allowed in <command>COPY FROM</command>.
      </para>
      <para>
