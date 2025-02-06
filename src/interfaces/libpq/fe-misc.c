@@ -1049,34 +1049,43 @@ pqWriteReady(PGconn *conn)
  * or both.  Returns >0 if one or more conditions are met, 0 if it timed
  * out, -1 if an error occurred.
  *
- * If SSL is in use, the SSL buffer is checked prior to checking the socket
- * for read data directly.
+ * If an altsock is set for asynchronous authentication, that will be used in
+ * preference to the "server" socket. Otherwise, if SSL is in use, the SSL
+ * buffer is checked prior to checking the socket for read data directly.
  */
 static int
 pqSocketCheck(PGconn *conn, int forRead, int forWrite, pg_usec_time_t end_time)
 {
 	int			result;
+	pgsocket	sock;
 
 	if (!conn)
 		return -1;
-	if (conn->sock == PGINVALID_SOCKET)
+
+	if (conn->altsock != PGINVALID_SOCKET)
+		sock = conn->altsock;
+	else
 	{
-		libpq_append_conn_error(conn, "invalid socket");
-		return -1;
-	}
+		sock = conn->sock;
+		if (sock == PGINVALID_SOCKET)
+		{
+			libpq_append_conn_error(conn, "invalid socket");
+			return -1;
+		}
 
 #ifdef USE_SSL
-	/* Check for SSL library buffering read bytes */
-	if (forRead && conn->ssl_in_use && pgtls_read_pending(conn))
-	{
-		/* short-circuit the select */
-		return 1;
-	}
+		/* Check for SSL library buffering read bytes */
+		if (forRead && conn->ssl_in_use && pgtls_read_pending(conn))
+		{
+			/* short-circuit the select */
+			return 1;
+		}
 #endif
+	}
 
 	/* We will retry as long as we get EINTR */
 	do
-		result = PQsocketPoll(conn->sock, forRead, forWrite, end_time);
+		result = PQsocketPoll(sock, forRead, forWrite, end_time);
 	while (result < 0 && SOCK_ERRNO == EINTR);
 
 	if (result < 0)

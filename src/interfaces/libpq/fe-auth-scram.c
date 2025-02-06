@@ -24,7 +24,8 @@
 /* The exported SCRAM callback mechanism. */
 static void *scram_init(PGconn *conn, const char *password,
 						const char *sasl_mechanism);
-static SASLStatus scram_exchange(void *opaq, char *input, int inputlen,
+static SASLStatus scram_exchange(void *opaq, bool final,
+								 char *input, int inputlen,
 								 char **output, int *outputlen);
 static bool scram_channel_bound(void *opaq);
 static void scram_free(void *opaq);
@@ -205,7 +206,8 @@ scram_free(void *opaq)
  * Exchange a SCRAM message with backend.
  */
 static SASLStatus
-scram_exchange(void *opaq, char *input, int inputlen,
+scram_exchange(void *opaq, bool final,
+			   char *input, int inputlen,
 			   char **output, int *outputlen)
 {
 	fe_scram_state *state = (fe_scram_state *) opaq;

@@ -513,6 +513,12 @@ struct pg_conn
 										 * know which auth response we're
 										 * sending */
 
+	/* Callbacks for external async authentication */
+	PostgresPollingStatusType (*async_auth) (PGconn *conn);
+	void		(*cleanup_async_auth) (PGconn *conn);
+	pgsocket	altsock;		/* alternative socket for client to poll */
+
+
 	/* Transient state needed while establishing connection */
 	PGTargetServerType target_server_type;	/* desired session properties */
 	PGLoadBalanceType load_balance_type;	/* desired load balancing

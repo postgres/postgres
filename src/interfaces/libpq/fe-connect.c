@@ -507,6 +507,19 @@ pqDropConnection(PGconn *conn, bool flushInput)
 	conn->cmd_queue_recycle = NULL;
 
 	/* Free authentication/encryption state */
+	if (conn->cleanup_async_auth)
+	{
+		/*
+		 * Any in-progress async authentication should be torn down first so
+		 * that cleanup_async_auth() can depend on the other authentication
+		 * state if necessary.
+		 */
+		conn->cleanup_async_auth(conn);
+		conn->cleanup_async_auth = NULL;
+	}
+	conn->async_auth = NULL;
+	/* cleanup_async_auth() should have done this, but make sure */
+	conn->altsock = PGINVALID_SOCKET;
 #ifdef ENABLE_GSS
 	{
 		OM_uint32	min_s;
@@ -2853,6 +2866,7 @@ PQconnectPoll(PGconn *conn)
 		case CONNECTION_NEEDED:
 		case CONNECTION_GSS_STARTUP:
 		case CONNECTION_CHECK_TARGET:
+		case CONNECTION_AUTHENTICATING:
 			break;
 
 		default:
@@ -3888,6 +3902,7 @@ keep_going:						/* We will come back to here until there is
 				int			avail;
 				AuthRequest areq;
 				int			res;
+				bool		async;
 
 				/*
 				 * Scan the message from current point (note that if we find
@@ -4076,7 +4091,17 @@ keep_going:						/* We will come back to here until there is
 				 * Note that conn->pghost must be non-NULL if we are going to
 				 * avoid the Kerberos code doing a hostname look-up.
 				 */
-				res = pg_fe_sendauth(areq, msgLength, conn);
+				res = pg_fe_sendauth(areq, msgLength, conn, &async);
+
+				if (async && (res == STATUS_OK))
+				{
+					/*
+					 * We'll come back later once we're ready to respond.
+					 * Don't consume the request yet.
+					 */
+					conn->status = CONNECTION_AUTHENTICATING;
+					goto keep_going;
+				}
 
 				/*
 				 * OK, we have processed the message; mark data consumed.  We
@@ -4111,6 +4136,69 @@ keep_going:						/* We will come back to here until there is
 
 				/* Look to see if we have more data yet. */
 				goto keep_going;
+			}
+
+		case CONNECTION_AUTHENTICATING:
+			{
+				PostgresPollingStatusType status;
+
+				if (!conn->async_auth || !conn->cleanup_async_auth)
+				{
+					/* programmer error; should not happen */
+					libpq_append_conn_error(conn,
+											"internal error: async authentication has no handler");
+					goto error_return;
+				}
+
+				/* Drive some external authentication work. */
+				status = conn->async_auth(conn);
+
+				if (status == PGRES_POLLING_FAILED)
+					goto error_return;
+
+				if (status == PGRES_POLLING_OK)
+				{
+					/* Done. Tear down the async implementation. */
+					conn->cleanup_async_auth(conn);
+					conn->cleanup_async_auth = NULL;
+
+					/*
+					 * Cleanup must unset altsock, both as an indication that
+					 * it's been released, and to stop pqSocketCheck from
+					 * looking at the wrong socket after async auth is done.
+					 */
+					if (conn->altsock != PGINVALID_SOCKET)
+					{
+						Assert(false);
+						libpq_append_conn_error(conn,
+												"internal error: async cleanup did not release polling socket");
+						goto error_return;
+					}
+
+					/*
+					 * Reenter the authentication exchange with the server. We
+					 * didn't consume the message that started external
+					 * authentication, so it'll be reprocessed as if we just
+					 * received it.
+					 */
+					conn->status = CONNECTION_AWAITING_RESPONSE;
+
+					goto keep_going;
+				}
+
+				/*
+				 * Caller needs to poll some more. conn->async_auth() should
+				 * have assigned an altsock to poll on.
+				 */
+				if (conn->altsock == PGINVALID_SOCKET)
+				{
+					Assert(false);
+					libpq_append_conn_error(conn,
+											"internal error: async authentication did not set a socket for polling");
+					goto error_return;
+				}
+
+				return status;
 			}
 
 		case CONNECTION_AUTH_OK:
@@ -4794,6 +4882,7 @@ pqMakeEmptyPGconn(void)
 	conn->verbosity = PQERRORS_DEFAULT;
 	conn->show_context = PQSHOW_CONTEXT_ERRORS;
 	conn->sock = PGINVALID_SOCKET;
+	conn->altsock = PGINVALID_SOCKET;
 	conn->Pfdebug = NULL;
 
 	/*
@@ -7445,6 +7534,8 @@ PQsocket(const PGconn *conn)
 {
 	if (!conn)
 		return -1;
+	if (conn->altsock != PGINVALID_SOCKET)
+		return conn->altsock;
 	return (conn->sock != PGINVALID_SOCKET) ? conn->sock : -1;
 }
 

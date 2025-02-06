@@ -103,6 +103,8 @@ typedef enum
 	CONNECTION_CHECK_STANDBY,	/* Checking if server is in standby mode. */
 	CONNECTION_ALLOCATED,		/* Waiting for connection attempt to be
 								 * started.  */
+	CONNECTION_AUTHENTICATING,	/* Authentication is in progress with some
+								 * external system. */
 } ConnStatusType;
 
 typedef enum
