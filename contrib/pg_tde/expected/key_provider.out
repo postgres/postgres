@@ -40,6 +40,12 @@ SELECT pg_tde_set_principal_key('test-db-principal-key','file-provider');
  t
 (1 row)
 
+SELECT pg_tde_verify_principal_key();
+ pg_tde_verify_principal_key 
+-----------------------------
+ 
+(1 row)
+
 SELECT pg_tde_change_key_provider_file('not-existent-provider','/tmp/pg_tde_test_keyring.per');
 ERROR:  key provider "not-existent-provider" does not exists
 HINT:  Use pg_tde_add_key_provider interface to create the key provider
@@ -63,6 +69,8 @@ SELECT * FROM pg_tde_list_all_key_providers();
   2 | file-provider2 | file          | {"type" : "file", "path" : "/tmp/pg_tde_test_keyring2.per"}
 (2 rows)
 
+SELECT pg_tde_verify_principal_key();
+ERROR:  Failed to retrieve key from keyring
 SELECT pg_tde_change_key_provider_file('file-provider',  json_object('foo' VALUE '/tmp/pg_tde_test_keyring.per'));
 ERROR:  parse json keyring config: unexpected field foo
 SELECT * FROM pg_tde_list_all_key_providers();

@@ -49,6 +49,9 @@
 PG_FUNCTION_INFO_V1(pg_tde_delete_key_provider);
 PG_FUNCTION_INFO_V1(pg_tde_delete_key_provider_global);
 
+PG_FUNCTION_INFO_V1(pg_tde_verify_principal_key);
+PG_FUNCTION_INFO_V1(pg_tde_verify_global_principal_key);
+
 typedef struct TdePrincipalKeySharedState
 {
 	LWLockPadded *Locks;
@@ -84,7 +87,7 @@ static void shared_memory_shutdown(int code, Datum arg);
 static void principal_key_startup_cleanup(int tde_tbl_count, XLogExtensionInstall *ext_info, bool redo, void *arg);
 static void clear_principal_key_cache(Oid databaseId);
 static inline dshash_table *get_principal_key_Hash(void);
-static TDEPrincipalKey *get_principal_key_from_keyring(Oid dbOid);
+static TDEPrincipalKey *get_principal_key_from_keyring(Oid dbOid, bool pushToCache);
 static TDEPrincipalKey *get_principal_key_from_cache(Oid dbOid);
 static void push_principal_key_to_cache(TDEPrincipalKey *principalKey);
 static Datum pg_tde_get_key_info(PG_FUNCTION_ARGS, Oid dbOid);
@@ -94,6 +97,7 @@ static bool set_principal_key_with_keyring(const char *key_name,
 										   Oid dbOid,
 										   bool ensure_new_key);
 static bool pg_tde_is_provider_used(Oid databaseOid, Oid providerId);
+static bool pg_tde_verify_principal_key_internal(Oid databaseOid);
 
 static Datum pg_tde_delete_key_provider_internal(PG_FUNCTION_ARGS, int is_global);
 
@@ -617,6 +621,18 @@ pg_tde_principal_key_info_global(PG_FUNCTION_ARGS)
 	return pg_tde_get_key_info(fcinfo, GLOBAL_DATA_TDE_OID);
 }
 
+Datum
+pg_tde_verify_principal_key(PG_FUNCTION_ARGS)
+{
+	return pg_tde_verify_principal_key_internal(MyDatabaseId);
+}
+
+Datum
+pg_tde_verify_global_principal_key(PG_FUNCTION_ARGS)
+{
+	return pg_tde_verify_principal_key_internal(GLOBAL_DATA_TDE_OID);
+}
+
 static Datum
 pg_tde_get_key_info(PG_FUNCTION_ARGS, Oid dbOid)
 {
@@ -691,7 +707,7 @@ pg_tde_get_key_info(PG_FUNCTION_ARGS, Oid dbOid)
  * Caller should hold an exclusive tde_lwlock_enc_keys lock
  */
 static TDEPrincipalKey *
-get_principal_key_from_keyring(Oid dbOid)
+get_principal_key_from_keyring(Oid dbOid, bool pushToCache)
 {
 	GenericKeyring *keyring;
 	TDEPrincipalKey *principalKey = NULL;
@@ -730,7 +746,7 @@ get_principal_key_from_keyring(Oid dbOid)
 
 #ifndef FRONTEND
 	/* We don't store global space key in cache */
-	if (!TDEisInGlobalSpace(dbOid))
+	if (pushToCache && !TDEisInGlobalSpace(dbOid))
 	{
 		push_principal_key_to_cache(principalKey);
 
@@ -794,7 +810,7 @@ GetPrincipalKey(Oid dbOid, LWLockMode lockMode)
 	}
 #endif
 
-	return get_principal_key_from_keyring(dbOid);
+	return get_principal_key_from_keyring(dbOid, true);
 }
 
 #ifndef FRONTEND
@@ -914,6 +930,34 @@ pg_tde_delete_key_provider_internal(PG_FUNCTION_ARGS, int is_global)
 	}
 
 	delete_key_provider_info(provider_id, db_oid, true);
+
+	PG_RETURN_VOID();
+}
+
+static bool
+pg_tde_verify_principal_key_internal(Oid databaseOid)
+{
+	TDEPrincipalKey *fromKeyring;
+	TDEPrincipalKey *fromCache;
+
+	LWLockAcquire(tde_lwlock_enc_keys(), LW_EXCLUSIVE);
+
+	fromKeyring = get_principal_key_from_keyring(databaseOid, false);
+	fromCache = get_principal_key_from_cache(databaseOid);
+
+	LWLockRelease(tde_lwlock_enc_keys());
+
+	if (fromKeyring == NULL)
+	{
+		ereport(ERROR,
+				(errmsg("Failed to retrieve key from keyring")));
+	}
+
+	if (fromCache != NULL && (fromKeyring->keyLength != fromCache->keyLength || memcmp(fromKeyring->keyData, fromCache->keyData, fromCache->keyLength) != 0))
+	{
+		ereport(ERROR,
+				(errmsg("Key returned by keyring and cached in pg_tde is different")));
+	}
 
 	PG_RETURN_VOID();
 }

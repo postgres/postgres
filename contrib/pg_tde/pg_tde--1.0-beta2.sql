@@ -473,6 +473,16 @@ RETURNS VOID
 AS 'MODULE_PATHNAME'
 LANGUAGE C;
 
+CREATE FUNCTION pg_tde_verify_principal_key()
+RETURNS VOID
+AS 'MODULE_PATHNAME'
+LANGUAGE C;
+
+CREATE FUNCTION pg_tde_verify_global_principal_key()
+RETURNS VOID
+AS 'MODULE_PATHNAME'
+LANGUAGE C;
+
 CREATE FUNCTION pg_tde_principal_key_info()
 RETURNS TABLE ( principal_key_name text,
                 key_provider_name text,
