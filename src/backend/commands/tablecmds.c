@@ -10082,6 +10082,8 @@ ATAddForeignKeyConstraint(List **wqueue, AlteredTableInfo *tab, Relation rel,
 		Oid			amid;
 		Oid			opfamily;
 		Oid			opcintype;
+		bool		for_overlaps;
+		CompareType cmptype;
 		Oid			pfeqop;
 		Oid			ppeqop;
 		Oid			ffeqop;
@@ -10098,40 +10100,27 @@ ATAddForeignKeyConstraint(List **wqueue, AlteredTableInfo *tab, Relation rel,
 		opcintype = cla_tup->opcintype;
 		ReleaseSysCache(cla_ht);
 
-		if (with_period)
-		{
-			CompareType cmptype;
-			bool		for_overlaps = with_period && i == numpks - 1;
-
-			cmptype = for_overlaps ? COMPARE_OVERLAP : COMPARE_EQ;
-
-			/*
-			 * An index AM can use whatever strategy numbers it wants, so we
-			 * ask it what number it actually uses.
-			 */
-			eqstrategy = IndexAmTranslateCompareType(cmptype, amid, opfamily, opcintype, true);
-			if (eqstrategy == InvalidStrategy)
-				ereport(ERROR,
-						errcode(ERRCODE_UNDEFINED_OBJECT),
-						for_overlaps
-						? errmsg("could not identify an overlaps operator for foreign key")
-						: errmsg("could not identify an equality operator for foreign key"),
-						errdetail("Could not translate compare type %d for operator family \"%s\", input type %s, access method \"%s\".",
-								  cmptype, get_opfamily_name(opfamily, false), format_type_be(opcintype), get_am_name(amid)));
-		}
-		else
-		{
-			/*
-			 * Check it's a btree; currently this can never fail since no
-			 * other index AMs support unique indexes.  If we ever did have
-			 * other types of unique indexes, we'd need a way to determine
-			 * which operator strategy number is equality.  (We could use
-			 * IndexAmTranslateCompareType.)
-			 */
-			if (amid != BTREE_AM_OID)
-				elog(ERROR, "only b-tree indexes are supported for foreign keys");
-			eqstrategy = BTEqualStrategyNumber;
-		}
+		/*
+		 * Get strategy number from index AM.
+		 *
+		 * For a normal foreign-key constraint, this should not fail, since we
+		 * already checked that the index is unique and should therefore have
+		 * appropriate equal operators.  For a period foreign key, this could
+		 * fail if we selected a non-matching exclusion constraint earlier.
+		 * (XXX Maybe we should do these lookups earlier so we don't end up
+		 * doing that.)
+		 */
+		for_overlaps = with_period && i == numpks - 1;
+		cmptype = for_overlaps ? COMPARE_OVERLAP : COMPARE_EQ;
+		eqstrategy = IndexAmTranslateCompareType(cmptype, amid, opfamily, opcintype, true);
+		if (eqstrategy == InvalidStrategy)
+			ereport(ERROR,
+					errcode(ERRCODE_UNDEFINED_OBJECT),
+					for_overlaps
+					? errmsg("could not identify an overlaps operator for foreign key")
+					: errmsg("could not identify an equality operator for foreign key"),
+					errdetail("Could not translate compare type %d for operator family \"%s\", input type %s, access method \"%s\".",
+							  cmptype, get_opfamily_name(opfamily, false), format_type_be(opcintype), get_am_name(amid)));
 
 		/*
 		 * There had better be a primary equality operator for the index.
