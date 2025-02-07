@@ -2123,6 +2123,12 @@ describeOneTableDetails(const char *schemaname,
 									   PQgetvalue(res, i, attrdef_col));
 				mustfree = true;
 			}
+			else if (generated[0] == ATTRIBUTE_GENERATED_VIRTUAL)
+			{
+				default_str = psprintf("generated always as (%s)",
+									   PQgetvalue(res, i, attrdef_col));
+				mustfree = true;
+			}
 			else
 				default_str = PQgetvalue(res, i, attrdef_col);
 

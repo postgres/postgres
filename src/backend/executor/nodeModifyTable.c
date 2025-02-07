@@ -391,11 +391,14 @@ ExecCheckTIDVisible(EState *estate,
 }
 
 /*
- * Initialize to compute stored generated columns for a tuple
+ * Initialize generated columns handling for a tuple
  *
- * This fills the resultRelInfo's ri_GeneratedExprsI/ri_NumGeneratedNeededI
- * or ri_GeneratedExprsU/ri_NumGeneratedNeededU fields, depending on cmdtype.
+ * This fills the resultRelInfo's ri_GeneratedExprsI/ri_NumGeneratedNeededI or
+ * ri_GeneratedExprsU/ri_NumGeneratedNeededU fields, depending on cmdtype.
+ * This is used only for stored generated columns.
+ *
  * If cmdType == CMD_UPDATE, the ri_extraUpdatedCols field is filled too.
+ * This is used by both stored and virtual generated columns.
  *
  * Note: usually, a given query would need only one of ri_GeneratedExprsI and
  * ri_GeneratedExprsU per result rel; but MERGE can need both, and so can
@@ -403,9 +406,9 @@ ExecCheckTIDVisible(EState *estate,
  * UPDATE and INSERT actions.
  */
 void
-ExecInitStoredGenerated(ResultRelInfo *resultRelInfo,
-						EState *estate,
-						CmdType cmdtype)
+ExecInitGenerated(ResultRelInfo *resultRelInfo,
+				  EState *estate,
+				  CmdType cmdtype)
 {
 	Relation	rel = resultRelInfo->ri_RelationDesc;
 	TupleDesc	tupdesc = RelationGetDescr(rel);
@@ -416,7 +419,7 @@ ExecInitStoredGenerated(ResultRelInfo *resultRelInfo,
 	MemoryContext oldContext;
 
 	/* Nothing to do if no generated columns */
-	if (!(tupdesc->constr && tupdesc->constr->has_generated_stored))
+	if (!(tupdesc->constr && (tupdesc->constr->has_generated_stored || tupdesc->constr->has_generated_virtual)))
 		return;
 
 	/*
@@ -442,7 +445,9 @@ ExecInitStoredGenerated(ResultRelInfo *resultRelInfo,
 
 	for (int i = 0; i < natts; i++)
 	{
-		if (TupleDescAttr(tupdesc, i)->attgenerated == ATTRIBUTE_GENERATED_STORED)
+		char		attgenerated = TupleDescAttr(tupdesc, i)->attgenerated;
+
+		if (attgenerated)
 		{
 			Expr	   *expr;
 
@@ -467,8 +472,11 @@ ExecInitStoredGenerated(ResultRelInfo *resultRelInfo,
 			}
 
 			/* No luck, so prepare the expression for execution */
-			ri_GeneratedExprs[i] = ExecPrepareExpr(expr, estate);
-			ri_NumGeneratedNeeded++;
+			if (attgenerated == ATTRIBUTE_GENERATED_STORED)
+			{
+				ri_GeneratedExprs[i] = ExecPrepareExpr(expr, estate);
+				ri_NumGeneratedNeeded++;
+			}
 
 			/* If UPDATE, mark column in resultRelInfo->ri_extraUpdatedCols */
 			if (cmdtype == CMD_UPDATE)
@@ -476,6 +484,13 @@ ExecInitStoredGenerated(ResultRelInfo *resultRelInfo,
 					bms_add_member(resultRelInfo->ri_extraUpdatedCols,
 								   i + 1 - FirstLowInvalidHeapAttributeNumber);
 		}
+	}
+
+	if (ri_NumGeneratedNeeded == 0)
+	{
+		/* didn't need it after all */
+		pfree(ri_GeneratedExprs);
+		ri_GeneratedExprs = NULL;
 	}
 
 	/* Save in appropriate set of fields */
@@ -486,6 +501,8 @@ ExecInitStoredGenerated(ResultRelInfo *resultRelInfo,
 
 		resultRelInfo->ri_GeneratedExprsU = ri_GeneratedExprs;
 		resultRelInfo->ri_NumGeneratedNeededU = ri_NumGeneratedNeeded;
+
+		resultRelInfo->ri_extraUpdatedCols_valid = true;
 	}
 	else
 	{
@@ -526,7 +543,7 @@ ExecComputeStoredGenerated(ResultRelInfo *resultRelInfo,
 	if (cmdtype == CMD_UPDATE)
 	{
 		if (resultRelInfo->ri_GeneratedExprsU == NULL)
-			ExecInitStoredGenerated(resultRelInfo, estate, cmdtype);
+			ExecInitGenerated(resultRelInfo, estate, cmdtype);
 		if (resultRelInfo->ri_NumGeneratedNeededU == 0)
 			return;
 		ri_GeneratedExprs = resultRelInfo->ri_GeneratedExprsU;
@@ -534,7 +551,7 @@ ExecComputeStoredGenerated(ResultRelInfo *resultRelInfo,
 	else
 	{
 		if (resultRelInfo->ri_GeneratedExprsI == NULL)
-			ExecInitStoredGenerated(resultRelInfo, estate, cmdtype);
+			ExecInitGenerated(resultRelInfo, estate, cmdtype);
 		/* Early exit is impossible given the prior Assert */
 		Assert(resultRelInfo->ri_NumGeneratedNeededI > 0);
 		ri_GeneratedExprs = resultRelInfo->ri_GeneratedExprsI;

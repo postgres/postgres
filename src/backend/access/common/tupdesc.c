@@ -342,6 +342,7 @@ CreateTupleDescCopyConstr(TupleDesc tupdesc)
 
 		cpy->has_not_null = constr->has_not_null;
 		cpy->has_generated_stored = constr->has_generated_stored;
+		cpy->has_generated_virtual = constr->has_generated_virtual;
 
 		if ((cpy->num_defval = constr->num_defval) > 0)
 		{
@@ -639,6 +640,8 @@ equalTupleDescs(TupleDesc tupdesc1, TupleDesc tupdesc2)
 		if (constr1->has_not_null != constr2->has_not_null)
 			return false;
 		if (constr1->has_generated_stored != constr2->has_generated_stored)
+			return false;
+		if (constr1->has_generated_virtual != constr2->has_generated_virtual)
 			return false;
 		n = constr1->num_defval;
 		if (n != (int) constr2->num_defval)

@@ -442,7 +442,7 @@ LINE 1: ...ICATION testpub6 FOR TABLE testpub_rf_tbl3 WHERE (e =#> 27);
                                                              ^
 DETAIL:  User-defined operators are not allowed.
 -- fail - user-defined functions are not allowed
-CREATE FUNCTION testpub_rf_func2() RETURNS integer AS $$ BEGIN RETURN 123; END; $$ LANGUAGE plpgsql;
+CREATE FUNCTION testpub_rf_func2() RETURNS integer IMMUTABLE AS $$ BEGIN RETURN 123; END; $$ LANGUAGE plpgsql;
 ALTER PUBLICATION testpub5 ADD TABLE testpub_rf_tbl1 WHERE (a >= testpub_rf_func2());
 ERROR:  invalid publication WHERE expression
 LINE 1: ...ON testpub5 ADD TABLE testpub_rf_tbl1 WHERE (a >= testpub_rf...
@@ -523,17 +523,33 @@ Tables:
 Tables from schemas:
     "testpub_rf_schema2"
 
+-- fail - virtual generated column uses user-defined function
+CREATE TABLE testpub_rf_tbl6 (id int PRIMARY KEY, x int, y int GENERATED ALWAYS AS (x * testpub_rf_func2()) VIRTUAL);
+CREATE PUBLICATION testpub7 FOR TABLE testpub_rf_tbl6 WHERE (y > 100);
+ERROR:  invalid publication WHERE expression
+DETAIL:  User-defined or built-in mutable functions are not allowed.
+-- test that SET EXPRESSION is rejected, because it could affect a row filter
+SET client_min_messages = 'ERROR';
+CREATE TABLE testpub_rf_tbl7 (id int PRIMARY KEY, x int, y int GENERATED ALWAYS AS (x * 111) VIRTUAL);
+CREATE PUBLICATION testpub8 FOR TABLE testpub_rf_tbl7 WHERE (y > 100);
+ALTER TABLE testpub_rf_tbl7 ALTER COLUMN y SET EXPRESSION AS (x * testpub_rf_func2());
+ERROR:  ALTER TABLE / SET EXPRESSION is not supported for virtual generated columns on tables that are part of a publication
+DETAIL:  Column "y" of relation "testpub_rf_tbl7" is a virtual generated column.
+RESET client_min_messages;
 DROP TABLE testpub_rf_tbl1;
 DROP TABLE testpub_rf_tbl2;
 DROP TABLE testpub_rf_tbl3;
 DROP TABLE testpub_rf_tbl4;
 DROP TABLE testpub_rf_tbl5;
+DROP TABLE testpub_rf_tbl6;
 DROP TABLE testpub_rf_schema1.testpub_rf_tbl5;
 DROP TABLE testpub_rf_schema2.testpub_rf_tbl6;
 DROP SCHEMA testpub_rf_schema1;
 DROP SCHEMA testpub_rf_schema2;
 DROP PUBLICATION testpub5;
 DROP PUBLICATION testpub6;
+DROP PUBLICATION testpub8;
+DROP TABLE testpub_rf_tbl7;
 DROP OPERATOR =#>(integer, integer);
 DROP FUNCTION testpub_rf_func1(integer, integer);
 DROP FUNCTION testpub_rf_func2();
@@ -675,6 +691,7 @@ DROP TABLE rf_tbl_abcd_part_pk;
 -- ======================================================
 -- Tests with generated column
 SET client_min_messages = 'ERROR';
+-- stored
 CREATE TABLE testpub_gencol (a INT, b INT GENERATED ALWAYS AS (a + 1) STORED NOT NULL);
 CREATE UNIQUE INDEX testpub_gencol_idx ON testpub_gencol (b);
 ALTER TABLE testpub_gencol REPLICA IDENTITY USING index testpub_gencol_idx;
@@ -696,6 +713,23 @@ CREATE PUBLICATION pub_gencol FOR TABLE testpub_gencol with (publish_generated_c
 UPDATE testpub_gencol SET a = 100 WHERE a = 1;
 DROP PUBLICATION pub_gencol;
 DROP TABLE testpub_gencol;
+-- virtual
+CREATE TABLE testpub_gencol (a INT, b INT GENERATED ALWAYS AS (a + 1) VIRTUAL);
+CREATE PUBLICATION pub_gencol FOR TABLE testpub_gencol;
+-- error - generated column "b" must be published explicitly as it is
+-- part of the REPLICA IDENTITY.
+ALTER TABLE testpub_gencol REPLICA IDENTITY FULL;
+UPDATE testpub_gencol SET a = 100 WHERE a = 1;
+ERROR:  cannot update table "testpub_gencol"
+DETAIL:  Replica identity must not contain unpublished generated columns.
+DROP PUBLICATION pub_gencol;
+-- error - "stored" setting does not affect virtual column
+CREATE PUBLICATION pub_gencol FOR TABLE testpub_gencol with (publish_generated_columns = stored);
+UPDATE testpub_gencol SET a = 100 WHERE a = 1;
+ERROR:  cannot update table "testpub_gencol"
+DETAIL:  Replica identity must not contain unpublished generated columns.
+DROP PUBLICATION pub_gencol;
+DROP TABLE testpub_gencol;
 RESET client_min_messages;
 -- ======================================================
 -- fail - duplicate tables are not allowed if that table has any column lists
@@ -711,7 +745,9 @@ CREATE PUBLICATION testpub_fortable FOR TABLE testpub_tbl1;
 CREATE PUBLICATION testpub_fortable_insert WITH (publish = 'insert');
 RESET client_min_messages;
 CREATE TABLE testpub_tbl5 (a int PRIMARY KEY, b text, c text,
-	d int generated always as (a + length(b)) stored);
+    d int generated always as (a + length(b)) stored,
+    e int generated always as (a + length(b)) virtual
+);
 -- error: column "x" does not exist
 ALTER PUBLICATION testpub_fortable ADD TABLE testpub_tbl5 (a, x);
 ERROR:  column "x" of relation "testpub_tbl5" does not exist
@@ -748,9 +784,12 @@ UPDATE testpub_tbl5 SET a = 1;
 ERROR:  cannot update table "testpub_tbl5"
 DETAIL:  Column list used by the publication does not cover the replica identity.
 ALTER PUBLICATION testpub_fortable DROP TABLE testpub_tbl5;
--- ok: generated column "d" can be in the list too
+-- ok: stored generated column "d" can be in the list too
 ALTER PUBLICATION testpub_fortable ADD TABLE testpub_tbl5 (a, d);
 ALTER PUBLICATION testpub_fortable DROP TABLE testpub_tbl5;
+-- error: virtual generated column "e" can't be in list
+ALTER PUBLICATION testpub_fortable ADD TABLE testpub_tbl5 (a, e);
+ERROR:  cannot use virtual generated column "e" in publication column list
 -- error: change the replica identity to "b", and column list to (a, c)
 -- then update fails, because (a, c) does not cover replica identity
 ALTER TABLE testpub_tbl5 REPLICA IDENTITY USING INDEX testpub_tbl5_b_key;

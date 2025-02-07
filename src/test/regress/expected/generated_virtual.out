@@ -1,10 +1,10 @@
--- keep these tests aligned with generated_virtual.sql
-CREATE SCHEMA generated_stored_tests;
-GRANT USAGE ON SCHEMA generated_stored_tests TO PUBLIC;
-SET search_path = generated_stored_tests;
-CREATE TABLE gtest0 (a int PRIMARY KEY, b int GENERATED ALWAYS AS (55) STORED);
-CREATE TABLE gtest1 (a int PRIMARY KEY, b int GENERATED ALWAYS AS (a * 2) STORED);
-SELECT table_name, column_name, column_default, is_nullable, is_generated, generation_expression FROM information_schema.columns WHERE table_schema = 'generated_stored_tests' ORDER BY 1, 2;
+-- keep these tests aligned with generated_stored.sql
+CREATE SCHEMA generated_virtual_tests;
+GRANT USAGE ON SCHEMA generated_virtual_tests TO PUBLIC;
+SET search_path = generated_virtual_tests;
+CREATE TABLE gtest0 (a int PRIMARY KEY, b int GENERATED ALWAYS AS (55) VIRTUAL);
+CREATE TABLE gtest1 (a int PRIMARY KEY, b int GENERATED ALWAYS AS (a * 2) VIRTUAL);
+SELECT table_name, column_name, column_default, is_nullable, is_generated, generation_expression FROM information_schema.columns WHERE table_schema = 'generated_virtual_tests' ORDER BY 1, 2;
  table_name | column_name | column_default | is_nullable | is_generated | generation_expression 
 ------------+-------------+----------------+-------------+--------------+-----------------------
  gtest0     | a           |                | NO          | NEVER        | 
@@ -13,89 +13,89 @@ SELECT table_name, column_name, column_default, is_nullable, is_generated, gener
  gtest1     | b           |                | YES         | ALWAYS       | (a * 2)
 (4 rows)
 
-SELECT table_name, column_name, dependent_column FROM information_schema.column_column_usage WHERE table_schema = 'generated_stored_tests' ORDER BY 1, 2, 3;
+SELECT table_name, column_name, dependent_column FROM information_schema.column_column_usage WHERE table_schema = 'generated_virtual_tests' ORDER BY 1, 2, 3;
  table_name | column_name | dependent_column 
 ------------+-------------+------------------
  gtest1     | a           | b
 (1 row)
 
 \d gtest1
-                    Table "generated_stored_tests.gtest1"
- Column |  Type   | Collation | Nullable |              Default               
---------+---------+-----------+----------+------------------------------------
+                Table "generated_virtual_tests.gtest1"
+ Column |  Type   | Collation | Nullable |           Default           
+--------+---------+-----------+----------+-----------------------------
  a      | integer |           | not null | 
- b      | integer |           |          | generated always as (a * 2) stored
+ b      | integer |           |          | generated always as (a * 2)
 Indexes:
     "gtest1_pkey" PRIMARY KEY, btree (a)
 
 -- duplicate generated
-CREATE TABLE gtest_err_1 (a int PRIMARY KEY, b int GENERATED ALWAYS AS (a * 2) STORED GENERATED ALWAYS AS (a * 3) STORED);
+CREATE TABLE gtest_err_1 (a int PRIMARY KEY, b int GENERATED ALWAYS AS (a * 2) VIRTUAL GENERATED ALWAYS AS (a * 3) VIRTUAL);
 ERROR:  multiple generation clauses specified for column "b" of table "gtest_err_1"
-LINE 1: ...ARY KEY, b int GENERATED ALWAYS AS (a * 2) STORED GENERATED ...
+LINE 1: ...RY KEY, b int GENERATED ALWAYS AS (a * 2) VIRTUAL GENERATED ...
                                                              ^
 -- references to other generated columns, including self-references
-CREATE TABLE gtest_err_2a (a int PRIMARY KEY, b int GENERATED ALWAYS AS (b * 2) STORED);
+CREATE TABLE gtest_err_2a (a int PRIMARY KEY, b int GENERATED ALWAYS AS (b * 2) VIRTUAL);
 ERROR:  cannot use generated column "b" in column generation expression
-LINE 1: ...2a (a int PRIMARY KEY, b int GENERATED ALWAYS AS (b * 2) STO...
+LINE 1: ...2a (a int PRIMARY KEY, b int GENERATED ALWAYS AS (b * 2) VIR...
                                                              ^
 DETAIL:  A generated column cannot reference another generated column.
-CREATE TABLE gtest_err_2b (a int PRIMARY KEY, b int GENERATED ALWAYS AS (a * 2) STORED, c int GENERATED ALWAYS AS (b * 3) STORED);
+CREATE TABLE gtest_err_2b (a int PRIMARY KEY, b int GENERATED ALWAYS AS (a * 2) VIRTUAL, c int GENERATED ALWAYS AS (b * 3) VIRTUAL);
 ERROR:  cannot use generated column "b" in column generation expression
-LINE 1: ...AYS AS (a * 2) STORED, c int GENERATED ALWAYS AS (b * 3) STO...
+LINE 1: ...YS AS (a * 2) VIRTUAL, c int GENERATED ALWAYS AS (b * 3) VIR...
                                                              ^
 DETAIL:  A generated column cannot reference another generated column.
 -- a whole-row var is a self-reference on steroids, so disallow that too
 CREATE TABLE gtest_err_2c (a int PRIMARY KEY,
-    b int GENERATED ALWAYS AS (num_nulls(gtest_err_2c)) STORED);
+    b int GENERATED ALWAYS AS (num_nulls(gtest_err_2c)) VIRTUAL);
 ERROR:  cannot use whole-row variable in column generation expression
-LINE 2:     b int GENERATED ALWAYS AS (num_nulls(gtest_err_2c)) STOR...
+LINE 2:     b int GENERATED ALWAYS AS (num_nulls(gtest_err_2c)) VIRT...
                                                  ^
 DETAIL:  This would cause the generated column to depend on its own value.
 -- invalid reference
-CREATE TABLE gtest_err_3 (a int PRIMARY KEY, b int GENERATED ALWAYS AS (c * 2) STORED);
+CREATE TABLE gtest_err_3 (a int PRIMARY KEY, b int GENERATED ALWAYS AS (c * 2) VIRTUAL);
 ERROR:  column "c" does not exist
-LINE 1: ..._3 (a int PRIMARY KEY, b int GENERATED ALWAYS AS (c * 2) STO...
+LINE 1: ..._3 (a int PRIMARY KEY, b int GENERATED ALWAYS AS (c * 2) VIR...
                                                              ^
 -- generation expression must be immutable
-CREATE TABLE gtest_err_4 (a int PRIMARY KEY, b double precision GENERATED ALWAYS AS (random()) STORED);
+CREATE TABLE gtest_err_4 (a int PRIMARY KEY, b double precision GENERATED ALWAYS AS (random()) VIRTUAL);
 ERROR:  generation expression is not immutable
 -- ... but be sure that the immutability test is accurate
-CREATE TABLE gtest2 (a int, b text GENERATED ALWAYS AS (a || ' sec') STORED);
+CREATE TABLE gtest2 (a int, b text GENERATED ALWAYS AS (a || ' sec') VIRTUAL);
 DROP TABLE gtest2;
 -- cannot have default/identity and generated
-CREATE TABLE gtest_err_5a (a int PRIMARY KEY, b int DEFAULT 5 GENERATED ALWAYS AS (a * 2) STORED);
+CREATE TABLE gtest_err_5a (a int PRIMARY KEY, b int DEFAULT 5 GENERATED ALWAYS AS (a * 2) VIRTUAL);
 ERROR:  both default and generation expression specified for column "b" of table "gtest_err_5a"
 LINE 1: ... gtest_err_5a (a int PRIMARY KEY, b int DEFAULT 5 GENERATED ...
                                                              ^
-CREATE TABLE gtest_err_5b (a int PRIMARY KEY, b int GENERATED ALWAYS AS identity GENERATED ALWAYS AS (a * 2) STORED);
+CREATE TABLE gtest_err_5b (a int PRIMARY KEY, b int GENERATED ALWAYS AS identity GENERATED ALWAYS AS (a * 2) VIRTUAL);
 ERROR:  both identity and generation expression specified for column "b" of table "gtest_err_5b"
 LINE 1: ...t PRIMARY KEY, b int GENERATED ALWAYS AS identity GENERATED ...
                                                              ^
 -- reference to system column not allowed in generated column
 -- (except tableoid, which we test below)
-CREATE TABLE gtest_err_6a (a int PRIMARY KEY, b bool GENERATED ALWAYS AS (xmin <> 37) STORED);
+CREATE TABLE gtest_err_6a (a int PRIMARY KEY, b bool GENERATED ALWAYS AS (xmin <> 37) VIRTUAL);
 ERROR:  cannot use system column "xmin" in column generation expression
 LINE 1: ...a (a int PRIMARY KEY, b bool GENERATED ALWAYS AS (xmin <> 37...
                                                              ^
 -- various prohibited constructs
-CREATE TABLE gtest_err_7a (a int PRIMARY KEY, b int GENERATED ALWAYS AS (avg(a)) STORED);
+CREATE TABLE gtest_err_7a (a int PRIMARY KEY, b int GENERATED ALWAYS AS (avg(a)) VIRTUAL);
 ERROR:  aggregate functions are not allowed in column generation expressions
-LINE 1: ...7a (a int PRIMARY KEY, b int GENERATED ALWAYS AS (avg(a)) ST...
+LINE 1: ...7a (a int PRIMARY KEY, b int GENERATED ALWAYS AS (avg(a)) VI...
                                                              ^
-CREATE TABLE gtest_err_7b (a int PRIMARY KEY, b int GENERATED ALWAYS AS (row_number() OVER (ORDER BY a)) STORED);
+CREATE TABLE gtest_err_7b (a int PRIMARY KEY, b int GENERATED ALWAYS AS (row_number() OVER (ORDER BY a)) VIRTUAL);
 ERROR:  window functions are not allowed in column generation expressions
 LINE 1: ...7b (a int PRIMARY KEY, b int GENERATED ALWAYS AS (row_number...
                                                              ^
-CREATE TABLE gtest_err_7c (a int PRIMARY KEY, b int GENERATED ALWAYS AS ((SELECT a)) STORED);
+CREATE TABLE gtest_err_7c (a int PRIMARY KEY, b int GENERATED ALWAYS AS ((SELECT a)) VIRTUAL);
 ERROR:  cannot use subquery in column generation expression
 LINE 1: ...7c (a int PRIMARY KEY, b int GENERATED ALWAYS AS ((SELECT a)...
                                                              ^
-CREATE TABLE gtest_err_7d (a int PRIMARY KEY, b int GENERATED ALWAYS AS (generate_series(1, a)) STORED);
+CREATE TABLE gtest_err_7d (a int PRIMARY KEY, b int GENERATED ALWAYS AS (generate_series(1, a)) VIRTUAL);
 ERROR:  set-returning functions are not allowed in column generation expressions
 LINE 1: ...7d (a int PRIMARY KEY, b int GENERATED ALWAYS AS (generate_s...
                                                              ^
 -- GENERATED BY DEFAULT not allowed
-CREATE TABLE gtest_err_8 (a int PRIMARY KEY, b int GENERATED BY DEFAULT AS (a * 2) STORED);
+CREATE TABLE gtest_err_8 (a int PRIMARY KEY, b int GENERATED BY DEFAULT AS (a * 2) VIRTUAL);
 ERROR:  for a generated column, GENERATED ALWAYS must be specified
 LINE 1: ...E gtest_err_8 (a int PRIMARY KEY, b int GENERATED BY DEFAULT...
                                                              ^
@@ -166,16 +166,10 @@ SELECT a, b FROM gtest1 WHERE b = 4 ORDER BY a;
  2 | 4
 (1 row)
 
--- test that overflow error happens on write
+-- test that overflow error happens on read
 INSERT INTO gtest1 VALUES (2000000000);
-ERROR:  integer out of range
 SELECT * FROM gtest1;
- a | b 
----+---
- 2 | 4
- 1 | 2
-(2 rows)
-
+ERROR:  integer out of range
 DELETE FROM gtest1 WHERE a = 2000000000;
 -- test with joins
 CREATE TABLE gtestx (x int, y int);
@@ -221,8 +215,8 @@ CREATE TABLE gtestm (
   id int PRIMARY KEY,
   f1 int,
   f2 int,
-  f3 int GENERATED ALWAYS AS (f1 * 2) STORED,
-  f4 int GENERATED ALWAYS AS (f2 * 2) STORED
+  f3 int GENERATED ALWAYS AS (f1 * 2) VIRTUAL,
+  f4 int GENERATED ALWAYS AS (f2 * 2) VIRTUAL
 );
 INSERT INTO gtestm VALUES (1, 5, 100);
 MERGE INTO gtestm t USING (VALUES (1, 10), (2, 20)) v(id, f1) ON t.id = v.id
@@ -245,7 +239,7 @@ SELECT * FROM gtestm ORDER BY id;
 DROP TABLE gtestm;
 CREATE TABLE gtestm (
   a int PRIMARY KEY,
-  b int GENERATED ALWAYS AS (a * 2) STORED
+  b int GENERATED ALWAYS AS (a * 2) VIRTUAL
 );
 INSERT INTO gtestm (a) SELECT g FROM generate_series(1, 10) g;
 MERGE INTO gtestm t USING gtestm AS s ON 2 * t.a = s.b WHEN MATCHED THEN DELETE RETURNING *;
@@ -319,11 +313,11 @@ SELECT * FROM gtest1_1;
 (0 rows)
 
 \d gtest1_1
-                   Table "generated_stored_tests.gtest1_1"
- Column |  Type   | Collation | Nullable |              Default               
---------+---------+-----------+----------+------------------------------------
+               Table "generated_virtual_tests.gtest1_1"
+ Column |  Type   | Collation | Nullable |           Default           
+--------+---------+-----------+----------+-----------------------------
  a      | integer |           | not null | 
- b      | integer |           |          | generated always as (a * 2) stored
+ b      | integer |           |          | generated always as (a * 2)
 Inherits: gtest1
 
 INSERT INTO gtest1_1 VALUES (4);
@@ -342,12 +336,12 @@ SELECT * FROM gtest1;
 
 -- can't have generated column that is a child of normal column
 CREATE TABLE gtest_normal (a int, b int);
-CREATE TABLE gtest_normal_child (a int, b int GENERATED ALWAYS AS (a * 2) STORED) INHERITS (gtest_normal);  -- error
+CREATE TABLE gtest_normal_child (a int, b int GENERATED ALWAYS AS (a * 2) VIRTUAL) INHERITS (gtest_normal);  -- error
 NOTICE:  merging column "a" with inherited definition
 NOTICE:  merging column "b" with inherited definition
 ERROR:  child column "b" specifies generation expression
 HINT:  A child table column cannot be generated unless its parent column is.
-CREATE TABLE gtest_normal_child (a int, b int GENERATED ALWAYS AS (a * 2) STORED);
+CREATE TABLE gtest_normal_child (a int, b int GENERATED ALWAYS AS (a * 2) VIRTUAL);
 ALTER TABLE gtest_normal_child INHERIT gtest_normal;  -- error
 ERROR:  column "b" in child table must not be a generated column
 DROP TABLE gtest_normal, gtest_normal_child;
@@ -358,30 +352,30 @@ ERROR:  column "b" inherits from generated column but specifies default
 CREATE TABLE gtestx (x int, b int GENERATED ALWAYS AS IDENTITY) INHERITS (gtest1);  -- error
 NOTICE:  merging column "b" with inherited definition
 ERROR:  column "b" inherits from generated column but specifies identity
-CREATE TABLE gtestx (x int, b int GENERATED ALWAYS AS (a * 22) VIRTUAL) INHERITS (gtest1);  -- error
+CREATE TABLE gtestx (x int, b int GENERATED ALWAYS AS (a * 22) STORED) INHERITS (gtest1);  -- error
 NOTICE:  merging column "b" with inherited definition
 ERROR:  column "b" inherits from generated column of different kind
-DETAIL:  Parent column is STORED, child column is VIRTUAL.
-CREATE TABLE gtestx (x int, b int GENERATED ALWAYS AS (a * 22) STORED) INHERITS (gtest1);  -- ok, overrides parent
+DETAIL:  Parent column is VIRTUAL, child column is STORED.
+CREATE TABLE gtestx (x int, b int GENERATED ALWAYS AS (a * 22) VIRTUAL) INHERITS (gtest1);  -- ok, overrides parent
 NOTICE:  merging column "b" with inherited definition
 \d+ gtestx
-                                        Table "generated_stored_tests.gtestx"
- Column |  Type   | Collation | Nullable |               Default               | Storage | Stats target | Description 
---------+---------+-----------+----------+-------------------------------------+---------+--------------+-------------
- a      | integer |           | not null |                                     | plain   |              | 
- b      | integer |           |          | generated always as (a * 22) stored | plain   |              | 
- x      | integer |           |          |                                     | plain   |              | 
+                                    Table "generated_virtual_tests.gtestx"
+ Column |  Type   | Collation | Nullable |           Default            | Storage | Stats target | Description 
+--------+---------+-----------+----------+------------------------------+---------+--------------+-------------
+ a      | integer |           | not null |                              | plain   |              | 
+ b      | integer |           |          | generated always as (a * 22) | plain   |              | 
+ x      | integer |           |          |                              | plain   |              | 
 Not-null constraints:
     "gtest1_a_not_null" NOT NULL "a" (inherited)
 Inherits: gtest1
 
 INSERT INTO gtestx (a, x) VALUES (11, 22);
 SELECT * FROM gtest1;
- a  |  b  
-----+-----
-  3 |   6
-  4 |   8
- 11 | 242
+ a  | b  
+----+----
+  3 |  6
+  4 |  8
+ 11 | 22
 (3 rows)
 
 SELECT * FROM gtestx;
@@ -393,9 +387,9 @@ SELECT * FROM gtestx;
 CREATE TABLE gtestxx_1 (a int NOT NULL, b int);
 ALTER TABLE gtestxx_1 INHERIT gtest1;  -- error
 ERROR:  column "b" in child table must be a generated column
-CREATE TABLE gtestxx_3 (a int NOT NULL, b int GENERATED ALWAYS AS (a * 2) STORED);
+CREATE TABLE gtestxx_3 (a int NOT NULL, b int GENERATED ALWAYS AS (a * 2) VIRTUAL);
 ALTER TABLE gtestxx_3 INHERIT gtest1;  -- ok
-CREATE TABLE gtestxx_4 (b int GENERATED ALWAYS AS (a * 2) STORED, a int NOT NULL);
+CREATE TABLE gtestxx_4 (b int GENERATED ALWAYS AS (a * 2) VIRTUAL, a int NOT NULL);
 ALTER TABLE gtestxx_4 INHERIT gtest1;  -- ok
 -- test multiple inheritance mismatches
 CREATE TABLE gtesty (x int, b int DEFAULT 55);
@@ -408,28 +402,28 @@ CREATE TABLE gtest1_y () INHERITS (gtest1, gtesty);  -- error
 NOTICE:  merging multiple inherited definitions of column "b"
 ERROR:  inherited column "b" has a generation conflict
 DROP TABLE gtesty;
-CREATE TABLE gtesty (x int, b int GENERATED ALWAYS AS (x * 22) STORED);
+CREATE TABLE gtesty (x int, b int GENERATED ALWAYS AS (x * 22) VIRTUAL);
 CREATE TABLE gtest1_y () INHERITS (gtest1, gtesty);  -- error
 NOTICE:  merging multiple inherited definitions of column "b"
 ERROR:  column "b" inherits conflicting generation expressions
 HINT:  To resolve the conflict, specify a generation expression explicitly.
-CREATE TABLE gtest1_y (b int GENERATED ALWAYS AS (x + 1) STORED) INHERITS (gtest1, gtesty);  -- ok
+CREATE TABLE gtest1_y (b int GENERATED ALWAYS AS (x + 1) VIRTUAL) INHERITS (gtest1, gtesty);  -- ok
 NOTICE:  merging multiple inherited definitions of column "b"
 NOTICE:  moving and merging column "b" with inherited definition
 DETAIL:  User-specified column moved to the position of the inherited column.
 \d gtest1_y
-                   Table "generated_stored_tests.gtest1_y"
- Column |  Type   | Collation | Nullable |              Default               
---------+---------+-----------+----------+------------------------------------
+               Table "generated_virtual_tests.gtest1_y"
+ Column |  Type   | Collation | Nullable |           Default           
+--------+---------+-----------+----------+-----------------------------
  a      | integer |           | not null | 
- b      | integer |           |          | generated always as (x + 1) stored
+ b      | integer |           |          | generated always as (x + 1)
  x      | integer |           |          | 
 Inherits: gtest1,
           gtesty
 
 -- test correct handling of GENERATED column that's only in child
 CREATE TABLE gtestp (f1 int);
-CREATE TABLE gtestc (f2 int GENERATED ALWAYS AS (f1+1) STORED) INHERITS(gtestp);
+CREATE TABLE gtestc (f2 int GENERATED ALWAYS AS (f1+1) VIRTUAL) INHERITS(gtestp);
 INSERT INTO gtestc values(42);
 TABLE gtestc;
  f1 | f2 
@@ -446,8 +440,8 @@ TABLE gtestc;
 
 DROP TABLE gtestp CASCADE;
 NOTICE:  drop cascades to table gtestc
--- test stored update
-CREATE TABLE gtest3 (a int, b int GENERATED ALWAYS AS (a * 3) STORED);
+-- test update
+CREATE TABLE gtest3 (a int, b int GENERATED ALWAYS AS (a * 3) VIRTUAL);
 INSERT INTO gtest3 (a) VALUES (1), (2), (3), (NULL);
 SELECT * FROM gtest3 ORDER BY a;
  a | b 
@@ -468,7 +462,7 @@ SELECT * FROM gtest3 ORDER BY a;
     |   
 (4 rows)
 
-CREATE TABLE gtest3a (a text, b text GENERATED ALWAYS AS (a || '+' || a) STORED);
+CREATE TABLE gtest3a (a text, b text GENERATED ALWAYS AS (a || '+' || a) VIRTUAL);
 INSERT INTO gtest3a (a) VALUES ('a'), ('b'), ('c'), (NULL);
 SELECT * FROM gtest3a ORDER BY a;
  a |  b  
@@ -533,7 +527,7 @@ SELECT * FROM gtest3 ORDER BY a;
 (4 rows)
 
 -- null values
-CREATE TABLE gtest2 (a int PRIMARY KEY, b int GENERATED ALWAYS AS (NULL) STORED);
+CREATE TABLE gtest2 (a int PRIMARY KEY, b int GENERATED ALWAYS AS (NULL) VIRTUAL);
 INSERT INTO gtest2 VALUES (1);
 SELECT * FROM gtest2;
  a | b 
@@ -542,7 +536,7 @@ SELECT * FROM gtest2;
 (1 row)
 
 -- simple column reference for varlena types
-CREATE TABLE gtest_varlena (a varchar, b varchar GENERATED ALWAYS AS (a) STORED);
+CREATE TABLE gtest_varlena (a varchar, b varchar GENERATED ALWAYS AS (a) VIRTUAL);
 INSERT INTO gtest_varlena (a) VALUES('01234567890123456789');
 INSERT INTO gtest_varlena (a) VALUES(NULL);
 SELECT * FROM gtest_varlena ORDER BY a;
@@ -557,7 +551,7 @@ DROP TABLE gtest_varlena;
 CREATE TYPE double_int as (a int, b int);
 CREATE TABLE gtest4 (
     a int,
-    b double_int GENERATED ALWAYS AS ((a * 2, a * 3)) STORED
+    b double_int GENERATED ALWAYS AS ((a * 2, a * 3)) VIRTUAL
 );
 INSERT INTO gtest4 VALUES (1), (6);
 SELECT * FROM gtest4;
@@ -572,11 +566,11 @@ DROP TYPE double_int;
 -- using tableoid is allowed
 CREATE TABLE gtest_tableoid (
   a int PRIMARY KEY,
-  b bool GENERATED ALWAYS AS (tableoid = 'gtest_tableoid'::regclass) STORED
+  b bool GENERATED ALWAYS AS (tableoid = 'gtest_tableoid'::regclass) VIRTUAL
 );
 INSERT INTO gtest_tableoid VALUES (1), (2);
 ALTER TABLE gtest_tableoid ADD COLUMN
-  c regclass GENERATED ALWAYS AS (tableoid) STORED;
+  c regclass GENERATED ALWAYS AS (tableoid) VIRTUAL;
 SELECT * FROM gtest_tableoid;
  a | b |       c        
 ---+---+----------------
@@ -585,7 +579,7 @@ SELECT * FROM gtest_tableoid;
 (2 rows)
 
 -- drop column behavior
-CREATE TABLE gtest10 (a int PRIMARY KEY, b int, c int GENERATED ALWAYS AS (b * 2) STORED);
+CREATE TABLE gtest10 (a int PRIMARY KEY, b int, c int GENERATED ALWAYS AS (b * 2) VIRTUAL);
 ALTER TABLE gtest10 DROP COLUMN b;  -- fails
 ERROR:  cannot drop column b of table gtest10 because other objects depend on it
 DETAIL:  column c of table gtest10 depends on column b of table gtest10
@@ -593,24 +587,24 @@ HINT:  Use DROP ... CASCADE to drop the dependent objects too.
 ALTER TABLE gtest10 DROP COLUMN b CASCADE;  -- drops c too
 NOTICE:  drop cascades to column c of table gtest10
 \d gtest10
-      Table "generated_stored_tests.gtest10"
+      Table "generated_virtual_tests.gtest10"
  Column |  Type   | Collation | Nullable | Default 
 --------+---------+-----------+----------+---------
  a      | integer |           | not null | 
 Indexes:
     "gtest10_pkey" PRIMARY KEY, btree (a)
 
-CREATE TABLE gtest10a (a int PRIMARY KEY, b int GENERATED ALWAYS AS (a * 2) STORED);
+CREATE TABLE gtest10a (a int PRIMARY KEY, b int GENERATED ALWAYS AS (a * 2) VIRTUAL);
 ALTER TABLE gtest10a DROP COLUMN b;
 INSERT INTO gtest10a (a) VALUES (1);
 -- privileges
 CREATE USER regress_user11;
-CREATE TABLE gtest11 (a int PRIMARY KEY, b int, c int GENERATED ALWAYS AS (b * 2) STORED);
+CREATE TABLE gtest11 (a int PRIMARY KEY, b int, c int GENERATED ALWAYS AS (b * 2) VIRTUAL);
 INSERT INTO gtest11 VALUES (1, 10), (2, 20);
 GRANT SELECT (a, c) ON gtest11 TO regress_user11;
 CREATE FUNCTION gf1(a int) RETURNS int AS $$ SELECT a * 3 $$ IMMUTABLE LANGUAGE SQL;
 REVOKE ALL ON FUNCTION gf1(int) FROM PUBLIC;
-CREATE TABLE gtest12 (a int PRIMARY KEY, b int, c int GENERATED ALWAYS AS (gf1(b)) STORED);
+CREATE TABLE gtest12 (a int PRIMARY KEY, b int, c int GENERATED ALWAYS AS (gf1(b)) VIRTUAL);
 INSERT INTO gtest12 VALUES (1, 10), (2, 20);
 GRANT SELECT (a, c), INSERT ON gtest12 TO regress_user11;
 SET ROLE regress_user11;
@@ -625,15 +619,9 @@ SELECT a, c FROM gtest11;  -- allowed
 
 SELECT gf1(10);  -- not allowed
 ERROR:  permission denied for function gf1
-INSERT INTO gtest12 VALUES (3, 30), (4, 40);  -- currently not allowed because of function permissions, should arguably be allowed
+INSERT INTO gtest12 VALUES (3, 30), (4, 40);  -- allowed (does not actually invoke the function)
+SELECT a, c FROM gtest12;  -- currently not allowed because of function permissions, should arguably be allowed
 ERROR:  permission denied for function gf1
-SELECT a, c FROM gtest12;  -- allowed (does not actually invoke the function)
- a | c  
----+----
- 1 | 30
- 2 | 60
-(2 rows)
-
 RESET ROLE;
 DROP FUNCTION gf1(int);  -- fail
 ERROR:  cannot drop function gf1(integer) because other objects depend on it
@@ -643,227 +631,147 @@ DROP TABLE gtest11, gtest12;
 DROP FUNCTION gf1(int);
 DROP USER regress_user11;
 -- check constraints
-CREATE TABLE gtest20 (a int PRIMARY KEY, b int GENERATED ALWAYS AS (a * 2) STORED CHECK (b < 50));
+CREATE TABLE gtest20 (a int PRIMARY KEY, b int GENERATED ALWAYS AS (a * 2) VIRTUAL CHECK (b < 50));
 INSERT INTO gtest20 (a) VALUES (10);  -- ok
 INSERT INTO gtest20 (a) VALUES (30);  -- violates constraint
 ERROR:  new row for relation "gtest20" violates check constraint "gtest20_b_check"
-DETAIL:  Failing row contains (30, 60).
-ALTER TABLE gtest20 ALTER COLUMN b SET EXPRESSION AS (a * 100);  -- violates constraint
-ERROR:  check constraint "gtest20_b_check" of relation "gtest20" is violated by some row
-ALTER TABLE gtest20 ALTER COLUMN b SET EXPRESSION AS (a * 3);  -- ok
-CREATE TABLE gtest20a (a int PRIMARY KEY, b int GENERATED ALWAYS AS (a * 2) STORED);
+DETAIL:  Failing row contains (30, virtual).
+ALTER TABLE gtest20 ALTER COLUMN b SET EXPRESSION AS (a * 100);  -- violates constraint (currently not supported)
+ERROR:  ALTER TABLE / SET EXPRESSION is not supported for virtual generated columns on tables with check constraints
+DETAIL:  Column "b" of relation "gtest20" is a virtual generated column.
+ALTER TABLE gtest20 ALTER COLUMN b SET EXPRESSION AS (a * 3);  -- ok (currently not supported)
+ERROR:  ALTER TABLE / SET EXPRESSION is not supported for virtual generated columns on tables with check constraints
+DETAIL:  Column "b" of relation "gtest20" is a virtual generated column.
+CREATE TABLE gtest20a (a int PRIMARY KEY, b int GENERATED ALWAYS AS (a * 2) VIRTUAL);
 INSERT INTO gtest20a (a) VALUES (10);
 INSERT INTO gtest20a (a) VALUES (30);
 ALTER TABLE gtest20a ADD CHECK (b < 50);  -- fails on existing row
 ERROR:  check constraint "gtest20a_b_check" of relation "gtest20a" is violated by some row
-CREATE TABLE gtest20b (a int PRIMARY KEY, b int GENERATED ALWAYS AS (a * 2) STORED);
+CREATE TABLE gtest20b (a int PRIMARY KEY, b int GENERATED ALWAYS AS (a * 2) VIRTUAL);
 INSERT INTO gtest20b (a) VALUES (10);
 INSERT INTO gtest20b (a) VALUES (30);
 ALTER TABLE gtest20b ADD CONSTRAINT chk CHECK (b < 50) NOT VALID;
 ALTER TABLE gtest20b VALIDATE CONSTRAINT chk;  -- fails on existing row
 ERROR:  check constraint "chk" of relation "gtest20b" is violated by some row
 -- check with whole-row reference
-CREATE TABLE gtest20c (a int, b int GENERATED ALWAYS AS (a * 2) STORED);
+CREATE TABLE gtest20c (a int, b int GENERATED ALWAYS AS (a * 2) VIRTUAL);
 ALTER TABLE gtest20c ADD CONSTRAINT whole_row_check CHECK (gtest20c IS NOT NULL);
 INSERT INTO gtest20c VALUES (1);  -- ok
 INSERT INTO gtest20c VALUES (NULL);  -- fails
 ERROR:  new row for relation "gtest20c" violates check constraint "whole_row_check"
-DETAIL:  Failing row contains (null, null).
--- not-null constraints
-CREATE TABLE gtest21a (a int PRIMARY KEY, b int GENERATED ALWAYS AS (nullif(a, 0)) STORED NOT NULL);
-INSERT INTO gtest21a (a) VALUES (1);  -- ok
-INSERT INTO gtest21a (a) VALUES (0);  -- violates constraint
-ERROR:  null value in column "b" of relation "gtest21a" violates not-null constraint
-DETAIL:  Failing row contains (0, null).
-CREATE TABLE gtest21b (a int PRIMARY KEY, b int GENERATED ALWAYS AS (nullif(a, 0)) STORED);
+DETAIL:  Failing row contains (null, virtual).
+-- not-null constraints (currently not supported)
+CREATE TABLE gtest21a (a int PRIMARY KEY, b int GENERATED ALWAYS AS (nullif(a, 0)) VIRTUAL NOT NULL);
+ERROR:  not-null constraints are not supported on virtual generated columns
+LINE 1: ... b int GENERATED ALWAYS AS (nullif(a, 0)) VIRTUAL NOT NULL);
+                                                             ^
+--INSERT INTO gtest21a (a) VALUES (1);  -- ok
+--INSERT INTO gtest21a (a) VALUES (0);  -- violates constraint
+-- also check with table constraint syntax
+CREATE TABLE gtest21ax (a int PRIMARY KEY, b int GENERATED ALWAYS AS (nullif(a, 0)) VIRTUAL, CONSTRAINT cc NOT NULL b);  -- error
+ERROR:  not-null constraints are not supported on virtual generated columns
+CREATE TABLE gtest21ax (a int PRIMARY KEY, b int GENERATED ALWAYS AS (nullif(a, 0)) VIRTUAL);
+ALTER TABLE gtest21ax ADD CONSTRAINT cc NOT NULL b;  -- error
+ERROR:  not-null constraints are not supported on virtual generated columns
+DROP TABLE gtest21ax;
+CREATE TABLE gtest21b (a int PRIMARY KEY, b int GENERATED ALWAYS AS (nullif(a, 0)) VIRTUAL);
 ALTER TABLE gtest21b ALTER COLUMN b SET NOT NULL;
-INSERT INTO gtest21b (a) VALUES (1);  -- ok
-INSERT INTO gtest21b (a) VALUES (0);  -- violates constraint
-ERROR:  null value in column "b" of relation "gtest21b" violates not-null constraint
-DETAIL:  Failing row contains (0, null).
+ERROR:  not-null constraints are not supported on virtual generated columns
+DETAIL:  Column "b" of relation "gtest21b" is a virtual generated column.
+--INSERT INTO gtest21b (a) VALUES (1);  -- ok
+--INSERT INTO gtest21b (a) VALUES (0);  -- violates constraint
 ALTER TABLE gtest21b ALTER COLUMN b DROP NOT NULL;
-INSERT INTO gtest21b (a) VALUES (0);  -- ok now
+--INSERT INTO gtest21b (a) VALUES (0);  -- ok now
 -- index constraints
-CREATE TABLE gtest22a (a int PRIMARY KEY, b int GENERATED ALWAYS AS (a / 2) STORED UNIQUE);
-INSERT INTO gtest22a VALUES (2);
-INSERT INTO gtest22a VALUES (3);
-ERROR:  duplicate key value violates unique constraint "gtest22a_b_key"
-DETAIL:  Key (b)=(1) already exists.
-INSERT INTO gtest22a VALUES (4);
-CREATE TABLE gtest22b (a int, b int GENERATED ALWAYS AS (a / 2) STORED, PRIMARY KEY (a, b));
-INSERT INTO gtest22b VALUES (2);
-INSERT INTO gtest22b VALUES (2);
-ERROR:  duplicate key value violates unique constraint "gtest22b_pkey"
-DETAIL:  Key (a, b)=(2, 1) already exists.
+CREATE TABLE gtest22a (a int PRIMARY KEY, b int GENERATED ALWAYS AS (a / 2) VIRTUAL UNIQUE);
+ERROR:  unique constraints on virtual generated columns are not supported
+--INSERT INTO gtest22a VALUES (2);
+--INSERT INTO gtest22a VALUES (3);
+--INSERT INTO gtest22a VALUES (4);
+CREATE TABLE gtest22b (a int, b int GENERATED ALWAYS AS (a / 2) VIRTUAL, PRIMARY KEY (a, b));
+ERROR:  not-null constraints are not supported on virtual generated columns
+--INSERT INTO gtest22b VALUES (2);
+--INSERT INTO gtest22b VALUES (2);
 -- indexes
-CREATE TABLE gtest22c (a int, b int GENERATED ALWAYS AS (a * 2) STORED);
-CREATE INDEX gtest22c_b_idx ON gtest22c (b);
-CREATE INDEX gtest22c_expr_idx ON gtest22c ((b * 3));
-CREATE INDEX gtest22c_pred_idx ON gtest22c (a) WHERE b > 0;
-\d gtest22c
-                   Table "generated_stored_tests.gtest22c"
- Column |  Type   | Collation | Nullable |              Default               
---------+---------+-----------+----------+------------------------------------
- a      | integer |           |          | 
- b      | integer |           |          | generated always as (a * 2) stored
-Indexes:
-    "gtest22c_b_idx" btree (b)
-    "gtest22c_expr_idx" btree ((b * 3))
-    "gtest22c_pred_idx" btree (a) WHERE b > 0
-
-INSERT INTO gtest22c VALUES (1), (2), (3);
-SET enable_seqscan TO off;
-SET enable_bitmapscan TO off;
-EXPLAIN (COSTS OFF) SELECT * FROM gtest22c WHERE b = 4;
-                 QUERY PLAN                  
----------------------------------------------
- Index Scan using gtest22c_b_idx on gtest22c
-   Index Cond: (b = 4)
-(2 rows)
-
-SELECT * FROM gtest22c WHERE b = 4;
- a | b 
----+---
- 2 | 4
-(1 row)
-
-EXPLAIN (COSTS OFF) SELECT * FROM gtest22c WHERE b * 3 = 6;
-                   QUERY PLAN                   
-------------------------------------------------
- Index Scan using gtest22c_expr_idx on gtest22c
-   Index Cond: ((b * 3) = 6)
-(2 rows)
-
-SELECT * FROM gtest22c WHERE b * 3 = 6;
- a | b 
----+---
- 1 | 2
-(1 row)
-
-EXPLAIN (COSTS OFF) SELECT * FROM gtest22c WHERE a = 1 AND b > 0;
-                   QUERY PLAN                   
-------------------------------------------------
- Index Scan using gtest22c_pred_idx on gtest22c
-   Index Cond: (a = 1)
-(2 rows)
-
-SELECT * FROM gtest22c WHERE a = 1 AND b > 0;
- a | b 
----+---
- 1 | 2
-(1 row)
-
-ALTER TABLE gtest22c ALTER COLUMN b SET EXPRESSION AS (a * 4);
-ANALYZE gtest22c;
-EXPLAIN (COSTS OFF) SELECT * FROM gtest22c WHERE b = 8;
-                 QUERY PLAN                  
----------------------------------------------
- Index Scan using gtest22c_b_idx on gtest22c
-   Index Cond: (b = 8)
-(2 rows)
-
-SELECT * FROM gtest22c WHERE b = 8;
- a | b 
----+---
- 2 | 8
-(1 row)
-
-EXPLAIN (COSTS OFF) SELECT * FROM gtest22c WHERE b * 3 = 12;
-                   QUERY PLAN                   
-------------------------------------------------
- Index Scan using gtest22c_expr_idx on gtest22c
-   Index Cond: ((b * 3) = 12)
-(2 rows)
-
-SELECT * FROM gtest22c WHERE b * 3 = 12;
- a | b 
----+---
- 1 | 4
-(1 row)
-
-EXPLAIN (COSTS OFF) SELECT * FROM gtest22c WHERE a = 1 AND b > 0;
-                   QUERY PLAN                   
-------------------------------------------------
- Index Scan using gtest22c_pred_idx on gtest22c
-   Index Cond: (a = 1)
-(2 rows)
-
-SELECT * FROM gtest22c WHERE a = 1 AND b > 0;
- a | b 
----+---
- 1 | 4
-(1 row)
-
-RESET enable_seqscan;
-RESET enable_bitmapscan;
+CREATE TABLE gtest22c (a int, b int GENERATED ALWAYS AS (a * 2) VIRTUAL);
+--CREATE INDEX gtest22c_b_idx ON gtest22c (b);
+--CREATE INDEX gtest22c_expr_idx ON gtest22c ((b * 3));
+--CREATE INDEX gtest22c_pred_idx ON gtest22c (a) WHERE b > 0;
+--\d gtest22c
+--INSERT INTO gtest22c VALUES (1), (2), (3);
+--SET enable_seqscan TO off;
+--SET enable_bitmapscan TO off;
+--EXPLAIN (COSTS OFF) SELECT * FROM gtest22c WHERE b = 4;
+--SELECT * FROM gtest22c WHERE b = 4;
+--EXPLAIN (COSTS OFF) SELECT * FROM gtest22c WHERE b * 3 = 6;
+--SELECT * FROM gtest22c WHERE b * 3 = 6;
+--EXPLAIN (COSTS OFF) SELECT * FROM gtest22c WHERE a = 1 AND b > 0;
+--SELECT * FROM gtest22c WHERE a = 1 AND b > 0;
+--ALTER TABLE gtest22c ALTER COLUMN b SET EXPRESSION AS (a * 4);
+--ANALYZE gtest22c;
+--EXPLAIN (COSTS OFF) SELECT * FROM gtest22c WHERE b = 8;
+--SELECT * FROM gtest22c WHERE b = 8;
+--EXPLAIN (COSTS OFF) SELECT * FROM gtest22c WHERE b * 3 = 12;
+--SELECT * FROM gtest22c WHERE b * 3 = 12;
+--EXPLAIN (COSTS OFF) SELECT * FROM gtest22c WHERE a = 1 AND b > 0;
+--SELECT * FROM gtest22c WHERE a = 1 AND b > 0;
+--RESET enable_seqscan;
+--RESET enable_bitmapscan;
 -- foreign keys
 CREATE TABLE gtest23a (x int PRIMARY KEY, y int);
-INSERT INTO gtest23a VALUES (1, 11), (2, 22), (3, 33);
-CREATE TABLE gtest23x (a int PRIMARY KEY, b int GENERATED ALWAYS AS (a * 2) STORED REFERENCES gtest23a (x) ON UPDATE CASCADE);  -- error
+--INSERT INTO gtest23a VALUES (1, 11), (2, 22), (3, 33);
+CREATE TABLE gtest23x (a int PRIMARY KEY, b int GENERATED ALWAYS AS (a * 2) VIRTUAL REFERENCES gtest23a (x) ON UPDATE CASCADE);  -- error
 ERROR:  invalid ON UPDATE action for foreign key constraint containing generated column
-CREATE TABLE gtest23x (a int PRIMARY KEY, b int GENERATED ALWAYS AS (a * 2) STORED REFERENCES gtest23a (x) ON DELETE SET NULL);  -- error
+CREATE TABLE gtest23x (a int PRIMARY KEY, b int GENERATED ALWAYS AS (a * 2) VIRTUAL REFERENCES gtest23a (x) ON DELETE SET NULL);  -- error
 ERROR:  invalid ON DELETE action for foreign key constraint containing generated column
-CREATE TABLE gtest23b (a int PRIMARY KEY, b int GENERATED ALWAYS AS (a * 2) STORED REFERENCES gtest23a (x));
-\d gtest23b
-                   Table "generated_stored_tests.gtest23b"
- Column |  Type   | Collation | Nullable |              Default               
---------+---------+-----------+----------+------------------------------------
- a      | integer |           | not null | 
- b      | integer |           |          | generated always as (a * 2) stored
-Indexes:
-    "gtest23b_pkey" PRIMARY KEY, btree (a)
-Foreign-key constraints:
-    "gtest23b_b_fkey" FOREIGN KEY (b) REFERENCES gtest23a(x)
-
-INSERT INTO gtest23b VALUES (1);  -- ok
-INSERT INTO gtest23b VALUES (5);  -- error
-ERROR:  insert or update on table "gtest23b" violates foreign key constraint "gtest23b_b_fkey"
-DETAIL:  Key (b)=(10) is not present in table "gtest23a".
-ALTER TABLE gtest23b ALTER COLUMN b SET EXPRESSION AS (a * 5); -- error
-ERROR:  insert or update on table "gtest23b" violates foreign key constraint "gtest23b_b_fkey"
-DETAIL:  Key (b)=(5) is not present in table "gtest23a".
-ALTER TABLE gtest23b ALTER COLUMN b SET EXPRESSION AS (a * 1); -- ok
-DROP TABLE gtest23b;
-DROP TABLE gtest23a;
-CREATE TABLE gtest23p (x int, y int GENERATED ALWAYS AS (x * 2) STORED, PRIMARY KEY (y));
-INSERT INTO gtest23p VALUES (1), (2), (3);
+CREATE TABLE gtest23b (a int PRIMARY KEY, b int GENERATED ALWAYS AS (a * 2) VIRTUAL REFERENCES gtest23a (x));
+ERROR:  foreign key constraints on virtual generated columns are not supported
+--\d gtest23b
+--INSERT INTO gtest23b VALUES (1);  -- ok
+--INSERT INTO gtest23b VALUES (5);  -- error
+--ALTER TABLE gtest23b ALTER COLUMN b SET EXPRESSION AS (a * 5); -- error
+--ALTER TABLE gtest23b ALTER COLUMN b SET EXPRESSION AS (a * 1); -- ok
+--DROP TABLE gtest23b;
+--DROP TABLE gtest23a;
+CREATE TABLE gtest23p (x int, y int GENERATED ALWAYS AS (x * 2) VIRTUAL, PRIMARY KEY (y));
+ERROR:  not-null constraints are not supported on virtual generated columns
+--INSERT INTO gtest23p VALUES (1), (2), (3);
 CREATE TABLE gtest23q (a int PRIMARY KEY, b int REFERENCES gtest23p (y));
-INSERT INTO gtest23q VALUES (1, 2);  -- ok
-INSERT INTO gtest23q VALUES (2, 5);  -- error
-ERROR:  insert or update on table "gtest23q" violates foreign key constraint "gtest23q_b_fkey"
-DETAIL:  Key (b)=(5) is not present in table "gtest23p".
+ERROR:  relation "gtest23p" does not exist
+--INSERT INTO gtest23q VALUES (1, 2);  -- ok
+--INSERT INTO gtest23q VALUES (2, 5);  -- error
 -- domains
 CREATE DOMAIN gtestdomain1 AS int CHECK (VALUE < 10);
-CREATE TABLE gtest24 (a int PRIMARY KEY, b gtestdomain1 GENERATED ALWAYS AS (a * 2) STORED);
-INSERT INTO gtest24 (a) VALUES (4);  -- ok
-INSERT INTO gtest24 (a) VALUES (6);  -- error
-ERROR:  value for domain gtestdomain1 violates check constraint "gtestdomain1_check"
+CREATE TABLE gtest24 (a int PRIMARY KEY, b gtestdomain1 GENERATED ALWAYS AS (a * 2) VIRTUAL);
+ERROR:  virtual generated column "b" cannot have a domain type
+--INSERT INTO gtest24 (a) VALUES (4);  -- ok
+--INSERT INTO gtest24 (a) VALUES (6);  -- error
 CREATE TYPE gtestdomain1range AS range (subtype = gtestdomain1);
-CREATE TABLE gtest24r (a int PRIMARY KEY, b gtestdomain1range GENERATED ALWAYS AS (gtestdomain1range(a, a + 5)) STORED);
-INSERT INTO gtest24r (a) VALUES (4);  -- ok
-INSERT INTO gtest24r (a) VALUES (6);  -- error
-ERROR:  value for domain gtestdomain1 violates check constraint "gtestdomain1_check"
+CREATE TABLE gtest24r (a int PRIMARY KEY, b gtestdomain1range GENERATED ALWAYS AS (gtestdomain1range(a, a + 5)) VIRTUAL);
+ERROR:  virtual generated column "b" cannot have a domain type
+--INSERT INTO gtest24r (a) VALUES (4);  -- ok
+--INSERT INTO gtest24r (a) VALUES (6);  -- error
 -- typed tables (currently not supported)
 CREATE TYPE gtest_type AS (f1 integer, f2 text, f3 bigint);
-CREATE TABLE gtest28 OF gtest_type (f1 WITH OPTIONS GENERATED ALWAYS AS (f2 *2) STORED);
+CREATE TABLE gtest28 OF gtest_type (f1 WITH OPTIONS GENERATED ALWAYS AS (f2 *2) VIRTUAL);
 ERROR:  generated columns are not supported on typed tables
 DROP TYPE gtest_type CASCADE;
 -- partitioning cases
 CREATE TABLE gtest_parent (f1 date NOT NULL, f2 bigint, f3 bigint) PARTITION BY RANGE (f1);
 CREATE TABLE gtest_child PARTITION OF gtest_parent (
-    f3 WITH OPTIONS GENERATED ALWAYS AS (f2 * 2) STORED
+    f3 WITH OPTIONS GENERATED ALWAYS AS (f2 * 2) VIRTUAL
 ) FOR VALUES FROM ('2016-07-01') TO ('2016-08-01'); -- error
 ERROR:  child column "f3" specifies generation expression
 HINT:  A child table column cannot be generated unless its parent column is.
-CREATE TABLE gtest_child (f1 date NOT NULL, f2 bigint, f3 bigint GENERATED ALWAYS AS (f2 * 2) STORED);
+CREATE TABLE gtest_child (f1 date NOT NULL, f2 bigint, f3 bigint GENERATED ALWAYS AS (f2 * 2) VIRTUAL);
 ALTER TABLE gtest_parent ATTACH PARTITION gtest_child FOR VALUES FROM ('2016-07-01') TO ('2016-08-01'); -- error
 ERROR:  column "f3" in child table must not be a generated column
 DROP TABLE gtest_parent, gtest_child;
-CREATE TABLE gtest_parent (f1 date NOT NULL, f2 bigint, f3 bigint GENERATED ALWAYS AS (f2 * 2) STORED) PARTITION BY RANGE (f1);
+CREATE TABLE gtest_parent (f1 date NOT NULL, f2 bigint, f3 bigint GENERATED ALWAYS AS (f2 * 2) VIRTUAL) PARTITION BY RANGE (f1);
 CREATE TABLE gtest_child PARTITION OF gtest_parent
   FOR VALUES FROM ('2016-07-01') TO ('2016-08-01');  -- inherits gen expr
 CREATE TABLE gtest_child2 PARTITION OF gtest_parent (
-    f3 WITH OPTIONS GENERATED ALWAYS AS (f2 * 22) STORED  -- overrides gen expr
+    f3 WITH OPTIONS GENERATED ALWAYS AS (f2 * 22) VIRTUAL  -- overrides gen expr
 ) FOR VALUES FROM ('2016-08-01') TO ('2016-09-01');
 CREATE TABLE gtest_child3 PARTITION OF gtest_parent (
     f3 DEFAULT 42  -- error
@@ -874,10 +782,10 @@ CREATE TABLE gtest_child3 PARTITION OF gtest_parent (
 ) FOR VALUES FROM ('2016-09-01') TO ('2016-10-01');
 ERROR:  identity columns are not supported on partitions
 CREATE TABLE gtest_child3 PARTITION OF gtest_parent (
-    f3 GENERATED ALWAYS AS (f2 * 2) VIRTUAL  -- error
+    f3 GENERATED ALWAYS AS (f2 * 2) STORED  -- error
 ) FOR VALUES FROM ('2016-09-01') TO ('2016-10-01');
 ERROR:  column "f3" inherits from generated column of different kind
-DETAIL:  Parent column is STORED, child column is VIRTUAL.
+DETAIL:  Parent column is VIRTUAL, child column is STORED.
 CREATE TABLE gtest_child3 (f1 date NOT NULL, f2 bigint, f3 bigint);
 ALTER TABLE gtest_parent ATTACH PARTITION gtest_child3 FOR VALUES FROM ('2016-09-01') TO ('2016-10-01'); -- error
 ERROR:  column "f3" in child table must be a generated column
@@ -891,38 +799,38 @@ ALTER TABLE gtest_parent ATTACH PARTITION gtest_child3 FOR VALUES FROM ('2016-09
 ERROR:  table "gtest_child3" being attached contains an identity column "f3"
 DETAIL:  The new partition may not contain an identity column.
 DROP TABLE gtest_child3;
-CREATE TABLE gtest_child3 (f1 date NOT NULL, f2 bigint, f3 bigint GENERATED ALWAYS AS (f2 * 33) VIRTUAL);
+CREATE TABLE gtest_child3 (f1 date NOT NULL, f2 bigint, f3 bigint GENERATED ALWAYS AS (f2 * 33) STORED);
 ALTER TABLE gtest_parent ATTACH PARTITION gtest_child3 FOR VALUES FROM ('2016-09-01') TO ('2016-10-01'); -- error
 ERROR:  column "f3" inherits from generated column of different kind
-DETAIL:  Parent column is STORED, child column is VIRTUAL.
+DETAIL:  Parent column is VIRTUAL, child column is STORED.
 DROP TABLE gtest_child3;
-CREATE TABLE gtest_child3 (f1 date NOT NULL, f2 bigint, f3 bigint GENERATED ALWAYS AS (f2 * 33) STORED);
+CREATE TABLE gtest_child3 (f1 date NOT NULL, f2 bigint, f3 bigint GENERATED ALWAYS AS (f2 * 33) VIRTUAL);
 ALTER TABLE gtest_parent ATTACH PARTITION gtest_child3 FOR VALUES FROM ('2016-09-01') TO ('2016-10-01');
 \d gtest_child
-                  Table "generated_stored_tests.gtest_child"
- Column |  Type  | Collation | Nullable |               Default               
---------+--------+-----------+----------+-------------------------------------
+              Table "generated_virtual_tests.gtest_child"
+ Column |  Type  | Collation | Nullable |           Default            
+--------+--------+-----------+----------+------------------------------
  f1     | date   |           | not null | 
  f2     | bigint |           |          | 
- f3     | bigint |           |          | generated always as (f2 * 2) stored
+ f3     | bigint |           |          | generated always as (f2 * 2)
 Partition of: gtest_parent FOR VALUES FROM ('07-01-2016') TO ('08-01-2016')
 
 \d gtest_child2
-                  Table "generated_stored_tests.gtest_child2"
- Column |  Type  | Collation | Nullable |               Default                
---------+--------+-----------+----------+--------------------------------------
+              Table "generated_virtual_tests.gtest_child2"
+ Column |  Type  | Collation | Nullable |            Default            
+--------+--------+-----------+----------+-------------------------------
  f1     | date   |           | not null | 
  f2     | bigint |           |          | 
- f3     | bigint |           |          | generated always as (f2 * 22) stored
+ f3     | bigint |           |          | generated always as (f2 * 22)
 Partition of: gtest_parent FOR VALUES FROM ('08-01-2016') TO ('09-01-2016')
 
 \d gtest_child3
-                  Table "generated_stored_tests.gtest_child3"
- Column |  Type  | Collation | Nullable |               Default                
---------+--------+-----------+----------+--------------------------------------
+              Table "generated_virtual_tests.gtest_child3"
+ Column |  Type  | Collation | Nullable |            Default            
+--------+--------+-----------+----------+-------------------------------
  f1     | date   |           | not null | 
  f2     | bigint |           |          | 
- f3     | bigint |           |          | generated always as (f2 * 33) stored
+ f3     | bigint |           |          | generated always as (f2 * 33)
 Partition of: gtest_parent FOR VALUES FROM ('09-01-2016') TO ('10-01-2016')
 
 INSERT INTO gtest_parent (f1, f2) VALUES ('2016-07-15', 1);
@@ -933,7 +841,7 @@ SELECT tableoid::regclass, * FROM gtest_parent ORDER BY 1, 2, 3;
 --------------+------------+----+----
  gtest_child  | 07-15-2016 |  1 |  2
  gtest_child  | 07-15-2016 |  2 |  4
- gtest_child2 | 08-15-2016 |  3 | 66
+ gtest_child2 | 08-15-2016 |  3 |  6
 (3 rows)
 
 SELECT tableoid::regclass, * FROM gtest_child ORDER BY 1, 2, 3;
@@ -943,7 +851,7 @@ SELECT tableoid::regclass, * FROM gtest_child ORDER BY 1, 2, 3;
  gtest_child | 07-15-2016 |  2 |  4
 (2 rows)
 
-SELECT tableoid::regclass, * FROM gtest_child2 ORDER BY 1, 2, 3;
+SELECT tableoid::regclass, * FROM gtest_child2 ORDER BY 1, 2, 3;  -- uses child's generation expression, not parent's
    tableoid   |     f1     | f2 | f3 
 --------------+------------+----+----
  gtest_child2 | 08-15-2016 |  3 | 66
@@ -959,95 +867,95 @@ SELECT tableoid::regclass, * FROM gtest_parent ORDER BY 1, 2, 3;
    tableoid   |     f1     | f2 | f3 
 --------------+------------+----+----
  gtest_child  | 07-15-2016 |  2 |  4
- gtest_child2 | 08-15-2016 |  3 | 66
- gtest_child3 | 09-13-2016 |  1 | 33
+ gtest_child2 | 08-15-2016 |  3 |  6
+ gtest_child3 | 09-13-2016 |  1 |  2
 (3 rows)
 
 -- alter only parent's and one child's generation expression
 ALTER TABLE ONLY gtest_parent ALTER COLUMN f3 SET EXPRESSION AS (f2 * 4);
 ALTER TABLE gtest_child ALTER COLUMN f3 SET EXPRESSION AS (f2 * 10);
 \d gtest_parent
-           Partitioned table "generated_stored_tests.gtest_parent"
- Column |  Type  | Collation | Nullable |               Default               
---------+--------+-----------+----------+-------------------------------------
+       Partitioned table "generated_virtual_tests.gtest_parent"
+ Column |  Type  | Collation | Nullable |           Default            
+--------+--------+-----------+----------+------------------------------
  f1     | date   |           | not null | 
  f2     | bigint |           |          | 
- f3     | bigint |           |          | generated always as (f2 * 4) stored
+ f3     | bigint |           |          | generated always as (f2 * 4)
 Partition key: RANGE (f1)
 Number of partitions: 3 (Use \d+ to list them.)
 
 \d gtest_child
-                  Table "generated_stored_tests.gtest_child"
- Column |  Type  | Collation | Nullable |               Default                
---------+--------+-----------+----------+--------------------------------------
+              Table "generated_virtual_tests.gtest_child"
+ Column |  Type  | Collation | Nullable |            Default            
+--------+--------+-----------+----------+-------------------------------
  f1     | date   |           | not null | 
  f2     | bigint |           |          | 
- f3     | bigint |           |          | generated always as (f2 * 10) stored
+ f3     | bigint |           |          | generated always as (f2 * 10)
 Partition of: gtest_parent FOR VALUES FROM ('07-01-2016') TO ('08-01-2016')
 
 \d gtest_child2
-                  Table "generated_stored_tests.gtest_child2"
- Column |  Type  | Collation | Nullable |               Default                
---------+--------+-----------+----------+--------------------------------------
+              Table "generated_virtual_tests.gtest_child2"
+ Column |  Type  | Collation | Nullable |            Default            
+--------+--------+-----------+----------+-------------------------------
  f1     | date   |           | not null | 
  f2     | bigint |           |          | 
- f3     | bigint |           |          | generated always as (f2 * 22) stored
+ f3     | bigint |           |          | generated always as (f2 * 22)
 Partition of: gtest_parent FOR VALUES FROM ('08-01-2016') TO ('09-01-2016')
 
 \d gtest_child3
-                  Table "generated_stored_tests.gtest_child3"
- Column |  Type  | Collation | Nullable |               Default                
---------+--------+-----------+----------+--------------------------------------
+              Table "generated_virtual_tests.gtest_child3"
+ Column |  Type  | Collation | Nullable |            Default            
+--------+--------+-----------+----------+-------------------------------
  f1     | date   |           | not null | 
  f2     | bigint |           |          | 
- f3     | bigint |           |          | generated always as (f2 * 33) stored
+ f3     | bigint |           |          | generated always as (f2 * 33)
 Partition of: gtest_parent FOR VALUES FROM ('09-01-2016') TO ('10-01-2016')
 
 SELECT tableoid::regclass, * FROM gtest_parent ORDER BY 1, 2, 3;
    tableoid   |     f1     | f2 | f3 
 --------------+------------+----+----
- gtest_child  | 07-15-2016 |  2 | 20
- gtest_child2 | 08-15-2016 |  3 | 66
- gtest_child3 | 09-13-2016 |  1 | 33
+ gtest_child  | 07-15-2016 |  2 |  8
+ gtest_child2 | 08-15-2016 |  3 | 12
+ gtest_child3 | 09-13-2016 |  1 |  4
 (3 rows)
 
 -- alter generation expression of parent and all its children altogether
 ALTER TABLE gtest_parent ALTER COLUMN f3 SET EXPRESSION AS (f2 * 2);
 \d gtest_parent
-           Partitioned table "generated_stored_tests.gtest_parent"
- Column |  Type  | Collation | Nullable |               Default               
---------+--------+-----------+----------+-------------------------------------
+       Partitioned table "generated_virtual_tests.gtest_parent"
+ Column |  Type  | Collation | Nullable |           Default            
+--------+--------+-----------+----------+------------------------------
  f1     | date   |           | not null | 
  f2     | bigint |           |          | 
- f3     | bigint |           |          | generated always as (f2 * 2) stored
+ f3     | bigint |           |          | generated always as (f2 * 2)
 Partition key: RANGE (f1)
 Number of partitions: 3 (Use \d+ to list them.)
 
 \d gtest_child
-                  Table "generated_stored_tests.gtest_child"
- Column |  Type  | Collation | Nullable |               Default               
---------+--------+-----------+----------+-------------------------------------
+              Table "generated_virtual_tests.gtest_child"
+ Column |  Type  | Collation | Nullable |           Default            
+--------+--------+-----------+----------+------------------------------
  f1     | date   |           | not null | 
  f2     | bigint |           |          | 
- f3     | bigint |           |          | generated always as (f2 * 2) stored
+ f3     | bigint |           |          | generated always as (f2 * 2)
 Partition of: gtest_parent FOR VALUES FROM ('07-01-2016') TO ('08-01-2016')
 
 \d gtest_child2
-                 Table "generated_stored_tests.gtest_child2"
- Column |  Type  | Collation | Nullable |               Default               
---------+--------+-----------+----------+-------------------------------------
+             Table "generated_virtual_tests.gtest_child2"
+ Column |  Type  | Collation | Nullable |           Default            
+--------+--------+-----------+----------+------------------------------
  f1     | date   |           | not null | 
  f2     | bigint |           |          | 
- f3     | bigint |           |          | generated always as (f2 * 2) stored
+ f3     | bigint |           |          | generated always as (f2 * 2)
 Partition of: gtest_parent FOR VALUES FROM ('08-01-2016') TO ('09-01-2016')
 
 \d gtest_child3
-                 Table "generated_stored_tests.gtest_child3"
- Column |  Type  | Collation | Nullable |               Default               
---------+--------+-----------+----------+-------------------------------------
+             Table "generated_virtual_tests.gtest_child3"
+ Column |  Type  | Collation | Nullable |           Default            
+--------+--------+-----------+----------+------------------------------
  f1     | date   |           | not null | 
  f2     | bigint |           |          | 
- f3     | bigint |           |          | generated always as (f2 * 2) stored
+ f3     | bigint |           |          | generated always as (f2 * 2)
 Partition of: gtest_parent FOR VALUES FROM ('09-01-2016') TO ('10-01-2016')
 
 SELECT tableoid::regclass, * FROM gtest_parent ORDER BY 1, 2, 3;
@@ -1060,20 +968,20 @@ SELECT tableoid::regclass, * FROM gtest_parent ORDER BY 1, 2, 3;
 
 -- we leave these tables around for purposes of testing dump/reload/upgrade
 -- generated columns in partition key (not allowed)
-CREATE TABLE gtest_part_key (f1 date NOT NULL, f2 bigint, f3 bigint GENERATED ALWAYS AS (f2 * 2) STORED) PARTITION BY RANGE (f3);
+CREATE TABLE gtest_part_key (f1 date NOT NULL, f2 bigint, f3 bigint GENERATED ALWAYS AS (f2 * 2) VIRTUAL) PARTITION BY RANGE (f3);
 ERROR:  cannot use generated column in partition key
-LINE 1: ...ENERATED ALWAYS AS (f2 * 2) STORED) PARTITION BY RANGE (f3);
+LINE 1: ...NERATED ALWAYS AS (f2 * 2) VIRTUAL) PARTITION BY RANGE (f3);
                                                                    ^
 DETAIL:  Column "f3" is a generated column.
-CREATE TABLE gtest_part_key (f1 date NOT NULL, f2 bigint, f3 bigint GENERATED ALWAYS AS (f2 * 2) STORED) PARTITION BY RANGE ((f3 * 3));
+CREATE TABLE gtest_part_key (f1 date NOT NULL, f2 bigint, f3 bigint GENERATED ALWAYS AS (f2 * 2) VIRTUAL) PARTITION BY RANGE ((f3 * 3));
 ERROR:  cannot use generated column in partition key
-LINE 1: ...ED ALWAYS AS (f2 * 2) STORED) PARTITION BY RANGE ((f3 * 3));
+LINE 1: ...D ALWAYS AS (f2 * 2) VIRTUAL) PARTITION BY RANGE ((f3 * 3));
                                                              ^
 DETAIL:  Column "f3" is a generated column.
 -- ALTER TABLE ... ADD COLUMN
 CREATE TABLE gtest25 (a int PRIMARY KEY);
 INSERT INTO gtest25 VALUES (3), (4);
-ALTER TABLE gtest25 ADD COLUMN b int GENERATED ALWAYS AS (a * 2) STORED, ALTER COLUMN b SET EXPRESSION AS (a * 3);
+ALTER TABLE gtest25 ADD COLUMN b int GENERATED ALWAYS AS (a * 2) VIRTUAL, ALTER COLUMN b SET EXPRESSION AS (a * 3);
 SELECT * FROM gtest25 ORDER BY a;
  a | b  
 ---+----
@@ -1081,16 +989,16 @@ SELECT * FROM gtest25 ORDER BY a;
  4 | 12
 (2 rows)
 
-ALTER TABLE gtest25 ADD COLUMN x int GENERATED ALWAYS AS (b * 4) STORED;  -- error
+ALTER TABLE gtest25 ADD COLUMN x int GENERATED ALWAYS AS (b * 4) VIRTUAL;  -- error
 ERROR:  cannot use generated column "b" in column generation expression
 DETAIL:  A generated column cannot reference another generated column.
-ALTER TABLE gtest25 ADD COLUMN x int GENERATED ALWAYS AS (z * 4) STORED;  -- error
+ALTER TABLE gtest25 ADD COLUMN x int GENERATED ALWAYS AS (z * 4) VIRTUAL;  -- error
 ERROR:  column "z" does not exist
 ALTER TABLE gtest25 ADD COLUMN c int DEFAULT 42,
-  ADD COLUMN x int GENERATED ALWAYS AS (c * 4) STORED;
+  ADD COLUMN x int GENERATED ALWAYS AS (c * 4) VIRTUAL;
 ALTER TABLE gtest25 ADD COLUMN d int DEFAULT 101;
 ALTER TABLE gtest25 ALTER COLUMN d SET DATA TYPE float8,
-  ADD COLUMN y float8 GENERATED ALWAYS AS (d * 4) STORED;
+  ADD COLUMN y float8 GENERATED ALWAYS AS (d * 4) VIRTUAL;
 SELECT * FROM gtest25 ORDER BY a;
  a | b  | c  |  x  |  d  |  y  
 ---+----+----+-----+-----+-----
@@ -1099,15 +1007,15 @@ SELECT * FROM gtest25 ORDER BY a;
 (2 rows)
 
 \d gtest25
-                                 Table "generated_stored_tests.gtest25"
- Column |       Type       | Collation | Nullable |                       Default                        
---------+------------------+-----------+----------+------------------------------------------------------
+                             Table "generated_virtual_tests.gtest25"
+ Column |       Type       | Collation | Nullable |                    Default                    
+--------+------------------+-----------+----------+-----------------------------------------------
  a      | integer          |           | not null | 
- b      | integer          |           |          | generated always as (a * 3) stored
+ b      | integer          |           |          | generated always as (a * 3)
  c      | integer          |           |          | 42
- x      | integer          |           |          | generated always as (c * 4) stored
+ x      | integer          |           |          | generated always as (c * 4)
  d      | double precision |           |          | 101
- y      | double precision |           |          | generated always as (d * 4::double precision) stored
+ y      | double precision |           |          | generated always as (d * 4::double precision)
 Indexes:
     "gtest25_pkey" PRIMARY KEY, btree (a)
 
@@ -1115,7 +1023,7 @@ Indexes:
 CREATE TABLE gtest27 (
     a int,
     b int,
-    x int GENERATED ALWAYS AS ((a + b) * 2) STORED
+    x int GENERATED ALWAYS AS ((a + b) * 2) VIRTUAL
 );
 INSERT INTO gtest27 (a, b) VALUES (3, 7), (4, 11);
 ALTER TABLE gtest27 ALTER COLUMN a TYPE text;  -- error
@@ -1123,12 +1031,12 @@ ERROR:  cannot alter type of a column used by a generated column
 DETAIL:  Column "a" is used by generated column "x".
 ALTER TABLE gtest27 ALTER COLUMN x TYPE numeric;
 \d gtest27
-                        Table "generated_stored_tests.gtest27"
- Column |  Type   | Collation | Nullable |                  Default                   
---------+---------+-----------+----------+--------------------------------------------
+                    Table "generated_virtual_tests.gtest27"
+ Column |  Type   | Collation | Nullable |               Default               
+--------+---------+-----------+----------+-------------------------------------
  a      | integer |           |          | 
  b      | integer |           |          | 
- x      | numeric |           |          | generated always as (((a + b) * 2)) stored
+ x      | numeric |           |          | generated always as (((a + b) * 2))
 
 SELECT * FROM gtest27;
  a | b  | x  
@@ -1144,20 +1052,19 @@ LINE 1: ALTER TABLE gtest27 ALTER COLUMN x TYPE boolean USING x <> 0...
 DETAIL:  Column "x" is a generated column.
 ALTER TABLE gtest27 ALTER COLUMN x DROP DEFAULT;  -- error
 ERROR:  column "x" of relation "gtest27" is a generated column
-HINT:  Use ALTER TABLE ... ALTER COLUMN ... DROP EXPRESSION instead.
 -- It's possible to alter the column types this way:
 ALTER TABLE gtest27
   DROP COLUMN x,
   ALTER COLUMN a TYPE bigint,
   ALTER COLUMN b TYPE bigint,
-  ADD COLUMN x bigint GENERATED ALWAYS AS ((a + b) * 2) STORED;
+  ADD COLUMN x bigint GENERATED ALWAYS AS ((a + b) * 2) VIRTUAL;
 \d gtest27
-                      Table "generated_stored_tests.gtest27"
- Column |  Type  | Collation | Nullable |                 Default                  
---------+--------+-----------+----------+------------------------------------------
+                  Table "generated_virtual_tests.gtest27"
+ Column |  Type  | Collation | Nullable |              Default              
+--------+--------+-----------+----------+-----------------------------------
  a      | bigint |           |          | 
  b      | bigint |           |          | 
- x      | bigint |           |          | generated always as ((a + b) * 2) stored
+ x      | bigint |           |          | generated always as ((a + b) * 2)
 
 -- Ideally you could just do this, but not today (and should x change type?):
 ALTER TABLE gtest27
@@ -1166,12 +1073,12 @@ ALTER TABLE gtest27
 ERROR:  cannot alter type of a column used by a generated column
 DETAIL:  Column "a" is used by generated column "x".
 \d gtest27
-                      Table "generated_stored_tests.gtest27"
- Column |  Type  | Collation | Nullable |                 Default                  
---------+--------+-----------+----------+------------------------------------------
+                  Table "generated_virtual_tests.gtest27"
+ Column |  Type  | Collation | Nullable |              Default              
+--------+--------+-----------+----------+-----------------------------------
  a      | bigint |           |          | 
  b      | bigint |           |          | 
- x      | bigint |           |          | generated always as ((a + b) * 2) stored
+ x      | bigint |           |          | generated always as ((a + b) * 2)
 
 SELECT * FROM gtest27;
  a | b  | x  
@@ -1183,7 +1090,7 @@ SELECT * FROM gtest27;
 -- ALTER TABLE ... ALTER COLUMN ... DROP EXPRESSION
 CREATE TABLE gtest29 (
     a int,
-    b int GENERATED ALWAYS AS (a * 2) STORED
+    b int GENERATED ALWAYS AS (a * 2) VIRTUAL
 );
 INSERT INTO gtest29 (a) VALUES (3), (4);
 SELECT * FROM gtest29;
@@ -1194,11 +1101,11 @@ SELECT * FROM gtest29;
 (2 rows)
 
 \d gtest29
-                    Table "generated_stored_tests.gtest29"
- Column |  Type   | Collation | Nullable |              Default               
---------+---------+-----------+----------+------------------------------------
+                Table "generated_virtual_tests.gtest29"
+ Column |  Type   | Collation | Nullable |           Default           
+--------+---------+-----------+----------+-----------------------------
  a      | integer |           |          | 
- b      | integer |           |          | generated always as (a * 2) stored
+ b      | integer |           |          | generated always as (a * 2)
 
 ALTER TABLE gtest29 ALTER COLUMN a SET EXPRESSION AS (a * 3);  -- error
 ERROR:  column "a" of relation "gtest29" is not a generated column
@@ -1216,97 +1123,97 @@ SELECT * FROM gtest29;
 (2 rows)
 
 \d gtest29
-                    Table "generated_stored_tests.gtest29"
- Column |  Type   | Collation | Nullable |              Default               
---------+---------+-----------+----------+------------------------------------
+                Table "generated_virtual_tests.gtest29"
+ Column |  Type   | Collation | Nullable |           Default           
+--------+---------+-----------+----------+-----------------------------
  a      | integer |           |          | 
- b      | integer |           |          | generated always as (a * 3) stored
+ b      | integer |           |          | generated always as (a * 3)
 
-ALTER TABLE gtest29 ALTER COLUMN b DROP EXPRESSION;
+ALTER TABLE gtest29 ALTER COLUMN b DROP EXPRESSION;  -- not supported
+ERROR:  ALTER TABLE / DROP EXPRESSION is not supported for virtual generated columns
+DETAIL:  Column "b" of relation "gtest29" is a virtual generated column.
 INSERT INTO gtest29 (a) VALUES (5);
 INSERT INTO gtest29 (a, b) VALUES (6, 66);
+ERROR:  cannot insert a non-DEFAULT value into column "b"
+DETAIL:  Column "b" is a generated column.
 SELECT * FROM gtest29;
  a | b  
 ---+----
  3 |  9
  4 | 12
- 5 |   
- 6 | 66
-(4 rows)
+ 5 | 15
+(3 rows)
 
 \d gtest29
-      Table "generated_stored_tests.gtest29"
- Column |  Type   | Collation | Nullable | Default 
---------+---------+-----------+----------+---------
+                Table "generated_virtual_tests.gtest29"
+ Column |  Type   | Collation | Nullable |           Default           
+--------+---------+-----------+----------+-----------------------------
  a      | integer |           |          | 
- b      | integer |           |          | 
+ b      | integer |           |          | generated always as (a * 3)
 
 -- check that dependencies between columns have also been removed
-ALTER TABLE gtest29 DROP COLUMN a;  -- should not drop b
-\d gtest29
-      Table "generated_stored_tests.gtest29"
- Column |  Type   | Collation | Nullable | Default 
---------+---------+-----------+----------+---------
- b      | integer |           |          | 
-
+--ALTER TABLE gtest29 DROP COLUMN a;  -- should not drop b
+--\d gtest29
 -- with inheritance
 CREATE TABLE gtest30 (
     a int,
-    b int GENERATED ALWAYS AS (a * 2) STORED
+    b int GENERATED ALWAYS AS (a * 2) VIRTUAL
 );
 CREATE TABLE gtest30_1 () INHERITS (gtest30);
 ALTER TABLE gtest30 ALTER COLUMN b DROP EXPRESSION;
+ERROR:  ALTER TABLE / DROP EXPRESSION is not supported for virtual generated columns
+DETAIL:  Column "b" of relation "gtest30" is a virtual generated column.
 \d gtest30
-      Table "generated_stored_tests.gtest30"
- Column |  Type   | Collation | Nullable | Default 
---------+---------+-----------+----------+---------
+                Table "generated_virtual_tests.gtest30"
+ Column |  Type   | Collation | Nullable |           Default           
+--------+---------+-----------+----------+-----------------------------
  a      | integer |           |          | 
- b      | integer |           |          | 
+ b      | integer |           |          | generated always as (a * 2)
 Number of child tables: 1 (Use \d+ to list them.)
 
 \d gtest30_1
-     Table "generated_stored_tests.gtest30_1"
- Column |  Type   | Collation | Nullable | Default 
---------+---------+-----------+----------+---------
+               Table "generated_virtual_tests.gtest30_1"
+ Column |  Type   | Collation | Nullable |           Default           
+--------+---------+-----------+----------+-----------------------------
  a      | integer |           |          | 
- b      | integer |           |          | 
+ b      | integer |           |          | generated always as (a * 2)
 Inherits: gtest30
 
 DROP TABLE gtest30 CASCADE;
 NOTICE:  drop cascades to table gtest30_1
 CREATE TABLE gtest30 (
     a int,
-    b int GENERATED ALWAYS AS (a * 2) STORED
+    b int GENERATED ALWAYS AS (a * 2) VIRTUAL
 );
 CREATE TABLE gtest30_1 () INHERITS (gtest30);
 ALTER TABLE ONLY gtest30 ALTER COLUMN b DROP EXPRESSION;  -- error
 ERROR:  ALTER TABLE / DROP EXPRESSION must be applied to child tables too
 \d gtest30
-                    Table "generated_stored_tests.gtest30"
- Column |  Type   | Collation | Nullable |              Default               
---------+---------+-----------+----------+------------------------------------
+                Table "generated_virtual_tests.gtest30"
+ Column |  Type   | Collation | Nullable |           Default           
+--------+---------+-----------+----------+-----------------------------
  a      | integer |           |          | 
- b      | integer |           |          | generated always as (a * 2) stored
+ b      | integer |           |          | generated always as (a * 2)
 Number of child tables: 1 (Use \d+ to list them.)
 
 \d gtest30_1
-                   Table "generated_stored_tests.gtest30_1"
- Column |  Type   | Collation | Nullable |              Default               
---------+---------+-----------+----------+------------------------------------
+               Table "generated_virtual_tests.gtest30_1"
+ Column |  Type   | Collation | Nullable |           Default           
+--------+---------+-----------+----------+-----------------------------
  a      | integer |           |          | 
- b      | integer |           |          | generated always as (a * 2) stored
+ b      | integer |           |          | generated always as (a * 2)
 Inherits: gtest30
 
 ALTER TABLE gtest30_1 ALTER COLUMN b DROP EXPRESSION;  -- error
 ERROR:  cannot drop generation expression from inherited column
 -- composite type dependencies
-CREATE TABLE gtest31_1 (a int, b text GENERATED ALWAYS AS ('hello') STORED, c text);
+CREATE TABLE gtest31_1 (a int, b text GENERATED ALWAYS AS ('hello') VIRTUAL, c text);
 CREATE TABLE gtest31_2 (x int, y gtest31_1);
 ALTER TABLE gtest31_1 ALTER COLUMN b TYPE varchar;  -- fails
 ERROR:  cannot alter table "gtest31_1" because column "gtest31_2.y" uses its row type
 DROP TABLE gtest31_1, gtest31_2;
 -- Check it for a partitioned table, too
-CREATE TABLE gtest31_1 (a int, b text GENERATED ALWAYS AS ('hello') STORED, c text) PARTITION BY LIST (a);
+CREATE TABLE gtest31_1 (a int, b text GENERATED ALWAYS AS ('hello') VIRTUAL, c text) PARTITION BY LIST (a);
 CREATE TABLE gtest31_2 (x int, y gtest31_1);
 ALTER TABLE gtest31_1 ALTER COLUMN b TYPE varchar;  -- fails
 ERROR:  cannot alter table "gtest31_1" because column "gtest31_2.y" uses its row type
@@ -1314,7 +1221,7 @@ DROP TABLE gtest31_1, gtest31_2;
 -- triggers
 CREATE TABLE gtest26 (
     a int PRIMARY KEY,
-    b int GENERATED ALWAYS AS (a * 2) STORED
+    b int GENERATED ALWAYS AS (a * 2) VIRTUAL
 );
 CREATE FUNCTION gtest_trigger_func() RETURNS trigger
   LANGUAGE plpgsql
@@ -1367,7 +1274,7 @@ CREATE TRIGGER gtest4 AFTER INSERT OR UPDATE ON gtest26
   EXECUTE PROCEDURE gtest_trigger_func();
 INSERT INTO gtest26 (a) VALUES (-2), (0), (3);
 INFO:  gtest2: BEFORE: new = (-2,)
-INFO:  gtest4: AFTER: new = (-2,-4)
+INFO:  gtest4: AFTER: new = (-2,)
 SELECT * FROM gtest26 ORDER BY a;
  a  | b  
 ----+----
@@ -1377,12 +1284,12 @@ SELECT * FROM gtest26 ORDER BY a;
 (3 rows)
 
 UPDATE gtest26 SET a = a * -2;
-INFO:  gtest1: BEFORE: old = (-2,-4)
+INFO:  gtest1: BEFORE: old = (-2,)
 INFO:  gtest1: BEFORE: new = (4,)
-INFO:  gtest3: AFTER: old = (-2,-4)
-INFO:  gtest3: AFTER: new = (4,8)
-INFO:  gtest4: AFTER: old = (3,6)
-INFO:  gtest4: AFTER: new = (-6,-12)
+INFO:  gtest3: AFTER: old = (-2,)
+INFO:  gtest3: AFTER: new = (4,)
+INFO:  gtest4: AFTER: old = (3,)
+INFO:  gtest4: AFTER: new = (-6,)
 SELECT * FROM gtest26 ORDER BY a;
  a  |  b  
 ----+-----
@@ -1392,8 +1299,8 @@ SELECT * FROM gtest26 ORDER BY a;
 (3 rows)
 
 DELETE FROM gtest26 WHERE a = -6;
-INFO:  gtest1: BEFORE: old = (-6,-12)
-INFO:  gtest3: AFTER: old = (-6,-12)
+INFO:  gtest1: BEFORE: old = (-6,)
+INFO:  gtest3: AFTER: old = (-6,)
 SELECT * FROM gtest26 ORDER BY a;
  a | b 
 ---+---
@@ -1443,7 +1350,7 @@ CREATE TRIGGER gtest12_03 BEFORE INSERT OR UPDATE ON gtest26
   EXECUTE PROCEDURE gtest_trigger_func();
 INSERT INTO gtest26 (a) VALUES (1);
 INFO:  gtest12_01: BEFORE: new = (1,)
-INFO:  gtest12_03: BEFORE: new = (10,300)
+INFO:  gtest12_03: BEFORE: new = (10,)
 SELECT * FROM gtest26 ORDER BY a;
  a  | b  
 ----+----
@@ -1451,9 +1358,9 @@ SELECT * FROM gtest26 ORDER BY a;
 (1 row)
 
 UPDATE gtest26 SET a = 11 WHERE a = 10;
-INFO:  gtest12_01: BEFORE: old = (10,20)
+INFO:  gtest12_01: BEFORE: old = (10,)
 INFO:  gtest12_01: BEFORE: new = (11,)
-INFO:  gtest12_03: BEFORE: old = (10,20)
+INFO:  gtest12_03: BEFORE: old = (10,)
 INFO:  gtest12_03: BEFORE: new = (10,)
 SELECT * FROM gtest26 ORDER BY a;
  a  | b  
@@ -1466,24 +1373,24 @@ CREATE TABLE gtest28a (
   a int,
   b int,
   c int,
-  x int GENERATED ALWAYS AS (b * 2) STORED
+  x int GENERATED ALWAYS AS (b * 2) VIRTUAL
 );
 ALTER TABLE gtest28a DROP COLUMN a;
 CREATE TABLE gtest28b (LIKE gtest28a INCLUDING GENERATED);
 \d gtest28*
-                   Table "generated_stored_tests.gtest28a"
- Column |  Type   | Collation | Nullable |              Default               
---------+---------+-----------+----------+------------------------------------
+               Table "generated_virtual_tests.gtest28a"
+ Column |  Type   | Collation | Nullable |           Default           
+--------+---------+-----------+----------+-----------------------------
  b      | integer |           |          | 
  c      | integer |           |          | 
- x      | integer |           |          | generated always as (b * 2) stored
+ x      | integer |           |          | generated always as (b * 2)
 
-                   Table "generated_stored_tests.gtest28b"
- Column |  Type   | Collation | Nullable |              Default               
---------+---------+-----------+----------+------------------------------------
+               Table "generated_virtual_tests.gtest28b"
+ Column |  Type   | Collation | Nullable |           Default           
+--------+---------+-----------+----------+-----------------------------
  b      | integer |           |          | 
  c      | integer |           |          | 
- x      | integer |           |          | generated always as (b * 2) stored
+ x      | integer |           |          | generated always as (b * 2)
 
 -- sanity check of system catalog
 SELECT attrelid, attname, attgenerated FROM pg_attribute WHERE attgenerated NOT IN ('', 's', 'v');

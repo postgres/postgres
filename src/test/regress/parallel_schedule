@@ -78,7 +78,7 @@ test: brin_bloom brin_multi
 # psql depends on create_am
 # amutils depends on geometry, create_index_spgist, hash_index, brin
 # ----------
-test: create_table_like alter_generic alter_operator misc async dbsize merge misc_functions sysviews tsrf tid tidscan tidrangescan collate.utf8 collate.icu.utf8 incremental_sort create_role without_overlaps
+test: create_table_like alter_generic alter_operator misc async dbsize merge misc_functions sysviews tsrf tid tidscan tidrangescan collate.utf8 collate.icu.utf8 incremental_sort create_role without_overlaps generated_virtual
 
 # collate.linux.utf8 and collate.icu.utf8 tests cannot be run in parallel with each other
 test: rules psql psql_crosstab amutils stats_ext collate.linux.utf8 collate.windows.win1252

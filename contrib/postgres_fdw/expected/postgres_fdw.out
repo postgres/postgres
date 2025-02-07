@@ -7395,65 +7395,68 @@ select * from rem1;
 -- ===================================================================
 create table gloc1 (
   a int,
-  b int generated always as (a * 2) stored);
+  b int generated always as (a * 2) stored,
+  c int
+);
 alter table gloc1 set (autovacuum_enabled = 'false');
 create foreign table grem1 (
   a int,
-  b int generated always as (a * 2) stored)
-  server loopback options(table_name 'gloc1');
+  b int generated always as (a * 2) stored,
+  c int generated always as (a * 3) virtual
+) server loopback options(table_name 'gloc1');
 explain (verbose, costs off)
 insert into grem1 (a) values (1), (2);
-                            QUERY PLAN                             
--------------------------------------------------------------------
+                                  QUERY PLAN                                   
+-------------------------------------------------------------------------------
  Insert on public.grem1
-   Remote SQL: INSERT INTO public.gloc1(a, b) VALUES ($1, DEFAULT)
+   Remote SQL: INSERT INTO public.gloc1(a, b, c) VALUES ($1, DEFAULT, DEFAULT)
    Batch Size: 1
    ->  Values Scan on "*VALUES*"
-         Output: "*VALUES*".column1, NULL::integer
+         Output: "*VALUES*".column1, NULL::integer, NULL::integer
 (5 rows)
 
 insert into grem1 (a) values (1), (2);
 explain (verbose, costs off)
 update grem1 set a = 22 where a = 2;
-                                     QUERY PLAN                                     
-------------------------------------------------------------------------------------
+                                       QUERY PLAN                                       
+----------------------------------------------------------------------------------------
  Update on public.grem1
-   Remote SQL: UPDATE public.gloc1 SET a = $2, b = DEFAULT WHERE ctid = $1
+   Remote SQL: UPDATE public.gloc1 SET a = $2, b = DEFAULT, c = DEFAULT WHERE ctid = $1
    ->  Foreign Scan on public.grem1
          Output: 22, ctid, grem1.*
-         Remote SQL: SELECT a, b, ctid FROM public.gloc1 WHERE ((a = 2)) FOR UPDATE
+         Remote SQL: SELECT a, b, c, ctid FROM public.gloc1 WHERE ((a = 2)) FOR UPDATE
 (5 rows)
 
 update grem1 set a = 22 where a = 2;
 select * from gloc1;
- a  | b  
-----+----
-  1 |  2
- 22 | 44
+ a  | b  | c 
+----+----+---
+  1 |  2 |  
+ 22 | 44 |  
 (2 rows)
 
 select * from grem1;
- a  | b  
-----+----
-  1 |  2
- 22 | 44
+ a  | b  | c  
+----+----+----
+  1 |  2 |  3
+ 22 | 44 | 66
 (2 rows)
 
 delete from grem1;
 -- test copy from
 copy grem1 from stdin;
 select * from gloc1;
- a | b 
----+---
- 1 | 2
- 2 | 4
+ a | b | c 
+---+---+---
+ 1 | 2 |  
+ 2 | 4 |  
 (2 rows)
 
 select * from grem1;
- a | b 
----+---
- 1 | 2
- 2 | 4
+ a | b | c 
+---+---+---
+ 1 | 2 | 3
+ 2 | 4 | 6
 (2 rows)
 
 delete from grem1;
@@ -7461,28 +7464,28 @@ delete from grem1;
 alter server loopback options (add batch_size '10');
 explain (verbose, costs off)
 insert into grem1 (a) values (1), (2);
-                            QUERY PLAN                             
--------------------------------------------------------------------
+                                  QUERY PLAN                                   
+-------------------------------------------------------------------------------
  Insert on public.grem1
-   Remote SQL: INSERT INTO public.gloc1(a, b) VALUES ($1, DEFAULT)
+   Remote SQL: INSERT INTO public.gloc1(a, b, c) VALUES ($1, DEFAULT, DEFAULT)
    Batch Size: 10
    ->  Values Scan on "*VALUES*"
-         Output: "*VALUES*".column1, NULL::integer
+         Output: "*VALUES*".column1, NULL::integer, NULL::integer
 (5 rows)
 
 insert into grem1 (a) values (1), (2);
 select * from gloc1;
- a | b 
----+---
- 1 | 2
- 2 | 4
+ a | b | c 
+---+---+---
+ 1 | 2 |  
+ 2 | 4 |  
 (2 rows)
 
 select * from grem1;
- a | b 
----+---
- 1 | 2
- 2 | 4
+ a | b | c 
+---+---+---
+ 1 | 2 | 3
+ 2 | 4 | 6
 (2 rows)
 
 delete from grem1;

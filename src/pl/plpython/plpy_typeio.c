@@ -844,6 +844,9 @@ PLyDict_FromTuple(PLyDatumToOb *arg, HeapTuple tuple, TupleDesc desc, bool inclu
 				/* don't include unless requested */
 				if (!include_generated)
 					continue;
+				/* never include virtual columns */
+				if (attr->attgenerated == ATTRIBUTE_GENERATED_VIRTUAL)
+					continue;
 			}
 
 			key = NameStr(attr->attname);

@@ -47,7 +47,7 @@ CREATE FOREIGN TABLE [ IF NOT EXISTS ] <replaceable class="parameter">table_name
   NULL |
   CHECK ( <replaceable class="parameter">expression</replaceable> ) [ NO INHERIT ] |
   DEFAULT <replaceable>default_expr</replaceable> |
-  GENERATED ALWAYS AS ( <replaceable>generation_expr</replaceable> ) STORED }
+  GENERATED ALWAYS AS ( <replaceable>generation_expr</replaceable> ) [ STORED | VIRTUAL ] }
 [ ENFORCED | NOT ENFORCED ]
 
 <phrase>and <replaceable class="parameter">table_constraint</replaceable> is:</phrase>
@@ -283,7 +283,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
    </varlistentry>
 
    <varlistentry>
-    <term><literal>GENERATED ALWAYS AS ( <replaceable>generation_expr</replaceable> ) STORED</literal><indexterm><primary>generated column</primary></indexterm></term>
+    <term><literal>GENERATED ALWAYS AS ( <replaceable>generation_expr</replaceable> ) [ STORED | VIRTUAL ]</literal><indexterm><primary>generated column</primary></indexterm></term>
     <listitem>
      <para>
       This clause creates the column as a <firstterm>generated
@@ -292,10 +292,13 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
      </para>
 
      <para>
-      The keyword <literal>STORED</literal> is required to signify that the
+      When <literal>VIRTUAL</literal> is specified, the column will be
+      computed when it is read.  (The foreign-data wrapper will see it as a
+      null value in new rows and may choose to store it as a null value or
+      ignore it altogether.)  When <literal>STORED</literal> is specified, the
       column will be computed on write.  (The computed value will be presented
       to the foreign-data wrapper for storage and must be returned on
-      reading.)
+      reading.)  <literal>VIRTUAL</literal> is the default.
      </para>
 
      <para>

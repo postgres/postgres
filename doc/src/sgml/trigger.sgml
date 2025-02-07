@@ -293,6 +293,10 @@
     <literal>BEFORE</literal> trigger.  Changes to the value of a generated
     column in a <literal>BEFORE</literal> trigger are ignored and will be
     overwritten.
+    Virtual generated columns are never computed when triggers fire.  In the C
+    language interface, their content is undefined in a trigger function.
+    Higher-level programming languages should prevent access to virtual
+    generated columns in triggers.
    </para>
 
    <para>

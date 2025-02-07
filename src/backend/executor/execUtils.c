@@ -1393,8 +1393,8 @@ Bitmapset *
 ExecGetExtraUpdatedCols(ResultRelInfo *relinfo, EState *estate)
 {
 	/* Compute the info if we didn't already */
-	if (relinfo->ri_GeneratedExprsU == NULL)
-		ExecInitStoredGenerated(relinfo, estate, CMD_UPDATE);
+	if (!relinfo->ri_extraUpdatedCols_valid)
+		ExecInitGenerated(relinfo, estate, CMD_UPDATE);
 	return relinfo->ri_extraUpdatedCols;
 }
 

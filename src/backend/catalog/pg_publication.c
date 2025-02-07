@@ -546,7 +546,8 @@ publication_add_relation(Oid pubid, PublicationRelInfo *pri,
  * pub_collist_validate
  *		Process and validate the 'columns' list and ensure the columns are all
  *		valid to use for a publication.  Checks for and raises an ERROR for
- * 		any unknown columns, system columns, or duplicate columns.
+ *		any unknown columns, system columns, duplicate columns, or virtual
+ *		generated columns.
  *
  * Looks up each column's attnum and returns a 0-based Bitmapset of the
  * corresponding attnums.
@@ -556,6 +557,7 @@ pub_collist_validate(Relation targetrel, List *columns)
 {
 	Bitmapset  *set = NULL;
 	ListCell   *lc;
+	TupleDesc	tupdesc = RelationGetDescr(targetrel);
 
 	foreach(lc, columns)
 	{
@@ -572,6 +574,12 @@ pub_collist_validate(Relation targetrel, List *columns)
 			ereport(ERROR,
 					errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
 					errmsg("cannot use system column \"%s\" in publication column list",
+						   colname));
+
+		if (TupleDescAttr(tupdesc, attnum - 1)->attgenerated == ATTRIBUTE_GENERATED_VIRTUAL)
+			ereport(ERROR,
+					errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
+					errmsg("cannot use virtual generated column \"%s\" in publication column list",
 						   colname));
 
 		if (bms_is_member(attnum, set))

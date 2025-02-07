@@ -1209,7 +1209,7 @@ t), 'check the number of columns in the old tuple');
 # list) are considered to have the same column list.
 $node_publisher->safe_psql(
 	'postgres', qq(
-	CREATE TABLE test_mix_4 (a int PRIMARY KEY, b int, c int, d int GENERATED ALWAYS AS (a + 1) STORED);
+	CREATE TABLE test_mix_4 (a int PRIMARY KEY, b int, c int, d int GENERATED ALWAYS AS (a + 1) STORED, e int GENERATED ALWAYS AS (a + 2) VIRTUAL);
 	ALTER TABLE test_mix_4 DROP COLUMN c;
 
 	CREATE PUBLICATION pub_mix_7 FOR TABLE test_mix_4 (a, b);

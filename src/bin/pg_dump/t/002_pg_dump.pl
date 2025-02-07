@@ -3706,12 +3706,14 @@ my %tests = (
 		create_order => 3,
 		create_sql => 'CREATE TABLE dump_test.test_table_generated (
 						   col1 int primary key,
-						   col2 int generated always as (col1 * 2) stored
+						   col2 int generated always as (col1 * 2) stored,
+						   col3 int generated always as (col1 * 3) virtual
 					   );',
 		regexp => qr/^
 			\QCREATE TABLE dump_test.test_table_generated (\E\n
 			\s+\Qcol1 integer NOT NULL,\E\n
-			\s+\Qcol2 integer GENERATED ALWAYS AS ((col1 * 2)) STORED\E\n
+			\s+\Qcol2 integer GENERATED ALWAYS AS ((col1 * 2)) STORED,\E\n
+			\s+\Qcol3 integer GENERATED ALWAYS AS ((col1 * 3))\E\n
 			\);
 			/xms,
 		like =>

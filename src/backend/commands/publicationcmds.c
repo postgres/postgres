@@ -38,6 +38,7 @@
 #include "parser/parse_clause.h"
 #include "parser/parse_collate.h"
 #include "parser/parse_relation.h"
+#include "rewrite/rewriteHandler.h"
 #include "storage/lmgr.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
@@ -404,6 +405,14 @@ pub_contains_invalid_column(Oid pubid, Relation relation, List *ancestors,
 			relation->rd_att->constr->has_generated_stored)
 			*invalid_gen_col = true;
 
+		/*
+		 * Virtual generated columns are currently not supported for logical
+		 * replication at all.
+		 */
+		if (relation->rd_att->constr &&
+			relation->rd_att->constr->has_generated_virtual)
+			*invalid_gen_col = true;
+
 		if (*invalid_gen_col && *invalid_column_list)
 			return true;
 	}
@@ -430,7 +439,17 @@ pub_contains_invalid_column(Oid pubid, Relation relation, List *ancestors,
 			 * The publish_generated_columns option must be set to stored if
 			 * the REPLICA IDENTITY contains any stored generated column.
 			 */
-			if (pubgencols_type != PUBLISH_GENCOLS_STORED && att->attgenerated)
+			if (att->attgenerated == ATTRIBUTE_GENERATED_STORED && pubgencols_type != PUBLISH_GENCOLS_STORED)
+			{
+				*invalid_gen_col = true;
+				break;
+			}
+
+			/*
+			 * The equivalent setting for virtual generated columns does not
+			 * exist yet.
+			 */
+			if (att->attgenerated == ATTRIBUTE_GENERATED_VIRTUAL)
 			{
 				*invalid_gen_col = true;
 				break;
@@ -688,6 +707,8 @@ TransformPubWhereClauses(List *tables, const char *queryString,
 
 		/* Fix up collation information */
 		assign_expr_collations(pstate, whereclause);
+
+		whereclause = expand_generated_columns_in_expr(whereclause, pri->relation, 1);
 
 		/*
 		 * We allow only simple expressions in row filters. See

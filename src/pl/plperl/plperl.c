@@ -3047,6 +3047,9 @@ plperl_hash_from_tuple(HeapTuple tuple, TupleDesc tupdesc, bool include_generate
 			/* don't include unless requested */
 			if (!include_generated)
 				continue;
+			/* never include virtual columns */
+			if (att->attgenerated == ATTRIBUTE_GENERATED_VIRTUAL)
+				continue;
 		}
 
 		attname = NameStr(att->attname);

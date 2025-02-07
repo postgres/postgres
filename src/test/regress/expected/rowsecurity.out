@@ -4380,6 +4380,35 @@ INSERT INTO r1 VALUES (10)
     ON CONFLICT ON CONSTRAINT r1_pkey DO UPDATE SET a = 30;
 ERROR:  new row violates row-level security policy for table "r1"
 DROP TABLE r1;
+--
+-- Test policies using virtual generated columns
+--
+SET SESSION AUTHORIZATION regress_rls_alice;
+SET row_security = on;
+CREATE TABLE r1 (a int, b int GENERATED ALWAYS AS (a * 10) VIRTUAL);
+ALTER TABLE r1 ADD c int GENERATED ALWAYS AS (a * 100) VIRTUAL;
+INSERT INTO r1 VALUES (1), (2), (4);
+CREATE POLICY p0 ON r1 USING (b * 10 = c);
+CREATE POLICY p1 ON r1 AS RESTRICTIVE USING (b > 10);
+CREATE POLICY p2 ON r1 AS RESTRICTIVE USING ((SELECT c) < 400);
+ALTER TABLE r1 ENABLE ROW LEVEL SECURITY;
+ALTER TABLE r1 FORCE ROW LEVEL SECURITY;
+-- Should fail p1
+INSERT INTO r1 VALUES (0);
+ERROR:  new row violates row-level security policy "p1" for table "r1"
+-- Should fail p2
+INSERT INTO r1 VALUES (4);
+ERROR:  new row violates row-level security policy "p2" for table "r1"
+-- OK
+INSERT INTO r1 VALUES (3);
+SELECT * FROM r1;
+ a | b  |  c  
+---+----+-----
+ 2 | 20 | 200
+ 3 | 30 | 300
+(2 rows)
+
+DROP TABLE r1;
 -- Check dependency handling
 RESET SESSION AUTHORIZATION;
 CREATE TABLE dep1 (c1 int);

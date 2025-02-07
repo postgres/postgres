@@ -240,6 +240,9 @@ $node_publisher->safe_psql('postgres',
 $node_publisher->safe_psql('postgres',
 	"CREATE TABLE tab_rowfilter_child_sync PARTITION OF tab_rowfilter_parent_sync FOR VALUES FROM (1) TO (20)"
 );
+$node_publisher->safe_psql('postgres',
+	"CREATE TABLE tab_rowfilter_virtual (id int PRIMARY KEY, x int, y int GENERATED ALWAYS AS (x * 2) VIRTUAL)"
+);
 
 # setup structure on subscriber
 $node_subscriber->safe_psql('postgres',
@@ -294,6 +297,9 @@ $node_subscriber->safe_psql('postgres',
 	"CREATE TABLE tab_rowfilter_parent_sync (a int)");
 $node_subscriber->safe_psql('postgres',
 	"CREATE TABLE tab_rowfilter_child_sync (a int)");
+$node_subscriber->safe_psql('postgres',
+	"CREATE TABLE tab_rowfilter_virtual (id int PRIMARY KEY, x int, y int GENERATED ALWAYS AS (x * 2) VIRTUAL)"
+);
 
 # setup logical replication
 $node_publisher->safe_psql('postgres',
@@ -359,6 +365,11 @@ $node_publisher->safe_psql('postgres',
 	"CREATE PUBLICATION tap_pub_child_sync FOR TABLE tab_rowfilter_child_sync WHERE (a < 15)"
 );
 
+# publication using virtual generated column in row filter expression
+$node_publisher->safe_psql('postgres',
+	"CREATE PUBLICATION tap_pub_virtual FOR TABLE tab_rowfilter_virtual WHERE (y > 10)"
+);
+
 #
 # The following INSERTs are executed before the CREATE SUBSCRIPTION, so these
 # SQL commands are for testing the initial data copy using logical replication.
@@ -407,8 +418,12 @@ $node_publisher->safe_psql('postgres',
 	"INSERT INTO tab_rowfilter_child(a, b) VALUES(0,'0'),(30,'30'),(40,'40')"
 );
 
+$node_publisher->safe_psql('postgres',
+	"INSERT INTO tab_rowfilter_virtual (id, x) VALUES (1, 2), (2, 4), (3, 6)"
+);
+
 $node_subscriber->safe_psql('postgres',
-	"CREATE SUBSCRIPTION tap_sub CONNECTION '$publisher_connstr application_name=$appname' PUBLICATION tap_pub_1, tap_pub_2, tap_pub_3, tap_pub_4a, tap_pub_4b, tap_pub_5a, tap_pub_5b, tap_pub_toast, tap_pub_inherits, tap_pub_viaroot_2, tap_pub_viaroot_1, tap_pub_parent_sync, tap_pub_child_sync"
+	"CREATE SUBSCRIPTION tap_sub CONNECTION '$publisher_connstr application_name=$appname' PUBLICATION tap_pub_1, tap_pub_2, tap_pub_3, tap_pub_4a, tap_pub_4b, tap_pub_5a, tap_pub_5b, tap_pub_toast, tap_pub_inherits, tap_pub_viaroot_2, tap_pub_viaroot_1, tap_pub_parent_sync, tap_pub_child_sync, tap_pub_virtual"
 );
 
 # wait for initial table synchronization to finish
@@ -550,6 +565,16 @@ $result =
 	"SELECT a FROM tab_rowfilter_child_sync ORDER BY 1");
 is($result, qq(), 'check initial data copy from tab_rowfilter_child_sync');
 
+# Check expected replicated rows for tab_rowfilter_virtual
+# tap_pub_virtual filter is: (y > 10), where y is generated as (x * 2)
+# - INSERT (1, 2)      NO, 2 * 2 <= 10
+# - INSERT (2, 4)      NO, 4 * 2 <= 10
+# - INSERT (3, 6)      YES, 6 * 2 > 10
+$result = $node_subscriber->safe_psql('postgres',
+	"SELECT id, x FROM tab_rowfilter_virtual ORDER BY id");
+is($result, qq(3|6),
+	'check initial data copy from table tab_rowfilter_virtual');
+
 # The following commands are executed after CREATE SUBSCRIPTION, so these SQL
 # commands are for testing normal logical replication behavior.
 #
@@ -582,6 +607,8 @@ $node_publisher->safe_psql('postgres',
 	"INSERT INTO tab_rowfilter_child (a, b) VALUES (13, '13'), (17, '17')");
 $node_publisher->safe_psql('postgres',
 	"INSERT INTO tab_rowfilter_viaroot_part (a) VALUES (14), (15), (16)");
+$node_publisher->safe_psql('postgres',
+	"INSERT INTO tab_rowfilter_virtual (id, x) VALUES (4, 3), (5, 7)");
 
 $node_publisher->wait_for_catchup($appname);
 
@@ -724,6 +751,15 @@ is( $result, qq(16
 40),
 	'check replicated rows to tab_rowfilter_inherited and tab_rowfilter_child'
 );
+
+# Check expected replicated rows for tab_rowfilter_virtual
+# tap_pub_virtual filter is: (y > 10), where y is generated as (x * 2)
+# - INSERT (4, 3)      NO, 3 * 2 <= 10
+# - INSERT (5, 7)      YES, 7 * 2 > 10
+$result = $node_subscriber->safe_psql('postgres',
+	"SELECT id, x FROM tab_rowfilter_virtual ORDER BY id");
+is( $result, qq(3|6
+5|7), 'check replicated rows to tab_rowfilter_virtual');
 
 # UPDATE the non-toasted column for table tab_rowfilter_toast
 $node_publisher->safe_psql('postgres',

@@ -955,6 +955,21 @@ RESET enable_partitionwise_aggregate;
 RESET max_parallel_workers_per_gather;
 RESET enable_incremental_sort;
 
+-- virtual generated columns
+CREATE TABLE t5 (
+    a int,
+    b text collate "C",
+    c text collate "C" GENERATED ALWAYS AS (b COLLATE case_insensitive)
+);
+INSERT INTO t5 (a, b) values (1, 'D1'), (2, 'D2'), (3, 'd1');
+-- Collation of c should be the one defined for the column ("C"), not
+-- the one of the generation expression.  (Note that we cannot just
+-- test with, say, using COLLATION FOR, because the collation of
+-- function calls is already determined in the parser before
+-- rewriting.)
+SELECT * FROM t5 ORDER BY c ASC, a ASC;
+
+
 -- cleanup
 RESET search_path;
 SET client_min_messages TO warning;

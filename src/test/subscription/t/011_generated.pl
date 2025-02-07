@@ -21,11 +21,11 @@ $node_subscriber->start;
 my $publisher_connstr = $node_publisher->connstr . ' dbname=postgres';
 
 $node_publisher->safe_psql('postgres',
-	"CREATE TABLE tab1 (a int PRIMARY KEY, b int GENERATED ALWAYS AS (a * 2) STORED)"
+	"CREATE TABLE tab1 (a int PRIMARY KEY, b int GENERATED ALWAYS AS (a * 2) STORED, c int GENERATED ALWAYS AS (a * 3) VIRTUAL)"
 );
 
 $node_subscriber->safe_psql('postgres',
-	"CREATE TABLE tab1 (a int PRIMARY KEY, b int GENERATED ALWAYS AS (a * 22) STORED, c int)"
+	"CREATE TABLE tab1 (a int PRIMARY KEY, b int GENERATED ALWAYS AS (a * 22) STORED, c int GENERATED ALWAYS AS (a * 33) VIRTUAL, d int)"
 );
 
 # data for initial sync
@@ -42,10 +42,11 @@ $node_subscriber->safe_psql('postgres',
 # Wait for initial sync of all subscriptions
 $node_subscriber->wait_for_subscription_sync;
 
-my $result = $node_subscriber->safe_psql('postgres', "SELECT a, b FROM tab1");
-is( $result, qq(1|22
-2|44
-3|66), 'generated columns initial sync');
+my $result =
+  $node_subscriber->safe_psql('postgres', "SELECT a, b, c FROM tab1");
+is( $result, qq(1|22|33
+2|44|66
+3|66|99), 'generated columns initial sync');
 
 # data to replicate
 
@@ -56,11 +57,11 @@ $node_publisher->safe_psql('postgres', "UPDATE tab1 SET a = 6 WHERE a = 5");
 $node_publisher->wait_for_catchup('sub1');
 
 $result = $node_subscriber->safe_psql('postgres', "SELECT * FROM tab1");
-is( $result, qq(1|22|
-2|44|
-3|66|
-4|88|
-6|132|), 'generated columns replicated');
+is( $result, qq(1|22|33|
+2|44|66|
+3|66|99|
+4|88|132|
+6|132|198|), 'generated columns replicated');
 
 # try it with a subscriber-side trigger
 
@@ -69,7 +70,7 @@ $node_subscriber->safe_psql(
 CREATE FUNCTION tab1_trigger_func() RETURNS trigger
 LANGUAGE plpgsql AS $$
 BEGIN
-  NEW.c := NEW.a + 10;
+  NEW.d := NEW.a + 10;
   RETURN NEW;
 END $$;
 
@@ -88,13 +89,13 @@ $node_publisher->wait_for_catchup('sub1');
 
 $result =
   $node_subscriber->safe_psql('postgres', "SELECT * FROM tab1 ORDER BY 1");
-is( $result, qq(1|22|
-2|44|
-3|66|
-4|88|
-6|132|
-8|176|18
-9|198|19), 'generated columns replicated with trigger');
+is( $result, qq(1|22|33|
+2|44|66|
+3|66|99|
+4|88|132|
+6|132|198|
+8|176|264|18
+9|198|297|19), 'generated columns replicated with trigger');
 
 # cleanup
 $node_subscriber->safe_psql('postgres', "DROP SUBSCRIPTION sub1");

@@ -1859,12 +1859,15 @@ select * from rem1;
 -- ===================================================================
 create table gloc1 (
   a int,
-  b int generated always as (a * 2) stored);
+  b int generated always as (a * 2) stored,
+  c int
+);
 alter table gloc1 set (autovacuum_enabled = 'false');
 create foreign table grem1 (
   a int,
-  b int generated always as (a * 2) stored)
-  server loopback options(table_name 'gloc1');
+  b int generated always as (a * 2) stored,
+  c int generated always as (a * 3) virtual
+) server loopback options(table_name 'gloc1');
 explain (verbose, costs off)
 insert into grem1 (a) values (1), (2);
 insert into grem1 (a) values (1), (2);

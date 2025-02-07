@@ -65,7 +65,7 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
   NULL |
   CHECK ( <replaceable class="parameter">expression</replaceable> ) [ NO INHERIT ] |
   DEFAULT <replaceable>default_expr</replaceable> |
-  GENERATED ALWAYS AS ( <replaceable>generation_expr</replaceable> ) STORED |
+  GENERATED ALWAYS AS ( <replaceable>generation_expr</replaceable> ) [ STORED | VIRTUAL ] |
   GENERATED { ALWAYS | BY DEFAULT } AS IDENTITY [ ( <replaceable>sequence_options</replaceable> ) ] |
   UNIQUE [ NULLS [ NOT ] DISTINCT ] <replaceable class="parameter">index_parameters</replaceable> |
   PRIMARY KEY <replaceable class="parameter">index_parameters</replaceable> |
@@ -725,8 +725,9 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
         <term><literal>INCLUDING GENERATED</literal></term>
         <listitem>
          <para>
-          Any generation expressions of copied column definitions will be
-          copied.  By default, new columns will be regular base columns.
+          Any generation expressions as well as the stored/virtual choice of
+          copied column definitions will be copied.  By default, new columns
+          will be regular base columns.
          </para>
         </listitem>
        </varlistentry>
@@ -907,7 +908,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
    </varlistentry>
 
    <varlistentry id="sql-createtable-parms-generated-stored">
-    <term><literal>GENERATED ALWAYS AS ( <replaceable>generation_expr</replaceable> ) STORED</literal><indexterm><primary>generated column</primary></indexterm></term>
+    <term><literal>GENERATED ALWAYS AS ( <replaceable>generation_expr</replaceable> ) [ STORED | VIRTUAL ]</literal><indexterm><primary>generated column</primary></indexterm></term>
     <listitem>
      <para>
       This clause creates the column as a <firstterm>generated
@@ -916,8 +917,11 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
      </para>
 
      <para>
-      The keyword <literal>STORED</literal> is required to signify that the
-      column will be computed on write and will be stored on disk.
+      When <literal>VIRTUAL</literal> is specified, the column will be
+      computed when it is read, and it will not occupy any storage.  When
+      <literal>STORED</literal> is specified, the column will be computed on
+      write and will be stored on disk.  <literal>VIRTUAL</literal> is the
+      default.
      </para>
 
      <para>
@@ -2504,9 +2508,9 @@ CREATE TABLE cities_partdef
    <title>Generated Columns</title>
 
    <para>
-    The option <literal>STORED</literal> is not standard but is also used by
-    other SQL implementations.  The SQL standard does not specify the storage
-    of generated columns.
+    The options <literal>STORED</literal> and <literal>VIRTUAL</literal> are
+    not standard but are also used by other SQL implementations.  The SQL
+    standard does not specify the storage of generated columns.
    </para>
   </refsect2>
 

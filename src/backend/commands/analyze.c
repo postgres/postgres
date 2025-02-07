@@ -1039,6 +1039,10 @@ examine_attribute(Relation onerel, int attnum, Node *index_expr)
 	if (attr->attisdropped)
 		return NULL;
 
+	/* Don't analyze virtual generated columns */
+	if (attr->attgenerated == ATTRIBUTE_GENERATED_VIRTUAL)
+		return NULL;
+
 	/*
 	 * Get attstattarget value.  Set to -1 if null.  (Analyze functions expect
 	 * -1 to mean use default_statistics_target; see for example

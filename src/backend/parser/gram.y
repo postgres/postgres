@@ -636,7 +636,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 %type <str>		opt_existing_window_name
 %type <boolean> opt_if_not_exists
 %type <boolean> opt_unique_null_treatment
-%type <ival>	generated_when override_kind
+%type <ival>	generated_when override_kind opt_virtual_or_stored
 %type <partspec>	PartitionSpec OptPartitionSpec
 %type <partelem>	part_elem
 %type <list>		part_params
@@ -784,7 +784,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 	UNLISTEN UNLOGGED UNTIL UPDATE USER USING
 
 	VACUUM VALID VALIDATE VALIDATOR VALUE_P VALUES VARCHAR VARIADIC VARYING
-	VERBOSE VERSION_P VIEW VIEWS VOLATILE
+	VERBOSE VERSION_P VIEW VIEWS VIRTUAL VOLATILE
 
 	WHEN WHERE WHITESPACE_P WINDOW WITH WITHIN WITHOUT WORK WRAPPER WRITE
 
@@ -3995,7 +3995,7 @@ ColConstraintElem:
 					n->location = @1;
 					$$ = (Node *) n;
 				}
-			| GENERATED generated_when AS '(' a_expr ')' STORED
+			| GENERATED generated_when AS '(' a_expr ')' opt_virtual_or_stored
 				{
 					Constraint *n = makeNode(Constraint);
 
@@ -4003,6 +4003,7 @@ ColConstraintElem:
 					n->generated_when = $2;
 					n->raw_expr = $5;
 					n->cooked_expr = NULL;
+					n->generated_kind = $7;
 					n->location = @1;
 
 					/*
@@ -4048,6 +4049,12 @@ opt_unique_null_treatment:
 generated_when:
 			ALWAYS			{ $$ = ATTRIBUTE_IDENTITY_ALWAYS; }
 			| BY DEFAULT	{ $$ = ATTRIBUTE_IDENTITY_BY_DEFAULT; }
+		;
+
+opt_virtual_or_stored:
+			STORED			{ $$ = ATTRIBUTE_GENERATED_STORED; }
+			| VIRTUAL		{ $$ = ATTRIBUTE_GENERATED_VIRTUAL; }
+			| /*EMPTY*/		{ $$ = ATTRIBUTE_GENERATED_VIRTUAL; }
 		;
 
 /*
@@ -17990,6 +17997,7 @@ unreserved_keyword:
 			| VERSION_P
 			| VIEW
 			| VIEWS
+			| VIRTUAL
 			| VOLATILE
 			| WHITESPACE_P
 			| WITHIN
@@ -18645,6 +18653,7 @@ bare_label_keyword:
 			| VERSION_P
 			| VIEW
 			| VIEWS
+			| VIRTUAL
 			| VOLATILE
 			| WHEN
 			| WHITESPACE_P

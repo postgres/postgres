@@ -1110,6 +1110,9 @@ DefineIndex(Oid tableId,
 	/*
 	 * We disallow indexes on system columns.  They would not necessarily get
 	 * updated correctly, and they don't seem useful anyway.
+	 *
+	 * Also disallow virtual generated columns in indexes (use expression
+	 * index instead).
 	 */
 	for (int i = 0; i < indexInfo->ii_NumIndexAttrs; i++)
 	{
@@ -1119,14 +1122,24 @@ DefineIndex(Oid tableId,
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("index creation on system columns is not supported")));
+
+
+		if (TupleDescAttr(RelationGetDescr(rel), attno - 1)->attgenerated == ATTRIBUTE_GENERATED_VIRTUAL)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 stmt->isconstraint ?
+					 errmsg("unique constraints on virtual generated columns are not supported") :
+					 errmsg("indexes on virtual generated columns are not supported")));
 	}
 
 	/*
-	 * Also check for system columns used in expressions or predicates.
+	 * Also check for system and generated columns used in expressions or
+	 * predicates.
 	 */
 	if (indexInfo->ii_Expressions || indexInfo->ii_Predicate)
 	{
 		Bitmapset  *indexattrs = NULL;
+		int			j;
 
 		pull_varattnos((Node *) indexInfo->ii_Expressions, 1, &indexattrs);
 		pull_varattnos((Node *) indexInfo->ii_Predicate, 1, &indexattrs);
@@ -1138,6 +1151,24 @@ DefineIndex(Oid tableId,
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 						 errmsg("index creation on system columns is not supported")));
+		}
+
+		/*
+		 * XXX Virtual generated columns in index expressions or predicates
+		 * could be supported, but it needs support in
+		 * RelationGetIndexExpressions() and RelationGetIndexPredicate().
+		 */
+		j = -1;
+		while ((j = bms_next_member(indexattrs, j)) >= 0)
+		{
+			AttrNumber	attno = j + FirstLowInvalidHeapAttributeNumber;
+
+			if (TupleDescAttr(RelationGetDescr(rel), attno - 1)->attgenerated == ATTRIBUTE_GENERATED_VIRTUAL)
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 stmt->isconstraint ?
+						 errmsg("unique constraints on virtual generated columns are not supported") :
+						 errmsg("indexes on virtual generated columns are not supported")));
 		}
 	}
 

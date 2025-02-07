@@ -246,6 +246,12 @@ CreateStatistics(CreateStatsStmt *stmt)
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 						 errmsg("statistics creation on system columns is not supported")));
 
+			/* Disallow use of virtual generated columns in extended stats */
+			if (attForm->attgenerated == ATTRIBUTE_GENERATED_VIRTUAL)
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("statistics creation on virtual generated columns is not supported")));
+
 			/* Disallow data types without a less-than operator */
 			type = lookup_type_cache(attForm->atttypid, TYPECACHE_LT_OPR);
 			if (type->lt_opr == InvalidOid)
@@ -269,6 +275,12 @@ CreateStatistics(CreateStatsStmt *stmt)
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 						 errmsg("statistics creation on system columns is not supported")));
 
+			/* Disallow use of virtual generated columns in extended stats */
+			if (get_attgenerated(relid, var->varattno) == ATTRIBUTE_GENERATED_VIRTUAL)
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("statistics creation on virtual generated columns is not supported")));
+
 			/* Disallow data types without a less-than operator */
 			type = lookup_type_cache(var->vartype, TYPECACHE_LT_OPR);
 			if (type->lt_opr == InvalidOid)
@@ -290,7 +302,6 @@ CreateStatistics(CreateStatsStmt *stmt)
 
 			Assert(expr != NULL);
 
-			/* Disallow expressions referencing system attributes. */
 			pull_varattnos(expr, 1, &attnums);
 
 			k = -1;
@@ -298,10 +309,17 @@ CreateStatistics(CreateStatsStmt *stmt)
 			{
 				AttrNumber	attnum = k + FirstLowInvalidHeapAttributeNumber;
 
+				/* Disallow expressions referencing system attributes. */
 				if (attnum <= 0)
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 							 errmsg("statistics creation on system columns is not supported")));
+
+				/* Disallow use of virtual generated columns in extended stats */
+				if (get_attgenerated(relid, attnum) == ATTRIBUTE_GENERATED_VIRTUAL)
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("statistics creation on virtual generated columns is not supported")));
 			}
 
 			/*
