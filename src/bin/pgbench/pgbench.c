@@ -3934,6 +3934,16 @@ initGenerateDataClientSide(PGconn *con)
 							j, (int64) naccounts * scale,
 							(int) (((int64) j * 100) / (naccounts * (int64) scale)),
 							elapsed_sec, remaining_sec);
+
+			/*
+			 * If the previous progress message is longer than the current
+			 * one, add spaces to the current line to fully overwrite any
+			 * remaining characters from the previous message.
+			 */
+			if (prev_chars > chars)
+				fprintf(stderr, "%*c", prev_chars - chars, ' ');
+			fputc(eol, stderr);
+			prev_chars = chars;
 		}
 		/* let's not call the timing for each row, but only each 100 rows */
 		else if (use_quiet && (j % 100 == 0))
@@ -3951,20 +3961,20 @@ initGenerateDataClientSide(PGconn *con)
 								j, (int64) naccounts * scale,
 								(int) (((int64) j * 100) / (naccounts * (int64) scale)), elapsed_sec, remaining_sec);
 
+				/*
+				 * If the previous progress message is longer than the current
+				 * one, add spaces to the current line to fully overwrite any
+				 * remaining characters from the previous message.
+				 */
+				if (prev_chars > chars)
+					fprintf(stderr, "%*c", prev_chars - chars, ' ');
+				fputc(eol, stderr);
+				prev_chars = chars;
+
 				/* skip to the next interval */
 				log_interval = (int) ceil(elapsed_sec / LOG_STEP_SECONDS);
 			}
 		}
-
-		/*
-		 * If the previous progress message is longer than the current one,
-		 * add spaces to the current line to fully overwrite any remaining
-		 * characters from the previous message.
-		 */
-		if (prev_chars > chars)
-			fprintf(stderr, "%*c", prev_chars - chars, ' ');
-		fputc(eol, stderr);
-		prev_chars = chars;
 	}
 
 	if (eol != '\n')
