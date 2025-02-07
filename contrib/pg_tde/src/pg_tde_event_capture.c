@@ -187,7 +187,7 @@ pg_tde_ddl_command_end_capture(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errmsg("Function can only be fired by event trigger manager")));
 
-	elog(LOG, "Type:%s EncryptMode:%s, Oid:%d, Relation:%s ",
+	elog(DEBUG2, "Type:%s EncryptMode:%s, Oid:%d, Relation:%s ",
 		 (tdeCurrentCreateEvent.eventType == TDE_INDEX_CREATE_EVENT) ? "CREATE INDEX" :
 		 (tdeCurrentCreateEvent.eventType == TDE_TABLE_CREATE_EVENT) ? "CREATE TABLE" : "UNKNOWN",
 		 tdeCurrentCreateEvent.encryptMode ? "true" : "false",
