@@ -1,6 +1,6 @@
 Parsed test spec with 2 sessions
 
-starting permutation: wait1 wakeup2 detach2
+starting permutation: wait1 wakeup2 noop1 detach2
 injection_points_attach
 -----------------------
                        
@@ -19,6 +19,7 @@ injection_points_run
                     
 (1 row)
 
+step noop1: 
 step detach2: SELECT injection_points_detach('injection-points-wait');
 injection_points_detach
 -----------------------
