@@ -1,6 +1,1657 @@
 <!-- doc/src/sgml/release-17.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+ <sect1 id="release-17-3">
+  <title>Release 17.3</title>
+
+  <formalpara>
+  <title>Release date:</title>
+  <para>2025-02-13</para>
+  </formalpara>
+
+  <para>
+   This release contains a variety of fixes from 17.2.
+   For information about new features in major release 17, see
+   <xref linkend="release-17"/>.
+  </para>
+
+  <sect2 id="release-17-3-migration">
+   <title>Migration to Version 17.3</title>
+
+   <para>
+    A dump/restore is not required for those running 17.X.
+   </para>
+
+   <para>
+    However, if you are upgrading from a version earlier than 17.1,
+    see <xref linkend="release-17-1"/>.
+   </para>
+  </sect2>
+
+  <sect2 id="release-17-3-changes">
+   <title>Changes</title>
+
+   <itemizedlist>
+
+    <listitem>
+<!--
+Author: Nathan Bossart <nathan@postgresql.org>
+Branch: master [a0ff56e2d] 2024-12-12 15:52:04 -0600
+Branch: REL_17_STABLE [d09fbf645] 2024-12-12 15:52:04 -0600
+-->
+     <para>
+      Restore auto-truncation of database and user names appearing in
+      connection requests (Nathan Bossart)
+      <ulink url="&commit_baseurl;d09fbf645">&sect;</ulink>
+     </para>
+
+     <para>
+      This reverts a v17 change that proved to cause trouble for some
+      users.  Over-length names should be truncated in an encoding-aware
+      fashion, but for now just return to the former behavior of blind
+      truncation at <literal>NAMEDATALEN-1</literal> bytes.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [34486b609] 2024-12-28 16:08:50 -0500
+Branch: REL_17_STABLE [15b4c46c3] 2024-12-28 16:08:50 -0500
+Branch: REL_16_STABLE [41a252c2c] 2024-12-28 16:08:50 -0500
+Branch: REL_15_STABLE [3d1ecc92a] 2024-12-28 16:08:50 -0500
+Branch: REL_14_STABLE [c58b0c43d] 2024-12-28 16:08:50 -0500
+Branch: REL_13_STABLE [70d067cec] 2024-12-28 16:08:50 -0500
+-->
+     <para>
+      Exclude parallel workers from connection privilege checks and limits
+      (Tom Lane)
+      <ulink url="&commit_baseurl;15b4c46c3">&sect;</ulink>
+     </para>
+
+     <para>
+      Do not
+      check <literal>datallowconn</literal>, <literal>rolcanlogin</literal>,
+      and <literal>ACL_CONNECT</literal> privileges when starting a
+      parallel worker, instead assuming that it's enough for the leader
+      process to have passed similar checks originally.  This avoids, for
+      example, unexpected failures of parallelized queries when the leader
+      is running as a role that lacks login privilege.  In the same vein,
+      enforce <literal>ReservedConnections</literal>,
+      <literal>datconnlimit</literal>, and <literal>rolconnlimit</literal>
+      limits only against regular backends, and count only regular
+      backends while checking if the limits were already reached.  Those
+      limits are meant to prevent excessive consumption of process slots
+      for regular backends --- but parallel workers and other special
+      processes have their own pools of process slots with their own limit
+      checks.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Álvaro Herrera <alvherre@alvh.no-ip.org>
+Branch: master [1e5ef3a2a] 2024-12-03 15:50:03 +0100
+Branch: REL_17_STABLE [5ffbbcfa1] 2024-12-03 15:50:03 +0100
+-->
+     <para>
+      Drop <quote>Lock</quote> suffix from LWLock wait event names
+      (Bertrand Drouvot)
+      <ulink url="&commit_baseurl;5ffbbcfa1">&sect;</ulink>
+     </para>
+
+     <para>
+      Refactoring unintentionally caused
+      the <structname>pg_stat_activity</structname> view to show
+      lock-related wait event names with a <quote>Lock</quote> suffix,
+      which among other things broke joining it
+      to <structname>pg_wait_events</structname>.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Peter Geoghegan <pg@bowt.ie>
+Branch: master [31b0a8f04] 2024-12-19 11:08:55 -0500
+Branch: REL_17_STABLE [9e85b20da] 2024-12-19 11:08:53 -0500
+-->
+     <para>
+      Fix possible failure to return all matching tuples for a btree index
+      scan with a ScalarArrayOp (<literal>= ANY</literal>) condition
+      (Peter Geoghegan)
+      <ulink url="&commit_baseurl;9e85b20da">&sect;</ulink>
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: David Rowley <drowley@postgresql.org>
+Branch: master [1fe5a347e] 2024-12-09 14:23:21 +1300
+Branch: REL_17_STABLE [9d5ce4f1a] 2024-12-09 14:24:07 +1300
+Branch: REL_16_STABLE [c1d6506ac] 2024-12-09 14:24:34 +1300
+Branch: REL_15_STABLE [d54378e98] 2024-12-09 14:24:54 +1300
+-->
+     <para>
+      Fix possible re-use of stale results in window aggregates (David
+      Rowley)
+      <ulink url="&commit_baseurl;9d5ce4f1a">&sect;</ulink>
+     </para>
+
+     <para>
+      A window aggregate with a <quote>run condition</quote> optimization
+      and a pass-by-reference result type might incorrectly return the
+      result from the previous partition instead of performing a fresh
+      calculation.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Heikki Linnakangas <heikki.linnakangas@iki.fi>
+Branch: master [578a7fe7b] 2024-12-21 23:42:39 +0200
+Branch: REL_17_STABLE [7cfdb4d1e] 2024-12-21 23:42:52 +0200
+Branch: REL_16_STABLE [9d8ab2c46] 2024-12-21 23:42:55 +0200
+Branch: REL_15_STABLE [acd5c28db] 2024-12-21 23:42:57 +0200
+Branch: REL_14_STABLE [41eafbb49] 2024-12-21 23:42:59 +0200
+Branch: REL_13_STABLE [9c1afd344] 2024-12-21 23:45:56 +0200
+-->
+     <para>
+      Keep <varname>TransactionXmin</varname> in sync
+      with <varname>MyProc-&gt;xmin</varname> (Heikki Linnakangas)
+      <ulink url="&commit_baseurl;7cfdb4d1e">&sect;</ulink>
+     </para>
+
+     <para>
+      This oversight could permit a process to try to access data that had
+      already been vacuumed away.  One known consequence is
+      transient <quote>could not access status of transaction</quote>
+      errors.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Heikki Linnakangas <heikki.linnakangas@iki.fi>
+Branch: master [af8cd1639] 2025-01-14 14:28:49 +0200
+Branch: REL_17_STABLE [96e61b279] 2025-01-14 14:35:11 +0200
+Branch: REL_16_STABLE [91fc447c2] 2025-01-14 14:41:01 +0200
+Branch: REL_15_STABLE [ce7c406f0] 2025-01-14 14:29:11 +0200
+Branch: REL_14_STABLE [fce17c3a5] 2025-01-14 14:29:13 +0200
+Branch: REL_13_STABLE [f217c4105] 2025-01-14 18:54:56 +0200
+-->
+     <para>
+      Fix race condition that could cause failure to add a newly-inserted
+      catalog entry to a catalog cache list (Heikki Linnakangas)
+      <ulink url="&commit_baseurl;96e61b279">&sect;</ulink>
+     </para>
+
+     <para>
+      This could result, for example, in failure to use a newly-created
+      function within an existing session.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Noah Misch <noah@leadboat.com>
+Branch: master [81772a495] 2025-01-25 11:28:14 -0800
+Branch: REL_17_STABLE [1587f7b9f] 2025-01-25 11:28:18 -0800
+Branch: master [d28cd3e7b] 2025-01-25 11:28:14 -0800
+Branch: REL_17_STABLE [f4af4515b] 2025-01-25 11:28:18 -0800
+Branch: REL_16_STABLE [9311fcb86] 2025-01-25 11:28:18 -0800
+Branch: REL_15_STABLE [dc02b98bd] 2025-01-25 11:28:19 -0800
+Branch: REL_14_STABLE [25e99483c] 2025-01-25 11:28:19 -0800
+Branch: REL_13_STABLE [8bfd2ceba] 2025-01-25 11:28:19 -0800
+-->
+     <para>
+      Prevent possible catalog corruption when a system catalog is
+      vacuumed concurrently with an update (Noah Misch)
+      <ulink url="&commit_baseurl;1587f7b9f">&sect;</ulink>
+      <ulink url="&commit_baseurl;f4af4515b">&sect;</ulink>
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Thomas Munro <tmunro@postgresql.org>
+Branch: master [38c579b08] 2024-12-20 23:57:02 +1300
+Branch: REL_17_STABLE [0350b876b] 2024-12-20 23:57:18 +1300
+Branch: REL_16_STABLE [ba02d24ba] 2024-12-20 23:57:26 +1300
+Branch: REL_15_STABLE [fb540b6aa] 2024-12-20 23:57:34 +1300
+Branch: REL_14_STABLE [23c743b64] 2024-12-20 23:57:53 +1300
+Branch: REL_13_STABLE [228091216] 2024-12-20 23:58:08 +1300
+Branch: REL_17_STABLE [66aaabe7a] 2025-01-08 10:43:40 +1300
+Branch: REL_16_STABLE [c957d7444] 2025-01-08 10:46:45 +1300
+Branch: REL_15_STABLE [3181befdc] 2025-01-08 10:47:43 +1300
+Branch: REL_14_STABLE [f154f028d] 2025-01-08 10:48:01 +1300
+Branch: REL_13_STABLE [a1d17a894] 2025-01-08 10:48:57 +1300
+Branch: REL_17_STABLE [45aef9f6b] 2025-01-08 17:02:30 +1300
+Branch: REL_16_STABLE [9defaaa1d] 2025-01-08 17:03:25 +1300
+Branch: REL_15_STABLE [190054e61] 2025-01-08 17:03:45 +1300
+Branch: REL_14_STABLE [049c8cb9a] 2025-01-08 17:04:26 +1300
+Branch: REL_13_STABLE [417d41c65] 2025-01-08 17:14:15 +1300
+-->
+     <para>
+      Fix data corruption when relation truncation fails (Thomas Munro)
+      <ulink url="&commit_baseurl;0350b876b">&sect;</ulink>
+      <ulink url="&commit_baseurl;66aaabe7a">&sect;</ulink>
+      <ulink url="&commit_baseurl;45aef9f6b">&sect;</ulink>
+     </para>
+
+     <para>
+      The filesystem calls needed to perform relation truncation could
+      fail, leaving inconsistent state on disk (for example, effectively
+      reviving deleted data).  We can't really prevent that, but we can
+      recover by dint of making such failures into PANICs, so that
+      consistency is restored by replaying from WAL up to just before the
+      attempted truncation.  This isn't a hugely desirable behavior, but
+      such failures are rare enough that it seems an acceptable solution.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Thomas Munro <tmunro@postgresql.org>
+Branch: master [75818b3af] 2024-12-03 10:12:05 +1300
+Branch: REL_17_STABLE [d4ffbf47b] 2024-12-03 10:19:47 +1300
+Branch: REL_16_STABLE [ad5aa7bfd] 2024-12-03 10:20:10 +1300
+Branch: REL_15_STABLE [a501fe5a9] 2024-12-03 10:20:22 +1300
+Branch: REL_14_STABLE [7d0b91a28] 2024-12-03 10:12:56 +1300
+Branch: REL_13_STABLE [1168acbca] 2024-12-03 10:13:49 +1300
+-->
+     <para>
+      Prevent checkpoints from starting during relation truncation
+      (Robert Haas)
+      <ulink url="&commit_baseurl;d4ffbf47b">&sect;</ulink>
+     </para>
+
+     <para>
+      This avoids a race condition wherein the modified file might not get
+      fsync'd before completing the checkpoint, creating a risk of data
+      corruption if the operating system crashes soon after.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Michael Paquier <michael@paquier.xyz>
+Branch: master Release: REL_16_BR [dac1ff309] 2022-07-05 10:16:12 +0900
+Branch: REL_15_STABLE [c1c9df315] 2024-12-20 09:11:03 +0900
+Branch: REL_14_STABLE [1f95181b4] 2024-12-20 09:11:08 +0900
+Branch: REL_13_STABLE [26a79cbbd] 2024-12-20 09:11:11 +0900
+-->
+     <para>
+      Use <function>rename()</function>
+      not <function>link()</function>/<function>unlink()</function> to
+      rename files (Nathan Bossart)
+     </para>
+
+     <para>
+      The previous coding was intended to assure that the operation could
+      not accidentally overwrite an existing file.  However a failure
+      could leave two links to the same file in existence, confusing
+      subsequent operations and creating a risk of data corruption.
+      In practice we do not use this functionality in places where the
+      target filename could already exist, so it seems better to give up
+      the no-overwrite guarantee to remove the multiple-link hazard.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Noah Misch <noah@leadboat.com>
+Branch: master [ff90ee614] 2024-12-28 07:16:22 -0800
+Branch: REL_17_STABLE [fa6131377] 2024-12-28 07:16:26 -0800
+Branch: REL_16_STABLE [5d94aa4dc] 2024-12-28 07:16:26 -0800
+Branch: REL_15_STABLE [83bb52375] 2024-12-28 07:16:26 -0800
+Branch: REL_14_STABLE [536acda0b] 2024-12-28 07:16:27 -0800
+Branch: REL_13_STABLE [102546322] 2024-12-28 07:16:27 -0800
+-->
+     <para>
+      Avoid possibly losing an update of
+      <structname>pg_database</structname>.<structfield>datfrozenxid</structfield>
+      when <command>VACUUM</command> runs concurrently with
+      a <command>REASSIGN OWNED</command> that changes that database's
+      owner (Kirill Reshke)
+      <ulink url="&commit_baseurl;fa6131377">&sect;</ulink>
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [ea68ea632] 2025-01-22 11:58:20 -0500
+Branch: REL_17_STABLE [2b72fed2d] 2025-01-22 11:58:20 -0500
+Branch: REL_16_STABLE [8c57f5485] 2025-01-22 11:58:20 -0500
+Branch: REL_15_STABLE [cdeed4de7] 2025-01-22 11:58:20 -0500
+Branch: REL_14_STABLE [308599305] 2025-01-22 11:58:20 -0500
+Branch: REL_13_STABLE [001c09d8b] 2025-01-22 11:58:20 -0500
+-->
+     <para>
+      Fix incorrect <structfield>tg_updatedcols</structfield> values
+      passed to <literal>AFTER UPDATE</literal> triggers (Tom Lane)
+      <ulink url="&commit_baseurl;2b72fed2d">&sect;</ulink>
+     </para>
+
+     <para>
+      In some cases the <structfield>tg_updatedcols</structfield> bitmap
+      could describe the set of columns updated by an earlier command in
+      the same transaction, fooling the trigger into doing the wrong
+      thing.
+     </para>
+
+     <para>
+      Also, prevent memory bloat caused by making too many copies of
+      the <structfield>tg_updatedcols</structfield> bitmap.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Álvaro Herrera <alvherre@alvh.no-ip.org>
+Branch: master [9b21f203d] 2025-01-21 14:53:46 +0100
+Branch: REL_17_STABLE [2f30847d1] 2025-01-21 14:53:46 +0100
+Branch: REL_16_STABLE [ddab512eb] 2025-01-21 14:53:46 +0100
+Branch: REL_15_STABLE [1bc092519] 2025-01-21 14:53:46 +0100
+-->
+     <para>
+      Fix detach of a partition that has its own foreign-key constraint
+      referencing a partitioned table (Amul Sul)
+      <ulink url="&commit_baseurl;2f30847d1">&sect;</ulink>
+     </para>
+
+     <para>
+      In common cases, foreign keys are defined on a partitioned table's
+      top level; but if instead one is defined on a partition and
+      references a partitioned table, and the referencing partition is
+      detached, the relevant <structname>pg_constraint</structname>
+      entries were updated incorrectly.  This led to errors
+      like <quote>could not find ON INSERT check triggers of foreign key
+      constraint</quote>.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Álvaro Herrera <alvherre@alvh.no-ip.org>
+Branch: master [09d09d429] 2024-11-27 13:50:27 +0100
+Branch: REL_17_STABLE [6e793582b] 2024-11-27 13:50:27 +0100
+-->
+     <para>
+      Fix <function>pg_get_constraintdef</function>'s support
+      for <literal>NOT NULL</literal> constraints on domains
+      (Álvaro Herrera)
+      <ulink url="&commit_baseurl;6e793582b">&sect;</ulink>
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [3220ceaf7] 2024-12-07 13:12:32 -0500
+Branch: REL_17_STABLE [765f76d8c] 2024-12-07 13:12:32 -0500
+Branch: REL_16_STABLE [26c233b8b] 2024-12-07 13:12:32 -0500
+Branch: REL_15_STABLE [d2f59497a] 2024-12-07 13:12:32 -0500
+Branch: REL_14_STABLE [5882a4ba0] 2024-12-07 13:12:32 -0500
+Branch: REL_13_STABLE [f2eba400b] 2024-12-07 13:12:32 -0500
+-->
+     <para>
+      Fix mis-processing of <function>to_timestamp</function>'s
+      <literal>FF<replaceable>n</replaceable></literal> format codes
+      (Tom Lane)
+      <ulink url="&commit_baseurl;765f76d8c">&sect;</ulink>
+     </para>
+
+     <para>
+      An integer format code immediately
+      preceding <literal>FF<replaceable>n</replaceable></literal> would
+      consume all available digits, leaving none
+      for <literal>FF<replaceable>n</replaceable></literal>.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Dean Rasheed <dean.a.rasheed@gmail.com>
+Branch: master [a93e2a1e2] 2025-01-12 13:35:12 +0000
+Branch: REL_17_STABLE [d037cc2af] 2025-01-12 13:36:44 +0000
+-->
+     <para>
+      When deparsing a <literal>PASSING</literal> clause in a SQL/JSON
+      query function, ensure that variable names are double-quoted when
+      necessary (Dean Rasheed)
+      <ulink url="&commit_baseurl;d037cc2af">&sect;</ulink>
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Dean Rasheed <dean.a.rasheed@gmail.com>
+Branch: master [d673eefd4] 2025-01-12 12:54:32 +0000
+Branch: REL_17_STABLE [61b12135f] 2025-01-12 12:56:52 +0000
+Branch: REL_16_STABLE [77763f3be] 2025-01-12 12:58:14 +0000
+Branch: REL_15_STABLE [7c0379516] 2025-01-12 12:59:40 +0000
+Branch: REL_14_STABLE [dc8cd9cd0] 2025-01-12 13:01:22 +0000
+Branch: REL_13_STABLE [8f137f038] 2025-01-12 13:02:56 +0000
+-->
+     <para>
+      When deparsing an <literal>XMLTABLE()</literal> expression, ensure
+      that XML namespace names are double-quoted when necessary (Dean
+      Rasheed)
+      <ulink url="&commit_baseurl;61b12135f">&sect;</ulink>
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Daniel Gustafsson <dgustafsson@postgresql.org>
+Branch: master [27a1f8d10] 2025-01-10 22:02:58 +0100
+Branch: REL_17_STABLE [8ed9bf0a3] 2025-01-10 22:02:58 +0100
+Branch: REL_16_STABLE [c35bbdfbc] 2025-01-10 22:02:58 +0100
+Branch: REL_15_STABLE [830215a4c] 2025-01-10 22:02:58 +0100
+Branch: REL_14_STABLE [83ffb9f20] 2025-01-10 22:02:58 +0100
+Branch: REL_13_STABLE [84b8f6d9f] 2025-01-10 22:02:58 +0100
+Branch: master [97698cc51] 2025-01-12 23:44:39 +0100
+Branch: REL_17_STABLE [dc24c9ad5] 2025-01-12 23:44:39 +0100
+Branch: REL_16_STABLE [116036d81] 2025-01-12 23:44:39 +0100
+Branch: REL_15_STABLE [9ad7a32b2] 2025-01-12 23:44:39 +0100
+Branch: REL_14_STABLE [9e596a099] 2025-01-12 23:44:39 +0100
+Branch: REL_13_STABLE [7b1f50d8c] 2025-01-12 23:44:39 +0100
+-->
+     <para>
+      Include the <literal>ldapscheme</literal> option
+      in <function>pg_hba_file_rules()</function> output (Laurenz Albe)
+      <ulink url="&commit_baseurl;8ed9bf0a3">&sect;</ulink>
+      <ulink url="&commit_baseurl;dc24c9ad5">&sect;</ulink>
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: David Rowley <drowley@postgresql.org>
+Branch: master [231006451] 2025-01-10 14:30:25 +1300
+Branch: REL_17_STABLE [5db9367e5] 2025-01-10 14:31:31 +1300
+-->
+     <para>
+      Fix planning of pre-sorted <literal>UNION</literal> operations for
+      cases where the input column datatypes don't all match (David
+      Rowley)
+      <ulink url="&commit_baseurl;5db9367e5">&sect;</ulink>
+     </para>
+
+     <para>
+      This error could lead to sorting data with the wrong sort operator,
+      with consequences ranging from no visible problem to core dumps.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [a43d7a8c7] 2024-11-19 18:26:19 -0500
+Branch: REL_17_STABLE [c1ebef3c1] 2024-11-19 18:26:19 -0500
+Branch: REL_16_STABLE [f286f64bc] 2024-11-19 18:26:19 -0500
+Branch: REL_15_STABLE [fd3383ff1] 2024-11-19 18:26:19 -0500
+Branch: REL_14_STABLE [44a4a521d] 2024-11-19 18:26:19 -0500
+Branch: REL_13_STABLE [6b66dba3f] 2024-11-19 18:26:19 -0500
+-->
+     <para>
+      Don't merge <literal>UNION</literal> operations if their column
+      collations aren't consistent (Tom Lane)
+      <ulink url="&commit_baseurl;c1ebef3c1">&sect;</ulink>
+     </para>
+
+     <para>
+      Previously we ignored collations when deciding if it's safe to
+      merge <literal>UNION</literal> steps into a single
+      N-way <literal>UNION</literal> operation.  This was arguably valid
+      before the introduction of nondeterministic collations, but it's not
+      anymore, since the collation in use can affect the definition of
+      uniqueness.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [5c9d8636d] 2024-11-28 17:33:16 -0500
+Branch: REL_17_STABLE [72822a99d] 2024-11-28 17:33:16 -0500
+Branch: REL_16_STABLE [85990e2fd] 2024-11-28 17:33:16 -0500
+Branch: master [e032e4c7d] 2024-11-30 12:42:19 -0500
+Branch: REL_17_STABLE [78883cd90] 2024-11-30 12:42:20 -0500
+Branch: REL_16_STABLE [7b456f040] 2024-11-30 12:42:20 -0500
+-->
+     <para>
+      Prevent <quote>wrong varnullingrels</quote> planner errors after
+      pulling up a subquery that's underneath an outer join (Tom Lane)
+      <ulink url="&commit_baseurl;72822a99d">&sect;</ulink>
+      <ulink url="&commit_baseurl;78883cd90">&sect;</ulink>
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Richard Guo <rguo@postgresql.org>
+Branch: master [e28033fe1] 2025-01-02 18:06:00 +0900
+Branch: REL_17_STABLE [297b280ab] 2025-01-02 17:59:32 +0900
+Branch: REL_16_STABLE [a1a9120c7] 2025-01-02 18:02:02 +0900
+-->
+     <para>
+      Ignore nulling-relation marker bits when looking up statistics
+      (Richard Guo)
+      <ulink url="&commit_baseurl;297b280ab">&sect;</ulink>
+     </para>
+
+     <para>
+      This oversight could lead to failure to use relevant statistics
+      about expressions, or to <quote>corrupt MVNDistinct
+      entry</quote> errors.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [bf826ea06] 2025-01-16 20:40:07 -0500
+Branch: REL_17_STABLE [0671a71e0] 2025-01-16 20:40:07 -0500
+Branch: REL_16_STABLE [94c02bd33] 2025-01-16 20:40:07 -0500
+Branch: REL_15_STABLE [724ebebb1] 2025-01-16 20:40:07 -0500
+Branch: REL_14_STABLE [5f725648f] 2025-01-16 20:40:07 -0500
+Branch: REL_13_STABLE [45004f527] 2025-01-16 20:40:07 -0500
+-->
+     <para>
+      Fix missed expression processing for partition pruning steps
+      (Tom Lane)
+      <ulink url="&commit_baseurl;0671a71e0">&sect;</ulink>
+     </para>
+
+     <para>
+      This oversight could lead to <quote>unrecognized node type</quote>
+      errors, and perhaps other problems, in queries accessing partitioned
+      tables.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [2bdf1b2a2] 2024-12-28 12:30:42 -0500
+Branch: REL_17_STABLE [14141bbbc] 2024-12-28 12:30:42 -0500
+-->
+     <para>
+      Give the slotsync worker process its own process slot (Tom Lane, Hou
+      Zhijie)
+      <ulink url="&commit_baseurl;14141bbbc">&sect;</ulink>
+     </para>
+
+     <para>
+      This was overlooked in the addition of the slotsync worker, with the
+      result that its process slot effectively came out of the pool meant
+      for regular backend processes.  This could result in failure to
+      launch the worker, or to subsequent failures of connection requests
+      that should have succeeded according to the configured settings,
+      if the number of regular backend processes
+      approached <varname>max_connections</varname>.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Nathan Bossart <nathan@postgresql.org>
+Branch: master [84f1b0b03] 2024-12-17 15:24:45 -0600
+Branch: REL_17_STABLE [18452b70a] 2024-12-17 15:24:45 -0600
+Branch: REL_16_STABLE [2a7402322] 2024-12-17 15:24:45 -0600
+Branch: REL_15_STABLE [9f7b7d516] 2024-12-17 15:24:45 -0600
+Branch: REL_14_STABLE [84dc1303c] 2024-12-17 15:24:45 -0600
+Branch: REL_13_STABLE [853cef097] 2024-12-17 15:24:45 -0600
+-->
+     <para>
+      Allow dshash tables to grow past 1GB (Matthias van de Meent)
+      <ulink url="&commit_baseurl;18452b70a">&sect;</ulink>
+     </para>
+
+     <para>
+      This avoids errors like <quote>invalid DSA memory alloc request
+      size</quote>.  The case can occur for example in transactions that
+      process several million tables.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Michael Paquier <michael@paquier.xyz>
+Branch: master [720e52984] 2025-01-14 15:12:56 +0900
+Branch: REL_17_STABLE [e027ee990] 2025-01-14 15:13:14 +0900
+Branch: REL_16_STABLE [bfda7d8dd] 2025-01-14 15:13:15 +0900
+Branch: REL_15_STABLE [9e9f30139] 2025-01-14 15:13:17 +0900
+Branch: REL_14_STABLE [e35ff6520] 2025-01-14 15:13:19 +0900
+Branch: REL_13_STABLE [332023e2d] 2025-01-14 15:13:20 +0900
+-->
+     <para>
+      Avoid possible integer overflow
+      in <function>bringetbitmap()</function> (James Hunter, Evgeniy
+      Gorbanyov)
+      <ulink url="&commit_baseurl;e027ee990">&sect;</ulink>
+     </para>
+
+     <para>
+      Since the result is only used for statistical purposes, the effects
+      of this error were mostly cosmetic.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Álvaro Herrera <alvherre@alvh.no-ip.org>
+Branch: master [69ab44651] 2025-01-09 07:39:05 +0100
+Branch: REL_17_STABLE [ffd9b8134] 2025-01-09 07:44:30 +0100
+-->
+     <para>
+      Correct miscalculation of SLRU bank numbers (Yura Sokolov)
+      <ulink url="&commit_baseurl;ffd9b8134">&sect;</ulink>
+     </para>
+
+     <para>
+      This error led to using a smaller number of banks than intended,
+      causing more contention but no functional misbehavior.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Thomas Munro <tmunro@postgresql.org>
+Branch: master [73f6b9a3b] 2025-01-20 16:43:29 +1300
+Branch: REL_17_STABLE [44f400fbc] 2025-01-20 16:43:39 +1300
+Branch: REL_16_STABLE [b4b52c911] 2025-01-20 16:55:11 +1300
+-->
+     <para>
+      Ensure that an already-set process latch doesn't prevent the
+      postmaster from noticing socket events (Thomas Munro)
+      <ulink url="&commit_baseurl;44f400fbc">&sect;</ulink>
+     </para>
+
+     <para>
+      An extremely heavy workload of backends launching workers and
+      workers exiting could prevent the postmaster from responding to
+      incoming client connections in a timely fashion.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Michael Paquier <michael@paquier.xyz>
+Branch: master [6cf1647d8] 2025-01-20 09:29:42 +0900
+Branch: REL_17_STABLE [e6767c0ed] 2025-01-20 09:30:33 +0900
+Branch: REL_16_STABLE [2c2e1d4f4] 2025-01-20 09:30:36 +0900
+Branch: REL_15_STABLE [26554facc] 2025-01-20 09:30:37 +0900
+Branch: REL_14_STABLE [a2d4f806c] 2025-01-20 09:30:39 +0900
+Branch: REL_13_STABLE [0f0431e91] 2025-01-20 09:30:40 +0900
+-->
+     <para>
+      Prevent streaming standby servers from looping infinitely when
+      reading a WAL record that crosses pages (Kyotaro Horiguchi,
+      Alexander Kukushkin)
+      <ulink url="&commit_baseurl;e6767c0ed">&sect;</ulink>
+     </para>
+
+     <para>
+      This would happen when the record's continuation is on a page that
+      needs to be read from a different WAL source.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Álvaro Herrera <alvherre@alvh.no-ip.org>
+Branch: REL_14_STABLE [4abf615cc] 2024-12-12 16:21:18 +0100
+-->
+     <para>
+      Improve performance of archiver process with many status files
+      (Nathan Bossart)
+     </para>
+
+     <para>
+      This change back-patches a fix originally made in v15, in response
+      to reports of extremely poor archiving performance leading to
+      downtime or loss of replicas.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Noah Misch <noah@leadboat.com>
+Branch: master [8b9cbf492] 2024-12-10 13:51:59 -0800
+Branch: REL_17_STABLE [4bd9de3f4] 2024-12-10 13:52:02 -0800
+Branch: REL_16_STABLE [ac4a2b403] 2024-12-10 13:52:02 -0800
+Branch: REL_15_STABLE [839da50bd] 2024-12-10 13:52:02 -0800
+Branch: REL_14_STABLE [315264d70] 2024-12-10 13:52:02 -0800
+Branch: REL_13_STABLE [6151769f6] 2024-12-10 13:52:02 -0800
+-->
+     <para>
+      Fix unintended promotion of FATAL errors to PANIC during early
+      process startup (Noah Misch)
+      <ulink url="&commit_baseurl;4bd9de3f4">&sect;</ulink>
+     </para>
+
+     <para>
+      This fixes some unlikely cases that would result in <quote>PANIC:
+      proc_exit() called in child process</quote>.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [3f9b96217] 2024-12-07 15:56:28 -0500
+Branch: REL_17_STABLE [ec7b89cc5] 2024-12-07 15:56:28 -0500
+Branch: REL_16_STABLE [be5db08ed] 2024-12-07 15:56:28 -0500
+Branch: REL_15_STABLE [0e4fa06ba] 2024-12-07 15:56:28 -0500
+Branch: REL_14_STABLE [1a34cf0f4] 2024-12-07 15:56:28 -0500
+Branch: REL_13_STABLE [725d98102] 2024-12-07 15:56:28 -0500
+Branch: master [c82003760] 2024-12-07 14:28:16 -0500
+Branch: REL_17_STABLE [5b44a317a] 2024-12-07 14:28:16 -0500
+Branch: REL_16_STABLE [faad01835] 2024-12-07 14:28:16 -0500
+Branch: REL_15_STABLE [d40191467] 2024-12-07 14:28:16 -0500
+Branch: REL_14_STABLE [d9d5e1b48] 2024-12-07 14:28:16 -0500
+Branch: REL_13_STABLE [531cbd8b7] 2024-12-07 14:28:16 -0500
+-->
+     <para>
+      Fix cases where an operator family member operator or support
+      procedure could become a dangling reference (Tom Lane)
+      <ulink url="&commit_baseurl;ec7b89cc5">&sect;</ulink>
+      <ulink url="&commit_baseurl;5b44a317a">&sect;</ulink>
+     </para>
+
+     <para>
+      In some cases a data type could be dropped while references to its
+      OID still remain in <structname>pg_amop</structname>
+      or <structname>pg_amproc</structname>.  While that caused no
+      immediate issues, an attempt to drop the owning operator family
+      would fail, and <application>pg_dump</application> would produce
+      bogus output when dumping the operator family.  This fix causes
+      creation and modification of operator families/classes to add
+      needed dependency entries so that dropping a data type will also
+      drop any dependent operator family elements.  That does not help
+      vulnerable pre-existing operator families, though, so a band-aid has
+      also been added to <command>DROP OPERATOR FAMILY</command> to
+      prevent failure when dropping a family that has dangling members.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Michael Paquier <michael@paquier.xyz>
+Branch: master [c9b3d4909] 2024-12-30 13:33:09 +0900
+Branch: REL_17_STABLE [836435424] 2024-12-30 13:33:58 +0900
+Branch: REL_16_STABLE [e3a27fd06] 2024-12-30 13:33:59 +0900
+Branch: REL_15_STABLE [da8bd5d42] 2024-12-30 13:34:01 +0900
+Branch: REL_14_STABLE [c53d90bb4] 2025-01-08 08:47:19 +0900
+Branch: REL_13_STABLE [a786cf04d] 2025-01-08 08:47:24 +0900
+Author: Michael Paquier <michael@paquier.xyz>
+Branch: REL_17_STABLE [bbe68c13a] 2024-12-23 12:48:06 +0900
+Branch: REL_16_STABLE [4d45e7490] 2024-12-23 12:48:08 +0900
+Branch: REL_15_STABLE [6c9b39754] 2024-12-23 12:48:09 +0900
+Branch: REL_14_STABLE [cfd6cbcf9] 2024-12-23 12:48:10 +0900
+Branch: REL_13_STABLE [ba230ce40] 2024-12-23 12:48:12 +0900
+Author: Michael Paquier <michael@paquier.xyz>
+Branch: master [ea792bfd9] 2024-11-21 15:14:02 +0900
+Branch: REL_17_STABLE [afe9b0d9f] 2024-11-21 15:14:11 +0900
+Branch: REL_16_STABLE [e749eaf46] 2024-11-21 15:14:13 +0900
+Branch: REL_15_STABLE [6fc30c24c] 2024-11-21 15:14:15 +0900
+-->
+     <para>
+      Fix multiple memory leaks in logical decoding output (Vignesh C,
+      Masahiko Sawada, Boyu Yang)
+      <ulink url="&commit_baseurl;836435424">&sect;</ulink>
+      <ulink url="&commit_baseurl;bbe68c13a">&sect;</ulink>
+      <ulink url="&commit_baseurl;afe9b0d9f">&sect;</ulink>
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Daniel Gustafsson <dgustafsson@postgresql.org>
+Branch: master [73a392d23] 2024-12-09 20:58:23 +0100
+Branch: REL_17_STABLE [9add1bbfa] 2024-12-09 20:58:23 +0100
+Branch: REL_16_STABLE [be9dac9af] 2024-12-09 20:58:23 +0100
+-->
+     <para>
+      Fix small memory leak when
+      updating the <varname>application_name</varname>
+      or <varname>cluster_name</varname> settings (Tofig Aliev)
+      <ulink url="&commit_baseurl;9add1bbfa">&sect;</ulink>
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Álvaro Herrera <alvherre@alvh.no-ip.org>
+Branch: master [3c5f9f12c] 2024-12-03 17:50:57 +0100
+Branch: REL_17_STABLE [9abdc1841] 2024-12-03 17:50:57 +0100
+-->
+     <para>
+      Avoid crash when a background process tries to check a new value
+      of <varname>synchronized_standby_slots</varname> (Álvaro Herrera)
+      <ulink url="&commit_baseurl;9abdc1841">&sect;</ulink>
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: REL_15_STABLE [4398507df] 2024-12-05 12:54:41 -0500
+Branch: REL_14_STABLE [d24eb0e91] 2024-12-05 12:54:41 -0500
+Branch: REL_13_STABLE [cd1c8b992] 2024-12-05 12:54:41 -0500
+-->
+     <para>
+      Avoid low-probability crash on out-of-memory, due to missing check
+      for failure return from <function>malloc()</function>
+      (Karina Litskevich)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [b9aa4166f] 2025-01-30 15:36:44 -0500
+Branch: REL_17_STABLE [1e25cdb21] 2025-01-30 15:36:07 -0500
+Branch: REL_16_STABLE [f7a08b6e9] 2025-01-30 15:36:07 -0500
+Branch: REL_15_STABLE [b296e55b4] 2025-01-30 15:36:07 -0500
+Branch: REL_14_STABLE [6a33bb35c] 2025-01-30 15:36:07 -0500
+Branch: REL_13_STABLE [49a38238e] 2025-01-30 15:36:07 -0500
+-->
+     <para>
+      Avoid integer overflow while
+      testing <varname>wal_skip_threshold</varname> condition (Tom Lane)
+      <ulink url="&commit_baseurl;1e25cdb21">&sect;</ulink>
+     </para>
+
+     <para>
+      A transaction that created a very large relation could mistakenly
+      decide to ensure durability by copying the relation into WAL instead
+      of fsync'ing it, thereby negating the point
+      of <varname>wal_skip_threshold</varname>.  (This only matters
+      when <varname>wal_level</varname> is set
+      to <literal>minimal</literal>, else a WAL copy is required anyway.)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Noah Misch <noah@leadboat.com>
+Branch: master [4ba84de45] 2024-11-25 14:42:35 -0800
+Branch: REL_17_STABLE [718af10da] 2024-11-25 14:42:38 -0800
+Branch: REL_16_STABLE [c1285bbeb] 2024-11-25 14:42:39 -0800
+Branch: REL_15_STABLE [941e0c0df] 2024-11-25 14:42:39 -0800
+Branch: REL_14_STABLE [2690a4f5d] 2024-11-25 14:42:40 -0800
+Branch: REL_13_STABLE [01745fb04] 2024-11-25 14:42:40 -0800
+-->
+     <para>
+      Fix unsafe order of operations during cache lookups (Noah Misch)
+      <ulink url="&commit_baseurl;718af10da">&sect;</ulink>
+     </para>
+
+     <para>
+      The only known consequence was a usually-harmless <quote>you don't
+      own a lock of type ExclusiveLock</quote> warning
+      during <command>GRANT TABLESPACE</command>.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: John Naylor <john.naylor@postgresql.org>
+Branch: master [ccc8194e4] 2024-12-04 16:58:25 +0700
+Branch: REL_17_STABLE [83ce20d67] 2024-12-04 16:59:12 +0700
+-->
+     <para>
+      Avoid potential use-after-free in parallel vacuum (Vallimaharajan G,
+      John Naylor)
+      <ulink url="&commit_baseurl;83ce20d67">&sect;</ulink>
+     </para>
+
+     <para>
+      This bug seems to have no consequences in standard builds, but it's
+      theoretically a hazard.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Thomas Munro <tmunro@postgresql.org>
+Branch: master [78c09bd9f] 2024-11-22 15:29:47 +1300
+Branch: REL_17_STABLE [8a9a51518] 2024-11-22 15:29:28 +1300
+Branch: REL_16_STABLE [6de14dbb3] 2024-11-22 15:29:18 +1300
+Branch: REL_15_STABLE [15ab513fe] 2024-11-22 15:29:00 +1300
+Branch: REL_14_STABLE [7ca388fd0] 2024-11-22 15:30:37 +1300
+Branch: REL_13_STABLE [8aefd8b6f] 2024-11-22 15:32:02 +1300
+-->
+     <para>
+      Fix possible <quote>failed to resolve name</quote> failures when
+      using JIT on older ARM platforms (Thomas Munro)
+      <ulink url="&commit_baseurl;8a9a51518">&sect;</ulink>
+     </para>
+
+     <para>
+      This could occur as a consequence of inconsistency about the default
+      setting of <option>-moutline-atomics</option> between gcc and clang.
+      At least Debian and Ubuntu are known to ship gcc and clang compilers
+      that target armv8-a but differ on the use of outline atomics by
+      default.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Thomas Munro <tmunro@postgresql.org>
+Branch: REL_15_STABLE [9b136b0f2] 2025-01-18 09:31:39 -0500
+Branch: REL_14_STABLE [f4fd5325c] 2025-01-18 09:33:30 -0500
+Branch: REL_13_STABLE [2c4a532c9] 2025-01-18 09:33:49 -0500
+Branch: REL_15_STABLE [e708f3188] 2025-01-18 09:30:10 -0500
+Branch: REL_14_STABLE [9f1c67488] 2025-01-18 09:33:16 -0500
+Branch: REL_13_STABLE [fbf8efbda] 2025-01-18 09:33:43 -0500
+-->
+     <para>
+      Fix handling of Windows junction points that are not
+      of <productname>PostgreSQL</productname> origin (Thomas Munro)
+     </para>
+
+     <para>
+      Previously, <application>initdb</application> would fail if the path
+      to the data directory included junction points whose expansion isn't
+      in <quote>drive absolute</quote> format, or whose expansion points
+      to another junction point.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: David Rowley <drowley@postgresql.org>
+Branch: master [8f4ee9626] 2024-12-19 13:11:39 +1300
+Branch: REL_17_STABLE [7b8d45d27] 2024-12-19 13:12:18 +1300
+Branch: REL_16_STABLE [093fc156b] 2024-12-19 13:12:41 +1300
+Branch: REL_15_STABLE [ef178d38b] 2024-12-19 13:13:01 +1300
+Branch: REL_14_STABLE [bdb07d241] 2024-12-19 13:13:31 +1300
+Branch: REL_13_STABLE [2c7887c9d] 2024-12-19 13:13:51 +1300
+-->
+     <para>
+      Fix assertion failure in <literal>WITH RECURSIVE ... UNION</literal>
+      queries (David Rowley)
+      <ulink url="&commit_baseurl;7b8d45d27">&sect;</ulink>
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [94131cd53] 2024-11-20 12:03:47 -0500
+Branch: REL_17_STABLE [fea81aee8] 2024-11-20 12:03:47 -0500
+Branch: REL_16_STABLE [fe084039e] 2024-11-20 12:03:47 -0500
+Branch: REL_15_STABLE [9b9689e26] 2024-11-20 12:03:47 -0500
+Branch: REL_14_STABLE [3eb26524c] 2024-11-20 12:03:47 -0500
+Branch: REL_13_STABLE [630520c22] 2024-11-20 12:03:47 -0500
+-->
+     <para>
+      Avoid assertion failure in rule deparsing if a set operation leaf
+      query contains set operations (Man Zeng, Tom Lane)
+      <ulink url="&commit_baseurl;fea81aee8">&sect;</ulink>
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [3eea7a0c9] 2024-12-09 14:38:19 -0500
+Branch: REL_17_STABLE [556f7b7bc] 2024-12-09 14:38:19 -0500
+Branch: REL_16_STABLE [bb649b553] 2024-12-09 14:38:19 -0500
+Branch: REL_15_STABLE [4089b9bd6] 2024-12-09 14:38:19 -0500
+Branch: REL_14_STABLE [8a95ad3b2] 2024-12-09 14:38:19 -0500
+Branch: REL_13_STABLE [4d20bad5e] 2024-12-09 14:38:19 -0500
+-->
+     <para>
+      Avoid edge-case assertion failure in parallel query startup (Tom Lane)
+      <ulink url="&commit_baseurl;556f7b7bc">&sect;</ulink>
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Michael Paquier <michael@paquier.xyz>
+Branch: master [da99fedf8] 2024-12-09 10:45:28 +0900
+Branch: REL_17_STABLE [dc5f90541] 2024-12-09 10:46:03 +0900
+Branch: REL_16_STABLE [ae77bcc3a] 2024-12-09 10:46:09 +0900
+Branch: REL_15_STABLE [1df1e1e78] 2024-12-09 10:46:10 +0900
+-->
+     <para>
+      Fix assertion failure at shutdown when writing out the statistics
+      file (Michael Paquier)
+      <ulink url="&commit_baseurl;dc5f90541">&sect;</ulink>
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Thomas Munro <tmunro@postgresql.org>
+Branch: REL_13_STABLE [a722252ef] 2025-01-09 10:14:11 +1300
+-->
+     <para>
+      Avoid rare assertion failure during relation truncation (Heikki
+      Linnakangas)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: John Naylor <john.naylor@postgresql.org>
+Branch: master [235328ee4] 2025-01-29 13:35:43 +0700
+Branch: REL_17_STABLE [6555fe197] 2025-01-29 13:55:43 +0700
+-->
+     <para>
+      Avoid valgrind complaints about string hashing code (John Naylor)
+      <ulink url="&commit_baseurl;6555fe197">&sect;</ulink>
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [5b8728cd7] 2024-11-25 18:09:09 -0500
+Branch: REL_17_STABLE [97be02ad0] 2024-11-25 18:09:10 -0500
+Branch: REL_16_STABLE [4aba56adc] 2024-11-25 18:09:10 -0500
+Branch: REL_15_STABLE [80cd33bad] 2024-11-25 18:09:10 -0500
+Branch: REL_14_STABLE [a1168855e] 2024-11-25 18:09:10 -0500
+Branch: REL_13_STABLE [48a6cd1ae] 2024-11-25 18:09:11 -0500
+-->
+     <para>
+      In <function>NULLIF()</function>, avoid passing a read-write
+      expanded object pointer to the data type's equality function
+      (Tom Lane)
+      <ulink url="&commit_baseurl;97be02ad0">&sect;</ulink>
+     </para>
+
+     <para>
+      The equality function could modify or delete the object if it's
+      given a read-write pointer, which would be bad if we decide to
+      return it as the <function>NULLIF()</function> result.  There is
+      probably no problem with any built-in equality function, but it's
+      easy to demonstrate a failure with one coded in PL/pgSQL.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [0da39aa76] 2025-01-29 15:31:55 -0500
+Branch: REL_17_STABLE [6e41e9e5e] 2025-01-29 15:31:55 -0500
+Branch: REL_16_STABLE [6655d931c] 2025-01-29 15:31:55 -0500
+Branch: REL_15_STABLE [bb85d0935] 2025-01-29 15:31:55 -0500
+Branch: REL_14_STABLE [c05268e6e] 2025-01-29 15:31:55 -0500
+-->
+     <para>
+      Ensure that expression preprocessing is applied to a default null
+      value in <command>INSERT</command> (Tom Lane)
+      <ulink url="&commit_baseurl;6e41e9e5e">&sect;</ulink>
+     </para>
+
+     <para>
+      If the target column is of a domain type, the planner must insert a
+      coerce-to-domain step not just a null constant, and this expression
+      missed going through some required processing steps.  There is no
+      known consequence with domains based on core data types, but in
+      theory an error could occur with domains based on extension types.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Heikki Linnakangas <heikki.linnakangas@iki.fi>
+Branch: master [ee937f040] 2024-11-22 16:28:24 +0200
+Branch: REL_17_STABLE [969583553] 2024-11-22 16:29:22 +0200
+-->
+     <para>
+      Avoid data loss when starting a bulk write on a relation fork that
+      already contains data (Matthias van de Meent)
+      <ulink url="&commit_baseurl;969583553">&sect;</ulink>
+     </para>
+
+     <para>
+      Any pre-existing data was overwritten with zeroes.  This is not an
+      issue for core <productname>PostgreSQL</productname>, which never
+      does that.  Some extensions would like to, however.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Masahiko Sawada <msawada@postgresql.org>
+Branch: REL_17_STABLE [9af2b3435] 2025-02-06 11:35:51 -0800
+-->
+     <para>
+      Avoid crash if a server process tried to iterate over a shared radix
+      tree that it didn't create (Masahiko Sawada)
+      <ulink url="&commit_baseurl;9af2b3435">&sect;</ulink>
+     </para>
+
+     <para>
+      There is no code in core <productname>PostgreSQL</productname> that
+      does this, but an extension might wish to.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [29dfffae0] 2025-01-11 11:45:56 -0500
+Branch: REL_17_STABLE [e98df02df] 2025-01-11 11:45:56 -0500
+Branch: REL_16_STABLE [33a4e656d] 2025-01-11 11:45:56 -0500
+Branch: REL_15_STABLE [71bb9c4b2] 2025-01-11 11:45:56 -0500
+Branch: REL_14_STABLE [bcb4db0d3] 2025-01-11 11:45:56 -0500
+Branch: REL_13_STABLE [02a38bc84] 2025-01-11 11:45:56 -0500
+-->
+     <para>
+      Repair memory leaks in PL/Python (Mat Arye, Tom Lane)
+      <ulink url="&commit_baseurl;e98df02df">&sect;</ulink>
+     </para>
+
+     <para>
+      Repeated use of <function>PLyPlan.execute</function>
+      or <function>plpy.cursor</function> resulted in memory leakage for
+      the duration of the calling PL/Python function.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Peter Eisentraut <peter@eisentraut.org>
+Branch: master [32a2aa77e] 2024-11-25 11:44:29 +0100
+Branch: REL_17_STABLE [f979197eb] 2024-11-25 12:27:10 +0100
+Branch: REL_16_STABLE [07c77803c] 2024-11-25 12:27:19 +0100
+Branch: REL_15_STABLE [a5f9cbde9] 2024-11-25 12:27:26 +0100
+Branch: REL_14_STABLE [17d081a6f] 2024-11-25 13:11:18 +0100
+Branch: REL_13_STABLE [f230e27a2] 2024-11-25 13:11:49 +0100
+-->
+     <para>
+      Fix PL/Tcl to compile with Tcl 9 (Peter Eisentraut)
+      <ulink url="&commit_baseurl;f979197eb">&sect;</ulink>
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [2f696453d] 2024-12-01 14:15:37 -0500
+Branch: REL_17_STABLE [a963abd54] 2024-12-01 14:15:37 -0500
+Branch: REL_16_STABLE [cca34f68c] 2024-12-01 14:15:37 -0500
+Branch: REL_15_STABLE [60b47525c] 2024-12-01 14:15:37 -0500
+Branch: REL_14_STABLE [52c7a44e9] 2024-12-01 14:15:37 -0500
+Branch: REL_13_STABLE [e359cbb84] 2024-12-01 14:15:37 -0500
+-->
+     <para>
+      In the <application>ecpg</application> preprocessor, fix possible
+      misprocessing of cursors that reference out-of-scope variables
+      (Tom Lane)
+      <ulink url="&commit_baseurl;a963abd54">&sect;</ulink>
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Fujii Masao <fujii@postgresql.org>
+Branch: master [94b914f60] 2025-01-15 01:23:02 +0900
+Branch: REL_17_STABLE [ba2dbedd5] 2025-01-15 01:24:24 +0900
+Branch: REL_16_STABLE [5c7c34db2] 2025-01-15 01:25:05 +0900
+Branch: REL_15_STABLE [71ef47cf0] 2025-01-15 01:25:19 +0900
+Branch: REL_14_STABLE [d06ab3c0c] 2025-01-15 01:25:31 +0900
+Branch: REL_13_STABLE [226c9048d] 2025-01-15 01:25:52 +0900
+-->
+     <para>
+      In <application>ecpg</application>, fix compile-time warnings about
+      unsupported use of <literal>COPY ... FROM STDIN</literal> (Ryo
+      Kanbayashi)
+      <ulink url="&commit_baseurl;ba2dbedd5">&sect;</ulink>
+     </para>
+
+     <para>
+      Previously, the intended warning was not issued due to a typo.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [6cddecdfb] 2025-01-29 14:24:36 -0500
+Branch: REL_17_STABLE [0b713b94b] 2025-01-29 14:24:36 -0500
+Branch: REL_16_STABLE [998c4fc7c] 2025-01-29 14:24:36 -0500
+Branch: REL_15_STABLE [b17e3970c] 2025-01-29 14:24:36 -0500
+Branch: REL_14_STABLE [54f9afea7] 2025-01-29 14:24:36 -0500
+Branch: REL_13_STABLE [98df8bace] 2025-01-29 14:24:36 -0500
+-->
+     <para>
+      Fix <application>psql</application> to safely handle file path names
+      that are encoded in SJIS (Tom Lane)
+      <ulink url="&commit_baseurl;0b713b94b">&sect;</ulink>
+     </para>
+
+     <para>
+      Some two-byte characters in SJIS have a second byte that is equal to
+      ASCII backslash (<literal>\</literal>).  These characters were
+      corrupted by path name normalization, preventing access to files
+      whose names include such characters.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Peter Eisentraut <peter@eisentraut.org>
+Branch: master [25ec329af] 2024-11-28 09:14:41 +0100
+Branch: REL_17_STABLE [4527b9e26] 2024-11-28 12:09:53 +0100
+-->
+     <para>
+      Add <application>psql</application> tab completion for <literal>COPY
+      (MERGE INTO)</literal> (Jian He)
+      <ulink url="&commit_baseurl;4527b9e26">&sect;</ulink>
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [9a45a89c3] 2025-01-14 18:50:24 -0500
+Branch: REL_17_STABLE [a0dfeae0d] 2025-01-14 18:50:24 -0500
+Branch: REL_16_STABLE [b935691b8] 2025-01-14 18:50:24 -0500
+Branch: REL_15_STABLE [a3b709cf7] 2025-01-14 18:50:24 -0500
+Branch: REL_14_STABLE [02e69313a] 2025-01-14 18:50:24 -0500
+Branch: REL_13_STABLE [cfd7aadeb] 2025-01-14 18:50:24 -0500
+-->
+     <para>
+      Fix use of wrong version of <function>pqsignal()</function>
+      in <application>pgbench</application>
+      and <application>psql</application> (Fujii Masao, Tom Lane)
+      <ulink url="&commit_baseurl;a0dfeae0d">&sect;</ulink>
+     </para>
+
+     <para>
+      This error could lead to misbehavior when using
+      the <option>-T</option> option in <application>pgbench</application>
+      or the <command>\watch</command> command
+      in <application>psql</application>, due to interrupted system calls
+      not being resumed as expected.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [530f89e64] 2024-12-15 14:14:14 -0500
+Branch: REL_17_STABLE [ff9dc96f3] 2024-12-15 14:14:15 -0500
+Branch: REL_16_STABLE [076b09123] 2024-12-15 14:14:15 -0500
+Branch: REL_15_STABLE [ff88db910] 2024-12-15 14:14:15 -0500
+Branch: REL_14_STABLE [2a23dbcf3] 2024-12-15 14:14:15 -0500
+Branch: REL_13_STABLE [ec0dc2c59] 2024-12-15 14:14:15 -0500
+-->
+     <para>
+      Fix misexecution of some nested <command>\if</command> constructs
+      in <application>pgbench</application> (Michail Nikolaev)
+      <ulink url="&commit_baseurl;ff9dc96f3">&sect;</ulink>
+     </para>
+
+     <para>
+      An <command>\if</command> command appearing within a false
+      (not-being-executed) <command>\if</command> branch was incorrectly
+      treated the same as <command>\elif</command>.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Fujii Masao <fujii@postgresql.org>
+Branch: master [af35fe501] 2024-11-27 23:01:53 +0900
+Branch: REL_17_STABLE [adb103fca] 2024-11-27 23:03:04 +0900
+Branch: REL_16_STABLE [1cf646957] 2024-11-27 23:03:44 +0900
+Branch: REL_15_STABLE [1e46f7351] 2024-11-27 23:04:29 +0900
+Branch: REL_14_STABLE [0f13e1a78] 2024-11-27 23:04:55 +0900
+Branch: REL_13_STABLE [f1cb5e51f] 2024-11-27 23:05:24 +0900
+-->
+     <para>
+      In <application>pgbench</application>, fix possible misdisplay of
+      progress messages during table initialization (Yushi Ogiwara, Tatsuo
+      Ishii, Fujii Masao)
+      <ulink url="&commit_baseurl;adb103fca">&sect;</ulink>
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Alexander Korotkov <akorotkov@postgresql.org>
+Branch: master [ff1975ddd] 2025-02-05 00:45:49 +0200
+Branch: REL_17_STABLE [1b8a9533f] 2025-02-05 00:45:43 +0200
+Branch: REL_16_STABLE [d54d5668b] 2025-02-05 00:45:37 +0200
+Branch: REL_15_STABLE [f1e0b078b] 2025-02-05 00:45:29 +0200
+Branch: REL_14_STABLE [f2205448b] 2025-02-05 00:45:16 +0200
+Branch: REL_13_STABLE [c24311c1f] 2025-02-05 00:46:06 +0200
+-->
+     <para>
+      Make <application>pg_controldata</application> more robust against
+      corrupted <filename>pg_control</filename> files (Ilyasov Ian, Anton
+      Voloshin)
+      <ulink url="&commit_baseurl;1b8a9533f">&sect;</ulink>
+     </para>
+
+     <para>
+      Since <application>pg_controldata</application> will attempt to
+      print the contents of <filename>pg_control</filename> even if the
+      CRC check fails, it must take care not to misbehave for invalid
+      field values.  This patch fixes some issues triggered by invalid
+      timestamps and apparently-negative WAL segment sizes.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [7b8cb9cd6] 2024-12-13 14:21:36 -0500
+Branch: REL_17_STABLE [ad950ea98] 2024-12-13 14:21:36 -0500
+Branch: REL_16_STABLE [782cc1aa3] 2024-12-13 14:21:36 -0500
+Branch: REL_15_STABLE [6978129b4] 2024-12-13 14:21:36 -0500
+Branch: REL_14_STABLE [c7f3c414f] 2024-12-13 14:21:36 -0500
+Branch: REL_13_STABLE [b6df2d6e5] 2024-12-13 14:21:36 -0500
+-->
+     <para>
+      Fix possible crash in <application>pg_dump</application> with
+      identity sequences attached to tables that are extension members
+      (Tom Lane)
+      <ulink url="&commit_baseurl;ad950ea98">&sect;</ulink>
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [3f0632470] 2024-12-17 22:31:26 -0500
+Branch: REL_17_STABLE [04b860198] 2024-12-17 22:31:26 -0500
+Branch: REL_16_STABLE [8cfff087b] 2024-12-17 22:31:26 -0500
+-->
+     <para>
+      Fix memory leak in <application>pg_restore</application>
+      with zstd-compressed data (Tom Lane)
+      <ulink url="&commit_baseurl;04b860198">&sect;</ulink>
+     </para>
+
+     <para>
+      The leak was per-decompression-operation, so would be most
+      noticeable with a dump containing many tables or large objects.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Thomas Munro <tmunro@postgresql.org>
+Branch: master [970b97eeb] 2025-01-09 16:04:23 +1300
+Branch: REL_17_STABLE [faee3185a] 2025-01-09 16:05:01 +1300
+Branch: REL_16_STABLE [be7489662] 2025-01-09 16:05:08 +1300
+Branch: REL_15_STABLE [6b6901a26] 2025-01-09 16:05:16 +1300
+Branch: REL_14_STABLE [8f40d4612] 2025-01-09 16:05:25 +1300
+Branch: REL_13_STABLE [bd0564f61] 2025-01-09 16:05:36 +1300
+Branch: master [026762dae] 2025-01-09 15:00:58 +1300
+Branch: REL_17_STABLE [af109e339] 2025-01-09 15:00:23 +1300
+Branch: REL_16_STABLE [0bff6f1da] 2025-01-09 14:59:47 +1300
+Branch: REL_15_STABLE [70a7a3761] 2025-01-09 14:58:18 +1300
+Branch: REL_14_STABLE [1636c5e56] 2025-01-09 14:57:52 +1300
+Branch: REL_13_STABLE [d02486cc8] 2025-01-09 14:57:02 +1300
+-->
+     <para>
+      Fix <application>pg_basebackup</application> to correctly
+      handle <filename>pg_wal.tar</filename> files exceeding 2GB on
+      Windows (Davinder Singh, Thomas Munro)
+      <ulink url="&commit_baseurl;faee3185a">&sect;</ulink>
+      <ulink url="&commit_baseurl;af109e339">&sect;</ulink>
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [969bbd0fa] 2024-12-14 16:07:18 -0500
+Branch: REL_17_STABLE [3652de36e] 2024-12-14 16:07:18 -0500
+Branch: REL_16_STABLE [31daa10fa] 2024-12-14 16:07:18 -0500
+-->
+     <para>
+      Use SQL-standard function bodies in the declarations
+      of <filename>contrib/earthdistance</filename>'s SQL-language
+      functions (Tom Lane, Ronan Dunklau)
+      <ulink url="&commit_baseurl;3652de36e">&sect;</ulink>
+     </para>
+
+     <para>
+      This change allows their references
+      to <filename>contrib/cube</filename> to be resolved during extension
+      creation, reducing the risk of search-path-based failures and
+      possible attacks.
+     </para>
+
+     <para>
+      In particular, this restores their usability in contexts like
+      generated columns, for which <productname>PostgreSQL</productname>
+      v17 restricts the search path on security grounds.  We have received
+      reports of databases failing to be upgraded to v17 because of that.
+      This patch has been included in v16 to provide a workaround:
+      updating the <filename>earthdistance</filename> extension to this
+      version beforehand should allow an upgrade to succeed.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tomas Vondra <tomas.vondra@postgresql.org>
+Branch: master [957ba9ff1] 2024-12-17 17:48:55 +0100
+Branch: REL_17_STABLE [3668c1d50] 2024-12-17 17:50:13 +0100
+-->
+     <para>
+      Detect version mismatch
+      between <filename>contrib/pageinspect</filename>'s SQL declarations
+      and the underlying shared library (Tomas Vondra)
+      <ulink url="&commit_baseurl;3668c1d50">&sect;</ulink>
+     </para>
+
+     <para>
+      Previously, such a mismatch could result in a crash while
+      calling <function>brin_page_items()</function>.  Instead throw an
+      error recommending updating the extension.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [c431986de] 2024-12-23 15:14:30 -0500
+Branch: REL_17_STABLE [89962bfef] 2024-12-23 15:14:30 -0500
+-->
+     <para>
+      When trying to cancel a remote query
+      in <filename>contrib/postgres_fdw</filename>, re-issue the cancel
+      request a few times if it didn't seem to do anything (Tom Lane)
+      <ulink url="&commit_baseurl;89962bfef">&sect;</ulink>
+     </para>
+
+     <para>
+      This fixes a race condition where we might try to cancel a just-sent
+      query before the remote server has started to process it, so that
+      the initial cancel request is ignored.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [5980f1884] 2024-11-25 12:50:17 -0500
+Branch: REL_17_STABLE [e266a0ed6] 2024-11-25 12:50:17 -0500
+Branch: REL_16_STABLE [1f4aadec4] 2024-11-25 12:50:17 -0500
+Branch: REL_15_STABLE [851c6ff18] 2024-11-25 12:50:17 -0500
+Branch: REL_14_STABLE [2fc0199a5] 2024-11-25 12:50:17 -0500
+Branch: REL_13_STABLE [32057a0f7] 2024-11-25 12:50:17 -0500
+-->
+     <para>
+      Update configuration probes that determine the compiler switches
+      needed to access ARM CRC instructions (Tom Lane)
+      <ulink url="&commit_baseurl;e266a0ed6">&sect;</ulink>
+     </para>
+
+     <para>
+      On ARM platforms where the baseline CPU target lacks CRC
+      instructions, we need to supply a <option>-march</option> switch to
+      persuade the compiler to compile such instructions.  Recent versions
+      of gcc reject the value we were trying, leading to silently falling
+      back to software CRC.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Thomas Munro <tmunro@postgresql.org>
+Branch: REL_15_STABLE [f00c401c6] 2024-11-27 15:43:18 +1300
+Branch: REL_14_STABLE [1fd57e5bb] 2024-11-27 15:48:13 +1300
+Branch: REL_13_STABLE [59ea17c43] 2024-11-27 15:52:15 +1300
+Branch: REL_12_STABLE [3f302f0ed] 2024-11-27 15:57:32 +1300
+Branch: REL_11_STABLE [170e41603] 2024-11-27 16:04:22 +1300
+Branch: REL_10_STABLE [f4e8f137b] 2024-11-27 16:47:29 +1300
+Branch: REL9_6_STABLE [70cf253d1] 2024-11-27 16:13:59 +1300
+Branch: REL9_5_STABLE [5b40ce749] 2024-11-27 16:17:20 +1300
+Branch: REL9_4_STABLE [b1b8b8e6f] 2024-11-27 16:19:42 +1300
+Branch: REL9_3_STABLE [102be6634] 2024-11-27 16:28:34 +1300
+Branch: REL9_2_STABLE [0c7171b32] 2024-11-27 16:31:41 +1300
+-->
+     <para>
+      During <application>configure</application>, if a C23 compiler is
+      detected, try asking for C17 (Thomas Munro)
+     </para>
+
+     <para>
+      <productname>PostgreSQL</productname> versions before v16 will not
+      compile under C23 rules.  If the chosen compiler defaults to C23 or
+      later, try adding a <literal>-std=gnu17</literal> switch to change
+      that.  (If this won't work for your compiler, manually
+      specify <varname>CFLAGS</varname> with a suitable switch.)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Daniel Gustafsson <dgustafsson@postgresql.org>
+Branch: REL_17_STABLE [0951d4ee4] 2025-02-07 15:09:13 +0100
+Branch: REL_16_STABLE [60516fc8b] 2025-02-07 15:09:13 +0100
+-->
+     <para>
+      Fix meson build system to support old OpenSSL libraries on Windows
+      (Darek Slusarczyk)
+      <ulink url="&commit_baseurl;0951d4ee4">&sect;</ulink>
+     </para>
+
+     <para>
+      Add support for the legacy library
+      names <filename>ssleay32</filename>
+      and <filename>libeay32</filename>.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Heikki Linnakangas <heikki.linnakangas@iki.fi>
+Branch: master [2571c1d5c] 2024-12-25 18:14:18 +0200
+Branch: REL_17_STABLE [c80acbc6f] 2024-12-25 18:14:26 +0200
+Branch: REL_16_STABLE [4e0d71ff2] 2024-12-25 18:14:30 +0200
+Branch: master [07f902bd7] 2024-12-25 19:22:25 +0200
+Branch: REL_17_STABLE [d8b0c6411] 2024-12-25 19:22:33 +0200
+Branch: REL_16_STABLE [643efb18b] 2024-12-25 19:22:41 +0200
+-->
+     <para>
+      In Windows builds using meson, ensure all libcommon and libpgport
+      functions are exported (Vladlen Popolitov, Heikki Linnakangas)
+      <ulink url="&commit_baseurl;c80acbc6f">&sect;</ulink>
+      <ulink url="&commit_baseurl;d8b0c6411">&sect;</ulink>
+     </para>
+
+     <para>
+      This fixes <quote>unresolved external symbol</quote> build errors
+      for extensions.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Andrew Dunstan <andrew@dunslane.net>
+Branch: master Release: REL_17_BR [7c655a04a] 2024-05-26 17:34:45 -0400
+Branch: REL_16_STABLE [1250adfdf] 2024-11-26 15:41:58 -0500
+-->
+     <para>
+      Fix meson configuration process to correctly detect
+      OSSP's <filename>uuid.h</filename> header file under MSVC
+      (Andrew Dunstan)
+      <ulink url="&commit_baseurl;7c655a04a">&sect;</ulink>
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Peter Eisentraut <peter@eisentraut.org>
+Branch: master [4ee130c6e] 2024-11-26 18:09:05 +0100
+Branch: REL_17_STABLE [e00c1e249] 2024-11-26 18:09:14 +0100
+Branch: REL_16_STABLE [766b0b40a] 2024-11-26 18:09:23 +0100
+-->
+     <para>
+      When building with meson, install <filename>pgevent</filename>
+      in <replaceable>pkglibdir</replaceable>
+      not <replaceable>bindir</replaceable> (Peter Eisentraut)
+      <ulink url="&commit_baseurl;e00c1e249">&sect;</ulink>
+     </para>
+
+     <para>
+      This matches the behavior of the make-based build system and the old
+      MSVC build system.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Peter Eisentraut <peter@eisentraut.org>
+Branch: master [02ed3c2bd] 2025-01-24 10:26:12 +0100
+Branch: REL_17_STABLE [24c5b73eb] 2025-01-24 10:26:59 +0100
+Branch: REL_16_STABLE [155d6162e] 2025-01-24 10:55:24 +0100
+-->
+     <para>
+      When building with meson, install <filename>sepgsql.sql</filename>
+      under <filename>share/contrib/</filename>
+      not <filename>share/extension/</filename> (Peter Eisentraut)
+      <ulink url="&commit_baseurl;24c5b73eb">&sect;</ulink>
+     </para>
+
+     <para>
+      This matches what the make-based build system does.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [60c513f8f] 2025-01-20 16:49:15 -0500
+Branch: REL_17_STABLE [e292ba333] 2025-01-20 16:49:15 -0500
+Branch: REL_16_STABLE [d62403c51] 2025-01-20 16:49:15 -0500
+Branch: REL_15_STABLE [48bc95d0d] 2025-01-20 16:49:15 -0500
+Branch: REL_14_STABLE [20b4819d0] 2025-01-20 16:49:15 -0500
+Branch: REL_13_STABLE [6397819c8] 2025-01-20 16:49:15 -0500
+-->
+     <para>
+      Update time zone data files to <application>tzdata</application>
+      release 2025a for DST law changes in Paraguay, plus historical
+      corrections for the Philippines (Tom Lane)
+      <ulink url="&commit_baseurl;e292ba333">&sect;</ulink>
+     </para>
+    </listitem>
+
+   </itemizedlist>
+
+  </sect2>
+ </sect1>
+
  <sect1 id="release-17-2">
   <title>Release 17.2</title>
 
