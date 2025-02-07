@@ -128,10 +128,10 @@ After you [enabled `pg_tde`](#enable-extension) and started the Percona Server f
 
 Here's how to do it:
 
-1. Enable WAL level encryption using the `ALTER SYSTEM SET` command. You need the privileges of the superuser to run this command:
+1. Enable WAL level encryption using the `ALTER SYSTEM` command. You need the privileges of the superuser to run this command:
 
     ```sql
-    ALTER SYSTEM set pg_tde.wal_encrypt = on;
+    ALTER SYSTEM SET pg_tde.wal_encrypt = on;
     ```
 
 2. Restart the server to apply the changes.

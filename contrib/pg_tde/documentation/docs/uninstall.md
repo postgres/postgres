@@ -14,7 +14,7 @@ Here's how to do it:
 
 2. Run the `DROP EXTENSION` command against every database where you have enabled the `pg_tde` extension
 
-3. Modify the `shared_preload_libraries` and remove the 'pg_tde' from it. Use the `ALTER SYSTEM SET` command for this purpose
+3. Modify the `shared_preload_libraries` and remove the 'pg_tde' from it. Use the `ALTER SYSTEM` command for this purpose
 
 4. Start or restart the `postgre` instance to apply the changes.
 

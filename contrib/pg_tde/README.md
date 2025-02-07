@@ -151,7 +151,7 @@ _See [Make Builds for Developers](https://github.com/percona/pg_tde/wiki/Make-bu
         ```
    7. You can encrypt existing table. It requires rewriting the table, so for large tables, it might take a considerable amount of time. 
         ```sql
-        ALTER TABLE table_name SET access method  tde_heap_basic;
+        ALTER TABLE table_name SET ACCESS METHOD tde_heap_basic;
         ```
 
 

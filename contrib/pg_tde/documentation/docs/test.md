@@ -50,10 +50,10 @@ You can encrypt an existing table. It requires rewriting the table, so for large
 Run the following command:
 
 ```
-ALTER TABLE table_name SET access method  tde_heap;
+ALTER TABLE table_name SET ACCESS METHOD tde_heap;
 ```
 
-Note that the `ALTER TABLE SET` command drops hint bits and this may affect the performance. Running a plain `SELECT, count(*)`, or `VACUUM` commands on the entire table will check every tuple for visibility and set its hint bits. Therefore, after executing the ALTER command, run a simple "count(*)" on your tables:
+Note that the `SET ACCESS METHOD` command drops hint bits and this may affect the performance. Running a plain `SELECT, count(*)`, or `VACUUM` commands on the entire table will check every tuple for visibility and set its hint bits. Therefore, after executing the `ALTER TABLE` command, run a simple "count(*)" on your tables:
 
 ```
 SELECT COUNT(*) FROM table_name;
