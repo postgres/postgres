@@ -18,6 +18,21 @@ $node->start;
 my $connect_db = 'postgres';
 my $db_under_test = 'test';
 
+my $sect = "startup";
+
+# Check some WAL statistics after a fresh startup.  The startup process
+# should have done WAL reads, and initialization some WAL writes.
+my $standalone_io_stats = io_stats('init', 'wal', 'standalone backend');
+my $startup_io_stats = io_stats('normal', 'wal', 'startup');
+cmp_ok(
+	'0', '<',
+	$standalone_io_stats->{writes},
+	"$sect: increased standalone backend IO writes");
+cmp_ok(
+	'0', '<',
+	$startup_io_stats->{reads},
+	"$sect: increased startup IO reads");
+
 # create test objects
 $node->safe_psql($connect_db, "CREATE DATABASE $db_under_test");
 $node->safe_psql($db_under_test,
@@ -39,7 +54,7 @@ my $tableoid = $node->safe_psql($db_under_test,
 trigger_funcrel_stat();
 
 # verify stats objects exist
-my $sect = "initial";
+$sect = "initial";
 is(have_stats('database', $dboid, 0), 't', "$sect: db stats do exist");
 is(have_stats('function', $dboid, $funcoid),
 	't', "$sect: function stats do exist");
@@ -339,6 +354,23 @@ sub wal_stats
 	  $node->safe_psql($connect_db, "SELECT wal_bytes FROM pg_stat_wal");
 	$results{reset} =
 	  $node->safe_psql($connect_db, "SELECT stats_reset FROM pg_stat_wal");
+
+	return \%results;
+}
+
+sub io_stats
+{
+	my ($context, $object, $backend_type) = @_;
+	my %results;
+
+	$results{writes} = $node->safe_psql(
+		$connect_db, qq{SELECT writes FROM pg_stat_io
+  WHERE context = '$context' AND object = '$object' AND
+    backend_type = '$backend_type'});
+	$results{reads} = $node->safe_psql(
+		$connect_db, qq{SELECT reads FROM pg_stat_io
+  WHERE context = '$context' AND object = '$object' AND
+    backend_type = '$backend_type'});
 
 	return \%results;
 }

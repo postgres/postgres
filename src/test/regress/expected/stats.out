@@ -862,33 +862,6 @@ WHERE pg_stat_get_backend_pid(beid) = pg_backend_pid();
  t
 (1 row)
 
--- Test pg_stat_io for WAL in an init context, that should do writes
--- and syncs.
-SELECT sum(writes) AS writes, sum(fsyncs) AS fsyncs
-  FROM pg_stat_io
-  WHERE context = 'init' AND object = 'wal' \gset io_sum_wal_init_
-SELECT :io_sum_wal_init_writes > 0;
- ?column? 
-----------
- t
-(1 row)
-
-SELECT current_setting('fsync') = 'off'
-  OR :io_sum_wal_init_fsyncs > 0;
- ?column? 
-----------
- t
-(1 row)
-
--- Test pg_stat_io for WAL in a normal context, that should do reads as well.
-SELECT SUM(reads) > 0
-  FROM pg_stat_io
-  WHERE context = 'normal' AND object = 'wal';
- ?column? 
-----------
- t
-(1 row)
-
 -----
 -- Test that resetting stats works for reset timestamp
 -----
