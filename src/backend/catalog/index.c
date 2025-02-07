@@ -2677,9 +2677,6 @@ BuildSpeculativeIndexInfo(Relation index, IndexInfo *ii)
 	 */
 	Assert(ii->ii_Unique);
 
-	if (index->rd_rel->relam != BTREE_AM_OID)
-		elog(ERROR, "unexpected non-btree speculative unique index");
-
 	ii->ii_UniqueOps = (Oid *) palloc(sizeof(Oid) * indnkeyatts);
 	ii->ii_UniqueProcs = (Oid *) palloc(sizeof(Oid) * indnkeyatts);
 	ii->ii_UniqueStrats = (uint16 *) palloc(sizeof(uint16) * indnkeyatts);
@@ -2691,7 +2688,12 @@ BuildSpeculativeIndexInfo(Relation index, IndexInfo *ii)
 	/* We need the func OIDs and strategy numbers too */
 	for (i = 0; i < indnkeyatts; i++)
 	{
-		ii->ii_UniqueStrats[i] = BTEqualStrategyNumber;
+		ii->ii_UniqueStrats[i] =
+			IndexAmTranslateCompareType(COMPARE_EQ,
+										index->rd_rel->relam,
+										index->rd_opfamily[i],
+										index->rd_opcintype[i],
+										false);
 		ii->ii_UniqueOps[i] =
 			get_opfamily_member(index->rd_opfamily[i],
 								index->rd_opcintype[i],
