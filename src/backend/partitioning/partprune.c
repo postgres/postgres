@@ -645,6 +645,7 @@ make_partitionedrel_pruneinfo(PlannerInfo *root, RelOptInfo *parentrel,
 		int		   *subplan_map;
 		int		   *subpart_map;
 		Oid		   *relid_map;
+		int		   *leafpart_rti_map;
 
 		/*
 		 * Construct the subplan and subpart maps for this partitioning level.
@@ -657,6 +658,7 @@ make_partitionedrel_pruneinfo(PlannerInfo *root, RelOptInfo *parentrel,
 		subpart_map = (int *) palloc(nparts * sizeof(int));
 		memset(subpart_map, -1, nparts * sizeof(int));
 		relid_map = (Oid *) palloc0(nparts * sizeof(Oid));
+		leafpart_rti_map = (int *) palloc0(nparts * sizeof(int));
 		present_parts = NULL;
 
 		i = -1;
@@ -671,9 +673,21 @@ make_partitionedrel_pruneinfo(PlannerInfo *root, RelOptInfo *parentrel,
 			subplan_map[i] = subplanidx = relid_subplan_map[partrel->relid] - 1;
 			subpart_map[i] = subpartidx = relid_subpart_map[partrel->relid] - 1;
 			relid_map[i] = planner_rt_fetch(partrel->relid, root)->relid;
+
+			/*
+			 * Track the RT indexes of "leaf" partitions so they can be
+			 * included in the PlannerGlobal.prunableRelids set, indicating
+			 * relations that may be pruned during executor startup.
+			 *
+			 * Only leaf partitions with a valid subplan that are prunable
+			 * using initial pruning are added to prunableRelids. So
+			 * partitions without a subplan due to constraint exclusion will
+			 * remain in PlannedStmt.unprunableRelids.
+			 */
 			if (subplanidx >= 0)
 			{
 				present_parts = bms_add_member(present_parts, i);
+				leafpart_rti_map[i] = (int) partrel->relid;
 
 				/* Record finding this subplan  */
 				subplansfound = bms_add_member(subplansfound, subplanidx);
@@ -695,6 +709,7 @@ make_partitionedrel_pruneinfo(PlannerInfo *root, RelOptInfo *parentrel,
 		pinfo->subplan_map = subplan_map;
 		pinfo->subpart_map = subpart_map;
 		pinfo->relid_map = relid_map;
+		pinfo->leafpart_rti_map = leafpart_rti_map;
 	}
 
 	pfree(relid_subpart_map);

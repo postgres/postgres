@@ -668,7 +668,8 @@ create_edata_for_relation(LogicalRepRelMapEntry *rel)
 
 	addRTEPermissionInfo(&perminfos, rte);
 
-	ExecInitRangeTable(estate, list_make1(rte), perminfos);
+	ExecInitRangeTable(estate, list_make1(rte), perminfos,
+					   bms_make_singleton(1));
 
 	edata->targetRelInfo = resultRelInfo = makeNode(ResultRelInfo);
 

@@ -347,8 +347,13 @@ ExecInitLockRows(LockRows *node, EState *estate, int eflags)
 		ExecRowMark *erm;
 		ExecAuxRowMark *aerm;
 
-		/* ignore "parent" rowmarks; they are irrelevant at runtime */
-		if (rc->isParent)
+		/*
+		 * Ignore "parent" rowmarks, because they are irrelevant at runtime.
+		 * Also ignore the rowmarks belonging to child tables that have been
+		 * pruned in ExecDoInitialPruning().
+		 */
+		if (rc->isParent ||
+			!bms_is_member(rc->rti, estate->es_unpruned_relids))
 			continue;
 
 		/* find ExecRowMark and build ExecAuxRowMark */

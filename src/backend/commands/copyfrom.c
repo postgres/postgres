@@ -774,7 +774,8 @@ CopyFrom(CopyFromState cstate)
 	 * index-entry-making machinery.  (There used to be a huge amount of code
 	 * here that basically duplicated execUtils.c ...)
 	 */
-	ExecInitRangeTable(estate, cstate->range_table, cstate->rteperminfos);
+	ExecInitRangeTable(estate, cstate->range_table, cstate->rteperminfos,
+					   bms_make_singleton(1));
 	resultRelInfo = target_resultRelInfo = makeNode(ResultRelInfo);
 	ExecInitResultRelation(estate, resultRelInfo, 1);
 

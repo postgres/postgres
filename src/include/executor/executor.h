@@ -595,7 +595,8 @@ extern bool ExecRelationIsTargetRelation(EState *estate, Index scanrelid);
 
 extern Relation ExecOpenScanRelation(EState *estate, Index scanrelid, int eflags);
 
-extern void ExecInitRangeTable(EState *estate, List *rangeTable, List *permInfos);
+extern void ExecInitRangeTable(EState *estate, List *rangeTable, List *permInfos,
+							   Bitmapset *unpruned_relids);
 extern void ExecCloseRangeTableRelations(EState *estate);
 extern void ExecCloseResultRelations(EState *estate);
 

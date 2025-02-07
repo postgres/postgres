@@ -771,7 +771,8 @@ ExecOpenScanRelation(EState *estate, Index scanrelid, int eflags)
  * indexed by rangetable index.
  */
 void
-ExecInitRangeTable(EState *estate, List *rangeTable, List *permInfos)
+ExecInitRangeTable(EState *estate, List *rangeTable, List *permInfos,
+				   Bitmapset *unpruned_relids)
 {
 	/* Remember the range table List as-is */
 	estate->es_range_table = rangeTable;
@@ -781,6 +782,15 @@ ExecInitRangeTable(EState *estate, List *rangeTable, List *permInfos)
 
 	/* Set size of associated arrays */
 	estate->es_range_table_size = list_length(rangeTable);
+
+	/*
+	 * Initialize the bitmapset of RT indexes (es_unpruned_relids)
+	 * representing relations that will be scanned during execution. This set
+	 * is initially populated by the caller and may be extended later by
+	 * ExecDoInitialPruning() to include RT indexes of unpruned leaf
+	 * partitions.
+	 */
+	estate->es_unpruned_relids = unpruned_relids;
 
 	/*
 	 * Allocate an array to store an open Relation corresponding to each

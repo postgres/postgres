@@ -233,7 +233,7 @@ ExecMergeAppend(PlanState *pstate)
 		 */
 		if (node->ms_valid_subplans == NULL)
 			node->ms_valid_subplans =
-				ExecFindMatchingSubPlans(node->ms_prune_state, false);
+				ExecFindMatchingSubPlans(node->ms_prune_state, false, NULL);
 
 		/*
 		 * First time through: pull the first tuple from each valid subplan,

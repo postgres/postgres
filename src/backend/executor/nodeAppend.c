@@ -595,7 +595,7 @@ choose_next_subplan_locally(AppendState *node)
 		else if (!node->as_valid_subplans_identified)
 		{
 			node->as_valid_subplans =
-				ExecFindMatchingSubPlans(node->as_prune_state, false);
+				ExecFindMatchingSubPlans(node->as_prune_state, false, NULL);
 			node->as_valid_subplans_identified = true;
 		}
 
@@ -662,7 +662,7 @@ choose_next_subplan_for_leader(AppendState *node)
 		if (!node->as_valid_subplans_identified)
 		{
 			node->as_valid_subplans =
-				ExecFindMatchingSubPlans(node->as_prune_state, false);
+				ExecFindMatchingSubPlans(node->as_prune_state, false, NULL);
 			node->as_valid_subplans_identified = true;
 
 			/*
@@ -738,7 +738,7 @@ choose_next_subplan_for_worker(AppendState *node)
 	else if (!node->as_valid_subplans_identified)
 	{
 		node->as_valid_subplans =
-			ExecFindMatchingSubPlans(node->as_prune_state, false);
+			ExecFindMatchingSubPlans(node->as_prune_state, false, NULL);
 		node->as_valid_subplans_identified = true;
 
 		mark_invalid_subplans_as_finished(node);
@@ -891,7 +891,7 @@ ExecAppendAsyncBegin(AppendState *node)
 	if (!node->as_valid_subplans_identified)
 	{
 		node->as_valid_subplans =
-			ExecFindMatchingSubPlans(node->as_prune_state, false);
+			ExecFindMatchingSubPlans(node->as_prune_state, false, NULL);
 		node->as_valid_subplans_identified = true;
 
 		classify_matching_subplans(node);

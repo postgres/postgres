@@ -851,7 +851,8 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 	/*
 	 * initialize the node's execution state
 	 */
-	ExecInitRangeTable(estate, rangeTable, plannedstmt->permInfos);
+	ExecInitRangeTable(estate, rangeTable, plannedstmt->permInfos,
+					   bms_copy(plannedstmt->unprunableRelids));
 
 	estate->es_plannedstmt = plannedstmt;
 	estate->es_part_prune_infos = plannedstmt->partPruneInfos;
@@ -881,8 +882,13 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 			Relation	relation;
 			ExecRowMark *erm;
 
-			/* ignore "parent" rowmarks; they are irrelevant at runtime */
-			if (rc->isParent)
+			/*
+			 * Ignore "parent" rowmarks, because they are irrelevant at
+			 * runtime.  Also ignore the rowmarks belonging to child tables
+			 * that have been pruned in ExecDoInitialPruning().
+			 */
+			if (rc->isParent ||
+				!bms_is_member(rc->rti, estate->es_unpruned_relids))
 				continue;
 
 			/* get relation's OID (will produce InvalidOid if subquery) */
@@ -2932,6 +2938,13 @@ EvalPlanQualStart(EPQState *epqstate, Plan *planTree)
 				parentestate->es_param_exec_vals[i].isnull;
 		}
 	}
+
+	/*
+	 * Copy es_unpruned_relids so that pruned relations are ignored by
+	 * ExecInitLockRows() and ExecInitModifyTable() when initializing the plan
+	 * trees below.
+	 */
+	rcestate->es_unpruned_relids = parentestate->es_unpruned_relids;
 
 	/*
 	 * Initialize private state information for each SubPlan.  We must do this

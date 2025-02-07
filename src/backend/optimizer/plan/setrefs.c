@@ -564,7 +564,9 @@ add_rte_to_flat_rtable(PlannerGlobal *glob, List *rteperminfos,
 
 	/*
 	 * If it's a plain relation RTE (or a subquery that was once a view
-	 * reference), add the relation OID to relationOids.
+	 * reference), add the relation OID to relationOids.  Also add its new RT
+	 * index to the set of relations to be potentially accessed during
+	 * execution.
 	 *
 	 * We do this even though the RTE might be unreferenced in the plan tree;
 	 * this would correspond to cases such as views that were expanded, child
@@ -576,7 +578,11 @@ add_rte_to_flat_rtable(PlannerGlobal *glob, List *rteperminfos,
 	 */
 	if (newrte->rtekind == RTE_RELATION ||
 		(newrte->rtekind == RTE_SUBQUERY && OidIsValid(newrte->relid)))
+	{
 		glob->relationOids = lappend_oid(glob->relationOids, newrte->relid);
+		glob->allRelids = bms_add_member(glob->allRelids,
+										 list_length(glob->finalrtable));
+	}
 
 	/*
 	 * Add a copy of the RTEPermissionInfo, if any, corresponding to this RTE
@@ -1740,6 +1746,10 @@ set_customscan_references(PlannerInfo *root,
  *
  * Also update the RT indexes present in PartitionedRelPruneInfos to add the
  * offset.
+ *
+ * Finally, if there are initial pruning steps, add the RT indexes of the
+ * leaf partitions to the set of relations that are prunable at execution
+ * startup time.
  */
 static int
 register_partpruneinfo(PlannerInfo *root, int part_prune_index, int rtoffset)
@@ -1762,6 +1772,7 @@ register_partpruneinfo(PlannerInfo *root, int part_prune_index, int rtoffset)
 		foreach(l2, prune_infos)
 		{
 			PartitionedRelPruneInfo *prelinfo = lfirst(l2);
+			int			i;
 
 			prelinfo->rtindex += rtoffset;
 			prelinfo->initial_pruning_steps =
@@ -1770,6 +1781,22 @@ register_partpruneinfo(PlannerInfo *root, int part_prune_index, int rtoffset)
 			prelinfo->exec_pruning_steps =
 				fix_scan_list(root, prelinfo->exec_pruning_steps,
 							  rtoffset, 1);
+
+			for (i = 0; i < prelinfo->nparts; i++)
+			{
+				/*
+				 * Non-leaf partitions and partitions that do not have a
+				 * subplan are not included in this map as mentioned in
+				 * make_partitionedrel_pruneinfo().
+				 */
+				if (prelinfo->leafpart_rti_map[i])
+				{
+					prelinfo->leafpart_rti_map[i] += rtoffset;
+					if (prelinfo->initial_pruning_steps)
+						glob->prunableRelids = bms_add_member(glob->prunableRelids,
+															  prelinfo->leafpart_rti_map[i]);
+				}
+			}
 		}
 	}
 

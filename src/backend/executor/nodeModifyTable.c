@@ -690,7 +690,7 @@ ExecInitUpdateProjection(ModifyTableState *mtstate,
 		Assert(whichrel >= 0 && whichrel < mtstate->mt_nrels);
 	}
 
-	updateColnos = (List *) list_nth(node->updateColnosLists, whichrel);
+	updateColnos = (List *) list_nth(mtstate->mt_updateColnosLists, whichrel);
 
 	/*
 	 * For UPDATE, we use the old tuple to fill up missing values in the tuple
@@ -4453,7 +4453,11 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 	ModifyTableState *mtstate;
 	Plan	   *subplan = outerPlan(node);
 	CmdType		operation = node->operation;
-	int			nrels = list_length(node->resultRelations);
+	int			nrels;
+	List	   *resultRelations = NIL;
+	List	   *withCheckOptionLists = NIL;
+	List	   *returningLists = NIL;
+	List	   *updateColnosLists = NIL;
 	ResultRelInfo *resultRelInfo;
 	List	   *arowmarks;
 	ListCell   *l;
@@ -4462,6 +4466,45 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 
 	/* check for unsupported flags */
 	Assert(!(eflags & (EXEC_FLAG_BACKWARD | EXEC_FLAG_MARK)));
+
+	/*
+	 * Only consider unpruned relations for initializing their ResultRelInfo
+	 * struct and other fields such as withCheckOptions, etc.
+	 */
+	i = 0;
+	foreach(l, node->resultRelations)
+	{
+		Index		rti = lfirst_int(l);
+
+		if (bms_is_member(rti, estate->es_unpruned_relids))
+		{
+			resultRelations = lappend_int(resultRelations, rti);
+			if (node->withCheckOptionLists)
+			{
+				List	   *withCheckOptions = list_nth_node(List,
+															 node->withCheckOptionLists,
+															 i);
+
+				withCheckOptionLists = lappend(withCheckOptionLists, withCheckOptions);
+			}
+			if (node->returningLists)
+			{
+				List	   *returningList = list_nth_node(List,
+														  node->returningLists,
+														  i);
+
+				returningLists = lappend(returningLists, returningList);
+			}
+			if (node->updateColnosLists)
+			{
+				List	   *updateColnosList = list_nth(node->updateColnosLists, i);
+
+				updateColnosLists = lappend(updateColnosLists, updateColnosList);
+			}
+		}
+		i++;
+	}
+	nrels = list_length(resultRelations);
 
 	/*
 	 * create state structure
@@ -4483,6 +4526,7 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 	mtstate->mt_merge_inserted = 0;
 	mtstate->mt_merge_updated = 0;
 	mtstate->mt_merge_deleted = 0;
+	mtstate->mt_updateColnosLists = updateColnosLists;
 
 	/*----------
 	 * Resolve the target relation. This is the same as:
@@ -4500,6 +4544,7 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 	 */
 	if (node->rootRelation > 0)
 	{
+		Assert(bms_is_member(node->rootRelation, estate->es_unpruned_relids));
 		mtstate->rootResultRelInfo = makeNode(ResultRelInfo);
 		ExecInitResultRelation(estate, mtstate->rootResultRelInfo,
 							   node->rootRelation);
@@ -4514,7 +4559,7 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 
 	/* set up epqstate with dummy subplan data for the moment */
 	EvalPlanQualInit(&mtstate->mt_epqstate, estate, NULL, NIL,
-					 node->epqParam, node->resultRelations);
+					 node->epqParam, resultRelations);
 	mtstate->fireBSTriggers = true;
 
 	/*
@@ -4532,7 +4577,7 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 	 */
 	resultRelInfo = mtstate->resultRelInfo;
 	i = 0;
-	foreach(l, node->resultRelations)
+	foreach(l, resultRelations)
 	{
 		Index		resultRelation = lfirst_int(l);
 		List	   *mergeActions = NIL;
@@ -4676,7 +4721,7 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 	 * Initialize any WITH CHECK OPTION constraints if needed.
 	 */
 	resultRelInfo = mtstate->resultRelInfo;
-	foreach(l, node->withCheckOptionLists)
+	foreach(l, withCheckOptionLists)
 	{
 		List	   *wcoList = (List *) lfirst(l);
 		List	   *wcoExprs = NIL;
@@ -4699,7 +4744,7 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 	/*
 	 * Initialize RETURNING projections if needed.
 	 */
-	if (node->returningLists)
+	if (returningLists)
 	{
 		TupleTableSlot *slot;
 		ExprContext *econtext;
@@ -4708,7 +4753,7 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 		 * Initialize result tuple slot and assign its rowtype using the first
 		 * RETURNING list.  We assume the rest will look the same.
 		 */
-		mtstate->ps.plan->targetlist = (List *) linitial(node->returningLists);
+		mtstate->ps.plan->targetlist = (List *) linitial(returningLists);
 
 		/* Set up a slot for the output of the RETURNING projection(s) */
 		ExecInitResultTupleSlotTL(&mtstate->ps, &TTSOpsVirtual);
@@ -4723,7 +4768,7 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 		 * Build a projection for each result rel.
 		 */
 		resultRelInfo = mtstate->resultRelInfo;
-		foreach(l, node->returningLists)
+		foreach(l, returningLists)
 		{
 			List	   *rlist = (List *) lfirst(l);
 
@@ -4824,8 +4869,13 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 		ExecRowMark *erm;
 		ExecAuxRowMark *aerm;
 
-		/* ignore "parent" rowmarks; they are irrelevant at runtime */
-		if (rc->isParent)
+		/*
+		 * Ignore "parent" rowmarks, because they are irrelevant at runtime.
+		 * Also ignore the rowmarks belonging to child tables that have been
+		 * pruned in ExecDoInitialPruning().
+		 */
+		if (rc->isParent ||
+			!bms_is_member(rc->rti, estate->es_unpruned_relids))
 			continue;
 
 		/* Find ExecRowMark and build ExecAuxRowMark */
