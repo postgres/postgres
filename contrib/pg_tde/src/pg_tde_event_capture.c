@@ -25,6 +25,7 @@
 #include "catalog/tde_principal_key.h"
 #include "miscadmin.h"
 #include "access/tableam.h"
+#include "catalog/tde_global_space.h"
 
 /* Global variable that gets set at ddl start and cleard out at ddl end*/
 TdeCreateEvent tdeCurrentCreateEvent = {.relation = NULL};
@@ -58,7 +59,11 @@ checkEncryptionClause(const char *accessMethod)
 	if (tdeCurrentCreateEvent.encryptMode)
 	{
 		LWLockAcquire(tde_lwlock_enc_keys(), LW_SHARED);
-		principal_key = GetPrincipalKey(MyDatabaseId, LW_SHARED);
+		principal_key = GetPrincipalKeyNoDefault(MyDatabaseId, LW_SHARED);
+		if (principal_key == NULL)
+		{
+			principal_key = GetPrincipalKeyNoDefault(DEFAULT_DATA_TDE_OID, LW_EXCLUSIVE);
+		}
 		LWLockRelease(tde_lwlock_enc_keys());
 		if (principal_key == NULL)
 		{

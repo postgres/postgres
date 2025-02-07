@@ -151,6 +151,10 @@ if get_variable('percona_ext', false)
   ]
 endif
 
+sql_tests += [
+    'default_principal_key',
+]
+
 tests += {
   'name': 'pg_tde',
   'sd': meson.current_source_dir(),
