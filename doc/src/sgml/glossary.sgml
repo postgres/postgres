@@ -749,6 +749,11 @@
    </glossdef>
   </glossentry>
 
+  <glossentry>
+   <glossterm>GMT</glossterm>
+   <glosssee otherterm="glossary-utc" />
+  </glossentry>
+
   <glossentry id="glossary-grant">
    <glossterm>Grant</glossterm>
    <glossdef>
@@ -1861,6 +1866,17 @@
     <para>
      For more information, see
      <xref linkend="sql-createusermapping"/>.
+    </para>
+   </glossdef>
+  </glossentry>
+
+  <glossentry id="glossary-utc">
+   <glossterm>UTC</glossterm>
+   <glossdef>
+    <para>
+     Universal Coordinated Time, the primary global time reference,
+     approximately the time prevailing at the zero meridian of longitude.
+     Often but inaccurately referred to as GMT (Greenwich Mean Time).
     </para>
    </glossdef>
   </glossentry>
