@@ -4,6 +4,8 @@ Enabling `pg_tde` extension for a database creates the table access method `tde_
 
 Here's how to do it:
 
+## Encrypt data in a new table
+
 1. Create a table in the database for which you have [enabled `pg_tde`](setup.md) using the `tde_heap` access method as follows:
 
     ```
@@ -41,11 +43,21 @@ Here's how to do it:
     SELECT pg_tde_rotate_principal_key('new-principal-key', 'new-provider'); -- changeprovider
     ```
 
-4. You can encrypt an existing table. It requires rewriting the table, so for large tables, it might take a considerable amount of time.
+## Encrypt existing table
 
-    ```
-    ALTER TABLE table_name SET access method  tde_heap;
-    ```
+You can encrypt an existing table. It requires rewriting the table, so for large tables, it might take a considerable amount of time.
+
+Run the following command:
+
+```
+ALTER TABLE table_name SET access method  tde_heap;
+```
+
+Note that the `ALTER TABLE SET` command drops hint bits and this may affect the performance. Running a plain `SELECT, count(*)`, or `VACUUM` commands on the entire table will check every tuple for visibility and set its hint bits. Therefore, after executing the ALTER command, run a simple "count(*)" on your tables:
+
+```
+SELECT COUNT(*) FROM table_name;
+```
 
 !!! hint
 

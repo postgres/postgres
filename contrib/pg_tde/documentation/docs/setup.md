@@ -64,8 +64,6 @@ Load the `pg_tde` at the start time. The extension requires additional shared me
 
         <i warning>:material-information: Warning:</i> This example is for testing purposes only:
 
-        The Vault server setup is out of scope of this document.
-
         ```
         SELECT pg_tde_add_key_provider_kmip('kmip','127.0.0.1', 5696, '/tmp/server_certificate.pem', '/tmp/client_key_jane_doe.pem');
         ```
@@ -88,7 +86,7 @@ Load the `pg_tde` at the start time. The extension requires additional shared me
         <i warning>:material-information: Warning:</i> This example is for testing purposes only:
 
 	    ```
-	    SELECT pg_tde_add_key_provider_file_vault_v2('my-vault','https://vault.example.com','secret/data','hvs.zPuyktykA...example...ewUEnIRVaKoBzs2', NULL);
+	    SELECT pg_tde_add_key_provider_file_vault_v2('my-vault','http://vault.vault.svc.cluster.local:8200,'secret/data','hvs.zPuyktykA...example...ewUEnIRVaKoBzs2', NULL);
 	    ```
 
     === "With a keyring file"
@@ -124,7 +122,7 @@ Load the `pg_tde` at the start time. The extension requires additional shared me
    <i info>:material-information: Info:</i> The key provider configuration is stored in the database catalog in an unencrypted table. See [how to use external reference to parameters](external-parameters.md) to add an extra security layer to your setup.
 
 
-## WAL encryption configuration
+## WAL encryption configuration (tech preview)
 
 After you [enabled `pg_tde`](#enable-extension) and started the Percona Server for PostgreSQL, a principal key and a keyring for WAL are created. Now you need to instruct `pg_tde ` to encrypt WAL files by configuring WAL encryption. 
 

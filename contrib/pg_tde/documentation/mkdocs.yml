@@ -4,7 +4,7 @@ site_name: pg_tde documentation
 site_description: Documentation
 site_author: Percona LLC
 copyright: >
-  <a href="https://www.percona.com/about">Percona LLC</a> and/or its affiliates © 2023 — <a href="#__consent">Cookie Consent</a>
+  <a href="https://www.percona.com/about">Percona LLC</a> and/or its affiliates © 2025 — <a href="#__consent">Cookie Consent</a>
 
  
 repo_name: percona/pg_tde
@@ -92,8 +92,8 @@ markdown_extensions:
       linenums: false
   - pymdownx.snippets:
       base_path: ["snippets"]
-      auto_append:
-        - services-banner.md
+#      auto_append:
+#        - services-banner.md
   - pymdownx.emoji:
       emoji_index: !!python/name:material.extensions.emoji.twemoji
       emoji_generator: !!python/name:material.extensions.emoji.to_svg
