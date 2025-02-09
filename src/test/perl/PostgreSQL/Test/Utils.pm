@@ -50,6 +50,7 @@ use Cwd;
 use Exporter 'import';
 use Fcntl qw(:mode :seek);
 use File::Basename;
+use File::Compare;
 use File::Find;
 use File::Spec;
 use File::stat qw(stat);
@@ -70,6 +71,7 @@ our @EXPORT = qw(
   check_mode_recursive
   chmod_recursive
   check_pg_config
+  compare_files
   dir_symlink
   scan_server_header
   system_or_bail
@@ -769,6 +771,45 @@ sub check_pg_config
 	my $match = (grep { /^$regexp/ } <$pg_config_h>);
 	close $pg_config_h;
 	return $match;
+}
+
+=pod
+
+=item compare_files(file1, file2, testname)
+
+Check that two files match, printing the difference if any.
+
+C<line_comp_function> is an optional CODE reference to a line comparison
+function, passed down as-is to File::Compare::compare_text.
+
+=cut
+
+sub compare_files
+{
+	my ($file1, $file2, $testname, $line_comp_function) = @_;
+
+	# If nothing is given, all lines should be equal.
+	$line_comp_function = sub { $_[0] ne $_[1] }
+	  unless defined $line_comp_function;
+
+	my $compare_res =
+	  File::Compare::compare_text($file1, $file2, $line_comp_function);
+	is($compare_res, 0, $testname);
+
+	# Provide more context if the files do not match.
+	if ($compare_res != 0)
+	{
+		my ($stdout, $stderr) =
+		  run_command([ 'diff', '-u', $file1, $file2 ]);
+		print "=== diff of $file1 and $file2\n";
+		print "=== stdout ===\n";
+		print $stdout;
+		print "=== stderr ===\n";
+		print $stderr;
+		print "=== EOF ===\n";
+	}
+
+	return;
 }
 
 =pod

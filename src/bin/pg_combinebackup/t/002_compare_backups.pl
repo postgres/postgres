@@ -192,27 +192,12 @@ $pitr2->command_ok(
 
 # Compare the two dumps, there should be no differences other than
 # the tablespace paths.
-my $compare_res = compare_text(
+compare_files(
 	$dump1, $dump2,
+	"contents of dumps match for both PITRs",
 	sub {
 		s{create tablespace .* location .*\btspitr\K[12]}{N}i for @_;
 		return $_[0] ne $_[1];
 	});
-note($dump1);
-note($dump2);
-is($compare_res, 0, "dumps are identical");
-
-# Provide more context if the dumps do not match.
-if ($compare_res != 0)
-{
-	my ($stdout, $stderr) =
-	  run_command([ 'diff', '-u', $dump1, $dump2 ]);
-	print "=== diff of $dump1 and $dump2\n";
-	print "=== stdout ===\n";
-	print $stdout;
-	print "=== stderr ===\n";
-	print $stderr;
-	print "=== EOF ===\n";
-}
 
 done_testing();

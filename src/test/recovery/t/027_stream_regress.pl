@@ -120,8 +120,9 @@ command_ok(
 		'--port' => $node_standby_1->port,
 	],
 	'dump standby server');
-command_ok(
-	[ 'diff', $outputdir . '/primary.dump', $outputdir . '/standby.dump', ],
+compare_files(
+	$outputdir . '/primary.dump',
+	$outputdir . '/standby.dump',
 	'compare primary and standby dumps');
 
 # Likewise for the catalogs of the regression database, after disabling
@@ -150,12 +151,9 @@ command_ok(
 		'regression',
 	],
 	'dump catalogs of standby server');
-command_ok(
-	[
-		'diff',
-		$outputdir . '/catalogs_primary.dump',
-		$outputdir . '/catalogs_standby.dump',
-	],
+compare_files(
+	$outputdir . '/catalogs_primary.dump',
+	$outputdir . '/catalogs_standby.dump',
 	'compare primary and standby catalog dumps');
 
 # Check some data from pg_stat_statements.
