@@ -274,31 +274,6 @@ Branch: REL_13_STABLE [1168acbca] 2024-12-03 10:13:49 +1300
 
     <listitem>
 <!--
-Author: Michael Paquier <michael@paquier.xyz>
-Branch: master Release: REL_16_BR [dac1ff309] 2022-07-05 10:16:12 +0900
-Branch: REL_15_STABLE [c1c9df315] 2024-12-20 09:11:03 +0900
-Branch: REL_14_STABLE [1f95181b4] 2024-12-20 09:11:08 +0900
-Branch: REL_13_STABLE [26a79cbbd] 2024-12-20 09:11:11 +0900
--->
-     <para>
-      Use <function>rename()</function>
-      not <function>link()</function>/<function>unlink()</function> to
-      rename files (Nathan Bossart)
-     </para>
-
-     <para>
-      The previous coding was intended to assure that the operation could
-      not accidentally overwrite an existing file.  However a failure
-      could leave two links to the same file in existence, confusing
-      subsequent operations and creating a risk of data corruption.
-      In practice we do not use this functionality in places where the
-      target filename could already exist, so it seems better to give up
-      the no-overwrite guarantee to remove the multiple-link hazard.
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
 Author: Noah Misch <noah@leadboat.com>
 Branch: master [ff90ee614] 2024-12-28 07:16:22 -0800
 Branch: REL_17_STABLE [fa6131377] 2024-12-28 07:16:26 -0800
@@ -702,23 +677,6 @@ Branch: REL_13_STABLE [0f0431e91] 2025-01-20 09:30:40 +0900
 
     <listitem>
 <!--
-Author: Álvaro Herrera <alvherre@alvh.no-ip.org>
-Branch: REL_14_STABLE [4abf615cc] 2024-12-12 16:21:18 +0100
--->
-     <para>
-      Improve performance of archiver process with many status files
-      (Nathan Bossart)
-     </para>
-
-     <para>
-      This change back-patches a fix originally made in v15, in response
-      to reports of extremely poor archiving performance leading to
-      downtime or loss of replicas.
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
 Author: Noah Misch <noah@leadboat.com>
 Branch: master [8b9cbf492] 2024-12-10 13:51:59 -0800
 Branch: REL_17_STABLE [4bd9de3f4] 2024-12-10 13:52:02 -0800
@@ -839,20 +797,6 @@ Branch: REL_17_STABLE [9abdc1841] 2024-12-03 17:50:57 +0100
     <listitem>
 <!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
-Branch: REL_15_STABLE [4398507df] 2024-12-05 12:54:41 -0500
-Branch: REL_14_STABLE [d24eb0e91] 2024-12-05 12:54:41 -0500
-Branch: REL_13_STABLE [cd1c8b992] 2024-12-05 12:54:41 -0500
--->
-     <para>
-      Avoid low-probability crash on out-of-memory, due to missing check
-      for failure return from <function>malloc()</function>
-      (Karina Litskevich)
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
-Author: Tom Lane <tgl@sss.pgh.pa.us>
 Branch: master [b9aa4166f] 2025-01-30 15:36:44 -0500
 Branch: REL_17_STABLE [1e25cdb21] 2025-01-30 15:36:07 -0500
 Branch: REL_16_STABLE [f7a08b6e9] 2025-01-30 15:36:07 -0500
@@ -943,29 +887,6 @@ Branch: REL_13_STABLE [8aefd8b6f] 2024-11-22 15:32:02 +1300
 
     <listitem>
 <!--
-Author: Thomas Munro <tmunro@postgresql.org>
-Branch: REL_15_STABLE [9b136b0f2] 2025-01-18 09:31:39 -0500
-Branch: REL_14_STABLE [f4fd5325c] 2025-01-18 09:33:30 -0500
-Branch: REL_13_STABLE [2c4a532c9] 2025-01-18 09:33:49 -0500
-Branch: REL_15_STABLE [e708f3188] 2025-01-18 09:30:10 -0500
-Branch: REL_14_STABLE [9f1c67488] 2025-01-18 09:33:16 -0500
-Branch: REL_13_STABLE [fbf8efbda] 2025-01-18 09:33:43 -0500
--->
-     <para>
-      Fix handling of Windows junction points that are not
-      of <productname>PostgreSQL</productname> origin (Thomas Munro)
-     </para>
-
-     <para>
-      Previously, <application>initdb</application> would fail if the path
-      to the data directory included junction points whose expansion isn't
-      in <quote>drive absolute</quote> format, or whose expansion points
-      to another junction point.
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
 Author: David Rowley <drowley@postgresql.org>
 Branch: master [8f4ee9626] 2024-12-19 13:11:39 +1300
 Branch: REL_17_STABLE [7b8d45d27] 2024-12-19 13:12:18 +1300
@@ -1026,17 +947,6 @@ Branch: REL_15_STABLE [1df1e1e78] 2024-12-09 10:46:10 +0900
       Fix assertion failure at shutdown when writing out the statistics
       file (Michael Paquier)
       <ulink url="&commit_baseurl;dc5f90541">&sect;</ulink>
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
-Author: Thomas Munro <tmunro@postgresql.org>
-Branch: REL_13_STABLE [a722252ef] 2025-01-09 10:14:11 +1300
--->
-     <para>
-      Avoid rare assertion failure during relation truncation (Heikki
-      Linnakangas)
      </para>
     </listitem>
 
@@ -1311,12 +1221,20 @@ Branch: REL_16_STABLE [1cf646957] 2024-11-27 23:03:44 +0900
 Branch: REL_15_STABLE [1e46f7351] 2024-11-27 23:04:29 +0900
 Branch: REL_14_STABLE [0f13e1a78] 2024-11-27 23:04:55 +0900
 Branch: REL_13_STABLE [f1cb5e51f] 2024-11-27 23:05:24 +0900
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [fb056564e] 2025-02-07 13:41:42 -0500
+Branch: REL_17_STABLE [e35d396ec] 2025-02-07 13:41:42 -0500
+Branch: REL_16_STABLE [21b815f92] 2025-02-07 13:41:42 -0500
+Branch: REL_15_STABLE [499d1cf55] 2025-02-07 13:41:43 -0500
+Branch: REL_14_STABLE [5addea71c] 2025-02-07 13:41:43 -0500
+Branch: REL_13_STABLE [b6decfc1d] 2025-02-07 13:41:43 -0500
 -->
      <para>
       In <application>pgbench</application>, fix possible misdisplay of
       progress messages during table initialization (Yushi Ogiwara, Tatsuo
       Ishii, Fujii Masao)
       <ulink url="&commit_baseurl;adb103fca">&sect;</ulink>
+      <ulink url="&commit_baseurl;e35d396ec">&sect;</ulink>
      </para>
     </listitem>
 
@@ -1502,35 +1420,6 @@ Branch: REL_13_STABLE [32057a0f7] 2024-11-25 12:50:17 -0500
       persuade the compiler to compile such instructions.  Recent versions
       of gcc reject the value we were trying, leading to silently falling
       back to software CRC.
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
-Author: Thomas Munro <tmunro@postgresql.org>
-Branch: REL_15_STABLE [f00c401c6] 2024-11-27 15:43:18 +1300
-Branch: REL_14_STABLE [1fd57e5bb] 2024-11-27 15:48:13 +1300
-Branch: REL_13_STABLE [59ea17c43] 2024-11-27 15:52:15 +1300
-Branch: REL_12_STABLE [3f302f0ed] 2024-11-27 15:57:32 +1300
-Branch: REL_11_STABLE [170e41603] 2024-11-27 16:04:22 +1300
-Branch: REL_10_STABLE [f4e8f137b] 2024-11-27 16:47:29 +1300
-Branch: REL9_6_STABLE [70cf253d1] 2024-11-27 16:13:59 +1300
-Branch: REL9_5_STABLE [5b40ce749] 2024-11-27 16:17:20 +1300
-Branch: REL9_4_STABLE [b1b8b8e6f] 2024-11-27 16:19:42 +1300
-Branch: REL9_3_STABLE [102be6634] 2024-11-27 16:28:34 +1300
-Branch: REL9_2_STABLE [0c7171b32] 2024-11-27 16:31:41 +1300
--->
-     <para>
-      During <application>configure</application>, if a C23 compiler is
-      detected, try asking for C17 (Thomas Munro)
-     </para>
-
-     <para>
-      <productname>PostgreSQL</productname> versions before v16 will not
-      compile under C23 rules.  If the chosen compiler defaults to C23 or
-      later, try adding a <literal>-std=gnu17</literal> switch to change
-      that.  (If this won't work for your compiler, manually
-      specify <varname>CFLAGS</varname> with a suitable switch.)
      </para>
     </listitem>
 
