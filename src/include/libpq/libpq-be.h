@@ -312,7 +312,7 @@ extern ssize_t be_tls_read(Port *port, void *ptr, size_t len, int *waitfor);
 /*
  * Write data to a secure connection.
  */
-extern ssize_t be_tls_write(Port *port, void *ptr, size_t len, int *waitfor);
+extern ssize_t be_tls_write(Port *port, const void *ptr, size_t len, int *waitfor);
 
 /*
  * Return information about the SSL connection.
@@ -352,7 +352,7 @@ extern bool be_gssapi_get_delegation(Port *port);
 
 /* Read and write to a GSSAPI-encrypted connection. */
 extern ssize_t be_gssapi_read(Port *port, void *ptr, size_t len);
-extern ssize_t be_gssapi_write(Port *port, void *ptr, size_t len);
+extern ssize_t be_gssapi_write(Port *port, const void *ptr, size_t len);
 #endif							/* ENABLE_GSS */
 
 extern PGDLLIMPORT ProtocolVersion FrontendProtocol;

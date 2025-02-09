@@ -302,7 +302,7 @@ secure_raw_read(Port *port, void *ptr, size_t len)
  *	Write data to a secure connection.
  */
 ssize_t
-secure_write(Port *port, void *ptr, size_t len)
+secure_write(Port *port, const void *ptr, size_t len)
 {
 	ssize_t		n;
 	int			waitfor;

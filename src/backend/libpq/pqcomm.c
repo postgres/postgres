@@ -1368,7 +1368,7 @@ internal_flush_buffer(const char *buf, size_t *start, size_t *end)
 	{
 		int			r;
 
-		r = secure_write(MyProcPort, (char *) bufptr, bufend - bufptr);
+		r = secure_write(MyProcPort, bufptr, bufend - bufptr);
 
 		if (r <= 0)
 		{

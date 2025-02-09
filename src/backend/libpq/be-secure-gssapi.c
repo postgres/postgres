@@ -93,7 +93,7 @@ static uint32 PqGSSMaxPktSize;	/* Maximum size we can encrypt and fit the
  * failure if necessary, and then return an errno indicating connection loss.
  */
 ssize_t
-be_gssapi_write(Port *port, void *ptr, size_t len)
+be_gssapi_write(Port *port, const void *ptr, size_t len)
 {
 	OM_uint32	major,
 				minor;

@@ -821,7 +821,7 @@ be_tls_read(Port *port, void *ptr, size_t len, int *waitfor)
 }
 
 ssize_t
-be_tls_write(Port *port, void *ptr, size_t len, int *waitfor)
+be_tls_write(Port *port, const void *ptr, size_t len, int *waitfor)
 {
 	ssize_t		n;
 	int			err;
