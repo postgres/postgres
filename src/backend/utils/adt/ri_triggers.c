@@ -74,12 +74,13 @@
 /* these queries are executed against the FK (referencing) table: */
 #define RI_PLAN_CASCADE_ONDELETE		3
 #define RI_PLAN_CASCADE_ONUPDATE		4
+#define RI_PLAN_NO_ACTION				5
 /* For RESTRICT, the same plan can be used for both ON DELETE and ON UPDATE triggers. */
-#define RI_PLAN_RESTRICT				5
-#define RI_PLAN_SETNULL_ONDELETE		6
-#define RI_PLAN_SETNULL_ONUPDATE		7
-#define RI_PLAN_SETDEFAULT_ONDELETE		8
-#define RI_PLAN_SETDEFAULT_ONUPDATE		9
+#define RI_PLAN_RESTRICT				6
+#define RI_PLAN_SETNULL_ONDELETE		7
+#define RI_PLAN_SETNULL_ONUPDATE		8
+#define RI_PLAN_SETDEFAULT_ONDELETE		9
+#define RI_PLAN_SETDEFAULT_ONUPDATE		10
 
 #define MAX_QUOTED_NAME_LEN  (NAMEDATALEN*2+3)
 #define MAX_QUOTED_REL_NAME_LEN  (MAX_QUOTED_NAME_LEN*2)
@@ -752,7 +753,7 @@ ri_restrict(TriggerData *trigdata, bool is_no_action)
 	 * Fetch or prepare a saved plan for the restrict lookup (it's the same
 	 * query for delete and update cases)
 	 */
-	ri_BuildQueryKey(&qkey, riinfo, RI_PLAN_RESTRICT);
+	ri_BuildQueryKey(&qkey, riinfo, is_no_action ? RI_PLAN_NO_ACTION : RI_PLAN_RESTRICT);
 
 	if ((qplan = ri_FetchPreparedPlan(&qkey)) == NULL)
 	{
