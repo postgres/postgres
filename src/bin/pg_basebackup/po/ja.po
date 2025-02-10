@@ -747,7 +747,7 @@ msgstr "データをディスクに同期しています..."
 #: pg_basebackup.c:2210
 #, c-format
 msgid "renaming backup_manifest.tmp to backup_manifest"
-msgstr "backup_manifest.tmp の名前を backup_manifest に変更してください"
+msgstr "backup_manifest.tmp の名前を backup_manifest に変更しています"
 
 #: pg_basebackup.c:2221
 #, c-format
