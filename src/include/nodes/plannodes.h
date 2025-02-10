@@ -110,7 +110,7 @@ typedef struct PlannedStmt
 	 */
 	List	   *subplans;
 
-/* indices of subplans that require REWIND */
+	/* indices of subplans that require REWIND */
 	Bitmapset  *rewindPlanIDs;
 
 	/* a list of PlanRowMark's */
