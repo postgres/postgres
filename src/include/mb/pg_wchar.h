@@ -556,6 +556,8 @@ extern int	pg_encoding_mblen(int encoding, const char *mbstr);
 extern int	pg_encoding_mblen_bounded(int encoding, const char *mbstr);
 extern int	pg_encoding_dsplen(int encoding, const char *mbstr);
 extern int	pg_encoding_verifymb(int encoding, const char *mbstr, int len);
+extern int	pg_encoding_verifymbchar(int encoding, const char *mbstr, int len);
+extern int	pg_encoding_verifymbstr(int encoding, const char *mbstr, int len);
 extern int	pg_encoding_max_length(int encoding);
 extern int	pg_valid_client_encoding(const char *name);
 extern int	pg_valid_server_encoding(const char *name);

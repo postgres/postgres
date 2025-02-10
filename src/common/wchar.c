@@ -1597,6 +1597,72 @@ pg_encoding_verifymb(int encoding, const char *mbstr, int len)
 			pg_wchar_table[PG_SQL_ASCII].mbverify((const unsigned char *) mbstr, len));
 }
 
+/* v14+ function name, for easier backpatching */
+int
+pg_encoding_verifymbchar(int encoding, const char *mbstr, int len)
+{
+	int ok_bytes = pg_encoding_verifymb(encoding, mbstr, len);
+
+	if (ok_bytes == 0)
+		return -1;
+	return ok_bytes;
+}
+
+/* replace v14+ function, adapted from pg_verify_mbstr_len */
+int
+pg_encoding_verifymbstr(int encoding, const char *mbstr, int len)
+{
+	mbverifier	mbverify;
+	int			ok_bytes;
+
+	Assert(PG_VALID_ENCODING(encoding));
+
+	/*
+	 * In single-byte encodings, we need only reject nulls (\0).
+	 */
+	if (pg_encoding_max_length(encoding) <= 1)
+	{
+		const char *nullpos = memchr(mbstr, 0, len);
+
+		if (nullpos == NULL)
+			return len;
+		return nullpos - mbstr;
+	}
+
+	/* fetch function pointer just once */
+	mbverify = pg_wchar_table[encoding].mbverify;
+
+	ok_bytes = 0;
+
+	while (len > 0)
+	{
+		int			l;
+
+		/* fast path for ASCII-subset characters */
+		if (!IS_HIGHBIT_SET(*mbstr))
+		{
+			if (*mbstr != '\0')
+			{
+				ok_bytes++;
+				mbstr++;
+				len--;
+				continue;
+			}
+			return ok_bytes;
+		}
+
+		l = (*mbverify) ((const unsigned char *) mbstr, len);
+
+		if (l < 0)
+			return ok_bytes;
+
+		mbstr += l;
+		len -= l;
+		ok_bytes += l;
+	}
+	return ok_bytes;
+}
+
 /*
  * fetch maximum length of a given encoding
  */
