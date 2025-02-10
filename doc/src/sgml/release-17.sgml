@@ -35,6 +35,102 @@
 
     <listitem>
 <!--
+Author: Andres Freund <andres@anarazel.de>
+Branch: master [5dc1e42b4] 2025-02-10 10:03:37 -0500
+Branch: REL_17_STABLE [43a77239d] 2025-02-10 10:03:38 -0500
+Branch: REL_16_STABLE [92e4170f4] 2025-02-10 10:03:39 -0500
+Branch: REL_15_STABLE [370c94d4c] 2025-02-10 10:03:39 -0500
+Branch: REL_14_STABLE [e0ef3d776] 2025-02-10 10:03:40 -0500
+Branch: REL_13_STABLE [c906bfe1b] 2025-02-10 10:03:40 -0500
+Branch: master [4dc289635] 2025-02-10 10:03:37 -0500
+Branch: REL_17_STABLE [7d43ca6fe] 2025-02-10 10:03:38 -0500
+Branch: REL_16_STABLE [6e05b195d] 2025-02-10 10:03:39 -0500
+Branch: REL_15_STABLE [703b3fd5d] 2025-02-10 10:03:39 -0500
+Branch: REL_14_STABLE [5bc33cbea] 2025-02-10 10:03:40 -0500
+Branch: REL_13_STABLE [db3eb0e82] 2025-02-10 10:03:40 -0500
+Branch: master [3e98c8ce5] 2025-02-10 10:03:37 -0500
+Branch: REL_17_STABLE [61ad93cdd] 2025-02-10 10:03:38 -0500
+Branch: REL_16_STABLE [56aa2dcdd] 2025-02-10 10:03:39 -0500
+Branch: REL_15_STABLE [b1756da75] 2025-02-10 10:03:39 -0500
+Branch: REL_14_STABLE [2ae54ae17] 2025-02-10 10:03:40 -0500
+Branch: REL_13_STABLE [5df4e1632] 2025-02-10 10:03:40 -0500
+Branch: master [ac00ff1c9] 2025-02-10 10:03:37 -0500
+Branch: REL_17_STABLE [02d4d87ac] 2025-02-10 10:03:38 -0500
+Branch: REL_16_STABLE [01784793f] 2025-02-10 10:03:39 -0500
+Branch: REL_15_STABLE [de4b92f33] 2025-02-10 10:03:39 -0500
+Branch: REL_14_STABLE [46ddf98df] 2025-02-10 10:03:40 -0500
+Branch: REL_13_STABLE [4ea3f5ef3] 2025-02-10 10:03:40 -0500
+Branch: master [979205e47] 2025-02-10 12:12:14 -0500
+Branch: REL_17_STABLE [05abb0f83] 2025-02-10 12:12:53 -0500
+Branch: REL_16_STABLE [41343f840] 2025-02-10 12:12:56 -0500
+Branch: REL_15_STABLE [a085fa731] 2025-02-10 12:12:58 -0500
+Branch: REL_14_STABLE [4a6825c76] 2025-02-10 12:12:59 -0500
+Branch: REL_13_STABLE [7beb2af5e] 2025-02-10 12:13:02 -0500
+Branch: REL_13_STABLE [00f1a1f66] 2025-02-10 10:03:40 -0500
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [5bf12323b] 2025-02-10 16:30:03 -0500
+Branch: REL_17_STABLE [85c1fcc65] 2025-02-10 16:30:31 -0500
+Branch: REL_16_STABLE [0075a5c6c] 2025-02-10 16:30:37 -0500
+Branch: REL_15_STABLE [9862de917] 2025-02-10 16:30:54 -0500
+Branch: REL_14_STABLE [e1f1b030d] 2025-02-10 16:31:01 -0500
+Branch: REL_13_STABLE [f9fceef6e] 2025-02-10 16:31:09 -0500
+-->
+     <para>
+      Harden <function>PQescapeString</function> and allied functions
+      against invalidly-encoded input strings (Andres Freund, Noah Misch)
+      <ulink url="&commit_baseurl;43a77239d">&sect;</ulink>
+      <ulink url="&commit_baseurl;7d43ca6fe">&sect;</ulink>
+      <ulink url="&commit_baseurl;61ad93cdd">&sect;</ulink>
+      <ulink url="&commit_baseurl;02d4d87ac">&sect;</ulink>
+      <ulink url="&commit_baseurl;05abb0f83">&sect;</ulink>
+      <ulink url="&commit_baseurl;85c1fcc65">&sect;</ulink>
+     </para>
+
+     <para>
+      Data-quoting functions supplied by <application>libpq</application>
+      now fully check the encoding validity of their input.  If invalid
+      characters are detected, they report an error if possible.  For the
+      ones that lack an error return convention, the output string is
+      adjusted to ensure that the server will report invalid encoding and
+      no intervening processing will be fooled by bytes that might happen
+      to match single quote, backslash, etc.
+     </para>
+
+     <para>
+      The purpose of this change is to guard against SQL-injection attacks
+      that are possible if one of these functions is used to quote crafted
+      input.  There is no hazard when the resulting string is sent
+      directly to a <productname>PostgreSQL</productname> server (which
+      would check its encoding anyway), but there is a risk when it is
+      passed through <application>psql</application> or other client-side
+      code.  Historically such code has not carefully vetted encoding, and
+      in many cases it's not clear what it should do if it did detect such
+      a problem.
+     </para>
+
+     <para>
+      This fix is effective only if the data-quoting function, the server,
+      and any intermediate processing agree on the character encoding
+      that's being used.  Applications that insert untrusted input into
+      SQL commands should take special care to ensure that that's true.
+     </para>
+
+     <para>
+      Applications and drivers that quote untrusted input without using
+      these <application>libpq</application> functions may be at risk of
+      similar problems.  They should first confirm the data is valid in
+      the encoding expected by the server.
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks
+      Stephen Fewer for reporting this problem.
+      (CVE-2025-1094)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
 Author: Nathan Bossart <nathan@postgresql.org>
 Branch: master [a0ff56e2d] 2024-12-12 15:52:04 -0600
 Branch: REL_17_STABLE [d09fbf645] 2024-12-12 15:52:04 -0600
