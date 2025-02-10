@@ -2818,6 +2818,7 @@ processEncodingEntry(ArchiveHandle *AH, TocEntry *te)
 			pg_fatal("unrecognized encoding \"%s\"",
 					 ptr1);
 		AH->public.encoding = encoding;
+		setFmtEncoding(encoding);
 	}
 	else
 		pg_fatal("invalid ENCODING item: %s",

@@ -198,6 +198,8 @@ main(int argc, char *argv[])
 
 	conn = connectMaintenanceDatabase(&cparams, progname, echo);
 
+	setFmtEncoding(PQclientEncoding(conn));
+
 	initPQExpBuffer(&sql);
 
 	appendPQExpBuffer(&sql, "CREATE DATABASE %s",

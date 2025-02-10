@@ -524,6 +524,7 @@ main(int argc, char *argv[])
 	 * we know how to escape strings.
 	 */
 	encoding = PQclientEncoding(conn);
+	setFmtEncoding(encoding);
 	std_strings = PQparameterStatus(conn, "standard_conforming_strings");
 	if (!std_strings)
 		std_strings = "off";
