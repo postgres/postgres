@@ -3709,6 +3709,9 @@ pam_handle_t
 parallel_worker_main_type
 parse_error_callback_arg
 partition_method_t
+pe_test_config
+pe_test_escape_func
+pe_test_vector
 pendingPosition
 pending_label
 pgParameterStatus
