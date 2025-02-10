@@ -17,13 +17,16 @@
 #include "postgres.h"
 
 #include "access/relation.h"
+#include "catalog/index.h"
 #include "catalog/pg_database.h"
 #include "funcapi.h"
 #include "miscadmin.h"
 #include "statistics/stat_utils.h"
+#include "storage/lmgr.h"
 #include "utils/acl.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
+#include "utils/lsyscache.h"
 #include "utils/rel.h"
 
 /*
@@ -126,45 +129,86 @@ stats_check_arg_pair(FunctionCallInfo fcinfo,
 void
 stats_lock_check_privileges(Oid reloid)
 {
-	Relation	rel = relation_open(reloid, ShareUpdateExclusiveLock);
-	const char	relkind = rel->rd_rel->relkind;
+	Relation	table;
+	Oid			table_oid = reloid;
+	Oid			index_oid = InvalidOid;
+	LOCKMODE	index_lockmode = NoLock;
 
-	/* All of the types that can be used with ANALYZE, plus indexes */
-	switch (relkind)
+	/*
+	 * For indexes, we follow the locking behavior in do_analyze_rel() and
+	 * check_inplace_rel_lock(), which is to lock the table first in
+	 * ShareUpdateExclusive mode and then the index in AccessShare mode.
+	 *
+	 * Partitioned indexes are treated differently than normal indexes in
+	 * check_inplace_rel_lock(), so we take a ShareUpdateExclusive lock on
+	 * both the partitioned table and the partitioned index.
+	 */
+	switch (get_rel_relkind(reloid))
+	{
+		case RELKIND_INDEX:
+			index_oid = reloid;
+			table_oid = IndexGetRelation(index_oid, false);
+			index_lockmode = AccessShareLock;
+			break;
+		case RELKIND_PARTITIONED_INDEX:
+			index_oid = reloid;
+			table_oid = IndexGetRelation(index_oid, false);
+			index_lockmode = ShareUpdateExclusiveLock;
+			break;
+		default:
+			break;
+	}
+
+	table = relation_open(table_oid, ShareUpdateExclusiveLock);
+
+	/* the relkinds that can be used with ANALYZE */
+	switch (table->rd_rel->relkind)
 	{
 		case RELKIND_RELATION:
-		case RELKIND_INDEX:
 		case RELKIND_MATVIEW:
 		case RELKIND_FOREIGN_TABLE:
 		case RELKIND_PARTITIONED_TABLE:
-		case RELKIND_PARTITIONED_INDEX:
 			break;
 		default:
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 					 errmsg("cannot modify statistics for relation \"%s\"",
-							RelationGetRelationName(rel)),
-					 errdetail_relkind_not_supported(rel->rd_rel->relkind)));
+							RelationGetRelationName(table)),
+					 errdetail_relkind_not_supported(table->rd_rel->relkind)));
 	}
 
-	if (rel->rd_rel->relisshared)
+	if (OidIsValid(index_oid))
+	{
+		Relation	index;
+
+		Assert(index_lockmode != NoLock);
+		index = relation_open(index_oid, index_lockmode);
+
+		Assert(index->rd_index && index->rd_index->indrelid == table_oid);
+
+		/* retain lock on index */
+		relation_close(index, NoLock);
+	}
+
+	if (table->rd_rel->relisshared)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("cannot modify statistics for shared relation")));
 
 	if (!object_ownercheck(DatabaseRelationId, MyDatabaseId, GetUserId()))
 	{
-		AclResult	aclresult = pg_class_aclcheck(RelationGetRelid(rel),
+		AclResult	aclresult = pg_class_aclcheck(RelationGetRelid(table),
 												  GetUserId(),
 												  ACL_MAINTAIN);
 
 		if (aclresult != ACLCHECK_OK)
 			aclcheck_error(aclresult,
-						   get_relkind_objtype(rel->rd_rel->relkind),
-						   NameStr(rel->rd_rel->relname));
+						   get_relkind_objtype(table->rd_rel->relkind),
+						   NameStr(table->rd_rel->relname));
 	}
 
-	relation_close(rel, NoLock);
+	/* retain lock on table */
+	relation_close(table, NoLock);
 }
 
 /*

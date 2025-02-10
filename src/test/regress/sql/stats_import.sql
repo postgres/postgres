@@ -64,6 +64,30 @@ SELECT relpages, reltuples, relallvisible
 FROM pg_class
 WHERE oid = 'stats_import.test'::regclass;
 
+CREATE INDEX test_i ON stats_import.test(id);
+
+BEGIN;
+-- regular indexes have special case locking rules
+SELECT
+    pg_catalog.pg_set_relation_stats(
+        relation => 'stats_import.test_i'::regclass,
+        relpages => 18::integer);
+
+SELECT mode FROM pg_locks
+WHERE relation = 'stats_import.test'::regclass AND
+      pid = pg_backend_pid() AND granted;
+
+SELECT mode FROM pg_locks
+WHERE relation = 'stats_import.test_i'::regclass AND
+      pid = pg_backend_pid() AND granted;
+
+COMMIT;
+
+SELECT
+    pg_catalog.pg_restore_relation_stats(
+        'relation', 'stats_import.test_i'::regclass,
+        'relpages', 19::integer );
+
 -- positional arguments
 SELECT
     pg_catalog.pg_set_relation_stats(
@@ -127,6 +151,8 @@ CREATE TABLE stats_import.part_child_1
   FOR VALUES FROM (0) TO (10)
   WITH (autovacuum_enabled = false);
 
+CREATE INDEX part_parent_i ON stats_import.part_parent(i);
+
 ANALYZE stats_import.part_parent;
 
 SELECT relpages
@@ -137,8 +163,41 @@ WHERE oid = 'stats_import.part_parent'::regclass;
 -- positive value is still allowed
 SELECT
     pg_catalog.pg_set_relation_stats(
+        relation => 'stats_import.part_parent_i'::regclass,
+        relpages => 2::integer);
+
+SELECT
+    pg_catalog.pg_set_relation_stats(
         relation => 'stats_import.part_parent'::regclass,
         relpages => 2::integer);
+
+--
+-- Partitioned indexes aren't analyzed but it is possible to set
+-- stats. The locking rules are different from normal indexes due to
+-- the rules for in-place updates: both the partitioned table and the
+-- partitioned index are locked in ShareUpdateExclusive mode.
+--
+BEGIN;
+
+SELECT
+    pg_catalog.pg_set_relation_stats(
+        relation => 'stats_import.part_parent_i'::regclass,
+        relpages => 2::integer);
+
+SELECT mode FROM pg_locks
+WHERE relation = 'stats_import.part_parent'::regclass AND
+      pid = pg_backend_pid() AND granted;
+
+SELECT mode FROM pg_locks
+WHERE relation = 'stats_import.part_parent_i'::regclass AND
+      pid = pg_backend_pid() AND granted;
+
+COMMIT;
+
+SELECT
+    pg_catalog.pg_restore_relation_stats(
+        'relation', 'stats_import.part_parent_i'::regclass,
+        'relpages', 2::integer);
 
 -- nothing stops us from setting it to -1
 SELECT
@@ -1061,6 +1120,15 @@ UNION ALL
 SELECT 4, 'four', NULL, int4range(0,100), NULL;
 
 CREATE INDEX is_odd ON stats_import.test(((comp).a % 2 = 1));
+
+-- restoring stats on index
+SELECT * FROM pg_catalog.pg_restore_relation_stats(
+    'relation', 'stats_import.is_odd'::regclass,
+    'version', '180000'::integer,
+    'relpages', '11'::integer,
+    'reltuples', '10000'::real,
+    'relallvisible', '0'::integer
+);
 
 -- Generate statistics on table with data
 ANALYZE stats_import.test;
