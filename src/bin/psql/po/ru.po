@@ -4,14 +4,14 @@
 # Serguei A. Mokhov <mokhov@cs.concordia.ca>, 2001-2005.
 # Oleg Bartunov <oleg@sai.msu.su>, 2004-2005.
 # Sergey Burladyan <eshkinkot@gmail.com>, 2012.
-# Alexander Lakhin <exclusion@gmail.com>, 2012-2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024.
+# Alexander Lakhin <exclusion@gmail.com>, 2012-2025.
 # Maxim Yablokov <m.yablokov@postgrespro.ru>, 2021.
 msgid ""
 msgstr ""
 "Project-Id-Version: psql (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2024-11-02 08:22+0300\n"
-"PO-Revision-Date: 2024-09-07 06:49+0300\n"
+"PO-Revision-Date: 2025-02-08 08:33+0200\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -3367,7 +3367,7 @@ msgstr ""
 #, c-format
 msgid "  \\x [on|off|auto]       toggle expanded output (currently %s)\n"
 msgstr ""
-"  \\x [on|off|auto]       переключить режим расширенного вывода (сейчас: "
+"  \\x [on|off|auto]       переключить режим развёрнутого вывода (сейчас: "
 "%s)\n"
 
 #: help.c:323
@@ -3829,7 +3829,7 @@ msgid ""
 "    expanded output [on, off, auto]\n"
 msgstr ""
 "  expanded (или x)\n"
-"    расширенный вывод [on (вкл.), off (выкл.), auto (авто)]\n"
+"    развёрнутый вывод [on (вкл.), off (выкл.), auto (авто)]\n"
 
 #: help.c:482
 #, c-format

@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pltcl (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-08-01 12:51+0300\n"
+"POT-Creation-Date: 2025-02-08 07:45+0200\n"
 "PO-Revision-Date: 2024-08-01 13:03+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
@@ -17,64 +17,64 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 
-#: pltcl.c:463
+#: pltcl.c:467
 msgid "PL/Tcl function to call once when pltcl is first used."
 msgstr "Функция на PL/Tcl, вызываемая при первом использовании pltcl."
 
-#: pltcl.c:470
+#: pltcl.c:474
 msgid "PL/TclU function to call once when pltclu is first used."
 msgstr "Функция на PL/TclU, вызываемая при первом использовании pltclu."
 
-#: pltcl.c:637
+#: pltcl.c:641
 #, c-format
 msgid "function \"%s\" is in the wrong language"
 msgstr "Функция \"%s\" объявлена на другом языке"
 
-#: pltcl.c:648
+#: pltcl.c:652
 #, c-format
 msgid "function \"%s\" must not be SECURITY DEFINER"
 msgstr "функция \"%s\" не должна иметь характеристику SECURITY DEFINER"
 
 #. translator: %s is "pltcl.start_proc" or "pltclu.start_proc"
-#: pltcl.c:682
+#: pltcl.c:686
 #, c-format
 msgid "processing %s parameter"
 msgstr "обработка параметра %s"
 
-#: pltcl.c:835
+#: pltcl.c:839
 #, c-format
 msgid "set-valued function called in context that cannot accept a set"
 msgstr ""
 "функция, возвращающая множество, вызвана в контексте, где ему нет места"
 
-#: pltcl.c:840
+#: pltcl.c:844
 #, c-format
 msgid "materialize mode required, but it is not allowed in this context"
 msgstr "требуется режим материализации, но он недопустим в этом контексте"
 
-#: pltcl.c:1013
+#: pltcl.c:1017
 #, c-format
 msgid ""
 "function returning record called in context that cannot accept type record"
 msgstr ""
 "функция, возвращающая запись, вызвана в контексте, не допускающем этот тип"
 
-#: pltcl.c:1032
+#: pltcl.c:1036
 #, c-format
 msgid "could not parse function return value: %s"
 msgstr "разобрать возвращаемое функцией значение не удалось: %s"
 
-#: pltcl.c:1299
+#: pltcl.c:1303
 #, c-format
 msgid "could not parse trigger return value: %s"
 msgstr "разобрать возвращаемое триггером значение не удалось: %s"
 
-#: pltcl.c:1384 pltcl.c:1814
+#: pltcl.c:1388 pltcl.c:1818
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: pltcl.c:1385
+#: pltcl.c:1389
 #, c-format
 msgid ""
 "%s\n"
@@ -83,43 +83,43 @@ msgstr ""
 "%s\n"
 "в функции PL/Tcl \"%s\""
 
-#: pltcl.c:1549
+#: pltcl.c:1553
 #, c-format
 msgid "trigger functions can only be called as triggers"
 msgstr "триггерные функции могут вызываться только в триггерах"
 
-#: pltcl.c:1553
+#: pltcl.c:1557
 #, c-format
 msgid "PL/Tcl functions cannot return type %s"
 msgstr "функции PL/Tcl не могут возвращать тип %s"
 
-#: pltcl.c:1592
+#: pltcl.c:1596
 #, c-format
 msgid "PL/Tcl functions cannot accept type %s"
 msgstr "функции PL/Tcl не могут принимать тип %s"
 
-#: pltcl.c:1706
+#: pltcl.c:1710
 #, c-format
 msgid "could not create internal procedure \"%s\": %s"
 msgstr "не удалось создать внутреннюю процедуру \"%s\": %s"
 
-#: pltcl.c:3209
+#: pltcl.c:3213
 #, c-format
 msgid "column name/value list must have even number of elements"
 msgstr "в списке имён/значений столбцов должно быть чётное число элементов"
 
-#: pltcl.c:3227
+#: pltcl.c:3231
 #, c-format
 msgid "column name/value list contains nonexistent column name \"%s\""
 msgstr ""
 "список имён/значений столбцов содержит имя несуществующего столбца \"%s\""
 
-#: pltcl.c:3234
+#: pltcl.c:3238
 #, c-format
 msgid "cannot set system attribute \"%s\""
 msgstr "присвоить значение системному атрибуту \"%s\" нельзя"
 
-#: pltcl.c:3240
+#: pltcl.c:3244
 #, c-format
 msgid "cannot set generated column \"%s\""
 msgstr "присвоить значение генерируемому столбцу \"%s\" нельзя"

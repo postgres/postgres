@@ -1291,7 +1291,7 @@ msgstr "La clé « %s » existe déjà."
 #: access/nbtree/nbtinsert.c:762
 #, c-format
 msgid "This may be because of a non-immutable index expression."
-msgstr "Ceci peut être dû à une expression d'index immutable."
+msgstr "Ceci peut être dû à une expression d'index non immutable."
 
 #: access/nbtree/nbtpage.c:159 access/nbtree/nbtpage.c:608 parser/parse_utilcmd.c:2342
 #, c-format

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pgscripts (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-11-02 08:22+0300\n"
+"POT-Creation-Date: 2025-02-08 07:45+0200\n"
 "PO-Revision-Date: 2024-09-05 08:25+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
@@ -205,18 +205,18 @@ msgstr ""
 "\n"
 
 #: clusterdb.c:265 createdb.c:281 createuser.c:346 dropdb.c:172 dropuser.c:170
-#: pg_isready.c:226 reindexdb.c:766 vacuumdb.c:971
+#: pg_isready.c:226 reindexdb.c:766 vacuumdb.c:980
 #, c-format
 msgid "Usage:\n"
 msgstr "Использование:\n"
 
-#: clusterdb.c:266 reindexdb.c:767 vacuumdb.c:972
+#: clusterdb.c:266 reindexdb.c:767 vacuumdb.c:981
 #, c-format
 msgid "  %s [OPTION]... [DBNAME]\n"
 msgstr "  %s [ПАРАМЕТР]... [ИМЯ_БД]\n"
 
 #: clusterdb.c:267 createdb.c:283 createuser.c:348 dropdb.c:174 dropuser.c:172
-#: pg_isready.c:229 reindexdb.c:768 vacuumdb.c:973
+#: pg_isready.c:229 reindexdb.c:768 vacuumdb.c:982
 #, c-format
 msgid ""
 "\n"
@@ -268,7 +268,7 @@ msgid "  -?, --help                show this help, then exit\n"
 msgstr "  -?, --help                показать эту справку и выйти\n"
 
 #: clusterdb.c:276 createdb.c:298 createuser.c:370 dropdb.c:181 dropuser.c:179
-#: pg_isready.c:235 reindexdb.c:783 vacuumdb.c:998
+#: pg_isready.c:235 reindexdb.c:783 vacuumdb.c:1007
 #, c-format
 msgid ""
 "\n"
@@ -277,35 +277,35 @@ msgstr ""
 "\n"
 "Параметры подключения:\n"
 
-#: clusterdb.c:277 createuser.c:371 dropdb.c:182 dropuser.c:180 vacuumdb.c:999
+#: clusterdb.c:277 createuser.c:371 dropdb.c:182 dropuser.c:180 vacuumdb.c:1008
 #, c-format
 msgid "  -h, --host=HOSTNAME       database server host or socket directory\n"
 msgstr ""
 "  -h, --host=ИМЯ            компьютер с сервером баз данных или каталог "
 "сокетов\n"
 
-#: clusterdb.c:278 createuser.c:372 dropdb.c:183 dropuser.c:181 vacuumdb.c:1000
+#: clusterdb.c:278 createuser.c:372 dropdb.c:183 dropuser.c:181 vacuumdb.c:1009
 #, c-format
 msgid "  -p, --port=PORT           database server port\n"
 msgstr "  -p, --port=ПОРТ           порт сервера баз данных\n"
 
-#: clusterdb.c:279 dropdb.c:184 vacuumdb.c:1001
+#: clusterdb.c:279 dropdb.c:184 vacuumdb.c:1010
 #, c-format
 msgid "  -U, --username=USERNAME   user name to connect as\n"
 msgstr ""
 "  -U, --username=ИМЯ        имя пользователя для подключения к серверу\n"
 
-#: clusterdb.c:280 createuser.c:374 dropdb.c:185 dropuser.c:183 vacuumdb.c:1002
+#: clusterdb.c:280 createuser.c:374 dropdb.c:185 dropuser.c:183 vacuumdb.c:1011
 #, c-format
 msgid "  -w, --no-password         never prompt for password\n"
 msgstr "  -w, --no-password         не запрашивать пароль\n"
 
-#: clusterdb.c:281 createuser.c:375 dropdb.c:186 dropuser.c:184 vacuumdb.c:1003
+#: clusterdb.c:281 createuser.c:375 dropdb.c:186 dropuser.c:184 vacuumdb.c:1012
 #, c-format
 msgid "  -W, --password            force password prompt\n"
 msgstr "  -W, --password            запросить пароль\n"
 
-#: clusterdb.c:282 dropdb.c:187 vacuumdb.c:1004
+#: clusterdb.c:282 dropdb.c:187 vacuumdb.c:1013
 #, c-format
 msgid "  --maintenance-db=DBNAME   alternate maintenance database\n"
 msgstr "  --maintenance-db=ИМЯ_БД   сменить опорную базу данных\n"
@@ -320,7 +320,7 @@ msgstr ""
 "Подробнее о кластеризации вы можете узнать в описании SQL-команды CLUSTER.\n"
 
 #: clusterdb.c:284 createdb.c:306 createuser.c:376 dropdb.c:188 dropuser.c:185
-#: pg_isready.c:240 reindexdb.c:791 vacuumdb.c:1006
+#: pg_isready.c:240 reindexdb.c:791 vacuumdb.c:1015
 #, c-format
 msgid ""
 "\n"
@@ -330,7 +330,7 @@ msgstr ""
 "Об ошибках сообщайте по адресу <%s>.\n"
 
 #: clusterdb.c:285 createdb.c:307 createuser.c:377 dropdb.c:189 dropuser.c:186
-#: pg_isready.c:241 reindexdb.c:792 vacuumdb.c:1007
+#: pg_isready.c:241 reindexdb.c:792 vacuumdb.c:1016
 #, c-format
 msgid "%s home page: <%s>\n"
 msgstr "Домашняя страница %s: <%s>\n"
@@ -935,8 +935,8 @@ msgid "cannot use multiple jobs to reindex indexes"
 msgstr "нельзя задействовать несколько заданий для перестроения индексов"
 
 #: reindexdb.c:323 reindexdb.c:330 vacuumdb.c:424 vacuumdb.c:431 vacuumdb.c:438
-#: vacuumdb.c:445 vacuumdb.c:452 vacuumdb.c:459 vacuumdb.c:464 vacuumdb.c:468
-#: vacuumdb.c:472
+#: vacuumdb.c:445 vacuumdb.c:452 vacuumdb.c:459 vacuumdb.c:466 vacuumdb.c:473
+#: vacuumdb.c:480
 #, c-format
 msgid ""
 "cannot use the \"%s\" option on server versions older than PostgreSQL %s"
@@ -1104,27 +1104,27 @@ msgstr "Вычисление средней статистики для опти
 msgid "Generating default (full) optimizer statistics"
 msgstr "Вычисление стандартной (полной) статистики для оптимизатора"
 
-#: vacuumdb.c:478
+#: vacuumdb.c:487
 #, c-format
 msgid "%s: processing database \"%s\": %s\n"
 msgstr "%s: обработка базы данных \"%s\": %s\n"
 
-#: vacuumdb.c:481
+#: vacuumdb.c:490
 #, c-format
 msgid "%s: vacuuming database \"%s\"\n"
 msgstr "%s: очистка базы данных \"%s\"\n"
 
-#: vacuumdb.c:959
+#: vacuumdb.c:968
 #, c-format
 msgid "vacuuming of table \"%s\" in database \"%s\" failed: %s"
 msgstr "очистить таблицу \"%s\" в базе \"%s\" не удалось: %s"
 
-#: vacuumdb.c:962
+#: vacuumdb.c:971
 #, c-format
 msgid "vacuuming of database \"%s\" failed: %s"
 msgstr "очистить базу данных \"%s\" не удалось: %s"
 
-#: vacuumdb.c:970
+#: vacuumdb.c:979
 #, c-format
 msgid ""
 "%s cleans and analyzes a PostgreSQL database.\n"
@@ -1133,23 +1133,23 @@ msgstr ""
 "%s очищает и анализирует базу данных PostgreSQL.\n"
 "\n"
 
-#: vacuumdb.c:974
+#: vacuumdb.c:983
 #, c-format
 msgid "  -a, --all                       vacuum all databases\n"
 msgstr "  -a, --all                       очистить все базы данных\n"
 
-#: vacuumdb.c:975
+#: vacuumdb.c:984
 #, c-format
 msgid "  -d, --dbname=DBNAME             database to vacuum\n"
 msgstr "  -d, --dbname=ИМЯ_БД             очистить указанную базу данных\n"
 
-#: vacuumdb.c:976
+#: vacuumdb.c:985
 #, c-format
 msgid "      --disable-page-skipping     disable all page-skipping behavior\n"
 msgstr ""
 "      --disable-page-skipping     исключить все варианты пропуска страниц\n"
 
-#: vacuumdb.c:977
+#: vacuumdb.c:986
 #, c-format
 msgid ""
 "  -e, --echo                      show the commands being sent to the "
@@ -1157,19 +1157,19 @@ msgid ""
 msgstr ""
 "  -e, --echo                      отображать команды, отправляемые серверу\n"
 
-#: vacuumdb.c:978
+#: vacuumdb.c:987
 #, c-format
 msgid "  -f, --full                      do full vacuuming\n"
 msgstr "  -f, --full                      произвести полную очистку\n"
 
-#: vacuumdb.c:979
+#: vacuumdb.c:988
 #, c-format
 msgid "  -F, --freeze                    freeze row transaction information\n"
 msgstr ""
 "  -F, --freeze                    заморозить информацию о транзакциях в "
 "строках\n"
 
-#: vacuumdb.c:980
+#: vacuumdb.c:989
 #, c-format
 msgid ""
 "      --force-index-cleanup       always remove index entries that point to "
@@ -1179,7 +1179,7 @@ msgstr ""
 "указывающие\n"
 "                                  на мёртвые кортежи\n"
 
-#: vacuumdb.c:981
+#: vacuumdb.c:990
 #, c-format
 msgid ""
 "  -j, --jobs=NUM                  use this many concurrent connections to "
@@ -1188,7 +1188,7 @@ msgstr ""
 "  -j, --jobs=ЧИСЛО                запускать для очистки заданное число "
 "заданий\n"
 
-#: vacuumdb.c:982
+#: vacuumdb.c:991
 #, c-format
 msgid ""
 "      --min-mxid-age=MXID_AGE     minimum multixact ID age of tables to "
@@ -1197,7 +1197,7 @@ msgstr ""
 "      --min-mxid-age=ВОЗРАСТ      минимальный возраст мультитранзакций для\n"
 "                                  таблиц, подлежащих очистке\n"
 
-#: vacuumdb.c:983
+#: vacuumdb.c:992
 #, c-format
 msgid ""
 "      --min-xid-age=XID_AGE       minimum transaction ID age of tables to "
@@ -1207,7 +1207,7 @@ msgstr ""
 "таблиц,\n"
 "                                  подлежащих очистке\n"
 
-#: vacuumdb.c:984
+#: vacuumdb.c:993
 #, c-format
 msgid ""
 "      --no-index-cleanup          don't remove index entries that point to "
@@ -1216,7 +1216,7 @@ msgstr ""
 "      --no-index-cleanup          не удалять элементы индекса, указывающие\n"
 "                                  на мёртвые кортежи\n"
 
-#: vacuumdb.c:985
+#: vacuumdb.c:994
 #, c-format
 msgid ""
 "      --no-process-toast          skip the TOAST table associated with the "
@@ -1225,7 +1225,7 @@ msgstr ""
 "      --no-process-toast          пропускать TOAST-таблицу, связанную\n"
 "                                  с очищаемой таблицей\n"
 
-#: vacuumdb.c:986
+#: vacuumdb.c:995
 #, c-format
 msgid ""
 "      --no-truncate               don't truncate empty pages at the end of "
@@ -1234,7 +1234,7 @@ msgstr ""
 "      --no-truncate               не отсекать пустые страницы в конце "
 "таблицы\n"
 
-#: vacuumdb.c:987
+#: vacuumdb.c:996
 #, c-format
 msgid ""
 "  -P, --parallel=PARALLEL_WORKERS use this many background workers for "
@@ -1244,12 +1244,12 @@ msgstr ""
 "                                  по возможности использовать для очистки\n"
 "                                  заданное число фоновых процессов\n"
 
-#: vacuumdb.c:988
+#: vacuumdb.c:997
 #, c-format
 msgid "  -q, --quiet                     don't write any messages\n"
 msgstr "  -q, --quiet                     не выводить сообщения\n"
 
-#: vacuumdb.c:989
+#: vacuumdb.c:998
 #, c-format
 msgid ""
 "      --skip-locked               skip relations that cannot be immediately "
@@ -1258,29 +1258,29 @@ msgstr ""
 "      --skip-locked               пропускать отношения, которые не удаётся\n"
 "                                  заблокировать немедленно\n"
 
-#: vacuumdb.c:990
+#: vacuumdb.c:999
 #, c-format
 msgid "  -t, --table='TABLE[(COLUMNS)]'  vacuum specific table(s) only\n"
 msgstr ""
 "  -t, --table='ТАБЛ[(СТОЛБЦЫ)]'   очистить только указанную таблицу(ы)\n"
 
-#: vacuumdb.c:991
+#: vacuumdb.c:1000
 #, c-format
 msgid "  -v, --verbose                   write a lot of output\n"
 msgstr "  -v, --verbose                   выводить исчерпывающие сообщения\n"
 
-#: vacuumdb.c:992
+#: vacuumdb.c:1001
 #, c-format
 msgid ""
 "  -V, --version                   output version information, then exit\n"
 msgstr "  -V, --version                   показать версию и выйти\n"
 
-#: vacuumdb.c:993
+#: vacuumdb.c:1002
 #, c-format
 msgid "  -z, --analyze                   update optimizer statistics\n"
 msgstr "  -z, --analyze                   обновить статистику оптимизатора\n"
 
-#: vacuumdb.c:994
+#: vacuumdb.c:1003
 #, c-format
 msgid ""
 "  -Z, --analyze-only              only update optimizer statistics; no "
@@ -1289,7 +1289,7 @@ msgstr ""
 "  -Z, --analyze-only              только обновить статистику оптимизатора,\n"
 "                                  не очищать БД\n"
 
-#: vacuumdb.c:995
+#: vacuumdb.c:1004
 #, c-format
 msgid ""
 "      --analyze-in-stages         only update optimizer statistics, in "
@@ -1301,12 +1301,12 @@ msgstr ""
 "                                  (в несколько проходов для большей "
 "скорости), без очистки\n"
 
-#: vacuumdb.c:997
+#: vacuumdb.c:1006
 #, c-format
 msgid "  -?, --help                      show this help, then exit\n"
 msgstr "  -?, --help                      показать эту справку и выйти\n"
 
-#: vacuumdb.c:1005
+#: vacuumdb.c:1014
 #, c-format
 msgid ""
 "\n"

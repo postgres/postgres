@@ -1198,7 +1198,7 @@ msgid ""
 "                         time between status packets sent to server (default: %d)\n"
 msgstr ""
 "  -s, --status-interval=SECS     durée entre l'envoi de paquets de statut au\n"
-"                                 (par défaut %d)\n"
+"                                 serveur (par défaut %d)\n"
 
 #: pg_receivewal.c:92
 #, c-format
