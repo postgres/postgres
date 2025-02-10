@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ecpg (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-09-19 11:24+0300\n"
+"POT-Creation-Date: 2025-02-08 07:44+0200\n"
 "PO-Revision-Date: 2024-09-04 07:22+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
@@ -399,7 +399,7 @@ msgstr "имя типа \"string\" в режиме Informix зарезервир
 msgid "type \"%s\" is already defined"
 msgstr "тип \"%s\" уже определён"
 
-#: preproc.y:577 preproc.y:19669 preproc.y:19991 variable.c:625
+#: preproc.y:577 preproc.y:19669 preproc.y:19991 variable.c:624
 #, c-format
 msgid "multidimensional arrays for simple data types are not supported"
 msgstr "многомерные массивы с простыми типами данных не поддерживаются"
@@ -684,22 +684,22 @@ msgstr "переменная \"%s\" - не массив"
 msgid "variable \"%s\" is not declared"
 msgstr "переменная \"%s\" не объявлена"
 
-#: variable.c:493
+#: variable.c:492
 #, c-format
 msgid "indicator variable must have an integer type"
 msgstr "переменная-индикатор должна быть целочисленной"
 
-#: variable.c:510
+#: variable.c:509
 #, c-format
 msgid "unrecognized data type name \"%s\""
 msgstr "нераспознанное имя типа данных \"%s\""
 
-#: variable.c:521 variable.c:529 variable.c:546 variable.c:549
+#: variable.c:520 variable.c:528 variable.c:545 variable.c:548
 #, c-format
 msgid "multidimensional arrays are not supported"
 msgstr "многомерные массивы не поддерживаются"
 
-#: variable.c:538
+#: variable.c:537
 #, c-format
 msgid ""
 "multilevel pointers (more than 2 levels) are not supported; found %d level"
@@ -715,12 +715,12 @@ msgstr[2] ""
 "многоуровневые указатели (больше 2 уровней) не поддерживаются, обнаружено %d "
 "уровней"
 
-#: variable.c:543
+#: variable.c:542
 #, c-format
 msgid "pointer to pointer is not supported for this data type"
 msgstr "для этого типа данных указатели на указатели не поддерживаются"
 
-#: variable.c:563
+#: variable.c:562
 #, c-format
 msgid "multidimensional arrays for structures are not supported"
 msgstr "многомерные массивы структур не поддерживаются"

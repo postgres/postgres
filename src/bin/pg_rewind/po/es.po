@@ -8,10 +8,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_rewind (PostgreSQL) 16\n"
+"Project-Id-Version: pg_rewind (PostgreSQL) 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-08-01 11:23+0000\n"
-"PO-Revision-Date: 2024-08-02 16:53-0400\n"
+"POT-Creation-Date: 2024-11-16 05:23+0000\n"
+"PO-Revision-Date: 2024-11-16 14:24+0100\n"
 "Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
 "Language: es\n"
@@ -47,12 +47,12 @@ msgid "could not open file \"%s\" for reading: %m"
 msgstr "no se pudo abrir archivo «%s» para lectura: %m"
 
 #: ../../common/controldata_utils.c:110 file_ops.c:341 local_source.c:104
-#: local_source.c:163 parsexlog.c:350
+#: local_source.c:163 parsexlog.c:371
 #, c-format
 msgid "could not read file \"%s\": %m"
 msgstr "no se pudo leer el archivo «%s»: %m"
 
-#: ../../common/controldata_utils.c:119 file_ops.c:344 parsexlog.c:352
+#: ../../common/controldata_utils.c:119 file_ops.c:344 parsexlog.c:373
 #, c-format
 msgid "could not read file \"%s\": read %d of %zu"
 msgstr "no se pudo leer el archivo «%s»: leídos %d de %zu"
@@ -84,7 +84,7 @@ msgstr ""
 #: ../../common/controldata_utils.c:230 ../../common/file_utils.c:70
 #: ../../common/file_utils.c:347 ../../common/file_utils.c:406
 #: ../../common/file_utils.c:480 ../../fe_utils/recovery_gen.c:140
-#: parsexlog.c:312
+#: parsexlog.c:333
 #, c-format
 msgid "could not open file \"%s\": %m"
 msgstr "no se pudo abrir el archivo «%s»: %m"
@@ -325,32 +325,32 @@ msgstr "la ruta «%s» del enlace simbólico es demasiado larga"
 msgid "could not close directory \"%s\": %m"
 msgstr "no se pudo abrir el directorio «%s»: %m"
 
-#: filemap.c:235
+#: filemap.c:297
 #, c-format
 msgid "data file \"%s\" in source is not a regular file"
 msgstr "el archivo de datos «%s» en el origen no es un archivo regular"
 
-#: filemap.c:240 filemap.c:273
+#: filemap.c:302 filemap.c:335
 #, c-format
 msgid "duplicate source file \"%s\""
 msgstr "archivo origen duplicado «%s»"
 
-#: filemap.c:328
+#: filemap.c:390
 #, c-format
 msgid "unexpected page modification for non-regular file \"%s\""
 msgstr "modificación de página inesperada para el archivo no regular «%s»"
 
-#: filemap.c:682 filemap.c:776
+#: filemap.c:744 filemap.c:846
 #, c-format
 msgid "unknown file type for \"%s\""
 msgstr "tipo de archivo desconocido para «%s»"
 
-#: filemap.c:709
+#: filemap.c:779
 #, c-format
 msgid "file \"%s\" is of different type in source and target"
 msgstr "el archivo «%s» tiene un tipo diferente en el origen y en el destino"
 
-#: filemap.c:781
+#: filemap.c:851
 #, c-format
 msgid "could not decide what to do with file \"%s\""
 msgstr "no se pudo decidir qué hacer con el archivo «%s»"
@@ -495,7 +495,7 @@ msgstr "no se pudo posicionar en archivo de origen: %m"
 msgid "unexpected EOF while reading file \"%s\""
 msgstr "EOF inesperado mientras se leía el archivo «%s»"
 
-#: parsexlog.c:80 parsexlog.c:139 parsexlog.c:199
+#: parsexlog.c:80 parsexlog.c:139 parsexlog.c:201
 #, c-format
 msgid "out of memory while allocating a WAL reading processor"
 msgstr "memoria agotada mientras se emplazaba un procesador de lectura de WAL"
@@ -515,22 +515,22 @@ msgstr "no se pudo leer el registro WAL en %X/%X"
 msgid "end pointer %X/%X is not a valid end point; expected %X/%X"
 msgstr "el puntero de término %X/%X no es un punto válido; se esperaba %X/%X"
 
-#: parsexlog.c:212
+#: parsexlog.c:214
 #, c-format
 msgid "could not find previous WAL record at %X/%X: %s"
 msgstr "no se pudo encontrar el registro WAL anterior en %X/%X: %s"
 
-#: parsexlog.c:216
+#: parsexlog.c:218
 #, c-format
 msgid "could not find previous WAL record at %X/%X"
 msgstr "no se pudo encontrar el registro WAL anterior en %X/%X"
 
-#: parsexlog.c:341
+#: parsexlog.c:362
 #, c-format
 msgid "could not seek in file \"%s\": %m"
 msgstr "no se pudo posicionar (seek) el archivo «%s»: %m"
 
-#: parsexlog.c:440
+#: parsexlog.c:461
 #, c-format
 msgid "WAL record modifies a relation, but record type is not recognized: lsn: %X/%X, rmid: %d, rmgr: %s, info: %02X"
 msgstr "el registro WAL modifica una relación, pero el tipo de registro no es reconocido: lsn: %X/%X, rmid: %d, rmgr: %s, info: %02X"
@@ -731,154 +731,154 @@ msgstr "servidores divergieron en la posición de WAL %X/%X en el timeline %u"
 msgid "no rewind required"
 msgstr "no se requiere rebobinar"
 
-#: pg_rewind.c:460
+#: pg_rewind.c:463
 #, c-format
 msgid "rewinding from last common checkpoint at %X/%X on timeline %u"
 msgstr "rebobinando desde el último checkpoint común en %X/%X en el timeline %u"
 
-#: pg_rewind.c:470
+#: pg_rewind.c:473
 #, c-format
 msgid "reading source file list"
 msgstr "leyendo la lista de archivos de origen"
 
-#: pg_rewind.c:474
+#: pg_rewind.c:477
 #, c-format
 msgid "reading target file list"
 msgstr "leyendo la lista de archivos de destino"
 
-#: pg_rewind.c:483
+#: pg_rewind.c:486
 #, c-format
 msgid "reading WAL in target"
 msgstr "leyendo WAL en destino"
 
-#: pg_rewind.c:504
+#: pg_rewind.c:507
 #, c-format
 msgid "need to copy %lu MB (total source directory size is %lu MB)"
 msgstr "se necesitan copiar %lu MB (tamaño total de directorio de origen es %lu MB)"
 
-#: pg_rewind.c:522
+#: pg_rewind.c:525
 #, c-format
 msgid "syncing target data directory"
 msgstr "sincronizando directorio de datos de destino"
 
-#: pg_rewind.c:538
+#: pg_rewind.c:541
 #, c-format
 msgid "Done!"
 msgstr "¡Listo!"
 
-#: pg_rewind.c:618
+#: pg_rewind.c:621
 #, c-format
 msgid "no action decided for file \"%s\""
 msgstr "no se decidió una acción para el archivo «%s»"
 
-#: pg_rewind.c:650
+#: pg_rewind.c:653
 #, c-format
 msgid "source system was modified while pg_rewind was running"
 msgstr "el sistema origen fue modificado mientras pg_rewind estaba en ejecución"
 
-#: pg_rewind.c:654
+#: pg_rewind.c:657
 #, c-format
 msgid "creating backup label and updating control file"
 msgstr "creando etiqueta de respaldo y actualizando archivo de control"
 
-#: pg_rewind.c:704
+#: pg_rewind.c:707
 #, c-format
 msgid "source system was in unexpected state at end of rewind"
 msgstr "el sistema origen estaba en un estado inesperado al final del rebobinado"
 
-#: pg_rewind.c:736
+#: pg_rewind.c:739
 #, c-format
 msgid "source and target clusters are from different systems"
 msgstr "clusters de origen y destino son de sistemas diferentes"
 
-#: pg_rewind.c:744
+#: pg_rewind.c:747
 #, c-format
 msgid "clusters are not compatible with this version of pg_rewind"
 msgstr "los clusters no son compatibles con esta versión de pg_rewind"
 
-#: pg_rewind.c:754
+#: pg_rewind.c:757
 #, c-format
 msgid "target server needs to use either data checksums or \"wal_log_hints = on\""
 msgstr "el servidor de destino necesita tener sumas de verificación de datos o «wal_log_hints» activados"
 
-#: pg_rewind.c:765
+#: pg_rewind.c:768
 #, c-format
 msgid "target server must be shut down cleanly"
 msgstr "el directorio de destino debe estar apagado limpiamente"
 
-#: pg_rewind.c:775
+#: pg_rewind.c:778
 #, c-format
 msgid "source data directory must be shut down cleanly"
 msgstr "el directorio de origen debe estar apagado limpiamente"
 
-#: pg_rewind.c:822
+#: pg_rewind.c:825
 #, c-format
 msgid "%*s/%s kB (%d%%) copied"
 msgstr "%*s/%s kB (%d%%) copiados"
 
-#: pg_rewind.c:950
+#: pg_rewind.c:951
 #, c-format
 msgid "could not find common ancestor of the source and target cluster's timelines"
 msgstr "no se pudo encontrar un ancestro común en el timeline de los clusters de origen y destino"
 
-#: pg_rewind.c:991
+#: pg_rewind.c:992
 #, c-format
 msgid "backup label buffer too small"
 msgstr "el búfer del backup label es demasiado pequeño"
 
-#: pg_rewind.c:1014
+#: pg_rewind.c:1015
 #, c-format
 msgid "unexpected control file CRC"
 msgstr "CRC de archivo de control inesperado"
 
-#: pg_rewind.c:1026
+#: pg_rewind.c:1027
 #, c-format
 msgid "unexpected control file size %d, expected %d"
 msgstr "tamaño del archivo de control %d inesperado, se esperaba %d"
 
-#: pg_rewind.c:1036
+#: pg_rewind.c:1037
 #, c-format
 msgid "invalid WAL segment size in control file (%d byte)"
 msgid_plural "invalid WAL segment size in control file (%d bytes)"
 msgstr[0] "tamaño de segmento de WAL no válido (%d byte) en archivo de control"
 msgstr[1] "tamaño de segmento de WAL no válido (%d bytes) en archivo de control"
 
-#: pg_rewind.c:1040
+#: pg_rewind.c:1041
 #, c-format
 msgid "The WAL segment size must be a power of two between 1 MB and 1 GB."
 msgstr "El tamaño de segmento de WAL debe ser una potencia de dos entre 1 MB y 1 GB."
 
-#: pg_rewind.c:1077 pg_rewind.c:1145
+#: pg_rewind.c:1078 pg_rewind.c:1146
 #, c-format
 msgid "program \"%s\" is needed by %s but was not found in the same directory as \"%s\""
 msgstr "el programa «%s» es requerido por %s, pero no se encontró en el mismo directorio que «%s»"
 
-#: pg_rewind.c:1080 pg_rewind.c:1148
+#: pg_rewind.c:1081 pg_rewind.c:1149
 #, c-format
 msgid "program \"%s\" was found by \"%s\" but was not the same version as %s"
 msgstr "el programa «%s» fue encontrado por «%s» pero no es de la misma versión que %s"
 
-#: pg_rewind.c:1109
+#: pg_rewind.c:1110
 #, c-format
-msgid "unable to read restore_command from target cluster"
-msgstr "no se puede leer restore_command en el clúster de destino"
+msgid "could not read restore_command from target cluster"
+msgstr "no se pudo leer restore_command en el clúster de destino"
 
-#: pg_rewind.c:1114
+#: pg_rewind.c:1115
 #, c-format
 msgid "\"restore_command\" is not set in the target cluster"
 msgstr "«restore_command» no está definido en el clúster de destino"
 
-#: pg_rewind.c:1152
+#: pg_rewind.c:1153
 #, c-format
 msgid "executing \"%s\" for target server to complete crash recovery"
 msgstr "ejecutando «%s» en el servidor de destino para completar la recuperación de caídas"
 
-#: pg_rewind.c:1190
+#: pg_rewind.c:1191
 #, c-format
 msgid "postgres single-user mode in target cluster failed"
 msgstr "el modo «single-user» en el servidor de destino falló"
 
-#: pg_rewind.c:1191
+#: pg_rewind.c:1192
 #, c-format
 msgid "Command was: %s"
 msgstr "La orden era: % s"

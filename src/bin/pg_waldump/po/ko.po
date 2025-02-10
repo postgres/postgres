@@ -5,10 +5,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_waldump (PostgreSQL) 16\n"
+"Project-Id-Version: pg_waldump (PostgreSQL) 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2023-09-07 05:48+0000\n"
-"PO-Revision-Date: 2023-05-26 13:22+0900\n"
+"POT-Creation-Date: 2025-01-17 04:48+0000\n"
+"PO-Revision-Date: 2025-01-16 14:06+0900\n"
 "Last-Translator: Ioseph Kim <ioseph@uri.sarang.net>\n"
 "Language-Team: Korean <pgsql-kr@postgresql.kr>\n"
 "Language: ko\n"
@@ -37,6 +37,60 @@ msgstr "상세정보: "
 msgid "hint: "
 msgstr "힌트: "
 
+#: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:161
+#, c-format
+msgid "out of memory\n"
+msgstr "메모리 부족\n"
+
+#: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:153
+#, c-format
+msgid "cannot duplicate null pointer (internal error)\n"
+msgstr "널 포인터를 중복할 수 없음 (내부 오류)\n"
+
+#: ../../common/file_utils.c:70 ../../common/file_utils.c:347
+#: ../../common/file_utils.c:406 ../../common/file_utils.c:480 pg_waldump.c:199
+#: pg_waldump.c:532
+#, c-format
+msgid "could not open file \"%s\": %m"
+msgstr "\"%s\" 파일을 열 수 없음: %m"
+
+#: ../../common/file_utils.c:76
+#, c-format
+msgid "could not synchronize file system for file \"%s\": %m"
+msgstr "\"%s\" 파일을 위해 파일 시스템 동기화를 할 수 없음: %m"
+
+#: ../../common/file_utils.c:120 ../../common/file_utils.c:566
+#, c-format
+msgid "could not stat file \"%s\": %m"
+msgstr "\"%s\" 파일 상태 값을 구할 수 없음: %m"
+
+#: ../../common/file_utils.c:130 ../../common/file_utils.c:227
+#, c-format
+msgid "this build does not support sync method \"%s\""
+msgstr "이 빌드는 \"%s\" 동기화 방법을 지원하지 않음"
+
+#: ../../common/file_utils.c:151 ../../common/file_utils.c:281
+#: pg_waldump.c:1104 pg_waldump.c:1127
+#, c-format
+msgid "could not open directory \"%s\": %m"
+msgstr "\"%s\" 디렉터리 열 수 없음: %m"
+
+#: ../../common/file_utils.c:169 ../../common/file_utils.c:315
+#, c-format
+msgid "could not read directory \"%s\": %m"
+msgstr "\"%s\" 디렉터리를 읽을 수 없음: %m"
+
+#: ../../common/file_utils.c:418 ../../common/file_utils.c:488
+#, c-format
+msgid "could not fsync file \"%s\": %m"
+msgstr "\"%s\" 파일을 fsync 할 수 없음: %m"
+
+#: ../../common/file_utils.c:498
+#, c-format
+msgid "could not rename file \"%s\" to \"%s\": %m"
+msgstr "\"%s\" 파일을 \"%s\" 파일로 이름을 바꿀 수 없음: %m"
+
 #: pg_waldump.c:137
 #, c-format
 msgid "could not create directory \"%s\": %m"
@@ -52,96 +106,90 @@ msgstr "\"%s\" 디렉터리가 있지만, 비어있지 않음"
 msgid "could not access directory \"%s\": %m"
 msgstr "\"%s\" 디렉터리에 접근 할 수 없음: %m"
 
-#: pg_waldump.c:199 pg_waldump.c:528
+#: pg_waldump.c:256
 #, c-format
-msgid "could not open file \"%s\": %m"
-msgstr "\"%s\" 파일을 열 수 없음: %m"
+msgid "invalid WAL segment size in WAL file \"%s\" (%d byte)"
+msgid_plural "invalid WAL segment size in WAL file \"%s\" (%d bytes)"
+msgstr[0] "\"%s\" WAL 파일 안에 잘못된 WAL 조각 크기 (%d 바이트)"
 
-#: pg_waldump.c:255
+#: pg_waldump.c:260
 #, c-format
-msgid ""
-"WAL segment size must be a power of two between 1 MB and 1 GB, but the WAL "
-"file \"%s\" header specifies %d byte"
-msgid_plural ""
-"WAL segment size must be a power of two between 1 MB and 1 GB, but the WAL "
-"file \"%s\" header specifies %d bytes"
-msgstr[0] ""
-"WAL 조각 파일 크기는 1MB에서 1GB사이 2^n 이어야하지만, \"%s\" WAL 파일 헤더에"
-"는 %d 바이트로 지정되어있습니다"
+msgid "The WAL segment size must be a power of two between 1 MB and 1 GB."
+msgstr "WAL 조각 파일 크기는 1MB에서 1GB사이 2^n 이어야 합니다."
 
-#: pg_waldump.c:261
+#: pg_waldump.c:265
 #, c-format
 msgid "could not read file \"%s\": %m"
 msgstr "\"%s\" 파일을 읽을 수 없음: %m"
 
-#: pg_waldump.c:264
+#: pg_waldump.c:268
 #, c-format
 msgid "could not read file \"%s\": read %d of %d"
 msgstr "\"%s\" 파일을 읽을 수 없음: %d 읽음, 전체 %d"
 
-#: pg_waldump.c:325
+#: pg_waldump.c:329
 #, c-format
 msgid "could not locate WAL file \"%s\""
 msgstr "\"%s\" WAL 파일 찾기 실패"
 
-#: pg_waldump.c:327
+#: pg_waldump.c:331
 #, c-format
 msgid "could not find any WAL file"
 msgstr "어떤 WAL 파일도 찾을 수 없음"
 
-#: pg_waldump.c:368
+#: pg_waldump.c:372
 #, c-format
 msgid "could not find file \"%s\": %m"
 msgstr "\"%s\" 파일을 찾을 수 없음: %m"
 
-#: pg_waldump.c:417
-#, c-format
-msgid "could not read from file %s, offset %d: %m"
-msgstr "\"%s\" 파일에서 %d 위치를 읽을 수 없음: %m"
-
 #: pg_waldump.c:421
 #, c-format
-msgid "could not read from file %s, offset %d: read %d of %d"
+msgid "could not read from file \"%s\", offset %d: %m"
+msgstr "\"%s\" 파일에서 %d 위치를 읽을 수 없음: %m"
+
+#: pg_waldump.c:425
+#, c-format
+msgid "could not read from file \"%s\", offset %d: read %d of %d"
 msgstr "%s 파일에서 %d 위치에서 읽기 실패: %d 읽음, 전체 %d"
 
-#: pg_waldump.c:511
+#: pg_waldump.c:515
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: pg_waldump.c:519
+#: pg_waldump.c:523
 #, c-format
 msgid "invalid fork number: %u"
 msgstr "잘못된 포크 번호: %u"
 
-#: pg_waldump.c:531
+#: pg_waldump.c:535
 #, c-format
 msgid "could not write file \"%s\": %m"
 msgstr "\"%s\" 파일을 쓸 수 없음: %m"
 
-#: pg_waldump.c:534
+#: pg_waldump.c:538
 #, c-format
 msgid "could not close file \"%s\": %m"
 msgstr "\"%s\" 파일을 닫을 수 없음: %m"
 
-#: pg_waldump.c:754
+#: pg_waldump.c:758
 #, c-format
 msgid ""
 "%s decodes and displays PostgreSQL write-ahead logs for debugging.\n"
 "\n"
 msgstr "%s 명령은 디버깅을 위해 PostgreSQL 미리 쓰기 로그(WAL)를 분석합니다.\n"
 
-#: pg_waldump.c:756
+#: pg_waldump.c:760
 #, c-format
 msgid "Usage:\n"
 msgstr "사용법:\n"
 
-#: pg_waldump.c:757
+#: pg_waldump.c:761
 #, c-format
 msgid "  %s [OPTION]... [STARTSEG [ENDSEG]]\n"
 msgstr "  %s [옵션]... [시작파일 [마침파일]]\n"
 
-#: pg_waldump.c:758
+#: pg_waldump.c:762
 #, c-format
 msgid ""
 "\n"
@@ -150,13 +198,13 @@ msgstr ""
 "\n"
 "옵션들:\n"
 
-#: pg_waldump.c:759
+#: pg_waldump.c:763
 #, c-format
 msgid ""
 "  -b, --bkp-details      output detailed information about backup blocks\n"
 msgstr "  -b, --bkp-details      백업 블록에 대한 자세한 정보도 출력함\n"
 
-#: pg_waldump.c:760
+#: pg_waldump.c:764
 #, c-format
 msgid ""
 "  -B, --block=N          with --relation, only show records that modify "
@@ -165,17 +213,17 @@ msgstr ""
 "  -B, --block=N          --relation 옵션과 함께, 변경된 N번 블록의 레코드만"
 "봄\n"
 
-#: pg_waldump.c:761
+#: pg_waldump.c:765
 #, c-format
 msgid "  -e, --end=RECPTR       stop reading at WAL location RECPTR\n"
 msgstr "  -e, --end=RECPTR       RECPTR WAL 위치에서 읽기 멈춤\n"
 
-#: pg_waldump.c:762
+#: pg_waldump.c:766
 #, c-format
 msgid "  -f, --follow           keep retrying after reaching end of WAL\n"
 msgstr "  -f, --follow           WAL 끝까지 읽은 뒤에도 계속 진행함\n"
 
-#: pg_waldump.c:763
+#: pg_waldump.c:767
 #, c-format
 msgid ""
 "  -F, --fork=FORK        only show records that modify blocks in fork FORK;\n"
@@ -184,12 +232,12 @@ msgstr ""
 "  -F, --fork=FORK        지정한 FORK 종류 포크의 변경 블록의 레코드만\n"
 "                         사용가능한 포크: main, fsm, vm, init\n"
 
-#: pg_waldump.c:765
+#: pg_waldump.c:769
 #, c-format
 msgid "  -n, --limit=N          number of records to display\n"
 msgstr "  -n, --limit=N          출력할 레코드 수\n"
 
-#: pg_waldump.c:766
+#: pg_waldump.c:770
 #, c-format
 msgid ""
 "  -p, --path=PATH        directory in which to find WAL segment files or a\n"
@@ -201,12 +249,12 @@ msgstr ""
 "                         ./pg_wal 디렉터리가 있는 디렉터리 지정\n"
 "                         (기본값: 현재 디렉터리, ./pg_wal, PGDATA/pg_wal)\n"
 
-#: pg_waldump.c:769
+#: pg_waldump.c:773
 #, c-format
 msgid "  -q, --quiet            do not print any output, except for errors\n"
 msgstr "  -q, --quiet            오류를 빼고 나머지는 아무 것도 안 보여줌\n"
 
-#: pg_waldump.c:770
+#: pg_waldump.c:774
 #, c-format
 msgid ""
 "  -r, --rmgr=RMGR        only show records generated by resource manager "
@@ -217,7 +265,7 @@ msgstr ""
 "  -r, --rmgr=RMGR        리소스 관리자 RMGR에서 만든 레코드만 출력함\n"
 "                         리소스 관리자 이들을 --rmgr=list 로 봄\n"
 
-#: pg_waldump.c:772
+#: pg_waldump.c:776
 #, c-format
 msgid ""
 "  -R, --relation=T/D/R   only show records that modify blocks in relation T/"
@@ -225,12 +273,12 @@ msgid ""
 msgstr ""
 "  -R, --relation=T/D/R   T/D/R 릴레이션에서 변경 블록 레코드만 보여줌\n"
 
-#: pg_waldump.c:773
+#: pg_waldump.c:777
 #, c-format
 msgid "  -s, --start=RECPTR     start reading at WAL location RECPTR\n"
 msgstr "  -s, --start=RECPTR     WAL RECPTR 위치에서 읽기 시작\n"
 
-#: pg_waldump.c:774
+#: pg_waldump.c:778
 #, c-format
 msgid ""
 "  -t, --timeline=TLI     timeline from which to read WAL records\n"
@@ -239,22 +287,22 @@ msgstr ""
 "  -t, --timeline=TLI     WAL 레코드를 시작할 타임라인 번호\n"
 "                         (기본값: 1 또는 STARTSEG에 사용된 값)\n"
 
-#: pg_waldump.c:776
+#: pg_waldump.c:780
 #, c-format
 msgid "  -V, --version          output version information, then exit\n"
 msgstr "  -V, --version          버전 정보 보여주고 마침\n"
 
-#: pg_waldump.c:777
+#: pg_waldump.c:781
 #, c-format
 msgid "  -w, --fullpage         only show records with a full page write\n"
 msgstr "  -w, --fullpage         full page write 레코드만 보여줌\n"
 
-#: pg_waldump.c:778
+#: pg_waldump.c:782
 #, c-format
 msgid "  -x, --xid=XID          only show records with transaction ID XID\n"
 msgstr "  -x, --xid=XID          트랜잭션 XID 레코드만 출력\n"
 
-#: pg_waldump.c:779
+#: pg_waldump.c:783
 #, c-format
 msgid ""
 "  -z, --stats[=record]   show statistics instead of records\n"
@@ -263,17 +311,17 @@ msgstr ""
 "  -z, --stats[=record]   레크드 통계 정보를 보여줌\n"
 "                         (추가로, 레코드당 통계정보를 출력)\n"
 
-#: pg_waldump.c:781
+#: pg_waldump.c:785
 #, c-format
 msgid "  --save-fullpage=DIR    save full page images to DIR\n"
 msgstr "  --save-fullpage=DIR    DIR에 전체 페이지 이미지 저장\n"
 
-#: pg_waldump.c:782
+#: pg_waldump.c:786
 #, c-format
 msgid "  -?, --help             show this help, then exit\n"
 msgstr "  -?, --help             이 도움말을 보여주고 마침\n"
 
-#: pg_waldump.c:783
+#: pg_waldump.c:787
 #, c-format
 msgid ""
 "\n"
@@ -282,198 +330,183 @@ msgstr ""
 "\n"
 "문제점 보고 주소: <%s>\n"
 
-#: pg_waldump.c:784
+#: pg_waldump.c:788
 #, c-format
 msgid "%s home page: <%s>\n"
 msgstr "%s 홈페이지: <%s>\n"
 
-#: pg_waldump.c:880
+#: pg_waldump.c:884
 #, c-format
 msgid "no arguments specified"
 msgstr "인자를 지정하세요"
 
-#: pg_waldump.c:896
+#: pg_waldump.c:900
 #, c-format
 msgid "invalid block number: \"%s\""
 msgstr "잘못된 블록 번호: \"%s\""
 
-#: pg_waldump.c:905 pg_waldump.c:1003
+#: pg_waldump.c:909 pg_waldump.c:1007
 #, c-format
 msgid "invalid WAL location: \"%s\""
 msgstr "잘못된 WAL 위치: \"%s\""
 
-#: pg_waldump.c:918
+#: pg_waldump.c:922
 #, c-format
 msgid "invalid fork name: \"%s\""
 msgstr "잘못된 포크 이름: \"%s\""
 
-#: pg_waldump.c:926 pg_waldump.c:1029
+#: pg_waldump.c:930 pg_waldump.c:1033
 #, c-format
 msgid "invalid value \"%s\" for option %s"
 msgstr "\"%s\" 값은 %s 옵션 값으로 유효하지 않음"
 
-#: pg_waldump.c:957
+#: pg_waldump.c:961
 #, c-format
 msgid "custom resource manager \"%s\" does not exist"
 msgstr "\"%s\" 이름의 사용자 정의 리소스 관리자가 없음"
 
-#: pg_waldump.c:978
+#: pg_waldump.c:982
 #, c-format
 msgid "resource manager \"%s\" does not exist"
 msgstr "\"%s\" 이름의 리소스 관리자가 없음"
 
-#: pg_waldump.c:993
+#: pg_waldump.c:997
 #, c-format
 msgid "invalid relation specification: \"%s\""
 msgstr "잘못된 릴레이션 양식: \"%s\""
 
-#: pg_waldump.c:994
+#: pg_waldump.c:998
 #, c-format
 msgid "Expecting \"tablespace OID/database OID/relation filenode\"."
 msgstr "\"테이블스페이스OID/데이터베이스OID/릴레이션 filenode\" 양식을 기대함"
 
-#: pg_waldump.c:1036
+#: pg_waldump.c:1040
 #, c-format
 msgid "%s must be in range %u..%u"
 msgstr "%s 값은 %u부터 %u까지만 허용함"
 
-#: pg_waldump.c:1051
+#: pg_waldump.c:1055
 #, c-format
 msgid "invalid transaction ID specification: \"%s\""
 msgstr "잘못된 트랜잭션 ID 양식: \"%s\""
 
-#: pg_waldump.c:1066
+#: pg_waldump.c:1070
 #, c-format
 msgid "unrecognized value for option %s: %s"
 msgstr "%s 옵션에 대한 알 수 없는 값: %s"
 
-#: pg_waldump.c:1083
+#: pg_waldump.c:1087
 #, c-format
 msgid "option %s requires option %s to be specified"
 msgstr "%s 옵션은 %s 옵션 설정이 필요합니다."
 
-#: pg_waldump.c:1090
+#: pg_waldump.c:1094
 #, c-format
 msgid "too many command-line arguments (first is \"%s\")"
 msgstr "너무 많은 명령행 인수를 지정했습니다. (처음 \"%s\")"
 
-#: pg_waldump.c:1100 pg_waldump.c:1123
-#, c-format
-msgid "could not open directory \"%s\": %m"
-msgstr "\"%s\" 디렉터리 열 수 없음: %m"
-
-#: pg_waldump.c:1129 pg_waldump.c:1159
+#: pg_waldump.c:1133 pg_waldump.c:1163
 #, c-format
 msgid "could not open file \"%s\""
 msgstr "\"%s\" 파일을 열 수 없음"
 
-#: pg_waldump.c:1139
+#: pg_waldump.c:1143
 #, c-format
 msgid "start WAL location %X/%X is not inside file \"%s\""
 msgstr "%X/%X WAL 시작 위치가 \"%s\" 파일에 없음"
 
-#: pg_waldump.c:1166
+#: pg_waldump.c:1170
 #, c-format
 msgid "ENDSEG %s is before STARTSEG %s"
 msgstr "%s ENDSEG가 %s STARTSEG 앞에 있음"
 
-#: pg_waldump.c:1181
+#: pg_waldump.c:1185
 #, c-format
 msgid "end WAL location %X/%X is not inside file \"%s\""
 msgstr "%X/%X WAL 끝 위치가 \"%s\" 파일에 없음"
 
-#: pg_waldump.c:1193
+#: pg_waldump.c:1197
 #, c-format
 msgid "no start WAL location given"
 msgstr "입력한 WAL 위치에서 시작할 수 없음"
 
-#: pg_waldump.c:1207
+#: pg_waldump.c:1211
 #, c-format
 msgid "out of memory while allocating a WAL reading processor"
 msgstr "WAL 읽기 프로세서를 할당하는 중에 메모리 부족 발생"
 
-#: pg_waldump.c:1213
+#: pg_waldump.c:1217
 #, c-format
 msgid "could not find a valid record after %X/%X"
 msgstr "%X/%X 위치 뒤에 올바른 레코드가 없음"
 
-#: pg_waldump.c:1223
+#: pg_waldump.c:1227
 #, c-format
-msgid "first record is after %X/%X, at %X/%X, skipping over %u byte\n"
-msgid_plural "first record is after %X/%X, at %X/%X, skipping over %u bytes\n"
-msgstr[0] "첫 레코드가 %X/%X 뒤에 있고, (%X/%X), %u 바이트 건너 뜀\n"
+msgid "first record is after %X/%X, at %X/%X, skipping over %u byte"
+msgid_plural "first record is after %X/%X, at %X/%X, skipping over %u bytes"
+msgstr[0] "첫 레코드가 %X/%X 뒤에 있고, (%X/%X), %u 바이트 건너 뜀"
 
-#: pg_waldump.c:1308
+#: pg_waldump.c:1312
 #, c-format
 msgid "error in WAL record at %X/%X: %s"
 msgstr "%X/%X 위치에서 WAL 레코드 오류: %s"
 
-#: pg_waldump.c:1317
+#: pg_waldump.c:1321
 #, c-format
 msgid "Try \"%s --help\" for more information."
 msgstr "자세한 사항은 \"%s --help\" 명령으로 살펴보세요."
 
-#: xlogreader.c:626
+#: xlogreader.c:619
 #, c-format
 msgid "invalid record offset at %X/%X: expected at least %u, got %u"
 msgstr "잘못된 레코드 오프셋: 위치 %X/%X, 기대값 %u, 실재값 %u"
 
-#: xlogreader.c:635
+#: xlogreader.c:628
 #, c-format
 msgid "contrecord is requested by %X/%X"
 msgstr "%X/%X에서 contrecord를 필요로 함"
 
-#: xlogreader.c:676 xlogreader.c:1119
+#: xlogreader.c:669 xlogreader.c:1134
 #, c-format
 msgid "invalid record length at %X/%X: expected at least %u, got %u"
 msgstr "잘못된 레코드 길이: 위치 %X/%X, 기대값 %u, 실재값 %u"
 
-#: xlogreader.c:705
-#, c-format
-msgid "out of memory while trying to decode a record of length %u"
-msgstr "%u 길이 레코드를 디코드 작업을 위한 메모리가 부족함"
-
-#: xlogreader.c:727
-#, c-format
-msgid "record length %u at %X/%X too long"
-msgstr "너무 긴 길이(%u)의 레코드가 %X/%X에 있음"
-
-#: xlogreader.c:776
+#: xlogreader.c:758
 #, c-format
 msgid "there is no contrecord flag at %X/%X"
 msgstr "%X/%X 위치에 contrecord 플래그가 없음"
 
-#: xlogreader.c:789
+#: xlogreader.c:771
 #, c-format
 msgid "invalid contrecord length %u (expected %lld) at %X/%X"
 msgstr "잘못된 contrecord 길이 %u (기대값: %lld), 위치 %X/%X"
 
-#: xlogreader.c:1127
+#: xlogreader.c:1142
 #, c-format
 msgid "invalid resource manager ID %u at %X/%X"
 msgstr "잘못된 자원 관리 ID %u, 위치: %X/%X"
 
-#: xlogreader.c:1140 xlogreader.c:1156
+#: xlogreader.c:1155 xlogreader.c:1171
 #, c-format
 msgid "record with incorrect prev-link %X/%X at %X/%X"
 msgstr "레코드의 잘못된 프리링크 %X/%X, 해당 레코드 %X/%X"
 
-#: xlogreader.c:1192
+#: xlogreader.c:1209
 #, c-format
 msgid "incorrect resource manager data checksum in record at %X/%X"
 msgstr "잘못된 자원관리자 데이터 체크섬, 위치: %X/%X 레코드"
 
-#: xlogreader.c:1226
+#: xlogreader.c:1243
 #, c-format
 msgid "invalid magic number %04X in WAL segment %s, LSN %X/%X, offset %u"
 msgstr "%04X 매직 번호가 잘못됨, WAL 조각 파일 %s, LSN %X/%X, 오프셋 %u"
 
-#: xlogreader.c:1241 xlogreader.c:1283
+#: xlogreader.c:1258 xlogreader.c:1300
 #, c-format
 msgid "invalid info bits %04X in WAL segment %s, LSN %X/%X, offset %u"
 msgstr "잘못된 정보 비트 %04X, WAL 조각 파일 %s, LSN %X/%X, 오프셋 %u"
 
-#: xlogreader.c:1257
+#: xlogreader.c:1274
 #, c-format
 msgid ""
 "WAL file is from different database system: WAL file database system "
@@ -482,7 +515,7 @@ msgstr ""
 "WAL 파일이 다른 시스템의 것입니다. WAL 파일의 시스템 식별자는 %llu, "
 "pg_control 의 식별자는 %llu"
 
-#: xlogreader.c:1265
+#: xlogreader.c:1282
 #, c-format
 msgid ""
 "WAL file is from different database system: incorrect segment size in page "
@@ -491,7 +524,7 @@ msgstr ""
 "WAL 파일이 다른 데이터베이스 시스템의 것입니다: 페이지 헤더에 지정된 값이 잘"
 "못된 조각 크기임"
 
-#: xlogreader.c:1271
+#: xlogreader.c:1288
 #, c-format
 msgid ""
 "WAL file is from different database system: incorrect XLOG_BLCKSZ in page "
@@ -500,12 +533,12 @@ msgstr ""
 "WAL 파일이 다른 데이터베이스 시스템의 것입니다: 페이지 헤더의 XLOG_BLCKSZ 값"
 "이 바르지 않음"
 
-#: xlogreader.c:1303
+#: xlogreader.c:1320
 #, c-format
 msgid "unexpected pageaddr %X/%X in WAL segment %s, LSN %X/%X, offset %u"
 msgstr "잘못된 페이지 주소 %X/%X, WAL 조각 파일 %s, LSN %X/%X, 오프셋 %u"
 
-#: xlogreader.c:1329
+#: xlogreader.c:1346
 #, c-format
 msgid ""
 "out-of-sequence timeline ID %u (after %u) in WAL segment %s, LSN %X/%X, "
@@ -514,22 +547,22 @@ msgstr ""
 "타임라인 범위 벗어남 %u (이전 번호 %u), WAL 조각 파일 %s, LSN %X/%X, 오프셋 "
 "%u"
 
-#: xlogreader.c:1735
+#: xlogreader.c:1749
 #, c-format
 msgid "out-of-order block_id %u at %X/%X"
 msgstr "%u block_id는 범위를 벗어남, 위치 %X/%X"
 
-#: xlogreader.c:1759
+#: xlogreader.c:1773
 #, c-format
 msgid "BKPBLOCK_HAS_DATA set, but no data included at %X/%X"
 msgstr "BKPBLOCK_HAS_DATA 지정했지만, %X/%X 에 자료가 없음"
 
-#: xlogreader.c:1766
+#: xlogreader.c:1780
 #, c-format
 msgid "BKPBLOCK_HAS_DATA not set, but data length is %u at %X/%X"
 msgstr "BKPBLOCK_HAS_DATA 지정 않았지만, %u 길이의 자료가 있음, 위치 %X/%X"
 
-#: xlogreader.c:1802
+#: xlogreader.c:1816
 #, c-format
 msgid ""
 "BKPIMAGE_HAS_HOLE set, but hole offset %u length %u block image length %u at "
@@ -538,19 +571,19 @@ msgstr ""
 "BKPIMAGE_HAS_HOLE 설정이 되어 있지만, 옵셋: %u, 길이: %u, 블록 이미지 길이: "
 "%u, 대상: %X/%X"
 
-#: xlogreader.c:1818
+#: xlogreader.c:1832
 #, c-format
 msgid "BKPIMAGE_HAS_HOLE not set, but hole offset %u length %u at %X/%X"
 msgstr ""
 "BKPIMAGE_HAS_HOLE 설정이 안되어 있지만, 옵셋: %u, 길이: %u, 대상: %X/%X"
 
-#: xlogreader.c:1832
+#: xlogreader.c:1846
 #, c-format
 msgid "BKPIMAGE_COMPRESSED set, but block image length %u at %X/%X"
 msgstr ""
 "BKPIMAGE_COMPRESSED 설정이 되어 있지만, 블록 이미지 길이: %u, 대상: %X/%X"
 
-#: xlogreader.c:1847
+#: xlogreader.c:1861
 #, c-format
 msgid ""
 "neither BKPIMAGE_HAS_HOLE nor BKPIMAGE_COMPRESSED set, but block image "
@@ -559,37 +592,37 @@ msgstr ""
 "BKPIMAGE_HAS_HOLE, BKPIMAGE_COMPRESSED 지정 안되어 있으나, 블록 이미지 길이"
 "는 %u, 대상: %X/%X"
 
-#: xlogreader.c:1863
+#: xlogreader.c:1877
 #, c-format
 msgid "BKPBLOCK_SAME_REL set but no previous rel at %X/%X"
 msgstr "BKPBLOCK_SAME_REL 설정이 되어 있지만, %X/%X 에 이전 릴레이션 없음"
 
-#: xlogreader.c:1875
+#: xlogreader.c:1889
 #, c-format
 msgid "invalid block_id %u at %X/%X"
 msgstr "잘못된 block_id %u, 위치 %X/%X"
 
-#: xlogreader.c:1942
+#: xlogreader.c:1956
 #, c-format
 msgid "record with invalid length at %X/%X"
 msgstr "잘못된 레코드 길이, 위치 %X/%X"
 
-#: xlogreader.c:1968
+#: xlogreader.c:1982
 #, c-format
 msgid "could not locate backup block with ID %d in WAL record"
 msgstr "WAL 레코드에서 %d ID의 백업 블록 위치를 바르게 잡을 수 없음"
 
-#: xlogreader.c:2052
+#: xlogreader.c:2066
 #, c-format
 msgid "could not restore image at %X/%X with invalid block %d specified"
 msgstr "%X/%X 위치에 이미지를 복원할 수 없음, 해당 %d 블록이 깨졌음"
 
-#: xlogreader.c:2059
+#: xlogreader.c:2073
 #, c-format
 msgid "could not restore image at %X/%X with invalid state, block %d"
 msgstr "이미지 복원 실패, 잘못된 상태의 압축 이미지, 위치 %X/%X, 블록 %d"
 
-#: xlogreader.c:2086 xlogreader.c:2103
+#: xlogreader.c:2100 xlogreader.c:2117
 #, c-format
 msgid ""
 "could not restore image at %X/%X compressed with %s not supported by build, "
@@ -598,14 +631,14 @@ msgstr ""
 "%X/%X 압축 위치에 이미지 복원할 수 없음, %s 압축을 지원하지 않음, 해당 블록: "
 "%d"
 
-#: xlogreader.c:2112
+#: xlogreader.c:2126
 #, c-format
 msgid ""
 "could not restore image at %X/%X compressed with unknown method, block %d"
 msgstr ""
 "%X/%X 압축 위치에 이미지 복원할 수 없음, 알 수 없은 방법, 해당 블록: %d"
 
-#: xlogreader.c:2120
+#: xlogreader.c:2134
 #, c-format
 msgid "could not decompress image at %X/%X, block %d"
 msgstr "압축 이미지 풀기 실패, 위치 %X/%X, 블록 %d"
@@ -613,3 +646,11 @@ msgstr "압축 이미지 풀기 실패, 위치 %X/%X, 블록 %d"
 #, c-format
 #~ msgid "missing contrecord at %X/%X"
 #~ msgstr "%X/%X 위치에 contrecord 없음"
+
+#, c-format
+#~ msgid "out of memory while trying to decode a record of length %u"
+#~ msgstr "%u 길이 레코드를 디코드 작업을 위한 메모리가 부족함"
+
+#, c-format
+#~ msgid "record length %u at %X/%X too long"
+#~ msgstr "너무 긴 길이(%u)의 레코드가 %X/%X에 있음"

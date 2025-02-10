@@ -7,15 +7,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_combinebackup (PostgreSQL) 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-08-29 17:53+0000\n"
-"PO-Revision-Date: 2024-08-29 22:30+0200\n"
+"POT-Creation-Date: 2024-11-28 22:52+0000\n"
+"PO-Revision-Date: 2024-11-29 05:07+0100\n"
 "Last-Translator: Temuri Doghonadze <temuri.doghonadze@gmail.com>\n"
 "Language-Team: \n"
 "Language: ka\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 3.3.2\n"
+"X-Generator: Poedit 3.5\n"
 
 #: ../../../src/common/logging.c:276
 #, c-format
@@ -43,7 +43,7 @@ msgid "could not open file \"%s\" for reading: %m"
 msgstr "ფაილის (%s) გახსნის შეცდომა: %m"
 
 #: ../../common/controldata_utils.c:110 copy_file.c:150 load_manifest.c:161
-#: load_manifest.c:199 pg_combinebackup.c:1400 reconstruct.c:527
+#: load_manifest.c:199 pg_combinebackup.c:1400 reconstruct.c:540
 #, c-format
 msgid "could not read file \"%s\": %m"
 msgstr "ფაილის (%s) წაკითხვის შეცდომა: %m"
@@ -55,7 +55,7 @@ msgstr "\"%s\"-ის წაკითხვის შეცდომა: წა�
 
 #: ../../common/controldata_utils.c:132 ../../common/controldata_utils.c:280
 #: backup_label.c:174 copy_file.c:68 pg_combinebackup.c:538
-#: pg_combinebackup.c:1175 reconstruct.c:356 reconstruct.c:727
+#: pg_combinebackup.c:1175 reconstruct.c:369 reconstruct.c:740
 #: write_manifest.c:187
 #, c-format
 msgid "could not close file \"%s\": %m"
@@ -82,13 +82,13 @@ msgstr ""
 #: ../../common/file_utils.c:480 backup_label.c:143 copy_file.c:66
 #: copy_file.c:139 copy_file.c:171 copy_file.c:175 copy_file.c:225
 #: copy_file.c:268 load_manifest.c:128 pg_combinebackup.c:523
-#: pg_combinebackup.c:1167 reconstruct.c:510 reconstruct.c:625
+#: pg_combinebackup.c:1167 reconstruct.c:523 reconstruct.c:638
 #: write_manifest.c:250
 #, c-format
 msgid "could not open file \"%s\": %m"
 msgstr "ფაილის (%s) გახსნის შეცდომა: %m"
 
-#: ../../common/controldata_utils.c:249 backup_label.c:160 reconstruct.c:746
+#: ../../common/controldata_utils.c:249 backup_label.c:160 reconstruct.c:759
 #: write_manifest.c:260
 #, c-format
 msgid "could not write file \"%s\": %m"
@@ -101,7 +101,7 @@ msgid "could not fsync file \"%s\": %m"
 msgstr "ფაილის (%s) fsync-ის შეცდომა: %m"
 
 #: ../../common/cryptohash.c:261 ../../common/cryptohash_openssl.c:356
-#: ../../common/parse_manifest.c:157 ../../common/parse_manifest.c:853
+#: ../../common/parse_manifest.c:157 ../../common/parse_manifest.c:852
 #, c-format
 msgid "out of memory"
 msgstr "არასაკმარისი მეხსიერება"
@@ -137,8 +137,8 @@ msgstr "შეუძლებელია ფაილური სისტე�
 
 #: ../../common/file_utils.c:120 ../../common/file_utils.c:566
 #: backup_label.c:187 load_manifest.c:133 pg_combinebackup.c:676
-#: pg_combinebackup.c:1131 pg_combinebackup.c:1383 reconstruct.c:199
-#: reconstruct.c:408
+#: pg_combinebackup.c:1131 pg_combinebackup.c:1383 reconstruct.c:204
+#: reconstruct.c:421
 #, c-format
 msgid "could not stat file \"%s\": %m"
 msgstr "ფაილი \"%s\" არ არსებობს: %m"
@@ -261,159 +261,159 @@ msgstr "უნიკოდის მაღალ სუროგატს მა
 msgid "Unicode low surrogate must follow a high surrogate."
 msgstr "უნიკოდის დაბალი სუროგატი მაღალ სუროგატს უნდა მისდევდეს."
 
-#: ../../common/parse_manifest.c:159 ../../common/parse_manifest.c:855
+#: ../../common/parse_manifest.c:159 ../../common/parse_manifest.c:854
 #, c-format
 msgid "could not initialize checksum of manifest"
 msgstr "მანიფესტის საკონტროლო ჯამის ინიციალიზაციის შეცდომა"
 
-#: ../../common/parse_manifest.c:204 ../../common/parse_manifest.c:261
+#: ../../common/parse_manifest.c:203 ../../common/parse_manifest.c:260
 msgid "manifest ended unexpectedly"
 msgstr "მანიფესტი მოულოდნელად დასრულდა"
 
-#: ../../common/parse_manifest.c:210 ../../common/parse_manifest.c:862
+#: ../../common/parse_manifest.c:209 ../../common/parse_manifest.c:861
 #, c-format
 msgid "could not update checksum of manifest"
 msgstr "მანიფესტის საკონტროლო ჯამის განახლების შეცდომა"
 
-#: ../../common/parse_manifest.c:302
+#: ../../common/parse_manifest.c:301
 msgid "unexpected object start"
 msgstr "ობიექტის მოულოდნელი დასაწყისი"
 
-#: ../../common/parse_manifest.c:337
+#: ../../common/parse_manifest.c:336
 msgid "unexpected object end"
 msgstr "ობიექტის მოულოდნელი დასასრული"
 
-#: ../../common/parse_manifest.c:366
+#: ../../common/parse_manifest.c:365
 msgid "unexpected array start"
 msgstr "მასივის მოულოდნელი დასაწყისი"
 
-#: ../../common/parse_manifest.c:391
+#: ../../common/parse_manifest.c:390
 msgid "unexpected array end"
 msgstr "მასივის მოულოდნელი დასასრული"
 
-#: ../../common/parse_manifest.c:418
+#: ../../common/parse_manifest.c:417
 msgid "expected version indicator"
 msgstr "მოსალოდნელი ვერსიის მაჩვენებელი"
 
-#: ../../common/parse_manifest.c:454
+#: ../../common/parse_manifest.c:453
 msgid "unrecognized top-level field"
 msgstr "უცნობი ველი ზედა დონეზე"
 
-#: ../../common/parse_manifest.c:473
+#: ../../common/parse_manifest.c:472
 msgid "unexpected file field"
 msgstr "მოულოდნელი ველი ფაილისთვის"
 
-#: ../../common/parse_manifest.c:487
+#: ../../common/parse_manifest.c:486
 msgid "unexpected WAL range field"
 msgstr "მოულოდნელი ველი WAL-ის დიაპაზონისთვის"
 
-#: ../../common/parse_manifest.c:493
+#: ../../common/parse_manifest.c:492
 msgid "unexpected object field"
 msgstr "ობიექტის მოულოდნელი ველი"
 
-#: ../../common/parse_manifest.c:583
+#: ../../common/parse_manifest.c:582
 msgid "unexpected scalar"
 msgstr "მოულოდნელი სკალარი"
 
-#: ../../common/parse_manifest.c:609
+#: ../../common/parse_manifest.c:608
 msgid "manifest version not an integer"
 msgstr "მანიფესტის ვერსია მთელი რიცხვი არაა"
 
-#: ../../common/parse_manifest.c:613
+#: ../../common/parse_manifest.c:612
 msgid "unexpected manifest version"
 msgstr "მანიფესტის მოულოდნელი ვერსია"
 
-#: ../../common/parse_manifest.c:637
+#: ../../common/parse_manifest.c:636
 msgid "system identifier in manifest not an integer"
 msgstr "მანიფესტის სისტემის იდენფიტიკატორი მთელი რიცხვი არაა"
 
-#: ../../common/parse_manifest.c:662
+#: ../../common/parse_manifest.c:661
 msgid "missing path name"
 msgstr "აკლია ბილიკის სახელი"
 
-#: ../../common/parse_manifest.c:665
+#: ../../common/parse_manifest.c:664
 msgid "both path name and encoded path name"
 msgstr "ორივე, ბილიკის სახელი და ბილიკის კოდირებული სახელი"
 
-#: ../../common/parse_manifest.c:667
+#: ../../common/parse_manifest.c:666
 msgid "missing size"
 msgstr "ზომა აკლია"
 
-#: ../../common/parse_manifest.c:670
+#: ../../common/parse_manifest.c:669
 msgid "checksum without algorithm"
 msgstr "საკონტროლო ჯამი ალგორითმის გარეშე"
 
-#: ../../common/parse_manifest.c:684
+#: ../../common/parse_manifest.c:683
 msgid "could not decode file name"
 msgstr "ფაილის სახელის გაშიფვრის შეცდომა"
 
-#: ../../common/parse_manifest.c:694
+#: ../../common/parse_manifest.c:693
 msgid "file size is not an integer"
 msgstr "ფაილის ზომა მთელი რიცხვი არაა"
 
-#: ../../common/parse_manifest.c:700 pg_combinebackup.c:199
+#: ../../common/parse_manifest.c:699 pg_combinebackup.c:199
 #, c-format
 msgid "unrecognized checksum algorithm: \"%s\""
 msgstr "საკონტროლო ჯამის უცნობი ალგორითმი: \"%s\""
 
-#: ../../common/parse_manifest.c:719
+#: ../../common/parse_manifest.c:718
 #, c-format
 msgid "invalid checksum for file \"%s\": \"%s\""
 msgstr "არასწორი საკონტროლო ჯამი ფაილისთვის \"%s\": \"%s\""
 
-#: ../../common/parse_manifest.c:762
+#: ../../common/parse_manifest.c:761
 msgid "missing timeline"
 msgstr "აკლია დროის ხაზი"
 
-#: ../../common/parse_manifest.c:764
+#: ../../common/parse_manifest.c:763
 msgid "missing start LSN"
 msgstr "აკლია საწყისი LSN"
 
-#: ../../common/parse_manifest.c:766
+#: ../../common/parse_manifest.c:765
 msgid "missing end LSN"
 msgstr "აკლია დასასრულის LSN"
 
-#: ../../common/parse_manifest.c:772
+#: ../../common/parse_manifest.c:771
 msgid "timeline is not an integer"
 msgstr "დროის ხაზი მთელი რიცხვი არაა"
 
-#: ../../common/parse_manifest.c:775
+#: ../../common/parse_manifest.c:774
 msgid "could not parse start LSN"
 msgstr "საწყისი LSN-ის დამუშავების შეცდომა"
 
-#: ../../common/parse_manifest.c:778
+#: ../../common/parse_manifest.c:777
 msgid "could not parse end LSN"
 msgstr "საბოლოო LSN-ის დამუშავების შეცდომა"
 
-#: ../../common/parse_manifest.c:843
+#: ../../common/parse_manifest.c:842
 msgid "expected at least 2 lines"
 msgstr "ველოდებოდი სულ ცოტა 2 ხაზს"
 
-#: ../../common/parse_manifest.c:846
+#: ../../common/parse_manifest.c:845
 msgid "last line not newline-terminated"
 msgstr "ბოლო ხაზი ხაზის გადატანით არ სრულდება"
 
-#: ../../common/parse_manifest.c:865
+#: ../../common/parse_manifest.c:864
 #, c-format
 msgid "could not finalize checksum of manifest"
 msgstr "მანიფესტის საკონტროლო ჯამის დასრულების შეცდომა"
 
-#: ../../common/parse_manifest.c:869
+#: ../../common/parse_manifest.c:868
 #, c-format
 msgid "manifest has no checksum"
 msgstr "მანიფესტის საკონტროლო ჯამი არ გააჩნია"
 
-#: ../../common/parse_manifest.c:873
+#: ../../common/parse_manifest.c:872
 #, c-format
 msgid "invalid manifest checksum: \"%s\""
 msgstr "მანიფესტის საკონტროლო ჯამის არასწორია: %s"
 
-#: ../../common/parse_manifest.c:877
+#: ../../common/parse_manifest.c:876
 #, c-format
 msgid "manifest checksum mismatch"
 msgstr "მანიფესტის საკონტროლო ჯამი არ ემთხვევა"
 
-#: ../../common/parse_manifest.c:892
+#: ../../common/parse_manifest.c:891
 #, c-format
 msgid "could not parse backup manifest: %s"
 msgstr "მარქაფის მანიფესტის დამუშავების შეცრომა: %s"
@@ -463,13 +463,13 @@ msgstr "%s: %s ვერ ვიპოვე"
 msgid "%s: %s requires %s"
 msgstr "%s: %s-ს %s სჭირდება"
 
-#: backup_label.c:162 reconstruct.c:748 write_manifest.c:262
+#: backup_label.c:162 reconstruct.c:761 write_manifest.c:262
 #, c-format
 msgid "could not write file \"%s\": wrote %d of %d"
 msgstr "ფაილში \"%s\" ჩაწერა შეუძლებელია. ჩაწერილია %d %d-დან"
 
-#: backup_label.c:166 copy_file.c:146 copy_file.c:193 reconstruct.c:708
-#: reconstruct.c:754 write_manifest.c:270
+#: backup_label.c:166 copy_file.c:146 copy_file.c:193 reconstruct.c:721
+#: reconstruct.c:767 write_manifest.c:270
 #, c-format
 msgid "could not update checksum of file \"%s\""
 msgstr "ფაილის (\"%s\") საკონტროლო ჯამის განახლების შეცდომა"
@@ -484,7 +484,7 @@ msgstr "ფაილში (%s) ჩაწერის შეცდომა: %m"
 msgid "could not write to file \"%s\", offset %u: wrote %d of %d"
 msgstr "ფაილში \"%s\" ჩაწერის შეცდომა. წანაცვლება %u: ჩავწერე %d ბაიტი %d-დან"
 
-#: copy_file.c:199 reconstruct.c:771
+#: copy_file.c:199 reconstruct.c:784
 #, c-format
 msgid "could not read from file \"%s\": %m"
 msgstr "ფაილიდან (\"%s\") წაკითხვის შეცდომა: %m"
@@ -509,12 +509,12 @@ msgstr "შეცდომა ფაილის დაკლონვისა�
 msgid "file cloning not supported on this platform"
 msgstr "ამ პლატფორმაზე კლონირება მხარდაჭერილი არაა"
 
-#: copy_file.c:278 reconstruct.c:691
+#: copy_file.c:278 reconstruct.c:704
 #, c-format
 msgid "error while copying file range from \"%s\" to \"%s\": %m"
 msgstr "შეცდომა ფაილბის შუალედის კოპირებისას \"%s\"-დან \"%s\"-მდე: %m"
 
-#: copy_file.c:285 pg_combinebackup.c:264 reconstruct.c:711
+#: copy_file.c:285 pg_combinebackup.c:264 reconstruct.c:724
 #, c-format
 msgid "copy_file_range not supported on this platform"
 msgstr "ამ პლატფორმაზე copy_file_range მხარდაჭერილი არაა"
@@ -539,12 +539,12 @@ msgstr "ფაილის \"%s\" წაკითხვა შეუძლებ
 msgid "could not read file \"%s\": read %lld of %lld"
 msgstr "ფაილის \"%s\" წაკითხვა შეუძლებელია: წაკითხულია %lld %lld-დან"
 
-#: load_manifest.c:249
+#: load_manifest.c:248
 #, c-format
 msgid "backup manifest version 1 does not support incremental backup"
 msgstr "მარქაფის მანიფესტის ვერსიას 1 ინკრემენტული მარქაფების მხარდაჭერა არ გააჩნია"
 
-#: load_manifest.c:281
+#: load_manifest.c:280
 #, c-format
 msgid "duplicate path name in backup manifest: \"%s\""
 msgstr "მარქაფს მანიფესტში მითითებული ბილიკის სახელი დუბლირებულია: %s"
@@ -804,7 +804,7 @@ msgstr "%s: სიმბმულია. გამოტოვება"
 msgid "skipping special file \"%s\""
 msgstr "სპეციალური ფაილის გამოტოვება \"%s\""
 
-#: pg_combinebackup.c:1073 reconstruct.c:300
+#: pg_combinebackup.c:1073 reconstruct.c:305
 #, c-format
 msgid "manifest file \"%s\" contains no entry for file \"%s\""
 msgstr "მანიფესტის ფაილი \"%s\" ფაილისთვის \"%s\" ჩანაწერებს არ შეიცავს"
@@ -859,32 +859,37 @@ msgstr "%s: ფაილი ძალიან დიდია"
 msgid "could not read file \"%s\": read %zd of %lld"
 msgstr "ფაილის \"%s\" წაკითხვა შეუძლებელია: წაკითხულია %zd %lld-დან"
 
-#: reconstruct.c:410
+#: reconstruct.c:339
+#, c-format
+msgid "full backup contains unexpected incremental file \"%s\""
+msgstr "სრული მარქაფი შეიცავს მოულოდნელ ინკრემენტულ ფაილს \"%s\""
+
+#: reconstruct.c:423
 #, c-format
 msgid "file \"%s\" is too short: expected %llu, found %llu"
 msgstr "ფაილი \"%s\" მეტისმეტად მოკლეა. მოველოდი %llu, მივიღე %llu"
 
-#: reconstruct.c:452
+#: reconstruct.c:465
 #, c-format
 msgid "file \"%s\" has bad incremental magic number (0x%x, expected 0x%x)"
 msgstr "ფაილს \"%s\" არასწორი ინკრემენტული ჯადოსნური რიცხვი (0x%x not 0x%x) გააჩნია"
 
-#: reconstruct.c:458
+#: reconstruct.c:471
 #, c-format
 msgid "file \"%s\" has block count %u in excess of segment size %u"
 msgstr "ფაილს \"%s\" აქვს ბლოკების რაოდენობა %u, რომელიც სეგმენტის ზომას %u აჭარბებს"
 
-#: reconstruct.c:465
+#: reconstruct.c:478
 #, c-format
 msgid "file \"%s\" has truncation block length %u in excess of segment size %u"
 msgstr "ფაილს \"%s\" აქვს წაკვეთის ბლოკის სიგრძე %u, რომელიც სეგმენტის ზომას %u აჭარბებს"
 
-#: reconstruct.c:529
+#: reconstruct.c:542
 #, c-format
 msgid "could not read file \"%s\": read %d of %u"
 msgstr "ფაილის \"%s\" წაკითხვის შეცდომა: წაკითხულია %d %u-დან"
 
-#: reconstruct.c:773
+#: reconstruct.c:786
 #, c-format
 msgid "could not read from file \"%s\", offset %llu: read %d of %d"
 msgstr "ფაილიდან \"%s\" წაკითხვის შეცდომა. წანაცვლება %llu: წაკითხულია %d %d-დან"

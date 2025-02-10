@@ -10,8 +10,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_upgrade (PostgreSQL) 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-08-01 11:20+0000\n"
-"PO-Revision-Date: 2024-08-04 22:44-0400\n"
+"POT-Creation-Date: 2024-11-16 05:20+0000\n"
+"PO-Revision-Date: 2024-11-16 09:10+0100\n"
 "Last-Translator: Álvaro Herrera <alvherre@alvh.no-ip.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
 "Language: es\n"
@@ -230,13 +230,13 @@ msgstr ""
 
 #: check.c:345
 #, c-format
-msgid "Checking for data type usage"
+msgid "Checking data type usage"
 msgstr "Verificando el uso de tipos de datos"
 
 #: check.c:480
 #, c-format
-msgid "    failed check: %s"
-msgstr "    falló la comprobación: %s"
+msgid "failed check: %s"
+msgstr "falló la comprobación: %s"
 
 #: check.c:483
 msgid "A list of the problem columns is in the file:"
@@ -618,8 +618,8 @@ msgstr "no se pudo contar el número de slots de replicación lógica"
 
 #: check.c:1759
 #, c-format
-msgid "Expected 0 logical replication slots but found %d."
-msgstr "Se esperaban 0 slots de replicación lógica pero se encontraron %d."
+msgid "expected 0 logical replication slots but found %d"
+msgstr "se esperaban 0 slots de replicación lógica pero se encontraron %d"
 
 #: check.c:1769 check.c:1820
 #, c-format
@@ -628,8 +628,8 @@ msgstr "no se pudo determinar el valor de los parámetros en el clúster nuevo"
 
 #: check.c:1774
 #, c-format
-msgid "\"wal_level\" must be \"logical\", but is set to \"%s\""
-msgstr "«wal_level» debe ser definido a «logical», pero está definido a «%s»"
+msgid "\"wal_level\" must be \"logical\" but is set to \"%s\""
+msgstr "«wal_level» debe ser «logical», pero está definido a «%s»"
 
 #: check.c:1780
 #, c-format
@@ -654,7 +654,7 @@ msgstr "Verificando los slots de replicación lógica válidos"
 #: check.c:1898
 #, c-format
 msgid ""
-"Your installation contains logical replication slots that can't be upgraded.\n"
+"Your installation contains logical replication slots that cannot be upgraded.\n"
 "You can remove invalid slots and/or consume the pending WAL for other slots,\n"
 "and then restart the upgrade.\n"
 "A list of the problematic slots is in the file:\n"
@@ -1265,13 +1265,13 @@ msgstr "relname: «%s.%s»: reloid: %u reltblspace: «%s»"
 
 #: info.c:832
 #, c-format
-msgid "Logical replication slots within the database:"
+msgid "Logical replication slots in the database:"
 msgstr "Slots de replicación lógica en la base de datos:"
 
 #: info.c:838
 #, c-format
-msgid "slot_name: \"%s\", plugin: \"%s\", two_phase: %s"
-msgstr "slot_name: «%s», plugin: «%s», two_phase: %s"
+msgid "slot name: \"%s\", output plugin: \"%s\", two_phase: %s"
+msgstr "nombre de slot: «%s», plugin de salida: «%s», two_phase: %s"
 
 #: option.c:105
 #, c-format

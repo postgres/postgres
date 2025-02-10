@@ -11,7 +11,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_ctl (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-09-02 09:29+0300\n"
+"POT-Creation-Date: 2025-02-08 07:44+0200\n"
 "PO-Revision-Date: 2024-09-07 06:47+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
@@ -72,7 +72,7 @@ msgstr "нехватка памяти"
 
 #: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
 #: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:161
-#: ../../port/path.c:753 ../../port/path.c:790 ../../port/path.c:807
+#: ../../port/path.c:830 ../../port/path.c:867 ../../port/path.c:884
 #, c-format
 msgid "out of memory\n"
 msgstr "нехватка памяти\n"
@@ -112,7 +112,7 @@ msgstr "дочерний процесс завершён по сигналу %d:
 msgid "child process exited with unrecognized status %d"
 msgstr "дочерний процесс завершился с нераспознанным кодом состояния %d"
 
-#: ../../port/path.c:775
+#: ../../port/path.c:852
 #, c-format
 msgid "could not get current working directory: %m\n"
 msgstr "не удалось определить текущий рабочий каталог: %m\n"

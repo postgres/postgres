@@ -4,10 +4,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_amcheck (PostgreSQL) 16\n"
+"Project-Id-Version: pg_amcheck (PostgreSQL) 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2023-09-07 05:51+0000\n"
-"PO-Revision-Date: 2023-05-30 12:37+0900\n"
+"POT-Creation-Date: 2025-01-17 04:52+0000\n"
+"PO-Revision-Date: 2025-01-17 18:01+0900\n"
 "Last-Translator: Ioseph Kim <ioseph@uri.sarang.net>\n"
 "Language-Team: Korean <kr@postgresql.org>\n"
 "Language: ko\n"
@@ -36,11 +36,78 @@ msgstr "상세정보: "
 msgid "hint: "
 msgstr "힌트: "
 
-#: ../../fe_utils/cancel.c:189 ../../fe_utils/cancel.c:238
+#: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:161
+#, c-format
+msgid "out of memory\n"
+msgstr "메모리 부족\n"
+
+#: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:153
+#, c-format
+msgid "cannot duplicate null pointer (internal error)\n"
+msgstr "널 포인터를 중복할 수 없음 (내부 오류)\n"
+
+#: ../../common/file_utils.c:70 ../../common/file_utils.c:347
+#: ../../common/file_utils.c:406 ../../common/file_utils.c:480
+#, c-format
+msgid "could not open file \"%s\": %m"
+msgstr "\"%s\" 파일을 열 수 없음: %m"
+
+#: ../../common/file_utils.c:76
+#, c-format
+msgid "could not synchronize file system for file \"%s\": %m"
+msgstr "\"%s\" 파일을 위한 파일 시스템 동기화를 할 수 없음: %m"
+
+#: ../../common/file_utils.c:120 ../../common/file_utils.c:566
+#, c-format
+msgid "could not stat file \"%s\": %m"
+msgstr "\"%s\" 파일 상태 정보를 알 수 없음: %m"
+
+#: ../../common/file_utils.c:130 ../../common/file_utils.c:227
+#: ../../fe_utils/option_utils.c:99
+#, c-format
+msgid "this build does not support sync method \"%s\""
+msgstr "이 빌드는 \"%s\" 동기화 방법은 지원하지 않음"
+
+#: ../../common/file_utils.c:151 ../../common/file_utils.c:281
+#, c-format
+msgid "could not open directory \"%s\": %m"
+msgstr "\"%s\" 디렉터리를 열 수 없음: %m"
+
+#: ../../common/file_utils.c:169 ../../common/file_utils.c:315
+#, c-format
+msgid "could not read directory \"%s\": %m"
+msgstr "\"%s\" 디렉터리를 읽을 수 없음: %m"
+
+#: ../../common/file_utils.c:418 ../../common/file_utils.c:488
+#, c-format
+msgid "could not fsync file \"%s\": %m"
+msgstr "\"%s\" 파일을 fsync 할 수 없음: %m"
+
+#: ../../common/file_utils.c:498
+#, c-format
+msgid "could not rename file \"%s\" to \"%s\": %m"
+msgstr "\"%s\" 파일을 \"%s\" 파일로 이름을 바꿀 수 없음: %m"
+
+#: ../../common/username.c:43
+#, c-format
+msgid "could not look up effective user ID %ld: %s"
+msgstr "사용자 ID(%ld)를 찾을 수 없음: %s"
+
+#: ../../common/username.c:45
+msgid "user does not exist"
+msgstr "사용자 없음"
+
+#: ../../common/username.c:60
+#, c-format
+msgid "user name lookup failure: error code %lu"
+msgstr "사용자 이름 찾기 실패: 오류 코드 %lu"
+
+#: ../../fe_utils/cancel.c:186 ../../fe_utils/cancel.c:235
 msgid "Cancel request sent\n"
 msgstr "취소 요청 보냄\n"
 
-#: ../../fe_utils/cancel.c:190 ../../fe_utils/cancel.c:239
+#: ../../fe_utils/cancel.c:187 ../../fe_utils/cancel.c:236
 msgid "Could not send cancel request: "
 msgstr "취소 요청 보내기 실패: "
 
@@ -64,195 +131,235 @@ msgstr "\"%s\" 값은 %s 옵션의 값으로 적당하지 않음"
 msgid "%s must be in range %d..%d"
 msgstr "%s 값은 %d부터 %d까지만 허용합니다"
 
+#: ../../fe_utils/option_utils.c:106
+#, c-format
+msgid "unrecognized sync method: %s"
+msgstr "알 수 없는 동기화 방법: %s"
+
+#: ../../fe_utils/parallel_slot.c:317
+#, c-format
+msgid "too many jobs for this platform: %d"
+msgstr "이 플랫폼에서는 너무 많은 job 입니다: %d"
+
+#: ../../fe_utils/parallel_slot.c:326
+#, c-format
+msgid "socket file descriptor out of range for select(): %d"
+msgstr "select() 작업 범위를 벗어나는 소켓 파일 기술자: %d"
+
+#: ../../fe_utils/parallel_slot.c:328
+#, c-format
+msgid "Try fewer jobs."
+msgstr "job 수를 줄여주세요."
+
+#: ../../fe_utils/parallel_slot.c:553
+#, c-format
+msgid "processing of database \"%s\" failed: %s"
+msgstr "\"%s\" 데이터베이스 처리 중 오류 발생: %s"
+
 #: ../../fe_utils/query_utils.c:33 ../../fe_utils/query_utils.c:58
-#: pg_amcheck.c:1647 pg_amcheck.c:2092
+#: pg_amcheck.c:1693 pg_amcheck.c:2138
 #, c-format
 msgid "query failed: %s"
 msgstr "쿼리 실패: %s"
 
 #: ../../fe_utils/query_utils.c:34 ../../fe_utils/query_utils.c:59
-#: pg_amcheck.c:571 pg_amcheck.c:1102 pg_amcheck.c:1648 pg_amcheck.c:2093
+#: pg_amcheck.c:578 pg_amcheck.c:1147 pg_amcheck.c:1694 pg_amcheck.c:2139
 #, c-format
 msgid "Query was: %s"
 msgstr "사용한 쿼리: %s"
 
-#: pg_amcheck.c:399
+#: ../../fe_utils/string_utils.c:434
+#, c-format
+msgid "shell command argument contains a newline or carriage return: \"%s\"\n"
+msgstr "쉘 명령 인자에 줄바꿈 문자가 있음: \"%s\"\n"
+
+#: ../../fe_utils/string_utils.c:607
+#, c-format
+msgid "database name contains a newline or carriage return: \"%s\"\n"
+msgstr "데이터베이스 이름에 줄바꿈 문자가 있음:  \"%s\"\n"
+
+#: pg_amcheck.c:403
 #, c-format
 msgid "invalid argument for option %s"
 msgstr "%s 옵션의 잘못된 인자"
 
-#: pg_amcheck.c:405
+#: pg_amcheck.c:409
 #, c-format
 msgid "invalid start block"
 msgstr "시작 블록이 유효하지 않음"
 
-#: pg_amcheck.c:407
+#: pg_amcheck.c:411
 #, c-format
 msgid "start block out of bounds"
 msgstr "시작 블록이 범위를 벗어남"
 
-#: pg_amcheck.c:414
+#: pg_amcheck.c:418
 #, c-format
 msgid "invalid end block"
 msgstr "마지막 블록이 유효하지 않음"
 
-#: pg_amcheck.c:416
+#: pg_amcheck.c:420
 #, c-format
 msgid "end block out of bounds"
 msgstr "마지막 블록이 범위를 벗어남"
 
-#: pg_amcheck.c:439 pg_amcheck.c:461
+#: pg_amcheck.c:446 pg_amcheck.c:468
 #, c-format
 msgid "Try \"%s --help\" for more information."
 msgstr "자세한 사항은 \"%s --help\" 명령으로 살펴보십시오."
 
-#: pg_amcheck.c:445
+#: pg_amcheck.c:452
 #, c-format
 msgid "end block precedes start block"
 msgstr "마지막 블록이 시작 블록보다 앞에 존재함"
 
-#: pg_amcheck.c:459
+#: pg_amcheck.c:466
 #, c-format
 msgid "too many command-line arguments (first is \"%s\")"
 msgstr "너무 많은 명령행 인자를 지정했습니다. (처음 \"%s\")"
 
-#: pg_amcheck.c:479
+#: pg_amcheck.c:486
 #, c-format
 msgid "cannot specify a database name with --all"
 msgstr "데이터베이스 이름을 —all 와 같이 지정할 수 없습니다"
 
-#: pg_amcheck.c:485
+#: pg_amcheck.c:492
 #, c-format
 msgid "cannot specify both a database name and database patterns"
 msgstr "데이터베이스 이름과 형식을 지정할 수 없습니다"
 
-#: pg_amcheck.c:513
+#: pg_amcheck.c:520
 #, c-format
 msgid "no databases to check"
 msgstr "확인할 데이터베이스가 없습니다"
 
-#: pg_amcheck.c:569
+#: pg_amcheck.c:576
 #, c-format
 msgid "database \"%s\": %s"
 msgstr "데이터베이스 “%s”: %s"
 
-#: pg_amcheck.c:580
+#: pg_amcheck.c:587
 #, c-format
 msgid "skipping database \"%s\": amcheck is not installed"
 msgstr "데이터베이스 생략 “%s”: amcheck 가 설치되지 않음"
 
-#: pg_amcheck.c:588
+#: pg_amcheck.c:595
 #, c-format
 msgid "in database \"%s\": using amcheck version \"%s\" in schema \"%s\""
 msgstr "데이터베이스 “%s”: 사용하는 amcheck 버전 “%s” 스키마 “%s”"
 
-#: pg_amcheck.c:610
+#: pg_amcheck.c:624
+#, c-format
+msgid "option %s is not supported by amcheck version %s"
+msgstr "%s 옵션은 %s 버전 amcheck에서 지원하지 않음"
+
+#: pg_amcheck.c:650
 #, c-format
 msgid "no heap tables to check matching \"%s\""
 msgstr "“%s” 와 일치하는 heap 테이블을 찾을 수 없습니다"
 
-#: pg_amcheck.c:613
+#: pg_amcheck.c:653
 #, c-format
 msgid "no btree indexes to check matching \"%s\""
 msgstr "“%s” 와 일치하는 btree 인덱스를 찾을 수 없습니다"
 
-#: pg_amcheck.c:616
+#: pg_amcheck.c:656
 #, c-format
 msgid "no relations to check in schemas matching \"%s\""
 msgstr "스키마에서 “%s” 와 일치하는 릴레이션을 찾을 수 없습니다"
 
-#: pg_amcheck.c:619
+#: pg_amcheck.c:659
 #, c-format
 msgid "no relations to check matching \"%s\""
 msgstr "“%s” 와 일치하는 릴레이션을 찾을 수 없습니다"
 
-#: pg_amcheck.c:647
+#: pg_amcheck.c:687
 #, c-format
 msgid "no relations to check"
 msgstr "확인할 릴레이션이 없습니다"
 
-#: pg_amcheck.c:730
+#: pg_amcheck.c:770
 #, c-format
 msgid "checking heap table \"%s.%s.%s\""
 msgstr "heap 테이블 확인 “%s.%s.%s”"
 
-#: pg_amcheck.c:746
+#: pg_amcheck.c:786
 #, c-format
 msgid "checking btree index \"%s.%s.%s\""
 msgstr "btree 인덱스 확인 “%s.%s.%s”"
 
-#: pg_amcheck.c:893
+#: pg_amcheck.c:937
 #, c-format
 msgid "error sending command to database \"%s\": %s"
 msgstr "데이터베이스에 명령을 보내는 중 오류 발생 “%s”: %s"
 
-#: pg_amcheck.c:896
+#: pg_amcheck.c:940
 #, c-format
 msgid "Command was: %s"
 msgstr "사용한 명령: %s"
 
-#: pg_amcheck.c:1015
+#: pg_amcheck.c:1060
 #, c-format
 msgid "heap table \"%s.%s.%s\", block %s, offset %s, attribute %s:\n"
 msgstr "heap 테이블 “%s.%s.%s”, 블록 %s, 오프셋 %s, 에트리뷰트 %s:\n"
 
-#: pg_amcheck.c:1022
+#: pg_amcheck.c:1067
 #, c-format
 msgid "heap table \"%s.%s.%s\", block %s, offset %s:\n"
 msgstr "heap 테이블 “%s.%s.%s”, 블록 %s, 오프셋 %s:\n"
 
-#: pg_amcheck.c:1028
+#: pg_amcheck.c:1073
 #, c-format
 msgid "heap table \"%s.%s.%s\", block %s:\n"
 msgstr "heap 테이블 “%s.%s.%s”, 블록 %s:\n"
 
-#: pg_amcheck.c:1033 pg_amcheck.c:1044
+#: pg_amcheck.c:1078 pg_amcheck.c:1089
 #, c-format
 msgid "heap table \"%s.%s.%s\":\n"
 msgstr "heap 테이블 “%s.%s.%s”:\n"
 
-#: pg_amcheck.c:1048 pg_amcheck.c:1117
+#: pg_amcheck.c:1093 pg_amcheck.c:1162
 #, c-format
 msgid "query was: %s\n"
 msgstr "사용한 쿼리: %s\n"
 
-#: pg_amcheck.c:1099
+#: pg_amcheck.c:1144
 #, c-format
 msgid ""
 "btree index \"%s.%s.%s\": btree checking function returned unexpected number "
 "of rows: %d"
 msgstr "btree 인덱스 “%s.%s.%s”: btree 확인 중에 예기치 않은 행수를 반환함: %d"
 
-#: pg_amcheck.c:1103
+#: pg_amcheck.c:1148
 #, c-format
 msgid "Are %s's and amcheck's versions compatible?"
 msgstr "%s 버전과 amcheck의 버전이 호환 가능합니까?"
 
-#: pg_amcheck.c:1113
+#: pg_amcheck.c:1158
 #, c-format
 msgid "btree index \"%s.%s.%s\":\n"
 msgstr "btree 인덱스 “%s.%s.%s”:\n"
 
-#: pg_amcheck.c:1138
+#: pg_amcheck.c:1183
 #, c-format
 msgid ""
 "%s checks objects in a PostgreSQL database for corruption.\n"
 "\n"
 msgstr ""
-"%s 가 PostgreSQL 데이터베이스 개체 손상 여부를 검사합니다.\n"
+"%s는 PostgreSQL 데이터베이스 개체 손상 여부를 검사합니다.\n"
 "\n"
 
-#: pg_amcheck.c:1139
+#: pg_amcheck.c:1184
 #, c-format
 msgid "Usage:\n"
 msgstr "사용법:\n"
 
-#: pg_amcheck.c:1140
+#: pg_amcheck.c:1185
 #, c-format
 msgid "  %s [OPTION]... [DBNAME]\n"
 msgstr "  %s [옵션]... [DB이름]\n"
 
-#: pg_amcheck.c:1141
+#: pg_amcheck.c:1186
 #, c-format
 msgid ""
 "\n"
@@ -261,85 +368,85 @@ msgstr ""
 "\n"
 "사용가능한 옵션들:\n"
 
-#: pg_amcheck.c:1142
+#: pg_amcheck.c:1187
 #, c-format
 msgid "  -a, --all                       check all databases\n"
-msgstr "  -a, —all                       모든 데이터베이스를 검사\n"
+msgstr "  -a, -—all                       모든 데이터베이스를 검사\n"
 
-#: pg_amcheck.c:1143
+#: pg_amcheck.c:1188
 #, c-format
 msgid "  -d, --database=PATTERN          check matching database(s)\n"
-msgstr "  -d, —database=PATTERN          일치하는 모든 데이터베이스를 검사\n"
+msgstr "  -d, -—database=PATTERN          일치하는 모든 데이터베이스를 검사\n"
 
-#: pg_amcheck.c:1144
+#: pg_amcheck.c:1189
 #, c-format
 msgid "  -D, --exclude-database=PATTERN  do NOT check matching database(s)\n"
 msgstr ""
-"  -D, —exclude-database=PATTERN  일치하는 데이터베이스를 제외 하고 검사\n"
+"  -D, -—exclude-database=PATTERN  일치하는 데이터베이스를 제외 하고 검사\n"
 
-#: pg_amcheck.c:1145
+#: pg_amcheck.c:1190
 #, c-format
 msgid "  -i, --index=PATTERN             check matching index(es)\n"
-msgstr "  -i, —index=PATTERN             일치하는 인덱스를 검사\n"
+msgstr "  -i, -—index=PATTERN             일치하는 인덱스를 검사\n"
 
-#: pg_amcheck.c:1146
+#: pg_amcheck.c:1191
 #, c-format
 msgid "  -I, --exclude-index=PATTERN     do NOT check matching index(es)\n"
-msgstr "  -I, —exclude-index=PATTERN     일치하는 인덱스를 제외하고 검사\n"
+msgstr "  -I, -—exclude-index=PATTERN     일치하는 인덱스를 제외하고 검사\n"
 
-#: pg_amcheck.c:1147
+#: pg_amcheck.c:1192
 #, c-format
 msgid "  -r, --relation=PATTERN          check matching relation(s)\n"
-msgstr "  -r, —relation=PATTERN          일치하는 릴레이션을 검사\n"
+msgstr "  -r, -—relation=PATTERN          일치하는 릴레이션을 검사\n"
 
-#: pg_amcheck.c:1148
+#: pg_amcheck.c:1193
 #, c-format
 msgid "  -R, --exclude-relation=PATTERN  do NOT check matching relation(s)\n"
-msgstr "  -R, —exclude-relation=PATTERN  일치하는 릴레이션을 제외하고 검사\n"
+msgstr "  -R, -—exclude-relation=PATTERN  일치하는 릴레이션을 제외하고 검사\n"
 
-#: pg_amcheck.c:1149
+#: pg_amcheck.c:1194
 #, c-format
 msgid "  -s, --schema=PATTERN            check matching schema(s)\n"
-msgstr "  -s, —schema=PATTERN            일치하는 스키마를 검사\n"
+msgstr "  -s, -—schema=PATTERN            일치하는 스키마를 검사\n"
 
-#: pg_amcheck.c:1150
+#: pg_amcheck.c:1195
 #, c-format
 msgid "  -S, --exclude-schema=PATTERN    do NOT check matching schema(s)\n"
-msgstr "  -S, —exclude-schema=PATTERN    일치하는 스키마를 제외하고 검사\n"
+msgstr "  -S, -—exclude-schema=PATTERN    일치하는 스키마를 제외하고 검사\n"
 
-#: pg_amcheck.c:1151
+#: pg_amcheck.c:1196
 #, c-format
 msgid "  -t, --table=PATTERN             check matching table(s)\n"
-msgstr "  -t, —table=PATTERN             일치하는 테이블을 검사\n"
+msgstr "  -t, -—table=PATTERN             일치하는 테이블을 검사\n"
 
-#: pg_amcheck.c:1152
+#: pg_amcheck.c:1197
 #, c-format
 msgid "  -T, --exclude-table=PATTERN     do NOT check matching table(s)\n"
-msgstr "  -T, —exclude-table=PATTERN     일치하는 테이블을 제외하고 검사\n"
+msgstr "  -T, -—exclude-table=PATTERN     일치하는 테이블을 제외하고 검사\n"
 
-#: pg_amcheck.c:1153
+#: pg_amcheck.c:1198
 #, c-format
 msgid ""
 "      --no-dependent-indexes      do NOT expand list of relations to include "
 "indexes\n"
-msgstr "      —no-dependent-indexes      릴레이션에 인덱스를 포함하지 않음 \n"
+msgstr "      -—no-dependent-indexes      릴레이션에 인덱스를 포함하지 않음 \n"
 
-#: pg_amcheck.c:1154
+#: pg_amcheck.c:1199
 #, c-format
 msgid ""
 "      --no-dependent-toast        do NOT expand list of relations to include "
 "TOAST tables\n"
 msgstr ""
-"      —no-dependent-toast        릴레이션에 TOAST 테이블을 포함하지 않음\n"
+"      -—no-dependent-toast        릴레이션에 TOAST 테이블을 포함하지 않음\n"
 
-#: pg_amcheck.c:1155
+#: pg_amcheck.c:1200
 #, c-format
 msgid ""
 "      --no-strict-names           do NOT require patterns to match objects\n"
 msgstr ""
-"      —no-strict-names           개체가 패턴과 일치하지 않아도 허용함\n"
+"      -—no-strict-names           개체가 패턴과 일치하지 않아도 허용함\n"
 
-#: pg_amcheck.c:1156
+#: pg_amcheck.c:1201
 #, c-format
 msgid ""
 "\n"
@@ -348,45 +455,45 @@ msgstr ""
 "\n"
 "테이블 검사 옵션들:\n"
 
-#: pg_amcheck.c:1157
+#: pg_amcheck.c:1202
 #, c-format
 msgid ""
 "      --exclude-toast-pointers    do NOT follow relation TOAST pointers\n"
-msgstr "      —exclude-toast-pointers    TOAST 포인터를 확인하지 않음\n"
+msgstr "      -—exclude-toast-pointers    TOAST 포인터를 확인하지 않음\n"
 
-#: pg_amcheck.c:1158
+#: pg_amcheck.c:1203
 #, c-format
 msgid ""
 "      --on-error-stop             stop checking at end of first corrupt "
 "page\n"
-msgstr "      —on-error-stop             손상된 페이지 끝에서 검사를 멈춤\n"
+msgstr "      -—on-error-stop             손상된 페이지 끝에서 검사를 멈춤\n"
 
-#: pg_amcheck.c:1159
+#: pg_amcheck.c:1204
 #, c-format
 msgid ""
 "      --skip=OPTION               do NOT check \"all-frozen\" or \"all-"
 "visible\" blocks\n"
 msgstr ""
-"      —skip=OPTION               “all-frozen” 또는 “all-visible” 블록을 검사"
-"하지 않음\n"
+"      -—skip=OPTION               \"all-frozen\" 또는 \"all-visible\" 블록을 "
+"검사하지 않음\n"
 
-#: pg_amcheck.c:1160
+#: pg_amcheck.c:1205
 #, c-format
 msgid ""
 "      --startblock=BLOCK          begin checking table(s) at the given block "
 "number\n"
 msgstr ""
-"      —startblock=BLOCK          지정된 블록 번호부터 테이블 검사를 시작\n"
+"      -—startblock=BLOCK          지정된 블록 번호부터 테이블 검사를 시작\n"
 
-#: pg_amcheck.c:1161
+#: pg_amcheck.c:1206
 #, c-format
 msgid ""
 "      --endblock=BLOCK            check table(s) only up to the given block "
 "number\n"
 msgstr ""
-"      —endblock=BLOCK            지정된 블록 번호까지 테이블 검사 마침 \n"
+"      -—endblock=BLOCK            지정된 블록 번호까지 테이블 검사 마침\n"
 
-#: pg_amcheck.c:1162
+#: pg_amcheck.c:1207
 #, c-format
 msgid ""
 "\n"
@@ -395,27 +502,35 @@ msgstr ""
 "\n"
 "B-tree 인덱스 검사 옵션들:\n"
 
-#: pg_amcheck.c:1163
+#: pg_amcheck.c:1208
+#, c-format
+msgid ""
+"      --checkunique               check unique constraint if index is "
+"unique\n"
+msgstr ""
+"      --checkunique               유니크 인덱스라면 유니크 제약조건 검사\n"
+
+#: pg_amcheck.c:1209
 #, c-format
 msgid ""
 "      --heapallindexed            check that all heap tuples are found "
 "within indexes\n"
 msgstr ""
-"      —heapallindexed            모든 heap 튜플이 인덱스 내에 있는지 검사\n"
+"      -—heapallindexed            모든 heap 튜플이 인덱스 내에 있는지 검사\n"
 
-#: pg_amcheck.c:1164
+#: pg_amcheck.c:1210
 #, c-format
 msgid ""
 "      --parent-check              check index parent/child relationships\n"
-msgstr "      —parent-check              인덱스의 부모/자식 관계를 검사\n"
+msgstr "      -—parent-check              인덱스의 부모/자식 관계를 검사\n"
 
-#: pg_amcheck.c:1165
+#: pg_amcheck.c:1211
 #, c-format
 msgid ""
 "      --rootdescend               search from root page to refind tuples\n"
-msgstr "      —rootdescend               루트 페이지 부터 튜플을 다시 찾음 \n"
+msgstr "      —-rootdescend               루트 페이지 부터 튜플을 다시 찾음 \n"
 
-#: pg_amcheck.c:1166
+#: pg_amcheck.c:1212
 #, c-format
 msgid ""
 "\n"
@@ -424,40 +539,40 @@ msgstr ""
 "\n"
 "연결 옵션들:\n"
 
-#: pg_amcheck.c:1167
+#: pg_amcheck.c:1213
 #, c-format
 msgid ""
 "  -h, --host=HOSTNAME             database server host or socket directory\n"
 msgstr ""
-"  -h, —host=HOSTNAME             데이터베이스 서버 호스트 또는 소켓의 디렉터"
+"  -h, -—host=HOSTNAME             데이터베이스 서버 호스트 또는 소켓의 디렉터"
 "리\n"
 
-#: pg_amcheck.c:1168
+#: pg_amcheck.c:1214
 #, c-format
 msgid "  -p, --port=PORT                 database server port\n"
-msgstr "  -p, —port=PORT                 데이터베이스 서버 포트\n"
+msgstr "  -p, -—port=PORT                 데이터베이스 서버 포트\n"
 
-#: pg_amcheck.c:1169
+#: pg_amcheck.c:1215
 #, c-format
 msgid "  -U, --username=USERNAME         user name to connect as\n"
-msgstr "  -U, —username=USERNAME         연결할 유저 이름\n"
+msgstr "  -U, -—username=USERNAME         연결할 유저 이름\n"
 
-#: pg_amcheck.c:1170
+#: pg_amcheck.c:1216
 #, c-format
 msgid "  -w, --no-password               never prompt for password\n"
-msgstr "  -w, —no-password               암호 입력 프롬프트가 나타나지 않음\n"
+msgstr "  -w, -—no-password               암호 입력 프롬프트가 나타나지 않음\n"
 
-#: pg_amcheck.c:1171
+#: pg_amcheck.c:1217
 #, c-format
 msgid "  -W, --password                  force password prompt\n"
-msgstr "  -W, —password                  암호 입력 프롬프트가 나타남\n"
+msgstr "  -W, -—password                  암호 입력 프롬프트가 나타남\n"
 
-#: pg_amcheck.c:1172
+#: pg_amcheck.c:1218
 #, c-format
 msgid "      --maintenance-db=DBNAME     alternate maintenance database\n"
-msgstr "      —maintenance-db=DBNAME     대체 연결 데이터베이스\n"
+msgstr "      -—maintenance-db=DBNAME     대체 연결 데이터베이스\n"
 
-#: pg_amcheck.c:1173
+#: pg_amcheck.c:1219
 #, c-format
 msgid ""
 "\n"
@@ -466,47 +581,47 @@ msgstr ""
 "\n"
 "기타 옵션:\n"
 
-#: pg_amcheck.c:1174
+#: pg_amcheck.c:1220
 #, c-format
 msgid ""
 "  -e, --echo                      show the commands being sent to the "
 "server\n"
 msgstr "  -e, --echo                      서버로 보내는 명령들을 보여줌\n"
 
-#: pg_amcheck.c:1175
+#: pg_amcheck.c:1221
 #, c-format
 msgid ""
 "  -j, --jobs=NUM                  use this many concurrent connections to "
 "the server\n"
-msgstr "  -j, —jobs=NUM                  서버에 동시 연결할 수를 지정\n"
+msgstr "  -j, -—jobs=NUM                  서버에 동시 연결할 수를 지정\n"
 
-#: pg_amcheck.c:1176
+#: pg_amcheck.c:1222
 #, c-format
 msgid "  -P, --progress                  show progress information\n"
-msgstr " -P, —progress                  진행 사항 정보를 보여줌\n"
+msgstr "  -P, -—progress                  진행 사항 정보를 보여줌\n"
 
-#: pg_amcheck.c:1177
+#: pg_amcheck.c:1223
 #, c-format
 msgid "  -v, --verbose                   write a lot of output\n"
 msgstr "  -v, --verbose                   작업내역의 자세한 출력\n"
 
-#: pg_amcheck.c:1178
+#: pg_amcheck.c:1224
 #, c-format
 msgid ""
 "  -V, --version                   output version information, then exit\n"
 msgstr "  -V, --version                   버전 정보를 보여주고 마침\n"
 
-#: pg_amcheck.c:1179
+#: pg_amcheck.c:1225
 #, c-format
 msgid "      --install-missing           install missing extensions\n"
-msgstr "      —install-missing           누락된 익스텐션을 설치\n"
+msgstr "      -—install-missing           누락된 익스텐션을 설치\n"
 
-#: pg_amcheck.c:1180
+#: pg_amcheck.c:1226
 #, c-format
 msgid "  -?, --help                      show this help, then exit\n"
 msgstr "  -?, --help                      도움말을 표시하고 종료\n"
 
-#: pg_amcheck.c:1182
+#: pg_amcheck.c:1228
 #, c-format
 msgid ""
 "\n"
@@ -515,52 +630,52 @@ msgstr ""
 "\n"
 "문제점 보고 주소: <%s>\n"
 
-#: pg_amcheck.c:1183
+#: pg_amcheck.c:1229
 #, c-format
 msgid "%s home page: <%s>\n"
 msgstr "%s 홈페이지: <%s>\n"
 
-#: pg_amcheck.c:1236
+#: pg_amcheck.c:1282
 #, c-format
 msgid "%*s/%s relations (%d%%), %*s/%s pages (%d%%) %*s"
 msgstr "%*s/%s 릴레이션 (%d%%), %*s/%s 페이지 (%d%%) %*s"
 
-#: pg_amcheck.c:1247
+#: pg_amcheck.c:1293
 #, c-format
 msgid "%*s/%s relations (%d%%), %*s/%s pages (%d%%) (%s%-*.*s)"
 msgstr "%*s/%s 릴레이션 (%d%%), %*s/%s 페이지 (%d%%) (%s%-*.*s)"
 
-#: pg_amcheck.c:1262
+#: pg_amcheck.c:1308
 #, c-format
 msgid "%*s/%s relations (%d%%), %*s/%s pages (%d%%)"
 msgstr "%*s/%s 릴레이션 (%d%%), %*s/%s 페이지 (%d%%)"
 
-#: pg_amcheck.c:1321 pg_amcheck.c:1354
+#: pg_amcheck.c:1367 pg_amcheck.c:1400
 #, c-format
 msgid "improper qualified name (too many dotted names): %s"
 msgstr "바르지 못한 규정 이름(점으로 구분된 이름이 너무 많음): %s"
 
-#: pg_amcheck.c:1399
+#: pg_amcheck.c:1445
 #, c-format
 msgid "improper relation name (too many dotted names): %s"
 msgstr "바르지 못한 릴레이션 이름(점으로 구분된 이름이 너무 많음): %s"
 
-#: pg_amcheck.c:1552 pg_amcheck.c:1691
+#: pg_amcheck.c:1598 pg_amcheck.c:1737
 #, c-format
 msgid "including database \"%s\""
 msgstr "“%s” 데이터베이스를 포함합니다"
 
-#: pg_amcheck.c:1673
+#: pg_amcheck.c:1719
 #, c-format
 msgid "internal error: received unexpected database pattern_id %d"
 msgstr "내부 오류: 올바르지 않은 데이터베이스 패턴 아이디 %d"
 
-#: pg_amcheck.c:1675
+#: pg_amcheck.c:1721
 #, c-format
 msgid "no connectable databases to check matching \"%s\""
 msgstr "“%s” 와 일치하는 연결 가능한 데이터베이스를 찾을 수 없음"
 
-#: pg_amcheck.c:2133
+#: pg_amcheck.c:2179
 #, c-format
 msgid "internal error: received unexpected relation pattern_id %d"
 msgstr "내부 오류: 올바르지 않은 릴레이션 패턴 아이디 %d"
