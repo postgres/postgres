@@ -533,7 +533,8 @@ run_reindex_command(PGconn *conn, ReindexType type, const char *name,
 
 	if (tablespace)
 	{
-		appendPQExpBuffer(&sql, "%sTABLESPACE %s", sep, fmtId(tablespace));
+		appendPQExpBuffer(&sql, "%sTABLESPACE %s", sep,
+						  fmtIdEnc(tablespace, PQclientEncoding(conn)));
 		sep = comma;
 	}
 
@@ -573,7 +574,8 @@ run_reindex_command(PGconn *conn, ReindexType type, const char *name,
 	{
 		case REINDEX_DATABASE:
 		case REINDEX_SYSTEM:
-			appendPQExpBufferStr(&sql, fmtId(name));
+			appendPQExpBufferStr(&sql,
+								 fmtIdEnc(name, PQclientEncoding(conn)));
 			break;
 		case REINDEX_INDEX:
 		case REINDEX_TABLE:
@@ -743,8 +745,9 @@ get_parallel_object_list(PGconn *conn, ReindexType type,
 	for (i = 0; i < ntups; i++)
 	{
 		appendPQExpBufferStr(&buf,
-							 fmtQualifiedId(PQgetvalue(res, i, 1),
-											PQgetvalue(res, i, 0)));
+							 fmtQualifiedIdEnc(PQgetvalue(res, i, 1),
+											   PQgetvalue(res, i, 0),
+											   PQclientEncoding(conn)));
 
 		simple_string_list_append(tables, buf.data);
 		resetPQExpBuffer(&buf);
