@@ -740,7 +740,7 @@ int
 main(int argc, char *argv[])
 {
 	pe_test_config tc = {0};
-	char		c;
+	int			c;
 	int			option_index;
 
 	static const struct option long_options[] = {
