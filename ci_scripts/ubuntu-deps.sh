@@ -1,13 +1,49 @@
 #!/bin/bash
 
-sudo apt-get update
+DEPS=(
+    # Setup
+    wget
+    gpg
+    # Build
+    bison
+    docbook-xsl
+    flex
+    gettext
+    libkrb5-dev
+    libldap2-dev
+    liblz4-dev
+    libpam0g-dev
+    libperl-dev
+    libreadline6-dev
+    libselinux1-dev
+    libssl-dev
+    libsystemd-dev
+    libxml2
+    libxml2-dev
+    libxml2-utils
+    libxslt-dev
+    meson
+    ninja-build
+    pkg-config
+    python3-dev
+    systemtap-sdt-dev
+    tcl-dev
+    uuid-dev
+    xsltproc
+    zlib1g-dev
+    # Build pg_tde
+    libcurl4-openssl-dev
+    # Test
+    libipc-run-perl
+    # Test pg_tde
+    python3-pykmip
+    libhttp-server-simple-perl
+)
 
-sudo apt-get install -y libreadline6-dev systemtap-sdt-dev zlib1g-dev libssl-dev libpam0g-dev bison flex libxml2 libxml2-utils libxml2-dev libxslt-dev xsltproc libkrb5-dev libldap2-dev libsystemd-dev gettext tcl-dev libperl-dev pkg-config libselinux1-dev python3-dev uuid-dev liblz4-dev meson ninja-build gpg wget libcurl4-openssl-dev libxml2-utils docbook-xsl xsltproc
+sudo apt-get update
+sudo apt-get install -y ${DEPS[@]}
 
 bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)"
-
-# Test dependencies
-sudo apt-get install -y libipc-run-perl python3-pykmip libhttp-server-simple-perl
 
 # Vault
 wget -O- https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
