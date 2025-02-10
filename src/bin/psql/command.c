@@ -1285,6 +1285,7 @@ exec_command_encoding(PsqlScanState scan_state, bool active_branch)
 				/* save encoding info into psql internal data */
 				pset.encoding = PQclientEncoding(pset.db);
 				pset.popt.topt.encoding = pset.encoding;
+				setFmtEncoding(pset.encoding);
 				SetVariable(pset.vars, "ENCODING",
 							pg_encoding_to_char(pset.encoding));
 			}
@@ -3739,6 +3740,8 @@ SyncVariables(void)
 	pset.encoding = PQclientEncoding(pset.db);
 	pset.popt.topt.encoding = pset.encoding;
 	pset.sversion = PQserverVersion(pset.db);
+
+	setFmtEncoding(pset.encoding);
 
 	SetVariable(pset.vars, "DBNAME", PQdb(pset.db));
 	SetVariable(pset.vars, "USER", PQuser(pset.db));
