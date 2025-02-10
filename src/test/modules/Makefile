@@ -12,6 +12,7 @@ SUBDIRS = \
 		  snapshot_too_old \
 		  test_bloomfilter \
 		  test_ddl_deparse \
+		  test_escape \
 		  test_extensions \
 		  test_ginpostinglist \
 		  test_integerset \
