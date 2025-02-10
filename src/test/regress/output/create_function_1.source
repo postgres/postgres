@@ -55,6 +55,9 @@ CREATE FUNCTION test_atomic_ops()
     RETURNS bool
     AS '@libdir@/regress@DLSUFFIX@'
     LANGUAGE C;
+CREATE FUNCTION test_enc_setup() RETURNS void
+    AS '@libdir@/regress@DLSUFFIX@', 'test_enc_setup'
+    LANGUAGE C STRICT;
 -- Tests creating a FDW handler
 CREATE FUNCTION test_fdw_handler()
     RETURNS fdw_handler
