@@ -5608,7 +5608,7 @@ msgstr "sort_ifadesi"
 
 #: sql_help.c:4764 sql_help.c:5742
 msgid "abort the current transaction"
-msgstr "aktif transcation'ı iptal et"
+msgstr "aktif transaction'ı iptal et"
 
 #: sql_help.c:4770
 msgid "change the definition of an aggregate function"
@@ -6272,7 +6272,7 @@ msgstr "ilk oturum ve geçerli oturum için kullanıcı tanımla"
 
 #: sql_help.c:5808
 msgid "set the characteristics of the current transaction"
-msgstr "geçerli transcation'ın karakteristiklerini ayarla"
+msgstr "geçerli transaction'ın karakteristiklerini ayarla"
 
 #: sql_help.c:5814
 msgid "show the value of a run-time parameter"
