@@ -790,16 +790,22 @@ appendPsqlMetaConnect(PQExpBuffer buf, const char *dbname)
 		}
 	}
 
-	appendPQExpBufferStr(buf, "\\connect ");
 	if (complex)
 	{
 		PQExpBufferData connstr;
 
 		initPQExpBuffer(&connstr);
+
+		/*
+		 * Force the target psql's encoding to SQL_ASCII.  We don't really
+		 * know the encoding of the database name, and it doesn't matter as
+		 * long as psql will forward it to the server unchanged.
+		 */
+		appendPQExpBufferStr(buf, "\\encoding SQL_ASCII\n");
+		appendPQExpBufferStr(buf, "\\connect -reuse-previous=on ");
+
 		appendPQExpBufferStr(&connstr, "dbname=");
 		appendConnStrVal(&connstr, dbname);
-
-		appendPQExpBufferStr(buf, "-reuse-previous=on ");
 
 		/*
 		 * As long as the name does not contain a newline, SQL identifier
@@ -807,12 +813,15 @@ appendPsqlMetaConnect(PQExpBuffer buf, const char *dbname)
 		 * involve psql-interpreted single quotes, which behaved differently
 		 * before PostgreSQL 9.2.
 		 */
-		appendPQExpBufferStr(buf, fmtId(connstr.data));
+		appendPQExpBufferStr(buf, fmtIdEnc(connstr.data, PG_SQL_ASCII));
 
 		termPQExpBuffer(&connstr);
 	}
 	else
-		appendPQExpBufferStr(buf, fmtId(dbname));
+	{
+		appendPQExpBufferStr(buf, "\\connect ");
+		appendPQExpBufferStr(buf, fmtIdEnc(dbname, PG_SQL_ASCII));
+	}
 	appendPQExpBufferChar(buf, '\n');
 }
 
