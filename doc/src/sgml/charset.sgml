@@ -1168,7 +1168,7 @@ CREATE COLLATION ignore_accents (provider = icu, locale = 'und-u-ks-level1-kc-tr
          <entry>Traditional Chinese, Taiwanese</entry>
          <entry>Yes</entry>
          <entry>Yes</entry>
-         <entry>1&ndash;3</entry>
+         <entry>1&ndash;4</entry>
          <entry></entry>
         </row>
         <row>
