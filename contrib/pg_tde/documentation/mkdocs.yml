@@ -159,16 +159,18 @@ nav:
   - get-help.md
   - features.md
   - Get started:
-    - "Install": "install.md"
+    - "1. Install": "install.md"
     - "Via apt": apt.md
     - "Via yum": yum.md   
-    - "Set up": "setup.md"
-    - "Test TDE": "test.md"
+    - "2. Set up": "setup.md"
+    - "3. Configure WAL encryption (tech preview)": wal-encryption.md
+    - "4. Test TDE": "test.md"
   - functions.md
   - Concepts:
     - "What is TDE": tde.md
     - table-access-method.md
   - How to:
+    - Set up multi-tenancy: multi-tenant-setup.md
     - Use reference to external parameters: external-parameters.md
     - Decrypt an encrypted table: decrypt.md
   - faq.md

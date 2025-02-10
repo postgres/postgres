@@ -1,6 +1,10 @@
-# Set up `pg_tde`
+# Set up multi-tenancy
 
-The steps below describe the global key provider configuration. This means that the entire PostgreSQL cluster is encrypted using the same global encryption keys. For how to configure multi-tenancy, see the [Set up multi-tenancy](multi-tenant-setup.md) guidelines.
+The steps below describe how to set up multi-tenancy with `pg_tde`. Multi-tenancy allows you to encrypt different databases with different keys. This provides granular control over data and enables you to introduce different security policies and access controls for each database so that only authorized users of specific databases have access to the data.
+
+If you don't need multi-tenancy, use the global key provider. See the configuration steps from the [Setup](setup.md) section.
+
+For how to enable WAL encryption, refer to the [WAL encryption](setup.md#wal-encryption) section.
 
 --8<-- "kms-considerations.md"
 
@@ -10,7 +14,7 @@ Load the `pg_tde` at the start time. The extension requires additional shared me
 
 1. Use the [ALTER SYSTEM :octicons-link-external-16:](https://www.postgresql.org/docs/current/sql-altersystem.html) command from `psql` terminal to modify the `shared_preload_libraries` parameter. This requires superuser privileges. 
 
-    ```sql
+    ```
     ALTER SYSTEM SET shared_preload_libraries = 'pg_tde';
     ```
 
@@ -28,7 +32,7 @@ Load the `pg_tde` at the start time. The extension requires additional shared me
        sudo systemctl restart postgresql-17
        ```
 
-3. Create the extension using the [CREATE EXTENSION :octicons-link-external-16:](https://www.postgresql.org/docs/current/sql-createextension.html) command. You must have the privileges of a superuser or a database owner to use this command. Connect to `psql` as a superuser for a database and run the following command:
+3. Create the extension using the [CREATE EXTENSION](https://www.postgresql.org/docs/current/sql-createextension.html) command. You must have the privileges of a superuser or a database owner to use this command. Connect to `psql` as a superuser for a database and run the following command:
 
     ```
     CREATE EXTENSION pg_tde;
@@ -36,15 +40,19 @@ Load the `pg_tde` at the start time. The extension requires additional shared me
     
     By default, the `pg_tde` extension is created for the currently used database. To enable data encryption in other databases, you must explicitly run the `CREATE EXTENSION` command against them. 
 
-4. Enable the `pg_tde` extension automatically for every newly created database. Modify the template `template1` database as follows: 
+    !!! tip
 
-    ```sh
-    psql -d template1 -c 'CREATE EXTENSION pg_tde;'
-    ```
+        You can have the `pg_tde` extension automatically enabled for every newly created database. Modify the template `template1` database as follows: 
 
-## Global key provider configuration
+        ```sh
+        psql -d template1 -c 'CREATE EXTENSION pg_tde;'
+        ```
 
-1. Set up a global key provider.
+## Key provider configuration
+
+You must do these steps for every database where you have created the extension.
+
+1. Set up a key provider.
 
     === "With KMIP server"
 
@@ -52,13 +60,12 @@ Load the `pg_tde` at the start time. The extension requires additional shared me
         
         For testing purposes, you can use the PyKMIP server which enables you to set up required certificates. To use a real KMIP server, make sure to obtain the valid certificates issued by the key management appliance. 
 
-        ```sql
-        SELECT pg_tde_add_key_provider_kmip('PG_TDE_GLOBAL', 'provider-name','kmip-IP', 5696, '/path_to/server_certificate.pem', '/path_to/client_key.pem');
+        ```
+        SELECT pg_tde_add_key_provider_kmip('provider-name','kmip-IP', 5696, '/path_to/server_certificate.pem', '/path_to/client_key.pem');
         ```
 
         where:
 
-        * `PG_TDE_GLOBAL` is the constant that defines that this is the global key provider
         * `provider-name` is the name of the provider. You can specify any name, it's for you to identify the provider.
         * `kmip-IP` is the IP address of a domain name of the KMIP server
         * `port` is the port to communicate with the KMIP server. Typically used port is 5696.
@@ -68,20 +75,19 @@ Load the `pg_tde` at the start time. The extension requires additional shared me
         <i warning>:material-information: Warning:</i> This example is for testing purposes only:
 
         ```
-        SELECT pg_tde_add_key_provider_kmip('PG_TDE_GLOBAL','kmip','127.0.0.1', 5696, '/tmp/server_certificate.pem', '/tmp/client_key_jane_doe.pem');
+        SELECT pg_tde_add_key_provider_kmip('kmip','127.0.0.1', 5696, '/tmp/server_certificate.pem', '/tmp/client_key_jane_doe.pem');
         ```
 
     === "With HashiCorp Vault"
 
         The Vault server setup is out of scope of this document.
 
-        ```
-        SELECT pg_tde_add_key_provider_vault_v2('PG_TDE_GLOBAL','provider-name','root_token','url','mount','ca_path');
+        ```sql
+        SELECT pg_tde_add_key_provider_vault_v2('provider-name','root_token','url','mount','ca_path');
         ``` 
 
         where: 
 
-        * `PG_TDE_GLOBAL` is the constant that defines that this is the global key provider
         * `url` is the URL of the Vault server
         * `mount` is the mount point where the keyring should store the keys
         * `root_token` is an access token with read and write access to the above mount point
@@ -89,48 +95,44 @@ Load the `pg_tde` at the start time. The extension requires additional shared me
 
         <i warning>:material-information: Warning:</i> This example is for testing purposes only:
 
-        ```
-        SELECT pg_tde_add_key_provider_file_vault_v2('PG_TDE_GLOBAL','my-vault','http://vault.vault.svc.cluster.local:8200,'secret/data','hvs.zPuyktykA...example...ewUEnIRVaKoBzs2', NULL);
-        ```
+	    ```
+	    SELECT pg_tde_add_key_provider_file_vault_v2('my-vault','http://vault.vault.svc.cluster.local:8200,'secret/data','hvs.zPuyktykA...example...ewUEnIRVaKoBzs2', NULL);
+	    ```
 
     === "With a keyring file"
 
-        This setup is intended for development and stores the keys unencrypted in the specified data file. See [how to use external reference to parameters](external-parameters.md) to add an extra security layer to your setup.
-  
+        This setup is intended for development and stores the keys unencrypted in the specified data file.    
 
         ```sql
-        SELECT pg_tde_add_key_provider_file('PG_TDE_GLOBAL','provider-name','/path/to/the/keyring/data.file');
+        SELECT pg_tde_add_key_provider_file('provider-name','/path/to/the/keyring/data.file');
         ```
 
-        <i warning>:material-information: Warning:</i> This example is for testing purposes only:
+	    <i warning>:material-information: Warning:</i> This example is for testing purposes only:
 
-        ```sql
-        SELECT pg_tde_add_key_provider_file('PG_TDE_GLOBAL','file-keyring','/tmp/pg_tde_test_local_keyring.per');
-        ```
+	    ```sql
+	    SELECT pg_tde_add_key_provider_file('file-keyring','/tmp/pg_tde_test_local_keyring.per');
+	    ```
        
        
 2. Add a principal key
 
     ```sql
-    SELECT pg_tde_set_principal_key('name-of-the-principal-key','PG_TDE_GLOBAL','provider-name','ensure_new_key');
+    SELECT pg_tde_set_principal_key('name-of-the-principal-key', 'provider-name','ensure_new_key');
     ```
 
     where:
 
     * `name-of-the-principal-key` is the name of the principal key. You will use this name to identify the key.
     * `provider-name` is the name of the key provider you added before. The principal key will be associated with this provider.
-    * `ensure_new_key` defines if a principal key must be unique. The default value `true` means that you must speficy a unique key during key rotation. The `false` value allows reusing an existing principal key.);
-    ```
+    * `ensure_new_key` defines if a principal key must be unique. The default value `true` means that you must speficy a unique key during key rotation. The `false` value allows reusing an existing principal key.
 
-    <i warning>:material-information: Warning:</i> This example is for testing purposes only. Replace the key name and provider name with your values:
+    <i warning>:material-information: Warning:</i> This example is for testing purposes only:
 
     ```sql
-    SELECT pg_tde_set_principal_key('test-db-master-key','PG_TDE_GLOBAL','file-vault','ensure_new_key');
+    SELECT pg_tde_set_principal_key('test-db-master-key','file-vault','ensure_new_key');
     ```
 
     The key is auto-generated.
 
-## Next steps
 
-[WAL encryption](wal-encryption.md){.md-button}
- 
+   <i info>:material-information: Info:</i> The key provider configuration is stored in the database catalog in an unencrypted table. See [how to use external reference to parameters](external-parameters.md) to add an extra security layer to your setup.

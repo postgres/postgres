@@ -1,14 +1,10 @@
 # Install `pg_tde` on Red Hat Enterprise Linux and derivatives
 
-The packages for the tech preview `pg_tde` are available in the experimental repository for Percona Distribution for PostgreSQL 17. 
-
-Check the [list of supported platforms](install.md#__tabbed_1_2).
-
 This tutorial shows how to install `pg_tde` with [Percona Distribution for PostgreSQL](https://docs.percona.com/postgresql/latest/index.html).
 
-## Preconditions
+Check the [list of supported platforms](install.md#__tabbed_1_1).
 
-### Install `percona-release`
+## Install `percona-release`
 
 You need the `percona-release` repository management tool that enables the desired Percona repository for you.
 
@@ -32,15 +28,15 @@ You need the `percona-release` repository management tool that enables the desir
 
     The `pg_tde` {{release}} extension is a part of the `percona-postgresql17` package. If you installed a previous version of `pg_tde` from the `percona-pg_tde_17` package, do the following:
 
-    * Drop the extension using the `DROP EXTENSION` with `CASCADE` command.
+    1. Drop the extension using the `DROP EXTENSION` with `CASCADE` command.
 
-       <i warning>:material-alert: Warning:</i> The use of the `CASCADE` parameter deletes all tables that were created in the database with `pg_tde` enabled and also all dependencies upon the encrypted table (e.g. foreign keys in a non-encrypted table used in the encrypted one).    
+       The use of the `CASCADE` parameter deletes all tables that were created in the database with `pg_tde` enabled and also all dependencies upon the encrypted table (e.g. foreign keys in a non-encrypted table used in the encrypted one).    
 
        ```sql
        DROP EXTENSION pg_tde CASCADE
        ```
 
-    * Uninstall the `percona-pg_tde_17` package.  
+    2. Uninstall the `percona-pg_tde_17` package.  
     
 
 ```bash

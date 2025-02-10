@@ -2,30 +2,22 @@
 
 The `pg_tde` extension provides the following functions:
 
-## pg_tde_add_key_provider_file
+## Key provider management
 
-Creates a new key provider for the database using a local file.
-
-This function is intended for development, and stores the keys unencrypted in the specified data file.
-
-```
-SELECT pg_tde_add_key_provider_file('provider-name','/path/to/the/keyring/data.file');
-```
-
-All parameters can be either strings, or JSON objects [referencing remote parameters](external-parameters.md).
-
-## pg_tde_add_key_provider_vault_v2
+### pg_tde_add_key_provider_vault_v2
 
 Creates a new key provider for the database using a remote HashiCorp Vault server.
 
 The specified access parameters require permission to read and write keys at the location.
 
 ```
-SELECT pg_tde_add_key_provider_vault_v2('provider-name','secret_token','url','mount','ca_path');
+SELECT pg_tde_add_key_provider_vault_v2('PG_TDE_GLOBAL','provider-name','secret_token','url','mount','ca_path');
 ```
 
 where:
 
+* `PG_TDE_GLOBAL` is the constant that defines the configuration for a global key provider. For multi-tenant setup, omit this parameter.
+* `provider-name` is the name of the key provider. You can specify any name, it's for you to identify the provider
 * `url` is the URL of the Vault server
 * `mount` is the mount point where the keyring should store the keys
 * `secret_token` is an access token with read and write access to the above mount point
@@ -33,65 +25,115 @@ where:
 
 All parameters can be either strings, or JSON objects [referencing remote parameters](external-parameters.md).
 
-## pg_tde_add_key_provider_kmip
+### pg_tde_add_key_provider_kmip
 
 Creates a new key provider for the database using a remote KMIP server.
 
 The specified access parameters require permission to read and write keys at the server.
 
 ```
-SELECT pg_tde_add_key_provider_kmip('provider-name','kmip-IP', 5696, '/path_to/server_certificate.pem', '/path_to/client_key.pem');
+SELECT pg_tde_add_key_provider_kmip('PG_TDE_GLOBAL','provider-name','kmip-IP', 5696, '/path_to/server_certificate.pem', '/path_to/client_key.pem');
 ```
 
 where:
 
+* `PG_TDE_GLOBAL` is the constant that defines the configuration for a global key provider. For multi-tenant setup, omit this parameter.
 * `provider-name` is the name of the provider. You can specify any name, it's for you to identify the provider.
 * `kmip-IP` is the IP address of a domain name of the KMIP server
 * The port to communicate with the KMIP server. The default port is `5696`.
 * `server-certificate` is the path to the certificate file for the KMIP server.
 * `client key` is the path to the client key.
 
-## pg_tde_set_principal_key
+### pg_tde_add_key_provider_file
 
-Sets the principal key for the database using the specified key provider.
+Creates a new key provider for the database using a local file.
+
+This function is intended for development, and stores the keys unencrypted in the specified data file.
+
+```
+SELECT pg_tde_add_key_provider_file('PG_TDE_GLOABL','provider-name','/path/to/the/keyring/data.file');
+```
+
+where:
+
+* `PG_TDE_GLOBAL` is the constant that defines the configuration for a global key provider. For multi-tenant setup, omit this parameter.
+* `provider-name` is the name of the provider. You can specify any name, it's for you to identify the provider.
+* `/path/to/the/keyring/data.file` is the path to the keyring file.
+
+
+All parameters can be either strings, or JSON objects [referencing remote parameters](external-parameters.md).
+
+### pg_tde_change_key_provider_vault_v2
+
+Modifies the configuration for an existing key provider for the database using a remote HashiCorp Vault server.
+
+When changing a single parameter (for example, the path the client certificate), you must specify all parameters with their existing values.
+
+The specified access parameters require permission to read and write keys at the location.
+
+```
+SELECT pg_tde_change_key_provider_vault_v2('PG_TDE_GLOBAL','provider-name','secret_token','url','mount','ca_path');
+```
+
+### pg_tde_change_key_provider_kmip
+
+Modifies the configuration for an existing key provider for the database using a remote KMIP server.
+
+When changing a single parameter (for example, the path the client certificate), you must specify all parameters with their existing values.
+
+
+The specified access parameters require permission to read and write keys at the server.
+
+```sql
+SELECT pg_tde_change_key_provider_kmip('PG_TDE_GLOBAL','provider-name','kmip-IP', 5696, '/path_to/server_certificate.pem', '/path_to/client_key.pem');
+```
+
+### pg_tde_change_key_provider_file
+
+Changes the configuration of an existing key provider for a database. Use this function for development and testing purposes because it stores the keys unencrypted in the specified data file.
+
+When changing a single parameter (for example, the path the keyring data file), you must specify all parameters with their existing values.
+
+
+```
+SELECT pg_tde_add_key_provider_file('PG_TDE_GLOABL','provider-name','/path/to/the/keyring/data.file');
+```
+
+
+## Principal key management
+
+### pg_tde_set_principal_key
+
+Creates or rotates the principal key for the database using the specified key provider. The principal key name is also used for constructing the name in the provider, for example on the remote Vault server.
+
+ The `ensure_new_key` parameter instructs the function how to handle a principal key during key rotation:
+
+* If set to `true` (default), a new key must be unique. 
+* If set to `false`, an existing principal key will be reused. This enables you to copy the current principal key to a new key provider.
+
+
+```
+SELECT pg_tde_set_principal_key('name-of-the-principal-key','provider-name','ensure_new_key');
+```
+
+### pg_tde_set_server_principal_key
+
+Creates or rotates the global principal key for the database using the specified key provider. Use this function to set a principal key for WAL encryption.
 
 The principal key name is also used for constructing the name in the provider, for example on the remote Vault server.
 
-You can use this function only to a principal key. For changes in the principal key, use the [`pg_tde_rotate_principal_key`](#pg_tde_rotate_principal_key) function.
+The `ensure_new_key` parameter instructs the function how to handle a principal key during key rotation:
+
+* If set to `true` (default), a new key must be unique. 
+* If set to `false`, an existing principal key will be reused. This enables you to copy the current principal key to a new key provider.
 
 ```
-SELECT pg_tde_set_principal_key('name-of-the-principal-key', 'provider-name');
+SELECT pg_tde_set_principal_key('name-of-the-principal-key','provider-name','ensure_new_key');
 ```
 
-## pg_tde_rotate_principal_key
+## Encryption status check
 
-Creates a new version of the specified principal key and updates the database so that it uses the new principal key version.
-
-When used without any parameters, the function will just create a new version of the current database
-principal key, using the same provider:
-
-```
-SELECT pg_tde_rotate_principal_key();
-```
-
-Alternatively, you can pass two parameters to the function, specifying both a new key name and a new provider name:
-
-```
-SELECT pg_tde_rotate_principal_key('name-of-the-new-principal-key', 'name-of-the-new-provider');
-```
-
-Both parameters support the `NULL` value, which means that the parameter won't be changed:
-
-```
--- creates  new principal key on the same provider as before
-SELECT pg_tde_rotate_principal_key('name-of-the-new-principal-key', NULL);
-
--- copies the current principal key to a new provider
-SELECT pg_tde_rotate_principal_key(NULL, 'name-of-the-new-provider');
-```
-
-
-## pg_tde_is_encrypted
+### pg_tde_is_encrypted
 
 Tells if a relation is encrypted using the `pg_tde` extension or not.
 

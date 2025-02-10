@@ -1,33 +1,5 @@
 # Installation
 
-## Considerations
-
-You can use the following options to manage encryption keys:
-
-* Use the Key Management Store (KMS). This is the recommended approach. `pg_tde` supports the following KMS:
-
-    * HashiCorp Vault as the key/value secrets engine version 2 with secret versioning
-    * HashiCorp Vault as the KMIP server. The KMIP server is part of Vault Enterprise and requires a license
-    * OpenBao as the open-source alternative to HashiCorp Vault KMIP 
-    * A KMIP-compatible server. For testing and development purposes you can use PyKMIP.
-
-    The KMS configuration is out of scope of this document. We assume that you have the KMS up and running. For the `pg_tde` configuration, you need the following information:  
-
-    === "Vault secrets engine"  
-
-        * The secret access token to the Vault server
-        * The URL to access the Vault server
-        * (Optional) The CA file used for SSL verification  
-    
-    === "KMIP server"
-
-        * The hostname or IP address of the KMIP server.
-        * The valid certificates issued by the key management appliance.
-
-* Use the local keyfile. Use the keyfile only development and testing purposes since the keys are stored unencrypted.
-
-## Procedure 
-
 Install `pg_tde` using one of available installation methods:
 
 
@@ -78,9 +50,9 @@ Install `pg_tde` using one of available installation methods:
 
     !!! note
 
-        The steps below are for the PostgreSQL Community version of `pg_tde`. It provides the `tde_heap_basic` access method for data encryption. 
+        The steps below are for the deprecated PostgreSQL Community version of `pg_tde` and apply only to PostgreSQL 16. This `pg_tde` version provides only the `tde_heap_basic` access method for data encryption. 
 
-        To run the `pg_tde` version for Percona Server for PostgreSQL, [use the Percona Distribution for PostgreSQL Docker image :octicons-link-external-16:](https://docs.percona.com/postgresql/17/docker.html). 
+        To enjoy full encryption features, run the `pg_tde` version for Percona Server for PostgreSQL. [Use the Percona Distribution for PostgreSQL Docker image :octicons-link-external-16:](https://docs.percona.com/postgresql/17/docker.html). 
 
     You can find Docker images on [Docker Hub](https://hub.docker.com/r/perconalab/pg_tde). Images are built on top of [postgres:16](https://hub.docker.com/_/postgres) official image.     
 

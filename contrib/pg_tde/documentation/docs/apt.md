@@ -1,10 +1,8 @@
 # Install `pg_tde` on Debian or Ubuntu
 
-The packages for the tech preview `pg_tde` are available in the experimental repository for Percona Distribution for PostgreSQL 17. 
+This tutorial shows how to install `pg_tde` with [Percona Distribution for PostgreSQL :octicons-link-external-16:](https://docs.percona.com/postgresql/latest/index.html).
 
-Check the [list of supported platforms](install.md#__tabbed_1_2).
-
-This tutorial shows how to install `pg_tde` with [Percona Distribution for PostgreSQL](https://docs.percona.com/postgresql/latest/index.html).
+Check the [list of supported platforms](install.md#__tabbed_1_1).
 
 ## Preconditions
 
@@ -41,8 +39,6 @@ This tutorial shows how to install `pg_tde` with [Percona Distribution for Postg
 
 4. Enable the Percona Distribution for PostgreSQL repository
 
-    Percona provides [two repositories](repo-overview.md) for Percona Distribution for PostgreSQL. We recommend enabling the Major release repository to timely receive the latest updates. 
-
     ```{.bash data-prompt="$"}
     $ sudo percona-release enable ppg-{{pgversion17}} 
     ```
@@ -59,15 +55,15 @@ This tutorial shows how to install `pg_tde` with [Percona Distribution for Postg
 
     The `pg_tde` {{release}} extension is a part of the `percona-postgresql-17` package. If you installed a previous version of `pg_tde` from the `percona-postgresql-17-pg-tde` package, do the following:
 
-    * Drop the extension using the `DROP EXTENSION` with `CASCADE` command.
+    1. Drop the extension using the `DROP EXTENSION` with `CASCADE` command.
 
-       <i warning>:material-alert: Warning:</i> The use of the `CASCADE` parameter deletes all tables that were created in the database with `pg_tde` enabled and also all dependencies upon the encrypted table (e.g. foreign keys in a non-encrypted table used in the encrypted one).    
+       The use of the `CASCADE` parameter deletes all tables that were created in the database with `pg_tde` enabled and also all dependencies upon the encrypted table (e.g. foreign keys in a non-encrypted table used in the encrypted one).    
 
        ```sql
        DROP EXTENSION pg_tde CASCADE
        ```
 
-    * Uninstall the `percona-postgresql-17-pg-tde` package.  
+    2. Uninstall the `percona-postgresql-17-pg-tde` package.  
 
 After all [preconditions](#preconditions) are met, run the following command to install `pg_tde`:
 
