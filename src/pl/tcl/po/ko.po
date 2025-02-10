@@ -5,10 +5,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pltcl (PostgreSQL) 16\n"
+"Project-Id-Version: pltcl (PostgreSQL) 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2023-09-07 05:38+0000\n"
-"PO-Revision-Date: 2023-05-30 12:40+0900\n"
+"POT-Creation-Date: 2025-01-17 04:38+0000\n"
+"PO-Revision-Date: 2025-01-16 11:03+0900\n"
 "Last-Translator: Ioseph Kim <ioseph@uri.sarang.net>\n"
 "Language-Team: Korean Team <pgsql-kr@postgresql.kr>\n"
 "Language: ko\n"
@@ -17,58 +17,63 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: pltcl.c:462
+#: pltcl.c:466
 msgid "PL/Tcl function to call once when pltcl is first used."
 msgstr "pltcl 언어가 처음 사용될 때 한번 호출 될 PL/Tcl 함수"
 
-#: pltcl.c:469
+#: pltcl.c:473
 msgid "PL/TclU function to call once when pltclu is first used."
 msgstr "pltclu 언어가 처음 사용될 때 한번 호출 될 PL/Tcl 함수"
 
-#: pltcl.c:636
+#: pltcl.c:640
 #, c-format
 msgid "function \"%s\" is in the wrong language"
 msgstr "\"%s\" 함수에 잘못된 언어가 있음"
 
-#: pltcl.c:647
+#: pltcl.c:651
 #, c-format
 msgid "function \"%s\" must not be SECURITY DEFINER"
 msgstr "\"%s\" 함수는 SECURITY DEFINER 속성이 없어야 합니다"
 
 #. translator: %s is "pltcl.start_proc" or "pltclu.start_proc"
-#: pltcl.c:681
+#: pltcl.c:685
 #, c-format
 msgid "processing %s parameter"
 msgstr "%s 매개 변수 처리 중"
 
-#: pltcl.c:834
+#: pltcl.c:838
 #, c-format
 msgid "set-valued function called in context that cannot accept a set"
 msgstr "집합이 값이 함수가 집합을 사용할 수 없는 구문에서 호출 되었음"
 
-#: pltcl.c:839
+#: pltcl.c:843
 #, c-format
 msgid "materialize mode required, but it is not allowed in this context"
 msgstr "materialize 모드가 필요합니다만, 이 구문에서는 허용되지 않습니다"
 
-#: pltcl.c:1012
+#: pltcl.c:1016
 #, c-format
 msgid ""
 "function returning record called in context that cannot accept type record"
 msgstr ""
 "레코드를 반환하는 함수가 레코드 형을 사용할 수 없는 구문에서 호출 되었음"
 
-#: pltcl.c:1295
+#: pltcl.c:1035
 #, c-format
-msgid "could not split return value from trigger: %s"
-msgstr "트리거에서 반환값을 분리할 수 없음: %s"
+msgid "could not parse function return value: %s"
+msgstr "함수 반환값을 분석할 수 없음: %s"
 
-#: pltcl.c:1376 pltcl.c:1803
+#: pltcl.c:1302
+#, c-format
+msgid "could not parse trigger return value: %s"
+msgstr "트리거 반환값을 분석할 수 없음: %s"
+
+#: pltcl.c:1387 pltcl.c:1814
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: pltcl.c:1377
+#: pltcl.c:1388
 #, c-format
 msgid ""
 "%s\n"
@@ -77,42 +82,46 @@ msgstr ""
 "%s\n"
 "해당 PL/Tcl 함수: \"%s\""
 
-#: pltcl.c:1540
+#: pltcl.c:1551
 #, c-format
 msgid "trigger functions can only be called as triggers"
 msgstr "트리거 함수는 트리거로만 호출될 수 있음"
 
-#: pltcl.c:1544
+#: pltcl.c:1555
 #, c-format
 msgid "PL/Tcl functions cannot return type %s"
 msgstr "PL/Tcl 함수는 %s 자료형을 반환할 수 없음"
 
-#: pltcl.c:1583
+#: pltcl.c:1594
 #, c-format
 msgid "PL/Tcl functions cannot accept type %s"
 msgstr "PL/Tcl 함수는 %s 자료형을 사용할 수 없음"
 
-#: pltcl.c:1695
+#: pltcl.c:1706
 #, c-format
 msgid "could not create internal procedure \"%s\": %s"
 msgstr "\"%s\" 내부 프로시져를 만들 수 없음: %s"
 
-#: pltcl.c:3199
+#: pltcl.c:3211
 #, c-format
 msgid "column name/value list must have even number of elements"
 msgstr "칼럼 이름/값 목록은 그 요소의 개수가 짝수여야 함"
 
-#: pltcl.c:3217
+#: pltcl.c:3229
 #, c-format
 msgid "column name/value list contains nonexistent column name \"%s\""
 msgstr "칼럼 이름/값 목록에 \"%s\" 칼럼에 대한 값이 없음"
 
-#: pltcl.c:3224
+#: pltcl.c:3236
 #, c-format
 msgid "cannot set system attribute \"%s\""
 msgstr "\"%s\" 시스템 속성을 지정할 수 없음"
 
-#: pltcl.c:3230
+#: pltcl.c:3242
 #, c-format
 msgid "cannot set generated column \"%s\""
 msgstr "\"%s\" 계산된 칼럼을 지정할 수 없음"
+
+#, c-format
+#~ msgid "could not split return value from trigger: %s"
+#~ msgstr "트리거에서 반환값을 분리할 수 없음: %s"

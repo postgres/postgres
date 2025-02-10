@@ -7,10 +7,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_amcheck (PostgreSQL) 16\n"
+"Project-Id-Version: pg_amcheck (PostgreSQL) 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-08-01 11:23+0000\n"
-"PO-Revision-Date: 2024-08-01 20:31-0400\n"
+"POT-Creation-Date: 2024-11-16 05:22+0000\n"
+"PO-Revision-Date: 2024-11-16 14:23+0100\n"
 "Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
 "Language: es\n"
@@ -253,8 +253,8 @@ msgstr "en base de datos «%s»: usando amcheck versión «%s» en esquema «%s�
 
 #: pg_amcheck.c:624
 #, c-format
-msgid "--checkunique option is not supported by amcheck version \"%s\""
-msgstr "la opción --checkunique no está soportada por la versión «%s» de amcheck"
+msgid "option %s is not supported by amcheck version %s"
+msgstr "la opción %s no está soportada por la versión %s de amcheck"
 
 #: pg_amcheck.c:650
 #, c-format

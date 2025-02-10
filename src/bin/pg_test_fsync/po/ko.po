@@ -5,10 +5,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_test_fsync (PostgreSQL) 16\n"
+"Project-Id-Version: pg_test_fsync (PostgreSQL) 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2023-09-07 05:52+0000\n"
-"PO-Revision-Date: 2023-05-30 12:39+0900\n"
+"POT-Creation-Date: 2025-01-17 04:54+0000\n"
+"PO-Revision-Date: 2025-01-16 11:05+0900\n"
 "Last-Translator: Ioseph Kim <ioseph@uri.sarang.net>\n"
 "Language-Team: Korean <pgsql-kr@postgresql.kr>\n"
 "Language: ko\n"
@@ -37,89 +37,100 @@ msgstr "상세정보: "
 msgid "hint: "
 msgstr "힌트: "
 
+#: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:161
+#, c-format
+msgid "out of memory\n"
+msgstr "메모리 부족\n"
+
+#: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:153
+#, c-format
+msgid "cannot duplicate null pointer (internal error)\n"
+msgstr "널 포인터를 중복할 수 없음 (내부 오류)\n"
+
 #. translator: maintain alignment with NA_FORMAT
-#: pg_test_fsync.c:32
+#: pg_test_fsync.c:38
 #, c-format
 msgid "%13.3f ops/sec  %6.0f usecs/op\n"
 msgstr "%13.3f ops/sec  %6.0f usecs/op\n"
 
-#: pg_test_fsync.c:50
+#: pg_test_fsync.c:56
 #, c-format
 msgid "could not create thread for alarm"
 msgstr "알람용 쓰레드를 만들 수 없음"
 
-#: pg_test_fsync.c:95
+#: pg_test_fsync.c:101
 #, c-format
 msgid "%s: %m"
 msgstr "%s: %m"
 
-#: pg_test_fsync.c:159
+#: pg_test_fsync.c:165
 #, c-format
 msgid "Usage: %s [-f FILENAME] [-s SECS-PER-TEST]\n"
 msgstr "사용법: %s [-f 파일이름] [-s 검사초]\n"
 
-#: pg_test_fsync.c:185
+#: pg_test_fsync.c:191
 #, c-format
 msgid "invalid argument for option %s"
 msgstr "%s 옵션의 잘못된 인자"
 
-#: pg_test_fsync.c:186 pg_test_fsync.c:198 pg_test_fsync.c:207
+#: pg_test_fsync.c:192 pg_test_fsync.c:204 pg_test_fsync.c:213
 #, c-format
 msgid "Try \"%s --help\" for more information."
 msgstr "자세한 사항은 \"%s --help\" 명령으로 살펴보세요."
 
-#: pg_test_fsync.c:192
+#: pg_test_fsync.c:198
 #, c-format
 msgid "%s must be in range %u..%u"
 msgstr "%s 값은 %u부터 %u까지 지정할 수 있습니다."
 
-#: pg_test_fsync.c:205
+#: pg_test_fsync.c:211
 #, c-format
 msgid "too many command-line arguments (first is \"%s\")"
 msgstr "너무 많은 명령행 인자를 지정했습니다. (처음 \"%s\")"
 
-#: pg_test_fsync.c:211
+#: pg_test_fsync.c:217
 #, c-format
 msgid "%u second per test\n"
 msgid_plural "%u seconds per test\n"
 msgstr[0] "검사 간격: %u초\n"
 
-#: pg_test_fsync.c:216
+#: pg_test_fsync.c:222
 #, c-format
 msgid "O_DIRECT supported on this platform for open_datasync and open_sync.\n"
 msgstr ""
 "이 플랫폼에서는 open_datasync, open_sync 에서 O_DIRECT 옵션을 지원함.\n"
 
-#: pg_test_fsync.c:218
+#: pg_test_fsync.c:224
 #, c-format
 msgid "F_NOCACHE supported on this platform for open_datasync and open_sync.\n"
 msgstr ""
 "이 플랫폼에서는 open_datasync, open_sync 에서 F_NOCACHE 옵션을 지원함.\n"
 
-#: pg_test_fsync.c:220
+#: pg_test_fsync.c:226
 #, c-format
 msgid "Direct I/O is not supported on this platform.\n"
 msgstr "이 플랫폼은 direct I/O 기능을 지원하지 않음.\n"
 
-#: pg_test_fsync.c:245 pg_test_fsync.c:335 pg_test_fsync.c:357
-#: pg_test_fsync.c:381 pg_test_fsync.c:525 pg_test_fsync.c:537
-#: pg_test_fsync.c:553 pg_test_fsync.c:559 pg_test_fsync.c:581
+#: pg_test_fsync.c:251 pg_test_fsync.c:341 pg_test_fsync.c:363
+#: pg_test_fsync.c:387 pg_test_fsync.c:531 pg_test_fsync.c:543
+#: pg_test_fsync.c:559 pg_test_fsync.c:565 pg_test_fsync.c:587
 msgid "could not open output file"
 msgstr "출력 파일을 열 수 없음"
 
-#: pg_test_fsync.c:249 pg_test_fsync.c:319 pg_test_fsync.c:344
-#: pg_test_fsync.c:366 pg_test_fsync.c:390 pg_test_fsync.c:429
-#: pg_test_fsync.c:488 pg_test_fsync.c:527 pg_test_fsync.c:555
-#: pg_test_fsync.c:586
+#: pg_test_fsync.c:255 pg_test_fsync.c:325 pg_test_fsync.c:350
+#: pg_test_fsync.c:372 pg_test_fsync.c:396 pg_test_fsync.c:435
+#: pg_test_fsync.c:494 pg_test_fsync.c:533 pg_test_fsync.c:561
+#: pg_test_fsync.c:592
 msgid "write failed"
 msgstr "쓰기 실패"
 
-#: pg_test_fsync.c:253 pg_test_fsync.c:368 pg_test_fsync.c:392
-#: pg_test_fsync.c:529 pg_test_fsync.c:561
+#: pg_test_fsync.c:259 pg_test_fsync.c:374 pg_test_fsync.c:398
+#: pg_test_fsync.c:535 pg_test_fsync.c:567
 msgid "fsync failed"
 msgstr "fsync 실패"
 
-#: pg_test_fsync.c:292
+#: pg_test_fsync.c:298
 #, c-format
 msgid ""
 "\n"
@@ -128,7 +139,7 @@ msgstr ""
 "\n"
 "하나의 %dkB 쓰기에 대한 파일 싱크 방법 비교:\n"
 
-#: pg_test_fsync.c:294
+#: pg_test_fsync.c:300
 #, c-format
 msgid ""
 "\n"
@@ -137,24 +148,25 @@ msgstr ""
 "\n"
 "두개의 %dkB 쓰기에 대한 파일 싱크 방법 비교:\n"
 
-#: pg_test_fsync.c:295
+#: pg_test_fsync.c:301
 #, c-format
 msgid ""
-"(in wal_sync_method preference order, except fdatasync is Linux's default)\n"
+"(in \"wal_sync_method\" preference order, except fdatasync is Linux's "
+"default)\n"
 msgstr ""
-"(fdatasync가 리눅스 기본값이기에 제외하고, wal_sync_method 우선으로 처리 "
+"(fdatasync가 리눅스 기본값이기에 제외하고, \"wal_sync_method\" 우선으로 처리 "
 "함)\n"
 
-#: pg_test_fsync.c:306 pg_test_fsync.c:409 pg_test_fsync.c:476
+#: pg_test_fsync.c:312 pg_test_fsync.c:415 pg_test_fsync.c:482
 msgid "n/a*"
 msgstr "n/a*"
 
-#: pg_test_fsync.c:325 pg_test_fsync.c:397 pg_test_fsync.c:435
-#: pg_test_fsync.c:494
+#: pg_test_fsync.c:331 pg_test_fsync.c:403 pg_test_fsync.c:441
+#: pg_test_fsync.c:500
 msgid "n/a"
 msgstr "n/a"
 
-#: pg_test_fsync.c:440
+#: pg_test_fsync.c:446
 #, c-format
 msgid ""
 "* This file system and its mount options do not support direct\n"
@@ -163,7 +175,7 @@ msgstr ""
 "* 이 파일 시스템과 마운트 옵션이 direct I/O 기능을 지원하지 않음\n"
 "  예: journaled mode에서 ext4\n"
 
-#: pg_test_fsync.c:448
+#: pg_test_fsync.c:454
 #, c-format
 msgid ""
 "\n"
@@ -172,7 +184,7 @@ msgstr ""
 "\n"
 "서로 다른 쓰기량으로 open_sync 비교:\n"
 
-#: pg_test_fsync.c:449
+#: pg_test_fsync.c:455
 #, c-format
 msgid ""
 "(This is designed to compare the cost of writing 16kB in different write\n"
@@ -180,27 +192,27 @@ msgid ""
 msgstr ""
 "(서로 다른 크기로 16kB를 쓰는데, open_sync 옵션을 사용할 때의 비용 비교)\n"
 
-#: pg_test_fsync.c:452
+#: pg_test_fsync.c:458
 msgid " 1 * 16kB open_sync write"
 msgstr " 1 * 16kB open_sync 쓰기"
 
-#: pg_test_fsync.c:453
+#: pg_test_fsync.c:459
 msgid " 2 *  8kB open_sync writes"
 msgstr " 2 * 8kB open_sync 쓰기"
 
-#: pg_test_fsync.c:454
+#: pg_test_fsync.c:460
 msgid " 4 *  4kB open_sync writes"
 msgstr " 4 * 4kB open_sync 쓰기"
 
-#: pg_test_fsync.c:455
+#: pg_test_fsync.c:461
 msgid " 8 *  2kB open_sync writes"
 msgstr " 8 * 2kB open_sync 쓰기"
 
-#: pg_test_fsync.c:456
+#: pg_test_fsync.c:462
 msgid "16 *  1kB open_sync writes"
 msgstr "16 * 1kB open_sync 쓰기"
 
-#: pg_test_fsync.c:510
+#: pg_test_fsync.c:516
 #, c-format
 msgid ""
 "\n"
@@ -209,7 +221,7 @@ msgstr ""
 "\n"
 "쓰기 방지 파일에서 fsync 작동 여부 검사:\n"
 
-#: pg_test_fsync.c:511
+#: pg_test_fsync.c:517
 #, c-format
 msgid ""
 "(If the times are similar, fsync() can sync data written on a different\n"
@@ -218,7 +230,7 @@ msgstr ""
 "(이 값이 비슷하다면, fsync() 호출로 여러 파일 상태에 대해서 sync를 사용\n"
 "할 수 있음.)\n"
 
-#: pg_test_fsync.c:576
+#: pg_test_fsync.c:582
 #, c-format
 msgid ""
 "\n"

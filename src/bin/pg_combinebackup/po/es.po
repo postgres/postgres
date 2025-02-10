@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_combinebackup (PostgreSQL) 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-08-01 11:22+0000\n"
-"PO-Revision-Date: 2024-08-04 22:45-0400\n"
+"POT-Creation-Date: 2024-11-16 05:22+0000\n"
+"PO-Revision-Date: 2024-11-16 09:07+0100\n"
 "Last-Translator: Álvaro Herrera <alvherre@lvh.no-ip.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
 "Language: es\n"
@@ -46,7 +46,7 @@ msgid "could not open file \"%s\" for reading: %m"
 msgstr "no se pudo abrir archivo «%s» para lectura: %m"
 
 #: ../../common/controldata_utils.c:110 copy_file.c:150 load_manifest.c:161
-#: load_manifest.c:199 pg_combinebackup.c:1400 reconstruct.c:527
+#: load_manifest.c:199 pg_combinebackup.c:1400 reconstruct.c:540
 #, c-format
 msgid "could not read file \"%s\": %m"
 msgstr "no se pudo leer el archivo «%s»: %m"
@@ -58,7 +58,7 @@ msgstr "no se pudo leer el archivo «%s»: leídos %d de %zu"
 
 #: ../../common/controldata_utils.c:132 ../../common/controldata_utils.c:280
 #: backup_label.c:174 copy_file.c:68 pg_combinebackup.c:538
-#: pg_combinebackup.c:1175 reconstruct.c:356 reconstruct.c:727
+#: pg_combinebackup.c:1175 reconstruct.c:369 reconstruct.c:740
 #: write_manifest.c:187
 #, c-format
 msgid "could not close file \"%s\": %m"
@@ -87,13 +87,13 @@ msgstr ""
 #: ../../common/file_utils.c:480 backup_label.c:143 copy_file.c:66
 #: copy_file.c:139 copy_file.c:171 copy_file.c:175 copy_file.c:225
 #: copy_file.c:268 load_manifest.c:128 pg_combinebackup.c:523
-#: pg_combinebackup.c:1167 reconstruct.c:510 reconstruct.c:625
+#: pg_combinebackup.c:1167 reconstruct.c:523 reconstruct.c:638
 #: write_manifest.c:250
 #, c-format
 msgid "could not open file \"%s\": %m"
 msgstr "no se pudo abrir el archivo «%s»: %m"
 
-#: ../../common/controldata_utils.c:249 backup_label.c:160 reconstruct.c:746
+#: ../../common/controldata_utils.c:249 backup_label.c:160 reconstruct.c:759
 #: write_manifest.c:260
 #, c-format
 msgid "could not write file \"%s\": %m"
@@ -142,8 +142,8 @@ msgstr "no se pudo sincronizar el sistema de archivos para el archivo «%s»: %m
 
 #: ../../common/file_utils.c:120 ../../common/file_utils.c:566
 #: backup_label.c:187 load_manifest.c:133 pg_combinebackup.c:676
-#: pg_combinebackup.c:1131 pg_combinebackup.c:1383 reconstruct.c:199
-#: reconstruct.c:408
+#: pg_combinebackup.c:1131 pg_combinebackup.c:1383 reconstruct.c:204
+#: reconstruct.c:421
 #, c-format
 msgid "could not stat file \"%s\": %m"
 msgstr "no se pudo hacer stat al archivo «%s»: %m"
@@ -329,8 +329,8 @@ msgid "unexpected manifest version"
 msgstr "versión de manifiesto inesperada"
 
 #: ../../common/parse_manifest.c:637
-msgid "manifest system identifier not an integer"
-msgstr "el identificador de sistema del manifiesto no es un número entero"
+msgid "system identifier in manifest not an integer"
+msgstr "el identificador de sistema en el manifiesto no es un número entero"
 
 #: ../../common/parse_manifest.c:662
 msgid "missing path name"
@@ -468,13 +468,13 @@ msgstr "%s: no se pudo encontrar %s"
 msgid "%s: %s requires %s"
 msgstr "%s: %s requiere %s"
 
-#: backup_label.c:162 reconstruct.c:748 write_manifest.c:262
+#: backup_label.c:162 reconstruct.c:761 write_manifest.c:262
 #, c-format
 msgid "could not write file \"%s\": wrote %d of %d"
 msgstr "no se pudo escribir al archivo «%s»: se escribió %d de %d"
 
-#: backup_label.c:166 copy_file.c:146 copy_file.c:193 reconstruct.c:708
-#: reconstruct.c:754 write_manifest.c:270
+#: backup_label.c:166 copy_file.c:146 copy_file.c:193 reconstruct.c:721
+#: reconstruct.c:767 write_manifest.c:270
 #, c-format
 msgid "could not update checksum of file \"%s\""
 msgstr "no se pudo actualizar la suma de verificación para el archivo «%s»"
@@ -489,7 +489,7 @@ msgstr "no se pudo escribir a archivo «%s»: %m"
 msgid "could not write to file \"%s\", offset %u: wrote %d of %d"
 msgstr "no se pudo escribir al archivo «%s», posición %u: se escribió %d de %d"
 
-#: copy_file.c:199 reconstruct.c:771
+#: copy_file.c:199 reconstruct.c:784
 #, c-format
 msgid "could not read from file \"%s\": %m"
 msgstr "no se pudo leer el archivo «%s»: %m"
@@ -514,12 +514,12 @@ msgstr "error mientras se clonaba la relación «%s» a «%s»: %s"
 msgid "file cloning not supported on this platform"
 msgstr "el clonado de archivos no está soportado en esta plataforma"
 
-#: copy_file.c:278 reconstruct.c:691
+#: copy_file.c:278 reconstruct.c:704
 #, c-format
 msgid "error while copying file range from \"%s\" to \"%s\": %m"
 msgstr "error mientras se copiaba un rango de archivo de «%s» a «%s»: %m"
 
-#: copy_file.c:285 pg_combinebackup.c:264 reconstruct.c:711
+#: copy_file.c:285 pg_combinebackup.c:264 reconstruct.c:724
 #, c-format
 msgid "copy_file_range not supported on this platform"
 msgstr "copy_file_range no está soportado en esta plataforma"
@@ -576,7 +576,7 @@ msgstr "%s: el identificador de sistema del manifiesto es %llu, pero el archivo 
 
 #: pg_combinebackup.c:340
 #, c-format
-msgid "can't generate a manifest because no manifest is available for the final input backup"
+msgid "cannot generate a manifest because no manifest is available for the final input backup"
 msgstr "no se puede generar un manifiesto porque no hay un manifiesto disponible para el backup final de entrada"
 
 #: pg_combinebackup.c:387
@@ -651,8 +651,8 @@ msgstr "sólo algunos backups tienen checksums activados"
 
 #: pg_combinebackup.c:658
 #, c-format
-msgid "disable, and optionally reenable, checksums on the output directory to avoid failures"
-msgstr "desactive (y opcionalmente reactive) los checksums en el directorio de salida para evitar fallos"
+msgid "Disable, and optionally reenable, checksums on the output directory to avoid failures."
+msgstr "Desactive (y opcionalmente reactive) los checksums en el directorio de salida para evitar fallos."
 
 #: pg_combinebackup.c:693
 #, c-format
@@ -743,7 +743,7 @@ msgstr ""
 
 #: pg_combinebackup.c:769
 #, c-format
-msgid "      --clone               clone (reflink) instead of copying files\n"
+msgid "      --clone               clone (reflink) files instead of copying\n"
 msgstr "      --clone               clonar (reflink) archivos en vez de copiarlos\n"
 
 #: pg_combinebackup.c:770
@@ -753,7 +753,7 @@ msgstr "      --copy                copiar archivos (por omisión)\n"
 
 #: pg_combinebackup.c:771
 #, c-format
-msgid "      --copy-file-range     copy using copy_file_range() syscall\n"
+msgid "      --copy-file-range     copy using copy_file_range() system call\n"
 msgstr "      --copy-file-range     copiar usando la llamada copy_file_range()\n"
 
 #: pg_combinebackup.c:772
@@ -809,10 +809,10 @@ msgstr "omitiendo el link simbólico «%s»"
 msgid "skipping special file \"%s\""
 msgstr "omitiendo el archivo especial «%s»"
 
-#: pg_combinebackup.c:1073
+#: pg_combinebackup.c:1073 reconstruct.c:305
 #, c-format
-msgid "\"%s\" contains no entry for \"%s\""
-msgstr "«%s» no contiene entrada para «%s»"
+msgid "manifest file \"%s\" contains no entry for file \"%s\""
+msgstr "el archivo de manifiesto «%s» no contiene una entrada para el archivo «%s»"
 
 #: pg_combinebackup.c:1189
 #, c-format
@@ -864,37 +864,37 @@ msgstr "el archivo «%s» es demasiado grande"
 msgid "could not read file \"%s\": read %zd of %lld"
 msgstr "no se pudo leer el archivo «%s»: leídos %zd de %lld"
 
-#: reconstruct.c:300
+#: reconstruct.c:339
 #, c-format
-msgid "manifest file \"%s\" contains no entry for file \"%s\""
-msgstr "el archivo de manifiesto «%s» no contiene una entrada para el archivo «%s»"
+msgid "full backup contains unexpected incremental file \"%s\""
+msgstr "backup «full» contiene archivo incremental «%s» inesperado"
 
-#: reconstruct.c:410
+#: reconstruct.c:423
 #, c-format
 msgid "file \"%s\" is too short: expected %llu, found %llu"
 msgstr "el archivo «%s» es demasiado corto: se esperaban %llu, se encontraron %llu"
 
-#: reconstruct.c:452
+#: reconstruct.c:465
 #, c-format
-msgid "file \"%s\" has bad incremental magic number (0x%x not 0x%x)"
-msgstr "el archivo «%s» tiene número mágico incremental erróneo (0x%x en vez de 0x%x)"
+msgid "file \"%s\" has bad incremental magic number (0x%x, expected 0x%x)"
+msgstr "el archivo «%s» tiene número mágico incremental erróneo (0x%x, se esperaba 0x%x)"
 
-#: reconstruct.c:458
+#: reconstruct.c:471
 #, c-format
 msgid "file \"%s\" has block count %u in excess of segment size %u"
 msgstr "el archivo «%s» tiene una cantidad de bloques %u más allá del tamaño de bloque %u"
 
-#: reconstruct.c:465
+#: reconstruct.c:478
 #, c-format
 msgid "file \"%s\" has truncation block length %u in excess of segment size %u"
 msgstr "el archivo «%s» tiene una longitud de truncado de bloque %u en exceso del tamaño de segmento %u"
 
-#: reconstruct.c:529
+#: reconstruct.c:542
 #, c-format
 msgid "could not read file \"%s\": read %d of %u"
 msgstr "no se pudo leer el archivo «%s»: leídos %d de %u"
 
-#: reconstruct.c:773
+#: reconstruct.c:786
 #, c-format
 msgid "could not read from file \"%s\", offset %llu: read %d of %d"
 msgstr "no se pudo leer del archivo \"%s\", posición %llu: leídos %d de %d"
