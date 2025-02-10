@@ -359,7 +359,7 @@ typedef struct pg_enc2name
 #endif
 } pg_enc2name;
 
-extern const pg_enc2name pg_enc2name_tbl[];
+extern PGDLLIMPORT const pg_enc2name pg_enc2name_tbl[];
 
 /*
  * Encoding names for gettext
@@ -573,6 +573,7 @@ extern int	pg_valid_server_encoding_id(int encoding);
  * (in addition to the ones just above).  The constant tables declared
  * earlier in this file are also available from libpgcommon.
  */
+extern void pg_encoding_set_invalid(int encoding, char *dst);
 extern int	pg_encoding_mblen(int encoding, const char *mbstr);
 extern int	pg_encoding_mblen_bounded(int encoding, const char *mbstr);
 extern int	pg_encoding_dsplen(int encoding, const char *mbstr);

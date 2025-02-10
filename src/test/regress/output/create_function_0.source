@@ -46,6 +46,9 @@ CREATE FUNCTION test_opclass_options_func(internal)
     RETURNS void
     AS '@libdir@/regress@DLSUFFIX@', 'test_opclass_options_func'
     LANGUAGE C;
+CREATE FUNCTION test_enc_setup() RETURNS void
+    AS '@libdir@/regress@DLSUFFIX@', 'test_enc_setup'
+    LANGUAGE C STRICT;
 CREATE FUNCTION test_enc_conversion(bytea, name, name, bool, validlen OUT int, result OUT bytea)
     AS '@libdir@/regress@DLSUFFIX@', 'test_enc_conversion'
     LANGUAGE C STRICT;
