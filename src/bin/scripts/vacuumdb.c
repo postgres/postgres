@@ -611,8 +611,9 @@ vacuum_one_database(const ConnParams *cparams,
 	for (i = 0; i < ntups; i++)
 	{
 		appendPQExpBufferStr(&buf,
-							 fmtQualifiedId(PQgetvalue(res, i, 1),
-											PQgetvalue(res, i, 0)));
+							 fmtQualifiedIdEnc(PQgetvalue(res, i, 1),
+											   PQgetvalue(res, i, 0),
+											   PQclientEncoding(conn)));
 
 		if (tables_listed && !PQgetisnull(res, i, 2))
 			appendPQExpBufferStr(&buf, PQgetvalue(res, i, 2));
