@@ -104,6 +104,7 @@ fmtIdEnc(const char *rawid, int encoding)
 
 	const char *cp;
 	bool		need_quotes = false;
+	size_t		remaining = strlen(rawid);
 
 	/*
 	 * These checks need to match the identifier production in scan.l. Don't
@@ -117,7 +118,8 @@ fmtIdEnc(const char *rawid, int encoding)
 	else
 	{
 		/* otherwise check the entire string */
-		for (cp = rawid; *cp; cp++)
+		cp = rawid;
+		for (size_t i = 0; i < remaining; i++, cp++)
 		{
 			if (!((*cp >= 'a' && *cp <= 'z')
 				  || (*cp >= '0' && *cp <= '9')
@@ -153,17 +155,90 @@ fmtIdEnc(const char *rawid, int encoding)
 	else
 	{
 		appendPQExpBufferChar(id_return, '"');
-		for (cp = rawid; *cp; cp++)
+
+		cp = &rawid[0];
+		while (remaining > 0)
 		{
-			/*
-			 * Did we find a double-quote in the string? Then make this a
-			 * double double-quote per SQL99. Before, we put in a
-			 * backslash/double-quote pair. - thomas 2000-08-05
-			 */
-			if (*cp == '"')
-				appendPQExpBufferChar(id_return, '"');
-			appendPQExpBufferChar(id_return, *cp);
+			int			charlen;
+
+			/* Fast path for plain ASCII */
+			if (!IS_HIGHBIT_SET(*cp))
+			{
+				/*
+				 * Did we find a double-quote in the string? Then make this a
+				 * double double-quote per SQL99. Before, we put in a
+				 * backslash/double-quote pair. - thomas 2000-08-05
+				 */
+				if (*cp == '"')
+					appendPQExpBufferChar(id_return, '"');
+				appendPQExpBufferChar(id_return, *cp);
+				remaining--;
+				cp++;
+				continue;
+			}
+
+			/* Slow path for possible multibyte characters */
+			charlen = pg_encoding_mblen(encoding, cp);
+
+			if (remaining < charlen)
+			{
+				/*
+				 * If the character is longer than the available input,
+				 * replace the string with an invalid sequence. The invalid
+				 * sequence ensures that the escaped string will trigger an
+				 * error on the server-side, even if we can't directly report
+				 * an error here.
+				 */
+				enlargePQExpBuffer(id_return, 2);
+				pg_encoding_set_invalid(encoding,
+										id_return->data + id_return->len);
+				id_return->len += 2;
+				id_return->data[id_return->len] = '\0';
+
+				/* there's no more input data, so we can stop */
+				break;
+			}
+			else if (pg_encoding_verifymbchar(encoding, cp, charlen) == -1)
+			{
+				/*
+				 * Multibyte character is invalid.  It's important to verify
+				 * that as invalid multi-byte characters could e.g. be used to
+				 * "skip" over quote characters, e.g. when parsing
+				 * character-by-character.
+				 *
+				 * Replace the bytes corresponding to the invalid character
+				 * with an invalid sequence, for the same reason as above.
+				 *
+				 * It would be a bit faster to verify the whole string the
+				 * first time we encounter a set highbit, but this way we can
+				 * replace just the invalid characters, which probably makes
+				 * it easier for users to find the invalidly encoded portion
+				 * of a larger string.
+				 */
+				enlargePQExpBuffer(id_return, 2);
+				pg_encoding_set_invalid(encoding,
+										id_return->data + id_return->len);
+				id_return->len += 2;
+				id_return->data[id_return->len] = '\0';
+
+				/*
+				 * Copy the rest of the string after the invalid multi-byte
+				 * character.
+				 */
+				remaining -= charlen;
+				cp += charlen;
+			}
+			else
+			{
+				for (int i = 0; i < charlen; i++)
+				{
+					appendPQExpBufferChar(id_return, *cp);
+					remaining--;
+					cp++;
+				}
+			}
 		}
+
 		appendPQExpBufferChar(id_return, '"');
 	}
 
@@ -290,6 +365,7 @@ appendStringLiteral(PQExpBuffer buf, const char *str,
 	size_t		length = strlen(str);
 	const char *source = str;
 	char	   *target;
+	size_t		remaining = length;
 
 	if (!enlargePQExpBuffer(buf, 2 * length + 2))
 		return;
@@ -297,10 +373,10 @@ appendStringLiteral(PQExpBuffer buf, const char *str,
 	target = buf->data + buf->len;
 	*target++ = '\'';
 
-	while (*source != '\0')
+	while (remaining > 0)
 	{
 		char		c = *source;
-		int			len;
+		int			charlen;
 		int			i;
 
 		/* Fast path for plain ASCII */
@@ -312,39 +388,65 @@ appendStringLiteral(PQExpBuffer buf, const char *str,
 			/* Copy the character */
 			*target++ = c;
 			source++;
+			remaining--;
 			continue;
 		}
 
 		/* Slow path for possible multibyte characters */
-		len = PQmblen(source, encoding);
+		charlen = PQmblen(source, encoding);
 
-		/* Copy the character */
-		for (i = 0; i < len; i++)
+		if (remaining < charlen)
 		{
-			if (*source == '\0')
-				break;
-			*target++ = *source++;
-		}
+			/*
+			 * If the character is longer than the available input, replace
+			 * the string with an invalid sequence. The invalid sequence
+			 * ensures that the escaped string will trigger an error on the
+			 * server-side, even if we can't directly report an error here.
+			 *
+			 * We know there's enough space for the invalid sequence because
+			 * the "target" buffer is 2 * length + 2 long, and at worst we're
+			 * replacing a single input byte with two invalid bytes.
+			 */
+			pg_encoding_set_invalid(encoding, target);
+			target += 2;
 
-		/*
-		 * If we hit premature end of string (ie, incomplete multibyte
-		 * character), try to pad out to the correct length with spaces. We
-		 * may not be able to pad completely, but we will always be able to
-		 * insert at least one pad space (since we'd not have quoted a
-		 * multibyte character).  This should be enough to make a string that
-		 * the server will error out on.
-		 */
-		if (i < len)
-		{
-			char	   *stop = buf->data + buf->maxlen - 2;
-
-			for (; i < len; i++)
-			{
-				if (target >= stop)
-					break;
-				*target++ = ' ';
-			}
+			/* there's no more valid input data, so we can stop */
 			break;
+		}
+		else if (pg_encoding_verifymbchar(encoding, source, charlen) == -1)
+		{
+			/*
+			 * Multibyte character is invalid.  It's important to verify that
+			 * as invalid multi-byte characters could e.g. be used to "skip"
+			 * over quote characters, e.g. when parsing
+			 * character-by-character.
+			 *
+			 * Replace the bytes corresponding to the invalid character with
+			 * an invalid sequence, for the same reason as above.
+			 *
+			 * It would be a bit faster to verify the whole string the first
+			 * time we encounter a set highbit, but this way we can replace
+			 * just the invalid characters, which probably makes it easier for
+			 * users to find the invalidly encoded portion of a larger string.
+			 */
+			pg_encoding_set_invalid(encoding, target);
+			target += 2;
+			remaining -= charlen;
+
+			/*
+			 * Copy the rest of the string after the invalid multi-byte
+			 * character.
+			 */
+			source += charlen;
+		}
+		else
+		{
+			/* Copy the character */
+			for (i = 0; i < charlen; i++)
+			{
+				*target++ = *source++;
+				remaining--;
+			}
 		}
 	}
 
