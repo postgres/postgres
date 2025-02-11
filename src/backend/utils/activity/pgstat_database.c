@@ -20,6 +20,7 @@
 #include "storage/procsignal.h"
 #include "utils/pgstat_internal.h"
 #include "utils/timestamp.h"
+#include "pgstat.h"
 
 
 static bool pgstat_should_report_connstat(void);
@@ -29,6 +30,7 @@ PgStat_Counter pgStatBlockReadTime = 0;
 PgStat_Counter pgStatBlockWriteTime = 0;
 PgStat_Counter pgStatActiveTime = 0;
 PgStat_Counter pgStatTransactionIdleTime = 0;
+PgStat_Counter pgStatCommitTime = 0;
 SessionEndType pgStatSessionEndCause = DISCONNECT_NORMAL;
 
 
@@ -320,6 +322,7 @@ pgstat_update_dbstats(TimestampTz ts)
 		dbentry->session_time += (PgStat_Counter) secs * 1000000 + usecs;
 		dbentry->active_time += pgStatActiveTime;
 		dbentry->idle_in_transaction_time += pgStatTransactionIdleTime;
+		dbentry->commit_time += pgStatCommitTime;
 	}
 
 	pgStatXactCommit = 0;
@@ -328,6 +331,7 @@ pgstat_update_dbstats(TimestampTz ts)
 	pgStatBlockWriteTime = 0;
 	pgStatActiveTime = 0;
 	pgStatTransactionIdleTime = 0;
+	pgStatCommitTime = 0;
 }
 
 /*
@@ -439,6 +443,7 @@ pgstat_database_flush_cb(PgStat_EntryRef *entry_ref, bool nowait)
 	PGSTAT_ACCUM_DBCOUNT(session_time);
 	PGSTAT_ACCUM_DBCOUNT(active_time);
 	PGSTAT_ACCUM_DBCOUNT(idle_in_transaction_time);
+	PGSTAT_ACCUM_DBCOUNT(commit_time);
 	PGSTAT_ACCUM_DBCOUNT(sessions_abandoned);
 	PGSTAT_ACCUM_DBCOUNT(sessions_fatal);
 	PGSTAT_ACCUM_DBCOUNT(sessions_killed);

@@ -1502,6 +1502,9 @@ FinishPreparedTransaction(const char *gid, bool isCommit)
 	xl_xact_stats_item *commitstats;
 	xl_xact_stats_item *abortstats;
 	SharedInvalidationMessage *invalmsgs;
+	instr_time	start_time; // TODO remove
+
+	INSTR_TIME_SET_CURRENT(start_time);
 
 	/*
 	 * Validate the GID, and lock the GXACT to ensure that two backends do not
@@ -1658,7 +1661,7 @@ FinishPreparedTransaction(const char *gid, bool isCommit)
 	LWLockRelease(TwoPhaseStateLock);
 
 	/* Count the prepared xact as committed or aborted */
-	AtEOXact_PgStat(isCommit, false);
+	AtEOXact_PgStat(isCommit, false, start_time); // TODO add xact_time for 2PC
 
 	/*
 	 * And now we can clean up any files we may have left.

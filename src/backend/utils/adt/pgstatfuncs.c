@@ -1204,6 +1204,9 @@ PG_STAT_GET_DBENTRY_FLOAT8_MS(blk_write_time)
 /* pg_stat_get_db_idle_in_transaction_time */
 PG_STAT_GET_DBENTRY_FLOAT8_MS(idle_in_transaction_time)
 
+/* pg_stat_get_db_idle_in_transaction_time */
+PG_STAT_GET_DBENTRY_FLOAT8_MS(commit_time)
+
 /* pg_stat_get_db_session_time */
 PG_STAT_GET_DBENTRY_FLOAT8_MS(session_time)
 

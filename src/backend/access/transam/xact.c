@@ -70,6 +70,7 @@
 #include "utils/timeout.h"
 #include "utils/timestamp.h"
 #include "utils/typcache.h"
+#include "portability/instr_time.h"
 
 /*
  *	User-tweakable parameters
@@ -215,6 +216,7 @@ typedef struct TransactionStateData
 	bool		chain;			/* start a new block after this one */
 	bool		topXidLogged;	/* for a subxact: is top-level XID logged? */
 	struct TransactionStateData *parent;	/* back link to parent */
+	instr_time  start_time;
 } TransactionStateData;
 
 typedef TransactionStateData *TransactionState;
@@ -2269,6 +2271,8 @@ CommitTransaction(void)
 			break;
 	}
 
+	INSTR_TIME_SET_CURRENT(s->start_time);
+
 	/*
 	 * The remaining actions cannot call any user-defined code, so it's safe
 	 * to start shutting down within-transaction services.  But note that most
@@ -2469,7 +2473,7 @@ CommitTransaction(void)
 	AtEOXact_Files(true);
 	AtEOXact_ComboCid();
 	AtEOXact_HashTables(true);
-	AtEOXact_PgStat(true, is_parallel_worker);
+	AtEOXact_PgStat(true, is_parallel_worker, s->start_time);
 	AtEOXact_Snapshot(true, false);
 	AtEOXact_ApplyLauncher(true);
 	AtEOXact_LogicalRepWorkers(true);
@@ -2982,7 +2986,7 @@ AbortTransaction(void)
 		AtEOXact_Files(false);
 		AtEOXact_ComboCid();
 		AtEOXact_HashTables(false);
-		AtEOXact_PgStat(false, is_parallel_worker);
+		AtEOXact_PgStat(false, is_parallel_worker, s->start_time);
 		AtEOXact_ApplyLauncher(false);
 		AtEOXact_LogicalRepWorkers(false);
 		pgstat_report_xact_timestamp(0);

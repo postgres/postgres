@@ -16,6 +16,7 @@
 #include "pgstat.h"
 #include "utils/memutils.h"
 #include "utils/pgstat_internal.h"
+#include "portability/instr_time.h"
 
 
 typedef struct PgStat_PendingDroppedStatsItem
@@ -37,9 +38,17 @@ static PgStat_SubXactStatus *pgStatXactStack = NULL;
  * Called from access/transam/xact.c at top-level transaction commit/abort.
  */
 void
-AtEOXact_PgStat(bool isCommit, bool parallel)
+AtEOXact_PgStat(bool isCommit, bool parallel, instr_time start_time)
 {
 	PgStat_SubXactStatus *xact_state;
+	instr_time now;
+	instr_time elapsed;
+
+	INSTR_TIME_SET_ZERO(elapsed);
+	INSTR_TIME_SET_CURRENT(now);
+	INSTR_TIME_ACCUM_DIFF(elapsed, now, start_time);
+
+	pgstat_commit_time(INSTR_TIME_GET_MICROSEC(elapsed));
 
 	AtEOXact_PgStat_Database(isCommit, parallel);
 

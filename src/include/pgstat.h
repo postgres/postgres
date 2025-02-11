@@ -387,6 +387,7 @@ typedef struct PgStat_StatDBEntry
 	PgStat_Counter session_time;
 	PgStat_Counter active_time;
 	PgStat_Counter idle_in_transaction_time;
+	PgStat_Counter commit_time;
 	PgStat_Counter sessions_abandoned;
 	PgStat_Counter sessions_fatal;
 	PgStat_Counter sessions_killed;
@@ -622,6 +623,8 @@ extern void pgstat_update_parallel_workers_stats(PgStat_Counter workers_to_launc
 	(pgStatActiveTime += (n))
 #define pgstat_count_conn_txn_idle_time(n)							\
 	(pgStatTransactionIdleTime += (n))
+#define pgstat_commit_time(n)							\
+	(pgStatCommitTime += (n))
 
 extern PgStat_StatDBEntry *pgstat_fetch_stat_dbentry(Oid dboid);
 
@@ -771,7 +774,7 @@ extern PgStat_StatSubEntry *pgstat_fetch_stat_subscription(Oid subid);
  * Functions in pgstat_xact.c
  */
 
-extern void AtEOXact_PgStat(bool isCommit, bool parallel);
+extern void AtEOXact_PgStat(bool isCommit, bool parallel, instr_time start_time);
 extern void AtEOSubXact_PgStat(bool isCommit, int nestDepth);
 extern void AtPrepare_PgStat(void);
 extern void PostPrepare_PgStat(void);
@@ -831,6 +834,7 @@ extern PGDLLIMPORT PgStat_Counter pgStatBlockWriteTime;
  */
 extern PGDLLIMPORT PgStat_Counter pgStatActiveTime;
 extern PGDLLIMPORT PgStat_Counter pgStatTransactionIdleTime;
+extern PGDLLIMPORT PgStat_Counter pgStatCommitTime;
 
 /* updated by the traffic cop and in errfinish() */
 extern PGDLLIMPORT SessionEndType pgStatSessionEndCause;
