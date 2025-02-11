@@ -128,8 +128,8 @@ test_custom_rmgrs_insert_wal_record(PG_FUNCTION_ARGS)
 	xlrec.message_size = len;
 
 	XLogBeginInsert();
-	XLogRegisterData((char *) &xlrec, SizeOfTestCustomRmgrsMessage);
-	XLogRegisterData((char *) payload, len);
+	XLogRegisterData(&xlrec, SizeOfTestCustomRmgrsMessage);
+	XLogRegisterData(payload, len);
 
 	/* Let's mark this record as unimportant, just in case. */
 	XLogSetRecordFlags(XLOG_MARK_UNIMPORTANT);

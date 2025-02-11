@@ -216,7 +216,7 @@ ginDeletePage(GinVacuumState *gvs, BlockNumber deleteBlkno, BlockNumber leftBlkn
 		data.rightLink = GinPageGetOpaque(page)->rightlink;
 		data.deleteXid = GinPageGetDeleteXid(page);
 
-		XLogRegisterData((char *) &data, sizeof(ginxlogDeletePage));
+		XLogRegisterData(&data, sizeof(ginxlogDeletePage));
 
 		recptr = XLogInsert(RM_GIN_ID, XLOG_GIN_DELETE_PAGE);
 		PageSetLSN(page, recptr);

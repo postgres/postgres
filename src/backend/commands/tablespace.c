@@ -363,9 +363,9 @@ CreateTableSpace(CreateTableSpaceStmt *stmt)
 		xlrec.ts_id = tablespaceoid;
 
 		XLogBeginInsert();
-		XLogRegisterData((char *) &xlrec,
+		XLogRegisterData(&xlrec,
 						 offsetof(xl_tblspc_create_rec, ts_path));
-		XLogRegisterData((char *) location, strlen(location) + 1);
+		XLogRegisterData(location, strlen(location) + 1);
 
 		(void) XLogInsert(RM_TBLSPC_ID, XLOG_TBLSPC_CREATE);
 	}
@@ -533,7 +533,7 @@ DropTableSpace(DropTableSpaceStmt *stmt)
 		xlrec.ts_id = tablespaceoid;
 
 		XLogBeginInsert();
-		XLogRegisterData((char *) &xlrec, sizeof(xl_tblspc_drop_rec));
+		XLogRegisterData(&xlrec, sizeof(xl_tblspc_drop_rec));
 
 		(void) XLogInsert(RM_TBLSPC_ID, XLOG_TBLSPC_DROP);
 	}

@@ -528,14 +528,14 @@ gistXLogSplit(bool page_is_leaf,
 	 * of buffer or data registrations here, make sure you modify the
 	 * XLogEnsureRecordSpace() calls accordingly!
 	 */
-	XLogRegisterData((char *) &xlrec, sizeof(gistxlogPageSplit));
+	XLogRegisterData(&xlrec, sizeof(gistxlogPageSplit));
 
 	i = 1;
 	for (ptr = dist; ptr; ptr = ptr->next)
 	{
 		XLogRegisterBuffer(i, ptr->buffer, REGBUF_WILL_INIT);
-		XLogRegisterBufData(i, (char *) &(ptr->block.num), sizeof(int));
-		XLogRegisterBufData(i, (char *) ptr->list, ptr->lenlist);
+		XLogRegisterBufData(i, &(ptr->block.num), sizeof(int));
+		XLogRegisterBufData(i, ptr->list, ptr->lenlist);
 		i++;
 	}
 
@@ -559,7 +559,7 @@ gistXLogPageDelete(Buffer buffer, FullTransactionId xid,
 	xlrec.downlinkOffset = downlinkOffset;
 
 	XLogBeginInsert();
-	XLogRegisterData((char *) &xlrec, SizeOfGistxlogPageDelete);
+	XLogRegisterData(&xlrec, SizeOfGistxlogPageDelete);
 
 	XLogRegisterBuffer(0, buffer, REGBUF_STANDARD);
 	XLogRegisterBuffer(1, parentBuffer, REGBUF_STANDARD);
@@ -583,7 +583,7 @@ gistXLogAssignLSN(void)
 	 */
 	XLogBeginInsert();
 	XLogSetRecordFlags(XLOG_MARK_UNIMPORTANT);
-	XLogRegisterData((char *) &dummy, sizeof(dummy));
+	XLogRegisterData(&dummy, sizeof(dummy));
 	return XLogInsert(RM_GIST_ID, XLOG_GIST_ASSIGN_LSN);
 }
 
@@ -609,7 +609,7 @@ gistXLogPageReuse(Relation rel, Relation heaprel,
 	xlrec_reuse.snapshotConflictHorizon = deleteXid;
 
 	XLogBeginInsert();
-	XLogRegisterData((char *) &xlrec_reuse, SizeOfGistxlogPageReuse);
+	XLogRegisterData(&xlrec_reuse, SizeOfGistxlogPageReuse);
 
 	XLogInsert(RM_GIST_ID, XLOG_GIST_PAGE_REUSE);
 }
@@ -639,14 +639,14 @@ gistXLogUpdate(Buffer buffer,
 	xlrec.ntoinsert = ituplen;
 
 	XLogBeginInsert();
-	XLogRegisterData((char *) &xlrec, sizeof(gistxlogPageUpdate));
+	XLogRegisterData(&xlrec, sizeof(gistxlogPageUpdate));
 
 	XLogRegisterBuffer(0, buffer, REGBUF_STANDARD);
-	XLogRegisterBufData(0, (char *) todelete, sizeof(OffsetNumber) * ntodelete);
+	XLogRegisterBufData(0, todelete, sizeof(OffsetNumber) * ntodelete);
 
 	/* new tuples */
 	for (i = 0; i < ituplen; i++)
-		XLogRegisterBufData(0, (char *) (itup[i]), IndexTupleSize(itup[i]));
+		XLogRegisterBufData(0, itup[i], IndexTupleSize(itup[i]));
 
 	/*
 	 * Include a full page image of the child buf. (only necessary if a
@@ -678,14 +678,14 @@ gistXLogDelete(Buffer buffer, OffsetNumber *todelete, int ntodelete,
 	xlrec.ntodelete = ntodelete;
 
 	XLogBeginInsert();
-	XLogRegisterData((char *) &xlrec, SizeOfGistxlogDelete);
+	XLogRegisterData(&xlrec, SizeOfGistxlogDelete);
 
 	/*
 	 * We need the target-offsets array whether or not we store the whole
 	 * buffer, to allow us to find the snapshotConflictHorizon on a standby
 	 * server.
 	 */
-	XLogRegisterData((char *) todelete, ntodelete * sizeof(OffsetNumber));
+	XLogRegisterData(todelete, ntodelete * sizeof(OffsetNumber));
 
 	XLogRegisterBuffer(0, buffer, REGBUF_STANDARD);
 

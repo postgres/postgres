@@ -221,12 +221,12 @@ restart_insert:
 		xlrec.offnum = itup_off;
 
 		XLogBeginInsert();
-		XLogRegisterData((char *) &xlrec, SizeOfHashInsert);
+		XLogRegisterData(&xlrec, SizeOfHashInsert);
 
 		XLogRegisterBuffer(1, metabuf, REGBUF_STANDARD);
 
 		XLogRegisterBuffer(0, buf, REGBUF_STANDARD);
-		XLogRegisterBufData(0, (char *) itup, IndexTupleSize(itup));
+		XLogRegisterBufData(0, itup, IndexTupleSize(itup));
 
 		recptr = XLogInsert(RM_HASH_ID, XLOG_HASH_INSERT);
 
@@ -436,14 +436,14 @@ _hash_vacuum_one_page(Relation rel, Relation hrel, Buffer metabuf, Buffer buf)
 
 			XLogBeginInsert();
 			XLogRegisterBuffer(0, buf, REGBUF_STANDARD);
-			XLogRegisterData((char *) &xlrec, SizeOfHashVacuumOnePage);
+			XLogRegisterData(&xlrec, SizeOfHashVacuumOnePage);
 
 			/*
 			 * We need the target-offsets array whether or not we store the
 			 * whole buffer, to allow us to find the snapshotConflictHorizon
 			 * on a standby server.
 			 */
-			XLogRegisterData((char *) deletable,
+			XLogRegisterData(deletable,
 							 ndeletable * sizeof(OffsetNumber));
 
 			XLogRegisterBuffer(1, metabuf, REGBUF_STANDARD);

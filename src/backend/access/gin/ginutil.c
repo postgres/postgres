@@ -689,7 +689,7 @@ ginUpdateStats(Relation index, const GinStatsData *stats, bool is_build)
 		memcpy(&data.metadata, metadata, sizeof(GinMetaPageData));
 
 		XLogBeginInsert();
-		XLogRegisterData((char *) &data, sizeof(ginxlogUpdateMeta));
+		XLogRegisterData(&data, sizeof(ginxlogUpdateMeta));
 		XLogRegisterBuffer(0, metabuffer, REGBUF_WILL_INIT | REGBUF_STANDARD);
 
 		recptr = XLogInsert(RM_GIN_ID, XLOG_GIN_UPDATE_META_PAGE);

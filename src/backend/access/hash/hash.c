@@ -616,7 +616,7 @@ loop_top:
 		xlrec.ntuples = metap->hashm_ntuples;
 
 		XLogBeginInsert();
-		XLogRegisterData((char *) &xlrec, SizeOfHashUpdateMetaPage);
+		XLogRegisterData(&xlrec, SizeOfHashUpdateMetaPage);
 
 		XLogRegisterBuffer(0, metabuf, REGBUF_STANDARD);
 
@@ -823,7 +823,7 @@ hashbucketcleanup(Relation rel, Bucket cur_bucket, Buffer bucket_buf,
 				xlrec.is_primary_bucket_page = (buf == bucket_buf);
 
 				XLogBeginInsert();
-				XLogRegisterData((char *) &xlrec, SizeOfHashDelete);
+				XLogRegisterData(&xlrec, SizeOfHashDelete);
 
 				/*
 				 * bucket buffer was not changed, but still needs to be
@@ -838,7 +838,7 @@ hashbucketcleanup(Relation rel, Bucket cur_bucket, Buffer bucket_buf,
 				}
 
 				XLogRegisterBuffer(1, buf, REGBUF_STANDARD);
-				XLogRegisterBufData(1, (char *) deletable,
+				XLogRegisterBufData(1, deletable,
 									ndeletable * sizeof(OffsetNumber));
 
 				recptr = XLogInsert(RM_HASH_ID, XLOG_HASH_DELETE);

@@ -194,7 +194,7 @@ log_smgrcreate(const RelFileLocator *rlocator, ForkNumber forkNum)
 	xlrec.forkNum = forkNum;
 
 	XLogBeginInsert();
-	XLogRegisterData((char *) &xlrec, sizeof(xlrec));
+	XLogRegisterData(&xlrec, sizeof(xlrec));
 	XLogInsert(RM_SMGR_ID, XLOG_SMGR_CREATE | XLR_SPECIAL_REL_UPDATE);
 }
 
@@ -397,7 +397,7 @@ RelationTruncate(Relation rel, BlockNumber nblocks)
 		xlrec.flags = SMGR_TRUNCATE_ALL;
 
 		XLogBeginInsert();
-		XLogRegisterData((char *) &xlrec, sizeof(xlrec));
+		XLogRegisterData(&xlrec, sizeof(xlrec));
 
 		lsn = XLogInsert(RM_SMGR_ID,
 						 XLOG_SMGR_TRUNCATE | XLR_SPECIAL_REL_UPDATE);

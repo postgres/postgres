@@ -416,7 +416,7 @@ brinRevmapDesummarizeRange(Relation idxrel, BlockNumber heapBlk)
 		xlrec.regOffset = regOffset;
 
 		XLogBeginInsert();
-		XLogRegisterData((char *) &xlrec, SizeOfBrinDesummarize);
+		XLogRegisterData(&xlrec, SizeOfBrinDesummarize);
 		XLogRegisterBuffer(0, revmapBuf, 0);
 		XLogRegisterBuffer(1, regBuf, REGBUF_STANDARD);
 		recptr = XLogInsert(RM_BRIN_ID, XLOG_BRIN_DESUMMARIZE);
@@ -627,7 +627,7 @@ revmap_physical_extend(BrinRevmap *revmap)
 		xlrec.targetBlk = mapBlk;
 
 		XLogBeginInsert();
-		XLogRegisterData((char *) &xlrec, SizeOfBrinRevmapExtend);
+		XLogRegisterData(&xlrec, SizeOfBrinRevmapExtend);
 		XLogRegisterBuffer(0, revmap->rm_metaBuf, REGBUF_STANDARD);
 
 		XLogRegisterBuffer(1, buf, REGBUF_WILL_INIT);

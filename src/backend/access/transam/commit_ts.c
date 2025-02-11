@@ -989,7 +989,7 @@ static void
 WriteZeroPageXlogRec(int64 pageno)
 {
 	XLogBeginInsert();
-	XLogRegisterData((char *) (&pageno), sizeof(pageno));
+	XLogRegisterData(&pageno, sizeof(pageno));
 	(void) XLogInsert(RM_COMMIT_TS_ID, COMMIT_TS_ZEROPAGE);
 }
 
@@ -1005,7 +1005,7 @@ WriteTruncateXlogRec(int64 pageno, TransactionId oldestXid)
 	xlrec.oldestXid = oldestXid;
 
 	XLogBeginInsert();
-	XLogRegisterData((char *) (&xlrec), SizeOfCommitTsTruncate);
+	XLogRegisterData(&xlrec, SizeOfCommitTsTruncate);
 	(void) XLogInsert(RM_COMMIT_TS_ID, COMMIT_TS_TRUNCATE);
 }
 

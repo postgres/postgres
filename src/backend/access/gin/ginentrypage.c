@@ -585,9 +585,9 @@ entryExecPlaceToPage(GinBtree btree, Buffer buf, GinBtreeStack *stack,
 		data.offset = off;
 
 		XLogRegisterBuffer(0, buf, REGBUF_STANDARD);
-		XLogRegisterBufData(0, (char *) &data,
+		XLogRegisterBufData(0, &data,
 							offsetof(ginxlogInsertEntry, tuple));
-		XLogRegisterBufData(0, (char *) insertData->entry,
+		XLogRegisterBufData(0, insertData->entry,
 							IndexTupleSize(insertData->entry));
 	}
 }

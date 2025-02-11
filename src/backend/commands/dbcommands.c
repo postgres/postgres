@@ -529,7 +529,7 @@ CreateDirAndVersionFile(char *dbpath, Oid dbid, Oid tsid, bool isRedo)
 		xlrec.tablespace_id = tsid;
 
 		XLogBeginInsert();
-		XLogRegisterData((char *) (&xlrec),
+		XLogRegisterData(&xlrec,
 						 sizeof(xl_dbase_create_wal_log_rec));
 
 		(void) XLogInsert(RM_DBASE_ID, XLOG_DBASE_CREATE_WAL_LOG);
@@ -625,7 +625,7 @@ CreateDatabaseUsingFileCopy(Oid src_dboid, Oid dst_dboid, Oid src_tsid,
 			xlrec.src_tablespace_id = srctablespace;
 
 			XLogBeginInsert();
-			XLogRegisterData((char *) &xlrec,
+			XLogRegisterData(&xlrec,
 							 sizeof(xl_dbase_create_file_copy_rec));
 
 			(void) XLogInsert(RM_DBASE_ID,
@@ -2183,7 +2183,7 @@ movedb(const char *dbname, const char *tblspcname)
 			xlrec.src_tablespace_id = src_tblspcoid;
 
 			XLogBeginInsert();
-			XLogRegisterData((char *) &xlrec,
+			XLogRegisterData(&xlrec,
 							 sizeof(xl_dbase_create_file_copy_rec));
 
 			(void) XLogInsert(RM_DBASE_ID,
@@ -2279,8 +2279,8 @@ movedb(const char *dbname, const char *tblspcname)
 		xlrec.ntablespaces = 1;
 
 		XLogBeginInsert();
-		XLogRegisterData((char *) &xlrec, sizeof(xl_dbase_drop_rec));
-		XLogRegisterData((char *) &src_tblspcoid, sizeof(Oid));
+		XLogRegisterData(&xlrec, sizeof(xl_dbase_drop_rec));
+		XLogRegisterData(&src_tblspcoid, sizeof(Oid));
 
 		(void) XLogInsert(RM_DBASE_ID,
 						  XLOG_DBASE_DROP | XLR_SPECIAL_REL_UPDATE);
@@ -3037,8 +3037,8 @@ remove_dbtablespaces(Oid db_id)
 		xlrec.ntablespaces = ntblspc;
 
 		XLogBeginInsert();
-		XLogRegisterData((char *) &xlrec, MinSizeOfDbaseDropRec);
-		XLogRegisterData((char *) tablespace_ids, ntblspc * sizeof(Oid));
+		XLogRegisterData(&xlrec, MinSizeOfDbaseDropRec);
+		XLogRegisterData(tablespace_ids, ntblspc * sizeof(Oid));
 
 		(void) XLogInsert(RM_DBASE_ID,
 						  XLOG_DBASE_DROP | XLR_SPECIAL_REL_UPDATE);

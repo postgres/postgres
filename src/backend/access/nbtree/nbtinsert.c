@@ -1320,7 +1320,7 @@ _bt_insertonpg(Relation rel,
 			xlrec.offnum = newitemoff;
 
 			XLogBeginInsert();
-			XLogRegisterData((char *) &xlrec, SizeOfBtreeInsert);
+			XLogRegisterData(&xlrec, SizeOfBtreeInsert);
 
 			if (isleaf && postingoff == 0)
 			{
@@ -1358,7 +1358,7 @@ _bt_insertonpg(Relation rel,
 
 					XLogRegisterBuffer(2, metabuf,
 									   REGBUF_WILL_INIT | REGBUF_STANDARD);
-					XLogRegisterBufData(2, (char *) &xlmeta,
+					XLogRegisterBufData(2, &xlmeta,
 										sizeof(xl_btree_metadata));
 				}
 			}
@@ -1367,7 +1367,7 @@ _bt_insertonpg(Relation rel,
 			if (postingoff == 0)
 			{
 				/* Just log itup from caller */
-				XLogRegisterBufData(0, (char *) itup, IndexTupleSize(itup));
+				XLogRegisterBufData(0, itup, IndexTupleSize(itup));
 			}
 			else
 			{
@@ -1381,8 +1381,8 @@ _bt_insertonpg(Relation rel,
 				 */
 				upostingoff = postingoff;
 
-				XLogRegisterBufData(0, (char *) &upostingoff, sizeof(uint16));
-				XLogRegisterBufData(0, (char *) origitup,
+				XLogRegisterBufData(0, &upostingoff, sizeof(uint16));
+				XLogRegisterBufData(0, origitup,
 									IndexTupleSize(origitup));
 			}
 
@@ -1979,7 +1979,7 @@ _bt_split(Relation rel, Relation heaprel, BTScanInsert itup_key, Buffer buf,
 			xlrec.postingoff = postingoff;
 
 		XLogBeginInsert();
-		XLogRegisterData((char *) &xlrec, SizeOfBtreeSplit);
+		XLogRegisterData(&xlrec, SizeOfBtreeSplit);
 
 		XLogRegisterBuffer(0, buf, REGBUF_STANDARD);
 		XLogRegisterBuffer(1, rbuf, REGBUF_WILL_INIT);
@@ -2017,13 +2017,13 @@ _bt_split(Relation rel, Relation heaprel, BTScanInsert itup_key, Buffer buf,
 		 * newitem-logged case).
 		 */
 		if (newitemonleft && xlrec.postingoff == 0)
-			XLogRegisterBufData(0, (char *) newitem, newitemsz);
+			XLogRegisterBufData(0, newitem, newitemsz);
 		else if (xlrec.postingoff != 0)
 		{
 			Assert(isleaf);
 			Assert(newitemonleft || firstrightoff == newitemoff);
 			Assert(newitemsz == IndexTupleSize(orignewitem));
-			XLogRegisterBufData(0, (char *) orignewitem, newitemsz);
+			XLogRegisterBufData(0, orignewitem, newitemsz);
 		}
 
 		/* Log the left page's new high key */
@@ -2033,7 +2033,7 @@ _bt_split(Relation rel, Relation heaprel, BTScanInsert itup_key, Buffer buf,
 			itemid = PageGetItemId(origpage, P_HIKEY);
 			lefthighkey = (IndexTuple) PageGetItem(origpage, itemid);
 		}
-		XLogRegisterBufData(0, (char *) lefthighkey,
+		XLogRegisterBufData(0, lefthighkey,
 							MAXALIGN(IndexTupleSize(lefthighkey)));
 
 		/*
@@ -2564,7 +2564,7 @@ _bt_newlevel(Relation rel, Relation heaprel, Buffer lbuf, Buffer rbuf)
 		xlrec.level = metad->btm_level;
 
 		XLogBeginInsert();
-		XLogRegisterData((char *) &xlrec, SizeOfBtreeNewroot);
+		XLogRegisterData(&xlrec, SizeOfBtreeNewroot);
 
 		XLogRegisterBuffer(0, rootbuf, REGBUF_WILL_INIT);
 		XLogRegisterBuffer(1, lbuf, REGBUF_STANDARD);
@@ -2579,7 +2579,7 @@ _bt_newlevel(Relation rel, Relation heaprel, Buffer lbuf, Buffer rbuf)
 		md.last_cleanup_num_delpages = metad->btm_last_cleanup_num_delpages;
 		md.allequalimage = metad->btm_allequalimage;
 
-		XLogRegisterBufData(2, (char *) &md, sizeof(xl_btree_metadata));
+		XLogRegisterBufData(2, &md, sizeof(xl_btree_metadata));
 
 		/*
 		 * Direct access to page is not good but faster - we should implement

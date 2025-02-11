@@ -2283,8 +2283,8 @@ ExecuteTruncateGuts(List *explicit_rels,
 			xlrec.flags |= XLH_TRUNCATE_RESTART_SEQS;
 
 		XLogBeginInsert();
-		XLogRegisterData((char *) &xlrec, SizeOfHeapTruncate);
-		XLogRegisterData((char *) logrelids, list_length(relids_logged) * sizeof(Oid));
+		XLogRegisterData(&xlrec, SizeOfHeapTruncate);
+		XLogRegisterData(logrelids, list_length(relids_logged) * sizeof(Oid));
 
 		XLogSetRecordFlags(XLOG_INCLUDE_ORIGIN);
 

@@ -299,7 +299,7 @@ _bt_set_cleanup_info(Relation rel, BlockNumber num_delpages)
 		md.last_cleanup_num_delpages = num_delpages;
 		md.allequalimage = metad->btm_allequalimage;
 
-		XLogRegisterBufData(0, (char *) &md, sizeof(xl_btree_metadata));
+		XLogRegisterBufData(0, &md, sizeof(xl_btree_metadata));
 
 		recptr = XLogInsert(RM_BTREE_ID, XLOG_BTREE_META_CLEANUP);
 
@@ -488,12 +488,12 @@ _bt_getroot(Relation rel, Relation heaprel, int access)
 			md.last_cleanup_num_delpages = 0;
 			md.allequalimage = metad->btm_allequalimage;
 
-			XLogRegisterBufData(2, (char *) &md, sizeof(xl_btree_metadata));
+			XLogRegisterBufData(2, &md, sizeof(xl_btree_metadata));
 
 			xlrec.rootblk = rootblkno;
 			xlrec.level = 0;
 
-			XLogRegisterData((char *) &xlrec, SizeOfBtreeNewroot);
+			XLogRegisterData(&xlrec, SizeOfBtreeNewroot);
 
 			recptr = XLogInsert(RM_BTREE_ID, XLOG_BTREE_NEWROOT);
 
@@ -948,7 +948,7 @@ _bt_allocbuf(Relation rel, Relation heaprel)
 						RelationIsAccessibleInLogicalDecoding(heaprel);
 
 					XLogBeginInsert();
-					XLogRegisterData((char *) &xlrec_reuse, SizeOfBtreeReusePage);
+					XLogRegisterData(&xlrec_reuse, SizeOfBtreeReusePage);
 
 					XLogInsert(RM_BTREE_ID, XLOG_BTREE_REUSE_PAGE);
 				}
@@ -1234,15 +1234,15 @@ _bt_delitems_vacuum(Relation rel, Buffer buf,
 
 		XLogBeginInsert();
 		XLogRegisterBuffer(0, buf, REGBUF_STANDARD);
-		XLogRegisterData((char *) &xlrec_vacuum, SizeOfBtreeVacuum);
+		XLogRegisterData(&xlrec_vacuum, SizeOfBtreeVacuum);
 
 		if (ndeletable > 0)
-			XLogRegisterBufData(0, (char *) deletable,
+			XLogRegisterBufData(0, deletable,
 								ndeletable * sizeof(OffsetNumber));
 
 		if (nupdatable > 0)
 		{
-			XLogRegisterBufData(0, (char *) updatedoffsets,
+			XLogRegisterBufData(0, updatedoffsets,
 								nupdatable * sizeof(OffsetNumber));
 			XLogRegisterBufData(0, updatedbuf, updatedbuflen);
 		}
@@ -1353,15 +1353,15 @@ _bt_delitems_delete(Relation rel, Buffer buf,
 
 		XLogBeginInsert();
 		XLogRegisterBuffer(0, buf, REGBUF_STANDARD);
-		XLogRegisterData((char *) &xlrec_delete, SizeOfBtreeDelete);
+		XLogRegisterData(&xlrec_delete, SizeOfBtreeDelete);
 
 		if (ndeletable > 0)
-			XLogRegisterBufData(0, (char *) deletable,
+			XLogRegisterBufData(0, deletable,
 								ndeletable * sizeof(OffsetNumber));
 
 		if (nupdatable > 0)
 		{
-			XLogRegisterBufData(0, (char *) updatedoffsets,
+			XLogRegisterBufData(0, updatedoffsets,
 								nupdatable * sizeof(OffsetNumber));
 			XLogRegisterBufData(0, updatedbuf, updatedbuflen);
 		}
@@ -2269,7 +2269,7 @@ _bt_mark_page_halfdead(Relation rel, Relation heaprel, Buffer leafbuf,
 		xlrec.leftblk = opaque->btpo_prev;
 		xlrec.rightblk = opaque->btpo_next;
 
-		XLogRegisterData((char *) &xlrec, SizeOfBtreeMarkPageHalfDead);
+		XLogRegisterData(&xlrec, SizeOfBtreeMarkPageHalfDead);
 
 		recptr = XLogInsert(RM_BTREE_ID, XLOG_BTREE_MARK_PAGE_HALFDEAD);
 
@@ -2694,7 +2694,7 @@ _bt_unlink_halfdead_page(Relation rel, Buffer leafbuf, BlockNumber scanblkno,
 		xlrec.leafrightsib = leafrightsib;
 		xlrec.leaftopparent = leaftopparent;
 
-		XLogRegisterData((char *) &xlrec, SizeOfBtreeUnlinkPage);
+		XLogRegisterData(&xlrec, SizeOfBtreeUnlinkPage);
 
 		if (BufferIsValid(metabuf))
 		{
@@ -2709,7 +2709,7 @@ _bt_unlink_halfdead_page(Relation rel, Buffer leafbuf, BlockNumber scanblkno,
 			xlmeta.last_cleanup_num_delpages = metad->btm_last_cleanup_num_delpages;
 			xlmeta.allequalimage = metad->btm_allequalimage;
 
-			XLogRegisterBufData(4, (char *) &xlmeta, sizeof(xl_btree_metadata));
+			XLogRegisterBufData(4, &xlmeta, sizeof(xl_btree_metadata));
 			xlinfo = XLOG_BTREE_UNLINK_PAGE_META;
 		}
 		else

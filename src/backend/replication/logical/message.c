@@ -62,7 +62,7 @@ LogLogicalMessage(const char *prefix, const char *message, size_t size,
 	xlrec.message_size = size;
 
 	XLogBeginInsert();
-	XLogRegisterData((char *) &xlrec, SizeOfLogicalMessage);
+	XLogRegisterData(&xlrec, SizeOfLogicalMessage);
 	XLogRegisterData(prefix, xlrec.prefix_size);
 	XLogRegisterData(message, size);
 

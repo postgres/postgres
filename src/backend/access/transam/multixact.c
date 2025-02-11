@@ -886,8 +886,8 @@ MultiXactIdCreateFromMembers(int nmembers, MultiXactMember *members)
 	 * Not clear that it's worth the trouble though.
 	 */
 	XLogBeginInsert();
-	XLogRegisterData((char *) (&xlrec), SizeOfMultiXactCreate);
-	XLogRegisterData((char *) members, nmembers * sizeof(MultiXactMember));
+	XLogRegisterData(&xlrec, SizeOfMultiXactCreate);
+	XLogRegisterData(members, nmembers * sizeof(MultiXactMember));
 
 	(void) XLogInsert(RM_MULTIXACT_ID, XLOG_MULTIXACT_CREATE_ID);
 
@@ -3355,7 +3355,7 @@ static void
 WriteMZeroPageXlogRec(int64 pageno, uint8 info)
 {
 	XLogBeginInsert();
-	XLogRegisterData((char *) (&pageno), sizeof(pageno));
+	XLogRegisterData(&pageno, sizeof(pageno));
 	(void) XLogInsert(RM_MULTIXACT_ID, info);
 }
 
@@ -3382,7 +3382,7 @@ WriteMTruncateXlogRec(Oid oldestMultiDB,
 	xlrec.endTruncMemb = endTruncMemb;
 
 	XLogBeginInsert();
-	XLogRegisterData((char *) (&xlrec), SizeOfMultiXactTruncate);
+	XLogRegisterData(&xlrec, SizeOfMultiXactTruncate);
 	recptr = XLogInsert(RM_MULTIXACT_ID, XLOG_MULTIXACT_TRUNCATE_ID);
 	XLogFlush(recptr);
 }

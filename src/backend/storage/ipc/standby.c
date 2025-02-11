@@ -1353,11 +1353,11 @@ LogCurrentRunningXacts(RunningTransactions CurrRunningXacts)
 	/* Header */
 	XLogBeginInsert();
 	XLogSetRecordFlags(XLOG_MARK_UNIMPORTANT);
-	XLogRegisterData((char *) (&xlrec), MinSizeOfXactRunningXacts);
+	XLogRegisterData(&xlrec, MinSizeOfXactRunningXacts);
 
 	/* array of TransactionIds */
 	if (xlrec.xcnt > 0)
-		XLogRegisterData((char *) CurrRunningXacts->xids,
+		XLogRegisterData(CurrRunningXacts->xids,
 						 (xlrec.xcnt + xlrec.subxcnt) * sizeof(TransactionId));
 
 	recptr = XLogInsert(RM_STANDBY_ID, XLOG_RUNNING_XACTS);
@@ -1405,8 +1405,8 @@ LogAccessExclusiveLocks(int nlocks, xl_standby_lock *locks)
 	xlrec.nlocks = nlocks;
 
 	XLogBeginInsert();
-	XLogRegisterData((char *) &xlrec, offsetof(xl_standby_locks, locks));
-	XLogRegisterData((char *) locks, nlocks * sizeof(xl_standby_lock));
+	XLogRegisterData(&xlrec, offsetof(xl_standby_locks, locks));
+	XLogRegisterData(locks, nlocks * sizeof(xl_standby_lock));
 	XLogSetRecordFlags(XLOG_MARK_UNIMPORTANT);
 
 	(void) XLogInsert(RM_STANDBY_ID, XLOG_STANDBY_LOCK);
@@ -1469,8 +1469,8 @@ LogStandbyInvalidations(int nmsgs, SharedInvalidationMessage *msgs,
 
 	/* perform insertion */
 	XLogBeginInsert();
-	XLogRegisterData((char *) (&xlrec), MinSizeOfInvalidations);
-	XLogRegisterData((char *) msgs,
+	XLogRegisterData(&xlrec, MinSizeOfInvalidations);
+	XLogRegisterData(msgs,
 					 nmsgs * sizeof(SharedInvalidationMessage));
 	XLogInsert(RM_STANDBY_ID, XLOG_INVALIDATIONS);
 }

@@ -969,8 +969,8 @@ write_relmap_file(RelMapFile *newmap, bool write_wal, bool send_sinval,
 		xlrec.nbytes = sizeof(RelMapFile);
 
 		XLogBeginInsert();
-		XLogRegisterData((char *) (&xlrec), MinSizeOfRelmapUpdate);
-		XLogRegisterData((char *) newmap, sizeof(RelMapFile));
+		XLogRegisterData(&xlrec, MinSizeOfRelmapUpdate);
+		XLogRegisterData(newmap, sizeof(RelMapFile));
 
 		lsn = XLogInsert(RM_RELMAP_ID, XLOG_RELMAP_UPDATE);
 

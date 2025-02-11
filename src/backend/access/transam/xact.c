@@ -770,8 +770,8 @@ AssignTransactionId(TransactionState s)
 			xlrec.nsubxacts = nUnreportedXids;
 
 			XLogBeginInsert();
-			XLogRegisterData((char *) &xlrec, MinSizeOfXactAssignment);
-			XLogRegisterData((char *) unreportedXids,
+			XLogRegisterData(&xlrec, MinSizeOfXactAssignment);
+			XLogRegisterData(unreportedXids,
 							 nUnreportedXids * sizeof(TransactionId));
 
 			(void) XLogInsert(RM_XACT_ID, XLOG_XACT_ASSIGNMENT);
@@ -5909,54 +5909,54 @@ XactLogCommitRecord(TimestampTz commit_time,
 
 	XLogBeginInsert();
 
-	XLogRegisterData((char *) (&xlrec), sizeof(xl_xact_commit));
+	XLogRegisterData(&xlrec, sizeof(xl_xact_commit));
 
 	if (xl_xinfo.xinfo != 0)
-		XLogRegisterData((char *) (&xl_xinfo.xinfo), sizeof(xl_xinfo.xinfo));
+		XLogRegisterData(&xl_xinfo.xinfo, sizeof(xl_xinfo.xinfo));
 
 	if (xl_xinfo.xinfo & XACT_XINFO_HAS_DBINFO)
-		XLogRegisterData((char *) (&xl_dbinfo), sizeof(xl_dbinfo));
+		XLogRegisterData(&xl_dbinfo, sizeof(xl_dbinfo));
 
 	if (xl_xinfo.xinfo & XACT_XINFO_HAS_SUBXACTS)
 	{
-		XLogRegisterData((char *) (&xl_subxacts),
+		XLogRegisterData(&xl_subxacts,
 						 MinSizeOfXactSubxacts);
-		XLogRegisterData((char *) subxacts,
+		XLogRegisterData(subxacts,
 						 nsubxacts * sizeof(TransactionId));
 	}
 
 	if (xl_xinfo.xinfo & XACT_XINFO_HAS_RELFILELOCATORS)
 	{
-		XLogRegisterData((char *) (&xl_relfilelocators),
+		XLogRegisterData(&xl_relfilelocators,
 						 MinSizeOfXactRelfileLocators);
-		XLogRegisterData((char *) rels,
+		XLogRegisterData(rels,
 						 nrels * sizeof(RelFileLocator));
 	}
 
 	if (xl_xinfo.xinfo & XACT_XINFO_HAS_DROPPED_STATS)
 	{
-		XLogRegisterData((char *) (&xl_dropped_stats),
+		XLogRegisterData(&xl_dropped_stats,
 						 MinSizeOfXactStatsItems);
-		XLogRegisterData((char *) droppedstats,
+		XLogRegisterData(droppedstats,
 						 ndroppedstats * sizeof(xl_xact_stats_item));
 	}
 
 	if (xl_xinfo.xinfo & XACT_XINFO_HAS_INVALS)
 	{
-		XLogRegisterData((char *) (&xl_invals), MinSizeOfXactInvals);
-		XLogRegisterData((char *) msgs,
+		XLogRegisterData(&xl_invals, MinSizeOfXactInvals);
+		XLogRegisterData(msgs,
 						 nmsgs * sizeof(SharedInvalidationMessage));
 	}
 
 	if (xl_xinfo.xinfo & XACT_XINFO_HAS_TWOPHASE)
 	{
-		XLogRegisterData((char *) (&xl_twophase), sizeof(xl_xact_twophase));
+		XLogRegisterData(&xl_twophase, sizeof(xl_xact_twophase));
 		if (xl_xinfo.xinfo & XACT_XINFO_HAS_GID)
 			XLogRegisterData(twophase_gid, strlen(twophase_gid) + 1);
 	}
 
 	if (xl_xinfo.xinfo & XACT_XINFO_HAS_ORIGIN)
-		XLogRegisterData((char *) (&xl_origin), sizeof(xl_xact_origin));
+		XLogRegisterData(&xl_origin, sizeof(xl_xact_origin));
 
 	/* we allow filtering by xacts */
 	XLogSetRecordFlags(XLOG_INCLUDE_ORIGIN);
@@ -6062,47 +6062,47 @@ XactLogAbortRecord(TimestampTz abort_time,
 
 	XLogBeginInsert();
 
-	XLogRegisterData((char *) (&xlrec), MinSizeOfXactAbort);
+	XLogRegisterData(&xlrec, MinSizeOfXactAbort);
 
 	if (xl_xinfo.xinfo != 0)
-		XLogRegisterData((char *) (&xl_xinfo), sizeof(xl_xinfo));
+		XLogRegisterData(&xl_xinfo, sizeof(xl_xinfo));
 
 	if (xl_xinfo.xinfo & XACT_XINFO_HAS_DBINFO)
-		XLogRegisterData((char *) (&xl_dbinfo), sizeof(xl_dbinfo));
+		XLogRegisterData(&xl_dbinfo, sizeof(xl_dbinfo));
 
 	if (xl_xinfo.xinfo & XACT_XINFO_HAS_SUBXACTS)
 	{
-		XLogRegisterData((char *) (&xl_subxacts),
+		XLogRegisterData(&xl_subxacts,
 						 MinSizeOfXactSubxacts);
-		XLogRegisterData((char *) subxacts,
+		XLogRegisterData(subxacts,
 						 nsubxacts * sizeof(TransactionId));
 	}
 
 	if (xl_xinfo.xinfo & XACT_XINFO_HAS_RELFILELOCATORS)
 	{
-		XLogRegisterData((char *) (&xl_relfilelocators),
+		XLogRegisterData(&xl_relfilelocators,
 						 MinSizeOfXactRelfileLocators);
-		XLogRegisterData((char *) rels,
+		XLogRegisterData(rels,
 						 nrels * sizeof(RelFileLocator));
 	}
 
 	if (xl_xinfo.xinfo & XACT_XINFO_HAS_DROPPED_STATS)
 	{
-		XLogRegisterData((char *) (&xl_dropped_stats),
+		XLogRegisterData(&xl_dropped_stats,
 						 MinSizeOfXactStatsItems);
-		XLogRegisterData((char *) droppedstats,
+		XLogRegisterData(droppedstats,
 						 ndroppedstats * sizeof(xl_xact_stats_item));
 	}
 
 	if (xl_xinfo.xinfo & XACT_XINFO_HAS_TWOPHASE)
 	{
-		XLogRegisterData((char *) (&xl_twophase), sizeof(xl_xact_twophase));
+		XLogRegisterData(&xl_twophase, sizeof(xl_xact_twophase));
 		if (xl_xinfo.xinfo & XACT_XINFO_HAS_GID)
 			XLogRegisterData(twophase_gid, strlen(twophase_gid) + 1);
 	}
 
 	if (xl_xinfo.xinfo & XACT_XINFO_HAS_ORIGIN)
-		XLogRegisterData((char *) (&xl_origin), sizeof(xl_xact_origin));
+		XLogRegisterData(&xl_origin, sizeof(xl_xact_origin));
 
 	/* Include the replication origin */
 	XLogSetRecordFlags(XLOG_INCLUDE_ORIGIN);

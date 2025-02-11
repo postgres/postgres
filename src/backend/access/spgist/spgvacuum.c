@@ -380,14 +380,14 @@ vacuumLeafPage(spgBulkDeleteState *bds, Relation index, Buffer buffer,
 
 		STORE_STATE(&bds->spgstate, xlrec.stateSrc);
 
-		XLogRegisterData((char *) &xlrec, SizeOfSpgxlogVacuumLeaf);
+		XLogRegisterData(&xlrec, SizeOfSpgxlogVacuumLeaf);
 		/* sizeof(xlrec) should be a multiple of sizeof(OffsetNumber) */
-		XLogRegisterData((char *) toDead, sizeof(OffsetNumber) * xlrec.nDead);
-		XLogRegisterData((char *) toPlaceholder, sizeof(OffsetNumber) * xlrec.nPlaceholder);
-		XLogRegisterData((char *) moveSrc, sizeof(OffsetNumber) * xlrec.nMove);
-		XLogRegisterData((char *) moveDest, sizeof(OffsetNumber) * xlrec.nMove);
-		XLogRegisterData((char *) chainSrc, sizeof(OffsetNumber) * xlrec.nChain);
-		XLogRegisterData((char *) chainDest, sizeof(OffsetNumber) * xlrec.nChain);
+		XLogRegisterData(toDead, sizeof(OffsetNumber) * xlrec.nDead);
+		XLogRegisterData(toPlaceholder, sizeof(OffsetNumber) * xlrec.nPlaceholder);
+		XLogRegisterData(moveSrc, sizeof(OffsetNumber) * xlrec.nMove);
+		XLogRegisterData(moveDest, sizeof(OffsetNumber) * xlrec.nMove);
+		XLogRegisterData(chainSrc, sizeof(OffsetNumber) * xlrec.nChain);
+		XLogRegisterData(chainDest, sizeof(OffsetNumber) * xlrec.nChain);
 
 		XLogRegisterBuffer(0, buffer, REGBUF_STANDARD);
 
@@ -465,9 +465,9 @@ vacuumLeafRoot(spgBulkDeleteState *bds, Relation index, Buffer buffer)
 		/* Prepare WAL record */
 		STORE_STATE(&bds->spgstate, xlrec.stateSrc);
 
-		XLogRegisterData((char *) &xlrec, SizeOfSpgxlogVacuumRoot);
+		XLogRegisterData(&xlrec, SizeOfSpgxlogVacuumRoot);
 		/* sizeof(xlrec) should be a multiple of sizeof(OffsetNumber) */
-		XLogRegisterData((char *) toDelete,
+		XLogRegisterData(toDelete,
 						 sizeof(OffsetNumber) * xlrec.nDelete);
 
 		XLogRegisterBuffer(0, buffer, REGBUF_STANDARD);
@@ -600,8 +600,8 @@ vacuumRedirectAndPlaceholder(Relation index, Relation heaprel, Buffer buffer)
 
 		XLogBeginInsert();
 
-		XLogRegisterData((char *) &xlrec, SizeOfSpgxlogVacuumRedirect);
-		XLogRegisterData((char *) itemToPlaceholder,
+		XLogRegisterData(&xlrec, SizeOfSpgxlogVacuumRedirect);
+		XLogRegisterData(itemToPlaceholder,
 						 sizeof(OffsetNumber) * xlrec.nToPlaceholder);
 
 		XLogRegisterBuffer(0, buffer, REGBUF_STANDARD);

@@ -394,7 +394,7 @@ _hash_init(Relation rel, double num_tuples, ForkNumber forkNum)
 		xlrec.ffactor = metap->hashm_ffactor;
 
 		XLogBeginInsert();
-		XLogRegisterData((char *) &xlrec, SizeOfHashInitMetaPage);
+		XLogRegisterData(&xlrec, SizeOfHashInitMetaPage);
 		XLogRegisterBuffer(0, metabuf, REGBUF_WILL_INIT | REGBUF_STANDARD);
 
 		recptr = XLogInsert(RM_HASH_ID, XLOG_HASH_INIT_META_PAGE);
@@ -468,7 +468,7 @@ _hash_init(Relation rel, double num_tuples, ForkNumber forkNum)
 		xlrec.bmsize = metap->hashm_bmsize;
 
 		XLogBeginInsert();
-		XLogRegisterData((char *) &xlrec, SizeOfHashInitBitmapPage);
+		XLogRegisterData(&xlrec, SizeOfHashInitBitmapPage);
 		XLogRegisterBuffer(0, bitmapbuf, REGBUF_WILL_INIT);
 
 		/*
@@ -916,21 +916,21 @@ restart_expand:
 		if (metap_update_masks)
 		{
 			xlrec.flags |= XLH_SPLIT_META_UPDATE_MASKS;
-			XLogRegisterBufData(2, (char *) &metap->hashm_lowmask, sizeof(uint32));
-			XLogRegisterBufData(2, (char *) &metap->hashm_highmask, sizeof(uint32));
+			XLogRegisterBufData(2, &metap->hashm_lowmask, sizeof(uint32));
+			XLogRegisterBufData(2, &metap->hashm_highmask, sizeof(uint32));
 		}
 
 		if (metap_update_splitpoint)
 		{
 			xlrec.flags |= XLH_SPLIT_META_UPDATE_SPLITPOINT;
-			XLogRegisterBufData(2, (char *) &metap->hashm_ovflpoint,
+			XLogRegisterBufData(2, &metap->hashm_ovflpoint,
 								sizeof(uint32));
 			XLogRegisterBufData(2,
-								(char *) &metap->hashm_spares[metap->hashm_ovflpoint],
+								&metap->hashm_spares[metap->hashm_ovflpoint],
 								sizeof(uint32));
 		}
 
-		XLogRegisterData((char *) &xlrec, SizeOfHashSplitAllocPage);
+		XLogRegisterData(&xlrec, SizeOfHashSplitAllocPage);
 
 		recptr = XLogInsert(RM_HASH_ID, XLOG_HASH_SPLIT_ALLOCATE_PAGE);
 
@@ -1304,7 +1304,7 @@ _hash_splitbucket(Relation rel,
 
 		XLogBeginInsert();
 
-		XLogRegisterData((char *) &xlrec, SizeOfHashSplitComplete);
+		XLogRegisterData(&xlrec, SizeOfHashSplitComplete);
 
 		XLogRegisterBuffer(0, bucket_obuf, REGBUF_STANDARD);
 		XLogRegisterBuffer(1, bucket_nbuf, REGBUF_STANDARD);

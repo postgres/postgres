@@ -1135,7 +1135,7 @@ brinbuild(Relation heap, Relation index, IndexInfo *indexInfo)
 		xlrec.pagesPerRange = BrinGetPagesPerRange(index);
 
 		XLogBeginInsert();
-		XLogRegisterData((char *) &xlrec, SizeOfBrinCreateIdx);
+		XLogRegisterData(&xlrec, SizeOfBrinCreateIdx);
 		XLogRegisterBuffer(0, meta, REGBUF_WILL_INIT | REGBUF_STANDARD);
 
 		recptr = XLogInsert(RM_BRIN_ID, XLOG_BRIN_CREATE_INDEX);

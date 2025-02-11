@@ -190,10 +190,10 @@ brin_doupdate(Relation idxrel, BlockNumber pagesPerRange,
 			xlrec.offnum = oldoff;
 
 			XLogBeginInsert();
-			XLogRegisterData((char *) &xlrec, SizeOfBrinSamepageUpdate);
+			XLogRegisterData(&xlrec, SizeOfBrinSamepageUpdate);
 
 			XLogRegisterBuffer(0, oldbuf, REGBUF_STANDARD);
-			XLogRegisterBufData(0, (const char *) newtup, newsz);
+			XLogRegisterBufData(0, newtup, newsz);
 
 			recptr = XLogInsert(RM_BRIN_ID, info);
 
@@ -282,10 +282,10 @@ brin_doupdate(Relation idxrel, BlockNumber pagesPerRange,
 			XLogBeginInsert();
 
 			/* new page */
-			XLogRegisterData((char *) &xlrec, SizeOfBrinUpdate);
+			XLogRegisterData(&xlrec, SizeOfBrinUpdate);
 
 			XLogRegisterBuffer(0, newbuf, REGBUF_STANDARD | (extended ? REGBUF_WILL_INIT : 0));
-			XLogRegisterBufData(0, (const char *) newtup, newsz);
+			XLogRegisterBufData(0, newtup, newsz);
 
 			/* revmap page */
 			XLogRegisterBuffer(1, revmapbuf, 0);
@@ -435,10 +435,10 @@ brin_doinsert(Relation idxrel, BlockNumber pagesPerRange,
 		xlrec.offnum = off;
 
 		XLogBeginInsert();
-		XLogRegisterData((char *) &xlrec, SizeOfBrinInsert);
+		XLogRegisterData(&xlrec, SizeOfBrinInsert);
 
 		XLogRegisterBuffer(0, *buffer, REGBUF_STANDARD | (extended ? REGBUF_WILL_INIT : 0));
-		XLogRegisterBufData(0, (char *) tup, itemsz);
+		XLogRegisterBufData(0, tup, itemsz);
 
 		XLogRegisterBuffer(1, revmapbuf, 0);
 

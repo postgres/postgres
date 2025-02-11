@@ -63,7 +63,7 @@ typedef struct
 	 * If we need WAL data representing the reconstructed leaf page, it's
 	 * stored here by computeLeafRecompressWALData.
 	 */
-	char	   *walinfo;		/* buffer start */
+	void	   *walinfo;		/* buffer start */
 	int			walinfolen;		/* and length */
 } disassembledLeaf;
 
@@ -1173,7 +1173,7 @@ dataExecPlaceToPageInternal(GinBtree btree, Buffer buf, GinBtreeStack *stack,
 		data.newitem = *pitem;
 
 		XLogRegisterBuffer(0, buf, REGBUF_STANDARD);
-		XLogRegisterBufData(0, (char *) &data,
+		XLogRegisterBufData(0, &data,
 							sizeof(ginxlogInsertDataInternal));
 	}
 }
@@ -1844,9 +1844,9 @@ createPostingTree(Relation index, ItemPointerData *items, uint32 nitems,
 		data.size = rootsize;
 
 		XLogBeginInsert();
-		XLogRegisterData((char *) &data, sizeof(ginxlogCreatePostingTree));
+		XLogRegisterData(&data, sizeof(ginxlogCreatePostingTree));
 
-		XLogRegisterData((char *) GinDataLeafPageGetPostingList(page),
+		XLogRegisterData(GinDataLeafPageGetPostingList(page),
 						 rootsize);
 		XLogRegisterBuffer(0, buffer, REGBUF_WILL_INIT);
 

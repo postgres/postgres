@@ -424,7 +424,7 @@ pg_truncate_visibility_map(PG_FUNCTION_ARGS)
 		xlrec.flags = SMGR_TRUNCATE_VM;
 
 		XLogBeginInsert();
-		XLogRegisterData((char *) &xlrec, sizeof(xlrec));
+		XLogRegisterData(&xlrec, sizeof(xlrec));
 
 		lsn = XLogInsert(RM_SMGR_ID,
 						 XLOG_SMGR_TRUNCATE | XLR_SPECIAL_REL_UPDATE);

@@ -2093,9 +2093,9 @@ log_heap_prune_and_freeze(Relation relation, Buffer buffer,
 		nplans = heap_log_freeze_plan(frozen, nfrozen, plans, frz_offsets);
 
 		freeze_plans.nplans = nplans;
-		XLogRegisterBufData(0, (char *) &freeze_plans,
+		XLogRegisterBufData(0, &freeze_plans,
 							offsetof(xlhp_freeze_plans, plans));
-		XLogRegisterBufData(0, (char *) plans,
+		XLogRegisterBufData(0, plans,
 							sizeof(xlhp_freeze_plan) * nplans);
 	}
 	if (nredirected > 0)
@@ -2103,9 +2103,9 @@ log_heap_prune_and_freeze(Relation relation, Buffer buffer,
 		xlrec.flags |= XLHP_HAS_REDIRECTIONS;
 
 		redirect_items.ntargets = nredirected;
-		XLogRegisterBufData(0, (char *) &redirect_items,
+		XLogRegisterBufData(0, &redirect_items,
 							offsetof(xlhp_prune_items, data));
-		XLogRegisterBufData(0, (char *) redirected,
+		XLogRegisterBufData(0, redirected,
 							sizeof(OffsetNumber[2]) * nredirected);
 	}
 	if (ndead > 0)
@@ -2113,9 +2113,9 @@ log_heap_prune_and_freeze(Relation relation, Buffer buffer,
 		xlrec.flags |= XLHP_HAS_DEAD_ITEMS;
 
 		dead_items.ntargets = ndead;
-		XLogRegisterBufData(0, (char *) &dead_items,
+		XLogRegisterBufData(0, &dead_items,
 							offsetof(xlhp_prune_items, data));
-		XLogRegisterBufData(0, (char *) dead,
+		XLogRegisterBufData(0, dead,
 							sizeof(OffsetNumber) * ndead);
 	}
 	if (nunused > 0)
@@ -2123,13 +2123,13 @@ log_heap_prune_and_freeze(Relation relation, Buffer buffer,
 		xlrec.flags |= XLHP_HAS_NOW_UNUSED_ITEMS;
 
 		unused_items.ntargets = nunused;
-		XLogRegisterBufData(0, (char *) &unused_items,
+		XLogRegisterBufData(0, &unused_items,
 							offsetof(xlhp_prune_items, data));
-		XLogRegisterBufData(0, (char *) unused,
+		XLogRegisterBufData(0, unused,
 							sizeof(OffsetNumber) * nunused);
 	}
 	if (nfrozen > 0)
-		XLogRegisterBufData(0, (char *) frz_offsets,
+		XLogRegisterBufData(0, frz_offsets,
 							sizeof(OffsetNumber) * nfrozen);
 
 	/*
@@ -2147,9 +2147,9 @@ log_heap_prune_and_freeze(Relation relation, Buffer buffer,
 		Assert(nredirected == 0 && ndead == 0);
 		/* also, any items in 'unused' must've been LP_DEAD previously */
 	}
-	XLogRegisterData((char *) &xlrec, SizeOfHeapPrune);
+	XLogRegisterData(&xlrec, SizeOfHeapPrune);
 	if (TransactionIdIsValid(conflict_xid))
-		XLogRegisterData((char *) &conflict_xid, sizeof(TransactionId));
+		XLogRegisterData(&conflict_xid, sizeof(TransactionId));
 
 	switch (reason)
 	{
