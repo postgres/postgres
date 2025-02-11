@@ -53,6 +53,7 @@ begin
   -- test scenarios for optimization of updates of R/W expanded objects
   a := array_append(a, 42);  -- optimizable using "transfer" method
   a := a || a[3];  -- optimizable using "inplace" method
+  a := a[1] || a;  -- ditto, but let's test array_prepend
   a := a || a;     -- not optimizable
   raise notice 'a = %', a;
 end$$;

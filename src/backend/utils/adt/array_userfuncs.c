@@ -16,6 +16,7 @@
 #include "common/int.h"
 #include "common/pg_prng.h"
 #include "libpq/pqformat.h"
+#include "nodes/supportnodes.h"
 #include "port/pg_bitutils.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
@@ -167,6 +168,36 @@ array_append(PG_FUNCTION_ARGS)
 	PG_RETURN_DATUM(result);
 }
 
+/*
+ * array_append_support()
+ *
+ * Planner support function for array_append()
+ */
+Datum
+array_append_support(PG_FUNCTION_ARGS)
+{
+	Node	   *rawreq = (Node *) PG_GETARG_POINTER(0);
+	Node	   *ret = NULL;
+
+	if (IsA(rawreq, SupportRequestModifyInPlace))
+	{
+		/*
+		 * We can optimize in-place appends if the function's array argument
+		 * is the array being assigned to.  We don't need to worry about array
+		 * references within the other argument.
+		 */
+		SupportRequestModifyInPlace *req = (SupportRequestModifyInPlace *) rawreq;
+		Param	   *arg = (Param *) linitial(req->args);
+
+		if (arg && IsA(arg, Param) &&
+			arg->paramkind == PARAM_EXTERN &&
+			arg->paramid == req->paramid)
+			ret = (Node *) arg;
+	}
+
+	PG_RETURN_POINTER(ret);
+}
+
 /*-----------------------------------------------------------------------------
  * array_prepend :
  *		push an element onto the front of a one-dimensional array
@@ -228,6 +259,36 @@ array_prepend(PG_FUNCTION_ARGS)
 	}
 
 	PG_RETURN_DATUM(result);
+}
+
+/*
+ * array_prepend_support()
+ *
+ * Planner support function for array_prepend()
+ */
+Datum
+array_prepend_support(PG_FUNCTION_ARGS)
+{
+	Node	   *rawreq = (Node *) PG_GETARG_POINTER(0);
+	Node	   *ret = NULL;
+
+	if (IsA(rawreq, SupportRequestModifyInPlace))
+	{
+		/*
+		 * We can optimize in-place prepends if the function's array argument
+		 * is the array being assigned to.  We don't need to worry about array
+		 * references within the other argument.
+		 */
+		SupportRequestModifyInPlace *req = (SupportRequestModifyInPlace *) rawreq;
+		Param	   *arg = (Param *) lsecond(req->args);
+
+		if (arg && IsA(arg, Param) &&
+			arg->paramkind == PARAM_EXTERN &&
+			arg->paramid == req->paramid)
+			ret = (Node *) arg;
+	}
+
+	PG_RETURN_POINTER(ret);
 }
 
 /*-----------------------------------------------------------------------------

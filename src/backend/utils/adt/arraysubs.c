@@ -18,6 +18,7 @@
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
 #include "nodes/subscripting.h"
+#include "nodes/supportnodes.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_expr.h"
 #include "utils/array.h"
@@ -574,4 +575,37 @@ raw_array_subscript_handler(PG_FUNCTION_ARGS)
 	};
 
 	PG_RETURN_POINTER(&sbsroutines);
+}
+
+/*
+ * array_subscript_handler_support()
+ *
+ * Planner support function for array_subscript_handler()
+ */
+Datum
+array_subscript_handler_support(PG_FUNCTION_ARGS)
+{
+	Node	   *rawreq = (Node *) PG_GETARG_POINTER(0);
+	Node	   *ret = NULL;
+
+	if (IsA(rawreq, SupportRequestModifyInPlace))
+	{
+		/*
+		 * We can optimize in-place subscripted assignment if the refexpr is
+		 * the array being assigned to.  We don't need to worry about array
+		 * references within the refassgnexpr or the subscripts; however, if
+		 * there's no refassgnexpr then it's a fetch which there's no need to
+		 * optimize.
+		 */
+		SupportRequestModifyInPlace *req = (SupportRequestModifyInPlace *) rawreq;
+		Param	   *refexpr = (Param *) linitial(req->args);
+
+		if (refexpr && IsA(refexpr, Param) &&
+			refexpr->paramkind == PARAM_EXTERN &&
+			refexpr->paramid == req->paramid &&
+			lsecond(req->args) != NULL)
+			ret = (Node *) refexpr;
+	}
+
+	PG_RETURN_POINTER(ret);
 }

@@ -29,6 +29,7 @@
 #include "mb/stringinfo_mb.h"
 #include "miscadmin.h"
 #include "nodes/nodeFuncs.h"
+#include "nodes/supportnodes.h"
 #include "optimizer/optimizer.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_type.h"
@@ -8411,7 +8412,7 @@ exec_check_rw_parameter(PLpgSQL_expr *expr, int paramid)
 	Expr	   *sexpr = expr->expr_simple_expr;
 	Oid			funcid;
 	List	   *fargs;
-	ListCell   *lc;
+	Oid			prosupport;
 
 	/* Assume unsafe */
 	expr->expr_rwopt = PLPGSQL_RWOPT_NOPE;
@@ -8480,64 +8481,51 @@ exec_check_rw_parameter(PLpgSQL_expr *expr, int paramid)
 	{
 		SubscriptingRef *sbsref = (SubscriptingRef *) sexpr;
 
-		/* We only trust standard varlena arrays to be safe */
-		/* TODO: install some extensibility here */
-		if (get_typsubscript(sbsref->refcontainertype, NULL) !=
-			F_ARRAY_SUBSCRIPT_HANDLER)
-			return;
+		funcid = get_typsubscript(sbsref->refcontainertype, NULL);
 
-		/* We can optimize the refexpr if it's the target, otherwise not */
-		if (sbsref->refexpr && IsA(sbsref->refexpr, Param))
-		{
-			Param	   *param = (Param *) sbsref->refexpr;
-
-			if (param->paramkind == PARAM_EXTERN &&
-				param->paramid == paramid)
-			{
-				/* Found the Param we want to pass as read/write */
-				expr->expr_rwopt = PLPGSQL_RWOPT_INPLACE;
-				expr->expr_rw_param = param;
-				return;
-			}
-		}
-
-		return;
+		/*
+		 * We assume that only the refexpr and refassgnexpr (if any) are
+		 * relevant to the support function's decision.  If that turns out to
+		 * be a bad idea, we could incorporate the subscript expressions into
+		 * the fargs list somehow.
+		 */
+		fargs = list_make2(sbsref->refexpr, sbsref->refassgnexpr);
 	}
 	else
 		return;
 
 	/*
-	 * The top-level function must be one that we trust to be "safe".
-	 * Currently we hard-wire the list, but it would be very desirable to
-	 * allow extensions to mark their functions as safe ...
+	 * The top-level function must be one that can handle in-place update
+	 * safely.  We allow functions to declare their ability to do that via a
+	 * support function request.
 	 */
-	if (!(funcid == F_ARRAY_APPEND ||
-		  funcid == F_ARRAY_PREPEND))
-		return;
-
-	/*
-	 * The target variable (in the form of a Param) must appear as a direct
-	 * argument of the top-level function.  References further down in the
-	 * tree can't be optimized; but on the other hand, they don't invalidate
-	 * optimizing the top-level call, since that will be executed last.
-	 */
-	foreach(lc, fargs)
+	prosupport = get_func_support(funcid);
+	if (OidIsValid(prosupport))
 	{
-		Node	   *arg = (Node *) lfirst(lc);
+		SupportRequestModifyInPlace req;
+		Param	   *param;
 
-		if (arg && IsA(arg, Param))
-		{
-			Param	   *param = (Param *) arg;
+		req.type = T_SupportRequestModifyInPlace;
+		req.funcid = funcid;
+		req.args = fargs;
+		req.paramid = paramid;
 
-			if (param->paramkind == PARAM_EXTERN &&
-				param->paramid == paramid)
-			{
-				/* Found the Param we want to pass as read/write */
-				expr->expr_rwopt = PLPGSQL_RWOPT_INPLACE;
-				expr->expr_rw_param = param;
-				return;
-			}
-		}
+		param = (Param *)
+			DatumGetPointer(OidFunctionCall1(prosupport,
+											 PointerGetDatum(&req)));
+
+		if (param == NULL)
+			return;				/* support function fails */
+
+		/* Verify support function followed the API */
+		Assert(IsA(param, Param));
+		Assert(param->paramkind == PARAM_EXTERN);
+		Assert(param->paramid == paramid);
+
+		/* Found the Param we want to pass as read/write */
+		expr->expr_rwopt = PLPGSQL_RWOPT_INPLACE;
+		expr->expr_rw_param = param;
+		return;
 	}
 }
 
