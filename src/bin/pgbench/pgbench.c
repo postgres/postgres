@@ -53,6 +53,7 @@
 #include <sys/select.h>
 #endif
 
+#include "catalog/pg_class_d.h"
 #include "common/int.h"
 #include "common/logging.h"
 #include "common/pg_prng.h"
@@ -847,6 +848,31 @@ typedef void (*initRowMethod) (PQExpBufferData *sql, int64 curr);
 static const PsqlScanCallbacks pgbench_callbacks = {
 	NULL,						/* don't need get_variable functionality */
 };
+
+static char
+get_table_relkind(PGconn *con, const char *table)
+{
+	PGresult   *res;
+	char	   *val;
+	char		relkind;
+	const char *params[1] = {table};
+	const char *sql =
+		"SELECT relkind FROM pg_catalog.pg_class WHERE oid=$1::pg_catalog.regclass";
+
+	res = PQexecParams(con, sql, 1, NULL, params, NULL, NULL, 0);
+	if (PQresultStatus(res) != PGRES_TUPLES_OK)
+	{
+		pg_log_error("query failed: %s", PQerrorMessage(con));
+		pg_log_error_detail("Query was: %s", sql);
+		exit(1);
+	}
+	val = PQgetvalue(res, 0, 0);
+	Assert(strlen(val) == 1);
+	relkind = val[0];
+	PQclear(res);
+
+	return relkind;
+}
 
 static inline pg_time_usec_t
 pg_time_now(void)
@@ -4962,16 +4988,11 @@ initPopulateTable(PGconn *con, const char *table, int64 base,
 
 	initPQExpBuffer(&sql);
 
-	/*
-	 * Use COPY with FREEZE on v14 and later for all the tables except
-	 * pgbench_accounts when it is partitioned.
-	 */
-	if (PQserverVersion(con) >= 140000)
-	{
-		if (strcmp(table, "pgbench_accounts") != 0 ||
-			partitions == 0)
-			copy_statement_fmt = "copy %s from stdin with (freeze on)";
-	}
+	/* Use COPY with FREEZE on v14 and later for all ordinary tables */
+	if ((PQserverVersion(con) >= 140000) &&
+		get_table_relkind(con, table) == RELKIND_RELATION)
+		copy_statement_fmt = "copy %s from stdin with (freeze on)";
+
 
 	n = pg_snprintf(copy_statement, sizeof(copy_statement), copy_statement_fmt, table);
 	if (n >= sizeof(copy_statement))

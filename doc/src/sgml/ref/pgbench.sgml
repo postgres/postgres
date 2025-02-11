@@ -231,11 +231,10 @@ pgbench <optional> <replaceable>options</replaceable> </optional> <replaceable>d
             sent to the server. This uses the client/server bandwidth
             extensively through a <command>COPY</command>.
             <command>pgbench</command> uses the <option>FREEZE</option> option
-            with version 14 or later
-            of <productname>PostgreSQL</productname> to speed up
-            subsequent <command>VACUUM</command>, except on the
-            <literal>pgbench_accounts</literal> table if partitions are
-            enabled. Using <literal>g</literal> causes logging to
+            to load data into ordinary (non-partition) tables with version 14
+            or later of <productname>PostgreSQL</productname> to speed up
+            subsequent <command>VACUUM</command>.
+            Using <literal>g</literal> causes logging to
             print one message every 100,000 rows while generating data for all
             tables.
            </para>
