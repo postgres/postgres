@@ -425,6 +425,7 @@ typedef struct ExprEvalStep
 		{
 			ExecEvalSubroutine paramfunc;	/* add-on evaluation subroutine */
 			void	   *paramarg;	/* private data for same */
+			void	   *paramarg2;	/* more private data for same */
 			int			paramid;	/* numeric ID for parameter */
 			Oid			paramtype;	/* OID of parameter's datatype */
 		}			cparam;

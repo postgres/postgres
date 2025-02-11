@@ -1873,6 +1873,7 @@ PLpgSQL_rec
 PLpgSQL_recfield
 PLpgSQL_resolve_option
 PLpgSQL_row
+PLpgSQL_rwopt
 PLpgSQL_stmt
 PLpgSQL_stmt_assert
 PLpgSQL_stmt_assign
@@ -3414,6 +3415,7 @@ core_yy_extra_type
 core_yyscan_t
 corrupt_items
 cost_qual_eval_context
+count_param_references_context
 cp_hash_func
 create_upper_paths_hook_type
 createdb_failure_params

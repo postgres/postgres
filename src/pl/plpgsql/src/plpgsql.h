@@ -187,6 +187,17 @@ typedef enum PLpgSQL_resolve_option
 	PLPGSQL_RESOLVE_COLUMN,		/* prefer table column to plpgsql var */
 } PLpgSQL_resolve_option;
 
+/*
+ * Status of optimization of assignment to a read/write expanded object
+ */
+typedef enum PLpgSQL_rwopt
+{
+	PLPGSQL_RWOPT_UNKNOWN = 0,	/* applicability not determined yet */
+	PLPGSQL_RWOPT_NOPE,			/* cannot do any optimization */
+	PLPGSQL_RWOPT_TRANSFER,		/* transfer the old value into expr state */
+	PLPGSQL_RWOPT_INPLACE,		/* pass value as R/W to top-level function */
+} PLpgSQL_rwopt;
+
 
 /**********************************************************************
  * Node and structure definitions
@@ -246,11 +257,14 @@ typedef struct PLpgSQL_expr
 	bool		expr_simple_mutable;	/* true if simple expr is mutable */
 
 	/*
-	 * If we match a Param within expr_simple_expr to the variable identified
-	 * by target_param, that Param's address is stored in expr_rw_param; then
-	 * expression code generation will allow the value for that Param to be
-	 * passed as a read/write expanded-object pointer.
+	 * expr_rwopt tracks whether we have determined that assignment to a
+	 * read/write expanded object (stored in the target_param datum) can be
+	 * optimized by passing it to the expr as a read/write expanded-object
+	 * pointer.  If so, expr_rw_param identifies the specific Param that
+	 * should emit a read/write pointer; any others will emit read-only
+	 * pointers.
 	 */
+	PLpgSQL_rwopt expr_rwopt;	/* can we apply R/W optimization? */
 	Param	   *expr_rw_param;	/* read/write Param within expr, if any */
 
 	/*

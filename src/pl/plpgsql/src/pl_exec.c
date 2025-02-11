@@ -251,6 +251,15 @@ static HTAB *shared_cast_hash = NULL;
 	else \
 		Assert(rc == PLPGSQL_RC_OK)
 
+/* State struct for count_param_references */
+typedef struct count_param_references_context
+{
+	int			paramid;
+	int			count;
+	Param	   *last_param;
+} count_param_references_context;
+
+
 /************************************************************
  * Local function forward declarations
  ************************************************************/
@@ -336,7 +345,9 @@ static void exec_prepare_plan(PLpgSQL_execstate *estate,
 static void exec_simple_check_plan(PLpgSQL_execstate *estate, PLpgSQL_expr *expr);
 static bool exec_is_simple_query(PLpgSQL_expr *expr);
 static void exec_save_simple_expr(PLpgSQL_expr *expr, CachedPlan *cplan);
-static void exec_check_rw_parameter(PLpgSQL_expr *expr);
+static void exec_check_rw_parameter(PLpgSQL_expr *expr, int paramid);
+static bool count_param_references(Node *node,
+								   count_param_references_context *context);
 static void exec_check_assignable(PLpgSQL_execstate *estate, int dno);
 static bool exec_eval_simple_expr(PLpgSQL_execstate *estate,
 								  PLpgSQL_expr *expr,
@@ -384,6 +395,10 @@ static ParamExternData *plpgsql_param_fetch(ParamListInfo params,
 static void plpgsql_param_compile(ParamListInfo params, Param *param,
 								  ExprState *state,
 								  Datum *resv, bool *resnull);
+static void plpgsql_param_eval_var_check(ExprState *state, ExprEvalStep *op,
+										 ExprContext *econtext);
+static void plpgsql_param_eval_var_transfer(ExprState *state, ExprEvalStep *op,
+											ExprContext *econtext);
 static void plpgsql_param_eval_var(ExprState *state, ExprEvalStep *op,
 								   ExprContext *econtext);
 static void plpgsql_param_eval_var_ro(ExprState *state, ExprEvalStep *op,
@@ -6078,10 +6093,13 @@ exec_eval_simple_expr(PLpgSQL_execstate *estate,
 
 		/*
 		 * Reset to "not simple" to leave sane state (with no dangling
-		 * pointers) in case we fail while replanning.  expr_simple_plansource
-		 * can be left alone however, as that cannot move.
+		 * pointers) in case we fail while replanning.  We'll need to
+		 * re-determine simplicity and R/W optimizability anyway, since those
+		 * could change with the new plan.  expr_simple_plansource can be left
+		 * alone however, as that cannot move.
 		 */
 		expr->expr_simple_expr = NULL;
+		expr->expr_rwopt = PLPGSQL_RWOPT_UNKNOWN;
 		expr->expr_rw_param = NULL;
 		expr->expr_simple_plan = NULL;
 		expr->expr_simple_plan_lxid = InvalidLocalTransactionId;
@@ -6439,16 +6457,27 @@ plpgsql_param_compile(ParamListInfo params, Param *param,
 	scratch.resnull = resnull;
 
 	/*
-	 * Select appropriate eval function.  It seems worth special-casing
-	 * DTYPE_VAR and DTYPE_RECFIELD for performance.  Also, we can determine
-	 * in advance whether MakeExpandedObjectReadOnly() will be required.
-	 * Currently, only VAR/PROMISE and REC datums could contain read/write
-	 * expanded objects.
+	 * Select appropriate eval function.
+	 *
+	 * First, if this Param references the same varlena-type DTYPE_VAR datum
+	 * that is the target of the assignment containing this simple expression,
+	 * then it's possible we will be able to optimize handling of R/W expanded
+	 * datums.  We don't want to do the work needed to determine that unless
+	 * we actually see a R/W expanded datum at runtime, so install a checking
+	 * function that will figure that out when needed.
+	 *
+	 * Otherwise, it seems worth special-casing DTYPE_VAR and DTYPE_RECFIELD
+	 * for performance.  Also, we can determine in advance whether
+	 * MakeExpandedObjectReadOnly() will be required.  Currently, only
+	 * VAR/PROMISE and REC datums could contain read/write expanded objects.
 	 */
 	if (datum->dtype == PLPGSQL_DTYPE_VAR)
 	{
-		if (param != expr->expr_rw_param &&
-			((PLpgSQL_var *) datum)->datatype->typlen == -1)
+		bool		isvarlena = (((PLpgSQL_var *) datum)->datatype->typlen == -1);
+
+		if (isvarlena && dno == expr->target_param && expr->expr_simple_expr)
+			scratch.d.cparam.paramfunc = plpgsql_param_eval_var_check;
+		else if (isvarlena)
 			scratch.d.cparam.paramfunc = plpgsql_param_eval_var_ro;
 		else
 			scratch.d.cparam.paramfunc = plpgsql_param_eval_var;
@@ -6457,14 +6486,12 @@ plpgsql_param_compile(ParamListInfo params, Param *param,
 		scratch.d.cparam.paramfunc = plpgsql_param_eval_recfield;
 	else if (datum->dtype == PLPGSQL_DTYPE_PROMISE)
 	{
-		if (param != expr->expr_rw_param &&
-			((PLpgSQL_var *) datum)->datatype->typlen == -1)
+		if (((PLpgSQL_var *) datum)->datatype->typlen == -1)
 			scratch.d.cparam.paramfunc = plpgsql_param_eval_generic_ro;
 		else
 			scratch.d.cparam.paramfunc = plpgsql_param_eval_generic;
 	}
-	else if (datum->dtype == PLPGSQL_DTYPE_REC &&
-			 param != expr->expr_rw_param)
+	else if (datum->dtype == PLPGSQL_DTYPE_REC)
 		scratch.d.cparam.paramfunc = plpgsql_param_eval_generic_ro;
 	else
 		scratch.d.cparam.paramfunc = plpgsql_param_eval_generic;
@@ -6473,12 +6500,175 @@ plpgsql_param_compile(ParamListInfo params, Param *param,
 	 * Note: it's tempting to use paramarg to store the estate pointer and
 	 * thereby save an indirection or two in the eval functions.  But that
 	 * doesn't work because the compiled expression might be used with
-	 * different estates for the same PL/pgSQL function.
+	 * different estates for the same PL/pgSQL function.  Instead, store
+	 * pointers to the PLpgSQL_expr as well as this specific Param, to support
+	 * plpgsql_param_eval_var_check().
 	 */
-	scratch.d.cparam.paramarg = NULL;
+	scratch.d.cparam.paramarg = expr;
+	scratch.d.cparam.paramarg2 = param;
 	scratch.d.cparam.paramid = param->paramid;
 	scratch.d.cparam.paramtype = param->paramtype;
 	ExprEvalPushStep(state, &scratch);
+}
+
+/*
+ * plpgsql_param_eval_var_check		evaluation of EEOP_PARAM_CALLBACK step
+ *
+ * This is specialized to the case of DTYPE_VAR variables for which
+ * we may need to determine the applicability of a read/write optimization,
+ * but we've not done that yet.  The work to determine applicability will
+ * be done at most once (per construction of the PL/pgSQL function's cache
+ * entry) when we first see that the target variable's old value is a R/W
+ * expanded object.  If we never do see that, nothing is lost: the amount
+ * of work done by this function in that case is just about the same as
+ * what would be done by plpgsql_param_eval_var_ro, which is what we'd
+ * have used otherwise.
+ */
+static void
+plpgsql_param_eval_var_check(ExprState *state, ExprEvalStep *op,
+							 ExprContext *econtext)
+{
+	ParamListInfo params;
+	PLpgSQL_execstate *estate;
+	int			dno = op->d.cparam.paramid - 1;
+	PLpgSQL_var *var;
+
+	/* fetch back the hook data */
+	params = econtext->ecxt_param_list_info;
+	estate = (PLpgSQL_execstate *) params->paramFetchArg;
+	Assert(dno >= 0 && dno < estate->ndatums);
+
+	/* now we can access the target datum */
+	var = (PLpgSQL_var *) estate->datums[dno];
+	Assert(var->dtype == PLPGSQL_DTYPE_VAR);
+
+	/*
+	 * If the variable's current value is a R/W expanded object, it's time to
+	 * decide whether/how to optimize the assignment.
+	 */
+	if (!var->isnull &&
+		VARATT_IS_EXTERNAL_EXPANDED_RW(DatumGetPointer(var->value)))
+	{
+		PLpgSQL_expr *expr = (PLpgSQL_expr *) op->d.cparam.paramarg;
+		Param	   *param = (Param *) op->d.cparam.paramarg2;
+
+		/*
+		 * We might have already figured this out while evaluating some other
+		 * Param referencing the same variable, so check expr_rwopt first.
+		 */
+		if (expr->expr_rwopt == PLPGSQL_RWOPT_UNKNOWN)
+			exec_check_rw_parameter(expr, op->d.cparam.paramid);
+
+		/*
+		 * Update the callback pointer to match what we decided to do, so that
+		 * this function will not be called again.  Then pass off this
+		 * execution to the newly-selected function.
+		 */
+		switch (expr->expr_rwopt)
+		{
+			case PLPGSQL_RWOPT_UNKNOWN:
+				Assert(false);
+				break;
+			case PLPGSQL_RWOPT_NOPE:
+				/* Force the value to read-only in all future executions */
+				op->d.cparam.paramfunc = plpgsql_param_eval_var_ro;
+				plpgsql_param_eval_var_ro(state, op, econtext);
+				break;
+			case PLPGSQL_RWOPT_TRANSFER:
+				/* There can be only one matching Param in this case */
+				Assert(param == expr->expr_rw_param);
+				/* When the value is read/write, transfer to exec context */
+				op->d.cparam.paramfunc = plpgsql_param_eval_var_transfer;
+				plpgsql_param_eval_var_transfer(state, op, econtext);
+				break;
+			case PLPGSQL_RWOPT_INPLACE:
+				if (param == expr->expr_rw_param)
+				{
+					/* When the value is read/write, deliver it as-is */
+					op->d.cparam.paramfunc = plpgsql_param_eval_var;
+					plpgsql_param_eval_var(state, op, econtext);
+				}
+				else
+				{
+					/* Not the optimizable reference, so force to read-only */
+					op->d.cparam.paramfunc = plpgsql_param_eval_var_ro;
+					plpgsql_param_eval_var_ro(state, op, econtext);
+				}
+				break;
+		}
+		return;
+	}
+
+	/*
+	 * Otherwise, continue to postpone that decision, and execute an inlined
+	 * version of exec_eval_datum().  Although this value could potentially
+	 * need MakeExpandedObjectReadOnly, we know it doesn't right now.
+	 */
+	*op->resvalue = var->value;
+	*op->resnull = var->isnull;
+
+	/* safety check -- an assertion should be sufficient */
+	Assert(var->datatype->typoid == op->d.cparam.paramtype);
+}
+
+/*
+ * plpgsql_param_eval_var_transfer		evaluation of EEOP_PARAM_CALLBACK step
+ *
+ * This is specialized to the case of DTYPE_VAR variables for which
+ * we have determined that a read/write expanded value can be handed off
+ * into execution of the expression (and then possibly returned to our
+ * function's ownership afterwards).  We have to test though, because the
+ * variable might not contain a read/write expanded value during this
+ * execution.
+ */
+static void
+plpgsql_param_eval_var_transfer(ExprState *state, ExprEvalStep *op,
+								ExprContext *econtext)
+{
+	ParamListInfo params;
+	PLpgSQL_execstate *estate;
+	int			dno = op->d.cparam.paramid - 1;
+	PLpgSQL_var *var;
+
+	/* fetch back the hook data */
+	params = econtext->ecxt_param_list_info;
+	estate = (PLpgSQL_execstate *) params->paramFetchArg;
+	Assert(dno >= 0 && dno < estate->ndatums);
+
+	/* now we can access the target datum */
+	var = (PLpgSQL_var *) estate->datums[dno];
+	Assert(var->dtype == PLPGSQL_DTYPE_VAR);
+
+	/*
+	 * If the variable's current value is a R/W expanded object, transfer its
+	 * ownership into the expression execution context, then drop our own
+	 * reference to the value by setting the variable to NULL.  That'll be
+	 * overwritten (perhaps with this same object) when control comes back
+	 * from the expression.
+	 */
+	if (!var->isnull &&
+		VARATT_IS_EXTERNAL_EXPANDED_RW(DatumGetPointer(var->value)))
+	{
+		*op->resvalue = TransferExpandedObject(var->value,
+											   get_eval_mcontext(estate));
+		*op->resnull = false;
+
+		var->value = (Datum) 0;
+		var->isnull = true;
+		var->freeval = false;
+	}
+	else
+	{
+		/*
+		 * Otherwise we can pass the variable's value directly; we now know
+		 * that MakeExpandedObjectReadOnly isn't needed.
+		 */
+		*op->resvalue = var->value;
+		*op->resnull = var->isnull;
+	}
+
+	/* safety check -- an assertion should be sufficient */
+	Assert(var->datatype->typoid == op->d.cparam.paramtype);
 }
 
 /*
@@ -7957,9 +8147,10 @@ exec_simple_check_plan(PLpgSQL_execstate *estate, PLpgSQL_expr *expr)
 	MemoryContext oldcontext;
 
 	/*
-	 * Initialize to "not simple".
+	 * Initialize to "not simple", and reset R/W optimizability.
 	 */
 	expr->expr_simple_expr = NULL;
+	expr->expr_rwopt = PLPGSQL_RWOPT_UNKNOWN;
 	expr->expr_rw_param = NULL;
 
 	/*
@@ -8164,88 +8355,133 @@ exec_save_simple_expr(PLpgSQL_expr *expr, CachedPlan *cplan)
 	expr->expr_simple_typmod = exprTypmod((Node *) tle_expr);
 	/* We also want to remember if it is immutable or not */
 	expr->expr_simple_mutable = contain_mutable_functions((Node *) tle_expr);
-
-	/*
-	 * Lastly, check to see if there's a possibility of optimizing a
-	 * read/write parameter.
-	 */
-	exec_check_rw_parameter(expr);
 }
 
 /*
  * exec_check_rw_parameter --- can we pass expanded object as read/write param?
  *
- * If we have an assignment like "x := array_append(x, foo)" in which the
+ * There are two separate cases in which we can optimize an update to a
+ * variable that has a read/write expanded value by letting the called
+ * expression operate directly on the expanded value.  In both cases we
+ * are considering assignments like "var := array_append(var, foo)" where
+ * the assignment target is also an input to the RHS expression.
+ *
+ * Case 1 (RWOPT_TRANSFER rule): if the variable is "local" in the sense that
+ * its declaration is not outside any BEGIN...EXCEPTION block surrounding the
+ * assignment, then we do not need to worry about preserving its value if the
+ * RHS expression throws an error.  If in addition the variable is referenced
+ * exactly once in the RHS expression, then we can optimize by converting the
+ * read/write expanded value into a transient value within the expression
+ * evaluation context, and then setting the variable's recorded value to NULL
+ * to prevent double-free attempts.  This works regardless of any other
+ * details of the RHS expression.  If the expression eventually returns that
+ * same expanded object (possibly modified) then the variable will re-acquire
+ * ownership; while if it returns something else or throws an error, the
+ * expanded object will be discarded as part of cleanup of the evaluation
+ * context.
+ *
+ * Case 2 (RWOPT_INPLACE rule): if we have a non-local assignment or if
+ * it looks like "var := array_append(var, var[1])" with multiple references
+ * to the target variable, then we can't use case 1.  Nonetheless, if the
  * top-level function is trusted not to corrupt its argument in case of an
- * error, then when x has an expanded object as value, it is safe to pass the
- * value as a read/write pointer and let the function modify the value
- * in-place.
+ * error, then when the var has an expanded object as value, it is safe to
+ * pass the value as a read/write pointer to the top-level function and let
+ * the function modify the value in-place.  (Any other references have to be
+ * passed as read-only pointers as usual.)  Only the top-level function has to
+ * be trusted, since if anything further down fails, the object hasn't been
+ * modified yet.
  *
- * This function checks for a safe expression, and sets expr->expr_rw_param
- * to the address of any Param within the expression that can be passed as
- * read/write (there can be only one); or to NULL when there is no safe Param.
+ * This function checks to see if the assignment is optimizable according
+ * to either rule, and updates expr->expr_rwopt accordingly.  In addition,
+ * it sets expr->expr_rw_param to the address of the Param within the
+ * expression that can be passed as read/write (there can be only one);
+ * or to NULL when there is no safe Param.
  *
- * Note that this mechanism intentionally applies the safety labeling to just
- * one Param; the expression could contain other Params referencing the target
- * variable, but those must still be treated as read-only.
+ * Note that this mechanism intentionally allows just one Param to emit a
+ * read/write pointer; in case 2, the expression could contain other Params
+ * referencing the target variable, but those must be treated as read-only.
  *
  * Also note that we only apply this optimization within simple expressions.
  * There's no point in it for non-simple expressions, because the
  * exec_run_select code path will flatten any expanded result anyway.
- * Also, it's safe to assume that an expr_simple_expr tree won't get copied
- * somewhere before it gets compiled, so that looking for pointer equality
- * to expr_rw_param will work for matching the target Param.  That'd be much
- * shakier in the general case.
  */
 static void
-exec_check_rw_parameter(PLpgSQL_expr *expr)
+exec_check_rw_parameter(PLpgSQL_expr *expr, int paramid)
 {
-	int			target_dno;
+	Expr	   *sexpr = expr->expr_simple_expr;
 	Oid			funcid;
 	List	   *fargs;
 	ListCell   *lc;
 
 	/* Assume unsafe */
+	expr->expr_rwopt = PLPGSQL_RWOPT_NOPE;
 	expr->expr_rw_param = NULL;
 
-	/* Done if expression isn't an assignment source */
-	target_dno = expr->target_param;
-	if (target_dno < 0)
-		return;
-
-	/*
-	 * If target variable isn't referenced by expression, no need to look
-	 * further.
-	 */
-	if (!bms_is_member(target_dno, expr->paramnos))
-		return;
-
 	/* Shouldn't be here for non-simple expression */
-	Assert(expr->expr_simple_expr != NULL);
+	Assert(sexpr != NULL);
+
+	/* Param should match the expression's assignment target, too */
+	Assert(paramid == expr->target_param + 1);
 
 	/*
-	 * Top level of expression must be a simple FuncExpr, OpExpr, or
-	 * SubscriptingRef, else we can't optimize.
+	 * If the assignment is to a "local" variable (one whose value won't
+	 * matter anymore if expression evaluation fails), and this Param is the
+	 * only reference to that variable in the expression, then we can
+	 * unconditionally optimize using the "transfer" method.
 	 */
-	if (IsA(expr->expr_simple_expr, FuncExpr))
+	if (expr->target_is_local)
 	{
-		FuncExpr   *fexpr = (FuncExpr *) expr->expr_simple_expr;
+		count_param_references_context context;
+
+		/* See how many references there are, and find one of them */
+		context.paramid = paramid;
+		context.count = 0;
+		context.last_param = NULL;
+		(void) count_param_references((Node *) sexpr, &context);
+
+		/* If we're here, the expr must contain some reference to the var */
+		Assert(context.count > 0);
+
+		/* If exactly one reference, success! */
+		if (context.count == 1)
+		{
+			expr->expr_rwopt = PLPGSQL_RWOPT_TRANSFER;
+			expr->expr_rw_param = context.last_param;
+			return;
+		}
+	}
+
+	/*
+	 * Otherwise, see if we can trust the expression's top-level function to
+	 * apply the "inplace" method.
+	 *
+	 * Top level of expression must be a simple FuncExpr, OpExpr, or
+	 * SubscriptingRef, else we can't identify which function is relevant. But
+	 * it's okay to look through any RelabelType above that, since that can't
+	 * fail.
+	 */
+	if (IsA(sexpr, RelabelType))
+		sexpr = ((RelabelType *) sexpr)->arg;
+	if (IsA(sexpr, FuncExpr))
+	{
+		FuncExpr   *fexpr = (FuncExpr *) sexpr;
 
 		funcid = fexpr->funcid;
 		fargs = fexpr->args;
 	}
-	else if (IsA(expr->expr_simple_expr, OpExpr))
+	else if (IsA(sexpr, OpExpr))
 	{
-		OpExpr	   *opexpr = (OpExpr *) expr->expr_simple_expr;
+		OpExpr	   *opexpr = (OpExpr *) sexpr;
 
 		funcid = opexpr->opfuncid;
 		fargs = opexpr->args;
 	}
-	else if (IsA(expr->expr_simple_expr, SubscriptingRef))
+	else if (IsA(sexpr, SubscriptingRef))
 	{
-		SubscriptingRef *sbsref = (SubscriptingRef *) expr->expr_simple_expr;
+		SubscriptingRef *sbsref = (SubscriptingRef *) sexpr;
 
 		/* We only trust standard varlena arrays to be safe */
+		/* TODO: install some extensibility here */
 		if (get_typsubscript(sbsref->refcontainertype, NULL) !=
 			F_ARRAY_SUBSCRIPT_HANDLER)
 			return;
@@ -8256,9 +8492,10 @@ exec_check_rw_parameter(PLpgSQL_expr *expr)
 			Param	   *param = (Param *) sbsref->refexpr;
 
 			if (param->paramkind == PARAM_EXTERN &&
-				param->paramid == target_dno + 1)
+				param->paramid == paramid)
 			{
 				/* Found the Param we want to pass as read/write */
+				expr->expr_rwopt = PLPGSQL_RWOPT_INPLACE;
 				expr->expr_rw_param = param;
 				return;
 			}
@@ -8293,14 +8530,44 @@ exec_check_rw_parameter(PLpgSQL_expr *expr)
 			Param	   *param = (Param *) arg;
 
 			if (param->paramkind == PARAM_EXTERN &&
-				param->paramid == target_dno + 1)
+				param->paramid == paramid)
 			{
 				/* Found the Param we want to pass as read/write */
+				expr->expr_rwopt = PLPGSQL_RWOPT_INPLACE;
 				expr->expr_rw_param = param;
 				return;
 			}
 		}
 	}
+}
+
+/*
+ * Count Params referencing the specified paramid, and return one of them
+ * if there are any.
+ *
+ * We actually only need to distinguish 0, 1, and N references; so we can
+ * abort the tree traversal as soon as we've found two.
+ */
+static bool
+count_param_references(Node *node, count_param_references_context *context)
+{
+	if (node == NULL)
+		return false;
+	else if (IsA(node, Param))
+	{
+		Param	   *param = (Param *) node;
+
+		if (param->paramkind == PARAM_EXTERN &&
+			param->paramid == context->paramid)
+		{
+			context->last_param = param;
+			if (++(context->count) > 1)
+				return true;	/* abort tree traversal */
+		}
+		return false;
+	}
+	else
+		return expression_tree_walker(node, count_param_references, context);
 }
 
 /*
