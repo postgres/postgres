@@ -1094,6 +1094,11 @@ parallel_vacuum_main(dsm_segment *seg, shm_toc *toc)
 	InstrEndParallelQuery(&buffer_usage[ParallelWorkerNumber],
 						  &wal_usage[ParallelWorkerNumber]);
 
+	/* Report any remaining cost-based vacuum delay time */
+	if (track_cost_delay_timing)
+		pgstat_progress_parallel_incr_param(PROGRESS_VACUUM_DELAY_TIME,
+											parallel_vacuum_worker_delay_ns);
+
 	TidStoreDetach(dead_items);
 
 	/* Pop the error context stack */

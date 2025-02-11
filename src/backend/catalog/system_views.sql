@@ -1213,7 +1213,8 @@ CREATE VIEW pg_stat_progress_analyze AS
         S.param5 AS ext_stats_computed,
         S.param6 AS child_tables_total,
         S.param7 AS child_tables_done,
-        CAST(S.param8 AS oid) AS current_child_table_relid
+        CAST(S.param8 AS oid) AS current_child_table_relid,
+        S.param9 / 1000000::double precision AS delay_time
     FROM pg_stat_get_progress_info('ANALYZE') AS S
         LEFT JOIN pg_database D ON S.datid = D.oid;
 
@@ -1233,7 +1234,8 @@ CREATE VIEW pg_stat_progress_vacuum AS
         S.param4 AS heap_blks_vacuumed, S.param5 AS index_vacuum_count,
         S.param6 AS max_dead_tuple_bytes, S.param7 AS dead_tuple_bytes,
         S.param8 AS num_dead_item_ids, S.param9 AS indexes_total,
-        S.param10 AS indexes_processed
+        S.param10 AS indexes_processed,
+        S.param11 / 1000000::double precision AS delay_time
     FROM pg_stat_get_progress_info('VACUUM') AS S
         LEFT JOIN pg_database D ON S.datid = D.oid;
 

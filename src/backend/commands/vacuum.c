@@ -39,6 +39,7 @@
 #include "catalog/pg_inherits.h"
 #include "commands/cluster.h"
 #include "commands/defrem.h"
+#include "commands/progress.h"
 #include "commands/vacuum.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
@@ -59,6 +60,12 @@
 #include "utils/snapmgr.h"
 #include "utils/syscache.h"
 
+/*
+ * Minimum interval for cost-based vacuum delay reports from a parallel worker.
+ * This aims to avoid sending too many messages and waking up the leader too
+ * frequently.
+ */
+#define PARALLEL_VACUUM_DELAY_REPORT_INTERVAL_NS	(NS_PER_S)
 
 /*
  * GUC parameters
@@ -70,6 +77,7 @@ int			vacuum_multixact_freeze_table_age;
 int			vacuum_failsafe_age;
 int			vacuum_multixact_failsafe_age;
 double		vacuum_max_eager_freeze_failure_rate;
+bool		track_cost_delay_timing;
 
 /*
  * Variables for cost-based vacuum delay. The defaults differ between
@@ -79,6 +87,9 @@ double		vacuum_max_eager_freeze_failure_rate;
  */
 double		vacuum_cost_delay = 0;
 int			vacuum_cost_limit = 200;
+
+/* Variable for reporting cost-based vacuum delay from parallel workers. */
+int64		parallel_vacuum_worker_delay_ns = 0;
 
 /*
  * VacuumFailsafeActive is a defined as a global so that we can determine
@@ -2416,12 +2427,65 @@ vacuum_delay_point(bool is_analyze)
 	/* Nap if appropriate */
 	if (msec > 0)
 	{
+		instr_time	delay_start;
+
 		if (msec > vacuum_cost_delay * 4)
 			msec = vacuum_cost_delay * 4;
+
+		if (track_cost_delay_timing)
+			INSTR_TIME_SET_CURRENT(delay_start);
 
 		pgstat_report_wait_start(WAIT_EVENT_VACUUM_DELAY);
 		pg_usleep(msec * 1000);
 		pgstat_report_wait_end();
+
+		if (track_cost_delay_timing)
+		{
+			instr_time	delay_end;
+			instr_time	delay;
+
+			INSTR_TIME_SET_CURRENT(delay_end);
+			INSTR_TIME_SET_ZERO(delay);
+			INSTR_TIME_ACCUM_DIFF(delay, delay_end, delay_start);
+
+			/*
+			 * For parallel workers, we only report the delay time every once
+			 * in a while to avoid overloading the leader with messages and
+			 * interrupts.
+			 */
+			if (IsParallelWorker())
+			{
+				static instr_time last_report_time;
+				instr_time	time_since_last_report;
+
+				Assert(!is_analyze);
+
+				/* Accumulate the delay time */
+				parallel_vacuum_worker_delay_ns += INSTR_TIME_GET_NANOSEC(delay);
+
+				/* Calculate interval since last report */
+				INSTR_TIME_SET_ZERO(time_since_last_report);
+				INSTR_TIME_ACCUM_DIFF(time_since_last_report, delay_end, last_report_time);
+
+				/* If we haven't reported in a while, do so now */
+				if (INSTR_TIME_GET_NANOSEC(time_since_last_report) >=
+					PARALLEL_VACUUM_DELAY_REPORT_INTERVAL_NS)
+				{
+					pgstat_progress_parallel_incr_param(PROGRESS_VACUUM_DELAY_TIME,
+														parallel_vacuum_worker_delay_ns);
+
+					/* Reset variables */
+					last_report_time = delay_end;
+					parallel_vacuum_worker_delay_ns = 0;
+				}
+			}
+			else if (is_analyze)
+				pgstat_progress_incr_param(PROGRESS_ANALYZE_DELAY_TIME,
+										   INSTR_TIME_GET_NANOSEC(delay));
+			else
+				pgstat_progress_incr_param(PROGRESS_VACUUM_DELAY_TIME,
+										   INSTR_TIME_GET_NANOSEC(delay));
+		}
 
 		/*
 		 * We don't want to ignore postmaster death during very long vacuums

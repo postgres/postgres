@@ -303,6 +303,7 @@ extern PGDLLIMPORT int vacuum_multixact_freeze_min_age;
 extern PGDLLIMPORT int vacuum_multixact_freeze_table_age;
 extern PGDLLIMPORT int vacuum_failsafe_age;
 extern PGDLLIMPORT int vacuum_multixact_failsafe_age;
+extern PGDLLIMPORT bool track_cost_delay_timing;
 
 /*
  * Relevant for vacuums implementing eager scanning. Normal vacuums may
@@ -329,6 +330,8 @@ extern PGDLLIMPORT int VacuumCostBalanceLocal;
 extern PGDLLIMPORT bool VacuumFailsafeActive;
 extern PGDLLIMPORT double vacuum_cost_delay;
 extern PGDLLIMPORT int vacuum_cost_limit;
+
+extern PGDLLIMPORT int64 parallel_vacuum_worker_delay_ns;
 
 /* in commands/vacuum.c */
 extern void ExecVacuum(ParseState *pstate, VacuumStmt *vacstmt, bool isTopLevel);

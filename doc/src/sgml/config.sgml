@@ -8252,6 +8252,30 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
       </listitem>
      </varlistentry>
 
+     <varlistentry id="guc-track-cost-delay-timing" xreflabel="track_cost_delay_timing">
+      <term><varname>track_cost_delay_timing</varname> (<type>boolean</type>)
+      <indexterm>
+       <primary><varname>track_cost_delay_timing</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Enables timing of cost-based vacuum delay (see
+        <xref linkend="runtime-config-resource-vacuum-cost"/>).  This parameter
+        is off by default, as it will repeatedly query the operating system for
+        the current time, which may cause significant overhead on some
+        platforms.  You can use the <xref linkend="pgtesttiming"/> tool to
+        measure the overhead of timing on your system.  Cost-based vacuum delay
+        timing information is displayed in
+        <link linkend="vacuum-progress-reporting"><structname>pg_stat_progress_vacuum</structname></link>
+        and
+        <link linkend="analyze-progress-reporting"><structname>pg_stat_progress_analyze</structname></link>.
+        Only superusers and users with the appropriate <literal>SET</literal>
+        privilege can change this setting.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="guc-track-io-timing" xreflabel="track_io_timing">
       <term><varname>track_io_timing</varname> (<type>boolean</type>)
       <indexterm>
