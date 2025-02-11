@@ -599,6 +599,91 @@ plpgsql_statement_tree_walker_impl(PLpgSQL_stmt *stmt,
 
 
 /**********************************************************************
+ * Mark assignment source expressions that have local target variables,
+ * that is, the target variable is declared within the exception block
+ * most closely containing the assignment itself.  (Such target variables
+ * need not be preserved if the assignment's source expression raises an
+ * error, since the variable will no longer be accessible afterwards.
+ * Detecting this allows better optimization.)
+ *
+ * This code need not be called if the plpgsql function contains no exception
+ * blocks, because mark_expr_as_assignment_source will have set all the flags
+ * to true already.  Also, we need not reconsider default-value expressions
+ * for variables, because variable declarations are necessarily within the
+ * nearest exception block.  (In DECLARE ... BEGIN ... EXCEPTION ... END, the
+ * variable initializations are done before entering the exception scope.)
+ *
+ * Within the recursion, local_dnos is a Bitmapset of dnos of variables
+ * known to be declared within the current exception level.
+ **********************************************************************/
+static void mark_stmt(PLpgSQL_stmt *stmt, Bitmapset *local_dnos);
+static void mark_expr(PLpgSQL_expr *expr, Bitmapset *local_dnos);
+
+static void
+mark_stmt(PLpgSQL_stmt *stmt, Bitmapset *local_dnos)
+{
+	if (stmt == NULL)
+		return;
+	if (stmt->cmd_type == PLPGSQL_STMT_BLOCK)
+	{
+		PLpgSQL_stmt_block *block = (PLpgSQL_stmt_block *) stmt;
+
+		if (block->exceptions)
+		{
+			/*
+			 * The block creates a new exception scope, so variables declared
+			 * at outer levels are nonlocal.  For that matter, so are any
+			 * variables declared in the block's DECLARE section.  Hence, we
+			 * must pass down empty local_dnos.
+			 */
+			plpgsql_statement_tree_walker(stmt, mark_stmt, mark_expr, NULL);
+		}
+		else
+		{
+			/*
+			 * Otherwise, the block does not create a new exception scope, and
+			 * any variables it declares can also be considered local within
+			 * it.  Note that only initializable datum types (VAR, REC) are
+			 * included in initvarnos; but that's sufficient for our purposes.
+			 */
+			local_dnos = bms_copy(local_dnos);
+			for (int i = 0; i < block->n_initvars; i++)
+				local_dnos = bms_add_member(local_dnos, block->initvarnos[i]);
+			plpgsql_statement_tree_walker(stmt, mark_stmt, mark_expr,
+										  local_dnos);
+			bms_free(local_dnos);
+		}
+	}
+	else
+		plpgsql_statement_tree_walker(stmt, mark_stmt, mark_expr, local_dnos);
+}
+
+static void
+mark_expr(PLpgSQL_expr *expr, Bitmapset *local_dnos)
+{
+	/*
+	 * If this expression has an assignment target, check whether the target
+	 * is local, and mark the expression accordingly.
+	 */
+	if (expr && expr->target_param >= 0)
+		expr->target_is_local = bms_is_member(expr->target_param, local_dnos);
+}
+
+void
+plpgsql_mark_local_assignment_targets(PLpgSQL_function *func)
+{
+	Bitmapset  *local_dnos;
+
+	/* Function parameters can be treated as local targets at outer level */
+	local_dnos = NULL;
+	for (int i = 0; i < func->fn_nargs; i++)
+		local_dnos = bms_add_member(local_dnos, func->fn_argvarnos[i]);
+	mark_stmt((PLpgSQL_stmt *) func->action, local_dnos);
+	bms_free(local_dnos);
+}
+
+
+/**********************************************************************
  * Release memory when a PL/pgSQL function is no longer needed
  *
  * This code only needs to deal with cleaning up PLpgSQL_expr nodes,
@@ -1500,6 +1585,9 @@ static void
 dump_expr(PLpgSQL_expr *expr)
 {
 	printf("'%s'", expr->query);
+	if (expr->target_param >= 0)
+		printf(" target %d%s", expr->target_param,
+			   expr->target_is_local ? " (local)" : "");
 }
 
 void

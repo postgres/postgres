@@ -225,9 +225,12 @@ typedef struct PLpgSQL_expr
 	/*
 	 * These fields are used to help optimize assignments to expanded-datum
 	 * variables.  If this expression is the source of an assignment to a
-	 * simple variable, target_param holds that variable's dno (else it's -1).
+	 * simple variable, target_param holds that variable's dno (else it's -1),
+	 * and target_is_local indicates whether the target is declared inside the
+	 * closest exception block containing the assignment.
 	 */
 	int			target_param;	/* dno of assign target, or -1 if none */
+	bool		target_is_local;	/* is it within nearest exception block? */
 
 	/*
 	 * Fields above are set during plpgsql parsing.  Remaining fields are left
@@ -1014,6 +1017,7 @@ typedef struct PLpgSQL_function
 	/* data derived while parsing body */
 	unsigned int nstatements;	/* counter for assigning stmtids */
 	bool		requires_procedure_resowner;	/* contains CALL or DO? */
+	bool		has_exception_block;	/* contains BEGIN...EXCEPTION? */
 
 	/* these fields change when the function is used */
 	struct PLpgSQL_execstate *cur_estate;
@@ -1312,6 +1316,7 @@ extern PLpgSQL_nsitem *plpgsql_ns_find_nearest_loop(PLpgSQL_nsitem *ns_cur);
  */
 extern PGDLLEXPORT const char *plpgsql_stmt_typename(PLpgSQL_stmt *stmt);
 extern const char *plpgsql_getdiag_kindname(PLpgSQL_getdiag_kind kind);
+extern void plpgsql_mark_local_assignment_targets(PLpgSQL_function *func);
 extern void plpgsql_free_function_memory(PLpgSQL_function *func);
 extern void plpgsql_dumptree(PLpgSQL_function *func);
 
