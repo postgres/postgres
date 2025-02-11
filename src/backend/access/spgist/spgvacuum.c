@@ -625,7 +625,7 @@ spgvacuumpage(spgBulkDeleteState *bds, BlockNumber blkno)
 	Page		page;
 
 	/* call vacuum_delay_point while not holding any buffer lock */
-	vacuum_delay_point();
+	vacuum_delay_point(false);
 
 	buffer = ReadBufferExtended(index, MAIN_FORKNUM, blkno,
 								RBM_NORMAL, bds->info->strategy);
@@ -704,7 +704,7 @@ spgprocesspending(spgBulkDeleteState *bds)
 			continue;			/* ignore already-done items */
 
 		/* call vacuum_delay_point while not holding any buffer lock */
-		vacuum_delay_point();
+		vacuum_delay_point(false);
 
 		/* examine the referenced page */
 		blkno = ItemPointerGetBlockNumber(&pitem->tid);

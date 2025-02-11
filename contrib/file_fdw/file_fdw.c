@@ -1237,7 +1237,7 @@ file_acquire_sample_rows(Relation onerel, int elevel,
 	for (;;)
 	{
 		/* Check for user-requested abort or sleep */
-		vacuum_delay_point();
+		vacuum_delay_point(true);
 
 		/* Fetch next row */
 		MemoryContextReset(tupcontext);

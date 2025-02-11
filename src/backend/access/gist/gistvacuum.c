@@ -283,7 +283,7 @@ restart:
 	recurse_to = InvalidBlockNumber;
 
 	/* call vacuum_delay_point while not holding any buffer lock */
-	vacuum_delay_point();
+	vacuum_delay_point(false);
 
 	buffer = ReadBufferExtended(rel, MAIN_FORKNUM, blkno, RBM_NORMAL,
 								info->strategy);

@@ -314,7 +314,7 @@ compute_array_stats(VacAttrStats *stats, AnalyzeAttrFetchFunc fetchfunc,
 		int			distinct_count;
 		bool		count_item_found;
 
-		vacuum_delay_point();
+		vacuum_delay_point(true);
 
 		value = fetchfunc(stats, array_no, &isnull);
 		if (isnull)

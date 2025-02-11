@@ -204,7 +204,7 @@ compute_tsvector_stats(VacAttrStats *stats,
 		char	   *lexemesptr;
 		int			j;
 
-		vacuum_delay_point();
+		vacuum_delay_point(true);
 
 		value = fetchfunc(stats, vector_no, &isnull);
 

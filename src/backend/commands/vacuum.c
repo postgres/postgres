@@ -2373,7 +2373,7 @@ vac_close_indexes(int nindexes, Relation *Irel, LOCKMODE lockmode)
  * typically once per page processed.
  */
 void
-vacuum_delay_point(void)
+vacuum_delay_point(bool is_analyze)
 {
 	double		msec = 0;
 

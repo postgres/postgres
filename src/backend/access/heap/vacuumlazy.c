@@ -1214,7 +1214,7 @@ lazy_scan_heap(LVRelState *vacrel)
 		update_vacuum_error_info(vacrel, NULL, VACUUM_ERRCB_PHASE_SCAN_HEAP,
 								 blkno, InvalidOffsetNumber);
 
-		vacuum_delay_point();
+		vacuum_delay_point(false);
 
 		/*
 		 * Regularly check if wraparound failsafe should trigger.
@@ -2646,7 +2646,7 @@ lazy_vacuum_heap_rel(LVRelState *vacrel)
 		OffsetNumber offsets[MaxOffsetNumber];
 		int			num_offsets;
 
-		vacuum_delay_point();
+		vacuum_delay_point(false);
 
 		blkno = iter_result->blkno;
 		vacrel->blkno = blkno;
