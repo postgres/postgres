@@ -35,6 +35,7 @@ tests += {
   'regress': {
     'sql': [
       'injection_points',
+      'hashagg',
       'reindex_conc',
     ],
     'regress_args': ['--dlpath', meson.build_root() / 'src/test/regress'],
