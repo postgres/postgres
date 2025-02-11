@@ -1,6 +1,0 @@
-# using postmaster on Unix socket, default port
-not ok 1     - earthdistance                             249 ms
-1..1
-# 1 of 1 tests failed.
-# The differences that caused some tests to fail can be viewed in the file "/home/dutow/work/postgres/contrib/earthdistance/regression.diffs".
-# A copy of the test summary that you see above is saved in the file "/home/dutow/work/postgres/contrib/earthdistance/regression.out".
