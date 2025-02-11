@@ -7,9 +7,9 @@ copyright: >
   <a href="https://www.percona.com/about">Percona LLC</a> and/or its affiliates © 2025 — <a href="#__consent">Cookie Consent</a>
 
  
-repo_name: percona/pg_tde
-repo_url: https://github.com/percona/pg_tde
-edit_uri: edit/main/documentation/docs/
+repo_name: percona/postgres
+repo_url: https://github.com/percona/postgres
+edit_uri: edit/TDE_REL_17_STABLE/contrib/pg_tde/documentation/docs
 
 use_directory_urls: false
 
@@ -156,6 +156,7 @@ extra:
 
 nav:
   - Home: index.md
+  - get-help.md
   - features.md
   - Get started:
     - "Install": "install.md"
