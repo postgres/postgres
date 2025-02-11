@@ -27,8 +27,8 @@ shared_preload_libraries = 'pg_tde'
 $node->start;
 
 $node->safe_psql('postgres', "CREATE EXTENSION IF NOT EXISTS pg_tde;");
-$node->safe_psql('postgres', "SELECT pg_tde_add_key_provider_file('PG_TDE_GLOBAL', 'file-keyring-wal','/tmp/pg_tde_test_keyring-wal.per');");;
-$node->safe_psql('postgres', "SELECT pg_tde_set_server_principal_key('global-db-principal-key', 'PG_TDE_GLOBAL', 'file-keyring-wal');");
+$node->safe_psql('postgres', "SELECT pg_tde_add_global_key_provider_file('file-keyring-wal','/tmp/pg_tde_test_keyring-wal.per');");;
+$node->safe_psql('postgres', "SELECT pg_tde_set_server_principal_key('global-db-principal-key', 'file-keyring-wal');");
 $node->safe_psql('postgres', "SELECT pg_tde_create_wal_key();");
 
 $node->append_conf(

@@ -29,10 +29,10 @@ ok($rt_value == 1, "Start Server");
 my $stdout = $node->safe_psql('postgres', "CREATE EXTENSION IF NOT EXISTS pg_tde;", extra_params => ['-a']);
 PGTDE::append_to_file($stdout);
 
-$stdout = $node->safe_psql('postgres', "SELECT pg_tde_add_key_provider_file('PG_TDE_GLOBAL', 'file-keyring-010','/tmp/pg_tde_test_keyring010.per');", extra_params => ['-a']);
+$stdout = $node->safe_psql('postgres', "SELECT pg_tde_add_global_key_provider_file('file-keyring-010','/tmp/pg_tde_test_keyring010.per');", extra_params => ['-a']);
 PGTDE::append_to_file($stdout);
 
-$stdout = $node->safe_psql('postgres', "SELECT pg_tde_set_server_principal_key('global-db-principal-key', 'PG_TDE_GLOBAL', 'file-keyring-010');", extra_params => ['-a']);
+$stdout = $node->safe_psql('postgres', "SELECT pg_tde_set_server_principal_key('global-db-principal-key', 'file-keyring-010');", extra_params => ['-a']);
 PGTDE::append_to_file($stdout);
 
 $stdout = $node->safe_psql('postgres', "SELECT pg_tde_create_wal_key();", extra_params => ['-a']);

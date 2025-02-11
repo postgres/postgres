@@ -1,20 +1,20 @@
 CREATE EXTENSION IF NOT EXISTS pg_tde;
-SELECT pg_tde_add_key_provider_file('PG_TDE_GLOBAL', 'file-provider','/tmp/pg_tde_regression_default_principal_key.per');
- pg_tde_add_key_provider_file 
-------------------------------
-                           -4
+SELECT pg_tde_add_global_key_provider_file('file-provider','/tmp/pg_tde_regression_default_principal_key.per');
+ pg_tde_add_global_key_provider_file 
+-------------------------------------
+                                  -4
 (1 row)
 
-SELECT pg_tde_set_default_principal_key('default-principal-key', 'PG_TDE_GLOBAL', 'file-provider', false);
+SELECT pg_tde_set_default_principal_key('default-principal-key', 'file-provider', false);
  pg_tde_set_default_principal_key 
 ----------------------------------
  t
 (1 row)
 
 -- fails
-SELECT pg_tde_delete_key_provider('PG_TDE_GLOBAL', 'file-provider');
+SELECT pg_tde_delete_global_key_provider('file-provider');
 ERROR:  Can't delete a provider which is currently in use
-SELECT id, provider_name FROM pg_tde_list_all_key_providers('PG_TDE_GLOBAL');
+SELECT id, provider_name FROM pg_tde_list_all_global_key_providers();
  id | provider_name 
 ----+---------------
  -2 | file-keyring2
@@ -67,7 +67,7 @@ SELECT  key_provider_id, key_provider_name, principal_key_name
 (1 row)
 
 \c regression_pg_tde
-SELECT pg_tde_set_default_principal_key('new-default-principal-key', 'PG_TDE_GLOBAL', 'file-provider', false);
+SELECT pg_tde_set_default_principal_key('new-default-principal-key', 'file-provider', false);
 WARNING:  you don't own a lock of type AccessExclusiveLock
  pg_tde_set_default_principal_key 
 ----------------------------------

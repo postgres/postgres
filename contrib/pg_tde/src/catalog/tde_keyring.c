@@ -75,21 +75,26 @@ static List *scan_key_provider_file(ProviderScanType scanType, void *scanKey, Oi
 PG_FUNCTION_INFO_V1(pg_tde_add_key_provider);
 Datum		pg_tde_add_key_provider(PG_FUNCTION_ARGS);
 
-PG_FUNCTION_INFO_V1(pg_tde_add_key_provider_global);
-Datum		pg_tde_add_key_provider_global(PG_FUNCTION_ARGS);
+PG_FUNCTION_INFO_V1(pg_tde_add_global_key_provider);
+Datum		pg_tde_add_global_key_provider(PG_FUNCTION_ARGS);
 
 PG_FUNCTION_INFO_V1(pg_tde_change_key_provider);
 Datum		pg_tde_change_key_provider(PG_FUNCTION_ARGS);
 
-PG_FUNCTION_INFO_V1(pg_tde_change_key_provider_global);
-Datum		pg_tde_change_key_provider_global(PG_FUNCTION_ARGS);
+PG_FUNCTION_INFO_V1(pg_tde_change_global_key_provider);
+Datum		pg_tde_change_global_key_provider(PG_FUNCTION_ARGS);
+
+static Datum pg_tde_list_all_key_providers_internal(const char *fname, bool global, PG_FUNCTION_ARGS);
 
 PG_FUNCTION_INFO_V1(pg_tde_list_all_key_providers);
 Datum		pg_tde_list_all_key_providers(PG_FUNCTION_ARGS);
 
-static Datum pg_tde_change_key_provider_internal(PG_FUNCTION_ARGS, Oid dbOid, int shift);
+PG_FUNCTION_INFO_V1(pg_tde_list_all_global_key_providers);
+Datum		pg_tde_list_all_global_key_providers(PG_FUNCTION_ARGS);
 
-static Datum pg_tde_add_key_provider_internal(PG_FUNCTION_ARGS, Oid dbOid, int shift);
+static Datum pg_tde_change_key_provider_internal(PG_FUNCTION_ARGS, Oid dbOid);
+
+static Datum pg_tde_add_key_provider_internal(PG_FUNCTION_ARGS, Oid dbOid);
 
 #define PG_TDE_LIST_PROVIDERS_COLS 4
 
@@ -197,21 +202,21 @@ cleanup_key_provider_info(Oid databaseId)
 Datum
 pg_tde_change_key_provider(PG_FUNCTION_ARGS)
 {
-	return pg_tde_change_key_provider_internal(fcinfo, MyDatabaseId, 0);
+	return pg_tde_change_key_provider_internal(fcinfo, MyDatabaseId);
 }
 
 Datum
-pg_tde_change_key_provider_global(PG_FUNCTION_ARGS)
+pg_tde_change_global_key_provider(PG_FUNCTION_ARGS)
 {
-	return pg_tde_change_key_provider_internal(fcinfo, GLOBAL_DATA_TDE_OID, 1);
+	return pg_tde_change_key_provider_internal(fcinfo, GLOBAL_DATA_TDE_OID);
 }
 
 static Datum
-pg_tde_change_key_provider_internal(PG_FUNCTION_ARGS, Oid dbOid, int shift)
+pg_tde_change_key_provider_internal(PG_FUNCTION_ARGS, Oid dbOid)
 {
-	char	   *provider_type = text_to_cstring(PG_GETARG_TEXT_PP(0 + shift));
-	char	   *provider_name = text_to_cstring(PG_GETARG_TEXT_PP(1 + shift));
-	char	   *options = text_to_cstring(PG_GETARG_TEXT_PP(2 + shift));
+	char	   *provider_type = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	char	   *provider_name = text_to_cstring(PG_GETARG_TEXT_PP(1));
+	char	   *options = text_to_cstring(PG_GETARG_TEXT_PP(2));
 	KeyringProvideRecord provider;
 
 	/* reports error if not found */
@@ -231,21 +236,21 @@ pg_tde_change_key_provider_internal(PG_FUNCTION_ARGS, Oid dbOid, int shift)
 Datum
 pg_tde_add_key_provider(PG_FUNCTION_ARGS)
 {
-	return pg_tde_add_key_provider_internal(fcinfo, MyDatabaseId, 0);
+	return pg_tde_add_key_provider_internal(fcinfo, MyDatabaseId);
 }
 
 Datum
-pg_tde_add_key_provider_global(PG_FUNCTION_ARGS)
+pg_tde_add_global_key_provider(PG_FUNCTION_ARGS)
 {
-	return pg_tde_add_key_provider_internal(fcinfo, GLOBAL_DATA_TDE_OID, 1);
+	return pg_tde_add_key_provider_internal(fcinfo, GLOBAL_DATA_TDE_OID);
 }
 
 Datum
-pg_tde_add_key_provider_internal(PG_FUNCTION_ARGS, Oid dbOid, int shift)
+pg_tde_add_key_provider_internal(PG_FUNCTION_ARGS, Oid dbOid)
 {
-	char	   *provider_type = text_to_cstring(PG_GETARG_TEXT_PP(0 + shift));
-	char	   *provider_name = text_to_cstring(PG_GETARG_TEXT_PP(1 + shift));
-	char	   *options = text_to_cstring(PG_GETARG_TEXT_PP(2 + shift));
+	char	   *provider_type = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	char	   *provider_name = text_to_cstring(PG_GETARG_TEXT_PP(1));
+	char	   *options = text_to_cstring(PG_GETARG_TEXT_PP(2));
 	KeyringProvideRecord provider;
 
 	provider.provider_id = 0;
@@ -260,7 +265,20 @@ pg_tde_add_key_provider_internal(PG_FUNCTION_ARGS, Oid dbOid, int shift)
 Datum
 pg_tde_list_all_key_providers(PG_FUNCTION_ARGS)
 {
-	List	   *all_providers = GetAllKeyringProviders(PG_NARGS() == 1 ? GLOBAL_DATA_TDE_OID : MyDatabaseId);
+	return pg_tde_list_all_key_providers_internal("pg_tde_list_all_key_providers", false, fcinfo);
+}
+
+Datum
+pg_tde_list_all_global_key_providers(PG_FUNCTION_ARGS)
+{
+	return pg_tde_list_all_key_providers_internal("pg_tde_list_all_key_providers_global", true, fcinfo);
+}
+
+static Datum
+pg_tde_list_all_key_providers_internal(const char *fname, bool global, PG_FUNCTION_ARGS)
+{
+	Oid			database = (global ? GLOBAL_DATA_TDE_OID : MyDatabaseId);
+	List	   *all_providers = GetAllKeyringProviders(database);
 	ListCell   *lc;
 	Tuplestorestate *tupstore;
 	TupleDesc	tupdesc;
@@ -272,11 +290,11 @@ pg_tde_list_all_key_providers(PG_FUNCTION_ARGS)
 	if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("pg_tde_list_all_key_providers: set-valued function called in context that cannot accept a set")));
+				 errmsg("%s: set-valued function called in context that cannot accept a set", fname)));
 	if (!(rsinfo->allowedModes & SFRM_Materialize))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("pg_tde_list_all_key_providers: materialize mode required, but it is not allowed in this context")));
+				 errmsg("%s: materialize mode required, but it is not allowed in this context", fname)));
 
 	/* Switch into long-lived context to construct returned data structures */
 	per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
@@ -284,7 +302,7 @@ pg_tde_list_all_key_providers(PG_FUNCTION_ARGS)
 
 	/* Build a tuple descriptor for our result type */
 	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
-		elog(ERROR, "pg_tde_list_all_key_providers: return type must be a row type");
+		elog(ERROR, "%s: return type must be a row type", fname);
 
 	tupstore = tuplestore_begin_heap(true, false, work_mem);
 	rsinfo->returnMode = SFRM_Materialize;

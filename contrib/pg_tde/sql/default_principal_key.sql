@@ -1,12 +1,12 @@
 CREATE EXTENSION IF NOT EXISTS pg_tde;
 
-SELECT pg_tde_add_key_provider_file('PG_TDE_GLOBAL', 'file-provider','/tmp/pg_tde_regression_default_principal_key.per');
+SELECT pg_tde_add_global_key_provider_file('file-provider','/tmp/pg_tde_regression_default_principal_key.per');
 
-SELECT pg_tde_set_default_principal_key('default-principal-key', 'PG_TDE_GLOBAL', 'file-provider', false);
+SELECT pg_tde_set_default_principal_key('default-principal-key', 'file-provider', false);
 
 -- fails
-SELECT pg_tde_delete_key_provider('PG_TDE_GLOBAL', 'file-provider');
-SELECT id, provider_name FROM pg_tde_list_all_key_providers('PG_TDE_GLOBAL');
+SELECT pg_tde_delete_global_key_provider('file-provider');
+SELECT id, provider_name FROM pg_tde_list_all_global_key_providers();
 
 -- Should fail: no principal key for the database yet
 SELECT  key_provider_id, key_provider_name, principal_key_name
@@ -50,7 +50,7 @@ SELECT  key_provider_id, key_provider_name, principal_key_name
 
 \c regression_pg_tde
 
-SELECT pg_tde_set_default_principal_key('new-default-principal-key', 'PG_TDE_GLOBAL', 'file-provider', false);
+SELECT pg_tde_set_default_principal_key('new-default-principal-key', 'file-provider', false);
 
 SELECT  key_provider_id, key_provider_name, principal_key_name
 		FROM pg_tde_principal_key_info();

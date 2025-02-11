@@ -80,19 +80,19 @@ SELECT * FROM pg_tde_list_all_key_providers();
   2 | file-provider2 | file          | {"type" : "file", "path" : "/tmp/pg_tde_test_keyring2.per"}
 (2 rows)
 
-SELECT pg_tde_add_key_provider_file('PG_TDE_GLOBAL', 'file-keyring','/tmp/pg_tde_test_keyring.per');
- pg_tde_add_key_provider_file 
-------------------------------
-                           -1
+SELECT pg_tde_add_global_key_provider_file('file-keyring','/tmp/pg_tde_test_keyring.per');
+ pg_tde_add_global_key_provider_file 
+-------------------------------------
+                                  -1
 (1 row)
 
-SELECT pg_tde_add_key_provider_file('PG_TDE_GLOBAL', 'file-keyring2','/tmp/pg_tde_test_keyring2.per');
- pg_tde_add_key_provider_file 
-------------------------------
-                           -2
+SELECT pg_tde_add_global_key_provider_file('file-keyring2','/tmp/pg_tde_test_keyring2.per');
+ pg_tde_add_global_key_provider_file 
+-------------------------------------
+                                  -2
 (1 row)
 
-SELECT id, provider_name FROM pg_tde_list_all_key_providers('PG_TDE_GLOBAL');
+SELECT id, provider_name FROM pg_tde_list_all_global_key_providers();
  id | provider_name 
 ----+---------------
  -1 | file-keyring
@@ -123,40 +123,40 @@ SELECT id, provider_name FROM pg_tde_list_all_key_providers();
   1 | file-provider
 (1 row)
 
-SELECT id, provider_name FROM pg_tde_list_all_key_providers('PG_TDE_GLOBAL');
+SELECT id, provider_name FROM pg_tde_list_all_global_key_providers();
  id | provider_name 
 ----+---------------
  -1 | file-keyring
  -2 | file-keyring2
 (2 rows)
 
-SELECT pg_tde_set_principal_key('test-db-principal-key', 'PG_TDE_GLOBAL', 'file-keyring', false);
- pg_tde_set_principal_key 
---------------------------
+SELECT pg_tde_set_global_principal_key('test-db-principal-key', 'file-keyring', false);
+ pg_tde_set_global_principal_key 
+---------------------------------
  t
 (1 row)
 
 -- fails
-SELECT pg_tde_delete_key_provider('PG_TDE_GLOBAL', 'file-keyring');
- pg_tde_delete_key_provider 
-----------------------------
+SELECT pg_tde_delete_global_key_provider('file-keyring');
+ pg_tde_delete_global_key_provider 
+-----------------------------------
  
 (1 row)
 
-SELECT id, provider_name FROM pg_tde_list_all_key_providers('PG_TDE_GLOBAL');
+SELECT id, provider_name FROM pg_tde_list_all_global_key_providers();
  id | provider_name 
 ----+---------------
  -2 | file-keyring2
 (1 row)
 
 -- works
-SELECT pg_tde_delete_key_provider('PG_TDE_GLOBAL', 'file-keyring2');
- pg_tde_delete_key_provider 
-----------------------------
+SELECT pg_tde_delete_global_key_provider('file-keyring2');
+ pg_tde_delete_global_key_provider 
+-----------------------------------
  
 (1 row)
 
-SELECT id, provider_name FROM pg_tde_list_all_key_providers('PG_TDE_GLOBAL');
+SELECT id, provider_name FROM pg_tde_list_all_global_key_providers();
  id | provider_name 
 ----+---------------
  -2 | file-keyring2
