@@ -2506,8 +2506,8 @@ include_dir 'conf.d'
      </para>
     </sect2>
 
-    <sect2 id="runtime-config-resource-async-behavior">
-     <title>Asynchronous Behavior</title>
+    <sect2 id="runtime-config-resource-io">
+     <title>I/O</title>
 
      <variablelist>
       <varlistentry id="guc-backend-flush-after" xreflabel="backend_flush_after">

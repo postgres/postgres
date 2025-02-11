@@ -682,7 +682,7 @@ const char *const config_group_names[] =
 	[RESOURCES_DISK] = gettext_noop("Resource Usage / Disk"),
 	[RESOURCES_KERNEL] = gettext_noop("Resource Usage / Kernel Resources"),
 	[RESOURCES_BGWRITER] = gettext_noop("Resource Usage / Background Writer"),
-	[RESOURCES_ASYNCHRONOUS] = gettext_noop("Resource Usage / Asynchronous Behavior"),
+	[RESOURCES_IO] = gettext_noop("Resource Usage / I/O"),
 	[RESOURCES_WORKER_PROCESSES] = gettext_noop("Resource Usage / Worker Processes"),
 	[WAL_SETTINGS] = gettext_noop("Write-Ahead Log / Settings"),
 	[WAL_CHECKPOINTS] = gettext_noop("Write-Ahead Log / Checkpoints"),
@@ -3181,7 +3181,7 @@ struct config_int ConfigureNamesInt[] =
 	{
 		{"effective_io_concurrency",
 			PGC_USERSET,
-			RESOURCES_ASYNCHRONOUS,
+			RESOURCES_IO,
 			gettext_noop("Number of simultaneous requests that can be handled efficiently by the disk subsystem."),
 			NULL,
 			GUC_EXPLAIN
@@ -3195,7 +3195,7 @@ struct config_int ConfigureNamesInt[] =
 	{
 		{"maintenance_io_concurrency",
 			PGC_USERSET,
-			RESOURCES_ASYNCHRONOUS,
+			RESOURCES_IO,
 			gettext_noop("A variant of \"effective_io_concurrency\" that is used for maintenance work."),
 			NULL,
 			GUC_EXPLAIN
@@ -3210,7 +3210,7 @@ struct config_int ConfigureNamesInt[] =
 	{
 		{"io_combine_limit",
 			PGC_USERSET,
-			RESOURCES_ASYNCHRONOUS,
+			RESOURCES_IO,
 			gettext_noop("Limit on the size of data reads and writes."),
 			NULL,
 			GUC_UNIT_BLOCKS
@@ -3222,7 +3222,7 @@ struct config_int ConfigureNamesInt[] =
 	},
 
 	{
-		{"backend_flush_after", PGC_USERSET, RESOURCES_ASYNCHRONOUS,
+		{"backend_flush_after", PGC_USERSET, RESOURCES_IO,
 			gettext_noop("Number of pages after which previously performed writes are flushed to disk."),
 			NULL,
 			GUC_UNIT_BLOCKS

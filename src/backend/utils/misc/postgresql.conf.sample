@@ -192,7 +192,7 @@
 #bgwriter_lru_multiplier = 2.0		# 0-10.0 multiplier on buffers scanned/round
 #bgwriter_flush_after = 0		# measured in pages, 0 disables
 
-# - Asynchronous Behavior -
+# - I/O -
 
 #backend_flush_after = 0		# measured in pages, 0 disables
 #effective_io_concurrency = 1		# 1-1000; 0 disables prefetching
