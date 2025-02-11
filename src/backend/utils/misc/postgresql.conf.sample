@@ -198,6 +198,9 @@
 #effective_io_concurrency = 1		# 1-1000; 0 disables prefetching
 #maintenance_io_concurrency = 10	# 1-1000; 0 disables prefetching
 #io_combine_limit = 128kB		# usually 1-32 blocks (depends on OS)
+
+# - Worker Processes -
+
 #max_worker_processes = 8		# (change requires restart)
 #max_parallel_workers_per_gather = 2	# limited by max_parallel_workers
 #max_parallel_maintenance_workers = 2	# limited by max_parallel_workers
