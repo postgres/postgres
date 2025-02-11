@@ -4175,12 +4175,6 @@ exec_prepare_plan(PLpgSQL_execstate *estate,
 	SPIPrepareOptions options;
 
 	/*
-	 * The grammar can't conveniently set expr->func while building the parse
-	 * tree, so make sure it's set before parser hooks need it.
-	 */
-	expr->func = estate->func;
-
-	/*
 	 * Generate and save the plan
 	 */
 	memset(&options, 0, sizeof(options));
@@ -5016,21 +5010,7 @@ exec_assign_expr(PLpgSQL_execstate *estate, PLpgSQL_datum *target,
 	 * If first time through, create a plan for this expression.
 	 */
 	if (expr->plan == NULL)
-	{
-		/*
-		 * Mark the expression as being an assignment source, if target is a
-		 * simple variable.  (This is a bit messy, but it seems cleaner than
-		 * modifying the API of exec_prepare_plan for the purpose.  We need to
-		 * stash the target dno into the expr anyway, so that it will be
-		 * available if we have to replan.)
-		 */
-		if (target->dtype == PLPGSQL_DTYPE_VAR)
-			expr->target_param = target->dno;
-		else
-			expr->target_param = -1;	/* should be that already */
-
 		exec_prepare_plan(estate, expr, 0);
-	}
 
 	value = exec_eval_expr(estate, expr, &isnull, &valtype, &valtypmod);
 	exec_assign_value(estate, target, value, isnull, valtype, valtypmod);
@@ -6282,13 +6262,6 @@ setup_param_list(PLpgSQL_execstate *estate, PLpgSQL_expr *expr)
 		 * that they are interrupting an active use of parameters.
 		 */
 		paramLI->parserSetupArg = expr;
-
-		/*
-		 * Also make sure this is set before parser hooks need it.  There is
-		 * no need to save and restore, since the value is always correct once
-		 * set.  (Should be set already, but let's be sure.)
-		 */
-		expr->func = estate->func;
 	}
 	else
 	{

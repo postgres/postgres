@@ -219,14 +219,22 @@ typedef struct PLpgSQL_expr
 {
 	char	   *query;			/* query string, verbatim from function body */
 	RawParseMode parseMode;		/* raw_parser() mode to use */
+	struct PLpgSQL_function *func;	/* function containing this expr */
+	struct PLpgSQL_nsitem *ns;	/* namespace chain visible to this expr */
+
+	/*
+	 * These fields are used to help optimize assignments to expanded-datum
+	 * variables.  If this expression is the source of an assignment to a
+	 * simple variable, target_param holds that variable's dno (else it's -1).
+	 */
+	int			target_param;	/* dno of assign target, or -1 if none */
+
+	/*
+	 * Fields above are set during plpgsql parsing.  Remaining fields are left
+	 * as zeroes/NULLs until we first parse/plan the query.
+	 */
 	SPIPlanPtr	plan;			/* plan, or NULL if not made yet */
 	Bitmapset  *paramnos;		/* all dnos referenced by this query */
-
-	/* function containing this expr (not set until we first parse query) */
-	struct PLpgSQL_function *func;
-
-	/* namespace chain visible to this expr */
-	struct PLpgSQL_nsitem *ns;
 
 	/* fields for "simple expression" fast-path execution: */
 	Expr	   *expr_simple_expr;	/* NULL means not a simple expr */
@@ -235,14 +243,11 @@ typedef struct PLpgSQL_expr
 	bool		expr_simple_mutable;	/* true if simple expr is mutable */
 
 	/*
-	 * These fields are used to optimize assignments to expanded-datum
-	 * variables.  If this expression is the source of an assignment to a
-	 * simple variable, target_param holds that variable's dno; else it's -1.
-	 * If we match a Param within expr_simple_expr to such a variable, that
-	 * Param's address is stored in expr_rw_param; then expression code
-	 * generation will allow the value for that Param to be passed read/write.
+	 * If we match a Param within expr_simple_expr to the variable identified
+	 * by target_param, that Param's address is stored in expr_rw_param; then
+	 * expression code generation will allow the value for that Param to be
+	 * passed as a read/write expanded-object pointer.
 	 */
-	int			target_param;	/* dno of assign target, or -1 if none */
 	Param	   *expr_rw_param;	/* read/write Param within expr, if any */
 
 	/*
