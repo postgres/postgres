@@ -116,13 +116,13 @@ No, it's not yet supported. In our implementation we reply on OpenSSL libraries 
 
 ## Can I encrypt an existing table?
 
-Yes, you can encrypt an existing table. Run the ALTER TABLE command as follows:
+Yes, you can encrypt an existing table. Run the `ALTER TABLE` command as follows:
 
 ```
 ALTER TABLE table_name SET ACCESS METHOD tde_heap;
 ```
 
-Since the `ALTER TABLE SET` command drops hint bits and this may affect the performance, we recommend to run the `SELECT COUNT(*)` command. It checks every tuple for visibility and sets its hint bits. Read more in the [Changing existing table](test.md) section. 
+Since the `SET ACCESS METHOD` command drops hint bits and this may affect the performance, we recommend to run the `SELECT COUNT(*)` command. It checks every tuple for visibility and sets its hint bits. Read more in the [Changing existing table](test.md) section.
 
 ## Do I have to restart the database to encrypt the data?
 

@@ -5,10 +5,10 @@
 If you encrypted a table with the `tde_heap` or `tde_heap_basic` access method and need to decrypt it, run the following command against the desired table (`mytable` in the example below):
 
 ```
-ALTER TABLE mytable SET access method heap;
+ALTER TABLE mytable SET ACCESS METHOD heap;
 ```
 
-Note that the `ALTER TABLE SET` command drops hint bits and this may affect the performance. Running a plain `SELECT, count(*)`, or `VACUUM` commands on the entire table will check every tuple for visibility and set its hint bits. Therefore, after executing the ALTER command, run a simple "count(*)" on your tables:
+Note that the `SET ACCESS METHOD` command drops hint bits and this may affect the performance. Running a plain `SELECT, count(*)`, or `VACUUM` commands on the entire table will check every tuple for visibility and set its hint bits. Therefore, after executing the `ALTER TABLE` command, run a simple "count(*)" on your tables:
 
 ```
 SELECT COUNT(*) FROM mytable;
@@ -27,7 +27,7 @@ The output returns `f` meaning that the table is no longer encrypted.
     In the same way you can re-encrypt the data with the `tde_heap_basic` access method. 
     
     ```
-    ALTER TABLE mytable SET access method tde_heap_basic;
+    ALTER TABLE mytable SET ACCESS METHOD tde_heap_basic;
     ```
     
     Note that the indexes and WAL files will no longer be encrypted.
