@@ -434,6 +434,16 @@ static relopt_real realRelOpts[] =
 	},
 	{
 		{
+			"vacuum_max_eager_freeze_failure_rate",
+			"Fraction of pages in a relation vacuum can scan and fail to freeze before disabling eager scanning.",
+			RELOPT_KIND_HEAP | RELOPT_KIND_TOAST,
+			ShareUpdateExclusiveLock
+		},
+		-1, 0.0, 1.0
+	},
+
+	{
+		{
 			"seq_page_cost",
 			"Sets the planner's estimate of the cost of a sequentially fetched disk page.",
 			RELOPT_KIND_TABLESPACE,
@@ -1891,7 +1901,9 @@ default_reloptions(Datum reloptions, bool validate, relopt_kind kind)
 		{"vacuum_index_cleanup", RELOPT_TYPE_ENUM,
 		offsetof(StdRdOptions, vacuum_index_cleanup)},
 		{"vacuum_truncate", RELOPT_TYPE_BOOL,
-		offsetof(StdRdOptions, vacuum_truncate)}
+		offsetof(StdRdOptions, vacuum_truncate)},
+		{"vacuum_max_eager_freeze_failure_rate", RELOPT_TYPE_REAL,
+		offsetof(StdRdOptions, vacuum_max_eager_freeze_failure_rate)}
 	};
 
 	return (bytea *) build_reloptions(reloptions, validate, kind,

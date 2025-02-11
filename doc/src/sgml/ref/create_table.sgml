@@ -1950,6 +1950,21 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     </listitem>
    </varlistentry>
 
+   <varlistentry id="reloption-vacuum-max-eager-freeze-failure-rate" xreflabel="vacuum_max_eager_freeze_failure_rate">
+    <term><literal>vacuum_max_eager_freeze_failure_rate</literal>, <literal>toast.vacuum_max_eager_freeze_failure_rate</literal> (<type>floating point</type>)
+    <indexterm>
+     <primary><varname>vacuum_max_eager_freeze_failure_rate</varname></primary>
+     <secondary>storage parameter</secondary>
+    </indexterm>
+    </term>
+    <listitem>
+     <para>
+      Per-table value for <xref linkend="guc-vacuum-max-eager-freeze-failure-rate"/>
+      parameter.
+     </para>
+    </listitem>
+   </varlistentry>
+
    <varlistentry id="reloption-user-catalog-table" xreflabel="user_catalog_table">
     <term><literal>user_catalog_table</literal> (<type>boolean</type>)
     <indexterm>

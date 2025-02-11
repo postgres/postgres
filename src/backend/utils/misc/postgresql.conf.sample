@@ -704,6 +704,7 @@ autovacuum_worker_slots = 16	# autovacuum worker slots to allocate
 #vacuum_multixact_freeze_table_age = 150000000
 #vacuum_multixact_freeze_min_age = 5000000
 #vacuum_multixact_failsafe_age = 1600000000
+#vacuum_max_eager_freeze_failure_rate = 0.03 # 0 disables eager scanning
 
 #------------------------------------------------------------------------------
 # CLIENT CONNECTION DEFAULTS

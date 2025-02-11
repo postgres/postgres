@@ -4034,6 +4034,16 @@ struct config_real ConfigureNamesReal[] =
 		NULL, NULL, NULL
 	},
 
+	{
+		{"vacuum_max_eager_freeze_failure_rate", PGC_USERSET, VACUUM_FREEZING,
+			gettext_noop("Fraction of pages in a relation vacuum can scan and fail to freeze before disabling eager scanning."),
+			gettext_noop("A value of 0.0 disables eager scanning and a value of 1.0 will eagerly scan up to 100 percent of the all-visible pages in the relation. If vacuum successfully freezes these pages, the cap is lower than 100 percent, because the goal is to amortize page freezing across multiple vacuums.")
+		},
+		&vacuum_max_eager_freeze_failure_rate,
+		0.03, 0.0, 1.0,
+		NULL, NULL, NULL
+	},
+
 	/* End-of-list marker */
 	{
 		{NULL, 0, 0, NULL, NULL}, NULL, 0.0, 0.0, 0.0, NULL, NULL, NULL

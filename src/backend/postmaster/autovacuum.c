@@ -2827,6 +2827,12 @@ table_recheck_autovac(Oid relid, HTAB *table_toast_map,
 		tab->at_params.is_wraparound = wraparound;
 		tab->at_params.log_min_duration = log_min_duration;
 		tab->at_params.toast_parent = InvalidOid;
+
+		/*
+		 * Later, in vacuum_rel(), we check reloptions for any
+		 * vacuum_max_eager_freeze_failure_rate override.
+		 */
+		tab->at_params.max_eager_freeze_failure_rate = vacuum_max_eager_freeze_failure_rate;
 		tab->at_storage_param_vac_cost_limit = avopts ?
 			avopts->vacuum_cost_limit : 0;
 		tab->at_storage_param_vac_cost_delay = avopts ?

@@ -9147,6 +9147,45 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
        </listitem>
       </varlistentry>
 
+     <varlistentry id="guc-vacuum-max-eager-freeze-failure-rate" xreflabel="vacuum_max_eager_freeze_failure_rate">
+      <term><varname>vacuum_max_eager_freeze_failure_rate</varname> (<type>floating point</type>)
+      <indexterm>
+       <primary><varname>vacuum_max_eager_freeze_failure_rate</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Specifies the maximum number of pages (as a fraction of total pages in
+        the relation) that <command>VACUUM</command> may scan and
+        <emphasis>fail</emphasis> to set all-frozen in the visibility map
+        before disabling eager scanning. A value of <literal>0</literal>
+        disables eager scanning altogether. The default is
+        <literal>0.03</literal> (3%).
+       </para>
+
+       <para>
+        Note that when eager scanning is enabled, successful page freezes do
+        not count against the cap on eager freeze failures. Successful page
+        freezes are capped internally at 20% of the all-visible but not
+        all-frozen pages in the relation. Capping successful page freezes helps
+        amortize the overhead across multiple normal vacuums and limits the
+        potential downside of wasted eager freezes of pages that are modified
+        again before the next aggressive vacuum.
+       </para>
+
+       <para>
+        This parameter can only be set in the
+        <filename>postgresql.conf</filename> file or on the server command
+        line; but the setting can be overridden for individual tables by
+        changing the
+        <link linkend="reloption-vacuum-max-eager-freeze-failure-rate">
+        corresponding table storage parameter</link>.
+        For more information on tuning vacuum's freezing behavior,
+        see <xref linkend="vacuum-for-wraparound"/>.
+       </para>
+      </listitem>
+     </varlistentry>
+
      </variablelist>
     </sect2>
    </sect1>
