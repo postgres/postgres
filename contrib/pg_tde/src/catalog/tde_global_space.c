@@ -50,7 +50,7 @@ TDEInitGlobalKeys(const char *dir)
 	 */
 	if (ikey != NULL)
 	{
-		pg_tde_put_key_into_cache(XLOG_TDE_OID, ikey);
+		pg_tde_put_key_into_cache(&GLOBAL_SPACE_RLOCATOR(XLOG_TDE_OID), ikey);
 	}
 
 }

@@ -83,7 +83,8 @@ typedef struct TDEMapFilePath
 
 typedef struct RelKeyCacheRec
 {
-	RelFileNumber rel_number;
+	Oid			dbOid;
+	RelFileNumber relNumber;
 	RelKeyData	key;
 } RelKeyCacheRec;
 
@@ -121,7 +122,7 @@ static int	pg_tde_file_header_read(char *tde_filename, int fd, TDEFileHeader *fh
 static bool pg_tde_read_one_map_entry(int fd, const RelFileLocator *rlocator, int flags, TDEMapEntry *map_entry, off_t *offset);
 static RelKeyData *pg_tde_read_one_keydata(int keydata_fd, int32 key_index, TDEPrincipalKey *principal_key);
 static int	pg_tde_open_file(char *tde_filename, TDEPrincipalKeyInfo *principal_key_info, bool update_header, int fileFlags, bool *is_new_file, off_t *curr_pos);
-static RelKeyData *pg_tde_get_key_from_cache(RelFileNumber rel_number, uint32 key_type);
+static RelKeyData *pg_tde_get_key_from_cache(const RelFileLocator *rlocator, uint32 key_type);
 
 #ifndef FRONTEND
 
@@ -191,7 +192,7 @@ pg_tde_create_key_map_entry(const RelFileLocator *newrlocator, uint32 entry_type
 	}
 
 	/* Encrypt the key */
-	rel_key_data = tde_create_rel_key(newrlocator->relNumber, &int_key, &principal_key->keyInfo);
+	rel_key_data = tde_create_rel_key(newrlocator, &int_key, &principal_key->keyInfo);
 	enc_rel_key_data = tde_encrypt_rel_key(principal_key, rel_key_data, newrlocator->dbOid);
 
 	/*
@@ -230,7 +231,7 @@ tde_sprint_key(InternalKey *k)
  * created key.
  */
 RelKeyData *
-tde_create_rel_key(RelFileNumber rel_num, InternalKey *key, TDEPrincipalKeyInfo *principal_key_info)
+tde_create_rel_key(const RelFileLocator *rlocator, InternalKey *key, TDEPrincipalKeyInfo *principal_key_info)
 {
 	RelKeyData	rel_key_data;
 
@@ -239,7 +240,7 @@ tde_create_rel_key(RelFileNumber rel_num, InternalKey *key, TDEPrincipalKeyInfo 
 	rel_key_data.internal_key.ctx = NULL;
 
 	/* Add to the decrypted key to cache */
-	return pg_tde_put_key_into_cache(rel_num, &rel_key_data);
+	return pg_tde_put_key_into_cache(rlocator, &rel_key_data);
 }
 
 /*
@@ -911,7 +912,7 @@ pg_tde_move_rel_key(const RelFileLocator *newrlocator, const RelFileLocator *old
 	XLogInsert(RM_TDERMGR_ID, XLOG_TDE_ADD_RELATION_KEY);
 
 	pg_tde_write_key_map_entry(newrlocator, enc_key, &principal_key->keyInfo);
-	pg_tde_put_key_into_cache(newrlocator->relNumber, rel_key);
+	pg_tde_put_key_into_cache(newrlocator, rel_key);
 
 	XLogBeginInsert();
 	XLogRegisterData((char *) oldrlocator, sizeof(RelFileLocator));
@@ -1375,7 +1376,7 @@ GetRelationKey(RelFileLocator rel, uint32 key_type, bool no_map_ok)
 {
 	RelKeyData *key;
 
-	key = pg_tde_get_key_from_cache(rel.relNumber, key_type);
+	key = pg_tde_get_key_from_cache(&rel, key_type);
 	if (key)
 		return key;
 
@@ -1383,7 +1384,7 @@ GetRelationKey(RelFileLocator rel, uint32 key_type, bool no_map_ok)
 
 	if (key != NULL)
 	{
-		RelKeyData *cached_key = pg_tde_put_key_into_cache(rel.relNumber, key);
+		RelKeyData *cached_key = pg_tde_put_key_into_cache(&rel, key);
 
 		pfree(key);
 		return cached_key;
@@ -1411,13 +1412,14 @@ GetTdeGlobaleRelationKey(RelFileLocator rel)
 }
 
 static RelKeyData *
-pg_tde_get_key_from_cache(RelFileNumber rel_number, uint32 key_type)
+pg_tde_get_key_from_cache(const RelFileLocator *rlocator, uint32 key_type)
 {
 	for (int i = 0; i < tde_rel_key_cache.len; i++)
 	{
 		RelKeyCacheRec *rec = tde_rel_key_cache.data + i;
 
-		if ((rel_number == InvalidOid || (rec->rel_number == rel_number)) &&
+		if ((rlocator->relNumber == InvalidRelFileNumber ||
+			 (rec->dbOid == rlocator->dbOid && rec->relNumber == rlocator->relNumber)) &&
 			rec->key.internal_key.rel_type & key_type)
 		{
 			return &rec->key;
@@ -1432,7 +1434,7 @@ pg_tde_get_key_from_cache(RelFileNumber rel_number, uint32 key_type)
  * TODO: add tests.
  */
 RelKeyData *
-pg_tde_put_key_into_cache(RelFileNumber rel_num, RelKeyData *key)
+pg_tde_put_key_into_cache(const RelFileLocator *rlocator, RelKeyData *key)
 {
 	static long pageSize = 0;
 	RelKeyCacheRec *rec;
@@ -1507,7 +1509,8 @@ pg_tde_put_key_into_cache(RelFileNumber rel_num, RelKeyData *key)
 
 	rec = tde_rel_key_cache.data + tde_rel_key_cache.len;
 
-	rec->rel_number = rel_num;
+	rec->dbOid = rlocator->dbOid;
+	rec->relNumber = rlocator->relNumber;
 	memcpy(&rec->key, key, sizeof(RelKeyCacheRec));
 	tde_rel_key_cache.len++;
 

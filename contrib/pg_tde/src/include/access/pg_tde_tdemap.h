@@ -69,7 +69,7 @@ extern TDEPrincipalKeyInfo *pg_tde_get_principal_key_info(Oid dbOid);
 extern bool pg_tde_save_principal_key(TDEPrincipalKeyInfo *principal_key_info, bool truncate_existing, bool update_header);
 extern bool pg_tde_perform_rotate_key(TDEPrincipalKey *principal_key, TDEPrincipalKey *new_principal_key);
 extern bool pg_tde_write_map_keydata_files(off_t map_size, char *m_file_data, off_t keydata_size, char *k_file_data);
-extern RelKeyData *tde_create_rel_key(RelFileNumber rel_num, InternalKey *key, TDEPrincipalKeyInfo *principal_key_info);
+extern RelKeyData *tde_create_rel_key(const RelFileLocator *locator, InternalKey *key, TDEPrincipalKeyInfo *principal_key_info);
 extern RelKeyData *tde_encrypt_rel_key(TDEPrincipalKey *principal_key, RelKeyData *rel_key_data, Oid dbOid);
 extern RelKeyData *tde_decrypt_rel_key(TDEPrincipalKey *principal_key, RelKeyData *enc_rel_key_data, Oid dbOid);
 extern RelKeyData *pg_tde_get_key_from_file(const RelFileLocator *rlocator, uint32 key_type, bool no_map_ok);
@@ -89,6 +89,6 @@ pg_tde_set_db_file_paths(Oid dbOid, char *map_path, char *keydata_path)
 
 const char *tde_sprint_key(InternalKey *k);
 
-extern RelKeyData *pg_tde_put_key_into_cache(RelFileNumber rel_num, RelKeyData *key);
+extern RelKeyData *pg_tde_put_key_into_cache(const RelFileLocator *locator, RelKeyData *key);
 
 #endif							/* PG_TDE_MAP_H */
