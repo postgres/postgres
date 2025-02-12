@@ -9,7 +9,7 @@ os=$1
 directory=$2
 
 case $os in
-    freebsd|linux|macos)
+    freebsd|linux|macos|netbsd|openbsd)
     ;;
     *)
         echo "unsupported operating system ${os}"
@@ -26,7 +26,7 @@ for corefile in $(find "$directory" -type f) ; do
         echo -e '\n\n'
     fi
 
-    if [ "$os" = 'macos' ]; then
+    if [ "$os" = 'macos' ] || [ "$os" = 'openbsd' ]; then
         lldb -c $corefile --batch -o 'thread backtrace all' -o 'quit'
     else
         auxv=$(gdb --quiet --core ${corefile} --batch -ex 'info auxv' 2>/dev/null)
@@ -37,6 +37,8 @@ for corefile in $(find "$directory" -type f) ; do
 
         if [ "$os" = 'freebsd' ]; then
             binary=$(echo "$auxv" | grep AT_EXECPATH | perl -pe "s/^.*\"(.*)\"\$/\$1/g")
+        elif [ "$os" = 'netbsd' ]; then
+            binary=$(echo "$auxv" | grep AT_SUN_EXECNAME | perl -pe "s/^.*\"(.*)\"\$/\$1/g")
         elif [ "$os" = 'linux' ]; then
             binary=$(echo "$auxv" | grep AT_EXECFN | perl -pe "s/^.*\"(.*)\"\$/\$1/g")
         else

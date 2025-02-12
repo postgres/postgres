@@ -232,11 +232,13 @@ task:
     CCACHE_DIR: /home/postgres/cache
 
     PATH: /usr/sbin:$PATH
+    CORE_DUMP_DIR: /var/crash
 
   matrix:
     - name: NetBSD - Meson
       only_if: $CIRRUS_CHANGE_MESSAGE !=~ '.*\nci-os-only:.*' || $CIRRUS_CHANGE_MESSAGE =~ '.*\nci-os-only:[^\n]*netbsd.*'
       env:
+        OS_NAME: netbsd
         IMAGE_FAMILY: pg-ci-netbsd-postgres
         PKGCONFIG_PATH: '/usr/lib/pkgconfig:/usr/pkg/lib/pkgconfig'
         # initdb fails with: 'invalid locale settings' error on NetBSD.
@@ -253,12 +255,15 @@ task:
     - name: OpenBSD - Meson
       only_if: $CIRRUS_CHANGE_MESSAGE !=~ '.*\nci-os-only:.*' || $CIRRUS_CHANGE_MESSAGE =~ '.*\nci-os-only:[^\n]*openbsd.*'
       env:
+        OS_NAME: openbsd
         IMAGE_FAMILY: pg-ci-openbsd-postgres
         PKGCONFIG_PATH: '/usr/lib/pkgconfig:/usr/local/lib/pkgconfig'
         UUID: -Duuid=e2fs
         TCL: -Dtcl_version=tcl86
       setup_additional_packages_script: |
         #pkg_add -I ...
+      # Always core dump to ${CORE_DUMP_DIR}
+      set_core_dump_script: sysctl -w kern.nosuidcoredump=2
       <<: *openbsd_task_template
 
   sysinfo_script: |
@@ -276,6 +281,10 @@ task:
     chown -R postgres:users /home/postgres
     mkdir -p ${CCACHE_DIR}
     chown -R postgres:users ${CCACHE_DIR}
+  setup_core_files_script: |
+    mkdir -p ${CORE_DUMP_DIR}
+    chmod -R 770 ${CORE_DUMP_DIR}
+    chown -R postgres:users ${CORE_DUMP_DIR}
 
   # -Duuid=bsd is not set since 'bsd' uuid option
   # is not working on NetBSD & OpenBSD. See
@@ -306,6 +315,12 @@ task:
 
   on_failure:
     <<: *on_failure_meson
+    cores_script: |
+      # Although we try to configure the OS to core dump inside
+      # ${CORE_DUMP_DIR}, they may not obey this. So, move core files to the
+      # ${CORE_DUMP_DIR} directory.
+      find build/ -type f -name '*.core' -exec mv '{}' ${CORE_DUMP_DIR} \;
+      src/tools/ci/cores_backtrace.sh ${OS_NAME} ${CORE_DUMP_DIR}
 
 
 # configure feature flags, shared between the task running the linux tests and
