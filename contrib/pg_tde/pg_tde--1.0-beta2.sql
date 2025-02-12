@@ -103,6 +103,11 @@ BEGIN ATOMIC
                             'certPath' VALUE kmip_cert_path));
 END;
 
+CREATE FUNCTION pg_tde_set_default_principal_key(principal_key_name VARCHAR(255), PG_TDE_GLOBAL, provider_name VARCHAR(255) DEFAULT NULL, ensure_new_key BOOLEAN DEFAULT FALSE)
+RETURNS boolean
+AS 'MODULE_PATHNAME'
+LANGUAGE C;
+
 CREATE FUNCTION pg_tde_list_all_key_providers
     (OUT id INT,
     OUT provider_name VARCHAR(128),
@@ -581,6 +586,8 @@ BEGIN
 
     EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_set_principal_key(varchar, pg_tde_global, varchar, BOOLEAN) TO %I', target_role);
     EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_set_server_principal_key(varchar, pg_tde_global, varchar, BOOLEAN) TO %I', target_role);
+
+    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_set_default_principal_key(varchar, pg_tde_global, varchar, BOOLEAN) FROM %I', target_role);
 END;
 $$;
 
@@ -660,6 +667,8 @@ BEGIN
 
     EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_set_principal_key(varchar, pg_tde_global, varchar, BOOLEAN) FROM %I', target_role);
     EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_set_server_principal_key(varchar, pg_tde_global, varchar, BOOLEAN) FROM %I', target_role);
+
+    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_set_default_principal_key(varchar, pg_tde_global, varchar, BOOLEAN) FROM %I', target_role);
 END;
 $$;
 

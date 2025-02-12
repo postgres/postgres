@@ -30,11 +30,6 @@
 #include <openssl/err.h>
 #include <sys/time.h>
 
-#define PRINCIPAL_KEY_DEFAULT_NAME	"tde-global-catalog-key"
-#define KEYRING_DEFAULT_NAME "default_global_tablespace_keyring"
-#define KEYRING_DEFAULT_FILE_NAME "pg_tde_default_keyring_CHANGE_AND_REMOVE_IT"
-
-
 void
 TDEInitGlobalKeys(const char *dir)
 {
