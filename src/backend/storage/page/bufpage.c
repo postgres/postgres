@@ -85,7 +85,7 @@ PageInit(Page page, Size pageSize, Size specialSize)
  * to pgstat.
  */
 bool
-PageIsVerifiedExtended(const PageData *page, BlockNumber blkno, int flags)
+PageIsVerifiedExtended(PageData *page, BlockNumber blkno, int flags)
 {
 	const PageHeaderData *p = (const PageHeaderData *) page;
 	size_t	   *pagebytes;
@@ -100,7 +100,7 @@ PageIsVerifiedExtended(const PageData *page, BlockNumber blkno, int flags)
 	{
 		if (DataChecksumsEnabled())
 		{
-			checksum = pg_checksum_page((char *) page, blkno);
+			checksum = pg_checksum_page(page, blkno);
 
 			if (checksum != p->pd_checksum)
 				checksum_failure = true;
@@ -1534,5 +1534,5 @@ PageSetChecksumInplace(Page page, BlockNumber blkno)
 	if (PageIsNew(page) || !DataChecksumsEnabled())
 		return;
 
-	((PageHeader) page)->pd_checksum = pg_checksum_page((char *) page, blkno);
+	((PageHeader) page)->pd_checksum = pg_checksum_page(page, blkno);
 }

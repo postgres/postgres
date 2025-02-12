@@ -357,7 +357,7 @@ page_checksum_internal(PG_FUNCTION_ARGS, enum pageinspect_version ext_version)
 	if (PageIsNew(page))
 		PG_RETURN_NULL();
 
-	PG_RETURN_INT16(pg_checksum_page((char *) page, blkno));
+	PG_RETURN_INT16(pg_checksum_page(page, blkno));
 }
 
 Datum
