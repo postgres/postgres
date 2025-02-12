@@ -1406,11 +1406,6 @@ GetTdeGlobaleRelationKey(RelFileLocator rel)
 	return GetRelationKey(rel, TDE_KEY_TYPE_GLOBAL, false);
 }
 
-/*
- * Returns TDE key for a given relation.
- * First it looks in a cache. If nothing found in the cache, it reads data from
- * the tde key file and populates cache.
- */
 static RelKeyData *
 pg_tde_get_key_from_cache(RelFileNumber rel_number, uint32 key_type)
 {
