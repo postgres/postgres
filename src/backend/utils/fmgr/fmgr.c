@@ -639,7 +639,7 @@ fmgr_security_definer(PG_FUNCTION_ARGS)
 	ListCell   *lc1,
 			   *lc2,
 			   *lc3;
-	volatile int save_nestlevel;
+	int			save_nestlevel;
 	PgStat_FunctionCallUsage fcusage;
 
 	if (!fcinfo->flinfo->fn_extra)
