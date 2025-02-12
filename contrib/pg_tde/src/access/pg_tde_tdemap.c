@@ -128,7 +128,7 @@ static RelKeyData *pg_tde_get_key_from_cache(const RelFileLocator *rlocator, uin
 
 static int	pg_tde_file_header_write(char *tde_filename, int fd, TDEPrincipalKeyInfo *principal_key_info, off_t *bytes_written);
 static int32 pg_tde_write_map_entry(const RelFileLocator *rlocator, uint32 entry_type, char *db_map_path, TDEPrincipalKeyInfo *principal_key_info);
-static off_t pg_tde_write_one_map_entry(int fd, const RelFileLocator *rlocator, uint32 flags, int32 key_index, TDEMapEntry *map_entry, off_t *offset);
+static off_t pg_tde_write_one_map_entry(int fd, const RelFileLocator *rlocator, uint32 flags, int32 key_index, TDEMapEntry *map_entry, off_t *offset, const char *db_map_path);
 static void pg_tde_write_keydata(char *db_keydata_path, TDEPrincipalKeyInfo *principal_key_info, int32 key_index, RelKeyData *enc_rel_key_data);
 static void pg_tde_write_one_keydata(int keydata_fd, int32 key_index, RelKeyData *enc_rel_key_data);
 static int	keyrotation_init_file(TDEPrincipalKeyInfo *new_principal_key_info, char *rotated_filename, char *filename, bool *is_new_file, off_t *curr_pos);
@@ -411,7 +411,7 @@ pg_tde_write_map_entry(const RelFileLocator *rlocator, uint32 entry_type, char *
 	 * free entry
 	 */
 	curr_pos = prev_pos;
-	pg_tde_write_one_map_entry(map_fd, rlocator, entry_type, key_index, &map_entry, &prev_pos);
+	pg_tde_write_one_map_entry(map_fd, rlocator, entry_type, key_index, &map_entry, &prev_pos, db_map_path);
 
 	/* Let's close the file. */
 	close(map_fd);
@@ -427,7 +427,7 @@ pg_tde_write_map_entry(const RelFileLocator *rlocator, uint32 entry_type, char *
  * map file.
  */
 static off_t
-pg_tde_write_one_map_entry(int fd, const RelFileLocator *rlocator, uint32 flags, int32 key_index, TDEMapEntry *map_entry, off_t *offset)
+pg_tde_write_one_map_entry(int fd, const RelFileLocator *rlocator, uint32 flags, int32 key_index, TDEMapEntry *map_entry, off_t *offset, const char *db_map_path)
 {
 	int			bytes_written = 0;
 
@@ -444,10 +444,6 @@ pg_tde_write_one_map_entry(int fd, const RelFileLocator *rlocator, uint32 flags,
 	/* Add the entry to the file */
 	if (bytes_written != MAP_ENTRY_SIZE)
 	{
-		char		db_map_path[MAXPGPATH] = {0};
-
-		/* TODO: this seems like a bad idea? */
-		pg_tde_set_db_file_paths(rlocator->dbOid, db_map_path, NULL);
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not write tde map file \"%s\": %m",
@@ -455,10 +451,6 @@ pg_tde_write_one_map_entry(int fd, const RelFileLocator *rlocator, uint32 flags,
 	}
 	if (pg_fsync(fd) != 0)
 	{
-		char		db_map_path[MAXPGPATH] = {0};
-
-		/* TODO: this seems like a bad idea? */
-		pg_tde_set_db_file_paths(rlocator->dbOid, db_map_path, NULL);
 		ereport(data_sync_elevel(ERROR),
 				(errcode_for_file_access(),
 				 errmsg("could not fsync file \"%s\": %m", db_map_path)));
@@ -742,7 +734,7 @@ pg_tde_perform_rotate_key(TDEPrincipalKey *principal_key, TDEPrincipalKey *new_p
 
 		/* Write the given entry at the location pointed by prev_pos */
 		prev_pos[NEW_PRINCIPAL_KEY] = curr_pos[NEW_PRINCIPAL_KEY];
-		curr_pos[NEW_PRINCIPAL_KEY] = pg_tde_write_one_map_entry(m_fd[NEW_PRINCIPAL_KEY], &rloc, read_map_entry.flags, key_index[NEW_PRINCIPAL_KEY], &write_map_entry, &prev_pos[NEW_PRINCIPAL_KEY]);
+		curr_pos[NEW_PRINCIPAL_KEY] = pg_tde_write_one_map_entry(m_fd[NEW_PRINCIPAL_KEY], &rloc, read_map_entry.flags, key_index[NEW_PRINCIPAL_KEY], &write_map_entry, &prev_pos[NEW_PRINCIPAL_KEY], m_path[NEW_PRINCIPAL_KEY]);
 		pg_tde_write_one_keydata(k_fd[NEW_PRINCIPAL_KEY], key_index[NEW_PRINCIPAL_KEY], enc_rel_key_data[NEW_PRINCIPAL_KEY]);
 
 		/* Increment the key index for the new principal key */
@@ -1073,7 +1065,7 @@ pg_tde_process_map_entry(const RelFileLocator *rlocator, uint32 key_type, char *
 			/* Mark the entry pointed by prev_pos as free */
 			if (should_delete)
 			{
-				pg_tde_write_one_map_entry(map_fd, NULL, MAP_ENTRY_EMPTY, 0, &map_entry, &prev_pos);
+				pg_tde_write_one_map_entry(map_fd, NULL, MAP_ENTRY_EMPTY, 0, &map_entry, &prev_pos, db_map_path);
 			}
 #endif
 			break;
