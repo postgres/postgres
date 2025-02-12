@@ -45,3 +45,5 @@ lib*.pc
 /tmp_install/
 /portlock/
 /*.typedefs
+/contrib/*/regression.diffs
+/contrib/*/regression.out
