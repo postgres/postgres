@@ -12,6 +12,7 @@ __pycache__
 /t/results
 /results
 /tmp_check
+/log
 
 # tools files
 typedefs-full.list
