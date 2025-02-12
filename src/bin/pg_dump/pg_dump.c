@@ -4682,6 +4682,8 @@ getPublicationTables(Archive *fout, TableInfo tblinfo[], int numTables)
 				appendPQExpBufferStr(attribs, fmtId(attnames[k]));
 			}
 			pubrinfo[j].pubrattrs = attribs->data;
+			free(attribs);		/* but not attribs->data */
+			free(attnames);
 		}
 		else
 			pubrinfo[j].pubrattrs = NULL;
@@ -9424,6 +9426,7 @@ determineNotNullFlags(Archive *fout, PGresult *res, int r,
 					tbinfo->notnull_constrs[j] =
 						pstrdup(PQgetvalue(res, r, i_notnull_name));
 				}
+				free(default_name);
 			}
 		}
 	}
