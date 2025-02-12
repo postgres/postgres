@@ -19,7 +19,7 @@ pgtypes_alloc(long size)
 char *
 pgtypes_strdup(const char *str)
 {
-	char	   *new = (char *) strdup(str);
+	char	   *new = strdup(str);
 
 	if (!new)
 		errno = ENOMEM;

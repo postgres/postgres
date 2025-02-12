@@ -795,11 +795,11 @@ pgstat_read_current_status(void)
 				 * strcpy is safe even if the string is modified concurrently,
 				 * because there's always a \0 at the end of the buffer.
 				 */
-				strcpy(localappname, (char *) beentry->st_appname);
+				strcpy(localappname, beentry->st_appname);
 				localentry->backendStatus.st_appname = localappname;
-				strcpy(localclienthostname, (char *) beentry->st_clienthostname);
+				strcpy(localclienthostname, beentry->st_clienthostname);
 				localentry->backendStatus.st_clienthostname = localclienthostname;
-				strcpy(localactivity, (char *) beentry->st_activity_raw);
+				strcpy(localactivity, beentry->st_activity_raw);
 				localentry->backendStatus.st_activity_raw = localactivity;
 #ifdef USE_SSL
 				if (beentry->st_ssl)

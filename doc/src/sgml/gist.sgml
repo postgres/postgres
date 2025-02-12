@@ -1027,7 +1027,7 @@ fill_my_string_relopt(const char *value, void *ptr)
     int     len = strlen(tmp);
 
     if (ptr)
-        strcpy((char *) ptr, tmp);
+        strcpy(ptr, tmp);
 
     pfree(tmp);
     return len + 1;
