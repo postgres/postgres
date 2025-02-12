@@ -898,7 +898,7 @@ pgbench <optional> <replaceable>options</replaceable> </optional> <replaceable>d
         Print messages about all errors and failures (errors without retrying)
         including which limit for retries was exceeded and how far it was
         exceeded for the serialization/deadlock failures. (Note that in this
-        case the output can be significantly increased.).
+        case the output can be significantly increased.)
         See <xref linkend="failures-and-retries"/> for more information.
        </para>
       </listitem>
