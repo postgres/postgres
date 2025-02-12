@@ -557,7 +557,8 @@ test_c_args = cppflags + cflags
 bsd_authopt = get_option('bsd_auth')
 bsd_auth = not_found_dep
 if cc.check_header('bsd_auth.h', required: bsd_authopt,
-    args: test_c_args, include_directories: postgres_inc)
+    args: test_c_args, prefix: '#include <sys/types.h>',
+    include_directories: postgres_inc)
   cdata.set('USE_BSD_AUTH', 1)
   bsd_auth = declare_dependency()
 endif
