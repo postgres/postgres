@@ -5,30 +5,36 @@ DEPS=(
     wget
     # Build
     bison
+    docbook-xml
     docbook-xsl
     flex
     gettext
+    libicu-dev
     libkrb5-dev
     libldap2-dev
     liblz4-dev
     libpam0g-dev
     libperl-dev
-    libreadline6-dev
+    libreadline-dev
     libselinux1-dev
     libssl-dev
     libsystemd-dev
-    libxml2
     libxml2-dev
     libxml2-utils
-    libxslt-dev
+    libxslt1-dev
+    libzstd-dev
+    lz4
+    mawk
     meson
-    pkg-config
+    perl
+    pkgconf
     python3-dev
     systemtap-sdt-dev
     tcl-dev
     uuid-dev
     xsltproc
     zlib1g-dev
+    zstd
     # Build pg_tde
     libcurl4-openssl-dev
     # Test
