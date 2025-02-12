@@ -108,7 +108,11 @@ typedef struct RelKeyCache
 	int			cap;			/* max amount of RelKeyCacheRec data can fit */
 } RelKeyCache;
 
-RelKeyCache *tde_rel_key_cache = NULL;
+RelKeyCache tde_rel_key_cache = {
+	.data = NULL,
+	.len = 0,
+	.cap = 0,
+};
 
 static int32 pg_tde_process_map_entry(const RelFileLocator *rlocator, uint32 key_type, char *db_map_path, off_t *offset, bool should_delete);
 static RelKeyData *pg_tde_read_keydata(char *db_keydata_path, int32 key_index, TDEPrincipalKey *principal_key);
@@ -1409,16 +1413,11 @@ GetTdeGlobaleRelationKey(RelFileLocator rel)
 static RelKeyData *
 pg_tde_get_key_from_cache(RelFileNumber rel_number, uint32 key_type)
 {
-	RelKeyCacheRec *rec;
-
-	if (tde_rel_key_cache == NULL)
-		return NULL;
-
-	for (int i = 0; i < tde_rel_key_cache->len; i++)
+	for (int i = 0; i < tde_rel_key_cache.len; i++)
 	{
-		rec = tde_rel_key_cache->data + i;
-		if (rec != NULL &&
-			(rel_number == InvalidOid || (rec->rel_number == rel_number)) &&
+		RelKeyCacheRec *rec = tde_rel_key_cache.data + i;
+
+		if ((rel_number == InvalidOid || (rec->rel_number == rel_number)) &&
 			rec->key.internal_key.rel_type & key_type)
 		{
 			return &rec->key;
@@ -1448,37 +1447,35 @@ pg_tde_put_key_into_cache(RelFileNumber rel_num, RelKeyData *key)
 #endif
 	}
 
-	if (tde_rel_key_cache == NULL)
+	if (tde_rel_key_cache.data == NULL)
 	{
 #ifndef FRONTEND
 		oldCtx = MemoryContextSwitchTo(TopMemoryContext);
-		tde_rel_key_cache = palloc(sizeof(RelKeyCache));
-		tde_rel_key_cache->data = palloc_aligned(pageSize, pageSize, MCXT_ALLOC_ZERO);
+		tde_rel_key_cache.data = palloc_aligned(pageSize, pageSize, MCXT_ALLOC_ZERO);
 		MemoryContextSwitchTo(oldCtx);
 #else
-		tde_rel_key_cache = palloc(sizeof(RelKeyCache));
-		tde_rel_key_cache->data = aligned_alloc(pageSize, pageSize);
-		memset(tde_rel_key_cache->data, 0, pageSize);
+		tde_rel_key_cache.data = aligned_alloc(pageSize, pageSize);
+		memset(tde_rel_key_cache.data, 0, pageSize);
 #endif
 
-		if (mlock(tde_rel_key_cache->data, pageSize) == -1)
+		if (mlock(tde_rel_key_cache.data, pageSize) == -1)
 			elog(ERROR, "could not mlock internal key initial cache page: %m");
 
-		tde_rel_key_cache->len = 0;
-		tde_rel_key_cache->cap = (pageSize - 1) / sizeof(RelKeyCacheRec);
+		tde_rel_key_cache.len = 0;
+		tde_rel_key_cache.cap = (pageSize - 1) / sizeof(RelKeyCacheRec);
 	}
 
 	/*
 	 * Add another mem page if there is no more room left for another key. We
 	 * allocate `current_memory_size` + 1 page and copy data there.
 	 */
-	if (tde_rel_key_cache->len == tde_rel_key_cache->cap)
+	if (tde_rel_key_cache.len == tde_rel_key_cache.cap)
 	{
 		size_t		size;
 		size_t		old_size;
 		RelKeyCacheRec *cachePage;
 
-		old_size = TYPEALIGN(pageSize, (tde_rel_key_cache->cap) * sizeof(RelKeyCacheRec));
+		old_size = TYPEALIGN(pageSize, tde_rel_key_cache.cap * sizeof(RelKeyCacheRec));
 
 		/*
 		 * TODO: consider some formula for less allocations when  caching a
@@ -1498,21 +1495,21 @@ pg_tde_put_key_into_cache(RelFileNumber rel_num, RelKeyData *key)
 		memset(cachePage, 0, size);
 #endif
 
-		memcpy(cachePage, tde_rel_key_cache->data, old_size);
-		pfree(tde_rel_key_cache->data);
-		tde_rel_key_cache->data = cachePage;
+		memcpy(cachePage, tde_rel_key_cache.data, old_size);
+		pfree(tde_rel_key_cache.data);
+		tde_rel_key_cache.data = cachePage;
 
-		if (mlock(tde_rel_key_cache->data, size) == -1)
+		if (mlock(tde_rel_key_cache.data, size) == -1)
 			elog(WARNING, "could not mlock internal key cache pages: %m");
 
-		tde_rel_key_cache->cap = (size - 1) / sizeof(RelKeyCacheRec);
+		tde_rel_key_cache.cap = (size - 1) / sizeof(RelKeyCacheRec);
 	}
 
-	rec = tde_rel_key_cache->data + tde_rel_key_cache->len;
+	rec = tde_rel_key_cache.data + tde_rel_key_cache.len;
 
 	rec->rel_number = rel_num;
 	memcpy(&rec->key, key, sizeof(RelKeyCacheRec));
-	tde_rel_key_cache->len++;
+	tde_rel_key_cache.len++;
 
 	return &rec->key;
 }
