@@ -434,6 +434,36 @@ explain (costs off)
    Filter: ((unique1 IS NOT NULL) AND (unique2 IS NOT NULL))
 (2 rows)
 
+-- Test that broken ECs are processed correctly during self join removal.
+-- Disable merge joins so that we don't get an error about missing commutator.
+-- Test both orientations of the join clause, because only one of them breaks
+-- the EC.
+set enable_mergejoin to off;
+explain (costs off)
+  select * from ec0 m join ec0 n on m.ff = n.ff
+  join ec1 p on m.ff + n.ff = p.f1;
+              QUERY PLAN               
+---------------------------------------
+ Nested Loop
+   Join Filter: ((n.ff + n.ff) = p.f1)
+   ->  Seq Scan on ec0 n
+   ->  Materialize
+         ->  Seq Scan on ec1 p
+(5 rows)
+
+explain (costs off)
+  select * from ec0 m join ec0 n on m.ff = n.ff
+  join ec1 p on p.f1::int8 = (m.ff + n.ff)::int8alias1;
+                          QUERY PLAN                           
+---------------------------------------------------------------
+ Nested Loop
+   Join Filter: ((p.f1)::bigint = ((n.ff + n.ff))::int8alias1)
+   ->  Seq Scan on ec0 n
+   ->  Materialize
+         ->  Seq Scan on ec1 p
+(5 rows)
+
+reset enable_mergejoin;
 -- this could be converted, but isn't at present
 explain (costs off)
   select * from tenk1 where unique1 = unique1 or unique2 = unique2;

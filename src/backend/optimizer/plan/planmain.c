@@ -234,6 +234,11 @@ query_planner(PlannerInfo *root,
 	reduce_unique_semijoins(root);
 
 	/*
+	 * Remove self joins on a unique column.
+	 */
+	joinlist = remove_useless_self_joins(root, joinlist);
+
+	/*
 	 * Now distribute "placeholders" to base rels as needed.  This has to be
 	 * done after join removal because removal could change whether a
 	 * placeholder is evaluable at a base rel.

@@ -989,6 +989,16 @@ struct config_bool ConfigureNamesBool[] =
 		NULL, NULL, NULL
 	},
 	{
+		{"enable_self_join_elimination", PGC_USERSET, QUERY_TUNING_METHOD,
+			gettext_noop("Enable removal of unique self-joins."),
+			NULL,
+			GUC_EXPLAIN | GUC_NOT_IN_SAMPLE
+		},
+		&enable_self_join_elimination,
+		true,
+		NULL, NULL, NULL
+	},
+	{
 		{"enable_group_by_reordering", PGC_USERSET, QUERY_TUNING_METHOD,
 			gettext_noop("Enables reordering of GROUP BY keys."),
 			NULL,

@@ -20,6 +20,7 @@
 /* GUC parameters */
 #define DEFAULT_CURSOR_TUPLE_FRACTION 0.1
 extern PGDLLIMPORT double cursor_tuple_fraction;
+extern PGDLLIMPORT bool enable_self_join_elimination;
 
 /* query_planner callback to compute query_pathkeys */
 typedef void (*query_pathkeys_callback) (PlannerInfo *root, void *extra);
@@ -113,6 +114,11 @@ extern bool query_is_distinct_for(Query *query, List *colnos, List *opids);
 extern bool innerrel_is_unique(PlannerInfo *root,
 							   Relids joinrelids, Relids outerrelids, RelOptInfo *innerrel,
 							   JoinType jointype, List *restrictlist, bool force_cache);
+extern bool innerrel_is_unique_ext(PlannerInfo *root, Relids joinrelids,
+								   Relids outerrelids, RelOptInfo *innerrel,
+								   JoinType jointype, List *restrictlist,
+								   bool force_cache, List **uclauses);
+extern List *remove_useless_self_joins(PlannerInfo *root, List *jointree);
 
 /*
  * prototypes for plan/setrefs.c

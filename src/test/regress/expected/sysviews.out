@@ -168,10 +168,11 @@ select name, setting from pg_settings where name like 'enable%';
  enable_partitionwise_aggregate | off
  enable_partitionwise_join      | off
  enable_presorted_aggregate     | on
+ enable_self_join_elimination   | on
  enable_seqscan                 | on
  enable_sort                    | on
  enable_tidscan                 | on
-(23 rows)
+(24 rows)
 
 -- There are always wait event descriptions for various types.  InjectionPoint
 -- may be present or absent, depending on history since last postmaster start.
