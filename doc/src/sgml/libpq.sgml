@@ -5392,7 +5392,7 @@ PGresult *PQgetResult(PGconn *conn);
        <literal>PGRES_PIPELINE_SYNC</literal> will be returned.
        The result of the next query after the synchronization point follows
        immediately (that is, no null pointer is returned after
-       the synchronization point.)
+       the synchronization point).
       </para>
 
       <note>
