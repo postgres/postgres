@@ -48,6 +48,7 @@
 #include "utils/pg_locale.h"
 #include "utils/varlena.h"
 #include "varatt.h"
+#include <pg_collation_d.h>
 
 
 /*
@@ -573,129 +574,137 @@ spg_text_inner_consistent(PG_FUNCTION_ARGS)
 Datum
 spg_text_leaf_consistent(PG_FUNCTION_ARGS)
 {
-	spgLeafConsistentIn *in = (spgLeafConsistentIn *) PG_GETARG_POINTER(0);
-	spgLeafConsistentOut *out = (spgLeafConsistentOut *) PG_GETARG_POINTER(1);
-	int			level = in->level;
-	text	   *leafValue,
-			   *reconstrValue = NULL;
-	char	   *fullValue;
-	int			fullLen;
-	bool		res;
-	int			j;
+    spgLeafConsistentIn *in = (spgLeafConsistentIn *) PG_GETARG_POINTER(0);
+    spgLeafConsistentOut *out = (spgLeafConsistentOut *) PG_GETARG_POINTER(1);
+    int         level = in->level;
+    text       *leafValue,
+               *reconstrValue = NULL;
+    char       *fullValue;
+    int         fullLen;
+    bool        res;
+    int         j;
 
-	/* all tests are exact */
-	out->recheck = false;
+    /* all tests are exact */
+    out->recheck = false;
 
-	leafValue = DatumGetTextPP(in->leafDatum);
+    leafValue = DatumGetTextPP(in->leafDatum);
 
-	/* As above, in->reconstructedValue isn't toasted or short. */
-	if (DatumGetPointer(in->reconstructedValue))
-		reconstrValue = (text *) DatumGetPointer(in->reconstructedValue);
+    if (DatumGetPointer(in->reconstructedValue))
+        reconstrValue = (text *) DatumGetPointer(in->reconstructedValue);
 
-	Assert(reconstrValue == NULL ? level == 0 :
-		   VARSIZE_ANY_EXHDR(reconstrValue) == level);
+    Assert(reconstrValue == NULL ? level == 0 :
+           VARSIZE_ANY_EXHDR(reconstrValue) == level);
 
-	/* Reconstruct the full string represented by this leaf tuple */
-	fullLen = level + VARSIZE_ANY_EXHDR(leafValue);
-	if (VARSIZE_ANY_EXHDR(leafValue) == 0 && level > 0)
-	{
-		fullValue = VARDATA(reconstrValue);
-		out->leafValue = PointerGetDatum(reconstrValue);
-	}
-	else
-	{
-		text	   *fullText = palloc(VARHDRSZ + fullLen);
+    /* Reconstruct the full string represented by this leaf tuple */
+    fullLen = level + VARSIZE_ANY_EXHDR(leafValue);
+    if (VARSIZE_ANY_EXHDR(leafValue) == 0 && level > 0)
+    {
+        fullValue = VARDATA(reconstrValue);
+        out->leafValue = PointerGetDatum(reconstrValue);
+    }
+    else
+    {
+        text       *fullText = palloc(VARHDRSZ + fullLen);
 
-		SET_VARSIZE(fullText, VARHDRSZ + fullLen);
-		fullValue = VARDATA(fullText);
-		if (level)
-			memcpy(fullValue, VARDATA(reconstrValue), level);
-		if (VARSIZE_ANY_EXHDR(leafValue) > 0)
-			memcpy(fullValue + level, VARDATA_ANY(leafValue),
-				   VARSIZE_ANY_EXHDR(leafValue));
-		out->leafValue = PointerGetDatum(fullText);
-	}
+        SET_VARSIZE(fullText, VARHDRSZ + fullLen);
+        fullValue = VARDATA(fullText);
+        if (level)
+            memcpy(fullValue, VARDATA(reconstrValue), level);
+        if (VARSIZE_ANY_EXHDR(leafValue) > 0)
+            memcpy(fullValue + level, VARDATA_ANY(leafValue),
+                   VARSIZE_ANY_EXHDR(leafValue));
+        out->leafValue = PointerGetDatum(fullText);
+    }
 
-	/* Perform the required comparison(s) */
-	res = true;
-	for (j = 0; j < in->nkeys; j++)
-	{
-		StrategyNumber strategy = in->scankeys[j].sk_strategy;
-		text	   *query = DatumGetTextPP(in->scankeys[j].sk_argument);
-		int			queryLen = VARSIZE_ANY_EXHDR(query);
-		int			r;
+    /* Perform the required comparison(s) */
+    res = true;
+    for (j = 0; j < in->nkeys; j++)
+    {
+        StrategyNumber strategy = in->scankeys[j].sk_strategy;
+        text       *query = DatumGetTextPP(in->scankeys[j].sk_argument);
+        int         queryLen = VARSIZE_ANY_EXHDR(query);
+        char       *queryData = VARDATA_ANY(query);
+        int         r;
 
-		if (strategy == RTPrefixStrategyNumber)
-		{
-			/*
-			 * if level >= length of query then reconstrValue must begin with
-			 * query (prefix) string, so we don't need to check it again.
-			 */
-			res = (level >= queryLen) ||
-				DatumGetBool(DirectFunctionCall2Coll(text_starts_with,
-													 PG_GET_COLLATION(),
-													 out->leafValue,
-													 PointerGetDatum(query)));
+        if (strategy == RTPrefixStrategyNumber)
+        {
+            /*
+             * Optimize prefix check for C collation using memcmp.
+             * For non-C collations, fall back to text_starts_with.
+             */
+            if (level >= queryLen)
+            {
+                res = true;
+            }
+            else if (PG_GET_COLLATION() == C_COLLATION_OID)
+            {
+                /* Use fast memcmp for C collation */
+                res = (fullLen >= queryLen) && 
+                      (memcmp(fullValue, queryData, queryLen) == 0);
+            }
+            else
+            {
+                /* Use existing text_starts_with for other collations */
+                res = DatumGetBool(DirectFunctionCall2Coll(
+                    text_starts_with,
+                    PG_GET_COLLATION(),
+                    out->leafValue,
+                    PointerGetDatum(query)
+                ));
+            }
 
-			if (!res)			/* no need to consider remaining conditions */
-				break;
+            if (!res)
+                break;
+            continue;
+        }
 
-			continue;
-		}
+        if (SPG_IS_COLLATION_AWARE_STRATEGY(strategy))
+        {
+            /* Collation-aware comparison */
+            strategy -= SPG_STRATEGY_ADDITION;
+            Assert(pg_verifymbstr(fullValue, fullLen, false));
+            r = varstr_cmp(fullValue, fullLen, queryData, queryLen, PG_GET_COLLATION());
+        }
+        else
+        {
+            /* Optimized non-collation-aware comparison */
+            int minLen = Min(queryLen, fullLen);
+            r = memcmp(fullValue, queryData, minLen);
+            if (r == 0)
+            {
+                if (queryLen > fullLen)
+                    r = -1;
+                else if (queryLen < fullLen)
+                    r = 1;
+            }
+        }
 
-		if (SPG_IS_COLLATION_AWARE_STRATEGY(strategy))
-		{
-			/* Collation-aware comparison */
-			strategy -= SPG_STRATEGY_ADDITION;
+        switch (strategy)
+        {
+            case BTLessStrategyNumber:
+                res = (r < 0);
+                break;
+            case BTLessEqualStrategyNumber:
+                res = (r <= 0);
+                break;
+            case BTEqualStrategyNumber:
+                res = (r == 0);
+                break;
+            case BTGreaterEqualStrategyNumber:
+                res = (r >= 0);
+                break;
+            case BTGreaterStrategyNumber:
+                res = (r > 0);
+                break;
+            default:
+                elog(ERROR, "unrecognized strategy number: %d", strategy);
+                res = false;
+                break;
+        }
 
-			/* If asserts enabled, verify encoding of reconstructed string */
-			Assert(pg_verifymbstr(fullValue, fullLen, false));
+        if (!res)
+            break;
+    }
 
-			r = varstr_cmp(fullValue, fullLen,
-						   VARDATA_ANY(query), queryLen,
-						   PG_GET_COLLATION());
-		}
-		else
-		{
-			/* Non-collation-aware comparison */
-			r = memcmp(fullValue, VARDATA_ANY(query), Min(queryLen, fullLen));
-
-			if (r == 0)
-			{
-				if (queryLen > fullLen)
-					r = -1;
-				else if (queryLen < fullLen)
-					r = 1;
-			}
-		}
-
-		switch (strategy)
-		{
-			case BTLessStrategyNumber:
-				res = (r < 0);
-				break;
-			case BTLessEqualStrategyNumber:
-				res = (r <= 0);
-				break;
-			case BTEqualStrategyNumber:
-				res = (r == 0);
-				break;
-			case BTGreaterEqualStrategyNumber:
-				res = (r >= 0);
-				break;
-			case BTGreaterStrategyNumber:
-				res = (r > 0);
-				break;
-			default:
-				elog(ERROR, "unrecognized strategy number: %d",
-					 in->scankeys[j].sk_strategy);
-				res = false;
-				break;
-		}
-
-		if (!res)
-			break;				/* no need to consider remaining conditions */
-	}
-
-	PG_RETURN_BOOL(res);
+    PG_RETURN_BOOL(res);
 }
