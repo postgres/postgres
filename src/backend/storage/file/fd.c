@@ -910,7 +910,7 @@ InitFileAccess(void)
 				(errcode(ERRCODE_OUT_OF_MEMORY),
 				 errmsg("out of memory")));
 
-	MemSet((char *) &(VfdCache[0]), 0, sizeof(Vfd));
+	MemSet(&(VfdCache[0]), 0, sizeof(Vfd));
 	VfdCache->fd = VFD_CLOSED;
 
 	SizeVfdCache = 1;
@@ -1447,7 +1447,7 @@ AllocateVfd(void)
 		 */
 		for (i = SizeVfdCache; i < newCacheSize; i++)
 		{
-			MemSet((char *) &(VfdCache[i]), 0, sizeof(Vfd));
+			MemSet(&(VfdCache[i]), 0, sizeof(Vfd));
 			VfdCache[i].nextFree = i + 1;
 			VfdCache[i].fd = VFD_CLOSED;
 		}

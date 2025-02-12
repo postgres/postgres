@@ -480,11 +480,11 @@ heap_xlog_insert(XLogReaderState *record)
 
 		newlen = datalen - SizeOfHeapHeader;
 		Assert(datalen > SizeOfHeapHeader && newlen <= MaxHeapTupleSize);
-		memcpy((char *) &xlhdr, data, SizeOfHeapHeader);
+		memcpy(&xlhdr, data, SizeOfHeapHeader);
 		data += SizeOfHeapHeader;
 
 		htup = &tbuf.hdr;
-		MemSet((char *) htup, 0, SizeofHeapTupleHeader);
+		MemSet(htup, 0, SizeofHeapTupleHeader);
 		/* PG73FORMAT: get bitmap [+ padding] [+ oid] + data */
 		memcpy((char *) htup + SizeofHeapTupleHeader,
 			   data,
@@ -625,10 +625,10 @@ heap_xlog_multi_insert(XLogReaderState *record)
 			newlen = xlhdr->datalen;
 			Assert(newlen <= MaxHeapTupleSize);
 			htup = &tbuf.hdr;
-			MemSet((char *) htup, 0, SizeofHeapTupleHeader);
+			MemSet(htup, 0, SizeofHeapTupleHeader);
 			/* PG73FORMAT: get bitmap [+ padding] [+ oid] + data */
 			memcpy((char *) htup + SizeofHeapTupleHeader,
-				   (char *) tupdata,
+				   tupdata,
 				   newlen);
 			tupdata += newlen;
 
@@ -854,14 +854,14 @@ heap_xlog_update(XLogReaderState *record, bool hot_update)
 			recdata += sizeof(uint16);
 		}
 
-		memcpy((char *) &xlhdr, recdata, SizeOfHeapHeader);
+		memcpy(&xlhdr, recdata, SizeOfHeapHeader);
 		recdata += SizeOfHeapHeader;
 
 		tuplen = recdata_end - recdata;
 		Assert(tuplen <= MaxHeapTupleSize);
 
 		htup = &tbuf.hdr;
-		MemSet((char *) htup, 0, SizeofHeapTupleHeader);
+		MemSet(htup, 0, SizeofHeapTupleHeader);
 
 		/*
 		 * Reconstruct the new tuple using the prefix and/or suffix from the

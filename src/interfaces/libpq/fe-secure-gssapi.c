@@ -698,7 +698,7 @@ pqsecure_open_gss(PGconn *conn)
 	/* Queue the token for writing */
 	netlen = pg_hton32(output.length);
 
-	memcpy(PqGSSSendBuffer, (char *) &netlen, sizeof(uint32));
+	memcpy(PqGSSSendBuffer, &netlen, sizeof(uint32));
 	PqGSSSendLength += sizeof(uint32);
 
 	memcpy(PqGSSSendBuffer + PqGSSSendLength, output.value, output.length);

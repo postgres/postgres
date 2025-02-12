@@ -597,7 +597,7 @@ pgstat_report_activity(BackendState state, const char *cmd_str)
 
 	if (cmd_str != NULL)
 	{
-		memcpy((char *) beentry->st_activity_raw, cmd_str, len);
+		memcpy(beentry->st_activity_raw, cmd_str, len);
 		beentry->st_activity_raw[len] = '\0';
 		beentry->st_activity_start_timestamp = start_timestamp;
 	}
@@ -670,7 +670,7 @@ pgstat_report_appname(const char *appname)
 	 */
 	PGSTAT_BEGIN_WRITE_ACTIVITY(beentry);
 
-	memcpy((char *) beentry->st_appname, appname, len);
+	memcpy(beentry->st_appname, appname, len);
 	beentry->st_appname[len] = '\0';
 
 	PGSTAT_END_WRITE_ACTIVITY(beentry);

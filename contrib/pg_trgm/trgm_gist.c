@@ -228,7 +228,7 @@ gtrgm_consistent(PG_FUNCTION_ARGS)
 	if (cache == NULL ||
 		cache->strategy != strategy ||
 		VARSIZE(cache->query) != querysize ||
-		memcmp((char *) cache->query, (char *) query, querysize) != 0)
+		memcmp(cache->query, query, querysize) != 0)
 	{
 		gtrgm_consistent_cache *newcache;
 		TrgmPackedGraph *graph = NULL;
@@ -284,12 +284,12 @@ gtrgm_consistent(PG_FUNCTION_ARGS)
 		newcache->strategy = strategy;
 		newcache->query = (text *)
 			((char *) newcache + MAXALIGN(sizeof(gtrgm_consistent_cache)));
-		memcpy((char *) newcache->query, (char *) query, querysize);
+		memcpy(newcache->query, query, querysize);
 		if (qtrg)
 		{
 			newcache->trigrams = (TRGM *)
 				((char *) newcache->query + MAXALIGN(querysize));
-			memcpy((char *) newcache->trigrams, (char *) qtrg, qtrgsize);
+			memcpy((char *) newcache->trigrams, qtrg, qtrgsize);
 			/* release qtrg in case it was made in fn_mcxt */
 			pfree(qtrg);
 		}

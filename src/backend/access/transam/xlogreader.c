@@ -794,7 +794,7 @@ restart:
 				readOff = ReadPageInternal(state, targetPagePtr,
 										   pageHeaderSize + len);
 
-			memcpy(buffer, (char *) contdata, len);
+			memcpy(buffer, contdata, len);
 			buffer += len;
 			gotlen += len;
 

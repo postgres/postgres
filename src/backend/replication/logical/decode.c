@@ -1177,9 +1177,7 @@ DecodeMultiInsert(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 
 		memset(header, 0, SizeofHeapTupleHeader);
 
-		memcpy((char *) tuple->t_data + SizeofHeapTupleHeader,
-			   (char *) data,
-			   datalen);
+		memcpy((char *) tuple->t_data + SizeofHeapTupleHeader, data, datalen);
 		header->t_infomask = xlhdr->t_infomask;
 		header->t_infomask2 = xlhdr->t_infomask2;
 		header->t_hoff = xlhdr->t_hoff;
@@ -1265,9 +1263,7 @@ DecodeXLogTuple(char *data, Size len, HeapTuple tuple)
 	tuple->t_tableOid = InvalidOid;
 
 	/* data is not stored aligned, copy to aligned storage */
-	memcpy((char *) &xlhdr,
-		   data,
-		   SizeOfHeapHeader);
+	memcpy(&xlhdr, data, SizeOfHeapHeader);
 
 	memset(header, 0, SizeofHeapTupleHeader);
 

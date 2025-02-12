@@ -338,7 +338,7 @@ ExtendBufferedRelLocal(BufferManagerRelation bmr,
 		buf_block = LocalBufHdrGetBlock(buf_hdr);
 
 		/* new buffers are zero-filled */
-		MemSet((char *) buf_block, 0, BLCKSZ);
+		MemSet(buf_block, 0, BLCKSZ);
 	}
 
 	first_block = smgrnblocks(bmr.smgr, fork);

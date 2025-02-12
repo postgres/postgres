@@ -641,7 +641,7 @@ secure_open_gssapi(Port *port)
 				return -1;
 			}
 
-			memcpy(PqGSSSendBuffer, (char *) &netlen, sizeof(uint32));
+			memcpy(PqGSSSendBuffer, &netlen, sizeof(uint32));
 			PqGSSSendLength += sizeof(uint32);
 
 			memcpy(PqGSSSendBuffer + PqGSSSendLength, output.value, output.length);

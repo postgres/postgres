@@ -787,7 +787,7 @@ heap_copytuple(HeapTuple tuple)
 	newTuple->t_self = tuple->t_self;
 	newTuple->t_tableOid = tuple->t_tableOid;
 	newTuple->t_data = (HeapTupleHeader) ((char *) newTuple + HEAPTUPLESIZE);
-	memcpy((char *) newTuple->t_data, (char *) tuple->t_data, tuple->t_len);
+	memcpy(newTuple->t_data, tuple->t_data, tuple->t_len);
 	return newTuple;
 }
 
@@ -813,7 +813,7 @@ heap_copytuple_with_tuple(HeapTuple src, HeapTuple dest)
 	dest->t_self = src->t_self;
 	dest->t_tableOid = src->t_tableOid;
 	dest->t_data = (HeapTupleHeader) palloc(src->t_len);
-	memcpy((char *) dest->t_data, (char *) src->t_data, src->t_len);
+	memcpy(dest->t_data, src->t_data, src->t_len);
 }
 
 /*
@@ -1097,7 +1097,7 @@ heap_copy_tuple_as_datum(HeapTuple tuple, TupleDesc tupleDesc)
 	 * the given tuple came from disk, rather than from heap_form_tuple).
 	 */
 	td = (HeapTupleHeader) palloc(tuple->t_len);
-	memcpy((char *) td, (char *) tuple->t_data, tuple->t_len);
+	memcpy(td, tuple->t_data, tuple->t_len);
 
 	HeapTupleHeaderSetDatumLength(td, tuple->t_len);
 	HeapTupleHeaderSetTypeId(td, tupleDesc->tdtypeid);

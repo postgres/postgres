@@ -75,7 +75,7 @@ toast_tuple_init(ToastTupleContext *ttc)
 			{
 				if (ttc->ttc_isnull[i] ||
 					!VARATT_IS_EXTERNAL_ONDISK(new_value) ||
-					memcmp((char *) old_value, (char *) new_value,
+					memcmp(old_value, new_value,
 						   VARSIZE_EXTERNAL(old_value)) != 0)
 				{
 					/*

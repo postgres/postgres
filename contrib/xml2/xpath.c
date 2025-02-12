@@ -278,8 +278,8 @@ xpath_string(PG_FUNCTION_ARGS)
 	/* We could try casting to string using the libxml function? */
 
 	xpath = (xmlChar *) palloc(pathsize + 9);
-	memcpy((char *) xpath, "string(", 7);
-	memcpy((char *) (xpath + 7), VARDATA_ANY(xpathsupp), pathsize);
+	memcpy(xpath, "string(", 7);
+	memcpy(xpath + 7, VARDATA_ANY(xpathsupp), pathsize);
 	xpath[pathsize + 7] = ')';
 	xpath[pathsize + 8] = '\0';
 
