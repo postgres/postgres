@@ -22,7 +22,6 @@ DEPS=(
     libxml2-utils
     libxslt-dev
     meson
-    ninja-build
     pkg-config
     python3-dev
     systemtap-sdt-dev
