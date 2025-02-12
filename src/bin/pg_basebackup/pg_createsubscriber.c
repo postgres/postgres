@@ -1130,6 +1130,7 @@ check_and_drop_existing_subscriptions(PGconn *conn,
 
 	PQclear(res);
 	destroyPQExpBuffer(query);
+	PQfreemem(dbname);
 }
 
 /*
@@ -1329,7 +1330,7 @@ create_logical_replication_slot(PGconn *conn, struct LogicalRepInfo *dbinfo)
 					  "SELECT lsn FROM pg_catalog.pg_create_logical_replication_slot(%s, 'pgoutput', false, false, false)",
 					  slot_name_esc);
 
-	pg_free(slot_name_esc);
+	PQfreemem(slot_name_esc);
 
 	pg_log_debug("command is: %s", str->data);
 
@@ -1375,7 +1376,7 @@ drop_replication_slot(PGconn *conn, struct LogicalRepInfo *dbinfo,
 
 	appendPQExpBuffer(str, "SELECT pg_catalog.pg_drop_replication_slot(%s)", slot_name_esc);
 
-	pg_free(slot_name_esc);
+	PQfreemem(slot_name_esc);
 
 	pg_log_debug("command is: %s", str->data);
 
@@ -1614,8 +1615,8 @@ create_publication(PGconn *conn, struct LogicalRepInfo *dbinfo)
 	/* For cleanup purposes */
 	dbinfo->made_publication = true;
 
-	pg_free(ipubname_esc);
-	pg_free(spubname_esc);
+	PQfreemem(ipubname_esc);
+	PQfreemem(spubname_esc);
 	destroyPQExpBuffer(str);
 }
 
@@ -1638,7 +1639,7 @@ drop_publication(PGconn *conn, struct LogicalRepInfo *dbinfo)
 
 	appendPQExpBuffer(str, "DROP PUBLICATION %s", pubname_esc);
 
-	pg_free(pubname_esc);
+	PQfreemem(pubname_esc);
 
 	pg_log_debug("command is: %s", str->data);
 
@@ -1702,10 +1703,10 @@ create_subscription(PGconn *conn, const struct LogicalRepInfo *dbinfo)
 					  "slot_name = %s, copy_data = false)",
 					  subname_esc, pubconninfo_esc, pubname_esc, replslotname_esc);
 
-	pg_free(pubname_esc);
-	pg_free(subname_esc);
-	pg_free(pubconninfo_esc);
-	pg_free(replslotname_esc);
+	PQfreemem(pubname_esc);
+	PQfreemem(subname_esc);
+	PQfreemem(pubconninfo_esc);
+	PQfreemem(replslotname_esc);
 
 	pg_log_debug("command is: %s", str->data);
 
@@ -1812,8 +1813,8 @@ set_replication_progress(PGconn *conn, const struct LogicalRepInfo *dbinfo, cons
 		PQclear(res);
 	}
 
-	pg_free(subname);
-	pg_free(dbname);
+	PQfreemem(subname);
+	PQfreemem(dbname);
 	pg_free(originname);
 	pg_free(lsnstr);
 	destroyPQExpBuffer(str);
@@ -1856,7 +1857,7 @@ enable_subscription(PGconn *conn, const struct LogicalRepInfo *dbinfo)
 		PQclear(res);
 	}
 
-	pg_free(subname);
+	PQfreemem(subname);
 	destroyPQExpBuffer(str);
 }
 
