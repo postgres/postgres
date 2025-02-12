@@ -61,7 +61,7 @@ Controlling CI via commit messages
 The behavior of CI can be controlled by special content in commit
 messages. Currently the following controls are available:
 
-- ci-os-only: {(freebsd|linux|macos|windows|mingw)}
+- ci-os-only: {(freebsd|linux|macos|mingw|netbsd|openbsd|windows)}
 
   Only runs CI on operating systems specified. This can be useful when
   addressing portability issues affecting only a subset of platforms.

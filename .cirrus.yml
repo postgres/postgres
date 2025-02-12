@@ -52,6 +52,16 @@ default_freebsd_task_template: &freebsd_task_template
     PLATFORM: freebsd
   <<: *cirrus_community_vm_template
 
+default_netbsd_task_template: &netbsd_task_template
+  env:
+    PLATFORM: netbsd
+  <<: *cirrus_community_vm_template
+
+default_openbsd_task_template: &openbsd_task_template
+  env:
+    PLATFORM: openbsd
+  <<: *cirrus_community_vm_template
+
 
 default_windows_task_template: &windows_task_template
   env:
