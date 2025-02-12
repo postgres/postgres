@@ -1,5 +1,7 @@
-PostgreSQL Database Management System
+Percona server for PostgreSQL
 (formerly known as Postgres, then as Postgres95)
+
+Portions Copyright (c) 2024-2025, Percona LLC and/or its affiliates
 
 Portions Copyright (c) 1996-2024, PostgreSQL Global Development Group
 

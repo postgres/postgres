@@ -1,8 +1,10 @@
-PostgreSQL Database Management System
-=====================================
+Percona Server for PostgreSQL
+=============================
 
-This directory contains the source code distribution of the PostgreSQL
-database management system.
+Percona Server for PostgreSQL is a free, enhanced, fully compatible, 
+open source, drop-in replacement for the PostgreSQL Database Management 
+System with enterprise-grade features.
+It requires no changes to PostgreSQL applications or code.
 
 PostgreSQL is an advanced object-relational database management system
 that supports an extended subset of the SQL standard, including
@@ -11,11 +13,24 @@ and functions.  This distribution also contains C language bindings.
 
 Copyright and license information can be found in the file COPYRIGHT.
 
-General documentation about this version of PostgreSQL can be found at
-<https://www.postgresql.org/docs/17/>.  In particular, information
+General documentation about this version of Percona Server for PostgreSQL can be found at
+[https://docs.percona.com/postgresql/17/](https://docs.percona.com/postgresql/17/).  In particular, information
 about building PostgreSQL from the source code can be found at
-<https://www.postgresql.org/docs/17/installation.html>.
+[https://docs.percona.com/postgresql/17/installing.html](https://docs.percona.com/postgresql/17/installing.html).
 
-The latest version of this software, and related software, may be
-obtained at <https://www.postgresql.org/download/>.  For more information
-look at our web site located at <https://www.postgresql.org/>.
+Submit a bug report or a feature request
+---
+
+If you find a bug in Percona Server for PostgreSQL, you can submit a report to the project's 
+[Jira](https://perconadev.atlassian.net/jira/software/c/projects/PG/issues) issue tracker
+
+As a general rule of thumb, please try to create a bug report that is:
+
+Reproducible - include the steps on how to reproduce the issue
+
+Specific - include as much detail as possible, such as which version, which environment, etc.
+
+Unique - do not duplicate existing tickets
+
+Scoped to a single issue - only one issue per report
+
