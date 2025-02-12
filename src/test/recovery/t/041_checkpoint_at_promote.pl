@@ -110,7 +110,7 @@ $node_standby->safe_psql('postgres',
 my $checkpoint_complete = 0;
 foreach my $i (0 .. 10 * $PostgreSQL::Test::Utils::timeout_default)
 {
-	if ($node_standby->log_contains("restartpoint complete"), $logstart)
+	if ($node_standby->log_contains("restartpoint complete", $logstart))
 	{
 		$checkpoint_complete = 1;
 		last;
