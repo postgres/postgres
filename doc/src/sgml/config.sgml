@@ -7877,7 +7877,7 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         various purposes.  The cluster name appears in the process title for
         all server processes in this cluster.  Moreover, it is the default
         application name for a standby connection (see <xref
-        linkend="guc-synchronous-standby-names"/>.)
+        linkend="guc-synchronous-standby-names"/>).
        </para>
 
        <para>
