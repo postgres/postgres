@@ -4511,8 +4511,10 @@ TransitionCaptureState *
 MakeTransitionCaptureState(TriggerDesc *trigdesc, Oid relid, CmdType cmdType)
 {
 	TransitionCaptureState *state;
-	bool		need_old,
-				need_new;
+	bool		need_old_upd,
+				need_new_upd,
+				need_old_del,
+				need_new_ins;
 	AfterTriggersTableData *table;
 	MemoryContext oldcxt;
 	ResourceOwner saveResourceOwner;
@@ -4524,23 +4526,25 @@ MakeTransitionCaptureState(TriggerDesc *trigdesc, Oid relid, CmdType cmdType)
 	switch (cmdType)
 	{
 		case CMD_INSERT:
-			need_old = false;
-			need_new = trigdesc->trig_insert_new_table;
+			need_old_upd = need_old_del = need_new_upd = false;
+			need_new_ins = trigdesc->trig_insert_new_table;
 			break;
 		case CMD_UPDATE:
-			need_old = trigdesc->trig_update_old_table;
-			need_new = trigdesc->trig_update_new_table;
+			need_old_upd = trigdesc->trig_update_old_table;
+			need_new_upd = trigdesc->trig_update_new_table;
+			need_old_del = need_new_ins = false;
 			break;
 		case CMD_DELETE:
-			need_old = trigdesc->trig_delete_old_table;
-			need_new = false;
+			need_old_del = trigdesc->trig_delete_old_table;
+			need_old_upd = need_new_upd = need_new_ins = false;
 			break;
 		default:
 			elog(ERROR, "unexpected CmdType: %d", (int) cmdType);
-			need_old = need_new = false;	/* keep compiler quiet */
+			/* keep compiler quiet */
+			need_old_upd = need_new_upd = need_old_del = need_new_ins = false;
 			break;
 	}
-	if (!need_old && !need_new)
+	if (!need_old_upd && !need_new_upd && !need_new_ins && !need_old_del)
 		return NULL;
 
 	/* Check state, like AfterTriggerSaveEvent. */
@@ -4570,9 +4574,9 @@ MakeTransitionCaptureState(TriggerDesc *trigdesc, Oid relid, CmdType cmdType)
 	saveResourceOwner = CurrentResourceOwner;
 	CurrentResourceOwner = CurTransactionResourceOwner;
 
-	if (need_old && table->old_tuplestore == NULL)
+	if ((need_old_upd || need_old_del) && table->old_tuplestore == NULL)
 		table->old_tuplestore = tuplestore_begin_heap(false, false, work_mem);
-	if (need_new && table->new_tuplestore == NULL)
+	if ((need_new_upd || need_new_ins) && table->new_tuplestore == NULL)
 		table->new_tuplestore = tuplestore_begin_heap(false, false, work_mem);
 
 	CurrentResourceOwner = saveResourceOwner;
@@ -4580,10 +4584,10 @@ MakeTransitionCaptureState(TriggerDesc *trigdesc, Oid relid, CmdType cmdType)
 
 	/* Now build the TransitionCaptureState struct, in caller's context */
 	state = (TransitionCaptureState *) palloc0(sizeof(TransitionCaptureState));
-	state->tcs_delete_old_table = trigdesc->trig_delete_old_table;
-	state->tcs_update_old_table = trigdesc->trig_update_old_table;
-	state->tcs_update_new_table = trigdesc->trig_update_new_table;
-	state->tcs_insert_new_table = trigdesc->trig_insert_new_table;
+	state->tcs_delete_old_table = need_old_del;
+	state->tcs_update_old_table = need_old_upd;
+	state->tcs_update_new_table = need_new_upd;
+	state->tcs_insert_new_table = need_new_ins;
 	state->tcs_private = table;
 
 	return state;
