@@ -5000,10 +5000,10 @@ MakeTransitionCaptureState(TriggerDesc *trigdesc, Oid relid, CmdType cmdType)
 
 	/* Now build the TransitionCaptureState struct, in caller's context */
 	state = (TransitionCaptureState *) palloc0(sizeof(TransitionCaptureState));
-	state->tcs_delete_old_table = trigdesc->trig_delete_old_table;
-	state->tcs_update_old_table = trigdesc->trig_update_old_table;
-	state->tcs_update_new_table = trigdesc->trig_update_new_table;
-	state->tcs_insert_new_table = trigdesc->trig_insert_new_table;
+	state->tcs_delete_old_table = need_old_del;
+	state->tcs_update_old_table = need_old_upd;
+	state->tcs_update_new_table = need_new_upd;
+	state->tcs_insert_new_table = need_new_ins;
 	state->tcs_private = table;
 
 	return state;
