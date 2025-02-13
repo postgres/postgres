@@ -77,7 +77,7 @@ TDEXlogCheckSane(void)
 		if (key == NULL)
 		{
 			ereport(ERROR,
-					(errmsg("WAL encryption can only be enabled with a properly configured key. Disable pg_tde.wal_encrypt and create one using pg_tde_crete_wal_key() before enabling it.")));
+					(errmsg("WAL encryption can only be enabled with a properly configured key. Disable pg_tde.wal_encrypt and create one using pg_tde_create_wal_key() before enabling it.")));
 		}
 	}
 }
