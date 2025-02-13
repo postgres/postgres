@@ -164,7 +164,7 @@ logicalrep_write_prepare_common(StringInfo out, LogicalRepMsgType type,
 	 * which case we expect to have a valid GID.
 	 */
 	Assert(txn->gid != NULL);
-	Assert(rbtxn_prepared(txn));
+	Assert(rbtxn_is_prepared(txn));
 	Assert(TransactionIdIsValid(txn->xid));
 
 	/* send the flags field */

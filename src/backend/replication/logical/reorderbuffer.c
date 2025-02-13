@@ -1793,7 +1793,7 @@ ReorderBufferCheckAndTruncateAbortedTXN(ReorderBuffer *rb, ReorderBufferTXN *txn
 	 * and the toast reconstruction data. The full cleanup will happen as part
 	 * of decoding ABORT record of this transaction.
 	 */
-	ReorderBufferTruncateTXN(rb, txn, rbtxn_prepared(txn));
+	ReorderBufferTruncateTXN(rb, txn, rbtxn_is_prepared(txn));
 	ReorderBufferToastReset(rb, txn);
 
 	/* All changes should be discarded */
@@ -1968,7 +1968,7 @@ ReorderBufferStreamCommit(ReorderBuffer *rb, ReorderBufferTXN *txn)
 
 	ReorderBufferStreamTXN(rb, txn);
 
-	if (rbtxn_prepared(txn))
+	if (rbtxn_is_prepared(txn))
 	{
 		/*
 		 * Note, we send stream prepare even if a concurrent abort is
@@ -2150,7 +2150,7 @@ ReorderBufferResetTXN(ReorderBuffer *rb, ReorderBufferTXN *txn,
 					  ReorderBufferChange *specinsert)
 {
 	/* Discard the changes that we just streamed */
-	ReorderBufferTruncateTXN(rb, txn, rbtxn_prepared(txn));
+	ReorderBufferTruncateTXN(rb, txn, rbtxn_is_prepared(txn));
 
 	/* Free all resources allocated for toast reconstruction */
 	ReorderBufferToastReset(rb, txn);
@@ -2238,7 +2238,7 @@ ReorderBufferProcessTXN(ReorderBuffer *rb, ReorderBufferTXN *txn,
 		 */
 		if (!streaming)
 		{
-			if (rbtxn_prepared(txn))
+			if (rbtxn_is_prepared(txn))
 				rb->begin_prepare(rb, txn);
 			else
 				rb->begin(rb, txn);
@@ -2280,7 +2280,7 @@ ReorderBufferProcessTXN(ReorderBuffer *rb, ReorderBufferTXN *txn,
 			 * required for the cases when we decode the changes before the
 			 * COMMIT record is processed.
 			 */
-			if (streaming || rbtxn_prepared(change->txn))
+			if (streaming || rbtxn_is_prepared(change->txn))
 			{
 				curtxn = change->txn;
 				SetupCheckXidLive(curtxn->xid);
@@ -2625,7 +2625,7 @@ ReorderBufferProcessTXN(ReorderBuffer *rb, ReorderBufferTXN *txn,
 			 * Call either PREPARE (for two-phase transactions) or COMMIT (for
 			 * regular ones).
 			 */
-			if (rbtxn_prepared(txn))
+			if (rbtxn_is_prepared(txn))
 			{
 				Assert(!rbtxn_sent_prepare(txn));
 				rb->prepare(rb, txn, commit_lsn);
@@ -2680,12 +2680,12 @@ ReorderBufferProcessTXN(ReorderBuffer *rb, ReorderBufferTXN *txn,
 		 * For 4, as the entire txn has been decoded, we can fully clean up
 		 * the TXN reorder buffer.
 		 */
-		if (streaming || rbtxn_prepared(txn))
+		if (streaming || rbtxn_is_prepared(txn))
 		{
 			if (streaming)
 				ReorderBufferMaybeMarkTXNStreamed(rb, txn);
 
-			ReorderBufferTruncateTXN(rb, txn, rbtxn_prepared(txn));
+			ReorderBufferTruncateTXN(rb, txn, rbtxn_is_prepared(txn));
 			/* Reset the CheckXidAlive */
 			CheckXidAlive = InvalidTransactionId;
 		}
@@ -2729,7 +2729,7 @@ ReorderBufferProcessTXN(ReorderBuffer *rb, ReorderBufferTXN *txn,
 		 * during a two-phase commit.
 		 */
 		if (errdata->sqlerrcode == ERRCODE_TRANSACTION_ROLLBACK &&
-			(stream_started || rbtxn_prepared(txn)))
+			(stream_started || rbtxn_is_prepared(txn)))
 		{
 			/* curtxn must be set for streaming or prepared transactions */
 			Assert(curtxn);
@@ -2816,7 +2816,7 @@ ReorderBufferReplay(ReorderBufferTXN *txn,
 		 * Removing this txn before a commit might result in the computation
 		 * of an incorrect restart_lsn. See SnapBuildProcessRunningXacts.
 		 */
-		if (!rbtxn_prepared(txn))
+		if (!rbtxn_is_prepared(txn))
 			ReorderBufferCleanupTXN(rb, txn);
 		return;
 	}
@@ -2853,7 +2853,8 @@ ReorderBufferCommit(ReorderBuffer *rb, TransactionId xid,
 }
 
 /*
- * Record the prepare information for a transaction.
+ * Record the prepare information for a transaction. Also, mark the transaction
+ * as a prepared transaction.
  */
 bool
 ReorderBufferRememberPrepareInfo(ReorderBuffer *rb, TransactionId xid,
@@ -2879,6 +2880,10 @@ ReorderBufferRememberPrepareInfo(ReorderBuffer *rb, TransactionId xid,
 	txn->origin_id = origin_id;
 	txn->origin_lsn = origin_lsn;
 
+	/* Mark this transaction as a prepared transaction */
+	Assert((txn->txn_flags & RBTXN_PREPARE_STATUS_MASK) == 0);
+	txn->txn_flags |= RBTXN_IS_PREPARED;
+
 	return true;
 }
 
@@ -2894,6 +2899,8 @@ ReorderBufferSkipPrepare(ReorderBuffer *rb, TransactionId xid)
 	if (txn == NULL)
 		return;
 
+	/* txn must have been marked as a prepared transaction */
+	Assert((txn->txn_flags & RBTXN_PREPARE_STATUS_MASK) == RBTXN_IS_PREPARED);
 	txn->txn_flags |= RBTXN_SKIPPED_PREPARE;
 }
 
@@ -2915,11 +2922,15 @@ ReorderBufferPrepare(ReorderBuffer *rb, TransactionId xid,
 	if (txn == NULL)
 		return;
 
-	txn->txn_flags |= RBTXN_PREPARE;
-	txn->gid = pstrdup(gid);
-
-	/* The prepare info must have been updated in txn by now. */
+	/*
+	 * txn must have been marked as a prepared transaction and must have
+	 * neither been skipped nor sent a prepare. Also, the prepare info must
+	 * have been updated in it by now.
+	 */
+	Assert((txn->txn_flags & RBTXN_PREPARE_STATUS_MASK) == RBTXN_IS_PREPARED);
 	Assert(txn->final_lsn != InvalidXLogRecPtr);
+
+	txn->gid = pstrdup(gid);
 
 	ReorderBufferReplay(txn, rb, xid, txn->final_lsn, txn->end_lsn,
 						txn->xact_time.prepare_time, txn->origin_id, txn->origin_lsn);
@@ -2976,12 +2987,13 @@ ReorderBufferFinishPrepared(ReorderBuffer *rb, TransactionId xid,
 	 */
 	if ((txn->final_lsn < two_phase_at) && is_commit)
 	{
-		txn->txn_flags |= RBTXN_PREPARE;
-
 		/*
-		 * The prepare info must have been updated in txn even if we skip
-		 * prepare.
+		 * txn must have been marked as a prepared transaction and skipped but
+		 * not sent a prepare. Also, the prepare info must have been updated
+		 * in txn even if we skip prepare.
 		 */
+		Assert((txn->txn_flags & RBTXN_PREPARE_STATUS_MASK) ==
+			   (RBTXN_IS_PREPARED | RBTXN_SKIPPED_PREPARE));
 		Assert(txn->final_lsn != InvalidXLogRecPtr);
 
 		/*

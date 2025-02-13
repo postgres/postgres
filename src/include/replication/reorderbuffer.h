@@ -170,12 +170,14 @@ typedef struct ReorderBufferChange
 #define RBTXN_IS_SERIALIZED_CLEAR 	0x0008
 #define RBTXN_IS_STREAMED         	0x0010
 #define RBTXN_HAS_PARTIAL_CHANGE  	0x0020
-#define RBTXN_PREPARE             	0x0040
+#define RBTXN_IS_PREPARED 			0x0040
 #define RBTXN_SKIPPED_PREPARE	  	0x0080
 #define RBTXN_HAS_STREAMABLE_CHANGE	0x0100
 #define RBTXN_SENT_PREPARE			0x0200
 #define RBTXN_IS_COMMITTED			0x0400
 #define RBTXN_IS_ABORTED			0x0800
+
+#define RBTXN_PREPARE_STATUS_MASK	(RBTXN_IS_PREPARED | RBTXN_SKIPPED_PREPARE | RBTXN_SENT_PREPARE)
 
 /* Does the transaction have catalog changes? */
 #define rbtxn_has_catalog_changes(txn) \
@@ -234,9 +236,9 @@ typedef struct ReorderBufferChange
  * committed. To check whether a prepare or a stream_prepare has already
  * been sent for this transaction, we need to use rbtxn_sent_prepare().
  */
-#define rbtxn_prepared(txn) \
+#define rbtxn_is_prepared(txn) \
 ( \
-	((txn)->txn_flags & RBTXN_PREPARE) != 0 \
+	((txn)->txn_flags & RBTXN_IS_PREPARED) != 0 \
 )
 
 /* Has a prepare or stream_prepare already been sent? */

@@ -761,7 +761,7 @@ SnapBuildDistributeNewCatalogSnapshot(SnapBuild *builder, XLogRecPtr lsn)
 		 * We don't need to add snapshot to prepared transactions as they
 		 * should not see the new catalog contents.
 		 */
-		if (rbtxn_prepared(txn) || rbtxn_skip_prepared(txn))
+		if (rbtxn_is_prepared(txn))
 			continue;
 
 		elog(DEBUG2, "adding a new snapshot to %u at %X/%X",
