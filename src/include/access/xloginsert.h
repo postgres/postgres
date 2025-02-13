@@ -45,12 +45,12 @@ extern void XLogBeginInsert(void);
 extern void XLogSetRecordFlags(uint8 flags);
 extern XLogRecPtr XLogInsert(RmgrId rmid, uint8 info);
 extern void XLogEnsureRecordSpace(int max_block_id, int ndatas);
-extern void XLogRegisterData(const char *data, uint32 len);
+extern void XLogRegisterData(const void *data, uint32 len);
 extern void XLogRegisterBuffer(uint8 block_id, Buffer buffer, uint8 flags);
 extern void XLogRegisterBlock(uint8 block_id, RelFileLocator *rlocator,
 							  ForkNumber forknum, BlockNumber blknum, const PageData *page,
 							  uint8 flags);
-extern void XLogRegisterBufData(uint8 block_id, const char *data, uint32 len);
+extern void XLogRegisterBufData(uint8 block_id, const void *data, uint32 len);
 extern void XLogResetInsertion(void);
 extern bool XLogCheckBufferNeedsBackup(Buffer buffer);
 

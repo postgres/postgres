@@ -586,13 +586,13 @@ void XLogRegisterBuffer(uint8 block_id, Buffer buf, uint8 flags);
     XLogRegisterBufData() is included in the WAL record even if a full-page
     image is taken.
 
-void XLogRegisterData(const char *data, int len);
+void XLogRegisterData(const void *data, int len);
 
     XLogRegisterData is used to include arbitrary data in the WAL record.  If
     XLogRegisterData() is called multiple times, the data are appended, and
     will be made available to the redo routine as one contiguous chunk.
 
-void XLogRegisterBufData(uint8 block_id, const char *data, int len);
+void XLogRegisterBufData(uint8 block_id, const void *data, int len);
 
     XLogRegisterBufData is used to include data associated with a particular
     buffer that was registered earlier with XLogRegisterBuffer().  If

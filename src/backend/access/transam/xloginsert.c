@@ -361,7 +361,7 @@ XLogRegisterBlock(uint8 block_id, RelFileLocator *rlocator, ForkNumber forknum,
  * XLogRecGetData().
  */
 void
-XLogRegisterData(const char *data, uint32 len)
+XLogRegisterData(const void *data, uint32 len)
 {
 	XLogRecData *rdata;
 
@@ -402,7 +402,7 @@ XLogRegisterData(const char *data, uint32 len)
  * limited)
  */
 void
-XLogRegisterBufData(uint8 block_id, const char *data, uint32 len)
+XLogRegisterBufData(uint8 block_id, const void *data, uint32 len)
 {
 	registered_buffer *regbuf;
 	XLogRecData *rdata;
