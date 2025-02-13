@@ -50,7 +50,25 @@ SELECT slot_name FROM pg_stat_replication_slots;
 SELECT slot_name FROM pg_stat_replication_slots;
 COMMIT;
 
+
+SELECT 'init' FROM pg_create_logical_replication_slot('regression_slot_stats4_twophase', 'test_decoding', false, true) s4;
+
+-- The INSERT changes are large enough to be spilled but will not be, because
+-- the transaction is aborted. The logical decoding skips collecting further
+-- changes too. The transaction is prepared to make sure the decoding processes
+-- the aborted transaction.
+BEGIN;
+INSERT INTO stats_test SELECT 'serialize-toobig--1:'||g.i FROM generate_series(1, 5000) g(i);
+PREPARE TRANSACTION 'test1_abort';
+ROLLBACK PREPARED 'test1_abort';
+SELECT count(*) FROM pg_logical_slot_get_changes('regression_slot_stats4_twophase', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1');
+
+-- Verify that the decoding doesn't spill already-aborted transaction's changes.
+SELECT pg_stat_force_next_flush();
+SELECT slot_name, spill_txns, spill_count FROM pg_stat_replication_slots WHERE slot_name = 'regression_slot_stats4_twophase';
+
 DROP TABLE stats_test;
 SELECT pg_drop_replication_slot('regression_slot_stats1'),
     pg_drop_replication_slot('regression_slot_stats2'),
-    pg_drop_replication_slot('regression_slot_stats3');
+    pg_drop_replication_slot('regression_slot_stats3'),
+    pg_drop_replication_slot('regression_slot_stats4_twophase');

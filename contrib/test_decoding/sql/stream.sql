@@ -49,7 +49,12 @@ SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL,NULL, 'incl
  * detect that the subtransaction was aborted, and reset the transaction while having
  * the TOAST changes in memory, resulting in deallocating both decoded changes and
  * TOAST reconstruction data. Memory usage counters must be updated correctly.
+ *
+ * Set debug_logical_replication_streaming to 'immediate' to disable the transaction
+ * status check happening before streaming the second insertion, so we can detect a
+ * concurrent abort while streaming.
  */
+SET debug_logical_replication_streaming = immediate;
 BEGIN;
 INSERT INTO stream_test SELECT repeat(string_agg(to_char(g.i, 'FM0000'), ''), 50) FROM generate_series(1, 500) g(i);
 ALTER TABLE stream_test ADD COLUMN i INT;
@@ -58,6 +63,7 @@ INSERT INTO stream_test(data, i) SELECT repeat(string_agg(to_char(g.i, 'FM0000')
 ROLLBACK TO s1;
 COMMIT;
 SELECT count(*) FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1', 'stream-changes', '1');
+RESET debug_logical_replication_streaming;
 
 DROP TABLE stream_test;
 SELECT pg_drop_replication_slot('regression_slot');

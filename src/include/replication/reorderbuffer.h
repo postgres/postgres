@@ -173,6 +173,9 @@ typedef struct ReorderBufferChange
 #define RBTXN_PREPARE             	0x0040
 #define RBTXN_SKIPPED_PREPARE	  	0x0080
 #define RBTXN_HAS_STREAMABLE_CHANGE	0x0100
+#define RBTXN_SENT_PREPARE			0x0200
+#define RBTXN_IS_COMMITTED			0x0400
+#define RBTXN_IS_ABORTED			0x0800
 
 /* Does the transaction have catalog changes? */
 #define rbtxn_has_catalog_changes(txn) \
@@ -224,10 +227,34 @@ typedef struct ReorderBufferChange
 	((txn)->txn_flags & RBTXN_IS_STREAMED) != 0 \
 )
 
-/* Has this transaction been prepared? */
+/*
+ * Is this a prepared transaction?
+ *
+ * Being true means that this transaction should be prepared instead of
+ * committed. To check whether a prepare or a stream_prepare has already
+ * been sent for this transaction, we need to use rbtxn_sent_prepare().
+ */
 #define rbtxn_prepared(txn) \
 ( \
 	((txn)->txn_flags & RBTXN_PREPARE) != 0 \
+)
+
+/* Has a prepare or stream_prepare already been sent? */
+#define rbtxn_sent_prepare(txn) \
+( \
+	((txn)->txn_flags & RBTXN_SENT_PREPARE) != 0 \
+)
+
+/* Is this transaction committed? */
+#define rbtxn_is_committed(txn) \
+( \
+	((txn)->txn_flags & RBTXN_IS_COMMITTED) != 0 \
+)
+
+/* Is this transaction aborted? */
+#define rbtxn_is_aborted(txn) \
+( \
+	((txn)->txn_flags & RBTXN_IS_ABORTED) != 0 \
 )
 
 /* prepare for this transaction skipped? */
@@ -418,9 +445,6 @@ typedef struct ReorderBufferTXN
 
 	/* Size of top-transaction including sub-transactions. */
 	Size		total_size;
-
-	/* If we have detected concurrent abort then ignore future changes. */
-	bool		concurrent_abort;
 
 	/*
 	 * Private data pointer of the output plugin.
