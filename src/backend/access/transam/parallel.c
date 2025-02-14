@@ -1208,7 +1208,7 @@ HandleParallelMessage(ParallelContext *pcxt, int i, StringInfo msg)
 				break;
 			}
 
-		case 'P':				/* Parallel progress reporting */
+		case PqMsg_Progress:
 			{
 				/*
 				 * Only incremental progress reporting is currently supported.
