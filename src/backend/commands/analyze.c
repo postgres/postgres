@@ -808,6 +808,15 @@ do_analyze_rel(Relation onerel, VacuumParams *params,
 							 get_database_name(MyDatabaseId),
 							 get_namespace_name(RelationGetNamespace(onerel)),
 							 RelationGetRelationName(onerel));
+			if (track_cost_delay_timing)
+			{
+				/*
+				 * We bypass the changecount mechanism because this value is
+				 * only updated by the calling process.
+				 */
+				appendStringInfo(&buf, _("delay time: %.3f ms\n"),
+								 (double) MyBEEntry->st_progress_param[PROGRESS_ANALYZE_DELAY_TIME] / 1000000.0);
+			}
 			if (track_io_timing)
 			{
 				double		read_ms = (double) (pgStatBlockReadTime - startreadtime) / 1000;

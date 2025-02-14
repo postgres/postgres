@@ -8267,9 +8267,12 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         platforms.  You can use the <xref linkend="pgtesttiming"/> tool to
         measure the overhead of timing on your system.  Cost-based vacuum delay
         timing information is displayed in
-        <link linkend="vacuum-progress-reporting"><structname>pg_stat_progress_vacuum</structname></link>
-        and
-        <link linkend="analyze-progress-reporting"><structname>pg_stat_progress_analyze</structname></link>.
+        <link linkend="vacuum-progress-reporting"><structname>pg_stat_progress_vacuum</structname></link>,
+        <link linkend="analyze-progress-reporting"><structname>pg_stat_progress_analyze</structname></link>,
+        in the output of <xref linkend="sql-vacuum"/> when the
+        <literal>VERBOSE</literal> option is used, and by autovacuum for
+        auto-vacuums and auto-analyzes when
+        <xref linkend="guc-log-autovacuum-min-duration"/> is set.
         Only superusers and users with the appropriate <literal>SET</literal>
         privilege can change this setting.
        </para>
