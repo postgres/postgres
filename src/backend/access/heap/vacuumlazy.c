@@ -248,6 +248,13 @@ typedef enum
  */
 #define EAGER_SCAN_REGION_SIZE 4096
 
+/*
+ * heap_vac_scan_next_block() sets these flags to communicate information
+ * about the block it read to the caller.
+ */
+#define VAC_BLK_WAS_EAGER_SCANNED (1 << 0)
+#define VAC_BLK_ALL_VISIBLE_ACCORDING_TO_VM (1 << 1)
+
 typedef struct LVRelState
 {
 	/* Target heap relation and its indexes */
@@ -417,8 +424,7 @@ static void lazy_scan_heap(LVRelState *vacrel);
 static void heap_vacuum_eager_scan_setup(LVRelState *vacrel,
 										 VacuumParams *params);
 static bool heap_vac_scan_next_block(LVRelState *vacrel, BlockNumber *blkno,
-									 bool *all_visible_according_to_vm,
-									 bool *was_eager_scanned);
+									 uint8 *blk_info);
 static void find_next_unskippable_block(LVRelState *vacrel, bool *skipsallvis);
 static bool lazy_scan_new_or_empty(LVRelState *vacrel, Buffer buf,
 								   BlockNumber blkno, Page page,
@@ -1171,8 +1177,7 @@ lazy_scan_heap(LVRelState *vacrel)
 	BlockNumber rel_pages = vacrel->rel_pages,
 				blkno,
 				next_fsm_block_to_vacuum = 0;
-	bool		all_visible_according_to_vm,
-				was_eager_scanned = false;
+	uint8		blk_info = 0;
 	BlockNumber orig_eager_scan_success_limit =
 		vacrel->eager_scan_remaining_successes; /* for logging */
 	Buffer		vmbuffer = InvalidBuffer;
@@ -1196,8 +1201,7 @@ lazy_scan_heap(LVRelState *vacrel)
 	vacrel->next_unskippable_eager_scanned = false;
 	vacrel->next_unskippable_vmbuffer = InvalidBuffer;
 
-	while (heap_vac_scan_next_block(vacrel, &blkno, &all_visible_according_to_vm,
-									&was_eager_scanned))
+	while (heap_vac_scan_next_block(vacrel, &blkno, &blk_info))
 	{
 		Buffer		buf;
 		Page		page;
@@ -1206,7 +1210,7 @@ lazy_scan_heap(LVRelState *vacrel)
 		bool		got_cleanup_lock = false;
 
 		vacrel->scanned_pages++;
-		if (was_eager_scanned)
+		if (blk_info & VAC_BLK_WAS_EAGER_SCANNED)
 			vacrel->eager_scanned_pages++;
 
 		/* Report as block scanned, update error traceback information */
@@ -1331,7 +1335,8 @@ lazy_scan_heap(LVRelState *vacrel)
 		 */
 		if (got_cleanup_lock)
 			lazy_scan_prune(vacrel, buf, blkno, page,
-							vmbuffer, all_visible_according_to_vm,
+							vmbuffer,
+							blk_info & VAC_BLK_ALL_VISIBLE_ACCORDING_TO_VM,
 							&has_lpdead_items, &vm_page_frozen);
 
 		/*
@@ -1348,7 +1353,8 @@ lazy_scan_heap(LVRelState *vacrel)
 		 * exclude pages skipped due to cleanup lock contention from eager
 		 * freeze algorithm caps.
 		 */
-		if (got_cleanup_lock && was_eager_scanned)
+		if (got_cleanup_lock &&
+			(blk_info & VAC_BLK_WAS_EAGER_SCANNED))
 		{
 			/* Aggressive vacuums do not eager scan. */
 			Assert(!vacrel->aggressive);
@@ -1479,11 +1485,11 @@ lazy_scan_heap(LVRelState *vacrel)
  * and various thresholds to skip blocks which do not need to be processed and
  * sets blkno to the next block to process.
  *
- * The block number and visibility status of the next block to process are set
- * in *blkno and *all_visible_according_to_vm.  The return value is false if
- * there are no further blocks to process. If the block is being eagerly
- * scanned, was_eager_scanned is set so that the caller can count whether or
- * not an eagerly scanned page is successfully frozen.
+ * The block number of the next block to process is set in *blkno and its
+ * visibility status and whether or not it was eager scanned is set in
+ * *blk_info.
+ *
+ * The return value is false if there are no further blocks to process.
  *
  * vacrel is an in/out parameter here.  Vacuum options and information about
  * the relation are read.  vacrel->skippedallvis is set if we skip a block
@@ -1493,15 +1499,14 @@ lazy_scan_heap(LVRelState *vacrel)
  */
 static bool
 heap_vac_scan_next_block(LVRelState *vacrel, BlockNumber *blkno,
-						 bool *all_visible_according_to_vm,
-						 bool *was_eager_scanned)
+						 uint8 *blk_info)
 {
 	BlockNumber next_block;
 
 	/* relies on InvalidBlockNumber + 1 overflowing to 0 on first call */
 	next_block = vacrel->current_block + 1;
 
-	*was_eager_scanned = false;
+	*blk_info = 0;
 
 	/* Have we reached the end of the relation? */
 	if (next_block >= vacrel->rel_pages)
@@ -1562,7 +1567,7 @@ heap_vac_scan_next_block(LVRelState *vacrel, BlockNumber *blkno,
 		 * otherwise they would've been unskippable.
 		 */
 		*blkno = vacrel->current_block = next_block;
-		*all_visible_according_to_vm = true;
+		*blk_info |= VAC_BLK_ALL_VISIBLE_ACCORDING_TO_VM;
 		return true;
 	}
 	else
@@ -1574,8 +1579,10 @@ heap_vac_scan_next_block(LVRelState *vacrel, BlockNumber *blkno,
 		Assert(next_block == vacrel->next_unskippable_block);
 
 		*blkno = vacrel->current_block = next_block;
-		*all_visible_according_to_vm = vacrel->next_unskippable_allvis;
-		*was_eager_scanned = vacrel->next_unskippable_eager_scanned;
+		if (vacrel->next_unskippable_allvis)
+			*blk_info |= VAC_BLK_ALL_VISIBLE_ACCORDING_TO_VM;
+		if (vacrel->next_unskippable_eager_scanned)
+			*blk_info |= VAC_BLK_WAS_EAGER_SCANNED;
 		return true;
 	}
 }
