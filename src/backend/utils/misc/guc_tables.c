@@ -2119,7 +2119,7 @@ struct config_int ConfigureNamesInt[] =
 		{"archive_timeout", PGC_SIGHUP, WAL_ARCHIVING,
 			gettext_noop("Sets the amount of time to wait before forcing a "
 						 "switch to the next WAL file."),
-			NULL,
+			gettext_noop("0 disables the timeout."),
 			GUC_UNIT_S
 		},
 		&XLogArchiveTimeout,
@@ -2196,7 +2196,7 @@ struct config_int ConfigureNamesInt[] =
 	{
 		{"geqo_pool_size", PGC_USERSET, QUERY_TUNING_GEQO,
 			gettext_noop("GEQO: number of individuals in the population."),
-			gettext_noop("Zero selects a suitable default value."),
+			gettext_noop("0 means use a suitable default value."),
 			GUC_EXPLAIN
 		},
 		&Geqo_pool_size,
@@ -2206,7 +2206,7 @@ struct config_int ConfigureNamesInt[] =
 	{
 		{"geqo_generations", PGC_USERSET, QUERY_TUNING_GEQO,
 			gettext_noop("GEQO: number of iterations of the algorithm."),
-			gettext_noop("Zero selects a suitable default value."),
+			gettext_noop("0 means use a suitable default value."),
 			GUC_EXPLAIN
 		},
 		&Geqo_generations,
@@ -2229,7 +2229,7 @@ struct config_int ConfigureNamesInt[] =
 	{
 		{"max_standby_archive_delay", PGC_SIGHUP, REPLICATION_STANDBY,
 			gettext_noop("Sets the maximum delay before canceling queries when a hot standby server is processing archived WAL data."),
-			NULL,
+			gettext_noop("-1 means wait forever."),
 			GUC_UNIT_MS
 		},
 		&max_standby_archive_delay,
@@ -2240,7 +2240,7 @@ struct config_int ConfigureNamesInt[] =
 	{
 		{"max_standby_streaming_delay", PGC_SIGHUP, REPLICATION_STANDBY,
 			gettext_noop("Sets the maximum delay before canceling queries when a hot standby server is processing streamed WAL data."),
-			NULL,
+			gettext_noop("-1 means wait forever."),
 			GUC_UNIT_MS
 		},
 		&max_standby_streaming_delay,
@@ -2273,7 +2273,7 @@ struct config_int ConfigureNamesInt[] =
 	{
 		{"wal_receiver_timeout", PGC_SIGHUP, REPLICATION_STANDBY,
 			gettext_noop("Sets the maximum wait time to receive data from the sending server."),
-			NULL,
+			gettext_noop("0 disables the timeout."),
 			GUC_UNIT_MS
 		},
 		&wal_receiver_timeout,
@@ -2364,7 +2364,7 @@ struct config_int ConfigureNamesInt[] =
 	{
 		{"shared_memory_size_in_huge_pages", PGC_INTERNAL, PRESET_OPTIONS,
 			gettext_noop("Shows the number of huge pages needed for the main shared memory area."),
-			gettext_noop("-1 indicates that the value could not be determined."),
+			gettext_noop("-1 means huge pages are not supported."),
 			GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_RUNTIME_COMPUTED
 		},
 		&shared_memory_size_in_huge_pages,
@@ -2386,7 +2386,7 @@ struct config_int ConfigureNamesInt[] =
 	{
 		{"commit_timestamp_buffers", PGC_POSTMASTER, RESOURCES_MEM,
 			gettext_noop("Sets the size of the dedicated buffer pool used for the commit timestamp cache."),
-			gettext_noop("Specify 0 to have this value determined as a fraction of \"shared_buffers\"."),
+			gettext_noop("0 means use a fraction of \"shared_buffers\"."),
 			GUC_UNIT_BLOCKS
 		},
 		&commit_timestamp_buffers,
@@ -2441,7 +2441,7 @@ struct config_int ConfigureNamesInt[] =
 	{
 		{"subtransaction_buffers", PGC_POSTMASTER, RESOURCES_MEM,
 			gettext_noop("Sets the size of the dedicated buffer pool used for the subtransaction cache."),
-			gettext_noop("Specify 0 to have this value determined as a fraction of \"shared_buffers\"."),
+			gettext_noop("0 means use a fraction of \"shared_buffers\"."),
 			GUC_UNIT_BLOCKS
 		},
 		&subtransaction_buffers,
@@ -2452,7 +2452,7 @@ struct config_int ConfigureNamesInt[] =
 	{
 		{"transaction_buffers", PGC_POSTMASTER, RESOURCES_MEM,
 			gettext_noop("Sets the size of the dedicated buffer pool used for the transaction status cache."),
-			gettext_noop("Specify 0 to have this value determined as a fraction of \"shared_buffers\"."),
+			gettext_noop("0 means use a fraction of \"shared_buffers\"."),
 			GUC_UNIT_BLOCKS
 		},
 		&transaction_buffers,
@@ -2636,7 +2636,7 @@ struct config_int ConfigureNamesInt[] =
 	{
 		{"autovacuum_vacuum_cost_limit", PGC_SIGHUP, VACUUM_AUTOVACUUM,
 			gettext_noop("Vacuum cost amount available before napping, for autovacuum."),
-			NULL
+			gettext_noop("-1 means use \"vacuum_cost_limit\".")
 		},
 		&autovacuum_vac_cost_limit,
 		-1, -1, 10000,
@@ -2692,7 +2692,7 @@ struct config_int ConfigureNamesInt[] =
 	{
 		{"statement_timeout", PGC_USERSET, CLIENT_CONN_STATEMENT,
 			gettext_noop("Sets the maximum allowed duration of any statement."),
-			gettext_noop("A value of 0 turns off the timeout."),
+			gettext_noop("0 disables the timeout."),
 			GUC_UNIT_MS
 		},
 		&StatementTimeout,
@@ -2703,7 +2703,7 @@ struct config_int ConfigureNamesInt[] =
 	{
 		{"lock_timeout", PGC_USERSET, CLIENT_CONN_STATEMENT,
 			gettext_noop("Sets the maximum allowed duration of any wait for a lock."),
-			gettext_noop("A value of 0 turns off the timeout."),
+			gettext_noop("0 disables the timeout."),
 			GUC_UNIT_MS
 		},
 		&LockTimeout,
@@ -2714,7 +2714,7 @@ struct config_int ConfigureNamesInt[] =
 	{
 		{"idle_in_transaction_session_timeout", PGC_USERSET, CLIENT_CONN_STATEMENT,
 			gettext_noop("Sets the maximum allowed idle time between queries, when in a transaction."),
-			gettext_noop("A value of 0 turns off the timeout."),
+			gettext_noop("0 disables the timeout."),
 			GUC_UNIT_MS
 		},
 		&IdleInTransactionSessionTimeout,
@@ -2725,7 +2725,7 @@ struct config_int ConfigureNamesInt[] =
 	{
 		{"transaction_timeout", PGC_USERSET, CLIENT_CONN_STATEMENT,
 			gettext_noop("Sets the maximum allowed duration of any transaction within a session (not a prepared transaction)."),
-			gettext_noop("A value of 0 turns off the timeout."),
+			gettext_noop("0 disables the timeout."),
 			GUC_UNIT_MS
 		},
 		&TransactionTimeout,
@@ -2736,7 +2736,7 @@ struct config_int ConfigureNamesInt[] =
 	{
 		{"idle_session_timeout", PGC_USERSET, CLIENT_CONN_STATEMENT,
 			gettext_noop("Sets the maximum allowed idle time between queries, when not in a transaction."),
-			gettext_noop("A value of 0 turns off the timeout."),
+			gettext_noop("0 disables the timeout."),
 			GUC_UNIT_MS
 		},
 		&IdleSessionTimeout,
@@ -2950,7 +2950,7 @@ struct config_int ConfigureNamesInt[] =
 			gettext_noop("Write a message to the server log if checkpoints "
 						 "caused by the filling of WAL segment files happen more "
 						 "frequently than this amount of time. "
-						 "Zero turns off the warning."),
+						 "0 disables the warning."),
 			GUC_UNIT_S
 		},
 		&CheckPointWarning,
@@ -2961,7 +2961,7 @@ struct config_int ConfigureNamesInt[] =
 	{
 		{"checkpoint_flush_after", PGC_SIGHUP, WAL_CHECKPOINTS,
 			gettext_noop("Number of pages after which previously performed writes are flushed to disk."),
-			NULL,
+			gettext_noop("0 disables forced writeback."),
 			GUC_UNIT_BLOCKS
 		},
 		&checkpoint_flush_after,
@@ -2972,7 +2972,7 @@ struct config_int ConfigureNamesInt[] =
 	{
 		{"wal_buffers", PGC_POSTMASTER, WAL_SETTINGS,
 			gettext_noop("Sets the number of disk-page buffers in shared memory for WAL."),
-			gettext_noop("Specify -1 to have this value determined as a fraction of \"shared_buffers\"."),
+			gettext_noop("-1 means use a fraction of \"shared_buffers\"."),
 			GUC_UNIT_XBLOCKS
 		},
 		&XLOGbuffers,
@@ -3038,8 +3038,8 @@ struct config_int ConfigureNamesInt[] =
 		{"max_slot_wal_keep_size", PGC_SIGHUP, REPLICATION_SENDING,
 			gettext_noop("Sets the maximum WAL size that can be reserved by replication slots."),
 			gettext_noop("Replication slots will be marked as failed, and segments released "
-						 "for deletion or recycling, if this much space is occupied by WAL "
-						 "on disk."),
+						 "for deletion or recycling, if this much space is occupied by WAL on disk. "
+						 "-1 means no maximum."),
 			GUC_UNIT_MB
 		},
 		&max_slot_wal_keep_size_mb,
@@ -3099,7 +3099,7 @@ struct config_int ConfigureNamesInt[] =
 			gettext_noop("Sets the minimum execution time above which "
 						 "a sample of statements will be logged."
 						 " Sampling is determined by \"log_statement_sample_rate\"."),
-			gettext_noop("Zero logs a sample of all queries. -1 turns this feature off."),
+			gettext_noop("-1 disables sampling. 0 means sample all statements."),
 			GUC_UNIT_MS
 		},
 		&log_min_duration_sample,
@@ -3111,7 +3111,7 @@ struct config_int ConfigureNamesInt[] =
 		{"log_min_duration_statement", PGC_SUSET, LOGGING_WHEN,
 			gettext_noop("Sets the minimum execution time above which "
 						 "all statements will be logged."),
-			gettext_noop("Zero prints all queries. -1 turns this feature off."),
+			gettext_noop("-1 disables logging statement durations. 0 means log all statement durations."),
 			GUC_UNIT_MS
 		},
 		&log_min_duration_statement,
@@ -3123,7 +3123,7 @@ struct config_int ConfigureNamesInt[] =
 		{"log_autovacuum_min_duration", PGC_SIGHUP, LOGGING_WHAT,
 			gettext_noop("Sets the minimum execution time above which "
 						 "autovacuum actions will be logged."),
-			gettext_noop("Zero prints all actions. -1 turns autovacuum logging off."),
+			gettext_noop("-1 disables logging autovacuum actions. 0 means log all autovacuum actions."),
 			GUC_UNIT_MS
 		},
 		&Log_autovacuum_min_duration,
@@ -3135,7 +3135,7 @@ struct config_int ConfigureNamesInt[] =
 		{"log_parameter_max_length", PGC_SUSET, LOGGING_WHAT,
 			gettext_noop("Sets the maximum length in bytes of data logged for bind "
 						 "parameter values when logging statements."),
-			gettext_noop("-1 to print values in full."),
+			gettext_noop("-1 means log values in full."),
 			GUC_UNIT_BYTE
 		},
 		&log_parameter_max_length,
@@ -3147,7 +3147,7 @@ struct config_int ConfigureNamesInt[] =
 		{"log_parameter_max_length_on_error", PGC_USERSET, LOGGING_WHAT,
 			gettext_noop("Sets the maximum length in bytes of data logged for bind "
 						 "parameter values when logging statements, on error."),
-			gettext_noop("-1 to print values in full."),
+			gettext_noop("-1 means log values in full."),
 			GUC_UNIT_BYTE
 		},
 		&log_parameter_max_length_on_error,
@@ -3169,7 +3169,7 @@ struct config_int ConfigureNamesInt[] =
 	{
 		{"bgwriter_lru_maxpages", PGC_SIGHUP, RESOURCES_BGWRITER,
 			gettext_noop("Background writer maximum number of LRU pages to flush per round."),
-			NULL
+			gettext_noop("0 disables background writing.")
 		},
 		&bgwriter_lru_maxpages,
 		100, 0, INT_MAX / 2,	/* Same upper limit as shared_buffers */
@@ -3179,7 +3179,7 @@ struct config_int ConfigureNamesInt[] =
 	{
 		{"bgwriter_flush_after", PGC_SIGHUP, RESOURCES_BGWRITER,
 			gettext_noop("Number of pages after which previously performed writes are flushed to disk."),
-			NULL,
+			gettext_noop("0 disables forced writeback."),
 			GUC_UNIT_BLOCKS
 		},
 		&bgwriter_flush_after,
@@ -3192,7 +3192,7 @@ struct config_int ConfigureNamesInt[] =
 			PGC_USERSET,
 			RESOURCES_IO,
 			gettext_noop("Number of simultaneous requests that can be handled efficiently by the disk subsystem."),
-			NULL,
+			gettext_noop("0 disables simultaneous requests."),
 			GUC_EXPLAIN
 		},
 		&effective_io_concurrency,
@@ -3206,7 +3206,7 @@ struct config_int ConfigureNamesInt[] =
 			PGC_USERSET,
 			RESOURCES_IO,
 			gettext_noop("A variant of \"effective_io_concurrency\" that is used for maintenance work."),
-			NULL,
+			gettext_noop("0 disables simultaneous requests."),
 			GUC_EXPLAIN
 		},
 		&maintenance_io_concurrency,
@@ -3233,7 +3233,7 @@ struct config_int ConfigureNamesInt[] =
 	{
 		{"backend_flush_after", PGC_USERSET, RESOURCES_IO,
 			gettext_noop("Number of pages after which previously performed writes are flushed to disk."),
-			NULL,
+			gettext_noop("0 disables forced writeback."),
 			GUC_UNIT_BLOCKS
 		},
 		&backend_flush_after,
@@ -3293,7 +3293,7 @@ struct config_int ConfigureNamesInt[] =
 		{"log_rotation_age", PGC_SIGHUP, LOGGING_WHERE,
 			gettext_noop("Sets the amount of time to wait before forcing "
 						 "log file rotation."),
-			NULL,
+			gettext_noop("0 disables time-based creation of new log files."),
 			GUC_UNIT_MIN
 		},
 		&Log_RotationAge,
@@ -3305,7 +3305,7 @@ struct config_int ConfigureNamesInt[] =
 		{"log_rotation_size", PGC_SIGHUP, LOGGING_WHERE,
 			gettext_noop("Sets the maximum size a log file can reach before "
 						 "being rotated."),
-			NULL,
+			gettext_noop("0 disables size-based creation of new log files."),
 			GUC_UNIT_KB
 		},
 		&Log_RotationSize,
@@ -3407,7 +3407,7 @@ struct config_int ConfigureNamesInt[] =
 	{
 		{"wal_summary_keep_time", PGC_SIGHUP, WAL_SUMMARIZATION,
 			gettext_noop("Time for which WAL summary files should be kept."),
-			NULL,
+			gettext_noop("0 disables automatic summary file deletion."),
 			GUC_UNIT_MIN,
 		},
 		&wal_summary_keep_time,
@@ -3438,8 +3438,8 @@ struct config_int ConfigureNamesInt[] =
 	},
 	{
 		{"autovacuum_vacuum_max_threshold", PGC_SIGHUP, VACUUM_AUTOVACUUM,
-			gettext_noop("Maximum number of tuple updates or deletes prior to vacuum, or -1 to disable maximum threshold."),
-			NULL
+			gettext_noop("Maximum number of tuple updates or deletes prior to vacuum."),
+			gettext_noop("-1 disables the maximum threshold.")
 		},
 		&autovacuum_vac_max_thresh,
 		100000000, -1, INT_MAX,
@@ -3447,8 +3447,8 @@ struct config_int ConfigureNamesInt[] =
 	},
 	{
 		{"autovacuum_vacuum_insert_threshold", PGC_SIGHUP, VACUUM_AUTOVACUUM,
-			gettext_noop("Minimum number of tuple inserts prior to vacuum, or -1 to disable insert vacuums."),
-			NULL
+			gettext_noop("Minimum number of tuple inserts prior to vacuum."),
+			gettext_noop("-1 disables insert vacuums.")
 		},
 		&autovacuum_vac_ins_thresh,
 		1000, -1, INT_MAX,
@@ -3540,7 +3540,7 @@ struct config_int ConfigureNamesInt[] =
 	{
 		{"autovacuum_work_mem", PGC_SIGHUP, RESOURCES_MEM,
 			gettext_noop("Sets the maximum memory to be used by each autovacuum worker process."),
-			NULL,
+			gettext_noop("-1 means use \"maintenance_work_mem\"."),
 			GUC_UNIT_KB
 		},
 		&autovacuum_work_mem,
@@ -3551,7 +3551,7 @@ struct config_int ConfigureNamesInt[] =
 	{
 		{"tcp_keepalives_idle", PGC_USERSET, CONN_AUTH_TCP,
 			gettext_noop("Time between issuing TCP keepalives."),
-			gettext_noop("A value of 0 uses the system default."),
+			gettext_noop("0 means use the system default."),
 			GUC_UNIT_S
 		},
 		&tcp_keepalives_idle,
@@ -3562,7 +3562,7 @@ struct config_int ConfigureNamesInt[] =
 	{
 		{"tcp_keepalives_interval", PGC_USERSET, CONN_AUTH_TCP,
 			gettext_noop("Time between TCP keepalive retransmits."),
-			gettext_noop("A value of 0 uses the system default."),
+			gettext_noop("0 means use the system default."),
 			GUC_UNIT_S
 		},
 		&tcp_keepalives_interval,
@@ -3585,8 +3585,8 @@ struct config_int ConfigureNamesInt[] =
 		{"tcp_keepalives_count", PGC_USERSET, CONN_AUTH_TCP,
 			gettext_noop("Maximum number of TCP keepalive retransmits."),
 			gettext_noop("Number of consecutive keepalive retransmits that can be "
-						 "lost before a connection is considered dead. A value of 0 uses the "
-						 "system default."),
+						 "lost before a connection is considered dead. "
+						 "0 means use the system default."),
 		},
 		&tcp_keepalives_count,
 		0, 0, INT_MAX,
@@ -3596,8 +3596,7 @@ struct config_int ConfigureNamesInt[] =
 	{
 		{"gin_fuzzy_search_limit", PGC_USERSET, CLIENT_CONN_OTHER,
 			gettext_noop("Sets the maximum allowed result for exact search by GIN."),
-			NULL,
-			0
+			gettext_noop("0 means no limit."),
 		},
 		&GinFuzzySearchLimit,
 		0, 0, INT_MAX,
@@ -3653,7 +3652,7 @@ struct config_int ConfigureNamesInt[] =
 	{
 		{"log_temp_files", PGC_SUSET, LOGGING_WHAT,
 			gettext_noop("Log the use of temporary files larger than this number of kilobytes."),
-			gettext_noop("Zero logs all files. The default is -1 (turning this feature off)."),
+			gettext_noop("-1 disables logging temporary files. 0 means log all temporary files."),
 			GUC_UNIT_KB
 		},
 		&log_temp_files,
@@ -3686,7 +3685,7 @@ struct config_int ConfigureNamesInt[] =
 	{
 		{"tcp_user_timeout", PGC_USERSET, CONN_AUTH_TCP,
 			gettext_noop("TCP user timeout."),
-			gettext_noop("A value of 0 uses the system default."),
+			gettext_noop("0 means use the system default."),
 			GUC_UNIT_MS
 		},
 		&tcp_user_timeout,
@@ -3697,7 +3696,7 @@ struct config_int ConfigureNamesInt[] =
 	{
 		{"huge_page_size", PGC_POSTMASTER, RESOURCES_MEM,
 			gettext_noop("The size of huge page that should be requested."),
-			NULL,
+			gettext_noop("0 means use the system default."),
 			GUC_UNIT_KB
 		},
 		&huge_page_size,
@@ -3708,7 +3707,7 @@ struct config_int ConfigureNamesInt[] =
 	{
 		{"debug_discard_caches", PGC_SUSET, DEVELOPER_OPTIONS,
 			gettext_noop("Aggressively flush system caches for debugging purposes."),
-			NULL,
+			gettext_noop("0 means use normal caching behavior."),
 			GUC_NOT_IN_SAMPLE
 		},
 		&debug_discard_caches,
@@ -3731,7 +3730,7 @@ struct config_int ConfigureNamesInt[] =
 	{
 		{"client_connection_check_interval", PGC_USERSET, CONN_AUTH_TCP,
 			gettext_noop("Sets the time interval between checks for disconnection while running queries."),
-			NULL,
+			gettext_noop("0 disables connection checks."),
 			GUC_UNIT_MS
 		},
 		&client_connection_check_interval,
@@ -3743,7 +3742,7 @@ struct config_int ConfigureNamesInt[] =
 		{"log_startup_progress_interval", PGC_SIGHUP, LOGGING_WHEN,
 			gettext_noop("Time between progress updates for "
 						 "long-running startup operations."),
-			gettext_noop("0 turns this feature off."),
+			gettext_noop("0 disables progress updates."),
 			GUC_UNIT_MS,
 		},
 		&log_startup_progress_interval,
@@ -3974,7 +3973,7 @@ struct config_real ConfigureNamesReal[] =
 	{
 		{"autovacuum_vacuum_cost_delay", PGC_SIGHUP, VACUUM_AUTOVACUUM,
 			gettext_noop("Vacuum cost delay in milliseconds, for autovacuum."),
-			NULL,
+			gettext_noop("-1 means use \"vacuum_cost_delay\"."),
 			GUC_UNIT_MS
 		},
 		&autovacuum_vac_cost_delay,
@@ -4065,7 +4064,7 @@ struct config_string ConfigureNamesString[] =
 	{
 		{"archive_command", PGC_SIGHUP, WAL_ARCHIVING,
 			gettext_noop("Sets the shell command that will be called to archive a WAL file."),
-			gettext_noop("This is used only if \"archive_library\" is not set.")
+			gettext_noop("An empty string means use \"archive_library\".")
 		},
 		&XLogArchiveCommand,
 		"",
@@ -4075,7 +4074,7 @@ struct config_string ConfigureNamesString[] =
 	{
 		{"archive_library", PGC_SIGHUP, WAL_ARCHIVING,
 			gettext_noop("Sets the library that will be called to archive a WAL file."),
-			gettext_noop("An empty string indicates that \"archive_command\" should be used.")
+			gettext_noop("An empty string means use \"archive_command\".")
 		},
 		&XLogArchiveLibrary,
 		"",
@@ -4203,7 +4202,7 @@ struct config_string ConfigureNamesString[] =
 	{
 		{"log_line_prefix", PGC_SIGHUP, LOGGING_WHAT,
 			gettext_noop("Controls information prefixed to each log line."),
-			gettext_noop("If blank, no prefix is used.")
+			gettext_noop("An empty string means no prefix.")
 		},
 		&Log_line_prefix,
 		"%m [%p] ",
@@ -4246,7 +4245,7 @@ struct config_string ConfigureNamesString[] =
 	{
 		{"default_tablespace", PGC_USERSET, CLIENT_CONN_STATEMENT,
 			gettext_noop("Sets the default tablespace to create tables and indexes in."),
-			gettext_noop("An empty string selects the database's default tablespace."),
+			gettext_noop("An empty string means use the database's default tablespace."),
 			GUC_IS_NAME
 		},
 		&default_tablespace,
@@ -4257,7 +4256,7 @@ struct config_string ConfigureNamesString[] =
 	{
 		{"temp_tablespaces", PGC_USERSET, CLIENT_CONN_STATEMENT,
 			gettext_noop("Sets the tablespace(s) to use for temporary tables and sort files."),
-			NULL,
+			gettext_noop("An empty string means use the database's default tablespace."),
 			GUC_LIST_INPUT | GUC_LIST_QUOTE
 		},
 		&temp_tablespaces,
@@ -4269,7 +4268,7 @@ struct config_string ConfigureNamesString[] =
 		{"createrole_self_grant", PGC_USERSET, CLIENT_CONN_STATEMENT,
 			gettext_noop("Sets whether a CREATEROLE user automatically grants "
 						 "the role to themselves, and with which options."),
-			NULL,
+			gettext_noop("An empty string disables automatic self grants."),
 			GUC_LIST_INPUT
 		},
 		&createrole_self_grant,
@@ -4305,7 +4304,7 @@ struct config_string ConfigureNamesString[] =
 	{
 		{"bonjour_name", PGC_POSTMASTER, CONN_AUTH_SETTINGS,
 			gettext_noop("Sets the Bonjour service name."),
-			NULL
+			gettext_noop("An empty string means use the computer name.")
 		},
 		&bonjour_name,
 		"",
@@ -4315,7 +4314,7 @@ struct config_string ConfigureNamesString[] =
 	{
 		{"lc_messages", PGC_SUSET, CLIENT_CONN_LOCALE,
 			gettext_noop("Sets the language in which messages are displayed."),
-			NULL
+			gettext_noop("An empty string means use the operating system setting.")
 		},
 		&locale_messages,
 		"",
@@ -4325,7 +4324,7 @@ struct config_string ConfigureNamesString[] =
 	{
 		{"lc_monetary", PGC_USERSET, CLIENT_CONN_LOCALE,
 			gettext_noop("Sets the locale for formatting monetary amounts."),
-			NULL
+			gettext_noop("An empty string means use the operating system setting.")
 		},
 		&locale_monetary,
 		"C",
@@ -4335,7 +4334,7 @@ struct config_string ConfigureNamesString[] =
 	{
 		{"lc_numeric", PGC_USERSET, CLIENT_CONN_LOCALE,
 			gettext_noop("Sets the locale for formatting numbers."),
-			NULL
+			gettext_noop("An empty string means use the operating system setting.")
 		},
 		&locale_numeric,
 		"C",
@@ -4345,7 +4344,7 @@ struct config_string ConfigureNamesString[] =
 	{
 		{"lc_time", PGC_USERSET, CLIENT_CONN_LOCALE,
 			gettext_noop("Sets the locale for formatting date and time values."),
-			NULL
+			gettext_noop("An empty string means use the operating system setting.")
 		},
 		&locale_time,
 		"C",
@@ -4523,8 +4522,8 @@ struct config_string ConfigureNamesString[] =
 	{
 		{"unix_socket_group", PGC_POSTMASTER, CONN_AUTH_SETTINGS,
 			gettext_noop("Sets the owning group of the Unix-domain socket."),
-			gettext_noop("The owning user of the socket is always the user "
-						 "that starts the server.")
+			gettext_noop("The owning user of the socket is always the user that starts the server. "
+						 "An empty string means use the user's default group.")
 		},
 		&Unix_socket_group,
 		"",
@@ -4700,8 +4699,8 @@ struct config_string ConfigureNamesString[] =
 
 	{
 		{"ssl_tls13_ciphers", PGC_SIGHUP, CONN_AUTH_SSL,
-			gettext_noop("Sets the list of allowed TLSv1.3 cipher suites (leave blank for default)."),
-			NULL,
+			gettext_noop("Sets the list of allowed TLSv1.3 cipher suites."),
+			gettext_noop("An empty string means use the default cipher suites."),
 			GUC_SUPERUSER_ONLY
 		},
 		&SSLCipherSuites,
@@ -4742,7 +4741,7 @@ struct config_string ConfigureNamesString[] =
 	{
 		{"ssl_dh_params_file", PGC_SIGHUP, CONN_AUTH_SSL,
 			gettext_noop("Location of the SSL DH parameters file."),
-			NULL,
+			gettext_noop("An empty string means use compiled-in default parameters."),
 			GUC_SUPERUSER_ONLY
 		},
 		&ssl_dh_params_file,
@@ -4753,7 +4752,7 @@ struct config_string ConfigureNamesString[] =
 	{
 		{"ssl_passphrase_command", PGC_SIGHUP, CONN_AUTH_SSL,
 			gettext_noop("Command to obtain passphrases for SSL."),
-			NULL,
+			gettext_noop("An empty string means use the built-in prompting mechanism."),
 			GUC_SUPERUSER_ONLY
 		},
 		&ssl_passphrase_command,
@@ -4819,7 +4818,7 @@ struct config_string ConfigureNamesString[] =
 	{
 		{"debug_io_direct", PGC_POSTMASTER, DEVELOPER_OPTIONS,
 			gettext_noop("Use direct I/O for file access."),
-			NULL,
+			gettext_noop("An empty string disables direct I/O."),
 			GUC_LIST_INPUT | GUC_NOT_IN_SAMPLE
 		},
 		&debug_io_direct_string,

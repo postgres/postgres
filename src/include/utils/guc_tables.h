@@ -138,6 +138,21 @@ typedef struct guc_stack
  * applications may use the long description as well, and will append
  * it to the short description. (separated by a newline or '. ')
  *
+ * If the GUC accepts a special value like -1 to disable the feature, use a
+ * system default, etc., it should be mentioned in the long description with
+ * the following style:
+ *
+ *  - Special values should be listed at the end of the long description.
+ *  - Descriptions should use numerals (e.g., "0") instead of words (e.g.,
+ *    "zero").
+ *  - Special value mentions should be concise and direct (e.g., "0 disables
+ *    the timeout.", "An empty string means use the operating system
+ *    setting.").
+ *  - Multiple special values should be listed in ascending order.
+ *
+ * As an exception, special values should _not_ be mentioned if the description
+ * would be too complex or if the meaning is sufficiently obvious.
+ *
  * srole is the role that set the current value, or BOOTSTRAP_SUPERUSERID
  * if the value came from an internal source or the config file.  Similarly
  * for reset_srole (which is usually BOOTSTRAP_SUPERUSERID, but not always).
