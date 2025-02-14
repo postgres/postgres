@@ -24,7 +24,6 @@ initdb -D "$PGDATA" --set shared_preload_libraries=pg_tde
 
 pg_ctl -D "$PGDATA" start
 
-createdb setup_helper
-psql setup_helper -f "$SCRIPT_DIR/tde_setup_global.sql"
+psql postgres -f "$SCRIPT_DIR/tde_setup_global.sql"
 
 pg_ctl -D "$PGDATA" restart
