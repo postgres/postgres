@@ -1,4 +1,6 @@
 #!/bin/bash
+set -e
+
 # This script is used to configure a TDE server for testing purposes.
 export TDE_MODE=1
 
@@ -10,16 +12,11 @@ cd "$SCRIPT_DIR/.."
 export PATH=$INSTALL_DIR/bin:$PATH
 export PGDATA=$INSTALL_DIR/data
 
-if pgrep -x "postgres" > /dev/null; then
-    pg_ctl -D "$PGDATA" stop
-fi
-
-if pgrep -x "postgres" > /dev/null; then
-    echo "Error: a postgres process is already running"
-    exit 1
-fi
-
 if [ -d "$PGDATA" ]; then
+    if pg_ctl -D "$PGDATA" status >/dev/null; then
+        pg_ctl -D "$PGDATA" stop
+    fi
+
     rm -rf "$PGDATA"
 fi
 
