@@ -1330,10 +1330,7 @@ StartReadBuffersImpl(ReadBuffersOperation *operation,
 		 * StartReadBuffers() were made for the same blocks before
 		 * WaitReadBuffers(), only the first would issue the advice. That'd be
 		 * a better simulation of true asynchronous I/O, which would only
-		 * start the I/O once, but isn't done here for simplicity.  Note also
-		 * that the following call might actually issue two advice calls if we
-		 * cross a segment boundary; in a true asynchronous version we might
-		 * choose to process only one real I/O at a time in that case.
+		 * start the I/O once, but isn't done here for simplicity.
 		 */
 		smgrprefetch(operation->smgr,
 					 operation->forknum,
