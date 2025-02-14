@@ -135,3 +135,121 @@ select encode(decrypt(encrypt('Lets try a longer message.', '0123456789', 'aes')
  Lets try a longer message.
 (1 row)
 
+-- cfb
+SELECT encrypt(
+'\x00112233445566778899aabbccddeeff',
+'\x000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f',
+'aes-cfb/pad:none');
+              encrypt               
+------------------------------------
+ \xf28122856e1cf9a7216a30d111f3997f
+(1 row)
+
+-- without padding, input not multiple of block size
+SELECT encrypt(
+'\x00112233445566778899aabbccddeeff00',
+'\x000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f',
+'aes-cfb/pad:none');
+               encrypt                
+--------------------------------------
+ \xf28122856e1cf9a7216a30d111f3997fcb
+(1 row)
+
+-- key padding
+SELECT encrypt(
+'\x0011223344',
+'\x000102030405',
+'aes-cfb');
+   encrypt    
+--------------
+ \x8145d1a0ef
+(1 row)
+
+SELECT encrypt(
+'\x0011223344',
+'\x000102030405060708090a0b0c0d0e0f10111213',
+'aes-cfb');
+   encrypt    
+--------------
+ \x52642c3b9c
+(1 row)
+
+SELECT encrypt(
+'\x0011223344',
+'\x000102030405060708090a0b0c0d0e0f101112131415161718191a1b',
+'aes-cfb');
+   encrypt    
+--------------
+ \xc93b4468a4
+(1 row)
+
+-- empty data
+select encrypt('', 'foo', 'aes-cfb');
+ encrypt 
+---------
+ \x
+(1 row)
+
+-- 10 bytes key
+select encrypt('foo', '0123456789', 'aes-cfb');
+ encrypt  
+----------
+ \x6f8ced
+(1 row)
+
+-- 22 bytes key
+select encrypt('foo', '0123456789012345678901', 'aes-cfb');
+ encrypt  
+----------
+ \xfb47d2
+(1 row)
+
+-- decrypt
+select encode(decrypt(encrypt('foo', '0123456', 'aes-cfb'), '0123456', 'aes-cfb'), 'escape');
+ encode 
+--------
+ foo
+(1 row)
+
+-- data not multiple of block size
+select encode(decrypt(encrypt('foo', '0123456', 'aes-cfb') || '\x00'::bytea, '0123456', 'aes-cfb'), 'escape');
+ encode  
+---------
+ foo\337
+(1 row)
+
+-- bad padding
+-- (The input value is the result of encrypt_iv('abcdefghijklmnopqrstuvwxyz', '0123456', 'abcd', 'aes-cfb')
+-- with the 16th byte changed (s/c5/d5/) to corrupt the padding of the last block.)
+select encode(decrypt_iv('\xf9ad6817cb58d31dd9ba6571fbc4f55d56f65b631f0f437cb828', '0123456', 'abcd', 'aes-cfb'), 'escape');
+                     encode                      
+-------------------------------------------------
+ abcdefghijklmnoq\243:\205o\x7F\x05z\276\x07\332
+(1 row)
+
+-- iv
+select encrypt_iv('foo', '0123456', 'abcd', 'aes-cfb');
+ encrypt_iv 
+------------
+ \xfea064
+(1 row)
+
+select encode(decrypt_iv('\xfea064', '0123456', 'abcd', 'aes-cfb'), 'escape');
+ encode 
+--------
+ foo
+(1 row)
+
+-- long message
+select encrypt('Lets try a longer message.', '0123456789', 'aes-cfb');
+                        encrypt                         
+--------------------------------------------------------
+ \x4586f6c6351055051f723b1b0aad52c877eaf0c421d18fd73a28
+(1 row)
+
+select encode(decrypt(encrypt('Lets try a longer message.', '0123456789', 'aes-cfb'), '0123456789', 'aes-cfb'), 'escape');
+           encode           
+----------------------------
+ Lets try a longer message.
+(1 row)
+

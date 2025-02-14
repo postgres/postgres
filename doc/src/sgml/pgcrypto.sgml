@@ -1084,6 +1084,11 @@ decrypt_iv(data bytea, key bytea, iv bytea, type text) returns bytea
    </listitem>
    <listitem>
     <para>
+    <literal>cfb</literal> &mdash; next block depends on previous encrypted block
+    </para>
+   </listitem>
+   <listitem>
+    <para>
     <literal>ecb</literal> &mdash; each block is encrypted separately (for
     testing only)
     </para>
@@ -1112,7 +1117,8 @@ encrypt(data, 'fooz', 'bf-cbc/pad:pkcs')
   </para>
   <para>
    In <function>encrypt_iv</function> and <function>decrypt_iv</function>, the
-   <parameter>iv</parameter> parameter is the initial value for the CBC mode;
+   <parameter>iv</parameter> parameter is the initial value for the CBC and
+   CFB mode;
    it is ignored for ECB.
    It is clipped or padded with zeroes if not exactly block size.
    It defaults to all zeroes in the functions without this parameter.

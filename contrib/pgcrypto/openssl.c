@@ -617,6 +617,36 @@ ossl_aes_cbc_init(PX_Cipher *c, const uint8 *key, unsigned klen, const uint8 *iv
 	return err;
 }
 
+static int
+ossl_aes_cfb_init(PX_Cipher *c, const uint8 *key, unsigned klen, const uint8 *iv)
+{
+	OSSLCipher *od = c->ptr;
+	int			err;
+
+	err = ossl_aes_init(c, key, klen, iv);
+	if (err)
+		return err;
+
+	switch (od->klen)
+	{
+		case 128 / 8:
+			od->evp_ciph = EVP_aes_128_cfb();
+			break;
+		case 192 / 8:
+			od->evp_ciph = EVP_aes_192_cfb();
+			break;
+		case 256 / 8:
+			od->evp_ciph = EVP_aes_256_cfb();
+			break;
+		default:
+			/* shouldn't happen */
+			err = PXE_CIPHER_INIT;
+			break;
+	}
+
+	return err;
+}
+
 /*
  * aliases
  */
@@ -636,6 +666,7 @@ static PX_Alias ossl_aliases[] = {
 	{"rijndael", "aes-cbc"},
 	{"rijndael-cbc", "aes-cbc"},
 	{"rijndael-ecb", "aes-ecb"},
+	{"rijndael-cfb", "aes-cfb"},
 	{NULL}
 };
 
@@ -707,6 +738,13 @@ static const struct ossl_cipher ossl_aes_cbc = {
 	128 / 8, 256 / 8
 };
 
+static const struct ossl_cipher ossl_aes_cfb = {
+	ossl_aes_cfb_init,
+	NULL,						/* EVP_aes_XXX_cfb(), determined in init
+								 * function */
+	128 / 8, 256 / 8
+};
+
 /*
  * Special handlers
  */
@@ -728,6 +766,7 @@ static const struct ossl_cipher_lookup ossl_cipher_types[] = {
 	{"cast5-cbc", &ossl_cast_cbc},
 	{"aes-ecb", &ossl_aes_ecb},
 	{"aes-cbc", &ossl_aes_cbc},
+	{"aes-cfb", &ossl_aes_cfb},
 	{NULL}
 };
 
