@@ -17,6 +17,7 @@
 #include "getopt_long.h"
 #include "libpq-fe.h"
 #include "mb/pg_wchar.h"
+#include "utils/memdebug.h"
 
 
 typedef struct pe_test_config
@@ -55,6 +56,11 @@ typedef struct pe_test_escape_func
 	 * multi-byte characters are valid ascii.
 	 */
 	bool		supports_only_ascii_overlap;
+
+	/*
+	 * Does the escape function have a length input?
+	 */
+	bool		supports_input_length;
 
 	bool		(*escape) (PGconn *conn, PQExpBuffer target,
 						   const char *unescaped, size_t unescaped_len,
@@ -234,21 +240,25 @@ static pe_test_escape_func pe_test_escape_funcs[] =
 	{
 		.name = "PQescapeLiteral",
 		.reports_errors = true,
+		.supports_input_length = true,
 		.escape = escape_literal,
 	},
 	{
 		.name = "PQescapeIdentifier",
 		.reports_errors = true,
+		.supports_input_length = true,
 		.escape = escape_identifier
 	},
 	{
 		.name = "PQescapeStringConn",
 		.reports_errors = true,
+		.supports_input_length = true,
 		.escape = escape_string_conn
 	},
 	{
 		.name = "PQescapeString",
 		.reports_errors = false,
+		.supports_input_length = true,
 		.escape = escape_string
 	},
 	{
@@ -256,6 +266,7 @@ static pe_test_escape_func pe_test_escape_funcs[] =
 		.reports_errors = false,
 		.supports_only_valid = true,
 		.supports_only_ascii_overlap = true,
+		.supports_input_length = true,
 		.escape = escape_replace
 	},
 	{
@@ -272,6 +283,7 @@ static pe_test_escape_func pe_test_escape_funcs[] =
 
 
 #define TV(enc, string) {.client_encoding = (enc), .escape=string, .escape_len=sizeof(string) - 1, }
+#define TV_LEN(enc, string, len) {.client_encoding = (enc), .escape=string, .escape_len=len, }
 static pe_test_vector pe_test_vectors[] =
 {
 	/* expected to work sanity checks */
@@ -359,6 +371,15 @@ static pe_test_vector pe_test_vectors[] =
 	TV("mule_internal", "\\\x9c';\0;"),
 
 	TV("sql_ascii", "1\xC0'"),
+
+	/*
+	 * Testcases that are not null terminated for the specified input length.
+	 * That's interesting to verify that escape functions don't read beyond
+	 * the intended input length.
+	 */
+	TV_LEN("gbk", "\x80", 1),
+	TV_LEN("UTF-8", "\xC3\xb6  ", 1),
+	TV_LEN("UTF-8", "\xC3\xb6  ", 2),
 };
 
 
@@ -521,6 +542,7 @@ test_one_vector_escape(pe_test_config *tc, const pe_test_vector *tv, const pe_te
 {
 	PQExpBuffer testname;
 	PQExpBuffer details;
+	PQExpBuffer raw_buf;
 	PQExpBuffer escape_buf;
 	PQExpBuffer escape_err;
 	size_t		input_encoding_validlen;
@@ -534,6 +556,7 @@ test_one_vector_escape(pe_test_config *tc, const pe_test_vector *tv, const pe_te
 	escape_err = createPQExpBuffer();
 	testname = createPQExpBuffer();
 	details = createPQExpBuffer();
+	raw_buf = createPQExpBuffer();
 	escape_buf = createPQExpBuffer();
 
 	if (ef->supports_only_ascii_overlap &&
@@ -567,8 +590,8 @@ test_one_vector_escape(pe_test_config *tc, const pe_test_vector *tv, const pe_te
 
 	input_encoding0_validlen = pg_encoding_verifymbstr(PQclientEncoding(tc->conn),
 													   tv->escape,
-													   strlen(tv->escape));
-	input_encoding0_valid = input_encoding0_validlen == strlen(tv->escape);
+													   strnlen(tv->escape, tv->escape_len));
+	input_encoding0_valid = input_encoding0_validlen == strnlen(tv->escape, tv->escape_len);
 	appendPQExpBuffer(details, "#\t input encoding valid till 0: %d\n",
 					  input_encoding0_valid);
 
@@ -580,9 +603,45 @@ test_one_vector_escape(pe_test_config *tc, const pe_test_vector *tv, const pe_te
 		goto out;
 
 
+	/*
+	 * Put the to-be-escaped data into a buffer, so that we
+	 *
+	 * a) can mark memory beyond end of the string as inaccessible when using
+	 * valgrind
+	 *
+	 * b) can append extra data beyond the length passed to the escape
+	 * function, to verify that that data is not processed.
+	 *
+	 * TODO: Should we instead/additionally escape twice, once with unmodified
+	 * and once with appended input? That way we could compare the two.
+	 */
+	appendBinaryPQExpBuffer(raw_buf, tv->escape, tv->escape_len);
+
+#define NEVER_ACCESS_STR "\xff never-to-be-touched"
+	if (ef->supports_input_length)
+	{
+		/*
+		 * Append likely invalid string that does *not* contain a null byte
+		 * (which'd prevent some invalid accesses to later memory).
+		 */
+		appendPQExpBufferStr(raw_buf, NEVER_ACCESS_STR);
+
+		VALGRIND_MAKE_MEM_NOACCESS(&raw_buf->data[tv->escape_len],
+								   raw_buf->len - tv->escape_len);
+	}
+	else
+	{
+		/* append invalid string, after \0 */
+		appendPQExpBufferChar(raw_buf, 0);
+		appendPQExpBufferStr(raw_buf, NEVER_ACCESS_STR);
+
+		VALGRIND_MAKE_MEM_NOACCESS(&raw_buf->data[tv->escape_len + 1],
+								   raw_buf->len - tv->escape_len - 1);
+	}
+
 	/* call the to-be-tested escape function */
 	escape_success = ef->escape(tc->conn, escape_buf,
-								tv->escape, tv->escape_len,
+								raw_buf->data, tv->escape_len,
 								escape_err);
 	if (!escape_success)
 	{
@@ -592,6 +651,8 @@ test_one_vector_escape(pe_test_config *tc, const pe_test_vector *tv, const pe_te
 
 	if (escape_buf->len > 0)
 	{
+		bool		contains_never;
+
 		appendPQExpBuffer(details, "#\t escaped string: %zd bytes: ", escape_buf->len);
 		escapify(details, escape_buf->data, escape_buf->len);
 		appendPQExpBufferChar(details, '\n');
@@ -603,6 +664,16 @@ test_one_vector_escape(pe_test_config *tc, const pe_test_vector *tv, const pe_te
 
 		appendPQExpBuffer(details, "#\t escape encoding valid: %d\n",
 						  escape_encoding_valid);
+
+		/*
+		 * Verify that no data beyond the end of the input is included in the
+		 * escaped string.  It'd be better to use something like memmem()
+		 * here, but that's not available everywhere.
+		 */
+		contains_never = strstr(escape_buf->data, NEVER_ACCESS_STR) == NULL;
+		report_result(tc, contains_never, testname, details,
+					  "escaped data beyond end of input",
+					  contains_never ? "no" : "all secrets revealed");
 	}
 	else
 	{
@@ -693,6 +764,7 @@ out:
 	destroyPQExpBuffer(details);
 	destroyPQExpBuffer(testname);
 	destroyPQExpBuffer(escape_buf);
+	destroyPQExpBuffer(raw_buf);
 }
 
 static void
