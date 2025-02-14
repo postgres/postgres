@@ -4224,7 +4224,7 @@ PQescapeInternal(PGconn *conn, const char *str, size_t len, bool as_ident)
 	char	   *rp;
 	int			num_quotes = 0; /* single or double, depending on as_ident */
 	int			num_backslashes = 0;
-	size_t		input_len = strlen(str);
+	size_t		input_len = strnlen(str, len);
 	size_t		result_size;
 	char		quote_char = as_ident ? '"' : '\'';
 	bool		validated_mb = false;
@@ -4274,7 +4274,7 @@ PQescapeInternal(PGconn *conn, const char *str, size_t len, bool as_ident)
 			if (!validated_mb)
 			{
 				if (pg_encoding_verifymbstr(conn->client_encoding, s, remaining)
-					!= strlen(s))
+					!= remaining)
 				{
 					libpq_append_conn_error(conn, "invalid multibyte character");
 					return NULL;
