@@ -23,15 +23,11 @@ if [ -d "$PGDATA" ]; then
     rm -rf "$PGDATA"
 fi
 
-initdb -D "$PGDATA"
-
-echo "shared_preload_libraries ='pg_tde'" >> "$PGDATA/postgresql.conf"
+initdb -D "$PGDATA" --set shared_preload_libraries=pg_tde
 
 pg_ctl -D "$PGDATA" start
 
 createdb setup_helper
-psql setup_helper < "$SCRIPT_DIR/tde_setup_global.sql"
-
-echo "pg_tde.wal_encrypt = on" >> "$PGDATA/postgresql.conf"
+psql setup_helper -f "$SCRIPT_DIR/tde_setup_global.sql"
 
 pg_ctl -D "$PGDATA" restart
