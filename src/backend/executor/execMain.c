@@ -2662,12 +2662,14 @@ bool
 EvalPlanQualFetchRowMark(EPQState *epqstate, Index rti, TupleTableSlot *slot)
 {
 	ExecAuxRowMark *earm = epqstate->relsubs_rowmark[rti - 1];
-	ExecRowMark *erm = earm->rowmark;
+	ExecRowMark *erm;
 	Datum		datum;
 	bool		isNull;
 
 	Assert(earm != NULL);
 	Assert(epqstate->origslot != NULL);
+
+	erm = earm->rowmark;
 
 	if (RowMarkRequiresRowShareLock(erm->markType))
 		elog(ERROR, "EvalPlanQual doesn't support locking rowmarks");
