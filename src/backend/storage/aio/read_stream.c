@@ -193,9 +193,20 @@ read_stream_get_block(ReadStream *stream, void *per_buffer_data)
 	if (blocknum != InvalidBlockNumber)
 		stream->buffered_blocknum = InvalidBlockNumber;
 	else
+	{
+		/*
+		 * Tell Valgrind that the per-buffer data is undefined.  That replaces
+		 * the "noaccess" state that was set when the consumer moved past this
+		 * entry last time around the queue, and should also catch callbacks
+		 * that fail to initialize data that the buffer consumer later
+		 * accesses.  On the first go around, it is undefined already.
+		 */
+		VALGRIND_MAKE_MEM_UNDEFINED(per_buffer_data,
+									stream->per_buffer_data_size);
 		blocknum = stream->callback(stream,
 									stream->callback_private_data,
 									per_buffer_data);
+	}
 
 	return blocknum;
 }
@@ -752,8 +763,11 @@ read_stream_next_buffer(ReadStream *stream, void **per_buffer_data)
 	}
 
 #ifdef CLOBBER_FREED_MEMORY
-	/* Clobber old buffer and per-buffer data for debugging purposes. */
+	/* Clobber old buffer for debugging purposes. */
 	stream->buffers[oldest_buffer_index] = InvalidBuffer;
+#endif
+
+#if defined(CLOBBER_FREED_MEMORY) || defined(USE_VALGRIND)
 
 	/*
 	 * The caller will get access to the per-buffer data, until the next call.
@@ -762,11 +776,23 @@ read_stream_next_buffer(ReadStream *stream, void **per_buffer_data)
 	 * that is holding a dangling pointer to it.
 	 */
 	if (stream->per_buffer_data)
-		wipe_mem(get_per_buffer_data(stream,
-									 oldest_buffer_index == 0 ?
-									 stream->queue_size - 1 :
-									 oldest_buffer_index - 1),
-				 stream->per_buffer_data_size);
+	{
+		void	   *per_buffer_data;
+
+		per_buffer_data = get_per_buffer_data(stream,
+											  oldest_buffer_index == 0 ?
+											  stream->queue_size - 1 :
+											  oldest_buffer_index - 1);
+
+#if defined(CLOBBER_FREED_MEMORY)
+		/* This also tells Valgrind the memory is "noaccess". */
+		wipe_mem(per_buffer_data, stream->per_buffer_data_size);
+#elif defined(USE_VALGRIND)
+		/* Tell it ourselves. */
+		VALGRIND_MAKE_MEM_NO_ACCESS(per_buffer_data,
+									stream->per_buffer_data_size);
+#endif
+	}
 #endif
 
 	/* Pin transferred to caller. */
