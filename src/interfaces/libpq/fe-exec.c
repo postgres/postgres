@@ -4076,6 +4076,7 @@ PQescapeStringInternal(PGconn *conn,
 	const char *source = from;
 	char	   *target = to;
 	size_t		remaining = strnlen(from, length);
+	bool		already_complained = false;
 
 	if (error)
 		*error = 0;
@@ -4102,65 +4103,57 @@ PQescapeStringInternal(PGconn *conn,
 		/* Slow path for possible multibyte characters */
 		charlen = pg_encoding_mblen(encoding, source);
 
-		if (remaining < charlen)
+		if (remaining < charlen ||
+			pg_encoding_verifymbchar(encoding, source, charlen) == -1)
 		{
 			/*
-			 * If the character is longer than the available input, report an
-			 * error if possible, and replace the string with an invalid
-			 * sequence. The invalid sequence ensures that the escaped string
-			 * will trigger an error on the server-side, even if we can't
-			 * directly report an error here.
+			 * Multibyte character is invalid.  It's important to verify that
+			 * as invalid multibyte characters could e.g. be used to "skip"
+			 * over quote characters, e.g. when parsing
+			 * character-by-character.
+			 *
+			 * Report an error if possible, and replace the character's first
+			 * byte with an invalid sequence. The invalid sequence ensures
+			 * that the escaped string will trigger an error on the
+			 * server-side, even if we can't directly report an error here.
 			 *
 			 * This isn't *that* crucial when we can report an error to the
-			 * caller, but if we can't, the caller will use this string
-			 * unmodified and it needs to be safe for parsing.
+			 * caller; but if we can't or the caller ignores it, the caller
+			 * will use this string unmodified and it needs to be safe for
+			 * parsing.
 			 *
 			 * We know there's enough space for the invalid sequence because
 			 * the "to" buffer needs to be at least 2 * length + 1 long, and
 			 * at worst we're replacing a single input byte with two invalid
 			 * bytes.
-			 */
-			if (error)
-				*error = 1;
-			if (conn)
-				libpq_append_conn_error(conn, "incomplete multibyte character");
-
-			pg_encoding_set_invalid(encoding, target);
-			target += 2;
-
-			/* there's no more input data, so we can stop */
-			break;
-		}
-		else if (pg_encoding_verifymbchar(encoding, source, charlen) == -1)
-		{
-			/*
-			 * Multibyte character is invalid.  It's important to verify that
-			 * as invalid multi-byte characters could e.g. be used to "skip"
-			 * over quote characters, e.g. when parsing
-			 * character-by-character.
-			 *
-			 * Replace the bytes corresponding to the invalid character with
-			 * an invalid sequence, for the same reason as above.
 			 *
 			 * It would be a bit faster to verify the whole string the first
 			 * time we encounter a set highbit, but this way we can replace
-			 * just the invalid characters, which probably makes it easier for
-			 * users to find the invalidly encoded portion of a larger string.
+			 * just the invalid data, which probably makes it easier for users
+			 * to find the invalidly encoded portion of a larger string.
 			 */
 			if (error)
 				*error = 1;
-			if (conn)
-				libpq_append_conn_error(conn, "invalid multibyte character");
+			if (conn && !already_complained)
+			{
+				if (remaining < charlen)
+					libpq_append_conn_error(conn, "incomplete multibyte character");
+				else
+					libpq_append_conn_error(conn, "invalid multibyte character");
+				/* Issue a complaint only once per string */
+				already_complained = true;
+			}
 
 			pg_encoding_set_invalid(encoding, target);
 			target += 2;
-			remaining -= charlen;
 
 			/*
-			 * Copy the rest of the string after the invalid multi-byte
-			 * character.
+			 * Handle the following bytes as if this byte didn't exist. That's
+			 * safer in case the subsequent bytes contain important characters
+			 * for the caller (e.g. '>' in html).
 			 */
-			source += charlen;
+			source++;
+			remaining--;
 		}
 		else
 		{
