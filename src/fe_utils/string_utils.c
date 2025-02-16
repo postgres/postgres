@@ -200,11 +200,13 @@ fmtIdEnc(const char *rawid, int encoding)
 				 * easier for users to find the invalidly encoded portion of a
 				 * larger string.
 				 */
-				enlargePQExpBuffer(id_return, 2);
-				pg_encoding_set_invalid(encoding,
-										id_return->data + id_return->len);
-				id_return->len += 2;
-				id_return->data[id_return->len] = '\0';
+				if (enlargePQExpBuffer(id_return, 2))
+				{
+					pg_encoding_set_invalid(encoding,
+											id_return->data + id_return->len);
+					id_return->len += 2;
+					id_return->data[id_return->len] = '\0';
+				}
 
 				/*
 				 * Handle the following bytes as if this byte didn't exist.
