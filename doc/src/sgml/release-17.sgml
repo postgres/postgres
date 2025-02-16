@@ -1,6 +1,123 @@
 <!-- doc/src/sgml/release-17.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+ <sect1 id="release-17-4">
+  <title>Release 17.4</title>
+
+  <formalpara>
+  <title>Release date:</title>
+  <para>2025-02-20</para>
+  </formalpara>
+
+  <para>
+   This release contains a few fixes from 17.3.
+   For information about new features in major release 17, see
+   <xref linkend="release-17"/>.
+  </para>
+
+  <sect2 id="release-17-4-migration">
+   <title>Migration to Version 17.4</title>
+
+   <para>
+    A dump/restore is not required for those running 17.X.
+   </para>
+
+   <para>
+    However, if you are upgrading from a version earlier than 17.1,
+    see <xref linkend="release-17-1"/>.
+   </para>
+  </sect2>
+
+  <sect2 id="release-17-4-changes">
+   <title>Changes</title>
+
+   <itemizedlist>
+
+    <listitem>
+<!--
+Author: Andres Freund <andres@anarazel.de>
+Branch: master [efdadeb22] 2025-02-14 18:09:19 -0500
+Branch: REL_17_STABLE [a92db3d02] 2025-02-14 18:09:21 -0500
+Branch: REL_16_STABLE [111f4dd27] 2025-02-14 18:09:23 -0500
+Branch: REL_15_STABLE [22ffbbf24] 2025-02-14 18:09:24 -0500
+Branch: REL_14_STABLE [985908df1] 2025-02-14 18:09:25 -0500
+Branch: REL_13_STABLE [1f7a05324] 2025-02-14 18:09:27 -0500
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [9f45e6a91] 2025-02-15 16:20:21 -0500
+Branch: REL_17_STABLE [3abe6e04c] 2025-02-15 16:20:21 -0500
+Branch: REL_16_STABLE [991a60a9f] 2025-02-15 16:20:21 -0500
+Branch: REL_15_STABLE [e782a63cc] 2025-02-15 16:20:21 -0500
+Branch: REL_14_STABLE [c08309584] 2025-02-15 16:20:21 -0500
+Branch: REL_13_STABLE [d6d29b213] 2025-02-15 16:20:21 -0500
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [a7f95859e] 2025-02-16 12:46:35 -0500
+Branch: REL_17_STABLE [3977bd298] 2025-02-16 12:46:35 -0500
+Branch: REL_16_STABLE [644b7d686] 2025-02-16 12:46:35 -0500
+Branch: REL_15_STABLE [2226a2e26] 2025-02-16 12:46:35 -0500
+Branch: REL_14_STABLE [f864a4cdf] 2025-02-16 12:46:35 -0500
+Branch: REL_13_STABLE [9f052613e] 2025-02-16 12:46:35 -0500
+-->
+     <para>
+      Improve behavior of <application>libpq</application>'s quoting
+      functions (Andres Freund, Tom Lane)
+      <ulink url="&commit_baseurl;a92db3d02">&sect;</ulink>
+      <ulink url="&commit_baseurl;3abe6e04c">&sect;</ulink>
+      <ulink url="&commit_baseurl;3977bd298">&sect;</ulink>
+     </para>
+
+     <para>
+      The changes made for CVE-2025-1094 had one serious oversight:
+      <function>PQescapeLiteral()</function>
+      and <function>PQescapeIdentifier()</function> failed to honor their
+      string length parameter, instead always reading to the input
+      string's trailing null.  This resulted in including unwanted text in
+      the output, if the caller intended to truncate the string via the
+      length parameter.  With very bad luck it could cause a crash due to
+      reading off the end of memory.
+     </para>
+
+     <para>
+      In addition, modify all these quoting functions so that when invalid
+      encoding is detected, an invalid sequence is substituted for just
+      the first byte of the presumed character, not all of it.  This
+      reduces the risk of problems if a calling application performs
+      additional processing on the quoted string.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Michael Paquier <michael@paquier.xyz>
+Branch: master [5b94e2753] 2025-02-12 17:11:43 +0900
+Branch: REL_17_STABLE [ff6d9cfcb] 2025-02-12 17:11:47 +0900
+-->
+     <para>
+      Fix small memory leak
+      in <application>pg_createsubscriber</application> (Ranier Vilela)
+      <ulink url="&commit_baseurl;ff6d9cfcb">&sect;</ulink>
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Andres Freund <andres@anarazel.de>
+Branch: master [b64d83115] 2025-02-12 08:15:53 -0500
+Branch: REL_17_STABLE [c9a1d2135] 2025-02-12 08:15:53 -0500
+Branch: REL_16_STABLE [01cdb98e4] 2025-02-12 08:15:54 -0500
+-->
+     <para>
+      Fix meson build system to correctly detect availability of
+      the <filename>bsd_auth.h</filename> system header
+      (Nazir Bilal Yavuz)
+      <ulink url="&commit_baseurl;c9a1d2135">&sect;</ulink>
+     </para>
+    </listitem>
+
+   </itemizedlist>
+
+  </sect2>
+ </sect1>
+
  <sect1 id="release-17-3">
   <title>Release 17.3</title>
 
