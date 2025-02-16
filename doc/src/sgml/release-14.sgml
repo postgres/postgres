@@ -1,6 +1,120 @@
 <!-- doc/src/sgml/release-14.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+ <sect1 id="release-14-17">
+  <title>Release 14.17</title>
+
+  <formalpara>
+  <title>Release date:</title>
+  <para>2025-02-20</para>
+  </formalpara>
+
+  <para>
+   This release contains a few fixes from 14.16.
+   For information about new features in major release 14, see
+   <xref linkend="release-14"/>.
+  </para>
+
+  <sect2>
+   <title>Migration to Version 14.17</title>
+
+   <para>
+    A dump/restore is not required for those running 14.X.
+   </para>
+
+   <para>
+    However, if you are upgrading from a version earlier than 14.14,
+    see <xref linkend="release-14-14"/>.
+   </para>
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <itemizedlist>
+
+    <listitem>
+<!--
+Author: Andres Freund <andres@anarazel.de>
+Branch: master [efdadeb22] 2025-02-14 18:09:19 -0500
+Branch: REL_17_STABLE [a92db3d02] 2025-02-14 18:09:21 -0500
+Branch: REL_16_STABLE [111f4dd27] 2025-02-14 18:09:23 -0500
+Branch: REL_15_STABLE [22ffbbf24] 2025-02-14 18:09:24 -0500
+Branch: REL_14_STABLE [985908df1] 2025-02-14 18:09:25 -0500
+Branch: REL_13_STABLE [1f7a05324] 2025-02-14 18:09:27 -0500
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [9f45e6a91] 2025-02-15 16:20:21 -0500
+Branch: REL_17_STABLE [3abe6e04c] 2025-02-15 16:20:21 -0500
+Branch: REL_16_STABLE [991a60a9f] 2025-02-15 16:20:21 -0500
+Branch: REL_15_STABLE [e782a63cc] 2025-02-15 16:20:21 -0500
+Branch: REL_14_STABLE [c08309584] 2025-02-15 16:20:21 -0500
+Branch: REL_13_STABLE [d6d29b213] 2025-02-15 16:20:21 -0500
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [a7f95859e] 2025-02-16 12:46:35 -0500
+Branch: REL_17_STABLE [3977bd298] 2025-02-16 12:46:35 -0500
+Branch: REL_16_STABLE [644b7d686] 2025-02-16 12:46:35 -0500
+Branch: REL_15_STABLE [2226a2e26] 2025-02-16 12:46:35 -0500
+Branch: REL_14_STABLE [f864a4cdf] 2025-02-16 12:46:35 -0500
+Branch: REL_13_STABLE [9f052613e] 2025-02-16 12:46:35 -0500
+-->
+     <para>
+      Improve behavior of <application>libpq</application>'s quoting
+      functions (Andres Freund, Tom Lane)
+      <ulink url="&commit_baseurl;985908df1">&sect;</ulink>
+      <ulink url="&commit_baseurl;c08309584">&sect;</ulink>
+      <ulink url="&commit_baseurl;f864a4cdf">&sect;</ulink>
+     </para>
+
+     <para>
+      The changes made for CVE-2025-1094 had one serious oversight:
+      <function>PQescapeLiteral()</function>
+      and <function>PQescapeIdentifier()</function> failed to honor their
+      string length parameter, instead always reading to the input
+      string's trailing null.  This resulted in including unwanted text in
+      the output, if the caller intended to truncate the string via the
+      length parameter.  With very bad luck it could cause a crash due to
+      reading off the end of memory.
+     </para>
+
+     <para>
+      In addition, modify all these quoting functions so that when invalid
+      encoding is detected, an invalid sequence is substituted for just
+      the first byte of the presumed character, not all of it.  This
+      reduces the risk of problems if a calling application performs
+      additional processing on the quoted string.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+note: no actual bug in v15 and later
+Author: Michael Paquier <michael@paquier.xyz>
+Branch: master [773c51dd3] 2025-02-13 16:30:58 +0900
+Branch: REL_17_STABLE [6342d49d8] 2025-02-13 16:31:05 +0900
+Branch: REL_16_STABLE [139beb035] 2025-02-13 16:31:08 +0900
+Branch: REL_15_STABLE [a37c83d1e] 2025-02-13 16:31:10 +0900
+Branch: REL_14_STABLE [8e58f8024] 2025-02-13 16:31:11 +0900
+Branch: REL_13_STABLE [520905824] 2025-02-13 16:31:12 +0900
+-->
+     <para>
+      Fix crash involving triggers on partitioned tables that make use of
+      transition tables (Kyotaro Horiguchi)
+      <ulink url="&commit_baseurl;8e58f8024">&sect;</ulink>
+     </para>
+
+     <para>
+      If there are both <literal>AFTER UPDATE</literal>
+      and <literal>AFTER DELETE</literal> triggers, the need for
+      transition tables was determined incorrectly, leading to a crash
+      during cross-partition updates.
+     </para>
+    </listitem>
+
+   </itemizedlist>
+
+  </sect2>
+ </sect1>
+
  <sect1 id="release-14-16">
   <title>Release 14.16</title>
 
