@@ -11,7 +11,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_ctl (PostgreSQL) 15\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-11-09 06:22+0000\n"
+"POT-Creation-Date: 2025-02-16 20:21+0000\n"
 "PO-Revision-Date: 2022-10-20 09:06+0200\n"
 "Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
@@ -62,7 +62,7 @@ msgstr "memoria agotada"
 
 #: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
 #: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:162
-#: ../../port/path.c:753 ../../port/path.c:791 ../../port/path.c:808
+#: ../../port/path.c:830 ../../port/path.c:868 ../../port/path.c:885
 #, c-format
 msgid "out of memory\n"
 msgstr "memoria agotada\n"
@@ -102,7 +102,7 @@ msgstr "el proceso hijo fue terminado por una señal %d: %s"
 msgid "child process exited with unrecognized status %d"
 msgstr "el proceso hijo terminó con código no reconocido %d"
 
-#: ../../port/path.c:775
+#: ../../port/path.c:852
 #, c-format
 msgid "could not get current working directory: %s\n"
 msgstr "no se pudo obtener el directorio de trabajo actual: %s\n"

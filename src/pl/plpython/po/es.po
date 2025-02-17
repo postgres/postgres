@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: plpython (PostgreSQL) 15\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-11-09 06:13+0000\n"
+"POT-Creation-Date: 2025-02-16 20:12+0000\n"
 "PO-Revision-Date: 2022-10-20 09:06+0200\n"
 "Last-Translator: Carlos Chapi <carlos.chapi@2ndquadrant.com>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
@@ -26,44 +26,44 @@ msgstr ""
 msgid "plpy.cursor expected a query or a plan"
 msgstr "plpy.cursor espera una consulta o un plan"
 
-#: plpy_cursorobject.c:155
+#: plpy_cursorobject.c:154
 #, c-format
 msgid "plpy.cursor takes a sequence as its second argument"
 msgstr "plpy.cursor lleva una secuencia como segundo argumento"
 
-#: plpy_cursorobject.c:171 plpy_spi.c:205
+#: plpy_cursorobject.c:170 plpy_spi.c:204
 #, c-format
 msgid "could not execute plan"
 msgstr "no se pudo ejecutar el plan"
 
-#: plpy_cursorobject.c:174 plpy_spi.c:208
+#: plpy_cursorobject.c:173 plpy_spi.c:207
 #, c-format
 msgid "Expected sequence of %d argument, got %d: %s"
 msgid_plural "Expected sequence of %d arguments, got %d: %s"
 msgstr[0] "Se esperaba una secuencia de %d argumento, se obtuvo %d: %s"
 msgstr[1] "Se esperaba una secuencia de %d argumentos, se obtuvo %d: %s"
 
-#: plpy_cursorobject.c:321
+#: plpy_cursorobject.c:317
 #, c-format
 msgid "iterating a closed cursor"
 msgstr "iterando un cursor cerrado"
 
-#: plpy_cursorobject.c:329 plpy_cursorobject.c:395
+#: plpy_cursorobject.c:325 plpy_cursorobject.c:391
 #, c-format
 msgid "iterating a cursor in an aborted subtransaction"
 msgstr "iterando un cursor en una subtransacción abortada"
 
-#: plpy_cursorobject.c:387
+#: plpy_cursorobject.c:383
 #, c-format
 msgid "fetch from a closed cursor"
 msgstr "haciendo «fetch» en un cursor cerrado"
 
-#: plpy_cursorobject.c:430 plpy_spi.c:401
+#: plpy_cursorobject.c:426 plpy_spi.c:393
 #, c-format
 msgid "query result has too many rows to fit in a Python list"
 msgstr "el resultado de la consulta tiene demasiados registros y no entran en una lista de Python"
 
-#: plpy_cursorobject.c:482
+#: plpy_cursorobject.c:478
 #, c-format
 msgid "closing a cursor in an aborted subtransaction"
 msgstr "cerrando un cursor en una subtransacción abortada"
@@ -318,17 +318,17 @@ msgstr "plpy.prepare: el nombre de tipo en la posición %d no es una cadena"
 msgid "plpy.execute expected a query or a plan"
 msgstr "plpy.execute espera una consulta o un plan"
 
-#: plpy_spi.c:189
+#: plpy_spi.c:188
 #, c-format
 msgid "plpy.execute takes a sequence as its second argument"
 msgstr "plpy.execute lleva una secuencia como segundo argumento"
 
-#: plpy_spi.c:297
+#: plpy_spi.c:289
 #, c-format
 msgid "SPI_execute_plan failed: %s"
 msgstr "falló SPI_execute_plan: %s"
 
-#: plpy_spi.c:339
+#: plpy_spi.c:331
 #, c-format
 msgid "SPI_execute failed: %s"
 msgstr "falló SPI_execute: %s"
