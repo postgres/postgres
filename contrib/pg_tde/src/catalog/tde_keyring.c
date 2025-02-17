@@ -217,6 +217,8 @@ pg_tde_change_key_provider_internal(PG_FUNCTION_ARGS, Oid dbOid)
 	char	   *provider_type = text_to_cstring(PG_GETARG_TEXT_PP(0));
 	char	   *provider_name = text_to_cstring(PG_GETARG_TEXT_PP(1));
 	char	   *options = text_to_cstring(PG_GETARG_TEXT_PP(2));
+	int			nlen,
+				olen;
 	KeyringProvideRecord provider;
 
 	/* reports error if not found */
@@ -224,9 +226,23 @@ pg_tde_change_key_provider_internal(PG_FUNCTION_ARGS, Oid dbOid)
 
 	pfree(keyring);
 
+	nlen = strlen(provider_name);
+	if (nlen >= sizeof(provider.provider_name))
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("too long provider name, maximum lenght is %ld bytes", sizeof(provider.provider_name) - 1)));
+
+	olen = strlen(options);
+	if (olen >= sizeof(provider.options))
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("too large provider options, maximum size is %ld bytes", sizeof(provider.options) - 1)));
+
+	/* Struct will be saved to disk so keep clean */
+	memset(&provider, 0, sizeof(provider));
 	provider.provider_id = 0;
-	strncpy(provider.options, options, sizeof(provider.options));
-	strncpy(provider.provider_name, provider_name, sizeof(provider.provider_name));
+	memcpy(provider.provider_name, provider_name, nlen);
+	memcpy(provider.options, options, olen);
 	provider.provider_type = get_keyring_provider_from_typename(provider_type);
 	modify_key_provider_info(&provider, dbOid, true);
 
@@ -251,11 +267,27 @@ pg_tde_add_key_provider_internal(PG_FUNCTION_ARGS, Oid dbOid)
 	char	   *provider_type = text_to_cstring(PG_GETARG_TEXT_PP(0));
 	char	   *provider_name = text_to_cstring(PG_GETARG_TEXT_PP(1));
 	char	   *options = text_to_cstring(PG_GETARG_TEXT_PP(2));
+	int			nlen,
+				olen;
 	KeyringProvideRecord provider;
 
+	nlen = strlen(provider_name);
+	if (nlen >= sizeof(provider.provider_name) - 1)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("too long provider name, maximum lenght is %ld bytes", sizeof(provider.provider_name) - 1)));
+
+	olen = strlen(options);
+	if (olen >= sizeof(provider.options))
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("too large provider options, maximum size is %ld bytes", sizeof(provider.options) - 1)));
+
+	/* Struct will be saved to disk so keep clean */
+	memset(&provider, 0, sizeof(provider));
 	provider.provider_id = 0;
-	strncpy(provider.options, options, sizeof(provider.options));
-	strncpy(provider.provider_name, provider_name, sizeof(provider.provider_name));
+	memcpy(provider.provider_name, provider_name, nlen);
+	memcpy(provider.options, options, olen);
 	provider.provider_type = get_keyring_provider_from_typename(provider_type);
 	save_new_key_provider_info(&provider, dbOid, true);
 
@@ -667,9 +699,9 @@ load_keyring_provider_from_record(KeyringProvideRecord *provider)
 	if (keyring)
 	{
 		keyring->keyring_id = provider->provider_id;
-		strncpy(keyring->provider_name, provider->provider_name, sizeof(keyring->provider_name));
+		memcpy(keyring->provider_name, provider->provider_name, sizeof(keyring->provider_name));
 		keyring->type = provider->provider_type;
-		strncpy(keyring->options, provider->options, sizeof(keyring->options));
+		memcpy(keyring->options, provider->options, sizeof(keyring->options));
 		debug_print_kerying(keyring);
 	}
 	return keyring;

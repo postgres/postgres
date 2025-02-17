@@ -140,7 +140,7 @@ void
 pg_tde_set_data_dir(const char *dir)
 {
 	Assert(dir != NULL);
-	strncpy(globalspace_dir, dir, sizeof(globalspace_dir));
+	strlcpy(globalspace_dir, dir, sizeof(globalspace_dir));
 }
 
 /* returns the palloc'd string */

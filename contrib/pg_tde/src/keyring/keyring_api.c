@@ -138,14 +138,15 @@ KeyringGenerateNewKey(const char *key_name, unsigned key_len)
 	keyInfo    *key;
 
 	Assert(key_len <= 32);
-	key = palloc(sizeof(keyInfo));
+	/* Struct will be saved to disk so keep clean */
+	key = palloc0(sizeof(keyInfo));
 	key->data.len = key_len;
 	if (!RAND_bytes(key->data.data, key_len))
 	{
 		pfree(key);
 		return NULL;			/* openssl error */
 	}
-	strncpy(key->name, key_name, sizeof(key->name));
+	strlcpy(key->name, key_name, sizeof(key->name));
 	return key;
 }
 
