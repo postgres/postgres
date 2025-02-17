@@ -1,14 +1,14 @@
 # Swedish message translation file for pg_combinebackup
 # Copyright (C) 2024 PostgreSQL Global Development Group
 # This file is distributed under the same license as the pg_combinebackup (PostgreSQL) package.
-# Dennis Björklund <db@zigo.dhs.org>, 2024.
+# Dennis Björklund <db@zigo.dhs.org>, 2024, 2025.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-08-31 06:22+0000\n"
-"PO-Revision-Date: 2024-09-01 20:47+0200\n"
+"POT-Creation-Date: 2025-02-12 13:52+0000\n"
+"PO-Revision-Date: 2025-02-12 20:37+0100\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
 "Language: sv\n"
@@ -43,7 +43,7 @@ msgid "could not open file \"%s\" for reading: %m"
 msgstr "kunde inte öppna filen \"%s\" för läsning: %m"
 
 #: ../../common/controldata_utils.c:110 copy_file.c:150 load_manifest.c:161
-#: load_manifest.c:199 pg_combinebackup.c:1400 reconstruct.c:527
+#: load_manifest.c:199 pg_combinebackup.c:1400 reconstruct.c:540
 #, c-format
 msgid "could not read file \"%s\": %m"
 msgstr "kunde inte läsa fil \"%s\": %m"
@@ -55,7 +55,7 @@ msgstr "kunde inte läsa fil \"%s\": läste %d av %zu"
 
 #: ../../common/controldata_utils.c:132 ../../common/controldata_utils.c:280
 #: backup_label.c:174 copy_file.c:68 pg_combinebackup.c:538
-#: pg_combinebackup.c:1175 reconstruct.c:356 reconstruct.c:727
+#: pg_combinebackup.c:1175 reconstruct.c:369 reconstruct.c:740
 #: write_manifest.c:187
 #, c-format
 msgid "could not close file \"%s\": %m"
@@ -83,13 +83,13 @@ msgstr ""
 #: ../../common/file_utils.c:480 backup_label.c:143 copy_file.c:66
 #: copy_file.c:139 copy_file.c:171 copy_file.c:175 copy_file.c:225
 #: copy_file.c:268 load_manifest.c:128 pg_combinebackup.c:523
-#: pg_combinebackup.c:1167 reconstruct.c:510 reconstruct.c:625
+#: pg_combinebackup.c:1167 reconstruct.c:523 reconstruct.c:638
 #: write_manifest.c:250
 #, c-format
 msgid "could not open file \"%s\": %m"
 msgstr "kunde inte öppna fil \"%s\": %m"
 
-#: ../../common/controldata_utils.c:249 backup_label.c:160 reconstruct.c:746
+#: ../../common/controldata_utils.c:249 backup_label.c:160 reconstruct.c:759
 #: write_manifest.c:260
 #, c-format
 msgid "could not write file \"%s\": %m"
@@ -102,7 +102,7 @@ msgid "could not fsync file \"%s\": %m"
 msgstr "kunde inte fsync:a fil \"%s\": %m"
 
 #: ../../common/cryptohash.c:261 ../../common/cryptohash_openssl.c:356
-#: ../../common/parse_manifest.c:157 ../../common/parse_manifest.c:853
+#: ../../common/parse_manifest.c:157 ../../common/parse_manifest.c:852
 #, c-format
 msgid "out of memory"
 msgstr "slut på minne"
@@ -138,8 +138,8 @@ msgstr "kan inte synkronisera filsystemet för fil \"%s\": %m"
 
 #: ../../common/file_utils.c:120 ../../common/file_utils.c:566
 #: backup_label.c:187 load_manifest.c:133 pg_combinebackup.c:676
-#: pg_combinebackup.c:1131 pg_combinebackup.c:1383 reconstruct.c:199
-#: reconstruct.c:408
+#: pg_combinebackup.c:1131 pg_combinebackup.c:1383 reconstruct.c:204
+#: reconstruct.c:421
 #, c-format
 msgid "could not stat file \"%s\": %m"
 msgstr "kunde inte göra stat() på fil \"%s\": %m"
@@ -262,159 +262,159 @@ msgstr "Unicodes övre surrogathalva får inte komma efter en övre surrogathalv
 msgid "Unicode low surrogate must follow a high surrogate."
 msgstr "Unicodes lägre surrogathalva måste följa en övre surrogathalva."
 
-#: ../../common/parse_manifest.c:159 ../../common/parse_manifest.c:855
+#: ../../common/parse_manifest.c:159 ../../common/parse_manifest.c:854
 #, c-format
 msgid "could not initialize checksum of manifest"
 msgstr "kunde inte initiera kontrollsumma för backup-manifest"
 
-#: ../../common/parse_manifest.c:204 ../../common/parse_manifest.c:261
+#: ../../common/parse_manifest.c:203 ../../common/parse_manifest.c:260
 msgid "manifest ended unexpectedly"
 msgstr "manifestet avslutades oväntat"
 
-#: ../../common/parse_manifest.c:210 ../../common/parse_manifest.c:862
+#: ../../common/parse_manifest.c:209 ../../common/parse_manifest.c:861
 #, c-format
 msgid "could not update checksum of manifest"
 msgstr "kunde inte uppdatera kontrollsumma för backup-manifest"
 
-#: ../../common/parse_manifest.c:302
+#: ../../common/parse_manifest.c:301
 msgid "unexpected object start"
 msgstr "oväntad objektstart"
 
-#: ../../common/parse_manifest.c:337
+#: ../../common/parse_manifest.c:336
 msgid "unexpected object end"
 msgstr "oväntat objektslut"
 
-#: ../../common/parse_manifest.c:366
+#: ../../common/parse_manifest.c:365
 msgid "unexpected array start"
 msgstr "oväntad array-start"
 
-#: ../../common/parse_manifest.c:391
+#: ../../common/parse_manifest.c:390
 msgid "unexpected array end"
 msgstr "oväntat array-slut"
 
-#: ../../common/parse_manifest.c:418
+#: ../../common/parse_manifest.c:417
 msgid "expected version indicator"
 msgstr "förväntade en versionsindikator"
 
-#: ../../common/parse_manifest.c:454
+#: ../../common/parse_manifest.c:453
 msgid "unrecognized top-level field"
 msgstr "okänt toppnivåfält"
 
-#: ../../common/parse_manifest.c:473
+#: ../../common/parse_manifest.c:472
 msgid "unexpected file field"
 msgstr "oväntat filfält"
 
-#: ../../common/parse_manifest.c:487
+#: ../../common/parse_manifest.c:486
 msgid "unexpected WAL range field"
 msgstr "oväntat WAL-intervall-fält"
 
-#: ../../common/parse_manifest.c:493
+#: ../../common/parse_manifest.c:492
 msgid "unexpected object field"
 msgstr "oväntat objektfält"
 
-#: ../../common/parse_manifest.c:583
+#: ../../common/parse_manifest.c:582
 msgid "unexpected scalar"
 msgstr "oväntad skalar"
 
-#: ../../common/parse_manifest.c:609
+#: ../../common/parse_manifest.c:608
 msgid "manifest version not an integer"
 msgstr "manifestversion är inte ett heltal"
 
-#: ../../common/parse_manifest.c:613
+#: ../../common/parse_manifest.c:612
 msgid "unexpected manifest version"
 msgstr "oväntad manifestversion"
 
-#: ../../common/parse_manifest.c:637
+#: ../../common/parse_manifest.c:636
 msgid "system identifier in manifest not an integer"
 msgstr "manifestets systemidentifierare är inte ett heltal"
 
-#: ../../common/parse_manifest.c:662
+#: ../../common/parse_manifest.c:661
 msgid "missing path name"
 msgstr "saknas sökväg"
 
-#: ../../common/parse_manifest.c:665
+#: ../../common/parse_manifest.c:664
 msgid "both path name and encoded path name"
 msgstr "både sökväg och kodad sökväg"
 
-#: ../../common/parse_manifest.c:667
+#: ../../common/parse_manifest.c:666
 msgid "missing size"
 msgstr "saknar storlek"
 
-#: ../../common/parse_manifest.c:670
+#: ../../common/parse_manifest.c:669
 msgid "checksum without algorithm"
 msgstr "kontrollsumma utan algoritm"
 
-#: ../../common/parse_manifest.c:684
+#: ../../common/parse_manifest.c:683
 msgid "could not decode file name"
 msgstr "kunde inte avkoda filnamn"
 
-#: ../../common/parse_manifest.c:694
+#: ../../common/parse_manifest.c:693
 msgid "file size is not an integer"
 msgstr "filstorlek är inte ett haltal"
 
-#: ../../common/parse_manifest.c:700 pg_combinebackup.c:199
+#: ../../common/parse_manifest.c:699 pg_combinebackup.c:199
 #, c-format
 msgid "unrecognized checksum algorithm: \"%s\""
 msgstr "okänd algoritm för kontrollsumma: \"%s\""
 
-#: ../../common/parse_manifest.c:719
+#: ../../common/parse_manifest.c:718
 #, c-format
 msgid "invalid checksum for file \"%s\": \"%s\""
 msgstr "ogiltig kontrollsumma för fil \"%s\": \"%s\""
 
-#: ../../common/parse_manifest.c:762
+#: ../../common/parse_manifest.c:761
 msgid "missing timeline"
 msgstr "saknar tidslinje"
 
-#: ../../common/parse_manifest.c:764
+#: ../../common/parse_manifest.c:763
 msgid "missing start LSN"
 msgstr "saknar start-LSN"
 
-#: ../../common/parse_manifest.c:766
+#: ../../common/parse_manifest.c:765
 msgid "missing end LSN"
 msgstr "saknar slut-LSN"
 
-#: ../../common/parse_manifest.c:772
+#: ../../common/parse_manifest.c:771
 msgid "timeline is not an integer"
 msgstr "tidslinje är inte ett heltal"
 
-#: ../../common/parse_manifest.c:775
+#: ../../common/parse_manifest.c:774
 msgid "could not parse start LSN"
 msgstr "kunde inte parsa start-LSN"
 
-#: ../../common/parse_manifest.c:778
+#: ../../common/parse_manifest.c:777
 msgid "could not parse end LSN"
 msgstr "kunde inte parsa slut-LSN"
 
-#: ../../common/parse_manifest.c:843
+#: ../../common/parse_manifest.c:842
 msgid "expected at least 2 lines"
 msgstr "förväntade minst två rader"
 
-#: ../../common/parse_manifest.c:846
+#: ../../common/parse_manifest.c:845
 msgid "last line not newline-terminated"
 msgstr "sista raden är inte nyradsterminerad"
 
-#: ../../common/parse_manifest.c:865
+#: ../../common/parse_manifest.c:864
 #, c-format
 msgid "could not finalize checksum of manifest"
 msgstr "kunde inte göra klart kontrollsumma för backup-manifest"
 
-#: ../../common/parse_manifest.c:869
+#: ../../common/parse_manifest.c:868
 #, c-format
 msgid "manifest has no checksum"
 msgstr "manifestet har ingen kontrollsumma"
 
-#: ../../common/parse_manifest.c:873
+#: ../../common/parse_manifest.c:872
 #, c-format
 msgid "invalid manifest checksum: \"%s\""
 msgstr "ogiltig kontrollsumma för manifest: \"%s\""
 
-#: ../../common/parse_manifest.c:877
+#: ../../common/parse_manifest.c:876
 #, c-format
 msgid "manifest checksum mismatch"
 msgstr "kontrollsumma för manifest matchar inte"
 
-#: ../../common/parse_manifest.c:892
+#: ../../common/parse_manifest.c:891
 #, c-format
 msgid "could not parse backup manifest: %s"
 msgstr "kunde inte parsa backup-manifest: %s"
@@ -464,13 +464,13 @@ msgstr "%s: kunde inte hitta %s"
 msgid "%s: %s requires %s"
 msgstr "%s: %s kräver %s"
 
-#: backup_label.c:162 reconstruct.c:748 write_manifest.c:262
+#: backup_label.c:162 reconstruct.c:761 write_manifest.c:262
 #, c-format
 msgid "could not write file \"%s\": wrote %d of %d"
 msgstr "kunde inte skriva fil \"%s\": skrev %d av %d"
 
-#: backup_label.c:166 copy_file.c:146 copy_file.c:193 reconstruct.c:708
-#: reconstruct.c:754 write_manifest.c:270
+#: backup_label.c:166 copy_file.c:146 copy_file.c:193 reconstruct.c:721
+#: reconstruct.c:767 write_manifest.c:270
 #, c-format
 msgid "could not update checksum of file \"%s\""
 msgstr "kunde inte uppdatera kontrollsumma för filen \"%s\""
@@ -485,7 +485,7 @@ msgstr "kunde inte skriva till fil \"%s\": %m"
 msgid "could not write to file \"%s\", offset %u: wrote %d of %d"
 msgstr "kunde inte skriva till fil \"%s\", offset %u: skrev %d av %d"
 
-#: copy_file.c:199 reconstruct.c:771
+#: copy_file.c:199 reconstruct.c:784
 #, c-format
 msgid "could not read from file \"%s\": %m"
 msgstr "kunde inte läsa från fil \"%s\": %m"
@@ -510,12 +510,12 @@ msgstr "fel vid kloning av fil \"%s\" till \"%s\": %s"
 msgid "file cloning not supported on this platform"
 msgstr "filkloning stöds inte på denna plattform"
 
-#: copy_file.c:278 reconstruct.c:691
+#: copy_file.c:278 reconstruct.c:704
 #, c-format
 msgid "error while copying file range from \"%s\" to \"%s\": %m"
 msgstr "fel vid kopiering av filintervall från \"%s\" till \"%s\": %m"
 
-#: copy_file.c:285 pg_combinebackup.c:264 reconstruct.c:711
+#: copy_file.c:285 pg_combinebackup.c:264 reconstruct.c:724
 #, c-format
 msgid "copy_file_range not supported on this platform"
 msgstr "copy_file_range stöds inte på denna plattform"
@@ -540,12 +540,12 @@ msgstr "kunde inte läsa fil \"%s\": läste %d av %lld"
 msgid "could not read file \"%s\": read %lld of %lld"
 msgstr "kunde inte läsa fil \"%s\": läste %lld av %lld"
 
-#: load_manifest.c:249
+#: load_manifest.c:248
 #, c-format
 msgid "backup manifest version 1 does not support incremental backup"
 msgstr "version 1 av backup-manifest stöder inte inkrementell backup"
 
-#: load_manifest.c:281
+#: load_manifest.c:280
 #, c-format
 msgid "duplicate path name in backup manifest: \"%s\""
 msgstr "duplicerad sökväg i backup-manifest: \"%s\""
@@ -805,7 +805,7 @@ msgstr "hoppar över symbolisk länk \"%s\""
 msgid "skipping special file \"%s\""
 msgstr "hoppar över specialfil \"%s\""
 
-#: pg_combinebackup.c:1073 reconstruct.c:300
+#: pg_combinebackup.c:1073 reconstruct.c:305
 #, c-format
 msgid "manifest file \"%s\" contains no entry for file \"%s\""
 msgstr "manifestfil \"%s\" innehåller ingen post för fil \"%s\""
@@ -860,32 +860,37 @@ msgstr "filen \"%s\" är för stor"
 msgid "could not read file \"%s\": read %zd of %lld"
 msgstr "kunde inte läsa fil \"%s\": läste %zd av %lld"
 
-#: reconstruct.c:410
+#: reconstruct.c:339
+#, c-format
+msgid "full backup contains unexpected incremental file \"%s\""
+msgstr "full backup innehåller in oväntad inkrementell fil \"%s\""
+
+#: reconstruct.c:423
 #, c-format
 msgid "file \"%s\" is too short: expected %llu, found %llu"
 msgstr "filen \"%s\" är för kort: förväntade %llu, hittade %llu"
 
-#: reconstruct.c:452
+#: reconstruct.c:465
 #, c-format
 msgid "file \"%s\" has bad incremental magic number (0x%x, expected 0x%x)"
 msgstr "filen \"%s\" har ett felaktigt inkrementellt magiskt nummer (0x%x, förväntade 0x%x)"
 
-#: reconstruct.c:458
+#: reconstruct.c:471
 #, c-format
 msgid "file \"%s\" has block count %u in excess of segment size %u"
 msgstr "filen \"%s\" har ett blockantal %u som är större än segmentstorleken %u"
 
-#: reconstruct.c:465
+#: reconstruct.c:478
 #, c-format
 msgid "file \"%s\" has truncation block length %u in excess of segment size %u"
 msgstr "filen \"%s\" trunkeringsblocklängd %u som är större än segmentstorleken %u"
 
-#: reconstruct.c:529
+#: reconstruct.c:542
 #, c-format
 msgid "could not read file \"%s\": read %d of %u"
 msgstr "kunde inte läsa filen \"%s\": läste %d av %u"
 
-#: reconstruct.c:773
+#: reconstruct.c:786
 #, c-format
 msgid "could not read from file \"%s\", offset %llu: read %d of %d"
 msgstr "kunde inte läsa från filen \"%s\", offset %llu: läste %d av %d"

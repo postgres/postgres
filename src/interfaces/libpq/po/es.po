@@ -12,8 +12,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: libpq (PostgreSQL) 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-11-16 05:10+0000\n"
-"PO-Revision-Date: 2024-11-16 14:23+0100\n"
+"POT-Creation-Date: 2025-02-16 19:40+0000\n"
+"PO-Revision-Date: 2025-02-17 15:15+0100\n"
 "Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
 "Language: es\n"
@@ -83,7 +83,7 @@ msgstr "no se pudo generar nonce"
 #: fe-connect.c:5773 fe-connect.c:5871 fe-connect.c:6122 fe-connect.c:6149
 #: fe-connect.c:6225 fe-connect.c:6248 fe-connect.c:6272 fe-connect.c:6307
 #: fe-connect.c:6393 fe-connect.c:6401 fe-connect.c:6758 fe-connect.c:6908
-#: fe-exec.c:530 fe-exec.c:1315 fe-exec.c:3254 fe-exec.c:4234 fe-exec.c:4398
+#: fe-exec.c:530 fe-exec.c:1315 fe-exec.c:3254 fe-exec.c:4291 fe-exec.c:4457
 #: fe-gssapi-common.c:109 fe-lobj.c:870 fe-protocol3.c:209 fe-protocol3.c:232
 #: fe-protocol3.c:255 fe-protocol3.c:272 fe-protocol3.c:293 fe-protocol3.c:369
 #: fe-protocol3.c:737 fe-protocol3.c:976 fe-protocol3.c:1787
@@ -981,10 +981,16 @@ msgstr "el número de parámetro %d está fuera del rango 0..%d"
 msgid "could not interpret result from server: %s"
 msgstr "no se pudo interpretar el resultado del servidor: %s"
 
-#: fe-exec.c:4127 fe-exec.c:4217
+#: fe-exec.c:4140 fe-exec.c:4253
 #, c-format
 msgid "incomplete multibyte character"
 msgstr "carácter multibyte incompleto"
+
+#: fe-exec.c:4142 fe-exec.c:4272
+#, c-format
+#| msgid "invalid multibyte character for locale"
+msgid "invalid multibyte character"
+msgstr "carácter multibyte no válido"
 
 #: fe-gssapi-common.c:122
 msgid "GSSAPI name import error"

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_verifybackup (PostgreSQL) 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-11-16 05:18+0000\n"
+"POT-Creation-Date: 2025-02-16 19:47+0000\n"
 "PO-Revision-Date: 2024-11-16 14:24+0100\n"
 "Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: PgSQL-es-ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
@@ -96,7 +96,7 @@ msgid "could not fsync file \"%s\": %m"
 msgstr "no se pudo sincronizar (fsync) archivo «%s»: %m"
 
 #: ../../common/cryptohash.c:261 ../../common/cryptohash_openssl.c:356
-#: ../../common/parse_manifest.c:157 ../../common/parse_manifest.c:853
+#: ../../common/parse_manifest.c:157 ../../common/parse_manifest.c:852
 #, c-format
 msgid "out of memory"
 msgstr "memoria agotada"
@@ -221,159 +221,159 @@ msgstr "Un «high-surrogate» Unicode no puede venir después de un «high-surro
 msgid "Unicode low surrogate must follow a high surrogate."
 msgstr "Un «low-surrogate» Unicode debe seguir a un «high-surrogate»."
 
-#: ../../common/parse_manifest.c:159 ../../common/parse_manifest.c:855
+#: ../../common/parse_manifest.c:159 ../../common/parse_manifest.c:854
 #, c-format
 msgid "could not initialize checksum of manifest"
 msgstr "no se pudo inicializar la suma de verificación del manifiesto"
 
-#: ../../common/parse_manifest.c:204 ../../common/parse_manifest.c:261
+#: ../../common/parse_manifest.c:203 ../../common/parse_manifest.c:260
 msgid "manifest ended unexpectedly"
 msgstr "el manifiesto terminó inesperadamente"
 
-#: ../../common/parse_manifest.c:210 ../../common/parse_manifest.c:862
+#: ../../common/parse_manifest.c:209 ../../common/parse_manifest.c:861
 #, c-format
 msgid "could not update checksum of manifest"
 msgstr "no se pudo actualizar la suma de verificación del manifiesto"
 
-#: ../../common/parse_manifest.c:302
+#: ../../common/parse_manifest.c:301
 msgid "unexpected object start"
 msgstr "inicio de objeto inesperado"
 
-#: ../../common/parse_manifest.c:337
+#: ../../common/parse_manifest.c:336
 msgid "unexpected object end"
 msgstr "fin de objeto inesperado"
 
-#: ../../common/parse_manifest.c:366
+#: ../../common/parse_manifest.c:365
 msgid "unexpected array start"
 msgstr "inicio de array inesperado"
 
-#: ../../common/parse_manifest.c:391
+#: ../../common/parse_manifest.c:390
 msgid "unexpected array end"
 msgstr "fin de array inesperado"
 
-#: ../../common/parse_manifest.c:418
+#: ../../common/parse_manifest.c:417
 msgid "expected version indicator"
 msgstr "se esperaba indicador de versión"
 
-#: ../../common/parse_manifest.c:454
+#: ../../common/parse_manifest.c:453
 msgid "unrecognized top-level field"
 msgstr "campo de nivel superior no reconocido"
 
-#: ../../common/parse_manifest.c:473
+#: ../../common/parse_manifest.c:472
 msgid "unexpected file field"
 msgstr "campo de archivo inesperado"
 
-#: ../../common/parse_manifest.c:487
+#: ../../common/parse_manifest.c:486
 msgid "unexpected WAL range field"
 msgstr "campo de rango de WAL inesperado"
 
-#: ../../common/parse_manifest.c:493
+#: ../../common/parse_manifest.c:492
 msgid "unexpected object field"
 msgstr "campo de objeto inesperado"
 
-#: ../../common/parse_manifest.c:583
+#: ../../common/parse_manifest.c:582
 msgid "unexpected scalar"
 msgstr "escalar inesperado"
 
-#: ../../common/parse_manifest.c:609
+#: ../../common/parse_manifest.c:608
 msgid "manifest version not an integer"
 msgstr "la versión de manifiesto no es un número entero"
 
-#: ../../common/parse_manifest.c:613
+#: ../../common/parse_manifest.c:612
 msgid "unexpected manifest version"
 msgstr "versión de manifiesto inesperada"
 
-#: ../../common/parse_manifest.c:637
+#: ../../common/parse_manifest.c:636
 msgid "system identifier in manifest not an integer"
 msgstr "el identificador de sistema en el manifiesto no es un número entero"
 
-#: ../../common/parse_manifest.c:662
+#: ../../common/parse_manifest.c:661
 msgid "missing path name"
 msgstr "ruta de archivo faltante"
 
-#: ../../common/parse_manifest.c:665
+#: ../../common/parse_manifest.c:664
 msgid "both path name and encoded path name"
 msgstr "hay ambos ruta de archivo (path name) y ruta codificada (encoded path name)"
 
-#: ../../common/parse_manifest.c:667
+#: ../../common/parse_manifest.c:666
 msgid "missing size"
 msgstr "tamaño faltante"
 
-#: ../../common/parse_manifest.c:670
+#: ../../common/parse_manifest.c:669
 msgid "checksum without algorithm"
 msgstr "suma de comprobación sin algoritmo"
 
-#: ../../common/parse_manifest.c:684
+#: ../../common/parse_manifest.c:683
 msgid "could not decode file name"
 msgstr "no se pudo decodificar el nombre del archivo"
 
-#: ../../common/parse_manifest.c:694
+#: ../../common/parse_manifest.c:693
 msgid "file size is not an integer"
 msgstr "el tamaño del archivo no es un número entero"
 
-#: ../../common/parse_manifest.c:700
+#: ../../common/parse_manifest.c:699
 #, c-format
 msgid "unrecognized checksum algorithm: \"%s\""
 msgstr "algoritmo de suma de comprobación no reconocido: \"%s\""
 
-#: ../../common/parse_manifest.c:719
+#: ../../common/parse_manifest.c:718
 #, c-format
 msgid "invalid checksum for file \"%s\": \"%s\""
 msgstr "suma de comprobación no válida para el archivo \"%s\": \"%s\""
 
-#: ../../common/parse_manifest.c:762
+#: ../../common/parse_manifest.c:761
 msgid "missing timeline"
 msgstr "falta el timeline"
 
-#: ../../common/parse_manifest.c:764
+#: ../../common/parse_manifest.c:763
 msgid "missing start LSN"
 msgstr "falta el LSN de inicio"
 
-#: ../../common/parse_manifest.c:766
+#: ../../common/parse_manifest.c:765
 msgid "missing end LSN"
 msgstr "falta el LSN de término"
 
-#: ../../common/parse_manifest.c:772
+#: ../../common/parse_manifest.c:771
 msgid "timeline is not an integer"
 msgstr "el timeline no es un número entero"
 
-#: ../../common/parse_manifest.c:775
+#: ../../common/parse_manifest.c:774
 msgid "could not parse start LSN"
 msgstr "no se pudo interpretar el LSN de inicio"
 
-#: ../../common/parse_manifest.c:778
+#: ../../common/parse_manifest.c:777
 msgid "could not parse end LSN"
 msgstr "no se pudo interpretar el LSN de término"
 
-#: ../../common/parse_manifest.c:843
+#: ../../common/parse_manifest.c:842
 msgid "expected at least 2 lines"
 msgstr "esperado al menos 2 líneas"
 
-#: ../../common/parse_manifest.c:846
+#: ../../common/parse_manifest.c:845
 msgid "last line not newline-terminated"
 msgstr "última línea no termina en nueva línea"
 
-#: ../../common/parse_manifest.c:865
+#: ../../common/parse_manifest.c:864
 #, c-format
 msgid "could not finalize checksum of manifest"
 msgstr "no se pudo finalizar la suma de verificación del manifiesto"
 
-#: ../../common/parse_manifest.c:869
+#: ../../common/parse_manifest.c:868
 #, c-format
 msgid "manifest has no checksum"
 msgstr "el manifiesto no tiene suma de comprobación"
 
-#: ../../common/parse_manifest.c:873
+#: ../../common/parse_manifest.c:872
 #, c-format
 msgid "invalid manifest checksum: \"%s\""
 msgstr "suma de comprobación de manifiesto no válida: \"%s\""
 
-#: ../../common/parse_manifest.c:877
+#: ../../common/parse_manifest.c:876
 #, c-format
 msgid "manifest checksum mismatch"
 msgstr "discordancia en la suma de comprobación del manifiesto"
 
-#: ../../common/parse_manifest.c:892
+#: ../../common/parse_manifest.c:891
 #, c-format
 msgid "could not parse backup manifest: %s"
 msgstr "no se pudo analizar el manifiesto de la copia de seguridad: %s"

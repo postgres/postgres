@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: initdb (PostgreSQL) 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-11-16 05:21+0000\n"
+"POT-Creation-Date: 2025-02-16 19:50+0000\n"
 "PO-Revision-Date: 2024-11-16 14:23+0100\n"
 "Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
@@ -245,12 +245,12 @@ msgstr "%s debe estar en el rango %d..%d"
 msgid "unrecognized sync method: %s"
 msgstr "método sync no reconocido: %s"
 
-#: ../../fe_utils/string_utils.c:434
+#: ../../fe_utils/string_utils.c:587
 #, c-format
 msgid "shell command argument contains a newline or carriage return: \"%s\"\n"
 msgstr "el argumento de la orden de shell contiene un salto de línea o retorno de carro: «%s»\n"
 
-#: ../../fe_utils/string_utils.c:607
+#: ../../fe_utils/string_utils.c:760
 #, c-format
 msgid "database name contains a newline or carriage return: \"%s\"\n"
 msgstr "el nombre de base de datos contiene un salto de línea o retorno de carro: «%s»\n"
