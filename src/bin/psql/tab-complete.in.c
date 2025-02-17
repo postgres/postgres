@@ -1077,6 +1077,11 @@ Keywords_for_list_of_owner_roles, "PUBLIC"
 "   FROM pg_catalog.pg_user_mappings "\
 "  WHERE usename LIKE '%s'"
 
+#define Query_for_list_of_user_vars \
+" SELECT pg_catalog.split_part(pg_catalog.unnest(rolconfig),'=',1) "\
+"   FROM pg_catalog.pg_roles "\
+"  WHERE rolname LIKE '%s'"
+
 #define Query_for_list_of_access_methods \
 " SELECT amname "\
 "   FROM pg_catalog.pg_am "\
@@ -2486,6 +2491,10 @@ match_previous_words(int pattern_id,
 					  "NOLOGIN", "NOREPLICATION", "NOSUPERUSER", "PASSWORD",
 					  "RENAME TO", "REPLICATION", "RESET", "SET", "SUPERUSER",
 					  "VALID UNTIL", "WITH");
+
+	/* ALTER USER,ROLE <name> RESET */
+	else if (Matches("ALTER", "USER|ROLE", MatchAny, "RESET"))
+		COMPLETE_WITH_QUERY_PLUS(Query_for_list_of_user_vars, "ALL");
 
 	/* ALTER USER,ROLE <name> WITH */
 	else if (Matches("ALTER", "USER|ROLE", MatchAny, "WITH"))
