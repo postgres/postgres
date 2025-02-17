@@ -10,11 +10,13 @@ INSTALL_DIR="$SCRIPT_DIR/../../pginst"
 cd "$SCRIPT_DIR/.."
 
 export PATH=$INSTALL_DIR/bin:$PATH
-export PGDATA=$INSTALL_DIR/data
+export DATA_DIR=$INSTALL_DIR/data
+export PGDATA="${1:-$DATA_DIR}"
+export PGPORT="${2:-5432}"
 
 if [ -d "$PGDATA" ]; then
-    if pg_ctl -D "$PGDATA" status >/dev/null; then
-        pg_ctl -D "$PGDATA" stop
+    if pg_ctl -D "$PGDATA" status -o "-p $PGPORT" >/dev/null; then
+        pg_ctl -D "$PGDATA" stop -o "-p $PGPORT"
     fi
 
     rm -rf "$PGDATA"
@@ -22,8 +24,8 @@ fi
 
 initdb -D "$PGDATA" --set shared_preload_libraries=pg_tde
 
-pg_ctl -D "$PGDATA" start
+pg_ctl -D "$PGDATA" start -o "-p $PGPORT"
 
 psql postgres -f "$SCRIPT_DIR/tde_setup_global.sql"
 
-pg_ctl -D "$PGDATA" restart
+pg_ctl -D "$PGDATA" restart -o "-p $PGPORT"
