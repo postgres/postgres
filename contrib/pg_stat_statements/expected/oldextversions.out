@@ -385,6 +385,7 @@ AlTER EXTENSION pg_stat_statements UPDATE TO '1.12';
  wal_records                | bigint                   |           |          | 
  wal_fpi                    | bigint                   |           |          | 
  wal_bytes                  | numeric                  |           |          | 
+ wal_buffers_full           | bigint                   |           |          | 
  jit_functions              | bigint                   |           |          | 
  jit_generation_time        | double precision         |           |          | 
  jit_inlining_count         | bigint                   |           |          | 

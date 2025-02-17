@@ -438,6 +438,15 @@
 
      <row>
       <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>wal_buffers_full</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of times the WAL buffers became full
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
        <structfield>jit_functions</structfield> <type>bigint</type>
       </para>
       <para>
