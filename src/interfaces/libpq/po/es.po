@@ -938,6 +938,12 @@ msgstr "no se pudo interpretar el resultado del servidor: %s"
 msgid "incomplete multibyte character"
 msgstr "carácter multibyte incompleto"
 
+#: fe-exec.c:4019 fe-exec.c:4145
+#, c-format
+#| msgid "invalid multibyte character for locale"
+msgid "invalid multibyte character"
+msgstr "carácter multibyte no válido"
+
 #: fe-gssapi-common.c:122
 msgid "GSSAPI name import error"
 msgstr "error de importación de nombre de GSSAPI"
