@@ -4,12 +4,12 @@
 \echo Use "CREATE EXTENSION pg_tde" to load this file. \quit
 
 -- Key Provider Management
-CREATE FUNCTION pg_tde_add_key_provider(provider_type VARCHAR(10), provider_name VARCHAR(128), options JSON)
+CREATE FUNCTION pg_tde_add_key_provider(provider_type TEXT, provider_name TEXT, options JSON)
 RETURNS INT
 LANGUAGE C
 AS 'MODULE_PATHNAME';
 
-CREATE FUNCTION pg_tde_add_key_provider_file(provider_name VARCHAR(128), file_path TEXT)
+CREATE FUNCTION pg_tde_add_key_provider_file(provider_name TEXT, file_path TEXT)
 RETURNS INT
 LANGUAGE SQL
 BEGIN ATOMIC
@@ -19,7 +19,7 @@ BEGIN ATOMIC
                 json_object('type' VALUE 'file', 'path' VALUE COALESCE(file_path, '')));
 END;
 
-CREATE FUNCTION pg_tde_add_key_provider_file(provider_name VARCHAR(128), file_path JSON)
+CREATE FUNCTION pg_tde_add_key_provider_file(provider_name TEXT, file_path JSON)
 RETURNS INT
 LANGUAGE SQL
 BEGIN ATOMIC
@@ -29,7 +29,7 @@ BEGIN ATOMIC
                 json_object('type' VALUE 'file', 'path' VALUE file_path));
 END;
 
-CREATE FUNCTION pg_tde_add_key_provider_vault_v2(provider_name VARCHAR(128),
+CREATE FUNCTION pg_tde_add_key_provider_vault_v2(provider_name TEXT,
                                                 vault_token TEXT,
                                                 vault_url TEXT,
                                                 vault_mount_path TEXT,
@@ -47,7 +47,7 @@ BEGIN ATOMIC
                             'caPath' VALUE COALESCE(vault_ca_path, '')));
 END;
 
-CREATE FUNCTION pg_tde_add_key_provider_vault_v2(provider_name VARCHAR(128),
+CREATE FUNCTION pg_tde_add_key_provider_vault_v2(provider_name TEXT,
                                                 vault_token JSON,
                                                 vault_url JSON,
                                                 vault_mount_path JSON,
@@ -65,7 +65,7 @@ BEGIN ATOMIC
                             'caPath' VALUE vault_ca_path));
 END;
 
-CREATE FUNCTION pg_tde_add_key_provider_kmip(provider_name VARCHAR(128),
+CREATE FUNCTION pg_tde_add_key_provider_kmip(provider_name TEXT,
                                              kmip_host TEXT,
                                              kmip_port INT,
                                              kmip_ca_path TEXT,
@@ -83,7 +83,7 @@ BEGIN ATOMIC
                             'certPath' VALUE COALESCE(kmip_cert_path, '')));
 END;
 
-CREATE FUNCTION pg_tde_add_key_provider_kmip(provider_name VARCHAR(128),
+CREATE FUNCTION pg_tde_add_key_provider_kmip(provider_name TEXT,
                                              kmip_host JSON,
                                              kmip_port JSON,
                                              kmip_ca_path JSON,
@@ -101,15 +101,15 @@ BEGIN ATOMIC
                             'certPath' VALUE kmip_cert_path));
 END;
 
-CREATE FUNCTION pg_tde_set_default_principal_key(principal_key_name VARCHAR(255), provider_name VARCHAR(255) DEFAULT NULL, ensure_new_key BOOLEAN DEFAULT FALSE)
+CREATE FUNCTION pg_tde_set_default_principal_key(principal_key_name TEXT, provider_name TEXT DEFAULT NULL, ensure_new_key BOOLEAN DEFAULT FALSE)
 RETURNS boolean
 AS 'MODULE_PATHNAME'
 LANGUAGE C;
 
 CREATE FUNCTION pg_tde_list_all_key_providers
     (OUT id INT,
-    OUT provider_name VARCHAR(128),
-    OUT provider_type VARCHAR(10),
+    OUT provider_name TEXT,
+    OUT provider_type TEXT,
     OUT options JSON)
 RETURNS SETOF record
 LANGUAGE C STRICT
@@ -117,20 +117,20 @@ AS 'MODULE_PATHNAME';
 
 CREATE FUNCTION pg_tde_list_all_global_key_providers
     (OUT id INT,
-    OUT provider_name VARCHAR(128),
-    OUT provider_type VARCHAR(10),
+    OUT provider_name TEXT,
+    OUT provider_type TEXT,
     OUT options JSON)
 RETURNS SETOF record
 LANGUAGE C STRICT
 AS 'MODULE_PATHNAME';
 
 -- Global Tablespace Key Provider Management
-CREATE FUNCTION pg_tde_add_global_key_provider(provider_type VARCHAR(10), provider_name VARCHAR(128), options JSON)
+CREATE FUNCTION pg_tde_add_global_key_provider(provider_type TEXT, provider_name TEXT, options JSON)
 RETURNS INT
 LANGUAGE C
 AS 'MODULE_PATHNAME';
 
-CREATE FUNCTION pg_tde_add_global_key_provider_file(provider_name VARCHAR(128), file_path TEXT)
+CREATE FUNCTION pg_tde_add_global_key_provider_file(provider_name TEXT, file_path TEXT)
 RETURNS INT
 LANGUAGE SQL
 BEGIN ATOMIC
@@ -140,7 +140,7 @@ BEGIN ATOMIC
                 json_object('type' VALUE 'file', 'path' VALUE COALESCE(file_path, '')));
 END;
 
-CREATE FUNCTION pg_tde_add_global_key_provider_file(provider_name VARCHAR(128), file_path JSON)
+CREATE FUNCTION pg_tde_add_global_key_provider_file(provider_name TEXT, file_path JSON)
 RETURNS INT
 LANGUAGE SQL
 BEGIN ATOMIC
@@ -150,7 +150,7 @@ BEGIN ATOMIC
                 json_object('type' VALUE 'file', 'path' VALUE file_path));
 END;
 
-CREATE FUNCTION pg_tde_add_global_key_provider_vault_v2(provider_name VARCHAR(128),
+CREATE FUNCTION pg_tde_add_global_key_provider_vault_v2(provider_name TEXT,
                                                         vault_token TEXT,
                                                         vault_url TEXT,
                                                         vault_mount_path TEXT,
@@ -168,7 +168,7 @@ BEGIN ATOMIC
                             'caPath' VALUE COALESCE(vault_ca_path, '')));
 END;
 
-CREATE FUNCTION pg_tde_add_global_key_provider_vault_v2(provider_name VARCHAR(128),
+CREATE FUNCTION pg_tde_add_global_key_provider_vault_v2(provider_name TEXT,
                                                         vault_token JSON,
                                                         vault_url JSON,
                                                         vault_mount_path JSON,
@@ -186,7 +186,7 @@ BEGIN ATOMIC
                             'caPath' VALUE vault_ca_path));
 END;
 
-CREATE FUNCTION pg_tde_add_global_key_provider_kmip(provider_name VARCHAR(128),
+CREATE FUNCTION pg_tde_add_global_key_provider_kmip(provider_name TEXT,
                                                     kmip_host TEXT,
                                                     kmip_port INT,
                                                     kmip_ca_path TEXT,
@@ -204,7 +204,7 @@ BEGIN ATOMIC
                             'certPath' VALUE COALESCE(kmip_cert_path, '')));
 END;
 
-CREATE FUNCTION pg_tde_add_global_key_provider_kmip(provider_name VARCHAR(128),
+CREATE FUNCTION pg_tde_add_global_key_provider_kmip(provider_name TEXT,
                                                     kmip_host JSON,
                                                     kmip_port JSON,
                                                     kmip_ca_path JSON,
@@ -223,12 +223,12 @@ BEGIN ATOMIC
 END;
 
 -- Key Provider Management
-CREATE FUNCTION pg_tde_change_key_provider(provider_type VARCHAR(10), provider_name VARCHAR(128), options JSON)
+CREATE FUNCTION pg_tde_change_key_provider(provider_type TEXT, provider_name TEXT, options JSON)
 RETURNS INT
 LANGUAGE C
 AS 'MODULE_PATHNAME';
 
-CREATE FUNCTION pg_tde_change_key_provider_file(provider_name VARCHAR(128), file_path TEXT)
+CREATE FUNCTION pg_tde_change_key_provider_file(provider_name TEXT, file_path TEXT)
 RETURNS INT
 LANGUAGE SQL
 BEGIN ATOMIC
@@ -238,7 +238,7 @@ BEGIN ATOMIC
                 json_object('type' VALUE 'file', 'path' VALUE COALESCE(file_path, '')));
 END;
 
-CREATE FUNCTION pg_tde_change_key_provider_file(provider_name VARCHAR(128), file_path JSON)
+CREATE FUNCTION pg_tde_change_key_provider_file(provider_name TEXT, file_path JSON)
 RETURNS INT
 LANGUAGE SQL
 BEGIN ATOMIC
@@ -248,7 +248,7 @@ BEGIN ATOMIC
                 json_object('type' VALUE 'file', 'path' VALUE file_path));
 END;
 
-CREATE FUNCTION pg_tde_change_key_provider_vault_v2(provider_name VARCHAR(128),
+CREATE FUNCTION pg_tde_change_key_provider_vault_v2(provider_name TEXT,
                                                     vault_token TEXT,
                                                     vault_url TEXT,
                                                     vault_mount_path TEXT,
@@ -266,7 +266,7 @@ BEGIN ATOMIC
                             'caPath' VALUE COALESCE(vault_ca_path, '')));
 END;
 
-CREATE FUNCTION pg_tde_change_key_provider_vault_v2(provider_name VARCHAR(128),
+CREATE FUNCTION pg_tde_change_key_provider_vault_v2(provider_name TEXT,
                                                     vault_token JSON,
                                                     vault_url JSON,
                                                     vault_mount_path JSON,
@@ -284,7 +284,7 @@ BEGIN ATOMIC
                             'caPath' VALUE vault_ca_path));
 END;
 
-CREATE FUNCTION pg_tde_change_key_provider_kmip(provider_name VARCHAR(128),
+CREATE FUNCTION pg_tde_change_key_provider_kmip(provider_name TEXT,
                                                 kmip_host TEXT,
                                                 kmip_port INT,
                                                 kmip_ca_path TEXT,
@@ -302,7 +302,7 @@ BEGIN ATOMIC
                             'certPath' VALUE COALESCE(kmip_cert_path, '')));
 END;
 
-CREATE FUNCTION pg_tde_change_key_provider_kmip(provider_name VARCHAR(128),
+CREATE FUNCTION pg_tde_change_key_provider_kmip(provider_name TEXT,
                                                 kmip_host JSON,
                                                 kmip_port JSON,
                                                 kmip_ca_path JSON,
@@ -321,12 +321,12 @@ BEGIN ATOMIC
 END;
 
 -- Global Tablespace Key Provider Management
-CREATE FUNCTION pg_tde_change_global_key_provider(provider_type VARCHAR(10), provider_name VARCHAR(128), options JSON)
+CREATE FUNCTION pg_tde_change_global_key_provider(provider_type TEXT, provider_name TEXT, options JSON)
 RETURNS INT
 LANGUAGE C
 AS 'MODULE_PATHNAME';
 
-CREATE FUNCTION pg_tde_change_global_key_provider_file(provider_name VARCHAR(128), file_path TEXT)
+CREATE FUNCTION pg_tde_change_global_key_provider_file(provider_name TEXT, file_path TEXT)
 RETURNS INT
 LANGUAGE SQL
 BEGIN ATOMIC
@@ -336,7 +336,7 @@ BEGIN ATOMIC
                 json_object('type' VALUE 'file', 'path' VALUE COALESCE(file_path, '')));
 END;
 
-CREATE FUNCTION pg_tde_change_global_key_provider_file(provider_name VARCHAR(128), file_path JSON)
+CREATE FUNCTION pg_tde_change_global_key_provider_file(provider_name TEXT, file_path JSON)
 RETURNS INT
 LANGUAGE SQL
 BEGIN ATOMIC
@@ -346,7 +346,7 @@ BEGIN ATOMIC
                 json_object('type' VALUE 'file', 'path' VALUE file_path));
 END;
 
-CREATE FUNCTION pg_tde_change_global_key_provider_vault_v2(provider_name VARCHAR(128),
+CREATE FUNCTION pg_tde_change_global_key_provider_vault_v2(provider_name TEXT,
                                                            vault_token TEXT,
                                                            vault_url TEXT,
                                                            vault_mount_path TEXT,
@@ -364,7 +364,7 @@ BEGIN ATOMIC
                             'caPath' VALUE COALESCE(vault_ca_path, '')));
 END;
 
-CREATE FUNCTION pg_tde_change_global_key_provider_vault_v2(provider_name VARCHAR(128),
+CREATE FUNCTION pg_tde_change_global_key_provider_vault_v2(provider_name TEXT,
                                                            vault_token JSON,
                                                            vault_url JSON,
                                                            vault_mount_path JSON,
@@ -382,7 +382,7 @@ BEGIN ATOMIC
                             'caPath' VALUE vault_ca_path));
 END;
 
-CREATE FUNCTION pg_tde_change_global_key_provider_kmip(provider_name VARCHAR(128),
+CREATE FUNCTION pg_tde_change_global_key_provider_kmip(provider_name TEXT,
                                                        kmip_host TEXT,
                                                        kmip_port INT,
                                                        kmip_ca_path TEXT,
@@ -400,7 +400,7 @@ BEGIN ATOMIC
                             'certPath' VALUE COALESCE(kmip_cert_path, '')));
 END;
 
-CREATE FUNCTION pg_tde_change_global_key_provider_kmip(provider_name VARCHAR(128),
+CREATE FUNCTION pg_tde_change_global_key_provider_kmip(provider_name TEXT,
                                                        kmip_host JSON,
                                                        kmip_port JSON,
                                                        kmip_ca_path JSON,
@@ -429,7 +429,7 @@ RETURNS boolean
 LANGUAGE C
 AS 'MODULE_PATHNAME';
 
-CREATE FUNCTION pg_tde_is_encrypted(table_name VARCHAR)
+CREATE FUNCTION pg_tde_is_encrypted(table_name TEXT)
 RETURNS boolean
 LANGUAGE SQL
 BEGIN ATOMIC
@@ -443,17 +443,17 @@ BEGIN ATOMIC
         );
 END;
 
-CREATE FUNCTION pg_tde_set_principal_key(principal_key_name VARCHAR(255), provider_name VARCHAR(255) DEFAULT NULL, ensure_new_key BOOLEAN DEFAULT FALSE)
+CREATE FUNCTION pg_tde_set_principal_key(principal_key_name TEXT, provider_name TEXT DEFAULT NULL, ensure_new_key BOOLEAN DEFAULT FALSE)
 RETURNS boolean
 LANGUAGE C
 AS 'MODULE_PATHNAME';
 
-CREATE FUNCTION pg_tde_set_global_principal_key(principal_key_name VARCHAR(255), provider_name VARCHAR(255) DEFAULT NULL, ensure_new_key BOOLEAN DEFAULT FALSE)
+CREATE FUNCTION pg_tde_set_global_principal_key(principal_key_name TEXT, provider_name TEXT DEFAULT NULL, ensure_new_key BOOLEAN DEFAULT FALSE)
 RETURNS boolean
 LANGUAGE C
 AS 'MODULE_PATHNAME';
 
-CREATE FUNCTION pg_tde_set_server_principal_key(principal_key_name VARCHAR(255), provider_name VARCHAR(255) DEFAULT NULL, ensure_new_key BOOLEAN DEFAULT FALSE)
+CREATE FUNCTION pg_tde_set_server_principal_key(principal_key_name TEXT, provider_name TEXT DEFAULT NULL, ensure_new_key BOOLEAN DEFAULT FALSE)
 RETURNS boolean
 LANGUAGE C
 AS 'MODULE_PATHNAME';
@@ -494,12 +494,12 @@ RETURNS TABLE ( principal_key_name text,
 LANGUAGE C
 AS 'MODULE_PATHNAME';
 
-CREATE FUNCTION pg_tde_delete_global_key_provider(provider_name VARCHAR)
+CREATE FUNCTION pg_tde_delete_global_key_provider(provider_name TEXT)
 RETURNS VOID
 LANGUAGE C
 AS 'MODULE_PATHNAME';
 
-CREATE FUNCTION pg_tde_delete_key_provider(provider_name VARCHAR)
+CREATE FUNCTION pg_tde_delete_key_provider(provider_name TEXT)
 RETURNS VOID
 LANGUAGE C
 AS 'MODULE_PATHNAME';
@@ -554,30 +554,30 @@ LANGUAGE plpgsql
 SET search_path = @extschema@
 AS $$
 BEGIN
-    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_add_global_key_provider(varchar, varchar, JSON) TO %I', target_role);
+    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_add_global_key_provider(text, text, JSON) TO %I', target_role);
 
-    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_add_global_key_provider_file(varchar, json) TO %I', target_role);
-    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_add_global_key_provider_file(varchar, text) TO %I', target_role);
-    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_add_global_key_provider_vault_v2(varchar, text, text, text, text) TO %I', target_role);
-    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_add_global_key_provider_vault_v2(varchar, JSON, JSON, JSON, JSON) TO %I', target_role);
-    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_add_global_key_provider_kmip(varchar, text, int, text, text) TO %I', target_role);
-    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_add_global_key_provider_kmip(varchar, JSON, JSON, JSON, JSON) TO %I', target_role);
+    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_add_global_key_provider_file(text, json) TO %I', target_role);
+    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_add_global_key_provider_file(text, text) TO %I', target_role);
+    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_add_global_key_provider_vault_v2(text, text, text, text, text) TO %I', target_role);
+    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_add_global_key_provider_vault_v2(text, JSON, JSON, JSON, JSON) TO %I', target_role);
+    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_add_global_key_provider_kmip(text, text, int, text, text) TO %I', target_role);
+    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_add_global_key_provider_kmip(text, JSON, JSON, JSON, JSON) TO %I', target_role);
 
-    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_change_global_key_provider(varchar, varchar, JSON) TO %I', target_role);
+    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_change_global_key_provider(text, text, JSON) TO %I', target_role);
 
-    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_change_global_key_provider_file(varchar, json) TO %I', target_role);
-    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_change_global_key_provider_file(varchar, text) TO %I', target_role);
-    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_change_global_key_provider_vault_v2(varchar, text, text, text, text) TO %I', target_role);
-    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_change_global_key_provider_vault_v2(varchar, JSON, JSON, JSON, JSON) TO %I', target_role);
-    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_change_global_key_provider_kmip(varchar, text, int, text, text) TO %I', target_role);
-    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_change_global_key_provider_kmip(varchar, JSON, JSON, JSON, JSON) TO %I', target_role);
+    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_change_global_key_provider_file(text, json) TO %I', target_role);
+    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_change_global_key_provider_file(text, text) TO %I', target_role);
+    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_change_global_key_provider_vault_v2(text, text, text, text, text) TO %I', target_role);
+    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_change_global_key_provider_vault_v2(text, JSON, JSON, JSON, JSON) TO %I', target_role);
+    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_change_global_key_provider_kmip(text, text, int, text, text) TO %I', target_role);
+    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_change_global_key_provider_kmip(text, JSON, JSON, JSON, JSON) TO %I', target_role);
 
-    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_delete_global_key_provider(varchar) TO %I', target_role);
+    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_delete_global_key_provider(text) TO %I', target_role);
 
-    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_set_global_principal_key(varchar, varchar, BOOLEAN) TO %I', target_role);
-    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_set_server_principal_key(varchar, varchar, BOOLEAN) TO %I', target_role);
+    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_set_global_principal_key(text, text, BOOLEAN) TO %I', target_role);
+    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_set_server_principal_key(text, text, BOOLEAN) TO %I', target_role);
 
-    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_set_default_principal_key(varchar, varchar, BOOLEAN) FROM %I', target_role);
+    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_set_default_principal_key(text, text, BOOLEAN) FROM %I', target_role);
 END;
 $$;
 
@@ -588,27 +588,27 @@ LANGUAGE plpgsql
 SET search_path = @extschema@
 AS $$
 BEGIN
-    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_add_key_provider(varchar, varchar, JSON) TO %I', target_role);
+    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_add_key_provider(text, text, JSON) TO %I', target_role);
 
-    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_add_key_provider_file(varchar, json) TO %I', target_role);
-    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_add_key_provider_file(varchar, text) TO %I', target_role);
-    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_add_key_provider_vault_v2(varchar, text, text, text, text) TO %I', target_role);
-    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_add_key_provider_vault_v2(varchar, JSON, JSON, JSON, JSON) TO %I', target_role);
-    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_add_key_provider_kmip(varchar, text, int, text, text) TO %I', target_role);
-    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_add_key_provider_kmip(varchar, JSON, JSON, JSON, JSON) TO %I', target_role);
+    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_add_key_provider_file(text, json) TO %I', target_role);
+    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_add_key_provider_file(text, text) TO %I', target_role);
+    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_add_key_provider_vault_v2(text, text, text, text, text) TO %I', target_role);
+    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_add_key_provider_vault_v2(text, JSON, JSON, JSON, JSON) TO %I', target_role);
+    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_add_key_provider_kmip(text, text, int, text, text) TO %I', target_role);
+    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_add_key_provider_kmip(text, JSON, JSON, JSON, JSON) TO %I', target_role);
 
-    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_change_key_provider(varchar, varchar, JSON) TO %I', target_role);
+    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_change_key_provider(text, text, JSON) TO %I', target_role);
 
-    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_change_key_provider_file(varchar, json) TO %I', target_role);
-    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_change_key_provider_file(varchar, text) TO %I', target_role);
-    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_change_key_provider_vault_v2(varchar, text, text,text,text) TO %I', target_role);
-    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_change_key_provider_vault_v2(varchar, JSON, JSON,JSON,JSON) TO %I', target_role);
-    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_change_key_provider_kmip(varchar, text, int, text, text) TO %I', target_role);
-    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_change_key_provider_kmip(varchar, JSON, JSON, JSON, JSON) TO %I', target_role);
+    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_change_key_provider_file(text, json) TO %I', target_role);
+    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_change_key_provider_file(text, text) TO %I', target_role);
+    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_change_key_provider_vault_v2(text, text, text,text,text) TO %I', target_role);
+    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_change_key_provider_vault_v2(text, JSON, JSON,JSON,JSON) TO %I', target_role);
+    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_change_key_provider_kmip(text, text, int, text, text) TO %I', target_role);
+    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_change_key_provider_kmip(text, JSON, JSON, JSON, JSON) TO %I', target_role);
 
-    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_delete_key_provider(varchar) TO %I', target_role);
+    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_delete_key_provider(text) TO %I', target_role);
 
-    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_set_principal_key(varchar, varchar, BOOLEAN) TO %I', target_role);
+    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_set_principal_key(text, text, BOOLEAN) TO %I', target_role);
 END;
 $$;
 
@@ -621,7 +621,7 @@ AS $$
 BEGIN
     EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_list_all_key_providers() TO %I', target_role);
     EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_list_all_global_key_providers() TO %I', target_role);
-    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_is_encrypted(VARCHAR) TO %I', target_role);
+    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_is_encrypted(text) TO %I', target_role);
 
     EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_principal_key_info() TO %I', target_role);
     EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_global_principal_key_info() TO %I', target_role);
@@ -635,30 +635,30 @@ LANGUAGE plpgsql
 SET search_path = @extschema@
 AS $$
 BEGIN
-    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_add_global_key_provider(varchar, varchar, JSON) FROM %I', target_role);
+    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_add_global_key_provider(text, text, JSON) FROM %I', target_role);
 
-    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_add_global_key_provider_file(varchar, json) FROM %I', target_role);
-    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_add_global_key_provider_file(varchar, text) FROM %I', target_role);
-    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_add_global_key_provider_vault_v2(varchar, text, text, text, text) FROM %I', target_role);
-    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_add_global_key_provider_vault_v2(varchar, JSON, JSON, JSON, JSON) FROM %I', target_role);
-    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_add_global_key_provider_kmip(varchar, text, int, text, text) FROM %I', target_role);
-    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_add_global_key_provider_kmip(varchar, JSON, JSON, JSON, JSON) FROM %I', target_role);
+    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_add_global_key_provider_file(text, json) FROM %I', target_role);
+    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_add_global_key_provider_file(text, text) FROM %I', target_role);
+    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_add_global_key_provider_vault_v2(text, text, text, text, text) FROM %I', target_role);
+    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_add_global_key_provider_vault_v2(text, JSON, JSON, JSON, JSON) FROM %I', target_role);
+    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_add_global_key_provider_kmip(text, text, int, text, text) FROM %I', target_role);
+    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_add_global_key_provider_kmip(text, JSON, JSON, JSON, JSON) FROM %I', target_role);
 
-    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_change_global_key_provider(varchar, varchar, JSON) FROM %I', target_role);
+    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_change_global_key_provider(text, text, JSON) FROM %I', target_role);
 
-    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_change_global_key_provider_file(varchar, json) FROM %I', target_role);
-    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_change_global_key_provider_file(varchar, text) FROM %I', target_role);
-    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_change_global_key_provider_vault_v2(varchar, text, text, text, text) FROM %I', target_role);
-    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_change_global_key_provider_vault_v2(varchar, JSON, JSON, JSON, JSON) FROM %I', target_role);
-    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_change_global_key_provider_kmip(varchar, text, int, text, text) FROM %I', target_role);
-    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_change_global_key_provider_kmip(varchar, JSON, JSON, JSON, JSON) FROM %I', target_role);
+    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_change_global_key_provider_file(text, json) FROM %I', target_role);
+    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_change_global_key_provider_file(text, text) FROM %I', target_role);
+    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_change_global_key_provider_vault_v2(text, text, text, text, text) FROM %I', target_role);
+    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_change_global_key_provider_vault_v2(text, JSON, JSON, JSON, JSON) FROM %I', target_role);
+    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_change_global_key_provider_kmip(text, text, int, text, text) FROM %I', target_role);
+    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_change_global_key_provider_kmip(text, JSON, JSON, JSON, JSON) FROM %I', target_role);
 
-    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_delete_global_key_provider(varchar) FROM %I', target_role);
+    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_delete_global_key_provider(text) FROM %I', target_role);
 
-    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_set_global_principal_key(varchar, varchar, BOOLEAN) FROM %I', target_role);
-    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_set_server_principal_key(varchar, varchar, BOOLEAN) FROM %I', target_role);
+    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_set_global_principal_key(text, text, BOOLEAN) FROM %I', target_role);
+    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_set_server_principal_key(text, text, BOOLEAN) FROM %I', target_role);
 
-    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_set_default_principal_key(varchar, varchar, BOOLEAN) FROM %I', target_role);
+    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_set_default_principal_key(text, text, BOOLEAN) FROM %I', target_role);
 END;
 $$;
 
@@ -669,27 +669,27 @@ LANGUAGE plpgsql
 SET search_path = @extschema@
 AS $$
 BEGIN
-    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_add_key_provider(varchar, varchar, JSON) FROM %I', target_role);
+    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_add_key_provider(text, text, JSON) FROM %I', target_role);
 
-    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_add_key_provider_file(varchar, json) FROM %I', target_role);
-    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_add_key_provider_file(varchar, text) FROM %I', target_role);
-    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_add_key_provider_vault_v2(varchar, text, text, text, text) FROM %I', target_role);
-    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_add_key_provider_vault_v2(varchar, JSON, JSON, JSON, JSON) FROM %I', target_role);
-    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_add_key_provider_kmip(varchar, text, int, text, text) FROM %I', target_role);
-    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_add_key_provider_kmip(varchar, JSON, JSON, JSON, JSON) FROM %I', target_role);
+    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_add_key_provider_file(text, json) FROM %I', target_role);
+    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_add_key_provider_file(text, text) FROM %I', target_role);
+    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_add_key_provider_vault_v2(text, text, text, text, text) FROM %I', target_role);
+    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_add_key_provider_vault_v2(text, JSON, JSON, JSON, JSON) FROM %I', target_role);
+    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_add_key_provider_kmip(text, text, int, text, text) FROM %I', target_role);
+    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_add_key_provider_kmip(text, JSON, JSON, JSON, JSON) FROM %I', target_role);
 
-    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_change_key_provider(varchar, varchar, JSON) FROM %I', target_role);
+    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_change_key_provider(text, text, JSON) FROM %I', target_role);
 
-    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_change_key_provider_file(varchar, json) FROM %I', target_role);
-    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_change_key_provider_file(varchar, text) FROM %I', target_role);
-    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_change_key_provider_vault_v2(varchar, text, text, text, text) FROM %I', target_role);
-    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_change_key_provider_vault_v2(varchar, JSON, JSON, JSON, JSON) FROM %I', target_role);
-    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_change_key_provider_kmip(varchar, text, int, text, text) FROM %I', target_role);
-    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_change_key_provider_kmip(varchar, JSON, JSON, JSON, JSON) FROM %I', target_role);
+    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_change_key_provider_file(text, json) FROM %I', target_role);
+    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_change_key_provider_file(text, text) FROM %I', target_role);
+    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_change_key_provider_vault_v2(text, text, text, text, text) FROM %I', target_role);
+    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_change_key_provider_vault_v2(text, JSON, JSON, JSON, JSON) FROM %I', target_role);
+    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_change_key_provider_kmip(text, text, int, text, text) FROM %I', target_role);
+    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_change_key_provider_kmip(text, JSON, JSON, JSON, JSON) FROM %I', target_role);
 
-    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_delete_key_provider(varchar) FROM %I', target_role);
+    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_delete_key_provider(text) FROM %I', target_role);
 
-    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_set_principal_key(varchar, varchar, BOOLEAN) FROM %I', target_role);
+    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_set_principal_key(text, text, BOOLEAN) FROM %I', target_role);
 END;
 $$;
 
@@ -702,7 +702,7 @@ AS $$
 BEGIN
     EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_list_all_key_providers() FROM %I', target_role);
     EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_list_all_global_key_providers() FROM %I', target_role);
-    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_is_encrypted(VARCHAR) FROM %I', target_role);
+    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_is_encrypted(text) FROM %I', target_role);
 
     EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_principal_key_info() FROM %I', target_role);
     EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_global_principal_key_info() FROM %I', target_role);
