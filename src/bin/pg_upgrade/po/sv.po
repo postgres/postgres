@@ -1,14 +1,14 @@
 # Swedish message translation file for pg_upgrade
 # Copyright (C) 2017 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# Dennis Björklund <db@zigo.dhs.org>, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024.
+# Dennis Björklund <db@zigo.dhs.org>, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-08-26 23:50+0000\n"
-"PO-Revision-Date: 2024-08-27 07:16+0200\n"
+"POT-Creation-Date: 2025-02-12 13:50+0000\n"
+"PO-Revision-Date: 2025-02-12 20:38+0100\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
 "Language: sv\n"
@@ -47,12 +47,12 @@ msgstr "användaren finns inte"
 msgid "user name lookup failure: error code %lu"
 msgstr "misslyckad sökning efter användarnamn: felkod %lu"
 
-#: ../../fe_utils/string_utils.c:434
+#: ../../fe_utils/string_utils.c:608
 #, c-format
 msgid "shell command argument contains a newline or carriage return: \"%s\"\n"
 msgstr "shell-kommandots argument innehåller nyrad eller vagnretur: \"%s\"\n"
 
-#: ../../fe_utils/string_utils.c:607
+#: ../../fe_utils/string_utils.c:781
 #, c-format
 msgid "database name contains a newline or carriage return: \"%s\"\n"
 msgstr "databasnamnet innehåller nyrad eller vagnretur: \"%s\"\n"
@@ -229,8 +229,8 @@ msgstr "Letar efter användning av datatyp"
 
 #: check.c:480
 #, c-format
-msgid "    failed check: %s"
-msgstr "  misslyckad kontroll: %s"
+msgid "failed check: %s"
+msgstr "misslyckad kontroll: %s"
 
 #: check.c:483
 msgid "A list of the problem columns is in the file:"
