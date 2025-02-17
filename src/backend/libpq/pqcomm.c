@@ -571,7 +571,7 @@ ListenServerPort(int family, const char *hostName, unsigned short portNumber,
 			{
 				ereport(LOG,
 						(errcode_for_socket_access(),
-				/* translator: third %s is IPv4, IPv6, or Unix */
+				/* translator: third %s is IPv4 or IPv6 */
 						 errmsg("%s(%s) failed for %s address \"%s\": %m",
 								"setsockopt", "SO_REUSEADDR",
 								familyDesc, addrDesc)));
@@ -589,7 +589,7 @@ ListenServerPort(int family, const char *hostName, unsigned short portNumber,
 			{
 				ereport(LOG,
 						(errcode_for_socket_access(),
-				/* translator: third %s is IPv4, IPv6, or Unix */
+				/* translator: third %s is IPv6 */
 						 errmsg("%s(%s) failed for %s address \"%s\": %m",
 								"setsockopt", "IPV6_V6ONLY",
 								familyDesc, addrDesc)));
