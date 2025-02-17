@@ -1448,10 +1448,13 @@ typedef struct ModifyTableState
 	double		mt_merge_deleted;
 
 	/*
-	 * List of valid updateColnosLists.  Contains only those belonging to
-	 * unpruned relations from ModifyTable.updateColnosLists.
+	 * Lists of valid updateColnosLists, mergeActionLists, and
+	 * mergeJoinConditions.  These contain only entries for unpruned
+	 * relations, filtered from the corresponding lists in ModifyTable.
 	 */
 	List	   *mt_updateColnosLists;
+	List	   *mt_mergeActionLists;
+	List	   *mt_mergeJoinConditions;
 } ModifyTableState;
 
 /* ----------------

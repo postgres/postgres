@@ -1371,6 +1371,31 @@ explain (costs off) execute update_part_abc_view (1, 'd');
 execute update_part_abc_view (1, 'd');
 explain (costs off) execute update_part_abc_view (2, 'a');
 execute update_part_abc_view (2, 'a');
+-- All pruned.
+explain (costs off) execute update_part_abc_view (3, 'a');
+execute update_part_abc_view (3, 'a');
 deallocate update_part_abc_view;
+
+-- Runtime pruning on MERGE using a stable function
+create function stable_one() returns int as $$ begin return 1; end; $$ language plpgsql stable;
+explain (costs off)
+merge into part_abc_view pt
+using (select stable_one() as pid) as q join part_abc_1 pt1 on (q.pid = pt1.a) on pt.a = pt1.a
+when matched then delete returning pt.a;
+merge into part_abc_view pt
+using (select stable_one() as pid) as q join part_abc_1 pt1 on (q.pid = pt1.a) on pt.a = pt1.a
+when matched then delete returning pt.a;
+table part_abc_view;
+
+-- All pruned.
+explain (costs off)
+merge into part_abc_view pt
+using (select stable_one() + 2 as pid) as q join part_abc_1 pt1 on (q.pid = pt1.a) on pt.a = pt1.a
+when matched then delete returning pt.a;
+merge into part_abc_view pt
+using (select stable_one() + 2 as pid) as q join part_abc_1 pt1 on (q.pid = pt1.a) on pt.a = pt1.a
+when matched then delete returning pt.a;
+table part_abc_view;
+
 drop view part_abc_view;
 drop table part_abc;

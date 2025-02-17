@@ -3643,14 +3643,15 @@ ExecMergeNotMatched(ModifyTableContext *context, ResultRelInfo *resultRelInfo,
 void
 ExecInitMerge(ModifyTableState *mtstate, EState *estate)
 {
-	ModifyTable *node = (ModifyTable *) mtstate->ps.plan;
+	List	   *mergeActionLists = mtstate->mt_mergeActionLists;
+	List	   *mergeJoinConditions = mtstate->mt_mergeJoinConditions;
 	ResultRelInfo *rootRelInfo = mtstate->rootResultRelInfo;
 	ResultRelInfo *resultRelInfo;
 	ExprContext *econtext;
 	ListCell   *lc;
 	int			i;
 
-	if (node->mergeActionLists == NIL)
+	if (mergeActionLists == NIL)
 		return;
 
 	mtstate->mt_merge_subcommands = 0;
@@ -3667,14 +3668,14 @@ ExecInitMerge(ModifyTableState *mtstate, EState *estate)
 	 * anything here, do so there too.
 	 */
 	i = 0;
-	foreach(lc, node->mergeActionLists)
+	foreach(lc, mergeActionLists)
 	{
 		List	   *mergeActionList = lfirst(lc);
 		Node	   *joinCondition;
 		TupleDesc	relationDesc;
 		ListCell   *l;
 
-		joinCondition = (Node *) list_nth(node->mergeJoinConditions, i);
+		joinCondition = (Node *) list_nth(mergeJoinConditions, i);
 		resultRelInfo = mtstate->resultRelInfo + i;
 		i++;
 		relationDesc = RelationGetDescr(resultRelInfo->ri_RelationDesc);
@@ -4475,6 +4476,8 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 	List	   *withCheckOptionLists = NIL;
 	List	   *returningLists = NIL;
 	List	   *updateColnosLists = NIL;
+	List	   *mergeActionLists = NIL;
+	List	   *mergeJoinConditions = NIL;
 	ResultRelInfo *resultRelInfo;
 	List	   *arowmarks;
 	ListCell   *l;
@@ -4518,6 +4521,18 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 
 				updateColnosLists = lappend(updateColnosLists, updateColnosList);
 			}
+			if (node->mergeActionLists)
+			{
+				List	   *mergeActionList = list_nth(node->mergeActionLists, i);
+
+				mergeActionLists = lappend(mergeActionLists, mergeActionList);
+			}
+			if (node->mergeJoinConditions)
+			{
+				List	   *mergeJoinCondition = list_nth(node->mergeJoinConditions, i);
+
+				mergeJoinConditions = lappend(mergeJoinConditions, mergeJoinCondition);
+			}
 		}
 		i++;
 	}
@@ -4544,6 +4559,8 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 	mtstate->mt_merge_updated = 0;
 	mtstate->mt_merge_deleted = 0;
 	mtstate->mt_updateColnosLists = updateColnosLists;
+	mtstate->mt_mergeActionLists = mergeActionLists;
+	mtstate->mt_mergeJoinConditions = mergeJoinConditions;
 
 	/*----------
 	 * Resolve the target relation. This is the same as:
@@ -4556,7 +4573,8 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 	 * If it's a partitioned or inherited table, the root partition or
 	 * appendrel RTE doesn't appear elsewhere in the plan and its RT index is
 	 * given explicitly in node->rootRelation.  Otherwise, the target relation
-	 * is the sole relation in the node->resultRelations list.
+	 * is the sole relation in the node->resultRelations list and, since it can
+	 * never be pruned, also in the resultRelations list constructed above.
 	 *----------
 	 */
 	if (node->rootRelation > 0)
@@ -4569,9 +4587,10 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 	else
 	{
 		Assert(list_length(node->resultRelations) == 1);
+		Assert(list_length(resultRelations) == 1);
 		mtstate->rootResultRelInfo = mtstate->resultRelInfo;
 		ExecInitResultRelation(estate, mtstate->resultRelInfo,
-							   linitial_int(node->resultRelations));
+							   linitial_int(resultRelations));
 	}
 
 	/* set up epqstate with dummy subplan data for the moment */
@@ -4599,8 +4618,8 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 		Index		resultRelation = lfirst_int(l);
 		List	   *mergeActions = NIL;
 
-		if (node->mergeActionLists)
-			mergeActions = list_nth(node->mergeActionLists, i);
+		if (mergeActionLists)
+			mergeActions = list_nth(mergeActionLists, i);
 
 		if (resultRelInfo != mtstate->rootResultRelInfo)
 		{

@@ -4512,6 +4512,83 @@ explain (costs off) execute update_part_abc_view (2, 'a');
 execute update_part_abc_view (2, 'a');
 ERROR:  new row violates check option for view "part_abc_view"
 DETAIL:  Failing row contains (2, a, t).
+-- All pruned.
+explain (costs off) execute update_part_abc_view (3, 'a');
+         QUERY PLAN          
+-----------------------------
+ Update on part_abc
+   ->  Append
+         Subplans Removed: 2
+(3 rows)
+
+execute update_part_abc_view (3, 'a');
+ a | b | c 
+---+---+---
+(0 rows)
+
 deallocate update_part_abc_view;
+-- Runtime pruning on MERGE using a stable function
+create function stable_one() returns int as $$ begin return 1; end; $$ language plpgsql stable;
+explain (costs off)
+merge into part_abc_view pt
+using (select stable_one() as pid) as q join part_abc_1 pt1 on (q.pid = pt1.a) on pt.a = pt1.a
+when matched then delete returning pt.a;
+                              QUERY PLAN                               
+-----------------------------------------------------------------------
+ Merge on part_abc
+   Merge on part_abc_1
+   ->  Nested Loop
+         ->  Append
+               Subplans Removed: 1
+               ->  Seq Scan on part_abc_1
+                     Filter: ((b <> 'a'::text) AND (a = stable_one()))
+         ->  Materialize
+               ->  Seq Scan on part_abc_1 pt1
+                     Filter: (a = stable_one())
+(10 rows)
+
+merge into part_abc_view pt
+using (select stable_one() as pid) as q join part_abc_1 pt1 on (q.pid = pt1.a) on pt.a = pt1.a
+when matched then delete returning pt.a;
+ a 
+---
+ 1
+(1 row)
+
+table part_abc_view;
+ a | b | c 
+---+---+---
+ 2 | c | t
+(1 row)
+
+-- All pruned.
+explain (costs off)
+merge into part_abc_view pt
+using (select stable_one() + 2 as pid) as q join part_abc_1 pt1 on (q.pid = pt1.a) on pt.a = pt1.a
+when matched then delete returning pt.a;
+                      QUERY PLAN                      
+------------------------------------------------------
+ Merge on part_abc
+   ->  Nested Loop
+         ->  Append
+               Subplans Removed: 2
+         ->  Materialize
+               ->  Seq Scan on part_abc_1 pt1
+                     Filter: (a = (stable_one() + 2))
+(7 rows)
+
+merge into part_abc_view pt
+using (select stable_one() + 2 as pid) as q join part_abc_1 pt1 on (q.pid = pt1.a) on pt.a = pt1.a
+when matched then delete returning pt.a;
+ a 
+---
+(0 rows)
+
+table part_abc_view;
+ a | b | c 
+---+---+---
+ 2 | c | t
+(1 row)
+
 drop view part_abc_view;
 drop table part_abc;
