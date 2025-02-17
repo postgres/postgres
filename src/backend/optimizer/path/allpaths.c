@@ -958,6 +958,7 @@ set_append_rel_size(PlannerInfo *root, RelOptInfo *rel,
 {
 	int			parentRTindex = rti;
 	bool		has_live_children;
+	double		parent_tuples;
 	double		parent_rows;
 	double		parent_size;
 	double	   *parent_attrsizes;
@@ -983,6 +984,15 @@ set_append_rel_size(PlannerInfo *root, RelOptInfo *rel,
 	/*
 	 * Initialize to compute size estimates for whole append relation.
 	 *
+	 * We handle tuples estimates by setting "tuples" to the total number of
+	 * tuples accumulated from each live child, rather than using "rows".
+	 * Although an appendrel itself doesn't directly enforce any quals, its
+	 * child relations may.  Therefore, setting "tuples" equal to "rows" for
+	 * an appendrel isn't always appropriate, and can lead to inaccurate cost
+	 * estimates.  For example, when estimating the number of distinct values
+	 * from an appendrel, we would be unable to adjust the estimate based on
+	 * the restriction selectivity (see estimate_num_groups).
+	 *
 	 * We handle width estimates by weighting the widths of different child
 	 * rels proportionally to their number of rows.  This is sensible because
 	 * the use of width estimates is mainly to compute the total relation
@@ -995,6 +1005,7 @@ set_append_rel_size(PlannerInfo *root, RelOptInfo *rel,
 	 * have zero rows and/or width, if they were excluded by constraints.
 	 */
 	has_live_children = false;
+	parent_tuples = 0;
 	parent_rows = 0;
 	parent_size = 0;
 	nattrs = rel->max_attr - rel->min_attr + 1;
@@ -1161,6 +1172,7 @@ set_append_rel_size(PlannerInfo *root, RelOptInfo *rel,
 		 */
 		Assert(childrel->rows > 0);
 
+		parent_tuples += childrel->tuples;
 		parent_rows += childrel->rows;
 		parent_size += childrel->reltarget->width * childrel->rows;
 
@@ -1207,16 +1219,11 @@ set_append_rel_size(PlannerInfo *root, RelOptInfo *rel,
 		int			i;
 
 		Assert(parent_rows > 0);
+		rel->tuples = parent_tuples;
 		rel->rows = parent_rows;
 		rel->reltarget->width = rint(parent_size / parent_rows);
 		for (i = 0; i < nattrs; i++)
 			rel->attr_widths[i] = rint(parent_attrsizes[i] / parent_rows);
-
-		/*
-		 * Set "raw tuples" count equal to "rows" for the appendrel; needed
-		 * because some places assume rel->tuples is valid for any baserel.
-		 */
-		rel->tuples = parent_rows;
 
 		/*
 		 * Note that we leave rel->pages as zero; this is important to avoid
