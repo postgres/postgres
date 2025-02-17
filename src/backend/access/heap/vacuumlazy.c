@@ -1125,10 +1125,11 @@ heap_vacuum_rel(Relation rel, VacuumParams *params,
 							 (long long) total_blks_read,
 							 (long long) total_blks_dirtied);
 			appendStringInfo(&buf,
-							 _("WAL usage: %lld records, %lld full page images, %llu bytes\n"),
+							 _("WAL usage: %lld records, %lld full page images, %llu bytes, %lld buffers full\n"),
 							 (long long) walusage.wal_records,
 							 (long long) walusage.wal_fpi,
-							 (unsigned long long) walusage.wal_bytes);
+							 (unsigned long long) walusage.wal_bytes,
+							 (long long) walusage.wal_buffers_full);
 			appendStringInfo(&buf, _("system usage: %s"), pg_rusage_show(&ru0));
 
 			ereport(verbose ? INFO : LOG,
