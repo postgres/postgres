@@ -280,6 +280,7 @@ WalUsageAdd(WalUsage *dst, WalUsage *add)
 	dst->wal_bytes += add->wal_bytes;
 	dst->wal_records += add->wal_records;
 	dst->wal_fpi += add->wal_fpi;
+	dst->wal_buffers_full += add->wal_buffers_full;
 }
 
 void
@@ -288,4 +289,5 @@ WalUsageAccumDiff(WalUsage *dst, const WalUsage *add, const WalUsage *sub)
 	dst->wal_bytes += add->wal_bytes - sub->wal_bytes;
 	dst->wal_records += add->wal_records - sub->wal_records;
 	dst->wal_fpi += add->wal_fpi - sub->wal_fpi;
+	dst->wal_buffers_full += add->wal_buffers_full - sub->wal_buffers_full;
 }

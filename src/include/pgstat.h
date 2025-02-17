@@ -495,7 +495,6 @@ typedef struct PgStat_WalStats
  */
 typedef struct PgStat_PendingWalStats
 {
-	PgStat_Counter wal_buffers_full;
 	PgStat_Counter wal_write;
 	PgStat_Counter wal_sync;
 	instr_time	wal_write_time;

@@ -123,7 +123,7 @@ pgstat_wal_flush_cb(bool nowait)
 	WALSTAT_ACC(wal_records, wal_usage_diff);
 	WALSTAT_ACC(wal_fpi, wal_usage_diff);
 	WALSTAT_ACC(wal_bytes, wal_usage_diff);
-	WALSTAT_ACC(wal_buffers_full, PendingWalStats);
+	WALSTAT_ACC(wal_buffers_full, wal_usage_diff);
 	WALSTAT_ACC(wal_write, PendingWalStats);
 	WALSTAT_ACC(wal_sync, PendingWalStats);
 	WALSTAT_ACC_INSTR_TIME(wal_write_time);
