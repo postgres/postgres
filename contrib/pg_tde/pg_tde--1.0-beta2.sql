@@ -619,8 +619,8 @@ LANGUAGE plpgsql
 SET search_path = @extschema@
 AS $$
 BEGIN
-    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_list_all_key_providers(OUT INT, OUT varchar, OUT varchar, OUT JSON) TO %I', target_role);
-    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_list_all_global_key_providers(OUT INT, OUT varchar, OUT varchar, OUT JSON) TO %I', target_role);
+    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_list_all_key_providers() TO %I', target_role);
+    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_list_all_global_key_providers() TO %I', target_role);
     EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_is_encrypted(VARCHAR) TO %I', target_role);
 
     EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_principal_key_info() TO %I', target_role);
@@ -700,8 +700,8 @@ LANGUAGE plpgsql
 SET search_path = @extschema@
 AS $$
 BEGIN
-    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_list_all_key_providers(OUT INT, OUT varchar, OUT varchar, OUT JSON) FROM %I', target_role);
-    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_list_all_global_key_providers(OUT INT, OUT varchar, OUT varchar, OUT JSON) FROM %I', target_role);
+    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_list_all_key_providers() FROM %I', target_role);
+    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_list_all_global_key_providers() FROM %I', target_role);
     EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_is_encrypted(VARCHAR) FROM %I', target_role);
 
     EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_principal_key_info() FROM %I', target_role);
