@@ -84,8 +84,7 @@ typedef struct TDEMapFilePath
 
 typedef struct RelKeyCacheRec
 {
-	Oid			dbOid;
-	RelFileNumber relNumber;
+	RelFileLocator locator;
 	InternalKey key;
 } RelKeyCacheRec;
 
@@ -1402,7 +1401,7 @@ pg_tde_get_key_from_cache(const RelFileLocator *rlocator, uint32 key_type)
 		RelKeyCacheRec *rec = tde_rel_key_cache.data + i;
 
 		if ((rlocator->relNumber == InvalidRelFileNumber ||
-			 (rec->dbOid == rlocator->dbOid && rec->relNumber == rlocator->relNumber)) &&
+			 RelFileLocatorEquals(rec->locator, *rlocator)) &&
 			rec->key.rel_type & key_type)
 		{
 			return &rec->key;
@@ -1492,8 +1491,7 @@ pg_tde_put_key_into_cache(const RelFileLocator *rlocator, InternalKey *key)
 
 	rec = tde_rel_key_cache.data + tde_rel_key_cache.len;
 
-	rec->dbOid = rlocator->dbOid;
-	rec->relNumber = rlocator->relNumber;
+	rec->locator = *rlocator;
 	rec->key = *key;
 	tde_rel_key_cache.len++;
 
