@@ -1192,7 +1192,6 @@ lazy_scan_heap(LVRelState *vacrel)
 	BlockNumber rel_pages = vacrel->rel_pages,
 				blkno = 0,
 				next_fsm_block_to_vacuum = 0;
-	void	   *per_buffer_data = NULL;
 	BlockNumber orig_eager_scan_success_limit =
 		vacrel->eager_scan_remaining_successes; /* for logging */
 	Buffer		vmbuffer = InvalidBuffer;
@@ -1231,6 +1230,7 @@ lazy_scan_heap(LVRelState *vacrel)
 		Page		page;
 		uint8		blk_info = 0;
 		bool		has_lpdead_items;
+		void	   *per_buffer_data = NULL;
 		bool		vm_page_frozen = false;
 		bool		got_cleanup_lock = false;
 
