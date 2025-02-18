@@ -789,8 +789,8 @@ read_stream_next_buffer(ReadStream *stream, void **per_buffer_data)
 		wipe_mem(per_buffer_data, stream->per_buffer_data_size);
 #elif defined(USE_VALGRIND)
 		/* Tell it ourselves. */
-		VALGRIND_MAKE_MEM_NO_ACCESS(per_buffer_data,
-									stream->per_buffer_data_size);
+		VALGRIND_MAKE_MEM_NOACCESS(per_buffer_data,
+								   stream->per_buffer_data_size);
 #endif
 	}
 #endif
