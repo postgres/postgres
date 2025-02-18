@@ -125,6 +125,18 @@ static RelKeyData *pg_tde_read_one_keydata(int keydata_fd, int32 key_index, TDEP
 static int	pg_tde_open_file(char *tde_filename, TDEPrincipalKeyInfo *principal_key_info, bool update_header, int fileFlags, bool *is_new_file, off_t *curr_pos);
 static RelKeyData *pg_tde_get_key_from_cache(const RelFileLocator *rlocator, uint32 key_type);
 
+#define PG_TDE_MAP_FILENAME			"pg_tde_%d_map"
+#define PG_TDE_KEYDATA_FILENAME		"pg_tde_%d_dat"
+
+static inline void
+pg_tde_set_db_file_paths(Oid dbOid, char *map_path, char *keydata_path)
+{
+	if (map_path)
+		join_path_components(map_path, pg_tde_get_tde_data_dir(), psprintf(PG_TDE_MAP_FILENAME, dbOid));
+	if (keydata_path)
+		join_path_components(keydata_path, pg_tde_get_tde_data_dir(), psprintf(PG_TDE_KEYDATA_FILENAME, dbOid));
+}
+
 #ifndef FRONTEND
 
 static int	pg_tde_file_header_write(char *tde_filename, int fd, TDEPrincipalKeyInfo *principal_key_info, off_t *bytes_written);

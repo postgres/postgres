@@ -32,12 +32,5 @@ extern void tdeheap_rmgr_redo(XLogReaderState *record);
 extern void tdeheap_rmgr_desc(StringInfo buf, XLogReaderState *record);
 extern const char *tdeheap_rmgr_identify(uint8 info);
 
-static const RmgrData tdeheap_rmgr = {
-	.rm_name = RM_TDERMGR_NAME,
-	.rm_redo = tdeheap_rmgr_redo,
-	.rm_desc = tdeheap_rmgr_desc,
-	.rm_identify = tdeheap_rmgr_identify
-};
-
 #endif							/* !FRONTEND */
 #endif							/* PG_TDE_XLOG_H */

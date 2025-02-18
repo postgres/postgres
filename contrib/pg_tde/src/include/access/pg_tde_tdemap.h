@@ -75,18 +75,6 @@ extern RelKeyData *tde_decrypt_rel_key(TDEPrincipalKey *principal_key, RelKeyDat
 extern RelKeyData *pg_tde_get_key_from_file(const RelFileLocator *rlocator, uint32 key_type, bool no_map_ok);
 extern void pg_tde_move_rel_key(const RelFileLocator *newrlocator, const RelFileLocator *oldrlocator);
 
-#define PG_TDE_MAP_FILENAME			"pg_tde_%d_map"
-#define PG_TDE_KEYDATA_FILENAME		"pg_tde_%d_dat"
-
-static inline void
-pg_tde_set_db_file_paths(Oid dbOid, char *map_path, char *keydata_path)
-{
-	if (map_path)
-		join_path_components(map_path, pg_tde_get_tde_data_dir(), psprintf(PG_TDE_MAP_FILENAME, dbOid));
-	if (keydata_path)
-		join_path_components(keydata_path, pg_tde_get_tde_data_dir(), psprintf(PG_TDE_KEYDATA_FILENAME, dbOid));
-}
-
 const char *tde_sprint_key(InternalKey *k);
 
 extern RelKeyData *pg_tde_put_key_into_cache(const RelFileLocator *locator, RelKeyData *key);

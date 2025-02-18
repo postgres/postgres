@@ -10,6 +10,10 @@
 #include "storage/bufmgr.h"
 #include "keyring/keyring_api.h"
 
+#define AES_BLOCK_SIZE 		        16
+#define NUM_AES_BLOCKS_IN_BATCH     200
+#define DATA_BYTES_PER_AES_BATCH    (NUM_AES_BLOCKS_IN_BATCH * AES_BLOCK_SIZE)
+
 #ifdef ENCRYPTION_DEBUG
 static void
 iv_prefix_debug(const char *iv_prefix, char *out_hex)

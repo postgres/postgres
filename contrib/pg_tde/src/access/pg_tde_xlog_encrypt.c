@@ -33,6 +33,11 @@
 
 #include "pg_tde_guc.h"
 
+static const XLogSmgr tde_xlog_smgr = {
+	.seg_read = tdeheap_xlog_seg_read,
+	.seg_write = tdeheap_xlog_seg_write,
+};
+
 static XLogPageHeaderData DecryptCurrentPageHrd;
 
 static void SetXLogPageIVPrefix(TimeLineID tli, XLogRecPtr lsn, char *iv_prefix);
