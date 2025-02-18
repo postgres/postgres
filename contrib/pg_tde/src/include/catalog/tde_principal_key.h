@@ -19,9 +19,7 @@
 #include "storage/lwlock.h"
 #endif
 
-#define DEFAULT_PRINCIPAL_KEY_VERSION 1
 #define PRINCIPAL_KEY_NAME_LEN TDE_KEY_NAME_LEN
-#define MAX_PRINCIPAL_KEY_VERSION_NUM 100000
 
 typedef struct TDEPrincipalKeyId
 {

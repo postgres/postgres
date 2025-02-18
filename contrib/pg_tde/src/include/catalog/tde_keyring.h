@@ -14,9 +14,6 @@
 #include "nodes/pg_list.h"
 #include "catalog/keyring_min.h"
 
-#define PG_TDE_NAMESPACE_NAME "percona_tde"
-#define PG_TDE_KEY_PROVIDER_CAT_NAME "pg_tde_key_provider"
-
 /* This record goes into key provider info file */
 typedef struct KeyringProvideRecord
 {
