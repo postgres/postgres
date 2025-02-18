@@ -1792,6 +1792,7 @@ PGAsyncStatusType
 PGCALL2
 PGChecksummablePage
 PGContextVisibility
+PGErrorVerbosity
 PGEvent
 PGEventConnDestroy
 PGEventConnReset
