@@ -11006,6 +11006,8 @@ SELECT TIMESTAMP '2001-02-16 20:38:40' AT TIME ZONE 'Asia/Tokyo' AT TIME ZONE 'A
 <lineannotation>Result: </lineannotation><computeroutput>2001-02-16 05:38:40</computeroutput>
 SELECT TIMESTAMP WITH TIME ZONE '2001-02-16 20:38:40-05' AT LOCAL;
 <lineannotation>Result: </lineannotation><computeroutput>2001-02-16 17:38:40</computeroutput>
+SELECT TIMESTAMP WITH TIME ZONE '2001-02-16 20:38:40-05' AT TIME ZONE '+05';
+<lineannotation>Result: </lineannotation><computeroutput>2001-02-16 20:38:40</computeroutput>
 SELECT TIME WITH TIME ZONE '20:38:40-05' AT LOCAL;
 <lineannotation>Result: </lineannotation><computeroutput>17:38:40</computeroutput>
 </screen>
@@ -11018,11 +11020,14 @@ SELECT TIME WITH TIME ZONE '20:38:40-05' AT LOCAL;
     Tokyo time to Chicago time.  The fourth example shifts the time stamp
     with time zone value to the time zone currently specified by the
     <varname>TimeZone</varname> setting and returns the value without a
-    time zone.
+    time zone.  The fifth example demonstrates that the sign in a POSIX-style
+    time zone specification has the opposite meaning of the sign in an
+    ISO-8601 datetime literal, as described in <xref linkend="datatype-timezones"/>
+    and <xref linkend="datetime-appendix"/>.
    </para>
 
    <para>
-    The fifth example is a cautionary tale. Due to the fact that there is no
+    The sixth example is a cautionary tale. Due to the fact that there is no
     date associated with the input value, the conversion is made using the
     current date of the session. Therefore, this static example may show a wrong
     result depending on the time of the year it is viewed because
