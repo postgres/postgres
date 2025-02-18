@@ -1454,7 +1454,7 @@ find_cols_walker(Node *node, FindColsContext *context)
  * To implement hashed aggregation, we need a hashtable that stores a
  * representative tuple and an array of AggStatePerGroup structs for each
  * distinct set of GROUP BY column values.  We compute the hash key from the
- * GROUP BY columns.  The per-group data is allocated in lookup_hash_entry(),
+ * GROUP BY columns.  The per-group data is allocated in initialize_hash_entry(),
  * for each entry.
  *
  * We have a separate hashtable and associated perhash data structure for each
@@ -1551,7 +1551,7 @@ build_hash_table(AggState *aggstate, int setno, long nbuckets)
  * at all.  Only columns of the first two types need to be stored in the
  * hashtable, and getting rid of the others can make the table entries
  * significantly smaller.  The hashtable only contains the relevant columns,
- * and is packed/unpacked in lookup_hash_entry() / agg_retrieve_hash_table()
+ * and is packed/unpacked in lookup_hash_entries() / agg_retrieve_hash_table()
  * into the format of the normal input descriptor.
  *
  * Additional columns, in addition to the columns grouped by, come from two
@@ -2101,8 +2101,6 @@ initialize_hash_entry(AggState *aggstate, TupleHashTable hashtable,
 
 /*
  * Look up hash entries for the current tuple in all hashed grouping sets.
- *
- * Be aware that lookup_hash_entry can reset the tmpcontext.
  *
  * Some entries may be left NULL if we are in "spill mode". The same tuple
  * will belong to different groups for each grouping set, so may match a group
