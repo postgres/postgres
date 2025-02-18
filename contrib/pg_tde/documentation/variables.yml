@@ -2,3 +2,5 @@
 
 release: 'Beta2'
 pgversion17: '17.2'
+tdebranch: TDE_REL_17_STABLE
+
