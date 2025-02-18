@@ -8,10 +8,10 @@ If you encrypted a table with the `tde_heap` or `tde_heap_basic` access method a
 ALTER TABLE mytable SET ACCESS METHOD heap;
 ```
 
-Note that the `SET ACCESS METHOD` command drops hint bits and this may affect the performance. Running a plain `SELECT, count(*)`, or `VACUUM` commands on the entire table will check every tuple for visibility and set its hint bits. Therefore, after executing the `ALTER TABLE` command, run a simple "count(*)" on your tables:
+Note that the `SET ACCESS METHOD` command drops hint bits and this may affect the performance. Running a plain `SELECT count(*)` or `VACUUM` commands on the entire table will check every tuple for visibility and set its hint bits. Therefore, after executing the `ALTER TABLE` command, run a simple `count(*)` on your tables:
 
 ```
-SELECT COUNT(*) FROM mytable;
+SELECT count(*) FROM mytable;
 ```
 
 Check that the table is not encrypted:
@@ -32,10 +32,10 @@ The output returns `f` meaning that the table is no longer encrypted.
     
     Note that the indexes and WAL files will no longer be encrypted.
     
-    Run a simple "count(*)" on your table to check every tuple for visibility and set the hint bits:
+    Run a simple `count(*)` on your table to check every tuple for visibility and set the hint bits:
 
     ```
-    SELECT COUNT(*) FROM mytable;
+    SELECT count(*) FROM mytable;
     ```
 
 
