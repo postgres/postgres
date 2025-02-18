@@ -139,6 +139,7 @@ pg_tde_set_db_file_paths(Oid dbOid, char *map_path, char *keydata_path)
 
 #ifndef FRONTEND
 
+static RelKeyData *pg_tde_create_key_map_entry(const RelFileLocator *newrlocator, uint32 entry_type);
 static int	pg_tde_file_header_write(char *tde_filename, int fd, TDEPrincipalKeyInfo *principal_key_info, off_t *bytes_written);
 static int32 pg_tde_write_map_entry(const RelFileLocator *rlocator, uint32 entry_type, char *db_map_path, TDEPrincipalKeyInfo *principal_key_info);
 static off_t pg_tde_write_one_map_entry(int fd, RelFileNumber rel_number, uint32 flags, int32 key_index, TDEMapEntry *map_entry, off_t *offset, const char *db_map_path);
@@ -168,7 +169,7 @@ pg_tde_create_heap_basic_key(const RelFileLocator *newrlocator)
 /*
  * Generate an encrypted key for the relation and store it in the keymap file.
  */
-RelKeyData *
+static RelKeyData *
 pg_tde_create_key_map_entry(const RelFileLocator *newrlocator, uint32 entry_type)
 {
 	InternalKey int_key;

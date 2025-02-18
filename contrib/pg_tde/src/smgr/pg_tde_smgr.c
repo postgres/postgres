@@ -93,7 +93,7 @@ tde_smgr_get_key(SMgrRelation reln, RelFileLocator *old_locator, bool can_create
 		if (rkd2 != NULL)
 		{
 			/* create a new key for the new file */
-			return pg_tde_create_key_map_entry(&reln->smgr_rlocator.locator, TDE_KEY_TYPE_SMGR);
+			return pg_tde_create_smgr_key(&reln->smgr_rlocator.locator);
 		}
 	}
 
