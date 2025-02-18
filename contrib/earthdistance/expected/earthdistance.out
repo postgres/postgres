@@ -962,7 +962,7 @@ SELECT abs(cube_distance(ll_to_earth(-30,-90), '(0)'::cube) / earth() - 1) <
 -- Now we are going to test extension create/drop scenarios.
 --
 -- list what's installed
-\dT
+\dT public.*
                                               List of data types
  Schema | Name  |                                         Description                                         
 --------+-------+---------------------------------------------------------------------------------------------
@@ -994,19 +994,19 @@ HINT:  Use DROP ... CASCADE to drop the dependent objects too.
 drop table foo;
 drop extension cube;
 -- list what's installed
-\dT
+\dT public.*
      List of data types
  Schema | Name | Description 
 --------+------+-------------
 (0 rows)
 
-\df
+\df public.*
                        List of functions
  Schema | Name | Result data type | Argument data types | Type 
 --------+------+------------------+---------------------+------
 (0 rows)
 
-\do
+\do public.*
                              List of operators
  Schema | Name | Left arg type | Right arg type | Result type | Description 
 --------+------+---------------+----------------+-------------+-------------
