@@ -186,36 +186,38 @@ rt__int_size(ArrayType *a, float *size)
 	*size = (float) ARRNELEMS(a);
 }
 
-/* qsort_arg comparison function for isort() */
-static int
+/* comparison function for isort() and _int_unique() */
+static inline int
 isort_cmp(const void *a, const void *b, void *arg)
 {
 	int32		aval = *((const int32 *) a);
 	int32		bval = *((const int32 *) b);
 
-	if (aval < bval)
-		return -1;
-	if (aval > bval)
-		return 1;
-
-	/*
-	 * Report if we have any duplicates.  If there are equal keys, qsort must
-	 * compare them at some point, else it wouldn't know whether one should go
-	 * before or after the other.
-	 */
-	*((bool *) arg) = true;
+	if (*((bool *) arg))
+	{
+		/* compare for ascending order */
+		if (aval < bval)
+			return -1;
+		if (aval > bval)
+			return 1;
+	}
+	else
+	{
+		if (aval > bval)
+			return -1;
+		if (aval < bval)
+			return 1;
+	}
 	return 0;
 }
 
-/* Sort the given data (len >= 2).  Return true if any duplicates found */
-bool
-isort(int32 *a, int len)
-{
-	bool		r = false;
-
-	qsort_arg(a, len, sizeof(int32), isort_cmp, &r);
-	return r;
-}
+#define ST_SORT isort
+#define ST_ELEMENT_TYPE int32
+#define ST_COMPARE(a, b, ascending) isort_cmp(a, b, ascending)
+#define ST_COMPARE_ARG_TYPE void
+#define ST_SCOPE
+#define ST_DEFINE
+#include "lib/sort_template.h"
 
 /* Create a new int array with room for "num" elements */
 ArrayType *
@@ -311,10 +313,10 @@ ArrayType *
 _int_unique(ArrayType *r)
 {
 	int			num = ARRNELEMS(r);
-	bool		duplicates_found;	/* not used */
+	bool		ascending = true;
 
 	num = qunique_arg(ARRPTR(r), num, sizeof(int), isort_cmp,
-					  &duplicates_found);
+					  &ascending);
 
 	return resize_intArrayType(r, num);
 }
@@ -392,16 +394,4 @@ int_to_intset(int32 elem)
 	aa = ARRPTR(result);
 	aa[0] = elem;
 	return result;
-}
-
-int
-compASC(const void *a, const void *b)
-{
-	return pg_cmp_s32(*(const int32 *) a, *(const int32 *) b);
-}
-
-int
-compDESC(const void *a, const void *b)
-{
-	return pg_cmp_s32(*(const int32 *) b, *(const int32 *) a);
 }
