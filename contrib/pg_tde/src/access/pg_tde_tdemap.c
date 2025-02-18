@@ -67,8 +67,10 @@ typedef struct TDEFileHeader
 	TDEPrincipalKeyInfo principal_key_info;
 } TDEFileHeader;
 
+/* We do not need the dbOid since the entries are stored in a file per db */
 typedef struct TDEMapEntry
 {
+	Oid			spcOid;
 	RelFileNumber relNumber;
 	uint32		flags;
 	int32		key_index;
@@ -429,6 +431,7 @@ pg_tde_write_one_map_entry(int fd, const RelFileLocator *rlocator, uint32 flags,
 	Assert(map_entry);
 
 	/* Fill in the map entry structure */
+	map_entry->spcOid = (rlocator == NULL) ? 0 : rlocator->spcOid;
 	map_entry->relNumber = (rlocator == NULL) ? 0 : rlocator->relNumber;
 	map_entry->flags = flags;
 	map_entry->key_index = key_index;
@@ -564,8 +567,9 @@ pg_tde_delete_key_map_entry(const RelFileLocator *rlocator, uint32 key_type)
 	{
 		ereport(WARNING,
 				(errcode(ERRCODE_NO_DATA_FOUND),
-				 errmsg("could not find the required map entry for deletion of relation %d in tde map file \"%s\": %m",
+				 errmsg("could not find the required map entry for deletion of relation %d in tablespace %d in tde map file \"%s\": %m",
 						rlocator->relNumber,
+						rlocator->spcOid,
 						db_map_path)));
 
 		return;
@@ -606,8 +610,9 @@ pg_tde_free_key_map_entry(const RelFileLocator *rlocator, uint32 key_type, off_t
 	{
 		ereport(WARNING,
 				(errcode(ERRCODE_NO_DATA_FOUND),
-				 errmsg("could not find the required map entry for deletion of relation %d in tde map file \"%s\": %m",
+				 errmsg("could not find the required map entry for deletion of relation %d in tablespace %d in tde map file \"%s\": %m",
 						rlocator->relNumber,
+						rlocator->spcOid,
 						db_map_path)));
 
 	}
@@ -717,8 +722,9 @@ pg_tde_perform_rotate_key(TDEPrincipalKey *principal_key, TDEPrincipalKey *new_p
 		if (found == false)
 			continue;
 
-		rloc.relNumber = read_map_entry.relNumber;
+		rloc.spcOid = read_map_entry.spcOid;
 		rloc.dbOid = principal_key->keyInfo.databaseId;
+		rloc.relNumber = read_map_entry.relNumber;
 
 		/* Let's get the decrypted key and re-encrypt it with the new key. */
 		enc_rel_key_data[OLD_PRINCIPAL_KEY] = pg_tde_read_one_keydata(k_fd[OLD_PRINCIPAL_KEY], key_index[OLD_PRINCIPAL_KEY], principal_key);
@@ -989,8 +995,8 @@ pg_tde_get_key_from_file(const RelFileLocator *rlocator, uint32 key_type, bool n
 
 /*
  * Returns the index of the read map if we find a valid match; i.e.
- * 	 - flags is set to MAP_ENTRY_VALID and the relNumber matches the one
- * 	   provided in rlocator.
+ *   - flags is set to MAP_ENTRY_VALID and the relNumber and spcOid matches the
+ *     one provided in rlocator.
  *   - If should_delete is true, we delete the entry. An offset value may
  *     be passed to speed up the file reading operation.
  *
@@ -1053,7 +1059,7 @@ pg_tde_process_map_entry(const RelFileLocator *rlocator, uint32 key_type, char *
 		if (curr_pos == prev_pos)
 			break;
 
-		/* We found a valid entry for the relNumber */
+		/* We found a valid entry for the relation */
 		if (found)
 		{
 #ifndef FRONTEND
@@ -1250,11 +1256,12 @@ pg_tde_read_one_map_entry(File map_file, const RelFileLocator *rlocator, int fla
 
 	*offset += bytes_read;
 
-	/* We found a valid entry for the relNumber */
-	found = (map_entry->flags & flags);
+	/* We found a valid entry */
+	found = map_entry->flags & flags;
 
 	/* If a valid rlocator is provided, let's compare and set found value */
-	found &= (rlocator == NULL) ? true : (map_entry->relNumber == rlocator->relNumber);
+	if (rlocator != NULL)
+		found &= map_entry->spcOid == rlocator->spcOid && map_entry->relNumber == rlocator->relNumber;
 
 	return found;
 }
