@@ -507,37 +507,37 @@ create temp table p_t1_2 partition of p_t1 for values in(2);
 -- Ensure we can remove non-PK columns for partitioned tables.
 explain (costs off) select * from p_t1 group by a,b,c,d;
 
-create unique index t3_c_uidx on t3(c);
+create unique index t2_z_uidx on t2(z);
 
 -- Ensure we don't remove any columns from the GROUP BY for a unique
 -- index on a NULLable column.
-explain (costs off) select b,c from t3 group by b,c;
+explain (costs off) select y,z from t2 group by y,z;
 
 -- Make the column NOT NULL and ensure we remove the redundant column
-alter table t3 alter column c set not null;
-explain (costs off) select b,c from t3 group by b,c;
+alter table t2 alter column z set not null;
+explain (costs off) select y,z from t2 group by y,z;
 
 -- When there are multiple supporting unique indexes and the GROUP BY contains
 -- columns to cover all of those, ensure we pick the index with the least
 -- number of columns so that we can remove more columns from the GROUP BY.
-explain (costs off) select a,b,c from t3 group by a,b,c;
+explain (costs off) select x,y,z from t2 group by x,y,z;
 
 -- As above but try ordering the columns differently to ensure we get the
 -- same result.
-explain (costs off) select a,b,c from t3 group by c,a,b;
+explain (costs off) select x,y,z from t2 group by z,x,y;
 
 -- Ensure we don't use a partial index as proof of functional dependency
-drop index t3_c_uidx;
-create index t3_c_uidx on t3 (c) where c > 0;
-explain (costs off) select b,c from t3 group by b,c;
+drop index t2_z_uidx;
+create index t2_z_uidx on t2 (z) where z > 0;
+explain (costs off) select y,z from t2 group by y,z;
 
 -- A unique index defined as NULLS NOT DISTINCT does not need a supporting NOT
 -- NULL constraint on the indexed columns.  Ensure the redundant columns are
 -- removed from the GROUP BY for such a table.
-drop index t3_c_uidx;
-alter table t3 alter column c drop not null;
-create unique index t3_c_uidx on t3(c) nulls not distinct;
-explain (costs off) select b,c from t3 group by b,c;
+drop index t2_z_uidx;
+alter table t2 alter column z drop not null;
+create unique index t2_z_uidx on t2(z) nulls not distinct;
+explain (costs off) select y,z from t2 group by y,z;
 
 drop table t1 cascade;
 drop table t2;
