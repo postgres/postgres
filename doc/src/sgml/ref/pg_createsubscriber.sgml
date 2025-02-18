@@ -377,6 +377,13 @@ PostgreSQL documentation
     server.  If the target server has a standby, replication will break and a
     fresh standby should be created.
    </para>
+
+   <para>
+    Replication failures can occur if required WAL files are missing. To prevent
+    this, the source server must set
+    <xref linkend="guc-max-slot-wal-keep-size"/> to <literal>-1</literal> to
+    ensure that required WAL files are not prematurely removed.
+   </para>
   </refsect2>
 
   <refsect2>

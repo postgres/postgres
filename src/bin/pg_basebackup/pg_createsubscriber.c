@@ -849,6 +849,7 @@ check_publisher(const struct LogicalRepInfo *dbinfo)
 	int			max_walsenders;
 	int			cur_walsenders;
 	int			max_prepared_transactions;
+	char	   *max_slot_wal_keep_size;
 
 	pg_log_info("checking settings on publisher");
 
@@ -872,6 +873,7 @@ check_publisher(const struct LogicalRepInfo *dbinfo)
 	 * - wal_level = logical
 	 * - max_replication_slots >= current + number of dbs to be converted
 	 * - max_wal_senders >= current + number of dbs to be converted
+	 * - max_slot_wal_keep_size = -1 (to prevent deletion of required WAL files)
 	 * -----------------------------------------------------------------------
 	 */
 	res = PQexec(conn,
@@ -880,7 +882,8 @@ check_publisher(const struct LogicalRepInfo *dbinfo)
 				 " (SELECT count(*) FROM pg_catalog.pg_replication_slots),"
 				 " pg_catalog.current_setting('max_wal_senders'),"
 				 " (SELECT count(*) FROM pg_catalog.pg_stat_activity WHERE backend_type = 'walsender'),"
-				 " pg_catalog.current_setting('max_prepared_transactions')");
+				 " pg_catalog.current_setting('max_prepared_transactions'),"
+				 " pg_catalog.current_setting('max_slot_wal_keep_size')");
 
 	if (PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
@@ -895,6 +898,7 @@ check_publisher(const struct LogicalRepInfo *dbinfo)
 	max_walsenders = atoi(PQgetvalue(res, 0, 3));
 	cur_walsenders = atoi(PQgetvalue(res, 0, 4));
 	max_prepared_transactions = atoi(PQgetvalue(res, 0, 5));
+	max_slot_wal_keep_size = pg_strdup(PQgetvalue(res, 0, 6));
 
 	PQclear(res);
 
@@ -905,6 +909,8 @@ check_publisher(const struct LogicalRepInfo *dbinfo)
 	pg_log_debug("publisher: current wal senders: %d", cur_walsenders);
 	pg_log_debug("publisher: max_prepared_transactions: %d",
 				 max_prepared_transactions);
+	pg_log_debug("publisher: max_slot_wal_keep_size: %s",
+				 max_slot_wal_keep_size);
 
 	disconnect_database(conn, false);
 
@@ -937,6 +943,18 @@ check_publisher(const struct LogicalRepInfo *dbinfo)
 		pg_log_warning("two_phase option will not be enabled for replication slots");
 		pg_log_warning_detail("Subscriptions will be created with the two_phase option disabled.  "
 							  "Prepared transactions will be replicated at COMMIT PREPARED.");
+	}
+
+	/*
+	 * Validate 'max_slot_wal_keep_size'. If this parameter is set to a
+	 * non-default value, it may cause replication failures due to required
+	 * WAL files being prematurely removed.
+	 */
+	if (dry_run && (strcmp(max_slot_wal_keep_size, "-1") != 0))
+	{
+		pg_log_warning("required WAL could be removed from the publisher");
+		pg_log_warning_hint("Set the configuration parameter \"%s\" to -1 to ensure that required WAL files are not prematurely removed.",
+							"max_slot_wal_keep_size");
 	}
 
 	pg_free(wal_level);
