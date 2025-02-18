@@ -59,7 +59,7 @@ SetIVPrefix(ItemPointerData *ip, char *iv_prefix)
  * This function assumes that everything is in a single block, and has an assertion ensuring this
  */
 static void
-pg_tde_crypt_simple(const char *iv_prefix, uint32 start_offset, const char *data, uint32 data_len, char *out, RelKeyData *key, const char *context)
+pg_tde_crypt_simple(const char *iv_prefix, uint32 start_offset, const char *data, uint32 data_len, char *out, InternalKey *key, const char *context)
 {
 	const uint64 aes_start_block = start_offset / AES_BLOCK_SIZE;
 	const uint64 aes_end_block = (start_offset + data_len + (AES_BLOCK_SIZE - 1)) / AES_BLOCK_SIZE;
@@ -69,7 +69,7 @@ pg_tde_crypt_simple(const char *iv_prefix, uint32 start_offset, const char *data
 
 	Assert(aes_end_block - aes_start_block <= NUM_AES_BLOCKS_IN_BATCH + 1);
 
-	Aes128EncryptedZeroBlocks(&(key->internal_key.ctx), key->internal_key.key, iv_prefix, aes_start_block, aes_end_block, enc_key);
+	Aes128EncryptedZeroBlocks(&key->ctx, key->key, iv_prefix, aes_start_block, aes_end_block, enc_key);
 
 #ifdef ENCRYPTION_DEBUG
 	{
@@ -96,7 +96,7 @@ pg_tde_crypt_simple(const char *iv_prefix, uint32 start_offset, const char *data
  * This is a generic function intended for large data, that do not fit into a single block
  */
 static void
-pg_tde_crypt_complex(const char *iv_prefix, uint32 start_offset, const char *data, uint32 data_len, char *out, RelKeyData *key, const char *context)
+pg_tde_crypt_complex(const char *iv_prefix, uint32 start_offset, const char *data, uint32 data_len, char *out, InternalKey *key, const char *context)
 {
 	const uint64 aes_start_block = start_offset / AES_BLOCK_SIZE;
 	const uint64 aes_end_block = (start_offset + data_len + (AES_BLOCK_SIZE - 1)) / AES_BLOCK_SIZE;
@@ -112,7 +112,7 @@ pg_tde_crypt_complex(const char *iv_prefix, uint32 start_offset, const char *dat
 	{
 		batch_end_block = Min(batch_start_block + NUM_AES_BLOCKS_IN_BATCH, aes_end_block);
 
-		Aes128EncryptedZeroBlocks(&(key->internal_key.ctx), key->internal_key.key, iv_prefix, batch_start_block, batch_end_block, enc_key);
+		Aes128EncryptedZeroBlocks(&key->ctx, key->key, iv_prefix, batch_start_block, batch_end_block, enc_key);
 #ifdef ENCRYPTION_DEBUG
 		{
 			char		ivp_debug[33];
@@ -165,7 +165,7 @@ pg_tde_crypt_complex(const char *iv_prefix, uint32 start_offset, const char *dat
  * This function simply selects between the two above variations based on the data length
  */
 void
-pg_tde_crypt(const char *iv_prefix, uint32 start_offset, const char *data, uint32 data_len, char *out, RelKeyData *key, const char *context)
+pg_tde_crypt(const char *iv_prefix, uint32 start_offset, const char *data, uint32 data_len, char *out, InternalKey *key, const char *context)
 {
 	if (data_len >= DATA_BYTES_PER_AES_BATCH)
 	{
@@ -186,7 +186,7 @@ pg_tde_crypt(const char *iv_prefix, uint32 start_offset, const char *data, uint3
  * context: Optional context message to be used in debug log
  * */
 void
-pg_tde_crypt_tuple(HeapTuple tuple, HeapTuple out_tuple, RelKeyData *key, const char *context)
+pg_tde_crypt_tuple(HeapTuple tuple, HeapTuple out_tuple, InternalKey *key, const char *context)
 {
 	char		iv_prefix[16] = {0};
 	uint32		data_len = tuple->t_len - tuple->t_data->t_hoff;
@@ -228,7 +228,7 @@ PGTdePageAddItemExtended(RelFileLocator rel,
 
 	/* ctid stored in item is incorrect (not set) at this point */
 	ItemPointerData ip;
-	RelKeyData *key = GetHeapBaiscRelationKey(rel);
+	InternalKey *key = GetHeapBaiscRelationKey(rel);
 
 	ItemPointerSet(&ip, bn, off);
 

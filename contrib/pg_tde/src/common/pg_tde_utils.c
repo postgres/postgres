@@ -59,7 +59,7 @@ pg_tde_internal_has_key(PG_FUNCTION_ARGS)
 	{
 		LOCKMODE	lockmode = AccessShareLock;
 		Relation	rel = table_open(tableOid, lockmode);
-		RelKeyData *rkd;
+		InternalKey *key;
 
 		if (
 #ifdef PERCONA_EXT
@@ -71,11 +71,11 @@ pg_tde_internal_has_key(PG_FUNCTION_ARGS)
 			PG_RETURN_BOOL(false);
 		}
 
-		rkd = GetSMGRRelationKey(rel->rd_locator);
+		key = GetSMGRRelationKey(rel->rd_locator);
 
 		table_close(rel, lockmode);
 
-		PG_RETURN_BOOL(rkd != NULL);
+		PG_RETURN_BOOL(key != NULL);
 	}
 }
 

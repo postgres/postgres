@@ -33,12 +33,12 @@
 void
 TDEInitGlobalKeys(const char *dir)
 {
-	RelKeyData *ikey;
+	RelKeyData *key;
 
 	if (dir != NULL)
 		pg_tde_set_data_dir(dir);
 
-	ikey = pg_tde_get_key_from_file(&GLOBAL_SPACE_RLOCATOR(XLOG_TDE_OID), TDE_KEY_TYPE_GLOBAL, true);
+	key = pg_tde_get_key_from_file(&GLOBAL_SPACE_RLOCATOR(XLOG_TDE_OID), TDE_KEY_TYPE_GLOBAL, true);
 
 	/*
 	 * Internal Key should be in the TopMemmoryContext because of SSL
@@ -48,9 +48,9 @@ TDEInitGlobalKeys(const char *dir)
 	 * any changes to it have to remain local ot the backend. (see
 	 * https://github.com/percona-Lab/pg_tde/pull/214#discussion_r1648998317)
 	 */
-	if (ikey != NULL)
+	if (key != NULL)
 	{
-		pg_tde_put_key_into_cache(&GLOBAL_SPACE_RLOCATOR(XLOG_TDE_OID), ikey);
+		pg_tde_put_key_into_cache(&GLOBAL_SPACE_RLOCATOR(XLOG_TDE_OID), &key->internal_key);
 	}
 
 }

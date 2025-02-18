@@ -44,7 +44,7 @@ static void tdeheap_toast_tuple_externalize(ToastTupleContext *ttc,
 static Datum tdeheap_toast_save_datum(Relation rel, Datum value,
 								struct varlena *oldexternal,
 								int options);
-static void tdeheap_toast_encrypt(Pointer dval, Oid valueid, RelKeyData *keys);
+static void tdeheap_toast_encrypt(Pointer dval, Oid valueid, InternalKey *keys);
 static bool toastrel_valueid_exists(Relation toastrel, Oid valueid);
 static bool toastid_valueid_exists(Oid toastrelid, Oid valueid);
 
@@ -657,7 +657,7 @@ tdeheap_fetch_toast_slice(Relation toastrel, Oid valueid, int32 attrsize,
 	int			validIndex;
 	SnapshotData SnapshotToast;
 	char		decrypted_data[TOAST_MAX_CHUNK_SIZE];
-	RelKeyData *key = GetHeapBaiscRelationKey(toastrel->rd_locator);
+	InternalKey *key = GetHeapBaiscRelationKey(toastrel->rd_locator);
 	char		iv_prefix[16] = {0,};
 
 
@@ -842,7 +842,7 @@ tdeheap_fetch_toast_slice(Relation toastrel, Oid valueid, int32 attrsize,
 // TODO: these should be in their own file so we can proplerly autoupdate them
 /* pg_tde extension */
 static void
-tdeheap_toast_encrypt(Pointer dval, Oid valueid, RelKeyData *key)
+tdeheap_toast_encrypt(Pointer dval, Oid valueid, InternalKey *key)
 {
 	int32		data_size =0;
 	char*		data_p;

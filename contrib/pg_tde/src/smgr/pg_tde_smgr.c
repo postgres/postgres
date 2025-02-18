@@ -23,7 +23,7 @@ typedef struct TDESMgrRelationData
 	struct _MdfdVec *md_seg_fds[MAX_FORKNUM + 1];
 
 	bool		encrypted_relation;
-	RelKeyData	relKey;
+	InternalKey relKey;
 } TDESMgrRelationData;
 
 typedef TDESMgrRelationData *TDESMgrRelation;
@@ -37,11 +37,11 @@ tde_is_encryption_required(TDESMgrRelation tdereln, ForkNumber forknum)
 	return (tdereln->encrypted_relation && (forknum == MAIN_FORKNUM || forknum == INIT_FORKNUM));
 }
 
-static RelKeyData *
+static InternalKey *
 tde_smgr_get_key(SMgrRelation reln, RelFileLocator *old_locator, bool can_create)
 {
 	TdeCreateEvent *event;
-	RelKeyData *rkd;
+	InternalKey *key;
 	TDEPrincipalKey *pk;
 
 	if (IsCatalogRelationOid(reln->smgr_rlocator.locator.relNumber))
@@ -61,11 +61,11 @@ tde_smgr_get_key(SMgrRelation reln, RelFileLocator *old_locator, bool can_create
 	event = GetCurrentTdeCreateEvent();
 
 	/* see if we have a key for the relation, and return if yes */
-	rkd = GetSMGRRelationKey(reln->smgr_rlocator.locator);
+	key = GetSMGRRelationKey(reln->smgr_rlocator.locator);
 
-	if (rkd != NULL)
+	if (key != NULL)
 	{
-		return rkd;
+		return key;
 	}
 
 	/* if this is a CREATE TABLE, we have to generate the key */
@@ -88,9 +88,9 @@ tde_smgr_get_key(SMgrRelation reln, RelFileLocator *old_locator, bool can_create
 	/* check if we had a key for the old locator, if there's one */
 	if (old_locator != NULL && can_create)
 	{
-		RelKeyData *rkd2 = GetSMGRRelationKey(*old_locator);
+		InternalKey *key2 = GetSMGRRelationKey(*old_locator);
 
-		if (rkd2 != NULL)
+		if (key2 != NULL)
 		{
 			/* create a new key for the new file */
 			return pg_tde_create_smgr_key(&reln->smgr_rlocator.locator);
@@ -105,7 +105,7 @@ tde_mdwritev(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 			 const void **buffers, BlockNumber nblocks, bool skipFsync)
 {
 	TDESMgrRelation tdereln = (TDESMgrRelation) reln;
-	RelKeyData *rkd = &tdereln->relKey;
+	InternalKey *int_key = &tdereln->relKey;
 
 	if (!tde_is_encryption_required(tdereln, forknum))
 	{
@@ -130,7 +130,7 @@ tde_mdwritev(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 
 			memcpy(iv + 4, &bn, sizeof(BlockNumber));
 
-			AesEncrypt(rkd->internal_key.key, iv, ((unsigned char **) buffers)[i], BLCKSZ, local_buffers[i], &out_len);
+			AesEncrypt(int_key->key, iv, ((unsigned char **) buffers)[i], BLCKSZ, local_buffers[i], &out_len);
 		}
 
 		mdwritev(reln, forknum, blocknum,
@@ -146,7 +146,7 @@ tde_mdextend(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 			 const void *buffer, bool skipFsync)
 {
 	TDESMgrRelation tdereln = (TDESMgrRelation) reln;
-	RelKeyData *rkd = &tdereln->relKey;
+	InternalKey *int_key = &tdereln->relKey;
 
 	if (!tde_is_encryption_required(tdereln, forknum))
 	{
@@ -164,7 +164,7 @@ tde_mdextend(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 		AesInit();
 		memcpy(iv + 4, &blocknum, sizeof(BlockNumber));
 
-		AesEncrypt(rkd->internal_key.key, iv, ((unsigned char *) buffer), BLCKSZ, local_blocks_aligned, &out_len);
+		AesEncrypt(int_key->key, iv, ((unsigned char *) buffer), BLCKSZ, local_blocks_aligned, &out_len);
 
 		mdextend(reln, forknum, blocknum, local_blocks_aligned, skipFsync);
 
@@ -178,7 +178,7 @@ tde_mdreadv(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 {
 	int			out_len = BLCKSZ;
 	TDESMgrRelation tdereln = (TDESMgrRelation) reln;
-	RelKeyData *rkd = &tdereln->relKey;
+	InternalKey *int_key = &tdereln->relKey;
 
 	mdreadv(reln, forknum, blocknum, buffers, nblocks);
 
@@ -220,7 +220,7 @@ tde_mdreadv(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 
 		memcpy(iv + 4, &bn, sizeof(BlockNumber));
 
-		AesDecrypt(rkd->internal_key.key, iv, ((unsigned char **) buffers)[i], BLCKSZ, ((unsigned char **) buffers)[i], &out_len);
+		AesDecrypt(int_key->key, iv, ((unsigned char **) buffers)[i], BLCKSZ, ((unsigned char **) buffers)[i], &out_len);
 	}
 }
 
@@ -228,7 +228,7 @@ static void
 tde_mdcreate(RelFileLocator relold, SMgrRelation reln, ForkNumber forknum, bool isRedo)
 {
 	TDESMgrRelation tdereln = (TDESMgrRelation) reln;
-	RelKeyData *key;
+	InternalKey *key;
 
 	/*
 	 * This is the only function that gets called during actual CREATE
@@ -247,7 +247,7 @@ tde_mdcreate(RelFileLocator relold, SMgrRelation reln, ForkNumber forknum, bool 
 	if (key)
 	{
 		tdereln->encrypted_relation = true;
-		memcpy(&tdereln->relKey, key, sizeof(RelKeyData));
+		tdereln->relKey = *key;
 	}
 	else
 	{
@@ -262,12 +262,12 @@ static void
 tde_mdopen(SMgrRelation reln)
 {
 	TDESMgrRelation tdereln = (TDESMgrRelation) reln;
-	RelKeyData *key = tde_smgr_get_key(reln, NULL, false);
+	InternalKey *key = tde_smgr_get_key(reln, NULL, false);
 
 	if (key)
 	{
 		tdereln->encrypted_relation = true;
-		memcpy(&tdereln->relKey, key, sizeof(RelKeyData));
+		tdereln->relKey = *key;
 	}
 	else
 	{

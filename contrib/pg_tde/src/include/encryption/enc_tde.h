@@ -17,10 +17,8 @@
 #include "access/pg_tde_tdemap.h"
 #include "keyring/keyring_api.h"
 
-extern void
-			pg_tde_crypt(const char *iv_prefix, uint32 start_offset, const char *data, uint32 data_len, char *out, RelKeyData *key, const char *context);
-extern void
-			pg_tde_crypt_tuple(HeapTuple tuple, HeapTuple out_tuple, RelKeyData *key, const char *context);
+extern void pg_tde_crypt(const char *iv_prefix, uint32 start_offset, const char *data, uint32 data_len, char *out, InternalKey *key, const char *context);
+extern void pg_tde_crypt_tuple(HeapTuple tuple, HeapTuple out_tuple, InternalKey *key, const char *context);
 
 /* A wrapper to encrypt a tuple before adding it to the buffer */
 extern OffsetNumber

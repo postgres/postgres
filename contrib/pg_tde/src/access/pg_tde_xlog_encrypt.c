@@ -58,7 +58,7 @@ PG_FUNCTION_INFO_V1(pg_tde_create_wal_key);
 Datum
 pg_tde_create_wal_key(PG_FUNCTION_ARGS)
 {
-	RelKeyData *key = GetRelationKey(GLOBAL_SPACE_RLOCATOR(XLOG_TDE_OID), TDE_KEY_TYPE_GLOBAL, true);
+	InternalKey *key = GetRelationKey(GLOBAL_SPACE_RLOCATOR(XLOG_TDE_OID), TDE_KEY_TYPE_GLOBAL, true);
 
 	if (key != NULL)
 	{
@@ -77,7 +77,7 @@ TDEXlogCheckSane(void)
 {
 	if (EncryptXLog)
 	{
-		RelKeyData *key = GetRelationKey(GLOBAL_SPACE_RLOCATOR(XLOG_TDE_OID), TDE_KEY_TYPE_GLOBAL, true);
+		InternalKey *key = GetRelationKey(GLOBAL_SPACE_RLOCATOR(XLOG_TDE_OID), TDE_KEY_TYPE_GLOBAL, true);
 
 		if (key == NULL)
 		{
@@ -149,7 +149,7 @@ TDEXLogWriteEncryptedPages(int fd, const void *buf, size_t count, off_t offset)
 	size_t		data_size = 0;
 	XLogPageHeader curr_page_hdr = &EncryptCurrentPageHrd;
 	XLogPageHeader enc_buf_page = NULL;
-	RelKeyData *key = GetTdeGlobaleRelationKey(GLOBAL_SPACE_RLOCATOR(XLOG_TDE_OID));
+	InternalKey *key = GetTdeGlobaleRelationKey(GLOBAL_SPACE_RLOCATOR(XLOG_TDE_OID));
 	off_t		enc_off;
 	size_t		page_size = XLOG_BLCKSZ - offset % XLOG_BLCKSZ;
 	uint32		iv_ctr = 0;
@@ -256,7 +256,7 @@ tdeheap_xlog_seg_read(int fd, void *buf, size_t count, off_t offset)
 	char		iv_prefix[16] = {0,};
 	size_t		data_size = 0;
 	XLogPageHeader curr_page_hdr = &DecryptCurrentPageHrd;
-	RelKeyData *key = NULL;
+	InternalKey *key = NULL;
 	size_t		page_size = XLOG_BLCKSZ - offset % XLOG_BLCKSZ;
 	off_t		dec_off;
 	uint32		iv_ctr = 0;
