@@ -19475,7 +19475,7 @@ SELECT jt.* FROM
 SELECT jt.* FROM
  my_films,
  JSON_TABLE (js, '$.favorites[*] ? (@.films[*].director == $filter)'
-   PASSING 'Alfred Hitchcock' AS filter, 'Vertigo' AS filter2
+   PASSING 'Alfred Hitchcock' AS filter
      COLUMNS (
      id FOR ORDINALITY,
      kind text PATH '$.kind',
@@ -19562,13 +19562,13 @@ SELECT jt.* FROM
 <programlisting>
 SELECT * FROM JSON_TABLE (
 '{"favorites":
-    {"movies":
+    [{"movies":
       [{"name": "One", "director": "John Doe"},
        {"name": "Two", "director": "Don Joe"}],
      "books":
       [{"name": "Mystery", "authors": [{"name": "Brown Dan"}]},
        {"name": "Wonder", "authors": [{"name": "Jun Murakami"}, {"name":"Craig Doe"}]}]
-}}'::json, '$.favorites[*]'
+}]}'::json, '$.favorites[*]'
 COLUMNS (
   user_id FOR ORDINALITY,
   NESTED '$.movies[*]'
