@@ -4429,6 +4429,46 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
        </listitem>
       </varlistentry>
 
+     <varlistentry id="guc-idle-replication-slot-timeout" xreflabel="idle_replication_slot_timeout">
+      <term><varname>idle_replication_slot_timeout</varname> (<type>integer</type>)
+      <indexterm>
+       <primary><varname>idle_replication_slot_timeout</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Invalidate replication slots that have remained idle longer than this
+        duration. If this value is specified without units, it is taken as
+        minutes. A value of zero (the default) disables the idle timeout
+        invalidation mechanism. This parameter can only be set in the
+        <filename>postgresql.conf</filename> file or on the server command
+        line.
+       </para>
+
+       <para>
+        Slot invalidation due to idle timeout occurs during checkpoint.
+        Because checkpoints happen at <varname>checkpoint_timeout</varname>
+        intervals, there can be some lag between when the
+        <varname>idle_replication_slot_timeout</varname> was exceeded and when
+        the slot invalidation is triggered at the next checkpoint.
+        To avoid such lags, users can force a checkpoint to promptly invalidate
+        inactive slots. The duration of slot inactivity is calculated using the
+        slot's <link linkend="view-pg-replication-slots">pg_replication_slots</link>.<structfield>inactive_since</structfield>
+        value.
+       </para>
+
+       <para>
+        Note that the idle timeout invalidation mechanism is not applicable
+        for slots that do not reserve WAL or for slots on the standby server
+        that are being synced from the primary server (i.e., standby slots
+        having <link linkend="view-pg-replication-slots">pg_replication_slots</link>.<structfield>synced</structfield>
+        value <literal>true</literal>). Synced slots are always considered to
+        be inactive because they don't perform logical decoding to produce
+        changes.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="guc-wal-sender-timeout" xreflabel="wal_sender_timeout">
       <term><varname>wal_sender_timeout</varname> (<type>integer</type>)
       <indexterm>

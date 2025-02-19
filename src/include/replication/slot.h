@@ -44,21 +44,25 @@ typedef enum ReplicationSlotPersistency
  * Slots can be invalidated, e.g. due to max_slot_wal_keep_size. If so, the
  * 'invalidated' field is set to a value other than _NONE.
  *
- * When adding a new invalidation cause here, remember to update
- * SlotInvalidationCauses and RS_INVAL_MAX_CAUSES.
+ * When adding a new invalidation cause here, the value must be powers of 2
+ * (e.g., 1, 2, 4...) for proper bitwise operations. Also, remember to update
+ * RS_INVAL_MAX_CAUSES below, and SlotInvalidationCauses in slot.c.
  */
 typedef enum ReplicationSlotInvalidationCause
 {
-	RS_INVAL_NONE,
+	RS_INVAL_NONE = 0,
 	/* required WAL has been removed */
-	RS_INVAL_WAL_REMOVED,
+	RS_INVAL_WAL_REMOVED = (1 << 0),
 	/* required rows have been removed */
-	RS_INVAL_HORIZON,
+	RS_INVAL_HORIZON = (1 << 1),
 	/* wal_level insufficient for slot */
-	RS_INVAL_WAL_LEVEL,
+	RS_INVAL_WAL_LEVEL = (1 << 2),
+	/* idle slot timeout has occurred */
+	RS_INVAL_IDLE_TIMEOUT = (1 << 3),
 } ReplicationSlotInvalidationCause;
 
-extern PGDLLIMPORT const char *const SlotInvalidationCauses[];
+/* Maximum number of invalidation causes */
+#define	RS_INVAL_MAX_CAUSES 4
 
 /*
  * On-Disk data of a replication slot, preserved across restarts.
@@ -254,6 +258,7 @@ extern PGDLLIMPORT ReplicationSlot *MyReplicationSlot;
 /* GUCs */
 extern PGDLLIMPORT int max_replication_slots;
 extern PGDLLIMPORT char *synchronized_standby_slots;
+extern PGDLLIMPORT int idle_replication_slot_timeout_mins;
 
 /* shmem initialization functions */
 extern Size ReplicationSlotsShmemSize(void);
@@ -286,7 +291,7 @@ extern void ReplicationSlotsComputeRequiredLSN(void);
 extern XLogRecPtr ReplicationSlotsComputeLogicalRestartLSN(void);
 extern bool ReplicationSlotsCountDBSlots(Oid dboid, int *nslots, int *nactive);
 extern void ReplicationSlotsDropDBSlots(Oid dboid);
-extern bool InvalidateObsoleteReplicationSlots(ReplicationSlotInvalidationCause cause,
+extern bool InvalidateObsoleteReplicationSlots(uint32 possible_causes,
 											   XLogSegNo oldestSegno,
 											   Oid dboid,
 											   TransactionId snapshotConflictHorizon);
@@ -303,6 +308,7 @@ extern void CheckSlotRequirements(void);
 extern void CheckSlotPermissions(void);
 extern ReplicationSlotInvalidationCause
 			GetSlotInvalidationCause(const char *invalidation_reason);
+extern const char *GetSlotInvalidationCauseName(ReplicationSlotInvalidationCause cause);
 
 extern bool SlotExistsInSyncStandbySlots(const char *slot_name);
 extern bool StandbySlotsHaveCaughtup(XLogRecPtr wait_for_lsn, int elevel);

@@ -107,6 +107,9 @@ extern long TimestampDifferenceMilliseconds(TimestampTz start_time,
 extern bool TimestampDifferenceExceeds(TimestampTz start_time,
 									   TimestampTz stop_time,
 									   int msec);
+extern bool TimestampDifferenceExceedsSeconds(TimestampTz start_time,
+											  TimestampTz stop_time,
+											  int threshold_sec);
 
 extern TimestampTz time_t_to_timestamptz(pg_time_t tm);
 extern pg_time_t timestamptz_to_time_t(TimestampTz t);

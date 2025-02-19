@@ -1787,6 +1787,24 @@ TimestampDifferenceExceeds(TimestampTz start_time,
 }
 
 /*
+ * Check if the difference between two timestamps is >= a given
+ * threshold (expressed in seconds).
+ */
+bool
+TimestampDifferenceExceedsSeconds(TimestampTz start_time,
+								  TimestampTz stop_time,
+								  int threshold_sec)
+{
+	long		secs;
+	int			usecs;
+
+	/* Calculate the difference in seconds */
+	TimestampDifference(start_time, stop_time, &secs, &usecs);
+
+	return (secs >= threshold_sec);
+}
+
+/*
  * Convert a time_t to TimestampTz.
  *
  * We do not use time_t internally in Postgres, but this is provided for use

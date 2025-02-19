@@ -431,7 +431,7 @@ pg_get_replication_slots(PG_FUNCTION_ARGS)
 		if (cause == RS_INVAL_NONE)
 			nulls[i++] = true;
 		else
-			values[i++] = CStringGetTextDatum(SlotInvalidationCauses[cause]);
+			values[i++] = CStringGetTextDatum(GetSlotInvalidationCauseName(cause));
 
 		values[i++] = BoolGetDatum(slot_contents.data.failover);
 

@@ -253,6 +253,13 @@ start_postmaster(ClusterInfo *cluster, bool report_and_exit_on_error)
 		appendPQExpBufferStr(&pgoptions, " -c max_slot_wal_keep_size=-1");
 
 	/*
+	 * Use idle_replication_slot_timeout=0 to prevent slot invalidation due to
+	 * idle_timeout by checkpointer process during upgrade.
+	 */
+	if (GET_MAJOR_VERSION(cluster->major_version) >= 1800)
+		appendPQExpBufferStr(&pgoptions, " -c idle_replication_slot_timeout=0");
+
+	/*
 	 * Use -b to disable autovacuum and logical replication launcher
 	 * (effective in PG17 or later for the latter).
 	 */

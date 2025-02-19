@@ -3069,6 +3069,18 @@ struct config_int ConfigureNamesInt[] =
 	},
 
 	{
+		{"idle_replication_slot_timeout", PGC_SIGHUP, REPLICATION_SENDING,
+			gettext_noop("Sets the duration a replication slot can remain idle before "
+						 "it is invalidated."),
+			NULL,
+			GUC_UNIT_MIN
+		},
+		&idle_replication_slot_timeout_mins,
+		0, 0, INT_MAX / SECS_PER_MINUTE,
+		check_idle_replication_slot_timeout, NULL, NULL
+	},
+
+	{
 		{"commit_delay", PGC_SUSET, WAL_SETTINGS,
 			gettext_noop("Sets the delay in microseconds between transaction commit and "
 						 "flushing WAL to disk."),

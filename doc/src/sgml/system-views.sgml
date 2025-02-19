@@ -2619,6 +2619,13 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
           perform logical decoding.  It is set only for logical slots.
          </para>
         </listitem>
+        <listitem>
+         <para>
+          <literal>idle_timeout</literal> means that the slot has remained
+          idle longer than the configured
+          <xref linkend="guc-idle-replication-slot-timeout"/> duration.
+         </para>
+        </listitem>
        </itemizedlist>
       </para></entry>
      </row>
