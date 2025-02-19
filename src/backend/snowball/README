@@ -29,8 +29,8 @@ We choose to include the derived files in the PostgreSQL distribution
 because most installations will not have the Snowball compiler available.
 
 We are currently synced with the Snowball git commit
-48a67a2831005f49c48ec29a5837640e23e54e6b (tag v2.2.0)
-of 2021-11-10.
+d19326ac6c1b9a417fc872f7c2f845265a5e9ece
+of 2025-02-19.
 
 To update the PostgreSQL sources from a new Snowball version:
 
@@ -44,8 +44,8 @@ do
     sed 's|\.\./runtime/header\.h|header.h|' $f >libstemmer/`basename $f`
 done
 
-Do not copy stemmers that are listed in libstemmer/modules.txt as
-nonstandard, such as "german2" or "lovins".
+Do not copy stemmers that are listed in their libstemmer/modules.txt as
+nonstandard, such as "kraaij_pohlmann" or "lovins".
 
 2. Copy the *.c files in snowball/runtime/ to
 src/backend/snowball/libstemmer, and edit them to remove direct inclusions
@@ -55,14 +55,18 @@ is sensitive to largefile compilation options.)
 
 3. Copy the *.h files in snowball/src_c/ and snowball/runtime/
 to src/include/snowball/libstemmer.  At this writing the header files
-do not require any changes.
+do not require any changes.  Again, omit the *.h files for nonstandard
+stemmers.
 
 4. Check whether any stemmer modules have been added or removed.  If so, edit
-the OBJS list in Makefile, the list of #include's in dict_snowball.c, and the
-stemmer_modules[] table in dict_snowball.c, as well as the list in the
-documentation in textsearch.sgml.  You might also need to change
-the LANGUAGES list in Makefile and tsearch_config_languages in initdb.c.
+the OBJS list in Makefile, the dict_snowball_sources list in meson.build,
+the list of #include's and the stemmer_modules[] table in dict_snowball.c,
+and the sample \dFd output in the documentation in textsearch.sgml.
+You might also need to change the @languages array in snowball_create.pl
+and the tsearch_config_languages[] table in initdb.c.
 
 5. The various stopword files in stopwords/ must be downloaded
 individually from pages on the snowballstem.org website.
 Be careful that these files must be stored in UTF-8 encoding.
+Update the stop_files list in Makefile if any are added or removed
+(the meson tooling does not require adjustment for that, though).

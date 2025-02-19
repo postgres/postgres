@@ -883,6 +883,8 @@ static const struct tsearch_config_match tsearch_config_languages[] =
 	{"english", "POSIX"},
 	{"english", "en"},
 	{"english", "English"},
+	{"estonian", "et"},
+	{"estonian", "Estonian"},
 	{"finnish", "fi"},
 	{"finnish", "Finnish"},
 	{"french", "fr"},

@@ -2,38 +2,38 @@
 
 #include "header.h"
 
-static int r_step7(struct SN_env * z);
-static int r_step6(struct SN_env * z);
-static int r_step5m(struct SN_env * z);
-static int r_step5l(struct SN_env * z);
-static int r_step5k(struct SN_env * z);
-static int r_step5j(struct SN_env * z);
-static int r_step5i(struct SN_env * z);
-static int r_step5h(struct SN_env * z);
-static int r_step5g(struct SN_env * z);
-static int r_step5f(struct SN_env * z);
-static int r_step5e(struct SN_env * z);
-static int r_step5d(struct SN_env * z);
-static int r_step5c(struct SN_env * z);
-static int r_step5b(struct SN_env * z);
-static int r_step5a(struct SN_env * z);
-static int r_step4(struct SN_env * z);
-static int r_step3(struct SN_env * z);
-static int r_step2d(struct SN_env * z);
-static int r_step2c(struct SN_env * z);
-static int r_step2b(struct SN_env * z);
-static int r_step2a(struct SN_env * z);
-static int r_step1(struct SN_env * z);
-static int r_steps10(struct SN_env * z);
-static int r_steps9(struct SN_env * z);
-static int r_steps8(struct SN_env * z);
-static int r_steps7(struct SN_env * z);
-static int r_steps6(struct SN_env * z);
-static int r_steps5(struct SN_env * z);
-static int r_steps4(struct SN_env * z);
-static int r_steps3(struct SN_env * z);
-static int r_steps2(struct SN_env * z);
-static int r_steps1(struct SN_env * z);
+static int r_step_7(struct SN_env * z);
+static int r_step_6(struct SN_env * z);
+static int r_step_5m(struct SN_env * z);
+static int r_step_5l(struct SN_env * z);
+static int r_step_5k(struct SN_env * z);
+static int r_step_5j(struct SN_env * z);
+static int r_step_5i(struct SN_env * z);
+static int r_step_5h(struct SN_env * z);
+static int r_step_5g(struct SN_env * z);
+static int r_step_5f(struct SN_env * z);
+static int r_step_5e(struct SN_env * z);
+static int r_step_5d(struct SN_env * z);
+static int r_step_5c(struct SN_env * z);
+static int r_step_5b(struct SN_env * z);
+static int r_step_5a(struct SN_env * z);
+static int r_step_4(struct SN_env * z);
+static int r_step_3(struct SN_env * z);
+static int r_step_2d(struct SN_env * z);
+static int r_step_2c(struct SN_env * z);
+static int r_step_2b(struct SN_env * z);
+static int r_step_2a(struct SN_env * z);
+static int r_step_1(struct SN_env * z);
+static int r_step_s10(struct SN_env * z);
+static int r_step_s9(struct SN_env * z);
+static int r_step_s8(struct SN_env * z);
+static int r_step_s7(struct SN_env * z);
+static int r_step_s6(struct SN_env * z);
+static int r_step_s5(struct SN_env * z);
+static int r_step_s4(struct SN_env * z);
+static int r_step_s3(struct SN_env * z);
+static int r_step_s2(struct SN_env * z);
+static int r_step_s1(struct SN_env * z);
 static int r_has_min_length(struct SN_env * z);
 static int r_tolower(struct SN_env * z);
 #ifdef __cplusplus
@@ -2323,8 +2323,7 @@ static const symbol s_105[] = { 0xCE, 0xBF, 0xCF, 0x85, 0xCE, 0xBC };
 static const symbol s_106[] = { 0xCE, 0xBC, 0xCE, 0xB1 };
 
 static int r_has_min_length(struct SN_env * z) {
-    if (!(len_utf8(z->p) >= 3)) return 0;
-    return 1;
+    return len_utf8(z->p) >= 3;
 }
 
 static int r_tolower(struct SN_env * z) {
@@ -2333,7 +2332,6 @@ static int r_tolower(struct SN_env * z) {
         int m1 = z->l - z->c; (void)m1;
         z->ket = z->c;
         among_var = find_among_b(z, a_0, 46);
-        if (!(among_var)) goto lab0;
         z->bra = z->c;
         switch (among_var) {
             case 1:
@@ -2471,11 +2469,11 @@ static int r_tolower(struct SN_env * z) {
     return 1;
 }
 
-static int r_step1(struct SN_env * z) {
+static int r_step_1(struct SN_env * z) {
     int among_var;
     z->ket = z->c;
     among_var = find_among_b(z, a_1, 40);
-    if (!(among_var)) return 0;
+    if (!among_var) return 0;
     z->bra = z->c;
     switch (among_var) {
         case 1:
@@ -2538,10 +2536,10 @@ static int r_step1(struct SN_env * z) {
     return 1;
 }
 
-static int r_steps1(struct SN_env * z) {
+static int r_step_s1(struct SN_env * z) {
     int among_var;
     z->ket = z->c;
-    if (!(find_among_b(z, a_3, 14))) return 0;
+    if (!find_among_b(z, a_3, 14)) return 0;
     z->bra = z->c;
     {   int ret = slice_del(z);
         if (ret < 0) return ret;
@@ -2550,7 +2548,7 @@ static int r_steps1(struct SN_env * z) {
     z->ket = z->c;
     z->bra = z->c;
     among_var = find_among_b(z, a_2, 31);
-    if (!(among_var)) return 0;
+    if (!among_var) return 0;
     if (z->c > z->lb) return 0;
     switch (among_var) {
         case 1:
@@ -2567,9 +2565,9 @@ static int r_steps1(struct SN_env * z) {
     return 1;
 }
 
-static int r_steps2(struct SN_env * z) {
+static int r_step_s2(struct SN_env * z) {
     z->ket = z->c;
-    if (!(find_among_b(z, a_5, 7))) return 0;
+    if (!find_among_b(z, a_5, 7)) return 0;
     z->bra = z->c;
     {   int ret = slice_del(z);
         if (ret < 0) return ret;
@@ -2577,7 +2575,7 @@ static int r_steps2(struct SN_env * z) {
     z->I[0] = 0;
     z->ket = z->c;
     z->bra = z->c;
-    if (!(find_among_b(z, a_4, 8))) return 0;
+    if (!find_among_b(z, a_4, 8)) return 0;
     if (z->c > z->lb) return 0;
     {   int ret = slice_from_s(z, 4, s_37);
         if (ret < 0) return ret;
@@ -2585,17 +2583,12 @@ static int r_steps2(struct SN_env * z) {
     return 1;
 }
 
-static int r_steps3(struct SN_env * z) {
+static int r_step_s3(struct SN_env * z) {
     int among_var;
-    z->ket = z->c;
-    if (!(find_among_b(z, a_7, 7))) return 0;
-    z->bra = z->c;
-    {   int ret = slice_del(z);
-        if (ret < 0) return ret;
-    }
-    z->I[0] = 0;
     {   int m1 = z->l - z->c; (void)m1;
+        z->ket = z->c;
         if (!(eq_s_b(z, 6, s_38))) goto lab1;
+        z->bra = z->c;
         if (z->c > z->lb) goto lab1;
         {   int ret = slice_from_s(z, 4, s_39);
             if (ret < 0) return ret;
@@ -2604,30 +2597,37 @@ static int r_steps3(struct SN_env * z) {
     lab1:
         z->c = z->l - m1;
         z->ket = z->c;
-        z->bra = z->c;
-        among_var = find_among_b(z, a_6, 32);
-        if (!(among_var)) return 0;
-        if (z->c > z->lb) return 0;
-        switch (among_var) {
-            case 1:
-                {   int ret = slice_from_s(z, 2, s_40);
-                    if (ret < 0) return ret;
-                }
-                break;
-            case 2:
-                {   int ret = slice_from_s(z, 4, s_41);
-                    if (ret < 0) return ret;
-                }
-                break;
-        }
     }
 lab0:
+    if (!find_among_b(z, a_7, 7)) return 0;
+    z->bra = z->c;
+    {   int ret = slice_del(z);
+        if (ret < 0) return ret;
+    }
+    z->I[0] = 0;
+    z->ket = z->c;
+    z->bra = z->c;
+    among_var = find_among_b(z, a_6, 32);
+    if (!among_var) return 0;
+    if (z->c > z->lb) return 0;
+    switch (among_var) {
+        case 1:
+            {   int ret = slice_from_s(z, 2, s_40);
+                if (ret < 0) return ret;
+            }
+            break;
+        case 2:
+            {   int ret = slice_from_s(z, 4, s_41);
+                if (ret < 0) return ret;
+            }
+            break;
+    }
     return 1;
 }
 
-static int r_steps4(struct SN_env * z) {
+static int r_step_s4(struct SN_env * z) {
     z->ket = z->c;
-    if (!(find_among_b(z, a_9, 7))) return 0;
+    if (!find_among_b(z, a_9, 7)) return 0;
     z->bra = z->c;
     {   int ret = slice_del(z);
         if (ret < 0) return ret;
@@ -2636,7 +2636,7 @@ static int r_steps4(struct SN_env * z) {
     z->ket = z->c;
     z->bra = z->c;
     if (z->c - 3 <= z->lb || z->p[z->c - 1] >> 5 != 5 || !((-2145255424 >> (z->p[z->c - 1] & 0x1f)) & 1)) return 0;
-    if (!(find_among_b(z, a_8, 19))) return 0;
+    if (!find_among_b(z, a_8, 19)) return 0;
     if (z->c > z->lb) return 0;
     {   int ret = slice_from_s(z, 2, s_42);
         if (ret < 0) return ret;
@@ -2644,10 +2644,10 @@ static int r_steps4(struct SN_env * z) {
     return 1;
 }
 
-static int r_steps5(struct SN_env * z) {
+static int r_step_s5(struct SN_env * z) {
     int among_var;
     z->ket = z->c;
-    if (!(find_among_b(z, a_11, 11))) return 0;
+    if (!find_among_b(z, a_11, 11)) return 0;
     z->bra = z->c;
     {   int ret = slice_del(z);
         if (ret < 0) return ret;
@@ -2656,7 +2656,7 @@ static int r_steps5(struct SN_env * z) {
     z->ket = z->c;
     z->bra = z->c;
     among_var = find_among_b(z, a_10, 40);
-    if (!(among_var)) return 0;
+    if (!among_var) return 0;
     if (z->c > z->lb) return 0;
     switch (among_var) {
         case 1:
@@ -2673,10 +2673,10 @@ static int r_steps5(struct SN_env * z) {
     return 1;
 }
 
-static int r_steps6(struct SN_env * z) {
+static int r_step_s6(struct SN_env * z) {
     int among_var;
     z->ket = z->c;
-    if (!(find_among_b(z, a_14, 6))) return 0;
+    if (!find_among_b(z, a_14, 6)) return 0;
     z->bra = z->c;
     {   int ret = slice_del(z);
         if (ret < 0) return ret;
@@ -2687,7 +2687,7 @@ static int r_steps6(struct SN_env * z) {
         z->bra = z->c;
         if (z->c - 3 <= z->lb || z->p[z->c - 1] != 181) goto lab1;
         among_var = find_among_b(z, a_12, 7);
-        if (!(among_var)) goto lab1;
+        if (!among_var) goto lab1;
         if (z->c > z->lb) goto lab1;
         switch (among_var) {
             case 1:
@@ -2707,7 +2707,7 @@ static int r_steps6(struct SN_env * z) {
         z->ket = z->c;
         if (z->c - 9 <= z->lb || (z->p[z->c - 1] != 186 && z->p[z->c - 1] != 189)) return 0;
         among_var = find_among_b(z, a_13, 10);
-        if (!(among_var)) return 0;
+        if (!among_var) return 0;
         z->bra = z->c;
         switch (among_var) {
             case 1:
@@ -2766,10 +2766,10 @@ lab0:
     return 1;
 }
 
-static int r_steps7(struct SN_env * z) {
+static int r_step_s7(struct SN_env * z) {
     z->ket = z->c;
     if (z->c - 9 <= z->lb || (z->p[z->c - 1] != 177 && z->p[z->c - 1] != 185)) return 0;
-    if (!(find_among_b(z, a_16, 4))) return 0;
+    if (!find_among_b(z, a_16, 4)) return 0;
     z->bra = z->c;
     {   int ret = slice_del(z);
         if (ret < 0) return ret;
@@ -2778,7 +2778,7 @@ static int r_steps7(struct SN_env * z) {
     z->ket = z->c;
     z->bra = z->c;
     if (z->c - 1 <= z->lb || (z->p[z->c - 1] != 131 && z->p[z->c - 1] != 135)) return 0;
-    if (!(find_among_b(z, a_15, 2))) return 0;
+    if (!find_among_b(z, a_15, 2)) return 0;
     if (z->c > z->lb) return 0;
     {   int ret = slice_from_s(z, 8, s_57);
         if (ret < 0) return ret;
@@ -2786,10 +2786,10 @@ static int r_steps7(struct SN_env * z) {
     return 1;
 }
 
-static int r_steps8(struct SN_env * z) {
+static int r_step_s8(struct SN_env * z) {
     int among_var;
     z->ket = z->c;
-    if (!(find_among_b(z, a_18, 8))) return 0;
+    if (!find_among_b(z, a_18, 8)) return 0;
     z->bra = z->c;
     {   int ret = slice_del(z);
         if (ret < 0) return ret;
@@ -2799,7 +2799,7 @@ static int r_steps8(struct SN_env * z) {
         z->ket = z->c;
         z->bra = z->c;
         among_var = find_among_b(z, a_17, 46);
-        if (!(among_var)) goto lab1;
+        if (!among_var) goto lab1;
         if (z->c > z->lb) goto lab1;
         switch (among_var) {
             case 1:
@@ -2827,10 +2827,10 @@ lab0:
     return 1;
 }
 
-static int r_steps9(struct SN_env * z) {
+static int r_step_s9(struct SN_env * z) {
     z->ket = z->c;
     if (z->c - 7 <= z->lb || z->p[z->c - 1] >> 5 != 5 || !((-1610481664 >> (z->p[z->c - 1] & 0x1f)) & 1)) return 0;
-    if (!(find_among_b(z, a_21, 3))) return 0;
+    if (!find_among_b(z, a_21, 3)) return 0;
     z->bra = z->c;
     {   int ret = slice_del(z);
         if (ret < 0) return ret;
@@ -2839,7 +2839,7 @@ static int r_steps9(struct SN_env * z) {
     {   int m1 = z->l - z->c; (void)m1;
         z->ket = z->c;
         z->bra = z->c;
-        if (!(find_among_b(z, a_19, 4))) goto lab1;
+        if (!find_among_b(z, a_19, 4)) goto lab1;
         if (z->c > z->lb) goto lab1;
         {   int ret = slice_from_s(z, 4, s_62);
             if (ret < 0) return ret;
@@ -2850,7 +2850,7 @@ static int r_steps9(struct SN_env * z) {
         z->ket = z->c;
         z->bra = z->c;
         if (z->c - 1 <= z->lb || (z->p[z->c - 1] != 181 && z->p[z->c - 1] != 189)) return 0;
-        if (!(find_among_b(z, a_20, 2))) return 0;
+        if (!find_among_b(z, a_20, 2)) return 0;
         {   int ret = slice_from_s(z, 4, s_63);
             if (ret < 0) return ret;
         }
@@ -2859,9 +2859,9 @@ lab0:
     return 1;
 }
 
-static int r_steps10(struct SN_env * z) {
+static int r_step_s10(struct SN_env * z) {
     z->ket = z->c;
-    if (!(find_among_b(z, a_23, 4))) return 0;
+    if (!find_among_b(z, a_23, 4)) return 0;
     z->bra = z->c;
     {   int ret = slice_del(z);
         if (ret < 0) return ret;
@@ -2869,7 +2869,7 @@ static int r_steps10(struct SN_env * z) {
     z->I[0] = 0;
     z->ket = z->c;
     z->bra = z->c;
-    if (!(find_among_b(z, a_22, 7))) return 0;
+    if (!find_among_b(z, a_22, 7)) return 0;
     if (z->c > z->lb) return 0;
     {   int ret = slice_from_s(z, 6, s_64);
         if (ret < 0) return ret;
@@ -2877,16 +2877,16 @@ static int r_steps10(struct SN_env * z) {
     return 1;
 }
 
-static int r_step2a(struct SN_env * z) {
+static int r_step_2a(struct SN_env * z) {
     z->ket = z->c;
     if (z->c - 7 <= z->lb || (z->p[z->c - 1] != 131 && z->p[z->c - 1] != 189)) return 0;
-    if (!(find_among_b(z, a_24, 2))) return 0;
+    if (!find_among_b(z, a_24, 2)) return 0;
     z->bra = z->c;
     {   int ret = slice_del(z);
         if (ret < 0) return ret;
     }
     {   int m1 = z->l - z->c; (void)m1;
-        if (!(find_among_b(z, a_25, 10))) goto lab0;
+        if (!find_among_b(z, a_25, 10)) goto lab0;
         return 0;
     lab0:
         z->c = z->l - m1;
@@ -2901,10 +2901,10 @@ static int r_step2a(struct SN_env * z) {
     return 1;
 }
 
-static int r_step2b(struct SN_env * z) {
+static int r_step_2b(struct SN_env * z) {
     z->ket = z->c;
     if (z->c - 7 <= z->lb || (z->p[z->c - 1] != 131 && z->p[z->c - 1] != 189)) return 0;
-    if (!(find_among_b(z, a_26, 2))) return 0;
+    if (!find_among_b(z, a_26, 2)) return 0;
     z->bra = z->c;
     {   int ret = slice_del(z);
         if (ret < 0) return ret;
@@ -2912,34 +2912,34 @@ static int r_step2b(struct SN_env * z) {
     z->ket = z->c;
     z->bra = z->c;
     if (z->c - 3 <= z->lb || (z->p[z->c - 1] != 128 && z->p[z->c - 1] != 187)) return 0;
-    if (!(find_among_b(z, a_27, 8))) return 0;
+    if (!find_among_b(z, a_27, 8)) return 0;
     {   int ret = slice_from_s(z, 4, s_66);
         if (ret < 0) return ret;
     }
     return 1;
 }
 
-static int r_step2c(struct SN_env * z) {
+static int r_step_2c(struct SN_env * z) {
     z->ket = z->c;
     if (z->c - 9 <= z->lb || (z->p[z->c - 1] != 131 && z->p[z->c - 1] != 189)) return 0;
-    if (!(find_among_b(z, a_28, 2))) return 0;
+    if (!find_among_b(z, a_28, 2)) return 0;
     z->bra = z->c;
     {   int ret = slice_del(z);
         if (ret < 0) return ret;
     }
     z->ket = z->c;
     z->bra = z->c;
-    if (!(find_among_b(z, a_29, 15))) return 0;
+    if (!find_among_b(z, a_29, 15)) return 0;
     {   int ret = slice_from_s(z, 6, s_67);
         if (ret < 0) return ret;
     }
     return 1;
 }
 
-static int r_step2d(struct SN_env * z) {
+static int r_step_2d(struct SN_env * z) {
     z->ket = z->c;
     if (z->c - 5 <= z->lb || (z->p[z->c - 1] != 131 && z->p[z->c - 1] != 189)) return 0;
-    if (!(find_among_b(z, a_30, 2))) return 0;
+    if (!find_among_b(z, a_30, 2)) return 0;
     z->bra = z->c;
     {   int ret = slice_del(z);
         if (ret < 0) return ret;
@@ -2947,7 +2947,7 @@ static int r_step2d(struct SN_env * z) {
     z->I[0] = 0;
     z->ket = z->c;
     z->bra = z->c;
-    if (!(find_among_b(z, a_31, 8))) return 0;
+    if (!find_among_b(z, a_31, 8)) return 0;
     if (z->c > z->lb) return 0;
     {   int ret = slice_from_s(z, 2, s_68);
         if (ret < 0) return ret;
@@ -2955,9 +2955,9 @@ static int r_step2d(struct SN_env * z) {
     return 1;
 }
 
-static int r_step3(struct SN_env * z) {
+static int r_step_3(struct SN_env * z) {
     z->ket = z->c;
-    if (!(find_among_b(z, a_32, 3))) return 0;
+    if (!find_among_b(z, a_32, 3)) return 0;
     z->bra = z->c;
     {   int ret = slice_del(z);
         if (ret < 0) return ret;
@@ -2972,9 +2972,9 @@ static int r_step3(struct SN_env * z) {
     return 1;
 }
 
-static int r_step4(struct SN_env * z) {
+static int r_step_4(struct SN_env * z) {
     z->ket = z->c;
-    if (!(find_among_b(z, a_33, 4))) return 0;
+    if (!find_among_b(z, a_33, 4)) return 0;
     z->bra = z->c;
     {   int ret = slice_del(z);
         if (ret < 0) return ret;
@@ -2994,7 +2994,7 @@ static int r_step4(struct SN_env * z) {
     }
 lab0:
     z->bra = z->c;
-    if (!(find_among_b(z, a_34, 36))) return 0;
+    if (!find_among_b(z, a_34, 36)) return 0;
     if (z->c > z->lb) return 0;
     {   int ret = slice_from_s(z, 4, s_71);
         if (ret < 0) return ret;
@@ -3002,9 +3002,11 @@ lab0:
     return 1;
 }
 
-static int r_step5a(struct SN_env * z) {
+static int r_step_5a(struct SN_env * z) {
     {   int m1 = z->l - z->c; (void)m1;
+        z->ket = z->c;
         if (!(eq_s_b(z, 10, s_72))) goto lab0;
+        z->bra = z->c;
         if (z->c > z->lb) goto lab0;
         {   int ret = slice_from_s(z, 8, s_73);
             if (ret < 0) return ret;
@@ -3015,7 +3017,7 @@ static int r_step5a(struct SN_env * z) {
     {   int m2 = z->l - z->c; (void)m2;
         z->ket = z->c;
         if (z->c - 9 <= z->lb || z->p[z->c - 1] != 181) goto lab1;
-        if (!(find_among_b(z, a_35, 5))) goto lab1;
+        if (!find_among_b(z, a_35, 5)) goto lab1;
         z->bra = z->c;
         {   int ret = slice_del(z);
             if (ret < 0) return ret;
@@ -3033,7 +3035,7 @@ static int r_step5a(struct SN_env * z) {
     z->I[0] = 0;
     z->ket = z->c;
     z->bra = z->c;
-    if (!(find_among_b(z, a_36, 12))) return 0;
+    if (!find_among_b(z, a_36, 12)) return 0;
     if (z->c > z->lb) return 0;
     {   int ret = slice_from_s(z, 4, s_75);
         if (ret < 0) return ret;
@@ -3041,11 +3043,11 @@ static int r_step5a(struct SN_env * z) {
     return 1;
 }
 
-static int r_step5b(struct SN_env * z) {
+static int r_step_5b(struct SN_env * z) {
     {   int m1 = z->l - z->c; (void)m1;
         z->ket = z->c;
         if (z->c - 9 <= z->lb || z->p[z->c - 1] != 181) goto lab0;
-        if (!(find_among_b(z, a_38, 11))) goto lab0;
+        if (!find_among_b(z, a_38, 11)) goto lab0;
         z->bra = z->c;
         {   int ret = slice_del(z);
             if (ret < 0) return ret;
@@ -3054,7 +3056,7 @@ static int r_step5b(struct SN_env * z) {
         z->ket = z->c;
         z->bra = z->c;
         if (z->c - 3 <= z->lb || (z->p[z->c - 1] != 129 && z->p[z->c - 1] != 131)) goto lab0;
-        if (!(find_among_b(z, a_37, 2))) goto lab0;
+        if (!find_among_b(z, a_37, 2)) goto lab0;
         if (z->c > z->lb) goto lab0;
         {   int ret = slice_from_s(z, 8, s_76);
             if (ret < 0) return ret;
@@ -3083,7 +3085,7 @@ static int r_step5b(struct SN_env * z) {
     }
 lab1:
     z->bra = z->c;
-    if (!(find_among_b(z, a_39, 95))) return 0;
+    if (!find_among_b(z, a_39, 95)) return 0;
     if (z->c > z->lb) return 0;
     {   int ret = slice_from_s(z, 4, s_79);
         if (ret < 0) return ret;
@@ -3091,11 +3093,11 @@ lab1:
     return 1;
 }
 
-static int r_step5c(struct SN_env * z) {
+static int r_step_5c(struct SN_env * z) {
     {   int m1 = z->l - z->c; (void)m1;
         z->ket = z->c;
         if (z->c - 9 <= z->lb || z->p[z->c - 1] != 181) goto lab0;
-        if (!(find_among_b(z, a_40, 1))) goto lab0;
+        if (!find_among_b(z, a_40, 1)) goto lab0;
         z->bra = z->c;
         {   int ret = slice_del(z);
             if (ret < 0) return ret;
@@ -3123,7 +3125,7 @@ static int r_step5c(struct SN_env * z) {
         z->c = z->l - m2;
         z->ket = z->c;
         z->bra = z->c;
-        if (!(find_among_b(z, a_41, 31))) goto lab3;
+        if (!find_among_b(z, a_41, 31)) goto lab3;
         {   int ret = slice_from_s(z, 4, s_82);
             if (ret < 0) return ret;
         }
@@ -3134,7 +3136,7 @@ static int r_step5c(struct SN_env * z) {
     }
 lab1:
     z->bra = z->c;
-    if (!(find_among_b(z, a_42, 25))) return 0;
+    if (!find_among_b(z, a_42, 25)) return 0;
     if (z->c > z->lb) return 0;
     {   int ret = slice_from_s(z, 4, s_83);
         if (ret < 0) return ret;
@@ -3142,10 +3144,10 @@ lab1:
     return 1;
 }
 
-static int r_step5d(struct SN_env * z) {
+static int r_step_5d(struct SN_env * z) {
     z->ket = z->c;
     if (z->c - 9 <= z->lb || z->p[z->c - 1] != 131) return 0;
-    if (!(find_among_b(z, a_43, 2))) return 0;
+    if (!find_among_b(z, a_43, 2)) return 0;
     z->bra = z->c;
     {   int ret = slice_del(z);
         if (ret < 0) return ret;
@@ -3173,10 +3175,10 @@ lab0:
     return 1;
 }
 
-static int r_step5e(struct SN_env * z) {
+static int r_step_5e(struct SN_env * z) {
     z->ket = z->c;
     if (z->c - 11 <= z->lb || z->p[z->c - 1] != 181) return 0;
-    if (!(find_among_b(z, a_44, 2))) return 0;
+    if (!find_among_b(z, a_44, 2)) return 0;
     z->bra = z->c;
     {   int ret = slice_del(z);
         if (ret < 0) return ret;
@@ -3192,7 +3194,7 @@ static int r_step5e(struct SN_env * z) {
     return 1;
 }
 
-static int r_step5f(struct SN_env * z) {
+static int r_step_5f(struct SN_env * z) {
     {   int m1 = z->l - z->c; (void)m1;
         z->ket = z->c;
         if (!(eq_s_b(z, 10, s_90))) goto lab0;
@@ -3204,7 +3206,7 @@ static int r_step5f(struct SN_env * z) {
         z->ket = z->c;
         z->bra = z->c;
         if (z->c - 1 <= z->lb || (z->p[z->c - 1] != 128 && z->p[z->c - 1] != 134)) goto lab0;
-        if (!(find_among_b(z, a_45, 6))) goto lab0;
+        if (!find_among_b(z, a_45, 6)) goto lab0;
         if (z->c > z->lb) goto lab0;
         {   int ret = slice_from_s(z, 8, s_91);
             if (ret < 0) return ret;
@@ -3221,7 +3223,7 @@ static int r_step5f(struct SN_env * z) {
     z->I[0] = 0;
     z->ket = z->c;
     z->bra = z->c;
-    if (!(find_among_b(z, a_46, 9))) return 0;
+    if (!find_among_b(z, a_46, 9)) return 0;
     if (z->c > z->lb) return 0;
     {   int ret = slice_from_s(z, 8, s_93);
         if (ret < 0) return ret;
@@ -3229,10 +3231,10 @@ static int r_step5f(struct SN_env * z) {
     return 1;
 }
 
-static int r_step5g(struct SN_env * z) {
+static int r_step_5g(struct SN_env * z) {
     {   int m1 = z->l - z->c; (void)m1;
         z->ket = z->c;
-        if (!(find_among_b(z, a_47, 3))) goto lab0;
+        if (!find_among_b(z, a_47, 3)) goto lab0;
         z->bra = z->c;
         {   int ret = slice_del(z);
             if (ret < 0) return ret;
@@ -3242,7 +3244,7 @@ static int r_step5g(struct SN_env * z) {
         z->c = z->l - m1;
     }
     z->ket = z->c;
-    if (!(find_among_b(z, a_50, 3))) return 0;
+    if (!find_among_b(z, a_50, 3)) return 0;
     z->bra = z->c;
     {   int ret = slice_del(z);
         if (ret < 0) return ret;
@@ -3251,7 +3253,7 @@ static int r_step5g(struct SN_env * z) {
     {   int m2 = z->l - z->c; (void)m2;
         z->ket = z->c;
         z->bra = z->c;
-        if (!(find_among_b(z, a_48, 6))) goto lab2;
+        if (!find_among_b(z, a_48, 6)) goto lab2;
         {   int ret = slice_from_s(z, 4, s_94);
             if (ret < 0) return ret;
         }
@@ -3261,7 +3263,7 @@ static int r_step5g(struct SN_env * z) {
         z->ket = z->c;
         z->bra = z->c;
         if (z->c - 1 <= z->lb || z->p[z->c - 1] != 184) return 0;
-        if (!(find_among_b(z, a_49, 5))) return 0;
+        if (!find_among_b(z, a_49, 5)) return 0;
         if (z->c > z->lb) return 0;
         {   int ret = slice_from_s(z, 4, s_95);
             if (ret < 0) return ret;
@@ -3271,9 +3273,9 @@ lab1:
     return 1;
 }
 
-static int r_step5h(struct SN_env * z) {
+static int r_step_5h(struct SN_env * z) {
     z->ket = z->c;
-    if (!(find_among_b(z, a_53, 3))) return 0;
+    if (!find_among_b(z, a_53, 3)) return 0;
     z->bra = z->c;
     {   int ret = slice_del(z);
         if (ret < 0) return ret;
@@ -3282,7 +3284,7 @@ static int r_step5h(struct SN_env * z) {
     {   int m1 = z->l - z->c; (void)m1;
         z->ket = z->c;
         z->bra = z->c;
-        if (!(find_among_b(z, a_51, 12))) goto lab1;
+        if (!find_among_b(z, a_51, 12)) goto lab1;
         {   int ret = slice_from_s(z, 6, s_96);
             if (ret < 0) return ret;
         }
@@ -3291,7 +3293,7 @@ static int r_step5h(struct SN_env * z) {
         z->c = z->l - m1;
         z->ket = z->c;
         z->bra = z->c;
-        if (!(find_among_b(z, a_52, 25))) return 0;
+        if (!find_among_b(z, a_52, 25)) return 0;
         if (z->c > z->lb) return 0;
         {   int ret = slice_from_s(z, 6, s_97);
             if (ret < 0) return ret;
@@ -3301,10 +3303,10 @@ lab0:
     return 1;
 }
 
-static int r_step5i(struct SN_env * z) {
+static int r_step_5i(struct SN_env * z) {
     int among_var;
     z->ket = z->c;
-    if (!(find_among_b(z, a_56, 3))) return 0;
+    if (!find_among_b(z, a_56, 3)) return 0;
     z->bra = z->c;
     {   int ret = slice_del(z);
         if (ret < 0) return ret;
@@ -3324,7 +3326,7 @@ static int r_step5i(struct SN_env * z) {
             z->ket = z->c;
             z->bra = z->c;
             among_var = find_among_b(z, a_54, 12);
-            if (!(among_var)) goto lab3;
+            if (!among_var) goto lab3;
             switch (among_var) {
                 case 1:
                     {   int ret = slice_from_s(z, 4, s_100);
@@ -3337,7 +3339,7 @@ static int r_step5i(struct SN_env * z) {
             z->c = z->l - m2;
             z->ket = z->c;
             z->bra = z->c;
-            if (!(find_among_b(z, a_55, 44))) return 0;
+            if (!find_among_b(z, a_55, 44)) return 0;
             if (z->c > z->lb) return 0;
             {   int ret = slice_from_s(z, 4, s_101);
                 if (ret < 0) return ret;
@@ -3350,9 +3352,9 @@ lab0:
     return 1;
 }
 
-static int r_step5j(struct SN_env * z) {
+static int r_step_5j(struct SN_env * z) {
     z->ket = z->c;
-    if (!(find_among_b(z, a_57, 3))) return 0;
+    if (!find_among_b(z, a_57, 3)) return 0;
     z->bra = z->c;
     {   int ret = slice_del(z);
         if (ret < 0) return ret;
@@ -3361,7 +3363,7 @@ static int r_step5j(struct SN_env * z) {
     z->ket = z->c;
     z->bra = z->c;
     if (z->c - 1 <= z->lb || z->p[z->c - 1] != 189) return 0;
-    if (!(find_among_b(z, a_58, 6))) return 0;
+    if (!find_among_b(z, a_58, 6)) return 0;
     if (z->c > z->lb) return 0;
     {   int ret = slice_from_s(z, 4, s_102);
         if (ret < 0) return ret;
@@ -3369,10 +3371,10 @@ static int r_step5j(struct SN_env * z) {
     return 1;
 }
 
-static int r_step5k(struct SN_env * z) {
+static int r_step_5k(struct SN_env * z) {
     z->ket = z->c;
     if (z->c - 7 <= z->lb || z->p[z->c - 1] != 181) return 0;
-    if (!(find_among_b(z, a_59, 1))) return 0;
+    if (!find_among_b(z, a_59, 1)) return 0;
     z->bra = z->c;
     {   int ret = slice_del(z);
         if (ret < 0) return ret;
@@ -3380,7 +3382,7 @@ static int r_step5k(struct SN_env * z) {
     z->I[0] = 0;
     z->ket = z->c;
     z->bra = z->c;
-    if (!(find_among_b(z, a_60, 10))) return 0;
+    if (!find_among_b(z, a_60, 10)) return 0;
     if (z->c > z->lb) return 0;
     {   int ret = slice_from_s(z, 6, s_103);
         if (ret < 0) return ret;
@@ -3388,10 +3390,10 @@ static int r_step5k(struct SN_env * z) {
     return 1;
 }
 
-static int r_step5l(struct SN_env * z) {
+static int r_step_5l(struct SN_env * z) {
     z->ket = z->c;
     if (z->c - 7 <= z->lb || z->p[z->c - 1] != 181) return 0;
-    if (!(find_among_b(z, a_61, 3))) return 0;
+    if (!find_among_b(z, a_61, 3)) return 0;
     z->bra = z->c;
     {   int ret = slice_del(z);
         if (ret < 0) return ret;
@@ -3399,7 +3401,7 @@ static int r_step5l(struct SN_env * z) {
     z->I[0] = 0;
     z->ket = z->c;
     z->bra = z->c;
-    if (!(find_among_b(z, a_62, 6))) return 0;
+    if (!find_among_b(z, a_62, 6)) return 0;
     if (z->c > z->lb) return 0;
     {   int ret = slice_from_s(z, 6, s_104);
         if (ret < 0) return ret;
@@ -3407,10 +3409,10 @@ static int r_step5l(struct SN_env * z) {
     return 1;
 }
 
-static int r_step5m(struct SN_env * z) {
+static int r_step_5m(struct SN_env * z) {
     z->ket = z->c;
     if (z->c - 7 <= z->lb || z->p[z->c - 1] != 181) return 0;
-    if (!(find_among_b(z, a_63, 3))) return 0;
+    if (!find_among_b(z, a_63, 3)) return 0;
     z->bra = z->c;
     {   int ret = slice_del(z);
         if (ret < 0) return ret;
@@ -3418,7 +3420,7 @@ static int r_step5m(struct SN_env * z) {
     z->I[0] = 0;
     z->ket = z->c;
     z->bra = z->c;
-    if (!(find_among_b(z, a_64, 7))) return 0;
+    if (!find_among_b(z, a_64, 7)) return 0;
     if (z->c > z->lb) return 0;
     {   int ret = slice_from_s(z, 6, s_105);
         if (ret < 0) return ret;
@@ -3426,10 +3428,10 @@ static int r_step5m(struct SN_env * z) {
     return 1;
 }
 
-static int r_step6(struct SN_env * z) {
+static int r_step_6(struct SN_env * z) {
     {   int m1 = z->l - z->c; (void)m1;
         z->ket = z->c;
-        if (!(find_among_b(z, a_65, 3))) goto lab0;
+        if (!find_among_b(z, a_65, 3)) goto lab0;
         z->bra = z->c;
         {   int ret = slice_from_s(z, 4, s_106);
             if (ret < 0) return ret;
@@ -3439,7 +3441,7 @@ static int r_step6(struct SN_env * z) {
     }
     if (!(z->I[0])) return 0;
     z->ket = z->c;
-    if (!(find_among_b(z, a_66, 84))) return 0;
+    if (!find_among_b(z, a_66, 84)) return 0;
     z->bra = z->c;
     {   int ret = slice_del(z);
         if (ret < 0) return ret;
@@ -3447,10 +3449,10 @@ static int r_step6(struct SN_env * z) {
     return 1;
 }
 
-static int r_step7(struct SN_env * z) {
+static int r_step_7(struct SN_env * z) {
     z->ket = z->c;
     if (z->c - 7 <= z->lb || (z->p[z->c - 1] != 129 && z->p[z->c - 1] != 132)) return 0;
-    if (!(find_among_b(z, a_67, 8))) return 0;
+    if (!find_among_b(z, a_67, 8)) return 0;
     z->bra = z->c;
     {   int ret = slice_del(z);
         if (ret < 0) return ret;
@@ -3472,193 +3474,193 @@ extern int greek_UTF_8_stem(struct SN_env * z) {
     }
     z->I[0] = 1;
     {   int m2 = z->l - z->c; (void)m2;
-        {   int ret = r_step1(z);
+        {   int ret = r_step_1(z);
             if (ret < 0) return ret;
         }
         z->c = z->l - m2;
     }
     {   int m3 = z->l - z->c; (void)m3;
-        {   int ret = r_steps1(z);
+        {   int ret = r_step_s1(z);
             if (ret < 0) return ret;
         }
         z->c = z->l - m3;
     }
     {   int m4 = z->l - z->c; (void)m4;
-        {   int ret = r_steps2(z);
+        {   int ret = r_step_s2(z);
             if (ret < 0) return ret;
         }
         z->c = z->l - m4;
     }
     {   int m5 = z->l - z->c; (void)m5;
-        {   int ret = r_steps3(z);
+        {   int ret = r_step_s3(z);
             if (ret < 0) return ret;
         }
         z->c = z->l - m5;
     }
     {   int m6 = z->l - z->c; (void)m6;
-        {   int ret = r_steps4(z);
+        {   int ret = r_step_s4(z);
             if (ret < 0) return ret;
         }
         z->c = z->l - m6;
     }
     {   int m7 = z->l - z->c; (void)m7;
-        {   int ret = r_steps5(z);
+        {   int ret = r_step_s5(z);
             if (ret < 0) return ret;
         }
         z->c = z->l - m7;
     }
     {   int m8 = z->l - z->c; (void)m8;
-        {   int ret = r_steps6(z);
+        {   int ret = r_step_s6(z);
             if (ret < 0) return ret;
         }
         z->c = z->l - m8;
     }
     {   int m9 = z->l - z->c; (void)m9;
-        {   int ret = r_steps7(z);
+        {   int ret = r_step_s7(z);
             if (ret < 0) return ret;
         }
         z->c = z->l - m9;
     }
     {   int m10 = z->l - z->c; (void)m10;
-        {   int ret = r_steps8(z);
+        {   int ret = r_step_s8(z);
             if (ret < 0) return ret;
         }
         z->c = z->l - m10;
     }
     {   int m11 = z->l - z->c; (void)m11;
-        {   int ret = r_steps9(z);
+        {   int ret = r_step_s9(z);
             if (ret < 0) return ret;
         }
         z->c = z->l - m11;
     }
     {   int m12 = z->l - z->c; (void)m12;
-        {   int ret = r_steps10(z);
+        {   int ret = r_step_s10(z);
             if (ret < 0) return ret;
         }
         z->c = z->l - m12;
     }
     {   int m13 = z->l - z->c; (void)m13;
-        {   int ret = r_step2a(z);
+        {   int ret = r_step_2a(z);
             if (ret < 0) return ret;
         }
         z->c = z->l - m13;
     }
     {   int m14 = z->l - z->c; (void)m14;
-        {   int ret = r_step2b(z);
+        {   int ret = r_step_2b(z);
             if (ret < 0) return ret;
         }
         z->c = z->l - m14;
     }
     {   int m15 = z->l - z->c; (void)m15;
-        {   int ret = r_step2c(z);
+        {   int ret = r_step_2c(z);
             if (ret < 0) return ret;
         }
         z->c = z->l - m15;
     }
     {   int m16 = z->l - z->c; (void)m16;
-        {   int ret = r_step2d(z);
+        {   int ret = r_step_2d(z);
             if (ret < 0) return ret;
         }
         z->c = z->l - m16;
     }
     {   int m17 = z->l - z->c; (void)m17;
-        {   int ret = r_step3(z);
+        {   int ret = r_step_3(z);
             if (ret < 0) return ret;
         }
         z->c = z->l - m17;
     }
     {   int m18 = z->l - z->c; (void)m18;
-        {   int ret = r_step4(z);
+        {   int ret = r_step_4(z);
             if (ret < 0) return ret;
         }
         z->c = z->l - m18;
     }
     {   int m19 = z->l - z->c; (void)m19;
-        {   int ret = r_step5a(z);
+        {   int ret = r_step_5a(z);
             if (ret < 0) return ret;
         }
         z->c = z->l - m19;
     }
     {   int m20 = z->l - z->c; (void)m20;
-        {   int ret = r_step5b(z);
+        {   int ret = r_step_5b(z);
             if (ret < 0) return ret;
         }
         z->c = z->l - m20;
     }
     {   int m21 = z->l - z->c; (void)m21;
-        {   int ret = r_step5c(z);
+        {   int ret = r_step_5c(z);
             if (ret < 0) return ret;
         }
         z->c = z->l - m21;
     }
     {   int m22 = z->l - z->c; (void)m22;
-        {   int ret = r_step5d(z);
+        {   int ret = r_step_5d(z);
             if (ret < 0) return ret;
         }
         z->c = z->l - m22;
     }
     {   int m23 = z->l - z->c; (void)m23;
-        {   int ret = r_step5e(z);
+        {   int ret = r_step_5e(z);
             if (ret < 0) return ret;
         }
         z->c = z->l - m23;
     }
     {   int m24 = z->l - z->c; (void)m24;
-        {   int ret = r_step5f(z);
+        {   int ret = r_step_5f(z);
             if (ret < 0) return ret;
         }
         z->c = z->l - m24;
     }
     {   int m25 = z->l - z->c; (void)m25;
-        {   int ret = r_step5g(z);
+        {   int ret = r_step_5g(z);
             if (ret < 0) return ret;
         }
         z->c = z->l - m25;
     }
     {   int m26 = z->l - z->c; (void)m26;
-        {   int ret = r_step5h(z);
+        {   int ret = r_step_5h(z);
             if (ret < 0) return ret;
         }
         z->c = z->l - m26;
     }
     {   int m27 = z->l - z->c; (void)m27;
-        {   int ret = r_step5j(z);
+        {   int ret = r_step_5j(z);
             if (ret < 0) return ret;
         }
         z->c = z->l - m27;
     }
     {   int m28 = z->l - z->c; (void)m28;
-        {   int ret = r_step5i(z);
+        {   int ret = r_step_5i(z);
             if (ret < 0) return ret;
         }
         z->c = z->l - m28;
     }
     {   int m29 = z->l - z->c; (void)m29;
-        {   int ret = r_step5k(z);
+        {   int ret = r_step_5k(z);
             if (ret < 0) return ret;
         }
         z->c = z->l - m29;
     }
     {   int m30 = z->l - z->c; (void)m30;
-        {   int ret = r_step5l(z);
+        {   int ret = r_step_5l(z);
             if (ret < 0) return ret;
         }
         z->c = z->l - m30;
     }
     {   int m31 = z->l - z->c; (void)m31;
-        {   int ret = r_step5m(z);
+        {   int ret = r_step_5m(z);
             if (ret < 0) return ret;
         }
         z->c = z->l - m31;
     }
     {   int m32 = z->l - z->c; (void)m32;
-        {   int ret = r_step6(z);
+        {   int ret = r_step_6(z);
             if (ret < 0) return ret;
         }
         z->c = z->l - m32;
     }
     {   int m33 = z->l - z->c; (void)m33;
-        {   int ret = r_step7(z);
+        {   int ret = r_step_7(z);
             if (ret < 0) return ret;
         }
         z->c = z->l - m33;

@@ -35,40 +35,42 @@ extern void tamil_UTF_8_close_env(struct SN_env * z);
 #ifdef __cplusplus
 }
 #endif
-static const symbol s_0_0[3] = { 0xE0, 0xAE, 0x95 };
-static const symbol s_0_1[3] = { 0xE0, 0xAE, 0x99 };
-static const symbol s_0_2[3] = { 0xE0, 0xAE, 0x9A };
-static const symbol s_0_3[3] = { 0xE0, 0xAE, 0x9E };
-static const symbol s_0_4[3] = { 0xE0, 0xAE, 0xA4 };
-static const symbol s_0_5[3] = { 0xE0, 0xAE, 0xA8 };
-static const symbol s_0_6[3] = { 0xE0, 0xAE, 0xAA };
-static const symbol s_0_7[3] = { 0xE0, 0xAE, 0xAE };
-static const symbol s_0_8[3] = { 0xE0, 0xAE, 0xAF };
-static const symbol s_0_9[3] = { 0xE0, 0xAE, 0xB5 };
+static const symbol s_0_0[6] = { 0xE0, 0xAE, 0xB5, 0xE0, 0xAF, 0x81 };
+static const symbol s_0_1[6] = { 0xE0, 0xAE, 0xB5, 0xE0, 0xAF, 0x82 };
+static const symbol s_0_2[6] = { 0xE0, 0xAE, 0xB5, 0xE0, 0xAF, 0x8A };
+static const symbol s_0_3[6] = { 0xE0, 0xAE, 0xB5, 0xE0, 0xAF, 0x8B };
 
-static const struct among a_0[10] =
+static const struct among a_0[4] =
 {
-{ 3, s_0_0, -1, -1, 0},
-{ 3, s_0_1, -1, -1, 0},
-{ 3, s_0_2, -1, -1, 0},
-{ 3, s_0_3, -1, -1, 0},
-{ 3, s_0_4, -1, -1, 0},
-{ 3, s_0_5, -1, -1, 0},
-{ 3, s_0_6, -1, -1, 0},
-{ 3, s_0_7, -1, -1, 0},
-{ 3, s_0_8, -1, -1, 0},
-{ 3, s_0_9, -1, -1, 0}
+{ 6, s_0_0, -1, 3, 0},
+{ 6, s_0_1, -1, 4, 0},
+{ 6, s_0_2, -1, 2, 0},
+{ 6, s_0_3, -1, 1, 0}
 };
 
-static const symbol s_1_0[12] = { 0xE0, 0xAE, 0xA8, 0xE0, 0xAF, 0x8D, 0xE0, 0xAE, 0xA4, 0xE0, 0xAF, 0x8D };
-static const symbol s_1_1[6] = { 0xE0, 0xAE, 0xA8, 0xE0, 0xAF, 0x8D };
-static const symbol s_1_2[9] = { 0xE0, 0xAE, 0xA8, 0xE0, 0xAF, 0x8D, 0xE0, 0xAE, 0xA4 };
+static const symbol s_1_0[3] = { 0xE0, 0xAE, 0x95 };
+static const symbol s_1_1[3] = { 0xE0, 0xAE, 0x99 };
+static const symbol s_1_2[3] = { 0xE0, 0xAE, 0x9A };
+static const symbol s_1_3[3] = { 0xE0, 0xAE, 0x9E };
+static const symbol s_1_4[3] = { 0xE0, 0xAE, 0xA4 };
+static const symbol s_1_5[3] = { 0xE0, 0xAE, 0xA8 };
+static const symbol s_1_6[3] = { 0xE0, 0xAE, 0xAA };
+static const symbol s_1_7[3] = { 0xE0, 0xAE, 0xAE };
+static const symbol s_1_8[3] = { 0xE0, 0xAE, 0xAF };
+static const symbol s_1_9[3] = { 0xE0, 0xAE, 0xB5 };
 
-static const struct among a_1[3] =
+static const struct among a_1[10] =
 {
-{ 12, s_1_0, -1, -1, 0},
-{ 6, s_1_1, -1, -1, 0},
-{ 9, s_1_2, -1, -1, 0}
+{ 3, s_1_0, -1, -1, 0},
+{ 3, s_1_1, -1, -1, 0},
+{ 3, s_1_2, -1, -1, 0},
+{ 3, s_1_3, -1, -1, 0},
+{ 3, s_1_4, -1, -1, 0},
+{ 3, s_1_5, -1, -1, 0},
+{ 3, s_1_6, -1, -1, 0},
+{ 3, s_1_7, -1, -1, 0},
+{ 3, s_1_8, -1, -1, 0},
+{ 3, s_1_9, -1, -1, 0}
 };
 
 static const symbol s_2_0[3] = { 0xE0, 0xAF, 0x80 };
@@ -82,63 +84,82 @@ static const struct among a_2[3] =
 { 3, s_2_2, -1, -1, 0}
 };
 
-static const symbol s_3_0[3] = { 0xE0, 0xAE, 0x95 };
-static const symbol s_3_1[3] = { 0xE0, 0xAE, 0x9A };
-static const symbol s_3_2[3] = { 0xE0, 0xAE, 0x9F };
-static const symbol s_3_3[3] = { 0xE0, 0xAE, 0xA4 };
-static const symbol s_3_4[3] = { 0xE0, 0xAE, 0xAA };
-static const symbol s_3_5[3] = { 0xE0, 0xAE, 0xB1 };
+static const symbol s_3_0[3] = { 0xE0, 0xAF, 0x80 };
+static const symbol s_3_1[3] = { 0xE0, 0xAF, 0x81 };
+static const symbol s_3_2[3] = { 0xE0, 0xAF, 0x82 };
+static const symbol s_3_3[3] = { 0xE0, 0xAF, 0x86 };
+static const symbol s_3_4[3] = { 0xE0, 0xAF, 0x87 };
+static const symbol s_3_5[3] = { 0xE0, 0xAF, 0x88 };
+static const symbol s_3_6[3] = { 0xE0, 0xAE, 0xBE };
+static const symbol s_3_7[3] = { 0xE0, 0xAE, 0xBF };
 
-static const struct among a_3[6] =
+static const struct among a_3[8] =
 {
 { 3, s_3_0, -1, -1, 0},
 { 3, s_3_1, -1, -1, 0},
 { 3, s_3_2, -1, -1, 0},
 { 3, s_3_3, -1, -1, 0},
 { 3, s_3_4, -1, -1, 0},
-{ 3, s_3_5, -1, -1, 0}
+{ 3, s_3_5, -1, -1, 0},
+{ 3, s_3_6, -1, -1, 0},
+{ 3, s_3_7, -1, -1, 0}
 };
 
-static const symbol s_4_0[3] = { 0xE0, 0xAE, 0x95 };
-static const symbol s_4_1[3] = { 0xE0, 0xAE, 0x9A };
-static const symbol s_4_2[3] = { 0xE0, 0xAE, 0x9F };
-static const symbol s_4_3[3] = { 0xE0, 0xAE, 0xA4 };
-static const symbol s_4_4[3] = { 0xE0, 0xAE, 0xAA };
-static const symbol s_4_5[3] = { 0xE0, 0xAE, 0xB1 };
+static const symbol s_4_1[3] = { 0xE0, 0xAF, 0x88 };
+static const symbol s_4_2[3] = { 0xE0, 0xAF, 0x8D };
 
-static const struct among a_4[6] =
+static const struct among a_4[3] =
 {
-{ 3, s_4_0, -1, -1, 0},
-{ 3, s_4_1, -1, -1, 0},
-{ 3, s_4_2, -1, -1, 0},
-{ 3, s_4_3, -1, -1, 0},
-{ 3, s_4_4, -1, -1, 0},
-{ 3, s_4_5, -1, -1, 0}
+{ 0, 0, -1, 2, 0},
+{ 3, s_4_1, 0, 1, 0},
+{ 3, s_4_2, 0, 1, 0}
 };
 
-static const symbol s_5_0[3] = { 0xE0, 0xAE, 0x95 };
-static const symbol s_5_1[3] = { 0xE0, 0xAE, 0x9A };
-static const symbol s_5_2[3] = { 0xE0, 0xAE, 0x9F };
-static const symbol s_5_3[3] = { 0xE0, 0xAE, 0xA4 };
-static const symbol s_5_4[3] = { 0xE0, 0xAE, 0xAA };
-static const symbol s_5_5[3] = { 0xE0, 0xAE, 0xB1 };
+static const symbol s_5_0[6] = { 0xE0, 0xAE, 0xA9, 0xE0, 0xAF, 0x81 };
+static const symbol s_5_1[9] = { 0xE0, 0xAF, 0x81, 0xE0, 0xAE, 0x95, 0xE0, 0xAF, 0x8D };
+static const symbol s_5_2[15] = { 0xE0, 0xAF, 0x81, 0xE0, 0xAE, 0x95, 0xE0, 0xAF, 0x8D, 0xE0, 0xAE, 0x95, 0xE0, 0xAF, 0x8D };
+static const symbol s_5_3[12] = { 0xE0, 0xAE, 0x9F, 0xE0, 0xAF, 0x8D, 0xE0, 0xAE, 0x95, 0xE0, 0xAF, 0x8D };
+static const symbol s_5_4[12] = { 0xE0, 0xAE, 0xB1, 0xE0, 0xAF, 0x8D, 0xE0, 0xAE, 0x95, 0xE0, 0xAF, 0x8D };
+static const symbol s_5_5[6] = { 0xE0, 0xAE, 0x99, 0xE0, 0xAF, 0x8D };
+static const symbol s_5_6[12] = { 0xE0, 0xAE, 0x9F, 0xE0, 0xAF, 0x8D, 0xE0, 0xAE, 0x9F, 0xE0, 0xAF, 0x8D };
+static const symbol s_5_7[12] = { 0xE0, 0xAE, 0xA4, 0xE0, 0xAF, 0x8D, 0xE0, 0xAE, 0xA4, 0xE0, 0xAF, 0x8D };
+static const symbol s_5_8[12] = { 0xE0, 0xAE, 0xA8, 0xE0, 0xAF, 0x8D, 0xE0, 0xAE, 0xA4, 0xE0, 0xAF, 0x8D };
+static const symbol s_5_9[6] = { 0xE0, 0xAE, 0xA8, 0xE0, 0xAF, 0x8D };
+static const symbol s_5_10[12] = { 0xE0, 0xAE, 0x9F, 0xE0, 0xAF, 0x8D, 0xE0, 0xAE, 0xAA, 0xE0, 0xAF, 0x8D };
+static const symbol s_5_11[6] = { 0xE0, 0xAE, 0xAF, 0xE0, 0xAF, 0x8D };
+static const symbol s_5_12[12] = { 0xE0, 0xAE, 0xA9, 0xE0, 0xAF, 0x8D, 0xE0, 0xAE, 0xB1, 0xE0, 0xAF, 0x8D };
+static const symbol s_5_13[6] = { 0xE0, 0xAE, 0xB5, 0xE0, 0xAF, 0x8D };
+static const symbol s_5_14[9] = { 0xE0, 0xAE, 0xA8, 0xE0, 0xAF, 0x8D, 0xE0, 0xAE, 0xA4 };
+static const symbol s_5_15[3] = { 0xE0, 0xAE, 0xAF };
+static const symbol s_5_16[3] = { 0xE0, 0xAE, 0xB5 };
 
-static const struct among a_5[6] =
+static const struct among a_5[17] =
 {
-{ 3, s_5_0, -1, -1, 0},
-{ 3, s_5_1, -1, -1, 0},
-{ 3, s_5_2, -1, -1, 0},
-{ 3, s_5_3, -1, -1, 0},
-{ 3, s_5_4, -1, -1, 0},
-{ 3, s_5_5, -1, -1, 0}
+{ 6, s_5_0, -1, 8, 0},
+{ 9, s_5_1, -1, 7, 0},
+{ 15, s_5_2, -1, 7, 0},
+{ 12, s_5_3, -1, 3, 0},
+{ 12, s_5_4, -1, 4, 0},
+{ 6, s_5_5, -1, 9, 0},
+{ 12, s_5_6, -1, 5, 0},
+{ 12, s_5_7, -1, 6, 0},
+{ 12, s_5_8, -1, 1, 0},
+{ 6, s_5_9, -1, 1, 0},
+{ 12, s_5_10, -1, 3, 0},
+{ 6, s_5_11, -1, 2, 0},
+{ 12, s_5_12, -1, 4, 0},
+{ 6, s_5_13, -1, 1, 0},
+{ 9, s_5_14, -1, 1, 0},
+{ 3, s_5_15, -1, 1, 0},
+{ 3, s_5_16, -1, 1, 0}
 };
 
-static const symbol s_6_0[3] = { 0xE0, 0xAE, 0xAF };
-static const symbol s_6_1[3] = { 0xE0, 0xAE, 0xB0 };
-static const symbol s_6_2[3] = { 0xE0, 0xAE, 0xB2 };
-static const symbol s_6_3[3] = { 0xE0, 0xAE, 0xB3 };
-static const symbol s_6_4[3] = { 0xE0, 0xAE, 0xB4 };
-static const symbol s_6_5[3] = { 0xE0, 0xAE, 0xB5 };
+static const symbol s_6_0[3] = { 0xE0, 0xAE, 0x95 };
+static const symbol s_6_1[3] = { 0xE0, 0xAE, 0x9A };
+static const symbol s_6_2[3] = { 0xE0, 0xAE, 0x9F };
+static const symbol s_6_3[3] = { 0xE0, 0xAE, 0xA4 };
+static const symbol s_6_4[3] = { 0xE0, 0xAE, 0xAA };
+static const symbol s_6_5[3] = { 0xE0, 0xAE, 0xB1 };
 
 static const struct among a_6[6] =
 {
@@ -150,12 +171,12 @@ static const struct among a_6[6] =
 { 3, s_6_5, -1, -1, 0}
 };
 
-static const symbol s_7_0[3] = { 0xE0, 0xAE, 0x99 };
-static const symbol s_7_1[3] = { 0xE0, 0xAE, 0x9E };
-static const symbol s_7_2[3] = { 0xE0, 0xAE, 0xA3 };
-static const symbol s_7_3[3] = { 0xE0, 0xAE, 0xA8 };
-static const symbol s_7_4[3] = { 0xE0, 0xAE, 0xA9 };
-static const symbol s_7_5[3] = { 0xE0, 0xAE, 0xAE };
+static const symbol s_7_0[3] = { 0xE0, 0xAE, 0x95 };
+static const symbol s_7_1[3] = { 0xE0, 0xAE, 0x9A };
+static const symbol s_7_2[3] = { 0xE0, 0xAE, 0x9F };
+static const symbol s_7_3[3] = { 0xE0, 0xAE, 0xA4 };
+static const symbol s_7_4[3] = { 0xE0, 0xAE, 0xAA };
+static const symbol s_7_5[3] = { 0xE0, 0xAE, 0xB1 };
 
 static const struct among a_7[6] =
 {
@@ -167,15 +188,31 @@ static const struct among a_7[6] =
 { 3, s_7_5, -1, -1, 0}
 };
 
-static const symbol s_8_0[6] = { 0xE0, 0xAE, 0xB5, 0xE0, 0xAF, 0x8D };
-static const symbol s_8_1[3] = { 0xE0, 0xAE, 0xAF };
-static const symbol s_8_2[3] = { 0xE0, 0xAE, 0xB5 };
+static const symbol s_8_0[3] = { 0xE0, 0xAE, 0x9E };
+static const symbol s_8_1[3] = { 0xE0, 0xAE, 0xA3 };
+static const symbol s_8_2[3] = { 0xE0, 0xAE, 0xA8 };
+static const symbol s_8_3[3] = { 0xE0, 0xAE, 0xA9 };
+static const symbol s_8_4[3] = { 0xE0, 0xAE, 0xAE };
+static const symbol s_8_5[3] = { 0xE0, 0xAE, 0xAF };
+static const symbol s_8_6[3] = { 0xE0, 0xAE, 0xB0 };
+static const symbol s_8_7[3] = { 0xE0, 0xAE, 0xB2 };
+static const symbol s_8_8[3] = { 0xE0, 0xAE, 0xB3 };
+static const symbol s_8_9[3] = { 0xE0, 0xAE, 0xB4 };
+static const symbol s_8_10[3] = { 0xE0, 0xAE, 0xB5 };
 
-static const struct among a_8[3] =
+static const struct among a_8[11] =
 {
-{ 6, s_8_0, -1, -1, 0},
+{ 3, s_8_0, -1, -1, 0},
 { 3, s_8_1, -1, -1, 0},
-{ 3, s_8_2, -1, -1, 0}
+{ 3, s_8_2, -1, -1, 0},
+{ 3, s_8_3, -1, -1, 0},
+{ 3, s_8_4, -1, -1, 0},
+{ 3, s_8_5, -1, -1, 0},
+{ 3, s_8_6, -1, -1, 0},
+{ 3, s_8_7, -1, -1, 0},
+{ 3, s_8_8, -1, -1, 0},
+{ 3, s_8_9, -1, -1, 0},
+{ 3, s_8_10, -1, -1, 0}
 };
 
 static const symbol s_9_0[3] = { 0xE0, 0xAF, 0x80 };
@@ -184,10 +221,11 @@ static const symbol s_9_2[3] = { 0xE0, 0xAF, 0x82 };
 static const symbol s_9_3[3] = { 0xE0, 0xAF, 0x86 };
 static const symbol s_9_4[3] = { 0xE0, 0xAF, 0x87 };
 static const symbol s_9_5[3] = { 0xE0, 0xAF, 0x88 };
-static const symbol s_9_6[3] = { 0xE0, 0xAE, 0xBE };
-static const symbol s_9_7[3] = { 0xE0, 0xAE, 0xBF };
+static const symbol s_9_6[3] = { 0xE0, 0xAF, 0x8D };
+static const symbol s_9_7[3] = { 0xE0, 0xAE, 0xBE };
+static const symbol s_9_8[3] = { 0xE0, 0xAE, 0xBF };
 
-static const struct among a_9[8] =
+static const struct among a_9[9] =
 {
 { 3, s_9_0, -1, -1, 0},
 { 3, s_9_1, -1, -1, 0},
@@ -196,81 +234,74 @@ static const struct among a_9[8] =
 { 3, s_9_4, -1, -1, 0},
 { 3, s_9_5, -1, -1, 0},
 { 3, s_9_6, -1, -1, 0},
-{ 3, s_9_7, -1, -1, 0}
+{ 3, s_9_7, -1, -1, 0},
+{ 3, s_9_8, -1, -1, 0}
 };
 
-static const symbol s_10_0[3] = { 0xE0, 0xAF, 0x80 };
-static const symbol s_10_1[3] = { 0xE0, 0xAF, 0x81 };
-static const symbol s_10_2[3] = { 0xE0, 0xAF, 0x82 };
-static const symbol s_10_3[3] = { 0xE0, 0xAF, 0x86 };
-static const symbol s_10_4[3] = { 0xE0, 0xAF, 0x87 };
-static const symbol s_10_5[3] = { 0xE0, 0xAF, 0x88 };
-static const symbol s_10_6[3] = { 0xE0, 0xAE, 0xBE };
-static const symbol s_10_7[3] = { 0xE0, 0xAE, 0xBF };
+static const symbol s_10_0[3] = { 0xE0, 0xAE, 0x85 };
+static const symbol s_10_1[3] = { 0xE0, 0xAE, 0x87 };
+static const symbol s_10_2[3] = { 0xE0, 0xAE, 0x89 };
 
-static const struct among a_10[8] =
+static const struct among a_10[3] =
 {
 { 3, s_10_0, -1, -1, 0},
 { 3, s_10_1, -1, -1, 0},
-{ 3, s_10_2, -1, -1, 0},
-{ 3, s_10_3, -1, -1, 0},
-{ 3, s_10_4, -1, -1, 0},
-{ 3, s_10_5, -1, -1, 0},
-{ 3, s_10_6, -1, -1, 0},
-{ 3, s_10_7, -1, -1, 0}
+{ 3, s_10_2, -1, -1, 0}
 };
 
-static const symbol s_11_0[3] = { 0xE0, 0xAE, 0x85 };
-static const symbol s_11_1[3] = { 0xE0, 0xAE, 0x87 };
-static const symbol s_11_2[3] = { 0xE0, 0xAE, 0x89 };
+static const symbol s_11_0[3] = { 0xE0, 0xAE, 0x95 };
+static const symbol s_11_1[3] = { 0xE0, 0xAE, 0x99 };
+static const symbol s_11_2[3] = { 0xE0, 0xAE, 0x9A };
+static const symbol s_11_3[3] = { 0xE0, 0xAE, 0x9E };
+static const symbol s_11_4[3] = { 0xE0, 0xAE, 0xA4 };
+static const symbol s_11_5[3] = { 0xE0, 0xAE, 0xA8 };
+static const symbol s_11_6[3] = { 0xE0, 0xAE, 0xAA };
+static const symbol s_11_7[3] = { 0xE0, 0xAE, 0xAE };
+static const symbol s_11_8[3] = { 0xE0, 0xAE, 0xAF };
+static const symbol s_11_9[3] = { 0xE0, 0xAE, 0xB5 };
 
-static const struct among a_11[3] =
+static const struct among a_11[10] =
 {
 { 3, s_11_0, -1, -1, 0},
 { 3, s_11_1, -1, -1, 0},
-{ 3, s_11_2, -1, -1, 0}
+{ 3, s_11_2, -1, -1, 0},
+{ 3, s_11_3, -1, -1, 0},
+{ 3, s_11_4, -1, -1, 0},
+{ 3, s_11_5, -1, -1, 0},
+{ 3, s_11_6, -1, -1, 0},
+{ 3, s_11_7, -1, -1, 0},
+{ 3, s_11_8, -1, -1, 0},
+{ 3, s_11_9, -1, -1, 0}
 };
 
 static const symbol s_12_0[3] = { 0xE0, 0xAE, 0x95 };
-static const symbol s_12_1[3] = { 0xE0, 0xAE, 0x99 };
-static const symbol s_12_2[3] = { 0xE0, 0xAE, 0x9A };
-static const symbol s_12_3[3] = { 0xE0, 0xAE, 0x9E };
-static const symbol s_12_4[3] = { 0xE0, 0xAE, 0xA4 };
-static const symbol s_12_5[3] = { 0xE0, 0xAE, 0xA8 };
-static const symbol s_12_6[3] = { 0xE0, 0xAE, 0xAA };
-static const symbol s_12_7[3] = { 0xE0, 0xAE, 0xAE };
-static const symbol s_12_8[3] = { 0xE0, 0xAE, 0xAF };
-static const symbol s_12_9[3] = { 0xE0, 0xAE, 0xB5 };
+static const symbol s_12_1[3] = { 0xE0, 0xAE, 0x9A };
+static const symbol s_12_2[3] = { 0xE0, 0xAE, 0x9F };
+static const symbol s_12_3[3] = { 0xE0, 0xAE, 0xA4 };
+static const symbol s_12_4[3] = { 0xE0, 0xAE, 0xAA };
+static const symbol s_12_5[3] = { 0xE0, 0xAE, 0xB1 };
 
-static const struct among a_12[10] =
+static const struct among a_12[6] =
 {
 { 3, s_12_0, -1, -1, 0},
 { 3, s_12_1, -1, -1, 0},
 { 3, s_12_2, -1, -1, 0},
 { 3, s_12_3, -1, -1, 0},
 { 3, s_12_4, -1, -1, 0},
-{ 3, s_12_5, -1, -1, 0},
-{ 3, s_12_6, -1, -1, 0},
-{ 3, s_12_7, -1, -1, 0},
-{ 3, s_12_8, -1, -1, 0},
-{ 3, s_12_9, -1, -1, 0}
+{ 3, s_12_5, -1, -1, 0}
 };
 
-static const symbol s_13_0[3] = { 0xE0, 0xAE, 0x95 };
-static const symbol s_13_1[3] = { 0xE0, 0xAE, 0x9A };
-static const symbol s_13_2[3] = { 0xE0, 0xAE, 0x9F };
-static const symbol s_13_3[3] = { 0xE0, 0xAE, 0xA4 };
-static const symbol s_13_4[3] = { 0xE0, 0xAE, 0xAA };
-static const symbol s_13_5[3] = { 0xE0, 0xAE, 0xB1 };
+static const symbol s_13_0[9] = { 0xE0, 0xAE, 0x95, 0xE0, 0xAE, 0xB3, 0xE0, 0xAF, 0x8D };
+static const symbol s_13_1[18] = { 0xE0, 0xAF, 0x81, 0xE0, 0xAE, 0x99, 0xE0, 0xAF, 0x8D, 0xE0, 0xAE, 0x95, 0xE0, 0xAE, 0xB3, 0xE0, 0xAF, 0x8D };
+static const symbol s_13_2[15] = { 0xE0, 0xAE, 0x9F, 0xE0, 0xAF, 0x8D, 0xE0, 0xAE, 0x95, 0xE0, 0xAE, 0xB3, 0xE0, 0xAF, 0x8D };
+static const symbol s_13_3[15] = { 0xE0, 0xAE, 0xB1, 0xE0, 0xAF, 0x8D, 0xE0, 0xAE, 0x95, 0xE0, 0xAE, 0xB3, 0xE0, 0xAF, 0x8D };
 
-static const struct among a_13[6] =
+static const struct among a_13[4] =
 {
-{ 3, s_13_0, -1, -1, 0},
-{ 3, s_13_1, -1, -1, 0},
-{ 3, s_13_2, -1, -1, 0},
-{ 3, s_13_3, -1, -1, 0},
-{ 3, s_13_4, -1, -1, 0},
-{ 3, s_13_5, -1, -1, 0}
+{ 9, s_13_0, -1, 4, 0},
+{ 18, s_13_1, 0, 1, 0},
+{ 15, s_13_2, 0, 3, 0},
+{ 15, s_13_3, 0, 2, 0}
 };
 
 static const symbol s_14_0[3] = { 0xE0, 0xAF, 0x87 };
@@ -319,115 +350,181 @@ static const symbol s_17_1[18] = { 0xE0, 0xAE, 0xB5, 0xE0, 0xAE, 0xBF, 0xE0, 0xA
 static const symbol s_17_2[9] = { 0xE0, 0xAE, 0xAA, 0xE0, 0xAE, 0x9F, 0xE0, 0xAF, 0x81 };
 static const symbol s_17_3[12] = { 0xE0, 0xAE, 0xB5, 0xE0, 0xAE, 0xBF, 0xE0, 0xAE, 0x9F, 0xE0, 0xAF, 0x81 };
 static const symbol s_17_4[18] = { 0xE0, 0xAE, 0xAA, 0xE0, 0xAE, 0x9F, 0xE0, 0xAF, 0x8D, 0xE0, 0xAE, 0x9F, 0xE0, 0xAE, 0xA4, 0xE0, 0xAF, 0x81 };
-static const symbol s_17_5[21] = { 0xE0, 0xAF, 0x86, 0xE0, 0xAE, 0xB2, 0xE0, 0xAF, 0x8D, 0xE0, 0xAE, 0xB2, 0xE0, 0xAE, 0xBE, 0xE0, 0xAE, 0xAE, 0xE0, 0xAF, 0x8D };
-static const symbol s_17_6[12] = { 0xE0, 0xAE, 0xAA, 0xE0, 0xAE, 0x9F, 0xE0, 0xAF, 0x8D, 0xE0, 0xAE, 0x9F };
-static const symbol s_17_7[15] = { 0xE0, 0xAE, 0xAA, 0xE0, 0xAE, 0x9F, 0xE0, 0xAF, 0x8D, 0xE0, 0xAE, 0x9F, 0xE0, 0xAE, 0xA3 };
-static const symbol s_17_8[9] = { 0xE0, 0xAE, 0xA4, 0xE0, 0xAE, 0xBE, 0xE0, 0xAE, 0xA9 };
-static const symbol s_17_9[18] = { 0xE0, 0xAE, 0xAA, 0xE0, 0xAE, 0x9F, 0xE0, 0xAE, 0xBF, 0xE0, 0xAE, 0xA4, 0xE0, 0xAE, 0xBE, 0xE0, 0xAE, 0xA9 };
-static const symbol s_17_10[15] = { 0xE0, 0xAE, 0x95, 0xE0, 0xAF, 0x81, 0xE0, 0xAE, 0xB0, 0xE0, 0xAE, 0xBF, 0xE0, 0xAE, 0xAF };
-static const symbol s_17_11[9] = { 0xE0, 0xAE, 0xAA, 0xE0, 0xAE, 0x9F, 0xE0, 0xAE, 0xBF };
-static const symbol s_17_12[15] = { 0xE0, 0xAE, 0xAA, 0xE0, 0xAE, 0xB1, 0xE0, 0xAF, 0x8D, 0xE0, 0xAE, 0xB1, 0xE0, 0xAE, 0xBF };
+static const symbol s_17_5[15] = { 0xE0, 0xAF, 0x86, 0xE0, 0xAE, 0xA9, 0xE0, 0xAF, 0x8D, 0xE0, 0xAE, 0xB1, 0xE0, 0xAF, 0x81 };
+static const symbol s_17_6[9] = { 0xE0, 0xAF, 0x81, 0xE0, 0xAE, 0x9F, 0xE0, 0xAF, 0x88 };
+static const symbol s_17_7[15] = { 0xE0, 0xAE, 0xBF, 0xE0, 0xAE, 0xB2, 0xE0, 0xAF, 0x8D, 0xE0, 0xAE, 0xB2, 0xE0, 0xAF, 0x88 };
+static const symbol s_17_8[12] = { 0xE0, 0xAF, 0x81, 0xE0, 0xAE, 0x9F, 0xE0, 0xAE, 0xA9, 0xE0, 0xAF, 0x8D };
+static const symbol s_17_9[15] = { 0xE0, 0xAF, 0x86, 0xE0, 0xAE, 0xA9, 0xE0, 0xAF, 0x81, 0xE0, 0xAE, 0xAE, 0xE0, 0xAF, 0x8D };
+static const symbol s_17_10[12] = { 0xE0, 0xAE, 0xBF, 0xE0, 0xAE, 0x9F, 0xE0, 0xAE, 0xAE, 0xE0, 0xAF, 0x8D };
+static const symbol s_17_11[21] = { 0xE0, 0xAF, 0x86, 0xE0, 0xAE, 0xB2, 0xE0, 0xAF, 0x8D, 0xE0, 0xAE, 0xB2, 0xE0, 0xAE, 0xBE, 0xE0, 0xAE, 0xAE, 0xE0, 0xAF, 0x8D };
+static const symbol s_17_12[12] = { 0xE0, 0xAE, 0xAA, 0xE0, 0xAE, 0x9F, 0xE0, 0xAF, 0x8D, 0xE0, 0xAE, 0x9F };
+static const symbol s_17_13[15] = { 0xE0, 0xAE, 0xAA, 0xE0, 0xAE, 0x9F, 0xE0, 0xAF, 0x8D, 0xE0, 0xAE, 0x9F, 0xE0, 0xAE, 0xA3 };
+static const symbol s_17_14[6] = { 0xE0, 0xAF, 0x86, 0xE0, 0xAE, 0xA9 };
+static const symbol s_17_15[9] = { 0xE0, 0xAE, 0xA4, 0xE0, 0xAE, 0xBE, 0xE0, 0xAE, 0xA9 };
+static const symbol s_17_16[18] = { 0xE0, 0xAE, 0xAA, 0xE0, 0xAE, 0x9F, 0xE0, 0xAE, 0xBF, 0xE0, 0xAE, 0xA4, 0xE0, 0xAE, 0xBE, 0xE0, 0xAE, 0xA9 };
+static const symbol s_17_17[12] = { 0xE0, 0xAF, 0x81, 0xE0, 0xAE, 0x9F, 0xE0, 0xAF, 0x88, 0xE0, 0xAE, 0xAF };
+static const symbol s_17_18[12] = { 0xE0, 0xAE, 0xBE, 0xE0, 0xAE, 0x95, 0xE0, 0xAE, 0xBF, 0xE0, 0xAE, 0xAF };
+static const symbol s_17_19[15] = { 0xE0, 0xAE, 0x95, 0xE0, 0xAF, 0x81, 0xE0, 0xAE, 0xB0, 0xE0, 0xAE, 0xBF, 0xE0, 0xAE, 0xAF };
+static const symbol s_17_20[9] = { 0xE0, 0xAE, 0xB2, 0xE0, 0xAF, 0x8D, 0xE0, 0xAE, 0xB2 };
+static const symbol s_17_21[12] = { 0xE0, 0xAF, 0x81, 0xE0, 0xAE, 0xB3, 0xE0, 0xAF, 0x8D, 0xE0, 0xAE, 0xB3 };
+static const symbol s_17_22[9] = { 0xE0, 0xAE, 0xBE, 0xE0, 0xAE, 0x95, 0xE0, 0xAE, 0xBF };
+static const symbol s_17_23[9] = { 0xE0, 0xAE, 0xAA, 0xE0, 0xAE, 0x9F, 0xE0, 0xAE, 0xBF };
+static const symbol s_17_24[15] = { 0xE0, 0xAE, 0xBF, 0xE0, 0xAE, 0xA9, 0xE0, 0xAF, 0x8D, 0xE0, 0xAE, 0xB1, 0xE0, 0xAE, 0xBF };
+static const symbol s_17_25[15] = { 0xE0, 0xAE, 0xAA, 0xE0, 0xAE, 0xB1, 0xE0, 0xAF, 0x8D, 0xE0, 0xAE, 0xB1, 0xE0, 0xAE, 0xBF };
 
-static const struct among a_17[13] =
+static const struct among a_17[26] =
 {
-{ 15, s_17_0, -1, -1, 0},
-{ 18, s_17_1, -1, -1, 0},
-{ 9, s_17_2, -1, -1, 0},
-{ 12, s_17_3, -1, -1, 0},
-{ 18, s_17_4, -1, -1, 0},
-{ 21, s_17_5, -1, -1, 0},
-{ 12, s_17_6, -1, -1, 0},
-{ 15, s_17_7, -1, -1, 0},
-{ 9, s_17_8, -1, -1, 0},
-{ 18, s_17_9, 8, -1, 0},
-{ 15, s_17_10, -1, -1, 0},
-{ 9, s_17_11, -1, -1, 0},
-{ 15, s_17_12, -1, -1, 0}
+{ 15, s_17_0, -1, 3, 0},
+{ 18, s_17_1, -1, 3, 0},
+{ 9, s_17_2, -1, 3, 0},
+{ 12, s_17_3, -1, 3, 0},
+{ 18, s_17_4, -1, 3, 0},
+{ 15, s_17_5, -1, 1, 0},
+{ 9, s_17_6, -1, 1, 0},
+{ 15, s_17_7, -1, 1, 0},
+{ 12, s_17_8, -1, 1, 0},
+{ 15, s_17_9, -1, 1, 0},
+{ 12, s_17_10, -1, 1, 0},
+{ 21, s_17_11, -1, 3, 0},
+{ 12, s_17_12, -1, 3, 0},
+{ 15, s_17_13, -1, 3, 0},
+{ 6, s_17_14, -1, 1, 0},
+{ 9, s_17_15, -1, 3, 0},
+{ 18, s_17_16, 15, 3, 0},
+{ 12, s_17_17, -1, 1, 0},
+{ 12, s_17_18, -1, 1, 0},
+{ 15, s_17_19, -1, 3, 0},
+{ 9, s_17_20, -1, 2, 0},
+{ 12, s_17_21, -1, 1, 0},
+{ 9, s_17_22, -1, 1, 0},
+{ 9, s_17_23, -1, 3, 0},
+{ 15, s_17_24, -1, 1, 0},
+{ 15, s_17_25, -1, 3, 0}
 };
 
-static const symbol s_18_0[3] = { 0xE0, 0xAE, 0x95 };
-static const symbol s_18_1[3] = { 0xE0, 0xAE, 0x9A };
-static const symbol s_18_2[3] = { 0xE0, 0xAE, 0x9F };
-static const symbol s_18_3[3] = { 0xE0, 0xAE, 0xA4 };
-static const symbol s_18_4[3] = { 0xE0, 0xAE, 0xAA };
-static const symbol s_18_5[3] = { 0xE0, 0xAE, 0xB1 };
+static const symbol s_18_0[3] = { 0xE0, 0xAF, 0x80 };
+static const symbol s_18_1[3] = { 0xE0, 0xAF, 0x81 };
+static const symbol s_18_2[3] = { 0xE0, 0xAF, 0x82 };
+static const symbol s_18_3[3] = { 0xE0, 0xAF, 0x86 };
+static const symbol s_18_4[3] = { 0xE0, 0xAF, 0x87 };
+static const symbol s_18_5[3] = { 0xE0, 0xAF, 0x88 };
+static const symbol s_18_6[3] = { 0xE0, 0xAE, 0xBE };
+static const symbol s_18_7[3] = { 0xE0, 0xAE, 0xBF };
 
-static const struct among a_18[6] =
+static const struct among a_18[8] =
 {
 { 3, s_18_0, -1, -1, 0},
 { 3, s_18_1, -1, -1, 0},
 { 3, s_18_2, -1, -1, 0},
 { 3, s_18_3, -1, -1, 0},
 { 3, s_18_4, -1, -1, 0},
-{ 3, s_18_5, -1, -1, 0}
+{ 3, s_18_5, -1, -1, 0},
+{ 3, s_18_6, -1, -1, 0},
+{ 3, s_18_7, -1, -1, 0}
 };
 
-static const symbol s_19_0[3] = { 0xE0, 0xAE, 0x95 };
-static const symbol s_19_1[3] = { 0xE0, 0xAE, 0x9A };
-static const symbol s_19_2[3] = { 0xE0, 0xAE, 0x9F };
-static const symbol s_19_3[3] = { 0xE0, 0xAE, 0xA4 };
-static const symbol s_19_4[3] = { 0xE0, 0xAE, 0xAA };
-static const symbol s_19_5[3] = { 0xE0, 0xAE, 0xB1 };
+static const symbol s_19_0[3] = { 0xE0, 0xAF, 0x80 };
+static const symbol s_19_1[3] = { 0xE0, 0xAF, 0x81 };
+static const symbol s_19_2[3] = { 0xE0, 0xAF, 0x82 };
+static const symbol s_19_3[3] = { 0xE0, 0xAF, 0x86 };
+static const symbol s_19_4[3] = { 0xE0, 0xAF, 0x87 };
+static const symbol s_19_5[3] = { 0xE0, 0xAF, 0x88 };
+static const symbol s_19_6[3] = { 0xE0, 0xAE, 0xBE };
+static const symbol s_19_7[3] = { 0xE0, 0xAE, 0xBF };
 
-static const struct among a_19[6] =
+static const struct among a_19[8] =
 {
 { 3, s_19_0, -1, -1, 0},
 { 3, s_19_1, -1, -1, 0},
 { 3, s_19_2, -1, -1, 0},
 { 3, s_19_3, -1, -1, 0},
 { 3, s_19_4, -1, -1, 0},
-{ 3, s_19_5, -1, -1, 0}
+{ 3, s_19_5, -1, -1, 0},
+{ 3, s_19_6, -1, -1, 0},
+{ 3, s_19_7, -1, -1, 0}
 };
 
 static const symbol s_20_0[3] = { 0xE0, 0xAF, 0x80 };
-static const symbol s_20_1[3] = { 0xE0, 0xAF, 0x81 };
-static const symbol s_20_2[3] = { 0xE0, 0xAF, 0x82 };
-static const symbol s_20_3[3] = { 0xE0, 0xAF, 0x86 };
-static const symbol s_20_4[3] = { 0xE0, 0xAF, 0x87 };
-static const symbol s_20_5[3] = { 0xE0, 0xAF, 0x88 };
-static const symbol s_20_6[3] = { 0xE0, 0xAE, 0xBE };
-static const symbol s_20_7[3] = { 0xE0, 0xAE, 0xBF };
+static const symbol s_20_1[9] = { 0xE0, 0xAF, 0x8A, 0xE0, 0xAE, 0x9F, 0xE0, 0xAF, 0x81 };
+static const symbol s_20_2[9] = { 0xE0, 0xAF, 0x8B, 0xE0, 0xAE, 0x9F, 0xE0, 0xAF, 0x81 };
+static const symbol s_20_3[6] = { 0xE0, 0xAE, 0xA4, 0xE0, 0xAF, 0x81 };
+static const symbol s_20_4[21] = { 0xE0, 0xAE, 0xBF, 0xE0, 0xAE, 0xB0, 0xE0, 0xAF, 0x81, 0xE0, 0xAE, 0xA8, 0xE0, 0xAF, 0x8D, 0xE0, 0xAE, 0xA4, 0xE0, 0xAF, 0x81 };
+static const symbol s_20_5[15] = { 0xE0, 0xAE, 0xBF, 0xE0, 0xAE, 0xA9, 0xE0, 0xAF, 0x8D, 0xE0, 0xAE, 0xB1, 0xE0, 0xAF, 0x81 };
+static const symbol s_20_6[9] = { 0xE0, 0xAF, 0x81, 0xE0, 0xAE, 0x9F, 0xE0, 0xAF, 0x88 };
+static const symbol s_20_7[6] = { 0xE0, 0xAE, 0xA9, 0xE0, 0xAF, 0x88 };
+static const symbol s_20_8[9] = { 0xE0, 0xAE, 0x95, 0xE0, 0xAE, 0xA3, 0xE0, 0xAF, 0x8D };
+static const symbol s_20_9[12] = { 0xE0, 0xAE, 0xAE, 0xE0, 0xAF, 0x81, 0xE0, 0xAE, 0xA9, 0xE0, 0xAF, 0x8D };
+static const symbol s_20_10[9] = { 0xE0, 0xAE, 0xBF, 0xE0, 0xAE, 0xA9, 0xE0, 0xAF, 0x8D };
+static const symbol s_20_11[12] = { 0xE0, 0xAE, 0xBF, 0xE0, 0xAE, 0x9F, 0xE0, 0xAE, 0xAE, 0xE0, 0xAF, 0x8D };
+static const symbol s_20_12[12] = { 0xE0, 0xAE, 0xAE, 0xE0, 0xAF, 0x87, 0xE0, 0xAE, 0xB1, 0xE0, 0xAF, 0x8D };
+static const symbol s_20_13[9] = { 0xE0, 0xAE, 0xBF, 0xE0, 0xAE, 0xB1, 0xE0, 0xAF, 0x8D };
+static const symbol s_20_14[6] = { 0xE0, 0xAE, 0xB2, 0xE0, 0xAF, 0x8D };
+static const symbol s_20_15[12] = { 0xE0, 0xAE, 0xAE, 0xE0, 0xAF, 0x87, 0xE0, 0xAE, 0xB2, 0xE0, 0xAF, 0x8D };
+static const symbol s_20_16[12] = { 0xE0, 0xAE, 0xBE, 0xE0, 0xAE, 0xAE, 0xE0, 0xAE, 0xB2, 0xE0, 0xAF, 0x8D };
+static const symbol s_20_17[9] = { 0xE0, 0xAE, 0xBE, 0xE0, 0xAE, 0xB2, 0xE0, 0xAF, 0x8D };
+static const symbol s_20_18[9] = { 0xE0, 0xAE, 0xBF, 0xE0, 0xAE, 0xB2, 0xE0, 0xAF, 0x8D };
+static const symbol s_20_19[9] = { 0xE0, 0xAF, 0x81, 0xE0, 0xAE, 0xB3, 0xE0, 0xAF, 0x8D };
+static const symbol s_20_20[12] = { 0xE0, 0xAE, 0x95, 0xE0, 0xAF, 0x80, 0xE0, 0xAE, 0xB4, 0xE0, 0xAF, 0x8D };
+static const symbol s_20_21[9] = { 0xE0, 0xAE, 0xB5, 0xE0, 0xAE, 0xBF, 0xE0, 0xAE, 0x9F };
 
-static const struct among a_20[8] =
+static const struct among a_20[22] =
 {
-{ 3, s_20_0, -1, -1, 0},
-{ 3, s_20_1, -1, -1, 0},
-{ 3, s_20_2, -1, -1, 0},
-{ 3, s_20_3, -1, -1, 0},
-{ 3, s_20_4, -1, -1, 0},
-{ 3, s_20_5, -1, -1, 0},
-{ 3, s_20_6, -1, -1, 0},
-{ 3, s_20_7, -1, -1, 0}
+{ 3, s_20_0, -1, 7, 0},
+{ 9, s_20_1, -1, 2, 0},
+{ 9, s_20_2, -1, 2, 0},
+{ 6, s_20_3, -1, 6, 0},
+{ 21, s_20_4, 3, 2, 0},
+{ 15, s_20_5, -1, 2, 0},
+{ 9, s_20_6, -1, 2, 0},
+{ 6, s_20_7, -1, 1, 0},
+{ 9, s_20_8, -1, 1, 0},
+{ 12, s_20_9, -1, 1, 0},
+{ 9, s_20_10, -1, 3, 0},
+{ 12, s_20_11, -1, 4, 0},
+{ 12, s_20_12, -1, 1, 0},
+{ 9, s_20_13, -1, 2, 0},
+{ 6, s_20_14, -1, 5, 0},
+{ 12, s_20_15, 14, 1, 0},
+{ 12, s_20_16, 14, 2, 0},
+{ 9, s_20_17, 14, 2, 0},
+{ 9, s_20_18, 14, 2, 0},
+{ 9, s_20_19, -1, 2, 0},
+{ 12, s_20_20, -1, 1, 0},
+{ 9, s_20_21, -1, 2, 0}
 };
 
-static const symbol s_21_0[3] = { 0xE0, 0xAF, 0x80 };
-static const symbol s_21_1[3] = { 0xE0, 0xAF, 0x81 };
-static const symbol s_21_2[3] = { 0xE0, 0xAF, 0x82 };
-static const symbol s_21_3[3] = { 0xE0, 0xAF, 0x86 };
-static const symbol s_21_4[3] = { 0xE0, 0xAF, 0x87 };
-static const symbol s_21_5[3] = { 0xE0, 0xAF, 0x88 };
-static const symbol s_21_6[3] = { 0xE0, 0xAE, 0xBE };
-static const symbol s_21_7[3] = { 0xE0, 0xAE, 0xBF };
+static const symbol s_21_0[3] = { 0xE0, 0xAE, 0x95 };
+static const symbol s_21_1[3] = { 0xE0, 0xAE, 0x9A };
+static const symbol s_21_2[3] = { 0xE0, 0xAE, 0x9F };
+static const symbol s_21_3[3] = { 0xE0, 0xAE, 0xA4 };
+static const symbol s_21_4[3] = { 0xE0, 0xAE, 0xAA };
+static const symbol s_21_5[3] = { 0xE0, 0xAE, 0xB1 };
 
-static const struct among a_21[8] =
+static const struct among a_21[6] =
 {
 { 3, s_21_0, -1, -1, 0},
 { 3, s_21_1, -1, -1, 0},
 { 3, s_21_2, -1, -1, 0},
 { 3, s_21_3, -1, -1, 0},
 { 3, s_21_4, -1, -1, 0},
-{ 3, s_21_5, -1, -1, 0},
-{ 3, s_21_6, -1, -1, 0},
-{ 3, s_21_7, -1, -1, 0}
+{ 3, s_21_5, -1, -1, 0}
 };
 
-static const symbol s_22_0[9] = { 0xE0, 0xAE, 0xAA, 0xE0, 0xAE, 0x9F, 0xE0, 0xAF, 0x81 };
-static const symbol s_22_1[24] = { 0xE0, 0xAE, 0x95, 0xE0, 0xAF, 0x8A, 0xE0, 0xAE, 0xA3, 0xE0, 0xAF, 0x8D, 0xE0, 0xAE, 0x9F, 0xE0, 0xAE, 0xBF, 0xE0, 0xAE, 0xB0, 0xE0, 0xAF, 0x8D };
+static const symbol s_22_0[3] = { 0xE0, 0xAE, 0x95 };
+static const symbol s_22_1[3] = { 0xE0, 0xAE, 0x9A };
+static const symbol s_22_2[3] = { 0xE0, 0xAE, 0x9F };
+static const symbol s_22_3[3] = { 0xE0, 0xAE, 0xA4 };
+static const symbol s_22_4[3] = { 0xE0, 0xAE, 0xAA };
+static const symbol s_22_5[3] = { 0xE0, 0xAE, 0xB1 };
 
-static const struct among a_22[2] =
+static const struct among a_22[6] =
 {
-{ 9, s_22_0, -1, -1, 0},
-{ 24, s_22_1, -1, -1, 0}
+{ 3, s_22_0, -1, -1, 0},
+{ 3, s_22_1, -1, -1, 0},
+{ 3, s_22_2, -1, -1, 0},
+{ 3, s_22_3, -1, -1, 0},
+{ 3, s_22_4, -1, -1, 0},
+{ 3, s_22_5, -1, -1, 0}
 };
 
 static const symbol s_23_0[3] = { 0xE0, 0xAE, 0x85 };
@@ -480,254 +577,195 @@ static const struct among a_24[8] =
 { 3, s_24_7, -1, -1, 0}
 };
 
-static const symbol s_25_0[18] = { 0xE0, 0xAE, 0x95, 0xE0, 0xAE, 0xBF, 0xE0, 0xAE, 0xA9, 0xE0, 0xAF, 0x8D, 0xE0, 0xAE, 0xB1, 0xE0, 0xAF, 0x8D };
-static const symbol s_25_1[21] = { 0xE0, 0xAE, 0xBE, 0xE0, 0xAE, 0xA8, 0xE0, 0xAE, 0xBF, 0xE0, 0xAE, 0xA9, 0xE0, 0xAF, 0x8D, 0xE0, 0xAE, 0xB1, 0xE0, 0xAF, 0x8D };
-static const symbol s_25_2[12] = { 0xE0, 0xAE, 0x95, 0xE0, 0xAE, 0xBF, 0xE0, 0xAE, 0xB1, 0xE0, 0xAF, 0x8D };
-static const symbol s_25_3[15] = { 0xE0, 0xAE, 0x95, 0xE0, 0xAE, 0xBF, 0xE0, 0xAE, 0xA9, 0xE0, 0xAF, 0x8D, 0xE0, 0xAE, 0xB1 };
-static const symbol s_25_4[18] = { 0xE0, 0xAE, 0xBE, 0xE0, 0xAE, 0xA8, 0xE0, 0xAE, 0xBF, 0xE0, 0xAE, 0xA9, 0xE0, 0xAF, 0x8D, 0xE0, 0xAE, 0xB1 };
-static const symbol s_25_5[9] = { 0xE0, 0xAE, 0x95, 0xE0, 0xAE, 0xBF, 0xE0, 0xAE, 0xB1 };
+static const symbol s_25_0[6] = { 0xE0, 0xAE, 0x95, 0xE0, 0xAF, 0x81 };
+static const symbol s_25_1[9] = { 0xE0, 0xAE, 0xAA, 0xE0, 0xAE, 0x9F, 0xE0, 0xAF, 0x81 };
+static const symbol s_25_2[6] = { 0xE0, 0xAE, 0xA4, 0xE0, 0xAF, 0x81 };
+static const symbol s_25_3[15] = { 0xE0, 0xAE, 0xBF, 0xE0, 0xAE, 0xB1, 0xE0, 0xAF, 0x8D, 0xE0, 0xAE, 0xB1, 0xE0, 0xAF, 0x81 };
+static const symbol s_25_4[6] = { 0xE0, 0xAE, 0xA9, 0xE0, 0xAF, 0x88 };
+static const symbol s_25_5[6] = { 0xE0, 0xAE, 0xB5, 0xE0, 0xAF, 0x88 };
+static const symbol s_25_6[12] = { 0xE0, 0xAE, 0xA9, 0xE0, 0xAF, 0x86, 0xE0, 0xAE, 0xA9, 0xE0, 0xAF, 0x8D };
+static const symbol s_25_7[9] = { 0xE0, 0xAF, 0x87, 0xE0, 0xAE, 0xA9, 0xE0, 0xAF, 0x8D };
+static const symbol s_25_8[9] = { 0xE0, 0xAE, 0xA9, 0xE0, 0xAE, 0xA9, 0xE0, 0xAF, 0x8D };
+static const symbol s_25_9[9] = { 0xE0, 0xAE, 0xAA, 0xE0, 0xAE, 0xA9, 0xE0, 0xAF, 0x8D };
+static const symbol s_25_10[9] = { 0xE0, 0xAE, 0xB5, 0xE0, 0xAE, 0xA9, 0xE0, 0xAF, 0x8D };
+static const symbol s_25_11[9] = { 0xE0, 0xAE, 0xBE, 0xE0, 0xAE, 0xA9, 0xE0, 0xAF, 0x8D };
+static const symbol s_25_12[12] = { 0xE0, 0xAE, 0xA9, 0xE0, 0xAE, 0xBE, 0xE0, 0xAE, 0xA9, 0xE0, 0xAF, 0x8D };
+static const symbol s_25_13[12] = { 0xE0, 0xAE, 0xAE, 0xE0, 0xAE, 0xBF, 0xE0, 0xAE, 0xA9, 0xE0, 0xAF, 0x8D };
+static const symbol s_25_14[12] = { 0xE0, 0xAE, 0x95, 0xE0, 0xAF, 0x81, 0xE0, 0xAE, 0xAE, 0xE0, 0xAF, 0x8D };
+static const symbol s_25_15[12] = { 0xE0, 0xAE, 0x9F, 0xE0, 0xAF, 0x81, 0xE0, 0xAE, 0xAE, 0xE0, 0xAF, 0x8D };
+static const symbol s_25_16[12] = { 0xE0, 0xAE, 0xA4, 0xE0, 0xAF, 0x81, 0xE0, 0xAE, 0xAE, 0xE0, 0xAF, 0x8D };
+static const symbol s_25_17[12] = { 0xE0, 0xAE, 0xB1, 0xE0, 0xAF, 0x81, 0xE0, 0xAE, 0xAE, 0xE0, 0xAF, 0x8D };
+static const symbol s_25_18[9] = { 0xE0, 0xAF, 0x86, 0xE0, 0xAE, 0xAE, 0xE0, 0xAF, 0x8D };
+static const symbol s_25_19[9] = { 0xE0, 0xAF, 0x87, 0xE0, 0xAE, 0xAE, 0xE0, 0xAF, 0x8D };
+static const symbol s_25_20[9] = { 0xE0, 0xAF, 0x8B, 0xE0, 0xAE, 0xAE, 0xE0, 0xAF, 0x8D };
+static const symbol s_25_21[9] = { 0xE0, 0xAE, 0xA9, 0xE0, 0xAE, 0xAE, 0xE0, 0xAF, 0x8D };
+static const symbol s_25_22[9] = { 0xE0, 0xAE, 0xAA, 0xE0, 0xAE, 0xAE, 0xE0, 0xAF, 0x8D };
+static const symbol s_25_23[9] = { 0xE0, 0xAE, 0xBE, 0xE0, 0xAE, 0xAE, 0xE0, 0xAF, 0x8D };
+static const symbol s_25_24[9] = { 0xE0, 0xAE, 0xBE, 0xE0, 0xAE, 0xAF, 0xE0, 0xAF, 0x8D };
+static const symbol s_25_25[9] = { 0xE0, 0xAF, 0x80, 0xE0, 0xAE, 0xB0, 0xE0, 0xAF, 0x8D };
+static const symbol s_25_26[9] = { 0xE0, 0xAE, 0xA9, 0xE0, 0xAE, 0xB0, 0xE0, 0xAF, 0x8D };
+static const symbol s_25_27[9] = { 0xE0, 0xAE, 0xAA, 0xE0, 0xAE, 0xB0, 0xE0, 0xAF, 0x8D };
+static const symbol s_25_28[12] = { 0xE0, 0xAF, 0x80, 0xE0, 0xAE, 0xAF, 0xE0, 0xAE, 0xB0, 0xE0, 0xAF, 0x8D };
+static const symbol s_25_29[9] = { 0xE0, 0xAE, 0xB5, 0xE0, 0xAE, 0xB0, 0xE0, 0xAF, 0x8D };
+static const symbol s_25_30[9] = { 0xE0, 0xAE, 0xBE, 0xE0, 0xAE, 0xB0, 0xE0, 0xAF, 0x8D };
+static const symbol s_25_31[12] = { 0xE0, 0xAE, 0xA9, 0xE0, 0xAE, 0xBE, 0xE0, 0xAE, 0xB0, 0xE0, 0xAF, 0x8D };
+static const symbol s_25_32[12] = { 0xE0, 0xAE, 0xAE, 0xE0, 0xAE, 0xBE, 0xE0, 0xAE, 0xB0, 0xE0, 0xAF, 0x8D };
+static const symbol s_25_33[24] = { 0xE0, 0xAE, 0x95, 0xE0, 0xAF, 0x8A, 0xE0, 0xAE, 0xA3, 0xE0, 0xAF, 0x8D, 0xE0, 0xAE, 0x9F, 0xE0, 0xAE, 0xBF, 0xE0, 0xAE, 0xB0, 0xE0, 0xAF, 0x8D };
+static const symbol s_25_34[12] = { 0xE0, 0xAE, 0xA9, 0xE0, 0xAE, 0xBF, 0xE0, 0xAE, 0xB0, 0xE0, 0xAF, 0x8D };
+static const symbol s_25_35[9] = { 0xE0, 0xAE, 0xA9, 0xE0, 0xAE, 0xB3, 0xE0, 0xAF, 0x8D };
+static const symbol s_25_36[9] = { 0xE0, 0xAE, 0xAA, 0xE0, 0xAE, 0xB3, 0xE0, 0xAF, 0x8D };
+static const symbol s_25_37[9] = { 0xE0, 0xAE, 0xB5, 0xE0, 0xAE, 0xB3, 0xE0, 0xAF, 0x8D };
+static const symbol s_25_38[9] = { 0xE0, 0xAE, 0xBE, 0xE0, 0xAE, 0xB3, 0xE0, 0xAF, 0x8D };
+static const symbol s_25_39[12] = { 0xE0, 0xAE, 0xA9, 0xE0, 0xAE, 0xBE, 0xE0, 0xAE, 0xB3, 0xE0, 0xAF, 0x8D };
+static const symbol s_25_40[3] = { 0xE0, 0xAE, 0x95 };
+static const symbol s_25_41[3] = { 0xE0, 0xAE, 0xA4 };
+static const symbol s_25_42[3] = { 0xE0, 0xAE, 0xA9 };
+static const symbol s_25_43[3] = { 0xE0, 0xAE, 0xAA };
+static const symbol s_25_44[3] = { 0xE0, 0xAE, 0xAF };
+static const symbol s_25_45[3] = { 0xE0, 0xAE, 0xBE };
 
-static const struct among a_25[6] =
+static const struct among a_25[46] =
 {
-{ 18, s_25_0, -1, -1, 0},
-{ 21, s_25_1, -1, -1, 0},
-{ 12, s_25_2, -1, -1, 0},
-{ 15, s_25_3, -1, -1, 0},
-{ 18, s_25_4, -1, -1, 0},
-{ 9, s_25_5, -1, -1, 0}
+{ 6, s_25_0, -1, 6, 0},
+{ 9, s_25_1, -1, 1, 0},
+{ 6, s_25_2, -1, 3, 0},
+{ 15, s_25_3, -1, 1, 0},
+{ 6, s_25_4, -1, 1, 0},
+{ 6, s_25_5, -1, 1, 0},
+{ 12, s_25_6, -1, 1, 0},
+{ 9, s_25_7, -1, 5, 0},
+{ 9, s_25_8, -1, 1, 0},
+{ 9, s_25_9, -1, 1, 0},
+{ 9, s_25_10, -1, 2, 0},
+{ 9, s_25_11, -1, 4, 0},
+{ 12, s_25_12, 11, 1, 0},
+{ 12, s_25_13, -1, 1, 0},
+{ 12, s_25_14, -1, 1, 0},
+{ 12, s_25_15, -1, 5, 0},
+{ 12, s_25_16, -1, 1, 0},
+{ 12, s_25_17, -1, 1, 0},
+{ 9, s_25_18, -1, 5, 0},
+{ 9, s_25_19, -1, 5, 0},
+{ 9, s_25_20, -1, 5, 0},
+{ 9, s_25_21, -1, 1, 0},
+{ 9, s_25_22, -1, 1, 0},
+{ 9, s_25_23, -1, 5, 0},
+{ 9, s_25_24, -1, 5, 0},
+{ 9, s_25_25, -1, 5, 0},
+{ 9, s_25_26, -1, 1, 0},
+{ 9, s_25_27, -1, 1, 0},
+{ 12, s_25_28, -1, 5, 0},
+{ 9, s_25_29, -1, 1, 0},
+{ 9, s_25_30, -1, 5, 0},
+{ 12, s_25_31, 30, 1, 0},
+{ 12, s_25_32, 30, 1, 0},
+{ 24, s_25_33, -1, 1, 0},
+{ 12, s_25_34, -1, 5, 0},
+{ 9, s_25_35, -1, 1, 0},
+{ 9, s_25_36, -1, 1, 0},
+{ 9, s_25_37, -1, 1, 0},
+{ 9, s_25_38, -1, 5, 0},
+{ 12, s_25_39, 38, 1, 0},
+{ 3, s_25_40, -1, 1, 0},
+{ 3, s_25_41, -1, 1, 0},
+{ 3, s_25_42, -1, 1, 0},
+{ 3, s_25_43, -1, 1, 0},
+{ 3, s_25_44, -1, 1, 0},
+{ 3, s_25_45, -1, 5, 0}
 };
 
-static const symbol s_0[] = { 0xE0, 0xAE, 0xB5, 0xE0, 0xAF, 0x8B };
-static const symbol s_1[] = { 0xE0, 0xAE, 0xB5, 0xE0, 0xAF, 0x8B };
-static const symbol s_2[] = { 0xE0, 0xAE, 0x93 };
-static const symbol s_3[] = { 0xE0, 0xAE, 0xB5, 0xE0, 0xAF, 0x8A };
-static const symbol s_4[] = { 0xE0, 0xAE, 0xB5, 0xE0, 0xAF, 0x8A };
-static const symbol s_5[] = { 0xE0, 0xAE, 0x92 };
-static const symbol s_6[] = { 0xE0, 0xAE, 0xB5, 0xE0, 0xAF, 0x81 };
-static const symbol s_7[] = { 0xE0, 0xAE, 0xB5, 0xE0, 0xAF, 0x81 };
-static const symbol s_8[] = { 0xE0, 0xAE, 0x89 };
-static const symbol s_9[] = { 0xE0, 0xAE, 0xB5, 0xE0, 0xAF, 0x82 };
-static const symbol s_10[] = { 0xE0, 0xAE, 0xB5, 0xE0, 0xAF, 0x82 };
-static const symbol s_11[] = { 0xE0, 0xAE, 0x8A };
-static const symbol s_12[] = { 0xE0, 0xAE, 0x8E };
+static const symbol s_26_0[18] = { 0xE0, 0xAE, 0x95, 0xE0, 0xAE, 0xBF, 0xE0, 0xAE, 0xA9, 0xE0, 0xAF, 0x8D, 0xE0, 0xAE, 0xB1, 0xE0, 0xAF, 0x8D };
+static const symbol s_26_1[21] = { 0xE0, 0xAE, 0xBE, 0xE0, 0xAE, 0xA8, 0xE0, 0xAE, 0xBF, 0xE0, 0xAE, 0xA9, 0xE0, 0xAF, 0x8D, 0xE0, 0xAE, 0xB1, 0xE0, 0xAF, 0x8D };
+static const symbol s_26_2[12] = { 0xE0, 0xAE, 0x95, 0xE0, 0xAE, 0xBF, 0xE0, 0xAE, 0xB1, 0xE0, 0xAF, 0x8D };
+static const symbol s_26_3[15] = { 0xE0, 0xAE, 0x95, 0xE0, 0xAE, 0xBF, 0xE0, 0xAE, 0xA9, 0xE0, 0xAF, 0x8D, 0xE0, 0xAE, 0xB1 };
+static const symbol s_26_4[18] = { 0xE0, 0xAE, 0xBE, 0xE0, 0xAE, 0xA8, 0xE0, 0xAE, 0xBF, 0xE0, 0xAE, 0xA9, 0xE0, 0xAF, 0x8D, 0xE0, 0xAE, 0xB1 };
+static const symbol s_26_5[9] = { 0xE0, 0xAE, 0x95, 0xE0, 0xAE, 0xBF, 0xE0, 0xAE, 0xB1 };
+
+static const struct among a_26[6] =
+{
+{ 18, s_26_0, -1, -1, 0},
+{ 21, s_26_1, -1, -1, 0},
+{ 12, s_26_2, -1, -1, 0},
+{ 15, s_26_3, -1, -1, 0},
+{ 18, s_26_4, -1, -1, 0},
+{ 9, s_26_5, -1, -1, 0}
+};
+
+static const symbol s_0[] = { 0xE0, 0xAE, 0x93 };
+static const symbol s_1[] = { 0xE0, 0xAE, 0x92 };
+static const symbol s_2[] = { 0xE0, 0xAE, 0x89 };
+static const symbol s_3[] = { 0xE0, 0xAE, 0x8A };
+static const symbol s_4[] = { 0xE0, 0xAE, 0x8E };
+static const symbol s_5[] = { 0xE0, 0xAF, 0x8D };
+static const symbol s_6[] = { 0xE0, 0xAE, 0xB3, 0xE0, 0xAF, 0x8D };
+static const symbol s_7[] = { 0xE0, 0xAE, 0xB2, 0xE0, 0xAF, 0x8D };
+static const symbol s_8[] = { 0xE0, 0xAE, 0x9F, 0xE0, 0xAF, 0x81 };
+static const symbol s_9[] = { 0xE0, 0xAF, 0x88 };
+static const symbol s_10[] = { 0xE0, 0xAE, 0xAE, 0xE0, 0xAF, 0x8D };
+static const symbol s_11[] = { 0xE0, 0xAF, 0x8D };
+static const symbol s_12[] = { 0xE0, 0xAE, 0xAE, 0xE0, 0xAF, 0x8D };
 static const symbol s_13[] = { 0xE0, 0xAF, 0x8D };
-static const symbol s_14[] = { 0xE0, 0xAE, 0xAF, 0xE0, 0xAF, 0x8D };
-static const symbol s_15[] = { 0xE0, 0xAE, 0x9F, 0xE0, 0xAF, 0x8D, 0xE0, 0xAE, 0xAA, 0xE0, 0xAF, 0x8D };
-static const symbol s_16[] = { 0xE0, 0xAE, 0x9F, 0xE0, 0xAF, 0x8D, 0xE0, 0xAE, 0x95, 0xE0, 0xAF, 0x8D };
-static const symbol s_17[] = { 0xE0, 0xAE, 0xB3, 0xE0, 0xAF, 0x8D };
-static const symbol s_18[] = { 0xE0, 0xAE, 0xA9, 0xE0, 0xAF, 0x8D, 0xE0, 0xAE, 0xB1, 0xE0, 0xAF, 0x8D };
+static const symbol s_14[] = { 0xE0, 0xAF, 0x8D };
+static const symbol s_15[] = { 0xE0, 0xAF, 0x8D };
+static const symbol s_16[] = { 0xE0, 0xAF, 0x8D };
+static const symbol s_17[] = { 0xE0, 0xAF, 0x81, 0xE0, 0xAE, 0x99, 0xE0, 0xAF, 0x8D };
+static const symbol s_18[] = { 0xE0, 0xAF, 0x8D };
 static const symbol s_19[] = { 0xE0, 0xAE, 0xB2, 0xE0, 0xAF, 0x8D };
-static const symbol s_20[] = { 0xE0, 0xAE, 0xB1, 0xE0, 0xAF, 0x8D, 0xE0, 0xAE, 0x95, 0xE0, 0xAF, 0x8D };
-static const symbol s_21[] = { 0xE0, 0xAE, 0xB2, 0xE0, 0xAF, 0x8D };
-static const symbol s_22[] = { 0xE0, 0xAE, 0x9F, 0xE0, 0xAF, 0x8D, 0xE0, 0xAE, 0x9F, 0xE0, 0xAF, 0x8D };
-static const symbol s_23[] = { 0xE0, 0xAE, 0x9F, 0xE0, 0xAF, 0x81 };
-static const symbol s_24[] = { 0xE0, 0xAE, 0xA4, 0xE0, 0xAF, 0x8D, 0xE0, 0xAE, 0xA4, 0xE0, 0xAF, 0x8D };
-static const symbol s_25[] = { 0xE0, 0xAF, 0x88 };
-static const symbol s_26[] = { 0xE0, 0xAE, 0xAE, 0xE0, 0xAF, 0x8D };
-static const symbol s_27[] = { 0xE0, 0xAF, 0x81, 0xE0, 0xAE, 0x95, 0xE0, 0xAF, 0x8D };
-static const symbol s_28[] = { 0xE0, 0xAF, 0x81, 0xE0, 0xAE, 0x95, 0xE0, 0xAF, 0x8D, 0xE0, 0xAE, 0x95, 0xE0, 0xAF, 0x8D };
+static const symbol s_20[] = { 0xE0, 0xAE, 0xB3, 0xE0, 0xAF, 0x8D };
+static const symbol s_21[] = { 0xE0, 0xAF, 0x8D };
+static const symbol s_22[] = { 0xE0, 0xAF, 0x81, 0xE0, 0xAE, 0xAE, 0xE0, 0xAF, 0x8D };
+static const symbol s_23[] = { 0xE0, 0xAF, 0x8D };
+static const symbol s_24[] = { 0xE0, 0xAF, 0x8D };
+static const symbol s_25[] = { 0xE0, 0xAF, 0x8D };
+static const symbol s_26[] = { 0xE0, 0xAF, 0x8D };
+static const symbol s_27[] = { 0xE0, 0xAE, 0xAE };
+static const symbol s_28[] = { 0xE0, 0xAF, 0x8D };
 static const symbol s_29[] = { 0xE0, 0xAF, 0x8D };
 static const symbol s_30[] = { 0xE0, 0xAF, 0x8D };
-static const symbol s_31[] = { 0xE0, 0xAF, 0x8D };
-static const symbol s_32[] = { 0xE0, 0xAF, 0x81, 0xE0, 0xAE, 0x95, 0xE0, 0xAF, 0x8D };
+static const symbol s_31[] = { 0xE0, 0xAE, 0xBF };
+static const symbol s_32[] = { 0xE0, 0xAF, 0x88 };
 static const symbol s_33[] = { 0xE0, 0xAF, 0x8D };
 static const symbol s_34[] = { 0xE0, 0xAF, 0x8D };
-static const symbol s_35[] = { 0xE0, 0xAF, 0x8D };
+static const symbol s_35[] = { 0xE0, 0xAE, 0xBF, 0xE0, 0xAE, 0xA9, 0xE0, 0xAF, 0x8D };
 static const symbol s_36[] = { 0xE0, 0xAF, 0x8D };
-static const symbol s_37[] = { 0xE0, 0xAF, 0x8D };
-static const symbol s_38[] = { 0xE0, 0xAE, 0xA9, 0xE0, 0xAF, 0x81 };
-static const symbol s_39[] = { 0xE0, 0xAE, 0x99, 0xE0, 0xAF, 0x8D };
-static const symbol s_40[] = { 0xE0, 0xAF, 0x88 };
-static const symbol s_41[] = { 0xE0, 0xAE, 0xAE, 0xE0, 0xAF, 0x8D };
-static const symbol s_42[] = { 0xE0, 0xAE, 0x99, 0xE0, 0xAF, 0x8D };
-static const symbol s_43[] = { 0xE0, 0xAF, 0x8D };
-static const symbol s_44[] = { 0xE0, 0xAF, 0x8D };
-static const symbol s_45[] = { 0xE0, 0xAF, 0x8D };
-static const symbol s_46[] = { 0xE0, 0xAF, 0x81, 0xE0, 0xAE, 0x99, 0xE0, 0xAF, 0x8D, 0xE0, 0xAE, 0x95, 0xE0, 0xAE, 0xB3, 0xE0, 0xAF, 0x8D };
-static const symbol s_47[] = { 0xE0, 0xAF, 0x8D };
-static const symbol s_48[] = { 0xE0, 0xAE, 0xB1, 0xE0, 0xAF, 0x8D, 0xE0, 0xAE, 0x95, 0xE0, 0xAE, 0xB3, 0xE0, 0xAF, 0x8D };
-static const symbol s_49[] = { 0xE0, 0xAE, 0xB2, 0xE0, 0xAF, 0x8D };
-static const symbol s_50[] = { 0xE0, 0xAE, 0x9F, 0xE0, 0xAF, 0x8D, 0xE0, 0xAE, 0x95, 0xE0, 0xAE, 0xB3, 0xE0, 0xAF, 0x8D };
-static const symbol s_51[] = { 0xE0, 0xAE, 0xB3, 0xE0, 0xAF, 0x8D };
-static const symbol s_52[] = { 0xE0, 0xAE, 0x95, 0xE0, 0xAE, 0xB3, 0xE0, 0xAF, 0x8D };
-static const symbol s_53[] = { 0xE0, 0xAF, 0x8D };
-static const symbol s_54[] = { 0xE0, 0xAF, 0x81, 0xE0, 0xAE, 0xAE, 0xE0, 0xAF, 0x8D };
-static const symbol s_55[] = { 0xE0, 0xAF, 0x8D };
-static const symbol s_56[] = { 0xE0, 0xAF, 0x81, 0xE0, 0xAE, 0x9F, 0xE0, 0xAE, 0xA9, 0xE0, 0xAF, 0x8D };
-static const symbol s_57[] = { 0xE0, 0xAE, 0xBF, 0xE0, 0xAE, 0xB2, 0xE0, 0xAF, 0x8D, 0xE0, 0xAE, 0xB2, 0xE0, 0xAF, 0x88 };
-static const symbol s_58[] = { 0xE0, 0xAE, 0xBF, 0xE0, 0xAE, 0x9F, 0xE0, 0xAE, 0xAE, 0xE0, 0xAF, 0x8D };
-static const symbol s_59[] = { 0xE0, 0xAE, 0xBF, 0xE0, 0xAE, 0xA9, 0xE0, 0xAF, 0x8D, 0xE0, 0xAE, 0xB1, 0xE0, 0xAE, 0xBF };
-static const symbol s_60[] = { 0xE0, 0xAE, 0xBE, 0xE0, 0xAE, 0x95, 0xE0, 0xAE, 0xBF };
-static const symbol s_61[] = { 0xE0, 0xAE, 0xBE, 0xE0, 0xAE, 0x95, 0xE0, 0xAE, 0xBF, 0xE0, 0xAE, 0xAF };
-static const symbol s_62[] = { 0xE0, 0xAF, 0x86, 0xE0, 0xAE, 0xA9, 0xE0, 0xAF, 0x8D, 0xE0, 0xAE, 0xB1, 0xE0, 0xAF, 0x81 };
-static const symbol s_63[] = { 0xE0, 0xAF, 0x81, 0xE0, 0xAE, 0xB3, 0xE0, 0xAF, 0x8D, 0xE0, 0xAE, 0xB3 };
-static const symbol s_64[] = { 0xE0, 0xAF, 0x81, 0xE0, 0xAE, 0x9F, 0xE0, 0xAF, 0x88, 0xE0, 0xAE, 0xAF };
-static const symbol s_65[] = { 0xE0, 0xAF, 0x81, 0xE0, 0xAE, 0x9F, 0xE0, 0xAF, 0x88 };
-static const symbol s_66[] = { 0xE0, 0xAF, 0x86, 0xE0, 0xAE, 0xA9, 0xE0, 0xAF, 0x81, 0xE0, 0xAE, 0xAE, 0xE0, 0xAF, 0x8D };
-static const symbol s_67[] = { 0xE0, 0xAE, 0xB2, 0xE0, 0xAF, 0x8D, 0xE0, 0xAE, 0xB2 };
-static const symbol s_68[] = { 0xE0, 0xAF, 0x86, 0xE0, 0xAE, 0xA9 };
-static const symbol s_69[] = { 0xE0, 0xAE, 0xBE, 0xE0, 0xAE, 0x95, 0xE0, 0xAE, 0xBF };
-static const symbol s_70[] = { 0xE0, 0xAF, 0x8D };
-static const symbol s_71[] = { 0xE0, 0xAE, 0xA9, 0xE0, 0xAF, 0x88 };
-static const symbol s_72[] = { 0xE0, 0xAE, 0xBF, 0xE0, 0xAE, 0xA9, 0xE0, 0xAF, 0x88 };
-static const symbol s_73[] = { 0xE0, 0xAF, 0x88 };
-static const symbol s_74[] = { 0xE0, 0xAF, 0x88 };
-static const symbol s_75[] = { 0xE0, 0xAF, 0x8D };
-static const symbol s_76[] = { 0xE0, 0xAF, 0x8D };
-static const symbol s_77[] = { 0xE0, 0xAF, 0x8A, 0xE0, 0xAE, 0x9F, 0xE0, 0xAF, 0x81 };
-static const symbol s_78[] = { 0xE0, 0xAF, 0x8B, 0xE0, 0xAE, 0x9F, 0xE0, 0xAF, 0x81 };
-static const symbol s_79[] = { 0xE0, 0xAE, 0xBF, 0xE0, 0xAE, 0xB2, 0xE0, 0xAF, 0x8D };
-static const symbol s_80[] = { 0xE0, 0xAE, 0xBF, 0xE0, 0xAE, 0xB1, 0xE0, 0xAF, 0x8D };
-static const symbol s_81[] = { 0xE0, 0xAE, 0xBF, 0xE0, 0xAE, 0xA9, 0xE0, 0xAF, 0x8D };
-static const symbol s_82[] = { 0xE0, 0xAE, 0xAE };
-static const symbol s_83[] = { 0xE0, 0xAE, 0xBF, 0xE0, 0xAE, 0xA9, 0xE0, 0xAF, 0x8D, 0xE0, 0xAE, 0xB1, 0xE0, 0xAF, 0x81 };
-static const symbol s_84[] = { 0xE0, 0xAE, 0xBF, 0xE0, 0xAE, 0xB0, 0xE0, 0xAF, 0x81, 0xE0, 0xAE, 0xA8, 0xE0, 0xAF, 0x8D, 0xE0, 0xAE, 0xA4, 0xE0, 0xAF, 0x81 };
-static const symbol s_85[] = { 0xE0, 0xAE, 0xB5, 0xE0, 0xAE, 0xBF, 0xE0, 0xAE, 0x9F };
-static const symbol s_86[] = { 0xE0, 0xAE, 0xBF, 0xE0, 0xAE, 0x9F, 0xE0, 0xAE, 0xAE, 0xE0, 0xAF, 0x8D };
-static const symbol s_87[] = { 0xE0, 0xAE, 0xBE, 0xE0, 0xAE, 0xB2, 0xE0, 0xAF, 0x8D };
-static const symbol s_88[] = { 0xE0, 0xAF, 0x81, 0xE0, 0xAE, 0x9F, 0xE0, 0xAF, 0x88 };
-static const symbol s_89[] = { 0xE0, 0xAE, 0xBE, 0xE0, 0xAE, 0xAE, 0xE0, 0xAE, 0xB2, 0xE0, 0xAF, 0x8D };
-static const symbol s_90[] = { 0xE0, 0xAE, 0xB2, 0xE0, 0xAF, 0x8D };
-static const symbol s_91[] = { 0xE0, 0xAF, 0x81, 0xE0, 0xAE, 0xB3, 0xE0, 0xAF, 0x8D };
-static const symbol s_92[] = { 0xE0, 0xAF, 0x8D };
-static const symbol s_93[] = { 0xE0, 0xAE, 0x95, 0xE0, 0xAE, 0xA3, 0xE0, 0xAF, 0x8D };
-static const symbol s_94[] = { 0xE0, 0xAE, 0xAE, 0xE0, 0xAF, 0x81, 0xE0, 0xAE, 0xA9, 0xE0, 0xAF, 0x8D };
-static const symbol s_95[] = { 0xE0, 0xAE, 0xAE, 0xE0, 0xAF, 0x87, 0xE0, 0xAE, 0xB2, 0xE0, 0xAF, 0x8D };
-static const symbol s_96[] = { 0xE0, 0xAE, 0xAE, 0xE0, 0xAF, 0x87, 0xE0, 0xAE, 0xB1, 0xE0, 0xAF, 0x8D };
-static const symbol s_97[] = { 0xE0, 0xAE, 0x95, 0xE0, 0xAF, 0x80, 0xE0, 0xAE, 0xB4, 0xE0, 0xAF, 0x8D };
-static const symbol s_98[] = { 0xE0, 0xAE, 0xAA, 0xE0, 0xAE, 0xBF, 0xE0, 0xAE, 0xA9, 0xE0, 0xAF, 0x8D };
-static const symbol s_99[] = { 0xE0, 0xAE, 0xA4, 0xE0, 0xAF, 0x81 };
-static const symbol s_100[] = { 0xE0, 0xAF, 0x80 };
-static const symbol s_101[] = { 0xE0, 0xAE, 0xBF };
-static const symbol s_102[] = { 0xE0, 0xAE, 0xBF, 0xE0, 0xAE, 0xA9, 0xE0, 0xAF, 0x8D };
-static const symbol s_103[] = { 0xE0, 0xAF, 0x8D };
-static const symbol s_104[] = { 0xE0, 0xAE, 0xAE, 0xE0, 0xAE, 0xBE, 0xE0, 0xAE, 0xB0, 0xE0, 0xAF, 0x8D };
-static const symbol s_105[] = { 0xE0, 0xAE, 0xAE, 0xE0, 0xAE, 0xBF, 0xE0, 0xAE, 0xA9, 0xE0, 0xAF, 0x8D };
-static const symbol s_106[] = { 0xE0, 0xAE, 0xA9, 0xE0, 0xAE, 0xA9, 0xE0, 0xAF, 0x8D };
-static const symbol s_107[] = { 0xE0, 0xAE, 0xA9, 0xE0, 0xAE, 0xBE, 0xE0, 0xAE, 0xA9, 0xE0, 0xAF, 0x8D };
-static const symbol s_108[] = { 0xE0, 0xAE, 0xA9, 0xE0, 0xAE, 0xBE, 0xE0, 0xAE, 0xB3, 0xE0, 0xAF, 0x8D };
-static const symbol s_109[] = { 0xE0, 0xAE, 0xA9, 0xE0, 0xAE, 0xBE, 0xE0, 0xAE, 0xB0, 0xE0, 0xAF, 0x8D };
-static const symbol s_110[] = { 0xE0, 0xAE, 0xB5, 0xE0, 0xAE, 0xA9, 0xE0, 0xAF, 0x8D };
-static const symbol s_111[] = { 0xE0, 0xAE, 0xA9, 0xE0, 0xAE, 0xB3, 0xE0, 0xAF, 0x8D };
-static const symbol s_112[] = { 0xE0, 0xAE, 0xB5, 0xE0, 0xAE, 0xB3, 0xE0, 0xAF, 0x8D };
-static const symbol s_113[] = { 0xE0, 0xAE, 0xA9, 0xE0, 0xAE, 0xB0, 0xE0, 0xAF, 0x8D };
-static const symbol s_114[] = { 0xE0, 0xAE, 0xB5, 0xE0, 0xAE, 0xB0, 0xE0, 0xAF, 0x8D };
-static const symbol s_115[] = { 0xE0, 0xAE, 0xA9 };
-static const symbol s_116[] = { 0xE0, 0xAE, 0xAA };
-static const symbol s_117[] = { 0xE0, 0xAE, 0x95 };
-static const symbol s_118[] = { 0xE0, 0xAE, 0xA4 };
-static const symbol s_119[] = { 0xE0, 0xAE, 0xAF };
-static const symbol s_120[] = { 0xE0, 0xAE, 0xAA, 0xE0, 0xAE, 0xA9, 0xE0, 0xAF, 0x8D };
-static const symbol s_121[] = { 0xE0, 0xAE, 0xAA, 0xE0, 0xAE, 0xB3, 0xE0, 0xAF, 0x8D };
-static const symbol s_122[] = { 0xE0, 0xAE, 0xAA, 0xE0, 0xAE, 0xB0, 0xE0, 0xAF, 0x8D };
-static const symbol s_123[] = { 0xE0, 0xAE, 0xA4, 0xE0, 0xAF, 0x81 };
-static const symbol s_124[] = { 0xE0, 0xAE, 0xBF, 0xE0, 0xAE, 0xB1, 0xE0, 0xAF, 0x8D, 0xE0, 0xAE, 0xB1, 0xE0, 0xAF, 0x81 };
-static const symbol s_125[] = { 0xE0, 0xAE, 0xAA, 0xE0, 0xAE, 0xAE, 0xE0, 0xAF, 0x8D };
-static const symbol s_126[] = { 0xE0, 0xAE, 0xA9, 0xE0, 0xAE, 0xAE, 0xE0, 0xAF, 0x8D };
-static const symbol s_127[] = { 0xE0, 0xAE, 0xA4, 0xE0, 0xAF, 0x81, 0xE0, 0xAE, 0xAE, 0xE0, 0xAF, 0x8D };
-static const symbol s_128[] = { 0xE0, 0xAE, 0xB1, 0xE0, 0xAF, 0x81, 0xE0, 0xAE, 0xAE, 0xE0, 0xAF, 0x8D };
-static const symbol s_129[] = { 0xE0, 0xAE, 0x95, 0xE0, 0xAF, 0x81, 0xE0, 0xAE, 0xAE, 0xE0, 0xAF, 0x8D };
-static const symbol s_130[] = { 0xE0, 0xAE, 0xA9, 0xE0, 0xAF, 0x86, 0xE0, 0xAE, 0xA9, 0xE0, 0xAF, 0x8D };
-static const symbol s_131[] = { 0xE0, 0xAE, 0xA9, 0xE0, 0xAF, 0x88 };
-static const symbol s_132[] = { 0xE0, 0xAE, 0xB5, 0xE0, 0xAF, 0x88 };
-static const symbol s_133[] = { 0xE0, 0xAE, 0xBE, 0xE0, 0xAE, 0xA9, 0xE0, 0xAF, 0x8D };
-static const symbol s_134[] = { 0xE0, 0xAE, 0x9A };
-static const symbol s_135[] = { 0xE0, 0xAE, 0xBE, 0xE0, 0xAE, 0xB3, 0xE0, 0xAF, 0x8D };
-static const symbol s_136[] = { 0xE0, 0xAE, 0xBE, 0xE0, 0xAE, 0xB0, 0xE0, 0xAF, 0x8D };
-static const symbol s_137[] = { 0xE0, 0xAF, 0x87, 0xE0, 0xAE, 0xA9, 0xE0, 0xAF, 0x8D };
-static const symbol s_138[] = { 0xE0, 0xAE, 0xBE };
-static const symbol s_139[] = { 0xE0, 0xAE, 0xBE, 0xE0, 0xAE, 0xAE, 0xE0, 0xAF, 0x8D };
-static const symbol s_140[] = { 0xE0, 0xAF, 0x86, 0xE0, 0xAE, 0xAE, 0xE0, 0xAF, 0x8D };
-static const symbol s_141[] = { 0xE0, 0xAF, 0x87, 0xE0, 0xAE, 0xAE, 0xE0, 0xAF, 0x8D };
-static const symbol s_142[] = { 0xE0, 0xAF, 0x8B, 0xE0, 0xAE, 0xAE, 0xE0, 0xAF, 0x8D };
-static const symbol s_143[] = { 0xE0, 0xAE, 0x95, 0xE0, 0xAF, 0x81, 0xE0, 0xAE, 0xAE, 0xE0, 0xAF, 0x8D };
-static const symbol s_144[] = { 0xE0, 0xAE, 0xA4, 0xE0, 0xAF, 0x81, 0xE0, 0xAE, 0xAE, 0xE0, 0xAF, 0x8D };
-static const symbol s_145[] = { 0xE0, 0xAE, 0x9F, 0xE0, 0xAF, 0x81, 0xE0, 0xAE, 0xAE, 0xE0, 0xAF, 0x8D };
-static const symbol s_146[] = { 0xE0, 0xAE, 0xB1, 0xE0, 0xAF, 0x81, 0xE0, 0xAE, 0xAE, 0xE0, 0xAF, 0x8D };
-static const symbol s_147[] = { 0xE0, 0xAE, 0xBE, 0xE0, 0xAE, 0xAF, 0xE0, 0xAF, 0x8D };
-static const symbol s_148[] = { 0xE0, 0xAE, 0xA9, 0xE0, 0xAF, 0x86, 0xE0, 0xAE, 0xA9, 0xE0, 0xAF, 0x8D };
-static const symbol s_149[] = { 0xE0, 0xAE, 0xA9, 0xE0, 0xAE, 0xBF, 0xE0, 0xAE, 0xB0, 0xE0, 0xAF, 0x8D };
-static const symbol s_150[] = { 0xE0, 0xAF, 0x80, 0xE0, 0xAE, 0xB0, 0xE0, 0xAF, 0x8D };
-static const symbol s_151[] = { 0xE0, 0xAF, 0x80, 0xE0, 0xAE, 0xAF, 0xE0, 0xAE, 0xB0, 0xE0, 0xAF, 0x8D };
-static const symbol s_152[] = { 0xE0, 0xAF, 0x8D };
-static const symbol s_153[] = { 0xE0, 0xAE, 0x95, 0xE0, 0xAF, 0x81 };
-static const symbol s_154[] = { 0xE0, 0xAE, 0xA4, 0xE0, 0xAF, 0x81 };
-static const symbol s_155[] = { 0xE0, 0xAF, 0x8D };
+static const symbol s_37[] = { 0xE0, 0xAE, 0x9A };
+static const symbol s_38[] = { 0xE0, 0xAF, 0x8D };
+static const symbol s_39[] = { 0xE0, 0xAF, 0x8D };
+static const symbol s_40[] = { 0xE0, 0xAF, 0x8D };
 
 static int r_has_min_length(struct SN_env * z) {
-    if (!(len_utf8(z->p) > 4)) return 0;
-    return 1;
+    return len_utf8(z->p) > 4;
 }
 
 static int r_fix_va_start(struct SN_env * z) {
-    {   int c1 = z->c;
-        {   int c2 = z->c;
-            {   int c3 = z->c;
-                if (!(eq_s(z, 6, s_0))) { z->c = c3; goto lab2; }
-            lab2:
-                ;
+    int among_var;
+    z->bra = z->c;
+    if (z->c + 5 >= z->l || z->p[z->c + 5] >> 5 != 4 || !((3078 >> (z->p[z->c + 5] & 0x1f)) & 1)) return 0;
+    among_var = find_among(z, a_0, 4);
+    if (!among_var) return 0;
+    z->ket = z->c;
+    switch (among_var) {
+        case 1:
+            {   int ret = slice_from_s(z, 3, s_0);
+                if (ret < 0) return ret;
             }
-            z->c = c2;
-            z->bra = z->c;
-        }
-        if (!(eq_s(z, 6, s_1))) goto lab1;
-        z->ket = z->c;
-        {   int ret = slice_from_s(z, 3, s_2);
-            if (ret < 0) return ret;
-        }
-        goto lab0;
-    lab1:
-        z->c = c1;
-        {   int c4 = z->c;
-            {   int c5 = z->c;
-                if (!(eq_s(z, 6, s_3))) { z->c = c5; goto lab4; }
-            lab4:
-                ;
+            break;
+        case 2:
+            {   int ret = slice_from_s(z, 3, s_1);
+                if (ret < 0) return ret;
             }
-            z->c = c4;
-            z->bra = z->c;
-        }
-        if (!(eq_s(z, 6, s_4))) goto lab3;
-        z->ket = z->c;
-        {   int ret = slice_from_s(z, 3, s_5);
-            if (ret < 0) return ret;
-        }
-        goto lab0;
-    lab3:
-        z->c = c1;
-        {   int c6 = z->c;
-            {   int c7 = z->c;
-                if (!(eq_s(z, 6, s_6))) { z->c = c7; goto lab6; }
-            lab6:
-                ;
+            break;
+        case 3:
+            {   int ret = slice_from_s(z, 3, s_2);
+                if (ret < 0) return ret;
             }
-            z->c = c6;
-            z->bra = z->c;
-        }
-        if (!(eq_s(z, 6, s_7))) goto lab5;
-        z->ket = z->c;
-        {   int ret = slice_from_s(z, 3, s_8);
-            if (ret < 0) return ret;
-        }
-        goto lab0;
-    lab5:
-        z->c = c1;
-        {   int c8 = z->c;
-            {   int c9 = z->c;
-                if (!(eq_s(z, 6, s_9))) { z->c = c9; goto lab7; }
-            lab7:
-                ;
+            break;
+        case 4:
+            {   int ret = slice_from_s(z, 3, s_3);
+                if (ret < 0) return ret;
             }
-            z->c = c8;
-            z->bra = z->c;
-        }
-        if (!(eq_s(z, 6, s_10))) return 0;
-        z->ket = z->c;
-        {   int ret = slice_from_s(z, 3, s_11);
-            if (ret < 0) return ret;
-        }
+            break;
     }
-lab0:
     return 1;
 }
 
@@ -751,9 +789,9 @@ static int r_fix_endings(struct SN_env * z) {
 
 static int r_remove_question_prefixes(struct SN_env * z) {
     z->bra = z->c;
-    if (!(eq_s(z, 3, s_12))) return 0;
-    if (!(find_among(z, a_0, 10))) return 0;
-    if (!(eq_s(z, 3, s_13))) return 0;
+    if (!(eq_s(z, 3, s_4))) return 0;
+    if (!find_among(z, a_1, 10)) return 0;
+    if (!(eq_s(z, 3, s_5))) return 0;
     z->ket = z->c;
     {   int ret = slice_del(z);
         if (ret < 0) return ret;
@@ -768,233 +806,130 @@ static int r_remove_question_prefixes(struct SN_env * z) {
 }
 
 static int r_fix_ending(struct SN_env * z) {
-    if (!(len_utf8(z->p) > 3)) return 0;
+    int among_var;
+    if (len_utf8(z->p) <= 3) return 0;
     z->lb = z->c; z->c = z->l;
 
     {   int m1 = z->l - z->c; (void)m1;
         z->ket = z->c;
-        if (z->c - 5 <= z->lb || (z->p[z->c - 1] != 141 && z->p[z->c - 1] != 164)) goto lab1;
-        if (!(find_among_b(z, a_1, 3))) goto lab1;
+        among_var = find_among_b(z, a_5, 17);
+        if (!among_var) goto lab1;
         z->bra = z->c;
-        {   int ret = slice_del(z);
-            if (ret < 0) return ret;
+        switch (among_var) {
+            case 1:
+                {   int ret = slice_del(z);
+                    if (ret < 0) return ret;
+                }
+                break;
+            case 2:
+                {   int m_test2 = z->l - z->c;
+                    if (!find_among_b(z, a_2, 3)) goto lab1;
+                    z->c = z->l - m_test2;
+                }
+                {   int ret = slice_del(z);
+                    if (ret < 0) return ret;
+                }
+                break;
+            case 3:
+                {   int ret = slice_from_s(z, 6, s_6);
+                    if (ret < 0) return ret;
+                }
+                break;
+            case 4:
+                {   int ret = slice_from_s(z, 6, s_7);
+                    if (ret < 0) return ret;
+                }
+                break;
+            case 5:
+                {   int ret = slice_from_s(z, 6, s_8);
+                    if (ret < 0) return ret;
+                }
+                break;
+            case 6:
+                if (!(z->I[0])) goto lab1;
+                {   int m3 = z->l - z->c; (void)m3;
+                    if (!(eq_s_b(z, 3, s_9))) goto lab2;
+                    goto lab1;
+                lab2:
+                    z->c = z->l - m3;
+                }
+                {   int ret = slice_from_s(z, 6, s_10);
+                    if (ret < 0) return ret;
+                }
+                break;
+            case 7:
+                {   int ret = slice_from_s(z, 3, s_11);
+                    if (ret < 0) return ret;
+                }
+                break;
+            case 8:
+                {   int m4 = z->l - z->c; (void)m4;
+                    if (!find_among_b(z, a_3, 8)) goto lab3;
+                    goto lab1;
+                lab3:
+                    z->c = z->l - m4;
+                }
+                {   int ret = slice_del(z);
+                    if (ret < 0) return ret;
+                }
+                break;
+            case 9:
+                if (z->c - 2 <= z->lb || (z->p[z->c - 1] != 136 && z->p[z->c - 1] != 141)) among_var = 2; else
+                among_var = find_among_b(z, a_4, 3);
+                switch (among_var) {
+                    case 1:
+                        {   int ret = slice_del(z);
+                            if (ret < 0) return ret;
+                        }
+                        break;
+                    case 2:
+                        {   int ret = slice_from_s(z, 6, s_12);
+                            if (ret < 0) return ret;
+                        }
+                        break;
+                }
+                break;
         }
         goto lab0;
     lab1:
         z->c = z->l - m1;
         z->ket = z->c;
-        if (!(eq_s_b(z, 6, s_14))) goto lab2;
-        {   int m_test2 = z->l - z->c;
-            if (!(find_among_b(z, a_2, 3))) goto lab2;
-            z->c = z->l - m_test2;
-        }
-        z->bra = z->c;
-        {   int ret = slice_del(z);
-            if (ret < 0) return ret;
-        }
-        goto lab0;
-    lab2:
-        z->c = z->l - m1;
-        z->ket = z->c;
-        {   int m3 = z->l - z->c; (void)m3;
-            if (!(eq_s_b(z, 12, s_15))) goto lab5;
+        if (!(eq_s_b(z, 3, s_13))) return 0;
+        {   int m5 = z->l - z->c; (void)m5;
+            if (!find_among_b(z, a_6, 6)) goto lab5;
+            {   int m6 = z->l - z->c; (void)m6;
+                if (!(eq_s_b(z, 3, s_14))) { z->c = z->l - m6; goto lab6; }
+                if (!find_among_b(z, a_7, 6)) { z->c = z->l - m6; goto lab6; }
+            lab6:
+                ;
+            }
+            z->bra = z->c;
+            {   int ret = slice_del(z);
+                if (ret < 0) return ret;
+            }
             goto lab4;
         lab5:
-            z->c = z->l - m3;
-            if (!(eq_s_b(z, 12, s_16))) goto lab3;
+            z->c = z->l - m5;
+            if (!find_among_b(z, a_8, 11)) goto lab7;
+            z->bra = z->c;
+            if (!(eq_s_b(z, 3, s_15))) goto lab7;
+            {   int ret = slice_del(z);
+                if (ret < 0) return ret;
+            }
+            goto lab4;
+        lab7:
+            z->c = z->l - m5;
+            {   int m_test7 = z->l - z->c;
+                if (!find_among_b(z, a_9, 9)) return 0;
+                z->c = z->l - m_test7;
+            }
+            z->bra = z->c;
+            {   int ret = slice_del(z);
+                if (ret < 0) return ret;
+            }
         }
     lab4:
-        z->bra = z->c;
-        {   int ret = slice_from_s(z, 6, s_17);
-            if (ret < 0) return ret;
-        }
-        goto lab0;
-    lab3:
-        z->c = z->l - m1;
-        z->ket = z->c;
-        if (!(eq_s_b(z, 12, s_18))) goto lab6;
-        z->bra = z->c;
-        {   int ret = slice_from_s(z, 6, s_19);
-            if (ret < 0) return ret;
-        }
-        goto lab0;
-    lab6:
-        z->c = z->l - m1;
-        z->ket = z->c;
-        if (!(eq_s_b(z, 12, s_20))) goto lab7;
-        z->bra = z->c;
-        {   int ret = slice_from_s(z, 6, s_21);
-            if (ret < 0) return ret;
-        }
-        goto lab0;
-    lab7:
-        z->c = z->l - m1;
-        z->ket = z->c;
-        if (!(eq_s_b(z, 12, s_22))) goto lab8;
-        z->bra = z->c;
-        {   int ret = slice_from_s(z, 6, s_23);
-            if (ret < 0) return ret;
-        }
-        goto lab0;
-    lab8:
-        z->c = z->l - m1;
-        if (!(z->I[0])) goto lab9;
-        z->ket = z->c;
-        if (!(eq_s_b(z, 12, s_24))) goto lab9;
-        {   int m_test4 = z->l - z->c;
-            {   int m5 = z->l - z->c; (void)m5;
-                if (!(eq_s_b(z, 3, s_25))) goto lab10;
-                goto lab9;
-            lab10:
-                z->c = z->l - m5;
-            }
-            z->c = z->l - m_test4;
-        }
-        z->bra = z->c;
-        {   int ret = slice_from_s(z, 6, s_26);
-            if (ret < 0) return ret;
-        }
-        z->bra = z->c;
-        goto lab0;
-    lab9:
-        z->c = z->l - m1;
-        z->ket = z->c;
-        {   int m6 = z->l - z->c; (void)m6;
-            if (!(eq_s_b(z, 9, s_27))) goto lab13;
-            goto lab12;
-        lab13:
-            z->c = z->l - m6;
-            if (!(eq_s_b(z, 15, s_28))) goto lab11;
-        }
-    lab12:
-        z->bra = z->c;
-        {   int ret = slice_from_s(z, 3, s_29);
-            if (ret < 0) return ret;
-        }
-        goto lab0;
-    lab11:
-        z->c = z->l - m1;
-        z->ket = z->c;
-        if (!(eq_s_b(z, 3, s_30))) goto lab14;
-        if (!(find_among_b(z, a_3, 6))) goto lab14;
-        if (!(eq_s_b(z, 3, s_31))) goto lab14;
-        if (!(find_among_b(z, a_4, 6))) goto lab14;
-        z->bra = z->c;
-        {   int ret = slice_del(z);
-            if (ret < 0) return ret;
-        }
-        goto lab0;
-    lab14:
-        z->c = z->l - m1;
-        z->ket = z->c;
-        if (!(eq_s_b(z, 9, s_32))) goto lab15;
-        z->bra = z->c;
-        {   int ret = slice_from_s(z, 3, s_33);
-            if (ret < 0) return ret;
-        }
-        goto lab0;
-    lab15:
-        z->c = z->l - m1;
-        z->ket = z->c;
-        if (!(eq_s_b(z, 3, s_34))) goto lab16;
-        if (!(find_among_b(z, a_5, 6))) goto lab16;
-        z->bra = z->c;
-        {   int ret = slice_del(z);
-            if (ret < 0) return ret;
-        }
-        goto lab0;
-    lab16:
-        z->c = z->l - m1;
-        z->ket = z->c;
-        if (!(eq_s_b(z, 3, s_35))) goto lab17;
-        {   int m7 = z->l - z->c; (void)m7;
-            if (z->c - 2 <= z->lb || z->p[z->c - 1] >> 5 != 5 || !((4030464 >> (z->p[z->c - 1] & 0x1f)) & 1)) goto lab19;
-            if (!(find_among_b(z, a_6, 6))) goto lab19;
-            goto lab18;
-        lab19:
-            z->c = z->l - m7;
-            if (!(find_among_b(z, a_7, 6))) goto lab17;
-        }
-    lab18:
-        if (!(eq_s_b(z, 3, s_36))) goto lab17;
-        z->bra = z->c;
-        {   int ret = slice_from_s(z, 3, s_37);
-            if (ret < 0) return ret;
-        }
-        goto lab0;
-    lab17:
-        z->c = z->l - m1;
-        z->ket = z->c;
-        if (!(find_among_b(z, a_8, 3))) goto lab20;
-        z->bra = z->c;
-        {   int ret = slice_del(z);
-            if (ret < 0) return ret;
-        }
-        goto lab0;
-    lab20:
-        z->c = z->l - m1;
-        z->ket = z->c;
-        if (!(eq_s_b(z, 6, s_38))) goto lab21;
-        {   int m_test8 = z->l - z->c;
-            {   int m9 = z->l - z->c; (void)m9;
-                if (!(find_among_b(z, a_9, 8))) goto lab22;
-                goto lab21;
-            lab22:
-                z->c = z->l - m9;
-            }
-            z->c = z->l - m_test8;
-        }
-        z->bra = z->c;
-        {   int ret = slice_del(z);
-            if (ret < 0) return ret;
-        }
-        goto lab0;
-    lab21:
-        z->c = z->l - m1;
-        z->ket = z->c;
-        if (!(eq_s_b(z, 6, s_39))) goto lab23;
-        {   int m_test10 = z->l - z->c;
-            {   int m11 = z->l - z->c; (void)m11;
-                if (!(eq_s_b(z, 3, s_40))) goto lab24;
-                goto lab23;
-            lab24:
-                z->c = z->l - m11;
-            }
-            z->c = z->l - m_test10;
-        }
-        z->bra = z->c;
-        {   int ret = slice_from_s(z, 6, s_41);
-            if (ret < 0) return ret;
-        }
-        goto lab0;
-    lab23:
-        z->c = z->l - m1;
-        z->ket = z->c;
-        if (!(eq_s_b(z, 6, s_42))) goto lab25;
-        z->bra = z->c;
-        {   int ret = slice_del(z);
-            if (ret < 0) return ret;
-        }
-        goto lab0;
-    lab25:
-        z->c = z->l - m1;
-        z->ket = z->c;
-        if (!(eq_s_b(z, 3, s_43))) return 0;
-        {   int m_test12 = z->l - z->c;
-            {   int m13 = z->l - z->c; (void)m13;
-                if (!(find_among_b(z, a_10, 8))) goto lab27;
-                goto lab26;
-            lab27:
-                z->c = z->l - m13;
-                if (!(eq_s_b(z, 3, s_44))) return 0;
-            }
-        lab26:
-            z->c = z->l - m_test12;
-        }
-        z->bra = z->c;
-        {   int ret = slice_del(z);
-            if (ret < 0) return ret;
-        }
+        ;
     }
 lab0:
     z->c = z->lb;
@@ -1002,17 +937,15 @@ lab0:
 }
 
 static int r_remove_pronoun_prefixes(struct SN_env * z) {
-    z->I[1] = 0;
     z->bra = z->c;
     if (z->c + 2 >= z->l || z->p[z->c + 2] >> 5 != 4 || !((672 >> (z->p[z->c + 2] & 0x1f)) & 1)) return 0;
-    if (!(find_among(z, a_11, 3))) return 0;
-    if (!(find_among(z, a_12, 10))) return 0;
-    if (!(eq_s(z, 3, s_45))) return 0;
+    if (!find_among(z, a_10, 3)) return 0;
+    if (!find_among(z, a_11, 10)) return 0;
+    if (!(eq_s(z, 3, s_16))) return 0;
     z->ket = z->c;
     {   int ret = slice_del(z);
         if (ret < 0) return ret;
     }
-    z->I[1] = 1;
     {   int c1 = z->c;
         {   int ret = r_fix_va_start(z);
             if (ret < 0) return ret;
@@ -1023,55 +956,46 @@ static int r_remove_pronoun_prefixes(struct SN_env * z) {
 }
 
 static int r_remove_plural_suffix(struct SN_env * z) {
-    z->I[1] = 0;
+    int among_var;
     z->lb = z->c; z->c = z->l;
 
-    {   int m1 = z->l - z->c; (void)m1;
-        z->ket = z->c;
-        if (!(eq_s_b(z, 18, s_46))) goto lab1;
-        {   int m_test2 = z->l - z->c;
-            {   int m3 = z->l - z->c; (void)m3;
-                if (!(find_among_b(z, a_13, 6))) goto lab2;
-                goto lab1;
-            lab2:
-                z->c = z->l - m3;
+    z->ket = z->c;
+    if (z->c - 8 <= z->lb || z->p[z->c - 1] != 141) return 0;
+    among_var = find_among_b(z, a_13, 4);
+    if (!among_var) return 0;
+    z->bra = z->c;
+    switch (among_var) {
+        case 1:
+            {   int m1 = z->l - z->c; (void)m1;
+                if (!find_among_b(z, a_12, 6)) goto lab1;
+                {   int ret = slice_from_s(z, 9, s_17);
+                    if (ret < 0) return ret;
+                }
+                goto lab0;
+            lab1:
+                z->c = z->l - m1;
+                {   int ret = slice_from_s(z, 3, s_18);
+                    if (ret < 0) return ret;
+                }
             }
-            z->c = z->l - m_test2;
-        }
-        z->bra = z->c;
-        {   int ret = slice_from_s(z, 3, s_47);
-            if (ret < 0) return ret;
-        }
-        goto lab0;
-    lab1:
-        z->c = z->l - m1;
-        z->ket = z->c;
-        if (!(eq_s_b(z, 15, s_48))) goto lab3;
-        z->bra = z->c;
-        {   int ret = slice_from_s(z, 6, s_49);
-            if (ret < 0) return ret;
-        }
-        goto lab0;
-    lab3:
-        z->c = z->l - m1;
-        z->ket = z->c;
-        if (!(eq_s_b(z, 15, s_50))) goto lab4;
-        z->bra = z->c;
-        {   int ret = slice_from_s(z, 6, s_51);
-            if (ret < 0) return ret;
-        }
-        goto lab0;
-    lab4:
-        z->c = z->l - m1;
-        z->ket = z->c;
-        if (!(eq_s_b(z, 9, s_52))) return 0;
-        z->bra = z->c;
-        {   int ret = slice_del(z);
-            if (ret < 0) return ret;
-        }
+        lab0:
+            break;
+        case 2:
+            {   int ret = slice_from_s(z, 6, s_19);
+                if (ret < 0) return ret;
+            }
+            break;
+        case 3:
+            {   int ret = slice_from_s(z, 6, s_20);
+                if (ret < 0) return ret;
+            }
+            break;
+        case 4:
+            {   int ret = slice_del(z);
+                if (ret < 0) return ret;
+            }
+            break;
     }
-lab0:
-    z->I[1] = 1;
     z->c = z->lb;
     return 1;
 }
@@ -1080,22 +1004,20 @@ static int r_remove_question_suffixes(struct SN_env * z) {
     {   int ret = r_has_min_length(z);
         if (ret <= 0) return ret;
     }
-    z->I[1] = 0;
     z->lb = z->c; z->c = z->l;
 
     {   int m1 = z->l - z->c; (void)m1;
         z->ket = z->c;
-        if (!(find_among_b(z, a_14, 3))) goto lab0;
+        if (!find_among_b(z, a_14, 3)) goto lab0;
         z->bra = z->c;
-        {   int ret = slice_from_s(z, 3, s_53);
+        {   int ret = slice_from_s(z, 3, s_21);
             if (ret < 0) return ret;
         }
-        z->I[1] = 1;
     lab0:
         z->c = z->l - m1;
     }
     z->c = z->lb;
-    
+
     {   int ret = r_fix_endings(z);
         if (ret < 0) return ret;
     }
@@ -1106,35 +1028,31 @@ static int r_remove_command_suffixes(struct SN_env * z) {
     {   int ret = r_has_min_length(z);
         if (ret <= 0) return ret;
     }
-    z->I[1] = 0;
     z->lb = z->c; z->c = z->l;
 
     z->ket = z->c;
     if (z->c - 5 <= z->lb || z->p[z->c - 1] != 191) return 0;
-    if (!(find_among_b(z, a_15, 2))) return 0;
+    if (!find_among_b(z, a_15, 2)) return 0;
     z->bra = z->c;
     {   int ret = slice_del(z);
         if (ret < 0) return ret;
     }
-    z->I[1] = 1;
     z->c = z->lb;
     return 1;
 }
 
 static int r_remove_um(struct SN_env * z) {
-    z->I[1] = 0;
     {   int ret = r_has_min_length(z);
         if (ret <= 0) return ret;
     }
     z->lb = z->c; z->c = z->l;
 
     z->ket = z->c;
-    if (!(eq_s_b(z, 9, s_54))) return 0;
+    if (!(eq_s_b(z, 9, s_22))) return 0;
     z->bra = z->c;
-    {   int ret = slice_from_s(z, 3, s_55);
+    {   int ret = slice_from_s(z, 3, s_23);
         if (ret < 0) return ret;
     }
-    z->I[1] = 1;
     z->c = z->lb;
     {   int c1 = z->c;
         {   int ret = r_fix_ending(z);
@@ -1146,104 +1064,41 @@ static int r_remove_um(struct SN_env * z) {
 }
 
 static int r_remove_common_word_endings(struct SN_env * z) {
-    z->I[1] = 0;
+    int among_var;
     {   int ret = r_has_min_length(z);
         if (ret <= 0) return ret;
     }
     z->lb = z->c; z->c = z->l;
 
-    {   int m1 = z->l - z->c; (void)m1;
-        {   int m_test2 = z->l - z->c;
-            z->ket = z->c;
-            {   int m3 = z->l - z->c; (void)m3;
-                if (!(eq_s_b(z, 12, s_56))) goto lab3;
-                goto lab2;
-            lab3:
-                z->c = z->l - m3;
-                if (!(eq_s_b(z, 15, s_57))) goto lab4;
-                goto lab2;
-            lab4:
-                z->c = z->l - m3;
-                if (!(eq_s_b(z, 12, s_58))) goto lab5;
-                goto lab2;
-            lab5:
-                z->c = z->l - m3;
-                if (!(eq_s_b(z, 15, s_59))) goto lab6;
-                goto lab2;
-            lab6:
-                z->c = z->l - m3;
-                if (!(eq_s_b(z, 9, s_60))) goto lab7;
-                goto lab2;
-            lab7:
-                z->c = z->l - m3;
-                if (!(eq_s_b(z, 12, s_61))) goto lab8;
-                goto lab2;
-            lab8:
-                z->c = z->l - m3;
-                if (!(eq_s_b(z, 15, s_62))) goto lab9;
-                goto lab2;
-            lab9:
-                z->c = z->l - m3;
-                if (!(eq_s_b(z, 12, s_63))) goto lab10;
-                goto lab2;
-            lab10:
-                z->c = z->l - m3;
-                if (!(eq_s_b(z, 12, s_64))) goto lab11;
-                goto lab2;
-            lab11:
-                z->c = z->l - m3;
-                if (!(eq_s_b(z, 9, s_65))) goto lab12;
-                goto lab2;
-            lab12:
-                z->c = z->l - m3;
-                if (!(eq_s_b(z, 15, s_66))) goto lab13;
-                goto lab2;
-            lab13:
-                z->c = z->l - m3;
-                if (!(eq_s_b(z, 9, s_67))) goto lab14;
-                {   int m_test4 = z->l - z->c;
-                    {   int m5 = z->l - z->c; (void)m5;
-                        if (!(find_among_b(z, a_16, 8))) goto lab15;
-                        goto lab14;
-                    lab15:
-                        z->c = z->l - m5;
-                    }
-                    z->c = z->l - m_test4;
-                }
-                goto lab2;
-            lab14:
-                z->c = z->l - m3;
-                if (!(eq_s_b(z, 6, s_68))) goto lab16;
-                goto lab2;
-            lab16:
-                z->c = z->l - m3;
-                if (!(eq_s_b(z, 9, s_69))) goto lab1;
-            }
-        lab2:
-            z->bra = z->c;
-            {   int ret = slice_from_s(z, 3, s_70);
+    z->ket = z->c;
+    among_var = find_among_b(z, a_17, 26);
+    if (!among_var) return 0;
+    z->bra = z->c;
+    switch (among_var) {
+        case 1:
+            {   int ret = slice_from_s(z, 3, s_24);
                 if (ret < 0) return ret;
             }
-            z->I[1] = 1;
-            z->c = z->l - m_test2;
-        }
-        goto lab0;
-    lab1:
-        z->c = z->l - m1;
-        {   int m_test6 = z->l - z->c;
-            z->ket = z->c;
-            if (!(find_among_b(z, a_17, 13))) return 0;
-            z->bra = z->c;
+            break;
+        case 2:
+            {   int m1 = z->l - z->c; (void)m1;
+                if (!find_among_b(z, a_16, 8)) goto lab0;
+                return 0;
+            lab0:
+                z->c = z->l - m1;
+            }
+            {   int ret = slice_from_s(z, 3, s_25);
+                if (ret < 0) return ret;
+            }
+            break;
+        case 3:
             {   int ret = slice_del(z);
                 if (ret < 0) return ret;
             }
-            z->I[1] = 1;
-            z->c = z->l - m_test6;
-        }
+            break;
     }
-lab0:
     z->c = z->lb;
-    
+
     {   int ret = r_fix_endings(z);
         if (ret < 0) return ret;
     }
@@ -1251,7 +1106,7 @@ lab0:
 }
 
 static int r_remove_vetrumai_urupukal(struct SN_env * z) {
-    z->I[1] = 0;
+    int among_var;
     z->I[0] = 0;
     {   int ret = r_has_min_length(z);
         if (ret <= 0) return ret;
@@ -1261,215 +1116,112 @@ static int r_remove_vetrumai_urupukal(struct SN_env * z) {
     {   int m1 = z->l - z->c; (void)m1;
         {   int m_test2 = z->l - z->c;
             z->ket = z->c;
-            if (!(eq_s_b(z, 6, s_71))) goto lab1;
+            if (z->c - 2 <= z->lb || z->p[z->c - 1] >> 5 != 4 || !((-2147475197 >> (z->p[z->c - 1] & 0x1f)) & 1)) goto lab1;
+            among_var = find_among_b(z, a_20, 22);
+            if (!among_var) goto lab1;
             z->bra = z->c;
-            {   int ret = slice_del(z);
-                if (ret < 0) return ret;
+            switch (among_var) {
+                case 1:
+                    {   int ret = slice_del(z);
+                        if (ret < 0) return ret;
+                    }
+                    break;
+                case 2:
+                    {   int ret = slice_from_s(z, 3, s_26);
+                        if (ret < 0) return ret;
+                    }
+                    break;
+                case 3:
+                    {   int m3 = z->l - z->c; (void)m3;
+                        if (!(eq_s_b(z, 3, s_27))) goto lab2;
+                        goto lab1;
+                    lab2:
+                        z->c = z->l - m3;
+                    }
+                    {   int ret = slice_from_s(z, 3, s_28);
+                        if (ret < 0) return ret;
+                    }
+                    break;
+                case 4:
+                    if (len_utf8(z->p) < 7) goto lab1;
+                    {   int ret = slice_from_s(z, 3, s_29);
+                        if (ret < 0) return ret;
+                    }
+                    break;
+                case 5:
+                    {   int m4 = z->l - z->c; (void)m4;
+                        if (!find_among_b(z, a_18, 8)) goto lab3;
+                        goto lab1;
+                    lab3:
+                        z->c = z->l - m4;
+                    }
+                    {   int ret = slice_from_s(z, 3, s_30);
+                        if (ret < 0) return ret;
+                    }
+                    break;
+                case 6:
+                    {   int m5 = z->l - z->c; (void)m5;
+                        if (!find_among_b(z, a_19, 8)) goto lab4;
+                        goto lab1;
+                    lab4:
+                        z->c = z->l - m5;
+                    }
+                    {   int ret = slice_del(z);
+                        if (ret < 0) return ret;
+                    }
+                    break;
+                case 7:
+                    {   int ret = slice_from_s(z, 3, s_31);
+                        if (ret < 0) return ret;
+                    }
+                    break;
             }
             z->c = z->l - m_test2;
         }
         goto lab0;
     lab1:
         z->c = z->l - m1;
-        {   int m_test3 = z->l - z->c;
+        {   int m_test6 = z->l - z->c;
             z->ket = z->c;
-            {   int m4 = z->l - z->c; (void)m4;
-                {   int m5 = z->l - z->c; (void)m5;
-                    if (!(eq_s_b(z, 9, s_72))) goto lab6;
-                    goto lab5;
-                lab6:
-                    z->c = z->l - m5;
-                    if (!(eq_s_b(z, 3, s_73))) goto lab4;
+            if (!(eq_s_b(z, 3, s_32))) return 0;
+            {   int m7 = z->l - z->c; (void)m7;
+                {   int m8 = z->l - z->c; (void)m8;
+                    if (!find_among_b(z, a_21, 6)) goto lab7;
+                    goto lab6;
+                lab7:
+                    z->c = z->l - m8;
                 }
-            lab5:
-                {   int m_test6 = z->l - z->c;
-                    {   int m7 = z->l - z->c; (void)m7;
-                        if (!(find_among_b(z, a_18, 6))) goto lab7;
-                        goto lab4;
-                    lab7:
-                        z->c = z->l - m7;
-                    }
-                    z->c = z->l - m_test6;
-                }
-                goto lab3;
-            lab4:
-                z->c = z->l - m4;
-                if (!(eq_s_b(z, 3, s_74))) goto lab2;
-                {   int m_test8 = z->l - z->c;
-                    if (!(find_among_b(z, a_19, 6))) goto lab2;
-                    if (!(eq_s_b(z, 3, s_75))) goto lab2;
-                    z->c = z->l - m_test8;
+                goto lab5;
+            lab6:
+                z->c = z->l - m7;
+                {   int m_test9 = z->l - z->c;
+                    if (!find_among_b(z, a_22, 6)) return 0;
+                    if (!(eq_s_b(z, 3, s_33))) return 0;
+                    z->c = z->l - m_test9;
                 }
             }
-        lab3:
+        lab5:
             z->bra = z->c;
-            {   int ret = slice_from_s(z, 3, s_76);
+            {   int ret = slice_from_s(z, 3, s_34);
                 if (ret < 0) return ret;
             }
-            z->c = z->l - m_test3;
-        }
-        goto lab0;
-    lab2:
-        z->c = z->l - m1;
-        {   int m_test9 = z->l - z->c;
-            z->ket = z->c;
-            {   int m10 = z->l - z->c; (void)m10;
-                if (!(eq_s_b(z, 9, s_77))) goto lab10;
-                goto lab9;
-            lab10:
-                z->c = z->l - m10;
-                if (!(eq_s_b(z, 9, s_78))) goto lab11;
-                goto lab9;
-            lab11:
-                z->c = z->l - m10;
-                if (!(eq_s_b(z, 9, s_79))) goto lab12;
-                goto lab9;
-            lab12:
-                z->c = z->l - m10;
-                if (!(eq_s_b(z, 9, s_80))) goto lab13;
-                goto lab9;
-            lab13:
-                z->c = z->l - m10;
-                if (!(eq_s_b(z, 9, s_81))) goto lab14;
-                {   int m_test11 = z->l - z->c;
-                    {   int m12 = z->l - z->c; (void)m12;
-                        if (!(eq_s_b(z, 3, s_82))) goto lab15;
-                        goto lab14;
-                    lab15:
-                        z->c = z->l - m12;
-                    }
-                    z->c = z->l - m_test11;
-                }
-                goto lab9;
-            lab14:
-                z->c = z->l - m10;
-                if (!(eq_s_b(z, 15, s_83))) goto lab16;
-                goto lab9;
-            lab16:
-                z->c = z->l - m10;
-                if (!(eq_s_b(z, 21, s_84))) goto lab17;
-                goto lab9;
-            lab17:
-                z->c = z->l - m10;
-                if (!(eq_s_b(z, 9, s_85))) goto lab18;
-                goto lab9;
-            lab18:
-                z->c = z->l - m10;
-                if (!(len_utf8(z->p) >= 7)) goto lab19;
-                if (!(eq_s_b(z, 12, s_86))) goto lab19;
-                goto lab9;
-            lab19:
-                z->c = z->l - m10;
-                if (!(eq_s_b(z, 9, s_87))) goto lab20;
-                goto lab9;
-            lab20:
-                z->c = z->l - m10;
-                if (!(eq_s_b(z, 9, s_88))) goto lab21;
-                goto lab9;
-            lab21:
-                z->c = z->l - m10;
-                if (!(eq_s_b(z, 12, s_89))) goto lab22;
-                goto lab9;
-            lab22:
-                z->c = z->l - m10;
-                if (!(eq_s_b(z, 6, s_90))) goto lab23;
-                {   int m_test13 = z->l - z->c;
-                    {   int m14 = z->l - z->c; (void)m14;
-                        if (!(find_among_b(z, a_20, 8))) goto lab24;
-                        goto lab23;
-                    lab24:
-                        z->c = z->l - m14;
-                    }
-                    z->c = z->l - m_test13;
-                }
-                goto lab9;
-            lab23:
-                z->c = z->l - m10;
-                if (!(eq_s_b(z, 9, s_91))) goto lab8;
-            }
-        lab9:
-            z->bra = z->c;
-            {   int ret = slice_from_s(z, 3, s_92);
-                if (ret < 0) return ret;
-            }
-            z->c = z->l - m_test9;
-        }
-        goto lab0;
-    lab8:
-        z->c = z->l - m1;
-        {   int m_test15 = z->l - z->c;
-            z->ket = z->c;
-            {   int m16 = z->l - z->c; (void)m16;
-                if (!(eq_s_b(z, 9, s_93))) goto lab27;
-                goto lab26;
-            lab27:
-                z->c = z->l - m16;
-                if (!(eq_s_b(z, 12, s_94))) goto lab28;
-                goto lab26;
-            lab28:
-                z->c = z->l - m16;
-                if (!(eq_s_b(z, 12, s_95))) goto lab29;
-                goto lab26;
-            lab29:
-                z->c = z->l - m16;
-                if (!(eq_s_b(z, 12, s_96))) goto lab30;
-                goto lab26;
-            lab30:
-                z->c = z->l - m16;
-                if (!(eq_s_b(z, 12, s_97))) goto lab31;
-                goto lab26;
-            lab31:
-                z->c = z->l - m16;
-                if (!(eq_s_b(z, 12, s_98))) goto lab32;
-                goto lab26;
-            lab32:
-                z->c = z->l - m16;
-                if (!(eq_s_b(z, 6, s_99))) goto lab25;
-                {   int m_test17 = z->l - z->c;
-                    {   int m18 = z->l - z->c; (void)m18;
-                        if (!(find_among_b(z, a_21, 8))) goto lab33;
-                        goto lab25;
-                    lab33:
-                        z->c = z->l - m18;
-                    }
-                    z->c = z->l - m_test17;
-                }
-            }
-        lab26:
-            z->bra = z->c;
-            {   int ret = slice_del(z);
-                if (ret < 0) return ret;
-            }
-            z->c = z->l - m_test15;
-        }
-        goto lab0;
-    lab25:
-        z->c = z->l - m1;
-        {   int m_test19 = z->l - z->c;
-            z->ket = z->c;
-            if (!(eq_s_b(z, 3, s_100))) return 0;
-            z->bra = z->c;
-            {   int ret = slice_from_s(z, 3, s_101);
-                if (ret < 0) return ret;
-            }
-            z->c = z->l - m_test19;
+            z->c = z->l - m_test6;
         }
     }
 lab0:
-    z->I[1] = 1;
     z->I[0] = 1;
-    {   int m20 = z->l - z->c; (void)m20;
+    {   int m10 = z->l - z->c; (void)m10;
         z->ket = z->c;
-        if (!(eq_s_b(z, 9, s_102))) goto lab34;
+        if (!(eq_s_b(z, 9, s_35))) goto lab8;
         z->bra = z->c;
-        {   int ret = slice_from_s(z, 3, s_103);
+        {   int ret = slice_from_s(z, 3, s_36);
             if (ret < 0) return ret;
         }
-    lab34:
-        z->c = z->l - m20;
+    lab8:
+        z->c = z->l - m10;
     }
     z->c = z->lb;
-    
+
     {   int ret = r_fix_endings(z);
         if (ret < 0) return ret;
     }
@@ -1496,6 +1248,7 @@ static int r_remove_tense_suffixes(struct SN_env * z) {
 }
 
 static int r_remove_tense_suffix(struct SN_env * z) {
+    int among_var;
     z->I[1] = 0;
     {   int ret = r_has_min_length(z);
         if (ret <= 0) return ret;
@@ -1503,301 +1256,86 @@ static int r_remove_tense_suffix(struct SN_env * z) {
     z->lb = z->c; z->c = z->l;
 
     {   int m1 = z->l - z->c; (void)m1;
-        {   int m2 = z->l - z->c; (void)m2;
-            {   int m_test3 = z->l - z->c;
-                z->ket = z->c;
-                if (z->c - 8 <= z->lb || (z->p[z->c - 1] != 129 && z->p[z->c - 1] != 141)) goto lab2;
-                if (!(find_among_b(z, a_22, 2))) goto lab2;
-                z->bra = z->c;
-                {   int ret = slice_del(z);
-                    if (ret < 0) return ret;
-                }
-                z->I[1] = 1;
-                z->c = z->l - m_test3;
-            }
-            goto lab1;
-        lab2:
-            z->c = z->l - m2;
-            {   int m_test4 = z->l - z->c;
-                z->ket = z->c;
-                {   int m5 = z->l - z->c; (void)m5;
-                    if (!(eq_s_b(z, 12, s_104))) goto lab5;
-                    goto lab4;
-                lab5:
-                    z->c = z->l - m5;
-                    if (!(eq_s_b(z, 12, s_105))) goto lab6;
-                    goto lab4;
-                lab6:
-                    z->c = z->l - m5;
-                    if (!(eq_s_b(z, 9, s_106))) goto lab7;
-                    goto lab4;
-                lab7:
-                    z->c = z->l - m5;
-                    if (!(eq_s_b(z, 12, s_107))) goto lab8;
-                    goto lab4;
-                lab8:
-                    z->c = z->l - m5;
-                    if (!(eq_s_b(z, 12, s_108))) goto lab9;
-                    goto lab4;
-                lab9:
-                    z->c = z->l - m5;
-                    if (!(eq_s_b(z, 12, s_109))) goto lab10;
-                    goto lab4;
-                lab10:
-                    z->c = z->l - m5;
-                    if (!(eq_s_b(z, 9, s_110))) goto lab11;
+        {   int m_test2 = z->l - z->c;
+            z->ket = z->c;
+            among_var = find_among_b(z, a_25, 46);
+            if (!among_var) goto lab0;
+            z->bra = z->c;
+            switch (among_var) {
+                case 1:
+                    {   int ret = slice_del(z);
+                        if (ret < 0) return ret;
+                    }
+                    break;
+                case 2:
+                    {   int m3 = z->l - z->c; (void)m3;
+                        if (z->c - 2 <= z->lb || z->p[z->c - 1] >> 5 != 4 || !((1951712 >> (z->p[z->c - 1] & 0x1f)) & 1)) goto lab1;
+                        if (!find_among_b(z, a_23, 12)) goto lab1;
+                        goto lab0;
+                    lab1:
+                        z->c = z->l - m3;
+                    }
+                    {   int ret = slice_del(z);
+                        if (ret < 0) return ret;
+                    }
+                    break;
+                case 3:
+                    {   int m4 = z->l - z->c; (void)m4;
+                        if (!find_among_b(z, a_24, 8)) goto lab2;
+                        goto lab0;
+                    lab2:
+                        z->c = z->l - m4;
+                    }
+                    {   int ret = slice_del(z);
+                        if (ret < 0) return ret;
+                    }
+                    break;
+                case 4:
+                    {   int m5 = z->l - z->c; (void)m5;
+                        if (!(eq_s_b(z, 3, s_37))) goto lab3;
+                        goto lab0;
+                    lab3:
+                        z->c = z->l - m5;
+                    }
+                    {   int ret = slice_from_s(z, 3, s_38);
+                        if (ret < 0) return ret;
+                    }
+                    break;
+                case 5:
+                    {   int ret = slice_from_s(z, 3, s_39);
+                        if (ret < 0) return ret;
+                    }
+                    break;
+                case 6:
                     {   int m_test6 = z->l - z->c;
-                        {   int m7 = z->l - z->c; (void)m7;
-                            if (z->c - 2 <= z->lb || z->p[z->c - 1] >> 5 != 4 || !((1951712 >> (z->p[z->c - 1] & 0x1f)) & 1)) goto lab12;
-                            if (!(find_among_b(z, a_23, 12))) goto lab12;
-                            goto lab11;
-                        lab12:
-                            z->c = z->l - m7;
-                        }
+                        if (!(eq_s_b(z, 3, s_40))) goto lab0;
                         z->c = z->l - m_test6;
                     }
-                    goto lab4;
-                lab11:
-                    z->c = z->l - m5;
-                    if (!(eq_s_b(z, 9, s_111))) goto lab13;
-                    goto lab4;
-                lab13:
-                    z->c = z->l - m5;
-                    if (!(eq_s_b(z, 9, s_112))) goto lab14;
-                    goto lab4;
-                lab14:
-                    z->c = z->l - m5;
-                    if (!(eq_s_b(z, 9, s_113))) goto lab15;
-                    goto lab4;
-                lab15:
-                    z->c = z->l - m5;
-                    if (!(eq_s_b(z, 9, s_114))) goto lab16;
-                    goto lab4;
-                lab16:
-                    z->c = z->l - m5;
-                    if (!(eq_s_b(z, 3, s_115))) goto lab17;
-                    goto lab4;
-                lab17:
-                    z->c = z->l - m5;
-                    if (!(eq_s_b(z, 3, s_116))) goto lab18;
-                    goto lab4;
-                lab18:
-                    z->c = z->l - m5;
-                    if (!(eq_s_b(z, 3, s_117))) goto lab19;
-                    goto lab4;
-                lab19:
-                    z->c = z->l - m5;
-                    if (!(eq_s_b(z, 3, s_118))) goto lab20;
-                    goto lab4;
-                lab20:
-                    z->c = z->l - m5;
-                    if (!(eq_s_b(z, 3, s_119))) goto lab21;
-                    goto lab4;
-                lab21:
-                    z->c = z->l - m5;
-                    if (!(eq_s_b(z, 9, s_120))) goto lab22;
-                    goto lab4;
-                lab22:
-                    z->c = z->l - m5;
-                    if (!(eq_s_b(z, 9, s_121))) goto lab23;
-                    goto lab4;
-                lab23:
-                    z->c = z->l - m5;
-                    if (!(eq_s_b(z, 9, s_122))) goto lab24;
-                    goto lab4;
-                lab24:
-                    z->c = z->l - m5;
-                    if (!(eq_s_b(z, 6, s_123))) goto lab25;
-                    {   int m_test8 = z->l - z->c;
-                        {   int m9 = z->l - z->c; (void)m9;
-                            if (!(find_among_b(z, a_24, 8))) goto lab26;
-                            goto lab25;
-                        lab26:
-                            z->c = z->l - m9;
-                        }
-                        z->c = z->l - m_test8;
+                    {   int ret = slice_del(z);
+                        if (ret < 0) return ret;
                     }
-                    goto lab4;
-                lab25:
-                    z->c = z->l - m5;
-                    if (!(eq_s_b(z, 15, s_124))) goto lab27;
-                    goto lab4;
-                lab27:
-                    z->c = z->l - m5;
-                    if (!(eq_s_b(z, 9, s_125))) goto lab28;
-                    goto lab4;
-                lab28:
-                    z->c = z->l - m5;
-                    if (!(eq_s_b(z, 9, s_126))) goto lab29;
-                    goto lab4;
-                lab29:
-                    z->c = z->l - m5;
-                    if (!(eq_s_b(z, 12, s_127))) goto lab30;
-                    goto lab4;
-                lab30:
-                    z->c = z->l - m5;
-                    if (!(eq_s_b(z, 12, s_128))) goto lab31;
-                    goto lab4;
-                lab31:
-                    z->c = z->l - m5;
-                    if (!(eq_s_b(z, 12, s_129))) goto lab32;
-                    goto lab4;
-                lab32:
-                    z->c = z->l - m5;
-                    if (!(eq_s_b(z, 12, s_130))) goto lab33;
-                    goto lab4;
-                lab33:
-                    z->c = z->l - m5;
-                    if (!(eq_s_b(z, 6, s_131))) goto lab34;
-                    goto lab4;
-                lab34:
-                    z->c = z->l - m5;
-                    if (!(eq_s_b(z, 6, s_132))) goto lab3;
-                }
-            lab4:
-                z->bra = z->c;
-                {   int ret = slice_del(z);
-                    if (ret < 0) return ret;
-                }
-                z->I[1] = 1;
-                z->c = z->l - m_test4;
+                    break;
             }
-            goto lab1;
-        lab3:
-            z->c = z->l - m2;
-            {   int m_test10 = z->l - z->c;
-                z->ket = z->c;
-                {   int m11 = z->l - z->c; (void)m11;
-                    if (!(eq_s_b(z, 9, s_133))) goto lab37;
-                    {   int m_test12 = z->l - z->c;
-                        {   int m13 = z->l - z->c; (void)m13;
-                            if (!(eq_s_b(z, 3, s_134))) goto lab38;
-                            goto lab37;
-                        lab38:
-                            z->c = z->l - m13;
-                        }
-                        z->c = z->l - m_test12;
-                    }
-                    goto lab36;
-                lab37:
-                    z->c = z->l - m11;
-                    if (!(eq_s_b(z, 9, s_135))) goto lab39;
-                    goto lab36;
-                lab39:
-                    z->c = z->l - m11;
-                    if (!(eq_s_b(z, 9, s_136))) goto lab40;
-                    goto lab36;
-                lab40:
-                    z->c = z->l - m11;
-                    if (!(eq_s_b(z, 9, s_137))) goto lab41;
-                    goto lab36;
-                lab41:
-                    z->c = z->l - m11;
-                    if (!(eq_s_b(z, 3, s_138))) goto lab42;
-                    goto lab36;
-                lab42:
-                    z->c = z->l - m11;
-                    if (!(eq_s_b(z, 9, s_139))) goto lab43;
-                    goto lab36;
-                lab43:
-                    z->c = z->l - m11;
-                    if (!(eq_s_b(z, 9, s_140))) goto lab44;
-                    goto lab36;
-                lab44:
-                    z->c = z->l - m11;
-                    if (!(eq_s_b(z, 9, s_141))) goto lab45;
-                    goto lab36;
-                lab45:
-                    z->c = z->l - m11;
-                    if (!(eq_s_b(z, 9, s_142))) goto lab46;
-                    goto lab36;
-                lab46:
-                    z->c = z->l - m11;
-                    if (!(eq_s_b(z, 12, s_143))) goto lab47;
-                    goto lab36;
-                lab47:
-                    z->c = z->l - m11;
-                    if (!(eq_s_b(z, 12, s_144))) goto lab48;
-                    goto lab36;
-                lab48:
-                    z->c = z->l - m11;
-                    if (!(eq_s_b(z, 12, s_145))) goto lab49;
-                    goto lab36;
-                lab49:
-                    z->c = z->l - m11;
-                    if (!(eq_s_b(z, 12, s_146))) goto lab50;
-                    goto lab36;
-                lab50:
-                    z->c = z->l - m11;
-                    if (!(eq_s_b(z, 9, s_147))) goto lab51;
-                    goto lab36;
-                lab51:
-                    z->c = z->l - m11;
-                    if (!(eq_s_b(z, 12, s_148))) goto lab52;
-                    goto lab36;
-                lab52:
-                    z->c = z->l - m11;
-                    if (!(eq_s_b(z, 12, s_149))) goto lab53;
-                    goto lab36;
-                lab53:
-                    z->c = z->l - m11;
-                    if (!(eq_s_b(z, 9, s_150))) goto lab54;
-                    goto lab36;
-                lab54:
-                    z->c = z->l - m11;
-                    if (!(eq_s_b(z, 12, s_151))) goto lab35;
-                }
-            lab36:
-                z->bra = z->c;
-                {   int ret = slice_from_s(z, 3, s_152);
-                    if (ret < 0) return ret;
-                }
-                z->I[1] = 1;
-                z->c = z->l - m_test10;
-            }
-            goto lab1;
-        lab35:
-            z->c = z->l - m2;
-            {   int m_test14 = z->l - z->c;
-                z->ket = z->c;
-                {   int m15 = z->l - z->c; (void)m15;
-                    if (!(eq_s_b(z, 6, s_153))) goto lab56;
-                    goto lab55;
-                lab56:
-                    z->c = z->l - m15;
-                    if (!(eq_s_b(z, 6, s_154))) goto lab0;
-                }
-            lab55:
-                {   int m_test16 = z->l - z->c;
-                    if (!(eq_s_b(z, 3, s_155))) goto lab0;
-                    z->c = z->l - m_test16;
-                }
-                z->bra = z->c;
-                {   int ret = slice_del(z);
-                    if (ret < 0) return ret;
-                }
-                z->I[1] = 1;
-                z->c = z->l - m_test14;
-            }
+            z->I[1] = 1;
+            z->c = z->l - m_test2;
         }
-    lab1:
     lab0:
         z->c = z->l - m1;
     }
-    {   int m17 = z->l - z->c; (void)m17;
+    {   int m7 = z->l - z->c; (void)m7;
         z->ket = z->c;
-        if (z->c - 8 <= z->lb || (z->p[z->c - 1] != 141 && z->p[z->c - 1] != 177)) goto lab57;
-        if (!(find_among_b(z, a_25, 6))) goto lab57;
+        if (z->c - 8 <= z->lb || (z->p[z->c - 1] != 141 && z->p[z->c - 1] != 177)) goto lab4;
+        if (!find_among_b(z, a_26, 6)) goto lab4;
         z->bra = z->c;
         {   int ret = slice_del(z);
             if (ret < 0) return ret;
         }
         z->I[1] = 1;
-    lab57:
-        z->c = z->l - m17;
+    lab4:
+        z->c = z->l - m7;
     }
     z->c = z->lb;
-    
+
     {   int ret = r_fix_endings(z);
         if (ret < 0) return ret;
     }

@@ -356,23 +356,27 @@ static int r_mark_regions(struct SN_env * z) {
     z->I[1] = z->l;
     z->I[0] = z->l;
     {   int c1 = z->c;
-        {   
+
+        {
             int ret = out_grouping_U(z, g_v, 1072, 1103, 1);
             if (ret < 0) goto lab0;
             z->c += ret;
         }
         z->I[1] = z->c;
-        {   
+
+        {
             int ret = in_grouping_U(z, g_v, 1072, 1103, 1);
             if (ret < 0) goto lab0;
             z->c += ret;
         }
-        {   
+
+        {
             int ret = out_grouping_U(z, g_v, 1072, 1103, 1);
             if (ret < 0) goto lab0;
             z->c += ret;
         }
-        {   
+
+        {
             int ret = in_grouping_U(z, g_v, 1072, 1103, 1);
             if (ret < 0) goto lab0;
             z->c += ret;
@@ -385,15 +389,14 @@ static int r_mark_regions(struct SN_env * z) {
 }
 
 static int r_R2(struct SN_env * z) {
-    if (!(z->I[0] <= z->c)) return 0;
-    return 1;
+    return z->I[0] <= z->c;
 }
 
 static int r_perfective_gerund(struct SN_env * z) {
     int among_var;
     z->ket = z->c;
     among_var = find_among_b(z, a_0, 9);
-    if (!(among_var)) return 0;
+    if (!among_var) return 0;
     z->bra = z->c;
     switch (among_var) {
         case 1:
@@ -420,7 +423,7 @@ static int r_perfective_gerund(struct SN_env * z) {
 
 static int r_adjective(struct SN_env * z) {
     z->ket = z->c;
-    if (!(find_among_b(z, a_1, 26))) return 0;
+    if (!find_among_b(z, a_1, 26)) return 0;
     z->bra = z->c;
     {   int ret = slice_del(z);
         if (ret < 0) return ret;
@@ -436,7 +439,7 @@ static int r_adjectival(struct SN_env * z) {
     {   int m1 = z->l - z->c; (void)m1;
         z->ket = z->c;
         among_var = find_among_b(z, a_2, 8);
-        if (!(among_var)) { z->c = z->l - m1; goto lab0; }
+        if (!among_var) { z->c = z->l - m1; goto lab0; }
         z->bra = z->c;
         switch (among_var) {
             case 1:
@@ -467,7 +470,7 @@ static int r_adjectival(struct SN_env * z) {
 static int r_reflexive(struct SN_env * z) {
     z->ket = z->c;
     if (z->c - 3 <= z->lb || (z->p[z->c - 1] != 140 && z->p[z->c - 1] != 143)) return 0;
-    if (!(find_among_b(z, a_3, 2))) return 0;
+    if (!find_among_b(z, a_3, 2)) return 0;
     z->bra = z->c;
     {   int ret = slice_del(z);
         if (ret < 0) return ret;
@@ -479,7 +482,7 @@ static int r_verb(struct SN_env * z) {
     int among_var;
     z->ket = z->c;
     among_var = find_among_b(z, a_4, 46);
-    if (!(among_var)) return 0;
+    if (!among_var) return 0;
     z->bra = z->c;
     switch (among_var) {
         case 1:
@@ -506,7 +509,7 @@ static int r_verb(struct SN_env * z) {
 
 static int r_noun(struct SN_env * z) {
     z->ket = z->c;
-    if (!(find_among_b(z, a_5, 36))) return 0;
+    if (!find_among_b(z, a_5, 36)) return 0;
     z->bra = z->c;
     {   int ret = slice_del(z);
         if (ret < 0) return ret;
@@ -517,7 +520,7 @@ static int r_noun(struct SN_env * z) {
 static int r_derivational(struct SN_env * z) {
     z->ket = z->c;
     if (z->c - 5 <= z->lb || (z->p[z->c - 1] != 130 && z->p[z->c - 1] != 140)) return 0;
-    if (!(find_among_b(z, a_6, 2))) return 0;
+    if (!find_among_b(z, a_6, 2)) return 0;
     z->bra = z->c;
     {   int ret = r_R2(z);
         if (ret <= 0) return ret;
@@ -532,7 +535,7 @@ static int r_tidy_up(struct SN_env * z) {
     int among_var;
     z->ket = z->c;
     among_var = find_among_b(z, a_7, 4);
-    if (!(among_var)) return 0;
+    if (!among_var) return 0;
     z->bra = z->c;
     switch (among_var) {
         case 1:
@@ -590,7 +593,7 @@ extern int russian_UTF_8_stem(struct SN_env * z) {
         }
         z->c = c1;
     }
-    
+
     {   int ret = r_mark_regions(z);
         if (ret < 0) return ret;
     }

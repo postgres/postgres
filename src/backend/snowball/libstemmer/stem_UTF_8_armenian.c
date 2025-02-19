@@ -436,23 +436,27 @@ static int r_mark_regions(struct SN_env * z) {
     z->I[1] = z->l;
     z->I[0] = z->l;
     {   int c1 = z->c;
-        {   
+
+        {
             int ret = out_grouping_U(z, g_v, 1377, 1413, 1);
             if (ret < 0) goto lab0;
             z->c += ret;
         }
         z->I[1] = z->c;
-        {   
+
+        {
             int ret = in_grouping_U(z, g_v, 1377, 1413, 1);
             if (ret < 0) goto lab0;
             z->c += ret;
         }
-        {   
+
+        {
             int ret = out_grouping_U(z, g_v, 1377, 1413, 1);
             if (ret < 0) goto lab0;
             z->c += ret;
         }
-        {   
+
+        {
             int ret = in_grouping_U(z, g_v, 1377, 1413, 1);
             if (ret < 0) goto lab0;
             z->c += ret;
@@ -465,13 +469,12 @@ static int r_mark_regions(struct SN_env * z) {
 }
 
 static int r_R2(struct SN_env * z) {
-    if (!(z->I[0] <= z->c)) return 0;
-    return 1;
+    return z->I[0] <= z->c;
 }
 
 static int r_adjective(struct SN_env * z) {
     z->ket = z->c;
-    if (!(find_among_b(z, a_0, 23))) return 0;
+    if (!find_among_b(z, a_0, 23)) return 0;
     z->bra = z->c;
     {   int ret = slice_del(z);
         if (ret < 0) return ret;
@@ -481,7 +484,7 @@ static int r_adjective(struct SN_env * z) {
 
 static int r_verb(struct SN_env * z) {
     z->ket = z->c;
-    if (!(find_among_b(z, a_1, 71))) return 0;
+    if (!find_among_b(z, a_1, 71)) return 0;
     z->bra = z->c;
     {   int ret = slice_del(z);
         if (ret < 0) return ret;
@@ -491,7 +494,7 @@ static int r_verb(struct SN_env * z) {
 
 static int r_noun(struct SN_env * z) {
     z->ket = z->c;
-    if (!(find_among_b(z, a_2, 40))) return 0;
+    if (!find_among_b(z, a_2, 40)) return 0;
     z->bra = z->c;
     {   int ret = slice_del(z);
         if (ret < 0) return ret;
@@ -501,7 +504,7 @@ static int r_noun(struct SN_env * z) {
 
 static int r_ending(struct SN_env * z) {
     z->ket = z->c;
-    if (!(find_among_b(z, a_3, 57))) return 0;
+    if (!find_among_b(z, a_3, 57)) return 0;
     z->bra = z->c;
     {   int ret = r_R2(z);
         if (ret <= 0) return ret;
@@ -513,7 +516,7 @@ static int r_ending(struct SN_env * z) {
 }
 
 extern int armenian_UTF_8_stem(struct SN_env * z) {
-    
+
     {   int ret = r_mark_regions(z);
         if (ret < 0) return ret;
     }

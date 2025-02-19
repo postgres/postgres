@@ -479,7 +479,6 @@ static int r_prelude(struct SN_env * z) {
         z->bra = z->c;
         if (z->c >= z->l || (z->p[z->c + 0] != 227 && z->p[z->c + 0] != 245)) among_var = 3; else
         among_var = find_among(z, a_0, 3);
-        if (!(among_var)) goto lab0;
         z->ket = z->c;
         switch (among_var) {
             case 1:
@@ -514,7 +513,8 @@ static int r_mark_regions(struct SN_env * z) {
             if (in_grouping(z, g_v, 97, 250, 0)) goto lab2;
             {   int c3 = z->c;
                 if (out_grouping(z, g_v, 97, 250, 0)) goto lab4;
-                {   
+
+                {
                     int ret = out_grouping(z, g_v, 97, 250, 1);
                     if (ret < 0) goto lab4;
                     z->c += ret;
@@ -523,7 +523,8 @@ static int r_mark_regions(struct SN_env * z) {
             lab4:
                 z->c = c3;
                 if (in_grouping(z, g_v, 97, 250, 0)) goto lab2;
-                {   
+
+                {
                     int ret = in_grouping(z, g_v, 97, 250, 1);
                     if (ret < 0) goto lab2;
                     z->c += ret;
@@ -536,7 +537,8 @@ static int r_mark_regions(struct SN_env * z) {
             if (out_grouping(z, g_v, 97, 250, 0)) goto lab0;
             {   int c4 = z->c;
                 if (out_grouping(z, g_v, 97, 250, 0)) goto lab6;
-                {   
+
+                {
                     int ret = out_grouping(z, g_v, 97, 250, 1);
                     if (ret < 0) goto lab6;
                     z->c += ret;
@@ -557,23 +559,27 @@ static int r_mark_regions(struct SN_env * z) {
         z->c = c1;
     }
     {   int c5 = z->c;
-        {   
+
+        {
             int ret = out_grouping(z, g_v, 97, 250, 1);
             if (ret < 0) goto lab7;
             z->c += ret;
         }
-        {   
+
+        {
             int ret = in_grouping(z, g_v, 97, 250, 1);
             if (ret < 0) goto lab7;
             z->c += ret;
         }
         z->I[1] = z->c;
-        {   
+
+        {
             int ret = out_grouping(z, g_v, 97, 250, 1);
             if (ret < 0) goto lab7;
             z->c += ret;
         }
-        {   
+
+        {
             int ret = in_grouping(z, g_v, 97, 250, 1);
             if (ret < 0) goto lab7;
             z->c += ret;
@@ -592,7 +598,6 @@ static int r_postlude(struct SN_env * z) {
         z->bra = z->c;
         if (z->c + 1 >= z->l || z->p[z->c + 1] != 126) among_var = 3; else
         among_var = find_among(z, a_1, 3);
-        if (!(among_var)) goto lab0;
         z->ket = z->c;
         switch (among_var) {
             case 1:
@@ -619,18 +624,15 @@ static int r_postlude(struct SN_env * z) {
 }
 
 static int r_RV(struct SN_env * z) {
-    if (!(z->I[2] <= z->c)) return 0;
-    return 1;
+    return z->I[2] <= z->c;
 }
 
 static int r_R1(struct SN_env * z) {
-    if (!(z->I[1] <= z->c)) return 0;
-    return 1;
+    return z->I[1] <= z->c;
 }
 
 static int r_R2(struct SN_env * z) {
-    if (!(z->I[0] <= z->c)) return 0;
-    return 1;
+    return z->I[0] <= z->c;
 }
 
 static int r_standard_suffix(struct SN_env * z) {
@@ -638,7 +640,7 @@ static int r_standard_suffix(struct SN_env * z) {
     z->ket = z->c;
     if (z->c - 2 <= z->lb || z->p[z->c - 1] >> 5 != 3 || !((823330 >> (z->p[z->c - 1] & 0x1f)) & 1)) return 0;
     among_var = find_among_b(z, a_5, 45);
-    if (!(among_var)) return 0;
+    if (!among_var) return 0;
     z->bra = z->c;
     switch (among_var) {
         case 1:
@@ -684,7 +686,7 @@ static int r_standard_suffix(struct SN_env * z) {
                 z->ket = z->c;
                 if (z->c - 1 <= z->lb || z->p[z->c - 1] >> 5 != 3 || !((4718616 >> (z->p[z->c - 1] & 0x1f)) & 1)) { z->c = z->l - m1; goto lab0; }
                 among_var = find_among_b(z, a_2, 4);
-                if (!(among_var)) { z->c = z->l - m1; goto lab0; }
+                if (!among_var) { z->c = z->l - m1; goto lab0; }
                 z->bra = z->c;
                 {   int ret = r_R2(z);
                     if (ret == 0) { z->c = z->l - m1; goto lab0; }
@@ -721,7 +723,7 @@ static int r_standard_suffix(struct SN_env * z) {
             {   int m2 = z->l - z->c; (void)m2;
                 z->ket = z->c;
                 if (z->c - 3 <= z->lb || (z->p[z->c - 1] != 101 && z->p[z->c - 1] != 108)) { z->c = z->l - m2; goto lab1; }
-                if (!(find_among_b(z, a_3, 3))) { z->c = z->l - m2; goto lab1; }
+                if (!find_among_b(z, a_3, 3)) { z->c = z->l - m2; goto lab1; }
                 z->bra = z->c;
                 {   int ret = r_R2(z);
                     if (ret == 0) { z->c = z->l - m2; goto lab1; }
@@ -744,7 +746,7 @@ static int r_standard_suffix(struct SN_env * z) {
             {   int m3 = z->l - z->c; (void)m3;
                 z->ket = z->c;
                 if (z->c - 1 <= z->lb || z->p[z->c - 1] >> 5 != 3 || !((4198408 >> (z->p[z->c - 1] & 0x1f)) & 1)) { z->c = z->l - m3; goto lab2; }
-                if (!(find_among_b(z, a_4, 3))) { z->c = z->l - m3; goto lab2; }
+                if (!find_among_b(z, a_4, 3)) { z->c = z->l - m3; goto lab2; }
                 z->bra = z->c;
                 {   int ret = r_R2(z);
                     if (ret == 0) { z->c = z->l - m3; goto lab2; }
@@ -799,7 +801,7 @@ static int r_verb_suffix(struct SN_env * z) {
         if (z->c < z->I[2]) return 0;
         mlimit1 = z->lb; z->lb = z->I[2];
         z->ket = z->c;
-        if (!(find_among_b(z, a_6, 120))) { z->lb = mlimit1; return 0; }
+        if (!find_among_b(z, a_6, 120)) { z->lb = mlimit1; return 0; }
         z->bra = z->c;
         {   int ret = slice_del(z);
             if (ret < 0) return ret;
@@ -811,7 +813,7 @@ static int r_verb_suffix(struct SN_env * z) {
 
 static int r_residual_suffix(struct SN_env * z) {
     z->ket = z->c;
-    if (!(find_among_b(z, a_7, 7))) return 0;
+    if (!find_among_b(z, a_7, 7)) return 0;
     z->bra = z->c;
     {   int ret = r_RV(z);
         if (ret <= 0) return ret;
@@ -826,7 +828,7 @@ static int r_residual_form(struct SN_env * z) {
     int among_var;
     z->ket = z->c;
     among_var = find_among_b(z, a_8, 4);
-    if (!(among_var)) return 0;
+    if (!among_var) return 0;
     z->bra = z->c;
     switch (among_var) {
         case 1:
@@ -882,7 +884,7 @@ extern int portuguese_ISO_8859_1_stem(struct SN_env * z) {
         }
         z->c = c1;
     }
-    
+
     {   int ret = r_mark_regions(z);
         if (ret < 0) return ret;
     }

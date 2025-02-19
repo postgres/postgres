@@ -138,15 +138,17 @@ z->c = z->c + 3;
         z->I[0] = z->c;
         z->c = c_test1;
     }
+
     if (out_grouping(z, g_v, 97, 248, 1) < 0) return 0;
-    {   
+
+    {
         int ret = in_grouping(z, g_v, 97, 248, 1);
         if (ret < 0) return 0;
         z->c += ret;
     }
     z->I[1] = z->c;
-    
-    if (!(z->I[1] < z->I[0])) goto lab0;
+
+    if (z->I[1] >= z->I[0]) goto lab0;
     z->I[1] = z->I[0];
 lab0:
     return 1;
@@ -161,7 +163,7 @@ static int r_main_suffix(struct SN_env * z) {
         z->ket = z->c;
         if (z->c <= z->lb || z->p[z->c - 1] >> 5 != 3 || !((1851426 >> (z->p[z->c - 1] & 0x1f)) & 1)) { z->lb = mlimit1; return 0; }
         among_var = find_among_b(z, a_0, 29);
-        if (!(among_var)) { z->lb = mlimit1; return 0; }
+        if (!among_var) { z->lb = mlimit1; return 0; }
         z->bra = z->c;
         z->lb = mlimit1;
     }
@@ -203,7 +205,7 @@ static int r_consonant_pair(struct SN_env * z) {
             mlimit2 = z->lb; z->lb = z->I[1];
             z->ket = z->c;
             if (z->c - 1 <= z->lb || z->p[z->c - 1] != 116) { z->lb = mlimit2; return 0; }
-            if (!(find_among_b(z, a_1, 2))) { z->lb = mlimit2; return 0; }
+            if (!find_among_b(z, a_1, 2)) { z->lb = mlimit2; return 0; }
             z->bra = z->c;
             z->lb = mlimit2;
         }
@@ -225,7 +227,7 @@ static int r_other_suffix(struct SN_env * z) {
         mlimit1 = z->lb; z->lb = z->I[1];
         z->ket = z->c;
         if (z->c - 1 <= z->lb || z->p[z->c - 1] >> 5 != 3 || !((4718720 >> (z->p[z->c - 1] & 0x1f)) & 1)) { z->lb = mlimit1; return 0; }
-        if (!(find_among_b(z, a_2, 11))) { z->lb = mlimit1; return 0; }
+        if (!find_among_b(z, a_2, 11)) { z->lb = mlimit1; return 0; }
         z->bra = z->c;
         z->lb = mlimit1;
     }

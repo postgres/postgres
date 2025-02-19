@@ -307,7 +307,7 @@ extern int hindi_UTF_8_stem(struct SN_env * z) {
     z->lb = z->c; z->c = z->l;
 
     z->ket = z->c;
-    if (!(find_among_b(z, a_0, 132))) return 0;
+    if (!find_among_b(z, a_0, 132)) return 0;
     z->bra = z->c;
     {   int ret = slice_del(z);
         if (ret < 0) return ret;

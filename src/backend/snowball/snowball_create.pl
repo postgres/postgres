@@ -19,6 +19,7 @@ our @languages = qw(
   danish
   dutch
   english
+  estonian
   finnish
   french
   german

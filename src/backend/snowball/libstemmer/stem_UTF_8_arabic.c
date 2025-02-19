@@ -680,7 +680,7 @@ static int r_Normalize_pre(struct SN_env * z) {
             {   int c3 = z->c;
                 z->bra = z->c;
                 among_var = find_among(z, a_0, 144);
-                if (!(among_var)) goto lab3;
+                if (!among_var) goto lab3;
                 z->ket = z->c;
                 switch (among_var) {
                     case 1:
@@ -965,7 +965,7 @@ static int r_Normalize_post(struct SN_env * z) {
 
         z->ket = z->c;
         if (z->c - 1 <= z->lb || z->p[z->c - 1] >> 5 != 5 || !((124 >> (z->p[z->c - 1] & 0x1f)) & 1)) goto lab0;
-        if (!(find_among_b(z, a_1, 5))) goto lab0;
+        if (!find_among_b(z, a_1, 5)) goto lab0;
         z->bra = z->c;
         {   int ret = slice_from_s(z, 2, s_50);
             if (ret < 0) return ret;
@@ -981,7 +981,7 @@ static int r_Normalize_post(struct SN_env * z) {
                 z->bra = z->c;
                 if (z->c + 1 >= z->l || z->p[z->c + 1] >> 5 != 5 || !((124 >> (z->p[z->c + 1] & 0x1f)) & 1)) goto lab4;
                 among_var = find_among(z, a_2, 5);
-                if (!(among_var)) goto lab4;
+                if (!among_var) goto lab4;
                 z->ket = z->c;
                 switch (among_var) {
                     case 1:
@@ -1024,17 +1024,17 @@ static int r_Checks1(struct SN_env * z) {
     z->bra = z->c;
     if (z->c + 3 >= z->l || (z->p[z->c + 3] != 132 && z->p[z->c + 3] != 167)) return 0;
     among_var = find_among(z, a_3, 4);
-    if (!(among_var)) return 0;
+    if (!among_var) return 0;
     z->ket = z->c;
     switch (among_var) {
         case 1:
-            if (!(len_utf8(z->p) > 4)) return 0;
+            if (len_utf8(z->p) <= 4) return 0;
             z->I[2] = 1;
             z->I[1] = 0;
             z->I[0] = 1;
             break;
         case 2:
-            if (!(len_utf8(z->p) > 3)) return 0;
+            if (len_utf8(z->p) <= 3) return 0;
             z->I[2] = 1;
             z->I[1] = 0;
             z->I[0] = 1;
@@ -1048,29 +1048,29 @@ static int r_Prefix_Step1(struct SN_env * z) {
     z->bra = z->c;
     if (z->c + 3 >= z->l || z->p[z->c + 3] >> 5 != 5 || !((188 >> (z->p[z->c + 3] & 0x1f)) & 1)) return 0;
     among_var = find_among(z, a_4, 5);
-    if (!(among_var)) return 0;
+    if (!among_var) return 0;
     z->ket = z->c;
     switch (among_var) {
         case 1:
-            if (!(len_utf8(z->p) > 3)) return 0;
+            if (len_utf8(z->p) <= 3) return 0;
             {   int ret = slice_from_s(z, 2, s_54);
                 if (ret < 0) return ret;
             }
             break;
         case 2:
-            if (!(len_utf8(z->p) > 3)) return 0;
+            if (len_utf8(z->p) <= 3) return 0;
             {   int ret = slice_from_s(z, 2, s_55);
                 if (ret < 0) return ret;
             }
             break;
         case 3:
-            if (!(len_utf8(z->p) > 3)) return 0;
+            if (len_utf8(z->p) <= 3) return 0;
             {   int ret = slice_from_s(z, 2, s_56);
                 if (ret < 0) return ret;
             }
             break;
         case 4:
-            if (!(len_utf8(z->p) > 3)) return 0;
+            if (len_utf8(z->p) <= 3) return 0;
             {   int ret = slice_from_s(z, 2, s_57);
                 if (ret < 0) return ret;
             }
@@ -1082,9 +1082,9 @@ static int r_Prefix_Step1(struct SN_env * z) {
 static int r_Prefix_Step2(struct SN_env * z) {
     z->bra = z->c;
     if (z->c + 1 >= z->l || (z->p[z->c + 1] != 129 && z->p[z->c + 1] != 136)) return 0;
-    if (!(find_among(z, a_5, 2))) return 0;
+    if (!find_among(z, a_5, 2)) return 0;
     z->ket = z->c;
-    if (!(len_utf8(z->p) > 3)) return 0;
+    if (len_utf8(z->p) <= 3) return 0;
     {   int c1 = z->c;
         if (!(eq_s(z, 2, s_58))) goto lab0;
         return 0;
@@ -1102,17 +1102,17 @@ static int r_Prefix_Step3a_Noun(struct SN_env * z) {
     z->bra = z->c;
     if (z->c + 3 >= z->l || (z->p[z->c + 3] != 132 && z->p[z->c + 3] != 167)) return 0;
     among_var = find_among(z, a_6, 4);
-    if (!(among_var)) return 0;
+    if (!among_var) return 0;
     z->ket = z->c;
     switch (among_var) {
         case 1:
-            if (!(len_utf8(z->p) > 5)) return 0;
+            if (len_utf8(z->p) <= 5) return 0;
             {   int ret = slice_del(z);
                 if (ret < 0) return ret;
             }
             break;
         case 2:
-            if (!(len_utf8(z->p) > 4)) return 0;
+            if (len_utf8(z->p) <= 4) return 0;
             {   int ret = slice_del(z);
                 if (ret < 0) return ret;
             }
@@ -1126,23 +1126,23 @@ static int r_Prefix_Step3b_Noun(struct SN_env * z) {
     z->bra = z->c;
     if (z->c + 1 >= z->l || (z->p[z->c + 1] != 168 && z->p[z->c + 1] != 131)) return 0;
     among_var = find_among(z, a_7, 4);
-    if (!(among_var)) return 0;
+    if (!among_var) return 0;
     z->ket = z->c;
     switch (among_var) {
         case 1:
-            if (!(len_utf8(z->p) > 3)) return 0;
+            if (len_utf8(z->p) <= 3) return 0;
             {   int ret = slice_del(z);
                 if (ret < 0) return ret;
             }
             break;
         case 2:
-            if (!(len_utf8(z->p) > 3)) return 0;
+            if (len_utf8(z->p) <= 3) return 0;
             {   int ret = slice_from_s(z, 2, s_59);
                 if (ret < 0) return ret;
             }
             break;
         case 3:
-            if (!(len_utf8(z->p) > 3)) return 0;
+            if (len_utf8(z->p) <= 3) return 0;
             {   int ret = slice_from_s(z, 2, s_60);
                 if (ret < 0) return ret;
             }
@@ -1155,29 +1155,29 @@ static int r_Prefix_Step3_Verb(struct SN_env * z) {
     int among_var;
     z->bra = z->c;
     among_var = find_among(z, a_8, 4);
-    if (!(among_var)) return 0;
+    if (!among_var) return 0;
     z->ket = z->c;
     switch (among_var) {
         case 1:
-            if (!(len_utf8(z->p) > 4)) return 0;
+            if (len_utf8(z->p) <= 4) return 0;
             {   int ret = slice_from_s(z, 2, s_61);
                 if (ret < 0) return ret;
             }
             break;
         case 2:
-            if (!(len_utf8(z->p) > 4)) return 0;
+            if (len_utf8(z->p) <= 4) return 0;
             {   int ret = slice_from_s(z, 2, s_62);
                 if (ret < 0) return ret;
             }
             break;
         case 3:
-            if (!(len_utf8(z->p) > 4)) return 0;
+            if (len_utf8(z->p) <= 4) return 0;
             {   int ret = slice_from_s(z, 2, s_63);
                 if (ret < 0) return ret;
             }
             break;
         case 4:
-            if (!(len_utf8(z->p) > 4)) return 0;
+            if (len_utf8(z->p) <= 4) return 0;
             {   int ret = slice_from_s(z, 2, s_64);
                 if (ret < 0) return ret;
             }
@@ -1189,9 +1189,9 @@ static int r_Prefix_Step3_Verb(struct SN_env * z) {
 static int r_Prefix_Step4_Verb(struct SN_env * z) {
     z->bra = z->c;
     if (z->c + 5 >= z->l || z->p[z->c + 5] != 170) return 0;
-    if (!(find_among(z, a_9, 3))) return 0;
+    if (!find_among(z, a_9, 3)) return 0;
     z->ket = z->c;
-    if (!(len_utf8(z->p) > 4)) return 0;
+    if (len_utf8(z->p) <= 4) return 0;
     z->I[1] = 1;
     z->I[2] = 0;
     {   int ret = slice_from_s(z, 6, s_65);
@@ -1204,23 +1204,23 @@ static int r_Suffix_Noun_Step1a(struct SN_env * z) {
     int among_var;
     z->ket = z->c;
     among_var = find_among_b(z, a_10, 10);
-    if (!(among_var)) return 0;
+    if (!among_var) return 0;
     z->bra = z->c;
     switch (among_var) {
         case 1:
-            if (!(len_utf8(z->p) >= 4)) return 0;
+            if (len_utf8(z->p) < 4) return 0;
             {   int ret = slice_del(z);
                 if (ret < 0) return ret;
             }
             break;
         case 2:
-            if (!(len_utf8(z->p) >= 5)) return 0;
+            if (len_utf8(z->p) < 5) return 0;
             {   int ret = slice_del(z);
                 if (ret < 0) return ret;
             }
             break;
         case 3:
-            if (!(len_utf8(z->p) >= 6)) return 0;
+            if (len_utf8(z->p) < 6) return 0;
             {   int ret = slice_del(z);
                 if (ret < 0) return ret;
             }
@@ -1232,9 +1232,9 @@ static int r_Suffix_Noun_Step1a(struct SN_env * z) {
 static int r_Suffix_Noun_Step1b(struct SN_env * z) {
     z->ket = z->c;
     if (z->c - 1 <= z->lb || z->p[z->c - 1] != 134) return 0;
-    if (!(find_among_b(z, a_11, 1))) return 0;
+    if (!find_among_b(z, a_11, 1)) return 0;
     z->bra = z->c;
-    if (!(len_utf8(z->p) > 5)) return 0;
+    if (len_utf8(z->p) <= 5) return 0;
     {   int ret = slice_del(z);
         if (ret < 0) return ret;
     }
@@ -1243,9 +1243,9 @@ static int r_Suffix_Noun_Step1b(struct SN_env * z) {
 
 static int r_Suffix_Noun_Step2a(struct SN_env * z) {
     z->ket = z->c;
-    if (!(find_among_b(z, a_12, 3))) return 0;
+    if (!find_among_b(z, a_12, 3)) return 0;
     z->bra = z->c;
-    if (!(len_utf8(z->p) > 4)) return 0;
+    if (len_utf8(z->p) <= 4) return 0;
     {   int ret = slice_del(z);
         if (ret < 0) return ret;
     }
@@ -1255,9 +1255,9 @@ static int r_Suffix_Noun_Step2a(struct SN_env * z) {
 static int r_Suffix_Noun_Step2b(struct SN_env * z) {
     z->ket = z->c;
     if (z->c - 3 <= z->lb || z->p[z->c - 1] != 170) return 0;
-    if (!(find_among_b(z, a_13, 1))) return 0;
+    if (!find_among_b(z, a_13, 1)) return 0;
     z->bra = z->c;
-    if (!(len_utf8(z->p) >= 5)) return 0;
+    if (len_utf8(z->p) < 5) return 0;
     {   int ret = slice_del(z);
         if (ret < 0) return ret;
     }
@@ -1267,9 +1267,9 @@ static int r_Suffix_Noun_Step2b(struct SN_env * z) {
 static int r_Suffix_Noun_Step2c1(struct SN_env * z) {
     z->ket = z->c;
     if (z->c - 1 <= z->lb || z->p[z->c - 1] != 170) return 0;
-    if (!(find_among_b(z, a_14, 1))) return 0;
+    if (!find_among_b(z, a_14, 1)) return 0;
     z->bra = z->c;
-    if (!(len_utf8(z->p) >= 4)) return 0;
+    if (len_utf8(z->p) < 4) return 0;
     {   int ret = slice_del(z);
         if (ret < 0) return ret;
     }
@@ -1279,9 +1279,9 @@ static int r_Suffix_Noun_Step2c1(struct SN_env * z) {
 static int r_Suffix_Noun_Step2c2(struct SN_env * z) {
     z->ket = z->c;
     if (z->c - 1 <= z->lb || z->p[z->c - 1] != 169) return 0;
-    if (!(find_among_b(z, a_15, 1))) return 0;
+    if (!find_among_b(z, a_15, 1)) return 0;
     z->bra = z->c;
-    if (!(len_utf8(z->p) >= 4)) return 0;
+    if (len_utf8(z->p) < 4) return 0;
     {   int ret = slice_del(z);
         if (ret < 0) return ret;
     }
@@ -1291,9 +1291,9 @@ static int r_Suffix_Noun_Step2c2(struct SN_env * z) {
 static int r_Suffix_Noun_Step3(struct SN_env * z) {
     z->ket = z->c;
     if (z->c - 1 <= z->lb || z->p[z->c - 1] != 138) return 0;
-    if (!(find_among_b(z, a_16, 1))) return 0;
+    if (!find_among_b(z, a_16, 1)) return 0;
     z->bra = z->c;
-    if (!(len_utf8(z->p) >= 3)) return 0;
+    if (len_utf8(z->p) < 3) return 0;
     {   int ret = slice_del(z);
         if (ret < 0) return ret;
     }
@@ -1304,23 +1304,23 @@ static int r_Suffix_Verb_Step1(struct SN_env * z) {
     int among_var;
     z->ket = z->c;
     among_var = find_among_b(z, a_17, 12);
-    if (!(among_var)) return 0;
+    if (!among_var) return 0;
     z->bra = z->c;
     switch (among_var) {
         case 1:
-            if (!(len_utf8(z->p) >= 4)) return 0;
+            if (len_utf8(z->p) < 4) return 0;
             {   int ret = slice_del(z);
                 if (ret < 0) return ret;
             }
             break;
         case 2:
-            if (!(len_utf8(z->p) >= 5)) return 0;
+            if (len_utf8(z->p) < 5) return 0;
             {   int ret = slice_del(z);
                 if (ret < 0) return ret;
             }
             break;
         case 3:
-            if (!(len_utf8(z->p) >= 6)) return 0;
+            if (len_utf8(z->p) < 6) return 0;
             {   int ret = slice_del(z);
                 if (ret < 0) return ret;
             }
@@ -1333,29 +1333,29 @@ static int r_Suffix_Verb_Step2a(struct SN_env * z) {
     int among_var;
     z->ket = z->c;
     among_var = find_among_b(z, a_18, 11);
-    if (!(among_var)) return 0;
+    if (!among_var) return 0;
     z->bra = z->c;
     switch (among_var) {
         case 1:
-            if (!(len_utf8(z->p) >= 4)) return 0;
+            if (len_utf8(z->p) < 4) return 0;
             {   int ret = slice_del(z);
                 if (ret < 0) return ret;
             }
             break;
         case 2:
-            if (!(len_utf8(z->p) >= 5)) return 0;
+            if (len_utf8(z->p) < 5) return 0;
             {   int ret = slice_del(z);
                 if (ret < 0) return ret;
             }
             break;
         case 3:
-            if (!(len_utf8(z->p) > 5)) return 0;
+            if (len_utf8(z->p) <= 5) return 0;
             {   int ret = slice_del(z);
                 if (ret < 0) return ret;
             }
             break;
         case 4:
-            if (!(len_utf8(z->p) >= 6)) return 0;
+            if (len_utf8(z->p) < 6) return 0;
             {   int ret = slice_del(z);
                 if (ret < 0) return ret;
             }
@@ -1367,9 +1367,9 @@ static int r_Suffix_Verb_Step2a(struct SN_env * z) {
 static int r_Suffix_Verb_Step2b(struct SN_env * z) {
     z->ket = z->c;
     if (z->c - 3 <= z->lb || (z->p[z->c - 1] != 133 && z->p[z->c - 1] != 167)) return 0;
-    if (!(find_among_b(z, a_19, 2))) return 0;
+    if (!find_among_b(z, a_19, 2)) return 0;
     z->bra = z->c;
-    if (!(len_utf8(z->p) >= 5)) return 0;
+    if (len_utf8(z->p) < 5) return 0;
     {   int ret = slice_del(z);
         if (ret < 0) return ret;
     }
@@ -1381,17 +1381,17 @@ static int r_Suffix_Verb_Step2c(struct SN_env * z) {
     z->ket = z->c;
     if (z->c - 1 <= z->lb || z->p[z->c - 1] != 136) return 0;
     among_var = find_among_b(z, a_20, 2);
-    if (!(among_var)) return 0;
+    if (!among_var) return 0;
     z->bra = z->c;
     switch (among_var) {
         case 1:
-            if (!(len_utf8(z->p) >= 4)) return 0;
+            if (len_utf8(z->p) < 4) return 0;
             {   int ret = slice_del(z);
                 if (ret < 0) return ret;
             }
             break;
         case 2:
-            if (!(len_utf8(z->p) >= 6)) return 0;
+            if (len_utf8(z->p) < 6) return 0;
             {   int ret = slice_del(z);
                 if (ret < 0) return ret;
             }
@@ -1403,7 +1403,7 @@ static int r_Suffix_Verb_Step2c(struct SN_env * z) {
 static int r_Suffix_All_alef_maqsura(struct SN_env * z) {
     z->ket = z->c;
     if (z->c - 1 <= z->lb || z->p[z->c - 1] != 137) return 0;
-    if (!(find_among_b(z, a_21, 1))) return 0;
+    if (!find_among_b(z, a_21, 1)) return 0;
     z->bra = z->c;
     {   int ret = slice_from_s(z, 2, s_66);
         if (ret < 0) return ret;
@@ -1421,7 +1421,7 @@ extern int arabic_UTF_8_stem(struct SN_env * z) {
         }
         z->c = c1;
     }
-    
+
     {   int ret = r_Normalize_pre(z);
         if (ret < 0) return ret;
     }
@@ -1496,7 +1496,7 @@ extern int arabic_UTF_8_stem(struct SN_env * z) {
                     goto lab12;
                 lab13:
                     z->c = z->l - m8;
-                    
+
                     if (!(z->I[0])) goto lab15;
                     goto lab14;
                 lab15:
@@ -1563,7 +1563,7 @@ extern int arabic_UTF_8_stem(struct SN_env * z) {
                     goto lab12;
                 lab20:
                     z->c = z->l - m8;
-                    
+
                     if (!(z->I[0])) goto lab25;
                     goto lab24;
                 lab25:
@@ -1651,7 +1651,7 @@ extern int arabic_UTF_8_stem(struct SN_env * z) {
     lab26:
         z->c = c11;
     }
-    
+
     {   int ret = r_Normalize_post(z);
         if (ret < 0) return ret;
     }

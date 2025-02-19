@@ -508,7 +508,7 @@ static int r_prelude(struct SN_env * z) {
                 int c3 = z->c;
                 z->bra = z->c;
                 among_var = find_among(z, a_0, 8);
-                if (!(among_var)) goto lab2;
+                if (!among_var) goto lab2;
                 z->ket = z->c;
                 switch (among_var) {
                     case 1:
@@ -628,7 +628,11 @@ static int r_mark_regions(struct SN_env * z) {
                 goto lab2;
             lab3:
                 z->c = c3;
-                if (!(eq_s(z, 4, s_13))) goto lab1;
+                if (!(eq_s(z, 4, s_13))) goto lab4;
+                goto lab2;
+            lab4:
+                z->c = c3;
+                if (z->c < z->l) goto lab1;
             }
         lab2:
             { z->c = c1; goto lab0; }
@@ -642,52 +646,52 @@ static int r_mark_regions(struct SN_env * z) {
         ;
     }
     {   int c4 = z->c;
-        if (!(find_among(z, a_1, 40))) { z->c = c4; goto lab4; }
+        if (!find_among(z, a_1, 40)) { z->c = c4; goto lab5; }
         {   int c5 = z->c;
             {   int c_test6 = z->c;
                 {   int c7 = z->c;
-                    if (!(eq_s(z, 8, s_15))) goto lab8;
-                    goto lab7;
-                lab8:
-                    z->c = c7;
-                    if (!(eq_s(z, 8, s_16))) goto lab9;
-                    goto lab7;
+                    if (!(eq_s(z, 8, s_15))) goto lab9;
+                    goto lab8;
                 lab9:
                     z->c = c7;
-                    if (!(eq_s(z, 8, s_17))) goto lab6;
+                    if (!(eq_s(z, 8, s_16))) goto lab10;
+                    goto lab8;
+                lab10:
+                    z->c = c7;
+                    if (!(eq_s(z, 8, s_17))) goto lab7;
                 }
-            lab7:
-                if (z->c < z->l) goto lab6;
+            lab8:
+                if (z->c < z->l) goto lab7;
                 z->c = c_test6;
             }
-            goto lab5;
-        lab6:
+            goto lab6;
+        lab7:
             z->c = c5;
             {   int c_test8 = z->c;
-                if (!(eq_s(z, 8, s_18))) goto lab10;
+                if (!(eq_s(z, 8, s_18))) goto lab11;
                 z->c = c_test8;
             }
-            goto lab5;
-        lab10:
+            goto lab6;
+        lab11:
             z->c = c5;
             z->bra = z->c;
-            if (!(eq_s(z, 4, s_19))) goto lab11;
+            if (!(eq_s(z, 4, s_19))) goto lab12;
             z->ket = z->c;
             {   int ret = slice_from_s(z, 2, s_20);
                 if (ret < 0) return ret;
             }
-            goto lab5;
-        lab11:
+            goto lab6;
+        lab12:
             z->c = c5;
             z->bra = z->c;
-            if (!(eq_s(z, 4, s_21))) { z->c = c4; goto lab4; }
+            if (!(eq_s(z, 4, s_21))) { z->c = c4; goto lab5; }
             z->ket = z->c;
             {   int ret = slice_from_s(z, 3, s_22);
                 if (ret < 0) return ret;
             }
         }
+    lab6:
     lab5:
-    lab4:
         ;
     }
     {   int c_test9 = z->c;
@@ -699,43 +703,42 @@ static int r_mark_regions(struct SN_env * z) {
         z->c = c_test9;
     }
     {   int c10 = z->c;
-        if (z->c + 5 >= z->l || (z->p[z->c + 5] != 169 && z->p[z->c + 5] != 168)) { z->c = c10; goto lab12; }
-        if (!(find_among(z, a_2, 4))) { z->c = c10; goto lab12; }
-    lab12:
+        if (z->c + 5 >= z->l || (z->p[z->c + 5] != 169 && z->p[z->c + 5] != 168)) { z->c = c10; goto lab13; }
+        if (!find_among(z, a_2, 4)) { z->c = c10; goto lab13; }
+    lab13:
         ;
     }
     {   int c11 = z->c;
-        if (in_grouping_U(z, g_consonant, 1489, 1520, 0)) goto lab13;
-        if (in_grouping_U(z, g_consonant, 1489, 1520, 0)) goto lab13;
-        if (in_grouping_U(z, g_consonant, 1489, 1520, 0)) goto lab13;
+        if (in_grouping_U(z, g_consonant, 1489, 1520, 0)) goto lab14;
+        if (in_grouping_U(z, g_consonant, 1489, 1520, 0)) goto lab14;
+        if (in_grouping_U(z, g_consonant, 1489, 1520, 0)) goto lab14;
         z->I[1] = z->c;
         return 0;
-    lab13:
+    lab14:
         z->c = c11;
     }
+
     if (out_grouping_U(z, g_vowel, 1488, 1522, 1) < 0) return 0;
     while(1) {
-        if (in_grouping_U(z, g_vowel, 1488, 1522, 0)) goto lab14;
+        if (in_grouping_U(z, g_vowel, 1488, 1522, 0)) goto lab15;
         continue;
-    lab14:
+    lab15:
         break;
     }
     z->I[1] = z->c;
-    
-    if (!(z->I[1] < z->I[0])) goto lab15;
+
+    if (z->I[1] >= z->I[0]) goto lab16;
     z->I[1] = z->I[0];
-lab15:
+lab16:
     return 1;
 }
 
 static int r_R1(struct SN_env * z) {
-    if (!(z->I[1] <= z->c)) return 0;
-    return 1;
+    return z->I[1] <= z->c;
 }
 
 static int r_R1plus3(struct SN_env * z) {
-    if (!(z->I[1] <= (z->c + 6))) return 0;
-    return 1;
+    return z->I[1] <= (z->c + 6);
 }
 
 static int r_standard_suffix(struct SN_env * z) {
@@ -743,7 +746,7 @@ static int r_standard_suffix(struct SN_env * z) {
     {   int m1 = z->l - z->c; (void)m1;
         z->ket = z->c;
         among_var = find_among_b(z, a_4, 79);
-        if (!(among_var)) goto lab0;
+        if (!among_var) goto lab0;
         z->bra = z->c;
         switch (among_var) {
             case 1:
@@ -774,7 +777,7 @@ static int r_standard_suffix(struct SN_env * z) {
                 }
                 z->ket = z->c;
                 among_var = find_among_b(z, a_3, 26);
-                if (!(among_var)) goto lab0;
+                if (!among_var) goto lab0;
                 z->bra = z->c;
                 switch (among_var) {
                     case 1:
@@ -1124,7 +1127,7 @@ static int r_standard_suffix(struct SN_env * z) {
         z->ket = z->c;
         if (z->c - 1 <= z->lb || z->p[z->c - 1] >> 5 != 4 || !((285474816 >> (z->p[z->c - 1] & 0x1f)) & 1)) goto lab9;
         among_var = find_among_b(z, a_5, 6);
-        if (!(among_var)) goto lab9;
+        if (!among_var) goto lab9;
         z->bra = z->c;
         switch (among_var) {
             case 1:
@@ -1153,7 +1156,7 @@ static int r_standard_suffix(struct SN_env * z) {
     {   int m8 = z->l - z->c; (void)m8;
         z->ket = z->c;
         among_var = find_among_b(z, a_6, 9);
-        if (!(among_var)) goto lab10;
+        if (!among_var) goto lab10;
         z->bra = z->c;
         switch (among_var) {
             case 1:
@@ -1207,7 +1210,7 @@ static int r_standard_suffix(struct SN_env * z) {
 }
 
 extern int yiddish_UTF_8_stem(struct SN_env * z) {
-    
+
     {   int ret = r_prelude(z);
         if (ret < 0) return ret;
     }
@@ -1219,7 +1222,7 @@ extern int yiddish_UTF_8_stem(struct SN_env * z) {
     }
     z->lb = z->c; z->c = z->l;
 
-    
+
     {   int ret = r_standard_suffix(z);
         if (ret < 0) return ret;
     }

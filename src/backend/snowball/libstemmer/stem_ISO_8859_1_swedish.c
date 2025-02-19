@@ -127,7 +127,7 @@ static const symbol s_2_0[2] = { 'i', 'g' };
 static const symbol s_2_1[3] = { 'l', 'i', 'g' };
 static const symbol s_2_2[3] = { 'e', 'l', 's' };
 static const symbol s_2_3[5] = { 'f', 'u', 'l', 'l', 't' };
-static const symbol s_2_4[4] = { 'l', 0xF6, 's', 't' };
+static const symbol s_2_4[3] = { 0xF6, 's', 't' };
 
 static const struct among a_2[5] =
 {
@@ -135,14 +135,16 @@ static const struct among a_2[5] =
 { 3, s_2_1, 0, 1, 0},
 { 3, s_2_2, -1, 1, 0},
 { 5, s_2_3, -1, 3, 0},
-{ 4, s_2_4, -1, 2, 0}
+{ 3, s_2_4, -1, 2, 0}
 };
 
 static const unsigned char g_v[] = { 17, 65, 16, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 24, 0, 32 };
 
 static const unsigned char g_s_ending[] = { 119, 127, 149 };
 
-static const symbol s_0[] = { 'l', 0xF6, 's' };
+static const unsigned char g_ost_ending[] = { 173, 58 };
+
+static const symbol s_0[] = { 0xF6, 's' };
 static const symbol s_1[] = { 'f', 'u', 'l', 'l' };
 
 static int r_mark_regions(struct SN_env * z) {
@@ -153,15 +155,17 @@ z->c = z->c + 3;
         z->I[0] = z->c;
         z->c = c_test1;
     }
+
     if (out_grouping(z, g_v, 97, 246, 1) < 0) return 0;
-    {   
+
+    {
         int ret = in_grouping(z, g_v, 97, 246, 1);
         if (ret < 0) return 0;
         z->c += ret;
     }
     z->I[1] = z->c;
-    
-    if (!(z->I[1] < z->I[0])) goto lab0;
+
+    if (z->I[1] >= z->I[0]) goto lab0;
     z->I[1] = z->I[0];
 lab0:
     return 1;
@@ -176,7 +180,7 @@ static int r_main_suffix(struct SN_env * z) {
         z->ket = z->c;
         if (z->c <= z->lb || z->p[z->c - 1] >> 5 != 3 || !((1851442 >> (z->p[z->c - 1] & 0x1f)) & 1)) { z->lb = mlimit1; return 0; }
         among_var = find_among_b(z, a_0, 37);
-        if (!(among_var)) { z->lb = mlimit1; return 0; }
+        if (!among_var) { z->lb = mlimit1; return 0; }
         z->bra = z->c;
         z->lb = mlimit1;
     }
@@ -203,7 +207,7 @@ static int r_consonant_pair(struct SN_env * z) {
         mlimit1 = z->lb; z->lb = z->I[1];
         {   int m2 = z->l - z->c; (void)m2;
             if (z->c - 1 <= z->lb || z->p[z->c - 1] >> 5 != 3 || !((1064976 >> (z->p[z->c - 1] & 0x1f)) & 1)) { z->lb = mlimit1; return 0; }
-            if (!(find_among_b(z, a_1, 7))) { z->lb = mlimit1; return 0; }
+            if (!find_among_b(z, a_1, 7)) { z->lb = mlimit1; return 0; }
             z->c = z->l - m2;
             z->ket = z->c;
             if (z->c <= z->lb) { z->lb = mlimit1; return 0; }
@@ -227,26 +231,27 @@ static int r_other_suffix(struct SN_env * z) {
         z->ket = z->c;
         if (z->c - 1 <= z->lb || z->p[z->c - 1] >> 5 != 3 || !((1572992 >> (z->p[z->c - 1] & 0x1f)) & 1)) { z->lb = mlimit1; return 0; }
         among_var = find_among_b(z, a_2, 5);
-        if (!(among_var)) { z->lb = mlimit1; return 0; }
+        if (!among_var) { z->lb = mlimit1; return 0; }
         z->bra = z->c;
-        switch (among_var) {
-            case 1:
-                {   int ret = slice_del(z);
-                    if (ret < 0) return ret;
-                }
-                break;
-            case 2:
-                {   int ret = slice_from_s(z, 3, s_0);
-                    if (ret < 0) return ret;
-                }
-                break;
-            case 3:
-                {   int ret = slice_from_s(z, 4, s_1);
-                    if (ret < 0) return ret;
-                }
-                break;
-        }
         z->lb = mlimit1;
+    }
+    switch (among_var) {
+        case 1:
+            {   int ret = slice_del(z);
+                if (ret < 0) return ret;
+            }
+            break;
+        case 2:
+            if (in_grouping_b(z, g_ost_ending, 105, 118, 0)) return 0;
+            {   int ret = slice_from_s(z, 2, s_0);
+                if (ret < 0) return ret;
+            }
+            break;
+        case 3:
+            {   int ret = slice_from_s(z, 4, s_1);
+                if (ret < 0) return ret;
+            }
+            break;
     }
     return 1;
 }

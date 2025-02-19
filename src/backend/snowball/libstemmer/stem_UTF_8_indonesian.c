@@ -123,7 +123,7 @@ static const symbol s_6[] = { 'a', 'j', 'a', 'r' };
 static int r_remove_particle(struct SN_env * z) {
     z->ket = z->c;
     if (z->c - 2 <= z->lb || (z->p[z->c - 1] != 104 && z->p[z->c - 1] != 110)) return 0;
-    if (!(find_among_b(z, a_0, 3))) return 0;
+    if (!find_among_b(z, a_0, 3)) return 0;
     z->bra = z->c;
     {   int ret = slice_del(z);
         if (ret < 0) return ret;
@@ -135,7 +135,7 @@ static int r_remove_particle(struct SN_env * z) {
 static int r_remove_possessive_pronoun(struct SN_env * z) {
     z->ket = z->c;
     if (z->c - 1 <= z->lb || (z->p[z->c - 1] != 97 && z->p[z->c - 1] != 117)) return 0;
-    if (!(find_among_b(z, a_1, 3))) return 0;
+    if (!find_among_b(z, a_1, 3)) return 0;
     z->bra = z->c;
     {   int ret = slice_del(z);
         if (ret < 0) return ret;
@@ -145,19 +145,18 @@ static int r_remove_possessive_pronoun(struct SN_env * z) {
 }
 
 static int r_SUFFIX_KAN_OK(struct SN_env * z) {
-    
-    if (!(z->I[0] != 3)) return 0;
-    if (!(z->I[0] != 2)) return 0;
+
+    if (z->I[0] == 3) return 0;
+    if (z->I[0] == 2) return 0;
     return 1;
 }
 
 static int r_SUFFIX_AN_OK(struct SN_env * z) {
-    if (!(z->I[0] != 1)) return 0;
-    return 1;
+    return z->I[0] != 1;
 }
 
 static int r_SUFFIX_I_OK(struct SN_env * z) {
-    if (!(z->I[0] <= 2)) return 0;
+    if (z->I[0] > 2) return 0;
     {   int m1 = z->l - z->c; (void)m1;
         if (z->c <= z->lb || z->p[z->c - 1] != 's') goto lab0;
         z->c--;
@@ -171,7 +170,7 @@ static int r_SUFFIX_I_OK(struct SN_env * z) {
 static int r_remove_suffix(struct SN_env * z) {
     z->ket = z->c;
     if (z->c <= z->lb || (z->p[z->c - 1] != 105 && z->p[z->c - 1] != 110)) return 0;
-    if (!(find_among_b(z, a_2, 3))) return 0;
+    if (!find_among_b(z, a_2, 3)) return 0;
     z->bra = z->c;
     {   int ret = slice_del(z);
         if (ret < 0) return ret;
@@ -196,7 +195,7 @@ static int r_remove_first_order_prefix(struct SN_env * z) {
     z->bra = z->c;
     if (z->c + 1 >= z->l || (z->p[z->c + 1] != 105 && z->p[z->c + 1] != 101)) return 0;
     among_var = find_among(z, a_3, 12);
-    if (!(among_var)) return 0;
+    if (!among_var) return 0;
     z->ket = z->c;
     switch (among_var) {
         case 1:
@@ -276,7 +275,7 @@ static int r_remove_second_order_prefix(struct SN_env * z) {
     z->bra = z->c;
     if (z->c + 1 >= z->l || z->p[z->c + 1] != 101) return 0;
     among_var = find_among(z, a_4, 6);
-    if (!(among_var)) return 0;
+    if (!among_var) return 0;
     z->ket = z->c;
     switch (among_var) {
         case 1:
@@ -315,7 +314,8 @@ extern int indonesian_UTF_8_stem(struct SN_env * z) {
     {   int c1 = z->c;
         while(1) {
             int c2 = z->c;
-            {   
+
+            {
                 int ret = out_grouping_U(z, g_vowel, 97, 117, 1);
                 if (ret < 0) goto lab1;
                 z->c += ret;
@@ -328,7 +328,7 @@ extern int indonesian_UTF_8_stem(struct SN_env * z) {
         }
         z->c = c1;
     }
-    if (!(z->I[1] > 2)) return 0;
+    if (z->I[1] <= 2) return 0;
     z->I[0] = 0;
     z->lb = z->c; z->c = z->l;
 
@@ -338,7 +338,7 @@ extern int indonesian_UTF_8_stem(struct SN_env * z) {
         }
         z->c = z->l - m3;
     }
-    if (!(z->I[1] > 2)) return 0;
+    if (z->I[1] <= 2) return 0;
     {   int m4 = z->l - z->c; (void)m4;
         {   int ret = r_remove_possessive_pronoun(z);
             if (ret < 0) return ret;
@@ -346,7 +346,7 @@ extern int indonesian_UTF_8_stem(struct SN_env * z) {
         z->c = z->l - m4;
     }
     z->c = z->lb;
-    if (!(z->I[1] > 2)) return 0;
+    if (z->I[1] <= 2) return 0;
     {   int c5 = z->c;
         {   int c_test6 = z->c;
             {   int ret = r_remove_first_order_prefix(z);
@@ -355,7 +355,7 @@ extern int indonesian_UTF_8_stem(struct SN_env * z) {
             }
             {   int c7 = z->c;
                 {   int c_test8 = z->c;
-                    if (!(z->I[1] > 2)) goto lab4;
+                    if (z->I[1] <= 2) goto lab4;
                     z->lb = z->c; z->c = z->l;
 
                     {   int ret = r_remove_suffix(z);
@@ -365,7 +365,7 @@ extern int indonesian_UTF_8_stem(struct SN_env * z) {
                     z->c = z->lb;
                     z->c = c_test8;
                 }
-                if (!(z->I[1] > 2)) goto lab4;
+                if (z->I[1] <= 2) goto lab4;
                 {   int ret = r_remove_second_order_prefix(z);
                     if (ret == 0) goto lab4;
                     if (ret < 0) return ret;
@@ -385,7 +385,7 @@ extern int indonesian_UTF_8_stem(struct SN_env * z) {
             z->c = c9;
         }
         {   int c10 = z->c;
-            if (!(z->I[1] > 2)) goto lab5;
+            if (z->I[1] <= 2) goto lab5;
             z->lb = z->c; z->c = z->l;
 
             {   int ret = r_remove_suffix(z);

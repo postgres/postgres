@@ -480,10 +480,11 @@ static int r_mark_regions(struct SN_env * z) {
     z->I[0] = z->l;
     {   int c1 = z->c;
         if (in_grouping_U(z, g_v, 97, 369, 0)) goto lab1;
+
         if (in_grouping_U(z, g_v, 97, 369, 1) < 0) goto lab1;
         {   int c2 = z->c;
             if (z->c + 1 >= z->l || z->p[z->c + 1] >> 5 != 3 || !((101187584 >> (z->p[z->c + 1] & 0x1f)) & 1)) goto lab3;
-            if (!(find_among(z, a_0, 8))) goto lab3;
+            if (!find_among(z, a_0, 8)) goto lab3;
             goto lab2;
         lab3:
             z->c = c2;
@@ -498,7 +499,8 @@ static int r_mark_regions(struct SN_env * z) {
     lab1:
         z->c = c1;
         if (out_grouping_U(z, g_v, 97, 369, 0)) return 0;
-        {   
+
+        {
             int ret = out_grouping_U(z, g_v, 97, 369, 1);
             if (ret < 0) return 0;
             z->c += ret;
@@ -510,8 +512,7 @@ lab0:
 }
 
 static int r_R1(struct SN_env * z) {
-    if (!(z->I[0] <= z->c)) return 0;
-    return 1;
+    return z->I[0] <= z->c;
 }
 
 static int r_v_ending(struct SN_env * z) {
@@ -519,7 +520,7 @@ static int r_v_ending(struct SN_env * z) {
     z->ket = z->c;
     if (z->c - 1 <= z->lb || (z->p[z->c - 1] != 161 && z->p[z->c - 1] != 169)) return 0;
     among_var = find_among_b(z, a_1, 2);
-    if (!(among_var)) return 0;
+    if (!among_var) return 0;
     z->bra = z->c;
     {   int ret = r_R1(z);
         if (ret <= 0) return ret;
@@ -542,7 +543,7 @@ static int r_v_ending(struct SN_env * z) {
 static int r_double(struct SN_env * z) {
     {   int m_test1 = z->l - z->c;
         if (z->c - 1 <= z->lb || z->p[z->c - 1] >> 5 != 3 || !((106790108 >> (z->p[z->c - 1] & 0x1f)) & 1)) return 0;
-        if (!(find_among_b(z, a_2, 23))) return 0;
+        if (!find_among_b(z, a_2, 23)) return 0;
         z->c = z->l - m_test1;
     }
     return 1;
@@ -568,7 +569,7 @@ static int r_undouble(struct SN_env * z) {
 static int r_instrum(struct SN_env * z) {
     z->ket = z->c;
     if (z->c - 1 <= z->lb || z->p[z->c - 1] != 108) return 0;
-    if (!(find_among_b(z, a_3, 2))) return 0;
+    if (!find_among_b(z, a_3, 2)) return 0;
     z->bra = z->c;
     {   int ret = r_R1(z);
         if (ret <= 0) return ret;
@@ -587,7 +588,7 @@ static int r_instrum(struct SN_env * z) {
 
 static int r_case(struct SN_env * z) {
     z->ket = z->c;
-    if (!(find_among_b(z, a_4, 44))) return 0;
+    if (!find_among_b(z, a_4, 44)) return 0;
     z->bra = z->c;
     {   int ret = r_R1(z);
         if (ret <= 0) return ret;
@@ -606,7 +607,7 @@ static int r_case_special(struct SN_env * z) {
     z->ket = z->c;
     if (z->c - 2 <= z->lb || (z->p[z->c - 1] != 110 && z->p[z->c - 1] != 116)) return 0;
     among_var = find_among_b(z, a_5, 3);
-    if (!(among_var)) return 0;
+    if (!among_var) return 0;
     z->bra = z->c;
     {   int ret = r_R1(z);
         if (ret <= 0) return ret;
@@ -631,7 +632,7 @@ static int r_case_other(struct SN_env * z) {
     z->ket = z->c;
     if (z->c - 3 <= z->lb || z->p[z->c - 1] != 108) return 0;
     among_var = find_among_b(z, a_6, 6);
-    if (!(among_var)) return 0;
+    if (!among_var) return 0;
     z->bra = z->c;
     {   int ret = r_R1(z);
         if (ret <= 0) return ret;
@@ -659,7 +660,7 @@ static int r_case_other(struct SN_env * z) {
 static int r_factive(struct SN_env * z) {
     z->ket = z->c;
     if (z->c - 1 <= z->lb || (z->p[z->c - 1] != 161 && z->p[z->c - 1] != 169)) return 0;
-    if (!(find_among_b(z, a_7, 2))) return 0;
+    if (!find_among_b(z, a_7, 2)) return 0;
     z->bra = z->c;
     {   int ret = r_R1(z);
         if (ret <= 0) return ret;
@@ -681,7 +682,7 @@ static int r_plural(struct SN_env * z) {
     z->ket = z->c;
     if (z->c <= z->lb || z->p[z->c - 1] != 107) return 0;
     among_var = find_among_b(z, a_8, 7);
-    if (!(among_var)) return 0;
+    if (!among_var) return 0;
     z->bra = z->c;
     {   int ret = r_R1(z);
         if (ret <= 0) return ret;
@@ -711,7 +712,7 @@ static int r_owned(struct SN_env * z) {
     z->ket = z->c;
     if (z->c - 1 <= z->lb || (z->p[z->c - 1] != 105 && z->p[z->c - 1] != 169)) return 0;
     among_var = find_among_b(z, a_9, 12);
-    if (!(among_var)) return 0;
+    if (!among_var) return 0;
     z->bra = z->c;
     {   int ret = r_R1(z);
         if (ret <= 0) return ret;
@@ -740,7 +741,7 @@ static int r_sing_owner(struct SN_env * z) {
     int among_var;
     z->ket = z->c;
     among_var = find_among_b(z, a_10, 31);
-    if (!(among_var)) return 0;
+    if (!among_var) return 0;
     z->bra = z->c;
     {   int ret = r_R1(z);
         if (ret <= 0) return ret;
@@ -770,7 +771,7 @@ static int r_plur_owner(struct SN_env * z) {
     z->ket = z->c;
     if (z->c <= z->lb || z->p[z->c - 1] >> 5 != 3 || !((10768 >> (z->p[z->c - 1] & 0x1f)) & 1)) return 0;
     among_var = find_among_b(z, a_11, 42);
-    if (!(among_var)) return 0;
+    if (!among_var) return 0;
     z->bra = z->c;
     {   int ret = r_R1(z);
         if (ret <= 0) return ret;

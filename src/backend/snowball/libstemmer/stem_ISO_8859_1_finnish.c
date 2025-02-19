@@ -277,15 +277,19 @@ static const symbol s_4[] = { 'p', 'o' };
 static int r_mark_regions(struct SN_env * z) {
     z->I[1] = z->l;
     z->I[0] = z->l;
+
     if (out_grouping(z, g_V1, 97, 246, 1) < 0) return 0;
-    {   
+
+    {
         int ret = in_grouping(z, g_V1, 97, 246, 1);
         if (ret < 0) return 0;
         z->c += ret;
     }
     z->I[1] = z->c;
+
     if (out_grouping(z, g_V1, 97, 246, 1) < 0) return 0;
-    {   
+
+    {
         int ret = in_grouping(z, g_V1, 97, 246, 1);
         if (ret < 0) return 0;
         z->c += ret;
@@ -295,8 +299,7 @@ static int r_mark_regions(struct SN_env * z) {
 }
 
 static int r_R2(struct SN_env * z) {
-    if (!(z->I[0] <= z->c)) return 0;
-    return 1;
+    return z->I[0] <= z->c;
 }
 
 static int r_particle_etc(struct SN_env * z) {
@@ -307,7 +310,7 @@ static int r_particle_etc(struct SN_env * z) {
         mlimit1 = z->lb; z->lb = z->I[1];
         z->ket = z->c;
         among_var = find_among_b(z, a_0, 10);
-        if (!(among_var)) { z->lb = mlimit1; return 0; }
+        if (!among_var) { z->lb = mlimit1; return 0; }
         z->bra = z->c;
         z->lb = mlimit1;
     }
@@ -335,7 +338,7 @@ static int r_possessive(struct SN_env * z) {
         mlimit1 = z->lb; z->lb = z->I[1];
         z->ket = z->c;
         among_var = find_among_b(z, a_4, 9);
-        if (!(among_var)) { z->lb = mlimit1; return 0; }
+        if (!among_var) { z->lb = mlimit1; return 0; }
         z->bra = z->c;
         z->lb = mlimit1;
     }
@@ -370,21 +373,21 @@ static int r_possessive(struct SN_env * z) {
             break;
         case 4:
             if (z->c - 1 <= z->lb || z->p[z->c - 1] != 97) return 0;
-            if (!(find_among_b(z, a_1, 6))) return 0;
+            if (!find_among_b(z, a_1, 6)) return 0;
             {   int ret = slice_del(z);
                 if (ret < 0) return ret;
             }
             break;
         case 5:
             if (z->c - 1 <= z->lb || z->p[z->c - 1] != 228) return 0;
-            if (!(find_among_b(z, a_2, 6))) return 0;
+            if (!find_among_b(z, a_2, 6)) return 0;
             {   int ret = slice_del(z);
                 if (ret < 0) return ret;
             }
             break;
         case 6:
             if (z->c - 2 <= z->lb || z->p[z->c - 1] != 101) return 0;
-            if (!(find_among_b(z, a_3, 2))) return 0;
+            if (!find_among_b(z, a_3, 2)) return 0;
             {   int ret = slice_del(z);
                 if (ret < 0) return ret;
             }
@@ -394,7 +397,7 @@ static int r_possessive(struct SN_env * z) {
 }
 
 static int r_LONG(struct SN_env * z) {
-    if (!(find_among_b(z, a_5, 7))) return 0;
+    if (!find_among_b(z, a_5, 7)) return 0;
     return 1;
 }
 
@@ -413,7 +416,7 @@ static int r_case_ending(struct SN_env * z) {
         mlimit1 = z->lb; z->lb = z->I[1];
         z->ket = z->c;
         among_var = find_among_b(z, a_6, 30);
-        if (!(among_var)) { z->lb = mlimit1; return 0; }
+        if (!among_var) { z->lb = mlimit1; return 0; }
         z->bra = z->c;
         z->lb = mlimit1;
     }
@@ -485,7 +488,7 @@ static int r_other_endings(struct SN_env * z) {
         mlimit1 = z->lb; z->lb = z->I[0];
         z->ket = z->c;
         among_var = find_among_b(z, a_7, 14);
-        if (!(among_var)) { z->lb = mlimit1; return 0; }
+        if (!among_var) { z->lb = mlimit1; return 0; }
         z->bra = z->c;
         z->lb = mlimit1;
     }
@@ -512,7 +515,7 @@ static int r_i_plural(struct SN_env * z) {
         mlimit1 = z->lb; z->lb = z->I[1];
         z->ket = z->c;
         if (z->c <= z->lb || (z->p[z->c - 1] != 105 && z->p[z->c - 1] != 106)) { z->lb = mlimit1; return 0; }
-        if (!(find_among_b(z, a_8, 2))) { z->lb = mlimit1; return 0; }
+        if (!find_among_b(z, a_8, 2)) { z->lb = mlimit1; return 0; }
         z->bra = z->c;
         z->lb = mlimit1;
     }
@@ -548,7 +551,7 @@ static int r_t_plural(struct SN_env * z) {
         z->ket = z->c;
         if (z->c - 2 <= z->lb || z->p[z->c - 1] != 97) { z->lb = mlimit3; return 0; }
         among_var = find_among_b(z, a_9, 2);
-        if (!(among_var)) { z->lb = mlimit3; return 0; }
+        if (!among_var) { z->lb = mlimit3; return 0; }
         z->bra = z->c;
         z->lb = mlimit3;
     }
@@ -638,6 +641,7 @@ static int r_tidy(struct SN_env * z) {
         }
         z->lb = mlimit1;
     }
+
     if (in_grouping_b(z, g_V1, 97, 246, 1) < 0) return 0;
     z->ket = z->c;
     if (in_grouping_b(z, g_C, 98, 122, 0)) return 0;
@@ -685,7 +689,7 @@ extern int finnish_ISO_8859_1_stem(struct SN_env * z) {
         }
         z->c = z->l - m5;
     }
-    
+
     if (!(z->I[2])) goto lab1;
     {   int m6 = z->l - z->c; (void)m6;
         {   int ret = r_i_plural(z);

@@ -6,7 +6,6 @@ static int r_fix_conflicts(struct SN_env * z);
 static int r_fix_gd(struct SN_env * z);
 static int r_fix_chdz(struct SN_env * z);
 static int r_step1(struct SN_env * z);
-static int r_R1(struct SN_env * z);
 static int r_step2(struct SN_env * z);
 #ifdef __cplusplus
 extern "C" {
@@ -626,23 +625,15 @@ static const symbol s_8[] = { 't' };
 static const symbol s_9[] = { 'd' };
 static const symbol s_10[] = { 'g' };
 
-static int r_R1(struct SN_env * z) {
-    if (!(z->I[0] <= z->c)) return 0;
-    return 1;
-}
-
 static int r_step1(struct SN_env * z) {
 
     {   int mlimit1;
         if (z->c < z->I[0]) return 0;
         mlimit1 = z->lb; z->lb = z->I[0];
         z->ket = z->c;
-        if (!(find_among_b(z, a_0, 204))) { z->lb = mlimit1; return 0; }
+        if (!find_among_b(z, a_0, 204)) { z->lb = mlimit1; return 0; }
         z->bra = z->c;
         z->lb = mlimit1;
-    }
-    {   int ret = r_R1(z);
-        if (ret <= 0) return ret;
     }
     {   int ret = slice_del(z);
         if (ret < 0) return ret;
@@ -658,7 +649,7 @@ static int r_step2(struct SN_env * z) {
             if (z->c < z->I[0]) goto lab0;
             mlimit2 = z->lb; z->lb = z->I[0];
             z->ket = z->c;
-            if (!(find_among_b(z, a_1, 62))) { z->lb = mlimit2; goto lab0; }
+            if (!find_among_b(z, a_1, 62)) { z->lb = mlimit2; goto lab0; }
             z->bra = z->c;
             z->lb = mlimit2;
         }
@@ -678,7 +669,7 @@ static int r_fix_conflicts(struct SN_env * z) {
     z->ket = z->c;
     if (z->c - 3 <= z->lb || z->p[z->c - 1] >> 5 != 3 || !((2621472 >> (z->p[z->c - 1] & 0x1f)) & 1)) return 0;
     among_var = find_among_b(z, a_2, 11);
-    if (!(among_var)) return 0;
+    if (!among_var) return 0;
     z->bra = z->c;
     switch (among_var) {
         case 1:
@@ -730,7 +721,7 @@ static int r_fix_chdz(struct SN_env * z) {
     z->ket = z->c;
     if (z->c - 1 <= z->lb || (z->p[z->c - 1] != 141 && z->p[z->c - 1] != 190)) return 0;
     among_var = find_among_b(z, a_3, 2);
-    if (!(among_var)) return 0;
+    if (!among_var) return 0;
     z->bra = z->c;
     switch (among_var) {
         case 1:
@@ -750,7 +741,7 @@ static int r_fix_chdz(struct SN_env * z) {
 static int r_fix_gd(struct SN_env * z) {
     z->ket = z->c;
     if (z->c - 1 <= z->lb || z->p[z->c - 1] != 100) return 0;
-    if (!(find_among_b(z, a_4, 1))) return 0;
+    if (!find_among_b(z, a_4, 1)) return 0;
     z->bra = z->c;
     {   int ret = slice_from_s(z, 1, s_10);
         if (ret < 0) return ret;
@@ -767,7 +758,7 @@ extern int lithuanian_UTF_8_stem(struct SN_env * z) {
                 z->c++;
                 z->c = c_test3;
             }
-            if (!(len_utf8(z->p) > 6)) { z->c = c2; goto lab1; }
+            if (len_utf8(z->p) <= 6) { z->c = c2; goto lab1; }
             {   int ret = skip_utf8(z->p, z->c, z->l, 1);
                 if (ret < 0) { z->c = c2; goto lab1; }
                 z->c = ret;
@@ -775,12 +766,14 @@ extern int lithuanian_UTF_8_stem(struct SN_env * z) {
         lab1:
             ;
         }
-        {   
+
+        {
             int ret = out_grouping_U(z, g_v, 97, 371, 1);
             if (ret < 0) goto lab0;
             z->c += ret;
         }
-        {   
+
+        {
             int ret = in_grouping_U(z, g_v, 97, 371, 1);
             if (ret < 0) goto lab0;
             z->c += ret;

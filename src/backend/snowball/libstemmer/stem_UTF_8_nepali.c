@@ -285,7 +285,7 @@ static int r_remove_category_1(struct SN_env * z) {
     int among_var;
     z->ket = z->c;
     among_var = find_among_b(z, a_0, 17);
-    if (!(among_var)) return 0;
+    if (!among_var) return 0;
     z->bra = z->c;
     switch (among_var) {
         case 1:
@@ -319,7 +319,7 @@ static int r_remove_category_1(struct SN_env * z) {
 static int r_check_category_2(struct SN_env * z) {
     z->ket = z->c;
     if (z->c - 2 <= z->lb || z->p[z->c - 1] >> 5 != 4 || !((262 >> (z->p[z->c - 1] & 0x1f)) & 1)) return 0;
-    if (!(find_among_b(z, a_1, 3))) return 0;
+    if (!find_among_b(z, a_1, 3)) return 0;
     z->bra = z->c;
     return 1;
 }
@@ -329,7 +329,7 @@ static int r_remove_category_2(struct SN_env * z) {
     z->ket = z->c;
     if (z->c - 2 <= z->lb || z->p[z->c - 1] >> 5 != 4 || !((262 >> (z->p[z->c - 1] & 0x1f)) & 1)) return 0;
     among_var = find_among_b(z, a_2, 3);
-    if (!(among_var)) return 0;
+    if (!among_var) return 0;
     z->bra = z->c;
     switch (among_var) {
         case 1:
@@ -365,7 +365,7 @@ static int r_remove_category_2(struct SN_env * z) {
 
 static int r_remove_category_3(struct SN_env * z) {
     z->ket = z->c;
-    if (!(find_among_b(z, a_3, 91))) return 0;
+    if (!find_among_b(z, a_3, 91)) return 0;
     z->bra = z->c;
     {   int ret = slice_del(z);
         if (ret < 0) return ret;

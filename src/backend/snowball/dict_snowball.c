@@ -45,7 +45,6 @@
 #include "snowball/libstemmer/stem_ISO_8859_1_spanish.h"
 #include "snowball/libstemmer/stem_ISO_8859_1_swedish.h"
 #include "snowball/libstemmer/stem_ISO_8859_2_hungarian.h"
-#include "snowball/libstemmer/stem_ISO_8859_2_romanian.h"
 #include "snowball/libstemmer/stem_KOI8_R_russian.h"
 #include "snowball/libstemmer/stem_UTF_8_arabic.h"
 #include "snowball/libstemmer/stem_UTF_8_armenian.h"
@@ -54,6 +53,7 @@
 #include "snowball/libstemmer/stem_UTF_8_danish.h"
 #include "snowball/libstemmer/stem_UTF_8_dutch.h"
 #include "snowball/libstemmer/stem_UTF_8_english.h"
+#include "snowball/libstemmer/stem_UTF_8_estonian.h"
 #include "snowball/libstemmer/stem_UTF_8_finnish.h"
 #include "snowball/libstemmer/stem_UTF_8_french.h"
 #include "snowball/libstemmer/stem_UTF_8_german.h"
@@ -119,7 +119,6 @@ static const stemmer_module stemmer_modules[] =
 	STEMMER_MODULE(spanish, PG_LATIN1, ISO_8859_1),
 	STEMMER_MODULE(swedish, PG_LATIN1, ISO_8859_1),
 	STEMMER_MODULE(hungarian, PG_LATIN2, ISO_8859_2),
-	STEMMER_MODULE(romanian, PG_LATIN2, ISO_8859_2),
 	STEMMER_MODULE(russian, PG_KOI8R, KOI8_R),
 	STEMMER_MODULE(arabic, PG_UTF8, UTF_8),
 	STEMMER_MODULE(armenian, PG_UTF8, UTF_8),
@@ -128,6 +127,7 @@ static const stemmer_module stemmer_modules[] =
 	STEMMER_MODULE(danish, PG_UTF8, UTF_8),
 	STEMMER_MODULE(dutch, PG_UTF8, UTF_8),
 	STEMMER_MODULE(english, PG_UTF8, UTF_8),
+	STEMMER_MODULE(estonian, PG_UTF8, UTF_8),
 	STEMMER_MODULE(finnish, PG_UTF8, UTF_8),
 	STEMMER_MODULE(french, PG_UTF8, UTF_8),
 	STEMMER_MODULE(german, PG_UTF8, UTF_8),

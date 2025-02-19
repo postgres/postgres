@@ -45,7 +45,7 @@ extern int eq_v_b(struct SN_env * z, const symbol * p);
 extern int find_among(struct SN_env * z, const struct among * v, int v_size);
 extern int find_among_b(struct SN_env * z, const struct among * v, int v_size);
 
-extern int replace_s(struct SN_env * z, int c_bra, int c_ket, int s_size, const symbol * s, int * adjptr);
+extern int replace_s(struct SN_env * z, int c_bra, int c_ket, int s_size, const symbol * s, int * adjustment);
 extern int slice_from_s(struct SN_env * z, int s_size, const symbol * s);
 extern int slice_from_v(struct SN_env * z, const symbol * p);
 extern int slice_del(struct SN_env * z);

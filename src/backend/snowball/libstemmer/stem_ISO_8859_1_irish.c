@@ -225,24 +225,28 @@ static int r_mark_regions(struct SN_env * z) {
     z->I[1] = z->l;
     z->I[0] = z->l;
     {   int c1 = z->c;
-        {   
+
+        {
             int ret = out_grouping(z, g_v, 97, 250, 1);
             if (ret < 0) goto lab0;
             z->c += ret;
         }
         z->I[2] = z->c;
-        {   
+
+        {
             int ret = in_grouping(z, g_v, 97, 250, 1);
             if (ret < 0) goto lab0;
             z->c += ret;
         }
         z->I[1] = z->c;
-        {   
+
+        {
             int ret = out_grouping(z, g_v, 97, 250, 1);
             if (ret < 0) goto lab0;
             z->c += ret;
         }
-        {   
+
+        {
             int ret = in_grouping(z, g_v, 97, 250, 1);
             if (ret < 0) goto lab0;
             z->c += ret;
@@ -258,7 +262,7 @@ static int r_initial_morph(struct SN_env * z) {
     int among_var;
     z->bra = z->c;
     among_var = find_among(z, a_0, 24);
-    if (!(among_var)) return 0;
+    if (!among_var) return 0;
     z->ket = z->c;
     switch (among_var) {
         case 1:
@@ -316,25 +320,22 @@ static int r_initial_morph(struct SN_env * z) {
 }
 
 static int r_RV(struct SN_env * z) {
-    if (!(z->I[2] <= z->c)) return 0;
-    return 1;
+    return z->I[2] <= z->c;
 }
 
 static int r_R1(struct SN_env * z) {
-    if (!(z->I[1] <= z->c)) return 0;
-    return 1;
+    return z->I[1] <= z->c;
 }
 
 static int r_R2(struct SN_env * z) {
-    if (!(z->I[0] <= z->c)) return 0;
-    return 1;
+    return z->I[0] <= z->c;
 }
 
 static int r_noun_sfx(struct SN_env * z) {
     int among_var;
     z->ket = z->c;
     among_var = find_among_b(z, a_1, 16);
-    if (!(among_var)) return 0;
+    if (!among_var) return 0;
     z->bra = z->c;
     switch (among_var) {
         case 1:
@@ -361,7 +362,7 @@ static int r_deriv(struct SN_env * z) {
     int among_var;
     z->ket = z->c;
     among_var = find_among_b(z, a_2, 25);
-    if (!(among_var)) return 0;
+    if (!among_var) return 0;
     z->bra = z->c;
     switch (among_var) {
         case 1:
@@ -406,7 +407,7 @@ static int r_verb_sfx(struct SN_env * z) {
     z->ket = z->c;
     if (z->c - 2 <= z->lb || z->p[z->c - 1] >> 5 != 3 || !((282896 >> (z->p[z->c - 1] & 0x1f)) & 1)) return 0;
     among_var = find_among_b(z, a_3, 12);
-    if (!(among_var)) return 0;
+    if (!among_var) return 0;
     z->bra = z->c;
     switch (among_var) {
         case 1:
@@ -436,7 +437,7 @@ extern int irish_ISO_8859_1_stem(struct SN_env * z) {
         }
         z->c = c1;
     }
-    
+
     {   int ret = r_mark_regions(z);
         if (ret < 0) return ret;
     }
