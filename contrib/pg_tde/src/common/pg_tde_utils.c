@@ -60,6 +60,7 @@ pg_tde_is_encrypted(PG_FUNCTION_ARGS)
 		LOCKMODE	lockmode = AccessShareLock;
 		Relation	rel = relation_open(tableOid, lockmode);
 		InternalKey *key;
+		RelFileLocatorBackend rlocator = {.locator = rel->rd_locator,.backend = rel->rd_backend};
 
 		if (rel->rd_rel->relam == get_tde_basic_table_am_oid())
 		{
@@ -67,7 +68,12 @@ pg_tde_is_encrypted(PG_FUNCTION_ARGS)
 			PG_RETURN_BOOL(true);
 		}
 
-		key = GetSMGRRelationKey(rel->rd_locator);
+		if (RelFileLocatorBackendIsTemp(rlocator) && !rel->rd_islocaltemp)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("we cannot check if temporary relations from other backends are encrypted")));
+
+		key = GetSMGRRelationKey(rlocator);
 
 		relation_close(rel, lockmode);
 

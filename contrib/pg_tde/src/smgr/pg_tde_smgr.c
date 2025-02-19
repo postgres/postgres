@@ -61,7 +61,7 @@ tde_smgr_get_key(SMgrRelation reln, RelFileLocator *old_locator, bool can_create
 	event = GetCurrentTdeCreateEvent();
 
 	/* see if we have a key for the relation, and return if yes */
-	key = GetSMGRRelationKey(reln->smgr_rlocator.locator);
+	key = GetSMGRRelationKey(reln->smgr_rlocator);
 
 	if (key != NULL)
 	{
@@ -71,7 +71,7 @@ tde_smgr_get_key(SMgrRelation reln, RelFileLocator *old_locator, bool can_create
 	/* if this is a CREATE TABLE, we have to generate the key */
 	if (event->encryptMode == true && event->eventType == TDE_TABLE_CREATE_EVENT && can_create)
 	{
-		return pg_tde_create_smgr_key(&reln->smgr_rlocator.locator);
+		return pg_tde_create_smgr_key(&reln->smgr_rlocator);
 	}
 
 	/* if this is a CREATE INDEX, we have to load the key based on the table */
@@ -82,18 +82,19 @@ tde_smgr_get_key(SMgrRelation reln, RelFileLocator *old_locator, bool can_create
 		 * Later we might modify the map infrastructure to support the same
 		 * keys
 		 */
-		return pg_tde_create_smgr_key(&reln->smgr_rlocator.locator);
+		return pg_tde_create_smgr_key(&reln->smgr_rlocator);
 	}
 
 	/* check if we had a key for the old locator, if there's one */
 	if (old_locator != NULL && can_create)
 	{
-		InternalKey *key2 = GetSMGRRelationKey(*old_locator);
+		RelFileLocatorBackend rlocator = {.locator = *old_locator,.backend = reln->smgr_rlocator.backend};
+		InternalKey *key2 = GetSMGRRelationKey(rlocator);
 
 		if (key2 != NULL)
 		{
 			/* create a new key for the new file */
-			return pg_tde_create_smgr_key(&reln->smgr_rlocator.locator);
+			return pg_tde_create_smgr_key(&reln->smgr_rlocator);
 		}
 	}
 

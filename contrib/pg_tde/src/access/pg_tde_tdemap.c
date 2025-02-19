@@ -141,6 +141,7 @@ pg_tde_set_db_file_paths(Oid dbOid, char *map_path, char *keydata_path)
 #ifndef FRONTEND
 
 static InternalKey *pg_tde_create_key_map_entry(const RelFileLocator *newrlocator, uint32 entry_type);
+static InternalKey *pg_tde_create_local_key(const RelFileLocator *newrlocator, uint32 entry_type);
 static void pg_tde_generate_internal_key(InternalKey *int_key, uint32 entry_type);
 static InternalKey *tde_encrypt_rel_key(TDEPrincipalKey *principal_key, InternalKey *rel_key_data, Oid dbOid);
 static int	pg_tde_file_header_write(char *tde_filename, int fd, TDEPrincipalKeyInfo *principal_key_info, off_t *bytes_written);
@@ -152,9 +153,12 @@ static int	keyrotation_init_file(TDEPrincipalKeyInfo *new_principal_key_info, ch
 static void finalize_key_rotation(char *m_path_old, char *k_path_old, char *m_path_new, char *k_path_new);
 
 InternalKey *
-pg_tde_create_smgr_key(const RelFileLocator *newrlocator)
+pg_tde_create_smgr_key(const RelFileLocatorBackend *newrlocator)
 {
-	return pg_tde_create_key_map_entry(newrlocator, TDE_KEY_TYPE_SMGR);
+	if (RelFileLocatorBackendIsTemp(*newrlocator))
+		return pg_tde_create_local_key(&newrlocator->locator, TDE_KEY_TYPE_SMGR);
+	else
+		return pg_tde_create_key_map_entry(&newrlocator->locator, TDE_KEY_TYPE_SMGR);
 }
 
 InternalKey *
@@ -215,6 +219,16 @@ pg_tde_create_key_map_entry(const RelFileLocator *newrlocator, uint32 entry_type
 	pfree(enc_rel_key_data);
 
 	return pg_tde_put_key_into_cache(newrlocator, &rel_key_data);
+}
+
+static InternalKey *
+pg_tde_create_local_key(const RelFileLocator *newrlocator, uint32 entry_type)
+{
+	InternalKey int_key;
+
+	pg_tde_generate_internal_key(&int_key, entry_type);
+
+	return pg_tde_put_key_into_cache(newrlocator, &int_key);
 }
 
 static void
@@ -1388,9 +1402,12 @@ GetRelationKey(RelFileLocator rel, uint32 key_type, bool no_map_ok)
 }
 
 InternalKey *
-GetSMGRRelationKey(RelFileLocator rel)
+GetSMGRRelationKey(RelFileLocatorBackend rel)
 {
-	return GetRelationKey(rel, TDE_KEY_TYPE_SMGR, true);
+	if (RelFileLocatorBackendIsTemp(rel))
+		return pg_tde_get_key_from_cache(&rel.locator, TDE_KEY_TYPE_SMGR);
+	else
+		return GetRelationKey(rel.locator, TDE_KEY_TYPE_SMGR, true);
 }
 
 InternalKey *
