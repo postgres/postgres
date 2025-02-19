@@ -895,4 +895,20 @@ DROP TABLE brin_hot_3;
 
 SET enable_seqscan = on;
 
+-- Test that estimation of relation size works with tuples wider than the
+-- relation fillfactor. We create a table with wide inline attributes and
+-- low fillfactor, insert rows and then see how many rows EXPLAIN shows
+-- before running analyze. We disable autovacuum so that it does not
+-- interfere with the test.
+CREATE TABLE table_fillfactor (
+  n char(1000)
+) with (fillfactor=10, autovacuum_enabled=off);
+
+INSERT INTO table_fillfactor
+SELECT 'x' FROM generate_series(1,1000);
+
+SELECT * FROM check_estimated_rows('SELECT * FROM table_fillfactor');
+
+DROP TABLE table_fillfactor;
+
 -- End of Stats Test
