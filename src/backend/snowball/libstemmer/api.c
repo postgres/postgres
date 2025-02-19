@@ -34,7 +34,7 @@ error:
 extern void SN_close_env(struct SN_env * z, int S_size)
 {
     if (z == NULL) return;
-    if (S_size)
+    if (z->S)
     {
         int i;
         for (i = 0; i < S_size; i++)
