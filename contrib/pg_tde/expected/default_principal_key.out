@@ -68,7 +68,6 @@ SELECT  key_provider_id, key_provider_name, principal_key_name
 
 \c regression_pg_tde
 SELECT pg_tde_set_default_principal_key('new-default-principal-key', 'file-provider', false);
-WARNING:  you don't own a lock of type AccessExclusiveLock
  pg_tde_set_default_principal_key 
 ----------------------------------
  t

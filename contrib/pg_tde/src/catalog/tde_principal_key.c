@@ -1080,7 +1080,7 @@ pg_tde_update_global_principal_key_everywhere(TDEPrincipalKey *oldKey, TDEPrinci
 	}
 
 	systable_endscan(scan);
-	table_close(rel, AccessExclusiveLock);
+	table_close(rel, RowExclusiveLock);
 }
 
 Datum
