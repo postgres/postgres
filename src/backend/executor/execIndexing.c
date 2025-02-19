@@ -181,6 +181,9 @@ ExecOpenIndices(ResultRelInfo *resultRelInfo, bool speculative)
 	if (len == 0)
 		return;
 
+	/* This Assert will fail if ExecOpenIndices is called twice */
+	Assert(resultRelInfo->ri_IndexRelationDescs == NULL);
+
 	/*
 	 * allocate space for result arrays
 	 */
@@ -246,19 +249,23 @@ ExecCloseIndices(ResultRelInfo *resultRelInfo)
 
 	for (i = 0; i < numIndices; i++)
 	{
-		if (indexDescs[i] == NULL)
-			continue;			/* shouldn't happen? */
+		/* This Assert will fail if ExecCloseIndices is called twice */
+		Assert(indexDescs[i] != NULL);
 
 		/* Give the index a chance to do some post-insert cleanup */
 		index_insert_cleanup(indexDescs[i], indexInfos[i]);
 
 		/* Drop lock acquired by ExecOpenIndices */
 		index_close(indexDescs[i], RowExclusiveLock);
+
+		/* Mark the index as closed */
+		indexDescs[i] = NULL;
 	}
 
 	/*
-	 * XXX should free indexInfo array here too?  Currently we assume that
-	 * such stuff will be cleaned up automatically in FreeExecutorState.
+	 * We don't attempt to free the IndexInfo data structures or the arrays,
+	 * instead assuming that such stuff will be cleaned up automatically in
+	 * FreeExecutorState.
 	 */
 }
 
