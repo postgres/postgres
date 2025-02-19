@@ -1131,6 +1131,10 @@ transformTableConstraint(CreateStmtContext *cxt, Constraint *constraint)
  * process at this point, add the TableLikeClause to cxt->likeclauses, which
  * will cause utility.c to call expandTableLikeClause() after the new
  * table has been created.
+ *
+ * Some options are ignored.  For example, as foreign tables have no storage,
+ * these INCLUDING options have no effect: STORAGE, COMPRESSION, IDENTITY
+ * and INDEXES.  Similarly, INCLUDING INDEXES is ignored from a view.
  */
 static void
 transformTableLikeClause(CreateStmtContext *cxt, TableLikeClause *table_like_clause)
@@ -1144,12 +1148,6 @@ transformTableLikeClause(CreateStmtContext *cxt, TableLikeClause *table_like_cla
 
 	setup_parser_errposition_callback(&pcbstate, cxt->pstate,
 									  table_like_clause->relation->location);
-
-	/* we could support LIKE in many cases, but worry about it another day */
-	if (cxt->isforeign)
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("LIKE is not supported for creating foreign tables")));
 
 	/* Open the relation referenced by the LIKE clause */
 	relation = relation_openrv(table_like_clause->relation, AccessShareLock);
@@ -1231,7 +1229,8 @@ transformTableLikeClause(CreateStmtContext *cxt, TableLikeClause *table_like_cla
 		 * Copy identity if requested
 		 */
 		if (attribute->attidentity &&
-			(table_like_clause->options & CREATE_TABLE_LIKE_IDENTITY))
+			(table_like_clause->options & CREATE_TABLE_LIKE_IDENTITY) &&
+			!cxt->isforeign)
 		{
 			Oid			seq_relid;
 			List	   *seq_options;
@@ -1250,14 +1249,16 @@ transformTableLikeClause(CreateStmtContext *cxt, TableLikeClause *table_like_cla
 		}
 
 		/* Likewise, copy storage if requested */
-		if (table_like_clause->options & CREATE_TABLE_LIKE_STORAGE)
+		if ((table_like_clause->options & CREATE_TABLE_LIKE_STORAGE) &&
+			!cxt->isforeign)
 			def->storage = attribute->attstorage;
 		else
 			def->storage = 0;
 
 		/* Likewise, copy compression if requested */
-		if ((table_like_clause->options & CREATE_TABLE_LIKE_COMPRESSION) != 0
-			&& CompressionMethodIsValid(attribute->attcompression))
+		if ((table_like_clause->options & CREATE_TABLE_LIKE_COMPRESSION) != 0 &&
+			CompressionMethodIsValid(attribute->attcompression) &&
+			!cxt->isforeign)
 			def->compression =
 				pstrdup(GetCompressionMethodName(attribute->attcompression));
 		else
@@ -1536,7 +1537,8 @@ expandTableLikeClause(RangeVar *heapRel, TableLikeClause *table_like_clause)
 	 * Process indexes if required.
 	 */
 	if ((table_like_clause->options & CREATE_TABLE_LIKE_INDEXES) &&
-		relation->rd_rel->relhasindex)
+		relation->rd_rel->relhasindex &&
+		childrel->rd_rel->relkind != RELKIND_FOREIGN_TABLE)
 	{
 		List	   *parent_indexes;
 		ListCell   *l;

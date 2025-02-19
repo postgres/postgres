@@ -225,3 +225,45 @@ DROP SEQUENCE ctlseq1;
 DROP TYPE ctlty1;
 DROP VIEW ctlv1;
 DROP TABLE IF EXISTS ctlt4, ctlt10, ctlt11, ctlt11a, ctlt12;
+
+--
+-- CREATE FOREIGN TABLE LIKE
+--
+CREATE FOREIGN DATA WRAPPER ctl_dummy;
+CREATE SERVER ctl_s0 FOREIGN DATA WRAPPER ctl_dummy;
+
+CREATE TABLE ctl_table(a int PRIMARY KEY,
+  b varchar COMPRESSION pglz,
+  c int GENERATED ALWAYS AS (a * 2) STORED,
+  d bigint GENERATED ALWAYS AS IDENTITY,
+  e int DEFAULT 1);
+
+CREATE INDEX ctl_table_a_key ON ctl_table(a);
+COMMENT ON COLUMN ctl_table.b IS 'Column b';
+CREATE STATISTICS ctl_table_stat ON a,b FROM ctl_table;
+ALTER TABLE ctl_table ADD CONSTRAINT foo CHECK (b = 'text');
+ALTER TABLE ctl_table ALTER COLUMN b SET STORAGE MAIN;
+
+\d+ ctl_table
+
+-- Test EXCLUDING ALL
+CREATE FOREIGN TABLE ctl_foreign_table1(LIKE ctl_table EXCLUDING ALL) SERVER ctl_s0;
+\d+ ctl_foreign_table1
+-- \d+ does not report the value of attcompression for a foreign table, so
+-- check separately.
+SELECT attname, attcompression FROM pg_attribute
+  WHERE attrelid = 'ctl_foreign_table1'::regclass and attnum > 0 ORDER BY attnum;
+
+-- Test INCLUDING ALL
+-- INDEXES, IDENTITY, COMPRESSION, STORAGE are not copied.
+CREATE FOREIGN TABLE ctl_foreign_table2(LIKE ctl_table INCLUDING ALL) SERVER ctl_s0;
+\d+ ctl_foreign_table2
+-- \d+ does not report the value of attcompression for a foreign table, so
+-- check separately.
+SELECT attname, attcompression FROM pg_attribute
+  WHERE attrelid = 'ctl_foreign_table2'::regclass and attnum > 0 ORDER BY attnum;
+
+DROP TABLE ctl_table;
+DROP FOREIGN TABLE ctl_foreign_table1;
+DROP FOREIGN TABLE ctl_foreign_table2;
+DROP FOREIGN DATA WRAPPER ctl_dummy CASCADE;
