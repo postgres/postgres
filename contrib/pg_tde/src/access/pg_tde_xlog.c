@@ -90,7 +90,7 @@ tdeheap_rmgr_redo(XLogReaderState *record)
 	{
 		RelFileLocator *xlrec = (RelFileLocator *) XLogRecGetData(record);
 
-		pg_tde_free_key_map_entry(xlrec, MAP_ENTRY_VALID, 0);
+		pg_tde_free_key_map_entry(xlrec, 0);
 	}
 	else
 	{

@@ -128,7 +128,7 @@ static void pg_tde_generate_internal_key(InternalKey *int_key, uint32 entry_type
 static int	pg_tde_file_header_write(const char *tde_filename, int fd, TDEPrincipalKeyInfo *principal_key_info, off_t *bytes_written);
 static off_t pg_tde_write_one_map_entry(int fd, const TDEMapEntry *map_entry, off_t *offset, const char *db_map_path);
 static void pg_tde_write_key_map_entry(const RelFileLocator *rlocator, InternalKey *rel_key_data, TDEPrincipalKey *principal_key, bool write_xlog);
-static bool pg_tde_delete_map_entry(const RelFileLocator *rlocator, uint32 key_type, char *db_map_path, off_t offset);
+static bool pg_tde_delete_map_entry(const RelFileLocator *rlocator, char *db_map_path, off_t offset);
 static int	keyrotation_init_file(TDEPrincipalKeyInfo *new_principal_key_info, char *rotated_filename, char *filename, off_t *curr_pos);
 static void finalize_key_rotation(const char *path_old, const char *path_new);
 static int	pg_tde_open_file_write(const char *tde_filename, TDEPrincipalKeyInfo *principal_key_info, bool truncate, off_t *curr_pos);
@@ -514,7 +514,7 @@ pg_tde_write_key_map_entry_redo(const TDEMapEntry *write_map_entry, TDEPrincipal
 }
 
 static bool
-pg_tde_delete_map_entry(const RelFileLocator *rlocator, uint32 key_type, char *db_map_path, off_t offset)
+pg_tde_delete_map_entry(const RelFileLocator *rlocator, char *db_map_path, off_t offset)
 {
 	File		map_fd;
 	bool		found = false;
@@ -551,7 +551,7 @@ pg_tde_delete_map_entry(const RelFileLocator *rlocator, uint32 key_type, char *d
 		TDEMapEntry read_map_entry;
 		off_t		prev_pos = curr_pos;
 
-		found = pg_tde_read_one_map_entry(map_fd, rlocator, key_type, &read_map_entry, &curr_pos);
+		found = pg_tde_read_one_map_entry(map_fd, rlocator, MAP_ENTRY_VALID, &read_map_entry, &curr_pos);
 
 		/* We've reached EOF */
 		if (curr_pos == prev_pos)
@@ -591,7 +591,7 @@ pg_tde_delete_map_entry(const RelFileLocator *rlocator, uint32 key_type, char *d
  * as MAP_ENTRY_FREE without needing any further processing.
  */
 void
-pg_tde_free_key_map_entry(const RelFileLocator *rlocator, uint32 key_type, off_t offset)
+pg_tde_free_key_map_entry(const RelFileLocator *rlocator, off_t offset)
 {
 	bool		found;
 	char		db_map_path[MAXPGPATH] = {0};
@@ -604,7 +604,7 @@ pg_tde_free_key_map_entry(const RelFileLocator *rlocator, uint32 key_type, off_t
 	LWLockAcquire(tde_lwlock_enc_keys(), LW_EXCLUSIVE);
 
 	/* Remove the map entry if found */
-	found = pg_tde_delete_map_entry(rlocator, key_type, db_map_path, offset);
+	found = pg_tde_delete_map_entry(rlocator, db_map_path, offset);
 
 	LWLockRelease(tde_lwlock_enc_keys());
 
