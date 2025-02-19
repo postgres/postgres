@@ -1512,7 +1512,7 @@ pg_tde_put_key_into_cache(const RelFileLocator *rlocator, RelKeyData *key)
 
 	rec->dbOid = rlocator->dbOid;
 	rec->relNumber = rlocator->relNumber;
-	memcpy(&rec->key, key, sizeof(RelKeyCacheRec));
+	rec->key = *key;
 	tde_rel_key_cache.len++;
 
 	return &rec->key;
