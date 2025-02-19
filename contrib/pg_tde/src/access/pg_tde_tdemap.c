@@ -118,6 +118,7 @@ RelKeyCache tde_rel_key_cache = {
 
 static int32 pg_tde_process_map_entry(RelFileNumber rel_number, uint32 key_type, char *db_map_path, off_t *offset, bool should_delete);
 static RelKeyData *pg_tde_read_keydata(char *db_keydata_path, int32 key_index, TDEPrincipalKey *principal_key);
+static RelKeyData *tde_decrypt_rel_key(TDEPrincipalKey *principal_key, RelKeyData *enc_rel_key_data, Oid dbOid);
 static int	pg_tde_open_file_basic(char *tde_filename, int fileFlags, bool ignore_missing);
 static int	pg_tde_file_header_read(char *tde_filename, int fd, TDEFileHeader *fheader, bool *is_new_file, off_t *bytes_read);
 static bool pg_tde_read_one_map_entry(int fd, RelFileNumber rel_number, int flags, TDEMapEntry *map_entry, off_t *offset);
@@ -140,6 +141,8 @@ pg_tde_set_db_file_paths(Oid dbOid, char *map_path, char *keydata_path)
 #ifndef FRONTEND
 
 static RelKeyData *pg_tde_create_key_map_entry(const RelFileLocator *newrlocator, uint32 entry_type);
+static RelKeyData *tde_create_rel_key(const RelFileLocator *locator, InternalKey *key, TDEPrincipalKeyInfo *principal_key_info);
+static RelKeyData *tde_encrypt_rel_key(TDEPrincipalKey *principal_key, RelKeyData *rel_key_data, Oid dbOid);
 static int	pg_tde_file_header_write(char *tde_filename, int fd, TDEPrincipalKeyInfo *principal_key_info, off_t *bytes_written);
 static int32 pg_tde_write_map_entry(const RelFileLocator *rlocator, uint32 entry_type, char *db_map_path, TDEPrincipalKeyInfo *principal_key_info);
 static off_t pg_tde_write_one_map_entry(int fd, RelFileNumber rel_number, uint32 flags, int32 key_index, TDEMapEntry *map_entry, off_t *offset, const char *db_map_path);
@@ -244,7 +247,7 @@ tde_sprint_key(InternalKey *k)
  * Creates a key for a relation identified by rlocator. Returns the newly
  * created key.
  */
-RelKeyData *
+static RelKeyData *
 tde_create_rel_key(const RelFileLocator *rlocator, InternalKey *key, TDEPrincipalKeyInfo *principal_key_info)
 {
 	RelKeyData	rel_key_data;
@@ -260,7 +263,7 @@ tde_create_rel_key(const RelFileLocator *rlocator, InternalKey *key, TDEPrincipa
 /*
  * Encrypts a given key and returns the encrypted one.
  */
-RelKeyData *
+static RelKeyData *
 tde_encrypt_rel_key(TDEPrincipalKey *principal_key, RelKeyData *rel_key_data, Oid dbOid)
 {
 	RelKeyData *enc_rel_key_data;
@@ -1121,7 +1124,7 @@ pg_tde_read_keydata(char *db_keydata_path, int32 key_index, TDEPrincipalKey *pri
 /*
  * Decrypts a given key and returns the decrypted one.
  */
-RelKeyData *
+static RelKeyData *
 tde_decrypt_rel_key(TDEPrincipalKey *principal_key, RelKeyData *enc_rel_key_data, Oid dbOid)
 {
 	RelKeyData *rel_key_data = NULL;
