@@ -141,6 +141,7 @@ pg_tde_set_db_file_paths(Oid dbOid, char *map_path, char *keydata_path)
 #ifndef FRONTEND
 
 static InternalKey *pg_tde_create_key_map_entry(const RelFileLocator *newrlocator, uint32 entry_type);
+static void pg_tde_generate_internal_key(InternalKey *int_key, uint32 entry_type);
 static InternalKey *tde_encrypt_rel_key(TDEPrincipalKey *principal_key, InternalKey *rel_key_data, Oid dbOid);
 static int	pg_tde_file_header_write(char *tde_filename, int fd, TDEPrincipalKeyInfo *principal_key_info, off_t *bytes_written);
 static int32 pg_tde_write_map_entry(const RelFileLocator *rlocator, uint32 entry_type, char *db_map_path, TDEPrincipalKeyInfo *principal_key_info);
@@ -180,6 +181,8 @@ pg_tde_create_key_map_entry(const RelFileLocator *newrlocator, uint32 entry_type
 	XLogRelKey	xlrec;
 	LWLock	   *lock_pk = tde_lwlock_enc_keys();
 
+	pg_tde_generate_internal_key(&rel_key_data, entry_type);
+
 	LWLockAcquire(lock_pk, LW_EXCLUSIVE);
 	principal_key = GetPrincipalKey(newrlocator->dbOid, LW_EXCLUSIVE);
 	if (principal_key == NULL)
@@ -187,20 +190,6 @@ pg_tde_create_key_map_entry(const RelFileLocator *newrlocator, uint32 entry_type
 		LWLockRelease(lock_pk);
 		ereport(ERROR,
 				(errmsg("failed to retrieve principal key. Create one using pg_tde_set_principal_key before using encrypted tables.")));
-
-		return NULL;
-	}
-
-	rel_key_data.rel_type = entry_type;
-	rel_key_data.ctx = NULL;
-
-	if (!RAND_bytes(rel_key_data.key, INTERNAL_KEY_LEN))
-	{
-		LWLockRelease(lock_pk);
-		ereport(ERROR,
-				(errcode(ERRCODE_INTERNAL_ERROR),
-				 errmsg("could not generate internal key for relation \"%s\": %s",
-						"TODO", ERR_error_string(ERR_get_error(), NULL))));
 
 		return NULL;
 	}
@@ -226,6 +215,19 @@ pg_tde_create_key_map_entry(const RelFileLocator *newrlocator, uint32 entry_type
 	pfree(enc_rel_key_data);
 
 	return pg_tde_put_key_into_cache(newrlocator, &rel_key_data);
+}
+
+static void
+pg_tde_generate_internal_key(InternalKey *int_key, uint32 entry_type)
+{
+	int_key->rel_type = entry_type;
+	int_key->ctx = NULL;
+
+	if (!RAND_bytes(int_key->key, INTERNAL_KEY_LEN))
+		ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+				 errmsg("could not generate internal key for relation \"%s\": %s",
+						"TODO", ERR_error_string(ERR_get_error(), NULL))));
 }
 
 const char *
