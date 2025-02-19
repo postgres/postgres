@@ -157,6 +157,7 @@ ArrayType
 AsyncQueueControl
 AsyncQueueEntry
 AsyncRequest
+ATAlterConstraint
 AttInMetadata
 AttStatsSlot
 AttoptCacheEntry

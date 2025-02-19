@@ -389,17 +389,14 @@ static void AlterIndexNamespaces(Relation classRel, Relation rel,
 static void AlterSeqNamespaces(Relation classRel, Relation rel,
 							   Oid oldNspOid, Oid newNspOid, ObjectAddresses *objsMoved,
 							   LOCKMODE lockmode);
-static ObjectAddress ATExecAlterConstraint(Relation rel, AlterTableCmd *cmd,
-										   bool recurse, bool recursing, LOCKMODE lockmode);
-static bool ATExecAlterConstrRecurse(Constraint *cmdcon, Relation conrel, Relation tgrel,
-									 Relation rel, HeapTuple contuple, List **otherrelids,
-									 LOCKMODE lockmode);
+static ObjectAddress ATExecAlterConstraint(Relation rel, ATAlterConstraint *cmdcon,
+										   bool recurse, LOCKMODE lockmode);
+static bool ATExecAlterConstraintInternal(ATAlterConstraint *cmdcon, Relation conrel,
+										  Relation tgrel, Relation rel, HeapTuple contuple,
+										  bool recurse, List **otherrelids, LOCKMODE lockmode);
 static void AlterConstrTriggerDeferrability(Oid conoid, Relation tgrel, Relation rel,
 											bool deferrable, bool initdeferred,
 											List **otherrelids);
-static void ATExecAlterChildConstr(Constraint *cmdcon, Relation conrel, Relation tgrel,
-								   Relation rel, HeapTuple contuple, List **otherrelids,
-								   LOCKMODE lockmode);
 static ObjectAddress ATExecValidateConstraint(List **wqueue,
 											  Relation rel, char *constrName,
 											  bool recurse, bool recursing, LOCKMODE lockmode);
@@ -5170,6 +5167,8 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 			ATSimplePermissions(cmd->subtype, rel,
 								ATT_TABLE | ATT_PARTITIONED_TABLE);
 			/* Recursion occurs during execution phase */
+			if (recurse)
+				cmd->recurse = true;
 			pass = AT_PASS_MISC;
 			break;
 		case AT_ValidateConstraint: /* VALIDATE CONSTRAINT */
@@ -5450,7 +5449,9 @@ ATExecCmd(List **wqueue, AlteredTableInfo *tab,
 											   lockmode);
 			break;
 		case AT_AlterConstraint:	/* ALTER CONSTRAINT */
-			address = ATExecAlterConstraint(rel, cmd, false, false, lockmode);
+			address = ATExecAlterConstraint(rel, castNode(ATAlterConstraint,
+														  cmd->def),
+											cmd->recurse, lockmode);
 			break;
 		case AT_ValidateConstraint: /* VALIDATE CONSTRAINT */
 			address = ATExecValidateConstraint(wqueue, rel, cmd->name, cmd->recurse,
@@ -11801,10 +11802,9 @@ GetForeignKeyCheckTriggers(Relation trigrel,
  * InvalidObjectAddress.
  */
 static ObjectAddress
-ATExecAlterConstraint(Relation rel, AlterTableCmd *cmd, bool recurse,
-					  bool recursing, LOCKMODE lockmode)
+ATExecAlterConstraint(Relation rel, ATAlterConstraint *cmdcon, bool recurse,
+					  LOCKMODE lockmode)
 {
-	Constraint *cmdcon;
 	Relation	conrel;
 	Relation	tgrel;
 	SysScanDesc scan;
@@ -11813,9 +11813,17 @@ ATExecAlterConstraint(Relation rel, AlterTableCmd *cmd, bool recurse,
 	Form_pg_constraint currcon;
 	ObjectAddress address;
 	List	   *otherrelids = NIL;
-	ListCell   *lc;
 
-	cmdcon = castNode(Constraint, cmd->def);
+	/*
+	 * Disallow altering ONLY a partitioned table, as it would make no sense.
+	 * This is okay for legacy inheritance.
+	 */
+	if (rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE && !recurse)
+		ereport(ERROR,
+				errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+				errmsg("constraint must be altered in child tables too"),
+				errhint("Do not specify the ONLY keyword."));
+
 
 	conrel = table_open(ConstraintRelationId, RowExclusiveLock);
 	tgrel = table_open(TriggerRelationId, RowExclusiveLock);
@@ -11896,28 +11904,22 @@ ATExecAlterConstraint(Relation rel, AlterTableCmd *cmd, bool recurse,
 				 errhint("You may alter the constraint it derives from instead.")));
 	}
 
-	/*
-	 * Do the actual catalog work.  We can skip changing if already in the
-	 * desired state, but not if a partitioned table: partitions need to be
-	 * processed regardless, in case they had the constraint locally changed.
-	 */
 	address = InvalidObjectAddress;
-	if (currcon->condeferrable != cmdcon->deferrable ||
-		currcon->condeferred != cmdcon->initdeferred ||
-		rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
-	{
-		if (ATExecAlterConstrRecurse(cmdcon, conrel, tgrel, rel, contuple,
-									 &otherrelids, lockmode))
-			ObjectAddressSet(address, ConstraintRelationId, currcon->oid);
-	}
 
 	/*
-	 * ATExecAlterConstrRecurse already invalidated relcache for the relations
-	 * having the constraint itself; here we also invalidate for relations
-	 * that have any triggers that are part of the constraint.
+	 * Do the actual catalog work, and recurse if necessary.
 	 */
-	foreach(lc, otherrelids)
-		CacheInvalidateRelcacheByRelid(lfirst_oid(lc));
+	if (ATExecAlterConstraintInternal(cmdcon, conrel, tgrel, rel, contuple,
+									  recurse, &otherrelids, lockmode))
+		ObjectAddressSet(address, ConstraintRelationId, currcon->oid);
+
+	/*
+	 * ATExecAlterConstraintInternal already invalidated relcache for the
+	 * relations having the constraint itself; here we also invalidate for
+	 * relations that have any triggers that are part of the constraint.
+	 */
+	foreach_oid(relid, otherrelids)
+		CacheInvalidateRelcacheByRelid(relid);
 
 	systable_endscan(scan);
 
@@ -11939,21 +11941,20 @@ ATExecAlterConstraint(Relation rel, AlterTableCmd *cmd, bool recurse,
  * but existing releases don't do that.)
  */
 static bool
-ATExecAlterConstrRecurse(Constraint *cmdcon, Relation conrel, Relation tgrel,
-						 Relation rel, HeapTuple contuple, List **otherrelids,
-						 LOCKMODE lockmode)
+ATExecAlterConstraintInternal(ATAlterConstraint *cmdcon, Relation conrel,
+							  Relation tgrel, Relation rel, HeapTuple contuple,
+							  bool recurse, List **otherrelids, LOCKMODE lockmode)
 {
 	Form_pg_constraint currcon;
-	Oid			conoid;
-	Oid			refrelid;
+	Oid			refrelid = InvalidOid;
 	bool		changed = false;
 
 	/* since this function recurses, it could be driven to stack overflow */
 	check_stack_depth();
 
 	currcon = (Form_pg_constraint) GETSTRUCT(contuple);
-	conoid = currcon->oid;
-	refrelid = currcon->confrelid;
+	if (currcon->contype == CONSTRAINT_FOREIGN)
+		refrelid = currcon->confrelid;
 
 	/*
 	 * Update pg_constraint with the flags from cmdcon.
@@ -11961,8 +11962,9 @@ ATExecAlterConstrRecurse(Constraint *cmdcon, Relation conrel, Relation tgrel,
 	 * If called to modify a constraint that's already in the desired state,
 	 * silently do nothing.
 	 */
-	if (currcon->condeferrable != cmdcon->deferrable ||
-		currcon->condeferred != cmdcon->initdeferred)
+	if (cmdcon->alterDeferrability &&
+		(currcon->condeferrable != cmdcon->deferrable ||
+		 currcon->condeferred != cmdcon->initdeferred))
 	{
 		HeapTuple	copyTuple;
 		Form_pg_constraint copy_con;
@@ -11973,8 +11975,7 @@ ATExecAlterConstrRecurse(Constraint *cmdcon, Relation conrel, Relation tgrel,
 		copy_con->condeferred = cmdcon->initdeferred;
 		CatalogTupleUpdate(conrel, &copyTuple->t_self, copyTuple);
 
-		InvokeObjectPostAlterHook(ConstraintRelationId,
-								  conoid, 0);
+		InvokeObjectPostAlterHook(ConstraintRelationId, currcon->oid, 0);
 
 		heap_freetuple(copyTuple);
 		changed = true;
@@ -11986,32 +11987,59 @@ ATExecAlterConstrRecurse(Constraint *cmdcon, Relation conrel, Relation tgrel,
 		 * Now we need to update the multiple entries in pg_trigger that
 		 * implement the constraint.
 		 */
-		AlterConstrTriggerDeferrability(conoid, tgrel, rel, cmdcon->deferrable,
+		AlterConstrTriggerDeferrability(currcon->oid, tgrel, rel,
+										cmdcon->deferrable,
 										cmdcon->initdeferred, otherrelids);
 	}
 
 	/*
 	 * If the table at either end of the constraint is partitioned, we need to
-	 * recurse and handle every constraint that is a child of this one.
+	 * handle every constraint that is a child of this one.
 	 *
-	 * (This assumes that the recurse flag is forcibly set for partitioned
-	 * tables, and not set for legacy inheritance, though we don't check for
-	 * that here.)
+	 * Note that this doesn't handle recursion the normal way, viz. by
+	 * scanning the list of child relations and recursing; instead it uses the
+	 * conparentid relationships.  This may need to be reconsidered.
 	 */
-	if (rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE ||
-		get_rel_relkind(refrelid) == RELKIND_PARTITIONED_TABLE)
-		ATExecAlterChildConstr(cmdcon, conrel, tgrel, rel, contuple,
-							   otherrelids, lockmode);
+	if (recurse && changed &&
+		(rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE ||
+		 (OidIsValid(refrelid) &&
+		  get_rel_relkind(refrelid) == RELKIND_PARTITIONED_TABLE)))
+	{
+		ScanKeyData pkey;
+		SysScanDesc pscan;
+		HeapTuple	childtup;
+
+		ScanKeyInit(&pkey,
+					Anum_pg_constraint_conparentid,
+					BTEqualStrategyNumber, F_OIDEQ,
+					ObjectIdGetDatum(currcon->oid));
+
+		pscan = systable_beginscan(conrel, ConstraintParentIndexId,
+								   true, NULL, 1, &pkey);
+
+		while (HeapTupleIsValid(childtup = systable_getnext(pscan)))
+		{
+			Form_pg_constraint childcon = (Form_pg_constraint) GETSTRUCT(childtup);
+			Relation	childrel;
+
+			childrel = table_open(childcon->conrelid, lockmode);
+			ATExecAlterConstraintInternal(cmdcon, conrel, tgrel, childrel, childtup,
+										  recurse, otherrelids, lockmode);
+			table_close(childrel, NoLock);
+		}
+
+		systable_endscan(pscan);
+	}
 
 	return changed;
 }
 
 /*
- * A subroutine of ATExecAlterConstrRecurse that updated constraint trigger's
- * deferrability.
+ * A subroutine of ATExecAlterConstrDeferrability that updated constraint
+ * trigger's deferrability.
  *
  * The arguments to this function have the same meaning as the arguments to
- * ATExecAlterConstrRecurse.
+ * ATExecAlterConstrDeferrability.
  */
 static void
 AlterConstrTriggerDeferrability(Oid conoid, Relation tgrel, Relation rel,
@@ -12069,49 +12097,6 @@ AlterConstrTriggerDeferrability(Oid conoid, Relation tgrel, Relation rel,
 	}
 
 	systable_endscan(tgscan);
-}
-
-/*
- * Invokes ATExecAlterConstrRecurse for each constraint that is a child of the
- * specified constraint.
- *
- * The arguments to this function have the same meaning as the arguments to
- * ATExecAlterConstrRecurse.
- */
-static void
-ATExecAlterChildConstr(Constraint *cmdcon, Relation conrel, Relation tgrel,
-					   Relation rel, HeapTuple contuple, List **otherrelids,
-					   LOCKMODE lockmode)
-{
-	Form_pg_constraint currcon;
-	Oid			conoid;
-	ScanKeyData pkey;
-	SysScanDesc pscan;
-	HeapTuple	childtup;
-
-	currcon = (Form_pg_constraint) GETSTRUCT(contuple);
-	conoid = currcon->oid;
-
-	ScanKeyInit(&pkey,
-				Anum_pg_constraint_conparentid,
-				BTEqualStrategyNumber, F_OIDEQ,
-				ObjectIdGetDatum(conoid));
-
-	pscan = systable_beginscan(conrel, ConstraintParentIndexId,
-							   true, NULL, 1, &pkey);
-
-	while (HeapTupleIsValid(childtup = systable_getnext(pscan)))
-	{
-		Form_pg_constraint childcon = (Form_pg_constraint) GETSTRUCT(childtup);
-		Relation	childrel;
-
-		childrel = table_open(childcon->conrelid, lockmode);
-		ATExecAlterConstrRecurse(cmdcon, conrel, tgrel, childrel, childtup,
-								 otherrelids, lockmode);
-		table_close(childrel, NoLock);
-	}
-
-	systable_endscan(pscan);
 }
 
 /*
