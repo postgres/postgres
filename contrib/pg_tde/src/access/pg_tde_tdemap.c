@@ -1286,11 +1286,6 @@ pg_tde_read_one_keydata(int keydata_fd, int32 key_index, TDEPrincipalKey *princi
 	RelKeyData *enc_rel_key_data;
 	off_t		read_pos = 0;
 
-	/* Allocate and fill in the structure */
-	enc_rel_key_data = (RelKeyData *) palloc(sizeof(RelKeyData));
-
-	strncpy(enc_rel_key_data->principal_key_id.name, principal_key->keyInfo.keyId.name, PRINCIPAL_KEY_NAME_LEN);
-
 	/* Calculate the reading position in the file. */
 	read_pos += (key_index * INTERNAL_KEY_DAT_LEN) + TDE_FILE_HEADER_SIZE;
 
@@ -1306,6 +1301,11 @@ pg_tde_read_one_keydata(int keydata_fd, int32 key_index, TDEPrincipalKey *princi
 						key_index,
 						db_keydata_path)));
 	}
+
+	/* Allocate and fill in the structure */
+	enc_rel_key_data = (RelKeyData *) palloc(sizeof(RelKeyData));
+	strncpy(enc_rel_key_data->principal_key_id.name, principal_key->keyInfo.keyId.name, PRINCIPAL_KEY_NAME_LEN);
+	enc_rel_key_data->internal_key.ctx = NULL;
 
 	/* Read the encrypted key */
 	/* TODO: pgstat_report_wait_start / pgstat_report_wait_end */
