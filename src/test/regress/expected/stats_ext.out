@@ -3368,3 +3368,18 @@ NOTICE:  drop cascades to 2 other objects
 DETAIL:  drop cascades to table tststats.priv_test_tbl
 drop cascades to view tststats.priv_test_view
 DROP USER regress_stats_user1;
+CREATE TABLE grouping_unique (x integer);
+INSERT INTO grouping_unique (x) SELECT gs FROM generate_series(1,1000) AS gs;
+ANALYZE grouping_unique;
+-- Optimiser treat GROUP-BY operator as an 'uniqueser' of the input
+SELECT * FROM check_estimated_rows('
+  SELECT * FROM generate_series(1, 1) t1 LEFT JOIN (
+    SELECT x FROM grouping_unique t2 GROUP BY x) AS q1
+  ON t1.t1 = q1.x;
+');
+ estimated | actual 
+-----------+--------
+         1 |      1
+(1 row)
+
+DROP TABLE grouping_unique;

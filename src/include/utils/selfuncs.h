@@ -94,7 +94,8 @@ typedef struct VariableStatData
 	Oid			vartype;		/* exposed type of expression */
 	Oid			atttype;		/* actual type (after stripping relabel) */
 	int32		atttypmod;		/* actual typmod (after stripping relabel) */
-	bool		isunique;		/* matches unique index or DISTINCT clause */
+	bool		isunique;		/* matches unique index, DISTINCT or GROUP-BY
+								 * clause */
 	bool		acl_ok;			/* result of ACL check on table or column */
 } VariableStatData;
 
