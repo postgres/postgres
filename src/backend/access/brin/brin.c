@@ -511,16 +511,18 @@ brininsertcleanup(Relation index, IndexInfo *indexInfo)
 	BrinInsertState *bistate = (BrinInsertState *) indexInfo->ii_AmCache;
 
 	/* bail out if cache not initialized */
-	if (indexInfo->ii_AmCache == NULL)
+	if (bistate == NULL)
 		return;
+
+	/* do this first to avoid dangling pointer if we fail partway through */
+	indexInfo->ii_AmCache = NULL;
 
 	/*
 	 * Clean up the revmap. Note that the brinDesc has already been cleaned up
 	 * as part of its own memory context.
 	 */
 	brinRevmapTerminate(bistate->bis_rmAccess);
-	bistate->bis_rmAccess = NULL;
-	bistate->bis_desc = NULL;
+	pfree(bistate);
 }
 
 /*
