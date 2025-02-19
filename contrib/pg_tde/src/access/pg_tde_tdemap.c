@@ -48,8 +48,8 @@
 {																			\
 	int i;																	\
 	char buf[1024];															\
-	for (i = 0; i < sizeof(_key->internal_key.key); i++)					\
-		sprintf(buf+i, "%02X", _key->internal_key.key[i]);				\
+	for (i = 0; i < sizeof(_key.key); i++)					\
+		sprintf(buf+i, "%02X", _key.key[i]);				\
 	buf[i] = '\0';															\
 	elog(INFO, "[%s] INTERNAL KEY => %s", _msg, buf);						\
 }
@@ -117,12 +117,12 @@ RelKeyCache tde_rel_key_cache = {
 };
 
 static int32 pg_tde_process_map_entry(RelFileNumber rel_number, uint32 key_type, char *db_map_path, off_t *offset, bool should_delete);
-static RelKeyData *pg_tde_read_keydata(char *db_keydata_path, int32 key_index, TDEPrincipalKey *principal_key);
-static RelKeyData *tde_decrypt_rel_key(TDEPrincipalKey *principal_key, RelKeyData *enc_rel_key_data, Oid dbOid);
+static InternalKey *pg_tde_read_keydata(char *db_keydata_path, int32 key_index, TDEPrincipalKey *principal_key);
+static InternalKey *tde_decrypt_rel_key(TDEPrincipalKey *principal_key, InternalKey *enc_rel_key_data, Oid dbOid);
 static int	pg_tde_open_file_basic(char *tde_filename, int fileFlags, bool ignore_missing);
 static int	pg_tde_file_header_read(char *tde_filename, int fd, TDEFileHeader *fheader, bool *is_new_file, off_t *bytes_read);
 static bool pg_tde_read_one_map_entry(int fd, RelFileNumber rel_number, int flags, TDEMapEntry *map_entry, off_t *offset);
-static RelKeyData *pg_tde_read_one_keydata(int keydata_fd, int32 key_index, TDEPrincipalKey *principal_key);
+static InternalKey *pg_tde_read_one_keydata(int keydata_fd, int32 key_index, TDEPrincipalKey *principal_key);
 static int	pg_tde_open_file(char *tde_filename, TDEPrincipalKeyInfo *principal_key_info, bool update_header, int fileFlags, bool *is_new_file, off_t *curr_pos);
 static InternalKey *pg_tde_get_key_from_cache(const RelFileLocator *rlocator, uint32 key_type);
 
@@ -141,12 +141,12 @@ pg_tde_set_db_file_paths(Oid dbOid, char *map_path, char *keydata_path)
 #ifndef FRONTEND
 
 static InternalKey *pg_tde_create_key_map_entry(const RelFileLocator *newrlocator, uint32 entry_type);
-static RelKeyData *tde_encrypt_rel_key(TDEPrincipalKey *principal_key, RelKeyData *rel_key_data, Oid dbOid);
+static InternalKey *tde_encrypt_rel_key(TDEPrincipalKey *principal_key, InternalKey *rel_key_data, Oid dbOid);
 static int	pg_tde_file_header_write(char *tde_filename, int fd, TDEPrincipalKeyInfo *principal_key_info, off_t *bytes_written);
 static int32 pg_tde_write_map_entry(const RelFileLocator *rlocator, uint32 entry_type, char *db_map_path, TDEPrincipalKeyInfo *principal_key_info);
 static off_t pg_tde_write_one_map_entry(int fd, RelFileNumber rel_number, uint32 flags, int32 key_index, TDEMapEntry *map_entry, off_t *offset, const char *db_map_path);
-static void pg_tde_write_keydata(char *db_keydata_path, TDEPrincipalKeyInfo *principal_key_info, int32 key_index, RelKeyData *enc_rel_key_data);
-static void pg_tde_write_one_keydata(int keydata_fd, int32 key_index, RelKeyData *enc_rel_key_data);
+static void pg_tde_write_keydata(char *db_keydata_path, TDEPrincipalKeyInfo *principal_key_info, int32 key_index, InternalKey *enc_rel_key_data);
+static void pg_tde_write_one_keydata(int keydata_fd, int32 key_index, InternalKey *enc_rel_key_data);
 static int	keyrotation_init_file(TDEPrincipalKeyInfo *new_principal_key_info, char *rotated_filename, char *filename, bool *is_new_file, off_t *curr_pos);
 static void finalize_key_rotation(char *m_path_old, char *k_path_old, char *m_path_new, char *k_path_new);
 
@@ -174,8 +174,8 @@ pg_tde_create_heap_basic_key(const RelFileLocator *newrlocator)
 static InternalKey *
 pg_tde_create_key_map_entry(const RelFileLocator *newrlocator, uint32 entry_type)
 {
-	RelKeyData	rel_key_data;
-	RelKeyData *enc_rel_key_data;
+	InternalKey rel_key_data;
+	InternalKey *enc_rel_key_data;
 	TDEPrincipalKey *principal_key;
 	XLogRelKey	xlrec;
 	LWLock	   *lock_pk = tde_lwlock_enc_keys();
@@ -191,11 +191,10 @@ pg_tde_create_key_map_entry(const RelFileLocator *newrlocator, uint32 entry_type
 		return NULL;
 	}
 
-	rel_key_data.principal_key_id = principal_key->keyInfo.keyId;
-	rel_key_data.internal_key.rel_type = entry_type;
-	rel_key_data.internal_key.ctx = NULL;
+	rel_key_data.rel_type = entry_type;
+	rel_key_data.ctx = NULL;
 
-	if (!RAND_bytes(rel_key_data.internal_key.key, INTERNAL_KEY_LEN))
+	if (!RAND_bytes(rel_key_data.key, INTERNAL_KEY_LEN))
 	{
 		LWLockRelease(lock_pk);
 		ereport(ERROR,
@@ -226,7 +225,7 @@ pg_tde_create_key_map_entry(const RelFileLocator *newrlocator, uint32 entry_type
 	LWLockRelease(lock_pk);
 	pfree(enc_rel_key_data);
 
-	return pg_tde_put_key_into_cache(newrlocator, &rel_key_data.internal_key);
+	return pg_tde_put_key_into_cache(newrlocator, &rel_key_data);
 }
 
 const char *
@@ -244,10 +243,10 @@ tde_sprint_key(InternalKey *k)
 /*
  * Encrypts a given key and returns the encrypted one.
  */
-static RelKeyData *
-tde_encrypt_rel_key(TDEPrincipalKey *principal_key, RelKeyData *rel_key_data, Oid dbOid)
+static InternalKey *
+tde_encrypt_rel_key(TDEPrincipalKey *principal_key, InternalKey *rel_key_data, Oid dbOid)
 {
-	RelKeyData *enc_rel_key_data;
+	InternalKey *enc_rel_key_data;
 	size_t		enc_key_bytes;
 
 	AesEncryptKey(principal_key, dbOid, rel_key_data, &enc_rel_key_data, &enc_key_bytes);
@@ -467,7 +466,7 @@ pg_tde_write_one_map_entry(int fd, RelFileNumber rel_number, uint32 flags, int32
  * job finds an empty index.
  */
 static void
-pg_tde_write_keydata(char *db_keydata_path, TDEPrincipalKeyInfo *principal_key_info, int32 key_index, RelKeyData *enc_rel_key_data)
+pg_tde_write_keydata(char *db_keydata_path, TDEPrincipalKeyInfo *principal_key_info, int32 key_index, InternalKey *enc_rel_key_data)
 {
 	File		fd = -1;
 	bool		is_new_file;
@@ -484,10 +483,10 @@ pg_tde_write_keydata(char *db_keydata_path, TDEPrincipalKeyInfo *principal_key_i
 }
 
 /*
- * Function writes a single RelKeyData into the file at the given index.
+ * Function writes a single InternalKey into the file at the given index.
  */
 static void
-pg_tde_write_one_keydata(int fd, int32 key_index, RelKeyData *enc_rel_key_data)
+pg_tde_write_one_keydata(int fd, int32 key_index, InternalKey *enc_rel_key_data)
 {
 	off_t		curr_pos;
 
@@ -497,7 +496,7 @@ pg_tde_write_one_keydata(int fd, int32 key_index, RelKeyData *enc_rel_key_data)
 	curr_pos = (key_index * INTERNAL_KEY_DAT_LEN) + TDE_FILE_HEADER_SIZE;
 
 	/* TODO: pgstat_report_wait_start / pgstat_report_wait_end */
-	if (pg_pwrite(fd, &enc_rel_key_data->internal_key, INTERNAL_KEY_DAT_LEN, curr_pos) != INTERNAL_KEY_DAT_LEN)
+	if (pg_pwrite(fd, enc_rel_key_data, INTERNAL_KEY_DAT_LEN, curr_pos) != INTERNAL_KEY_DAT_LEN)
 	{
 		/* TODO: what now? File is corrupted */
 		ereport(ERROR,
@@ -521,7 +520,7 @@ pg_tde_write_one_keydata(int fd, int32 key_index, RelKeyData *enc_rel_key_data)
  * The caller must hold an exclusive lock tde_lwlock_enc_keys.
  */
 void
-pg_tde_write_key_map_entry(const RelFileLocator *rlocator, RelKeyData *enc_rel_key_data, TDEPrincipalKeyInfo *principal_key_info)
+pg_tde_write_key_map_entry(const RelFileLocator *rlocator, InternalKey *enc_rel_key_data, TDEPrincipalKeyInfo *principal_key_info)
 {
 	int32		key_index = 0;
 	char		db_map_path[MAXPGPATH] = {0};
@@ -533,7 +532,7 @@ pg_tde_write_key_map_entry(const RelFileLocator *rlocator, RelKeyData *enc_rel_k
 	pg_tde_set_db_file_paths(rlocator->dbOid, db_map_path, db_keydata_path);
 
 	/* Create the map entry and then add the encrypted key to the data file */
-	key_index = pg_tde_write_map_entry(rlocator, enc_rel_key_data->internal_key.rel_type, db_map_path, principal_key_info);
+	key_index = pg_tde_write_map_entry(rlocator, enc_rel_key_data->rel_type, db_map_path, principal_key_info);
 
 	/* Add the encrypted key to the data file. */
 	pg_tde_write_keydata(db_keydata_path, principal_key_info, key_index, enc_rel_key_data);
@@ -664,8 +663,8 @@ pg_tde_perform_rotate_key(TDEPrincipalKey *principal_key, TDEPrincipalKey *new_p
 	off_t		curr_pos[PRINCIPAL_KEY_COUNT] = {0};
 	off_t		prev_pos[PRINCIPAL_KEY_COUNT] = {0};
 	int32		key_index[PRINCIPAL_KEY_COUNT] = {0};
-	RelKeyData *rel_key_data[PRINCIPAL_KEY_COUNT];
-	RelKeyData *enc_rel_key_data[PRINCIPAL_KEY_COUNT];
+	InternalKey *rel_key_data[PRINCIPAL_KEY_COUNT];
+	InternalKey *enc_rel_key_data[PRINCIPAL_KEY_COUNT];
 	int			m_fd[PRINCIPAL_KEY_COUNT] = {-1};
 	int			k_fd[PRINCIPAL_KEY_COUNT] = {-1};
 	char		m_path[PRINCIPAL_KEY_COUNT][MAXPGPATH];
@@ -865,8 +864,8 @@ FINALIZE:
 void
 pg_tde_move_rel_key(const RelFileLocator *newrlocator, const RelFileLocator *oldrlocator)
 {
-	RelKeyData *rel_key;
-	RelKeyData *enc_key;
+	InternalKey *rel_key;
+	InternalKey *enc_key;
 	TDEPrincipalKey *principal_key;
 	XLogRelKey	xlrec;
 	char		db_map_path[MAXPGPATH] = {0};
@@ -898,7 +897,7 @@ pg_tde_move_rel_key(const RelFileLocator *newrlocator, const RelFileLocator *old
 	XLogInsert(RM_TDERMGR_ID, XLOG_TDE_ADD_RELATION_KEY);
 
 	pg_tde_write_key_map_entry(newrlocator, enc_key, &principal_key->keyInfo);
-	pg_tde_put_key_into_cache(newrlocator, &rel_key->internal_key);
+	pg_tde_put_key_into_cache(newrlocator, rel_key);
 
 	XLogBeginInsert();
 	XLogRegisterData((char *) oldrlocator, sizeof(RelFileLocator));
@@ -922,13 +921,13 @@ pg_tde_move_rel_key(const RelFileLocator *newrlocator, const RelFileLocator *old
  * Reads the key of the required relation. It identifies its map entry and then simply
  * reads the key data from the keydata file.
  */
-RelKeyData *
+InternalKey *
 pg_tde_get_key_from_file(const RelFileLocator *rlocator, uint32 key_type, bool no_map_ok)
 {
 	int32		key_index = 0;
 	TDEPrincipalKey *principal_key;
-	RelKeyData *rel_key_data;
-	RelKeyData *enc_rel_key_data;
+	InternalKey *rel_key_data;
+	InternalKey *enc_rel_key_data;
 	off_t		offset = 0;
 	LWLock	   *lock_pk = tde_lwlock_enc_keys();
 	char		db_map_path[MAXPGPATH] = {0};
@@ -1081,11 +1080,11 @@ pg_tde_process_map_entry(RelFileNumber rel_number, uint32 key_type, char *db_map
  * Open the file and read the required key data from file and return encrypted key.
  * The caller should hold a tde_lwlock_enc_keys lock
  */
-static RelKeyData *
+static InternalKey *
 pg_tde_read_keydata(char *db_keydata_path, int32 key_index, TDEPrincipalKey *principal_key)
 {
 	int			fd = -1;
-	RelKeyData *enc_rel_key_data;
+	InternalKey *enc_rel_key_data;
 	off_t		read_pos = 0;
 	bool		is_new_file;
 
@@ -1105,10 +1104,10 @@ pg_tde_read_keydata(char *db_keydata_path, int32 key_index, TDEPrincipalKey *pri
 /*
  * Decrypts a given key and returns the decrypted one.
  */
-static RelKeyData *
-tde_decrypt_rel_key(TDEPrincipalKey *principal_key, RelKeyData *enc_rel_key_data, Oid dbOid)
+static InternalKey *
+tde_decrypt_rel_key(TDEPrincipalKey *principal_key, InternalKey *enc_rel_key_data, Oid dbOid)
 {
-	RelKeyData *rel_key_data = NULL;
+	InternalKey *rel_key_data = NULL;
 	size_t		key_bytes;
 
 	AesDecryptKey(principal_key, dbOid, &rel_key_data, enc_rel_key_data, &key_bytes);
@@ -1261,10 +1260,10 @@ pg_tde_read_one_map_entry(File map_file, RelFileNumber rel_number, int flags, TD
 /*
  * Reads a single keydata from the file.
  */
-static RelKeyData *
+static InternalKey *
 pg_tde_read_one_keydata(int keydata_fd, int32 key_index, TDEPrincipalKey *principal_key)
 {
-	RelKeyData *enc_rel_key_data;
+	InternalKey *enc_rel_key_data;
 	off_t		read_pos = 0;
 
 	/* Calculate the reading position in the file. */
@@ -1284,13 +1283,12 @@ pg_tde_read_one_keydata(int keydata_fd, int32 key_index, TDEPrincipalKey *princi
 	}
 
 	/* Allocate and fill in the structure */
-	enc_rel_key_data = (RelKeyData *) palloc(sizeof(RelKeyData));
-	strncpy(enc_rel_key_data->principal_key_id.name, principal_key->keyInfo.keyId.name, PRINCIPAL_KEY_NAME_LEN);
-	enc_rel_key_data->internal_key.ctx = NULL;
+	enc_rel_key_data = (InternalKey *) palloc(sizeof(InternalKey));
+	enc_rel_key_data->ctx = NULL;
 
 	/* Read the encrypted key */
 	/* TODO: pgstat_report_wait_start / pgstat_report_wait_end */
-	if (pg_pread(keydata_fd, &(enc_rel_key_data->internal_key), INTERNAL_KEY_DAT_LEN, read_pos) != INTERNAL_KEY_DAT_LEN)
+	if (pg_pread(keydata_fd, enc_rel_key_data, INTERNAL_KEY_DAT_LEN, read_pos) != INTERNAL_KEY_DAT_LEN)
 	{
 		char		db_keydata_path[MAXPGPATH] = {0};
 
@@ -1361,18 +1359,17 @@ InternalKey *
 GetRelationKey(RelFileLocator rel, uint32 key_type, bool no_map_ok)
 {
 	InternalKey *key;
-	RelKeyData *file_key;
 
 	key = pg_tde_get_key_from_cache(&rel, key_type);
 	if (key)
 		return key;
 
-	file_key = pg_tde_get_key_from_file(&rel, key_type, no_map_ok);
-	if (file_key)
+	key = pg_tde_get_key_from_file(&rel, key_type, no_map_ok);
+	if (key)
 	{
-		InternalKey *cached_key = pg_tde_put_key_into_cache(&rel, &file_key->internal_key);
+		InternalKey *cached_key = pg_tde_put_key_into_cache(&rel, key);
 
-		pfree(file_key);
+		pfree(key);
 		return cached_key;
 	}
 

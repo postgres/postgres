@@ -33,7 +33,7 @@
 void
 TDEInitGlobalKeys(const char *dir)
 {
-	RelKeyData *key;
+	InternalKey *key;
 
 	if (dir != NULL)
 		pg_tde_set_data_dir(dir);
@@ -50,7 +50,7 @@ TDEInitGlobalKeys(const char *dir)
 	 */
 	if (key != NULL)
 	{
-		pg_tde_put_key_into_cache(&GLOBAL_SPACE_RLOCATOR(XLOG_TDE_OID), &key->internal_key);
+		pg_tde_put_key_into_cache(&GLOBAL_SPACE_RLOCATOR(XLOG_TDE_OID), key);
 	}
 
 }

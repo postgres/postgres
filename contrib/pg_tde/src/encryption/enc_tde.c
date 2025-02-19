@@ -246,7 +246,7 @@ PGTdePageAddItemExtended(RelFileLocator rel,
  * short lifespan until it is written to disk.
  */
 void
-AesEncryptKey(const TDEPrincipalKey *principal_key, Oid dbOid, RelKeyData *rel_key_data, RelKeyData **p_enc_rel_key_data, size_t *enc_key_bytes)
+AesEncryptKey(const TDEPrincipalKey *principal_key, Oid dbOid, InternalKey *rel_key_data, InternalKey **p_enc_rel_key_data, size_t *enc_key_bytes)
 {
 	unsigned char iv[16] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 
@@ -255,10 +255,10 @@ AesEncryptKey(const TDEPrincipalKey *principal_key, Oid dbOid, RelKeyData *rel_k
 
 	memcpy(iv, &dbOid, sizeof(Oid));
 
-	*p_enc_rel_key_data = (RelKeyData *) palloc(sizeof(RelKeyData));
-	memcpy(*p_enc_rel_key_data, rel_key_data, sizeof(RelKeyData));
+	*p_enc_rel_key_data = (InternalKey *) palloc(sizeof(InternalKey));
+	memcpy(*p_enc_rel_key_data, rel_key_data, sizeof(InternalKey));
 
-	AesEncrypt(principal_key->keyData, iv, ((unsigned char *) &rel_key_data->internal_key), INTERNAL_KEY_LEN, ((unsigned char *) &(*p_enc_rel_key_data)->internal_key), (int *) enc_key_bytes);
+	AesEncrypt(principal_key->keyData, iv, (unsigned char *) rel_key_data, INTERNAL_KEY_LEN, (unsigned char *) *p_enc_rel_key_data, (int *) enc_key_bytes);
 }
 
 #endif							/* FRONTEND */
@@ -271,7 +271,7 @@ AesEncryptKey(const TDEPrincipalKey *principal_key, Oid dbOid, RelKeyData *rel_k
  * to our key cache.
  */
 void
-AesDecryptKey(const TDEPrincipalKey *principal_key, Oid dbOid, RelKeyData **p_rel_key_data, RelKeyData *enc_rel_key_data, size_t *key_bytes)
+AesDecryptKey(const TDEPrincipalKey *principal_key, Oid dbOid, InternalKey **p_rel_key_data, InternalKey *enc_rel_key_data, size_t *key_bytes)
 {
 	unsigned char iv[16] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 
@@ -288,15 +288,15 @@ AesDecryptKey(const TDEPrincipalKey *principal_key, Oid dbOid, RelKeyData **p_re
 	oldcontext = MemoryContextSwitchTo(TopMemoryContext);
 #endif
 
-	*p_rel_key_data = (RelKeyData *) palloc(sizeof(RelKeyData));
+	*p_rel_key_data = (InternalKey *) palloc(sizeof(InternalKey));
 
 #ifndef FRONTEND
 	MemoryContextSwitchTo(oldcontext);
 #endif
 
 	/* Fill in the structure */
-	memcpy(*p_rel_key_data, enc_rel_key_data, sizeof(RelKeyData));
-	(*p_rel_key_data)->internal_key.ctx = NULL;
+	memcpy(*p_rel_key_data, enc_rel_key_data, sizeof(InternalKey));
+	(*p_rel_key_data)->ctx = NULL;
 
-	AesDecrypt(principal_key->keyData, iv, ((unsigned char *) &enc_rel_key_data->internal_key), INTERNAL_KEY_LEN, ((unsigned char *) &(*p_rel_key_data)->internal_key), (int *) key_bytes);
+	AesDecrypt(principal_key->keyData, iv, (unsigned char *) enc_rel_key_data, INTERNAL_KEY_LEN, (unsigned char *) *p_rel_key_data, (int *) key_bytes);
 }

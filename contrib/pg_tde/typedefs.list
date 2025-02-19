@@ -40,7 +40,6 @@ ProviderScanType
 PruneFreezeResult
 RelKeyCache
 RelKeyCacheRec
-RelKeyData
 RewriteMappingDataEntry
 RewriteMappingDataEntry
 RewriteMappingFile
