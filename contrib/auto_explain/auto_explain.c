@@ -76,7 +76,7 @@ static ExecutorRun_hook_type prev_ExecutorRun = NULL;
 static ExecutorFinish_hook_type prev_ExecutorFinish = NULL;
 static ExecutorEnd_hook_type prev_ExecutorEnd = NULL;
 
-static void explain_ExecutorStart(QueryDesc *queryDesc, int eflags);
+static bool explain_ExecutorStart(QueryDesc *queryDesc, int eflags);
 static void explain_ExecutorRun(QueryDesc *queryDesc,
 								ScanDirection direction,
 								uint64 count);
@@ -256,9 +256,11 @@ _PG_init(void)
 /*
  * ExecutorStart hook: start up logging if needed
  */
-static void
+static bool
 explain_ExecutorStart(QueryDesc *queryDesc, int eflags)
 {
+	bool		plan_valid;
+
 	/*
 	 * At the beginning of each top-level statement, decide whether we'll
 	 * sample this statement.  If nested-statement explaining is enabled,
@@ -294,9 +296,13 @@ explain_ExecutorStart(QueryDesc *queryDesc, int eflags)
 	}
 
 	if (prev_ExecutorStart)
-		prev_ExecutorStart(queryDesc, eflags);
+		plan_valid = prev_ExecutorStart(queryDesc, eflags);
 	else
-		standard_ExecutorStart(queryDesc, eflags);
+		plan_valid = standard_ExecutorStart(queryDesc, eflags);
+
+	/* The plan may have become invalid during standard_ExecutorStart() */
+	if (!plan_valid)
+		return false;
 
 	if (auto_explain_enabled())
 	{
@@ -314,6 +320,8 @@ explain_ExecutorStart(QueryDesc *queryDesc, int eflags)
 			MemoryContextSwitchTo(oldcxt);
 		}
 	}
+
+	return true;
 }
 
 /*

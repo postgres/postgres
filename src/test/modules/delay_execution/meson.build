@@ -24,6 +24,7 @@ tests += {
     'specs': [
       'partition-addition',
       'partition-removal-1',
+      'cached-plan-inval',
     ],
   },
 }

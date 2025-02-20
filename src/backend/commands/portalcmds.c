@@ -117,6 +117,7 @@ PerformCursorOpen(ParseState *pstate, DeclareCursorStmt *cstmt, ParamListInfo pa
 					  queryString,
 					  CMDTAG_SELECT,	/* cursor's query is always a SELECT */
 					  list_make1(plan),
+					  NULL,
 					  NULL);
 
 	/*----------

@@ -35,6 +35,7 @@ typedef struct QueryDesc
 	/* These fields are provided by CreateQueryDesc */
 	CmdType		operation;		/* CMD_SELECT, CMD_UPDATE, etc. */
 	PlannedStmt *plannedstmt;	/* planner's output (could be utility, too) */
+	CachedPlan *cplan;			/* CachedPlan that supplies the plannedstmt */
 	const char *sourceText;		/* source text of the query */
 	Snapshot	snapshot;		/* snapshot to use for query */
 	Snapshot	crosscheck_snapshot;	/* crosscheck for RI update/delete */
@@ -57,6 +58,7 @@ typedef struct QueryDesc
 
 /* in pquery.c */
 extern QueryDesc *CreateQueryDesc(PlannedStmt *plannedstmt,
+								  CachedPlan *cplan,
 								  const char *sourceText,
 								  Snapshot snapshot,
 								  Snapshot crosscheck_snapshot,

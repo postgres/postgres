@@ -8,7 +8,8 @@ OBJS = \
 	delay_execution.o
 
 ISOLATION = partition-addition \
-	    partition-removal-1
+	    partition-removal-1 \
+		cached-plan-inval
 
 ifdef USE_PGXS
 PG_CONFIG = pg_config

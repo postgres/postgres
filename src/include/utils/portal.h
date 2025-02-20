@@ -138,6 +138,7 @@ typedef struct PortalData
 	QueryCompletion qc;			/* command completion data for executed query */
 	List	   *stmts;			/* list of PlannedStmts */
 	CachedPlan *cplan;			/* CachedPlan, if stmts are from one */
+	CachedPlanSource *plansource;	/* CachedPlanSource, for cplan */
 
 	ParamListInfo portalParams; /* params to pass to query */
 	QueryEnvironment *queryEnv; /* environment for query */
@@ -240,7 +241,8 @@ extern void PortalDefineQuery(Portal portal,
 							  const char *sourceText,
 							  CommandTag commandTag,
 							  List *stmts,
-							  CachedPlan *cplan);
+							  CachedPlan *cplan,
+							  CachedPlanSource *plansource);
 extern PlannedStmt *PortalGetPrimaryStmt(Portal portal);
 extern void PortalCreateHoldStore(Portal portal);
 extern void PortalHashTableDeleteAll(void);

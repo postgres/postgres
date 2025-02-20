@@ -147,6 +147,7 @@ CreateExecutorState(void)
 	estate->es_top_eflags = 0;
 	estate->es_instrument = 0;
 	estate->es_finished = false;
+	estate->es_aborted = false;
 
 	estate->es_exprcontexts = NIL;
 
@@ -813,6 +814,10 @@ ExecInitRangeTable(EState *estate, List *rangeTable, List *permInfos,
  *		Open the Relation for a range table entry, if not already done
  *
  * The Relations will be closed in ExecEndPlan().
+ *
+ * Note: The caller must ensure that 'rti' refers to an unpruned relation
+ * (i.e., it is a member of estate->es_unpruned_relids) before calling this
+ * function. Attempting to open a pruned relation will result in an error.
  */
 Relation
 ExecGetRangeTableRelation(EState *estate, Index rti)
@@ -820,6 +825,9 @@ ExecGetRangeTableRelation(EState *estate, Index rti)
 	Relation	rel;
 
 	Assert(rti > 0 && rti <= estate->es_range_table_size);
+
+	if (!bms_is_member(rti, estate->es_unpruned_relids))
+		elog(ERROR, "trying to open a pruned relation");
 
 	rel = estate->es_relations[rti - 1];
 	if (rel == NULL)

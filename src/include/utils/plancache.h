@@ -18,6 +18,8 @@
 #include "access/tupdesc.h"
 #include "lib/ilist.h"
 #include "nodes/params.h"
+#include "nodes/parsenodes.h"
+#include "nodes/plannodes.h"
 #include "tcop/cmdtag.h"
 #include "utils/queryenvironment.h"
 #include "utils/resowner.h"
@@ -139,10 +141,11 @@ typedef struct CachedPlanSource
  * The reference count includes both the link from the parent CachedPlanSource
  * (if any), and any active plan executions, so the plan can be discarded
  * exactly when refcount goes to zero.  Both the struct itself and the
- * subsidiary data live in the context denoted by the context field.
- * This makes it easy to free a no-longer-needed cached plan.  (However,
- * if is_oneshot is true, the context does not belong solely to the CachedPlan
- * so no freeing is possible.)
+ * subsidiary data, except the PlannedStmts in stmt_list live in the context
+ * denoted by the context field; the PlannedStmts live in the context denoted
+ * by stmt_context.  Separate contexts makes it easy to free a no-longer-needed
+ * cached plan. (However, if is_oneshot is true, the context does not belong
+ * solely to the CachedPlan so no freeing is possible.)
  */
 typedef struct CachedPlan
 {
@@ -150,6 +153,7 @@ typedef struct CachedPlan
 	List	   *stmt_list;		/* list of PlannedStmts */
 	bool		is_oneshot;		/* is it a "oneshot" plan? */
 	bool		is_saved;		/* is CachedPlan in a long-lived context? */
+	bool		is_reused;		/* is it a reused generic plan? */
 	bool		is_valid;		/* is the stmt_list currently valid? */
 	Oid			planRoleId;		/* Role ID the plan was created for */
 	bool		dependsOnRole;	/* is plan specific to that role? */
@@ -158,6 +162,10 @@ typedef struct CachedPlan
 	int			generation;		/* parent's generation number for this plan */
 	int			refcount;		/* count of live references to this struct */
 	MemoryContext context;		/* context containing this CachedPlan */
+	MemoryContext stmt_context; /* context containing the PlannedStmts in
+								 * stmt_list, but not the List itself which is
+								 * in the above context; NULL if is_oneshot is
+								 * true. */
 } CachedPlan;
 
 /*
@@ -223,6 +231,10 @@ extern CachedPlan *GetCachedPlan(CachedPlanSource *plansource,
 								 ParamListInfo boundParams,
 								 ResourceOwner owner,
 								 QueryEnvironment *queryEnv);
+extern PlannedStmt *UpdateCachedPlan(CachedPlanSource *plansource,
+									 int query_index,
+									 QueryEnvironment *queryEnv);
+
 extern void ReleaseCachedPlan(CachedPlan *plan, ResourceOwner owner);
 
 extern bool CachedPlanAllowsSimpleValidityCheck(CachedPlanSource *plansource,
@@ -234,5 +246,31 @@ extern bool CachedPlanIsSimplyValid(CachedPlanSource *plansource,
 
 extern CachedExpression *GetCachedExpression(Node *expr);
 extern void FreeCachedExpression(CachedExpression *cexpr);
+
+/*
+ * CachedPlanRequiresLocking: should the executor acquire additional locks?
+ *
+ * If the plan is a saved generic plan, the executor must acquire locks for
+ * relations that are not covered by AcquireExecutorLocks(), such as partitions
+ * that are subject to initial runtime pruning.
+ */
+static inline bool
+CachedPlanRequiresLocking(CachedPlan *cplan)
+{
+	return !cplan->is_oneshot && cplan->is_reused;
+}
+
+/*
+ * CachedPlanValid
+ *      Returns whether a cached generic plan is still valid.
+ *
+ * Invoked by the executor to check if the plan has not been invalidated after
+ * taking locks during the initialization of the plan.
+ */
+static inline bool
+CachedPlanValid(CachedPlan *cplan)
+{
+	return cplan->is_valid;
+}
 
 #endif							/* PLANCACHE_H */

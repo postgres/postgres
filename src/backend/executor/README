@@ -280,6 +280,28 @@ are typically reset to empty once per tuple.  Per-tuple contexts are usually
 associated with ExprContexts, and commonly each PlanState node has its own
 ExprContext to evaluate its qual and targetlist expressions in.
 
+Relation Locking
+----------------
+
+When the executor initializes a plan tree for execution, it doesn't lock
+non-index relations if the plan tree is freshly generated and not derived
+from a CachedPlan. This is because such locks have already been established
+during the query's parsing, rewriting, and planning phases. However, with a
+cached plan tree, some relations may remain unlocked. The function
+AcquireExecutorLocks() only locks unprunable relations in the plan, deferring
+the locking of prunable ones to executor initialization. This avoids
+unnecessary locking of relations that will be pruned during "initial" runtime
+pruning in ExecDoInitialPruning().
+
+This approach creates a window where a cached plan tree with child tables
+could become outdated if another backend modifies these tables before
+ExecDoInitialPruning() locks them. As a result, the executor has the added duty
+to verify the plan tree's validity whenever it locks a child table after
+doing initial pruning. This validation is done by checking the CachedPlan.is_valid
+flag. If the plan tree is outdated (is_valid = false), the executor stops
+further initialization, cleans up anything in EState that would have been
+allocated up to that point, and retries execution after recreating the
+invalid plan in the CachedPlan.  See ExecutorStartCachedPlan().
 
 Query Processing Control Flow
 -----------------------------
@@ -288,11 +310,13 @@ This is a sketch of control flow for full query processing:
 
 	CreateQueryDesc
 
-	ExecutorStart
+	ExecutorStart or ExecutorStartCachedPlan
 		CreateExecutorState
 			creates per-query context
-		switch to per-query context to run ExecInitNode
+		switch to per-query context to run ExecDoInitialPruning and ExecInitNode
 		AfterTriggerBeginQuery
+		ExecDoInitialPruning
+			does initial pruning and locks surviving partitions if needed
 		ExecInitNode --- recursively scans plan tree
 			ExecInitNode
 				recurse into subsidiary nodes
@@ -316,7 +340,12 @@ This is a sketch of control flow for full query processing:
 
 	FreeQueryDesc
 
-Per above comments, it's not really critical for ExecEndNode to free any
+As mentioned in the "Relation Locking" section, if the plan tree is found to
+be stale after locking partitions in ExecDoInitialPruning(), the control is
+immediately returned to ExecutorStartCachedPlan(), which will create a new plan
+tree and perform the steps starting from CreateExecutorState() again.
+
+Per above comments, it's not really critical for ExecEndPlan to free any
 memory; it'll all go away in FreeExecutorState anyway.  However, we do need to
 be careful to close relations, drop buffer pins, etc, so we do need to scan
 the plan state tree to find these sorts of resources.

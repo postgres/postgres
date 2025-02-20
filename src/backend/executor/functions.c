@@ -840,6 +840,7 @@ postquel_start(execution_state *es, SQLFunctionCachePtr fcache)
 		dest = None_Receiver;
 
 	es->qd = CreateQueryDesc(es->stmt,
+							 NULL,
 							 fcache->src,
 							 GetActiveSnapshot(),
 							 InvalidSnapshot,
@@ -864,7 +865,8 @@ postquel_start(execution_state *es, SQLFunctionCachePtr fcache)
 			eflags = EXEC_FLAG_SKIP_TRIGGERS;
 		else
 			eflags = 0;			/* default run-to-completion flags */
-		ExecutorStart(es->qd, eflags);
+		if (!ExecutorStart(es->qd, eflags))
+			elog(ERROR, "ExecutorStart() failed unexpectedly");
 	}
 
 	es->status = F_EXEC_RUN;

@@ -103,8 +103,10 @@ extern void ExplainOneUtility(Node *utilityStmt, IntoClause *into,
 							  ExplainState *es, ParseState *pstate,
 							  ParamListInfo params);
 
-extern void ExplainOnePlan(PlannedStmt *plannedstmt, IntoClause *into,
-						   ExplainState *es, const char *queryString,
+extern void ExplainOnePlan(PlannedStmt *plannedstmt, CachedPlan *cplan,
+						   CachedPlanSource *plansource, int plan_index,
+						   IntoClause *into, ExplainState *es,
+						   const char *queryString,
 						   ParamListInfo params, QueryEnvironment *queryEnv,
 						   const instr_time *planduration,
 						   const BufferUsage *bufusage,
