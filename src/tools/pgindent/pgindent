@@ -182,7 +182,7 @@ sub process_exclude
 		while (my $line = <$eh>)
 		{
 			chomp $line;
-			next if $line =~ m/^#/;
+			next if $line =~ m/^#/ || $line eq "";
 			my $rgx = qr!$line!;
 			@files = grep { $_ !~ /$rgx/ } @files if $rgx;
 		}
