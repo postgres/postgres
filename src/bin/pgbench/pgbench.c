@@ -6815,12 +6815,25 @@ main(int argc, char **argv)
 #ifdef HAVE_GETRLIMIT
 				if (getrlimit(RLIMIT_NOFILE, &rlim) == -1)
 					pg_fatal("getrlimit failed: %m");
-				if (rlim.rlim_cur < nclients + 3)
+
+				if (rlim.rlim_max < nclients + 3)
 				{
 					pg_log_error("need at least %d open files, but system limit is %ld",
-								 nclients + 3, (long) rlim.rlim_cur);
+								 nclients + 3, (long) rlim.rlim_max);
 					pg_log_error_hint("Reduce number of clients, or use limit/ulimit to increase the system limit.");
 					exit(1);
+				}
+
+				if (rlim.rlim_cur < nclients + 3)
+				{
+					rlim.rlim_cur = nclients + 3;
+					if (setrlimit(RLIMIT_NOFILE, &rlim) == -1)
+					{
+						pg_log_error("need at least %d open files, but couldn't raise the limit: %m",
+									 nclients + 3);
+						pg_log_error_hint("Reduce number of clients, or use limit/ulimit to increase the system limit.");
+						exit(1);
+					}
 				}
 #endif							/* HAVE_GETRLIMIT */
 				break;
