@@ -10,11 +10,20 @@ if host_system == 'windows'
     '--FILEDESC', 'pg_checksums - verify data checksums in an offline cluster',])
 endif
 
+link_w  = []
+include_dirs = [timezone_inc]
+
+if percona_ext == true
+  link_w = [pg_tde_frontend]
+  include_dirs = [timezone_inc, pg_tde_inc]
+endif
+
 pg_checksums = executable('pg_checksums',
   pg_checksums_sources,
-  include_directories: [timezone_inc],
+  include_directories: include_dirs,
   dependencies: [frontend_code],
   kwargs: default_bin_args,
+  link_with: link_w,
 )
 bin_targets += pg_checksums
 
