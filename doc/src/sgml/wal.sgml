@@ -813,7 +813,7 @@
    When <xref linkend="guc-track-io-timing"/> is enabled, the total
    amounts of time <function>XLogWrite</function> writes and
    <function>issue_xlog_fsync</function> syncs WAL data to disk are counted as
-   <varname>write_time</varname> and <varname>sync_time</varname> in
+   <varname>write_time</varname> and <varname>fsync_time</varname> in
    <xref linkend="pg-stat-io-view"/> for the <varname>object</varname>
    <literal>wal</literal>, respectively.
    <function>XLogWrite</function> is normally called by
