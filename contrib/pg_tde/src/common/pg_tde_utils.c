@@ -29,9 +29,9 @@ get_tde_basic_table_am_oid(void)
 	return get_table_am_oid("tde_heap_basic", false);
 }
 
-PG_FUNCTION_INFO_V1(pg_tde_internal_has_key);
+PG_FUNCTION_INFO_V1(pg_tde_is_encrypted);
 Datum
-pg_tde_internal_has_key(PG_FUNCTION_ARGS)
+pg_tde_is_encrypted(PG_FUNCTION_ARGS)
 {
 	Oid			tableOid = InvalidOid;
 	Oid			dbOid = MyDatabaseId;
@@ -58,22 +58,18 @@ pg_tde_internal_has_key(PG_FUNCTION_ARGS)
 
 	{
 		LOCKMODE	lockmode = AccessShareLock;
-		Relation	rel = table_open(tableOid, lockmode);
+		Relation	rel = relation_open(tableOid, lockmode);
 		InternalKey *key;
 
-		if (
-#ifdef PERCONA_EXT
-			rel->rd_rel->relam != get_tde_table_am_oid() &&
-#endif
-			rel->rd_rel->relam != get_tde_basic_table_am_oid())
+		if (rel->rd_rel->relam == get_tde_basic_table_am_oid())
 		{
-			table_close(rel, lockmode);
-			PG_RETURN_BOOL(false);
+			relation_close(rel, lockmode);
+			PG_RETURN_BOOL(true);
 		}
 
 		key = GetSMGRRelationKey(rel->rd_locator);
 
-		table_close(rel, lockmode);
+		relation_close(rel, lockmode);
 
 		PG_RETURN_BOOL(key != NULL);
 	}

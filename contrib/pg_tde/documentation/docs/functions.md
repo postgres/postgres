@@ -93,7 +93,7 @@ SELECT pg_tde_rotate_principal_key(NULL, 'name-of-the-new-provider');
 
 ## pg_tde_is_encrypted
 
-Tells if a table is encrypted using the `tde_heap` access method or not.
+Tells if a relation is encrypted using the `pg_tde` extension or not.
 
 To verify a table encryption, run the following statement:
 
@@ -101,8 +101,10 @@ To verify a table encryption, run the following statement:
 SELECT pg_tde_is_encrypted('table_name');
 ```
 
-You can also verify if the table in a custom schema is encrypted. Pass teh schema name for the function as follows:
+You can also verify if the table in a custom schema is encrypted. Pass the schema name for the function as follows:
 
 ```
 SELECT pg_tde_is_encrypted('schema.table_name');
 ```
+
+This can additoonally be used the verify that indexes and sequences are encrypted.

@@ -23,6 +23,12 @@ SELECT amname FROM pg_class INNER JOIN pg_am ON pg_am.oid = pg_class.relam WHERE
 SELECT pg_tde_is_encrypted('test_enc');
 SELECT pg_tde_is_encrypted('test_norm');
 
+SELECT pg_tde_is_encrypted('test_enc_id_seq');
+SELECT pg_tde_is_encrypted('test_norm_id_seq');
+
+SELECT pg_tde_is_encrypted('test_enc_pkey');
+SELECT pg_tde_is_encrypted('test_norm_pkey');
+
 SELECT  key_provider_id, key_provider_name, principal_key_name
 		FROM pg_tde_principal_key_info();
 

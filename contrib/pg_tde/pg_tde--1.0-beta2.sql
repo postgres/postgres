@@ -424,24 +424,10 @@ RETURNS table_am_handler
 LANGUAGE C
 AS 'MODULE_PATHNAME';
 
-CREATE FUNCTION pg_tde_internal_has_key(relation regclass)
+CREATE FUNCTION pg_tde_is_encrypted(relation regclass)
 RETURNS boolean
 LANGUAGE C
 AS 'MODULE_PATHNAME';
-
-CREATE FUNCTION pg_tde_is_encrypted(table_name regclass)
-RETURNS boolean
-LANGUAGE SQL
-BEGIN ATOMIC
-    SELECT EXISTS (
-        SELECT 1
-        FROM   pg_catalog.pg_class
-        WHERE  oid = table_name
-        AND    (relam = (SELECT oid FROM pg_catalog.pg_am WHERE amname = 'tde_heap_basic')
-            OR (relam = (SELECT oid FROM pg_catalog.pg_am WHERE amname = 'tde_heap'))
-                AND pg_tde_internal_has_key(table_name))
-        );
-END;
 
 CREATE FUNCTION pg_tde_set_principal_key(principal_key_name TEXT, provider_name TEXT DEFAULT NULL, ensure_new_key BOOLEAN DEFAULT FALSE)
 RETURNS boolean

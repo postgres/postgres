@@ -169,4 +169,4 @@ The extension provides the following helper functions:
 
 ### pg_tde_is_encrypted(tablename)
 
-Returns `t` if the table is encrypted (uses the tde_heap_basic access method), or `f` otherwise.
+Returns `t` if the relation is encrypted, or `f` otherwise.
