@@ -810,11 +810,12 @@
   <para>
    There are two internal functions to write WAL data to disk:
    <function>XLogWrite</function> and <function>issue_xlog_fsync</function>.
-   When <xref linkend="guc-track-wal-io-timing"/> is enabled, the total
+   When <xref linkend="guc-track-io-timing"/> is enabled, the total
    amounts of time <function>XLogWrite</function> writes and
    <function>issue_xlog_fsync</function> syncs WAL data to disk are counted as
-   <literal>wal_write_time</literal> and <literal>wal_sync_time</literal> in
-   <xref linkend="pg-stat-wal-view"/>, respectively.
+   <varname>write_time</varname> and <varname>sync_time</varname> in
+   <xref linkend="pg-stat-io-view"/> for the <varname>object</varname>
+   <literal>wal</literal>, respectively.
    <function>XLogWrite</function> is normally called by
    <function>XLogInsertRecord</function> (when there is no space for the new
    record in WAL buffers), <function>XLogFlush</function> and the WAL writer,
@@ -829,11 +830,12 @@
    <literal>fsync</literal>, or <literal>fsync_writethrough</literal>,
    the write operation moves WAL buffers to kernel cache and
    <function>issue_xlog_fsync</function> syncs them to disk. Regardless
-   of the setting of <varname>track_wal_io_timing</varname>, the number
+   of the setting of <varname>track_io_timing</varname>, the number
    of times <function>XLogWrite</function> writes and
    <function>issue_xlog_fsync</function> syncs WAL data to disk are also
-   counted as <literal>wal_write</literal> and <literal>wal_sync</literal>
-   in <structname>pg_stat_wal</structname>, respectively.
+   counted as <varname>writes</varname> and <varname>fsyncs</varname>
+   in <structname>pg_stat_io</structname> for the <varname>object</varname>
+   <literal>wal</literal>, respectively.
   </para>
 
   <para>
