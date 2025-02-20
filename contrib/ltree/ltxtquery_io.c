@@ -410,7 +410,7 @@ ltxtq_in(PG_FUNCTION_ARGS)
 {
 	ltxtquery  *res;
 
-	if ((res = queryin((char *) PG_GETARG_POINTER(0), fcinfo->context)) == NULL)
+	if ((res = queryin(PG_GETARG_POINTER(0), fcinfo->context)) == NULL)
 		PG_RETURN_NULL();
 	PG_RETURN_POINTER(res);
 }

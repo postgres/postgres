@@ -1502,7 +1502,7 @@ PageSetChecksumCopy(Page page, BlockNumber blkno)
 
 	/* If we don't need a checksum, just return the passed-in data */
 	if (PageIsNew(page) || !DataChecksumsEnabled())
-		return (char *) page;
+		return page;
 
 	/*
 	 * We allocate the copy space once and use it over on each subsequent

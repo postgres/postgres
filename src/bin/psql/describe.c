@@ -1741,7 +1741,7 @@ describeOneTableDetails(const char *schemaname,
 		*(PQgetvalue(res, 0, 13)) : 'd';
 	if (pset.sversion >= 120000)
 		tableinfo.relam = PQgetisnull(res, 0, 14) ?
-			(char *) NULL : pg_strdup(PQgetvalue(res, 0, 14));
+			NULL : pg_strdup(PQgetvalue(res, 0, 14));
 	else
 		tableinfo.relam = NULL;
 	PQclear(res);

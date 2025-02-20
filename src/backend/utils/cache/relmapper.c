@@ -854,7 +854,7 @@ read_relmap_file(RelMapFile *map, char *dbpath, bool lock_held, int elevel)
 
 	/* verify the CRC */
 	INIT_CRC32C(crc);
-	COMP_CRC32C(crc, (char *) map, offsetof(RelMapFile, crc));
+	COMP_CRC32C(crc, map, offsetof(RelMapFile, crc));
 	FIN_CRC32C(crc);
 
 	if (!EQ_CRC32C(crc, map->crc))
@@ -910,7 +910,7 @@ write_relmap_file(RelMapFile *newmap, bool write_wal, bool send_sinval,
 		elog(ERROR, "attempt to write bogus relation mapping");
 
 	INIT_CRC32C(newmap->crc);
-	COMP_CRC32C(newmap->crc, (char *) newmap, offsetof(RelMapFile, crc));
+	COMP_CRC32C(newmap->crc, newmap, offsetof(RelMapFile, crc));
 	FIN_CRC32C(newmap->crc);
 
 	/*

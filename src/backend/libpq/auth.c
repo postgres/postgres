@@ -2932,8 +2932,8 @@ PerformRadiusTransaction(const char *server, const char *secret, const char *por
 	radius_packet radius_recv_pack;
 	radius_packet *packet = &radius_send_pack;
 	radius_packet *receivepacket = &radius_recv_pack;
-	char	   *radius_buffer = (char *) &radius_send_pack;
-	char	   *receive_buffer = (char *) &radius_recv_pack;
+	void	   *radius_buffer = &radius_send_pack;
+	void	   *receive_buffer = &radius_recv_pack;
 	int32		service = pg_hton32(RADIUS_AUTHENTICATE_ONLY);
 	uint8	   *cryptvector;
 	int			encryptedpasswordlen;
@@ -3204,7 +3204,9 @@ PerformRadiusTransaction(const char *server, const char *secret, const char *por
 																		 * original packet */
 		if (packetlength > RADIUS_HEADER_LENGTH)	/* there may be no
 													 * attributes at all */
-			memcpy(cryptvector + RADIUS_HEADER_LENGTH, receive_buffer + RADIUS_HEADER_LENGTH, packetlength - RADIUS_HEADER_LENGTH);
+			memcpy(cryptvector + RADIUS_HEADER_LENGTH,
+				   (char *) receive_buffer + RADIUS_HEADER_LENGTH,
+				   packetlength - RADIUS_HEADER_LENGTH);
 		memcpy(cryptvector + packetlength, secret, strlen(secret));
 
 		if (!pg_md5_binary(cryptvector,

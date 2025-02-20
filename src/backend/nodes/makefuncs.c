@@ -51,7 +51,7 @@ makeSimpleA_Expr(A_Expr_Kind kind, char *name,
 	A_Expr	   *a = makeNode(A_Expr);
 
 	a->kind = kind;
-	a->name = list_make1(makeString((char *) name));
+	a->name = list_make1(makeString(name));
 	a->lexpr = lexpr;
 	a->rexpr = rexpr;
 	a->location = location;

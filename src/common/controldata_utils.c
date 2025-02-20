@@ -135,7 +135,7 @@ retry:
 	/* Check the CRC. */
 	INIT_CRC32C(crc);
 	COMP_CRC32C(crc,
-				(char *) ControlFile,
+				ControlFile,
 				offsetof(ControlFileData, crc));
 	FIN_CRC32C(crc);
 
@@ -199,7 +199,7 @@ update_controlfile(const char *DataDir,
 	/* Recalculate CRC of control file */
 	INIT_CRC32C(ControlFile->crc);
 	COMP_CRC32C(ControlFile->crc,
-				(char *) ControlFile,
+				ControlFile,
 				offsetof(ControlFileData, crc));
 	FIN_CRC32C(ControlFile->crc);
 

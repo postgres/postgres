@@ -342,7 +342,7 @@ FindStreamingStart(uint32 *tli)
 			if (lseek(fd, (off_t) (-4), SEEK_END) < 0)
 				pg_fatal("could not seek in compressed file \"%s\": %m",
 						 fullpath);
-			r = read(fd, (char *) buf, sizeof(buf));
+			r = read(fd, buf, sizeof(buf));
 			if (r != sizeof(buf))
 			{
 				if (r < 0)

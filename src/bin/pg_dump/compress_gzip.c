@@ -129,7 +129,7 @@ DeflateCompressorCommon(ArchiveHandle *AH, CompressorState *cs, bool flush)
 				 */
 				size_t		len = gzipcs->outsize - zp->avail_out;
 
-				cs->writeF(AH, (char *) out, len);
+				cs->writeF(AH, out, len);
 			}
 			zp->next_out = out;
 			zp->avail_out = gzipcs->outsize;

@@ -232,7 +232,7 @@ get_str_from_var(numeric *var, int dscale)
 
 	if (var->sign == NUMERIC_NAN)
 	{
-		str = (char *) pgtypes_alloc(4);
+		str = pgtypes_alloc(4);
 		if (str == NULL)
 			return NULL;
 		sprintf(str, "NaN");
@@ -269,7 +269,7 @@ get_str_from_var(numeric *var, int dscale)
 	/*
 	 * Allocate space for the result
 	 */
-	if ((str = (char *) pgtypes_alloc(Max(0, dscale) + Max(0, var->weight) + 4)) == NULL)
+	if ((str = pgtypes_alloc(Max(0, dscale) + Max(0, var->weight) + 4)) == NULL)
 		return NULL;
 	cp = str;
 

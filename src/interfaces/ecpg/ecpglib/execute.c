@@ -278,7 +278,7 @@ ecpg_is_type_an_array(int type, const struct statement *stmt, const struct varia
 			isarray = ECPG_ARRAY_NONE;
 		else
 		{
-			isarray = (atoi((char *) PQgetvalue(query, 0, 0)) == -1) ? ECPG_ARRAY_ARRAY : ECPG_ARRAY_VECTOR;
+			isarray = (atoi(PQgetvalue(query, 0, 0)) == -1) ? ECPG_ARRAY_ARRAY : ECPG_ARRAY_VECTOR;
 			if (ecpg_dynamic_type(type) == SQL3_CHARACTER ||
 				ecpg_dynamic_type(type) == SQL3_CHARACTER_VARYING)
 			{

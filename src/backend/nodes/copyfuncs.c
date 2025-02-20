@@ -40,7 +40,7 @@
 
 /* Copy a field that is a pointer to a C string, or perhaps NULL */
 #define COPY_STRING_FIELD(fldname) \
-	(newnode->fldname = from->fldname ? pstrdup(from->fldname) : (char *) NULL)
+	(newnode->fldname = from->fldname ? pstrdup(from->fldname) : NULL)
 
 /* Copy a field that is an inline array */
 #define COPY_ARRAY_FIELD(fldname) \

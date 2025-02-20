@@ -106,7 +106,7 @@ makesign(BITVECP sign, TRGM *a, int siglen)
 	SETBIT(sign, SIGLENBIT(siglen));	/* set last unused bit */
 	for (k = 0; k < len; k++)
 	{
-		CPTRGM(((char *) &tmp), ptr + k);
+		CPTRGM(&tmp, ptr + k);
 		HASH(sign, tmp, siglen);
 	}
 }
@@ -186,7 +186,7 @@ cnt_sml_sign_common(TRGM *qtrg, BITVECP sign, int siglen)
 
 	for (k = 0; k < len; k++)
 	{
-		CPTRGM(((char *) &tmp), ptr + k);
+		CPTRGM(&tmp, ptr + k);
 		count += GETBIT(sign, HASHVAL(tmp, siglen));
 	}
 
@@ -373,7 +373,7 @@ gtrgm_consistent(PG_FUNCTION_ARGS)
 				res = true;
 				for (k = 0; k < len; k++)
 				{
-					CPTRGM(((char *) &tmp), ptr + k);
+					CPTRGM(&tmp, ptr + k);
 					if (!GETBIT(sign, HASHVAL(tmp, siglen)))
 					{
 						res = false;
@@ -426,7 +426,7 @@ gtrgm_consistent(PG_FUNCTION_ARGS)
 					check = (bool *) palloc(len * sizeof(bool));
 					for (k = 0; k < len; k++)
 					{
-						CPTRGM(((char *) &tmp), ptr + k);
+						CPTRGM(&tmp, ptr + k);
 						check[k] = GETBIT(sign, HASHVAL(tmp, siglen));
 					}
 					res = trigramsMatchGraph(cache->graph, check);
@@ -552,7 +552,7 @@ unionkey(BITVECP sbase, TRGM *add, int siglen)
 
 		for (i = 0; i < ARRNELEM(add); i++)
 		{
-			CPTRGM(((char *) &tmp), ptr + i);
+			CPTRGM(&tmp, ptr + i);
 			HASH(sbase, tmp, siglen);
 		}
 	}

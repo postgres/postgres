@@ -206,7 +206,7 @@ write_jsonlog(ErrorData *edata)
 	/* Error severity */
 	if (edata->elevel)
 		appendJSONKeyValue(&buf, "error_severity",
-						   (char *) error_severity(edata->elevel), true);
+						   error_severity(edata->elevel), true);
 
 	/* SQL state code */
 	if (edata->sqlerrcode)
