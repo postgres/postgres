@@ -95,7 +95,7 @@ SELECT pg_tde_rotate_principal_key(NULL, 'name-of-the-new-provider');
 
 Tells if a relation is encrypted using the `pg_tde` extension or not.
 
-To verify a table encryption, run the following statement:
+To verify that a table is encrypted, run the following statement:
 
 ```
 SELECT pg_tde_is_encrypted('table_name');
