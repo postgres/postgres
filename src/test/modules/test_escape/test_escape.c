@@ -801,7 +801,7 @@ usage(const char *hint)
 		   "  -c, --conninfo=CONNINFO   connection information to use\n"
 		   "  -v, --verbose             show test details even for successes\n"
 		   "  -q, --quiet               only show failures\n"
-		   "      --force-unsupported   test invalid input even if unsupported\n"
+		   "  -f, --force-unsupported   test invalid input even if unsupported\n"
 		);
 
 	if (hint)
