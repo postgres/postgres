@@ -81,6 +81,7 @@ enum dbObjectTypePriorities
 	PRIO_TABLE_DATA,
 	PRIO_SEQUENCE_SET,
 	PRIO_LARGE_OBJECT_DATA,
+	PRIO_STATISTICS_DATA_DATA,
 	PRIO_POST_DATA_BOUNDARY,	/* boundary! */
 	PRIO_CONSTRAINT,
 	PRIO_INDEX,
@@ -148,11 +149,12 @@ static const int dbObjectTypePriority[] =
 	[DO_PUBLICATION] = PRIO_PUBLICATION,
 	[DO_PUBLICATION_REL] = PRIO_PUBLICATION_REL,
 	[DO_PUBLICATION_TABLE_IN_SCHEMA] = PRIO_PUBLICATION_TABLE_IN_SCHEMA,
+	[DO_REL_STATS] = PRIO_STATISTICS_DATA_DATA,
 	[DO_SUBSCRIPTION] = PRIO_SUBSCRIPTION,
 	[DO_SUBSCRIPTION_REL] = PRIO_SUBSCRIPTION_REL,
 };
 
-StaticAssertDecl(lengthof(dbObjectTypePriority) == (DO_SUBSCRIPTION_REL + 1),
+StaticAssertDecl(lengthof(dbObjectTypePriority) == NUM_DUMPABLE_OBJECT_TYPES,
 				 "array length mismatch");
 
 static DumpId preDataBoundId;
@@ -801,10 +803,21 @@ repairMatViewBoundaryMultiLoop(DumpableObject *boundaryobj,
 {
 	/* remove boundary's dependency on object after it in loop */
 	removeObjectDependency(boundaryobj, nextobj->dumpId);
-	/* if that object is a matview, mark it as postponed into post-data */
+
+	/*
+	 * If that object is a matview or matview stats, mark it as postponed into
+	 * post-data.
+	 */
 	if (nextobj->objType == DO_TABLE)
 	{
 		TableInfo  *nextinfo = (TableInfo *) nextobj;
+
+		if (nextinfo->relkind == RELKIND_MATVIEW)
+			nextinfo->postponed_def = true;
+	}
+	else if (nextobj->objType == DO_REL_STATS)
+	{
+		RelStatsInfo *nextinfo = (RelStatsInfo *) nextobj;
 
 		if (nextinfo->relkind == RELKIND_MATVIEW)
 			nextinfo->postponed_def = true;
@@ -1015,6 +1028,21 @@ repairDependencyLoop(DumpableObject **loop,
 				for (j = 0; j < nLoop; j++)
 				{
 					if (loop[j]->objType == DO_PRE_DATA_BOUNDARY)
+					{
+						DumpableObject *nextobj;
+
+						nextobj = (j < nLoop - 1) ? loop[j + 1] : loop[0];
+						repairMatViewBoundaryMultiLoop(loop[j], nextobj);
+						return;
+					}
+				}
+			}
+			else if (loop[i]->objType == DO_REL_STATS &&
+					 ((RelStatsInfo *) loop[i])->relkind == RELKIND_MATVIEW)
+			{
+				for (j = 0; j < nLoop; j++)
+				{
+					if (loop[j]->objType == DO_POST_DATA_BOUNDARY)
 					{
 						DumpableObject *nextobj;
 
@@ -1499,6 +1527,11 @@ describeDumpableObject(DumpableObject *obj, char *buf, int bufsize)
 			snprintf(buf, bufsize,
 					 "POST-DATA BOUNDARY  (ID %d)",
 					 obj->dumpId);
+			return;
+		case DO_REL_STATS:
+			snprintf(buf, bufsize,
+					 "RELATION STATISTICS FOR %s  (ID %d OID %u)",
+					 obj->name, obj->dumpId, obj->catId.oid);
 			return;
 	}
 	/* shouldn't get here */

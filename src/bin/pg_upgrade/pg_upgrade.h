@@ -327,6 +327,7 @@ typedef struct
 	int			jobs;			/* number of processes/threads to use */
 	char	   *socketdir;		/* directory to use for Unix sockets */
 	char	   *sync_method;
+	bool		do_statistics;	/* carry over statistics from old cluster */
 } UserOpts;
 
 typedef struct

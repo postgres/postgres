@@ -83,9 +83,12 @@ typedef enum
 	DO_PUBLICATION,
 	DO_PUBLICATION_REL,
 	DO_PUBLICATION_TABLE_IN_SCHEMA,
+	DO_REL_STATS,
 	DO_SUBSCRIPTION,
 	DO_SUBSCRIPTION_REL,		/* see note for SubRelInfo */
 } DumpableObjectType;
+
+#define NUM_DUMPABLE_OBJECT_TYPES (DO_SUBSCRIPTION_REL + 1)
 
 /*
  * DumpComponents is a bitmask of the potentially dumpable components of
@@ -110,6 +113,7 @@ typedef uint32 DumpComponents;
 #define DUMP_COMPONENT_ACL			(1 << 4)
 #define DUMP_COMPONENT_POLICY		(1 << 5)
 #define DUMP_COMPONENT_USERMAP		(1 << 6)
+#define DUMP_COMPONENT_STATISTICS	(1 << 7)
 #define DUMP_COMPONENT_ALL			(0xFFFF)
 
 /*
@@ -137,6 +141,7 @@ typedef uint32 DumpComponents;
 #define DUMP_COMPONENTS_REQUIRING_LOCK (\
 		DUMP_COMPONENT_DEFINITION |\
 		DUMP_COMPONENT_DATA |\
+		DUMP_COMPONENT_STATISTICS |\
 		DUMP_COMPONENT_POLICY)
 
 typedef struct _dumpableObject
@@ -429,6 +434,13 @@ typedef struct _indexAttachInfo
 	IndxInfo   *parentIdx;		/* link to index on partitioned table */
 	IndxInfo   *partitionIdx;	/* link to index on partition */
 } IndexAttachInfo;
+
+typedef struct _relStatsInfo
+{
+	DumpableObject dobj;
+	char		relkind;		/* 'r', 'm', 'i', etc */
+	bool		postponed_def;	/* stats must be postponed into post-data */
+} RelStatsInfo;
 
 typedef struct _statsExtInfo
 {

@@ -160,6 +160,7 @@ typedef struct _restoreOptions
 	/* flags derived from the user-settable flags */
 	bool		dumpSchema;
 	bool		dumpData;
+	bool		dumpStatistics;
 } RestoreOptions;
 
 typedef struct _dumpOptions
@@ -208,6 +209,7 @@ typedef struct _dumpOptions
 	/* flags derived from the user-settable flags */
 	bool		dumpSchema;
 	bool		dumpData;
+	bool		dumpStatistics;
 } DumpOptions;
 
 /*

@@ -46,6 +46,9 @@
 #define TEXT_DUMP_HEADER "--\n-- PostgreSQL database dump\n--\n\n"
 #define TEXT_DUMPALL_HEADER "--\n-- PostgreSQL database cluster dump\n--\n\n"
 
+#define TOC_PREFIX_NONE		""
+#define TOC_PREFIX_DATA		"Data for "
+#define TOC_PREFIX_STATS	"Statistics for "
 
 static ArchiveHandle *_allocAH(const char *FileSpec, const ArchiveFormat fmt,
 							   const pg_compress_specification compression_spec,
@@ -53,7 +56,7 @@ static ArchiveHandle *_allocAH(const char *FileSpec, const ArchiveFormat fmt,
 							   SetupWorkerPtrType setupWorkerPtr,
 							   DataDirSyncMethod sync_method);
 static void _getObjectDescription(PQExpBuffer buf, const TocEntry *te);
-static void _printTocEntry(ArchiveHandle *AH, TocEntry *te, bool isData);
+static void _printTocEntry(ArchiveHandle *AH, TocEntry *te, const char *pfx);
 static char *sanitize_line(const char *str, bool want_hyphen);
 static void _doSetFixedOutputState(ArchiveHandle *AH);
 static void _doSetSessionAuth(ArchiveHandle *AH, const char *user);
@@ -149,6 +152,7 @@ InitDumpOptions(DumpOptions *opts)
 	opts->dumpSections = DUMP_UNSECTIONED;
 	opts->dumpSchema = true;
 	opts->dumpData = true;
+	opts->dumpStatistics = true;
 }
 
 /*
@@ -169,9 +173,10 @@ dumpOptionsFromRestoreOptions(RestoreOptions *ropt)
 	dopt->outputClean = ropt->dropSchema;
 	dopt->dumpData = ropt->dumpData;
 	dopt->dumpSchema = ropt->dumpSchema;
+	dopt->dumpSections = ropt->dumpSections;
+	dopt->dumpStatistics = ropt->dumpStatistics;
 	dopt->if_exists = ropt->if_exists;
 	dopt->column_inserts = ropt->column_inserts;
-	dopt->dumpSections = ropt->dumpSections;
 	dopt->aclsSkip = ropt->aclsSkip;
 	dopt->outputSuperuser = ropt->superuser;
 	dopt->outputCreateDB = ropt->createDB;
@@ -418,8 +423,8 @@ RestoreArchive(Archive *AHX)
 	}
 
 	/*
-	 * Work out if we have an implied data-only restore. This can happen if
-	 * the dump was data only or if the user has used a toc list to exclude
+	 * Work out if we have an implied schema-less restore. This can happen if
+	 * the dump excluded the schema or the user has used a toc list to exclude
 	 * all of the schema data. All we do is look for schema entries - if none
 	 * are found then we unset the dumpSchema flag.
 	 *
@@ -428,20 +433,20 @@ RestoreArchive(Archive *AHX)
 	 */
 	if (ropt->dumpSchema)
 	{
-		int			impliedDataOnly = 1;
+		bool		no_schema_found = true;
 
 		for (te = AH->toc->next; te != AH->toc; te = te->next)
 		{
 			if ((te->reqs & REQ_SCHEMA) != 0)
-			{					/* It's schema, and it's wanted */
-				impliedDataOnly = 0;
+			{
+				no_schema_found = false;
 				break;
 			}
 		}
-		if (impliedDataOnly)
+		if (no_schema_found)
 		{
 			ropt->dumpSchema = false;
-			pg_log_info("implied data-only restore");
+			pg_log_info("implied no-schema restore");
 		}
 	}
 
@@ -739,7 +744,7 @@ RestoreArchive(Archive *AHX)
 
 		for (te = AH->toc->next; te != AH->toc; te = te->next)
 		{
-			if ((te->reqs & (REQ_SCHEMA | REQ_DATA)) == 0)
+			if ((te->reqs & (REQ_SCHEMA | REQ_DATA | REQ_STATS)) == 0)
 				continue;		/* ignore if not to be dumped at all */
 
 			switch (_tocEntryRestorePass(te))
@@ -760,7 +765,7 @@ RestoreArchive(Archive *AHX)
 		{
 			for (te = AH->toc->next; te != AH->toc; te = te->next)
 			{
-				if ((te->reqs & (REQ_SCHEMA | REQ_DATA)) != 0 &&
+				if ((te->reqs & (REQ_SCHEMA | REQ_DATA | REQ_STATS)) != 0 &&
 					_tocEntryRestorePass(te) == RESTORE_PASS_ACL)
 					(void) restore_toc_entry(AH, te, false);
 			}
@@ -770,7 +775,7 @@ RestoreArchive(Archive *AHX)
 		{
 			for (te = AH->toc->next; te != AH->toc; te = te->next)
 			{
-				if ((te->reqs & (REQ_SCHEMA | REQ_DATA)) != 0 &&
+				if ((te->reqs & (REQ_SCHEMA | REQ_DATA | REQ_STATS)) != 0 &&
 					_tocEntryRestorePass(te) == RESTORE_PASS_POST_ACL)
 					(void) restore_toc_entry(AH, te, false);
 			}
@@ -869,7 +874,7 @@ restore_toc_entry(ArchiveHandle *AH, TocEntry *te, bool is_parallel)
 			pg_log_info("creating %s \"%s\"",
 						te->desc, te->tag);
 
-		_printTocEntry(AH, te, false);
+		_printTocEntry(AH, te, TOC_PREFIX_NONE);
 		defnDumped = true;
 
 		if (strcmp(te->desc, "TABLE") == 0)
@@ -938,7 +943,7 @@ restore_toc_entry(ArchiveHandle *AH, TocEntry *te, bool is_parallel)
 			 */
 			if (AH->PrintTocDataPtr != NULL)
 			{
-				_printTocEntry(AH, te, true);
+				_printTocEntry(AH, te, TOC_PREFIX_DATA);
 
 				if (strcmp(te->desc, "BLOBS") == 0 ||
 					strcmp(te->desc, "BLOB COMMENTS") == 0)
@@ -1036,15 +1041,21 @@ restore_toc_entry(ArchiveHandle *AH, TocEntry *te, bool is_parallel)
 		{
 			/* If we haven't already dumped the defn part, do so now */
 			pg_log_info("executing %s %s", te->desc, te->tag);
-			_printTocEntry(AH, te, false);
+			_printTocEntry(AH, te, TOC_PREFIX_NONE);
 		}
 	}
+
+	/*
+	 * If it has a statistics component that we want, then process that
+	 */
+	if ((reqs & REQ_STATS) != 0)
+		_printTocEntry(AH, te, TOC_PREFIX_STATS);
 
 	/*
 	 * If we emitted anything for this TOC entry, that counts as one action
 	 * against the transaction-size limit.  Commit if it's time to.
 	 */
-	if ((reqs & (REQ_SCHEMA | REQ_DATA)) != 0 && ropt->txn_size > 0)
+	if ((reqs & (REQ_SCHEMA | REQ_DATA | REQ_STATS)) != 0 && ropt->txn_size > 0)
 	{
 		if (++AH->txnCount >= ropt->txn_size)
 		{
@@ -1084,6 +1095,7 @@ NewRestoreOptions(void)
 	opts->compression_spec.level = 0;
 	opts->dumpSchema = true;
 	opts->dumpData = true;
+	opts->dumpStatistics = true;
 
 	return opts;
 }
@@ -1329,7 +1341,7 @@ PrintTOCSummary(Archive *AHX)
 		te->reqs = _tocEntryRequired(te, curSection, AH);
 		/* Now, should we print it? */
 		if (ropt->verbose ||
-			(te->reqs & (REQ_SCHEMA | REQ_DATA)) != 0)
+			(te->reqs & (REQ_SCHEMA | REQ_DATA | REQ_STATS)) != 0)
 		{
 			char	   *sanitized_name;
 			char	   *sanitized_schema;
@@ -2582,7 +2594,7 @@ WriteToc(ArchiveHandle *AH)
 	tocCount = 0;
 	for (te = AH->toc->next; te != AH->toc; te = te->next)
 	{
-		if ((te->reqs & (REQ_SCHEMA | REQ_DATA | REQ_SPECIAL)) != 0)
+		if ((te->reqs & (REQ_SCHEMA | REQ_DATA | REQ_STATS | REQ_SPECIAL)) != 0)
 			tocCount++;
 	}
 
@@ -2592,7 +2604,7 @@ WriteToc(ArchiveHandle *AH)
 
 	for (te = AH->toc->next; te != AH->toc; te = te->next)
 	{
-		if ((te->reqs & (REQ_SCHEMA | REQ_DATA | REQ_SPECIAL)) == 0)
+		if ((te->reqs & (REQ_SCHEMA | REQ_DATA | REQ_STATS | REQ_SPECIAL)) == 0)
 			continue;
 
 		WriteInt(AH, te->dumpId);
@@ -2904,8 +2916,9 @@ StrictNamesCheck(RestoreOptions *ropt)
  * Determine whether we want to restore this TOC entry.
  *
  * Returns 0 if entry should be skipped, or some combination of the
- * REQ_SCHEMA and REQ_DATA bits if we want to restore schema and/or data
- * portions of this TOC entry, or REQ_SPECIAL if it's a special entry.
+ * REQ_SCHEMA, REQ_DATA, and REQ_STATS bits if we want to restore schema, data
+ * and/or statistics portions of this TOC entry, or REQ_SPECIAL if it's a
+ * special entry.
  */
 static int
 _tocEntryRequired(TocEntry *te, teSection curSection, ArchiveHandle *AH)
@@ -2918,6 +2931,14 @@ _tocEntryRequired(TocEntry *te, teSection curSection, ArchiveHandle *AH)
 		strcmp(te->desc, "STDSTRINGS") == 0 ||
 		strcmp(te->desc, "SEARCHPATH") == 0)
 		return REQ_SPECIAL;
+
+	if (strcmp(te->desc, "STATISTICS DATA") == 0)
+	{
+		if (!ropt->dumpStatistics)
+			return 0;
+		else
+			res = REQ_STATS;
+	}
 
 	/*
 	 * DATABASE and DATABASE PROPERTIES also have a special rule: they are
@@ -2963,6 +2984,10 @@ _tocEntryRequired(TocEntry *te, teSection curSection, ArchiveHandle *AH)
 	if (ropt->no_subscriptions && strcmp(te->desc, "SUBSCRIPTION") == 0)
 		return 0;
 
+	/* If it's statistics and we don't want statistics, maybe ignore it */
+	if (!ropt->dumpStatistics && strcmp(te->desc, "STATISTICS DATA") == 0)
+		return 0;
+
 	/* Ignore it if section is not to be dumped/restored */
 	switch (curSection)
 	{
@@ -2992,6 +3017,7 @@ _tocEntryRequired(TocEntry *te, teSection curSection, ArchiveHandle *AH)
 	 */
 	if (strcmp(te->desc, "ACL") == 0 ||
 		strcmp(te->desc, "COMMENT") == 0 ||
+		strcmp(te->desc, "STATISTICS DATA") == 0 ||
 		strcmp(te->desc, "SECURITY LABEL") == 0)
 	{
 		/* Database properties react to createDB, not selectivity options. */
@@ -3108,6 +3134,7 @@ _tocEntryRequired(TocEntry *te, teSection curSection, ArchiveHandle *AH)
 		}
 	}
 
+
 	/*
 	 * Determine whether the TOC entry contains schema and/or data components,
 	 * and mask off inapplicable REQ bits.  If it had a dataDumper, assume
@@ -3173,12 +3200,12 @@ _tocEntryRequired(TocEntry *te, teSection curSection, ArchiveHandle *AH)
 				strncmp(te->tag, "LARGE OBJECT", 12) == 0) ||
 			   (strcmp(te->desc, "SECURITY LABEL") == 0 &&
 				strncmp(te->tag, "LARGE OBJECT", 12) == 0))))
-			res = res & REQ_SCHEMA;
+			res = res & (REQ_SCHEMA | REQ_STATS);
 	}
 
 	/* Mask it if we don't want schema */
 	if (!ropt->dumpSchema)
-		res = res & REQ_DATA;
+		res = res & (REQ_DATA | REQ_STATS);
 
 	return res;
 }
@@ -3730,7 +3757,7 @@ _getObjectDescription(PQExpBuffer buf, const TocEntry *te)
  * will remain at default, until the matching ACL TOC entry is restored.
  */
 static void
-_printTocEntry(ArchiveHandle *AH, TocEntry *te, bool isData)
+_printTocEntry(ArchiveHandle *AH, TocEntry *te, const char *pfx)
 {
 	RestoreOptions *ropt = AH->public.ropt;
 
@@ -3749,15 +3776,9 @@ _printTocEntry(ArchiveHandle *AH, TocEntry *te, bool isData)
 	/* Emit header comment for item */
 	if (!AH->noTocComments)
 	{
-		const char *pfx;
 		char	   *sanitized_name;
 		char	   *sanitized_schema;
 		char	   *sanitized_owner;
-
-		if (isData)
-			pfx = "Data for ";
-		else
-			pfx = "";
 
 		ahprintf(AH, "--\n");
 		if (AH->public.verbose)
@@ -4325,7 +4346,7 @@ restore_toc_entries_parallel(ArchiveHandle *AH, ParallelState *pstate,
 		if (next_work_item != NULL)
 		{
 			/* If not to be restored, don't waste time launching a worker */
-			if ((next_work_item->reqs & (REQ_SCHEMA | REQ_DATA)) == 0)
+			if ((next_work_item->reqs & (REQ_SCHEMA | REQ_DATA | REQ_STATS)) == 0)
 			{
 				pg_log_info("skipping item %d %s %s",
 							next_work_item->dumpId,

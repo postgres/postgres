@@ -146,6 +146,15 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>--no-statistics</option></term>
+      <listitem>
+       <para>
+        Do not restore statistics from the old cluster into the new cluster.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>-o</option> <replaceable class="parameter">options</replaceable></term>
       <term><option>--old-options</option> <replaceable class="parameter">options</replaceable></term>
       <listitem><para>options to be passed directly to the

@@ -107,7 +107,7 @@ command_ok(
 	[
 		'pg_dumpall',
 		'--file' => $outputdir . '/primary.dump',
-		'--no-sync',
+		'--no-sync', '--no-statistics',
 		'--port' => $node_primary->port,
 		'--no-unlogged-table-data',    # if unlogged, standby has schema only
 	],
@@ -116,7 +116,7 @@ command_ok(
 	[
 		'pg_dumpall',
 		'--file' => $outputdir . '/standby.dump',
-		'--no-sync',
+		'--no-sync', '--no-statistics',
 		'--port' => $node_standby_1->port,
 	],
 	'dump standby server');

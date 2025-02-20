@@ -294,6 +294,11 @@ sub adjust_old_dumpfile
 	# Version comments will certainly not match.
 	$dump =~ s/^-- Dumped from database version.*\n//mg;
 
+	# Same with version argument to pg_restore_relation_stats() or
+	# pg_restore_attribute_stats().
+	$dump =~ s ['version', '${old_version}\d{4}'::integer,]
+		['version', '000000'::integer,]mg;
+
 	if ($old_version < 16)
 	{
 		# Fix up some view queries that no longer require table-qualification.
@@ -625,6 +630,11 @@ sub adjust_new_dumpfile
 
 	# Version comments will certainly not match.
 	$dump =~ s/^-- Dumped from database version.*\n//mg;
+
+	# Same with version argument to pg_restore_relation_stats() or
+	# pg_restore_attribute_stats().
+	$dump =~ s ['version', '\d{6}'::integer,]
+		['version', '000000'::integer,]mg;
 
 	if ($old_version < 14)
 	{

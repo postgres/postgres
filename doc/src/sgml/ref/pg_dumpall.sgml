@@ -81,7 +81,7 @@ PostgreSQL documentation
       <term><option>--data-only</option></term>
       <listitem>
        <para>
-        Dump only the data, not the schema (data definitions).
+        Dump only the data, not the schema (data definitions) or statistics.
        </para>
       </listitem>
      </varlistentry>
@@ -266,6 +266,16 @@ exclude database <replaceable class="parameter">PATTERN</replaceable>
      </varlistentry>
 
      <varlistentry>
+      <term><option>--statistics-only</option></term>
+      <listitem>
+       <para>
+        Dump only the statistics, not the schema (data definitions) or data.
+        Statistics for tables, materialized views, and indexes are dumped.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>--binary-upgrade</option></term>
       <listitem>
        <para>
@@ -307,7 +317,7 @@ exclude database <replaceable class="parameter">PATTERN</replaceable>
       <term><option>--disable-triggers</option></term>
       <listitem>
        <para>
-        This option is relevant only when creating a data-only dump.
+        This option is relevant only when creating a dump with data and without schema.
         It instructs <application>pg_dumpall</application> to include commands
         to temporarily disable triggers on the target tables while
         the data is restored.  Use this if you have referential
@@ -423,6 +433,15 @@ exclude database <replaceable class="parameter">PATTERN</replaceable>
      </varlistentry>
 
      <varlistentry>
+      <term><option>--no-data</option></term>
+      <listitem>
+       <para>
+        Do not dump data.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>--no-publications</option></term>
       <listitem>
        <para>
@@ -448,10 +467,28 @@ exclude database <replaceable class="parameter">PATTERN</replaceable>
      </varlistentry>
 
      <varlistentry>
+      <term><option>--no-schema</option></term>
+      <listitem>
+       <para>
+        Do not dump schema (data definitions).
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>--no-security-labels</option></term>
       <listitem>
        <para>
         Do not dump security labels.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>--no-statistics</option></term>
+      <listitem>
+       <para>
+        Do not dump statistics.
        </para>
       </listitem>
      </varlistentry>

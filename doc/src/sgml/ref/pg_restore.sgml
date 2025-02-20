@@ -94,7 +94,7 @@ PostgreSQL documentation
       <term><option>--data-only</option></term>
       <listitem>
        <para>
-        Restore only the data, not the schema (data definitions).
+        Restore only the data, not the schema (data definitions) or statistics.
         Table data, large objects, and sequence values are restored,
         if present in the archive.
        </para>
@@ -483,10 +483,11 @@ PostgreSQL documentation
         to the extent that schema entries are present in the archive.
        </para>
        <para>
-        This option is the inverse of <option>--data-only</option>.
+        This option is mutually exclusive of <option>--data-only</option>
+        and <option>--statistics-only</option>.
         It is similar to, but for historical reasons not identical to,
         specifying
-        <option>--section=pre-data --section=post-data</option>.
+        <option>--section=pre-data --section=post-data --no-statistics</option>.
        </para>
        <para>
         (Do not confuse this with the <option>--schema</option> option, which
@@ -600,6 +601,15 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>--statistics-only</option></term>
+      <listitem>
+       <para>
+        Restore only the statistics, not schema (data definitions) or data.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>-1</option></term>
       <term><option>--single-transaction</option></term>
       <listitem>
@@ -617,7 +627,7 @@ PostgreSQL documentation
       <term><option>--disable-triggers</option></term>
       <listitem>
        <para>
-        This option is relevant only when performing a data-only restore.
+        This option is relevant only when performing a restore without schema.
         It instructs <application>pg_restore</application> to execute commands
         to temporarily disable triggers on the target tables while
         the data is restored.  Use this if you have referential
@@ -682,6 +692,16 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>--no-data</option></term>
+      <listitem>
+       <para>
+        Do not output commands to restore data, even if the archive
+        contains them.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>--no-data-for-failed-tables</option></term>
       <listitem>
        <para>
@@ -714,11 +734,31 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>--no-schema</option></term>
+      <listitem>
+       <para>
+        Do not output commands to restore schema (data definitions), even if
+        the archive contains them.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>--no-security-labels</option></term>
       <listitem>
        <para>
         Do not output commands to restore security labels,
         even if the archive contains them.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>--no-statistics</option></term>
+      <listitem>
+       <para>
+        Do not output commands to restore statistics, even if the archive
+        contains them.
        </para>
       </listitem>
      </varlistentry>

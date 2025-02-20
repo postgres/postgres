@@ -209,7 +209,8 @@ typedef enum
 
 #define REQ_SCHEMA	0x01		/* want schema */
 #define REQ_DATA	0x02		/* want data */
-#define REQ_SPECIAL	0x04		/* for special TOC entries */
+#define REQ_STATS	0x04
+#define REQ_SPECIAL	0x08		/* for special TOC entries */
 
 struct _archiveHandle
 {

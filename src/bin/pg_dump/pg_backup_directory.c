@@ -780,7 +780,7 @@ _PrepParallelRestore(ArchiveHandle *AH)
 			continue;
 
 		/* We may ignore items not due to be restored */
-		if ((te->reqs & REQ_DATA) == 0)
+		if ((te->reqs & (REQ_DATA | REQ_STATS)) == 0)
 			continue;
 
 		/*
