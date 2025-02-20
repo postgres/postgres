@@ -1,9 +1,10 @@
 
 #include "postgres_fe.h"
 
-#include "common/logging.h"
 #include "catalog/tde_keyring.h"
 #include "catalog/tde_global_space.h"
+#include "common/logging.h"
+#include "common/pg_tde_utils.h"
 
 #include <stdarg.h>
 #include <stdio.h>

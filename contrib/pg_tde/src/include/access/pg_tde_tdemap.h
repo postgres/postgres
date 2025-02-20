@@ -9,10 +9,7 @@
 #define PG_TDE_MAP_H
 
 #include "pg_tde.h"
-#include "utils/rel.h"
-#include "access/xlog_internal.h"
 #include "catalog/tde_principal_key.h"
-#include "common/pg_tde_utils.h"
 #include "storage/relfilelocator.h"
 
 /* Map entry flags */
