@@ -2931,6 +2931,16 @@ description | Waiting for a newly initialized WAL file to reach durable storage
   </para>
 
   <para>
+   For the <varname>object</varname> <literal>wal</literal>,
+   <varname>fsyncs</varname> and <varname>fsync_time</varname> track the
+   fsync activity of WAL files done in <function>issue_xlog_fsync</function>.
+   <varname>writes</varname> and <varname>write_time</varname>
+   track the write activity of WAL files done in
+   <function>XLogWrite</function>.
+   See <xref linkend="wal-configuration"/> for more information.
+  </para>
+
+  <para>
    <structname>pg_stat_io</structname> can be used to inform database tuning.
    For example:
    <itemizedlist>
