@@ -2986,7 +2986,7 @@ check_idle_replication_slot_timeout(int *newval, void **extra, GucSource source)
 {
 	if (IsBinaryUpgrade && *newval != 0)
 	{
-		GUC_check_errdetail("The value of \"%s\" must be set to 0 during binary upgrade mode.",
+		GUC_check_errdetail("\"%s\" must be set to 0 during binary upgrade mode.",
 							"idle_replication_slot_timeout");
 		return false;
 	}
