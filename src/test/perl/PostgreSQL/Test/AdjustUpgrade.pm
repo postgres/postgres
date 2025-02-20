@@ -296,7 +296,7 @@ sub adjust_old_dumpfile
 
 	# Same with version argument to pg_restore_relation_stats() or
 	# pg_restore_attribute_stats().
-	$dump =~ s ['version', '${old_version}\d{4}'::integer,]
+	$dump =~ s ['version', '\d+'::integer,]
 		['version', '000000'::integer,]mg;
 
 	if ($old_version < 16)
@@ -633,7 +633,7 @@ sub adjust_new_dumpfile
 
 	# Same with version argument to pg_restore_relation_stats() or
 	# pg_restore_attribute_stats().
-	$dump =~ s ['version', '\d{6}'::integer,]
+	$dump =~ s ['version', '\d+'::integer,]
 		['version', '000000'::integer,]mg;
 
 	if ($old_version < 14)
