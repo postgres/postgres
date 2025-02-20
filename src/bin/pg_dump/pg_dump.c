@@ -4536,13 +4536,6 @@ getPublicationNamespaces(Archive *fout)
 		if (nspinfo == NULL)
 			continue;
 
-		/*
-		 * We always dump publication namespaces unless the corresponding
-		 * namespace is excluded from the dump.
-		 */
-		if (nspinfo->dobj.dump == DUMP_COMPONENT_NONE)
-			continue;
-
 		/* OK, make a DumpableObject for this relationship */
 		pubsinfo[j].dobj.objType = DO_PUBLICATION_TABLE_IN_SCHEMA;
 		pubsinfo[j].dobj.catId.tableoid =
@@ -4640,13 +4633,6 @@ getPublicationTables(Archive *fout, TableInfo tblinfo[], int numTables)
 			continue;
 		tbinfo = findTableByOid(prrelid);
 		if (tbinfo == NULL)
-			continue;
-
-		/*
-		 * Ignore publication membership of tables whose definitions are not
-		 * to be dumped.
-		 */
-		if (!(tbinfo->dobj.dump & DUMP_COMPONENT_DEFINITION))
 			continue;
 
 		/* OK, make a DumpableObject for this relationship */
