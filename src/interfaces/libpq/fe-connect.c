@@ -28,6 +28,7 @@
 #include "common/scram-common.h"
 #include "common/string.h"
 #include "fe-auth.h"
+#include "fe-auth-oauth.h"
 #include "libpq-fe.h"
 #include "libpq-int.h"
 #include "mb/pg_wchar.h"
@@ -373,6 +374,23 @@ static const internalPQconninfoOption PQconninfoOptions[] = {
 	{"scram_server_key", NULL, NULL, NULL, "SCRAM-Server-Key", "D", SCRAM_MAX_KEY_LEN * 2,
 	offsetof(struct pg_conn, scram_server_key)},
 
+	/* OAuth v2 */
+	{"oauth_issuer", NULL, NULL, NULL,
+		"OAuth-Issuer", "", 40,
+	offsetof(struct pg_conn, oauth_issuer)},
+
+	{"oauth_client_id", NULL, NULL, NULL,
+		"OAuth-Client-ID", "", 40,
+	offsetof(struct pg_conn, oauth_client_id)},
+
+	{"oauth_client_secret", NULL, NULL, NULL,
+		"OAuth-Client-Secret", "", 40,
+	offsetof(struct pg_conn, oauth_client_secret)},
+
+	{"oauth_scope", NULL, NULL, NULL,
+		"OAuth-Scope", "", 15,
+	offsetof(struct pg_conn, oauth_scope)},
+
 	/* Terminating entry --- MUST BE LAST */
 	{NULL, NULL, NULL, NULL,
 	NULL, NULL, 0}
@@ -399,6 +417,7 @@ static const PQEnvironmentOption EnvironmentOptions[] =
 static const pg_fe_sasl_mech *supported_sasl_mechs[] =
 {
 	&pg_scram_mech,
+	&pg_oauth_mech,
 };
 #define SASL_MECHANISM_COUNT lengthof(supported_sasl_mechs)
 
@@ -655,6 +674,7 @@ pqDropServerData(PGconn *conn)
 	conn->write_failed = false;
 	free(conn->write_err_msg);
 	conn->write_err_msg = NULL;
+	conn->oauth_want_retry = false;
 
 	/*
 	 * Cancel connections need to retain their be_pid and be_key across
@@ -1144,7 +1164,7 @@ static inline void
 fill_allowed_sasl_mechs(PGconn *conn)
 {
 	/*---
-	 * We only support one mechanism at the moment, so rather than deal with a
+	 * We only support two mechanisms at the moment, so rather than deal with a
 	 * linked list, conn->allowed_sasl_mechs is an array of static length. We
 	 * rely on the compile-time assertion here to keep us honest.
 	 *
@@ -1518,6 +1538,10 @@ pqConnectOptions2(PGconn *conn)
 			else if (strcmp(method, "scram-sha-256") == 0)
 			{
 				mech = &pg_scram_mech;
+			}
+			else if (strcmp(method, "oauth") == 0)
+			{
+				mech = &pg_oauth_mech;
 			}
 
 			/*
@@ -4111,7 +4135,19 @@ keep_going:						/* We will come back to here until there is
 				conn->inStart = conn->inCursor;
 
 				if (res != STATUS_OK)
+				{
+					/*
+					 * OAuth connections may perform two-step discovery, where
+					 * the first connection is a dummy.
+					 */
+					if (conn->sasl == &pg_oauth_mech && conn->oauth_want_retry)
+					{
+						need_new_connection = true;
+						goto keep_going;
+					}
+
 					goto error_return;
+				}
 
 				/*
 				 * Just make sure that any data sent by pg_fe_sendauth is
@@ -4389,6 +4425,9 @@ keep_going:						/* We will come back to here until there is
 						goto keep_going;
 					}
 				}
+
+				/* Don't hold onto any OAuth tokens longer than necessary. */
+				pqClearOAuthToken(conn);
 
 				/*
 				 * For non cancel requests we can release the address list
@@ -5002,6 +5041,12 @@ freePGconn(PGconn *conn)
 	free(conn->load_balance_hosts);
 	free(conn->scram_client_key);
 	free(conn->scram_server_key);
+	free(conn->oauth_issuer);
+	free(conn->oauth_issuer_id);
+	free(conn->oauth_discovery_uri);
+	free(conn->oauth_client_id);
+	free(conn->oauth_client_secret);
+	free(conn->oauth_scope);
 	termPQExpBuffer(&conn->errorMessage);
 	termPQExpBuffer(&conn->workBuffer);
 
@@ -5155,6 +5200,7 @@ pqClosePGconn(PGconn *conn)
 	conn->asyncStatus = PGASYNC_IDLE;
 	conn->xactStatus = PQTRANS_IDLE;
 	conn->pipelineStatus = PQ_PIPELINE_OFF;
+	pqClearOAuthToken(conn);
 	pqClearAsyncResult(conn);	/* deallocate result */
 	pqClearConnErrorState(conn);
 

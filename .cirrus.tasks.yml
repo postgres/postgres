@@ -23,7 +23,7 @@ env:
   MTEST_ARGS: --print-errorlogs --no-rebuild -C build
   PGCTLTIMEOUT: 120 # avoids spurious failures during parallel tests
   TEMP_CONFIG: ${CIRRUS_WORKING_DIR}/src/tools/ci/pg_ci_base.conf
-  PG_TEST_EXTRA: kerberos ldap ssl libpq_encryption load_balance
+  PG_TEST_EXTRA: kerberos ldap ssl libpq_encryption load_balance oauth
 
 
 # What files to preserve in case tests fail
@@ -167,7 +167,7 @@ task:
     chown root:postgres /tmp/cores
     sysctl kern.corefile='/tmp/cores/%N.%P.core'
   setup_additional_packages_script: |
-    #pkg install -y ...
+    pkg install -y curl
 
   # NB: Intentionally build without -Dllvm. The freebsd image size is already
   # large enough to make VM startup slow, and even without llvm freebsd
@@ -329,6 +329,7 @@ LINUX_CONFIGURE_FEATURES: &LINUX_CONFIGURE_FEATURES >-
   --with-gssapi
   --with-icu
   --with-ldap
+  --with-libcurl
   --with-libxml
   --with-libxslt
   --with-llvm
@@ -422,8 +423,10 @@ task:
     EOF
 
   setup_additional_packages_script: |
-    #apt-get update
-    #DEBIAN_FRONTEND=noninteractive apt-get -y install ...
+    apt-get update
+    DEBIAN_FRONTEND=noninteractive apt-get -y install \
+      libcurl4-openssl-dev \
+      libcurl4-openssl-dev:i386 \
 
   matrix:
     - name: Linux - Debian Bookworm - Autoconf
@@ -799,8 +802,8 @@ task:
     folder: $CCACHE_DIR
 
   setup_additional_packages_script: |
-    #apt-get update
-    #DEBIAN_FRONTEND=noninteractive apt-get -y install ...
+    apt-get update
+    DEBIAN_FRONTEND=noninteractive apt-get -y install libcurl4-openssl-dev
 
   ###
   # Test that code can be built with gcc/clang without warnings

@@ -206,3 +206,6 @@ PQsocketPoll              203
 PQsetChunkedRowsMode      204
 PQgetCurrentTimeUSec      205
 PQservice                 206
+PQsetAuthDataHook         207
+PQgetAuthDataHook         208
+PQdefaultAuthDataHook     209

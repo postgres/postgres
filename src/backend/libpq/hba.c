@@ -32,6 +32,7 @@
 #include "libpq/hba.h"
 #include "libpq/ifaddr.h"
 #include "libpq/libpq-be.h"
+#include "libpq/oauth.h"
 #include "postmaster/postmaster.h"
 #include "regex/regex.h"
 #include "replication/walsender.h"
@@ -114,7 +115,8 @@ static const char *const UserAuthName[] =
 	"ldap",
 	"cert",
 	"radius",
-	"peer"
+	"peer",
+	"oauth",
 };
 
 /*
@@ -1747,6 +1749,8 @@ parse_hba_line(TokenizedAuthLine *tok_line, int elevel)
 #endif
 	else if (strcmp(token->string, "radius") == 0)
 		parsedline->auth_method = uaRADIUS;
+	else if (strcmp(token->string, "oauth") == 0)
+		parsedline->auth_method = uaOAuth;
 	else
 	{
 		ereport(elevel,
@@ -2039,6 +2043,36 @@ parse_hba_line(TokenizedAuthLine *tok_line, int elevel)
 		parsedline->clientcert = clientCertFull;
 	}
 
+	/*
+	 * Enforce proper configuration of OAuth authentication.
+	 */
+	if (parsedline->auth_method == uaOAuth)
+	{
+		MANDATORY_AUTH_ARG(parsedline->oauth_scope, "scope", "oauth");
+		MANDATORY_AUTH_ARG(parsedline->oauth_issuer, "issuer", "oauth");
+
+		/* Ensure a validator library is set and permitted by the config. */
+		if (!check_oauth_validator(parsedline, elevel, err_msg))
+			return NULL;
+
+		/*
+		 * Supplying a usermap combined with the option to skip usermapping is
+		 * nonsensical and indicates a configuration error.
+		 */
+		if (parsedline->oauth_skip_usermap && parsedline->usermap != NULL)
+		{
+			ereport(elevel,
+					errcode(ERRCODE_CONFIG_FILE_ERROR),
+			/* translator: strings are replaced with hba options */
+					errmsg("%s cannot be used in combination with %s",
+						   "map", "delegate_ident_mapping"),
+					errcontext("line %d of configuration file \"%s\"",
+							   line_num, file_name));
+			*err_msg = "map cannot be used in combination with delegate_ident_mapping";
+			return NULL;
+		}
+	}
+
 	return parsedline;
 }
 
@@ -2066,8 +2100,9 @@ parse_hba_auth_opt(char *name, char *val, HbaLine *hbaline,
 			hbaline->auth_method != uaPeer &&
 			hbaline->auth_method != uaGSS &&
 			hbaline->auth_method != uaSSPI &&
-			hbaline->auth_method != uaCert)
-			INVALID_AUTH_OPTION("map", gettext_noop("ident, peer, gssapi, sspi, and cert"));
+			hbaline->auth_method != uaCert &&
+			hbaline->auth_method != uaOAuth)
+			INVALID_AUTH_OPTION("map", gettext_noop("ident, peer, gssapi, sspi, cert, and oauth"));
 		hbaline->usermap = pstrdup(val);
 	}
 	else if (strcmp(name, "clientcert") == 0)
@@ -2449,6 +2484,29 @@ parse_hba_auth_opt(char *name, char *val, HbaLine *hbaline,
 
 		hbaline->radiusidentifiers = parsed_identifiers;
 		hbaline->radiusidentifiers_s = pstrdup(val);
+	}
+	else if (strcmp(name, "issuer") == 0)
+	{
+		REQUIRE_AUTH_OPTION(uaOAuth, "issuer", "oauth");
+		hbaline->oauth_issuer = pstrdup(val);
+	}
+	else if (strcmp(name, "scope") == 0)
+	{
+		REQUIRE_AUTH_OPTION(uaOAuth, "scope", "oauth");
+		hbaline->oauth_scope = pstrdup(val);
+	}
+	else if (strcmp(name, "validator") == 0)
+	{
+		REQUIRE_AUTH_OPTION(uaOAuth, "validator", "oauth");
+		hbaline->oauth_validator = pstrdup(val);
+	}
+	else if (strcmp(name, "delegate_ident_mapping") == 0)
+	{
+		REQUIRE_AUTH_OPTION(uaOAuth, "delegate_ident_mapping", "oauth");
+		if (strcmp(val, "1") == 0)
+			hbaline->oauth_skip_usermap = true;
+		else
+			hbaline->oauth_skip_usermap = false;
 	}
 	else
 	{

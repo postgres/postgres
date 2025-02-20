@@ -49,6 +49,7 @@
 #include "jit/jit.h"
 #include "libpq/auth.h"
 #include "libpq/libpq.h"
+#include "libpq/oauth.h"
 #include "libpq/scram.h"
 #include "nodes/queryjumble.h"
 #include "optimizer/cost.h"
@@ -4871,6 +4872,17 @@ struct config_string ConfigureNamesString[] =
 		&restrict_nonsystem_relation_kind_string,
 		"",
 		check_restrict_nonsystem_relation_kind, assign_restrict_nonsystem_relation_kind, NULL
+	},
+
+	{
+		{"oauth_validator_libraries", PGC_SIGHUP, CONN_AUTH_AUTH,
+			gettext_noop("Lists libraries that may be called to validate OAuth v2 bearer tokens."),
+			NULL,
+			GUC_LIST_INPUT | GUC_LIST_QUOTE | GUC_SUPERUSER_ONLY
+		},
+		&oauth_validator_libraries_string,
+		"",
+		NULL, NULL, NULL
 	},
 
 	/* End-of-list marker */

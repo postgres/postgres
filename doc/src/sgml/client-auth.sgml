@@ -656,6 +656,16 @@ include_dir         <replaceable>directory</replaceable>
          </para>
         </listitem>
        </varlistentry>
+
+       <varlistentry>
+        <term><literal>oauth</literal></term>
+        <listitem>
+         <para>
+          Authorize and optionally authenticate using a third-party OAuth 2.0
+          identity provider. See <xref linkend="auth-oauth"/> for details.
+         </para>
+        </listitem>
+       </varlistentry>
       </variablelist>
 
       </para>
@@ -1141,6 +1151,12 @@ omicron         bryanh                  guest1
       <link linkend="auth-bsd">BSD authentication</link>, which
       relies on the BSD Authentication framework (currently available
       only on OpenBSD).
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      <link linkend="auth-oauth">OAuth authorization/authentication</link>,
+      which relies on an external OAuth 2.0 identity provider.
      </para>
     </listitem>
    </itemizedlist>
@@ -2327,6 +2343,242 @@ host ... radius radiusservers="server1,server2" radiussecrets="""secret one"",""
      exists by default on OpenBSD systems.
     </para>
    </note>
+  </sect1>
+
+  <sect1 id="auth-oauth">
+   <title>OAuth Authorization/Authentication</title>
+
+   <indexterm zone="auth-oauth">
+    <primary>OAuth Authorization/Authentication</primary>
+   </indexterm>
+
+   <para>
+    OAuth 2.0 is an industry-standard framework, defined in
+    <ulink url="https://datatracker.ietf.org/doc/html/rfc6749">RFC 6749</ulink>,
+    to enable third-party applications to obtain limited access to a protected
+    resource.
+
+    OAuth client support has to be enabled when <productname>PostgreSQL</productname>
+    is built, see <xref linkend="installation"/> for more information.
+   </para>
+
+   <para>
+    This documentation uses the following terminology when discussing the OAuth
+    ecosystem:
+
+    <variablelist>
+
+     <varlistentry>
+      <term>Resource Owner (or End User)</term>
+      <listitem>
+       <para>
+        The user or system who owns protected resources and can grant access to
+        them. This documentation also uses the term <emphasis>end user</emphasis>
+        when the resource owner is a person. When you use
+        <application>psql</application> to connect to the database using OAuth,
+        you are the resource owner/end user.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>Client</term>
+      <listitem>
+       <para>
+        The system which accesses the protected resources using access
+        tokens. Applications using libpq, such as <application>psql</application>,
+        are the OAuth clients when connecting to a
+        <productname>PostgreSQL</productname> cluster.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>Resource Server</term>
+      <listitem>
+       <para>
+        The system hosting the protected resources which are
+        accessed by the client. The <productname>PostgreSQL</productname>
+        cluster being connected to is the resource server.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>Provider</term>
+      <listitem>
+       <para>
+        The organization, product vendor, or other entity which develops and/or
+        administers the OAuth authorization servers and clients for a given application.
+        Different providers typically choose different implementation details
+        for their OAuth systems; a client of one provider is not generally
+        guaranteed to have access to the servers of another.
+       </para>
+       <para>
+        This use of the term "provider" is not standard, but it seems to be in
+        wide use colloquially. (It should not be confused with OpenID's similar
+        term "Identity Provider". While the implementation of OAuth in
+        <productname>PostgreSQL</productname> is intended to be interoperable
+        and compatible with OpenID Connect/OIDC, it is not itself an OIDC client
+        and does not require its use.)
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>Authorization Server</term>
+      <listitem>
+       <para>
+        The system which receives requests from, and issues access tokens to,
+        the client after the authenticated resource owner has given approval.
+        <productname>PostgreSQL</productname> does not provide an authorization
+        server; it is the responsibility of the OAuth provider.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term id="auth-oauth-issuer">Issuer</term>
+      <listitem>
+       <para>
+        An identifier for an authorization server, printed as an
+        <literal>https://</literal> URL, which provides a trusted "namespace"
+        for OAuth clients and applications. The issuer identifier allows a
+        single authorization server to talk to the clients of mutually
+        untrusting entities, as long as they maintain separate issuers.
+       </para>
+      </listitem>
+     </varlistentry>
+
+    </variablelist>
+
+    <note>
+     <para>
+      For small deployments, there may not be a meaningful distinction between
+      the "provider", "authorization server", and "issuer". However, for more
+      complicated setups, there may be a one-to-many (or many-to-many)
+      relationship: a provider may rent out multiple issuer identifiers to
+      separate tenants, then provide multiple authorization servers, possibly
+      with different supported feature sets, to interact with their clients.
+     </para>
+    </note>
+   </para>
+
+   <para>
+    <productname>PostgreSQL</productname> supports bearer tokens, defined in
+    <ulink url="https://datatracker.ietf.org/doc/html/rfc6750">RFC 6750</ulink>,
+    which are a type of access token used with OAuth 2.0 where the token is an
+    opaque string.  The format of the access token is implementation specific
+    and is chosen by each authorization server.
+   </para>
+
+   <para>
+    The following configuration options are supported for OAuth:
+    <variablelist>
+     <varlistentry>
+      <term><literal>issuer</literal></term>
+      <listitem>
+       <para>
+        An HTTPS URL which is either the exact
+        <link linkend="auth-oauth-issuer">issuer identifier</link> of the
+        authorization server, as defined by its discovery document, or a
+        well-known URI that points directly to that discovery document. This
+        parameter is required.
+       </para>
+       <para>
+        When an OAuth client connects to the server, a URL for the discovery
+        document will be constructed using the issuer identifier. By default,
+        this URL uses the conventions of OpenID Connect Discovery: the path
+        <literal>/.well-known/openid-configuration</literal> will be appended
+        to the end of the issuer identifier. Alternatively, if the
+        <literal>issuer</literal> contains a <literal>/.well-known/</literal>
+        path segment, that URL will be provided to the client as-is.
+       </para>
+       <warning>
+        <para>
+         The OAuth client in libpq requires the server's issuer setting to
+         exactly match the issuer identifier which is provided in the discovery
+         document, which must in turn match the client's
+         <xref linkend="libpq-connect-oauth-issuer"/> setting. No variations in
+         case or formatting are permitted.
+        </para>
+       </warning>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>scope</literal></term>
+      <listitem>
+       <para>
+        A space-separated list of the OAuth scopes needed for the server to
+        both authorize the client and authenticate the user.  Appropriate values
+        are determined by the authorization server and the OAuth validation
+        module used (see <xref linkend="oauth-validators" /> for more
+        information on validators).  This parameter is required.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>validator</literal></term>
+      <listitem>
+       <para>
+        The library to use for validating bearer tokens. If given, the name must
+        exactly match one of the libraries listed in
+        <xref linkend="guc-oauth-validator-libraries" />.  This parameter is
+        optional unless <literal>oauth_validator_libraries</literal> contains
+        more than one library, in which case it is required.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>map</literal></term>
+      <listitem>
+       <para>
+        Allows for mapping between OAuth identity provider and database user
+        names.  See <xref linkend="auth-username-maps"/> for details.  If a
+        map is not specified, the user name associated with the token (as
+        determined by the OAuth validator) must exactly match the role name
+        being requested.  This parameter is optional.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term id="auth-oauth-delegate-ident-mapping" xreflabel="delegate_ident_mapping">
+       <literal>delegate_ident_mapping</literal>
+      </term>
+      <listitem>
+       <para>
+        An advanced option which is not intended for common use.
+       </para>
+       <para>
+        When set to <literal>1</literal>, standard user mapping with
+        <filename>pg_ident.conf</filename> is skipped, and the OAuth validator
+        takes full responsibility for mapping end user identities to database
+        roles.  If the validator authorizes the token, the server trusts that
+        the user is allowed to connect under the requested role, and the
+        connection is allowed to proceed regardless of the authentication
+        status of the user.
+       </para>
+       <para>
+        This parameter is incompatible with <literal>map</literal>.
+       </para>
+       <warning>
+        <para>
+         <literal>delegate_ident_mapping</literal> provides additional
+         flexibility in the design of the authentication system, but it also
+         requires careful implementation of the OAuth validator, which must
+         determine whether the provided token carries sufficient end-user
+         privileges in addition to the <link linkend="oauth-validators">standard
+         checks</link> required of all validators.  Use with caution.
+        </para>
+       </warning>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+   </para>
   </sect1>
 
   <sect1 id="client-authentication-problems">

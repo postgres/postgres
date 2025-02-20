@@ -404,11 +404,11 @@ $node->connect_fails(
 $node->connect_fails(
 	"user=scram_role require_auth=!scram-sha-256",
 	"SCRAM authentication forbidden, fails with SCRAM auth",
-	expected_stderr => qr/server requested SASL authentication/);
+	expected_stderr => qr/server requested SCRAM-SHA-256 authentication/);
 $node->connect_fails(
 	"user=scram_role require_auth=!password,!md5,!scram-sha-256",
 	"multiple authentication types forbidden, fails with SCRAM auth",
-	expected_stderr => qr/server requested SASL authentication/);
+	expected_stderr => qr/server requested SCRAM-SHA-256 authentication/);
 
 # Test that bad passwords are rejected.
 $ENV{"PGPASSWORD"} = 'badpass';
@@ -465,13 +465,13 @@ $node->connect_fails(
 	"user=scram_role require_auth=!scram-sha-256",
 	"password authentication forbidden, fails with SCRAM auth",
 	expected_stderr =>
-	  qr/authentication method requirement "!scram-sha-256" failed: server requested SASL authentication/
+	  qr/authentication method requirement "!scram-sha-256" failed: server requested SCRAM-SHA-256 authentication/
 );
 $node->connect_fails(
 	"user=scram_role require_auth=!password,!md5,!scram-sha-256",
 	"multiple authentication types forbidden, fails with SCRAM auth",
 	expected_stderr =>
-	  qr/authentication method requirement "!password,!md5,!scram-sha-256" failed: server requested SASL authentication/
+	  qr/authentication method requirement "!password,!md5,!scram-sha-256" failed: server requested SCRAM-SHA-256 authentication/
 );
 
 # Test SYSTEM_USER <> NULL with parallel workers.

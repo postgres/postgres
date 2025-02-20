@@ -1,6 +1,7 @@
 # Copyright (c) 2022-2025, PostgreSQL Global Development Group
 
 libpq_sources = files(
+  'fe-auth-oauth.c',
   'fe-auth-scram.c',
   'fe-auth.c',
   'fe-cancel.c',
@@ -35,6 +36,10 @@ if gssapi.found()
     'fe-gssapi-common.c',
     'fe-secure-gssapi.c',
   )
+endif
+
+if libcurl.found()
+  libpq_sources += files('fe-auth-oauth-curl.c')
 endif
 
 export_file = custom_target('libpq.exports',

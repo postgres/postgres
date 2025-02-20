@@ -111,6 +111,7 @@
 <!ENTITY generic-wal SYSTEM "generic-wal.sgml">
 <!ENTITY custom-rmgr SYSTEM "custom-rmgr.sgml">
 <!ENTITY backup-manifest SYSTEM "backup-manifest.sgml">
+<!ENTITY oauth-validators SYSTEM "oauth-validators.sgml">
 
 <!-- contrib information -->
 <!ENTITY contrib         SYSTEM "contrib.sgml">

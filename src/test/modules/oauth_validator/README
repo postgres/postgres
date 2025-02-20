@@ -1,0 +1,13 @@
+Test programs and libraries for OAuth
+-------------------------------------
+
+This folder contains tests for the client- and server-side OAuth
+implementations. Most tests are run end-to-end to test both simultaneously. The
+tests in t/001_server use a mock OAuth authorization server, implemented jointly
+by t/OAuth/Server.pm and t/oauth_server.py, to run the libpq Device
+Authorization flow. The tests in t/002_client exercise custom OAuth flows and
+don't need an authorization server.
+
+Tests in this folder require 'oauth' to be present in PG_TEST_EXTRA, since
+HTTPS servers listening on localhost with TCP/IP sockets will be started. A
+Python installation is required to run the mock authorization server.

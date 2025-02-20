@@ -708,6 +708,9 @@ XML2_LIBS
 XML2_CFLAGS
 XML2_CONFIG
 with_libxml
+LIBCURL_LIBS
+LIBCURL_CFLAGS
+with_libcurl
 with_uuid
 with_readline
 with_systemd
@@ -864,6 +867,7 @@ with_readline
 with_libedit_preferred
 with_uuid
 with_ossp_uuid
+with_libcurl
 with_libxml
 with_libxslt
 with_system_tzdata
@@ -894,6 +898,8 @@ PKG_CONFIG_PATH
 PKG_CONFIG_LIBDIR
 ICU_CFLAGS
 ICU_LIBS
+LIBCURL_CFLAGS
+LIBCURL_LIBS
 XML2_CONFIG
 XML2_CFLAGS
 XML2_LIBS
@@ -1574,6 +1580,7 @@ Optional Packages:
                           prefer BSD Libedit over GNU Readline
   --with-uuid=LIB         build contrib/uuid-ossp using LIB (bsd,e2fs,ossp)
   --with-ossp-uuid        obsolete spelling of --with-uuid=ossp
+  --with-libcurl          build with libcurl support
   --with-libxml           build with XML support
   --with-libxslt          use XSLT support when building contrib/xml2
   --with-system-tzdata=DIR
@@ -1607,6 +1614,10 @@ Some influential environment variables:
               path overriding pkg-config's built-in search path
   ICU_CFLAGS  C compiler flags for ICU, overriding pkg-config
   ICU_LIBS    linker flags for ICU, overriding pkg-config
+  LIBCURL_CFLAGS
+              C compiler flags for LIBCURL, overriding pkg-config
+  LIBCURL_LIBS
+              linker flags for LIBCURL, overriding pkg-config
   XML2_CONFIG path to xml2-config utility
   XML2_CFLAGS C compiler flags for XML2, overriding pkg-config
   XML2_LIBS   linker flags for XML2, overriding pkg-config
@@ -8763,6 +8774,157 @@ fi
 
 
 #
+# libcurl
+#
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to build with libcurl support" >&5
+$as_echo_n "checking whether to build with libcurl support... " >&6; }
+
+
+
+# Check whether --with-libcurl was given.
+if test "${with_libcurl+set}" = set; then :
+  withval=$with_libcurl;
+  case $withval in
+    yes)
+
+$as_echo "#define USE_LIBCURL 1" >>confdefs.h
+
+      ;;
+    no)
+      :
+      ;;
+    *)
+      as_fn_error $? "no argument expected for --with-libcurl option" "$LINENO" 5
+      ;;
+  esac
+
+else
+  with_libcurl=no
+
+fi
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $with_libcurl" >&5
+$as_echo "$with_libcurl" >&6; }
+
+
+if test "$with_libcurl" = yes ; then
+  # Check for libcurl 7.61.0 or higher (corresponding to RHEL8 and the ability
+  # to explicitly set TLS 1.3 ciphersuites).
+
+pkg_failed=no
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for libcurl >= 7.61.0" >&5
+$as_echo_n "checking for libcurl >= 7.61.0... " >&6; }
+
+if test -n "$LIBCURL_CFLAGS"; then
+    pkg_cv_LIBCURL_CFLAGS="$LIBCURL_CFLAGS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"libcurl >= 7.61.0\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "libcurl >= 7.61.0") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_LIBCURL_CFLAGS=`$PKG_CONFIG --cflags "libcurl >= 7.61.0" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+if test -n "$LIBCURL_LIBS"; then
+    pkg_cv_LIBCURL_LIBS="$LIBCURL_LIBS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"libcurl >= 7.61.0\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "libcurl >= 7.61.0") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_LIBCURL_LIBS=`$PKG_CONFIG --libs "libcurl >= 7.61.0" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+
+
+
+if test $pkg_failed = yes; then
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+
+if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
+        _pkg_short_errors_supported=yes
+else
+        _pkg_short_errors_supported=no
+fi
+        if test $_pkg_short_errors_supported = yes; then
+	        LIBCURL_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "libcurl >= 7.61.0" 2>&1`
+        else
+	        LIBCURL_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "libcurl >= 7.61.0" 2>&1`
+        fi
+	# Put the nasty error message in config.log where it belongs
+	echo "$LIBCURL_PKG_ERRORS" >&5
+
+	as_fn_error $? "Package requirements (libcurl >= 7.61.0) were not met:
+
+$LIBCURL_PKG_ERRORS
+
+Consider adjusting the PKG_CONFIG_PATH environment variable if you
+installed software in a non-standard prefix.
+
+Alternatively, you may set the environment variables LIBCURL_CFLAGS
+and LIBCURL_LIBS to avoid the need to call pkg-config.
+See the pkg-config man page for more details." "$LINENO" 5
+elif test $pkg_failed = untried; then
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+	{ { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error $? "The pkg-config script could not be found or is too old.  Make sure it
+is in your PATH or set the PKG_CONFIG environment variable to the full
+path to pkg-config.
+
+Alternatively, you may set the environment variables LIBCURL_CFLAGS
+and LIBCURL_LIBS to avoid the need to call pkg-config.
+See the pkg-config man page for more details.
+
+To get pkg-config, see <http://pkg-config.freedesktop.org/>.
+See \`config.log' for more details" "$LINENO" 5; }
+else
+	LIBCURL_CFLAGS=$pkg_cv_LIBCURL_CFLAGS
+	LIBCURL_LIBS=$pkg_cv_LIBCURL_LIBS
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+
+fi
+
+  # We only care about -I, -D, and -L switches;
+  # note that -lcurl will be added by PGAC_CHECK_LIBCURL below.
+  for pgac_option in $LIBCURL_CFLAGS; do
+    case $pgac_option in
+      -I*|-D*) CPPFLAGS="$CPPFLAGS $pgac_option";;
+    esac
+  done
+  for pgac_option in $LIBCURL_LIBS; do
+    case $pgac_option in
+      -L*) LDFLAGS="$LDFLAGS $pgac_option";;
+    esac
+  done
+
+  # OAuth requires python for testing
+  if test "$with_python" != yes; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: *** OAuth support tests require --with-python to run" >&5
+$as_echo "$as_me: WARNING: *** OAuth support tests require --with-python to run" >&2;}
+  fi
+fi
+
+
+#
 # XML
 #
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to build with XML support" >&5
@@ -12213,6 +12375,176 @@ If you have zlib already installed, see config.log for details on the
 failure.  It is possible the compiler isn't looking in the proper directory.
 Use --without-zlib to disable zlib support." "$LINENO" 5
 fi
+
+fi
+
+# XXX libcurl must link after libgssapi_krb5 on FreeBSD to avoid segfaults
+# during gss_acquire_cred(). This is possibly related to Curl's Heimdal
+# dependency on that platform?
+if test "$with_libcurl" = yes ; then
+
+  ac_fn_c_check_header_mongrel "$LINENO" "curl/curl.h" "ac_cv_header_curl_curl_h" "$ac_includes_default"
+if test "x$ac_cv_header_curl_curl_h" = xyes; then :
+
+else
+  as_fn_error $? "header file <curl/curl.h> is required for --with-libcurl" "$LINENO" 5
+fi
+
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for curl_multi_init in -lcurl" >&5
+$as_echo_n "checking for curl_multi_init in -lcurl... " >&6; }
+if ${ac_cv_lib_curl_curl_multi_init+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lcurl  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char curl_multi_init ();
+int
+main ()
+{
+return curl_multi_init ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_curl_curl_multi_init=yes
+else
+  ac_cv_lib_curl_curl_multi_init=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_curl_curl_multi_init" >&5
+$as_echo "$ac_cv_lib_curl_curl_multi_init" >&6; }
+if test "x$ac_cv_lib_curl_curl_multi_init" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_LIBCURL 1
+_ACEOF
+
+  LIBS="-lcurl $LIBS"
+
+else
+  as_fn_error $? "library 'curl' does not provide curl_multi_init" "$LINENO" 5
+fi
+
+
+  # Check to see whether the current platform supports threadsafe Curl
+  # initialization.
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for curl_global_init thread safety" >&5
+$as_echo_n "checking for curl_global_init thread safety... " >&6; }
+if ${pgac_cv__libcurl_threadsafe_init+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test "$cross_compiling" = yes; then :
+  pgac_cv__libcurl_threadsafe_init=unknown
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+#include <curl/curl.h>
+
+int
+main ()
+{
+
+    curl_version_info_data *info;
+
+    if (curl_global_init(CURL_GLOBAL_ALL))
+        return -1;
+
+    info = curl_version_info(CURLVERSION_NOW);
+#ifdef CURL_VERSION_THREADSAFE
+    if (info->features & CURL_VERSION_THREADSAFE)
+        return 0;
+#endif
+
+    return 1;
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_run "$LINENO"; then :
+  pgac_cv__libcurl_threadsafe_init=yes
+else
+  pgac_cv__libcurl_threadsafe_init=no
+fi
+rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
+  conftest.$ac_objext conftest.beam conftest.$ac_ext
+fi
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $pgac_cv__libcurl_threadsafe_init" >&5
+$as_echo "$pgac_cv__libcurl_threadsafe_init" >&6; }
+  if test x"$pgac_cv__libcurl_threadsafe_init" = xyes ; then
+
+$as_echo "#define HAVE_THREADSAFE_CURL_GLOBAL_INIT 1" >>confdefs.h
+
+  fi
+
+  # Warn if a thread-friendly DNS resolver isn't built.
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for curl support for asynchronous DNS" >&5
+$as_echo_n "checking for curl support for asynchronous DNS... " >&6; }
+if ${pgac_cv__libcurl_async_dns+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test "$cross_compiling" = yes; then :
+  pgac_cv__libcurl_async_dns=unknown
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+#include <curl/curl.h>
+
+int
+main ()
+{
+
+    curl_version_info_data *info;
+
+    if (curl_global_init(CURL_GLOBAL_ALL))
+        return -1;
+
+    info = curl_version_info(CURLVERSION_NOW);
+    return (info->features & CURL_VERSION_ASYNCHDNS) ? 0 : 1;
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_run "$LINENO"; then :
+  pgac_cv__libcurl_async_dns=yes
+else
+  pgac_cv__libcurl_async_dns=no
+fi
+rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
+  conftest.$ac_objext conftest.beam conftest.$ac_ext
+fi
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $pgac_cv__libcurl_async_dns" >&5
+$as_echo "$pgac_cv__libcurl_async_dns" >&6; }
+  if test x"$pgac_cv__libcurl_async_dns" != xyes ; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING:
+*** The installed version of libcurl does not support asynchronous DNS
+*** lookups. Connection timeouts will not be honored during DNS resolution,
+*** which may lead to hangs in client programs." >&5
+$as_echo "$as_me: WARNING:
+*** The installed version of libcurl does not support asynchronous DNS
+*** lookups. Connection timeouts will not be honored during DNS resolution,
+*** which may lead to hangs in client programs." >&2;}
+  fi
 
 fi
 

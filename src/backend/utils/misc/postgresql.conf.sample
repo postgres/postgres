@@ -121,6 +121,9 @@
 #ssl_passphrase_command = ''
 #ssl_passphrase_command_supports_reload = off
 
+# OAuth
+#oauth_validator_libraries = ''	# comma-separated list of trusted validator modules
+
 
 #------------------------------------------------------------------------------
 # RESOURCE USAGE (except WAL)

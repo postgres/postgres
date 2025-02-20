@@ -39,6 +39,7 @@ extern PGDLLIMPORT bool pg_gss_accept_delegation;
 extern void ClientAuthentication(Port *port);
 extern void sendAuthRequest(Port *port, AuthRequest areq, const char *extradata,
 							int extralen);
+extern void set_authn_id(Port *port, const char *id);
 
 /* Hook for plugins to get control in ClientAuthentication() */
 typedef void (*ClientAuthentication_hook_type) (Port *, int);

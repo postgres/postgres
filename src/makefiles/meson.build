@@ -229,6 +229,7 @@ pgxs_deps = {
   'gssapi': gssapi,
   'icu': icu,
   'ldap': ldap,
+  'libcurl': libcurl,
   'libxml': libxml,
   'libxslt': libxslt,
   'llvm': llvm,

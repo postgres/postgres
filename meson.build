@@ -856,6 +856,101 @@ endif
 
 
 ###############################################################
+# Library: libcurl
+###############################################################
+
+libcurlopt = get_option('libcurl')
+if not libcurlopt.disabled()
+  # Check for libcurl 7.61.0 or higher (corresponding to RHEL8 and the ability
+  # to explicitly set TLS 1.3 ciphersuites).
+  libcurl = dependency('libcurl', version: '>= 7.61.0', required: libcurlopt)
+  if libcurl.found()
+    cdata.set('USE_LIBCURL', 1)
+
+    # Check to see whether the current platform supports thread-safe Curl
+    # initialization.
+    libcurl_threadsafe_init = false
+
+    if not meson.is_cross_build()
+      r = cc.run('''
+        #include <curl/curl.h>
+
+        int main(void)
+        {
+            curl_version_info_data *info;
+
+            if (curl_global_init(CURL_GLOBAL_ALL))
+                return -1;
+
+            info = curl_version_info(CURLVERSION_NOW);
+        #ifdef CURL_VERSION_THREADSAFE
+            if (info->features & CURL_VERSION_THREADSAFE)
+                return 0;
+        #endif
+
+            return 1;
+        }''',
+        name: 'test for curl_global_init thread safety',
+        dependencies: libcurl,
+      )
+
+      assert(r.compiled())
+      if r.returncode() == 0
+        libcurl_threadsafe_init = true
+        message('curl_global_init is thread-safe')
+      elif r.returncode() == 1
+        message('curl_global_init is not thread-safe')
+      else
+        message('curl_global_init failed; assuming not thread-safe')
+      endif
+    endif
+
+    if libcurl_threadsafe_init
+      cdata.set('HAVE_THREADSAFE_CURL_GLOBAL_INIT', 1)
+    endif
+
+    # Warn if a thread-friendly DNS resolver isn't built.
+    libcurl_async_dns = false
+
+    if not meson.is_cross_build()
+      r = cc.run('''
+        #include <curl/curl.h>
+
+        int main(void)
+        {
+            curl_version_info_data *info;
+
+            if (curl_global_init(CURL_GLOBAL_ALL))
+                return -1;
+
+            info = curl_version_info(CURLVERSION_NOW);
+            return (info->features & CURL_VERSION_ASYNCHDNS) ? 0 : 1;
+        }''',
+        name: 'test for curl support for asynchronous DNS',
+        dependencies: libcurl,
+      )
+
+      assert(r.compiled())
+      if r.returncode() == 0
+        libcurl_async_dns = true
+      endif
+    endif
+
+    if not libcurl_async_dns
+      warning('''
+*** The installed version of libcurl does not support asynchronous DNS
+*** lookups. Connection timeouts will not be honored during DNS resolution,
+*** which may lead to hangs in client programs.''')
+    endif
+  endif
+
+else
+  libcurl = not_found_dep
+endif
+
+
+
+###############################################################
 # Library: libxml
 ###############################################################
 
@@ -3045,6 +3140,10 @@ libpq_deps += [
 
   gssapi,
   ldap_r,
+  # XXX libcurl must link after libgssapi_krb5 on FreeBSD to avoid segfaults
+  # during gss_acquire_cred(). This is possibly related to Curl's Heimdal
+  # dependency on that platform?
+  libcurl,
   libintl,
   ssl,
 ]
@@ -3721,6 +3820,7 @@ if meson.version().version_compare('>=0.57')
       'gss': gssapi,
       'icu': icu,
       'ldap': ldap,
+      'libcurl': libcurl,
       'libxml': libxml,
       'libxslt': libxslt,
       'llvm': llvm,

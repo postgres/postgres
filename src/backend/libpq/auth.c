@@ -29,6 +29,7 @@
 #include "libpq/auth.h"
 #include "libpq/crypt.h"
 #include "libpq/libpq.h"
+#include "libpq/oauth.h"
 #include "libpq/pqformat.h"
 #include "libpq/sasl.h"
 #include "libpq/scram.h"
@@ -45,7 +46,6 @@
  */
 static void auth_failed(Port *port, int status, const char *logdetail);
 static char *recv_password_packet(Port *port);
-static void set_authn_id(Port *port, const char *id);
 
 
 /*----------------------------------------------------------------
@@ -289,6 +289,9 @@ auth_failed(Port *port, int status, const char *logdetail)
 		case uaRADIUS:
 			errstr = gettext_noop("RADIUS authentication failed for user \"%s\"");
 			break;
+		case uaOAuth:
+			errstr = gettext_noop("OAuth bearer authentication failed for user \"%s\"");
+			break;
 		default:
 			errstr = gettext_noop("authentication failed for user \"%s\": invalid authentication method");
 			break;
@@ -324,7 +327,7 @@ auth_failed(Port *port, int status, const char *logdetail)
  * lifetime of MyClientConnectionInfo, so it is safe to pass a string that is
  * managed by an external library.
  */
-static void
+void
 set_authn_id(Port *port, const char *id)
 {
 	Assert(id);
@@ -610,6 +613,9 @@ ClientAuthentication(Port *port)
 			/* uaCert will be treated as if clientcert=verify-full (uaTrust) */
 		case uaTrust:
 			status = STATUS_OK;
+			break;
+		case uaOAuth:
+			status = CheckSASLAuth(&pg_be_oauth_mech, port, NULL, NULL);
 			break;
 	}
 

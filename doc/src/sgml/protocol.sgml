@@ -1688,11 +1688,11 @@ SELCT 1/0;<!-- this typo is intentional -->
 
   <para>
    <firstterm>SASL</firstterm> is a framework for authentication in connection-oriented
-   protocols. At the moment, <productname>PostgreSQL</productname> implements two SASL
-   authentication mechanisms, SCRAM-SHA-256 and SCRAM-SHA-256-PLUS. More
-   might be added in the future. The below steps illustrate how SASL
-   authentication is performed in general, while the next subsection gives
-   more details on SCRAM-SHA-256 and SCRAM-SHA-256-PLUS.
+   protocols. At the moment, <productname>PostgreSQL</productname> implements three
+   SASL authentication mechanisms: SCRAM-SHA-256, SCRAM-SHA-256-PLUS, and
+   OAUTHBEARER. More might be added in the future. The below steps illustrate how SASL
+   authentication is performed in general, while the next subsections give
+   more details on particular mechanisms.
   </para>
 
   <procedure>
@@ -1727,7 +1727,7 @@ SELCT 1/0;<!-- this typo is intentional -->
    <step id="sasl-auth-end">
     <para>
      Finally, when the authentication exchange is completed successfully, the
-     server sends an AuthenticationSASLFinal message, followed
+     server sends an optional AuthenticationSASLFinal message, followed
      immediately by an AuthenticationOk message. The AuthenticationSASLFinal
      contains additional server-to-client data, whose content is particular to the
      selected authentication mechanism. If the authentication mechanism doesn't
@@ -1746,9 +1746,9 @@ SELCT 1/0;<!-- this typo is intentional -->
    <title>SCRAM-SHA-256 Authentication</title>
 
    <para>
-    The implemented SASL mechanisms at the moment
-    are <literal>SCRAM-SHA-256</literal> and its variant with channel
-    binding <literal>SCRAM-SHA-256-PLUS</literal>. They are described in
+    <literal>SCRAM-SHA-256</literal>, and its variant with channel
+    binding <literal>SCRAM-SHA-256-PLUS</literal>, are password-based
+    authentication mechanisms. They are described in
     detail in <ulink url="https://datatracker.ietf.org/doc/html/rfc7677">RFC 7677</ulink>
     and <ulink url="https://datatracker.ietf.org/doc/html/rfc5802">RFC 5802</ulink>.
    </para>
@@ -1846,6 +1846,121 @@ SELCT 1/0;<!-- this typo is intentional -->
       Server sends an AuthenticationSASLFinal message, with the SCRAM
       <structname>server-final-message</structname>, followed immediately by
       an AuthenticationOk message.
+     </para>
+    </step>
+   </procedure>
+  </sect2>
+
+  <sect2 id="sasl-oauthbearer">
+   <title>OAUTHBEARER Authentication</title>
+
+   <para>
+    <literal>OAUTHBEARER</literal> is a token-based mechanism for federated
+    authentication. It is described in detail in
+    <ulink url="https://datatracker.ietf.org/doc/html/rfc7628">RFC 7628</ulink>.
+   </para>
+
+   <para>
+    A typical exchange differs depending on whether or not the client already
+    has a bearer token cached for the current user. If it does not, the exchange
+    will take place over two connections: the first "discovery" connection to
+    obtain OAuth metadata from the server, and the second connection to send
+    the token after the client has obtained it. (libpq does not currently
+    implement a caching method as part of its builtin flow, so it uses the
+    two-connection exchange.)
+   </para>
+
+   <para>
+    This mechanism is client-initiated, like SCRAM. The client initial response
+    consists of the standard "GS2" header used by SCRAM, followed by a list of
+    <literal>key=value</literal> pairs. The only key currently supported by
+    the server is <literal>auth</literal>, which contains the bearer token.
+    <literal>OAUTHBEARER</literal> additionally specifies three optional
+    components of the client initial response (the <literal>authzid</literal> of
+    the GS2 header, and the <structfield>host</structfield> and
+    <structfield>port</structfield> keys) which are currently ignored by the
+    server.
+   </para>
+
+   <para>
+    <literal>OAUTHBEARER</literal> does not support channel binding, and there
+    is no "OAUTHBEARER-PLUS" mechanism. This mechanism does not make use of
+    server data during a successful authentication, so the
+    AuthenticationSASLFinal message is not used in the exchange.
+   </para>
+
+   <procedure>
+    <title>Example</title>
+    <step>
+     <para>
+      During the first exchange, the server sends an AuthenticationSASL message
+      with the <literal>OAUTHBEARER</literal> mechanism advertised.
+     </para>
+    </step>
+
+    <step>
+     <para>
+      The client responds by sending a SASLInitialResponse message which
+      indicates the <literal>OAUTHBEARER</literal> mechanism. Assuming the
+      client does not already have a valid bearer token for the current user,
+      the <structfield>auth</structfield> field is empty, indicating a discovery
+      connection.
+     </para>
+    </step>
+
+    <step>
+     <para>
+      Server sends an AuthenticationSASLContinue message containing an error
+      <literal>status</literal> alongside a well-known URI and scopes that the
+      client should use to conduct an OAuth flow.
+     </para>
+    </step>
+
+    <step>
+     <para>
+      Client sends a SASLResponse message containing the empty set (a single
+      <literal>0x01</literal> byte) to finish its half of the discovery
+      exchange.
+     </para>
+    </step>
+
+    <step>
+     <para>
+      Server sends an ErrorMessage to fail the first exchange.
+     </para>
+     <para>
+      At this point, the client conducts one of many possible OAuth flows to
+      obtain a bearer token, using any metadata that it has been configured with
+      in addition to that provided by the server. (This description is left
+      deliberately vague; <literal>OAUTHBEARER</literal> does not specify or
+      mandate any particular method for obtaining a token.)
+     </para>
+     <para>
+      Once it has a token, the client reconnects to the server for the final
+      exchange:
+     </para>
+    </step>
+
+    <step>
+     <para>
+      The server once again sends an AuthenticationSASL message with the
+      <literal>OAUTHBEARER</literal> mechanism advertised.
+     </para>
+    </step>
+
+    <step>
+     <para>
+      The client responds by sending a SASLInitialResponse message, but this
+      time the <structfield>auth</structfield> field in the message contains the
+      bearer token that was obtained during the client flow.
+     </para>
+    </step>
+
+    <step>
+     <para>
+      The server validates the token according to the instructions of the
+      token provider. If the client is authorized to connect, it sends an
+      AuthenticationOk message to end the SASL exchange.
      </para>
     </step>
    </procedure>

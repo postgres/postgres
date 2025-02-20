@@ -1209,6 +1209,32 @@ include_dir 'conf.d'
        </para>
       </listitem>
      </varlistentry>
+
+     <varlistentry id="guc-oauth-validator-libraries" xreflabel="oauth_validator_libraries">
+      <term><varname>oauth_validator_libraries</varname> (<type>string</type>)
+      <indexterm>
+       <primary><varname>oauth_validator_libraries</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        The library/libraries to use for validating OAuth connection tokens. If
+        only one validator library is provided, it will be used by default for
+        any OAuth connections; otherwise, all
+        <link linkend="auth-oauth"><literal>oauth</literal> HBA entries</link>
+        must explicitly set a <literal>validator</literal> chosen from this
+        list. If set to an empty string (the default), OAuth connections will be
+        refused. This parameter can only be set in the
+        <filename>postgresql.conf</filename> file.
+       </para>
+       <para>
+        Validator modules must be implemented/obtained separately;
+        <productname>PostgreSQL</productname> does not ship with any default
+        implementations. For more information on implementing OAuth validators,
+        see <xref linkend="oauth-validators" />.
+       </para>
+      </listitem>
+     </varlistentry>
      </variablelist>
      </sect2>
 

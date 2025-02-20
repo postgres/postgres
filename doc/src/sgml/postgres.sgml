@@ -229,6 +229,7 @@ break is not needed in a wider output rendering.
   &logicaldecoding;
   &replication-origins;
   &archive-modules;
+  &oauth-validators;
 
  </part>
 

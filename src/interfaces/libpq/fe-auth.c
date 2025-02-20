@@ -40,9 +40,11 @@
 #endif
 
 #include "common/md5.h"
+#include "common/oauth-common.h"
 #include "common/scram-common.h"
 #include "fe-auth.h"
 #include "fe-auth-sasl.h"
+#include "fe-auth-oauth.h"
 #include "libpq-fe.h"
 
 #ifdef ENABLE_GSS
@@ -535,6 +537,13 @@ pg_SASL_init(PGconn *conn, int payloadlen, bool *async)
 			conn->sasl = &pg_scram_mech;
 			conn->password_needed = true;
 		}
+		else if (strcmp(mechanism_buf.data, OAUTHBEARER_NAME) == 0 &&
+				 !selected_mechanism)
+		{
+			selected_mechanism = OAUTHBEARER_NAME;
+			conn->sasl = &pg_oauth_mech;
+			conn->password_needed = false;
+		}
 	}
 
 	if (!selected_mechanism)
@@ -559,13 +568,6 @@ pg_SASL_init(PGconn *conn, int payloadlen, bool *async)
 
 		if (!allowed)
 		{
-			/*
-			 * TODO: this is dead code until a second SASL mechanism is added;
-			 * the connection can't have proceeded past check_expected_areq()
-			 * if no SASL methods are allowed.
-			 */
-			Assert(false);
-
 			libpq_append_conn_error(conn, "authentication method requirement \"%s\" failed: server requested %s authentication",
 									conn->require_auth, selected_mechanism);
 			goto error;
@@ -1579,4 +1581,24 @@ PQchangePassword(PGconn *conn, const char *user, const char *passwd)
 			}
 		}
 	}
+}
+
+PQauthDataHook_type PQauthDataHook = PQdefaultAuthDataHook;
+
+PQauthDataHook_type
+PQgetAuthDataHook(void)
+{
+	return PQauthDataHook;
+}
+
+void
+PQsetAuthDataHook(PQauthDataHook_type hook)
+{
+	PQauthDataHook = hook ? hook : PQdefaultAuthDataHook;
+}
+
+int
+PQdefaultAuthDataHook(PGauthData type, PGconn *conn, void *data)
+{
+	return 0;					/* handle nothing */
 }

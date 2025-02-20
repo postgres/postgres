@@ -1,0 +1,414 @@
+<!-- doc/src/sgml/oauth-validators.sgml -->
+
+<chapter id="oauth-validators">
+ <title>OAuth Validator Modules</title>
+ <indexterm zone="oauth-validators">
+  <primary>OAuth Validators</primary>
+ </indexterm>
+ <para>
+  <productname>PostgreSQL</productname> provides infrastructure for creating
+  custom modules to perform server-side validation of OAuth bearer tokens.
+  Because OAuth implementations vary so wildly, and bearer token validation is
+  heavily dependent on the issuing party, the server cannot check the token
+  itself; validator modules provide the integration layer between the server
+  and the OAuth provider in use.
+ </para>
+ <para>
+  OAuth validator modules must at least consist of an initialization function
+  (see <xref linkend="oauth-validator-init"/>) and the required callback for
+  performing validation (see <xref linkend="oauth-validator-callback-validate"/>).
+ </para>
+ <warning>
+  <para>
+   Since a misbehaving validator might let unauthorized users into the database,
+   correct implementation is crucial for server safety. See
+   <xref linkend="oauth-validator-design"/> for design considerations.
+  </para>
+ </warning>
+
+ <sect1 id="oauth-validator-design">
+  <title>Safely Designing a Validator Module</title>
+  <warning>
+   <para>
+    Read and understand the entirety of this section before implementing a
+    validator module. A malfunctioning validator is potentially worse than no
+    authentication at all, both because of the false sense of security it
+    provides, and because it may contribute to attacks against other pieces of
+    an OAuth ecosystem.
+   </para>
+  </warning>
+
+  <sect2 id="oauth-validator-design-responsibilities">
+   <title>Validator Responsibilities</title>
+   <para>
+    Although different modules may take very different approaches to token
+    validation, implementations generally need to perform three separate
+    actions:
+   </para>
+   <variablelist>
+    <varlistentry>
+     <term>Validate the Token</term>
+     <listitem>
+      <para>
+       The validator must first ensure that the presented token is in fact a
+       valid Bearer token for use in client authentication. The correct way to
+       do this depends on the provider, but it generally involves either
+       cryptographic operations to prove that the token was created by a trusted
+       party (offline validation), or the presentation of the token to that
+       trusted party so that it can perform validation for you (online
+       validation).
+      </para>
+      <para>
+       Online validation, usually implemented via
+       <ulink url="https://datatracker.ietf.org/doc/html/rfc7662">OAuth Token
+       Introspection</ulink>, requires fewer steps of a validator module and
+       allows central revocation of a token in the event that it is stolen
+       or misissued. However, it does require the module to make at least one
+       network call per authentication attempt (all of which must complete
+       within the configured <xref linkend="guc-authentication-timeout"/>).
+       Additionally, your provider may not provide introspection endpoints for
+       use by external resource servers.
+      </para>
+      <para>
+       Offline validation is much more involved, typically requiring a validator
+       to maintain a list of trusted signing keys for a provider and then
+       check the token's cryptographic signature along with its contents.
+       Implementations must follow the provider's instructions to the letter,
+       including any verification of issuer ("where is this token from?"),
+       audience ("who is this token for?"), and validity period ("when can this
+       token be used?"). Since there is no communication between the module and
+       the provider, tokens cannot be centrally revoked using this method;
+       offline validator implementations may wish to place restrictions on the
+       maximum length of a token's validity period.
+      </para>
+      <para>
+       If the token cannot be validated, the module should immediately fail.
+       Further authentication/authorization is pointless if the bearer token
+       wasn't issued by a trusted party.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term>Authorize the Client</term>
+     <listitem>
+      <para>
+       Next the validator must ensure that the end user has given the client
+       permission to access the server on their behalf. This generally involves
+       checking the scopes that have been assigned to the token, to make sure
+       that they cover database access for the current HBA parameters.
+      </para>
+      <para>
+       The purpose of this step is to prevent an OAuth client from obtaining a
+       token under false pretenses. If the validator requires all tokens to
+       carry scopes that cover database access, the provider should then loudly
+       prompt the user to grant that access during the flow. This gives them the
+       opportunity to reject the request if the client isn't supposed to be
+       using their credentials to connect to databases.
+      </para>
+      <para>
+       While it is possible to establish client authorization without explicit
+       scopes by using out-of-band knowledge of the deployed architecture, doing
+       so removes the user from the loop, which prevents them from catching
+       deployment mistakes and allows any such mistakes to be exploited
+       silently. Access to the database must be tightly restricted to only
+       trusted clients
+       <footnote>
+        <para>
+         That is, "trusted" in the sense that the OAuth client and the
+         <productname>PostgreSQL</productname> server are controlled by the same
+         entity. Notably, the Device Authorization client flow supported by
+         libpq does not usually meet this bar, since it's designed for use by
+         public/untrusted clients.
+        </para>
+       </footnote>
+       if users are not prompted for additional scopes.
+      </para>
+      <para>
+       Even if authorization fails, a module may choose to continue to pull
+       authentication information from the token for use in auditing and
+       debugging.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term>Authenticate the End User</term>
+     <listitem>
+      <para>
+       Finally, the validator should determine a user identifier for the token,
+       either by asking the provider for this information or by extracting it
+       from the token itself, and return that identifier to the server (which
+       will then make a final authorization decision using the HBA
+       configuration). This identifier will be available within the session via
+       <link linkend="functions-info-session-table"><function>system_user</function></link>
+       and recorded in the server logs if <xref linkend="guc-log-connections"/>
+       is enabled.
+      </para>
+      <para>
+       Different providers may record a variety of different authentication
+       information for an end user, typically referred to as
+       <emphasis>claims</emphasis>. Providers usually document which of these
+       claims are trustworthy enough to use for authorization decisions and
+       which are not. (For instance, it would probably not be wise to use an
+       end user's full name as the identifier for authentication, since many
+       providers allow users to change their display names arbitrarily.)
+       Ultimately, the choice of which claim (or combination of claims) to use
+       comes down to the provider implementation and application requirements.
+      </para>
+      <para>
+       Note that anonymous/pseudonymous login is possible as well, by enabling
+       usermap delegation; see
+       <xref linkend="oauth-validator-design-usermap-delegation"/>.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </sect2>
+
+  <sect2 id="oauth-validator-design-guidelines">
+   <title>General Coding Guidelines</title>
+   <para>
+    Developers should keep the following in mind when implementing token
+    validation:
+   </para>
+   <variablelist>
+    <varlistentry>
+     <term>Token Confidentiality</term>
+     <listitem>
+      <para>
+       Modules should not write tokens, or pieces of tokens, into the server
+       log. This is true even if the module considers the token invalid; an
+       attacker who confuses a client into communicating with the wrong provider
+       should not be able to retrieve that (otherwise valid) token from the
+       disk.
+      </para>
+      <para>
+       Implementations that send tokens over the network (for example, to
+       perform online token validation with a provider) must authenticate the
+       peer and ensure that strong transport security is in use.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term>Logging</term>
+     <listitem>
+      <para>
+       Modules may use the same <link linkend="error-message-reporting">logging
+       facilities</link> as standard extensions; however, the rules for emitting
+       log entries to the client are subtly different during the authentication
+       phase of the connection. Generally speaking, modules should log
+       verification problems at the <symbol>COMMERROR</symbol> level and return
+       normally, instead of using <symbol>ERROR</symbol>/<symbol>FATAL</symbol>
+       to unwind the stack, to avoid leaking information to unauthenticated
+       clients.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term>Interruptibility</term>
+     <listitem>
+      <para>
+       Modules must remain interruptible by signals so that the server can
+       correctly handle authentication timeouts and shutdown signals from
+       <application>pg_ctl</application>. For example, a module receiving
+       <symbol>EINTR</symbol>/<symbol>EAGAIN</symbol> from a blocking call
+       should call <function>CHECK_FOR_INTERRUPTS()</function> before retrying.
+       The same should be done during any long-running loops. Failure to follow
+       this guidance may result in unresponsive backend sessions.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term>Testing</term>
+     <listitem>
+      <para>
+       The breadth of testing an OAuth system is well beyond the scope of this
+       documentation, but at minimum, negative testing should be considered
+       mandatory. It's trivial to design a module that lets authorized users in;
+       the whole point of the system is to keep unauthorized users out.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term>Documentation</term>
+     <listitem>
+      <para>
+       Validator implementations should document the contents and format of the
+       authenticated ID that is reported to the server for each end user, since
+       DBAs may need to use this information to construct pg_ident maps. (For
+       instance, is it an email address? an organizational ID number? a UUID?)
+       They should also document whether or not it is safe to use the module in
+       <symbol>delegate_ident_mapping=1</symbol> mode, and what additional
+       configuration is required in order to do so.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </sect2>
+
+  <sect2 id="oauth-validator-design-usermap-delegation">
+   <title>Authorizing Users (Usermap Delegation)</title>
+   <para>
+    The standard deliverable of a validation module is the user identifier,
+    which the server will then compare to any configured
+    <link linkend="auth-username-maps"><filename>pg_ident.conf</filename>
+    mappings</link> and determine whether the end user is authorized to connect.
+    However, OAuth is itself an authorization framework, and tokens may carry
+    information about user privileges. For example, a token may be associated
+    with the organizational groups that a user belongs to, or list the roles
+    that a user may assume, and duplicating that knowledge into local usermaps
+    for every server may not be desirable.
+   </para>
+   <para>
+    To bypass username mapping entirely, and have the validator module assume
+    the additional responsibility of authorizing user connections, the HBA may
+    be configured with <xref linkend="auth-oauth-delegate-ident-mapping"/>.
+    The module may then use token scopes or an equivalent method to decide
+    whether the user is allowed to connect under their desired role. The user
+    identifier will still be recorded by the server, but it plays no part in
+    determining whether to continue the connection.
+   </para>
+   <para>
+    Using this scheme, authentication itself is optional. As long as the module
+    reports that the connection is authorized, login will continue even if there
+    is no recorded user identifier at all. This makes it possible to implement
+    anonymous or pseudonymous access to the database, where the third-party
+    provider performs all necessary authentication but does not provide any
+    user-identifying information to the server. (Some providers may create an
+    anonymized ID number that can be recorded instead, for later auditing.)
+   </para>
+   <para>
+    Usermap delegation provides the most architectural flexibility, but it turns
+    the validator module into a single point of failure for connection
+    authorization. Use with caution.
+   </para>
+  </sect2>
+ </sect1>
+
+ <sect1 id="oauth-validator-init">
+  <title>Initialization Functions</title>
+  <indexterm zone="oauth-validator-init">
+   <primary>_PG_oauth_validator_module_init</primary>
+  </indexterm>
+  <para>
+   OAuth validator modules are dynamically loaded from the shared
+   libraries listed in <xref linkend="guc-oauth-validator-libraries"/>.
+   Modules are loaded on demand when requested from a login in progress.
+   The normal library search path is used to locate the library. To
+   provide the validator callbacks and to indicate that the library is an OAuth
+   validator module a function named
+   <function>_PG_oauth_validator_module_init</function> must be provided. The
+   return value of the function must be a pointer to a struct of type
+   <structname>OAuthValidatorCallbacks</structname>, which contains a magic
+   number and pointers to the module's token validation functions. The returned
+   pointer must be of server lifetime, which is typically achieved by defining
+   it as a <literal>static const</literal> variable in global scope.
+<programlisting>
+typedef struct OAuthValidatorCallbacks
+{
+    uint32        magic;            /* must be set to PG_OAUTH_VALIDATOR_MAGIC */
+
+    ValidatorStartupCB startup_cb;
+    ValidatorShutdownCB shutdown_cb;
+    ValidatorValidateCB validate_cb;
+} OAuthValidatorCallbacks;
+
+typedef const OAuthValidatorCallbacks *(*OAuthValidatorModuleInit) (void);
+</programlisting>
+
+   Only the <function>validate_cb</function> callback is required, the others
+   are optional.
+  </para>
+ </sect1>
+
+ <sect1 id="oauth-validator-callbacks">
+  <title>OAuth Validator Callbacks</title>
+  <para>
+   OAuth validator modules implement their functionality by defining a set of
+   callbacks. The server will call them as required to process the
+   authentication request from the user.
+  </para>
+
+  <sect2 id="oauth-validator-callback-startup">
+   <title>Startup Callback</title>
+   <para>
+    The <function>startup_cb</function> callback is executed directly after
+    loading the module. This callback can be used to set up local state and
+    perform additional initialization if required. If the validator module
+    has state it can use <structfield>state->private_data</structfield> to
+    store it.
+
+<programlisting>
+typedef void (*ValidatorStartupCB) (ValidatorModuleState *state);
+</programlisting>
+   </para>
+  </sect2>
+
+  <sect2 id="oauth-validator-callback-validate">
+   <title>Validate Callback</title>
+   <para>
+    The <function>validate_cb</function> callback is executed during the OAuth
+    exchange when a user attempts to authenticate using OAuth.  Any state set in
+    previous calls will be available in <structfield>state->private_data</structfield>.
+
+<programlisting>
+typedef bool (*ValidatorValidateCB) (const ValidatorModuleState *state,
+                                     const char *token, const char *role,
+                                     ValidatorModuleResult *result);
+</programlisting>
+
+    <replaceable>token</replaceable> will contain the bearer token to validate.
+    <application>PostgreSQL</application> has ensured that the token is well-formed syntactically, but no
+    other validation has been performed.  <replaceable>role</replaceable> will
+    contain the role the user has requested to log in as.  The callback must
+    set output parameters in the <literal>result</literal> struct, which is
+    defined as below:
+
+<programlisting>
+typedef struct ValidatorModuleResult
+{
+    bool        authorized;
+    char       *authn_id;
+} ValidatorModuleResult;
+</programlisting>
+
+    The connection will only proceed if the module sets
+    <structfield>result->authorized</structfield> to <literal>true</literal>.  To
+    authenticate the user, the authenticated user name (as determined using the
+    token) shall be palloc'd and returned in the <structfield>result->authn_id</structfield>
+    field.  Alternatively, <structfield>result->authn_id</structfield> may be set to
+    NULL if the token is valid but the associated user identity cannot be
+    determined.
+   </para>
+   <para>
+    A validator may return <literal>false</literal> to signal an internal error,
+    in which case any result parameters are ignored and the connection fails.
+    Otherwise the validator should return <literal>true</literal> to indicate
+    that it has processed the token and made an authorization decision.
+   </para>
+   <para>
+    The behavior after <function>validate_cb</function> returns depends on the
+    specific HBA setup.  Normally, the <structfield>result->authn_id</structfield> user
+    name must exactly match the role that the user is logging in as.  (This
+    behavior may be modified with a usermap.)  But when authenticating against
+    an HBA rule with <literal>delegate_ident_mapping</literal> turned on,
+    <productname>PostgreSQL</productname> will not perform any checks on the value of
+    <structfield>result->authn_id</structfield> at all; in this case it is up to the
+    validator to ensure that the token carries enough privileges for the user to
+    log in under the indicated <replaceable>role</replaceable>.
+   </para>
+  </sect2>
+
+  <sect2 id="oauth-validator-callback-shutdown">
+   <title>Shutdown Callback</title>
+   <para>
+    The <function>shutdown_cb</function> callback is executed when the backend
+    process associated with the connection exits. If the validator module has
+    any allocated state, this callback should free it to avoid resource leaks.
+<programlisting>
+typedef void (*ValidatorShutdownCB) (ValidatorModuleState *state);
+</programlisting>
+   </para>
+  </sect2>
+
+ </sect1>
+</chapter>

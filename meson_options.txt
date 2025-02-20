@@ -100,6 +100,9 @@ option('icu', type: 'feature', value: 'auto',
 option('ldap', type: 'feature', value: 'auto',
   description: 'LDAP support')
 
+option('libcurl', type : 'feature', value: 'auto',
+  description: 'libcurl support')
+
 option('libedit_preferred', type: 'boolean', value: false,
   description: 'Prefer BSD Libedit over GNU Readline')
 
