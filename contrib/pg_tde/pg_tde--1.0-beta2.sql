@@ -424,22 +424,22 @@ RETURNS table_am_handler
 LANGUAGE C
 AS 'MODULE_PATHNAME';
 
-CREATE FUNCTION pg_tde_internal_has_key(oid OID)
+CREATE FUNCTION pg_tde_internal_has_key(relation regclass)
 RETURNS boolean
 LANGUAGE C
 AS 'MODULE_PATHNAME';
 
-CREATE FUNCTION pg_tde_is_encrypted(table_name TEXT)
+CREATE FUNCTION pg_tde_is_encrypted(table_name regclass)
 RETURNS boolean
 LANGUAGE SQL
 BEGIN ATOMIC
     SELECT EXISTS (
         SELECT 1
         FROM   pg_catalog.pg_class
-        WHERE  oid = table_name::regclass::oid
+        WHERE  oid = table_name
         AND    (relam = (SELECT oid FROM pg_catalog.pg_am WHERE amname = 'tde_heap_basic')
             OR (relam = (SELECT oid FROM pg_catalog.pg_am WHERE amname = 'tde_heap'))
-                AND pg_tde_internal_has_key(table_name::regclass::oid))
+                AND pg_tde_internal_has_key(table_name))
         );
 END;
 
@@ -621,7 +621,7 @@ AS $$
 BEGIN
     EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_list_all_key_providers() TO %I', target_role);
     EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_list_all_global_key_providers() TO %I', target_role);
-    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_is_encrypted(text) TO %I', target_role);
+    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_is_encrypted(regclass) TO %I', target_role);
 
     EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_principal_key_info() TO %I', target_role);
     EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_global_principal_key_info() TO %I', target_role);
@@ -702,7 +702,7 @@ AS $$
 BEGIN
     EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_list_all_key_providers() FROM %I', target_role);
     EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_list_all_global_key_providers() FROM %I', target_role);
-    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_is_encrypted(text) FROM %I', target_role);
+    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_is_encrypted(regclass) FROM %I', target_role);
 
     EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_principal_key_info() FROM %I', target_role);
     EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_global_principal_key_info() FROM %I', target_role);

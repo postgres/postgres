@@ -128,7 +128,7 @@ WHERE dept.deptno IS NULL;
 -- 9. Verify tables are encrypted
 -- ===============================================
 -- Verify all tables exist and are encrypted
-SELECT tablename, pg_tde_is_encrypted(tablename::TEXT) AS is_encrypted
+SELECT tablename, pg_tde_is_encrypted(tablename::regclass) AS is_encrypted
 FROM pg_tables
 WHERE schemaname = 'public'
 AND tablename IN ('dept', 'emp', 'jobhist')
