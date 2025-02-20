@@ -845,13 +845,13 @@ InitWalRecovery(ControlFileData *ControlFile, bool *wasShutdown_ptr,
 		 * tliSwitchPoint will throw an error if the checkpoint's timeline is
 		 * not in expectedTLEs at all.
 		 */
-		switchpoint = tliSwitchPoint(ControlFile->checkPointCopy.ThisTimeLineID, expectedTLEs, NULL);
+		switchpoint = tliSwitchPoint(CheckPointTLI, expectedTLEs, NULL);
 		ereport(FATAL,
 				(errmsg("requested timeline %u is not a child of this server's history",
 						recoveryTargetTLI),
 				 errdetail("Latest checkpoint is at %X/%X on timeline %u, but in the history of the requested timeline, the server forked off from that timeline at %X/%X.",
-						   LSN_FORMAT_ARGS(ControlFile->checkPoint),
-						   ControlFile->checkPointCopy.ThisTimeLineID,
+						   LSN_FORMAT_ARGS(CheckPointLoc),
+						   CheckPointTLI,
 						   LSN_FORMAT_ARGS(switchpoint))));
 	}
 
