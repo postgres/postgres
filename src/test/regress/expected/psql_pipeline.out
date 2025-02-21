@@ -1,0 +1,589 @@
+--
+-- Tests using psql pipelining
+--
+CREATE TABLE psql_pipeline(a INTEGER PRIMARY KEY, s TEXT);
+-- Single query
+\startpipeline
+SELECT $1 \bind 'val1' \g
+\endpipeline
+ ?column? 
+----------
+ val1
+(1 row)
+
+-- Multiple queries
+\startpipeline
+SELECT $1 \bind 'val1' \g
+SELECT $1, $2 \bind 'val2' 'val3' \g
+SELECT $1, $2 \bind 'val2' 'val3' \g
+\endpipeline
+ ?column? 
+----------
+ val1
+(1 row)
+
+ ?column? | ?column? 
+----------+----------
+ val2     | val3
+(1 row)
+
+ ?column? | ?column? 
+----------+----------
+ val2     | val3
+(1 row)
+
+-- Test \flush
+\startpipeline
+\flush
+SELECT $1 \bind 'val1' \g
+\flush
+SELECT $1, $2 \bind 'val2' 'val3' \g
+SELECT $1, $2 \bind 'val2' 'val3' \g
+\endpipeline
+ ?column? 
+----------
+ val1
+(1 row)
+
+ ?column? | ?column? 
+----------+----------
+ val2     | val3
+(1 row)
+
+ ?column? | ?column? 
+----------+----------
+ val2     | val3
+(1 row)
+
+-- Send multiple syncs
+\startpipeline
+SELECT $1 \bind 'val1' \g
+\syncpipeline
+\syncpipeline
+SELECT $1, $2 \bind 'val2' 'val3' \g
+\syncpipeline
+SELECT $1, $2 \bind 'val4' 'val5' \g
+\endpipeline
+ ?column? 
+----------
+ val1
+(1 row)
+
+ ?column? | ?column? 
+----------+----------
+ val2     | val3
+(1 row)
+
+ ?column? | ?column? 
+----------+----------
+ val4     | val5
+(1 row)
+
+-- \startpipeline should not have any effect if already in a pipeline.
+\startpipeline
+\startpipeline
+SELECT $1 \bind 'val1' \g
+\endpipeline
+ ?column? 
+----------
+ val1
+(1 row)
+
+-- Convert an implicit transaction block to an explicit transaction block.
+\startpipeline
+INSERT INTO psql_pipeline VALUES ($1) \bind 1 \g
+BEGIN \bind \g
+INSERT INTO psql_pipeline VALUES ($1) \bind 2 \g
+ROLLBACK \bind \g
+\endpipeline
+-- Multiple explicit transactions
+\startpipeline
+BEGIN \bind \g
+INSERT INTO psql_pipeline VALUES ($1) \bind 1 \g
+ROLLBACK \bind \g
+BEGIN \bind \g
+INSERT INTO psql_pipeline VALUES ($1) \bind 1 \g
+COMMIT \bind \g
+\endpipeline
+-- COPY FROM STDIN
+\startpipeline
+SELECT $1 \bind 'val1' \g
+COPY psql_pipeline FROM STDIN \bind \g
+\endpipeline
+ ?column? 
+----------
+ val1
+(1 row)
+
+-- COPY FROM STDIN with \flushrequest + \getresults
+\startpipeline
+SELECT $1 \bind 'val1' \g
+COPY psql_pipeline FROM STDIN \bind \g
+\flushrequest
+\getresults
+ ?column? 
+----------
+ val1
+(1 row)
+
+message type 0x5a arrived from server while idle
+\endpipeline
+-- COPY FROM STDIN with \syncpipeline + \getresults
+\startpipeline
+SELECT $1 \bind 'val1' \g
+COPY psql_pipeline FROM STDIN \bind \g
+\syncpipeline
+\getresults
+ ?column? 
+----------
+ val1
+(1 row)
+
+\endpipeline
+-- COPY TO STDOUT
+\startpipeline
+SELECT $1 \bind 'val1' \g
+copy psql_pipeline TO STDOUT \bind \g
+\endpipeline
+ ?column? 
+----------
+ val1
+(1 row)
+
+1	\N
+2	test2
+3	test3
+4	test4
+-- COPY TO STDOUT with \flushrequest + \getresults
+\startpipeline
+SELECT $1 \bind 'val1' \g
+copy psql_pipeline TO STDOUT \bind \g
+\flushrequest
+\getresults
+ ?column? 
+----------
+ val1
+(1 row)
+
+1	\N
+2	test2
+3	test3
+4	test4
+\endpipeline
+-- COPY TO STDOUT with \syncpipeline + \getresults
+\startpipeline
+SELECT $1 \bind 'val1' \g
+copy psql_pipeline TO STDOUT \bind \g
+\syncpipeline
+\getresults
+ ?column? 
+----------
+ val1
+(1 row)
+
+1	\N
+2	test2
+3	test3
+4	test4
+\endpipeline
+-- Use \parse and \bind_named
+\startpipeline
+SELECT $1 \parse ''
+SELECT $1, $2 \parse ''
+SELECT $2 \parse pipeline_1
+\bind_named '' 1 2 \g
+\bind_named pipeline_1 2 \g
+\endpipeline
+ERROR:  could not determine data type of parameter $1
+-- \getresults displays all results preceding a \flushrequest.
+\startpipeline
+SELECT $1 \bind 1 \g
+SELECT $1 \bind 2 \g
+\flushrequest
+\getresults
+ ?column? 
+----------
+ 1
+(1 row)
+
+ ?column? 
+----------
+ 2
+(1 row)
+
+\endpipeline
+-- \getresults displays all results preceding a \syncpipeline.
+\startpipeline
+SELECT $1 \bind 1 \g
+SELECT $1 \bind 2 \g
+\syncpipeline
+\getresults
+ ?column? 
+----------
+ 1
+(1 row)
+
+ ?column? 
+----------
+ 2
+(1 row)
+
+\endpipeline
+-- \getresults immediately returns if there is no result to fetch.
+\startpipeline
+\getresults
+No pending results to get
+SELECT $1 \bind 2 \g
+\getresults
+No pending results to get
+\flushrequest
+\endpipeline
+ ?column? 
+----------
+ 2
+(1 row)
+
+\getresults
+No pending results to get
+-- \getresults only fetches results preceding a \flushrequest.
+\startpipeline
+SELECT $1 \bind 2 \g
+\flushrequest
+SELECT $1 \bind 2 \g
+\getresults
+ ?column? 
+----------
+ 2
+(1 row)
+
+\endpipeline
+ ?column? 
+----------
+ 2
+(1 row)
+
+-- \getresults only fetches results preceding a \syncpipeline.
+\startpipeline
+SELECT $1 \bind 2 \g
+\syncpipeline
+SELECT $1 \bind 2 \g
+\getresults
+ ?column? 
+----------
+ 2
+(1 row)
+
+\endpipeline
+ ?column? 
+----------
+ 2
+(1 row)
+
+-- Use pipeline with chunked results for both \getresults and \endpipeline.
+\startpipeline
+\set FETCH_COUNT 10
+SELECT $1 \bind 2 \g
+\flushrequest
+\getresults
+ ?column? 
+----------
+ 2
+(1 row)
+
+SELECT $1 \bind 2 \g
+\endpipeline
+ ?column? 
+----------
+ 2
+(1 row)
+
+\unset FETCH_COUNT
+-- \getresults with specific number of requested results.
+\startpipeline
+SELECT $1 \bind 1 \g
+SELECT $1 \bind 2 \g
+SELECT $1 \bind 3 \g
+\syncpipeline
+\getresults 1
+ ?column? 
+----------
+ 1
+(1 row)
+
+SELECT $1 \bind 4 \g
+\getresults 3
+ ?column? 
+----------
+ 2
+(1 row)
+
+ ?column? 
+----------
+ 3
+(1 row)
+
+\endpipeline
+ ?column? 
+----------
+ 4
+(1 row)
+
+-- \syncpipeline count as one command to fetch for \getresults.
+\startpipeline
+\syncpipeline
+\syncpipeline
+SELECT $1 \bind 1 \g
+\flushrequest
+\getresults 2
+\getresults 1
+ ?column? 
+----------
+ 1
+(1 row)
+
+\endpipeline
+-- \getresults 0 should get all the results.
+\startpipeline
+SELECT $1 \bind 1 \g
+SELECT $1 \bind 2 \g
+SELECT $1 \bind 3 \g
+\syncpipeline
+\getresults 0
+ ?column? 
+----------
+ 1
+(1 row)
+
+ ?column? 
+----------
+ 2
+(1 row)
+
+ ?column? 
+----------
+ 3
+(1 row)
+
+\endpipeline
+--
+-- Pipeline errors
+--
+-- \endpipeline outside of pipeline should fail
+\endpipeline
+cannot send pipeline when not in pipeline mode
+-- Query using simple protocol should not be sent and should leave the
+-- pipeline usable.
+\startpipeline
+SELECT 1;
+PQsendQuery not allowed in pipeline mode
+SELECT $1 \bind 'val1' \g
+\endpipeline
+ ?column? 
+----------
+ val1
+(1 row)
+
+-- After an aborted pipeline, commands after a \syncpipeline should be
+-- displayed.
+\startpipeline
+SELECT $1 \bind \g
+\syncpipeline
+SELECT $1 \bind 1 \g
+\endpipeline
+ERROR:  bind message supplies 0 parameters, but prepared statement "" requires 1
+ ?column? 
+----------
+ 1
+(1 row)
+
+-- For an incorrect number of parameters, the pipeline is aborted and
+-- the following queries will not be executed.
+\startpipeline
+SELECT \bind 'val1' \g
+SELECT $1 \bind 'val1' \g
+\endpipeline
+ERROR:  bind message supplies 1 parameters, but prepared statement "" requires 0
+-- An explicit transaction with an error needs to be rollbacked after
+-- the pipeline.
+\startpipeline
+BEGIN \bind \g
+INSERT INTO psql_pipeline VALUES ($1) \bind 1 \g
+ROLLBACK \bind \g
+\endpipeline
+ERROR:  duplicate key value violates unique constraint "psql_pipeline_pkey"
+DETAIL:  Key (a)=(1) already exists.
+ROLLBACK;
+-- \watch sends a simple query, something not allowed within a pipeline.
+\startpipeline
+SELECT \bind \g
+\watch 1
+PQsendQuery not allowed in pipeline mode
+
+\endpipeline
+--
+(1 row)
+
+-- \gdesc should fail as synchronous commands are not allowed in a pipeline,
+-- and the pipeline should still be usable.
+\startpipeline
+SELECT $1 \bind 1 \gdesc
+synchronous command execution functions are not allowed in pipeline mode
+SELECT $1 \bind 1 \g
+\endpipeline
+ ?column? 
+----------
+ 1
+(1 row)
+
+-- \gset is not allowed in a pipeline, pipeline should still be usable.
+\startpipeline
+SELECT $1 as i, $2 as j \parse ''
+SELECT $1 as k, $2 as l \parse 'second'
+\bind_named '' 1 2 \gset
+\gset not allowed in pipeline mode
+\bind_named second 1 2 \gset pref02_ \echo :pref02_i :pref02_j
+\gset not allowed in pipeline mode
+\bind_named '' 1 2 \g
+\endpipeline
+ i | j 
+---+---
+ 1 | 2
+(1 row)
+
+-- \gx is not allowed, pipeline should still be usable.
+\startpipeline
+SELECT $1 \bind 1 \gx
+\gx not allowed in pipeline mode
+\reset
+SELECT $1 \bind 1 \g
+\endpipeline
+ ?column? 
+----------
+ 1
+(1 row)
+
+-- \gx warning should be emitted in an aborted pipeline, with
+-- pipeline still usable.
+\startpipeline
+SELECT $1 \bind \g
+\flushrequest
+\getresults
+ERROR:  bind message supplies 0 parameters, but prepared statement "" requires 1
+SELECT $1 \bind 1 \gx
+\gx not allowed in pipeline mode
+\endpipeline
+-- \gexec is not allowed, pipeline should still be usable.
+\startpipeline
+SELECT 'INSERT INTO psql_pipeline(a) SELECT generate_series(1, 10)' \parse 'insert_stmt'
+\bind_named insert_stmt \gexec
+\gexec not allowed in pipeline mode
+\bind_named insert_stmt \g
+SELECT COUNT(*) FROM psql_pipeline \bind \g
+\endpipeline
+                          ?column?                          
+------------------------------------------------------------
+ INSERT INTO psql_pipeline(a) SELECT generate_series(1, 10)
+(1 row)
+
+ count 
+-------
+     4
+(1 row)
+
+-- After an error, pipeline is aborted and requires \syncpipeline to be
+-- reusable.
+\startpipeline
+SELECT $1 \bind \g
+SELECT $1 \bind 1 \g
+SELECT $1 \parse a
+\bind_named a 1 \g
+\close a
+\flushrequest
+\getresults
+ERROR:  bind message supplies 0 parameters, but prepared statement "" requires 1
+-- Pipeline is aborted.
+SELECT $1 \bind 1 \g
+SELECT $1 \parse a
+\bind_named a 1 \g
+\close a
+-- Sync allows pipeline to recover.
+\syncpipeline
+\getresults
+Pipeline aborted, command did not run
+SELECT $1 \bind 1 \g
+SELECT $1 \parse a
+\bind_named a 1 \g
+\close a
+\flushrequest
+\getresults
+ ?column? 
+----------
+ 1
+(1 row)
+
+ ?column? 
+----------
+ 1
+(1 row)
+
+\endpipeline
+-- In an aborted pipeline, \getresults 1 aborts commands one at a time.
+\startpipeline
+SELECT $1 \bind \g
+SELECT $1 \bind 1 \g
+SELECT $1 \parse a
+\bind_named a 1 \g
+\syncpipeline
+\getresults 1
+ERROR:  bind message supplies 0 parameters, but prepared statement "" requires 1
+\getresults 1
+Pipeline aborted, command did not run
+\getresults 1
+Pipeline aborted, command did not run
+\getresults 1
+Pipeline aborted, command did not run
+\getresults 1
+\endpipeline
+-- Test chunked results with an aborted pipeline.
+\startpipeline
+\set FETCH_COUNT 10
+SELECT $1 \bind \g
+\flushrequest
+\getresults
+ERROR:  bind message supplies 0 parameters, but prepared statement "" requires 1
+SELECT $1 \bind \g
+\endpipeline
+fetching results in chunked mode failed
+Pipeline aborted, command did not run
+\unset FETCH_COUNT
+-- \getresults returns an error when an incorrect number is provided.
+\startpipeline
+\getresults -1
+\getresults: invalid number of requested results
+\endpipeline
+-- \getresults when there is no result should not impact the next
+-- query executed.
+\getresults 1
+No pending results to get
+select 1;
+ ?column? 
+----------
+        1
+(1 row)
+
+-- Error messages accumulate and are repeated.
+\startpipeline
+SELECT 1 \bind \g
+SELECT 1;
+PQsendQuery not allowed in pipeline mode
+SELECT 1;
+PQsendQuery not allowed in pipeline mode
+PQsendQuery not allowed in pipeline mode
+\endpipeline
+ ?column? 
+----------
+        1
+(1 row)
+
+-- Clean up
+DROP TABLE psql_pipeline;

@@ -69,6 +69,12 @@ typedef enum
 	PSQL_SEND_EXTENDED_PARSE,
 	PSQL_SEND_EXTENDED_QUERY_PARAMS,
 	PSQL_SEND_EXTENDED_QUERY_PREPARED,
+	PSQL_SEND_PIPELINE_SYNC,
+	PSQL_SEND_START_PIPELINE_MODE,
+	PSQL_SEND_END_PIPELINE_MODE,
+	PSQL_SEND_FLUSH,
+	PSQL_SEND_FLUSH_REQUEST,
+	PSQL_SEND_GET_RESULTS,
 } PSQL_SEND_MODE;
 
 typedef enum
@@ -111,6 +117,12 @@ typedef struct _psqlSettings
 	char	  **bind_params;	/* parameters for extended query protocol call */
 	char	   *stmtName;		/* prepared statement name used for extended
 								 * query protocol commands */
+	int			piped_commands; /* number of piped commands */
+	int			piped_syncs;	/* number of piped syncs */
+	int			available_results;	/* number of results available to get */
+	int			requested_results;	/* number of requested results, including
+									 * sync messages.  Used to read a limited
+									 * subset of the available_results. */
 	bool		crosstab_flag;	/* one-shot request to crosstab result */
 	char	   *ctv_args[4];	/* \crosstabview arguments */
 

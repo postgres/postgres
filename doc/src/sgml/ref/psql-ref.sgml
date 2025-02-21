@@ -3674,6 +3674,73 @@ testdb=&gt; <userinput>\setenv LESS -imx4F</userinput>
         </listitem>
       </varlistentry>
 
+     <varlistentry id="app-psql-meta-command-pipeline">
+      <term><literal>\startpipeline</literal></term>
+      <term><literal>\syncpipeline</literal></term>
+      <term><literal>\endpipeline</literal></term>
+      <term><literal>\flushrequest</literal></term>
+      <term><literal>\flush</literal></term>
+      <term><literal>\getresults [ <replaceable class="parameter">number_results</replaceable> ]</literal></term>
+
+      <listitem>
+       <para>
+        This group of commands implements pipelining of SQL statements.
+        A pipeline must begin with a <command>\startpipeline</command>
+        and end with an <command>\endpipeline</command>. In between there
+        may be any number of <command>\syncpipeline</command> commands,
+        which sends a <link linkend="protocol-flow-ext-query">sync message</link>
+        without ending the ongoing pipeline and flushing the send buffer.
+        In pipeline mode, statements are sent to the server without waiting
+        for the results of previous statements.
+        See <xref linkend="libpq-pipeline-mode"/> for more details.
+       </para>
+
+       <para>
+        Pipeline mode requires the use of the extended query protocol. All
+        queries need to be sent using the meta-commands
+        <literal>\bind</literal>, <literal>\bind_named</literal>,
+        <literal>\close</literal> or <literal>\parse</literal>. While a
+        pipeline is ongoing, <literal>\g</literal> will append the current
+        query buffer to the pipeline. Other meta-commands like
+        <literal>\gx</literal> or <literal>\gdesc</literal> are not allowed
+        in pipeline mode.
+       </para>
+
+       <para>
+        <command>\flushrequest</command> appends a flush command to the
+        pipeline, allowing to read results with
+        <command>\getresults</command> without issuing a sync or ending the
+        pipeline. <command>\getresults</command> will automatically push
+        unsent data to the server. <command>\flush</command> can be used to
+        manually push unsent data.
+       </para>
+
+       <para>
+        <command>\getresults</command> accepts an optional
+        <replaceable class="parameter">number_results</replaceable> parameter.
+        If provided, only the first
+        <replaceable class="parameter">number_results</replaceable> pending
+        results will be read. If not provided or <literal>0</literal>, all
+        pending results are read. The commands <literal>\bind</literal>,
+        <literal>\bind_named</literal>, <literal>\close</literal>,
+        <literal>\parse</literal> and <literal>\syncpipeline</literal>
+        generate one result to get.
+       </para>
+
+       <para>
+        Example:
+<programlisting>
+\startpipeline
+SELECT 1 \bind \g
+\flushrequest
+\getresults
+\endpipeline
+</programlisting>
+       </para>
+
+      </listitem>
+     </varlistentry>
+
 
       <varlistentry id="app-psql-meta-command-t-lc">
         <term><literal>\t</literal></term>

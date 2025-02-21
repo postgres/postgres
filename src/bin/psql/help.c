@@ -167,15 +167,22 @@ slashUsage(unsigned short int pager)
 	HELP0("  \\close STMT_NAME       close an existing prepared statement\n");
 	HELP0("  \\copyright             show PostgreSQL usage and distribution terms\n");
 	HELP0("  \\crosstabview [COLUMNS] execute query and display result in crosstab\n");
+	HELP0("  \\endpipeline           exit pipeline mode\n");
 	HELP0("  \\errverbose            show most recent error message at maximum verbosity\n");
+	HELP0("  \\flush                 push unsent data to the server\n");
+	HELP0("  \\flushrequest          send a flushrequest command\n");
 	HELP0("  \\g [(OPTIONS)] [FILE]  execute query (and send result to file or |pipe);\n"
 		  "                         \\g with no arguments is equivalent to a semicolon\n");
 	HELP0("  \\gdesc                 describe result of query, without executing it\n");
+	HELP0("  \\getresults [NUM_RES]  read NUM_RES pending results. All pending results are\n"
+		  "                         read if no argument is provided\n");
 	HELP0("  \\gexec                 execute query, then execute each value in its result\n");
 	HELP0("  \\gset [PREFIX]         execute query and store result in psql variables\n");
 	HELP0("  \\gx [(OPTIONS)] [FILE] as \\g, but forces expanded output mode\n");
 	HELP0("  \\parse STMT_NAME       create a prepared statement\n");
 	HELP0("  \\q                     quit psql\n");
+	HELP0("  \\startpipeline         enter pipeline mode\n");
+	HELP0("  \\syncpipeline          add a synchronisation point to an ongoing pipeline\n");
 	HELP0("  \\watch [[i=]SEC] [c=N] [m=MIN]\n"
 		  "                         execute query every SEC seconds, up to N times,\n"
 		  "                         stop if less than MIN rows are returned\n");

@@ -90,9 +90,12 @@ static backslashResult exec_command_else(PsqlScanState scan_state, ConditionalSt
 										 PQExpBuffer query_buf);
 static backslashResult exec_command_endif(PsqlScanState scan_state, ConditionalStack cstack,
 										  PQExpBuffer query_buf);
+static backslashResult exec_command_endpipeline(PsqlScanState scan_state, bool active_branch);
 static backslashResult exec_command_encoding(PsqlScanState scan_state, bool active_branch);
 static backslashResult exec_command_errverbose(PsqlScanState scan_state, bool active_branch);
 static backslashResult exec_command_f(PsqlScanState scan_state, bool active_branch);
+static backslashResult exec_command_flush(PsqlScanState scan_state, bool active_branch);
+static backslashResult exec_command_flushrequest(PsqlScanState scan_state, bool active_branch);
 static backslashResult exec_command_g(PsqlScanState scan_state, bool active_branch,
 									  const char *cmd);
 static backslashResult process_command_g_options(char *first_option,
@@ -103,6 +106,7 @@ static backslashResult exec_command_gdesc(PsqlScanState scan_state, bool active_
 static backslashResult exec_command_getenv(PsqlScanState scan_state, bool active_branch,
 										   const char *cmd);
 static backslashResult exec_command_gexec(PsqlScanState scan_state, bool active_branch);
+static backslashResult exec_command_getresults(PsqlScanState scan_state, bool active_branch);
 static backslashResult exec_command_gset(PsqlScanState scan_state, bool active_branch);
 static backslashResult exec_command_help(PsqlScanState scan_state, bool active_branch);
 static backslashResult exec_command_html(PsqlScanState scan_state, bool active_branch);
@@ -132,6 +136,8 @@ static backslashResult exec_command_setenv(PsqlScanState scan_state, bool active
 										   const char *cmd);
 static backslashResult exec_command_sf_sv(PsqlScanState scan_state, bool active_branch,
 										  const char *cmd, bool is_func);
+static backslashResult exec_command_startpipeline(PsqlScanState scan_state, bool active_branch);
+static backslashResult exec_command_syncpipeline(PsqlScanState scan_state, bool active_branch);
 static backslashResult exec_command_t(PsqlScanState scan_state, bool active_branch);
 static backslashResult exec_command_T(PsqlScanState scan_state, bool active_branch);
 static backslashResult exec_command_timing(PsqlScanState scan_state, bool active_branch);
@@ -351,18 +357,26 @@ exec_command(const char *cmd,
 		status = exec_command_else(scan_state, cstack, query_buf);
 	else if (strcmp(cmd, "endif") == 0)
 		status = exec_command_endif(scan_state, cstack, query_buf);
+	else if (strcmp(cmd, "endpipeline") == 0)
+		status = exec_command_endpipeline(scan_state, active_branch);
 	else if (strcmp(cmd, "encoding") == 0)
 		status = exec_command_encoding(scan_state, active_branch);
 	else if (strcmp(cmd, "errverbose") == 0)
 		status = exec_command_errverbose(scan_state, active_branch);
 	else if (strcmp(cmd, "f") == 0)
 		status = exec_command_f(scan_state, active_branch);
+	else if (strcmp(cmd, "flush") == 0)
+		status = exec_command_flush(scan_state, active_branch);
+	else if (strcmp(cmd, "flushrequest") == 0)
+		status = exec_command_flushrequest(scan_state, active_branch);
 	else if (strcmp(cmd, "g") == 0 || strcmp(cmd, "gx") == 0)
 		status = exec_command_g(scan_state, active_branch, cmd);
 	else if (strcmp(cmd, "gdesc") == 0)
 		status = exec_command_gdesc(scan_state, active_branch);
 	else if (strcmp(cmd, "getenv") == 0)
 		status = exec_command_getenv(scan_state, active_branch, cmd);
+	else if (strcmp(cmd, "getresults") == 0)
+		status = exec_command_getresults(scan_state, active_branch);
 	else if (strcmp(cmd, "gexec") == 0)
 		status = exec_command_gexec(scan_state, active_branch);
 	else if (strcmp(cmd, "gset") == 0)
@@ -411,6 +425,10 @@ exec_command(const char *cmd,
 		status = exec_command_sf_sv(scan_state, active_branch, cmd, true);
 	else if (strcmp(cmd, "sv") == 0 || strcmp(cmd, "sv+") == 0)
 		status = exec_command_sf_sv(scan_state, active_branch, cmd, false);
+	else if (strcmp(cmd, "startpipeline") == 0)
+		status = exec_command_startpipeline(scan_state, active_branch);
+	else if (strcmp(cmd, "syncpipeline") == 0)
+		status = exec_command_syncpipeline(scan_state, active_branch);
 	else if (strcmp(cmd, "t") == 0)
 		status = exec_command_t(scan_state, active_branch);
 	else if (strcmp(cmd, "T") == 0)
@@ -1516,6 +1534,44 @@ exec_command_f(PsqlScanState scan_state, bool active_branch)
 }
 
 /*
+ * \flush -- call PQflush() on the connection
+ */
+static backslashResult
+exec_command_flush(PsqlScanState scan_state, bool active_branch)
+{
+	backslashResult status = PSQL_CMD_SKIP_LINE;
+
+	if (active_branch)
+	{
+		pset.send_mode = PSQL_SEND_FLUSH;
+		status = PSQL_CMD_SEND;
+	}
+	else
+		ignore_slash_options(scan_state);
+
+	return status;
+}
+
+/*
+ * \flushrequest -- call PQsendFlushRequest() on the connection
+ */
+static backslashResult
+exec_command_flushrequest(PsqlScanState scan_state, bool active_branch)
+{
+	backslashResult status = PSQL_CMD_SKIP_LINE;
+
+	if (active_branch)
+	{
+		pset.send_mode = PSQL_SEND_FLUSH_REQUEST;
+		status = PSQL_CMD_SEND;
+	}
+	else
+		ignore_slash_options(scan_state);
+
+	return status;
+}
+
+/*
  * \g  [(pset-option[=pset-value] ...)] [filename/shell-command]
  * \gx [(pset-option[=pset-value] ...)] [filename/shell-command]
  *
@@ -1550,6 +1606,14 @@ exec_command_g(PsqlScanState scan_state, bool active_branch, const char *cmd)
 
 	if (status == PSQL_CMD_SKIP_LINE && active_branch)
 	{
+		if (strcmp(cmd, "gx") == 0 &&
+			PQpipelineStatus(pset.db) != PQ_PIPELINE_OFF)
+		{
+			pg_log_error("\\gx not allowed in pipeline mode");
+			clean_extended_state();
+			return PSQL_CMD_ERROR;
+		}
+
 		if (!fname)
 			pset.gfname = NULL;
 		else
@@ -1704,6 +1768,42 @@ exec_command_getenv(PsqlScanState scan_state, bool active_branch,
 }
 
 /*
+ * \getresults -- read results
+ */
+static backslashResult
+exec_command_getresults(PsqlScanState scan_state, bool active_branch)
+{
+	backslashResult status = PSQL_CMD_SKIP_LINE;
+
+	if (active_branch)
+	{
+		char	   *opt;
+		int			num_results;
+
+		pset.send_mode = PSQL_SEND_GET_RESULTS;
+		status = PSQL_CMD_SEND;
+		opt = psql_scan_slash_option(scan_state, OT_NORMAL, NULL, false);
+
+		pset.requested_results = 0;
+		if (opt != NULL)
+		{
+			num_results = atoi(opt);
+			if (num_results < 0)
+			{
+				pg_log_error("\\getresults: invalid number of requested results");
+				return PSQL_CMD_SKIP_LINE;
+			}
+			pset.requested_results = num_results;
+		}
+	}
+	else
+		ignore_slash_options(scan_state);
+
+	return status;
+}
+
+
+/*
  * \gexec -- send query and execute each field of result
  */
 static backslashResult
@@ -1713,6 +1813,12 @@ exec_command_gexec(PsqlScanState scan_state, bool active_branch)
 
 	if (active_branch)
 	{
+		if (PQpipelineStatus(pset.db) != PQ_PIPELINE_OFF)
+		{
+			pg_log_error("\\gexec not allowed in pipeline mode");
+			clean_extended_state();
+			return PSQL_CMD_ERROR;
+		}
 		pset.gexec_flag = true;
 		status = PSQL_CMD_SEND;
 	}
@@ -1732,6 +1838,13 @@ exec_command_gset(PsqlScanState scan_state, bool active_branch)
 	{
 		char	   *prefix = psql_scan_slash_option(scan_state,
 													OT_NORMAL, NULL, false);
+
+		if (PQpipelineStatus(pset.db) != PQ_PIPELINE_OFF)
+		{
+			pg_log_error("\\gset not allowed in pipeline mode");
+			clean_extended_state();
+			return PSQL_CMD_ERROR;
+		}
 
 		if (prefix)
 			pset.gset_prefix = prefix;
@@ -2714,6 +2827,63 @@ exec_command_sf_sv(PsqlScanState scan_state, bool active_branch,
 	}
 	else
 		ignore_slash_whole_line(scan_state);
+
+	return status;
+}
+
+/*
+ * \startpipeline -- enter pipeline mode
+ */
+static backslashResult
+exec_command_startpipeline(PsqlScanState scan_state, bool active_branch)
+{
+	backslashResult status = PSQL_CMD_SKIP_LINE;
+
+	if (active_branch)
+	{
+		pset.send_mode = PSQL_SEND_START_PIPELINE_MODE;
+		status = PSQL_CMD_SEND;
+	}
+	else
+		ignore_slash_options(scan_state);
+
+	return status;
+}
+
+/*
+ * \syncpipeline -- send a sync message to an active pipeline
+ */
+static backslashResult
+exec_command_syncpipeline(PsqlScanState scan_state, bool active_branch)
+{
+	backslashResult status = PSQL_CMD_SKIP_LINE;
+
+	if (active_branch)
+	{
+		pset.send_mode = PSQL_SEND_PIPELINE_SYNC;
+		status = PSQL_CMD_SEND;
+	}
+	else
+		ignore_slash_options(scan_state);
+
+	return status;
+}
+
+/*
+ * \endpipeline -- end pipeline mode
+ */
+static backslashResult
+exec_command_endpipeline(PsqlScanState scan_state, bool active_branch)
+{
+	backslashResult status = PSQL_CMD_SKIP_LINE;
+
+	if (active_branch)
+	{
+		pset.send_mode = PSQL_SEND_END_PIPELINE_MODE;
+		status = PSQL_CMD_SEND;
+	}
+	else
+		ignore_slash_options(scan_state);
 
 	return status;
 }
