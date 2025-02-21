@@ -10142,9 +10142,16 @@ get_rule_expr(Node *node, deparse_context *context,
 					}
 				}
 				if (xexpr->op == IS_XMLSERIALIZE)
+				{
 					appendStringInfo(buf, " AS %s",
 									 format_type_with_typemod(xexpr->type,
 															  xexpr->typmod));
+					if (xexpr->indent)
+						appendStringInfoString(buf, " INDENT");
+					else
+						appendStringInfoString(buf, " NO INDENT");
+				}
+
 				if (xexpr->op == IS_DOCUMENT)
 					appendStringInfoString(buf, " IS DOCUMENT");
 				else
