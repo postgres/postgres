@@ -2692,7 +2692,6 @@ BuildSpeculativeIndexInfo(Relation index, IndexInfo *ii)
 			IndexAmTranslateCompareType(COMPARE_EQ,
 										index->rd_rel->relam,
 										index->rd_opfamily[i],
-										index->rd_opcintype[i],
 										false);
 		ii->ii_UniqueOps[i] =
 			get_opfamily_member(index->rd_opfamily[i],

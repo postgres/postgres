@@ -927,7 +927,7 @@ hashbucketcleanup(Relation rel, Bucket cur_bucket, Buffer bucket_buf,
 }
 
 CompareType
-hashtranslatestrategy(StrategyNumber strategy, Oid opfamily, Oid opcintype)
+hashtranslatestrategy(StrategyNumber strategy, Oid opfamily)
 {
 	if (strategy == HTEqualStrategyNumber)
 		return COMPARE_EQ;
@@ -935,7 +935,7 @@ hashtranslatestrategy(StrategyNumber strategy, Oid opfamily, Oid opcintype)
 }
 
 StrategyNumber
-hashtranslatecmptype(CompareType cmptype, Oid opfamily, Oid opcintype)
+hashtranslatecmptype(CompareType cmptype, Oid opfamily)
 {
 	if (cmptype == COMPARE_EQ)
 		return HTEqualStrategyNumber;

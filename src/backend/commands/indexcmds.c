@@ -2468,7 +2468,7 @@ GetOperatorFromCompareType(Oid opclass, Oid rhstype, CompareType cmptype,
 		/*
 		 * Ask the index AM to translate to its internal stratnum
 		 */
-		*strat = IndexAmTranslateCompareType(cmptype, amid, opfamily, opcintype, true);
+		*strat = IndexAmTranslateCompareType(cmptype, amid, opfamily, true);
 		if (*strat == InvalidStrategy)
 			ereport(ERROR,
 					errcode(ERRCODE_UNDEFINED_OBJECT),

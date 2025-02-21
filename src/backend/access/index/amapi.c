@@ -115,14 +115,14 @@ GetIndexAmRoutineByAmId(Oid amoid, bool noerror)
  * true, just return COMPARE_INVALID.
  */
 CompareType
-IndexAmTranslateStrategy(StrategyNumber strategy, Oid amoid, Oid opfamily, Oid opcintype, bool missing_ok)
+IndexAmTranslateStrategy(StrategyNumber strategy, Oid amoid, Oid opfamily, bool missing_ok)
 {
 	CompareType result;
 	IndexAmRoutine *amroutine;
 
 	amroutine = GetIndexAmRoutineByAmId(amoid, false);
 	if (amroutine->amtranslatestrategy)
-		result = amroutine->amtranslatestrategy(strategy, opfamily, opcintype);
+		result = amroutine->amtranslatestrategy(strategy, opfamily);
 	else
 		result = COMPARE_INVALID;
 
@@ -140,14 +140,14 @@ IndexAmTranslateStrategy(StrategyNumber strategy, Oid amoid, Oid opfamily, Oid o
  * to the given cmptype.  If true, just return InvalidStrategy.
  */
 StrategyNumber
-IndexAmTranslateCompareType(CompareType cmptype, Oid amoid, Oid opfamily, Oid opcintype, bool missing_ok)
+IndexAmTranslateCompareType(CompareType cmptype, Oid amoid, Oid opfamily, bool missing_ok)
 {
 	StrategyNumber result;
 	IndexAmRoutine *amroutine;
 
 	amroutine = GetIndexAmRoutineByAmId(amoid, false);
 	if (amroutine->amtranslatecmptype)
-		result = amroutine->amtranslatecmptype(cmptype, opfamily, opcintype);
+		result = amroutine->amtranslatecmptype(cmptype, opfamily);
 	else
 		result = InvalidStrategy;
 

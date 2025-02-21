@@ -10113,7 +10113,7 @@ ATAddForeignKeyConstraint(List **wqueue, AlteredTableInfo *tab, Relation rel,
 		 */
 		for_overlaps = with_period && i == numpks - 1;
 		cmptype = for_overlaps ? COMPARE_OVERLAP : COMPARE_EQ;
-		eqstrategy = IndexAmTranslateCompareType(cmptype, amid, opfamily, opcintype, true);
+		eqstrategy = IndexAmTranslateCompareType(cmptype, amid, opfamily, true);
 		if (eqstrategy == InvalidStrategy)
 			ereport(ERROR,
 					errcode(ERRCODE_UNDEFINED_OBJECT),

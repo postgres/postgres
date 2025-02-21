@@ -1198,6 +1198,12 @@ RETURNS smallint
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT;
 </programlisting>
+
+       And the operator family registration must look like this:
+<programlisting>
+ALTER OPERATOR FAMILY my_opfamily USING gist ADD
+    FUNCTION 12 ("any", "any") my_stratnum(int);
+</programlisting>
       </para>
 
        <para>

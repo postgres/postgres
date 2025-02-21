@@ -102,10 +102,10 @@ typedef struct OpFamilyMember
  */
 
 /* translate AM-specific strategies to general operator types */
-typedef CompareType (*amtranslate_strategy_function) (StrategyNumber strategy, Oid opfamily, Oid opcintype);
+typedef CompareType (*amtranslate_strategy_function) (StrategyNumber strategy, Oid opfamily);
 
 /* translate general operator types to AM-specific strategies */
-typedef StrategyNumber (*amtranslate_cmptype_function) (CompareType cmptype, Oid opfamily, Oid opcintype);
+typedef StrategyNumber (*amtranslate_cmptype_function) (CompareType cmptype, Oid opfamily);
 
 /* build new index */
 typedef IndexBuildResult *(*ambuild_function) (Relation heapRelation,
@@ -319,7 +319,7 @@ typedef struct IndexAmRoutine
 /* Functions in access/index/amapi.c */
 extern IndexAmRoutine *GetIndexAmRoutine(Oid amhandler);
 extern IndexAmRoutine *GetIndexAmRoutineByAmId(Oid amoid, bool noerror);
-extern CompareType IndexAmTranslateStrategy(StrategyNumber strategy, Oid amoid, Oid opfamily, Oid opcintype, bool missing_ok);
-extern StrategyNumber IndexAmTranslateCompareType(CompareType cmptype, Oid amoid, Oid opfamily, Oid opcintype, bool missing_ok);
+extern CompareType IndexAmTranslateStrategy(StrategyNumber strategy, Oid amoid, Oid opfamily, bool missing_ok);
+extern StrategyNumber IndexAmTranslateCompareType(CompareType cmptype, Oid amoid, Oid opfamily, bool missing_ok);
 
 #endif							/* AMAPI_H */

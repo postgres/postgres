@@ -248,6 +248,6 @@ typedef struct
 	do { (e).key = (k); (e).rel = (r); (e).page = (pg); \
 		 (e).offset = (o); (e).leafkey = (l); } while (0)
 
-extern StrategyNumber gisttranslatecmptype(CompareType cmptype, Oid opfamily, Oid opcintype);
+extern StrategyNumber gisttranslatecmptype(CompareType cmptype, Oid opfamily);
 
 #endif							/* GIST_H */

@@ -837,11 +837,9 @@ IsIndexUsableForReplicaIdentityFull(Relation idxrel, AttrMap *attrmap)
 	for (int i = 0; i < idxrel->rd_index->indnkeyatts; i++)
 	{
 		Oid			opfamily;
-		Oid			opcintype;
 
-		if (!get_opclass_opfamily_and_input_type(indclass->values[i], &opfamily, &opcintype))
-			return false;
-		if (IndexAmTranslateCompareType(COMPARE_EQ, idxrel->rd_rel->relam, opfamily, opcintype, true) == InvalidStrategy)
+		opfamily = get_opclass_family(indclass->values[i]);
+		if (IndexAmTranslateCompareType(COMPARE_EQ, idxrel->rd_rel->relam, opfamily, true) == InvalidStrategy)
 			return false;
 	}
 
