@@ -627,6 +627,12 @@ sub adjust_new_dumpfile
 	# Version comments will certainly not match.
 	$dump =~ s/^-- Dumped from database version.*\n//mg;
 
+	# pre-v16 dumps do not know about XMLSERIALIZE(NO INDENT).
+	if ($old_version < 16)
+	{
+		$dump =~ s/XMLSERIALIZE\((.*)? NO INDENT\)/XMLSERIALIZE\($1\)/mg;
+	}
+
 	if ($old_version < 14)
 	{
 		# Suppress noise-word uses of IN in CREATE/ALTER PROCEDURE.
