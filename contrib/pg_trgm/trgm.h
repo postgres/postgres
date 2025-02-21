@@ -40,15 +40,12 @@
 
 typedef char trgm[3];
 
-#define CMPCHAR(a,b) ( ((a)==(b)) ? 0 : ( ((a)<(b)) ? -1 : 1 ) )
-#define CMPPCHAR(a,b,i)  CMPCHAR( *(((const char*)(a))+i), *(((const char*)(b))+i) )
-#define CMPTRGM(a,b) ( CMPPCHAR(a,b,0) ? CMPPCHAR(a,b,0) : ( CMPPCHAR(a,b,1) ? CMPPCHAR(a,b,1) : CMPPCHAR(a,b,2) ) )
-
 #define CPTRGM(a,b) do {				\
 	*(((char*)(a))+0) = *(((char*)(b))+0);	\
 	*(((char*)(a))+1) = *(((char*)(b))+1);	\
 	*(((char*)(a))+2) = *(((char*)(b))+2);	\
 } while(0)
+extern int	(*CMPTRGM) (const void *a, const void *b);
 
 #define ISWORDCHR(c)	(t_isalnum(c))
 #define ISPRINTABLECHAR(a)	( isascii( *(unsigned char*)(a) ) && (isalnum( *(unsigned char*)(a) ) || *(unsigned char*)(a)==' ') )

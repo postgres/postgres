@@ -42,6 +42,9 @@ PG_FUNCTION_INFO_V1(strict_word_similarity_commutator_op);
 PG_FUNCTION_INFO_V1(strict_word_similarity_dist_op);
 PG_FUNCTION_INFO_V1(strict_word_similarity_dist_commutator_op);
 
+static int	CMPTRGM_CHOOSE(const void *a, const void *b);
+int			(*CMPTRGM) (const void *a, const void *b) = CMPTRGM_CHOOSE;
+
 /* Trigram with position */
 typedef struct
 {
@@ -105,6 +108,47 @@ _PG_init(void)
 							 NULL);
 
 	MarkGUCPrefixReserved("pg_trgm");
+}
+
+#define CMPCHAR(a,b) ( ((a)==(b)) ? 0 : ( ((a)<(b)) ? -1 : 1 ) )
+
+/*
+ * Functions for comparing two trgms while treating each char as "signed char" or
+ * "unsigned char".
+ */
+static inline int
+CMPTRGM_SIGNED(const void *a, const void *b)
+{
+#define CMPPCHAR_S(a,b,i)  CMPCHAR( *(((const signed char*)(a))+i), *(((const signed char*)(b))+i) )
+
+	return CMPPCHAR_S(a, b, 0) ? CMPPCHAR_S(a, b, 0)
+		: (CMPPCHAR_S(a, b, 1) ? CMPPCHAR_S(a, b, 1)
+		   : CMPPCHAR_S(a, b, 2));
+}
+
+static inline int
+CMPTRGM_UNSIGNED(const void *a, const void *b)
+{
+#define CMPPCHAR_UNS(a,b,i)  CMPCHAR( *(((const unsigned char*)(a))+i), *(((const unsigned char*)(b))+i) )
+
+	return CMPPCHAR_UNS(a, b, 0) ? CMPPCHAR_UNS(a, b, 0)
+		: (CMPPCHAR_UNS(a, b, 1) ? CMPPCHAR_UNS(a, b, 1)
+		   : CMPPCHAR_UNS(a, b, 2));
+}
+
+/*
+ * This gets called on the first call. It replaces the function pointer so
+ * that subsequent calls are routed directly to the chosen implementation.
+ */
+static int
+CMPTRGM_CHOOSE(const void *a, const void *b)
+{
+	if (GetDefaultCharSignedness())
+		CMPTRGM = CMPTRGM_SIGNED;
+	else
+		CMPTRGM = CMPTRGM_UNSIGNED;
+
+	return CMPTRGM(a, b);
 }
 
 /*
