@@ -636,6 +636,12 @@ sub adjust_new_dumpfile
 	$dump =~ s ['version', '\d+'::integer,]
 		['version', '000000'::integer,]mg;
 
+	# pre-v16 dumps do not know about XMLSERIALIZE(NO INDENT).
+	if ($old_version < 16)
+	{
+		$dump =~ s/XMLSERIALIZE\((.*)? NO INDENT\)/XMLSERIALIZE\($1\)/mg;
+	}
+
 	if ($old_version < 14)
 	{
 		# Suppress noise-word uses of IN in CREATE/ALTER PROCEDURE.
