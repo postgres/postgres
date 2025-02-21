@@ -175,7 +175,7 @@ static void ReqShutdownXLOG(SIGNAL_ARGS);
  * basic execution environment, but not enabled signals yet.
  */
 void
-CheckpointerMain(char *startup_data, size_t startup_data_len)
+CheckpointerMain(const void *startup_data, size_t startup_data_len)
 {
 	sigjmp_buf	local_sigjmp_buf;
 	MemoryContext checkpointer_context;

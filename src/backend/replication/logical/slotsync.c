@@ -1326,7 +1326,7 @@ reset_syncing_flag()
  * information periodically in order to create and sync the slots.
  */
 void
-ReplSlotSyncWorkerMain(char *startup_data, size_t startup_data_len)
+ReplSlotSyncWorkerMain(const void *startup_data, size_t startup_data_len)
 {
 	WalReceiverConn *wrconn = NULL;
 	char	   *dbname;

@@ -18,6 +18,6 @@
 extern PGDLLIMPORT int WalWriterDelay;
 extern PGDLLIMPORT int WalWriterFlushAfter;
 
-extern void WalWriterMain(char *startup_data, size_t startup_data_len) pg_attribute_noreturn();
+extern void WalWriterMain(const void *startup_data, size_t startup_data_len) pg_attribute_noreturn();
 
 #endif							/* _WALWRITER_H */

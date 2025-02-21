@@ -214,7 +214,7 @@ PgArchCanRestart(void)
 
 /* Main entry point for archiver process */
 void
-PgArchiverMain(char *startup_data, size_t startup_data_len)
+PgArchiverMain(const void *startup_data, size_t startup_data_len)
 {
 	Assert(startup_data_len == 0);
 

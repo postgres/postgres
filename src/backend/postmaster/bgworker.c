@@ -714,7 +714,7 @@ bgworker_die(SIGNAL_ARGS)
  * Main entry point for background worker processes.
  */
 void
-BackgroundWorkerMain(char *startup_data, size_t startup_data_len)
+BackgroundWorkerMain(const void *startup_data, size_t startup_data_len)
 {
 	sigjmp_buf	local_sigjmp_buf;
 	BackgroundWorker *worker;

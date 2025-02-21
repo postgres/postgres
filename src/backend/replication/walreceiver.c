@@ -180,7 +180,7 @@ ProcessWalRcvInterrupts(void)
 
 /* Main entry point for walreceiver process */
 void
-WalReceiverMain(char *startup_data, size_t startup_data_len)
+WalReceiverMain(const void *startup_data, size_t startup_data_len)
 {
 	char		conninfo[MAXCONNINFO];
 	char	   *tmp_conninfo;

@@ -56,9 +56,9 @@ static void StartupPacketTimeoutHandler(void);
  * client, and start the main processing loop.
  */
 void
-BackendMain(char *startup_data, size_t startup_data_len)
+BackendMain(const void *startup_data, size_t startup_data_len)
 {
-	BackendStartupData *bsdata = (BackendStartupData *) startup_data;
+	const BackendStartupData *bsdata = startup_data;
 
 	Assert(startup_data_len == sizeof(BackendStartupData));
 	Assert(MyClientSocket != NULL);

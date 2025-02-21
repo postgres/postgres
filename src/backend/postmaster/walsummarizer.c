@@ -208,7 +208,7 @@ WalSummarizerShmemInit(void)
  * Entry point for walsummarizer process.
  */
 void
-WalSummarizerMain(char *startup_data, size_t startup_data_len)
+WalSummarizerMain(const void *startup_data, size_t startup_data_len)
 {
 	sigjmp_buf	local_sigjmp_buf;
 	MemoryContext context;

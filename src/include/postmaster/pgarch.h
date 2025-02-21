@@ -29,7 +29,7 @@
 extern Size PgArchShmemSize(void);
 extern void PgArchShmemInit(void);
 extern bool PgArchCanRestart(void);
-extern void PgArchiverMain(char *startup_data, size_t startup_data_len) pg_attribute_noreturn();
+extern void PgArchiverMain(const void *startup_data, size_t startup_data_len) pg_attribute_noreturn();
 extern void PgArchWakeup(void);
 extern void PgArchForceDirScan(void);
 

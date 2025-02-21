@@ -213,7 +213,7 @@ StartupProcExit(int code, Datum arg)
  * ----------------------------------
  */
 void
-StartupProcessMain(char *startup_data, size_t startup_data_len)
+StartupProcessMain(const void *startup_data, size_t startup_data_len)
 {
 	Assert(startup_data_len == 0);
 

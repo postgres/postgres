@@ -149,7 +149,7 @@ typedef struct
 
 #define SizeOfBackendParameters(startup_data_len) (offsetof(BackendParameters, startup_data) + startup_data_len)
 
-static void read_backend_variables(char *id, char **startup_data, size_t *startup_data_len);
+static void read_backend_variables(char *id, void **startup_data, size_t *startup_data_len);
 static void restore_backend_variables(BackendParameters *param);
 
 static bool save_backend_variables(BackendParameters *param, int child_slot,
@@ -157,10 +157,10 @@ static bool save_backend_variables(BackendParameters *param, int child_slot,
 #ifdef WIN32
 								   HANDLE childProcess, pid_t childPid,
 #endif
-								   char *startup_data, size_t startup_data_len);
+								   const void *startup_data, size_t startup_data_len);
 
 static pid_t internal_forkexec(const char *child_kind, int child_slot,
-							   char *startup_data, size_t startup_data_len,
+							   const void *startup_data, size_t startup_data_len,
 							   ClientSocket *client_sock);
 
 #endif							/* EXEC_BACKEND */
@@ -171,7 +171,7 @@ static pid_t internal_forkexec(const char *child_kind, int child_slot,
 typedef struct
 {
 	const char *name;
-	void		(*main_fn) (char *startup_data, size_t startup_data_len) pg_attribute_noreturn();
+	void		(*main_fn) (const void *startup_data, size_t startup_data_len) pg_attribute_noreturn();
 	bool		shmem_attach;
 } child_process_kind;
 
@@ -225,7 +225,7 @@ PostmasterChildName(BackendType child_type)
  */
 pid_t
 postmaster_child_launch(BackendType child_type, int child_slot,
-						char *startup_data, size_t startup_data_len,
+						const void *startup_data, size_t startup_data_len,
 						ClientSocket *client_sock)
 {
 	pid_t		pid;
@@ -289,7 +289,7 @@ postmaster_child_launch(BackendType child_type, int child_slot,
  */
 static pid_t
 internal_forkexec(const char *child_kind, int child_slot,
-				  char *startup_data, size_t startup_data_len, ClientSocket *client_sock)
+				  const void *startup_data, size_t startup_data_len, ClientSocket *client_sock)
 {
 	static unsigned long tmpBackendFileNum = 0;
 	pid_t		pid;
@@ -399,7 +399,7 @@ internal_forkexec(const char *child_kind, int child_slot,
  */
 static pid_t
 internal_forkexec(const char *child_kind, int child_slot,
-				  char *startup_data, size_t startup_data_len, ClientSocket *client_sock)
+				  const void *startup_data, size_t startup_data_len, ClientSocket *client_sock)
 {
 	int			retry_count = 0;
 	STARTUPINFO si;
@@ -581,7 +581,7 @@ retry:
 void
 SubPostmasterMain(int argc, char *argv[])
 {
-	char	   *startup_data;
+	void	   *startup_data;
 	size_t		startup_data_len;
 	char	   *child_kind;
 	BackendType child_type;
@@ -699,7 +699,7 @@ save_backend_variables(BackendParameters *param,
 #ifdef WIN32
 					   HANDLE childProcess, pid_t childPid,
 #endif
-					   char *startup_data, size_t startup_data_len)
+					   const void *startup_data, size_t startup_data_len)
 {
 	if (client_sock)
 		memcpy(&param->client_sock, client_sock, sizeof(ClientSocket));
@@ -867,7 +867,7 @@ read_inheritable_socket(SOCKET *dest, InheritableSocket *src)
 #endif
 
 static void
-read_backend_variables(char *id, char **startup_data, size_t *startup_data_len)
+read_backend_variables(char *id, void **startup_data, size_t *startup_data_len)
 {
 	BackendParameters param;
 

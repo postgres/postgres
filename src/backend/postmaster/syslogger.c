@@ -162,7 +162,7 @@ typedef struct
  * argc/argv parameters are valid only in EXEC_BACKEND case.
  */
 void
-SysLoggerMain(char *startup_data, size_t startup_data_len)
+SysLoggerMain(const void *startup_data, size_t startup_data_len)
 {
 #ifndef WIN32
 	char		logbuffer[READ_BUF_SIZE];
@@ -183,7 +183,7 @@ SysLoggerMain(char *startup_data, size_t startup_data_len)
 	 */
 #ifdef EXEC_BACKEND
 	{
-		SysloggerStartupData *slsdata = (SysloggerStartupData *) startup_data;
+		const SysloggerStartupData *slsdata = startup_data;
 
 		Assert(startup_data_len == sizeof(*slsdata));
 		syslogFile = syslogger_fdopen(slsdata->syslogFile);
@@ -699,7 +699,7 @@ SysLogger_Start(int child_slot)
 	startup_data.csvlogFile = syslogger_fdget(csvlogFile);
 	startup_data.jsonlogFile = syslogger_fdget(jsonlogFile);
 	sysloggerPid = postmaster_child_launch(B_LOGGER, child_slot,
-										   (char *) &startup_data, sizeof(startup_data), NULL);
+										   &startup_data, sizeof(startup_data), NULL);
 #else
 	sysloggerPid = postmaster_child_launch(B_LOGGER, child_slot,
 										   NULL, 0, NULL);

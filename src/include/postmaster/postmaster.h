@@ -109,7 +109,7 @@ extern PGDLLIMPORT struct ClientSocket *MyClientSocket;
 /* prototypes for functions in launch_backend.c */
 extern pid_t postmaster_child_launch(BackendType child_type,
 									 int child_slot,
-									 char *startup_data,
+									 const void *startup_data,
 									 size_t startup_data_len,
 									 struct ClientSocket *client_sock);
 const char *PostmasterChildName(BackendType child_type);

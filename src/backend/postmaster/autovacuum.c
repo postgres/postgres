@@ -364,7 +364,7 @@ static void check_av_worker_gucs(void);
  * Main entry point for the autovacuum launcher process.
  */
 void
-AutoVacLauncherMain(char *startup_data, size_t startup_data_len)
+AutoVacLauncherMain(const void *startup_data, size_t startup_data_len)
 {
 	sigjmp_buf	local_sigjmp_buf;
 
@@ -1371,7 +1371,7 @@ avl_sigusr2_handler(SIGNAL_ARGS)
  * Main entry point for autovacuum worker processes.
  */
 void
-AutoVacWorkerMain(char *startup_data, size_t startup_data_len)
+AutoVacWorkerMain(const void *startup_data, size_t startup_data_len)
 {
 	sigjmp_buf	local_sigjmp_buf;
 	Oid			dbid;
