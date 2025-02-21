@@ -69,6 +69,7 @@ fmgrtab_target = custom_target('fmgrtab',
 
 generated_backend_headers += fmgrtab_target[0]
 generated_backend_headers += fmgrtab_target[1]
+bc_generated_sources += fmgrtab_target[2]
 
 # autoconf generates the file there, ensure we get a conflict
 generated_sources_ac += {

@@ -814,6 +814,50 @@ if add_languages('cpp', required: llvmopt, native: false)
     # Some distros put LLVM and clang in different paths, so fallback to
     # find via PATH, too.
     clang = find_program(llvm_binpath / 'clang', 'clang', required: true)
+    llvm_lto = find_program(llvm_binpath / 'llvm-lto', required: true)
+    irlink = find_program('src/tools/irlink', native: true)
+
+    # Define a few bits and pieces used here and elsewhere to generate bitcode
+
+    llvm_irgen_args = [
+      '-c', '-o', '@OUTPUT@', '@INPUT@',
+      '-flto=thin', '-emit-llvm',
+      '-MD', '-MQ', '@OUTPUT@', '-MF', '@DEPFILE@',
+      '-O2',
+      '-Wno-ignored-attributes',
+      '-Wno-empty-body',
+    ]
+
+    if ccache.found()
+      llvm_irgen_command = ccache
+      llvm_irgen_args = [clang.path()] + llvm_irgen_args
+    else
+      llvm_irgen_command = clang
+    endif
+
+    llvm_irlink_kw = {
+      'command': [
+        irlink,
+        '--name', 'postgres',
+        '--lto', llvm_lto,
+        '--outdir', '@OUTPUT0@',
+        '--privdir', '@PRIVATE_DIR@',
+        '@INPUT@',
+      ],
+      'install': true,
+      'install_dir': dir_lib_pkg,
+    }
+
+    # XXX: Need to determine proper version of the function cflags for clang
+    bitcode_cflags = ['-fno-strict-aliasing', '-fwrapv']
+    bitcode_cflags += get_option('c_args')
+    bitcode_cflags += cppflags
+
+    # XXX: Worth improving on the logic to find directories here
+    bitcode_cflags += '-I@BUILD_ROOT@/src/include'
+    bitcode_cflags += '-I@BUILD_ROOT@/src/backend/utils/misc'
+    bitcode_cflags += '-I@SOURCE_ROOT@/src/include'
+
   endif
 elif llvmopt.auto()
   message('llvm requires a C++ compiler')
@@ -3061,6 +3105,12 @@ generated_sources = []
 # elements are [dir, [files]]
 generated_sources_ac = {}
 
+# contrib source files used to generate bitcode (--with-llvm)
+llvm_contrib_sources = []
+
+# bitcode files generated from generated source files
+bc_generated_sources = []
+bc_gen_custom = []
 
 # First visit src/include - all targets creating headers are defined
 # within. That makes it easy to add the necessary dependencies for the
@@ -3272,6 +3322,59 @@ above, or by running configure and then make maintainer-clean.
   error(errmsg_nonclean_base.format(errmsg_cleanup))
 endif
 
+
+###############################################################
+# emit LLVM bitcode of backend/contrib code for JIT inlining
+###############################################################
+
+if llvm.found()
+  # custom_target() insists on targeting files into the current
+  # directory. But we have files with the same name in different
+  # subdirectories.  generators() don't have that problem, but their results
+  # are not installable. The irlink command copies the files for us.
+  #
+  # generators don't accept CustomTargetIndex as input or 'depends', nor do
+  # they like targets with more than one output. However, a custom target
+  # accepts them as input without a problem. So we have the below transitive
+  # target :(
+
+  transitive_depend_target = custom_target('stamp',
+    input: generated_headers + generated_backend_headers + generated_backend_sources,
+    output: 'stamp',
+    command: ['touch', '@OUTPUT@'],
+    install: false)
+
+  llvm_gen = generator(llvm_irgen_command,
+    arguments: llvm_irgen_args + bitcode_cflags,
+    depends: [transitive_depend_target] + contrib_targets,
+    depfile: '@BASENAME@.c.bc.d',
+    output: '@PLAINNAME@.bc',
+  )
+
+  bc_backend_sources = llvm_gen.process(backend_sources,
+    preserve_path_from: meson.current_source_dir())
+
+  # need to convert generated filenames from relative to absolute paths.
+  # otherwise the generator will not find the files as it uses the current working
+  # directory as base for the filenames.
+  generated_filenames = []
+  foreach gen: bc_generated_sources
+    generated_filenames += gen.full_path()
+  endforeach
+
+  bc_gen_sources = llvm_gen.process(generated_filenames)
+
+  # bc_contrib_sources = llvm_gen.process(llvm_contrib_sources)
+
+  postgres_llvm = custom_target('bitcode',
+    output: ['bitcode'],
+    # input: [bc_backend_sources, bc_generated_sources, bc_contrib_sources],
+    input: [bc_backend_sources, bc_gen_sources, bc_gen_custom],
+    kwargs: llvm_irlink_kw,
+  )
+
+  backend_targets += postgres_llvm
+endif
 
 
 ###############################################################

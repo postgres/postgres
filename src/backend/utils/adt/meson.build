@@ -113,6 +113,7 @@ backend_sources += files(
   'xml.c',
 )
 
+bc_jsonpath_sources = []
 
 jsonpath_scan = custom_target('jsonpath_scan',
   input: 'jsonpath_scan.l',
@@ -120,12 +121,14 @@ jsonpath_scan = custom_target('jsonpath_scan',
   command: [flex_cmd, '--no-backup', '--', '-CF', '-p', '-p'],
 )
 generated_sources += jsonpath_scan
+bc_jsonpath_sources += jsonpath_scan
 
 jsonpath_gram = custom_target('jsonpath_parse',
   input: 'jsonpath_gram.y',
   kwargs: bison_kw,
 )
 generated_sources += jsonpath_gram.to_list()
+bc_jsonpath_sources += jsonpath_gram[0]
 
 # so we don't need to add . as an include dir for the whole backend
 backend_link_with += static_library('jsonpath',
@@ -134,5 +137,21 @@ backend_link_with += static_library('jsonpath',
   include_directories: include_directories('.'),
   kwargs: internal_lib_args,
 )
+
+if llvm.found()
+  llvm_jsonpath_cflags = [
+    '-I@BUILD_ROOT@/src/backend/utils/adt',
+    '-I@SOURCE_ROOT@/src/backend/utils/adt',
+  ]
+
+  llvm_jsonpath = generator(llvm_irgen_command,
+    arguments: llvm_irgen_args + bitcode_cflags + llvm_jsonpath_cflags,
+    depends: [jsonpath_scan, jsonpath_gram],
+    depfile: '@BASENAME@.c.bc.d',
+    output: '@PLAINNAME@.bc',
+  )
+
+  bc_gen_custom += llvm_jsonpath.process(bc_jsonpath_sources)
+endif
 
 #generated_backend_sources += jsonpath_gram.to_list()

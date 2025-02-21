@@ -34,6 +34,21 @@ backend_link_with += static_library('guc-file',
   kwargs: internal_lib_args,
 )
 
+if llvm.found()
+  llvm_guc_file_cflags = [
+    '-I@SOURCE_ROOT@/src/backend/utils/misc',
+  ]
+
+  llvm_guc_file = generator(llvm_irgen_command,
+    arguments: llvm_irgen_args + bitcode_cflags + llvm_guc_file_cflags,
+    depends: guc_scan,
+    depfile: '@BASENAME@.c.bc.d',
+    output: '@PLAINNAME@.bc',
+  )
+
+  bc_gen_custom += llvm_guc_file.process(guc_scan)
+endif
+
 install_data('postgresql.conf.sample',
   install_dir: dir_data,
 )

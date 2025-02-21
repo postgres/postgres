@@ -1,0 +1,43 @@
+#!/usr/bin/env python3
+
+import os
+import shutil
+import subprocess
+import sys
+import argparse
+
+parser = argparse.ArgumentParser(
+    description='generate PostgreSQL JIT IR module')
+
+parser.add_argument('--name', type=str, required=True)
+parser.add_argument('--lto', type=str, required=True)
+parser.add_argument('--privdir', type=str, required=True)
+parser.add_argument('--outdir', type=str, required=True)
+parser.add_argument('INPUT', type=str, nargs='+')
+
+args = parser.parse_args()
+
+outdir = os.path.realpath(args.outdir)
+privdir = os.path.realpath(args.privdir)
+
+index = '{0}/{1}.index.bc'.format(outdir, args.name)
+destdir = '{0}/{1}'.format(outdir, args.name)
+
+# Remove old contents if exist
+if os.path.exists(destdir):
+    shutil.rmtree(destdir)
+
+shutil.copytree(privdir, destdir)
+
+# Change working directory for irlink to link correctly
+os.chdir(args.outdir)
+
+file_names = []
+for input in args.INPUT:
+    file_names += [args.name + input.replace(args.privdir, '')]
+
+command = [args.lto, '-thinlto', '-thinlto-action=thinlink',
+           '-o', index] + file_names
+res = subprocess.run(command)
+
+exit(res.returncode)

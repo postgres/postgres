@@ -35,3 +35,19 @@ wait_event = static_library('wait_event_names',
 )
 
 backend_link_with += wait_event
+
+if llvm.found()
+  llvm_wait_event_cflags = [
+    '-I@BUILD_ROOT@/src/include/utils',
+    '-I@SOURCE_ROOT@/src/include/utils',
+  ]
+
+  llvm_wait_event = generator(llvm_irgen_command,
+    arguments: llvm_irgen_args + bitcode_cflags + llvm_wait_event_cflags,
+    depends: wait_event,
+    depfile: '@BASENAME@.c.bc.d',
+    output: '@PLAINNAME@.bc',
+  )
+
+  bc_gen_custom += llvm_wait_event.process(waitevent_sources)
+endif

@@ -34,6 +34,7 @@ backend_scanner = custom_target('scan',
 )
 generated_sources += backend_scanner
 parser_sources += backend_scanner
+bc_parser_sources = parser_sources
 
 backend_parser = custom_target('gram',
   input: 'gram.y',
@@ -41,6 +42,7 @@ backend_parser = custom_target('gram',
 )
 generated_sources += backend_parser.to_list()
 parser_sources += backend_parser
+bc_parser_sources += backend_parser[0]
 
 parser = static_library('parser',
   parser_sources,
@@ -49,3 +51,19 @@ parser = static_library('parser',
   kwargs: internal_lib_args,
 )
 backend_link_with += parser
+
+if llvm.found()
+  llvm_parser_cflags = [
+    '-I@BUILD_ROOT@/src/backend/parser',
+    '-I@SOURCE_ROOT@/src/backend/parser',
+  ]
+
+  llvm_gen_parser = generator(llvm_irgen_command,
+    arguments: llvm_irgen_args + bitcode_cflags + llvm_parser_cflags,
+    depends: parser,
+    depfile: '@BASENAME@.c.bc.d',
+    output: '@PLAINNAME@.bc',
+  )
+
+  bc_gen_custom += llvm_gen_parser.process(bc_parser_sources)
+endif

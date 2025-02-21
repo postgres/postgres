@@ -186,6 +186,100 @@ pg_test_mod_args = pg_mod_args + {
   'install': false
 }
 
+###############################################################
+# Define a .pc file that can be used to build server extensions
+###############################################################
+
+pg_ext_vars = []
+pg_ext_vars_inst = []
+pg_ext_vars_uninst = []
+
+pg_ext_cflags = pg_mod_c_args
+pg_ext_libs = [backend_mod_code, thread_dep, ldflags, ldflags_mod]
+pg_ext_subdirs = ['']
+
+# Compute directories to add include directories to the .pc files for.
+# This is a bit more complicated due to port/win32 etc.
+i = 0
+foreach incdir : postgres_inc_d
+  if incdir.startswith('src/include')
+    subincdir = dir_include_pkg_rel / 'server' / incdir.split('src/include/').get(1, '')
+  else
+    subincdir = ''
+  endif
+  pg_ext_subdirs += subincdir
+
+  # Add directories in source / build dir containing headers to cflags for the
+  # -uninstalled.pc
+  pg_ext_vars_uninst += [
+    'build_inc@0@=-I${prefix}/@1@'.format(i, incdir),
+    'src_inc@0@=-I${srcdir}/@1@'.format(i, incdir),
+  ]
+  pg_ext_cflags += [
+    '${build_inc@0@}'.format(i),
+    '${src_inc@0@}'.format(i)
+  ]
+
+  i += 1
+endforeach
+
+
+# Extension modules should likely also use -fwrapv etc. But it it's a bit odd
+# to expose it to a .pc file?
+pg_ext_cflags += cflags
+
+# Directories for extensions to install into
+# XXX: more needed
+pg_ext_vars += 'pkglibdir=${prefix}/@0@'.format(dir_lib_pkg)
+pg_ext_vars += 'dir_mod=${pkglibdir}'
+pg_ext_vars += 'dir_data=${prefix}/@0@'.format(dir_data_extension)
+# referenced on some platforms, via mod_link_with_dir
+pg_ext_vars += 'bindir=${prefix}/@0@'.format(dir_bin)
+
+# XXX: Define variables making it easy to define tests, too
+
+# Some platforms need linker flags to link with binary, they are the same
+# between building with meson and .pc file, except that we have have to
+# reference a variable to make it work for both normal and -uninstalled .pc
+# files.
+if mod_link_args_fmt.length() != 0
+  assert(link_with_inst != '')
+  assert(link_with_uninst != '')
+
+  pg_ext_vars_inst += 'mod_link_with=@0@'.format(link_with_inst)
+  pg_ext_vars_uninst += 'mod_link_with=@0@'.format(link_with_uninst)
+
+  foreach el : mod_link_args_fmt
+    pg_ext_libs += el.format('${mod_link_with}')
+  endforeach
+endif
+
+# main .pc to build extensions
+pkgconfig.generate(
+  name: 'postgresql-extension',
+  description: 'PostgreSQL Extension Support',
+  url: pg_url,
+
+  subdirs: pg_ext_subdirs,
+  libraries: pg_ext_libs,
+  extra_cflags: pg_ext_cflags,
+
+  variables: pg_ext_vars + pg_ext_vars_inst,
+  uninstalled_variables: pg_ext_vars + pg_ext_vars_uninst,
+)
+
+# a .pc depending on the above, but with all our warnings enabled
+pkgconfig.generate(
+  name: 'postgresql-extension-warnings',
+  description: 'PostgreSQL Extension Support - Compiler Warnings',
+  requires: 'postgresql-extension',
+  url: pg_url,
+  extra_cflags: cflags_warn,
+
+  variables: pg_ext_vars + pg_ext_vars_inst,
+  uninstalled_variables: pg_ext_vars + pg_ext_vars_uninst,
+)
+
 
 
 # Shared modules that, on some system, link against the server binary. Only

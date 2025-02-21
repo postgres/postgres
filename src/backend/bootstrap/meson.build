@@ -5,6 +5,7 @@ backend_sources += files(
 
 # see ../parser/meson.build
 boot_parser_sources = []
+bc_bootparse_sources = []
 
 bootscanner = custom_target('bootscanner',
   input: 'bootscanner.l',
@@ -13,6 +14,7 @@ bootscanner = custom_target('bootscanner',
 )
 generated_sources += bootscanner
 boot_parser_sources += bootscanner
+bc_bootparse_sources += bootscanner
 
 bootparse = custom_target('bootparse',
   input: 'bootparse.y',
@@ -20,6 +22,7 @@ bootparse = custom_target('bootparse',
 )
 generated_sources += bootparse.to_list()
 boot_parser_sources += bootparse
+bc_bootparse_sources += bootparse[0]
 
 boot_parser = static_library('boot_parser',
   boot_parser_sources,
@@ -28,3 +31,19 @@ boot_parser = static_library('boot_parser',
   kwargs: internal_lib_args,
 )
 backend_link_with += boot_parser
+
+if llvm.found()
+  llvm_bootparse_cflags = [
+    '-I@BUILD_ROOT@/src/backend/bootstrap',
+    '-I@SOURCE_ROOT@/src/backend/bootstrap',
+  ]
+
+  llvm_gen_bootparser = generator(llvm_irgen_command,
+    arguments: llvm_irgen_args + bitcode_cflags + llvm_bootparse_cflags,
+    depends: boot_parser,
+    depfile: '@BASENAME@.c.bc.d',
+    output: '@PLAINNAME@.bc',
+  )
+
+  bc_gen_custom += llvm_gen_bootparser.process(bc_bootparse_sources)
+endif

@@ -39,37 +39,6 @@ llvmjit = shared_module('llvmjit',
 
 backend_targets += llvmjit
 
-
-# Define a few bits and pieces used here and elsewhere to generate bitcode
-
-llvm_irgen_args = [
-  '-c', '-o', '@OUTPUT@', '@INPUT@',
-  '-flto=thin', '-emit-llvm',
-  '-MD', '-MQ', '@OUTPUT@', '-MF', '@DEPFILE@',
-  '-O2',
-  '-Wno-ignored-attributes',
-  '-Wno-empty-body',
-]
-
-if ccache.found()
-  llvm_irgen_command = ccache
-  llvm_irgen_args = [clang.path()] + llvm_irgen_args
-else
-  llvm_irgen_command = clang
-endif
-
-
-# XXX: Need to determine proper version of the function cflags for clang
-bitcode_cflags = ['-fno-strict-aliasing', '-fwrapv']
-bitcode_cflags += get_option('c_args')
-bitcode_cflags += cppflags
-
-# XXX: Worth improving on the logic to find directories here
-bitcode_cflags += '-I@BUILD_ROOT@/src/include'
-bitcode_cflags += '-I@BUILD_ROOT@/src/backend/utils/misc'
-bitcode_cflags += '-I@SOURCE_ROOT@/src/include'
-
-
 # Note this is intentionally not installed to bitcodedir, as it's not for
 # inlining
 llvmjit_types = custom_target('llvmjit_types.bc',
@@ -82,3 +51,11 @@ llvmjit_types = custom_target('llvmjit_types.bc',
   depfile: '@BASENAME@.c.bc.d',
 )
 backend_targets += llvmjit_types
+
+# Figure out -I's needed to build all postgres code, including all its
+# dependencies
+pkg_config = find_program(['pkg-config', 'pkgconf'], required: true)
+r = run_command(pkg_config,
+  ['--cflags-only-I', meson.build_root() / 'meson-uninstalled/postgresql-extension-uninstalled.pc'],
+  check: true)
+bitcode_cflags += r.stdout().split()

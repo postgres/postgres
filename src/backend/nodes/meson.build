@@ -30,3 +30,20 @@ nodefuncs = static_library('nodefuncs',
   kwargs: internal_lib_args,
 )
 backend_link_with += nodefuncs
+
+if llvm.found()
+  llvm_nodefuncs_cflags = [
+    '-I@SOURCE_ROOT@/src/include/nodes',
+    '-I@BUILD_ROOT@/src/include/nodes',
+  ]
+
+  llvm_gen_nodefunc = generator(llvm_irgen_command,
+    arguments: llvm_irgen_args + bitcode_cflags + llvm_nodefuncs_cflags,
+    depends: nodefuncs,
+    depfile: '@BASENAME@.c.bc.d',
+    output: '@PLAINNAME@.bc',
+  )
+
+  bc_gen_custom += llvm_gen_nodefunc.process(nodefunc_sources,
+    preserve_path_from: meson.current_source_dir())
+endif
