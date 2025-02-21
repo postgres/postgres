@@ -480,23 +480,37 @@ attribute_statistics_update(FunctionCallInfo fcinfo, int elevel)
 static Node *
 get_attr_expr(Relation rel, int attnum)
 {
-	if ((rel->rd_rel->relkind == RELKIND_INDEX
-		 || (rel->rd_rel->relkind == RELKIND_PARTITIONED_INDEX))
-		&& (rel->rd_indexprs != NIL)
-		&& (rel->rd_index->indkey.values[attnum - 1] == 0))
-	{
-		ListCell   *indexpr_item = list_head(rel->rd_indexprs);
+	List	   *index_exprs;
+	ListCell   *indexpr_item;
 
-		for (int i = 0; i < attnum - 1; i++)
-			if (rel->rd_index->indkey.values[i] == 0)
-				indexpr_item = lnext(rel->rd_indexprs, indexpr_item);
+	/* relation is not an index */
+	if (rel->rd_rel->relkind != RELKIND_INDEX &&
+		rel->rd_rel->relkind != RELKIND_PARTITIONED_INDEX)
+		return NULL;
 
-		if (indexpr_item == NULL)	/* shouldn't happen */
-			elog(ERROR, "too few entries in indexprs list");
+	index_exprs = RelationGetIndexExpressions(rel);
 
-		return (Node *) lfirst(indexpr_item);
-	}
-	return NULL;
+	/* index has no expressions to give */
+	if (index_exprs == NIL)
+		return NULL;
+
+	/*
+	 * The index attnum points directly to a relation attnum, then it's no an
+	 * expression attribute.
+	 */
+	if (rel->rd_index->indkey.values[attnum - 1] != 0)
+		return NULL;
+
+	indexpr_item = list_head(rel->rd_indexprs);
+
+	for (int i = 0; i < attnum - 1; i++)
+		if (rel->rd_index->indkey.values[i] == 0)
+			indexpr_item = lnext(rel->rd_indexprs, indexpr_item);
+
+	if (indexpr_item == NULL)	/* shouldn't happen */
+		elog(ERROR, "too few entries in indexprs list");
+
+	return (Node *) lfirst(indexpr_item);
 }
 
 /*
