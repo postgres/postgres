@@ -583,6 +583,16 @@ ERROR:  unsupported XML feature
 LINE 1: ...EATE VIEW xmlview9 AS SELECT xmlserialize(content 'good' as ...
                                                              ^
 DETAIL:  This functionality requires the server to be built with libxml support.
+CREATE VIEW xmlview10 AS SELECT xmlserialize(document '<foo><bar>42</bar></foo>' AS text indent);
+ERROR:  unsupported XML feature
+LINE 1: ...TE VIEW xmlview10 AS SELECT xmlserialize(document '<foo><bar...
+                                                             ^
+DETAIL:  This functionality requires the server to be built with libxml support.
+CREATE VIEW xmlview11 AS SELECT xmlserialize(document '<foo><bar>42</bar></foo>' AS character varying no indent);
+ERROR:  unsupported XML feature
+LINE 1: ...TE VIEW xmlview11 AS SELECT xmlserialize(document '<foo><bar...
+                                                             ^
+DETAIL:  This functionality requires the server to be built with libxml support.
 SELECT table_name, view_definition FROM information_schema.views
   WHERE table_name LIKE 'xmlview%' ORDER BY 1;
  table_name |                                view_definition                                 

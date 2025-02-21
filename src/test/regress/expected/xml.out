@@ -822,21 +822,25 @@ CREATE VIEW xmlview6 AS SELECT xmlpi(name foo, 'bar');
 CREATE VIEW xmlview7 AS SELECT xmlroot(xml '<foo/>', version no value, standalone yes);
 CREATE VIEW xmlview8 AS SELECT xmlserialize(content 'good' as char(10));
 CREATE VIEW xmlview9 AS SELECT xmlserialize(content 'good' as text);
+CREATE VIEW xmlview10 AS SELECT xmlserialize(document '<foo><bar>42</bar></foo>' AS text indent);
+CREATE VIEW xmlview11 AS SELECT xmlserialize(document '<foo><bar>42</bar></foo>' AS character varying no indent);
 SELECT table_name, view_definition FROM information_schema.views
   WHERE table_name LIKE 'xmlview%' ORDER BY 1;
- table_name |                                              view_definition                                               
-------------+------------------------------------------------------------------------------------------------------------
+ table_name |                                                            view_definition                                                            
+------------+---------------------------------------------------------------------------------------------------------------------------------------
  xmlview1   |  SELECT xmlcomment('test'::text) AS xmlcomment;
+ xmlview10  |  SELECT XMLSERIALIZE(DOCUMENT '<foo><bar>42</bar></foo>'::xml AS text INDENT) AS "xmlserialize";
+ xmlview11  |  SELECT (XMLSERIALIZE(DOCUMENT '<foo><bar>42</bar></foo>'::xml AS character varying NO INDENT))::character varying AS "xmlserialize";
  xmlview2   |  SELECT XMLCONCAT('hello'::xml, 'you'::xml) AS "xmlconcat";
  xmlview3   |  SELECT XMLELEMENT(NAME element, XMLATTRIBUTES(1 AS ":one:", 'deuce' AS two), 'content&') AS "xmlelement";
- xmlview4   |  SELECT XMLELEMENT(NAME employee, XMLFOREST(name AS name, age AS age, salary AS pay)) AS "xmlelement"     +
+ xmlview4   |  SELECT XMLELEMENT(NAME employee, XMLFOREST(name AS name, age AS age, salary AS pay)) AS "xmlelement"                                +
             |    FROM emp;
  xmlview5   |  SELECT XMLPARSE(CONTENT '<abc>x</abc>'::text STRIP WHITESPACE) AS "xmlparse";
  xmlview6   |  SELECT XMLPI(NAME foo, 'bar'::text) AS "xmlpi";
  xmlview7   |  SELECT XMLROOT('<foo/>'::xml, VERSION NO VALUE, STANDALONE YES) AS "xmlroot";
- xmlview8   |  SELECT (XMLSERIALIZE(CONTENT 'good'::xml AS character(10)))::character(10) AS "xmlserialize";
- xmlview9   |  SELECT XMLSERIALIZE(CONTENT 'good'::xml AS text) AS "xmlserialize";
-(9 rows)
+ xmlview8   |  SELECT (XMLSERIALIZE(CONTENT 'good'::xml AS character(10) NO INDENT))::character(10) AS "xmlserialize";
+ xmlview9   |  SELECT XMLSERIALIZE(CONTENT 'good'::xml AS text NO INDENT) AS "xmlserialize";
+(11 rows)
 
 -- Text XPath expressions evaluation
 SELECT xpath('/value', data) FROM xmltest;
