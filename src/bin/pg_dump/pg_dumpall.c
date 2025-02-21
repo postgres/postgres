@@ -931,10 +931,12 @@ dumpRoleMembership(PGconn *conn)
 	PGresult   *res;
 	int			i;
 
-	printfPQExpBuffer(buf, "SELECT ur.rolname AS roleid, "
+	printfPQExpBuffer(buf, "SELECT ur.rolname AS role, "
 					  "um.rolname AS member, "
 					  "a.admin_option, "
-					  "ug.rolname AS grantor "
+					  "ug.rolname AS grantor, "
+					  "a.roleid AS roleid, "
+					  "a.member AS memberid "
 					  "FROM pg_auth_members a "
 					  "LEFT JOIN %s ur on ur.oid = a.roleid "
 					  "LEFT JOIN %s um on um.oid = a.member "
@@ -948,13 +950,33 @@ dumpRoleMembership(PGconn *conn)
 
 	for (i = 0; i < PQntuples(res); i++)
 	{
-		char	   *roleid = PQgetvalue(res, i, 0);
+		char	   *role = PQgetvalue(res, i, 0);
 		char	   *member = PQgetvalue(res, i, 1);
-		char	   *option = PQgetvalue(res, i, 2);
+		char	   *admin_option = PQgetvalue(res, i, 2);
 
-		fprintf(OPF, "GRANT %s", fmtId(roleid));
+		/*
+		 * Due to race conditions, the role and/or member could have been
+		 * dropped.  If we find such cases, print a warning and skip the
+		 * entry.
+		 */
+		if (PQgetisnull(res, i, 0))
+		{
+			/* translator: %s represents a numeric role OID */
+			pg_log_warning("found orphaned pg_auth_members entry for role %s",
+						   PQgetvalue(res, i, 4));
+			continue;
+		}
+		if (PQgetisnull(res, i, 1))
+		{
+			/* translator: %s represents a numeric role OID */
+			pg_log_warning("found orphaned pg_auth_members entry for role %s",
+						   PQgetvalue(res, i, 5));
+			continue;
+		}
+
+		fprintf(OPF, "GRANT %s", fmtId(role));
 		fprintf(OPF, " TO %s", fmtId(member));
-		if (*option == 't')
+		if (*admin_option == 't')
 			fprintf(OPF, " WITH ADMIN OPTION");
 
 		/*
