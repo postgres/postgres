@@ -172,6 +172,25 @@ PostgreSQL documentation
 
   <variablelist>
    <varlistentry>
+    <term><option>--char-signedness=<replaceable class="parameter">option</replaceable></option></term>
+    <listitem>
+     <para>
+      Manually set the default char signedness. Possible values are
+      <literal>signed</literal> and <literal>unsigned</literal>.
+     </para>
+     <para>
+      For a database cluster that <command>pg_upgrade</command> upgraded from
+      a <productname>PostgreSQL</productname> version before 18, the safe
+      value would be the default <type>char</type> signedness of the platform
+      that ran the cluster before that upgrade. For all other
+      clusters, <literal>signed</literal> would be the safe value. However,
+      this option is exclusively for use with <command>pg_upgrade</command>
+      and should not normally be used manually.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
     <term><option>-c <replaceable class="parameter">xid</replaceable>,<replaceable class="parameter">xid</replaceable></option></term>
     <term><option>--commit-timestamp-ids=<replaceable class="parameter">xid</replaceable>,<replaceable class="parameter">xid</replaceable></option></term>
     <listitem>

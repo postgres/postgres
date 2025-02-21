@@ -173,6 +173,12 @@ command_fails_like(
 	qr/must be greater than/,
 	'fails with -x value too small');
 
+# --char-signedness
+command_fails_like(
+	[ 'pg_resetwal', '--char-signedness', 'foo', $node->data_dir ],
+	qr/error: invalid argument for option --char-signedness/,
+	'fails with incorrect --char-signedness option');
+
 # run with control override options
 
 my $out = (run_command([ 'pg_resetwal', '--dry-run', $node->data_dir ]))[0];
