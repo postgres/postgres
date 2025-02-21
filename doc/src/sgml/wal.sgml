@@ -194,10 +194,8 @@
     </listitem>
     <listitem>
      <para>
-      Data pages are not currently checksummed by default, though full page images
-      recorded in WAL records will be protected; see <link
-      linkend="app-initdb-data-checksums"><application>initdb</application></link>
-      for details about enabling data checksums.
+      Data pages are checksummed by default, and full page images
+      recorded in WAL records are always checksum protected.
      </para>
     </listitem>
     <listitem>
@@ -238,15 +236,15 @@
   </indexterm>
 
   <para>
-   By default, data pages are not protected by checksums, but this can
-   optionally be enabled for a cluster. When enabled, each data page includes
+   By default, data pages are protected by checksums, but this can
+   optionally be disabled for a cluster. When enabled, each data page includes
    a checksum that is updated when the page is written and verified each time
    the page is read. Only data pages are protected by checksums; internal data
    structures and temporary files are not.
   </para>
 
   <para>
-   Checksums are normally enabled when the cluster is initialized using <link
+   Checksums can be disabled when the cluster is initialized using <link
    linkend="app-initdb-data-checksums"><application>initdb</application></link>.
    They can also be enabled or disabled at a later time as an offline
    operation. Data checksums are enabled or disabled at the full cluster

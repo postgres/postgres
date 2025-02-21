@@ -466,8 +466,8 @@ SET client_min_messages = DEBUG1;
    </listitem>
    <listitem>
     <para>
-     File system or storage subsystem faults where checksums happen to
-     simply not be enabled.
+     File system or storage subsystem faults when data checksums are
+     disabled.
     </para>
     <para>
      Note that <filename>amcheck</filename> examines a page as represented in some

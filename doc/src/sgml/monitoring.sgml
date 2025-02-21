@@ -3532,8 +3532,8 @@ description | Waiting for a newly initialized WAL file to reach durable storage
       </para>
       <para>
        Number of data page checksum failures detected in this
-       database (or on a shared object), or NULL if data checksums are not
-       enabled.
+       database (or on a shared object), or NULL if data checksums are
+       disabled.
       </para></entry>
      </row>
 
@@ -3543,8 +3543,8 @@ description | Waiting for a newly initialized WAL file to reach durable storage
       </para>
       <para>
        Time at which the last data page checksum failure was detected in
-       this database (or on a shared object), or NULL if data checksums are not
-       enabled.
+       this database (or on a shared object), or NULL if data checksums are
+       disabled.
       </para></entry>
      </row>
 

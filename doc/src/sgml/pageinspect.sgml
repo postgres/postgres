@@ -85,7 +85,7 @@ test=# SELECT * FROM page_header(get_raw_page('pg_class', 0));
      <para>
       The <structfield>checksum</structfield> field is the checksum stored in
       the page, which might be incorrect if the page is somehow corrupted.  If
-      data checksums are not enabled for this instance, then the value stored
+      data checksums are disabled for this instance, then the value stored
       is meaningless.
      </para>
     </listitem>
