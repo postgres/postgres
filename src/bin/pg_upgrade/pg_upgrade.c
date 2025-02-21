@@ -54,6 +54,7 @@
  */
 #define RESTORE_TRANSACTION_SIZE 1000
 
+static void set_new_cluster_char_signedness(void);
 static void set_locale_and_encoding(void);
 static void prepare_new_cluster(void);
 static void prepare_new_globals(void);
@@ -154,6 +155,7 @@ main(int argc, char **argv)
 	 */
 
 	copy_xact_xlog_xid();
+	set_new_cluster_char_signedness();
 
 	/* New now using xids of the old system */
 
@@ -388,6 +390,32 @@ setup(char *argv0)
 	}
 }
 
+/*
+ * Set the new cluster's default char signedness using the old cluster's
+ * value.
+ */
+static void
+set_new_cluster_char_signedness(void)
+{
+	bool		new_char_signedness;
+
+	/* Inherit the source database's signedness */
+	new_char_signedness = old_cluster.controldata.default_char_signedness;
+
+	/* Change the char signedness of the new cluster, if necessary */
+	if (new_cluster.controldata.default_char_signedness != new_char_signedness)
+	{
+		prep_status("Setting the default char signedness for new cluster");
+
+		exec_prog(UTILITY_LOG_FILE, NULL, true, true,
+				  "\"%s/pg_resetwal\" --char-signedness %s \"%s\"",
+				  new_cluster.bindir,
+				  new_char_signedness ? "signed" : "unsigned",
+				  new_cluster.pgdata);
+
+		check_ok();
+	}
+}
 
 /*
  * Copy locale and encoding information into the new cluster's template0.
