@@ -527,14 +527,28 @@ SELECT 'abc' LIKE 'a\bc' COLLATE ctest_nondet;
 
 CREATE TABLE test6 (a int, b text);
 -- same string in different normal forms
-INSERT INTO test6 VALUES (1, U&'\00E4bc');
-INSERT INTO test6 VALUES (2, U&'\0061\0308bc');
+INSERT INTO test6 VALUES (1, U&'zy\00E4bc');
+INSERT INTO test6 VALUES (2, U&'zy\0061\0308bc');
 SELECT * FROM test6;
-SELECT * FROM test6 WHERE b = 'äbc' COLLATE ctest_det;
-SELECT * FROM test6 WHERE b = 'äbc' COLLATE ctest_nondet;
+SELECT * FROM test6 WHERE b = 'zyäbc' COLLATE ctest_det;
+SELECT * FROM test6 WHERE b = 'zyäbc' COLLATE ctest_nondet;
 
-SELECT * FROM test6 WHERE b LIKE 'äbc' COLLATE ctest_det;
-SELECT * FROM test6 WHERE b LIKE 'äbc' COLLATE ctest_nondet;
+SELECT strpos(b COLLATE ctest_det, 'bc') FROM test6;
+SELECT strpos(b COLLATE ctest_nondet, 'bc') FROM test6;
+
+SELECT replace(b COLLATE ctest_det, U&'\00E4b', 'X') FROM test6;
+SELECT replace(b COLLATE ctest_nondet, U&'\00E4b', 'X') FROM test6;
+
+SELECT a, split_part(b COLLATE ctest_det, U&'\00E4b', 2) FROM test6;
+SELECT a, split_part(b COLLATE ctest_nondet, U&'\00E4b', 2) FROM test6;
+SELECT a, split_part(b COLLATE ctest_det, U&'\00E4b', -1) FROM test6;
+SELECT a, split_part(b COLLATE ctest_nondet, U&'\00E4b', -1) FROM test6;
+
+SELECT a, string_to_array(b COLLATE ctest_det, U&'\00E4b') FROM test6;
+SELECT a, string_to_array(b COLLATE ctest_nondet, U&'\00E4b') FROM test6;
+
+SELECT * FROM test6 WHERE b LIKE 'zyäbc' COLLATE ctest_det;
+SELECT * FROM test6 WHERE b LIKE 'zyäbc' COLLATE ctest_nondet;
 
 -- same with arrays
 CREATE TABLE test6a (a int, b text[]);
@@ -700,6 +714,16 @@ SELECT * FROM test4 WHERE b = 'cote';
 SELECT * FROM test4 WHERE b = 'cote' COLLATE ignore_accents;
 SELECT * FROM test4 WHERE b = 'Cote' COLLATE ignore_accents;  -- still case-sensitive
 SELECT * FROM test4 WHERE b = 'Cote' COLLATE case_insensitive;
+
+CREATE TABLE test4nfd (a int, b text);
+INSERT INTO test4nfd VALUES (1, 'cote'), (2, 'côte'), (3, 'coté'), (4, 'côté');
+UPDATE test4nfd SET b = normalize(b, nfd);
+
+-- This shows why replace should be greedy.  Otherwise, in the NFD
+-- case, the match would stop before the decomposed accents, which
+-- would leave the accents in the results.
+SELECT a, b, replace(b COLLATE ignore_accents, 'co', 'ma') FROM test4;
+SELECT a, b, replace(b COLLATE ignore_accents, 'co', 'ma') FROM test4nfd;
 
 -- This is a tricky one.  A naive implementation would first test
 -- \00E4 matches \0061, which is true under ignore_accents, but then

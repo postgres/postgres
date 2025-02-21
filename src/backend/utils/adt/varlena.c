@@ -54,7 +54,9 @@ typedef struct varlena VarString;
  */
 typedef struct
 {
+	pg_locale_t locale;			/* collation used for substring matching */
 	bool		is_multibyte_char_in_char;	/* need to check char boundaries? */
+	bool		greedy;			/* find longest possible substring? */
 
 	char	   *str1;			/* haystack string */
 	char	   *str2;			/* needle string */
@@ -65,7 +67,13 @@ typedef struct
 	int			skiptablemask;	/* mask for ANDing with skiptable subscripts */
 	int			skiptable[256]; /* skip distance for given mismatched char */
 
+	/*
+	 * Note that with nondeterministic collations, the length of the last
+	 * match is not necessarily equal to the length of the "needle" passed in.
+	 */
 	char	   *last_match;		/* pointer to last match in 'str1' */
+	int			last_match_len; /* length of last match */
+	int			last_match_len_tmp; /* same but for internal use */
 
 	/*
 	 * Sometimes we need to convert the byte position of a match to a
@@ -1178,15 +1186,21 @@ text_position(text *t1, text *t2, Oid collid)
 	TextPositionState state;
 	int			result;
 
+	check_collation_set(collid);
+
 	/* Empty needle always matches at position 1 */
 	if (VARSIZE_ANY_EXHDR(t2) < 1)
 		return 1;
 
 	/* Otherwise, can't match if haystack is shorter than needle */
-	if (VARSIZE_ANY_EXHDR(t1) < VARSIZE_ANY_EXHDR(t2))
+	if (VARSIZE_ANY_EXHDR(t1) < VARSIZE_ANY_EXHDR(t2) &&
+		pg_newlocale_from_collation(collid)->deterministic)
 		return 0;
 
 	text_position_setup(t1, t2, collid, &state);
+	/* don't need greedy mode here */
+	state.greedy = false;
+
 	if (!text_position_next(&state))
 		result = 0;
 	else
@@ -1217,18 +1231,17 @@ text_position_setup(text *t1, text *t2, Oid collid, TextPositionState *state)
 {
 	int			len1 = VARSIZE_ANY_EXHDR(t1);
 	int			len2 = VARSIZE_ANY_EXHDR(t2);
-	pg_locale_t mylocale;
 
 	check_collation_set(collid);
 
-	mylocale = pg_newlocale_from_collation(collid);
+	state->locale = pg_newlocale_from_collation(collid);
 
-	if (!mylocale->deterministic)
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("nondeterministic collations are not supported for substring searches")));
+	/*
+	 * Most callers need greedy mode, but some might want to unset this to
+	 * optimize.
+	 */
+	state->greedy = true;
 
-	Assert(len1 > 0);
 	Assert(len2 > 0);
 
 	/*
@@ -1264,8 +1277,11 @@ text_position_setup(text *t1, text *t2, Oid collid, TextPositionState *state)
 	 * point in wasting cycles initializing the table.  We also choose not to
 	 * use B-M-H for needles of length 1, since the skip table can't possibly
 	 * save anything in that case.
+	 *
+	 * (With nondeterministic collations, the search is already
+	 * multibyte-aware, so we don't need this.)
 	 */
-	if (len1 >= len2 && len2 > 1)
+	if (len1 >= len2 && len2 > 1 && state->locale->deterministic)
 	{
 		int			searchlength = len1 - len2;
 		int			skiptablemask;
@@ -1343,7 +1359,7 @@ text_position_next(TextPositionState *state)
 
 	/* Start from the point right after the previous match. */
 	if (state->last_match)
-		start_ptr = state->last_match + needle_len;
+		start_ptr = state->last_match + state->last_match_len;
 	else
 		start_ptr = state->str1;
 
@@ -1359,7 +1375,7 @@ retry:
 	 * multi-byte character, we need to verify that the match was at a
 	 * character boundary, not in the middle of a multi-byte character.
 	 */
-	if (state->is_multibyte_char_in_char)
+	if (state->is_multibyte_char_in_char && state->locale->deterministic)
 	{
 		/* Walk one character at a time, until we reach the match. */
 
@@ -1387,6 +1403,7 @@ retry:
 	}
 
 	state->last_match = matchptr;
+	state->last_match_len = state->last_match_len_tmp;
 	return true;
 }
 
@@ -1408,7 +1425,62 @@ text_position_next_internal(char *start_ptr, TextPositionState *state)
 
 	Assert(start_ptr >= haystack && start_ptr <= haystack_end);
 
-	if (needle_len == 1)
+	state->last_match_len_tmp = needle_len;
+
+	if (!state->locale->deterministic)
+	{
+		/*
+		 * With a nondeterministic collation, we have to use an unoptimized
+		 * route.  We walk through the haystack and see if at each position
+		 * there is a substring of the remaining string that is equal to the
+		 * needle under the given collation.
+		 *
+		 * Note, the found substring could have a different length than the
+		 * needle, including being empty.  Callers that want to skip over the
+		 * found string need to read the length of the found substring from
+		 * last_match_len rather than just using the length of their needle.
+		 *
+		 * Most callers will require "greedy" semantics, meaning that we need
+		 * to find the longest such substring, not the shortest.  For callers
+		 * that don't need greedy semantics, we can finish on the first match.
+		 */
+		const char *result_hptr = NULL;
+
+		hptr = start_ptr;
+		while (hptr < haystack_end)
+		{
+			/*
+			 * First check the common case that there is a match in the
+			 * haystack of exactly the length of the needle.
+			 */
+			if (!state->greedy &&
+				haystack_end - hptr >= needle_len &&
+				pg_strncoll(hptr, needle_len, needle, needle_len, state->locale) == 0)
+				return (char *) hptr;
+
+			/*
+			 * Else check if any of the possible substrings starting at hptr
+			 * are equal to the needle.
+			 */
+			for (const char *test_end = hptr; test_end < haystack_end; test_end += pg_mblen(test_end))
+			{
+				if (pg_strncoll(hptr, (test_end - hptr), needle, needle_len, state->locale) == 0)
+				{
+					state->last_match_len_tmp = (test_end - hptr);
+					result_hptr = hptr;
+					if (!state->greedy)
+						break;
+				}
+			}
+			if (result_hptr)
+				break;
+
+			hptr += pg_mblen(hptr);
+		}
+
+		return (char *) result_hptr;
+	}
+	else if (needle_len == 1)
 	{
 		/* No point in using B-M-H for a one-character needle */
 		char		nchar = *needle;
@@ -4055,7 +4127,7 @@ replace_text(PG_FUNCTION_ARGS)
 
 		appendStringInfoText(&str, to_sub_text);
 
-		start_ptr = curr_ptr + from_sub_text_len;
+		start_ptr = curr_ptr + state.last_match_len;
 
 		found = text_position_next(&state);
 		if (found)
@@ -4445,7 +4517,7 @@ split_part(PG_FUNCTION_ARGS)
 		/* special case of last field does not require an extra pass */
 		if (fldnum == -1)
 		{
-			start_ptr = text_position_get_match_ptr(&state) + fldsep_len;
+			start_ptr = text_position_get_match_ptr(&state) + state.last_match_len;
 			end_ptr = VARDATA_ANY(inputstring) + inputstring_len;
 			text_position_cleanup(&state);
 			PG_RETURN_TEXT_P(cstring_to_text_with_len(start_ptr,
@@ -4475,7 +4547,7 @@ split_part(PG_FUNCTION_ARGS)
 	while (found && --fldnum > 0)
 	{
 		/* identify bounds of next field */
-		start_ptr = end_ptr + fldsep_len;
+		start_ptr = end_ptr + state.last_match_len;
 		found = text_position_next(&state);
 		if (found)
 			end_ptr = text_position_get_match_ptr(&state);
@@ -4691,7 +4763,7 @@ split_text(FunctionCallInfo fcinfo, SplitTextOutputData *tstate)
 			if (!found)
 				break;
 
-			start_ptr = end_ptr + fldsep_len;
+			start_ptr = end_ptr + state.last_match_len;
 		}
 
 		text_position_cleanup(&state);

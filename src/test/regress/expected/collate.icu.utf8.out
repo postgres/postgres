@@ -1326,39 +1326,109 @@ SELECT 'abc' LIKE 'a\bc' COLLATE ctest_nondet;
 
 CREATE TABLE test6 (a int, b text);
 -- same string in different normal forms
-INSERT INTO test6 VALUES (1, U&'\00E4bc');
-INSERT INTO test6 VALUES (2, U&'\0061\0308bc');
+INSERT INTO test6 VALUES (1, U&'zy\00E4bc');
+INSERT INTO test6 VALUES (2, U&'zy\0061\0308bc');
 SELECT * FROM test6;
- a |  b  
----+-----
- 1 | äbc
- 2 | äbc
+ a |   b   
+---+-------
+ 1 | zyäbc
+ 2 | zyäbc
 (2 rows)
 
-SELECT * FROM test6 WHERE b = 'äbc' COLLATE ctest_det;
- a |  b  
----+-----
- 1 | äbc
+SELECT * FROM test6 WHERE b = 'zyäbc' COLLATE ctest_det;
+ a |   b   
+---+-------
+ 1 | zyäbc
 (1 row)
 
-SELECT * FROM test6 WHERE b = 'äbc' COLLATE ctest_nondet;
- a |  b  
----+-----
- 1 | äbc
- 2 | äbc
+SELECT * FROM test6 WHERE b = 'zyäbc' COLLATE ctest_nondet;
+ a |   b   
+---+-------
+ 1 | zyäbc
+ 2 | zyäbc
 (2 rows)
 
-SELECT * FROM test6 WHERE b LIKE 'äbc' COLLATE ctest_det;
- a |  b  
----+-----
- 1 | äbc
+SELECT strpos(b COLLATE ctest_det, 'bc') FROM test6;
+ strpos 
+--------
+      4
+      5
+(2 rows)
+
+SELECT strpos(b COLLATE ctest_nondet, 'bc') FROM test6;
+ strpos 
+--------
+      4
+      5
+(2 rows)
+
+SELECT replace(b COLLATE ctest_det, U&'\00E4b', 'X') FROM test6;
+ replace 
+---------
+ zyXc
+ zyäbc
+(2 rows)
+
+SELECT replace(b COLLATE ctest_nondet, U&'\00E4b', 'X') FROM test6;
+ replace 
+---------
+ zyXc
+ zyXc
+(2 rows)
+
+SELECT a, split_part(b COLLATE ctest_det, U&'\00E4b', 2) FROM test6;
+ a | split_part 
+---+------------
+ 1 | c
+ 2 | 
+(2 rows)
+
+SELECT a, split_part(b COLLATE ctest_nondet, U&'\00E4b', 2) FROM test6;
+ a | split_part 
+---+------------
+ 1 | c
+ 2 | c
+(2 rows)
+
+SELECT a, split_part(b COLLATE ctest_det, U&'\00E4b', -1) FROM test6;
+ a | split_part 
+---+------------
+ 1 | c
+ 2 | zyäbc
+(2 rows)
+
+SELECT a, split_part(b COLLATE ctest_nondet, U&'\00E4b', -1) FROM test6;
+ a | split_part 
+---+------------
+ 1 | c
+ 2 | c
+(2 rows)
+
+SELECT a, string_to_array(b COLLATE ctest_det, U&'\00E4b') FROM test6;
+ a | string_to_array 
+---+-----------------
+ 1 | {zy,c}
+ 2 | {zyäbc}
+(2 rows)
+
+SELECT a, string_to_array(b COLLATE ctest_nondet, U&'\00E4b') FROM test6;
+ a | string_to_array 
+---+-----------------
+ 1 | {zy,c}
+ 2 | {zy,c}
+(2 rows)
+
+SELECT * FROM test6 WHERE b LIKE 'zyäbc' COLLATE ctest_det;
+ a |   b   
+---+-------
+ 1 | zyäbc
 (1 row)
 
-SELECT * FROM test6 WHERE b LIKE 'äbc' COLLATE ctest_nondet;
- a |  b  
----+-----
- 1 | äbc
- 2 | äbc
+SELECT * FROM test6 WHERE b LIKE 'zyäbc' COLLATE ctest_nondet;
+ a |   b   
+---+-------
+ 1 | zyäbc
+ 2 | zyäbc
 (2 rows)
 
 -- same with arrays
@@ -1669,7 +1739,11 @@ CREATE UNIQUE INDEX ON test3ci (x);  -- error
 ERROR:  could not create unique index "test3ci_x_idx"
 DETAIL:  Key (x)=(abc) is duplicated.
 SELECT string_to_array('ABC,DEF,GHI' COLLATE case_insensitive, ',', 'abc');
-ERROR:  nondeterministic collations are not supported for substring searches
+ string_to_array 
+-----------------
+ {NULL,DEF,GHI}
+(1 row)
+
 SELECT string_to_array('ABCDEFGHI' COLLATE case_insensitive, NULL, 'b');
     string_to_array     
 ------------------------
@@ -1792,7 +1866,11 @@ CREATE UNIQUE INDEX ON test3bpci (x);  -- error
 ERROR:  could not create unique index "test3bpci_x_idx"
 DETAIL:  Key (x)=(abc) is duplicated.
 SELECT string_to_array('ABC,DEF,GHI'::char(11) COLLATE case_insensitive, ',', 'abc');
-ERROR:  nondeterministic collations are not supported for substring searches
+ string_to_array 
+-----------------
+ {NULL,DEF,GHI}
+(1 row)
+
 SELECT string_to_array('ABCDEFGHI'::char(9) COLLATE case_insensitive, NULL, 'b');
     string_to_array     
 ------------------------
@@ -1920,6 +1998,30 @@ SELECT * FROM test4 WHERE b = 'Cote' COLLATE case_insensitive;
 ---+------
  1 | cote
 (1 row)
+
+CREATE TABLE test4nfd (a int, b text);
+INSERT INTO test4nfd VALUES (1, 'cote'), (2, 'côte'), (3, 'coté'), (4, 'côté');
+UPDATE test4nfd SET b = normalize(b, nfd);
+-- This shows why replace should be greedy.  Otherwise, in the NFD
+-- case, the match would stop before the decomposed accents, which
+-- would leave the accents in the results.
+SELECT a, b, replace(b COLLATE ignore_accents, 'co', 'ma') FROM test4;
+ a |  b   | replace 
+---+------+---------
+ 1 | cote | mate
+ 2 | côte | mate
+ 3 | coté | maté
+ 4 | côté | maté
+(4 rows)
+
+SELECT a, b, replace(b COLLATE ignore_accents, 'co', 'ma') FROM test4nfd;
+ a |  b   | replace 
+---+------+---------
+ 1 | cote | mate
+ 2 | côte | mate
+ 3 | coté | maté
+ 4 | côté | maté
+(4 rows)
 
 -- This is a tricky one.  A naive implementation would first test
 -- \00E4 matches \0061, which is true under ignore_accents, but then
