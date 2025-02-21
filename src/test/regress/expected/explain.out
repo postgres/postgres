@@ -528,7 +528,7 @@ select jsonb_pretty(
                              "Plan Rows": 0,                +
                              "Plan Width": 0,               +
                              "Total Cost": 0.0,             +
-                             "Actual Rows": 0,              +
+                             "Actual Rows": 0.0,            +
                              "Actual Loops": 0,             +
                              "Startup Cost": 0.0,           +
                              "Async Capable": false,        +
@@ -575,7 +575,7 @@ select jsonb_pretty(
                      "Plan Rows": 0,                        +
                      "Plan Width": 0,                       +
                      "Total Cost": 0.0,                     +
-                     "Actual Rows": 0,                      +
+                     "Actual Rows": 0.0,                    +
                      "Actual Loops": 0,                     +
                      "Startup Cost": 0.0,                   +
                      "Async Capable": false,                +

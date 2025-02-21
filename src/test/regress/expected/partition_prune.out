@@ -2367,7 +2367,7 @@ begin
             $1)
     loop
         ln := regexp_replace(ln, 'Workers Launched: \d+', 'Workers Launched: N');
-        ln := regexp_replace(ln, 'actual rows=\d+ loops=\d+', 'actual rows=N loops=N');
+        ln := regexp_replace(ln, 'actual rows=\d+(?:\.\d+)? loops=\d+', 'actual rows=N loops=N');
         ln := regexp_replace(ln, 'Rows Removed by Filter: \d+', 'Rows Removed by Filter: N');
         return next ln;
     end loop;
@@ -2940,7 +2940,7 @@ update ab_a1 set b = 3 from ab_a2 where ab_a2.b = (select 1);');
                ->  Seq Scan on ab_a1_b1 ab_a1_1 (actual rows=1 loops=1)
                ->  Seq Scan on ab_a1_b2 ab_a1_2 (actual rows=1 loops=1)
                ->  Seq Scan on ab_a1_b3 ab_a1_3 (actual rows=1 loops=1)
-         ->  Materialize (actual rows=1 loops=3)
+         ->  Materialize (actual rows=1.00 loops=3)
                Storage: Memory  Maximum Storage: NkB
                ->  Append (actual rows=1 loops=1)
                      ->  Seq Scan on ab_a2_b1 ab_a2_1 (actual rows=1 loops=1)
@@ -2983,12 +2983,12 @@ set enable_hashjoin = off;
 set enable_mergejoin = off;
 explain (analyze, costs off, summary off, timing off, buffers off)
 select * from tbl1 join tprt on tbl1.col1 > tprt.col1;
-                                QUERY PLAN                                
---------------------------------------------------------------------------
+                                 QUERY PLAN                                  
+-----------------------------------------------------------------------------
  Nested Loop (actual rows=6 loops=1)
    ->  Seq Scan on tbl1 (actual rows=2 loops=1)
-   ->  Append (actual rows=3 loops=2)
-         ->  Index Scan using tprt1_idx on tprt_1 (actual rows=2 loops=2)
+   ->  Append (actual rows=3.00 loops=2)
+         ->  Index Scan using tprt1_idx on tprt_1 (actual rows=2.00 loops=2)
                Index Cond: (col1 < tbl1.col1)
          ->  Index Scan using tprt2_idx on tprt_2 (actual rows=2 loops=1)
                Index Cond: (col1 < tbl1.col1)
@@ -3004,14 +3004,14 @@ select * from tbl1 join tprt on tbl1.col1 > tprt.col1;
 
 explain (analyze, costs off, summary off, timing off, buffers off)
 select * from tbl1 join tprt on tbl1.col1 = tprt.col1;
-                                QUERY PLAN                                
---------------------------------------------------------------------------
+                                 QUERY PLAN                                  
+-----------------------------------------------------------------------------
  Nested Loop (actual rows=2 loops=1)
    ->  Seq Scan on tbl1 (actual rows=2 loops=1)
-   ->  Append (actual rows=1 loops=2)
+   ->  Append (actual rows=1.00 loops=2)
          ->  Index Scan using tprt1_idx on tprt_1 (never executed)
                Index Cond: (col1 = tbl1.col1)
-         ->  Index Scan using tprt2_idx on tprt_2 (actual rows=1 loops=2)
+         ->  Index Scan using tprt2_idx on tprt_2 (actual rows=1.00 loops=2)
                Index Cond: (col1 = tbl1.col1)
          ->  Index Scan using tprt3_idx on tprt_3 (never executed)
                Index Cond: (col1 = tbl1.col1)
@@ -3049,16 +3049,16 @@ order by tbl1.col1, tprt.col1;
 insert into tbl1 values (1001), (1010), (1011);
 explain (analyze, costs off, summary off, timing off, buffers off)
 select * from tbl1 inner join tprt on tbl1.col1 > tprt.col1;
-                                QUERY PLAN                                
---------------------------------------------------------------------------
+                                 QUERY PLAN                                  
+-----------------------------------------------------------------------------
  Nested Loop (actual rows=23 loops=1)
    ->  Seq Scan on tbl1 (actual rows=5 loops=1)
-   ->  Append (actual rows=5 loops=5)
-         ->  Index Scan using tprt1_idx on tprt_1 (actual rows=2 loops=5)
+   ->  Append (actual rows=4.60 loops=5)
+         ->  Index Scan using tprt1_idx on tprt_1 (actual rows=2.00 loops=5)
                Index Cond: (col1 < tbl1.col1)
-         ->  Index Scan using tprt2_idx on tprt_2 (actual rows=3 loops=4)
+         ->  Index Scan using tprt2_idx on tprt_2 (actual rows=2.75 loops=4)
                Index Cond: (col1 < tbl1.col1)
-         ->  Index Scan using tprt3_idx on tprt_3 (actual rows=1 loops=2)
+         ->  Index Scan using tprt3_idx on tprt_3 (actual rows=1.00 loops=2)
                Index Cond: (col1 < tbl1.col1)
          ->  Index Scan using tprt4_idx on tprt_4 (never executed)
                Index Cond: (col1 < tbl1.col1)
@@ -3070,16 +3070,16 @@ select * from tbl1 inner join tprt on tbl1.col1 > tprt.col1;
 
 explain (analyze, costs off, summary off, timing off, buffers off)
 select * from tbl1 inner join tprt on tbl1.col1 = tprt.col1;
-                                QUERY PLAN                                
---------------------------------------------------------------------------
+                                 QUERY PLAN                                  
+-----------------------------------------------------------------------------
  Nested Loop (actual rows=3 loops=1)
    ->  Seq Scan on tbl1 (actual rows=5 loops=1)
-   ->  Append (actual rows=1 loops=5)
+   ->  Append (actual rows=0.60 loops=5)
          ->  Index Scan using tprt1_idx on tprt_1 (never executed)
                Index Cond: (col1 = tbl1.col1)
-         ->  Index Scan using tprt2_idx on tprt_2 (actual rows=1 loops=2)
+         ->  Index Scan using tprt2_idx on tprt_2 (actual rows=1.00 loops=2)
                Index Cond: (col1 = tbl1.col1)
-         ->  Index Scan using tprt3_idx on tprt_3 (actual rows=0 loops=3)
+         ->  Index Scan using tprt3_idx on tprt_3 (actual rows=0.33 loops=3)
                Index Cond: (col1 = tbl1.col1)
          ->  Index Scan using tprt4_idx on tprt_4 (never executed)
                Index Cond: (col1 = tbl1.col1)

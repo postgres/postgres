@@ -1993,14 +1993,15 @@ ExplainNode(PlanState *planstate, List *ancestors,
 
 		if (es->format == EXPLAIN_FORMAT_TEXT)
 		{
+			appendStringInfo(es->str, " (actual ");
+
 			if (es->timing)
-				appendStringInfo(es->str,
-								 " (actual time=%.3f..%.3f rows=%.0f loops=%.0f)",
-								 startup_ms, total_ms, rows, nloops);
+				appendStringInfo(es->str, "time=%.3f..%.3f ", startup_ms, total_ms);
+
+			if (nloops > 1)
+				appendStringInfo(es->str, "rows=%.2f loops=%.0f)", rows, nloops);
 			else
-				appendStringInfo(es->str,
-								 " (actual rows=%.0f loops=%.0f)",
-								 rows, nloops);
+				appendStringInfo(es->str, "rows=%.0f loops=%.0f)", rows, nloops);
 		}
 		else
 		{
@@ -2011,8 +2012,16 @@ ExplainNode(PlanState *planstate, List *ancestors,
 				ExplainPropertyFloat("Actual Total Time", "ms", total_ms,
 									 3, es);
 			}
-			ExplainPropertyFloat("Actual Rows", NULL, rows, 0, es);
-			ExplainPropertyFloat("Actual Loops", NULL, nloops, 0, es);
+			if (nloops > 1)
+			{
+				ExplainPropertyFloat("Actual Rows", NULL, rows, 2, es);
+				ExplainPropertyFloat("Actual Loops", NULL, nloops, 0, es);
+			}
+			else
+			{
+				ExplainPropertyFloat("Actual Rows", NULL, rows, 0, es);
+				ExplainPropertyFloat("Actual Loops", NULL, nloops, 0, es);
+			}
 		}
 	}
 	else if (es->analyze)
@@ -2064,14 +2073,14 @@ ExplainNode(PlanState *planstate, List *ancestors,
 			if (es->format == EXPLAIN_FORMAT_TEXT)
 			{
 				ExplainIndentText(es);
+				appendStringInfo(es->str, "actual ");
 				if (es->timing)
-					appendStringInfo(es->str,
-									 "actual time=%.3f..%.3f rows=%.0f loops=%.0f\n",
-									 startup_ms, total_ms, rows, nloops);
+					appendStringInfo(es->str, "time=%.3f..%.3f", startup_ms, total_ms);
+
+				if (nloops > 1)
+					appendStringInfo(es->str, "rows=%.2f loops=%.0f\n", rows, nloops);
 				else
-					appendStringInfo(es->str,
-									 "actual rows=%.0f loops=%.0f\n",
-									 rows, nloops);
+					appendStringInfo(es->str, "rows=%.0f loops=%.0f\n", rows, nloops);
 			}
 			else
 			{
@@ -2082,8 +2091,17 @@ ExplainNode(PlanState *planstate, List *ancestors,
 					ExplainPropertyFloat("Actual Total Time", "ms",
 										 total_ms, 3, es);
 				}
-				ExplainPropertyFloat("Actual Rows", NULL, rows, 0, es);
-				ExplainPropertyFloat("Actual Loops", NULL, nloops, 0, es);
+
+				if (nloops > 1)
+				{
+					ExplainPropertyFloat("Actual Rows", NULL, rows, 2, es);
+					ExplainPropertyFloat("Actual Loops", NULL, nloops, 0, es);
+				}
+				else
+				{
+					ExplainPropertyFloat("Actual Rows", NULL, rows, 0, es);
+					ExplainPropertyFloat("Actual Loops", NULL, nloops, 0, es);
+				}
 			}
 
 			ExplainCloseWorker(n, es);

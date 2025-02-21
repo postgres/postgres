@@ -583,17 +583,17 @@ alter table tenk2 set (parallel_workers = 0);
 explain (analyze, timing off, summary off, costs off, buffers off)
    select count(*) from tenk1, tenk2 where tenk1.hundred > 1
         and tenk2.thousand=0;
-                                QUERY PLAN                                
---------------------------------------------------------------------------
+                                 QUERY PLAN                                  
+-----------------------------------------------------------------------------
  Aggregate (actual rows=1 loops=1)
    ->  Nested Loop (actual rows=98000 loops=1)
          ->  Seq Scan on tenk2 (actual rows=10 loops=1)
                Filter: (thousand = 0)
                Rows Removed by Filter: 9990
-         ->  Gather (actual rows=9800 loops=10)
+         ->  Gather (actual rows=9800.00 loops=10)
                Workers Planned: 4
                Workers Launched: 4
-               ->  Parallel Seq Scan on tenk1 (actual rows=1960 loops=50)
+               ->  Parallel Seq Scan on tenk1 (actual rows=1960.00 loops=50)
                      Filter: (hundred > 1)
                      Rows Removed by Filter: 40
 (11 rows)
@@ -617,21 +617,21 @@ begin
 end;
 $$;
 select * from explain_parallel_sort_stats();
-                       explain_parallel_sort_stats                        
---------------------------------------------------------------------------
+                         explain_parallel_sort_stats                         
+-----------------------------------------------------------------------------
  Nested Loop Left Join (actual rows=30000 loops=1)
    ->  Values Scan on "*VALUES*" (actual rows=3 loops=1)
-   ->  Gather Merge (actual rows=10000 loops=3)
+   ->  Gather Merge (actual rows=10000.00 loops=3)
          Workers Planned: 4
          Workers Launched: 4
-         ->  Sort (actual rows=2000 loops=15)
+         ->  Sort (actual rows=2000.00 loops=15)
                Sort Key: tenk1.ten
                Sort Method: quicksort  Memory: xxx
                Worker 0:  Sort Method: quicksort  Memory: xxx
                Worker 1:  Sort Method: quicksort  Memory: xxx
                Worker 2:  Sort Method: quicksort  Memory: xxx
                Worker 3:  Sort Method: quicksort  Memory: xxx
-               ->  Parallel Seq Scan on tenk1 (actual rows=2000 loops=15)
+               ->  Parallel Seq Scan on tenk1 (actual rows=2000.00 loops=15)
                      Filter: (ten < 100)
 (14 rows)
 
@@ -1170,12 +1170,12 @@ explain (costs off)
 SAVEPOINT settings;
 SET LOCAL debug_parallel_query = 1;
 EXPLAIN (analyze, timing off, summary off, costs off, buffers off) SELECT * FROM tenk1;
-                         QUERY PLAN                          
--------------------------------------------------------------
+                           QUERY PLAN                           
+----------------------------------------------------------------
  Gather (actual rows=10000 loops=1)
    Workers Planned: 4
    Workers Launched: 4
-   ->  Parallel Seq Scan on tenk1 (actual rows=2000 loops=5)
+   ->  Parallel Seq Scan on tenk1 (actual rows=2000.00 loops=5)
 (4 rows)
 
 ROLLBACK TO SAVEPOINT settings;
