@@ -1577,7 +1577,7 @@ ExecQueryAndProcessResults(const char *query,
 			if (result_status == PGRES_COPY_BOTH ||
 				result_status == PGRES_COPY_OUT ||
 				result_status == PGRES_COPY_IN)
-
+			{
 				/*
 				 * For some obscure reason PQgetResult does *not* return a
 				 * NULL in copy cases despite the result having been cleared,
@@ -1585,6 +1585,7 @@ ExecQueryAndProcessResults(const char *query,
 				 * ignore manually.
 				 */
 				result = NULL;
+			}
 			else
 				result = PQgetResult(pset.db);
 
