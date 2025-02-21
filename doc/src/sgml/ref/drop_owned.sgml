@@ -33,7 +33,7 @@ DROP OWNED BY { <replaceable class="parameter">name</replaceable> | CURRENT_ROLE
    database that are owned by one of the specified roles. Any
    privileges granted to the given roles on objects in the current
    database or on shared objects (databases, tablespaces, configuration
-   parameters) will also be revoked.
+   parameters, or other roles) will also be revoked.
   </para>
  </refsect1>
 

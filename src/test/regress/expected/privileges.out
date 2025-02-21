@@ -113,6 +113,36 @@ CREATE USER regress_priv_user2;
 CREATE USER regress_priv_user3;
 CREATE USER regress_priv_user4;
 CREATE USER regress_priv_user5;
+-- DROP OWNED should also act on granted and granted-to roles
+GRANT regress_priv_user1 TO regress_priv_user2;
+GRANT regress_priv_user2 TO regress_priv_user3;
+SELECT roleid::regrole, member::regrole FROM pg_auth_members
+  WHERE roleid IN ('regress_priv_user1'::regrole,'regress_priv_user2'::regrole)
+  ORDER BY roleid::regrole::text;
+       roleid       |       member       
+--------------------+--------------------
+ regress_priv_user1 | regress_priv_user2
+ regress_priv_user2 | regress_priv_user3
+(2 rows)
+
+REASSIGN OWNED BY regress_priv_user2 TO regress_priv_user4;  -- no effect
+SELECT roleid::regrole, member::regrole FROM pg_auth_members
+  WHERE roleid IN ('regress_priv_user1'::regrole,'regress_priv_user2'::regrole)
+  ORDER BY roleid::regrole::text;
+       roleid       |       member       
+--------------------+--------------------
+ regress_priv_user1 | regress_priv_user2
+ regress_priv_user2 | regress_priv_user3
+(2 rows)
+
+DROP OWNED BY regress_priv_user2;  -- removes both grants
+SELECT roleid::regrole, member::regrole FROM pg_auth_members
+  WHERE roleid IN ('regress_priv_user1'::regrole,'regress_priv_user2'::regrole)
+  ORDER BY roleid::regrole::text;
+ roleid | member 
+--------+--------
+(0 rows)
+
 GRANT pg_read_all_data TO regress_priv_user6;
 GRANT pg_write_all_data TO regress_priv_user7;
 GRANT pg_read_all_settings TO regress_priv_user8 WITH ADMIN OPTION;
