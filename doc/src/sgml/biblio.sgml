@@ -286,7 +286,7 @@ ssimkovi@ag.or.at
    </biblioentry>
 
    <biblioentry id="olson93">
-    <title>Partial indexing in POSTGRES: research project</title>
+    <title><ulink url="https://search.library.berkeley.edu/permalink/01UCS_BER/iqob43/alma991082339239706532">Partial indexing in POSTGRES: research project</ulink></title>
     <authorgroup>
      <author>
       <firstname>Nels</firstname>
@@ -303,7 +303,7 @@ ssimkovi@ag.or.at
 
    <biblioentry id="ong90">
    <biblioset relation="article">
-    <title>A Unified Framework for Version Modeling Using Production Rules in a Database System</title>
+    <title><ulink url="https://www2.eecs.berkeley.edu/Pubs/TechRpts/1990/1466.html">A Unified Framework for Version Modeling Using Production Rules in a Database System</ulink></title>
     <authorgroup>
      <author>
       <firstname>L.</firstname>
