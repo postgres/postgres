@@ -534,12 +534,14 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
 <programlisting>
 # substitute &lt;pub-names&gt; below with your publication name(s) to be queried
 SELECT DISTINCT PT.schemaname, PT.tablename
-FROM pg_publication_tables PT,
+FROM pg_publication_tables PT
+     JOIN pg_class C ON (C.relname = PT.tablename)
+     JOIN pg_namespace N ON (N.nspname = PT.schemaname),
      pg_subscription_rel PS
-     JOIN pg_class C ON (C.oid = PS.srrelid)
-     JOIN pg_namespace N ON (N.oid = C.relnamespace)
-WHERE N.nspname = PT.schemaname AND
-      C.relname = PT.tablename AND
+WHERE C.relnamespace = N.oid AND
+      (PS.srrelid = C.oid OR
+      C.oid IN (SELECT relid FROM pg_partition_ancestors(PS.srrelid) UNION
+                SELECT relid FROM pg_partition_tree(PS.srrelid))) AND
       PT.pubname IN (&lt;pub-names&gt;);
 </programlisting></para>
 

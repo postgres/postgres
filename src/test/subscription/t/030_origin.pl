@@ -251,9 +251,123 @@ $node_A->poll_query_until('postgres', $synced_query)
 $node_B->wait_for_catchup($subname_AB2);
 
 # clear the operations done by this test
-$node_A->safe_psql('postgres', "DROP TABLE tab_new");
-$node_B->safe_psql('postgres', "DROP TABLE tab_new");
-$node_A->safe_psql('postgres', "DROP SUBSCRIPTION $subname_AB2");
+$node_A->safe_psql(
+	'postgres', qq(
+DROP TABLE tab_new;
+DROP SUBSCRIPTION $subname_AB2;
+DROP SUBSCRIPTION $subname_AB;
+DROP PUBLICATION tap_pub_A;
+));
+$node_B->safe_psql(
+	'postgres', qq(
+DROP TABLE tab_new;
+DROP SUBSCRIPTION $subname_BA;
+DROP PUBLICATION tap_pub_B;
+));
+
+###############################################################################
+# Specifying origin = NONE and copy_data = on must raise WARNING if we subscribe
+# to a partitioned table and this table contains any remotely originated data.
+#
+#           node_B
+#  __________________________
+# |       tab_main           | --------------> node_C (tab_main)
+# |__________________________|
+# | tab_part1  | tab_part2   | <-------------- node_A (tab_part2)
+# |____________|_____________|
+#              | tab_part2_1 |
+#              |_____________|
+#
+#           node_B
+#  __________________________
+# |       tab_main           |
+# |__________________________|
+# | tab_part1  | tab_part2   | <-------------- node_A (tab_part2)
+# |____________|_____________|
+#              | tab_part2_1 | --------------> node_C (tab_part2_1)
+#              |_____________|
+###############################################################################
+
+# create a table on node A which will act as a source for a partition on node B
+$node_A->safe_psql(
+	'postgres', qq(
+CREATE TABLE tab_part2(a int);
+CREATE PUBLICATION tap_pub_A FOR TABLE tab_part2;
+));
+
+# create a partition table on node B
+$node_B->safe_psql(
+	'postgres', qq(
+CREATE TABLE tab_main(a int) PARTITION BY RANGE(a);
+CREATE TABLE tab_part1 PARTITION OF tab_main FOR VALUES FROM (0) TO (5);
+CREATE TABLE tab_part2(a int) PARTITION BY RANGE(a);
+CREATE TABLE tab_part2_1 PARTITION OF tab_part2 FOR VALUES FROM (5) TO (10);
+ALTER TABLE tab_main ATTACH PARTITION tab_part2 FOR VALUES FROM (5) to (10);
+CREATE SUBSCRIPTION tap_sub_A_B CONNECTION '$node_A_connstr' PUBLICATION tap_pub_A;
+));
+
+# create a table on node C
+$node_C->safe_psql(
+	'postgres', qq(
+CREATE TABLE tab_main(a int);
+CREATE TABLE tab_part2_1(a int);
+));
+
+# create a logical replication setup between node B and node C with
+# subscription on node C having origin = NONE and copy_data = on
+$node_B->safe_psql(
+	'postgres', qq(
+CREATE PUBLICATION tap_pub_B FOR TABLE tab_main WITH (publish_via_partition_root);
+CREATE PUBLICATION tap_pub_B_2 FOR TABLE tab_part2_1;
+));
+
+($result, $stdout, $stderr) = $node_C->psql(
+	'postgres', "
+	CREATE SUBSCRIPTION tap_sub_B_C CONNECTION '$node_B_connstr' PUBLICATION tap_pub_B WITH (origin = none, copy_data = on);
+");
+
+# A warning must be logged as a partition 'tab_part2' in node B is subscribed to
+# node A so partition 'tab_part2' can have remotely originated data
+like(
+	$stderr,
+	qr/WARNING: ( [A-Z0-9]+:)? subscription "tap_sub_b_c" requested copy_data with origin = NONE but might copy data that had a different origin/,
+	"Create subscription with origin = none and copy_data when the publisher's partition is subscribing from different origin"
+);
+$node_C->safe_psql('postgres', "DROP SUBSCRIPTION tap_sub_B_C");
+
+($result, $stdout, $stderr) = $node_C->psql(
+	'postgres', "
+	CREATE SUBSCRIPTION tap_sub_B_C CONNECTION '$node_B_connstr' PUBLICATION tap_pub_B_2 WITH (origin = none, copy_data = on);
+");
+
+# A warning must be logged as ancestor of table 'tab_part2_1' in node B is
+# subscribed to node A so table 'tab_part2_1' can have remotely originated
+# data
+like(
+	$stderr,
+	qr/WARNING: ( [A-Z0-9]+:)? subscription "tap_sub_b_c" requested copy_data with origin = NONE but might copy data that had a different origin/,
+	"Create subscription with origin = none and copy_data when the publisher's ancestor is subscribing from different origin"
+);
+
+# clear the operations done by this test
+$node_C->safe_psql(
+	'postgres', qq(
+DROP SUBSCRIPTION tap_sub_B_C;
+DROP TABLE tab_main;
+DROP TABLE tab_part2_1;
+));
+$node_B->safe_psql(
+	'postgres', qq(
+DROP SUBSCRIPTION tap_sub_A_B;
+DROP PUBLICATION tap_pub_B;
+DROP PUBLICATION tap_pub_B_2;
+DROP TABLE tab_main;
+));
+$node_A->safe_psql(
+	'postgres', qq(
+DROP PUBLICATION tap_pub_A;
+DROP TABLE tab_part2;
+));
 
 # shutdown
 $node_B->stop('fast');

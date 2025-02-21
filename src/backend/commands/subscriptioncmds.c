@@ -2083,11 +2083,12 @@ AlterSubscriptionOwner_oid(Oid subid, Oid newOwnerId)
 }
 
 /*
- * Check and log a warning if the publisher has subscribed to the same table
- * from some other publisher. This check is required only if "copy_data = true"
- * and "origin = none" for CREATE SUBSCRIPTION and
- * ALTER SUBSCRIPTION ... REFRESH statements to notify the user that data
- * having origin might have been copied.
+ * Check and log a warning if the publisher has subscribed to the same table,
+ * its partition ancestors (if it's a partition), or its partition children (if
+ * it's a partitioned table), from some other publishers. This check is
+ * required only if "copy_data = true" and "origin = none" for CREATE
+ * SUBSCRIPTION and ALTER SUBSCRIPTION ... REFRESH statements to notify the
+ * user that data having origin might have been copied.
  *
  * This check need not be performed on the tables that are already added
  * because incremental sync for those tables will happen through WAL and the
@@ -2117,7 +2118,9 @@ check_publications_origin(WalReceiverConn *wrconn, List *publications,
 						   "SELECT DISTINCT P.pubname AS pubname\n"
 						   "FROM pg_publication P,\n"
 						   "     LATERAL pg_get_publication_tables(P.pubname) GPT\n"
-						   "     JOIN pg_subscription_rel PS ON (GPT.relid = PS.srrelid),\n"
+						   "     JOIN pg_subscription_rel PS ON (GPT.relid = PS.srrelid OR"
+						   "     GPT.relid IN (SELECT relid FROM pg_partition_ancestors(PS.srrelid) UNION"
+						   "                   SELECT relid FROM pg_partition_tree(PS.srrelid))),\n"
 						   "     pg_class C JOIN pg_namespace N ON (N.oid = C.relnamespace)\n"
 						   "WHERE C.oid = GPT.relid AND P.pubname IN (");
 	GetPublicationsStr(publications, &cmd, true);
