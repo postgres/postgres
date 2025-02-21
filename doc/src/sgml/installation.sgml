@@ -2598,7 +2598,7 @@ ninja install
      </varlistentry>
 
      <varlistentry id="configure-with-libcurl-meson">
-      <term><option>-Dlibcurl={ auto | enabled | disabled }</option></term>
+      <term><option>-Dlibcurl={ auto | enabled | disabled }</option></term>
       <listitem>
        <para>
         Build with libcurl support for OAuth 2.0 client flows.
