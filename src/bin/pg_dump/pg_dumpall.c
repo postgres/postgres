@@ -986,6 +986,13 @@ dumpRoleMembership(PGconn *conn)
 				total;
 	bool		dump_grantors;
 	bool		dump_grant_options;
+	int			i_role;
+	int			i_member;
+	int			i_grantor;
+	int			i_roleid;
+	int			i_memberid;
+	int			i_grantorid;
+	int			i_admin_option;
 	int			i_inherit_option;
 	int			i_set_option;
 
@@ -995,6 +1002,10 @@ dumpRoleMembership(PGconn *conn)
 	 * they didn't have ADMIN OPTION on the role, or a user that no longer
 	 * existed. To avoid dump and restore failures, don't dump the grantor
 	 * when talking to an old server version.
+	 *
+	 * Also, in older versions the roleid and/or member could be role OIDs
+	 * that no longer exist.  If we find such cases, print a warning and skip
+	 * the entry.
 	 */
 	dump_grantors = (PQserverVersion(conn) >= 160000);
 
@@ -1006,8 +1017,10 @@ dumpRoleMembership(PGconn *conn)
 	/* Generate and execute query. */
 	printfPQExpBuffer(buf, "SELECT ur.rolname AS role, "
 					  "um.rolname AS member, "
-					  "ug.oid AS grantorid, "
 					  "ug.rolname AS grantor, "
+					  "a.roleid AS roleid, "
+					  "a.member AS memberid, "
+					  "a.grantor AS grantorid, "
 					  "a.admin_option");
 	if (dump_grant_options)
 		appendPQExpBufferStr(buf, ", a.inherit_option, a.set_option");
@@ -1016,8 +1029,15 @@ dumpRoleMembership(PGconn *conn)
 					  "LEFT JOIN %s um on um.oid = a.member "
 					  "LEFT JOIN %s ug on ug.oid = a.grantor "
 					  "WHERE NOT (ur.rolname ~ '^pg_' AND um.rolname ~ '^pg_')"
-					  "ORDER BY 1,2,4", role_catalog, role_catalog, role_catalog);
+					  "ORDER BY 1,2,3", role_catalog, role_catalog, role_catalog);
 	res = executeQuery(conn, buf->data);
+	i_role = PQfnumber(res, "role");
+	i_member = PQfnumber(res, "member");
+	i_grantor = PQfnumber(res, "grantor");
+	i_roleid = PQfnumber(res, "roleid");
+	i_memberid = PQfnumber(res, "memberid");
+	i_grantorid = PQfnumber(res, "grantorid");
+	i_admin_option = PQfnumber(res, "admin_option");
 	i_inherit_option = PQfnumber(res, "inherit_option");
 	i_set_option = PQfnumber(res, "set_option");
 
@@ -1041,24 +1061,32 @@ dumpRoleMembership(PGconn *conn)
 	total = PQntuples(res);
 	while (start < total)
 	{
-		char	   *role = PQgetvalue(res, start, 0);
+		char	   *role = PQgetvalue(res, start, i_role);
 		int			i;
 		bool	   *done;
 		int			remaining;
 		int			prev_remaining = 0;
 		rolename_hash *ht;
 
+		/* If we hit a null roleid, we're done (nulls sort to the end). */
+		if (PQgetisnull(res, start, i_role))
+		{
+			/* translator: %s represents a numeric role OID */
+			pg_log_warning("found orphaned pg_auth_members entry for role %s",
+						   PQgetvalue(res, start, i_roleid));
+			break;
+		}
+
 		/* All memberships for a single role should be adjacent. */
 		for (end = start; end < total; ++end)
 		{
 			char	   *otherrole;
 
-			otherrole = PQgetvalue(res, end, 0);
+			otherrole = PQgetvalue(res, end, i_role);
 			if (strcmp(role, otherrole) != 0)
 				break;
 		}
 
-		role = PQgetvalue(res, start, 0);
 		remaining = end - start;
 		done = pg_malloc0(remaining * sizeof(bool));
 		ht = rolename_create(remaining, NULL);
@@ -1098,10 +1126,30 @@ dumpRoleMembership(PGconn *conn)
 				if (done[i - start])
 					continue;
 
-				member = PQgetvalue(res, i, 1);
-				grantorid = PQgetvalue(res, i, 2);
-				grantor = PQgetvalue(res, i, 3);
-				admin_option = PQgetvalue(res, i, 4);
+				/* Complain about, then ignore, entries with orphaned OIDs. */
+				if (PQgetisnull(res, i, i_member))
+				{
+					/* translator: %s represents a numeric role OID */
+					pg_log_warning("found orphaned pg_auth_members entry for role %s",
+								   PQgetvalue(res, i, i_memberid));
+					done[i - start] = true;
+					--remaining;
+					continue;
+				}
+				if (PQgetisnull(res, i, i_grantor))
+				{
+					/* translator: %s represents a numeric role OID */
+					pg_log_warning("found orphaned pg_auth_members entry for role %s",
+								   PQgetvalue(res, i, i_grantorid));
+					done[i - start] = true;
+					--remaining;
+					continue;
+				}
+
+				member = PQgetvalue(res, i, i_member);
+				grantor = PQgetvalue(res, i, i_grantor);
+				grantorid = PQgetvalue(res, i, i_grantorid);
+				admin_option = PQgetvalue(res, i, i_admin_option);
 				if (dump_grant_options)
 					set_option = PQgetvalue(res, i, i_set_option);
 
