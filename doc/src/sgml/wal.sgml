@@ -245,7 +245,7 @@
   </para>
 
   <para>
-   Checksums are normally enabled when the cluster is initialized using <link
+   Checksums can be enabled when the cluster is initialized using <link
    linkend="app-initdb-data-checksums"><application>initdb</application></link>.
    They can also be enabled or disabled at a later time as an offline
    operation. Data checksums are enabled or disabled at the full cluster
