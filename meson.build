@@ -3401,6 +3401,8 @@ test_initdb_template = meson.build_root() / 'tmp_install' / 'initdb-template'
 test_env.set('PG_REGRESS', pg_regress.full_path())
 test_env.set('REGRESS_SHLIB', regress_module.full_path())
 test_env.set('INITDB_TEMPLATE', test_initdb_template)
+# for Cluster.pm's portlock logic
+test_env.set('top_builddir', meson.build_root())
 
 # Add the temporary installation to the library search path on platforms where
 # that works (everything but windows, basically). On windows everything

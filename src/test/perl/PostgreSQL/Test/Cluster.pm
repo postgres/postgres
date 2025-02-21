@@ -168,9 +168,7 @@ INIT
 	$portdir = $ENV{PG_TEST_PORT_DIR};
 	# Otherwise, try to use a directory at the top of the build tree
 	# or as a last resort use the tmp_check directory
-	my $build_dir =
-		 $ENV{MESON_BUILD_ROOT}
-	  || $ENV{top_builddir}
+	my $build_dir = $ENV{top_builddir}
 	  || $PostgreSQL::Test::Utils::tmp_check;
 	$portdir ||= "$build_dir/portlock";
 	$portdir =~ s!\\!/!g;
