@@ -203,8 +203,8 @@ pg_control_recovery(PG_FUNCTION_ARGS)
 Datum
 pg_control_init(PG_FUNCTION_ARGS)
 {
-	Datum		values[11];
-	bool		nulls[11];
+	Datum		values[12];
+	bool		nulls[12];
 	TupleDesc	tupdesc;
 	HeapTuple	htup;
 	ControlFileData *ControlFile;
@@ -253,6 +253,9 @@ pg_control_init(PG_FUNCTION_ARGS)
 
 	values[10] = Int32GetDatum(ControlFile->data_checksum_version);
 	nulls[10] = false;
+
+	values[11] = BoolGetDatum(ControlFile->default_char_signedness);
+	nulls[11] = false;
 
 	htup = heap_form_tuple(tupdesc, values, nulls);
 

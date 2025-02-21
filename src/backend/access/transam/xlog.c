@@ -4284,6 +4284,33 @@ WriteControlFile(void)
 
 	ControlFile->float8ByVal = FLOAT8PASSBYVAL;
 
+	/*
+	 * Initialize the default 'char' signedness.
+	 *
+	 * The signedness of the char type is implementation-defined. For instance
+	 * on x86 architecture CPUs, the char data type is typically treated as
+	 * signed by default, whereas on aarch architecture CPUs, it is typically
+	 * treated as unsigned by default. In v17 or earlier, we accidentally let
+	 * C implementation signedness affect persistent data. This led to
+	 * inconsistent results when comparing char data across different
+	 * platforms.
+	 *
+	 * This flag can be used as a hint to ensure consistent behavior for
+	 * pre-v18 data files that store data sorted by the 'char' type on disk,
+	 * especially in cross-platform replication scenarios.
+	 *
+	 * Newly created database clusters unconditionally set the default char
+	 * signedness to true. pg_upgrade changes this flag for clusters that were
+	 * initialized on signedness=false platforms. As a result,
+	 * signedness=false setting will become rare over time. If we had known
+	 * about this problem during the last development cycle that forced initdb
+	 * (v8.3), we would have made all clusters signed or all clusters
+	 * unsigned. Making pg_upgrade the only source of signedness=false will
+	 * cause the population of database clusters to converge toward that
+	 * retrospective ideal.
+	 */
+	ControlFile->default_char_signedness = true;
+
 	/* Contents are protected with a CRC */
 	INIT_CRC32C(ControlFile->crc);
 	COMP_CRC32C(ControlFile->crc,
@@ -4610,6 +4637,19 @@ DataChecksumsEnabled(void)
 {
 	Assert(ControlFile != NULL);
 	return (ControlFile->data_checksum_version > 0);
+}
+
+/*
+ * Return true if the cluster was initialized on a platform where the
+ * default signedness of char is "signed". This function exists for code
+ * that deals with pre-v18 data files that store data sorted by the 'char'
+ * type on disk (e.g., GIN and GiST indexes). See the comments in
+ * WriteControlFile() for details.
+ */
+bool
+GetDefaultCharSignedness(void)
+{
+	return ControlFile->default_char_signedness;
 }
 
 /*
