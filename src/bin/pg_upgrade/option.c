@@ -61,6 +61,7 @@ parseCommandLine(int argc, char *argv[])
 		{"copy-file-range", no_argument, NULL, 3},
 		{"sync-method", required_argument, NULL, 4},
 		{"no-statistics", no_argument, NULL, 5},
+		{"set-char-signedness", required_argument, NULL, 6},
 
 		{NULL, 0, NULL, 0}
 	};
@@ -72,6 +73,7 @@ parseCommandLine(int argc, char *argv[])
 	user_opts.do_sync = true;
 	user_opts.transfer_mode = TRANSFER_MODE_COPY;
 	user_opts.do_statistics = true;
+	user_opts.char_signedness = -1;
 
 	os_info.progname = get_progname(argv[0]);
 
@@ -218,6 +220,14 @@ parseCommandLine(int argc, char *argv[])
 				user_opts.do_statistics = false;
 				break;
 
+			case 6:
+				if (pg_strcasecmp(optarg, "signed") == 0)
+					user_opts.char_signedness = 1;
+				else if (pg_strcasecmp(optarg, "unsigned") == 0)
+					user_opts.char_signedness = 0;
+				else
+					pg_fatal("invalid argument for option %s", "--set-char-signedness");
+				break;
 			default:
 				fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
 						os_info.progname);
@@ -313,6 +323,8 @@ usage(void)
 	printf(_("  --copy                        copy files to new cluster (default)\n"));
 	printf(_("  --copy-file-range             copy files to new cluster with copy_file_range\n"));
 	printf(_("  --no-statistics               do not import statistics from old cluster\n"));
+	printf(_("  --set-char-signedness=OPTION  set new cluster char signedness to \"signed\" or\n"));
+	printf(_("                                \"unsigned\"\n"));
 	printf(_("  --sync-method=METHOD          set method for syncing files to disk\n"));
 	printf(_("  -?, --help                    show this help, then exit\n"));
 	printf(_("\n"

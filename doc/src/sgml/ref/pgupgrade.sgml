@@ -286,6 +286,59 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>--set-char-signedness=</option><replaceable>option</replaceable></term>
+      <listitem>
+       <para>
+        Manually set the default char signedness of new clusters. Possible values
+        are <literal>signed</literal> and <literal>unsigned</literal>.
+       </para>
+       <para>
+        In the C language, the default signedness of the <type>char</type> type
+        (when not explicitly specified) varies across platforms. For example,
+        <type>char</type> defaults to <type>signed char</type> on x86 CPUs but
+        to <type>unsigned char</type> on ARM CPUs.
+       </para>
+       <para>
+        Starting from <productname>PostgreSQL</productname> 18, database clusters
+        maintain their own default char signedness setting, which can be used to
+        ensure consistent behavior across platforms with different default char
+        signedness. By default, <application>pg_upgrade</application> preserves
+        the char signedness setting when upgrading from an existing cluster.
+        However, when upgrading from <productname>PostgreSQL</productname> 17 or
+        earlier, <application>pg_upgrade</application> adopts the char signedness
+        of the platform on which it was built.
+       </para>
+       <para>
+        This option allows you to explicitly set the default char signedness for
+        the new cluster, overriding any inherited values. There are two specific
+        scenarios where this option is relevant:
+        <itemizedlist>
+         <listitem>
+          <para>
+           If you are planning to migrate to a different platform after the upgrade,
+           you should not use this option. The default behavior is right in this case.
+           Instead, perform the upgrade on the original platform without this flag,
+           and then migrate the cluster afterward. This is the recommended and safest
+           approach.
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+           If you have already migrated the cluster to a platform with different
+           char signedness (for example, from an x86-based system to an ARM-based
+           system), you should use this option to specify the signedness matching
+           the original platform's default char signedness. Additionally, it's
+           essential not to modify any data files between migrating data files and
+           running <command>pg_upgrade</command>. <command>pg_upgrade</command>
+           should be the first operation that starts the cluster on the new platform.
+          </para>
+         </listitem>
+        </itemizedlist>
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>-?</option></term>
       <term><option>--help</option></term>
       <listitem><para>show help, then exit</para></listitem>

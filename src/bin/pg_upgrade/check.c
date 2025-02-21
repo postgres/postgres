@@ -838,6 +838,18 @@ check_cluster_versions(void)
 		GET_MAJOR_VERSION(new_cluster.bin_version))
 		pg_fatal("New cluster data and binary directories are from different major versions.");
 
+	/*
+	 * Since from version 18, newly created database clusters always have
+	 * 'signed' default char-signedness, it makes less sense to use
+	 * --set-char-signedness option for upgrading from version 18 or later.
+	 * Users who want to change the default char signedness of the new
+	 * cluster, they can use pg_resetwal manually before the upgrade.
+	 */
+	if (GET_MAJOR_VERSION(old_cluster.major_version) >= 1800 &&
+		user_opts.char_signedness != -1)
+		pg_fatal("%s option cannot be used to upgrade from PostgreSQL %s and later.",
+				 "--set-char-signedness", "18");
+
 	check_ok();
 }
 

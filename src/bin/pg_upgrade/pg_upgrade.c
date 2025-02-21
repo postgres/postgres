@@ -399,8 +399,14 @@ set_new_cluster_char_signedness(void)
 {
 	bool		new_char_signedness;
 
-	/* Inherit the source database's signedness */
-	new_char_signedness = old_cluster.controldata.default_char_signedness;
+	/*
+	 * Use the specified char signedness if specified. Otherwise we inherit
+	 * the source database's signedness.
+	 */
+	if (user_opts.char_signedness != -1)
+		new_char_signedness = (user_opts.char_signedness == 1);
+	else
+		new_char_signedness = old_cluster.controldata.default_char_signedness;
 
 	/* Change the char signedness of the new cluster, if necessary */
 	if (new_cluster.controldata.default_char_signedness != new_char_signedness)

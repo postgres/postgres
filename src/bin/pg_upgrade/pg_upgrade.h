@@ -334,6 +334,9 @@ typedef struct
 	char	   *socketdir;		/* directory to use for Unix sockets */
 	char	   *sync_method;
 	bool		do_statistics;	/* carry over statistics from old cluster */
+	int			char_signedness;	/* default char signedness: -1 for initial
+									 * value, 1 for "signed" and 0 for
+									 * "unsigned" */
 } UserOpts;
 
 typedef struct
