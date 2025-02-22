@@ -1775,14 +1775,25 @@ LWLockUpdateVar(LWLock *lock, pg_atomic_uint64 *valptr, uint64 val)
 
 
 /*
- * LWLockRelease - release a previously acquired lock
+ * Stop treating lock as held by current backend.
+ *
+ * This is the code that can be shared between actually releasing a lock
+ * (LWLockRelease()) and just not tracking ownership of the lock anymore
+ * without releasing the lock (LWLockDisown()).
+ *
+ * Returns the mode in which the lock was held by the current backend.
+ *
+ * NB: This does not call RESUME_INTERRUPTS(), but leaves that responsibility
+ * of the caller.
+ *
+ * NB: This will leave lock->owner pointing to the current backend (if
+ * LOCK_DEBUG is set). This is somewhat intentional, as it makes it easier to
+ * debug cases of missing wakeups during lock release.
  */
-void
-LWLockRelease(LWLock *lock)
+static inline LWLockMode
+LWLockDisownInternal(LWLock *lock)
 {
 	LWLockMode	mode;
-	uint32		oldstate;
-	bool		check_waiters;
 	int			i;
 
 	/*
@@ -1802,7 +1813,18 @@ LWLockRelease(LWLock *lock)
 	for (; i < num_held_lwlocks; i++)
 		held_lwlocks[i] = held_lwlocks[i + 1];
 
-	PRINT_LWDEBUG("LWLockRelease", lock, mode);
+	return mode;
+}
+
+/*
+ * Helper function to release lock, shared between LWLockRelease() and
+ * LWLockeleaseDisowned().
+ */
+static void
+LWLockReleaseInternal(LWLock *lock, LWLockMode mode)
+{
+	uint32		oldstate;
+	bool		check_waiters;
 
 	/*
 	 * Release my hold on lock, after that it can immediately be acquired by
@@ -1840,11 +1862,52 @@ LWLockRelease(LWLock *lock)
 		LOG_LWDEBUG("LWLockRelease", lock, "releasing waiters");
 		LWLockWakeup(lock);
 	}
+}
+
+
+/*
+ * Stop treating lock as held by current backend.
+ *
+ * After calling this function it's the callers responsibility to ensure that
+ * the lock gets released (via LWLockReleaseDisowned()), even in case of an
+ * error. This only is desirable if the lock is going to be released in a
+ * different process than the process that acquired it.
+ */
+void
+LWLockDisown(LWLock *lock)
+{
+	LWLockDisownInternal(lock);
+
+	RESUME_INTERRUPTS();
+}
+
+/*
+ * LWLockRelease - release a previously acquired lock
+ */
+void
+LWLockRelease(LWLock *lock)
+{
+	LWLockMode	mode;
+
+	mode = LWLockDisownInternal(lock);
+
+	PRINT_LWDEBUG("LWLockRelease", lock, mode);
+
+	LWLockReleaseInternal(lock, mode);
 
 	/*
 	 * Now okay to allow cancel/die interrupts.
 	 */
 	RESUME_INTERRUPTS();
+}
+
+/*
+ * Release lock previously disowned with LWLockDisown().
+ */
+void
+LWLockReleaseDisowned(LWLock *lock, LWLockMode mode)
+{
+	LWLockReleaseInternal(lock, mode);
 }
 
 /*
