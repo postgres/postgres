@@ -521,8 +521,8 @@ PostgreSQL documentation
         Dump only the object definitions (schema), not data or statistics.
        </para>
        <para>
-        This option is mutually exclusive to <option>--data-only</option>
-        and <option>--statistics-only</option>.
+        This option cannot be used with <option>--data-only</option>
+        or <option>--statistics-only</option>.
         It is similar to, but for historical reasons not identical to,
         specifying
         <option>--section=pre-data --section=post-data</option>.
@@ -1635,12 +1635,14 @@ CREATE DATABASE foo WITH TEMPLATE template0;
   </para>
 
   <para>
-   The dump file produced by <application>pg_dump</application>
-   does not contain the statistics used by the optimizer to make
-   query planning decisions.  Therefore, it is wise to run
-   <command>ANALYZE</command> after restoring from a dump file
-   to ensure optimal performance; see <xref linkend="vacuum-for-statistics"/>
-   and <xref linkend="autovacuum"/> for more information.
+   By default, <command>pg_dump</command> will include most optimizer
+   statistics in the resulting dump file.  However, some statistics may not be
+   included, such as those created explicitly with <xref
+   linkend="sql-createstatistics"/> or custom statistics added by an
+   extension.  Therefore, it may be useful to run <command>ANALYZE</command>
+   after restoring from a dump file to ensure optimal performance; see <xref
+   linkend="vacuum-for-statistics"/> and <xref linkend="autovacuum"/> for more
+   information.
   </para>
 
   <para>

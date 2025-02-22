@@ -830,10 +830,14 @@ exclude database <replaceable class="parameter">PATTERN</replaceable>
   </para>
 
   <para>
-   Once restored, it is wise to run <command>ANALYZE</command> on each
-   database so the optimizer has useful statistics. You
-   can also run <command>vacuumdb -a -z</command> to analyze all
-   databases.
+   By default, <command>pg_dumpall</command> will include most optimizer
+   statistics in the resulting dump file.  However, some statistics may not be
+   included, such as those created explicitly with <xref
+   linkend="sql-createstatistics"/> or custom statistics added by an
+   extension.  Therefore, it may be useful to run <command>ANALYZE</command>
+   on each database after restoring from a dump file to ensure optimal
+   performance.  You can also run <command>vacuumdb -a -z</command> to analyze
+   all databases.
   </para>
 
   <para>

@@ -792,10 +792,19 @@ psql --username=postgres --file=script.sql postgres
     <title>Statistics</title>
 
     <para>
-     Because optimizer statistics are not transferred by <command>pg_upgrade</command>, you will
-     be instructed to run a command to regenerate that information at the end
-     of the upgrade.  You might need to set connection parameters to
-     match your new cluster.
+     Unless the <option>--no-statistics</option> option is specified,
+     <command>pg_upgrade</command> will transfer most optimizer statistics
+     from the old cluster to the new cluster.  However, some statistics may
+     not be transferred, such as those created explicitly with <xref
+     linkend="sql-createstatistics"/> or custom statistics added by an
+     extension.
+    </para>
+
+    <para>
+     Because not all statistics are not transferred by
+     <command>pg_upgrade</command>, you will be instructed to run a command to
+     regenerate that information at the end of the upgrade.  You might need to
+     set connection parameters to match your new cluster.
     </para>
 
     <para>
