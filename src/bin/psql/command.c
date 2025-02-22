@@ -763,40 +763,168 @@ exec_command_close(PsqlScanState scan_state, bool active_branch, const char *cmd
 static backslashResult
 exec_command_conninfo(PsqlScanState scan_state, bool active_branch)
 {
-	if (active_branch)
-	{
-		char	   *db = PQdb(pset.db);
+	printTableContent cont;
+	int			rows,
+				cols;
+	char	   *db;
+	char	   *host;
+	bool		print_hostaddr;
+	char	   *hostaddr;
+	char	   *protocol_version,
+			   *backend_pid;
+	int			ssl_in_use,
+				password_used,
+				gssapi_used;
+	char	   *paramval;
 
-		if (db == NULL)
-			printf(_("You are currently not connected to a database.\n"));
+	if (!active_branch)
+		return PSQL_CMD_SKIP_LINE;
+
+	db = PQdb(pset.db);
+	if (db == NULL)
+	{
+		printf(_("You are currently not connected to a database.\n"));
+		return PSQL_CMD_SKIP_LINE;
+	}
+
+	/* Get values for the parameters */
+	host = PQhost(pset.db);
+	hostaddr = PQhostaddr(pset.db);
+	protocol_version = psprintf("%d", PQprotocolVersion(pset.db));
+	ssl_in_use = PQsslInUse(pset.db);
+	password_used = PQconnectionUsedPassword(pset.db);
+	gssapi_used = PQconnectionUsedGSSAPI(pset.db);
+	backend_pid = psprintf("%d", PQbackendPID(pset.db));
+
+	/* Only print hostaddr if it differs from host, and not if unixsock */
+	print_hostaddr = (!is_unixsock_path(host) &&
+					  hostaddr && *hostaddr && strcmp(host, hostaddr) != 0);
+
+	/* Determine the exact number of rows to print */
+	rows = 12;
+	cols = 2;
+	if (ssl_in_use)
+		rows += 6;
+	if (print_hostaddr)
+		rows++;
+
+	/* Set it all up */
+	printTableInit(&cont, &pset.popt.topt, _("Connection Information"), cols, rows);
+	printTableAddHeader(&cont, _("Parameter"), true, 'l');
+	printTableAddHeader(&cont, _("Value"), true, 'l');
+
+	/* Database */
+	printTableAddCell(&cont, _("Database"), false, false);
+	printTableAddCell(&cont, db, false, false);
+
+	/* Client User */
+	printTableAddCell(&cont, _("Client User"), false, false);
+	printTableAddCell(&cont, PQuser(pset.db), false, false);
+
+	/* Host/hostaddr/socket */
+	if (is_unixsock_path(host))
+	{
+		/* hostaddr if specified overrides socket, so suppress the latter */
+		if (hostaddr && *hostaddr)
+		{
+			printTableAddCell(&cont, _("Host Address"), false, false);
+			printTableAddCell(&cont, hostaddr, false, false);
+		}
 		else
 		{
-			char	   *host = PQhost(pset.db);
-			char	   *hostaddr = PQhostaddr(pset.db);
-
-			if (is_unixsock_path(host))
-			{
-				/* hostaddr overrides host */
-				if (hostaddr && *hostaddr)
-					printf(_("You are connected to database \"%s\" as user \"%s\" on address \"%s\" at port \"%s\".\n"),
-						   db, PQuser(pset.db), hostaddr, PQport(pset.db));
-				else
-					printf(_("You are connected to database \"%s\" as user \"%s\" via socket in \"%s\" at port \"%s\".\n"),
-						   db, PQuser(pset.db), host, PQport(pset.db));
-			}
-			else
-			{
-				if (hostaddr && *hostaddr && strcmp(host, hostaddr) != 0)
-					printf(_("You are connected to database \"%s\" as user \"%s\" on host \"%s\" (address \"%s\") at port \"%s\".\n"),
-						   db, PQuser(pset.db), host, hostaddr, PQport(pset.db));
-				else
-					printf(_("You are connected to database \"%s\" as user \"%s\" on host \"%s\" at port \"%s\".\n"),
-						   db, PQuser(pset.db), host, PQport(pset.db));
-			}
-			printSSLInfo();
-			printGSSInfo();
+			printTableAddCell(&cont, _("Socket Directory"), false, false);
+			printTableAddCell(&cont, host, false, false);
 		}
 	}
+	else
+	{
+		printTableAddCell(&cont, _("Host"), false, false);
+		printTableAddCell(&cont, host, false, false);
+		if (print_hostaddr)
+		{
+			printTableAddCell(&cont, _("Host Address"), false, false);
+			printTableAddCell(&cont, hostaddr, false, false);
+		}
+	}
+
+	/* Server Port */
+	printTableAddCell(&cont, _("Server Port"), false, false);
+	printTableAddCell(&cont, PQport(pset.db), false, false);
+
+	/* Options */
+	printTableAddCell(&cont, _("Options"), false, false);
+	printTableAddCell(&cont, PQoptions(pset.db), false, false);
+
+	/* Protocol Version */
+	printTableAddCell(&cont, _("Protocol Version"), false, false);
+	printTableAddCell(&cont, protocol_version, false, false);
+
+	/* Password Used */
+	printTableAddCell(&cont, _("Password Used"), false, false);
+	printTableAddCell(&cont, password_used ? _("true") : _("false"), false, false);
+
+	/* GSSAPI Authenticated */
+	printTableAddCell(&cont, _("GSSAPI Authenticated"), false, false);
+	printTableAddCell(&cont, gssapi_used ? _("true") : _("false"), false, false);
+
+	/* Backend PID */
+	printTableAddCell(&cont, _("Backend PID"), false, false);
+	printTableAddCell(&cont, backend_pid, false, false);
+
+	/* TLS Connection */
+	printTableAddCell(&cont, _("TLS Connection"), false, false);
+	printTableAddCell(&cont, ssl_in_use ? _("true") : _("false"), false, false);
+
+	/* TLS Information */
+	if (ssl_in_use)
+	{
+		char	   *library,
+				   *protocol,
+				   *key_bits,
+				   *cipher,
+				   *compression,
+				   *alpn;
+
+		library = (char *) PQsslAttribute(pset.db, "library");
+		protocol = (char *) PQsslAttribute(pset.db, "protocol");
+		key_bits = (char *) PQsslAttribute(pset.db, "key_bits");
+		cipher = (char *) PQsslAttribute(pset.db, "cipher");
+		compression = (char *) PQsslAttribute(pset.db, "compression");
+		alpn = (char *) PQsslAttribute(pset.db, "alpn");
+
+		printTableAddCell(&cont, _("TLS Library"), false, false);
+		printTableAddCell(&cont, library ? library : _("unknown"), false, false);
+
+		printTableAddCell(&cont, _("TLS Protocol"), false, false);
+		printTableAddCell(&cont, protocol ? protocol : _("unknown"), false, false);
+
+		printTableAddCell(&cont, _("TLS Key Bits"), false, false);
+		printTableAddCell(&cont, key_bits ? key_bits : _("unknown"), false, false);
+
+		printTableAddCell(&cont, _("TLS Cipher"), false, false);
+		printTableAddCell(&cont, cipher ? cipher : _("unknown"), false, false);
+
+		printTableAddCell(&cont, _("TLS Compression"), false, false);
+		printTableAddCell(&cont, (compression && strcmp(compression, "off") != 0) ?
+						  _("true") : _("false"), false, false);
+
+		printTableAddCell(&cont, _("ALPN"), false, false);
+		printTableAddCell(&cont, (alpn && alpn[0] != '\0') ? alpn : _("none"), false, false);
+	}
+
+	paramval = (char *) PQparameterStatus(pset.db, "is_superuser");
+	printTableAddCell(&cont, "Superuser", false, false);
+	printTableAddCell(&cont, paramval ? paramval : _("unknown"), false, false);
+
+	paramval = (char *) PQparameterStatus(pset.db, "in_hot_standby");
+	printTableAddCell(&cont, "Hot Standby", false, false);
+	printTableAddCell(&cont, paramval ? paramval : _("unknown"), false, false);
+
+	printTable(&cont, pset.queryFout, false, pset.logfile);
+	printTableCleanup(&cont);
+
+	pfree(protocol_version);
+	pfree(backend_pid);
 
 	return PSQL_CMD_SKIP_LINE;
 }
