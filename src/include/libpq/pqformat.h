@@ -200,7 +200,7 @@ extern int64 pq_getmsgint64(StringInfo msg);
 extern float4 pq_getmsgfloat4(StringInfo msg);
 extern float8 pq_getmsgfloat8(StringInfo msg);
 extern const char *pq_getmsgbytes(StringInfo msg, int datalen);
-extern void pq_copymsgbytes(StringInfo msg, char *buf, int datalen);
+extern void pq_copymsgbytes(StringInfo msg, void *buf, int datalen);
 extern char *pq_getmsgtext(StringInfo msg, int rawbytes, int *nbytes);
 extern const char *pq_getmsgstring(StringInfo msg);
 extern const char *pq_getmsgrawstring(StringInfo msg);

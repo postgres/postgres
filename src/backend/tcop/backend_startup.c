@@ -480,7 +480,7 @@ ProcessStartupPacket(Port *port, bool ssl_done, bool gss_done)
 	 * sound inefficient, but it's not really, because of buffering in
 	 * pqcomm.c.)
 	 */
-	if (pq_getbytes((char *) &len, 1) == EOF)
+	if (pq_getbytes(&len, 1) == EOF)
 	{
 		/*
 		 * If we get no data at all, don't clutter the log with a complaint;

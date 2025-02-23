@@ -422,15 +422,15 @@ pq_getmsgint(StringInfo msg, int b)
 	switch (b)
 	{
 		case 1:
-			pq_copymsgbytes(msg, (char *) &n8, 1);
+			pq_copymsgbytes(msg, &n8, 1);
 			result = n8;
 			break;
 		case 2:
-			pq_copymsgbytes(msg, (char *) &n16, 2);
+			pq_copymsgbytes(msg, &n16, 2);
 			result = pg_ntoh16(n16);
 			break;
 		case 4:
-			pq_copymsgbytes(msg, (char *) &n32, 4);
+			pq_copymsgbytes(msg, &n32, 4);
 			result = pg_ntoh32(n32);
 			break;
 		default:
@@ -454,7 +454,7 @@ pq_getmsgint64(StringInfo msg)
 {
 	uint64		n64;
 
-	pq_copymsgbytes(msg, (char *) &n64, sizeof(n64));
+	pq_copymsgbytes(msg, &n64, sizeof(n64));
 
 	return pg_ntoh64(n64);
 }
@@ -525,7 +525,7 @@ pq_getmsgbytes(StringInfo msg, int datalen)
  * --------------------------------
  */
 void
-pq_copymsgbytes(StringInfo msg, char *buf, int datalen)
+pq_copymsgbytes(StringInfo msg, void *buf, int datalen)
 {
 	if (datalen < 0 || datalen > (msg->len - msg->cursor))
 		ereport(ERROR,

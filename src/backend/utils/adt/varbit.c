@@ -361,7 +361,7 @@ bit_recv(PG_FUNCTION_ARGS)
 	SET_VARSIZE(result, len);
 	VARBITLEN(result) = bitlen;
 
-	pq_copymsgbytes(buf, (char *) VARBITS(result), VARBITBYTES(result));
+	pq_copymsgbytes(buf, VARBITS(result), VARBITBYTES(result));
 
 	/* Make sure last byte is correctly zero-padded */
 	VARBIT_PAD(result);
@@ -666,7 +666,7 @@ varbit_recv(PG_FUNCTION_ARGS)
 	SET_VARSIZE(result, len);
 	VARBITLEN(result) = bitlen;
 
-	pq_copymsgbytes(buf, (char *) VARBITS(result), VARBITBYTES(result));
+	pq_copymsgbytes(buf, VARBITS(result), VARBITBYTES(result));
 
 	/* Make sure last byte is correctly zero-padded */
 	VARBIT_PAD(result);
