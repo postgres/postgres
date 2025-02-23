@@ -585,5 +585,117 @@ PQsendQuery not allowed in pipeline mode
         1
 (1 row)
 
+--
+-- Pipelines and transaction blocks
+--
+-- SET LOCAL will issue a warning when modifying a GUC outside of a
+-- transaction block.  The change will still be valid as a pipeline
+-- runs within an implicit transaction block.  Sending a sync will
+-- commit the implicit transaction block. The first command after a
+-- sync will not be seen as belonging to a pipeline.
+\startpipeline
+SET LOCAL statement_timeout='1h' \bind \g
+SHOW statement_timeout \bind \g
+\syncpipeline
+SHOW statement_timeout \bind \g
+SET LOCAL statement_timeout='2h' \bind \g
+SHOW statement_timeout \bind \g
+\endpipeline
+WARNING:  SET LOCAL can only be used in transaction blocks
+ statement_timeout 
+-------------------
+ 1h
+(1 row)
+
+ statement_timeout 
+-------------------
+ 0
+(1 row)
+
+ statement_timeout 
+-------------------
+ 2h
+(1 row)
+
+-- REINDEX CONCURRENTLY fails if not the first command in a pipeline.
+\startpipeline
+SELECT $1 \bind 1 \g
+REINDEX TABLE CONCURRENTLY psql_pipeline \bind \g
+SELECT $1 \bind 2 \g
+\endpipeline
+ ?column? 
+----------
+ 1
+(1 row)
+
+ERROR:  REINDEX CONCURRENTLY cannot run inside a transaction block
+-- REINDEX CONCURRENTLY works if it is the first command in a pipeline.
+\startpipeline
+REINDEX TABLE CONCURRENTLY psql_pipeline \bind \g
+SELECT $1 \bind 2 \g
+\endpipeline
+ ?column? 
+----------
+ 2
+(1 row)
+
+-- Subtransactions are not allowed in a pipeline.
+\startpipeline
+SAVEPOINT a \bind \g
+SELECT $1 \bind 1 \g
+ROLLBACK TO SAVEPOINT a \bind \g
+SELECT $1 \bind 2 \g
+\endpipeline
+ERROR:  SAVEPOINT can only be used in transaction blocks
+-- LOCK fails as the first command in a pipeline, as not seen in an
+-- implicit transaction block.
+\startpipeline
+LOCK psql_pipeline \bind \g
+SELECT $1 \bind 2 \g
+\endpipeline
+ERROR:  LOCK TABLE can only be used in transaction blocks
+-- LOCK succeeds as it is not the first command in a pipeline,
+-- seen in an implicit transaction block.
+\startpipeline
+SELECT $1 \bind 1 \g
+LOCK psql_pipeline \bind \g
+SELECT $1 \bind 2 \g
+\endpipeline
+ ?column? 
+----------
+ 1
+(1 row)
+
+ ?column? 
+----------
+ 2
+(1 row)
+
+-- VACUUM works as the first command in a pipeline.
+\startpipeline
+VACUUM psql_pipeline \bind \g
+\endpipeline
+-- VACUUM fails when not the first command in a pipeline.
+\startpipeline
+SELECT 1 \bind \g
+VACUUM psql_pipeline \bind \g
+\endpipeline
+ ?column? 
+----------
+        1
+(1 row)
+
+ERROR:  VACUUM cannot run inside a transaction block
+-- VACUUM works after a \syncpipeline.
+\startpipeline
+SELECT 1 \bind \g
+\syncpipeline
+VACUUM psql_pipeline \bind \g
+\endpipeline
+ ?column? 
+----------
+        1
+(1 row)
+
 -- Clean up
 DROP TABLE psql_pipeline;

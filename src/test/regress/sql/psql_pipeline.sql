@@ -350,5 +350,77 @@ SELECT 1;
 SELECT 1;
 \endpipeline
 
+--
+-- Pipelines and transaction blocks
+--
+
+-- SET LOCAL will issue a warning when modifying a GUC outside of a
+-- transaction block.  The change will still be valid as a pipeline
+-- runs within an implicit transaction block.  Sending a sync will
+-- commit the implicit transaction block. The first command after a
+-- sync will not be seen as belonging to a pipeline.
+\startpipeline
+SET LOCAL statement_timeout='1h' \bind \g
+SHOW statement_timeout \bind \g
+\syncpipeline
+SHOW statement_timeout \bind \g
+SET LOCAL statement_timeout='2h' \bind \g
+SHOW statement_timeout \bind \g
+\endpipeline
+
+-- REINDEX CONCURRENTLY fails if not the first command in a pipeline.
+\startpipeline
+SELECT $1 \bind 1 \g
+REINDEX TABLE CONCURRENTLY psql_pipeline \bind \g
+SELECT $1 \bind 2 \g
+\endpipeline
+
+-- REINDEX CONCURRENTLY works if it is the first command in a pipeline.
+\startpipeline
+REINDEX TABLE CONCURRENTLY psql_pipeline \bind \g
+SELECT $1 \bind 2 \g
+\endpipeline
+
+-- Subtransactions are not allowed in a pipeline.
+\startpipeline
+SAVEPOINT a \bind \g
+SELECT $1 \bind 1 \g
+ROLLBACK TO SAVEPOINT a \bind \g
+SELECT $1 \bind 2 \g
+\endpipeline
+
+-- LOCK fails as the first command in a pipeline, as not seen in an
+-- implicit transaction block.
+\startpipeline
+LOCK psql_pipeline \bind \g
+SELECT $1 \bind 2 \g
+\endpipeline
+
+-- LOCK succeeds as it is not the first command in a pipeline,
+-- seen in an implicit transaction block.
+\startpipeline
+SELECT $1 \bind 1 \g
+LOCK psql_pipeline \bind \g
+SELECT $1 \bind 2 \g
+\endpipeline
+
+-- VACUUM works as the first command in a pipeline.
+\startpipeline
+VACUUM psql_pipeline \bind \g
+\endpipeline
+
+-- VACUUM fails when not the first command in a pipeline.
+\startpipeline
+SELECT 1 \bind \g
+VACUUM psql_pipeline \bind \g
+\endpipeline
+
+-- VACUUM works after a \syncpipeline.
+\startpipeline
+SELECT 1 \bind \g
+\syncpipeline
+VACUUM psql_pipeline \bind \g
+\endpipeline
+
 -- Clean up
 DROP TABLE psql_pipeline;
