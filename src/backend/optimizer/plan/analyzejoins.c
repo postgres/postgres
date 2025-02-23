@@ -59,7 +59,8 @@ static void remove_leftjoinrel_from_query(PlannerInfo *root, int relid,
 static void remove_rel_from_restrictinfo(RestrictInfo *rinfo,
 										 int relid, int ojrelid);
 static void remove_rel_from_eclass(EquivalenceClass *ec,
-								   int relid, int ojrelid, int subst);
+								   SpecialJoinInfo *sjinfo,
+								   int relid, int subst);
 static List *remove_rel_from_joinlist(List *joinlist, int relid, int *nremoved);
 static bool rel_supports_distinctness(PlannerInfo *root, RelOptInfo *rel);
 static bool rel_is_distinct_for(PlannerInfo *root, RelOptInfo *rel,
@@ -324,7 +325,6 @@ remove_rel_from_query(PlannerInfo *root, RelOptInfo *rel,
 					  Relids joinrelids)
 {
 	int			relid = rel->relid;
-	int			ojrelid = (sjinfo != NULL) ? sjinfo->ojrelid : -1;
 	Index		rti;
 	ListCell   *l;
 
@@ -332,9 +332,15 @@ remove_rel_from_query(PlannerInfo *root, RelOptInfo *rel,
 	 * Update all_baserels and related relid sets.
 	 */
 	root->all_baserels = adjust_relid_set(root->all_baserels, relid, subst);
-	root->outer_join_rels = adjust_relid_set(root->outer_join_rels, ojrelid, subst);
 	root->all_query_rels = adjust_relid_set(root->all_query_rels, relid, subst);
-	root->all_query_rels = adjust_relid_set(root->all_query_rels, ojrelid, subst);
+
+	if (sjinfo != NULL)
+	{
+		root->outer_join_rels = bms_del_member(root->outer_join_rels,
+											   sjinfo->ojrelid);
+		root->all_query_rels = bms_del_member(root->all_query_rels,
+											  sjinfo->ojrelid);
+	}
 
 	/*
 	 * Likewise remove references from SpecialJoinInfo data structures.
@@ -366,22 +372,30 @@ remove_rel_from_query(PlannerInfo *root, RelOptInfo *rel,
 
 		if (sjinfo != NULL)
 		{
-			Assert(subst <= 0 && ojrelid > 0);
+			Assert(subst <= 0);
 
-			/* Remove ojrelid bits from the sets: */
-			sjinf->min_lefthand = bms_del_member(sjinf->min_lefthand, ojrelid);
-			sjinf->min_righthand = bms_del_member(sjinf->min_righthand, ojrelid);
-			sjinf->syn_lefthand = bms_del_member(sjinf->syn_lefthand, ojrelid);
-			sjinf->syn_righthand = bms_del_member(sjinf->syn_righthand, ojrelid);
+			/* Remove sjinfo->ojrelid bits from the sets: */
+			sjinf->min_lefthand = bms_del_member(sjinf->min_lefthand,
+												 sjinfo->ojrelid);
+			sjinf->min_righthand = bms_del_member(sjinf->min_righthand,
+												  sjinfo->ojrelid);
+			sjinf->syn_lefthand = bms_del_member(sjinf->syn_lefthand,
+												 sjinfo->ojrelid);
+			sjinf->syn_righthand = bms_del_member(sjinf->syn_righthand,
+												  sjinfo->ojrelid);
 			/* relid cannot appear in these fields, but ojrelid can: */
-			sjinf->commute_above_l = bms_del_member(sjinf->commute_above_l, ojrelid);
-			sjinf->commute_above_r = bms_del_member(sjinf->commute_above_r, ojrelid);
-			sjinf->commute_below_l = bms_del_member(sjinf->commute_below_l, ojrelid);
-			sjinf->commute_below_r = bms_del_member(sjinf->commute_below_r, ojrelid);
+			sjinf->commute_above_l = bms_del_member(sjinf->commute_above_l,
+													sjinfo->ojrelid);
+			sjinf->commute_above_r = bms_del_member(sjinf->commute_above_r,
+													sjinfo->ojrelid);
+			sjinf->commute_below_l = bms_del_member(sjinf->commute_below_l,
+													sjinfo->ojrelid);
+			sjinf->commute_below_r = bms_del_member(sjinf->commute_below_r,
+													sjinfo->ojrelid);
 		}
 		else
 		{
-			Assert(subst > 0 && ojrelid == -1);
+			Assert(subst > 0);
 
 			ChangeVarNodes((Node *) sjinf->semi_rhs_exprs, relid, subst, 0);
 		}
@@ -408,7 +422,7 @@ remove_rel_from_query(PlannerInfo *root, RelOptInfo *rel,
 		Assert(sjinfo == NULL || !bms_is_member(relid, phinfo->ph_lateral));
 		if (bms_is_subset(phinfo->ph_needed, joinrelids) &&
 			bms_is_member(relid, phinfo->ph_eval_at) &&
-			(sjinfo == NULL || !bms_is_member(ojrelid, phinfo->ph_eval_at)))
+			(sjinfo == NULL || !bms_is_member(sjinfo->ojrelid, phinfo->ph_eval_at)))
 		{
 			root->placeholder_list = foreach_delete_current(root->placeholder_list,
 															l);
@@ -419,7 +433,9 @@ remove_rel_from_query(PlannerInfo *root, RelOptInfo *rel,
 			PlaceHolderVar *phv = phinfo->ph_var;
 
 			phinfo->ph_eval_at = adjust_relid_set(phinfo->ph_eval_at, relid, subst);
-			phinfo->ph_eval_at = adjust_relid_set(phinfo->ph_eval_at, ojrelid, subst);
+			if (sjinfo != NULL)
+				phinfo->ph_eval_at = adjust_relid_set(phinfo->ph_eval_at,
+													  sjinfo->ojrelid, subst);
 			Assert(!bms_is_empty(phinfo->ph_eval_at));	/* checked previously */
 			/* Reduce ph_needed to contain only "relation 0"; see below */
 			if (bms_is_member(0, phinfo->ph_needed))
@@ -437,7 +453,9 @@ remove_rel_from_query(PlannerInfo *root, RelOptInfo *rel,
 			/* ph_lateral might or might not be empty */
 
 			phv->phrels = adjust_relid_set(phv->phrels, relid, subst);
-			phv->phrels = adjust_relid_set(phv->phrels, ojrelid, subst);
+			if (sjinfo != NULL)
+				phv->phrels = adjust_relid_set(phv->phrels,
+											   sjinfo->ojrelid, subst);
 			Assert(!bms_is_empty(phv->phrels));
 
 			ChangeVarNodes((Node *) phv->phexpr, relid, subst, 0);
@@ -454,8 +472,8 @@ remove_rel_from_query(PlannerInfo *root, RelOptInfo *rel,
 		EquivalenceClass *ec = (EquivalenceClass *) lfirst(l);
 
 		if (bms_is_member(relid, ec->ec_relids) ||
-			(sjinfo == NULL || bms_is_member(ojrelid, ec->ec_relids)))
-			remove_rel_from_eclass(ec, relid, ojrelid, subst);
+			(sjinfo == NULL || bms_is_member(sjinfo->ojrelid, ec->ec_relids)))
+			remove_rel_from_eclass(ec, sjinfo, relid, subst);
 	}
 
 	/*
@@ -671,7 +689,8 @@ remove_rel_from_restrictinfo(RestrictInfo *rinfo, int relid, int ojrelid)
 }
 
 /*
- * Remove any references to relid or ojrelid from the EquivalenceClass.
+ * Remove any references to relid or sjinfo->ojrelid (if sjinfo != NULL)
+ * from the EquivalenceClass.
  *
  * Like remove_rel_from_restrictinfo, we don't worry about cleaning out
  * any nullingrel bits in contained Vars and PHVs.  (This might have to be
@@ -680,13 +699,16 @@ remove_rel_from_restrictinfo(RestrictInfo *rinfo, int relid, int ojrelid)
  * level(s).
  */
 static void
-remove_rel_from_eclass(EquivalenceClass *ec, int relid, int ojrelid, int subst)
+remove_rel_from_eclass(EquivalenceClass *ec, SpecialJoinInfo *sjinfo,
+					   int relid, int subst)
 {
 	ListCell   *lc;
 
 	/* Fix up the EC's overall relids */
 	ec->ec_relids = adjust_relid_set(ec->ec_relids, relid, subst);
-	ec->ec_relids = adjust_relid_set(ec->ec_relids, ojrelid, subst);
+	if (sjinfo != NULL)
+		ec->ec_relids = adjust_relid_set(ec->ec_relids,
+										 sjinfo->ojrelid, subst);
 
 	/*
 	 * Fix up the member expressions.  Any non-const member that ends with
@@ -698,11 +720,14 @@ remove_rel_from_eclass(EquivalenceClass *ec, int relid, int ojrelid, int subst)
 		EquivalenceMember *cur_em = (EquivalenceMember *) lfirst(lc);
 
 		if (bms_is_member(relid, cur_em->em_relids) ||
-			(ojrelid != -1 && bms_is_member(ojrelid, cur_em->em_relids)))
+			(sjinfo != NULL && bms_is_member(sjinfo->ojrelid,
+											 cur_em->em_relids)))
 		{
 			Assert(!cur_em->em_is_const);
 			cur_em->em_relids = adjust_relid_set(cur_em->em_relids, relid, subst);
-			cur_em->em_relids = adjust_relid_set(cur_em->em_relids, ojrelid, subst);
+			if (sjinfo != NULL)
+				cur_em->em_relids = adjust_relid_set(cur_em->em_relids,
+													 sjinfo->ojrelid, subst);
 			if (bms_is_empty(cur_em->em_relids))
 				ec->ec_members = foreach_delete_current(ec->ec_members, lc);
 		}
@@ -713,10 +738,10 @@ remove_rel_from_eclass(EquivalenceClass *ec, int relid, int ojrelid, int subst)
 	{
 		RestrictInfo *rinfo = (RestrictInfo *) lfirst(lc);
 
-		if (ojrelid == -1)
+		if (sjinfo == NULL)
 			ChangeVarNodes((Node *) rinfo, relid, subst, 0);
 		else
-			remove_rel_from_restrictinfo(rinfo, relid, ojrelid);
+			remove_rel_from_restrictinfo(rinfo, relid, sjinfo->ojrelid);
 	}
 
 	/*
