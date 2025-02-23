@@ -296,8 +296,8 @@ sub adjust_old_dumpfile
 
 	# Same with version argument to pg_restore_relation_stats() or
 	# pg_restore_attribute_stats().
-	$dump =~ s ['version', '\d+'::integer,]
-		['version', '000000'::integer,]mg;
+	$dump =~ s {(^\s+'version',) '\d+'::integer,$}
+		{$1 '000000'::integer,}mg;
 
 	if ($old_version < 16)
 	{
@@ -336,6 +336,18 @@ sub adjust_old_dumpfile
 			(^CREATE\sTRIGGER\s.*?)
 			\sEXECUTE\sPROCEDURE
 			/$1 EXECUTE FUNCTION/mgx;
+	}
+
+	# During pg_upgrade, we reindex hash indexes if the source is pre-v10.
+	# This may change their tables' relallvisible values, so don't compare
+	# those.
+	if ($old_version < 10)
+	{
+		$dump =~ s/
+			(^SELECT\s\*\sFROM\spg_catalog\.pg_restore_relation_stats\(
+			\s+'relation',\s'public\.hash_[a-z0-9]*_heap'::regclass,
+			[^;]*'relallvisible',)\s'\d+'::integer
+			/$1 ''::integer/mgx;
 	}
 
 	if ($old_version lt '9.6')
@@ -633,8 +645,8 @@ sub adjust_new_dumpfile
 
 	# Same with version argument to pg_restore_relation_stats() or
 	# pg_restore_attribute_stats().
-	$dump =~ s ['version', '\d+'::integer,]
-		['version', '000000'::integer,]mg;
+	$dump =~ s {(^\s+'version',) '\d+'::integer,$}
+		{$1 '000000'::integer,}mg;
 
 	# pre-v16 dumps do not know about XMLSERIALIZE(NO INDENT).
 	if ($old_version < 16)
@@ -671,6 +683,18 @@ sub adjust_new_dumpfile
 	if ($old_version < 12)
 	{
 		$dump =~ s/^SET default_table_access_method = heap;\n//mg;
+	}
+
+	# During pg_upgrade, we reindex hash indexes if the source is pre-v10.
+	# This may change their tables' relallvisible values, so don't compare
+	# those.
+	if ($old_version < 10)
+	{
+		$dump =~ s/
+			(^SELECT\s\*\sFROM\spg_catalog\.pg_restore_relation_stats\(
+			\s+'relation',\s'public\.hash_[a-z0-9]*_heap'::regclass,
+			[^;]*'relallvisible',)\s'\d+'::integer
+			/$1 ''::integer/mgx;
 	}
 
 	# dumps from pre-9.6 dblink may include redundant ACL settings
