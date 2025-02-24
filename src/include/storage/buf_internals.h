@@ -39,12 +39,19 @@
  *
  * The definition of buffer state components is below.
  */
+#define BUF_REFCOUNT_BITS 18
+#define BUF_USAGECOUNT_BITS 4
+#define BUF_FLAG_BITS 10
+
+StaticAssertDecl(BUF_REFCOUNT_BITS + BUF_USAGECOUNT_BITS + BUF_FLAG_BITS == 32,
+				 "parts of buffer state space need to equal 32");
+
 #define BUF_REFCOUNT_ONE 1
-#define BUF_REFCOUNT_MASK ((1U << 18) - 1)
-#define BUF_USAGECOUNT_MASK 0x003C0000U
-#define BUF_USAGECOUNT_ONE (1U << 18)
-#define BUF_USAGECOUNT_SHIFT 18
-#define BUF_FLAG_MASK 0xFFC00000U
+#define BUF_REFCOUNT_MASK ((1U << BUF_REFCOUNT_BITS) - 1)
+#define BUF_USAGECOUNT_MASK (((1U << BUF_USAGECOUNT_BITS) - 1) << (BUF_REFCOUNT_BITS))
+#define BUF_USAGECOUNT_ONE (1U << BUF_REFCOUNT_BITS)
+#define BUF_USAGECOUNT_SHIFT BUF_REFCOUNT_BITS
+#define BUF_FLAG_MASK (((1U << BUF_FLAG_BITS) - 1) << (BUF_REFCOUNT_BITS + BUF_USAGECOUNT_BITS))
 
 /* Get refcount and usagecount from buffer state */
 #define BUF_STATE_GET_REFCOUNT(state) ((state) & BUF_REFCOUNT_MASK)
@@ -76,6 +83,9 @@
  * value to be very large.
  */
 #define BM_MAX_USAGE_COUNT	5
+
+StaticAssertDecl(BM_MAX_USAGE_COUNT < (1 << BUF_USAGECOUNT_BITS),
+				 "BM_MAX_USAGE_COUNT doesn't fit in BUF_USAGECOUNT_BITS bits");
 
 /*
  * Buffer tag identifies which disk block the buffer contains.
