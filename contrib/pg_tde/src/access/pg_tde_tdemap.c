@@ -695,20 +695,11 @@ pg_tde_perform_rotate_key(TDEPrincipalKey *principal_key, TDEPrincipalKey *new_p
 	off_t		keydata_size;
 	XLogPrincipalKeyRotate *xlrec;
 	off_t		xlrec_size;
-	char		db_map_path[MAXPGPATH] = {0};
-	char		db_keydata_path[MAXPGPATH] = {0};
 	bool		success = true;
 
 	/* Set the file paths */
 	pg_tde_set_db_file_paths(principal_key->keyInfo.databaseId,
-							 db_map_path, db_keydata_path);
-
-	/*
-	 * Let's update the pathnames in the local variable for ease of
-	 * use/readability
-	 */
-	strncpy(m_path[OLD_PRINCIPAL_KEY], db_map_path, MAXPGPATH);
-	strncpy(k_path[OLD_PRINCIPAL_KEY], db_keydata_path, MAXPGPATH);
+							 m_path[OLD_PRINCIPAL_KEY], k_path[OLD_PRINCIPAL_KEY]);
 
 	/*
 	 * Open both files in read only mode. We don't need to track the current
