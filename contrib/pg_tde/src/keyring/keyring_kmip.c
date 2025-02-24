@@ -240,7 +240,6 @@ get_key_by_name(GenericKeyring *keyring, const char *key_name, bool throw_error,
 	key = palloc(sizeof(keyInfo));
 
 	{
-
 		char	   *keyp = NULL;
 		int			result = kmip_bio_get_symmetric_key(ctx.bio, id, strlen(id), &keyp, (int *) &key->data.len);
 
@@ -254,7 +253,18 @@ get_key_by_name(GenericKeyring *keyring, const char *key_name, bool throw_error,
 			return NULL;
 		}
 
-		strncpy((char *) key->data.data, keyp, MAX_KEY_DATA_SIZE);
+		if (key->data.len > sizeof(key->data.data))
+		{
+			kmip_ereport(throw_error, "keyring provider returned invalid key size: %d", key->data.len);
+			*return_code = KEYRING_CODE_INVALID_KEY_SIZE;
+			pfree(key);
+			BIO_free_all(ctx.bio);
+			SSL_CTX_free(ctx.ssl);
+			free(keyp);
+			return NULL;
+		}
+
+		memcpy(key->data.data, keyp, key->data.len);
 		free(keyp);
 	}
 
