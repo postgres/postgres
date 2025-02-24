@@ -91,19 +91,29 @@
 #endif
 
 
-#define LW_FLAG_HAS_WAITERS			((uint32) 1 << 30)
-#define LW_FLAG_RELEASE_OK			((uint32) 1 << 29)
-#define LW_FLAG_LOCKED				((uint32) 1 << 28)
+#define LW_FLAG_HAS_WAITERS			((uint32) 1 << 31)
+#define LW_FLAG_RELEASE_OK			((uint32) 1 << 30)
+#define LW_FLAG_LOCKED				((uint32) 1 << 29)
+#define LW_FLAG_BITS				3
+#define LW_FLAG_MASK				(((1<<LW_FLAG_BITS)-1)<<(32-LW_FLAG_BITS))
 
-#define LW_VAL_EXCLUSIVE			((uint32) 1 << 24)
+/* assumes MAX_BACKENDS is a (power of 2) - 1, checked below */
+#define LW_VAL_EXCLUSIVE			(MAX_BACKENDS + 1)
 #define LW_VAL_SHARED				1
 
-#define LW_LOCK_MASK				((uint32) ((1 << 25)-1))
-/* Must be greater than MAX_BACKENDS - which is 2^23-1, so we're fine. */
-#define LW_SHARED_MASK				((uint32) ((1 << 24)-1))
+/* already (power of 2)-1, i.e. suitable for a mask */
+#define LW_SHARED_MASK				MAX_BACKENDS
+#define LW_LOCK_MASK				(MAX_BACKENDS | LW_VAL_EXCLUSIVE)
 
-StaticAssertDecl(LW_VAL_EXCLUSIVE > (uint32) MAX_BACKENDS,
-				 "MAX_BACKENDS too big for lwlock.c");
+
+StaticAssertDecl(((MAX_BACKENDS + 1) & MAX_BACKENDS) == 0,
+				 "MAX_BACKENDS + 1 needs to be a power of 2");
+
+StaticAssertDecl((MAX_BACKENDS & LW_FLAG_MASK) == 0,
+				 "MAX_BACKENDS and LW_FLAG_MASK overlap");
+
+StaticAssertDecl((LW_VAL_EXCLUSIVE & LW_FLAG_MASK) == 0,
+				 "LW_VAL_EXCLUSIVE and LW_FLAG_MASK overlap");
 
 /*
  * There are three sorts of LWLock "tranches":
