@@ -209,3 +209,4 @@ PQservice                 206
 PQsetAuthDataHook         207
 PQgetAuthDataHook         208
 PQdefaultAuthDataHook     209
+PQfullProtocolVersion     210
