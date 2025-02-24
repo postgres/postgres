@@ -32,8 +32,8 @@ typedef int ProcNumber;
  * currently realistic configurations. Even if that limitation were removed,
  * we still could not a) exceed 2^23-1 because inval.c stores the ProcNumber
  * as a 3-byte signed integer, b) INT_MAX/4 because some places compute
- * 4*MaxBackends without any overflow check.  This is rechecked in the
- * relevant GUC check hooks and in RegisterBackgroundWorker().
+ * 4*MaxBackends without any overflow check.  We check that the configured
+ * number of backends does not exceed MAX_BACKENDS in InitializeMaxBackends().
  */
 #define MAX_BACKENDS_BITS		18
 #define MAX_BACKENDS			((1U << MAX_BACKENDS_BITS)-1)
