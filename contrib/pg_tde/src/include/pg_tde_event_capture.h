@@ -26,6 +26,8 @@ typedef struct TdeCreateEvent
 								 * contains InvalidOid */
 	RangeVar   *relation;		/* Reference to the parsed relation from
 								 * create statement */
+	bool		alterSequenceMode;	/* true when alter sequence is executed by
+									 * pg_tde */
 } TdeCreateEvent;
 
 extern TdeCreateEvent *GetCurrentTdeCreateEvent(void);

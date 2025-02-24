@@ -18,8 +18,13 @@ SELECT * FROM country_table;
 
 SELECT pg_tde_is_encrypted('country_table');
 
+SELECT pg_tde_is_encrypted('country_table_country_id_seq');
+
 -- Try changing the encrypted table to an unencrypted table
 ALTER TABLE country_table SET access method  heap;
+
+SELECT pg_tde_is_encrypted('country_table_country_id_seq');
+
 -- Insert some more data 
 INSERT INTO country_table (country_name, continent)
      VALUES ('France', 'Europe'),
@@ -28,6 +33,8 @@ INSERT INTO country_table (country_name, continent)
 
 SELECT * FROM country_table;
 SELECT pg_tde_is_encrypted('country_table');
+
+SELECT pg_tde_is_encrypted('country_table_country_id_seq');
 
 -- Change it back to encrypted
 ALTER TABLE country_table SET access method  :tde_am;
@@ -38,6 +45,8 @@ INSERT INTO country_table (country_name, continent)
             ('Australia', 'Oceania');
 SELECT * FROM country_table;
 SELECT pg_tde_is_encrypted('country_table');
+
+SELECT pg_tde_is_encrypted('country_table_country_id_seq');
 
 CREATE TABLE country_table2 (
      country_id        serial primary key,

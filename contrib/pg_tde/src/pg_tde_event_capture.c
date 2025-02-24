@@ -26,9 +26,14 @@
 #include "miscadmin.h"
 #include "access/tableam.h"
 #include "catalog/tde_global_space.h"
+#include "executor/spi.h"
 
 /* Global variable that gets set at ddl start and cleard out at ddl end*/
 TdeCreateEvent tdeCurrentCreateEvent = {.relation = NULL};
+
+bool		alteringTdeTable = false;
+
+int			event_trigger_level = 0;
 
 
 static void reset_current_tde_create_event(void);
@@ -100,6 +105,8 @@ pg_tde_ddl_command_start_capture(PG_FUNCTION_ARGS)
 	EventTriggerData *trigdata;
 	Node	   *parsetree;
 
+	event_trigger_level++;
+
 	/* Ensure this function is being called as an event trigger */
 	if (!CALLED_AS_EVENT_TRIGGER(fcinfo))	/* internal error */
 		ereport(ERROR,
@@ -108,7 +115,10 @@ pg_tde_ddl_command_start_capture(PG_FUNCTION_ARGS)
 	trigdata = (EventTriggerData *) fcinfo->context;
 	parsetree = trigdata->parsetree;
 
-	reset_current_tde_create_event();
+	if (event_trigger_level == 1)
+	{
+		reset_current_tde_create_event();
+	}
 
 	if (IsA(parsetree, IndexStmt))
 	{
@@ -168,10 +178,15 @@ pg_tde_ddl_command_start_capture(PG_FUNCTION_ARGS)
 			if (cmd->subtype == AT_SetAccessMethod)
 			{
 				const char *accessMethod = cmd->name;
+				Oid			relationId = RangeVarGetRelid(stmt->relation, NoLock, true);
 
 				tdeCurrentCreateEvent.eventType = TDE_TABLE_CREATE_EVENT;
 				tdeCurrentCreateEvent.relation = stmt->relation;
+				tdeCurrentCreateEvent.baseTableOid = relationId;
+				/* verify ! */
+
 				checkEncryptionClause(accessMethod);
+				alteringTdeTable = true;
 			}
 		}
 	}
@@ -187,6 +202,7 @@ Datum
 pg_tde_ddl_command_end_capture(PG_FUNCTION_ARGS)
 {
 #ifdef PERCONA_EXT
+
 	/* Ensure this function is being called as an event trigger */
 	if (!CALLED_AS_EVENT_TRIGGER(fcinfo))	/* internal error */
 		ereport(ERROR,
@@ -199,9 +215,46 @@ pg_tde_ddl_command_end_capture(PG_FUNCTION_ARGS)
 		 tdeCurrentCreateEvent.baseTableOid,
 		 tdeCurrentCreateEvent.relation ? tdeCurrentCreateEvent.relation->relname : "UNKNOWN");
 
+	if (alteringTdeTable && !tdeCurrentCreateEvent.alterSequenceMode)
+	{
+		/*
+		 * sequences are not updated automatically call a helper function that
+		 * automatically alters all of them, forcing an update on the
+		 * encryption status int ret;
+		 */
+		char	   *sql = "SELECT pg_tde_internal_refresh_sequences($1);";
+		Oid			argtypes[1];
+		SPIPlanPtr	plan;
+		Datum		args[1];
+		char		nulls[1];
+		int			ret;
+
+		SPI_connect();
+
+		argtypes[0] = OIDOID;
+		plan = SPI_prepare(sql, 1, argtypes);
+
+		args[0] = ObjectIdGetDatum(tdeCurrentCreateEvent.baseTableOid);
+		nulls[0] = ' ';
+
+		tdeCurrentCreateEvent.alterSequenceMode = true;
+		ret = SPI_execute_plan(plan, args, nulls, false, 0);
+		tdeCurrentCreateEvent.alterSequenceMode = false;
+
+		SPI_finish();
+
+		if (ret != SPI_OK_SELECT)
+		{
+			elog(ERROR, "Failed to update encryption status of sequences.");
+		}
+	}
+
+	event_trigger_level--;
+
 	/* All we need to do is to clear the event state */
 	reset_current_tde_create_event();
 #endif
+
 	PG_RETURN_NULL();
 }
 
@@ -212,4 +265,5 @@ reset_current_tde_create_event(void)
 	tdeCurrentCreateEvent.eventType = TDE_UNKNOWN_CREATE_EVENT;
 	tdeCurrentCreateEvent.baseTableOid = InvalidOid;
 	tdeCurrentCreateEvent.relation = NULL;
+	alteringTdeTable = false;
 }

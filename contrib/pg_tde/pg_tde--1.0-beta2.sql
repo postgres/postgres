@@ -418,6 +418,41 @@ BEGIN ATOMIC
                             'certPath' VALUE kmip_cert_path));
 END;
 
+
+CREATE FUNCTION pg_tde_internal_refresh_sequences(table_oid OID)
+RETURNS VOID
+VOLATILE
+AS
+$BODY$
+DECLARE
+    rec RECORD;
+BEGIN
+    FOR rec IN
+            SELECT s.relname AS sequence_name,
+                se.seqstart AS sequence_start
+            FROM pg_class AS t
+            JOIN pg_attribute AS a
+                ON a.attrelid = t.oid
+            JOIN pg_depend AS d
+                ON d.refobjid = t.oid
+                AND d.refobjsubid = a.attnum
+            JOIN pg_class AS s
+                ON s.oid = d.objid
+            JOIN pg_sequence AS se
+                ON se.seqrelid = d.objid
+            WHERE d.classid = 'pg_catalog.pg_class'::regclass
+            AND d.refclassid = 'pg_catalog.pg_class'::regclass
+            AND d.deptype IN ('i', 'a')
+            AND t.relkind IN ('r', 'P')
+            AND s.relkind = 'S'
+            AND t.oid = table_oid
+    LOOP
+        EXECUTE format('ALTER SEQUENCE %s START %s', rec.sequence_name, rec.sequence_start);
+    END LOOP;
+END
+$BODY$
+LANGUAGE plpgsql;
+
 -- Table access method
 CREATE FUNCTION pg_tdeam_basic_handler(internal)
 RETURNS table_am_handler
@@ -515,6 +550,7 @@ DO $$
         CREATE FUNCTION pg_tde_ddl_command_end_capture()
         RETURNS event_trigger
         LANGUAGE C
+        VOLATILE
         AS 'MODULE_PATHNAME';
 
         CREATE EVENT TRIGGER pg_tde_trigger_create_index
