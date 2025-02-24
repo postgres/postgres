@@ -24,10 +24,7 @@ Learn more [what is Transparent Data Encryption](tde.md#how-does-it-work) and [w
 ## Known limitations
 
 * Keys in the local keyfile are stored unencrypted. For better security we recommend using the Key management storage. 
-* System tables are currently not encrypted.
-* Currently you cannot update the configuration of an existing Key Management Store (KMS). If its configuration changes (e.g. your Vault server has a new URL), you must set up a new key provider in `pg_tde` and create new keys there. Both the KMS and PostgreSQL servers must be up and running during these changes. [Reach out to our experts](https://www.percona.com/about/contact) for help and to outline the best update path for you.
-
-    We plan to introduce the way to update the configuration of an existing KMS in future releases. 
+* System tables are currently not encrypted. This means that statistics data and database metadata are currently not encrypted.
    
 * `pg_rewind` doesn't work with encrypted WAL for now. We plan to fix it in future releases.
 
@@ -42,15 +39,13 @@ The `pg_tde` extension comes in two distinct versions with specific access metho
 
     This `pg_tde` version is based on and supported for [Percona Server for PostgreSQL 17.x :octicons-link-external-16:](https://docs.percona.com/postgresql/17/postgresql-server.html) - an open source binary drop-in replacement for PostgreSQL Community. It provides the `tde_heap` access method and offers [full encryption capabilities](features.md). 
 
-* **Community version**
+* **Community version** (deprecated)
 
-    This version is supported for PostgreSQL Community 16 and 17, and Percona Distribution for PostgreSQL 16. It provides the `tde_heap_basic` access method, offering limited encryption features. The limitations are in encrypting WAL data only for tables created using the extension and no support of index encryption nor logical replication.
+    This version is available with PostgreSQL Community 16 and 17, and Percona Distribution for PostgreSQL 16. It provides the `tde_heap_basic` access method, offering limited encryption features. The limitations are in encrypting WAL data only for tables created using the extension and no support of index encryption nor logical replication.
 
-### Which version to chose?
+### Which version to choose?
 
-Use the community version and the `tde_heap_basic` access method for data sets where indexing is not mandatory or index encryption is not required. Check the [upstream documentation :octicons-link-external-16:](https://github.com/percona/pg_tde/blob/main/README.md) how to get started.
-
-Otherwise, enjoy full encryption with the Percona Server for PostgreSQL version and the `tde_heap` access method. 
+Enjoy full encryption with the Percona Server for PostgreSQL version and the `tde_heap` access method. The Community version is deprecated and is planned to be removed in future releases. 
 
 Still not sure? [Contact our experts](https://www.percona.com/about/contact) to find the best solution for you.
 

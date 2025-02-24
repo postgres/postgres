@@ -55,11 +55,8 @@ Here's how you can set the new default table access method:
 
     === "via the SQL statement"
 
-        Use the `ALTER SYSTEM` command. This requires superuser or `ALTER SYSTEM` privileges.
-
-        This example shows how to set the `tde_heap` access method. Replace it with the `tde_heap_basic` if needed. 
-    
-
+        Use the `ALTER SYSTEM` command. This requires superuser or ALTER SYSTEM privileges.
+        
         ```sql
         ALTER SYSTEM SET default_table_access_method = tde_heap;
         ```
@@ -68,8 +65,6 @@ Here's how you can set the new default table access method:
 
         Edit the `postgresql.conf` configuration file and add the value for the `default_table_access_method` parameter.
         
-        This example shows how to set the `tde_heap` access method. Replace it with the `tde_heap_basic` if needed.
-
         ```ini
         default_table_access_method = 'tde_heap'
         ```  
@@ -82,7 +77,7 @@ Here's how you can set the new default table access method:
 
         You also don't need to have the superuser privileges to run the `SET` command.
 
-        You can run the SET command anytime during the session. This example shows how to set the `tde_heap` access method. Replace it with the `tde_heap_basic` if needed.
+        You can run the SET command anytime during the session. 
 
         ```sql
         SET default_table_access_method = tde_heap;

@@ -4,14 +4,16 @@ We provide `pg_tde` in two versions for both PostgreSQL Community and [Percona S
 
 The following table provides features available for each version:
 
-| PostgreSQL Community version  | Percona Server for PostgreSQL version <br> |
-|----------------------|-------------------------------|
-| Table encryption: <br> - data tables, <br> - TOAST tables <br> - temporary tables created during the database operation.<br><br> Metadata of those tables is not encrypted. | Table encryption: <br> - data tables, <br> - **Index data for encrypted tables**, <br> - TOAST tables, <br> - temporary tables created during the database operation.<br><br> Metadata of those tables is not encrypted.  |
-| Write-Ahead Log (WAL) encryption of data in encrypted tables | **Global** Write-Ahead Log (WAL) encryption: for data in encrypted and non-encrypted tables  |
-| Multi-tenancy support| Multi-tenancy support |
-| Table-level granularity |Table-level granularity | 
-| Key management via: <br> - HashiCorp Vault; <br> - Local keyfile | Key management via: <br> - HashiCorp Vault; <br> - KMIP server; <br> - Local keyfile|
-| | Logical replication of encrypted tables | 
+| Percona Server for PostgreSQL version | PostgreSQL Community version (deprecated)  |
+|-------------------------------|----------------------|
+| Table encryption: <br> - data tables, <br> - **Index data for encrypted tables**, <br> - TOAST tables, <br> - temporary tables created during the database operation.<br><br> Metadata of those tables is not encrypted.  | Table encryption: <br> - data tables, <br> - TOAST tables <br> - temporary tables created during the database operation.<br><br> Metadata of those tables is not encrypted. |
+| **Global** Write-Ahead Log (WAL) encryption: for data in encrypted and non-encrypted tables | Write-Ahead Log (WAL) encryption of data in encrypted tables |
+| Single-tenancy support via global keyring provider |   | 
+| Multi-tenancy support | Multi-tenancy support |
+| Table-level granularity | Table-level granularity |
+| Key management via: <br> - HashiCorp Vault; <br> - KMIP server; <br> - Local keyfile | Key management via: <br> - HashiCorp Vault; <br> - Local keyfile |
+| Logical replication of encrypted tables | |
+
 
 
 
