@@ -357,8 +357,7 @@ set_principal_key_with_keyring(const char *key_name, const char *provider_name,
 	new_principal_key = palloc(sizeof(TDEPrincipalKey));
 	new_principal_key->keyInfo.databaseId = dbOid;
 	new_principal_key->keyInfo.keyringId = new_keyring->keyring_id;
-	strncpy(new_principal_key->keyInfo.keyId.name, key_name, TDE_KEY_NAME_LEN);
-	strncpy(new_principal_key->keyInfo.keyId.versioned_name, key_name, TDE_KEY_NAME_LEN);
+	strncpy(new_principal_key->keyInfo.name, key_name, TDE_KEY_NAME_LEN);
 	gettimeofday(&new_principal_key->keyInfo.creationTime, NULL);
 	new_principal_key->keyLength = keyInfo->data.len;
 
@@ -732,7 +731,7 @@ pg_tde_get_key_info(PG_FUNCTION_ARGS, Oid dbOid)
 	/* Initialize the values and null flags */
 
 	/* TEXT: Principal key name */
-	values[0] = CStringGetTextDatum(principal_key->keyInfo.keyId.name);
+	values[0] = CStringGetTextDatum(principal_key->keyInfo.name);
 	isnull[0] = false;
 	/* TEXT: Keyring provider name */
 	if (keyring)
@@ -794,7 +793,7 @@ get_principal_key_from_keyring(Oid dbOid, bool pushToCache)
 		return NULL;
 	}
 
-	keyInfo = KeyringGetKey(keyring, principalKeyInfo->keyId.versioned_name, false, &keyring_ret);
+	keyInfo = KeyringGetKey(keyring, principalKeyInfo->name, false, &keyring_ret);
 
 	if (keyInfo == NULL)
 	{
@@ -1014,7 +1013,7 @@ pg_tde_is_provider_used(Oid databaseOid, Oid providerId)
 static bool
 pg_tde_is_same_principal_key(TDEPrincipalKey *a, TDEPrincipalKey *b)
 {
-	return a != NULL && b != NULL && strncmp(a->keyInfo.keyId.name, b->keyInfo.keyId.name, PRINCIPAL_KEY_NAME_LEN) == 0 && a->keyInfo.keyringId == b->keyInfo.keyringId;
+	return a != NULL && b != NULL && strncmp(a->keyInfo.name, b->keyInfo.name, PRINCIPAL_KEY_NAME_LEN) == 0 && a->keyInfo.keyringId == b->keyInfo.keyringId;
 }
 
 static void

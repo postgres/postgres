@@ -56,7 +56,6 @@ TDELockTypes
 TDEMapEntry
 TDEMapFilePath
 TDEPrincipalKey
-TDEPrincipalKeyId
 TDEPrincipalKeyInfo
 TDEShmemSetupRoutine
 TdeCreateEvent

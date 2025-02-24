@@ -21,19 +21,13 @@
 
 #define PRINCIPAL_KEY_NAME_LEN TDE_KEY_NAME_LEN
 
-typedef struct TDEPrincipalKeyId
-{
-	char		name[PRINCIPAL_KEY_NAME_LEN];
-	char		versioned_name[PRINCIPAL_KEY_NAME_LEN + 4];
-} TDEPrincipalKeyId;
-
 typedef struct TDEPrincipalKeyInfo
 {
 	Oid			databaseId;
 	Oid			userId;
 	Oid			keyringId;
 	struct timeval creationTime;
-	TDEPrincipalKeyId keyId;
+	char		name[PRINCIPAL_KEY_NAME_LEN];
 } TDEPrincipalKeyInfo;
 
 typedef struct TDEPrincipalKey
