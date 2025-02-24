@@ -1637,7 +1637,7 @@ pg_stat_get_backend_io(PG_FUNCTION_ARGS)
 Datum
 pg_stat_get_wal(PG_FUNCTION_ARGS)
 {
-#define PG_STAT_GET_WAL_COLS	9
+#define PG_STAT_GET_WAL_COLS	5
 	TupleDesc	tupdesc;
 	Datum		values[PG_STAT_GET_WAL_COLS] = {0};
 	bool		nulls[PG_STAT_GET_WAL_COLS] = {0};
@@ -1654,15 +1654,7 @@ pg_stat_get_wal(PG_FUNCTION_ARGS)
 					   NUMERICOID, -1, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 4, "wal_buffers_full",
 					   INT8OID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 5, "wal_write",
-					   INT8OID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 6, "wal_sync",
-					   INT8OID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 7, "wal_write_time",
-					   FLOAT8OID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 8, "wal_sync_time",
-					   FLOAT8OID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 9, "stats_reset",
+	TupleDescInitEntry(tupdesc, (AttrNumber) 5, "stats_reset",
 					   TIMESTAMPTZOID, -1, 0);
 
 	BlessTupleDesc(tupdesc);
@@ -1682,14 +1674,8 @@ pg_stat_get_wal(PG_FUNCTION_ARGS)
 									Int32GetDatum(-1));
 
 	values[3] = Int64GetDatum(wal_stats->wal_buffers_full);
-	values[4] = Int64GetDatum(wal_stats->wal_write);
-	values[5] = Int64GetDatum(wal_stats->wal_sync);
 
-	/* Convert counters from microsec to millisec for display */
-	values[6] = Float8GetDatum(((double) wal_stats->wal_write_time) / 1000.0);
-	values[7] = Float8GetDatum(((double) wal_stats->wal_sync_time) / 1000.0);
-
-	values[8] = TimestampTzGetDatum(wal_stats->stat_reset_timestamp);
+	values[4] = TimestampTzGetDatum(wal_stats->stat_reset_timestamp);
 
 	/* Returns the record as Datum */
 	PG_RETURN_DATUM(HeapTupleGetDatum(heap_form_tuple(tupdesc, values, nulls)));

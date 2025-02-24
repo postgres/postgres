@@ -8393,28 +8393,6 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
       </listitem>
      </varlistentry>
 
-     <varlistentry id="guc-track-wal-io-timing" xreflabel="track_wal_io_timing">
-      <term><varname>track_wal_io_timing</varname> (<type>boolean</type>)
-      <indexterm>
-       <primary><varname>track_wal_io_timing</varname> configuration parameter</primary>
-      </indexterm>
-      </term>
-      <listitem>
-       <para>
-        Enables timing of WAL I/O calls. This parameter is off by default,
-        as it will repeatedly query the operating system for the current time,
-        which may cause significant overhead on some platforms.
-        You can use the <application>pg_test_timing</application> tool to
-        measure the overhead of timing on your system.
-        I/O timing information is
-        displayed in <link linkend="monitoring-pg-stat-wal-view">
-        <structname>pg_stat_wal</structname></link>.
-        Only superusers and users with the appropriate <literal>SET</literal>
-        privilege can change this setting.
-       </para>
-      </listitem>
-     </varlistentry>
-
      <varlistentry id="guc-track-functions" xreflabel="track_functions">
       <term><varname>track_functions</varname> (<type>enum</type>)
       <indexterm>

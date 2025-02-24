@@ -244,7 +244,7 @@ GetLocalVictimBuffer(void)
 
 		PageSetChecksumInplace(localpage, bufHdr->tag.blockNum);
 
-		io_start = pgstat_prepare_io_time(track_io_timing);
+		io_start = pgstat_prepare_io_time();
 
 		/* And write... */
 		smgrwrite(oreln,
@@ -414,7 +414,7 @@ ExtendBufferedRelLocal(BufferManagerRelation bmr,
 		}
 	}
 
-	io_start = pgstat_prepare_io_time(track_io_timing);
+	io_start = pgstat_prepare_io_time();
 
 	/* actually extend relation */
 	smgrzeroextend(bmr.smgr, fork, first_block, extend_by, false);

@@ -134,7 +134,6 @@ int			CommitSiblings = 5; /* # concurrent xacts needed to sleep */
 int			wal_retrieve_retry_interval = 5000;
 int			max_slot_wal_keep_size_mb = -1;
 int			wal_decode_buffer_size = 512 * 1024;
-bool		track_wal_io_timing = false;
 
 #ifdef WAL_DEBUG
 bool		XLOG_DEBUG = false;
@@ -2436,10 +2435,9 @@ XLogWrite(XLogwrtRqst WriteRqst, TimeLineID tli, bool flexible)
 				errno = 0;
 
 				/*
-				 * Measure I/O timing to write WAL data, for pg_stat_io and/or
-				 * pg_stat_wal.
+				 * Measure I/O timing to write WAL data, for pg_stat_io.
 				 */
-				start = pgstat_prepare_io_time(track_io_timing || track_wal_io_timing);
+				start = pgstat_prepare_io_time();
 
 				pgstat_report_wait_start(WAIT_EVENT_WAL_WRITE);
 				written = pg_pwrite(openLogFile, from, nleft, startoffset);
@@ -2447,20 +2445,6 @@ XLogWrite(XLogwrtRqst WriteRqst, TimeLineID tli, bool flexible)
 
 				pgstat_count_io_op_time(IOOBJECT_WAL, IOCONTEXT_NORMAL,
 										IOOP_WRITE, start, 1, written);
-
-				/*
-				 * Increment the I/O timing and the number of times WAL data
-				 * were written out to disk.
-				 */
-				if (track_wal_io_timing)
-				{
-					instr_time	end;
-
-					INSTR_TIME_SET_CURRENT(end);
-					INSTR_TIME_ACCUM_DIFF(PendingWalStats.wal_write_time, end, start);
-				}
-
-				PendingWalStats.wal_write++;
 
 				if (written <= 0)
 				{
@@ -3264,7 +3248,7 @@ XLogFileInitInternal(XLogSegNo logsegno, TimeLineID logtli,
 				 errmsg("could not create file \"%s\": %m", tmppath)));
 
 	/* Measure I/O timing when initializing segment */
-	io_start = pgstat_prepare_io_time(track_io_timing);
+	io_start = pgstat_prepare_io_time();
 
 	pgstat_report_wait_start(WAIT_EVENT_WAL_INIT_WRITE);
 	save_errno = 0;
@@ -3326,7 +3310,7 @@ XLogFileInitInternal(XLogSegNo logsegno, TimeLineID logtli,
 	}
 
 	/* Measure I/O timing when flushing segment */
-	io_start = pgstat_prepare_io_time(track_io_timing);
+	io_start = pgstat_prepare_io_time();
 
 	pgstat_report_wait_start(WAIT_EVENT_WAL_INIT_SYNC);
 	if (pg_fsync(fd) != 0)
@@ -8758,10 +8742,9 @@ issue_xlog_fsync(int fd, XLogSegNo segno, TimeLineID tli)
 		return;
 
 	/*
-	 * Measure I/O timing to sync the WAL file for pg_stat_io and/or
-	 * pg_stat_wal.
+	 * Measure I/O timing to sync the WAL file for pg_stat_io.
 	 */
-	start = pgstat_prepare_io_time(track_io_timing || track_wal_io_timing);
+	start = pgstat_prepare_io_time();
 
 	pgstat_report_wait_start(WAIT_EVENT_WAL_SYNC);
 	switch (wal_sync_method)
@@ -8807,21 +8790,8 @@ issue_xlog_fsync(int fd, XLogSegNo segno, TimeLineID tli)
 
 	pgstat_report_wait_end();
 
-	/*
-	 * Increment the I/O timing and the number of times WAL files were synced.
-	 */
-	if (track_wal_io_timing)
-	{
-		instr_time	end;
-
-		INSTR_TIME_SET_CURRENT(end);
-		INSTR_TIME_ACCUM_DIFF(PendingWalStats.wal_sync_time, end, start);
-	}
-
 	pgstat_count_io_op_time(IOOBJECT_WAL, IOCONTEXT_NORMAL, IOOP_FSYNC,
 							start, 1, 0);
-
-	PendingWalStats.wal_sync++;
 }
 
 /*

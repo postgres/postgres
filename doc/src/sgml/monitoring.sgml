@@ -184,11 +184,6 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
   </para>
 
   <para>
-   The parameter <xref linkend="guc-track-wal-io-timing"/> enables monitoring
-   of WAL write and fsync times.
-  </para>
-
-  <para>
    Normally these parameters are set in <filename>postgresql.conf</filename> so
    that they apply to all server processes, but it is possible to turn
    them on or off in individual sessions using the <xref
@@ -3262,63 +3257,6 @@ description | Waiting for a newly initialized WAL file to reach durable storage
       </para>
       <para>
        Number of times WAL data was written to disk because WAL buffers became full
-      </para></entry>
-     </row>
-
-     <row>
-      <entry role="catalog_table_entry"><para role="column_definition">
-       <structfield>wal_write</structfield> <type>bigint</type>
-      </para>
-      <para>
-       Number of times WAL buffers were written out to disk via
-       <function>XLogWrite</function> request.
-       See <xref linkend="wal-configuration"/> for more information about
-       the internal WAL function <function>XLogWrite</function>.
-      </para></entry>
-     </row>
-
-     <row>
-      <entry role="catalog_table_entry"><para role="column_definition">
-       <structfield>wal_sync</structfield> <type>bigint</type>
-      </para>
-      <para>
-       Number of times WAL files were synced to disk via
-       <function>issue_xlog_fsync</function> request
-       (if <xref linkend="guc-fsync"/> is <literal>on</literal> and
-       <xref linkend="guc-wal-sync-method"/> is either
-       <literal>fdatasync</literal>, <literal>fsync</literal> or
-       <literal>fsync_writethrough</literal>, otherwise zero).
-       See <xref linkend="wal-configuration"/> for more information about
-       the internal WAL function <function>issue_xlog_fsync</function>.
-      </para></entry>
-     </row>
-
-     <row>
-      <entry role="catalog_table_entry"><para role="column_definition">
-       <structfield>wal_write_time</structfield> <type>double precision</type>
-      </para>
-      <para>
-       Total amount of time spent writing WAL buffers to disk via
-       <function>XLogWrite</function> request, in milliseconds
-       (if <xref linkend="guc-track-wal-io-timing"/> is enabled,
-       otherwise zero).  This includes the sync time when
-       <varname>wal_sync_method</varname> is either
-       <literal>open_datasync</literal> or <literal>open_sync</literal>.
-      </para></entry>
-     </row>
-
-     <row>
-      <entry role="catalog_table_entry"><para role="column_definition">
-       <structfield>wal_sync_time</structfield> <type>double precision</type>
-      </para>
-      <para>
-       Total amount of time spent syncing WAL files to disk via
-       <function>issue_xlog_fsync</function> request, in milliseconds
-       (if <varname>track_wal_io_timing</varname> is enabled,
-       <varname>fsync</varname> is <literal>on</literal>, and
-       <varname>wal_sync_method</varname> is either
-       <literal>fdatasync</literal>, <literal>fsync</literal> or
-       <literal>fsync_writethrough</literal>, otherwise zero).
       </para></entry>
      </row>
 

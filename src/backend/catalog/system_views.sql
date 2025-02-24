@@ -1189,10 +1189,6 @@ CREATE VIEW pg_stat_wal AS
         w.wal_fpi,
         w.wal_bytes,
         w.wal_buffers_full,
-        w.wal_write,
-        w.wal_sync,
-        w.wal_write_time,
-        w.wal_sync_time,
         w.stats_reset
     FROM pg_stat_get_wal() w;
 
