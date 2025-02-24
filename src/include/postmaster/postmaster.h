@@ -127,18 +127,6 @@ extern bool ReleasePostmasterChildSlot(PMChild *pmchild);
 extern PMChild *FindPostmasterChildByPid(int pid);
 
 /*
- * Note: MAX_BACKENDS is limited to 2^18-1 because that's the width reserved
- * for buffer references in buf_internals.h.  This limitation could be lifted
- * by using a 64bit state; but it's unlikely to be worthwhile as 2^18-1
- * backends exceed currently realistic configurations. Even if that limitation
- * were removed, we still could not a) exceed 2^23-1 because inval.c stores
- * the ProcNumber as a 3-byte signed integer, b) INT_MAX/4 because some places
- * compute 4*MaxBackends without any overflow check.  This is rechecked in the
- * relevant GUC check hooks and in RegisterBackgroundWorker().
- */
-#define MAX_BACKENDS	0x3FFFF
-
-/*
  * These values correspond to the special must-be-first options for dispatching
  * to various subprograms.  parse_dispatch_option() can be used to convert an
  * option name to one of these values.

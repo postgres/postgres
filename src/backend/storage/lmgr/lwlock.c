@@ -80,9 +80,9 @@
 #include "pg_trace.h"
 #include "pgstat.h"
 #include "port/pg_bitutils.h"
-#include "postmaster/postmaster.h"
 #include "storage/proc.h"
 #include "storage/proclist.h"
+#include "storage/procnumber.h"
 #include "storage/spin.h"
 #include "utils/memutils.h"
 
