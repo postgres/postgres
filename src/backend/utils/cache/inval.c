@@ -120,6 +120,7 @@
 #include "catalog/catalog.h"
 #include "catalog/pg_constraint.h"
 #include "miscadmin.h"
+#include "storage/procnumber.h"
 #include "storage/sinval.h"
 #include "storage/smgr.h"
 #include "utils/catcache.h"
@@ -1650,6 +1651,10 @@ void
 CacheInvalidateSmgr(RelFileLocatorBackend rlocator)
 {
 	SharedInvalidationMessage msg;
+
+	/* verify optimization stated above stays valid */
+	StaticAssertStmt(MAX_BACKENDS_BITS <= 23,
+					 "MAX_BACKEND_BITS is too big for inval.c");
 
 	msg.sm.id = SHAREDINVALSMGR_ID;
 	msg.sm.backend_hi = rlocator.backend >> 16;

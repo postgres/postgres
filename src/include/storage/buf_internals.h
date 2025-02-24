@@ -21,6 +21,7 @@
 #include "storage/bufmgr.h"
 #include "storage/condition_variable.h"
 #include "storage/lwlock.h"
+#include "storage/procnumber.h"
 #include "storage/shmem.h"
 #include "storage/smgr.h"
 #include "storage/spin.h"
@@ -86,6 +87,8 @@ StaticAssertDecl(BUF_REFCOUNT_BITS + BUF_USAGECOUNT_BITS + BUF_FLAG_BITS == 32,
 
 StaticAssertDecl(BM_MAX_USAGE_COUNT < (1 << BUF_USAGECOUNT_BITS),
 				 "BM_MAX_USAGE_COUNT doesn't fit in BUF_USAGECOUNT_BITS bits");
+StaticAssertDecl(MAX_BACKENDS_BITS <= BUF_REFCOUNT_BITS,
+				 "MAX_BACKENDS_BITS needs to be <= BUF_REFCOUNT_BITS");
 
 /*
  * Buffer tag identifies which disk block the buffer contains.
