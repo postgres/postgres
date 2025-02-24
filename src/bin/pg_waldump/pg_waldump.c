@@ -33,7 +33,9 @@
 #include "storage/bufpage.h"
 
 #ifdef PERCONA_EXT
-#include "access/pg_tde_xlog_encrypt_fe.h"
+#include "access/pg_tde_fe_init.h"
+#include "access/pg_tde_xlog_encrypt.h"
+#include "catalog/tde_global_space.h"
 #endif
 
 /*
@@ -1133,7 +1135,9 @@ main(int argc, char **argv)
 	 */
 	if (kringdir != NULL)
 	{
-		TDE_XLOG_INIT(kringdir);
+		pg_tde_fe_init(kringdir);
+		TDEInitGlobalKeys();
+		TDEXLogSmgrInit();
 	}
 #endif
 

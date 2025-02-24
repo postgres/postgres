@@ -37,6 +37,6 @@
 
 #define TDEisInGlobalSpace(dbOid) 	(dbOid == GLOBAL_DATA_TDE_OID)
 
-extern void TDEInitGlobalKeys(const char *dir);
+extern void TDEInitGlobalKeys(void);
 
 #endif							/* TDE_GLOBAL_CATALOG_H */

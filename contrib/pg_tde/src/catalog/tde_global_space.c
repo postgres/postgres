@@ -31,12 +31,9 @@
 #include <sys/time.h>
 
 void
-TDEInitGlobalKeys(const char *dir)
+TDEInitGlobalKeys(void)
 {
 	InternalKey *key;
-
-	if (dir != NULL)
-		pg_tde_set_data_dir(dir);
 
 	key = pg_tde_get_key_from_file(&GLOBAL_SPACE_RLOCATOR(XLOG_TDE_OID), TDE_KEY_TYPE_GLOBAL, true);
 
@@ -52,7 +49,6 @@ TDEInitGlobalKeys(const char *dir)
 	{
 		pg_tde_put_key_into_cache(&GLOBAL_SPACE_RLOCATOR(XLOG_TDE_OID), key);
 	}
-
 }
 
 #endif							/* PERCONA_EXT */
