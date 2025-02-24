@@ -3353,8 +3353,7 @@ count_nondeletable_pages(LVRelState *vacrel, bool *lock_waiter_detected)
 			INSTR_TIME_SET_CURRENT(currenttime);
 			elapsed = currenttime;
 			INSTR_TIME_SUBTRACT(elapsed, starttime);
-			if ((INSTR_TIME_GET_MICROSEC(elapsed) / 1000)
-				>= VACUUM_TRUNCATE_LOCK_CHECK_INTERVAL)
+			if (INSTR_TIME_GET_MILLISEC(elapsed) >= VACUUM_TRUNCATE_LOCK_CHECK_INTERVAL)
 			{
 				if (LockHasWaitersRelation(vacrel->rel, AccessExclusiveLock))
 				{

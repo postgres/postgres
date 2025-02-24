@@ -24,6 +24,7 @@
 #include "help.h"
 #include "input.h"
 #include "mainloop.h"
+#include "portability/instr_time.h"
 #include "settings.h"
 
 /*
@@ -321,6 +322,9 @@ main(int argc, char *argv[])
 #endif
 
 	PQsetNoticeProcessor(pset.db, NoticeProcessor, NULL);
+
+	/* initialize high-precision interval timing */
+	INSTR_TIME_INITIALIZE();
 
 	SyncVariables();
 

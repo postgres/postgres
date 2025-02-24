@@ -128,7 +128,8 @@ test_timing(unsigned int duration)
 				end_time;
 	instr_time	cur;
 
-	INSTR_TIME_SET_CURRENT(start_time);
+	INSTR_TIME_INITIALIZE();
+	INSTR_TIME_SET_CURRENT_FAST(start_time);
 
 	/*
 	 * To reduce loop overhead, check loop condition in instr_time domain.
@@ -147,7 +148,7 @@ test_timing(unsigned int duration)
 		int32		bits = 0;
 
 		prev = cur;
-		INSTR_TIME_SET_CURRENT(cur);
+		INSTR_TIME_SET_CURRENT_FAST(cur);
 		temp = cur;
 		INSTR_TIME_SUBTRACT(temp, prev);
 		diff = INSTR_TIME_GET_NANOSEC(temp);
@@ -179,7 +180,7 @@ test_timing(unsigned int duration)
 		loop_count++;
 	}
 
-	INSTR_TIME_SET_CURRENT(end_time);
+	INSTR_TIME_SET_CURRENT_FAST(end_time);
 
 	INSTR_TIME_SUBTRACT(end_time, start_time);
 

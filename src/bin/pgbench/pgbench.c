@@ -7268,6 +7268,9 @@ main(int argc, char **argv)
 		initRandomState(&state[i].cs_func_rs);
 	}
 
+	/* initialize high-precision interval timing */
+	INSTR_TIME_INITIALIZE();
+
 	/* opening connection... */
 	con = doConnect();
 	if (con == NULL)
