@@ -16,6 +16,7 @@
 #include "utils/builtins.h"
 #include "catalog/pg_class.h"
 #include "access/table.h"
+#include "access/relation.h"
 #include "catalog/pg_event_trigger.h"
 #include "catalog/namespace.h"
 #include "commands/event_trigger.h"
@@ -31,7 +32,7 @@
 /* Global variable that gets set at ddl start and cleard out at ddl end*/
 TdeCreateEvent tdeCurrentCreateEvent = {.relation = NULL};
 
-bool		alteringTdeTable = false;
+bool		alterSetAccessMethod = false;
 
 int			event_trigger_level = 0;
 
@@ -125,7 +126,6 @@ pg_tde_ddl_command_start_capture(PG_FUNCTION_ARGS)
 		IndexStmt  *stmt = (IndexStmt *) parsetree;
 		Oid			relationId = RangeVarGetRelid(stmt->relation, NoLock, true);
 
-		tdeCurrentCreateEvent.eventType = TDE_INDEX_CREATE_EVENT;
 		tdeCurrentCreateEvent.baseTableOid = relationId;
 		tdeCurrentCreateEvent.relation = stmt->relation;
 
@@ -141,6 +141,11 @@ pg_tde_ddl_command_start_capture(PG_FUNCTION_ARGS)
 				tdeCurrentCreateEvent.encryptMode = true;
 			}
 			table_close(rel, lockmode);
+
+			if (tdeCurrentCreateEvent.encryptMode)
+			{
+				checkEncryptionClause("");
+			}
 		}
 		else
 			ereport(DEBUG1, (errmsg("Failed to get relation Oid for relation:%s", stmt->relation->relname)));
@@ -151,7 +156,6 @@ pg_tde_ddl_command_start_capture(PG_FUNCTION_ARGS)
 		CreateStmt *stmt = (CreateStmt *) parsetree;
 		const char *accessMethod = stmt->accessMethod;
 
-		tdeCurrentCreateEvent.eventType = TDE_TABLE_CREATE_EVENT;
 		tdeCurrentCreateEvent.relation = stmt->relation;
 
 		checkEncryptionClause(accessMethod);
@@ -161,7 +165,6 @@ pg_tde_ddl_command_start_capture(PG_FUNCTION_ARGS)
 		CreateTableAsStmt *stmt = (CreateTableAsStmt *) parsetree;
 		const char *accessMethod = stmt->into->accessMethod;
 
-		tdeCurrentCreateEvent.eventType = TDE_TABLE_CREATE_EVENT;
 		tdeCurrentCreateEvent.relation = stmt->into->rel;
 
 		checkEncryptionClause(accessMethod);
@@ -170,6 +173,7 @@ pg_tde_ddl_command_start_capture(PG_FUNCTION_ARGS)
 	{
 		AlterTableStmt *stmt = (AlterTableStmt *) parsetree;
 		ListCell   *lcmd;
+		Oid			relationId = RangeVarGetRelid(stmt->relation, NoLock, true);
 
 		foreach(lcmd, stmt->cmds)
 		{
@@ -178,17 +182,48 @@ pg_tde_ddl_command_start_capture(PG_FUNCTION_ARGS)
 			if (cmd->subtype == AT_SetAccessMethod)
 			{
 				const char *accessMethod = cmd->name;
-				Oid			relationId = RangeVarGetRelid(stmt->relation, NoLock, true);
 
-				tdeCurrentCreateEvent.eventType = TDE_TABLE_CREATE_EVENT;
 				tdeCurrentCreateEvent.relation = stmt->relation;
 				tdeCurrentCreateEvent.baseTableOid = relationId;
-				/* verify ! */
 
 				checkEncryptionClause(accessMethod);
-				alteringTdeTable = true;
+				alterSetAccessMethod = true;
 			}
 		}
+
+		if (!alterSetAccessMethod)
+		{
+			/*
+			 * With a SET ACCESS METHOD clause, use that as the basis for
+			 * decisions. But if it's not present, look up encryption status
+			 * of the table.
+			 */
+
+			tdeCurrentCreateEvent.baseTableOid = relationId;
+			tdeCurrentCreateEvent.relation = stmt->relation;
+
+			if (relationId != InvalidOid)
+			{
+				LOCKMODE	lockmode = AccessShareLock;
+				Relation	rel = relation_open(relationId, lockmode);
+
+				if (rel->rd_rel->relam == get_tde_table_am_oid())
+				{
+					/*
+					 * We are altering an encrypted table ALTER TABLE can
+					 * create possibly new files set the global state
+					 */
+					tdeCurrentCreateEvent.encryptMode = true;
+				}
+				relation_close(rel, lockmode);
+
+				if (tdeCurrentCreateEvent.encryptMode)
+				{
+					checkEncryptionClause("");
+				}
+			}
+		}
+
 	}
 #endif
 	PG_RETURN_NULL();
@@ -208,14 +243,7 @@ pg_tde_ddl_command_end_capture(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errmsg("Function can only be fired by event trigger manager")));
 
-	elog(DEBUG2, "Type:%s EncryptMode:%s, Oid:%d, Relation:%s ",
-		 (tdeCurrentCreateEvent.eventType == TDE_INDEX_CREATE_EVENT) ? "CREATE INDEX" :
-		 (tdeCurrentCreateEvent.eventType == TDE_TABLE_CREATE_EVENT) ? "CREATE TABLE" : "UNKNOWN",
-		 tdeCurrentCreateEvent.encryptMode ? "true" : "false",
-		 tdeCurrentCreateEvent.baseTableOid,
-		 tdeCurrentCreateEvent.relation ? tdeCurrentCreateEvent.relation->relname : "UNKNOWN");
-
-	if (alteringTdeTable && !tdeCurrentCreateEvent.alterSequenceMode)
+	if (alterSetAccessMethod && !tdeCurrentCreateEvent.alterSequenceMode)
 	{
 		/*
 		 * sequences are not updated automatically call a helper function that
@@ -262,8 +290,7 @@ static void
 reset_current_tde_create_event(void)
 {
 	tdeCurrentCreateEvent.encryptMode = false;
-	tdeCurrentCreateEvent.eventType = TDE_UNKNOWN_CREATE_EVENT;
 	tdeCurrentCreateEvent.baseTableOid = InvalidOid;
 	tdeCurrentCreateEvent.relation = NULL;
-	alteringTdeTable = false;
+	alterSetAccessMethod = false;
 }

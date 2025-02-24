@@ -5,8 +5,8 @@ SELECT pg_tde_set_principal_key('test-db-principal-key','file-vault');
 
 CREATE TABLE country_table (
      country_id        serial primary key,
-     country_name    text unique not null,
-     continent        text not null
+     country_name    varchar(32) unique not null,
+     continent        varchar(32) not null
 ) using :tde_am;
  
 INSERT INTO country_table (country_name, continent)
@@ -47,6 +47,10 @@ SELECT * FROM country_table;
 SELECT pg_tde_is_encrypted('country_table');
 
 SELECT pg_tde_is_encrypted('country_table_country_id_seq');
+
+ALTER TABLE country_table ADD y text;
+
+SELECT pg_tde_is_encrypted(('pg_toast.pg_toast_' || 'country_table'::regclass::oid)::regclass);
 
 CREATE TABLE country_table2 (
      country_id        serial primary key,

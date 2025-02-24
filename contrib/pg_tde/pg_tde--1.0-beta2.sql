@@ -421,7 +421,6 @@ END;
 
 CREATE FUNCTION pg_tde_internal_refresh_sequences(table_oid OID)
 RETURNS VOID
-VOLATILE
 AS
 $BODY$
 DECLARE
@@ -429,6 +428,7 @@ DECLARE
 BEGIN
     FOR rec IN
             SELECT s.relname AS sequence_name,
+                ns.nspname AS sequence_namespace,
                 se.seqstart AS sequence_start
             FROM pg_class AS t
             JOIN pg_attribute AS a
@@ -440,6 +440,8 @@ BEGIN
                 ON s.oid = d.objid
             JOIN pg_sequence AS se
                 ON se.seqrelid = d.objid
+            JOIN pg_namespace AS ns
+                ON ns.oid = s.relnamespace
             WHERE d.classid = 'pg_catalog.pg_class'::regclass
             AND d.refclassid = 'pg_catalog.pg_class'::regclass
             AND d.deptype IN ('i', 'a')
@@ -447,7 +449,7 @@ BEGIN
             AND s.relkind = 'S'
             AND t.oid = table_oid
     LOOP
-        EXECUTE format('ALTER SEQUENCE %s START %s', rec.sequence_name, rec.sequence_start);
+        EXECUTE format('ALTER SEQUENCE %s.%s START %s', rec.sequence_namespace, rec.sequence_name, rec.sequence_start);
     END LOOP;
 END
 $BODY$
@@ -550,7 +552,6 @@ DO $$
         CREATE FUNCTION pg_tde_ddl_command_end_capture()
         RETURNS event_trigger
         LANGUAGE C
-        VOLATILE
         AS 'MODULE_PATHNAME';
 
         CREATE EVENT TRIGGER pg_tde_trigger_create_index

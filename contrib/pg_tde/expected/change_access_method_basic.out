@@ -15,11 +15,9 @@ SELECT pg_tde_set_principal_key('test-db-principal-key','file-vault');
 
 CREATE TABLE country_table (
      country_id        serial primary key,
-     country_name    text unique not null,
-     continent        text not null
+     country_name    varchar(32) unique not null,
+     continent        varchar(32) not null
 ) using :tde_am;
-psql:sql/change_access_method.inc:10: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
-psql:sql/change_access_method.inc:10: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
 psql:sql/change_access_method.inc:10: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
 psql:sql/change_access_method.inc:10: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
 psql:sql/change_access_method.inc:10: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
@@ -100,8 +98,6 @@ psql:sql/change_access_method.inc:40: WARNING:  tde_heap_basic is deprecated, an
 psql:sql/change_access_method.inc:40: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
 psql:sql/change_access_method.inc:40: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
 psql:sql/change_access_method.inc:40: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
-psql:sql/change_access_method.inc:40: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
-psql:sql/change_access_method.inc:40: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
 INSERT INTO country_table (country_name, continent)
      VALUES ('China', 'Asia'),
             ('Brazil', 'South America'),
@@ -136,6 +132,15 @@ SELECT pg_tde_is_encrypted('country_table_country_id_seq');
  f
 (1 row)
 
+ALTER TABLE country_table ADD y text;
+psql:sql/change_access_method.inc:51: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
+psql:sql/change_access_method.inc:51: WARNING:  tde_heap_basic is deprecated, and will be removed in the next release. Please migrate tables to tde_heap.
+SELECT pg_tde_is_encrypted(('pg_toast.pg_toast_' || 'country_table'::regclass::oid)::regclass);
+ pg_tde_is_encrypted 
+---------------------
+ t
+(1 row)
+
 CREATE TABLE country_table2 (
      country_id        serial primary key,
      country_name    text unique not null,
@@ -147,21 +152,21 @@ CREATE TABLE country_table3 (
      country_name    text unique not null,
      continent        text not null
 ) USING heap;
-psql:sql/change_access_method.inc:63: ERROR:  pg_tde.enforce_encryption is ON, only the tde_heap access method is allowed.
+psql:sql/change_access_method.inc:67: ERROR:  pg_tde.enforce_encryption is ON, only the tde_heap access method is allowed.
  
 ALTER TABLE country_table SET access method  heap;
-psql:sql/change_access_method.inc:65: ERROR:  pg_tde.enforce_encryption is ON, only the tde_heap access method is allowed.
+psql:sql/change_access_method.inc:69: ERROR:  pg_tde.enforce_encryption is ON, only the tde_heap access method is allowed.
 ALTER TABLE country_table2 SET access method  :tde_am;
-psql:sql/change_access_method.inc:67: ERROR:  pg_tde.enforce_encryption is ON, only the tde_heap access method is allowed.
+psql:sql/change_access_method.inc:71: ERROR:  pg_tde.enforce_encryption is ON, only the tde_heap access method is allowed.
 CREATE TABLE country_table3 (
      country_id        serial primary key,
      country_name    text unique not null,
      continent        text not null
 ) using :tde_am;
-psql:sql/change_access_method.inc:73: ERROR:  pg_tde.enforce_encryption is ON, only the tde_heap access method is allowed.
+psql:sql/change_access_method.inc:77: ERROR:  pg_tde.enforce_encryption is ON, only the tde_heap access method is allowed.
 DROP TABLE country_table;
 DROP TABLE country_table2;
 DROP TABLE country_table3;
-psql:sql/change_access_method.inc:77: ERROR:  table "country_table3" does not exist
+psql:sql/change_access_method.inc:81: ERROR:  table "country_table3" does not exist
 SET pg_tde.enforce_encryption = OFF;
 DROP EXTENSION pg_tde;

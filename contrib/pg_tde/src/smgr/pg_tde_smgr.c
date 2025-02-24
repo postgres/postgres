@@ -68,20 +68,14 @@ tde_smgr_get_key(SMgrRelation reln, RelFileLocator *old_locator, bool can_create
 		return key;
 	}
 
-	/* if this is a CREATE TABLE, we have to generate the key */
-	if (event->encryptMode == true && event->eventType == TDE_TABLE_CREATE_EVENT && can_create)
+	/*
+	 * Can be many things, such as: CREATE TABLE ALTER TABLE SET ACCESS METHOD
+	 * ALTER TABLE something else on an encrypted table CREATE INDEX ...
+	 *
+	 * Every file has its own key, that makes logistics easier.
+	 */
+	if (event->encryptMode == true && can_create)
 	{
-		return pg_tde_create_smgr_key(&reln->smgr_rlocator);
-	}
-
-	/* if this is a CREATE INDEX, we have to load the key based on the table */
-	if (event->encryptMode == true && event->eventType == TDE_INDEX_CREATE_EVENT && can_create)
-	{
-		/* For now keep it simple and create separate key for indexes */
-		/*
-		 * Later we might modify the map infrastructure to support the same
-		 * keys
-		 */
 		return pg_tde_create_smgr_key(&reln->smgr_rlocator);
 	}
 
