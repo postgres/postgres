@@ -54,9 +54,10 @@ typedef struct TBMIterator
 typedef struct TBMIterateResult
 {
 	BlockNumber blockno;		/* page number containing tuples */
-	int			ntuples;		/* -1 indicates lossy result */
+	int			ntuples;		/* -1 when lossy */
+	bool		lossy;
 	bool		recheck;		/* should the tuples be rechecked? */
-	/* Note: recheck is always true if ntuples < 0 */
+	/* Note: recheck is always true if lossy */
 	OffsetNumber offsets[FLEXIBLE_ARRAY_MEMBER];
 } TBMIterateResult;
 

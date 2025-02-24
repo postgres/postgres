@@ -2170,7 +2170,7 @@ heapam_scan_bitmap_next_block(TableScanDesc scan,
 		VM_ALL_VISIBLE(scan->rs_rd, tbmres->blockno, &bscan->rs_vmbuffer))
 	{
 		/* can't be lossy in the skip_fetch case */
-		Assert(tbmres->ntuples >= 0);
+		Assert(!tbmres->lossy);
 		Assert(bscan->rs_empty_tuples_pending >= 0);
 
 		bscan->rs_empty_tuples_pending += tbmres->ntuples;
@@ -2207,7 +2207,7 @@ heapam_scan_bitmap_next_block(TableScanDesc scan,
 	/*
 	 * We need two separate strategies for lossy and non-lossy cases.
 	 */
-	if (tbmres->ntuples >= 0)
+	if (!tbmres->lossy)
 	{
 		/*
 		 * Bitmap is non-lossy, so we just look through the offsets listed in
@@ -2268,10 +2268,10 @@ heapam_scan_bitmap_next_block(TableScanDesc scan,
 	Assert(ntup <= MaxHeapTuplesPerPage);
 	hscan->rs_ntuples = ntup;
 
-	if (tbmres->ntuples >= 0)
-		(*exact_pages)++;
-	else
+	if (tbmres->lossy)
 		(*lossy_pages)++;
+	else
+		(*exact_pages)++;
 
 	/*
 	 * Return true to indicate that a valid block was found and the bitmap is

@@ -961,12 +961,13 @@ tbm_advance_schunkbit(PagetableEntry *chunk, int *schunkbitp)
  *
  * Returns a TBMIterateResult representing one page, or NULL if there are
  * no more pages to scan.  Pages are guaranteed to be delivered in numerical
- * order.  If result->ntuples < 0, then the bitmap is "lossy" and failed to
+ * order.  If lossy is true, then the bitmap is "lossy" and failed to
  * remember the exact tuples to look at on this page --- the caller must
  * examine all tuples on the page and check if they meet the intended
- * condition.  If result->recheck is true, only the indicated tuples need
+ * condition.  result->ntuples is set to -1 when the bitmap is lossy.
+ * If result->recheck is true, only the indicated tuples need
  * be examined, but the condition must be rechecked anyway.  (For ease of
- * testing, recheck is always set true when ntuples < 0.)
+ * testing, recheck is always set true when lossy is true.)
  */
 TBMIterateResult *
 tbm_private_iterate(TBMPrivateIterator *iterator)
@@ -1012,6 +1013,7 @@ tbm_private_iterate(TBMPrivateIterator *iterator)
 			/* Return a lossy page indicator from the chunk */
 			output->blockno = chunk_blockno;
 			output->ntuples = -1;
+			output->lossy = true;
 			output->recheck = true;
 			iterator->schunkbit++;
 			return output;
@@ -1033,6 +1035,7 @@ tbm_private_iterate(TBMPrivateIterator *iterator)
 		ntuples = tbm_extract_page_tuple(page, output);
 		output->blockno = page->blockno;
 		output->ntuples = ntuples;
+		output->lossy = false;
 		output->recheck = page->recheck;
 		iterator->spageptr++;
 		return output;
@@ -1105,6 +1108,7 @@ tbm_shared_iterate(TBMSharedIterator *iterator)
 			/* Return a lossy page indicator from the chunk */
 			output->blockno = chunk_blockno;
 			output->ntuples = -1;
+			output->lossy = true;
 			output->recheck = true;
 			istate->schunkbit++;
 
@@ -1122,6 +1126,7 @@ tbm_shared_iterate(TBMSharedIterator *iterator)
 		ntuples = tbm_extract_page_tuple(page, output);
 		output->blockno = page->blockno;
 		output->ntuples = ntuples;
+		output->lossy = false;
 		output->recheck = page->recheck;
 		istate->spageptr++;
 

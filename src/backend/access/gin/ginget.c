@@ -827,7 +827,7 @@ entryGetItem(GinState *ginstate, GinScanEntry entry,
 			 * in the bitmap.
 			 */
 			while (entry->matchResult == NULL ||
-				   (entry->matchResult->ntuples >= 0 &&
+				   (!entry->matchResult->lossy &&
 					entry->offset >= entry->matchResult->ntuples) ||
 				   entry->matchResult->blockno < advancePastBlk ||
 				   (ItemPointerIsLossyPage(&advancePast) &&
@@ -860,7 +860,7 @@ entryGetItem(GinState *ginstate, GinScanEntry entry,
 			 * We're now on the first page after advancePast which has any
 			 * items on it. If it's a lossy result, return that.
 			 */
-			if (entry->matchResult->ntuples < 0)
+			if (entry->matchResult->lossy)
 			{
 				ItemPointerSetLossyPage(&entry->curItem,
 										entry->matchResult->blockno);
@@ -879,6 +879,8 @@ entryGetItem(GinState *ginstate, GinScanEntry entry,
 			 */
 			if (entry->matchResult->blockno == advancePastBlk)
 			{
+				Assert(entry->matchResult->ntuples > 0);
+
 				/*
 				 * First, do a quick check against the last offset on the
 				 * page. If that's > advancePast, so are all the other
