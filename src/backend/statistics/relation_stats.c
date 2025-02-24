@@ -24,9 +24,6 @@
 #include "utils/fmgrprotos.h"
 #include "utils/syscache.h"
 
-#define DEFAULT_RELPAGES Int32GetDatum(0)
-#define DEFAULT_RELTUPLES Float4GetDatum(-1.0)
-#define DEFAULT_RELALLVISIBLE Int32GetDatum(0)
 
 /*
  * Positional argument numbers, names, and types for
@@ -60,40 +57,25 @@ static bool relation_statistics_update(FunctionCallInfo fcinfo, int elevel,
 static bool
 relation_statistics_update(FunctionCallInfo fcinfo, int elevel, bool inplace)
 {
+	bool		result = true;
 	Oid			reloid;
 	Relation	crel;
-	int32		relpages = DEFAULT_RELPAGES;
+	BlockNumber relpages = 0;
 	bool		update_relpages = false;
-	float		reltuples = DEFAULT_RELTUPLES;
+	float		reltuples = 0;
 	bool		update_reltuples = false;
-	int32		relallvisible = DEFAULT_RELALLVISIBLE;
+	BlockNumber relallvisible = 0;
 	bool		update_relallvisible = false;
-	bool		result = true;
 
 	if (!PG_ARGISNULL(RELPAGES_ARG))
 	{
-		relpages = PG_GETARG_INT32(RELPAGES_ARG);
-
-		/*
-		 * Partitioned tables may have relpages=-1. Note: for relations with
-		 * no storage, relpages=-1 is not used consistently, but must be
-		 * supported here.
-		 */
-		if (relpages < -1)
-		{
-			ereport(elevel,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("relpages cannot be < -1")));
-			result = false;
-		}
-		else
-			update_relpages = true;
+		relpages = PG_GETARG_UINT32(RELPAGES_ARG);
+		update_relpages = true;
 	}
 
 	if (!PG_ARGISNULL(RELTUPLES_ARG))
 	{
 		reltuples = PG_GETARG_FLOAT4(RELTUPLES_ARG);
-
 		if (reltuples < -1.0)
 		{
 			ereport(elevel,
@@ -107,17 +89,8 @@ relation_statistics_update(FunctionCallInfo fcinfo, int elevel, bool inplace)
 
 	if (!PG_ARGISNULL(RELALLVISIBLE_ARG))
 	{
-		relallvisible = PG_GETARG_INT32(RELALLVISIBLE_ARG);
-
-		if (relallvisible < 0)
-		{
-			ereport(elevel,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("relallvisible cannot be < 0")));
-			result = false;
-		}
-		else
-			update_relallvisible = true;
+		relallvisible = PG_GETARG_UINT32(RELALLVISIBLE_ARG);
+		update_relallvisible = true;
 	}
 
 	stats_check_required_arg(fcinfo, relarginfo, RELATION_ARG);
@@ -201,7 +174,7 @@ relation_statistics_update(FunctionCallInfo fcinfo, int elevel, bool inplace)
 		if (update_relpages && relpages != pgcform->relpages)
 		{
 			replaces[nreplaces] = Anum_pg_class_relpages;
-			values[nreplaces] = Int32GetDatum(relpages);
+			values[nreplaces] = UInt32GetDatum(relpages);
 			nreplaces++;
 		}
 
@@ -215,7 +188,7 @@ relation_statistics_update(FunctionCallInfo fcinfo, int elevel, bool inplace)
 		if (update_relallvisible && relallvisible != pgcform->relallvisible)
 		{
 			replaces[nreplaces] = Anum_pg_class_relallvisible;
-			values[nreplaces] = Int32GetDatum(relallvisible);
+			values[nreplaces] = UInt32GetDatum(relallvisible);
 			nreplaces++;
 		}
 
@@ -263,11 +236,11 @@ pg_clear_relation_stats(PG_FUNCTION_ARGS)
 
 	newfcinfo->args[0].value = PG_GETARG_OID(0);
 	newfcinfo->args[0].isnull = PG_ARGISNULL(0);
-	newfcinfo->args[1].value = DEFAULT_RELPAGES;
+	newfcinfo->args[1].value = UInt32GetDatum(0);
 	newfcinfo->args[1].isnull = false;
-	newfcinfo->args[2].value = DEFAULT_RELTUPLES;
+	newfcinfo->args[2].value = Float4GetDatum(-1.0);
 	newfcinfo->args[2].isnull = false;
-	newfcinfo->args[3].value = DEFAULT_RELALLVISIBLE;
+	newfcinfo->args[3].value = UInt32GetDatum(0);
 	newfcinfo->args[3].isnull = false;
 
 	relation_statistics_update(newfcinfo, ERROR, false);
