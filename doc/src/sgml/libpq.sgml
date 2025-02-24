@@ -10318,21 +10318,21 @@ typedef struct _PGpromptOAuthDevice
          of <symbol>PGoauthBearerRequest</symbol>, which should be filled in
          by the implementation:
 <synopsis>
-typedef struct _PGoauthBearerRequest
+typedef struct PGoauthBearerRequest
 {
     /* Hook inputs (constant across all calls) */
-    const char *const openid_configuration; /* OIDC discovery URL */
-    const char *const scope;                /* required scope(s), or NULL */
+    const char *openid_configuration; /* OIDC discovery URL */
+    const char *scope;                /* required scope(s), or NULL */
 
     /* Hook outputs */
 
     /* Callback implementing a custom asynchronous OAuth flow. */
     PostgresPollingStatusType (*async) (PGconn *conn,
-                                        struct _PGoauthBearerRequest *request,
+                                        struct PGoauthBearerRequest *request,
                                         SOCKTYPE *altsock);
 
     /* Callback to clean up custom allocations. */
-    void        (*cleanup) (PGconn *conn, struct _PGoauthBearerRequest *request);
+    void        (*cleanup) (PGconn *conn, struct PGoauthBearerRequest *request);
 
     char       *token;   /* acquired Bearer token */
     void       *user;    /* hook-defined allocated data */
