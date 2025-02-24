@@ -40,21 +40,12 @@
 
 #include <limits.h>
 
-#include "access/htup_details.h"
 #include "common/hashfn.h"
 #include "common/int.h"
 #include "nodes/bitmapset.h"
 #include "nodes/tidbitmap.h"
 #include "storage/lwlock.h"
 #include "utils/dsa.h"
-
-/*
- * The maximum number of tuples per page is not large (typically 256 with
- * 8K pages, or 1024 with 32K pages).  So there's not much point in making
- * the per-page bitmaps variable size.  We just legislate that the size
- * is this:
- */
-#define MAX_TUPLES_PER_PAGE  MaxHeapTuplesPerPage
 
 /*
  * When we have to switch over to lossy storage, we use a data structure
@@ -67,7 +58,7 @@
  * table, using identical data structures.  (This is because the memory
  * management for hashtables doesn't easily/efficiently allow space to be
  * transferred easily from one hashtable to another.)  Therefore it's best
- * if PAGES_PER_CHUNK is the same as MAX_TUPLES_PER_PAGE, or at least not
+ * if PAGES_PER_CHUNK is the same as TBM_MAX_TUPLES_PER_PAGE, or at least not
  * too different.  But we also want PAGES_PER_CHUNK to be a power of 2 to
  * avoid expensive integer remainder operations.  So, define it like this:
  */
@@ -79,7 +70,7 @@
 #define BITNUM(x)	((x) % BITS_PER_BITMAPWORD)
 
 /* number of active words for an exact page: */
-#define WORDS_PER_PAGE	((MAX_TUPLES_PER_PAGE - 1) / BITS_PER_BITMAPWORD + 1)
+#define WORDS_PER_PAGE	((TBM_MAX_TUPLES_PER_PAGE - 1) / BITS_PER_BITMAPWORD + 1)
 /* number of active words for a lossy chunk: */
 #define WORDS_PER_CHUNK  ((PAGES_PER_CHUNK - 1) / BITS_PER_BITMAPWORD + 1)
 
@@ -181,7 +172,7 @@ struct TBMPrivateIterator
 	int			spageptr;		/* next spages index */
 	int			schunkptr;		/* next schunks index */
 	int			schunkbit;		/* next bit to check in current schunk */
-	TBMIterateResult output;	/* MUST BE LAST (because variable-size) */
+	TBMIterateResult output;
 };
 
 /*
@@ -222,7 +213,7 @@ struct TBMSharedIterator
 	PTEntryArray *ptbase;		/* pagetable element array */
 	PTIterationArray *ptpages;	/* sorted exact page index list */
 	PTIterationArray *ptchunks; /* sorted lossy page index list */
-	TBMIterateResult output;	/* MUST BE LAST (because variable-size) */
+	TBMIterateResult output;
 };
 
 /* Local function prototypes */
@@ -390,7 +381,7 @@ tbm_add_tuples(TIDBitmap *tbm, const ItemPointer tids, int ntids,
 					bitnum;
 
 		/* safety check to ensure we don't overrun bit array bounds */
-		if (off < 1 || off > MAX_TUPLES_PER_PAGE)
+		if (off < 1 || off > TBM_MAX_TUPLES_PER_PAGE)
 			elog(ERROR, "tuple offset out of range: %u", off);
 
 		/*
@@ -696,9 +687,7 @@ tbm_begin_private_iterate(TIDBitmap *tbm)
 	 * Create the TBMPrivateIterator struct, with enough trailing space to
 	 * serve the needs of the TBMIterateResult sub-struct.
 	 */
-	iterator = (TBMPrivateIterator *) palloc(sizeof(TBMPrivateIterator) +
-											 MAX_TUPLES_PER_PAGE *
-											 sizeof(OffsetNumber));
+	iterator = (TBMPrivateIterator *) palloc(sizeof(TBMPrivateIterator));
 	iterator->tbm = tbm;
 
 	/*
@@ -906,11 +895,16 @@ tbm_prepare_shared_iterate(TIDBitmap *tbm)
 /*
  * tbm_extract_page_tuple - extract the tuple offsets from a page
  *
- * The extracted offsets are stored into TBMIterateResult.
+ * Returns the number of offsets it filled in if <= max_offsets. Otherwise,
+ * fills in as many offsets as fit and returns the total number of offsets in
+ * the page.
  */
-static inline int
-tbm_extract_page_tuple(PagetableEntry *page, TBMIterateResult *output)
+int
+tbm_extract_page_tuple(TBMIterateResult *iteritem,
+					   OffsetNumber *offsets,
+					   uint32 max_offsets)
 {
+	PagetableEntry *page = iteritem->internal_page;
 	int			wordnum;
 	int			ntuples = 0;
 
@@ -925,7 +919,11 @@ tbm_extract_page_tuple(PagetableEntry *page, TBMIterateResult *output)
 			while (w != 0)
 			{
 				if (w & 1)
-					output->offsets[ntuples++] = (OffsetNumber) off;
+				{
+					if (ntuples < max_offsets)
+						offsets[ntuples] = (OffsetNumber) off;
+					ntuples++;
+				}
 				off++;
 				w >>= 1;
 			}
@@ -1012,9 +1010,9 @@ tbm_private_iterate(TBMPrivateIterator *iterator)
 		{
 			/* Return a lossy page indicator from the chunk */
 			output->blockno = chunk_blockno;
-			output->ntuples = -1;
 			output->lossy = true;
 			output->recheck = true;
+			output->internal_page = NULL;
 			iterator->schunkbit++;
 			return output;
 		}
@@ -1023,7 +1021,6 @@ tbm_private_iterate(TBMPrivateIterator *iterator)
 	if (iterator->spageptr < tbm->npages)
 	{
 		PagetableEntry *page;
-		int			ntuples;
 
 		/* In TBM_ONE_PAGE state, we don't allocate an spages[] array */
 		if (tbm->status == TBM_ONE_PAGE)
@@ -1031,10 +1028,8 @@ tbm_private_iterate(TBMPrivateIterator *iterator)
 		else
 			page = tbm->spages[iterator->spageptr];
 
-		/* scan bitmap to extract individual offset numbers */
-		ntuples = tbm_extract_page_tuple(page, output);
+		output->internal_page = page;
 		output->blockno = page->blockno;
-		output->ntuples = ntuples;
 		output->lossy = false;
 		output->recheck = page->recheck;
 		iterator->spageptr++;
@@ -1107,9 +1102,9 @@ tbm_shared_iterate(TBMSharedIterator *iterator)
 		{
 			/* Return a lossy page indicator from the chunk */
 			output->blockno = chunk_blockno;
-			output->ntuples = -1;
 			output->lossy = true;
 			output->recheck = true;
+			output->internal_page = NULL;
 			istate->schunkbit++;
 
 			LWLockRelease(&istate->lock);
@@ -1120,12 +1115,9 @@ tbm_shared_iterate(TBMSharedIterator *iterator)
 	if (istate->spageptr < istate->npages)
 	{
 		PagetableEntry *page = &ptbase[idxpages[istate->spageptr]];
-		int			ntuples;
 
-		/* scan bitmap to extract individual offset numbers */
-		ntuples = tbm_extract_page_tuple(page, output);
+		output->internal_page = page;
 		output->blockno = page->blockno;
-		output->ntuples = ntuples;
 		output->lossy = false;
 		output->recheck = page->recheck;
 		istate->spageptr++;
@@ -1473,8 +1465,7 @@ tbm_attach_shared_iterate(dsa_area *dsa, dsa_pointer dp)
 	 * Create the TBMSharedIterator struct, with enough trailing space to
 	 * serve the needs of the TBMIterateResult sub-struct.
 	 */
-	iterator = (TBMSharedIterator *) palloc0(sizeof(TBMSharedIterator) +
-											 MAX_TUPLES_PER_PAGE * sizeof(OffsetNumber));
+	iterator = (TBMSharedIterator *) palloc0(sizeof(TBMSharedIterator));
 
 	istate = (TBMSharedIteratorState *) dsa_get_address(dsa, dp);
 

@@ -354,6 +354,8 @@ typedef struct GinScanEntryData
 	TIDBitmap  *matchBitmap;
 	TBMPrivateIterator *matchIterator;
 	TBMIterateResult *matchResult;
+	OffsetNumber matchOffsets[TBM_MAX_TUPLES_PER_PAGE];
+	int			matchNtuples;
 
 	/* used for Posting list and one page in Posting tree */
 	ItemPointerData *list;

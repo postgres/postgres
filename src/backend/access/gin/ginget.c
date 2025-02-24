@@ -333,6 +333,7 @@ restartScanEntry:
 	entry->nlist = 0;
 	entry->matchBitmap = NULL;
 	entry->matchResult = NULL;
+	entry->matchNtuples = -1;
 	entry->reduceResult = false;
 	entry->predictNumberResult = 0;
 
@@ -828,7 +829,7 @@ entryGetItem(GinState *ginstate, GinScanEntry entry,
 			 */
 			while (entry->matchResult == NULL ||
 				   (!entry->matchResult->lossy &&
-					entry->offset >= entry->matchResult->ntuples) ||
+					entry->offset >= entry->matchNtuples) ||
 				   entry->matchResult->blockno < advancePastBlk ||
 				   (ItemPointerIsLossyPage(&advancePast) &&
 					entry->matchResult->blockno == advancePastBlk))
@@ -845,9 +846,15 @@ entryGetItem(GinState *ginstate, GinScanEntry entry,
 					break;
 				}
 
+				/* Exact pages need their tuple offsets extracted. */
+				if (!entry->matchResult->lossy)
+					entry->matchNtuples = tbm_extract_page_tuple(entry->matchResult,
+																 entry->matchOffsets,
+																 TBM_MAX_TUPLES_PER_PAGE);
+
 				/*
 				 * Reset counter to the beginning of entry->matchResult. Note:
-				 * entry->offset is still greater than matchResult->ntuples if
+				 * entry->offset is still greater than entry->matchNtuples if
 				 * matchResult is lossy.  So, on next call we will get next
 				 * result from TIDBitmap.
 				 */
@@ -874,32 +881,35 @@ entryGetItem(GinState *ginstate, GinScanEntry entry,
 			}
 
 			/*
-			 * Not a lossy page. Skip over any offsets <= advancePast, and
-			 * return that.
+			 * Not a lossy page. If tuple offsets were extracted,
+			 * entry->matchNtuples must be > -1
 			 */
+			Assert(entry->matchNtuples > -1);
+
+			/* Skip over any offsets <= advancePast, and return that. */
 			if (entry->matchResult->blockno == advancePastBlk)
 			{
-				Assert(entry->matchResult->ntuples > 0);
+				Assert(entry->matchNtuples > 0);
 
 				/*
 				 * First, do a quick check against the last offset on the
 				 * page. If that's > advancePast, so are all the other
 				 * offsets, so just go back to the top to get the next page.
 				 */
-				if (entry->matchResult->offsets[entry->matchResult->ntuples - 1] <= advancePastOff)
+				if (entry->matchOffsets[entry->matchNtuples - 1] <= advancePastOff)
 				{
-					entry->offset = entry->matchResult->ntuples;
+					entry->offset = entry->matchNtuples;
 					continue;
 				}
 
 				/* Otherwise scan to find the first item > advancePast */
-				while (entry->matchResult->offsets[entry->offset] <= advancePastOff)
+				while (entry->matchOffsets[entry->offset] <= advancePastOff)
 					entry->offset++;
 			}
 
 			ItemPointerSet(&entry->curItem,
 						   entry->matchResult->blockno,
-						   entry->matchResult->offsets[entry->offset]);
+						   entry->matchOffsets[entry->offset]);
 			entry->offset++;
 
 			/* Done unless we need to reduce the result */

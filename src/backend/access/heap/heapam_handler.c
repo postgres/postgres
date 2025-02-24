@@ -2127,6 +2127,8 @@ heapam_scan_bitmap_next_block(TableScanDesc scan,
 	Snapshot	snapshot;
 	int			ntup;
 	TBMIterateResult *tbmres;
+	OffsetNumber offsets[TBM_MAX_TUPLES_PER_PAGE];
+	int			noffsets = -1;
 
 	Assert(scan->rs_flags & SO_TYPE_BITMAPSCAN);
 
@@ -2144,6 +2146,11 @@ heapam_scan_bitmap_next_block(TableScanDesc scan,
 
 		if (tbmres == NULL)
 			return false;
+
+		/* Exact pages need their tuple offsets extracted. */
+		if (!tbmres->lossy)
+			noffsets = tbm_extract_page_tuple(tbmres, offsets,
+											  TBM_MAX_TUPLES_PER_PAGE);
 
 		/*
 		 * Ignore any claimed entries past what we think is the end of the
@@ -2172,8 +2179,9 @@ heapam_scan_bitmap_next_block(TableScanDesc scan,
 		/* can't be lossy in the skip_fetch case */
 		Assert(!tbmres->lossy);
 		Assert(bscan->rs_empty_tuples_pending >= 0);
+		Assert(noffsets > -1);
 
-		bscan->rs_empty_tuples_pending += tbmres->ntuples;
+		bscan->rs_empty_tuples_pending += noffsets;
 
 		return true;
 	}
@@ -2216,9 +2224,12 @@ heapam_scan_bitmap_next_block(TableScanDesc scan,
 		 */
 		int			curslot;
 
-		for (curslot = 0; curslot < tbmres->ntuples; curslot++)
+		/* We must have extracted the tuple offsets by now */
+		Assert(noffsets > -1);
+
+		for (curslot = 0; curslot < noffsets; curslot++)
 		{
-			OffsetNumber offnum = tbmres->offsets[curslot];
+			OffsetNumber offnum = offsets[curslot];
 			ItemPointerData tid;
 			HeapTupleData heapTuple;
 
