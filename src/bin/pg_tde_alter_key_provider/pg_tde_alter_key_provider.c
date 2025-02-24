@@ -216,7 +216,8 @@ main(int argc, char *argv[])
 	}
 
 	cptr = strcat(cptr, datadir);
-	cptr = strcat(cptr, "/pg_tde");
+	cptr = strcat(cptr, "/");
+	cptr = strcat(cptr, PG_TDE_DATA_DIR);
 	pg_tde_set_data_dir(tdedir);
 
 	/* reports error if not found */
