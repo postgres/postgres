@@ -14,8 +14,6 @@
 #ifndef HASHFN_UNSTABLE_H
 #define HASHFN_UNSTABLE_H
 
-#include "port/pg_bitutils.h"
-#include "port/pg_bswap.h"
 
 /*
  * fasthash is a modification of code taken from
@@ -262,26 +260,13 @@ fasthash_accum_cstring_aligned(fasthash_state *hs, const char *str)
 
 	/*
 	 * For every chunk of input, check for zero bytes before mixing into the
-	 * hash. The chunk with zeros must contain the NUL terminator. We arrange
-	 * so that zero_byte_low tells us not only that a zero exists, but also
-	 * where it is, so we can hash the remainder of the string.
-	 *
-	 * The haszero64 calculation will set bits corresponding to the lowest
-	 * byte where a zero exists, so that suffices for little-endian machines.
-	 * For big-endian machines, we would need bits set for the highest zero
-	 * byte in the chunk, since the trailing junk past the terminator could
-	 * contain additional zeros. haszero64 does not give us that, so we
-	 * byteswap the chunk first.
+	 * hash. The chunk with zeros must contain the NUL terminator.
 	 */
 	for (;;)
 	{
 		uint64		chunk = *(uint64 *) str;
 
-#ifdef WORDS_BIGENDIAN
-		zero_byte_low = haszero64(pg_bswap64(chunk));
-#else
 		zero_byte_low = haszero64(chunk);
-#endif
 		if (zero_byte_low)
 			break;
 
@@ -290,13 +275,8 @@ fasthash_accum_cstring_aligned(fasthash_state *hs, const char *str)
 		str += FH_SIZEOF_ACCUM;
 	}
 
-	/*
-	 * The byte corresponding to the NUL will be 0x80, so the rightmost bit
-	 * position will be in the range 7, 15, ..., 63. Turn this into byte
-	 * position by dividing by 8.
-	 */
-	remainder = pg_rightmost_one_pos64(zero_byte_low) / BITS_PER_BYTE;
-	fasthash_accum(hs, str, remainder);
+	/* mix in remaining bytes */
+	remainder = fasthash_accum_cstring_unaligned(hs, str);
 	str += remainder;
 
 	return str - start;
