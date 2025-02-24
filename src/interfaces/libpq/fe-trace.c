@@ -578,9 +578,15 @@ pqTraceOutput_RowDescription(FILE *f, const char *message, int *cursor, bool reg
 static void
 pqTraceOutput_NegotiateProtocolVersion(FILE *f, const char *message, int *cursor)
 {
+	int			nparams;
+
 	fprintf(f, "NegotiateProtocolVersion\t");
 	pqTraceOutputInt32(f, message, cursor, false);
-	pqTraceOutputInt32(f, message, cursor, false);
+	nparams = pqTraceOutputInt32(f, message, cursor, false);
+	for (int i = 0; i < nparams; i++)
+	{
+		pqTraceOutputString(f, message, cursor, false);
+	}
 }
 
 static void
