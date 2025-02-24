@@ -394,8 +394,8 @@ struct json_field
 };
 
 /* Documentation macros for json_field.required. */
-#define REQUIRED true
-#define OPTIONAL false
+#define PG_OAUTH_REQUIRED true
+#define PG_OAUTH_OPTIONAL false
 
 /* Parse state for parse_oauth_json(). */
 struct oauth_parse
@@ -844,8 +844,8 @@ static bool
 parse_provider(struct async_ctx *actx, struct provider *provider)
 {
 	struct json_field fields[] = {
-		{"issuer", JSON_TOKEN_STRING, {&provider->issuer}, REQUIRED},
-		{"token_endpoint", JSON_TOKEN_STRING, {&provider->token_endpoint}, REQUIRED},
+		{"issuer", JSON_TOKEN_STRING, {&provider->issuer}, PG_OAUTH_REQUIRED},
+		{"token_endpoint", JSON_TOKEN_STRING, {&provider->token_endpoint}, PG_OAUTH_REQUIRED},
 
 		/*----
 		 * The following fields are technically REQUIRED, but we don't use
@@ -857,8 +857,8 @@ parse_provider(struct async_ctx *actx, struct provider *provider)
 		 * - id_token_signing_alg_values_supported
 		 */
 
-		{"device_authorization_endpoint", JSON_TOKEN_STRING, {&provider->device_authorization_endpoint}, OPTIONAL},
-		{"grant_types_supported", JSON_TOKEN_ARRAY_START, {.array = &provider->grant_types_supported}, OPTIONAL},
+		{"device_authorization_endpoint", JSON_TOKEN_STRING, {&provider->device_authorization_endpoint}, PG_OAUTH_OPTIONAL},
+		{"grant_types_supported", JSON_TOKEN_ARRAY_START, {.array = &provider->grant_types_supported}, PG_OAUTH_OPTIONAL},
 
 		{0},
 	};
@@ -955,24 +955,24 @@ static bool
 parse_device_authz(struct async_ctx *actx, struct device_authz *authz)
 {
 	struct json_field fields[] = {
-		{"device_code", JSON_TOKEN_STRING, {&authz->device_code}, REQUIRED},
-		{"user_code", JSON_TOKEN_STRING, {&authz->user_code}, REQUIRED},
-		{"verification_uri", JSON_TOKEN_STRING, {&authz->verification_uri}, REQUIRED},
-		{"expires_in", JSON_TOKEN_NUMBER, {&authz->expires_in_str}, REQUIRED},
+		{"device_code", JSON_TOKEN_STRING, {&authz->device_code}, PG_OAUTH_REQUIRED},
+		{"user_code", JSON_TOKEN_STRING, {&authz->user_code}, PG_OAUTH_REQUIRED},
+		{"verification_uri", JSON_TOKEN_STRING, {&authz->verification_uri}, PG_OAUTH_REQUIRED},
+		{"expires_in", JSON_TOKEN_NUMBER, {&authz->expires_in_str}, PG_OAUTH_REQUIRED},
 
 		/*
 		 * Some services (Google, Azure) spell verification_uri differently.
 		 * We accept either.
 		 */
-		{"verification_url", JSON_TOKEN_STRING, {&authz->verification_uri}, REQUIRED},
+		{"verification_url", JSON_TOKEN_STRING, {&authz->verification_uri}, PG_OAUTH_REQUIRED},
 
 		/*
 		 * There is no evidence of verification_uri_complete being spelled
 		 * with "url" instead with any service provider, so only support
 		 * "uri".
 		 */
-		{"verification_uri_complete", JSON_TOKEN_STRING, {&authz->verification_uri_complete}, OPTIONAL},
-		{"interval", JSON_TOKEN_NUMBER, {&authz->interval_str}, OPTIONAL},
+		{"verification_uri_complete", JSON_TOKEN_STRING, {&authz->verification_uri_complete}, PG_OAUTH_OPTIONAL},
+		{"interval", JSON_TOKEN_NUMBER, {&authz->interval_str}, PG_OAUTH_OPTIONAL},
 
 		{0},
 	};
@@ -1010,9 +1010,9 @@ parse_token_error(struct async_ctx *actx, struct token_error *err)
 {
 	bool		result;
 	struct json_field fields[] = {
-		{"error", JSON_TOKEN_STRING, {&err->error}, REQUIRED},
+		{"error", JSON_TOKEN_STRING, {&err->error}, PG_OAUTH_REQUIRED},
 
-		{"error_description", JSON_TOKEN_STRING, {&err->error_description}, OPTIONAL},
+		{"error_description", JSON_TOKEN_STRING, {&err->error_description}, PG_OAUTH_OPTIONAL},
 
 		{0},
 	};
@@ -1069,8 +1069,8 @@ static bool
 parse_access_token(struct async_ctx *actx, struct token *tok)
 {
 	struct json_field fields[] = {
-		{"access_token", JSON_TOKEN_STRING, {&tok->access_token}, REQUIRED},
-		{"token_type", JSON_TOKEN_STRING, {&tok->token_type}, REQUIRED},
+		{"access_token", JSON_TOKEN_STRING, {&tok->access_token}, PG_OAUTH_REQUIRED},
+		{"token_type", JSON_TOKEN_STRING, {&tok->token_type}, PG_OAUTH_REQUIRED},
 
 		/*---
 		 * We currently have no use for the following OPTIONAL fields:
