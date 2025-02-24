@@ -194,7 +194,7 @@ set_key_by_name(GenericKeyring *keyring, keyInfo *key, bool throw_error)
 	elog(DEBUG1, "Sending base64 key: %s", keyData);
 #endif
 
-	get_keyring_vault_url(vault_keyring, key->name.name, url, sizeof(url));
+	get_keyring_vault_url(vault_keyring, key->name, url, sizeof(url));
 
 	if (!curl_perform(vault_keyring, url, &str, &httpCode, jsonText))
 	{

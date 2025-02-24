@@ -145,7 +145,7 @@ KeyringGenerateNewKey(const char *key_name, unsigned key_len)
 		pfree(key);
 		return NULL;			/* openssl error */
 	}
-	strncpy(key->name.name, key_name, sizeof(key->name.name));
+	strncpy(key->name, key_name, sizeof(key->name));
 	return key;
 }
 

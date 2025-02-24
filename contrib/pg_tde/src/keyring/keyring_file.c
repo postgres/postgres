@@ -86,7 +86,7 @@ get_key_by_name(GenericKeyring *keyring, const char *key_name, bool throw_error,
 					 errdetail("invalid key size %lu expected %lu", bytes_read, sizeof(keyInfo))));
 			return NULL;
 		}
-		if (strncasecmp(key->name.name, key_name, sizeof(key->name.name)) == 0)
+		if (strncasecmp(key->name, key_name, sizeof(key->name)) == 0)
 		{
 			close(fd);
 			return key;
@@ -110,12 +110,12 @@ set_key_by_name(GenericKeyring *keyring, keyInfo *key, bool throw_error)
 
 	Assert(key != NULL);
 	/* See if the key with same name already exists */
-	existing_key = get_key_by_name(keyring, key->name.name, false, &return_code);
+	existing_key = get_key_by_name(keyring, key->name, false, &return_code);
 	if (existing_key)
 	{
 		pfree(existing_key);
 		ereport(ereport_level,
-				(errmsg("Key with name %s already exists in keyring", key->name.name)));
+				(errmsg("Key with name %s already exists in keyring", key->name)));
 		return KEYRING_CODE_INVALID_OPERATION;
 	}
 

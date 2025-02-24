@@ -135,8 +135,8 @@ set_key_by_name(GenericKeyring *keyring, keyInfo *key, bool throw_error)
 	a[2].type = KMIP_ATTR_CRYPTOGRAPHIC_USAGE_MASK;
 	a[2].value = &mask;
 
-	ts2.value = key->name.name;
-	ts2.size = kmip_strnlen_s(key->name.name, 250);
+	ts2.value = key->name;
+	ts2.size = kmip_strnlen_s(key->name, 250);
 	ts.value = &ts2;
 	ts.type = KMIP_NAME_UNINTERPRETED_TEXT_STRING;
 	a[3].type = KMIP_ATTR_NAME;

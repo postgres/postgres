@@ -117,7 +117,7 @@ struct JsonPathGinNode
 typedef struct JsonPathGinPathItem
 {
 	struct JsonPathGinPathItem *parent;
-	Datum keyName;				/* key name (for '.key' path item) or NULL */
+	Datum		keyName;		/* key name (for '.key' path item) or NULL */
 	JsonPathItemType type;		/* type of jsonpath item */
 } JsonPathGinPathItem;
 
@@ -278,7 +278,7 @@ static bool
 jsonb_ops__add_path_item(JsonPathGinPath *path, JsonPathItem *jsp)
 {
 	JsonPathGinPathItem *pentry;
-	Datum keyName;
+	Datum		keyName;
 
 	switch (jsp->type)
 	{
