@@ -343,6 +343,44 @@ $psql_subscriber{run} = IPC::Run::start(
 	IPC::Run::timeout($default_timeout));
 
 ##################################################
+# Test that the standby requires hot_standby to be
+# enabled for pre-existing logical slots.
+##################################################
+
+# create the logical slots
+$node_standby->create_logical_slot_on_standby($node_primary, 'restart_test');
+$node_standby->stop;
+$node_standby->append_conf('postgresql.conf', qq[hot_standby = off]);
+
+# Use run_log instead of $node_standby->start because this test expects
+# that the server ends with an error during startup.
+run_log(
+	[
+		'pg_ctl',
+		'--pgdata' => $node_standby->data_dir,
+		'--log' => $node_standby->logfile,
+		'start',
+	]);
+
+# wait for postgres to terminate
+foreach my $i (0 .. 10 * $PostgreSQL::Test::Utils::timeout_default)
+{
+	last if !-f $node_standby->data_dir . '/postmaster.pid';
+	usleep(100_000);
+}
+
+# Confirm that the server startup fails with an expected error
+my $logfile = slurp_file($node_standby->logfile());
+ok( $logfile =~
+	  qr/FATAL: .* logical replication slot ".*" exists on the standby, but "hot_standby" = "off"/,
+	"the standby ends with an error during startup because hot_standby was disabled"
+);
+$node_standby->adjust_conf('postgresql.conf', 'hot_standby', 'on');
+$node_standby->start;
+$node_standby->safe_psql('postgres',
+	qq[SELECT pg_drop_replication_slot('restart_test')]);
+
+##################################################
 # Test that logical decoding on the standby
 # behaves correctly.
 ##################################################
