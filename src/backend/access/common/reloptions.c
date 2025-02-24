@@ -16,6 +16,7 @@
 #include "postgres.h"
 
 #include <float.h>
+#include <stdint.h>
 
 #include "access/gist_private.h"
 #include "access/hash.h"
@@ -34,6 +35,7 @@
 #include "utils/guc.h"
 #include "utils/memutils.h"
 #include "utils/rel.h"
+#include "access/toast_compression.h"
 
 /*
  * Contents of pg_class.reloptions
@@ -477,6 +479,33 @@ static relopt_real realRelOpts[] =
 			ShareUpdateExclusiveLock
 		},
 		0, -1.0, DBL_MAX
+	},
+	{
+		{
+			"zstd_dictid",
+			"Current Zstd dictid for column",
+			RELOPT_KIND_ATTRIBUTE,
+			ShareUpdateExclusiveLock
+		},
+		InvalidDictId, InvalidDictId, UINT32_MAX
+	},
+	{
+		{
+			"zstd_dict_size",
+			"Max dict size for zstd",
+			RELOPT_KIND_ATTRIBUTE,
+			ShareUpdateExclusiveLock
+		},
+		4096, 0, 112640 /* Max dict size(110 KB), 0 indicates Don't use dictionary for compression */
+	},
+	{
+		{
+			"zstd_compression_level",
+			"Set column's ZSTD compression level",
+			RELOPT_KIND_ATTRIBUTE,
+			ShareUpdateExclusiveLock
+		},
+		DEFAULT_ZSTD_COMPRESSION_LEVEL, 1, 22
 	},
 	{
 		{
@@ -2093,7 +2122,10 @@ attribute_reloptions(Datum reloptions, bool validate)
 {
 	static const relopt_parse_elt tab[] = {
 		{"n_distinct", RELOPT_TYPE_REAL, offsetof(AttributeOpts, n_distinct)},
-		{"n_distinct_inherited", RELOPT_TYPE_REAL, offsetof(AttributeOpts, n_distinct_inherited)}
+		{"n_distinct_inherited", RELOPT_TYPE_REAL, offsetof(AttributeOpts, n_distinct_inherited)},
+		{"zstd_dictid", RELOPT_TYPE_REAL, offsetof(AttributeOpts, zstd_dictid)},
+		{"zstd_dict_size", RELOPT_TYPE_REAL, offsetof(AttributeOpts, zstd_dict_size)},
+		{"zstd_compression_level", RELOPT_TYPE_REAL, offsetof(AttributeOpts, zstd_compression_level)},
 	};
 
 	return (bytea *) build_reloptions(reloptions, validate,

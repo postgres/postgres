@@ -43,7 +43,7 @@ static bool toastid_valueid_exists(Oid toastrelid, Oid valueid);
  * ----------
  */
 Datum
-toast_compress_datum(Datum value, char cmethod)
+toast_compress_datum(Datum value, char cmethod, Oid zstd_dictid, int zstd_level)
 {
 	struct varlena *tmp = NULL;
 	int32		valsize;
@@ -70,6 +70,10 @@ toast_compress_datum(Datum value, char cmethod)
 		case TOAST_LZ4_COMPRESSION:
 			tmp = lz4_compress_datum((const struct varlena *) value);
 			cmid = TOAST_LZ4_COMPRESSION_ID;
+			break;
+		case TOAST_ZSTD_COMPRESSION:
+			tmp = zstd_compress_datum((const struct varlena *) value, zstd_dictid, zstd_level);
+			cmid = TOAST_ZSTD_COMPRESSION_ID;
 			break;
 		default:
 			elog(ERROR, "invalid compression method %c", cmethod);

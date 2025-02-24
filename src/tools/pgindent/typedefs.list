@@ -884,6 +884,7 @@ FormData_pg_ts_parser
 FormData_pg_ts_template
 FormData_pg_type
 FormData_pg_user_mapping
+FormData_pg_zstd_dictionaries
 FormExtraData_pg_attribute
 Form_pg_aggregate
 Form_pg_am
@@ -943,6 +944,7 @@ Form_pg_ts_parser
 Form_pg_ts_template
 Form_pg_type
 Form_pg_user_mapping
+Form_pg_zstd_dictionaries
 FormatNode
 FreeBlockNumberArray
 FreeListData
@@ -2572,6 +2574,8 @@ STARTUPINFO
 STRLEN
 SV
 SYNCHRONIZATION_BARRIER
+SampleCollector
+SampleEntry
 SampleScan
 SampleScanGetSampleSize_function
 SampleScanState
@@ -3296,6 +3300,7 @@ ZSTD_cParameter
 ZSTD_inBuffer
 ZSTD_outBuffer
 ZstdCompressorState
+ZstdTrainingData
 _SPI_connection
 _SPI_plan
 __m128i

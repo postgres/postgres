@@ -40,7 +40,7 @@
 #include "access/tupmacs.h"
 #include "utils/datum.h"
 #include "utils/memutils.h"
-
+#include "utils/attoptcache.h"
 
 /*
  * This enables de-toasting of index entries.  Needed until VACUUM is
@@ -236,8 +236,21 @@ brin_form_tuple(BrinDesc *brdesc, BlockNumber blkno, BrinMemTuple *tuple,
 					compression = att->attcompression;
 				else
 					compression = InvalidCompressionMethod;
-
-				cvalue = toast_compress_datum(value, compression);
+				
+				int zstd_cmp_level = DEFAULT_ZSTD_COMPRESSION_LEVEL;
+				Oid zstd_dictid    = InvalidDictId;
+				if (compression == TOAST_ZSTD_COMPRESSION)
+				{
+					AttributeOpts *aopt = get_attribute_options(att->attrelid, att->attnum);
+					if (aopt != NULL)
+					{
+						zstd_cmp_level = (int) aopt->zstd_compression_level;
+						zstd_dictid    = (Oid) aopt->zstd_dictid;
+					}
+				}
+				cvalue = toast_compress_datum(value, compression, 
+											  zstd_dictid, 
+											  zstd_cmp_level);
 
 				if (DatumGetPointer(cvalue) != NULL)
 				{

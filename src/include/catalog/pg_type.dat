@@ -446,7 +446,7 @@
   typname => 'jsonb', typlen => '-1', typbyval => 'f', typcategory => 'U',
   typsubscript => 'jsonb_subscript_handler', typinput => 'jsonb_in',
   typoutput => 'jsonb_out', typreceive => 'jsonb_recv', typsend => 'jsonb_send',
-  typalign => 'i', typstorage => 'x' },
+  typalign => 'i', typstorage => 'x', typebuildzstddictionary => 'jsonb_generate_zstd_dictionary' },
 { oid => '4072', array_type_oid => '4073', descr => 'JSON path',
   typname => 'jsonpath', typlen => '-1', typbyval => 'f', typcategory => 'U',
   typinput => 'jsonpath_in', typoutput => 'jsonpath_out',

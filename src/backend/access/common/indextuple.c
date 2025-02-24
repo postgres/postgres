@@ -21,6 +21,7 @@
 #include "access/htup_details.h"
 #include "access/itup.h"
 #include "access/toast_internals.h"
+#include "utils/attoptcache.h"
 
 /*
  * This enables de-toasting of index entries.  Needed until VACUUM is
@@ -124,8 +125,21 @@ index_form_tuple_context(TupleDesc tupleDescriptor,
 		{
 			Datum		cvalue;
 
+			int zstd_cmp_level = DEFAULT_ZSTD_COMPRESSION_LEVEL;
+			Oid zstd_dictid    = InvalidDictId;
+			if (att->attcompression == TOAST_ZSTD_COMPRESSION)
+			{
+				AttributeOpts *aopt = get_attribute_options(att->attrelid, att->attnum);
+				if (aopt != NULL)
+				{
+					zstd_cmp_level = (int) aopt->zstd_compression_level;
+					zstd_dictid    = (Oid) aopt->zstd_dictid;
+				}
+			}
 			cvalue = toast_compress_datum(untoasted_values[i],
-										  att->attcompression);
+										  att->attcompression, 
+										  zstd_dictid, 
+										  zstd_cmp_level);
 
 			if (DatumGetPointer(cvalue) != NULL)
 			{

@@ -25,6 +25,7 @@ typedef struct toast_compress_header
 	int32		vl_len_;		/* varlena header (do not touch directly!) */
 	uint32		tcinfo;			/* 2 bits for compression method and 30 bits
 								 * external size; see va_extinfo */
+	uint8       ext_alg;
 } toast_compress_header;
 
 /*
@@ -33,19 +34,31 @@ typedef struct toast_compress_header
  */
 #define TOAST_COMPRESS_EXTSIZE(ptr) \
 	(((toast_compress_header *) (ptr))->tcinfo & VARLENA_EXTSIZE_MASK)
-#define TOAST_COMPRESS_METHOD(ptr) \
-	(((toast_compress_header *) (ptr))->tcinfo >> VARLENA_EXTSIZE_BITS)
+#define TOAST_COMPRESS_METHOD(PTR)                       													  \
+	( ((((toast_compress_header *) (PTR))->tcinfo >> VARLENA_EXTSIZE_BITS) == VARLENA_EXTENDED_COMPRESSION_FLAG ) \
+		? (((toast_compress_header *) (PTR))->ext_alg)     													  \
+		: ( (((toast_compress_header *) (PTR))->tcinfo) >> VARLENA_EXTSIZE_BITS ) )
 
-#define TOAST_COMPRESS_SET_SIZE_AND_COMPRESS_METHOD(ptr, len, cm_method) \
-	do { \
-		Assert((len) > 0 && (len) <= VARLENA_EXTSIZE_MASK); \
-		Assert((cm_method) == TOAST_PGLZ_COMPRESSION_ID || \
-			   (cm_method) == TOAST_LZ4_COMPRESSION_ID); \
-		((toast_compress_header *) (ptr))->tcinfo = \
-			(len) | ((uint32) (cm_method) << VARLENA_EXTSIZE_BITS); \
+#define TOAST_COMPRESS_SET_SIZE_AND_COMPRESS_METHOD(ptr, len, cm_method) 										\
+	do { 																										\
+		Assert((len) > 0 && (len) <= VARLENA_EXTSIZE_MASK); 													\
+		Assert((cm_method) == TOAST_PGLZ_COMPRESSION_ID || 														\
+				(cm_method) == TOAST_LZ4_COMPRESSION_ID  || 													\
+				(cm_method) == TOAST_ZSTD_COMPRESSION_ID); 														\
+		/* If the compression method is less than TOAST_ZSTD_COMPRESSION_ID, don't use ext_alg */ 				\
+		if ((cm_method) < TOAST_ZSTD_COMPRESSION_ID) { 															\
+			((toast_compress_header *) (ptr))->tcinfo = 														\
+				(len) | ((uint32) (cm_method) << VARLENA_EXTSIZE_BITS); 										\
+		} else { 																								\
+			/* For compression methods after lz4, use 'VARLENA_EXTENDED_COMPRESSION_FLAG' 
+				in the top bits of tcinfo to indicate compression algorithm is stored in ext_alg.	*/			\
+			((toast_compress_header *) (ptr))->tcinfo = 														\
+			(len) | ((uint32)VARLENA_EXTENDED_COMPRESSION_FLAG << VARLENA_EXTSIZE_BITS); 						\
+			((toast_compress_header *) (ptr))->ext_alg = (uint8)(cm_method); 									\
+		} 																										\
 	} while (0)
 
-extern Datum toast_compress_datum(Datum value, char cmethod);
+extern Datum toast_compress_datum(Datum value, char cmethod, Oid zstd_dictid, int zstd_level);
 extern Oid	toast_get_valid_index(Oid toastoid, LOCKMODE lock);
 
 extern void toast_delete_datum(Relation rel, Datum value, bool is_speculative);

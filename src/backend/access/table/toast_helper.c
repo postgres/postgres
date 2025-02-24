@@ -19,7 +19,8 @@
 #include "access/toast_internals.h"
 #include "catalog/pg_type_d.h"
 #include "varatt.h"
-
+#include "utils/attoptcache.h"
+#include "access/toast_compression.h"
 
 /*
  * Prepare to TOAST a tuple.
@@ -55,6 +56,17 @@ toast_tuple_init(ToastTupleContext *ttc)
 		ttc->ttc_attr[i].tai_colflags = 0;
 		ttc->ttc_attr[i].tai_oldexternal = NULL;
 		ttc->ttc_attr[i].tai_compression = att->attcompression;
+		ttc->ttc_attr[i].zstd_dictid = InvalidDictId;
+		ttc->ttc_attr[i].zstd_level = DEFAULT_ZSTD_COMPRESSION_LEVEL;
+		if (att->attcompression == TOAST_ZSTD_COMPRESSION)
+		{
+			AttributeOpts *aopt = get_attribute_options(att->attrelid, att->attnum);
+			if (aopt)
+			{
+				ttc->ttc_attr[i].zstd_dictid = (Oid)aopt->zstd_dictid;
+				ttc->ttc_attr[i].zstd_level = (int)aopt->zstd_compression_level;
+			}
+		}
 
 		if (ttc->ttc_oldvalues != NULL)
 		{
@@ -230,7 +242,7 @@ toast_tuple_try_compression(ToastTupleContext *ttc, int attribute)
 	Datum		new_value;
 	ToastAttrInfo *attr = &ttc->ttc_attr[attribute];
 
-	new_value = toast_compress_datum(*value, attr->tai_compression);
+	new_value = toast_compress_datum(*value, attr->tai_compression, attr->zstd_dictid, attr->zstd_level);
 
 	if (DatumGetPointer(new_value) != NULL)
 	{

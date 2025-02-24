@@ -227,6 +227,10 @@ CATALOG(pg_type,1247,TypeRelationId) BKI_BOOTSTRAP BKI_ROWTYPE_OID(71,TypeRelati
 	 */
 	Oid			typcollation BKI_DEFAULT(0) BKI_LOOKUP_OPT(pg_collation);
 
+	/*
+	 * Custom generate dictionary procedure for the datatype (0 selects the default).
+	 */
+	regproc		typebuildzstddictionary BKI_DEFAULT(-) BKI_ARRAY_DEFAULT(-) BKI_LOOKUP_OPT(pg_proc);
 #ifdef CATALOG_VARLEN			/* variable-length fields start here */
 
 	/*
@@ -380,7 +384,8 @@ extern ObjectAddress TypeCreate(Oid newTypeOid,
 								int32 typeMod,
 								int32 typNDims,
 								bool typeNotNull,
-								Oid typeCollation);
+								Oid typeCollation,
+								Oid generateDictionaryProcedure);
 
 extern void GenerateTypeDependencies(HeapTuple typeTuple,
 									 Relation typeCatalog,

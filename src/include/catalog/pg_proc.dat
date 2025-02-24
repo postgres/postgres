@@ -12464,4 +12464,14 @@
   proargtypes => 'int4',
   prosrc => 'gist_stratnum_common' },
 
+# ZSTD generate dictionary training functions
+{ oid => '9241', descr => 'ZSTD generate dictionary support',
+  proname => 'jsonb_generate_zstd_dictionary', prorettype => 'internal',
+  proargtypes => 'oid int4',
+  prosrc => 'jsonb_generate_zstd_dictionary' },
+
+{ oid => '9242', descr => 'Build zstd dictionaries for a column.',
+  proname => 'build_zstd_dict_relation_column', prorettype => 'bool',
+  proargtypes => 'oid int4',
+  prosrc => 'build_zstd_dict_relation_column' },
 ]

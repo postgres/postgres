@@ -46,7 +46,8 @@ OBJS = \
 	pg_subscription.o \
 	pg_type.o \
 	storage.o \
-	toasting.o
+	toasting.o \
+	pg_zstd_dictionaries.o
 
 include $(top_srcdir)/src/backend/common.mk
 

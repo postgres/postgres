@@ -36,14 +36,20 @@ typedef struct varatt_external
 								 * compression method */
 	Oid			va_valueid;		/* Unique ID of value within TOAST table */
 	Oid			va_toastrelid;	/* RelID of TOAST table containing it */
+	/* 
+     * Valid only if (va_extinfo >> VARLENA_EXTSIZE_BITS) == VARLENA_EXTENDED_COMPRESSION_FLAG.
+     * This field holds the additional compression algorithms information.
+     */
+	uint8 		va_cmp_alg;
 }			varatt_external;
 
 /*
  * These macros define the "saved size" portion of va_extinfo.  Its remaining
  * two high-order bits identify the compression method.
  */
-#define VARLENA_EXTSIZE_BITS	30
-#define VARLENA_EXTSIZE_MASK	((1U << VARLENA_EXTSIZE_BITS) - 1)
+#define VARLENA_EXTSIZE_BITS				30
+#define VARLENA_EXTSIZE_MASK				((1U << VARLENA_EXTSIZE_BITS) - 1)
+#define VARLENA_EXTENDED_COMPRESSION_FLAG	0x3
 
 /*
  * struct varatt_indirect is a "TOAST pointer" representing an out-of-line
@@ -122,6 +128,13 @@ typedef union
 								 * compression method; see va_extinfo */
 		char		va_data[FLEXIBLE_ARRAY_MEMBER]; /* Compressed data */
 	}			va_compressed;
+	struct 
+    {
+        uint32      va_header;
+        uint32      va_tcinfo; 
+        uint8       va_cmp_alg;
+        char        va_data[FLEXIBLE_ARRAY_MEMBER];
+    }           va_compressed_ext;
 } varattrib_4b;
 
 typedef struct
@@ -242,7 +255,14 @@ typedef struct
 #endif							/* WORDS_BIGENDIAN */
 
 #define VARDATA_4B(PTR)		(((varattrib_4b *) (PTR))->va_4byte.va_data)
-#define VARDATA_4B_C(PTR)	(((varattrib_4b *) (PTR))->va_compressed.va_data)
+/*
+ * If va_tcinfo >> VARLENA_EXTSIZE_BITS == VARLENA_EXTENDED_COMPRESSION_FLAG
+ * use va_compressed_ext; otherwise, use the va_compressed.
+ */
+#define VARDATA_4B_C(PTR)                                                   								  \
+( (((varattrib_4b *)(PTR))->va_compressed.va_tcinfo >> VARLENA_EXTSIZE_BITS) == VARLENA_EXTENDED_COMPRESSION_FLAG \
+  ? ((varattrib_4b *)(PTR))->va_compressed_ext.va_data                        								  \
+  : ((varattrib_4b *)(PTR))->va_compressed.va_data )
 #define VARDATA_1B(PTR)		(((varattrib_1b *) (PTR))->va_data)
 #define VARDATA_1B_E(PTR)	(((varattrib_1b_e *) (PTR))->va_data)
 
@@ -252,6 +272,7 @@ typedef struct
 
 #define VARHDRSZ_EXTERNAL		offsetof(varattrib_1b_e, va_data)
 #define VARHDRSZ_COMPRESSED		offsetof(varattrib_4b, va_compressed.va_data)
+#define VARHDRSZ_COMPRESSED_EXT	offsetof(varattrib_4b, va_compressed_ext.va_data)
 #define VARHDRSZ_SHORT			offsetof(varattrib_1b, va_data)
 
 #define VARATT_SHORT_MAX		0x7F
@@ -327,22 +348,55 @@ typedef struct
 /* Decompressed size and compression method of a compressed-in-line Datum */
 #define VARDATA_COMPRESSED_GET_EXTSIZE(PTR) \
 	(((varattrib_4b *) (PTR))->va_compressed.va_tcinfo & VARLENA_EXTSIZE_MASK)
-#define VARDATA_COMPRESSED_GET_COMPRESS_METHOD(PTR) \
-	(((varattrib_4b *) (PTR))->va_compressed.va_tcinfo >> VARLENA_EXTSIZE_BITS)
+/*
+ *  - "Extended" format is indicated by (va_tcinfo >> VARLENA_EXTSIZE_BITS) == VARLENA_EXTENDED_COMPRESSION_FLAG
+ *  - For the non-extended formats, the method code is stored in the top bits of
+ *    va_tcinfo, which we extract by shifting right VARLENA_EXTSIZE_BITS.
+ *  - In the extended format, the method code is stored in va_cmp_alg instead.
+ */
+#define VARDATA_COMPRESSED_GET_COMPRESS_METHOD(PTR)                       										  		\
+( ((((varattrib_4b *) (PTR))->va_compressed.va_tcinfo >> VARLENA_EXTSIZE_BITS) == VARLENA_EXTENDED_COMPRESSION_FLAG ) 	\
+  ? (((varattrib_4b *) (PTR))->va_compressed_ext.va_cmp_alg)     												  		\
+  : ( (((varattrib_4b *) (PTR))->va_compressed.va_tcinfo) >> VARLENA_EXTSIZE_BITS))
 
 /* Same for external Datums; but note argument is a struct varatt_external */
 #define VARATT_EXTERNAL_GET_EXTSIZE(toast_pointer) \
 	((toast_pointer).va_extinfo & VARLENA_EXTSIZE_MASK)
-#define VARATT_EXTERNAL_GET_COMPRESS_METHOD(toast_pointer) \
-	((toast_pointer).va_extinfo >> VARLENA_EXTSIZE_BITS)
+/*
+ * If ((toast_pointer).va_extinfo >> VARLENA_EXTSIZE_BITS) == VARLENA_EXTENDED_COMPRESSION_FLAG,
+ * that means the compression method code is in va_cmp_alg.
+ * Otherwise, we return the top bits directly from va_extinfo.
+ */
+#define VARATT_EXTERNAL_GET_COMPRESS_METHOD(toast_pointer)  								\
+( ( ((toast_pointer).va_extinfo >> VARLENA_EXTSIZE_BITS) == VARLENA_EXTENDED_COMPRESSION_FLAG ) \
+  ? (toast_pointer).va_cmp_alg                           									\
+  : ((toast_pointer).va_extinfo >> VARLENA_EXTSIZE_BITS) )
 
-#define VARATT_EXTERNAL_SET_SIZE_AND_COMPRESS_METHOD(toast_pointer, len, cm) \
-	do { \
-		Assert((cm) == TOAST_PGLZ_COMPRESSION_ID || \
-			   (cm) == TOAST_LZ4_COMPRESSION_ID); \
-		((toast_pointer).va_extinfo = \
-			(len) | ((uint32) (cm) << VARLENA_EXTSIZE_BITS)); \
-	} while (0)
+#define VARATT_EXTERNAL_SET_SIZE_AND_COMPRESS_METHOD(toast_pointer, len, cm) 	\
+    do { 																		\
+        /* If desired, keep or expand the Assert checks for known methods: */ 	\
+        Assert((cm) == TOAST_PGLZ_COMPRESSION_ID || 							\
+               (cm) == TOAST_LZ4_COMPRESSION_ID || 								\
+			   (cm) == TOAST_ZSTD_COMPRESSION_ID); 								\
+        if ((cm) < TOAST_ZSTD_COMPRESSION_ID) 									\
+        { 																		\
+            /* Store the actual method in va_extinfo */ 						\
+			(toast_pointer).va_extinfo = (uint32)(len) 							\
+                | ((uint32)(cm) << VARLENA_EXTSIZE_BITS); 						\
+            /* Clear or set va_cmp_alg to 0 */ 									\
+            (toast_pointer).va_cmp_alg = (uint8) 0; 							\
+        } 																		\
+        else 																	\
+        { 																		\
+            /* Store VARLENA_EXTENDED_COMPRESSION_FLAG in the top bits,			
+			 meaning "extended" method. */ 										\
+            (toast_pointer).va_extinfo = (uint32)(len) |						\
+                ((uint32)VARLENA_EXTENDED_COMPRESSION_FLAG 						\
+						<< VARLENA_EXTSIZE_BITS);								\
+            /* Put the real method code in va_cmp_alg */ 						\
+            (toast_pointer).va_cmp_alg = (uint8)(cm); 							\
+        } 																		\
+    } while (0)
 
 /*
  * Testing whether an externally-stored value is compressed now requires

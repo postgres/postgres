@@ -55,7 +55,7 @@
 #include "utils/sortsupport.h"
 #include "utils/syscache.h"
 #include "utils/timestamp.h"
-
+#include "parser/analyze.h"
 
 /* Per-index data for ANALYZE */
 typedef struct AnlIndexData
@@ -85,9 +85,6 @@ static void compute_index_stats(Relation onerel, double totalrows,
 								MemoryContext col_context);
 static VacAttrStats *examine_attribute(Relation onerel, int attnum,
 									   Node *index_expr);
-static int	acquire_sample_rows(Relation onerel, int elevel,
-								HeapTuple *rows, int targrows,
-								double *totalrows, double *totaldeadrows);
 static int	compare_rows(const void *a, const void *b, void *arg);
 static int	acquire_inherited_sample_rows(Relation onerel, int elevel,
 										  HeapTuple *rows, int targrows,
@@ -1195,8 +1192,7 @@ block_sampling_read_stream_next(ReadStream *stream,
  * block.  The previous sampling method put too much credence in the row
  * density near the start of the table.
  */
-static int
-acquire_sample_rows(Relation onerel, int elevel,
+int acquire_sample_rows(Relation onerel, int elevel,
 					HeapTuple *rows, int targrows,
 					double *totalrows, double *totaldeadrows)
 {

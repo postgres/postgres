@@ -17,10 +17,19 @@
 #include <lz4.h>
 #endif
 
+#ifdef USE_ZSTD
+#include <zstd.h>
+#include <zdict.h>
+#endif
+
 #include "access/detoast.h"
 #include "access/toast_compression.h"
 #include "common/pg_lzcompress.h"
 #include "varatt.h"
+#include "catalog/pg_zstd_dictionaries.h"
+#include "utils/syscache.h"
+#include "access/htup_details.h"
+#include "fmgr.h"
 
 /* GUC */
 int			default_toast_compression = TOAST_PGLZ_COMPRESSION;
@@ -30,6 +39,13 @@ int			default_toast_compression = TOAST_PGLZ_COMPRESSION;
 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED), \
 			 errmsg("compression method lz4 not supported"), \
 			 errdetail("This functionality requires the server to be built with lz4 support.")))
+
+
+#define NO_ZSTD_SUPPORT() \
+	ereport(ERROR, \
+			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED), \
+			errmsg("compression method zstd not supported"), \
+			errdetail("This functionality requires the server to be built with zstd support.")))
 
 /*
  * Compress a varlena using PGLZ.
@@ -293,6 +309,13 @@ CompressionNameToMethod(const char *compression)
 #endif
 		return TOAST_LZ4_COMPRESSION;
 	}
+	else if (strcmp(compression, "zstd") == 0)
+	{
+#ifndef USE_ZSTD
+		NO_ZSTD_SUPPORT();
+#endif
+		return TOAST_ZSTD_COMPRESSION;
+	}
 
 	return InvalidCompressionMethod;
 }
@@ -309,8 +332,147 @@ GetCompressionMethodName(char method)
 			return "pglz";
 		case TOAST_LZ4_COMPRESSION:
 			return "lz4";
+		case TOAST_ZSTD_COMPRESSION:
+			return "zstd";
 		default:
 			elog(ERROR, "invalid compression method %c", method);
 			return NULL;		/* keep compiler quiet */
 	}
+}
+
+/* zstd routines */
+struct varlena *
+zstd_compress_datum(const struct varlena *value, Oid dictid, int zstd_level)
+{
+#ifdef USE_ZSTD
+    /* Uncompressed data size and maximum possible compressed size */
+    uint32 valsize = VARSIZE_ANY_EXHDR(value);
+    size_t max_size = ZSTD_compressBound(valsize);
+
+    /* Allocate space for the compressed varlena (header + data) */
+    struct varlena *compressed = (struct varlena *) palloc(max_size + VARHDRSZ_COMPRESSED_EXT);
+    void *dest = (char *) compressed + VARHDRSZ_COMPRESSED_EXT;
+
+    size_t cmp_size;
+    /* Create a compression context */
+    ZSTD_CCtx *cctx = ZSTD_createCCtx();
+    if (!cctx)
+        ereport(ERROR, (errmsg("Failed to create ZSTD compression context")));
+
+    if (dictid != InvalidDictId)
+    {
+        /* Fetch the finalized dictionary from the catalog */
+        HeapTuple tuple = SearchSysCache1(ZSTDDICTIDOID, ObjectIdGetDatum(dictid));
+        if (!HeapTupleIsValid(tuple))
+            ereport(ERROR, (errmsg("Cache lookup failed for dictid %u", dictid)));
+
+        Form_pg_zstd_dictionaries zstd_form = (Form_pg_zstd_dictionaries) GETSTRUCT(tuple);
+        const void *dict_buffer = VARDATA_ANY(&zstd_form->dict);
+        uint32 dict_size = VARSIZE_ANY(&zstd_form->dict) - VARHDRSZ;
+        ReleaseSysCache(tuple);
+
+		/* Compress with a dictionary */
+        cmp_size = ZSTD_compress_usingDict(cctx, dest, max_size,
+                                           VARDATA_ANY(value), valsize,
+                                           dict_buffer, dict_size,
+                                           zstd_level);
+    }
+    else
+    {
+        /* Compress without a dictionary */
+        cmp_size = ZSTD_compressCCtx(cctx, dest, max_size,
+                                     VARDATA_ANY(value), valsize,
+                                     zstd_level);
+    }
+
+    if (ZSTD_isError(cmp_size))
+        ereport(ERROR, (errmsg("ZSTD compression failed: %s", ZSTD_getErrorName(cmp_size))));
+
+    ZSTD_freeCCtx(cctx);
+
+    /* If compression did not reduce size, return NULL so that the uncompressed data is stored */
+    if (cmp_size > valsize)
+    {
+        pfree(compressed);
+        return NULL;
+    }
+
+    /* Set the compressed size in the varlena header */
+    SET_VARSIZE_COMPRESSED(compressed, cmp_size + VARHDRSZ_COMPRESSED_EXT);
+    return compressed;
+
+#else
+    NO_ZSTD_SUPPORT();
+    return NULL;
+#endif
+}
+
+struct varlena *
+zstd_decompress_datum(const struct varlena *value)
+{
+#ifdef USE_ZSTD
+    /* Get sizes (excluding varlena headers) */
+    uint32 actual_size_exhdr = VARDATA_COMPRESSED_GET_EXTSIZE(value);
+    uint32 cmp_size_exhdr 	 = VARSIZE_4B(value) - VARHDRSZ_COMPRESSED_EXT;
+
+    /* Create a decompression context */
+    ZSTD_DCtx *dctx = ZSTD_createDCtx();
+    if (!dctx)
+        ereport(ERROR, (errmsg("Failed to create ZSTD decompression context")));
+
+    /*
+     * Extract the dictionary ID from the compressed frame.
+     * This function reads the dictionary ID from the frame header.
+     */
+    Oid dictid = (Oid) ZSTD_getDictID_fromFrame(VARDATA_4B_C(value), cmp_size_exhdr);
+
+    /* Allocate space for the uncompressed data */
+    struct varlena *result = (struct varlena *) palloc(actual_size_exhdr + VARHDRSZ);
+    size_t uncmp_size;
+
+    if (dictid != InvalidDictId)
+    {
+        /* A dictionary is used. Fetch it from the catalog. */
+        HeapTuple tuple = SearchSysCache1(ZSTDDICTIDOID, ObjectIdGetDatum(dictid));
+        if (!HeapTupleIsValid(tuple))
+            ereport(ERROR, (errmsg("Cache lookup failed for dictid %u", dictid)));
+
+        Form_pg_zstd_dictionaries zstd_form = (Form_pg_zstd_dictionaries) GETSTRUCT(tuple);
+        const void *dict_buffer = VARDATA_ANY(&zstd_form->dict);
+        uint32 dict_size = VARSIZE_ANY(&zstd_form->dict) - VARHDRSZ;
+        ReleaseSysCache(tuple);
+
+        /* Decompress using the one-shot API with the dictionary. */
+        uncmp_size = ZSTD_decompress_usingDict(dctx,
+                                               VARDATA(result),        /* destination */
+                                               actual_size_exhdr,        /* capacity */
+                                               VARDATA_4B_C(value),      /* source */
+                                               cmp_size_exhdr,           /* source size */
+                                               dict_buffer,              /* dictionary buffer */
+                                               dict_size);               /* dictionary size */
+    }
+    else
+    {
+        /* No dictionary needed; decompress normally. */
+        uncmp_size = ZSTD_decompressDCtx(dctx,
+                                         VARDATA(result),
+                                         actual_size_exhdr,
+                                         VARDATA_4B_C(value),
+                                         cmp_size_exhdr);
+    }
+
+    if (ZSTD_isError(uncmp_size))
+        ereport(ERROR, (errmsg("ZSTD decompression failed: %s", ZSTD_getErrorName(uncmp_size))));
+
+    /* Cleanup the decompression context */
+    ZSTD_freeDCtx(dctx);
+
+    /* Set final size in the varlena header */
+    SET_VARSIZE(result, uncmp_size + VARHDRSZ);
+    return result;
+
+#else
+    NO_ZSTD_SUPPORT();
+    return NULL;
+#endif
 }

@@ -64,4 +64,8 @@ extern List *BuildOnConflictExcludedTargetlist(Relation targetrel,
 
 extern SortGroupClause *makeSortGroupClauseForSetOp(Oid rescoltype, bool require_hash);
 
+extern int	acquire_sample_rows(Relation onerel, int elevel,
+	HeapTuple *rows, int targrows,
+	double *totalrows, double *totaldeadrows);
+
 #endif							/* ANALYZE_H */

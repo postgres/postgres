@@ -120,6 +120,7 @@ TypeShellMake(const char *typeName, Oid typeNamespace, Oid ownerId)
 	values[Anum_pg_type_typtypmod - 1] = Int32GetDatum(-1);
 	values[Anum_pg_type_typndims - 1] = Int32GetDatum(0);
 	values[Anum_pg_type_typcollation - 1] = ObjectIdGetDatum(InvalidOid);
+	values[Anum_pg_type_typebuildzstddictionary - 1] = ObjectIdGetDatum(InvalidOid);
 	nulls[Anum_pg_type_typdefaultbin - 1] = true;
 	nulls[Anum_pg_type_typdefault - 1] = true;
 	nulls[Anum_pg_type_typacl - 1] = true;
@@ -223,7 +224,8 @@ TypeCreate(Oid newTypeOid,
 		   int32 typeMod,
 		   int32 typNDims,		/* Array dimensions for baseType */
 		   bool typeNotNull,
-		   Oid typeCollation)
+		   Oid typeCollation,
+		   Oid generateDictionaryProcedure)
 {
 	Relation	pg_type_desc;
 	Oid			typeObjectId;
@@ -378,6 +380,7 @@ TypeCreate(Oid newTypeOid,
 	values[Anum_pg_type_typtypmod - 1] = Int32GetDatum(typeMod);
 	values[Anum_pg_type_typndims - 1] = Int32GetDatum(typNDims);
 	values[Anum_pg_type_typcollation - 1] = ObjectIdGetDatum(typeCollation);
+	values[Anum_pg_type_typebuildzstddictionary - 1] = ObjectIdGetDatum(generateDictionaryProcedure);
 
 	/*
 	 * initialize the default binary value for this type.  Check for nulls of
@@ -676,6 +679,12 @@ GenerateTypeDependencies(HeapTuple typeTuple,
 	if (OidIsValid(typeForm->typanalyze))
 	{
 		ObjectAddressSet(referenced, ProcedureRelationId, typeForm->typanalyze);
+		add_exact_object_address(&referenced, addrs_normal);
+	}
+
+	if (OidIsValid(typeForm->typebuildzstddictionary))
+	{
+		ObjectAddressSet(referenced, ProcedureRelationId, typeForm->typebuildzstddictionary);
 		add_exact_object_address(&referenced, addrs_normal);
 	}
 
