@@ -1010,7 +1010,7 @@ SetVarReturningType_walker(Node *node, SetVarReturningType_context *context)
 	return expression_tree_walker(node, SetVarReturningType_walker, context);
 }
 
-void
+static void
 SetVarReturningType(Node *node, int result_relation, int sublevels_up,
 					VarReturningType returning_type)
 {
@@ -1797,6 +1797,11 @@ map_variable_attnos(Node *node,
  * referencing result_relation, it is wrapped in a ReturningExpr node (causing
  * the executor to return NULL if the OLD/NEW row doesn't exist).
  *
+ * Note that ReplaceVarFromTargetList always generates the replacement
+ * expression with varlevelsup = 0.  The caller is responsible for adjusting
+ * the varlevelsup if needed.  This simplifies the caller's life if it wants to
+ * cache the replacement expressions.
+ *
  * outer_hasSubLinks works the same as for replace_rte_variables().
  */
 
@@ -1814,6 +1819,30 @@ ReplaceVarsFromTargetList_callback(Var *var,
 								   replace_rte_variables_context *context)
 {
 	ReplaceVarsFromTargetList_context *rcon = (ReplaceVarsFromTargetList_context *) context->callback_arg;
+	Node	   *newnode;
+
+	newnode = ReplaceVarFromTargetList(var,
+									   rcon->target_rte,
+									   rcon->targetlist,
+									   rcon->result_relation,
+									   rcon->nomatch_option,
+									   rcon->nomatch_varno);
+
+	/* Must adjust varlevelsup if replaced Var is within a subquery */
+	if (var->varlevelsup > 0)
+		IncrementVarSublevelsUp(newnode, var->varlevelsup, 0);
+
+	return newnode;
+}
+
+Node *
+ReplaceVarFromTargetList(Var *var,
+						 RangeTblEntry *target_rte,
+						 List *targetlist,
+						 int result_relation,
+						 ReplaceVarsNoMatchOption nomatch_option,
+						 int nomatch_varno)
+{
 	TargetEntry *tle;
 
 	if (var->varattno == InvalidAttrNumber)
@@ -1822,6 +1851,7 @@ ReplaceVarsFromTargetList_callback(Var *var,
 		RowExpr    *rowexpr;
 		List	   *colnames;
 		List	   *fields;
+		ListCell   *lc;
 
 		/*
 		 * If generating an expansion for a var of a named rowtype (ie, this
@@ -1830,29 +1860,46 @@ ReplaceVarsFromTargetList_callback(Var *var,
 		 * omit dropped columns.  In the latter case, attach column names to
 		 * the RowExpr for use of the executor and ruleutils.c.
 		 *
+		 * In order to be able to cache the results, we always generate the
+		 * expansion with varlevelsup = 0.  The caller is responsible for
+		 * adjusting it if needed.
+		 *
 		 * The varreturningtype is copied onto each individual field Var, so
 		 * that it is handled correctly when we recurse.
 		 */
-		expandRTE(rcon->target_rte,
-				  var->varno, var->varlevelsup, var->varreturningtype,
-				  var->location, (var->vartype != RECORDOID),
+		expandRTE(target_rte,
+				  var->varno, 0 /* not varlevelsup */ ,
+				  var->varreturningtype, var->location,
+				  (var->vartype != RECORDOID),
 				  &colnames, &fields);
-		/* Adjust the generated per-field Vars... */
-		fields = (List *) replace_rte_variables_mutator((Node *) fields,
-														context);
 		rowexpr = makeNode(RowExpr);
-		rowexpr->args = fields;
+		/* the fields will be set below */
+		rowexpr->args = NIL;
 		rowexpr->row_typeid = var->vartype;
 		rowexpr->row_format = COERCE_IMPLICIT_CAST;
 		rowexpr->colnames = (var->vartype == RECORDOID) ? colnames : NIL;
 		rowexpr->location = var->location;
+		/* Adjust the generated per-field Vars... */
+		foreach(lc, fields)
+		{
+			Node	   *field = lfirst(lc);
+
+			if (field && IsA(field, Var))
+				field = ReplaceVarFromTargetList((Var *) field,
+												 target_rte,
+												 targetlist,
+												 result_relation,
+												 nomatch_option,
+												 nomatch_varno);
+			rowexpr->args = lappend(rowexpr->args, field);
+		}
 
 		/* Wrap it in a ReturningExpr, if needed, per comments above */
 		if (var->varreturningtype != VAR_RETURNING_DEFAULT)
 		{
 			ReturningExpr *rexpr = makeNode(ReturningExpr);
 
-			rexpr->retlevelsup = var->varlevelsup;
+			rexpr->retlevelsup = 0;
 			rexpr->retold = (var->varreturningtype == VAR_RETURNING_OLD);
 			rexpr->retexpr = (Expr *) rowexpr;
 
@@ -1863,12 +1910,12 @@ ReplaceVarsFromTargetList_callback(Var *var,
 	}
 
 	/* Normal case referencing one targetlist element */
-	tle = get_tle_by_resno(rcon->targetlist, var->varattno);
+	tle = get_tle_by_resno(targetlist, var->varattno);
 
 	if (tle == NULL || tle->resjunk)
 	{
 		/* Failed to find column in targetlist */
-		switch (rcon->nomatch_option)
+		switch (nomatch_option)
 		{
 			case REPLACEVARS_REPORT_ERROR:
 				/* fall through, throw error below */
@@ -1876,7 +1923,8 @@ ReplaceVarsFromTargetList_callback(Var *var,
 
 			case REPLACEVARS_CHANGE_VARNO:
 				var = copyObject(var);
-				var->varno = rcon->nomatch_varno;
+				var->varno = nomatch_varno;
+				var->varlevelsup = 0;
 				/* we leave the syntactic referent alone */
 				return (Node *) var;
 
@@ -1906,10 +1954,6 @@ ReplaceVarsFromTargetList_callback(Var *var,
 		/* Make a copy of the tlist item to return */
 		Expr	   *newnode = copyObject(tle->expr);
 
-		/* Must adjust varlevelsup if tlist item is from higher query */
-		if (var->varlevelsup > 0)
-			IncrementVarSublevelsUp((Node *) newnode, var->varlevelsup, 0);
-
 		/*
 		 * Check to see if the tlist item contains a PARAM_MULTIEXPR Param,
 		 * and throw error if so.  This case could only happen when expanding
@@ -1932,20 +1976,20 @@ ReplaceVarsFromTargetList_callback(Var *var,
 			 * Copy varreturningtype onto any Vars in the tlist item that
 			 * refer to result_relation (which had better be non-zero).
 			 */
-			if (rcon->result_relation == 0)
+			if (result_relation == 0)
 				elog(ERROR, "variable returning old/new found outside RETURNING list");
 
-			SetVarReturningType((Node *) newnode, rcon->result_relation,
-								var->varlevelsup, var->varreturningtype);
+			SetVarReturningType((Node *) newnode, result_relation,
+								0, var->varreturningtype);
 
 			/* Wrap it in a ReturningExpr, if needed, per comments above */
 			if (!IsA(newnode, Var) ||
-				((Var *) newnode)->varno != rcon->result_relation ||
-				((Var *) newnode)->varlevelsup != var->varlevelsup)
+				((Var *) newnode)->varno != result_relation ||
+				((Var *) newnode)->varlevelsup != 0)
 			{
 				ReturningExpr *rexpr = makeNode(ReturningExpr);
 
-				rexpr->retlevelsup = var->varlevelsup;
+				rexpr->retlevelsup = 0;
 				rexpr->retold = (var->varreturningtype == VAR_RETURNING_OLD);
 				rexpr->retexpr = newnode;
 

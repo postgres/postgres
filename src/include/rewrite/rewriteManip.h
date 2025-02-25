@@ -55,9 +55,6 @@ extern void IncrementVarSublevelsUp(Node *node, int delta_sublevels_up,
 extern void IncrementVarSublevelsUp_rtable(List *rtable,
 										   int delta_sublevels_up, int min_sublevels_up);
 
-extern void SetVarReturningType(Node *node, int result_relation, int sublevels_up,
-								VarReturningType returning_type);
-
 extern bool rangeTableEntry_used(Node *node, int rt_index,
 								 int sublevels_up);
 
@@ -92,6 +89,12 @@ extern Node *map_variable_attnos(Node *node,
 								 const struct AttrMap *attno_map,
 								 Oid to_rowtype, bool *found_whole_row);
 
+extern Node *ReplaceVarFromTargetList(Var *var,
+									  RangeTblEntry *target_rte,
+									  List *targetlist,
+									  int result_relation,
+									  ReplaceVarsNoMatchOption nomatch_option,
+									  int nomatch_varno);
 extern Node *ReplaceVarsFromTargetList(Node *node,
 									   int target_varno, int sublevels_up,
 									   RangeTblEntry *target_rte,

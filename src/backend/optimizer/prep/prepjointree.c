@@ -2666,131 +2666,38 @@ pullup_replace_vars_callback(Var *var,
 		/* Just copy the entry and fall through to adjust phlevelsup etc */
 		newnode = copyObject(rcon->rv_cache[varattno]);
 	}
-	else if (varattno == InvalidAttrNumber)
-	{
-		/* Must expand whole-tuple reference into RowExpr */
-		RowExpr    *rowexpr;
-		List	   *colnames;
-		List	   *fields;
-		bool		save_wrap_non_vars = rcon->wrap_non_vars;
-		int			save_sublevelsup = context->sublevels_up;
-
-		/*
-		 * If generating an expansion for a var of a named rowtype (ie, this
-		 * is a plain relation RTE), then we must include dummy items for
-		 * dropped columns.  If the var is RECORD (ie, this is a JOIN), then
-		 * omit dropped columns.  In the latter case, attach column names to
-		 * the RowExpr for use of the executor and ruleutils.c.
-		 *
-		 * In order to be able to cache the results, we always generate the
-		 * expansion with varlevelsup = 0, and then adjust below if needed.
-		 */
-		expandRTE(rcon->target_rte,
-				  var->varno, 0 /* not varlevelsup */ ,
-				  var->varreturningtype, var->location,
-				  (var->vartype != RECORDOID),
-				  &colnames, &fields);
-		/* Expand the generated per-field Vars, but don't insert PHVs there */
-		rcon->wrap_non_vars = false;
-		context->sublevels_up = 0;	/* to match the expandRTE output */
-		fields = (List *) replace_rte_variables_mutator((Node *) fields,
-														context);
-		rcon->wrap_non_vars = save_wrap_non_vars;
-		context->sublevels_up = save_sublevelsup;
-
-		rowexpr = makeNode(RowExpr);
-		rowexpr->args = fields;
-		rowexpr->row_typeid = var->vartype;
-		rowexpr->row_format = COERCE_IMPLICIT_CAST;
-		rowexpr->colnames = (var->vartype == RECORDOID) ? colnames : NIL;
-		rowexpr->location = var->location;
-		newnode = (Node *) rowexpr;
-
-		/* Handle any OLD/NEW RETURNING list Vars */
-		if (var->varreturningtype != VAR_RETURNING_DEFAULT)
-		{
-			/*
-			 * Wrap the RowExpr in a ReturningExpr node, so that the executor
-			 * returns NULL if the OLD/NEW row does not exist.
-			 */
-			ReturningExpr *rexpr = makeNode(ReturningExpr);
-
-			rexpr->retlevelsup = 0;
-			rexpr->retold = (var->varreturningtype == VAR_RETURNING_OLD);
-			rexpr->retexpr = (Expr *) newnode;
-
-			newnode = (Node *) rexpr;
-		}
-
-		/*
-		 * Insert PlaceHolderVar if needed.  Notice that we are wrapping one
-		 * PlaceHolderVar around the whole RowExpr, rather than putting one
-		 * around each element of the row.  This is because we need the
-		 * expression to yield NULL, not ROW(NULL,NULL,...) when it is forced
-		 * to null by an outer join.
-		 */
-		if (need_phv)
-		{
-			newnode = (Node *)
-				make_placeholder_expr(rcon->root,
-									  (Expr *) newnode,
-									  bms_make_singleton(rcon->varno));
-			/* cache it with the PHV, and with phlevelsup etc not set yet */
-			rcon->rv_cache[InvalidAttrNumber] = copyObject(newnode);
-		}
-	}
 	else
 	{
-		/* Normal case referencing one targetlist element */
-		TargetEntry *tle = get_tle_by_resno(rcon->targetlist, varattno);
-
-		if (tle == NULL)		/* shouldn't happen */
-			elog(ERROR, "could not find attribute %d in subquery targetlist",
-				 varattno);
-
-		/* Make a copy of the tlist item to return */
-		newnode = (Node *) copyObject(tle->expr);
-
-		/* Handle any OLD/NEW RETURNING list Vars */
-		if (var->varreturningtype != VAR_RETURNING_DEFAULT)
-		{
-			/*
-			 * Copy varreturningtype onto any Vars in the tlist item that
-			 * refer to result_relation (which had better be non-zero).
-			 */
-			if (rcon->result_relation == 0)
-				elog(ERROR, "variable returning old/new found outside RETURNING list");
-
-			SetVarReturningType((Node *) newnode, rcon->result_relation,
-								0, var->varreturningtype);
-
-			/*
-			 * If the replacement expression in the targetlist is not simply a
-			 * Var referencing result_relation, wrap it in a ReturningExpr
-			 * node, so that the executor returns NULL if the OLD/NEW row does
-			 * not exist.
-			 */
-			if (!IsA(newnode, Var) ||
-				((Var *) newnode)->varno != rcon->result_relation ||
-				((Var *) newnode)->varlevelsup != 0)
-			{
-				ReturningExpr *rexpr = makeNode(ReturningExpr);
-
-				rexpr->retlevelsup = 0;
-				rexpr->retold = (var->varreturningtype == VAR_RETURNING_OLD);
-				rexpr->retexpr = (Expr *) newnode;
-
-				newnode = (Node *) rexpr;
-			}
-		}
+		/*
+		 * Generate the replacement expression.  This takes care of expanding
+		 * wholerow references and dealing with non-default varreturningtype.
+		 */
+		newnode = ReplaceVarFromTargetList(var,
+										   rcon->target_rte,
+										   rcon->targetlist,
+										   rcon->result_relation,
+										   REPLACEVARS_REPORT_ERROR,
+										   0);
 
 		/* Insert PlaceHolderVar if needed */
 		if (need_phv)
 		{
 			bool		wrap;
 
-			if (newnode && IsA(newnode, Var) &&
-				((Var *) newnode)->varlevelsup == 0)
+			if (varattno == InvalidAttrNumber)
+			{
+				/*
+				 * Insert PlaceHolderVar for whole-tuple reference.  Notice
+				 * that we are wrapping one PlaceHolderVar around the whole
+				 * RowExpr, rather than putting one around each element of the
+				 * row.  This is because we need the expression to yield NULL,
+				 * not ROW(NULL,NULL,...) when it is forced to null by an
+				 * outer join.
+				 */
+				wrap = true;
+			}
+			else if (newnode && IsA(newnode, Var) &&
+					 ((Var *) newnode)->varlevelsup == 0)
 			{
 				/*
 				 * Simple Vars always escape being wrapped, unless they are
@@ -2936,7 +2843,7 @@ pullup_replace_vars_callback(Var *var,
 				 * Cache it if possible (ie, if the attno is in range, which
 				 * it probably always should be).
 				 */
-				if (varattno > InvalidAttrNumber &&
+				if (varattno >= InvalidAttrNumber &&
 					varattno <= list_length(rcon->targetlist))
 					rcon->rv_cache[varattno] = copyObject(newnode);
 			}
