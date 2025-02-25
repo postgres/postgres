@@ -323,8 +323,8 @@ usage(void)
 	printf(_("  --copy                        copy files to new cluster (default)\n"));
 	printf(_("  --copy-file-range             copy files to new cluster with copy_file_range\n"));
 	printf(_("  --no-statistics               do not import statistics from old cluster\n"));
-	printf(_("  --set-char-signedness=OPTION  set new cluster char signedness to \"signed\" or\n"));
-	printf(_("                                \"unsigned\"\n"));
+	printf(_("  --set-char-signedness=OPTION  set new cluster char signedness to \"signed\" or\n"
+			 "                                \"unsigned\"\n"));
 	printf(_("  --sync-method=METHOD          set method for syncing files to disk\n"));
 	printf(_("  -?, --help                    show this help, then exit\n"));
 	printf(_("\n"
