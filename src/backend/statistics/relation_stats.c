@@ -48,14 +48,13 @@ static struct StatsArgInfo relarginfo[] =
 	[NUM_RELATION_STATS_ARGS] = {0}
 };
 
-static bool relation_statistics_update(FunctionCallInfo fcinfo, int elevel,
-									   bool inplace);
+static bool relation_statistics_update(FunctionCallInfo fcinfo, int elevel);
 
 /*
  * Internal function for modifying statistics for a relation.
  */
 static bool
-relation_statistics_update(FunctionCallInfo fcinfo, int elevel, bool inplace)
+relation_statistics_update(FunctionCallInfo fcinfo, int elevel)
 {
 	bool		result = true;
 	Oid			reloid;
@@ -66,6 +65,12 @@ relation_statistics_update(FunctionCallInfo fcinfo, int elevel, bool inplace)
 	bool		update_reltuples = false;
 	BlockNumber relallvisible = 0;
 	bool		update_relallvisible = false;
+	HeapTuple	ctup;
+	Form_pg_class pgcform;
+	int			replaces[3] = {0};
+	Datum		values[3] = {0};
+	bool		nulls[3] = {0};
+	int			nreplaces = 0;
 
 	if (!PG_ARGISNULL(RELPAGES_ARG))
 	{
@@ -110,100 +115,51 @@ relation_statistics_update(FunctionCallInfo fcinfo, int elevel, bool inplace)
 	 */
 	crel = table_open(RelationRelationId, RowExclusiveLock);
 
-	if (inplace)
+	ctup = SearchSysCache1(RELOID, ObjectIdGetDatum(reloid));
+	if (!HeapTupleIsValid(ctup))
 	{
-		HeapTuple	ctup = NULL;
-		ScanKeyData key[1];
-		Form_pg_class pgcform;
-		void	   *inplace_state = NULL;
-		bool		dirty = false;
-
-		ScanKeyInit(&key[0], Anum_pg_class_oid, BTEqualStrategyNumber, F_OIDEQ,
-					ObjectIdGetDatum(reloid));
-		systable_inplace_update_begin(crel, ClassOidIndexId, true, NULL, 1, key,
-									  &ctup, &inplace_state);
-		if (!HeapTupleIsValid(ctup))
-			elog(ERROR, "pg_class entry for relid %u vanished while updating statistics",
-				 reloid);
-		pgcform = (Form_pg_class) GETSTRUCT(ctup);
-
-		if (update_relpages && pgcform->relpages != relpages)
-		{
-			pgcform->relpages = relpages;
-			dirty = true;
-		}
-		if (update_reltuples && pgcform->reltuples != reltuples)
-		{
-			pgcform->reltuples = reltuples;
-			dirty = true;
-		}
-		if (update_relallvisible && pgcform->relallvisible != relallvisible)
-		{
-			pgcform->relallvisible = relallvisible;
-			dirty = true;
-		}
-
-		if (dirty)
-			systable_inplace_update_finish(inplace_state, ctup);
-		else
-			systable_inplace_update_cancel(inplace_state);
-
-		heap_freetuple(ctup);
+		ereport(elevel,
+				(errcode(ERRCODE_OBJECT_IN_USE),
+				 errmsg("pg_class entry for relid %u not found", reloid)));
+		table_close(crel, RowExclusiveLock);
+		return false;
 	}
-	else
+
+	pgcform = (Form_pg_class) GETSTRUCT(ctup);
+
+	if (update_relpages && relpages != pgcform->relpages)
+	{
+		replaces[nreplaces] = Anum_pg_class_relpages;
+		values[nreplaces] = UInt32GetDatum(relpages);
+		nreplaces++;
+	}
+
+	if (update_reltuples && reltuples != pgcform->reltuples)
+	{
+		replaces[nreplaces] = Anum_pg_class_reltuples;
+		values[nreplaces] = Float4GetDatum(reltuples);
+		nreplaces++;
+	}
+
+	if (update_relallvisible && relallvisible != pgcform->relallvisible)
+	{
+		replaces[nreplaces] = Anum_pg_class_relallvisible;
+		values[nreplaces] = UInt32GetDatum(relallvisible);
+		nreplaces++;
+	}
+
+	if (nreplaces > 0)
 	{
 		TupleDesc	tupdesc = RelationGetDescr(crel);
-		HeapTuple	ctup;
-		Form_pg_class pgcform;
-		int			replaces[3] = {0};
-		Datum		values[3] = {0};
-		bool		nulls[3] = {0};
-		int			nreplaces = 0;
+		HeapTuple	newtup;
 
-		ctup = SearchSysCache1(RELOID, ObjectIdGetDatum(reloid));
-		if (!HeapTupleIsValid(ctup))
-		{
-			ereport(elevel,
-					(errcode(ERRCODE_OBJECT_IN_USE),
-					 errmsg("pg_class entry for relid %u not found", reloid)));
-			table_close(crel, RowExclusiveLock);
-			return false;
-		}
-		pgcform = (Form_pg_class) GETSTRUCT(ctup);
-
-		if (update_relpages && relpages != pgcform->relpages)
-		{
-			replaces[nreplaces] = Anum_pg_class_relpages;
-			values[nreplaces] = UInt32GetDatum(relpages);
-			nreplaces++;
-		}
-
-		if (update_reltuples && reltuples != pgcform->reltuples)
-		{
-			replaces[nreplaces] = Anum_pg_class_reltuples;
-			values[nreplaces] = Float4GetDatum(reltuples);
-			nreplaces++;
-		}
-
-		if (update_relallvisible && relallvisible != pgcform->relallvisible)
-		{
-			replaces[nreplaces] = Anum_pg_class_relallvisible;
-			values[nreplaces] = UInt32GetDatum(relallvisible);
-			nreplaces++;
-		}
-
-		if (nreplaces > 0)
-		{
-			HeapTuple	newtup;
-
-			newtup = heap_modify_tuple_by_cols(ctup, tupdesc, nreplaces,
-											   replaces, values, nulls);
-			CatalogTupleUpdate(crel, &newtup->t_self, newtup);
-			heap_freetuple(newtup);
-		}
-
-		ReleaseSysCache(ctup);
+		newtup = heap_modify_tuple_by_cols(ctup, tupdesc, nreplaces,
+										   replaces, values, nulls);
+		CatalogTupleUpdate(crel, &newtup->t_self, newtup);
+		heap_freetuple(newtup);
 	}
+
+	ReleaseSysCache(ctup);
 
 	/* release the lock, consistent with vac_update_relstats() */
 	table_close(crel, RowExclusiveLock);
@@ -219,7 +175,7 @@ relation_statistics_update(FunctionCallInfo fcinfo, int elevel, bool inplace)
 Datum
 pg_set_relation_stats(PG_FUNCTION_ARGS)
 {
-	relation_statistics_update(fcinfo, ERROR, false);
+	relation_statistics_update(fcinfo, ERROR);
 	PG_RETURN_VOID();
 }
 
@@ -243,7 +199,7 @@ pg_clear_relation_stats(PG_FUNCTION_ARGS)
 	newfcinfo->args[3].value = UInt32GetDatum(0);
 	newfcinfo->args[3].isnull = false;
 
-	relation_statistics_update(newfcinfo, ERROR, false);
+	relation_statistics_update(newfcinfo, ERROR);
 	PG_RETURN_VOID();
 }
 
@@ -261,7 +217,7 @@ pg_restore_relation_stats(PG_FUNCTION_ARGS)
 										  relarginfo, WARNING))
 		result = false;
 
-	if (!relation_statistics_update(positional_fcinfo, WARNING, true))
+	if (!relation_statistics_update(positional_fcinfo, WARNING))
 		result = false;
 
 	PG_RETURN_BOOL(result);
