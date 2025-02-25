@@ -802,10 +802,10 @@ load_kmip_keyring_provider_options(char *keyring_options)
 		ereport(WARNING,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("missing in the keyring options:%s%s%s%s",
-						*(kmip_keyring->kmip_host) ? "" : " kmip_host",
-						*(kmip_keyring->kmip_port) ? "" : " kmip_port",
-						*(kmip_keyring->kmip_ca_path) ? "" : " kmip_ca_path",
-						*(kmip_keyring->kmip_cert_path) ? "" : " kmip_cert_path")));
+						*(kmip_keyring->kmip_host) ? "" : " host",
+						*(kmip_keyring->kmip_port) ? "" : " port",
+						*(kmip_keyring->kmip_ca_path) ? "" : " caPath",
+						*(kmip_keyring->kmip_cert_path) ? "" : " certPath")));
 		return NULL;
 	}
 
