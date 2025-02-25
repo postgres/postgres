@@ -29374,6 +29374,10 @@ postgres=# SELECT '0/0'::pg_lsn + pd.segment_number * ps.setting::int + :offset 
         from the same <acronym>LSN</acronym> as the source logical slot.  Both
         <parameter>temporary</parameter> and <parameter>plugin</parameter> are
         optional; if they are omitted, the values of the source slot are used.
+        The <literal>failover</literal> option of the source logical slot
+        is not copied and is set to <literal>false</literal> by default. This
+        is to avoid the risk of being unable to continue logical replication
+        after failover to standby where the slot is being synchronized.
        </para></entry>
       </row>
 
