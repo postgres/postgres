@@ -55,6 +55,9 @@ extern void IncrementVarSublevelsUp(Node *node, int delta_sublevels_up,
 extern void IncrementVarSublevelsUp_rtable(List *rtable,
 										   int delta_sublevels_up, int min_sublevels_up);
 
+extern void SetVarReturningType(Node *node, int result_relation, int sublevels_up,
+								VarReturningType returning_type);
+
 extern bool rangeTableEntry_used(Node *node, int rt_index,
 								 int sublevels_up);
 

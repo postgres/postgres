@@ -2190,10 +2190,6 @@ fireRIRrules(Query *parsetree, List *activeRIRs)
 	 * requires special recursion detection if the new quals have sublink
 	 * subqueries, and if we did it in the loop above query_tree_walker would
 	 * then recurse into those quals a second time.
-	 *
-	 * Finally, we expand any virtual generated columns.  We do this after
-	 * each table's RLS policies are applied because the RLS policies might
-	 * also refer to the table's virtual generated columns.
 	 */
 	rt_index = 0;
 	foreach(lc, parsetree->rtable)
@@ -2207,11 +2203,10 @@ fireRIRrules(Query *parsetree, List *activeRIRs)
 
 		++rt_index;
 
-		/*
-		 * Only normal relations can have RLS policies or virtual generated
-		 * columns.
-		 */
-		if (rte->rtekind != RTE_RELATION)
+		/* Only normal relations can have RLS policies */
+		if (rte->rtekind != RTE_RELATION ||
+			(rte->relkind != RELKIND_RELATION &&
+			 rte->relkind != RELKIND_PARTITIONED_TABLE))
 			continue;
 
 		rel = table_open(rte->relid, NoLock);
@@ -2299,16 +2294,6 @@ fireRIRrules(Query *parsetree, List *activeRIRs)
 			parsetree->hasRowSecurity = true;
 		if (hasSubLinks)
 			parsetree->hasSubLinks = true;
-
-		/*
-		 * Expand any references to virtual generated columns of this table.
-		 * Note that subqueries in virtual generated column expressions are
-		 * not currently supported, so this cannot add any more sublinks.
-		 */
-		parsetree = (Query *)
-			expand_generated_columns_internal((Node *) parsetree,
-											  rel, rt_index, rte,
-											  parsetree->resultRelation);
 
 		table_close(rel, NoLock);
 	}
@@ -4457,35 +4442,12 @@ expand_generated_columns_internal(Node *node, Relation rel, int rt_index,
 			if (attr->attgenerated == ATTRIBUTE_GENERATED_VIRTUAL)
 			{
 				Node	   *defexpr;
-				int			attnum = i + 1;
-				Oid			attcollid;
 				TargetEntry *te;
 
-				defexpr = build_column_default(rel, attnum);
-				if (defexpr == NULL)
-					elog(ERROR, "no generation expression found for column number %d of table \"%s\"",
-						 attnum, RelationGetRelationName(rel));
-
-				/*
-				 * If the column definition has a collation and it is
-				 * different from the collation of the generation expression,
-				 * put a COLLATE clause around the expression.
-				 */
-				attcollid = attr->attcollation;
-				if (attcollid && attcollid != exprCollation(defexpr))
-				{
-					CollateExpr *ce = makeNode(CollateExpr);
-
-					ce->arg = (Expr *) defexpr;
-					ce->collOid = attcollid;
-					ce->location = -1;
-
-					defexpr = (Node *) ce;
-				}
-
+				defexpr = build_generation_expression(rel, i + 1);
 				ChangeVarNodes(defexpr, 1, rt_index, 0);
 
-				te = makeTargetEntry((Expr *) defexpr, attnum, 0, false);
+				te = makeTargetEntry((Expr *) defexpr, i + 1, 0, false);
 				tlist = lappend(tlist, te);
 			}
 		}
@@ -4526,6 +4488,47 @@ expand_generated_columns_in_expr(Node *node, Relation rel, int rt_index)
 	}
 
 	return node;
+}
+
+/*
+ * Build the generation expression for the virtual generated column.
+ *
+ * Error out if there is no generation expression found for the given column.
+ */
+Node *
+build_generation_expression(Relation rel, int attrno)
+{
+	TupleDesc	rd_att = RelationGetDescr(rel);
+	Form_pg_attribute att_tup = TupleDescAttr(rd_att, attrno - 1);
+	Node	   *defexpr;
+	Oid			attcollid;
+
+	Assert(rd_att->constr && rd_att->constr->has_generated_virtual);
+	Assert(att_tup->attgenerated == ATTRIBUTE_GENERATED_VIRTUAL);
+
+	defexpr = build_column_default(rel, attrno);
+	if (defexpr == NULL)
+		elog(ERROR, "no generation expression found for column number %d of table \"%s\"",
+			 attrno, RelationGetRelationName(rel));
+
+	/*
+	 * If the column definition has a collation and it is different from the
+	 * collation of the generation expression, put a COLLATE clause around the
+	 * expression.
+	 */
+	attcollid = att_tup->attcollation;
+	if (attcollid && attcollid != exprCollation(defexpr))
+	{
+		CollateExpr *ce = makeNode(CollateExpr);
+
+		ce->arg = (Expr *) defexpr;
+		ce->collOid = attcollid;
+		ce->location = -1;
+
+		defexpr = (Node *) ce;
+	}
+
+	return defexpr;
 }
 
 

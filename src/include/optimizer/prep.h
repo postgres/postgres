@@ -25,6 +25,7 @@ extern void transform_MERGE_to_join(Query *parse);
 extern void replace_empty_jointree(Query *parse);
 extern void pull_up_sublinks(PlannerInfo *root);
 extern void preprocess_function_rtes(PlannerInfo *root);
+extern Query *expand_virtual_generated_columns(PlannerInfo *root);
 extern void pull_up_subqueries(PlannerInfo *root);
 extern void flatten_simple_union_all(PlannerInfo *root);
 extern void reduce_outer_joins(PlannerInfo *root);

@@ -1010,7 +1010,7 @@ SetVarReturningType_walker(Node *node, SetVarReturningType_context *context)
 	return expression_tree_walker(node, SetVarReturningType_walker, context);
 }
 
-static void
+void
 SetVarReturningType(Node *node, int result_relation, int sublevels_up,
 					VarReturningType returning_type)
 {

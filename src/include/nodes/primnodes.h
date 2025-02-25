@@ -2147,7 +2147,7 @@ typedef struct InferenceElem
  * rule, which may also contain arbitrary expressions.
  *
  * ReturningExpr nodes never appear in a parsed Query --- they are only ever
- * inserted by the rewriter.
+ * inserted by the rewriter and the planner.
  */
 typedef struct ReturningExpr
 {

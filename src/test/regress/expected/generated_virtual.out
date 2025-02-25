@@ -1398,3 +1398,133 @@ SELECT attrelid, attname, attgenerated FROM pg_attribute WHERE attgenerated NOT 
 ----------+---------+--------------
 (0 rows)
 
+--
+-- test the expansion of virtual generated columns
+--
+-- these tests are specific to generated_virtual.sql
+--
+create table gtest32 (
+  a int primary key,
+  b int generated always as (a * 2),
+  c int generated always as (10 + 10),
+  d int generated always as (coalesce(a, 100))
+);
+insert into gtest32 values (1), (2);
+analyze gtest32;
+-- Ensure that nullingrel bits are propagated into the generation expressions
+explain (costs off)
+select sum(t2.b) over (partition by t2.a),
+       sum(t2.c) over (partition by t2.a),
+       sum(t2.d) over (partition by t2.a)
+from gtest32 as t1 left join gtest32 as t2 on (t1.a = t2.a)
+order by t1.a;
+                      QUERY PLAN                      
+------------------------------------------------------
+ Sort
+   Sort Key: t1.a
+   ->  WindowAgg
+         ->  Sort
+               Sort Key: t2.a
+               ->  Nested Loop Left Join
+                     Join Filter: (t1.a = t2.a)
+                     ->  Seq Scan on gtest32 t1
+                     ->  Materialize
+                           ->  Seq Scan on gtest32 t2
+(10 rows)
+
+select sum(t2.b) over (partition by t2.a),
+       sum(t2.c) over (partition by t2.a),
+       sum(t2.d) over (partition by t2.a)
+from gtest32 as t1 left join gtest32 as t2 on (t1.a = t2.a)
+order by t1.a;
+ sum | sum | sum 
+-----+-----+-----
+   2 |  20 |   1
+   4 |  20 |   2
+(2 rows)
+
+-- Ensure that outer-join removal functions correctly after the propagation of nullingrel bits
+explain (costs off)
+select t1.a from gtest32 t1 left join gtest32 t2 on t1.a = t2.a
+where coalesce(t2.b, 1) = 2;
+               QUERY PLAN                
+-----------------------------------------
+ Hash Left Join
+   Hash Cond: (t1.a = t2.a)
+   Filter: (COALESCE((t2.a * 2), 1) = 2)
+   ->  Seq Scan on gtest32 t1
+   ->  Hash
+         ->  Seq Scan on gtest32 t2
+(6 rows)
+
+select t1.a from gtest32 t1 left join gtest32 t2 on t1.a = t2.a
+where coalesce(t2.b, 1) = 2;
+ a 
+---
+ 1
+(1 row)
+
+explain (costs off)
+select t1.a from gtest32 t1 left join gtest32 t2 on t1.a = t2.a
+where coalesce(t2.b, 1) = 2 or t1.a is null;
+                         QUERY PLAN                          
+-------------------------------------------------------------
+ Hash Left Join
+   Hash Cond: (t1.a = t2.a)
+   Filter: ((COALESCE((t2.a * 2), 1) = 2) OR (t1.a IS NULL))
+   ->  Seq Scan on gtest32 t1
+   ->  Hash
+         ->  Seq Scan on gtest32 t2
+(6 rows)
+
+select t1.a from gtest32 t1 left join gtest32 t2 on t1.a = t2.a
+where coalesce(t2.b, 1) = 2 or t1.a is null;
+ a 
+---
+ 1
+(1 row)
+
+-- Ensure that the generation expressions are wrapped into PHVs if needed
+explain (verbose, costs off)
+select t2.* from gtest32 t1 left join gtest32 t2 on false;
+                      QUERY PLAN                      
+------------------------------------------------------
+ Nested Loop Left Join
+   Output: a, (a * 2), (20), (COALESCE(a, 100))
+   Join Filter: false
+   ->  Seq Scan on generated_virtual_tests.gtest32 t1
+         Output: t1.a, t1.b, t1.c, t1.d
+   ->  Result
+         Output: a, 20, COALESCE(a, 100)
+         One-Time Filter: false
+(8 rows)
+
+select t2.* from gtest32 t1 left join gtest32 t2 on false;
+ a | b | c | d 
+---+---+---+---
+   |   |   |  
+   |   |   |  
+(2 rows)
+
+explain (verbose, costs off)
+select * from gtest32 t group by grouping sets (a, b, c, d) having c = 20;
+                     QUERY PLAN                      
+-----------------------------------------------------
+ HashAggregate
+   Output: a, ((a * 2)), (20), (COALESCE(a, 100))
+   Hash Key: t.a
+   Hash Key: (t.a * 2)
+   Hash Key: 20
+   Hash Key: COALESCE(t.a, 100)
+   Filter: ((20) = 20)
+   ->  Seq Scan on generated_virtual_tests.gtest32 t
+         Output: a, (a * 2), 20, COALESCE(a, 100)
+(9 rows)
+
+select * from gtest32 t group by grouping sets (a, b, c, d) having c = 20;
+ a | b | c  | d 
+---+---+----+---
+   |   | 20 |  
+(1 row)
+
+drop table gtest32;
