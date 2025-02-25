@@ -110,6 +110,26 @@ static MemoryContext MdCxt;		/* context for all MdfdVec objects */
 #define EXTENSION_DONT_OPEN			(1 << 5)
 
 
+/*
+ * Fixed-length string to represent paths to files that need to be built by
+ * md.c.
+ *
+ * The maximum number of segments is MaxBlockNumber / RELSEG_SIZE, where
+ * RELSEG_SIZE can be set to 1 (for testing only).
+ */
+#define SEGMENT_CHARS	OIDCHARS
+#define MD_PATH_STR_MAXLEN \
+	(\
+		REL_PATH_STR_MAXLEN \
+		+ sizeof((char)'.') \
+		+ SEGMENT_CHARS \
+	)
+typedef struct MdPathStr
+{
+	char		str[MD_PATH_STR_MAXLEN + 1];
+} MdPathStr;
+
+
 /* local routines */
 static void mdunlinkfork(RelFileLocatorBackend rlocator, ForkNumber forknum,
 						 bool isRedo);
@@ -123,8 +143,8 @@ static void register_forget_request(RelFileLocatorBackend rlocator, ForkNumber f
 static void _fdvec_resize(SMgrRelation reln,
 						  ForkNumber forknum,
 						  int nseg);
-static char *_mdfd_segpath(SMgrRelation reln, ForkNumber forknum,
-						   BlockNumber segno);
+static MdPathStr _mdfd_segpath(SMgrRelation reln, ForkNumber forknum,
+							   BlockNumber segno);
 static MdfdVec *_mdfd_openseg(SMgrRelation reln, ForkNumber forknum,
 							  BlockNumber segno, int oflags);
 static MdfdVec *_mdfd_getseg(SMgrRelation reln, ForkNumber forknum,
@@ -398,12 +418,12 @@ mdunlinkfork(RelFileLocatorBackend rlocator, ForkNumber forknum, bool isRedo)
 	 */
 	if (ret >= 0 || errno != ENOENT)
 	{
-		char	   *segpath = (char *) palloc(strlen(path.str) + 12);
+		MdPathStr	segpath;
 		BlockNumber segno;
 
 		for (segno = 1;; segno++)
 		{
-			sprintf(segpath, "%s.%u", path.str, segno);
+			sprintf(segpath.str, "%s.%u", path.str, segno);
 
 			if (!RelFileLocatorBackendIsTemp(rlocator))
 			{
@@ -411,7 +431,7 @@ mdunlinkfork(RelFileLocatorBackend rlocator, ForkNumber forknum, bool isRedo)
 				 * Prevent other backends' fds from holding on to the disk
 				 * space.  We're done if we see ENOENT, though.
 				 */
-				if (do_truncate(segpath) < 0 && errno == ENOENT)
+				if (do_truncate(segpath.str) < 0 && errno == ENOENT)
 					break;
 
 				/*
@@ -421,17 +441,16 @@ mdunlinkfork(RelFileLocatorBackend rlocator, ForkNumber forknum, bool isRedo)
 				register_forget_request(rlocator, forknum, segno);
 			}
 
-			if (unlink(segpath) < 0)
+			if (unlink(segpath.str) < 0)
 			{
 				/* ENOENT is expected after the last segment... */
 				if (errno != ENOENT)
 					ereport(WARNING,
 							(errcode_for_file_access(),
-							 errmsg("could not remove file \"%s\": %m", segpath)));
+							 errmsg("could not remove file \"%s\": %m", segpath.str)));
 				break;
 			}
 		}
-		pfree(segpath);
 	}
 }
 
@@ -1528,18 +1547,18 @@ _fdvec_resize(SMgrRelation reln,
  * Return the filename for the specified segment of the relation. The
  * returned string is palloc'd.
  */
-static char *
+static MdPathStr
 _mdfd_segpath(SMgrRelation reln, ForkNumber forknum, BlockNumber segno)
 {
 	RelPathStr	path;
-	char	   *fullpath;
+	MdPathStr	fullpath;
 
 	path = relpath(reln->smgr_rlocator, forknum);
 
 	if (segno > 0)
-		fullpath = psprintf("%s.%u", path.str, segno);
+		sprintf(fullpath.str, "%s.%u", path.str, segno);
 	else
-		fullpath = pstrdup(path.str);
+		strcpy(fullpath.str, path.str);
 
 	return fullpath;
 }
@@ -1554,14 +1573,12 @@ _mdfd_openseg(SMgrRelation reln, ForkNumber forknum, BlockNumber segno,
 {
 	MdfdVec    *v;
 	File		fd;
-	char	   *fullpath;
+	MdPathStr	fullpath;
 
 	fullpath = _mdfd_segpath(reln, forknum, segno);
 
 	/* open the file */
-	fd = PathNameOpenFile(fullpath, _mdfd_open_flags() | oflags);
-
-	pfree(fullpath);
+	fd = PathNameOpenFile(fullpath.str, _mdfd_open_flags() | oflags);
 
 	if (fd < 0)
 		return NULL;
@@ -1697,7 +1714,7 @@ _mdfd_getseg(SMgrRelation reln, ForkNumber forknum, BlockNumber blkno,
 			ereport(ERROR,
 					(errcode_for_file_access(),
 					 errmsg("could not open file \"%s\" (target block %u): previous segment is only %u blocks",
-							_mdfd_segpath(reln, forknum, nextsegno),
+							_mdfd_segpath(reln, forknum, nextsegno).str,
 							blkno, nblocks)));
 		}
 
@@ -1711,7 +1728,7 @@ _mdfd_getseg(SMgrRelation reln, ForkNumber forknum, BlockNumber blkno,
 			ereport(ERROR,
 					(errcode_for_file_access(),
 					 errmsg("could not open file \"%s\" (target block %u): %m",
-							_mdfd_segpath(reln, forknum, nextsegno),
+							_mdfd_segpath(reln, forknum, nextsegno).str,
 							blkno)));
 		}
 	}
@@ -1762,11 +1779,10 @@ mdsyncfiletag(const FileTag *ftag, char *path)
 	}
 	else
 	{
-		char	   *p;
+		MdPathStr	p;
 
 		p = _mdfd_segpath(reln, ftag->forknum, ftag->segno);
-		strlcpy(path, p, MAXPGPATH);
-		pfree(p);
+		strlcpy(path, p.str, MD_PATH_STR_MAXLEN);
 
 		file = PathNameOpenFile(path, _mdfd_open_flags());
 		if (file < 0)
