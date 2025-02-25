@@ -795,13 +795,15 @@ load_kmip_keyring_provider_options(char *keyring_options)
 	}
 
 	if (strlen(kmip_keyring->kmip_host) == 0 ||
+		strlen(kmip_keyring->kmip_port) == 0 ||
 		strlen(kmip_keyring->kmip_ca_path) == 0 ||
 		strlen(kmip_keyring->kmip_cert_path) == 0)
 	{
 		ereport(WARNING,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("missing in the keyring options:%s%s%s",
+				 errmsg("missing in the keyring options:%s%s%s%s",
 						*(kmip_keyring->kmip_host) ? "" : " kmip_host",
+						*(kmip_keyring->kmip_port) ? "" : " kmip_port",
 						*(kmip_keyring->kmip_ca_path) ? "" : " kmip_ca_path",
 						*(kmip_keyring->kmip_cert_path) ? "" : " kmip_cert_path")));
 		return NULL;
