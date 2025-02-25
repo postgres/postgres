@@ -625,23 +625,21 @@ char *
 GetIncrementalFilePath(Oid dboid, Oid spcoid, RelFileNumber relfilenumber,
 					   ForkNumber forknum, unsigned segno)
 {
-	char	   *path;
+	RelPathStr	path;
 	char	   *lastslash;
 	char	   *ipath;
 
 	path = GetRelationPath(dboid, spcoid, relfilenumber, INVALID_PROC_NUMBER,
 						   forknum);
 
-	lastslash = strrchr(path, '/');
+	lastslash = strrchr(path.str, '/');
 	Assert(lastslash != NULL);
 	*lastslash = '\0';
 
 	if (segno > 0)
-		ipath = psprintf("%s/INCREMENTAL.%s.%u", path, lastslash + 1, segno);
+		ipath = psprintf("%s/INCREMENTAL.%s.%u", path.str, lastslash + 1, segno);
 	else
-		ipath = psprintf("%s/INCREMENTAL.%s", path, lastslash + 1);
-
-	pfree(path);
+		ipath = psprintf("%s/INCREMENTAL.%s", path.str, lastslash + 1);
 
 	return ipath;
 }

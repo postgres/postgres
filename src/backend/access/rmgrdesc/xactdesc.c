@@ -287,10 +287,8 @@ xact_desc_relations(StringInfo buf, char *label, int nrels,
 		appendStringInfo(buf, "; %s:", label);
 		for (i = 0; i < nrels; i++)
 		{
-			char	   *path = relpathperm(xlocators[i], MAIN_FORKNUM);
-
-			appendStringInfo(buf, " %s", path);
-			pfree(path);
+			appendStringInfo(buf, " %s",
+							 relpathperm(xlocators[i], MAIN_FORKNUM).str);
 		}
 	}
 }

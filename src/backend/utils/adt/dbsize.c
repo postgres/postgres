@@ -326,7 +326,7 @@ static int64
 calculate_relation_size(RelFileLocator *rfn, ProcNumber backend, ForkNumber forknum)
 {
 	int64		totalsize = 0;
-	char	   *relationpath;
+	RelPathStr	relationpath;
 	char		pathname[MAXPGPATH];
 	unsigned int segcount = 0;
 
@@ -340,10 +340,10 @@ calculate_relation_size(RelFileLocator *rfn, ProcNumber backend, ForkNumber fork
 
 		if (segcount == 0)
 			snprintf(pathname, MAXPGPATH, "%s",
-					 relationpath);
+					 relationpath.str);
 		else
 			snprintf(pathname, MAXPGPATH, "%s.%u",
-					 relationpath, segcount);
+					 relationpath.str, segcount);
 
 		if (stat(pathname, &fst) < 0)
 		{
@@ -973,7 +973,7 @@ pg_relation_filepath(PG_FUNCTION_ARGS)
 	Form_pg_class relform;
 	RelFileLocator rlocator;
 	ProcNumber	backend;
-	char	   *path;
+	RelPathStr	path;
 
 	tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(relid));
 	if (!HeapTupleIsValid(tuple))
@@ -1039,5 +1039,5 @@ pg_relation_filepath(PG_FUNCTION_ARGS)
 
 	path = relpathbackend(rlocator, backend, MAIN_FORKNUM);
 
-	PG_RETURN_TEXT_P(cstring_to_text(path));
+	PG_RETURN_TEXT_P(cstring_to_text(path.str));
 }

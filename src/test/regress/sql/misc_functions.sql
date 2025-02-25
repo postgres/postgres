@@ -403,3 +403,11 @@ DROP FUNCTION explain_mask_costs(text, bool, bool, bool, bool);
 -- test stratnum support functions
 SELECT gist_stratnum_common(7);
 SELECT gist_stratnum_common(3);
+
+
+-- relpath tests
+CREATE FUNCTION test_relpath()
+    RETURNS void
+    AS :'regresslib'
+    LANGUAGE C;
+SELECT test_relpath();

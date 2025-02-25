@@ -182,7 +182,7 @@ void
 mdcreate(SMgrRelation reln, ForkNumber forknum, bool isRedo)
 {
 	MdfdVec    *mdfd;
-	char	   *path;
+	RelPathStr	path;
 	File		fd;
 
 	if (isRedo && reln->md_num_open_segs[forknum] > 0)
@@ -205,25 +205,23 @@ mdcreate(SMgrRelation reln, ForkNumber forknum, bool isRedo)
 
 	path = relpath(reln->smgr_rlocator, forknum);
 
-	fd = PathNameOpenFile(path, _mdfd_open_flags() | O_CREAT | O_EXCL);
+	fd = PathNameOpenFile(path.str, _mdfd_open_flags() | O_CREAT | O_EXCL);
 
 	if (fd < 0)
 	{
 		int			save_errno = errno;
 
 		if (isRedo)
-			fd = PathNameOpenFile(path, _mdfd_open_flags());
+			fd = PathNameOpenFile(path.str, _mdfd_open_flags());
 		if (fd < 0)
 		{
 			/* be sure to report the error reported by create, not open */
 			errno = save_errno;
 			ereport(ERROR,
 					(errcode_for_file_access(),
-					 errmsg("could not create file \"%s\": %m", path)));
+					 errmsg("could not create file \"%s\": %m", path.str)));
 		}
 	}
-
-	pfree(path);
 
 	_fdvec_resize(reln, forknum, 1);
 	mdfd = &reln->md_seg_fds[forknum][0];
@@ -335,7 +333,7 @@ do_truncate(const char *path)
 static void
 mdunlinkfork(RelFileLocatorBackend rlocator, ForkNumber forknum, bool isRedo)
 {
-	char	   *path;
+	RelPathStr	path;
 	int			ret;
 	int			save_errno;
 
@@ -351,7 +349,7 @@ mdunlinkfork(RelFileLocatorBackend rlocator, ForkNumber forknum, bool isRedo)
 		if (!RelFileLocatorBackendIsTemp(rlocator))
 		{
 			/* Prevent other backends' fds from holding on to the disk space */
-			ret = do_truncate(path);
+			ret = do_truncate(path.str);
 
 			/* Forget any pending sync requests for the first segment */
 			save_errno = errno;
@@ -364,13 +362,13 @@ mdunlinkfork(RelFileLocatorBackend rlocator, ForkNumber forknum, bool isRedo)
 		/* Next unlink the file, unless it was already found to be missing */
 		if (ret >= 0 || errno != ENOENT)
 		{
-			ret = unlink(path);
+			ret = unlink(path.str);
 			if (ret < 0 && errno != ENOENT)
 			{
 				save_errno = errno;
 				ereport(WARNING,
 						(errcode_for_file_access(),
-						 errmsg("could not remove file \"%s\": %m", path)));
+						 errmsg("could not remove file \"%s\": %m", path.str)));
 				errno = save_errno;
 			}
 		}
@@ -378,7 +376,7 @@ mdunlinkfork(RelFileLocatorBackend rlocator, ForkNumber forknum, bool isRedo)
 	else
 	{
 		/* Prevent other backends' fds from holding on to the disk space */
-		ret = do_truncate(path);
+		ret = do_truncate(path.str);
 
 		/* Register request to unlink first segment later */
 		save_errno = errno;
@@ -400,12 +398,12 @@ mdunlinkfork(RelFileLocatorBackend rlocator, ForkNumber forknum, bool isRedo)
 	 */
 	if (ret >= 0 || errno != ENOENT)
 	{
-		char	   *segpath = (char *) palloc(strlen(path) + 12);
+		char	   *segpath = (char *) palloc(strlen(path.str) + 12);
 		BlockNumber segno;
 
 		for (segno = 1;; segno++)
 		{
-			sprintf(segpath, "%s.%u", path, segno);
+			sprintf(segpath, "%s.%u", path.str, segno);
 
 			if (!RelFileLocatorBackendIsTemp(rlocator))
 			{
@@ -435,8 +433,6 @@ mdunlinkfork(RelFileLocatorBackend rlocator, ForkNumber forknum, bool isRedo)
 		}
 		pfree(segpath);
 	}
-
-	pfree(path);
 }
 
 /*
@@ -475,7 +471,7 @@ mdextend(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 		ereport(ERROR,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 				 errmsg("cannot extend file \"%s\" beyond %u blocks",
-						relpath(reln->smgr_rlocator, forknum),
+						relpath(reln->smgr_rlocator, forknum).str,
 						InvalidBlockNumber)));
 
 	v = _mdfd_getseg(reln, forknum, blocknum, skipFsync, EXTENSION_CREATE);
@@ -537,7 +533,7 @@ mdzeroextend(SMgrRelation reln, ForkNumber forknum,
 		ereport(ERROR,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 				 errmsg("cannot extend file \"%s\" beyond %u blocks",
-						relpath(reln->smgr_rlocator, forknum),
+						relpath(reln->smgr_rlocator, forknum).str,
 						InvalidBlockNumber)));
 
 	while (remblocks > 0)
@@ -629,7 +625,7 @@ static MdfdVec *
 mdopenfork(SMgrRelation reln, ForkNumber forknum, int behavior)
 {
 	MdfdVec    *mdfd;
-	char	   *path;
+	RelPathStr	path;
 	File		fd;
 
 	/* No work if already open */
@@ -638,22 +634,17 @@ mdopenfork(SMgrRelation reln, ForkNumber forknum, int behavior)
 
 	path = relpath(reln->smgr_rlocator, forknum);
 
-	fd = PathNameOpenFile(path, _mdfd_open_flags());
+	fd = PathNameOpenFile(path.str, _mdfd_open_flags());
 
 	if (fd < 0)
 	{
 		if ((behavior & EXTENSION_RETURN_NULL) &&
 			FILE_POSSIBLY_DELETED(errno))
-		{
-			pfree(path);
 			return NULL;
-		}
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("could not open file \"%s\": %m", path)));
+				 errmsg("could not open file \"%s\": %m", path.str)));
 	}
-
-	pfree(path);
 
 	_fdvec_resize(reln, forknum, 1);
 	mdfd = &reln->md_seg_fds[forknum][0];
@@ -1176,7 +1167,7 @@ mdtruncate(SMgrRelation reln, ForkNumber forknum,
 			return;
 		ereport(ERROR,
 				(errmsg("could not truncate file \"%s\" to %u blocks: it's only %u blocks now",
-						relpath(reln->smgr_rlocator, forknum),
+						relpath(reln->smgr_rlocator, forknum).str,
 						nblocks, curnblk)));
 	}
 	if (nblocks == curnblk)
@@ -1540,18 +1531,15 @@ _fdvec_resize(SMgrRelation reln,
 static char *
 _mdfd_segpath(SMgrRelation reln, ForkNumber forknum, BlockNumber segno)
 {
-	char	   *path,
-			   *fullpath;
+	RelPathStr	path;
+	char	   *fullpath;
 
 	path = relpath(reln->smgr_rlocator, forknum);
 
 	if (segno > 0)
-	{
-		fullpath = psprintf("%s.%u", path, segno);
-		pfree(path);
-	}
+		fullpath = psprintf("%s.%u", path.str, segno);
 	else
-		fullpath = path;
+		fullpath = pstrdup(path.str);
 
 	return fullpath;
 }
@@ -1811,12 +1799,11 @@ mdsyncfiletag(const FileTag *ftag, char *path)
 int
 mdunlinkfiletag(const FileTag *ftag, char *path)
 {
-	char	   *p;
+	RelPathStr	p;
 
 	/* Compute the path. */
 	p = relpathperm(ftag->rlocator, MAIN_FORKNUM);
-	strlcpy(path, p, MAXPGPATH);
-	pfree(p);
+	strlcpy(path, p.str, MAXPGPATH);
 
 	/* Try to unlink the file. */
 	return unlink(path);

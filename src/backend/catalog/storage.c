@@ -524,14 +524,14 @@ RelationCopyStorage(SMgrRelation src, SMgrRelation dst,
 			 * (errcontext callbacks shouldn't be risking any such thing, but
 			 * people have been known to forget that rule.)
 			 */
-			char	   *relpath = relpathbackend(src->smgr_rlocator.locator,
+			RelPathStr	relpath = relpathbackend(src->smgr_rlocator.locator,
 												 src->smgr_rlocator.backend,
 												 forkNum);
 
 			ereport(ERROR,
 					(errcode(ERRCODE_DATA_CORRUPTED),
 					 errmsg("invalid page in block %u of relation %s",
-							blkno, relpath)));
+							blkno, relpath.str)));
 		}
 
 		/*

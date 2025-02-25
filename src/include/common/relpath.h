@@ -77,13 +77,61 @@ extern PGDLLIMPORT const char *const forkNames[];
 extern ForkNumber forkname_to_number(const char *forkName);
 extern int	forkname_chars(const char *str, ForkNumber *fork);
 
+
+/*
+ * Unfortunately, there's no easy way to derive PROCNUMBER_CHARS from
+ * MAX_BACKENDS. MAX_BACKENDS is 2^18-1. Crosschecked in test_relpath().
+ */
+#define PROCNUMBER_CHARS	6
+
+/*
+ * The longest possible relation path lengths is from the following format:
+ * sprintf(rp.path, "%s/%u/%s/%u/t%d_%u",
+ *         PG_TBLSPC_DIR, spcOid,
+ *         TABLESPACE_VERSION_DIRECTORY,
+ *         dbOid, procNumber, relNumber);
+ *
+ * Note this does *not* include the trailing null-byte, to make it easier to
+ * combine it with other lengths.
+ */
+#define REL_PATH_STR_MAXLEN \
+	( \
+		sizeof(PG_TBLSPC_DIR) - 1 \
+		+ sizeof((char)'/') \
+		+ OIDCHARS /* spcOid */ \
+		+ sizeof((char)'/') \
+		+ sizeof(TABLESPACE_VERSION_DIRECTORY) - 1 \
+		+ sizeof((char)'/') \
+		+ OIDCHARS /* dbOid */ \
+		+ sizeof((char)'/') \
+		+ sizeof((char)'t') /* temporary table indicator */ \
+		+ PROCNUMBER_CHARS /* procNumber */ \
+		+ sizeof((char)'_') \
+		+ OIDCHARS /* relNumber */ \
+		+ sizeof((char)'_') \
+		+ FORKNAMECHARS /* forkNames[forkNumber] */ \
+	)
+
+/*
+ * String of the exact length required to represent a relation path. We return
+ * this struct, instead of char[REL_PATH_STR_MAXLEN + 1], as the pointer would
+ * decay to a plain char * too easily, possibly preventing the compiler from
+ * detecting invalid references to the on-stack return value of
+ * GetRelationPath().
+ */
+typedef struct RelPathStr
+{
+	char		str[REL_PATH_STR_MAXLEN + 1];
+} RelPathStr;
+
+
 /*
  * Stuff for computing filesystem pathnames for relations.
  */
 extern char *GetDatabasePath(Oid dbOid, Oid spcOid);
 
-extern char *GetRelationPath(Oid dbOid, Oid spcOid, RelFileNumber relNumber,
-							 int procNumber, ForkNumber forkNumber);
+extern RelPathStr GetRelationPath(Oid dbOid, Oid spcOid, RelFileNumber relNumber,
+								  int procNumber, ForkNumber forkNumber);
 
 /*
  * Wrapper macros for GetRelationPath.  Beware of multiple

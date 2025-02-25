@@ -2329,7 +2329,7 @@ ReorderBufferProcessTXN(ReorderBuffer *rb, ReorderBufferTXN *txn,
 					else if (reloid == InvalidOid)
 						elog(ERROR, "could not map filenumber \"%s\" to relation OID",
 							 relpathperm(change->data.tp.rlocator,
-										 MAIN_FORKNUM));
+										 MAIN_FORKNUM).str);
 
 					relation = RelationIdGetRelation(reloid);
 
@@ -2337,7 +2337,7 @@ ReorderBufferProcessTXN(ReorderBuffer *rb, ReorderBufferTXN *txn,
 						elog(ERROR, "could not open relation with OID %u (for filenumber \"%s\")",
 							 reloid,
 							 relpathperm(change->data.tp.rlocator,
-										 MAIN_FORKNUM));
+										 MAIN_FORKNUM).str);
 
 					if (!RelationIsLogicallyLogged(relation))
 						goto change_done;

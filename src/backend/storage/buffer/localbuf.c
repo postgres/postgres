@@ -360,7 +360,7 @@ ExtendBufferedRelLocal(BufferManagerRelation bmr,
 		ereport(ERROR,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 				 errmsg("cannot extend relation %s beyond %u blocks",
-						relpath(bmr.smgr->smgr_rlocator, fork),
+						relpath(bmr.smgr->smgr_rlocator, fork).str,
 						MaxBlockNumber)));
 
 	for (uint32 i = 0; i < extend_by; i++)
@@ -510,7 +510,7 @@ DropRelationLocalBuffers(RelFileLocator rlocator, ForkNumber forkNum,
 					 bufHdr->tag.blockNum,
 					 relpathbackend(BufTagGetRelFileLocator(&bufHdr->tag),
 									MyProcNumber,
-									BufTagGetForkNum(&bufHdr->tag)),
+									BufTagGetForkNum(&bufHdr->tag)).str,
 					 LocalRefCount[i]);
 
 			/* Remove entry from hashtable */
@@ -555,7 +555,7 @@ DropRelationAllLocalBuffers(RelFileLocator rlocator)
 					 bufHdr->tag.blockNum,
 					 relpathbackend(BufTagGetRelFileLocator(&bufHdr->tag),
 									MyProcNumber,
-									BufTagGetForkNum(&bufHdr->tag)),
+									BufTagGetForkNum(&bufHdr->tag)).str,
 					 LocalRefCount[i]);
 			/* Remove entry from hashtable */
 			hresult = (LocalBufferLookupEnt *)

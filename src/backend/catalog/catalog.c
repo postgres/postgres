@@ -528,7 +528,7 @@ RelFileNumber
 GetNewRelFileNumber(Oid reltablespace, Relation pg_class, char relpersistence)
 {
 	RelFileLocatorBackend rlocator;
-	char	   *rpath;
+	RelPathStr	rpath;
 	bool		collides;
 	ProcNumber	procNumber;
 
@@ -580,7 +580,7 @@ GetNewRelFileNumber(Oid reltablespace, Relation pg_class, char relpersistence)
 		/* Check for existing file of same name */
 		rpath = relpath(rlocator, MAIN_FORKNUM);
 
-		if (access(rpath, F_OK) == 0)
+		if (access(rpath.str, F_OK) == 0)
 		{
 			/* definite collision */
 			collides = true;
@@ -596,8 +596,6 @@ GetNewRelFileNumber(Oid reltablespace, Relation pg_class, char relpersistence)
 			 */
 			collides = false;
 		}
-
-		pfree(rpath);
 	} while (collides);
 
 	return rlocator.locator.relNumber;

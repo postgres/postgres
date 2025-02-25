@@ -86,15 +86,14 @@ static void
 report_invalid_page(int elevel, RelFileLocator locator, ForkNumber forkno,
 					BlockNumber blkno, bool present)
 {
-	char	   *path = relpathperm(locator, forkno);
+	RelPathStr	path = relpathperm(locator, forkno);
 
 	if (present)
 		elog(elevel, "page %u of relation %s is uninitialized",
-			 blkno, path);
+			 blkno, path.str);
 	else
 		elog(elevel, "page %u of relation %s does not exist",
-			 blkno, path);
-	pfree(path);
+			 blkno, path.str);
 }
 
 /* Log a reference to an invalid page */
@@ -180,14 +179,9 @@ forget_invalid_pages(RelFileLocator locator, ForkNumber forkno,
 			hentry->key.forkno == forkno &&
 			hentry->key.blkno >= minblkno)
 		{
-			if (message_level_is_interesting(DEBUG2))
-			{
-				char	   *path = relpathperm(hentry->key.locator, forkno);
-
-				elog(DEBUG2, "page %u of relation %s has been dropped",
-					 hentry->key.blkno, path);
-				pfree(path);
-			}
+			elog(DEBUG2, "page %u of relation %s has been dropped",
+				 hentry->key.blkno,
+				 relpathperm(hentry->key.locator, forkno).str);
 
 			if (hash_search(invalid_page_tab,
 							&hentry->key,
@@ -213,14 +207,9 @@ forget_invalid_pages_db(Oid dbid)
 	{
 		if (hentry->key.locator.dbOid == dbid)
 		{
-			if (message_level_is_interesting(DEBUG2))
-			{
-				char	   *path = relpathperm(hentry->key.locator, hentry->key.forkno);
-
-				elog(DEBUG2, "page %u of relation %s has been dropped",
-					 hentry->key.blkno, path);
-				pfree(path);
-			}
+			elog(DEBUG2, "page %u of relation %s has been dropped",
+				 hentry->key.blkno,
+				 relpathperm(hentry->key.locator, hentry->key.forkno).str);
 
 			if (hash_search(invalid_page_tab,
 							&hentry->key,

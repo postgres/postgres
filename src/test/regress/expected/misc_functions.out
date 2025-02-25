@@ -903,3 +903,14 @@ SELECT gist_stratnum_common(3);
                    18
 (1 row)
 
+-- relpath tests
+CREATE FUNCTION test_relpath()
+    RETURNS void
+    AS :'regresslib'
+    LANGUAGE C;
+SELECT test_relpath();
+ test_relpath 
+--------------
+ 
+(1 row)
+

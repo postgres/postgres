@@ -1541,7 +1541,7 @@ WaitReadBuffers(ReadBuffersOperation *operation)
 							(errcode(ERRCODE_DATA_CORRUPTED),
 							 errmsg("invalid page in block %u of relation %s; zeroing out page",
 									io_first_block + j,
-									relpath(operation->smgr->smgr_rlocator, forknum))));
+									relpath(operation->smgr->smgr_rlocator, forknum).str)));
 					memset(bufBlock, 0, BLCKSZ);
 				}
 				else
@@ -1549,7 +1549,7 @@ WaitReadBuffers(ReadBuffersOperation *operation)
 							(errcode(ERRCODE_DATA_CORRUPTED),
 							 errmsg("invalid page in block %u of relation %s",
 									io_first_block + j,
-									relpath(operation->smgr->smgr_rlocator, forknum))));
+									relpath(operation->smgr->smgr_rlocator, forknum).str)));
 			}
 
 			/* Terminate I/O and set BM_VALID. */
@@ -2284,7 +2284,7 @@ ExtendBufferedRelShared(BufferManagerRelation bmr,
 		ereport(ERROR,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 				 errmsg("cannot extend relation %s beyond %u blocks",
-						relpath(bmr.smgr->smgr_rlocator, fork),
+						relpath(bmr.smgr->smgr_rlocator, fork).str,
 						MaxBlockNumber)));
 
 	/*
@@ -2355,7 +2355,8 @@ ExtendBufferedRelShared(BufferManagerRelation bmr,
 			if (valid && !PageIsNew((Page) buf_block))
 				ereport(ERROR,
 						(errmsg("unexpected data beyond EOF in block %u of relation %s",
-								existing_hdr->tag.blockNum, relpath(bmr.smgr->smgr_rlocator, fork)),
+								existing_hdr->tag.blockNum,
+								relpath(bmr.smgr->smgr_rlocator, fork).str),
 						 errhint("This has been seen to occur with buggy kernels; consider updating your system.")));
 
 			/*
@@ -3663,7 +3664,6 @@ DebugPrintBufferRefcount(Buffer buffer)
 {
 	BufferDesc *buf;
 	int32		loccount;
-	char	   *path;
 	char	   *result;
 	ProcNumber	backend;
 	uint32		buf_state;
@@ -3683,15 +3683,14 @@ DebugPrintBufferRefcount(Buffer buffer)
 	}
 
 	/* theoretically we should lock the bufhdr here */
-	path = relpathbackend(BufTagGetRelFileLocator(&buf->tag), backend,
-						  BufTagGetForkNum(&buf->tag));
 	buf_state = pg_atomic_read_u32(&buf->state);
 
 	result = psprintf("[%03d] (rel=%s, blockNum=%u, flags=0x%x, refcount=%u %d)",
-					  buffer, path,
+					  buffer,
+					  relpathbackend(BufTagGetRelFileLocator(&buf->tag), backend,
+									 BufTagGetForkNum(&buf->tag)).str,
 					  buf->tag.blockNum, buf_state & BUF_FLAG_MASK,
 					  BUF_STATE_GET_REFCOUNT(buf_state), loccount);
-	pfree(path);
 	return result;
 }
 
@@ -5611,16 +5610,13 @@ AbortBufferIO(Buffer buffer)
 		if (buf_state & BM_IO_ERROR)
 		{
 			/* Buffer is pinned, so we can read tag without spinlock */
-			char	   *path;
-
-			path = relpathperm(BufTagGetRelFileLocator(&buf_hdr->tag),
-							   BufTagGetForkNum(&buf_hdr->tag));
 			ereport(WARNING,
 					(errcode(ERRCODE_IO_ERROR),
 					 errmsg("could not write block %u of %s",
-							buf_hdr->tag.blockNum, path),
+							buf_hdr->tag.blockNum,
+							relpathperm(BufTagGetRelFileLocator(&buf_hdr->tag),
+										BufTagGetForkNum(&buf_hdr->tag)).str),
 					 errdetail("Multiple failures --- write error might be permanent.")));
-			pfree(path);
 		}
 	}
 
@@ -5637,14 +5633,10 @@ shared_buffer_write_error_callback(void *arg)
 
 	/* Buffer is pinned, so we can read the tag without locking the spinlock */
 	if (bufHdr != NULL)
-	{
-		char	   *path = relpathperm(BufTagGetRelFileLocator(&bufHdr->tag),
-									   BufTagGetForkNum(&bufHdr->tag));
-
 		errcontext("writing block %u of relation %s",
-				   bufHdr->tag.blockNum, path);
-		pfree(path);
-	}
+				   bufHdr->tag.blockNum,
+				   relpathperm(BufTagGetRelFileLocator(&bufHdr->tag),
+							   BufTagGetForkNum(&bufHdr->tag)).str);
 }
 
 /*
@@ -5656,15 +5648,11 @@ local_buffer_write_error_callback(void *arg)
 	BufferDesc *bufHdr = (BufferDesc *) arg;
 
 	if (bufHdr != NULL)
-	{
-		char	   *path = relpathbackend(BufTagGetRelFileLocator(&bufHdr->tag),
-										  MyProcNumber,
-										  BufTagGetForkNum(&bufHdr->tag));
-
 		errcontext("writing block %u of relation %s",
-				   bufHdr->tag.blockNum, path);
-		pfree(path);
-	}
+				   bufHdr->tag.blockNum,
+				   relpathbackend(BufTagGetRelFileLocator(&bufHdr->tag),
+								  MyProcNumber,
+								  BufTagGetForkNum(&bufHdr->tag)).str);
 }
 
 /*
