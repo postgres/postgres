@@ -741,7 +741,7 @@ load_file_keyring_provider_options(char *keyring_options)
 		return NULL;
 	}
 
-	if (strlen(file_keyring->file_name) == 0)
+	if (file_keyring->file_name == NULL || file_keyring->file_name[0] == '\0')
 	{
 		ereport(WARNING,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -765,16 +765,16 @@ load_vaultV2_keyring_provider_options(char *keyring_options)
 		return NULL;
 	}
 
-	if (strlen(vaultV2_keyring->vault_token) == 0 ||
-		strlen(vaultV2_keyring->vault_url) == 0 ||
-		strlen(vaultV2_keyring->vault_mount_path) == 0)
+	if (vaultV2_keyring->vault_token == NULL || vaultV2_keyring->vault_token[0] == '\0' ||
+		vaultV2_keyring->vault_url == NULL || vaultV2_keyring->vault_url[0] == '\0' ||
+		vaultV2_keyring->vault_mount_path == NULL || vaultV2_keyring->vault_mount_path[0] == '\0')
 	{
 		ereport(WARNING,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("missing in the keyring options:%s%s%s",
-						*(vaultV2_keyring->vault_token) ? "" : " token",
-						*(vaultV2_keyring->vault_url) ? "" : " url",
-						*(vaultV2_keyring->vault_mount_path) ? "" : " mountPath")));
+						(vaultV2_keyring->vault_token != NULL && vaultV2_keyring->vault_token[0] != '\0') ? "" : " token",
+						(vaultV2_keyring->vault_url != NULL && vaultV2_keyring->vault_url[0] != '\0') ? "" : " url",
+						(vaultV2_keyring->vault_mount_path != NULL && vaultV2_keyring->vault_mount_path[0] != '\0') ? "" : " mountPath")));
 		return NULL;
 	}
 
@@ -802,10 +802,10 @@ load_kmip_keyring_provider_options(char *keyring_options)
 		ereport(WARNING,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("missing in the keyring options:%s%s%s%s",
-						*(kmip_keyring->kmip_host) ? "" : " host",
-						*(kmip_keyring->kmip_port) ? "" : " port",
-						*(kmip_keyring->kmip_ca_path) ? "" : " caPath",
-						*(kmip_keyring->kmip_cert_path) ? "" : " certPath")));
+						(kmip_keyring->kmip_host != NULL && kmip_keyring->kmip_host[0] != '\0') ? "" : " host",
+						(kmip_keyring->kmip_port != NULL && kmip_keyring->kmip_port[0] != '\0') ? "" : " port",
+						(kmip_keyring->kmip_ca_path != NULL && kmip_keyring->kmip_ca_path[0] != '\0') ? "" : " caPath",
+						(kmip_keyring->kmip_cert_path != NULL && kmip_keyring->kmip_cert_path[0] != '\0') ? "" : " certPath")));
 		return NULL;
 	}
 

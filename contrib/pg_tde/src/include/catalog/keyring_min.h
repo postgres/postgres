@@ -10,7 +10,6 @@ typedef unsigned int Oid;
 
 #define MAX_PROVIDER_NAME_LEN 128	/* pg_tde_key_provider's provider_name
 									 * size */
-#define MAX_VAULT_V2_KEY_LEN 128	/* From hashi corp docs */
 #define MAX_KEYRING_OPTION_LEN 1024
 typedef enum ProviderType
 {
@@ -75,25 +74,25 @@ typedef struct TDEKeyringRoutine
 typedef struct FileKeyring
 {
 	GenericKeyring keyring;		/* Must be the first field */
-	char		file_name[MAXPGPATH];
+	char	   *file_name;
 } FileKeyring;
 
 typedef struct VaultV2Keyring
 {
 	GenericKeyring keyring;		/* Must be the first field */
-	char		vault_token[MAX_VAULT_V2_KEY_LEN];
-	char		vault_url[MAXPGPATH];
-	char		vault_ca_path[MAXPGPATH];
-	char		vault_mount_path[MAXPGPATH];
+	char	   *vault_token;
+	char	   *vault_url;
+	char	   *vault_ca_path;
+	char	   *vault_mount_path;
 } VaultV2Keyring;
 
 typedef struct KmipKeyring
 {
 	GenericKeyring keyring;		/* Must be the first field */
-	char		kmip_host[MAXPGPATH];
-	char		kmip_port[32];
-	char		kmip_ca_path[MAXPGPATH];
-	char		kmip_cert_path[MAXPGPATH];
+	char	   *kmip_host;
+	char	   *kmip_port;
+	char	   *kmip_ca_path;
+	char	   *kmip_cert_path;
 } KmipKeyring;
 
 #endif

@@ -434,33 +434,33 @@ json_kring_assign_scalar(JsonKeyringState *parse, JsonKeyringField field, char *
 			break;
 
 		case JF_FILE_PATH:
-			strncpy(file->file_name, value, sizeof(file->file_name));
+			file->file_name = value;
 			break;
 
 		case JK_VAULT_TOKEN:
-			strncpy(vault->vault_token, value, sizeof(vault->vault_token));
+			vault->vault_token = value;
 			break;
 		case JK_VAULT_URL:
-			strncpy(vault->vault_url, value, sizeof(vault->vault_url));
+			vault->vault_url = value;
 			break;
 		case JK_VAULT_MOUNT_PATH:
-			strncpy(vault->vault_mount_path, value, sizeof(vault->vault_mount_path));
+			vault->vault_mount_path = value;
 			break;
 		case JK_VAULT_CA_PATH:
-			strncpy(vault->vault_ca_path, value, sizeof(vault->vault_ca_path));
+			vault->vault_ca_path = value;
 			break;
 
 		case JK_KMIP_HOST:
-			strncpy(kmip->kmip_host, value, sizeof(kmip->kmip_host));
+			kmip->kmip_host = value;
 			break;
 		case JK_KMIP_PORT:
-			strncpy(kmip->kmip_port, value, sizeof(kmip->kmip_port));
+			kmip->kmip_port = value;
 			break;
 		case JK_KMIP_CA_PATH:
-			strncpy(kmip->kmip_ca_path, value, sizeof(kmip->kmip_ca_path));
+			kmip->kmip_ca_path = value;
 			break;
 		case JK_KMIP_CERT_PATH:
-			strncpy(kmip->kmip_cert_path, value, sizeof(kmip->kmip_cert_path));
+			kmip->kmip_cert_path = value;
 			break;
 
 		default:
