@@ -205,6 +205,11 @@ main(int argc, char *argv[])
 	SetVariable(pset.vars, "PROMPT3", DEFAULT_PROMPT3);
 	SetVariableBool(pset.vars, "SHOW_ALL_RESULTS");
 
+	/* Initialize pipeline variables */
+	SetVariable(pset.vars, "PIPELINE_SYNC_COUNT", "0");
+	SetVariable(pset.vars, "PIPELINE_COMMAND_COUNT", "0");
+	SetVariable(pset.vars, "PIPELINE_RESULT_COUNT", "0");
+
 	parse_psql_options(argc, argv, &options);
 
 	/*

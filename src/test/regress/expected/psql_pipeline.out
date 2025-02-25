@@ -57,12 +57,24 @@ SELECT $1, $2 \bind 'val2' 'val3' \g
 
 -- Send multiple syncs
 \startpipeline
+\echo :PIPELINE_COMMAND_COUNT
+0
+\echo :PIPELINE_SYNC_COUNT
+0
+\echo :PIPELINE_RESULT_COUNT
+0
 SELECT $1 \bind 'val1' \g
 \syncpipeline
 \syncpipeline
 SELECT $1, $2 \bind 'val2' 'val3' \g
 \syncpipeline
 SELECT $1, $2 \bind 'val4' 'val5' \g
+\echo :PIPELINE_COMMAND_COUNT
+1
+\echo :PIPELINE_SYNC_COUNT
+3
+\echo :PIPELINE_RESULT_COUNT
+2
 \endpipeline
  ?column? 
 ----------
@@ -303,13 +315,21 @@ SELECT $1 \bind 2 \g
 SELECT $1 \bind 1 \g
 SELECT $1 \bind 2 \g
 SELECT $1 \bind 3 \g
+\echo :PIPELINE_SYNC_COUNT
+0
 \syncpipeline
+\echo :PIPELINE_SYNC_COUNT
+1
+\echo :PIPELINE_RESULT_COUNT
+3
 \getresults 1
  ?column? 
 ----------
  1
 (1 row)
 
+\echo :PIPELINE_RESULT_COUNT
+2
 SELECT $1 \bind 4 \g
 \getresults 3
  ?column? 
@@ -322,6 +342,8 @@ SELECT $1 \bind 4 \g
  3
 (1 row)
 
+\echo :PIPELINE_RESULT_COUNT
+0
 \endpipeline
  ?column? 
 ----------

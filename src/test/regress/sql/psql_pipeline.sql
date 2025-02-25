@@ -27,12 +27,18 @@ SELECT $1, $2 \bind 'val2' 'val3' \g
 
 -- Send multiple syncs
 \startpipeline
+\echo :PIPELINE_COMMAND_COUNT
+\echo :PIPELINE_SYNC_COUNT
+\echo :PIPELINE_RESULT_COUNT
 SELECT $1 \bind 'val1' \g
 \syncpipeline
 \syncpipeline
 SELECT $1, $2 \bind 'val2' 'val3' \g
 \syncpipeline
 SELECT $1, $2 \bind 'val4' 'val5' \g
+\echo :PIPELINE_COMMAND_COUNT
+\echo :PIPELINE_SYNC_COUNT
+\echo :PIPELINE_RESULT_COUNT
 \endpipeline
 
 -- \startpipeline should not have any effect if already in a pipeline.
@@ -174,10 +180,15 @@ SELECT $1 \bind 2 \g
 SELECT $1 \bind 1 \g
 SELECT $1 \bind 2 \g
 SELECT $1 \bind 3 \g
+\echo :PIPELINE_SYNC_COUNT
 \syncpipeline
+\echo :PIPELINE_SYNC_COUNT
+\echo :PIPELINE_RESULT_COUNT
 \getresults 1
+\echo :PIPELINE_RESULT_COUNT
 SELECT $1 \bind 4 \g
 \getresults 3
+\echo :PIPELINE_RESULT_COUNT
 \endpipeline
 
 -- \syncpipeline count as one command to fetch for \getresults.
