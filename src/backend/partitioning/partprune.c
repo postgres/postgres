@@ -687,7 +687,14 @@ make_partitionedrel_pruneinfo(PlannerInfo *root, RelOptInfo *parentrel,
 			if (subplanidx >= 0)
 			{
 				present_parts = bms_add_member(present_parts, i);
-				leafpart_rti_map[i] = (int) partrel->relid;
+
+				/*
+				 * Non-leaf partitions may appear here when they use an
+				 * unflattened Append or MergeAppend. These should not be
+				 * included in prunableRelids.
+				 */
+				if (partrel->nparts == -1)
+					leafpart_rti_map[i] = (int) partrel->relid;
 
 				/* Record finding this subplan  */
 				subplansfound = bms_add_member(subplansfound, subplanidx);

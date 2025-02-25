@@ -2589,9 +2589,9 @@ ExecFindMatchingSubPlans(PartitionPruneState *prunestate,
  * find_matching_subplans_recurse
  *		Recursive worker function for ExecFindMatchingSubPlans
  *
- * Adds valid (non-prunable) subplan IDs to *validsubplans and the RT indexes
- * of their corresponding leaf partitions to *validsubplan_rtis if
- * it's non-NULL.
+ * Adds valid (non-prunable) subplan IDs to *validsubplans. If
+ * *validsubplan_rtis is non-NULL, it also adds the RT indexes of their
+ * corresponding partitions, but only if they are leaf partitions.
  */
 static void
 find_matching_subplans_recurse(PartitionPruningData *prunedata,
@@ -2628,7 +2628,12 @@ find_matching_subplans_recurse(PartitionPruningData *prunedata,
 		{
 			*validsubplans = bms_add_member(*validsubplans,
 											pprune->subplan_map[i]);
-			if (validsubplan_rtis)
+
+			/*
+			 * Only report leaf partitions. Non-leaf partitions may appear
+			 * here when they use an unflattened Append or MergeAppend.
+			 */
+			if (validsubplan_rtis && pprune->leafpart_rti_map[i])
 				*validsubplan_rtis = bms_add_member(*validsubplan_rtis,
 													pprune->leafpart_rti_map[i]);
 		}

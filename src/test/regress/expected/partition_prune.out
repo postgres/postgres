@@ -4590,5 +4590,53 @@ table part_abc_view;
  2 | c | t
 (1 row)
 
+-- A case with nested MergeAppend with its own PartitionPruneInfo.
+create index on part_abc (a);
+alter table part_abc add d int;
+create table part_abc_3 partition of part_abc for values in (3, 4) partition by range (d);
+create table part_abc_3_1 partition of part_abc_3 for values from (minvalue) to (1);
+create table part_abc_3_2 partition of part_abc_3 for values from (1) to (100);
+create table part_abc_3_3 partition of part_abc_3 for values from (100) to (maxvalue);
+explain (costs off)
+select min(a) over (partition by a order by a) from part_abc where a >= stable_one() + 1 and d <= stable_one()
+union all
+select min(a) over (partition by a order by a) from part_abc where a >= stable_one() + 1 and d >= stable_one();
+                                          QUERY PLAN                                          
+----------------------------------------------------------------------------------------------
+ Append
+   ->  Subquery Scan on "*SELECT* 1_1"
+         ->  WindowAgg
+               ->  Append
+                     Subplans Removed: 1
+                     ->  Index Scan using part_abc_2_a_idx on part_abc_2 part_abc_1
+                           Index Cond: (a >= (stable_one() + 1))
+                           Filter: (d <= stable_one())
+                     ->  Merge Append
+                           Sort Key: part_abc_3.a
+                           Subplans Removed: 1
+                           ->  Index Scan using part_abc_3_1_a_idx on part_abc_3_1 part_abc_3
+                                 Index Cond: (a >= (stable_one() + 1))
+                                 Filter: (d <= stable_one())
+                           ->  Index Scan using part_abc_3_2_a_idx on part_abc_3_2 part_abc_4
+                                 Index Cond: (a >= (stable_one() + 1))
+                                 Filter: (d <= stable_one())
+   ->  Subquery Scan on "*SELECT* 2"
+         ->  WindowAgg
+               ->  Append
+                     Subplans Removed: 1
+                     ->  Index Scan using part_abc_2_a_idx on part_abc_2 part_abc_6
+                           Index Cond: (a >= (stable_one() + 1))
+                           Filter: (d >= stable_one())
+                     ->  Merge Append
+                           Sort Key: a
+                           Subplans Removed: 1
+                           ->  Index Scan using part_abc_3_2_a_idx on part_abc_3_2 part_abc_8
+                                 Index Cond: (a >= (stable_one() + 1))
+                                 Filter: (d >= stable_one())
+                           ->  Index Scan using part_abc_3_3_a_idx on part_abc_3_3 part_abc_9
+                                 Index Cond: (a >= (stable_one() + 1))
+                                 Filter: (d >= stable_one())
+(33 rows)
+
 drop view part_abc_view;
 drop table part_abc;
