@@ -166,6 +166,19 @@ PostgreSQL documentation
     </varlistentry>
 
     <varlistentry>
+     <term><option>-T</option></term>
+     <term><option>--enable-two-phase</option></term>
+     <listitem>
+      <para>
+       Enables <link linkend="sql-createsubscription-params-with-two-phase"><literal>two_phase</literal></link>
+       commit for the subscription. When multiple databases are specified, this
+       option applies uniformly to all subscriptions created on those databases.
+       The default is <literal>false</literal>.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
      <term><option>-U <replaceable class="parameter">username</replaceable></option></term>
      <term><option>--subscriber-username=<replaceable class="parameter">username</replaceable></option></term>
      <listitem>
@@ -300,7 +313,9 @@ PostgreSQL documentation
     greater than or equal to the number of specified databases.  The target
     server must have <xref linkend="guc-max-worker-processes"/> configured to a
     value greater than the number of specified databases.  The target server
-    must accept local connections.
+    must accept local connections. If you are planning to use the
+    <option>--enable-two-phase</option> switch then you will also need to set
+    the <xref linkend="guc-max-prepared-transactions"/> appropriately.
    </para>
 
    <para>
@@ -360,6 +375,7 @@ PostgreSQL documentation
    </para>
 
    <para>
+    Unless the <option>--enable-two-phase</option> switch is specified,
     <application>pg_createsubscriber</application> sets up logical
     replication with two-phase commit disabled.  This means that any
     prepared transactions will be replicated at the time

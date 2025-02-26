@@ -373,6 +373,7 @@ command_ok(
 
 # Run pg_createsubscriber on node S.  --verbose is used twice
 # to show more information.
+# In passing, also test the --enable-two-phase option
 command_ok(
 	[
 		'pg_createsubscriber',
@@ -388,6 +389,7 @@ command_ok(
 		'--replication-slot' => 'replslot2',
 		'--database' => $db1,
 		'--database' => $db2,
+		'--enable-two-phase'
 	],
 	'run pg_createsubscriber on node S');
 
@@ -405,6 +407,15 @@ $node_p->safe_psql($db2, "INSERT INTO tbl2 VALUES('row 1')");
 
 # Start subscriber
 $node_s->start;
+
+# Verify that all subtwophase states are pending or enabled,
+# e.g. there are no subscriptions where subtwophase is disabled ('d')
+is( $node_s->safe_psql(
+		'postgres',
+		"SELECT count(1) = 0 FROM pg_subscription WHERE subtwophasestate = 'd'"
+	),
+	't',
+	'subscriptions are created with the two-phase option enabled');
 
 # Confirm the pre-existing subscription has been removed
 $result = $node_s->safe_psql(
