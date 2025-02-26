@@ -184,6 +184,11 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
   </para>
 
   <para>
+   The parameter <xref linkend="guc-track-wal-io-timing"/> enables monitoring
+   of WAL read, write and fsync times.
+  </para>
+
+  <para>
    Normally these parameters are set in <filename>postgresql.conf</filename> so
    that they apply to all server processes, but it is possible to turn
    them on or off in individual sessions using the <xref
@@ -2723,7 +2728,11 @@ description | Waiting for a newly initialized WAL file to reach durable storage
        </para>
        <para>
         Time spent in read operations in milliseconds (if
-        <xref linkend="guc-track-io-timing"/> is enabled, otherwise zero)
+        <xref linkend="guc-track-io-timing"/> is enabled and
+        <varname>object</varname> is not <literal>wal</literal>,
+        or if <xref linkend="guc-track-wal-io-timing"/> is enabled
+        and <varname>object</varname> is <literal>wal</literal>,
+        otherwise zero)
        </para>
       </entry>
      </row>
@@ -2757,7 +2766,11 @@ description | Waiting for a newly initialized WAL file to reach durable storage
        </para>
        <para>
         Time spent in write operations in milliseconds (if
-        <xref linkend="guc-track-io-timing"/> is enabled, otherwise zero)
+        <xref linkend="guc-track-io-timing"/> is enabled and
+        <varname>object</varname> is not <literal>wal</literal>,
+        or if <xref linkend="guc-track-wal-io-timing"/> is enabled
+        and <varname>object</varname> is <literal>wal</literal>,
+        otherwise zero)
        </para>
       </entry>
      </row>
@@ -2816,8 +2829,12 @@ description | Waiting for a newly initialized WAL file to reach durable storage
         <structfield>extend_time</structfield> <type>double precision</type>
        </para>
        <para>
-        Time spent in extend operations in milliseconds (if
-        <xref linkend="guc-track-io-timing"/> is enabled, otherwise zero)
+        Time spent in extend operations in milliseconds. (if
+        <xref linkend="guc-track-io-timing"/> is enabled and
+        <varname>object</varname> is not <literal>wal</literal>,
+        or if <xref linkend="guc-track-wal-io-timing"/> is enabled
+        and <varname>object</varname> is <literal>wal</literal>,
+        otherwise zero)
        </para>
       </entry>
      </row>
@@ -2887,7 +2904,11 @@ description | Waiting for a newly initialized WAL file to reach durable storage
        </para>
        <para>
         Time spent in fsync operations in milliseconds (if
-        <xref linkend="guc-track-io-timing"/> is enabled, otherwise zero)
+        <xref linkend="guc-track-io-timing"/> is enabled and
+        <varname>object</varname> is not <literal>wal</literal>,
+        or if <xref linkend="guc-track-wal-io-timing"/> is enabled
+        and <varname>object</varname> is <literal>wal</literal>,
+        otherwise zero)
        </para>
       </entry>
      </row>

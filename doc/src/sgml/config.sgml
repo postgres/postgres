@@ -8378,15 +8378,43 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         displayed in <link linkend="monitoring-pg-stat-database-view">
         <structname>pg_stat_database</structname></link>,
         <link linkend="monitoring-pg-stat-io-view">
-        <structname>pg_stat_io</structname></link>, in the output of the
+        <structname>pg_stat_io</structname></link> (if <varname>object</varname>
+        is not <literal>wal</literal>), in the output of the
         <link linkend="pg-stat-get-backend-io">
-        <function>pg_stat_get_backend_io()</function></link> function, in the
+        <function>pg_stat_get_backend_io()</function></link> function (if
+        <varname>object</varname> is not <literal>wal</literal>), in the
         output of <xref linkend="sql-explain"/> when the <literal>BUFFERS</literal>
         option is used, in the output of <xref linkend="sql-vacuum"/> when
         the <literal>VERBOSE</literal> option is used, by autovacuum
         for auto-vacuums and auto-analyzes, when <xref
         linkend="guc-log-autovacuum-min-duration"/> is set and by
         <xref linkend="pgstatstatements"/>.
+        Only superusers and users with the appropriate <literal>SET</literal>
+        privilege can change this setting.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-track-wal-io-timing" xreflabel="track_wal_io_timing">
+      <term><varname>track_wal_io_timing</varname> (<type>boolean</type>)
+      <indexterm>
+       <primary><varname>track_wal_io_timing</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Enables timing of WAL I/O calls. This parameter is off by default,
+        as it will repeatedly query the operating system for the current time,
+        which may cause significant overhead on some platforms.
+        You can use the <application>pg_test_timing</application> tool to
+        measure the overhead of timing on your system.
+        I/O timing information is displayed in
+        <link linkend="monitoring-pg-stat-io-view">
+        <structname>pg_stat_io</structname></link> for the
+        <varname>object</varname> <literal>wal</literal> and in the output of
+        the <link linkend="pg-stat-get-backend-io">
+        <function>pg_stat_get_backend_io()</function></link> function for the
+        <varname>object</varname> <literal>wal</literal>.
         Only superusers and users with the appropriate <literal>SET</literal>
         privilege can change this setting.
        </para>

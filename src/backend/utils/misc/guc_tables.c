@@ -1501,6 +1501,15 @@ struct config_bool ConfigureNamesBool[] =
 		false,
 		NULL, NULL, NULL
 	},
+	{
+		{"track_wal_io_timing", PGC_SUSET, STATS_CUMULATIVE,
+			gettext_noop("Collects timing statistics for WAL I/O activity."),
+			NULL
+		},
+		&track_wal_io_timing,
+		false,
+		NULL, NULL, NULL
+	},
 
 	{
 		{"update_process_title", PGC_SUSET, PROCESS_TITLE,

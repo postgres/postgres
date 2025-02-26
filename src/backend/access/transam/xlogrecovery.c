@@ -3401,7 +3401,7 @@ retry:
 	readOff = targetPageOff;
 
 	/* Measure I/O timing when reading segment */
-	io_start = pgstat_prepare_io_time();
+	io_start = pgstat_prepare_io_time(track_wal_io_timing);
 
 	pgstat_report_wait_start(WAIT_EVENT_WAL_READ);
 	r = pg_pread(readFile, readBuf, XLOG_BLCKSZ, (off_t) readOff);

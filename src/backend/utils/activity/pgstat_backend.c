@@ -24,6 +24,7 @@
 
 #include "postgres.h"
 
+#include "access/xlog.h"
 #include "storage/bufmgr.h"
 #include "utils/memutils.h"
 #include "utils/pgstat_internal.h"
@@ -43,7 +44,7 @@ void
 pgstat_count_backend_io_op_time(IOObject io_object, IOContext io_context,
 								IOOp io_op, instr_time io_time)
 {
-	Assert(track_io_timing);
+	Assert(track_io_timing || track_wal_io_timing);
 
 	if (!pgstat_tracks_backend_bktype(MyBackendType))
 		return;
