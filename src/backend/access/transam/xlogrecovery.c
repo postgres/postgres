@@ -849,7 +849,9 @@ InitWalRecovery(ControlFileData *ControlFile, bool *wasShutdown_ptr,
 		ereport(FATAL,
 				(errmsg("requested timeline %u is not a child of this server's history",
 						recoveryTargetTLI),
-				 errdetail("Latest checkpoint is at %X/%X on timeline %u, but in the history of the requested timeline, the server forked off from that timeline at %X/%X.",
+		/* translator: %s is a backup_label file or a pg_control file */
+				 errdetail("Latest checkpoint in file \"%s\" is at %X/%X on timeline %u, but in the history of the requested timeline, the server forked off from that timeline at %X/%X.",
+						   haveBackupLabel ? "backup_label" : "pg_control",
 						   LSN_FORMAT_ARGS(CheckPointLoc),
 						   CheckPointTLI,
 						   LSN_FORMAT_ARGS(switchpoint))));
