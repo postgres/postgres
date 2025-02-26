@@ -51,7 +51,7 @@ command_fails(
 		'-s', $new->host,
 		'-p', $old->port,
 		'-P', $new->port,
-		'-set-char-signedness', 'signed',
+		'--set-char-signedness', 'signed',
 		$mode
 	],
 	'--set-char-signedness option cannot be used for upgrading from v18 or later'
