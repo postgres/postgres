@@ -350,6 +350,7 @@ PLy_procedure_compile(PLyProcedure *proc, const char *src)
 {
 	PyObject   *crv = NULL;
 	char	   *msrc;
+	PyObject   *code0;
 
 	proc->globals = PyDict_Copy(PLy_interp_globals);
 
@@ -368,7 +369,9 @@ PLy_procedure_compile(PLyProcedure *proc, const char *src)
 	msrc = PLy_procedure_munge_source(proc->pyname, src);
 	/* Save the mangled source for later inclusion in tracebacks */
 	proc->src = MemoryContextStrdup(proc->mcxt, msrc);
-	crv = PyRun_String(msrc, Py_file_input, proc->globals, NULL);
+	code0 = Py_CompileString(msrc, "<string>", Py_file_input);
+	if (code0)
+		crv = PyEval_EvalCode(code0, proc->globals, NULL);
 	pfree(msrc);
 
 	if (crv != NULL)
