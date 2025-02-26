@@ -10415,10 +10415,8 @@ dumpComment(Archive *fout, const char *type,
  * param_name, param_type
  */
 static const char *att_stats_arginfo[][2] = {
-	{"relation", "regclass"},
 	{"attname", "name"},
 	{"inherited", "boolean"},
-	{"version", "integer"},
 	{"null_frac", "float4"},
 	{"avg_width", "integer"},
 	{"n_distinct", "float4"},
@@ -10433,60 +10431,6 @@ static const char *att_stats_arginfo[][2] = {
 	{"range_empty_frac", "float4"},
 	{"range_bounds_histogram", "text"},
 };
-
-/*
- * getAttStatsExportQuery --
- *
- * Generate a query that will fetch all attribute (e.g. pg_statistic)
- * stats for a given relation.
- */
-static void
-getAttStatsExportQuery(PQExpBuffer query, Archive *fout,
-					   const char *schemaname, const char *relname)
-{
-	resetPQExpBuffer(query);
-	appendPQExpBuffer(query,
-					  "SELECT c.oid::regclass AS relation, "
-					  "s.attname,"
-					  "s.inherited,"
-					  "'%u'::integer AS version, "
-					  "s.null_frac,"
-					  "s.avg_width,"
-					  "s.n_distinct,"
-					  "s.most_common_vals,"
-					  "s.most_common_freqs,"
-					  "s.histogram_bounds,"
-					  "s.correlation,"
-					  "s.most_common_elems,"
-					  "s.most_common_elem_freqs,"
-					  "s.elem_count_histogram,",
-					  fout->remoteVersion);
-
-	if (fout->remoteVersion >= 170000)
-		appendPQExpBufferStr(query,
-							 "s.range_length_histogram,"
-							 "s.range_empty_frac,"
-							 "s.range_bounds_histogram ");
-	else
-		appendPQExpBufferStr(query,
-							 "NULL AS range_length_histogram,"
-							 "NULL AS range_empty_frac,"
-							 "NULL AS range_bounds_histogram ");
-
-	appendPQExpBufferStr(query,
-						 "FROM pg_stats s "
-						 "JOIN pg_namespace n "
-						 "ON n.nspname = s.schemaname "
-						 "JOIN pg_class c "
-						 "ON c.relname = s.tablename "
-						 "AND c.relnamespace = n.oid "
-						 "WHERE s.schemaname = ");
-	appendStringLiteralAH(query, schemaname, fout);
-	appendPQExpBufferStr(query, " AND s.tablename = ");
-	appendStringLiteralAH(query, relname, fout);
-	appendPQExpBufferStr(query, " ORDER BY s.attname, s.inherited");
-}
-
 
 /*
  * appendNamedArgument --
@@ -10513,17 +10457,17 @@ appendNamedArgument(PQExpBuffer out, Archive *fout, const char *argname,
  * Append a formatted pg_restore_relation_stats statement.
  */
 static void
-appendRelStatsImport(PQExpBuffer out, Archive *fout, const RelStatsInfo *rsinfo)
+appendRelStatsImport(PQExpBuffer out, Archive *fout, const RelStatsInfo *rsinfo,
+					 const char *qualified_name)
 {
-	const char *qualname = fmtQualifiedId(rsinfo->dobj.namespace->dobj.name, rsinfo->dobj.name);
 	char		reltuples_str[FLOAT_SHORTEST_DECIMAL_LEN];
 
 	float_to_shortest_decimal_buf(rsinfo->reltuples, reltuples_str);
 
 	appendPQExpBufferStr(out, "SELECT * FROM pg_catalog.pg_restore_relation_stats(\n");
-	appendPQExpBuffer(out, "\t'relation', '%s'::regclass,\n", qualname);
 	appendPQExpBuffer(out, "\t'version', '%u'::integer,\n",
 					  fout->remoteVersion);
+	appendPQExpBuffer(out, "\t'relation', '%s'::regclass,\n", qualified_name);
 	appendPQExpBuffer(out, "\t'relpages', '%d'::integer,\n", rsinfo->relpages);
 	appendPQExpBuffer(out, "\t'reltuples', '%s'::real,\n", reltuples_str);
 	appendPQExpBuffer(out, "\t'relallvisible', '%d'::integer\n);\n",
@@ -10536,13 +10480,18 @@ appendRelStatsImport(PQExpBuffer out, Archive *fout, const RelStatsInfo *rsinfo)
  * Append a series of formatted pg_restore_attribute_stats statements.
  */
 static void
-appendAttStatsImport(PQExpBuffer out, Archive *fout, PGresult *res)
+appendAttStatsImport(PQExpBuffer out, Archive *fout, PGresult *res,
+					 const char *qualified_name)
 {
 	for (int rownum = 0; rownum < PQntuples(res); rownum++)
 	{
 		const char *sep = "";
 
 		appendPQExpBufferStr(out, "SELECT * FROM pg_catalog.pg_restore_attribute_stats(\n");
+		appendPQExpBuffer(out, "\t'version', '%u'::integer,\n",
+						  fout->remoteVersion);
+		appendPQExpBuffer(out, "\t'relation', '%s'::regclass,\n",
+						  qualified_name);
 		for (int argno = 0; argno < lengthof(att_stats_arginfo); argno++)
 		{
 			const char *argname = att_stats_arginfo[argno][0];
@@ -10607,6 +10556,7 @@ dumpRelationStats(Archive *fout, const RelStatsInfo *rsinfo)
 	DumpableObject *dobj = (DumpableObject *) &rsinfo->dobj;
 	DumpId	   *deps = NULL;
 	int			ndeps = 0;
+	const char *qualified_name;
 
 	/* nothing to do if we are not dumping statistics */
 	if (!fout->dopt->dumpStatistics)
@@ -10622,15 +10572,56 @@ dumpRelationStats(Archive *fout, const RelStatsInfo *rsinfo)
 	tag = createPQExpBuffer();
 	appendPQExpBufferStr(tag, fmtId(dobj->name));
 
+	query = createPQExpBuffer();
+	if (!fout->is_prepared[PREPQUERY_GETATTRIBUTESTATS])
+	{
+		appendPQExpBufferStr(query,
+							 "PREPARE getAttributeStats(pg_catalog.name, pg_catalog.name) AS\n"
+							 "SELECT s.attname, s.inherited, "
+							 "s.null_frac, s.avg_width, s.n_distinct, "
+							 "s.most_common_vals, s.most_common_freqs, "
+							 "s.histogram_bounds, s.correlation, "
+							 "s.most_common_elems, s.most_common_elem_freqs, "
+							 "s.elem_count_histogram, ");
+
+		if (fout->remoteVersion >= 170000)
+			appendPQExpBufferStr(query,
+								 "s.range_length_histogram, s.range_empty_frac, "
+								 "s.range_bounds_histogram ");
+		else
+			appendPQExpBufferStr(query,
+								 "NULL AS range_length_histogram,"
+								 "NULL AS range_empty_frac,"
+								 "NULL AS range_bounds_histogram ");
+
+		appendPQExpBufferStr(query,
+							 "FROM pg_stats s "
+							 "WHERE s.schemaname = $1 "
+							 "AND s.tablename = $2 "
+							 "ORDER BY s.attname, s.inherited");
+
+		ExecuteSqlStatement(fout, query->data);
+
+		fout->is_prepared[PREPQUERY_GETATTRIBUTESTATS] = true;
+		resetPQExpBuffer(query);
+	}
+
+	appendPQExpBufferStr(query, "EXECUTE getAttributeStats(");
+	appendStringLiteralAH(query, dobj->namespace->dobj.name, fout);
+	appendPQExpBufferStr(query, ", ");
+	appendStringLiteralAH(query, dobj->name, fout);
+	appendPQExpBufferStr(query, "); ");
+
+	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
+
 	out = createPQExpBuffer();
 
-	appendRelStatsImport(out, fout, rsinfo);
+	qualified_name = fmtQualifiedId(rsinfo->dobj.namespace->dobj.name,
+									rsinfo->dobj.name);
 
-	query = createPQExpBuffer();
-	getAttStatsExportQuery(query, fout, dobj->namespace->dobj.name,
-						   dobj->name);
-	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
-	appendAttStatsImport(out, fout, res);
+	appendRelStatsImport(out, fout, rsinfo, qualified_name);
+	appendAttStatsImport(out, fout, res, qualified_name);
+
 	PQclear(res);
 
 	ArchiveEntry(fout, nilCatalogId, createDumpId(),
