@@ -328,7 +328,7 @@ typedef struct _tableInfo
 	Oid			owning_tab;		/* OID of table owning sequence */
 	int			owning_col;		/* attr # of column owning sequence */
 	bool		is_identity_sequence;
-	int			relpages;		/* table's size in pages (from pg_class) */
+	int32		relpages;		/* table's size in pages (from pg_class) */
 	int			toastpages;		/* toast table's size in pages, if any */
 
 	bool		interesting;	/* true if need to collect more data */
@@ -438,6 +438,9 @@ typedef struct _indexAttachInfo
 typedef struct _relStatsInfo
 {
 	DumpableObject dobj;
+	int32		relpages;
+	float		reltuples;
+	int32		relallvisible;
 	char		relkind;		/* 'r', 'm', 'i', etc */
 	bool		postponed_def;	/* stats must be postponed into post-data */
 } RelStatsInfo;
