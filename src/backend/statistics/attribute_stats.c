@@ -38,6 +38,7 @@ enum attribute_stats_argnum
 {
 	ATTRELATION_ARG = 0,
 	ATTNAME_ARG,
+	ATTNUM_ARG,
 	INHERITED_ARG,
 	NULL_FRAC_ARG,
 	AVG_WIDTH_ARG,
@@ -59,6 +60,7 @@ static struct StatsArgInfo attarginfo[] =
 {
 	[ATTRELATION_ARG] = {"relation", REGCLASSOID},
 	[ATTNAME_ARG] = {"attname", NAMEOID},
+	[ATTNUM_ARG] = {"attnum", INT2OID},
 	[INHERITED_ARG] = {"inherited", BOOLOID},
 	[NULL_FRAC_ARG] = {"null_frac", FLOAT4OID},
 	[AVG_WIDTH_ARG] = {"avg_width", INT4OID},
@@ -74,6 +76,22 @@ static struct StatsArgInfo attarginfo[] =
 	[RANGE_EMPTY_FRAC_ARG] = {"range_empty_frac", FLOAT4OID},
 	[RANGE_BOUNDS_HISTOGRAM_ARG] = {"range_bounds_histogram", TEXTOID},
 	[NUM_ATTRIBUTE_STATS_ARGS] = {0}
+};
+
+enum clear_attribute_stats_argnum
+{
+	C_ATTRELATION_ARG = 0,
+	C_ATTNAME_ARG,
+	C_INHERITED_ARG,
+	C_NUM_ATTRIBUTE_STATS_ARGS
+};
+
+static struct StatsArgInfo cleararginfo[] =
+{
+	[C_ATTRELATION_ARG] = {"relation", REGCLASSOID},
+	[C_ATTNAME_ARG] = {"attname", NAMEOID},
+	[C_INHERITED_ARG] = {"inherited", BOOLOID},
+	[C_NUM_ATTRIBUTE_STATS_ARGS] = {0}
 };
 
 static bool attribute_statistics_update(FunctionCallInfo fcinfo);
@@ -116,9 +134,9 @@ static bool
 attribute_statistics_update(FunctionCallInfo fcinfo)
 {
 	Oid			reloid;
-	Name		attname;
-	bool		inherited;
+	char	   *attname;
 	AttrNumber	attnum;
+	bool		inherited;
 
 	Relation	starel;
 	HeapTuple	statup;
@@ -164,21 +182,51 @@ attribute_statistics_update(FunctionCallInfo fcinfo)
 	/* lock before looking up attribute */
 	stats_lock_check_privileges(reloid);
 
-	stats_check_required_arg(fcinfo, attarginfo, ATTNAME_ARG);
-	attname = PG_GETARG_NAME(ATTNAME_ARG);
-	attnum = get_attnum(reloid, NameStr(*attname));
+	/* user can specify either attname or attnum, but not both */
+	if (!PG_ARGISNULL(ATTNAME_ARG))
+	{
+		Name		attnamename;
+
+		if (!PG_ARGISNULL(ATTNUM_ARG))
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("cannot specify both attname and attnum")));
+		attnamename = PG_GETARG_NAME(ATTNAME_ARG);
+		attname = NameStr(*attnamename);
+		attnum = get_attnum(reloid, attname);
+		/* note that this test covers attisdropped cases too: */
+		if (attnum == InvalidAttrNumber)
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_COLUMN),
+					 errmsg("column \"%s\" of relation \"%s\" does not exist",
+							attname, get_rel_name(reloid))));
+	}
+	else if (!PG_ARGISNULL(ATTNUM_ARG))
+	{
+		attnum = PG_GETARG_INT16(ATTNUM_ARG);
+		attname = get_attname(reloid, attnum, true);
+		/* annoyingly, get_attname doesn't check attisdropped */
+		if (attname == NULL ||
+			!SearchSysCacheExistsAttName(reloid, attname))
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_COLUMN),
+					 errmsg("column %d of relation \"%s\" does not exist",
+							attnum, get_rel_name(reloid))));
+	}
+	else
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("must specify either attname or attnum")));
+		attname = NULL;			/* keep compiler quiet */
+		attnum = 0;
+	}
 
 	if (attnum < 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("cannot modify statistics on system column \"%s\"",
-						NameStr(*attname))));
-
-	if (attnum == InvalidAttrNumber)
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_COLUMN),
-				 errmsg("column \"%s\" of relation \"%s\" does not exist",
-						NameStr(*attname), get_rel_name(reloid))));
+						attname)));
 
 	stats_check_required_arg(fcinfo, attarginfo, INHERITED_ARG);
 	inherited = PG_GETARG_BOOL(INHERITED_ARG);
@@ -241,7 +289,7 @@ attribute_statistics_update(FunctionCallInfo fcinfo)
 								&elemtypid, &elem_eq_opr))
 		{
 			ereport(WARNING,
-					(errmsg("unable to determine element type of attribute \"%s\"", NameStr(*attname)),
+					(errmsg("unable to determine element type of attribute \"%s\"", attname),
 					 errdetail("Cannot set STATISTIC_KIND_MCELEM or STATISTIC_KIND_DECHIST.")));
 			elemtypid = InvalidOid;
 			elem_eq_opr = InvalidOid;
@@ -257,7 +305,7 @@ attribute_statistics_update(FunctionCallInfo fcinfo)
 	{
 		ereport(WARNING,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("could not determine less-than operator for attribute \"%s\"", NameStr(*attname)),
+				 errmsg("could not determine less-than operator for attribute \"%s\"", attname),
 				 errdetail("Cannot set STATISTIC_KIND_HISTOGRAM or STATISTIC_KIND_CORRELATION.")));
 
 		do_histogram = false;
@@ -271,7 +319,7 @@ attribute_statistics_update(FunctionCallInfo fcinfo)
 	{
 		ereport(WARNING,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("attribute \"%s\" is not a range type", NameStr(*attname)),
+				 errmsg("attribute \"%s\" is not a range type", attname),
 				 errdetail("Cannot set STATISTIC_KIND_RANGE_LENGTH_HISTOGRAM or STATISTIC_KIND_BOUNDS_HISTOGRAM.")));
 
 		do_bounds_histogram = false;
@@ -857,8 +905,8 @@ pg_clear_attribute_stats(PG_FUNCTION_ARGS)
 	AttrNumber	attnum;
 	bool		inherited;
 
-	stats_check_required_arg(fcinfo, attarginfo, ATTRELATION_ARG);
-	reloid = PG_GETARG_OID(ATTRELATION_ARG);
+	stats_check_required_arg(fcinfo, cleararginfo, C_ATTRELATION_ARG);
+	reloid = PG_GETARG_OID(C_ATTRELATION_ARG);
 
 	if (RecoveryInProgress())
 		ereport(ERROR,
@@ -868,8 +916,8 @@ pg_clear_attribute_stats(PG_FUNCTION_ARGS)
 
 	stats_lock_check_privileges(reloid);
 
-	stats_check_required_arg(fcinfo, attarginfo, ATTNAME_ARG);
-	attname = PG_GETARG_NAME(ATTNAME_ARG);
+	stats_check_required_arg(fcinfo, cleararginfo, C_ATTNAME_ARG);
+	attname = PG_GETARG_NAME(C_ATTNAME_ARG);
 	attnum = get_attnum(reloid, NameStr(*attname));
 
 	if (attnum < 0)
@@ -884,13 +932,39 @@ pg_clear_attribute_stats(PG_FUNCTION_ARGS)
 				 errmsg("column \"%s\" of relation \"%s\" does not exist",
 						NameStr(*attname), get_rel_name(reloid))));
 
-	stats_check_required_arg(fcinfo, attarginfo, INHERITED_ARG);
-	inherited = PG_GETARG_BOOL(INHERITED_ARG);
+	stats_check_required_arg(fcinfo, cleararginfo, C_INHERITED_ARG);
+	inherited = PG_GETARG_BOOL(C_INHERITED_ARG);
 
 	delete_pg_statistic(reloid, attnum, inherited);
 	PG_RETURN_VOID();
 }
 
+/*
+ * Import statistics for a given relation attribute.
+ *
+ * Inserts or replaces a row in pg_statistic for the given relation and
+ * attribute name or number. It takes input parameters that correspond to
+ * columns in the view pg_stats.
+ *
+ * Parameters are given in a pseudo named-attribute style: they must be
+ * pairs of parameter names (as text) and values (of appropriate types).
+ * We do that, rather than using regular named-parameter notation, so
+ * that we can add or change parameters without fear of breaking
+ * carelessly-written calls.
+ *
+ * Parameters null_frac, avg_width, and n_distinct all correspond to NOT NULL
+ * columns in pg_statistic. The remaining parameters all belong to a specific
+ * stakind. Some stakinds require multiple parameters, which must be specified
+ * together (or neither specified).
+ *
+ * Parameters are only superficially validated. Omitting a parameter or
+ * passing NULL leaves the statistic unchanged.
+ *
+ * Parameters corresponding to ANYARRAY columns are instead passed in as text
+ * values, which is a valid input string for an array of the type or element
+ * type of the attribute. Any error generated by the array_in() function will
+ * in turn fail the function.
+ */
 Datum
 pg_restore_attribute_stats(PG_FUNCTION_ARGS)
 {

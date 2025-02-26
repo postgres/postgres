@@ -345,7 +345,7 @@ sub adjust_old_dumpfile
 	{
 		$dump =~ s/
 			(^SELECT\s\*\sFROM\spg_catalog\.pg_restore_relation_stats\(
-			\s+'relation',\s'public\.hash_[a-z0-9]*_heap'::regclass,
+			[^;]*'relation',\s'public\.hash_[a-z0-9]*_heap'::regclass,
 			[^;]*'relallvisible',)\s'\d+'::integer
 			/$1 ''::integer/mgx;
 	}
@@ -692,7 +692,7 @@ sub adjust_new_dumpfile
 	{
 		$dump =~ s/
 			(^SELECT\s\*\sFROM\spg_catalog\.pg_restore_relation_stats\(
-			\s+'relation',\s'public\.hash_[a-z0-9]*_heap'::regclass,
+			[^;]*'relation',\s'public\.hash_[a-z0-9]*_heap'::regclass,
 			[^;]*'relallvisible',)\s'\d+'::integer
 			/$1 ''::integer/mgx;
 	}

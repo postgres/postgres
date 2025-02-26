@@ -6819,7 +6819,8 @@ getFuncs(Archive *fout)
  */
 static RelStatsInfo *
 getRelationStatistics(Archive *fout, DumpableObject *rel, int32 relpages,
-					  float reltuples, int32 relallvisible, char relkind)
+					  float reltuples, int32 relallvisible, char relkind,
+					  char **indAttNames, int nindAttNames)
 {
 	if (!fout->dopt->dumpStatistics)
 		return NULL;
@@ -6848,6 +6849,8 @@ getRelationStatistics(Archive *fout, DumpableObject *rel, int32 relpages,
 		info->reltuples = reltuples;
 		info->relallvisible = relallvisible;
 		info->relkind = relkind;
+		info->indAttNames = indAttNames;
+		info->nindAttNames = nindAttNames;
 		info->postponed_def = false;
 
 		return info;
@@ -7249,7 +7252,8 @@ getTables(Archive *fout, int *numTables)
 		/* Add statistics */
 		if (tblinfo[i].interesting)
 			getRelationStatistics(fout, &tblinfo[i].dobj, tblinfo[i].relpages,
-								  reltuples, relallvisible, tblinfo[i].relkind);
+								  reltuples, relallvisible, tblinfo[i].relkind,
+								  NULL, 0);
 
 		/*
 		 * Read-lock target tables to make sure they aren't DROPPED or altered
@@ -7534,6 +7538,7 @@ getIndexes(Archive *fout, TableInfo tblinfo[], int numTables)
 				i_contableoid,
 				i_conoid,
 				i_condef,
+				i_indattnames,
 				i_tablespace,
 				i_indreloptions,
 				i_indstatcols,
@@ -7579,6 +7584,11 @@ getIndexes(Archive *fout, TableInfo tblinfo[], int numTables)
 						 "c.tableoid AS contableoid, "
 						 "c.oid AS conoid, "
 						 "pg_catalog.pg_get_constraintdef(c.oid, false) AS condef, "
+						 "CASE WHEN i.indexprs IS NOT NULL THEN "
+						 "(SELECT pg_catalog.array_agg(attname ORDER BY attnum)"
+						 "  FROM pg_catalog.pg_attribute "
+						 "  WHERE attrelid = i.indexrelid) "
+						 "ELSE NULL END AS indattnames, "
 						 "(SELECT spcname FROM pg_catalog.pg_tablespace s WHERE s.oid = t.reltablespace) AS tablespace, "
 						 "t.reloptions AS indreloptions, ");
 
@@ -7698,6 +7708,7 @@ getIndexes(Archive *fout, TableInfo tblinfo[], int numTables)
 	i_contableoid = PQfnumber(res, "contableoid");
 	i_conoid = PQfnumber(res, "conoid");
 	i_condef = PQfnumber(res, "condef");
+	i_indattnames = PQfnumber(res, "indattnames");
 	i_tablespace = PQfnumber(res, "tablespace");
 	i_indreloptions = PQfnumber(res, "indreloptions");
 	i_indstatcols = PQfnumber(res, "indstatcols");
@@ -7714,6 +7725,8 @@ getIndexes(Archive *fout, TableInfo tblinfo[], int numTables)
 	{
 		Oid			indrelid = atooid(PQgetvalue(res, j, i_indrelid));
 		TableInfo  *tbinfo = NULL;
+		char	  **indAttNames = NULL;
+		int			nindAttNames = 0;
 		int			numinds;
 
 		/* Count rows for this table */
@@ -7784,10 +7797,18 @@ getIndexes(Archive *fout, TableInfo tblinfo[], int numTables)
 			else
 				indexkind = RELKIND_PARTITIONED_INDEX;
 
-			contype = *(PQgetvalue(res, j, i_contype));
-			relstats = getRelationStatistics(fout, &indxinfo[j].dobj, relpages,
-											 reltuples, relallvisible, indexkind);
+			if (!PQgetisnull(res, j, i_indattnames))
+			{
+				if (!parsePGArray(PQgetvalue(res, j, i_indattnames),
+								  &indAttNames, &nindAttNames))
+					pg_fatal("could not parse %s array", "indattnames");
+			}
 
+			relstats = getRelationStatistics(fout, &indxinfo[j].dobj, relpages,
+											 reltuples, relallvisible, indexkind,
+											 indAttNames, nindAttNames);
+
+			contype = *(PQgetvalue(res, j, i_contype));
 			if (contype == 'p' || contype == 'u' || contype == 'x')
 			{
 				/*
@@ -10411,28 +10432,6 @@ dumpComment(Archive *fout, const char *type,
 }
 
 /*
- * Tabular description of the parameters to pg_restore_attribute_stats()
- * param_name, param_type
- */
-static const char *att_stats_arginfo[][2] = {
-	{"attname", "name"},
-	{"inherited", "boolean"},
-	{"null_frac", "float4"},
-	{"avg_width", "integer"},
-	{"n_distinct", "float4"},
-	{"most_common_vals", "text"},
-	{"most_common_freqs", "float4[]"},
-	{"histogram_bounds", "text"},
-	{"correlation", "float4"},
-	{"most_common_elems", "text"},
-	{"most_common_elem_freqs", "float4[]"},
-	{"elem_count_histogram", "float4[]"},
-	{"range_length_histogram", "text"},
-	{"range_empty_frac", "float4"},
-	{"range_bounds_histogram", "text"},
-};
-
-/*
  * appendNamedArgument --
  *
  * Convenience routine for constructing parameters of the form:
@@ -10440,77 +10439,15 @@ static const char *att_stats_arginfo[][2] = {
  */
 static void
 appendNamedArgument(PQExpBuffer out, Archive *fout, const char *argname,
-					const char *argval, const char *argtype)
+					const char *argtype, const char *argval)
 {
-	appendPQExpBufferStr(out, "\t");
+	appendPQExpBufferStr(out, ",\n\t");
 
 	appendStringLiteralAH(out, argname, fout);
 	appendPQExpBufferStr(out, ", ");
 
 	appendStringLiteralAH(out, argval, fout);
 	appendPQExpBuffer(out, "::%s", argtype);
-}
-
-/*
- * appendRelStatsImport --
- *
- * Append a formatted pg_restore_relation_stats statement.
- */
-static void
-appendRelStatsImport(PQExpBuffer out, Archive *fout, const RelStatsInfo *rsinfo,
-					 const char *qualified_name)
-{
-	char		reltuples_str[FLOAT_SHORTEST_DECIMAL_LEN];
-
-	float_to_shortest_decimal_buf(rsinfo->reltuples, reltuples_str);
-
-	appendPQExpBufferStr(out, "SELECT * FROM pg_catalog.pg_restore_relation_stats(\n");
-	appendPQExpBuffer(out, "\t'version', '%u'::integer,\n",
-					  fout->remoteVersion);
-	appendPQExpBuffer(out, "\t'relation', '%s'::regclass,\n", qualified_name);
-	appendPQExpBuffer(out, "\t'relpages', '%d'::integer,\n", rsinfo->relpages);
-	appendPQExpBuffer(out, "\t'reltuples', '%s'::real,\n", reltuples_str);
-	appendPQExpBuffer(out, "\t'relallvisible', '%d'::integer\n);\n",
-					  rsinfo->relallvisible);
-}
-
-/*
- * appendAttStatsImport --
- *
- * Append a series of formatted pg_restore_attribute_stats statements.
- */
-static void
-appendAttStatsImport(PQExpBuffer out, Archive *fout, PGresult *res,
-					 const char *qualified_name)
-{
-	for (int rownum = 0; rownum < PQntuples(res); rownum++)
-	{
-		const char *sep = "";
-
-		appendPQExpBufferStr(out, "SELECT * FROM pg_catalog.pg_restore_attribute_stats(\n");
-		appendPQExpBuffer(out, "\t'version', '%u'::integer,\n",
-						  fout->remoteVersion);
-		appendPQExpBuffer(out, "\t'relation', '%s'::regclass,\n",
-						  qualified_name);
-		for (int argno = 0; argno < lengthof(att_stats_arginfo); argno++)
-		{
-			const char *argname = att_stats_arginfo[argno][0];
-			const char *argtype = att_stats_arginfo[argno][1];
-			int			fieldno = PQfnumber(res, argname);
-
-			if (fieldno < 0)
-				pg_fatal("attribute stats export query missing field '%s'",
-						 argname);
-
-			if (PQgetisnull(res, rownum, fieldno))
-				continue;
-
-			appendPQExpBufferStr(out, sep);
-			appendNamedArgument(out, fout, argname, PQgetvalue(res, rownum, fieldno), argtype);
-			sep = ",\n";
-		}
-		appendPQExpBufferStr(out, "\n);\n");
-	}
 }
 
 /*
@@ -10549,14 +10486,30 @@ statisticsDumpSection(const RelStatsInfo *rsinfo)
 static void
 dumpRelationStats(Archive *fout, const RelStatsInfo *rsinfo)
 {
+	const DumpableObject *dobj = &rsinfo->dobj;
 	PGresult   *res;
 	PQExpBuffer query;
 	PQExpBuffer out;
 	PQExpBuffer tag;
-	DumpableObject *dobj = (DumpableObject *) &rsinfo->dobj;
 	DumpId	   *deps = NULL;
 	int			ndeps = 0;
-	const char *qualified_name;
+	char	   *qualified_name;
+	char		reltuples_str[FLOAT_SHORTEST_DECIMAL_LEN];
+	int			i_attname;
+	int			i_inherited;
+	int			i_null_frac;
+	int			i_avg_width;
+	int			i_n_distinct;
+	int			i_most_common_vals;
+	int			i_most_common_freqs;
+	int			i_histogram_bounds;
+	int			i_correlation;
+	int			i_most_common_elems;
+	int			i_most_common_elem_freqs;
+	int			i_elem_count_histogram;
+	int			i_range_length_histogram;
+	int			i_range_empty_frac;
+	int			i_range_bounds_histogram;
 
 	/* nothing to do if we are not dumping statistics */
 	if (!fout->dopt->dumpStatistics)
@@ -10586,7 +10539,8 @@ dumpRelationStats(Archive *fout, const RelStatsInfo *rsinfo)
 
 		if (fout->remoteVersion >= 170000)
 			appendPQExpBufferStr(query,
-								 "s.range_length_histogram, s.range_empty_frac, "
+								 "s.range_length_histogram, "
+								 "s.range_empty_frac, "
 								 "s.range_bounds_histogram ");
 		else
 			appendPQExpBufferStr(query,
@@ -10595,7 +10549,7 @@ dumpRelationStats(Archive *fout, const RelStatsInfo *rsinfo)
 								 "NULL AS range_bounds_histogram ");
 
 		appendPQExpBufferStr(query,
-							 "FROM pg_stats s "
+							 "FROM pg_catalog.pg_stats s "
 							 "WHERE s.schemaname = $1 "
 							 "AND s.tablename = $2 "
 							 "ORDER BY s.attname, s.inherited");
@@ -10606,21 +10560,137 @@ dumpRelationStats(Archive *fout, const RelStatsInfo *rsinfo)
 		resetPQExpBuffer(query);
 	}
 
+	out = createPQExpBuffer();
+
+	qualified_name = pg_strdup(fmtQualifiedDumpable(rsinfo));
+
+	/* restore relation stats */
+	appendPQExpBufferStr(out, "SELECT * FROM pg_catalog.pg_restore_relation_stats(\n");
+	appendPQExpBuffer(out, "\t'version', '%u'::integer,\n",
+					  fout->remoteVersion);
+	appendPQExpBufferStr(out, "\t'relation', ");
+	appendStringLiteralAH(out, qualified_name, fout);
+	appendPQExpBufferStr(out, "::regclass,\n");
+	appendPQExpBuffer(out, "\t'relpages', '%d'::integer,\n", rsinfo->relpages);
+	float_to_shortest_decimal_buf(rsinfo->reltuples, reltuples_str);
+	appendPQExpBuffer(out, "\t'reltuples', '%s'::real,\n", reltuples_str);
+	appendPQExpBuffer(out, "\t'relallvisible', '%d'::integer\n);\n",
+					  rsinfo->relallvisible);
+
+	/* fetch attribute stats */
 	appendPQExpBufferStr(query, "EXECUTE getAttributeStats(");
 	appendStringLiteralAH(query, dobj->namespace->dobj.name, fout);
 	appendPQExpBufferStr(query, ", ");
 	appendStringLiteralAH(query, dobj->name, fout);
-	appendPQExpBufferStr(query, "); ");
+	appendPQExpBufferStr(query, ");");
 
 	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
 
-	out = createPQExpBuffer();
+	i_attname = PQfnumber(res, "attname");
+	i_inherited = PQfnumber(res, "inherited");
+	i_null_frac = PQfnumber(res, "null_frac");
+	i_avg_width = PQfnumber(res, "avg_width");
+	i_n_distinct = PQfnumber(res, "n_distinct");
+	i_most_common_vals = PQfnumber(res, "most_common_vals");
+	i_most_common_freqs = PQfnumber(res, "most_common_freqs");
+	i_histogram_bounds = PQfnumber(res, "histogram_bounds");
+	i_correlation = PQfnumber(res, "correlation");
+	i_most_common_elems = PQfnumber(res, "most_common_elems");
+	i_most_common_elem_freqs = PQfnumber(res, "most_common_elem_freqs");
+	i_elem_count_histogram = PQfnumber(res, "elem_count_histogram");
+	i_range_length_histogram = PQfnumber(res, "range_length_histogram");
+	i_range_empty_frac = PQfnumber(res, "range_empty_frac");
+	i_range_bounds_histogram = PQfnumber(res, "range_bounds_histogram");
 
-	qualified_name = fmtQualifiedId(rsinfo->dobj.namespace->dobj.name,
-									rsinfo->dobj.name);
+	/* restore attribute stats */
+	for (int rownum = 0; rownum < PQntuples(res); rownum++)
+	{
+		const char *attname;
 
-	appendRelStatsImport(out, fout, rsinfo, qualified_name);
-	appendAttStatsImport(out, fout, res, qualified_name);
+		appendPQExpBufferStr(out, "SELECT * FROM pg_catalog.pg_restore_attribute_stats(\n");
+		appendPQExpBuffer(out, "\t'version', '%u'::integer,\n",
+						  fout->remoteVersion);
+		appendPQExpBufferStr(out, "\t'relation', ");
+		appendStringLiteralAH(out, qualified_name, fout);
+		appendPQExpBufferStr(out, "::regclass");
+
+		if (PQgetisnull(res, rownum, i_attname))
+			pg_fatal("attname cannot be NULL");
+		attname = PQgetvalue(res, rownum, i_attname);
+
+		/*
+		 * Indexes look up attname in indAttNames to derive attnum, all others
+		 * use attname directly.  We must specify attnum for indexes, since
+		 * their attnames are not necessarily stable across dump/reload.
+		 */
+		if (rsinfo->nindAttNames == 0)
+			appendNamedArgument(out, fout, "attname", "name", attname);
+		else
+		{
+			bool		found = false;
+
+			for (int i = 0; i < rsinfo->nindAttNames; i++)
+			{
+				if (strcmp(attname, rsinfo->indAttNames[i]) == 0)
+				{
+					appendPQExpBuffer(out, ",\n\t'attnum', '%d'::smallint",
+									  i + 1);
+					found = true;
+					break;
+				}
+			}
+
+			if (!found)
+				pg_fatal("could not find index attname \"%s\"", attname);
+		}
+
+		if (!PQgetisnull(res, rownum, i_inherited))
+			appendNamedArgument(out, fout, "inherited", "boolean",
+								PQgetvalue(res, rownum, i_inherited));
+		if (!PQgetisnull(res, rownum, i_null_frac))
+			appendNamedArgument(out, fout, "null_frac", "real",
+								PQgetvalue(res, rownum, i_null_frac));
+		if (!PQgetisnull(res, rownum, i_avg_width))
+			appendNamedArgument(out, fout, "avg_width", "integer",
+								PQgetvalue(res, rownum, i_avg_width));
+		if (!PQgetisnull(res, rownum, i_n_distinct))
+			appendNamedArgument(out, fout, "n_distinct", "real",
+								PQgetvalue(res, rownum, i_n_distinct));
+		if (!PQgetisnull(res, rownum, i_most_common_vals))
+			appendNamedArgument(out, fout, "most_common_vals", "text",
+								PQgetvalue(res, rownum, i_most_common_vals));
+		if (!PQgetisnull(res, rownum, i_most_common_freqs))
+			appendNamedArgument(out, fout, "most_common_freqs", "real[]",
+								PQgetvalue(res, rownum, i_most_common_freqs));
+		if (!PQgetisnull(res, rownum, i_histogram_bounds))
+			appendNamedArgument(out, fout, "histogram_bounds", "text",
+								PQgetvalue(res, rownum, i_histogram_bounds));
+		if (!PQgetisnull(res, rownum, i_correlation))
+			appendNamedArgument(out, fout, "correlation", "real",
+								PQgetvalue(res, rownum, i_correlation));
+		if (!PQgetisnull(res, rownum, i_most_common_elems))
+			appendNamedArgument(out, fout, "most_common_elems", "text",
+								PQgetvalue(res, rownum, i_most_common_elems));
+		if (!PQgetisnull(res, rownum, i_most_common_elem_freqs))
+			appendNamedArgument(out, fout, "most_common_elem_freqs", "real[]",
+								PQgetvalue(res, rownum, i_most_common_elem_freqs));
+		if (!PQgetisnull(res, rownum, i_elem_count_histogram))
+			appendNamedArgument(out, fout, "elem_count_histogram", "real[]",
+								PQgetvalue(res, rownum, i_elem_count_histogram));
+		if (fout->remoteVersion >= 170000)
+		{
+			if (!PQgetisnull(res, rownum, i_range_length_histogram))
+				appendNamedArgument(out, fout, "range_length_histogram", "text",
+									PQgetvalue(res, rownum, i_range_length_histogram));
+			if (!PQgetisnull(res, rownum, i_range_empty_frac))
+				appendNamedArgument(out, fout, "range_empty_frac", "real",
+									PQgetvalue(res, rownum, i_range_empty_frac));
+			if (!PQgetisnull(res, rownum, i_range_bounds_histogram))
+				appendNamedArgument(out, fout, "range_bounds_histogram", "text",
+									PQgetvalue(res, rownum, i_range_bounds_histogram));
+		}
+		appendPQExpBufferStr(out, "\n);\n");
+	}
 
 	PQclear(res);
 
@@ -10634,8 +10704,9 @@ dumpRelationStats(Archive *fout, const RelStatsInfo *rsinfo)
 							  .deps = deps,
 							  .nDeps = ndeps));
 
-	destroyPQExpBuffer(query);
+	free(qualified_name);
 	destroyPQExpBuffer(out);
+	destroyPQExpBuffer(query);
 	destroyPQExpBuffer(tag);
 }
 

@@ -184,6 +184,23 @@ SELECT pg_catalog.pg_restore_attribute_stats(
     'attname', 'id'::name,
     'inherited', false::boolean,
     'version', 150000::integer,
+    'null_frac', 0.2::real,
+    'avg_width', 5::integer,
+    'n_distinct', 0.6::real);
+
+SELECT *
+FROM pg_stats
+WHERE schemaname = 'stats_import'
+AND tablename = 'test'
+AND inherited = false
+AND attname = 'id';
+
+-- ok: restore by attnum
+SELECT pg_catalog.pg_restore_attribute_stats(
+    'relation', 'stats_import.test'::regclass,
+    'attnum', 1::smallint,
+    'inherited', false::boolean,
+    'version', 150000::integer,
     'null_frac', 0.4::real,
     'avg_width', 5::integer,
     'n_distinct', 0.6::real);
@@ -902,10 +919,21 @@ SELECT pg_catalog.pg_restore_attribute_stats(
     'avg_width', 2::integer,
     'n_distinct', 0.3::real);
 
--- error: attname null
+-- error: missing attname
 SELECT pg_catalog.pg_restore_attribute_stats(
     'relation', 'stats_import.test'::regclass,
     'attname', NULL::name,
+    'inherited', false::boolean,
+    'version', 150000::integer,
+    'null_frac', 0.1::real,
+    'avg_width', 2::integer,
+    'n_distinct', 0.3::real);
+
+-- error: both attname and attnum
+SELECT pg_catalog.pg_restore_attribute_stats(
+    'relation', 'stats_import.test'::regclass,
+    'attname', 'id'::name,
+    'attnum', 1::smallint,
     'inherited', false::boolean,
     'version', 150000::integer,
     'null_frac', 0.1::real,

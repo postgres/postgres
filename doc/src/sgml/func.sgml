@@ -30209,8 +30209,8 @@ postgres=# SELECT '0/0'::pg_lsn + pd.segment_number * ps.setting::int + :offset 
 </programlisting>
         </para>
         <para>
-         For example, to set the <structname>relpages</structname> and
-         <structname>reltuples</structname> of the table
+         For example, to set the <structfield>relpages</structfield> and
+         <structfield>reltuples</structfield> values for the table
          <structname>mytable</structname>:
 <programlisting>
  SELECT pg_restore_relation_stats(
@@ -30222,8 +30222,8 @@ postgres=# SELECT '0/0'::pg_lsn + pd.segment_number * ps.setting::int + :offset 
         <para>
          The argument <literal>relation</literal> with a value of type
          <type>regclass</type> is required, and specifies the table. Other
-         arguments are the names of statistics corresponding to certain
-         columns in <link
+         arguments are the names and values of statistics corresponding to
+         certain columns in <link
          linkend="catalog-pg-class"><structname>pg_class</structname></link>.
          The currently-supported relation statistics are
          <literal>relpages</literal> with a value of type
@@ -30232,16 +30232,16 @@ postgres=# SELECT '0/0'::pg_lsn + pd.segment_number * ps.setting::int + :offset 
          value of type <type>integer</type>.
         </para>
         <para>
-         Additionally, this function supports argument name
+         Additionally, this function accepts argument name
          <literal>version</literal> of type <type>integer</type>, which
-         specifies the version from which the statistics originated, improving
-         interpretation of statistics from older versions of
-         <productname>PostgreSQL</productname>.
+         specifies the server version from which the statistics originated.
+         This is anticipated to be helpful in porting statistics from older
+         versions of <productname>PostgreSQL</productname>.
         </para>
         <para>
          Minor errors are reported as a <literal>WARNING</literal> and
          ignored, and remaining statistics will still be restored. If all
-         specified statistics are successfully restored, return
+         specified statistics are successfully restored, returns
          <literal>true</literal>, otherwise <literal>false</literal>.
         </para>
         <para>
@@ -30281,7 +30281,7 @@ postgres=# SELECT '0/0'::pg_lsn + pd.segment_number * ps.setting::int + :offset 
         <returnvalue>boolean</returnvalue>
        </para>
         <para>
-         Create or update column-level statistics.  Ordinarily, these
+         Creates or updates column-level statistics.  Ordinarily, these
          statistics are collected automatically or updated as a part of <xref
          linkend="sql-vacuum"/> or <xref linkend="sql-analyze"/>, so it's not
          necessary to call this function.  However, it is useful after a
@@ -30300,9 +30300,9 @@ postgres=# SELECT '0/0'::pg_lsn + pd.segment_number * ps.setting::int + :offset 
 </programlisting>
         </para>
         <para>
-         For example, to set the <structname>avg_width</structname> and
-         <structname>null_frac</structname> for the attribute
-         <structname>col1</structname> of the table
+         For example, to set the <structfield>avg_width</structfield> and
+         <structfield>null_frac</structfield> values for the attribute
+         <structfield>col1</structfield> of the table
          <structname>mytable</structname>:
 <programlisting>
  SELECT pg_restore_attribute_stats(
@@ -30315,25 +30315,26 @@ postgres=# SELECT '0/0'::pg_lsn + pd.segment_number * ps.setting::int + :offset 
         </para>
         <para>
          The required arguments are <literal>relation</literal> with a value
-         of type <type>regclass</type>, which specifies the table;
-         <literal>attname</literal> with a value of type <type>name</type>,
+         of type <type>regclass</type>, which specifies the table; either
+         <literal>attname</literal> with a value of type <type>name</type> or
+         <literal>attnum</literal> with a value of type <type>smallint</type>,
          which specifies the column; and <literal>inherited</literal>, which
-         specifies whether the statistics includes values from child tables.
-         Other arguments are the names of statistics corresponding to columns
-         in <link
+         specifies whether the statistics include values from child tables.
+         Other arguments are the names and values of statistics corresponding
+         to columns in <link
          linkend="view-pg-stats"><structname>pg_stats</structname></link>.
         </para>
         <para>
-         Additionally, this function supports argument name
+         Additionally, this function accepts argument name
          <literal>version</literal> of type <type>integer</type>, which
-         specifies the version from which the statistics originated, improving
-         interpretation of statistics from older versions of
-         <productname>PostgreSQL</productname>.
+         specifies the server version from which the statistics originated.
+         This is anticipated to be helpful in porting statistics from older
+         versions of <productname>PostgreSQL</productname>.
         </para>
         <para>
          Minor errors are reported as a <literal>WARNING</literal> and
          ignored, and remaining statistics will still be restored. If all
-         specified statistics are successfully restored, return
+         specified statistics are successfully restored, returns
          <literal>true</literal>, otherwise <literal>false</literal>.
         </para>
         <para>

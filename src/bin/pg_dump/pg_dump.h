@@ -442,6 +442,13 @@ typedef struct _relStatsInfo
 	float		reltuples;
 	int32		relallvisible;
 	char		relkind;		/* 'r', 'm', 'i', etc */
+
+	/*
+	 * indAttNames/nindAttNames are populated only if the relation is an index
+	 * with at least one expression column; we don't need them otherwise.
+	 */
+	char	  **indAttNames;	/* attnames of the index, in order */
+	int32		nindAttNames;	/* number of attnames stored (can be 0) */
 	bool		postponed_def;	/* stats must be postponed into post-data */
 } RelStatsInfo;
 

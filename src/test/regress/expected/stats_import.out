@@ -278,6 +278,31 @@ SELECT pg_catalog.pg_restore_attribute_stats(
     'attname', 'id'::name,
     'inherited', false::boolean,
     'version', 150000::integer,
+    'null_frac', 0.2::real,
+    'avg_width', 5::integer,
+    'n_distinct', 0.6::real);
+ pg_restore_attribute_stats 
+----------------------------
+ t
+(1 row)
+
+SELECT *
+FROM pg_stats
+WHERE schemaname = 'stats_import'
+AND tablename = 'test'
+AND inherited = false
+AND attname = 'id';
+  schemaname  | tablename | attname | inherited | null_frac | avg_width | n_distinct | most_common_vals | most_common_freqs | histogram_bounds | correlation | most_common_elems | most_common_elem_freqs | elem_count_histogram | range_length_histogram | range_empty_frac | range_bounds_histogram 
+--------------+-----------+---------+-----------+-----------+-----------+------------+------------------+-------------------+------------------+-------------+-------------------+------------------------+----------------------+------------------------+------------------+------------------------
+ stats_import | test      | id      | f         |       0.2 |         5 |        0.6 |                  |                   |                  |             |                   |                        |                      |                        |                  | 
+(1 row)
+
+-- ok: restore by attnum
+SELECT pg_catalog.pg_restore_attribute_stats(
+    'relation', 'stats_import.test'::regclass,
+    'attnum', 1::smallint,
+    'inherited', false::boolean,
+    'version', 150000::integer,
     'null_frac', 0.4::real,
     'avg_width', 5::integer,
     'n_distinct', 0.6::real);
@@ -1241,7 +1266,7 @@ SELECT pg_catalog.pg_restore_attribute_stats(
     'avg_width', 2::integer,
     'n_distinct', 0.3::real);
 ERROR:  "relation" cannot be NULL
--- error: attname null
+-- error: missing attname
 SELECT pg_catalog.pg_restore_attribute_stats(
     'relation', 'stats_import.test'::regclass,
     'attname', NULL::name,
@@ -1250,7 +1275,18 @@ SELECT pg_catalog.pg_restore_attribute_stats(
     'null_frac', 0.1::real,
     'avg_width', 2::integer,
     'n_distinct', 0.3::real);
-ERROR:  "attname" cannot be NULL
+ERROR:  must specify either attname or attnum
+-- error: both attname and attnum
+SELECT pg_catalog.pg_restore_attribute_stats(
+    'relation', 'stats_import.test'::regclass,
+    'attname', 'id'::name,
+    'attnum', 1::smallint,
+    'inherited', false::boolean,
+    'version', 150000::integer,
+    'null_frac', 0.1::real,
+    'avg_width', 2::integer,
+    'n_distinct', 0.3::real);
+ERROR:  cannot specify both attname and attnum
 -- error: attname doesn't exist
 SELECT pg_catalog.pg_restore_attribute_stats(
     'relation', 'stats_import.test'::regclass,
