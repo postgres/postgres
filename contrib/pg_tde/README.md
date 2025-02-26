@@ -98,11 +98,11 @@ _See [Make Builds for Developers](https://github.com/percona/pg_tde/wiki/Make-bu
             ```sql
             ALTER SYSTEM SET shared_preload_libraries = 'pg_tde';
             ```
-   2. Start or restart the `postgresql` instance to apply the changes.
+   2. Start or restart the `postgresql` cluster to apply the changes.
       * On Debian and Ubuntu:
 
         ```sh
-        sudo systemctl restart postgresql.service
+        sudo systemctl restart postgresql-17
         ```
 
       * On RHEL 8 compatible OS (replace XX with your version):

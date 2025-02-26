@@ -10,7 +10,7 @@ For how to enable WAL encryption, refer to the [WAL encryption](setup.md#wal-enc
 
 ## Enable extension
 
-Load the `pg_tde` at the start time. The extension requires additional shared memory; therefore, add the `pg_tde` value for the `shared_preload_libraries` parameter and restart the `postgresql` instance.
+Load the `pg_tde` at startup time. The extension requires additional shared memory; therefore, add the `pg_tde` value for the `shared_preload_libraries` parameter and restart the `postgresql` cluster.
 
 1. Use the [ALTER SYSTEM :octicons-link-external-16:](https://www.postgresql.org/docs/current/sql-altersystem.html) command from `psql` terminal to modify the `shared_preload_libraries` parameter. This requires superuser privileges. 
 
@@ -18,12 +18,12 @@ Load the `pg_tde` at the start time. The extension requires additional shared me
     ALTER SYSTEM SET shared_preload_libraries = 'pg_tde';
     ```
 
-2. Start or restart the `postgresql` instance to apply the changes.
+2. Start or restart the `postgresql` cluster to apply the changes.
 
     * On Debian and Ubuntu:    
 
        ```sh
-       sudo systemctl restart postgresql.service
+       sudo systemctl restart postgresql-17
        ```
     
     * On RHEL and derivatives
@@ -38,7 +38,7 @@ Load the `pg_tde` at the start time. The extension requires additional shared me
     CREATE EXTENSION pg_tde;
     ```
     
-    By default, the `pg_tde` extension is created for the currently used database. To enable data encryption in other databases, you must explicitly run the `CREATE EXTENSION` command against them. 
+    The `pg_tde` extension is created for the currently used database. To enable data encryption in other databases, you must explicitly run the `CREATE EXTENSION` command against them. 
 
     !!! tip
 
@@ -61,13 +61,13 @@ You must do these steps for every database where you have created the extension.
         For testing purposes, you can use the PyKMIP server which enables you to set up required certificates. To use a real KMIP server, make sure to obtain the valid certificates issued by the key management appliance. 
 
         ```
-        SELECT pg_tde_add_key_provider_kmip('provider-name','kmip-IP', 5696, '/path_to/server_certificate.pem', '/path_to/client_key.pem');
+        SELECT pg_tde_add_key_provider_kmip('provider-name','kmip-addr', 5696, '/path_to/server_certificate.pem', '/path_to/client_key.pem');
         ```
 
         where:
 
         * `provider-name` is the name of the provider. You can specify any name, it's for you to identify the provider.
-        * `kmip-IP` is the IP address of a domain name of the KMIP server
+        * `kmip-addr` is the IP address of a domain name of the KMIP server
         * `port` is the port to communicate with the KMIP server. Typically used port is 5696.
         * `server-certificate` is the path to the certificate file for the KMIP server.
         * `client key` is the path to the client key.

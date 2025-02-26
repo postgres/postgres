@@ -1,6 +1,6 @@
 # Uninstall `pg_tde`
 
-If you no longer wish to use TDE in your deployment, you can remove the `pg_tde` extension. To do that, your user must have the privileges of the superuser or a database owner.
+If you no longer wish to use TDE in your deployment, you can remove the `pg_tde` extension. To do that, your user must have the superuser privileges or a database owner.
 
 Here's how to do it:
 
@@ -16,16 +16,16 @@ Here's how to do it:
 
 3. Modify the `shared_preload_libraries` and remove the 'pg_tde' from it. Use the `ALTER SYSTEM` command for this purpose
 
-4. Start or restart the `postgre` instance to apply the changes.
+4. Start or restart the `postgresql` cluster to apply the changes.
 
     * On Debian and Ubuntu:    
 
        ```sh
-       sudo systemctl restart postgre.service
+       sudo systemctl restart postgresql-17
        ```
     
     * On RHEL and derivatives
 
        ```sh
-       sudo systemctl restart postgre-17
+       sudo systemctl restart postgresql-17
        ```

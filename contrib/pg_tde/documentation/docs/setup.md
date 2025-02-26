@@ -6,7 +6,7 @@ The steps below describe the default key configuration. This means that the enti
 
 ## Enable extension
 
-Load the `pg_tde` at the start time. The extension requires additional shared memory; therefore, add the `pg_tde` value for the `shared_preload_libraries` parameter and restart the `postgresql` instance.
+Load the `pg_tde` at startup time. The extension requires additional shared memory; therefore, add the `pg_tde` value for the `shared_preload_libraries` parameter and restart the `postgresql` cluster.
 
 1. Use the [ALTER SYSTEM :octicons-link-external-16:](https://www.postgresql.org/docs/current/sql-altersystem.html) command from `psql` terminal to modify the `shared_preload_libraries` parameter. This requires superuser privileges. 
 
@@ -14,12 +14,12 @@ Load the `pg_tde` at the start time. The extension requires additional shared me
     ALTER SYSTEM SET shared_preload_libraries = 'pg_tde';
     ```
 
-2. Start or restart the `postgresql` instance to apply the changes.
+2. Start or restart the `postgresql` cluster to apply the changes.
 
     * On Debian and Ubuntu:    
 
        ```sh
-       sudo systemctl restart postgresql.service
+       sudo systemctl restart postgresql-17
        ```
     
     * On RHEL and derivatives
@@ -34,7 +34,7 @@ Load the `pg_tde` at the start time. The extension requires additional shared me
     CREATE EXTENSION pg_tde;
     ```
     
-    By default, the `pg_tde` extension is created for the currently used database. To enable data encryption in other databases, you must explicitly run the `CREATE EXTENSION` command against them. 
+    The `pg_tde` extension is created for the currently used database. To enable data encryption in other databases, you must explicitly run the `CREATE EXTENSION` command against them. 
 
 4. Enable the `pg_tde` extension automatically for every newly created database. Modify the template `template1` database as follows: 
 

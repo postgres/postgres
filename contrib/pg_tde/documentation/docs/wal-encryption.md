@@ -4,7 +4,7 @@ After you [enabled `pg_tde`](#enable-extension) and restarted the Percona Server
 
 Here's how to do it:
 
-1. Enable WAL level encryption using the `ALTER SYSTEM SET` command. You need the privileges of the superuser to run this command:
+1. Enable WAL level encryption using the `ALTER SYSTEM SET` command. You need the superuser privileges to run this command:
 
     ```sql
     ALTER SYSTEM set pg_tde.wal_encrypt = on;
@@ -15,7 +15,7 @@ Here's how to do it:
     * On Debian and Ubuntu:    
 
        ```sh
-       sudo systemctl restart postgresql.service
+       sudo systemctl restart postgresql-17
        ```
     
     * On RHEL and derivatives
@@ -35,14 +35,13 @@ Here's how to do it:
         For testing purposes, you can use the PyKMIP server which enables you to set up required certificates. To use a real KMIP server, make sure to obtain the valid certificates issued by the key management appliance. 
 
         ```sql
-        SELECT pg_tde_add_key_provider_kmip('PG_TDE_GLOBAL', 'provider-name','kmip-IP', 5696, '/path_to/server_certificate.pem', '/path_to/client_key.pem');
+        SELECT pg_tde_add_global_key_provider_kmip('provider-name','kmip-addr', 5696, '/path_to/server_certificate.pem', '/path_to/client_key.pem');
         ```
 
         where:
 
-        * `PG_TDE_GLOBAL` is the constant that defines that this is the global key provider
         * `provider-name` is the name of the provider. You can specify any name, it's for you to identify the provider.
-        * `kmip-IP` is the IP address of a domain name of the KMIP server
+        * `kmip-addr` is the IP address of a domain name of the KMIP server
         * `port` is the port to communicate with the KMIP server. Typically used port is 5696.
         * `server-certificate` is the path to the certificate file for the KMIP server.
         * `client key` is the path to the client key.
@@ -50,18 +49,17 @@ Here's how to do it:
         <i warning>:material-information: Warning:</i> This example is for testing purposes only:
 
         ```
-        SELECT pg_tde_add_key_provider_kmip('PG_TDE_GLOBAL','kmip','127.0.0.1', 5696, '/tmp/server_certificate.pem', '/tmp/client_key_jane_doe.pem');
+        SELECT pg_tde_add_key_global_provider_kmip('kmip','127.0.0.1', 5696, '/tmp/server_certificate.pem', '/tmp/client_key_jane_doe.pem');
         ```
     
     === "With HashiCorp Vault"
     
         ```sql
-        SELECT pg_tde_add_key_provider_vault_v2('PG_TDE_GLOBAL','provider-name',:'secret_token','url','mount','ca_path');
+        SELECT pg_tde_add_global_key_provider_vault_v2('provider-name',:'secret_token','url','mount','ca_path');
         ``` 
 
         where: 
 
-        * `PG_TDE_GLOBAL` is the constant that defines the WAL encryption key  
         * `provider-name` is the name you define for the key provider
         * `url` is the URL of the Vault server
         * `mount` is the mount point where the keyring should store the keys
@@ -80,7 +78,7 @@ Here's how to do it:
 4. Rotate the principal key for WAL encryption. 
 
     ```sql
-    SELECT pg_tde_set_server_principal_key('PG_TDE_GLOBAL', 'new-principal-key', 'provider-name','ensure_new_key');
+    SELECT pg_tde_set_server_principal_key('new-principal-key', 'provider-name','ensure_new_key');
     ```
 
     The `ensure_new_key` parameter is set to `true` by default. It ensures that a new key must be unique. If set to `false`, an existing principal key will be reused.  
