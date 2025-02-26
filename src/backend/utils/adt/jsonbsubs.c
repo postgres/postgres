@@ -32,6 +32,83 @@ typedef struct JsonbSubWorkspace
 	Datum	   *index;			/* Subscript values in Datum format */
 } JsonbSubWorkspace;
 
+static Oid
+jsonb_subscript_type(Node *expr)
+{
+	if (expr && IsA(expr, String))
+		return TEXTOID;
+
+	return exprType(expr);
+}
+
+static Node *
+coerce_jsonpath_subscript(ParseState *pstate, Node *subExpr, Oid numtype)
+{
+	Oid			subExprType = jsonb_subscript_type(subExpr);
+	Oid			targetType = UNKNOWNOID;
+
+	if (subExprType != UNKNOWNOID)
+	{
+		Oid			targets[2] = {numtype, TEXTOID};
+
+		/*
+		 * Jsonb can handle multiple subscript types, but cases when a
+		 * subscript could be coerced to multiple target types must be
+		 * avoided, similar to overloaded functions. It could be possibly
+		 * extend with jsonpath in the future.
+		 */
+		for (int i = 0; i < 2; i++)
+		{
+			if (can_coerce_type(1, &subExprType, &targets[i], COERCION_IMPLICIT))
+			{
+				/*
+				 * One type has already succeeded, it means there are two
+				 * coercion targets possible, failure.
+				 */
+				if (targetType != UNKNOWNOID)
+					ereport(ERROR,
+							(errcode(ERRCODE_DATATYPE_MISMATCH),
+							 errmsg("subscript type %s is not supported", format_type_be(subExprType)),
+							 errhint("jsonb subscript must be coercible to only one type, integer or text."),
+							 parser_errposition(pstate, exprLocation(subExpr))));
+
+				targetType = targets[i];
+			}
+		}
+
+		/*
+		 * No suitable types were found, failure.
+		 */
+		if (targetType == UNKNOWNOID)
+			ereport(ERROR,
+					(errcode(ERRCODE_DATATYPE_MISMATCH),
+					 errmsg("subscript type %s is not supported", format_type_be(subExprType)),
+					 errhint("jsonb subscript must be coercible to either integer or text."),
+					 parser_errposition(pstate, exprLocation(subExpr))));
+	}
+	else
+		targetType = TEXTOID;
+
+	/*
+	 * We known from can_coerce_type that coercion will succeed, so
+	 * coerce_type could be used. Note the implicit coercion context, which is
+	 * required to handle subscripts of different types, similar to overloaded
+	 * functions.
+	 */
+	subExpr = coerce_type(pstate,
+						  subExpr, subExprType,
+						  targetType, -1,
+						  COERCION_IMPLICIT,
+						  COERCE_IMPLICIT_CAST,
+						  -1);
+	if (subExpr == NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_DATATYPE_MISMATCH),
+				 errmsg("jsonb subscript must have text type"),
+				 parser_errposition(pstate, exprLocation(subExpr))));
+
+	return subExpr;
+}
 
 /*
  * Finish parse analysis of a SubscriptingRef expression for a jsonb.
@@ -75,71 +152,8 @@ jsonb_subscript_transform(SubscriptingRef *sbsref,
 
 		if (ai->uidx)
 		{
-			Oid			subExprType = InvalidOid,
-						targetType = UNKNOWNOID;
-
 			subExpr = transformExpr(pstate, ai->uidx, pstate->p_expr_kind);
-			subExprType = exprType(subExpr);
-
-			if (subExprType != UNKNOWNOID)
-			{
-				Oid			targets[2] = {INT4OID, TEXTOID};
-
-				/*
-				 * Jsonb can handle multiple subscript types, but cases when a
-				 * subscript could be coerced to multiple target types must be
-				 * avoided, similar to overloaded functions. It could be
-				 * possibly extend with jsonpath in the future.
-				 */
-				for (int i = 0; i < 2; i++)
-				{
-					if (can_coerce_type(1, &subExprType, &targets[i], COERCION_IMPLICIT))
-					{
-						/*
-						 * One type has already succeeded, it means there are
-						 * two coercion targets possible, failure.
-						 */
-						if (targetType != UNKNOWNOID)
-							ereport(ERROR,
-									(errcode(ERRCODE_DATATYPE_MISMATCH),
-									 errmsg("subscript type %s is not supported", format_type_be(subExprType)),
-									 errhint("jsonb subscript must be coercible to only one type, integer or text."),
-									 parser_errposition(pstate, exprLocation(subExpr))));
-
-						targetType = targets[i];
-					}
-				}
-
-				/*
-				 * No suitable types were found, failure.
-				 */
-				if (targetType == UNKNOWNOID)
-					ereport(ERROR,
-							(errcode(ERRCODE_DATATYPE_MISMATCH),
-							 errmsg("subscript type %s is not supported", format_type_be(subExprType)),
-							 errhint("jsonb subscript must be coercible to either integer or text."),
-							 parser_errposition(pstate, exprLocation(subExpr))));
-			}
-			else
-				targetType = TEXTOID;
-
-			/*
-			 * We known from can_coerce_type that coercion will succeed, so
-			 * coerce_type could be used. Note the implicit coercion context,
-			 * which is required to handle subscripts of different types,
-			 * similar to overloaded functions.
-			 */
-			subExpr = coerce_type(pstate,
-								  subExpr, subExprType,
-								  targetType, -1,
-								  COERCION_IMPLICIT,
-								  COERCE_IMPLICIT_CAST,
-								  -1);
-			if (subExpr == NULL)
-				ereport(ERROR,
-						(errcode(ERRCODE_DATATYPE_MISMATCH),
-						 errmsg("jsonb subscript must have text type"),
-						 parser_errposition(pstate, exprLocation(subExpr))));
+			subExpr = coerce_jsonpath_subscript(pstate, subExpr, INT4OID);
 		}
 		else
 		{
