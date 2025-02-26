@@ -748,8 +748,6 @@ extern void pgstat_slru_snapshot_cb(void);
  * Functions in pgstat_wal.c
  */
 
-extern void pgstat_flush_wal(bool nowait);
-
 extern void pgstat_wal_init_backend_cb(void);
 extern bool pgstat_wal_have_pending_cb(void);
 extern bool pgstat_wal_flush_cb(bool nowait);

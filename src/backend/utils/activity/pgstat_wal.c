@@ -51,7 +51,7 @@ pgstat_report_wal(bool force)
 	nowait = !force;
 
 	/* flush wal stats */
-	pgstat_flush_wal(nowait);
+	(void) pgstat_wal_flush_cb(nowait);
 
 	/* flush IO stats */
 	pgstat_flush_io(nowait);
@@ -67,15 +67,6 @@ pgstat_fetch_stat_wal(void)
 	pgstat_snapshot_fixed(PGSTAT_KIND_WAL);
 
 	return &pgStatLocal.snapshot.wal;
-}
-
-/*
- * Simple wrapper of pgstat_wal_flush_cb()
- */
-void
-pgstat_flush_wal(bool nowait)
-{
-	(void) pgstat_wal_flush_cb(nowait);
 }
 
 /*
