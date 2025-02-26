@@ -12,7 +12,7 @@
 #include "plpython.h"
 #include "utils/memutils.h"
 
-static void PLy_plan_dealloc(PLyPlanObject *self);
+static void PLy_plan_dealloc(PyObject *arg);
 static PyObject *PLy_plan_cursor(PyObject *self, PyObject *args);
 static PyObject *PLy_plan_execute(PyObject *self, PyObject *args);
 static PyObject *PLy_plan_status(PyObject *self, PyObject *args);
@@ -26,37 +26,20 @@ static PyMethodDef PLy_plan_methods[] = {
 	{NULL, NULL, 0, NULL}
 };
 
-static PyType_Slot PLyPlan_slots[] =
-{
-	{
-		Py_tp_dealloc, PLy_plan_dealloc
-	},
-	{
-		Py_tp_doc, (char *) PLy_plan_doc
-	},
-	{
-		Py_tp_methods, PLy_plan_methods
-	},
-	{
-		0, NULL
-	}
+static PyTypeObject PLy_PlanType = {
+	PyVarObject_HEAD_INIT(NULL, 0)
+	.tp_name = "PLyPlan",
+	.tp_basicsize = sizeof(PLyPlanObject),
+	.tp_dealloc = PLy_plan_dealloc,
+	.tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
+	.tp_doc = PLy_plan_doc,
+	.tp_methods = PLy_plan_methods,
 };
-
-static PyType_Spec PLyPlan_spec =
-{
-	.name = "PLyPlan",
-		.basicsize = sizeof(PLyPlanObject),
-		.flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
-		.slots = PLyPlan_slots,
-};
-
-static PyTypeObject *PLy_PlanType;
 
 void
 PLy_plan_init_type(void)
 {
-	PLy_PlanType = (PyTypeObject *) PyType_FromSpec(&PLyPlan_spec);
-	if (!PLy_PlanType)
+	if (PyType_Ready(&PLy_PlanType) < 0)
 		elog(ERROR, "could not initialize PLy_PlanType");
 }
 
@@ -65,7 +48,7 @@ PLy_plan_new(void)
 {
 	PLyPlanObject *ob;
 
-	if ((ob = PyObject_New(PLyPlanObject, PLy_PlanType)) == NULL)
+	if ((ob = PyObject_New(PLyPlanObject, &PLy_PlanType)) == NULL)
 		return NULL;
 
 	ob->plan = NULL;
@@ -80,27 +63,25 @@ PLy_plan_new(void)
 bool
 is_PLyPlanObject(PyObject *ob)
 {
-	return ob->ob_type == PLy_PlanType;
+	return ob->ob_type == &PLy_PlanType;
 }
 
 static void
-PLy_plan_dealloc(PLyPlanObject *self)
+PLy_plan_dealloc(PyObject *arg)
 {
-	PyTypeObject *tp = Py_TYPE(self);
+	PLyPlanObject *ob = (PLyPlanObject *) arg;
 
-	if (self->plan)
+	if (ob->plan)
 	{
-		SPI_freeplan(self->plan);
-		self->plan = NULL;
+		SPI_freeplan(ob->plan);
+		ob->plan = NULL;
 	}
-	if (self->mcxt)
+	if (ob->mcxt)
 	{
-		MemoryContextDelete(self->mcxt);
-		self->mcxt = NULL;
+		MemoryContextDelete(ob->mcxt);
+		ob->mcxt = NULL;
 	}
-
-	PyObject_Free(self);
-	Py_DECREF(tp);
+	arg->ob_type->tp_free(arg);
 }
 
 
