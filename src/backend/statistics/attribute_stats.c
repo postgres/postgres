@@ -76,16 +76,16 @@ static struct StatsArgInfo attarginfo[] =
 	[NUM_ATTRIBUTE_STATS_ARGS] = {0}
 };
 
-static bool attribute_statistics_update(FunctionCallInfo fcinfo, int elevel);
+static bool attribute_statistics_update(FunctionCallInfo fcinfo);
 static Node *get_attr_expr(Relation rel, int attnum);
-static void get_attr_stat_type(Oid reloid, AttrNumber attnum, int elevel,
+static void get_attr_stat_type(Oid reloid, AttrNumber attnum,
 							   Oid *atttypid, int32 *atttypmod,
 							   char *atttyptype, Oid *atttypcoll,
 							   Oid *eq_opr, Oid *lt_opr);
-static bool get_elem_stat_type(Oid atttypid, char atttyptype, int elevel,
+static bool get_elem_stat_type(Oid atttypid, char atttyptype,
 							   Oid *elemtypid, Oid *elem_eq_opr);
 static Datum text_to_stavalues(const char *staname, FmgrInfo *array_in, Datum d,
-							   Oid typid, int32 typmod, int elevel, bool *ok);
+							   Oid typid, int32 typmod, bool *ok);
 static void set_stats_slot(Datum *values, bool *nulls, bool *replaces,
 						   int16 stakind, Oid staop, Oid stacoll,
 						   Datum stanumbers, bool stanumbers_isnull,
@@ -109,11 +109,11 @@ static void init_empty_stats_tuple(Oid reloid, int16 attnum, bool inherited,
  *
  * Major errors, such as the table not existing, the attribute not existing,
  * or a permissions failure are always reported at ERROR. Other errors, such
- * as a conversion failure on one statistic kind, are reported at 'elevel',
+ * as a conversion failure on one statistic kind, are reported as a WARNING
  * and other statistic kinds may still be updated.
  */
 static bool
-attribute_statistics_update(FunctionCallInfo fcinfo, int elevel)
+attribute_statistics_update(FunctionCallInfo fcinfo)
 {
 	Oid			reloid;
 	Name		attname;
@@ -184,33 +184,29 @@ attribute_statistics_update(FunctionCallInfo fcinfo, int elevel)
 	inherited = PG_GETARG_BOOL(INHERITED_ARG);
 
 	/*
-	 * Check argument sanity. If some arguments are unusable, emit at elevel
+	 * Check argument sanity. If some arguments are unusable, emit a WARNING
 	 * and set the corresponding argument to NULL in fcinfo.
 	 */
 
-	if (!stats_check_arg_array(fcinfo, attarginfo, MOST_COMMON_FREQS_ARG,
-							   elevel))
+	if (!stats_check_arg_array(fcinfo, attarginfo, MOST_COMMON_FREQS_ARG))
 	{
 		do_mcv = false;
 		result = false;
 	}
 
-	if (!stats_check_arg_array(fcinfo, attarginfo, MOST_COMMON_ELEM_FREQS_ARG,
-							   elevel))
+	if (!stats_check_arg_array(fcinfo, attarginfo, MOST_COMMON_ELEM_FREQS_ARG))
 	{
 		do_mcelem = false;
 		result = false;
 	}
-	if (!stats_check_arg_array(fcinfo, attarginfo, ELEM_COUNT_HISTOGRAM_ARG,
-							   elevel))
+	if (!stats_check_arg_array(fcinfo, attarginfo, ELEM_COUNT_HISTOGRAM_ARG))
 	{
 		do_dechist = false;
 		result = false;
 	}
 
 	if (!stats_check_arg_pair(fcinfo, attarginfo,
-							  MOST_COMMON_VALS_ARG, MOST_COMMON_FREQS_ARG,
-							  elevel))
+							  MOST_COMMON_VALS_ARG, MOST_COMMON_FREQS_ARG))
 	{
 		do_mcv = false;
 		result = false;
@@ -218,7 +214,7 @@ attribute_statistics_update(FunctionCallInfo fcinfo, int elevel)
 
 	if (!stats_check_arg_pair(fcinfo, attarginfo,
 							  MOST_COMMON_ELEMS_ARG,
-							  MOST_COMMON_ELEM_FREQS_ARG, elevel))
+							  MOST_COMMON_ELEM_FREQS_ARG))
 	{
 		do_mcelem = false;
 		result = false;
@@ -226,14 +222,14 @@ attribute_statistics_update(FunctionCallInfo fcinfo, int elevel)
 
 	if (!stats_check_arg_pair(fcinfo, attarginfo,
 							  RANGE_LENGTH_HISTOGRAM_ARG,
-							  RANGE_EMPTY_FRAC_ARG, elevel))
+							  RANGE_EMPTY_FRAC_ARG))
 	{
 		do_range_length_histogram = false;
 		result = false;
 	}
 
 	/* derive information from attribute */
-	get_attr_stat_type(reloid, attnum, elevel,
+	get_attr_stat_type(reloid, attnum,
 					   &atttypid, &atttypmod,
 					   &atttyptype, &atttypcoll,
 					   &eq_opr, &lt_opr);
@@ -241,10 +237,10 @@ attribute_statistics_update(FunctionCallInfo fcinfo, int elevel)
 	/* if needed, derive element type */
 	if (do_mcelem || do_dechist)
 	{
-		if (!get_elem_stat_type(atttypid, atttyptype, elevel,
+		if (!get_elem_stat_type(atttypid, atttyptype,
 								&elemtypid, &elem_eq_opr))
 		{
-			ereport(elevel,
+			ereport(WARNING,
 					(errmsg("unable to determine element type of attribute \"%s\"", NameStr(*attname)),
 					 errdetail("Cannot set STATISTIC_KIND_MCELEM or STATISTIC_KIND_DECHIST.")));
 			elemtypid = InvalidOid;
@@ -259,7 +255,7 @@ attribute_statistics_update(FunctionCallInfo fcinfo, int elevel)
 	/* histogram and correlation require less-than operator */
 	if ((do_histogram || do_correlation) && !OidIsValid(lt_opr))
 	{
-		ereport(elevel,
+		ereport(WARNING,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("could not determine less-than operator for attribute \"%s\"", NameStr(*attname)),
 				 errdetail("Cannot set STATISTIC_KIND_HISTOGRAM or STATISTIC_KIND_CORRELATION.")));
@@ -273,7 +269,7 @@ attribute_statistics_update(FunctionCallInfo fcinfo, int elevel)
 	if ((do_range_length_histogram || do_bounds_histogram) &&
 		!(atttyptype == TYPTYPE_RANGE || atttyptype == TYPTYPE_MULTIRANGE))
 	{
-		ereport(elevel,
+		ereport(WARNING,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("attribute \"%s\" is not a range type", NameStr(*attname)),
 				 errdetail("Cannot set STATISTIC_KIND_RANGE_LENGTH_HISTOGRAM or STATISTIC_KIND_BOUNDS_HISTOGRAM.")));
@@ -322,7 +318,7 @@ attribute_statistics_update(FunctionCallInfo fcinfo, int elevel)
 												  &array_in_fn,
 												  PG_GETARG_DATUM(MOST_COMMON_VALS_ARG),
 												  atttypid, atttypmod,
-												  elevel, &converted);
+												  &converted);
 
 		if (converted)
 		{
@@ -344,7 +340,7 @@ attribute_statistics_update(FunctionCallInfo fcinfo, int elevel)
 		stavalues = text_to_stavalues("histogram_bounds",
 									  &array_in_fn,
 									  PG_GETARG_DATUM(HISTOGRAM_BOUNDS_ARG),
-									  atttypid, atttypmod, elevel,
+									  atttypid, atttypmod,
 									  &converted);
 
 		if (converted)
@@ -382,7 +378,7 @@ attribute_statistics_update(FunctionCallInfo fcinfo, int elevel)
 									  &array_in_fn,
 									  PG_GETARG_DATUM(MOST_COMMON_ELEMS_ARG),
 									  elemtypid, atttypmod,
-									  elevel, &converted);
+									  &converted);
 
 		if (converted)
 		{
@@ -422,7 +418,7 @@ attribute_statistics_update(FunctionCallInfo fcinfo, int elevel)
 									  &array_in_fn,
 									  PG_GETARG_DATUM(RANGE_BOUNDS_HISTOGRAM_ARG),
 									  atttypid, atttypmod,
-									  elevel, &converted);
+									  &converted);
 
 		if (converted)
 		{
@@ -449,7 +445,7 @@ attribute_statistics_update(FunctionCallInfo fcinfo, int elevel)
 		stavalues = text_to_stavalues("range_length_histogram",
 									  &array_in_fn,
 									  PG_GETARG_DATUM(RANGE_LENGTH_HISTOGRAM_ARG),
-									  FLOAT8OID, 0, elevel, &converted);
+									  FLOAT8OID, 0, &converted);
 
 		if (converted)
 		{
@@ -517,7 +513,7 @@ get_attr_expr(Relation rel, int attnum)
  * Derive type information from the attribute.
  */
 static void
-get_attr_stat_type(Oid reloid, AttrNumber attnum, int elevel,
+get_attr_stat_type(Oid reloid, AttrNumber attnum,
 				   Oid *atttypid, int32 *atttypmod,
 				   char *atttyptype, Oid *atttypcoll,
 				   Oid *eq_opr, Oid *lt_opr)
@@ -599,7 +595,7 @@ get_attr_stat_type(Oid reloid, AttrNumber attnum, int elevel,
  * Derive element type information from the attribute type.
  */
 static bool
-get_elem_stat_type(Oid atttypid, char atttyptype, int elevel,
+get_elem_stat_type(Oid atttypid, char atttyptype,
 				   Oid *elemtypid, Oid *elem_eq_opr)
 {
 	TypeCacheEntry *elemtypcache;
@@ -634,13 +630,13 @@ get_elem_stat_type(Oid atttypid, char atttyptype, int elevel,
 /*
  * Cast a text datum into an array with element type elemtypid.
  *
- * If an error is encountered, capture it and re-throw at elevel, and set ok
- * to false. If the resulting array contains NULLs, raise an error at elevel
- * and set ok to false. Otherwise, set ok to true.
+ * If an error is encountered, capture it and re-throw a WARNING, and set ok
+ * to false. If the resulting array contains NULLs, raise a WARNING and set ok
+ * to false. Otherwise, set ok to true.
  */
 static Datum
 text_to_stavalues(const char *staname, FmgrInfo *array_in, Datum d, Oid typid,
-				  int32 typmod, int elevel, bool *ok)
+				  int32 typmod, bool *ok)
 {
 	LOCAL_FCINFO(fcinfo, 8);
 	char	   *s;
@@ -667,8 +663,7 @@ text_to_stavalues(const char *staname, FmgrInfo *array_in, Datum d, Oid typid,
 
 	if (escontext.error_occurred)
 	{
-		if (elevel != ERROR)
-			escontext.error_data->elevel = elevel;
+		escontext.error_data->elevel = WARNING;
 		ThrowErrorData(escontext.error_data);
 		*ok = false;
 		return (Datum) 0;
@@ -676,7 +671,7 @@ text_to_stavalues(const char *staname, FmgrInfo *array_in, Datum d, Oid typid,
 
 	if (array_contains_nulls(DatumGetArrayTypeP(result)))
 	{
-		ereport(elevel,
+		ereport(WARNING,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("\"%s\" array cannot contain NULL values", staname)));
 		*ok = false;
@@ -852,33 +847,6 @@ init_empty_stats_tuple(Oid reloid, int16 attnum, bool inherited,
 }
 
 /*
- * Import statistics for a given relation attribute.
- *
- * Inserts or replaces a row in pg_statistic for the given relation and
- * attribute name. It takes input parameters that correspond to columns in the
- * view pg_stats.
- *
- * Parameters null_frac, avg_width, and n_distinct all correspond to NOT NULL
- * columns in pg_statistic. The remaining parameters all belong to a specific
- * stakind. Some stakinds require multiple parameters, which must be specified
- * together (or neither specified).
- *
- * Parameters are only superficially validated. Omitting a parameter or
- * passing NULL leaves the statistic unchanged.
- *
- * Parameters corresponding to ANYARRAY columns are instead passed in as text
- * values, which is a valid input string for an array of the type or element
- * type of the attribute. Any error generated by the array_in() function will
- * in turn fail the function.
- */
-Datum
-pg_set_attribute_stats(PG_FUNCTION_ARGS)
-{
-	attribute_statistics_update(fcinfo, ERROR);
-	PG_RETURN_VOID();
-}
-
-/*
  * Delete statistics for the given attribute.
  */
 Datum
@@ -933,10 +901,10 @@ pg_restore_attribute_stats(PG_FUNCTION_ARGS)
 							 InvalidOid, NULL, NULL);
 
 	if (!stats_fill_fcinfo_from_arg_pairs(fcinfo, positional_fcinfo,
-										  attarginfo, WARNING))
+										  attarginfo))
 		result = false;
 
-	if (!attribute_statistics_update(positional_fcinfo, WARNING))
+	if (!attribute_statistics_update(positional_fcinfo))
 		result = false;
 
 	PG_RETURN_BOOL(result);

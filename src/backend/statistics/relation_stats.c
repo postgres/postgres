@@ -48,13 +48,13 @@ static struct StatsArgInfo relarginfo[] =
 	[NUM_RELATION_STATS_ARGS] = {0}
 };
 
-static bool relation_statistics_update(FunctionCallInfo fcinfo, int elevel);
+static bool relation_statistics_update(FunctionCallInfo fcinfo);
 
 /*
  * Internal function for modifying statistics for a relation.
  */
 static bool
-relation_statistics_update(FunctionCallInfo fcinfo, int elevel)
+relation_statistics_update(FunctionCallInfo fcinfo)
 {
 	bool		result = true;
 	Oid			reloid;
@@ -83,7 +83,7 @@ relation_statistics_update(FunctionCallInfo fcinfo, int elevel)
 		reltuples = PG_GETARG_FLOAT4(RELTUPLES_ARG);
 		if (reltuples < -1.0)
 		{
-			ereport(elevel,
+			ereport(WARNING,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 					 errmsg("reltuples cannot be < -1.0")));
 			result = false;
@@ -118,7 +118,7 @@ relation_statistics_update(FunctionCallInfo fcinfo, int elevel)
 	ctup = SearchSysCache1(RELOID, ObjectIdGetDatum(reloid));
 	if (!HeapTupleIsValid(ctup))
 	{
-		ereport(elevel,
+		ereport(WARNING,
 				(errcode(ERRCODE_OBJECT_IN_USE),
 				 errmsg("pg_class entry for relid %u not found", reloid)));
 		table_close(crel, RowExclusiveLock);
@@ -170,16 +170,6 @@ relation_statistics_update(FunctionCallInfo fcinfo, int elevel)
 }
 
 /*
- * Set statistics for a given pg_class entry.
- */
-Datum
-pg_set_relation_stats(PG_FUNCTION_ARGS)
-{
-	relation_statistics_update(fcinfo, ERROR);
-	PG_RETURN_VOID();
-}
-
-/*
  * Clear statistics for a given pg_class entry; that is, set back to initial
  * stats for a newly-created table.
  */
@@ -199,7 +189,7 @@ pg_clear_relation_stats(PG_FUNCTION_ARGS)
 	newfcinfo->args[3].value = UInt32GetDatum(0);
 	newfcinfo->args[3].isnull = false;
 
-	relation_statistics_update(newfcinfo, ERROR);
+	relation_statistics_update(newfcinfo);
 	PG_RETURN_VOID();
 }
 
@@ -214,10 +204,10 @@ pg_restore_relation_stats(PG_FUNCTION_ARGS)
 							 InvalidOid, NULL, NULL);
 
 	if (!stats_fill_fcinfo_from_arg_pairs(fcinfo, positional_fcinfo,
-										  relarginfo, WARNING))
+										  relarginfo))
 		result = false;
 
-	if (!relation_statistics_update(positional_fcinfo, WARNING))
+	if (!relation_statistics_update(positional_fcinfo))
 		result = false;
 
 	PG_RETURN_BOOL(result);

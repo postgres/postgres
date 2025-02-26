@@ -12,6 +12,7 @@ CREATE TABLE stats_import.test(
     arange int4range,
     tags text[]
 ) WITH (autovacuum_enabled = false);
+CREATE INDEX test_i ON stats_import.test(id);
 -- starting stats
 SELECT relpages, reltuples, relallvisible
 FROM pg_class
@@ -21,80 +22,15 @@ WHERE oid = 'stats_import.test'::regclass;
         0 |        -1 |             0
 (1 row)
 
--- error: regclass not found
-SELECT
-    pg_catalog.pg_set_relation_stats(
-        relation => 0::Oid,
-        relpages => 17::integer,
-        reltuples => 400.0::real,
-        relallvisible => 4::integer);
-ERROR:  could not open relation with OID 0
--- relpages default
-SELECT
-    pg_catalog.pg_set_relation_stats(
-        relation => 'stats_import.test'::regclass,
-        relpages => NULL::integer,
-        reltuples => 400.0::real,
-        relallvisible => 4::integer);
- pg_set_relation_stats 
------------------------
- 
-(1 row)
-
--- reltuples default
-SELECT
-    pg_catalog.pg_set_relation_stats(
-        relation => 'stats_import.test'::regclass,
-        relpages => 17::integer,
-        reltuples => NULL::real,
-        relallvisible => 4::integer);
- pg_set_relation_stats 
------------------------
- 
-(1 row)
-
--- relallvisible default
-SELECT
-    pg_catalog.pg_set_relation_stats(
-        relation => 'stats_import.test'::regclass,
-        relpages => 17::integer,
-        reltuples => 400.0::real,
-        relallvisible => NULL::integer);
- pg_set_relation_stats 
------------------------
- 
-(1 row)
-
--- named arguments
-SELECT
-    pg_catalog.pg_set_relation_stats(
-        relation => 'stats_import.test'::regclass,
-        relpages => 17::integer,
-        reltuples => 400.0::real,
-        relallvisible => 4::integer);
- pg_set_relation_stats 
------------------------
- 
-(1 row)
-
-SELECT relpages, reltuples, relallvisible
-FROM pg_class
-WHERE oid = 'stats_import.test'::regclass;
- relpages | reltuples | relallvisible 
-----------+-----------+---------------
-       17 |       400 |             4
-(1 row)
-
-CREATE INDEX test_i ON stats_import.test(id);
 BEGIN;
 -- regular indexes have special case locking rules
 SELECT
-    pg_catalog.pg_set_relation_stats(
-        relation => 'stats_import.test_i'::regclass,
-        relpages => 18::integer);
- pg_set_relation_stats 
------------------------
- 
+    pg_catalog.pg_restore_relation_stats(
+        'relation', 'stats_import.test_i'::regclass,
+        'relpages', 18::integer);
+ pg_restore_relation_stats 
+---------------------------
+ t
 (1 row)
 
 SELECT mode FROM pg_locks
@@ -123,34 +59,6 @@ SELECT
  t
 (1 row)
 
--- positional arguments
-SELECT
-    pg_catalog.pg_set_relation_stats(
-        'stats_import.test'::regclass,
-        18::integer,
-        401.0::real,
-        5::integer);
- pg_set_relation_stats 
------------------------
- 
-(1 row)
-
-SELECT relpages, reltuples, relallvisible
-FROM pg_class
-WHERE oid = 'stats_import.test'::regclass;
- relpages | reltuples | relallvisible 
-----------+-----------+---------------
-       18 |       401 |             5
-(1 row)
-
-SELECT relpages, reltuples, relallvisible
-FROM pg_class
-WHERE oid = 'stats_import.test'::regclass;
- relpages | reltuples | relallvisible 
-----------+-----------+---------------
-       18 |       401 |             5
-(1 row)
-
 -- clear
 SELECT
     pg_catalog.pg_clear_relation_stats(
@@ -168,19 +76,6 @@ WHERE oid = 'stats_import.test'::regclass;
         0 |        -1 |             0
 (1 row)
 
--- invalid relkinds for statistics
-CREATE SEQUENCE stats_import.testseq;
-CREATE VIEW stats_import.testview AS SELECT * FROM stats_import.test;
-SELECT
-    pg_catalog.pg_clear_relation_stats(
-        'stats_import.testseq'::regclass);
-ERROR:  cannot modify statistics for relation "testseq"
-DETAIL:  This operation is not supported for sequences.
-SELECT
-    pg_catalog.pg_clear_relation_stats(
-        'stats_import.testview'::regclass);
-ERROR:  cannot modify statistics for relation "testview"
-DETAIL:  This operation is not supported for views.
 --  relpages may be -1 for partitioned tables
 CREATE TABLE stats_import.part_parent ( i integer ) PARTITION BY RANGE(i);
 CREATE TABLE stats_import.part_child_1
@@ -200,21 +95,21 @@ WHERE oid = 'stats_import.part_parent'::regclass;
 -- although partitioned tables have no storage, setting relpages to a
 -- positive value is still allowed
 SELECT
-    pg_catalog.pg_set_relation_stats(
-        relation => 'stats_import.part_parent_i'::regclass,
-        relpages => 2::integer);
- pg_set_relation_stats 
------------------------
- 
+    pg_catalog.pg_restore_relation_stats(
+        'relation', 'stats_import.part_parent_i'::regclass,
+        'relpages', 2::integer);
+ pg_restore_relation_stats 
+---------------------------
+ t
 (1 row)
 
 SELECT
-    pg_catalog.pg_set_relation_stats(
-        relation => 'stats_import.part_parent'::regclass,
-        relpages => 2::integer);
- pg_set_relation_stats 
------------------------
- 
+    pg_catalog.pg_restore_relation_stats(
+        'relation', 'stats_import.part_parent'::regclass,
+        'relpages', 2::integer);
+ pg_restore_relation_stats 
+---------------------------
+ t
 (1 row)
 
 --
@@ -225,12 +120,12 @@ SELECT
 --
 BEGIN;
 SELECT
-    pg_catalog.pg_set_relation_stats(
-        relation => 'stats_import.part_parent_i'::regclass,
-        relpages => 2::integer);
- pg_set_relation_stats 
------------------------
- 
+    pg_catalog.pg_restore_relation_stats(
+        'relation', 'stats_import.part_parent_i'::regclass,
+        'relpages', 2::integer);
+ pg_restore_relation_stats 
+---------------------------
+ t
 (1 row)
 
 SELECT mode FROM pg_locks
@@ -261,527 +156,14 @@ SELECT
 
 -- nothing stops us from setting it to -1
 SELECT
-    pg_catalog.pg_set_relation_stats(
-        relation => 'stats_import.part_parent'::regclass,
-        relpages => -1::integer);
- pg_set_relation_stats 
------------------------
- 
+    pg_catalog.pg_restore_relation_stats(
+        'relation', 'stats_import.part_parent'::regclass,
+        'relpages', -1::integer);
+ pg_restore_relation_stats 
+---------------------------
+ t
 (1 row)
 
--- error: object doesn't exist
-SELECT pg_catalog.pg_set_attribute_stats(
-    relation => '0'::oid,
-    attname => 'id'::name,
-    inherited => false::boolean,
-    null_frac => 0.1::real,
-    avg_width => 2::integer,
-    n_distinct => 0.3::real);
-ERROR:  could not open relation with OID 0
--- error: object doesn't exist
-SELECT pg_catalog.pg_clear_attribute_stats(
-    relation => '0'::oid,
-    attname => 'id'::name,
-    inherited => false::boolean);
-ERROR:  could not open relation with OID 0
--- error: relation null
-SELECT pg_catalog.pg_set_attribute_stats(
-    relation => NULL::oid,
-    attname => 'id'::name,
-    inherited => false::boolean,
-    null_frac => 0.1::real,
-    avg_width => 2::integer,
-    n_distinct => 0.3::real);
-ERROR:  "relation" cannot be NULL
--- error: attribute is system column
-SELECT pg_catalog.pg_set_attribute_stats(
-    relation => 'stats_import.test'::regclass,
-    attname => 'xmin'::name,
-    inherited => false::boolean,
-    null_frac => 0.1::real,
-    avg_width => 2::integer,
-    n_distinct => 0.3::real);
-ERROR:  cannot modify statistics on system column "xmin"
--- error: attname doesn't exist
-SELECT pg_catalog.pg_set_attribute_stats(
-    relation => 'stats_import.test'::regclass,
-    attname => 'nope'::name,
-    inherited => false::boolean,
-    null_frac => 0.1::real,
-    avg_width => 2::integer,
-    n_distinct => 0.3::real);
-ERROR:  column "nope" of relation "test" does not exist
--- error: attribute is system column
-SELECT pg_catalog.pg_clear_attribute_stats(
-    relation => 'stats_import.test'::regclass,
-    attname => 'ctid'::name,
-    inherited => false::boolean);
-ERROR:  cannot clear statistics on system column "ctid"
--- error: attname doesn't exist
-SELECT pg_catalog.pg_clear_attribute_stats(
-    relation => 'stats_import.test'::regclass,
-    attname => 'nope'::name,
-    inherited => false::boolean);
-ERROR:  column "nope" of relation "test" does not exist
--- error: attname null
-SELECT pg_catalog.pg_set_attribute_stats(
-    relation => 'stats_import.test'::regclass,
-    attname => NULL::name,
-    inherited => false::boolean,
-    null_frac => 0.1::real,
-    avg_width => 2::integer,
-    n_distinct => 0.3::real);
-ERROR:  "attname" cannot be NULL
--- error: inherited null
-SELECT pg_catalog.pg_set_attribute_stats(
-    relation => 'stats_import.test'::regclass,
-    attname => 'id'::name,
-    inherited => NULL::boolean,
-    null_frac => 0.1::real,
-    avg_width => 2::integer,
-    n_distinct => 0.3::real);
-ERROR:  "inherited" cannot be NULL
--- ok: no stakinds
-SELECT pg_catalog.pg_set_attribute_stats(
-    relation => 'stats_import.test'::regclass,
-    attname => 'id'::name,
-    inherited => false::boolean,
-    null_frac => 0.1::real,
-    avg_width => 2::integer,
-    n_distinct => 0.3::real);
- pg_set_attribute_stats 
-------------------------
- 
-(1 row)
-
-SELECT stanullfrac, stawidth, stadistinct
-FROM pg_statistic
-WHERE starelid = 'stats_import.test'::regclass;
- stanullfrac | stawidth | stadistinct 
--------------+----------+-------------
-         0.1 |        2 |         0.3
-(1 row)
-
--- error: mcv / mcf null mismatch
-SELECT pg_catalog.pg_set_attribute_stats(
-    relation => 'stats_import.test'::regclass,
-    attname => 'id'::name,
-    inherited => false::boolean,
-    null_frac => 0.5::real,
-    avg_width => 2::integer,
-    n_distinct => -0.1::real,
-    most_common_freqs => '{0.1,0.2,0.3}'::real[]
-    );
-ERROR:  "most_common_vals" must be specified when "most_common_freqs" is specified
--- error: mcv / mcf null mismatch part 2
-SELECT pg_catalog.pg_set_attribute_stats(
-    relation => 'stats_import.test'::regclass,
-    attname => 'id'::name,
-    inherited => false::boolean,
-    null_frac => 0.5::real,
-    avg_width => 2::integer,
-    n_distinct => -0.1::real,
-    most_common_vals => '{1,2,3}'::text
-    );
-ERROR:  "most_common_freqs" must be specified when "most_common_vals" is specified
--- error: mcv / mcf type mismatch
-SELECT pg_catalog.pg_set_attribute_stats(
-    relation => 'stats_import.test'::regclass,
-    attname => 'id'::name,
-    inherited => false::boolean,
-    null_frac => 0.5::real,
-    avg_width => 2::integer,
-    n_distinct => -0.1::real,
-    most_common_vals => '{2023-09-30,2024-10-31,3}'::text,
-    most_common_freqs => '{0.2,0.1}'::real[]
-    );
-ERROR:  invalid input syntax for type integer: "2023-09-30"
--- error: mcv cast failure
-SELECT pg_catalog.pg_set_attribute_stats(
-    relation => 'stats_import.test'::regclass,
-    attname => 'id'::name,
-    inherited => false::boolean,
-    null_frac => 0.5::real,
-    avg_width => 2::integer,
-    n_distinct => -0.1::real,
-    most_common_vals => '{2,four,3}'::text,
-    most_common_freqs => '{0.3,0.25,0.05}'::real[]
-    );
-ERROR:  invalid input syntax for type integer: "four"
--- ok: mcv+mcf
-SELECT pg_catalog.pg_set_attribute_stats(
-    relation => 'stats_import.test'::regclass,
-    attname => 'id'::name,
-    inherited => false::boolean,
-    null_frac => 0.5::real,
-    avg_width => 2::integer,
-    n_distinct => -0.1::real,
-    most_common_vals => '{2,1,3}'::text,
-    most_common_freqs => '{0.3,0.25,0.05}'::real[]
-    );
- pg_set_attribute_stats 
-------------------------
- 
-(1 row)
-
-SELECT *
-FROM pg_stats
-WHERE schemaname = 'stats_import'
-AND tablename = 'test'
-AND inherited = false
-AND attname = 'id';
-  schemaname  | tablename | attname | inherited | null_frac | avg_width | n_distinct | most_common_vals | most_common_freqs | histogram_bounds | correlation | most_common_elems | most_common_elem_freqs | elem_count_histogram | range_length_histogram | range_empty_frac | range_bounds_histogram 
---------------+-----------+---------+-----------+-----------+-----------+------------+------------------+-------------------+------------------+-------------+-------------------+------------------------+----------------------+------------------------+------------------+------------------------
- stats_import | test      | id      | f         |       0.5 |         2 |       -0.1 | {2,1,3}          | {0.3,0.25,0.05}   |                  |             |                   |                        |                      |                        |                  | 
-(1 row)
-
--- error: histogram elements null value
--- this generates no warnings, but perhaps it should
-SELECT pg_catalog.pg_set_attribute_stats(
-    relation => 'stats_import.test'::regclass,
-    attname => 'id'::name,
-    inherited => false::boolean,
-    null_frac => 0.5::real,
-    avg_width => 2::integer,
-    n_distinct => -0.1::real,
-    histogram_bounds => '{1,NULL,3,4}'::text
-    );
-ERROR:  "histogram_bounds" array cannot contain NULL values
--- ok: histogram_bounds
-SELECT pg_catalog.pg_set_attribute_stats(
-    relation => 'stats_import.test'::regclass,
-    attname => 'id'::name,
-    inherited => false::boolean,
-    null_frac => 0.5::real,
-    avg_width => 2::integer,
-    n_distinct => -0.1::real,
-    histogram_bounds => '{1,2,3,4}'::text
-    );
- pg_set_attribute_stats 
-------------------------
- 
-(1 row)
-
-SELECT *
-FROM pg_stats
-WHERE schemaname = 'stats_import'
-AND tablename = 'test'
-AND inherited = false
-AND attname = 'id';
-  schemaname  | tablename | attname | inherited | null_frac | avg_width | n_distinct | most_common_vals | most_common_freqs | histogram_bounds | correlation | most_common_elems | most_common_elem_freqs | elem_count_histogram | range_length_histogram | range_empty_frac | range_bounds_histogram 
---------------+-----------+---------+-----------+-----------+-----------+------------+------------------+-------------------+------------------+-------------+-------------------+------------------------+----------------------+------------------------+------------------+------------------------
- stats_import | test      | id      | f         |       0.5 |         2 |       -0.1 | {2,1,3}          | {0.3,0.25,0.05}   | {1,2,3,4}        |             |                   |                        |                      |                        |                  | 
-(1 row)
-
--- ok: correlation
-SELECT pg_catalog.pg_set_attribute_stats(
-    relation => 'stats_import.test'::regclass,
-    attname => 'id'::name,
-    inherited => false::boolean,
-    null_frac => 0.5::real,
-    avg_width => 2::integer,
-    n_distinct => -0.1::real,
-    correlation => 0.5::real);
- pg_set_attribute_stats 
-------------------------
- 
-(1 row)
-
-SELECT *
-FROM pg_stats
-WHERE schemaname = 'stats_import'
-AND tablename = 'test'
-AND inherited = false
-AND attname = 'id';
-  schemaname  | tablename | attname | inherited | null_frac | avg_width | n_distinct | most_common_vals | most_common_freqs | histogram_bounds | correlation | most_common_elems | most_common_elem_freqs | elem_count_histogram | range_length_histogram | range_empty_frac | range_bounds_histogram 
---------------+-----------+---------+-----------+-----------+-----------+------------+------------------+-------------------+------------------+-------------+-------------------+------------------------+----------------------+------------------------+------------------+------------------------
- stats_import | test      | id      | f         |       0.5 |         2 |       -0.1 | {2,1,3}          | {0.3,0.25,0.05}   | {1,2,3,4}        |         0.5 |                   |                        |                      |                        |                  | 
-(1 row)
-
--- error: scalars can't have mcelem
-SELECT pg_catalog.pg_set_attribute_stats(
-    relation => 'stats_import.test'::regclass,
-    attname => 'id'::name,
-    inherited => false::boolean,
-    null_frac => 0.5::real,
-    avg_width => 2::integer,
-    n_distinct => -0.1::real,
-    most_common_elems => '{1,3}'::text,
-    most_common_elem_freqs => '{0.3,0.2,0.2,0.3,0.0}'::real[]
-    );
-ERROR:  unable to determine element type of attribute "id"
-DETAIL:  Cannot set STATISTIC_KIND_MCELEM or STATISTIC_KIND_DECHIST.
--- error: mcelem / mcelem mismatch
-SELECT pg_catalog.pg_set_attribute_stats(
-    relation => 'stats_import.test'::regclass,
-    attname => 'tags'::name,
-    inherited => false::boolean,
-    null_frac => 0.5::real,
-    avg_width => 2::integer,
-    n_distinct => -0.1::real,
-    most_common_elems => '{one,two}'::text
-    );
-ERROR:  "most_common_elem_freqs" must be specified when "most_common_elems" is specified
--- error: mcelem / mcelem null mismatch part 2
-SELECT pg_catalog.pg_set_attribute_stats(
-    relation => 'stats_import.test'::regclass,
-    attname => 'tags'::name,
-    inherited => false::boolean,
-    null_frac => 0.5::real,
-    avg_width => 2::integer,
-    n_distinct => -0.1::real,
-    most_common_elem_freqs => '{0.3,0.2,0.2,0.3}'::real[]
-    );
-ERROR:  "most_common_elems" must be specified when "most_common_elem_freqs" is specified
--- ok: mcelem
-SELECT pg_catalog.pg_set_attribute_stats(
-    relation => 'stats_import.test'::regclass,
-    attname => 'tags'::name,
-    inherited => false::boolean,
-    null_frac => 0.5::real,
-    avg_width => 2::integer,
-    n_distinct => -0.1::real,
-    most_common_elems => '{one,three}'::text,
-    most_common_elem_freqs => '{0.3,0.2,0.2,0.3,0.0}'::real[]
-    );
- pg_set_attribute_stats 
-------------------------
- 
-(1 row)
-
-SELECT *
-FROM pg_stats
-WHERE schemaname = 'stats_import'
-AND tablename = 'test'
-AND inherited = false
-AND attname = 'tags';
-  schemaname  | tablename | attname | inherited | null_frac | avg_width | n_distinct | most_common_vals | most_common_freqs | histogram_bounds | correlation | most_common_elems | most_common_elem_freqs | elem_count_histogram | range_length_histogram | range_empty_frac | range_bounds_histogram 
---------------+-----------+---------+-----------+-----------+-----------+------------+------------------+-------------------+------------------+-------------+-------------------+------------------------+----------------------+------------------------+------------------+------------------------
- stats_import | test      | tags    | f         |       0.5 |         2 |       -0.1 |                  |                   |                  |             | {one,three}       | {0.3,0.2,0.2,0.3,0}    |                      |                        |                  | 
-(1 row)
-
--- error: scalars can't have elem_count_histogram
-SELECT pg_catalog.pg_set_attribute_stats(
-    relation => 'stats_import.test'::regclass,
-    attname => 'id'::name,
-    inherited => false::boolean,
-    null_frac => 0.5::real,
-    avg_width => 2::integer,
-    n_distinct => -0.1::real,
-    elem_count_histogram => '{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1}'::real[]
-    );
-ERROR:  unable to determine element type of attribute "id"
-DETAIL:  Cannot set STATISTIC_KIND_MCELEM or STATISTIC_KIND_DECHIST.
--- error: elem_count_histogram null element
-SELECT pg_catalog.pg_set_attribute_stats(
-    relation => 'stats_import.test'::regclass,
-    attname => 'tags'::name,
-    inherited => false::boolean,
-    null_frac => 0.5::real,
-    avg_width => 2::integer,
-    n_distinct => -0.1::real,
-    elem_count_histogram => '{1,1,NULL,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1}'::real[]
-    );
-ERROR:  "elem_count_histogram" array cannot contain NULL values
--- ok: elem_count_histogram
-SELECT pg_catalog.pg_set_attribute_stats(
-    relation => 'stats_import.test'::regclass,
-    attname => 'tags'::name,
-    inherited => false::boolean,
-    null_frac => 0.5::real,
-    avg_width => 2::integer,
-    n_distinct => -0.1::real,
-    elem_count_histogram => '{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1}'::real[]
-    );
- pg_set_attribute_stats 
-------------------------
- 
-(1 row)
-
-SELECT *
-FROM pg_stats
-WHERE schemaname = 'stats_import'
-AND tablename = 'test'
-AND inherited = false
-AND attname = 'tags';
-  schemaname  | tablename | attname | inherited | null_frac | avg_width | n_distinct | most_common_vals | most_common_freqs | histogram_bounds | correlation | most_common_elems | most_common_elem_freqs |                                                                                            elem_count_histogram                                                                                             | range_length_histogram | range_empty_frac | range_bounds_histogram 
---------------+-----------+---------+-----------+-----------+-----------+------------+------------------+-------------------+------------------+-------------+-------------------+------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+------------------------+------------------+------------------------
- stats_import | test      | tags    | f         |       0.5 |         2 |       -0.1 |                  |                   |                  |             | {one,three}       | {0.3,0.2,0.2,0.3,0}    | {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1} |                        |                  | 
-(1 row)
-
--- error: scalars can't have range stats
-SELECT pg_catalog.pg_set_attribute_stats(
-    relation => 'stats_import.test'::regclass,
-    attname => 'id'::name,
-    inherited => false::boolean,
-    null_frac => 0.5::real,
-    avg_width => 2::integer,
-    n_distinct => -0.1::real,
-    range_empty_frac => 0.5::real,
-    range_length_histogram => '{399,499,Infinity}'::text
-    );
-ERROR:  attribute "id" is not a range type
-DETAIL:  Cannot set STATISTIC_KIND_RANGE_LENGTH_HISTOGRAM or STATISTIC_KIND_BOUNDS_HISTOGRAM.
--- error: range_empty_frac range_length_hist null mismatch
-SELECT pg_catalog.pg_set_attribute_stats(
-    relation => 'stats_import.test'::regclass,
-    attname => 'arange'::name,
-    inherited => false::boolean,
-    null_frac => 0.5::real,
-    avg_width => 2::integer,
-    n_distinct => -0.1::real,
-    range_length_histogram => '{399,499,Infinity}'::text
-    );
-ERROR:  "range_empty_frac" must be specified when "range_length_histogram" is specified
--- error: range_empty_frac range_length_hist null mismatch part 2
-SELECT pg_catalog.pg_set_attribute_stats(
-    relation => 'stats_import.test'::regclass,
-    attname => 'arange'::name,
-    inherited => false::boolean,
-    null_frac => 0.5::real,
-    avg_width => 2::integer,
-    n_distinct => -0.1::real,
-    range_empty_frac => 0.5::real
-    );
-ERROR:  "range_length_histogram" must be specified when "range_empty_frac" is specified
--- ok: range_empty_frac + range_length_hist
-SELECT pg_catalog.pg_set_attribute_stats(
-    relation => 'stats_import.test'::regclass,
-    attname => 'arange'::name,
-    inherited => false::boolean,
-    null_frac => 0.5::real,
-    avg_width => 2::integer,
-    n_distinct => -0.1::real,
-    range_empty_frac => 0.5::real,
-    range_length_histogram => '{399,499,Infinity}'::text
-    );
- pg_set_attribute_stats 
-------------------------
- 
-(1 row)
-
-SELECT *
-FROM pg_stats
-WHERE schemaname = 'stats_import'
-AND tablename = 'test'
-AND inherited = false
-AND attname = 'arange';
-  schemaname  | tablename | attname | inherited | null_frac | avg_width | n_distinct | most_common_vals | most_common_freqs | histogram_bounds | correlation | most_common_elems | most_common_elem_freqs | elem_count_histogram | range_length_histogram | range_empty_frac | range_bounds_histogram 
---------------+-----------+---------+-----------+-----------+-----------+------------+------------------+-------------------+------------------+-------------+-------------------+------------------------+----------------------+------------------------+------------------+------------------------
- stats_import | test      | arange  | f         |       0.5 |         2 |       -0.1 |                  |                   |                  |             |                   |                        |                      | {399,499,Infinity}     |              0.5 | 
-(1 row)
-
--- error: scalars can't have range stats
-SELECT pg_catalog.pg_set_attribute_stats(
-    relation => 'stats_import.test'::regclass,
-    attname => 'id'::name,
-    inherited => false::boolean,
-    null_frac => 0.5::real,
-    avg_width => 2::integer,
-    n_distinct => -0.1::real,
-    range_bounds_histogram => '{"[-1,1)","[0,4)","[1,4)","[1,100)"}'::text
-    );
-ERROR:  attribute "id" is not a range type
-DETAIL:  Cannot set STATISTIC_KIND_RANGE_LENGTH_HISTOGRAM or STATISTIC_KIND_BOUNDS_HISTOGRAM.
--- ok: range_bounds_histogram
-SELECT pg_catalog.pg_set_attribute_stats(
-    relation => 'stats_import.test'::regclass,
-    attname => 'arange'::name,
-    inherited => false::boolean,
-    null_frac => 0.5::real,
-    avg_width => 2::integer,
-    n_distinct => -0.1::real,
-    range_bounds_histogram => '{"[-1,1)","[0,4)","[1,4)","[1,100)"}'::text
-    );
- pg_set_attribute_stats 
-------------------------
- 
-(1 row)
-
-SELECT *
-FROM pg_stats
-WHERE schemaname = 'stats_import'
-AND tablename = 'test'
-AND inherited = false
-AND attname = 'arange';
-  schemaname  | tablename | attname | inherited | null_frac | avg_width | n_distinct | most_common_vals | most_common_freqs | histogram_bounds | correlation | most_common_elems | most_common_elem_freqs | elem_count_histogram | range_length_histogram | range_empty_frac |        range_bounds_histogram        
---------------+-----------+---------+-----------+-----------+-----------+------------+------------------+-------------------+------------------+-------------+-------------------+------------------------+----------------------+------------------------+------------------+--------------------------------------
- stats_import | test      | arange  | f         |       0.5 |         2 |       -0.1 |                  |                   |                  |             |                   |                        |                      | {399,499,Infinity}     |              0.5 | {"[-1,1)","[0,4)","[1,4)","[1,100)"}
-(1 row)
-
--- error: cannot set most_common_elems for range type
-SELECT pg_catalog.pg_set_attribute_stats(
-    relation => 'stats_import.test'::regclass,
-    attname => 'arange'::name,
-    inherited => false::boolean,
-    null_frac => 0.5::real,
-    avg_width => 2::integer,
-    n_distinct => -0.1::real,
-    most_common_vals => '{"[2,3)","[1,2)","[3,4)"}'::text,
-    most_common_freqs => '{0.3,0.25,0.05}'::real[],
-    histogram_bounds => '{"[1,2)","[2,3)","[3,4)","[4,5)"}'::text,
-    correlation => 1.1::real,
-    most_common_elems => '{3,1}'::text,
-    most_common_elem_freqs => '{0.3,0.2,0.2,0.3,0.0}'::real[],
-    range_empty_frac => -0.5::real,
-    range_length_histogram => '{399,499,Infinity}'::text,
-    range_bounds_histogram => '{"[-1,1)","[0,4)","[1,4)","[1,100)"}'::text
-    );
-ERROR:  unable to determine element type of attribute "arange"
-DETAIL:  Cannot set STATISTIC_KIND_MCELEM or STATISTIC_KIND_DECHIST.
---
--- Clear attribute stats to try again with restore functions
--- (relation stats were already cleared).
---
-SELECT
-  pg_catalog.pg_clear_attribute_stats(
-        'stats_import.test'::regclass,
-        s.attname,
-        s.inherited)
-FROM pg_catalog.pg_stats AS s
-WHERE s.schemaname = 'stats_import'
-AND s.tablename = 'test'
-ORDER BY s.attname, s.inherited;
- pg_clear_attribute_stats 
---------------------------
- 
- 
- 
-(3 rows)
-
--- reject: argument name is NULL
-SELECT pg_restore_relation_stats(
-        'relation', '0'::oid::regclass,
-        'version', 150000::integer,
-        NULL, '17'::integer,
-        'reltuples', 400::real,
-        'relallvisible', 4::integer);
-ERROR:  name at variadic position 5 is NULL
--- reject: argument name is an integer
-SELECT pg_restore_relation_stats(
-        'relation', '0'::oid::regclass,
-        'version', 150000::integer,
-        17, '17'::integer,
-        'reltuples', 400::real,
-        'relallvisible', 4::integer);
-ERROR:  name at variadic position 5 has type "integer", expected type "text"
--- reject: odd number of variadic arguments cannot be pairs
-SELECT pg_restore_relation_stats(
-        'relation', '0'::oid::regclass,
-        'version', 150000::integer,
-        'relpages', '17'::integer,
-        'reltuples', 400::real,
-        'relallvisible');
-ERROR:  variadic arguments must be name/value pairs
-HINT:  Provide an even number of variadic arguments that can be divided into pairs.
--- reject: object doesn't exist
-SELECT pg_restore_relation_stats(
-        'relation', '0'::oid::regclass,
-        'version', 150000::integer,
-        'relpages', '17'::integer,
-        'reltuples', 400::real,
-        'relallvisible', 4::integer);
-ERROR:  could not open relation with OID 0
 -- ok: set all stats
 SELECT pg_restore_relation_stats(
         'relation', 'stats_import.test'::regclass,
@@ -856,15 +238,6 @@ WHERE oid = 'stats_import.test'::regclass;
        16 |       500 |             5
 (1 row)
 
--- warn and error: unrecognized argument name
-SELECT pg_restore_relation_stats(
-        'relation', '0'::oid::regclass,
-        'version', 150000::integer,
-        'relpages', '17'::integer,
-        'reltuples', 400::real,
-        'nope', 4::integer);
-WARNING:  unrecognized argument name: "nope"
-ERROR:  could not open relation with OID 0
 -- warn: bad relpages type
 SELECT pg_restore_relation_stats(
         'relation', 'stats_import.test'::regclass,
@@ -886,56 +259,19 @@ WHERE oid = 'stats_import.test'::regclass;
        16 |       400 |             4
 (1 row)
 
--- error: object does not exist
-SELECT pg_catalog.pg_restore_attribute_stats(
-    'relation', '0'::oid::regclass,
-    'attname', 'id'::name,
-    'inherited', false::boolean,
-    'version', 150000::integer,
-    'null_frac', 0.1::real,
-    'avg_width', 2::integer,
-    'n_distinct', 0.3::real);
-ERROR:  could not open relation with OID 0
--- error: relation null
-SELECT pg_catalog.pg_restore_attribute_stats(
-    'relation', NULL::oid,
-    'attname', 'id'::name,
-    'inherited', false::boolean,
-    'version', 150000::integer,
-    'null_frac', 0.1::real,
-    'avg_width', 2::integer,
-    'n_distinct', 0.3::real);
-ERROR:  "relation" cannot be NULL
--- error: attname null
-SELECT pg_catalog.pg_restore_attribute_stats(
-    'relation', 'stats_import.test'::regclass,
-    'attname', NULL::name,
-    'inherited', false::boolean,
-    'version', 150000::integer,
-    'null_frac', 0.1::real,
-    'avg_width', 2::integer,
-    'n_distinct', 0.3::real);
-ERROR:  "attname" cannot be NULL
--- error: attname doesn't exist
-SELECT pg_catalog.pg_restore_attribute_stats(
-    'relation', 'stats_import.test'::regclass,
-    'attname', 'nope'::name,
-    'inherited', false::boolean,
-    'version', 150000::integer,
-    'null_frac', 0.1::real,
-    'avg_width', 2::integer,
-    'n_distinct', 0.3::real);
-ERROR:  column "nope" of relation "test" does not exist
--- error: inherited null
-SELECT pg_catalog.pg_restore_attribute_stats(
-    'relation', 'stats_import.test'::regclass,
-    'attname', 'id'::name,
-    'inherited', NULL::boolean,
-    'version', 150000::integer,
-    'null_frac', 0.1::real,
-    'avg_width', 2::integer,
-    'n_distinct', 0.3::real);
-ERROR:  "inherited" cannot be NULL
+-- invalid relkinds for statistics
+CREATE SEQUENCE stats_import.testseq;
+CREATE VIEW stats_import.testview AS SELECT * FROM stats_import.test;
+SELECT
+    pg_catalog.pg_clear_relation_stats(
+        'stats_import.testseq'::regclass);
+ERROR:  cannot modify statistics for relation "testseq"
+DETAIL:  This operation is not supported for sequences.
+SELECT
+    pg_catalog.pg_clear_relation_stats(
+        'stats_import.testview'::regclass);
+ERROR:  cannot modify statistics for relation "testview"
+DETAIL:  This operation is not supported for views.
 -- ok: no stakinds
 SELECT pg_catalog.pg_restore_attribute_stats(
     'relation', 'stats_import.test'::regclass,
@@ -1409,6 +745,169 @@ AND attname = 'arange';
  stats_import | test      | arange  | f         |       0.2 |         3 |      -0.39 |                  |                   |                  |             |                   |                        |                      | {399,499,Infinity}     |              0.5 | {"[-1,1)","[0,4)","[1,4)","[1,100)"}
 (1 row)
 
+-- warn: cannot set most_common_elems for range type
+SELECT pg_catalog.pg_restore_attribute_stats(
+    'relation', 'stats_import.test'::regclass,
+    'attname', 'arange'::name,
+    'inherited', false::boolean,
+    'null_frac', 0.5::real,
+    'avg_width', 2::integer,
+    'n_distinct', -0.1::real,
+    'most_common_vals', '{"[2,3)","[1,2)","[3,4)"}'::text,
+    'most_common_freqs', '{0.3,0.25,0.05}'::real[],
+    'histogram_bounds', '{"[1,2)","[2,3)","[3,4)","[4,5)"}'::text,
+    'correlation', 1.1::real,
+    'most_common_elems', '{3,1}'::text,
+    'most_common_elem_freqs', '{0.3,0.2,0.2,0.3,0.0}'::real[],
+    'range_empty_frac', -0.5::real,
+    'range_length_histogram', '{399,499,Infinity}'::text,
+    'range_bounds_histogram', '{"[-1,1)","[0,4)","[1,4)","[1,100)"}'::text
+    );
+WARNING:  unable to determine element type of attribute "arange"
+DETAIL:  Cannot set STATISTIC_KIND_MCELEM or STATISTIC_KIND_DECHIST.
+ pg_restore_attribute_stats 
+----------------------------
+ f
+(1 row)
+
+SELECT *
+FROM pg_stats
+WHERE schemaname = 'stats_import'
+AND tablename = 'test'
+AND inherited = false
+AND attname = 'arange';
+  schemaname  | tablename | attname | inherited | null_frac | avg_width | n_distinct |     most_common_vals      | most_common_freqs |         histogram_bounds          | correlation | most_common_elems | most_common_elem_freqs | elem_count_histogram | range_length_histogram | range_empty_frac |        range_bounds_histogram        
+--------------+-----------+---------+-----------+-----------+-----------+------------+---------------------------+-------------------+-----------------------------------+-------------+-------------------+------------------------+----------------------+------------------------+------------------+--------------------------------------
+ stats_import | test      | arange  | f         |       0.5 |         2 |       -0.1 | {"[2,3)","[1,2)","[3,4)"} | {0.3,0.25,0.05}   | {"[1,2)","[2,3)","[3,4)","[4,5)"} |         1.1 |                   |                        |                      | {399,499,Infinity}     |             -0.5 | {"[-1,1)","[0,4)","[1,4)","[1,100)"}
+(1 row)
+
+-- warn: scalars can't have mcelem
+SELECT pg_catalog.pg_restore_attribute_stats(
+    'relation', 'stats_import.test'::regclass,
+    'attname', 'id'::name,
+    'inherited', false::boolean,
+    'null_frac', 0.5::real,
+    'avg_width', 2::integer,
+    'n_distinct', -0.1::real,
+    'most_common_elems', '{1,3}'::text,
+    'most_common_elem_freqs', '{0.3,0.2,0.2,0.3,0.0}'::real[]
+    );
+WARNING:  unable to determine element type of attribute "id"
+DETAIL:  Cannot set STATISTIC_KIND_MCELEM or STATISTIC_KIND_DECHIST.
+ pg_restore_attribute_stats 
+----------------------------
+ f
+(1 row)
+
+SELECT *
+FROM pg_stats
+WHERE schemaname = 'stats_import'
+AND tablename = 'test'
+AND inherited = false
+AND attname = 'id';
+  schemaname  | tablename | attname | inherited | null_frac | avg_width | n_distinct | most_common_vals | most_common_freqs | histogram_bounds | correlation | most_common_elems | most_common_elem_freqs | elem_count_histogram | range_length_histogram | range_empty_frac | range_bounds_histogram 
+--------------+-----------+---------+-----------+-----------+-----------+------------+------------------+-------------------+------------------+-------------+-------------------+------------------------+----------------------+------------------------+------------------+------------------------
+ stats_import | test      | id      | f         |       0.5 |         2 |       -0.1 | {2,1,3}          | {0.3,0.25,0.05}   | {1,2,3,4}        |             |                   |                        |                      |                        |                  | 
+(1 row)
+
+-- warn: mcelem / mcelem mismatch
+SELECT pg_catalog.pg_restore_attribute_stats(
+    'relation', 'stats_import.test'::regclass,
+    'attname', 'tags'::name,
+    'inherited', false::boolean,
+    'null_frac', 0.5::real,
+    'avg_width', 2::integer,
+    'n_distinct', -0.1::real,
+    'most_common_elems', '{one,two}'::text
+    );
+WARNING:  "most_common_elem_freqs" must be specified when "most_common_elems" is specified
+ pg_restore_attribute_stats 
+----------------------------
+ f
+(1 row)
+
+SELECT *
+FROM pg_stats
+WHERE schemaname = 'stats_import'
+AND tablename = 'test'
+AND inherited = false
+AND attname = 'tags';
+  schemaname  | tablename | attname | inherited | null_frac | avg_width | n_distinct | most_common_vals | most_common_freqs | histogram_bounds | correlation | most_common_elems | most_common_elem_freqs |                                                                                            elem_count_histogram                                                                                             | range_length_histogram | range_empty_frac | range_bounds_histogram 
+--------------+-----------+---------+-----------+-----------+-----------+------------+------------------+-------------------+------------------+-------------+-------------------+------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+------------------------+------------------+------------------------
+ stats_import | test      | tags    | f         |       0.5 |         2 |       -0.1 |                  |                   |                  |             |                   |                        | {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1} |                        |                  | 
+(1 row)
+
+-- warn: mcelem / mcelem null mismatch part 2
+SELECT pg_catalog.pg_restore_attribute_stats(
+    'relation', 'stats_import.test'::regclass,
+    'attname', 'tags'::name,
+    'inherited', false::boolean,
+    'null_frac', 0.5::real,
+    'avg_width', 2::integer,
+    'n_distinct', -0.1::real,
+    'most_common_elem_freqs', '{0.3,0.2,0.2,0.3}'::real[]
+    );
+WARNING:  "most_common_elems" must be specified when "most_common_elem_freqs" is specified
+ pg_restore_attribute_stats 
+----------------------------
+ f
+(1 row)
+
+-- ok: mcelem
+SELECT pg_catalog.pg_restore_attribute_stats(
+    'relation', 'stats_import.test'::regclass,
+    'attname', 'tags'::name,
+    'inherited', false::boolean,
+    'null_frac', 0.5::real,
+    'avg_width', 2::integer,
+    'n_distinct', -0.1::real,
+    'most_common_elems', '{one,three}'::text,
+    'most_common_elem_freqs', '{0.3,0.2,0.2,0.3,0.0}'::real[]
+    );
+ pg_restore_attribute_stats 
+----------------------------
+ t
+(1 row)
+
+SELECT *
+FROM pg_stats
+WHERE schemaname = 'stats_import'
+AND tablename = 'test'
+AND inherited = false
+AND attname = 'tags';
+  schemaname  | tablename | attname | inherited | null_frac | avg_width | n_distinct | most_common_vals | most_common_freqs | histogram_bounds | correlation | most_common_elems | most_common_elem_freqs |                                                                                            elem_count_histogram                                                                                             | range_length_histogram | range_empty_frac | range_bounds_histogram 
+--------------+-----------+---------+-----------+-----------+-----------+------------+------------------+-------------------+------------------+-------------+-------------------+------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+------------------------+------------------+------------------------
+ stats_import | test      | tags    | f         |       0.5 |         2 |       -0.1 |                  |                   |                  |             | {one,three}       | {0.3,0.2,0.2,0.3,0}    | {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1} |                        |                  | 
+(1 row)
+
+-- warn: scalars can't have elem_count_histogram
+SELECT pg_catalog.pg_restore_attribute_stats(
+    'relation', 'stats_import.test'::regclass,
+    'attname', 'id'::name,
+    'inherited', false::boolean,
+    'null_frac', 0.5::real,
+    'avg_width', 2::integer,
+    'n_distinct', -0.1::real,
+    'elem_count_histogram', '{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1}'::real[]
+    );
+WARNING:  unable to determine element type of attribute "id"
+DETAIL:  Cannot set STATISTIC_KIND_MCELEM or STATISTIC_KIND_DECHIST.
+ pg_restore_attribute_stats 
+----------------------------
+ f
+(1 row)
+
+SELECT *
+FROM pg_stats
+WHERE schemaname = 'stats_import'
+AND tablename = 'test'
+AND inherited = false
+AND attname = 'id';
+  schemaname  | tablename | attname | inherited | null_frac | avg_width | n_distinct | most_common_vals | most_common_freqs | histogram_bounds | correlation | most_common_elems | most_common_elem_freqs | elem_count_histogram | range_length_histogram | range_empty_frac | range_bounds_histogram 
+--------------+-----------+---------+-----------+-----------+-----------+------------+------------------+-------------------+------------------+-------------+-------------------+------------------------+----------------------+------------------------+------------------+------------------------
+ stats_import | test      | id      | f         |       0.5 |         2 |       -0.1 | {2,1,3}          | {0.3,0.25,0.05}   | {1,2,3,4}        |             |                   |                        |                      |                        |                  | 
+(1 row)
+
 -- warn: too many stat kinds
 SELECT pg_catalog.pg_restore_attribute_stats(
     'relation', 'stats_import.test'::regclass,
@@ -1432,6 +931,17 @@ DETAIL:  Cannot set STATISTIC_KIND_MCELEM or STATISTIC_KIND_DECHIST.
  pg_restore_attribute_stats 
 ----------------------------
  f
+(1 row)
+
+SELECT *
+FROM pg_stats
+WHERE schemaname = 'stats_import'
+AND tablename = 'test'
+AND inherited = false
+AND attname = 'arange';
+  schemaname  | tablename | attname | inherited | null_frac | avg_width | n_distinct |     most_common_vals      | most_common_freqs |         histogram_bounds         | correlation | most_common_elems | most_common_elem_freqs | elem_count_histogram | range_length_histogram | range_empty_frac |        range_bounds_histogram        
+--------------+-----------+---------+-----------+-----------+-----------+------------+---------------------------+-------------------+----------------------------------+-------------+-------------------+------------------------+----------------------+------------------------+------------------+--------------------------------------
+ stats_import | test      | arange  | f         |       0.5 |         2 |       -0.1 | {"[2,3)","[1,3)","[3,9)"} | {0.3,0.25,0.05}   | {"[1,2)","[2,3)","[3,4)","[4,)"} |         1.1 |                   |                        |                      | {399,499,Infinity}     |             -0.5 | {"[-1,1)","[0,4)","[1,4)","[1,100)"}
 (1 row)
 
 --
@@ -1469,216 +979,6 @@ ANALYZE stats_import.test;
 CREATE TABLE stats_import.test_clone ( LIKE stats_import.test )
     WITH (autovacuum_enabled = false);
 CREATE INDEX is_odd_clone ON stats_import.test_clone(((comp).a % 2 = 1));
---
--- Copy stats from test to test_clone, and is_odd to is_odd_clone
---
-SELECT s.schemaname, s.tablename, s.attname, s.inherited
-FROM pg_catalog.pg_stats AS s
-CROSS JOIN LATERAL
-    pg_catalog.pg_set_attribute_stats(
-        relation => ('stats_import.' || s.tablename || '_clone')::regclass::oid,
-        attname => s.attname,
-        inherited => s.inherited,
-        null_frac => s.null_frac,
-        avg_width => s.avg_width,
-        n_distinct => s.n_distinct,
-        most_common_vals => s.most_common_vals::text,
-        most_common_freqs => s.most_common_freqs,
-        histogram_bounds => s.histogram_bounds::text,
-        correlation => s.correlation,
-        most_common_elems => s.most_common_elems::text,
-        most_common_elem_freqs => s.most_common_elem_freqs,
-        elem_count_histogram => s.elem_count_histogram,
-        range_bounds_histogram => s.range_bounds_histogram::text,
-        range_empty_frac => s.range_empty_frac,
-        range_length_histogram => s.range_length_histogram::text) AS r
-WHERE s.schemaname = 'stats_import'
-AND s.tablename IN ('test', 'is_odd')
-ORDER BY s.tablename, s.attname, s.inherited;
-  schemaname  | tablename | attname | inherited 
---------------+-----------+---------+-----------
- stats_import | is_odd    | expr    | f
- stats_import | test      | arange  | f
- stats_import | test      | comp    | f
- stats_import | test      | id      | f
- stats_import | test      | name    | f
- stats_import | test      | tags    | f
-(6 rows)
-
-SELECT c.relname, COUNT(*) AS num_stats
-FROM pg_class AS c
-JOIN pg_statistic s ON s.starelid = c.oid
-WHERE c.relnamespace = 'stats_import'::regnamespace
-AND c.relname IN ('test', 'test_clone', 'is_odd', 'is_odd_clone')
-GROUP BY c.relname
-ORDER BY c.relname;
-   relname    | num_stats 
---------------+-----------
- is_odd       |         1
- is_odd_clone |         1
- test         |         5
- test_clone   |         5
-(4 rows)
-
--- check test minus test_clone
-SELECT
-    a.attname, s.stainherit, s.stanullfrac, s.stawidth, s.stadistinct,
-    s.stakind1, s.stakind2, s.stakind3, s.stakind4, s.stakind5,
-    s.staop1, s.staop2, s.staop3, s.staop4, s.staop5,
-    s.stacoll1, s.stacoll2, s.stacoll3, s.stacoll4, s.stacoll5,
-    s.stanumbers1, s.stanumbers2, s.stanumbers3, s.stanumbers4, s.stanumbers5,
-    s.stavalues1::text AS sv1, s.stavalues2::text AS sv2,
-    s.stavalues3::text AS sv3, s.stavalues4::text AS sv4,
-    s.stavalues5::text AS sv5, 'test' AS direction
-FROM pg_statistic s
-JOIN pg_attribute a ON a.attrelid = s.starelid AND a.attnum = s.staattnum
-WHERE s.starelid = 'stats_import.test'::regclass
-EXCEPT
-SELECT
-    a.attname, s.stainherit, s.stanullfrac, s.stawidth, s.stadistinct,
-    s.stakind1, s.stakind2, s.stakind3, s.stakind4, s.stakind5,
-    s.staop1, s.staop2, s.staop3, s.staop4, s.staop5,
-    s.stacoll1, s.stacoll2, s.stacoll3, s.stacoll4, s.stacoll5,
-    s.stanumbers1, s.stanumbers2, s.stanumbers3, s.stanumbers4, s.stanumbers5,
-    s.stavalues1::text AS sv1, s.stavalues2::text AS sv2,
-    s.stavalues3::text AS sv3, s.stavalues4::text AS sv4,
-    s.stavalues5::text AS sv5, 'test' AS direction
-FROM pg_statistic s
-JOIN pg_attribute a ON a.attrelid = s.starelid AND a.attnum = s.staattnum
-WHERE s.starelid = 'stats_import.test_clone'::regclass;
- attname | stainherit | stanullfrac | stawidth | stadistinct | stakind1 | stakind2 | stakind3 | stakind4 | stakind5 | staop1 | staop2 | staop3 | staop4 | staop5 | stacoll1 | stacoll2 | stacoll3 | stacoll4 | stacoll5 | stanumbers1 | stanumbers2 | stanumbers3 | stanumbers4 | stanumbers5 | sv1 | sv2 | sv3 | sv4 | sv5 | direction 
----------+------------+-------------+----------+-------------+----------+----------+----------+----------+----------+--------+--------+--------+--------+--------+----------+----------+----------+----------+----------+-------------+-------------+-------------+-------------+-------------+-----+-----+-----+-----+-----+-----------
-(0 rows)
-
--- check test_clone minus test
-SELECT
-    a.attname, s.stainherit, s.stanullfrac, s.stawidth, s.stadistinct,
-    s.stakind1, s.stakind2, s.stakind3, s.stakind4, s.stakind5,
-    s.staop1, s.staop2, s.staop3, s.staop4, s.staop5,
-    s.stacoll1, s.stacoll2, s.stacoll3, s.stacoll4, s.stacoll5,
-    s.stanumbers1, s.stanumbers2, s.stanumbers3, s.stanumbers4, s.stanumbers5,
-    s.stavalues1::text AS sv1, s.stavalues2::text AS sv2,
-    s.stavalues3::text AS sv3, s.stavalues4::text AS sv4,
-    s.stavalues5::text AS sv5, 'test_clone' AS direction
-FROM pg_statistic s
-JOIN pg_attribute a ON a.attrelid = s.starelid AND a.attnum = s.staattnum
-WHERE s.starelid = 'stats_import.test_clone'::regclass
-EXCEPT
-SELECT
-    a.attname, s.stainherit, s.stanullfrac, s.stawidth, s.stadistinct,
-    s.stakind1, s.stakind2, s.stakind3, s.stakind4, s.stakind5,
-    s.staop1, s.staop2, s.staop3, s.staop4, s.staop5,
-    s.stacoll1, s.stacoll2, s.stacoll3, s.stacoll4, s.stacoll5,
-    s.stanumbers1, s.stanumbers2, s.stanumbers3, s.stanumbers4, s.stanumbers5,
-    s.stavalues1::text AS sv1, s.stavalues2::text AS sv2,
-    s.stavalues3::text AS sv3, s.stavalues4::text AS sv4,
-    s.stavalues5::text AS sv5, 'test_clone' AS direction
-FROM pg_statistic s
-JOIN pg_attribute a ON a.attrelid = s.starelid AND a.attnum = s.staattnum
-WHERE s.starelid = 'stats_import.test'::regclass;
- attname | stainherit | stanullfrac | stawidth | stadistinct | stakind1 | stakind2 | stakind3 | stakind4 | stakind5 | staop1 | staop2 | staop3 | staop4 | staop5 | stacoll1 | stacoll2 | stacoll3 | stacoll4 | stacoll5 | stanumbers1 | stanumbers2 | stanumbers3 | stanumbers4 | stanumbers5 | sv1 | sv2 | sv3 | sv4 | sv5 | direction 
----------+------------+-------------+----------+-------------+----------+----------+----------+----------+----------+--------+--------+--------+--------+--------+----------+----------+----------+----------+----------+-------------+-------------+-------------+-------------+-------------+-----+-----+-----+-----+-----+-----------
-(0 rows)
-
--- check is_odd minus is_odd_clone
-SELECT
-    a.attname, s.stainherit, s.stanullfrac, s.stawidth, s.stadistinct,
-    s.stakind1, s.stakind2, s.stakind3, s.stakind4, s.stakind5,
-    s.staop1, s.staop2, s.staop3, s.staop4, s.staop5,
-    s.stacoll1, s.stacoll2, s.stacoll3, s.stacoll4, s.stacoll5,
-    s.stanumbers1, s.stanumbers2, s.stanumbers3, s.stanumbers4, s.stanumbers5,
-    s.stavalues1::text AS sv1, s.stavalues2::text AS sv2,
-    s.stavalues3::text AS sv3, s.stavalues4::text AS sv4,
-    s.stavalues5::text AS sv5, 'is_odd' AS direction
-FROM pg_statistic s
-JOIN pg_attribute a ON a.attrelid = s.starelid AND a.attnum = s.staattnum
-WHERE s.starelid = 'stats_import.is_odd'::regclass
-EXCEPT
-SELECT
-    a.attname, s.stainherit, s.stanullfrac, s.stawidth, s.stadistinct,
-    s.stakind1, s.stakind2, s.stakind3, s.stakind4, s.stakind5,
-    s.staop1, s.staop2, s.staop3, s.staop4, s.staop5,
-    s.stacoll1, s.stacoll2, s.stacoll3, s.stacoll4, s.stacoll5,
-    s.stanumbers1, s.stanumbers2, s.stanumbers3, s.stanumbers4, s.stanumbers5,
-    s.stavalues1::text AS sv1, s.stavalues2::text AS sv2,
-    s.stavalues3::text AS sv3, s.stavalues4::text AS sv4,
-    s.stavalues5::text AS sv5, 'is_odd' AS direction
-FROM pg_statistic s
-JOIN pg_attribute a ON a.attrelid = s.starelid AND a.attnum = s.staattnum
-WHERE s.starelid = 'stats_import.is_odd_clone'::regclass;
- attname | stainherit | stanullfrac | stawidth | stadistinct | stakind1 | stakind2 | stakind3 | stakind4 | stakind5 | staop1 | staop2 | staop3 | staop4 | staop5 | stacoll1 | stacoll2 | stacoll3 | stacoll4 | stacoll5 | stanumbers1 | stanumbers2 | stanumbers3 | stanumbers4 | stanumbers5 | sv1 | sv2 | sv3 | sv4 | sv5 | direction 
----------+------------+-------------+----------+-------------+----------+----------+----------+----------+----------+--------+--------+--------+--------+--------+----------+----------+----------+----------+----------+-------------+-------------+-------------+-------------+-------------+-----+-----+-----+-----+-----+-----------
-(0 rows)
-
--- check is_odd_clone minus is_odd
-SELECT
-    a.attname, s.stainherit, s.stanullfrac, s.stawidth, s.stadistinct,
-    s.stakind1, s.stakind2, s.stakind3, s.stakind4, s.stakind5,
-    s.staop1, s.staop2, s.staop3, s.staop4, s.staop5,
-    s.stacoll1, s.stacoll2, s.stacoll3, s.stacoll4, s.stacoll5,
-    s.stanumbers1, s.stanumbers2, s.stanumbers3, s.stanumbers4, s.stanumbers5,
-    s.stavalues1::text AS sv1, s.stavalues2::text AS sv2,
-    s.stavalues3::text AS sv3, s.stavalues4::text AS sv4,
-    s.stavalues5::text AS sv5, 'is_odd_clone' AS direction
-FROM pg_statistic s
-JOIN pg_attribute a ON a.attrelid = s.starelid AND a.attnum = s.staattnum
-WHERE s.starelid = 'stats_import.is_odd_clone'::regclass
-EXCEPT
-SELECT
-    a.attname, s.stainherit, s.stanullfrac, s.stawidth, s.stadistinct,
-    s.stakind1, s.stakind2, s.stakind3, s.stakind4, s.stakind5,
-    s.staop1, s.staop2, s.staop3, s.staop4, s.staop5,
-    s.stacoll1, s.stacoll2, s.stacoll3, s.stacoll4, s.stacoll5,
-    s.stanumbers1, s.stanumbers2, s.stanumbers3, s.stanumbers4, s.stanumbers5,
-    s.stavalues1::text AS sv1, s.stavalues2::text AS sv2,
-    s.stavalues3::text AS sv3, s.stavalues4::text AS sv4,
-    s.stavalues5::text AS sv5, 'is_odd_clone' AS direction
-FROM pg_statistic s
-JOIN pg_attribute a ON a.attrelid = s.starelid AND a.attnum = s.staattnum
-WHERE s.starelid = 'stats_import.is_odd'::regclass;
- attname | stainherit | stanullfrac | stawidth | stadistinct | stakind1 | stakind2 | stakind3 | stakind4 | stakind5 | staop1 | staop2 | staop3 | staop4 | staop5 | stacoll1 | stacoll2 | stacoll3 | stacoll4 | stacoll5 | stanumbers1 | stanumbers2 | stanumbers3 | stanumbers4 | stanumbers5 | sv1 | sv2 | sv3 | sv4 | sv5 | direction 
----------+------------+-------------+----------+-------------+----------+----------+----------+----------+----------+--------+--------+--------+--------+--------+----------+----------+----------+----------+----------+-------------+-------------+-------------+-------------+-------------+-----+-----+-----+-----+-----+-----------
-(0 rows)
-
---
-SELECT relpages, reltuples, relallvisible
-FROM pg_class
-WHERE oid = 'stats_import.test'::regclass;
- relpages | reltuples | relallvisible 
-----------+-----------+---------------
-        1 |         4 |             0
-(1 row)
-
---
--- Clear clone stats to try again with pg_restore_attribute_stats
---
-SELECT
-  pg_catalog.pg_clear_attribute_stats(
-        ('stats_import.' || s.tablename)::regclass,
-        s.attname,
-        s.inherited)
-FROM pg_catalog.pg_stats AS s
-WHERE s.schemaname = 'stats_import'
-AND s.tablename IN ('test_clone', 'is_odd_clone')
-ORDER BY s.tablename, s.attname, s.inherited;
- pg_clear_attribute_stats 
---------------------------
- 
- 
- 
- 
- 
- 
-(6 rows)
-
-SELECT
-SELECT COUNT(*)
-FROM pg_catalog.pg_stats AS s
-WHERE s.schemaname = 'stats_import'
-AND s.tablename IN ('test_clone', 'is_odd_clone');
-ERROR:  syntax error at or near "SELECT"
-LINE 2: SELECT COUNT(*)
-        ^
 --
 -- Copy stats from test to test_clone, and is_odd to is_odd_clone
 --
@@ -1851,11 +1151,158 @@ WHERE s.starelid = 'stats_import.is_odd'::regclass;
 ---------+------------+-------------+----------+-------------+----------+----------+----------+----------+----------+--------+--------+--------+--------+--------+----------+----------+----------+----------+----------+-------------+-------------+-------------+-------------+-------------+-----+-----+-----+-----+-----+-----------
 (0 rows)
 
+-- ok
+SELECT pg_catalog.pg_clear_attribute_stats(
+    relation => 'stats_import.test'::regclass,
+    attname => 'arange'::name,
+    inherited => false::boolean);
+ pg_clear_attribute_stats 
+--------------------------
+ 
+(1 row)
+
+--
+-- Negative tests
+--
+--- error: relation is wrong type
+SELECT pg_catalog.pg_restore_relation_stats(
+        'relation', 0::oid,
+        'relpages', 17::integer,
+        'reltuples', 400.0::real,
+        'relallvisible', 4::integer);
+WARNING:  argument "relation" has type "oid", expected type "regclass"
+ERROR:  "relation" cannot be NULL
+--- error: relation not found
+SELECT pg_catalog.pg_restore_relation_stats(
+        'relation', 0::regclass,
+        'relpages', 17::integer,
+        'reltuples', 400.0::real,
+        'relallvisible', 4::integer);
+ERROR:  could not open relation with OID 0
+-- warn and error: unrecognized argument name
+SELECT pg_restore_relation_stats(
+        'relation', '0'::oid::regclass,
+        'version', 150000::integer,
+        'relpages', '17'::integer,
+        'reltuples', 400::real,
+        'nope', 4::integer);
+WARNING:  unrecognized argument name: "nope"
+ERROR:  could not open relation with OID 0
+-- error: argument name is NULL
+SELECT pg_restore_relation_stats(
+        'relation', '0'::oid::regclass,
+        'version', 150000::integer,
+        NULL, '17'::integer,
+        'reltuples', 400::real,
+        'relallvisible', 4::integer);
+ERROR:  name at variadic position 5 is NULL
+-- error: argument name is an integer
+SELECT pg_restore_relation_stats(
+        'relation', '0'::oid::regclass,
+        'version', 150000::integer,
+        17, '17'::integer,
+        'reltuples', 400::real,
+        'relallvisible', 4::integer);
+ERROR:  name at variadic position 5 has type "integer", expected type "text"
+-- error: odd number of variadic arguments cannot be pairs
+SELECT pg_restore_relation_stats(
+        'relation', '0'::oid::regclass,
+        'version', 150000::integer,
+        'relpages', '17'::integer,
+        'reltuples', 400::real,
+        'relallvisible');
+ERROR:  variadic arguments must be name/value pairs
+HINT:  Provide an even number of variadic arguments that can be divided into pairs.
+-- error: object doesn't exist
+SELECT pg_restore_relation_stats(
+        'relation', '0'::oid::regclass,
+        'version', 150000::integer,
+        'relpages', '17'::integer,
+        'reltuples', 400::real,
+        'relallvisible', 4::integer);
+ERROR:  could not open relation with OID 0
+-- error: object does not exist
+SELECT pg_catalog.pg_restore_attribute_stats(
+    'relation', '0'::oid::regclass,
+    'attname', 'id'::name,
+    'inherited', false::boolean,
+    'version', 150000::integer,
+    'null_frac', 0.1::real,
+    'avg_width', 2::integer,
+    'n_distinct', 0.3::real);
+ERROR:  could not open relation with OID 0
+-- error: relation null
+SELECT pg_catalog.pg_restore_attribute_stats(
+    'relation', NULL::oid,
+    'attname', 'id'::name,
+    'inherited', false::boolean,
+    'version', 150000::integer,
+    'null_frac', 0.1::real,
+    'avg_width', 2::integer,
+    'n_distinct', 0.3::real);
+ERROR:  "relation" cannot be NULL
+-- error: attname null
+SELECT pg_catalog.pg_restore_attribute_stats(
+    'relation', 'stats_import.test'::regclass,
+    'attname', NULL::name,
+    'inherited', false::boolean,
+    'version', 150000::integer,
+    'null_frac', 0.1::real,
+    'avg_width', 2::integer,
+    'n_distinct', 0.3::real);
+ERROR:  "attname" cannot be NULL
+-- error: attname doesn't exist
+SELECT pg_catalog.pg_restore_attribute_stats(
+    'relation', 'stats_import.test'::regclass,
+    'attname', 'nope'::name,
+    'inherited', false::boolean,
+    'version', 150000::integer,
+    'null_frac', 0.1::real,
+    'avg_width', 2::integer,
+    'n_distinct', 0.3::real);
+ERROR:  column "nope" of relation "test" does not exist
+-- error: attribute is system column
+SELECT pg_catalog.pg_restore_attribute_stats(
+    'relation', 'stats_import.test'::regclass,
+    'attname', 'xmin'::name,
+    'inherited', false::boolean,
+    'null_frac', 0.1::real,
+    'avg_width', 2::integer,
+    'n_distinct', 0.3::real);
+ERROR:  cannot modify statistics on system column "xmin"
+-- error: inherited null
+SELECT pg_catalog.pg_restore_attribute_stats(
+    'relation', 'stats_import.test'::regclass,
+    'attname', 'id'::name,
+    'inherited', NULL::boolean,
+    'version', 150000::integer,
+    'null_frac', 0.1::real,
+    'avg_width', 2::integer,
+    'n_distinct', 0.3::real);
+ERROR:  "inherited" cannot be NULL
+-- error: relation not found
+SELECT pg_catalog.pg_clear_relation_stats(
+    relation => 'stats_import.nope'::regclass);
+ERROR:  relation "stats_import.nope" does not exist
+LINE 2:     relation => 'stats_import.nope'::regclass);
+                        ^
+-- error: attribute is system column
+SELECT pg_catalog.pg_clear_attribute_stats(
+    relation => 'stats_import.test'::regclass,
+    attname => 'ctid'::name,
+    inherited => false::boolean);
+ERROR:  cannot clear statistics on system column "ctid"
+-- error: attname doesn't exist
+SELECT pg_catalog.pg_clear_attribute_stats(
+    relation => 'stats_import.test'::regclass,
+    attname => 'nope'::name,
+    inherited => false::boolean);
+ERROR:  column "nope" of relation "test" does not exist
 DROP SCHEMA stats_import CASCADE;
 NOTICE:  drop cascades to 6 other objects
 DETAIL:  drop cascades to type stats_import.complex_type
 drop cascades to table stats_import.test
+drop cascades to table stats_import.part_parent
 drop cascades to sequence stats_import.testseq
 drop cascades to view stats_import.testview
-drop cascades to table stats_import.part_parent
 drop cascades to table stats_import.test_clone

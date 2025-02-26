@@ -25,17 +25,15 @@ extern void stats_check_required_arg(FunctionCallInfo fcinfo,
 									 struct StatsArgInfo *arginfo,
 									 int argnum);
 extern bool stats_check_arg_array(FunctionCallInfo fcinfo,
-								  struct StatsArgInfo *arginfo, int argnum,
-								  int elevel);
+								  struct StatsArgInfo *arginfo, int argnum);
 extern bool stats_check_arg_pair(FunctionCallInfo fcinfo,
 								 struct StatsArgInfo *arginfo,
-								 int argnum1, int argnum2, int elevel);
+								 int argnum1, int argnum2);
 
 extern void stats_lock_check_privileges(Oid reloid);
 
 extern bool stats_fill_fcinfo_from_arg_pairs(FunctionCallInfo pairs_fcinfo,
 											 FunctionCallInfo positional_fcinfo,
-											 struct StatsArgInfo *arginfo,
-											 int elevel);
+											 struct StatsArgInfo *arginfo);
 
 #endif							/* STATS_UTILS_H */

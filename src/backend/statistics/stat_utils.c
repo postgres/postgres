@@ -48,13 +48,13 @@ stats_check_required_arg(FunctionCallInfo fcinfo,
  * Check that argument is either NULL or a one dimensional array with no
  * NULLs.
  *
- * If a problem is found, emit at elevel, and return false. Otherwise return
+ * If a problem is found, emit a WARNING, and return false. Otherwise return
  * true.
  */
 bool
 stats_check_arg_array(FunctionCallInfo fcinfo,
 					  struct StatsArgInfo *arginfo,
-					  int argnum, int elevel)
+					  int argnum)
 {
 	ArrayType  *arr;
 
@@ -65,7 +65,7 @@ stats_check_arg_array(FunctionCallInfo fcinfo,
 
 	if (ARR_NDIM(arr) != 1)
 	{
-		ereport(elevel,
+		ereport(WARNING,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("\"%s\" cannot be a multidimensional array",
 						arginfo[argnum].argname)));
@@ -74,7 +74,7 @@ stats_check_arg_array(FunctionCallInfo fcinfo,
 
 	if (array_contains_nulls(arr))
 	{
-		ereport(elevel,
+		ereport(WARNING,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("\"%s\" array cannot contain NULL values",
 						arginfo[argnum].argname)));
@@ -89,13 +89,13 @@ stats_check_arg_array(FunctionCallInfo fcinfo,
  * a particular stakind, such as most_common_vals and most_common_freqs for
  * STATISTIC_KIND_MCV.
  *
- * If a problem is found, emit at elevel, and return false. Otherwise return
+ * If a problem is found, emit a WARNING, and return false. Otherwise return
  * true.
  */
 bool
 stats_check_arg_pair(FunctionCallInfo fcinfo,
 					 struct StatsArgInfo *arginfo,
-					 int argnum1, int argnum2, int elevel)
+					 int argnum1, int argnum2)
 {
 	if (PG_ARGISNULL(argnum1) && PG_ARGISNULL(argnum2))
 		return true;
@@ -105,7 +105,7 @@ stats_check_arg_pair(FunctionCallInfo fcinfo,
 		int			nullarg = PG_ARGISNULL(argnum1) ? argnum1 : argnum2;
 		int			otherarg = PG_ARGISNULL(argnum1) ? argnum2 : argnum1;
 
-		ereport(elevel,
+		ereport(WARNING,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("\"%s\" must be specified when \"%s\" is specified",
 						arginfo[nullarg].argname,
@@ -216,7 +216,7 @@ stats_lock_check_privileges(Oid reloid)
  * found.
  */
 static int
-get_arg_by_name(const char *argname, struct StatsArgInfo *arginfo, int elevel)
+get_arg_by_name(const char *argname, struct StatsArgInfo *arginfo)
 {
 	int			argnum;
 
@@ -224,7 +224,7 @@ get_arg_by_name(const char *argname, struct StatsArgInfo *arginfo, int elevel)
 		if (pg_strcasecmp(argname, arginfo[argnum].argname) == 0)
 			return argnum;
 
-	ereport(elevel,
+	ereport(WARNING,
 			(errmsg("unrecognized argument name: \"%s\"", argname)));
 
 	return -1;
@@ -234,11 +234,11 @@ get_arg_by_name(const char *argname, struct StatsArgInfo *arginfo, int elevel)
  * Ensure that a given argument matched the expected type.
  */
 static bool
-stats_check_arg_type(const char *argname, Oid argtype, Oid expectedtype, int elevel)
+stats_check_arg_type(const char *argname, Oid argtype, Oid expectedtype)
 {
 	if (argtype != expectedtype)
 	{
-		ereport(elevel,
+		ereport(WARNING,
 				(errmsg("argument \"%s\" has type \"%s\", expected type \"%s\"",
 						argname, format_type_be(argtype),
 						format_type_be(expectedtype))));
@@ -260,8 +260,7 @@ stats_check_arg_type(const char *argname, Oid argtype, Oid expectedtype, int ele
 bool
 stats_fill_fcinfo_from_arg_pairs(FunctionCallInfo pairs_fcinfo,
 								 FunctionCallInfo positional_fcinfo,
-								 struct StatsArgInfo *arginfo,
-								 int elevel)
+								 struct StatsArgInfo *arginfo)
 {
 	Datum	   *args;
 	bool	   *argnulls;
@@ -319,11 +318,10 @@ stats_fill_fcinfo_from_arg_pairs(FunctionCallInfo pairs_fcinfo,
 		if (pg_strcasecmp(argname, "version") == 0)
 			continue;
 
-		argnum = get_arg_by_name(argname, arginfo, elevel);
+		argnum = get_arg_by_name(argname, arginfo);
 
 		if (argnum < 0 || !stats_check_arg_type(argname, types[i + 1],
-												arginfo[argnum].argtype,
-												elevel))
+												arginfo[argnum].argtype))
 		{
 			result = false;
 			continue;
