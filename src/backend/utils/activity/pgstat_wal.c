@@ -106,7 +106,7 @@ pgstat_wal_flush_cb(bool nowait)
 		return true;
 
 #define WALSTAT_ACC(fld, var_to_add) \
-	(stats_shmem->stats.fld += var_to_add.fld)
+	(stats_shmem->stats.wal_counters.fld += var_to_add.fld)
 	WALSTAT_ACC(wal_records, wal_usage_diff);
 	WALSTAT_ACC(wal_fpi, wal_usage_diff);
 	WALSTAT_ACC(wal_bytes, wal_usage_diff);

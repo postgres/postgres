@@ -1643,6 +1643,7 @@ pg_stat_get_wal(PG_FUNCTION_ARGS)
 	bool		nulls[PG_STAT_GET_WAL_COLS] = {0};
 	char		buf[256];
 	PgStat_WalStats *wal_stats;
+	PgStat_WalCounters wal_counters;
 
 	/* Initialise attributes information in the tuple descriptor */
 	tupdesc = CreateTemplateTupleDesc(PG_STAT_GET_WAL_COLS);
@@ -1661,19 +1662,20 @@ pg_stat_get_wal(PG_FUNCTION_ARGS)
 
 	/* Get statistics about WAL activity */
 	wal_stats = pgstat_fetch_stat_wal();
+	wal_counters = wal_stats->wal_counters;
 
 	/* Fill values and NULLs */
-	values[0] = Int64GetDatum(wal_stats->wal_records);
-	values[1] = Int64GetDatum(wal_stats->wal_fpi);
+	values[0] = Int64GetDatum(wal_counters.wal_records);
+	values[1] = Int64GetDatum(wal_counters.wal_fpi);
 
 	/* Convert to numeric. */
-	snprintf(buf, sizeof buf, UINT64_FORMAT, wal_stats->wal_bytes);
+	snprintf(buf, sizeof buf, UINT64_FORMAT, wal_counters.wal_bytes);
 	values[2] = DirectFunctionCall3(numeric_in,
 									CStringGetDatum(buf),
 									ObjectIdGetDatum(0),
 									Int32GetDatum(-1));
 
-	values[3] = Int64GetDatum(wal_stats->wal_buffers_full);
+	values[3] = Int64GetDatum(wal_counters.wal_buffers_full);
 
 	values[4] = TimestampTzGetDatum(wal_stats->stat_reset_timestamp);
 

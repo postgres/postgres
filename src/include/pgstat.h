@@ -212,7 +212,7 @@ typedef struct PgStat_TableXactStatus
  * ------------------------------------------------------------
  */
 
-#define PGSTAT_FILE_FORMAT_ID	0x01A5BCB4
+#define PGSTAT_FILE_FORMAT_ID	0x01A5BCB5
 
 typedef struct PgStat_ArchiverStats
 {
@@ -474,12 +474,29 @@ typedef struct PgStat_StatTabEntry
 	PgStat_Counter total_autoanalyze_time;
 } PgStat_StatTabEntry;
 
-typedef struct PgStat_WalStats
+/* ------
+ * PgStat_WalCounters	WAL activity data gathered from WalUsage
+ *
+ * This stores all the counters and data gathered from WalUsage for WAL
+ * activity statistics, separated into its own structure so as this can be
+ * shared across multiple Stats structures.
+ * ------
+ */
+typedef struct PgStat_WalCounters
 {
 	PgStat_Counter wal_records;
 	PgStat_Counter wal_fpi;
 	uint64		wal_bytes;
 	PgStat_Counter wal_buffers_full;
+} PgStat_WalCounters;
+
+/* -------
+ * PgStat_WalStats		WAL statistics
+ * -------
+ */
+typedef struct PgStat_WalStats
+{
+	PgStat_WalCounters wal_counters;
 	TimestampTz stat_reset_timestamp;
 } PgStat_WalStats;
 

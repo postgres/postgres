@@ -2189,6 +2189,7 @@ PgStat_SubXactStatus
 PgStat_TableCounts
 PgStat_TableStatus
 PgStat_TableXactStatus
+PgStat_WalCounters
 PgStat_WalStats
 PgXmlErrorContext
 PgXmlStrictness
