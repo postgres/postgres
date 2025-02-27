@@ -1632,21 +1632,23 @@ pg_stat_get_backend_io(PG_FUNCTION_ARGS)
 }
 
 /*
- * Returns statistics of WAL activity
+ * pg_stat_wal_build_tuple
+ *
+ * Helper routine for pg_stat_get_wal() returning one tuple based on the
+ * contents of wal_counters.
  */
-Datum
-pg_stat_get_wal(PG_FUNCTION_ARGS)
+static Datum
+pg_stat_wal_build_tuple(PgStat_WalCounters wal_counters,
+						TimestampTz stat_reset_timestamp)
 {
-#define PG_STAT_GET_WAL_COLS	5
+#define PG_STAT_WAL_COLS	5
 	TupleDesc	tupdesc;
-	Datum		values[PG_STAT_GET_WAL_COLS] = {0};
-	bool		nulls[PG_STAT_GET_WAL_COLS] = {0};
+	Datum		values[PG_STAT_WAL_COLS] = {0};
+	bool		nulls[PG_STAT_WAL_COLS] = {0};
 	char		buf[256];
-	PgStat_WalStats *wal_stats;
-	PgStat_WalCounters wal_counters;
 
 	/* Initialise attributes information in the tuple descriptor */
-	tupdesc = CreateTemplateTupleDesc(PG_STAT_GET_WAL_COLS);
+	tupdesc = CreateTemplateTupleDesc(PG_STAT_WAL_COLS);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "wal_records",
 					   INT8OID, -1, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 2, "wal_fpi",
@@ -1659,10 +1661,6 @@ pg_stat_get_wal(PG_FUNCTION_ARGS)
 					   TIMESTAMPTZOID, -1, 0);
 
 	BlessTupleDesc(tupdesc);
-
-	/* Get statistics about WAL activity */
-	wal_stats = pgstat_fetch_stat_wal();
-	wal_counters = wal_stats->wal_counters;
 
 	/* Fill values and NULLs */
 	values[0] = Int64GetDatum(wal_counters.wal_records);
@@ -1677,10 +1675,28 @@ pg_stat_get_wal(PG_FUNCTION_ARGS)
 
 	values[3] = Int64GetDatum(wal_counters.wal_buffers_full);
 
-	values[4] = TimestampTzGetDatum(wal_stats->stat_reset_timestamp);
+	if (stat_reset_timestamp != 0)
+		values[4] = TimestampTzGetDatum(stat_reset_timestamp);
+	else
+		nulls[4] = true;
 
 	/* Returns the record as Datum */
 	PG_RETURN_DATUM(HeapTupleGetDatum(heap_form_tuple(tupdesc, values, nulls)));
+}
+
+/*
+ * Returns statistics of WAL activity
+ */
+Datum
+pg_stat_get_wal(PG_FUNCTION_ARGS)
+{
+	PgStat_WalStats *wal_stats;
+
+	/* Get statistics about WAL activity */
+	wal_stats = pgstat_fetch_stat_wal();
+
+	return (pg_stat_wal_build_tuple(wal_stats->wal_counters,
+									wal_stats->stat_reset_timestamp));
 }
 
 /*
