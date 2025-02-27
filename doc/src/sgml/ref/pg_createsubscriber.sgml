@@ -94,7 +94,10 @@ PostgreSQL documentation
       <para>
        The name of the database in which to create a subscription.  Multiple
        databases can be selected by writing multiple <option>-d</option>
-       switches.
+       switches. If <option>-d</option> option is not provided, the database
+       name will be obtained from <option>-P</option> option. If the database
+       name is not specified in either the <option>-d</option> option or
+       <option>-P</option> option, an error will be reported.
       </para>
      </listitem>
     </varlistentry>
