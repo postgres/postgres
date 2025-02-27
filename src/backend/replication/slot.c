@@ -580,19 +580,6 @@ retry:
 						name)));
 	}
 
-	/* Invalid slots can't be modified or used before accessing the WAL. */
-	if (error_if_invalid && s->data.invalidated != RS_INVAL_NONE)
-	{
-		LWLockRelease(ReplicationSlotControlLock);
-
-		ereport(ERROR,
-				errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				errmsg("can no longer access replication slot \"%s\"",
-					   NameStr(s->data.name)),
-				errdetail("This replication slot has been invalidated due to \"%s\".",
-						  GetSlotInvalidationCauseName(s->data.invalidated)));
-	}
-
 	/*
 	 * This is the slot we want; check if it's active under some other
 	 * process.  In single user mode, we don't need this check.
@@ -650,11 +637,24 @@ retry:
 	else if (!nowait)
 		ConditionVariableCancelSleep(); /* no sleep needed after all */
 
-	/* Let everybody know we've modified this slot */
-	ConditionVariableBroadcast(&s->active_cv);
-
 	/* We made this slot active, so it's ours now. */
 	MyReplicationSlot = s;
+
+	/*
+	 * We need to check for invalidation after making the slot ours to avoid
+	 * the possible race condition with the checkpointer that can otherwise
+	 * invalidate the slot immediately after the check.
+	 */
+	if (error_if_invalid && s->data.invalidated != RS_INVAL_NONE)
+		ereport(ERROR,
+				errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				errmsg("can no longer access replication slot \"%s\"",
+					   NameStr(s->data.name)),
+				errdetail("This replication slot has been invalidated due to \"%s\".",
+						  GetSlotInvalidationCauseName(s->data.invalidated)));
+
+	/* Let everybody know we've modified this slot */
+	ConditionVariableBroadcast(&s->active_cv);
 
 	/*
 	 * The call to pgstat_acquire_replslot() protects against stats for a
