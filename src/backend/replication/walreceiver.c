@@ -942,7 +942,9 @@ XLogWalRcvWrite(char *buf, Size nbytes, XLogRecPtr recptr, TimeLineID tli)
 		/* OK to write the logs */
 		errno = 0;
 
-		byteswritten = xlog_smgr->seg_write(recvFile, buf, segbytes, (off_t) startoff);
+		byteswritten = xlog_smgr->seg_write(recvFile, buf, segbytes,
+											(off_t) startoff, recvFileTLI,
+											recvSegNo);
 		if (byteswritten <= 0)
 		{
 			char		xlogfname[MAXFNAMELEN];

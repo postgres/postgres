@@ -34,7 +34,6 @@ pg_tde_sources = files(
 
         'src/smgr/pg_tde_smgr.c',
 
-        'src/catalog/tde_global_space.c',
         'src/catalog/tde_keyring.c',
         'src/catalog/tde_keyring_parse_opts.c',
         'src/catalog/tde_principal_key.c',
@@ -108,7 +107,6 @@ sql_tests = [
       'cache_alloc',
       'update_basic',
       'key_provider',
-      'wal_key',
       'relocate',
 ]
 
@@ -172,7 +170,6 @@ tests += {
 tde_decrypt_sources = files(
    'src/access/pg_tde_tdemap.c',
    'src/access/pg_tde_xlog_encrypt.c',
-   'src/catalog/tde_global_space.c',
    'src/catalog/tde_keyring.c',
    'src/catalog/tde_keyring_parse_opts.c',
    'src/catalog/tde_principal_key.c',

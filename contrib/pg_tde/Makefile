@@ -24,7 +24,6 @@ vault_v2_test_basic \
 alter_index_basic \
 merge_join_basic \
 tablespace_basic \
-wal_key \
 relocate
 TAP_TESTS = 1
 
@@ -51,7 +50,6 @@ src/keyring/keyring_vault.o \
 src/keyring/keyring_kmip.o \
 src/keyring/keyring_kmip_ereport.o \
 src/keyring/keyring_api.o \
-src/catalog/tde_global_space.o \
 src/catalog/tde_keyring.o \
 src/catalog/tde_keyring_parse_opts.o \
 src/catalog/tde_principal_key.o \

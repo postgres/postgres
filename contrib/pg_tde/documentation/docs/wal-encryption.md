@@ -1,32 +1,15 @@
 # WAL encryption configuration (tech preview)
 
-After you [enabled `pg_tde`](#enable-extension) and restarted the Percona Server for PostgreSQL, a principal key and a keyring for WAL are created. Now you need to instruct `pg_tde ` to encrypt WAL files by configuring WAL encryption. 
+Before turning WAL encryption on, you must first create a principal key for WAL.
 
-Here's how to do it:
+Here's what to do:
 
-1. Enable WAL level encryption using the `ALTER SYSTEM SET` command. You need the superuser privileges to run this command:
+1. Create pg_tde extesion if it is not exists:
 
     ```sql
-    ALTER SYSTEM set pg_tde.wal_encrypt = on;
+    CREATE EXTENSION IF NOT EXISTS pg_tde;
     ```
-
-2. Restart the server to apply the changes.
-
-    * On Debian and Ubuntu:    
-
-       ```sh
-       sudo systemctl restart postgresql-17
-       ```
-    
-    * On RHEL and derivatives
-
-       ```sh
-       sudo systemctl restart postgresql-17
-       ```
-
-3. We highly recommend you to create your own keyring and rotate the principal key. This is because the default principal key is created from the local keyfile and is stored unencrypted. 
-
-    Set up the key provider for WAL encryption
+2. Set up the key provider for WAL encryption
 
     === "With KMIP server"
 
@@ -51,11 +34,11 @@ Here's how to do it:
         ```
         SELECT pg_tde_add_key_global_provider_kmip('kmip','127.0.0.1', 5696, '/tmp/server_certificate.pem', '/tmp/client_key_jane_doe.pem');
         ```
-    
+
     === "With HashiCorp Vault"
     
         ```sql
-        SELECT pg_tde_add_global_key_provider_vault_v2('provider-name',:'secret_token','url','mount','ca_path');
+        SELECT pg_tde_add_global_key_provider_vault_v2('provider-name', 'secret_token', 'url', 'mount', 'ca_path');
         ``` 
 
         where: 
@@ -72,19 +55,36 @@ Here's how to do it:
         This setup is intended for development and stores the keys unencrypted in the specified data file.    
 
         ```sql
-        SELECT pg_tde_add_key_provider_file('provider-name','/path/to/the/keyring/data.file');
+        SELECT pg_tde_add_global_key_provider_file('provider-name','/path/to/the/keyring/data.file');
         ```
 
-4. Rotate the principal key for WAL encryption. 
-
+3. Create principal key
+    
     ```sql
-    SELECT pg_tde_set_server_principal_key('new-principal-key', 'provider-name','ensure_new_key');
+    SELECT pg_tde_set_server_principal_key('principal-key', 'provider-name');
     ```
 
-    The `ensure_new_key` parameter is set to `true` by default. It ensures that a new key must be unique. If set to `false`, an existing principal key will be reused.  
+4. Enable WAL level encryption using the `ALTER SYSTEM` command. You need the privileges of the superuser to run this command:
 
+    ```sql
+    ALTER SYSTEM SET pg_tde.wal_encrypt = on;
+    ```
 
-Now all WAL files are encrypted for both encrypted and unencrypted tables.
+5. Restart the server to apply the changes.
+
+    * On Debian and Ubuntu:    
+
+       ```sh
+       sudo systemctl restart postgresql
+       ```
+    
+    * On RHEL and derivatives
+
+       ```sh
+       sudo systemctl restart postgresql-17
+       ```
+
+Now WAL files start to be encrypted for both encrypted and unencrypted tables.
 
 ## Next steps
 

@@ -35,9 +35,6 @@ PGTDE::append_to_file($stdout);
 $stdout = $node->safe_psql('postgres', "SELECT pg_tde_set_server_principal_key('global-db-principal-key', 'file-keyring-010');", extra_params => ['-a']);
 PGTDE::append_to_file($stdout);
 
-$stdout = $node->safe_psql('postgres', "SELECT pg_tde_create_wal_key();", extra_params => ['-a']);
-PGTDE::append_to_file($stdout);
-
 # Restart the server, it should work with encryption now
 PGTDE::append_to_file("-- server restart with wal encryption");
 $node->stop();

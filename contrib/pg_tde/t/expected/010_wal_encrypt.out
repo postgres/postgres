@@ -3,8 +3,6 @@ SELECT pg_tde_add_global_key_provider_file('file-keyring-010','/tmp/pg_tde_test_
 -1
 SELECT pg_tde_set_server_principal_key('global-db-principal-key', 'file-keyring-010');
 t
-SELECT pg_tde_create_wal_key();
-t
 -- server restart with wal encryption
 SHOW pg_tde.wal_encrypt;
 on

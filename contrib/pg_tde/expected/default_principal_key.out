@@ -2,7 +2,7 @@ CREATE EXTENSION IF NOT EXISTS pg_tde;
 SELECT pg_tde_add_global_key_provider_file('file-provider','/tmp/pg_tde_regression_default_principal_key.per');
  pg_tde_add_global_key_provider_file 
 -------------------------------------
-                                  -4
+                                  -3
 (1 row)
 
 SELECT pg_tde_set_default_principal_key('default-principal-key', 'file-provider', false);
@@ -18,9 +18,8 @@ SELECT id, provider_name FROM pg_tde_list_all_global_key_providers();
  id | provider_name 
 ----+---------------
  -2 | file-keyring2
- -3 | file-keyring
- -4 | file-provider
-(3 rows)
+ -3 | file-provider
+(2 rows)
 
 -- Should fail: no principal key for the database yet
 SELECT  key_provider_id, key_provider_name, principal_key_name
@@ -40,7 +39,7 @@ SELECT  key_provider_id, key_provider_name, principal_key_name
 		FROM pg_tde_principal_key_info();
  key_provider_id | key_provider_name |  principal_key_name   
 -----------------+-------------------+-----------------------
-              -4 | file-provider     | default-principal-key
+              -3 | file-provider     | default-principal-key
 (1 row)
 
 CREATE DATABASE regress_pg_tde_other;
@@ -63,7 +62,7 @@ SELECT  key_provider_id, key_provider_name, principal_key_name
 		FROM pg_tde_principal_key_info();
  key_provider_id | key_provider_name |  principal_key_name   
 -----------------+-------------------+-----------------------
-              -4 | file-provider     | default-principal-key
+              -3 | file-provider     | default-principal-key
 (1 row)
 
 \c regression_pg_tde
@@ -77,7 +76,7 @@ SELECT  key_provider_id, key_provider_name, principal_key_name
 		FROM pg_tde_principal_key_info();
  key_provider_id | key_provider_name |    principal_key_name     
 -----------------+-------------------+---------------------------
-              -4 | file-provider     | new-default-principal-key
+              -3 | file-provider     | new-default-principal-key
 (1 row)
 
 \c regress_pg_tde_other
@@ -85,7 +84,7 @@ SELECT  key_provider_id, key_provider_name, principal_key_name
 		FROM pg_tde_principal_key_info();
  key_provider_id | key_provider_name |    principal_key_name     
 -----------------+-------------------+---------------------------
-              -4 | file-provider     | new-default-principal-key
+              -3 | file-provider     | new-default-principal-key
 (1 row)
 
 DROP TABLE test_enc;

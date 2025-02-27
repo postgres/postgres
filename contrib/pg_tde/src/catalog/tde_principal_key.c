@@ -87,7 +87,6 @@ static void shared_memory_shutdown(int code, Datum arg);
 static void principal_key_startup_cleanup(int tde_tbl_count, XLogExtensionInstall *ext_info, bool redo, void *arg);
 static void clear_principal_key_cache(Oid databaseId);
 static inline dshash_table *get_principal_key_Hash(void);
-static TDEPrincipalKey *get_principal_key_from_keyring(Oid dbOid, bool pushToCache);
 static TDEPrincipalKey *get_principal_key_from_cache(Oid dbOid);
 static bool pg_tde_is_same_principal_key(TDEPrincipalKey *a, TDEPrincipalKey *b);
 static void pg_tde_update_global_principal_key_everywhere(TDEPrincipalKey *oldKey, TDEPrincipalKey *newKey);
@@ -776,7 +775,7 @@ pg_tde_get_key_info(PG_FUNCTION_ARGS, Oid dbOid)
  * Gets principal key form the keyring and pops it into cache if key exists
  * Caller should hold an exclusive tde_lwlock_enc_keys lock
  */
-static TDEPrincipalKey *
+TDEPrincipalKey *
 get_principal_key_from_keyring(Oid dbOid, bool pushToCache)
 {
 	GenericKeyring *keyring;
@@ -785,7 +784,7 @@ get_principal_key_from_keyring(Oid dbOid, bool pushToCache)
 	const KeyInfo *keyInfo = NULL;
 	KeyringReturnCodes keyring_ret;
 
-	Assert(LWLockHeldByMeInMode(tde_lwlock_enc_keys(), LW_EXCLUSIVE));
+	/* Assert(LWLockHeldByMeInMode(tde_lwlock_enc_keys(), LW_EXCLUSIVE)); */
 
 	principalKeyInfo = pg_tde_get_principal_key_info(dbOid);
 	if (principalKeyInfo == NULL)

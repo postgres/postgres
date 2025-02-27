@@ -2446,7 +2446,7 @@ XLogWrite(XLogwrtRqst WriteRqst, TimeLineID tli, bool flexible)
 					INSTR_TIME_SET_ZERO(start);
 
 				pgstat_report_wait_start(WAIT_EVENT_WAL_WRITE);
-				written = xlog_smgr->seg_write(openLogFile, from, nleft, startoffset);
+				written = xlog_smgr->seg_write(openLogFile, from, nleft, startoffset, tli, openLogSegNo);
 				pgstat_report_wait_end();
 
 				/*

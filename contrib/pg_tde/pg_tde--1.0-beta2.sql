@@ -481,11 +481,6 @@ RETURNS boolean
 LANGUAGE C
 AS 'MODULE_PATHNAME';
 
-CREATE FUNCTION pg_tde_create_wal_key()
-RETURNS boolean
-LANGUAGE C
-AS 'MODULE_PATHNAME';
-
 CREATE FUNCTION pg_tde_extension_initialize()
 RETURNS VOID
 LANGUAGE C

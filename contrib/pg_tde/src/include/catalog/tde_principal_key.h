@@ -68,4 +68,6 @@ extern bool xl_tde_perform_rotate_key(XLogPrincipalKeyRotate *xlrec);
 
 extern void PrincipalKeyGucInit(void);
 
+extern TDEPrincipalKey *get_principal_key_from_keyring(Oid dbOid, bool pushToCache);
+
 #endif							/* PG_TDE_PRINCIPAL_KEY_H */

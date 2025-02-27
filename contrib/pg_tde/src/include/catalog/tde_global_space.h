@@ -14,9 +14,6 @@
 #include "postgres.h"
 #include "catalog/pg_tablespace_d.h"
 
-#include "access/pg_tde_tdemap.h"
-#include "catalog/tde_principal_key.h"
-
 /*
  * Needed for global data (WAL etc) keys identification in caches and storage.
  * We take Oids of the sql operators, so there is no overlap with the "real"
@@ -31,12 +28,9 @@
 	_obj_oid \
 }
 
-
 /*  Needed for using the same default key for multiple databases */
 #define DEFAULT_DATA_TDE_OID	DEFAULTTABLESPACE_OID
 
 #define TDEisInGlobalSpace(dbOid) 	(dbOid == GLOBAL_DATA_TDE_OID)
-
-extern void TDEInitGlobalKeys(void);
 
 #endif							/* TDE_GLOBAL_CATALOG_H */

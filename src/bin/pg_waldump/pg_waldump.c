@@ -250,7 +250,26 @@ search_directory(const char *directory, const char *fname)
 		PGAlignedXLogBlock buf;
 		int			r;
 
+#ifdef PERCONA_EXT
+		off_t		fsize;
+		TimeLineID	tli;
+		XLogSegNo	segno;
+
+		/*
+		 * WalSegSz extracted from the first page header but it might be
+		 * encrypted. But we need to know the segment seize to decrypt it
+		 * (it's required for encryption offset calculations). So we get the
+		 * segment size from the file's actual size.
+		 * XLogLongPageHeaderData->xlp_seg_size there is "just as a
+		 * cross-check" anyway.
+		 */
+		fsize = lseek(fd, 0, SEEK_END);
+		XLogFromFileName(fname, &tli, &segno, fsize);
+
+		r = xlog_smgr->seg_read(fd, buf.data, XLOG_BLCKSZ, 0, tli, segno, fsize);
+#else
 		r = read(fd, buf.data, XLOG_BLCKSZ);
+#endif
 		if (r == XLOG_BLCKSZ)
 		{
 			XLogLongPageHeader longhdr = (XLogLongPageHeader) buf.data;
@@ -1136,7 +1155,6 @@ main(int argc, char **argv)
 	if (kringdir != NULL)
 	{
 		pg_tde_fe_init(kringdir);
-		TDEInitGlobalKeys();
 		TDEXLogSmgrInit();
 	}
 #endif

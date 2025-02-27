@@ -134,18 +134,18 @@ get_tde_tables_count(void)
 
 #endif							/* !FRONTEND */
 
-static char globalspace_dir[MAXPGPATH] = PG_TDE_DATA_DIR;
+static char tde_data_dir[MAXPGPATH] = PG_TDE_DATA_DIR;
 
 void
 pg_tde_set_data_dir(const char *dir)
 {
 	Assert(dir != NULL);
-	strlcpy(globalspace_dir, dir, sizeof(globalspace_dir));
+	strlcpy(tde_data_dir, dir, sizeof(tde_data_dir));
 }
 
 /* returns the palloc'd string */
 char *
 pg_tde_get_tde_data_dir(void)
 {
-	return globalspace_dir;
+	return tde_data_dir;
 }

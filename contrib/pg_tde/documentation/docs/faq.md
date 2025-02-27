@@ -85,13 +85,13 @@ The principal key is used to encrypt the internal keys. The principal key is sto
 
 WAL encryption is done globally for the entire database cluster. All modifications to any database within a PostgreSQL cluster are written to the same WAL to maintain data consistency and integrity and ensure that PostgreSQL cluster can be restored to a consistent state. Therefore, WAL is encrypted globally. 
 
-When you turn on WAL encryption, `pg_tde` encrypts entire WAL pages except for the header. The header contains a marker if a page is encrypted or not. 
+When you turn on WAL encryption, `pg_tde` encrypts entire WAL files starting from the first WAL write after the server was started with the encryption turned on.
 
 The same 2-tier approach is used with WAL as with the table data: WAL pages are first encrypted with the internal key. Then the internal key is encrypted with the global principal key.
 
-You can turn WAL encryption on and off so WAL can contain both encrypted and unencrypted pages. The WAL encryption GUC variable influences only writes.
+You can turn WAL encryption on and off so WAL can contain both encrypted and unencrypted data. The WAL encryption GUC variable influences only writes.
 
-Whenever the WAL is being read (by the recovery process or tools), the decision on what pages should be decrypted is based solely on the encryption flag of each page.
+Whenever the WAL is being read (by the recovery process or tools), the decision on what should be decrypted is based solely on the metadata of WAL encryption keys.
 
 
 ## Should I encrypt all my data?
@@ -145,7 +145,7 @@ In `pg_tde`, multi-tenancy is supported via a separate principal key per databas
 
 To control user access to the databases, you can use role-based access control (RBAC).
 
-WAL files are encrypted globally across the entire PostgreSQL cluster using the same encryption key. Users don't interact with WAL files as these are used by the database management system to ensure data integrity and durability.
+WAL files are encrypted globally across the entire PostgreSQL cluster using the same encryption keys. Users don't interact with WAL files as these are used by the database management system to ensure data integrity and durability.
 
 ## Are my backups safe? Can I restore from them?
 

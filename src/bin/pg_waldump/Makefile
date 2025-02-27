@@ -22,8 +22,8 @@ ifeq ($(enable_percona_ext),yes)
 
 OBJS += \
 	$(top_srcdir)/src/fe_utils/simple_list.o \
-	$(top_builddir)/src/libtde/libtde.a \
-	$(top_builddir)/src/libtde/libtdexlog.a
+	$(top_builddir)/src/libtde/libtdexlog.a \
+	$(top_builddir)/src/libtde/libtde.a
 
 override CPPFLAGS := -I$(top_srcdir)/contrib/pg_tde/src/include -I$(top_srcdir)/contrib/pg_tde/src/libkmip/libkmip/include $(CPPFLAGS)
 endif

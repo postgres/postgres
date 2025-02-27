@@ -29,7 +29,6 @@ $node->start;
 $node->safe_psql('postgres', "CREATE EXTENSION IF NOT EXISTS pg_tde;");
 $node->safe_psql('postgres', "SELECT pg_tde_add_global_key_provider_file('file-keyring-wal','/tmp/pg_tde_test_keyring-wal.per');");;
 $node->safe_psql('postgres', "SELECT pg_tde_set_server_principal_key('global-db-principal-key', 'file-keyring-wal');");
-$node->safe_psql('postgres', "SELECT pg_tde_create_wal_key();");
 
 $node->append_conf(
 	'postgresql.conf', q{
@@ -132,7 +131,7 @@ command_fails_like(
 command_like([ 'pg_waldump', '-k', $node->data_dir. '/pg_tde', $node->data_dir . '/pg_wal/' . $start_walfile ],
 	qr/./, 'runs with start segment specified');
 command_fails_like(
-	[ 'pg_waldump', $node->data_dir . '/pg_wal/' . $start_walfile, 'bar' ],
+	[ 'pg_waldump', '-k', $node->data_dir. '/pg_tde', $node->data_dir . '/pg_wal/' . $start_walfile, 'bar' ],
 	qr/error: could not open file "bar"/,
 	'end file not found');
 command_like(

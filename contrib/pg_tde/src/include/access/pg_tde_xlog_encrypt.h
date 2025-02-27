@@ -15,12 +15,14 @@
 
 extern Size TDEXLogEncryptBuffSize(void);
 
-#define XLOG_TDE_ENC_BUFF_ALIGNED_SIZE	add_size(TDEXLogEncryptBuffSize(), PG_IO_ALIGN_SIZE)
-
+extern Size TDEXLogEncryptStateSize(void);
 extern void TDEXLogShmemInit(void);
 
-extern ssize_t tdeheap_xlog_seg_read(int fd, void *buf, size_t count, off_t offset);
-extern ssize_t tdeheap_xlog_seg_write(int fd, const void *buf, size_t count, off_t offset);
+extern ssize_t tdeheap_xlog_seg_read(int fd, void *buf, size_t count, off_t offset,
+									 TimeLineID tli, XLogSegNo segno, int segSize);
+extern ssize_t tdeheap_xlog_seg_write(int fd, const void *buf, size_t count,
+									  off_t offset, TimeLineID tli,
+									  XLogSegNo segno);
 
 extern void TDEXLogSmgrInit(void);
 extern void XLogInitGUC(void);
