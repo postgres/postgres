@@ -26,8 +26,8 @@
 #include <stdio.h>
 #include <unistd.h>
 
-static keyInfo *get_key_by_name(GenericKeyring *keyring, const char *key_name, bool throw_error, KeyringReturnCodes *return_code);
-static KeyringReturnCodes set_key_by_name(GenericKeyring *keyring, keyInfo *key, bool throw_error);
+static KeyInfo *get_key_by_name(GenericKeyring *keyring, const char *key_name, bool throw_error, KeyringReturnCodes *return_code);
+static KeyringReturnCodes set_key_by_name(GenericKeyring *keyring, KeyInfo *key, bool throw_error);
 
 const TDEKeyringRoutine keyringFileRoutine = {
 	.keyring_get_key = get_key_by_name,
@@ -41,10 +41,10 @@ InstallFileKeyring(void)
 }
 
 
-static keyInfo *
+static KeyInfo *
 get_key_by_name(GenericKeyring *keyring, const char *key_name, bool throw_error, KeyringReturnCodes *return_code)
 {
-	keyInfo    *key = NULL;
+	KeyInfo    *key = NULL;
 	int			fd = -1;
 	FileKeyring *file_keyring = (FileKeyring *) keyring;
 	off_t		bytes_read = 0;
@@ -57,10 +57,10 @@ get_key_by_name(GenericKeyring *keyring, const char *key_name, bool throw_error,
 	if (fd < 0)
 		return NULL;
 
-	key = palloc(sizeof(keyInfo));
+	key = palloc(sizeof(KeyInfo));
 	while (true)
 	{
-		bytes_read = pg_pread(fd, key, sizeof(keyInfo), curr_pos);
+		bytes_read = pg_pread(fd, key, sizeof(KeyInfo), curr_pos);
 		curr_pos += bytes_read;
 
 		if (bytes_read == 0)
@@ -73,7 +73,7 @@ get_key_by_name(GenericKeyring *keyring, const char *key_name, bool throw_error,
 			pfree(key);
 			return NULL;
 		}
-		if (bytes_read != sizeof(keyInfo))
+		if (bytes_read != sizeof(KeyInfo))
 		{
 			close(fd);
 			pfree(key);
@@ -83,7 +83,7 @@ get_key_by_name(GenericKeyring *keyring, const char *key_name, bool throw_error,
 					(errcode_for_file_access(),
 					 errmsg("keyring file \"%s\" is corrupted: %m",
 							file_keyring->file_name),
-					 errdetail("invalid key size %lu expected %lu", bytes_read, sizeof(keyInfo))));
+					 errdetail("invalid key size %lu expected %lu", bytes_read, sizeof(KeyInfo))));
 			return NULL;
 		}
 		if (strncasecmp(key->name, key_name, sizeof(key->name)) == 0)
@@ -98,13 +98,13 @@ get_key_by_name(GenericKeyring *keyring, const char *key_name, bool throw_error,
 }
 
 static KeyringReturnCodes
-set_key_by_name(GenericKeyring *keyring, keyInfo *key, bool throw_error)
+set_key_by_name(GenericKeyring *keyring, KeyInfo *key, bool throw_error)
 {
 	off_t		bytes_written = 0;
 	off_t		curr_pos = 0;
 	int			fd;
 	FileKeyring *file_keyring = (FileKeyring *) keyring;
-	keyInfo    *existing_key;
+	KeyInfo    *existing_key;
 	KeyringReturnCodes return_code = KEYRING_CODE_SUCCESS;
 	int			ereport_level = throw_error ? ERROR : WARNING;
 
@@ -129,8 +129,8 @@ set_key_by_name(GenericKeyring *keyring, keyInfo *key, bool throw_error)
 	}
 	/* Write key to the end of file */
 	curr_pos = lseek(fd, 0, SEEK_END);
-	bytes_written = pg_pwrite(fd, key, sizeof(keyInfo), curr_pos);
-	if (bytes_written != sizeof(keyInfo))
+	bytes_written = pg_pwrite(fd, key, sizeof(KeyInfo), curr_pos);
+	if (bytes_written != sizeof(KeyInfo))
 	{
 		close(fd);
 		ereport(ereport_level,

@@ -23,17 +23,17 @@ typedef enum ProviderType
 #define MAX_KEY_DATA_SIZE 32	/* maximum 256 bit encryption */
 #define INTERNAL_KEY_LEN 16
 
-typedef struct keyData
+typedef struct KeyData
 {
 	unsigned char data[MAX_KEY_DATA_SIZE];
 	unsigned	len;
-} keyData;
+} KeyData;
 
-typedef struct keyInfo
+typedef struct KeyInfo
 {
 	char		name[TDE_KEY_NAME_LEN];
-	keyData		data;
-} keyInfo;
+	KeyData		data;
+} KeyInfo;
 
 typedef enum KeyringReturnCodes
 {
@@ -59,8 +59,8 @@ typedef struct GenericKeyring
 
 typedef struct TDEKeyringRoutine
 {
-	keyInfo    *(*keyring_get_key) (GenericKeyring *keyring, const char *key_name, bool throw_error, KeyringReturnCodes *returnCode);
-	KeyringReturnCodes (*keyring_store_key) (GenericKeyring *keyring, keyInfo *key, bool throw_error);
+	KeyInfo    *(*keyring_get_key) (GenericKeyring *keyring, const char *key_name, bool throw_error, KeyringReturnCodes *returnCode);
+	KeyringReturnCodes (*keyring_store_key) (GenericKeyring *keyring, KeyInfo *key, bool throw_error);
 } TDEKeyringRoutine;
 
 /*

@@ -143,7 +143,7 @@ RelationGetIndexScan(Relation indexRelation, int nkeys, int norderbys)
 void
 IndexScanEnd(IndexScanDesc scan)
 {
-	if (scan->keyData !=NULL)
+	if (scan->keyData != NULL)
 		pfree(scan->keyData);
 	if (scan->orderByData != NULL)
 		pfree(scan->orderByData);

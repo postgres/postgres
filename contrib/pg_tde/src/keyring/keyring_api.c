@@ -101,7 +101,7 @@ RegisterKeyProvider(const TDEKeyringRoutine *routine, ProviderType type)
 	return true;
 }
 
-keyInfo *
+KeyInfo *
 KeyringGetKey(GenericKeyring *keyring, const char *key_name, bool throw_error, KeyringReturnCodes *returnCode)
 {
 	KeyProviders *kp = find_key_provider(keyring->type);
@@ -118,7 +118,7 @@ KeyringGetKey(GenericKeyring *keyring, const char *key_name, bool throw_error, K
 }
 
 KeyringReturnCodes
-KeyringStoreKey(GenericKeyring *keyring, keyInfo *key, bool throw_error)
+KeyringStoreKey(GenericKeyring *keyring, KeyInfo *key, bool throw_error)
 {
 	KeyProviders *kp = find_key_provider(keyring->type);
 	int			ereport_level = throw_error ? ERROR : WARNING;
@@ -132,14 +132,14 @@ KeyringStoreKey(GenericKeyring *keyring, keyInfo *key, bool throw_error)
 	return kp->routine->keyring_store_key(keyring, key, throw_error);
 }
 
-keyInfo *
+KeyInfo *
 KeyringGenerateNewKey(const char *key_name, unsigned key_len)
 {
-	keyInfo    *key;
+	KeyInfo    *key;
 
 	Assert(key_len <= 32);
 	/* Struct will be saved to disk so keep clean */
-	key = palloc0(sizeof(keyInfo));
+	key = palloc0(sizeof(KeyInfo));
 	key->data.len = key_len;
 	if (!RAND_bytes(key->data.data, key_len))
 	{
@@ -150,10 +150,10 @@ KeyringGenerateNewKey(const char *key_name, unsigned key_len)
 	return key;
 }
 
-keyInfo *
+KeyInfo *
 KeyringGenerateNewKeyAndStore(GenericKeyring *keyring, const char *key_name, unsigned key_len, bool throw_error)
 {
-	keyInfo    *key = KeyringGenerateNewKey(key_name, key_len);
+	KeyInfo    *key = KeyringGenerateNewKey(key_name, key_len);
 	int			ereport_level = throw_error ? ERROR : WARNING;
 
 	if (key == NULL)

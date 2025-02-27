@@ -24,6 +24,8 @@ JsonKeyringState
 JsonVaultRespField
 JsonVaultRespSemState
 JsonVaultRespState
+Keydata
+KeyInfo
 KeyProviders
 KeyringProvideRecord
 KeyringProviderXLRecord
@@ -70,8 +72,6 @@ XLogPrincipalKeyRotate
 XLogRelKey
 itemIdCompactData
 itemIdCompactData
-keyData
-keyInfo
 xl_multi_insert_tuple
 xl_multi_insert_tuple
 xl_tdeheap_confirm

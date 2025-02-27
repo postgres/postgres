@@ -566,7 +566,7 @@ _bt_preprocess_array_keys_final(IndexScanDesc scan, int *keyDataMap)
 
 	for (int output_ikey = 0; output_ikey < so->numberOfKeys; output_ikey++)
 	{
-		ScanKey		outkey = so->keyData +output_ikey;
+		ScanKey		outkey = so->keyData + output_ikey;
 		int			input_ikey;
 		bool		found PG_USED_FOR_ASSERTS_ONLY = false;
 
@@ -1471,7 +1471,7 @@ _bt_rewind_nonrequired_arrays(IndexScanDesc scan, ScanDirection dir)
 
 	for (int ikey = 0; ikey < so->numberOfKeys; ikey++)
 	{
-		ScanKey		cur = so->keyData +ikey;
+		ScanKey		cur = so->keyData + ikey;
 		BTArrayKeyInfo *array = NULL;
 		int			first_elem_dir;
 
@@ -1557,7 +1557,7 @@ _bt_tuple_before_array_skeys(IndexScanDesc scan, ScanDirection dir,
 
 	for (int ikey = sktrig; ikey < so->numberOfKeys; ikey++)
 	{
-		ScanKey		cur = so->keyData +ikey;
+		ScanKey		cur = so->keyData + ikey;
 		Datum		tupdatum;
 		bool		tupnull;
 		int32		result;
@@ -1837,7 +1837,7 @@ _bt_advance_array_keys(IndexScanDesc scan, BTReadPageState *pstate,
 
 	for (int ikey = 0; ikey < so->numberOfKeys; ikey++)
 	{
-		ScanKey		cur = so->keyData +ikey;
+		ScanKey		cur = so->keyData + ikey;
 		BTArrayKeyInfo *array = NULL;
 		Datum		tupdatum;
 		bool		required = false,
@@ -3010,7 +3010,7 @@ _bt_verify_arrays_bt_first(IndexScanDesc scan, ScanDirection dir)
 
 	for (int ikey = 0; ikey < so->numberOfKeys; ikey++)
 	{
-		ScanKey		cur = so->keyData +ikey;
+		ScanKey		cur = so->keyData + ikey;
 		BTArrayKeyInfo *array = NULL;
 		int			first_elem_dir;
 
@@ -3052,7 +3052,7 @@ _bt_verify_keys_with_arraykeys(IndexScanDesc scan)
 
 	for (int ikey = 0; ikey < so->numberOfKeys; ikey++)
 	{
-		ScanKey		cur = so->keyData +ikey;
+		ScanKey		cur = so->keyData + ikey;
 		BTArrayKeyInfo *array;
 
 		if (cur->sk_strategy != BTEqualStrategyNumber ||
@@ -3690,7 +3690,7 @@ _bt_check_compare(IndexScanDesc scan, ScanDirection dir,
 
 	for (; *ikey < so->numberOfKeys; (*ikey)++)
 	{
-		ScanKey		key = so->keyData +*ikey;
+		ScanKey		key = so->keyData + *ikey;
 		Datum		datum;
 		bool		isNull;
 		bool		requiredSameDir = false,

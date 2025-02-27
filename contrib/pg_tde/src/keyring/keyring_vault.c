@@ -68,8 +68,8 @@ static bool curl_setup_token(VaultV2Keyring *keyring);
 static char *get_keyring_vault_url(VaultV2Keyring *keyring, const char *key_name, char *out, size_t out_size);
 static bool curl_perform(VaultV2Keyring *keyring, const char *url, CurlString *outStr, long *httpCode, const char *postData);
 
-static KeyringReturnCodes set_key_by_name(GenericKeyring *keyring, keyInfo *key, bool throw_error);
-static keyInfo *get_key_by_name(GenericKeyring *keyring, const char *key_name, bool throw_error, KeyringReturnCodes *return_code);
+static KeyringReturnCodes set_key_by_name(GenericKeyring *keyring, KeyInfo *key, bool throw_error);
+static KeyInfo *get_key_by_name(GenericKeyring *keyring, const char *key_name, bool throw_error, KeyringReturnCodes *return_code);
 
 const TDEKeyringRoutine keyringVaultV2Routine = {
 	.keyring_get_key = get_key_by_name,
@@ -167,14 +167,14 @@ get_keyring_vault_url(VaultV2Keyring *keyring, const char *key_name, char *out, 
 }
 
 static KeyringReturnCodes
-set_key_by_name(GenericKeyring *keyring, keyInfo *key, bool throw_error)
+set_key_by_name(GenericKeyring *keyring, KeyInfo *key, bool throw_error)
 {
 	VaultV2Keyring *vault_keyring = (VaultV2Keyring *) keyring;
 	char		url[VAULT_URL_MAX_LEN];
 	CurlString	str;
 	long		httpCode = 0;
 	char		jsonText[512];
-	char keyData[64];
+	char		keyData[64];
 	int			keyLen = 0;
 	int			ereport_level = throw_error ? ERROR : WARNING;
 
@@ -186,7 +186,7 @@ set_key_by_name(GenericKeyring *keyring, keyInfo *key, bool throw_error)
 	 */
 	/* Simpler than using the limited pg json api */
 	keyLen = pg_b64_encode((char *) key->data.data, key->data.len, keyData, 64);
-	keyData[	keyLen] = 0;
+	keyData[keyLen] = 0;
 
 	snprintf(jsonText, 512, "{\"data\":{\"key\":\"%s\"}}", keyData);
 
@@ -217,11 +217,11 @@ set_key_by_name(GenericKeyring *keyring, keyInfo *key, bool throw_error)
 	return KEYRING_CODE_INVALID_RESPONSE;
 }
 
-static keyInfo *
+static KeyInfo *
 get_key_by_name(GenericKeyring *keyring, const char *key_name, bool throw_error, KeyringReturnCodes *return_code)
 {
 	VaultV2Keyring *vault_keyring = (VaultV2Keyring *) keyring;
-	keyInfo    *key = NULL;
+	KeyInfo    *key = NULL;
 	char		url[VAULT_URL_MAX_LEN];
 	CurlString	str;
 	long		httpCode = 0;
@@ -282,7 +282,7 @@ get_key_by_name(GenericKeyring *keyring, const char *key_name, bool throw_error,
 	elog(DEBUG1, "Retrieved base64 key: %s", responseKey);
 #endif
 
-	key = palloc(sizeof(keyInfo));
+	key = palloc(sizeof(KeyInfo));
 	key->data.len = pg_b64_decode(responseKey, strlen(responseKey), (char *) key->data.data, MAX_KEY_DATA_SIZE);
 
 	if (key->data.len > MAX_KEY_DATA_SIZE)

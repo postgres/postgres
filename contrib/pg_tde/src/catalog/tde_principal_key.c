@@ -273,7 +273,7 @@ set_principal_key_with_keyring(const char *key_name, const char *provider_name,
 	LWLock	   *lock_files = tde_lwlock_enc_keys();
 	bool		already_has_key = false;
 	GenericKeyring *new_keyring;
-	const keyInfo *keyInfo = NULL;
+	const KeyInfo *keyInfo = NULL;
 	bool		success = true;
 
 	if (AllowInheritGlobalProviders == false && providerOid != dbOid)
@@ -316,6 +316,7 @@ set_principal_key_with_keyring(const char *key_name, const char *provider_name,
 
 	{
 		KeyringReturnCodes kr_ret;
+
 		keyInfo = KeyringGetKey(new_keyring, key_name, false, &kr_ret);
 
 		if (kr_ret != KEYRING_CODE_SUCCESS && kr_ret != KEYRING_CODE_RESOURCE_NOT_AVAILABLE)
@@ -327,7 +328,7 @@ set_principal_key_with_keyring(const char *key_name, const char *provider_name,
 		}
 	}
 
-	if (keyInfo !=NULL && ensure_new_key)
+	if (keyInfo != NULL && ensure_new_key)
 	{
 		LWLockRelease(lock_files);
 
@@ -781,7 +782,7 @@ get_principal_key_from_keyring(Oid dbOid, bool pushToCache)
 	GenericKeyring *keyring;
 	TDEPrincipalKey *principalKey = NULL;
 	TDEPrincipalKeyInfo *principalKeyInfo = NULL;
-	const keyInfo *keyInfo = NULL;
+	const KeyInfo *keyInfo = NULL;
 	KeyringReturnCodes keyring_ret;
 
 	Assert(LWLockHeldByMeInMode(tde_lwlock_enc_keys(), LW_EXCLUSIVE));

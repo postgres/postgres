@@ -433,7 +433,7 @@ btendscan(IndexScanDesc scan)
 	/* No need to invalidate positions, the RAM is about to be freed. */
 
 	/* Release storage */
-	if (so->keyData !=NULL)
+	if (so->keyData != NULL)
 		pfree(so->keyData);
 	/* so->arrayKeys and so->orderProcs are in arrayContext */
 	if (so->arrayContext != NULL)

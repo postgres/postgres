@@ -29,8 +29,8 @@
 
 extern bool RegisterKeyProvider(const TDEKeyringRoutine *routine, ProviderType type);
 
-static KeyringReturnCodes set_key_by_name(GenericKeyring *keyring, keyInfo *key, bool throw_error);
-static keyInfo *get_key_by_name(GenericKeyring *keyring, const char *key_name, bool throw_error, KeyringReturnCodes *return_code);
+static KeyringReturnCodes set_key_by_name(GenericKeyring *keyring, KeyInfo *key, bool throw_error);
+static KeyInfo *get_key_by_name(GenericKeyring *keyring, const char *key_name, bool throw_error, KeyringReturnCodes *return_code);
 
 const TDEKeyringRoutine keyringKmipRoutine = {
 	.keyring_get_key = get_key_by_name,
@@ -100,7 +100,7 @@ kmipSslConnect(KmipCtx *ctx, KmipKeyring *kmip_keyring, bool throw_error)
 }
 
 static KeyringReturnCodes
-set_key_by_name(GenericKeyring *keyring, keyInfo *key, bool throw_error)
+set_key_by_name(GenericKeyring *keyring, KeyInfo *key, bool throw_error)
 {
 	KmipCtx		ctx;
 	KmipKeyring *kmip_keyring = (KmipKeyring *) keyring;
@@ -163,10 +163,10 @@ void	   *palloc(size_t);
 
 void		pfree(void *);
 
-static keyInfo *
+static KeyInfo *
 get_key_by_name(GenericKeyring *keyring, const char *key_name, bool throw_error, KeyringReturnCodes *return_code)
 {
-	keyInfo    *key = NULL;
+	KeyInfo    *key = NULL;
 	KmipKeyring *kmip_keyring = (KmipKeyring *) keyring;
 	char	   *id = 0;
 	KmipCtx		ctx;
@@ -237,7 +237,7 @@ get_key_by_name(GenericKeyring *keyring, const char *key_name, bool throw_error,
 
 	/* 2. get key */
 
-	key = palloc(sizeof(keyInfo));
+	key = palloc(sizeof(KeyInfo));
 
 	{
 		char	   *keyp = NULL;

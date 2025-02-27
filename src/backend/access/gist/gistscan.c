@@ -251,7 +251,7 @@ gistrescan(IndexScanDesc scan, ScanKey key, int nkeys,
 
 		for (i = 0; i < scan->numberOfKeys; i++)
 		{
-			ScanKey		skey = scan->keyData +i;
+			ScanKey		skey = scan->keyData + i;
 
 			/*
 			 * Copy consistent support function to ScanKey structure instead

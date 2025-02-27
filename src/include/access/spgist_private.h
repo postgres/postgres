@@ -199,7 +199,7 @@ typedef struct SpGistScanOpaqueData
 
 	/* Index quals to be passed to opclass (null-related quals removed) */
 	int			numberOfKeys;	/* number of index qualifier conditions */
-	ScanKey keyData;			/* array of index qualifier descriptors */
+	ScanKey		keyData;		/* array of index qualifier descriptors */
 	int			numberOfOrderBys;	/* number of ordering operators */
 	int			numberOfNonNullOrderBys;	/* number of ordering operators
 											 * with non-NULL arguments */
