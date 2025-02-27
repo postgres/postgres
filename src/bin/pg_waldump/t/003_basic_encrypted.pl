@@ -144,7 +144,7 @@ command_like(
 	qr/./,
 	'runs with start and end segment specified');
 command_fails_like(
-	[ 'pg_waldump', '-p', $node->data_dir ],
+	[ 'pg_waldump', '-p', $node->data_dir, '-k', $node->data_dir. '/pg_tde' ],
 	qr/error: no start WAL location given/,
 	'path option requires start location');
 command_like(
