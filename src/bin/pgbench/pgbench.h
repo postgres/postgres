@@ -149,11 +149,9 @@ extern yyscan_t expr_scanner_init(PsqlScanState state,
 								  const char *source, int lineno, int start_offset,
 								  const char *command);
 extern void expr_scanner_finish(yyscan_t yyscanner);
-extern int	expr_scanner_offset(PsqlScanState state);
 extern char *expr_scanner_get_substring(PsqlScanState state,
-										int start_offset, int end_offset,
+										int start_offset,
 										bool chomp);
-extern int	expr_scanner_get_lineno(PsqlScanState state, int offset);
 
 extern void syntax_error(const char *source, int lineno, const char *line,
 						 const char *command, const char *msg,

@@ -104,6 +104,10 @@ typedef struct PsqlScanStateData
 	const char *curline;		/* actual flex input string for cur buf */
 	const char *refline;		/* original data for cur buffer */
 
+	/* status for psql_scan_get_location() */
+	int			cur_line_no;	/* current line#, or 0 if no yylex done */
+	const char *cur_line_ptr;	/* points into cur_line_no'th line in scanbuf */
+
 	/*
 	 * All this state lives across successive input lines, until explicitly
 	 * reset by psql_scan_reset.  start_state is adopted by yylex() on entry,

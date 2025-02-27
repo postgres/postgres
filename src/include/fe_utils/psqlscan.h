@@ -87,4 +87,7 @@ extern void psql_scan_reselect_sql_lexer(PsqlScanState state);
 
 extern bool psql_scan_in_quote(PsqlScanState state);
 
+extern void psql_scan_get_location(PsqlScanState state,
+								   int *lineno, int *offset);
+
 #endif							/* PSQLSCAN_H */

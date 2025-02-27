@@ -271,9 +271,13 @@ void
 expr_yyerror_more(yyscan_t yyscanner, const char *message, const char *more)
 {
 	PsqlScanState state = yyget_extra(yyscanner);
-	int			error_detection_offset = expr_scanner_offset(state) - 1;
+	int			lineno;
+	int			error_detection_offset;
 	YYSTYPE		lval;
 	char	   *full_line;
+
+	psql_scan_get_location(state, &lineno, &error_detection_offset);
+	error_detection_offset--;
 
 	/*
 	 * While parsing an expression, we may not have collected the whole line
@@ -289,7 +293,6 @@ expr_yyerror_more(yyscan_t yyscanner, const char *message, const char *more)
 	/* Extract the line, trimming trailing newline if any */
 	full_line = expr_scanner_get_substring(state,
 										   expr_start_offset,
-										   expr_scanner_offset(state),
 										   true);
 
 	syntax_error(expr_source, expr_lineno, full_line, expr_command,
@@ -336,12 +339,15 @@ expr_lex_one_word(PsqlScanState state, PQExpBuffer word_buf, int *offset)
 	/* And lex. */
 	lexresult = yylex(&lval, state->scanner);
 
-	/*
-	 * Save start offset of word, if any.  We could do this more efficiently,
-	 * but for now this seems fine.
-	 */
+	/* Save start offset of word, if any. */
 	if (lexresult)
-		*offset = expr_scanner_offset(state) - word_buf->len;
+	{
+		int			lineno;
+		int			end_offset;
+
+		psql_scan_get_location(state, &lineno, &end_offset);
+		*offset = end_offset - word_buf->len;
+	}
 	else
 		*offset = -1;
 
@@ -404,35 +410,25 @@ expr_scanner_finish(yyscan_t yyscanner)
 }
 
 /*
- * Get offset from start of string to end of current lexer token.
+ * Get a malloc'd copy of the lexer input string from start_offset
+ * to end of current lexer token.  If chomp is true, drop any trailing
+ * newline(s).
  *
  * We rely on the knowledge that flex modifies the scan buffer by storing
  * a NUL at the end of the current token (yytext).  Note that this might
  * not work quite right if we were parsing a sub-buffer, but since pgbench
- * never invokes that functionality, it doesn't matter.
- */
-int
-expr_scanner_offset(PsqlScanState state)
-{
-	return strlen(state->scanbuf);
-}
-
-/*
- * Get a malloc'd copy of the lexer input string from start_offset
- * to just before end_offset.  If chomp is true, drop any trailing
- * newline(s).
+ * never invokes that functionality, it doesn't matter.  Also, this will
+ * give the wrong answer (the whole remainder of the input) if called
+ * before any yylex() call has been done.
  */
 char *
 expr_scanner_get_substring(PsqlScanState state,
-						   int start_offset, int end_offset,
+						   int start_offset,
 						   bool chomp)
 {
 	char	   *result;
 	const char *scanptr = state->scanbuf + start_offset;
-	int			slen = end_offset - start_offset;
-
-	Assert(slen >= 0);
-	Assert(end_offset <= strlen(state->scanbuf));
+	size_t		slen = strlen(scanptr);
 
 	if (chomp)
 	{
@@ -446,23 +442,4 @@ expr_scanner_get_substring(PsqlScanState state,
 	result[slen] = '\0';
 
 	return result;
-}
-
-/*
- * Get the line number associated with the given string offset
- * (which must not be past the end of where we've lexed to).
- */
-int
-expr_scanner_get_lineno(PsqlScanState state, int offset)
-{
-	int			lineno = 1;
-	const char *p = state->scanbuf;
-
-	while (*p && offset > 0)
-	{
-		if (*p == '\n')
-			lineno++;
-		p++, offset--;
-	}
-	return lineno;
 }

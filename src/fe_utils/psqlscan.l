@@ -1079,6 +1079,10 @@ psql_scan_setup(PsqlScanState state,
 	/* Set lookaside data in case we have to map unsafe encoding */
 	state->curline = state->scanbuf;
 	state->refline = state->scanline;
+
+	/* Initialize state for psql_scan_get_location() */
+	state->cur_line_no = 0;		/* yylex not called yet */
+	state->cur_line_ptr = state->scanbuf;
 }
 
 /*
@@ -1135,6 +1139,10 @@ psql_scan(PsqlScanState state,
 
 	/* And lex. */
 	lexresult = yylex(NULL, state->scanner);
+
+	/* Notify psql_scan_get_location() that a yylex call has been made. */
+	if (state->cur_line_no == 0)
+		state->cur_line_no = 1;
 
 	/*
 	 * Check termination state and return appropriate result info.
@@ -1309,6 +1317,52 @@ psql_scan_in_quote(PsqlScanState state)
 {
 	return state->start_state != INITIAL &&
 		state->start_state != xqs;
+}
+
+/*
+ * Return the current scanning location (end+1 of last scanned token),
+ * as a line number counted from 1 and an offset from string start.
+ *
+ * This considers only the outermost input string, and therefore is of
+ * limited use for programs that use psqlscan_push_new_buffer().
+ *
+ * It would be a bit easier probably to use "%option yylineno" to count
+ * lines, but the flex manual says that has a performance cost, and only
+ * a minority of programs using psqlscan have need for this functionality.
+ * So we implement it ourselves without adding overhead to the lexer itself.
+ */
+void
+psql_scan_get_location(PsqlScanState state,
+					   int *lineno, int *offset)
+{
+	const char *line_end;
+
+	/*
+	 * We rely on flex's having stored a NUL after the current token in
+	 * scanbuf.  Therefore we must specially handle the state before yylex()
+	 * has been called, when obviously that won't have happened yet.
+	 */
+	if (state->cur_line_no == 0)
+	{
+		*lineno = 1;
+		*offset = 0;
+		return;
+	}
+
+	/*
+	 * Advance cur_line_no/cur_line_ptr past whatever has been lexed so far.
+	 * Doing this prevents repeated calls from being O(N^2) for long inputs.
+	 */
+	while ((line_end = strchr(state->cur_line_ptr, '\n')) != NULL)
+	{
+		state->cur_line_no++;
+		state->cur_line_ptr = line_end + 1;
+	}
+	state->cur_line_ptr += strlen(state->cur_line_ptr);
+
+	/* Report current location. */
+	*lineno = state->cur_line_no;
+	*offset = state->cur_line_ptr - state->scanbuf;
 }
 
 /*

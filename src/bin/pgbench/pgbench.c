@@ -5690,8 +5690,8 @@ process_backslash_command(PsqlScanState sstate, const char *source)
 	initPQExpBuffer(&word_buf);
 
 	/* Remember location of the backslash */
-	start_offset = expr_scanner_offset(sstate) - 1;
-	lineno = expr_scanner_get_lineno(sstate, start_offset);
+	psql_scan_get_location(sstate, &lineno, &start_offset);
+	start_offset--;
 
 	/* Collect first word of command */
 	if (!expr_lex_one_word(sstate, &word_buf, &word_offset))
@@ -5747,7 +5747,6 @@ process_backslash_command(PsqlScanState sstate, const char *source)
 		my_command->first_line =
 			expr_scanner_get_substring(sstate,
 									   start_offset,
-									   expr_scanner_offset(sstate),
 									   true);
 
 		expr_scanner_finish(yyscanner);
@@ -5777,7 +5776,6 @@ process_backslash_command(PsqlScanState sstate, const char *source)
 	my_command->first_line =
 		expr_scanner_get_substring(sstate,
 								   start_offset,
-								   expr_scanner_offset(sstate),
 								   true);
 
 	if (my_command->meta == META_SLEEP)
@@ -5952,8 +5950,6 @@ ParseScript(const char *script, const char *desc, int weight)
 	PQExpBufferData line_buf;
 	int			alloc_num;
 	int			index;
-	int			lineno;
-	int			start_offset;
 
 #define COMMANDS_ALLOC_NUM 128
 	alloc_num = COMMANDS_ALLOC_NUM;
@@ -5977,7 +5973,6 @@ ParseScript(const char *script, const char *desc, int weight)
 	 * stdstrings should be true, which is a bit riskier.
 	 */
 	psql_scan_setup(sstate, script, strlen(script), 0, true);
-	start_offset = expr_scanner_offset(sstate) - 1;
 
 	initPQExpBuffer(&line_buf);
 
@@ -5985,12 +5980,15 @@ ParseScript(const char *script, const char *desc, int weight)
 
 	for (;;)
 	{
+		int			lineno;
+		int			start_offset;
 		PsqlScanResult sr;
 		promptStatus_t prompt;
 		Command    *command = NULL;
 
 		resetPQExpBuffer(&line_buf);
-		lineno = expr_scanner_get_lineno(sstate, start_offset);
+
+		psql_scan_get_location(sstate, &lineno, &start_offset);
 
 		sr = psql_scan(sstate, &line_buf, &prompt);
 
