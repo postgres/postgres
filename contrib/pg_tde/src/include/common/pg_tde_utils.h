@@ -13,7 +13,6 @@
 #ifndef FRONTEND
 #include "nodes/pg_list.h"
 
-extern Oid	get_tde_basic_table_am_oid(void);
 extern List *get_all_tde_tables(void);
 extern int	get_tde_tables_count(void);
 #endif							/* !FRONTEND */
