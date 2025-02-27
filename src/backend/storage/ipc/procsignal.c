@@ -167,6 +167,7 @@ ProcSignalInit(bool cancel_key_valid, int32 cancel_key)
 {
 	ProcSignalSlot *slot;
 	uint64		barrier_generation;
+	uint32		old_pss_pid;
 
 	if (MyProcNumber < 0)
 		elog(ERROR, "MyProcNumber not set");
@@ -174,14 +175,10 @@ ProcSignalInit(bool cancel_key_valid, int32 cancel_key)
 		elog(ERROR, "unexpected MyProcNumber %d in ProcSignalInit (max %d)", MyProcNumber, NumProcSignalSlots);
 	slot = &ProcSignal->psh_slot[MyProcNumber];
 
-	/* sanity check */
 	SpinLockAcquire(&slot->pss_mutex);
-	if (pg_atomic_read_u32(&slot->pss_pid) != 0)
-	{
-		SpinLockRelease(&slot->pss_mutex);
-		elog(LOG, "process %d taking over ProcSignal slot %d, but it's not empty",
-			 MyProcPid, MyProcNumber);
-	}
+
+	/* Value used for sanity check below */
+	old_pss_pid = pg_atomic_read_u32(&slot->pss_pid);
 
 	/* Clear out any leftover signal reasons */
 	MemSet(slot->pss_signalFlags, 0, NUM_PROCSIGNALS * sizeof(sig_atomic_t));
@@ -207,6 +204,11 @@ ProcSignalInit(bool cancel_key_valid, int32 cancel_key)
 	pg_atomic_write_u32(&slot->pss_pid, MyProcPid);
 
 	SpinLockRelease(&slot->pss_mutex);
+
+	/* Spinlock is released, do the check */
+	if (old_pss_pid != 0)
+		elog(LOG, "process %d taking over ProcSignal slot %d, but it's not empty",
+			 MyProcPid, MyProcNumber);
 
 	/* Remember slot location for CheckProcSignal */
 	MyProcSignalSlot = slot;
