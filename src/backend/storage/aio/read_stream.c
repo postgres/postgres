@@ -447,13 +447,17 @@ read_stream_begin_impl(int flags,
 
 	/*
 	 * Choose the maximum number of buffers we're prepared to pin.  We try to
-	 * pin fewer if we can, though.  We clamp it to at least io_combine_limit
-	 * so that we can have a chance to build up a full io_combine_limit sized
-	 * read, even when max_ios is zero.  Be careful not to allow int16 to
-	 * overflow (even though that's not possible with the current GUC range
-	 * limits), allowing also for the spare entry and the overflow space.
+	 * pin fewer if we can, though.  We add one so that we can make progress
+	 * even if max_ios is set to 0 (see also further down).  For max_ios > 0,
+	 * this also allows an extra full I/O's worth of buffers: after an I/O
+	 * finishes we don't want to have to wait for its buffers to be consumed
+	 * before starting a new one.
+	 *
+	 * Be careful not to allow int16 to overflow (even though that's not
+	 * possible with the current GUC range limits), allowing also for the
+	 * spare entry and the overflow space.
 	 */
-	max_pinned_buffers = Max(max_ios * 4, io_combine_limit);
+	max_pinned_buffers = (max_ios + 1) * io_combine_limit;
 	max_pinned_buffers = Min(max_pinned_buffers,
 							 PG_INT16_MAX - io_combine_limit - 1);
 
@@ -725,7 +729,7 @@ read_stream_next_buffer(ReadStream *stream, void **per_buffer_data)
 		stream->ios[stream->oldest_io_index].buffer_index == oldest_buffer_index)
 	{
 		int16		io_index = stream->oldest_io_index;
-		int16		distance;
+		int32		distance;	/* wider temporary value, clamped below */
 
 		/* Sanity check that we still agree on the buffers. */
 		Assert(stream->ios[io_index].op.buffers ==
