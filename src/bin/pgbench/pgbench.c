@@ -5677,21 +5677,16 @@ postprocess_sql_command(Command *my_command)
  * At call, we have scanned only the initial backslash.
  */
 static Command *
-process_backslash_command(PsqlScanState sstate, const char *source)
+process_backslash_command(PsqlScanState sstate, const char *source,
+						  int lineno, int start_offset)
 {
 	Command    *my_command;
 	PQExpBufferData word_buf;
 	int			word_offset;
 	int			offsets[MAX_ARGS];	/* offsets of argument words */
-	int			start_offset;
-	int			lineno;
 	int			j;
 
 	initPQExpBuffer(&word_buf);
-
-	/* Remember location of the backslash */
-	psql_scan_get_location(sstate, &lineno, &start_offset);
-	start_offset--;
 
 	/* Collect first word of command */
 	if (!expr_lex_one_word(sstate, &word_buf, &word_offset))
@@ -5980,15 +5975,11 @@ ParseScript(const char *script, const char *desc, int weight)
 
 	for (;;)
 	{
-		int			lineno;
-		int			start_offset;
 		PsqlScanResult sr;
 		promptStatus_t prompt;
 		Command    *command = NULL;
 
 		resetPQExpBuffer(&line_buf);
-
-		psql_scan_get_location(sstate, &lineno, &start_offset);
 
 		sr = psql_scan(sstate, &line_buf, &prompt);
 
@@ -6002,7 +5993,15 @@ ParseScript(const char *script, const char *desc, int weight)
 		/* If we reached a backslash, process that */
 		if (sr == PSCAN_BACKSLASH)
 		{
-			command = process_backslash_command(sstate, desc);
+			int			lineno;
+			int			start_offset;
+
+			/* Capture location of the backslash */
+			psql_scan_get_location(sstate, &lineno, &start_offset);
+			start_offset--;
+
+			command = process_backslash_command(sstate, desc,
+												lineno, start_offset);
 
 			if (command)
 			{
