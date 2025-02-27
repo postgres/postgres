@@ -15,6 +15,7 @@
 #include "utils/rel.h"
 #include "utils/builtins.h"
 #include "catalog/pg_class.h"
+#include "commands/defrem.h"
 #include "access/table.h"
 #include "access/relation.h"
 #include "catalog/pg_event_trigger.h"
@@ -38,6 +39,7 @@ int			event_trigger_level = 0;
 
 
 static void reset_current_tde_create_event(void);
+static Oid	get_tde_table_am_oid(void);
 
 PG_FUNCTION_INFO_V1(pg_tde_ddl_command_start_capture);
 PG_FUNCTION_INFO_V1(pg_tde_ddl_command_end_capture);
@@ -293,4 +295,10 @@ reset_current_tde_create_event(void)
 	tdeCurrentCreateEvent.baseTableOid = InvalidOid;
 	tdeCurrentCreateEvent.relation = NULL;
 	alterSetAccessMethod = false;
+}
+
+static Oid
+get_tde_table_am_oid(void)
+{
+	return get_table_am_oid("tde_heap", false);
 }

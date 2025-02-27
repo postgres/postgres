@@ -2107,6 +2107,4 @@ extern const TableAmRoutine *GetTableAmRoutine(Oid amhandler);
 
 extern const TableAmRoutine *GetHeapamTableAmRoutine(void);
 
-extern Oid	get_tde_table_am_oid(void);
-
 #endif							/* TABLEAM_H */

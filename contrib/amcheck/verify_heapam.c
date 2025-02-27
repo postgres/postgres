@@ -305,7 +305,7 @@ verify_heapam(PG_FUNCTION_ARGS)
 	 * Other relkinds might be using a different AM, so check.
 	 */
 	if (ctx.rel->rd_rel->relkind != RELKIND_SEQUENCE &&
-		ctx.rel->rd_rel->relam != HEAP_TABLE_AM_OID && ctx.rel->rd_rel->relam != get_tde_table_am_oid())
+		ctx.rel->rd_tableam != GetHeapamTableAmRoutine())
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("only heap AM is supported")));

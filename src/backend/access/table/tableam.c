@@ -757,10 +757,3 @@ table_block_relation_estimate_size(Relation rel, int32 *attr_widths,
 	else
 		*allvisfrac = (double) relallvisible / curpages;
 }
-
-
-Oid
-get_tde_table_am_oid(void)
-{
-	return get_table_am_oid("tde_heap", false);
-}
