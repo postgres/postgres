@@ -560,7 +560,7 @@ main(int argc, char *argv[])
 
 			executeCommand(conn, install_sql, opts.echo);
 			pfree(install_sql);
-			pfree(schema);
+			PQfreemem(schema);
 		}
 
 		/*
