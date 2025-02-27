@@ -28,10 +28,10 @@ ERROR:  permission denied for table tbl_withdata1
 EXPLAIN (ANALYZE, COSTS OFF, SUMMARY OFF, TIMING OFF, BUFFERS OFF)
   CREATE TABLE selinto_schema.tbl_withdata2 (a) AS
   SELECT generate_series(1,3) WITH DATA;
-              QUERY PLAN              
---------------------------------------
- ProjectSet (actual rows=3 loops=1)
-   ->  Result (actual rows=1 loops=1)
+               QUERY PLAN                
+-----------------------------------------
+ ProjectSet (actual rows=3.00 loops=1)
+   ->  Result (actual rows=1.00 loops=1)
 (2 rows)
 
 -- WITH NO DATA, passes.
@@ -53,10 +53,10 @@ CREATE TABLE selinto_schema.tbl_withdata3 (a) AS
 EXPLAIN (ANALYZE, COSTS OFF, SUMMARY OFF, TIMING OFF, BUFFERS OFF)
   CREATE TABLE selinto_schema.tbl_withdata4 (a) AS
   EXECUTE data_sel WITH DATA;
-              QUERY PLAN              
---------------------------------------
- ProjectSet (actual rows=3 loops=1)
-   ->  Result (actual rows=1 loops=1)
+               QUERY PLAN                
+-----------------------------------------
+ ProjectSet (actual rows=3.00 loops=1)
+   ->  Result (actual rows=1.00 loops=1)
 (2 rows)
 
 -- EXECUTE and WITH NO DATA, passes.

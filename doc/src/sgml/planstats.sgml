@@ -492,7 +492,7 @@ SELECT relpages, reltuples FROM pg_class WHERE relname = 't';
 EXPLAIN (ANALYZE, TIMING OFF, BUFFERS OFF) SELECT * FROM t WHERE a = 1;
                                  QUERY PLAN
 -------------------------------------------------------------------&zwsp;------------
- Seq Scan on t  (cost=0.00..170.00 rows=100 width=8) (actual rows=100 loops=1)
+ Seq Scan on t  (cost=0.00..170.00 rows=100 width=8) (actual rows=100.00 loops=1)
    Filter: (a = 1)
    Rows Removed by Filter: 9900
 </programlisting>
@@ -509,7 +509,7 @@ EXPLAIN (ANALYZE, TIMING OFF, BUFFERS OFF) SELECT * FROM t WHERE a = 1;
 EXPLAIN (ANALYZE, TIMING OFF, BUFFERS OFF) SELECT * FROM t WHERE a = 1 AND b = 1;
                                  QUERY PLAN
 -------------------------------------------------------------------&zwsp;----------
- Seq Scan on t  (cost=0.00..195.00 rows=1 width=8) (actual rows=100 loops=1)
+ Seq Scan on t  (cost=0.00..195.00 rows=1 width=8) (actual rows=100.00 loops=1)
    Filter: ((a = 1) AND (b = 1))
    Rows Removed by Filter: 9900
 </programlisting>
@@ -533,7 +533,7 @@ ANALYZE t;
 EXPLAIN (ANALYZE, TIMING OFF, BUFFERS OFF) SELECT * FROM t WHERE a = 1 AND b = 1;
                                   QUERY PLAN
 -------------------------------------------------------------------&zwsp;------------
- Seq Scan on t  (cost=0.00..195.00 rows=100 width=8) (actual rows=100 loops=1)
+ Seq Scan on t  (cost=0.00..195.00 rows=100 width=8) (actual rows=100.00 loops=1)
    Filter: ((a = 1) AND (b = 1))
    Rows Removed by Filter: 9900
 </programlisting>
@@ -554,9 +554,9 @@ EXPLAIN (ANALYZE, TIMING OFF, BUFFERS OFF) SELECT * FROM t WHERE a = 1 AND b = 1
 EXPLAIN (ANALYZE, TIMING OFF, BUFFERS OFF) SELECT COUNT(*) FROM t GROUP BY a;
                                        QUERY PLAN
 -------------------------------------------------------------------&zwsp;----------------------
- HashAggregate  (cost=195.00..196.00 rows=100 width=12) (actual rows=100 loops=1)
+ HashAggregate  (cost=195.00..196.00 rows=100 width=12) (actual rows=100.00 loops=1)
    Group Key: a
-   -&gt;  Seq Scan on t  (cost=0.00..145.00 rows=10000 width=4) (actual rows=10000 loops=1)
+   -&gt;  Seq Scan on t  (cost=0.00..145.00 rows=10000 width=4) (actual rows=10000.00 loops=1)
 </programlisting>
     But without multivariate statistics, the estimate for the number of
     groups in a query with two columns in <command>GROUP BY</command>, as
@@ -565,9 +565,9 @@ EXPLAIN (ANALYZE, TIMING OFF, BUFFERS OFF) SELECT COUNT(*) FROM t GROUP BY a;
 EXPLAIN (ANALYZE, TIMING OFF, BUFFERS OFF) SELECT COUNT(*) FROM t GROUP BY a, b;
                                        QUERY PLAN
 -------------------------------------------------------------------&zwsp;-------------------------
- HashAggregate  (cost=220.00..230.00 rows=1000 width=16) (actual rows=100 loops=1)
+ HashAggregate  (cost=220.00..230.00 rows=1000 width=16) (actual rows=100.00 loops=1)
    Group Key: a, b
-   -&gt;  Seq Scan on t  (cost=0.00..145.00 rows=10000 width=8) (actual rows=10000 loops=1)
+   -&gt;  Seq Scan on t  (cost=0.00..145.00 rows=10000 width=8) (actual rows=10000.00 loops=1)
 </programlisting>
     By redefining the statistics object to include n-distinct counts for the
     two columns, the estimate is much improved:
@@ -578,9 +578,9 @@ ANALYZE t;
 EXPLAIN (ANALYZE, TIMING OFF, BUFFERS OFF) SELECT COUNT(*) FROM t GROUP BY a, b;
                                        QUERY PLAN
 -------------------------------------------------------------------&zwsp;-------------------------
- HashAggregate  (cost=220.00..221.00 rows=100 width=16) (actual rows=100 loops=1)
+ HashAggregate  (cost=220.00..221.00 rows=100 width=16) (actual rows=100.00 loops=1)
    Group Key: a, b
-   -&gt;  Seq Scan on t  (cost=0.00..145.00 rows=10000 width=8) (actual rows=10000 loops=1)
+   -&gt;  Seq Scan on t  (cost=0.00..145.00 rows=10000 width=8) (actual rows=10000.00 loops=1)
 </programlisting>
    </para>
 
@@ -618,7 +618,7 @@ ANALYZE t;
 EXPLAIN (ANALYZE, TIMING OFF, BUFFERS OFF) SELECT * FROM t WHERE a = 1 AND b = 1;
                                    QUERY PLAN
 -------------------------------------------------------------------&zwsp;------------
- Seq Scan on t  (cost=0.00..195.00 rows=100 width=8) (actual rows=100 loops=1)
+ Seq Scan on t  (cost=0.00..195.00 rows=100 width=8) (actual rows=100.00 loops=1)
    Filter: ((a = 1) AND (b = 1))
    Rows Removed by Filter: 9900
 </programlisting>
@@ -675,7 +675,7 @@ SELECT m.* FROM pg_statistic_ext join pg_statistic_ext_data on (oid = stxoid),
 EXPLAIN (ANALYZE, TIMING OFF, BUFFERS OFF) SELECT * FROM t WHERE a = 1 AND b = 10;
                                  QUERY PLAN
 -------------------------------------------------------------------&zwsp;--------
- Seq Scan on t  (cost=0.00..195.00 rows=1 width=8) (actual rows=0 loops=1)
+ Seq Scan on t  (cost=0.00..195.00 rows=1 width=8) (actual rows=0.00 loops=1)
    Filter: ((a = 1) AND (b = 10))
    Rows Removed by Filter: 10000
 </programlisting>
@@ -688,7 +688,7 @@ EXPLAIN (ANALYZE, TIMING OFF, BUFFERS OFF) SELECT * FROM t WHERE a = 1 AND b = 1
 EXPLAIN (ANALYZE, TIMING OFF, BUFFERS OFF) SELECT * FROM t WHERE a &lt;= 49 AND b &gt; 49;
                                 QUERY PLAN
 -------------------------------------------------------------------&zwsp;--------
- Seq Scan on t  (cost=0.00..195.00 rows=1 width=8) (actual rows=0 loops=1)
+ Seq Scan on t  (cost=0.00..195.00 rows=1 width=8) (actual rows=0.00 loops=1)
    Filter: ((a &lt;= 49) AND (b &gt; 49))
    Rows Removed by Filter: 10000
 </programlisting>

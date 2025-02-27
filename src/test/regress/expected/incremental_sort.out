@@ -522,15 +522,15 @@ select * from (select * from t order by a) s order by a, b limit 55;
 select explain_analyze_without_memory('select * from (select * from t order by a) s order by a, b limit 55');
                                         explain_analyze_without_memory                                         
 ---------------------------------------------------------------------------------------------------------------
- Limit (actual rows=55 loops=1)
-   ->  Incremental Sort (actual rows=55 loops=1)
+ Limit (actual rows=55.00 loops=1)
+   ->  Incremental Sort (actual rows=55.00 loops=1)
          Sort Key: t.a, t.b
          Presorted Key: t.a
          Full-sort Groups: 2  Sort Methods: top-N heapsort, quicksort  Average Memory: NNkB  Peak Memory: NNkB
-         ->  Sort (actual rows=101 loops=1)
+         ->  Sort (actual rows=101.00 loops=1)
                Sort Key: t.a
                Sort Method: quicksort  Memory: NNkB
-               ->  Seq Scan on t (actual rows=1000 loops=1)
+               ->  Seq Scan on t (actual rows=1000.00 loops=1)
 (9 rows)
 
 select jsonb_pretty(explain_analyze_inc_sort_nodes_without_memory('select * from (select * from t order by a) s order by a, b limit 55'));
@@ -544,7 +544,7 @@ select jsonb_pretty(explain_analyze_inc_sort_nodes_without_memory('select * from
              "t.b"                              +
          ],                                     +
          "Node Type": "Incremental Sort",       +
-         "Actual Rows": 55,                     +
+         "Actual Rows": 55.00,                  +
          "Actual Loops": 1,                     +
          "Async Capable": false,                +
          "Presorted Key": [                     +
@@ -726,16 +726,16 @@ rollback;
 select explain_analyze_without_memory('select * from (select * from t order by a) s order by a, b limit 70');
                                          explain_analyze_without_memory                                         
 ----------------------------------------------------------------------------------------------------------------
- Limit (actual rows=70 loops=1)
-   ->  Incremental Sort (actual rows=70 loops=1)
+ Limit (actual rows=70.00 loops=1)
+   ->  Incremental Sort (actual rows=70.00 loops=1)
          Sort Key: t.a, t.b
          Presorted Key: t.a
          Full-sort Groups: 1  Sort Method: quicksort  Average Memory: NNkB  Peak Memory: NNkB
          Pre-sorted Groups: 5  Sort Methods: top-N heapsort, quicksort  Average Memory: NNkB  Peak Memory: NNkB
-         ->  Sort (actual rows=1000 loops=1)
+         ->  Sort (actual rows=1000.00 loops=1)
                Sort Key: t.a
                Sort Method: quicksort  Memory: NNkB
-               ->  Seq Scan on t (actual rows=1000 loops=1)
+               ->  Seq Scan on t (actual rows=1000.00 loops=1)
 (10 rows)
 
 select jsonb_pretty(explain_analyze_inc_sort_nodes_without_memory('select * from (select * from t order by a) s order by a, b limit 70'));
@@ -749,7 +749,7 @@ select jsonb_pretty(explain_analyze_inc_sort_nodes_without_memory('select * from
              "t.b"                              +
          ],                                     +
          "Node Type": "Incremental Sort",       +
-         "Actual Rows": 70,                     +
+         "Actual Rows": 70.00,                  +
          "Actual Loops": 1,                     +
          "Async Capable": false,                +
          "Presorted Key": [                     +

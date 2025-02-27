@@ -500,11 +500,11 @@ EXPLAIN ANALYZE EXECUTE query(100, 200);
 
                                                        QUERY PLAN
 -------------------------------------------------------------------&zwsp;------------------------------------------------------
- HashAggregate  (cost=10.77..10.87 rows=10 width=12) (actual time=0.043..0.044 rows=10 loops=1)
+ HashAggregate  (cost=10.77..10.87 rows=10 width=12) (actual time=0.043..0.044 rows=10.00 loops=1)
    Group Key: foo
    Batches: 1  Memory Usage: 24kB
    Buffers: shared hit=4
-   -&gt;  Index Scan using test_pkey on test  (cost=0.29..10.27 rows=99 width=8) (actual time=0.009..0.025 rows=99 loops=1)
+   -&gt;  Index Scan using test_pkey on test  (cost=0.29..10.27 rows=99 width=8) (actual time=0.009..0.025 rows=99.00 loops=1)
          Index Cond: ((id &gt; 100) AND (id &lt; 200))
          Buffers: shared hit=4
  Planning Time: 0.244 ms

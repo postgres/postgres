@@ -147,9 +147,6 @@ select jsonb_pretty(
   -- Also remove its sort-type fields, as those aren't 100% stable
   #- '{0,Plan,Plans,0,Sort Method}'
   #- '{0,Plan,Plans,0,Sort Space Type}'
-  -- Actual Rows can be 0 or 0.0 depending on whether loops>1
-  #- '{0,Plan,Plans,0,Actual Rows}'
-  #- '{0,Plan,Plans,0,Plans,0,Actual Rows}'
 );
 
 rollback;

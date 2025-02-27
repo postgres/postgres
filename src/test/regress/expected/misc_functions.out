@@ -647,27 +647,27 @@ SELECT * FROM tenk1 a JOIN my_gen_series(1,10) g ON a.unique1 = g;
 SELECT explain_mask_costs($$
 SELECT * FROM generate_series(TIMESTAMPTZ '2024-02-01', TIMESTAMPTZ '2024-03-01', INTERVAL '1 day') g(s);$$,
 true, true, false, true);
-                                    explain_mask_costs                                    
-------------------------------------------------------------------------------------------
- Function Scan on generate_series g  (cost=N..N rows=30 width=N) (actual rows=30 loops=1)
+                                     explain_mask_costs                                      
+---------------------------------------------------------------------------------------------
+ Function Scan on generate_series g  (cost=N..N rows=30 width=N) (actual rows=30.00 loops=1)
 (1 row)
 
 -- As above but with generate_series_timestamp
 SELECT explain_mask_costs($$
 SELECT * FROM generate_series(TIMESTAMP '2024-02-01', TIMESTAMP '2024-03-01', INTERVAL '1 day') g(s);$$,
 true, true, false, true);
-                                    explain_mask_costs                                    
-------------------------------------------------------------------------------------------
- Function Scan on generate_series g  (cost=N..N rows=30 width=N) (actual rows=30 loops=1)
+                                     explain_mask_costs                                      
+---------------------------------------------------------------------------------------------
+ Function Scan on generate_series g  (cost=N..N rows=30 width=N) (actual rows=30.00 loops=1)
 (1 row)
 
 -- As above but with generate_series_timestamptz_at_zone()
 SELECT explain_mask_costs($$
 SELECT * FROM generate_series(TIMESTAMPTZ '2024-02-01', TIMESTAMPTZ '2024-03-01', INTERVAL '1 day', 'UTC') g(s);$$,
 true, true, false, true);
-                                    explain_mask_costs                                    
-------------------------------------------------------------------------------------------
- Function Scan on generate_series g  (cost=N..N rows=30 width=N) (actual rows=30 loops=1)
+                                     explain_mask_costs                                      
+---------------------------------------------------------------------------------------------
+ Function Scan on generate_series g  (cost=N..N rows=30 width=N) (actual rows=30.00 loops=1)
 (1 row)
 
 -- Ensure the estimated and actual row counts match when the range isn't
@@ -675,27 +675,27 @@ true, true, false, true);
 SELECT explain_mask_costs($$
 SELECT * FROM generate_series(TIMESTAMPTZ '2024-02-01', TIMESTAMPTZ '2024-03-01', INTERVAL '7 day') g(s);$$,
 true, true, false, true);
-                                   explain_mask_costs                                   
-----------------------------------------------------------------------------------------
- Function Scan on generate_series g  (cost=N..N rows=5 width=N) (actual rows=5 loops=1)
+                                    explain_mask_costs                                     
+-------------------------------------------------------------------------------------------
+ Function Scan on generate_series g  (cost=N..N rows=5 width=N) (actual rows=5.00 loops=1)
 (1 row)
 
 -- Ensure the estimates match when step is decreasing
 SELECT explain_mask_costs($$
 SELECT * FROM generate_series(TIMESTAMPTZ '2024-03-01', TIMESTAMPTZ '2024-02-01', INTERVAL '-1 day') g(s);$$,
 true, true, false, true);
-                                    explain_mask_costs                                    
-------------------------------------------------------------------------------------------
- Function Scan on generate_series g  (cost=N..N rows=30 width=N) (actual rows=30 loops=1)
+                                     explain_mask_costs                                      
+---------------------------------------------------------------------------------------------
+ Function Scan on generate_series g  (cost=N..N rows=30 width=N) (actual rows=30.00 loops=1)
 (1 row)
 
 -- Ensure an empty range estimates 1 row
 SELECT explain_mask_costs($$
 SELECT * FROM generate_series(TIMESTAMPTZ '2024-03-01', TIMESTAMPTZ '2024-02-01', INTERVAL '1 day') g(s);$$,
 true, true, false, true);
-                                   explain_mask_costs                                   
-----------------------------------------------------------------------------------------
- Function Scan on generate_series g  (cost=N..N rows=1 width=N) (actual rows=0 loops=1)
+                                    explain_mask_costs                                     
+-------------------------------------------------------------------------------------------
+ Function Scan on generate_series g  (cost=N..N rows=1 width=N) (actual rows=0.00 loops=1)
 (1 row)
 
 -- Ensure we get the default row estimate for infinity values
@@ -719,36 +719,36 @@ ERROR:  step size cannot equal zero
 SELECT explain_mask_costs($$
 SELECT * FROM generate_series(1.0, 25.0) g(s);$$,
 true, true, false, true);
-                                    explain_mask_costs                                    
-------------------------------------------------------------------------------------------
- Function Scan on generate_series g  (cost=N..N rows=25 width=N) (actual rows=25 loops=1)
+                                     explain_mask_costs                                      
+---------------------------------------------------------------------------------------------
+ Function Scan on generate_series g  (cost=N..N rows=25 width=N) (actual rows=25.00 loops=1)
 (1 row)
 
 -- As above but with non-default step
 SELECT explain_mask_costs($$
 SELECT * FROM generate_series(1.0, 25.0, 2.0) g(s);$$,
 true, true, false, true);
-                                    explain_mask_costs                                    
-------------------------------------------------------------------------------------------
- Function Scan on generate_series g  (cost=N..N rows=13 width=N) (actual rows=13 loops=1)
+                                     explain_mask_costs                                      
+---------------------------------------------------------------------------------------------
+ Function Scan on generate_series g  (cost=N..N rows=13 width=N) (actual rows=13.00 loops=1)
 (1 row)
 
 -- Ensure the estimates match when step is decreasing
 SELECT explain_mask_costs($$
 SELECT * FROM generate_series(25.0, 1.0, -1.0) g(s);$$,
 true, true, false, true);
-                                    explain_mask_costs                                    
-------------------------------------------------------------------------------------------
- Function Scan on generate_series g  (cost=N..N rows=25 width=N) (actual rows=25 loops=1)
+                                     explain_mask_costs                                      
+---------------------------------------------------------------------------------------------
+ Function Scan on generate_series g  (cost=N..N rows=25 width=N) (actual rows=25.00 loops=1)
 (1 row)
 
 -- Ensure an empty range estimates 1 row
 SELECT explain_mask_costs($$
 SELECT * FROM generate_series(25.0, 1.0, 1.0) g(s);$$,
 true, true, false, true);
-                                   explain_mask_costs                                   
-----------------------------------------------------------------------------------------
- Function Scan on generate_series g  (cost=N..N rows=1 width=N) (actual rows=0 loops=1)
+                                    explain_mask_costs                                     
+-------------------------------------------------------------------------------------------
+ Function Scan on generate_series g  (cost=N..N rows=1 width=N) (actual rows=0.00 loops=1)
 (1 row)
 
 -- Ensure we get the default row estimate for error cases (infinity/NaN values

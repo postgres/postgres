@@ -61,26 +61,26 @@ select explain_filter('explain select * from int8_tbl i8');
 (1 row)
 
 select explain_filter('explain (analyze, buffers off) select * from int8_tbl i8');
-                                        explain_filter                                         
------------------------------------------------------------------------------------------------
- Seq Scan on int8_tbl i8  (cost=N.N..N.N rows=N width=N) (actual time=N.N..N.N rows=N loops=N)
+                                         explain_filter                                          
+-------------------------------------------------------------------------------------------------
+ Seq Scan on int8_tbl i8  (cost=N.N..N.N rows=N width=N) (actual time=N.N..N.N rows=N.N loops=N)
  Planning Time: N.N ms
  Execution Time: N.N ms
 (3 rows)
 
 select explain_filter('explain (analyze, buffers off, verbose) select * from int8_tbl i8');
-                                            explain_filter                                            
-------------------------------------------------------------------------------------------------------
- Seq Scan on public.int8_tbl i8  (cost=N.N..N.N rows=N width=N) (actual time=N.N..N.N rows=N loops=N)
+                                             explain_filter                                             
+--------------------------------------------------------------------------------------------------------
+ Seq Scan on public.int8_tbl i8  (cost=N.N..N.N rows=N width=N) (actual time=N.N..N.N rows=N.N loops=N)
    Output: q1, q2
  Planning Time: N.N ms
  Execution Time: N.N ms
 (4 rows)
 
 select explain_filter('explain (analyze, buffers, format text) select * from int8_tbl i8');
-                                        explain_filter                                         
------------------------------------------------------------------------------------------------
- Seq Scan on int8_tbl i8  (cost=N.N..N.N rows=N width=N) (actual time=N.N..N.N rows=N loops=N)
+                                         explain_filter                                          
+-------------------------------------------------------------------------------------------------
+ Seq Scan on int8_tbl i8  (cost=N.N..N.N rows=N width=N) (actual time=N.N..N.N rows=N.N loops=N)
  Planning Time: N.N ms
  Execution Time: N.N ms
 (3 rows)
@@ -102,7 +102,7 @@ select explain_filter('explain (analyze, buffers, format xml) select * from int8
        <Plan-Width>N</Plan-Width>                      +
        <Actual-Startup-Time>N.N</Actual-Startup-Time>  +
        <Actual-Total-Time>N.N</Actual-Total-Time>      +
-       <Actual-Rows>N</Actual-Rows>                    +
+       <Actual-Rows>N.N</Actual-Rows>                  +
        <Actual-Loops>N</Actual-Loops>                  +
        <Disabled>false</Disabled>                      +
        <Shared-Hit-Blocks>N</Shared-Hit-Blocks>        +
@@ -151,7 +151,7 @@ select explain_filter('explain (analyze, serialize, buffers, format yaml) select
      Plan Width: N            +
      Actual Startup Time: N.N +
      Actual Total Time: N.N   +
-     Actual Rows: N           +
+     Actual Rows: N.N         +
      Actual Loops: N          +
      Disabled: false          +
      Shared Hit Blocks: N     +
@@ -263,7 +263,7 @@ select explain_filter('explain (analyze, buffers, format json) select * from int
        "Plan Width": N,             +
        "Actual Startup Time": N.N,  +
        "Actual Total Time": N.N,    +
-       "Actual Rows": N,            +
+       "Actual Rows": N.N,          +
        "Actual Loops": N,           +
        "Disabled": false,           +
        "Shared Hit Blocks": N,      +
@@ -353,9 +353,9 @@ select explain_filter('explain (memory) select * from int8_tbl i8');
 (2 rows)
 
 select explain_filter('explain (memory, analyze, buffers off) select * from int8_tbl i8');
-                                        explain_filter                                         
------------------------------------------------------------------------------------------------
- Seq Scan on int8_tbl i8  (cost=N.N..N.N rows=N width=N) (actual time=N.N..N.N rows=N loops=N)
+                                         explain_filter                                          
+-------------------------------------------------------------------------------------------------
+ Seq Scan on int8_tbl i8  (cost=N.N..N.N rows=N width=N) (actual time=N.N..N.N rows=N.N loops=N)
    Memory: used=NkB  allocated=NkB
  Planning Time: N.N ms
  Execution Time: N.N ms
@@ -398,7 +398,7 @@ select explain_filter('explain (memory, analyze, format json) select * from int8
        "Plan Width": N,            +
        "Actual Startup Time": N.N, +
        "Actual Total Time": N.N,   +
-       "Actual Rows": N,           +
+       "Actual Rows": N.N,         +
        "Actual Loops": N,          +
        "Disabled": false,          +
        "Shared Hit Blocks": N,     +
@@ -493,9 +493,6 @@ select jsonb_pretty(
   -- Also remove its sort-type fields, as those aren't 100% stable
   #- '{0,Plan,Plans,0,Sort Method}'
   #- '{0,Plan,Plans,0,Sort Space Type}'
-  -- Actual Rows can be 0 or 0.0 depending on whether loops>1
-  #- '{0,Plan,Plans,0,Actual Rows}'
-  #- '{0,Plan,Plans,0,Plans,0,Actual Rows}'
 );
                         jsonb_pretty                         
 -------------------------------------------------------------
@@ -531,6 +528,7 @@ select jsonb_pretty(
                              "Plan Rows": 0,                +
                              "Plan Width": 0,               +
                              "Total Cost": 0.0,             +
+                             "Actual Rows": 0.0,            +
                              "Actual Loops": 0,             +
                              "Startup Cost": 0.0,           +
                              "Async Capable": false,        +
@@ -577,6 +575,7 @@ select jsonb_pretty(
                      "Plan Rows": 0,                        +
                      "Plan Width": 0,                       +
                      "Total Cost": 0.0,                     +
+                     "Actual Rows": 0.0,                    +
                      "Actual Loops": 0,                     +
                      "Startup Cost": 0.0,                   +
                      "Async Capable": false,                +
@@ -620,7 +619,7 @@ select jsonb_pretty(
              "Plan Rows": 0,                                +
              "Plan Width": 0,                               +
              "Total Cost": 0.0,                             +
-             "Actual Rows": 0,                              +
+             "Actual Rows": 0.0,                            +
              "Actual Loops": 0,                             +
              "Startup Cost": 0.0,                           +
              "Async Capable": false,                        +
@@ -702,27 +701,27 @@ select explain_filter('explain (verbose) create table test_ctas as select 1');
 
 -- Test SERIALIZE option
 select explain_filter('explain (analyze,buffers off,serialize) select * from int8_tbl i8');
-                                        explain_filter                                         
------------------------------------------------------------------------------------------------
- Seq Scan on int8_tbl i8  (cost=N.N..N.N rows=N width=N) (actual time=N.N..N.N rows=N loops=N)
+                                         explain_filter                                          
+-------------------------------------------------------------------------------------------------
+ Seq Scan on int8_tbl i8  (cost=N.N..N.N rows=N width=N) (actual time=N.N..N.N rows=N.N loops=N)
  Planning Time: N.N ms
  Serialization: time=N.N ms  output=NkB  format=text
  Execution Time: N.N ms
 (4 rows)
 
 select explain_filter('explain (analyze,serialize text,buffers,timing off) select * from int8_tbl i8');
-                                 explain_filter                                  
----------------------------------------------------------------------------------
- Seq Scan on int8_tbl i8  (cost=N.N..N.N rows=N width=N) (actual rows=N loops=N)
+                                  explain_filter                                   
+-----------------------------------------------------------------------------------
+ Seq Scan on int8_tbl i8  (cost=N.N..N.N rows=N width=N) (actual rows=N.N loops=N)
  Planning Time: N.N ms
  Serialization: output=NkB  format=text
  Execution Time: N.N ms
 (4 rows)
 
 select explain_filter('explain (analyze,serialize binary,buffers,timing) select * from int8_tbl i8');
-                                        explain_filter                                         
------------------------------------------------------------------------------------------------
- Seq Scan on int8_tbl i8  (cost=N.N..N.N rows=N width=N) (actual time=N.N..N.N rows=N loops=N)
+                                         explain_filter                                          
+-------------------------------------------------------------------------------------------------
+ Seq Scan on int8_tbl i8  (cost=N.N..N.N rows=N width=N) (actual time=N.N..N.N rows=N.N loops=N)
  Planning Time: N.N ms
  Serialization: time=N.N ms  output=NkB  format=binary
  Execution Time: N.N ms
@@ -730,9 +729,9 @@ select explain_filter('explain (analyze,serialize binary,buffers,timing) select 
 
 -- this tests an edge case where we have no data to return
 select explain_filter('explain (analyze,buffers off,serialize) create temp table explain_temp as select * from int8_tbl i8');
-                                        explain_filter                                         
------------------------------------------------------------------------------------------------
- Seq Scan on int8_tbl i8  (cost=N.N..N.N rows=N width=N) (actual time=N.N..N.N rows=N loops=N)
+                                         explain_filter                                          
+-------------------------------------------------------------------------------------------------
+ Seq Scan on int8_tbl i8  (cost=N.N..N.N rows=N width=N) (actual time=N.N..N.N rows=N.N loops=N)
  Planning Time: N.N ms
  Serialization: time=N.N ms  output=NkB  format=text
  Execution Time: N.N ms
@@ -740,11 +739,11 @@ select explain_filter('explain (analyze,buffers off,serialize) create temp table
 
 -- Test tuplestore storage usage in Window aggregate (memory case)
 select explain_filter('explain (analyze,buffers off,costs off) select sum(n) over() from generate_series(1,10) a(n)');
-                                 explain_filter                                 
---------------------------------------------------------------------------------
- WindowAgg (actual time=N.N..N.N rows=N loops=N)
+                                  explain_filter                                  
+----------------------------------------------------------------------------------
+ WindowAgg (actual time=N.N..N.N rows=N.N loops=N)
    Storage: Memory  Maximum Storage: NkB
-   ->  Function Scan on generate_series a (actual time=N.N..N.N rows=N loops=N)
+   ->  Function Scan on generate_series a (actual time=N.N..N.N rows=N.N loops=N)
  Planning Time: N.N ms
  Execution Time: N.N ms
 (5 rows)
@@ -752,25 +751,25 @@ select explain_filter('explain (analyze,buffers off,costs off) select sum(n) ove
 -- Test tuplestore storage usage in Window aggregate (disk case)
 set work_mem to 64;
 select explain_filter('explain (analyze,buffers off,costs off) select sum(n) over() from generate_series(1,2000) a(n)');
-                                 explain_filter                                 
---------------------------------------------------------------------------------
- WindowAgg (actual time=N.N..N.N rows=N loops=N)
+                                  explain_filter                                  
+----------------------------------------------------------------------------------
+ WindowAgg (actual time=N.N..N.N rows=N.N loops=N)
    Storage: Disk  Maximum Storage: NkB
-   ->  Function Scan on generate_series a (actual time=N.N..N.N rows=N loops=N)
+   ->  Function Scan on generate_series a (actual time=N.N..N.N rows=N.N loops=N)
  Planning Time: N.N ms
  Execution Time: N.N ms
 (5 rows)
 
 -- Test tuplestore storage usage in Window aggregate (memory and disk case, final result is disk)
 select explain_filter('explain (analyze,buffers off,costs off) select sum(n) over(partition by m) from (SELECT n < 3 as m, n from generate_series(1,2000) a(n))');
-                                    explain_filter                                    
---------------------------------------------------------------------------------------
- WindowAgg (actual time=N.N..N.N rows=N loops=N)
+                                     explain_filter                                     
+----------------------------------------------------------------------------------------
+ WindowAgg (actual time=N.N..N.N rows=N.N loops=N)
    Storage: Disk  Maximum Storage: NkB
-   ->  Sort (actual time=N.N..N.N rows=N loops=N)
+   ->  Sort (actual time=N.N..N.N rows=N.N loops=N)
          Sort Key: ((a.n < N))
          Sort Method: external merge  Disk: NkB
-         ->  Function Scan on generate_series a (actual time=N.N..N.N rows=N loops=N)
+         ->  Function Scan on generate_series a (actual time=N.N..N.N rows=N.N loops=N)
  Planning Time: N.N ms
  Execution Time: N.N ms
 (8 rows)

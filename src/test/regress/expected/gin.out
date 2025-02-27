@@ -187,16 +187,16 @@ from
   lateral execute_text_query_heap($$select string_agg((i, j)::text, ' ') from t_gin_test_tbl where $$ || query) res_heap;
                    query                   | return by index | removed by recheck | match 
 -------------------------------------------+-----------------+--------------------+-------
-  i @> '{}'                                | 7               | 0                  | t
-  j @> '{}'                                | 6               | 0                  | t
-  i @> '{}' and j @> '{}'                  | 4               | 0                  | t
-  i @> '{1}'                               | 5               | 0                  | t
-  i @> '{1}' and j @> '{}'                 | 3               | 0                  | t
-  i @> '{1}' and i @> '{}' and j @> '{}'   | 3               | 0                  | t
-  j @> '{10}'                              | 4               | 0                  | t
-  j @> '{10}' and i @> '{}'                | 3               | 0                  | t
-  j @> '{10}' and j @> '{}' and i @> '{}'  | 3               | 0                  | t
-  i @> '{1}' and j @> '{10}'               | 2               | 0                  | t
+  i @> '{}'                                | 7.00            | 0                  | t
+  j @> '{}'                                | 6.00            | 0                  | t
+  i @> '{}' and j @> '{}'                  | 4.00            | 0                  | t
+  i @> '{1}'                               | 5.00            | 0                  | t
+  i @> '{1}' and j @> '{}'                 | 3.00            | 0                  | t
+  i @> '{1}' and i @> '{}' and j @> '{}'   | 3.00            | 0                  | t
+  j @> '{10}'                              | 4.00            | 0                  | t
+  j @> '{10}' and i @> '{}'                | 3.00            | 0                  | t
+  j @> '{10}' and j @> '{}' and i @> '{}'  | 3.00            | 0                  | t
+  i @> '{1}' and j @> '{10}'               | 2.00            | 0                  | t
 (10 rows)
 
 reset enable_seqscan;

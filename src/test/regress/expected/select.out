@@ -759,9 +759,9 @@ select * from onek2 where unique2 = 11 and stringu1 = 'ATAAAA';
 -- actually run the query with an analyze to use the partial index
 explain (costs off, analyze on, timing off, summary off, buffers off)
 select * from onek2 where unique2 = 11 and stringu1 = 'ATAAAA';
-                           QUERY PLAN                            
------------------------------------------------------------------
- Index Scan using onek2_u2_prtl on onek2 (actual rows=1 loops=1)
+                             QUERY PLAN                             
+--------------------------------------------------------------------
+ Index Scan using onek2_u2_prtl on onek2 (actual rows=1.00 loops=1)
    Index Cond: (unique2 = 11)
    Filter: (stringu1 = 'ATAAAA'::name)
 (3 rows)

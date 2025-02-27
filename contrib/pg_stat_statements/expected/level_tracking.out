@@ -904,16 +904,16 @@ SELECT pg_stat_statements_reset() IS NOT NULL AS t;
 (1 row)
 
 EXPLAIN (ANALYZE, COSTS OFF, SUMMARY OFF, TIMING OFF, BUFFERS OFF) SELECT 100;
-           QUERY PLAN           
---------------------------------
- Result (actual rows=1 loops=1)
+            QUERY PLAN             
+-----------------------------------
+ Result (actual rows=1.00 loops=1)
 (1 row)
 
 EXPLAIN (ANALYZE, COSTS OFF, SUMMARY OFF, TIMING OFF, BUFFERS OFF)
   DECLARE foocur CURSOR FOR SELECT * FROM stats_track_tab;
-                     QUERY PLAN                      
------------------------------------------------------
- Seq Scan on stats_track_tab (actual rows=0 loops=1)
+                       QUERY PLAN                       
+--------------------------------------------------------
+ Seq Scan on stats_track_tab (actual rows=0.00 loops=1)
 (1 row)
 
 SELECT toplevel, calls, query FROM pg_stat_statements
@@ -937,16 +937,16 @@ SELECT pg_stat_statements_reset() IS NOT NULL AS t;
 (1 row)
 
 EXPLAIN (ANALYZE, COSTS OFF, SUMMARY OFF, TIMING OFF, BUFFERS OFF) SELECT 100;
-           QUERY PLAN           
---------------------------------
- Result (actual rows=1 loops=1)
+            QUERY PLAN             
+-----------------------------------
+ Result (actual rows=1.00 loops=1)
 (1 row)
 
 EXPLAIN (ANALYZE, COSTS OFF, SUMMARY OFF, TIMING OFF, BUFFERS OFF)
   DECLARE foocur CURSOR FOR SELECT * FROM stats_track_tab;
-                     QUERY PLAN                      
------------------------------------------------------
- Seq Scan on stats_track_tab (actual rows=0 loops=1)
+                       QUERY PLAN                       
+--------------------------------------------------------
+ Seq Scan on stats_track_tab (actual rows=0.00 loops=1)
 (1 row)
 
 SELECT toplevel, calls, query FROM pg_stat_statements

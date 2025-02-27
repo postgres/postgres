@@ -37,9 +37,9 @@ INNER JOIN tenk1 t2 ON t1.unique1 = t2.twenty
 WHERE t2.unique1 < 1000;', false);
                                        explain_memoize                                        
 ----------------------------------------------------------------------------------------------
- Aggregate (actual rows=1 loops=N)
-   ->  Nested Loop (actual rows=1000 loops=N)
-         ->  Seq Scan on tenk1 t2 (actual rows=1000 loops=N)
+ Aggregate (actual rows=1.00 loops=N)
+   ->  Nested Loop (actual rows=1000.00 loops=N)
+         ->  Seq Scan on tenk1 t2 (actual rows=1000.00 loops=N)
                Filter: (unique1 < 1000)
                Rows Removed by Filter: 9000
          ->  Memoize (actual rows=1.00 loops=N)
@@ -68,9 +68,9 @@ LATERAL (SELECT t2.unique1 FROM tenk1 t2
 WHERE t1.unique1 < 1000;', false);
                                        explain_memoize                                        
 ----------------------------------------------------------------------------------------------
- Aggregate (actual rows=1 loops=N)
-   ->  Nested Loop (actual rows=1000 loops=N)
-         ->  Seq Scan on tenk1 t1 (actual rows=1000 loops=N)
+ Aggregate (actual rows=1.00 loops=N)
+   ->  Nested Loop (actual rows=1000.00 loops=N)
+         ->  Seq Scan on tenk1 t1 (actual rows=1000.00 loops=N)
                Filter: (unique1 < 1000)
                Rows Removed by Filter: 9000
          ->  Memoize (actual rows=1.00 loops=N)
@@ -102,9 +102,9 @@ ON t1.two = t2.two
 WHERE t1.unique1 < 10;', false);
                                          explain_memoize                                         
 -------------------------------------------------------------------------------------------------
- Aggregate (actual rows=1 loops=N)
-   ->  Nested Loop Left Join (actual rows=20 loops=N)
-         ->  Index Scan using tenk1_unique1 on tenk1 t1 (actual rows=10 loops=N)
+ Aggregate (actual rows=1.00 loops=N)
+   ->  Nested Loop Left Join (actual rows=20.00 loops=N)
+         ->  Index Scan using tenk1_unique1 on tenk1 t1 (actual rows=10.00 loops=N)
                Index Cond: (unique1 < 10)
          ->  Memoize (actual rows=2.00 loops=N)
                Cache Key: t1.two
@@ -136,9 +136,9 @@ LATERAL (SELECT t1.two+1 AS c1, t2.unique1 AS c2 FROM tenk1 t2) s ON TRUE
 WHERE s.c1 = s.c2 AND t1.unique1 < 1000;', false);
                                        explain_memoize                                        
 ----------------------------------------------------------------------------------------------
- Aggregate (actual rows=1 loops=N)
-   ->  Nested Loop (actual rows=1000 loops=N)
-         ->  Seq Scan on tenk1 t1 (actual rows=1000 loops=N)
+ Aggregate (actual rows=1.00 loops=N)
+   ->  Nested Loop (actual rows=1000.00 loops=N)
+         ->  Seq Scan on tenk1 t1 (actual rows=1000.00 loops=N)
                Filter: (unique1 < 1000)
                Rows Removed by Filter: 9000
          ->  Memoize (actual rows=1.00 loops=N)
@@ -168,9 +168,9 @@ ON t1.two = s.two
 WHERE s.c1 = s.c2 AND t1.unique1 < 1000;', false);
                                     explain_memoize                                    
 ---------------------------------------------------------------------------------------
- Aggregate (actual rows=1 loops=N)
-   ->  Nested Loop (actual rows=1000 loops=N)
-         ->  Seq Scan on tenk1 t1 (actual rows=1000 loops=N)
+ Aggregate (actual rows=1.00 loops=N)
+   ->  Nested Loop (actual rows=1000.00 loops=N)
+         ->  Seq Scan on tenk1 t1 (actual rows=1000.00 loops=N)
                Filter: (unique1 < 1000)
                Rows Removed by Filter: 9000
          ->  Memoize (actual rows=1.00 loops=N)
@@ -209,8 +209,8 @@ SELECT * FROM expr_key t1 INNER JOIN expr_key t2
 ON t1.x = t2.t::numeric AND t1.t::numeric = t2.x;', false);
                                        explain_memoize                                        
 ----------------------------------------------------------------------------------------------
- Nested Loop (actual rows=80 loops=N)
-   ->  Seq Scan on expr_key t1 (actual rows=40 loops=N)
+ Nested Loop (actual rows=80.00 loops=N)
+   ->  Seq Scan on expr_key t1 (actual rows=40.00 loops=N)
    ->  Memoize (actual rows=2.00 loops=N)
          Cache Key: t1.x, (t1.t)::numeric
          Cache Mode: logical
@@ -234,9 +234,9 @@ INNER JOIN tenk1 t2 ON t1.unique1 = t2.thousand
 WHERE t2.unique1 < 1200;', true);
                                        explain_memoize                                        
 ----------------------------------------------------------------------------------------------
- Aggregate (actual rows=1 loops=N)
-   ->  Nested Loop (actual rows=1200 loops=N)
-         ->  Seq Scan on tenk1 t2 (actual rows=1200 loops=N)
+ Aggregate (actual rows=1.00 loops=N)
+   ->  Nested Loop (actual rows=1200.00 loops=N)
+         ->  Seq Scan on tenk1 t2 (actual rows=1200.00 loops=N)
                Filter: (unique1 < 1200)
                Rows Removed by Filter: 8800
          ->  Memoize (actual rows=1.00 loops=N)
@@ -256,16 +256,16 @@ SET enable_seqscan TO off;
 -- Ensure memoize operates in logical mode
 SELECT explain_memoize('
 SELECT * FROM flt f1 INNER JOIN flt f2 ON f1.f = f2.f;', false);
-                                explain_memoize                                
--------------------------------------------------------------------------------
- Nested Loop (actual rows=4 loops=N)
-   ->  Index Only Scan using flt_f_idx on flt f1 (actual rows=2 loops=N)
+                                 explain_memoize                                  
+----------------------------------------------------------------------------------
+ Nested Loop (actual rows=4.00 loops=N)
+   ->  Index Only Scan using flt_f_idx on flt f1 (actual rows=2.00 loops=N)
          Heap Fetches: N
    ->  Memoize (actual rows=2.00 loops=N)
          Cache Key: f1.f
          Cache Mode: logical
          Hits: 1  Misses: 1  Evictions: Zero  Overflows: 0  Memory Usage: NkB
-         ->  Index Only Scan using flt_f_idx on flt f2 (actual rows=2 loops=N)
+         ->  Index Only Scan using flt_f_idx on flt f2 (actual rows=2.00 loops=N)
                Index Cond: (f = f1.f)
                Heap Fetches: N
 (10 rows)
@@ -275,8 +275,8 @@ SELECT explain_memoize('
 SELECT * FROM flt f1 INNER JOIN flt f2 ON f1.f >= f2.f;', false);
                                  explain_memoize                                  
 ----------------------------------------------------------------------------------
- Nested Loop (actual rows=4 loops=N)
-   ->  Index Only Scan using flt_f_idx on flt f1 (actual rows=2 loops=N)
+ Nested Loop (actual rows=4.00 loops=N)
+   ->  Index Only Scan using flt_f_idx on flt f1 (actual rows=2.00 loops=N)
          Heap Fetches: N
    ->  Memoize (actual rows=2.00 loops=N)
          Cache Key: f1.f
@@ -302,8 +302,8 @@ SELECT explain_memoize('
 SELECT * FROM strtest s1 INNER JOIN strtest s2 ON s1.n >= s2.n;', false);
                                    explain_memoize                                   
 -------------------------------------------------------------------------------------
- Nested Loop (actual rows=24 loops=N)
-   ->  Seq Scan on strtest s1 (actual rows=6 loops=N)
+ Nested Loop (actual rows=24.00 loops=N)
+   ->  Seq Scan on strtest s1 (actual rows=6.00 loops=N)
          Disabled: true
    ->  Memoize (actual rows=4.00 loops=N)
          Cache Key: s1.n
@@ -318,8 +318,8 @@ SELECT explain_memoize('
 SELECT * FROM strtest s1 INNER JOIN strtest s2 ON s1.t >= s2.t;', false);
                                    explain_memoize                                   
 -------------------------------------------------------------------------------------
- Nested Loop (actual rows=24 loops=N)
-   ->  Seq Scan on strtest s1 (actual rows=6 loops=N)
+ Nested Loop (actual rows=24.00 loops=N)
+   ->  Seq Scan on strtest s1 (actual rows=6.00 loops=N)
          Disabled: true
    ->  Memoize (actual rows=4.00 loops=N)
          Cache Key: s1.t
@@ -342,27 +342,27 @@ CREATE INDEX iprt_p2_a ON prt_p2 (a);
 ANALYZE prt;
 SELECT explain_memoize('
 SELECT * FROM prt t1 INNER JOIN prt t2 ON t1.a = t2.a;', false);
-                                     explain_memoize                                      
-------------------------------------------------------------------------------------------
- Append (actual rows=32 loops=N)
-   ->  Nested Loop (actual rows=16 loops=N)
-         ->  Index Only Scan using iprt_p1_a on prt_p1 t1_1 (actual rows=4 loops=N)
+                                       explain_memoize                                       
+---------------------------------------------------------------------------------------------
+ Append (actual rows=32.00 loops=N)
+   ->  Nested Loop (actual rows=16.00 loops=N)
+         ->  Index Only Scan using iprt_p1_a on prt_p1 t1_1 (actual rows=4.00 loops=N)
                Heap Fetches: N
          ->  Memoize (actual rows=4.00 loops=N)
                Cache Key: t1_1.a
                Cache Mode: logical
                Hits: 3  Misses: 1  Evictions: Zero  Overflows: 0  Memory Usage: NkB
-               ->  Index Only Scan using iprt_p1_a on prt_p1 t2_1 (actual rows=4 loops=N)
+               ->  Index Only Scan using iprt_p1_a on prt_p1 t2_1 (actual rows=4.00 loops=N)
                      Index Cond: (a = t1_1.a)
                      Heap Fetches: N
-   ->  Nested Loop (actual rows=16 loops=N)
-         ->  Index Only Scan using iprt_p2_a on prt_p2 t1_2 (actual rows=4 loops=N)
+   ->  Nested Loop (actual rows=16.00 loops=N)
+         ->  Index Only Scan using iprt_p2_a on prt_p2 t1_2 (actual rows=4.00 loops=N)
                Heap Fetches: N
          ->  Memoize (actual rows=4.00 loops=N)
                Cache Key: t1_2.a
                Cache Mode: logical
                Hits: 3  Misses: 1  Evictions: Zero  Overflows: 0  Memory Usage: NkB
-               ->  Index Only Scan using iprt_p2_a on prt_p2 t2_2 (actual rows=4 loops=N)
+               ->  Index Only Scan using iprt_p2_a on prt_p2 t2_2 (actual rows=4.00 loops=N)
                      Index Cond: (a = t1_2.a)
                      Heap Fetches: N
 (21 rows)
@@ -373,20 +373,20 @@ SELECT explain_memoize('
 SELECT * FROM prt_p1 t1 INNER JOIN
 (SELECT * FROM prt_p1 UNION ALL SELECT * FROM prt_p2) t2
 ON t1.a = t2.a;', false);
-                                   explain_memoize                                   
--------------------------------------------------------------------------------------
- Nested Loop (actual rows=16 loops=N)
-   ->  Index Only Scan using iprt_p1_a on prt_p1 t1 (actual rows=4 loops=N)
+                                    explain_memoize                                     
+----------------------------------------------------------------------------------------
+ Nested Loop (actual rows=16.00 loops=N)
+   ->  Index Only Scan using iprt_p1_a on prt_p1 t1 (actual rows=4.00 loops=N)
          Heap Fetches: N
    ->  Memoize (actual rows=4.00 loops=N)
          Cache Key: t1.a
          Cache Mode: logical
          Hits: 3  Misses: 1  Evictions: Zero  Overflows: 0  Memory Usage: NkB
-         ->  Append (actual rows=4 loops=N)
-               ->  Index Only Scan using iprt_p1_a on prt_p1 (actual rows=4 loops=N)
+         ->  Append (actual rows=4.00 loops=N)
+               ->  Index Only Scan using iprt_p1_a on prt_p1 (actual rows=4.00 loops=N)
                      Index Cond: (a = t1.a)
                      Heap Fetches: N
-               ->  Index Only Scan using iprt_p2_a on prt_p2 (actual rows=0 loops=N)
+               ->  Index Only Scan using iprt_p2_a on prt_p2 (actual rows=0.00 loops=N)
                      Index Cond: (a = t1.a)
                      Heap Fetches: N
 (14 rows)

@@ -11670,15 +11670,15 @@ SELECT * FROM local_tbl, async_pt WHERE local_tbl.a = async_pt.a AND local_tbl.c
 
 EXPLAIN (ANALYZE, COSTS OFF, SUMMARY OFF, TIMING OFF, BUFFERS OFF)
 SELECT * FROM local_tbl, async_pt WHERE local_tbl.a = async_pt.a AND local_tbl.c = 'bar';
-                                  QUERY PLAN                                   
--------------------------------------------------------------------------------
- Nested Loop (actual rows=1 loops=1)
-   ->  Seq Scan on local_tbl (actual rows=1 loops=1)
+                                    QUERY PLAN                                    
+----------------------------------------------------------------------------------
+ Nested Loop (actual rows=1.00 loops=1)
+   ->  Seq Scan on local_tbl (actual rows=1.00 loops=1)
          Filter: (c = 'bar'::text)
          Rows Removed by Filter: 1
-   ->  Append (actual rows=1 loops=1)
+   ->  Append (actual rows=1.00 loops=1)
          ->  Async Foreign Scan on async_p1 async_pt_1 (never executed)
-         ->  Async Foreign Scan on async_p2 async_pt_2 (actual rows=1 loops=1)
+         ->  Async Foreign Scan on async_p2 async_pt_2 (actual rows=1.00 loops=1)
          ->  Seq Scan on async_p3 async_pt_3 (never executed)
                Filter: (a = local_tbl.a)
 (9 rows)
@@ -11916,20 +11916,20 @@ SELECT * FROM local_tbl t1 LEFT JOIN (SELECT *, (SELECT count(*) FROM async_pt W
 
 EXPLAIN (ANALYZE, COSTS OFF, SUMMARY OFF, TIMING OFF, BUFFERS OFF)
 SELECT * FROM local_tbl t1 LEFT JOIN (SELECT *, (SELECT count(*) FROM async_pt WHERE a < 3000) FROM async_pt WHERE a < 3000) t2 ON t1.a = t2.a;
-                                       QUERY PLAN                                        
------------------------------------------------------------------------------------------
- Nested Loop Left Join (actual rows=1 loops=1)
+                                         QUERY PLAN                                         
+--------------------------------------------------------------------------------------------
+ Nested Loop Left Join (actual rows=1.00 loops=1)
    Join Filter: (t1.a = async_pt.a)
    Rows Removed by Join Filter: 399
    InitPlan 1
-     ->  Aggregate (actual rows=1 loops=1)
-           ->  Append (actual rows=400 loops=1)
-                 ->  Async Foreign Scan on async_p1 async_pt_4 (actual rows=200 loops=1)
-                 ->  Async Foreign Scan on async_p2 async_pt_5 (actual rows=200 loops=1)
-   ->  Seq Scan on local_tbl t1 (actual rows=1 loops=1)
-   ->  Append (actual rows=400 loops=1)
-         ->  Async Foreign Scan on async_p1 async_pt_1 (actual rows=200 loops=1)
-         ->  Async Foreign Scan on async_p2 async_pt_2 (actual rows=200 loops=1)
+     ->  Aggregate (actual rows=1.00 loops=1)
+           ->  Append (actual rows=400.00 loops=1)
+                 ->  Async Foreign Scan on async_p1 async_pt_4 (actual rows=200.00 loops=1)
+                 ->  Async Foreign Scan on async_p2 async_pt_5 (actual rows=200.00 loops=1)
+   ->  Seq Scan on local_tbl t1 (actual rows=1.00 loops=1)
+   ->  Append (actual rows=400.00 loops=1)
+         ->  Async Foreign Scan on async_p1 async_pt_1 (actual rows=200.00 loops=1)
+         ->  Async Foreign Scan on async_p2 async_pt_2 (actual rows=200.00 loops=1)
 (12 rows)
 
 SELECT * FROM local_tbl t1 LEFT JOIN (SELECT *, (SELECT count(*) FROM async_pt WHERE a < 3000) FROM async_pt WHERE a < 3000) t2 ON t1.a = t2.a;
@@ -11960,15 +11960,15 @@ SELECT * FROM async_pt t1 WHERE t1.b === 505 LIMIT 1;
 
 EXPLAIN (ANALYZE, COSTS OFF, SUMMARY OFF, TIMING OFF, BUFFERS OFF)
 SELECT * FROM async_pt t1 WHERE t1.b === 505 LIMIT 1;
-                               QUERY PLAN                                
--------------------------------------------------------------------------
- Limit (actual rows=1 loops=1)
-   ->  Append (actual rows=1 loops=1)
-         ->  Async Foreign Scan on async_p1 t1_1 (actual rows=0 loops=1)
+                                 QUERY PLAN                                 
+----------------------------------------------------------------------------
+ Limit (actual rows=1.00 loops=1)
+   ->  Append (actual rows=1.00 loops=1)
+         ->  Async Foreign Scan on async_p1 t1_1 (actual rows=0.00 loops=1)
                Filter: (b === 505)
-         ->  Async Foreign Scan on async_p2 t1_2 (actual rows=0 loops=1)
+         ->  Async Foreign Scan on async_p2 t1_2 (actual rows=0.00 loops=1)
                Filter: (b === 505)
-         ->  Seq Scan on async_p3 t1_3 (actual rows=1 loops=1)
+         ->  Seq Scan on async_p3 t1_3 (actual rows=1.00 loops=1)
                Filter: (b === 505)
                Rows Removed by Filter: 101
 (9 rows)
@@ -12120,12 +12120,12 @@ DELETE FROM async_p2;
 DELETE FROM async_p3;
 EXPLAIN (ANALYZE, COSTS OFF, SUMMARY OFF, TIMING OFF, BUFFERS OFF)
 SELECT * FROM async_pt;
-                               QUERY PLAN                                
--------------------------------------------------------------------------
- Append (actual rows=0 loops=1)
-   ->  Async Foreign Scan on async_p1 async_pt_1 (actual rows=0 loops=1)
-   ->  Async Foreign Scan on async_p2 async_pt_2 (actual rows=0 loops=1)
-   ->  Seq Scan on async_p3 async_pt_3 (actual rows=0 loops=1)
+                                 QUERY PLAN                                 
+----------------------------------------------------------------------------
+ Append (actual rows=0.00 loops=1)
+   ->  Async Foreign Scan on async_p1 async_pt_1 (actual rows=0.00 loops=1)
+   ->  Async Foreign Scan on async_p2 async_pt_2 (actual rows=0.00 loops=1)
+   ->  Seq Scan on async_p3 async_pt_3 (actual rows=0.00 loops=1)
 (4 rows)
 
 -- Clean up

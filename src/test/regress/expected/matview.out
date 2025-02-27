@@ -627,10 +627,10 @@ CREATE MATERIALIZED VIEW matview_schema.mv_withdata1 (a) AS
 EXPLAIN (ANALYZE, COSTS OFF, SUMMARY OFF, TIMING OFF, BUFFERS OFF)
   CREATE MATERIALIZED VIEW matview_schema.mv_withdata2 (a) AS
   SELECT generate_series(1, 10) WITH DATA;
-              QUERY PLAN              
---------------------------------------
- ProjectSet (actual rows=10 loops=1)
-   ->  Result (actual rows=1 loops=1)
+               QUERY PLAN                
+-----------------------------------------
+ ProjectSet (actual rows=10.00 loops=1)
+   ->  Result (actual rows=1.00 loops=1)
 (2 rows)
 
 REFRESH MATERIALIZED VIEW matview_schema.mv_withdata2;
