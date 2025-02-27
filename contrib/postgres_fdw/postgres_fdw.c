@@ -20,6 +20,7 @@
 #include "catalog/pg_opfamily.h"
 #include "commands/defrem.h"
 #include "commands/explain.h"
+#include "commands/explain_format.h"
 #include "executor/execAsync.h"
 #include "foreign/fdwapi.h"
 #include "funcapi.h"

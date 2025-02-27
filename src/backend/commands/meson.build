@@ -22,6 +22,7 @@ backend_sources += files(
   'dropcmds.c',
   'event_trigger.c',
   'explain.c',
+  'explain_format.c',
   'extension.c',
   'foreigncmds.c',
   'functioncmds.c',

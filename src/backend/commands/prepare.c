@@ -21,6 +21,7 @@
 #include "access/xact.h"
 #include "catalog/pg_type.h"
 #include "commands/createas.h"
+#include "commands/explain_format.h"
 #include "commands/prepare.h"
 #include "funcapi.h"
 #include "nodes/nodeFuncs.h"
