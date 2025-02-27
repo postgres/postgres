@@ -103,6 +103,10 @@ typedef struct IndexAmRoutine
     bool        amcanorder;
     /* does AM support ORDER BY result of an operator on indexed column? */
     bool        amcanorderbyop;
+    /* does AM support hashing using API consistent with the hash AM? */
+    bool        amcanhash;
+    /* does AM support cross-type comparisons? */
+    bool        amcancrosscompare;
     /* does AM support backward scanning? */
     bool        amcanbackward;
     /* does AM support UNIQUE indexes? */

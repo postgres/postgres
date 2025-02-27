@@ -1242,25 +1242,25 @@ assignProcTypes(OpFamilyMember *member, Oid amoid, Oid typeoid,
 	}
 
 	/*
-	 * btree comparison procs must be 2-arg procs returning int4.  btree
-	 * sortsupport procs must take internal and return void.  btree in_range
-	 * procs must be 5-arg procs returning bool.  btree equalimage procs must
-	 * take 1 arg and return bool.  hash support proc 1 must be a 1-arg proc
-	 * returning int4, while proc 2 must be a 2-arg proc returning int8.
-	 * Otherwise we don't know.
+	 * Ordering comparison procs must be 2-arg procs returning int4.  Ordering
+	 * sortsupport procs must take internal and return void.  Ordering
+	 * in_range procs must be 5-arg procs returning bool.  Ordering equalimage
+	 * procs must take 1 arg and return bool.  Hashing support proc 1 must be
+	 * a 1-arg proc returning int4, while proc 2 must be a 2-arg proc
+	 * returning int8. Otherwise we don't know.
 	 */
-	else if (amoid == BTREE_AM_OID)
+	else if (GetIndexAmRoutineByAmId(amoid, false)->amcanorder)
 	{
 		if (member->number == BTORDER_PROC)
 		{
 			if (procform->pronargs != 2)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-						 errmsg("btree comparison functions must have two arguments")));
+						 errmsg("ordering comparison functions must have two arguments")));
 			if (procform->prorettype != INT4OID)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-						 errmsg("btree comparison functions must return integer")));
+						 errmsg("ordering comparison functions must return integer")));
 
 			/*
 			 * If lefttype/righttype isn't specified, use the proc's input
@@ -1277,11 +1277,11 @@ assignProcTypes(OpFamilyMember *member, Oid amoid, Oid typeoid,
 				procform->proargtypes.values[0] != INTERNALOID)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-						 errmsg("btree sort support functions must accept type \"internal\"")));
+						 errmsg("ordering sort support functions must accept type \"internal\"")));
 			if (procform->prorettype != VOIDOID)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-						 errmsg("btree sort support functions must return void")));
+						 errmsg("ordering sort support functions must return void")));
 
 			/*
 			 * Can't infer lefttype/righttype from proc, so use default rule
@@ -1292,11 +1292,11 @@ assignProcTypes(OpFamilyMember *member, Oid amoid, Oid typeoid,
 			if (procform->pronargs != 5)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-						 errmsg("btree in_range functions must have five arguments")));
+						 errmsg("ordering in_range functions must have five arguments")));
 			if (procform->prorettype != BOOLOID)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-						 errmsg("btree in_range functions must return boolean")));
+						 errmsg("ordering in_range functions must return boolean")));
 
 			/*
 			 * If lefttype/righttype isn't specified, use the proc's input
@@ -1312,11 +1312,11 @@ assignProcTypes(OpFamilyMember *member, Oid amoid, Oid typeoid,
 			if (procform->pronargs != 1)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-						 errmsg("btree equal image functions must have one argument")));
+						 errmsg("ordering equal image functions must have one argument")));
 			if (procform->prorettype != BOOLOID)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-						 errmsg("btree equal image functions must return boolean")));
+						 errmsg("ordering equal image functions must return boolean")));
 
 			/*
 			 * pg_amproc functions are indexed by (lefttype, righttype), but
@@ -1329,10 +1329,10 @@ assignProcTypes(OpFamilyMember *member, Oid amoid, Oid typeoid,
 			if (member->lefttype != member->righttype)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-						 errmsg("btree equal image functions must not be cross-type")));
+						 errmsg("ordering equal image functions must not be cross-type")));
 		}
 	}
-	else if (amoid == HASH_AM_OID)
+	else if (GetIndexAmRoutineByAmId(amoid, false)->amcanhash)
 	{
 		if (member->number == HASHSTANDARD_PROC)
 		{

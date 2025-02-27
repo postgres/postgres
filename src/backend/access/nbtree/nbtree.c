@@ -107,6 +107,8 @@ bthandler(PG_FUNCTION_ARGS)
 	amroutine->amoptsprocnum = BTOPTIONS_PROC;
 	amroutine->amcanorder = true;
 	amroutine->amcanorderbyop = false;
+	amroutine->amcanhash = false;
+	amroutine->amcancrosscompare = true;
 	amroutine->amcanbackward = true;
 	amroutine->amcanunique = true;
 	amroutine->amcanmulticol = true;

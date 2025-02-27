@@ -420,7 +420,7 @@ BEGIN TRANSACTION;
 CREATE OPERATOR FAMILY alt_opf12 USING btree;
 CREATE FUNCTION fn_opf12  (int4, int2) RETURNS BIGINT AS 'SELECT NULL::BIGINT;' LANGUAGE SQL;
 ALTER OPERATOR FAMILY alt_opf12 USING btree ADD FUNCTION 1 fn_opf12(int4, int2);
-ERROR:  btree comparison functions must return integer
+ERROR:  ordering comparison functions must return integer
 DROP OPERATOR FAMILY alt_opf12 USING btree;
 ERROR:  current transaction is aborted, commands ignored until end of transaction block
 ROLLBACK;
@@ -438,7 +438,7 @@ BEGIN TRANSACTION;
 CREATE OPERATOR FAMILY alt_opf14 USING btree;
 CREATE FUNCTION fn_opf14 (int4) RETURNS BIGINT AS 'SELECT NULL::BIGINT;' LANGUAGE SQL;
 ALTER OPERATOR FAMILY alt_opf14 USING btree ADD FUNCTION 1 fn_opf14(int4);
-ERROR:  btree comparison functions must have two arguments
+ERROR:  ordering comparison functions must have two arguments
 DROP OPERATOR FAMILY alt_opf14 USING btree;
 ERROR:  current transaction is aborted, commands ignored until end of transaction block
 ROLLBACK;
@@ -504,7 +504,7 @@ ALTER OPERATOR FAMILY alt_opf18 USING btree ADD
 -- Should fail. Not allowed to have cross-type equalimage function.
 ALTER OPERATOR FAMILY alt_opf18 USING btree
   ADD FUNCTION 4 (int4, int2) btequalimage(oid);
-ERROR:  btree equal image functions must not be cross-type
+ERROR:  ordering equal image functions must not be cross-type
 ALTER OPERATOR FAMILY alt_opf18 USING btree DROP FUNCTION 2 (int4, int4);
 ERROR:  function 2(integer,integer) does not exist in operator family "alt_opf18"
 DROP OPERATOR FAMILY alt_opf18 USING btree;
