@@ -270,7 +270,6 @@ tde_mdopen(SMgrRelation reln)
 	mdopen(reln);
 }
 
-static SMgrId tde_smgr_id;
 static const struct f_smgr tde_smgr = {
 	.name = "tde",
 	.smgr_init = mdinit,
@@ -295,8 +294,6 @@ static const struct f_smgr tde_smgr = {
 void
 RegisterStorageMgr(void)
 {
-	tde_smgr_id = smgr_register(&tde_smgr, sizeof(TDESMgrRelationData));
-
 	/* TODO: figure out how this part should work in a real extension */
-	storage_manager_id = tde_smgr_id;
+	storage_manager_id = smgr_register(&tde_smgr, sizeof(TDESMgrRelationData));
 }
