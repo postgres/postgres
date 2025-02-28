@@ -28,13 +28,16 @@
 #include "catalog/keyring_min.h"
 
 extern void RegisterKeyProvider(const TDEKeyringRoutine *routine, ProviderType type);
+extern void *palloc(size_t);
+extern void pfree(void *);
 
 static void set_key_by_name(GenericKeyring *keyring, KeyInfo *key);
 static KeyInfo *get_key_by_name(GenericKeyring *keyring, const char *key_name, KeyringReturnCodes *return_code);
 
 const TDEKeyringRoutine keyringKmipRoutine = {
 	.keyring_get_key = get_key_by_name,
-.keyring_store_key = set_key_by_name};
+	.keyring_store_key = set_key_by_name
+};
 
 void
 InstallKmipKeyring(void)
@@ -152,10 +155,6 @@ set_key_by_name(GenericKeyring *keyring, KeyInfo *key)
 	if (result != 0)
 		kmip_ereport(true, "KMIP server reported error on register symmetric key: %i", result);
 }
-
-void	   *palloc(size_t);
-
-void		pfree(void *);
 
 static KeyInfo *
 get_key_by_name(GenericKeyring *keyring, const char *key_name, KeyringReturnCodes *return_code)
