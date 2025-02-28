@@ -12,7 +12,7 @@
 
 #include <stdint.h>
 
-void		AesInit(void);
+extern void AesInit(void);
 extern void Aes128EncryptedZeroBlocks(void *ctxPtr, const unsigned char *key, const char *iv_prefix, uint64_t blockNumber1, uint64_t blockNumber2, unsigned char *out);
 
 /* Only used for testing */

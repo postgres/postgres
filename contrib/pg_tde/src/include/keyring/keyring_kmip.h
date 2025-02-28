@@ -14,6 +14,6 @@
 
 extern bool InstallKmipKeyring(void);
 
-void		kmip_ereport(bool throw_error, const char *msg, int errCode);
+extern void kmip_ereport(bool throw_error, const char *msg, int errCode);
 
 #endif							/* // KEYRING_KMIP_H */

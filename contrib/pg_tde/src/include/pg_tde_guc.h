@@ -20,7 +20,7 @@ extern bool AllowInheritGlobalProviders;
 extern bool EncryptXLog;
 extern bool EnforceEncryption;
 
-void		TdeGucInit(void);
+extern void TdeGucInit(void);
 
 #endif
 #endif							/* TDE_GUC_H */

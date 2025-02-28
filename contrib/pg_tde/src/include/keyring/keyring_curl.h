@@ -27,6 +27,6 @@ typedef struct CurlString
 
 extern CURL *keyringCurl;
 
-bool		curlSetupSession(const char *url, const char *caFile, CurlString *outStr);
+extern bool curlSetupSession(const char *url, const char *caFile, CurlString *outStr);
 
 #endif							/* //KEYRING_CURL_H */
