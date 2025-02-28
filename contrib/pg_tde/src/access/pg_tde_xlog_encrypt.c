@@ -249,6 +249,7 @@ tdeheap_xlog_seg_read(int fd, void *buf, size_t count, off_t offset,
 	XLogRecPtr	write_key_lsn = 0;
 	WALKeyCacheRec *curr_key = NULL;
 	off_t		dec_off = 0;
+	off_t		dec_end = 0;
 	size_t		dec_sz = 0;
 	XLogRecPtr	data_start;
 	XLogRecPtr	data_end;
@@ -318,7 +319,16 @@ tdeheap_xlog_seg_read(int fd, void *buf, size_t count, off_t offset,
 			if (data_start <= curr_key->end_lsn && curr_key->start_lsn <= data_end)
 			{
 				dec_off = XLogSegmentOffset(Max(data_start, curr_key->start_lsn), segSize);
-				dec_sz = XLogSegmentOffset(Min(data_end, curr_key->end_lsn), segSize) - dec_off;
+				dec_end = XLogSegmentOffset(Min(data_end, curr_key->end_lsn), segSize);
+
+				/* We have reached the end of the segment */
+				if (dec_end == 0)
+				{
+					dec_end = offset + count;
+				}
+
+				dec_sz = dec_end - dec_off;
+
 #ifdef TDE_XLOG_DEBUG
 				elog(DEBUG1, "decrypt WAL, dec_off: %lu [buff_off %lu], sz: %lu | key %X/%X",
 					 dec_off, offset - dec_off, dec_sz, LSN_FORMAT_ARGS(curr_key->key->start_lsn));
