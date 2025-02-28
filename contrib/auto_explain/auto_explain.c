@@ -94,7 +94,7 @@ _PG_init(void)
 	/* Define custom GUC variables. */
 	DefineCustomIntVariable("auto_explain.log_min_duration",
 							"Sets the minimum execution time above which plans will be logged.",
-							"Zero prints all plans. -1 turns this feature off.",
+							"-1 disables logging plans. 0 means log all plans.",
 							&auto_explain_log_min_duration,
 							-1,
 							-1, INT_MAX,
@@ -105,8 +105,8 @@ _PG_init(void)
 							NULL);
 
 	DefineCustomIntVariable("auto_explain.log_parameter_max_length",
-							"Sets the maximum length of query parameters to log.",
-							"Zero logs no query parameters, -1 logs them in full.",
+							"Sets the maximum length of query parameter values to log.",
+							"-1 means log values in full.",
 							&auto_explain_log_parameter_max_length,
 							-1,
 							-1, INT_MAX,
