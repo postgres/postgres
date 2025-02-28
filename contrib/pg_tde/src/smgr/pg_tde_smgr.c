@@ -26,15 +26,6 @@ typedef struct TDESMgrRelationData
 
 typedef TDESMgrRelationData *TDESMgrRelation;
 
-/*
- * we only encrypt main and init forks
- */
-static inline bool
-tde_is_encryption_required(TDESMgrRelation tdereln, ForkNumber forknum)
-{
-	return (tdereln->encrypted_relation && (forknum == MAIN_FORKNUM || forknum == INIT_FORKNUM));
-}
-
 static InternalKey *
 tde_smgr_get_key(SMgrRelation reln, RelFileLocator *old_locator, bool can_create)
 {
@@ -90,7 +81,7 @@ tde_mdwritev(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 	TDESMgrRelation tdereln = (TDESMgrRelation) reln;
 	InternalKey *int_key = &tdereln->relKey;
 
-	if (!tde_is_encryption_required(tdereln, forknum))
+	if (!tdereln->encrypted_relation)
 	{
 		mdwritev(reln, forknum, blocknum, buffers, nblocks, skipFsync);
 	}
@@ -131,7 +122,7 @@ tde_mdextend(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 	TDESMgrRelation tdereln = (TDESMgrRelation) reln;
 	InternalKey *int_key = &tdereln->relKey;
 
-	if (!tde_is_encryption_required(tdereln, forknum))
+	if (!tdereln->encrypted_relation)
 	{
 		mdextend(reln, forknum, blocknum, buffer, skipFsync);
 	}
@@ -165,7 +156,7 @@ tde_mdreadv(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 
 	mdreadv(reln, forknum, blocknum, buffers, nblocks);
 
-	if (!tde_is_encryption_required(tdereln, forknum))
+	if (!tdereln->encrypted_relation)
 		return;
 
 	AesInit();
