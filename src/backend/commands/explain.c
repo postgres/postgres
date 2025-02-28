@@ -2038,7 +2038,7 @@ ExplainNode(PlanState *planstate, List *ancestors,
 				ExplainIndentText(es);
 				appendStringInfo(es->str, "actual ");
 				if (es->timing)
-					appendStringInfo(es->str, "time=%.3f..%.3f", startup_ms, total_ms);
+					appendStringInfo(es->str, "time=%.3f..%.3f ", startup_ms, total_ms);
 
 				appendStringInfo(es->str, "rows=%.2f loops=%.0f\n", rows, nloops);
 			}
