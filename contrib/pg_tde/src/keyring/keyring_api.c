@@ -1,11 +1,6 @@
-
 #include "keyring/keyring_api.h"
-#include "keyring/keyring_file.h"
-#include "keyring/keyring_vault.h"
 
 #include "postgres.h"
-#include "access/xlog.h"
-#include "storage/shmem.h"
 #include "nodes/pg_list.h"
 #include "utils/memutils.h"
 #ifdef FRONTEND
