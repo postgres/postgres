@@ -120,6 +120,4 @@ extern void ExplainPrintJITSummary(ExplainState *es, QueryDesc *queryDesc);
 extern void ExplainQueryText(ExplainState *es, QueryDesc *queryDesc);
 extern void ExplainQueryParameters(ExplainState *es, ParamListInfo params, int maxlen);
 
-extern DestReceiver *CreateExplainSerializeDestReceiver(ExplainState *es);
-
 #endif							/* EXPLAIN_H */

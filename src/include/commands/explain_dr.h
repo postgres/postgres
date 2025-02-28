@@ -13,8 +13,10 @@
 #ifndef EXPLAIN_DR_H
 #define EXPLAIN_DR_H
 
-#include "commands/explain.h"
 #include "executor/instrument.h"
+#include "tcop/dest.h"
+
+struct ExplainState;			/* avoid including explain.h here */
 
 /* Instrumentation data for EXPLAIN's SERIALIZE option */
 typedef struct SerializeMetrics
@@ -24,7 +26,7 @@ typedef struct SerializeMetrics
 	BufferUsage bufferUsage;	/* buffers accessed during serialization */
 } SerializeMetrics;
 
-extern DestReceiver *CreateExplainSerializeDestReceiver(ExplainState *es);
+extern DestReceiver *CreateExplainSerializeDestReceiver(struct ExplainState *es);
 extern SerializeMetrics GetSerializationMetrics(DestReceiver *dest);
 
 #endif

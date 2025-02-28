@@ -13,6 +13,7 @@
  */
 #include "postgres.h"
 
+#include "commands/explain.h"
 #include "commands/explain_dr.h"
 #include "libpq/pqformat.h"
 #include "libpq/protocol.h"

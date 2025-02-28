@@ -33,7 +33,7 @@
 #include "access/xact.h"
 #include "commands/copy.h"
 #include "commands/createas.h"
-#include "commands/explain.h"
+#include "commands/explain_dr.h"
 #include "commands/matview.h"
 #include "executor/functions.h"
 #include "executor/tqueue.h"
