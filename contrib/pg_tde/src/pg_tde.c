@@ -45,13 +45,6 @@
 
 PG_MODULE_MAGIC;
 
-static const RmgrData tdeheap_rmgr = {
-	.rm_name = RM_TDERMGR_NAME,
-	.rm_redo = tdeheap_rmgr_redo,
-	.rm_desc = tdeheap_rmgr_desc,
-	.rm_identify = tdeheap_rmgr_identify
-};
-
 struct OnExtInstall
 {
 	pg_tde_on_ext_install_callback function;
@@ -129,7 +122,7 @@ _PG_init(void)
 	InstallFileKeyring();
 	InstallVaultV2Keyring();
 	InstallKmipKeyring();
-	RegisterCustomRmgr(RM_TDERMGR_ID, &tdeheap_rmgr);
+	RegisterTdeRmgr();
 
 	RegisterStorageMgr();
 }

@@ -12,8 +12,6 @@
 #ifndef FRONTEND
 
 #include "postgres.h"
-#include "access/xlog.h"
-#include "access/xlog_internal.h"
 
 /* TDE XLOG resource manager */
 #define XLOG_TDE_ADD_RELATION_KEY		0x00
@@ -26,11 +24,8 @@
 
 /* ID 140 is registered for Percona TDE extension: https://wiki.postgresql.org/wiki/CustomWALResourceManagers */
 #define RM_TDERMGR_ID	140
-#define RM_TDERMGR_NAME	"test_tdeheap_custom_rmgr"
 
-extern void tdeheap_rmgr_redo(XLogReaderState *record);
-extern void tdeheap_rmgr_desc(StringInfo buf, XLogReaderState *record);
-extern const char *tdeheap_rmgr_identify(uint8 info);
+extern void RegisterTdeRmgr(void);
 
 #endif							/* !FRONTEND */
 #endif							/* PG_TDE_XLOG_H */
