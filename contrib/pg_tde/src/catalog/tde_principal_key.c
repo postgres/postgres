@@ -311,7 +311,7 @@ set_principal_key_with_keyring(const char *key_name, const char *provider_name,
 	{
 		KeyringReturnCodes kr_ret;
 
-		keyInfo = KeyringGetKey(new_keyring, key_name, false, &kr_ret);
+		keyInfo = KeyringGetKey(new_keyring, key_name, &kr_ret);
 
 		if (kr_ret != KEYRING_CODE_SUCCESS && kr_ret != KEYRING_CODE_RESOURCE_NOT_AVAILABLE)
 		{
@@ -340,7 +340,7 @@ set_principal_key_with_keyring(const char *key_name, const char *provider_name,
 				 errmsg("too long principal key name, maximum lenght is %ld bytes", sizeof(keyInfo->name) - 1)));
 
 	if (keyInfo == NULL)
-		keyInfo = KeyringGenerateNewKeyAndStore(new_keyring, key_name, INTERNAL_KEY_LEN, true);
+		keyInfo = KeyringGenerateNewKeyAndStore(new_keyring, key_name, INTERNAL_KEY_LEN);
 
 	if (keyInfo == NULL)
 	{
@@ -755,7 +755,7 @@ get_principal_key_from_keyring(Oid dbOid, bool pushToCache)
 		return NULL;
 	}
 
-	keyInfo = KeyringGetKey(keyring, principalKeyInfo->name, false, &keyring_ret);
+	keyInfo = KeyringGetKey(keyring, principalKeyInfo->name, &keyring_ret);
 
 	if (keyInfo == NULL)
 	{

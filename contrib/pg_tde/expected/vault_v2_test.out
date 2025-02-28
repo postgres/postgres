@@ -8,7 +8,7 @@ SELECT pg_tde_add_key_provider_vault_v2('vault-incorrect',:'root_token','http://
 
 -- FAILS
 SELECT pg_tde_set_principal_key('vault-v2-principal-key','vault-incorrect');
-ERROR:  Failed to store key on keyring. Please check the keyring configuration.
+ERROR:  Invalid HTTP response from keyring provider "vault-incorrect": 404
 CREATE TABLE test_enc(
 	  id SERIAL,
 	  k INTEGER DEFAULT '0' NOT NULL,
