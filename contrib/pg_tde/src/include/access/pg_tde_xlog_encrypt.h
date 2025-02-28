@@ -15,7 +15,6 @@
 extern Size TDEXLogEncryptStateSize(void);
 extern void TDEXLogShmemInit(void);
 extern void TDEXLogSmgrInit(void);
-extern void XLogInitGUC(void);
 #ifndef FRONTEND
 extern void TDEXlogCheckSane(void);
 #endif

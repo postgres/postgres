@@ -62,10 +62,7 @@ extern bool create_principal_key_info(TDEPrincipalKeyInfo *principalKeyInfo);
 extern bool update_principal_key_info(TDEPrincipalKeyInfo *principal_key_info);
 
 extern Oid	GetPrincipalKeyProviderId(void);
-extern bool AlterPrincipalKeyKeyring(const char *provider_name);
 extern bool xl_tde_perform_rotate_key(XLogPrincipalKeyRotate *xlrec);
-
-extern void PrincipalKeyGucInit(void);
 
 extern TDEPrincipalKey *get_principal_key_from_keyring(Oid dbOid, bool pushToCache);
 
