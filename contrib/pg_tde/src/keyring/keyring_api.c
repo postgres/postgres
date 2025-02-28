@@ -154,9 +154,6 @@ KeyringGenerateNewKeyAndStore(GenericKeyring *keyring, const char *key_name, uns
 {
 	KeyInfo    *key = KeyringGenerateNewKey(key_name, key_len);
 
-	if (key == NULL)
-		ereport(ERROR,
-				(errmsg("Failed to generate key")));
 	KeyringStoreKey(keyring, key);
 
 	return key;
