@@ -437,6 +437,7 @@ set_locale_and_encoding(void)
 	char	   *datcollate_literal;
 	char	   *datctype_literal;
 	char	   *datlocale_literal = NULL;
+	char	   *datlocale_src;
 	DbLocaleInfo *locale = old_cluster.template0;
 
 	prep_status("Setting locale and encoding for new cluster");
@@ -450,12 +451,10 @@ set_locale_and_encoding(void)
 	datctype_literal = PQescapeLiteral(conn_new_template1,
 									   locale->db_ctype,
 									   strlen(locale->db_ctype));
-	if (locale->db_locale)
-		datlocale_literal = PQescapeLiteral(conn_new_template1,
-											locale->db_locale,
-											strlen(locale->db_locale));
-	else
-		datlocale_literal = pg_strdup("NULL");
+	datlocale_src = locale->db_locale ? locale->db_locale : "NULL";
+	datlocale_literal = PQescapeLiteral(conn_new_template1,
+										datlocale_src,
+										strlen(datlocale_src));
 
 	/* update template0 in new cluster */
 	if (GET_MAJOR_VERSION(new_cluster.major_version) >= 1700)
