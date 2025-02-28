@@ -52,15 +52,15 @@ pg_tde_is_encrypted(PG_FUNCTION_ARGS)
 }
 
 /*
- * Returns the list of OIDs for all TDE tables in a database
+ * Returns the number of TDE tables in a database
  */
-List *
-get_all_tde_tables(void)
+int
+get_tde_tables_count(void)
 {
 	Relation	pg_class;
 	SysScanDesc scan;
 	HeapTuple	tuple;
-	List	   *tde_tables = NIL;
+	int			count = 0;
 	Oid			am_oid = get_tde_table_am_oid();
 
 	/* Open the pg_class table */
@@ -77,11 +77,7 @@ get_all_tde_tables(void)
 
 		/* Check if the table uses the specified access method */
 		if (classForm->relam == am_oid)
-		{
-			/* Print the name of the table */
-			tde_tables = lappend_oid(tde_tables, classForm->oid);
-			elog(DEBUG2, "Table %s uses the TDE access method.", NameStr(classForm->relname));
-		}
+			count++;
 	}
 
 	/* End the scan */
@@ -89,16 +85,6 @@ get_all_tde_tables(void)
 
 	/* Close the pg_class table */
 	table_close(pg_class, AccessShareLock);
-	return tde_tables;
-}
-
-int
-get_tde_tables_count(void)
-{
-	List	   *tde_tables = get_all_tde_tables();
-	int			count = list_length(tde_tables);
-
-	list_free(tde_tables);
 	return count;
 }
 

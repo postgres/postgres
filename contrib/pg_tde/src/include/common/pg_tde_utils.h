@@ -8,12 +8,7 @@
 #ifndef PG_TDE_UTILS_H
 #define PG_TDE_UTILS_H
 
-#include "postgres.h"
-
 #ifndef FRONTEND
-#include "nodes/pg_list.h"
-
-extern List *get_all_tde_tables(void);
 extern int	get_tde_tables_count(void);
 #endif							/* !FRONTEND */
 
