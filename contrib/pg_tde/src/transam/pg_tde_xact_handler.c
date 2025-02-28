@@ -11,6 +11,7 @@
  */
 
 #include "postgres.h"
+#include "access/xact.h"
 #include "utils/memutils.h"
 #include "utils/palloc.h"
 #include "utils/elog.h"
@@ -34,7 +35,7 @@ static void reassign_pending_deletes_to_parent_xact(void);
 static void pending_delete_cleanup(void);
 
 /* Transaction Callbacks from Backend*/
-void
+static void
 pg_tde_xact_callback(XactEvent event, void *arg)
 {
 	if (event == XACT_EVENT_PARALLEL_ABORT ||
@@ -55,7 +56,7 @@ pg_tde_xact_callback(XactEvent event, void *arg)
 	}
 }
 
-void
+static void
 pg_tde_subxact_callback(SubXactEvent event, SubTransactionId mySubid,
 						SubTransactionId parentSubid, void *arg)
 {
@@ -72,6 +73,13 @@ pg_tde_subxact_callback(SubXactEvent event, SubTransactionId mySubid,
 				(errmsg("pg_tde_subxact_callback: committing subtransaction")));
 		reassign_pending_deletes_to_parent_xact();
 	}
+}
+
+void
+RegisterTdeXactCallbacks(void)
+{
+	RegisterXactCallback(pg_tde_xact_callback, NULL);
+	RegisterSubXactCallback(pg_tde_subxact_callback, NULL);
 }
 
 void

@@ -117,8 +117,7 @@ _PG_init(void)
 	prev_shmem_startup_hook = shmem_startup_hook;
 	shmem_startup_hook = tde_shmem_startup;
 
-	RegisterXactCallback(pg_tde_xact_callback, NULL);
-	RegisterSubXactCallback(pg_tde_subxact_callback, NULL);
+	RegisterTdeXactCallbacks();
 	InstallFileKeyring();
 	InstallVaultV2Keyring();
 	InstallKmipKeyring();
