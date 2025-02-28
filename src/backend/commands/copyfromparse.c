@@ -152,6 +152,10 @@ static pg_attribute_always_inline bool CopyFromTextLikeOneRow(CopyFromState csta
 															  Datum *values,
 															  bool *nulls,
 															  bool is_csv);
+static pg_attribute_always_inline bool NextCopyFromRawFieldsInternal(CopyFromState cstate,
+																	 char ***fields,
+																	 int *nfields,
+																	 bool is_csv);
 
 
 /* Low-level communications functions */
@@ -736,8 +740,21 @@ CopyReadBinaryData(CopyFromState cstate, char *dest, int nbytes)
 }
 
 /*
- * Read raw fields in the next line for COPY FROM in text or csv mode.
- * Return false if no more lines.
+ * This function is exposed for use by extensions that read raw fields in the
+ * next line. See NextCopyFromRawFieldsInternal() for details.
+ */
+bool
+NextCopyFromRawFields(CopyFromState cstate, char ***fields, int *nfields)
+{
+	return NextCopyFromRawFieldsInternal(cstate, fields, nfields,
+										 cstate->opts.csv_mode);
+}
+
+/*
+ * Workhorse for NextCopyFromRawFields().
+ *
+ * Read raw fields in the next line for COPY FROM in text or csv mode. Return
+ * false if no more lines.
  *
  * An internal temporary buffer is returned via 'fields'. It is valid until
  * the next call of the function. Since the function returns all raw fields
@@ -747,10 +764,11 @@ CopyReadBinaryData(CopyFromState cstate, char *dest, int nbytes)
  * NOTE: force_not_null option are not applied to the returned fields.
  *
  * We use pg_attribute_always_inline to reduce function call overhead
- * and to help compilers to optimize away the 'is_csv' condition.
+ * and to help compilers to optimize away the 'is_csv' condition when called
+ * by internal functions such as CopyFromTextLikeOneRow().
  */
 static pg_attribute_always_inline bool
-NextCopyFromRawFields(CopyFromState cstate, char ***fields, int *nfields, bool is_csv)
+NextCopyFromRawFieldsInternal(CopyFromState cstate, char ***fields, int *nfields, bool is_csv)
 {
 	int			fldct;
 	bool		done;
@@ -934,7 +952,7 @@ CopyFromTextLikeOneRow(CopyFromState cstate, ExprContext *econtext,
 	attr_count = list_length(cstate->attnumlist);
 
 	/* read raw fields in the next line */
-	if (!NextCopyFromRawFields(cstate, &field_strings, &fldct, is_csv))
+	if (!NextCopyFromRawFieldsInternal(cstate, &field_strings, &fldct, is_csv))
 		return false;
 
 	/* check for overflowing fields */
