@@ -1576,44 +1576,16 @@ pg_stat_get_backend_io(PG_FUNCTION_ARGS)
 	ReturnSetInfo *rsinfo;
 	BackendType bktype;
 	int			pid;
-	PGPROC	   *proc;
-	ProcNumber	procNumber;
 	PgStat_Backend *backend_stats;
 	PgStat_BktypeIO *bktype_stats;
-	PgBackendStatus *beentry;
 
 	InitMaterializedSRF(fcinfo, 0);
 	rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
 
 	pid = PG_GETARG_INT32(0);
-	proc = BackendPidGetProc(pid);
+	backend_stats = pgstat_fetch_stat_backend_by_pid(pid, &bktype);
 
-	/*
-	 * This could be an auxiliary process but these do not report backend
-	 * statistics due to pgstat_tracks_backend_bktype(), so there is no need
-	 * for an extra call to AuxiliaryPidGetProc().
-	 */
-	if (!proc)
-		return (Datum) 0;
-
-	procNumber = GetNumberFromPGProc(proc);
-
-	beentry = pgstat_get_beentry_by_proc_number(procNumber);
-	if (!beentry)
-		return (Datum) 0;
-
-	backend_stats = pgstat_fetch_stat_backend(procNumber);
 	if (!backend_stats)
-		return (Datum) 0;
-
-	bktype = beentry->st_backendType;
-
-	/* if PID does not match, leave */
-	if (beentry->st_procpid != pid)
-		return (Datum) 0;
-
-	/* backend may be gone, so recheck in case */
-	if (bktype == B_INVALID)
 		return (Datum) 0;
 
 	bktype_stats = &backend_stats->io_stats;

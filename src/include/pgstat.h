@@ -554,6 +554,8 @@ extern void pgstat_count_backend_io_op(IOObject io_object,
 									   IOOp io_op, uint32 cnt,
 									   uint64 bytes);
 extern PgStat_Backend *pgstat_fetch_stat_backend(ProcNumber procNumber);
+extern PgStat_Backend *pgstat_fetch_stat_backend_by_pid(int pid,
+														BackendType *bktype);
 extern bool pgstat_tracks_backend_bktype(BackendType bktype);
 extern void pgstat_create_backend(ProcNumber procnum);
 
