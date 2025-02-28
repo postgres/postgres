@@ -43,11 +43,41 @@ typedef uint32 pg_crc32c;
 
 #if defined(USE_SSE42_CRC32C)
 /* Use Intel SSE4.2 instructions. */
+
+#include <nmmintrin.h>
+
 #define COMP_CRC32C(crc, data, len) \
-	((crc) = pg_comp_crc32c_sse42((crc), (data), (len)))
+	((crc) = pg_comp_crc32c_dispatch((crc), (data), (len)))
 #define FIN_CRC32C(crc) ((crc) ^= 0xFFFFFFFF)
 
 extern pg_crc32c pg_comp_crc32c_sse42(pg_crc32c crc, const void *data, size_t len);
+
+pg_attribute_no_sanitize_alignment()
+static inline
+pg_crc32c
+pg_comp_crc32c_dispatch(pg_crc32c crc, const void *data, size_t len)
+{
+	if (__builtin_constant_p(len) && len < 32)
+	{
+		const unsigned char *p = data;
+
+		/*
+		 * For small constant inputs, inline the computation to avoid a
+		 * function call and allow the compiler to unroll loops.
+		 */
+#if SIZEOF_VOID_P >= 8
+		for (; len >= 8; p += 8, len -= 8)
+			crc = _mm_crc32_u64(crc, *(const uint64 *) p);
+#endif
+		for (; len >= 4; p += 4, len -= 4)
+			crc = _mm_crc32_u32(crc, *(const uint32 *) p);
+		for (; len > 0; --len)
+			crc = _mm_crc32_u8(crc, *p++);
+		return crc;
+	}
+	else
+		return pg_comp_crc32c_sse42(crc, data, len);
+}
 
 #elif defined(USE_ARMV8_CRC32C)
 /* Use ARMv8 CRC Extension instructions. */
