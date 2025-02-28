@@ -34,12 +34,17 @@
 #include "port/atomics.h"
 #endif
 
+static void SetXLogPageIVPrefix(TimeLineID tli, XLogRecPtr lsn, char *iv_prefix);
+static ssize_t tdeheap_xlog_seg_read(int fd, void *buf, size_t count, off_t offset,
+									 TimeLineID tli, XLogSegNo segno, int segSize);
+static ssize_t tdeheap_xlog_seg_write(int fd, const void *buf, size_t count,
+									  off_t offset, TimeLineID tli,
+									  XLogSegNo segno);
+
 static const XLogSmgr tde_xlog_smgr = {
 	.seg_read = tdeheap_xlog_seg_read,
 	.seg_write = tdeheap_xlog_seg_write,
 };
-
-static void SetXLogPageIVPrefix(TimeLineID tli, XLogRecPtr lsn, char *iv_prefix);
 
 #ifndef FRONTEND
 static Size TDEXLogEncryptBuffSize(void);
@@ -206,7 +211,7 @@ TDEXLogSmgrInit(void)
 	SetXLogSmgr(&tde_xlog_smgr);
 }
 
-ssize_t
+static ssize_t
 tdeheap_xlog_seg_write(int fd, const void *buf, size_t count, off_t offset,
 					   TimeLineID tli, XLogSegNo segno)
 {
@@ -239,7 +244,7 @@ tdeheap_xlog_seg_write(int fd, const void *buf, size_t count, off_t offset,
 /*
  * Read the XLog pages from the segment file and dectypt if need.
  */
-ssize_t
+static ssize_t
 tdeheap_xlog_seg_read(int fd, void *buf, size_t count, off_t offset,
 					  TimeLineID tli, XLogSegNo segno, int segSize)
 {

@@ -112,6 +112,4 @@ extern InternalKey *pg_tde_get_key_from_file(const RelFileLocator *rlocator, uin
 
 const char *tde_sprint_key(InternalKey *k);
 
-extern InternalKey *pg_tde_put_key_into_cache(const RelFileLocator *locator, InternalKey *key);
-
 #endif							/* PG_TDE_MAP_H */

@@ -85,6 +85,7 @@ static Size cache_area_size(void);
 static Size required_shared_mem_size(void);
 static void shared_memory_shutdown(int code, Datum arg);
 static void principal_key_startup_cleanup(int tde_tbl_count, XLogExtensionInstall *ext_info, bool redo, void *arg);
+static void cleanup_principal_key_info(Oid databaseId);
 static void clear_principal_key_cache(Oid databaseId);
 static inline dshash_table *get_principal_key_Hash(void);
 static TDEPrincipalKey *get_principal_key_from_cache(Oid dbOid);
@@ -527,7 +528,7 @@ principal_key_startup_cleanup(int tde_tbl_count, XLogExtensionInstall *ext_info,
 	cleanup_principal_key_info(ext_info->database_id);
 }
 
-void
+static void
 cleanup_principal_key_info(Oid databaseId)
 {
 	clear_principal_key_cache(databaseId);

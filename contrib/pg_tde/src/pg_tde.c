@@ -53,6 +53,7 @@ struct OnExtInstall
 
 static struct OnExtInstall on_ext_install_list[MAX_ON_INSTALLS];
 static int	on_ext_install_index = 0;
+static void pg_tde_init_data_dir(void);
 static void run_extension_install_callbacks(XLogExtensionInstall *xlrec, bool redo);
 void		_PG_init(void);
 Datum		pg_tde_extension_initialize(PG_FUNCTION_ARGS);
@@ -175,7 +176,7 @@ on_ext_install(pg_tde_on_ext_install_callback function, void *arg)
 }
 
 /* Creates a tde directory for internal files if not exists */
-void
+static void
 pg_tde_init_data_dir(void)
 {
 	struct stat st;
