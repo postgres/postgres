@@ -1,5 +1,5 @@
 # pg_tde extension
 comment = 'pg_tde access method'
-default_version = '1.0-beta2'
+default_version = '1.0-rc'
 module_pathname = '$libdir/pg_tde'
 relocatable = false

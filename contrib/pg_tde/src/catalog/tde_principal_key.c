@@ -307,12 +307,6 @@ set_principal_key_with_keyring(const char *key_name, const char *provider_name,
 										 curr_principal_key->keyInfo.databaseId);
 	}
 
-	if (providerOid != dbOid && new_keyring->keyring_id > 0)
-	{
-		ereport(ERROR,
-				(errmsg("Global keys created with the beta2 release can't be used for databases! Please create a new global provider.")));
-	}
-
 	{
 		KeyringReturnCodes kr_ret;
 
