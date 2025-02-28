@@ -29,11 +29,9 @@ typedef struct KeyringProviderXLRecord
 	KeyringProvideRecord provider;
 } KeyringProviderXLRecord;
 
-extern List *GetAllKeyringProviders(Oid dbOid);
 extern GenericKeyring *GetKeyProviderByName(const char *provider_name, Oid dbOid);
 extern GenericKeyring *GetKeyProviderByID(int provider_id, Oid dbOid);
 extern ProviderType get_keyring_provider_from_typename(char *provider_type);
-extern void cleanup_key_provider_info(Oid databaseId);
 extern void InitializeKeyProviderInfo(void);
 extern uint32 save_new_key_provider_info(KeyringProvideRecord *provider,
 										 Oid databaseId, bool write_xlog);

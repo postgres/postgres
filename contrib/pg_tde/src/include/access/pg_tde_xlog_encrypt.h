@@ -12,8 +12,6 @@
 #include "postgres.h"
 #include "access/xlog_smgr.h"
 
-extern Size TDEXLogEncryptBuffSize(void);
-
 extern Size TDEXLogEncryptStateSize(void);
 extern void TDEXLogShmemInit(void);
 

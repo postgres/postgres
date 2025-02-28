@@ -100,6 +100,8 @@ static Datum pg_tde_add_key_provider_internal(PG_FUNCTION_ARGS, Oid dbOid);
 
 static void key_provider_startup_cleanup(int tde_tbl_count, XLogExtensionInstall *ext_info, bool redo, void *arg);
 static const char *get_keyring_provider_typename(ProviderType p_type);
+static List *GetAllKeyringProviders(Oid dbOid);
+static void cleanup_key_provider_info(Oid databaseId);
 
 static Size initialize_shared_state(void *start_address);
 static Size required_shared_mem_size(void);
@@ -177,7 +179,7 @@ get_keyring_provider_typename(ProviderType p_type)
 	return NULL;
 }
 
-List *
+static List *
 GetAllKeyringProviders(Oid dbOid)
 {
 	return scan_key_provider_file(PROVIDER_SCAN_ALL, NULL, dbOid);
@@ -189,7 +191,7 @@ redo_key_provider_info(KeyringProviderXLRecord *xlrec)
 	return write_key_provider_info(&xlrec->provider, xlrec->database_id, xlrec->offset_in_file, false, false);
 }
 
-void
+static void
 cleanup_key_provider_info(Oid databaseId)
 {
 	/* Remove the key provider info file */

@@ -62,7 +62,7 @@ static JsonParseErrorType json_resp_scalar(void *state, char *token, JsonTokenTy
 static JsonParseErrorType json_resp_object_field_start(void *state, char *fname, bool isnull);
 static JsonParseErrorType parse_json_response(JsonVaultRespState *parse, JsonLexContext *lex);
 
-struct curl_slist *curlList = NULL;
+static struct curl_slist *curlList = NULL;
 
 static bool curl_setup_token(VaultV2Keyring *keyring);
 static char *get_keyring_vault_url(VaultV2Keyring *keyring, const char *key_name, char *out, size_t out_size);

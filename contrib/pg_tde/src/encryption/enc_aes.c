@@ -43,10 +43,10 @@
  * 16 byte blocks.
  */
 
-
 const EVP_CIPHER *cipher = NULL;
 const EVP_CIPHER *cipher2 = NULL;
-int			cipher_block_size = 0;
+
+static int	cipher_block_size = 0;
 
 void
 AesInit(void)

@@ -23,11 +23,14 @@ typedef struct KeyProviders
 } KeyProviders;
 
 #ifndef FRONTEND
-List	   *registeredKeyProviders = NIL;
+static List *registeredKeyProviders = NIL;
 #else
-SimplePtrList registeredKeyProviders = {NULL, NULL};
+static SimplePtrList registeredKeyProviders = {NULL, NULL};
 #endif
+
 static KeyProviders *find_key_provider(ProviderType type);
+static KeyringReturnCodes KeyringStoreKey(GenericKeyring *keyring, KeyInfo *key, bool throw_error);
+static KeyInfo *KeyringGenerateNewKey(const char *key_name, unsigned key_len);
 
 #ifndef FRONTEND
 static KeyProviders *
@@ -117,7 +120,7 @@ KeyringGetKey(GenericKeyring *keyring, const char *key_name, bool throw_error, K
 	return kp->routine->keyring_get_key(keyring, key_name, throw_error, returnCode);
 }
 
-KeyringReturnCodes
+static KeyringReturnCodes
 KeyringStoreKey(GenericKeyring *keyring, KeyInfo *key, bool throw_error)
 {
 	KeyProviders *kp = find_key_provider(keyring->type);
@@ -132,7 +135,7 @@ KeyringStoreKey(GenericKeyring *keyring, KeyInfo *key, bool throw_error)
 	return kp->routine->keyring_store_key(keyring, key, throw_error);
 }
 
-KeyInfo *
+static KeyInfo *
 KeyringGenerateNewKey(const char *key_name, unsigned key_len)
 {
 	KeyInfo    *key;

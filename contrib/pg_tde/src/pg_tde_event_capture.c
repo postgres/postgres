@@ -31,12 +31,9 @@
 #include "executor/spi.h"
 
 /* Global variable that gets set at ddl start and cleard out at ddl end*/
-TdeCreateEvent tdeCurrentCreateEvent = {.relation = NULL};
-
-bool		alterSetAccessMethod = false;
-
-int			event_trigger_level = 0;
-
+static TdeCreateEvent tdeCurrentCreateEvent = {.relation = NULL};
+static bool alterSetAccessMethod = false;
+static int	event_trigger_level = 0;
 
 static void reset_current_tde_create_event(void);
 static Oid	get_tde_table_am_oid(void);

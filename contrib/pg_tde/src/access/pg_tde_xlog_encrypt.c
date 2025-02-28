@@ -42,6 +42,7 @@ static const XLogSmgr tde_xlog_smgr = {
 static void SetXLogPageIVPrefix(TimeLineID tli, XLogRecPtr lsn, char *iv_prefix);
 
 #ifndef FRONTEND
+static Size TDEXLogEncryptBuffSize(void);
 static ssize_t TDEXLogWriteEncryptedPages(int fd, const void *buf, size_t count,
 										  off_t offset, TimeLineID tli,
 										  XLogSegNo segno);
@@ -97,7 +98,7 @@ XLOGChooseNumBuffers(void)
 /*
  * Defines the size of the XLog encryption buffer
  */
-Size
+static Size
 TDEXLogEncryptBuffSize(void)
 {
 	int			xbuffers;
