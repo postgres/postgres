@@ -68,7 +68,7 @@ find_key_provider(ProviderType type)
 }
 #endif							/* !FRONTEND */
 
-bool
+void
 RegisterKeyProvider(const TDEKeyringRoutine *routine, ProviderType type)
 {
 	KeyProviders *kp;
@@ -82,11 +82,8 @@ RegisterKeyProvider(const TDEKeyringRoutine *routine, ProviderType type)
 
 	kp = find_key_provider(type);
 	if (kp)
-	{
 		ereport(ERROR,
 				(errmsg("Key provider of type %d already registered", type)));
-		return false;
-	}
 
 #ifndef FRONTEND
 	oldcontext = MemoryContextSwitchTo(TopMemoryContext);
@@ -100,8 +97,6 @@ RegisterKeyProvider(const TDEKeyringRoutine *routine, ProviderType type)
 #else
 	simple_ptr_list_append(&registeredKeyProviders, kp);
 #endif
-
-	return true;
 }
 
 KeyInfo *

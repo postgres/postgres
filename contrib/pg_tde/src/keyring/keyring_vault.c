@@ -76,11 +76,10 @@ const TDEKeyringRoutine keyringVaultV2Routine = {
 	.keyring_store_key = set_key_by_name
 };
 
-
-bool
+void
 InstallVaultV2Keyring(void)
 {
-	return RegisterKeyProvider(&keyringVaultV2Routine, VAULT_V2_KEY_PROVIDER);
+	RegisterKeyProvider(&keyringVaultV2Routine, VAULT_V2_KEY_PROVIDER);
 }
 
 static bool

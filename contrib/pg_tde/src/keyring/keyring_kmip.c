@@ -27,7 +27,7 @@
 #include "keyring/keyring_kmip.h"
 #include "catalog/keyring_min.h"
 
-extern bool RegisterKeyProvider(const TDEKeyringRoutine *routine, ProviderType type);
+extern void RegisterKeyProvider(const TDEKeyringRoutine *routine, ProviderType type);
 
 static void set_key_by_name(GenericKeyring *keyring, KeyInfo *key);
 static KeyInfo *get_key_by_name(GenericKeyring *keyring, const char *key_name, KeyringReturnCodes *return_code);
@@ -36,10 +36,10 @@ const TDEKeyringRoutine keyringKmipRoutine = {
 	.keyring_get_key = get_key_by_name,
 .keyring_store_key = set_key_by_name};
 
-bool
+void
 InstallKmipKeyring(void)
 {
-	return RegisterKeyProvider(&keyringKmipRoutine, KMIP_KEY_PROVIDER);
+	RegisterKeyProvider(&keyringKmipRoutine, KMIP_KEY_PROVIDER);
 }
 
 typedef struct KmipCtx

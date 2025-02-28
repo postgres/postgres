@@ -34,12 +34,11 @@ const TDEKeyringRoutine keyringFileRoutine = {
 	.keyring_store_key = set_key_by_name
 };
 
-bool
+void
 InstallFileKeyring(void)
 {
-	return RegisterKeyProvider(&keyringFileRoutine, FILE_KEY_PROVIDER);
+	RegisterKeyProvider(&keyringFileRoutine, FILE_KEY_PROVIDER);
 }
-
 
 static KeyInfo *
 get_key_by_name(GenericKeyring *keyring, const char *key_name, KeyringReturnCodes *return_code)

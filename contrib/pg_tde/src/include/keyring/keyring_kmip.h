@@ -12,7 +12,7 @@
 #ifndef KEYRING_KMIP_H
 #define KEYRING_KMIP_H
 
-extern bool InstallKmipKeyring(void);
+extern void InstallKmipKeyring(void);
 
 extern void kmip_ereport(bool throw_error, const char *msg, int errCode);
 
