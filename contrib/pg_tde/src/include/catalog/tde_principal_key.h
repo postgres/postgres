@@ -61,7 +61,6 @@ extern TDEPrincipalKey *GetPrincipalKeyNoDefault(Oid dbOid, void *lockMode);
 extern bool create_principal_key_info(TDEPrincipalKeyInfo *principalKeyInfo);
 extern bool update_principal_key_info(TDEPrincipalKeyInfo *principal_key_info);
 
-extern Oid	GetPrincipalKeyProviderId(void);
 extern bool xl_tde_perform_rotate_key(XLogPrincipalKeyRotate *xlrec);
 
 extern TDEPrincipalKey *get_principal_key_from_keyring(Oid dbOid, bool pushToCache);

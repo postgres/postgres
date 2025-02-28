@@ -411,44 +411,6 @@ xl_tde_perform_rotate_key(XLogPrincipalKeyRotate *xlrec)
 }
 
 /*
- * Returns the provider ID of the keyring that holds the principal key
- * Return InvalidOid if the principal key is not set for the database
- */
-Oid
-GetPrincipalKeyProviderId(void)
-{
-	TDEPrincipalKey *principalKey = NULL;
-	TDEPrincipalKeyInfo *principalKeyInfo = NULL;
-	Oid			keyringId = InvalidOid;
-	Oid			dbOid = MyDatabaseId;
-	LWLock	   *lock_files = tde_lwlock_enc_keys();
-
-	LWLockAcquire(lock_files, LW_SHARED);
-
-	principalKey = get_principal_key_from_cache(dbOid);
-	if (principalKey)
-	{
-		keyringId = principalKey->keyInfo.keyringId;
-	}
-	{
-		/*
-		 * Principal key not present in cache. Try Loading it from the info
-		 * file
-		 */
-		principalKeyInfo = pg_tde_get_principal_key_info(dbOid);
-		if (principalKeyInfo)
-		{
-			keyringId = principalKeyInfo->keyringId;
-			pfree(principalKeyInfo);
-		}
-	}
-
-	LWLockRelease(lock_files);
-
-	return keyringId;
-}
-
-/*
  * ------------------------------
  * Principal key cache realted stuff
  */
