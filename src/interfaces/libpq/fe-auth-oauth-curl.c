@@ -1363,6 +1363,16 @@ set_timer(struct async_ctx *actx, long timeout)
 #ifdef HAVE_SYS_EVENT_H
 	struct kevent ev;
 
+#ifdef __NetBSD__
+
+	/*
+	 * Work around NetBSD's rejection of zero timeouts (EINVAL), a bit like
+	 * timerfd above.
+	 */
+	if (timeout == 0)
+		timeout = 1;
+#endif
+
 	/* Enable/disable the timer itself. */
 	EV_SET(&ev, 1, EVFILT_TIMER, timeout < 0 ? EV_DELETE : (EV_ADD | EV_ONESHOT),
 		   0, timeout, 0);
