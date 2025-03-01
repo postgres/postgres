@@ -31,15 +31,18 @@ pg_strtof(const char *nptr, char **endptr)
 {
 	int			caller_errno = errno;
 	float		fresult;
+	char	   *myendptr;
 
 	errno = 0;
-	fresult = (strtof) (nptr, endptr);
+	fresult = (strtof) (nptr, &myendptr);
+	if (endptr)
+		*endptr = myendptr;
 	if (errno)
 	{
 		/* On error, just return the error to the caller. */
 		return fresult;
 	}
-	else if ((*endptr == nptr) || isnan(fresult) ||
+	else if ((myendptr == nptr) || isnan(fresult) ||
 			 ((fresult >= FLT_MIN || fresult <= -FLT_MIN) && !isinf(fresult)))
 	{
 		/*
@@ -53,7 +56,8 @@ pg_strtof(const char *nptr, char **endptr)
 	else
 	{
 		/*
-		 * Try again. errno is already 0 here.
+		 * Try again.  errno is already 0 here, and we assume that the endptr
+		 * won't be any different.
 		 */
 		double		dresult = strtod(nptr, NULL);
 
