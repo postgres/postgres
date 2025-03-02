@@ -141,9 +141,9 @@ progress_report(bool finished)
 	/* Calculate current percentage of size done */
 	percent = total_size ? (int) ((current_size) * 100 / total_size) : 0;
 
-	fprintf(stderr, _("%lld/%lld MB (%d%%) computed"),
-			(long long) (current_size / (1024 * 1024)),
-			(long long) (total_size / (1024 * 1024)),
+	fprintf(stderr, _("%" PRId64 "/%" PRId64 " MB (%d%%) computed"),
+			(current_size / (1024 * 1024)),
+			(total_size / (1024 * 1024)),
 			percent);
 
 	/*
@@ -603,11 +603,11 @@ main(int argc, char *argv[])
 			progress_report(true);
 
 		printf(_("Checksum operation completed\n"));
-		printf(_("Files scanned:   %lld\n"), (long long) files_scanned);
-		printf(_("Blocks scanned:  %lld\n"), (long long) blocks_scanned);
+		printf(_("Files scanned:   %" PRId64 "\n"), files_scanned);
+		printf(_("Blocks scanned:  %" PRId64 "\n"), blocks_scanned);
 		if (mode == PG_MODE_CHECK)
 		{
-			printf(_("Bad checksums:  %lld\n"), (long long) badblocks);
+			printf(_("Bad checksums:  %" PRId64 "\n"), badblocks);
 			printf(_("Data checksum version: %u\n"), ControlFile->data_checksum_version);
 
 			if (badblocks > 0)
@@ -615,8 +615,8 @@ main(int argc, char *argv[])
 		}
 		else if (mode == PG_MODE_ENABLE)
 		{
-			printf(_("Files written:  %lld\n"), (long long) files_written);
-			printf(_("Blocks written: %lld\n"), (long long) blocks_written);
+			printf(_("Files written:  %" PRId64 "\n"), files_written);
+			printf(_("Blocks written: %" PRId64 "\n"), blocks_written);
 		}
 	}
 
