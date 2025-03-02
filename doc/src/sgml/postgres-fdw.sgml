@@ -854,7 +854,7 @@ OPTIONS (ADD password_required 'false');
     <term><function>postgres_fdw_get_connections(
       IN check_conn boolean DEFAULT false, OUT server_name text,
       OUT user_name text, OUT valid boolean, OUT used_in_xact boolean,
-      OUT closed boolean)
+      OUT closed boolean, OUT remote_backend_pid int4)
       returns setof record</function></term>
     <listitem>
      <para>
@@ -882,11 +882,11 @@ OPTIONS (ADD password_required 'false');
       Example usage of the function:
 <screen>
 postgres=# SELECT * FROM postgres_fdw_get_connections(true);
- server_name | user_name | valid | used_in_xact | closed
--------------+-----------+-------+--------------+--------
- loopback1   | postgres  | t     | t            | f
- loopback2   | public    | t     | t            | f
- loopback3   |           | f     | t            | f
+ server_name | user_name | valid | used_in_xact | closed | remote_backend_pid
+-------------+-----------+-------+--------------+-----------------------------
+ loopback1   | postgres  | t     | t            | f      |            1353340
+ loopback2   | public    | t     | t            | f      |            1353120
+ loopback3   |           | f     | t            | f      |            1353156
 </screen>
       The output columns are described in
       <xref linkend="postgres-fdw-get-connections-columns"/>.
@@ -949,6 +949,17 @@ postgres=# SELECT * FROM postgres_fdw_get_connections(true);
          <literal>NULL</literal> is returned if <literal>check_conn</literal>
          is set to <literal>false</literal> or if the connection status check
          is not available on this platform.
+        </entry>
+       </row>
+       <row>
+        <entry><structfield>remote_backend_pid</structfield></entry>
+        <entry><type>int4</type></entry>
+        <entry>
+         Process ID of the remote backend, on the foreign server,
+         handling the connection.  If the remote backend is terminated and
+         the connection is closed (with <literal>closed</literal> set to
+         <literal>true</literal>), this still shows the process ID of
+         the terminated backend.
         </entry>
        </row>
       </tbody>

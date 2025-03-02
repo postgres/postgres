@@ -2111,8 +2111,8 @@ pgfdw_finish_abort_cleanup(List *pending_entries, List *cancel_requested,
 
 /* Number of output arguments (columns) for various API versions */
 #define POSTGRES_FDW_GET_CONNECTIONS_COLS_V1_1	2
-#define POSTGRES_FDW_GET_CONNECTIONS_COLS_V1_2	5
-#define POSTGRES_FDW_GET_CONNECTIONS_COLS	5	/* maximum of above */
+#define POSTGRES_FDW_GET_CONNECTIONS_COLS_V1_2	6
+#define POSTGRES_FDW_GET_CONNECTIONS_COLS	6	/* maximum of above */
 
 /*
  * Internal function used by postgres_fdw_get_connections variants.
@@ -2128,13 +2128,15 @@ pgfdw_finish_abort_cleanup(List *pending_entries, List *cancel_requested,
  *
  * For API version 1.2 and later, this function takes an input parameter
  * to check a connection status and returns the following
- * additional values along with the three values from version 1.1:
+ * additional values along with the four values from version 1.1:
  *
  * - user_name - the local user name of the active connection. In case the
  *   user mapping is dropped but the connection is still active, then the
  *   user name will be NULL in the output.
  * - used_in_xact - true if the connection is used in the current transaction.
  * - closed - true if the connection is closed.
+ * - remote_backend_pid - process ID of the remote backend, on the foreign
+ *   server, handling the connection.
  *
  * No records are returned when there are no cached connections at all.
  */
@@ -2273,6 +2275,9 @@ postgres_fdw_get_connections_internal(FunctionCallInfo fcinfo,
 				values[i++] = BoolGetDatum(pgfdw_conn_check(entry->conn) != 0);
 			else
 				nulls[i++] = true;
+
+			/* Return process ID of remote backend */
+			values[i++] = Int32GetDatum(PQbackendPID(entry->conn));
 		}
 
 		tuplestore_putvalues(rsinfo->setResult, rsinfo->setDesc, values, nulls);
