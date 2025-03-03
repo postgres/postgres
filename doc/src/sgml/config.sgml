@@ -8773,14 +8773,13 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
        </term>
        <listitem>
         <para>
-         Specifies a fraction of the table size to add to
-         <varname>autovacuum_vacuum_insert_threshold</varname>
-         when deciding whether to trigger a <command>VACUUM</command>.
-         The default is <literal>0.2</literal> (20% of table size).
-         This parameter can only be set in the <filename>postgresql.conf</filename>
-         file or on the server command line;
-         but the setting can be overridden for individual tables by
-         changing table storage parameters.
+         Specifies a fraction of the unfrozen pages in the table to add to
+         <varname>autovacuum_vacuum_insert_threshold</varname> when deciding
+         whether to trigger a <command>VACUUM</command>. The default is
+         <literal>0.2</literal> (20% of unfrozen pages in table). This
+         parameter can only be set in the <filename>postgresql.conf</filename>
+         file or on the server command line; but the setting can be overridden
+         for individual tables by changing table storage parameters.
         </para>
        </listitem>
       </varlistentry>
