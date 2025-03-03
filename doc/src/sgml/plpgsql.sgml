@@ -3317,7 +3317,7 @@ OPEN curs1 FOR EXECUTE format('SELECT * FROM %I WHERE col1 = $1',tabname) USING 
      <title>Opening a Bound Cursor</title>
 
 <synopsis>
-OPEN <replaceable>bound_cursorvar</replaceable> <optional> ( <optional> <replaceable>argument_name</replaceable> := </optional> <replaceable>argument_value</replaceable> <optional>, ...</optional> ) </optional>;
+OPEN <replaceable>bound_cursorvar</replaceable> <optional> ( <optional> <replaceable>argument_name</replaceable> { := | =&gt; } </optional> <replaceable>argument_value</replaceable> <optional>, ...</optional> ) </optional>;
 </synopsis>
 
          <para>
@@ -3340,7 +3340,8 @@ OPEN <replaceable>bound_cursorvar</replaceable> <optional> ( <optional> <replace
           Argument values can be passed using either <firstterm>positional</firstterm>
           or <firstterm>named</firstterm> notation.  In positional
           notation, all arguments are specified in order.  In named notation,
-          each argument's name is specified using <literal>:=</literal> to
+          each argument's name is specified using <literal>:=</literal>
+          or <literal>=&gt;</literal> to
           separate it from the argument expression. Similar to calling
           functions, described in <xref linkend="sql-syntax-calling-funcs"/>, it
           is also allowed to mix positional and named notation.
@@ -3352,6 +3353,7 @@ OPEN <replaceable>bound_cursorvar</replaceable> <optional> ( <optional> <replace
 OPEN curs2;
 OPEN curs3(42);
 OPEN curs3(key := 42);
+OPEN curs3(key =&gt; 42);
 </programlisting>
          </para>
 
@@ -3672,7 +3674,7 @@ COMMIT;
 
 <synopsis>
 <optional> &lt;&lt;<replaceable>label</replaceable>&gt;&gt; </optional>
-FOR <replaceable>recordvar</replaceable> IN <replaceable>bound_cursorvar</replaceable> <optional> ( <optional> <replaceable>argument_name</replaceable> := </optional> <replaceable>argument_value</replaceable> <optional>, ...</optional> ) </optional> LOOP
+FOR <replaceable>recordvar</replaceable> IN <replaceable>bound_cursorvar</replaceable> <optional> ( <optional> <replaceable>argument_name</replaceable> { := | =&gt; } </optional> <replaceable>argument_value</replaceable> <optional>, ...</optional> ) </optional> LOOP
     <replaceable>statements</replaceable>
 END LOOP <optional> <replaceable>label</replaceable> </optional>;
 </synopsis>

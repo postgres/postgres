@@ -3955,9 +3955,12 @@ read_cursor_args(PLpgSQL_var *cursor, int until, YYSTYPE *yylvalp, YYLTYPE *yyll
 					tok2;
 		int			arglocation;
 
-		/* Check if it's a named parameter: "param := value" */
+		/*
+		 * Check if it's a named parameter: "param := value"
+		 * or "param => value"
+		 */
 		plpgsql_peek2(&tok1, &tok2, &arglocation, NULL, yyscanner);
-		if (tok1 == IDENT && tok2 == COLON_EQUALS)
+		if (tok1 == IDENT && (tok2 == COLON_EQUALS || tok2 == EQUALS_GREATER))
 		{
 			char	   *argname;
 			IdentifierLookup save_IdentifierLookup;
@@ -3983,11 +3986,11 @@ read_cursor_args(PLpgSQL_var *cursor, int until, YYSTYPE *yylvalp, YYLTYPE *yyll
 						 parser_errposition(*yyllocp)));
 
 			/*
-			 * Eat the ":=". We already peeked, so the error should never
-			 * happen.
+			 * Eat the ":=" or "=>".  We already peeked, so the error should
+			 * never happen.
 			 */
 			tok2 = yylex(yylvalp, yyllocp, yyscanner);
-			if (tok2 != COLON_EQUALS)
+			if (tok2 != COLON_EQUALS && tok2 != EQUALS_GREATER)
 				yyerror(yyllocp, NULL, yyscanner, "syntax error");
 
 			any_named = true;
