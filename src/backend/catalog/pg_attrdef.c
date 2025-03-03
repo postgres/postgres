@@ -123,6 +123,12 @@ StoreAttrDefault(Relation rel, AttrNumber attnum,
 		valuesAtt[Anum_pg_attribute_atthasdef - 1] = true;
 		replacesAtt[Anum_pg_attribute_atthasdef - 1] = true;
 
+		/*
+		 * Note: this code is dead so far as core Postgres is concerned,
+		 * because no caller passes add_column_mode = true anymore.  We keep
+		 * it in back branches on the slight chance that some extension is
+		 * depending on it.
+		 */
 		if (rel->rd_rel->relkind == RELKIND_RELATION && add_column_mode &&
 			!attgenerated)
 		{
