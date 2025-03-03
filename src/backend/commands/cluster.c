@@ -1226,6 +1226,7 @@ swap_relation_files(Oid r1, Oid r2, bool target_is_pg_class,
 		int32		swap_pages;
 		float4		swap_tuples;
 		int32		swap_allvisible;
+		int32		swap_allfrozen;
 
 		swap_pages = relform1->relpages;
 		relform1->relpages = relform2->relpages;
@@ -1238,6 +1239,10 @@ swap_relation_files(Oid r1, Oid r2, bool target_is_pg_class,
 		swap_allvisible = relform1->relallvisible;
 		relform1->relallvisible = relform2->relallvisible;
 		relform2->relallvisible = swap_allvisible;
+
+		swap_allfrozen = relform1->relallfrozen;
+		relform1->relallfrozen = relform2->relallfrozen;
+		relform2->relallfrozen = swap_allfrozen;
 	}
 
 	/*

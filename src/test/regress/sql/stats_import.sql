@@ -18,7 +18,7 @@ CREATE TABLE stats_import.test(
 CREATE INDEX test_i ON stats_import.test(id);
 
 -- starting stats
-SELECT relpages, reltuples, relallvisible
+SELECT relpages, reltuples, relallvisible, relallfrozen
 FROM pg_class
 WHERE oid = 'stats_import.test'::regclass;
 
@@ -49,7 +49,7 @@ SELECT
     pg_catalog.pg_clear_relation_stats(
         'stats_import.test'::regclass);
 
-SELECT relpages, reltuples, relallvisible
+SELECT relpages, reltuples, relallvisible, relallfrozen
 FROM pg_class
 WHERE oid = 'stats_import.test'::regclass;
 
@@ -120,9 +120,10 @@ SELECT pg_restore_relation_stats(
         'version', 150000::integer,
         'relpages', '17'::integer,
         'reltuples', 400::real,
-        'relallvisible', 4::integer);
+        'relallvisible', 4::integer,
+        'relallfrozen', 2::integer);
 
-SELECT relpages, reltuples, relallvisible
+SELECT relpages, reltuples, relallvisible, relallfrozen
 FROM pg_class
 WHERE oid = 'stats_import.test'::regclass;
 
@@ -132,7 +133,7 @@ SELECT pg_restore_relation_stats(
         'version', 150000::integer,
         'relpages', '16'::integer);
 
-SELECT relpages, reltuples, relallvisible
+SELECT relpages, reltuples, relallvisible, relallfrozen
 FROM pg_class
 WHERE oid = 'stats_import.test'::regclass;
 
@@ -142,7 +143,7 @@ SELECT pg_restore_relation_stats(
         'version', 150000::integer,
         'reltuples', '500'::real);
 
-SELECT relpages, reltuples, relallvisible
+SELECT relpages, reltuples, relallvisible, relallfrozen
 FROM pg_class
 WHERE oid = 'stats_import.test'::regclass;
 
@@ -152,7 +153,17 @@ SELECT pg_restore_relation_stats(
         'version', 150000::integer,
         'relallvisible', 5::integer);
 
-SELECT relpages, reltuples, relallvisible
+SELECT relpages, reltuples, relallvisible, relallfrozen
+FROM pg_class
+WHERE oid = 'stats_import.test'::regclass;
+
+-- ok: just relallfrozen
+SELECT pg_restore_relation_stats(
+        'relation', 'stats_import.test'::regclass,
+        'version', 150000::integer,
+        'relallfrozen', 3::integer);
+
+SELECT relpages, reltuples, relallvisible, relallfrozen
 FROM pg_class
 WHERE oid = 'stats_import.test'::regclass;
 
@@ -162,9 +173,10 @@ SELECT pg_restore_relation_stats(
         'version', 150000::integer,
         'relpages', 'nope'::text,
         'reltuples', 400.0::real,
-        'relallvisible', 4::integer);
+        'relallvisible', 4::integer,
+        'relallfrozen', 3::integer);
 
-SELECT relpages, reltuples, relallvisible
+SELECT relpages, reltuples, relallvisible, relallfrozen
 FROM pg_class
 WHERE oid = 'stats_import.test'::regclass;
 
@@ -680,7 +692,8 @@ SELECT * FROM pg_catalog.pg_restore_relation_stats(
     'version', '180000'::integer,
     'relpages', '11'::integer,
     'reltuples', '10000'::real,
-    'relallvisible', '0'::integer
+    'relallvisible', '0'::integer,
+    'relallfrozen', '0'::integer
 );
 
 -- Generate statistics on table with data
@@ -850,14 +863,16 @@ SELECT pg_catalog.pg_restore_relation_stats(
         'relation', 0::oid,
         'relpages', 17::integer,
         'reltuples', 400.0::real,
-        'relallvisible', 4::integer);
+        'relallvisible', 4::integer,
+        'relallfrozen', 3::integer);
 
 --- error: relation not found
 SELECT pg_catalog.pg_restore_relation_stats(
         'relation', 0::regclass,
         'relpages', 17::integer,
         'reltuples', 400.0::real,
-        'relallvisible', 4::integer);
+        'relallvisible', 4::integer,
+        'relallfrozen', 3::integer);
 
 -- warn and error: unrecognized argument name
 SELECT pg_restore_relation_stats(
@@ -873,7 +888,8 @@ SELECT pg_restore_relation_stats(
         'version', 150000::integer,
         NULL, '17'::integer,
         'reltuples', 400::real,
-        'relallvisible', 4::integer);
+        'relallvisible', 4::integer,
+        'relallfrozen', 3::integer);
 
 -- error: argument name is an integer
 SELECT pg_restore_relation_stats(
@@ -881,7 +897,8 @@ SELECT pg_restore_relation_stats(
         'version', 150000::integer,
         17, '17'::integer,
         'reltuples', 400::real,
-        'relallvisible', 4::integer);
+        'relallvisible', 4::integer,
+        'relallfrozen', 3::integer);
 
 -- error: odd number of variadic arguments cannot be pairs
 SELECT pg_restore_relation_stats(
@@ -889,6 +906,7 @@ SELECT pg_restore_relation_stats(
         'version', 150000::integer,
         'relpages', '17'::integer,
         'reltuples', 400::real,
+        'relallfrozen', 3::integer,
         'relallvisible');
 
 -- error: object doesn't exist
@@ -897,7 +915,8 @@ SELECT pg_restore_relation_stats(
         'version', 150000::integer,
         'relpages', '17'::integer,
         'reltuples', 400::real,
-        'relallvisible', 4::integer);
+        'relallvisible', 4::integer,
+        'relallfrozen', 3::integer);
 
 -- error: object does not exist
 SELECT pg_catalog.pg_restore_attribute_stats(

@@ -924,6 +924,7 @@ InsertPgClassTuple(Relation pg_class_desc,
 	values[Anum_pg_class_relpages - 1] = Int32GetDatum(rd_rel->relpages);
 	values[Anum_pg_class_reltuples - 1] = Float4GetDatum(rd_rel->reltuples);
 	values[Anum_pg_class_relallvisible - 1] = Int32GetDatum(rd_rel->relallvisible);
+	values[Anum_pg_class_relallfrozen - 1] = Int32GetDatum(rd_rel->relallfrozen);
 	values[Anum_pg_class_reltoastrelid - 1] = ObjectIdGetDatum(rd_rel->reltoastrelid);
 	values[Anum_pg_class_relhasindex - 1] = BoolGetDatum(rd_rel->relhasindex);
 	values[Anum_pg_class_relisshared - 1] = BoolGetDatum(rd_rel->relisshared);
@@ -994,6 +995,7 @@ AddNewRelationTuple(Relation pg_class_desc,
 	new_rel_reltup->relpages = 0;
 	new_rel_reltup->reltuples = -1;
 	new_rel_reltup->relallvisible = 0;
+	new_rel_reltup->relallfrozen = 0;
 
 	/* Sequences always have a known size */
 	if (relkind == RELKIND_SEQUENCE)

@@ -630,12 +630,11 @@ do_analyze_rel(Relation onerel, VacuumParams *params,
 	 */
 	if (!inh)
 	{
-		BlockNumber relallvisible;
+		BlockNumber relallvisible = 0;
+		BlockNumber relallfrozen = 0;
 
 		if (RELKIND_HAS_STORAGE(onerel->rd_rel->relkind))
-			visibilitymap_count(onerel, &relallvisible, NULL);
-		else
-			relallvisible = 0;
+			visibilitymap_count(onerel, &relallvisible, &relallfrozen);
 
 		/*
 		 * Update pg_class for table relation.  CCI first, in case acquirefunc
@@ -646,6 +645,7 @@ do_analyze_rel(Relation onerel, VacuumParams *params,
 							relpages,
 							totalrows,
 							relallvisible,
+							relallfrozen,
 							hasindex,
 							InvalidTransactionId,
 							InvalidMultiXactId,
@@ -662,7 +662,7 @@ do_analyze_rel(Relation onerel, VacuumParams *params,
 			vac_update_relstats(Irel[ind],
 								RelationGetNumberOfBlocks(Irel[ind]),
 								totalindexrows,
-								0,
+								0, 0,
 								false,
 								InvalidTransactionId,
 								InvalidMultiXactId,
@@ -678,7 +678,7 @@ do_analyze_rel(Relation onerel, VacuumParams *params,
 		 */
 		CommandCounterIncrement();
 		vac_update_relstats(onerel, -1, totalrows,
-							0, hasindex, InvalidTransactionId,
+							0, 0, hasindex, InvalidTransactionId,
 							InvalidMultiXactId,
 							NULL, NULL,
 							in_outer_xact);

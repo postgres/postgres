@@ -1427,6 +1427,7 @@ void
 vac_update_relstats(Relation relation,
 					BlockNumber num_pages, double num_tuples,
 					BlockNumber num_all_visible_pages,
+					BlockNumber num_all_frozen_pages,
 					bool hasindex, TransactionId frozenxid,
 					MultiXactId minmulti,
 					bool *frozenxid_updated, bool *minmulti_updated,
@@ -1474,6 +1475,11 @@ vac_update_relstats(Relation relation,
 	if (pgcform->relallvisible != (int32) num_all_visible_pages)
 	{
 		pgcform->relallvisible = (int32) num_all_visible_pages;
+		dirty = true;
+	}
+	if (pgcform->relallfrozen != (int32) num_all_frozen_pages)
+	{
+		pgcform->relallfrozen = (int32) num_all_frozen_pages;
 		dirty = true;
 	}
 

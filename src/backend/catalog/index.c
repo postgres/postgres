@@ -2793,8 +2793,8 @@ FormIndexDatum(IndexInfo *indexInfo,
  * hasindex: set relhasindex to this value
  * reltuples: if >= 0, set reltuples to this value; else no change
  *
- * If reltuples >= 0, relpages and relallvisible are also updated (using
- * RelationGetNumberOfBlocks() and visibilitymap_count()).
+ * If reltuples >= 0, relpages, relallvisible, and relallfrozen are also
+ * updated (using RelationGetNumberOfBlocks() and visibilitymap_count()).
  *
  * NOTE: an important side-effect of this operation is that an SI invalidation
  * message is sent out to all backends --- including me --- causing relcache
@@ -2812,6 +2812,7 @@ index_update_stats(Relation rel,
 	bool		update_stats;
 	BlockNumber relpages = 0;	/* keep compiler quiet */
 	BlockNumber relallvisible = 0;
+	BlockNumber relallfrozen = 0;
 	Oid			relid = RelationGetRelid(rel);
 	Relation	pg_class;
 	ScanKeyData key[1];
@@ -2851,7 +2852,7 @@ index_update_stats(Relation rel,
 		relpages = RelationGetNumberOfBlocks(rel);
 
 		if (rel->rd_rel->relkind != RELKIND_INDEX)
-			visibilitymap_count(rel, &relallvisible, NULL);
+			visibilitymap_count(rel, &relallvisible, &relallfrozen);
 	}
 
 	/*
@@ -2922,6 +2923,11 @@ index_update_stats(Relation rel,
 		if (rd_rel->relallvisible != (int32) relallvisible)
 		{
 			rd_rel->relallvisible = (int32) relallvisible;
+			dirty = true;
+		}
+		if (rd_rel->relallfrozen != (int32) relallfrozen)
+		{
+			rd_rel->relallfrozen = (int32) relallfrozen;
 			dirty = true;
 		}
 	}

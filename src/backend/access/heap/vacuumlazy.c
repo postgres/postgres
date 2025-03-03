@@ -623,7 +623,8 @@ heap_vacuum_rel(Relation rel, VacuumParams *params,
 				minmulti_updated;
 	BlockNumber orig_rel_pages,
 				new_rel_pages,
-				new_rel_allvisible;
+				new_rel_allvisible,
+				new_rel_allfrozen;
 	PGRUsage	ru0;
 	TimestampTz starttime = 0;
 	PgStat_Counter startreadtime = 0,
@@ -898,9 +899,17 @@ heap_vacuum_rel(Relation rel, VacuumParams *params,
 	 * pg_class.relpages to
 	 */
 	new_rel_pages = vacrel->rel_pages;	/* After possible rel truncation */
-	visibilitymap_count(rel, &new_rel_allvisible, NULL);
+	visibilitymap_count(rel, &new_rel_allvisible, &new_rel_allfrozen);
 	if (new_rel_allvisible > new_rel_pages)
 		new_rel_allvisible = new_rel_pages;
+
+	/*
+	 * An all-frozen block _must_ be all-visible. As such, clamp the count of
+	 * all-frozen blocks to the count of all-visible blocks. This matches the
+	 * clamping of relallvisible above.
+	 */
+	if (new_rel_allfrozen > new_rel_allvisible)
+		new_rel_allfrozen = new_rel_allvisible;
 
 	/*
 	 * Now actually update rel's pg_class entry.
@@ -910,7 +919,8 @@ heap_vacuum_rel(Relation rel, VacuumParams *params,
 	 * scan every page that isn't skipped using the visibility map.
 	 */
 	vac_update_relstats(rel, new_rel_pages, vacrel->new_live_tuples,
-						new_rel_allvisible, vacrel->nindexes > 0,
+						new_rel_allvisible, new_rel_allfrozen,
+						vacrel->nindexes > 0,
 						vacrel->NewRelfrozenXid, vacrel->NewRelminMxid,
 						&frozenxid_updated, &minmulti_updated, false);
 
@@ -3720,7 +3730,7 @@ update_relstats_all_indexes(LVRelState *vacrel)
 		vac_update_relstats(indrel,
 							istat->num_pages,
 							istat->num_index_tuples,
-							0,
+							0, 0,
 							false,
 							InvalidTransactionId,
 							InvalidMultiXactId,
