@@ -81,7 +81,7 @@ static dshash_parameters principal_key_dsh_params = {
 	.hash_function = dshash_memhash,
 };
 
-TdePrincipalKeylocalState principalKeyLocalState;
+static TdePrincipalKeylocalState principalKeyLocalState;
 
 static void principal_key_info_attach_shmem(void);
 static Size initialize_shared_state(void *start_address);
@@ -176,7 +176,7 @@ initialize_shared_state(void *start_address)
 	return sizeof(TdePrincipalKeySharedState);
 }
 
-void
+static void
 initialize_objects_in_dsa_area(dsa_area *dsa, void *raw_dsa_area)
 {
 	dshash_table *dsh;
