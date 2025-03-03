@@ -43,6 +43,9 @@ StoreAttrDefault(Relation rel, AttrNumber attnum,
 	Relation	attrrel;
 	HeapTuple	atttup;
 	Form_pg_attribute attStruct;
+	Datum		valuesAtt[Natts_pg_attribute] = {0};
+	bool		nullsAtt[Natts_pg_attribute] = {0};
+	bool		replacesAtt[Natts_pg_attribute] = {0};
 	char		attgenerated;
 	Oid			attrdefOid;
 	ObjectAddress colobject,
@@ -92,20 +95,15 @@ StoreAttrDefault(Relation rel, AttrNumber attnum,
 			 attnum, RelationGetRelid(rel));
 	attStruct = (Form_pg_attribute) GETSTRUCT(atttup);
 	attgenerated = attStruct->attgenerated;
-	if (!attStruct->atthasdef)
-	{
-		Datum		valuesAtt[Natts_pg_attribute] = {0};
-		bool		nullsAtt[Natts_pg_attribute] = {0};
-		bool		replacesAtt[Natts_pg_attribute] = {0};
 
-		valuesAtt[Anum_pg_attribute_atthasdef - 1] = BoolGetDatum(true);
-		replacesAtt[Anum_pg_attribute_atthasdef - 1] = true;
+	valuesAtt[Anum_pg_attribute_atthasdef - 1] = BoolGetDatum(true);
+	replacesAtt[Anum_pg_attribute_atthasdef - 1] = true;
 
-		atttup = heap_modify_tuple(atttup, RelationGetDescr(attrrel),
-								   valuesAtt, nullsAtt, replacesAtt);
+	atttup = heap_modify_tuple(atttup, RelationGetDescr(attrrel),
+							   valuesAtt, nullsAtt, replacesAtt);
 
-		CatalogTupleUpdate(attrrel, &atttup->t_self, atttup);
-	}
+	CatalogTupleUpdate(attrrel, &atttup->t_self, atttup);
+
 	table_close(attrrel, RowExclusiveLock);
 	heap_freetuple(atttup);
 
