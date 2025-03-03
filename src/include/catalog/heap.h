@@ -29,7 +29,6 @@ typedef struct RawColumnDefault
 {
 	AttrNumber	attnum;			/* attribute to attach default to */
 	Node	   *raw_default;	/* default value (untransformed parse tree) */
-	bool		missingMode;	/* obsolete, no longer used */
 	char		generated;		/* attgenerated setting */
 } RawColumnDefault;
 

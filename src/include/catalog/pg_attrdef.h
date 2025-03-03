@@ -57,8 +57,7 @@ DECLARE_FOREIGN_KEY((adrelid, adnum), pg_attribute, (attrelid, attnum));
 
 
 extern Oid	StoreAttrDefault(Relation rel, AttrNumber attnum,
-							 Node *expr, bool is_internal,
-							 bool add_column_mode);
+							 Node *expr, bool is_internal);
 extern void RemoveAttrDefault(Oid relid, AttrNumber attnum,
 							  DropBehavior behavior,
 							  bool complain, bool internal);

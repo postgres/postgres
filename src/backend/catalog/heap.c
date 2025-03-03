@@ -2320,7 +2320,7 @@ StoreConstraints(Relation rel, List *cooked_constraints, bool is_internal)
 		{
 			case CONSTR_DEFAULT:
 				con->conoid = StoreAttrDefault(rel, con->attnum, con->expr,
-											   is_internal, false);
+											   is_internal);
 				break;
 			case CONSTR_CHECK:
 				con->conoid =
@@ -2447,8 +2447,7 @@ AddRelationNewConstraints(Relation rel,
 			 castNode(Const, expr)->constisnull))
 			continue;
 
-		defOid = StoreAttrDefault(rel, colDef->attnum, expr, is_internal,
-								  false);
+		defOid = StoreAttrDefault(rel, colDef->attnum, expr, is_internal);
 
 		cooked = (CookedConstraint *) palloc(sizeof(CookedConstraint));
 		cooked->contype = CONSTR_DEFAULT;

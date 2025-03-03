@@ -14,17 +14,12 @@
  */
 #include "postgres.h"
 
-#include "access/genam.h"
 #include "access/relation.h"
 #include "access/table.h"
-#include "catalog/catalog.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
 #include "catalog/objectaccess.h"
 #include "catalog/pg_attrdef.h"
-#include "executor/executor.h"
-#include "optimizer/optimizer.h"
-#include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
 #include "utils/rel.h"
@@ -35,22 +30,16 @@
  * Store a default expression for column attnum of relation rel.
  *
  * Returns the OID of the new pg_attrdef tuple.
- *
- * add_column_mode must be true if we are storing the default for a new
- * attribute, and false if it's for an already existing attribute. The reason
- * for this is that the missing value must never be updated after it is set,
- * which can only be when a column is added to the table. Otherwise we would
- * in effect be changing existing tuples.
  */
 Oid
 StoreAttrDefault(Relation rel, AttrNumber attnum,
-				 Node *expr, bool is_internal, bool add_column_mode)
+				 Node *expr, bool is_internal)
 {
 	char	   *adbin;
 	Relation	adrel;
 	HeapTuple	tuple;
-	Datum		values[4];
-	static bool nulls[4] = {false, false, false, false};
+	Datum		values[Natts_pg_attrdef];
+	static bool nulls[Natts_pg_attrdef] = {false, false, false, false};
 	Relation	attrrel;
 	HeapTuple	atttup;
 	Form_pg_attribute attStruct;
@@ -72,8 +61,8 @@ StoreAttrDefault(Relation rel, AttrNumber attnum,
 	attrdefOid = GetNewOidWithIndex(adrel, AttrDefaultOidIndexId,
 									Anum_pg_attrdef_oid);
 	values[Anum_pg_attrdef_oid - 1] = ObjectIdGetDatum(attrdefOid);
-	values[Anum_pg_attrdef_adrelid - 1] = RelationGetRelid(rel);
-	values[Anum_pg_attrdef_adnum - 1] = attnum;
+	values[Anum_pg_attrdef_adrelid - 1] = ObjectIdGetDatum(RelationGetRelid(rel));
+	values[Anum_pg_attrdef_adnum - 1] = Int16GetDatum(attnum);
 	values[Anum_pg_attrdef_adbin - 1] = CStringGetTextDatum(adbin);
 
 	tuple = heap_form_tuple(adrel->rd_att, values, nulls);
@@ -105,71 +94,17 @@ StoreAttrDefault(Relation rel, AttrNumber attnum,
 	attgenerated = attStruct->attgenerated;
 	if (!attStruct->atthasdef)
 	{
-		Form_pg_attribute defAttStruct;
-
-		ExprState  *exprState;
-		Expr	   *expr2 = (Expr *) expr;
-		EState	   *estate = NULL;
-		ExprContext *econtext;
 		Datum		valuesAtt[Natts_pg_attribute] = {0};
 		bool		nullsAtt[Natts_pg_attribute] = {0};
 		bool		replacesAtt[Natts_pg_attribute] = {0};
-		Datum		missingval = (Datum) 0;
-		bool		missingIsNull = true;
 
-		valuesAtt[Anum_pg_attribute_atthasdef - 1] = true;
+		valuesAtt[Anum_pg_attribute_atthasdef - 1] = BoolGetDatum(true);
 		replacesAtt[Anum_pg_attribute_atthasdef - 1] = true;
 
-		/*
-		 * Note: this code is dead so far as core Postgres is concerned,
-		 * because no caller passes add_column_mode = true anymore.  We keep
-		 * it in back branches on the slight chance that some extension is
-		 * depending on it.
-		 */
-		if (rel->rd_rel->relkind == RELKIND_RELATION && add_column_mode &&
-			!attgenerated)
-		{
-			expr2 = expression_planner(expr2);
-			estate = CreateExecutorState();
-			exprState = ExecPrepareExpr(expr2, estate);
-			econtext = GetPerTupleExprContext(estate);
-
-			missingval = ExecEvalExpr(exprState, econtext,
-									  &missingIsNull);
-
-			FreeExecutorState(estate);
-
-			defAttStruct = TupleDescAttr(rel->rd_att, attnum - 1);
-
-			if (missingIsNull)
-			{
-				/* if the default evaluates to NULL, just store a NULL array */
-				missingval = (Datum) 0;
-			}
-			else
-			{
-				/* otherwise make a one-element array of the value */
-				missingval = PointerGetDatum(construct_array(&missingval,
-															 1,
-															 defAttStruct->atttypid,
-															 defAttStruct->attlen,
-															 defAttStruct->attbyval,
-															 defAttStruct->attalign));
-			}
-
-			valuesAtt[Anum_pg_attribute_atthasmissing - 1] = !missingIsNull;
-			replacesAtt[Anum_pg_attribute_atthasmissing - 1] = true;
-			valuesAtt[Anum_pg_attribute_attmissingval - 1] = missingval;
-			replacesAtt[Anum_pg_attribute_attmissingval - 1] = true;
-			nullsAtt[Anum_pg_attribute_attmissingval - 1] = missingIsNull;
-		}
 		atttup = heap_modify_tuple(atttup, RelationGetDescr(attrrel),
 								   valuesAtt, nullsAtt, replacesAtt);
 
 		CatalogTupleUpdate(attrrel, &atttup->t_self, atttup);
-
-		if (!missingIsNull)
-			pfree(DatumGetPointer(missingval));
 	}
 	table_close(attrrel, RowExclusiveLock);
 	heap_freetuple(atttup);
