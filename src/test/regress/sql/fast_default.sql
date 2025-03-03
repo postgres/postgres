@@ -248,6 +248,50 @@ SELECT comp();
 
 DROP TABLE T;
 
+-- Test domains with default value for table rewrite.
+CREATE DOMAIN domain1 AS int DEFAULT 11;  -- constant
+CREATE DOMAIN domain2 AS int DEFAULT random(min=>10, max=>100);  -- volatile
+CREATE DOMAIN domain3 AS text DEFAULT foo(4);  -- stable
+CREATE DOMAIN domain4 AS text[]
+  DEFAULT ('{"This", "is", "' || foo(4) || '","the", "real", "world"}')::TEXT[];
+
+CREATE TABLE t2 (a domain1);
+INSERT INTO t2 VALUES (1),(2);
+
+-- no table rewrite
+ALTER TABLE t2 ADD COLUMN b domain1 default 3;
+
+SELECT attnum, attname, atthasmissing, atthasdef, attmissingval
+FROM pg_attribute
+WHERE attnum > 0 AND attrelid = 't2'::regclass
+ORDER BY attnum;
+
+-- table rewrite should happen
+ALTER TABLE t2 ADD COLUMN c domain3 default left(random()::text,3);
+
+-- no table rewrite
+ALTER TABLE t2 ADD COLUMN d domain4;
+
+SELECT attnum, attname, atthasmissing, atthasdef, attmissingval
+FROM pg_attribute
+WHERE attnum > 0 AND attrelid = 't2'::regclass
+ORDER BY attnum;
+
+-- table rewrite should happen
+ALTER TABLE t2 ADD COLUMN e domain2;
+
+SELECT attnum, attname, atthasmissing, atthasdef, attmissingval
+FROM pg_attribute
+WHERE attnum > 0 AND attrelid = 't2'::regclass
+ORDER BY attnum;
+
+SELECT a, b, length(c) = 3 as c_ok, d, e >= 10 as e_ok FROM t2;
+
+DROP TABLE t2;
+DROP DOMAIN domain1;
+DROP DOMAIN domain2;
+DROP DOMAIN domain3;
+DROP DOMAIN domain4;
 DROP FUNCTION foo(INT);
 
 -- Fall back to full rewrite for volatile expressions
