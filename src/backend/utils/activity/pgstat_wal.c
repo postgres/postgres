@@ -55,6 +55,7 @@ pgstat_report_wal(bool force)
 
 	/* flush IO stats */
 	pgstat_flush_io(nowait);
+	(void) pgstat_flush_backend(nowait, PGSTAT_BACKEND_FLUSH_IO);
 }
 
 /*

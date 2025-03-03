@@ -103,11 +103,10 @@ pgstat_fetch_stat_backend_by_pid(int pid, BackendType *bktype)
 	if (bktype)
 		*bktype = B_INVALID;
 
-	/*
-	 * This could be an auxiliary process but these do not report backend
-	 * statistics due to pgstat_tracks_backend_bktype(), so there is no need
-	 * for an extra call to AuxiliaryPidGetProc().
-	 */
+	/* this could be an auxiliary process */
+	if (!proc)
+		proc = AuxiliaryPidGetProc(pid);
+
 	if (!proc)
 		return NULL;
 
@@ -117,16 +116,16 @@ pgstat_fetch_stat_backend_by_pid(int pid, BackendType *bktype)
 	if (!beentry)
 		return NULL;
 
+	/* check if the backend type tracks statistics */
+	if (!pgstat_tracks_backend_bktype(beentry->st_backendType))
+		return NULL;
+
 	backend_stats = pgstat_fetch_stat_backend(procNumber);
 	if (!backend_stats)
 		return NULL;
 
 	/* if PID does not match, leave */
 	if (beentry->st_procpid != pid)
-		return NULL;
-
-	/* backend may be gone, so recheck in case */
-	if (beentry->st_backendType == B_INVALID)
 		return NULL;
 
 	if (bktype)
