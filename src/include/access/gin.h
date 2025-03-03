@@ -12,6 +12,8 @@
 
 #include "access/xlogreader.h"
 #include "lib/stringinfo.h"
+#include "nodes/execnodes.h"
+#include "storage/shm_toc.h"
 #include "storage/block.h"
 #include "utils/relcache.h"
 
@@ -35,6 +37,17 @@
 #define GIN_SEARCH_MODE_INCLUDE_EMPTY	1
 #define GIN_SEARCH_MODE_ALL				2
 #define GIN_SEARCH_MODE_EVERYTHING		3	/* for internal use only */
+
+/*
+ * Constant definition for progress reporting.  Phase numbers must match
+ * ginbuildphasename.
+ */
+/* PROGRESS_CREATEIDX_SUBPHASE_INITIALIZE is 1 (see progress.h) */
+#define PROGRESS_GIN_PHASE_INDEXBUILD_TABLESCAN		2
+#define PROGRESS_GIN_PHASE_PERFORMSORT_1			3
+#define PROGRESS_GIN_PHASE_MERGE_1					4
+#define PROGRESS_GIN_PHASE_PERFORMSORT_2			5
+#define PROGRESS_GIN_PHASE_MERGE_2					6
 
 /*
  * GinStatsData represents stats data for planner use
@@ -87,5 +100,7 @@ extern PGDLLIMPORT int gin_pending_list_limit;
 extern void ginGetStats(Relation index, GinStatsData *stats);
 extern void ginUpdateStats(Relation index, const GinStatsData *stats,
 						   bool is_build);
+
+extern void _gin_parallel_build_main(dsm_segment *seg, shm_toc *toc);
 
 #endif							/* GIN_H */

@@ -20,6 +20,7 @@
 #include "access/xloginsert.h"
 #include "catalog/pg_collation.h"
 #include "catalog/pg_type.h"
+#include "commands/progress.h"
 #include "commands/vacuum.h"
 #include "miscadmin.h"
 #include "storage/indexfsm.h"
@@ -55,7 +56,7 @@ ginhandler(PG_FUNCTION_ARGS)
 	amroutine->amclusterable = false;
 	amroutine->ampredlocks = true;
 	amroutine->amcanparallel = false;
-	amroutine->amcanbuildparallel = false;
+	amroutine->amcanbuildparallel = true;
 	amroutine->amcaninclude = false;
 	amroutine->amusemaintenanceworkmem = true;
 	amroutine->amsummarizing = false;
@@ -74,7 +75,7 @@ ginhandler(PG_FUNCTION_ARGS)
 	amroutine->amgettreeheight = NULL;
 	amroutine->amoptions = ginoptions;
 	amroutine->amproperty = NULL;
-	amroutine->ambuildphasename = NULL;
+	amroutine->ambuildphasename = ginbuildphasename;
 	amroutine->amvalidate = ginvalidate;
 	amroutine->amadjustmembers = ginadjustmembers;
 	amroutine->ambeginscan = ginbeginscan;
@@ -701,4 +702,29 @@ ginUpdateStats(Relation index, const GinStatsData *stats, bool is_build)
 	UnlockReleaseBuffer(metabuffer);
 
 	END_CRIT_SECTION();
+}
+
+/*
+ *	ginbuildphasename() -- Return name of index build phase.
+ */
+char *
+ginbuildphasename(int64 phasenum)
+{
+	switch (phasenum)
+	{
+		case PROGRESS_CREATEIDX_SUBPHASE_INITIALIZE:
+			return "initializing";
+		case PROGRESS_GIN_PHASE_INDEXBUILD_TABLESCAN:
+			return "scanning table";
+		case PROGRESS_GIN_PHASE_PERFORMSORT_1:
+			return "sorting tuples (workers)";
+		case PROGRESS_GIN_PHASE_MERGE_1:
+			return "merging tuples (workers)";
+		case PROGRESS_GIN_PHASE_PERFORMSORT_2:
+			return "sorting tuples";
+		case PROGRESS_GIN_PHASE_MERGE_2:
+			return "merging tuples";
+		default:
+			return NULL;
+	}
 }
