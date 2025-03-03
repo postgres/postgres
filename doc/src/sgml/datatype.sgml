@@ -4408,6 +4408,15 @@ SELECT to_tsvector( 'postgraduate' ), to_tsquery( 'postgres:*' );
    </para>
 
    <para>
+    RFC 9562 defines 8 different UUID versions.  Each version has specific requirements
+    for generating new UUID values, and each version provides distinct benefits and drawbacks.
+    <productname>PostgreSQL</productname> provides native support for generating UUIDs
+    using the UUIDv4 and UUIDv7 algorithms.  Alternatively, UUID values can be generated
+    outside of the database using any algorithm.  The data type <type>uuid</type> can be used
+    to store any UUID, regardless of the origin and the UUID version.
+   </para>
+
+   <para>
     A UUID is written as a sequence of lower-case hexadecimal digits,
     in several groups separated by hyphens, specifically a group of 8
     digits followed by three groups of 4 digits followed by a group of
