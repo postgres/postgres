@@ -23,7 +23,23 @@ jsonb_plperl = shared_module('jsonb_plperl',
     'build_rpath': '@0@/CORE'.format(archlibexp),
   },
 )
-contrib_targets += jsonb_plperl
+
+if llvm.found()
+  llvm_contrib_jsonb_plperl_cflags = [
+    '-I@BUILD_ROOT@/src/pl/plperl',
+    '-I@SOURCE_ROOT@/src/pl/plperl',
+  ]
+
+  llvm_gen_contrib_jsonb_plperl = generator(llvm_irgen_command,
+    arguments: llvm_irgen_args + bitcode_cflags + pg_mod_c_args + llvm_contrib_jsonb_plperl_cflags + perl_ccflags,
+    depends: jsonb_plperl,
+    depfile: '@BASENAME@.c.bc.d',
+    output: '@PLAINNAME@.bc',
+  )
+
+  bc_gen_custom_contrib += llvm_gen_contrib_jsonb_plperl.process(jsonb_plperl_sources)
+endif
+
 
 install_data(
   'jsonb_plperl.control',

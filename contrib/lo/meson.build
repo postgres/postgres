@@ -14,7 +14,11 @@ lo = shared_module('lo',
   lo_sources,
   kwargs: contrib_mod_args,
 )
-contrib_targets += lo
+
+if llvm.found()
+  contrib_targets += lo
+  llvm_contrib_sources += lo_sources
+endif
 
 install_data(
   'lo.control',

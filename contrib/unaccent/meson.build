@@ -14,7 +14,11 @@ unaccent = shared_module('unaccent',
   unaccent_sources,
   kwargs: contrib_mod_args,
 )
-contrib_targets += unaccent
+
+if llvm.found()
+  contrib_targets += unaccent
+  llvm_contrib_sources += unaccent_sources
+endif
 
 install_data(
   'unaccent--1.0--1.1.sql',

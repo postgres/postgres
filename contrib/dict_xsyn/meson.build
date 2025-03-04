@@ -14,7 +14,11 @@ dict_xsyn = shared_module('dict_xsyn',
   dict_xsyn_sources,
   kwargs: contrib_mod_args,
 )
-contrib_targets += dict_xsyn
+
+if llvm.found()
+  contrib_targets += dict_xsyn
+  llvm_contrib_sources += dict_xsyn_sources
+endif
 
 install_data(
   'dict_xsyn.control',

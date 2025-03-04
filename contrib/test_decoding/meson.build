@@ -14,7 +14,11 @@ test_decoding = shared_module('test_decoding',
   test_decoding_sources,
   kwargs: contrib_mod_args,
 )
-contrib_targets += test_decoding
+
+if llvm.found()
+  contrib_targets += test_decoding
+  llvm_contrib_sources += test_decoding_sources
+endif
 
 tests += {
   'name': 'test_decoding',

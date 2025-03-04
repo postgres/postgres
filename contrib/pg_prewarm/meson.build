@@ -15,7 +15,11 @@ pg_prewarm = shared_module('pg_prewarm',
   pg_prewarm_sources,
   kwargs: contrib_mod_args,
 )
-contrib_targets += pg_prewarm
+
+if llvm.found()
+  contrib_targets += pg_prewarm
+  llvm_contrib_sources += pg_prewarm_sources
+endif
 
 install_data(
   'pg_prewarm--1.0--1.1.sql',

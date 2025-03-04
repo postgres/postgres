@@ -22,7 +22,26 @@ jsonb_plpython = shared_module('jsonb_plpython3',
     'dependencies': [python3_dep, contrib_mod_args['dependencies']],
   },
 )
-contrib_targets += jsonb_plpython
+
+if llvm.found()
+  pyinc = python3_inst.get_variable('INCLUDEPY')
+  llvm_contrib_jsonb_plpython_cflags = [
+    '-I@SOURCE_ROOT@/src/pl/plpython',
+    '-I@SOURCE_ROOT@/contrib',
+    '-I@SOURCE_ROOT@/contrib/hstore',
+    '-DPLPYTHON_LIBNAME="plpython3"',
+    '-I@0@'.format(pyinc),
+  ]
+
+  llvm_gen_contrib_jsonb_plpython = generator(llvm_irgen_command,
+    arguments: llvm_irgen_args + bitcode_cflags + pg_mod_c_args + llvm_contrib_jsonb_plpython_cflags,
+    depends: jsonb_plpython,
+    depfile: '@BASENAME@.c.bc.d',
+    output: '@PLAINNAME@.bc',
+  )
+
+  bc_gen_custom_contrib += llvm_gen_contrib_jsonb_plpython.process(jsonb_plpython_sources)
+endif
 
 install_data(
   'jsonb_plpython3u.control',

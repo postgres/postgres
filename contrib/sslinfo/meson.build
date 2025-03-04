@@ -20,7 +20,11 @@ sslinfo = shared_module('sslinfo',
     'dependencies': [ssl, contrib_mod_args['dependencies']],
   }
 )
-contrib_targets += sslinfo
+
+if llvm.found()
+  contrib_targets += sslinfo
+  llvm_contrib_sources += sslinfo_sources
+endif
 
 install_data(
   'sslinfo--1.0--1.1.sql',

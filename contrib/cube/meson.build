@@ -11,6 +11,7 @@ cube_scan = custom_target('cubescan',
 )
 generated_sources += cube_scan
 cube_sources += cube_scan
+bc_cube_sources = cube_sources
 
 cube_parse = custom_target('cubeparse',
   input: 'cubeparse.y',
@@ -18,6 +19,7 @@ cube_parse = custom_target('cubeparse',
 )
 generated_sources += cube_parse.to_list()
 cube_sources += cube_parse
+bc_cube_sources += cube_parse[0]
 
 if host_system == 'windows'
   cube_sources += rc_lib_gen.process(win32ver_rc, extra_args: [
@@ -30,7 +32,22 @@ cube = shared_module('cube',
   include_directories: include_directories('.'),
   kwargs: contrib_mod_args,
 )
-contrib_targets += cube
+
+if llvm.found()
+  llvm_contrib_cube_cflags = [
+    '-I@BUILD_ROOT@/contrib/cube',
+    '-I@SOURCE_ROOT@/contrib/cube',
+  ]
+
+  llvm_gen_contrib_cube = generator(llvm_irgen_command,
+    arguments: llvm_irgen_args + bitcode_cflags + pg_mod_c_args + llvm_contrib_cube_cflags,
+    depends: cube,
+    depfile: '@BASENAME@.c.bc.d',
+    output: '@PLAINNAME@.bc',
+  )
+
+  bc_gen_custom_contrib += llvm_gen_contrib_cube.process(bc_cube_sources)
+endif
 
 install_data(
   'cube.control',

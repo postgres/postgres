@@ -14,7 +14,11 @@ pg_freespacemap = shared_module('pg_freespacemap',
   pg_freespacemap_sources,
   kwargs: contrib_mod_args,
 )
-contrib_targets += pg_freespacemap
+
+if llvm.found()
+  contrib_targets += pg_freespacemap
+  llvm_contrib_sources += pg_freespacemap_sources
+endif
 
 install_data(
   'pg_freespacemap--1.0--1.1.sql',

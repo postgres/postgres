@@ -17,7 +17,11 @@ pgstattuple = shared_module('pgstattuple',
   c_pch: pch_postgres_h,
   kwargs: contrib_mod_args,
 )
-contrib_targets += pgstattuple
+
+if llvm.found()
+  contrib_targets += pgstattuple
+  llvm_contrib_sources += pgstattuple_sources
+endif
 
 install_data(
   'pgstattuple--1.0--1.1.sql',

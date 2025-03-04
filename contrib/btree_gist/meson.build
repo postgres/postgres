@@ -38,7 +38,11 @@ btree_gist = shared_module('btree_gist',
   c_pch: pch_postgres_h,
   kwargs: contrib_mod_args,
 )
-contrib_targets += btree_gist
+
+if llvm.found()
+  contrib_targets += btree_gist
+  llvm_contrib_sources += btree_gist_sources
+endif
 
 install_data(
   'btree_gist.control',

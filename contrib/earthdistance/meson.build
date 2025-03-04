@@ -14,7 +14,11 @@ earthdistance = shared_module('earthdistance',
   earthdistance_sources,
   kwargs: contrib_mod_args,
 )
-contrib_targets += earthdistance
+
+if llvm.found()
+  contrib_targets += earthdistance
+  llvm_contrib_sources += earthdistance_sources
+endif
 
 install_data(
   'earthdistance.control',

@@ -22,7 +22,26 @@ ltree_plpython = shared_module('ltree_plpython3',
     'dependencies': [python3_dep, contrib_mod_args['dependencies']],
   },
 )
-contrib_targets += ltree_plpython
+
+if llvm.found()
+  pyinc = python3_inst.get_variable('INCLUDEPY')
+  llvm_contrib_ltree_plpython_cflags = [
+    '-I@SOURCE_ROOT@/src/pl/plpython',
+    '-I@SOURCE_ROOT@/contrib',
+    '-I@SOURCE_ROOT@/contrib/ltree',
+    '-DPLPYTHON_LIBNAME="plpython3"',
+    '-I@0@'.format(pyinc),
+  ]
+
+  llvm_gen_contrib_ltree_plpython = generator(llvm_irgen_command,
+    arguments: llvm_irgen_args + bitcode_cflags + pg_mod_c_args + llvm_contrib_ltree_plpython_cflags,
+    depends: ltree_plpython,
+    depfile: '@BASENAME@.c.bc.d',
+    output: '@PLAINNAME@.bc',
+  )
+
+  bc_gen_custom_contrib += llvm_gen_contrib_ltree_plpython.process(ltree_plpython_sources)
+endif
 
 install_data(
   'ltree_plpython3u--1.0.sql',

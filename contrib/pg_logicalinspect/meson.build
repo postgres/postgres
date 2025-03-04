@@ -14,7 +14,11 @@ pg_logicalinspect = shared_module('pg_logicalinspect',
       'dependencies': contrib_mod_args['dependencies'],
   },
 )
-contrib_targets += pg_logicalinspect
+
+if llvm.found()
+  contrib_targets += pg_logicalinspect
+  llvm_contrib_sources += pg_logicalinspect_sources
+endif
 
 install_data(
   'pg_logicalinspect.control',

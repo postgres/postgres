@@ -14,7 +14,11 @@ basebackup_to_shell = shared_module('basebackup_to_shell',
   basebackup_to_shell_sources,
   kwargs: contrib_mod_args,
 )
-contrib_targets += basebackup_to_shell
+
+if llvm.found()
+  contrib_targets += basebackup_to_shell
+  llvm_contrib_sources += basebackup_to_shell_sources
+endif
 
 tests += {
   'name': 'basebackup_to_shell',

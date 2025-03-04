@@ -14,7 +14,11 @@ tsm_system_rows = shared_module('tsm_system_rows',
   tsm_system_rows_sources,
   kwargs: contrib_mod_args,
 )
-contrib_targets += tsm_system_rows
+
+if llvm.found()
+  contrib_targets += tsm_system_rows
+  llvm_contrib_sources += tsm_system_rows_sources
+endif
 
 install_data(
   'tsm_system_rows--1.0.sql',

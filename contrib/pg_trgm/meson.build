@@ -18,7 +18,11 @@ pg_trgm = shared_module('pg_trgm',
   c_pch: pch_postgres_h,
   kwargs: contrib_mod_args,
 )
-contrib_targets += pg_trgm
+
+if llvm.found()
+  contrib_targets += pg_trgm
+  llvm_contrib_sources += pg_trgm_sources
+endif
 
 install_data(
   'pg_trgm--1.0--1.1.sql',

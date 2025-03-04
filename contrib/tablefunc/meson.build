@@ -14,7 +14,11 @@ tablefunc = shared_module('tablefunc',
   tablefunc_sources,
   kwargs: contrib_mod_args,
 )
-contrib_targets += tablefunc
+
+if llvm.found()
+  contrib_targets += tablefunc
+  llvm_contrib_sources += tablefunc_sources
+endif
 
 install_data(
   'tablefunc--1.0.sql',

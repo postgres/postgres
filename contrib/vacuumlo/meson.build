@@ -17,6 +17,10 @@ vacuumlo = executable('vacuumlo',
 )
 contrib_targets += vacuumlo
 
+# if llvm.found()
+#   llvm_contrib_sources += vacuumlo_sources
+# endif
+
 tests += {
   'name': 'vacuumlo',
   'sd': meson.current_source_dir(),

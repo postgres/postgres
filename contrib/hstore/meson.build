@@ -23,7 +23,11 @@ hstore = shared_module('hstore',
   c_pch: pch_postgres_h,
   kwargs: contrib_mod_args,
 )
-contrib_targets += hstore
+
+if llvm.found()
+  contrib_targets += hstore
+  llvm_contrib_sources += hstore_sources
+endif
 
 install_data(
   'hstore.control',

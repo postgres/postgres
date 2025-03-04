@@ -46,7 +46,7 @@ if llvm.found()
     output: '@PLAINNAME@.bc',
   )
 
-  bc_gen_custom += llvm_guc_file.process(guc_scan)
+  bc_gen_custom_backend += llvm_guc_file.process(guc_scan)
 endif
 
 install_data('postgresql.conf.sample',

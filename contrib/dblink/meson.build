@@ -18,6 +18,10 @@ dblink = shared_module('dblink',
 )
 contrib_targets += dblink
 
+# if llvm.found()
+#   llvm_contrib_sources += dblink_sources
+# endif
+
 install_data(
   'dblink.control',
   'dblink--1.0--1.1.sql',

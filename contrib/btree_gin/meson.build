@@ -14,7 +14,11 @@ btree_gin = shared_module('btree_gin',
   btree_gin_sources,
   kwargs: contrib_mod_args,
 )
-contrib_targets += btree_gin
+
+if llvm.found()
+  contrib_targets += btree_gin
+  llvm_contrib_sources += btree_gin_sources
+endif
 
 install_data(
   'btree_gin.control',

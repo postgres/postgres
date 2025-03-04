@@ -4,6 +4,8 @@ seg_sources = files(
   'seg.c',
 )
 
+bc_seg_sources= []
+
 seg_scan = custom_target('segscan',
   input: 'segscan.l',
   output: 'segscan.c',
@@ -11,6 +13,7 @@ seg_scan = custom_target('segscan',
 )
 generated_sources += seg_scan
 seg_sources += seg_scan
+bc_seg_sources += seg_scan
 
 seg_parse = custom_target('segparse',
   input: 'segparse.y',
@@ -18,6 +21,7 @@ seg_parse = custom_target('segparse',
 )
 generated_sources += seg_parse.to_list()
 seg_sources += seg_parse
+bc_seg_sources += seg_parse[0]
 
 if host_system == 'windows'
   seg_sources += rc_lib_gen.process(win32ver_rc, extra_args: [
@@ -30,7 +34,22 @@ seg = shared_module('seg',
   include_directories: include_directories('.'),
   kwargs: contrib_mod_args,
 )
-contrib_targets += seg
+
+if llvm.found()
+  llvm_contrib_seg_cflags = [
+    '-I@BUILD_ROOT@/contrib/seg',
+    '-I@SOURCE_ROOT@/contrib/seg',
+  ]
+
+  llvm_gen_contrib_seg = generator(llvm_irgen_command,
+    arguments: llvm_irgen_args + bitcode_cflags + pg_mod_c_args + llvm_contrib_seg_cflags,
+    depends: seg,
+    depfile: '@BASENAME@.c.bc.d',
+    output: '@PLAINNAME@.bc',
+  )
+
+  bc_gen_custom_contrib += llvm_gen_contrib_seg.process(bc_seg_sources)
+endif
 
 install_data(
   'seg.control',

@@ -14,7 +14,11 @@ dict_int = shared_module('dict_int',
   dict_int_sources,
   kwargs: contrib_mod_args,
 )
-contrib_targets += dict_int
+
+if llvm.found()
+  contrib_targets += dict_int
+  llvm_contrib_sources += dict_int_sources
+endif
 
 install_data(
   'dict_int.control',

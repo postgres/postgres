@@ -17,6 +17,10 @@ oid2name = executable('oid2name',
 )
 contrib_targets += oid2name
 
+# if llvm.found()
+#   llvm_contrib_sources += oid2name_sources
+# endif
+
 tests += {
   'name': 'oid2name',
   'sd': meson.current_source_dir(),

@@ -14,7 +14,11 @@ file_fdw = shared_module('file_fdw',
   file_fdw_sources,
   kwargs: contrib_mod_args,
 )
-contrib_targets += file_fdw
+
+if llvm.found()
+  contrib_targets += file_fdw
+  llvm_contrib_sources += file_fdw_sources
+endif
 
 install_data(
   'file_fdw.control',

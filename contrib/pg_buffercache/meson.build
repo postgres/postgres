@@ -14,7 +14,11 @@ pg_buffercache = shared_module('pg_buffercache',
   pg_buffercache_sources,
   kwargs: contrib_mod_args,
 )
-contrib_targets += pg_buffercache
+
+if llvm.found()
+  contrib_targets += pg_buffercache
+  llvm_contrib_sources += pg_buffercache_sources
+endif
 
 install_data(
   'pg_buffercache--1.0--1.1.sql',

@@ -14,7 +14,11 @@ citext = shared_module('citext',
   citext_sources,
   kwargs: contrib_mod_args,
 )
-contrib_targets += citext
+
+if llvm.found()
+  contrib_targets += citext
+  llvm_contrib_sources += citext_sources
+endif
 
 install_data(
   'citext.control',

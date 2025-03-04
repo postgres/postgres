@@ -24,7 +24,11 @@ passwordcheck = shared_module('passwordcheck',
     'dependencies': contrib_mod_args.get('dependencies') + passwordcheck_deps,
   }
 )
-contrib_targets += passwordcheck
+
+if llvm.found()
+  contrib_targets += passwordcheck
+  llvm_contrib_sources += passwordcheck_sources
+endif
 
 tests += {
   'name': 'passwordcheck',

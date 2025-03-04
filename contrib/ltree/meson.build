@@ -25,7 +25,11 @@ ltree = shared_module('ltree',
   ltree_sources,
   kwargs: contrib_mod_args,
 )
-contrib_targets += ltree
+
+if llvm.found()
+  contrib_targets += ltree
+  llvm_contrib_sources += ltree_sources
+endif
 
 install_data(
   'ltree.control',

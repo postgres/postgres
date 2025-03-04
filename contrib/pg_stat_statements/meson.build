@@ -16,7 +16,11 @@ pg_stat_statements = shared_module('pg_stat_statements',
     'dependencies': contrib_mod_args['dependencies'],
   },
 )
-contrib_targets += pg_stat_statements
+
+if llvm.found()
+  contrib_targets += pg_stat_statements
+  llvm_contrib_sources += pg_stat_statements_sources
+endif
 
 install_data(
   'pg_stat_statements.control',

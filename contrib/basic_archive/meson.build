@@ -14,7 +14,11 @@ basic_archive = shared_module('basic_archive',
   basic_archive_sources,
   kwargs: contrib_mod_args,
 )
-contrib_targets += basic_archive
+
+if llvm.found()
+  contrib_targets += basic_archive
+  llvm_contrib_sources += basic_archive_sources
+endif
 
 tests += {
   'name': 'basic_archive',

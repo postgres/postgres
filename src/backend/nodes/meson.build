@@ -44,6 +44,6 @@ if llvm.found()
     output: '@PLAINNAME@.bc',
   )
 
-  bc_gen_custom += llvm_gen_nodefunc.process(nodefunc_sources,
+  bc_gen_custom_backend += llvm_gen_nodefunc.process(nodefunc_sources,
     preserve_path_from: meson.current_source_dir())
 endif

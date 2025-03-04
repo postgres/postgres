@@ -20,7 +20,12 @@ bloom = shared_module('bloom',
   c_pch: pch_postgres_h,
   kwargs: contrib_mod_args,
 )
-contrib_targets += bloom
+
+if llvm.found()
+  contrib_targets += bloom
+  llvm_contrib_sources += bloom_sources
+endif
+
 
 install_data(
   'bloom.control',

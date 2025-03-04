@@ -86,7 +86,11 @@ pgcrypto = shared_module('pgcrypto',
     'dependencies': [pgcrypto_deps, contrib_mod_args['dependencies']]
   },
 )
-contrib_targets += pgcrypto
+
+if llvm.found()
+  contrib_targets += pgcrypto
+  llvm_contrib_sources += pgcrypto_sources
+endif
 
 install_data(
   'pgcrypto--1.0--1.1.sql',

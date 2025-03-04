@@ -151,7 +151,7 @@ if llvm.found()
     output: '@PLAINNAME@.bc',
   )
 
-  bc_gen_custom += llvm_jsonpath.process(bc_jsonpath_sources)
+  bc_gen_custom_backend += llvm_jsonpath.process(bc_jsonpath_sources)
 endif
 
 #generated_backend_sources += jsonpath_gram.to_list()

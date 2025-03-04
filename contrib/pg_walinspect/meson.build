@@ -14,7 +14,11 @@ pg_walinspect = shared_module('pg_walinspect',
       'dependencies': contrib_mod_args['dependencies'],
   },
 )
-contrib_targets += pg_walinspect
+
+if llvm.found()
+  contrib_targets += pg_walinspect
+  llvm_contrib_sources += pg_walinspect_sources
+endif
 
 install_data(
   'pg_walinspect.control',

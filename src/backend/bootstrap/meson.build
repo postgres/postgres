@@ -45,5 +45,5 @@ if llvm.found()
     output: '@PLAINNAME@.bc',
   )
 
-  bc_gen_custom += llvm_gen_bootparser.process(bc_bootparse_sources)
+  bc_gen_custom_backend += llvm_gen_bootparser.process(bc_bootparse_sources)
 endif

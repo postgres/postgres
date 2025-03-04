@@ -21,7 +21,11 @@ pageinspect = shared_module('pageinspect',
   pageinspect_sources,
   kwargs: contrib_mod_args,
 )
-contrib_targets += pageinspect
+
+if llvm.found()
+  contrib_targets += pageinspect
+  llvm_contrib_sources += pageinspect_sources
+endif
 
 install_data(
   'pageinspect--1.0--1.1.sql',

@@ -14,7 +14,11 @@ tcn = shared_module('tcn',
   tcn_sources,
   kwargs: contrib_mod_args,
 )
-contrib_targets += tcn
+
+if llvm.found()
+  contrib_targets += tcn
+  llvm_contrib_sources += tcn_sources
+endif
 
 install_data(
   'tcn--1.0.sql',

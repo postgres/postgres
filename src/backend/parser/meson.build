@@ -65,5 +65,5 @@ if llvm.found()
     output: '@PLAINNAME@.bc',
   )
 
-  bc_gen_custom += llvm_gen_parser.process(bc_parser_sources)
+  bc_gen_custom_backend += llvm_gen_parser.process(bc_parser_sources)
 endif

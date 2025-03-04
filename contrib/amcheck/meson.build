@@ -15,7 +15,11 @@ amcheck = shared_module('amcheck',
   amcheck_sources,
   kwargs: contrib_mod_args,
 )
-contrib_targets += amcheck
+
+if llvm.found()
+  contrib_targets += amcheck
+  llvm_contrib_sources += amcheck_sources
+endif
 
 install_data(
   'amcheck.control',

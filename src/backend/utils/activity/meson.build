@@ -49,5 +49,5 @@ if llvm.found()
     output: '@PLAINNAME@.bc',
   )
 
-  bc_gen_custom += llvm_wait_event.process(waitevent_sources)
+  bc_gen_custom_backend += llvm_wait_event.process(waitevent_sources)
 endif

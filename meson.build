@@ -857,6 +857,10 @@ if add_languages('cpp', required: llvmopt, native: false)
     bitcode_cflags += '-I@BUILD_ROOT@/src/include'
     bitcode_cflags += '-I@BUILD_ROOT@/src/backend/utils/misc'
     bitcode_cflags += '-I@SOURCE_ROOT@/src/include'
+    extra_inc = get_option('extra_include_dirs')
+    if extra_inc.length() > 0
+      bitcode_cflags += extra_inc
+    endif
 
   endif
 elif llvmopt.auto()
@@ -3108,9 +3112,14 @@ generated_sources_ac = {}
 # contrib source files used to generate bitcode (--with-llvm)
 llvm_contrib_sources = []
 
-# bitcode files generated from generated source files
+# bitcode files generated from generated source files (flex, bison, etc)_
 bc_generated_sources = []
-bc_gen_custom = []
+
+# bitcode files generated from generated source files in backend with custom CFLAGS
+bc_gen_custom_backend = []
+
+# bitcode files generated from generated source files in contrib with custom CFLAGS
+bc_gen_custom_contrib = []
 
 # First visit src/include - all targets creating headers are defined
 # within. That makes it easy to add the necessary dependencies for the
@@ -3346,7 +3355,14 @@ if llvm.found()
 
   llvm_gen = generator(llvm_irgen_command,
     arguments: llvm_irgen_args + bitcode_cflags,
-    depends: [transitive_depend_target] + contrib_targets,
+    depends: [transitive_depend_target, postgres_lib],
+    depfile: '@BASENAME@.c.bc.d',
+    output: '@PLAINNAME@.bc',
+  )
+
+  llvm_gen_contrib = generator(llvm_irgen_command,
+    arguments: llvm_irgen_args + bitcode_cflags + pg_mod_c_args,
+    depends: [transitive_depend_target, contrib_targets],
     depfile: '@BASENAME@.c.bc.d',
     output: '@PLAINNAME@.bc',
   )
@@ -3364,12 +3380,11 @@ if llvm.found()
 
   bc_gen_sources = llvm_gen.process(generated_filenames)
 
-  # bc_contrib_sources = llvm_gen.process(llvm_contrib_sources)
+  bc_contrib_sources = llvm_gen_contrib.process(llvm_contrib_sources)
 
   postgres_llvm = custom_target('bitcode',
     output: ['bitcode'],
-    # input: [bc_backend_sources, bc_generated_sources, bc_contrib_sources],
-    input: [bc_backend_sources, bc_gen_sources, bc_gen_custom],
+    input: [bc_backend_sources, bc_gen_sources, bc_gen_custom_backend, bc_contrib_sources, bc_gen_custom_contrib],
     kwargs: llvm_irlink_kw,
   )
 

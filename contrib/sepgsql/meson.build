@@ -40,6 +40,10 @@ contrib_targets += custom_target('sepgsql.sql',
   install_dir: dir_data / 'contrib',
 )
 
+if llvm.found()
+  llvm_contrib_sources += sepgsql_sources
+endif
+
 tests += {
   'name': 'sepgsql',
   'sd': meson.current_source_dir(),

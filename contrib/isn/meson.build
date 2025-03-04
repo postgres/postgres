@@ -14,7 +14,11 @@ isn = shared_module('isn',
   isn_sources,
   kwargs: contrib_mod_args,
 )
-contrib_targets += isn
+
+if llvm.found()
+  contrib_targets += isn
+  llvm_contrib_sources += isn_sources
+endif
 
 install_data(
   'isn.control',

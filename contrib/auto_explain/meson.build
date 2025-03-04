@@ -14,7 +14,11 @@ auto_explain = shared_module('auto_explain',
   auto_explain_sources,
   kwargs: contrib_mod_args,
 )
-contrib_targets += auto_explain
+
+if llvm.found()
+  contrib_targets += auto_explain
+  llvm_contrib_sources += auto_explain_sources
+endif
 
 tests += {
   'name': 'auto_explain',

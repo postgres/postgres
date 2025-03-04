@@ -67,7 +67,7 @@ if llvm.found()
     output: '@PLAINNAME@.bc',
   )
 
-  bc_gen_custom += llvm_gen_repl.process(bc_repl_sources)
+  bc_gen_custom_backend += llvm_gen_repl.process(bc_repl_sources)
 endif
 
 subdir('logical')

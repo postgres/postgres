@@ -6,6 +6,8 @@ fuzzystrmatch_sources = files(
   'fuzzystrmatch.c',
 )
 
+bc_fuzzystrmatch_sources = fuzzystrmatch_sources
+
 daitch_mokotoff_h = custom_target('daitch_mokotoff',
   input: 'daitch_mokotoff_header.pl',
   output: 'daitch_mokotoff.h',
@@ -27,6 +29,21 @@ fuzzystrmatch = shared_module('fuzzystrmatch',
 )
 contrib_targets += fuzzystrmatch
 
+if llvm.found()
+  llvm_contrib_fuzzystrmatch_cflags = [
+    '-I@BUILD_ROOT@/contrib/fuzzystrmatch',
+    '-I@SOURCE_ROOT@/contrib/fuzzystrmatch',
+  ]
+
+  llvm_gen_contrib_fuzzystrmatch = generator(llvm_irgen_command,
+    arguments: llvm_irgen_args + bitcode_cflags + pg_mod_c_args + llvm_contrib_fuzzystrmatch_cflags,
+    depends: daitch_mokotoff_h,
+    depfile: '@BASENAME@.c.bc.d',
+    output: '@PLAINNAME@.bc',
+  )
+
+  bc_gen_custom_contrib += llvm_gen_contrib_fuzzystrmatch.process(bc_fuzzystrmatch_sources)
+endif
 install_data(
   'fuzzystrmatch.control',
   'fuzzystrmatch--1.0--1.1.sql',
