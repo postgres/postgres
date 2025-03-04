@@ -1005,10 +1005,11 @@ PostgreSQL documentation
 
   <para>
    <application>pg_basebackup</application> works with servers of the same
-   or an older major version, down to 9.1. However, WAL streaming mode (<literal>-X
-   stream</literal>) only works with server version 9.3 and later, and tar format
+   or older major version, down to 9.1. However, WAL streaming mode (<literal>-X
+   stream</literal>) only works with server version 9.3 and later, the tar format
    (<literal>--format=tar</literal>) only works with server version 9.5
-   and later.
+   and later, and incremental backup (<literal>--incremental</literal>) only works
+   with server version 17 and later.
   </para>
 
   <para>
