@@ -239,7 +239,6 @@ task:
 
 task:
   depends_on: SanityCheck
-  trigger_type: manual
 
   env:
     # Below are experimentally derived to be a decent choice.
