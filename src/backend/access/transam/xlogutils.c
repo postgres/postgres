@@ -840,11 +840,6 @@ wal_segment_close(XLogReaderState *state)
  *
  * Public because it would likely be very helpful for someone writing another
  * output method outside walsender, e.g. in a bgworker.
- *
- * TODO: The walsender has its own version of this, but it relies on the
- * walsender's latch being set whenever WAL is flushed. No such infrastructure
- * exists for normal backends, so we have to do a check/sleep/repeat style of
- * loop for now.
  */
 int
 read_local_xlog_page(XLogReaderState *state, XLogRecPtr targetPagePtr,
@@ -884,7 +879,14 @@ read_local_xlog_page_guts(XLogReaderState *state, XLogRecPtr targetPagePtr,
 
 	loc = targetPagePtr + reqLen;
 
-	/* Loop waiting for xlog to be available if necessary */
+	/*
+	 * Loop waiting for xlog to be available if necessary
+	 *
+	 * TODO: The walsender has its own version of this function, which uses a
+	 * condition variable to wake up whenever WAL is flushed. We could use the
+	 * same infrastructure here, instead of the check/sleep/repeat style of
+	 * loop.
+	 */
 	while (1)
 	{
 		/*
