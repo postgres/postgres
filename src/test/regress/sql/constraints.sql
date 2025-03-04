@@ -531,10 +531,9 @@ COMMIT;
 
 SELECT * FROM unique_tbl;
 
--- enforcibility cannot be specified or set for unique constrain
+-- enforceability cannot be specified or set for unique constraint
 CREATE TABLE UNIQUE_EN_TBL(i int UNIQUE ENFORCED);
 CREATE TABLE UNIQUE_NOTEN_TBL(i int UNIQUE NOT ENFORCED);
--- XXX: error message is misleading here
 ALTER TABLE unique_tbl ALTER CONSTRAINT unique_tbl_i_key ENFORCED;
 ALTER TABLE unique_tbl ALTER CONSTRAINT unique_tbl_i_key NOT ENFORCED;
 

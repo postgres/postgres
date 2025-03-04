@@ -1278,10 +1278,18 @@ DETAIL:  Key (fk)=(20) is not present in table "pktable".
 COMMIT;
 -- try additional syntax
 ALTER TABLE fktable ALTER CONSTRAINT fktable_fk_fkey NOT DEFERRABLE;
--- illegal option
+-- illegal options
 ALTER TABLE fktable ALTER CONSTRAINT fktable_fk_fkey NOT DEFERRABLE INITIALLY DEFERRED;
 ERROR:  constraint declared INITIALLY DEFERRED must be DEFERRABLE
 LINE 1: ...e ALTER CONSTRAINT fktable_fk_fkey NOT DEFERRABLE INITIALLY ...
+                                                             ^
+ALTER TABLE fktable ALTER CONSTRAINT fktable_fk_fkey NO INHERIT;
+ERROR:  FOREIGN KEY constraints cannot be marked NO INHERIT
+LINE 1: ...ER TABLE fktable ALTER CONSTRAINT fktable_fk_fkey NO INHERIT...
+                                                             ^
+ALTER TABLE fktable ALTER CONSTRAINT fktable_fk_fkey NOT VALID;
+ERROR:  FOREIGN KEY constraints cannot be marked NOT VALID
+LINE 1: ...ER TABLE fktable ALTER CONSTRAINT fktable_fk_fkey NOT VALID;
                                                              ^
 -- test order of firing of FK triggers when several RI-induced changes need to
 -- be made to the same row.  This was broken by subtransaction-related

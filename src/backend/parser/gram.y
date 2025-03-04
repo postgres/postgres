@@ -2663,7 +2663,7 @@ alter_table_cmd:
 					n->def = (Node *) c;
 					c->conname = $3;
 					c->alterDeferrability = true;
-					processCASbits($4, @4, "ALTER CONSTRAINT statement",
+					processCASbits($4, @4, "FOREIGN KEY",
 									&c->deferrable,
 									&c->initdeferred,
 									NULL, NULL, NULL, yyscanner);
