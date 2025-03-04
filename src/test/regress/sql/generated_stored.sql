@@ -319,6 +319,9 @@ CREATE TABLE gtest20a (a int PRIMARY KEY, b int GENERATED ALWAYS AS (a * 2) STOR
 INSERT INTO gtest20a (a) VALUES (10);
 INSERT INTO gtest20a (a) VALUES (30);
 ALTER TABLE gtest20a ADD CHECK (b < 50);  -- fails on existing row
+-- table rewrite cases
+ALTER TABLE gtest20a ADD COLUMN c float8 DEFAULT random() CHECK (b < 50); -- fails on existing row
+ALTER TABLE gtest20a ADD COLUMN c float8 DEFAULT random() CHECK (b < 61); -- ok
 
 CREATE TABLE gtest20b (a int PRIMARY KEY, b int GENERATED ALWAYS AS (a * 2) STORED);
 INSERT INTO gtest20b (a) VALUES (10);

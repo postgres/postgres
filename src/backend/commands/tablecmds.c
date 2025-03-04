@@ -6137,7 +6137,7 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap)
 		{
 			case CONSTR_CHECK:
 				needscan = true;
-				con->qualstate = ExecPrepareExpr((Expr *) expand_generated_columns_in_expr(con->qual, newrel ? newrel : oldrel, 1), estate);
+				con->qualstate = ExecPrepareExpr((Expr *) expand_generated_columns_in_expr(con->qual, oldrel, 1), estate);
 				break;
 			case CONSTR_FOREIGN:
 				/* Nothing to do here */
