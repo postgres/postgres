@@ -2649,7 +2649,7 @@ alter_table_cmd:
 					n->def = (Node *) c;
 					c->contype = CONSTR_FOREIGN; /* others not supported, yet */
 					c->conname = $3;
-					processCASbits($4, @4, "ALTER CONSTRAINT statement",
+					processCASbits($4, @4, "FOREIGN KEY",
 									&c->deferrable,
 									&c->initdeferred,
 									NULL, NULL, yyscanner);
