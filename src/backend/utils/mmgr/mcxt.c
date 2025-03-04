@@ -1356,7 +1356,8 @@ palloc0(Size size)
 	context->isReset = false;
 
 	ret = context->methods->alloc(context, size, 0);
-
+	/* We expect OOM to be handled by the alloc function */
+	Assert(ret != NULL);
 	VALGRIND_MEMPOOL_ALLOC(context, ret, size);
 
 	MemSetAligned(ret, 0, size);
@@ -1379,6 +1380,8 @@ palloc_extended(Size size, int flags)
 	ret = context->methods->alloc(context, size, flags);
 	if (unlikely(ret == NULL))
 	{
+		/* NULL can be returned only when using MCXT_ALLOC_NO_OOM */
+		Assert(flags & MCXT_ALLOC_NO_OOM);
 		return NULL;
 	}
 
