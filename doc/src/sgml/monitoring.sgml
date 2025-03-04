@@ -900,6 +900,12 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
        Possible values are:
        <itemizedlist>
         <listitem>
+         <para>
+          <literal>starting</literal>: The backend is in initial startup. Client
+          authentication is performed during this phase.
+         </para>
+        </listitem>
+        <listitem>
         <para>
           <literal>active</literal>: The backend is executing a query.
          </para>

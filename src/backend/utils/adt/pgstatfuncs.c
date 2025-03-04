@@ -393,6 +393,9 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 
 			switch (beentry->st_state)
 			{
+				case STATE_STARTING:
+					values[4] = CStringGetTextDatum("starting");
+					break;
 				case STATE_IDLE:
 					values[4] = CStringGetTextDatum("idle");
 					break;
