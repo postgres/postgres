@@ -55,7 +55,7 @@ get_key_by_name(GenericKeyring *keyring, const char *key_name, KeyringReturnCode
 	if (fd < 0)
 		return NULL;
 
-	key = palloc(sizeof(KeyInfo));
+	key = palloc_object(KeyInfo);
 	while (true)
 	{
 		bytes_read = pg_pread(fd, key, sizeof(KeyInfo), curr_pos);

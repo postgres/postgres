@@ -31,6 +31,8 @@ extern void RegisterKeyProvider(const TDEKeyringRoutine *routine, ProviderType t
 extern void *palloc(size_t);
 extern void pfree(void *);
 
+#define palloc_object(type) ((type *) palloc(sizeof(type)))
+
 static void set_key_by_name(GenericKeyring *keyring, KeyInfo *key);
 static KeyInfo *get_key_by_name(GenericKeyring *keyring, const char *key_name, KeyringReturnCodes *return_code);
 
@@ -230,7 +232,7 @@ get_key_by_name(GenericKeyring *keyring, const char *key_name, KeyringReturnCode
 
 	/* 2. get key */
 
-	key = palloc(sizeof(KeyInfo));
+	key = palloc_object(KeyInfo);
 
 	{
 		char	   *keyp = NULL;

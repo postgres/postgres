@@ -83,7 +83,7 @@ RegisterKeyProvider(const TDEKeyringRoutine *routine, ProviderType type)
 #ifndef FRONTEND
 	oldcontext = MemoryContextSwitchTo(TopMemoryContext);
 #endif
-	kp = palloc(sizeof(KeyProviders));
+	kp = palloc_object(KeyProviders);
 	kp->routine = (TDEKeyringRoutine *) routine;
 	kp->type = type;
 #ifndef FRONTEND

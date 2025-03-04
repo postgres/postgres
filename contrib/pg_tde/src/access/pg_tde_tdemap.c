@@ -1339,7 +1339,7 @@ pg_tde_read_one_keydata(int keydata_fd, int32 key_index, TDEPrincipalKey *princi
 	}
 
 	/* Allocate and fill in the structure */
-	enc_rel_key_data = (InternalKey *) palloc(sizeof(InternalKey));
+	enc_rel_key_data = palloc_object(InternalKey);
 	enc_rel_key_data->ctx = NULL;
 
 	/* Read the encrypted key */
@@ -1397,10 +1397,8 @@ pg_tde_get_principal_key_info(Oid dbOid)
 	 */
 	if (!is_new_file)
 	{
-		size_t		sz = sizeof(TDEPrincipalKeyInfo);
-
-		principal_key_info = (TDEPrincipalKeyInfo *) palloc(sz);
-		memcpy(principal_key_info, &fheader.principal_key_info, sz);
+		principal_key_info = palloc_object(TDEPrincipalKeyInfo);
+		memcpy(principal_key_info, &fheader.principal_key_info, sizeof(TDEPrincipalKeyInfo));
 	}
 
 	return principal_key_info;
@@ -1617,8 +1615,7 @@ pg_tde_add_wal_key_to_cache(InternalKey *cached_key, XLogRecPtr start_lsn)
 
 	oldCtx = MemoryContextSwitchTo(TopMemoryContext);
 #endif
-	wal_rec = (WALKeyCacheRec *) palloc(sizeof(WALKeyCacheRec));
-	memset(wal_rec, 0, sizeof(WALKeyCacheRec));
+	wal_rec = palloc0_object(WALKeyCacheRec);
 #ifndef FRONTEND
 	MemoryContextSwitchTo(oldCtx);
 #endif

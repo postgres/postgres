@@ -108,7 +108,7 @@ tde_mdwritev(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 	{
 		unsigned char *local_blocks = palloc(BLCKSZ * (nblocks + 1));
 		unsigned char *local_blocks_aligned = (unsigned char *) TYPEALIGN(PG_IO_ALIGN_SIZE, local_blocks);
-		void	  **local_buffers = palloc(sizeof(void *) * nblocks);
+		void	  **local_buffers = palloc_array(void *, nblocks);
 
 		AesInit();
 

@@ -277,7 +277,7 @@ get_key_by_name(GenericKeyring *keyring, const char *key_name, KeyringReturnCode
 	elog(DEBUG1, "Retrieved base64 key: %s", responseKey);
 #endif
 
-	key = palloc(sizeof(KeyInfo));
+	key = palloc_object(KeyInfo);
 	key->data.len = pg_b64_decode(responseKey, strlen(responseKey), (char *) key->data.data, MAX_KEY_DATA_SIZE);
 
 	if (key->data.len > MAX_KEY_DATA_SIZE)

@@ -354,7 +354,7 @@ set_principal_key_with_keyring(const char *key_name, const char *provider_name,
 		return false;
 	}
 
-	new_principal_key = palloc(sizeof(TDEPrincipalKey));
+	new_principal_key = palloc_object(TDEPrincipalKey);
 	new_principal_key->keyInfo.databaseId = dbOid;
 	new_principal_key->keyInfo.keyringId = new_keyring->keyring_id;
 	memcpy(new_principal_key->keyInfo.name, keyInfo->name, TDE_KEY_NAME_LEN);
@@ -762,7 +762,7 @@ get_principal_key_from_keyring(Oid dbOid, bool pushToCache)
 		return NULL;
 	}
 
-	principalKey = palloc(sizeof(TDEPrincipalKey));
+	principalKey = palloc_object(TDEPrincipalKey);
 
 	memcpy(&principalKey->keyInfo, principalKeyInfo, sizeof(principalKey->keyInfo));
 	memcpy(principalKey->keyData, keyInfo->data.data, keyInfo->data.len);
@@ -862,7 +862,7 @@ GetPrincipalKey(Oid dbOid, LWLockMode lockMode)
 		return NULL;
 	}
 
-	newPrincipalKey = palloc(sizeof(TDEPrincipalKey));
+	newPrincipalKey = palloc_object(TDEPrincipalKey);
 	memcpy(newPrincipalKey, principalKey, sizeof(TDEPrincipalKey));
 	newPrincipalKey->keyInfo.databaseId = dbOid;
 
@@ -983,7 +983,7 @@ pg_tde_rotate_default_key_for_database(TDEPrincipalKey *oldKey, TDEPrincipalKey 
 {
 	bool		is_rotated;
 
-	TDEPrincipalKey *newKey = palloc(sizeof(TDEPrincipalKey));
+	TDEPrincipalKey *newKey = palloc_object(TDEPrincipalKey);
 
 	memcpy(newKey, newKeyTemplate, sizeof(TDEPrincipalKey));
 	newKey->keyInfo.databaseId = oldKey->keyInfo.databaseId;

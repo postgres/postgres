@@ -173,7 +173,7 @@ AesEncryptKey(const TDEPrincipalKey *principal_key, Oid dbOid, InternalKey *rel_
 
 	memcpy(iv, &dbOid, sizeof(Oid));
 
-	*p_enc_rel_key_data = (InternalKey *) palloc(sizeof(InternalKey));
+	*p_enc_rel_key_data = palloc_object(InternalKey);
 	memcpy(*p_enc_rel_key_data, rel_key_data, sizeof(InternalKey));
 
 	AesEncrypt(principal_key->keyData, iv, (unsigned char *) rel_key_data, INTERNAL_KEY_LEN, (unsigned char *) *p_enc_rel_key_data, (int *) enc_key_bytes);
@@ -198,7 +198,7 @@ AesDecryptKey(const TDEPrincipalKey *principal_key, Oid dbOid, InternalKey **p_r
 
 	memcpy(iv, &dbOid, sizeof(Oid));
 
-	*p_rel_key_data = (InternalKey *) palloc(sizeof(InternalKey));
+	*p_rel_key_data = palloc_object(InternalKey);
 
 	/* Fill in the structure */
 	memcpy(*p_rel_key_data, enc_rel_key_data, sizeof(InternalKey));
