@@ -396,7 +396,7 @@ $oldnode->stop;
 # Cause a failure at the start of pg_upgrade, this should create the logging
 # directory pg_upgrade_output.d but leave it around.  Keep --check for an
 # early exit.
-command_fails(
+command_checks_all(
 	[
 		'pg_upgrade', '--no-sync',
 		'-d', $oldnode->data_dir,
@@ -408,6 +408,9 @@ command_fails(
 		'-P', $newnode->port,
 		$mode, '--check',
 	],
+	1,
+	[qr{check for ".*?does/not/exist" failed}],
+	[],
 	'run of pg_upgrade --check for new instance with incorrect binary path');
 ok(-d $newnode->data_dir . "/pg_upgrade_output.d",
 	"pg_upgrade_output.d/ not removed after pg_upgrade failure");

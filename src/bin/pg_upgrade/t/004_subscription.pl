@@ -130,7 +130,7 @@ $old_sub->safe_psql('postgres',
 
 $old_sub->stop;
 
-command_fails(
+command_checks_all(
 	[
 		'pg_upgrade',
 		'--no-sync',
@@ -144,6 +144,11 @@ command_fails(
 		$mode,
 		'--check',
 	],
+	1,
+	[
+		qr/\QYour installation contains subscriptions without origin or having relations not in i (initialize) or r (ready) state\E/
+	],
+	[],
 	'run of pg_upgrade --check for old instance with relation in \'d\' datasync(invalid) state and missing replication origin'
 );
 

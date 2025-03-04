@@ -41,7 +41,7 @@ command_like(
 	'updated default char signedness is unsigned in control file');
 
 # Cannot use --set-char-signedness option for upgrading from v18+
-command_fails(
+command_checks_all(
 	[
 		'pg_upgrade', '--no-sync',
 		'-d', $old->data_dir,
@@ -54,6 +54,9 @@ command_fails(
 		'--set-char-signedness', 'signed',
 		$mode
 	],
+	1,
+	[qr/--set-char-signedness option cannot be used/],
+	[],
 	'--set-char-signedness option cannot be used for upgrading from v18 or later'
 );
 
