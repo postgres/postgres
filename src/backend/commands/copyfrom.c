@@ -153,11 +153,11 @@ static const CopyFromRoutine CopyFromRoutineBinary = {
 
 /* Return a COPY FROM routine for the given options */
 static const CopyFromRoutine *
-CopyFromGetRoutine(CopyFormatOptions opts)
+CopyFromGetRoutine(const CopyFormatOptions *opts)
 {
-	if (opts.csv_mode)
+	if (opts->csv_mode)
 		return &CopyFromRoutineCSV;
-	else if (opts.binary)
+	else if (opts->binary)
 		return &CopyFromRoutineBinary;
 
 	/* default is text */
@@ -1574,7 +1574,7 @@ BeginCopyFrom(ParseState *pstate,
 	ProcessCopyOptions(pstate, &cstate->opts, true /* is_from */ , options);
 
 	/* Set the format routine */
-	cstate->routine = CopyFromGetRoutine(cstate->opts);
+	cstate->routine = CopyFromGetRoutine(&cstate->opts);
 
 	/* Process the target relation */
 	cstate->rel = rel;

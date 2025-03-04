@@ -174,11 +174,11 @@ static const CopyToRoutine CopyToRoutineBinary = {
 
 /* Return a COPY TO routine for the given options */
 static const CopyToRoutine *
-CopyToGetRoutine(CopyFormatOptions opts)
+CopyToGetRoutine(const CopyFormatOptions *opts)
 {
-	if (opts.csv_mode)
+	if (opts->csv_mode)
 		return &CopyToRoutineCSV;
-	else if (opts.binary)
+	else if (opts->binary)
 		return &CopyToRoutineBinary;
 
 	/* default is text */
@@ -700,7 +700,7 @@ BeginCopyTo(ParseState *pstate,
 	ProcessCopyOptions(pstate, &cstate->opts, false /* is_from */ , options);
 
 	/* Set format routine */
-	cstate->routine = CopyToGetRoutine(cstate->opts);
+	cstate->routine = CopyToGetRoutine(&cstate->opts);
 
 	/* Process the source/target relation or query */
 	if (rel)
