@@ -631,7 +631,6 @@ scan_key_provider_file(ProviderScanType scanType, void *scanKey, Oid dbOid)
 	fd = BasicOpenFile(kp_info_path, PG_BINARY);
 	if (fd < 0)
 	{
-		fprintf(stderr, "WTF\n");
 		LWLockRelease(tde_provider_info_lock());
 		ereport(DEBUG2,
 				(errcode_for_file_access(),
