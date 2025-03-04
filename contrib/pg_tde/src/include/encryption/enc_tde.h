@@ -27,20 +27,6 @@ extern void pg_tde_crypt(const char *iv_prefix, uint32 start_offset, const char 
 #define PG_TDE_DECRYPT_DATA(_iv_prefix, _start_offset, _data, _data_len, _out, _key) \
 	pg_tde_crypt(_iv_prefix, _start_offset, _data, _data_len, _out, _key, "DECRYPT")
 
-#define PG_TDE_DECRYPT_TUPLE(_tuple, _out_tuple, _key) \
-	pg_tde_crypt_tuple(_tuple, _out_tuple, _key, "DECRYPT-TUPLE")
-
-#define PG_TDE_DECRYPT_TUPLE_EX(_tuple, _out_tuple, _key, _context) \
-	do { \
-	const char* _msg_context = "DECRYPT-TUPLE-"_context ; \
-	pg_tde_crypt_tuple(_tuple, _out_tuple, _key, _msg_context); \
-	} while(0)
-
-#define PG_TDE_ENCRYPT_PAGE_ITEM(_iv_prefix, _start_offset, _data, _data_len, _out, _key) \
-	do { \
-		pg_tde_crypt(_iv_prefix, _start_offset, _data, _data_len, _out, _key, "ENCRYPT-PAGE-ITEM"); \
-	} while(0)
-
 extern void AesEncryptKey(const TDEPrincipalKey *principal_key, Oid dbOid, InternalKey *rel_key_data, InternalKey **p_enc_rel_key_data, size_t *enc_key_bytes);
 extern void AesDecryptKey(const TDEPrincipalKey *principal_key, Oid dbOid, InternalKey **p_rel_key_data, InternalKey *enc_rel_key_data, size_t *key_bytes);
 
