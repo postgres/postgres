@@ -123,6 +123,7 @@ RelKeyCache tde_rel_key_cache = {
 static WALKeyCacheRec *tde_wal_key_cache = NULL;
 static WALKeyCacheRec *tde_wal_key_last_rec = NULL;
 
+static InternalKey *pg_tde_get_key_from_file(const RelFileLocator *rlocator, uint32 key_type, bool no_map_ok);
 static int32 pg_tde_process_map_entry(const RelFileLocator *rlocator, uint32 key_type, char *db_map_path, off_t *offset, bool should_delete);
 static InternalKey *pg_tde_read_keydata(char *db_keydata_path, int32 key_index, TDEPrincipalKey *principal_key);
 static InternalKey *tde_decrypt_rel_key(TDEPrincipalKey *principal_key, InternalKey *enc_rel_key_data, Oid dbOid);
@@ -978,12 +979,11 @@ pg_tde_wal_last_key_set_lsn(XLogRecPtr lsn, const char *keyfile_path)
  * Reads the key of the required relation. It identifies its map entry and then simply
  * reads the key data from the keydata file.
  */
-InternalKey *
+static InternalKey *
 pg_tde_get_key_from_file(const RelFileLocator *rlocator, uint32 key_type, bool no_map_ok)
 {
 	int32		key_index = 0;
 	TDEPrincipalKey *principal_key;
-	InternalKey *rel_key_data;
 	InternalKey *enc_rel_key_data;
 	off_t		offset = 0;
 	LWLock	   *lock_pk = tde_lwlock_enc_keys();
@@ -1037,9 +1037,7 @@ pg_tde_get_key_from_file(const RelFileLocator *rlocator, uint32 key_type, bool n
 	enc_rel_key_data = pg_tde_read_keydata(db_keydata_path, key_index, principal_key);
 	LWLockRelease(lock_pk);
 
-	rel_key_data = tde_decrypt_rel_key(principal_key, enc_rel_key_data, rlocator->dbOid);
-
-	return rel_key_data;
+	return tde_decrypt_rel_key(principal_key, enc_rel_key_data, rlocator->dbOid);
 }
 
 /*

@@ -108,7 +108,6 @@ extern TDEPrincipalKeyInfo *pg_tde_get_principal_key_info(Oid dbOid);
 extern bool pg_tde_save_principal_key(TDEPrincipalKeyInfo *principal_key_info, bool truncate_existing, bool update_header);
 extern bool pg_tde_perform_rotate_key(TDEPrincipalKey *principal_key, TDEPrincipalKey *new_principal_key);
 extern bool pg_tde_write_map_keydata_files(off_t map_size, char *m_file_data, off_t keydata_size, char *k_file_data);
-extern InternalKey *pg_tde_get_key_from_file(const RelFileLocator *rlocator, uint32 key_type, bool no_map_ok);
 
 const char *tde_sprint_key(InternalKey *k);
 

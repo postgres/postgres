@@ -1,7 +1,6 @@
 #include "pg_tde_defines.h"
 
 #include "postgres.h"
-#include "utils/memutils.h"
 
 #include "access/pg_tde_tdemap.h"
 #include "encryption/enc_tde.h"
@@ -194,24 +193,12 @@ AesDecryptKey(const TDEPrincipalKey *principal_key, Oid dbOid, InternalKey **p_r
 {
 	unsigned char iv[16] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 
-#ifndef FRONTEND
-	MemoryContext oldcontext;
-#endif
-
 	/* Ensure we are getting a valid pointer here */
 	Assert(principal_key);
 
 	memcpy(iv, &dbOid, sizeof(Oid));
 
-#ifndef FRONTEND
-	oldcontext = MemoryContextSwitchTo(TopMemoryContext);
-#endif
-
 	*p_rel_key_data = (InternalKey *) palloc(sizeof(InternalKey));
-
-#ifndef FRONTEND
-	MemoryContextSwitchTo(oldcontext);
-#endif
 
 	/* Fill in the structure */
 	memcpy(*p_rel_key_data, enc_rel_key_data, sizeof(InternalKey));
