@@ -81,6 +81,9 @@ ecpg_keywords.o: ecpg_kwlist_d.h
 c_keywords.o: c_kwlist_d.h
 keywords.o: $(top_srcdir)/src/include/parser/kwlist.h
 
+check:
+	$(prove_check)
+
 install: all installdirs
 	$(INSTALL_PROGRAM) ecpg$(X) '$(DESTDIR)$(bindir)'
 

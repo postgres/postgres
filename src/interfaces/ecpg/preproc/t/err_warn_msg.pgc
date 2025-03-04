@@ -1,0 +1,42 @@
+/* Test ECPG warning/error messages */
+
+#include <stdlib.h>
+
+int
+main(void)
+{
+	EXEC SQL BEGIN DECLARE SECTION;
+	char *cursor_var = "mycursor";
+	short a;
+	EXEC SQL END DECLARE SECTION;
+
+	/* For consistency with other tests */
+	EXEC SQL CONNECT TO testdb AS con1;
+
+	/* Test AT option errors */
+	EXEC SQL AT con1 CONNECT TO testdb2;
+	EXEC SQL AT con1 DISCONNECT;
+	EXEC SQL AT con1 SET CONNECTION TO testdb2;
+	EXEC SQL AT con1 TYPE string IS char[11];
+	EXEC SQL AT con1 WHENEVER NOT FOUND CONTINUE;
+	EXEC SQL AT con1 VAR a IS int;
+
+	/* Test COPY FROM STDIN warning */
+	EXEC SQL COPY test FROM stdin;
+
+	/* Test same variable in multi declare statement */
+	EXEC SQL DECLARE :cursor_var CURSOR FOR SELECT * FROM test;
+	EXEC SQL DECLARE :cursor_var CURSOR FOR SELECT * FROM test;
+
+	/* Test duplicate cursor declarations */
+	EXEC SQL DECLARE duplicate_cursor CURSOR FOR SELECT * FROM test;
+	EXEC SQL DECLARE duplicate_cursor CURSOR FOR SELECT * FROM test;
+
+	/* Test SHOW ALL error */
+	EXEC SQL SHOW ALL;
+
+	/* Test deprecated LIMIT syntax warning */
+	EXEC SQL SELECT * FROM test LIMIT 10, 5;
+
+	return 0;
+}
