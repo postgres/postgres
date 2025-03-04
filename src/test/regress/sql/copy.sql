@@ -193,7 +193,8 @@ begin
        bytes_processed > 0 as has_bytes_processed,
        bytes_total > 0 as has_bytes_total,
        tuples_processed,
-       tuples_excluded
+       tuples_excluded,
+       tuples_skipped
       from pg_stat_progress_copy
       where pid = pg_backend_pid())
   select into report (to_jsonb(r)) as value
@@ -221,6 +222,13 @@ truncate tab_progress_reporting;
 \set filename :abs_srcdir '/data/emp.data'
 copy tab_progress_reporting from :'filename'
 	where (salary < 2000);
+
+-- Generate COPY FROM report with PIPE, with some skipped tuples.
+copy tab_progress_reporting from stdin(on_error ignore);
+sharon	x	(15,12)	x	sam
+sharon	25	(15,12)	1000	sam
+sharon	y	(15,12)	x	sam
+\.
 
 drop trigger check_after_tab_progress_reporting on tab_progress_reporting;
 drop function notice_after_tab_progress_reporting();

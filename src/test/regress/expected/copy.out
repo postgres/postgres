@@ -181,7 +181,8 @@ begin
        bytes_processed > 0 as has_bytes_processed,
        bytes_total > 0 as has_bytes_total,
        tuples_processed,
-       tuples_excluded
+       tuples_excluded,
+       tuples_skipped
       from pg_stat_progress_copy
       where pid = pg_backend_pid())
   select into report (to_jsonb(r)) as value
@@ -197,13 +198,17 @@ create trigger check_after_tab_progress_reporting
 	execute function notice_after_tab_progress_reporting();
 -- Generate COPY FROM report with PIPE.
 copy tab_progress_reporting from stdin;
-INFO:  progress: {"type": "PIPE", "command": "COPY FROM", "relname": "tab_progress_reporting", "has_bytes_total": false, "tuples_excluded": 0, "tuples_processed": 3, "has_bytes_processed": true}
+INFO:  progress: {"type": "PIPE", "command": "COPY FROM", "relname": "tab_progress_reporting", "tuples_skipped": 0, "has_bytes_total": false, "tuples_excluded": 0, "tuples_processed": 3, "has_bytes_processed": true}
 -- Generate COPY FROM report with FILE, with some excluded tuples.
 truncate tab_progress_reporting;
 \set filename :abs_srcdir '/data/emp.data'
 copy tab_progress_reporting from :'filename'
 	where (salary < 2000);
-INFO:  progress: {"type": "FILE", "command": "COPY FROM", "relname": "tab_progress_reporting", "has_bytes_total": true, "tuples_excluded": 1, "tuples_processed": 2, "has_bytes_processed": true}
+INFO:  progress: {"type": "FILE", "command": "COPY FROM", "relname": "tab_progress_reporting", "tuples_skipped": 0, "has_bytes_total": true, "tuples_excluded": 1, "tuples_processed": 2, "has_bytes_processed": true}
+-- Generate COPY FROM report with PIPE, with some skipped tuples.
+copy tab_progress_reporting from stdin(on_error ignore);
+NOTICE:  2 rows were skipped due to data type incompatibility
+INFO:  progress: {"type": "PIPE", "command": "COPY FROM", "relname": "tab_progress_reporting", "tuples_skipped": 2, "has_bytes_total": false, "tuples_excluded": 0, "tuples_processed": 1, "has_bytes_processed": true}
 drop trigger check_after_tab_progress_reporting on tab_progress_reporting;
 drop function notice_after_tab_progress_reporting();
 drop table tab_progress_reporting;
