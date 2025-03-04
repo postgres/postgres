@@ -64,22 +64,20 @@ SELECT * FROM pred_tab t WHERE t.b IS NULL OR t.c IS NULL;
 -- and b) its Var is not nullable by any outer joins
 EXPLAIN (COSTS OFF)
 SELECT * FROM pred_tab t1
-    LEFT JOIN pred_tab t2 ON TRUE
-    LEFT JOIN pred_tab t3 ON t2.a IS NOT NULL;
+    LEFT JOIN pred_tab t2 ON t1.a IS NOT NULL;
 
 -- Ensure the IS_NOT_NULL qual is not ignored when columns are made nullable
 -- by an outer join
 EXPLAIN (COSTS OFF)
 SELECT * FROM pred_tab t1
-    LEFT JOIN pred_tab t2 ON t1.a = 1
+    FULL JOIN pred_tab t2 ON t1.a = t2.a
     LEFT JOIN pred_tab t3 ON t2.a IS NOT NULL;
 
 -- Ensure the IS_NULL qual is reduced to constant-FALSE, since a) it's on a NOT
 -- NULL column, and b) its Var is not nullable by any outer joins
 EXPLAIN (COSTS OFF)
 SELECT * FROM pred_tab t1
-    LEFT JOIN pred_tab t2 ON TRUE
-    LEFT JOIN pred_tab t3 ON t2.a IS NULL AND t2.b = 1;
+    LEFT JOIN pred_tab t2 ON t1.a IS NULL;
 
 -- Ensure the IS_NULL qual is not reduced to constant-FALSE when the column is
 -- nullable by an outer join
@@ -95,22 +93,20 @@ SELECT * FROM pred_tab t1
 -- Ensure the OR clause is ignored when an OR branch is provably always true
 EXPLAIN (COSTS OFF)
 SELECT * FROM pred_tab t1
-    LEFT JOIN pred_tab t2 ON TRUE
-    LEFT JOIN pred_tab t3 ON t2.a IS NOT NULL OR t2.b = 1;
+    LEFT JOIN pred_tab t2 ON t1.a IS NOT NULL OR t2.b = 1;
 
 -- Ensure the NullTest is not ignored when the column is nullable by an outer
 -- join
 EXPLAIN (COSTS OFF)
 SELECT * FROM pred_tab t1
-    LEFT JOIN pred_tab t2 ON t1.a = 1
+    FULL JOIN pred_tab t2 ON t1.a = t2.a
     LEFT JOIN pred_tab t3 ON t2.a IS NOT NULL OR t2.b = 1;
 
 -- Ensure the OR clause is reduced to constant-FALSE when all OR branches are
 -- provably false
 EXPLAIN (COSTS OFF)
 SELECT * FROM pred_tab t1
-    LEFT JOIN pred_tab t2 ON TRUE
-    LEFT JOIN pred_tab t3 ON (t2.a IS NULL OR t2.c IS NULL) AND t2.b = 1;
+    LEFT JOIN pred_tab t2 ON (t1.a IS NULL OR t1.c IS NULL);
 
 -- Ensure the OR clause is not reduced to constant-FALSE when a column is
 -- made nullable from an outer join
@@ -148,17 +144,42 @@ SELECT * FROM pred_parent WHERE a IS NULL;
 
 DROP TABLE pred_parent, pred_child;
 
--- Validate the additional constant-FALSE qual does not cause inconsistent
--- RestrictInfo serial numbers
-CREATE TABLE pred_tab (a int PRIMARY KEY, b int);
-INSERT INTO pred_tab SELECT i, i FROM generate_series(1, 10)i;
-ANALYZE pred_tab;
+-- Validate we do not reduce a clone clause to a constant true or false
+CREATE TABLE pred_tab (a int, b int);
+CREATE TABLE pred_tab_notnull (a int, b int NOT NULL);
 
+INSERT INTO pred_tab VALUES (1, 1);
+INSERT INTO pred_tab VALUES (2, 2);
+
+INSERT INTO pred_tab_notnull VALUES (2, 2);
+INSERT INTO pred_tab_notnull VALUES (3, 3);
+
+ANALYZE pred_tab;
+ANALYZE pred_tab_notnull;
+
+-- Ensure the IS_NOT_NULL qual is not reduced to constant true and removed
 EXPLAIN (COSTS OFF)
-SELECT 1 FROM pred_tab t1
-    LEFT JOIN
-        (pred_tab t2 LEFT JOIN pred_tab t3 ON t2.a = t3.a) ON TRUE
-    LEFT JOIN pred_tab t4 ON t1.a IS NULL AND t1.b = 1
-    RIGHT JOIN pred_tab t5 ON t1.b = t5.b;
+SELECT * FROM pred_tab t1
+    LEFT JOIN pred_tab t2 ON TRUE
+    LEFT JOIN pred_tab_notnull t3 ON t2.a = t3.a
+    LEFT JOIN pred_tab t4 ON t3.b IS NOT NULL;
+
+SELECT * FROM pred_tab t1
+    LEFT JOIN pred_tab t2 ON TRUE
+    LEFT JOIN pred_tab_notnull t3 ON t2.a = t3.a
+    LEFT JOIN pred_tab t4 ON t3.b IS NOT NULL;
+
+-- Ensure the IS_NULL qual is not reduced to constant false
+EXPLAIN (COSTS OFF)
+SELECT * FROM pred_tab t1
+    LEFT JOIN pred_tab t2 ON TRUE
+    LEFT JOIN pred_tab_notnull t3 ON t2.a = t3.a
+    LEFT JOIN pred_tab t4 ON t3.b IS NULL AND t3.a IS NOT NULL;
+
+SELECT * FROM pred_tab t1
+    LEFT JOIN pred_tab t2 ON TRUE
+    LEFT JOIN pred_tab_notnull t3 ON t2.a = t3.a
+    LEFT JOIN pred_tab t4 ON t3.b IS NULL AND t3.a IS NOT NULL;
 
 DROP TABLE pred_tab;
+DROP TABLE pred_tab_notnull;

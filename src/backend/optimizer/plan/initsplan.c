@@ -3091,6 +3091,15 @@ bool
 restriction_is_always_true(PlannerInfo *root,
 						   RestrictInfo *restrictinfo)
 {
+	/*
+	 * For a clone clause, we don't have a reliable way to determine if the
+	 * input expression of a NullTest is non-nullable: nullingrel bits in
+	 * clone clauses may not reflect reality, so we dare not draw conclusions
+	 * from clones about whether Vars are guaranteed not-null.
+	 */
+	if (restrictinfo->has_clone || restrictinfo->is_clone)
+		return false;
+
 	/* Check for NullTest qual */
 	if (IsA(restrictinfo->clause, NullTest))
 	{
@@ -3140,6 +3149,15 @@ bool
 restriction_is_always_false(PlannerInfo *root,
 							RestrictInfo *restrictinfo)
 {
+	/*
+	 * For a clone clause, we don't have a reliable way to determine if the
+	 * input expression of a NullTest is non-nullable: nullingrel bits in
+	 * clone clauses may not reflect reality, so we dare not draw conclusions
+	 * from clones about whether Vars are guaranteed not-null.
+	 */
+	if (restrictinfo->has_clone || restrictinfo->is_clone)
+		return false;
+
 	/* Check for NullTest qual */
 	if (IsA(restrictinfo->clause, NullTest))
 	{
