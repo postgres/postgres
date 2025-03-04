@@ -190,7 +190,9 @@ static void _gin_parallel_scan_and_build(GinBuildState *buildstate,
 										 Relation heap, Relation index,
 										 int sortmem, bool progress);
 
-static Datum _gin_parse_tuple(GinTuple *a, ItemPointerData **items);
+static ItemPointer _gin_parse_tuple_items(GinTuple *a);
+static Datum _gin_parse_tuple_key(GinTuple *a);
+
 static GinTuple *_gin_build_tuple(OffsetNumber attrnum, unsigned char category,
 								  Datum key, int16 typlen, bool typbyval,
 								  ItemPointerData *items, uint32 nitems,
@@ -1365,7 +1367,8 @@ GinBufferStoreTuple(GinBuffer *buffer, GinTuple *tup)
 
 	AssertCheckGinBuffer(buffer);
 
-	key = _gin_parse_tuple(tup, &items);
+	key = _gin_parse_tuple_key(tup);
+	items = _gin_parse_tuple_items(tup);
 
 	/* if the buffer is empty, set the fields (and copy the key) */
 	if (GinBufferIsEmpty(buffer))
@@ -1401,6 +1404,9 @@ GinBufferStoreTuple(GinBuffer *buffer, GinTuple *tup)
 
 		AssertCheckItemPointers(buffer);
 	}
+
+	/* free the decompressed TID list */
+	pfree(items);
 }
 
 /*
@@ -1956,6 +1962,15 @@ _gin_parallel_build_main(dsm_segment *seg, shm_toc *toc)
 }
 
 /*
+ * Used to keep track of compressed TID lists when building a GIN tuple.
+ */
+typedef struct
+{
+	dlist_node	node;			/* linked list pointers */
+	GinPostingList *seg;
+} GinSegmentInfo;
+
+/*
  * _gin_build_tuple
  *		Serialize the state for an index key into a tuple for tuplesort.
  *
@@ -1967,6 +1982,11 @@ _gin_parallel_build_main(dsm_segment *seg, shm_toc *toc)
  * like endianess etc. We could make it a little bit smaller, but it's not
  * worth it - it's a tiny fraction of the data, and we need to MAXALIGN the
  * start of the TID list anyway. So we wouldn't save anything.
+ *
+ * The TID list is serialized as compressed - it's highly compressible, and
+ * we already have ginCompressPostingList for this purpose. The list may be
+ * pretty long, so we compress it into multiple segments and then copy all
+ * of that into the GIN tuple.
  */
 static GinTuple *
 _gin_build_tuple(OffsetNumber attrnum, unsigned char category,
@@ -1979,6 +1999,11 @@ _gin_build_tuple(OffsetNumber attrnum, unsigned char category,
 
 	Size		tuplen;
 	int			keylen;
+
+	dlist_mutable_iter iter;
+	dlist_head	segments;
+	int			ncompressed;
+	Size		compresslen;
 
 	/*
 	 * Calculate how long is the key value. Only keys with GIN_CAT_NORM_KEY
@@ -2006,12 +2031,34 @@ _gin_build_tuple(OffsetNumber attrnum, unsigned char category,
 	else
 		elog(ERROR, "unexpected typlen value (%d)", typlen);
 
+	/* compress the item pointers */
+	ncompressed = 0;
+	compresslen = 0;
+	dlist_init(&segments);
+
+	/* generate compressed segments of TID list chunks */
+	while (ncompressed < nitems)
+	{
+		int			cnt;
+		GinSegmentInfo *seginfo = palloc(sizeof(GinSegmentInfo));
+
+		seginfo->seg = ginCompressPostingList(&items[ncompressed],
+											  (nitems - ncompressed),
+											  UINT16_MAX,
+											  &cnt);
+
+		ncompressed += cnt;
+		compresslen += SizeOfGinPostingList(seginfo->seg);
+
+		dlist_push_tail(&segments, &seginfo->node);
+	}
+
 	/*
 	 * Determine GIN tuple length with all the data included. Be careful about
-	 * alignment, to allow direct access to item pointers.
+	 * alignment, to allow direct access to compressed segments (those require
+	 * only SHORTALIGN).
 	 */
-	tuplen = SHORTALIGN(offsetof(GinTuple, data) + keylen) +
-		(sizeof(ItemPointerData) * nitems);
+	tuplen = SHORTALIGN(offsetof(GinTuple, data) + keylen) + compresslen;
 
 	*len = tuplen;
 
@@ -2061,36 +2108,39 @@ _gin_build_tuple(OffsetNumber attrnum, unsigned char category,
 	/* finally, copy the TIDs into the array */
 	ptr = (char *) tuple + SHORTALIGN(offsetof(GinTuple, data) + keylen);
 
-	memcpy(ptr, items, sizeof(ItemPointerData) * nitems);
+	/* copy in the compressed data, and free the segments */
+	dlist_foreach_modify(iter, &segments)
+	{
+		GinSegmentInfo *seginfo = dlist_container(GinSegmentInfo, node, iter.cur);
+
+		memcpy(ptr, seginfo->seg, SizeOfGinPostingList(seginfo->seg));
+
+		ptr += SizeOfGinPostingList(seginfo->seg);
+
+		dlist_delete(&seginfo->node);
+
+		pfree(seginfo->seg);
+		pfree(seginfo);
+	}
 
 	return tuple;
 }
 
 /*
- * _gin_parse_tuple
- *		Deserialize the tuple from the tuplestore representation.
+ * _gin_parse_tuple_key
+ *		Return a Datum representing the key stored in the tuple.
  *
- * Most of the fields are actually directly accessible, the only thing that
+ * Most of the tuple fields are directly accessible, the only thing that
  * needs more care is the key and the TID list.
  *
  * For the key, this returns a regular Datum representing it. It's either the
  * actual key value, or a pointer to the beginning of the data array (which is
  * where the data was copied by _gin_build_tuple).
- *
- * The pointer to the TID list is returned through 'items' (which is simply
- * a pointer to the data array).
  */
 static Datum
-_gin_parse_tuple(GinTuple *a, ItemPointerData **items)
+_gin_parse_tuple_key(GinTuple *a)
 {
 	Datum		key;
-
-	if (items)
-	{
-		char	   *ptr = (char *) a + SHORTALIGN(offsetof(GinTuple, data) + a->keylen);
-
-		*items = (ItemPointerData *) ptr;
-	}
 
 	if (a->category != GIN_CAT_NORM_KEY)
 		return (Datum) 0;
@@ -2102,6 +2152,28 @@ _gin_parse_tuple(GinTuple *a, ItemPointerData **items)
 	}
 
 	return PointerGetDatum(a->data);
+}
+
+/*
+* _gin_parse_tuple_items
+ *		Return a pointer to a palloc'd array of decompressed TID array.
+ */
+static ItemPointer
+_gin_parse_tuple_items(GinTuple *a)
+{
+	int			len;
+	char	   *ptr;
+	int			ndecoded;
+	ItemPointer items;
+
+	len = a->tuplen - SHORTALIGN(offsetof(GinTuple, data) + a->keylen);
+	ptr = (char *) a + SHORTALIGN(offsetof(GinTuple, data) + a->keylen);
+
+	items = ginPostingListDecodeAllSegments((GinPostingList *) ptr, len, &ndecoded);
+
+	Assert(ndecoded == a->nitems);
+
+	return (ItemPointer) items;
 }
 
 /*
@@ -2139,8 +2211,8 @@ _gin_compare_tuples(GinTuple *a, GinTuple *b, SortSupport ssup)
 
 	if (a->category == GIN_CAT_NORM_KEY)
 	{
-		keya = _gin_parse_tuple(a, NULL);
-		keyb = _gin_parse_tuple(b, NULL);
+		keya = _gin_parse_tuple_key(a);
+		keyb = _gin_parse_tuple_key(b);
 
 		r = ApplySortComparator(keya, false,
 								keyb, false,

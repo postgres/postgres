@@ -1052,6 +1052,7 @@ GinScanEntry
 GinScanKey
 GinScanOpaque
 GinScanOpaqueData
+GinSegmentInfo
 GinState
 GinStatsData
 GinTernaryValue
