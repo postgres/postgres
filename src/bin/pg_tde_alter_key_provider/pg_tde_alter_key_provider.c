@@ -16,14 +16,14 @@
 static void
 help(void)
 {
-	printf("pg_tde_modify_key_provider changes the configuration of a pg_tde key provider");
+	printf("pg_tde_modify_key_provider changes the configuration of a pg_tde key provider\n");
 	puts("");
-	printf("Usage:");
-	printf("pg_tde_modify_key_provider [-D <datadir>] <dbOid> <provider_name> file <filename>");
-	printf("pg_tde_modify_key_provider [-D <datadir>] <dbOid> <provider_name> vault <token> <url> <mount_path> [<ca_path>]");
-	printf("pg_tde_modify_key_provider [-D <datadir>] <dbOid> <provider_name> kmip <host> <port> <cert_path> [<ca_path>]");
-	printf("\nWARNING:");
-	printf("This tool only changes the values, without properly XLogging the changes. Only use it in case the database is inaccessible and can't be started.");
+	printf("Usage:\n");
+	printf("pg_tde_modify_key_provider [-D <datadir>] <dbOid> <provider_name> file <filename>\n");
+	printf("pg_tde_modify_key_provider [-D <datadir>] <dbOid> <provider_name> vault <token> <url> <mount_path> [<ca_path>]\n");
+	printf("pg_tde_modify_key_provider [-D <datadir>] <dbOid> <provider_name> kmip <host> <port> <cert_path> [<ca_path>]\n");
+	printf("\nWARNING:\n");
+	printf("This tool only changes the values, without properly XLogging the changes. Only use it in case the database is inaccessible and can't be started.\n");
 }
 
 #define BUFFER_SIZE 1024
@@ -73,7 +73,7 @@ build_json(char *buffer, int count,...)
 		}
 		if (ptr - buffer > BUFFER_SIZE)
 		{
-			printf("Error: Configuration too long.");
+			printf("Error: Configuration too long.\n");
 			return false;
 		}
 	}
@@ -83,7 +83,7 @@ build_json(char *buffer, int count,...)
 
 	if (ptr - buffer > BUFFER_SIZE)
 	{
-		printf("Error: Configuration too long.");
+		printf("Error: Configuration too long.\n");
 		return false;
 	}
 
@@ -140,7 +140,7 @@ main(int argc, char *argv[])
 	{
 		help();
 		puts("\n");
-		printf("Error: Data directory missing");
+		printf("Error: Data directory missing.\n");
 		exit(1);
 	}
 
@@ -162,7 +162,7 @@ main(int argc, char *argv[])
 		{
 			help();
 			puts("\n");
-			printf("Error: wrong number of arguments");
+			printf("Error: wrong number of arguments.\n");
 			exit(1);
 		}
 
@@ -180,7 +180,7 @@ main(int argc, char *argv[])
 		{
 			help();
 			puts("\n");
-			printf("Error: wrong number of arguments");
+			printf("Error: wrong number of arguments.\n");
 			exit(1);
 		}
 
@@ -198,7 +198,7 @@ main(int argc, char *argv[])
 		{
 			help();
 			puts("\n");
-			printf("Error: wrong number of arguments");
+			printf("Error: wrong number of arguments.\n");
 			exit(1);
 		}
 
@@ -212,7 +212,7 @@ main(int argc, char *argv[])
 	{
 		help();
 		puts("\n");
-		printf("Error: Unknown provider type: %s", new_provider_type);
+		printf("Error: Unknown provider type: %s\n.", new_provider_type);
 		exit(1);
 	}
 
@@ -226,7 +226,7 @@ main(int argc, char *argv[])
 
 	if (keyring == NULL)
 	{
-		printf("Error: provider not found");
+		printf("Error: provider not found\n.");
 		exit(1);
 	}
 
@@ -235,7 +235,7 @@ main(int argc, char *argv[])
 	provider.provider_type = get_keyring_provider_from_typename(new_provider_type);
 	modify_key_provider_info(&provider, db_oid, false);
 
-	printf("Key provider updated successfully!");
+	printf("Key provider updated successfully!\n");
 
 	return 0;
 }
