@@ -1739,6 +1739,7 @@ exec_command_g(PsqlScanState scan_state, bool active_branch, const char *cmd)
 		{
 			pg_log_error("\\gx not allowed in pipeline mode");
 			clean_extended_state();
+			free(fname);
 			return PSQL_CMD_ERROR;
 		}
 
