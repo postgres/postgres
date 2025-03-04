@@ -104,7 +104,6 @@ Datum
 pg_tde_ddl_command_start_capture(PG_FUNCTION_ARGS)
 {
 	/* TODO: verify update_compare_indexes failure related to this */
-#ifdef PERCONA_EXT
 	EventTriggerData *trigdata;
 	Node	   *parsetree;
 
@@ -227,7 +226,6 @@ pg_tde_ddl_command_start_capture(PG_FUNCTION_ARGS)
 		}
 
 	}
-#endif
 	PG_RETURN_NULL();
 }
 
@@ -238,8 +236,6 @@ pg_tde_ddl_command_start_capture(PG_FUNCTION_ARGS)
 Datum
 pg_tde_ddl_command_end_capture(PG_FUNCTION_ARGS)
 {
-#ifdef PERCONA_EXT
-
 	/* Ensure this function is being called as an event trigger */
 	if (!CALLED_AS_EVENT_TRIGGER(fcinfo))	/* internal error */
 		ereport(ERROR,
@@ -283,7 +279,6 @@ pg_tde_ddl_command_end_capture(PG_FUNCTION_ARGS)
 
 	/* All we need to do is to clear the event state */
 	reset_current_tde_create_event();
-#endif
 
 	PG_RETURN_NULL();
 }

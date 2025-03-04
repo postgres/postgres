@@ -3,7 +3,6 @@
 #include "postgres.h"
 #include "utils/memutils.h"
 
-#include "access/pg_tde_slot.h"
 #include "access/pg_tde_tdemap.h"
 #include "encryption/enc_tde.h"
 #include "encryption/enc_aes.h"
@@ -23,26 +22,6 @@ iv_prefix_debug(const char *iv_prefix, char *out_hex)
 		sprintf(out_hex + i * 2, "%02x", (int) *(iv_prefix + i));
 	}
 	out_hex[32] = 0;
-}
-#endif
-
-#ifndef FRONTEND
-static void
-SetIVPrefix(ItemPointerData *ip, char *iv_prefix)
-{
-	/*
-	 * We have up to 16 bytes for the entire IV The higher bytes (starting
-	 * with 15) are used for the incrementing counter The lower bytes (in this
-	 * case, 0..5) are used for the tuple identification Tuple identification
-	 * is based on CTID, which currently is 48 bytes in postgres: 4 bytes for
-	 * the block id and 2 bytes for the position id
-	 */
-	iv_prefix[0] = ip->ip_blkid.bi_hi / 256;
-	iv_prefix[1] = ip->ip_blkid.bi_hi % 256;
-	iv_prefix[2] = ip->ip_blkid.bi_lo / 256;
-	iv_prefix[3] = ip->ip_blkid.bi_lo % 256;
-	iv_prefix[4] = ip->ip_posid / 256;
-	iv_prefix[5] = ip->ip_posid % 256;
 }
 #endif
 
@@ -178,66 +157,6 @@ pg_tde_crypt(const char *iv_prefix, uint32 start_offset, const char *data, uint3
 }
 
 #ifndef FRONTEND
-/*
- * pg_tde_crypt_tuple:
- * Does the encryption/decryption of tuple data in place
- * tuple: HeapTuple to be encrypted/decrypted
- * out_tuple: to encrypt/decrypt into. If you want to do inplace encryption/decryption, pass tuple as out_tuple
- * context: Optional context message to be used in debug log
- * */
-void
-pg_tde_crypt_tuple(HeapTuple tuple, HeapTuple out_tuple, InternalKey *key, const char *context)
-{
-	char		iv_prefix[16] = {0};
-	uint32		data_len = tuple->t_len - tuple->t_data->t_hoff;
-	char	   *tup_data = (char *) tuple->t_data + tuple->t_data->t_hoff;
-	char	   *out_data = (char *) out_tuple->t_data + out_tuple->t_data->t_hoff;
-
-	SetIVPrefix(&tuple->t_self, iv_prefix);
-
-#ifdef ENCRYPTION_DEBUG
-	ereport(LOG,
-			(errmsg("%s: table Oid: %u data size: %u",
-					context ? context : "", tuple->t_tableOid,
-					data_len)));
-#endif
-	pg_tde_crypt(iv_prefix, 0, tup_data, data_len, out_data, key, context);
-}
-
-
-/*  ================================================================ */
-/*  HELPER FUNCTIONS FOR ENCRYPTION */
-/*  ================================================================ */
-
-OffsetNumber
-PGTdePageAddItemExtended(RelFileLocator rel,
-						 BlockNumber bn,
-						 Page page,
-						 Item item,
-						 Size size,
-						 OffsetNumber offsetNumber,
-						 int flags)
-{
-	OffsetNumber off = PageAddItemExtended(page, item, size, offsetNumber, flags);
-	PageHeader	phdr = (PageHeader) page;
-	unsigned long header_size = ((HeapTupleHeader) item)->t_hoff;
-	char		iv_prefix[16] = {0,};
-	char	   *toAddr = ((char *) phdr) + phdr->pd_upper + header_size;
-	char	   *data = item + header_size;
-	uint32		data_len = size - header_size;
-
-	/* ctid stored in item is incorrect (not set) at this point */
-	ItemPointerData ip;
-	InternalKey *key = GetHeapBaiscRelationKey(rel);
-
-	ItemPointerSet(&ip, bn, off);
-
-	SetIVPrefix(&ip, iv_prefix);
-
-	PG_TDE_ENCRYPT_PAGE_ITEM(iv_prefix, 0, data, data_len, toAddr, key);
-	return off;
-}
-
 /*
  * Provide a simple interface to encrypt a given key.
  *

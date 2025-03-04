@@ -17,20 +17,13 @@ The PostgreSQL extension provides data at rest encryption. It is currently in an
 ## Overview
 Transparent Data Encryption offers encryption at the file level and solves the problem of protecting data at rest. The encryption is transparent for users allowing them to access and manipulate the data and not to worry about the encryption process. As a key provider, the extension supports the keyringfile and  [Hashicorp Vault](https://www.vaultproject.io/).
 
-### This extension provides two `access methods` with different options:
-
-#### `tde_heap_basic` access method
-- Works with community PostgreSQL 16 and 17 or with [Percona Server for PosgreSQL 17](https://docs.percona.com/postgresql/17/postgresql-server.html)
-- Encrypts tuples and WAL
-- **Doesn't** encrypt indexes, temporary files, statistics
-- CPU expensive as it decrypts pages each time they are read from bufferpool
+### This extension provides one `access method`:
 
 #### `tde_heap` access method
 - Works only with [Percona Server for PostgreSQL 17](https://docs.percona.com/postgresql/17/postgresql-server.html)
 - Uses extended Storage Manager and WAL APIs
 - Encrypts tuples, WAL and indexes
 - **Doesn't** encrypt temporary files and statistics **yet**
-- Faster and cheaper than `tde_heap_basic`
 
 ## Documentation
 
@@ -140,18 +133,18 @@ _See [Make Builds for Developers](https://github.com/percona/pg_tde/wiki/Make-bu
         SELECT pg_tde_set_principal_key('my-principal-key','file');
         ```
    
-   6. Specify `tde_heap_basic` access method during table creation
+   6. Specify `tde_heap` access method during table creation
         ```sql
         CREATE TABLE albums (
             album_id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
             artist_id INTEGER,
             title TEXT NOT NULL,
             released DATE NOT NULL
-        ) USING tde_heap_basic;
+        ) USING tde_heap;
         ```
    7. You can encrypt existing table. It requires rewriting the table, so for large tables, it might take a considerable amount of time. 
         ```sql
-        ALTER TABLE table_name SET ACCESS METHOD tde_heap_basic;
+        ALTER TABLE table_name SET ACCESS METHOD tde_heap;
         ```
 
 

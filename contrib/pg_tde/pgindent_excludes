@@ -1,7 +1,0 @@
-
-# List of filename patterns to exclude from pgindent runs
-#
-# This contains code copied from postgres tree as is and slightly modified.
-# We don't want to run pgindent on these files to avoid unnecessary conflicts.
-src\d\d/
-

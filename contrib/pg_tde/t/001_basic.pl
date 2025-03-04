@@ -34,7 +34,7 @@ my ($cmdret, $stdout, $stderr) = $node->psql('postgres', 'SELECT extname, extver
 ok($cmdret == 0, "SELECT PGTDE VERSION");
 PGTDE::append_to_file($stdout);
 
-$rt_value = $node->psql('postgres', 'CREATE TABLE test_enc(id SERIAL,k INTEGER,PRIMARY KEY (id)) USING tde_heap_basic;', extra_params => ['-a']);
+$rt_value = $node->psql('postgres', 'CREATE TABLE test_enc(id SERIAL,k INTEGER,PRIMARY KEY (id)) USING tde_heap;', extra_params => ['-a']);
 ok($rt_value == 3, "Failing query");
 
 
@@ -48,7 +48,7 @@ ok($rt_value == 1, "Restart Server");
 $rt_value = $node->psql('postgres', "SELECT pg_tde_add_key_provider_file('file-vault','/tmp/pg_tde_test_keyring.per');", extra_params => ['-a']);
 $rt_value = $node->psql('postgres', "SELECT pg_tde_set_principal_key('test-db-principal-key','file-vault');", extra_params => ['-a']);
 
-$stdout = $node->safe_psql('postgres', 'CREATE TABLE test_enc(id SERIAL,k VARCHAR(32),PRIMARY KEY (id)) USING tde_heap_basic;', extra_params => ['-a']);
+$stdout = $node->safe_psql('postgres', 'CREATE TABLE test_enc(id SERIAL,k VARCHAR(32),PRIMARY KEY (id)) USING tde_heap;', extra_params => ['-a']);
 PGTDE::append_to_file($stdout);
 
 $stdout = $node->safe_psql('postgres', 'INSERT INTO test_enc (k) VALUES (\'foobar\'),(\'barfoo\');', extra_params => ['-a']);

@@ -157,12 +157,6 @@ pg_tde_create_smgr_key(const RelFileLocatorBackend *newrlocator)
 		return pg_tde_create_key_map_entry(&newrlocator->locator, TDE_KEY_TYPE_SMGR);
 }
 
-InternalKey *
-pg_tde_create_heap_basic_key(const RelFileLocator *newrlocator)
-{
-	return pg_tde_create_key_map_entry(newrlocator, TDE_KEY_TYPE_HEAP_BASIC);
-}
-
 /*
  * Generate an encrypted key for the relation and store it in the keymap file.
  */
@@ -898,64 +892,6 @@ FINALIZE:
 	return !is_err;
 }
 
-/*
- * Saves the relation key with the new relfilenode.
- * Needed by ALTER TABLE SET TABLESPACE for example.
- */
-void
-pg_tde_move_rel_key(const RelFileLocator *newrlocator, const RelFileLocator *oldrlocator)
-{
-	InternalKey *rel_key;
-	InternalKey *enc_key;
-	TDEPrincipalKey *principal_key;
-	XLogRelKey	xlrec;
-	char		db_map_path[MAXPGPATH] = {0};
-	char		db_keydata_path[MAXPGPATH] = {0};
-	off_t		offset = 0;
-	int32		key_index = 0;
-
-	pg_tde_set_db_file_paths(oldrlocator->dbOid, db_map_path, db_keydata_path);
-
-	LWLockAcquire(tde_lwlock_enc_keys(), LW_EXCLUSIVE);
-
-	principal_key = GetPrincipalKey(oldrlocator->dbOid, LW_EXCLUSIVE);
-	Assert(principal_key);
-
-	/*
-	 * We don't use internal_key cache to avoid locking complications.
-	 */
-	key_index = pg_tde_process_map_entry(oldrlocator, MAP_ENTRY_VALID, db_map_path, &offset, false);
-	Assert(key_index != -1);
-
-	enc_key = pg_tde_read_keydata(db_keydata_path, key_index, principal_key);
-	rel_key = tde_decrypt_rel_key(principal_key, enc_key, oldrlocator->dbOid);
-
-	xlrec.rlocator = *newrlocator;
-	xlrec.relKey = *enc_key;
-	xlrec.pkInfo = principal_key->keyInfo;
-	XLogBeginInsert();
-	XLogRegisterData((char *) &xlrec, sizeof(xlrec));
-	XLogInsert(RM_TDERMGR_ID, XLOG_TDE_ADD_RELATION_KEY);
-
-	pg_tde_write_key_map_entry(newrlocator, enc_key, &principal_key->keyInfo);
-	pg_tde_put_key_into_cache(newrlocator, rel_key);
-
-	XLogBeginInsert();
-	XLogRegisterData((char *) oldrlocator, sizeof(RelFileLocator));
-	XLogInsert(RM_TDERMGR_ID, XLOG_TDE_FREE_MAP_ENTRY);
-
-	/*
-	 * Clean-up map/dat entries. It will also remove physical files (*.map,
-	 * *.dat and keyring) if it was the last tde_heap_basic relation in the
-	 * old locator AND it was a custom tablespace.
-	 */
-	pg_tde_free_key_map_entry(oldrlocator, MAP_ENTRY_VALID, offset);
-
-	LWLockRelease(tde_lwlock_enc_keys());
-
-	pfree(enc_key);
-}
-
 /* It's called by seg_write inside crit section so no pallocs, hence
  * needs keyfile_path
  */
@@ -1504,12 +1440,6 @@ GetSMGRRelationKey(RelFileLocatorBackend rel)
 		return pg_tde_get_key_from_cache(&rel.locator, TDE_KEY_TYPE_SMGR);
 	else
 		return GetRelationKey(rel.locator, TDE_KEY_TYPE_SMGR, true);
-}
-
-InternalKey *
-GetHeapBaiscRelationKey(RelFileLocator rel)
-{
-	return GetRelationKey(rel, TDE_KEY_TYPE_HEAP_BASIC, false);
 }
 
 InternalKey *

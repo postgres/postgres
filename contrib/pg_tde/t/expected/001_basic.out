@@ -2,7 +2,7 @@ CREATE EXTENSION IF NOT EXISTS pg_tde;
 SELECT extname, extversion FROM pg_extension WHERE extname = 'pg_tde';
 pg_tde|1.0-rc
 -- server restart
-CREATE TABLE test_enc(id SERIAL,k VARCHAR(32),PRIMARY KEY (id)) USING tde_heap_basic;
+CREATE TABLE test_enc(id SERIAL,k VARCHAR(32),PRIMARY KEY (id)) USING tde_heap;
 INSERT INTO test_enc (k) VALUES ('foobar'),('barfoo');
 SELECT * FROM test_enc ORDER BY id ASC;
 1|foobar

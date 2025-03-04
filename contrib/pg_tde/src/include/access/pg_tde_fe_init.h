@@ -9,8 +9,6 @@
 #ifndef PG_TDE_FE_INIT_H
 #define PG_TDE_FE_INIT_H
 
-#ifdef PERCONA_EXT
-
 #include "common/pg_tde_utils.h"
 #include "encryption/enc_aes.h"
 #include "keyring/keyring_file.h"
@@ -27,7 +25,5 @@ pg_tde_fe_init(const char *kring_dir)
 	InstallKmipKeyring();
 	pg_tde_set_data_dir(kring_dir);
 }
-
-#endif							/* PERCONA_EXT */
 
 #endif							/* PG_TDE_FE_INIT_H */

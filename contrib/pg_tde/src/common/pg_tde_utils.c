@@ -24,9 +24,9 @@
 #include "access/heapam.h"
 
 static Oid
-get_tde_basic_table_am_oid(void)
+get_tde_table_am_oid(void)
 {
-	return get_table_am_oid("tde_heap_basic", false);
+	return get_table_am_oid("tde_heap", false);
 }
 
 PG_FUNCTION_INFO_V1(pg_tde_is_encrypted);
@@ -62,12 +62,6 @@ pg_tde_is_encrypted(PG_FUNCTION_ARGS)
 		InternalKey *key;
 		RelFileLocatorBackend rlocator = {.locator = rel->rd_locator,.backend = rel->rd_backend};
 
-		if (rel->rd_rel->relam == get_tde_basic_table_am_oid())
-		{
-			relation_close(rel, lockmode);
-			PG_RETURN_BOOL(true);
-		}
-
 		if (RelFileLocatorBackendIsTemp(rlocator) && !rel->rd_islocaltemp)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -91,7 +85,7 @@ get_all_tde_tables(void)
 	SysScanDesc scan;
 	HeapTuple	tuple;
 	List	   *tde_tables = NIL;
-	Oid			am_oid = get_tde_basic_table_am_oid();
+	Oid			am_oid = get_tde_table_am_oid();
 
 	/* Open the pg_class table */
 	pg_class = table_open(RelationRelationId, AccessShareLock);

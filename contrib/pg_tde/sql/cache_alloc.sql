@@ -10,7 +10,7 @@ do $$
     DECLARE idx integer;
 begin
     for idx in 0..700 loop
-        EXECUTE format('CREATE TABLE t%s (c1 int) USING tde_heap_basic', idx);
+        EXECUTE format('CREATE TABLE t%s (c1 int) USING tde_heap', idx);
     end loop;
 end; $$;
 

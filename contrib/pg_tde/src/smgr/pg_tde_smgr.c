@@ -8,8 +8,6 @@
 #include "access/pg_tde_tdemap.h"
 #include "pg_tde_event_capture.h"
 
-#ifdef PERCONA_EXT
-
 typedef struct TDESMgrRelationData
 {
 	/* parent data */
@@ -302,10 +300,3 @@ RegisterStorageMgr(void)
 	/* TODO: figure out how this part should work in a real extension */
 	storage_manager_id = tde_smgr_id;
 }
-
-#else
-void
-RegisterStorageMgr(void)
-{
-}
-#endif							/* PERCONA_EXT */

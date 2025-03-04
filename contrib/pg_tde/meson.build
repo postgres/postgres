@@ -1,24 +1,10 @@
 
 curldep = dependency('libcurl')
 
-pg_version = meson.project_version().substring(0,2)
-src_version = 'src' + pg_version
-
 pg_tde_sources = files(
         'src/pg_tde.c',
         'src/transam/pg_tde_xact_handler.c',
         'src/access/pg_tde_tdemap.c',
-        'src/access/pg_tde_slot.c',
-        src_version / 'access/pg_tdeam.c',
-        src_version / 'access/pg_tdeam_handler.c',
-        src_version / 'access/pg_tdeam_visibility.c',
-        src_version / 'access/pg_tdetoast.c',
-        src_version / 'access/pg_tde_io.c',
-        src_version / 'access/pg_tde_prune.c',
-        src_version / 'access/pg_tde_rewrite.c',
-        src_version / 'access/pg_tde_vacuumlazy.c',
-        src_version / 'access/pg_tde_visibilitymap.c',
-        'src/access/pg_tde_ddl.c',
         'src/access/pg_tde_xlog.c',
         'src/access/pg_tde_xlog_encrypt.c',
 
@@ -45,7 +31,7 @@ pg_tde_sources = files(
         'src/pg_tde.c',
 )
 
-incdir = include_directories(src_version / 'include', 'src/include', '.', 'src/libkmip/libkmip/include/')
+incdir = include_directories('src/include', '.', 'src/libkmip/libkmip/include/')
 
 kmip = static_library(
   'kmip',
@@ -87,43 +73,9 @@ install_data(
 
 
 sql_tests = [
-      'toast_decrypt_basic',
-      'toast_extended_storage_basic',
-      'move_large_tuples_basic',
-      'non_sorted_off_compact_basic',
-      'update_compare_indexes_basic',
-      'pg_tde_is_encrypted_basic',
-      'test_issue_153_fix_basic',
-      'multi_insert_basic',
-      'keyprovider_dependency_basic',
-      'trigger_on_view_basic',
-      'change_access_method_basic',
-      'insert_update_delete_basic',
-      'tablespace_basic',
-      'vault_v2_test_basic',
-      'kmip_test_basic',
-      'alter_index_basic',
-      'merge_join_basic',
       'cache_alloc',
-      'update_basic',
       'key_provider',
       'relocate',
-]
-
-tap_tests = [
-      't/001_basic.pl',
-      't/002_rotate_key.pl',
-      't/003_remote_config.pl',
-      't/004_file_config.pl',
-      't/005_multiple_extensions.pl',
-      't/006_remote_vault_config.pl',
-      't/007_access_control.pl',
-      't/009_key_rotate_tablespace.pl',
-      't/010_wal_encrypt.pl',
-    ]
-
-if get_variable('percona_ext', false)
-  sql_tests += [
       'toast_decrypt',
       'toast_extended_storage',
       'move_large_tuples',
@@ -142,15 +94,20 @@ if get_variable('percona_ext', false)
       'kmip_test',
       'alter_index',
       'merge_join',
-  ]
+      'default_principal_key',
+]
 
-  tap_tests += [
+tap_tests = [
+      't/001_basic.pl',
+      't/002_rotate_key.pl',
+      't/003_remote_config.pl',
+      't/004_file_config.pl',
+      't/005_multiple_extensions.pl',
+      't/006_remote_vault_config.pl',
+      't/007_access_control.pl',
       't/008_tde_heap.pl',
-  ]
-endif
-
-sql_tests += [
-    'default_principal_key',
+      't/009_key_rotate_tablespace.pl',
+      't/010_wal_encrypt.pl',
 ]
 
 tests += {

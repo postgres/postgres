@@ -28,7 +28,7 @@ psql:<stdin>:1: ERROR:  permission denied for function pg_tde_list_all_key_provi
 -- pg_tde_principal_key_info should also fail
 psql:<stdin>:1: ERROR:  permission denied for function pg_tde_principal_key_info
 CREATE SCHEMA test_access;
-CREATE TABLE test_access.test_enc1(id SERIAL,k INTEGER,PRIMARY KEY (id)) USING tde_heap_basic;
+CREATE TABLE test_access.test_enc1(id SERIAL,k INTEGER,PRIMARY KEY (id)) USING tde_heap;
 INSERT INTO test_access.test_enc1 (k) VALUES (5),(6);
 SELECT * FROM test_access.test_enc1 ORDER BY id ASC;
 1|5

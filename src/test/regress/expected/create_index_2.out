@@ -2252,9 +2252,9 @@ WHERE classid = 'pg_class'::regclass AND
  index concur_reindex_ind3                | table concur_reindex_tab                                   | a
  index concur_reindex_ind4                | column c1 of table concur_reindex_tab                      | a
  index concur_reindex_ind4                | column c2 of table concur_reindex_tab                      | a
- materialized view concur_reindex_matview | access method tde_heap_basic                               | n
+ materialized view concur_reindex_matview | access method tde_heap                                     | n
  materialized view concur_reindex_matview | schema public                                              | n
- table concur_reindex_tab                 | access method tde_heap_basic                               | n
+ table concur_reindex_tab                 | access method tde_heap                                     | n
  table concur_reindex_tab                 | schema public                                              | n
 (10 rows)
 
@@ -2281,9 +2281,9 @@ WHERE classid = 'pg_class'::regclass AND
  index concur_reindex_ind3                | table concur_reindex_tab                                   | a
  index concur_reindex_ind4                | column c1 of table concur_reindex_tab                      | a
  index concur_reindex_ind4                | column c2 of table concur_reindex_tab                      | a
- materialized view concur_reindex_matview | access method tde_heap_basic                               | n
+ materialized view concur_reindex_matview | access method tde_heap                                     | n
  materialized view concur_reindex_matview | schema public                                              | n
- table concur_reindex_tab                 | access method tde_heap_basic                               | n
+ table concur_reindex_tab                 | access method tde_heap                                     | n
  table concur_reindex_tab                 | schema public                                              | n
 (10 rows)
 
@@ -2442,10 +2442,10 @@ WHERE classid = 'pg_class'::regclass AND
  table concur_reindex_part                | schema public                              | n
  table concur_reindex_part_0              | schema public                              | n
  table concur_reindex_part_0              | table concur_reindex_part                  | a
- table concur_reindex_part_0_1            | access method tde_heap_basic               | n
+ table concur_reindex_part_0_1            | access method tde_heap                     | n
  table concur_reindex_part_0_1            | schema public                              | n
  table concur_reindex_part_0_1            | table concur_reindex_part_0                | a
- table concur_reindex_part_0_2            | access method tde_heap_basic               | n
+ table concur_reindex_part_0_2            | access method tde_heap                     | n
  table concur_reindex_part_0_2            | schema public                              | n
  table concur_reindex_part_0_2            | table concur_reindex_part_0                | a
 (21 rows)
@@ -2496,10 +2496,10 @@ WHERE classid = 'pg_class'::regclass AND
  table concur_reindex_part                | schema public                              | n
  table concur_reindex_part_0              | schema public                              | n
  table concur_reindex_part_0              | table concur_reindex_part                  | a
- table concur_reindex_part_0_1            | access method tde_heap_basic               | n
+ table concur_reindex_part_0_1            | access method tde_heap                     | n
  table concur_reindex_part_0_1            | schema public                              | n
  table concur_reindex_part_0_1            | table concur_reindex_part_0                | a
- table concur_reindex_part_0_2            | access method tde_heap_basic               | n
+ table concur_reindex_part_0_2            | access method tde_heap                     | n
  table concur_reindex_part_0_2            | schema public                              | n
  table concur_reindex_part_0_2            | table concur_reindex_part_0                | a
 (21 rows)

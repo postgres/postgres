@@ -1,5 +1,3 @@
-\set tde_am tde_heap
-\i sql/update.inc
 CREATE EXTENSION IF NOT EXISTS pg_tde;
 SELECT pg_tde_add_key_provider_file('file-vault','/tmp/pg_tde_test_keyring.per');
  pg_tde_add_key_provider_file 
@@ -17,11 +15,11 @@ CREATE TABLE update_test (
     a   INT DEFAULT 10,
     b   INT,
     c   TEXT
-) USING :tde_am;
+) USING tde_heap;
 CREATE TABLE upsert_test (
     a   INT PRIMARY KEY,
     b   TEXT
-) USING :tde_am;
+) USING tde_heap;
 INSERT INTO update_test VALUES (5, 10, 'foo');
 INSERT INTO update_test(b, a) VALUES (15, 10);
 INSERT INTO upsert_test VALUES (2, 'Beeble') ON CONFLICT(a)

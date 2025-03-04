@@ -99,7 +99,7 @@ PGTDE::append_to_file($stderr);
 $stdout = $node->safe_psql('postgres', 'CREATE SCHEMA test_access;', extra_params => ['-a', '-U', 'test_access']);
 PGTDE::append_to_file($stdout);
 
-$stdout = $node->safe_psql('postgres', 'CREATE TABLE test_access.test_enc1(id SERIAL,k INTEGER,PRIMARY KEY (id)) USING tde_heap_basic;', extra_params => ['-a', '-U', 'test_access']);
+$stdout = $node->safe_psql('postgres', 'CREATE TABLE test_access.test_enc1(id SERIAL,k INTEGER,PRIMARY KEY (id)) USING tde_heap;', extra_params => ['-a', '-U', 'test_access']);
 PGTDE::append_to_file($stdout);
 
 $stdout = $node->safe_psql('postgres', 'INSERT INTO test_access.test_enc1 (k) VALUES (5),(6);', extra_params => ['-a', '-U', 'test_access']);

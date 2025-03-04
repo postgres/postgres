@@ -22,4 +22,5 @@ extern void on_ext_install(pg_tde_on_ext_install_callback function, void *arg);
 extern void extension_install_redo(XLogExtensionInstall *xlrec);
 
 extern void pg_tde_init_data_dir(void);
+
 #endif							/* PG_TDE_H */

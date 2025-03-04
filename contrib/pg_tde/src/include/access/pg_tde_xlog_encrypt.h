@@ -10,7 +10,6 @@
 #define PG_TDE_XLOGENCRYPT_H
 
 #include "postgres.h"
-#ifdef PERCONA_EXT
 #include "access/xlog_smgr.h"
 
 extern Size TDEXLogEncryptBuffSize(void);
@@ -29,7 +28,5 @@ extern void XLogInitGUC(void);
 #ifndef FRONTEND
 extern void TDEXlogCheckSane(void);
 #endif
-
-#endif							/* PERCONA_EXT */
 
 #endif							/* PG_TDE_XLOGENCRYPT_H */
