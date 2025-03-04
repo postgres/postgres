@@ -116,7 +116,7 @@ ProcGlobalShmemSize(void)
 	 * nicely aligned in each backend.
 	 */
 	fpLockBitsSize = MAXALIGN(FastPathLockGroupsPerBackend * sizeof(uint64));
-	fpRelIdSize = MAXALIGN(FastPathLockGroupsPerBackend * sizeof(Oid) * FP_LOCK_SLOTS_PER_GROUP);
+	fpRelIdSize = MAXALIGN(FastPathLockSlotsPerBackend() * sizeof(Oid));
 
 	size = add_size(size, mul_size(TotalProcs, (fpLockBitsSize + fpRelIdSize)));
 
@@ -231,7 +231,7 @@ InitProcGlobal(void)
 	 * shared memory and then divide that between backends.
 	 */
 	fpLockBitsSize = MAXALIGN(FastPathLockGroupsPerBackend * sizeof(uint64));
-	fpRelIdSize = MAXALIGN(FastPathLockGroupsPerBackend * sizeof(Oid) * FP_LOCK_SLOTS_PER_GROUP);
+	fpRelIdSize = MAXALIGN(FastPathLockSlotsPerBackend() * sizeof(Oid));
 
 	fpPtr = ShmemAlloc(TotalProcs * (fpLockBitsSize + fpRelIdSize));
 	MemSet(fpPtr, 0, TotalProcs * (fpLockBitsSize + fpRelIdSize));

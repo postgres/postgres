@@ -587,7 +587,7 @@ InitializeFastPathLocks(void)
 	while (FastPathLockGroupsPerBackend < FP_LOCK_GROUPS_PER_BACKEND_MAX)
 	{
 		/* stop once we exceed max_locks_per_xact */
-		if (FastPathLockGroupsPerBackend * FP_LOCK_SLOTS_PER_GROUP >= max_locks_per_xact)
+		if (FastPathLockSlotsPerBackend() >= max_locks_per_xact)
 			break;
 
 		FastPathLockGroupsPerBackend *= 2;

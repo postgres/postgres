@@ -226,10 +226,10 @@ int			FastPathLockGroupsPerBackend = 0;
  * the FAST_PATH_SLOT macro, split it into group and index (in the group).
  */
 #define FAST_PATH_GROUP(index)	\
-	(AssertMacro((uint32) (index) < FP_LOCK_SLOTS_PER_BACKEND), \
+	(AssertMacro((uint32) (index) < FastPathLockSlotsPerBackend()), \
 	 ((index) / FP_LOCK_SLOTS_PER_GROUP))
 #define FAST_PATH_INDEX(index)	\
-	(AssertMacro((uint32) (index) < FP_LOCK_SLOTS_PER_BACKEND), \
+	(AssertMacro((uint32) (index) < FastPathLockSlotsPerBackend()), \
 	 ((index) % FP_LOCK_SLOTS_PER_GROUP))
 
 /* Macros for manipulating proc->fpLockBits */
@@ -242,7 +242,7 @@ int			FastPathLockGroupsPerBackend = 0;
 #define FAST_PATH_BIT_POSITION(n, l) \
 	(AssertMacro((l) >= FAST_PATH_LOCKNUMBER_OFFSET), \
 	 AssertMacro((l) < FAST_PATH_BITS_PER_SLOT+FAST_PATH_LOCKNUMBER_OFFSET), \
-	 AssertMacro((n) < FP_LOCK_SLOTS_PER_BACKEND), \
+	 AssertMacro((n) < FastPathLockSlotsPerBackend()), \
 	 ((l) - FAST_PATH_LOCKNUMBER_OFFSET + FAST_PATH_BITS_PER_SLOT * (FAST_PATH_INDEX(n))))
 #define FAST_PATH_SET_LOCKMODE(proc, n, l) \
 	 FAST_PATH_BITS(proc, n) |= UINT64CONST(1) << FAST_PATH_BIT_POSITION(n, l)
@@ -2691,7 +2691,7 @@ static bool
 FastPathGrantRelationLock(Oid relid, LOCKMODE lockmode)
 {
 	uint32		i;
-	uint32		unused_slot = FP_LOCK_SLOTS_PER_BACKEND;
+	uint32		unused_slot = FastPathLockSlotsPerBackend();
 
 	/* fast-path group the lock belongs to */
 	uint32		group = FAST_PATH_REL_GROUP(relid);
@@ -2713,7 +2713,7 @@ FastPathGrantRelationLock(Oid relid, LOCKMODE lockmode)
 	}
 
 	/* If no existing entry, use any empty slot. */
-	if (unused_slot < FP_LOCK_SLOTS_PER_BACKEND)
+	if (unused_slot < FastPathLockSlotsPerBackend())
 	{
 		MyProc->fpRelId[unused_slot] = relid;
 		FAST_PATH_SET_LOCKMODE(MyProc, unused_slot, lockmode);

@@ -88,7 +88,8 @@ extern PGDLLIMPORT int FastPathLockGroupsPerBackend;
 
 #define		FP_LOCK_GROUPS_PER_BACKEND_MAX	1024
 #define		FP_LOCK_SLOTS_PER_GROUP		16	/* don't change */
-#define		FP_LOCK_SLOTS_PER_BACKEND	(FP_LOCK_SLOTS_PER_GROUP * FastPathLockGroupsPerBackend)
+#define		FastPathLockSlotsPerBackend() \
+	(FP_LOCK_SLOTS_PER_GROUP * FastPathLockGroupsPerBackend)
 
 /*
  * Flags for PGPROC.delayChkptFlags
