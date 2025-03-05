@@ -42,7 +42,7 @@ pqinitmask(void)
 {
 	sigemptyset(&UnBlockSig);
 
-	/* Note: InitializeLatchSupport() modifies UnBlockSig. */
+	/* Note: InitializeWaitEventSupport() modifies UnBlockSig. */
 
 	/* First set all signals, then clear some. */
 	sigfillset(&BlockSig);

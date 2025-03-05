@@ -18,5 +18,6 @@ backend_sources += files(
   'sinval.c',
   'sinvaladt.c',
   'standby.c',
+  'waiteventset.c',
 
 )
