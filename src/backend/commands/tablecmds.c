@@ -389,9 +389,10 @@ static void AlterIndexNamespaces(Relation classRel, Relation rel,
 static void AlterSeqNamespaces(Relation classRel, Relation rel,
 							   Oid oldNspOid, Oid newNspOid, ObjectAddresses *objsMoved,
 							   LOCKMODE lockmode);
-static ObjectAddress ATExecAlterConstraint(Relation rel, ATAlterConstraint *cmdcon,
+static ObjectAddress ATExecAlterConstraint(List **wqueue, Relation rel,
+										   ATAlterConstraint *cmdcon,
 										   bool recurse, LOCKMODE lockmode);
-static bool ATExecAlterConstraintInternal(ATAlterConstraint *cmdcon, Relation conrel,
+static bool ATExecAlterConstraintInternal(List **wqueue, ATAlterConstraint *cmdcon, Relation conrel,
 										  Relation tgrel, Relation rel, HeapTuple contuple,
 										  bool recurse, List **otherrelids, LOCKMODE lockmode);
 static void AlterConstrTriggerDeferrability(Oid conoid, Relation tgrel, Relation rel,
@@ -5437,8 +5438,8 @@ ATExecCmd(List **wqueue, AlteredTableInfo *tab,
 											   lockmode);
 			break;
 		case AT_AlterConstraint:	/* ALTER CONSTRAINT */
-			address = ATExecAlterConstraint(rel, castNode(ATAlterConstraint,
-														  cmd->def),
+			address = ATExecAlterConstraint(wqueue, rel,
+											castNode(ATAlterConstraint, cmd->def),
 											cmd->recurse, lockmode);
 			break;
 		case AT_ValidateConstraint: /* VALIDATE CONSTRAINT */
@@ -11813,14 +11814,14 @@ GetForeignKeyCheckTriggers(Relation trigrel,
  *
  * Update the attributes of a constraint.
  *
- * Currently only works for Foreign Key constraints.
+ * Currently only works for Foreign Key and not null constraints.
  *
  * If the constraint is modified, returns its address; otherwise, return
  * InvalidObjectAddress.
  */
 static ObjectAddress
-ATExecAlterConstraint(Relation rel, ATAlterConstraint *cmdcon, bool recurse,
-					  LOCKMODE lockmode)
+ATExecAlterConstraint(List **wqueue, Relation rel, ATAlterConstraint *cmdcon,
+					  bool recurse, LOCKMODE lockmode)
 {
 	Relation	conrel;
 	Relation	tgrel;
@@ -11871,11 +11872,26 @@ ATExecAlterConstraint(Relation rel, ATAlterConstraint *cmdcon, bool recurse,
 						cmdcon->conname, RelationGetRelationName(rel))));
 
 	currcon = (Form_pg_constraint) GETSTRUCT(contuple);
-	if (currcon->contype != CONSTRAINT_FOREIGN)
+	if (cmdcon->alterDeferrability && currcon->contype != CONSTRAINT_FOREIGN)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("constraint \"%s\" of relation \"%s\" is not a foreign key constraint",
 						cmdcon->conname, RelationGetRelationName(rel))));
+	if (cmdcon->alterInheritability &&
+		currcon->contype != CONSTRAINT_NOTNULL)
+		ereport(ERROR,
+				errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				errmsg("constraint \"%s\" of relation \"%s\" is not a not-null constraint",
+					   cmdcon->conname, RelationGetRelationName(rel)));
+
+	/* Refuse to modify inheritability of inherited constraints */
+	if (cmdcon->alterInheritability &&
+		cmdcon->noinherit && currcon->coninhcount > 0)
+		ereport(ERROR,
+				errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				errmsg("cannot alter inherited constraint \"%s\" on relation \"%s\"",
+					   NameStr(currcon->conname),
+					   RelationGetRelationName(rel)));
 
 	/*
 	 * If it's not the topmost constraint, raise an error.
@@ -11926,8 +11942,8 @@ ATExecAlterConstraint(Relation rel, ATAlterConstraint *cmdcon, bool recurse,
 	/*
 	 * Do the actual catalog work, and recurse if necessary.
 	 */
-	if (ATExecAlterConstraintInternal(cmdcon, conrel, tgrel, rel, contuple,
-									  recurse, &otherrelids, lockmode))
+	if (ATExecAlterConstraintInternal(wqueue, cmdcon, conrel, tgrel, rel,
+									  contuple, recurse, &otherrelids, lockmode))
 		ObjectAddressSet(address, ConstraintRelationId, currcon->oid);
 
 	/*
@@ -11958,9 +11974,10 @@ ATExecAlterConstraint(Relation rel, ATAlterConstraint *cmdcon, bool recurse,
  * but existing releases don't do that.)
  */
 static bool
-ATExecAlterConstraintInternal(ATAlterConstraint *cmdcon, Relation conrel,
-							  Relation tgrel, Relation rel, HeapTuple contuple,
-							  bool recurse, List **otherrelids, LOCKMODE lockmode)
+ATExecAlterConstraintInternal(List **wqueue, ATAlterConstraint *cmdcon,
+							  Relation conrel, Relation tgrel, Relation rel,
+							  HeapTuple contuple, bool recurse,
+							  List **otherrelids, LOCKMODE lockmode)
 {
 	Form_pg_constraint currcon;
 	Oid			refrelid = InvalidOid;
@@ -12040,12 +12057,80 @@ ATExecAlterConstraintInternal(ATAlterConstraint *cmdcon, Relation conrel,
 			Relation	childrel;
 
 			childrel = table_open(childcon->conrelid, lockmode);
-			ATExecAlterConstraintInternal(cmdcon, conrel, tgrel, childrel, childtup,
-										  recurse, otherrelids, lockmode);
+			ATExecAlterConstraintInternal(wqueue, cmdcon, conrel, tgrel, childrel,
+										  childtup, recurse, otherrelids, lockmode);
 			table_close(childrel, NoLock);
 		}
 
 		systable_endscan(pscan);
+	}
+
+	/*
+	 * Update the catalog for inheritability.  No work if the constraint is
+	 * already in the requested state.
+	 */
+	if (cmdcon->alterInheritability &&
+		(cmdcon->noinherit != currcon->connoinherit))
+	{
+		AttrNumber	colNum;
+		char	   *colName;
+		List	   *children;
+		HeapTuple	copyTuple;
+		Form_pg_constraint copy_con;
+
+		/* The current implementation only works for NOT NULL constraints */
+		Assert(currcon->contype == CONSTRAINT_NOTNULL);
+
+		copyTuple = heap_copytuple(contuple);
+		copy_con = (Form_pg_constraint) GETSTRUCT(copyTuple);
+		copy_con->connoinherit = cmdcon->noinherit;
+
+		CatalogTupleUpdate(conrel, &copyTuple->t_self, copyTuple);
+		CommandCounterIncrement();
+		heap_freetuple(copyTuple);
+		changed = true;
+
+		/* Fetch the column number and name */
+		colNum = extractNotNullColumn(contuple);
+		colName = get_attname(currcon->conrelid, colNum, false);
+
+		/*
+		 * Propagate the change to children.  For SET NO INHERIT, we don't
+		 * recursively affect children, just the immediate level.
+		 */
+		children = find_inheritance_children(RelationGetRelid(rel),
+											 lockmode);
+		foreach_oid(childoid, children)
+		{
+			ObjectAddress addr;
+
+			if (cmdcon->noinherit)
+			{
+				HeapTuple	childtup;
+				Form_pg_constraint childcon;
+
+				childtup = findNotNullConstraint(childoid, colName);
+				if (!childtup)
+					elog(ERROR, "cache lookup failed for not-null constraint on column \"%s\" of relation %u",
+						 colName, childoid);
+				childcon = (Form_pg_constraint) GETSTRUCT(childtup);
+				Assert(childcon->coninhcount > 0);
+				childcon->coninhcount--;
+				childcon->conislocal = true;
+				CatalogTupleUpdate(conrel, &childtup->t_self, childtup);
+				heap_freetuple(childtup);
+			}
+			else
+			{
+				Relation	childrel = table_open(childoid, NoLock);
+
+				addr = ATExecSetNotNull(wqueue, childrel, NameStr(currcon->conname),
+										colName, true, true, lockmode);
+				if (OidIsValid(addr.objectId))
+					CommandCounterIncrement();
+				table_close(childrel, NoLock);
+			}
+		}
 	}
 
 	return changed;

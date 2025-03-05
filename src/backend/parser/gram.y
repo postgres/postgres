@@ -2669,6 +2669,34 @@ alter_table_cmd:
 									NULL, NULL, NULL, yyscanner);
 					$$ = (Node *) n;
 				}
+			/* ALTER TABLE <name> ALTER CONSTRAINT SET INHERIT */
+			| ALTER CONSTRAINT name SET INHERIT
+				{
+					AlterTableCmd *n = makeNode(AlterTableCmd);
+					ATAlterConstraint *c = makeNode(ATAlterConstraint);
+
+					n->subtype = AT_AlterConstraint;
+					n->def = (Node *) c;
+					c->conname = $3;
+					c->alterInheritability = true;
+					c->noinherit = false;
+
+					$$ = (Node *) n;
+				}
+			/* ALTER TABLE <name> ALTER CONSTRAINT SET NO INHERIT */
+			| ALTER CONSTRAINT name SET NO INHERIT
+				{
+					AlterTableCmd *n = makeNode(AlterTableCmd);
+					ATAlterConstraint *c = makeNode(ATAlterConstraint);
+
+					n->subtype = AT_AlterConstraint;
+					n->def = (Node *) c;
+					c->conname = $3;
+					c->alterInheritability = true;
+					c->noinherit = true;
+
+					$$ = (Node *) n;
+				}
 			/* ALTER TABLE <name> VALIDATE CONSTRAINT ... */
 			| VALIDATE CONSTRAINT name
 				{

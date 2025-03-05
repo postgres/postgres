@@ -59,6 +59,7 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceable>
     ADD <replaceable class="parameter">table_constraint</replaceable> [ NOT VALID ]
     ADD <replaceable class="parameter">table_constraint_using_index</replaceable>
     ALTER CONSTRAINT <replaceable class="parameter">constraint_name</replaceable> [ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY IMMEDIATE ]
+    ALTER CONSTRAINT <replaceable class="parameter">constraint_name</replaceable> SET [ INHERIT | NO INHERIT ]
     VALIDATE CONSTRAINT <replaceable class="parameter">constraint_name</replaceable>
     DROP CONSTRAINT [ IF EXISTS ]  <replaceable class="parameter">constraint_name</replaceable> [ RESTRICT | CASCADE ]
     DISABLE TRIGGER [ <replaceable class="parameter">trigger_name</replaceable> | ALL | USER ]
@@ -556,10 +557,30 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     <listitem>
      <para>
       This form alters the attributes of a constraint that was previously
-      created. Currently only foreign key constraints may be altered.
+      created. Currently only foreign key constraints may be altered in
+      this fashion, but see below.
      </para>
     </listitem>
    </varlistentry>
+
+   <varlistentry id="sql-altertable-desc-alter-constraint-inherit">
+    <term><literal>ALTER CONSTRAINT ... SET INHERIT</literal></term>
+    <term><literal>ALTER CONSTRAINT ... SET NO INHERIT</literal></term>
+    <listitem>
+     <para>
+      These forms modify a inheritable constraint so that it becomes not
+      inheritable, or vice-versa. Only not-null constraints may be altered
+      in this fashion at present.
+      In addition to changing the inheritability status of the constraint,
+      in the case where a non-inheritable constraint is being marked
+      inheritable, if the table has children, an equivalent constraint
+      will be added to them. If marking an inheritable constraint as
+      non-inheritable on a table with children, then the corresponding
+      constraint on children will be marked as no longer inherited,
+      but not removed.
+      </para>
+     </listitem>
+    </varlistentry>
 
    <varlistentry id="sql-altertable-desc-validate-constraint">
     <term><literal>VALIDATE CONSTRAINT</literal></term>
