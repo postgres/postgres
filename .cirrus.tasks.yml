@@ -188,7 +188,7 @@ task:
     chown root:postgres /tmp/cores
     sysctl kern.corefile='/tmp/cores/%N.%P.core'
   setup_additional_packages_script: |
-    pkg install -y curl
+    #pkg install -y ...
 
   # NB: Intentionally build without -Dllvm. The freebsd image size is already
   # large enough to make VM startup slow, and even without llvm freebsd
@@ -445,10 +445,8 @@ task:
     EOF
 
   setup_additional_packages_script: |
-    apt-get update
-    DEBIAN_FRONTEND=noninteractive apt-get -y install \
-      libcurl4-openssl-dev \
-      libcurl4-openssl-dev:i386 \
+    #apt-get update
+    #DEBIAN_FRONTEND=noninteractive apt-get -y install ...
 
   matrix:
     # SPECIAL:
@@ -837,8 +835,8 @@ task:
     folder: $CCACHE_DIR
 
   setup_additional_packages_script: |
-    apt-get update
-    DEBIAN_FRONTEND=noninteractive apt-get -y install libcurl4-openssl-dev
+    #apt-get update
+    #DEBIAN_FRONTEND=noninteractive apt-get -y install ...
 
   ###
   # Test that code can be built with gcc/clang without warnings
