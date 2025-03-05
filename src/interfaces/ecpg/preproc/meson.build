@@ -96,6 +96,6 @@ tests += {
       't/001_ecpg_err_warn_msg.pl',
       't/002_ecpg_err_warn_msg_informix.pl',
     ],
-    'deps': ecpg_exe,
+    'deps': [ecpg_exe],
   },
 }
