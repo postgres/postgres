@@ -33,6 +33,7 @@
 #include "common/blkreftable.h"
 #include "libpq/pqsignal.h"
 #include "miscadmin.h"
+#include "pgstat.h"
 #include "postmaster/auxprocess.h"
 #include "postmaster/interrupt.h"
 #include "postmaster/walsummarizer.h"
@@ -1635,6 +1636,9 @@ summarizer_wait_for_wal(void)
 		else
 			sleep_quanta -= pages_read_since_last_sleep;
 	}
+
+	/* Report pending statistics to the cumulative stats system. */
+	pgstat_report_wal(false);
 
 	/* OK, now sleep. */
 	(void) WaitLatch(MyLatch,

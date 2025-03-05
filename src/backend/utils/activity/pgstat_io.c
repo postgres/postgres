@@ -435,10 +435,20 @@ pgstat_tracks_io_object(BackendType bktype, IOObject io_object,
 	 */
 	no_temp_rel = bktype == B_AUTOVAC_LAUNCHER || bktype == B_BG_WRITER ||
 		bktype == B_CHECKPOINTER || bktype == B_AUTOVAC_WORKER ||
-		bktype == B_STANDALONE_BACKEND || bktype == B_STARTUP;
+		bktype == B_STANDALONE_BACKEND || bktype == B_STARTUP ||
+		bktype == B_WAL_SUMMARIZER || bktype == B_WAL_WRITER ||
+		bktype == B_WAL_RECEIVER;
 
 	if (no_temp_rel && io_context == IOCONTEXT_NORMAL &&
 		io_object == IOOBJECT_TEMP_RELATION)
+		return false;
+
+	/*
+	 * Some BackendTypes only perform IO under IOOBJECT_WAL, hence exclude all
+	 * rows for all the other objects for these.
+	 */
+	if ((bktype == B_WAL_SUMMARIZER || bktype == B_WAL_RECEIVER ||
+		 bktype == B_WAL_WRITER) && io_object != IOOBJECT_WAL)
 		return false;
 
 	/*

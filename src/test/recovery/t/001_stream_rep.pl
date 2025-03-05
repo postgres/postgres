@@ -506,6 +506,13 @@ $node_standby_2->append_conf('postgresql.conf', "primary_slot_name = ''");
 $node_standby_2->enable_streaming($node_primary);
 $node_standby_2->reload;
 
+# The WAL receiver should have generated some IO statistics.
+my $stats_reads = $node_standby_1->safe_psql(
+	'postgres',
+	qq{SELECT sum(writes) > 0 FROM pg_stat_io
+   WHERE backend_type = 'walreceiver' AND object = 'wal'});
+is($stats_reads, 't', "WAL receiver generates statistics for WAL writes");
+
 # be sure do not streaming from cascade
 $node_standby_1->stop;
 

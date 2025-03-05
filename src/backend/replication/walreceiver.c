@@ -584,6 +584,16 @@ WalReceiverMain(const void *startup_data, size_t startup_data_len)
 					bool		requestReply = false;
 
 					/*
+					 * Report pending statistics to the cumulative stats
+					 * system.  This location is useful for the report as it
+					 * is not within a tight loop in the WAL receiver, to
+					 * avoid bloating pgstats with requests, while also making
+					 * sure that the reports happen each time a status update
+					 * is sent.
+					 */
+					pgstat_report_wal(false);
+
+					/*
 					 * Check if time since last receive from primary has
 					 * reached the configured limit.
 					 */
