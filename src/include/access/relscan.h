@@ -151,13 +151,6 @@ typedef struct IndexScanDescData
 	void	   *opaque;			/* access-method-specific info */
 
 	/*
-	 * Instrumentation counters that are maintained by every index access
-	 * method, for all scan types.  These go here because there is no standard
-	 * way to access PlanState.instrument during amgettuple calls.
-	 */
-	uint64		nsearches;		/* total # of index searches */
-
-	/*
 	 * In an index-only scan, a successful amgettuple call must fill either
 	 * xs_itup (and xs_itupdesc) or xs_hitup (and xs_hitupdesc) to provide the
 	 * data returned by the scan.  It can fill both, in which case the heap

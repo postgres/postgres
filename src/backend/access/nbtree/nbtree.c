@@ -70,7 +70,6 @@ typedef struct BTParallelScanDescData
 	BTPS_State	btps_pageStatus;	/* indicates whether next page is
 									 * available for scan. see above for
 									 * possible states of parallel scan. */
-	uint64		btps_nsearches; /* tracked for IndexScanDescData.nsearches */
 	slock_t		btps_mutex;		/* protects above variables, btps_arrElems */
 	ConditionVariable btps_cv;	/* used to synchronize parallel scan */
 
@@ -558,7 +557,6 @@ btinitparallelscan(void *target)
 	bt_target->btps_nextScanPage = InvalidBlockNumber;
 	bt_target->btps_lastCurrPage = InvalidBlockNumber;
 	bt_target->btps_pageStatus = BTPARALLEL_NOT_INITIALIZED;
-	bt_target->btps_nsearches = 0;
 	ConditionVariableInit(&bt_target->btps_cv);
 }
 
@@ -585,7 +583,6 @@ btparallelrescan(IndexScanDesc scan)
 	btscan->btps_nextScanPage = InvalidBlockNumber;
 	btscan->btps_lastCurrPage = InvalidBlockNumber;
 	btscan->btps_pageStatus = BTPARALLEL_NOT_INITIALIZED;
-	/* deliberately don't reset btps_nsearches (matches index_rescan) */
 	SpinLockRelease(&btscan->btps_mutex);
 }
 
@@ -679,7 +676,6 @@ _bt_parallel_seize(IndexScanDesc scan, BlockNumber *next_scan_page,
 			{
 				/* Can start scheduled primitive scan right away, so do so */
 				btscan->btps_pageStatus = BTPARALLEL_ADVANCING;
-				btscan->btps_nsearches++;
 				for (int i = 0; i < so->numArrayKeys; i++)
 				{
 					BTArrayKeyInfo *array = &so->arrayKeys[i];
@@ -716,11 +712,6 @@ _bt_parallel_seize(IndexScanDesc scan, BlockNumber *next_scan_page,
 			 */
 			btscan->btps_pageStatus = BTPARALLEL_ADVANCING;
 			Assert(btscan->btps_nextScanPage != P_NONE);
-			if (btscan->btps_nextScanPage == InvalidBlockNumber)
-			{
-				Assert(first);
-				btscan->btps_nsearches++;
-			}
 			*next_scan_page = btscan->btps_nextScanPage;
 			*last_curr_page = btscan->btps_lastCurrPage;
 			exit_loop = true;
@@ -819,12 +810,6 @@ _bt_parallel_done(IndexScanDesc scan)
 		btscan->btps_pageStatus = BTPARALLEL_DONE;
 		status_changed = true;
 	}
-
-	/*
-	 * Don't use local nsearches counter -- overwrite it with the nsearches
-	 * counter that we've been maintaining in shared memory
-	 */
-	scan->nsearches = btscan->btps_nsearches;
 	SpinLockRelease(&btscan->btps_mutex);
 
 	/* wake up all the workers associated with this parallel scan */
