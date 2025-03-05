@@ -31,7 +31,7 @@ SUBDIRS = \
 	pg_dump \
 	pg_resetwal \
 	pg_rewind \
-	pg_tde_alter_key_provider \
+	pg_tde_change_key_provider \
 	pg_test_fsync \
 	pg_test_timing \
 	pg_upgrade \

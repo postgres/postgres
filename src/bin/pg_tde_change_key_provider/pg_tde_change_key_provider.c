@@ -10,20 +10,29 @@
 #include <stdarg.h>
 #include <stdio.h>
 
-/* version string we expect back from pg_tde_modify_key_provider */
-#define PROGNAME "pg_tde_modify_key_provider (PostgreSQL) " PG_VERSION "\n"
+/* version string we expect back from pg_tde_change_key_provider */
+#define PROGNAME "pg_tde_change_key_provider (PostgreSQL) " PG_VERSION "\n"
 
 static void
 help(void)
 {
-	printf("pg_tde_modify_key_provider changes the configuration of a pg_tde key provider\n");
+	puts("pg_tde_change_key_provider changes the configuration of a pg_tde key provider");
 	puts("");
-	printf("Usage:\n");
-	printf("pg_tde_modify_key_provider [-D <datadir>] <dbOid> <provider_name> file <filename>\n");
-	printf("pg_tde_modify_key_provider [-D <datadir>] <dbOid> <provider_name> vault <token> <url> <mount_path> [<ca_path>]\n");
-	printf("pg_tde_modify_key_provider [-D <datadir>] <dbOid> <provider_name> kmip <host> <port> <cert_path> [<ca_path>]\n");
-	printf("\nWARNING:\n");
-	printf("This tool only changes the values, without properly XLogging the changes. Only use it in case the database is inaccessible and can't be started.\n");
+	puts("Usage:");
+	puts("");
+	puts("pg_tde_change_key_provider [-D <datadir>] <dbOid> <provider_name> <new_provider_type> <provider_parameters...>");
+	puts("");
+	puts("  Where <new_provider_type> can be file, vault or kmip");
+	puts("");
+	puts("Depending on the provider type, the complete parameter list is:");
+	puts("");
+	puts("pg_tde_change_key_provider [-D <datadir>] <dbOid> <provider_name> file <filename>");
+	puts("pg_tde_change_key_provider [-D <datadir>] <dbOid> <provider_name> vault <token> <url> <mount_path> [<ca_path>]");
+	puts("pg_tde_change_key_provider [-D <datadir>] <dbOid> <provider_name> kmip <host> <port> <cert_path> [<ca_path>]");
+	puts("");
+	puts("WARNING:");
+	puts("");
+	puts("This tool only changes the values, without properly XLogging the changes, or adjusting the configuration in the running postgres processes. Only use it in case the database is inaccessible and can't be started.\n");
 }
 
 #define BUFFER_SIZE 1024
@@ -110,7 +119,7 @@ main(int argc, char *argv[])
 
 	pg_logging_init(argv[0]);
 	pg_logging_set_level(PG_LOG_WARNING);
-	set_pglocale_pgservice(argv[0], PG_TEXTDOMAIN("pg_tde_alter_key_provider"));
+	set_pglocale_pgservice(argv[0], PG_TEXTDOMAIN("pg_tde_change_key_provider"));
 
 	if (argc > 1)
 	{
@@ -121,7 +130,7 @@ main(int argc, char *argv[])
 		}
 		if (strcmp(argv[1], "--version") == 0 || strcmp(argv[1], "-V") == 0)
 		{
-			puts("pg_tde_alter_key_provider (PostgreSQL) " PG_VERSION);
+			puts("pg_tde_change_key_provider (PostgreSQL) " PG_VERSION);
 			exit(0);
 		}
 	}
