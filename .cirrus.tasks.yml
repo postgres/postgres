@@ -139,7 +139,14 @@ task:
     CPPFLAGS: -DRELCACHE_FORCE_RELEASE -DENFORCE_REGRESSION_TEST_NAME_RESTRICTIONS
     CFLAGS: -Og -ggdb
 
-    PG_TEST_INITDB_EXTRA_OPTS: -c debug_copy_parse_plan_trees=on -c debug_write_read_parse_plan_trees=on -c debug_raw_expression_coverage_test=on
+    # Several buildfarm animals enable these options. Without testing them
+    # during CI, it would be easy to cause breakage on the buildfarm with CI
+    # passing.
+    PG_TEST_INITDB_EXTRA_OPTS: >-
+      -c debug_copy_parse_plan_trees=on
+      -c debug_write_read_parse_plan_trees=on
+      -c debug_raw_expression_coverage_test=on
+      -c debug_parallel_query=regress
     PG_TEST_PG_UPGRADE_MODE: --link
 
   <<: *freebsd_task_template
