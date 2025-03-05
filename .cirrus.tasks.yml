@@ -2,6 +2,12 @@
 #
 # For instructions on how to enable the CI integration in a repository and
 # further details, see src/tools/ci/README
+#
+#
+# NB: Different tasks intentionally test with different, non-default,
+# configurations, to increase the chance of catching problems. Each task with
+# non-obvious non-default documents their oddity at the top of the task,
+# prefixed by "SPECIAL:".
 
 
 env:
@@ -55,6 +61,10 @@ on_failure_meson: &on_failure_meson
 
 # To avoid unnecessarily spinning up a lot of VMs / containers for entirely
 # broken commits, have a minimal task that all others depend on.
+#
+# SPECIAL:
+# - Builds with --auto-features=disabled and thus almost no enabled
+#   dependencies
 task:
   name: SanityCheck
 
@@ -125,6 +135,11 @@ task:
       src/tools/ci/cores_backtrace.sh linux /tmp/cores
 
 
+# SPECIAL:
+# - Uses postgres specific CPPFLAGS that increase test coverage
+# - Specifies configuration options that test reading/writing/copying of node trees
+# - Specifies debug_parallel_query=regress, to catch related issues during CI
+# - Also runs tests against a running postgres instance, see test_running_script
 task:
   name: FreeBSD - Meson
 
@@ -355,6 +370,7 @@ LINUX_MESON_FEATURES: &LINUX_MESON_FEATURES >-
   -Duuid=e2fs
 
 
+# Check SPECIAL in the matrix: below
 task:
   env:
     CPUS: 4
@@ -435,6 +451,10 @@ task:
       libcurl4-openssl-dev:i386 \
 
   matrix:
+    # SPECIAL:
+    # - Uses address sanitizer, sanitizer failures are typically printed in
+    #   the server log
+    # - Configures postgres with a small segment size
     - name: Linux - Debian Bookworm - Autoconf
 
       env:
@@ -470,6 +490,10 @@ task:
       on_failure:
         <<: *on_failure_ac
 
+    # SPECIAL:
+    # - Uses undefined behaviour and alignment sanitizers, sanitizer failures
+    #   are typically printed in the server log
+    # - Test both 64bit and 32 bit builds
     - name: Linux - Debian Bookworm - Meson
 
       env:
@@ -530,6 +554,11 @@ task:
     cores_script: src/tools/ci/cores_backtrace.sh linux /tmp/cores
 
 
+# NB: macOS is by far the most expensive OS to run CI for, therefore no
+# expensive additional checks should be added.
+#
+# SPECIAL:
+# - Enables --clone for pg_upgrade and pg_combinebackup
 task:
   name: macOS - Sonoma - Meson
 
