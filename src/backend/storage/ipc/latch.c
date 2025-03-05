@@ -360,33 +360,6 @@ InitializeLatchWaitSet(void)
 	Assert(latch_pos == LatchWaitSetLatchPos);
 }
 
-void
-ShutdownLatchSupport(void)
-{
-#if defined(WAIT_USE_POLL)
-	pqsignal(SIGURG, SIG_IGN);
-#endif
-
-	if (LatchWaitSet)
-	{
-		FreeWaitEventSet(LatchWaitSet);
-		LatchWaitSet = NULL;
-	}
-
-#if defined(WAIT_USE_SELF_PIPE)
-	close(selfpipe_readfd);
-	close(selfpipe_writefd);
-	selfpipe_readfd = -1;
-	selfpipe_writefd = -1;
-	selfpipe_owner_pid = InvalidPid;
-#endif
-
-#if defined(WAIT_USE_SIGNALFD)
-	close(signal_fd);
-	signal_fd = -1;
-#endif
-}
-
 /*
  * Initialize a process-local latch.
  */
