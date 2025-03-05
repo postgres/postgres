@@ -64,7 +64,7 @@ You can run tests on your local machine with whatever operating system you have.
 ## Contribute to documentation
 
 `pg_tde` documentation is written in Markdown language, so you can [write the docs for your code changes](#write-the-docs) or
-[edit the existing documentation online via GitHub](#edit-documentation-online-vi-github). If you wish to have more control over the doc process, jump to how to [edit documentation locally](#edit-documentation-locally). 
+[edit the existing documentation online via GitHub](#edit-documentation-online-via-github). If you wish to have more control over the doc process, jump to how to [edit documentation locally](#edit-documentation-locally). 
 
 Before you start, learn what [Markdown] is and how to write it. For your convenience, there's also a [Markdown cheat sheet] to help you with the syntax. 
 

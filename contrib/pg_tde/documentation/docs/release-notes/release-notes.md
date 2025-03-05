@@ -1,6 +1,6 @@
 # pg_tde release notes
 
-`pg_tde` extension brings in [Transparent Data Encryption (TDE)](tde.md) to PostgreSQL and enables you to keep sensitive data safe and secure.
+`pg_tde` extension brings in [Transparent Data Encryption (TDE)](../tde.md) to PostgreSQL and enables you to keep sensitive data safe and secure.
 
 [Get started](../install.md){.md-button}
 
