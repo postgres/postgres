@@ -125,7 +125,7 @@ task:
 
 
 task:
-  name: FreeBSD - 13 - Meson
+  name: FreeBSD - Meson
 
   env:
     # FreeBSD on GCP is slow when running with larger number of CPUS /
@@ -133,7 +133,7 @@ task:
     CPUS: 2
     BUILD_JOBS: 3
     TEST_JOBS: 3
-    IMAGE_FAMILY: pg-ci-freebsd-13
+    IMAGE_FAMILY: pg-ci-freebsd
     DISK_SIZE: 50
 
     CCACHE_DIR: /tmp/ccache_dir
