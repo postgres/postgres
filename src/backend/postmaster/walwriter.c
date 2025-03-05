@@ -239,7 +239,7 @@ WalWriterMain(const void *startup_data, size_t startup_data_len)
 		ResetLatch(MyLatch);
 
 		/* Process any signals received recently */
-		HandleMainLoopInterrupts();
+		ProcessMainLoopInterrupts();
 
 		/*
 		 * Do what we're here for; then, if XLogBackgroundFlush() found useful

@@ -31,7 +31,7 @@ volatile sig_atomic_t ShutdownRequestPending = false;
  * Simple interrupt handler for main loops of background processes.
  */
 void
-HandleMainLoopInterrupts(void)
+ProcessMainLoopInterrupts(void)
 {
 	if (ProcSignalBarrierPending)
 		ProcessProcSignalBarrier();
@@ -55,7 +55,7 @@ HandleMainLoopInterrupts(void)
  *
  * Normally, this handler would be used for SIGHUP. The idea is that code
  * which uses it would arrange to check the ConfigReloadPending flag at
- * convenient places inside main loops, or else call HandleMainLoopInterrupts.
+ * convenient places inside main loops, or else call ProcessMainLoopInterrupts.
  */
 void
 SignalHandlerForConfigReload(SIGNAL_ARGS)
@@ -99,7 +99,7 @@ SignalHandlerForCrashExit(SIGNAL_ARGS)
  * SIGINT or SIGTERM.
  *
  * ShutdownRequestPending should be checked at a convenient place within the
- * main loop, or else the main loop should call HandleMainLoopInterrupts.
+ * main loop, or else the main loop should call ProcessMainLoopInterrupts.
  */
 void
 SignalHandlerForShutdownRequest(SIGNAL_ARGS)

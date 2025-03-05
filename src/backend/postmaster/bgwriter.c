@@ -226,7 +226,7 @@ BackgroundWriterMain(const void *startup_data, size_t startup_data_len)
 		/* Clear any already-pending wakeups */
 		ResetLatch(MyLatch);
 
-		HandleMainLoopInterrupts();
+		ProcessMainLoopInterrupts();
 
 		/*
 		 * Do one cycle of dirty-buffer writing.

@@ -316,7 +316,7 @@ static WorkerInfo MyWorkerInfo = NULL;
 int			AutovacuumLauncherPid = 0;
 
 static Oid	do_start_worker(void);
-static void HandleAutoVacLauncherInterrupts(void);
+static void ProcessAutoVacLauncherInterrupts(void);
 static void AutoVacLauncherShutdown(void) pg_attribute_noreturn();
 static void launcher_determine_sleep(bool canlaunch, bool recursing,
 									 struct timeval *nap);
@@ -594,7 +594,7 @@ AutoVacLauncherMain(const void *startup_data, size_t startup_data_len)
 
 		ResetLatch(MyLatch);
 
-		HandleAutoVacLauncherInterrupts();
+		ProcessAutoVacLauncherInterrupts();
 
 		/*
 		 * a worker finished, or postmaster signaled failure to start a worker
@@ -742,7 +742,7 @@ AutoVacLauncherMain(const void *startup_data, size_t startup_data_len)
  * Process any new interrupts.
  */
 static void
-HandleAutoVacLauncherInterrupts(void)
+ProcessAutoVacLauncherInterrupts(void)
 {
 	/* the normal shutdown case */
 	if (ShutdownRequestPending)

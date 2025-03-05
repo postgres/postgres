@@ -983,7 +983,7 @@ ParallelApplyWorkerMain(Datum main_arg)
  *
  * Note: this is called within a signal handler! All we can do is set a flag
  * that will cause the next CHECK_FOR_INTERRUPTS() to invoke
- * HandleParallelApplyMessages().
+ * ProcessParallelApplyMessages().
  */
 void
 HandleParallelApplyMessageInterrupt(void)
@@ -994,11 +994,11 @@ HandleParallelApplyMessageInterrupt(void)
 }
 
 /*
- * Handle a single protocol message received from a single parallel apply
+ * Process a single protocol message received from a single parallel apply
  * worker.
  */
 static void
-HandleParallelApplyMessage(StringInfo msg)
+ProcessParallelApplyMessage(StringInfo msg)
 {
 	char		msgtype;
 
@@ -1060,7 +1060,7 @@ HandleParallelApplyMessage(StringInfo msg)
  * Handle any queued protocol messages received from parallel apply workers.
  */
 void
-HandleParallelApplyMessages(void)
+ProcessParallelApplyMessages(void)
 {
 	ListCell   *lc;
 	MemoryContext oldcontext;
@@ -1083,7 +1083,7 @@ HandleParallelApplyMessages(void)
 	 */
 	if (!hpam_context)			/* first time through? */
 		hpam_context = AllocSetContextCreate(TopMemoryContext,
-											 "HandleParallelApplyMessages",
+											 "ProcessParallelApplyMessages",
 											 ALLOCSET_DEFAULT_SIZES);
 	else
 		MemoryContextReset(hpam_context);
@@ -1118,7 +1118,7 @@ HandleParallelApplyMessages(void)
 
 			initStringInfo(&msg);
 			appendBinaryStringInfo(&msg, data, nbytes);
-			HandleParallelApplyMessage(&msg);
+			ProcessParallelApplyMessage(&msg);
 			pfree(msg.data);
 		}
 		else

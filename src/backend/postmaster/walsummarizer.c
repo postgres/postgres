@@ -145,7 +145,7 @@ int			wal_summary_keep_time = 10 * HOURS_PER_DAY * MINS_PER_HOUR;
 
 static void WalSummarizerShutdown(int code, Datum arg);
 static XLogRecPtr GetLatestLSN(TimeLineID *tli);
-static void HandleWalSummarizerInterrupts(void);
+static void ProcessWalSummarizerInterrupts(void);
 static XLogRecPtr SummarizeWAL(TimeLineID tli, XLogRecPtr start_lsn,
 							   bool exact, XLogRecPtr switch_lsn,
 							   XLogRecPtr maximum_lsn);
@@ -356,7 +356,7 @@ WalSummarizerMain(const void *startup_data, size_t startup_data_len)
 		MemoryContextReset(context);
 
 		/* Process any signals received recently. */
-		HandleWalSummarizerInterrupts();
+		ProcessWalSummarizerInterrupts();
 
 		/* If it's time to remove any old WAL summaries, do that now. */
 		MaybeRemoveOldWalSummaries();
@@ -856,7 +856,7 @@ GetLatestLSN(TimeLineID *tli)
  * Interrupt handler for main loop of WAL summarizer process.
  */
 static void
-HandleWalSummarizerInterrupts(void)
+ProcessWalSummarizerInterrupts(void)
 {
 	if (ProcSignalBarrierPending)
 		ProcessProcSignalBarrier();
@@ -1016,7 +1016,7 @@ SummarizeWAL(TimeLineID tli, XLogRecPtr start_lsn, bool exact,
 		XLogRecord *record;
 		uint8		rmid;
 
-		HandleWalSummarizerInterrupts();
+		ProcessWalSummarizerInterrupts();
 
 		/* We shouldn't go backward. */
 		Assert(summary_start_lsn <= xlogreader->EndRecPtr);
@@ -1503,7 +1503,7 @@ summarizer_read_local_xlog_page(XLogReaderState *state,
 	WALReadError errinfo;
 	SummarizerReadLocalXLogPrivate *private_data;
 
-	HandleWalSummarizerInterrupts();
+	ProcessWalSummarizerInterrupts();
 
 	private_data = (SummarizerReadLocalXLogPrivate *)
 		state->private_data;
@@ -1541,7 +1541,7 @@ summarizer_read_local_xlog_page(XLogReaderState *state,
 				 * current timeline, so more data might show up.  Delay here
 				 * so we don't tight-loop.
 				 */
-				HandleWalSummarizerInterrupts();
+				ProcessWalSummarizerInterrupts();
 				summarizer_wait_for_wal();
 
 				/* Recheck end-of-WAL. */
@@ -1692,7 +1692,7 @@ MaybeRemoveOldWalSummaries(void)
 		XLogRecPtr	oldest_lsn = InvalidXLogRecPtr;
 		TimeLineID	selected_tli;
 
-		HandleWalSummarizerInterrupts();
+		ProcessWalSummarizerInterrupts();
 
 		/*
 		 * Pick a timeline for which some summary files still exist on disk,
@@ -1711,7 +1711,7 @@ MaybeRemoveOldWalSummaries(void)
 		{
 			WalSummaryFile *ws = lfirst(lc);
 
-			HandleWalSummarizerInterrupts();
+			ProcessWalSummarizerInterrupts();
 
 			/* If it's not on this timeline, it's not time to consider it. */
 			if (selected_tli != ws->tli)

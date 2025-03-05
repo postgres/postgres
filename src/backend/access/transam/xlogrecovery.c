@@ -1774,7 +1774,7 @@ PerformWalRecovery(void)
 #endif
 
 			/* Handle interrupt signals of startup process */
-			HandleStartupProcInterrupts();
+			ProcessStartupProcInterrupts();
 
 			/*
 			 * Pause WAL replay, if requested by a hot-standby session via
@@ -2949,7 +2949,7 @@ recoveryPausesHere(bool endOfRecovery)
 	/* loop until recoveryPauseState is set to RECOVERY_NOT_PAUSED */
 	while (GetRecoveryPauseState() != RECOVERY_NOT_PAUSED)
 	{
-		HandleStartupProcInterrupts();
+		ProcessStartupProcInterrupts();
 		if (CheckForStandbyTrigger())
 			return;
 
@@ -3038,7 +3038,7 @@ recoveryApplyDelay(XLogReaderState *record)
 		ResetLatch(&XLogRecoveryCtl->recoveryWakeupLatch);
 
 		/* This might change recovery_min_apply_delay. */
-		HandleStartupProcInterrupts();
+		ProcessStartupProcInterrupts();
 
 		if (CheckForStandbyTrigger())
 			break;
@@ -3727,7 +3727,7 @@ WaitForWALToBecomeAvailable(XLogRecPtr RecPtr, bool randAccess,
 						now = GetCurrentTimestamp();
 
 						/* Handle interrupt signals of startup process */
-						HandleStartupProcInterrupts();
+						ProcessStartupProcInterrupts();
 					}
 					last_fail_time = now;
 					currentSource = XLOG_FROM_ARCHIVE;
@@ -4017,7 +4017,7 @@ WaitForWALToBecomeAvailable(XLogRecPtr RecPtr, bool randAccess,
 		 * This possibly-long loop needs to handle interrupts of startup
 		 * process.
 		 */
-		HandleStartupProcInterrupts();
+		ProcessStartupProcInterrupts();
 	}
 
 	return XLREAD_FAIL;			/* not reached */
@@ -4695,7 +4695,7 @@ RecoveryRequiresIntParameter(const char *param_name, int currValue, int minValue
 
 			while (GetRecoveryPauseState() != RECOVERY_NOT_PAUSED)
 			{
-				HandleStartupProcInterrupts();
+				ProcessStartupProcInterrupts();
 
 				if (CheckForStandbyTrigger())
 				{
