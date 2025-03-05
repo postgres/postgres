@@ -22,8 +22,9 @@ begin
         ln := regexp_replace(ln, 'Evictions: 0', 'Evictions: Zero');
         ln := regexp_replace(ln, 'Evictions: \d+', 'Evictions: N');
         ln := regexp_replace(ln, 'Memory Usage: \d+', 'Memory Usage: N');
-	ln := regexp_replace(ln, 'Heap Fetches: \d+', 'Heap Fetches: N');
-	ln := regexp_replace(ln, 'loops=\d+', 'loops=N');
+        ln := regexp_replace(ln, 'Heap Fetches: \d+', 'Heap Fetches: N');
+        ln := regexp_replace(ln, 'loops=\d+', 'loops=N');
+        ln := regexp_replace(ln, 'Index Searches: \d+', 'Index Searches: N');
         return next ln;
     end loop;
 end;
@@ -49,7 +50,8 @@ WHERE t2.unique1 < 1000;', false);
                ->  Index Only Scan using tenk1_unique1 on tenk1 t1 (actual rows=1.00 loops=N)
                      Index Cond: (unique1 = t2.twenty)
                      Heap Fetches: N
-(12 rows)
+                     Index Searches: N
+(13 rows)
 
 -- And check we get the expected results.
 SELECT COUNT(*),AVG(t1.unique1) FROM tenk1 t1
@@ -80,7 +82,8 @@ WHERE t1.unique1 < 1000;', false);
                ->  Index Only Scan using tenk1_unique1 on tenk1 t2 (actual rows=1.00 loops=N)
                      Index Cond: (unique1 = t1.twenty)
                      Heap Fetches: N
-(12 rows)
+                     Index Searches: N
+(13 rows)
 
 -- And check we get the expected results.
 SELECT COUNT(*),AVG(t2.unique1) FROM tenk1 t1,
@@ -106,6 +109,7 @@ WHERE t1.unique1 < 10;', false);
    ->  Nested Loop Left Join (actual rows=20.00 loops=N)
          ->  Index Scan using tenk1_unique1 on tenk1 t1 (actual rows=10.00 loops=N)
                Index Cond: (unique1 < 10)
+               Index Searches: N
          ->  Memoize (actual rows=2.00 loops=N)
                Cache Key: t1.two
                Cache Mode: binary
@@ -115,7 +119,8 @@ WHERE t1.unique1 < 10;', false);
                      Rows Removed by Filter: 2
                      ->  Index Scan using tenk1_unique1 on tenk1 t2_1 (actual rows=4.00 loops=N)
                            Index Cond: (unique1 < 4)
-(13 rows)
+                           Index Searches: N
+(15 rows)
 
 -- And check we get the expected results.
 SELECT COUNT(*),AVG(t2.t1two) FROM tenk1 t1 LEFT JOIN
@@ -149,7 +154,8 @@ WHERE s.c1 = s.c2 AND t1.unique1 < 1000;', false);
                      Filter: ((t1.two + 1) = unique1)
                      Rows Removed by Filter: 9999
                      Heap Fetches: N
-(13 rows)
+                     Index Searches: N
+(14 rows)
 
 -- And check we get the expected results.
 SELECT COUNT(*), AVG(t1.twenty) FROM tenk1 t1 LEFT JOIN
@@ -219,7 +225,8 @@ ON t1.x = t2.t::numeric AND t1.t::numeric = t2.x;', false);
                Index Cond: (x = (t1.t)::numeric)
                Filter: (t1.x = (t)::numeric)
                Heap Fetches: N
-(10 rows)
+               Index Searches: N
+(11 rows)
 
 DROP TABLE expr_key;
 -- Reduce work_mem and hash_mem_multiplier so that we see some cache evictions
@@ -246,7 +253,8 @@ WHERE t2.unique1 < 1200;', true);
                ->  Index Only Scan using tenk1_unique1 on tenk1 t1 (actual rows=1.00 loops=N)
                      Index Cond: (unique1 = t2.thousand)
                      Heap Fetches: N
-(12 rows)
+                     Index Searches: N
+(13 rows)
 
 CREATE TABLE flt (f float);
 CREATE INDEX flt_f_idx ON flt (f);
@@ -261,6 +269,7 @@ SELECT * FROM flt f1 INNER JOIN flt f2 ON f1.f = f2.f;', false);
  Nested Loop (actual rows=4.00 loops=N)
    ->  Index Only Scan using flt_f_idx on flt f1 (actual rows=2.00 loops=N)
          Heap Fetches: N
+         Index Searches: N
    ->  Memoize (actual rows=2.00 loops=N)
          Cache Key: f1.f
          Cache Mode: logical
@@ -268,7 +277,8 @@ SELECT * FROM flt f1 INNER JOIN flt f2 ON f1.f = f2.f;', false);
          ->  Index Only Scan using flt_f_idx on flt f2 (actual rows=2.00 loops=N)
                Index Cond: (f = f1.f)
                Heap Fetches: N
-(10 rows)
+               Index Searches: N
+(12 rows)
 
 -- Ensure memoize operates in binary mode
 SELECT explain_memoize('
@@ -278,6 +288,7 @@ SELECT * FROM flt f1 INNER JOIN flt f2 ON f1.f >= f2.f;', false);
  Nested Loop (actual rows=4.00 loops=N)
    ->  Index Only Scan using flt_f_idx on flt f1 (actual rows=2.00 loops=N)
          Heap Fetches: N
+         Index Searches: N
    ->  Memoize (actual rows=2.00 loops=N)
          Cache Key: f1.f
          Cache Mode: binary
@@ -285,7 +296,8 @@ SELECT * FROM flt f1 INNER JOIN flt f2 ON f1.f >= f2.f;', false);
          ->  Index Only Scan using flt_f_idx on flt f2 (actual rows=2.00 loops=N)
                Index Cond: (f <= f1.f)
                Heap Fetches: N
-(10 rows)
+               Index Searches: N
+(12 rows)
 
 DROP TABLE flt;
 -- Exercise Memoize in binary mode with a large fixed width type and a
@@ -311,7 +323,8 @@ SELECT * FROM strtest s1 INNER JOIN strtest s2 ON s1.n >= s2.n;', false);
          Hits: 3  Misses: 3  Evictions: Zero  Overflows: 0  Memory Usage: NkB
          ->  Index Scan using strtest_n_idx on strtest s2 (actual rows=4.00 loops=N)
                Index Cond: (n <= s1.n)
-(9 rows)
+               Index Searches: N
+(10 rows)
 
 -- Ensure we get 3 hits and 3 misses
 SELECT explain_memoize('
@@ -327,7 +340,8 @@ SELECT * FROM strtest s1 INNER JOIN strtest s2 ON s1.t >= s2.t;', false);
          Hits: 3  Misses: 3  Evictions: Zero  Overflows: 0  Memory Usage: NkB
          ->  Index Scan using strtest_t_idx on strtest s2 (actual rows=4.00 loops=N)
                Index Cond: (t <= s1.t)
-(9 rows)
+               Index Searches: N
+(10 rows)
 
 DROP TABLE strtest;
 -- Ensure memoize works with partitionwise join
@@ -348,6 +362,7 @@ SELECT * FROM prt t1 INNER JOIN prt t2 ON t1.a = t2.a;', false);
    ->  Nested Loop (actual rows=16.00 loops=N)
          ->  Index Only Scan using iprt_p1_a on prt_p1 t1_1 (actual rows=4.00 loops=N)
                Heap Fetches: N
+               Index Searches: N
          ->  Memoize (actual rows=4.00 loops=N)
                Cache Key: t1_1.a
                Cache Mode: logical
@@ -355,9 +370,11 @@ SELECT * FROM prt t1 INNER JOIN prt t2 ON t1.a = t2.a;', false);
                ->  Index Only Scan using iprt_p1_a on prt_p1 t2_1 (actual rows=4.00 loops=N)
                      Index Cond: (a = t1_1.a)
                      Heap Fetches: N
+                     Index Searches: N
    ->  Nested Loop (actual rows=16.00 loops=N)
          ->  Index Only Scan using iprt_p2_a on prt_p2 t1_2 (actual rows=4.00 loops=N)
                Heap Fetches: N
+               Index Searches: N
          ->  Memoize (actual rows=4.00 loops=N)
                Cache Key: t1_2.a
                Cache Mode: logical
@@ -365,7 +382,8 @@ SELECT * FROM prt t1 INNER JOIN prt t2 ON t1.a = t2.a;', false);
                ->  Index Only Scan using iprt_p2_a on prt_p2 t2_2 (actual rows=4.00 loops=N)
                      Index Cond: (a = t1_2.a)
                      Heap Fetches: N
-(21 rows)
+                     Index Searches: N
+(25 rows)
 
 -- Ensure memoize works with parameterized union-all Append path
 SET enable_partitionwise_join TO off;
@@ -378,6 +396,7 @@ ON t1.a = t2.a;', false);
  Nested Loop (actual rows=16.00 loops=N)
    ->  Index Only Scan using iprt_p1_a on prt_p1 t1 (actual rows=4.00 loops=N)
          Heap Fetches: N
+         Index Searches: N
    ->  Memoize (actual rows=4.00 loops=N)
          Cache Key: t1.a
          Cache Mode: logical
@@ -386,10 +405,12 @@ ON t1.a = t2.a;', false);
                ->  Index Only Scan using iprt_p1_a on prt_p1 (actual rows=4.00 loops=N)
                      Index Cond: (a = t1.a)
                      Heap Fetches: N
+                     Index Searches: N
                ->  Index Only Scan using iprt_p2_a on prt_p2 (actual rows=0.00 loops=N)
                      Index Cond: (a = t1.a)
                      Heap Fetches: N
-(14 rows)
+                     Index Searches: N
+(17 rows)
 
 DROP TABLE prt;
 RESET enable_partitionwise_join;

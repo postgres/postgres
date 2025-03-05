@@ -853,7 +853,8 @@ SELECT * FROM brin_date_test WHERE a = '2023-01-01'::date;
    Recheck Cond: (a = '2023-01-01'::date)
    ->  Bitmap Index Scan on brin_date_test_a_idx (actual rows=0.00 loops=1)
          Index Cond: (a = '2023-01-01'::date)
-(4 rows)
+         Index Searches: 1
+(5 rows)
 
 DROP TABLE brin_date_test;
 RESET enable_seqscan;
@@ -872,7 +873,8 @@ SELECT * FROM brin_timestamp_test WHERE a = '2023-01-01'::timestamp;
    Recheck Cond: (a = '2023-01-01 00:00:00'::timestamp without time zone)
    ->  Bitmap Index Scan on brin_timestamp_test_a_idx (actual rows=0.00 loops=1)
          Index Cond: (a = '2023-01-01 00:00:00'::timestamp without time zone)
-(4 rows)
+         Index Searches: 1
+(5 rows)
 
 EXPLAIN (ANALYZE, TIMING OFF, COSTS OFF, SUMMARY OFF, BUFFERS OFF)
 SELECT * FROM brin_timestamp_test WHERE a = '1900-01-01'::timestamp;
@@ -882,7 +884,8 @@ SELECT * FROM brin_timestamp_test WHERE a = '1900-01-01'::timestamp;
    Recheck Cond: (a = '1900-01-01 00:00:00'::timestamp without time zone)
    ->  Bitmap Index Scan on brin_timestamp_test_a_idx (actual rows=0.00 loops=1)
          Index Cond: (a = '1900-01-01 00:00:00'::timestamp without time zone)
-(4 rows)
+         Index Searches: 1
+(5 rows)
 
 DROP TABLE brin_timestamp_test;
 RESET enable_seqscan;
@@ -900,7 +903,8 @@ SELECT * FROM brin_date_test WHERE a = '2023-01-01'::date;
    Recheck Cond: (a = '2023-01-01'::date)
    ->  Bitmap Index Scan on brin_date_test_a_idx (actual rows=0.00 loops=1)
          Index Cond: (a = '2023-01-01'::date)
-(4 rows)
+         Index Searches: 1
+(5 rows)
 
 EXPLAIN (ANALYZE, TIMING OFF, COSTS OFF, SUMMARY OFF, BUFFERS OFF)
 SELECT * FROM brin_date_test WHERE a = '1900-01-01'::date;
@@ -910,7 +914,8 @@ SELECT * FROM brin_date_test WHERE a = '1900-01-01'::date;
    Recheck Cond: (a = '1900-01-01'::date)
    ->  Bitmap Index Scan on brin_date_test_a_idx (actual rows=0.00 loops=1)
          Index Cond: (a = '1900-01-01'::date)
-(4 rows)
+         Index Searches: 1
+(5 rows)
 
 DROP TABLE brin_date_test;
 RESET enable_seqscan;
@@ -929,7 +934,8 @@ SELECT * FROM brin_interval_test WHERE a = '-30 years'::interval;
    Recheck Cond: (a = '@ 30 years ago'::interval)
    ->  Bitmap Index Scan on brin_interval_test_a_idx (actual rows=0.00 loops=1)
          Index Cond: (a = '@ 30 years ago'::interval)
-(4 rows)
+         Index Searches: 1
+(5 rows)
 
 EXPLAIN (ANALYZE, TIMING OFF, COSTS OFF, SUMMARY OFF, BUFFERS OFF)
 SELECT * FROM brin_interval_test WHERE a = '30 years'::interval;
@@ -939,7 +945,8 @@ SELECT * FROM brin_interval_test WHERE a = '30 years'::interval;
    Recheck Cond: (a = '@ 30 years'::interval)
    ->  Bitmap Index Scan on brin_interval_test_a_idx (actual rows=0.00 loops=1)
          Index Cond: (a = '@ 30 years'::interval)
-(4 rows)
+         Index Searches: 1
+(5 rows)
 
 DROP TABLE brin_interval_test;
 RESET enable_seqscan;
@@ -957,7 +964,8 @@ SELECT * FROM brin_interval_test WHERE a = '-30 years'::interval;
    Recheck Cond: (a = '@ 30 years ago'::interval)
    ->  Bitmap Index Scan on brin_interval_test_a_idx (actual rows=0.00 loops=1)
          Index Cond: (a = '@ 30 years ago'::interval)
-(4 rows)
+         Index Searches: 1
+(5 rows)
 
 EXPLAIN (ANALYZE, TIMING OFF, COSTS OFF, SUMMARY OFF, BUFFERS OFF)
 SELECT * FROM brin_interval_test WHERE a = '30 years'::interval;
@@ -967,7 +975,8 @@ SELECT * FROM brin_interval_test WHERE a = '30 years'::interval;
    Recheck Cond: (a = '@ 30 years'::interval)
    ->  Bitmap Index Scan on brin_interval_test_a_idx (actual rows=0.00 loops=1)
          Index Cond: (a = '@ 30 years'::interval)
-(4 rows)
+         Index Searches: 1
+(5 rows)
 
 DROP TABLE brin_interval_test;
 RESET enable_seqscan;

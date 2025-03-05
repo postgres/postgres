@@ -173,10 +173,11 @@ CREATE INDEX
    Buffers: shared hit=21864
    -&gt;  Bitmap Index Scan on bloomidx  (cost=0.00..178436.00 rows=1 width=0) (actual time=20.005..20.005 rows=2300.00 loops=1)
          Index Cond: ((i2 = 898732) AND (i5 = 123451))
+         Index Searches: 1
          Buffers: shared hit=19608
  Planning Time: 0.099 ms
  Execution Time: 22.632 ms
-(10 rows)
+(11 rows)
 </programlisting>
   </para>
 
@@ -208,13 +209,15 @@ CREATE INDEX
          Buffers: shared hit=6
          -&gt;  Bitmap Index Scan on btreeidx5  (cost=0.00..4.52 rows=11 width=0) (actual time=0.026..0.026 rows=7.00 loops=1)
                Index Cond: (i5 = 123451)
+               Index Searches: 1
                Buffers: shared hit=3
          -&gt;  Bitmap Index Scan on btreeidx2  (cost=0.00..4.52 rows=11 width=0) (actual time=0.007..0.007 rows=8.00 loops=1)
                Index Cond: (i2 = 898732)
+               Index Searches: 1
                Buffers: shared hit=3
  Planning Time: 0.264 ms
  Execution Time: 0.047 ms
-(13 rows)
+(15 rows)
 </programlisting>
    Although this query runs much faster than with either of the single
    indexes, we pay a penalty in index size.  Each of the single-column
