@@ -1102,6 +1102,24 @@ select jsonb_strip_nulls('[1,{"a":1,"b":null,"c":2},3]');
 -- an empty object is not null and should not be stripped
 select jsonb_strip_nulls('{"a": {"b": null, "c": null}, "d": {} }');
 
+-- jsonb_strip_nulls (strip_in_arrays=true)
+
+select jsonb_strip_nulls(null, true);
+
+select jsonb_strip_nulls('1', true);
+
+select jsonb_strip_nulls('"a string"', true);
+
+select jsonb_strip_nulls('null', true);
+
+select jsonb_strip_nulls('[1,2,null,3,4]', true);
+
+select jsonb_strip_nulls('{"a":1,"b":null,"c":[2,null,3],"d":{"e":4,"f":null}}', true);
+
+select jsonb_strip_nulls('[1,{"a":1,"b":null,"c":2},3]', true);
+
+-- an empty object is not null and should not be stripped
+select jsonb_strip_nulls('{"a": {"b": null, "c": null}, "d": {} }', true);
 
 select jsonb_pretty('{"a": "test", "b": [1, 2, 3], "c": "test3", "d":{"dd": "test4", "dd2":{"ddd": "test5"}}}');
 select jsonb_pretty('[{"f1":1,"f2":null},2,null,[[{"x":true},6,7],8],3]');

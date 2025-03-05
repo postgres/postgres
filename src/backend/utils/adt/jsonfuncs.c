@@ -286,6 +286,7 @@ typedef struct StripnullState
 	JsonLexContext *lex;
 	StringInfo	strval;
 	bool		skip_next_null;
+	bool		strip_in_arrays;
 } StripnullState;
 
 /* structure for generalized json/jsonb value passing */
@@ -4460,8 +4461,19 @@ sn_array_element_start(void *state, bool isnull)
 {
 	StripnullState *_state = (StripnullState *) state;
 
-	if (_state->strval->data[_state->strval->len - 1] != '[')
+	/* If strip_in_arrays is enabled and this is a null, mark it for skipping */
+	if (isnull && _state->strip_in_arrays)
+	{
+		_state->skip_next_null = true;
+		return JSON_SUCCESS;
+	}
+
+	/* Only add a comma if this is not the first valid element */
+	if (_state->strval->len > 0 &&
+		_state->strval->data[_state->strval->len - 1] != '[')
+	{
 		appendStringInfoCharMacro(_state->strval, ',');
+	}
 
 	return JSON_SUCCESS;
 }
@@ -4493,6 +4505,7 @@ Datum
 json_strip_nulls(PG_FUNCTION_ARGS)
 {
 	text	   *json = PG_GETARG_TEXT_PP(0);
+	bool		strip_in_arrays = PG_NARGS() == 2 ? PG_GETARG_BOOL(1) : false;
 	StripnullState *state;
 	JsonLexContext lex;
 	JsonSemAction *sem;
@@ -4503,6 +4516,7 @@ json_strip_nulls(PG_FUNCTION_ARGS)
 	state->lex = makeJsonLexContext(&lex, json, true);
 	state->strval = makeStringInfo();
 	state->skip_next_null = false;
+	state->strip_in_arrays = strip_in_arrays;
 
 	sem->semstate = state;
 	sem->object_start = sn_object_start;
@@ -4520,12 +4534,13 @@ json_strip_nulls(PG_FUNCTION_ARGS)
 }
 
 /*
- * SQL function jsonb_strip_nulls(jsonb) -> jsonb
+ * SQL function jsonb_strip_nulls(jsonb, bool) -> jsonb
  */
 Datum
 jsonb_strip_nulls(PG_FUNCTION_ARGS)
 {
 	Jsonb	   *jb = PG_GETARG_JSONB_P(0);
+	bool		strip_in_arrays = false;
 	JsonbIterator *it;
 	JsonbParseState *parseState = NULL;
 	JsonbValue *res = NULL;
@@ -4533,6 +4548,9 @@ jsonb_strip_nulls(PG_FUNCTION_ARGS)
 				k;
 	JsonbIteratorToken type;
 	bool		last_was_key = false;
+
+	if (PG_NARGS() == 2)
+		strip_in_arrays = PG_GETARG_BOOL(1);
 
 	if (JB_ROOT_IS_SCALAR(jb))
 		PG_RETURN_POINTER(jb);
@@ -4563,6 +4581,11 @@ jsonb_strip_nulls(PG_FUNCTION_ARGS)
 			/* otherwise, do a delayed push of the key */
 			(void) pushJsonbValue(&parseState, WJB_KEY, &k);
 		}
+
+		/* if strip_in_arrays is set, also skip null array elements */
+		if (strip_in_arrays)
+			if (type == WJB_ELEM && v.type == jbvNull)
+				continue;
 
 		if (type == WJB_VALUE || type == WJB_ELEM)
 			res = pushJsonbValue(&parseState, type, &v);

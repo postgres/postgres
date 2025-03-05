@@ -9269,7 +9269,7 @@
   proname => 'to_json', provolatile => 's', prorettype => 'json',
   proargtypes => 'anyelement', prosrc => 'to_json' },
 { oid => '3261', descr => 'remove object fields with null values from json',
-  proname => 'json_strip_nulls', prorettype => 'json', proargtypes => 'json',
+  proname => 'json_strip_nulls', prorettype => 'json', proargtypes => 'json bool',
   prosrc => 'json_strip_nulls' },
 
 { oid => '3947',
@@ -10205,7 +10205,7 @@
   prorettype => 'jsonb', proargtypes => '',
   prosrc => 'jsonb_build_object_noargs' },
 { oid => '3262', descr => 'remove object fields with null values from jsonb',
-  proname => 'jsonb_strip_nulls', prorettype => 'jsonb', proargtypes => 'jsonb',
+  proname => 'jsonb_strip_nulls', prorettype => 'jsonb', proargtypes => 'jsonb bool',
   prosrc => 'jsonb_strip_nulls' },
 
 { oid => '3478',

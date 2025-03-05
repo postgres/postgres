@@ -814,6 +814,25 @@ select json_strip_nulls('[1,{"a":1,"b":null,"c":2},3]');
 -- an empty object is not null and should not be stripped
 select json_strip_nulls('{"a": {"b": null, "c": null}, "d": {} }');
 
+-- json_strip_nulls (strip_in_arrays=true)
+
+select json_strip_nulls(null, true);
+
+select json_strip_nulls('1', true);
+
+select json_strip_nulls('"a string"', true);
+
+select json_strip_nulls('null', true);
+
+select json_strip_nulls('[1,2,null,3,4]', true);
+
+select json_strip_nulls('{"a":1,"b":null,"c":[2,null,3],"d":{"e":4,"f":null}}', true);
+
+select json_strip_nulls('[1,{"a":1,"b":null,"c":2},3]', true);
+
+-- an empty object is not null and should not be stripped
+select json_strip_nulls('{"a": {"b": null, "c": null}, "d": {} }', true);
+
 -- json to tsvector
 select to_tsvector('{"a": "aaa bbb ddd ccc", "b": ["eee fff ggg"], "c": {"d": "hhh iii"}}'::json);
 

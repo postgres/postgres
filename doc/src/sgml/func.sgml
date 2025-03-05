@@ -17345,25 +17345,32 @@ ERROR:  value too long for type character(2)
         <indexterm>
          <primary>json_strip_nulls</primary>
         </indexterm>
-        <function>json_strip_nulls</function> ( <type>json</type> )
+        <function>json_strip_nulls</function> ( <parameter>target</parameter> <type>jsonb</type>, <optional>,<parameter>strip_in_arrays</parameter> <type>boolean</type> </optional> )
         <returnvalue>json</returnvalue>
        </para>
        <para role="func_signature">
         <indexterm>
          <primary>jsonb_strip_nulls</primary>
         </indexterm>
-        <function>jsonb_strip_nulls</function> ( <type>jsonb</type> )
+        <function>jsonb_strip_nulls</function> ( <parameter>target</parameter> <type>jsonb</type>, <optional>,<parameter>strip_in_arrays</parameter> <type>boolean</type> </optional> )
         <returnvalue>jsonb</returnvalue>
        </para>
        <para>
         Deletes all object fields that have null values from the given JSON
-        value, recursively.  Null values that are not object fields are
-        untouched.
+        value, recursively.
+        If <parameter>strip_in_arrays</parameter> is true (the default is false),
+        null array elements are also stripped.
+        Otherwise they are not stripped. Bare null values are never stripped.
        </para>
        <para>
         <literal>json_strip_nulls('[{"f1":1, "f2":null}, 2, null, 3]')</literal>
         <returnvalue>[{"f1":1},2,null,3]</returnvalue>
-       </para></entry>
+       </para>
+       <para>
+        <literal>jsonb_strip_nulls('[1,2,null,3,4]', true);</literal>
+        <returnvalue>[1,2,3,4]</returnvalue>
+       </para>
+       </entry>
       </row>
 
       <row>
