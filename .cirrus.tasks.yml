@@ -126,13 +126,13 @@ task:
 
 
 task:
-  name: FreeBSD - 13 - Meson
+  name: FreeBSD - Meson
 
   env:
     CPUS: 4
     BUILD_JOBS: 4
     TEST_JOBS: 8
-    IMAGE_FAMILY: pg-ci-freebsd-13
+    IMAGE_FAMILY: pg-ci-freebsd
     DISK_SIZE: 50
 
     CCACHE_DIR: /tmp/ccache_dir
