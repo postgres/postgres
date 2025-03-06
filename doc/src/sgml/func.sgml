@@ -17345,14 +17345,14 @@ ERROR:  value too long for type character(2)
         <indexterm>
          <primary>json_strip_nulls</primary>
         </indexterm>
-        <function>json_strip_nulls</function> ( <parameter>target</parameter> <type>jsonb</type>, <optional>,<parameter>strip_in_arrays</parameter> <type>boolean</type> </optional> )
+        <function>json_strip_nulls</function> ( <parameter>target</parameter> <type>jsonb</type> <optional>,<parameter>strip_in_arrays</parameter> <type>boolean</type> </optional> )
         <returnvalue>json</returnvalue>
        </para>
        <para role="func_signature">
         <indexterm>
          <primary>jsonb_strip_nulls</primary>
         </indexterm>
-        <function>jsonb_strip_nulls</function> ( <parameter>target</parameter> <type>jsonb</type>, <optional>,<parameter>strip_in_arrays</parameter> <type>boolean</type> </optional> )
+        <function>jsonb_strip_nulls</function> ( <parameter>target</parameter> <type>jsonb</type> <optional>,<parameter>strip_in_arrays</parameter> <type>boolean</type> </optional> )
         <returnvalue>jsonb</returnvalue>
        </para>
        <para>
