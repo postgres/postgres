@@ -922,6 +922,7 @@ XLogWalRcvWrite(char *buf, Size nbytes, XLogRecPtr recptr, TimeLineID tli)
 {
 	int			startoff;
 	int			byteswritten;
+	instr_time	start;
 
 	Assert(tli != 0);
 
@@ -952,7 +953,18 @@ XLogWalRcvWrite(char *buf, Size nbytes, XLogRecPtr recptr, TimeLineID tli)
 		/* OK to write the logs */
 		errno = 0;
 
+		/*
+		 * Measure I/O timing to write WAL data, for pg_stat_io.
+		 */
+		start = pgstat_prepare_io_time(track_wal_io_timing);
+
+		pgstat_report_wait_start(WAIT_EVENT_WAL_WRITE);
 		byteswritten = pg_pwrite(recvFile, buf, segbytes, (off_t) startoff);
+		pgstat_report_wait_end();
+
+		pgstat_count_io_op_time(IOOBJECT_WAL, IOCONTEXT_NORMAL,
+								IOOP_WRITE, start, 1, byteswritten);
+
 		if (byteswritten <= 0)
 		{
 			char		xlogfname[MAXFNAMELEN];
