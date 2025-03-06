@@ -68,8 +68,13 @@ ginFillScanEntry(GinScanOpaque so, OffsetNumber attnum,
 	 *
 	 * Entries with non-null extra_data are never considered identical, since
 	 * we can't know exactly what the opclass might be doing with that.
+	 *
+	 * Also, give up de-duplication once we have 100 entries.  That avoids
+	 * spending O(N^2) time on probably-fruitless de-duplication of large
+	 * search-key sets.  The threshold of 100 is arbitrary but matches
+	 * predtest.c's threshold for what's a large array.
 	 */
-	if (extra_data == NULL)
+	if (extra_data == NULL && so->totalentries < 100)
 	{
 		for (i = 0; i < so->totalentries; i++)
 		{
