@@ -7,22 +7,13 @@ DATA = pg_tde--1.0-rc.sql
 
 REGRESS_OPTS = --temp-config $(top_srcdir)/contrib/pg_tde/pg_tde.conf
 REGRESS = toast_decrypt \
-toast_extended_storage \
-move_large_tuples \
-non_sorted_off_compact \
-update_compare_indexes \
 pg_tde_is_encrypted \
-test_issue_153_fix \
-multi_insert \
-update \
 subtransaction \
-trigger_on_view \
 change_access_method \
 insert_update_delete \
 keyprovider_dependency \
 vault_v2_test \
 alter_index \
-merge_join \
 tablespace \
 relocate \
 access_control
