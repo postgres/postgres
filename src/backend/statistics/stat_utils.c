@@ -136,12 +136,14 @@ stats_lock_check_privileges(Oid reloid)
 
 	/*
 	 * For indexes, we follow the locking behavior in do_analyze_rel() and
-	 * check_inplace_rel_lock(), which is to lock the table first in
-	 * ShareUpdateExclusive mode and then the index in AccessShare mode.
+	 * check_lock_if_inplace_updateable_rel(), which is to lock the table
+	 * first in ShareUpdateExclusive mode and then the index in AccessShare
+	 * mode.
 	 *
 	 * Partitioned indexes are treated differently than normal indexes in
-	 * check_inplace_rel_lock(), so we take a ShareUpdateExclusive lock on
-	 * both the partitioned table and the partitioned index.
+	 * check_lock_if_inplace_updateable_rel(), so we take a
+	 * ShareUpdateExclusive lock on both the partitioned table and the
+	 * partitioned index.
 	 */
 	switch (get_rel_relkind(reloid))
 	{

@@ -127,13 +127,7 @@ relation_statistics_update(FunctionCallInfo fcinfo)
 
 	ctup = SearchSysCache1(RELOID, ObjectIdGetDatum(reloid));
 	if (!HeapTupleIsValid(ctup))
-	{
-		ereport(WARNING,
-				(errcode(ERRCODE_OBJECT_IN_USE),
-				 errmsg("pg_class entry for relid %u not found", reloid)));
-		table_close(crel, RowExclusiveLock);
-		return false;
-	}
+		elog(ERROR, "pg_class entry for relid %u not found", reloid);
 
 	pgcform = (Form_pg_class) GETSTRUCT(ctup);
 
