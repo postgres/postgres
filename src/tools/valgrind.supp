@@ -19,6 +19,7 @@
 	Memcheck:Param
 	socketcall.send(msg)
 
+	...
 	fun:*send*
 	fun:pgstat_send
 }
@@ -28,6 +29,7 @@
 	Memcheck:Param
 	socketcall.sendto(msg)
 
+	...
 	fun:*send*
 	fun:pgstat_send
 }
