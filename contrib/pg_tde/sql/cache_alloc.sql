@@ -1,4 +1,3 @@
--- We test cache so AM doesn't matter
 -- Just checking there are no mem debug WARNINGs during the cache population
 
 CREATE EXTENSION IF NOT EXISTS pg_tde;
