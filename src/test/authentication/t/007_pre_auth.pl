@@ -43,12 +43,16 @@ $psql->query_safe("SELECT injection_points_attach('init-pre-auth', 'wait')");
 # authentication. Use the $psql connection handle for server interaction.
 my $conn = $node->background_psql('postgres', wait => 0);
 
-# Wait for the connection to show up.
+# Wait for the connection to show up in pg_stat_activity, with the wait_event
+# of the injection point.
 my $pid;
 while (1)
 {
 	$pid = $psql->query(
-		"SELECT pid FROM pg_stat_activity WHERE state = 'starting';");
+		qq{SELECT pid FROM pg_stat_activity
+  WHERE backend_type = 'client backend'
+    AND state = 'starting'
+    AND wait_event = 'init-pre-auth';});
 	last if $pid ne "";
 
 	usleep(100_000);
