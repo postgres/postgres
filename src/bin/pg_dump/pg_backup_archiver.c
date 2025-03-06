@@ -2936,8 +2936,8 @@ _tocEntryRequired(TocEntry *te, teSection curSection, ArchiveHandle *AH)
 	{
 		if (!ropt->dumpStatistics)
 			return 0;
-		else
-			res = REQ_STATS;
+
+		res = REQ_STATS;
 	}
 
 	/*
@@ -2982,10 +2982,6 @@ _tocEntryRequired(TocEntry *te, teSection curSection, ArchiveHandle *AH)
 
 	/* If it's a subscription, maybe ignore it */
 	if (ropt->no_subscriptions && strcmp(te->desc, "SUBSCRIPTION") == 0)
-		return 0;
-
-	/* If it's statistics and we don't want statistics, maybe ignore it */
-	if (!ropt->dumpStatistics && strcmp(te->desc, "STATISTICS DATA") == 0)
 		return 0;
 
 	/* Ignore it if section is not to be dumped/restored */
