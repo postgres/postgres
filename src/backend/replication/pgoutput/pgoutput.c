@@ -1965,20 +1965,15 @@ init_rel_sync_cache(MemoryContext cachectx)
 	/*
 	 * Flush all cache entries after a pg_namespace change, in case it was a
 	 * schema rename affecting a relation being replicated.
+	 *
+	 * XXX: It is not a good idea to invalidate all the relation entries in
+	 * RelationSyncCache on schema rename. We can optimize it to invalidate
+	 * only the required relations by either having a specific invalidation
+	 * message containing impacted relations or by having schema information
+	 * in each RelationSyncCache entry and using hashvalue of pg_namespace.oid
+	 * passed to the callback.
 	 */
 	CacheRegisterSyscacheCallback(NAMESPACEOID,
-								  rel_sync_cache_publication_cb,
-								  (Datum) 0);
-
-	/*
-	 * Flush all cache entries after any publication changes.  (We need no
-	 * callback entry for pg_publication, because publication_invalidation_cb
-	 * will take care of it.)
-	 */
-	CacheRegisterSyscacheCallback(PUBLICATIONRELMAP,
-								  rel_sync_cache_publication_cb,
-								  (Datum) 0);
-	CacheRegisterSyscacheCallback(PUBLICATIONNAMESPACEMAP,
 								  rel_sync_cache_publication_cb,
 								  (Datum) 0);
 
@@ -2397,8 +2392,7 @@ rel_sync_cache_relation_cb(Datum arg, Oid relid)
 /*
  * Publication relation/schema map syscache invalidation callback
  *
- * Called for invalidations on pg_publication, pg_publication_rel,
- * pg_publication_namespace, and pg_namespace.
+ * Called for invalidations on pg_publication and pg_namespace.
  */
 static void
 rel_sync_cache_publication_cb(Datum arg, int cacheid, uint32 hashvalue)
