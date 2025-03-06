@@ -95,6 +95,7 @@ sql_tests = [
       'alter_index',
       'merge_join',
       'default_principal_key',
+      'access_control',
 ]
 
 tap_tests = [
@@ -104,10 +105,9 @@ tap_tests = [
       't/004_file_config.pl',
       't/005_multiple_extensions.pl',
       't/006_remote_vault_config.pl',
-      't/007_access_control.pl',
-      't/008_tde_heap.pl',
-      't/009_key_rotate_tablespace.pl',
-      't/010_wal_encrypt.pl',
+      't/007_tde_heap.pl',
+      't/008_key_rotate_tablespace.pl',
+      't/009_wal_encrypt.pl',
 ]
 
 tests += {

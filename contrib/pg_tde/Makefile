@@ -24,7 +24,8 @@ vault_v2_test \
 alter_index \
 merge_join \
 tablespace \
-relocate
+relocate \
+access_control
 TAP_TESTS = 1
 
 OBJS = src/encryption/enc_tde.o \
