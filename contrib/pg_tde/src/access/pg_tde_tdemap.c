@@ -362,7 +362,6 @@ static int
 pg_tde_file_header_write(char *tde_filename, int fd, TDEPrincipalKeyInfo *principal_key_info, off_t *bytes_written)
 {
 	TDEFileHeader fheader;
-	size_t		sz = sizeof(TDEPrincipalKeyInfo);
 
 	Assert(principal_key_info);
 
@@ -370,8 +369,7 @@ pg_tde_file_header_write(char *tde_filename, int fd, TDEPrincipalKeyInfo *princi
 	fheader.file_version = PG_TDE_FILEMAGIC;
 
 	/* Fill in the data */
-	memset(&fheader.principal_key_info, 0, sz);
-	memcpy(&fheader.principal_key_info, principal_key_info, sz);
+	fheader.principal_key_info = *principal_key_info;
 
 	/* TODO: pgstat_report_wait_start / pgstat_report_wait_end */
 	*bytes_written = pg_pwrite(fd, &fheader, TDE_FILE_HEADER_SIZE, 0);
@@ -1392,13 +1390,13 @@ pg_tde_get_principal_key_info(Oid dbOid)
 	close(fd);
 
 	/*
-	 * It's not a new file. So we can memcpy the principal key info from the
+	 * It's not a new file. So we can copy the principal key info from the
 	 * header
 	 */
 	if (!is_new_file)
 	{
 		principal_key_info = palloc_object(TDEPrincipalKeyInfo);
-		memcpy(principal_key_info, &fheader.principal_key_info, sizeof(TDEPrincipalKeyInfo));
+		*principal_key_info = fheader.principal_key_info;
 	}
 
 	return principal_key_info;

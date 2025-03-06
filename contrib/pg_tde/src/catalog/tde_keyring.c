@@ -496,7 +496,7 @@ write_key_provider_info(KeyringProvideRecord *provider, Oid database_id,
 
 			xlrec.database_id = database_id;
 			xlrec.offset_in_file = curr_pos;
-			memcpy(&xlrec.provider, provider, sizeof(KeyringProvideRecord));
+			xlrec.provider = *provider;
 
 			XLogBeginInsert();
 			XLogRegisterData((char *) &xlrec, sizeof(KeyringProviderXLRecord));

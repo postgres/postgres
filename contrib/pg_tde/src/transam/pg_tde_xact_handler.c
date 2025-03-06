@@ -89,7 +89,7 @@ RegisterEntryForDeletion(const RelFileLocator *rlocator, off_t map_entry_offset,
 
 	pending = (PendingMapEntryDelete *) MemoryContextAlloc(TopMemoryContext, sizeof(PendingMapEntryDelete));
 	pending->map_entry_offset = map_entry_offset;
-	memcpy(&pending->rlocator, rlocator, sizeof(RelFileLocator));
+	pending->rlocator = *rlocator;
 	pending->atCommit = atCommit;	/* delete if abort */
 	pending->nestLevel = GetCurrentTransactionNestLevel();
 	pending->next = pendingDeletes;

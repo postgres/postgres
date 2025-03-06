@@ -459,7 +459,7 @@ push_principal_key_to_cache(TDEPrincipalKey *principalKey)
 									   &databaseId, &found);
 
 	if (!found)
-		memcpy(cacheEntry, principalKey, sizeof(TDEPrincipalKey));
+		*cacheEntry = *principalKey;
 	dshash_release_lock(get_principal_key_Hash(), cacheEntry);
 
 	/* we don't want principal keys to end up paged to the swap */
@@ -596,7 +596,7 @@ pg_tde_set_principal_key_internal(char *principal_key_name, enum global_status g
 		existingDefaultKey = GetPrincipalKeyNoDefault(dbOid, LW_SHARED);
 		if (existingDefaultKey != NULL)
 		{
-			memcpy(&existingKeyCopy, existingDefaultKey, sizeof(TDEPrincipalKey));
+			existingKeyCopy = *existingDefaultKey;
 		}
 		LWLockRelease(tde_lwlock_enc_keys());
 	}
@@ -764,7 +764,7 @@ get_principal_key_from_keyring(Oid dbOid, bool pushToCache)
 
 	principalKey = palloc_object(TDEPrincipalKey);
 
-	memcpy(&principalKey->keyInfo, principalKeyInfo, sizeof(principalKey->keyInfo));
+	principalKey->keyInfo = *principalKeyInfo;
 	memcpy(principalKey->keyData, keyInfo->data.data, keyInfo->data.len);
 	principalKey->keyLength = keyInfo->data.len;
 
@@ -863,7 +863,7 @@ GetPrincipalKey(Oid dbOid, LWLockMode lockMode)
 	}
 
 	newPrincipalKey = palloc_object(TDEPrincipalKey);
-	memcpy(newPrincipalKey, principalKey, sizeof(TDEPrincipalKey));
+	*newPrincipalKey = *principalKey;
 	newPrincipalKey->keyInfo.databaseId = dbOid;
 
 	create_principal_key_info(&newPrincipalKey->keyInfo);
@@ -985,7 +985,7 @@ pg_tde_rotate_default_key_for_database(TDEPrincipalKey *oldKey, TDEPrincipalKey 
 
 	TDEPrincipalKey *newKey = palloc_object(TDEPrincipalKey);
 
-	memcpy(newKey, newKeyTemplate, sizeof(TDEPrincipalKey));
+	*newKey = *newKeyTemplate;
 	newKey->keyInfo.databaseId = oldKey->keyInfo.databaseId;
 
 	/* key rotation */
