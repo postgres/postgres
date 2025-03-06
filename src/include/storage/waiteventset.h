@@ -70,7 +70,7 @@ typedef struct WaitEvent
 /* forward declarations to avoid exposing waiteventset.c implementation details */
 typedef struct WaitEventSet WaitEventSet;
 
-typedef struct Latch Latch;
+struct Latch;
 
 /*
  * prototypes for functions in waiteventset.c
@@ -81,8 +81,9 @@ extern WaitEventSet *CreateWaitEventSet(ResourceOwner resowner, int nevents);
 extern void FreeWaitEventSet(WaitEventSet *set);
 extern void FreeWaitEventSetAfterFork(WaitEventSet *set);
 extern int	AddWaitEventToSet(WaitEventSet *set, uint32 events, pgsocket fd,
-							  Latch *latch, void *user_data);
-extern void ModifyWaitEvent(WaitEventSet *set, int pos, uint32 events, Latch *latch);
+							  struct Latch *latch, void *user_data);
+extern void ModifyWaitEvent(WaitEventSet *set, int pos, uint32 events,
+							struct Latch *latch);
 extern int	WaitEventSetWait(WaitEventSet *set, long timeout,
 							 WaitEvent *occurred_events, int nevents,
 							 uint32 wait_event_info);
