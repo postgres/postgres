@@ -17,15 +17,43 @@ CREATE TABLE stats_import.test(
 
 CREATE INDEX test_i ON stats_import.test(id);
 
+--
+-- relstats tests
+--
+
+--- error: relation is wrong type
+SELECT pg_catalog.pg_restore_relation_stats(
+        'relation', 0::oid,
+        'relpages', 17::integer);
+
+-- error: relation not found
+SELECT pg_catalog.pg_restore_relation_stats(
+        'relation', 0::oid::regclass,
+        'relpages', 17::integer);
+
+-- error: odd number of variadic arguments cannot be pairs
+SELECT pg_restore_relation_stats(
+        'relation', 'stats_import.test'::regclass,
+        'relallvisible');
+
+-- error: argument name is NULL
+SELECT pg_restore_relation_stats(
+        'relation', 'stats_import.test'::regclass,
+        NULL, '17'::integer);
+
+-- error: argument name is not a text type
+SELECT pg_restore_relation_stats(
+        'relation', '0'::oid::regclass,
+        17, '17'::integer);
+
 -- starting stats
 SELECT relpages, reltuples, relallvisible, relallfrozen
 FROM pg_class
-WHERE oid = 'stats_import.test'::regclass;
+WHERE oid = 'stats_import.test_i'::regclass;
 
-BEGIN;
 -- regular indexes have special case locking rules
-SELECT
-    pg_catalog.pg_restore_relation_stats(
+BEGIN;
+SELECT pg_catalog.pg_restore_relation_stats(
         'relation', 'stats_import.test_i'::regclass,
         'relpages', 18::integer);
 
@@ -38,20 +66,6 @@ WHERE relation = 'stats_import.test_i'::regclass AND
       pid = pg_backend_pid() AND granted;
 
 COMMIT;
-
-SELECT
-    pg_catalog.pg_restore_relation_stats(
-        'relation', 'stats_import.test_i'::regclass,
-        'relpages', 19::integer );
-
--- clear
-SELECT
-    pg_catalog.pg_clear_relation_stats(
-        'stats_import.test'::regclass);
-
-SELECT relpages, reltuples, relallvisible, relallfrozen
-FROM pg_class
-WHERE oid = 'stats_import.test'::regclass;
 
 --  relpages may be -1 for partitioned tables
 CREATE TABLE stats_import.part_parent ( i integer ) PARTITION BY RANGE(i);
@@ -68,18 +82,6 @@ SELECT relpages
 FROM pg_class
 WHERE oid = 'stats_import.part_parent'::regclass;
 
--- although partitioned tables have no storage, setting relpages to a
--- positive value is still allowed
-SELECT
-    pg_catalog.pg_restore_relation_stats(
-        'relation', 'stats_import.part_parent_i'::regclass,
-        'relpages', 2::integer);
-
-SELECT
-    pg_catalog.pg_restore_relation_stats(
-        'relation', 'stats_import.part_parent'::regclass,
-        'relpages', 2::integer);
-
 --
 -- Partitioned indexes aren't analyzed but it is possible to set
 -- stats. The locking rules are different from normal indexes due to
@@ -88,8 +90,7 @@ SELECT
 --
 BEGIN;
 
-SELECT
-    pg_catalog.pg_restore_relation_stats(
+SELECT pg_catalog.pg_restore_relation_stats(
         'relation', 'stats_import.part_parent_i'::regclass,
         'relpages', 2::integer);
 
@@ -103,22 +104,15 @@ WHERE relation = 'stats_import.part_parent_i'::regclass AND
 
 COMMIT;
 
-SELECT
-    pg_catalog.pg_restore_relation_stats(
-        'relation', 'stats_import.part_parent_i'::regclass,
-        'relpages', 2::integer);
+SELECT relpages
+FROM pg_class
+WHERE oid = 'stats_import.part_parent_i'::regclass;
 
--- nothing stops us from setting it to -1
-SELECT
-    pg_catalog.pg_restore_relation_stats(
-        'relation', 'stats_import.part_parent'::regclass,
-        'relpages', -1::integer);
-
--- ok: set all stats
+-- ok: set all relstats, with version, no bounds checking
 SELECT pg_restore_relation_stats(
         'relation', 'stats_import.test'::regclass,
         'version', 150000::integer,
-        'relpages', '17'::integer,
+        'relpages', '-17'::integer,
         'reltuples', 400::real,
         'relallvisible', 4::integer,
         'relallfrozen', 2::integer);
@@ -127,30 +121,27 @@ SELECT relpages, reltuples, relallvisible, relallfrozen
 FROM pg_class
 WHERE oid = 'stats_import.test'::regclass;
 
--- ok: just relpages
+-- ok: set just relpages, rest stay same
 SELECT pg_restore_relation_stats(
         'relation', 'stats_import.test'::regclass,
-        'version', 150000::integer,
         'relpages', '16'::integer);
 
 SELECT relpages, reltuples, relallvisible, relallfrozen
 FROM pg_class
 WHERE oid = 'stats_import.test'::regclass;
 
--- ok: just reltuples
+-- ok: set just reltuples, rest stay same
 SELECT pg_restore_relation_stats(
         'relation', 'stats_import.test'::regclass,
-        'version', 150000::integer,
         'reltuples', '500'::real);
 
 SELECT relpages, reltuples, relallvisible, relallfrozen
 FROM pg_class
 WHERE oid = 'stats_import.test'::regclass;
 
--- ok: just relallvisible
+-- ok: set just relallvisible, rest stay same
 SELECT pg_restore_relation_stats(
         'relation', 'stats_import.test'::regclass,
-        'version', 150000::integer,
         'relallvisible', 5::integer);
 
 SELECT relpages, reltuples, relallvisible, relallfrozen
@@ -167,10 +158,9 @@ SELECT relpages, reltuples, relallvisible, relallfrozen
 FROM pg_class
 WHERE oid = 'stats_import.test'::regclass;
 
--- warn: bad relpages type
+-- warn: bad relpages type, rest updated
 SELECT pg_restore_relation_stats(
         'relation', 'stats_import.test'::regclass,
-        'version', 150000::integer,
         'relpages', 'nope'::text,
         'reltuples', 400.0::real,
         'relallvisible', 4::integer,
@@ -180,17 +170,104 @@ SELECT relpages, reltuples, relallvisible, relallfrozen
 FROM pg_class
 WHERE oid = 'stats_import.test'::regclass;
 
+-- unrecognized argument name, rest ok
+SELECT pg_restore_relation_stats(
+        'relation', 'stats_import.test'::regclass,
+        'relpages', '171'::integer,
+        'nope', 10::integer);
+
+SELECT relpages, reltuples, relallvisible
+FROM pg_class
+WHERE oid = 'stats_import.test'::regclass;
+
+-- ok: clear stats
+SELECT pg_catalog.pg_clear_relation_stats(
+    relation => 'stats_import.test'::regclass);
+
+SELECT relpages, reltuples, relallvisible
+FROM pg_class
+WHERE oid = 'stats_import.test'::regclass;
+
 -- invalid relkinds for statistics
 CREATE SEQUENCE stats_import.testseq;
-CREATE VIEW stats_import.testview AS SELECT * FROM stats_import.test;
-SELECT
-    pg_catalog.pg_clear_relation_stats(
+
+SELECT pg_catalog.pg_restore_relation_stats(
+        'relation', 'stats_import.testseq'::regclass);
+
+SELECT pg_catalog.pg_clear_relation_stats(
         'stats_import.testseq'::regclass);
-SELECT
-    pg_catalog.pg_clear_relation_stats(
+
+CREATE VIEW stats_import.testview AS SELECT * FROM stats_import.test;
+
+SELECT pg_catalog.pg_restore_relation_stats(
+        'relation', 'stats_import.testview'::regclass);
+
+SELECT pg_catalog.pg_clear_relation_stats(
         'stats_import.testview'::regclass);
 
--- ok: no stakinds
+--
+-- attribute stats
+--
+
+-- error: object does not exist
+SELECT pg_catalog.pg_restore_attribute_stats(
+    'relation', '0'::oid::regclass,
+    'attname', 'id'::name,
+    'inherited', false::boolean,
+    'null_frac', 0.1::real);
+
+-- error: relation null
+SELECT pg_catalog.pg_restore_attribute_stats(
+    'relation', NULL::oid::regclass,
+    'attname', 'id'::name,
+    'inherited', false::boolean,
+    'null_frac', 0.1::real);
+
+-- error: NULL attname
+SELECT pg_catalog.pg_restore_attribute_stats(
+    'relation', 'stats_import.test'::regclass,
+    'attname', NULL::name,
+    'inherited', false::boolean,
+    'null_frac', 0.1::real);
+
+-- error: attname doesn't exist
+SELECT pg_catalog.pg_restore_attribute_stats(
+    'relation', 'stats_import.test'::regclass,
+    'attname', 'nope'::name,
+    'inherited', false::boolean,
+    'null_frac', 0.1::real,
+    'avg_width', 2::integer,
+    'n_distinct', 0.3::real);
+
+-- error: both attname and attnum
+SELECT pg_catalog.pg_restore_attribute_stats(
+    'relation', 'stats_import.test'::regclass,
+    'attname', 'id'::name,
+    'attnum', 1::smallint,
+    'inherited', false::boolean,
+    'null_frac', 0.1::real);
+
+-- error: neither attname nor attnum
+SELECT pg_catalog.pg_restore_attribute_stats(
+    'relation', 'stats_import.test'::regclass,
+    'inherited', false::boolean,
+    'null_frac', 0.1::real);
+
+-- error: attribute is system column
+SELECT pg_catalog.pg_restore_attribute_stats(
+    'relation', 'stats_import.test'::regclass,
+    'attname', 'xmin'::name,
+    'inherited', false::boolean,
+    'null_frac', 0.1::real);
+
+-- error: inherited null
+SELECT pg_catalog.pg_restore_attribute_stats(
+    'relation', 'stats_import.test'::regclass,
+    'attname', 'id'::name,
+    'inherited', NULL::boolean,
+    'null_frac', 0.1::real);
+
+-- ok: just the fixed values, with version, no stakinds
 SELECT pg_catalog.pg_restore_attribute_stats(
     'relation', 'stats_import.test'::regclass,
     'attname', 'id'::name,
@@ -207,15 +284,16 @@ AND tablename = 'test'
 AND inherited = false
 AND attname = 'id';
 
--- ok: restore by attnum
+--
+-- ok: restore by attnum, we normally reserve this for
+-- indexes, but there is no reason it shouldn't work
+-- for any stat-having relation.
+--
 SELECT pg_catalog.pg_restore_attribute_stats(
     'relation', 'stats_import.test'::regclass,
     'attnum', 1::smallint,
     'inherited', false::boolean,
-    'version', 150000::integer,
-    'null_frac', 0.4::real,
-    'avg_width', 5::integer,
-    'n_distinct', 0.6::real);
+    'null_frac', 0.4::real);
 
 SELECT *
 FROM pg_stats
@@ -224,14 +302,12 @@ AND tablename = 'test'
 AND inherited = false
 AND attname = 'id';
 
--- warn: unrecognized argument name
+-- warn: unrecognized argument name, rest get set
 SELECT pg_catalog.pg_restore_attribute_stats(
     'relation', 'stats_import.test'::regclass,
     'attname', 'id'::name,
     'inherited', false::boolean,
-    'version', 150000::integer,
     'null_frac', 0.2::real,
-    'avg_width', NULL::integer,
     'nope', 0.5::real);
 
 SELECT *
@@ -241,15 +317,12 @@ AND tablename = 'test'
 AND inherited = false
 AND attname = 'id';
 
--- warn: mcv / mcf null mismatch part 1
+-- warn: mcv / mcf null mismatch part 1, rest get set
 SELECT pg_catalog.pg_restore_attribute_stats(
     'relation', 'stats_import.test'::regclass,
     'attname', 'id'::name,
     'inherited', false::boolean,
-    'version', 150000::integer,
-    'null_frac', 0.6::real,
-    'avg_width', 7::integer,
-    'n_distinct', -0.7::real,
+    'null_frac', 0.21::real,
     'most_common_freqs', '{0.1,0.2,0.3}'::real[]
     );
 
@@ -260,15 +333,12 @@ AND tablename = 'test'
 AND inherited = false
 AND attname = 'id';
 
--- warn: mcv / mcf null mismatch part 2
+-- warn: mcv / mcf null mismatch part 2, rest get set
 SELECT pg_catalog.pg_restore_attribute_stats(
     'relation', 'stats_import.test'::regclass,
     'attname', 'id'::name,
     'inherited', false::boolean,
-    'version', 150000::integer,
-    'null_frac', 0.7::real,
-    'avg_width', 8::integer,
-    'n_distinct', -0.8::real,
+    'null_frac', 0.21::real,
     'most_common_vals', '{1,2,3}'::text
     );
 
@@ -279,15 +349,12 @@ AND tablename = 'test'
 AND inherited = false
 AND attname = 'id';
 
--- warn: mcv / mcf type mismatch
+-- warn: mcf type mismatch, mcv-pair fails, rest get set
 SELECT pg_catalog.pg_restore_attribute_stats(
     'relation', 'stats_import.test'::regclass,
     'attname', 'id'::name,
     'inherited', false::boolean,
-    'version', 150000::integer,
-    'null_frac', 0.8::real,
-    'avg_width', 9::integer,
-    'n_distinct', -0.9::real,
+    'null_frac', 0.22::real,
     'most_common_vals', '{2,1,3}'::text,
     'most_common_freqs', '{0.2,0.1}'::double precision[]
     );
@@ -299,15 +366,12 @@ AND tablename = 'test'
 AND inherited = false
 AND attname = 'id';
 
--- warn: mcv cast failure
+-- warn: mcv cast failure, mcv-pair fails, rest get set
 SELECT pg_catalog.pg_restore_attribute_stats(
     'relation', 'stats_import.test'::regclass,
     'attname', 'id'::name,
     'inherited', false::boolean,
-    'version', 150000::integer,
-    'null_frac', 0.9::real,
-    'avg_width', 10::integer,
-    'n_distinct', -0.4::real,
+    'null_frac', 0.23::real,
     'most_common_vals', '{2,four,3}'::text,
     'most_common_freqs', '{0.3,0.25,0.05}'::real[]
     );
@@ -324,10 +388,6 @@ SELECT pg_catalog.pg_restore_attribute_stats(
     'relation', 'stats_import.test'::regclass,
     'attname', 'id'::name,
     'inherited', false::boolean,
-    'version', 150000::integer,
-    'null_frac', 0.1::real,
-    'avg_width', 1::integer,
-    'n_distinct', -0.1::real,
     'most_common_vals', '{2,1,3}'::text,
     'most_common_freqs', '{0.3,0.25,0.05}'::real[]
     );
@@ -339,15 +399,12 @@ AND tablename = 'test'
 AND inherited = false
 AND attname = 'id';
 
--- warn: NULL in histogram array
+-- warn: NULL in histogram array, rest get set
 SELECT pg_catalog.pg_restore_attribute_stats(
     'relation', 'stats_import.test'::regclass,
     'attname', 'id'::name,
     'inherited', false::boolean,
-    'version', 150000::integer,
-    'null_frac', 0.2::real,
-    'avg_width', 2::integer,
-    'n_distinct', -0.2::real,
+    'null_frac', 0.24::real,
     'histogram_bounds', '{1,NULL,3,4}'::text
     );
 
@@ -363,11 +420,8 @@ SELECT pg_catalog.pg_restore_attribute_stats(
     'relation', 'stats_import.test'::regclass,
     'attname', 'id'::name,
     'inherited', false::boolean,
-    'version', 150000::integer,
-    'null_frac', 0.3::real,
-    'avg_width', 3::integer,
-    'n_distinct', -0.3::real,
-    'histogram_bounds', '{1,2,3,4}'::text );
+    'histogram_bounds', '{1,2,3,4}'::text
+    );
 
 SELECT *
 FROM pg_stats
@@ -376,16 +430,13 @@ AND tablename = 'test'
 AND inherited = false
 AND attname = 'id';
 
--- warn: elem_count_histogram null element
+-- warn: elem_count_histogram null element, rest get set
 SELECT pg_catalog.pg_restore_attribute_stats(
     'relation', 'stats_import.test'::regclass,
     'attname', 'tags'::name,
     'inherited', false::boolean,
-    'version', 150000::integer,
-    'null_frac', 0.4::real,
-    'avg_width', 5::integer,
-    'n_distinct', -0.4::real,
-    'elem_count_histogram', '{1,1,NULL,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1}'::real[]
+    'null_frac', 0.25::real,
+    'elem_count_histogram', '{1,1,NULL,1,1,1,1,1}'::real[]
     );
 
 SELECT *
@@ -400,10 +451,7 @@ SELECT pg_catalog.pg_restore_attribute_stats(
     'relation', 'stats_import.test'::regclass,
     'attname', 'tags'::name,
     'inherited', false::boolean,
-    'version', 150000::integer,
-    'null_frac', 0.5::real,
-    'avg_width', 6::integer,
-    'n_distinct', -0.55::real,
+    'null_frac', 0.26::real,
     'elem_count_histogram', '{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1}'::real[]
     );
 
@@ -414,15 +462,12 @@ AND tablename = 'test'
 AND inherited = false
 AND attname = 'tags';
 
--- range stats on a scalar type
+-- warn: range stats on a scalar type, rest ok
 SELECT pg_catalog.pg_restore_attribute_stats(
     'relation', 'stats_import.test'::regclass,
     'attname', 'id'::name,
     'inherited', false::boolean,
-    'version', 150000::integer,
-    'null_frac', 0.6::real,
-    'avg_width', 7::integer,
-    'n_distinct', -0.15::real,
+    'null_frac', 0.27::real,
     'range_empty_frac', 0.5::real,
     'range_length_histogram', '{399,499,Infinity}'::text
     );
@@ -434,15 +479,12 @@ AND tablename = 'test'
 AND inherited = false
 AND attname = 'id';
 
--- warn: range_empty_frac range_length_hist null mismatch
+-- warn: range_empty_frac range_length_hist null mismatch, rest ok
 SELECT pg_catalog.pg_restore_attribute_stats(
     'relation', 'stats_import.test'::regclass,
     'attname', 'arange'::name,
     'inherited', false::boolean,
-    'version', 150000::integer,
-    'null_frac', 0.7::real,
-    'avg_width', 8::integer,
-    'n_distinct', -0.25::real,
+    'null_frac', 0.28::real,
     'range_length_histogram', '{399,499,Infinity}'::text
     );
 
@@ -453,15 +495,12 @@ AND tablename = 'test'
 AND inherited = false
 AND attname = 'arange';
 
--- warn: range_empty_frac range_length_hist null mismatch part 2
+-- warn: range_empty_frac range_length_hist null mismatch part 2, rest ok
 SELECT pg_catalog.pg_restore_attribute_stats(
     'relation', 'stats_import.test'::regclass,
     'attname', 'arange'::name,
     'inherited', false::boolean,
-    'version', 150000::integer,
-    'null_frac', 0.8::real,
-    'avg_width', 9::integer,
-    'n_distinct', -0.35::real,
+    'null_frac', 0.29::real,
     'range_empty_frac', 0.5::real
     );
 
@@ -477,10 +516,6 @@ SELECT pg_catalog.pg_restore_attribute_stats(
     'relation', 'stats_import.test'::regclass,
     'attname', 'arange'::name,
     'inherited', false::boolean,
-    'version', 150000::integer,
-    'null_frac', 0.9::real,
-    'avg_width', 1::integer,
-    'n_distinct', -0.19::real,
     'range_empty_frac', 0.5::real,
     'range_length_histogram', '{399,499,Infinity}'::text
     );
@@ -492,15 +527,12 @@ AND tablename = 'test'
 AND inherited = false
 AND attname = 'arange';
 
--- warn: range bounds histogram on scalar
+-- warn: range bounds histogram on scalar, rest ok
 SELECT pg_catalog.pg_restore_attribute_stats(
     'relation', 'stats_import.test'::regclass,
     'attname', 'id'::name,
     'inherited', false::boolean,
-    'version', 150000::integer,
-    'null_frac', 0.1::real,
-    'avg_width', 2::integer,
-    'n_distinct', -0.29::real,
+    'null_frac', 0.31::real,
     'range_bounds_histogram', '{"[-1,1)","[0,4)","[1,4)","[1,100)"}'::text
     );
 
@@ -516,10 +548,6 @@ SELECT pg_catalog.pg_restore_attribute_stats(
     'relation', 'stats_import.test'::regclass,
     'attname', 'arange'::name,
     'inherited', false::boolean,
-    'version', 150000::integer,
-    'null_frac', 0.2::real,
-    'avg_width', 3::integer,
-    'n_distinct', -0.39::real,
     'range_bounds_histogram', '{"[-1,1)","[0,4)","[1,4)","[1,100)"}'::text
     );
 
@@ -530,23 +558,14 @@ AND tablename = 'test'
 AND inherited = false
 AND attname = 'arange';
 
--- warn: cannot set most_common_elems for range type
+-- warn: cannot set most_common_elems for range type, rest ok
 SELECT pg_catalog.pg_restore_attribute_stats(
     'relation', 'stats_import.test'::regclass,
     'attname', 'arange'::name,
     'inherited', false::boolean,
-    'null_frac', 0.5::real,
-    'avg_width', 2::integer,
-    'n_distinct', -0.1::real,
-    'most_common_vals', '{"[2,3)","[1,2)","[3,4)"}'::text,
-    'most_common_freqs', '{0.3,0.25,0.05}'::real[],
-    'histogram_bounds', '{"[1,2)","[2,3)","[3,4)","[4,5)"}'::text,
-    'correlation', 1.1::real,
+    'null_frac', 0.32::real,
     'most_common_elems', '{3,1}'::text,
-    'most_common_elem_freqs', '{0.3,0.2,0.2,0.3,0.0}'::real[],
-    'range_empty_frac', -0.5::real,
-    'range_length_histogram', '{399,499,Infinity}'::text,
-    'range_bounds_histogram', '{"[-1,1)","[0,4)","[1,4)","[1,100)"}'::text
+    'most_common_elem_freqs', '{0.3,0.2,0.2,0.3,0.0}'::real[]
     );
 
 SELECT *
@@ -556,14 +575,12 @@ AND tablename = 'test'
 AND inherited = false
 AND attname = 'arange';
 
--- warn: scalars can't have mcelem
+-- warn: scalars can't have mcelem, rest ok
 SELECT pg_catalog.pg_restore_attribute_stats(
     'relation', 'stats_import.test'::regclass,
     'attname', 'id'::name,
     'inherited', false::boolean,
-    'null_frac', 0.5::real,
-    'avg_width', 2::integer,
-    'n_distinct', -0.1::real,
+    'null_frac', 0.33::real,
     'most_common_elems', '{1,3}'::text,
     'most_common_elem_freqs', '{0.3,0.2,0.2,0.3,0.0}'::real[]
     );
@@ -575,14 +592,12 @@ AND tablename = 'test'
 AND inherited = false
 AND attname = 'id';
 
--- warn: mcelem / mcelem mismatch
+-- warn: mcelem / mcelem mismatch, rest ok
 SELECT pg_catalog.pg_restore_attribute_stats(
     'relation', 'stats_import.test'::regclass,
     'attname', 'tags'::name,
     'inherited', false::boolean,
-    'null_frac', 0.5::real,
-    'avg_width', 2::integer,
-    'n_distinct', -0.1::real,
+    'null_frac', 0.34::real,
     'most_common_elems', '{one,two}'::text
     );
 
@@ -593,25 +608,27 @@ AND tablename = 'test'
 AND inherited = false
 AND attname = 'tags';
 
--- warn: mcelem / mcelem null mismatch part 2
+-- warn: mcelem / mcelem null mismatch part 2, rest ok
 SELECT pg_catalog.pg_restore_attribute_stats(
     'relation', 'stats_import.test'::regclass,
     'attname', 'tags'::name,
     'inherited', false::boolean,
-    'null_frac', 0.5::real,
-    'avg_width', 2::integer,
-    'n_distinct', -0.1::real,
+    'null_frac', 0.35::real,
     'most_common_elem_freqs', '{0.3,0.2,0.2,0.3}'::real[]
     );
+
+SELECT *
+FROM pg_stats
+WHERE schemaname = 'stats_import'
+AND tablename = 'test'
+AND inherited = false
+AND attname = 'tags';
 
 -- ok: mcelem
 SELECT pg_catalog.pg_restore_attribute_stats(
     'relation', 'stats_import.test'::regclass,
     'attname', 'tags'::name,
     'inherited', false::boolean,
-    'null_frac', 0.5::real,
-    'avg_width', 2::integer,
-    'n_distinct', -0.1::real,
     'most_common_elems', '{one,three}'::text,
     'most_common_elem_freqs', '{0.3,0.2,0.2,0.3,0.0}'::real[]
     );
@@ -623,15 +640,13 @@ AND tablename = 'test'
 AND inherited = false
 AND attname = 'tags';
 
--- warn: scalars can't have elem_count_histogram
+-- warn: scalars can't have elem_count_histogram, rest ok
 SELECT pg_catalog.pg_restore_attribute_stats(
     'relation', 'stats_import.test'::regclass,
     'attname', 'id'::name,
     'inherited', false::boolean,
-    'null_frac', 0.5::real,
-    'avg_width', 2::integer,
-    'n_distinct', -0.1::real,
-    'elem_count_histogram', '{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1}'::real[]
+    'null_frac', 0.36::real,
+    'elem_count_histogram', '{1,1,1,1,1,1,1,1,1,1}'::real[]
     );
 
 SELECT *
@@ -640,32 +655,6 @@ WHERE schemaname = 'stats_import'
 AND tablename = 'test'
 AND inherited = false
 AND attname = 'id';
-
--- warn: too many stat kinds
-SELECT pg_catalog.pg_restore_attribute_stats(
-    'relation', 'stats_import.test'::regclass,
-    'attname', 'arange'::name,
-    'inherited', false::boolean,
-    'version', 150000::integer,
-    'null_frac', 0.5::real,
-    'avg_width', 2::integer,
-    'n_distinct', -0.1::real,
-    'most_common_vals', '{"[2,3)","[1,3)","[3,9)"}'::text,
-    'most_common_freqs', '{0.3,0.25,0.05}'::real[],
-    'histogram_bounds', '{"[1,2)","[2,3)","[3,4)","[4,)"}'::text,
-    'correlation', 1.1::real,
-    'most_common_elems', '{3,1}'::text,
-    'most_common_elem_freqs', '{0.3,0.2,0.2,0.3,0.0}'::real[],
-    'range_empty_frac', -0.5::real,
-    'range_length_histogram', '{399,499,Infinity}'::text,
-    'range_bounds_histogram', '{"[-1,1)","[0,4)","[1,4)","[1,100)"}'::text);
-
-SELECT *
-FROM pg_stats
-WHERE schemaname = 'stats_import'
-AND tablename = 'test'
-AND inherited = false
-AND attname = 'arange';
 
 --
 -- Test the ability to exactly copy data from one table to an identical table,
@@ -685,16 +674,6 @@ UNION ALL
 SELECT 4, 'four', NULL, int4range(0,100), NULL;
 
 CREATE INDEX is_odd ON stats_import.test(((comp).a % 2 = 1));
-
--- restoring stats on index
-SELECT * FROM pg_catalog.pg_restore_relation_stats(
-    'relation', 'stats_import.is_odd'::regclass,
-    'version', '180000'::integer,
-    'relpages', '11'::integer,
-    'reltuples', '10000'::real,
-    'relallvisible', '0'::integer,
-    'relallfrozen', '0'::integer
-);
 
 -- Generate statistics on table with data
 ANALYZE stats_import.test;
@@ -848,160 +827,24 @@ FROM pg_statistic s
 JOIN pg_attribute a ON a.attrelid = s.starelid AND a.attnum = s.staattnum
 WHERE s.starelid = 'stats_import.is_odd'::regclass;
 
--- ok
+-- attribute stats exist before a clear, but not after
+SELECT COUNT(*)
+FROM pg_stats
+WHERE schemaname = 'stats_import'
+AND tablename = 'test'
+AND inherited = false
+AND attname = 'arange';
+
 SELECT pg_catalog.pg_clear_attribute_stats(
     relation => 'stats_import.test'::regclass,
     attname => 'arange'::name,
     inherited => false::boolean);
 
---
--- Negative tests
---
-
---- error: relation is wrong type
-SELECT pg_catalog.pg_restore_relation_stats(
-        'relation', 0::oid,
-        'relpages', 17::integer,
-        'reltuples', 400.0::real,
-        'relallvisible', 4::integer,
-        'relallfrozen', 3::integer);
-
---- error: relation not found
-SELECT pg_catalog.pg_restore_relation_stats(
-        'relation', 0::regclass,
-        'relpages', 17::integer,
-        'reltuples', 400.0::real,
-        'relallvisible', 4::integer,
-        'relallfrozen', 3::integer);
-
--- warn and error: unrecognized argument name
-SELECT pg_restore_relation_stats(
-        'relation', '0'::oid::regclass,
-        'version', 150000::integer,
-        'relpages', '17'::integer,
-        'reltuples', 400::real,
-        'nope', 4::integer);
-
--- error: argument name is NULL
-SELECT pg_restore_relation_stats(
-        'relation', '0'::oid::regclass,
-        'version', 150000::integer,
-        NULL, '17'::integer,
-        'reltuples', 400::real,
-        'relallvisible', 4::integer,
-        'relallfrozen', 3::integer);
-
--- error: argument name is an integer
-SELECT pg_restore_relation_stats(
-        'relation', '0'::oid::regclass,
-        'version', 150000::integer,
-        17, '17'::integer,
-        'reltuples', 400::real,
-        'relallvisible', 4::integer,
-        'relallfrozen', 3::integer);
-
--- error: odd number of variadic arguments cannot be pairs
-SELECT pg_restore_relation_stats(
-        'relation', '0'::oid::regclass,
-        'version', 150000::integer,
-        'relpages', '17'::integer,
-        'reltuples', 400::real,
-        'relallfrozen', 3::integer,
-        'relallvisible');
-
--- error: object doesn't exist
-SELECT pg_restore_relation_stats(
-        'relation', '0'::oid::regclass,
-        'version', 150000::integer,
-        'relpages', '17'::integer,
-        'reltuples', 400::real,
-        'relallvisible', 4::integer,
-        'relallfrozen', 3::integer);
-
--- error: object does not exist
-SELECT pg_catalog.pg_restore_attribute_stats(
-    'relation', '0'::oid::regclass,
-    'attname', 'id'::name,
-    'inherited', false::boolean,
-    'version', 150000::integer,
-    'null_frac', 0.1::real,
-    'avg_width', 2::integer,
-    'n_distinct', 0.3::real);
-
--- error: relation null
-SELECT pg_catalog.pg_restore_attribute_stats(
-    'relation', NULL::oid,
-    'attname', 'id'::name,
-    'inherited', false::boolean,
-    'version', 150000::integer,
-    'null_frac', 0.1::real,
-    'avg_width', 2::integer,
-    'n_distinct', 0.3::real);
-
--- error: missing attname
-SELECT pg_catalog.pg_restore_attribute_stats(
-    'relation', 'stats_import.test'::regclass,
-    'attname', NULL::name,
-    'inherited', false::boolean,
-    'version', 150000::integer,
-    'null_frac', 0.1::real,
-    'avg_width', 2::integer,
-    'n_distinct', 0.3::real);
-
--- error: both attname and attnum
-SELECT pg_catalog.pg_restore_attribute_stats(
-    'relation', 'stats_import.test'::regclass,
-    'attname', 'id'::name,
-    'attnum', 1::smallint,
-    'inherited', false::boolean,
-    'version', 150000::integer,
-    'null_frac', 0.1::real,
-    'avg_width', 2::integer,
-    'n_distinct', 0.3::real);
-
--- error: attname doesn't exist
-SELECT pg_catalog.pg_restore_attribute_stats(
-    'relation', 'stats_import.test'::regclass,
-    'attname', 'nope'::name,
-    'inherited', false::boolean,
-    'version', 150000::integer,
-    'null_frac', 0.1::real,
-    'avg_width', 2::integer,
-    'n_distinct', 0.3::real);
-
--- error: attribute is system column
-SELECT pg_catalog.pg_restore_attribute_stats(
-    'relation', 'stats_import.test'::regclass,
-    'attname', 'xmin'::name,
-    'inherited', false::boolean,
-    'null_frac', 0.1::real,
-    'avg_width', 2::integer,
-    'n_distinct', 0.3::real);
-
--- error: inherited null
-SELECT pg_catalog.pg_restore_attribute_stats(
-    'relation', 'stats_import.test'::regclass,
-    'attname', 'id'::name,
-    'inherited', NULL::boolean,
-    'version', 150000::integer,
-    'null_frac', 0.1::real,
-    'avg_width', 2::integer,
-    'n_distinct', 0.3::real);
-
--- error: relation not found
-SELECT pg_catalog.pg_clear_relation_stats(
-    relation => 'stats_import.nope'::regclass);
-
--- error: attribute is system column
-SELECT pg_catalog.pg_clear_attribute_stats(
-    relation => 'stats_import.test'::regclass,
-    attname => 'ctid'::name,
-    inherited => false::boolean);
-
--- error: attname doesn't exist
-SELECT pg_catalog.pg_clear_attribute_stats(
-    relation => 'stats_import.test'::regclass,
-    attname => 'nope'::name,
-    inherited => false::boolean);
+SELECT COUNT(*)
+FROM pg_stats
+WHERE schemaname = 'stats_import'
+AND tablename = 'test'
+AND inherited = false
+AND attname = 'arange';
 
 DROP SCHEMA stats_import CASCADE;
