@@ -558,16 +558,18 @@ startScanKey(GinState *ginstate, GinScanOpaque so, GinScanKey key)
 		qsort_arg(entryIndexes, key->nentries, sizeof(int),
 				  entryIndexByFrequencyCmp, key);
 
+		for (i = 1; i < key->nentries; i++)
+			key->entryRes[entryIndexes[i]] = GIN_MAYBE;
 		for (i = 0; i < key->nentries - 1; i++)
 		{
 			/* Pass all entries <= i as FALSE, and the rest as MAYBE */
-			for (j = 0; j <= i; j++)
-				key->entryRes[entryIndexes[j]] = GIN_FALSE;
-			for (j = i + 1; j < key->nentries; j++)
-				key->entryRes[entryIndexes[j]] = GIN_MAYBE;
+			key->entryRes[entryIndexes[i]] = GIN_FALSE;
 
 			if (key->triConsistentFn(key) == GIN_FALSE)
 				break;
+
+			/* Make this loop interruptible in case there are many keys */
+			CHECK_FOR_INTERRUPTS();
 		}
 		/* i is now the last required entry. */
 
