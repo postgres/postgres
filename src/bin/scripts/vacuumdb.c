@@ -47,7 +47,6 @@ typedef struct vacuumingOptions
 	bool		process_toast;
 	bool		skip_database_stats;
 	char	   *buffer_usage_limit;
-	bool		missing_only;
 } vacuumingOptions;
 
 /* object filter options */
@@ -129,7 +128,6 @@ main(int argc, char *argv[])
 		{"no-process-toast", no_argument, NULL, 11},
 		{"no-process-main", no_argument, NULL, 12},
 		{"buffer-usage-limit", required_argument, NULL, 13},
-		{"missing-only", no_argument, NULL, 14},
 		{NULL, 0, NULL, 0}
 	};
 
@@ -277,9 +275,6 @@ main(int argc, char *argv[])
 			case 13:
 				vacopts.buffer_usage_limit = escape_quotes(optarg);
 				break;
-			case 14:
-				vacopts.missing_only = true;
-				break;
 			default:
 				/* getopt_long already emitted a complaint */
 				pg_log_error_hint("Try \"%s --help\" for more information.", progname);
@@ -364,11 +359,6 @@ main(int argc, char *argv[])
 	if (vacopts.buffer_usage_limit && vacopts.full && !vacopts.and_analyze)
 		pg_fatal("cannot use the \"%s\" option with the \"%s\" option",
 				 "buffer-usage-limit", "full");
-
-	/* Prohibit --missing-only without --analyze-only or --analyze-in-stages */
-	if (vacopts.missing_only && !vacopts.analyze_only)
-		pg_fatal("cannot use the \"%s\" option without \"%s\" or \"%s\"",
-				 "missing-only", "analyze-only", "analyze-in-stages");
 
 	/* fill cparams except for dbname, which is set below */
 	cparams.pghost = host;
@@ -594,13 +584,6 @@ vacuum_one_database(ConnParams *cparams,
 				 "--buffer-usage-limit", "16");
 	}
 
-	if (vacopts->missing_only && PQserverVersion(conn) < 150000)
-	{
-		PQfinish(conn);
-		pg_fatal("cannot use the \"%s\" option on server versions older than PostgreSQL %s",
-				 "--missing-only", "15");
-	}
-
 	/* skip_database_stats is used automatically if server supports it */
 	vacopts->skip_database_stats = (PQserverVersion(conn) >= 160000);
 
@@ -689,7 +672,6 @@ vacuum_one_database(ConnParams *cparams,
 						 " FROM pg_catalog.pg_class c\n"
 						 " JOIN pg_catalog.pg_namespace ns"
 						 " ON c.relnamespace OPERATOR(pg_catalog.=) ns.oid\n"
-						 " CROSS JOIN LATERAL (SELECT c.relkind IN ('p', 'I')) as p (inherited)\n"
 						 " LEFT JOIN pg_catalog.pg_class t"
 						 " ON c.reltoastrelid OPERATOR(pg_catalog.=) t.oid\n");
 
@@ -771,79 +753,6 @@ vacuum_one_database(ConnParams *cparams,
 						  " AND c.relminmxid OPERATOR(pg_catalog.!=)"
 						  " '0'::pg_catalog.xid\n",
 						  vacopts->min_mxid_age);
-	}
-
-	if (vacopts->missing_only)
-	{
-		appendPQExpBufferStr(&catalog_query, " AND (\n");
-
-		/* regular stats */
-		appendPQExpBufferStr(&catalog_query,
-							 " EXISTS (SELECT NULL FROM pg_catalog.pg_attribute a\n"
-							 " WHERE a.attrelid OPERATOR(pg_catalog.=) c.oid\n"
-							 " AND c.reltuples OPERATOR(pg_catalog.!=) 0::pg_catalog.float4\n"
-							 " AND a.attnum OPERATOR(pg_catalog.>) 0::pg_catalog.int2\n"
-							 " AND NOT a.attisdropped\n"
-							 " AND a.attstattarget IS DISTINCT FROM 0::pg_catalog.int2\n"
-							 " AND NOT EXISTS (SELECT NULL FROM pg_catalog.pg_statistic s\n"
-							 " WHERE s.starelid OPERATOR(pg_catalog.=) a.attrelid\n"
-							 " AND s.staattnum OPERATOR(pg_catalog.=) a.attnum\n"
-							 " AND s.stainherit OPERATOR(pg_catalog.=) p.inherited))\n");
-
-		/* extended stats */
-		appendPQExpBufferStr(&catalog_query,
-							 " OR EXISTS (SELECT NULL FROM pg_catalog.pg_statistic_ext e\n"
-							 " WHERE e.stxrelid OPERATOR(pg_catalog.=) c.oid\n"
-							 " AND c.reltuples OPERATOR(pg_catalog.!=) 0::pg_catalog.float4\n"
-							 " AND e.stxstattarget IS DISTINCT FROM 0::pg_catalog.int2\n"
-							 " AND NOT EXISTS (SELECT NULL FROM pg_catalog.pg_statistic_ext_data d\n"
-							 " WHERE d.stxoid OPERATOR(pg_catalog.=) e.oid\n"
-							 " AND d.stxdinherit OPERATOR(pg_catalog.=) p.inherited))\n");
-
-		/* expression indexes */
-		appendPQExpBufferStr(&catalog_query,
-							 " OR EXISTS (SELECT NULL FROM pg_catalog.pg_index i\n"
-							 " CROSS JOIN LATERAL pg_catalog.unnest(i.indkey) WITH ORDINALITY u (attnum, ord)\n"
-							 " WHERE i.indrelid OPERATOR(pg_catalog.=) c.oid\n"
-							 " AND c.reltuples OPERATOR(pg_catalog.!=) 0::pg_catalog.float4\n"
-							 " AND i.indexprs IS NOT NULL\n"
-							 " AND NOT EXISTS (SELECT NULL FROM pg_catalog.pg_statistic s\n"
-							 " WHERE s.starelid OPERATOR(pg_catalog.=) i.indexrelid\n"
-							 " AND s.staattnum OPERATOR(pg_catalog.=) u.ord\n"
-							 " AND s.stainherit OPERATOR(pg_catalog.=) p.inherited))\n");
-
-		/* table inheritance and regular stats */
-		appendPQExpBufferStr(&catalog_query,
-							 " OR EXISTS (SELECT NULL FROM pg_catalog.pg_attribute a\n"
-							 " WHERE a.attrelid OPERATOR(pg_catalog.=) c.oid\n"
-							 " AND c.reltuples OPERATOR(pg_catalog.!=) 0::pg_catalog.float4\n"
-							 " AND a.attnum OPERATOR(pg_catalog.>) 0::pg_catalog.int2\n"
-							 " AND NOT a.attisdropped\n"
-							 " AND a.attstattarget IS DISTINCT FROM 0::pg_catalog.int2\n"
-							 " AND c.relhassubclass\n"
-							 " AND NOT p.inherited\n"
-							 " AND EXISTS (SELECT NULL FROM pg_catalog.pg_inherits h\n"
-							 " WHERE h.inhparent OPERATOR(pg_catalog.=) c.oid)\n"
-							 " AND NOT EXISTS (SELECT NULL FROM pg_catalog.pg_statistic s\n"
-							 " WHERE s.starelid OPERATOR(pg_catalog.=) a.attrelid\n"
-							 " AND s.staattnum OPERATOR(pg_catalog.=) a.attnum\n"
-							 " AND s.stainherit))\n");
-
-		/* table inheritance and extended stats */
-		appendPQExpBufferStr(&catalog_query,
-							 " OR EXISTS (SELECT NULL FROM pg_catalog.pg_statistic_ext e\n"
-							 " WHERE e.stxrelid OPERATOR(pg_catalog.=) c.oid\n"
-							 " AND c.reltuples OPERATOR(pg_catalog.!=) 0::pg_catalog.float4\n"
-							 " AND e.stxstattarget IS DISTINCT FROM 0::pg_catalog.int2\n"
-							 " AND c.relhassubclass\n"
-							 " AND NOT p.inherited\n"
-							 " AND EXISTS (SELECT NULL FROM pg_catalog.pg_inherits h\n"
-							 " WHERE h.inhparent OPERATOR(pg_catalog.=) c.oid)\n"
-							 " AND NOT EXISTS (SELECT NULL FROM pg_catalog.pg_statistic_ext_data d\n"
-							 " WHERE d.stxoid OPERATOR(pg_catalog.=) e.oid\n"
-							 " AND d.stxdinherit))\n");
-
-		appendPQExpBufferStr(&catalog_query, " )\n");
 	}
 
 	/*
@@ -1272,7 +1181,6 @@ help(const char *progname)
 	printf(_("  -j, --jobs=NUM                  use this many concurrent connections to vacuum\n"));
 	printf(_("      --min-mxid-age=MXID_AGE     minimum multixact ID age of tables to vacuum\n"));
 	printf(_("      --min-xid-age=XID_AGE       minimum transaction ID age of tables to vacuum\n"));
-	printf(_("      --missing-only              only analyze relations with missing statistics\n"));
 	printf(_("      --no-index-cleanup          don't remove index entries that point to dead tuples\n"));
 	printf(_("      --no-process-main           skip the main relation\n"));
 	printf(_("      --no-process-toast          skip the TOAST table associated with the table to vacuum\n"));
