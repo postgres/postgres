@@ -65,7 +65,8 @@ hashhandler(PG_FUNCTION_ARGS)
 	amroutine->amcanorder = false;
 	amroutine->amcanorderbyop = false;
 	amroutine->amcanhash = true;
-	amroutine->amcancrosscompare = true;
+	amroutine->amconsistentequality = true;
+	amroutine->amconsistentequality = false;
 	amroutine->amcanbackward = true;
 	amroutine->amcanunique = false;
 	amroutine->amcanmulticol = false;

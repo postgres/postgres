@@ -1083,9 +1083,10 @@ query_supports_distinctness(Query *query)
  * the values are distinct.  (Note: the opids entries could be cross-type
  * operators, and thus not exactly the equality operators that the subquery
  * would use itself.  We use equality_ops_are_compatible() to check
- * compatibility.  That looks at btree or hash opfamily membership, and so
- * should give trustworthy answers for all operators that we might need
- * to deal with here.)
+ * compatibility.  That looks at opfamily membership for index AMs that have
+ * declared that they support consistent equality semantics within an
+ * opfamily, and so should give trustworthy answers for all operators that we
+ * might need to deal with here.)
  */
 bool
 query_is_distinct_for(Query *query, List *colnos, List *opids)
