@@ -20,6 +20,7 @@ $node->append_conf('postgresql.conf', "max_connections = 6");
 $node->append_conf('postgresql.conf', "reserved_connections = 2");
 $node->append_conf('postgresql.conf', "superuser_reserved_connections = 1");
 $node->append_conf('postgresql.conf', "log_connections = on");
+$node->append_conf('postgresql.conf', "log_min_messages=debug2");
 $node->start;
 
 $node->safe_psql(
@@ -45,13 +46,39 @@ sub background_psql_as_user
 		extra_params => [ '-U', $user ]);
 }
 
+# Like connect_fails(), except that we also wait for the failed backend to
+# have exited.
+#
+# This tests needs to wait for client processes to exit because the error
+# message for a failed connection is reported before the backend has detached
+# from shared memory. If we didn't wait, subsequent tests might hit connection
+# limits spuriously.
+#
+# This can't easily be generalized, as detecting process exit requires
+# log_min_messages to be at least DEBUG2 and is not concurrency safe, as we
+# can't easily be sure the right process exited. In this test that's not a
+# problem though, we only have one new connection at a time.
+sub connect_fails_wait
+{
+	local $Test::Builder::Level = $Test::Builder::Level + 1;
+	my ($node, $connstr, $test_name, %params) = @_;
+
+	my $log_location = -s $node->logfile;
+
+	$node->connect_fails($connstr, $test_name, %params);
+	$node->wait_for_log(qr/DEBUG:  client backend.*exited with exit code 1/,
+		$log_location);
+	ok(1, "$test_name: client backend process exited");
+}
+
 my @sessions = ();
 my @raw_connections = ();
 
 push(@sessions, background_psql_as_user('regress_regular'));
 push(@sessions, background_psql_as_user('regress_regular'));
 push(@sessions, background_psql_as_user('regress_regular'));
-$node->connect_fails(
+connect_fails_wait(
+	$node,
 	"dbname=postgres user=regress_regular",
 	"reserved_connections limit",
 	expected_stderr =>
@@ -60,7 +87,8 @@ $node->connect_fails(
 
 push(@sessions, background_psql_as_user('regress_reserved'));
 push(@sessions, background_psql_as_user('regress_reserved'));
-$node->connect_fails(
+connect_fails_wait(
+	$node,
 	"dbname=postgres user=regress_regular",
 	"reserved_connections limit",
 	expected_stderr =>
@@ -68,7 +96,8 @@ $node->connect_fails(
 );
 
 push(@sessions, background_psql_as_user('regress_superuser'));
-$node->connect_fails(
+connect_fails_wait(
+	$node,
 	"dbname=postgres user=regress_superuser",
 	"superuser_reserved_connections limit",
 	expected_stderr => qr/FATAL:  sorry, too many clients already/);
