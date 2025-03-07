@@ -111,7 +111,14 @@ _PG_init(void)
 {
 	if (!process_shared_preload_libraries_in_progress)
 	{
-		elog(ERROR, "pg_tde can only be loaded at server startup. Restart required.");
+		/*
+		 * psql/pg_restore continue on error by default, and change access
+		 * methods using set default_table_access_method. This error needs to
+		 * be FATAL and close the connection, otherwise these tools will
+		 * continue execution and create unencrypted tables when the intention
+		 * was to make them encrypted.
+		 */
+		elog(FATAL, "pg_tde can only be loaded at server startup. Restart required.");
 		return;
 	}
 
