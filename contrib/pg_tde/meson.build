@@ -83,6 +83,7 @@ sql_tests = [
       'kmip_test',
       'pg_tde_is_encrypted',
       'relocate',
+      'subtransaction',
       'tablespace',
       'vault_v2_test',
       'default_principal_key',

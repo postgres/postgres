@@ -1,0 +1,98 @@
+CREATE EXTENSION IF NOT EXISTS pg_tde;
+SELECT pg_tde_add_global_key_provider_file('file-provider','/tmp/pg_tde_regression_default_principal_key.per');
+ pg_tde_add_global_key_provider_file 
+-------------------------------------
+                                  -4
+(1 row)
+
+SELECT pg_tde_set_default_principal_key('default-principal-key', 'file-provider', false);
+ pg_tde_set_default_principal_key 
+----------------------------------
+ t
+(1 row)
+
+-- fails
+SELECT pg_tde_delete_global_key_provider('file-provider');
+ERROR:  Can't delete a provider which is currently in use
+SELECT id, provider_name FROM pg_tde_list_all_global_key_providers();
+ id |  provider_name  
+----+-----------------
+ -1 | reg_file-global
+ -3 | file-keyring2
+ -4 | file-provider
+(3 rows)
+
+-- Should fail: no principal key for the database yet
+SELECT  key_provider_id, key_provider_name, principal_key_name
+		FROM pg_tde_principal_key_info();
+ERROR:  Principal key does not exists for the database
+HINT:  Use set_principal_key interface to set the principal key
+ 
+-- Should succeed: "localizes" the default principal key for the database
+CREATE TABLE test_enc(
+	id SERIAL,
+	k INTEGER DEFAULT '0' NOT NULL,
+	PRIMARY KEY (id)
+) USING tde_heap;
+INSERT INTO test_enc (k) VALUES (1), (2), (3);
+-- Should succeed: create table localized the principal key
+SELECT  key_provider_id, key_provider_name, principal_key_name
+		FROM pg_tde_principal_key_info();
+ key_provider_id | key_provider_name |  principal_key_name   
+-----------------+-------------------+-----------------------
+              -4 | file-provider     | default-principal-key
+(1 row)
+
+SELECT current_database() AS regress_database
+\gset
+CREATE DATABASE regress_pg_tde_other;
+\c regress_pg_tde_other
+CREATE EXTENSION pg_tde;
+-- Should fail: no principal key for the database yet
+SELECT  key_provider_id, key_provider_name, principal_key_name
+		FROM pg_tde_principal_key_info();
+ERROR:  Principal key does not exists for the database
+HINT:  Use set_principal_key interface to set the principal key
+-- Should succeed: "localizes" the default principal key for the database
+CREATE TABLE test_enc(
+	id SERIAL,
+	k INTEGER DEFAULT '0' NOT NULL,
+	PRIMARY KEY (id)
+) USING tde_heap;
+INSERT INTO test_enc (k) VALUES (1), (2), (3);
+-- Should succeed: create table localized the principal key
+SELECT  key_provider_id, key_provider_name, principal_key_name
+		FROM pg_tde_principal_key_info();
+ key_provider_id | key_provider_name |  principal_key_name   
+-----------------+-------------------+-----------------------
+              -4 | file-provider     | default-principal-key
+(1 row)
+
+\c :regress_database
+SELECT pg_tde_set_default_principal_key('new-default-principal-key', 'file-provider', false);
+ pg_tde_set_default_principal_key 
+----------------------------------
+ t
+(1 row)
+
+SELECT  key_provider_id, key_provider_name, principal_key_name
+		FROM pg_tde_principal_key_info();
+ key_provider_id | key_provider_name |    principal_key_name     
+-----------------+-------------------+---------------------------
+              -4 | file-provider     | new-default-principal-key
+(1 row)
+
+\c regress_pg_tde_other
+SELECT  key_provider_id, key_provider_name, principal_key_name
+		FROM pg_tde_principal_key_info();
+ key_provider_id | key_provider_name |    principal_key_name     
+-----------------+-------------------+---------------------------
+              -4 | file-provider     | new-default-principal-key
+(1 row)
+
+DROP TABLE test_enc;
+DROP EXTENSION pg_tde CASCADE;
+\c :regress_database
+DROP TABLE test_enc;
+DROP EXTENSION pg_tde CASCADE;
+DROP DATABASE regress_pg_tde_other;
