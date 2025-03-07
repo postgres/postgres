@@ -12,7 +12,36 @@ CREATE TABLE stats_import.test(
     arange int4range,
     tags text[]
 ) WITH (autovacuum_enabled = false);
+SELECT
+    pg_catalog.pg_restore_relation_stats(
+        'relation', 'stats_import.test'::regclass,
+        'relpages', 18::integer,
+        'reltuples', 21::real,
+        'relallvisible', 24::integer,
+	'relallfrozen', 27::integer);
+ pg_restore_relation_stats 
+---------------------------
+ t
+(1 row)
+
+-- CREATE INDEX on a table with autovac disabled should not overwrite
+-- stats
 CREATE INDEX test_i ON stats_import.test(id);
+SELECT relname, relpages, reltuples, relallvisible, relallfrozen
+FROM pg_class
+WHERE oid = 'stats_import.test'::regclass
+ORDER BY relname;
+ relname | relpages | reltuples | relallvisible | relallfrozen 
+---------+----------+-----------+---------------+--------------
+ test    |       18 |        21 |            24 |           27
+(1 row)
+
+SELECT pg_clear_relation_stats('stats_import.test'::regclass);
+ pg_clear_relation_stats 
+-------------------------
+ 
+(1 row)
+
 --
 -- relstats tests
 --
