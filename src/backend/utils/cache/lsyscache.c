@@ -717,11 +717,16 @@ equality_ops_are_compatible(Oid opno1, Oid opno2)
 	{
 		HeapTuple	op_tuple = &catlist->members[i]->tuple;
 		Form_pg_amop op_form = (Form_pg_amop) GETSTRUCT(op_tuple);
-		IndexAmRoutine *amroutine = GetIndexAmRoutineByAmId(op_form->amopmethod, false);
 
-		if (amroutine->amconsistentequality)
+		/*
+		 * op_in_opfamily() is cheaper than GetIndexAmRoutineByAmId(), so
+		 * check it first
+		 */
+		if (op_in_opfamily(opno2, op_form->amopfamily))
 		{
-			if (op_in_opfamily(opno2, op_form->amopfamily))
+			IndexAmRoutine *amroutine = GetIndexAmRoutineByAmId(op_form->amopmethod, false);
+
+			if (amroutine->amconsistentequality)
 			{
 				result = true;
 				break;
@@ -768,11 +773,16 @@ comparison_ops_are_compatible(Oid opno1, Oid opno2)
 	{
 		HeapTuple	op_tuple = &catlist->members[i]->tuple;
 		Form_pg_amop op_form = (Form_pg_amop) GETSTRUCT(op_tuple);
-		IndexAmRoutine *amroutine = GetIndexAmRoutineByAmId(op_form->amopmethod, false);
 
-		if (amroutine->amcanorder && amroutine->amconsistentordering)
+		/*
+		 * op_in_opfamily() is cheaper than GetIndexAmRoutineByAmId(), so
+		 * check it first
+		 */
+		if (op_in_opfamily(opno2, op_form->amopfamily))
 		{
-			if (op_in_opfamily(opno2, op_form->amopfamily))
+			IndexAmRoutine *amroutine = GetIndexAmRoutineByAmId(op_form->amopmethod, false);
+
+			if (amroutine->amcanorder && amroutine->amconsistentordering)
 			{
 				result = true;
 				break;
