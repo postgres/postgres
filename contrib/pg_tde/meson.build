@@ -71,22 +71,21 @@ install_data(
   kwargs: contrib_data_args,
 )
 
-
 sql_tests = [
-      'cache_alloc',
-      'key_provider',
-      'relocate',
       'toast_decrypt',
-      'pg_tde_is_encrypted',
-      'keyprovider_dependency',
+      'access_control',
+      'alter_index',
+      'cache_alloc',
       'change_access_method',
       'insert_update_delete',
+      'key_provider',
+      'keyprovider_dependency',
+      'kmip_test',
+      'pg_tde_is_encrypted',
+      'relocate',
       'tablespace',
       'vault_v2_test',
-      'kmip_test',
-      'alter_index',
       'default_principal_key',
-      'access_control',
 ]
 
 tap_tests = [
