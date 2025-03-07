@@ -103,7 +103,7 @@ main(int argc, char *argv[])
 	char		json[BUFFER_SIZE * 2] = {0,};
 	ControlFileData *controlfile;
 	bool		crc_ok;
-	char		tdedir[1024] = {0,};
+	char		tdedir[MAXPGPATH] = {0,};
 	char	   *cptr = tdedir;
 	bool		provider_found = false;
 	GenericKeyring *keyring = NULL;
