@@ -96,33 +96,31 @@ build_attrmap_by_position(TupleDesc indesc,
 	same = true;
 	for (i = 0; i < n; i++)
 	{
-		Form_pg_attribute att = TupleDescAttr(outdesc, i);
-		Oid			atttypid;
-		int32		atttypmod;
+		Form_pg_attribute outatt = TupleDescAttr(outdesc, i);
 
-		if (att->attisdropped)
+		if (outatt->attisdropped)
 			continue;			/* attrMap->attnums[i] is already 0 */
 		noutcols++;
-		atttypid = att->atttypid;
-		atttypmod = att->atttypmod;
 		for (; j < indesc->natts; j++)
 		{
-			att = TupleDescAttr(indesc, j);
-			if (att->attisdropped)
+			Form_pg_attribute inatt = TupleDescAttr(indesc, j);
+
+			if (inatt->attisdropped)
 				continue;
 			nincols++;
 
 			/* Found matching column, now check type */
-			if (atttypid != att->atttypid ||
-				(atttypmod != att->atttypmod && atttypmod >= 0))
+			if (outatt->atttypid != inatt->atttypid ||
+				(outatt->atttypmod != inatt->atttypmod && outatt->atttypmod >= 0))
 				ereport(ERROR,
 						(errcode(ERRCODE_DATATYPE_MISMATCH),
 						 errmsg_internal("%s", _(msg)),
-						 errdetail("Returned type %s does not match expected type %s in column %d.",
-								   format_type_with_typemod(att->atttypid,
-															att->atttypmod),
-								   format_type_with_typemod(atttypid,
-															atttypmod),
+						 errdetail("Returned type %s does not match expected type %s in column \"%s\" (position %d).",
+								   format_type_with_typemod(inatt->atttypid,
+															inatt->atttypmod),
+								   format_type_with_typemod(outatt->atttypid,
+															outatt->atttypmod),
+								   NameStr(outatt->attname),
 								   noutcols)));
 			attrMap->attnums[i] = (AttrNumber) (j + 1);
 			j++;

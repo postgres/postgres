@@ -3779,7 +3779,7 @@ end;
 $$ language plpgsql;
 select compos();
 ERROR:  returned record type does not match expected record type
-DETAIL:  Returned type unknown does not match expected type character varying in column 2.
+DETAIL:  Returned type unknown does not match expected type character varying in column "y" (position 2).
 CONTEXT:  PL/pgSQL function compos() while casting return value to function's return type
 -- ... but this does
 create or replace function compos() returns compostype as $$
