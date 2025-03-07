@@ -4,6 +4,7 @@
 #include "pg_tde.h"
 #include "catalog/tde_keyring.h"
 #include "catalog/tde_global_space.h"
+#include "common/controldata_utils.h"
 #include "common/logging.h"
 #include "common/pg_tde_utils.h"
 
@@ -100,6 +101,8 @@ main(int argc, char *argv[])
 	int			argstart = 0;
 
 	char		json[BUFFER_SIZE * 2] = {0,};
+	ControlFileData *controlfile;
+	bool		crc_ok;
 	char		tdedir[1024] = {0,};
 	char	   *cptr = tdedir;
 	bool		provider_found = false;
@@ -215,6 +218,19 @@ main(int argc, char *argv[])
 		printf("Error: Unknown provider type: %s", new_provider_type);
 		exit(1);
 	}
+
+	/*
+	 * Check if cluster is running.  This way we can be sure we have no
+	 * concurrent modifcations of the key providers.  Note that this doesn't
+	 * guard against someone starting the cluster concurrently.
+	 */
+	controlfile = get_controlfile(datadir, &crc_ok);
+	if (!crc_ok)
+		pg_fatal("pg_control CRC value is incorrect");
+
+	if (controlfile->state != DB_SHUTDOWNED &&
+		controlfile->state != DB_SHUTDOWNED_IN_RECOVERY)
+		pg_fatal("cluster must be shut down");
 
 	cptr = strcat(cptr, datadir);
 	cptr = strcat(cptr, "/");
