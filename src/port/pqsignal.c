@@ -87,6 +87,9 @@ wrapper_handler(SIGNAL_ARGS)
 {
 	int			save_errno = errno;
 
+	Assert(postgres_signal_arg > 0);
+	Assert(postgres_signal_arg < PG_NSIG);
+
 #ifndef FRONTEND
 
 	/*
@@ -123,6 +126,7 @@ pqsignal(int signo, pqsigfunc func)
 	struct sigaction act;
 #endif
 
+	Assert(signo > 0);
 	Assert(signo < PG_NSIG);
 
 	if (func != SIG_IGN && func != SIG_DFL)
