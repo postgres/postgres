@@ -752,6 +752,35 @@ SELECT set_byte('\x1234567890abcdef00'::bytea, 7, 11);
 SELECT set_byte('\x1234567890abcdef00'::bytea, 99, 11);  -- error
 
 --
+-- conversions between bytea and integer types
+--
+SELECT 0x1234::int2::bytea AS "\x1234", (-0x1234)::int2::bytea AS "\xedcc";
+SELECT 0x12345678::int4::bytea AS "\x12345678", (-0x12345678)::int4::bytea AS "\xedcba988";
+SELECT 0x1122334455667788::int8::bytea AS "\x1122334455667788",
+       (-0x1122334455667788)::int8::bytea AS "\xeeddccbbaa998878";
+
+SELECT ''::bytea::int2 AS "0";
+SELECT '\x12'::bytea::int2 AS "18";
+SELECT '\x1234'::bytea::int2 AS "4460";
+SELECT '\x123456'::bytea::int2; -- error
+
+SELECT ''::bytea::int4 AS "0";
+SELECT '\x12'::bytea::int4 AS "18";
+SELECT '\x12345678'::bytea::int4 AS "305419896";
+SELECT '\x123456789A'::bytea::int4; -- error
+
+SELECT ''::bytea::int8 AS "0";
+SELECT '\x12'::bytea::int8 AS "18";
+SELECT '\x1122334455667788'::bytea::int8 AS "1234605616436508552";
+SELECT '\x112233445566778899'::bytea::int8; -- error
+
+-- min/max integer values
+SELECT '\x8000'::bytea::int2 AS "-32768", '\x7FFF'::bytea::int2 AS "32767";
+SELECT '\x80000000'::bytea::int4 AS "-2147483648", '\x7FFFFFFF'::bytea::int4 AS "2147483647";
+SELECT '\x8000000000000000'::bytea::int8 AS "-9223372036854775808",
+       '\x7FFFFFFFFFFFFFFF'::bytea::int8 AS "9223372036854775807";
+
+--
 -- test behavior of escape_string_warning and standard_conforming_strings options
 --
 set escape_string_warning = off;

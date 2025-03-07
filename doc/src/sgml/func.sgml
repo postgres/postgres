@@ -5036,6 +5036,23 @@ SELECT format('Testing %3$s, %2$s, %s', 'one', 'two', 'three');
   </para>
 
   <para>
+   In addition, it is possible to cast integral values to and from type
+   <type>bytea</type>. Casting an integer to <type>bytea</type> produces
+   2, 4, or 8 bytes, depending on the width of the integer type. The result
+   is the two's complement representation of the integer, with the most
+   significant byte first. Some examples:
+<programlisting>
+1234::smallint::bytea          <lineannotation>\x04d2</lineannotation>
+cast(1234 as bytea)            <lineannotation>\x000004d2</lineannotation>
+cast(-1234 as bytea)           <lineannotation>\xfffffb2e</lineannotation>
+'\x8000'::bytea::smallint      <lineannotation>-32768</lineannotation>
+'\x8000'::bytea::integer       <lineannotation>32768</lineannotation>
+</programlisting>
+   Casting a <type>bytea</type> to an integer will raise an error if the
+   length of the <type>bytea</type> exceeds the width of the integer type.
+  </para>
+
+  <para>
    See also the aggregate function <function>string_agg</function> in
    <xref linkend="functions-aggregate"/> and the large object functions
    in <xref linkend="lo-funcs"/>.

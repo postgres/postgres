@@ -320,6 +320,20 @@
 { castsource => 'varchar', casttarget => 'name', castfunc => 'name(varchar)',
   castcontext => 'i', castmethod => 'f' },
 
+# Allow explicit coercions between bytea and integer types
+{ castsource => 'int2', casttarget => 'bytea', castfunc => 'bytea(int2)',
+  castcontext => 'e', castmethod => 'f' },
+{ castsource => 'int4', casttarget => 'bytea', castfunc => 'bytea(int4)',
+  castcontext => 'e', castmethod => 'f' },
+{ castsource => 'int8', casttarget => 'bytea', castfunc => 'bytea(int8)',
+  castcontext => 'e', castmethod => 'f' },
+{ castsource => 'bytea', casttarget => 'int2', castfunc => 'int2(bytea)',
+  castcontext => 'e', castmethod => 'f' },
+{ castsource => 'bytea', casttarget => 'int4', castfunc => 'int4(bytea)',
+  castcontext => 'e', castmethod => 'f' },
+{ castsource => 'bytea', casttarget => 'int8', castfunc => 'int8(bytea)',
+  castcontext => 'e', castmethod => 'f' },
+
 # Allow explicit coercions between int4 and "char"
 { castsource => 'char', casttarget => 'int4', castfunc => 'int4(char)',
   castcontext => 'e', castmethod => 'f' },
