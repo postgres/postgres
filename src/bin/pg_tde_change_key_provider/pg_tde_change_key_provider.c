@@ -153,7 +153,7 @@ main(int argc, char *argv[])
 		exit(1);
 	}
 
-	if (argc - argstart < 3)
+	if (argc - argstart <= 3)
 	{
 		help();
 		exit(1);
