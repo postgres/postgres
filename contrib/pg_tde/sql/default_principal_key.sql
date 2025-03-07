@@ -25,6 +25,9 @@ INSERT INTO test_enc (k) VALUES (1), (2), (3);
 SELECT  key_provider_id, key_provider_name, principal_key_name
 		FROM pg_tde_principal_key_info();
 
+SELECT current_database() AS regress_database
+\gset
+
 CREATE DATABASE regress_pg_tde_other;
 
 \c regress_pg_tde_other
@@ -48,7 +51,7 @@ INSERT INTO test_enc (k) VALUES (1), (2), (3);
 SELECT  key_provider_id, key_provider_name, principal_key_name
 		FROM pg_tde_principal_key_info();
 
-\c regression_pg_tde
+\c :regress_database
 
 SELECT pg_tde_set_default_principal_key('new-default-principal-key', 'file-provider', false);
 
@@ -64,7 +67,7 @@ DROP TABLE test_enc;
 
 DROP EXTENSION pg_tde CASCADE;
 
-\c regression_pg_tde
+\c :regress_database
 
 DROP TABLE test_enc;
 
