@@ -730,7 +730,7 @@ WHERE t1.unique1 &lt; 10 AND t1.unique2 = t2.unique2;
          -&gt;  Bitmap Index Scan on tenk1_unique1  (cost=0.00..4.36 rows=10 width=0) (actual time=0.004..0.004 rows=10.00 loops=1)
                Index Cond: (unique1 &lt; 10)
                Buffers: shared hit=2
-   -&gt;  Index Scan using tenk2_unique2 on tenk2 t2  (cost=0.29..7.90 rows=1 width=244) (actual time=0.003..0.003 rows=1 loops=10)
+   -&gt;  Index Scan using tenk2_unique2 on tenk2 t2  (cost=0.29..7.90 rows=1 width=244) (actual time=0.003..0.003 rows=1.00 loops=10)
          Index Cond: (unique2 = t1.unique2)
          Buffers: shared hit=24 read=6
  Planning:
