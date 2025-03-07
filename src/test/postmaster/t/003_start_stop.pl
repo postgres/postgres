@@ -20,6 +20,10 @@ use Test::More;
 # "pg_ctl stop" will error out before the authentication timeout kicks
 # in and cleans up the dead-end backends.
 my $authentication_timeout = $PostgreSQL::Test::Utils::timeout_default;
+
+# Don't fail due to hitting the max value allowed for authentication_timeout.
+$authentication_timeout = 600 unless $authentication_timeout < 600;
+
 my $stop_timeout = $authentication_timeout / 2;
 
 # Initialize the server with low connection limits, to test dead-end backends
