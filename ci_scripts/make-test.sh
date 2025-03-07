@@ -7,4 +7,4 @@ INSTALL_DIR="$SCRIPT_DIR/../../pginst"
 
 cd "$SCRIPT_DIR/.."
 
-make check-world
+make -s check-world
