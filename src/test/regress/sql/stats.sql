@@ -8,6 +8,12 @@
 -- conditio sine qua non
 SHOW track_counts;  -- must be on
 
+-- List of backend types, contexts and objects tracked in pg_stat_io.
+\a
+SELECT backend_type, object, context FROM pg_stat_io
+  ORDER BY backend_type, object, context COLLATE "C";
+\a
+
 -- ensure that both seqscan and indexscan plans are allowed
 SET enable_seqscan TO on;
 SET enable_indexscan TO on;

@@ -11,6 +11,84 @@ SHOW track_counts;  -- must be on
  on
 (1 row)
 
+-- List of backend types, contexts and objects tracked in pg_stat_io.
+\a
+SELECT backend_type, object, context FROM pg_stat_io
+  ORDER BY backend_type, object, context COLLATE "C";
+backend_type|object|context
+autovacuum launcher|relation|bulkread
+autovacuum launcher|relation|init
+autovacuum launcher|relation|normal
+autovacuum launcher|wal|init
+autovacuum launcher|wal|normal
+autovacuum worker|relation|bulkread
+autovacuum worker|relation|init
+autovacuum worker|relation|normal
+autovacuum worker|relation|vacuum
+autovacuum worker|wal|init
+autovacuum worker|wal|normal
+background worker|relation|bulkread
+background worker|relation|bulkwrite
+background worker|relation|init
+background worker|relation|normal
+background worker|relation|vacuum
+background worker|temp relation|normal
+background worker|wal|init
+background worker|wal|normal
+background writer|relation|init
+background writer|relation|normal
+background writer|wal|init
+background writer|wal|normal
+checkpointer|relation|init
+checkpointer|relation|normal
+checkpointer|wal|init
+checkpointer|wal|normal
+client backend|relation|bulkread
+client backend|relation|bulkwrite
+client backend|relation|init
+client backend|relation|normal
+client backend|relation|vacuum
+client backend|temp relation|normal
+client backend|wal|init
+client backend|wal|normal
+slotsync worker|relation|bulkread
+slotsync worker|relation|bulkwrite
+slotsync worker|relation|init
+slotsync worker|relation|normal
+slotsync worker|relation|vacuum
+slotsync worker|temp relation|normal
+slotsync worker|wal|init
+slotsync worker|wal|normal
+standalone backend|relation|bulkread
+standalone backend|relation|bulkwrite
+standalone backend|relation|init
+standalone backend|relation|normal
+standalone backend|relation|vacuum
+standalone backend|wal|init
+standalone backend|wal|normal
+startup|relation|bulkread
+startup|relation|bulkwrite
+startup|relation|init
+startup|relation|normal
+startup|relation|vacuum
+startup|wal|init
+startup|wal|normal
+walreceiver|wal|init
+walreceiver|wal|normal
+walsender|relation|bulkread
+walsender|relation|bulkwrite
+walsender|relation|init
+walsender|relation|normal
+walsender|relation|vacuum
+walsender|temp relation|normal
+walsender|wal|init
+walsender|wal|normal
+walsummarizer|wal|init
+walsummarizer|wal|normal
+walwriter|wal|init
+walwriter|wal|normal
+(71 rows)
+\a
 -- ensure that both seqscan and indexscan plans are allowed
 SET enable_seqscan TO on;
 SET enable_indexscan TO on;
