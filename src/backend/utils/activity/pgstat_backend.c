@@ -36,7 +36,7 @@
  * reported within critical sections so we use static memory in order to avoid
  * memory allocation.
  */
-static PgStat_BackendPending PendingBackendStats;
+static PgStat_BackendPending PendingBackendStats = {0};
 
 /*
  * Utility routines to report I/O stats for backends, kept here to avoid
@@ -222,6 +222,9 @@ pgstat_flush_backend(bool nowait, bits32 flags)
 bool
 pgstat_backend_have_pending_cb(void)
 {
+	if (!pgstat_tracks_backend_bktype(MyBackendType))
+		return false;
+
 	return (!pg_memory_is_all_zeros(&PendingBackendStats,
 									sizeof(struct PgStat_BackendPending)));
 }
