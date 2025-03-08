@@ -11,7 +11,7 @@ SHOW track_counts;  -- must be on
 -- List of backend types, contexts and objects tracked in pg_stat_io.
 \a
 SELECT backend_type, object, context FROM pg_stat_io
-  ORDER BY backend_type, object, context COLLATE "C";
+  ORDER BY backend_type COLLATE "C", object COLLATE "C", context COLLATE "C";
 \a
 
 -- ensure that both seqscan and indexscan plans are allowed
