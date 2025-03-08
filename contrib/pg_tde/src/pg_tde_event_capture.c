@@ -187,6 +187,7 @@ pg_tde_ddl_command_start_capture(PG_FUNCTION_ARGS)
 
 				tdeCurrentCreateEvent.relation = stmt->relation;
 				tdeCurrentCreateEvent.baseTableOid = relationId;
+				tdeCurrentCreateEvent.alterAccessMethodMode = true;
 
 				checkEncryptionClause(accessMethod);
 				alterSetAccessMethod = true;
@@ -240,12 +241,18 @@ pg_tde_ddl_command_end_capture(PG_FUNCTION_ARGS)
 {
 #ifdef PERCONA_EXT
 
+	EventTriggerData *trigdata;
+	Node	   *parsetree;
+
+	trigdata = (EventTriggerData *) fcinfo->context;
+	parsetree = trigdata->parsetree;
+
 	/* Ensure this function is being called as an event trigger */
 	if (!CALLED_AS_EVENT_TRIGGER(fcinfo))	/* internal error */
 		ereport(ERROR,
 				(errmsg("Function can only be fired by event trigger manager")));
 
-	if (alterSetAccessMethod && !tdeCurrentCreateEvent.alterSequenceMode)
+	if (IsA(parsetree, AlterTableStmt) && tdeCurrentCreateEvent.alterAccessMethodMode)
 	{
 		/*
 		 * sequences are not updated automatically call a helper function that
@@ -267,9 +274,9 @@ pg_tde_ddl_command_end_capture(PG_FUNCTION_ARGS)
 		args[0] = ObjectIdGetDatum(tdeCurrentCreateEvent.baseTableOid);
 		nulls[0] = ' ';
 
-		tdeCurrentCreateEvent.alterSequenceMode = true;
 		ret = SPI_execute_plan(plan, args, nulls, false, 0);
-		tdeCurrentCreateEvent.alterSequenceMode = false;
+
+		tdeCurrentCreateEvent.alterAccessMethodMode = false;
 
 		SPI_finish();
 
@@ -295,6 +302,7 @@ reset_current_tde_create_event(void)
 	tdeCurrentCreateEvent.baseTableOid = InvalidOid;
 	tdeCurrentCreateEvent.relation = NULL;
 	alterSetAccessMethod = false;
+	tdeCurrentCreateEvent.alterAccessMethodMode = false;
 }
 
 static Oid

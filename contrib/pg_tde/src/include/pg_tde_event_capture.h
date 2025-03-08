@@ -18,8 +18,9 @@ typedef struct TdeCreateEvent
 								 * contains InvalidOid */
 	RangeVar   *relation;		/* Reference to the parsed relation from
 								 * create statement */
-	bool		alterSequenceMode;	/* true when alter sequence is executed by
-									 * pg_tde */
+	bool		alterAccessMethodMode;	/* during ALTER ... SET ACCESS METHOD,
+										 * new file permissions shouldn't be
+										 * based on earlier encryption status. */
 } TdeCreateEvent;
 
 extern TdeCreateEvent *GetCurrentTdeCreateEvent(void);

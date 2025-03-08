@@ -238,7 +238,7 @@ tde_mdcreate(RelFileLocator relold, SMgrRelation reln, ForkNumber forknum, bool 
 	 * Later calls then decide to encrypt or not based on the existence of the
 	 * key
 	 */
-	key = tde_smgr_get_key(reln, event->alterSequenceMode ? NULL : &relold, true);
+	key = tde_smgr_get_key(reln, event->alterAccessMethodMode ? NULL : &relold, true);
 
 	if (key)
 	{
