@@ -33,11 +33,15 @@ typedef enum DataDirSyncMethod
 struct iovec;					/* avoid including port/pg_iovec.h here */
 
 #ifdef FRONTEND
+#if !defined(fsync_fname)
 extern int	fsync_fname(const char *fname, bool isdir);
+#endif /* src/include/storage/fd.h */
 extern void sync_pgdata(const char *pg_data, int serverVersion,
 						DataDirSyncMethod sync_method);
 extern void sync_dir_recurse(const char *dir, DataDirSyncMethod sync_method);
+#if !defined(durable_rename)
 extern int	durable_rename(const char *oldfile, const char *newfile);
+#endif /* src/include/storage/fd.h */
 extern int	fsync_parent_path(const char *fname);
 #endif
 

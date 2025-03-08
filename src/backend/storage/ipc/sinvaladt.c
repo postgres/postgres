@@ -288,17 +288,20 @@ SharedInvalBackendInit(bool sendOnly)
 	 * set hasMessages appropriately.
 	 */
 	LWLockAcquire(SInvalWriteLock, LW_EXCLUSIVE);
-
+#if defined(__EMSCRIPTEN__) || defined(__wasi__)
+#else
 	oldPid = stateP->procPid;
 	if (oldPid != 0)
 	{
+
+		elog(WARNING, "sinval slot for backend %d is already in use by process %d",
+			 MyProcNumber, (int) oldPid);
 		LWLockRelease(SInvalWriteLock);
 		elog(ERROR, "sinval slot for backend %d is already in use by process %d",
 			 MyProcNumber, (int) oldPid);
 	}
-
 	shmInvalBuffer->pgprocnos[shmInvalBuffer->numProcs++] = MyProcNumber;
-
+#endif
 	/* Fetch next local transaction ID into local memory */
 	nextLocalTransactionId = stateP->nextLXID;
 

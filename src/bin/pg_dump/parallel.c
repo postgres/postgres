@@ -49,7 +49,7 @@
  * The pstate->te[] entry for each worker is valid when it's in WRKR_WORKING
  * state, and must be NULL in other states.
  */
-
+#define PG_DUMP_PARALLEL
 #include "postgres_fe.h"
 
 #ifndef WIN32
@@ -445,6 +445,7 @@ ShutdownWorkersHard(ParallelState *pstate)
 static void
 WaitForTerminatingWorkers(ParallelState *pstate)
 {
+#if !defined(__wasi__)
 	while (!HasEveryWorkerTerminated(pstate))
 	{
 		ParallelSlot *slot = NULL;
@@ -504,6 +505,7 @@ WaitForTerminatingWorkers(ParallelState *pstate)
 		slot->workerStatus = WRKR_TERMINATED;
 		pstate->te[j] = NULL;
 	}
+#endif /* __wasi__ */
 }
 
 

@@ -121,12 +121,15 @@ load_external_function(const char *filename, const char *funcname,
 
 	/* Look up the function within the library. */
 	retval = dlsym(lib_handle, funcname);
-
+#if !defined(__wasi__)
 	if (retval == NULL && signalNotFound)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_FUNCTION),
 				 errmsg("could not find function \"%s\" in file \"%s\"",
 						funcname, fullname)));
+#else
+    fprintf(stderr, "could not find function \"%s\" in file \"%s\" rv=%p snf=%b\n", funcname, fullname, retval, signalNotFound);
+#endif
 
 	pfree(fullname);
 	return retval;

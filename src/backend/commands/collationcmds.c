@@ -868,14 +868,14 @@ pg_import_system_collations(PG_FUNCTION_ARGS)
 		maxaliases = 100;
 		aliases = (CollAliasData *) palloc(maxaliases * sizeof(CollAliasData));
 		naliases = 0;
-
 		locale_a_handle = OpenPipeStream("locale -a", "r");
-		if (locale_a_handle == NULL)
+		if (locale_a_handle == NULL) {
+            puts("======================== ERROR ================");
 			ereport(ERROR,
 					(errcode_for_file_access(),
 					 errmsg("could not execute command \"%s\": %m",
 							"locale -a")));
-
+        }
 		while (fgets(localebuf, sizeof(localebuf), locale_a_handle))
 		{
 			size_t		len;

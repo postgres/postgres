@@ -961,10 +961,10 @@ int
 pg_fe_sendauth(AuthRequest areq, int payloadlen, PGconn *conn)
 {
 	int			oldmsglen;
-
+puts("965");
 	if (!check_expected_areq(areq, conn))
 		return STATUS_ERROR;
-
+puts("968");
 	switch (areq)
 	{
 		case AUTH_REQ_OK:
@@ -1090,7 +1090,7 @@ pg_fe_sendauth(AuthRequest areq, int payloadlen, PGconn *conn)
 		case AUTH_REQ_PASSWORD:
 			{
 				char	   *password;
-
+puts("1094");
 				conn->password_needed = true;
 				password = conn->connhost[conn->whichhost].password;
 				if (password == NULL)
@@ -1105,9 +1105,10 @@ pg_fe_sendauth(AuthRequest areq, int payloadlen, PGconn *conn)
 				{
 					appendPQExpBufferStr(&conn->errorMessage,
 										 "fe_sendauth: error sending password authentication\n");
+puts("1109");
 					return STATUS_ERROR;
 				}
-
+puts("1112");
 				/* We expect no further authentication requests. */
 				conn->client_finished_auth = true;
 				break;
@@ -1147,10 +1148,11 @@ pg_fe_sendauth(AuthRequest areq, int payloadlen, PGconn *conn)
 			break;
 
 		default:
+puts(" ----------- 1151 ---------------");
 			libpq_append_conn_error(conn, "authentication method %u not supported", areq);
 			return STATUS_ERROR;
 	}
-
+puts("1156");
 	return STATUS_OK;
 }
 
@@ -1169,6 +1171,7 @@ char *
 pg_fe_getusername(uid_t user_id, PQExpBuffer errorMessage)
 {
 	char	   *result = NULL;
+#if !defined(__EMSCRIPTEN__) && !defined(__wasi__)
 	const char *name = NULL;
 
 #ifdef WIN32
@@ -1192,7 +1195,9 @@ pg_fe_getusername(uid_t user_id, PQExpBuffer errorMessage)
 	else if (errorMessage)
 		appendPQExpBuffer(errorMessage, "%s\n", pwdbuf);
 #endif
-
+#else
+	const char *name = getenv("PGUSER");
+#endif
 	if (name)
 	{
 		result = strdup(name);

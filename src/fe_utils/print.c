@@ -15,6 +15,7 @@
  *
  *-------------------------------------------------------------------------
  */
+#define FE_UTILS_PRINT
 #include "postgres_fe.h"
 
 #include <limits.h>

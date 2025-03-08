@@ -416,6 +416,9 @@ WaitForProcSignalBarrier(uint64 generation)
 						(errmsg("still waiting for backend with PID %d to accept ProcSignalBarrier",
 								(int) slot->pss_pid)));
 			oldval = pg_atomic_read_u64(&slot->pss_barrierGeneration);
+#if defined(__EMSCRIPTEN__) || defined(__wasi__)
+            break;
+#endif
 		}
 		ConditionVariableCancelSleep();
 	}

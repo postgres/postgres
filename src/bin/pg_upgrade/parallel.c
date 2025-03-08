@@ -277,6 +277,7 @@ win32_transfer_all_new_dbs(transfer_thread_arg *args)
 bool
 reap_child(bool wait_for_child)
 {
+#if !defined(__wasi__)
 #ifndef WIN32
 	int			work_status;
 	pid_t		child;
@@ -336,6 +337,6 @@ reap_child(bool wait_for_child)
 
 	/* do this after job has been removed */
 	parallel_jobs--;
-
+#endif /* __wasi__ */
 	return true;
 }

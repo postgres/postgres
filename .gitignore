@@ -43,3 +43,10 @@ lib*.pc
 /Release/
 /tmp_install/
 /portlock/
+
+# libpglite
+/configure
+/src/Makefile.shlib
+/src/backend/commands/async.c
+/src/bin/initdb/initdb.c
+/src/bin/pg_verifybackup/pg_verifybackup.c

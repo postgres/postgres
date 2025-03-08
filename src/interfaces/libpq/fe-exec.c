@@ -1672,6 +1672,7 @@ PQsendQueryPrepared(PGconn *conn,
 static bool
 PQsendQueryStart(PGconn *conn, bool newQuery)
 {
+PDEBUG("PQsendQueryStart");
 	if (!conn)
 		return false;
 

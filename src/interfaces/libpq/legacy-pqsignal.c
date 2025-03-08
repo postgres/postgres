@@ -36,8 +36,8 @@
  * is to ensure that no in-tree code accidentally calls this version.)
  */
 #undef pqsignal
+#if !defined(__EMSCRIPTEN__) && !defined(__wasi__)
 extern pqsigfunc pqsignal(int signo, pqsigfunc func);
-
 pqsigfunc
 pqsignal(int signo, pqsigfunc func)
 {
@@ -61,3 +61,4 @@ pqsignal(int signo, pqsigfunc func)
 	return signal(signo, func);
 #endif
 }
+#endif /* __EMSCRIPTEN__ || __wasi__ */

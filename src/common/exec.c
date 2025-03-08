@@ -22,7 +22,7 @@
  * This should be harmless everywhere else.
  */
 #define _DARWIN_BETTER_REALPATH
-
+#define PG_EXEC
 #ifndef FRONTEND
 #include "postgres.h"
 #else

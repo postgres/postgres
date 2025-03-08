@@ -1861,7 +1861,7 @@ SelectConfigFiles(const char *userDoption, const char *progname)
 	 * data_directory parameter is picked up to determine the data directory,
 	 * so that we can read the PG_AUTOCONF_FILENAME file next time.
 	 */
-	ProcessConfigFile(PGC_POSTMASTER);
+PDEBUG("# 1830 ProcessConfigFile(PGC_POSTMASTER);");
 
 	/*
 	 * If the data_directory GUC variable has been set, use that as DataDir;
@@ -1902,7 +1902,7 @@ SelectConfigFiles(const char *userDoption, const char *progname)
 	 * since we have to determine the DataDir before we can find the autoconf
 	 * file, the alternatives seem worse.)
 	 */
-	ProcessConfigFile(PGC_POSTMASTER);
+PDEBUG("# 1871 ProcessConfigFile(PGC_POSTMASTER);");
 
 	/*
 	 * If timezone_abbreviations wasn't set in the configuration file, install

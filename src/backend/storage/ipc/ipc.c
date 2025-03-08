@@ -103,6 +103,48 @@ static int	on_proc_exit_index,
 void
 proc_exit(int code)
 {
+#if defined(__EMSCRIPTEN__) || defined(__wasi__)
+	if (code==66) {
+		fprintf(stderr,"# 108:fake shutdown\n");
+		proc_exit_inprogress = true;
+		InterruptPending = false;
+		ProcDiePending = false;
+		QueryCancelPending = false;
+		InterruptHoldoffCount = 1;
+		CritSectionCount = 0;
+
+		error_context_stack = NULL;
+		debug_query_string = NULL;
+
+		shmem_exit_inprogress = true;
+		int save_before_shmem_exit_index = before_shmem_exit_index;
+		while (--before_shmem_exit_index >= 0) {
+			if (before_shmem_exit_index!=4) {
+				printf("# skipped shmem_exit_index=%d/%d\n", before_shmem_exit_index, save_before_shmem_exit_index);
+				continue;
+			} else
+				printf("# before_shmem_exit_index=%d/%d\n", before_shmem_exit_index, save_before_shmem_exit_index);
+			before_shmem_exit_list[before_shmem_exit_index].function(code, before_shmem_exit_list[before_shmem_exit_index].arg);
+		}
+		before_shmem_exit_index = save_before_shmem_exit_index;
+		puts("# dsm_backend_shutdown ?");
+		// dsm_backend_shutdown();
+		shmem_exit_inprogress = false;
+		/*
+
+		int save_on_proc_exit_index = on_proc_exit_index;
+		while (--on_proc_exit_index >= 0) {
+			printf("# on_proc_exit_list=%d/%d\n", on_proc_exit_list, save_on_proc_exit_index);
+			on_proc_exit_list[on_proc_exit_index].function(code, on_proc_exit_list[on_proc_exit_index].arg);
+		}
+		on_proc_exit_index = save_on_proc_exit_index;
+		*/
+	} else {
+		proc_exit_inprogress = true;
+		fprintf(stderr,"# proc_exit(%d) ignored at 118:%s\n",code, __FILE__);
+    }
+    return;
+#endif
 	/* not safe if forked by system(), etc. */
 	if (MyProcPid != (int) getpid())
 		elog(PANIC, "proc_exit() called in child process");
@@ -152,7 +194,6 @@ proc_exit(int code)
 #endif
 
 	elog(DEBUG3, "exit(%d)", code);
-
 	exit(code);
 }
 
@@ -228,7 +269,7 @@ void
 shmem_exit(int code)
 {
 	shmem_exit_inprogress = true;
-
+if (code!=66){
 	/*
 	 * Call before_shmem_exit callbacks.
 	 *
@@ -276,7 +317,7 @@ shmem_exit(int code)
 		on_shmem_exit_list[on_shmem_exit_index].function(code,
 														 on_shmem_exit_list[on_shmem_exit_index].arg);
 	on_shmem_exit_index = 0;
-
+}
 	shmem_exit_inprogress = false;
 }
 
@@ -364,6 +405,17 @@ before_shmem_exit(pg_on_exit_callback function, Datum arg)
 void
 on_shmem_exit(pg_on_exit_callback function, Datum arg)
 {
+#if defined(__wasi__) || defined(__EMSCRIPTEN__)
+    if (!atexit_callback_setup) {
+        PDEBUG("# 410:" __FILE__ " on_shmem_exit(pg_on_exit_callback function, Datum arg) FIRST CALL");
+        if (on_shmem_exit_index >= MAX_ON_EXITS) {
+            PDEBUG("# 412:" __FILE__ " on_shmem_exit(pg_on_exit_callback function, Datum arg) OVERFLOW");
+        }
+    } else {
+        PDEBUG("# 415:" __FILE__ " on_shmem_exit(pg_on_exit_callback function, Datum arg) STUB");
+        return;
+    }
+#endif
 	if (on_shmem_exit_index >= MAX_ON_EXITS)
 		ereport(FATAL,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),

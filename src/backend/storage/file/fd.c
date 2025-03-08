@@ -69,7 +69,7 @@
  *
  *-------------------------------------------------------------------------
  */
-
+#define PG_FD
 #include "postgres.h"
 
 #include <dirent.h>
@@ -524,6 +524,11 @@ pg_file_exists(const char *name)
 void
 pg_flush_data(int fd, off_t offset, off_t nbytes)
 {
+#if defined(__EMSCRIPTEN__) || defined(__wasi__)
+    //int res = sync_file_range(fd, offset, nbytes, SYNC_FILE_RANGE_WAIT_BEFORE | SYNC_FILE_RANGE_WRITE | SYNC_FILE_RANGE_WAIT_AFTER);
+    (void)fsync(fd);
+    // fprintf(stderr, "# pg_flush_data(int fd=%d, off_t offset=%lld, off_t nbytes=%lld res=%d\n", fd,offset,nbytes, res);
+#else
 	/*
 	 * Right now file flushing is primarily used to avoid making later
 	 * fsync()/fdatasync() calls have less impact. Thus don't trigger flushes
@@ -694,6 +699,7 @@ retry:
 		return;
 	}
 #endif
+#endif /* wasm */
 }
 
 /*
@@ -706,7 +712,7 @@ pg_ftruncate(int fd, off_t length)
 
 retry:
 	ret = ftruncate(fd, length);
-
+printf("# 670 pg_ftruncate(int fd=%d, off_t length=%lld)=%d\n" __FILE__, fd, length, ret);
 	if (ret == -1 && errno == EINTR)
 		goto retry;
 
@@ -738,7 +744,7 @@ pg_truncate(const char *path, off_t length)
 
 retry:
 	ret = truncate(path, length);
-
+printf("# 670 pg_truncate(path=%s, off_t length=%lld)=%d\n" __FILE__, path, length, ret);
 	if (ret == -1 && errno == EINTR)
 		goto retry;
 #endif
@@ -2672,7 +2678,7 @@ OpenTransientFilePerm(const char *fileName, int fileFlags, mode_t fileMode)
 
 	return -1;					/* failure */
 }
-
+#if !defined(__EMSCRIPTEN__) && !defined(__wasi__)
 /*
  * Routines that want to initiate a pipe stream should use OpenPipeStream
  * rather than plain popen().  This lets fd.c deal with freeing FDs if
@@ -2732,7 +2738,7 @@ TryAgain:
 
 	return NULL;
 }
-
+#endif
 /*
  * Free an AllocateDesc of any type.
  *

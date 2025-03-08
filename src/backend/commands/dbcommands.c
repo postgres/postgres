@@ -1834,8 +1834,9 @@ dropdb(const char *dbname, bool missing_ok, bool force)
 	RequestCheckpoint(CHECKPOINT_IMMEDIATE | CHECKPOINT_FORCE | CHECKPOINT_WAIT);
 
 	/* Close all smgr fds in all backends. */
+#if !defined(__wasi__) && !defined(__EMSCRIPTEN__)
 	WaitForProcSignalBarrier(EmitProcSignalBarrier(PROCSIGNAL_BARRIER_SMGRRELEASE));
-
+#endif
 	/*
 	 * Remove all tablespace subdirs belonging to the database.
 	 */

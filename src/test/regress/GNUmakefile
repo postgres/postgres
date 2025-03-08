@@ -17,6 +17,14 @@ subdir = src/test/regress
 top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
+ifeq ($(PORTNAME), emscripten)
+
+all: $(echo "src/test/regress skipped")
+clean check installcheck all-src-recurse: all
+install: all
+else
+
+
 # maximum simultaneous connections for parallel tests
 MAXCONNOPT =
 ifdef MAX_CONNECTIONS
@@ -152,3 +160,5 @@ clean distclean: clean-lib
 	rm -f pg_regress_main.o pg_regress.o pg_regress$(X)
 # things created by various check targets
 	rm -rf $(pg_regress_clean_files)
+
+endif

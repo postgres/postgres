@@ -98,7 +98,12 @@ pg_signal_backend(int pid, int sig)
 	 */
 
 	/* If we have setsid(), signal the backend's whole process group */
-#ifdef HAVE_SETSID
+#if defined(__EMSCRIPTEN__) || defined(__wasi__)
+#   if PGDEBUG
+    printf("# 103: FIXME: kill(pid=%d, sig=%d) ", pid, sig);
+#   endif
+    if (0)
+#elif defined(HAVE_SETSID)
 	if (kill(-pid, sig))
 #else
 	if (kill(pid, sig))
@@ -106,7 +111,7 @@ pg_signal_backend(int pid, int sig)
 	{
 		/* Again, just a warning to allow loops */
 		ereport(WARNING,
-				(errmsg("could not send signal to process %d: %m", pid)));
+				(errmsg("# 109: could not send signal to process %d: %m", pid)));
 		return SIGNAL_BACKEND_ERROR;
 	}
 	return SIGNAL_BACKEND_SUCCESS;
