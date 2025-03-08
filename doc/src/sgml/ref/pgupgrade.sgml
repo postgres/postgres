@@ -533,12 +533,11 @@ NET STOP postgresql-&majorversion;
     </para>
 
     <para>
-     The <option>--jobs</option> option allows multiple CPU cores to be used
-     for copying/linking of files, dumping and restoring database schemas
-     in parallel, etc.;  a good place to start is the maximum of the number of
-     CPU cores and tablespaces.  This option can dramatically reduce the
-     time to upgrade a multi-database server running on a multiprocessor
-     machine.
+     Setting <option>--jobs</option> to 2 or higher allows pg_upgrade to
+     process multiple databases and tablespaces in parallel.  A good starting
+     point is the number of CPU cores on the machine.  This option can
+     substantially reduce the upgrade time for multi-database and
+     multi-tablespace servers.
     </para>
 
     <para>
