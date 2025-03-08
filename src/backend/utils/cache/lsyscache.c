@@ -750,7 +750,7 @@ equality_ops_are_compatible(Oid opno1, Oid opno2)
  * they belong to the same family.)
  *
  * (This is identical to equality_ops_are_compatible(), except that we check
- * amcanorder plus amconsistentordering instead of amconsistentequality.)
+ * amconsistentordering instead of amconsistentequality.)
  */
 bool
 comparison_ops_are_compatible(Oid opno1, Oid opno2)
@@ -782,7 +782,7 @@ comparison_ops_are_compatible(Oid opno1, Oid opno2)
 		{
 			IndexAmRoutine *amroutine = GetIndexAmRoutineByAmId(op_form->amopmethod, false);
 
-			if (amroutine->amcanorder && amroutine->amconsistentordering)
+			if (amroutine->amconsistentordering)
 			{
 				result = true;
 				break;
