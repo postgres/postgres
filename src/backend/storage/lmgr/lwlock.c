@@ -153,6 +153,7 @@ static const char *const BuiltinTrancheNames[] = {
 	[LWTRANCHE_LOCK_MANAGER] = "LockManager",
 	[LWTRANCHE_PREDICATE_LOCK_MANAGER] = "PredicateLockManager",
 	[LWTRANCHE_PARALLEL_HASH_JOIN] = "ParallelHashJoin",
+	[LWTRANCHE_PARALLEL_BTREE_SCAN] = "ParallelBtreeScan",
 	[LWTRANCHE_PARALLEL_QUERY_DSA] = "ParallelQueryDSA",
 	[LWTRANCHE_PER_SESSION_DSA] = "PerSessionDSA",
 	[LWTRANCHE_PER_SESSION_RECORD_TYPE] = "PerSessionRecordType",

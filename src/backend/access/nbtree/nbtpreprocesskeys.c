@@ -1565,7 +1565,7 @@ _bt_preprocess_array_keys_final(IndexScanDesc scan, int *keyDataMap)
 	 * Parallel index scans require space in shared memory to store the
 	 * current array elements (for arrays kept by preprocessing) to schedule
 	 * the next primitive index scan.  The underlying structure is protected
-	 * using a spinlock, so defensively limit its size.  In practice this can
+	 * using an LWLock, so defensively limit its size.  In practice this can
 	 * only affect parallel scans that use an incomplete opfamily.
 	 */
 	if (scan->parallel_scan && so->numArrayKeys > INDEX_MAX_KEYS)

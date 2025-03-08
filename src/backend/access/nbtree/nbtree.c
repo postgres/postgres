@@ -70,7 +70,7 @@ typedef struct BTParallelScanDescData
 	BTPS_State	btps_pageStatus;	/* indicates whether next page is
 									 * available for scan. see above for
 									 * possible states of parallel scan. */
-	slock_t		btps_mutex;		/* protects above variables, btps_arrElems */
+	LWLock		btps_lock;		/* protects shared parallel state */
 	ConditionVariable btps_cv;	/* used to synchronize parallel scan */
 
 	/*
@@ -554,7 +554,8 @@ btinitparallelscan(void *target)
 {
 	BTParallelScanDesc bt_target = (BTParallelScanDesc) target;
 
-	SpinLockInit(&bt_target->btps_mutex);
+	LWLockInitialize(&bt_target->btps_lock,
+					 LWTRANCHE_PARALLEL_BTREE_SCAN);
 	bt_target->btps_nextScanPage = InvalidBlockNumber;
 	bt_target->btps_lastCurrPage = InvalidBlockNumber;
 	bt_target->btps_pageStatus = BTPARALLEL_NOT_INITIALIZED;
@@ -576,15 +577,15 @@ btparallelrescan(IndexScanDesc scan)
 												  parallel_scan->ps_offset);
 
 	/*
-	 * In theory, we don't need to acquire the spinlock here, because there
+	 * In theory, we don't need to acquire the LWLock here, because there
 	 * shouldn't be any other workers running at this point, but we do so for
 	 * consistency.
 	 */
-	SpinLockAcquire(&btscan->btps_mutex);
+	LWLockAcquire(&btscan->btps_lock, LW_EXCLUSIVE);
 	btscan->btps_nextScanPage = InvalidBlockNumber;
 	btscan->btps_lastCurrPage = InvalidBlockNumber;
 	btscan->btps_pageStatus = BTPARALLEL_NOT_INITIALIZED;
-	SpinLockRelease(&btscan->btps_mutex);
+	LWLockRelease(&btscan->btps_lock);
 }
 
 /*
@@ -655,7 +656,7 @@ _bt_parallel_seize(IndexScanDesc scan, BlockNumber *next_scan_page,
 
 	while (1)
 	{
-		SpinLockAcquire(&btscan->btps_mutex);
+		LWLockAcquire(&btscan->btps_lock, LW_EXCLUSIVE);
 
 		if (btscan->btps_pageStatus == BTPARALLEL_DONE)
 		{
@@ -717,7 +718,7 @@ _bt_parallel_seize(IndexScanDesc scan, BlockNumber *next_scan_page,
 			*last_curr_page = btscan->btps_lastCurrPage;
 			exit_loop = true;
 		}
-		SpinLockRelease(&btscan->btps_mutex);
+		LWLockRelease(&btscan->btps_lock);
 		if (exit_loop || !status)
 			break;
 		ConditionVariableSleep(&btscan->btps_cv, WAIT_EVENT_BTREE_PAGE);
@@ -761,11 +762,11 @@ _bt_parallel_release(IndexScanDesc scan, BlockNumber next_scan_page,
 	btscan = (BTParallelScanDesc) OffsetToPointer(parallel_scan,
 												  parallel_scan->ps_offset);
 
-	SpinLockAcquire(&btscan->btps_mutex);
+	LWLockAcquire(&btscan->btps_lock, LW_EXCLUSIVE);
 	btscan->btps_nextScanPage = next_scan_page;
 	btscan->btps_lastCurrPage = curr_page;
 	btscan->btps_pageStatus = BTPARALLEL_IDLE;
-	SpinLockRelease(&btscan->btps_mutex);
+	LWLockRelease(&btscan->btps_lock);
 	ConditionVariableSignal(&btscan->btps_cv);
 }
 
@@ -804,14 +805,14 @@ _bt_parallel_done(IndexScanDesc scan)
 	 * Mark the parallel scan as done, unless some other process did so
 	 * already
 	 */
-	SpinLockAcquire(&btscan->btps_mutex);
+	LWLockAcquire(&btscan->btps_lock, LW_EXCLUSIVE);
 	Assert(btscan->btps_pageStatus != BTPARALLEL_NEED_PRIMSCAN);
 	if (btscan->btps_pageStatus != BTPARALLEL_DONE)
 	{
 		btscan->btps_pageStatus = BTPARALLEL_DONE;
 		status_changed = true;
 	}
-	SpinLockRelease(&btscan->btps_mutex);
+	LWLockRelease(&btscan->btps_lock);
 
 	/* wake up all the workers associated with this parallel scan */
 	if (status_changed)
@@ -838,7 +839,7 @@ _bt_parallel_primscan_schedule(IndexScanDesc scan, BlockNumber curr_page)
 	btscan = (BTParallelScanDesc) OffsetToPointer(parallel_scan,
 												  parallel_scan->ps_offset);
 
-	SpinLockAcquire(&btscan->btps_mutex);
+	LWLockAcquire(&btscan->btps_lock, LW_EXCLUSIVE);
 	if (btscan->btps_lastCurrPage == curr_page &&
 		btscan->btps_pageStatus == BTPARALLEL_IDLE)
 	{
@@ -854,7 +855,7 @@ _bt_parallel_primscan_schedule(IndexScanDesc scan, BlockNumber curr_page)
 			btscan->btps_arrElems[i] = array->cur_elem;
 		}
 	}
-	SpinLockRelease(&btscan->btps_mutex);
+	LWLockRelease(&btscan->btps_lock);
 }
 
 /*

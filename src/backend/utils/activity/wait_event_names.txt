@@ -371,6 +371,7 @@ BufferMapping	"Waiting to associate a data block with a buffer in the buffer poo
 LockManager	"Waiting to read or update information about <quote>heavyweight</quote> locks."
 PredicateLockManager	"Waiting to access predicate lock information used by serializable transactions."
 ParallelHashJoin	"Waiting to synchronize workers during Parallel Hash Join plan execution."
+ParallelBtreeScan	"Waiting to synchronize workers during Parallel B-tree scan plan execution."
 ParallelQueryDSA	"Waiting for parallel query dynamic shared memory allocation."
 PerSessionDSA	"Waiting for parallel query dynamic shared memory allocation."
 PerSessionRecordType	"Waiting to access a parallel query's information about composite types."
