@@ -439,7 +439,7 @@ typedef struct _relStatsInfo
 {
 	DumpableObject dobj;
 	int32		relpages;
-	float		reltuples;
+	char	   *reltuples;
 	int32		relallvisible;
 	char		relkind;		/* 'r', 'm', 'i', etc */
 
