@@ -374,6 +374,7 @@ getNextFlagFromString(IspellDict *Conf, char **sflagset, char *sflag)
 				stop = (maxstep == 0);
 				break;
 			case FM_NUM:
+				errno = 0;
 				s = strtol(*sflagset, &next, 10);
 				if (*sflagset == next || errno == ERANGE)
 					ereport(ERROR,
@@ -1056,6 +1057,7 @@ setCompoundAffixFlagValue(IspellDict *Conf, CompoundAffixFlag *entry,
 		char	   *next;
 		int			i;
 
+		errno = 0;
 		i = strtol(s, &next, 10);
 		if (s == next || errno == ERANGE)
 			ereport(ERROR,
@@ -1183,6 +1185,7 @@ getAffixFlagSet(IspellDict *Conf, char *s)
 		int			curaffix;
 		char	   *end;
 
+		errno = 0;
 		curaffix = strtol(s, &end, 10);
 		if (s == end || errno == ERANGE)
 			ereport(ERROR,
@@ -1755,6 +1758,7 @@ NISortDictionary(IspellDict *Conf)
 
 			if (*Conf->Spell[i]->p.flag != '\0')
 			{
+				errno = 0;
 				curaffix = strtol(Conf->Spell[i]->p.flag, &end, 10);
 				if (Conf->Spell[i]->p.flag == end || errno == ERANGE)
 					ereport(ERROR,
