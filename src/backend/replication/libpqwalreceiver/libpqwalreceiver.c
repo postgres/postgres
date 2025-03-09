@@ -208,7 +208,7 @@ libpqrcv_connect(const char *conninfo, bool replication, bool logical,
 	keys[++i] = NULL;
 	vals[i] = NULL;
 
-	Assert(i < sizeof(keys));
+	Assert(i < lengthof(keys));
 
 	conn = palloc0(sizeof(WalReceiverConn));
 	conn->streamConn = PQconnectStartParams(keys, vals,
