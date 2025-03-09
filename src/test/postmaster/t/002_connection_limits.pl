@@ -80,7 +80,7 @@ push(@sessions, background_psql_as_user('regress_regular'));
 connect_fails_wait(
 	$node,
 	"dbname=postgres user=regress_regular",
-	"reserved_connections limit",
+	"regular connections limit",
 	expected_stderr =>
 	  qr/FATAL:  remaining connection slots are reserved for roles with privileges of the "pg_use_reserved_connections" role/
 );
@@ -89,7 +89,7 @@ push(@sessions, background_psql_as_user('regress_reserved'));
 push(@sessions, background_psql_as_user('regress_reserved'));
 connect_fails_wait(
 	$node,
-	"dbname=postgres user=regress_regular",
+	"dbname=postgres user=regress_reserved",
 	"reserved_connections limit",
 	expected_stderr =>
 	  qr/FATAL:  remaining connection slots are reserved for roles with the SUPERUSER attribute/
