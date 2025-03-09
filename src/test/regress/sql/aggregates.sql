@@ -852,10 +852,15 @@ select * from v_pagg_test order by y;
 -- Ensure parallel aggregation is actually being used.
 explain (costs off) select * from v_pagg_test order by y;
 
-set max_parallel_workers_per_gather = 0;
-
 -- Ensure results are the same without parallel aggregation.
+set max_parallel_workers_per_gather = 0;
 select * from v_pagg_test order by y;
+
+-- Check that we don't fail on anonymous record types.
+set max_parallel_workers_per_gather = 2;
+explain (costs off)
+select array_dims(array_agg(s)) from (select * from pagg_test) s;
+select array_dims(array_agg(s)) from (select * from pagg_test) s;
 
 -- Clean up
 reset max_parallel_workers_per_gather;

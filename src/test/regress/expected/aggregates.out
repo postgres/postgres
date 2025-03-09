@@ -2151,8 +2151,8 @@ explain (costs off) select * from v_pagg_test order by y;
                                        ->  Parallel Seq Scan on pagg_test
 (13 rows)
 
-set max_parallel_workers_per_gather = 0;
 -- Ensure results are the same without parallel aggregation.
+set max_parallel_workers_per_gather = 0;
 select * from v_pagg_test order by y;
  y | tmin | tmax | tndistinct | bmin | bmax | bndistinct | amin | amax | andistinct | aamin | aamax | aandistinct 
 ---+------+------+------------+------+------+------------+------+------+------------+-------+-------+-------------
@@ -2167,6 +2167,24 @@ select * from v_pagg_test order by y;
  8 |    8 | 4998 |        500 | 1008 | 998  |        500 |    8 | 4998 |        500 |     8 |  4998 |         500
  9 |   19 | 4999 |        250 | 1019 | 999  |        250 |   19 | 4999 |        250 |    19 |  4999 |         250
 (10 rows)
+
+-- Check that we don't fail on anonymous record types.
+set max_parallel_workers_per_gather = 2;
+explain (costs off)
+select array_dims(array_agg(s)) from (select * from pagg_test) s;
+                 QUERY PLAN                 
+--------------------------------------------
+ Aggregate
+   ->  Gather
+         Workers Planned: 2
+         ->  Parallel Seq Scan on pagg_test
+(4 rows)
+
+select array_dims(array_agg(s)) from (select * from pagg_test) s;
+ array_dims 
+------------
+ [1:5000]
+(1 row)
 
 -- Clean up
 reset max_parallel_workers_per_gather;
