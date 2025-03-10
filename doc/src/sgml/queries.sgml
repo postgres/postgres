@@ -1461,10 +1461,10 @@ GROUP BY GROUPING SETS (
 
    <para>
     When multiple window functions are used, all the window functions having
-    syntactically equivalent <literal>PARTITION BY</literal> and <literal>ORDER BY</literal>
-    clauses in their window definitions are guaranteed to be evaluated in a
-    single pass over the data. Therefore they will see the same sort ordering,
-    even if the <literal>ORDER BY</literal> does not uniquely determine an ordering.
+    equivalent <literal>PARTITION BY</literal> and <literal>ORDER BY</literal>
+    clauses in their window definitions are guaranteed to see the same
+    ordering of the input rows, even if the <literal>ORDER BY</literal> does
+    not uniquely determine the ordering.
     However, no guarantees are made about the evaluation of functions having
     different <literal>PARTITION BY</literal> or <literal>ORDER BY</literal> specifications.
     (In such cases a sort step is typically required between the passes of
