@@ -1719,3 +1719,32 @@ SELECT * FROM check_estimated_rows('
   ON t1.t1 = q1.x;
 ');
 DROP TABLE grouping_unique;
+
+--
+-- Extended statistics on sb_2 (x, y, z) improve a bucket size estimation,
+-- and the optimizer may choose hash join.
+--
+CREATE TABLE sb_1 AS
+  SELECT gs % 10 AS x, gs % 10 AS y, gs % 10 AS z
+  FROM generate_series(1, 1e4) AS gs;
+CREATE TABLE sb_2 AS
+  SELECT gs % 49 AS x, gs % 51 AS y, gs % 73 AS z, 'abc' || gs AS payload
+  FROM generate_series(1, 1e4) AS gs;
+ANALYZE sb_1, sb_2;
+
+-- During hash join estimation, the number of distinct values on each column
+-- is calculated. The optimizer selects the smallest number of distinct values
+-- and the largest hash bucket size. The optimizer decides that the hash
+-- bucket size is quite big because there are possibly many correlations.
+EXPLAIN (COSTS OFF) -- Choose merge join
+SELECT * FROM sb_1 a, sb_2 b WHERE a.x = b.x AND a.y = b.y AND a.z = b.z;
+
+-- The ndistinct extended statistics on (x, y, z) provides more reliable value
+-- of bucket size.
+CREATE STATISTICS extstat_sb_2 (ndistinct) ON x, y, z FROM sb_2;
+ANALYZE sb_2;
+
+EXPLAIN (COSTS OFF) -- Choose hash join
+SELECT * FROM sb_1 a, sb_2 b WHERE a.x = b.x AND a.y = b.y AND a.z = b.z;
+
+DROP TABLE sb_1, sb_2 CASCADE;
