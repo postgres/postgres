@@ -264,7 +264,7 @@ You can also verify if the table in a custom schema is encrypted. Pass the schem
 SELECT pg_tde_is_encrypted('schema.table_name');
 ```
 
-This can additoonally be used the verify that indexes and sequences are encrypted.
+This can additionally be used the verify that indexes and sequences are encrypted.
 
 ### pg_tde_principal_key_info
 
