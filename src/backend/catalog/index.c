@@ -2847,20 +2847,20 @@ index_update_stats(Relation rel,
 	 * statistics, as the table statistics may be restored before the index is
 	 * created, and we want to preserve the restored table statistics.
 	 */
-	if (AutoVacuumingActive())
+	if (rel->rd_rel->relkind == RELKIND_RELATION ||
+		rel->rd_rel->relkind == RELKIND_TOASTVALUE ||
+		rel->rd_rel->relkind == RELKIND_MATVIEW)
 	{
-		if (rel->rd_rel->relkind == RELKIND_RELATION ||
-			rel->rd_rel->relkind == RELKIND_TOASTVALUE ||
-			rel->rd_rel->relkind == RELKIND_MATVIEW)
+		if (AutoVacuumingActive())
 		{
 			StdRdOptions *options = (StdRdOptions *) rel->rd_options;
 
 			if (options != NULL && !options->autovacuum.enabled)
 				update_stats = false;
 		}
+		else
+			update_stats = false;
 	}
-	else
-		update_stats = false;
 
 	/*
 	 * Finish I/O and visibility map buffer locks before
