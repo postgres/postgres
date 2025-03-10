@@ -411,7 +411,7 @@ retry:
 
 		PushActiveSnapshot(GetLatestSnapshot());
 
-		res = table_tuple_lock(rel, &(outslot->tts_tid), GetLatestSnapshot(),
+		res = table_tuple_lock(rel, &(outslot->tts_tid), GetActiveSnapshot(),
 							   outslot,
 							   GetCurrentCommandId(false),
 							   lockmode,
@@ -468,7 +468,7 @@ retry:
 
 	PushActiveSnapshot(GetLatestSnapshot());
 
-	res = table_tuple_lock(rel, &conflictTid, GetLatestSnapshot(),
+	res = table_tuple_lock(rel, &conflictTid, GetActiveSnapshot(),
 						   *conflictslot,
 						   GetCurrentCommandId(false),
 						   LockTupleShare,
