@@ -72,4 +72,4 @@ extern void DestroyPartitionDirectory(PartitionDirectory pdir);
 
 extern Oid	get_default_oid_from_partdesc(PartitionDesc partdesc);
 
-#endif							/* PARTCACHE_H */
+#endif							/* PARTDESC_H */
