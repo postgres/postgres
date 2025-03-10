@@ -6414,6 +6414,11 @@ make_sort_input_target(PlannerInfo *root,
  *	  Find the cheapest path for retrieving a specified fraction of all
  *	  the tuples expected to be returned by the given relation.
  *
+ * Do not consider parameterized paths.  If the caller needs a path for upper
+ * rel, it can't have parameterized paths.  If the caller needs an append
+ * subpath, it could become limited by the treatment of similar
+ * parameterization of all the subpaths.
+ *
  * We interpret tuple_fraction the same way as grouping_planner.
  *
  * We assume set_cheapest() has been run on the given rel.
@@ -6435,6 +6440,9 @@ get_cheapest_fractional_path(RelOptInfo *rel, double tuple_fraction)
 	foreach(l, rel->pathlist)
 	{
 		Path	   *path = (Path *) lfirst(l);
+
+		if (path->param_info)
+			continue;
 
 		if (path == rel->cheapest_total_path ||
 			compare_fractional_path_costs(best_path, path, tuple_fraction) <= 0)

@@ -1225,6 +1225,27 @@ SELECT x.id, y.id FROM fract_t x LEFT JOIN fract_t y USING (id) ORDER BY x.id AS
 EXPLAIN (COSTS OFF)
 SELECT x.id, y.id FROM fract_t x LEFT JOIN fract_t y USING (id) ORDER BY x.id DESC LIMIT 10;
 
+--
+-- Test Append's fractional paths
+--
+
+CREATE INDEX pht1_c_idx ON pht1(c);
+-- SeqScan might be the best choice if we need one single tuple
+EXPLAIN (COSTS OFF) SELECT * FROM pht1 p1 JOIN pht1 p2 USING (c) LIMIT 1;
+-- Increase number of tuples requested and an IndexScan will be chosen
+EXPLAIN (COSTS OFF) SELECT * FROM pht1 p1 JOIN pht1 p2 USING (c) LIMIT 100;
+-- If almost all the data should be fetched - prefer SeqScan
+EXPLAIN (COSTS OFF) SELECT * FROM pht1 p1 JOIN pht1 p2 USING (c) LIMIT 1000;
+
+SET max_parallel_workers_per_gather = 1;
+SET debug_parallel_query = on;
+-- Partial paths should also be smart enough to employ limits
+EXPLAIN (COSTS OFF) SELECT * FROM pht1 p1 JOIN pht1 p2 USING (c) LIMIT 100;
+RESET debug_parallel_query;
+
+-- Remove indexes from the partitioned table and its partitions
+DROP INDEX pht1_c_idx CASCADE;
+
 -- cleanup
 DROP TABLE fract_t;
 

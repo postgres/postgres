@@ -5260,6 +5260,122 @@ SELECT x.id, y.id FROM fract_t x LEFT JOIN fract_t y USING (id) ORDER BY x.id DE
                      Index Cond: (id = x_2.id)
 (11 rows)
 
+--
+-- Test Append's fractional paths
+--
+CREATE INDEX pht1_c_idx ON pht1(c);
+-- SeqScan might be the best choice if we need one single tuple
+EXPLAIN (COSTS OFF) SELECT * FROM pht1 p1 JOIN pht1 p2 USING (c) LIMIT 1;
+                    QUERY PLAN                    
+--------------------------------------------------
+ Limit
+   ->  Append
+         ->  Nested Loop
+               Join Filter: (p1_1.c = p2_1.c)
+               ->  Seq Scan on pht1_p1 p1_1
+               ->  Materialize
+                     ->  Seq Scan on pht1_p1 p2_1
+         ->  Nested Loop
+               Join Filter: (p1_2.c = p2_2.c)
+               ->  Seq Scan on pht1_p2 p1_2
+               ->  Materialize
+                     ->  Seq Scan on pht1_p2 p2_2
+         ->  Nested Loop
+               Join Filter: (p1_3.c = p2_3.c)
+               ->  Seq Scan on pht1_p3 p1_3
+               ->  Materialize
+                     ->  Seq Scan on pht1_p3 p2_3
+(17 rows)
+
+-- Increase number of tuples requested and an IndexScan will be chosen
+EXPLAIN (COSTS OFF) SELECT * FROM pht1 p1 JOIN pht1 p2 USING (c) LIMIT 100;
+                               QUERY PLAN                               
+------------------------------------------------------------------------
+ Limit
+   ->  Append
+         ->  Nested Loop
+               ->  Seq Scan on pht1_p1 p1_1
+               ->  Memoize
+                     Cache Key: p1_1.c
+                     Cache Mode: logical
+                     ->  Index Scan using pht1_p1_c_idx on pht1_p1 p2_1
+                           Index Cond: (c = p1_1.c)
+         ->  Nested Loop
+               ->  Seq Scan on pht1_p2 p1_2
+               ->  Memoize
+                     Cache Key: p1_2.c
+                     Cache Mode: logical
+                     ->  Index Scan using pht1_p2_c_idx on pht1_p2 p2_2
+                           Index Cond: (c = p1_2.c)
+         ->  Nested Loop
+               ->  Seq Scan on pht1_p3 p1_3
+               ->  Memoize
+                     Cache Key: p1_3.c
+                     Cache Mode: logical
+                     ->  Index Scan using pht1_p3_c_idx on pht1_p3 p2_3
+                           Index Cond: (c = p1_3.c)
+(23 rows)
+
+-- If almost all the data should be fetched - prefer SeqScan
+EXPLAIN (COSTS OFF) SELECT * FROM pht1 p1 JOIN pht1 p2 USING (c) LIMIT 1000;
+                    QUERY PLAN                    
+--------------------------------------------------
+ Limit
+   ->  Append
+         ->  Hash Join
+               Hash Cond: (p1_1.c = p2_1.c)
+               ->  Seq Scan on pht1_p1 p1_1
+               ->  Hash
+                     ->  Seq Scan on pht1_p1 p2_1
+         ->  Hash Join
+               Hash Cond: (p1_2.c = p2_2.c)
+               ->  Seq Scan on pht1_p2 p1_2
+               ->  Hash
+                     ->  Seq Scan on pht1_p2 p2_2
+         ->  Hash Join
+               Hash Cond: (p1_3.c = p2_3.c)
+               ->  Seq Scan on pht1_p3 p1_3
+               ->  Hash
+                     ->  Seq Scan on pht1_p3 p2_3
+(17 rows)
+
+SET max_parallel_workers_per_gather = 1;
+SET debug_parallel_query = on;
+-- Partial paths should also be smart enough to employ limits
+EXPLAIN (COSTS OFF) SELECT * FROM pht1 p1 JOIN pht1 p2 USING (c) LIMIT 100;
+                                  QUERY PLAN                                  
+------------------------------------------------------------------------------
+ Gather
+   Workers Planned: 1
+   Single Copy: true
+   ->  Limit
+         ->  Append
+               ->  Nested Loop
+                     ->  Seq Scan on pht1_p1 p1_1
+                     ->  Memoize
+                           Cache Key: p1_1.c
+                           Cache Mode: logical
+                           ->  Index Scan using pht1_p1_c_idx on pht1_p1 p2_1
+                                 Index Cond: (c = p1_1.c)
+               ->  Nested Loop
+                     ->  Seq Scan on pht1_p2 p1_2
+                     ->  Memoize
+                           Cache Key: p1_2.c
+                           Cache Mode: logical
+                           ->  Index Scan using pht1_p2_c_idx on pht1_p2 p2_2
+                                 Index Cond: (c = p1_2.c)
+               ->  Nested Loop
+                     ->  Seq Scan on pht1_p3 p1_3
+                     ->  Memoize
+                           Cache Key: p1_3.c
+                           Cache Mode: logical
+                           ->  Index Scan using pht1_p3_c_idx on pht1_p3 p2_3
+                                 Index Cond: (c = p1_3.c)
+(26 rows)
+
+RESET debug_parallel_query;
+-- Remove indexes from the partitioned table and its partitions
+DROP INDEX pht1_c_idx CASCADE;
 -- cleanup
 DROP TABLE fract_t;
 RESET max_parallel_workers_per_gather;

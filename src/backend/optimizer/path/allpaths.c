@@ -1371,9 +1371,23 @@ add_paths_to_append_rel(PlannerInfo *root, RelOptInfo *rel,
 		 */
 		if (rel->consider_startup && childrel->cheapest_startup_path != NULL)
 		{
+			Path	   *cheapest_path;
+
+			/*
+			 * With an indication of how many tuples the query should provide,
+			 * the optimizer tries to choose the path optimal for that
+			 * specific number of tuples.
+			 */
+			if (root->tuple_fraction > 0.0)
+				cheapest_path =
+					get_cheapest_fractional_path(childrel,
+												 root->tuple_fraction);
+			else
+				cheapest_path = childrel->cheapest_startup_path;
+
 			/* cheapest_startup_path must not be a parameterized path. */
-			Assert(childrel->cheapest_startup_path->param_info == NULL);
-			accumulate_append_subpath(childrel->cheapest_startup_path,
+			Assert(cheapest_path->param_info == NULL);
+			accumulate_append_subpath(cheapest_path,
 									  &startup_subpaths,
 									  NULL);
 		}

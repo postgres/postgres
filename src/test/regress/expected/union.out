@@ -1472,18 +1472,17 @@ select t1.unique1 from tenk1 t1
 inner join tenk2 t2 on t1.tenthous = t2.tenthous and t2.thousand = 0
    union all
 (values(1)) limit 1;
-                       QUERY PLAN                       
---------------------------------------------------------
+                             QUERY PLAN                              
+---------------------------------------------------------------------
  Limit
    ->  Append
          ->  Nested Loop
-               Join Filter: (t1.tenthous = t2.tenthous)
-               ->  Seq Scan on tenk1 t1
-               ->  Materialize
-                     ->  Seq Scan on tenk2 t2
-                           Filter: (thousand = 0)
+               ->  Seq Scan on tenk2 t2
+                     Filter: (thousand = 0)
+               ->  Index Scan using tenk1_thous_tenthous on tenk1 t1
+                     Index Cond: (tenthous = t2.tenthous)
          ->  Result
-(9 rows)
+(8 rows)
 
 -- Ensure there is no problem if cheapest_startup_path is NULL
 explain (costs off)
