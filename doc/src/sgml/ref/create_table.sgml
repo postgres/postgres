@@ -1282,6 +1282,10 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
           <quote>no-op</quote> updates that update a column to the same
           value.)
          </para>
+
+         <para>
+          In a temporal foreign key, this option is not supported.
+         </para>
         </listitem>
        </varlistentry>
 
