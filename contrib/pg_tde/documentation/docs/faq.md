@@ -79,9 +79,9 @@ Let's break the encryption into two parts:
 
 ### Encryption of data files 
 
-First, data files are encrypted with internal keys. Each file that has a different OID, has an internal key. For example, a table with 4 indexes will have 5 internal keys - one for the table and one for each index.	
+First, data files are encrypted with internal keys. Each file that has a different [Object Identifier (OID)](https://www.postgresql.org/docs/current/datatype-oid.html) has an internal key. For example, a table with 4 indexes will have 5 internal keys - one for the table and one for each index.	
 
-The initial decision on what file to encrypt is based on the table access method in PostgreSQL. When you run a `CREATE` or `ALTER TABLE` statement with the `USING tde_heap` clause, the newly created data files are marked as encrypted, and then file operations encrypt/decrypt the data. Later, if an initial file is re-created as a result of a `TRUNCATE` or `VACUUM FULL` command, the newly created file inherits the encryption information and is either encrypted or not. 
+The initial decision on what file to encrypt is based on the table access method in PostgreSQL. When you run a `CREATE` or `ALTER TABLE` statement with the `USING tde_heap` clause, the newly created data files are marked as encrypted, and then file operations encrypt or decrypt the data. Later, if an initial file is re-created as a result of a `TRUNCATE` or `VACUUM FULL` command, the newly created file inherits the encryption information and is either encrypted or not. 
 
 The principal key is used to encrypt the internal keys. The principal key is stored in the key management store. When you query the table, the principal key is retrieved from the key store to decrypt the table. Then the internal key for that table is used to decrypt the data.
 
@@ -91,7 +91,7 @@ WAL encryption is done globally for the entire database cluster. All modificatio
 
 When you turn on WAL encryption, `pg_tde` encrypts entire WAL files starting from the first WAL write after the server was started with the encryption turned on.
 
-The same 2-tier approach is used with WAL as with the table data: WAL pages are first encrypted with the internal key. Then the internal key is encrypted with the global principal key.
+The same 2-key approach is used with WAL as with the table data: WAL pages are first encrypted with the internal key. Then the internal key is encrypted with the global principal key.
 
 You can turn WAL encryption on and off so WAL can contain both encrypted and unencrypted data. The WAL encryption GUC variable influences only writes.
 

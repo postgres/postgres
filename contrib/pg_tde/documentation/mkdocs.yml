@@ -52,6 +52,7 @@ theme:
     - content.tabs.link
     - navigation.top
     - navigation.tracking
+    - navigation.indexes
 
 
 
@@ -92,8 +93,6 @@ markdown_extensions:
       linenums: false
   - pymdownx.snippets:
       base_path: ["snippets"]
-#      auto_append:
-#        - services-banner.md
   - pymdownx.emoji:
       emoji_index: !!python/name:material.extensions.emoji.twemoji
       emoji_generator: !!python/name:material.extensions.emoji.to_svg
@@ -171,6 +170,7 @@ nav:
   - Concepts:
     - "What is TDE": tde.md
     - table-access-method.md
+  - architecture.md
   - How to:
     - Set up multi-tenancy: multi-tenant-setup.md
     - Use reference to external parameters: external-parameters.md

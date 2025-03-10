@@ -1,171 +1,181 @@
-# PG_TDE High Level Overview
+# Architecture
 
+`pg_tde` is a **customizable, complete, data at rest encryption extension** for PostgreSQL.
 
-## Goals
+Let's break down what it means.
 
-Pg_tde aims to be a (1) customizable, (2) complete, (3) data at rest encryption (4) extension for PostgreSQL.
+**Customizable** means that `pg_tde` aims to support many different use cases:
 
-Customizable (1) means that `pg_tde` aims to support many different use cases:
-
-* Encrypting every table in every database or only some tables in some databases
-* Encryption keys can be stored on various external key storage servers (Hashicorp Vault, KMIP servers, ...)
+* Encrypting either every table in every database or only some tables in some databases
+* Encryption keys can be stored on various external key storage servers including Hashicorp Vault, KMIP servers.
 * Using one key for everything or different keys for different databases
 * Storing every key at the same key storage, or using different storages for different databases
 * Handling permissions: who can manage database specific or global permissions, who can create encrypted or not encrypted tables
 
-Complete (2) means that `pg_tde` aims to encrypt everything written to the disk: data at rest (3).
-This includes:
+**Complete** means that `pg_tde` aims to encrypt data at rest. 
+
+**Data at rest** means everything written to the disk. This includes the following:
 
 * Table data files
 * Indexes
 * Temporary tables
-* Write ahead log
+* Write Ahead Log (WAL)
 * PG-994 System tables (not yet implemented)
 * PG-993 Temporary files (not yet implemented)
 
-Extension (4) means that ideally `pg_tde` entirely should be implemented only as an extension, possibly compatible with any PostgreSQL distribution, including the open source community version.
-This requires changes in the core (making it more extensible), which means currently `pg_tde` only works with the Percona Distribution.
+**Extension** means that `pg_tde` should be implemented only as an extension, possibly compatible with any PostgreSQL distribution, including the open source community version. This requires changes in the PostgreSQL core to make it more extensible. Therefore, `pg_tde` currently works only with the [Percona Server for PostgreSQL](https://docs.percona.com/postgresql/17/index.html) - a binary replacement of community PostgreSQL and included in Percona Distribution for PostgreSQL.
 
 ## Main components
 
-Pg_tde consist of 3 main components:
+The main components of `pg_tde` are the following:
 
-Core server changes focus on making the server more extensible, allowing the main logic of pg_tde to remain separate as an extension.
-Additionally, core changes also add encryption-awareness to some command line tools that have to work directly with encrypted tables or encrypted WAL.
-Alternatively, these could be implemented as duplicated tools in part of the extension, but keeping everything in the original tool allows a better user experience, as currently `pg_tde` requires the Percona Distribution anyway.
+* **Core server changes** focus on making the server more extensible, allowing the main logic of `pg_tde` to remain separate, as an extension. Core changes also add encryption-awareness to some command line tools that have to work directly with encrypted tables or encrypted WAL files.
 
-Our patched postgres can be found at the following location:
-https://github.com/percona/postgres/tree/TDE_REL_17_STABLE 
+    [Percona Server for PostgreSQL location](https://github.com/percona/postgres/tree/{{tdebranch}})
 
-The `pg_tde` extension implements the encryption code itself by hooking into the extension points introduced in the core changes, and the already existing extension points in the PostgreSQL server.
-Everything is controllable with GUC variables and SQL statements, similar to other extensions.
+* The **`pg_tde` extension itself** implements the encryption code by hooking into the extension points introduced in the core changes, and the already existing extension points in the PostgreSQL server.
+   
+    Everything is controllable with GUC variables and SQL statements, similar to other extensions.
 
-Finally, the keyring API / libraries implement actual key storage logic with different providers.
-In the future these could be extracted into separate shared libraries with an open API, allowing third party providers.
-Currently the API already exists, but it is internal only and keyring libraries are part of the main library for simplicity.
+* The **keyring API / libraries** implement the key storage logic with different key providers. The API is internal only, the keyring libraries are part of the main library for simplicity. 
+In the future these could be extracted into separate shared libraries with an open API, allowing the use of third-party providers.
 
 ## Encryption architecture
 
-### Two key hierarchy
+### Two-key hierarchy
 
-`Pg_tde` uses a two level key structure, also found commonly in other database servers:
+`pg_tde` uses two keys for encryption: 
 
-The higher level keys are called "principal keys". These are the keys that are stored externally using the keyring APIs, and these are used to encrypt the "internal keys".
+* Internal keys to encrypt the data. They are stored internally near the data that they encrypt. 
+* Higher-level keys to encrypt internal keys. These keys are called "principal keys". They are stored externally, in the Key Management System (KMS) using the key provider API. 
 
-`Pg_tde` uses one principal key per database, every internal key for the given database is encrypted using this principal key.
+`pg_tde` uses one principal key per database. Every internal key for the given database is encrypted using this principal key.
 
-Internal keys are used for specific database files: each file that has a different Oid and has a different internal key.
+Internal keys are used for specific database files: each file with a different [Object Identifier (OID)](https://www.postgresql.org/docs/current/datatype-oid.html) and has a different internal key.
+
 This means that for example a table with 4 indexes will have at least 5 internal keys - one for the table, and one for each index.
-If the table has additional files, such as sequence(s) or a toast table, those files also have separate keys.
+
+If a table has additional files, such as sequence(s) or a TOAST table, those files will also have separate keys.
 
 ### Encryption algorithm
 
-`Pg_tde` currently uses a hardcoded AES-CBC-128 algorithm for encrypting most database files.
-First the internal keys in the datafile are encrypted using the principal key with AES-CBC-128, then the file data itself is again encrypted using AES-CBC-128 with the internal key.
+`pg_tde` currently uses the following encryption algorithms:
 
-WAL encryption is different, it uses AES-CTR-128.
+* `AES-CBC-128` algorithm for encrypting most database files.
 
-Support for other cipher lengths / algorithms is planned in the future (PG-1194).
+    Here's how it works:
 
-### Marking encrypted objects
+    First the internal keys for data files are encrypted using the principal key with the `AES-CBC-128` algorithm. Then the data file itself is again encrypted using `AES-CBC-128` with the internal key.
 
-`Pg_tde` makes it possible to encrypt everything, or only some tables in some databases.
-To support this without metadata changes, encrypted tables are marked with a marker access method:
-`tde_heap` is the same as `heap`, it uses the same functions internally without any changes, but with the different name and Id, `pg_tde` knows that `tde_heap` tables are encrypted, and `heap` tables aren't.
+* `AES-CTR-128` algorithm for WAL encryption. 
 
-The initial decision is made using the postgres event trigger mechanism:
-if a `CREATE TABLE` or `ALTER TABLE` statement uses `tde_heap`, the newly created data files are marked as encrypted, and then file operations encrypt/decrypt the data.
+    The workflow is similar: WAL pages are first encrypted with the internal key. Then the internal key is encrypted with the global principal key.
 
-Later decisions are made using a slightly modified SMGR API:
-when a database file is recreated with a different Id, for example because of a `TRUNCATE` or `VACUUM FULL`, the new file is either encrypted or plain based on the encryption information of the previous file.
 
-### SMGR API
+The support for other cipher lengths / algorithms is planned in the future.
 
-`Pg_tde` relies on a slightly modified version of the SMGR API.
-These modifications include:
+### Encryption workflow
 
-* Making the API generally extensible, where extensions can inject custom code into the storage manager
-* Adding tracking information for files:
-  when a new file is created for an existing relation, references to the existing file are also passed to the smgr functions
+`pg_tde` makes it possible to encrypt everything or only some tables in some databases.
 
-With these modifications, the `pg_tde` extension can implement an additional layer on top of the normal MD SMGR API, which encrypts a file before writing if the related table is encrypted, and similarly decrypts it after reading when needed.
+To support this without metadata changes, encrypted tables are labeled with a `tde_heap` access method marker. 
 
-### Encrypting other access methods
+The `tde_heap` access method is the same as the `heap` one. It uses the same functions internally without any changes, but with the different name and ID. In such a way `pg_tde` knows that `tde_heap` tables are encrypted and `heap` tables are not.
 
-Currently `pg_tde` only encrypts heap tables and other files (indexes, toast tables, sequences) related to the heap tables.
-Indexes include any kind of index that goes through the SMGR API, not just the built-in indexes in postgres.
+The initial decision what to encrypt is made using the `postgres` event trigger mechanism: if a `CREATE TABLE` or `ALTER TABLE` statement uses the `tde_heap` clause, the newly created data files are marked as encrypted. Then file operations encrypt or decrypt the data.
 
-In theory, it is possible to also encrypt any other table access method that goes through the SMGR API, by similarly providing a marker access method to it and extending the event triggers.
+Later decisions are made using a slightly modified Storage Manager (SMGR) API:
+when a database file is re-created with a different ID as a result of a `TRUNCATE` or a `VACUUM FULL` command, the newly created file inherits the encryption information and is either encrypted or not. 
 
 ### WAL encryption
 
-WAL encryption is currently controlled globally, it's either turned on or off with a global GUC variable that requires a server restart.
-The variable only controls writes, when it is turned on, WAL writes are encrypted.
+WAL encryption is controlled globally via a global GUC variable that requires a server restart.
 
-This means WAL files can contain both encrypted and unencrpyted data, depending on what the status of this variable was when writing the data.
-`pg_tde` keeps track of the encryption status of WAL records using internal keys:
-every time the encryption status of WAL changes, it writes a new internal key for WAL.
-When the encryption is turned on, this internal key contains a valid encryption key.
-When the encrpytion is turned off, it only contains a flag signaling that WAL encryption ended.
+The variable only controls writes so that only WAL writes are encrypted when WAL encryption is enabled. This means that WAL files can contain both encrypted and unencrpyted data, depending on what the status of this variable was when writing the data.
 
-With this information, the WAL reader code can decide if a specific WAL records has to be decrypted or not.
+`pg_tde` keeps track of the encryption status of WAL records using internal keys. Every time the encryption status of WAL changes, it writes a new internal key for WAL. When the encryption is enabled, this internal key contains a valid encryption key. When the encrpytion is disabled, it only contains a flag signaling that WAL encryption ended.
+
+With this information, the WAL reader code can decide if a specific WAL record has to be decrypted or not.
+
+### Encrypting other access methods
+
+Currently `pg_tde` only encrypts `heap` tables and other files such as indexes, TOAST tables, sequences that are related to the `heap` tables.
+
+Indexes include any kind of index that goes through the SMGR API, not just the built-in indexes in PostgreSQL.
+
+In theory, it is also possible to encrypt any other table access method that goes through the SMGR API by similarly providing a marker access method to it and extending the event triggers.
+
+### Storage Manager (SMGR) API
+
+`pg_tde` relies on a slightly modified version of the SMGR API.
+These modifications include:
+
+* Making the API generally extensible, where extensions can inject custom code into the storage manager
+* Adding tracking information for files. When a new file is created for an existing relation, references to the existing file are also passed to the SMGR functions
+
+With these modifications, the `pg_tde` extension can implement an additional layer on top of the normal Magnetic Disk SMGR API: if the related table is encrypted, `pg_tde` encrypts a file before writing it to the disk and, similarly, decrypts it after reading when needed.
+
+## Key and key providers management
 
 ### Principal key rotation
 
-To comply with common policies, and to handle situations with potentially exposed principal keys, principal keys can be rotated.
-Rotation means that `pg_tde` generates a new version of the principal key, and re-encrypts the associated internal keys with the new key.
-The old key is kept as is at the same location, as it is potentially still needed to decrypt backups or other databases.
+You can rotate principal keys to comply with common policies and to handle situations with potentially exposed principal keys.
 
-It is also possible that the location of the keyring changes:
-either the service is moved to a new address, or the keyring has to be moved to a different keyring provider type. Both of these situations are supported by `pg_tde` using simple SQL functions.
-
-In certain cases the SQL API can't be used for these operations:
-if the server isn't running, and the old keyring is no longer available, startup can fail if it needs to access the encryption keys. 
-For these situations, `pg_tde` also provides command line tools to recover the database.
-
+Rotation means that `pg_tde` generates a new version of the principal key, and re-encrypts the associated internal keys with the new key. The old key is kept as is at the same location, because it may still be needed to decrypt backups or other databases.
 
 ### Internal key regeneration
 
-Internal keys for files (tables, indexes, etc.) are fixed once the file is created, there's no way currently to re-encrypt a file.
+Internal keys for tables, indexes and other data files are fixed once a file is created. There's no way to re-encrypt a file.
+
+WAL internal keys are also fixed to the respective ranges. And there is no easy way to generate a new internal WAL key without turning off and on WAL encryption.
 
 There are workarounds for this, because operations that move the table data to a new file, such as `VACUUM FULL` or an `ALTER TABLE` that rewrites the file will create a new key for the new file, essentially rotating the internal key.
 This however means taking an exclusive lock on the table for the duration of the operation, which might not be desirable for huge tables.
 
 ### Internal key storage
 
-Internal keys, and generally `pg_tde` metadata is kept in a single directory in `$PGDATA/pg_tde`. 
-In this directory each database has separate files, containing:
+Internal keys and `pg_tde` metadata in general are kept in a single `$PGDATA/pg_tde` directory. This directory stores separate files for each database, such as:
 
 * Encrypted internal keys and internal key mapping to tables
 * Information about the key providers
 
-There's also a special global section marked with the OID 607, which includes the global key providers / global internal keys.
+Also, the `$PGDATA/pg_tde` directory has a special global section marked with the OID `607`, which includes the global key providers and global internal keys. 
 
-This is used by the WAL encryption, and can optionally be used by specific databases too, if global provider inheritance is enabled.
+The global section is used for WAL encryption. Specific databases can use the global section too, for scenarios where users configure individual principal keys for databases but use the same global key provider. For this purpose, you must enable the global provider inheritance. 
 
 ### Key providers (principal key storage)
 
-Principal keys are stored on external providers.
-Currently pg_tde has 3 implementations:
+Principal keys are stored externally in Key Management Stores (KMS). In `pg_tde`a KMS is defined as an external key provider.
 
-* A local file storage, intended for development and testing only
-* Hashicorp Vault
+The following key providers are supported:
+
+* [HashiCorp Vault](https://developer.hashicorp.com/vault/docs/what-is-vault) KV2 secrets engine
+* [OpenBao](https://openbao.org/) implementation of Vault
 * KMIP compatible servers
+* A local file storage. This storage is intended only for development and testing and is not recommended for production use.
 
-In all cases, `pg_tde` requires a detailed configuration, including the address of the service and authentication information.
-With these details, all operations are done by `pg_tde` based on user operations:
+For each key provider, `pg_tde` requires a detailed configuration, including the address of the service and the authentication information.
 
-* When a new principal key is created, it will communicate with the service and upload a fresh key to it
-* When a principal key is required for decryption, it will try to get the key from the service
+With these details, `pg_tde` does the following based on user operations:
+
+* Communicates with the service and uploads a new principal key to it after this key is created
+* Retrieves the principal key from the service when it is required for decryption 
+
+### Key provider management
+
+Key provider configuration or location may change. For example, a service is moved to a new address or the principal key must be moved to a different key provider type. `pg_tde` supports both these scenarios enabling you to manage principal keys using simple [SQL functions](functions.md#key-provider-management).
+
+In certain cases you can't use SQL functions to manage key providers. For example, if the key provider changed while the server wasn't running and is therefore unaware of these changes. The startup can fail if it needs to access the encryption keys. 
+
+For such situations, `pg_tde` also provides [command line tools](command-line-tools.md) to recover the database.
 
 ### Sensitive key provider information
 
-Some of the keyring provider information (authentication details) is potentially sensitive, and it is not safe to store it together with the database in the `$PGDATA` directory, or even on the same server.
+Key provider information authentication details is a sensitive information. It is not safe to store it together with the database in the `$PGDATA` directory, or even on the same server.
 
-For this purpose, `pg_tde` provides a mechanism where instead of directly specifying the parameter, users can specify an external service instead, from where it downloads the information.
-This way the configuration itself only contains the reference, not the actual authentication key or password.
+To safeguard key providers' sensitive information, `pg_tde` supports references to external services. Instead of specifying authentication details directly, users specify the reference to the external service where it is stored. `pg_tde` then downloads the provider's authentication details when needed.
 
-Currently only HTTP or external file references are supported, but other possible mechanisms can be added later, such as kubernetes secrets.
+The supported external services are HTTP and external file references. Upon request, other services such as Kubernetes secrets can be added. 
 
 ## User interface
 
