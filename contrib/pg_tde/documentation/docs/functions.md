@@ -36,8 +36,8 @@ These functions allow or revoke the use of the permissions management functions:
 
 Use these functions to grant or revoke the use of query functions, which do not modify the encryption settings:
 
-* `pg_tde_grant_key_viewer_management_to_role(role)`
-* `pg_tde_revoke_key_viewer_management_from_role(role)`
+* `pg_tde_grant_key_viewer_to_role(role)`
+* `pg_tde_revoke_key_viewer_from_role(role)`
 
 
 ## Key provider management
