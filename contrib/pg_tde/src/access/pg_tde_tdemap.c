@@ -266,7 +266,7 @@ pg_tde_create_wal_key(InternalKey *rel_key_data, const RelFileLocator *newrlocat
 	if (principal_key == NULL)
 	{
 		ereport(ERROR,
-				(errmsg("failed to retrieve principal key. Create one using pg_tde_set_principal_key before using encrypted WAL.")));
+				(errmsg("failed to retrieve principal key. Create one using pg_tde_set_server_principal_key before using encrypted WAL.")));
 
 		return;
 	}
