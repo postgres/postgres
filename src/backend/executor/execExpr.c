@@ -2788,7 +2788,15 @@ ExecInitFunc(ExprEvalStep *scratch, Expr *node, List *args, Oid funcid,
 	if (pgstat_track_functions <= flinfo->fn_stats)
 	{
 		if (flinfo->fn_strict && nargs > 0)
-			scratch->opcode = EEOP_FUNCEXPR_STRICT;
+		{
+			/* Choose nargs optimized implementation if available. */
+			if (nargs == 1)
+				scratch->opcode = EEOP_FUNCEXPR_STRICT_1;
+			else if (nargs == 2)
+				scratch->opcode = EEOP_FUNCEXPR_STRICT_2;
+			else
+				scratch->opcode = EEOP_FUNCEXPR_STRICT;
+		}
 		else
 			scratch->opcode = EEOP_FUNCEXPR;
 	}
@@ -3892,6 +3900,8 @@ ExecBuildAggTrans(AggState *aggstate, AggStatePerPhase phase,
 		{
 			if (strictnulls)
 				scratch.opcode = EEOP_AGG_STRICT_INPUT_CHECK_NULLS;
+			else if (strictargs && pertrans->numTransInputs == 1)
+				scratch.opcode = EEOP_AGG_STRICT_INPUT_CHECK_ARGS_1;
 			else
 				scratch.opcode = EEOP_AGG_STRICT_INPUT_CHECK_ARGS;
 			scratch.d.agg_strict_input_check.nulls = strictnulls;
@@ -3968,6 +3978,7 @@ ExecBuildAggTrans(AggState *aggstate, AggStatePerPhase phase,
 				as->d.jump.jumpdone = state->steps_len;
 			}
 			else if (as->opcode == EEOP_AGG_STRICT_INPUT_CHECK_ARGS ||
+					 as->opcode == EEOP_AGG_STRICT_INPUT_CHECK_ARGS_1 ||
 					 as->opcode == EEOP_AGG_STRICT_INPUT_CHECK_NULLS)
 			{
 				Assert(as->d.agg_strict_input_check.jumpnull == -1);
