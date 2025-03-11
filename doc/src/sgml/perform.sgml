@@ -729,9 +729,11 @@ WHERE t1.unique1 &lt; 10 AND t1.unique2 = t2.unique2;
          Buffers: shared hit=3 read=5 written=4
          -&gt;  Bitmap Index Scan on tenk1_unique1  (cost=0.00..4.36 rows=10 width=0) (actual time=0.004..0.004 rows=10.00 loops=1)
                Index Cond: (unique1 &lt; 10)
+               Index Searches: 1
                Buffers: shared hit=2
    -&gt;  Index Scan using tenk2_unique2 on tenk2 t2  (cost=0.29..7.90 rows=1 width=244) (actual time=0.003..0.003 rows=1.00 loops=10)
          Index Cond: (unique2 = t1.unique2)
+         Index Searches: 10
          Buffers: shared hit=24 read=6
  Planning:
    Buffers: shared hit=15 dirtied=9
@@ -790,6 +792,7 @@ WHERE t1.unique1 &lt; 100 AND t1.unique2 = t2.unique2 ORDER BY t1.fivethous;
                      Buffers: shared hit=92
                      -&gt;  Bitmap Index Scan on tenk1_unique1  (cost=0.00..5.04 rows=100 width=0) (actual time=0.013..0.013 rows=100.00 loops=1)
                            Index Cond: (unique1 &lt; 100)
+                           Index Searches: 1
                            Buffers: shared hit=2
  Planning:
    Buffers: shared hit=12
@@ -803,6 +806,58 @@ WHERE t1.unique1 &lt; 100 AND t1.unique2 = t2.unique2 ORDER BY t1.fivethous;
     peak amount of memory used for the hash table.  (If the number of batches
     exceeds one, there will also be disk space usage involved, but that is not
     shown.)
+   </para>
+
+   <para>
+    Index Scan nodes (as well as Bitmap Index Scan and Index-Only Scan nodes)
+    show an <quote>Index Searches</quote> line that reports the total number
+    of searches across <emphasis>all</emphasis> node
+    executions/<literal>loops</literal>:
+
+<screen>
+EXPLAIN ANALYZE SELECT * FROM tenk1 WHERE thousand IN (1, 500, 700, 999);
+                                                            QUERY PLAN
+-------------------------------------------------------------------&zwsp;---------------------------------------------------------------
+ Bitmap Heap Scan on tenk1  (cost=9.45..73.44 rows=40 width=244) (actual time=0.012..0.028 rows=40.00 loops=1)
+   Recheck Cond: (thousand = ANY ('{1,500,700,999}'::integer[]))
+   Heap Blocks: exact=39
+   Buffers: shared hit=47
+   ->  Bitmap Index Scan on tenk1_thous_tenthous  (cost=0.00..9.44 rows=40 width=0) (actual time=0.009..0.009 rows=40.00 loops=1)
+         Index Cond: (thousand = ANY ('{1,500,700,999}'::integer[]))
+         Index Searches: 4
+         Buffers: shared hit=8
+ Planning Time: 0.029 ms
+ Execution Time: 0.034 ms
+</screen>
+
+    Here we see a Bitmap Index Scan node that needed 4 separate index
+    searches.  The scan had to search the index from the
+    <structname>tenk1_thous_tenthous</structname> index root page once per
+    <type>integer</type> value from the predicate's <literal>IN</literal>
+    construct.  However, the number of index searches often won't have such a
+    simple correspondence to the query predicate:
+
+<screen>
+EXPLAIN ANALYZE SELECT * FROM tenk1 WHERE thousand IN (1, 2, 3, 4);
+                                                            QUERY PLAN
+--------------------------------------------------------------------&zwsp;--------------------------------------------------------------
+ Bitmap Heap Scan on tenk1  (cost=9.45..73.44 rows=40 width=244) (actual time=0.009..0.019 rows=40.00 loops=1)
+   Recheck Cond: (thousand = ANY ('{1,2,3,4}'::integer[]))
+   Heap Blocks: exact=38
+   Buffers: shared hit=40
+   ->  Bitmap Index Scan on tenk1_thous_tenthous  (cost=0.00..9.44 rows=40 width=0) (actual time=0.005..0.005 rows=40.00 loops=1)
+         Index Cond: (thousand = ANY ('{1,2,3,4}'::integer[]))
+         Index Searches: 1
+         Buffers: shared hit=2
+ Planning Time: 0.029 ms
+ Execution Time: 0.026 ms
+</screen>
+
+    This variant of our <literal>IN</literal> query performed only 1 index
+    search.  It spent less time traversing the index (compared to the original
+    query) because its <literal>IN</literal> construct uses values matching
+    index tuples stored next to each other, on the same
+    <structname>tenk1_thous_tenthous</structname> index leaf page.
    </para>
 
    <para>
@@ -861,6 +916,7 @@ EXPLAIN ANALYZE SELECT * FROM polygon_tbl WHERE f1 @&gt; polygon '(0.5,2.0)';
  Index Scan using gpolygonind on polygon_tbl  (cost=0.13..8.15 rows=1 width=85) (actual time=0.074..0.074 rows=0.00 loops=1)
    Index Cond: (f1 @&gt; '((0.5,2))'::polygon)
    Rows Removed by Index Recheck: 1
+   Index Searches: 1
    Buffers: shared hit=1
  Planning Time: 0.039 ms
  Execution Time: 0.098 ms
@@ -894,8 +950,10 @@ EXPLAIN (ANALYZE, BUFFERS OFF) SELECT * FROM tenk1 WHERE unique1 &lt; 100 AND un
    -&gt;  BitmapAnd  (cost=25.07..25.07 rows=10 width=0) (actual time=0.100..0.101 rows=0.00 loops=1)
          -&gt;  Bitmap Index Scan on tenk1_unique1  (cost=0.00..5.04 rows=100 width=0) (actual time=0.027..0.027 rows=100.00 loops=1)
                Index Cond: (unique1 &lt; 100)
+               Index Searches: 1
          -&gt;  Bitmap Index Scan on tenk1_unique2  (cost=0.00..19.78 rows=999 width=0) (actual time=0.070..0.070 rows=999.00 loops=1)
                Index Cond: (unique2 &gt; 9000)
+               Index Searches: 1
  Planning Time: 0.162 ms
  Execution Time: 0.143 ms
 </screen>
@@ -923,6 +981,7 @@ EXPLAIN ANALYZE UPDATE tenk1 SET hundred = hundred + 1 WHERE unique1 &lt; 100;
          Buffers: shared hit=4 read=2
          -&gt;  Bitmap Index Scan on tenk1_unique1  (cost=0.00..5.04 rows=100 width=0) (actual time=0.031..0.031 rows=100.00 loops=1)
                Index Cond: (unique1 &lt; 100)
+               Index Searches: 1
                Buffers: shared read=2
  Planning Time: 0.151 ms
  Execution Time: 1.856 ms
@@ -1061,6 +1120,7 @@ EXPLAIN ANALYZE SELECT * FROM tenk1 WHERE unique1 &lt; 100 AND unique2 &gt; 9000
          Index Cond: (unique2 &gt; 9000)
          Filter: (unique1 &lt; 100)
          Rows Removed by Filter: 287
+         Index Searches: 1
          Buffers: shared hit=16
  Planning Time: 0.077 ms
  Execution Time: 0.086 ms

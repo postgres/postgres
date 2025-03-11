@@ -950,6 +950,8 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	 * _bt_search/_bt_endpoint below
 	 */
 	pgstat_count_index_scan(rel);
+	if (scan->instrument)
+		scan->instrument->nsearches++;
 
 	/*----------
 	 * Examine the scan keys to discover where we need to start the scan.

@@ -421,6 +421,8 @@ spgrescan(IndexScanDesc scan, ScanKey scankey, int nscankeys,
 
 	/* count an indexscan for stats */
 	pgstat_count_index_scan(scan->indexRelation);
+	if (scan->instrument)
+		scan->instrument->nsearches++;
 }
 
 void

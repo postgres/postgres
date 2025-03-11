@@ -202,7 +202,7 @@ RelationFindReplTupleByIndex(Relation rel, Oid idxoid,
 	skey_attoff = build_replindex_scan_key(skey, rel, idxrel, searchslot);
 
 	/* Start an index scan. */
-	scan = index_beginscan(rel, idxrel, &snap, skey_attoff, 0);
+	scan = index_beginscan(rel, idxrel, &snap, NULL, skey_attoff, 0);
 
 retry:
 	found = false;

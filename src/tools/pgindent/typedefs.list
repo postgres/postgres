@@ -1238,6 +1238,7 @@ IndexPath
 IndexRuntimeKeyInfo
 IndexScan
 IndexScanDesc
+IndexScanInstrumentation
 IndexScanState
 IndexStateFlagsAction
 IndexStmt
@@ -2666,6 +2667,7 @@ SharedExecutorInstrumentation
 SharedFileSet
 SharedHashInfo
 SharedIncrementalSortInfo
+SharedIndexScanInstrumentation
 SharedInvalCatalogMsg
 SharedInvalCatcacheMsg
 SharedInvalRelcacheMsg

@@ -442,6 +442,8 @@ ginNewScanKey(IndexScanDesc scan)
 	MemoryContextSwitchTo(oldCtx);
 
 	pgstat_count_index_scan(scan->indexRelation);
+	if (scan->instrument)
+		scan->instrument->nsearches++;
 }
 
 void

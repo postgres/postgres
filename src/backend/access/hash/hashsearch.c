@@ -298,6 +298,8 @@ _hash_first(IndexScanDesc scan, ScanDirection dir)
 	HashScanPosItem *currItem;
 
 	pgstat_count_index_scan(rel);
+	if (scan->instrument)
+		scan->instrument->nsearches++;
 
 	/*
 	 * We do not support hash scans with no index qualification, because we

@@ -506,10 +506,11 @@ EXPLAIN ANALYZE EXECUTE query(100, 200);
    Buffers: shared hit=4
    -&gt;  Index Scan using test_pkey on test  (cost=0.29..10.27 rows=99 width=8) (actual time=0.009..0.025 rows=99.00 loops=1)
          Index Cond: ((id &gt; 100) AND (id &lt; 200))
+         Index Searches: 1
          Buffers: shared hit=4
  Planning Time: 0.244 ms
  Execution Time: 0.073 ms
-(9 rows)
+(10 rows)
 </programlisting>
   </para>
 

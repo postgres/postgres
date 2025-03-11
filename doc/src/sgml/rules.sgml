@@ -1046,6 +1046,7 @@ SELECT count(*) FROM words WHERE word = 'caterpiler';
    -&gt;  Index Only Scan using wrd_word on wrd  (cost=0.42..4.44 rows=1 width=0) (actual time=0.039..0.039 rows=0.00 loops=1)
          Index Cond: (word = 'caterpiler'::text)
          Heap Fetches: 0
+         Index Searches: 1
  Planning time: 0.164 ms
  Execution time: 0.117 ms
 </programlisting>
@@ -1090,6 +1091,7 @@ SELECT word FROM words ORDER BY word &lt;-&gt; 'caterpiler' LIMIT 10;
  Limit  (cost=0.29..1.06 rows=10 width=10) (actual time=187.222..188.257 rows=10.00 loops=1)
    -&gt;  Index Scan using wrd_trgm on wrd  (cost=0.29..37020.87 rows=479829 width=10) (actual time=187.219..188.252 rows=10.00 loops=1)
          Order By: (word &lt;-&gt; 'caterpiler'::text)
+         Index Searches: 1
  Planning time: 0.196 ms
  Execution time: 198.640 ms
 </programlisting>

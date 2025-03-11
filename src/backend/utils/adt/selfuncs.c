@@ -6551,7 +6551,7 @@ get_actual_variable_endpoint(Relation heapRel,
 							  GlobalVisTestFor(heapRel));
 
 	index_scan = index_beginscan(heapRel, indexRel,
-								 &SnapshotNonVacuumable,
+								 &SnapshotNonVacuumable, NULL,
 								 1, 0);
 	/* Set it up for index-only scan */
 	index_scan->xs_want_itup = true;
