@@ -11573,6 +11573,21 @@ AttachPartitionForeignKey(List **wqueue,
 	partConstrRelid = partConstr->conrelid;
 
 	/*
+	 * If the referenced table is partitioned, then the partition we're
+	 * attaching now has extra pg_constraint rows and action triggers that are
+	 * no longer needed.  Remove those.
+	 */
+	if (get_rel_relkind(partConstrFrelid) == RELKIND_PARTITIONED_TABLE)
+	{
+		Relation	pg_constraint = table_open(ConstraintRelationId, RowShareLock);
+
+		RemoveInheritedConstraint(pg_constraint, trigrel, partConstrOid,
+								  partConstrRelid);
+
+		table_close(pg_constraint, RowShareLock);
+	}
+
+	/*
 	 * Will we need to validate this constraint?   A valid parent constraint
 	 * implies that all child constraints have been validated, so if this one
 	 * isn't, we must trigger phase 3 validation.
@@ -11607,21 +11622,6 @@ AttachPartitionForeignKey(List **wqueue,
 	Assert(OidIsValid(updateTriggerOid) && OidIsValid(parentUpdTrigger));
 	TriggerSetParentTrigger(trigrel, updateTriggerOid, parentUpdTrigger,
 							RelationGetRelid(partition));
-
-	/*
-	 * If the referenced table is partitioned, then the partition we're
-	 * attaching now has extra pg_constraint rows and action triggers that are
-	 * no longer needed.  Remove those.
-	 */
-	if (get_rel_relkind(partConstrFrelid) == RELKIND_PARTITIONED_TABLE)
-	{
-		Relation	pg_constraint = table_open(ConstraintRelationId, RowShareLock);
-
-		RemoveInheritedConstraint(pg_constraint, trigrel, partConstrOid,
-								  partConstrRelid);
-
-		table_close(pg_constraint, RowShareLock);
-	}
 
 	/*
 	 * We updated this pg_constraint row above to set its parent; validating
