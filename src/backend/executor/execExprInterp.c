@@ -246,7 +246,8 @@ ExecReadyInterpretedExpr(ExprState *state)
 
 	/* Simple validity checks on expression */
 	Assert(state->steps_len >= 1);
-	Assert(state->steps[state->steps_len - 1].opcode == EEOP_DONE);
+	Assert(state->steps[state->steps_len - 1].opcode == EEOP_DONE_RETURN ||
+		   state->steps[state->steps_len - 1].opcode == EEOP_DONE_NO_RETURN);
 
 	/*
 	 * Don't perform redundant initialization. This is unreachable in current
@@ -469,7 +470,8 @@ ExecInterpExpr(ExprState *state, ExprContext *econtext, bool *isnull)
 	 */
 #if defined(EEO_USE_COMPUTED_GOTO)
 	static const void *const dispatch_table[] = {
-		&&CASE_EEOP_DONE,
+		&&CASE_EEOP_DONE_RETURN,
+		&&CASE_EEOP_DONE_NO_RETURN,
 		&&CASE_EEOP_INNER_FETCHSOME,
 		&&CASE_EEOP_OUTER_FETCHSOME,
 		&&CASE_EEOP_SCAN_FETCHSOME,
@@ -612,9 +614,16 @@ ExecInterpExpr(ExprState *state, ExprContext *econtext, bool *isnull)
 
 	EEO_SWITCH()
 	{
-		EEO_CASE(EEOP_DONE)
+		EEO_CASE(EEOP_DONE_RETURN)
 		{
-			goto out;
+			*isnull = state->resnull;
+			return state->resvalue;
+		}
+
+		EEO_CASE(EEOP_DONE_NO_RETURN)
+		{
+			Assert(isnull == NULL);
+			return (Datum) 0;
 		}
 
 		EEO_CASE(EEOP_INNER_FETCHSOME)
@@ -2188,13 +2197,13 @@ ExecInterpExpr(ExprState *state, ExprContext *econtext, bool *isnull)
 		{
 			/* unreachable */
 			Assert(false);
-			goto out;
+			goto out_error;
 		}
 	}
 
-out:
-	*isnull = state->resnull;
-	return state->resvalue;
+out_error:
+	pg_unreachable();
+	return (Datum) 0;
 }
 
 /*

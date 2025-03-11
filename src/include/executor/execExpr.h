@@ -65,8 +65,11 @@ typedef struct ExprEvalRowtypeCache
  */
 typedef enum ExprEvalOp
 {
-	/* entire expression has been evaluated completely, return */
-	EEOP_DONE,
+	/* entire expression has been evaluated, return value */
+	EEOP_DONE_RETURN,
+
+	/* entire expression has been evaluated, no return value */
+	EEOP_DONE_NO_RETURN,
 
 	/* apply slot_getsomeattrs on corresponding tuple slot */
 	EEOP_INNER_FETCHSOME,

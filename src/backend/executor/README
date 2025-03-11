@@ -133,9 +133,14 @@ is used by the function evaluation step, thus avoiding extra work to copy
 the result values around.
 
 The last entry in a completed ExprState->steps array is always an
-EEOP_DONE step; this removes the need to test for end-of-array while
-iterating.  Also, if the expression contains any variable references (to
-user columns of the ExprContext's INNER, OUTER, or SCAN tuples), the steps
+EEOP_DONE_RETURN or EEOP_DONE_NO_RETURN step; this removes the need to
+test for end-of-array while iterating. The former is used when the
+expression returns a value directly, the latter when side-effects of
+expression initialization are the goal (e.g. for projection or
+aggregate transition value computation).
+
+Also, if the expression contains any variable references (to user
+columns of the ExprContext's INNER, OUTER, or SCAN tuples), the steps
 array begins with EEOP_*_FETCHSOME steps that ensure that the relevant
 tuples have been deconstructed to make the required columns directly
 available (cf. slot_getsomeattrs()).  This allows individual Var-fetching

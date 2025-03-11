@@ -380,6 +380,34 @@ ExecEvalExpr(ExprState *state,
 #endif
 
 /*
+ * ExecEvalExprNoReturn
+ *
+ * Like ExecEvalExpr(), but for cases where no return value is expected,
+ * because the side-effects of expression evaluation are what's desired. This
+ * is e.g. used for projection and aggregate transition computation.
+
+ * Evaluate expression identified by "state" in the execution context
+ * given by "econtext".
+ *
+ * The caller should already have switched into the temporary memory context
+ * econtext->ecxt_per_tuple_memory.  The convenience entry point
+ * ExecEvalExprNoReturnSwitchContext() is provided for callers who don't
+ * prefer to do the switch in an outer loop.
+ */
+#ifndef FRONTEND
+static inline void
+ExecEvalExprNoReturn(ExprState *state,
+					 ExprContext *econtext)
+{
+	PG_USED_FOR_ASSERTS_ONLY Datum retDatum;
+
+	retDatum = state->evalfunc(state, econtext, NULL);
+
+	Assert(retDatum == (Datum) 0);
+}
+#endif
+
+/*
  * ExecEvalExprSwitchContext
  *
  * Same as ExecEvalExpr, but get into the right allocation context explicitly.
@@ -397,6 +425,25 @@ ExecEvalExprSwitchContext(ExprState *state,
 	retDatum = state->evalfunc(state, econtext, isNull);
 	MemoryContextSwitchTo(oldContext);
 	return retDatum;
+}
+#endif
+
+/*
+ * ExecEvalExprNoReturnSwitchContext
+ *
+ * Same as ExecEvalExprNoReturn, but get into the right allocation context
+ * explicitly.
+ */
+#ifndef FRONTEND
+static inline void
+ExecEvalExprNoReturnSwitchContext(ExprState *state,
+								  ExprContext *econtext)
+{
+	MemoryContext oldContext;
+
+	oldContext = MemoryContextSwitchTo(econtext->ecxt_per_tuple_memory);
+	ExecEvalExprNoReturn(state, econtext);
+	MemoryContextSwitchTo(oldContext);
 }
 #endif
 
@@ -419,7 +466,6 @@ ExecProject(ProjectionInfo *projInfo)
 	ExprContext *econtext = projInfo->pi_exprContext;
 	ExprState  *state = &projInfo->pi_state;
 	TupleTableSlot *slot = state->resultslot;
-	bool		isnull;
 
 	/*
 	 * Clear any former contents of the result slot.  This makes it safe for
@@ -427,8 +473,8 @@ ExecProject(ProjectionInfo *projInfo)
 	 */
 	ExecClearTuple(slot);
 
-	/* Run the expression, discarding scalar result from the last column. */
-	(void) ExecEvalExprSwitchContext(state, econtext, &isnull);
+	/* Run the expression */
+	ExecEvalExprNoReturnSwitchContext(state, econtext);
 
 	/*
 	 * Successfully formed a result row.  Mark the result slot as containing a

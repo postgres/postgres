@@ -816,11 +816,8 @@ advance_transition_function(AggState *aggstate,
 static void
 advance_aggregates(AggState *aggstate)
 {
-	bool		dummynull;
-
-	ExecEvalExprSwitchContext(aggstate->phase->evaltrans,
-							  aggstate->tmpcontext,
-							  &dummynull);
+	ExecEvalExprNoReturnSwitchContext(aggstate->phase->evaltrans,
+									  aggstate->tmpcontext);
 }
 
 /*
