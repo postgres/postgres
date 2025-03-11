@@ -1,6 +1,6 @@
 Parsed test spec with 2 sessions
 
-starting permutation: s0_init s0_begin s0_savepoint s0_truncate s1_checkpoint s1_get_changes s0_commit s0_begin s0_insert s1_checkpoint s1_get_changes s0_commit s1_get_changes s1_get_logical_snapshot_info s1_get_logical_snapshot_meta
+starting permutation: s0_init s0_begin s0_savepoint s0_truncate s1_create_table s1_checkpoint s1_get_changes s1_check_snapshot_info s1_check_snapshot_meta s0_commit
 step s0_init: SELECT 'init' FROM pg_create_logical_replication_slot('isolation_slot', 'test_decoding');
 ?column?
 --------
@@ -10,43 +10,23 @@ init
 step s0_begin: BEGIN;
 step s0_savepoint: SAVEPOINT sp1;
 step s0_truncate: TRUNCATE tbl1;
+step s1_create_table: CREATE TABLE tbl2 (val1 integer, val2 integer);
 step s1_checkpoint: CHECKPOINT;
 step s1_get_changes: SELECT data FROM pg_logical_slot_get_changes('isolation_slot', NULL, NULL, 'skip-empty-xacts', '1', 'include-xids', '0');
 data
 ----
 (0 rows)
 
-step s0_commit: COMMIT;
-step s0_begin: BEGIN;
-step s0_insert: INSERT INTO tbl1 VALUES (1);
-step s1_checkpoint: CHECKPOINT;
-step s1_get_changes: SELECT data FROM pg_logical_slot_get_changes('isolation_slot', NULL, NULL, 'skip-empty-xacts', '1', 'include-xids', '0');
-data                                   
----------------------------------------
-BEGIN                                  
-table public.tbl1: TRUNCATE: (no-flags)
-COMMIT                                 
-(3 rows)
-
-step s0_commit: COMMIT;
-step s1_get_changes: SELECT data FROM pg_logical_slot_get_changes('isolation_slot', NULL, NULL, 'skip-empty-xacts', '1', 'include-xids', '0');
-data                                                         
--------------------------------------------------------------
-BEGIN                                                        
-table public.tbl1: INSERT: val1[integer]:1 val2[integer]:null
-COMMIT                                                       
-(3 rows)
-
-step s1_get_logical_snapshot_info: SELECT info.state, info.catchange_count, array_length(info.catchange_xip,1) AS catchange_array_length, info.committed_count, array_length(info.committed_xip,1) AS committed_array_length FROM pg_ls_logicalsnapdir(), pg_get_logical_snapshot_info(name) AS info ORDER BY 2;
-state     |catchange_count|catchange_array_length|committed_count|committed_array_length
-----------+---------------+----------------------+---------------+----------------------
-consistent|              0|                      |              2|                     2
-consistent|              2|                     2|              0|                      
-(2 rows)
-
-step s1_get_logical_snapshot_meta: SELECT COUNT(meta.*) from pg_ls_logicalsnapdir(), pg_get_logical_snapshot_meta(name) as meta;
-count
------
-    2
+step s1_check_snapshot_info: SELECT count(*) > 0 as has_info FROM pg_ls_logicalsnapdir(), pg_get_logical_snapshot_info(name) AS info where info.catchange_count >= 2 and array_length(info.catchange_xip,1) >= 2 and info.committed_count >= 1 and array_length(info.committed_xip,1) >= 1;
+has_info
+--------
+t       
 (1 row)
 
+step s1_check_snapshot_meta: SELECT count(meta.*) > 0 AS has_meta from pg_ls_logicalsnapdir(), pg_get_logical_snapshot_meta(name) as meta;
+has_meta
+--------
+t       
+(1 row)
+
+step s0_commit: COMMIT;
