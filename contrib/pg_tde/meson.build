@@ -142,6 +142,7 @@ if get_variable('percona_ext', false)
       'kmip_test',
       'alter_index',
       'merge_join',
+      'no_provider_error',
   ]
 
   tap_tests += [

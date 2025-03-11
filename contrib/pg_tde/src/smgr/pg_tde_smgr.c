@@ -227,6 +227,14 @@ tde_mdcreate(RelFileLocator relold, SMgrRelation reln, ForkNumber forknum, bool 
 	TdeCreateEvent *event = GetCurrentTdeCreateEvent();
 
 	/*
+	 * Make sure that even if a statement failed, and an event trigger end
+	 * trigger didn't fire, we don't accidentaly create encrypted files when
+	 * we don't have to. event above is a pointer, so it will reflect the
+	 * correct state even if this changes it.
+	 */
+	validateCurrentEventTriggerState(false);
+
+	/*
 	 * This is the only function that gets called during actual CREATE
 	 * TABLE/INDEX (EVENT TRIGGER)
 	 */

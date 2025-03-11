@@ -9,9 +9,12 @@
 
 #include "postgres.h"
 #include "nodes/parsenodes.h"
+#include "access/transam.h"
 
 typedef struct TdeCreateEvent
 {
+	FullTransactionId tid;		/* transaction id of the last event trigger,
+								 * or 0 */
 	bool		encryptMode;	/* true when the table uses encryption */
 	Oid			baseTableOid;	/* Oid of table on which index is being
 								 * created on. For create table statement this
@@ -24,5 +27,7 @@ typedef struct TdeCreateEvent
 } TdeCreateEvent;
 
 extern TdeCreateEvent *GetCurrentTdeCreateEvent(void);
+
+extern void validateCurrentEventTriggerState(bool mightStartTransaction);
 
 #endif
