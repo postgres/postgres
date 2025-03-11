@@ -3,10 +3,69 @@
  * snapmgr.c
  *		PostgreSQL snapshot manager
  *
+ * The following functions return an MVCC snapshot that can be used in tuple
+ * visibility checks:
+ *
+ * - GetTransactionSnapshot
+ * - GetLatestSnapshot
+ * - GetCatalogSnapshot
+ * - GetNonHistoricCatalogSnapshot
+ *
+ * Each of these functions returns a reference to a statically allocated
+ * snapshot.  The statically allocated snapshot is subject to change on any
+ * snapshot-related function call, and should not be used directly.  Instead,
+ * call PushActiveSnapshot() or RegisterSnapshot() to create a longer-lived
+ * copy and use that.
+ *
  * We keep track of snapshots in two ways: those "registered" by resowner.c,
  * and the "active snapshot" stack.  All snapshots in either of them live in
  * persistent memory.  When a snapshot is no longer in any of these lists
  * (tracked by separate refcounts on each snapshot), its memory can be freed.
+ *
+ * In addition to the above-mentioned MVCC snapshots, there are some special
+ * snapshots like SnapshotSelf, SnapshotAny, and "dirty" snapshots.  They can
+ * only be used in limited contexts and cannot be registered or pushed to the
+ * active stack.
+ *
+ * ActiveSnapshot stack
+ * --------------------
+ *
+ * Most visibility checks use the current "active snapshot" returned by
+ * GetActiveSnapshot().  When running normal queries, the active snapshot is
+ * set when query execution begins based on the transaction isolation level.
+ *
+ * The active snapshot is tracked in a stack so that the currently active one
+ * is at the top of the stack.  It mirrors the process call stack: whenever we
+ * recurse or switch context to fetch rows from a different portal for
+ * example, the appropriate snapshot is pushed to become the active snapshot,
+ * and popped on return.  Once upon a time, ActiveSnapshot was just a global
+ * variable that was saved and restored similar to CurrentMemoryContext, but
+ * nowadays it's managed as a separate data structure so that we can keep
+ * track of which snapshots are in use and reset MyProc->xmin when there is no
+ * active snapshot.
+ *
+ * However, there are a couple of exceptions where the active snapshot stack
+ * does not strictly mirror the call stack:
+ *
+ * - VACUUM and a few other utility commands manage their own transactions,
+ *   which take their own snapshots.  They are called with an active snapshot
+ *   set, like most utility commands, but they pop the active snapshot that
+ *   was pushed by the caller.  PortalRunUtility knows about the possibility
+ *   that the snapshot it pushed is no longer active on return.
+ *
+ * - When COMMIT or ROLLBACK is executed within a procedure or DO-block, the
+ *   active snapshot stack is destroyed, and re-established later when
+ *   subsequent statements in the procedure are executed.  There are many
+ *   limitations on when in-procedure COMMIT/ROLLBACK is allowed; one such
+ *   limitation is that all the snapshots on the active snapshot stack are
+ *   known to portals that are being executed, which makes it safe to reset
+ *   the stack.  See EnsurePortalSnapshotExists().
+ *
+ * Registered snapshots
+ * --------------------
+ *
+ * In addition to snapshots pushed to the active snapshot stack, a snapshot
+ * can be registered with a resource owner.
  *
  * The FirstXactSnapshot, if any, is treated a bit specially: we increment its
  * regd_count and list it in RegisteredSnapshots, but this reference is not
