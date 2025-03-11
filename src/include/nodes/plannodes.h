@@ -1171,6 +1171,9 @@ typedef struct WindowAgg
 {
 	Plan		plan;
 
+	/* name of WindowClause implemented by this node */
+	char	   *winname;
+
 	/* ID referenced by window functions */
 	Index		winref;
 

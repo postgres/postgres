@@ -285,12 +285,9 @@ static Memoize *make_memoize(Plan *lefttree, Oid *hashoperators,
 							 Oid *collations, List *param_exprs,
 							 bool singlerow, bool binary_mode,
 							 uint32 est_entries, Bitmapset *keyparamids);
-static WindowAgg *make_windowagg(List *tlist, Index winref,
+static WindowAgg *make_windowagg(List *tlist, WindowClause *wc,
 								 int partNumCols, AttrNumber *partColIdx, Oid *partOperators, Oid *partCollations,
 								 int ordNumCols, AttrNumber *ordColIdx, Oid *ordOperators, Oid *ordCollations,
-								 int frameOptions, Node *startOffset, Node *endOffset,
-								 Oid startInRangeFunc, Oid endInRangeFunc,
-								 Oid inRangeColl, bool inRangeAsc, bool inRangeNullsFirst,
 								 List *runCondition, List *qual, bool topWindow,
 								 Plan *lefttree);
 static Group *make_group(List *tlist, List *qual, int numGroupCols,
@@ -2683,7 +2680,7 @@ create_windowagg_plan(PlannerInfo *root, WindowAggPath *best_path)
 
 	/* And finally we can make the WindowAgg node */
 	plan = make_windowagg(tlist,
-						  wc->winref,
+						  wc,
 						  partNumCols,
 						  partColIdx,
 						  partOperators,
@@ -2692,14 +2689,6 @@ create_windowagg_plan(PlannerInfo *root, WindowAggPath *best_path)
 						  ordColIdx,
 						  ordOperators,
 						  ordCollations,
-						  wc->frameOptions,
-						  wc->startOffset,
-						  wc->endOffset,
-						  wc->startInRangeFunc,
-						  wc->endInRangeFunc,
-						  wc->inRangeColl,
-						  wc->inRangeAsc,
-						  wc->inRangeNullsFirst,
 						  best_path->runCondition,
 						  best_path->qual,
 						  best_path->topwindow,
@@ -6704,18 +6693,16 @@ make_agg(List *tlist, List *qual,
 }
 
 static WindowAgg *
-make_windowagg(List *tlist, Index winref,
+make_windowagg(List *tlist, WindowClause *wc,
 			   int partNumCols, AttrNumber *partColIdx, Oid *partOperators, Oid *partCollations,
 			   int ordNumCols, AttrNumber *ordColIdx, Oid *ordOperators, Oid *ordCollations,
-			   int frameOptions, Node *startOffset, Node *endOffset,
-			   Oid startInRangeFunc, Oid endInRangeFunc,
-			   Oid inRangeColl, bool inRangeAsc, bool inRangeNullsFirst,
 			   List *runCondition, List *qual, bool topWindow, Plan *lefttree)
 {
 	WindowAgg  *node = makeNode(WindowAgg);
 	Plan	   *plan = &node->plan;
 
-	node->winref = winref;
+	node->winname = wc->name;
+	node->winref = wc->winref;
 	node->partNumCols = partNumCols;
 	node->partColIdx = partColIdx;
 	node->partOperators = partOperators;
@@ -6724,17 +6711,17 @@ make_windowagg(List *tlist, Index winref,
 	node->ordColIdx = ordColIdx;
 	node->ordOperators = ordOperators;
 	node->ordCollations = ordCollations;
-	node->frameOptions = frameOptions;
-	node->startOffset = startOffset;
-	node->endOffset = endOffset;
+	node->frameOptions = wc->frameOptions;
+	node->startOffset = wc->startOffset;
+	node->endOffset = wc->endOffset;
 	node->runCondition = runCondition;
 	/* a duplicate of the above for EXPLAIN */
 	node->runConditionOrig = runCondition;
-	node->startInRangeFunc = startInRangeFunc;
-	node->endInRangeFunc = endInRangeFunc;
-	node->inRangeColl = inRangeColl;
-	node->inRangeAsc = inRangeAsc;
-	node->inRangeNullsFirst = inRangeNullsFirst;
+	node->startInRangeFunc = wc->startInRangeFunc;
+	node->endInRangeFunc = wc->endInRangeFunc;
+	node->inRangeColl = wc->inRangeColl;
+	node->inRangeAsc = wc->inRangeAsc;
+	node->inRangeNullsFirst = wc->inRangeNullsFirst;
 	node->topWindow = topWindow;
 
 	plan->targetlist = tlist;

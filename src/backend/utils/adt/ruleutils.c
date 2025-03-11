@@ -441,6 +441,9 @@ static void get_rule_orderby(List *orderList, List *targetList,
 static void get_rule_windowclause(Query *query, deparse_context *context);
 static void get_rule_windowspec(WindowClause *wc, List *targetList,
 								deparse_context *context);
+static void get_window_frame_options(int frameOptions,
+									 Node *startOffset, Node *endOffset,
+									 deparse_context *context);
 static char *get_variable(Var *var, int levelsup, bool istoplevel,
 						  deparse_context *context);
 static void get_special_variable(Node *node, deparse_context *context,
@@ -6811,45 +6814,64 @@ get_rule_windowspec(WindowClause *wc, List *targetList,
 	{
 		if (needspace)
 			appendStringInfoChar(buf, ' ');
-		if (wc->frameOptions & FRAMEOPTION_RANGE)
+		get_window_frame_options(wc->frameOptions,
+								 wc->startOffset, wc->endOffset,
+								 context);
+	}
+	appendStringInfoChar(buf, ')');
+}
+
+/*
+ * Append the description of a window's framing options to context->buf
+ */
+static void
+get_window_frame_options(int frameOptions,
+						 Node *startOffset, Node *endOffset,
+						 deparse_context *context)
+{
+	StringInfo	buf = context->buf;
+
+	if (frameOptions & FRAMEOPTION_NONDEFAULT)
+	{
+		if (frameOptions & FRAMEOPTION_RANGE)
 			appendStringInfoString(buf, "RANGE ");
-		else if (wc->frameOptions & FRAMEOPTION_ROWS)
+		else if (frameOptions & FRAMEOPTION_ROWS)
 			appendStringInfoString(buf, "ROWS ");
-		else if (wc->frameOptions & FRAMEOPTION_GROUPS)
+		else if (frameOptions & FRAMEOPTION_GROUPS)
 			appendStringInfoString(buf, "GROUPS ");
 		else
 			Assert(false);
-		if (wc->frameOptions & FRAMEOPTION_BETWEEN)
+		if (frameOptions & FRAMEOPTION_BETWEEN)
 			appendStringInfoString(buf, "BETWEEN ");
-		if (wc->frameOptions & FRAMEOPTION_START_UNBOUNDED_PRECEDING)
+		if (frameOptions & FRAMEOPTION_START_UNBOUNDED_PRECEDING)
 			appendStringInfoString(buf, "UNBOUNDED PRECEDING ");
-		else if (wc->frameOptions & FRAMEOPTION_START_CURRENT_ROW)
+		else if (frameOptions & FRAMEOPTION_START_CURRENT_ROW)
 			appendStringInfoString(buf, "CURRENT ROW ");
-		else if (wc->frameOptions & FRAMEOPTION_START_OFFSET)
+		else if (frameOptions & FRAMEOPTION_START_OFFSET)
 		{
-			get_rule_expr(wc->startOffset, context, false);
-			if (wc->frameOptions & FRAMEOPTION_START_OFFSET_PRECEDING)
+			get_rule_expr(startOffset, context, false);
+			if (frameOptions & FRAMEOPTION_START_OFFSET_PRECEDING)
 				appendStringInfoString(buf, " PRECEDING ");
-			else if (wc->frameOptions & FRAMEOPTION_START_OFFSET_FOLLOWING)
+			else if (frameOptions & FRAMEOPTION_START_OFFSET_FOLLOWING)
 				appendStringInfoString(buf, " FOLLOWING ");
 			else
 				Assert(false);
 		}
 		else
 			Assert(false);
-		if (wc->frameOptions & FRAMEOPTION_BETWEEN)
+		if (frameOptions & FRAMEOPTION_BETWEEN)
 		{
 			appendStringInfoString(buf, "AND ");
-			if (wc->frameOptions & FRAMEOPTION_END_UNBOUNDED_FOLLOWING)
+			if (frameOptions & FRAMEOPTION_END_UNBOUNDED_FOLLOWING)
 				appendStringInfoString(buf, "UNBOUNDED FOLLOWING ");
-			else if (wc->frameOptions & FRAMEOPTION_END_CURRENT_ROW)
+			else if (frameOptions & FRAMEOPTION_END_CURRENT_ROW)
 				appendStringInfoString(buf, "CURRENT ROW ");
-			else if (wc->frameOptions & FRAMEOPTION_END_OFFSET)
+			else if (frameOptions & FRAMEOPTION_END_OFFSET)
 			{
-				get_rule_expr(wc->endOffset, context, false);
-				if (wc->frameOptions & FRAMEOPTION_END_OFFSET_PRECEDING)
+				get_rule_expr(endOffset, context, false);
+				if (frameOptions & FRAMEOPTION_END_OFFSET_PRECEDING)
 					appendStringInfoString(buf, " PRECEDING ");
-				else if (wc->frameOptions & FRAMEOPTION_END_OFFSET_FOLLOWING)
+				else if (frameOptions & FRAMEOPTION_END_OFFSET_FOLLOWING)
 					appendStringInfoString(buf, " FOLLOWING ");
 				else
 					Assert(false);
@@ -6857,16 +6879,46 @@ get_rule_windowspec(WindowClause *wc, List *targetList,
 			else
 				Assert(false);
 		}
-		if (wc->frameOptions & FRAMEOPTION_EXCLUDE_CURRENT_ROW)
+		if (frameOptions & FRAMEOPTION_EXCLUDE_CURRENT_ROW)
 			appendStringInfoString(buf, "EXCLUDE CURRENT ROW ");
-		else if (wc->frameOptions & FRAMEOPTION_EXCLUDE_GROUP)
+		else if (frameOptions & FRAMEOPTION_EXCLUDE_GROUP)
 			appendStringInfoString(buf, "EXCLUDE GROUP ");
-		else if (wc->frameOptions & FRAMEOPTION_EXCLUDE_TIES)
+		else if (frameOptions & FRAMEOPTION_EXCLUDE_TIES)
 			appendStringInfoString(buf, "EXCLUDE TIES ");
 		/* we will now have a trailing space; remove it */
-		buf->len--;
+		buf->data[--(buf->len)] = '\0';
 	}
-	appendStringInfoChar(buf, ')');
+}
+
+/*
+ * Return the description of a window's framing options as a palloc'd string
+ */
+char *
+get_window_frame_options_for_explain(int frameOptions,
+									 Node *startOffset, Node *endOffset,
+									 List *dpcontext, bool forceprefix)
+{
+	StringInfoData buf;
+	deparse_context context;
+
+	initStringInfo(&buf);
+	context.buf = &buf;
+	context.namespaces = dpcontext;
+	context.resultDesc = NULL;
+	context.targetList = NIL;
+	context.windowClause = NIL;
+	context.varprefix = forceprefix;
+	context.prettyFlags = 0;
+	context.wrapColumn = WRAP_COLUMN_DEFAULT;
+	context.indentLevel = 0;
+	context.colNamesVisible = true;
+	context.inGroupBy = false;
+	context.varInOrderBy = false;
+	context.appendparents = NULL;
+
+	get_window_frame_options(frameOptions, startOffset, endOffset, &context);
+
+	return buf.data;
 }
 
 /* ----------
@@ -11030,30 +11082,50 @@ get_windowfunc_expr_helper(WindowFunc *wfunc, deparse_context *context,
 
 	appendStringInfoString(buf, ") OVER ");
 
-	foreach(l, context->windowClause)
+	if (context->windowClause)
 	{
-		WindowClause *wc = (WindowClause *) lfirst(l);
-
-		if (wc->winref == wfunc->winref)
+		/* Query-decompilation case: search the windowClause list */
+		foreach(l, context->windowClause)
 		{
-			if (wc->name)
-				appendStringInfoString(buf, quote_identifier(wc->name));
-			else
-				get_rule_windowspec(wc, context->targetList, context);
-			break;
+			WindowClause *wc = (WindowClause *) lfirst(l);
+
+			if (wc->winref == wfunc->winref)
+			{
+				if (wc->name)
+					appendStringInfoString(buf, quote_identifier(wc->name));
+				else
+					get_rule_windowspec(wc, context->targetList, context);
+				break;
+			}
 		}
-	}
-	if (l == NULL)
-	{
-		if (context->windowClause)
+		if (l == NULL)
 			elog(ERROR, "could not find window clause for winref %u",
 				 wfunc->winref);
-
+	}
+	else
+	{
 		/*
-		 * In EXPLAIN, we don't have window context information available, so
-		 * we have to settle for this:
+		 * In EXPLAIN, search the namespace stack for a matching WindowAgg
+		 * node (probably it's always the first entry), and print winname.
 		 */
-		appendStringInfoString(buf, "(?)");
+		foreach(l, context->namespaces)
+		{
+			deparse_namespace *dpns = (deparse_namespace *) lfirst(l);
+
+			if (dpns->plan && IsA(dpns->plan, WindowAgg))
+			{
+				WindowAgg  *wagg = (WindowAgg *) dpns->plan;
+
+				if (wagg->winref == wfunc->winref)
+				{
+					appendStringInfoString(buf, quote_identifier(wagg->winname));
+					break;
+				}
+			}
+		}
+		if (l == NULL)
+			elog(ERROR, "could not find window clause for winref %u",
+				 wfunc->winref);
 	}
 }
 

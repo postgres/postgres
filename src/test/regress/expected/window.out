@@ -652,10 +652,11 @@ select first_value(max(x)) over (), y
                  QUERY PLAN                  
 ---------------------------------------------
  WindowAgg
+   Window: w1 AS ()
    ->  HashAggregate
          Group Key: (tenk1.ten + tenk1.four)
          ->  Seq Scan on tenk1
-(4 rows)
+(5 rows)
 
 -- window functions returning pass-by-ref values from different rows
 select x, lag(x, 1) over (order by x), lead(x, 3) over (order by x)
@@ -3537,14 +3538,15 @@ explain (costs off)
 select f1, sum(f1) over (partition by f1 order by f2
                          range between 1 preceding and 1 following)
 from t1 where f1 = f2;
-           QUERY PLAN            
----------------------------------
+                                                 QUERY PLAN                                                  
+-------------------------------------------------------------------------------------------------------------
  WindowAgg
+   Window: w1 AS (PARTITION BY f1 ORDER BY f2 RANGE BETWEEN '1'::bigint PRECEDING AND '1'::bigint FOLLOWING)
    ->  Sort
          Sort Key: f1
          ->  Seq Scan on t1
                Filter: (f1 = f2)
-(5 rows)
+(6 rows)
 
 select f1, sum(f1) over (partition by f1 order by f2
                          range between 1 preceding and 1 following)
@@ -3583,14 +3585,15 @@ explain (costs off)
 select f1, sum(f1) over (partition by f1 order by f2
                          groups between 1 preceding and 1 following)
 from t1 where f1 = f2;
-           QUERY PLAN            
----------------------------------
+                                                  QUERY PLAN                                                  
+--------------------------------------------------------------------------------------------------------------
  WindowAgg
+   Window: w1 AS (PARTITION BY f1 ORDER BY f2 GROUPS BETWEEN '1'::bigint PRECEDING AND '1'::bigint FOLLOWING)
    ->  Sort
          Sort Key: f1
          ->  Seq Scan on t1
                Filter: (f1 = f2)
-(5 rows)
+(6 rows)
 
 select f1, sum(f1) over (partition by f1 order by f2
                          groups between 1 preceding and 1 following)
@@ -3711,13 +3714,14 @@ SELECT
     cume_dist() OVER (PARTITION BY depname ORDER BY enroll_date RANGE BETWEEN
                       CURRENT ROW AND UNBOUNDED FOLLOWING) cd
 FROM empsalary;
-               QUERY PLAN               
-----------------------------------------
+                                      QUERY PLAN                                      
+--------------------------------------------------------------------------------------
  WindowAgg
+   Window: w1 AS (PARTITION BY depname ORDER BY enroll_date ROWS UNBOUNDED PRECEDING)
    ->  Sort
          Sort Key: depname, enroll_date
          ->  Seq Scan on empsalary
-(4 rows)
+(5 rows)
 
 -- Ensure WindowFuncs which cannot support their WindowClause's frameOptions
 -- being changed are untouched
@@ -3731,18 +3735,20 @@ SELECT
     count(*) OVER (PARTITION BY depname ORDER BY enroll_date RANGE BETWEEN
                    CURRENT ROW AND CURRENT ROW) cnt
 FROM empsalary;
-                                              QUERY PLAN                                              
-------------------------------------------------------------------------------------------------------
+                                                        QUERY PLAN                                                         
+---------------------------------------------------------------------------------------------------------------------------
  WindowAgg
-   Output: empno, depname, (row_number() OVER (?)), (rank() OVER (?)), count(*) OVER (?), enroll_date
+   Output: empno, depname, (row_number() OVER w1), (rank() OVER w1), count(*) OVER w2, enroll_date
+   Window: w2 AS (PARTITION BY empsalary.depname ORDER BY empsalary.enroll_date RANGE BETWEEN CURRENT ROW AND CURRENT ROW)
    ->  WindowAgg
-         Output: depname, enroll_date, empno, row_number() OVER (?), rank() OVER (?)
+         Output: depname, enroll_date, empno, row_number() OVER w1, rank() OVER w1
+         Window: w1 AS (PARTITION BY empsalary.depname ORDER BY empsalary.enroll_date ROWS UNBOUNDED PRECEDING)
          ->  Sort
                Output: depname, enroll_date, empno
                Sort Key: empsalary.depname, empsalary.enroll_date
                ->  Seq Scan on pg_temp.empsalary
                      Output: depname, enroll_date, empno
-(9 rows)
+(11 rows)
 
 -- Ensure the above query gives us the expected results
 SELECT
@@ -3777,16 +3783,18 @@ SELECT * FROM
           min(salary) OVER (PARTITION BY depname || 'A', depname) depminsalary
    FROM empsalary) emp
 WHERE depname = 'sales';
-                                QUERY PLAN                                
---------------------------------------------------------------------------
+                                      QUERY PLAN                                       
+---------------------------------------------------------------------------------------
  Subquery Scan on emp
    ->  WindowAgg
+         Window: w2 AS ()
          ->  WindowAgg
+               Window: w1 AS (PARTITION BY (((empsalary.depname)::text || 'A'::text)))
                ->  Sort
                      Sort Key: (((empsalary.depname)::text || 'A'::text))
                      ->  Seq Scan on empsalary
                            Filter: ((depname)::text = 'sales'::text)
-(7 rows)
+(9 rows)
 
 -- pushdown is unsafe because there's a PARTITION BY clause without depname:
 EXPLAIN (COSTS OFF)
@@ -3796,18 +3804,20 @@ SELECT * FROM
           min(salary) OVER (PARTITION BY depname) depminsalary
    FROM empsalary) emp
 WHERE depname = 'sales';
-                      QUERY PLAN                       
--------------------------------------------------------
+                             QUERY PLAN                             
+--------------------------------------------------------------------
  Subquery Scan on emp
    Filter: ((emp.depname)::text = 'sales'::text)
    ->  WindowAgg
+         Window: w2 AS (PARTITION BY empsalary.enroll_date)
          ->  Sort
                Sort Key: empsalary.enroll_date
                ->  WindowAgg
+                     Window: w1 AS (PARTITION BY empsalary.depname)
                      ->  Sort
                            Sort Key: empsalary.depname
                            ->  Seq Scan on empsalary
-(9 rows)
+(11 rows)
 
 -- Test window function run conditions are properly pushed down into the
 -- WindowAgg
@@ -3817,14 +3827,15 @@ SELECT * FROM
           row_number() OVER (ORDER BY empno) rn
    FROM empsalary) emp
 WHERE rn < 3;
-                  QUERY PLAN                  
-----------------------------------------------
+                             QUERY PLAN                              
+---------------------------------------------------------------------
  WindowAgg
-   Run Condition: (row_number() OVER (?) < 3)
+   Window: w1 AS (ORDER BY empsalary.empno ROWS UNBOUNDED PRECEDING)
+   Run Condition: (row_number() OVER w1 < 3)
    ->  Sort
          Sort Key: empsalary.empno
          ->  Seq Scan on empsalary
-(5 rows)
+(6 rows)
 
 -- The following 3 statements should result the same result.
 SELECT * FROM
@@ -3868,14 +3879,15 @@ SELECT * FROM
           rank() OVER (ORDER BY salary DESC) r
    FROM empsalary) emp
 WHERE r <= 3;
-               QUERY PLAN                
------------------------------------------
+                              QUERY PLAN                              
+----------------------------------------------------------------------
  WindowAgg
-   Run Condition: (rank() OVER (?) <= 3)
+   Window: w1 AS (ORDER BY empsalary.salary ROWS UNBOUNDED PRECEDING)
+   Run Condition: (rank() OVER w1 <= 3)
    ->  Sort
          Sort Key: empsalary.salary DESC
          ->  Seq Scan on empsalary
-(5 rows)
+(6 rows)
 
 SELECT * FROM
   (SELECT empno,
@@ -3898,16 +3910,17 @@ SELECT * FROM
           dense_rank() OVER (ORDER BY salary DESC) dr
    FROM empsalary) emp
 WHERE dr = 1;
-                     QUERY PLAN                      
------------------------------------------------------
+                                 QUERY PLAN                                 
+----------------------------------------------------------------------------
  Subquery Scan on emp
    Filter: (emp.dr = 1)
    ->  WindowAgg
-         Run Condition: (dense_rank() OVER (?) <= 1)
+         Window: w1 AS (ORDER BY empsalary.salary ROWS UNBOUNDED PRECEDING)
+         Run Condition: (dense_rank() OVER w1 <= 1)
          ->  Sort
                Sort Key: empsalary.salary DESC
                ->  Seq Scan on empsalary
-(7 rows)
+(8 rows)
 
 SELECT * FROM
   (SELECT empno,
@@ -3928,14 +3941,15 @@ SELECT * FROM
           count(*) OVER (ORDER BY salary DESC) c
    FROM empsalary) emp
 WHERE c <= 3;
-                QUERY PLAN                 
--------------------------------------------
+                 QUERY PLAN                  
+---------------------------------------------
  WindowAgg
-   Run Condition: (count(*) OVER (?) <= 3)
+   Window: w1 AS (ORDER BY empsalary.salary)
+   Run Condition: (count(*) OVER w1 <= 3)
    ->  Sort
          Sort Key: empsalary.salary DESC
          ->  Seq Scan on empsalary
-(5 rows)
+(6 rows)
 
 SELECT * FROM
   (SELECT empno,
@@ -3957,14 +3971,15 @@ SELECT * FROM
           count(empno) OVER (ORDER BY salary DESC) c
    FROM empsalary) emp
 WHERE c <= 3;
-                       QUERY PLAN                        
----------------------------------------------------------
+                       QUERY PLAN                       
+--------------------------------------------------------
  WindowAgg
-   Run Condition: (count(empsalary.empno) OVER (?) <= 3)
+   Window: w1 AS (ORDER BY empsalary.salary)
+   Run Condition: (count(empsalary.empno) OVER w1 <= 3)
    ->  Sort
          Sort Key: empsalary.salary DESC
          ->  Seq Scan on empsalary
-(5 rows)
+(6 rows)
 
 SELECT * FROM
   (SELECT empno,
@@ -3986,14 +4001,15 @@ SELECT * FROM
           count(*) OVER (ORDER BY salary DESC ROWS BETWEEN CURRENT ROW AND UNBOUNDED FOLLOWING) c
    FROM empsalary) emp
 WHERE c >= 3;
-                QUERY PLAN                 
--------------------------------------------
+                                          QUERY PLAN                                          
+----------------------------------------------------------------------------------------------
  WindowAgg
-   Run Condition: (count(*) OVER (?) >= 3)
+   Window: w1 AS (ORDER BY empsalary.salary ROWS BETWEEN CURRENT ROW AND UNBOUNDED FOLLOWING)
+   Run Condition: (count(*) OVER w1 >= 3)
    ->  Sort
          Sort Key: empsalary.salary DESC
          ->  Seq Scan on empsalary
-(5 rows)
+(6 rows)
 
 EXPLAIN (COSTS OFF)
 SELECT * FROM
@@ -4002,12 +4018,13 @@ SELECT * FROM
           count(*) OVER () c
    FROM empsalary) emp
 WHERE 11 <= c;
-                 QUERY PLAN                 
---------------------------------------------
+                QUERY PLAN                 
+-------------------------------------------
  WindowAgg
-   Run Condition: (11 <= count(*) OVER (?))
+   Window: w1 AS ()
+   Run Condition: (11 <= count(*) OVER w1)
    ->  Seq Scan on empsalary
-(3 rows)
+(4 rows)
 
 EXPLAIN (COSTS OFF)
 SELECT * FROM
@@ -4017,16 +4034,17 @@ SELECT * FROM
           dense_rank() OVER (ORDER BY salary DESC) dr
    FROM empsalary) emp
 WHERE dr = 1;
-                     QUERY PLAN                      
------------------------------------------------------
+                     QUERY PLAN                     
+----------------------------------------------------
  Subquery Scan on emp
    Filter: (emp.dr = 1)
    ->  WindowAgg
-         Run Condition: (dense_rank() OVER (?) <= 1)
+         Window: w1 AS (ORDER BY empsalary.salary)
+         Run Condition: (dense_rank() OVER w1 <= 1)
          ->  Sort
                Sort Key: empsalary.salary DESC
                ->  Seq Scan on empsalary
-(7 rows)
+(8 rows)
 
 -- Ensure we get a run condition when there's a PARTITION BY clause
 EXPLAIN (COSTS OFF)
@@ -4036,14 +4054,15 @@ SELECT * FROM
           row_number() OVER (PARTITION BY depname ORDER BY empno) rn
    FROM empsalary) emp
 WHERE rn < 3;
-                      QUERY PLAN                      
-------------------------------------------------------
+                                             QUERY PLAN                                             
+----------------------------------------------------------------------------------------------------
  WindowAgg
-   Run Condition: (row_number() OVER (?) < 3)
+   Window: w1 AS (PARTITION BY empsalary.depname ORDER BY empsalary.empno ROWS UNBOUNDED PRECEDING)
+   Run Condition: (row_number() OVER w1 < 3)
    ->  Sort
          Sort Key: empsalary.depname, empsalary.empno
          ->  Seq Scan on empsalary
-(5 rows)
+(6 rows)
 
 -- and ensure we get the correct results from the above plan
 SELECT * FROM
@@ -4071,15 +4090,16 @@ SELECT empno, depname FROM
           row_number() OVER (PARTITION BY depname ORDER BY empno) rn
    FROM empsalary) emp
 WHERE rn < 3;
-                         QUERY PLAN                         
-------------------------------------------------------------
+                                                QUERY PLAN                                                
+----------------------------------------------------------------------------------------------------------
  Subquery Scan on emp
    ->  WindowAgg
-         Run Condition: (row_number() OVER (?) < 3)
+         Window: w1 AS (PARTITION BY empsalary.depname ORDER BY empsalary.empno ROWS UNBOUNDED PRECEDING)
+         Run Condition: (row_number() OVER w1 < 3)
          ->  Sort
                Sort Key: empsalary.depname, empsalary.empno
                ->  Seq Scan on empsalary
-(6 rows)
+(7 rows)
 
 -- likewise with count(empno) instead of row_number()
 EXPLAIN (COSTS OFF)
@@ -4090,14 +4110,15 @@ SELECT * FROM
           count(empno) OVER (PARTITION BY depname ORDER BY salary DESC) c
    FROM empsalary) emp
 WHERE c <= 3;
-                         QUERY PLAN                         
-------------------------------------------------------------
+                                 QUERY PLAN                                 
+----------------------------------------------------------------------------
  WindowAgg
-   Run Condition: (count(empsalary.empno) OVER (?) <= 3)
+   Window: w1 AS (PARTITION BY empsalary.depname ORDER BY empsalary.salary)
+   Run Condition: (count(empsalary.empno) OVER w1 <= 3)
    ->  Sort
          Sort Key: empsalary.depname, empsalary.salary DESC
          ->  Seq Scan on empsalary
-(5 rows)
+(6 rows)
 
 -- and again, check the results are what we expect.
 SELECT * FROM
@@ -4129,12 +4150,13 @@ SELECT * FROM
           count(empno) OVER () c
    FROM empsalary) emp
 WHERE c = 1;
-                       QUERY PLAN                       
---------------------------------------------------------
+                      QUERY PLAN                       
+-------------------------------------------------------
  WindowAgg
-   Run Condition: (count(empsalary.empno) OVER (?) = 1)
+   Window: w1 AS ()
+   Run Condition: (count(empsalary.empno) OVER w1 = 1)
    ->  Seq Scan on empsalary
-(3 rows)
+(4 rows)
 
 -- Try another case with a WindowFunc with a byref return type
 SELECT * FROM
@@ -4157,23 +4179,26 @@ SELECT * FROM
           ntile(2) OVER (PARTITION BY depname) nt -- w2
    FROM empsalary
 ) e WHERE rn <= 1 AND c1 <= 3 AND nt < 2;
-                                          QUERY PLAN                                           
------------------------------------------------------------------------------------------------
+                                               QUERY PLAN                                               
+--------------------------------------------------------------------------------------------------------
  Subquery Scan on e
    ->  WindowAgg
-         Filter: (((row_number() OVER (?)) <= 1) AND ((ntile(2) OVER (?)) < 2))
-         Run Condition: (count(empsalary.salary) OVER (?) <= 3)
+         Window: w3 AS (PARTITION BY (((empsalary.depname)::text || ''::text)))
+         Run Condition: (count(empsalary.salary) OVER w3 <= 3)
+         Filter: (((row_number() OVER w2) <= 1) AND ((ntile(2) OVER w2) < 2))
          ->  Sort
                Sort Key: (((empsalary.depname)::text || ''::text))
                ->  WindowAgg
-                     Run Condition: ((row_number() OVER (?) <= 1) AND (ntile(2) OVER (?) < 2))
+                     Window: w2 AS (PARTITION BY empsalary.depname)
+                     Run Condition: ((row_number() OVER w2 <= 1) AND (ntile(2) OVER w2 < 2))
                      ->  Sort
                            Sort Key: empsalary.depname
                            ->  WindowAgg
+                                 Window: w1 AS (PARTITION BY ((''::text || (empsalary.depname)::text)))
                                  ->  Sort
                                        Sort Key: ((''::text || (empsalary.depname)::text))
                                        ->  Seq Scan on empsalary
-(14 rows)
+(17 rows)
 
 -- Ensure we correctly filter out all of the run conditions from each window
 SELECT * FROM
@@ -4199,12 +4224,13 @@ SELECT 1 FROM
    FROM empsalary e1 LEFT JOIN empsalary e2 ON TRUE
    WHERE e1.empno = e2.empno) s
 WHERE s.c = 1;
-                       QUERY PLAN                        
----------------------------------------------------------
+                                QUERY PLAN                                
+--------------------------------------------------------------------------
  Subquery Scan on s
    Filter: (s.c = 1)
    ->  WindowAgg
-         Run Condition: (ntile(e2.salary) OVER (?) <= 1)
+         Window: w1 AS (PARTITION BY e1.depname ROWS UNBOUNDED PRECEDING)
+         Run Condition: (ntile(e2.salary) OVER w1 <= 1)
          ->  Sort
                Sort Key: e1.depname
                ->  Merge Join
@@ -4215,7 +4241,7 @@ WHERE s.c = 1;
                      ->  Sort
                            Sort Key: e2.empno
                            ->  Seq Scan on empsalary e2
-(14 rows)
+(15 rows)
 
 -- Ensure the run condition optimization is used in cases where the WindowFunc
 -- has a Var from another query level
@@ -4224,16 +4250,17 @@ SELECT 1 FROM
   (SELECT ntile(s1.x) OVER () AS c
    FROM (SELECT (SELECT 1) AS x) AS s1) s
 WHERE s.c = 1;
-                           QUERY PLAN                            
------------------------------------------------------------------
+                           QUERY PLAN                           
+----------------------------------------------------------------
  Subquery Scan on s
    Filter: (s.c = 1)
    ->  WindowAgg
-         Run Condition: (ntile((InitPlan 1).col1) OVER (?) <= 1)
+         Window: w1 AS (ROWS UNBOUNDED PRECEDING)
+         Run Condition: (ntile((InitPlan 1).col1) OVER w1 <= 1)
          InitPlan 1
            ->  Result
          ->  Result
-(7 rows)
+(8 rows)
 
 -- Tests to ensure we don't push down the run condition when it's not valid to
 -- do so.
@@ -4246,15 +4273,16 @@ SELECT * FROM
           count(*) OVER (ORDER BY salary DESC ROWS BETWEEN CURRENT ROW AND UNBOUNDED FOLLOWING) c
    FROM empsalary) emp
 WHERE c <= 3;
-                  QUERY PLAN                   
------------------------------------------------
+                                             QUERY PLAN                                             
+----------------------------------------------------------------------------------------------------
  Subquery Scan on emp
    Filter: (emp.c <= 3)
    ->  WindowAgg
+         Window: w1 AS (ORDER BY empsalary.salary ROWS BETWEEN CURRENT ROW AND UNBOUNDED FOLLOWING)
          ->  Sort
                Sort Key: empsalary.salary DESC
                ->  Seq Scan on empsalary
-(6 rows)
+(7 rows)
 
 -- Ensure we don't push down when the window function's monotonic properties
 -- don't match that of the clauses.
@@ -4265,15 +4293,16 @@ SELECT * FROM
           count(*) OVER (ORDER BY salary) c
    FROM empsalary) emp
 WHERE 3 <= c;
-                QUERY PLAN                
-------------------------------------------
+                    QUERY PLAN                     
+---------------------------------------------------
  Subquery Scan on emp
    Filter: (3 <= emp.c)
    ->  WindowAgg
+         Window: w1 AS (ORDER BY empsalary.salary)
          ->  Sort
                Sort Key: empsalary.salary
                ->  Seq Scan on empsalary
-(6 rows)
+(7 rows)
 
 -- Ensure we don't use a run condition when there's a volatile function in the
 -- WindowFunc
@@ -4284,15 +4313,16 @@ SELECT * FROM
           count(random()) OVER (ORDER BY empno DESC) c
    FROM empsalary) emp
 WHERE c = 1;
-                  QUERY PLAN                  
-----------------------------------------------
+                    QUERY PLAN                    
+--------------------------------------------------
  Subquery Scan on emp
    Filter: (emp.c = 1)
    ->  WindowAgg
+         Window: w1 AS (ORDER BY empsalary.empno)
          ->  Sort
                Sort Key: empsalary.empno DESC
                ->  Seq Scan on empsalary
-(6 rows)
+(7 rows)
 
 -- Ensure we don't use a run condition when the WindowFunc contains subplans
 EXPLAIN (COSTS OFF)
@@ -4302,17 +4332,18 @@ SELECT * FROM
           count((SELECT 1)) OVER (ORDER BY empno DESC) c
    FROM empsalary) emp
 WHERE c = 1;
-                  QUERY PLAN                  
-----------------------------------------------
+                    QUERY PLAN                    
+--------------------------------------------------
  Subquery Scan on emp
    Filter: (emp.c = 1)
    ->  WindowAgg
+         Window: w1 AS (ORDER BY empsalary.empno)
          InitPlan 1
            ->  Result
          ->  Sort
                Sort Key: empsalary.empno DESC
                ->  Seq Scan on empsalary
-(8 rows)
+(9 rows)
 
 -- Test Sort node collapsing
 EXPLAIN (COSTS OFF)
@@ -4322,16 +4353,18 @@ SELECT * FROM
           min(salary) OVER (PARTITION BY depname, empno order by enroll_date) depminsalary
    FROM empsalary) emp
 WHERE depname = 'sales';
-                              QUERY PLAN                              
-----------------------------------------------------------------------
+                                        QUERY PLAN                                         
+-------------------------------------------------------------------------------------------
  Subquery Scan on emp
    ->  WindowAgg
+         Window: w2 AS (ORDER BY empsalary.empno)
          ->  WindowAgg
+               Window: w1 AS (PARTITION BY empsalary.empno ORDER BY empsalary.enroll_date)
                ->  Sort
                      Sort Key: empsalary.empno, empsalary.enroll_date
                      ->  Seq Scan on empsalary
                            Filter: ((depname)::text = 'sales'::text)
-(7 rows)
+(9 rows)
 
 -- Ensure that the evaluation order of the WindowAggs results in the WindowAgg
 -- with the same sort order that's required by the ORDER BY is evaluated last.
@@ -4343,17 +4376,19 @@ SELECT empno,
        min(salary) OVER (PARTITION BY depname order by enroll_date) depminsalary
 FROM empsalary
 ORDER BY depname, empno;
-                     QUERY PLAN                     
-----------------------------------------------------
+                               QUERY PLAN                                
+-------------------------------------------------------------------------
  WindowAgg
+   Window: w2 AS (PARTITION BY depname ORDER BY empno)
    ->  Incremental Sort
          Sort Key: depname, empno
          Presorted Key: depname
          ->  WindowAgg
+               Window: w1 AS (PARTITION BY depname ORDER BY enroll_date)
                ->  Sort
                      Sort Key: depname, enroll_date
                      ->  Seq Scan on empsalary
-(8 rows)
+(10 rows)
 
 -- As above, but with an adjusted ORDER BY to ensure the above plan didn't
 -- perform only 2 sorts by accident.
@@ -4365,17 +4400,19 @@ SELECT empno,
        min(salary) OVER (PARTITION BY depname order by enroll_date) depminsalary
 FROM empsalary
 ORDER BY depname, enroll_date;
-                  QUERY PLAN                   
------------------------------------------------
+                            QUERY PLAN                             
+-------------------------------------------------------------------
  WindowAgg
+   Window: w2 AS (PARTITION BY depname ORDER BY enroll_date)
    ->  Incremental Sort
          Sort Key: depname, enroll_date
          Presorted Key: depname
          ->  WindowAgg
+               Window: w1 AS (PARTITION BY depname ORDER BY empno)
                ->  Sort
                      Sort Key: depname, empno
                      ->  Seq Scan on empsalary
-(8 rows)
+(10 rows)
 
 SET enable_hashagg TO off;
 -- Ensure we don't get a sort for both DISTINCT and ORDER BY.  We expect the
@@ -4389,21 +4426,23 @@ SELECT DISTINCT
        min(salary) OVER (PARTITION BY depname order by enroll_date) depminsalary
 FROM empsalary
 ORDER BY depname, enroll_date;
-                                          QUERY PLAN                                           
------------------------------------------------------------------------------------------------
+                                         QUERY PLAN                                          
+---------------------------------------------------------------------------------------------
  Unique
    ->  Incremental Sort
-         Sort Key: depname, enroll_date, empno, (sum(salary) OVER (?)), (min(salary) OVER (?))
+         Sort Key: depname, enroll_date, empno, (sum(salary) OVER w1), (min(salary) OVER w2)
          Presorted Key: depname, enroll_date
          ->  WindowAgg
+               Window: w2 AS (PARTITION BY depname ORDER BY enroll_date)
                ->  Incremental Sort
                      Sort Key: depname, enroll_date
                      Presorted Key: depname
                      ->  WindowAgg
+                           Window: w1 AS (PARTITION BY depname ORDER BY empno)
                            ->  Sort
                                  Sort Key: depname, empno
                                  ->  Seq Scan on empsalary
-(12 rows)
+(14 rows)
 
 -- As above but adjust the ORDER BY clause to help ensure the plan with the
 -- minimum amount of sorting wasn't a fluke.
@@ -4416,21 +4455,23 @@ SELECT DISTINCT
        min(salary) OVER (PARTITION BY depname order by enroll_date) depminsalary
 FROM empsalary
 ORDER BY depname, empno;
-                                          QUERY PLAN                                           
------------------------------------------------------------------------------------------------
+                                         QUERY PLAN                                          
+---------------------------------------------------------------------------------------------
  Unique
    ->  Incremental Sort
-         Sort Key: depname, empno, enroll_date, (sum(salary) OVER (?)), (min(salary) OVER (?))
+         Sort Key: depname, empno, enroll_date, (sum(salary) OVER w2), (min(salary) OVER w1)
          Presorted Key: depname, empno
          ->  WindowAgg
+               Window: w2 AS (PARTITION BY depname ORDER BY empno)
                ->  Incremental Sort
                      Sort Key: depname, empno
                      Presorted Key: depname
                      ->  WindowAgg
+                           Window: w1 AS (PARTITION BY depname ORDER BY enroll_date)
                            ->  Sort
                                  Sort Key: depname, enroll_date
                                  ->  Seq Scan on empsalary
-(12 rows)
+(14 rows)
 
 RESET enable_hashagg;
 -- Test Sort node reordering
@@ -4439,14 +4480,16 @@ SELECT
   lead(1) OVER (PARTITION BY depname ORDER BY salary, enroll_date),
   lag(1) OVER (PARTITION BY depname ORDER BY salary,enroll_date,empno)
 FROM empsalary;
-                         QUERY PLAN                          
--------------------------------------------------------------
+                                    QUERY PLAN                                    
+----------------------------------------------------------------------------------
  WindowAgg
+   Window: w2 AS (PARTITION BY depname ORDER BY salary, enroll_date)
    ->  WindowAgg
+         Window: w1 AS (PARTITION BY depname ORDER BY salary, enroll_date, empno)
          ->  Sort
                Sort Key: depname, salary, enroll_date, empno
                ->  Seq Scan on empsalary
-(5 rows)
+(7 rows)
 
 -- Test incremental sorting
 EXPLAIN (COSTS OFF)
@@ -4459,19 +4502,21 @@ SELECT * FROM
           row_number() OVER (PARTITION BY depname ORDER BY enroll_date DESC) AS last_emp
    FROM empsalary) emp
 WHERE first_emp = 1 OR last_emp = 1;
-                                    QUERY PLAN                                     
------------------------------------------------------------------------------------
+                                                         QUERY PLAN                                                         
+----------------------------------------------------------------------------------------------------------------------------
  Subquery Scan on emp
    Filter: ((emp.first_emp = 1) OR (emp.last_emp = 1))
    ->  WindowAgg
+         Window: w2 AS (PARTITION BY empsalary.depname ORDER BY empsalary.enroll_date ROWS UNBOUNDED PRECEDING)
          ->  Incremental Sort
                Sort Key: empsalary.depname, empsalary.enroll_date
                Presorted Key: empsalary.depname
                ->  WindowAgg
+                     Window: w1 AS (PARTITION BY empsalary.depname ORDER BY empsalary.enroll_date ROWS UNBOUNDED PRECEDING)
                      ->  Sort
                            Sort Key: empsalary.depname, empsalary.enroll_date DESC
                            ->  Seq Scan on empsalary
-(10 rows)
+(12 rows)
 
 SELECT * FROM
   (SELECT depname,
@@ -5299,11 +5344,12 @@ LIMIT 1;
 --------------------------------------------------------------------------
  Limit
    ->  WindowAgg
+         Window: w1 AS (ORDER BY t1.unique1)
          ->  Nested Loop
                ->  Index Only Scan using tenk1_unique1 on tenk1 t1
                ->  Index Only Scan using tenk1_thous_tenthous on tenk1 t2
                      Index Cond: (tenthous = t1.unique1)
-(6 rows)
+(7 rows)
 
 -- Ensure we get a cheap total plan.  Lack of ORDER BY in the WindowClause
 -- means that all rows must be read from the join, so a cheap startup plan
@@ -5317,13 +5363,14 @@ LIMIT 1;
 -------------------------------------------------------------------
  Limit
    ->  WindowAgg
+         Window: w1 AS ()
          ->  Hash Join
                Hash Cond: (t1.unique1 = t2.tenthous)
                ->  Index Only Scan using tenk1_unique1 on tenk1 t1
                ->  Hash
                      ->  Seq Scan on tenk1 t2
                            Filter: (two = 1)
-(8 rows)
+(9 rows)
 
 -- Ensure we get a cheap total plan.  This time use UNBOUNDED FOLLOWING, which
 -- needs to read all join rows to output the first WindowAgg row.
@@ -5331,17 +5378,18 @@ EXPLAIN (COSTS OFF)
 SELECT COUNT(*) OVER (ORDER BY t1.unique1 ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING)
 FROM tenk1 t1 INNER JOIN tenk1 t2 ON t1.unique1 = t2.tenthous
 LIMIT 1;
-                                   QUERY PLAN                                   
---------------------------------------------------------------------------------
+                                              QUERY PLAN                                              
+------------------------------------------------------------------------------------------------------
  Limit
    ->  WindowAgg
+         Window: w1 AS (ORDER BY t1.unique1 ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING)
          ->  Merge Join
                Merge Cond: (t1.unique1 = t2.tenthous)
                ->  Index Only Scan using tenk1_unique1 on tenk1 t1
                ->  Sort
                      Sort Key: t2.tenthous
                      ->  Index Only Scan using tenk1_thous_tenthous on tenk1 t2
-(8 rows)
+(9 rows)
 
 -- Ensure we get a cheap total plan.  This time use 10000 FOLLOWING so we need
 -- to read all join rows.
@@ -5349,17 +5397,18 @@ EXPLAIN (COSTS OFF)
 SELECT COUNT(*) OVER (ORDER BY t1.unique1 ROWS BETWEEN UNBOUNDED PRECEDING AND 10000 FOLLOWING)
 FROM tenk1 t1 INNER JOIN tenk1 t2 ON t1.unique1 = t2.tenthous
 LIMIT 1;
-                                   QUERY PLAN                                   
---------------------------------------------------------------------------------
+                                                 QUERY PLAN                                                 
+------------------------------------------------------------------------------------------------------------
  Limit
    ->  WindowAgg
+         Window: w1 AS (ORDER BY t1.unique1 ROWS BETWEEN UNBOUNDED PRECEDING AND '10000'::bigint FOLLOWING)
          ->  Merge Join
                Merge Cond: (t1.unique1 = t2.tenthous)
                ->  Index Only Scan using tenk1_unique1 on tenk1 t1
                ->  Sort
                      Sort Key: t2.tenthous
                      ->  Index Only Scan using tenk1_thous_tenthous on tenk1 t2
-(8 rows)
+(9 rows)
 
 -- Tests for problems with failure to walk or mutate expressions
 -- within window frame clauses.
@@ -5384,14 +5433,15 @@ AS $$
     WINDOW w AS (ORDER BY s ROWS BETWEEN CURRENT ROW AND GROUP_SIZE FOLLOWING)
 $$ LANGUAGE SQL STABLE;
 EXPLAIN (costs off) SELECT * FROM pg_temp.f(2);
-                      QUERY PLAN                      
-------------------------------------------------------
+                                       QUERY PLAN                                       
+----------------------------------------------------------------------------------------
  Subquery Scan on f
    ->  WindowAgg
+         Window: w AS (ORDER BY s.s ROWS BETWEEN CURRENT ROW AND '2'::bigint FOLLOWING)
          ->  Sort
                Sort Key: s.s
                ->  Function Scan on generate_series s
-(5 rows)
+(6 rows)
 
 SELECT * FROM pg_temp.f(2);
     f    

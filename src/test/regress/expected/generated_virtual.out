@@ -1427,6 +1427,7 @@ order by t1.a;
  Sort
    Sort Key: t1.a
    ->  WindowAgg
+         Window: w1 AS (PARTITION BY t2.a)
          ->  Sort
                Sort Key: t2.a
                ->  Nested Loop Left Join
@@ -1434,7 +1435,7 @@ order by t1.a;
                      ->  Seq Scan on gtest32 t1
                      ->  Materialize
                            ->  Seq Scan on gtest32 t2
-(10 rows)
+(11 rows)
 
 select sum(t2.b) over (partition by t2.a),
        sum(t2.c) over (partition by t2.a),

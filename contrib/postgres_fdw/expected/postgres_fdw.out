@@ -3968,10 +3968,11 @@ select c2, sum(c2), count(c2) over (partition by c2%2) from ft2 where c2 < 10 gr
                                                  QUERY PLAN                                                 
 ------------------------------------------------------------------------------------------------------------
  Sort
-   Output: c2, (sum(c2)), (count(c2) OVER (?)), ((c2 % 2))
+   Output: c2, (sum(c2)), (count(c2) OVER w1), ((c2 % 2))
    Sort Key: ft2.c2
    ->  WindowAgg
-         Output: c2, (sum(c2)), count(c2) OVER (?), ((c2 % 2))
+         Output: c2, (sum(c2)), count(c2) OVER w1, ((c2 % 2))
+         Window: w1 AS (PARTITION BY ((ft2.c2 % 2)))
          ->  Sort
                Output: c2, ((c2 % 2)), (sum(c2))
                Sort Key: ((ft2.c2 % 2))
@@ -3979,7 +3980,7 @@ select c2, sum(c2), count(c2) over (partition by c2%2) from ft2 where c2 < 10 gr
                      Output: c2, ((c2 % 2)), (sum(c2))
                      Relations: Aggregate on (public.ft2)
                      Remote SQL: SELECT c2, (c2 % 2), sum(c2) FROM "S 1"."T 1" WHERE ((c2 < 10)) GROUP BY 1
-(12 rows)
+(13 rows)
 
 select c2, sum(c2), count(c2) over (partition by c2%2) from ft2 where c2 < 10 group by c2 order by 1;
  c2 | sum | count 
@@ -4001,10 +4002,11 @@ select c2, array_agg(c2) over (partition by c2%2 order by c2 desc) from ft1 wher
                                             QUERY PLAN                                             
 ---------------------------------------------------------------------------------------------------
  Sort
-   Output: c2, (array_agg(c2) OVER (?)), ((c2 % 2))
+   Output: c2, (array_agg(c2) OVER w1), ((c2 % 2))
    Sort Key: ft1.c2
    ->  WindowAgg
-         Output: c2, array_agg(c2) OVER (?), ((c2 % 2))
+         Output: c2, array_agg(c2) OVER w1, ((c2 % 2))
+         Window: w1 AS (PARTITION BY ((ft1.c2 % 2)) ORDER BY ft1.c2)
          ->  Sort
                Output: c2, ((c2 % 2))
                Sort Key: ((ft1.c2 % 2)), ft1.c2 DESC
@@ -4012,7 +4014,7 @@ select c2, array_agg(c2) over (partition by c2%2 order by c2 desc) from ft1 wher
                      Output: c2, ((c2 % 2))
                      Relations: Aggregate on (public.ft1)
                      Remote SQL: SELECT c2, (c2 % 2) FROM "S 1"."T 1" WHERE ((c2 < 10)) GROUP BY 1
-(12 rows)
+(13 rows)
 
 select c2, array_agg(c2) over (partition by c2%2 order by c2 desc) from ft1 where c2 < 10 group by c2 order by 1;
  c2 |  array_agg  
@@ -4031,13 +4033,14 @@ select c2, array_agg(c2) over (partition by c2%2 order by c2 desc) from ft1 wher
 
 explain (verbose, costs off)
 select c2, array_agg(c2) over (partition by c2%2 order by c2 range between current row and unbounded following) from ft1 where c2 < 10 group by c2 order by 1;
-                                            QUERY PLAN                                             
----------------------------------------------------------------------------------------------------
+                                                      QUERY PLAN                                                       
+-----------------------------------------------------------------------------------------------------------------------
  Sort
-   Output: c2, (array_agg(c2) OVER (?)), ((c2 % 2))
+   Output: c2, (array_agg(c2) OVER w1), ((c2 % 2))
    Sort Key: ft1.c2
    ->  WindowAgg
-         Output: c2, array_agg(c2) OVER (?), ((c2 % 2))
+         Output: c2, array_agg(c2) OVER w1, ((c2 % 2))
+         Window: w1 AS (PARTITION BY ((ft1.c2 % 2)) ORDER BY ft1.c2 RANGE BETWEEN CURRENT ROW AND UNBOUNDED FOLLOWING)
          ->  Sort
                Output: c2, ((c2 % 2))
                Sort Key: ((ft1.c2 % 2)), ft1.c2
@@ -4045,7 +4048,7 @@ select c2, array_agg(c2) over (partition by c2%2 order by c2 range between curre
                      Output: c2, ((c2 % 2))
                      Relations: Aggregate on (public.ft1)
                      Remote SQL: SELECT c2, (c2 % 2) FROM "S 1"."T 1" WHERE ((c2 < 10)) GROUP BY 1
-(12 rows)
+(13 rows)
 
 select c2, array_agg(c2) over (partition by c2%2 order by c2 range between current row and unbounded following) from ft1 where c2 < 10 group by c2 order by 1;
  c2 |  array_agg  

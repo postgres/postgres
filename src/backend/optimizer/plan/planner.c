@@ -214,6 +214,7 @@ static List *postprocess_setop_tlist(List *new_tlist, List *orig_tlist);
 static void optimize_window_clauses(PlannerInfo *root,
 									WindowFuncLists *wflists);
 static List *select_active_windows(PlannerInfo *root, WindowFuncLists *wflists);
+static void name_active_windows(List *activeWindows);
 static PathTarget *make_window_input_target(PlannerInfo *root,
 											PathTarget *final_target,
 											List *activeWindows);
@@ -1539,7 +1540,11 @@ grouping_planner(PlannerInfo *root, double tuple_fraction,
 				 */
 				optimize_window_clauses(root, wflists);
 
+				/* Extract the list of windows actually in use. */
 				activeWindows = select_active_windows(root, wflists);
+
+				/* Make sure they all have names, for EXPLAIN's use. */
+				name_active_windows(activeWindows);
 			}
 			else
 				parse->hasWindowFuncs = false;
@@ -5912,6 +5917,52 @@ select_active_windows(PlannerInfo *root, WindowFuncLists *wflists)
 	pfree(actives);
 
 	return result;
+}
+
+/*
+ * name_active_windows
+ *	  Ensure all active windows have unique names.
+ *
+ * The parser will have checked that user-assigned window names are unique
+ * within the Query.  Here we assign made-up names to any unnamed
+ * WindowClauses for the benefit of EXPLAIN.  (We don't want to do this
+ * at parse time, because it'd mess up decompilation of views.)
+ *
+ * activeWindows: result of select_active_windows
+ */
+static void
+name_active_windows(List *activeWindows)
+{
+	int			next_n = 1;
+	char		newname[16];
+	ListCell   *lc;
+
+	foreach(lc, activeWindows)
+	{
+		WindowClause *wc = lfirst_node(WindowClause, lc);
+
+		/* Nothing to do if it has a name already. */
+		if (wc->name)
+			continue;
+
+		/* Select a name not currently present in the list. */
+		for (;;)
+		{
+			ListCell   *lc2;
+
+			snprintf(newname, sizeof(newname), "w%d", next_n++);
+			foreach(lc2, activeWindows)
+			{
+				WindowClause *wc2 = lfirst_node(WindowClause, lc2);
+
+				if (wc2->name && strcmp(wc2->name, newname) == 0)
+					break;		/* matched */
+			}
+			if (lc2 == NULL)
+				break;			/* reached the end with no match */
+		}
+		wc->name = pstrdup(newname);
+	}
 }
 
 /*

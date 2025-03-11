@@ -1130,9 +1130,10 @@ explain (costs off, verbose)
  Aggregate
    Output: count(*)
    ->  Hash Right Semi Join
-         Hash Cond: ((b.unique1 = a.unique1) AND ((row_number() OVER (?)) = a.two))
+         Hash Cond: ((b.unique1 = a.unique1) AND ((row_number() OVER w1) = a.two))
          ->  WindowAgg
-               Output: b.unique1, row_number() OVER (?)
+               Output: b.unique1, row_number() OVER w1
+               Window: w1 AS (ROWS UNBOUNDED PRECEDING)
                ->  Gather
                      Output: b.unique1
                      Workers Planned: 4
@@ -1145,7 +1146,7 @@ explain (costs off, verbose)
                      Workers Planned: 4
                      ->  Parallel Seq Scan on public.tenk1 a
                            Output: a.unique1, a.two
-(18 rows)
+(19 rows)
 
 -- LIMIT/OFFSET within sub-selects can't be pushed to workers.
 explain (costs off)

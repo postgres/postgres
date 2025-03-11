@@ -243,6 +243,42 @@ select explain_filter('explain (buffers, format json) select * from int8_tbl i8'
  ]
 (1 row)
 
+-- Check expansion of window definitions
+select explain_filter('explain verbose select sum(unique1) over w, sum(unique2) over (w order by hundred), sum(tenthous) over (w order by hundred) from tenk1 window w as (partition by ten)');
+                                            explain_filter                                             
+-------------------------------------------------------------------------------------------------------
+ WindowAgg  (cost=N.N..N.N rows=N width=N)
+   Output: sum(unique1) OVER w, (sum(unique2) OVER w1), (sum(tenthous) OVER w1), ten, hundred
+   Window: w AS (PARTITION BY tenk1.ten)
+   ->  WindowAgg  (cost=N.N..N.N rows=N width=N)
+         Output: ten, hundred, unique1, unique2, tenthous, sum(unique2) OVER w1, sum(tenthous) OVER w1
+         Window: w1 AS (PARTITION BY tenk1.ten ORDER BY tenk1.hundred)
+         ->  Sort  (cost=N.N..N.N rows=N width=N)
+               Output: ten, hundred, unique1, unique2, tenthous
+               Sort Key: tenk1.ten, tenk1.hundred
+               ->  Seq Scan on public.tenk1  (cost=N.N..N.N rows=N width=N)
+                     Output: ten, hundred, unique1, unique2, tenthous
+(11 rows)
+
+select explain_filter('explain verbose select sum(unique1) over w1, sum(unique2) over (w1 order by hundred), sum(tenthous) over (w1 order by hundred rows 10 preceding) from tenk1 window w1 as (partition by ten)');
+                                             explain_filter                                              
+---------------------------------------------------------------------------------------------------------
+ WindowAgg  (cost=N.N..N.N rows=N width=N)
+   Output: sum(unique1) OVER w1, (sum(unique2) OVER w2), (sum(tenthous) OVER w3), ten, hundred
+   Window: w1 AS (PARTITION BY tenk1.ten)
+   ->  WindowAgg  (cost=N.N..N.N rows=N width=N)
+         Output: ten, hundred, unique1, unique2, tenthous, (sum(unique2) OVER w2), sum(tenthous) OVER w3
+         Window: w3 AS (PARTITION BY tenk1.ten ORDER BY tenk1.hundred ROWS 'N'::bigint PRECEDING)
+         ->  WindowAgg  (cost=N.N..N.N rows=N width=N)
+               Output: ten, hundred, unique1, unique2, tenthous, sum(unique2) OVER w2
+               Window: w2 AS (PARTITION BY tenk1.ten ORDER BY tenk1.hundred)
+               ->  Sort  (cost=N.N..N.N rows=N width=N)
+                     Output: ten, hundred, unique1, unique2, tenthous
+                     Sort Key: tenk1.ten, tenk1.hundred
+                     ->  Seq Scan on public.tenk1  (cost=N.N..N.N rows=N width=N)
+                           Output: ten, hundred, unique1, unique2, tenthous
+(14 rows)
+
 -- Check output including I/O timings.  These fields are conditional
 -- but always set in JSON format, so check them only in this case.
 set track_io_timing = on;
@@ -742,11 +778,12 @@ select explain_filter('explain (analyze,buffers off,costs off) select sum(n) ove
                                   explain_filter                                  
 ----------------------------------------------------------------------------------
  WindowAgg (actual time=N.N..N.N rows=N.N loops=N)
+   Window: w1 AS ()
    Storage: Memory  Maximum Storage: NkB
    ->  Function Scan on generate_series a (actual time=N.N..N.N rows=N.N loops=N)
  Planning Time: N.N ms
  Execution Time: N.N ms
-(5 rows)
+(6 rows)
 
 -- Test tuplestore storage usage in Window aggregate (disk case)
 set work_mem to 64;
@@ -754,17 +791,19 @@ select explain_filter('explain (analyze,buffers off,costs off) select sum(n) ove
                                   explain_filter                                  
 ----------------------------------------------------------------------------------
  WindowAgg (actual time=N.N..N.N rows=N.N loops=N)
+   Window: w1 AS ()
    Storage: Disk  Maximum Storage: NkB
    ->  Function Scan on generate_series a (actual time=N.N..N.N rows=N.N loops=N)
  Planning Time: N.N ms
  Execution Time: N.N ms
-(5 rows)
+(6 rows)
 
 -- Test tuplestore storage usage in Window aggregate (memory and disk case, final result is disk)
 select explain_filter('explain (analyze,buffers off,costs off) select sum(n) over(partition by m) from (SELECT n < 3 as m, n from generate_series(1,2000) a(n))');
                                      explain_filter                                     
 ----------------------------------------------------------------------------------------
  WindowAgg (actual time=N.N..N.N rows=N.N loops=N)
+   Window: w1 AS (PARTITION BY ((a.n < N)))
    Storage: Disk  Maximum Storage: NkB
    ->  Sort (actual time=N.N..N.N rows=N.N loops=N)
          Sort Key: ((a.n < N))
@@ -772,6 +811,6 @@ select explain_filter('explain (analyze,buffers off,costs off) select sum(n) ove
          ->  Function Scan on generate_series a (actual time=N.N..N.N rows=N.N loops=N)
  Planning Time: N.N ms
  Execution Time: N.N ms
-(8 rows)
+(9 rows)
 
 reset work_mem;
