@@ -82,7 +82,7 @@ typedef struct InclusionOpaque
 } InclusionOpaque;
 
 static FmgrInfo *inclusion_get_procinfo(BrinDesc *bdesc, uint16 attno,
-										uint16 procnum);
+										uint16 procnum, bool missing_ok);
 static FmgrInfo *inclusion_get_strategy_procinfo(BrinDesc *bdesc, uint16 attno,
 												 Oid subtype, uint16 strategynum);
 
@@ -189,7 +189,7 @@ brin_inclusion_add_value(PG_FUNCTION_ARGS)
 	 * new value for emptiness; if it returns true, we need to set the
 	 * "contains empty" flag in the element (unless already set).
 	 */
-	finfo = inclusion_get_procinfo(bdesc, attno, PROCNUM_EMPTY);
+	finfo = inclusion_get_procinfo(bdesc, attno, PROCNUM_EMPTY, true);
 	if (finfo != NULL && DatumGetBool(FunctionCall1Coll(finfo, colloid, newval)))
 	{
 		if (!DatumGetBool(column->bv_values[INCLUSION_CONTAINS_EMPTY]))
@@ -205,7 +205,7 @@ brin_inclusion_add_value(PG_FUNCTION_ARGS)
 		PG_RETURN_BOOL(true);
 
 	/* Check if the new value is already contained. */
-	finfo = inclusion_get_procinfo(bdesc, attno, PROCNUM_CONTAINS);
+	finfo = inclusion_get_procinfo(bdesc, attno, PROCNUM_CONTAINS, true);
 	if (finfo != NULL &&
 		DatumGetBool(FunctionCall2Coll(finfo, colloid,
 									   column->bv_values[INCLUSION_UNION],
@@ -220,7 +220,7 @@ brin_inclusion_add_value(PG_FUNCTION_ARGS)
 	 * it's not going to be used any longer.  However, the BRIN framework
 	 * doesn't allow for the value not being present.  Improve someday.
 	 */
-	finfo = inclusion_get_procinfo(bdesc, attno, PROCNUM_MERGEABLE);
+	finfo = inclusion_get_procinfo(bdesc, attno, PROCNUM_MERGEABLE, true);
 	if (finfo != NULL &&
 		!DatumGetBool(FunctionCall2Coll(finfo, colloid,
 										column->bv_values[INCLUSION_UNION],
@@ -231,8 +231,7 @@ brin_inclusion_add_value(PG_FUNCTION_ARGS)
 	}
 
 	/* Finally, merge the new value to the existing union. */
-	finfo = inclusion_get_procinfo(bdesc, attno, PROCNUM_MERGE);
-	Assert(finfo != NULL);
+	finfo = inclusion_get_procinfo(bdesc, attno, PROCNUM_MERGE, false);
 	result = FunctionCall2Coll(finfo, colloid,
 							   column->bv_values[INCLUSION_UNION], newval);
 	if (!attr->attbyval &&
@@ -572,7 +571,7 @@ brin_inclusion_union(PG_FUNCTION_ARGS)
 	}
 
 	/* Check if A and B are mergeable; if not, mark A unmergeable. */
-	finfo = inclusion_get_procinfo(bdesc, attno, PROCNUM_MERGEABLE);
+	finfo = inclusion_get_procinfo(bdesc, attno, PROCNUM_MERGEABLE, true);
 	if (finfo != NULL &&
 		!DatumGetBool(FunctionCall2Coll(finfo, colloid,
 										col_a->bv_values[INCLUSION_UNION],
@@ -583,8 +582,7 @@ brin_inclusion_union(PG_FUNCTION_ARGS)
 	}
 
 	/* Finally, merge B to A. */
-	finfo = inclusion_get_procinfo(bdesc, attno, PROCNUM_MERGE);
-	Assert(finfo != NULL);
+	finfo = inclusion_get_procinfo(bdesc, attno, PROCNUM_MERGE, false);
 	result = FunctionCall2Coll(finfo, colloid,
 							   col_a->bv_values[INCLUSION_UNION],
 							   col_b->bv_values[INCLUSION_UNION]);
@@ -605,10 +603,12 @@ brin_inclusion_union(PG_FUNCTION_ARGS)
  * Cache and return inclusion opclass support procedure
  *
  * Return the procedure corresponding to the given function support number
- * or null if it is not exists.
+ * or null if it is not exists.  If missing_ok is true and the procedure
+ * isn't set up for this opclass, return NULL instead of raising an error.
  */
 static FmgrInfo *
-inclusion_get_procinfo(BrinDesc *bdesc, uint16 attno, uint16 procnum)
+inclusion_get_procinfo(BrinDesc *bdesc, uint16 attno, uint16 procnum,
+					   bool missing_ok)
 {
 	InclusionOpaque *opaque;
 	uint16		basenum = procnum - PROCNUM_BASE;
@@ -630,13 +630,18 @@ inclusion_get_procinfo(BrinDesc *bdesc, uint16 attno, uint16 procnum)
 	{
 		if (RegProcedureIsValid(index_getprocid(bdesc->bd_index, attno,
 												procnum)))
-		{
 			fmgr_info_copy(&opaque->extra_procinfos[basenum],
 						   index_getprocinfo(bdesc->bd_index, attno, procnum),
 						   bdesc->bd_context);
-		}
 		else
 		{
+			if (!missing_ok)
+				ereport(ERROR,
+						errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+						errmsg_internal("invalid opclass definition"),
+						errdetail_internal("The operator class is missing support function %d for column %d.",
+										   procnum, attno));
+
 			opaque->extra_proc_missing[basenum] = true;
 			return NULL;
 		}
