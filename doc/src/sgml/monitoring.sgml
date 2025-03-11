@@ -4867,6 +4867,25 @@ description | Waiting for a newly initialized WAL file to reach durable storage
       </row>
 
       <row>
+       <entry id="pg-stat-get-backend-wal" role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_stat_get_backend_wal</primary>
+        </indexterm>
+        <function>pg_stat_get_backend_wal</function> ( <type>integer</type> )
+        <returnvalue>record</returnvalue>
+       </para>
+       <para>
+        Returns WAL statistics about the backend with the specified
+        process ID. The output fields are exactly the same as the ones in the
+        <structname>pg_stat_wal</structname> view.
+       </para>
+       <para>
+        The function does not return WAL statistics for the checkpointer,
+        the background writer, the startup process and the autovacuum launcher.
+       </para></entry>
+      </row>
+
+      <row>
        <entry role="func_table_entry"><para role="func_signature">
         <indexterm>
          <primary>pg_stat_get_snapshot_timestamp</primary>
