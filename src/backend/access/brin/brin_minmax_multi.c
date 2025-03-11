@@ -111,7 +111,6 @@
 typedef struct MinmaxMultiOpaque
 {
 	FmgrInfo	extra_procinfos[MINMAX_MAX_PROCNUMS];
-	bool		extra_proc_missing[MINMAX_MAX_PROCNUMS];
 	Oid			cached_subtype;
 	FmgrInfo	strategy_procinfos[BTMaxStrategyNumber];
 } MinmaxMultiOpaque;
@@ -2872,27 +2871,19 @@ minmax_multi_get_procinfo(BrinDesc *bdesc, uint16 attno, uint16 procnum)
 	 */
 	opaque = (MinmaxMultiOpaque *) bdesc->bd_info[attno - 1]->oi_opaque;
 
-	/*
-	 * If we already searched for this proc and didn't find it, don't bother
-	 * searching again.
-	 */
-	if (opaque->extra_proc_missing[basenum])
-		return NULL;
-
 	if (opaque->extra_procinfos[basenum].fn_oid == InvalidOid)
 	{
 		if (RegProcedureIsValid(index_getprocid(bdesc->bd_index, attno,
 												procnum)))
-		{
 			fmgr_info_copy(&opaque->extra_procinfos[basenum],
 						   index_getprocinfo(bdesc->bd_index, attno, procnum),
 						   bdesc->bd_context);
-		}
 		else
-		{
-			opaque->extra_proc_missing[basenum] = true;
-			return NULL;
-		}
+			ereport(ERROR,
+					errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+					errmsg_internal("invalid opclass definition"),
+					errdetail_internal("The operator class is missing support function %d for column %d.",
+									   procnum, attno));
 	}
 
 	return &opaque->extra_procinfos[basenum];
