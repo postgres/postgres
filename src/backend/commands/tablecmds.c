@@ -585,6 +585,14 @@ static bool tryAttachPartitionForeignKey(List **wqueue,
 										 Oid parentInsTrigger,
 										 Oid parentUpdTrigger,
 										 Relation trigrel);
+static void AttachPartitionForeignKey(List **wqueue, Relation partition,
+									  Oid partConstrOid, Oid parentConstrOid,
+									  Oid parentInsTrigger, Oid parentUpdTrigger,
+									  Relation trigrel);
+static void RemoveInheritedConstraint(Relation conrel, Relation trigrel,
+									  Oid conoid, Oid conrelid);
+static void DropForeignKeyConstraintTriggers(Relation trigrel, Oid conoid,
+											 Oid confrelid, Oid conrelid);
 static void GetForeignKeyActionTriggers(Relation trigrel,
 										Oid conoid, Oid confrelid, Oid conrelid,
 										Oid *deleteTriggerOid,
@@ -11467,12 +11475,6 @@ tryAttachPartitionForeignKey(List **wqueue,
 	Form_pg_constraint parentConstr;
 	HeapTuple	partcontup;
 	Form_pg_constraint partConstr;
-	bool		queueValidation;
-	ScanKeyData key;
-	SysScanDesc scan;
-	HeapTuple	trigtup;
-	Oid			insertTriggerOid,
-				updateTriggerOid;
 
 	parentConstrTup = SearchSysCache1(CONSTROID,
 									  ObjectIdGetDatum(parentConstrOid));
@@ -11517,6 +11519,59 @@ tryAttachPartitionForeignKey(List **wqueue,
 		return false;
 	}
 
+	ReleaseSysCache(parentConstrTup);
+	ReleaseSysCache(partcontup);
+
+	/* Looks good!  Attach this constraint. */
+	AttachPartitionForeignKey(wqueue, partition, fk->conoid,
+							  parentConstrOid, parentInsTrigger,
+							  parentUpdTrigger, trigrel);
+
+	return true;
+}
+
+/*
+ * AttachPartitionForeignKey
+ *
+ * The subroutine for tryAttachPartitionForeignKey performs the final tasks of
+ * attaching the constraint, removing redundant triggers and entries from
+ * pg_constraint, and setting the constraint's parent.
+ */
+static void
+AttachPartitionForeignKey(List **wqueue,
+						  Relation partition,
+						  Oid partConstrOid,
+						  Oid parentConstrOid,
+						  Oid parentInsTrigger,
+						  Oid parentUpdTrigger,
+						  Relation trigrel)
+{
+	HeapTuple	parentConstrTup;
+	Form_pg_constraint parentConstr;
+	HeapTuple	partcontup;
+	Form_pg_constraint partConstr;
+	bool		queueValidation;
+	Oid			partConstrFrelid;
+	Oid			partConstrRelid;
+	Oid			insertTriggerOid,
+				updateTriggerOid;
+
+	/* Fetch the parent constraint tuple */
+	parentConstrTup = SearchSysCache1(CONSTROID,
+									  ObjectIdGetDatum(parentConstrOid));
+	if (!HeapTupleIsValid(parentConstrTup))
+		elog(ERROR, "cache lookup failed for constraint %u", parentConstrOid);
+	parentConstr = (Form_pg_constraint) GETSTRUCT(parentConstrTup);
+
+	/* Fetch the child constraint tuple */
+	partcontup = SearchSysCache1(CONSTROID,
+								 ObjectIdGetDatum(partConstrOid));
+	if (!HeapTupleIsValid(partcontup))
+		elog(ERROR, "cache lookup failed for constraint %u", partConstrOid);
+	partConstr = (Form_pg_constraint) GETSTRUCT(partcontup);
+	partConstrFrelid = partConstr->confrelid;
+	partConstrRelid = partConstr->conrelid;
+
 	/*
 	 * Will we need to validate this constraint?   A valid parent constraint
 	 * implies that all child constraints have been validated, so if this one
@@ -11528,16 +11583,171 @@ tryAttachPartitionForeignKey(List **wqueue,
 	ReleaseSysCache(parentConstrTup);
 
 	/*
-	 * Looks good!  Attach this constraint.  The action triggers in the new
-	 * partition become redundant -- the parent table already has equivalent
-	 * ones, and those will be able to reach the partition.  Remove the ones
-	 * in the partition.  We identify them because they have our constraint
-	 * OID, as well as being on the referenced rel.
+	 * The action triggers in the new partition become redundant -- the parent
+	 * table already has equivalent ones, and those will be able to reach the
+	 * partition.  Remove the ones in the partition.  We identify them because
+	 * they have our constraint OID, as well as being on the referenced rel.
 	 */
+	DropForeignKeyConstraintTriggers(trigrel, partConstrOid, partConstrFrelid,
+									 partConstrRelid);
+
+	ConstraintSetParentConstraint(partConstrOid, parentConstrOid,
+								  RelationGetRelid(partition));
+
+	/*
+	 * Like the constraint, attach partition's "check" triggers to the
+	 * corresponding parent triggers.
+	 */
+	GetForeignKeyCheckTriggers(trigrel,
+							   partConstrOid, partConstrFrelid, partConstrRelid,
+							   &insertTriggerOid, &updateTriggerOid);
+	Assert(OidIsValid(insertTriggerOid) && OidIsValid(parentInsTrigger));
+	TriggerSetParentTrigger(trigrel, insertTriggerOid, parentInsTrigger,
+							RelationGetRelid(partition));
+	Assert(OidIsValid(updateTriggerOid) && OidIsValid(parentUpdTrigger));
+	TriggerSetParentTrigger(trigrel, updateTriggerOid, parentUpdTrigger,
+							RelationGetRelid(partition));
+
+	/*
+	 * If the referenced table is partitioned, then the partition we're
+	 * attaching now has extra pg_constraint rows and action triggers that are
+	 * no longer needed.  Remove those.
+	 */
+	if (get_rel_relkind(partConstrFrelid) == RELKIND_PARTITIONED_TABLE)
+	{
+		Relation	pg_constraint = table_open(ConstraintRelationId, RowShareLock);
+
+		RemoveInheritedConstraint(pg_constraint, trigrel, partConstrOid,
+								  partConstrRelid);
+
+		table_close(pg_constraint, RowShareLock);
+	}
+
+	/*
+	 * We updated this pg_constraint row above to set its parent; validating
+	 * it will cause its convalidated flag to change, so we need CCI here.  In
+	 * addition, we need it unconditionally for the rare case where the parent
+	 * table has *two* identical constraints; when reaching this function for
+	 * the second one, we must have made our changes visible, otherwise we
+	 * would try to attach both to this one.
+	 */
+	CommandCounterIncrement();
+
+	/* If validation is needed, put it in the queue now. */
+	if (queueValidation)
+	{
+		Relation	conrel;
+
+		conrel = table_open(ConstraintRelationId, RowExclusiveLock);
+
+		partcontup = SearchSysCache1(CONSTROID, ObjectIdGetDatum(partConstrOid));
+		if (!HeapTupleIsValid(partcontup))
+			elog(ERROR, "cache lookup failed for constraint %u", partConstrOid);
+
+		/* Use the same lock as for AT_ValidateConstraint */
+		QueueFKConstraintValidation(wqueue, conrel, partition, partcontup,
+									ShareUpdateExclusiveLock);
+		ReleaseSysCache(partcontup);
+		table_close(conrel, RowExclusiveLock);
+	}
+}
+
+/*
+ * RemoveInheritedConstraint
+ *
+ * Removes the constraint and its associated trigger from the specified
+ * relation, which inherited the given constraint.
+ */
+static void
+RemoveInheritedConstraint(Relation conrel, Relation trigrel, Oid conoid,
+						  Oid conrelid)
+{
+	ObjectAddresses *objs;
+	HeapTuple	consttup;
+	ScanKeyData key;
+	SysScanDesc scan;
+	HeapTuple	trigtup;
+
+	ScanKeyInit(&key,
+				Anum_pg_constraint_conrelid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(conrelid));
+
+	scan = systable_beginscan(conrel,
+							  ConstraintRelidTypidNameIndexId,
+							  true, NULL, 1, &key);
+	objs = new_object_addresses();
+	while ((consttup = systable_getnext(scan)) != NULL)
+	{
+		Form_pg_constraint conform = (Form_pg_constraint) GETSTRUCT(consttup);
+
+		if (conform->conparentid != conoid)
+			continue;
+		else
+		{
+			ObjectAddress addr;
+			SysScanDesc scan2;
+			ScanKeyData key2;
+			int			n PG_USED_FOR_ASSERTS_ONLY;
+
+			ObjectAddressSet(addr, ConstraintRelationId, conform->oid);
+			add_exact_object_address(&addr, objs);
+
+			/*
+			 * First we must delete the dependency record that binds the
+			 * constraint records together.
+			 */
+			n = deleteDependencyRecordsForSpecific(ConstraintRelationId,
+												   conform->oid,
+												   DEPENDENCY_INTERNAL,
+												   ConstraintRelationId,
+												   conoid);
+			Assert(n == 1);		/* actually only one is expected */
+
+			/*
+			 * Now search for the triggers for this constraint and set them up
+			 * for deletion too
+			 */
+			ScanKeyInit(&key2,
+						Anum_pg_trigger_tgconstraint,
+						BTEqualStrategyNumber, F_OIDEQ,
+						ObjectIdGetDatum(conform->oid));
+			scan2 = systable_beginscan(trigrel, TriggerConstraintIndexId,
+									   true, NULL, 1, &key2);
+			while ((trigtup = systable_getnext(scan2)) != NULL)
+			{
+				ObjectAddressSet(addr, TriggerRelationId,
+								 ((Form_pg_trigger) GETSTRUCT(trigtup))->oid);
+				add_exact_object_address(&addr, objs);
+			}
+			systable_endscan(scan2);
+		}
+	}
+	/* make the dependency deletions visible */
+	CommandCounterIncrement();
+	performMultipleDeletions(objs, DROP_RESTRICT,
+							 PERFORM_DELETION_INTERNAL);
+	systable_endscan(scan);
+}
+
+/*
+ * DropForeignKeyConstraintTriggers
+ *
+ * The subroutine for tryAttachPartitionForeignKey handles the deletion of
+ * action triggers for the foreign key constraint.
+ */
+static void
+DropForeignKeyConstraintTriggers(Relation trigrel, Oid conoid, Oid confrelid,
+								 Oid conrelid)
+{
+	ScanKeyData key;
+	SysScanDesc scan;
+	HeapTuple	trigtup;
+
 	ScanKeyInit(&key,
 				Anum_pg_trigger_tgconstraint,
 				BTEqualStrategyNumber, F_OIDEQ,
-				ObjectIdGetDatum(fk->conoid));
+				ObjectIdGetDatum(conoid));
 	scan = systable_beginscan(trigrel, TriggerConstraintIndexId, true,
 							  NULL, 1, &key);
 	while ((trigtup = systable_getnext(scan)) != NULL)
@@ -11545,9 +11755,9 @@ tryAttachPartitionForeignKey(List **wqueue,
 		Form_pg_trigger trgform = (Form_pg_trigger) GETSTRUCT(trigtup);
 		ObjectAddress trigger;
 
-		if (trgform->tgconstrrelid != fk->conrelid)
+		if (trgform->tgconstrrelid != conrelid)
 			continue;
-		if (trgform->tgrelid != fk->confrelid)
+		if (trgform->tgrelid != confrelid)
 			continue;
 
 		/*
@@ -11570,127 +11780,6 @@ tryAttachPartitionForeignKey(List **wqueue,
 	}
 
 	systable_endscan(scan);
-
-	ConstraintSetParentConstraint(fk->conoid, parentConstrOid,
-								  RelationGetRelid(partition));
-
-	/*
-	 * Like the constraint, attach partition's "check" triggers to the
-	 * corresponding parent triggers.
-	 */
-	GetForeignKeyCheckTriggers(trigrel,
-							   fk->conoid, fk->confrelid, fk->conrelid,
-							   &insertTriggerOid, &updateTriggerOid);
-	Assert(OidIsValid(insertTriggerOid) && OidIsValid(parentInsTrigger));
-	TriggerSetParentTrigger(trigrel, insertTriggerOid, parentInsTrigger,
-							RelationGetRelid(partition));
-	Assert(OidIsValid(updateTriggerOid) && OidIsValid(parentUpdTrigger));
-	TriggerSetParentTrigger(trigrel, updateTriggerOid, parentUpdTrigger,
-							RelationGetRelid(partition));
-
-	/*
-	 * If the referenced table is partitioned, then the partition we're
-	 * attaching now has extra pg_constraint rows and action triggers that are
-	 * no longer needed.  Remove those.
-	 */
-	if (get_rel_relkind(fk->confrelid) == RELKIND_PARTITIONED_TABLE)
-	{
-		Relation	pg_constraint = table_open(ConstraintRelationId, RowShareLock);
-		ObjectAddresses *objs;
-		HeapTuple	consttup;
-
-		ScanKeyInit(&key,
-					Anum_pg_constraint_conrelid,
-					BTEqualStrategyNumber, F_OIDEQ,
-					ObjectIdGetDatum(fk->conrelid));
-
-		scan = systable_beginscan(pg_constraint,
-								  ConstraintRelidTypidNameIndexId,
-								  true, NULL, 1, &key);
-		objs = new_object_addresses();
-		while ((consttup = systable_getnext(scan)) != NULL)
-		{
-			Form_pg_constraint conform = (Form_pg_constraint) GETSTRUCT(consttup);
-
-			if (conform->conparentid != fk->conoid)
-				continue;
-			else
-			{
-				ObjectAddress addr;
-				SysScanDesc scan2;
-				ScanKeyData key2;
-				int			n PG_USED_FOR_ASSERTS_ONLY;
-
-				ObjectAddressSet(addr, ConstraintRelationId, conform->oid);
-				add_exact_object_address(&addr, objs);
-
-				/*
-				 * First we must delete the dependency record that binds the
-				 * constraint records together.
-				 */
-				n = deleteDependencyRecordsForSpecific(ConstraintRelationId,
-													   conform->oid,
-													   DEPENDENCY_INTERNAL,
-													   ConstraintRelationId,
-													   fk->conoid);
-				Assert(n == 1); /* actually only one is expected */
-
-				/*
-				 * Now search for the triggers for this constraint and set
-				 * them up for deletion too
-				 */
-				ScanKeyInit(&key2,
-							Anum_pg_trigger_tgconstraint,
-							BTEqualStrategyNumber, F_OIDEQ,
-							ObjectIdGetDatum(conform->oid));
-				scan2 = systable_beginscan(trigrel, TriggerConstraintIndexId,
-										   true, NULL, 1, &key2);
-				while ((trigtup = systable_getnext(scan2)) != NULL)
-				{
-					ObjectAddressSet(addr, TriggerRelationId,
-									 ((Form_pg_trigger) GETSTRUCT(trigtup))->oid);
-					add_exact_object_address(&addr, objs);
-				}
-				systable_endscan(scan2);
-			}
-		}
-		/* make the dependency deletions visible */
-		CommandCounterIncrement();
-		performMultipleDeletions(objs, DROP_RESTRICT,
-								 PERFORM_DELETION_INTERNAL);
-		systable_endscan(scan);
-
-		table_close(pg_constraint, RowShareLock);
-	}
-
-	/*
-	 * We updated this pg_constraint row above to set its parent; validating
-	 * it will cause its convalidated flag to change, so we need CCI here.  In
-	 * addition, we need it unconditionally for the rare case where the parent
-	 * table has *two* identical constraints; when reaching this function for
-	 * the second one, we must have made our changes visible, otherwise we
-	 * would try to attach both to this one.
-	 */
-	CommandCounterIncrement();
-
-	/* If validation is needed, put it in the queue now. */
-	if (queueValidation)
-	{
-		Relation	conrel;
-
-		conrel = table_open(ConstraintRelationId, RowExclusiveLock);
-		partcontup = SearchSysCache1(CONSTROID, ObjectIdGetDatum(fk->conoid));
-		if (!HeapTupleIsValid(partcontup))
-			elog(ERROR, "cache lookup failed for constraint %u", fk->conoid);
-
-		/* Use the same lock as for AT_ValidateConstraint */
-		QueueFKConstraintValidation(wqueue, conrel, partition, partcontup,
-									ShareUpdateExclusiveLock);
-		ReleaseSysCache(partcontup);
-		table_close(conrel, RowExclusiveLock);
-	}
-
-	return true;
 }
 
 /*
