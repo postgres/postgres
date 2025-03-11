@@ -577,17 +577,13 @@ systable_recheck_tuple(SysScanDesc sysscan, HeapTuple tup)
 
 	Assert(tup == ExecFetchSlotHeapTuple(sysscan->slot, false, NULL));
 
-	/*
-	 * Trust that table_tuple_satisfies_snapshot() and its subsidiaries
-	 * (commonly LockBuffer() and HeapTupleSatisfiesMVCC()) do not themselves
-	 * acquire snapshots, so we need not register the snapshot.  Those
-	 * facilities are too low-level to have any business scanning tables.
-	 */
 	freshsnap = GetCatalogSnapshot(RelationGetRelid(sysscan->heap_rel));
+	freshsnap = RegisterSnapshot(freshsnap);
 
 	result = table_tuple_satisfies_snapshot(sysscan->heap_rel,
 											sysscan->slot,
 											freshsnap);
+	UnregisterSnapshot(freshsnap);
 
 	/*
 	 * Handle the concurrent abort while fetching the catalog tuple during

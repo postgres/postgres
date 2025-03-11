@@ -203,10 +203,10 @@ typedef struct SerializedSnapshotData
  * GetTransactionSnapshot
  *		Get the appropriate snapshot for a new query in a transaction.
  *
- * Note that the return value may point at static storage that will be modified
- * by future calls and by CommandCounterIncrement().  Callers should call
- * RegisterSnapshot or PushActiveSnapshot on the returned snap if it is to be
- * used very long.
+ * Note that the return value points at static storage that will be modified
+ * by future calls and by CommandCounterIncrement().  Callers must call
+ * RegisterSnapshot or PushActiveSnapshot on the returned snap before doing
+ * any other non-trivial work that could invalidate it.
  */
 Snapshot
 GetTransactionSnapshot(void)

@@ -288,7 +288,7 @@ ScanSourceDatabasePgClass(Oid tbid, Oid dbid, char *srcpath)
 	 * snapshot - or the active snapshot - might not be new enough for that,
 	 * but the return value of GetLatestSnapshot() should work fine.
 	 */
-	snapshot = GetLatestSnapshot();
+	snapshot = RegisterSnapshot(GetLatestSnapshot());
 
 	/* Process the relation block by block. */
 	for (blkno = 0; blkno < nblocks; blkno++)
@@ -313,6 +313,7 @@ ScanSourceDatabasePgClass(Oid tbid, Oid dbid, char *srcpath)
 
 		UnlockReleaseBuffer(buf);
 	}
+	UnregisterSnapshot(snapshot);
 
 	/* Release relation lock. */
 	UnlockRelationId(&relid, AccessShareLock);
