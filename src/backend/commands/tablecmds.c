@@ -398,6 +398,10 @@ static bool ATExecAlterConstraintInternal(List **wqueue, ATAlterConstraint *cmdc
 static void AlterConstrTriggerDeferrability(Oid conoid, Relation tgrel, Relation rel,
 											bool deferrable, bool initdeferred,
 											List **otherrelids);
+static void ATExecAlterChildConstr(List **wqueue, ATAlterConstraint *cmdcon,
+								   Relation conrel, Relation tgrel, Relation rel,
+								   HeapTuple contuple, bool recurse, List **otherrelids,
+								   LOCKMODE lockmode);
 static ObjectAddress ATExecValidateConstraint(List **wqueue,
 											  Relation rel, char *constrName,
 											  bool recurse, bool recursing, LOCKMODE lockmode);
@@ -12031,41 +12035,13 @@ ATExecAlterConstraintInternal(List **wqueue, ATAlterConstraint *cmdcon,
 	/*
 	 * If the table at either end of the constraint is partitioned, we need to
 	 * handle every constraint that is a child of this one.
-	 *
-	 * Note that this doesn't handle recursion the normal way, viz. by
-	 * scanning the list of child relations and recursing; instead it uses the
-	 * conparentid relationships.  This may need to be reconsidered.
 	 */
 	if (recurse && changed &&
 		(rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE ||
 		 (OidIsValid(refrelid) &&
 		  get_rel_relkind(refrelid) == RELKIND_PARTITIONED_TABLE)))
-	{
-		ScanKeyData pkey;
-		SysScanDesc pscan;
-		HeapTuple	childtup;
-
-		ScanKeyInit(&pkey,
-					Anum_pg_constraint_conparentid,
-					BTEqualStrategyNumber, F_OIDEQ,
-					ObjectIdGetDatum(currcon->oid));
-
-		pscan = systable_beginscan(conrel, ConstraintParentIndexId,
-								   true, NULL, 1, &pkey);
-
-		while (HeapTupleIsValid(childtup = systable_getnext(pscan)))
-		{
-			Form_pg_constraint childcon = (Form_pg_constraint) GETSTRUCT(childtup);
-			Relation	childrel;
-
-			childrel = table_open(childcon->conrelid, lockmode);
-			ATExecAlterConstraintInternal(wqueue, cmdcon, conrel, tgrel, childrel,
-										  childtup, recurse, otherrelids, lockmode);
-			table_close(childrel, NoLock);
-		}
-
-		systable_endscan(pscan);
-	}
+		ATExecAlterChildConstr(wqueue, cmdcon, conrel, tgrel, rel, contuple,
+							   recurse, otherrelids, lockmode);
 
 	/*
 	 * Update the catalog for inheritability.  No work if the constraint is
@@ -12201,6 +12177,54 @@ AlterConstrTriggerDeferrability(Oid conoid, Relation tgrel, Relation rel,
 	}
 
 	systable_endscan(tgscan);
+}
+
+/*
+ * Invokes ATExecAlterConstraintInternal for each constraint that is a child of
+ * the specified constraint.
+ *
+ * Note that this doesn't handle recursion the normal way, viz. by scanning the
+ * list of child relations and recursing; instead it uses the conparentid
+ * relationships.  This may need to be reconsidered.
+ *
+ * The arguments to this function have the same meaning as the arguments to
+ * ATExecAlterConstraintInternal.
+ */
+static void
+ATExecAlterChildConstr(List **wqueue, ATAlterConstraint *cmdcon,
+					   Relation conrel, Relation tgrel, Relation rel,
+					   HeapTuple contuple, bool recurse, List **otherrelids,
+					   LOCKMODE lockmode)
+{
+	Form_pg_constraint currcon;
+	Oid			conoid;
+	ScanKeyData pkey;
+	SysScanDesc pscan;
+	HeapTuple	childtup;
+
+	currcon = (Form_pg_constraint) GETSTRUCT(contuple);
+	conoid = currcon->oid;
+
+	ScanKeyInit(&pkey,
+				Anum_pg_constraint_conparentid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(conoid));
+
+	pscan = systable_beginscan(conrel, ConstraintParentIndexId,
+							   true, NULL, 1, &pkey);
+
+	while (HeapTupleIsValid(childtup = systable_getnext(pscan)))
+	{
+		Form_pg_constraint childcon = (Form_pg_constraint) GETSTRUCT(childtup);
+		Relation	childrel;
+
+		childrel = table_open(childcon->conrelid, lockmode);
+		ATExecAlterConstraintInternal(wqueue, cmdcon, conrel, tgrel, childrel,
+									  childtup, recurse, otherrelids, lockmode);
+		table_close(childrel, NoLock);
+	}
+
+	systable_endscan(pscan);
 }
 
 /*
