@@ -483,7 +483,7 @@ btree_xlog_dedup(XLogReaderState *record)
 		state->deduplicate = true;	/* unused */
 		state->nmaxitems = 0;	/* unused */
 		/* Conservatively use larger maxpostingsize than primary */
-		state->maxpostingsize = BTMaxItemSize(page);
+		state->maxpostingsize = BTMaxItemSize;
 		state->base = NULL;
 		state->baseoff = InvalidOffsetNumber;
 		state->basetupsize = 0;

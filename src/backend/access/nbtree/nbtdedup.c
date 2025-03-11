@@ -84,7 +84,7 @@ _bt_dedup_pass(Relation rel, Buffer buf, IndexTuple newitem, Size newitemsz,
 	state = (BTDedupState) palloc(sizeof(BTDedupStateData));
 	state->deduplicate = true;
 	state->nmaxitems = 0;
-	state->maxpostingsize = Min(BTMaxItemSize(page) / 2, INDEX_SIZE_MASK);
+	state->maxpostingsize = Min(BTMaxItemSize / 2, INDEX_SIZE_MASK);
 	/* Metadata about base tuple of current pending posting list */
 	state->base = NULL;
 	state->baseoff = InvalidOffsetNumber;
@@ -568,7 +568,7 @@ _bt_dedup_finish_pending(Page newpage, BTDedupState state)
 		/* Use original, unchanged base tuple */
 		tuplesz = IndexTupleSize(state->base);
 		Assert(tuplesz == MAXALIGN(IndexTupleSize(state->base)));
-		Assert(tuplesz <= BTMaxItemSize(newpage));
+		Assert(tuplesz <= BTMaxItemSize);
 		if (PageAddItem(newpage, (Item) state->base, tuplesz, tupoff,
 						false, false) == InvalidOffsetNumber)
 			elog(ERROR, "deduplication failed to add tuple to page");
@@ -588,7 +588,7 @@ _bt_dedup_finish_pending(Page newpage, BTDedupState state)
 		state->intervals[state->nintervals].nitems = state->nitems;
 
 		Assert(tuplesz == MAXALIGN(IndexTupleSize(final)));
-		Assert(tuplesz <= BTMaxItemSize(newpage));
+		Assert(tuplesz <= BTMaxItemSize);
 		if (PageAddItem(newpage, (Item) final, tuplesz, tupoff, false,
 						false) == InvalidOffsetNumber)
 			elog(ERROR, "deduplication failed to add tuple to page");

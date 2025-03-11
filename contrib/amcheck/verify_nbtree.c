@@ -1597,8 +1597,7 @@ bt_target_page_check(BtreeCheckState *state)
 		 */
 		lowersizelimit = skey->heapkeyspace &&
 			(P_ISLEAF(topaque) || BTreeTupleGetHeapTID(itup) == NULL);
-		if (tupsize > (lowersizelimit ? BTMaxItemSize(state->target) :
-					   BTMaxItemSizeNoHeapTid(state->target)))
+		if (tupsize > (lowersizelimit ? BTMaxItemSize : BTMaxItemSizeNoHeapTid))
 		{
 			ItemPointer tid = BTreeTupleGetPointsToTID(itup);
 			char	   *itid,
