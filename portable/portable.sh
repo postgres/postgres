@@ -407,7 +407,7 @@ __start() {
 }
 
 
-if git checkout ${PG_BRANCH}
+if git checkout ${PG_BRANCH}-pglite
 then
     if [ -f postgresql-${PG_BRANCH}.patched ]
     then
