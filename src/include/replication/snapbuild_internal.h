@@ -193,7 +193,7 @@ typedef struct SnapBuildOnDisk
 	/* variable amount of TransactionIds follows */
 } SnapBuildOnDisk;
 
-extern bool SnapBuildRestoreSnapshot(SnapBuildOnDisk *ondisk, const char *path,
+extern bool SnapBuildRestoreSnapshot(SnapBuildOnDisk *ondisk, XLogRecPtr lsn,
 									 MemoryContext context, bool missing_ok);
 
 #endif							/* SNAPBUILD_INTERNAL_H */

@@ -1691,12 +1691,17 @@ out:
  * If 'missing_ok' is true, will not throw an error if the file is not found.
  */
 bool
-SnapBuildRestoreSnapshot(SnapBuildOnDisk *ondisk, const char *path,
+SnapBuildRestoreSnapshot(SnapBuildOnDisk *ondisk, XLogRecPtr lsn,
 						 MemoryContext context, bool missing_ok)
 {
 	int			fd;
 	pg_crc32c	checksum;
 	Size		sz;
+	char		path[MAXPGPATH];
+
+	sprintf(path, "%s/%X-%X.snap",
+			PG_LOGICAL_SNAPSHOTS_DIR,
+			LSN_FORMAT_ARGS(lsn));
 
 	fd = OpenTransientFile(path, O_RDONLY | PG_BINARY);
 
@@ -1788,18 +1793,13 @@ static bool
 SnapBuildRestore(SnapBuild *builder, XLogRecPtr lsn)
 {
 	SnapBuildOnDisk ondisk;
-	char		path[MAXPGPATH];
 
 	/* no point in loading a snapshot if we're already there */
 	if (builder->state == SNAPBUILD_CONSISTENT)
 		return false;
 
-	sprintf(path, "%s/%X-%X.snap",
-			PG_LOGICAL_SNAPSHOTS_DIR,
-			LSN_FORMAT_ARGS(lsn));
-
 	/* validate and restore the snapshot to 'ondisk' */
-	if (!SnapBuildRestoreSnapshot(&ondisk, path, builder->context, true))
+	if (!SnapBuildRestoreSnapshot(&ondisk, lsn, builder->context, true))
 		return false;
 
 	/*

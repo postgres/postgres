@@ -1,0 +1,81 @@
+CREATE EXTENSION pg_logicalinspect;
+-- ===================================================================
+-- Tests for input validation
+-- ===================================================================
+SELECT pg_get_logical_snapshot_info('0-40796E18.foo');
+ERROR:  invalid snapshot file name "0-40796E18.foo"
+SELECT pg_get_logical_snapshot_info('0--40796E18.snap');
+ERROR:  invalid snapshot file name "0--40796E18.snap"
+SELECT pg_get_logical_snapshot_info('-1--40796E18.snap');
+ERROR:  invalid snapshot file name "-1--40796E18.snap"
+SELECT pg_get_logical_snapshot_info('0/40796E18.foo.snap');
+ERROR:  invalid snapshot file name "0/40796E18.foo.snap"
+SELECT pg_get_logical_snapshot_info('0/40796E18.snap');
+ERROR:  invalid snapshot file name "0/40796E18.snap"
+SELECT pg_get_logical_snapshot_info('');
+ERROR:  invalid snapshot file name ""
+SELECT pg_get_logical_snapshot_info(NULL);
+ pg_get_logical_snapshot_info 
+------------------------------
+ 
+(1 row)
+
+SELECT pg_get_logical_snapshot_info('../snapshots');
+ERROR:  invalid snapshot file name "../snapshots"
+SELECT pg_get_logical_snapshot_info('../snapshots/0-40796E18.snap');
+ERROR:  invalid snapshot file name "../snapshots/0-40796E18.snap"
+SELECT pg_get_logical_snapshot_meta('0-40796E18.foo');
+ERROR:  invalid snapshot file name "0-40796E18.foo"
+SELECT pg_get_logical_snapshot_meta('0-40796E18.foo.snap');
+ERROR:  invalid snapshot file name "0-40796E18.foo.snap"
+SELECT pg_get_logical_snapshot_meta('0/40796E18.snap');
+ERROR:  invalid snapshot file name "0/40796E18.snap"
+SELECT pg_get_logical_snapshot_meta('');
+ERROR:  invalid snapshot file name ""
+SELECT pg_get_logical_snapshot_meta(NULL);
+ pg_get_logical_snapshot_meta 
+------------------------------
+ 
+(1 row)
+
+SELECT pg_get_logical_snapshot_meta('../snapshots');
+ERROR:  invalid snapshot file name "../snapshots"
+-- ===================================================================
+-- Tests for permissions
+-- ===================================================================
+CREATE ROLE regress_pg_logicalinspect;
+SELECT has_function_privilege('regress_pg_logicalinspect',
+  'pg_get_logical_snapshot_info(text)', 'EXECUTE'); -- no
+ has_function_privilege 
+------------------------
+ f
+(1 row)
+
+SELECT has_function_privilege('regress_pg_logicalinspect',
+  'pg_get_logical_snapshot_meta(text)', 'EXECUTE'); -- no
+ has_function_privilege 
+------------------------
+ f
+(1 row)
+
+-- Functions accessible by users with role pg_read_server_files.
+GRANT pg_read_server_files TO regress_pg_logicalinspect;
+SELECT has_function_privilege('regress_pg_logicalinspect',
+  'pg_get_logical_snapshot_info(text)', 'EXECUTE'); -- yes
+ has_function_privilege 
+------------------------
+ t
+(1 row)
+
+SELECT has_function_privilege('regress_pg_logicalinspect',
+  'pg_get_logical_snapshot_meta(text)', 'EXECUTE'); -- yes
+ has_function_privilege 
+------------------------
+ t
+(1 row)
+
+-- ===================================================================
+-- Clean up
+-- ===================================================================
+DROP ROLE regress_pg_logicalinspect;
+DROP EXTENSION pg_logicalinspect;

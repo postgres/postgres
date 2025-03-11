@@ -49,6 +49,45 @@ get_snapbuild_state_desc(SnapBuildState state)
 }
 
 /*
+ * Extract the LSN from the given serialized snapshot file name.
+ */
+static XLogRecPtr
+parse_snapshot_filename(const char *filename)
+{
+	uint32		hi;
+	uint32		lo;
+	XLogRecPtr	lsn;
+	char		tmpfname[MAXPGPATH];
+
+	/*
+	 * Extract the values to build the LSN.
+	 *
+	 * Note: Including ".snap" doesn't mean that sscanf() also does the format
+	 * check including the suffix. The subsequent check validates if the given
+	 * filename has the expected suffix.
+	 */
+	if (sscanf(filename, "%X-%X.snap", &hi, &lo) != 2)
+		goto parse_error;
+
+	/*
+	 * Bring back the extracted LSN to the snapshot file format and compare it
+	 * to the given filename. This check strictly checks if the given filename
+	 * follows the format of the snapshot filename.
+	 */
+	sprintf(tmpfname, "%X-%X.snap", hi, lo);
+	if (strcmp(tmpfname, filename) != 0)
+		goto parse_error;
+
+	lsn = ((uint64) hi) << 32 | lo;
+
+	return lsn;
+
+parse_error:
+	ereport(ERROR,
+			errmsg("invalid snapshot file name \"%s\"", filename));
+}
+
+/*
  * Retrieve the logical snapshot file metadata.
  */
 Datum
@@ -60,7 +99,7 @@ pg_get_logical_snapshot_meta(PG_FUNCTION_ARGS)
 	Datum		values[PG_GET_LOGICAL_SNAPSHOT_META_COLS] = {0};
 	bool		nulls[PG_GET_LOGICAL_SNAPSHOT_META_COLS] = {0};
 	TupleDesc	tupdesc;
-	char		path[MAXPGPATH];
+	XLogRecPtr	lsn;
 	int			i = 0;
 	text	   *filename_t = PG_GETARG_TEXT_PP(0);
 
@@ -68,12 +107,10 @@ pg_get_logical_snapshot_meta(PG_FUNCTION_ARGS)
 	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
 		elog(ERROR, "return type must be a row type");
 
-	sprintf(path, "%s/%s",
-			PG_LOGICAL_SNAPSHOTS_DIR,
-			text_to_cstring(filename_t));
+	lsn = parse_snapshot_filename(text_to_cstring(filename_t));
 
 	/* Validate and restore the snapshot to 'ondisk' */
-	SnapBuildRestoreSnapshot(&ondisk, path, CurrentMemoryContext, false);
+	SnapBuildRestoreSnapshot(&ondisk, lsn, CurrentMemoryContext, false);
 
 	values[i++] = UInt32GetDatum(ondisk.magic);
 	values[i++] = Int64GetDatum((int64) ondisk.checksum);
@@ -97,7 +134,7 @@ pg_get_logical_snapshot_info(PG_FUNCTION_ARGS)
 	Datum		values[PG_GET_LOGICAL_SNAPSHOT_INFO_COLS] = {0};
 	bool		nulls[PG_GET_LOGICAL_SNAPSHOT_INFO_COLS] = {0};
 	TupleDesc	tupdesc;
-	char		path[MAXPGPATH];
+	XLogRecPtr	lsn;
 	int			i = 0;
 	text	   *filename_t = PG_GETARG_TEXT_PP(0);
 
@@ -105,12 +142,10 @@ pg_get_logical_snapshot_info(PG_FUNCTION_ARGS)
 	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
 		elog(ERROR, "return type must be a row type");
 
-	sprintf(path, "%s/%s",
-			PG_LOGICAL_SNAPSHOTS_DIR,
-			text_to_cstring(filename_t));
+	lsn = parse_snapshot_filename(text_to_cstring(filename_t));
 
 	/* Validate and restore the snapshot to 'ondisk' */
-	SnapBuildRestoreSnapshot(&ondisk, path, CurrentMemoryContext, false);
+	SnapBuildRestoreSnapshot(&ondisk, lsn, CurrentMemoryContext, false);
 
 	values[i++] = CStringGetTextDatum(get_snapbuild_state_desc(ondisk.builder.state));
 	values[i++] = TransactionIdGetDatum(ondisk.builder.xmin);
