@@ -86,7 +86,7 @@ parse_error:
 	ereport(ERROR,
 			errmsg("invalid snapshot file name \"%s\"", filename));
 
-	return InvalidXLogRecPtr;					/* keep compiler quiet */
+	return InvalidXLogRecPtr;	/* keep compiler quiet */
 }
 
 /*
