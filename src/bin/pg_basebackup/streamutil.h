@@ -31,8 +31,6 @@ extern PGconn *conn;
 
 extern PGconn *GetConnection(void);
 
-extern char *GetDbnameFromConnectionOptions(void);
-
 /* Replication commands */
 extern bool CreateReplicationSlot(PGconn *conn, const char *slot_name,
 								  const char *plugin, bool is_temporary,

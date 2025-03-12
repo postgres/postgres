@@ -451,7 +451,8 @@ main(int argc, char **argv)
 		pg_log_info("no rewind required");
 		if (writerecoveryconf && !dry_run)
 			WriteRecoveryConfig(conn, datadir_target,
-								GenerateRecoveryConfig(conn, NULL, NULL));
+								GenerateRecoveryConfig(conn, NULL,
+													   GetDbnameFromConnectionOptions(connstr_source)));
 		exit(0);
 	}
 
@@ -528,7 +529,8 @@ main(int argc, char **argv)
 	/* Also update the standby configuration, if requested. */
 	if (writerecoveryconf && !dry_run)
 		WriteRecoveryConfig(conn, datadir_target,
-							GenerateRecoveryConfig(conn, NULL, NULL));
+							GenerateRecoveryConfig(conn, NULL,
+												   GetDbnameFromConnectionOptions(connstr_source)));
 
 	/* don't need the source connection anymore */
 	source->destroy(source);

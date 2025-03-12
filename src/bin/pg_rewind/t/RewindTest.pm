@@ -279,6 +279,11 @@ sub run_pg_rewind
 			],
 			'pg_rewind remote');
 
+		# Check that pg_rewind with dbname and --write-recovery-conf
+		# wrote the dbname in the generated primary_conninfo value.
+		like(slurp_file("$primary_pgdata/postgresql.auto.conf"),
+		     qr/dbname=postgres/m, 'recovery conf file sets dbname');
+
 		# Check that standby.signal is here as recovery configuration
 		# was requested.
 		ok( -e "$primary_pgdata/standby.signal",

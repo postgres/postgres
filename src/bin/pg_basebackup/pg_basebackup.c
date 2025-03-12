@@ -1818,7 +1818,7 @@ BaseBackup(char *compression_algorithm, char *compression_detail,
 	if (writerecoveryconf)
 		recoveryconfcontents = GenerateRecoveryConfig(conn,
 													  replication_slot,
-													  GetDbnameFromConnectionOptions());
+													  GetDbnameFromConnectionOptions(connection_string));
 
 	/*
 	 * Run IDENTIFY_SYSTEM so we can get the timeline

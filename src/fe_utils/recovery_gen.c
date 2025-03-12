@@ -14,6 +14,7 @@
 #include "fe_utils/string_utils.h"
 
 static char *escape_quotes(const char *src);
+static char *FindDbnameInConnOpts(PQconninfoOption *conn_opts);
 
 /*
  * Write recovery configuration contents into a fresh PQExpBuffer, and
@@ -167,4 +168,69 @@ escape_quotes(const char *src)
 	if (!result)
 		pg_fatal("out of memory");
 	return result;
+}
+
+/*
+ * FindDbnameInConnOpts
+ *
+ * This is a helper function for GetDbnameFromConnectionOptions(). Extract
+ * the value of dbname from PQconninfoOption parameters, if it's present.
+ * Returns a strdup'd result or NULL.
+ */
+static char *
+FindDbnameInConnOpts(PQconninfoOption *conn_opts)
+{
+	for (PQconninfoOption *conn_opt = conn_opts;
+		 conn_opt->keyword != NULL;
+		 conn_opt++)
+	{
+		if (strcmp(conn_opt->keyword, "dbname") == 0 &&
+			conn_opt->val != NULL && conn_opt->val[0] != '\0')
+			return pg_strdup(conn_opt->val);
+	}
+	return NULL;
+}
+
+/*
+ * GetDbnameFromConnectionOptions
+ *
+ * This is a special purpose function to retrieve the dbname from either the
+ * 'connstr' specified by the caller or from the environment variables.
+ *
+ * Returns NULL, if dbname is not specified by the user in the given
+ * connection options.
+ */
+char *
+GetDbnameFromConnectionOptions(const char *connstr)
+{
+	PQconninfoOption *conn_opts;
+	char	   *err_msg = NULL;
+	char	   *dbname;
+
+	/* First try to get the dbname from connection string. */
+	if (connstr)
+	{
+		conn_opts = PQconninfoParse(connstr, &err_msg);
+		if (conn_opts == NULL)
+			pg_fatal("%s", err_msg);
+
+		dbname = FindDbnameInConnOpts(conn_opts);
+
+		PQconninfoFree(conn_opts);
+		if (dbname)
+			return dbname;
+	}
+
+	/*
+	 * Next try to get the dbname from default values that are available from
+	 * the environment.
+	 */
+	conn_opts = PQconndefaults();
+	if (conn_opts == NULL)
+		pg_fatal("out of memory");
+
+	dbname = FindDbnameInConnOpts(conn_opts);
+
+	PQconninfoFree(conn_opts);
+	return dbname;
 }

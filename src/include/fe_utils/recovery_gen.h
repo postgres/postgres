@@ -25,5 +25,6 @@ extern PQExpBuffer GenerateRecoveryConfig(PGconn *pgconn,
 										  char *dbname);
 extern void WriteRecoveryConfig(PGconn *pgconn, const char *target_dir,
 								PQExpBuffer contents);
+extern char *GetDbnameFromConnectionOptions(const char *connstr);
 
 #endif							/* RECOVERY_GEN_H */

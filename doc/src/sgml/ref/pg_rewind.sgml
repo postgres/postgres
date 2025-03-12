@@ -186,8 +186,10 @@ PostgreSQL documentation
        <para>
         Create <filename>standby.signal</filename> and append connection
         settings to <filename>postgresql.auto.conf</filename> in the output
-        directory.  <literal>--source-server</literal> is mandatory with
-        this option.
+        directory.  The dbname will be recorded only if the dbname was
+        specified explicitly in the connection string or <link linkend="libpq-envars">
+        environment variable</link>. <literal>--source-server</literal> is
+        mandatory with this option.
        </para>
       </listitem>
      </varlistentry>

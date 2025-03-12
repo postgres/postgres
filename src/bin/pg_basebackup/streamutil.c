@@ -32,7 +32,6 @@
 int			WalSegSz;
 
 static bool RetrieveDataDirCreatePerm(PGconn *conn);
-static char *FindDbnameInConnParams(PQconninfoOption *conn_opts);
 
 /* SHOW command for replication connection was introduced in version 10 */
 #define MINIMUM_VERSION_FOR_SHOW_CMD 100000
@@ -267,74 +266,6 @@ GetConnection(void)
 	}
 
 	return tmpconn;
-}
-
-/*
- * FindDbnameInConnParams
- *
- * This is a helper function for GetDbnameFromConnectionOptions(). Extract
- * the value of dbname from PQconninfoOption parameters, if it's present.
- * Returns a strdup'd result or NULL.
- */
-static char *
-FindDbnameInConnParams(PQconninfoOption *conn_opts)
-{
-	PQconninfoOption *conn_opt;
-
-	for (conn_opt = conn_opts; conn_opt->keyword != NULL; conn_opt++)
-	{
-		if (strcmp(conn_opt->keyword, "dbname") == 0 &&
-			conn_opt->val != NULL && conn_opt->val[0] != '\0')
-			return pg_strdup(conn_opt->val);
-	}
-	return NULL;
-}
-
-/*
- * GetDbnameFromConnectionOptions
- *
- * This is a special purpose function to retrieve the dbname from either the
- * connection_string specified by the user or from the environment variables.
- *
- * We follow GetConnection() to fetch the dbname from various connection
- * options.
- *
- * Returns NULL, if dbname is not specified by the user in the above
- * mentioned connection options.
- */
-char *
-GetDbnameFromConnectionOptions(void)
-{
-	PQconninfoOption *conn_opts;
-	char	   *err_msg = NULL;
-	char	   *dbname;
-
-	/* First try to get the dbname from connection string. */
-	if (connection_string)
-	{
-		conn_opts = PQconninfoParse(connection_string, &err_msg);
-		if (conn_opts == NULL)
-			pg_fatal("%s", err_msg);
-
-		dbname = FindDbnameInConnParams(conn_opts);
-
-		PQconninfoFree(conn_opts);
-		if (dbname)
-			return dbname;
-	}
-
-	/*
-	 * Next try to get the dbname from default values that are available from
-	 * the environment.
-	 */
-	conn_opts = PQconndefaults();
-	if (conn_opts == NULL)
-		pg_fatal("out of memory");
-
-	dbname = FindDbnameInConnParams(conn_opts);
-
-	PQconninfoFree(conn_opts);
-	return dbname;
 }
 
 /*
