@@ -50,3 +50,6 @@ lib*.pc
 /src/backend/commands/async.c
 /src/bin/initdb/initdb.c
 /src/bin/pg_verifybackup/pg_verifybackup.c
+/build
+/pglite/dist/**
+/pglite/patches

@@ -5,7 +5,7 @@ export WORKSPACE=${GITHUB_WORKSPACE:-$(pwd)}
 # we are using a custom emsdk to build pglite wasm
 # this is available as a docker image under electricsql/pglite-builder
 IMG_NAME="electricsql/pglite-builder"
-IMG_TAG="latest"
+IMG_TAG="17.4_3.1.61.6bi"
 
 [ -f ./pglite/.buildconfig ] && cp ./pglite/.buildconfig .buildconfig
 
@@ -47,10 +47,10 @@ docker run \
   -e SDKROOT=$SDKROOT \
   -e PG_VERSION=${PG_VERSION} \
   -e PG_BRANCH=${PG_BRANCH} \
-  -v /tmp/sdk:${WORKSPACE}/dist
+  -v /tmp/sdk:${WORKSPACE}/dist \
   -v .:${WORKSPACE} \
   $IMG_NAME:$IMG_TAG \
-  bash /workspace/wasm-build.sh ${WHAT:-"contrib extra"}
+  bash -c "source /tmp/sdk/wasm32-bi-emscripten-shell.sh && /workspace/wasm-build.sh ${WHAT:-\"contrib extra\"}"
 
 
 
