@@ -36,7 +36,7 @@
  * reported within critical sections so we use static memory in order to avoid
  * memory allocation.
  */
-static PgStat_BackendPending PendingBackendStats = {0};
+static PgStat_BackendPending PendingBackendStats;
 
 /*
  * WAL usage counters saved from pgWalUsage at the previous call to
