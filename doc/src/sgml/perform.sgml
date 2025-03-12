@@ -840,7 +840,7 @@ EXPLAIN ANALYZE SELECT * FROM tenk1 WHERE thousand IN (1, 500, 700, 999);
 <screen>
 EXPLAIN ANALYZE SELECT * FROM tenk1 WHERE thousand IN (1, 2, 3, 4);
                                                             QUERY PLAN
---------------------------------------------------------------------&zwsp;--------------------------------------------------------------
+-------------------------------------------------------------------&zwsp;---------------------------------------------------------------
  Bitmap Heap Scan on tenk1  (cost=9.45..73.44 rows=40 width=244) (actual time=0.009..0.019 rows=40.00 loops=1)
    Recheck Cond: (thousand = ANY ('{1,2,3,4}'::integer[]))
    Heap Blocks: exact=38
