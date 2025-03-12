@@ -1031,7 +1031,7 @@ ExecAppendAsyncRequest(AppendState *node, TupleTableSlot **result)
 static void
 ExecAppendAsyncEventWait(AppendState *node)
 {
-	int			nevents = node->as_nasyncplans + 1;
+	int			nevents = node->as_nasyncplans + 2;
 	long		timeout = node->as_syncdone ? -1 : 0;
 	WaitEvent	occurred_event[EVENT_BUFFER_SIZE];
 	int			noccurred;
@@ -1056,8 +1056,8 @@ ExecAppendAsyncEventWait(AppendState *node)
 	}
 
 	/*
-	 * No need for further processing if there are no configured events other
-	 * than the postmaster death event.
+	 * No need for further processing if none of the subplans configured any
+	 * events.
 	 */
 	if (GetNumRegisteredWaitEvents(node->as_eventset) == 1)
 	{
@@ -1065,6 +1065,21 @@ ExecAppendAsyncEventWait(AppendState *node)
 		node->as_eventset = NULL;
 		return;
 	}
+
+	/*
+	 * Add the process latch to the set, so that we wake up to process the
+	 * standard interrupts with CHECK_FOR_INTERRUPTS().
+	 *
+	 * NOTE: For historical reasons, it's important that this is added to the
+	 * WaitEventSet after the ExecAsyncConfigureWait() calls.  Namely,
+	 * postgres_fdw calls "GetNumRegisteredWaitEvents(set) == 1" to check if
+	 * any other events are in the set.  That's a poor design, it's
+	 * questionable for postgres_fdw to be doing that in the first place, but
+	 * we cannot change it now.  The pattern has possibly been copied to other
+	 * extensions too.
+	 */
+	AddWaitEventToSet(node->as_eventset, WL_LATCH_SET, PGINVALID_SOCKET,
+					  MyLatch, NULL);
 
 	/* Return at most EVENT_BUFFER_SIZE events in one call. */
 	if (nevents > EVENT_BUFFER_SIZE)
@@ -1106,6 +1121,13 @@ ExecAppendAsyncEventWait(AppendState *node)
 				/* Do the actual work. */
 				ExecAsyncNotify(areq);
 			}
+		}
+
+		/* Handle standard interrupts */
+		if ((w->events & WL_LATCH_SET) != 0)
+		{
+			ResetLatch(MyLatch);
+			CHECK_FOR_INTERRUPTS();
 		}
 	}
 }
