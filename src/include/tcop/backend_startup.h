@@ -16,6 +16,8 @@
 
 /* GUCs */
 extern PGDLLIMPORT bool Trace_connection_negotiation;
+extern PGDLLIMPORT uint32 log_connections;
+extern PGDLLIMPORT char *log_connections_string;
 
 /*
  * CAC_state is passed from postmaster to the backend process, to indicate
@@ -38,6 +40,33 @@ typedef struct BackendStartupData
 {
 	CAC_state	canAcceptConnections;
 } BackendStartupData;
+
+/*
+ * Granular control over which messages to log for the log_connections GUC.
+ *
+ * RECEIPT, AUTHENTICATION, and AUTHORIZATION are different aspects of
+ * connection establishment and backend setup for which we may emit a log
+ * message.
+ *
+ * ALL is a convenience alias equivalent to all of the above aspects.
+ *
+ * ON is backwards compatibility alias for the connection aspects that were
+ * logged in Postgres versions < 18.
+ */
+typedef enum LogConnectionOption
+{
+	LOG_CONNECTION_RECEIPT = (1 << 0),
+	LOG_CONNECTION_AUTHENTICATION = (1 << 1),
+	LOG_CONNECTION_AUTHORIZATION = (1 << 2),
+	LOG_CONNECTION_ON =
+		LOG_CONNECTION_RECEIPT |
+		LOG_CONNECTION_AUTHENTICATION |
+		LOG_CONNECTION_AUTHORIZATION,
+	LOG_CONNECTION_ALL =
+		LOG_CONNECTION_RECEIPT |
+		LOG_CONNECTION_AUTHENTICATION |
+		LOG_CONNECTION_AUTHORIZATION,
+} LogConnectionOption;
 
 extern void BackendMain(const void *startup_data, size_t startup_data_len) pg_attribute_noreturn();
 

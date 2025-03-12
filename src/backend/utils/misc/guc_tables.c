@@ -1220,15 +1220,6 @@ struct config_bool ConfigureNamesBool[] =
 		NULL, NULL, NULL
 	},
 	{
-		{"log_connections", PGC_SU_BACKEND, LOGGING_WHAT,
-			gettext_noop("Logs each successful connection."),
-			NULL
-		},
-		&Log_connections,
-		false,
-		NULL, NULL, NULL
-	},
-	{
 		{"trace_connection_negotiation", PGC_POSTMASTER, DEVELOPER_OPTIONS,
 			gettext_noop("Logs details of pre-authentication connection handshake."),
 			NULL,
@@ -4885,6 +4876,18 @@ struct config_string ConfigureNamesString[] =
 		"",
 		NULL, NULL, NULL
 	},
+
+	{
+		{"log_connections", PGC_SU_BACKEND, LOGGING_WHAT,
+			gettext_noop("Logs specified aspects of connection establishment and setup."),
+			NULL,
+			GUC_LIST_INPUT
+		},
+		&log_connections_string,
+		"",
+		check_log_connections, assign_log_connections, NULL
+	},
+
 
 	/* End-of-list marker */
 	{

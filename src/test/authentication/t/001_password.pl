@@ -7,6 +7,8 @@
 # - MD5-encrypted
 # - SCRAM-encrypted
 # This test can only run with Unix-domain sockets.
+#
+# There's also a few tests of the log_connections GUC here.
 
 use strict;
 use warnings FATAL => 'all';
@@ -65,6 +67,42 @@ my $node = PostgreSQL::Test::Cluster->new('primary');
 $node->init;
 $node->append_conf('postgresql.conf', "log_connections = on\n");
 $node->start;
+
+# Test behavior of log_connections GUC
+#
+# There wasn't another test file where these tests obviously fit, and we don't
+# want to incur the cost of spinning up a new cluster just to test one GUC.
+
+# Make a database for the log_connections tests to avoid test fragility if
+# other tests are added to this file in the future
+$node->safe_psql('postgres', "CREATE DATABASE test_log_connections");
+
+$node->safe_psql('test_log_connections',
+	q[ALTER SYSTEM SET log_connections = receipt,authorization;
+				   SELECT pg_reload_conf();]);
+
+$node->connect_ok('test_log_connections',
+	q(log_connections with subset of specified options logs only those aspects),
+	log_like => [
+		qr/connection received/,
+		qr/connection authorized: user=\S+ database=test_log_connections/,
+	],
+	log_unlike => [
+		qr/connection authenticated/,
+	],);
+
+$node->safe_psql('test_log_connections',
+	qq(ALTER SYSTEM SET log_connections = 'all'; SELECT pg_reload_conf();));
+
+$node->connect_ok('test_log_connections',
+	qq(log_connections 'all' logs all available connection aspects),
+	log_like => [
+		qr/connection received/,
+		qr/connection authenticated/,
+		qr/connection authorized: user=\S+ database=test_log_connections/,
+	],);
+
+# Authentication tests
 
 # could fail in FIPS mode
 my $md5_works = ($node->psql('postgres', "select md5('')") == 0);

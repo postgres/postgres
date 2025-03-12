@@ -237,7 +237,6 @@ int			PreAuthDelay = 0;
 int			AuthenticationTimeout = 60;
 
 bool		log_hostname;		/* for ps display and logging */
-bool		Log_connections = false;
 
 bool		enable_bonjour = false;
 char	   *bonjour_name;

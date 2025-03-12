@@ -7315,20 +7315,92 @@ local0.*    /var/log/postgresql
      </varlistentry>
 
      <varlistentry id="guc-log-connections" xreflabel="log_connections">
-      <term><varname>log_connections</varname> (<type>boolean</type>)
+      <term><varname>log_connections</varname> (<type>string</type>)
       <indexterm>
        <primary><varname>log_connections</varname> configuration parameter</primary>
       </indexterm>
       </term>
       <listitem>
        <para>
-        Causes each attempted connection to the server to be logged,
-        as well as successful completion of both client authentication (if
-        necessary) and authorization.
+        Causes aspects of each connection to the server to be logged.
+        The default is the empty string, <literal>''</literal>, which
+        disables all connection logging. The following options may be
+        specified alone or in a comma-separated list:
+       </para>
+
+       <table id="log-connections-options">
+        <title>Log Connection Options</title>
+        <tgroup cols="2">
+         <colspec colname="col1" colwidth="1*"/>
+         <colspec colname="col2" colwidth="2*"/>
+         <thead>
+          <row>
+           <entry>Name</entry>
+           <entry>Description</entry>
+          </row>
+         </thead>
+         <tbody>
+          <row>
+           <entry><literal>receipt</literal></entry>
+           <entry>Logs receipt of a connection.</entry>
+          </row>
+
+          <row>
+           <entry><literal>authentication</literal></entry>
+           <entry>
+            Logs the original identity used by an authentication method
+            to identify a user. In most cases, the identity string
+            matches the <productname>PostgreSQL</productname> username,
+            but some third-party authentication methods may alter the
+            original user identifier before the server stores it. Failed
+            authentication is always logged regardless of the value of
+            this setting.
+           </entry>
+          </row>
+
+          <row>
+           <entry><literal>authorization</literal></entry>
+           <entry>
+            Logs successful completion of authorization. At this point
+            the connection has been established but the backend is not
+            yet fully set up. The log message includes the authorized
+            username as well as the database name and application name,
+            if applicable.
+           </entry>
+          </row>
+
+          <row>
+           <entry><literal>all</literal></entry>
+           <entry>
+            A convenience alias equivalent to specifying all options. If
+            <literal>all</literal> is specified in a list of other
+            options, all connection aspects will be logged.
+           </entry>
+          </row>
+
+         </tbody>
+        </tgroup>
+       </table>
+
+       <para>
+        Disconnection logging is separately controlled by <xref
+        linkend="guc-log-disconnections"/>.
+       </para>
+
+       <para>
+        For the purposes of backwards compatibility, <literal>on</literal>,
+        <literal>off</literal>, <literal>true</literal>,
+        <literal>false</literal>, <literal>yes</literal>,
+        <literal>no</literal>, <literal>1</literal>, and <literal>0</literal>
+        are still supported. The positive values are equivalent to specifying
+        the <literal>receipt</literal>, <literal>authentication</literal>, and
+        <literal>authorization</literal> options.
+       </para>
+
+       <para>
         Only superusers and users with the appropriate <literal>SET</literal>
         privilege can change this parameter at session start,
         and it cannot be changed at all within a session.
-        The default is <literal>off</literal>.
        </para>
 
        <note>

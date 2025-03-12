@@ -21,7 +21,7 @@
 # require a server shutdown and restart to take effect.
 #
 # Any parameter can also be given as a command-line option to the server, e.g.,
-# "postgres -c log_connections=on".  Some parameters can be changed at run time
+# "postgres -c log_connections=all".  Some parameters can be changed at run time
 # with the "SET" SQL command.
 #
 # Memory units:  B  = bytes            Time units:  us  = microseconds
@@ -578,9 +578,11 @@
 					# actions running at least this number
 					# of milliseconds.
 #log_checkpoints = on
-#log_connections = off
+#log_connections = '' # log aspects of connection setup
+          # options include receipt, authentication, authorization,
+          # and all to log all of these aspects
 #log_disconnections = off
-#log_duration = off
+#log_duration = off # log statement duration
 #log_error_verbosity = default		# terse, default, or verbose messages
 #log_hostname = off
 #log_line_prefix = '%m [%p] '		# special values:

@@ -34,13 +34,17 @@
 #include "tcop/backend_startup.h"
 #include "tcop/tcopprot.h"
 #include "utils/builtins.h"
+#include "utils/guc_hooks.h"
 #include "utils/injection_point.h"
 #include "utils/memutils.h"
 #include "utils/ps_status.h"
 #include "utils/timeout.h"
+#include "utils/varlena.h"
 
 /* GUCs */
 bool		Trace_connection_negotiation = false;
+uint32		log_connections = 0;
+char	   *log_connections_string = NULL;
 
 static void BackendInitialize(ClientSocket *client_sock, CAC_state cac);
 static int	ProcessSSLStartup(Port *port);
@@ -48,6 +52,7 @@ static int	ProcessStartupPacket(Port *port, bool ssl_done, bool gss_done);
 static void SendNegotiateProtocolVersion(List *unrecognized_protocol_options);
 static void process_startup_packet_die(SIGNAL_ARGS);
 static void StartupPacketTimeoutHandler(void);
+static bool validate_log_connections_options(List *elemlist, uint32 *flags);
 
 /*
  * Entry point for a new backend process.
@@ -201,8 +206,8 @@ BackendInitialize(ClientSocket *client_sock, CAC_state cac)
 	port->remote_host = MemoryContextStrdup(TopMemoryContext, remote_host);
 	port->remote_port = MemoryContextStrdup(TopMemoryContext, remote_port);
 
-	/* And now we can issue the Log_connections message, if wanted */
-	if (Log_connections)
+	/* And now we can log that the connection was received, if enabled */
+	if (log_connections & LOG_CONNECTION_RECEIPT)
 	{
 		if (remote_port[0])
 			ereport(LOG,
@@ -923,4 +928,156 @@ static void
 StartupPacketTimeoutHandler(void)
 {
 	_exit(1);
+}
+
+/*
+ * Helper for the log_connections GUC check hook.
+ *
+ * `elemlist` is a listified version of the string input passed to the
+ * log_connections GUC check hook, check_log_connections().
+ * check_log_connections() is responsible for cleaning up `elemlist`.
+ *
+ * validate_log_connections_options() returns false if an error was
+ * encountered and the GUC input could not be validated and true otherwise.
+ *
+ * `flags` returns the flags that should be stored in the log_connections GUC
+ * by its assign hook.
+ */
+static bool
+validate_log_connections_options(List *elemlist, uint32 *flags)
+{
+	ListCell   *l;
+	char	   *item;
+
+	/*
+	 * For backwards compatibility, we accept these tokens by themselves.
+	 *
+	 * Prior to PostgreSQL 18, log_connections was a boolean GUC that accepted
+	 * any unambiguous substring of 'true', 'false', 'yes', 'no', 'on', and
+	 * 'off'. Since log_connections became a list of strings in 18, we only
+	 * accept complete option strings.
+	 */
+	static const struct config_enum_entry compat_options[] = {
+		{"off", 0},
+		{"false", 0},
+		{"no", 0},
+		{"0", 0},
+		{"on", LOG_CONNECTION_ON},
+		{"true", LOG_CONNECTION_ON},
+		{"yes", LOG_CONNECTION_ON},
+		{"1", LOG_CONNECTION_ON},
+	};
+
+	*flags = 0;
+
+	/* If an empty string was passed, we're done */
+	if (list_length(elemlist) == 0)
+		return true;
+
+	/*
+	 * Now check for the backwards compatibility options. They must always be
+	 * specified on their own, so we error out if the first option is a
+	 * backwards compatibility option and other options are also specified.
+	 */
+	item = linitial(elemlist);
+
+	for (size_t i = 0; i < lengthof(compat_options); i++)
+	{
+		struct config_enum_entry option = compat_options[i];
+
+		if (pg_strcasecmp(item, option.name) != 0)
+			continue;
+
+		if (list_length(elemlist) > 1)
+		{
+			GUC_check_errdetail("Cannot specify log_connections option \"%s\" in a list with other options.",
+								item);
+			return false;
+		}
+
+		*flags = option.val;
+		return true;
+	}
+
+	/* Now check the aspect options. The empty string was already handled */
+	foreach(l, elemlist)
+	{
+		static const struct config_enum_entry options[] = {
+			{"receipt", LOG_CONNECTION_RECEIPT},
+			{"authentication", LOG_CONNECTION_AUTHENTICATION},
+			{"authorization", LOG_CONNECTION_AUTHORIZATION},
+			{"all", LOG_CONNECTION_ALL},
+		};
+
+		item = lfirst(l);
+		for (size_t i = 0; i < lengthof(options); i++)
+		{
+			struct config_enum_entry option = options[i];
+
+			if (pg_strcasecmp(item, option.name) == 0)
+			{
+				*flags |= option.val;
+				goto next;
+			}
+		}
+
+		GUC_check_errdetail("Invalid option \"%s\".", item);
+		return false;
+
+next:	;
+	}
+
+	return true;
+}
+
+
+/*
+ * GUC check hook for log_connections
+ */
+bool
+check_log_connections(char **newval, void **extra, GucSource source)
+{
+	uint32		flags;
+	char	   *rawstring;
+	List	   *elemlist;
+	bool		success;
+
+	/* Need a modifiable copy of string */
+	rawstring = pstrdup(*newval);
+
+	if (!SplitIdentifierString(rawstring, ',', &elemlist))
+	{
+		GUC_check_errdetail("Invalid list syntax in parameter \"log_connections\".");
+		pfree(rawstring);
+		list_free(elemlist);
+		return false;
+	}
+
+	/* Validation logic is all in the helper */
+	success = validate_log_connections_options(elemlist, &flags);
+
+	/* Time for cleanup */
+	pfree(rawstring);
+	list_free(elemlist);
+
+	if (!success)
+		return false;
+
+	/*
+	 * We succeeded, so allocate `extra` and save the flags there for use by
+	 * assign_log_connections().
+	 */
+	*extra = guc_malloc(ERROR, sizeof(int));
+	*((int *) *extra) = flags;
+
+	return true;
+}
+
+/*
+ * GUC assign hook for log_connections
+ */
+void
+assign_log_connections(const char *newval, void *extra)
+{
+	log_connections = *((int *) extra);
 }
