@@ -969,6 +969,8 @@ pg_tde_wal_last_key_set_lsn(XLogRecPtr lsn, const char *keyfile_path)
 				prev_key_pos;
 	InternalKey prev_key;
 
+	LWLockAcquire(lock_pk, LW_EXCLUSIVE);
+
 	fd = BasicOpenFile(keyfile_path, O_RDWR | PG_BINARY);
 	if (fd < 0)
 	{
@@ -981,7 +983,6 @@ pg_tde_wal_last_key_set_lsn(XLogRecPtr lsn, const char *keyfile_path)
 	last_key_idx = ((lseek(fd, 0, SEEK_END) - TDE_FILE_HEADER_SIZE) / INTERNAL_KEY_DAT_LEN) - 1;
 	write_pos = TDE_FILE_HEADER_SIZE + (last_key_idx * INTERNAL_KEY_DAT_LEN) + offsetof(InternalKey, start_lsn);
 
-	LWLockAcquire(lock_pk, LW_EXCLUSIVE);
 	/* TODO: pgstat_report_wait_start / pgstat_report_wait_end */
 	if (pg_pwrite(fd, &lsn, sizeof(XLogRecPtr), write_pos) != sizeof(XLogRecPtr))
 	{
