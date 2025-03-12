@@ -580,7 +580,7 @@
 #log_checkpoints = on
 #log_connections = '' # log aspects of connection setup
           # options include receipt, authentication, authorization,
-          # and all to log all of these aspects
+          # setup_durations, and all to log all of these aspects
 #log_disconnections = off
 #log_duration = off # log statement duration
 #log_error_verbosity = default		# terse, default, or verbose messages

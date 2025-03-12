@@ -235,6 +235,9 @@ PerformAuthentication(Port *port)
 	}
 #endif
 
+	/* Capture authentication start time for logging */
+	conn_timing.auth_start = GetCurrentTimestamp();
+
 	/*
 	 * Set up a timeout in case a buggy or malicious client fails to respond
 	 * during authentication.  Since we're inside a transaction and might do
@@ -252,6 +255,9 @@ PerformAuthentication(Port *port)
 	 * Done with authentication.  Disable the timeout, and log if needed.
 	 */
 	disable_timeout(STATEMENT_TIMEOUT, false);
+
+	/* Capture authentication end time for logging */
+	conn_timing.auth_end = GetCurrentTimestamp();
 
 	if (log_connections & LOG_CONNECTION_AUTHORIZATION)
 	{

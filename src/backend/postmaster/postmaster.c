@@ -3478,6 +3478,12 @@ BackendStartup(ClientSocket *client_sock)
 	CAC_state	cac;
 
 	/*
+	 * Capture time that Postmaster got a socket from accept (for logging
+	 * connection establishment and setup total duration).
+	 */
+	startup_data.socket_created = GetCurrentTimestamp();
+
+	/*
 	 * Allocate and assign the child slot.  Note we must do this before
 	 * forking, so that we can handle failures (out of memory or child-process
 	 * slots) cleanly.

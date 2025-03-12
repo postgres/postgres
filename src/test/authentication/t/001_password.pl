@@ -77,8 +77,22 @@ $node->start;
 # other tests are added to this file in the future
 $node->safe_psql('postgres', "CREATE DATABASE test_log_connections");
 
+my $log_connections = $node->safe_psql('test_log_connections', q(SHOW log_connections;));
+is($log_connections, 'on', qq(check log connections has expected value 'on'));
+
+$node->connect_ok('test_log_connections',
+	qq(log_connections 'on' works as expected for backwards compatibility),
+	log_like => [
+		qr/connection received/,
+		qr/connection authenticated/,
+		qr/connection authorized: user=\S+ database=test_log_connections/,
+	],
+	log_unlike => [
+		qr/connection ready/,
+	],);
+
 $node->safe_psql('test_log_connections',
-	q[ALTER SYSTEM SET log_connections = receipt,authorization;
+	q[ALTER SYSTEM SET log_connections = receipt,authorization,setup_durations;
 				   SELECT pg_reload_conf();]);
 
 $node->connect_ok('test_log_connections',
@@ -86,6 +100,7 @@ $node->connect_ok('test_log_connections',
 	log_like => [
 		qr/connection received/,
 		qr/connection authorized: user=\S+ database=test_log_connections/,
+		qr/connection ready/,
 	],
 	log_unlike => [
 		qr/connection authenticated/,
@@ -100,6 +115,7 @@ $node->connect_ok('test_log_connections',
 		qr/connection received/,
 		qr/connection authenticated/,
 		qr/connection authorized: user=\S+ database=test_log_connections/,
+		qr/connection ready/,
 	],);
 
 # Authentication tests

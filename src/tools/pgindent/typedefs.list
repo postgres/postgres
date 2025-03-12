@@ -484,6 +484,7 @@ ConnParams
 ConnStatusType
 ConnType
 ConnectionStateEnum
+ConnectionTiming
 ConsiderSplitContext
 Const
 ConstrCheck

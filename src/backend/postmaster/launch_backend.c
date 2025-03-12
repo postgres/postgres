@@ -232,6 +232,10 @@ postmaster_child_launch(BackendType child_type, int child_slot,
 
 	Assert(IsPostmasterEnvironment && !IsUnderPostmaster);
 
+	/* Capture time Postmaster initiates process creation for logging */
+	if (IsExternalConnectionBackend(child_type))
+		((BackendStartupData *) startup_data)->fork_started = GetCurrentTimestamp();
+
 #ifdef EXEC_BACKEND
 	pid = internal_forkexec(child_process_kinds[child_type].name, child_slot,
 							startup_data, startup_data_len, client_sock);
@@ -240,6 +244,16 @@ postmaster_child_launch(BackendType child_type, int child_slot,
 	pid = fork_process();
 	if (pid == 0)				/* child */
 	{
+		/* Capture and transfer timings that may be needed for logging */
+		if (IsExternalConnectionBackend(child_type))
+		{
+			conn_timing.socket_create =
+				((BackendStartupData *) startup_data)->socket_created;
+			conn_timing.fork_start =
+				((BackendStartupData *) startup_data)->fork_started;
+			conn_timing.fork_end = GetCurrentTimestamp();
+		}
+
 		/* Close the postmaster's sockets */
 		ClosePostmasterPorts(child_type == B_LOGGER);
 
@@ -586,10 +600,17 @@ SubPostmasterMain(int argc, char *argv[])
 	char	   *child_kind;
 	BackendType child_type;
 	bool		found = false;
+	TimestampTz fork_end;
 
 	/* In EXEC_BACKEND case we will not have inherited these settings */
 	IsPostmasterEnvironment = true;
 	whereToSendOutput = DestNone;
+
+	/*
+	 * Capture the end of process creation for logging. We don't include the
+	 * time spent copying data from shared memory and setting up the backend.
+	 */
+	fork_end = GetCurrentTimestamp();
 
 	/* Setup essential subsystems (to ensure elog() behaves sanely) */
 	InitializeGUCOptions();
@@ -647,6 +668,16 @@ SubPostmasterMain(int argc, char *argv[])
 
 	/* Read in remaining GUC variables */
 	read_nondefault_variables();
+
+	/* Capture and transfer timings that may be needed for log_connections */
+	if (IsExternalConnectionBackend(child_type))
+	{
+		conn_timing.socket_create =
+			((BackendStartupData *) startup_data)->socket_created;
+		conn_timing.fork_start =
+			((BackendStartupData *) startup_data)->fork_started;
+		conn_timing.fork_end = fork_end;
+	}
 
 	/*
 	 * Check that the data directory looks valid, which will also check the

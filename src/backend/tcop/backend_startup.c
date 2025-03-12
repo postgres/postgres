@@ -46,6 +46,16 @@ bool		Trace_connection_negotiation = false;
 uint32		log_connections = 0;
 char	   *log_connections_string = NULL;
 
+/* Other globals */
+
+/*
+ * ConnectionTiming stores timestamps of various points in connection
+ * establishment and setup.
+ * ready_for_use is initialized to a special value here so we can check if
+ * we've already set it before doing so in PostgresMain().
+ */
+ConnectionTiming conn_timing = {.ready_for_use = TIMESTAMP_MINUS_INFINITY};
+
 static void BackendInitialize(ClientSocket *client_sock, CAC_state cac);
 static int	ProcessSSLStartup(Port *port);
 static int	ProcessStartupPacket(Port *port, bool ssl_done, bool gss_done);
@@ -1006,6 +1016,7 @@ validate_log_connections_options(List *elemlist, uint32 *flags)
 			{"receipt", LOG_CONNECTION_RECEIPT},
 			{"authentication", LOG_CONNECTION_AUTHENTICATION},
 			{"authorization", LOG_CONNECTION_AUTHORIZATION},
+			{"setup_durations", LOG_CONNECTION_SETUP_DURATIONS},
 			{"all", LOG_CONNECTION_ALL},
 		};
 

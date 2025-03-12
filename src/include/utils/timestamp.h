@@ -85,6 +85,15 @@ IntervalPGetDatum(const Interval *X)
 #define TimestampTzPlusMilliseconds(tz,ms) ((tz) + ((ms) * (int64) 1000))
 #define TimestampTzPlusSeconds(tz,s) ((tz) + ((s) * (int64) 1000000))
 
+/* Helper for simple subtraction between two timestamps */
+static inline uint64
+TimestampDifferenceMicroseconds(TimestampTz start_time,
+								TimestampTz stop_time)
+{
+	if (start_time >= stop_time)
+		return 0;
+	return (uint64) stop_time - start_time;
+}
 
 /* Set at postmaster start */
 extern PGDLLIMPORT TimestampTz PgStartTime;

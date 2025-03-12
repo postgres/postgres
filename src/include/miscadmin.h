@@ -394,6 +394,14 @@ extern PGDLLIMPORT BackendType MyBackendType;
 	(AmAutoVacuumLauncherProcess() || \
 	 AmLogicalSlotSyncWorkerProcess())
 
+/*
+ * Backend types that are spawned by the postmaster to serve a client or
+ * replication connection. These backend types have in common that they are
+ * externally initiated.
+ */
+#define IsExternalConnectionBackend(backend_type) \
+	(backend_type == B_BACKEND || backend_type == B_WAL_SENDER)
+
 extern const char *GetBackendTypeDesc(BackendType backendType);
 
 extern void SetDatabasePath(const char *path);
