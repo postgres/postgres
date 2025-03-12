@@ -2042,3 +2042,25 @@ DROP SCHEMA reindex_test;
 DROP ROLE regress_no_maintain;
 DROP ROLE regress_maintain;
 DROP ROLE regress_maintain_all;
+
+-- grantor selection
+CREATE ROLE regress_grantor1;
+CREATE ROLE regress_grantor2 ROLE regress_grantor1;
+CREATE ROLE regress_grantor3;
+CREATE TABLE grantor_test1 ();
+CREATE TABLE grantor_test2 ();
+CREATE TABLE grantor_test3 ();
+GRANT SELECT ON grantor_test2 TO regress_grantor1 WITH GRANT OPTION;
+GRANT SELECT, UPDATE ON grantor_test3 TO regress_grantor2 WITH GRANT OPTION;
+
+SET ROLE regress_grantor1;
+GRANT SELECT, UPDATE ON grantor_test1 TO regress_grantor3;
+GRANT SELECT, UPDATE ON grantor_test2 TO regress_grantor3;
+GRANT SELECT, UPDATE ON grantor_test3 TO regress_grantor3;
+RESET ROLE;
+
+SELECT * FROM information_schema.table_privileges t
+	WHERE grantor LIKE 'regress_grantor%' ORDER BY ROW(t.*);
+
+DROP TABLE grantor_test1, grantor_test2, grantor_test3;
+DROP ROLE regress_grantor1, regress_grantor2, regress_grantor3;
