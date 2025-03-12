@@ -286,6 +286,63 @@ SELECT * FROM voo;
  16 | zoo2
 (2 rows)
 
+-- Check use of a whole-row variable for an un-flattenable view
+CREATE TEMP VIEW foo_v AS SELECT * FROM foo OFFSET 0;
+UPDATE foo SET f2 = foo_v.f2 FROM foo_v WHERE foo_v.f1 = foo.f1
+  RETURNING foo_v;
+      foo_v      
+-----------------
+ (2,more,42,141)
+ (16,zoo2,57,99)
+(2 rows)
+
+SELECT * FROM foo;
+ f1 |  f2  | f3 | f4  
+----+------+----+-----
+  2 | more | 42 | 141
+ 16 | zoo2 | 57 |  99
+(2 rows)
+
+-- Check use of a whole-row variable for an inlined set-returning function
+CREATE FUNCTION foo_f() RETURNS SETOF foo AS
+  $$ SELECT * FROM foo OFFSET 0 $$ LANGUAGE sql STABLE;
+UPDATE foo SET f2 = foo_f.f2 FROM foo_f() WHERE foo_f.f1 = foo.f1
+  RETURNING foo_f;
+      foo_f      
+-----------------
+ (2,more,42,141)
+ (16,zoo2,57,99)
+(2 rows)
+
+SELECT * FROM foo;
+ f1 |  f2  | f3 | f4  
+----+------+----+-----
+  2 | more | 42 | 141
+ 16 | zoo2 | 57 |  99
+(2 rows)
+
+DROP FUNCTION foo_f();
+-- As above, but SRF is defined to return a composite type
+CREATE TYPE foo_t AS (f1 int, f2 text, f3 int, f4 int8);
+CREATE FUNCTION foo_f() RETURNS SETOF foo_t AS
+  $$ SELECT * FROM foo OFFSET 0 $$ LANGUAGE sql STABLE;
+UPDATE foo SET f2 = foo_f.f2 FROM foo_f() WHERE foo_f.f1 = foo.f1
+  RETURNING foo_f;
+      foo_f      
+-----------------
+ (2,more,42,141)
+ (16,zoo2,57,99)
+(2 rows)
+
+SELECT * FROM foo;
+ f1 |  f2  | f3 | f4  
+----+------+----+-----
+  2 | more | 42 | 141
+ 16 | zoo2 | 57 |  99
+(2 rows)
+
+DROP FUNCTION foo_f();
+DROP TYPE foo_t;
 -- Try a join case
 CREATE TEMP TABLE joinme (f2j text, other int);
 INSERT INTO joinme VALUES('more', 12345);
@@ -726,8 +783,9 @@ NOTICE:  UPDATE: (3,zoo2,58,99,54321) -> (3,zoo2,59,7,54321)
 
 -- Test wholerow & dropped column handling
 ALTER TABLE foo DROP COLUMN f3 CASCADE;
-NOTICE:  drop cascades to 3 other objects
+NOTICE:  drop cascades to 4 other objects
 DETAIL:  drop cascades to rule voo_i on view voo
+drop cascades to view foo_v
 drop cascades to view joinview
 drop cascades to rule foo_del_rule on table foo
 UPDATE foo SET f4 = f4 + 1 RETURNING old.f3;  -- should fail

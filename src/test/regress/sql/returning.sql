@@ -132,6 +132,30 @@ DELETE FROM foo WHERE f2 = 'zit' RETURNING *;
 SELECT * FROM foo;
 SELECT * FROM voo;
 
+-- Check use of a whole-row variable for an un-flattenable view
+CREATE TEMP VIEW foo_v AS SELECT * FROM foo OFFSET 0;
+UPDATE foo SET f2 = foo_v.f2 FROM foo_v WHERE foo_v.f1 = foo.f1
+  RETURNING foo_v;
+SELECT * FROM foo;
+
+-- Check use of a whole-row variable for an inlined set-returning function
+CREATE FUNCTION foo_f() RETURNS SETOF foo AS
+  $$ SELECT * FROM foo OFFSET 0 $$ LANGUAGE sql STABLE;
+UPDATE foo SET f2 = foo_f.f2 FROM foo_f() WHERE foo_f.f1 = foo.f1
+  RETURNING foo_f;
+SELECT * FROM foo;
+DROP FUNCTION foo_f();
+
+-- As above, but SRF is defined to return a composite type
+CREATE TYPE foo_t AS (f1 int, f2 text, f3 int, f4 int8);
+CREATE FUNCTION foo_f() RETURNS SETOF foo_t AS
+  $$ SELECT * FROM foo OFFSET 0 $$ LANGUAGE sql STABLE;
+UPDATE foo SET f2 = foo_f.f2 FROM foo_f() WHERE foo_f.f1 = foo.f1
+  RETURNING foo_f;
+SELECT * FROM foo;
+DROP FUNCTION foo_f();
+DROP TYPE foo_t;
+
 -- Try a join case
 
 CREATE TEMP TABLE joinme (f2j text, other int);

@@ -161,6 +161,53 @@ makeWholeRowVar(RangeTblEntry *rte,
 							 varlevelsup);
 			break;
 
+		case RTE_SUBQUERY:
+
+			/*
+			 * For a standard subquery, the Var should be of RECORD type.
+			 * However, if we're looking at a subquery that was expanded from
+			 * a view or SRF (only possible during planning), we must use the
+			 * appropriate rowtype, so that the resulting Var has the same
+			 * type that we would have produced from the original RTE.
+			 */
+			if (OidIsValid(rte->relid))
+			{
+				/* Subquery was expanded from a view */
+				toid = get_rel_type_id(rte->relid);
+				if (!OidIsValid(toid))
+					ereport(ERROR,
+							(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+							 errmsg("relation \"%s\" does not have a composite type",
+									get_rel_name(rte->relid))));
+			}
+			else if (rte->functions)
+			{
+				/*
+				 * Subquery was expanded from a set-returning function.  That
+				 * would not have happened if there's more than one function
+				 * or ordinality was requested.  We also needn't worry about
+				 * the allowScalar case, since the planner doesn't use that.
+				 * Otherwise this must match the RTE_FUNCTION code below.
+				 */
+				Assert(!allowScalar);
+				fexpr = ((RangeTblFunction *) linitial(rte->functions))->funcexpr;
+				toid = exprType(fexpr);
+				if (!type_is_rowtype(toid))
+					toid = RECORDOID;
+			}
+			else
+			{
+				/* Normal subquery-in-FROM */
+				toid = RECORDOID;
+			}
+			result = makeVar(varno,
+							 InvalidAttrNumber,
+							 toid,
+							 -1,
+							 InvalidOid,
+							 varlevelsup);
+			break;
+
 		case RTE_FUNCTION:
 
 			/*
@@ -217,8 +264,8 @@ makeWholeRowVar(RangeTblEntry *rte,
 		default:
 
 			/*
-			 * RTE is a join, subselect, tablefunc, or VALUES.  We represent
-			 * this as a whole-row Var of RECORD type. (Note that in most
+			 * RTE is a join, tablefunc, VALUES, CTE, etc.  We represent these
+			 * cases as a whole-row Var of RECORD type.  (Note that in most
 			 * cases the Var will be expanded to a RowExpr during planning,
 			 * but that is not our concern here.)
 			 */
