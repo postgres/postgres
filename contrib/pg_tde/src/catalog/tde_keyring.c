@@ -444,7 +444,7 @@ write_key_provider_info(KeyringProvideRecord *provider, Oid database_id,
 				seek_pos = before_pos;
 				break;
 			}
-			if (strcmp(existing_provider.provider_name, provider->provider_name) == 0)
+			if (strlen(existing_provider.provider_name) > 0 && strcmp(existing_provider.provider_name, provider->provider_name) == 0)
 			{
 				if (error_if_exists)
 				{

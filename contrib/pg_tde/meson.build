@@ -134,6 +134,7 @@ if get_variable('percona_ext', false)
       'test_issue_153_fix',
       'multi_insert',
       'keyprovider_dependency',
+      'delete_key_provider',
       'trigger_on_view',
       'change_access_method',
       'insert_update_delete',

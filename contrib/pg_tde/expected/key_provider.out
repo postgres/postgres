@@ -159,7 +159,6 @@ SELECT pg_tde_delete_global_key_provider('file-keyring2');
 SELECT id, provider_name FROM pg_tde_list_all_global_key_providers();
  id | provider_name 
 ----+---------------
- -2 | file-keyring2
-(1 row)
+(0 rows)
 
 DROP EXTENSION pg_tde;

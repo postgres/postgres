@@ -1,0 +1,74 @@
+CREATE EXTENSION IF NOT EXISTS pg_tde;
+SELECT  * FROM pg_tde_principal_key_info();
+ERROR:  Principal key does not exists for the database
+HINT:  Use set_principal_key interface to set the principal key
+SELECT pg_tde_add_key_provider_file('file-provider','/tmp/pg_tde_test_keyring.per');
+ pg_tde_add_key_provider_file 
+------------------------------
+                            1
+(1 row)
+
+SELECT * FROM pg_tde_list_all_key_providers();
+ id | provider_name | provider_type |                          options                           
+----+---------------+---------------+------------------------------------------------------------
+  1 | file-provider | file          | {"type" : "file", "path" : "/tmp/pg_tde_test_keyring.per"}
+(1 row)
+
+SELECT pg_tde_delete_key_provider('file-provider');
+ pg_tde_delete_key_provider 
+----------------------------
+ 
+(1 row)
+
+SELECT * FROM pg_tde_list_all_key_providers();
+ id | provider_name | provider_type | options 
+----+---------------+---------------+---------
+(0 rows)
+
+SELECT pg_tde_add_key_provider_file('file-provider','/tmp/pg_tde_test_keyring.per');
+ pg_tde_add_key_provider_file 
+------------------------------
+                            2
+(1 row)
+
+SELECT * FROM pg_tde_list_all_key_providers();
+ id | provider_name | provider_type |                          options                           
+----+---------------+---------------+------------------------------------------------------------
+  2 | file-provider | file          | {"type" : "file", "path" : "/tmp/pg_tde_test_keyring.per"}
+(1 row)
+
+SELECT pg_tde_delete_key_provider('file-provider');
+ pg_tde_delete_key_provider 
+----------------------------
+ 
+(1 row)
+
+SELECT * FROM pg_tde_list_all_key_providers();
+ id | provider_name | provider_type | options 
+----+---------------+---------------+---------
+(0 rows)
+
+SELECT pg_tde_add_key_provider_file('file-provider','/tmp/pg_tde_test_keyring.per');
+ pg_tde_add_key_provider_file 
+------------------------------
+                            3
+(1 row)
+
+SELECT * FROM pg_tde_list_all_key_providers();
+ id | provider_name | provider_type |                          options                           
+----+---------------+---------------+------------------------------------------------------------
+  3 | file-provider | file          | {"type" : "file", "path" : "/tmp/pg_tde_test_keyring.per"}
+(1 row)
+
+SELECT pg_tde_delete_key_provider('file-provider');
+ pg_tde_delete_key_provider 
+----------------------------
+ 
+(1 row)
+
+SELECT * FROM pg_tde_list_all_key_providers();
+ id | provider_name | provider_type | options 
+----+---------------+---------------+---------
+(0 rows)
+
+DROP EXTENSION pg_tde;
