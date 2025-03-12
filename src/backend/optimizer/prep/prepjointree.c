@@ -744,8 +744,14 @@ preprocess_function_rtes(PlannerInfo *root)
 				rte->rtekind = RTE_SUBQUERY;
 				rte->subquery = funcquery;
 				rte->security_barrier = false;
-				/* Clear fields that should not be set in a subquery RTE */
-				rte->functions = NIL;
+
+				/*
+				 * Clear fields that should not be set in a subquery RTE.
+				 * However, we leave rte->functions filled in for the moment,
+				 * in case makeWholeRowVar needs to consult it.  We'll clear
+				 * it in setrefs.c (see add_rte_to_flat_rtable) so that this
+				 * abuse of the data structure doesn't escape the planner.
+				 */
 				rte->funcordinality = false;
 			}
 		}
