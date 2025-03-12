@@ -71,6 +71,8 @@ install_data(
   kwargs: contrib_data_args,
 )
 
+# toast_descrypt needs to be the first test when running with pg_tde
+# preinstalled and default_principal_key needs to run after key_provider.
 sql_tests = [
       'toast_decrypt',
       'access_control',

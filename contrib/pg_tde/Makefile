@@ -6,6 +6,8 @@ EXTENSION = pg_tde
 DATA = pg_tde--1.0-rc.sql
 
 REGRESS_OPTS = --temp-config $(top_srcdir)/contrib/pg_tde/pg_tde.conf
+# toast_descrypt needs to be the first test when running with pg_tde
+# preinstalled and default_principal_key needs to run after key_provider.
 REGRESS = toast_decrypt \
 access_control \
 alter_index \
