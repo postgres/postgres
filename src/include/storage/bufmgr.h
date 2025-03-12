@@ -152,7 +152,7 @@ extern PGDLLIMPORT bool track_io_timing;
 
 /* only applicable when prefetching is available */
 #ifdef USE_PREFETCH
-#define DEFAULT_EFFECTIVE_IO_CONCURRENCY 1
+#define DEFAULT_EFFECTIVE_IO_CONCURRENCY 16
 #define DEFAULT_MAINTENANCE_IO_CONCURRENCY 10
 #else
 #define DEFAULT_EFFECTIVE_IO_CONCURRENCY 0

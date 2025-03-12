@@ -2574,39 +2574,33 @@ include_dir 'conf.d'
        </term>
        <listitem>
         <para>
-         Sets the number of concurrent disk I/O operations that
+         Sets the number of concurrent storage I/O operations that
          <productname>PostgreSQL</productname> expects can be executed
          simultaneously.  Raising this value will increase the number of I/O
-         operations that any individual <productname>PostgreSQL</productname> session
-         attempts to initiate in parallel.  The allowed range is 1 to 1000,
-         or zero to disable issuance of asynchronous I/O requests. Currently,
-         this setting only affects bitmap heap scans.
+         operations that any individual <productname>PostgreSQL</productname>
+         session attempts to initiate in parallel.  The allowed range is
+         <literal>1</literal> to <literal>1000</literal>, or
+         <literal>0</literal> to disable issuance of asynchronous I/O requests.
+         The default is <literal>16</literal> on supported systems, otherwise
+         <literal>0</literal>.
         </para>
 
         <para>
-         For magnetic drives, a good starting point for this setting is the
-         number of separate
-         drives comprising a RAID 0 stripe or RAID 1 mirror being used for the
-         database.  (For RAID 5 the parity drive should not be counted.)
-         However, if the database is often busy with multiple queries issued in
-         concurrent sessions, lower values may be sufficient to keep the disk
-         array busy.  A value higher than needed to keep the disks busy will
-         only result in extra CPU overhead.
-         SSDs and other memory-based storage can often process many
-         concurrent requests, so the best value might be in the hundreds.
+         Higher values will have the most impact on higher latency storage
+         where queries otherwise experience noticeable I/O stalls and on
+         devices with high IOPs. Unnecessarily high values may increase I/O
+         latency for all queries on the system
         </para>
 
         <para>
-         Asynchronous I/O requires that the operating system supports issuing
-         read-ahead advice.  If there is no operating system support then
-         setting this parameter to anything but zero will result in an error.
+         On systems without prefetch advice support, attempting to configure
+         any value other than <literal>0</literal> will error out.
         </para>
 
         <para>
-         The default is 1 on supported systems, otherwise 0.  This value can
-         be overridden for tables in a particular tablespace by setting the
-         tablespace parameter of the same name (see
-         <xref linkend="sql-altertablespace"/>).
+         This value can be overridden for tables in a particular tablespace by
+         setting the tablespace parameter of the same name (see <xref
+         linkend="sql-altertablespace"/>).
         </para>
        </listitem>
       </varlistentry>
