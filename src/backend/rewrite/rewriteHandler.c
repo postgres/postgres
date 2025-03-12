@@ -1825,8 +1825,12 @@ ApplyRetrieveRule(Query *parsetree,
 	rte->rtekind = RTE_SUBQUERY;
 	rte->subquery = rule_action;
 	rte->security_barrier = RelationIsSecurityView(relation);
-	/* Clear fields that should not be set in a subquery RTE */
-	rte->relid = InvalidOid;
+
+	/*
+	 * Clear fields that should not be set in a subquery RTE.  However, we
+	 * retain the relid to support correct operation of makeWholeRowVar during
+	 * planning.
+	 */
 	rte->relkind = 0;
 	rte->rellockmode = 0;
 	rte->tablesample = NULL;

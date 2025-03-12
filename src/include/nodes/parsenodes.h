@@ -982,6 +982,12 @@ typedef struct RangeTblEntry
 	/*
 	 * Fields valid for a plain relation RTE (else zero):
 	 *
+	 * As a special case, relid can also be set in RTE_SUBQUERY RTEs.  This
+	 * happens when an RTE_RELATION RTE for a view is transformed to an
+	 * RTE_SUBQUERY during rewriting.  We keep the relid because it is useful
+	 * during planning, cf makeWholeRowVar.  (It cannot be relied on during
+	 * execution, because it will not propagate to parallel workers.)
+	 *
 	 * As a special case, RTE_NAMEDTUPLESTORE can also set relid to indicate
 	 * that the tuple format of the tuplestore is the same as the referenced
 	 * relation.  This allows plans referencing AFTER trigger transition
