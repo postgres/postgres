@@ -12,7 +12,7 @@
 #include "plpython.h"
 #include "utils/memutils.h"
 
-static void PLy_plan_dealloc(PyObject *arg);
+static void PLy_plan_dealloc(PLyPlanObject *self);
 static PyObject *PLy_plan_cursor(PyObject *self, PyObject *args);
 static PyObject *PLy_plan_execute(PyObject *self, PyObject *args);
 static PyObject *PLy_plan_status(PyObject *self, PyObject *args);
@@ -26,20 +26,37 @@ static PyMethodDef PLy_plan_methods[] = {
 	{NULL, NULL, 0, NULL}
 };
 
-static PyTypeObject PLy_PlanType = {
-	PyVarObject_HEAD_INIT(NULL, 0)
-	.tp_name = "PLyPlan",
-	.tp_basicsize = sizeof(PLyPlanObject),
-	.tp_dealloc = PLy_plan_dealloc,
-	.tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
-	.tp_doc = PLy_plan_doc,
-	.tp_methods = PLy_plan_methods,
+static PyType_Slot PLyPlan_slots[] =
+{
+	{
+		Py_tp_dealloc, PLy_plan_dealloc
+	},
+	{
+		Py_tp_doc, (char *) PLy_plan_doc
+	},
+	{
+		Py_tp_methods, PLy_plan_methods
+	},
+	{
+		0, NULL
+	}
 };
+
+static PyType_Spec PLyPlan_spec =
+{
+	.name = "PLyPlan",
+		.basicsize = sizeof(PLyPlanObject),
+		.flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
+		.slots = PLyPlan_slots,
+};
+
+static PyTypeObject *PLy_PlanType;
 
 void
 PLy_plan_init_type(void)
 {
-	if (PyType_Ready(&PLy_PlanType) < 0)
+	PLy_PlanType = (PyTypeObject *) PyType_FromSpec(&PLyPlan_spec);
+	if (!PLy_PlanType)
 		elog(ERROR, "could not initialize PLy_PlanType");
 }
 
@@ -48,8 +65,12 @@ PLy_plan_new(void)
 {
 	PLyPlanObject *ob;
 
-	if ((ob = PyObject_New(PLyPlanObject, &PLy_PlanType)) == NULL)
+	if ((ob = PyObject_New(PLyPlanObject, PLy_PlanType)) == NULL)
 		return NULL;
+#if PY_VERSION_HEX < 0x03080000
+	/* Workaround for Python issue 35810; no longer necessary in Python 3.8 */
+	Py_INCREF(PLy_PlanType);
+#endif
 
 	ob->plan = NULL;
 	ob->nargs = 0;
@@ -63,25 +84,32 @@ PLy_plan_new(void)
 bool
 is_PLyPlanObject(PyObject *ob)
 {
-	return ob->ob_type == &PLy_PlanType;
+	return ob->ob_type == PLy_PlanType;
 }
 
 static void
-PLy_plan_dealloc(PyObject *arg)
+PLy_plan_dealloc(PLyPlanObject *self)
 {
-	PLyPlanObject *ob = (PLyPlanObject *) arg;
+#if PY_VERSION_HEX >= 0x03080000
+	PyTypeObject *tp = Py_TYPE(self);
+#endif
 
-	if (ob->plan)
+	if (self->plan)
 	{
-		SPI_freeplan(ob->plan);
-		ob->plan = NULL;
+		SPI_freeplan(self->plan);
+		self->plan = NULL;
 	}
-	if (ob->mcxt)
+	if (self->mcxt)
 	{
-		MemoryContextDelete(ob->mcxt);
-		ob->mcxt = NULL;
+		MemoryContextDelete(self->mcxt);
+		self->mcxt = NULL;
 	}
-	arg->ob_type->tp_free(arg);
+
+	PyObject_Free(self);
+#if PY_VERSION_HEX >= 0x03080000
+	/* This was not needed before Python 3.8 (Python issue 35810) */
+	Py_DECREF(tp);
+#endif
 }
 
 
