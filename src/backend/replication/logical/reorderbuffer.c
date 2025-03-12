@@ -220,8 +220,8 @@ int			debug_logical_replication_streaming = DEBUG_LOGICAL_REP_STREAMING_BUFFERED
  * primary reorderbuffer support routines
  * ---------------------------------------
  */
-static ReorderBufferTXN *ReorderBufferGetTXN(ReorderBuffer *rb);
-static void ReorderBufferReturnTXN(ReorderBuffer *rb, ReorderBufferTXN *txn);
+static ReorderBufferTXN *ReorderBufferAllocTXN(ReorderBuffer *rb);
+static void ReorderBufferFreeTXN(ReorderBuffer *rb, ReorderBufferTXN *txn);
 static ReorderBufferTXN *ReorderBufferTXNByXid(ReorderBuffer *rb,
 											   TransactionId xid, bool create, bool *is_new,
 											   XLogRecPtr lsn, bool create_as_top);
@@ -416,10 +416,10 @@ ReorderBufferFree(ReorderBuffer *rb)
 }
 
 /*
- * Get an unused, possibly preallocated, ReorderBufferTXN.
+ * Allocate a new ReorderBufferTXN.
  */
 static ReorderBufferTXN *
-ReorderBufferGetTXN(ReorderBuffer *rb)
+ReorderBufferAllocTXN(ReorderBuffer *rb)
 {
 	ReorderBufferTXN *txn;
 
@@ -443,7 +443,7 @@ ReorderBufferGetTXN(ReorderBuffer *rb)
  * Free a ReorderBufferTXN.
  */
 static void
-ReorderBufferReturnTXN(ReorderBuffer *rb, ReorderBufferTXN *txn)
+ReorderBufferFreeTXN(ReorderBuffer *rb, ReorderBufferTXN *txn)
 {
 	/* clean the lookup cache if we were cached (quite likely) */
 	if (rb->by_txn_last_xid == txn->xid)
@@ -482,10 +482,10 @@ ReorderBufferReturnTXN(ReorderBuffer *rb, ReorderBufferTXN *txn)
 }
 
 /*
- * Get a fresh ReorderBufferChange.
+ * Allocate a ReorderBufferChange.
  */
 ReorderBufferChange *
-ReorderBufferGetChange(ReorderBuffer *rb)
+ReorderBufferAllocChange(ReorderBuffer *rb)
 {
 	ReorderBufferChange *change;
 
@@ -500,8 +500,8 @@ ReorderBufferGetChange(ReorderBuffer *rb)
  * Free a ReorderBufferChange and update memory accounting, if requested.
  */
 void
-ReorderBufferReturnChange(ReorderBuffer *rb, ReorderBufferChange *change,
-						  bool upd_mem)
+ReorderBufferFreeChange(ReorderBuffer *rb, ReorderBufferChange *change,
+						bool upd_mem)
 {
 	/* update memory accounting info */
 	if (upd_mem)
@@ -517,13 +517,13 @@ ReorderBufferReturnChange(ReorderBuffer *rb, ReorderBufferChange *change,
 		case REORDER_BUFFER_CHANGE_INTERNAL_SPEC_INSERT:
 			if (change->data.tp.newtuple)
 			{
-				ReorderBufferReturnTupleBuf(change->data.tp.newtuple);
+				ReorderBufferFreeTupleBuf(change->data.tp.newtuple);
 				change->data.tp.newtuple = NULL;
 			}
 
 			if (change->data.tp.oldtuple)
 			{
-				ReorderBufferReturnTupleBuf(change->data.tp.oldtuple);
+				ReorderBufferFreeTupleBuf(change->data.tp.oldtuple);
 				change->data.tp.oldtuple = NULL;
 			}
 			break;
@@ -551,7 +551,7 @@ ReorderBufferReturnChange(ReorderBuffer *rb, ReorderBufferChange *change,
 		case REORDER_BUFFER_CHANGE_TRUNCATE:
 			if (change->data.truncate.relids != NULL)
 			{
-				ReorderBufferReturnRelids(rb, change->data.truncate.relids);
+				ReorderBufferFreeRelids(rb, change->data.truncate.relids);
 				change->data.truncate.relids = NULL;
 			}
 			break;
@@ -566,11 +566,11 @@ ReorderBufferReturnChange(ReorderBuffer *rb, ReorderBufferChange *change,
 }
 
 /*
- * Get a fresh HeapTuple fitting a tuple of size tuple_len (excluding header
+ * Allocate a HeapTuple fitting a tuple of size tuple_len (excluding header
  * overhead).
  */
 HeapTuple
-ReorderBufferGetTupleBuf(ReorderBuffer *rb, Size tuple_len)
+ReorderBufferAllocTupleBuf(ReorderBuffer *rb, Size tuple_len)
 {
 	HeapTuple	tuple;
 	Size		alloc_len;
@@ -585,16 +585,16 @@ ReorderBufferGetTupleBuf(ReorderBuffer *rb, Size tuple_len)
 }
 
 /*
- * Free a HeapTuple returned by ReorderBufferGetTupleBuf().
+ * Free a HeapTuple returned by ReorderBufferAllocTupleBuf().
  */
 void
-ReorderBufferReturnTupleBuf(HeapTuple tuple)
+ReorderBufferFreeTupleBuf(HeapTuple tuple)
 {
 	pfree(tuple);
 }
 
 /*
- * Get an array for relids of truncated relations.
+ * Allocate an array for relids of truncated relations.
  *
  * We use the global memory context (for the whole reorder buffer), because
  * none of the existing ones seems like a good match (some are SLAB, so we
@@ -603,7 +603,7 @@ ReorderBufferReturnTupleBuf(HeapTuple tuple)
  * not particularly common operation, so it does not seem worth it.
  */
 Oid *
-ReorderBufferGetRelids(ReorderBuffer *rb, int nrelids)
+ReorderBufferAllocRelids(ReorderBuffer *rb, int nrelids)
 {
 	Oid		   *relids;
 	Size		alloc_len;
@@ -619,7 +619,7 @@ ReorderBufferGetRelids(ReorderBuffer *rb, int nrelids)
  * Free an array of relids.
  */
 void
-ReorderBufferReturnRelids(ReorderBuffer *rb, Oid *relids)
+ReorderBufferFreeRelids(ReorderBuffer *rb, Oid *relids)
 {
 	pfree(relids);
 }
@@ -684,7 +684,7 @@ ReorderBufferTXNByXid(ReorderBuffer *rb, TransactionId xid, bool create,
 		Assert(ent != NULL);
 		Assert(lsn != InvalidXLogRecPtr);
 
-		ent->txn = ReorderBufferGetTXN(rb);
+		ent->txn = ReorderBufferAllocTXN(rb);
 		ent->txn->xid = xid;
 		txn = ent->txn;
 		txn->first_lsn = lsn;
@@ -806,7 +806,7 @@ ReorderBufferQueueChange(ReorderBuffer *rb, TransactionId xid, XLogRecPtr lsn,
 		 * We don't need to update memory accounting for this change as we
 		 * have not added it to the queue yet.
 		 */
-		ReorderBufferReturnChange(rb, change, false);
+		ReorderBufferFreeChange(rb, change, false);
 		return;
 	}
 
@@ -872,7 +872,7 @@ ReorderBufferQueueMessage(ReorderBuffer *rb, TransactionId xid,
 
 		oldcontext = MemoryContextSwitchTo(rb->context);
 
-		change = ReorderBufferGetChange(rb);
+		change = ReorderBufferAllocChange(rb);
 		change->action = REORDER_BUFFER_CHANGE_MESSAGE;
 		change->data.msg.prefix = pstrdup(prefix);
 		change->data.msg.message_size = message_size;
@@ -1408,7 +1408,7 @@ ReorderBufferIterTXNNext(ReorderBuffer *rb, ReorderBufferIterTXNState *state)
 	{
 		change = dlist_container(ReorderBufferChange, node,
 								 dlist_pop_head_node(&state->old_change));
-		ReorderBufferReturnChange(rb, change, true);
+		ReorderBufferFreeChange(rb, change, true);
 		Assert(dlist_is_empty(&state->old_change));
 	}
 
@@ -1500,7 +1500,7 @@ ReorderBufferIterTXNFinish(ReorderBuffer *rb,
 
 		change = dlist_container(ReorderBufferChange, node,
 								 dlist_pop_head_node(&state->old_change));
-		ReorderBufferReturnChange(rb, change, true);
+		ReorderBufferFreeChange(rb, change, true);
 		Assert(dlist_is_empty(&state->old_change));
 	}
 
@@ -1555,7 +1555,7 @@ ReorderBufferCleanupTXN(ReorderBuffer *rb, ReorderBufferTXN *txn)
 		 */
 		mem_freed += ReorderBufferChangeSize(change);
 
-		ReorderBufferReturnChange(rb, change, false);
+		ReorderBufferFreeChange(rb, change, false);
 	}
 
 	/* Update the memory counter */
@@ -1575,7 +1575,7 @@ ReorderBufferCleanupTXN(ReorderBuffer *rb, ReorderBufferTXN *txn)
 		Assert(change->txn == txn);
 		Assert(change->action == REORDER_BUFFER_CHANGE_INTERNAL_TUPLECID);
 
-		ReorderBufferReturnChange(rb, change, true);
+		ReorderBufferFreeChange(rb, change, true);
 	}
 
 	/*
@@ -1618,7 +1618,7 @@ ReorderBufferCleanupTXN(ReorderBuffer *rb, ReorderBufferTXN *txn)
 		ReorderBufferRestoreCleanup(rb, txn);
 
 	/* deallocate */
-	ReorderBufferReturnTXN(rb, txn);
+	ReorderBufferFreeTXN(rb, txn);
 }
 
 /*
@@ -1679,7 +1679,7 @@ ReorderBufferTruncateTXN(ReorderBuffer *rb, ReorderBufferTXN *txn, bool txn_prep
 		 */
 		mem_freed += ReorderBufferChangeSize(change);
 
-		ReorderBufferReturnChange(rb, change, false);
+		ReorderBufferFreeChange(rb, change, false);
 	}
 
 	/* Update the memory counter */
@@ -1705,7 +1705,7 @@ ReorderBufferTruncateTXN(ReorderBuffer *rb, ReorderBufferTXN *txn, bool txn_prep
 			/* Remove the change from its containing list. */
 			dlist_delete(&change->node);
 
-			ReorderBufferReturnChange(rb, change, true);
+			ReorderBufferFreeChange(rb, change, true);
 		}
 	}
 
@@ -2158,7 +2158,7 @@ ReorderBufferResetTXN(ReorderBuffer *rb, ReorderBufferTXN *txn,
 	/* Return the spec insert change if it is not NULL */
 	if (specinsert != NULL)
 	{
-		ReorderBufferReturnChange(rb, specinsert, true);
+		ReorderBufferFreeChange(rb, specinsert, true);
 		specinsert = NULL;
 	}
 
@@ -2399,7 +2399,7 @@ ReorderBufferProcessTXN(ReorderBuffer *rb, ReorderBufferTXN *txn,
 					 */
 					if (specinsert != NULL)
 					{
-						ReorderBufferReturnChange(rb, specinsert, true);
+						ReorderBufferFreeChange(rb, specinsert, true);
 						specinsert = NULL;
 					}
 
@@ -2428,7 +2428,7 @@ ReorderBufferProcessTXN(ReorderBuffer *rb, ReorderBufferTXN *txn,
 					/* clear out a pending (and thus failed) speculation */
 					if (specinsert != NULL)
 					{
-						ReorderBufferReturnChange(rb, specinsert, true);
+						ReorderBufferFreeChange(rb, specinsert, true);
 						specinsert = NULL;
 					}
 
@@ -2458,7 +2458,7 @@ ReorderBufferProcessTXN(ReorderBuffer *rb, ReorderBufferTXN *txn,
 						ReorderBufferToastReset(rb, txn);
 
 						/* We don't need this record anymore. */
-						ReorderBufferReturnChange(rb, specinsert, true);
+						ReorderBufferFreeChange(rb, specinsert, true);
 						specinsert = NULL;
 					}
 					break;
@@ -3253,7 +3253,7 @@ void
 ReorderBufferAddSnapshot(ReorderBuffer *rb, TransactionId xid,
 						 XLogRecPtr lsn, Snapshot snap)
 {
-	ReorderBufferChange *change = ReorderBufferGetChange(rb);
+	ReorderBufferChange *change = ReorderBufferAllocChange(rb);
 
 	change->data.snapshot = snap;
 	change->action = REORDER_BUFFER_CHANGE_INTERNAL_SNAPSHOT;
@@ -3302,7 +3302,7 @@ void
 ReorderBufferAddNewCommandId(ReorderBuffer *rb, TransactionId xid,
 							 XLogRecPtr lsn, CommandId cid)
 {
-	ReorderBufferChange *change = ReorderBufferGetChange(rb);
+	ReorderBufferChange *change = ReorderBufferAllocChange(rb);
 
 	change->data.command_id = cid;
 	change->action = REORDER_BUFFER_CHANGE_INTERNAL_COMMAND_ID;
@@ -3403,7 +3403,7 @@ ReorderBufferAddNewTupleCids(ReorderBuffer *rb, TransactionId xid,
 							 ItemPointerData tid, CommandId cmin,
 							 CommandId cmax, CommandId combocid)
 {
-	ReorderBufferChange *change = ReorderBufferGetChange(rb);
+	ReorderBufferChange *change = ReorderBufferAllocChange(rb);
 	ReorderBufferTXN *txn;
 
 	txn = ReorderBufferTXNByXid(rb, xid, true, NULL, lsn, true);
@@ -3476,7 +3476,7 @@ ReorderBufferAddInvalidations(ReorderBuffer *rb, TransactionId xid,
 		txn->ninvalidations += nmsgs;
 	}
 
-	change = ReorderBufferGetChange(rb);
+	change = ReorderBufferAllocChange(rb);
 	change->action = REORDER_BUFFER_CHANGE_INVALIDATION;
 	change->data.inval.ninvalidations = nmsgs;
 	change->data.inval.invalidations = (SharedInvalidationMessage *)
@@ -3891,7 +3891,7 @@ ReorderBufferSerializeTXN(ReorderBuffer *rb, ReorderBufferTXN *txn)
 
 		ReorderBufferSerializeChange(rb, txn, fd, change);
 		dlist_delete(&change->node);
-		ReorderBufferReturnChange(rb, change, false);
+		ReorderBufferFreeChange(rb, change, false);
 
 		spilled++;
 	}
@@ -4395,7 +4395,7 @@ ReorderBufferRestoreChanges(ReorderBuffer *rb, ReorderBufferTXN *txn,
 			dlist_container(ReorderBufferChange, node, cleanup_iter.cur);
 
 		dlist_delete(&cleanup->node);
-		ReorderBufferReturnChange(rb, cleanup, true);
+		ReorderBufferFreeChange(rb, cleanup, true);
 	}
 	txn->nentries_mem = 0;
 	Assert(dlist_is_empty(&txn->changes));
@@ -4528,7 +4528,7 @@ ReorderBufferRestoreChange(ReorderBuffer *rb, ReorderBufferTXN *txn,
 
 	ondisk = (ReorderBufferDiskChange *) data;
 
-	change = ReorderBufferGetChange(rb);
+	change = ReorderBufferAllocChange(rb);
 
 	/* copy static part */
 	memcpy(change, &ondisk->change, sizeof(ReorderBufferChange));
@@ -4548,7 +4548,7 @@ ReorderBufferRestoreChange(ReorderBuffer *rb, ReorderBufferTXN *txn,
 				uint32		tuplelen = ((HeapTuple) data)->t_len;
 
 				change->data.tp.oldtuple =
-					ReorderBufferGetTupleBuf(rb, tuplelen - SizeofHeapTupleHeader);
+					ReorderBufferAllocTupleBuf(rb, tuplelen - SizeofHeapTupleHeader);
 
 				/* restore ->tuple */
 				memcpy(change->data.tp.oldtuple, data,
@@ -4573,7 +4573,7 @@ ReorderBufferRestoreChange(ReorderBuffer *rb, ReorderBufferTXN *txn,
 					   sizeof(uint32));
 
 				change->data.tp.newtuple =
-					ReorderBufferGetTupleBuf(rb, tuplelen - SizeofHeapTupleHeader);
+					ReorderBufferAllocTupleBuf(rb, tuplelen - SizeofHeapTupleHeader);
 
 				/* restore ->tuple */
 				memcpy(change->data.tp.newtuple, data,
@@ -4655,8 +4655,7 @@ ReorderBufferRestoreChange(ReorderBuffer *rb, ReorderBufferTXN *txn,
 			{
 				Oid		   *relids;
 
-				relids = ReorderBufferGetRelids(rb,
-												change->data.truncate.nrelids);
+				relids = ReorderBufferAllocRelids(rb, change->data.truncate.nrelids);
 				memcpy(relids, data, change->data.truncate.nrelids * sizeof(Oid));
 				change->data.truncate.relids = relids;
 
@@ -5126,7 +5125,7 @@ ReorderBufferToastReset(ReorderBuffer *rb, ReorderBufferTXN *txn)
 				dlist_container(ReorderBufferChange, node, it.cur);
 
 			dlist_delete(&change->node);
-			ReorderBufferReturnChange(rb, change, true);
+			ReorderBufferFreeChange(rb, change, true);
 		}
 	}
 

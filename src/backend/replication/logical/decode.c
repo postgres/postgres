@@ -915,7 +915,7 @@ DecodeInsert(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 	if (FilterByOrigin(ctx, XLogRecGetOrigin(r)))
 		return;
 
-	change = ReorderBufferGetChange(ctx->reorder);
+	change = ReorderBufferAllocChange(ctx->reorder);
 	if (!(xlrec->flags & XLH_INSERT_IS_SPECULATIVE))
 		change->action = REORDER_BUFFER_CHANGE_INSERT;
 	else
@@ -928,7 +928,7 @@ DecodeInsert(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 	tuplelen = datalen - SizeOfHeapHeader;
 
 	change->data.tp.newtuple =
-		ReorderBufferGetTupleBuf(ctx->reorder, tuplelen);
+		ReorderBufferAllocTupleBuf(ctx->reorder, tuplelen);
 
 	DecodeXLogTuple(tupledata, datalen, change->data.tp.newtuple);
 
@@ -965,7 +965,7 @@ DecodeUpdate(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 	if (FilterByOrigin(ctx, XLogRecGetOrigin(r)))
 		return;
 
-	change = ReorderBufferGetChange(ctx->reorder);
+	change = ReorderBufferAllocChange(ctx->reorder);
 	change->action = REORDER_BUFFER_CHANGE_UPDATE;
 	change->origin_id = XLogRecGetOrigin(r);
 	memcpy(&change->data.tp.rlocator, &target_locator, sizeof(RelFileLocator));
@@ -980,7 +980,7 @@ DecodeUpdate(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 		tuplelen = datalen - SizeOfHeapHeader;
 
 		change->data.tp.newtuple =
-			ReorderBufferGetTupleBuf(ctx->reorder, tuplelen);
+			ReorderBufferAllocTupleBuf(ctx->reorder, tuplelen);
 
 		DecodeXLogTuple(data, datalen, change->data.tp.newtuple);
 	}
@@ -996,7 +996,7 @@ DecodeUpdate(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 		tuplelen = datalen - SizeOfHeapHeader;
 
 		change->data.tp.oldtuple =
-			ReorderBufferGetTupleBuf(ctx->reorder, tuplelen);
+			ReorderBufferAllocTupleBuf(ctx->reorder, tuplelen);
 
 		DecodeXLogTuple(data, datalen, change->data.tp.oldtuple);
 	}
@@ -1031,7 +1031,7 @@ DecodeDelete(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 	if (FilterByOrigin(ctx, XLogRecGetOrigin(r)))
 		return;
 
-	change = ReorderBufferGetChange(ctx->reorder);
+	change = ReorderBufferAllocChange(ctx->reorder);
 
 	if (xlrec->flags & XLH_DELETE_IS_SUPER)
 		change->action = REORDER_BUFFER_CHANGE_INTERNAL_SPEC_ABORT;
@@ -1051,7 +1051,7 @@ DecodeDelete(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 		Assert(XLogRecGetDataLen(r) > (SizeOfHeapDelete + SizeOfHeapHeader));
 
 		change->data.tp.oldtuple =
-			ReorderBufferGetTupleBuf(ctx->reorder, tuplelen);
+			ReorderBufferAllocTupleBuf(ctx->reorder, tuplelen);
 
 		DecodeXLogTuple((char *) xlrec + SizeOfHeapDelete,
 						datalen, change->data.tp.oldtuple);
@@ -1083,7 +1083,7 @@ DecodeTruncate(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 	if (FilterByOrigin(ctx, XLogRecGetOrigin(r)))
 		return;
 
-	change = ReorderBufferGetChange(ctx->reorder);
+	change = ReorderBufferAllocChange(ctx->reorder);
 	change->action = REORDER_BUFFER_CHANGE_TRUNCATE;
 	change->origin_id = XLogRecGetOrigin(r);
 	if (xlrec->flags & XLH_TRUNCATE_CASCADE)
@@ -1091,8 +1091,8 @@ DecodeTruncate(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 	if (xlrec->flags & XLH_TRUNCATE_RESTART_SEQS)
 		change->data.truncate.restart_seqs = true;
 	change->data.truncate.nrelids = xlrec->nrelids;
-	change->data.truncate.relids = ReorderBufferGetRelids(ctx->reorder,
-														  xlrec->nrelids);
+	change->data.truncate.relids = ReorderBufferAllocRelids(ctx->reorder,
+															xlrec->nrelids);
 	memcpy(change->data.truncate.relids, xlrec->relids,
 		   xlrec->nrelids * sizeof(Oid));
 	ReorderBufferQueueChange(ctx->reorder, XLogRecGetXid(r),
@@ -1149,7 +1149,7 @@ DecodeMultiInsert(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 		HeapTuple	tuple;
 		HeapTupleHeader header;
 
-		change = ReorderBufferGetChange(ctx->reorder);
+		change = ReorderBufferAllocChange(ctx->reorder);
 		change->action = REORDER_BUFFER_CHANGE_INSERT;
 		change->origin_id = XLogRecGetOrigin(r);
 
@@ -1160,7 +1160,7 @@ DecodeMultiInsert(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 		datalen = xlhdr->datalen;
 
 		change->data.tp.newtuple =
-			ReorderBufferGetTupleBuf(ctx->reorder, datalen);
+			ReorderBufferAllocTupleBuf(ctx->reorder, datalen);
 
 		tuple = change->data.tp.newtuple;
 		header = tuple->t_data;
@@ -1224,7 +1224,7 @@ DecodeSpecConfirm(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 	if (FilterByOrigin(ctx, XLogRecGetOrigin(r)))
 		return;
 
-	change = ReorderBufferGetChange(ctx->reorder);
+	change = ReorderBufferAllocChange(ctx->reorder);
 	change->action = REORDER_BUFFER_CHANGE_INTERNAL_SPEC_CONFIRM;
 	change->origin_id = XLogRecGetOrigin(r);
 

@@ -689,16 +689,15 @@ struct ReorderBuffer
 extern ReorderBuffer *ReorderBufferAllocate(void);
 extern void ReorderBufferFree(ReorderBuffer *rb);
 
-extern HeapTuple ReorderBufferGetTupleBuf(ReorderBuffer *rb,
-										  Size tuple_len);
-extern void ReorderBufferReturnTupleBuf(HeapTuple tuple);
+extern HeapTuple ReorderBufferAllocTupleBuf(ReorderBuffer *rb, Size tuple_len);
+extern void ReorderBufferFreeTupleBuf(HeapTuple tuple);
 
-extern ReorderBufferChange *ReorderBufferGetChange(ReorderBuffer *rb);
-extern void ReorderBufferReturnChange(ReorderBuffer *rb,
-									  ReorderBufferChange *change, bool upd_mem);
+extern ReorderBufferChange *ReorderBufferAllocChange(ReorderBuffer *rb);
+extern void ReorderBufferFreeChange(ReorderBuffer *rb,
+									ReorderBufferChange *change, bool upd_mem);
 
-extern Oid *ReorderBufferGetRelids(ReorderBuffer *rb, int nrelids);
-extern void ReorderBufferReturnRelids(ReorderBuffer *rb, Oid *relids);
+extern Oid *ReorderBufferAllocRelids(ReorderBuffer *rb, int nrelids);
+extern void ReorderBufferFreeRelids(ReorderBuffer *rb, Oid *relids);
 
 extern void ReorderBufferQueueChange(ReorderBuffer *rb, TransactionId xid,
 									 XLogRecPtr lsn, ReorderBufferChange *change,
