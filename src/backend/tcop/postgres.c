@@ -803,45 +803,10 @@ pg_rewrite_query(Query *query)
 	}
 #endif
 
-#ifdef WRITE_READ_PARSE_PLAN_TREES
-	/* Optional debugging check: pass querytree through outfuncs/readfuncs */
-	{
-		List	   *new_list = NIL;
-		ListCell   *lc;
-
-		/*
-		 * We currently lack outfuncs/readfuncs support for most utility
-		 * statement types, so only attempt to write/read non-utility queries.
-		 */
-		foreach(lc, querytree_list)
-		{
-			Query	   *query = castNode(Query, lfirst(lc));
-
-			if (query->commandType != CMD_UTILITY)
-			{
-				char	   *str = nodeToString(query);
-				Query	   *new_query = stringToNodeWithLocations(str);
-
-				/*
-				 * queryId is not saved in stored rules, but we must preserve
-				 * it here to avoid breaking pg_stat_statements.
-				 */
-				new_query->queryId = query->queryId;
-
-				new_list = lappend(new_list, new_query);
-				pfree(str);
-			}
-			else
-				new_list = lappend(new_list, query);
-		}
-
-		/* This checks both outfuncs/readfuncs and the equal() routines... */
-		if (!equal(new_list, querytree_list))
-			elog(WARNING, "outfuncs/readfuncs failed to produce equal parse tree");
-		else
-			querytree_list = new_list;
-	}
-#endif
+	/*
+	 * We don't apply WRITE_READ_PARSE_PLAN_TREES to rewritten query trees,
+	 * because it breaks the hack of preserving relid for rewritten views.
+	 */
 
 	if (Debug_print_rewritten)
 		elog_node_display(LOG, "rewritten parse tree", querytree_list,
