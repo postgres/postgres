@@ -38,5 +38,6 @@ extern bool pub_contains_invalid_column(Oid pubid, Relation relation,
 										char pubgencols_type,
 										bool *invalid_column_list,
 										bool *invalid_gen_col);
+extern void InvalidatePubRelSyncCache(Oid pubid, bool puballtables);
 
 #endif							/* PUBLICATIONCMDS_H */

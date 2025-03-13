@@ -27,6 +27,7 @@
  *	* invalidate an smgr cache entry for a specific physical relation
  *	* invalidate the mapped-relation mapping for a given database
  *	* invalidate any saved snapshot that might be used to scan a given relation
+ *	* invalidate a RelationSyncCache entry for a specific relation
  * More types could be added if needed.  The message type is identified by
  * the first "int8" field of the message struct.  Zero or positive means a
  * specific-catcache inval message (and also serves as the catcache ID field).
@@ -46,12 +47,12 @@
  * catcache inval messages must be generated for each of its caches, since
  * the hash keys will generally be different.
  *
- * Catcache, relcache, and snapshot invalidations are transactional, and so
- * are sent to other backends upon commit.  Internally to the generating
- * backend, they are also processed at CommandCounterIncrement so that later
- * commands in the same transaction see the new state.  The generating backend
- * also has to process them at abort, to flush out any cache state it's loaded
- * from no-longer-valid entries.
+ * Catcache, relcache, relsynccache, and snapshot invalidations are
+ * transactional, and so are sent to other backends upon commit.  Internally
+ * to the generating backend, they are also processed at
+ * CommandCounterIncrement so that later commands in the same transaction see
+ * the new state.  The generating backend also has to process them at abort,
+ * to flush out any cache state it's loaded from no-longer-valid entries.
  *
  * smgr and relation mapping invalidations are non-transactional: they are
  * sent immediately when the underlying file change is made.
@@ -110,6 +111,16 @@ typedef struct
 	Oid			relId;			/* relation ID */
 } SharedInvalSnapshotMsg;
 
+#define SHAREDINVALRELSYNC_ID	(-6)
+
+typedef struct
+{
+	int8		id;				/* type field --- must be first */
+	Oid			dbId;			/* database ID */
+	Oid			relid;			/* relation ID, or 0 if whole
+								 * RelationSyncCache */
+}			SharedInvalRelSyncMsg;
+
 typedef union
 {
 	int8		id;				/* type field --- must be first */
@@ -119,6 +130,7 @@ typedef union
 	SharedInvalSmgrMsg sm;
 	SharedInvalRelmapMsg rm;
 	SharedInvalSnapshotMsg sn;
+	SharedInvalRelSyncMsg rs;
 } SharedInvalidationMessage;
 
 

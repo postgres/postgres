@@ -491,6 +491,45 @@ pub_contains_invalid_column(Oid pubid, Relation relation, List *ancestors,
 	return *invalid_column_list || *invalid_gen_col;
 }
 
+/*
+ * Invalidate entries in the RelationSyncCache for relations included in the
+ * specified publication, either via FOR TABLE or FOR TABLES IN SCHEMA.
+ *
+ * If 'puballtables' is true, invalidate all cache entries.
+ */
+void
+InvalidatePubRelSyncCache(Oid pubid, bool puballtables)
+{
+	if (puballtables)
+	{
+		CacheInvalidateRelSyncAll();
+	}
+	else
+	{
+		List	   *relids = NIL;
+		List	   *schemarelids = NIL;
+
+		/*
+		 * For partitioned tables, we must invalidate all partitions and
+		 * itself. WAL records for INSERT/UPDATE/DELETE specify leaf tables as
+		 * a target. However, WAL records for TRUNCATE specify both a root and
+		 * its leaves.
+		 */
+		relids = GetPublicationRelations(pubid,
+										 PUBLICATION_PART_ALL);
+		schemarelids = GetAllSchemaPublicationRelations(pubid,
+														PUBLICATION_PART_ALL);
+
+		relids = list_concat_unique_oid(relids, schemarelids);
+
+		/* Invalidate the relsyncache */
+		foreach_oid(relid, relids)
+			CacheInvalidateRelSync(relid);
+	}
+
+	return;
+}
+
 /* check_functions_in_node callback */
 static bool
 contain_mutable_or_user_functions_checker(Oid func_id, void *context)

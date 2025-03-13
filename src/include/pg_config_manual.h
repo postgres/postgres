@@ -282,10 +282,10 @@
 
 /*
  * For cache-invalidation debugging, define DISCARD_CACHES_ENABLED to enable
- * use of the debug_discard_caches GUC to aggressively flush syscache/relcache
- * entries whenever it's possible to deliver invalidations.  See
- * AcceptInvalidationMessages() in src/backend/utils/cache/inval.c for
- * details.
+ * use of the debug_discard_caches GUC to aggressively flush
+ * syscache/relcache/relsynccache entries whenever it's possible to deliver
+ * invalidations.  See AcceptInvalidationMessages() in
+ * src/backend/utils/cache/inval.c for details.
  *
  * USE_ASSERT_CHECKING builds default to enabling this.  It's possible to use
  * DISCARD_CACHES_ENABLED without a cassert build and the implied

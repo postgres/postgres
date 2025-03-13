@@ -338,6 +338,22 @@ AlterObjectRename_internal(Relation rel, Oid objectId, const char *new_name)
 
 	InvokeObjectPostAlterHook(classId, objectId, 0);
 
+	/* Do post catalog-update tasks */
+	if (classId == PublicationRelationId)
+	{
+		Form_pg_publication pub = (Form_pg_publication) GETSTRUCT(oldtup);
+
+		/*
+		 * Invalidate relsynccache entries.
+		 *
+		 * Unlike ALTER PUBLICATION ADD/SET/DROP commands, renaming a
+		 * publication does not impact the publication status of tables. So,
+		 * we don't need to invalidate relcache to rebuild the rd_pubdesc.
+		 * Instead, we invalidate only the relsyncache.
+		 */
+		InvalidatePubRelSyncCache(pub->oid, pub->puballtables);
+	}
+
 	/* Release memory */
 	pfree(values);
 	pfree(nulls);

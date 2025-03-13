@@ -531,6 +531,8 @@ pgoutput_startup(LogicalDecodingContext *ctx, OutputPluginOptions *opt,
 			CacheRegisterSyscacheCallback(PUBLICATIONOID,
 										  publication_invalidation_cb,
 										  (Datum) 0);
+			CacheRegisterRelSyncCallback(rel_sync_cache_relation_cb,
+										 (Datum) 0);
 			publication_callback_registered = true;
 		}
 
@@ -1789,12 +1791,6 @@ static void
 publication_invalidation_cb(Datum arg, int cacheid, uint32 hashvalue)
 {
 	publications_valid = false;
-
-	/*
-	 * Also invalidate per-relation cache so that next time the filtering info
-	 * is checked it will be updated with the new publication settings.
-	 */
-	rel_sync_cache_publication_cb(arg, cacheid, hashvalue);
 }
 
 /*

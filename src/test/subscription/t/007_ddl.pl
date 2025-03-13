@@ -69,6 +69,91 @@ ok( $stderr =~
 	"Alter subscription set publication throws warning for non-existent publication"
 );
 
+# Cleanup
+$node_publisher->safe_psql('postgres', qq[
+	DROP PUBLICATION mypub;
+	SELECT pg_drop_replication_slot('mysub');
+]);
+$node_subscriber->safe_psql('postgres', "DROP SUBSCRIPTION mysub1");
+
+#
+# Test ALTER PUBLICATION RENAME command during the replication
+#
+
+# Test function for swaping name of publications
+sub test_swap
+{
+	my ($table_name, $pubname, $appname) = @_;
+
+	# Confirms tuples can be replicated
+	$node_publisher->safe_psql('postgres', "INSERT INTO $table_name VALUES (1);");
+	$node_publisher->wait_for_catchup($appname);
+	my $result =
+		$node_subscriber->safe_psql('postgres', "SELECT a FROM $table_name");
+	is($result, qq(1), 'check replication worked well before renaming a publication');
+
+	# Swap the name of publications; $pubname <-> pub_empty
+	$node_publisher->safe_psql('postgres', qq[
+		ALTER PUBLICATION $pubname RENAME TO tap_pub_tmp;
+		ALTER PUBLICATION pub_empty RENAME TO $pubname;
+		ALTER PUBLICATION tap_pub_tmp RENAME TO pub_empty;
+	]);
+
+	# Insert the data again
+	$node_publisher->safe_psql('postgres', "INSERT INTO $table_name VALUES (2);");
+	$node_publisher->wait_for_catchup($appname);
+
+	# Confirms the second tuple won't be replicated because $pubname does not
+	# contains relations anymore.
+	$result =
+		$node_subscriber->safe_psql('postgres', "SELECT a FROM $table_name ORDER BY a");
+	is($result, qq(1),
+		'check the tuple inserted after the RENAME was not replicated');
+
+	# Restore the name of publications because it can be called several times
+	$node_publisher->safe_psql('postgres', qq[
+		ALTER PUBLICATION $pubname RENAME TO tap_pub_tmp;
+		ALTER PUBLICATION pub_empty RENAME TO $pubname;
+		ALTER PUBLICATION tap_pub_tmp RENAME TO pub_empty;
+	]);
+}
+
+# Create another table
+$ddl = "CREATE TABLE test2 (a int, b text);";
+$node_publisher->safe_psql('postgres', $ddl);
+$node_subscriber->safe_psql('postgres', $ddl);
+
+# Create publications and a subscription
+$node_publisher->safe_psql('postgres', qq[
+	CREATE PUBLICATION pub_empty;
+	CREATE PUBLICATION pub_for_tab FOR TABLE test1;
+	CREATE PUBLICATION pub_for_all_tables FOR ALL TABLES;
+]);
+$node_subscriber->safe_psql('postgres',
+	"CREATE SUBSCRIPTION tap_sub CONNECTION '$publisher_connstr' PUBLICATION pub_for_tab WITH (copy_data = off)"
+);
+
+# Confirms RENAME command works well for a publication
+test_swap('test1', 'pub_for_tab', 'tap_sub');
+
+# Switches a publication which includes all tables
+$node_subscriber->safe_psql('postgres',
+	"ALTER SUBSCRIPTION tap_sub SET PUBLICATION pub_for_all_tables WITH (refresh = true, copy_data = false);"
+);
+
+# Confirms RENAME command works well for ALL TABLES publication
+test_swap('test2', 'pub_for_all_tables', 'tap_sub');
+
+# Cleanup
+$node_publisher->safe_psql('postgres', qq[
+	DROP PUBLICATION pub_empty, pub_for_tab, pub_for_all_tables;
+	DROP TABLE test1, test2;
+]);
+$node_subscriber->safe_psql('postgres', qq[
+	DROP SUBSCRIPTION tap_sub;
+	DROP TABLE test1, test2;
+]);
+
 $node_subscriber->stop;
 $node_publisher->stop;
 
