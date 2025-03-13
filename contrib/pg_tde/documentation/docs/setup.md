@@ -64,6 +64,8 @@ Load the `pg_tde` at startup time. The extension requires additional shared memo
         * `server-certificate` is the path to the certificate file for the KMIP server.
         * `client key` is the path to the client key.
 
+        <i warning>:material-information: Warning:</i> Note that pg_tde_add_global_key_provider_kmip currently accepts only a combined client key + client certificate for the last parameter of this function named as `client key`.
+
         <i warning>:material-information: Warning:</i> This example is for testing purposes only:
 
         ```
