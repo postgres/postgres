@@ -40,21 +40,21 @@ else
 
     pushd /tmp/sdk
 
-if false
-then
-    ${SDKROOT}/emsdk/upstream/bin/wasm-opt --version > ${SDKROOT}/wasm-opt.version
-    cat > ${SDKROOT}/emsdk/upstream/bin/wasm-opt <<END
-#!/bin/bash
-if echo \$*|grep -q version$
-then
-	echo "$(cat ${SDKROOT}/wasm-opt.version)"
-else
-	# echo "\$@" >> /tmp/wasm.opt
-    exit 0
-fi
-END
-        chmod +x ${SDKROOT}/emsdk/upstream/bin/wasm-opt
-fi
+#if false
+#then
+#    ${SDKROOT}/emsdk/upstream/bin/wasm-opt --version > ${SDKROOT}/wasm-opt.version
+#    cat > ${SDKROOT}/emsdk/upstream/bin/wasm-opt <<END
+##!/bin/bash
+#if echo \$*|grep -q version$
+#then
+#	echo "$(cat ${SDKROOT}/wasm-opt.version)"
+#else
+#	# echo "\$@" >> /tmp/wasm.opt
+#    exit 0
+#fi
+#END
+#        chmod +x ${SDKROOT}/emsdk/upstream/bin/wasm-opt
+#fi
 
     ALL="-m32 \
 -D_FILE_OFFSET_BITS=64 \

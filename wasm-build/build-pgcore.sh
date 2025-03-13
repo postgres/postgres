@@ -96,7 +96,7 @@ else
 #  --disable-atomics https://github.com/WebAssembly/threads/pull/147  "Allow atomic operations on unshared memories"
 
 
-    COMMON_CFLAGS="-sERROR_ON_UNDEFINED_SYMBOLS ${CC_PGLITE} -Wno-declaration-after-statement -Wno-macro-redefined -Wno-unused-function -Wno-missing-prototypes -Wno-incompatible-pointer-types"
+    COMMON_CFLAGS="${CC_PGLITE} -fpic -Wno-declaration-after-statement -Wno-macro-redefined -Wno-unused-function -Wno-missing-prototypes -Wno-incompatible-pointer-types"
 
     if ${WASI}
     then
@@ -105,9 +105,11 @@ else
         XML2=""
         UUID=""
 
+        cp ${PORTABLE}/wasi/wasi_port.c /tmp/pglite/include/sdk_port.c
         WASM_LDFLAGS="-lwasi-emulated-getpid -lwasi-emulated-mman -lwasi-emulated-signal -lwasi-emulated-process-clocks"
-        WASM_CFLAGS="${COMMON_CFLAGS} -D_WASI_EMULATED_MMAN -D_WASI_EMULATED_SIGNAL -D_WASI_EMULATED_PROCESS_CLOCKS -D_WASI_EMULATED_GETPID"
+        WASM_CFLAGS="-DSDK_PORT=/tmp/pglite/include/sdk_port.c ${COMMON_CFLAGS} -D_WASI_EMULATED_MMAN -D_WASI_EMULATED_SIGNAL -D_WASI_EMULATED_PROCESS_CLOCKS -D_WASI_EMULATED_GETPID"
         export MAIN_MODULE=""
+
     else
         BUILD=emscripten
 
@@ -120,8 +122,8 @@ else
             XML2="--with-zlib --with-libxml --with-libxslt"
         fi
         UUID="--with-uuid=ossp"
-        WASM_CFLAGS="${COMMON_FLAGS}"
-        WASM_LDFLAGS=""
+        WASM_CFLAGS="${COMMON_CFLAGS}"
+        WASM_LDFLAGS="-sERROR_ON_UNDEFINED_SYMBOLS"
         export MAIN_MODULE="-sMAIN_MODULE=1"
     fi
 
@@ -148,9 +150,7 @@ else
  ${UUID} ${XML2} ${PGDEBUG}"
 
 
-
     mkdir -p bin
-
 
     GETZIC=true
 

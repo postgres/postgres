@@ -52,13 +52,7 @@ chmod +x ${PORTABLE}/*.sh ${PORTABLE}/extra/*.sh
 # exit on error
 EOE=false
 
-if ${PORTABLE}/sdk.sh
-then
-    echo "$PORTABLE : sdk check passed (emscripten+wasi)"
-else
-    echo sdk failed
-    exit 40
-fi
+
 
 
 # default to user writeable paths in /tmp/ .
@@ -90,6 +84,7 @@ export PG_DEBUG_HEADER="${PGROOT}/include/pg_debug.h"
 
 
 echo "
+
 System node/pnpm ( may interfer) :
 
         node : $(which node) $(which node && $(which node) -v)
@@ -108,6 +103,7 @@ then
     echo "Wasi build (experimental)"
     export WASI_SDK=25.0
     export WASI_SDK_PREFIX=${SDKROOT}/wasisdk/wasi-sdk-${WASI_SDK}-x86_64-linux
+    #export WASI_SDK_PREFIX=${SDKROOT}/wasisdk/upstream
     export WASI_SYSROOT=${WASI_SDK_PREFIX}/share/wasi-sysroot
 
     if [ -f ${WASI_SYSROOT}/extra ]
@@ -148,6 +144,14 @@ else
     then
         echo "emcc found in PATH=$PATH"
     else
+        if ${PORTABLE}/sdk.sh
+        then
+            echo "$PORTABLE : sdk check passed (emscripten)"
+        else
+            echo emsdk failed
+            exit 150
+        fi
+
         . ${SDKROOT}/wasm32-bi-emscripten-shell.sh
     fi
     export PG_LINK=${PG_LINK:-$(which emcc)}
