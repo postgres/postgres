@@ -334,7 +334,6 @@ json_kring_object_field_start(void *state, char *fname, bool isnull)
 					{
 						*field = JK_FIELD_UNKNOWN;
 						elog(ERROR, "parse file keyring config: unexpected field %s", fname);
-						return JSON_INVALID_TOKEN;
 					}
 					break;
 
@@ -351,7 +350,6 @@ json_kring_object_field_start(void *state, char *fname, bool isnull)
 					{
 						*field = JK_FIELD_UNKNOWN;
 						elog(ERROR, "parse json keyring config: unexpected field %s", fname);
-						return JSON_INVALID_TOKEN;
 					}
 					break;
 
@@ -368,7 +366,6 @@ json_kring_object_field_start(void *state, char *fname, bool isnull)
 					{
 						*field = JK_FIELD_UNKNOWN;
 						elog(ERROR, "parse json keyring config: unexpected field %s", fname);
-						return JSON_INVALID_TOKEN;
 					}
 					break;
 
@@ -388,7 +385,6 @@ json_kring_object_field_start(void *state, char *fname, bool isnull)
 			{
 				*field = JK_FIELD_UNKNOWN;
 				elog(ERROR, "parse json keyring config: unexpected field %s", fname);
-				return JSON_INVALID_TOKEN;
 			}
 			break;
 	}
@@ -465,7 +461,6 @@ json_kring_assign_scalar(JsonKeyringState *parse, JsonKeyringField field, char *
 
 		default:
 			elog(ERROR, "json keyring: unexpected scalar field %d", field);
-			return JSON_INVALID_TOKEN;
 	}
 
 	return JSON_SUCCESS;
@@ -484,17 +479,14 @@ get_remote_kring_value(const char *url, const char *field_name)
 	if (!curlSetupSession(url, NULL, &outStr))
 	{
 		elog(ERROR, "CURL error for remote object %s", field_name);
-		return NULL;
 	}
 	if (curl_easy_perform(keyringCurl) != CURLE_OK)
 	{
 		elog(ERROR, "HTTP request error for remote object %s", field_name);
-		return NULL;
 	}
 	if (curl_easy_getinfo(keyringCurl, CURLINFO_RESPONSE_CODE, &httpCode) != CURLE_OK)
 	{
 		elog(ERROR, "HTTP error for remote object %s, HTTP code %li", field_name, httpCode);
-		return NULL;
 	}
 
 	/* remove trailing whitespace */
@@ -513,17 +505,15 @@ get_file_kring_value(const char *path, const char *field_name)
 	if (fd < 0)
 	{
 		elog(ERROR, "failed to open file %s for %s", path, field_name);
-		return NULL;
 	}
 
 	/* TODO: we never pfree it */
 	val = palloc0(MAX_CONFIG_FILE_DATA_LENGTH);
 	if (pg_pread(fd, val, MAX_CONFIG_FILE_DATA_LENGTH, 0) == -1)
 	{
-		elog(ERROR, "failed to read file %s for %s", path, field_name);
 		pfree(val);
 		close(fd);
-		return NULL;
+		elog(ERROR, "failed to read file %s for %s", path, field_name);
 	}
 	/* remove trailing whitespace */
 	val[strcspn(val, " \t\n\r")] = '\0';

@@ -179,8 +179,6 @@ pg_tde_create_key_map_entry(const RelFileLocator *newrlocator, uint32 entry_type
 	{
 		ereport(ERROR,
 				(errmsg("failed to retrieve principal key. Create one using pg_tde_set_principal_key before using encrypted tables.")));
-
-		return NULL;
 	}
 
 	/* Encrypt the key */
@@ -262,8 +260,6 @@ pg_tde_create_wal_key(InternalKey *rel_key_data, const RelFileLocator *newrlocat
 	{
 		ereport(ERROR,
 				(errmsg("failed to retrieve principal key. Create one using pg_tde_set_principal_key before using encrypted WAL.")));
-
-		return;
 	}
 
 	/* TODO: no need in generating key if TDE_KEY_TYPE_WAL_UNENCRYPTED */
@@ -1071,7 +1067,6 @@ pg_tde_process_map_entry(const RelFileLocator *rlocator, uint32 key_type, char *
 					(errcode_for_file_access(),
 					 errmsg("could not seek in tde map file \"%s\": %m",
 							db_map_path)));
-			return curr_pos;
 		}
 	}
 	else

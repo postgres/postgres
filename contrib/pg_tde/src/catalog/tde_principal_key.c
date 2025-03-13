@@ -319,7 +319,6 @@ set_principal_key_with_keyring(const char *key_name, const char *provider_name,
 			ereport(ERROR,
 					(errmsg("failed to retrieve principal key from keyring provider :\"%s\"", new_keyring->provider_name),
 					 errdetail("Error code: %d", kr_ret)));
-			return false;
 		}
 	}
 
@@ -329,8 +328,6 @@ set_principal_key_with_keyring(const char *key_name, const char *provider_name,
 
 		ereport(ERROR,
 				(errmsg("failed to create principal key: already exists")));
-
-		return false;
 	}
 
 	if (strlen(key_name) >= sizeof(keyInfo->name))
@@ -347,8 +344,6 @@ set_principal_key_with_keyring(const char *key_name, const char *provider_name,
 
 		ereport(ERROR,
 				(errmsg("failed to retrieve/create principal key.")));
-
-		return false;
 	}
 
 	new_principal_key = palloc_object(TDEPrincipalKey);
@@ -682,7 +677,6 @@ pg_tde_get_key_info(PG_FUNCTION_ARGS, Oid dbOid)
 		ereport(ERROR,
 				(errmsg("Principal key does not exists for the database"),
 				 errhint("Use set_principal_key interface to set the principal key")));
-		PG_RETURN_NULL();
 	}
 
 	keyring = GetKeyProviderByID(principal_key->keyInfo.keyringId, principal_key->keyInfo.databaseId);
