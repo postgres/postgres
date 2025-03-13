@@ -512,6 +512,15 @@ add_rte_to_flat_rtable(PlannerGlobal *glob, RangeTblEntry *rte)
 	newrte->colcollations = NIL;
 	newrte->securityQuals = NIL;
 
+	/*
+	 * Also, if it's a subquery RTE, lose the relid that may have been kept to
+	 * signal that it had been a view.  We don't want that to escape the
+	 * planner, mainly because doing so breaks -DWRITE_READ_PARSE_PLAN_TREES
+	 * testing thanks to outfuncs/readfuncs not preserving it.
+	 */
+	if (newrte->rtekind == RTE_SUBQUERY)
+		newrte->relid = InvalidOid;
+
 	glob->finalrtable = lappend(glob->finalrtable, newrte);
 
 	/*
