@@ -713,6 +713,28 @@ select array_replace(array['AB',NULL,'CDE'],NULL,'12');
 select array(select array[i,i/2] from generate_series(1,5) i);
 select array(select array['Hello', i::text] from generate_series(9,11) i);
 
+-- int2vector and oidvector should be treated as scalar types for this purpose
+select pg_typeof(array(select '11 22 33'::int2vector from generate_series(1,5)));
+select array(select '11 22 33'::int2vector from generate_series(1,5));
+select unnest(array(select '11 22 33'::int2vector from generate_series(1,5)));
+select pg_typeof(array(select '11 22 33'::oidvector from generate_series(1,5)));
+select array(select '11 22 33'::oidvector from generate_series(1,5));
+select unnest(array(select '11 22 33'::oidvector from generate_series(1,5)));
+
+-- array[] should do the same
+select pg_typeof(array['11 22 33'::int2vector]);
+select array['11 22 33'::int2vector];
+select pg_typeof(unnest(array['11 22 33'::int2vector]));
+select unnest(array['11 22 33'::int2vector]);
+select pg_typeof(unnest('11 22 33'::int2vector));
+select unnest('11 22 33'::int2vector);
+select pg_typeof(array['11 22 33'::oidvector]);
+select array['11 22 33'::oidvector];
+select pg_typeof(unnest(array['11 22 33'::oidvector]));
+select unnest(array['11 22 33'::oidvector]);
+select pg_typeof(unnest('11 22 33'::oidvector));
+select unnest('11 22 33'::oidvector);
+
 -- Insert/update on a column that is array of composite
 
 create temp table t1 (f1 int8_tbl[]);

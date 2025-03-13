@@ -2457,6 +2457,132 @@ select array(select array['Hello', i::text] from generate_series(9,11) i);
  {{Hello,9},{Hello,10},{Hello,11}}
 (1 row)
 
+-- int2vector and oidvector should be treated as scalar types for this purpose
+select pg_typeof(array(select '11 22 33'::int2vector from generate_series(1,5)));
+  pg_typeof   
+--------------
+ int2vector[]
+(1 row)
+
+select array(select '11 22 33'::int2vector from generate_series(1,5));
+                          array                           
+----------------------------------------------------------
+ {"11 22 33","11 22 33","11 22 33","11 22 33","11 22 33"}
+(1 row)
+
+select unnest(array(select '11 22 33'::int2vector from generate_series(1,5)));
+  unnest  
+----------
+ 11 22 33
+ 11 22 33
+ 11 22 33
+ 11 22 33
+ 11 22 33
+(5 rows)
+
+select pg_typeof(array(select '11 22 33'::oidvector from generate_series(1,5)));
+  pg_typeof  
+-------------
+ oidvector[]
+(1 row)
+
+select array(select '11 22 33'::oidvector from generate_series(1,5));
+                          array                           
+----------------------------------------------------------
+ {"11 22 33","11 22 33","11 22 33","11 22 33","11 22 33"}
+(1 row)
+
+select unnest(array(select '11 22 33'::oidvector from generate_series(1,5)));
+  unnest  
+----------
+ 11 22 33
+ 11 22 33
+ 11 22 33
+ 11 22 33
+ 11 22 33
+(5 rows)
+
+-- array[] should do the same
+select pg_typeof(array['11 22 33'::int2vector]);
+  pg_typeof   
+--------------
+ int2vector[]
+(1 row)
+
+select array['11 22 33'::int2vector];
+    array     
+--------------
+ {"11 22 33"}
+(1 row)
+
+select pg_typeof(unnest(array['11 22 33'::int2vector]));
+ pg_typeof  
+------------
+ int2vector
+(1 row)
+
+select unnest(array['11 22 33'::int2vector]);
+  unnest  
+----------
+ 11 22 33
+(1 row)
+
+select pg_typeof(unnest('11 22 33'::int2vector));
+ pg_typeof 
+-----------
+ smallint
+ smallint
+ smallint
+(3 rows)
+
+select unnest('11 22 33'::int2vector);
+ unnest 
+--------
+     11
+     22
+     33
+(3 rows)
+
+select pg_typeof(array['11 22 33'::oidvector]);
+  pg_typeof  
+-------------
+ oidvector[]
+(1 row)
+
+select array['11 22 33'::oidvector];
+    array     
+--------------
+ {"11 22 33"}
+(1 row)
+
+select pg_typeof(unnest(array['11 22 33'::oidvector]));
+ pg_typeof 
+-----------
+ oidvector
+(1 row)
+
+select unnest(array['11 22 33'::oidvector]);
+  unnest  
+----------
+ 11 22 33
+(1 row)
+
+select pg_typeof(unnest('11 22 33'::oidvector));
+ pg_typeof 
+-----------
+ oid
+ oid
+ oid
+(3 rows)
+
+select unnest('11 22 33'::oidvector);
+ unnest 
+--------
+     11
+     22
+     33
+(3 rows)
+
 -- Insert/update on a column that is array of composite
 create temp table t1 (f1 int8_tbl[]);
 insert into t1 (f1[5].q1) values(42);
