@@ -77,6 +77,10 @@ SELECT E'De\123dBeEf'::bytea;
 SELECT E'De\\123dBeEf'::bytea;
 SELECT E'De\\678dBeEf'::bytea;
 
+SELECT reverse(''::bytea);
+SELECT reverse('\xaa'::bytea);
+SELECT reverse('\xabcd'::bytea);
+
 SET bytea_output TO escape;
 SELECT E'\\xDeAdBeEf'::bytea;
 SELECT E'\\x De Ad Be Ef '::bytea;

@@ -1518,6 +1518,9 @@
 { oid => '6163', descr => 'number of set bits',
   proname => 'bit_count', prorettype => 'int8', proargtypes => 'bytea',
   prosrc => 'bytea_bit_count' },
+{ oid => '8694', descr => 'reverse bytea',
+  proname => 'reverse', prorettype => 'bytea', proargtypes => 'bytea',
+  prosrc => 'bytea_reverse' },
 
 { oid => '725',
   proname => 'dist_pl', prorettype => 'float8', proargtypes => 'point line',

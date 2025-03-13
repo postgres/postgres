@@ -4663,6 +4663,23 @@ SELECT format('Testing %3$s, %2$s, %s', 'one', 'two', 'three');
       <row>
        <entry role="func_table_entry"><para role="func_signature">
         <indexterm>
+         <primary>reverse</primary>
+        </indexterm>
+        <function>reverse</function> ( <type>bytea</type> )
+        <returnvalue>bytea</returnvalue>
+       </para>
+       <para>
+        Reverses the order of the bytes in the binary string.
+       </para>
+       <para>
+        <literal>reverse('\xabcd'::bytea)</literal>
+        <returnvalue>\xcdab</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
          <primary>set_bit</primary>
         </indexterm>
         <function>set_bit</function> ( <parameter>bytes</parameter> <type>bytea</type>,

@@ -3398,6 +3398,27 @@ byteaSetBit(PG_FUNCTION_ARGS)
 	PG_RETURN_BYTEA_P(res);
 }
 
+/*
+ * Return reversed bytea
+ */
+Datum
+bytea_reverse(PG_FUNCTION_ARGS)
+{
+	bytea	   *v = PG_GETARG_BYTEA_PP(0);
+	const char *p = VARDATA_ANY(v);
+	int			len = VARSIZE_ANY_EXHDR(v);
+	const char *endp = p + len;
+	bytea	   *result = palloc(len + VARHDRSZ);
+	char	   *dst = (char *) VARDATA(result) + len;
+
+	SET_VARSIZE(result, len + VARHDRSZ);
+
+	while (p < endp)
+		*(--dst) = *p++;
+
+	PG_RETURN_BYTEA_P(result);
+}
+
 
 /* text_name()
  * Converts a text type to a Name type.

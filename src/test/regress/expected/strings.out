@@ -236,6 +236,24 @@ SELECT E'De\\678dBeEf'::bytea;
 ERROR:  invalid input syntax for type bytea
 LINE 1: SELECT E'De\\678dBeEf'::bytea;
                ^
+SELECT reverse(''::bytea);
+ reverse 
+---------
+ \x
+(1 row)
+
+SELECT reverse('\xaa'::bytea);
+ reverse 
+---------
+ \xaa
+(1 row)
+
+SELECT reverse('\xabcd'::bytea);
+ reverse 
+---------
+ \xcdab
+(1 row)
+
 SET bytea_output TO escape;
 SELECT E'\\xDeAdBeEf'::bytea;
       bytea       
