@@ -940,7 +940,7 @@ pg_tde_wal_last_key_set_lsn(XLogRecPtr lsn, const char *keyfile_path)
 		if (pg_pread(fd, &prev_key, INTERNAL_KEY_DAT_LEN, prev_key_pos) != INTERNAL_KEY_DAT_LEN)
 		{
 			LWLockRelease(lock_pk);
-			ereport(WARNING,
+			ereport(ERROR,
 					(errcode_for_file_access(),
 					 errmsg("could not read previous WAL key: %m")));
 		}
