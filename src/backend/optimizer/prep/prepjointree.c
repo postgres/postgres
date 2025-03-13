@@ -1441,23 +1441,13 @@ pull_up_simple_subquery(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte,
 								 sizeof(Node *));
 
 	/*
-	 * If we are dealing with an appendrel member then anything that's not a
-	 * simple Var has to be turned into a PlaceHolderVar.  We force this to
-	 * ensure that what we pull up doesn't get merged into a surrounding
-	 * expression during later processing and then fail to match the
-	 * expression actually available from the appendrel.
-	 */
-	if (containing_appendrel != NULL)
-		rvcontext.wrap_non_vars = true;
-
-	/*
 	 * If the parent query uses grouping sets, we need a PlaceHolderVar for
-	 * anything that's not a simple Var.  Again, this ensures that expressions
-	 * retain their separate identity so that they will match grouping set
-	 * columns when appropriate.  (It'd be sufficient to wrap values used in
-	 * grouping set columns, and do so only in non-aggregated portions of the
-	 * tlist and havingQual, but that would require a lot of infrastructure
-	 * that pullup_replace_vars hasn't currently got.)
+	 * anything that's not a simple Var.  This ensures that expressions retain
+	 * their separate identity so that they will match grouping set columns
+	 * when appropriate.  (It'd be sufficient to wrap values used in grouping
+	 * set columns, and do so only in non-aggregated portions of the tlist and
+	 * havingQual, but that would require a lot of infrastructure that
+	 * pullup_replace_vars hasn't currently got.)
 	 */
 	if (parse->groupingSets)
 		rvcontext.wrap_non_vars = true;
@@ -2160,16 +2150,9 @@ pull_up_constant_function(PlannerInfo *root, Node *jtnode,
 								 sizeof(Node *));
 
 	/*
-	 * If we are dealing with an appendrel member then anything that's not a
-	 * simple Var has to be turned into a PlaceHolderVar.  (See comments in
-	 * pull_up_simple_subquery().)
-	 */
-	if (containing_appendrel != NULL)
-		rvcontext.wrap_non_vars = true;
-
-	/*
 	 * If the parent query uses grouping sets, we need a PlaceHolderVar for
-	 * anything that's not a simple Var.
+	 * anything that's not a simple Var.  (See comments in
+	 * pull_up_simple_subquery().)
 	 */
 	if (parse->groupingSets)
 		rvcontext.wrap_non_vars = true;
