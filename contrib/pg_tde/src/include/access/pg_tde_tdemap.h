@@ -95,9 +95,8 @@ pg_tde_set_db_file_paths(Oid dbOid, char *map_path, char *keydata_path)
 		join_path_components(keydata_path, pg_tde_get_tde_data_dir(), psprintf(PG_TDE_KEYDATA_FILENAME, dbOid));
 }
 
-extern InternalKey *GetRelationKey(RelFileLocator rel, uint32 entry_type, bool no_map_ok);
+extern InternalKey *GetRelationKey(RelFileLocator rel, uint32 entry_type);
 extern InternalKey *GetSMGRRelationKey(RelFileLocatorBackend rel);
-extern InternalKey *GetTdeGlobaleRelationKey(RelFileLocator rel);
 
 extern void pg_tde_delete_tde_files(Oid dbOid);
 

@@ -123,7 +123,7 @@ RelKeyCache tde_rel_key_cache = {
 static WALKeyCacheRec *tde_wal_key_cache = NULL;
 static WALKeyCacheRec *tde_wal_key_last_rec = NULL;
 
-static InternalKey *pg_tde_get_key_from_file(const RelFileLocator *rlocator, uint32 key_type, bool no_map_ok);
+static InternalKey *pg_tde_get_key_from_file(const RelFileLocator *rlocator, uint32 key_type);
 static int32 pg_tde_process_map_entry(const RelFileLocator *rlocator, uint32 key_type, char *db_map_path, off_t *offset, bool should_delete);
 static InternalKey *pg_tde_read_keydata(char *db_keydata_path, int32 key_index, TDEPrincipalKey *principal_key);
 static InternalKey *tde_decrypt_rel_key(TDEPrincipalKey *principal_key, InternalKey *enc_rel_key_data, Oid dbOid);
@@ -978,7 +978,7 @@ pg_tde_wal_last_key_set_lsn(XLogRecPtr lsn, const char *keyfile_path)
  * reads the key data from the keydata file.
  */
 static InternalKey *
-pg_tde_get_key_from_file(const RelFileLocator *rlocator, uint32 key_type, bool no_map_ok)
+pg_tde_get_key_from_file(const RelFileLocator *rlocator, uint32 key_type)
 {
 	int32		key_index = 0;
 	TDEPrincipalKey *principal_key;
@@ -1006,19 +1006,13 @@ pg_tde_get_key_from_file(const RelFileLocator *rlocator, uint32 key_type, bool n
 	principal_key = GetPrincipalKey(rlocator->dbOid, LW_SHARED);
 	if (principal_key == NULL)
 	{
-		LWLockRelease(lock_pk);
-		if (no_map_ok)
-		{
-			return NULL;
-		}
-		ereport(ERROR,
-				(errmsg("failed to retrieve principal key. Create one using pg_tde_set_principal_key before using encrypted tables.")));
+		return NULL;
 	}
 
 	/* Get the file paths */
 	pg_tde_set_db_file_paths(rlocator->dbOid, db_map_path, db_keydata_path);
 
-	if (no_map_ok && access(db_map_path, F_OK) == -1)
+	if (access(db_map_path, F_OK) == -1)
 	{
 		LWLockRelease(lock_pk);
 		return NULL;
@@ -1408,7 +1402,7 @@ pg_tde_get_principal_key_info(Oid dbOid)
  * the tde fork file and populates cache.
  */
 InternalKey *
-GetRelationKey(RelFileLocator rel, uint32 key_type, bool no_map_ok)
+GetRelationKey(RelFileLocator rel, uint32 key_type)
 {
 	InternalKey *key;
 
@@ -1416,7 +1410,7 @@ GetRelationKey(RelFileLocator rel, uint32 key_type, bool no_map_ok)
 	if (key)
 		return key;
 
-	key = pg_tde_get_key_from_file(&rel, key_type, no_map_ok);
+	key = pg_tde_get_key_from_file(&rel, key_type);
 	if (key)
 	{
 		InternalKey *cached_key = pg_tde_put_key_into_cache(&rel, key);
@@ -1434,13 +1428,7 @@ GetSMGRRelationKey(RelFileLocatorBackend rel)
 	if (RelFileLocatorBackendIsTemp(rel))
 		return pg_tde_get_key_from_cache(&rel.locator, TDE_KEY_TYPE_SMGR);
 	else
-		return GetRelationKey(rel.locator, TDE_KEY_TYPE_SMGR, true);
-}
-
-InternalKey *
-GetTdeGlobaleRelationKey(RelFileLocator rel)
-{
-	return GetRelationKey(rel, TDE_KEY_TYPE_GLOBAL, false);
+		return GetRelationKey(rel.locator, TDE_KEY_TYPE_SMGR);
 }
 
 static InternalKey *

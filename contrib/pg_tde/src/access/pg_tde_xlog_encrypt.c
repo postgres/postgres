@@ -78,7 +78,7 @@ TDEXlogCheckSane(void)
 {
 	if (EncryptXLog)
 	{
-		InternalKey *key = GetRelationKey(GLOBAL_SPACE_RLOCATOR(XLOG_TDE_OID), TDE_KEY_TYPE_GLOBAL, true);
+		InternalKey *key = GetRelationKey(GLOBAL_SPACE_RLOCATOR(XLOG_TDE_OID), TDE_KEY_TYPE_GLOBAL);
 
 		if (key == NULL)
 		{
