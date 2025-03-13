@@ -93,8 +93,6 @@ tde_shmem_startup(void)
 
 	TDEXLogShmemInit();
 	TDEXLogSmgrInit();
-
-	TDEXlogCheckSane();
 }
 
 void

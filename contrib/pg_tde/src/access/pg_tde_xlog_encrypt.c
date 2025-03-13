@@ -72,22 +72,6 @@ static InternalKey EncryptionKey =
 
 static int	XLOGChooseNumBuffers(void);
 
-/*  This can't be a GUC check hook, because that would run too soon during startup */
-void
-TDEXlogCheckSane(void)
-{
-	if (EncryptXLog)
-	{
-		InternalKey *key = GetRelationKey(GLOBAL_SPACE_RLOCATOR(XLOG_TDE_OID), TDE_KEY_TYPE_GLOBAL);
-
-		if (key == NULL)
-		{
-			ereport(ERROR,
-					(errmsg("WAL encryption can only be enabled with a properly configured principal key. Disable pg_tde.wal_encrypt and create one using pg_tde_set_server_principal_key() or pg_tde_set_global_principal_key() before enabling it.")));
-		}
-	}
-}
-
 static int
 XLOGChooseNumBuffers(void)
 {

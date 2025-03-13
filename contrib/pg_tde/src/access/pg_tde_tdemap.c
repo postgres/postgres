@@ -1006,6 +1006,7 @@ pg_tde_get_key_from_file(const RelFileLocator *rlocator, uint32 key_type)
 	principal_key = GetPrincipalKey(rlocator->dbOid, LW_SHARED);
 	if (principal_key == NULL)
 	{
+		LWLockRelease(lock_pk);
 		return NULL;
 	}
 
@@ -1402,33 +1403,29 @@ pg_tde_get_principal_key_info(Oid dbOid)
  * the tde fork file and populates cache.
  */
 InternalKey *
-GetRelationKey(RelFileLocator rel, uint32 key_type)
-{
-	InternalKey *key;
-
-	key = pg_tde_get_key_from_cache(&rel, key_type);
-	if (key)
-		return key;
-
-	key = pg_tde_get_key_from_file(&rel, key_type);
-	if (key)
-	{
-		InternalKey *cached_key = pg_tde_put_key_into_cache(&rel, key);
-
-		pfree(key);
-		return cached_key;
-	}
-
-	return NULL;
-}
-
-InternalKey *
 GetSMGRRelationKey(RelFileLocatorBackend rel)
 {
 	if (RelFileLocatorBackendIsTemp(rel))
 		return pg_tde_get_key_from_cache(&rel.locator, TDE_KEY_TYPE_SMGR);
 	else
-		return GetRelationKey(rel.locator, TDE_KEY_TYPE_SMGR);
+	{
+		InternalKey *key;
+
+		key = pg_tde_get_key_from_cache(&rel.locator, TDE_KEY_TYPE_SMGR);
+		if (key)
+			return key;
+
+		key = pg_tde_get_key_from_file(&rel.locator, TDE_KEY_TYPE_SMGR);
+		if (key)
+		{
+			InternalKey *cached_key = pg_tde_put_key_into_cache(&rel.locator, key);
+
+			pfree(key);
+			return cached_key;
+		}
+
+		return NULL;
+	}
 }
 
 static InternalKey *
