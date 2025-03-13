@@ -224,6 +224,33 @@ ifeq ($(SHLIB_EXPORTS),)
   override CXXFLAGS += $(CXXFLAGS_SL_MODULE)
 endif
 
+ifeq ($(PORTNAME), emscripten)
+  LINK.shared       = emsdk-shared
+  ifdef soname
+    # emscripten uses unversioned shared libraries
+    shlib     = $(shlib_bare)
+    soname        = $(shlib_bare)
+  endif
+  BUILD.exports     = ( echo '{ global:'; $(AWK) '/^[^\#]/ {printf "%s;\n",$$1}' $<; echo ' local: *; };' ) >$@
+  exports_file      = $(SHLIB_EXPORTS:%.txt=%.list)
+#  ifneq (,$(exports_file))
+#    LINK.shared     += -Wl,--version-script=$(exports_file)
+#  endif
+endif
+
+ifeq ($(PORTNAME), wasi)
+  LINK.shared       = wasi-shared
+  ifdef soname
+    # emscripten uses unversioned shared libraries
+    shlib     = $(shlib_bare)
+    soname        = $(shlib_bare)
+  endif
+  BUILD.exports     = ( echo '{ global:'; $(AWK) '/^[^\#]/ {printf "%s;\n",$$1}' $<; echo ' local: *; };' ) >$@
+  exports_file      = $(SHLIB_EXPORTS:%.txt=%.list)
+#  ifneq (,$(exports_file))
+#    LINK.shared     += -Wl,--version-script=$(exports_file)
+#  endif
+endif
 
 ##
 ## BUILD
@@ -239,8 +266,11 @@ all-lib: lib$(NAME).pc
 endif
 
 all-static-lib: $(stlib)
-
+ifdef wasi
+all-shared-lib: all-static-lib
+else
 all-shared-lib: $(shlib)
+endif
 
 # In this rule, "touch $@" works around a problem on some platforms wherein
 # ar updates the library file's mod time with a value calculated to
