@@ -110,7 +110,6 @@ set_key_by_name(GenericKeyring *keyring, KeyInfo *key)
 	existing_key = get_key_by_name(keyring, key->name, &return_code);
 	if (existing_key)
 	{
-		pfree(existing_key);
 		ereport(ERROR,
 				(errmsg("Key with name %s already exists in keyring", key->name)));
 	}

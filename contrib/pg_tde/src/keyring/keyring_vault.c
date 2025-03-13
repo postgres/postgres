@@ -196,9 +196,6 @@ set_key_by_name(GenericKeyring *keyring, KeyInfo *key)
 
 	if (!curl_perform(vault_keyring, url, &str, &httpCode, jsonText))
 	{
-		if (str.ptr != NULL)
-			pfree(str.ptr);
-
 		ereport(ERROR,
 				(errmsg("HTTP(S) request to keyring provider \"%s\" failed",
 						vault_keyring->keyring.provider_name)));

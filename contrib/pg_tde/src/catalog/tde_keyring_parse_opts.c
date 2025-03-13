@@ -511,7 +511,6 @@ get_file_kring_value(const char *path, const char *field_name)
 	val = palloc0(MAX_CONFIG_FILE_DATA_LENGTH);
 	if (pg_pread(fd, val, MAX_CONFIG_FILE_DATA_LENGTH, 0) == -1)
 	{
-		pfree(val);
 		close(fd);
 		elog(ERROR, "failed to read file %s for %s", path, field_name);
 	}
