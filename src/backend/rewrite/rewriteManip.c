@@ -1421,7 +1421,7 @@ remove_nulling_relids_mutator(Node *node,
 			 * Note: it might seem desirable to remove the PHV altogether if
 			 * phnullingrels goes to empty.  Currently we dare not do that
 			 * because we use PHVs in some cases to enforce separate identity
-			 * of subexpressions; see wrap_non_vars usages in prepjointree.c.
+			 * of subexpressions; see wrap_option usages in prepjointree.c.
 			 */
 			/* Copy the PlaceHolderVar and mutate what's below ... */
 			phv = (PlaceHolderVar *)

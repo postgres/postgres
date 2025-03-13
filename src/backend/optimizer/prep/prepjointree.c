@@ -57,6 +57,15 @@ typedef struct nullingrel_info
 	int			rtlength;		/* used only for assertion checks */
 } nullingrel_info;
 
+/* Options for wrapping an expression for identification purposes */
+typedef enum ReplaceWrapOption
+{
+	REPLACE_WRAP_NONE,			/* no expressions need to be wrapped */
+	REPLACE_WRAP_ALL,			/* all expressions need to be wrapped */
+	REPLACE_WRAP_VARFREE,		/* variable-free expressions need to be
+								 * wrapped */
+} ReplaceWrapOption;
+
 typedef struct pullup_replace_vars_context
 {
 	PlannerInfo *root;
@@ -70,7 +79,7 @@ typedef struct pullup_replace_vars_context
 								 * target_rte->lateral) */
 	bool	   *outer_hasSubLinks;	/* -> outer query's hasSubLinks */
 	int			varno;			/* varno of subquery */
-	bool		wrap_non_vars;	/* do we need all non-Var outputs to be PHVs? */
+	ReplaceWrapOption wrap_option;	/* do we need certain outputs to be PHVs? */
 	Node	  **rv_cache;		/* cache for results with PHVs */
 } pullup_replace_vars_context;
 
@@ -1025,23 +1034,18 @@ expand_virtual_generated_columns(PlannerInfo *root)
 			rvcontext.outer_hasSubLinks = NULL;
 			rvcontext.varno = rt_index;
 			/* this flag will be set below, if needed */
-			rvcontext.wrap_non_vars = false;
+			rvcontext.wrap_option = REPLACE_WRAP_NONE;
 			/* initialize cache array with indexes 0 .. length(tlist) */
 			rvcontext.rv_cache = palloc0((list_length(tlist) + 1) *
 										 sizeof(Node *));
 
 			/*
 			 * If the query uses grouping sets, we need a PlaceHolderVar for
-			 * anything that's not a simple Var.  Again, this ensures that
-			 * expressions retain their separate identity so that they will
-			 * match grouping set columns when appropriate.  (It'd be
-			 * sufficient to wrap values used in grouping set columns, and do
-			 * so only in non-aggregated portions of the tlist and havingQual,
-			 * but that would require a lot of infrastructure that
-			 * pullup_replace_vars hasn't currently got.)
+			 * each expression of the relation's targetlist items.  (See
+			 * comments in pull_up_simple_subquery().)
 			 */
 			if (parse->groupingSets)
-				rvcontext.wrap_non_vars = true;
+				rvcontext.wrap_option = REPLACE_WRAP_ALL;
 
 			/*
 			 * Apply pullup variable replacement throughout the query tree.
@@ -1435,22 +1439,22 @@ pull_up_simple_subquery(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte,
 	rvcontext.outer_hasSubLinks = &parse->hasSubLinks;
 	rvcontext.varno = varno;
 	/* this flag will be set below, if needed */
-	rvcontext.wrap_non_vars = false;
+	rvcontext.wrap_option = REPLACE_WRAP_NONE;
 	/* initialize cache array with indexes 0 .. length(tlist) */
 	rvcontext.rv_cache = palloc0((list_length(subquery->targetList) + 1) *
 								 sizeof(Node *));
 
 	/*
 	 * If the parent query uses grouping sets, we need a PlaceHolderVar for
-	 * anything that's not a simple Var.  This ensures that expressions retain
-	 * their separate identity so that they will match grouping set columns
-	 * when appropriate.  (It'd be sufficient to wrap values used in grouping
-	 * set columns, and do so only in non-aggregated portions of the tlist and
-	 * havingQual, but that would require a lot of infrastructure that
-	 * pullup_replace_vars hasn't currently got.)
+	 * each expression of the subquery's targetlist items.  This ensures that
+	 * expressions retain their separate identity so that they will match
+	 * grouping set columns when appropriate.  (It'd be sufficient to wrap
+	 * values used in grouping set columns, and do so only in non-aggregated
+	 * portions of the tlist and havingQual, but that would require a lot of
+	 * infrastructure that pullup_replace_vars hasn't currently got.)
 	 */
 	if (parse->groupingSets)
-		rvcontext.wrap_non_vars = true;
+		rvcontext.wrap_option = REPLACE_WRAP_ALL;
 
 	/*
 	 * Replace all of the top query's references to the subquery's outputs
@@ -1976,7 +1980,7 @@ pull_up_simple_values(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte)
 	rvcontext.nullinfo = NULL;
 	rvcontext.outer_hasSubLinks = &parse->hasSubLinks;
 	rvcontext.varno = varno;
-	rvcontext.wrap_non_vars = false;
+	rvcontext.wrap_option = REPLACE_WRAP_NONE;
 	/* initialize cache array with indexes 0 .. length(tlist) */
 	rvcontext.rv_cache = palloc0((list_length(tlist) + 1) *
 								 sizeof(Node *));
@@ -2144,18 +2148,18 @@ pull_up_constant_function(PlannerInfo *root, Node *jtnode,
 	rvcontext.outer_hasSubLinks = &parse->hasSubLinks;
 	rvcontext.varno = ((RangeTblRef *) jtnode)->rtindex;
 	/* this flag will be set below, if needed */
-	rvcontext.wrap_non_vars = false;
+	rvcontext.wrap_option = REPLACE_WRAP_NONE;
 	/* initialize cache array with indexes 0 .. length(tlist) */
 	rvcontext.rv_cache = palloc0((list_length(rvcontext.targetlist) + 1) *
 								 sizeof(Node *));
 
 	/*
 	 * If the parent query uses grouping sets, we need a PlaceHolderVar for
-	 * anything that's not a simple Var.  (See comments in
+	 * each expression of the subquery's targetlist items.  (See comments in
 	 * pull_up_simple_subquery().)
 	 */
 	if (parse->groupingSets)
-		rvcontext.wrap_non_vars = true;
+		rvcontext.wrap_option = REPLACE_WRAP_ALL;
 
 	/*
 	 * Replace all of the top query's references to the RTE's output with
@@ -2406,13 +2410,13 @@ perform_pullup_replace_vars(PlannerInfo *root,
 	 */
 	if (containing_appendrel)
 	{
-		bool		save_wrap_non_vars = rvcontext->wrap_non_vars;
+		ReplaceWrapOption save_wrap_option = rvcontext->wrap_option;
 
-		rvcontext->wrap_non_vars = false;
+		rvcontext->wrap_option = REPLACE_WRAP_NONE;
 		containing_appendrel->translated_vars = (List *)
 			pullup_replace_vars((Node *) containing_appendrel->translated_vars,
 								rvcontext);
-		rvcontext->wrap_non_vars = save_wrap_non_vars;
+		rvcontext->wrap_option = save_wrap_option;
 		return;
 	}
 
@@ -2573,24 +2577,24 @@ replace_vars_in_jointree(Node *jtnode,
 	else if (IsA(jtnode, JoinExpr))
 	{
 		JoinExpr   *j = (JoinExpr *) jtnode;
-		bool		save_wrap_non_vars = context->wrap_non_vars;
+		ReplaceWrapOption save_wrap_option = context->wrap_option;
 
 		replace_vars_in_jointree(j->larg, context);
 		replace_vars_in_jointree(j->rarg, context);
 
 		/*
-		 * Use PHVs within the join quals of a full join.  Otherwise, we
-		 * cannot identify which side of the join a pulled-up var-free
-		 * expression came from, which can lead to failure to make a plan at
-		 * all because none of the quals appear to be mergeable or hashable
-		 * conditions.
+		 * Use PHVs within the join quals of a full join for variable-free
+		 * expressions.  Otherwise, we cannot identify which side of the join
+		 * a pulled-up variable-free expression came from, which can lead to
+		 * failure to make a plan at all because none of the quals appear to
+		 * be mergeable or hashable conditions.
 		 */
 		if (j->jointype == JOIN_FULL)
-			context->wrap_non_vars = true;
+			context->wrap_option = REPLACE_WRAP_VARFREE;
 
 		j->quals = pullup_replace_vars(j->quals, context);
 
-		context->wrap_non_vars = save_wrap_non_vars;
+		context->wrap_option = save_wrap_option;
 	}
 	else
 		elog(ERROR, "unrecognized node type: %d",
@@ -2630,10 +2634,11 @@ pullup_replace_vars_callback(Var *var,
 	 * We need a PlaceHolderVar if the Var-to-be-replaced has nonempty
 	 * varnullingrels (unless we find below that the replacement expression is
 	 * a Var or PlaceHolderVar that we can just add the nullingrels to).  We
-	 * also need one if the caller has instructed us that all non-Var/PHV
+	 * also need one if the caller has instructed us that certain expression
 	 * replacements need to be wrapped for identification purposes.
 	 */
-	need_phv = (var->varnullingrels != NULL) || rcon->wrap_non_vars;
+	need_phv = (var->varnullingrels != NULL) ||
+		(rcon->wrap_option != REPLACE_WRAP_NONE);
 
 	/*
 	 * If PlaceHolderVars are needed, we cache the modified expressions in
@@ -2673,7 +2678,12 @@ pullup_replace_vars_callback(Var *var,
 		{
 			bool		wrap;
 
-			if (varattno == InvalidAttrNumber)
+			if (rcon->wrap_option == REPLACE_WRAP_ALL)
+			{
+				/* Caller told us to wrap all expressions in a PlaceHolderVar */
+				wrap = true;
+			}
+			else if (varattno == InvalidAttrNumber)
 			{
 				/*
 				 * Insert PlaceHolderVar for whole-tuple reference.  Notice
@@ -2733,11 +2743,6 @@ pullup_replace_vars_callback(Var *var,
 					}
 				}
 			}
-			else if (rcon->wrap_non_vars)
-			{
-				/* Caller told us to wrap all non-Vars in a PlaceHolderVar */
-				wrap = true;
-			}
 			else
 			{
 				/*
@@ -2769,7 +2774,11 @@ pullup_replace_vars_callback(Var *var,
 				 * This analysis could be tighter: in particular, a non-strict
 				 * construct hidden within a lower-level PlaceHolderVar is not
 				 * reason to add another PHV.  But for now it doesn't seem
-				 * worth the code to be more exact.
+				 * worth the code to be more exact.  This is also why it's
+				 * preferable to handle bare PHVs in the above branch, rather
+				 * than this branch.  We also prefer to handle bare Vars in a
+				 * separate branch, as it's cheaper this way and parallels the
+				 * handling of PHVs.
 				 *
 				 * For a LATERAL subquery, we have to check the actual var
 				 * membership of the node, but if it's non-lateral then any

@@ -2477,6 +2477,7 @@ RepOriginId
 ReparameterizeForeignPathByChild_function
 ReplaceVarsFromTargetList_context
 ReplaceVarsNoMatchOption
+ReplaceWrapOption
 ReplicaIdentityStmt
 ReplicationKind
 ReplicationSlot
