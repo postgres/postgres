@@ -160,8 +160,8 @@ extern void MemoryContextCreate(MemoryContext node,
 extern void *MemoryContextAllocationFailure(MemoryContext context, Size size,
 											int flags);
 
-extern void MemoryContextSizeFailure(MemoryContext context, Size size,
-									 int flags) pg_attribute_noreturn();
+pg_noreturn extern void MemoryContextSizeFailure(MemoryContext context, Size size,
+												 int flags);
 
 static inline void
 MemoryContextCheckSize(MemoryContext context, Size size, int flags)

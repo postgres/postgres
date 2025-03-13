@@ -235,10 +235,10 @@ static bool ri_PerformCheck(const RI_ConstraintInfo *riinfo,
 static void ri_ExtractValues(Relation rel, TupleTableSlot *slot,
 							 const RI_ConstraintInfo *riinfo, bool rel_is_pk,
 							 Datum *vals, char *nulls);
-static void ri_ReportViolation(const RI_ConstraintInfo *riinfo,
-							   Relation pk_rel, Relation fk_rel,
-							   TupleTableSlot *violatorslot, TupleDesc tupdesc,
-							   int queryno, bool is_restrict, bool partgone) pg_attribute_noreturn();
+pg_noreturn static void ri_ReportViolation(const RI_ConstraintInfo *riinfo,
+										   Relation pk_rel, Relation fk_rel,
+										   TupleTableSlot *violatorslot, TupleDesc tupdesc,
+										   int queryno, bool is_restrict, bool partgone);
 
 
 /*

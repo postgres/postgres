@@ -40,6 +40,6 @@ extern void test_shm_mq_setup(int64 queue_size, int32 nworkers,
 							  shm_mq_handle **input);
 
 /* Main entrypoint for a worker. */
-extern PGDLLEXPORT void test_shm_mq_main(Datum) pg_attribute_noreturn();
+pg_noreturn extern PGDLLEXPORT void test_shm_mq_main(Datum);
 
 #endif

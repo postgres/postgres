@@ -146,6 +146,26 @@
 #endif
 
 /*
+ * pg_noreturn corresponds to the C11 noreturn/_Noreturn function specifier.
+ * We can't use the standard name "noreturn" because some third-party code
+ * uses __attribute__((noreturn)) in headers, which would get confused if
+ * "noreturn" is defined to "_Noreturn", as is done by <stdnoreturn.h>.
+ *
+ * In a declaration, function specifiers go before the function name.  The
+ * common style is to put them before the return type.  (The MSVC fallback has
+ * the same requirement.  The GCC fallback is more flexible.)
+ */
+#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L
+#define pg_noreturn _Noreturn
+#elif defined(__GNUC__) || defined(__SUNPRO_C)
+#define pg_noreturn __attribute__((noreturn))
+#elif defined(_MSC_VER)
+#define pg_noreturn __declspec(noreturn)
+#else
+#define pg_noreturn
+#endif
+
+/*
  * This macro will disable address safety instrumentation for a function
  * when running with "-fsanitize=address". Think twice before using this!
  */
@@ -213,30 +233,24 @@
 #define pg_attribute_printf(f,a)
 #endif
 
-/* GCC and Sunpro support aligned, packed and noreturn */
+/* GCC and Sunpro support aligned and packed */
 #if defined(__GNUC__) || defined(__SUNPRO_C)
 #define pg_attribute_aligned(a) __attribute__((aligned(a)))
-#define pg_attribute_noreturn() __attribute__((noreturn))
 #define pg_attribute_packed() __attribute__((packed))
-#define HAVE_PG_ATTRIBUTE_NORETURN 1
 #elif defined(_MSC_VER)
 /*
- * MSVC supports aligned.  noreturn is also possible but in MSVC it is
- * declared before the definition while pg_attribute_noreturn() macro
- * is currently used after the definition.
+ * MSVC supports aligned.
  *
  * Packing is also possible but only by wrapping the entire struct definition
  * which doesn't fit into our current macro declarations.
  */
 #define pg_attribute_aligned(a) __declspec(align(a))
-#define pg_attribute_noreturn()
 #else
 /*
  * NB: aligned and packed are not given default definitions because they
  * affect code functionality; they *must* be implemented by the compiler
  * if they are to be used.
  */
-#define pg_attribute_noreturn()
 #endif
 
 /*
@@ -858,8 +872,8 @@ typedef NameData *Name;
  * we should declare it as long as !FRONTEND.
  */
 #ifndef FRONTEND
-extern void ExceptionalCondition(const char *conditionName,
-								 const char *fileName, int lineNumber) pg_attribute_noreturn();
+pg_noreturn extern void ExceptionalCondition(const char *conditionName,
+											 const char *fileName, int lineNumber);
 #endif
 
 /*

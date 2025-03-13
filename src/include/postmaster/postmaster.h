@@ -90,7 +90,7 @@ extern PGDLLIMPORT const char *progname;
 extern PGDLLIMPORT bool redirection_done;
 extern PGDLLIMPORT bool LoadedSSL;
 
-extern void PostmasterMain(int argc, char *argv[]) pg_attribute_noreturn();
+pg_noreturn extern void PostmasterMain(int argc, char *argv[]);
 extern void ClosePostmasterPorts(bool am_syslogger);
 extern void InitProcessGlobals(void);
 
@@ -113,7 +113,7 @@ extern pid_t postmaster_child_launch(BackendType child_type,
 									 struct ClientSocket *client_sock);
 const char *PostmasterChildName(BackendType child_type);
 #ifdef EXEC_BACKEND
-extern void SubPostmasterMain(int argc, char *argv[]) pg_attribute_noreturn();
+pg_noreturn extern void SubPostmasterMain(int argc, char *argv[]);
 #endif
 
 /* defined in pmchild.c */

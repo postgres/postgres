@@ -29,7 +29,7 @@ extern const char *progname;
 
 extern void set_dump_section(const char *arg, int *dumpSections);
 extern void on_exit_nicely(on_exit_nicely_callback function, void *arg);
-extern void exit_nicely(int code) pg_attribute_noreturn();
+pg_noreturn extern void exit_nicely(int code);
 
 /* In pg_dump, we modify pg_fatal to call exit_nicely instead of exit */
 #undef pg_fatal

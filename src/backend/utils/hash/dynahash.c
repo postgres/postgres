@@ -272,7 +272,7 @@ static HASHBUCKET get_hash_entry(HTAB *hashp, int freelist_idx);
 static void hdefault(HTAB *hashp);
 static int	choose_nelem_alloc(Size entrysize);
 static bool init_htab(HTAB *hashp, long nelem);
-static void hash_corrupted(HTAB *hashp) pg_attribute_noreturn();
+pg_noreturn static void hash_corrupted(HTAB *hashp);
 static uint32 hash_initial_lookup(HTAB *hashp, uint32 hashvalue,
 								  HASHBUCKET **bucketptr);
 static long next_pow2_long(long num);

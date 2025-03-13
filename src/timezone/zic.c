@@ -117,11 +117,11 @@ extern int	link(const char *target, const char *linkname);
 	(itssymlink(target) ? (errno = ENOTSUP, -1) : link(target, linkname))
 #endif
 
-static void memory_exhausted(const char *msg) pg_attribute_noreturn();
+pg_noreturn static void memory_exhausted(const char *msg);
 static void verror(const char *string, va_list args) pg_attribute_printf(1, 0);
 static void error(const char *string,...) pg_attribute_printf(1, 2);
 static void warning(const char *string,...) pg_attribute_printf(1, 2);
-static void usage(FILE *stream, int status) pg_attribute_noreturn();
+pg_noreturn static void usage(FILE *stream, int status);
 static void addtt(zic_t starttime, int type);
 static int	addtype(zic_t utoff, char const *abbr,
 					bool isdst, bool ttisstd, bool ttisut);

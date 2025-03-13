@@ -425,7 +425,7 @@ static void LogChildExit(int lev, const char *procname,
 static void PostmasterStateMachine(void);
 static void UpdatePMState(PMState newState);
 
-static void ExitPostmaster(int status) pg_attribute_noreturn();
+pg_noreturn static void ExitPostmaster(int status);
 static int	ServerLoop(void);
 static int	BackendStartup(ClientSocket *client_sock);
 static void report_fork_failure_to_client(ClientSocket *client_sock, int errnum);

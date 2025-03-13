@@ -601,8 +601,8 @@ SlabAllocFromNewBlock(MemoryContext context, Size size, int flags)
  *		want to avoid that.
  */
 pg_noinline
+pg_noreturn
 static void
-pg_attribute_noreturn()
 SlabAllocInvalidSize(MemoryContext context, Size size)
 {
 	SlabContext *slab = (SlabContext *) context;

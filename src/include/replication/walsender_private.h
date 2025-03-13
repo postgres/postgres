@@ -132,7 +132,7 @@ typedef void *yyscan_t;
 #endif
 extern int	replication_yyparse(Node **replication_parse_result_p, yyscan_t yyscanner);
 extern int	replication_yylex(union YYSTYPE *yylval_param, yyscan_t yyscanner);
-extern void replication_yyerror(Node **replication_parse_result_p, yyscan_t yyscanner, const char *message) pg_attribute_noreturn();
+pg_noreturn extern void replication_yyerror(Node **replication_parse_result_p, yyscan_t yyscanner, const char *message);
 extern void replication_scanner_init(const char *str, yyscan_t *yyscannerp);
 extern void replication_scanner_finish(yyscan_t yyscanner);
 extern bool replication_scanner_is_replication_command(yyscan_t yyscanner);

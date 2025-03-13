@@ -160,8 +160,7 @@ xpstrdup(const char *in)
 	return pstrdup(in);
 }
 
-static void
-pg_attribute_noreturn()
+pg_noreturn static void
 dblink_res_internalerror(PGconn *conn, PGresult *res, const char *p2)
 {
 	char	   *msg = pchomp(PQerrorMessage(conn));
@@ -170,8 +169,7 @@ dblink_res_internalerror(PGconn *conn, PGresult *res, const char *p2)
 	elog(ERROR, "%s: %s", p2, msg);
 }
 
-static void
-pg_attribute_noreturn()
+pg_noreturn static void
 dblink_conn_not_avail(const char *conname)
 {
 	if (conname)

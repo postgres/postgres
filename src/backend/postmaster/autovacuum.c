@@ -317,7 +317,7 @@ int			AutovacuumLauncherPid = 0;
 
 static Oid	do_start_worker(void);
 static void ProcessAutoVacLauncherInterrupts(void);
-static void AutoVacLauncherShutdown(void) pg_attribute_noreturn();
+pg_noreturn static void AutoVacLauncherShutdown(void);
 static void launcher_determine_sleep(bool canlaunch, bool recursing,
 									 struct timeval *nap);
 static void launch_worker(TimestampTz now);

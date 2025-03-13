@@ -171,7 +171,7 @@ static pid_t internal_forkexec(const char *child_kind, int child_slot,
 typedef struct
 {
 	const char *name;
-	void		(*main_fn) (const void *startup_data, size_t startup_data_len) pg_attribute_noreturn();
+	void		(*main_fn) (const void *startup_data, size_t startup_data_len);
 	bool		shmem_attach;
 } child_process_kind;
 

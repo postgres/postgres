@@ -140,9 +140,9 @@ struct PgBenchExprList
 
 extern int	expr_yyparse(PgBenchExpr **expr_parse_result_p, yyscan_t yyscanner);
 extern int	expr_yylex(union YYSTYPE *yylval_param, yyscan_t yyscanner);
-extern void expr_yyerror(PgBenchExpr **expr_parse_result_p, yyscan_t yyscanner, const char *message) pg_attribute_noreturn();
-extern void expr_yyerror_more(yyscan_t yyscanner, const char *message,
-							  const char *more) pg_attribute_noreturn();
+pg_noreturn extern void expr_yyerror(PgBenchExpr **expr_parse_result_p, yyscan_t yyscanner, const char *message);
+pg_noreturn extern void expr_yyerror_more(yyscan_t yyscanner, const char *message,
+										  const char *more);
 extern bool expr_lex_one_word(PsqlScanState state, PQExpBuffer word_buf,
 							  int *offset);
 extern yyscan_t expr_scanner_init(PsqlScanState state,
@@ -153,9 +153,9 @@ extern char *expr_scanner_get_substring(PsqlScanState state,
 										int start_offset,
 										bool chomp);
 
-extern void syntax_error(const char *source, int lineno, const char *line,
-						 const char *command, const char *msg,
-						 const char *more, int column) pg_attribute_noreturn();
+pg_noreturn extern void syntax_error(const char *source, int lineno, const char *line,
+									 const char *command, const char *msg,
+									 const char *more, int column);
 
 extern bool strtoint64(const char *str, bool errorOK, int64 *result);
 extern bool strtodouble(const char *str, bool errorOK, double *dv);

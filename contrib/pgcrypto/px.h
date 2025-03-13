@@ -181,7 +181,7 @@ int			px_find_hmac(const char *name, PX_HMAC **res);
 int			px_find_cipher(const char *name, PX_Cipher **res);
 int			px_find_combo(const char *name, PX_Combo **res);
 
-void		px_THROW_ERROR(int err) pg_attribute_noreturn();
+pg_noreturn void px_THROW_ERROR(int err);
 const char *px_strerror(int err);
 
 const char *px_resolve_alias(const PX_Alias *list, const char *name);

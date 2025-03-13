@@ -98,8 +98,8 @@ typedef struct verifier_context
 extern void report_backup_error(verifier_context *context,
 								const char *pg_restrict fmt,...)
 			pg_attribute_printf(2, 3);
-extern void report_fatal_error(const char *pg_restrict fmt,...)
-			pg_attribute_printf(1, 2) pg_attribute_noreturn();
+pg_noreturn extern void report_fatal_error(const char *pg_restrict fmt,...)
+			pg_attribute_printf(1, 2);
 extern bool should_ignore_relpath(verifier_context *context,
 								  const char *relpath);
 

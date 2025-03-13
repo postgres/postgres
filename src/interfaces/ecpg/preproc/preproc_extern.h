@@ -89,7 +89,7 @@ extern char *cat_str(int count,...);
 extern char *make2_str(const char *str1, const char *str2);
 extern char *make3_str(const char *str1, const char *str2, const char *str3);
 extern void mmerror(int error_code, enum errortype type, const char *error,...) pg_attribute_printf(3, 4);
-extern void mmfatal(int error_code, const char *error,...) pg_attribute_printf(2, 3) pg_attribute_noreturn();
+pg_noreturn extern void mmfatal(int error_code, const char *error,...) pg_attribute_printf(2, 3);
 extern void output_get_descr_header(const char *desc_name);
 extern void output_get_descr(const char *desc_name, const char *index);
 extern void output_set_descr_header(const char *desc_name);

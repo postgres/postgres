@@ -33,7 +33,7 @@ extern PGDLLIMPORT Form_pg_attribute attrtypes[MAXATTR];
 extern PGDLLIMPORT int numattr;
 
 
-extern void BootstrapModeMain(int argc, char *argv[], bool check_only) pg_attribute_noreturn();
+pg_noreturn extern void BootstrapModeMain(int argc, char *argv[], bool check_only);
 
 extern void closerel(char *relname);
 extern void boot_openrel(char *relname);
@@ -64,6 +64,6 @@ typedef void *yyscan_t;
 extern int	boot_yyparse(yyscan_t yyscanner);
 extern int	boot_yylex_init(yyscan_t *yyscannerp);
 extern int	boot_yylex(union YYSTYPE *yylval_param, yyscan_t yyscanner);
-extern void boot_yyerror(yyscan_t yyscanner, const char *message) pg_attribute_noreturn();
+pg_noreturn extern void boot_yyerror(yyscan_t yyscanner, const char *message);
 
 #endif							/* BOOTSTRAP_H */

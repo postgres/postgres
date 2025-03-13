@@ -481,7 +481,7 @@ int			get_user_info(char **user_name_p);
 void		check_ok(void);
 void		report_status(eLogType type, const char *fmt,...) pg_attribute_printf(2, 3);
 void		pg_log(eLogType type, const char *fmt,...) pg_attribute_printf(2, 3);
-void		pg_fatal(const char *fmt,...) pg_attribute_printf(1, 2) pg_attribute_noreturn();
+pg_noreturn void pg_fatal(const char *fmt,...) pg_attribute_printf(1, 2);
 void		end_progress_output(void);
 void		cleanup_output_dirs(void);
 void		prep_status(const char *fmt,...) pg_attribute_printf(1, 2);

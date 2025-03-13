@@ -4778,8 +4778,7 @@ check_primary_slot_name(char **newval, void **extra, GucSource source)
  * that we have odd behaviors such as unexpected GUC ordering dependencies.
  */
 
-static void
-pg_attribute_noreturn()
+pg_noreturn static void
 error_multiple_recovery_targets(void)
 {
 	ereport(ERROR,
