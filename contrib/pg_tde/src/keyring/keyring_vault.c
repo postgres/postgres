@@ -283,6 +283,8 @@ get_key_by_name(GenericKeyring *keyring, const char *key_name, bool throw_error,
 #endif
 
 	key = palloc(sizeof(KeyInfo));
+	memset(key->name, 0, sizeof(key->name));
+	memcpy(key->name, key_name, strnlen(key_name, sizeof(key->name) - 1));
 	key->data.len = pg_b64_decode(responseKey, strlen(responseKey), (char *) key->data.data, MAX_KEY_DATA_SIZE);
 
 	if (key->data.len > MAX_KEY_DATA_SIZE)

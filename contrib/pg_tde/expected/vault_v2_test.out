@@ -29,6 +29,25 @@ SELECT pg_tde_set_principal_key('vault-v2-principal-key','vault-v2');
  t
 (1 row)
 
+SELECT pg_tde_set_principal_key('vault-v2-principal-key-2','vault-v2');
+ pg_tde_set_principal_key 
+--------------------------
+ t
+(1 row)
+
+SELECT pg_tde_set_principal_key('vault-v2-principal-key','vault-v2');
+ pg_tde_set_principal_key 
+--------------------------
+ t
+(1 row)
+
+SELECT  key_provider_id, key_provider_name, principal_key_name
+		FROM pg_tde_principal_key_info();
+ key_provider_id | key_provider_name |   principal_key_name   
+-----------------+-------------------+------------------------
+               2 | vault-v2          | vault-v2-principal-key
+(1 row)
+
 CREATE TABLE test_enc(
 	  id SERIAL,
 	  k INTEGER DEFAULT '0' NOT NULL,

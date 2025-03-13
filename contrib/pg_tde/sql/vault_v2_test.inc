@@ -15,6 +15,13 @@ CREATE TABLE test_enc(
 SELECT pg_tde_add_key_provider_vault_v2('vault-v2',:'root_token','http://127.0.0.1:8200','secret',NULL);
 SELECT pg_tde_set_principal_key('vault-v2-principal-key','vault-v2');
 
+SELECT pg_tde_set_principal_key('vault-v2-principal-key-2','vault-v2');
+
+SELECT pg_tde_set_principal_key('vault-v2-principal-key','vault-v2');
+
+SELECT  key_provider_id, key_provider_name, principal_key_name
+		FROM pg_tde_principal_key_info();
+
 CREATE TABLE test_enc(
 	  id SERIAL,
 	  k INTEGER DEFAULT '0' NOT NULL,
