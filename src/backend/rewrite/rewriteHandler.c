@@ -1858,8 +1858,8 @@ ApplyRetrieveRule(Query *parsetree,
 
 	/*
 	 * Clear fields that should not be set in a subquery RTE.  However, we
-	 * retain the relid to support correct operation of makeWholeRowVar during
-	 * planning.
+	 * retain the relid for now, to support correct operation of
+	 * makeWholeRowVar during planning.
 	 */
 	rte->relkind = 0;
 	rte->rellockmode = 0;
