@@ -295,8 +295,6 @@ set_principal_key_with_keyring(const char *key_name, const char *provider_name,
 
 	if (provider_name == NULL && !already_has_key)
 	{
-		LWLockRelease(lock_files);
-
 		ereport(ERROR,
 				(errmsg("provider_name is a required parameter when creating the first principal key for a database")));
 	}
@@ -327,8 +325,6 @@ set_principal_key_with_keyring(const char *key_name, const char *provider_name,
 
 	if (keyInfo != NULL && ensure_new_key)
 	{
-		LWLockRelease(lock_files);
-
 		pfree(new_keyring);
 
 		ereport(ERROR,
@@ -347,8 +343,6 @@ set_principal_key_with_keyring(const char *key_name, const char *provider_name,
 
 	if (keyInfo == NULL)
 	{
-		LWLockRelease(lock_files);
-
 		pfree(new_keyring);
 
 		ereport(ERROR,

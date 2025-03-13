@@ -430,7 +430,6 @@ write_key_provider_info(KeyringProvideRecord *provider, Oid database_id,
 	fd = BasicOpenFile(kp_info_path, O_CREAT | O_RDWR | PG_BINARY);
 	if (fd < 0)
 	{
-		LWLockRelease(tde_provider_info_lock());
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not open tde file \"%s\": %m", kp_info_path)));
@@ -455,7 +454,6 @@ write_key_provider_info(KeyringProvideRecord *provider, Oid database_id,
 				if (error_if_exists)
 				{
 					close(fd);
-					LWLockRelease(tde_provider_info_lock());
 					ereport(ERROR,
 							(errcode(ERRCODE_DUPLICATE_OBJECT),
 							 errmsg("key provider \"%s\" already exists", provider->provider_name)));
@@ -527,7 +525,6 @@ write_key_provider_info(KeyringProvideRecord *provider, Oid database_id,
 	if (bytes_written != sizeof(KeyringProvideRecord))
 	{
 		close(fd);
-		LWLockRelease(tde_provider_info_lock());
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("key provider info file \"%s\" can't be written: %m",
@@ -536,7 +533,6 @@ write_key_provider_info(KeyringProvideRecord *provider, Oid database_id,
 	if (pg_fsync(fd) != 0)
 	{
 		close(fd);
-		LWLockRelease(tde_provider_info_lock());
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not fsync file \"%s\": %m",

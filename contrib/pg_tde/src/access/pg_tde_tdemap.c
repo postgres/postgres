@@ -177,7 +177,6 @@ pg_tde_create_key_map_entry(const RelFileLocator *newrlocator, uint32 entry_type
 	principal_key = GetPrincipalKey(newrlocator->dbOid, LW_EXCLUSIVE);
 	if (principal_key == NULL)
 	{
-		LWLockRelease(lock_pk);
 		ereport(ERROR,
 				(errmsg("failed to retrieve principal key. Create one using pg_tde_set_principal_key before using encrypted tables.")));
 
@@ -922,7 +921,6 @@ pg_tde_wal_last_key_set_lsn(XLogRecPtr lsn, const char *keyfile_path)
 	if (pg_pwrite(fd, &lsn, sizeof(XLogRecPtr), write_pos) != sizeof(XLogRecPtr))
 	{
 		/* TODO: what now? File is corrupted */
-		LWLockRelease(lock_pk);
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not write tde key data file: %m")));
@@ -939,7 +937,6 @@ pg_tde_wal_last_key_set_lsn(XLogRecPtr lsn, const char *keyfile_path)
 
 		if (pg_pread(fd, &prev_key, INTERNAL_KEY_DAT_LEN, prev_key_pos) != INTERNAL_KEY_DAT_LEN)
 		{
-			LWLockRelease(lock_pk);
 			ereport(ERROR,
 					(errcode_for_file_access(),
 					 errmsg("could not read previous WAL key: %m")));
@@ -951,7 +948,6 @@ pg_tde_wal_last_key_set_lsn(XLogRecPtr lsn, const char *keyfile_path)
 
 			if (pg_pwrite(fd, &prev_key, INTERNAL_KEY_DAT_LEN, prev_key_pos) != INTERNAL_KEY_DAT_LEN)
 			{
-				LWLockRelease(lock_pk);
 				ereport(ERROR,
 						(errcode_for_file_access(),
 						 errmsg("could not write invalidated key: %m")));
@@ -961,7 +957,6 @@ pg_tde_wal_last_key_set_lsn(XLogRecPtr lsn, const char *keyfile_path)
 
 	if (pg_fsync(fd) != 0)
 	{
-		LWLockRelease(lock_pk);
 		ereport(data_sync_elevel(ERROR),
 				(errcode_for_file_access(),
 				 errmsg("could not fsync file: %m")));
