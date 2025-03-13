@@ -20,12 +20,20 @@
 #include "common/unicode_category.h"
 #include "mb/pg_wchar.h"
 
+enum CaseMapResult
+{
+	CASEMAP_SELF,
+	CASEMAP_SIMPLE,
+	CASEMAP_SPECIAL,
+};
+
 static const pg_case_map *find_case_map(pg_wchar ucs);
 static size_t convert_case(char *dst, size_t dstsize, const char *src, ssize_t srclen,
 						   CaseKind str_casekind, bool full, WordBoundaryNext wbnext,
 						   void *wbstate);
-static bool check_special_conditions(int conditions, const char *str,
-									 size_t len, size_t offset);
+static enum CaseMapResult casemap(pg_wchar u1, CaseKind casekind, bool full,
+								  const char *src, size_t srclen, size_t srcoff,
+								  pg_wchar *u2, const pg_wchar **special);
 
 pg_wchar
 unicode_lowercase_simple(pg_wchar code)
@@ -214,8 +222,9 @@ convert_case(char *dst, size_t dstsize, const char *src, ssize_t srclen,
 	{
 		pg_wchar	u1 = utf8_to_unicode((unsigned char *) src + srcoff);
 		int			u1len = unicode_utf8len(u1);
-		const pg_case_map *casemap = find_case_map(u1);
-		const pg_special_case *special = NULL;
+		pg_wchar	simple = 0;
+		const pg_wchar *special = NULL;
+		enum CaseMapResult casemap_result;
 
 		if (str_casekind == CaseTitle)
 		{
@@ -228,56 +237,47 @@ convert_case(char *dst, size_t dstsize, const char *src, ssize_t srclen,
 				chr_casekind = CaseLower;
 		}
 
-		/*
-		 * Find special case that matches the conditions, if any.
-		 *
-		 * Note: only a single special mapping per codepoint is currently
-		 * supported, though Unicode allows for multiple special mappings for
-		 * a single codepoint.
-		 */
-		if (full && casemap && casemap->special_case)
+		casemap_result = casemap(u1, chr_casekind, full, src, srclen, srcoff,
+								 &simple, &special);
+
+		switch (casemap_result)
 		{
-			int16		conditions = casemap->special_case->conditions;
+			case CASEMAP_SELF:
+				/* no mapping; copy bytes from src */
+				Assert(simple == 0);
+				Assert(special == NULL);
+				if (result_len + u1len <= dstsize)
+					memcpy(dst + result_len, src + srcoff, u1len);
 
-			Assert(casemap->special_case->codepoint == u1);
-			if (check_special_conditions(conditions, src, srclen, srcoff))
-				special = casemap->special_case;
-		}
+				result_len += u1len;
+				break;
+			case CASEMAP_SIMPLE:
+				{
+					/* replace with single character */
+					pg_wchar	u2 = simple;
+					pg_wchar	u2len = unicode_utf8len(u2);
 
-		/* perform mapping, update result_len, and write to dst */
-		if (special)
-		{
-			for (int i = 0; i < MAX_CASE_EXPANSION; i++)
-			{
-				pg_wchar	u2 = special->map[chr_casekind][i];
-				size_t		u2len = unicode_utf8len(u2);
+					Assert(special == NULL);
+					if (result_len + u2len <= dstsize)
+						unicode_to_utf8(u2, (unsigned char *) dst + result_len);
 
-				if (u2 == '\0')
-					break;
+					result_len += u2len;
+				}
+				break;
+			case CASEMAP_SPECIAL:
+				/* replace with up to MAX_CASE_EXPANSION characters */
+				Assert(simple == 0);
+				for (int i = 0; i < MAX_CASE_EXPANSION && special[i]; i++)
+				{
+					pg_wchar	u2 = special[i];
+					size_t		u2len = unicode_utf8len(u2);
 
-				if (result_len + u2len <= dstsize)
-					unicode_to_utf8(u2, (unsigned char *) dst + result_len);
+					if (result_len + u2len <= dstsize)
+						unicode_to_utf8(u2, (unsigned char *) dst + result_len);
 
-				result_len += u2len;
-			}
-		}
-		else if (casemap)
-		{
-			pg_wchar	u2 = casemap->simplemap[chr_casekind];
-			pg_wchar	u2len = unicode_utf8len(u2);
-
-			if (result_len + u2len <= dstsize)
-				unicode_to_utf8(u2, (unsigned char *) dst + result_len);
-
-			result_len += u2len;
-		}
-		else
-		{
-			/* no mapping; copy bytes from src */
-			if (result_len + u1len <= dstsize)
-				memcpy(dst + result_len, src + srcoff, u1len);
-
-			result_len += u1len;
+					result_len += u2len;
+				}
+				break;
 		}
 
 		srcoff += u1len;
@@ -351,6 +351,10 @@ check_final_sigma(const unsigned char *str, size_t len, size_t offset)
 	return true;
 }
 
+/*
+ * Unicode allows for special casing to be applied only under certain
+ * circumstances. The only currently-supported condition is Final_Sigma.
+ */
 static bool
 check_special_conditions(int conditions, const char *str, size_t len,
 						 size_t offset)
@@ -363,6 +367,51 @@ check_special_conditions(int conditions, const char *str, size_t len,
 	/* no other conditions supported */
 	Assert(false);
 	return false;
+}
+
+/*
+ * Map the given character to the requested case.
+ *
+ * If full is true, and a special case mapping is found and the conditions are
+ * met, 'special' is set to the mapping result (which is an array of up to
+ * MAX_CASE_EXPANSION characters) and CASEMAP_SPECIAL is returned.
+ *
+ * Otherwise, search for a simple mapping, and if found, set 'simple' to the
+ * result and return CASEMAP_SIMPLE.
+ *
+ * If no mapping is found, return CASEMAP_SELF, and the caller should copy the
+ * character without modification.
+ */
+static enum CaseMapResult
+casemap(pg_wchar u1, CaseKind casekind, bool full,
+		const char *src, size_t srclen, size_t srcoff,
+		pg_wchar *simple, const pg_wchar **special)
+{
+	const pg_case_map *map;
+
+	if (u1 < 0x80)
+	{
+		*simple = case_map[u1].simplemap[casekind];
+
+		return CASEMAP_SIMPLE;
+	}
+
+	map = find_case_map(u1);
+
+	if (map == NULL)
+		return CASEMAP_SELF;
+
+	if (full && map->special_case != NULL &&
+		check_special_conditions(map->special_case->conditions,
+								 src, srclen, srcoff))
+	{
+		*special = map->special_case->map[casekind];
+		return CASEMAP_SPECIAL;
+	}
+
+	*simple = map->simplemap[casekind];
+
+	return CASEMAP_SIMPLE;
 }
 
 /* find entry in simple case map, if any */
