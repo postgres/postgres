@@ -33,19 +33,9 @@ PG_FUNCTION_INFO_V1(pg_tde_is_encrypted);
 Datum
 pg_tde_is_encrypted(PG_FUNCTION_ARGS)
 {
-	Oid			tableOid = InvalidOid;
+	Oid			tableOid = PG_GETARG_OID(0);
 	Oid			dbOid = MyDatabaseId;
 	TDEPrincipalKey *principalKey = NULL;
-
-	if (!PG_ARGISNULL(0))
-	{
-		tableOid = PG_GETARG_OID(0);
-	}
-
-	if (tableOid == InvalidOid)
-	{
-		PG_RETURN_BOOL(false);
-	}
 
 	LWLockAcquire(tde_lwlock_enc_keys(), LW_SHARED);
 	principalKey = GetPrincipalKey(dbOid, LW_SHARED);

@@ -457,6 +457,7 @@ LANGUAGE plpgsql;
 
 CREATE FUNCTION pg_tde_is_encrypted(relation regclass)
 RETURNS boolean
+STRICT
 LANGUAGE C
 AS 'MODULE_PATHNAME';
 
