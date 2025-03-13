@@ -101,6 +101,7 @@ tap_tests = [
       't/007_tde_heap.pl',
       't/008_key_rotate_tablespace.pl',
       't/009_wal_encrypt.pl',
+      't/010_change_key_provider.pl',
 ]
 
 tests += {

@@ -34,35 +34,21 @@ Datum
 pg_tde_is_encrypted(PG_FUNCTION_ARGS)
 {
 	Oid			tableOid = PG_GETARG_OID(0);
-	Oid			dbOid = MyDatabaseId;
-	TDEPrincipalKey *principalKey = NULL;
+	LOCKMODE	lockmode = AccessShareLock;
+	Relation	rel = relation_open(tableOid, lockmode);
+	RelFileLocatorBackend rlocator = {.locator = rel->rd_locator,.backend = rel->rd_backend};
+	InternalKey *key;
 
-	LWLockAcquire(tde_lwlock_enc_keys(), LW_SHARED);
-	principalKey = GetPrincipalKey(dbOid, LW_SHARED);
-	LWLockRelease(tde_lwlock_enc_keys());
+	if (RelFileLocatorBackendIsTemp(rlocator) && !rel->rd_islocaltemp)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("we cannot check if temporary relations from other backends are encrypted")));
 
-	if (principalKey == NULL)
-	{
-		PG_RETURN_BOOL(false);
-	}
+	key = GetSMGRRelationKey(rlocator);
 
-	{
-		LOCKMODE	lockmode = AccessShareLock;
-		Relation	rel = relation_open(tableOid, lockmode);
-		InternalKey *key;
-		RelFileLocatorBackend rlocator = {.locator = rel->rd_locator,.backend = rel->rd_backend};
+	relation_close(rel, lockmode);
 
-		if (RelFileLocatorBackendIsTemp(rlocator) && !rel->rd_islocaltemp)
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("we cannot check if temporary relations from other backends are encrypted")));
-
-		key = GetSMGRRelationKey(rlocator);
-
-		relation_close(rel, lockmode);
-
-		PG_RETURN_BOOL(key != NULL);
-	}
+	PG_RETURN_BOOL(key != NULL);
 }
 
 /*

@@ -40,19 +40,10 @@ tde_smgr_get_key(SMgrRelation reln, RelFileLocator *old_locator, bool can_create
 {
 	TdeCreateEvent *event;
 	InternalKey *key;
-	TDEPrincipalKey *pk;
 
 	if (IsCatalogRelationOid(reln->smgr_rlocator.locator.relNumber))
 	{
 		/* do not try to encrypt/decrypt catalog tables */
-		return NULL;
-	}
-
-	LWLockAcquire(tde_lwlock_enc_keys(), LW_SHARED);
-	pk = GetPrincipalKey(reln->smgr_rlocator.locator.dbOid, LW_SHARED);
-	LWLockRelease(tde_lwlock_enc_keys());
-	if (pk == NULL)
-	{
 		return NULL;
 	}
 

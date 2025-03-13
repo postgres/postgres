@@ -981,6 +981,18 @@ pg_tde_get_key_from_file(const RelFileLocator *rlocator, uint32 key_type)
 
 	Assert(rlocator);
 
+	/* Get the file paths */
+	pg_tde_set_db_file_paths(rlocator->dbOid, db_map_path, db_keydata_path);
+
+	if (access(db_map_path, F_OK) == -1)
+		return NULL;
+
+	/* Read the map entry and get the index of the relation key */
+	key_index = pg_tde_process_map_entry(rlocator, key_type, db_map_path, &offset, false);
+
+	if (key_index == -1)
+		return NULL;
+
 	/*
 	 * Get/generate a principal key, create the key for relation and get the
 	 * encrypted key with bytes to write
@@ -996,27 +1008,8 @@ pg_tde_get_key_from_file(const RelFileLocator *rlocator, uint32 key_type)
 	LWLockAcquire(lock_pk, LW_SHARED);
 	principal_key = GetPrincipalKey(rlocator->dbOid, LW_SHARED);
 	if (principal_key == NULL)
-	{
-		LWLockRelease(lock_pk);
-		return NULL;
-	}
-
-	/* Get the file paths */
-	pg_tde_set_db_file_paths(rlocator->dbOid, db_map_path, db_keydata_path);
-
-	if (access(db_map_path, F_OK) == -1)
-	{
-		LWLockRelease(lock_pk);
-		return NULL;
-	}
-	/* Read the map entry and get the index of the relation key */
-	key_index = pg_tde_process_map_entry(rlocator, key_type, db_map_path, &offset, false);
-
-	if (key_index == -1)
-	{
-		LWLockRelease(lock_pk);
-		return NULL;
-	}
+		ereport(ERROR,
+				(errmsg("failed to retrieve principal key. Create one using pg_tde_set_principal_key before using encrypted tables.")));
 
 	enc_rel_key_data = pg_tde_read_keydata(db_keydata_path, key_index, principal_key);
 	LWLockRelease(lock_pk);
