@@ -657,7 +657,7 @@ datum_to_jsonb_internal(Datum val, bool is_null, JsonbInState *result,
 			  tcategory == JSONTYPE_COMPOSITE ||
 			  tcategory == JSONTYPE_JSON ||
 			  tcategory == JSONTYPE_JSONB ||
-			  tcategory == JSONTYPE_JSON))
+			  tcategory == JSONTYPE_CAST))
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
