@@ -108,7 +108,8 @@ while (<$lwlocklist>)
 	$continue = ",\n";
 
 	# Add a "Lock" suffix to each lock name, as the C code depends on that
-	print $h "#define ${lockname}Lock (&MainLWLockArray[$lockidx].lock)\n";
+	printf $h "#define %-32s (&MainLWLockArray[$lockidx].lock)\n",
+	  $lockname . "Lock";
 }
 
 die
