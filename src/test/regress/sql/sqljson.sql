@@ -152,6 +152,17 @@ SELECT JSON_OBJECT(1: 1, '2': NULL, '1': 1 ABSENT ON NULL WITH UNIQUE RETURNING 
 SELECT JSON_OBJECT(1: 1, '2': NULL, '1': 1 ABSENT ON NULL WITHOUT UNIQUE RETURNING jsonb);
 SELECT JSON_OBJECT(1: 1, '2': NULL, '3': 1, 4: NULL, '5': 'a' ABSENT ON NULL WITH UNIQUE RETURNING jsonb);
 
+-- BUG: https://postgr.es/m/CADXhmgTJtJZK9A3Na_ry%2BXrq-ghjcejBRhcRMzWZvbd__QdgJA%40mail.gmail.com
+-- datum_to_jsonb_internal() didn't catch keys that are casts instead of a simple scalar
+CREATE TYPE mood AS ENUM ('happy', 'sad', 'neutral');
+CREATE FUNCTION mood_to_json(mood) RETURNS json AS $$
+  SELECT to_json($1::text);
+$$ LANGUAGE sql IMMUTABLE;
+CREATE CAST (mood AS json) WITH FUNCTION mood_to_json(mood) AS IMPLICIT;
+SELECT JSON_OBJECT('happy'::mood: '123'::jsonb);
+DROP CAST (mood AS json);
+DROP FUNCTION mood_to_json;
+DROP TYPE mood;
 
 -- JSON_ARRAY()
 SELECT JSON_ARRAY();
