@@ -47,15 +47,14 @@ tde_smgr_get_key(SMgrRelation reln, RelFileLocator *old_locator, bool can_create
 		return NULL;
 	}
 
-	event = GetCurrentTdeCreateEvent();
-
 	/* see if we have a key for the relation, and return if yes */
 	key = GetSMGRRelationKey(reln->smgr_rlocator);
-
 	if (key != NULL)
 	{
 		return key;
 	}
+
+	event = GetCurrentTdeCreateEvent();
 
 	/*
 	 * Can be many things, such as: CREATE TABLE ALTER TABLE SET ACCESS METHOD
@@ -72,9 +71,9 @@ tde_smgr_get_key(SMgrRelation reln, RelFileLocator *old_locator, bool can_create
 	if (old_locator != NULL && can_create)
 	{
 		RelFileLocatorBackend rlocator = {.locator = *old_locator,.backend = reln->smgr_rlocator.backend};
-		InternalKey *key2 = GetSMGRRelationKey(rlocator);
+		InternalKey *oldkey = GetSMGRRelationKey(rlocator);
 
-		if (key2 != NULL)
+		if (oldkey != NULL)
 		{
 			/* create a new key for the new file */
 			return pg_tde_create_smgr_key(&reln->smgr_rlocator);
