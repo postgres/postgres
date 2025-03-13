@@ -729,17 +729,18 @@ pg_tde_get_key_info(PG_FUNCTION_ARGS, Oid dbOid)
 #endif							/* FRONTEND */
 
 /*
- * Gets principal key form the keyring and pops it into cache if key exists
+ * Gets principal key form the keyring.
+ *
  * Caller should hold an exclusive tde_lwlock_enc_keys lock
  */
 TDEPrincipalKey *
-get_principal_key_from_keyring(Oid dbOid, bool pushToCache)
+get_principal_key_from_keyring(Oid dbOid)
 {
+	TDEPrincipalKeyInfo *principalKeyInfo;
 	GenericKeyring *keyring;
-	TDEPrincipalKey *principalKey = NULL;
-	TDEPrincipalKeyInfo *principalKeyInfo = NULL;
-	const KeyInfo *keyInfo = NULL;
+	KeyInfo    *keyInfo;
 	KeyringReturnCodes keyring_ret;
+	TDEPrincipalKey *principalKey;
 
 	/* Assert(LWLockHeldByMeInMode(tde_lwlock_enc_keys(), LW_EXCLUSIVE)); */
 
@@ -756,7 +757,6 @@ get_principal_key_from_keyring(Oid dbOid, bool pushToCache)
 	}
 
 	keyInfo = KeyringGetKey(keyring, principalKeyInfo->name, &keyring_ret);
-
 	if (keyInfo == NULL)
 	{
 		return NULL;
@@ -770,24 +770,9 @@ get_principal_key_from_keyring(Oid dbOid, bool pushToCache)
 
 	Assert(dbOid == principalKey->keyInfo.databaseId);
 
-#ifndef FRONTEND
-	/* We don't store global space key in cache */
-	if (pushToCache && !(TDEisInGlobalSpace(dbOid)))
-	{
-		push_principal_key_to_cache(principalKey);
-
-		/*
-		 * If we do store key in cache we want to return a cache reference
-		 * rather then a palloc'ed copy.
-		 */
-		pfree(principalKey);
-		principalKey = get_principal_key_from_cache(dbOid);
-	}
+	pfree(keyInfo);
 	pfree(keyring);
-#endif
-
-	if (principalKeyInfo)
-		pfree(principalKeyInfo);
+	pfree(principalKeyInfo);
 
 	return principalKey;
 }
@@ -815,18 +800,17 @@ get_principal_key_from_keyring(Oid dbOid, bool pushToCache)
 TDEPrincipalKey *
 GetPrincipalKeyNoDefault(Oid dbOid, LWLockMode lockMode)
 {
-	TDEPrincipalKey *principalKey = NULL;
+	TDEPrincipalKey *principalKey;
+
 #ifndef FRONTEND
 	Assert(LWLockHeldByMeInMode(tde_lwlock_enc_keys(), lockMode));
 	/* We don't store global space key in cache */
 	if (!TDEisInGlobalSpace(dbOid))
 	{
 		principalKey = get_principal_key_from_cache(dbOid);
-	}
 
-	if (likely(principalKey))
-	{
-		return principalKey;
+		if (likely(principalKey))
+			return principalKey;
 	}
 
 	if (lockMode != LW_EXCLUSIVE)
@@ -836,7 +820,24 @@ GetPrincipalKeyNoDefault(Oid dbOid, LWLockMode lockMode)
 	}
 #endif
 
-	return get_principal_key_from_keyring(dbOid, true);
+	principalKey = get_principal_key_from_keyring(dbOid);
+
+#ifndef FRONTEND
+	/* We don't store global space key in cache */
+	if (principalKey && !TDEisInGlobalSpace(dbOid))
+	{
+		push_principal_key_to_cache(principalKey);
+
+		/*
+		 * If we do store key in cache we want to return a cache reference
+		 * rather then a palloc'ed copy.
+		 */
+		pfree(principalKey);
+		principalKey = get_principal_key_from_cache(dbOid);
+	}
+#endif
+
+	return principalKey;
 }
 
 TDEPrincipalKey *
@@ -1095,7 +1096,7 @@ pg_tde_verify_principal_key_internal(Oid databaseOid)
 
 	LWLockAcquire(tde_lwlock_enc_keys(), LW_EXCLUSIVE);
 
-	fromKeyring = get_principal_key_from_keyring(databaseOid, false);
+	fromKeyring = get_principal_key_from_keyring(databaseOid);
 	fromCache = get_principal_key_from_cache(databaseOid);
 
 	LWLockRelease(tde_lwlock_enc_keys());

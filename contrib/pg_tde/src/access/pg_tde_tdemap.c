@@ -258,7 +258,7 @@ pg_tde_create_wal_key(InternalKey *rel_key_data, const RelFileLocator *newrlocat
 	InternalKey *enc_rel_key_data;
 	TDEPrincipalKey *principal_key;
 
-	principal_key = get_principal_key_from_keyring(newrlocator->dbOid, false);
+	principal_key = get_principal_key_from_keyring(newrlocator->dbOid);
 	if (principal_key == NULL)
 	{
 		ereport(ERROR,
