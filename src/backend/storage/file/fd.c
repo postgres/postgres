@@ -4026,7 +4026,7 @@ check_debug_io_direct(char **newval, void **extra, GucSource source)
 #if BLCKSZ < PG_IO_ALIGN_SIZE
 	if (result && (flags & IO_DIRECT_DATA))
 	{
-		GUC_check_errdetail("\"%s\" is not supported for WAL because %s is too small.",
+		GUC_check_errdetail("\"%s\" is not supported for data because %s is too small.",
 							"debug_io_direct", "BLCKSZ");
 		result = false;
 	}
