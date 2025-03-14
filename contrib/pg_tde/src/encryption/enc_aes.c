@@ -43,10 +43,8 @@
  * 16 byte blocks.
  */
 
-const EVP_CIPHER *cipher = NULL;
-const EVP_CIPHER *cipher2 = NULL;
-
-static int	cipher_block_size = 0;
+static const EVP_CIPHER *cipher_cbc;
+static const EVP_CIPHER *cipher_ctr_ecb;
 
 void
 AesInit(void)
@@ -58,10 +56,8 @@ AesInit(void)
 		OpenSSL_add_all_algorithms();
 		ERR_load_crypto_strings();
 
-		cipher = EVP_aes_128_cbc();
-		cipher_block_size = EVP_CIPHER_block_size(cipher);
-		/* == buffer size */
-		cipher2 = EVP_aes_128_ecb();
+		cipher_cbc = EVP_aes_128_cbc();
+		cipher_ctr_ecb = EVP_aes_128_ecb();
 
 		initialized = 1;
 	}
@@ -76,7 +72,7 @@ AesRunCtr(EVP_CIPHER_CTX **ctxPtr, int enc, const unsigned char *key, const unsi
 		*ctxPtr = EVP_CIPHER_CTX_new();
 		EVP_CIPHER_CTX_init(*ctxPtr);
 
-		if (EVP_CipherInit_ex(*ctxPtr, cipher2, NULL, key, iv, enc) == 0)
+		if (EVP_CipherInit_ex(*ctxPtr, cipher_ctr_ecb, NULL, key, iv, enc) == 0)
 		{
 #ifdef FRONTEND
 			fprintf(stderr, "ERROR: EVP_CipherInit_ex failed. OpenSSL error: %s\n", ERR_error_string(ERR_get_error(), NULL));
@@ -109,10 +105,12 @@ AesRunCbc(int enc, const unsigned char *key, const unsigned char *iv, const unsi
 	int			out_len_final = 0;
 	EVP_CIPHER_CTX *ctx = NULL;
 
+	Assert(in_len % EVP_CIPHER_block_size(cipher_cbc) == 0);
+
 	ctx = EVP_CIPHER_CTX_new();
 	EVP_CIPHER_CTX_init(ctx);
 
-	if (EVP_CipherInit_ex(ctx, cipher, NULL, key, iv, enc) == 0)
+	if (EVP_CipherInit_ex(ctx, cipher_cbc, NULL, key, iv, enc) == 0)
 	{
 #ifdef FRONTEND
 		fprintf(stderr, "ERROR: EVP_CipherInit_ex failed. OpenSSL error: %s\n", ERR_error_string(ERR_get_error(), NULL));
@@ -124,7 +122,6 @@ AesRunCbc(int enc, const unsigned char *key, const unsigned char *iv, const unsi
 	}
 
 	EVP_CIPHER_CTX_set_padding(ctx, 0);
-	Assert(in_len % cipher_block_size == 0);
 
 	if (EVP_CipherUpdate(ctx, out, out_len, in, in_len) == 0)
 	{
