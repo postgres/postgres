@@ -2774,6 +2774,9 @@ FastPathTransferRelationLocks(LockMethod lockMethodTable, const LOCKTAG *locktag
 	Oid			relid = locktag->locktag_field2;
 	uint32		i;
 
+	/* fast-path group the lock belongs to */
+	uint32		group = FAST_PATH_REL_GROUP(relid);
+
 	/*
 	 * Every PGPROC that can potentially hold a fast-path lock is present in
 	 * ProcGlobal->allProcs.  Prepared transactions are not, but any
@@ -2783,8 +2786,7 @@ FastPathTransferRelationLocks(LockMethod lockMethodTable, const LOCKTAG *locktag
 	for (i = 0; i < ProcGlobal->allProcCount; i++)
 	{
 		PGPROC	   *proc = &ProcGlobal->allProcs[i];
-		uint32		j,
-					group;
+		uint32		j;
 
 		LWLockAcquire(&proc->fpInfoLock, LW_EXCLUSIVE);
 
@@ -2802,15 +2804,15 @@ FastPathTransferRelationLocks(LockMethod lockMethodTable, const LOCKTAG *locktag
 		 * less clear that our backend is certain to have performed a memory
 		 * fencing operation since the other backend set proc->databaseId.  So
 		 * for now, we test it after acquiring the LWLock just to be safe.
+		 *
+		 * Also skip groups without any registered fast-path locks.
 		 */
-		if (proc->databaseId != locktag->locktag_field1)
+		if (proc->databaseId != locktag->locktag_field1 ||
+			proc->fpLockBits[group] == 0)
 		{
 			LWLockRelease(&proc->fpInfoLock);
 			continue;
 		}
-
-		/* fast-path group the lock belongs to */
-		group = FAST_PATH_REL_GROUP(relid);
 
 		for (j = 0; j < FP_LOCK_SLOTS_PER_GROUP; j++)
 		{
@@ -3027,6 +3029,9 @@ GetLockConflicts(const LOCKTAG *locktag, LOCKMODE lockmode, int *countp)
 		Oid			relid = locktag->locktag_field2;
 		VirtualTransactionId vxid;
 
+		/* fast-path group the lock belongs to */
+		uint32		group = FAST_PATH_REL_GROUP(relid);
+
 		/*
 		 * Iterate over relevant PGPROCs.  Anything held by a prepared
 		 * transaction will have been transferred to the primary lock table,
@@ -3040,8 +3045,7 @@ GetLockConflicts(const LOCKTAG *locktag, LOCKMODE lockmode, int *countp)
 		for (i = 0; i < ProcGlobal->allProcCount; i++)
 		{
 			PGPROC	   *proc = &ProcGlobal->allProcs[i];
-			uint32		j,
-						group;
+			uint32		j;
 
 			/* A backend never blocks itself */
 			if (proc == MyProc)
@@ -3056,15 +3060,15 @@ GetLockConflicts(const LOCKTAG *locktag, LOCKMODE lockmode, int *countp)
 			 *
 			 * See FastPathTransferRelationLocks() for discussion of why we do
 			 * this test after acquiring the lock.
+			 *
+			 * Also skip groups without any registered fast-path locks.
 			 */
-			if (proc->databaseId != locktag->locktag_field1)
+			if (proc->databaseId != locktag->locktag_field1 ||
+				proc->fpLockBits[group] == 0)
 			{
 				LWLockRelease(&proc->fpInfoLock);
 				continue;
 			}
-
-			/* fast-path group the lock belongs to */
-			group = FAST_PATH_REL_GROUP(relid);
 
 			for (j = 0; j < FP_LOCK_SLOTS_PER_GROUP; j++)
 			{
