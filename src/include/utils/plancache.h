@@ -89,18 +89,13 @@ extern PGDLLIMPORT int plan_cache_mode;
  * all subsidiary data live in the caller's CurrentMemoryContext, and there
  * is no way to free memory short of clearing that entire context.  A oneshot
  * plan is always treated as unsaved.
- *
- * Note: the string referenced by commandTag is not subsidiary storage;
- * it is assumed to be a compile-time-constant string.  As with portals,
- * commandTag shall be NULL if and only if the original query string (before
- * rewriting) was an empty string.
  */
 typedef struct CachedPlanSource
 {
 	int			magic;			/* should equal CACHEDPLANSOURCE_MAGIC */
 	struct RawStmt *raw_parse_tree; /* output of raw_parser(), or NULL */
 	const char *query_string;	/* source text of query */
-	CommandTag	commandTag;		/* 'nuff said */
+	CommandTag	commandTag;		/* command tag for query */
 	Oid		   *param_types;	/* array of parameter type OIDs, or NULL */
 	int			num_params;		/* length of param_types array */
 	ParserSetupHook parserSetup;	/* alternative parameter spec method */
