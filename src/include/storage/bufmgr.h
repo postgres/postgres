@@ -290,6 +290,10 @@ extern bool HoldingBufferPinThatDelaysRecovery(void);
 
 extern bool BgBufferSync(struct WritebackContext *wb_context);
 
+extern uint32 GetPinLimit(void);
+extern uint32 GetLocalPinLimit(void);
+extern uint32 GetAdditionalPinLimit(void);
+extern uint32 GetAdditionalLocalPinLimit(void);
 extern void LimitAdditionalPins(uint32 *additional_pins);
 extern void LimitAdditionalLocalPins(uint32 *additional_pins);
 
