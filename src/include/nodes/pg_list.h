@@ -608,23 +608,23 @@ extern List *list_make5_impl(NodeTag t, ListCell datum1, ListCell datum2,
 							 ListCell datum3, ListCell datum4,
 							 ListCell datum5);
 
-extern pg_nodiscard List *lappend(List *list, void *datum);
-extern pg_nodiscard List *lappend_int(List *list, int datum);
-extern pg_nodiscard List *lappend_oid(List *list, Oid datum);
-extern pg_nodiscard List *lappend_xid(List *list, TransactionId datum);
+pg_nodiscard extern List *lappend(List *list, void *datum);
+pg_nodiscard extern List *lappend_int(List *list, int datum);
+pg_nodiscard extern List *lappend_oid(List *list, Oid datum);
+pg_nodiscard extern List *lappend_xid(List *list, TransactionId datum);
 
-extern pg_nodiscard List *list_insert_nth(List *list, int pos, void *datum);
-extern pg_nodiscard List *list_insert_nth_int(List *list, int pos, int datum);
-extern pg_nodiscard List *list_insert_nth_oid(List *list, int pos, Oid datum);
+pg_nodiscard extern List *list_insert_nth(List *list, int pos, void *datum);
+pg_nodiscard extern List *list_insert_nth_int(List *list, int pos, int datum);
+pg_nodiscard extern List *list_insert_nth_oid(List *list, int pos, Oid datum);
 
-extern pg_nodiscard List *lcons(void *datum, List *list);
-extern pg_nodiscard List *lcons_int(int datum, List *list);
-extern pg_nodiscard List *lcons_oid(Oid datum, List *list);
+pg_nodiscard extern List *lcons(void *datum, List *list);
+pg_nodiscard extern List *lcons_int(int datum, List *list);
+pg_nodiscard extern List *lcons_oid(Oid datum, List *list);
 
-extern pg_nodiscard List *list_concat(List *list1, const List *list2);
-extern pg_nodiscard List *list_concat_copy(const List *list1, const List *list2);
+pg_nodiscard extern List *list_concat(List *list1, const List *list2);
+pg_nodiscard extern List *list_concat_copy(const List *list1, const List *list2);
 
-extern pg_nodiscard List *list_truncate(List *list, int new_size);
+pg_nodiscard extern List *list_truncate(List *list, int new_size);
 
 extern bool list_member(const List *list, const void *datum);
 extern bool list_member_ptr(const List *list, const void *datum);
@@ -632,15 +632,15 @@ extern bool list_member_int(const List *list, int datum);
 extern bool list_member_oid(const List *list, Oid datum);
 extern bool list_member_xid(const List *list, TransactionId datum);
 
-extern pg_nodiscard List *list_delete(List *list, void *datum);
-extern pg_nodiscard List *list_delete_ptr(List *list, void *datum);
-extern pg_nodiscard List *list_delete_int(List *list, int datum);
-extern pg_nodiscard List *list_delete_oid(List *list, Oid datum);
-extern pg_nodiscard List *list_delete_first(List *list);
-extern pg_nodiscard List *list_delete_last(List *list);
-extern pg_nodiscard List *list_delete_first_n(List *list, int n);
-extern pg_nodiscard List *list_delete_nth_cell(List *list, int n);
-extern pg_nodiscard List *list_delete_cell(List *list, ListCell *cell);
+pg_nodiscard extern List *list_delete(List *list, void *datum);
+pg_nodiscard extern List *list_delete_ptr(List *list, void *datum);
+pg_nodiscard extern List *list_delete_int(List *list, int datum);
+pg_nodiscard extern List *list_delete_oid(List *list, Oid datum);
+pg_nodiscard extern List *list_delete_first(List *list);
+pg_nodiscard extern List *list_delete_last(List *list);
+pg_nodiscard extern List *list_delete_first_n(List *list, int n);
+pg_nodiscard extern List *list_delete_nth_cell(List *list, int n);
+pg_nodiscard extern List *list_delete_cell(List *list, ListCell *cell);
 
 extern List *list_union(const List *list1, const List *list2);
 extern List *list_union_ptr(const List *list1, const List *list2);
@@ -657,25 +657,25 @@ extern List *list_difference_ptr(const List *list1, const List *list2);
 extern List *list_difference_int(const List *list1, const List *list2);
 extern List *list_difference_oid(const List *list1, const List *list2);
 
-extern pg_nodiscard List *list_append_unique(List *list, void *datum);
-extern pg_nodiscard List *list_append_unique_ptr(List *list, void *datum);
-extern pg_nodiscard List *list_append_unique_int(List *list, int datum);
-extern pg_nodiscard List *list_append_unique_oid(List *list, Oid datum);
+pg_nodiscard extern List *list_append_unique(List *list, void *datum);
+pg_nodiscard extern List *list_append_unique_ptr(List *list, void *datum);
+pg_nodiscard extern List *list_append_unique_int(List *list, int datum);
+pg_nodiscard extern List *list_append_unique_oid(List *list, Oid datum);
 
-extern pg_nodiscard List *list_concat_unique(List *list1, const List *list2);
-extern pg_nodiscard List *list_concat_unique_ptr(List *list1, const List *list2);
-extern pg_nodiscard List *list_concat_unique_int(List *list1, const List *list2);
-extern pg_nodiscard List *list_concat_unique_oid(List *list1, const List *list2);
+pg_nodiscard extern List *list_concat_unique(List *list1, const List *list2);
+pg_nodiscard extern List *list_concat_unique_ptr(List *list1, const List *list2);
+pg_nodiscard extern List *list_concat_unique_int(List *list1, const List *list2);
+pg_nodiscard extern List *list_concat_unique_oid(List *list1, const List *list2);
 
 extern void list_deduplicate_oid(List *list);
 
 extern void list_free(List *list);
 extern void list_free_deep(List *list);
 
-extern pg_nodiscard List *list_copy(const List *oldlist);
-extern pg_nodiscard List *list_copy_head(const List *oldlist, int len);
-extern pg_nodiscard List *list_copy_tail(const List *oldlist, int nskip);
-extern pg_nodiscard List *list_copy_deep(const List *oldlist);
+pg_nodiscard extern List *list_copy(const List *oldlist);
+pg_nodiscard extern List *list_copy_head(const List *oldlist, int len);
+pg_nodiscard extern List *list_copy_tail(const List *oldlist, int nskip);
+pg_nodiscard extern List *list_copy_deep(const List *oldlist);
 
 typedef int (*list_sort_comparator) (const ListCell *a, const ListCell *b);
 extern void list_sort(List *list, list_sort_comparator cmp);

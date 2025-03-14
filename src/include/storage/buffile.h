@@ -38,7 +38,7 @@ typedef struct BufFile BufFile;
 
 extern BufFile *BufFileCreateTemp(bool interXact);
 extern void BufFileClose(BufFile *file);
-extern pg_nodiscard size_t BufFileRead(BufFile *file, void *ptr, size_t size);
+pg_nodiscard extern size_t BufFileRead(BufFile *file, void *ptr, size_t size);
 extern void BufFileReadExact(BufFile *file, void *ptr, size_t size);
 extern size_t BufFileReadMaybeEOF(BufFile *file, void *ptr, size_t size, bool eofOK);
 extern void BufFileWrite(BufFile *file, const void *ptr, size_t size);

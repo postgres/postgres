@@ -135,9 +135,9 @@
 
 /*
  * pg_nodiscard means the compiler should warn if the result of a function
- * call is ignored.  The name "nodiscard" is chosen in alignment with
- * (possibly future) C and C++ standards.  For maximum compatibility, use it
- * as a function declaration specifier, so it goes before the return type.
+ * call is ignored.  The name "nodiscard" is chosen in alignment with the C23
+ * standard attribute with the same name.  For maximum forward compatibility,
+ * place it before the declaration.
  */
 #ifdef __GNUC__
 #define pg_nodiscard __attribute__((warn_unused_result))

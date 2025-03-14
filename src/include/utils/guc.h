@@ -444,7 +444,7 @@ extern ArrayType *GUCArrayDelete(ArrayType *array, const char *name);
 extern ArrayType *GUCArrayReset(ArrayType *array);
 
 extern void *guc_malloc(int elevel, size_t size);
-extern pg_nodiscard void *guc_realloc(int elevel, void *old, size_t size);
+pg_nodiscard extern void *guc_realloc(int elevel, void *old, size_t size);
 extern char *guc_strdup(int elevel, const char *src);
 extern void guc_free(void *ptr);
 
