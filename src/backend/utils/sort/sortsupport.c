@@ -150,15 +150,15 @@ PrepareSortSupportFromOrderingOp(Oid orderingOp, SortSupport ssup)
 }
 
 /*
- * Fill in SortSupport given an index relation, attribute, and strategy.
+ * Fill in SortSupport given an index relation and attribute.
  *
  * Caller must previously have zeroed the SortSupportData structure and then
  * filled in ssup_cxt, ssup_attno, ssup_collation, and ssup_nulls_first.  This
- * will fill in ssup_reverse (based on the supplied strategy), as well as the
+ * will fill in ssup_reverse (based on the supplied argument), as well as the
  * comparator function pointer.
  */
 void
-PrepareSortSupportFromIndexRel(Relation indexRel, int16 strategy,
+PrepareSortSupportFromIndexRel(Relation indexRel, bool reverse,
 							   SortSupport ssup)
 {
 	Oid			opfamily = indexRel->rd_opfamily[ssup->ssup_attno - 1];
@@ -166,12 +166,9 @@ PrepareSortSupportFromIndexRel(Relation indexRel, int16 strategy,
 
 	Assert(ssup->comparator == NULL);
 
-	if (indexRel->rd_rel->relam != BTREE_AM_OID)
-		elog(ERROR, "unexpected non-btree AM: %u", indexRel->rd_rel->relam);
-	if (strategy != BTGreaterStrategyNumber &&
-		strategy != BTLessStrategyNumber)
-		elog(ERROR, "unexpected sort support strategy: %d", strategy);
-	ssup->ssup_reverse = (strategy == BTGreaterStrategyNumber);
+	if (!indexRel->rd_indam->amcanorder)
+		elog(ERROR, "unexpected non-amcanorder AM: %u", indexRel->rd_rel->relam);
+	ssup->ssup_reverse = reverse;
 
 	FinishSortSupportFunction(opfamily, opcintype, ssup);
 }

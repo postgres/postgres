@@ -329,7 +329,7 @@ tuplesort_begin_cluster(TupleDesc tupDesc,
 	{
 		SortSupport sortKey = base->sortKeys + i;
 		ScanKey		scanKey = indexScanKey->scankeys + i;
-		int16		strategy;
+		bool		reverse;
 
 		sortKey->ssup_cxt = CurrentMemoryContext;
 		sortKey->ssup_collation = scanKey->sk_collation;
@@ -341,10 +341,9 @@ tuplesort_begin_cluster(TupleDesc tupDesc,
 
 		Assert(sortKey->ssup_attno != 0);
 
-		strategy = (scanKey->sk_flags & SK_BT_DESC) != 0 ?
-			BTGreaterStrategyNumber : BTLessStrategyNumber;
+		reverse = (scanKey->sk_flags & SK_BT_DESC) != 0;
 
-		PrepareSortSupportFromIndexRel(indexRel, strategy, sortKey);
+		PrepareSortSupportFromIndexRel(indexRel, reverse, sortKey);
 	}
 
 	pfree(indexScanKey);
@@ -412,7 +411,7 @@ tuplesort_begin_index_btree(Relation heapRel,
 	{
 		SortSupport sortKey = base->sortKeys + i;
 		ScanKey		scanKey = indexScanKey->scankeys + i;
-		int16		strategy;
+		bool		reverse;
 
 		sortKey->ssup_cxt = CurrentMemoryContext;
 		sortKey->ssup_collation = scanKey->sk_collation;
@@ -424,10 +423,9 @@ tuplesort_begin_index_btree(Relation heapRel,
 
 		Assert(sortKey->ssup_attno != 0);
 
-		strategy = (scanKey->sk_flags & SK_BT_DESC) != 0 ?
-			BTGreaterStrategyNumber : BTLessStrategyNumber;
+		reverse = (scanKey->sk_flags & SK_BT_DESC) != 0;
 
-		PrepareSortSupportFromIndexRel(indexRel, strategy, sortKey);
+		PrepareSortSupportFromIndexRel(indexRel, reverse, sortKey);
 	}
 
 	pfree(indexScanKey);

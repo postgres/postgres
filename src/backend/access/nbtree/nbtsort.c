@@ -1171,7 +1171,7 @@ _bt_load(BTWriteState *wstate, BTSpool *btspool, BTSpool *btspool2)
 		{
 			SortSupport sortKey = sortKeys + i;
 			ScanKey		scanKey = wstate->inskey->scankeys + i;
-			int16		strategy;
+			bool		reverse;
 
 			sortKey->ssup_cxt = CurrentMemoryContext;
 			sortKey->ssup_collation = scanKey->sk_collation;
@@ -1183,10 +1183,9 @@ _bt_load(BTWriteState *wstate, BTSpool *btspool, BTSpool *btspool2)
 
 			Assert(sortKey->ssup_attno != 0);
 
-			strategy = (scanKey->sk_flags & SK_BT_DESC) != 0 ?
-				BTGreaterStrategyNumber : BTLessStrategyNumber;
+			reverse = (scanKey->sk_flags & SK_BT_DESC) != 0;
 
-			PrepareSortSupportFromIndexRel(wstate->index, strategy, sortKey);
+			PrepareSortSupportFromIndexRel(wstate->index, reverse, sortKey);
 		}
 
 		for (;;)
