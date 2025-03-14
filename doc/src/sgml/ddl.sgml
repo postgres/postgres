@@ -1650,17 +1650,15 @@ ALTER TABLE products ADD COLUMN description text;
 
    <tip>
     <para>
-     From <productname>PostgreSQL</productname> 11, adding a column with
-     a constant default value no longer means that each row of the table
-     needs to be updated when the <command>ALTER TABLE</command> statement
+     Adding a column with a constant default value does not require each row of
+     the table to be updated when the <command>ALTER TABLE</command> statement
      is executed. Instead, the default value will be returned the next time
      the row is accessed, and applied when the table is rewritten, making
      the <command>ALTER TABLE</command> very fast even on large tables.
     </para>
 
     <para>
-     However, if the default value is volatile (e.g.,
-     <function>clock_timestamp()</function>)
+     If the default value is volatile (e.g., <function>clock_timestamp()</function>)
      each row will need to be updated with the value calculated at the time
      <command>ALTER TABLE</command> is executed. To avoid a potentially
      lengthy update operation, particularly if you intend to fill the column
