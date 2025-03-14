@@ -91,6 +91,9 @@ ERROR:  permission denied: "pg_description" is a system catalog
 SET allow_system_table_mods TO on;
 DROP RULE r2 ON pg_description;
 RESET allow_system_table_mods;
+-- Reloptions on TOAST tables
+ALTER TABLE pg_toast.pg_toast_2615 SET (fillfactor = '90');
+ERROR:  permission denied: "pg_toast_2615" is a system catalog
 SET allow_system_table_mods = on;
 -- create new table in pg_catalog
 BEGIN;
@@ -173,6 +176,10 @@ DROP TRIGGER t2 ON pg_description;
 CREATE RULE r1 AS ON INSERT TO pg_description DO INSTEAD NOTHING;
 ALTER RULE r1 ON pg_description RENAME TO r2;
 DROP RULE r2 ON pg_description;
+-- Reloptions on TOAST tables
+ALTER TABLE pg_toast.pg_toast_2615 SET (fillfactor = '90');
+ERROR:  ALTER action SET cannot be performed on relation "pg_toast_2615"
+DETAIL:  This operation is not supported for TOAST tables.
 -- cleanup
 REVOKE ALL ON pg_description FROM regress_user_ast;
 DROP USER regress_user_ast;

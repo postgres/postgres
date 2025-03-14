@@ -15963,7 +15963,6 @@ ATExecSetRelOptions(Relation rel, List *defList, AlterTableType operation,
 	switch (rel->rd_rel->relkind)
 	{
 		case RELKIND_RELATION:
-		case RELKIND_TOASTVALUE:
 		case RELKIND_MATVIEW:
 			(void) heap_reloptions(rel->rd_rel->relkind, newOptions, true);
 			break;
@@ -15977,6 +15976,8 @@ ATExecSetRelOptions(Relation rel, List *defList, AlterTableType operation,
 		case RELKIND_PARTITIONED_INDEX:
 			(void) index_reloptions(rel->rd_indam->amoptions, newOptions, true);
 			break;
+		case RELKIND_TOASTVALUE:
+			/* fall through to error -- shouldn't ever get here */
 		default:
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),

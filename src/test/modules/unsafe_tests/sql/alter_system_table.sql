@@ -89,6 +89,8 @@ SET allow_system_table_mods TO on;
 DROP RULE r2 ON pg_description;
 RESET allow_system_table_mods;
 
+-- Reloptions on TOAST tables
+ALTER TABLE pg_toast.pg_toast_2615 SET (fillfactor = '90');
 
 SET allow_system_table_mods = on;
 
@@ -187,6 +189,8 @@ CREATE RULE r1 AS ON INSERT TO pg_description DO INSTEAD NOTHING;
 ALTER RULE r1 ON pg_description RENAME TO r2;
 DROP RULE r2 ON pg_description;
 
+-- Reloptions on TOAST tables
+ALTER TABLE pg_toast.pg_toast_2615 SET (fillfactor = '90');
 
 -- cleanup
 REVOKE ALL ON pg_description FROM regress_user_ast;
