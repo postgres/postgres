@@ -1,9 +1,7 @@
-
-#ifndef FRONTEND
 #include "postgres.h"
-#else
-#include <assert.h>
-#define Assert(p) assert(p)
+
+#ifdef FRONTEND
+#include "pg_tde_fe.h"
 #endif
 
 #include "encryption/enc_aes.h"
@@ -73,30 +71,15 @@ AesRunCtr(EVP_CIPHER_CTX **ctxPtr, int enc, const unsigned char *key, const unsi
 		EVP_CIPHER_CTX_init(*ctxPtr);
 
 		if (EVP_CipherInit_ex(*ctxPtr, cipher_ctr_ecb, NULL, key, iv, enc) == 0)
-		{
-#ifdef FRONTEND
-			fprintf(stderr, "ERROR: EVP_CipherInit_ex failed. OpenSSL error: %s\n", ERR_error_string(ERR_get_error(), NULL));
-#else
 			ereport(ERROR,
 					(errmsg("EVP_CipherInit_ex failed. OpenSSL error: %s", ERR_error_string(ERR_get_error(), NULL))));
-#endif
-
-			return;
-		}
 
 		EVP_CIPHER_CTX_set_padding(*ctxPtr, 0);
 	}
 
 	if (EVP_CipherUpdate(*ctxPtr, out, out_len, in, in_len) == 0)
-	{
-#ifdef FRONTEND
-		fprintf(stderr, "ERROR: EVP_CipherUpdate failed. OpenSSL error: %s\n", ERR_error_string(ERR_get_error(), NULL));
-#else
 		ereport(ERROR,
 				(errmsg("EVP_CipherUpdate failed. OpenSSL error: %s", ERR_error_string(ERR_get_error(), NULL))));
-#endif
-		return;
-	}
 }
 
 static void
@@ -111,39 +94,18 @@ AesRunCbc(int enc, const unsigned char *key, const unsigned char *iv, const unsi
 	EVP_CIPHER_CTX_init(ctx);
 
 	if (EVP_CipherInit_ex(ctx, cipher_cbc, NULL, key, iv, enc) == 0)
-	{
-#ifdef FRONTEND
-		fprintf(stderr, "ERROR: EVP_CipherInit_ex failed. OpenSSL error: %s\n", ERR_error_string(ERR_get_error(), NULL));
-#else
 		ereport(ERROR,
 				(errmsg("EVP_CipherInit_ex failed. OpenSSL error: %s", ERR_error_string(ERR_get_error(), NULL))));
-#endif
-		goto cleanup;
-	}
 
 	EVP_CIPHER_CTX_set_padding(ctx, 0);
 
 	if (EVP_CipherUpdate(ctx, out, out_len, in, in_len) == 0)
-	{
-#ifdef FRONTEND
-		fprintf(stderr, "ERROR: EVP_CipherUpdate failed. OpenSSL error: %s\n", ERR_error_string(ERR_get_error(), NULL));
-#else
 		ereport(ERROR,
 				(errmsg("EVP_CipherUpdate failed. OpenSSL error: %s", ERR_error_string(ERR_get_error(), NULL))));
-#endif
-		goto cleanup;
-	}
 
 	if (EVP_CipherFinal_ex(ctx, out + *out_len, &out_len_final) == 0)
-	{
-#ifdef FRONTEND
-		fprintf(stderr, "ERROR: EVP_CipherFinal_ex failed. OpenSSL error: %s\n", ERR_error_string(ERR_get_error(), NULL));
-#else
 		ereport(ERROR,
 				(errmsg("EVP_CipherFinal_ex failed. OpenSSL error: %s", ERR_error_string(ERR_get_error(), NULL))));
-#endif
-		goto cleanup;
-	}
 
 	/*
 	 * We encrypt one block (16 bytes) Our expectation is that the result
@@ -152,7 +114,6 @@ AesRunCbc(int enc, const unsigned char *key, const unsigned char *iv, const unsi
 	*out_len += out_len_final;
 	Assert(in_len == *out_len);
 
-cleanup:
 	EVP_CIPHER_CTX_cleanup(ctx);
 	EVP_CIPHER_CTX_free(ctx);
 }
