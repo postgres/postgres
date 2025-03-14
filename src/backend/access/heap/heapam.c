@@ -98,7 +98,8 @@ static void MultiXactIdWait(MultiXactId multi, MultiXactStatus status, uint16 in
 							Relation rel, ItemPointer ctid, XLTW_Oper oper,
 							int *remaining);
 static bool ConditionalMultiXactIdWait(MultiXactId multi, MultiXactStatus status,
-									   uint16 infomask, Relation rel, int *remaining);
+									   uint16 infomask, Relation rel, int *remaining,
+									   bool logLockFailure);
 static void index_delete_sort(TM_IndexDeleteOp *delstate);
 static int	bottomup_sort_and_shrink(TM_IndexDeleteOp *delstate);
 static XLogRecPtr log_heap_new_cid(Relation relation, HeapTuple tup);
@@ -162,8 +163,8 @@ static const struct
 	LockTuple((rel), (tup), tupleLockExtraInfo[mode].hwlock)
 #define UnlockTupleTuplock(rel, tup, mode) \
 	UnlockTuple((rel), (tup), tupleLockExtraInfo[mode].hwlock)
-#define ConditionalLockTupleTuplock(rel, tup, mode) \
-	ConditionalLockTuple((rel), (tup), tupleLockExtraInfo[mode].hwlock)
+#define ConditionalLockTupleTuplock(rel, tup, mode, log) \
+	ConditionalLockTuple((rel), (tup), tupleLockExtraInfo[mode].hwlock, (log))
 
 #ifdef USE_PREFETCH
 /*
@@ -4894,7 +4895,7 @@ l3:
 					case LockWaitSkip:
 						if (!ConditionalMultiXactIdWait((MultiXactId) xwait,
 														status, infomask, relation,
-														NULL))
+														NULL, false))
 						{
 							result = TM_WouldBlock;
 							/* recovery code expects to have buffer lock held */
@@ -4905,7 +4906,7 @@ l3:
 					case LockWaitError:
 						if (!ConditionalMultiXactIdWait((MultiXactId) xwait,
 														status, infomask, relation,
-														NULL))
+														NULL, log_lock_failure))
 							ereport(ERROR,
 									(errcode(ERRCODE_LOCK_NOT_AVAILABLE),
 									 errmsg("could not obtain lock on row in relation \"%s\"",
@@ -4934,7 +4935,7 @@ l3:
 										  XLTW_Lock);
 						break;
 					case LockWaitSkip:
-						if (!ConditionalXactLockTableWait(xwait))
+						if (!ConditionalXactLockTableWait(xwait, false))
 						{
 							result = TM_WouldBlock;
 							/* recovery code expects to have buffer lock held */
@@ -4943,7 +4944,7 @@ l3:
 						}
 						break;
 					case LockWaitError:
-						if (!ConditionalXactLockTableWait(xwait))
+						if (!ConditionalXactLockTableWait(xwait, log_lock_failure))
 							ereport(ERROR,
 									(errcode(ERRCODE_LOCK_NOT_AVAILABLE),
 									 errmsg("could not obtain lock on row in relation \"%s\"",
@@ -5203,12 +5204,12 @@ heap_acquire_tuplock(Relation relation, ItemPointer tid, LockTupleMode mode,
 			break;
 
 		case LockWaitSkip:
-			if (!ConditionalLockTupleTuplock(relation, tid, mode))
+			if (!ConditionalLockTupleTuplock(relation, tid, mode, false))
 				return false;
 			break;
 
 		case LockWaitError:
-			if (!ConditionalLockTupleTuplock(relation, tid, mode))
+			if (!ConditionalLockTupleTuplock(relation, tid, mode, log_lock_failure))
 				ereport(ERROR,
 						(errcode(ERRCODE_LOCK_NOT_AVAILABLE),
 						 errmsg("could not obtain lock on row in relation \"%s\"",
@@ -7581,7 +7582,8 @@ DoesMultiXactIdConflict(MultiXactId multi, uint16 infomask,
  * fail if lock is unavailable.  'rel', 'ctid' and 'oper' are used to set up
  * context information for error messages.  'remaining', if not NULL, receives
  * the number of members that are still running, including any (non-aborted)
- * subtransactions of our own transaction.
+ * subtransactions of our own transaction.  'logLockFailure' indicates whether
+ * to log details when a lock acquisition fails with 'nowait' enabled.
  *
  * We do this by sleeping on each member using XactLockTableWait.  Any
  * members that belong to the current backend are *not* waited for, however;
@@ -7602,7 +7604,7 @@ static bool
 Do_MultiXactIdWait(MultiXactId multi, MultiXactStatus status,
 				   uint16 infomask, bool nowait,
 				   Relation rel, ItemPointer ctid, XLTW_Oper oper,
-				   int *remaining)
+				   int *remaining, bool logLockFailure)
 {
 	bool		result = true;
 	MultiXactMember *members;
@@ -7649,7 +7651,7 @@ Do_MultiXactIdWait(MultiXactId multi, MultiXactStatus status,
 			 */
 			if (nowait)
 			{
-				result = ConditionalXactLockTableWait(memxid);
+				result = ConditionalXactLockTableWait(memxid, logLockFailure);
 				if (!result)
 					break;
 			}
@@ -7682,7 +7684,7 @@ MultiXactIdWait(MultiXactId multi, MultiXactStatus status, uint16 infomask,
 				int *remaining)
 {
 	(void) Do_MultiXactIdWait(multi, status, infomask, false,
-							  rel, ctid, oper, remaining);
+							  rel, ctid, oper, remaining, false);
 }
 
 /*
@@ -7700,10 +7702,11 @@ MultiXactIdWait(MultiXactId multi, MultiXactStatus status, uint16 infomask,
  */
 static bool
 ConditionalMultiXactIdWait(MultiXactId multi, MultiXactStatus status,
-						   uint16 infomask, Relation rel, int *remaining)
+						   uint16 infomask, Relation rel, int *remaining,
+						   bool logLockFailure)
 {
 	return Do_MultiXactIdWait(multi, status, infomask, true,
-							  rel, NULL, XLTW_None, remaining);
+							  rel, NULL, XLTW_None, remaining, logLockFailure);
 }
 
 /*

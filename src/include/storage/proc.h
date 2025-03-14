@@ -489,6 +489,10 @@ extern void ProcWakeup(PGPROC *proc, ProcWaitStatus waitStatus);
 extern void ProcLockWakeup(LockMethod lockMethodTable, LOCK *lock);
 extern void CheckDeadLockAlert(void);
 extern void LockErrorCleanup(void);
+extern void GetLockHoldersAndWaiters(LOCALLOCK *locallock,
+									 StringInfo lock_holders_sbuf,
+									 StringInfo lock_waiters_sbuf,
+									 int *lockHoldersNum);
 
 extern void ProcWaitForSignal(uint32 wait_event_info);
 extern void ProcSendSignal(ProcNumber procNumber);

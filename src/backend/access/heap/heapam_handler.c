@@ -455,12 +455,12 @@ tuple_lock_retry:
 												  XLTW_FetchUpdated);
 								break;
 							case LockWaitSkip:
-								if (!ConditionalXactLockTableWait(SnapshotDirty.xmax))
+								if (!ConditionalXactLockTableWait(SnapshotDirty.xmax, false))
 									/* skip instead of waiting */
 									return TM_WouldBlock;
 								break;
 							case LockWaitError:
-								if (!ConditionalXactLockTableWait(SnapshotDirty.xmax))
+								if (!ConditionalXactLockTableWait(SnapshotDirty.xmax, log_lock_failure))
 									ereport(ERROR,
 											(errcode(ERRCODE_LOCK_NOT_AVAILABLE),
 											 errmsg("could not obtain lock on row in relation \"%s\"",

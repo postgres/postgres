@@ -39,6 +39,7 @@
 #include "access/xlogutils.h"
 #include "miscadmin.h"
 #include "pg_trace.h"
+#include "storage/lmgr.h"
 #include "storage/proc.h"
 #include "storage/procarray.h"
 #include "storage/spin.h"
@@ -48,8 +49,9 @@
 #include "utils/resowner.h"
 
 
-/* This configuration variable is used to set the lock table size */
-int			max_locks_per_xact; /* set by guc.c */
+/* GUC variables */
+int			max_locks_per_xact; /* used to set the lock table size */
+bool		log_lock_failure = false;
 
 #define NLOCKENTS() \
 	mul_size(max_locks_per_xact, add_size(MaxBackends, max_prepared_xacts))
@@ -806,7 +808,7 @@ LockAcquire(const LOCKTAG *locktag,
 			bool dontWait)
 {
 	return LockAcquireExtended(locktag, lockmode, sessionLock, dontWait,
-							   true, NULL);
+							   true, NULL, false);
 }
 
 /*
@@ -822,6 +824,9 @@ LockAcquire(const LOCKTAG *locktag,
  *
  * If locallockp isn't NULL, *locallockp receives a pointer to the LOCALLOCK
  * table entry if a lock is successfully acquired, or NULL if not.
+ *
+ * logLockFailure indicates whether to log details when a lock acquisition
+ * fails with dontWait = true.
  */
 LockAcquireResult
 LockAcquireExtended(const LOCKTAG *locktag,
@@ -829,7 +834,8 @@ LockAcquireExtended(const LOCKTAG *locktag,
 					bool sessionLock,
 					bool dontWait,
 					bool reportMemoryError,
-					LOCALLOCK **locallockp)
+					LOCALLOCK **locallockp,
+					bool logLockFailure)
 {
 	LOCKMETHODID lockmethodid = locktag->locktag_lockmethodid;
 	LockMethod	lockMethodTable;
@@ -1145,6 +1151,47 @@ LockAcquireExtended(const LOCKTAG *locktag,
 
 		if (dontWait)
 		{
+			/*
+			 * Log lock holders and waiters as a detail log message if
+			 * logLockFailure = true and lock acquisition fails with dontWait
+			 * = true
+			 */
+			if (logLockFailure)
+			{
+				StringInfoData buf,
+							lock_waiters_sbuf,
+							lock_holders_sbuf;
+				const char *modename;
+				int			lockHoldersNum = 0;
+
+				initStringInfo(&buf);
+				initStringInfo(&lock_waiters_sbuf);
+				initStringInfo(&lock_holders_sbuf);
+
+				DescribeLockTag(&buf, &locallock->tag.lock);
+				modename = GetLockmodeName(locallock->tag.lock.locktag_lockmethodid,
+										   lockmode);
+
+				/* Gather a list of all lock holders and waiters */
+				LWLockAcquire(partitionLock, LW_SHARED);
+				GetLockHoldersAndWaiters(locallock, &lock_holders_sbuf,
+										 &lock_waiters_sbuf, &lockHoldersNum);
+				LWLockRelease(partitionLock);
+
+				ereport(LOG,
+						(errmsg("process %d could not obtain %s on %s",
+								MyProcPid, modename, buf.data),
+						 errdetail_log_plural(
+											  "Process holding the lock: %s, Wait queue: %s.",
+											  "Processes holding the lock: %s, Wait queue: %s.",
+											  lockHoldersNum,
+											  lock_holders_sbuf.data,
+											  lock_waiters_sbuf.data)));
+
+				pfree(buf.data);
+				pfree(lock_holders_sbuf.data);
+				pfree(lock_waiters_sbuf.data);
+			}
 			if (locallockp)
 				*locallockp = NULL;
 			return LOCKACQUIRE_NOT_AVAIL;

@@ -30,6 +30,7 @@ typedef struct PGPROC PGPROC;
 
 /* GUC variables */
 extern PGDLLIMPORT int max_locks_per_xact;
+extern PGDLLIMPORT bool log_lock_failure;
 
 #ifdef LOCK_DEBUG
 extern PGDLLIMPORT int Trace_lock_oidmin;
@@ -560,7 +561,8 @@ extern LockAcquireResult LockAcquireExtended(const LOCKTAG *locktag,
 											 bool sessionLock,
 											 bool dontWait,
 											 bool reportMemoryError,
-											 LOCALLOCK **locallockp);
+											 LOCALLOCK **locallockp,
+											 bool logLockFailure);
 extern void AbortStrongLockAcquire(void);
 extern void MarkLockClear(LOCALLOCK *locallock);
 extern bool LockRelease(const LOCKTAG *locktag,

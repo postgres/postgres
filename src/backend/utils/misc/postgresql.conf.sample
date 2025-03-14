@@ -610,6 +610,7 @@
 					#   %% = '%'
 					# e.g. '<%u%%%d> '
 #log_lock_waits = off			# log lock waits >= deadlock_timeout
+#log_lock_failure = off		# log lock failures
 #log_recovery_conflict_waits = off	# log standby recovery conflict waits
 					# >= deadlock_timeout
 #log_parameter_max_length = -1		# when logging statements, limit logged
