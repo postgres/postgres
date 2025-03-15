@@ -280,6 +280,72 @@ heap_scan_stream_read_next_serial(ReadStream *stream,
 	return scan->rs_prefetch_block;
 }
 
+/*
+ * Read stream API callback for bitmap heap scans.
+ * Returns the next block the caller wants from the read stream or
+ * InvalidBlockNumber when done.
+ */
+static BlockNumber
+bitmapheap_stream_read_next(ReadStream *pgsr, void *private_data,
+							void *per_buffer_data)
+{
+	TBMIterateResult *tbmres = per_buffer_data;
+	BitmapHeapScanDesc bscan = (BitmapHeapScanDesc) private_data;
+	HeapScanDesc hscan = (HeapScanDesc) bscan;
+	TableScanDesc sscan = &hscan->rs_base;
+
+	for (;;)
+	{
+		CHECK_FOR_INTERRUPTS();
+
+		/* no more entries in the bitmap */
+		if (!tbm_iterate(&sscan->st.rs_tbmiterator, tbmres))
+			return InvalidBlockNumber;
+
+		/*
+		 * Ignore any claimed entries past what we think is the end of the
+		 * relation. It may have been extended after the start of our scan (we
+		 * only hold an AccessShareLock, and it could be inserts from this
+		 * backend).  We don't take this optimization in SERIALIZABLE
+		 * isolation though, as we need to examine all invisible tuples
+		 * reachable by the index.
+		 */
+		if (!IsolationIsSerializable() &&
+			tbmres->blockno >= hscan->rs_nblocks)
+			continue;
+
+		/*
+		 * We can skip fetching the heap page if we don't need any fields from
+		 * the heap, the bitmap entries don't need rechecking, and all tuples
+		 * on the page are visible to our transaction.
+		 */
+		if (!(sscan->rs_flags & SO_NEED_TUPLES) &&
+			!tbmres->recheck &&
+			VM_ALL_VISIBLE(sscan->rs_rd, tbmres->blockno, &bscan->rs_vmbuffer))
+		{
+			OffsetNumber offsets[TBM_MAX_TUPLES_PER_PAGE];
+			int			noffsets;
+
+			/* can't be lossy in the skip_fetch case */
+			Assert(!tbmres->lossy);
+			Assert(bscan->rs_empty_tuples_pending >= 0);
+
+			/*
+			 * We throw away the offsets, but this is the easiest way to get a
+			 * count of tuples.
+			 */
+			noffsets = tbm_extract_page_tuple(tbmres, offsets, TBM_MAX_TUPLES_PER_PAGE);
+			bscan->rs_empty_tuples_pending += noffsets;
+			continue;
+		}
+
+		return tbmres->blockno;
+	}
+
+	/* not reachable */
+	Assert(false);
+}
+
 /* ----------------
  *		initscan - scan code common to heap_beginscan and heap_rescan
  * ----------------
@@ -1068,6 +1134,7 @@ heap_beginscan(Relation relation, Snapshot snapshot,
 	scan->rs_base.rs_flags = flags;
 	scan->rs_base.rs_parallel = parallel_scan;
 	scan->rs_strategy = NULL;	/* set in initscan */
+	scan->rs_cbuf = InvalidBuffer;
 
 	/*
 	 * Disable page-at-a-time mode if it's not a MVCC-safe snapshot.
@@ -1147,6 +1214,16 @@ heap_beginscan(Relation relation, Snapshot snapshot,
 														  scan,
 														  0);
 	}
+	else if (scan->rs_base.rs_flags & SO_TYPE_BITMAPSCAN)
+	{
+		scan->rs_read_stream = read_stream_begin_relation(READ_STREAM_DEFAULT,
+														  scan->rs_strategy,
+														  scan->rs_base.rs_rd,
+														  MAIN_FORKNUM,
+														  bitmapheap_stream_read_next,
+														  scan,
+														  sizeof(TBMIterateResult));
+	}
 
 
 	return (TableScanDesc) scan;
@@ -1181,7 +1258,10 @@ heap_rescan(TableScanDesc sscan, ScanKey key, bool set_params,
 	 * unpin scan buffers
 	 */
 	if (BufferIsValid(scan->rs_cbuf))
+	{
 		ReleaseBuffer(scan->rs_cbuf);
+		scan->rs_cbuf = InvalidBuffer;
+	}
 
 	if (scan->rs_base.rs_flags & SO_TYPE_BITMAPSCAN)
 	{

@@ -2117,82 +2117,72 @@ heapam_estimate_rel_size(Relation rel, int32 *attr_widths,
 
 static bool
 heapam_scan_bitmap_next_block(TableScanDesc scan,
-							  BlockNumber *blockno, bool *recheck,
+							  bool *recheck,
 							  uint64 *lossy_pages, uint64 *exact_pages)
 {
 	BitmapHeapScanDesc bscan = (BitmapHeapScanDesc) scan;
 	HeapScanDesc hscan = (HeapScanDesc) bscan;
 	BlockNumber block;
+	void	   *per_buffer_data;
 	Buffer		buffer;
 	Snapshot	snapshot;
 	int			ntup;
-	TBMIterateResult tbmres;
+	TBMIterateResult *tbmres;
 	OffsetNumber offsets[TBM_MAX_TUPLES_PER_PAGE];
 	int			noffsets = -1;
 
 	Assert(scan->rs_flags & SO_TYPE_BITMAPSCAN);
+	Assert(hscan->rs_read_stream);
 
 	hscan->rs_cindex = 0;
 	hscan->rs_ntuples = 0;
 
-	*blockno = InvalidBlockNumber;
-	*recheck = true;
-
-	do
+	/* Release buffer containing previous block. */
+	if (BufferIsValid(hscan->rs_cbuf))
 	{
-		CHECK_FOR_INTERRUPTS();
-
-		if (!tbm_iterate(&scan->st.rs_tbmiterator, &tbmres))
-			return false;
-
-		/* Exact pages need their tuple offsets extracted. */
-		if (!tbmres.lossy)
-			noffsets = tbm_extract_page_tuple(&tbmres, offsets,
-											  TBM_MAX_TUPLES_PER_PAGE);
-
-		/*
-		 * Ignore any claimed entries past what we think is the end of the
-		 * relation. It may have been extended after the start of our scan (we
-		 * only hold an AccessShareLock, and it could be inserts from this
-		 * backend).  We don't take this optimization in SERIALIZABLE
-		 * isolation though, as we need to examine all invisible tuples
-		 * reachable by the index.
-		 */
-	} while (!IsolationIsSerializable() &&
-			 tbmres.blockno >= hscan->rs_nblocks);
-
-	/* Got a valid block */
-	*blockno = tbmres.blockno;
-	*recheck = tbmres.recheck;
-
-	/*
-	 * We can skip fetching the heap page if we don't need any fields from the
-	 * heap, the bitmap entries don't need rechecking, and all tuples on the
-	 * page are visible to our transaction.
-	 */
-	if (!(scan->rs_flags & SO_NEED_TUPLES) &&
-		!tbmres.recheck &&
-		VM_ALL_VISIBLE(scan->rs_rd, tbmres.blockno, &bscan->rs_vmbuffer))
-	{
-		/* can't be lossy in the skip_fetch case */
-		Assert(!tbmres.lossy);
-		Assert(bscan->rs_empty_tuples_pending >= 0);
-		Assert(noffsets > -1);
-
-		bscan->rs_empty_tuples_pending += noffsets;
-
-		return true;
+		ReleaseBuffer(hscan->rs_cbuf);
+		hscan->rs_cbuf = InvalidBuffer;
 	}
 
-	block = tbmres.blockno;
+	hscan->rs_cbuf = read_stream_next_buffer(hscan->rs_read_stream,
+											 &per_buffer_data);
 
-	/*
-	 * Acquire pin on the target heap page, trading in any pin we held before.
-	 */
-	hscan->rs_cbuf = ReleaseAndReadBuffer(hscan->rs_cbuf,
-										  scan->rs_rd,
-										  block);
-	hscan->rs_cblock = block;
+	if (BufferIsInvalid(hscan->rs_cbuf))
+	{
+		if (BufferIsValid(bscan->rs_vmbuffer))
+		{
+			ReleaseBuffer(bscan->rs_vmbuffer);
+			bscan->rs_vmbuffer = InvalidBuffer;
+		}
+
+		/*
+		 * Bitmap is exhausted. Time to emit empty tuples if relevant. We emit
+		 * all empty tuples at the end instead of emitting them per block we
+		 * skip fetching. This is necessary because the streaming read API
+		 * will only return TBMIterateResults for blocks actually fetched.
+		 * When we skip fetching a block, we keep track of how many empty
+		 * tuples to emit at the end of the BitmapHeapScan. We do not recheck
+		 * all NULL tuples.
+		 */
+		*recheck = false;
+		return bscan->rs_empty_tuples_pending > 0;
+	}
+
+	Assert(per_buffer_data);
+
+	tbmres = per_buffer_data;
+
+	Assert(BlockNumberIsValid(tbmres->blockno));
+	Assert(BufferGetBlockNumber(hscan->rs_cbuf) == tbmres->blockno);
+
+	/* Exact pages need their tuple offsets extracted. */
+	if (!tbmres->lossy)
+		noffsets = tbm_extract_page_tuple(tbmres, offsets,
+										  TBM_MAX_TUPLES_PER_PAGE);
+
+	*recheck = tbmres->recheck;
+
+	block = hscan->rs_cblock = tbmres->blockno;
 	buffer = hscan->rs_cbuf;
 	snapshot = scan->rs_snapshot;
 
@@ -2213,7 +2203,7 @@ heapam_scan_bitmap_next_block(TableScanDesc scan,
 	/*
 	 * We need two separate strategies for lossy and non-lossy cases.
 	 */
-	if (!tbmres.lossy)
+	if (!tbmres->lossy)
 	{
 		/*
 		 * Bitmap is non-lossy, so we just look through the offsets listed in
@@ -2277,7 +2267,7 @@ heapam_scan_bitmap_next_block(TableScanDesc scan,
 	Assert(ntup <= MaxHeapTuplesPerPage);
 	hscan->rs_ntuples = ntup;
 
-	if (tbmres.lossy)
+	if (tbmres->lossy)
 		(*lossy_pages)++;
 	else
 		(*exact_pages)++;

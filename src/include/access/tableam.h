@@ -797,28 +797,12 @@ typedef struct TableAmRoutine
 	 * always need to be rechecked, but some non-lossy pages' tuples may also
 	 * require recheck.
 	 *
-	 * `blockno` is the current block and is set by the table AM. The table AM
-	 * is responsible for advancing the main iterator, but the bitmap table
-	 * scan code still advances the prefetch iterator. `blockno` is used by
-	 * bitmap table scan code to validate that the prefetch block stays ahead
-	 * of the current block.
-	 *
-	 * XXX: Currently this may only be implemented if the AM uses md.c as its
-	 * storage manager, and uses ItemPointer->ip_blkid in a manner that maps
-	 * blockids directly to the underlying storage. nodeBitmapHeapscan.c
-	 * performs prefetching directly using that interface.  This probably
-	 * needs to be rectified at a later point.
-	 *
-	 * XXX: Currently this may only be implemented if the AM uses the
-	 * visibilitymap, as nodeBitmapHeapscan.c unconditionally accesses it to
-	 * perform prefetching.  This probably needs to be rectified at a later
-	 * point.
+	 * Prefetching additional data from the bitmap is left to the table AM.
 	 *
 	 * Optional callback, but either both scan_bitmap_next_block and
 	 * scan_bitmap_next_tuple need to exist, or neither.
 	 */
 	bool		(*scan_bitmap_next_block) (TableScanDesc scan,
-										   BlockNumber *blockno,
 										   bool *recheck,
 										   uint64 *lossy_pages,
 										   uint64 *exact_pages);
@@ -1966,16 +1950,11 @@ table_relation_estimate_size(Relation rel, int32 *attr_widths,
  * `recheck` is set by the table AM to indicate whether or not the tuples
  * from this block should be rechecked.
  *
- * `blockno` is the current block and is set by the table AM and is used by
- * bitmap table scan code to validate that the prefetch block stays ahead of
- * the current block.
- *
  * Note, this is an optionally implemented function, therefore should only be
  * used after verifying the presence (at plan time or such).
  */
 static inline bool
 table_scan_bitmap_next_block(TableScanDesc scan,
-							 BlockNumber *blockno,
 							 bool *recheck,
 							 uint64 *lossy_pages,
 							 uint64 *exact_pages)
@@ -1989,7 +1968,7 @@ table_scan_bitmap_next_block(TableScanDesc scan,
 		elog(ERROR, "unexpected table_scan_bitmap_next_block call during logical decoding");
 
 	return scan->rs_rd->rd_tableam->scan_bitmap_next_block(scan,
-														   blockno, recheck,
+														   recheck,
 														   lossy_pages,
 														   exact_pages);
 }
