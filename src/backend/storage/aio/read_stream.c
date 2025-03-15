@@ -17,30 +17,12 @@
  * pending read.  When that isn't possible, the existing pending read is sent
  * to StartReadBuffers() so that a new one can begin to form.
  *
- * The algorithm for controlling the look-ahead distance tries to classify the
- * stream into three ideal behaviors:
- *
- * A) No I/O is necessary, because the requested blocks are fully cached
- * already.  There is no benefit to looking ahead more than one block, so
- * distance is 1.  This is the default initial assumption.
- *
- * B) I/O is necessary, but read-ahead advice is undesirable because the
- * access is sequential and we can rely on the kernel's read-ahead heuristics,
- * or impossible because direct I/O is enabled, or the system doesn't support
- * read-ahead advice.  There is no benefit in looking ahead more than
- * io_combine_limit, because in this case the only goal is larger read system
- * calls.  Looking further ahead would pin many buffers and perform
- * speculative work for no benefit.
- *
- * C) I/O is necessary, it appears to be random, and this system supports
- * read-ahead advice.  We'll look further ahead in order to reach the
- * configured level of I/O concurrency.
- *
- * The distance increases rapidly and decays slowly, so that it moves towards
- * those levels as different I/O patterns are discovered.  For example, a
- * sequential scan of fully cached data doesn't bother looking ahead, but a
- * sequential scan that hits a region of uncached blocks will start issuing
- * increasingly wide read calls until it plateaus at io_combine_limit.
+ * The algorithm for controlling the look-ahead distance is based on recent
+ * cache hit and miss history.  When no I/O is necessary, there is no benefit
+ * in looking ahead more than one block.  This is the default initial
+ * assumption, but when blocks needing I/O are streamed, the distance is
+ * increased rapidly to try to benefit from I/O combining and concurrency.  It
+ * is reduced gradually when cached blocks are streamed.
  *
  * The main data structure is a circular queue of buffers of size
  * max_pinned_buffers plus some extra space for technical reasons, ready to be
@@ -333,7 +315,7 @@ read_stream_start_pending_read(ReadStream *stream)
 	/* Remember whether we need to wait before returning this buffer. */
 	if (!need_wait)
 	{
-		/* Look-ahead distance decays, no I/O necessary (behavior A). */
+		/* Look-ahead distance decays, no I/O necessary. */
 		if (stream->distance > 1)
 			stream->distance--;
 	}
@@ -634,7 +616,7 @@ read_stream_begin_impl(int flags,
 	/*
 	 * Skip the initial ramp-up phase if the caller says we're going to be
 	 * reading the whole relation.  This way we start out assuming we'll be
-	 * doing full io_combine_limit sized reads (behavior B).
+	 * doing full io_combine_limit sized reads.
 	 */
 	if (flags & READ_STREAM_FULL)
 		stream->distance = Min(max_pinned_buffers, stream->io_combine_limit);
@@ -725,10 +707,10 @@ read_stream_next_buffer(ReadStream *stream, void **per_buffer_data)
 #ifndef READ_STREAM_DISABLE_FAST_PATH
 
 	/*
-	 * A fast path for all-cached scans (behavior A).  This is the same as the
-	 * usual algorithm, but it is specialized for no I/O and no per-buffer
-	 * data, so we can skip the queue management code, stay in the same buffer
-	 * slot and use singular StartReadBuffer().
+	 * A fast path for all-cached scans.  This is the same as the usual
+	 * algorithm, but it is specialized for no I/O and no per-buffer data, so
+	 * we can skip the queue management code, stay in the same buffer slot and
+	 * use singular StartReadBuffer().
 	 */
 	if (likely(stream->fast_path))
 	{
@@ -848,28 +830,10 @@ read_stream_next_buffer(ReadStream *stream, void **per_buffer_data)
 		if (++stream->oldest_io_index == stream->max_ios)
 			stream->oldest_io_index = 0;
 
-		if (stream->ios[io_index].op.flags & READ_BUFFERS_ISSUE_ADVICE)
-		{
-			/* Distance ramps up fast (behavior C). */
-			distance = stream->distance * 2;
-			distance = Min(distance, stream->max_pinned_buffers);
-			stream->distance = distance;
-		}
-		else
-		{
-			/* No advice; move towards io_combine_limit (behavior B). */
-			if (stream->distance > stream->io_combine_limit)
-			{
-				stream->distance--;
-			}
-			else
-			{
-				distance = stream->distance * 2;
-				distance = Min(distance, stream->io_combine_limit);
-				distance = Min(distance, stream->max_pinned_buffers);
-				stream->distance = distance;
-			}
-		}
+		/* Look-ahead distance ramps up rapidly after we do I/O. */
+		distance = stream->distance * 2;
+		distance = Min(distance, stream->max_pinned_buffers);
+		stream->distance = distance;
 
 		/*
 		 * If we've reached the first block of a sequential region we're
