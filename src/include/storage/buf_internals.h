@@ -471,6 +471,8 @@ extern BlockNumber ExtendBufferedRelLocal(BufferManagerRelation bmr,
 										  Buffer *buffers,
 										  uint32 *extended_by);
 extern void MarkLocalBufferDirty(Buffer buffer);
+extern void TerminateLocalBufferIO(BufferDesc *bufHdr, bool clear_dirty,
+								   uint32 set_flag_bits);
 extern void DropRelationLocalBuffers(RelFileLocator rlocator,
 									 ForkNumber forkNum,
 									 BlockNumber firstDelBlock);

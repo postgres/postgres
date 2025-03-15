@@ -235,7 +235,6 @@ GetLocalVictimBuffer(void)
 	 */
 	if (pg_atomic_read_u32(&bufHdr->state) & BM_DIRTY)
 	{
-		uint32		buf_state = pg_atomic_read_u32(&bufHdr->state);
 		instr_time	io_start;
 		SMgrRelation oreln;
 		Page		localpage = (char *) LocalBufHdrGetBlock(bufHdr);
@@ -259,8 +258,7 @@ GetLocalVictimBuffer(void)
 								IOOP_WRITE, io_start, 1, BLCKSZ);
 
 		/* Mark not-dirty now in case we error out below */
-		buf_state &= ~BM_DIRTY;
-		pg_atomic_unlocked_write_u32(&bufHdr->state, buf_state);
+		TerminateLocalBufferIO(bufHdr, true, 0);
 
 		pgBufferUsage.local_blks_written++;
 	}
@@ -481,6 +479,31 @@ MarkLocalBufferDirty(Buffer buffer)
 	buf_state |= BM_DIRTY;
 
 	pg_atomic_unlocked_write_u32(&bufHdr->state, buf_state);
+}
+
+/*
+ * Like TerminateBufferIO, but for local buffers
+ */
+void
+TerminateLocalBufferIO(BufferDesc *bufHdr, bool clear_dirty, uint32 set_flag_bits)
+{
+	/* Only need to adjust flags */
+	uint32		buf_state = pg_atomic_read_u32(&bufHdr->state);
+
+	/* BM_IO_IN_PROGRESS isn't currently used for local buffers */
+
+	/* Clear earlier errors, if this IO failed, it'll be marked again */
+	buf_state &= ~BM_IO_ERROR;
+
+	if (clear_dirty)
+		buf_state &= ~BM_DIRTY;
+
+	buf_state |= set_flag_bits;
+	pg_atomic_unlocked_write_u32(&bufHdr->state, buf_state);
+
+	/* local buffers don't track IO using resowners */
+
+	/* local buffers don't use the IO CV, as no other process can see buffer */
 }
 
 /*
