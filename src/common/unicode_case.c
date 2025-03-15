@@ -27,7 +27,7 @@ enum CaseMapResult
 	CASEMAP_SPECIAL,
 };
 
-static const pg_case_map *find_case_map(pg_wchar ucs);
+static pg_wchar find_case_map(pg_wchar ucs, const pg_wchar *map);
 static size_t convert_case(char *dst, size_t dstsize, const char *src, ssize_t srclen,
 						   CaseKind str_casekind, bool full, WordBoundaryNext wbnext,
 						   void *wbstate);
@@ -38,33 +38,33 @@ static enum CaseMapResult casemap(pg_wchar u1, CaseKind casekind, bool full,
 pg_wchar
 unicode_lowercase_simple(pg_wchar code)
 {
-	const pg_case_map *map = find_case_map(code);
+	pg_wchar	cp = find_case_map(code, case_map_lower);
 
-	return map ? map->simplemap[CaseLower] : code;
+	return cp != 0 ? cp : code;
 }
 
 pg_wchar
 unicode_titlecase_simple(pg_wchar code)
 {
-	const pg_case_map *map = find_case_map(code);
+	pg_wchar	cp = find_case_map(code, case_map_title);
 
-	return map ? map->simplemap[CaseTitle] : code;
+	return cp != 0 ? cp : code;
 }
 
 pg_wchar
 unicode_uppercase_simple(pg_wchar code)
 {
-	const pg_case_map *map = find_case_map(code);
+	pg_wchar	cp = find_case_map(code, case_map_upper);
 
-	return map ? map->simplemap[CaseUpper] : code;
+	return cp != 0 ? cp : code;
 }
 
 pg_wchar
 unicode_casefold_simple(pg_wchar code)
 {
-	const pg_case_map *map = find_case_map(code);
+	pg_wchar	cp = find_case_map(code, case_map_fold);
 
-	return map ? map->simplemap[CaseFold] : code;
+	return cp != 0 ? cp : code;
 }
 
 /*
@@ -387,64 +387,48 @@ casemap(pg_wchar u1, CaseKind casekind, bool full,
 		const char *src, size_t srclen, size_t srcoff,
 		pg_wchar *simple, const pg_wchar **special)
 {
-	const pg_case_map *map;
+	uint16		idx;
 
+	/* Fast path for codepoints < 0x80 */
 	if (u1 < 0x80)
 	{
-		*simple = case_map[u1].simplemap[casekind];
+		/*
+		 * The first elements in all tables are reserved as 0 (as NULL). The
+		 * data starts at index 1, not 0.
+		 */
+		*simple = casekind_map[casekind][u1 + 1];
 
 		return CASEMAP_SIMPLE;
 	}
 
-	map = find_case_map(u1);
+	idx = case_index(u1);
 
-	if (map == NULL)
+	if (idx == 0)
 		return CASEMAP_SELF;
 
-	if (full && map->special_case != NULL &&
-		check_special_conditions(map->special_case->conditions,
+	if (full && case_map_special[idx] &&
+		check_special_conditions(special_case[case_map_special[idx]].conditions,
 								 src, srclen, srcoff))
 	{
-		*special = map->special_case->map[casekind];
+		*special = special_case[case_map_special[idx]].map[casekind];
 		return CASEMAP_SPECIAL;
 	}
 
-	*simple = map->simplemap[casekind];
+	*simple = casekind_map[casekind][idx];
 
 	return CASEMAP_SIMPLE;
 }
 
-/* find entry in simple case map, if any */
-static const pg_case_map *
-find_case_map(pg_wchar ucs)
+/*
+ * Find entry in simple case map.
+ * If the entry does not exist, 0 will be returned.
+ */
+static pg_wchar
+find_case_map(pg_wchar ucs, const pg_wchar *map)
 {
-	int			min;
-	int			mid;
-	int			max;
-
-	/* all chars <= 0x80 are stored in array for fast lookup */
-	Assert(lengthof(case_map) >= 0x80);
+	/* Fast path for codepoints < 0x80 */
 	if (ucs < 0x80)
-	{
-		const pg_case_map *map = &case_map[ucs];
-
-		Assert(map->codepoint == ucs);
-		return map;
-	}
-
-	/* otherwise, binary search */
-	min = 0x80;
-	max = lengthof(case_map) - 1;
-	while (max >= min)
-	{
-		mid = (min + max) / 2;
-		if (ucs > case_map[mid].codepoint)
-			min = mid + 1;
-		else if (ucs < case_map[mid].codepoint)
-			max = mid - 1;
-		else
-			return &case_map[mid];
-	}
-
-	return NULL;
+		/* The first elements in all tables are reserved as 0 (as NULL). */
+		return map[ucs + 1];
+	return map[case_index(ucs)];
 }

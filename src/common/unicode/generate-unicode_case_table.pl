@@ -231,25 +231,23 @@ while (my $line = <$FH>)
 close $FH;
 
 # assign sequential array indexes to the special mappings
-my $special_idx = 0;
+# 0 is reserved for NULL
+my $special_idx = 1;
 foreach my $code (sort { $a <=> $b } (keys %special))
 {
 	$special{$code}{Index} = $special_idx++;
 }
 
+# determine size of array
+my $num_special = scalar(keys %special) + 1;
+
+die
+  "special case map contains $num_special entries which cannot be represented in uint8"
+  if ($num_special > 256);
+
 # Start writing out the output files
 open my $OT, '>', $output_table_file
   or die "Could not open output file $output_table_file: $!\n";
-
-# determine size of array given that codepoints <= 0x80 are dense and
-# the rest of the entries are sparse
-my $num_simple = 0x80;
-foreach my $code (sort { $a <=> $b } (keys %simple))
-{
-	$num_simple++ unless $code < 0x80;
-}
-
-my $num_special = scalar(keys %special) + 1;
 
 print $OT <<"EOS";
 /*-------------------------------------------------------------------------
@@ -298,17 +296,9 @@ typedef enum
 
 typedef struct
 {
-	pg_wchar	codepoint;		/* Unicode codepoint */
 	int16		conditions;
 	pg_wchar	map[NCaseKind][MAX_CASE_EXPANSION];
 } pg_special_case;
-
-typedef struct
-{
-	pg_wchar	codepoint;		/* Unicode codepoint */
-	pg_wchar	simplemap[NCaseKind];
-	const pg_special_case *special_case;
-} pg_case_map;
 
 /*
  * Special case mappings that aren't representable in the simple map.
@@ -316,6 +306,7 @@ typedef struct
  */
 static const pg_special_case special_case[$num_special] =
 {
+	{0, {{0, 0, 0}, {0, 0, 0}, {0, 0, 0}}},
 EOS
 
 foreach my $code (sort { $a <=> $b } (keys %special))
@@ -332,23 +323,46 @@ foreach my $code (sort { $a <=> $b } (keys %special))
 	  (map { sprintf "0x%06x", $_ } @{ $special{$code}{Uppercase} });
 	my $fold = join ", ",
 	  (map { sprintf "0x%06x", $_ } @{ $special{$code}{Foldcase} });
-	printf $OT "\t{0x%06x, %s, ", $code, $special{$code}{Conditions};
-	printf $OT "{{%s}, {%s}, {%s}, {%s}}},\n", $lower, $title, $upper, $fold;
+	printf $OT "\t{%s, ", $special{$code}{Conditions};
+	printf $OT
+	  "{[CaseLower] = {%s},[CaseTitle] = {%s},[CaseUpper] = {%s},[CaseFold] = {%s}}},\n",
+	  $lower, $title, $upper, $fold;
+}
+print $OT "};\n";
+
+# Separate maps for each case form, starting with the reserved entry
+# at index 0. The first element is the result code point, and the
+# second element is the input code point (which is not ultimately
+# stored in the C array, it's just there as a comment).
+my %map = (
+	lower => [ [ 0, -1 ] ],
+	title => [ [ 0, -1 ] ],
+	upper => [ [ 0, -1 ] ],
+	fold => [ [ 0, -1 ] ],
+	special => [ [ 0, -1 ] ]);
+
+
+# Current index into the map arrays above.
+my $index = 1;
+
+# Sets of case forms/variations. Simple case pairs have the same set
+# of case forms, e.g. the letters 'a' and 'A' both lowercase to 'a';
+# both uppercase to 'A', etc. By tracking unique sets using a hash, we
+# cut the size needed for the maps in half (some characters are
+# exceptions, so it's not exactly half). The key is an array of all
+# case forms, and the value is an index into the maps.
+my %case_forms;
+
+# Perl doesn't allow arrays as hash keys, so we need to transform the
+# set of case forms to a scalar.
+sub get_hash_key
+{
+	return join ",", @_;
 }
 
-print $OT "\t{0, 0, {{0, 0, 0}, {0, 0, 0}, {0, 0, 0}}}\n";
-print $OT <<"EOS";
-};
-
-/*
- * Case mapping table. Dense for codepoints < 0x80 (enabling fast lookup),
- * sparse for higher codepoints (requiring scan or binary search).
- */
-static const pg_case_map case_map[$num_simple] =
-{
-EOS
-
-printf $OT "\t/* begin dense entries for codepoints < 0x80 */\n";
+# Create map entries for all codepoints < 0x80, so that the caller can
+# have a fast-path lookup without needing to go through the main
+# table.
 for (my $code = 0; $code < 0x80; $code++)
 {
 	my $lc = ($simple{$code}{Simple_Lowercase} || $code);
@@ -358,26 +372,310 @@ for (my $code = 0; $code < 0x80; $code++)
 
 	die "unexpected special case for code $code"
 	  if defined $special{$code};
-	printf $OT
-	  "\t{0x%06x, {[CaseLower] = 0x%06x,[CaseTitle] = 0x%06x,[CaseUpper] = 0x%06x,[CaseFold] = 0x%06x}, NULL},\n",
-	  $code, $lc, $tc, $uc, $fc;
-}
-printf $OT "\n";
 
-printf $OT "\t/* begin sparse entries for codepoints >= 0x80 */\n";
+	push @{ $map{lower} }, [ $lc, $code ];
+	push @{ $map{title} }, [ $tc, $code ];
+	push @{ $map{upper} }, [ $uc, $code ];
+	push @{ $map{fold} }, [ $fc, $code ];
+	push @{ $map{special} }, [ 0, $code ];
+
+	my $key = get_hash_key($lc, $tc, $uc, $fc, 0);
+
+	$simple{$code}{Index} = $index;
+	$case_forms{$key} = $index++;
+}
+
+# Create map entries for all characters >= 0x80 that have case
+# mappings (any character with a special case mapping also has an
+# entry in %simple).
 foreach my $code (sort { $a <=> $b } (keys %simple))
 {
 	next unless $code >= 0x80;    # already output above
 
-	my $map = $simple{$code};
-	my $special_case = "NULL";
+	my $entry = $simple{$code};
+	my $special_case = 0;
 	if (exists $special{$code})
 	{
-		$special_case = sprintf "&special_case[%d]", $special{$code}{Index};
+		$special_case = $special{$code}{Index};
 	}
-	printf $OT
-	  "\t{0x%06x, {[CaseLower] = 0x%06x,[CaseTitle] = 0x%06x,[CaseUpper] = 0x%06x,[CaseFold] = 0x%06x}, %s},\n",
-	  $code, $map->{Simple_Lowercase}, $map->{Simple_Titlecase},
-	  $map->{Simple_Uppercase}, $map->{Simple_Foldcase}, $special_case;
+
+	my $key = get_hash_key(
+		$entry->{Simple_Lowercase}, $entry->{Simple_Titlecase},
+		$entry->{Simple_Uppercase}, $entry->{Simple_Foldcase},
+		$special_case);
+
+	unless (exists $case_forms{$key})
+	{
+		$case_forms{$key} = $index++;
+
+		push @{ $map{lower} }, [ $entry->{Simple_Lowercase}, $code ];
+		push @{ $map{title} }, [ $entry->{Simple_Titlecase}, $code ];
+		push @{ $map{upper} }, [ $entry->{Simple_Uppercase}, $code ];
+		push @{ $map{fold} }, [ $entry->{Simple_Foldcase}, $code ];
+		push @{ $map{special} }, [ $special_case, $code ];
+	}
+
+	$simple{$code}{Index} = $case_forms{$key};
 }
-print $OT "};\n";
+
+die
+  "mapping tables contains $index entries which cannot be represented in uint16"
+  if ($index > 65536);
+
+foreach my $kind ('lower', 'title', 'upper', 'fold')
+{
+	print $OT <<"EOS";
+
+/*
+ * The entry case_map_${kind}[case_index(codepoint)] is the mapping for the
+ * given codepoint.
+ */
+static const pg_wchar case_map_$kind\[$index\] =
+{
+EOS
+
+	foreach my $entry (@{ $map{$kind} })
+	{
+		my $comment =
+		  @$entry[1] == -1 ? "reserved" : sprintf("U+%06x", @$entry[1]);
+		print $OT
+		  sprintf("\t0x%06x,\t\t\t\t\t/* %s */\n", @$entry[0], $comment);
+	}
+
+	print $OT "\n};\n";
+}
+
+print $OT <<"EOS";
+
+/*
+ * The entry case_map_special[case_index(codepoint)] is the index in
+ * special_case for that codepoint, or 0 if no special case mapping exists.
+ */
+static const uint8 case_map_special\[$index\] =
+{
+EOS
+
+foreach my $entry (@{ $map{special} })
+{
+	my $s = sprintf("%d,", @$entry[0]);
+	$s .= "\t" if length($s) < 4;
+	my $comment =
+	  @$entry[1] == -1 ? "reserved" : sprintf("U+%06x", @$entry[1]);
+	print $OT sprintf("\t%s\t\t\t\t\t\t/* %s */\n", $s, $comment);
+}
+
+print $OT "\n};\n";
+
+print $OT <<"EOS";
+
+/*
+ * Map for each case kind.
+ */
+static const pg_wchar *casekind_map[NCaseKind] =
+{
+	[CaseLower] = case_map_lower,
+	[CaseTitle] = case_map_title,
+	[CaseUpper] = case_map_upper,
+	[CaseFold] = case_map_fold,
+};
+EOS
+
+my @codepoints = keys %simple;
+my $range = make_ranges(\@codepoints, 500);
+my @case_map_lines = range_tables($range);
+my $case_map_length = scalar @case_map_lines;
+my $case_map_table = join "\n", @case_map_lines;
+
+print $OT <<"EOS";
+
+/*
+ * Used by case_index() to map a codepoint to an index that can be used in any
+ * of the following arrays: case_map_lower, case_map_title, case_map_upper,
+ * case_map_fold.
+ */
+static const uint16 case_map[$case_map_length] =
+{
+$case_map_table
+};
+
+
+EOS
+
+# First range is the fast path. It must start at codepoint zero, and
+# the end is the fastpath limit. Track the limit here and then
+# remove it before generating the other branches.
+die "first range must start at 0" unless ${ @$range[0] }{Start} == 0;
+my $fastpath_limit = sprintf("0x%04X", ${ @$range[0] }{End});
+shift @$range;
+
+print $OT <<"EOS";
+/*
+ * case_index()
+ *
+ * Given a code point, compute the index in the case_map at which we can find
+ * the offset into the mapping tables.
+ */
+static inline uint16
+case_index(pg_wchar cp)
+{
+	/* Fast path for codepoints < $fastpath_limit */
+	if (cp < $fastpath_limit)
+	{
+		return case_map[cp];
+	}
+
+EOS
+
+print $OT join("\n", @{ branch($range, 0, $#$range, 1) });
+
+print $OT <<"EOS";
+
+
+	return 0;
+}
+EOS
+
+close $OT;
+
+# The function generates C code with a series of nested if-else conditions
+# to search for the matching interval.
+sub branch
+{
+	my ($range, $from, $to, $indent) = @_;
+	my ($idx, $space, $entry, $table, @result);
+
+	$idx = ($from + int(($to - $from) / 2));
+	return \@result unless exists $range->[$idx];
+
+	$space = "\t" x $indent;
+
+	$entry = $range->[$idx];
+
+	# IF state
+	if ($idx == $from)
+	{
+		if ($idx == 0)
+		{
+			push @result,
+			  sprintf("%sif (cp >= 0x%04X && cp < 0x%04X)\n%s{",
+				$space, $entry->{Start}, $entry->{End}, $space);
+		}
+		else
+		{
+			push @result,
+			  sprintf("%sif (cp < 0x%04X)\n%s{",
+				$space, $entry->{End}, $space);
+		}
+
+		push @result,
+		  sprintf("%s\treturn case_map[cp - 0x%04X + %d];",
+			$space, $entry->{Start}, $entry->{Offset});
+	}
+	else
+	{
+		push @result,
+		  sprintf("%sif (cp < 0x%04X)\n%s{", $space, $entry->{End}, $space);
+		push @result, @{ branch($range, $from, $idx - 1, $indent + 1) };
+	}
+
+	push @result, $space . "}";
+
+	# return now if it's the last range
+	return \@result if $idx == (scalar @$range) - 1;
+
+	# ELSE looks ahead to the next range to avoid adding an
+	# unnecessary level of branching.
+	$entry = @$range[ $idx + 1 ];
+
+	# ELSE state
+	push @result,
+	  sprintf("%selse if (cp >= 0x%04X)\n%s{",
+		$space, $entry->{Start}, $space);
+
+	if ($idx == $to)
+	{
+		push @result,
+		  sprintf("%s\treturn case_map\[cp - 0x%04X + %d];",
+			$space, $entry->{Start}, $entry->{Offset});
+	}
+	else
+	{
+		push @result, @{ branch($range, $idx + 1, $to, $indent + 1) };
+	}
+
+	push @result, $space . "}";
+
+	return \@result;
+}
+
+# Group numbers into ranges where the difference between neighboring
+# elements does not exceed $limit. If the difference is greater, a new
+# range is created. This is used to break the sequence into intervals
+# where the gaps between numbers are greater than limit.
+#
+# For example, if there are numbers 1, 2, 3, 5, 6 and limit = 1, then
+# there is a difference of 2 between 3 and 5, which is greater than 1,
+# so there will be ranges 1-3 and 5-6.
+sub make_ranges
+{
+	my ($nums, $limit) = @_;
+	my ($prev, $start, $curr, $total, @sorted, @range);
+
+	@sorted = sort { $a <=> $b } @$nums;
+
+	die "expecting at least 2 codepoints" if (scalar @sorted < 2);
+
+	$start = shift @sorted;
+
+	die "expecting first codepoint to start at 0" unless $start == 0;
+
+	$prev = $start;
+	$total = 0;
+
+	# append final 'undef' to signal final iteration
+	push @sorted, undef;
+
+	foreach $curr (@sorted)
+	{
+		# if last iteration always append the range
+		if (!defined($curr) || ($curr - $prev > $limit))
+		{
+			push @range,
+			  {
+				Start => $start,
+				End => $prev + 1,
+				Offset => $total
+			  };
+			$total += $prev + 1 - $start;
+			$start = $curr;
+		}
+
+		$prev = $curr;
+	}
+
+	return \@range;
+}
+
+# The function combines all ranges into the case_map table. Ranges may
+# include codepoints without a case mapping at all, in which case the
+# entry in case_map should be zero.
+sub range_tables
+{
+	my ($range) = @_;
+	my (@lines, @result);
+
+	foreach my $entry (@$range)
+	{
+		my $start = $entry->{Start};
+		my $end = $entry->{End} - 1;
+
+		foreach my $cp ($start .. $end)
+		{
+			my $idx = sprintf("%d,", ($simple{$cp}{Index} || 0));
+			$idx .= "\t" if length($idx) < 4;
+			push @lines, sprintf("\t%s\t\t\t\t\t\t/* U+%06X */", $idx, $cp);
+		}
+	}
+
+	return @lines;
+}
