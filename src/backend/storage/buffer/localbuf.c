@@ -174,6 +174,41 @@ LocalBufferAlloc(SMgrRelation smgr, ForkNumber forkNum, BlockNumber blockNum,
 	return bufHdr;
 }
 
+/*
+ * Like FlushBuffer(), just for local buffers.
+ */
+void
+FlushLocalBuffer(BufferDesc *bufHdr, SMgrRelation reln)
+{
+	instr_time	io_start;
+	Page		localpage = (char *) LocalBufHdrGetBlock(bufHdr);
+
+	/* Find smgr relation for buffer */
+	if (reln == NULL)
+		reln = smgropen(BufTagGetRelFileLocator(&bufHdr->tag),
+						MyProcNumber);
+
+	PageSetChecksumInplace(localpage, bufHdr->tag.blockNum);
+
+	io_start = pgstat_prepare_io_time(track_io_timing);
+
+	/* And write... */
+	smgrwrite(reln,
+			  BufTagGetForkNum(&bufHdr->tag),
+			  bufHdr->tag.blockNum,
+			  localpage,
+			  false);
+
+	/* Temporary table I/O does not use Buffer Access Strategies */
+	pgstat_count_io_op_time(IOOBJECT_TEMP_RELATION, IOCONTEXT_NORMAL,
+							IOOP_WRITE, io_start, 1, BLCKSZ);
+
+	/* Mark not-dirty */
+	TerminateLocalBufferIO(bufHdr, true, 0);
+
+	pgBufferUsage.local_blks_written++;
+}
+
 static Buffer
 GetLocalVictimBuffer(void)
 {
@@ -234,34 +269,7 @@ GetLocalVictimBuffer(void)
 	 * the case, write it out before reusing it!
 	 */
 	if (pg_atomic_read_u32(&bufHdr->state) & BM_DIRTY)
-	{
-		instr_time	io_start;
-		SMgrRelation oreln;
-		Page		localpage = (char *) LocalBufHdrGetBlock(bufHdr);
-
-		/* Find smgr relation for buffer */
-		oreln = smgropen(BufTagGetRelFileLocator(&bufHdr->tag), MyProcNumber);
-
-		PageSetChecksumInplace(localpage, bufHdr->tag.blockNum);
-
-		io_start = pgstat_prepare_io_time(track_io_timing);
-
-		/* And write... */
-		smgrwrite(oreln,
-				  BufTagGetForkNum(&bufHdr->tag),
-				  bufHdr->tag.blockNum,
-				  localpage,
-				  false);
-
-		/* Temporary table I/O does not use Buffer Access Strategies */
-		pgstat_count_io_op_time(IOOBJECT_TEMP_RELATION, IOCONTEXT_NORMAL,
-								IOOP_WRITE, io_start, 1, BLCKSZ);
-
-		/* Mark not-dirty now in case we error out below */
-		TerminateLocalBufferIO(bufHdr, true, 0);
-
-		pgBufferUsage.local_blks_written++;
-	}
+		FlushLocalBuffer(bufHdr, NULL);
 
 	/*
 	 * Remove the victim buffer from the hashtable and mark as invalid.

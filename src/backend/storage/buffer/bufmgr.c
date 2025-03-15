@@ -4453,7 +4453,6 @@ FlushRelationBuffers(Relation rel)
 		for (i = 0; i < NLocBuffer; i++)
 		{
 			uint32		buf_state;
-			instr_time	io_start;
 
 			bufHdr = GetLocalBufferDescriptor(i);
 			if (BufTagMatchesRelFileLocator(&bufHdr->tag, &rel->rd_locator) &&
@@ -4461,9 +4460,6 @@ FlushRelationBuffers(Relation rel)
 				 (BM_VALID | BM_DIRTY)) == (BM_VALID | BM_DIRTY))
 			{
 				ErrorContextCallback errcallback;
-				Page		localpage;
-
-				localpage = (char *) LocalBufHdrGetBlock(bufHdr);
 
 				/* Setup error traceback support for ereport() */
 				errcallback.callback = local_buffer_write_error_callback;
@@ -4471,23 +4467,7 @@ FlushRelationBuffers(Relation rel)
 				errcallback.previous = error_context_stack;
 				error_context_stack = &errcallback;
 
-				PageSetChecksumInplace(localpage, bufHdr->tag.blockNum);
-
-				io_start = pgstat_prepare_io_time(track_io_timing);
-
-				smgrwrite(srel,
-						  BufTagGetForkNum(&bufHdr->tag),
-						  bufHdr->tag.blockNum,
-						  localpage,
-						  false);
-
-				pgstat_count_io_op_time(IOOBJECT_TEMP_RELATION,
-										IOCONTEXT_NORMAL, IOOP_WRITE,
-										io_start, 1, BLCKSZ);
-
-				TerminateLocalBufferIO(bufHdr, true, 0);
-
-				pgBufferUsage.local_blks_written++;
+				FlushLocalBuffer(bufHdr, srel);
 
 				/* Pop the error context stack */
 				error_context_stack = errcallback.previous;
