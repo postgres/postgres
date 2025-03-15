@@ -12,3 +12,10 @@ SELECT get_val_in_shmem();
              1236
 (1 row)
 
+-- 20 bytes = int (4 bytes) + LWLock (16bytes)
+SELECT * FROM pg_dsm_registry;
+       name        | size 
+-------------------+------
+ test_dsm_registry |   20
+(1 row)
+
