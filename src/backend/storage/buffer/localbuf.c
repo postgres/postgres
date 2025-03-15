@@ -183,6 +183,13 @@ FlushLocalBuffer(BufferDesc *bufHdr, SMgrRelation reln)
 	instr_time	io_start;
 	Page		localpage = (char *) LocalBufHdrGetBlock(bufHdr);
 
+	/*
+	 * Try to start an I/O operation.  There currently are no reasons for
+	 * StartLocalBufferIO to return false, so we raise an error in that case.
+	 */
+	if (!StartLocalBufferIO(bufHdr, false))
+		elog(ERROR, "failed to start write IO on local buffer");
+
 	/* Find smgr relation for buffer */
 	if (reln == NULL)
 		reln = smgropen(BufTagGetRelFileLocator(&bufHdr->tag),
@@ -406,11 +413,17 @@ ExtendBufferedRelLocal(BufferManagerRelation bmr,
 			PinLocalBuffer(existing_hdr, false);
 			buffers[i] = BufferDescriptorGetBuffer(existing_hdr);
 
+			/*
+			 * Clear the BM_VALID bit, do StartLocalBufferIO() and proceed.
+			 */
 			buf_state = pg_atomic_read_u32(&existing_hdr->state);
 			Assert(buf_state & BM_TAG_VALID);
 			Assert(!(buf_state & BM_DIRTY));
 			buf_state &= ~BM_VALID;
 			pg_atomic_unlocked_write_u32(&existing_hdr->state, buf_state);
+
+			/* no need to loop for local buffers */
+			StartLocalBufferIO(existing_hdr, true);
 		}
 		else
 		{
@@ -425,6 +438,8 @@ ExtendBufferedRelLocal(BufferManagerRelation bmr,
 			pg_atomic_unlocked_write_u32(&victim_buf_hdr->state, buf_state);
 
 			hresult->id = victim_buf_id;
+
+			StartLocalBufferIO(victim_buf_hdr, true);
 		}
 	}
 
@@ -487,6 +502,27 @@ MarkLocalBufferDirty(Buffer buffer)
 	buf_state |= BM_DIRTY;
 
 	pg_atomic_unlocked_write_u32(&bufHdr->state, buf_state);
+}
+
+/*
+ * Like StartBufferIO, but for local buffers
+ */
+bool
+StartLocalBufferIO(BufferDesc *bufHdr, bool forInput)
+{
+	uint32		buf_state = pg_atomic_read_u32(&bufHdr->state);
+
+	if (forInput ? (buf_state & BM_VALID) : !(buf_state & BM_DIRTY))
+	{
+		/* someone else already did the I/O */
+		return false;
+	}
+
+	/* BM_IO_IN_PROGRESS isn't currently used for local buffers */
+
+	/* local buffers don't track IO using resowners */
+
+	return true;
 }
 
 /*

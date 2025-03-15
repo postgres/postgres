@@ -1038,7 +1038,7 @@ ZeroAndLockBuffer(Buffer buffer, ReadBufferMode mode, bool already_valid)
 	{
 		/* Simple case for non-shared buffers. */
 		bufHdr = GetLocalBufferDescriptor(-buffer - 1);
-		need_to_zero = (pg_atomic_read_u32(&bufHdr->state) & BM_VALID) == 0;
+		need_to_zero = StartLocalBufferIO(bufHdr, true);
 	}
 	else
 	{
@@ -1388,11 +1388,7 @@ static inline bool
 WaitReadBuffersCanStartIO(Buffer buffer, bool nowait)
 {
 	if (BufferIsLocal(buffer))
-	{
-		BufferDesc *bufHdr = GetLocalBufferDescriptor(-buffer - 1);
-
-		return (pg_atomic_read_u32(&bufHdr->state) & BM_VALID) == 0;
-	}
+		return StartLocalBufferIO(GetLocalBufferDescriptor(-buffer - 1), true);
 	else
 		return StartBufferIO(GetBufferDescriptor(buffer - 1), true, nowait);
 }

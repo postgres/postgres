@@ -473,6 +473,7 @@ extern BlockNumber ExtendBufferedRelLocal(BufferManagerRelation bmr,
 extern void MarkLocalBufferDirty(Buffer buffer);
 extern void TerminateLocalBufferIO(BufferDesc *bufHdr, bool clear_dirty,
 								   uint32 set_flag_bits);
+extern bool StartLocalBufferIO(BufferDesc *bufHdr, bool forInput);
 extern void FlushLocalBuffer(BufferDesc *bufHdr, SMgrRelation reln);
 extern void DropRelationLocalBuffers(RelFileLocator rlocator,
 									 ForkNumber forkNum,
