@@ -619,7 +619,7 @@ sub branch
 sub make_ranges
 {
 	my ($nums, $limit) = @_;
-	my ($prev, $start, $curr, $total, @sorted, @range);
+	my ($prev, $start, $total, @sorted, @range);
 
 	@sorted = sort { $a <=> $b } @$nums;
 
@@ -635,7 +635,7 @@ sub make_ranges
 	# append final 'undef' to signal final iteration
 	push @sorted, undef;
 
-	foreach $curr (@sorted)
+	foreach my $curr (@sorted)
 	{
 		# if last iteration always append the range
 		if (!defined($curr) || ($curr - $prev > $limit))
