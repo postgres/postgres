@@ -178,7 +178,6 @@ GetLocalVictimBuffer(void)
 {
 	int			victim_bufid;
 	int			trycounter;
-	uint32		buf_state;
 	BufferDesc *bufHdr;
 
 	ResourceOwnerEnlarge(CurrentResourceOwner);
@@ -199,7 +198,7 @@ GetLocalVictimBuffer(void)
 
 		if (LocalRefCount[victim_bufid] == 0)
 		{
-			buf_state = pg_atomic_read_u32(&bufHdr->state);
+			uint32		buf_state = pg_atomic_read_u32(&bufHdr->state);
 
 			if (BUF_STATE_GET_USAGECOUNT(buf_state) > 0)
 			{
@@ -233,8 +232,9 @@ GetLocalVictimBuffer(void)
 	 * this buffer is not referenced but it might still be dirty. if that's
 	 * the case, write it out before reusing it!
 	 */
-	if (buf_state & BM_DIRTY)
+	if (pg_atomic_read_u32(&bufHdr->state) & BM_DIRTY)
 	{
+		uint32		buf_state = pg_atomic_read_u32(&bufHdr->state);
 		instr_time	io_start;
 		SMgrRelation oreln;
 		Page		localpage = (char *) LocalBufHdrGetBlock(bufHdr);
@@ -267,8 +267,9 @@ GetLocalVictimBuffer(void)
 	/*
 	 * Remove the victim buffer from the hashtable and mark as invalid.
 	 */
-	if (buf_state & BM_TAG_VALID)
+	if (pg_atomic_read_u32(&bufHdr->state) & BM_TAG_VALID)
 	{
+		uint32		buf_state = pg_atomic_read_u32(&bufHdr->state);
 		LocalBufferLookupEnt *hresult;
 
 		hresult = (LocalBufferLookupEnt *)
