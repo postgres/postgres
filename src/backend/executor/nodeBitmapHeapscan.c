@@ -317,7 +317,7 @@ BitmapAdjustPrefetchIterator(BitmapHeapScanState *node)
 {
 #ifdef USE_PREFETCH
 	ParallelBitmapHeapState *pstate = node->pstate;
-	TBMIterateResult *tbmpre;
+	TBMIterateResult tbmpre;
 
 	if (pstate == NULL)
 	{
@@ -330,9 +330,8 @@ BitmapAdjustPrefetchIterator(BitmapHeapScanState *node)
 		}
 		else if (!tbm_exhausted(prefetch_iterator))
 		{
-			tbmpre = tbm_iterate(prefetch_iterator);
-			node->prefetch_blockno = tbmpre ? tbmpre->blockno :
-				InvalidBlockNumber;
+			tbm_iterate(prefetch_iterator, &tbmpre);
+			node->prefetch_blockno = tbmpre.blockno;
 		}
 		return;
 	}
@@ -371,9 +370,8 @@ BitmapAdjustPrefetchIterator(BitmapHeapScanState *node)
 			 */
 			if (!tbm_exhausted(prefetch_iterator))
 			{
-				tbmpre = tbm_iterate(prefetch_iterator);
-				node->prefetch_blockno = tbmpre ? tbmpre->blockno :
-					InvalidBlockNumber;
+				tbm_iterate(prefetch_iterator, &tbmpre);
+				node->prefetch_blockno = tbmpre.blockno;
 			}
 		}
 	}
@@ -441,17 +439,18 @@ BitmapPrefetch(BitmapHeapScanState *node, TableScanDesc scan)
 		{
 			while (node->prefetch_pages < node->prefetch_target)
 			{
-				TBMIterateResult *tbmpre = tbm_iterate(prefetch_iterator);
+				TBMIterateResult tbmpre;
 				bool		skip_fetch;
 
-				if (tbmpre == NULL)
+				if (!tbm_iterate(prefetch_iterator, &tbmpre))
 				{
 					/* No more pages to prefetch */
+					Assert(!BlockNumberIsValid(tbmpre.blockno));
 					tbm_end_iterate(prefetch_iterator);
 					break;
 				}
 				node->prefetch_pages++;
-				node->prefetch_blockno = tbmpre->blockno;
+				node->prefetch_blockno = tbmpre.blockno;
 
 				/*
 				 * If we expect not to have to actually read this heap page,
@@ -460,13 +459,13 @@ BitmapPrefetch(BitmapHeapScanState *node, TableScanDesc scan)
 				 * prefetch_pages?)
 				 */
 				skip_fetch = (!(scan->rs_flags & SO_NEED_TUPLES) &&
-							  !tbmpre->recheck &&
+							  !tbmpre.recheck &&
 							  VM_ALL_VISIBLE(node->ss.ss_currentRelation,
-											 tbmpre->blockno,
+											 tbmpre.blockno,
 											 &node->pvmbuffer));
 
 				if (!skip_fetch)
-					PrefetchBuffer(scan->rs_rd, MAIN_FORKNUM, tbmpre->blockno);
+					PrefetchBuffer(scan->rs_rd, MAIN_FORKNUM, tbmpre.blockno);
 			}
 		}
 
@@ -481,7 +480,7 @@ BitmapPrefetch(BitmapHeapScanState *node, TableScanDesc scan)
 		{
 			while (1)
 			{
-				TBMIterateResult *tbmpre;
+				TBMIterateResult tbmpre;
 				bool		do_prefetch = false;
 				bool		skip_fetch;
 
@@ -500,25 +499,25 @@ BitmapPrefetch(BitmapHeapScanState *node, TableScanDesc scan)
 				if (!do_prefetch)
 					return;
 
-				tbmpre = tbm_iterate(prefetch_iterator);
-				if (tbmpre == NULL)
+				if (!tbm_iterate(prefetch_iterator, &tbmpre))
 				{
+					Assert(!BlockNumberIsValid(tbmpre.blockno));
 					/* No more pages to prefetch */
 					tbm_end_iterate(prefetch_iterator);
 					break;
 				}
 
-				node->prefetch_blockno = tbmpre->blockno;
+				node->prefetch_blockno = tbmpre.blockno;
 
 				/* As above, skip prefetch if we expect not to need page */
 				skip_fetch = (!(scan->rs_flags & SO_NEED_TUPLES) &&
-							  !tbmpre->recheck &&
+							  !tbmpre.recheck &&
 							  VM_ALL_VISIBLE(node->ss.ss_currentRelation,
-											 tbmpre->blockno,
+											 tbmpre.blockno,
 											 &node->pvmbuffer));
 
 				if (!skip_fetch)
-					PrefetchBuffer(scan->rs_rd, MAIN_FORKNUM, tbmpre->blockno);
+					PrefetchBuffer(scan->rs_rd, MAIN_FORKNUM, tbmpre.blockno);
 			}
 		}
 	}

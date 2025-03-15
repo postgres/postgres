@@ -2126,7 +2126,7 @@ heapam_scan_bitmap_next_block(TableScanDesc scan,
 	Buffer		buffer;
 	Snapshot	snapshot;
 	int			ntup;
-	TBMIterateResult *tbmres;
+	TBMIterateResult tbmres;
 	OffsetNumber offsets[TBM_MAX_TUPLES_PER_PAGE];
 	int			noffsets = -1;
 
@@ -2142,14 +2142,12 @@ heapam_scan_bitmap_next_block(TableScanDesc scan,
 	{
 		CHECK_FOR_INTERRUPTS();
 
-		tbmres = tbm_iterate(&scan->st.rs_tbmiterator);
-
-		if (tbmres == NULL)
+		if (!tbm_iterate(&scan->st.rs_tbmiterator, &tbmres))
 			return false;
 
 		/* Exact pages need their tuple offsets extracted. */
-		if (!tbmres->lossy)
-			noffsets = tbm_extract_page_tuple(tbmres, offsets,
+		if (!tbmres.lossy)
+			noffsets = tbm_extract_page_tuple(&tbmres, offsets,
 											  TBM_MAX_TUPLES_PER_PAGE);
 
 		/*
@@ -2161,11 +2159,11 @@ heapam_scan_bitmap_next_block(TableScanDesc scan,
 		 * reachable by the index.
 		 */
 	} while (!IsolationIsSerializable() &&
-			 tbmres->blockno >= hscan->rs_nblocks);
+			 tbmres.blockno >= hscan->rs_nblocks);
 
 	/* Got a valid block */
-	*blockno = tbmres->blockno;
-	*recheck = tbmres->recheck;
+	*blockno = tbmres.blockno;
+	*recheck = tbmres.recheck;
 
 	/*
 	 * We can skip fetching the heap page if we don't need any fields from the
@@ -2173,11 +2171,11 @@ heapam_scan_bitmap_next_block(TableScanDesc scan,
 	 * page are visible to our transaction.
 	 */
 	if (!(scan->rs_flags & SO_NEED_TUPLES) &&
-		!tbmres->recheck &&
-		VM_ALL_VISIBLE(scan->rs_rd, tbmres->blockno, &bscan->rs_vmbuffer))
+		!tbmres.recheck &&
+		VM_ALL_VISIBLE(scan->rs_rd, tbmres.blockno, &bscan->rs_vmbuffer))
 	{
 		/* can't be lossy in the skip_fetch case */
-		Assert(!tbmres->lossy);
+		Assert(!tbmres.lossy);
 		Assert(bscan->rs_empty_tuples_pending >= 0);
 		Assert(noffsets > -1);
 
@@ -2186,7 +2184,7 @@ heapam_scan_bitmap_next_block(TableScanDesc scan,
 		return true;
 	}
 
-	block = tbmres->blockno;
+	block = tbmres.blockno;
 
 	/*
 	 * Acquire pin on the target heap page, trading in any pin we held before.
@@ -2215,7 +2213,7 @@ heapam_scan_bitmap_next_block(TableScanDesc scan,
 	/*
 	 * We need two separate strategies for lossy and non-lossy cases.
 	 */
-	if (!tbmres->lossy)
+	if (!tbmres.lossy)
 	{
 		/*
 		 * Bitmap is non-lossy, so we just look through the offsets listed in
@@ -2279,7 +2277,7 @@ heapam_scan_bitmap_next_block(TableScanDesc scan,
 	Assert(ntup <= MaxHeapTuplesPerPage);
 	hscan->rs_ntuples = ntup;
 
-	if (tbmres->lossy)
+	if (tbmres.lossy)
 		(*lossy_pages)++;
 	else
 		(*exact_pages)++;

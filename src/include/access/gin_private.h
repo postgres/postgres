@@ -354,7 +354,12 @@ typedef struct GinScanEntryData
 	/* for a partial-match or full-scan query, we accumulate all TIDs here */
 	TIDBitmap  *matchBitmap;
 	TBMPrivateIterator *matchIterator;
-	TBMIterateResult *matchResult;
+
+	/*
+	 * If blockno is InvalidBlockNumber, all of the other fields in the
+	 * matchResult are meaningless.
+	 */
+	TBMIterateResult matchResult;
 	OffsetNumber matchOffsets[TBM_MAX_TUPLES_PER_PAGE];
 	int			matchNtuples;
 

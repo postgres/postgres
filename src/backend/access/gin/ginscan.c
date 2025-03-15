@@ -111,7 +111,7 @@ ginFillScanEntry(GinScanOpaque so, OffsetNumber attnum,
 	ItemPointerSetMin(&scanEntry->curItem);
 	scanEntry->matchBitmap = NULL;
 	scanEntry->matchIterator = NULL;
-	scanEntry->matchResult = NULL;
+	scanEntry->matchResult.blockno = InvalidBlockNumber;
 	scanEntry->matchNtuples = -1;
 	scanEntry->list = NULL;
 	scanEntry->nlist = 0;

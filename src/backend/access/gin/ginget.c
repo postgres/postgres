@@ -332,8 +332,8 @@ restartScanEntry:
 	entry->list = NULL;
 	entry->nlist = 0;
 	entry->matchBitmap = NULL;
-	entry->matchResult = NULL;
 	entry->matchNtuples = -1;
+	entry->matchResult.blockno = InvalidBlockNumber;
 	entry->reduceResult = false;
 	entry->predictNumberResult = 0;
 
@@ -827,20 +827,19 @@ entryGetItem(GinState *ginstate, GinScanEntry entry,
 		{
 			/*
 			 * If we've exhausted all items on this block, move to next block
-			 * in the bitmap.
+			 * in the bitmap. tbm_private_iterate() sets matchResult.blockno
+			 * to InvalidBlockNumber when the bitmap is exhausted.
 			 */
-			while (entry->matchResult == NULL ||
-				   (!entry->matchResult->lossy &&
+			while ((!BlockNumberIsValid(entry->matchResult.blockno)) ||
+				   (!entry->matchResult.lossy &&
 					entry->offset >= entry->matchNtuples) ||
-				   entry->matchResult->blockno < advancePastBlk ||
+				   entry->matchResult.blockno < advancePastBlk ||
 				   (ItemPointerIsLossyPage(&advancePast) &&
-					entry->matchResult->blockno == advancePastBlk))
+					entry->matchResult.blockno == advancePastBlk))
 			{
-				entry->matchResult =
-					tbm_private_iterate(entry->matchIterator);
-
-				if (entry->matchResult == NULL)
+				if (!tbm_private_iterate(entry->matchIterator, &entry->matchResult))
 				{
+					Assert(!BlockNumberIsValid(entry->matchResult.blockno));
 					ItemPointerSetInvalid(&entry->curItem);
 					tbm_end_private_iterate(entry->matchIterator);
 					entry->matchIterator = NULL;
@@ -849,14 +848,14 @@ entryGetItem(GinState *ginstate, GinScanEntry entry,
 				}
 
 				/* Exact pages need their tuple offsets extracted. */
-				if (!entry->matchResult->lossy)
-					entry->matchNtuples = tbm_extract_page_tuple(entry->matchResult,
+				if (!entry->matchResult.lossy)
+					entry->matchNtuples = tbm_extract_page_tuple(&entry->matchResult,
 																 entry->matchOffsets,
 																 TBM_MAX_TUPLES_PER_PAGE);
 
 				/*
 				 * Reset counter to the beginning of entry->matchResult. Note:
-				 * entry->offset is still greater than entry->matchNtuples if
+				 * entry->offset is still greater than matchResult.ntuples if
 				 * matchResult is lossy.  So, on next call we will get next
 				 * result from TIDBitmap.
 				 */
@@ -869,10 +868,10 @@ entryGetItem(GinState *ginstate, GinScanEntry entry,
 			 * We're now on the first page after advancePast which has any
 			 * items on it. If it's a lossy result, return that.
 			 */
-			if (entry->matchResult->lossy)
+			if (entry->matchResult.lossy)
 			{
 				ItemPointerSetLossyPage(&entry->curItem,
-										entry->matchResult->blockno);
+										entry->matchResult.blockno);
 
 				/*
 				 * We might as well fall out of the loop; we could not
@@ -889,7 +888,7 @@ entryGetItem(GinState *ginstate, GinScanEntry entry,
 			Assert(entry->matchNtuples > -1);
 
 			/* Skip over any offsets <= advancePast, and return that. */
-			if (entry->matchResult->blockno == advancePastBlk)
+			if (entry->matchResult.blockno == advancePastBlk)
 			{
 				Assert(entry->matchNtuples > 0);
 
@@ -910,7 +909,7 @@ entryGetItem(GinState *ginstate, GinScanEntry entry,
 			}
 
 			ItemPointerSet(&entry->curItem,
-						   entry->matchResult->blockno,
+						   entry->matchResult.blockno,
 						   entry->matchOffsets[entry->offset]);
 			entry->offset++;
 

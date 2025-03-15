@@ -172,7 +172,6 @@ struct TBMPrivateIterator
 	int			spageptr;		/* next spages index */
 	int			schunkptr;		/* next schunks index */
 	int			schunkbit;		/* next bit to check in current schunk */
-	TBMIterateResult output;
 };
 
 /*
@@ -213,7 +212,6 @@ struct TBMSharedIterator
 	PTEntryArray *ptbase;		/* pagetable element array */
 	PTIterationArray *ptpages;	/* sorted exact page index list */
 	PTIterationArray *ptchunks; /* sorted lossy page index list */
-	TBMIterateResult output;
 };
 
 /* Local function prototypes */
@@ -957,21 +955,28 @@ tbm_advance_schunkbit(PagetableEntry *chunk, int *schunkbitp)
 /*
  * tbm_private_iterate - scan through next page of a TIDBitmap
  *
- * Returns a TBMIterateResult representing one page, or NULL if there are
- * no more pages to scan.  Pages are guaranteed to be delivered in numerical
- * order.  If lossy is true, then the bitmap is "lossy" and failed to
- * remember the exact tuples to look at on this page --- the caller must
- * examine all tuples on the page and check if they meet the intended
- * condition.  result->ntuples is set to -1 when the bitmap is lossy.
- * If result->recheck is true, only the indicated tuples need
- * be examined, but the condition must be rechecked anyway.  (For ease of
- * testing, recheck is always set true when lossy is true.)
+ * Caller must pass in a TBMIterateResult to be filled.
+ *
+ * Pages are guaranteed to be delivered in numerical order.
+ *
+ * Returns false when there are no more pages to scan and true otherwise. When
+ * there are no more pages to scan, tbmres->blockno is set to
+ * InvalidBlockNumber.
+ *
+ * If lossy is true, then the bitmap is "lossy" and failed to remember
+ * the exact tuples to look at on this page --- the caller must examine all
+ * tuples on the page and check if they meet the intended condition. If lossy
+ * is false, the caller must later extract the tuple offsets from the page
+ * pointed to by internal_page with tbm_extract_page_tuple.
+ *
+ * If tbmres->recheck is true, only the indicated tuples need be examined, but
+ * the condition must be rechecked anyway.  (For ease of testing, recheck is
+ * always set true when lossy is true.)
  */
-TBMIterateResult *
-tbm_private_iterate(TBMPrivateIterator *iterator)
+bool
+tbm_private_iterate(TBMPrivateIterator *iterator, TBMIterateResult *tbmres)
 {
 	TIDBitmap  *tbm = iterator->tbm;
-	TBMIterateResult *output = &(iterator->output);
 
 	Assert(tbm->iterating == TBM_ITERATING_PRIVATE);
 
@@ -1009,12 +1014,12 @@ tbm_private_iterate(TBMPrivateIterator *iterator)
 			chunk_blockno < tbm->spages[iterator->spageptr]->blockno)
 		{
 			/* Return a lossy page indicator from the chunk */
-			output->blockno = chunk_blockno;
-			output->lossy = true;
-			output->recheck = true;
-			output->internal_page = NULL;
+			tbmres->blockno = chunk_blockno;
+			tbmres->lossy = true;
+			tbmres->recheck = true;
+			tbmres->internal_page = NULL;
 			iterator->schunkbit++;
-			return output;
+			return true;
 		}
 	}
 
@@ -1028,16 +1033,17 @@ tbm_private_iterate(TBMPrivateIterator *iterator)
 		else
 			page = tbm->spages[iterator->spageptr];
 
-		output->internal_page = page;
-		output->blockno = page->blockno;
-		output->lossy = false;
-		output->recheck = page->recheck;
+		tbmres->internal_page = page;
+		tbmres->blockno = page->blockno;
+		tbmres->lossy = false;
+		tbmres->recheck = page->recheck;
 		iterator->spageptr++;
-		return output;
+		return true;
 	}
 
 	/* Nothing more in the bitmap */
-	return NULL;
+	tbmres->blockno = InvalidBlockNumber;
+	return false;
 }
 
 /*
@@ -1047,10 +1053,9 @@ tbm_private_iterate(TBMPrivateIterator *iterator)
  *	across multiple processes.  We need to acquire the iterator LWLock,
  *	before accessing the shared members.
  */
-TBMIterateResult *
-tbm_shared_iterate(TBMSharedIterator *iterator)
+bool
+tbm_shared_iterate(TBMSharedIterator *iterator, TBMIterateResult *tbmres)
 {
-	TBMIterateResult *output = &iterator->output;
 	TBMSharedIteratorState *istate = iterator->state;
 	PagetableEntry *ptbase = NULL;
 	int		   *idxpages = NULL;
@@ -1101,14 +1106,14 @@ tbm_shared_iterate(TBMSharedIterator *iterator)
 			chunk_blockno < ptbase[idxpages[istate->spageptr]].blockno)
 		{
 			/* Return a lossy page indicator from the chunk */
-			output->blockno = chunk_blockno;
-			output->lossy = true;
-			output->recheck = true;
-			output->internal_page = NULL;
+			tbmres->blockno = chunk_blockno;
+			tbmres->lossy = true;
+			tbmres->recheck = true;
+			tbmres->internal_page = NULL;
 			istate->schunkbit++;
 
 			LWLockRelease(&istate->lock);
-			return output;
+			return true;
 		}
 	}
 
@@ -1116,21 +1121,22 @@ tbm_shared_iterate(TBMSharedIterator *iterator)
 	{
 		PagetableEntry *page = &ptbase[idxpages[istate->spageptr]];
 
-		output->internal_page = page;
-		output->blockno = page->blockno;
-		output->lossy = false;
-		output->recheck = page->recheck;
+		tbmres->internal_page = page;
+		tbmres->blockno = page->blockno;
+		tbmres->lossy = false;
+		tbmres->recheck = page->recheck;
 		istate->spageptr++;
 
 		LWLockRelease(&istate->lock);
 
-		return output;
+		return true;
 	}
 
 	LWLockRelease(&istate->lock);
 
 	/* Nothing more in the bitmap */
-	return NULL;
+	tbmres->blockno = InvalidBlockNumber;
+	return false;
 }
 
 /*
@@ -1604,15 +1610,17 @@ tbm_end_iterate(TBMIterator *iterator)
 }
 
 /*
- * Get the next TBMIterateResult from the shared or private bitmap iterator.
+ * Populate the next TBMIterateResult using the shared or private bitmap
+ * iterator. Returns false when there is nothing more to scan.
  */
-TBMIterateResult *
-tbm_iterate(TBMIterator *iterator)
+bool
+tbm_iterate(TBMIterator *iterator, TBMIterateResult *tbmres)
 {
 	Assert(iterator);
+	Assert(tbmres);
 
 	if (iterator->shared)
-		return tbm_shared_iterate(iterator->i.shared_iterator);
+		return tbm_shared_iterate(iterator->i.shared_iterator, tbmres);
 	else
-		return tbm_private_iterate(iterator->i.private_iterator);
+		return tbm_private_iterate(iterator->i.private_iterator, tbmres);
 }
