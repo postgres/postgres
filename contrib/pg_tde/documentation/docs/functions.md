@@ -203,10 +203,24 @@ Princial keys are stored on key providers by the name specified in this function
 
 ### pg_tde_set_principal_key
 
-Creates or rotates the principal key for the current database using the specified key provider and name.
+Creates or rotates the principal key for the current database using the specified database key provider and key name.
 
 ```
 SELECT pg_tde_set_principal_key('name-of-the-principal-key','provider-name','ensure_new_key');
+```
+
+ The `ensure_new_key` parameter instructs the function how to handle a principal key during key rotation:
+
+* If set to `true` (default), a new key must be unique.
+  If the provider already stores a key by that name, the function returns an error.
+* If set to `false`, an existing principal key may be reused.
+
+### pg_tde_set_global_principal_key
+
+Creates or rotates the principal key for the current database using the specified global key provider and key name.
+
+```
+SELECT pg_tde_set_global_principal_key('name-of-the-principal-key','provider-name','ensure_new_key');
 ```
 
  The `ensure_new_key` parameter instructs the function how to handle a principal key during key rotation:
