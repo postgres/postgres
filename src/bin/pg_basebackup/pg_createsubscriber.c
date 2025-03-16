@@ -184,17 +184,19 @@ cleanup_objects_atexit(void)
 
 	for (int i = 0; i < num_dbs; i++)
 	{
-		if (dbinfos.dbinfo[i].made_publication || dbinfos.dbinfo[i].made_replslot)
+		struct LogicalRepInfo *dbinfo = &dbinfos.dbinfo[i];
+
+		if (dbinfo->made_publication || dbinfo->made_replslot)
 		{
 			PGconn	   *conn;
 
-			conn = connect_database(dbinfos.dbinfo[i].pubconninfo, false);
+			conn = connect_database(dbinfo->pubconninfo, false);
 			if (conn != NULL)
 			{
-				if (dbinfos.dbinfo[i].made_publication)
-					drop_publication(conn, &dbinfos.dbinfo[i]);
-				if (dbinfos.dbinfo[i].made_replslot)
-					drop_replication_slot(conn, &dbinfos.dbinfo[i], dbinfos.dbinfo[i].replslotname);
+				if (dbinfo->made_publication)
+					drop_publication(conn, dbinfo);
+				if (dbinfo->made_replslot)
+					drop_replication_slot(conn, dbinfo, dbinfo->replslotname);
 				disconnect_database(conn, false);
 			}
 			else
@@ -204,18 +206,18 @@ cleanup_objects_atexit(void)
 				 * that some objects were left on primary and should be
 				 * removed before trying again.
 				 */
-				if (dbinfos.dbinfo[i].made_publication)
+				if (dbinfo->made_publication)
 				{
 					pg_log_warning("publication \"%s\" created in database \"%s\" on primary was left behind",
-								   dbinfos.dbinfo[i].pubname,
-								   dbinfos.dbinfo[i].dbname);
+								   dbinfo->pubname,
+								   dbinfo->dbname);
 					pg_log_warning_hint("Drop this publication before trying again.");
 				}
-				if (dbinfos.dbinfo[i].made_replslot)
+				if (dbinfo->made_replslot)
 				{
 					pg_log_warning("replication slot \"%s\" created in database \"%s\" on primary was left behind",
-								   dbinfos.dbinfo[i].replslotname,
-								   dbinfos.dbinfo[i].dbname);
+								   dbinfo->replslotname,
+								   dbinfo->dbname);
 					pg_log_warning_hint("Drop this replication slot soon to avoid retention of WAL files.");
 				}
 			}
