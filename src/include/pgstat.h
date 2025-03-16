@@ -11,7 +11,6 @@
 #ifndef PGSTAT_H
 #define PGSTAT_H
 
-#include "access/xlogdefs.h"
 #include "datatype/timestamp.h"
 #include "portability/instr_time.h"
 #include "postmaster/pgarch.h"	/* for MAX_XFN_CHARS */
@@ -212,7 +211,7 @@ typedef struct PgStat_TableXactStatus
  * ------------------------------------------------------------
  */
 
-#define PGSTAT_FILE_FORMAT_ID	0x01A5BCB5
+#define PGSTAT_FILE_FORMAT_ID	0x01A5BCB6
 
 typedef struct PgStat_ArchiverStats
 {
@@ -514,7 +513,7 @@ extern Size StatsShmemSize(void);
 extern void StatsShmemInit(void);
 
 /* Functions called during server startup / shutdown */
-extern void pgstat_restore_stats(XLogRecPtr redo);
+extern void pgstat_restore_stats(void);
 extern void pgstat_discard_stats(void);
 extern void pgstat_before_server_shutdown(int code, Datum arg);
 
