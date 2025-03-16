@@ -121,6 +121,19 @@ FROM (VALUES ('9780123456786', 'UPC'),
      LATERAL pg_input_error_info(a.str, a.typ) as errinfo;
 
 --
+-- test weak mode
+--
+SELECT '2222222222221'::ean13;  -- fail
+SET isn.weak TO TRUE;
+SELECT '2222222222221'::ean13;
+SELECT is_valid('2222222222221'::ean13);
+SELECT make_valid('2222222222221'::ean13);
+
+SELECT isn_weak();  -- backwards-compatibility wrappers for accessing the GUC
+SELECT isn_weak(false);
+SHOW isn.weak;
+
+--
 -- cleanup
 --
 DROP EXTENSION isn;

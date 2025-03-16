@@ -280,6 +280,50 @@ FROM (VALUES ('9780123456786', 'UPC'),
 (3 rows)
 
 --
+-- test weak mode
+--
+SELECT '2222222222221'::ean13;  -- fail
+ERROR:  invalid check digit for EAN13 number: "2222222222221", should be 2
+LINE 1: SELECT '2222222222221'::ean13;
+               ^
+SET isn.weak TO TRUE;
+SELECT '2222222222221'::ean13;
+      ean13       
+------------------
+ 222-222222222-2!
+(1 row)
+
+SELECT is_valid('2222222222221'::ean13);
+ is_valid 
+----------
+ f
+(1 row)
+
+SELECT make_valid('2222222222221'::ean13);
+   make_valid    
+-----------------
+ 222-222222222-2
+(1 row)
+
+SELECT isn_weak();  -- backwards-compatibility wrappers for accessing the GUC
+ isn_weak 
+----------
+ t
+(1 row)
+
+SELECT isn_weak(false);
+ isn_weak 
+----------
+ f
+(1 row)
+
+SHOW isn.weak;
+ isn.weak 
+----------
+ off
+(1 row)
+
+--
 -- cleanup
 --
 DROP EXTENSION isn;

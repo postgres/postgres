@@ -21,6 +21,7 @@
 #include "UPC.h"
 #include "fmgr.h"
 #include "isn.h"
+#include "utils/guc.h"
 
 PG_MODULE_MAGIC;
 
@@ -39,6 +40,7 @@ enum isn_type
 
 static const char *const isn_names[] = {"EAN13/UPC/ISxN", "EAN13/UPC/ISxN", "EAN13", "ISBN", "ISMN", "ISSN", "UPC"};
 
+/* GUC value */
 static bool g_weak = false;
 
 
@@ -929,6 +931,20 @@ _PG_init(void)
 		if (!check_table(UPC_range, UPC_index))
 			elog(ERROR, "UPC failed check");
 	}
+
+	/* Define a GUC variable for weak mode. */
+	DefineCustomBoolVariable("isn.weak",
+							 "Accept input with invalid ISN check digits.",
+							 NULL,
+							 &g_weak,
+							 false,
+							 PGC_USERSET,
+							 0,
+							 NULL,
+							 NULL,
+							 NULL);
+
+	MarkGUCPrefixReserved("isn");
 }
 
 /* isn_out
@@ -1109,17 +1125,16 @@ make_valid(PG_FUNCTION_ARGS)
 
 /* this function temporarily sets weak input flag
  * (to lose the strictness of check digit acceptance)
- * It's a helper function, not intended to be used!!
  */
 PG_FUNCTION_INFO_V1(accept_weak_input);
 Datum
 accept_weak_input(PG_FUNCTION_ARGS)
 {
-#ifdef ISN_WEAK_MODE
-	g_weak = PG_GETARG_BOOL(0);
-#else
-	/* function has no effect */
-#endif							/* ISN_WEAK_MODE */
+	bool		newvalue = PG_GETARG_BOOL(0);
+
+	(void) set_config_option("isn.weak", newvalue ? "on" : "off",
+							 PGC_USERSET, PGC_S_SESSION,
+							 GUC_ACTION_SET, true, 0, false);
 	PG_RETURN_BOOL(g_weak);
 }
 

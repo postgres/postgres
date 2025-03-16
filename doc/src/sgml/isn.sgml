@@ -230,7 +230,7 @@
   <para>
    The <filename>isn</filename> module provides the standard comparison operators,
    plus B-tree and hash indexing support for all these data types.  In
-   addition there are several specialized functions; shown in <xref linkend="isn-functions"/>.
+   addition, there are several specialized functions, shown in <xref linkend="isn-functions"/>.
    In this table,
    <type>isn</type> means any one of the module's data types.
   </para>
@@ -252,33 +252,12 @@
      <tbody>
       <row>
        <entry role="func_table_entry"><para role="func_signature">
-        <indexterm><primary>isn_weak</primary></indexterm>
-        <function>isn_weak</function> ( <type>boolean</type> )
-        <returnvalue>boolean</returnvalue>
-       </para>
-       <para>
-        Sets the weak input mode, and returns new setting.
-       </para></entry>
-      </row>
-
-      <row>
-       <entry role="func_table_entry"><para role="func_signature">
-        <function>isn_weak</function> ()
-        <returnvalue>boolean</returnvalue>
-       </para>
-       <para>
-        Returns the current status of the weak mode.
-       </para></entry>
-      </row>
-
-      <row>
-       <entry role="func_table_entry"><para role="func_signature">
         <indexterm><primary>make_valid</primary></indexterm>
         <function>make_valid</function> ( <type>isn</type> )
         <returnvalue>isn</returnvalue>
        </para>
        <para>
-        Validates an invalid number (clears the invalid flag).
+        Clears the invalid-check-digit flag of the value.
        </para></entry>
       </row>
 
@@ -289,18 +268,62 @@
         <returnvalue>boolean</returnvalue>
        </para>
        <para>
-        Checks for the presence of the invalid flag.
+        Checks for the presence of the invalid-check-digit flag.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm><primary>isn_weak</primary></indexterm>
+        <function>isn_weak</function> ( <type>boolean</type> )
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Sets the weak input mode, and returns the new setting.
+        This function is retained for backward compatibility.
+        The recommended way to set weak mode is via
+        the <varname>isn.weak</varname> configuration parameter.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <function>isn_weak</function> ()
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Returns the current status of the weak mode.
+        This function is retained for backward compatibility.
+        The recommended way to check weak mode is via
+        the <varname>isn.weak</varname> configuration parameter.
        </para></entry>
       </row>
      </tbody>
     </tgroup>
   </table>
+ </sect2>
 
-  <para>
-   <firstterm>Weak</firstterm> mode is used to be able to insert invalid data
-   into a table. Invalid means the check digit is wrong, not that there are
-   missing numbers.
-  </para>
+ <sect2 id="isn-configuration-parameters">
+  <title>Configuration Parameters</title>
+
+  <variablelist>
+   <varlistentry id="isn-configuration-parameters-weak">
+    <term>
+     <varname>isn.weak</varname> (<type>boolean</type>)
+     <indexterm>
+      <primary><varname>isn.weak</varname> configuration parameter</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      <varname>isn.weak</varname> enables the weak input mode, which allows
+      ISN input values to be accepted even when their check digit is wrong.
+      The default is <literal>false</literal>, which rejects invalid check
+      digits.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
 
   <para>
    Why would you want to use the weak mode? Well, it could be that
@@ -325,9 +348,9 @@
   </para>
 
   <para>
-   You can also force the insertion of invalid numbers even when not in the
-   weak mode, by appending the <literal>!</literal> character at the end of the
-   number.
+   You can also force the insertion of marked-as-invalid numbers even when not
+   in the weak mode, by appending the <literal>!</literal> character at the
+   end of the number.
   </para>
 
   <para>
@@ -366,11 +389,11 @@ SELECT issn('3251231?');
 SELECT ismn('979047213542?');
 
 --Using the weak mode:
-SELECT isn_weak(true);
+SET isn.weak TO true;
 INSERT INTO test VALUES('978-0-11-000533-4');
 INSERT INTO test VALUES('9780141219307');
 INSERT INTO test VALUES('2-205-00876-X');
-SELECT isn_weak(false);
+SET isn.weak TO false;
 
 SELECT id FROM test WHERE NOT is_valid(id);
 UPDATE test SET id = make_valid(id) WHERE id = '2-205-00876-X!';

@@ -19,8 +19,9 @@ contrib_targets += isn
 install_data(
   'isn.control',
   'isn--1.0--1.1.sql',
-  'isn--1.1--1.2.sql',
   'isn--1.1.sql',
+  'isn--1.1--1.2.sql',
+  'isn--1.2--1.3.sql',
   kwargs: contrib_data_args,
 )
 

@@ -18,7 +18,6 @@
 #include "fmgr.h"
 
 #undef ISN_DEBUG
-#define ISN_WEAK_MODE
 
 /*
  *	uint64 is the internal storage format for ISNs.

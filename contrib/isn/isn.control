@@ -1,6 +1,6 @@
 # isn extension
 comment = 'data types for international product numbering standards'
-default_version = '1.2'
+default_version = '1.3'
 module_pathname = '$libdir/isn'
 relocatable = true
 trusted = true
