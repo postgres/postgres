@@ -724,6 +724,16 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>--no-policies</option></term>
+      <listitem>
+       <para>
+        Do not output commands to restore row security policies, even if
+        the archive contains them.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>--no-publications</option></term>
       <listitem>
        <para>

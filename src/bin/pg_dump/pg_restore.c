@@ -74,6 +74,7 @@ main(int argc, char **argv)
 	static int	use_setsessauth = 0;
 	static int	no_comments = 0;
 	static int	no_data = 0;
+	static int	no_policies = 0;
 	static int	no_publications = 0;
 	static int	no_schema = 0;
 	static int	no_security_labels = 0;
@@ -129,6 +130,7 @@ main(int argc, char **argv)
 		{"use-set-session-authorization", no_argument, &use_setsessauth, 1},
 		{"no-comments", no_argument, &no_comments, 1},
 		{"no-data", no_argument, &no_data, 1},
+		{"no-policies", no_argument, &no_policies, 1},
 		{"no-publications", no_argument, &no_publications, 1},
 		{"no-schema", no_argument, &no_schema, 1},
 		{"no-security-labels", no_argument, &no_security_labels, 1},
@@ -385,6 +387,7 @@ main(int argc, char **argv)
 	opts->noTablespace = outputNoTablespaces;
 	opts->use_setsessauth = use_setsessauth;
 	opts->no_comments = no_comments;
+	opts->no_policies = no_policies;
 	opts->no_publications = no_publications;
 	opts->no_security_labels = no_security_labels;
 	opts->no_subscriptions = no_subscriptions;
@@ -505,6 +508,7 @@ usage(const char *progname)
 	printf(_("  --no-data                    do not restore data\n"));
 	printf(_("  --no-data-for-failed-tables  do not restore data of tables that could not be\n"
 			 "                               created\n"));
+	printf(_("  --no-policies                do not restore row level security policies\n"));
 	printf(_("  --no-publications            do not restore publications\n"));
 	printf(_("  --no-schema                  do not restore schema\n"));
 	printf(_("  --no-security-labels         do not restore security labels\n"));

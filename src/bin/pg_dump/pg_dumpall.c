@@ -101,6 +101,7 @@ static int	no_table_access_method = 0;
 static int	no_tablespaces = 0;
 static int	use_setsessauth = 0;
 static int	no_comments = 0;
+static int	no_policies = 0;
 static int	no_publications = 0;
 static int	no_security_labels = 0;
 static int	no_data = 0;
@@ -173,6 +174,7 @@ main(int argc, char *argv[])
 		{"use-set-session-authorization", no_argument, &use_setsessauth, 1},
 		{"no-comments", no_argument, &no_comments, 1},
 		{"no-data", no_argument, &no_data, 1},
+		{"no-policies", no_argument, &no_policies, 1},
 		{"no-publications", no_argument, &no_publications, 1},
 		{"no-role-passwords", no_argument, &no_role_passwords, 1},
 		{"no-schema", no_argument, &no_schema, 1},
@@ -457,6 +459,8 @@ main(int argc, char *argv[])
 		appendPQExpBufferStr(pgdumpopts, " --no-comments");
 	if (no_data)
 		appendPQExpBufferStr(pgdumpopts, " --no-data");
+	if (no_policies)
+		appendPQExpBufferStr(pgdumpopts, " --no-policies");
 	if (no_publications)
 		appendPQExpBufferStr(pgdumpopts, " --no-publications");
 	if (no_security_labels)
@@ -681,6 +685,7 @@ help(void)
 	printf(_("  --load-via-partition-root    load partitions via the root table\n"));
 	printf(_("  --no-comments                do not dump comment commands\n"));
 	printf(_("  --no-data                    do not dump data\n"));
+	printf(_("  --no-policies                do not dump row security policies\n"));
 	printf(_("  --no-publications            do not dump publications\n"));
 	printf(_("  --no-role-passwords          do not dump passwords for roles\n"));
 	printf(_("  --no-schema                  do not dump schema\n"));

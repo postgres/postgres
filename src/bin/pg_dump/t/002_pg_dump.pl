@@ -579,6 +579,14 @@ my %pgdump_runs = (
 			'postgres',
 		],
 	},
+	no_policies => {
+		dump_cmd => [
+			'pg_dump', '--no-sync',
+			'--file' => "$tempdir/no_policies.sql",
+			'--no-policies',
+			'postgres',
+		],
+	},
 	no_privs => {
 		dump_cmd => [
 			'pg_dump', '--no-sync',
@@ -803,6 +811,7 @@ my %full_runs = (
 	no_toast_compression => 1,
 	no_large_objects => 1,
 	no_owner => 1,
+	no_policies => 1,
 	no_privs => 1,
 	no_statistics => 1,
 	no_table_access_method => 1,
@@ -1328,6 +1337,7 @@ my %tests = (
 		unlike => {
 			exclude_dump_test_schema => 1,
 			exclude_test_table => 1,
+			no_policies => 1,
 			only_dump_measurement => 1,
 		},
 	},
@@ -2948,6 +2958,7 @@ my %tests = (
 		unlike => {
 			exclude_dump_test_schema => 1,
 			exclude_test_table => 1,
+			no_policies => 1,
 			only_dump_measurement => 1,
 		},
 	},
@@ -2969,6 +2980,7 @@ my %tests = (
 		unlike => {
 			exclude_dump_test_schema => 1,
 			exclude_test_table => 1,
+			no_policies => 1,
 			only_dump_measurement => 1,
 		},
 	},
@@ -2990,6 +3002,7 @@ my %tests = (
 		unlike => {
 			exclude_dump_test_schema => 1,
 			exclude_test_table => 1,
+			no_policies => 1,
 			only_dump_measurement => 1,
 		},
 	},
@@ -3011,6 +3024,7 @@ my %tests = (
 		unlike => {
 			exclude_dump_test_schema => 1,
 			exclude_test_table => 1,
+			no_policies => 1,
 			only_dump_measurement => 1,
 		},
 	},
@@ -3032,6 +3046,7 @@ my %tests = (
 		unlike => {
 			exclude_dump_test_schema => 1,
 			exclude_test_table => 1,
+			no_policies => 1,
 			only_dump_measurement => 1,
 		},
 	},
@@ -3053,6 +3068,7 @@ my %tests = (
 		unlike => {
 			exclude_dump_test_schema => 1,
 			exclude_test_table => 1,
+			no_policies => 1,
 			only_dump_measurement => 1,
 		},
 	},

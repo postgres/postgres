@@ -500,6 +500,7 @@ main(int argc, char **argv)
 		{"use-set-session-authorization", no_argument, &dopt.use_setsessauth, 1},
 		{"no-comments", no_argument, &dopt.no_comments, 1},
 		{"no-data", no_argument, NULL, 19},
+		{"no-policies", no_argument, &dopt.no_policies, 1},
 		{"no-publications", no_argument, &dopt.no_publications, 1},
 		{"no-schema", no_argument, NULL, 20},
 		{"no-security-labels", no_argument, &dopt.no_security_labels, 1},
@@ -1152,6 +1153,7 @@ main(int argc, char **argv)
 	ropt->disable_dollar_quoting = dopt.disable_dollar_quoting;
 	ropt->dump_inserts = dopt.dump_inserts;
 	ropt->no_comments = dopt.no_comments;
+	ropt->no_policies = dopt.no_policies;
 	ropt->no_publications = dopt.no_publications;
 	ropt->no_security_labels = dopt.no_security_labels;
 	ropt->no_subscriptions = dopt.no_subscriptions;
@@ -1259,6 +1261,7 @@ help(const char *progname)
 	printf(_("  --load-via-partition-root    load partitions via the root table\n"));
 	printf(_("  --no-comments                do not dump comment commands\n"));
 	printf(_("  --no-data                    do not dump data\n"));
+	printf(_("  --no-policies                do not dump row security policies\n"));
 	printf(_("  --no-publications            do not dump publications\n"));
 	printf(_("  --no-schema                  do not dump schema\n"));
 	printf(_("  --no-security-labels         do not dump security label assignments\n"));
@@ -4035,6 +4038,7 @@ dumpLOs(Archive *fout, const void *arg)
 void
 getPolicies(Archive *fout, TableInfo tblinfo[], int numTables)
 {
+	DumpOptions *dopt = fout->dopt;
 	PQExpBuffer query;
 	PQExpBuffer tbloids;
 	PGresult   *res;
@@ -4054,6 +4058,10 @@ getPolicies(Archive *fout, TableInfo tblinfo[], int numTables)
 
 	/* No policies before 9.5 */
 	if (fout->remoteVersion < 90500)
+		return;
+
+	/* Skip if --no-policies was specified */
+	if (dopt->no_policies)
 		return;
 
 	query = createPQExpBuffer();
