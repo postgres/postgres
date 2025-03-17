@@ -135,6 +135,7 @@ main(int argc, char *argv[])
 		{"no-sync", no_argument, NULL, 'N'},
 		{"output", required_argument, NULL, 'o'},
 		{"tablespace-mapping", required_argument, NULL, 'T'},
+		{"link", no_argument, NULL, 'k'},
 		{"manifest-checksums", required_argument, NULL, 1},
 		{"no-manifest", no_argument, NULL, 2},
 		{"sync-method", required_argument, NULL, 3},
@@ -172,7 +173,7 @@ main(int argc, char *argv[])
 	opt.copy_method = COPY_METHOD_COPY;
 
 	/* process command-line options */
-	while ((c = getopt_long(argc, argv, "dnNo:T:",
+	while ((c = getopt_long(argc, argv, "dknNo:T:",
 							long_options, &optindex)) != -1)
 	{
 		switch (c)
@@ -180,6 +181,9 @@ main(int argc, char *argv[])
 			case 'd':
 				opt.debug = true;
 				pg_logging_increase_verbosity();
+				break;
+			case 'k':
+				opt.copy_method = COPY_METHOD_LINK;
 				break;
 			case 'n':
 				opt.dry_run = true;
@@ -423,6 +427,11 @@ main(int argc, char *argv[])
 			sync_pgdata(opt.output, version * 10000, opt.sync_method);
 		}
 	}
+
+	/* Warn about the possibility of compromising the backups, when link mode */
+	if (opt.copy_method == COPY_METHOD_LINK)
+		pg_log_warning("--link mode was used; any modifications to the output "
+					   "directory may destructively modify input directories");
 
 	/* It's a success, so don't remove the output directories. */
 	reset_directory_cleanup_list();
@@ -761,6 +770,7 @@ help(const char *progname)
 	printf(_("  %s [OPTION]... DIRECTORY...\n"), progname);
 	printf(_("\nOptions:\n"));
 	printf(_("  -d, --debug               generate lots of debugging output\n"));
+	printf(_("  -k, --link                link files instead of copying\n"));
 	printf(_("  -n, --dry-run             do not actually do anything\n"));
 	printf(_("  -N, --no-sync             do not wait for changes to be written safely to disk\n"));
 	printf(_("  -o, --output=DIRECTORY    output directory\n"));

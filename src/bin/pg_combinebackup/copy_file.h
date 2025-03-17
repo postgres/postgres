@@ -25,6 +25,7 @@ typedef enum CopyMethod
 #ifdef WIN32
 	COPY_METHOD_COPYFILE,
 #endif
+	COPY_METHOD_LINK,
 } CopyMethod;
 
 extern void copy_file(const char *src, const char *dst,

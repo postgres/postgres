@@ -40,6 +40,9 @@ static void copy_file_copyfile(const char *src, const char *dst,
 							   pg_checksum_context *checksum_ctx);
 #endif
 
+static void copy_file_link(const char *src, const char *dest,
+						   pg_checksum_context *checksum_ctx);
+
 /*
  * Copy a regular file, optionally computing a checksum, and emitting
  * appropriate debug messages. But if we're in dry-run mode, then just emit
@@ -69,7 +72,13 @@ copy_file(const char *src, const char *dst,
 	}
 
 #ifdef WIN32
-	copy_method = COPY_METHOD_COPYFILE;
+	/*
+	 * We have no specific switch to enable CopyFile on Windows, because
+	 * it's supported (as far as we know) on all Windows machines. So,
+	 * automatically enable it unless some other strategy was selected.
+	 */
+	if (copy_method == COPY_METHOD_COPY)
+		copy_method = COPY_METHOD_COPYFILE;
 #endif
 
 	/* Determine the name of the copy strategy for use in log messages. */
@@ -93,6 +102,10 @@ copy_file(const char *src, const char *dst,
 			strategy_implementation = copy_file_copyfile;
 			break;
 #endif
+		case COPY_METHOD_LINK:
+			strategy_name = "link";
+			strategy_implementation = copy_file_link;
+			break;
 	}
 
 	if (dry_run)
@@ -304,3 +317,21 @@ copy_file_copyfile(const char *src, const char *dst,
 	checksum_file(src, checksum_ctx);
 }
 #endif							/* WIN32 */
+
+/*
+ * copy_file_link
+ * 		Hard-links a file from src to dest.
+ *
+ * If needed, also reads the file and calculates the checksum.
+ */
+static void
+copy_file_link(const char *src, const char *dest,
+			   pg_checksum_context *checksum_ctx)
+{
+	if (link(src, dest) < 0)
+		pg_fatal("error while linking file from \"%s\" to \"%s\": %m",
+				 src, dest);
+
+	/* if needed, calculate checksum of the file */
+	checksum_file(src, checksum_ctx);
+}

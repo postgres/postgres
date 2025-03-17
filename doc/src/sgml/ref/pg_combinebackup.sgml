@@ -138,6 +138,35 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>-k</option></term>
+      <term><option>--link</option></term>
+      <listitem>
+       <para>
+        Use hard links instead of copying files to the synthetic backup.
+        Reconstruction of the synthetic backup might be faster (no file copying)
+        and use less disk space, but care must be taken when using the output
+        directory, because any modifications to that directory (for example,
+        starting the server) can also affect the input directories. Likewise,
+        changes to the input directories (for example, starting the server on
+        the full backup) could affect the output directory. Thus, this option
+        is best used when the input directories are only copies that will be
+        removed after <application>pg_combinebackup</application> has completed.
+       </para>
+
+       <para>
+        Requires that the input backups and the output directory are in the
+        same file system.
+       </para>
+
+       <para>
+        If a backup manifest is not available or does not contain checksum of
+        the right type, hard links will still be created, but the file will be
+        also read block-by-block for the checksum calculation.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>--clone</option></term>
       <listitem>
        <para>
@@ -167,7 +196,8 @@ PostgreSQL documentation
       <listitem>
        <para>
         Perform regular file copy.  This is the default.  (See also
-        <option>--copy-file-range</option> and <option>--clone</option>.)
+        <option>--copy-file-range</option>, <option>--clone</option>, and
+        <option>-k</option>/<option>--link</option>.)
        </para>
       </listitem>
      </varlistentry>
