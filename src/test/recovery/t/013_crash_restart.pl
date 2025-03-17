@@ -34,30 +34,27 @@ $node->safe_psql(
 my ($killme_stdin, $killme_stdout, $killme_stderr) = ('', '', '');
 my $killme = IPC::Run::start(
 	[
-		'psql', '-X', '-qAt', '-v', 'ON_ERROR_STOP=1', '-f', '-', '-d',
-		$node->connstr('postgres')
+		'psql', '--no-psqlrc', '--quiet', '--no-align', '--tuples-only',
+		'--set' => 'ON_ERROR_STOP=1',
+		'--file' => '-',
+		'--dbname' => $node->connstr('postgres')
 	],
-	'<',
-	\$killme_stdin,
-	'>',
-	\$killme_stdout,
-	'2>',
-	\$killme_stderr,
+	'<' => \$killme_stdin,
+	'>' => \$killme_stdout,
+	'2>' => \$killme_stderr,
 	$psql_timeout);
 
 # Need a second psql to check if crash-restart happened.
 my ($monitor_stdin, $monitor_stdout, $monitor_stderr) = ('', '', '');
 my $monitor = IPC::Run::start(
 	[
-		'psql', '-X', '-qAt', '-v', 'ON_ERROR_STOP=1', '-f', '-', '-d',
-		$node->connstr('postgres')
+		'psql', '--no-psqlrc', '--quiet', '--no-align', '--tuples-only',
+		'--set' => 'ON_ERROR_STOP=1',
+		'--file', '-', '--dbname' => $node->connstr('postgres')
 	],
-	'<',
-	\$monitor_stdin,
-	'>',
-	\$monitor_stdout,
-	'2>',
-	\$monitor_stderr,
+	'<' => \$monitor_stdin,
+	'>' => \$monitor_stdout,
+	'2>' => \$monitor_stderr,
 	$psql_timeout);
 
 #create table, insert row that should survive

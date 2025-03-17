@@ -31,7 +31,12 @@ command_like(
 
 # Set the old cluster's default char signedness to unsigned for test.
 command_ok(
-	[ 'pg_resetwal', '--char-signedness', 'unsigned', '-f', $old->data_dir ],
+	[
+		'pg_resetwal',
+		'--char-signedness' => 'unsigned',
+		'--force',
+		$old->data_dir
+	],
 	"set old cluster's default char signedness to unsigned");
 
 # Check if the value is successfully updated.
@@ -44,14 +49,14 @@ command_like(
 command_checks_all(
 	[
 		'pg_upgrade', '--no-sync',
-		'-d', $old->data_dir,
-		'-D', $new->data_dir,
-		'-b', $old->config_data('--bindir'),
-		'-B', $new->config_data('--bindir'),
-		'-s', $new->host,
-		'-p', $old->port,
-		'-P', $new->port,
-		'--set-char-signedness', 'signed',
+		'--old-datadir' => $old->data_dir,
+		'--new-datadir' => $new->data_dir,
+		'--old-bindir' => $old->config_data('--bindir'),
+		'--new-bindir' => $new->config_data('--bindir'),
+		'--socketdir' => $new->host,
+		'--old-port' => $old->port,
+		'--new-port' => $new->port,
+		'--set-char-signedness' => 'signed',
 		$mode
 	],
 	1,
@@ -64,13 +69,13 @@ command_checks_all(
 command_ok(
 	[
 		'pg_upgrade', '--no-sync',
-		'-d', $old->data_dir,
-		'-D', $new->data_dir,
-		'-b', $old->config_data('--bindir'),
-		'-B', $new->config_data('--bindir'),
-		'-s', $new->host,
-		'-p', $old->port,
-		'-P', $new->port,
+		'--old-datadir' => $old->data_dir,
+		'--new-datadir' => $new->data_dir,
+		'--old-bindir' => $old->config_data('--bindir'),
+		'--new-bindir' => $new->config_data('--bindir'),
+		'--socketdir' => $new->host,
+		'--old-port' => $old->port,
+		'--new-port' => $new->port,
 		$mode
 	],
 	'run of pg_upgrade');

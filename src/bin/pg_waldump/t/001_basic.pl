@@ -247,13 +247,15 @@ command_fails_like(
 	$lsn2++;
 	my $new_start = sprintf("%s/%X", $part1, $lsn2);
 
-	my (@cmd, $stdout, $stderr, $result);
+	my ($stdout, $stderr);
 
-	@cmd = (
+	my $result = IPC::Run::run [
 		'pg_waldump',
 		'--start' => $new_start,
-		$node->data_dir . '/pg_wal/' . $start_walfile);
-	$result = IPC::Run::run \@cmd, '>', \$stdout, '2>', \$stderr;
+		$node->data_dir . '/pg_wal/' . $start_walfile
+	  ],
+	  '>' => \$stdout,
+	  '2>' => \$stderr;
 	ok($result, "runs with start segment and start LSN specified");
 	like($stderr, qr/first record is after/, 'info message printed');
 }
@@ -266,18 +268,20 @@ sub test_pg_waldump
 	local $Test::Builder::Level = $Test::Builder::Level + 1;
 	my @opts = @_;
 
-	my (@cmd, $stdout, $stderr, $result, @lines);
+	my ($stdout, $stderr);
 
-	@cmd = (
+	my $result = IPC::Run::run [
 		'pg_waldump',
 		'--path' => $node->data_dir,
 		'--start' => $start_lsn,
-		'--end' => $end_lsn);
-	push @cmd, @opts;
-	$result = IPC::Run::run \@cmd, '>', \$stdout, '2>', \$stderr;
+		'--end' => $end_lsn,
+		@opts
+	  ],
+	  '>' => \$stdout,
+	  '2>' => \$stderr;
 	ok($result, "pg_waldump @opts: runs ok");
 	is($stderr, '', "pg_waldump @opts: no stderr");
-	@lines = split /\n/, $stdout;
+	my @lines = split /\n/, $stdout;
 	ok(@lines > 0, "pg_waldump @opts: some lines are output");
 	return @lines;
 }

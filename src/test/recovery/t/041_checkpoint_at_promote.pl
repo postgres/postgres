@@ -124,15 +124,14 @@ my $psql_timeout = IPC::Run::timer(3600);
 my ($killme_stdin, $killme_stdout, $killme_stderr) = ('', '', '');
 my $killme = IPC::Run::start(
 	[
-		'psql', '-XAtq', '-v', 'ON_ERROR_STOP=1', '-f', '-', '-d',
-		$node_standby->connstr('postgres')
+		'psql', '--no-psqlrc', '--no-align', '--tuples-only', '--quiet',
+		'--set' => 'ON_ERROR_STOP=1',
+		'--file' => '-',
+		'--dbname' => $node_standby->connstr('postgres')
 	],
-	'<',
-	\$killme_stdin,
-	'>',
-	\$killme_stdout,
-	'2>',
-	\$killme_stderr,
+	'<' => \$killme_stdin,
+	'>' => \$killme_stdout,
+	'2>' => \$killme_stderr,
 	$psql_timeout);
 $killme_stdin .= q[
 SELECT pg_backend_pid();

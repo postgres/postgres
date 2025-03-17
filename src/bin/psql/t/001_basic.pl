@@ -52,8 +52,9 @@ foreach my $arg (qw(commands variables))
 	my ($stdout, $stderr);
 	my $result;
 
-	$result = IPC::Run::run [ 'psql', "--help=$arg" ], '>', \$stdout, '2>',
-	  \$stderr;
+	$result = IPC::Run::run [ 'psql', "--help=$arg" ],
+	  '>' => \$stdout,
+	  '2>' => \$stderr;
 	ok($result, "psql --help=$arg exit code 0");
 	isnt($stdout, '', "psql --help=$arg goes to stdout");
 	is($stderr, '', "psql --help=$arg nothing to stderr");

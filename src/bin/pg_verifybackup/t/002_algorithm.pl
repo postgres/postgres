@@ -19,18 +19,21 @@ sub test_checksums
 	my ($format, $algorithm) = @_;
 	my $backup_path = $primary->backup_dir . '/' . $format . '/' . $algorithm;
 	my @backup = (
-		'pg_basebackup', '-D', $backup_path,
-		'--manifest-checksums', $algorithm, '--no-sync', '-cfast');
-	my @verify = ('pg_verifybackup', '-e', $backup_path);
+		'pg_basebackup',
+		'--pgdata' => $backup_path,
+		'--manifest-checksums' => $algorithm,
+		'--no-sync',
+		'--checkpoint' => 'fast');
+	my @verify = ('pg_verifybackup', '--exit-on-error', $backup_path);
 
 	if ($format eq 'tar')
 	{
 		# Add switch to get a tar-format backup
-		push @backup, ('-F', 't');
+		push @backup, ('--format' => 'tar');
 
 		# Add switch to skip WAL verification, which is not yet supported for
 		# tar-format backups
-		push @verify, ('-n');
+		push @verify, ('--no-parse-wal');
 	}
 
 	# A backup with a bogus algorithm should fail.

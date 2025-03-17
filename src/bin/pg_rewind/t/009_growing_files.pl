@@ -56,8 +56,7 @@ my $ret = run_log(
 		'--target-pgdata' => $primary_pgdata,
 		'--no-sync',
 	],
-	'2>>',
-	"$standby_pgdata/tst_both_dir/file1");
+	'2>>' => "$standby_pgdata/tst_both_dir/file1");
 ok(!$ret, 'Error out on copying growing file');
 
 # Ensure that the files are of different size, the final error message should

@@ -208,7 +208,8 @@ if (defined($ENV{olddump}))
 
 	# Load the dump using the "postgres" database as "regression" does
 	# not exist yet, and we are done here.
-	$oldnode->command_ok([ 'psql', '-X', '-f', $olddumpfile, 'postgres' ],
+	$oldnode->command_ok(
+		[ 'psql', '--no-psqlrc', '--file' => $olddumpfile, 'postgres' ],
 		'loaded old dump file');
 }
 else
@@ -303,14 +304,15 @@ if (defined($ENV{oldinstall}))
 		my @command_args = ();
 		for my $upcmd (@{ $adjust_cmds->{$updb} })
 		{
-			push @command_args, '-c', $upcmd;
+			push @command_args, '--command' => $upcmd;
 		}
 
 		# For simplicity, use the newer version's psql to issue the commands.
 		$newnode->command_ok(
 			[
-				'psql', '-X', '-v', 'ON_ERROR_STOP=1',
-				'-d', $oldnode->connstr($updb),
+				'psql', '--no-psqlrc',
+				'--set' => 'ON_ERROR_STOP=1',
+				'--dbname' => $oldnode->connstr($updb),
 				@command_args,
 			],
 			"ran version adaptation commands for database $updb");
@@ -324,8 +326,9 @@ $oldnode->restart;
 # Take a dump before performing the upgrade as a base comparison. Note
 # that we need to use pg_dumpall from the new node here.
 my @dump_command = (
-	'pg_dumpall', '--no-sync', '-d', $oldnode->connstr('postgres'),
-	'-f', $dump1_file);
+	'pg_dumpall', '--no-sync',
+	'--dbname' => $oldnode->connstr('postgres'),
+	'--file' => $dump1_file);
 # --extra-float-digits is needed when upgrading from a version older than 11.
 push(@dump_command, '--extra-float-digits', '0')
   if ($oldnode->pg_version < 12);
@@ -399,13 +402,13 @@ $oldnode->stop;
 command_checks_all(
 	[
 		'pg_upgrade', '--no-sync',
-		'-d', $oldnode->data_dir,
-		'-D', $newnode->data_dir,
-		'-b', $oldbindir . '/does/not/exist/',
-		'-B', $newbindir,
-		'-s', $newnode->host,
-		'-p', $oldnode->port,
-		'-P', $newnode->port,
+		'--old-datadir' => $oldnode->data_dir,
+		'--new-datadir' => $newnode->data_dir,
+		'--old-bindir' => $oldbindir . '/does/not/exist/',
+		'--new-bindir' => $newbindir,
+		'--socketdir' => $newnode->host,
+		'--old-port' => $oldnode->port,
+		'--new-port' => $newnode->port,
 		$mode, '--check',
 	],
 	1,
@@ -427,13 +430,13 @@ SKIP:
 	command_checks_all(
 		[
 			'pg_upgrade', '--no-sync',
-			'-d', $oldnode->data_dir,
-			'-D', $newnode->data_dir,
-			'-b', $oldbindir,
-			'-B', $newbindir,
-			'-s', $newnode->host,
-			'-p', $oldnode->port,
-			'-P', $newnode->port,
+			'--old-datadir' => $oldnode->data_dir,
+			'--new-datadir' => $newnode->data_dir,
+			'--old-bindir' => $oldbindir,
+			'--new-bindir' => $newbindir,
+			'--socketdir' => $newnode->host,
+			'--old-port' => $oldnode->port,
+			'--new-port' => $newnode->port,
 			$mode, '--check',
 		],
 		1,
@@ -451,10 +454,14 @@ $oldnode->stop;
 # --check command works here, cleans up pg_upgrade_output.d.
 command_ok(
 	[
-		'pg_upgrade', '--no-sync', '-d', $oldnode->data_dir,
-		'-D', $newnode->data_dir, '-b', $oldbindir,
-		'-B', $newbindir, '-s', $newnode->host,
-		'-p', $oldnode->port, '-P', $newnode->port,
+		'pg_upgrade', '--no-sync',
+		'--old-datadir' => $oldnode->data_dir,
+		'--new-datadir' => $newnode->data_dir,
+		'--old-bindir' => $oldbindir,
+		'--new-bindir' => $newbindir,
+		'--socketdir' => $newnode->host,
+		'--old-port' => $oldnode->port,
+		'--new-port' => $newnode->port,
 		$mode, '--check',
 	],
 	'run of pg_upgrade --check for new instance');
@@ -464,10 +471,14 @@ ok(!-d $newnode->data_dir . "/pg_upgrade_output.d",
 # Actual run, pg_upgrade_output.d is removed at the end.
 command_ok(
 	[
-		'pg_upgrade', '--no-sync', '-d', $oldnode->data_dir,
-		'-D', $newnode->data_dir, '-b', $oldbindir,
-		'-B', $newbindir, '-s', $newnode->host,
-		'-p', $oldnode->port, '-P', $newnode->port,
+		'pg_upgrade', '--no-sync',
+		'--old-datadir' => $oldnode->data_dir,
+		'--new-datadir' => $newnode->data_dir,
+		'--old-bindir' => $oldbindir,
+		'--new-bindir' => $newbindir,
+		'--socketdir' => $newnode->host,
+		'--old-port' => $oldnode->port,
+		'--new-port' => $newnode->port,
 		$mode,
 	],
 	'run of pg_upgrade for new instance');
@@ -512,10 +523,11 @@ is( $result,
 
 # Second dump from the upgraded instance.
 @dump_command = (
-	'pg_dumpall', '--no-sync', '-d', $newnode->connstr('postgres'),
-	'-f', $dump2_file);
+	'pg_dumpall', '--no-sync',
+	'--dbname' => $newnode->connstr('postgres'),
+	'--file' => $dump2_file);
 # --extra-float-digits is needed when upgrading from a version older than 11.
-push(@dump_command, '--extra-float-digits', '0')
+push(@dump_command, '--extra-float-digits' => '0')
   if ($oldnode->pg_version < 12);
 $newnode->command_ok(\@dump_command, 'dump after running pg_upgrade');
 

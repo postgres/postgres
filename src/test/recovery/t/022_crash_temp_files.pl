@@ -38,15 +38,14 @@ $node->safe_psql('postgres', q[CREATE TABLE tab_crash (a integer UNIQUE);]);
 my ($killme_stdin, $killme_stdout, $killme_stderr) = ('', '', '');
 my $killme = IPC::Run::start(
 	[
-		'psql', '-X', '-qAt', '-v', 'ON_ERROR_STOP=1', '-f', '-', '-d',
-		$node->connstr('postgres')
+		'psql', '--no-psqlrc', '--quiet', '--no-align', '--tuples-only',
+		'--set' => 'ON_ERROR_STOP=1',
+		'--file' => '-',
+		'--dbname' => $node->connstr('postgres')
 	],
-	'<',
-	\$killme_stdin,
-	'>',
-	\$killme_stdout,
-	'2>',
-	\$killme_stderr,
+	'<' => \$killme_stdin,
+	'>' => \$killme_stdout,
+	'2>' => \$killme_stderr,
 	$psql_timeout);
 
 # Get backend pid
@@ -66,15 +65,14 @@ $killme_stderr = '';
 my ($killme_stdin2, $killme_stdout2, $killme_stderr2) = ('', '', '');
 my $killme2 = IPC::Run::start(
 	[
-		'psql', '-X', '-qAt', '-v', 'ON_ERROR_STOP=1', '-f', '-', '-d',
-		$node->connstr('postgres')
+		'psql', '--no-psqlrc', '--quiet', '--no-align', '--tuples-only',
+		'--set' => 'ON_ERROR_STOP=1',
+		'--file' => '-',
+		'--dbname' => $node->connstr('postgres')
 	],
-	'<',
-	\$killme_stdin2,
-	'>',
-	\$killme_stdout2,
-	'2>',
-	\$killme_stderr2,
+	'<' => \$killme_stdin2,
+	'>' => \$killme_stdout2,
+	'2>' => \$killme_stderr2,
 	$psql_timeout);
 
 # Insert one tuple and leave the transaction open

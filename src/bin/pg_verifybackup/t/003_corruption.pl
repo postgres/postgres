@@ -190,13 +190,13 @@ for my $scenario (@scenario)
 
 			# Construct base.tar with what's left.
 			chdir($backup_path) || die "chdir: $!";
-			command_ok([ $tar, '-cf', "$tar_backup_path/base.tar", '.' ]);
+			command_ok([ $tar, '-cf' => "$tar_backup_path/base.tar", '.' ]);
 			chdir($cwd) || die "chdir: $!";
 
 			# Now check that the backup no longer verifies. We must use -n
 			# here, because pg_waldump can't yet read WAL from a tarfile.
 			command_fails_like(
-				[ 'pg_verifybackup', '-n', $tar_backup_path ],
+				[ 'pg_verifybackup', '--no-parse-wal', $tar_backup_path ],
 				$scenario->{'fails_like'},
 				"corrupt backup fails verification: $name");
 

@@ -85,10 +85,11 @@ command_fails_like(
 
 	my $stderr;
 	my $oldestkeptwalfile = '00000001000000370000000E';
-	my $result =
-	  IPC::Run::run [ 'pg_archivecleanup', '-d', '-n', $tempdir,
-		$oldestkeptwalfile ],
-	  '2>', \$stderr;
+	my $result = IPC::Run::run [
+		'pg_archivecleanup', '--debug', '--dry-run', $tempdir,
+		$oldestkeptwalfile
+	  ],
+	  '2>' => \$stderr;
 	ok($result, "pg_archivecleanup dry run: exit code 0");
 
 	for my $walpair (@walfiles_verbose)

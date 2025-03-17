@@ -22,8 +22,13 @@ $node->start;
 local %ENV = $node->_get_env();
 
 my ($stdin, $stdout, $stderr);
-my $h = IPC::Run::start([ 'psql', '-X', '-v', 'ON_ERROR_STOP=1' ],
-	\$stdin, \$stdout, \$stderr);
+my $h = IPC::Run::start(
+	[
+		'psql', '--no-psqlrc', '--set' => 'ON_ERROR_STOP=1',
+	],
+	'<' => \$stdin,
+	'>' => \$stdout,
+	'2>' => \$stderr);
 
 # Send sleep command and wait until the server has registered it
 $stdin = "select pg_sleep($PostgreSQL::Test::Utils::timeout_default);\n";

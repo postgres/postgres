@@ -673,7 +673,9 @@ sub connect_test
 	my ($ret, $stdout, $stderr) = $node->psql(
 		'postgres',
 		'',
-		extra_params => [ '-w', '-c', 'SELECT current_enc()' ],
+		extra_params => [
+			'--no-password', '--command' => 'SELECT current_enc()',
+		],
 		connstr => "$connstr_full",
 		on_error_stop => 0);
 

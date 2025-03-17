@@ -35,7 +35,7 @@ mkdir "$PostgreSQL::Test::Utils::tmp_check/traces";
 
 for my $testname (@tests)
 {
-	my @extraargs = ('-r', $numrows);
+	my @extraargs = ('-r' => $numrows);
 	my $cmptrace = grep(/^$testname$/,
 		qw(simple_pipeline nosync multi_pipelines prepared singlerow
 		  pipeline_abort pipeline_idle transaction
@@ -46,7 +46,7 @@ for my $testname (@tests)
 	  "$PostgreSQL::Test::Utils::tmp_check/traces/$testname.trace";
 	if ($cmptrace)
 	{
-		push @extraargs, "-t", $traceout;
+		push @extraargs, "-t" => $traceout;
 	}
 
 	# Execute the test

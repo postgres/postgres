@@ -14,7 +14,8 @@ use Test::More;
 my $node = PostgreSQL::Test::Cluster->new('primary');
 $node->init(
 	'auth_extra' => [
-		'--create-role', 'regress_regular,regress_reserved,regress_superuser'
+		'--create-role' =>
+		  'regress_regular,regress_reserved,regress_superuser',
 	]);
 $node->append_conf('postgresql.conf', "max_connections = 6");
 $node->append_conf('postgresql.conf', "reserved_connections = 2");
@@ -43,7 +44,7 @@ sub background_psql_as_user
 	return $node->background_psql(
 		'postgres',
 		on_error_die => 1,
-		extra_params => [ '-U', $user ]);
+		extra_params => [ '--username' => $user ]);
 }
 
 # Like connect_fails(), except that we also wait for the failed backend to

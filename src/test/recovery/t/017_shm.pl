@@ -29,11 +29,11 @@ my $tempdir = PostgreSQL::Test::Utils::tempdir;
 
 # Log "ipcs" diffs on a best-effort basis, swallowing any error.
 my $ipcs_before = "$tempdir/ipcs_before";
-eval { run_log [ 'ipcs', '-am' ], '>', $ipcs_before; };
+eval { run_log [ 'ipcs', '-am' ], '>' => $ipcs_before; };
 
 sub log_ipcs
 {
-	eval { run_log [ 'ipcs', '-am' ], '|', [ 'diff', $ipcs_before, '-' ] };
+	eval { run_log [ 'ipcs', '-am' ], '|' => [ 'diff', $ipcs_before, '-' ] };
 	return;
 }
 
@@ -122,15 +122,13 @@ my $slow_query = 'SELECT wait_pid(pg_backend_pid())';
 my ($stdout, $stderr);
 my $slow_client = IPC::Run::start(
 	[
-		'psql', '-X', '-qAt', '-d', $gnat->connstr('postgres'),
-		'-c', $slow_query
+		'psql', '--no-psqlrc', '--quiet', '--no-align', '--tuples-only',
+		'--dbname' => $gnat->connstr('postgres'),
+		'--command' => $slow_query
 	],
-	'<',
-	\undef,
-	'>',
-	\$stdout,
-	'2>',
-	\$stderr,
+	'<' => \undef,
+	'>' => \$stdout,
+	'2>' => \$stderr,
 	IPC::Run::timeout(5 * $PostgreSQL::Test::Utils::timeout_default));
 ok( $gnat->poll_query_until(
 		'postgres',

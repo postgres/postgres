@@ -69,8 +69,9 @@ sub primary_psql
 	my $cmd = shift;
 	my $dbname = shift || 'postgres';
 
-	system_or_bail 'psql', '-q', '--no-psqlrc', '-d',
-	  $node_primary->connstr($dbname), '-c', "$cmd";
+	system_or_bail 'psql', '--quiet', '--no-psqlrc',
+	  '--dbname' => $node_primary->connstr($dbname),
+	  '--command' => $cmd;
 	return;
 }
 
@@ -79,8 +80,9 @@ sub standby_psql
 	my $cmd = shift;
 	my $dbname = shift || 'postgres';
 
-	system_or_bail 'psql', '-q', '--no-psqlrc', '-d',
-	  $node_standby->connstr($dbname), '-c', "$cmd";
+	system_or_bail 'psql', '--quiet', '--no-psqlrc',
+	  '--dbname' => $node_standby->connstr($dbname),
+	  '--command' => $cmd;
 	return;
 }
 
@@ -95,11 +97,12 @@ sub check_query
 
 	# we want just the output, no formatting
 	my $result = run [
-		'psql', '-q', '-A', '-t', '--no-psqlrc', '-d',
-		$node_primary->connstr('postgres'),
-		'-c', $query
+		'psql', '--quiet', '--no-align', '--tuples-only', '--no-psqlrc',
+		'--dbname' => $node_primary->connstr('postgres'),
+		'--command' => $query
 	  ],
-	  '>', \$stdout, '2>', \$stderr;
+	  '>' => \$stdout,
+	  '2>' => \$stderr;
 
 	is($result, 1, "$test_name: psql exit code");
 	is($stderr, '', "$test_name: psql no stderr");
@@ -124,7 +127,7 @@ sub setup_cluster
 	$node_primary->init(
 		allows_streaming => 1,
 		extra => $extra,
-		auth_extra => [ '--create-role', 'rewind_user' ]);
+		auth_extra => [ '--create-role' => 'rewind_user' ]);
 
 	# Set wal_keep_size to prevent WAL segment recycling after enforced
 	# checkpoints in the tests.

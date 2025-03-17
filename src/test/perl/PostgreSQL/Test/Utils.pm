@@ -20,7 +20,7 @@ PostgreSQL::Test::Utils - helper module for writing PostgreSQL's C<prove> tests.
   command_fails(['initdb', '--invalid-option'],
               'command fails with invalid option');
   my $tempdir = PostgreSQL::Test::Utils::tempdir;
-  command_ok('initdb', '-D', $tempdir);
+  command_ok('initdb', '--pgdata' => $tempdir);
 
   # Miscellanea
   print "on Windows" if $PostgreSQL::Test::Utils::windows_os;
@@ -333,7 +333,7 @@ sub has_wal_read_bug
 	return
 		 $Config{osname} eq 'linux'
 	  && $Config{archname} =~ /^sparc/
-	  && !run_log([ qw(df -x ext4), $tmp_check ], '>', '/dev/null', '2>&1');
+	  && !run_log([ qw(df -x ext4), $tmp_check ], '&>' => '/dev/null');
 }
 
 =pod
@@ -419,7 +419,7 @@ sub run_command
 {
 	my ($cmd) = @_;
 	my ($stdout, $stderr);
-	my $result = IPC::Run::run $cmd, '>', \$stdout, '2>', \$stderr;
+	my $result = IPC::Run::run $cmd, '>' => \$stdout, '2>' => \$stderr;
 	chomp($stdout);
 	chomp($stderr);
 	return ($stdout, $stderr);
@@ -723,8 +723,9 @@ sub scan_server_header
 	my ($header_path, $regexp) = @_;
 
 	my ($stdout, $stderr);
-	my $result = IPC::Run::run [ 'pg_config', '--includedir-server' ], '>',
-	  \$stdout, '2>', \$stderr
+	my $result = IPC::Run::run [ 'pg_config', '--includedir-server' ],
+	  '>' => \$stdout,
+	  '2>' => \$stderr
 	  or die "could not execute pg_config";
 	chomp($stdout);
 	$stdout =~ s/\r$//;
@@ -761,8 +762,9 @@ sub check_pg_config
 {
 	my ($regexp) = @_;
 	my ($stdout, $stderr);
-	my $result = IPC::Run::run [ 'pg_config', '--includedir' ], '>',
-	  \$stdout, '2>', \$stderr
+	my $result = IPC::Run::run [ 'pg_config', '--includedir' ],
+	  '>' => \$stdout,
+	  '2>' => \$stderr
 	  or die "could not execute pg_config";
 	chomp($stdout);
 	$stdout =~ s/\r$//;
@@ -925,8 +927,9 @@ sub program_help_ok
 	my ($cmd) = @_;
 	my ($stdout, $stderr);
 	print("# Running: $cmd --help\n");
-	my $result = IPC::Run::run [ $cmd, '--help' ], '>', \$stdout, '2>',
-	  \$stderr;
+	my $result = IPC::Run::run [ $cmd, '--help' ],
+	  '>' => \$stdout,
+	  '2>' => \$stderr;
 	ok($result, "$cmd --help exit code 0");
 	isnt($stdout, '', "$cmd --help goes to stdout");
 	is($stderr, '', "$cmd --help nothing to stderr");
@@ -956,8 +959,9 @@ sub program_version_ok
 	my ($cmd) = @_;
 	my ($stdout, $stderr);
 	print("# Running: $cmd --version\n");
-	my $result = IPC::Run::run [ $cmd, '--version' ], '>', \$stdout, '2>',
-	  \$stderr;
+	my $result = IPC::Run::run [ $cmd, '--version' ],
+	  '>' => \$stdout,
+	  '2>' => \$stderr;
 	ok($result, "$cmd --version exit code 0");
 	isnt($stdout, '', "$cmd --version goes to stdout");
 	is($stderr, '', "$cmd --version nothing to stderr");
@@ -979,9 +983,9 @@ sub program_options_handling_ok
 	my ($cmd) = @_;
 	my ($stdout, $stderr);
 	print("# Running: $cmd --not-a-valid-option\n");
-	my $result = IPC::Run::run [ $cmd, '--not-a-valid-option' ], '>',
-	  \$stdout,
-	  '2>', \$stderr;
+	my $result = IPC::Run::run [ $cmd, '--not-a-valid-option' ],
+	  '>' => \$stdout,
+	  '2>' => \$stderr;
 	ok(!$result, "$cmd with invalid option nonzero exit code");
 	isnt($stderr, '', "$cmd with invalid option prints error message");
 	return;
@@ -1002,7 +1006,7 @@ sub command_like
 	my ($cmd, $expected_stdout, $test_name) = @_;
 	my ($stdout, $stderr);
 	print("# Running: " . join(" ", @{$cmd}) . "\n");
-	my $result = IPC::Run::run $cmd, '>', \$stdout, '2>', \$stderr;
+	my $result = IPC::Run::run $cmd, '>' => \$stdout, '2>' => \$stderr;
 	ok($result, "$test_name: exit code 0");
 	is($stderr, '', "$test_name: no stderr");
 	like($stdout, $expected_stdout, "$test_name: matches");
@@ -1031,7 +1035,7 @@ sub command_like_safe
 	my $stdoutfile = File::Temp->new();
 	my $stderrfile = File::Temp->new();
 	print("# Running: " . join(" ", @{$cmd}) . "\n");
-	my $result = IPC::Run::run $cmd, '>', $stdoutfile, '2>', $stderrfile;
+	my $result = IPC::Run::run $cmd, '>' => $stdoutfile, '2>' => $stderrfile;
 	$stdout = slurp_file($stdoutfile);
 	$stderr = slurp_file($stderrfile);
 	ok($result, "$test_name: exit code 0");
@@ -1055,7 +1059,7 @@ sub command_fails_like
 	my ($cmd, $expected_stderr, $test_name) = @_;
 	my ($stdout, $stderr);
 	print("# Running: " . join(" ", @{$cmd}) . "\n");
-	my $result = IPC::Run::run $cmd, '>', \$stdout, '2>', \$stderr;
+	my $result = IPC::Run::run $cmd, '>' => \$stdout, '2>' => \$stderr;
 	ok(!$result, "$test_name: exit code not 0");
 	like($stderr, $expected_stderr, "$test_name: matches");
 	return;
@@ -1093,7 +1097,7 @@ sub command_checks_all
 	# run command
 	my ($stdout, $stderr);
 	print("# Running: " . join(" ", @{$cmd}) . "\n");
-	IPC::Run::run($cmd, '>', \$stdout, '2>', \$stderr);
+	IPC::Run::run($cmd, '>' => \$stdout, '2>' => \$stderr);
 
 	# See http://perldoc.perl.org/perlvar.html#%24CHILD_ERROR
 	my $ret = $?;

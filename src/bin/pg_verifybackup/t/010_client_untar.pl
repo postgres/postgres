@@ -72,14 +72,19 @@ for my $tc (@test_configuration)
 			|| $tc->{'decompress_program'} eq '');
 
 		# Take a client-side backup.
-		my @backup = (
-			'pg_basebackup', '-D', $backup_path,
-			'-Xfetch', '--no-sync', '-cfast', '-Ft');
-		push @backup, @{ $tc->{'backup_flags'} };
 		my $backup_stdout = '';
 		my $backup_stderr = '';
-		my $backup_result = $primary->run_log(\@backup, '>', \$backup_stdout,
-			'2>', \$backup_stderr);
+		my $backup_result = $primary->run_log(
+			[
+				'pg_basebackup', '--no-sync',
+				'--pgdata' => $backup_path,
+				'--wal-method' => 'fetch',
+				'--checkpoint' => 'fast',
+				'--format' => 'tar',
+				@{ $tc->{'backup_flags'} }
+			],
+			'>' => \$backup_stdout,
+			'2>' => \$backup_stderr);
 		if ($backup_stdout ne '')
 		{
 			print "# standard output was:\n$backup_stdout";

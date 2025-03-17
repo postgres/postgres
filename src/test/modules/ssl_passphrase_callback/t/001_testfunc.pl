@@ -62,9 +62,11 @@ like(
 $node->append_conf('postgresql.conf', "ssl_passphrase.passphrase = 'blurfl'");
 
 # try to start the server again
-my $ret =
-  PostgreSQL::Test::Utils::system_log('pg_ctl', '-D', $node->data_dir, '-l',
-	$node->logfile, 'start');
+my $ret = PostgreSQL::Test::Utils::system_log(
+	'pg_ctl',
+	'--pgdata' => $node->data_dir,
+	'--log' => $node->logfile,
+	'start');
 
 
 # with a bad passphrase the server should not start

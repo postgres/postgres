@@ -104,7 +104,7 @@ sub new
 	my ($host, $hostaddr, $realm) = @_;
 
 	my ($stdout, $krb5_version);
-	run_log [ $krb5_config, '--version' ], '>', \$stdout
+	run_log [ $krb5_config, '--version' ], '>' => \$stdout
 	  or BAIL_OUT("could not execute krb5-config");
 	BAIL_OUT("Heimdal is not supported") if $stdout =~ m/heimdal/;
 	$stdout =~ m/Kerberos 5 release ([0-9]+\.[0-9]+)/

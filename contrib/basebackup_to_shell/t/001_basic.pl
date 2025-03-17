@@ -131,8 +131,10 @@ sub verify_backup
 
 		# Untar.
 		my $extract_path = PostgreSQL::Test::Utils::tempdir;
-		system_or_bail($tar, 'xf', $backup_dir . '/' . $prefix . 'base.tar',
-			'-C', $extract_path);
+		system_or_bail(
+			$tar,
+			'xf' => $backup_dir . '/' . $prefix . 'base.tar',
+			'-C' => $extract_path);
 
 		# Verify.
 		$node->command_ok(

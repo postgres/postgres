@@ -53,19 +53,21 @@ for my $tc (@test_configuration)
 		skip "$method compression not supported by this build", 2
 		  if !$tc->{'enabled'};
 
-		# Take backup with server compression enabled.
-		my @backup = (
-			'pg_basebackup', '-D', $backup_path,
-			'-Xfetch', '--no-sync', '-cfast', '-Fp');
-		push @backup, @{ $tc->{'backup_flags'} };
-
-		my @verify = ('pg_verifybackup', '-e', $backup_path);
-
 		# A backup with a valid compression method should work.
 		my $backup_stdout = '';
 		my $backup_stderr = '';
-		my $backup_result = $primary->run_log(\@backup, '>', \$backup_stdout,
-			'2>', \$backup_stderr);
+		my $backup_result = $primary->run_log(
+			[
+				'pg_basebackup',
+				'--pgdata' => $backup_path,
+				'--wal-method' => 'fetch',
+				'--no-sync',
+				'--checkpoint' => 'fast',
+				'--format' => 'plain',
+				@{ $tc->{'backup_flags'} },
+			],
+			'>' => \$backup_stdout,
+			'2>' => \$backup_stderr);
 		if ($backup_stdout ne '')
 		{
 			print "# standard output was:\n$backup_stdout";
@@ -86,7 +88,8 @@ for my $tc (@test_configuration)
 		}
 
 		# Make sure that it verifies OK.
-		$primary->command_ok(\@verify,
+		$primary->command_ok(
+			[ 'pg_verifybackup', '--exit-on-error', $backup_path ],
 			"backup verified, compression method \"$method\"");
 	}
 

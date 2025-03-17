@@ -79,12 +79,14 @@ for my $tc (@test_configuration)
 			|| $tc->{'decompress_program'} eq '');
 
 		# Take a server-side backup.
-		my @backup = (
-			'pg_basebackup', '--no-sync',
-			'-cfast', '--target',
-			"server:$backup_path", '-Xfetch');
-		push @backup, @{ $tc->{'backup_flags'} };
-		$primary->command_ok(\@backup,
+		$primary->command_ok(
+			[
+				'pg_basebackup', '--no-sync',
+				'--checkpoint' => 'fast',
+				'--target' => "server:$backup_path",
+				'--wal-method' => 'fetch',
+				@{ $tc->{'backup_flags'} },
+			],
 			"server side backup, compression $method");
 
 
@@ -97,7 +99,11 @@ for my $tc (@test_configuration)
 			"found expected backup files, compression $method");
 
 		# Verify tar backup.
-		$primary->command_ok([ 'pg_verifybackup', '-n', '-e', $backup_path ],
+		$primary->command_ok(
+			[
+				'pg_verifybackup', '--no-parse-wal',
+				'--exit-on-error', $backup_path,
+			],
 			"verify backup, compression $method");
 
 		# Cleanup.
