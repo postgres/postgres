@@ -202,6 +202,12 @@
 #maintenance_io_concurrency = 10	# 1-1000; 0 disables prefetching
 #io_combine_limit = 128kB		# usually 1-32 blocks (depends on OS)
 
+#io_method = sync			# sync (change requires restart)
+#io_max_concurrency = -1		# Max number of IOs that one process
+					# can execute simultaneously
+					# -1 sets based on shared_buffers
+					# (change requires restart)
+
 # - Worker Processes -
 
 #max_worker_processes = 8		# (change requires restart)

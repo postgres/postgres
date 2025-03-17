@@ -1279,6 +1279,7 @@ IntoClause
 InvalMessageArray
 InvalidationInfo
 InvalidationMsgsGroup
+IoMethod
 IpcMemoryId
 IpcMemoryKey
 IpcMemoryState

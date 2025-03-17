@@ -38,6 +38,7 @@
 #include "postmaster/interrupt.h"
 #include "postmaster/walsummarizer.h"
 #include "replication/walreceiver.h"
+#include "storage/aio_subsys.h"
 #include "storage/fd.h"
 #include "storage/ipc.h"
 #include "storage/latch.h"
@@ -289,6 +290,7 @@ WalSummarizerMain(const void *startup_data, size_t startup_data_len)
 		LWLockReleaseAll();
 		ConditionVariableCancelSleep();
 		pgstat_report_wait_end();
+		pgaio_error_cleanup();
 		ReleaseAuxProcessResources(false);
 		AtEOXact_Files(false);
 		AtEOXact_HashTables(false);

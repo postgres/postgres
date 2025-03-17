@@ -2638,6 +2638,57 @@ include_dir 'conf.d'
         </para>
        </listitem>
       </varlistentry>
+
+      <varlistentry id="guc-io-max-concurrency" xreflabel="io_max_concurrency">
+       <term><varname>io_max_concurrency</varname> (<type>integer</type>)
+       <indexterm>
+        <primary><varname>io_max_concurrency</varname> configuration parameter</primary>
+       </indexterm>
+       </term>
+       <listitem>
+        <para>
+         Controls the maximum number of I/O operations that one process can
+         execute simultaneously.
+        </para>
+        <para>
+         The default setting of <literal>-1</literal> selects a number based
+         on <xref linkend="guc-shared-buffers"/> and the maximum number of
+         processes (<xref linkend="guc-max-connections"/>, <xref
+         linkend="guc-autovacuum-worker-slots"/>, <xref
+         linkend="guc-max-worker-processes"/> and <xref
+         linkend="guc-max-wal-senders"/>), but not more than
+         <literal>64</literal>.
+        </para>
+        <para>
+         This parameter can only be set at server start.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry id="guc-io-method" xreflabel="io_method">
+       <term><varname>io_method</varname> (<type>enum</type>)
+       <indexterm>
+        <primary><varname>io_method</varname> configuration parameter</primary>
+       </indexterm>
+       </term>
+       <listitem>
+        <para>
+         Selects the method for executing asynchronous I/O.
+         Possible values are:
+         <itemizedlist>
+          <listitem>
+           <para>
+            <literal>sync</literal> (execute asynchronous-eligible I/O synchronously)
+           </para>
+          </listitem>
+         </itemizedlist>
+        </para>
+        <para>
+         This parameter can only be set at server start.
+        </para>
+       </listitem>
+      </varlistentry>
+
      </variablelist>
     </sect2>
 

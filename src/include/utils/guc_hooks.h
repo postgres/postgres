@@ -64,6 +64,8 @@ extern bool check_default_with_oids(bool *newval, void **extra,
 extern bool check_effective_io_concurrency(int *newval, void **extra,
 										   GucSource source);
 extern bool check_huge_page_size(int *newval, void **extra, GucSource source);
+extern void assign_io_method(int newval, void *extra);
+extern bool check_io_max_concurrency(int *newval, void **extra, GucSource source);
 extern const char *show_in_hot_standby(void);
 extern bool check_locale_messages(char **newval, void **extra, GucSource source);
 extern void assign_locale_messages(const char *newval, void *extra);

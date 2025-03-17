@@ -37,6 +37,7 @@
 #include "replication/slotsync.h"
 #include "replication/walreceiver.h"
 #include "replication/walsender.h"
+#include "storage/aio_subsys.h"
 #include "storage/bufmgr.h"
 #include "storage/dsm.h"
 #include "storage/dsm_registry.h"
@@ -148,6 +149,7 @@ CalculateShmemSize(int *num_semaphores)
 	size = add_size(size, WaitEventCustomShmemSize());
 	size = add_size(size, InjectionPointShmemSize());
 	size = add_size(size, SlotSyncShmemSize());
+	size = add_size(size, AioShmemSize());
 
 	/* include additional requested shmem from preload libraries */
 	size = add_size(size, total_addin_request);
@@ -340,6 +342,7 @@ CreateOrAttachShmemStructs(void)
 	StatsShmemInit();
 	WaitEventCustomShmemInit();
 	InjectionPointShmemInit();
+	AioShmemInit();
 }
 
 /*

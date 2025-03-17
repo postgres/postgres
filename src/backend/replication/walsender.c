@@ -79,6 +79,7 @@
 #include "replication/walsender.h"
 #include "replication/walsender_private.h"
 #include "storage/condition_variable.h"
+#include "storage/aio_subsys.h"
 #include "storage/fd.h"
 #include "storage/ipc.h"
 #include "storage/pmsignal.h"
@@ -327,6 +328,7 @@ WalSndErrorCleanup(void)
 	LWLockReleaseAll();
 	ConditionVariableCancelSleep();
 	pgstat_report_wait_end();
+	pgaio_error_cleanup();
 
 	if (xlogreader != NULL && xlogreader->seg.ws_file >= 0)
 		wal_segment_close(xlogreader);

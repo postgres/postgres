@@ -88,6 +88,7 @@
 #include "postmaster/autovacuum.h"
 #include "postmaster/interrupt.h"
 #include "postmaster/postmaster.h"
+#include "storage/aio_subsys.h"
 #include "storage/bufmgr.h"
 #include "storage/ipc.h"
 #include "storage/latch.h"
@@ -465,6 +466,7 @@ AutoVacLauncherMain(const void *startup_data, size_t startup_data_len)
 		 */
 		LWLockReleaseAll();
 		pgstat_report_wait_end();
+		pgaio_error_cleanup();
 		UnlockBuffers();
 		/* this is probably dead code, but let's be safe: */
 		if (AuxProcessResourceOwner)

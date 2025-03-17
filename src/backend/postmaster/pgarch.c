@@ -40,6 +40,7 @@
 #include "postmaster/interrupt.h"
 #include "postmaster/pgarch.h"
 #include "storage/condition_variable.h"
+#include "storage/aio_subsys.h"
 #include "storage/fd.h"
 #include "storage/ipc.h"
 #include "storage/latch.h"
@@ -568,6 +569,7 @@ pgarch_archiveXlog(char *xlog)
 		LWLockReleaseAll();
 		ConditionVariableCancelSleep();
 		pgstat_report_wait_end();
+		pgaio_error_cleanup();
 		ReleaseAuxProcessResources(false);
 		AtEOXact_Files(false);
 		AtEOXact_HashTables(false);
