@@ -114,21 +114,6 @@ static bool force_echo = false;
 
 // interactive_one
 
-
-/* TODO : prevent multiple write and write while reading ? */
-volatile int cma_wsize = 0;
-volatile int cma_rsize = 0;  // defined in postgres.c
-
-
-
-__attribute__((export_name("interactive_read")))
-int
-interactive_read() {
-    /* should cma_rsize should be reset here ? */
-    return cma_wsize;
-}
-
-
 #include "./interactive_one.c"
 
 
