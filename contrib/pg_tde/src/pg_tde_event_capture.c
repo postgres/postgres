@@ -73,7 +73,8 @@ checkEncryptionClause(const char *accessMethod)
 		if (principal_key == NULL)
 		{
 			ereport(ERROR,
-					(errmsg("failed to retrieve principal key. Create one using pg_tde_set_principal_key before using encrypted tables.")));
+					(errmsg("principal key not configured"),
+					 errhint("create one using pg_tde_set_principal_key before using encrypted tables")));
 
 		}
 	}

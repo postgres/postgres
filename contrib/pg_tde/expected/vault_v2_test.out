@@ -14,7 +14,8 @@ CREATE TABLE test_enc(
 	  k INTEGER DEFAULT '0' NOT NULL,
 	  PRIMARY KEY (id)
 	) USING tde_heap;
-ERROR:  failed to retrieve principal key. Create one using pg_tde_set_principal_key before using encrypted tables.
+ERROR:  principal key not configured
+HINT:  create one using pg_tde_set_principal_key before using encrypted tables
 SELECT pg_tde_add_key_provider_vault_v2('vault-v2',:'root_token','http://127.0.0.1:8200','secret',NULL);
  pg_tde_add_key_provider_vault_v2 
 ----------------------------------

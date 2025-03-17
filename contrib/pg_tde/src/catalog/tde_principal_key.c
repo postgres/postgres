@@ -733,21 +733,21 @@ get_principal_key_from_keyring(Oid dbOid)
 
 	principalKeyInfo = pg_tde_get_principal_key_info(dbOid);
 	if (principalKeyInfo == NULL)
-	{
 		return NULL;
-	}
 
 	keyring = GetKeyProviderByID(principalKeyInfo->keyringId, dbOid);
 	if (keyring == NULL)
-	{
-		return NULL;
-	}
+		ereport(ERROR,
+				(errcode(ERRCODE_DATA_CORRUPTED),
+				 errmsg("keyring lookup failed for principal key %s, unknown keyring with ID %d",
+						principalKeyInfo->name, principalKeyInfo->keyringId)));
 
 	keyInfo = KeyringGetKey(keyring, principalKeyInfo->name, &keyring_ret);
 	if (keyInfo == NULL)
-	{
-		return NULL;
-	}
+		ereport(ERROR,
+				(errcode(ERRCODE_NO_DATA_FOUND),
+				 errmsg("failed to retrieve principal key %s from keyring with ID %d",
+						principalKeyInfo->name, principalKeyInfo->keyringId)));
 
 	principalKey = palloc_object(TDEPrincipalKey);
 
@@ -1091,13 +1091,13 @@ pg_tde_verify_principal_key_internal(Oid databaseOid)
 	if (fromKeyring == NULL)
 	{
 		ereport(ERROR,
-				(errmsg("Failed to retrieve key from keyring")));
+				(errmsg("principal key not configured for current database")));
 	}
 
 	if (fromCache != NULL && (fromKeyring->keyLength != fromCache->keyLength || memcmp(fromKeyring->keyData, fromCache->keyData, fromCache->keyLength) != 0))
 	{
 		ereport(ERROR,
-				(errmsg("Key returned by keyring and cached in pg_tde is different")));
+				(errmsg("key returned from keyring and cached in pg_tde differ")));
 	}
 
 	PG_RETURN_VOID();

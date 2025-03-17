@@ -11,6 +11,8 @@ SELECT * FROM pg_tde_list_all_key_providers();
 SELECT pg_tde_add_key_provider_file('file-provider2','/tmp/pg_tde_test_keyring2.per');
 SELECT * FROM pg_tde_list_all_key_providers();
 
+SELECT pg_tde_verify_principal_key();
+
 SELECT pg_tde_set_principal_key('test-db-principal-key','file-provider');
 SELECT pg_tde_verify_principal_key();
 

@@ -178,7 +178,8 @@ pg_tde_create_key_map_entry(const RelFileLocator *newrlocator, uint32 entry_type
 	if (principal_key == NULL)
 	{
 		ereport(ERROR,
-				(errmsg("failed to retrieve principal key. Create one using pg_tde_set_principal_key before using encrypted tables.")));
+				(errmsg("principal key not configured"),
+				 errhint("create one using pg_tde_set_principal_key before using encrypted tables")));
 	}
 
 	/* Encrypt the key */
@@ -259,7 +260,8 @@ pg_tde_create_wal_key(InternalKey *rel_key_data, const RelFileLocator *newrlocat
 	if (principal_key == NULL)
 	{
 		ereport(ERROR,
-				(errmsg("failed to retrieve principal key. Create one using pg_tde_set_principal_key before using encrypted WAL.")));
+				(errmsg("principal key not configured"),
+				 errhint("create one using pg_tde_set_principal_key before using encrypted WAL")));
 	}
 
 	/* TODO: no need in generating key if TDE_KEY_TYPE_WAL_UNENCRYPTED */
@@ -1009,7 +1011,8 @@ pg_tde_get_key_from_file(const RelFileLocator *rlocator, uint32 key_type)
 	principal_key = GetPrincipalKey(rlocator->dbOid, LW_SHARED);
 	if (principal_key == NULL)
 		ereport(ERROR,
-				(errmsg("failed to retrieve principal key. Create one using pg_tde_set_principal_key before using encrypted tables.")));
+				(errmsg("principal key not configured"),
+				 errhint("create one using pg_tde_set_principal_key before using encrypted tables")));
 
 	enc_rel_key_data = pg_tde_read_keydata(db_keydata_path, key_index, principal_key);
 	LWLockRelease(lock_pk);
