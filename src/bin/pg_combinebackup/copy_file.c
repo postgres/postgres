@@ -72,9 +72,10 @@ copy_file(const char *src, const char *dst,
 	}
 
 #ifdef WIN32
+
 	/*
-	 * We have no specific switch to enable CopyFile on Windows, because
-	 * it's supported (as far as we know) on all Windows machines. So,
+	 * We have no specific switch to enable CopyFile on Windows, because it's
+	 * supported (as far as we know) on all Windows machines. So,
 	 * automatically enable it unless some other strategy was selected.
 	 */
 	if (copy_method == COPY_METHOD_COPY)
