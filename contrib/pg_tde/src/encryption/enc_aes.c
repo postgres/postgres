@@ -135,14 +135,15 @@ AesDecrypt(const unsigned char *key, const unsigned char *iv, const unsigned cha
 void
 Aes128EncryptedZeroBlocks(void *ctxPtr, const unsigned char *key, const char *iv_prefix, uint64_t blockNumber1, uint64_t blockNumber2, unsigned char *out)
 {
-	const unsigned char iv[16] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-
-	const unsigned dataLen = (blockNumber2 - blockNumber1) * 16;
+	const unsigned char iv[16] = {0,};
+	unsigned char *p;
 	int			outLen;
 
 	Assert(blockNumber2 >= blockNumber1);
 
-	for (int j = blockNumber1; j < blockNumber2; ++j)
+	p = out;
+
+	for (int32 j = blockNumber1; j < blockNumber2; ++j)
 	{
 		/*
 		 * We have 16 bytes, and a 4 byte counter. The counter is the last 4
@@ -150,10 +151,12 @@ Aes128EncryptedZeroBlocks(void *ctxPtr, const unsigned char *key, const char *iv
 		 * counter depends on the endianness of the CPU running it. As this is
 		 * a generic limitation of Postgres, it's fine.
 		 */
-		memcpy(out + (16 * (j - blockNumber1)), iv_prefix, 12);
-		memcpy(out + (16 * (j - blockNumber1)) + 12, (char *) &j, 4);
+		memcpy(p, iv_prefix, 16 - sizeof(j));
+		p += 16 - sizeof(j);
+		memcpy(p, (char *) &j, sizeof(j));
+		p += sizeof(j);
 	}
 
-	AesRunCtr(ctxPtr, 1, key, iv, out, dataLen, out, &outLen);
-	Assert(outLen == dataLen);
+	AesRunCtr(ctxPtr, 1, key, iv, out, p - out, out, &outLen);
+	Assert(outLen == p - out);
 }
