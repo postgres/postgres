@@ -108,7 +108,7 @@ test: json jsonb json_encoding jsonpath jsonpath_encoding jsonb_jsonpath sqljson
 # ----------
 # Another group of parallel tests
 # with depends on create_misc
-# NB: temp.sql does a reconnect which transiently uses 2 connections,
+# NB: temp.sql does reconnects which transiently use 2 connections,
 # so keep this parallel group to at most 19 tests
 # ----------
 test: plancache limit plpgsql copy2 temp domain rangefuncs prepare conversion truncate alter_table sequence polymorphism rowtypes returning largeobject with xml
