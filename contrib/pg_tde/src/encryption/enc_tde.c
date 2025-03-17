@@ -42,7 +42,6 @@ pg_tde_crypt_simple(const char *iv_prefix, uint32 start_offset, const char *data
 	const uint64 aes_start_block = start_offset / AES_BLOCK_SIZE;
 	const uint64 aes_end_block = (start_offset + data_len + (AES_BLOCK_SIZE - 1)) / AES_BLOCK_SIZE;
 	const uint64 aes_block_no = start_offset % AES_BLOCK_SIZE;
-
 	unsigned char enc_key[DATA_BYTES_PER_AES_BATCH + AES_BLOCK_SIZE];
 
 	Assert(aes_end_block - aes_start_block <= NUM_AES_BLOCKS_IN_BATCH + 1);
@@ -81,14 +80,13 @@ pg_tde_crypt_complex(const char *iv_prefix, uint32 start_offset, const char *dat
 	const uint64 aes_block_no = start_offset % AES_BLOCK_SIZE;
 	uint32		batch_no = 0;
 	uint32		data_index = 0;
-	uint64		batch_end_block;
-	uint32		current_batch_bytes;
-	unsigned char enc_key[DATA_BYTES_PER_AES_BATCH];
 
 	/* do max NUM_AES_BLOCKS_IN_BATCH blocks at a time */
 	for (uint64 batch_start_block = aes_start_block; batch_start_block < aes_end_block; batch_start_block += NUM_AES_BLOCKS_IN_BATCH)
 	{
-		batch_end_block = Min(batch_start_block + NUM_AES_BLOCKS_IN_BATCH, aes_end_block);
+		unsigned char enc_key[DATA_BYTES_PER_AES_BATCH];
+		uint32		current_batch_bytes;
+		uint64		batch_end_block = Min(batch_start_block + NUM_AES_BLOCKS_IN_BATCH, aes_end_block);
 
 		Aes128EncryptedZeroBlocks(&key->ctx, key->key, iv_prefix, batch_start_block, batch_end_block, enc_key);
 #ifdef ENCRYPTION_DEBUG
@@ -166,7 +164,7 @@ pg_tde_crypt(const char *iv_prefix, uint32 start_offset, const char *data, uint3
 void
 AesEncryptKey(const TDEPrincipalKey *principal_key, Oid dbOid, InternalKey *rel_key_data, InternalKey **p_enc_rel_key_data, size_t *enc_key_bytes)
 {
-	unsigned char iv[16] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+	unsigned char iv[16] = {0,};
 
 	/* Ensure we are getting a valid pointer here */
 	Assert(principal_key);
@@ -191,7 +189,7 @@ AesEncryptKey(const TDEPrincipalKey *principal_key, Oid dbOid, InternalKey *rel_
 void
 AesDecryptKey(const TDEPrincipalKey *principal_key, Oid dbOid, InternalKey **p_rel_key_data, InternalKey *enc_rel_key_data, size_t *key_bytes)
 {
-	unsigned char iv[16] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+	unsigned char iv[16] = {0,};
 
 	/* Ensure we are getting a valid pointer here */
 	Assert(principal_key);
