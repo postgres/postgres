@@ -10,12 +10,7 @@
 #ifndef ENC_TDE_H
 #define ENC_TDE_H
 
-#include "utils/rel.h"
-#include "storage/bufpage.h"
-#include "executor/tuptable.h"
-#include "executor/tuptable.h"
 #include "access/pg_tde_tdemap.h"
-#include "keyring/keyring_api.h"
 
 extern void pg_tde_crypt(const char *iv_prefix, uint32 start_offset, const char *data, uint32 data_len, char *out, InternalKey *key, const char *context);
 

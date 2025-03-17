@@ -17,6 +17,7 @@
 #include "pg_tde_guc.h"
 #include "access/xlog.h"
 #include "access/xlog_internal.h"
+#include "access/xlog_smgr.h"
 #include "access/xloginsert.h"
 #include "storage/bufmgr.h"
 #include "storage/shmem.h"

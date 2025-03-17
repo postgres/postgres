@@ -9,7 +9,6 @@
 #ifndef KEYRING_API_H
 #define KEYRING_API_H
 
-#include "catalog/tde_keyring.h"
 #include "catalog/keyring_min.h"
 
 extern void RegisterKeyProvider(const TDEKeyringRoutine *routine, ProviderType type);

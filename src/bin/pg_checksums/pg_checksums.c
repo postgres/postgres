@@ -34,6 +34,7 @@
 #include "storage/checksum_impl.h"
 
 #ifdef PERCONA_EXT
+#include "pg_tde.h"
 #include "access/pg_tde_fe_init.h"
 #include "access/pg_tde_tdemap.h"
 #endif

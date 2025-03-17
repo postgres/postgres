@@ -50,6 +50,10 @@ typedef enum ProviderScanType
 
 #define PG_TDE_KEYRING_FILENAME "pg_tde_%d_keyring"
 
+#define FILE_KEYRING_TYPE "file"
+#define VAULTV2_KEYRING_TYPE "vault-v2"
+#define KMIP_KEYRING_TYPE "kmip"
+
 static FileKeyring *load_file_keyring_provider_options(char *keyring_options);
 static GenericKeyring *load_keyring_provider_options(ProviderType provider_type, char *keyring_options);
 static VaultV2Keyring *load_vaultV2_keyring_provider_options(char *keyring_options);

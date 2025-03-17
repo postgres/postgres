@@ -13,8 +13,6 @@
 
 #include "postgres.h"
 #include "catalog/tde_keyring.h"
-#include "keyring/keyring_api.h"
-#include "nodes/pg_list.h"
 #ifndef FRONTEND
 #include "storage/lwlock.h"
 #endif

@@ -28,6 +28,7 @@
 #include "utils/fmgroids.h"
 #include "utils/guc.h"
 #include "catalog/pg_database.h"
+#include "keyring/keyring_api.h"
 
 #include "access/pg_tde_tdemap.h"
 #include "catalog/tde_global_space.h"
@@ -36,7 +37,9 @@
 #include "access/table.h"
 #include "common/pg_tde_shmem.h"
 #include "funcapi.h"
+#include "lib/dshash.h"
 #include "storage/lwlock.h"
+#include "storage/shmem.h"
 #else
 #include "pg_tde_fe.h"
 #endif

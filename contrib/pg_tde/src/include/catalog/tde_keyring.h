@@ -11,7 +11,6 @@
 #define TDE_KEYRING_H
 
 #include "postgres.h"
-#include "nodes/pg_list.h"
 #include "catalog/keyring_min.h"
 
 /* This record goes into key provider info file */
@@ -22,6 +21,7 @@ typedef struct KeyringProvideRecord
 	char		options[MAX_KEYRING_OPTION_LEN];
 	ProviderType provider_type;
 } KeyringProvideRecord;
+
 typedef struct KeyringProviderXLRecord
 {
 	Oid			database_id;
@@ -43,4 +43,5 @@ extern uint32 redo_key_provider_info(KeyringProviderXLRecord *xlrec);
 
 extern bool ParseKeyringJSONOptions(ProviderType provider_type, void *out_opts,
 									char *in_buf, int buf_len);
+
 #endif							/* TDE_KEYRING_H */

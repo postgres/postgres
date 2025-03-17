@@ -9,10 +9,7 @@
 #define PG_TDE_MAP_H
 
 #include "access/xlog_internal.h"
-#include "port.h"
 #include "storage/relfilelocator.h"
-
-#include "pg_tde.h"
 #include "catalog/tde_principal_key.h"
 #include "common/pg_tde_utils.h"
 

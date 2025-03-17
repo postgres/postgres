@@ -19,4 +19,5 @@ extern int	get_tde_tables_count(void);
 
 extern void pg_tde_set_data_dir(const char *dir);
 extern char *pg_tde_get_tde_data_dir(void);
+
 #endif							/* PG_TDE_UTILS_H */

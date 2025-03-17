@@ -10,7 +10,6 @@
 #define PG_TDE_XLOGENCRYPT_H
 
 #include "postgres.h"
-#include "access/xlog_smgr.h"
 
 extern Size TDEXLogEncryptStateSize(void);
 extern void TDEXLogShmemInit(void);
