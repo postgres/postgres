@@ -28,7 +28,7 @@ sub query_log
 }
 
 my $node = PostgreSQL::Test::Cluster->new('main');
-$node->init('auth_extra' => [ '--create-role' => 'regress_user1' ]);
+$node->init(auth_extra => [ '--create-role' => 'regress_user1' ]);
 $node->append_conf('postgresql.conf',
 	"session_preload_libraries = 'auto_explain'");
 $node->append_conf('postgresql.conf', "auto_explain.log_min_duration = 0");

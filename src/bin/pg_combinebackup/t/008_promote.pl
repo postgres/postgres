@@ -52,7 +52,7 @@ EOM
 # then stop recovery at some arbitrary LSN, not just when it hits the end of
 # WAL, so use a recovery target.
 my $node2 = PostgreSQL::Test::Cluster->new('node2');
-$node2->init_from_backup($node1, 'backup1', 'has_streaming' => 1);
+$node2->init_from_backup($node1, 'backup1', has_streaming => 1);
 $node2->append_conf('postgresql.conf', <<EOM);
 recovery_target_lsn = '$lsn'
 recovery_target_action = 'pause'

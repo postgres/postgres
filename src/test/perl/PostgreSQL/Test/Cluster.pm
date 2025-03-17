@@ -1019,7 +1019,7 @@ sub init_from_backup
 		PostgreSQL::Test::RecursiveCopy::copypath(
 			$backup_path,
 			$data_path,
-			'filterfn' => sub {
+			filterfn => sub {
 				my ($path) = @_;
 				if ($path =~ /^pg_tblspc\/(\d+)$/
 					&& exists $params{tablespace_map}{$1})

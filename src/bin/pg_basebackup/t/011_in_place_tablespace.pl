@@ -17,7 +17,7 @@ my @pg_basebackup_defs =
 
 # Set up an instance.
 my $node = PostgreSQL::Test::Cluster->new('main');
-$node->init('allows_streaming' => 1);
+$node->init(allows_streaming => 1);
 $node->start();
 
 # Create an in-place tablespace.

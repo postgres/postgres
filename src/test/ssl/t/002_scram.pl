@@ -71,8 +71,8 @@ my $md5_works = ($node->psql('postgres', "select md5('')") == 0);
 $ssl_server->configure_test_server_for_ssl(
 	$node, $SERVERHOSTADDR, $SERVERHOSTCIDR,
 	"scram-sha-256",
-	'password' => "pass",
-	'password_enc' => "scram-sha-256");
+	password => "pass",
+	password_enc => "scram-sha-256");
 switch_server_cert($node, certfile => 'server-cn-only');
 $ENV{PGPASSWORD} = "pass";
 $common_connstr =

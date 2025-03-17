@@ -470,7 +470,7 @@ SKIP:
 	$node2->init_from_backup(
 		$node, 'tarbackup2',
 		tar_program => $tar,
-		'tablespace_map' => { $tblspcoid => $realRepTsDir });
+		tablespace_map => { $tblspcoid => $realRepTsDir });
 
 	$node2->start;
 	my $result = $node2->safe_psql('postgres', 'SELECT * FROM test1');

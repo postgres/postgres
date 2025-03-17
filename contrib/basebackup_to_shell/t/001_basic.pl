@@ -24,8 +24,8 @@ my $node = PostgreSQL::Test::Cluster->new('primary');
 # Make sure pg_hba.conf is set up to allow connections from backupuser.
 # This is only needed on Windows machines that don't use UNIX sockets.
 $node->init(
-	'allows_streaming' => 1,
-	'auth_extra' => [ '--create-role' => 'backupuser' ]);
+	allows_streaming => 1,
+	auth_extra => [ '--create-role' => 'backupuser' ]);
 
 $node->append_conf('postgresql.conf',
 	"shared_preload_libraries = 'basebackup_to_shell'");

@@ -186,9 +186,8 @@ foreach my $c (@cases)
 	$result = $node->safe_psql(
 		"trustdb",
 		"SELECT ssl_client_cert_present();",
-		connstr => "$common_connstr dbname=trustdb $c->{'opts'}");
-	is($result, $c->{'present'},
-		"ssl_client_cert_present() for $c->{'opts'}");
+		connstr => "$common_connstr dbname=trustdb $c->{opts}");
+	is($result, $c->{present}, "ssl_client_cert_present() for $c->{opts}");
 }
 
 done_testing();

@@ -13,7 +13,7 @@ use Test::More;
 # Initialize the server with specific low connection limits
 my $node = PostgreSQL::Test::Cluster->new('primary');
 $node->init(
-	'auth_extra' => [
+	auth_extra => [
 		'--create-role' =>
 		  'regress_regular,regress_reserved,regress_superuser',
 	]);
