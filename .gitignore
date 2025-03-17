@@ -53,3 +53,4 @@ lib*.pc
 /build
 /pglite/dist/**
 /pglite/patches
+/patches/
