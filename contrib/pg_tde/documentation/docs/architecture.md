@@ -20,8 +20,8 @@ Let's break down what it means.
 * Indexes
 * Temporary tables
 * Write Ahead Log (WAL)
-* PG-994 System tables (not yet implemented)
-* PG-993 Temporary files (not yet implemented)
+* System tables (not yet implemented)
+* Temporary files (not yet implemented)
 
 **Extension** means that `pg_tde` should be implemented only as an extension, possibly compatible with any PostgreSQL distribution, including the open source community version. This requires changes in the PostgreSQL core to make it more extensible. Therefore, `pg_tde` currently works only with the [Percona Server for PostgreSQL](https://docs.percona.com/postgresql/17/index.html) - a binary replacement of community PostgreSQL and included in Percona Distribution for PostgreSQL.
 
@@ -53,7 +53,7 @@ In the future these could be extracted into separate shared libraries with an op
 
 Internal keys are used for specific database files: each file with a different [Object Identifier (OID)](https://www.postgresql.org/docs/current/datatype-oid.html) and has a different internal key.
 
-This means that for example a table with 4 indexes will have at least 5 internal keys - one for the table, and one for each index.
+This means that, for example, a table with 4 indexes will have at least 5 internal keys - one for the table, and one for each index.
 
 If a table has additional files, such as sequence(s) or a TOAST table, those files will also have separate keys.
 
@@ -131,6 +131,7 @@ WAL internal keys are also fixed to the respective ranges. And there is no easy 
 
 There are workarounds for this, because operations that move the table data to a new file, such as `VACUUM FULL` or an `ALTER TABLE` that rewrites the file will create a new key for the new file, essentially rotating the internal key.
 This however means taking an exclusive lock on the table for the duration of the operation, which might not be desirable for huge tables.
+WAL internal key are also fixed to the respective ranges. And there is no easy way to generate a new WAL key without turning off and on WAL encryption.
 
 ### Internal key storage
 
@@ -273,7 +274,7 @@ Making this check makes more sense than potentially making some databases inacce
 
 These functions only return a list of provider names, without any details about the type/configuration.
 
-PG-??? There's also two function to query the details of providers:
+There's also two function to query the details of providers:
 
 ```sql
 pg_tde_show_key_provider_configuration(‘provider-name')
@@ -307,7 +308,7 @@ pg_tde_set_global_principal_key(‘key-name', ‘provider-name', ensure_new_key)
 pg_tde_set_server_principal_key(‘key-name', ‘provider-name', ensure_new_key)
 ```
 
-`Ensure_new_key` is a boolean parameter defaulting to false.
+`ensure_new_key` is a boolean parameter defaulting to false.
 If it is true, the function might return an error instead of setting the key, if it already exists on the provider.
 
 ### Default principal key
@@ -359,7 +360,7 @@ Users with management permissions to a specific database `(pg_tde_(grant/revoke)
 Also, the `pg_tde_(grant/revoke)_key_management_to_role` function deals with only the specific permission for the above function:
 it allows a user to change the key for the database, but not to modify the provider configuration.
 
-### Creating tables
+### Creating encrypted tables
 
 To create an encrypted table or modify an existing table to be encrypted, simply use `USING tde_heap` in the `CREATE` / `ALTER TABLE` statement.
 
