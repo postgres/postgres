@@ -750,7 +750,7 @@ SET ROLE test_user;
                 const count = resultArray.byteLength
 
                 var port = Module.cma_port || 1
-                Module._ping()
+                // Module._ping()
 
                 Module._interactive_write(count)
                 console.log("send_to_pglite(cma):", count, "sent to", port)
