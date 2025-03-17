@@ -427,6 +427,9 @@ fi
 
 # only build extra when targeting pglite-wasm .
 
+# TODO link the good tag
+ln -s ${WORKSPACE}/pglite-REL_17_4_WASM ${WORKSPACE}/pglite-wasm
+
 if [ -f  ${WORKSPACE}/pglite-wasm/build.sh ]
 then
 
@@ -469,8 +472,10 @@ then
 --preload-file placeholder@${PGROOT}/bin/postgres \
 --preload-file placeholder@${PGROOT}/bin/initdb\
 "
-    # TODO link the good tag
-    ln -s ${WORKSPACE}/pglite-REL_17_4_WASM ${WORKSPACE}/pglite-wasm
+    
     ${WORKSPACE}/pglite-wasm/build.sh
+else
+    echo "Could not find a pglite tag matching $PG_BRANCH"
+    exit 480
 fi
 
