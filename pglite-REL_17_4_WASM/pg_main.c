@@ -129,12 +129,7 @@ interactive_read() {
 }
 
 
-#if 1 // defined(__wasi__)
-#   include "./interactive_one_wasi.c"
-#else
-#   include "./interactive_one_emsdk.c"
-#endif
-
+#include "./interactive_one.c"
 
 
 static void
