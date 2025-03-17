@@ -508,7 +508,7 @@ usage(const char *progname)
 	printf(_("  --no-data                    do not restore data\n"));
 	printf(_("  --no-data-for-failed-tables  do not restore data of tables that could not be\n"
 			 "                               created\n"));
-	printf(_("  --no-policies                do not restore row level security policies\n"));
+	printf(_("  --no-policies                do not restore row security policies\n"));
 	printf(_("  --no-publications            do not restore publications\n"));
 	printf(_("  --no-schema                  do not restore schema\n"));
 	printf(_("  --no-security-labels         do not restore security labels\n"));
