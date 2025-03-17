@@ -936,6 +936,7 @@ create_script_for_old_cluster_deletion(char **deletion_script_file_name)
 	int			tblnum;
 	char		old_cluster_pgdata[MAXPGPATH],
 				new_cluster_pgdata[MAXPGPATH];
+	char	   *old_tblspc_suffix;
 
 	*deletion_script_file_name = psprintf("%sdelete_old_cluster.%s",
 										  SCRIPT_PREFIX, SCRIPT_EXT);
@@ -1000,39 +1001,13 @@ create_script_for_old_cluster_deletion(char **deletion_script_file_name)
 			fix_path_separator(old_cluster.pgdata), PATH_QUOTE);
 
 	/* delete old cluster's alternate tablespaces */
+	old_tblspc_suffix = pg_strdup(old_cluster.tablespace_suffix);
+	fix_path_separator(old_tblspc_suffix);
 	for (tblnum = 0; tblnum < os_info.num_old_tablespaces; tblnum++)
-	{
-		/*
-		 * Do the old cluster's per-database directories share a directory
-		 * with a new version-specific tablespace?
-		 */
-		if (strlen(old_cluster.tablespace_suffix) == 0)
-		{
-			/* delete per-database directories */
-			int			dbnum;
-
-			fprintf(script, "\n");
-
-			for (dbnum = 0; dbnum < old_cluster.dbarr.ndbs; dbnum++)
-				fprintf(script, RMDIR_CMD " %c%s%c%u%c\n", PATH_QUOTE,
-						fix_path_separator(os_info.old_tablespaces[tblnum]),
-						PATH_SEPARATOR, old_cluster.dbarr.dbs[dbnum].db_oid,
-						PATH_QUOTE);
-		}
-		else
-		{
-			char	   *suffix_path = pg_strdup(old_cluster.tablespace_suffix);
-
-			/*
-			 * Simply delete the tablespace directory, which might be ".old"
-			 * or a version-specific subdirectory.
-			 */
-			fprintf(script, RMDIR_CMD " %c%s%s%c\n", PATH_QUOTE,
-					fix_path_separator(os_info.old_tablespaces[tblnum]),
-					fix_path_separator(suffix_path), PATH_QUOTE);
-			pfree(suffix_path);
-		}
-	}
+		fprintf(script, RMDIR_CMD " %c%s%s%c\n", PATH_QUOTE,
+				fix_path_separator(os_info.old_tablespaces[tblnum]),
+				old_tblspc_suffix, PATH_QUOTE);
+	pfree(old_tblspc_suffix);
 
 	fclose(script);
 
