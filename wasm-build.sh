@@ -476,9 +476,7 @@ then
     
     ${WORKSPACE}/pglite-wasm/build.sh
 
-    # mkdir -p /tmp/dist/pglite
-    # cp ${WORKSPACE}/pglite.{wasm,js,data} /tmp/dist/pglite
-    # for file in /tmp/sdk/dist/extensions-emsdk/*.tar; do gzip -9 "$file" && mv "$file.gz" /tmp/dist/pglite; done
+    for file in /tmp/sdk/dist/extensions-emsdk/*.tar; do gzip -9 -k "$file"; done
 else
     echo "Could not find a pglite tag matching $PG_BRANCH"
     exit 480

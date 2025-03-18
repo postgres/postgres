@@ -21,7 +21,7 @@ docker run \
   --rm \
   -e PG_DIST_EXT=/tmp/sdk/dist/extensions-emsdk \
   -e DEBUG=true \
-  -e CI=true \  
+  -e CI=true \
   -e SDKROOT=$SDKROOT \
   -e PG_VERSION=${PG_VERSION} \
   -e PG_BRANCH=${PG_BRANCH} \
