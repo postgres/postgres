@@ -281,6 +281,8 @@ $node->command_ok(
 		'--jobs' => '2',
 		'--index' => 's1.i1',
 		'--index' => 's2.i2',
+		'--index' => 's1.t1_id_idx',
+		'--index' => 's2.t2_id_idx',
 		'postgres',
 	],
 	'parallel reindexdb for indices');
