@@ -79,13 +79,6 @@ typedef struct TDEMapEntry
 	int32		key_index;
 } TDEMapEntry;
 
-typedef struct TDEMapFilePath
-{
-	char		map_path[MAXPGPATH];
-	char		keydata_path[MAXPGPATH];
-}			TDEMapFilePath;
-
-
 typedef struct RelKeyCacheRec
 {
 	RelFileLocator locator;
