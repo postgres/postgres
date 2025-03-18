@@ -234,12 +234,12 @@ smgropen(RelFileLocator rlocator, ProcNumber backend)
 			reln->smgr_cached_nblocks[i] = InvalidBlockNumber;
 		reln->smgr_which = 0;	/* we only have md.c at present */
 
-		/* implementation-specific initialization */
-		smgrsw[reln->smgr_which].smgr_open(reln);
-
 		/* it is not pinned yet */
 		reln->pincount = 0;
 		dlist_push_tail(&unpinned_relns, &reln->node);
+
+		/* implementation-specific initialization */
+		smgrsw[reln->smgr_which].smgr_open(reln);
 	}
 
 	return reln;
