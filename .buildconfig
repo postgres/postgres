@@ -9,3 +9,6 @@ PG_DIST=/tmp/sdk/dist
 PG_DIST_EXT=/tmp/sdk/dist/extensions-emsdk
 DEBUG=false
 CI=true
+
+GETZIC=false
+ZIC=/usr/sbin/zic
