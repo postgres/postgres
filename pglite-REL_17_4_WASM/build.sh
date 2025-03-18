@@ -125,8 +125,8 @@ ________________________________________________________
         > ${PREFIX}/${cleanup}
     done
 
-
-    COPTS="$LOPTS" ${CC} ${CC_PGLITE} -sGLOBAL_BASE=${CMA_MB}MB -o pglite.html -ferror-limit=1 --shell-file ${WORKSPACE}/pglite-wasm/repl.html \
+    mkdir -p ${PG_DIST:-/tmp/sdk/dist}/pglite
+    COPTS="$LOPTS" ${CC} ${CC_PGLITE} -sGLOBAL_BASE=${CMA_MB}MB -o ${PG_DIST:-/tmp/sdk/dist}/pglite/pglite.html -ferror-limit=1 --shell-file ${WORKSPACE}/pglite-wasm/repl.html \
      $PGPRELOAD \
      -sFORCE_FILESYSTEM=1 -sNO_EXIT_RUNTIME=1 -sENVIRONMENT=node,web \
      -sMODULARIZE=1 -sEXPORT_ES6=1 -sEXPORT_NAME=Module \
@@ -139,6 +139,6 @@ ________________________________________________________
 
 fi
 
-du -hs pglite.*
+du -hs ${PG_DIST:-/tmp/sdk/dist}/pglite/pglite.*
 
 echo "pglite/build: end"
