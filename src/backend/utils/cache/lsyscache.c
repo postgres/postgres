@@ -185,6 +185,28 @@ get_opfamily_member(Oid opfamily, Oid lefttype, Oid righttype,
 }
 
 /*
+ * get_opfamily_member_for_cmptype
+ *		Get the OID of the operator that implements the specified comparison
+ *		type with the specified datatypes for the specified opfamily.
+ *
+ * Returns InvalidOid if there is no mapping for the comparison type or no
+ * pg_amop entry for the given keys.
+ */
+Oid
+get_opfamily_member_for_cmptype(Oid opfamily, Oid lefttype, Oid righttype,
+								CompareType cmptype)
+{
+	Oid			opmethod;
+	StrategyNumber strategy;
+
+	opmethod = get_opfamily_method(opfamily);
+	strategy = IndexAmTranslateCompareType(cmptype, opmethod, opfamily, true);
+	if (!strategy)
+		return InvalidOid;
+	return get_opfamily_member(opfamily, lefttype, righttype, strategy);
+}
+
+/*
  * get_ordering_op_properties
  *		Given the OID of an ordering operator (a btree "<" or ">" operator),
  *		determine its opfamily, its declared input datatype, and its
@@ -1287,6 +1309,28 @@ get_opclass_method(Oid opclass)
 }
 
 /*				---------- OPFAMILY CACHE ----------					 */
+
+/*
+ * get_opfamily_method
+ *
+ *		Returns the OID of the index access method the opfamily is for.
+ */
+Oid
+get_opfamily_method(Oid opfid)
+{
+	HeapTuple	tp;
+	Form_pg_opfamily opfform;
+	Oid			result;
+
+	tp = SearchSysCache1(OPFAMILYOID, ObjectIdGetDatum(opfid));
+	if (!HeapTupleIsValid(tp))
+		elog(ERROR, "cache lookup failed for operator family %u", opfid);
+	opfform = (Form_pg_opfamily) GETSTRUCT(tp);
+
+	result = opfform->opfmethod;
+	ReleaseSysCache(tp);
+	return result;
+}
 
 char *
 get_opfamily_name(Oid opfid, bool missing_ok)

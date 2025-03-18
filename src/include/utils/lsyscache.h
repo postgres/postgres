@@ -14,6 +14,7 @@
 #define LSYSCACHE_H
 
 #include "access/attnum.h"
+#include "access/cmptype.h"
 #include "access/htup.h"
 #include "nodes/pg_list.h"
 
@@ -74,6 +75,8 @@ extern void get_op_opfamily_properties(Oid opno, Oid opfamily, bool ordering_op,
 									   Oid *righttype);
 extern Oid	get_opfamily_member(Oid opfamily, Oid lefttype, Oid righttype,
 								int16 strategy);
+extern Oid	get_opfamily_member_for_cmptype(Oid opfamily, Oid lefttype, Oid righttype,
+											CompareType cmptype);
 extern bool get_ordering_op_properties(Oid opno,
 									   Oid *opfamily, Oid *opcintype, int16 *strategy);
 extern Oid	get_equality_op_for_ordering_op(Oid opno, bool *reverse);
@@ -108,6 +111,7 @@ extern Oid	get_opclass_input_type(Oid opclass);
 extern bool get_opclass_opfamily_and_input_type(Oid opclass,
 												Oid *opfamily, Oid *opcintype);
 extern Oid	get_opclass_method(Oid opclass);
+extern Oid	get_opfamily_method(Oid opfid);
 extern char *get_opfamily_name(Oid opfid, bool missing_ok);
 extern RegProcedure get_opcode(Oid opno);
 extern char *get_opname(Oid opno);
