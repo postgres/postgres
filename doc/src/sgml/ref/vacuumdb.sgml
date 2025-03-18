@@ -278,6 +278,22 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>--missing-stats-only</option></term>
+      <listitem>
+       <para>
+        Only analyze relations that are missing statistics for a column, index
+        expression, or extended statistics object.  This option prevents
+        <application>vacuumdb</application> from deleting existing statistics
+        so that the query optimizer's choices do not become transiently worse.
+       </para>
+       <para>
+        This option can only be used in conjunction with
+        <option>--analyze-only</option> or <option>--analyze-in-stages</option>.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>-n <replaceable class="parameter">schema</replaceable></option></term>
       <term><option>--schema=<replaceable class="parameter">schema</replaceable></option></term>
       <listitem>

@@ -2849,6 +2849,33 @@ sub issues_sql_like
 
 =pod
 
+=item $node->issues_sql_unlike(cmd, unexpected_sql, test_name)
+
+Run a command on the node, then verify that $unexpected_sql does not appear in
+the server log file.
+
+=cut
+
+sub issues_sql_unlike
+{
+	local $Test::Builder::Level = $Test::Builder::Level + 1;
+
+	my ($self, $cmd, $unexpected_sql, $test_name) = @_;
+
+	local %ENV = $self->_get_env();
+
+	my $log_location = -s $self->logfile;
+
+	my $result = PostgreSQL::Test::Utils::run_log($cmd);
+	ok($result, "@$cmd exit code 0");
+	my $log =
+	  PostgreSQL::Test::Utils::slurp_file($self->logfile, $log_location);
+	unlike($log, $unexpected_sql, "$test_name: SQL not found in server log");
+	return;
+}
+
+=pod
+
 =item $node->log_content()
 
 Returns the contents of log of the node
