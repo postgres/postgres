@@ -131,6 +131,7 @@ static backslashResult exec_command_quit(PsqlScanState scan_state, bool active_b
 static backslashResult exec_command_reset(PsqlScanState scan_state, bool active_branch,
 										  PQExpBuffer query_buf);
 static backslashResult exec_command_s(PsqlScanState scan_state, bool active_branch);
+static backslashResult exec_command_sendpipeline(PsqlScanState scan_state, bool active_branch);
 static backslashResult exec_command_set(PsqlScanState scan_state, bool active_branch);
 static backslashResult exec_command_setenv(PsqlScanState scan_state, bool active_branch,
 										   const char *cmd);
@@ -417,6 +418,8 @@ exec_command(const char *cmd,
 		status = exec_command_reset(scan_state, active_branch, query_buf);
 	else if (strcmp(cmd, "s") == 0)
 		status = exec_command_s(scan_state, active_branch);
+	else if (strcmp(cmd, "sendpipeline") == 0)
+		status = exec_command_sendpipeline(scan_state, active_branch);
 	else if (strcmp(cmd, "set") == 0)
 		status = exec_command_set(scan_state, active_branch);
 	else if (strcmp(cmd, "setenv") == 0)
@@ -1734,10 +1737,9 @@ exec_command_g(PsqlScanState scan_state, bool active_branch, const char *cmd)
 
 	if (status == PSQL_CMD_SKIP_LINE && active_branch)
 	{
-		if (strcmp(cmd, "gx") == 0 &&
-			PQpipelineStatus(pset.db) != PQ_PIPELINE_OFF)
+		if (PQpipelineStatus(pset.db) != PQ_PIPELINE_OFF)
 		{
-			pg_log_error("\\gx not allowed in pipeline mode");
+			pg_log_error("\\%s not allowed in pipeline mode", cmd);
 			clean_extended_state();
 			free(fname);
 			return PSQL_CMD_ERROR;
@@ -2774,6 +2776,43 @@ exec_command_s(PsqlScanState scan_state, bool active_branch)
 		ignore_slash_options(scan_state);
 
 	return success ? PSQL_CMD_SKIP_LINE : PSQL_CMD_ERROR;
+}
+
+/*
+ * \sendpipeline -- send an extended query to an ongoing pipeline
+ */
+static backslashResult
+exec_command_sendpipeline(PsqlScanState scan_state, bool active_branch)
+{
+	backslashResult status = PSQL_CMD_SKIP_LINE;
+
+	if (active_branch)
+	{
+		if (PQpipelineStatus(pset.db) != PQ_PIPELINE_OFF)
+		{
+			if (pset.send_mode == PSQL_SEND_EXTENDED_QUERY_PREPARED ||
+				pset.send_mode == PSQL_SEND_EXTENDED_QUERY_PARAMS)
+			{
+				status = PSQL_CMD_SEND;
+			}
+			else
+			{
+				pg_log_error("\\sendpipeline must be used after \\bind or \\bind_named");
+				clean_extended_state();
+				return PSQL_CMD_ERROR;
+			}
+		}
+		else
+		{
+			pg_log_error("\\sendpipeline not allowed outside of pipeline mode");
+			clean_extended_state();
+			return PSQL_CMD_ERROR;
+		}
+	}
+	else
+		ignore_slash_options(scan_state);
+
+	return status;
 }
 
 /*

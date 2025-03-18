@@ -181,6 +181,7 @@ slashUsage(unsigned short int pager)
 	HELP0("  \\gx [(OPTIONS)] [FILE] as \\g, but forces expanded output mode\n");
 	HELP0("  \\parse STMT_NAME       create a prepared statement\n");
 	HELP0("  \\q                     quit psql\n");
+	HELP0("  \\sendpipeline          send an extended query to an ongoing pipeline\n");
 	HELP0("  \\startpipeline         enter pipeline mode\n");
 	HELP0("  \\syncpipeline          add a synchronisation point to an ongoing pipeline\n");
 	HELP0("  \\watch [[i=]SEC] [c=N] [m=MIN]\n"

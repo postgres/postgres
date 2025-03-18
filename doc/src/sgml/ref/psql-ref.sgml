@@ -3677,6 +3677,7 @@ testdb=&gt; <userinput>\setenv LESS -imx4F</userinput>
 
      <varlistentry id="app-psql-meta-command-pipeline">
       <term><literal>\startpipeline</literal></term>
+      <term><literal>\sendpipeline</literal></term>
       <term><literal>\syncpipeline</literal></term>
       <term><literal>\endpipeline</literal></term>
       <term><literal>\flushrequest</literal></term>
@@ -3701,10 +3702,10 @@ testdb=&gt; <userinput>\setenv LESS -imx4F</userinput>
         queries need to be sent using the meta-commands
         <literal>\bind</literal>, <literal>\bind_named</literal>,
         <literal>\close</literal> or <literal>\parse</literal>. While a
-        pipeline is ongoing, <literal>\g</literal> will append the current
-        query buffer to the pipeline. Other meta-commands like
-        <literal>\gx</literal> or <literal>\gdesc</literal> are not allowed
-        in pipeline mode.
+        pipeline is ongoing, <literal>\sendpipeline</literal> will append the
+        current query buffer to the pipeline. Other meta-commands like
+        <literal>\g</literal>, <literal>\gx</literal> or <literal>\gdesc</literal>
+        are not allowed in pipeline mode.
        </para>
 
        <para>
@@ -3738,7 +3739,7 @@ testdb=&gt; <userinput>\setenv LESS -imx4F</userinput>
         Example:
 <programlisting>
 \startpipeline
-SELECT 1 \bind \g
+SELECT 1 \bind \sendpipeline
 \flushrequest
 \getresults
 \endpipeline

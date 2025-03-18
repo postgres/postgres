@@ -4,7 +4,7 @@
 CREATE TABLE psql_pipeline(a INTEGER PRIMARY KEY, s TEXT);
 -- Single query
 \startpipeline
-SELECT $1 \bind 'val1' \g
+SELECT $1 \bind 'val1' \sendpipeline
 \endpipeline
  ?column? 
 ----------
@@ -13,9 +13,9 @@ SELECT $1 \bind 'val1' \g
 
 -- Multiple queries
 \startpipeline
-SELECT $1 \bind 'val1' \g
-SELECT $1, $2 \bind 'val2' 'val3' \g
-SELECT $1, $2 \bind 'val2' 'val3' \g
+SELECT $1 \bind 'val1' \sendpipeline
+SELECT $1, $2 \bind 'val2' 'val3' \sendpipeline
+SELECT $1, $2 \bind 'val2' 'val3' \sendpipeline
 \endpipeline
  ?column? 
 ----------
@@ -35,10 +35,10 @@ SELECT $1, $2 \bind 'val2' 'val3' \g
 -- Test \flush
 \startpipeline
 \flush
-SELECT $1 \bind 'val1' \g
+SELECT $1 \bind 'val1' \sendpipeline
 \flush
-SELECT $1, $2 \bind 'val2' 'val3' \g
-SELECT $1, $2 \bind 'val2' 'val3' \g
+SELECT $1, $2 \bind 'val2' 'val3' \sendpipeline
+SELECT $1, $2 \bind 'val2' 'val3' \sendpipeline
 \endpipeline
  ?column? 
 ----------
@@ -63,12 +63,12 @@ SELECT $1, $2 \bind 'val2' 'val3' \g
 0
 \echo :PIPELINE_RESULT_COUNT
 0
-SELECT $1 \bind 'val1' \g
+SELECT $1 \bind 'val1' \sendpipeline
 \syncpipeline
 \syncpipeline
-SELECT $1, $2 \bind 'val2' 'val3' \g
+SELECT $1, $2 \bind 'val2' 'val3' \sendpipeline
 \syncpipeline
-SELECT $1, $2 \bind 'val4' 'val5' \g
+SELECT $1, $2 \bind 'val4' 'val5' \sendpipeline
 \echo :PIPELINE_COMMAND_COUNT
 1
 \echo :PIPELINE_SYNC_COUNT
@@ -94,7 +94,7 @@ SELECT $1, $2 \bind 'val4' 'val5' \g
 -- \startpipeline should not have any effect if already in a pipeline.
 \startpipeline
 \startpipeline
-SELECT $1 \bind 'val1' \g
+SELECT $1 \bind 'val1' \sendpipeline
 \endpipeline
  ?column? 
 ----------
@@ -103,24 +103,24 @@ SELECT $1 \bind 'val1' \g
 
 -- Convert an implicit transaction block to an explicit transaction block.
 \startpipeline
-INSERT INTO psql_pipeline VALUES ($1) \bind 1 \g
-BEGIN \bind \g
-INSERT INTO psql_pipeline VALUES ($1) \bind 2 \g
-ROLLBACK \bind \g
+INSERT INTO psql_pipeline VALUES ($1) \bind 1 \sendpipeline
+BEGIN \bind \sendpipeline
+INSERT INTO psql_pipeline VALUES ($1) \bind 2 \sendpipeline
+ROLLBACK \bind \sendpipeline
 \endpipeline
 -- Multiple explicit transactions
 \startpipeline
-BEGIN \bind \g
-INSERT INTO psql_pipeline VALUES ($1) \bind 1 \g
-ROLLBACK \bind \g
-BEGIN \bind \g
-INSERT INTO psql_pipeline VALUES ($1) \bind 1 \g
-COMMIT \bind \g
+BEGIN \bind \sendpipeline
+INSERT INTO psql_pipeline VALUES ($1) \bind 1 \sendpipeline
+ROLLBACK \bind \sendpipeline
+BEGIN \bind \sendpipeline
+INSERT INTO psql_pipeline VALUES ($1) \bind 1 \sendpipeline
+COMMIT \bind \sendpipeline
 \endpipeline
 -- COPY FROM STDIN
 \startpipeline
-SELECT $1 \bind 'val1' \g
-COPY psql_pipeline FROM STDIN \bind \g
+SELECT $1 \bind 'val1' \sendpipeline
+COPY psql_pipeline FROM STDIN \bind \sendpipeline
 \endpipeline
  ?column? 
 ----------
@@ -129,8 +129,8 @@ COPY psql_pipeline FROM STDIN \bind \g
 
 -- COPY FROM STDIN with \flushrequest + \getresults
 \startpipeline
-SELECT $1 \bind 'val1' \g
-COPY psql_pipeline FROM STDIN \bind \g
+SELECT $1 \bind 'val1' \sendpipeline
+COPY psql_pipeline FROM STDIN \bind \sendpipeline
 \flushrequest
 \getresults
  ?column? 
@@ -142,8 +142,8 @@ message type 0x5a arrived from server while idle
 \endpipeline
 -- COPY FROM STDIN with \syncpipeline + \getresults
 \startpipeline
-SELECT $1 \bind 'val1' \g
-COPY psql_pipeline FROM STDIN \bind \g
+SELECT $1 \bind 'val1' \sendpipeline
+COPY psql_pipeline FROM STDIN \bind \sendpipeline
 \syncpipeline
 \getresults
  ?column? 
@@ -154,8 +154,8 @@ COPY psql_pipeline FROM STDIN \bind \g
 \endpipeline
 -- COPY TO STDOUT
 \startpipeline
-SELECT $1 \bind 'val1' \g
-copy psql_pipeline TO STDOUT \bind \g
+SELECT $1 \bind 'val1' \sendpipeline
+copy psql_pipeline TO STDOUT \bind \sendpipeline
 \endpipeline
  ?column? 
 ----------
@@ -168,8 +168,8 @@ copy psql_pipeline TO STDOUT \bind \g
 4	test4
 -- COPY TO STDOUT with \flushrequest + \getresults
 \startpipeline
-SELECT $1 \bind 'val1' \g
-copy psql_pipeline TO STDOUT \bind \g
+SELECT $1 \bind 'val1' \sendpipeline
+copy psql_pipeline TO STDOUT \bind \sendpipeline
 \flushrequest
 \getresults
  ?column? 
@@ -184,8 +184,8 @@ copy psql_pipeline TO STDOUT \bind \g
 \endpipeline
 -- COPY TO STDOUT with \syncpipeline + \getresults
 \startpipeline
-SELECT $1 \bind 'val1' \g
-copy psql_pipeline TO STDOUT \bind \g
+SELECT $1 \bind 'val1' \sendpipeline
+copy psql_pipeline TO STDOUT \bind \sendpipeline
 \syncpipeline
 \getresults
  ?column? 
@@ -203,14 +203,14 @@ copy psql_pipeline TO STDOUT \bind \g
 SELECT $1 \parse ''
 SELECT $1, $2 \parse ''
 SELECT $2 \parse pipeline_1
-\bind_named '' 1 2 \g
-\bind_named pipeline_1 2 \g
+\bind_named '' 1 2 \sendpipeline
+\bind_named pipeline_1 2 \sendpipeline
 \endpipeline
 ERROR:  could not determine data type of parameter $1
 -- \getresults displays all results preceding a \flushrequest.
 \startpipeline
-SELECT $1 \bind 1 \g
-SELECT $1 \bind 2 \g
+SELECT $1 \bind 1 \sendpipeline
+SELECT $1 \bind 2 \sendpipeline
 \flushrequest
 \getresults
  ?column? 
@@ -226,8 +226,8 @@ SELECT $1 \bind 2 \g
 \endpipeline
 -- \getresults displays all results preceding a \syncpipeline.
 \startpipeline
-SELECT $1 \bind 1 \g
-SELECT $1 \bind 2 \g
+SELECT $1 \bind 1 \sendpipeline
+SELECT $1 \bind 2 \sendpipeline
 \syncpipeline
 \getresults
  ?column? 
@@ -245,7 +245,7 @@ SELECT $1 \bind 2 \g
 \startpipeline
 \getresults
 No pending results to get
-SELECT $1 \bind 2 \g
+SELECT $1 \bind 2 \sendpipeline
 \getresults
 No pending results to get
 \flushrequest
@@ -259,9 +259,9 @@ No pending results to get
 No pending results to get
 -- \getresults only fetches results preceding a \flushrequest.
 \startpipeline
-SELECT $1 \bind 2 \g
+SELECT $1 \bind 2 \sendpipeline
 \flushrequest
-SELECT $1 \bind 2 \g
+SELECT $1 \bind 2 \sendpipeline
 \getresults
  ?column? 
 ----------
@@ -276,9 +276,9 @@ SELECT $1 \bind 2 \g
 
 -- \getresults only fetches results preceding a \syncpipeline.
 \startpipeline
-SELECT $1 \bind 2 \g
+SELECT $1 \bind 2 \sendpipeline
 \syncpipeline
-SELECT $1 \bind 2 \g
+SELECT $1 \bind 2 \sendpipeline
 \getresults
  ?column? 
 ----------
@@ -294,7 +294,7 @@ SELECT $1 \bind 2 \g
 -- Use pipeline with chunked results for both \getresults and \endpipeline.
 \startpipeline
 \set FETCH_COUNT 10
-SELECT $1 \bind 2 \g
+SELECT $1 \bind 2 \sendpipeline
 \flushrequest
 \getresults
  ?column? 
@@ -302,7 +302,7 @@ SELECT $1 \bind 2 \g
  2
 (1 row)
 
-SELECT $1 \bind 2 \g
+SELECT $1 \bind 2 \sendpipeline
 \endpipeline
  ?column? 
 ----------
@@ -312,9 +312,9 @@ SELECT $1 \bind 2 \g
 \unset FETCH_COUNT
 -- \getresults with specific number of requested results.
 \startpipeline
-SELECT $1 \bind 1 \g
-SELECT $1 \bind 2 \g
-SELECT $1 \bind 3 \g
+SELECT $1 \bind 1 \sendpipeline
+SELECT $1 \bind 2 \sendpipeline
+SELECT $1 \bind 3 \sendpipeline
 \echo :PIPELINE_SYNC_COUNT
 0
 \syncpipeline
@@ -330,7 +330,7 @@ SELECT $1 \bind 3 \g
 
 \echo :PIPELINE_RESULT_COUNT
 2
-SELECT $1 \bind 4 \g
+SELECT $1 \bind 4 \sendpipeline
 \getresults 3
  ?column? 
 ----------
@@ -354,7 +354,7 @@ SELECT $1 \bind 4 \g
 \startpipeline
 \syncpipeline
 \syncpipeline
-SELECT $1 \bind 1 \g
+SELECT $1 \bind 1 \sendpipeline
 \flushrequest
 \getresults 2
 \getresults 1
@@ -366,9 +366,9 @@ SELECT $1 \bind 1 \g
 \endpipeline
 -- \getresults 0 should get all the results.
 \startpipeline
-SELECT $1 \bind 1 \g
-SELECT $1 \bind 2 \g
-SELECT $1 \bind 3 \g
+SELECT $1 \bind 1 \sendpipeline
+SELECT $1 \bind 2 \sendpipeline
+SELECT $1 \bind 3 \sendpipeline
 \syncpipeline
 \getresults 0
  ?column? 
@@ -398,7 +398,7 @@ cannot send pipeline when not in pipeline mode
 \startpipeline
 SELECT 1;
 PQsendQuery not allowed in pipeline mode
-SELECT $1 \bind 'val1' \g
+SELECT $1 \bind 'val1' \sendpipeline
 \endpipeline
  ?column? 
 ----------
@@ -408,9 +408,9 @@ SELECT $1 \bind 'val1' \g
 -- After an aborted pipeline, commands after a \syncpipeline should be
 -- displayed.
 \startpipeline
-SELECT $1 \bind \g
+SELECT $1 \bind \sendpipeline
 \syncpipeline
-SELECT $1 \bind 1 \g
+SELECT $1 \bind 1 \sendpipeline
 \endpipeline
 ERROR:  bind message supplies 0 parameters, but prepared statement "" requires 1
  ?column? 
@@ -421,23 +421,23 @@ ERROR:  bind message supplies 0 parameters, but prepared statement "" requires 1
 -- For an incorrect number of parameters, the pipeline is aborted and
 -- the following queries will not be executed.
 \startpipeline
-SELECT \bind 'val1' \g
-SELECT $1 \bind 'val1' \g
+SELECT \bind 'val1' \sendpipeline
+SELECT $1 \bind 'val1' \sendpipeline
 \endpipeline
 ERROR:  bind message supplies 1 parameters, but prepared statement "" requires 0
 -- An explicit transaction with an error needs to be rollbacked after
 -- the pipeline.
 \startpipeline
-BEGIN \bind \g
-INSERT INTO psql_pipeline VALUES ($1) \bind 1 \g
-ROLLBACK \bind \g
+BEGIN \bind \sendpipeline
+INSERT INTO psql_pipeline VALUES ($1) \bind 1 \sendpipeline
+ROLLBACK \bind \sendpipeline
 \endpipeline
 ERROR:  duplicate key value violates unique constraint "psql_pipeline_pkey"
 DETAIL:  Key (a)=(1) already exists.
 ROLLBACK;
 -- \watch sends a simple query, something not allowed within a pipeline.
 \startpipeline
-SELECT \bind \g
+SELECT \bind \sendpipeline
 \watch 1
 PQsendQuery not allowed in pipeline mode
 
@@ -450,7 +450,7 @@ PQsendQuery not allowed in pipeline mode
 \startpipeline
 SELECT $1 \bind 1 \gdesc
 synchronous command execution functions are not allowed in pipeline mode
-SELECT $1 \bind 1 \g
+SELECT $1 \bind 1 \sendpipeline
 \endpipeline
  ?column? 
 ----------
@@ -465,42 +465,63 @@ SELECT $1 as k, $2 as l \parse 'second'
 \gset not allowed in pipeline mode
 \bind_named second 1 2 \gset pref02_ \echo :pref02_i :pref02_j
 \gset not allowed in pipeline mode
-\bind_named '' 1 2 \g
+\bind_named '' 1 2 \sendpipeline
 \endpipeline
  i | j 
 ---+---
  1 | 2
 (1 row)
 
--- \gx is not allowed, pipeline should still be usable.
+-- \g and \gx are not allowed, pipeline should still be usable.
 \startpipeline
+SELECT $1 \bind 1 \g
+\g not allowed in pipeline mode
+SELECT $1 \bind 1 \g (format=unaligned tuples_only=on)
+\g not allowed in pipeline mode
 SELECT $1 \bind 1 \gx
 \gx not allowed in pipeline mode
+SELECT $1 \bind 1 \gx (format=unaligned tuples_only=on)
+\gx not allowed in pipeline mode
 \reset
-SELECT $1 \bind 1 \g
+SELECT $1 \bind 1 \sendpipeline
 \endpipeline
  ?column? 
 ----------
  1
 (1 row)
 
--- \gx warning should be emitted in an aborted pipeline, with
+-- \g and \gx warnings should be emitted in an aborted pipeline, with
 -- pipeline still usable.
 \startpipeline
-SELECT $1 \bind \g
+SELECT $1 \bind \sendpipeline
 \flushrequest
 \getresults
 ERROR:  bind message supplies 0 parameters, but prepared statement "" requires 1
+SELECT $1 \bind 1 \g
+\g not allowed in pipeline mode
 SELECT $1 \bind 1 \gx
 \gx not allowed in pipeline mode
+\endpipeline
+-- \sendpipeline is not allowed outside of a pipeline
+\sendpipeline
+\sendpipeline not allowed outside of pipeline mode
+SELECT $1 \bind 1 \sendpipeline
+\sendpipeline not allowed outside of pipeline mode
+\reset
+-- \sendpipeline is not allowed if not preceded by \bind or \bind_named
+\startpipeline
+\sendpipeline
+\sendpipeline must be used after \bind or \bind_named
+SELECT 1 \sendpipeline
+\sendpipeline must be used after \bind or \bind_named
 \endpipeline
 -- \gexec is not allowed, pipeline should still be usable.
 \startpipeline
 SELECT 'INSERT INTO psql_pipeline(a) SELECT generate_series(1, 10)' \parse 'insert_stmt'
 \bind_named insert_stmt \gexec
 \gexec not allowed in pipeline mode
-\bind_named insert_stmt \g
-SELECT COUNT(*) FROM psql_pipeline \bind \g
+\bind_named insert_stmt \sendpipeline
+SELECT COUNT(*) FROM psql_pipeline \bind \sendpipeline
 \endpipeline
                           ?column?                          
 ------------------------------------------------------------
@@ -515,26 +536,26 @@ SELECT COUNT(*) FROM psql_pipeline \bind \g
 -- After an error, pipeline is aborted and requires \syncpipeline to be
 -- reusable.
 \startpipeline
-SELECT $1 \bind \g
-SELECT $1 \bind 1 \g
+SELECT $1 \bind \sendpipeline
+SELECT $1 \bind 1 \sendpipeline
 SELECT $1 \parse a
-\bind_named a 1 \g
+\bind_named a 1 \sendpipeline
 \close a
 \flushrequest
 \getresults
 ERROR:  bind message supplies 0 parameters, but prepared statement "" requires 1
 -- Pipeline is aborted.
-SELECT $1 \bind 1 \g
+SELECT $1 \bind 1 \sendpipeline
 SELECT $1 \parse a
-\bind_named a 1 \g
+\bind_named a 1 \sendpipeline
 \close a
 -- Sync allows pipeline to recover.
 \syncpipeline
 \getresults
 Pipeline aborted, command did not run
-SELECT $1 \bind 1 \g
+SELECT $1 \bind 1 \sendpipeline
 SELECT $1 \parse a
-\bind_named a 1 \g
+\bind_named a 1 \sendpipeline
 \close a
 \flushrequest
 \getresults
@@ -551,10 +572,10 @@ SELECT $1 \parse a
 \endpipeline
 -- In an aborted pipeline, \getresults 1 aborts commands one at a time.
 \startpipeline
-SELECT $1 \bind \g
-SELECT $1 \bind 1 \g
+SELECT $1 \bind \sendpipeline
+SELECT $1 \bind 1 \sendpipeline
 SELECT $1 \parse a
-\bind_named a 1 \g
+\bind_named a 1 \sendpipeline
 \syncpipeline
 \getresults 1
 ERROR:  bind message supplies 0 parameters, but prepared statement "" requires 1
@@ -569,11 +590,11 @@ Pipeline aborted, command did not run
 -- Test chunked results with an aborted pipeline.
 \startpipeline
 \set FETCH_COUNT 10
-SELECT $1 \bind \g
+SELECT $1 \bind \sendpipeline
 \flushrequest
 \getresults
 ERROR:  bind message supplies 0 parameters, but prepared statement "" requires 1
-SELECT $1 \bind \g
+SELECT $1 \bind \sendpipeline
 \endpipeline
 fetching results in chunked mode failed
 Pipeline aborted, command did not run
@@ -595,7 +616,7 @@ select 1;
 
 -- Error messages accumulate and are repeated.
 \startpipeline
-SELECT 1 \bind \g
+SELECT 1 \bind \sendpipeline
 SELECT 1;
 PQsendQuery not allowed in pipeline mode
 SELECT 1;
@@ -616,12 +637,12 @@ PQsendQuery not allowed in pipeline mode
 -- commit the implicit transaction block. The first command after a
 -- sync will not be seen as belonging to a pipeline.
 \startpipeline
-SET LOCAL statement_timeout='1h' \bind \g
-SHOW statement_timeout \bind \g
+SET LOCAL statement_timeout='1h' \bind \sendpipeline
+SHOW statement_timeout \bind \sendpipeline
 \syncpipeline
-SHOW statement_timeout \bind \g
-SET LOCAL statement_timeout='2h' \bind \g
-SHOW statement_timeout \bind \g
+SHOW statement_timeout \bind \sendpipeline
+SET LOCAL statement_timeout='2h' \bind \sendpipeline
+SHOW statement_timeout \bind \sendpipeline
 \endpipeline
 WARNING:  SET LOCAL can only be used in transaction blocks
  statement_timeout 
@@ -641,9 +662,9 @@ WARNING:  SET LOCAL can only be used in transaction blocks
 
 -- REINDEX CONCURRENTLY fails if not the first command in a pipeline.
 \startpipeline
-SELECT $1 \bind 1 \g
-REINDEX TABLE CONCURRENTLY psql_pipeline \bind \g
-SELECT $1 \bind 2 \g
+SELECT $1 \bind 1 \sendpipeline
+REINDEX TABLE CONCURRENTLY psql_pipeline \bind \sendpipeline
+SELECT $1 \bind 2 \sendpipeline
 \endpipeline
  ?column? 
 ----------
@@ -653,8 +674,8 @@ SELECT $1 \bind 2 \g
 ERROR:  REINDEX CONCURRENTLY cannot run inside a transaction block
 -- REINDEX CONCURRENTLY works if it is the first command in a pipeline.
 \startpipeline
-REINDEX TABLE CONCURRENTLY psql_pipeline \bind \g
-SELECT $1 \bind 2 \g
+REINDEX TABLE CONCURRENTLY psql_pipeline \bind \sendpipeline
+SELECT $1 \bind 2 \sendpipeline
 \endpipeline
  ?column? 
 ----------
@@ -663,25 +684,25 @@ SELECT $1 \bind 2 \g
 
 -- Subtransactions are not allowed in a pipeline.
 \startpipeline
-SAVEPOINT a \bind \g
-SELECT $1 \bind 1 \g
-ROLLBACK TO SAVEPOINT a \bind \g
-SELECT $1 \bind 2 \g
+SAVEPOINT a \bind \sendpipeline
+SELECT $1 \bind 1 \sendpipeline
+ROLLBACK TO SAVEPOINT a \bind \sendpipeline
+SELECT $1 \bind 2 \sendpipeline
 \endpipeline
 ERROR:  SAVEPOINT can only be used in transaction blocks
 -- LOCK fails as the first command in a pipeline, as not seen in an
 -- implicit transaction block.
 \startpipeline
-LOCK psql_pipeline \bind \g
-SELECT $1 \bind 2 \g
+LOCK psql_pipeline \bind \sendpipeline
+SELECT $1 \bind 2 \sendpipeline
 \endpipeline
 ERROR:  LOCK TABLE can only be used in transaction blocks
 -- LOCK succeeds as it is not the first command in a pipeline,
 -- seen in an implicit transaction block.
 \startpipeline
-SELECT $1 \bind 1 \g
-LOCK psql_pipeline \bind \g
-SELECT $1 \bind 2 \g
+SELECT $1 \bind 1 \sendpipeline
+LOCK psql_pipeline \bind \sendpipeline
+SELECT $1 \bind 2 \sendpipeline
 \endpipeline
  ?column? 
 ----------
@@ -695,12 +716,12 @@ SELECT $1 \bind 2 \g
 
 -- VACUUM works as the first command in a pipeline.
 \startpipeline
-VACUUM psql_pipeline \bind \g
+VACUUM psql_pipeline \bind \sendpipeline
 \endpipeline
 -- VACUUM fails when not the first command in a pipeline.
 \startpipeline
-SELECT 1 \bind \g
-VACUUM psql_pipeline \bind \g
+SELECT 1 \bind \sendpipeline
+VACUUM psql_pipeline \bind \sendpipeline
 \endpipeline
  ?column? 
 ----------
@@ -710,9 +731,9 @@ VACUUM psql_pipeline \bind \g
 ERROR:  VACUUM cannot run inside a transaction block
 -- VACUUM works after a \syncpipeline.
 \startpipeline
-SELECT 1 \bind \g
+SELECT 1 \bind \sendpipeline
 \syncpipeline
-VACUUM psql_pipeline \bind \g
+VACUUM psql_pipeline \bind \sendpipeline
 \endpipeline
  ?column? 
 ----------

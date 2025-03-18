@@ -1074,6 +1074,7 @@ select \if false \\ (bogus \else \\ 42 \endif \\ forty_two;
 	\q
 	\reset
 	\s arg1
+	\sendpipeline
 	\set arg1 arg2 arg3 arg4 arg5 arg6 arg7
 	\setenv arg1 arg2
 	\sf whole_line
