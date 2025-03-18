@@ -5,7 +5,7 @@ SDK_VERSION=3.1.74.6bi
 WASI_SDK_VERSION=24.0.4
 SDKROOT=/tmp/sdk
 
-PG_DIST=/tmp/sdk
+PG_DIST=/tmp/sdk/dist
 PG_DIST_EXT=/tmp/sdk/dist/extensions-emsdk
 DEBUG=false
 CI=true
