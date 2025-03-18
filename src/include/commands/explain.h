@@ -16,7 +16,7 @@
 #include "executor/executor.h"
 #include "parser/parse_node.h"
 
-struct ExplainState;	/* defined in explain_state.h */
+struct ExplainState;			/* defined in explain_state.h */
 
 /* Hook for plugins to get control in ExplainOneQuery() */
 typedef void (*ExplainOneQuery_hook_type) (Query *query,
