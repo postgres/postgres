@@ -18,6 +18,7 @@
 #include "storage/aio.h"
 #include "storage/aio_internal.h"
 #include "storage/aio_subsys.h"
+#include "storage/bufmgr.h"
 #include "storage/io_worker.h"
 #include "storage/ipc.h"
 #include "storage/proc.h"
@@ -72,15 +73,9 @@ AioHandleShmemSize(void)
 static Size
 AioHandleIOVShmemSize(void)
 {
-	/*
-	 * Each IO handle can have an PG_IOV_MAX long iovec.
-	 *
-	 * XXX: Right now the amount of space available for each IO is PG_IOV_MAX.
-	 * While it's tempting to use the io_combine_limit GUC, that's
-	 * PGC_USERSET, so we can't allocate shared memory based on that.
-	 */
+	/* each IO handle can have up to io_max_combine_limit iovec objects */
 	return mul_size(sizeof(struct iovec),
-					mul_size(mul_size(PG_IOV_MAX, AioProcs()),
+					mul_size(mul_size(io_max_combine_limit, AioProcs()),
 							 io_max_concurrency));
 }
 
@@ -89,7 +84,7 @@ AioHandleDataShmemSize(void)
 {
 	/* each buffer referenced by an iovec can have associated data */
 	return mul_size(sizeof(uint64),
-					mul_size(mul_size(PG_IOV_MAX, AioProcs()),
+					mul_size(mul_size(io_max_combine_limit, AioProcs()),
 							 io_max_concurrency));
 }
 
@@ -160,7 +155,7 @@ AioShmemInit(void)
 	bool		found;
 	uint32		io_handle_off = 0;
 	uint32		iovec_off = 0;
-	uint32		per_backend_iovecs = io_max_concurrency * PG_IOV_MAX;
+	uint32		per_backend_iovecs = io_max_concurrency * io_max_combine_limit;
 
 	pgaio_ctl = (PgAioCtl *)
 		ShmemInitStruct("AioCtl", AioCtlShmemSize(), &found);
@@ -213,7 +208,7 @@ AioShmemInit(void)
 			ConditionVariableInit(&ioh->cv);
 
 			dclist_push_tail(&bs->idle_ios, &ioh->node);
-			iovec_off += PG_IOV_MAX;
+			iovec_off += io_max_combine_limit;
 		}
 	}
 

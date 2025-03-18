@@ -86,6 +86,8 @@ extern const char *show_log_timezone(void);
 extern bool check_maintenance_io_concurrency(int *newval, void **extra,
 											 GucSource source);
 extern void assign_maintenance_io_concurrency(int newval, void *extra);
+extern void assign_io_max_combine_limit(int newval, void *extra);
+extern void assign_io_combine_limit(int newval, void *extra);
 extern bool check_max_slot_wal_keep_size(int *newval, void **extra,
 										 GucSource source);
 extern void assign_max_wal_size(int newval, void *extra);

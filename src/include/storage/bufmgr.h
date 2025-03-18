@@ -163,7 +163,9 @@ extern PGDLLIMPORT int maintenance_io_concurrency;
 
 #define MAX_IO_COMBINE_LIMIT PG_IOV_MAX
 #define DEFAULT_IO_COMBINE_LIMIT Min(MAX_IO_COMBINE_LIMIT, (128 * 1024) / BLCKSZ)
-extern PGDLLIMPORT int io_combine_limit;
+extern PGDLLIMPORT int io_combine_limit;	/* min of the two GUCs below */
+extern PGDLLIMPORT int io_combine_limit_guc;
+extern PGDLLIMPORT int io_max_combine_limit;
 
 extern PGDLLIMPORT int checkpoint_flush_after;
 extern PGDLLIMPORT int backend_flush_after;

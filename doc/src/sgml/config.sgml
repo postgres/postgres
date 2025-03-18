@@ -2625,6 +2625,24 @@ include_dir 'conf.d'
        </listitem>
       </varlistentry>
 
+      <varlistentry id="guc-io-max-combine-limit" xreflabel="io_max_combine_limit">
+       <term><varname>io_max_combine_limit</varname> (<type>integer</type>)
+       <indexterm>
+        <primary><varname>io_max_combine_limit</varname> configuration parameter</primary>
+       </indexterm>
+       </term>
+       <listitem>
+        <para>
+         Controls the largest I/O size in operations that combine I/O, and silently
+         limits the user-settable parameter <varname>io_combine_limit</varname>.
+         This parameter can only be set in
+         the <filename>postgresql.conf</filename> file or on the server
+         command line.
+         The default is 128kB.
+        </para>
+       </listitem>
+      </varlistentry>
+
       <varlistentry id="guc-io-combine-limit" xreflabel="io_combine_limit">
        <term><varname>io_combine_limit</varname> (<type>integer</type>)
        <indexterm>
@@ -2633,7 +2651,10 @@ include_dir 'conf.d'
        </term>
        <listitem>
         <para>
-         Controls the largest I/O size in operations that combine I/O.
+         Controls the largest I/O size in operations that combine I/O.  If set
+         higher than the <varname>io_max_combine_limit</varname> parameter, the
+         lower value will silently be used instead, so both may need to be raised
+         to increase the I/O size.
          The default is 128kB.
         </para>
        </listitem>

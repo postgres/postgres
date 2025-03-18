@@ -160,9 +160,12 @@ int			maintenance_io_concurrency = DEFAULT_MAINTENANCE_IO_CONCURRENCY;
 /*
  * Limit on how many blocks should be handled in single I/O operations.
  * StartReadBuffers() callers should respect it, as should other operations
- * that call smgr APIs directly.
+ * that call smgr APIs directly.  It is computed as the minimum of underlying
+ * GUCs io_combine_limit_guc and io_max_combine_limit.
  */
 int			io_combine_limit = DEFAULT_IO_COMBINE_LIMIT;
+int			io_combine_limit_guc = DEFAULT_IO_COMBINE_LIMIT;
+int			io_max_combine_limit = DEFAULT_IO_COMBINE_LIMIT;
 
 /*
  * GUC variables about triggering kernel writeback for buffers written; OS
