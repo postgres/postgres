@@ -40,7 +40,8 @@ then
     export COPTS=${COPTS:-"-O2 -g3"}
     export LOPTS=${LOPTS:-"-O2 -g3 --no-wasm-opt -sASSERTIONS=1"}
 else
-    export COPTS=${COPTS:-"-Oz -g0"}
+    # DO NOT CHANGE COPTS - optimized wasm corruption fix
+    export COPTS=${COPTS:-"-O2 -g3 --no-wasm-opt"}
     export LOPTS=${LOPTS:-'-Oz -g0 --closure=0 --closure-args=--externs=/tmp/externs.js -sASSERTIONS=0'}
 fi
 
