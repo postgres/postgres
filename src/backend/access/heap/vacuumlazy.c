@@ -534,7 +534,7 @@ heap_vacuum_eager_scan_setup(LVRelState *vacrel, VacuumParams *params)
 	 * Tuples with XIDs older than OldestXmin or MXIDs older than OldestMxact
 	 * are technically freezable, but we won't freeze them unless the criteria
 	 * for opportunistic freezing is met. Only tuples with XIDs/MXIDs older
-	 * than the the FreezeLimit/MultiXactCutoff are frozen in the common case.
+	 * than the FreezeLimit/MultiXactCutoff are frozen in the common case.
 	 *
 	 * So, as a heuristic, we wait until the FreezeLimit has advanced past the
 	 * relfrozenxid or the MultiXactCutoff has advanced past the relminmxid to
