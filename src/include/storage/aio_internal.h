@@ -385,6 +385,7 @@ extern PgAioHandle *pgaio_inj_io_get(void);
 
 /* Declarations for the tables of function pointers exposed by each IO method. */
 extern PGDLLIMPORT const IoMethodOps pgaio_sync_ops;
+extern PGDLLIMPORT const IoMethodOps pgaio_worker_ops;
 
 extern PGDLLIMPORT const IoMethodOps *pgaio_method_ops;
 extern PGDLLIMPORT PgAioCtl *pgaio_ctl;

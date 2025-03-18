@@ -2678,6 +2678,11 @@ include_dir 'conf.d'
          <itemizedlist>
           <listitem>
            <para>
+            <literal>worker</literal> (execute asynchronous I/O using worker processes)
+           </para>
+          </listitem>
+          <listitem>
+           <para>
             <literal>sync</literal> (execute asynchronous-eligible I/O synchronously)
            </para>
           </listitem>
