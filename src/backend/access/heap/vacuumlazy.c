@@ -1263,9 +1263,12 @@ lazy_scan_heap(LVRelState *vacrel)
 		 * Consider if we definitely have enough space to process TIDs on page
 		 * already.  If we are close to overrunning the available space for
 		 * dead_items TIDs, pause and do a cycle of vacuuming before we tackle
-		 * this page.
+		 * this page. However, let's force at least one page-worth of tuples
+		 * to be stored as to ensure we do at least some work when the memory
+		 * configured is so low that we run out before storing anything.
 		 */
-		if (TidStoreMemoryUsage(vacrel->dead_items) > vacrel->dead_items_info->max_bytes)
+		if (vacrel->dead_items_info->num_items > 0 &&
+			TidStoreMemoryUsage(vacrel->dead_items) > vacrel->dead_items_info->max_bytes)
 		{
 			/*
 			 * Before beginning index vacuuming, we release any pin we may
