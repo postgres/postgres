@@ -10,6 +10,9 @@ export CI=${CI:-false}
 export PORTABLE=${PORTABLE:-$(pwd)/wasm-build}
 export SDKROOT=${SDKROOT:-/tmp/sdk}
 
+export GETZIC=${GETZIC:-true}
+export ZIC=${ZIC:-/usr/sbin/zic}
+
 
 # data transfer zone this is == (wire query size + result size ) + 2
 # expressed in EMSDK MB, max is 13MB on emsdk 3.1.74+
