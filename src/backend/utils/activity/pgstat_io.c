@@ -512,7 +512,7 @@ pgstat_tracks_io_op(BackendType bktype, IOObject io_object,
 	 */
 	if (io_object == IOOBJECT_WAL && io_op == IOOP_READ &&
 		(bktype == B_WAL_RECEIVER || bktype == B_BG_WRITER ||
-		 bktype == B_AUTOVAC_WORKER || bktype == B_AUTOVAC_WORKER ||
+		 bktype == B_AUTOVAC_LAUNCHER || bktype == B_AUTOVAC_WORKER ||
 		 bktype == B_WAL_WRITER))
 		return false;
 
