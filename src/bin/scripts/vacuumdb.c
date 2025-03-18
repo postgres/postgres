@@ -62,10 +62,16 @@ typedef enum
 
 static VacObjFilter objfilter = OBJFILTER_NONE;
 
+static SimpleStringList *retrieve_objects(PGconn *conn,
+										  vacuumingOptions *vacopts,
+										  SimpleStringList *objects,
+										  bool echo);
+
 static void vacuum_one_database(ConnParams *cparams,
 								vacuumingOptions *vacopts,
 								int stage,
 								SimpleStringList *objects,
+								SimpleStringList **found_objs,
 								int concurrentCons,
 								const char *progname, bool echo, bool quiet);
 
@@ -405,7 +411,7 @@ main(int argc, char *argv[])
 			{
 				vacuum_one_database(&cparams, &vacopts,
 									stage,
-									&objects,
+									&objects, NULL,
 									concurrentCons,
 									progname, echo, quiet);
 			}
@@ -413,7 +419,7 @@ main(int argc, char *argv[])
 		else
 			vacuum_one_database(&cparams, &vacopts,
 								ANALYZE_NO_STAGE,
-								&objects,
+								&objects, NULL,
 								concurrentCons,
 								progname, echo, quiet);
 	}
@@ -461,8 +467,36 @@ escape_quotes(const char *src)
 /*
  * vacuum_one_database
  *
- * Process tables in the given database.  If the 'objects' list is empty,
- * process all tables in the database.
+ * Process tables in the given database.
+ *
+ * There are two ways to specify the list of objects to process:
+ *
+ * 1) The "found_objs" parameter is a double pointer to a fully qualified list
+ *    of objects to process, as returned by a previous call to
+ *    vacuum_one_database().
+ *
+ *     a) If both "found_objs" (the double pointer) and "*found_objs" (the
+ *        once-dereferenced double pointer) are not NULL, this list takes
+ *        priority, and anything specified in "objects" is ignored.
+ *
+ *     b) If "found_objs" (the double pointer) is not NULL but "*found_objs"
+ *        (the once-dereferenced double pointer) _is_ NULL, the "objects"
+ *        parameter takes priority, and the results of the catalog query
+ *        described in (2) are stored in "found_objs".
+ *
+ *     c) If "found_objs" (the double pointer) is NULL, the "objects"
+ *        parameter again takes priority, and the results of the catalog query
+ *        are not saved.
+ *
+ * 2) The "objects" parameter is a user-specified list of objects to process.
+ *    When (1b) or (1c) applies, this function performs a catalog query to
+ *    retrieve a fully qualified list of objects to process, as described
+ *    below.
+ *
+ *     a) If "objects" is not NULL, the catalog query gathers only the objects
+ *        listed in "objects".
+ *
+ *     b) If "objects" is NULL, all tables in the database are gathered.
  *
  * Note that this function is only concerned with running exactly one stage
  * when in analyze-in-stages mode; caller must iterate on us if necessary.
@@ -475,22 +509,18 @@ vacuum_one_database(ConnParams *cparams,
 					vacuumingOptions *vacopts,
 					int stage,
 					SimpleStringList *objects,
+					SimpleStringList **found_objs,
 					int concurrentCons,
 					const char *progname, bool echo, bool quiet)
 {
 	PQExpBufferData sql;
-	PQExpBufferData buf;
-	PQExpBufferData catalog_query;
-	PGresult   *res;
 	PGconn	   *conn;
 	SimpleStringListCell *cell;
 	ParallelSlotArray *sa;
-	SimpleStringList dbtables = {NULL, NULL};
-	int			i;
-	int			ntups;
+	int			ntups = 0;
 	bool		failed = false;
-	bool		objects_listed = false;
 	const char *initcmd;
+	SimpleStringList *ret = NULL;
 	const char *stage_commands[] = {
 		"SET default_statistics_target=1; SET vacuum_cost_delay=0;",
 		"SET default_statistics_target=10; RESET vacuum_cost_delay;",
@@ -599,19 +629,155 @@ vacuum_one_database(ConnParams *cparams,
 	}
 
 	/*
-	 * Prepare the list of tables to process by querying the catalogs.
-	 *
-	 * Since we execute the constructed query with the default search_path
-	 * (which could be unsafe), everything in this query MUST be fully
-	 * qualified.
-	 *
-	 * First, build a WITH clause for the catalog query if any tables were
-	 * specified, with a set of values made of relation names and their
-	 * optional set of columns.  This is used to match any provided column
-	 * lists with the generated qualified identifiers and to filter for the
-	 * tables provided via --table.  If a listed table does not exist, the
-	 * catalog query will fail.
+	 * If the caller provided the results of a previous catalog query, just
+	 * use that.  Otherwise, run the catalog query ourselves and set the
+	 * return variable if provided.
 	 */
+	if (found_objs && *found_objs)
+		ret = *found_objs;
+	else
+	{
+		ret = retrieve_objects(conn, vacopts, objects, echo);
+		if (found_objs)
+			*found_objs = ret;
+	}
+
+	/*
+	 * Count the number of objects in the catalog query result.  If there are
+	 * none, we are done.
+	 */
+	for (cell = ret ? ret->head : NULL; cell; cell = cell->next)
+		ntups++;
+
+	if (ntups == 0)
+	{
+		PQfinish(conn);
+		return;
+	}
+
+	/*
+	 * Ensure concurrentCons is sane.  If there are more connections than
+	 * vacuumable relations, we don't need to use them all.
+	 */
+	if (concurrentCons > ntups)
+		concurrentCons = ntups;
+	if (concurrentCons <= 0)
+		concurrentCons = 1;
+
+	/*
+	 * All slots need to be prepared to run the appropriate analyze stage, if
+	 * caller requested that mode.  We have to prepare the initial connection
+	 * ourselves before setting up the slots.
+	 */
+	if (stage == ANALYZE_NO_STAGE)
+		initcmd = NULL;
+	else
+	{
+		initcmd = stage_commands[stage];
+		executeCommand(conn, initcmd, echo);
+	}
+
+	/*
+	 * Setup the database connections. We reuse the connection we already have
+	 * for the first slot.  If not in parallel mode, the first slot in the
+	 * array contains the connection.
+	 */
+	sa = ParallelSlotsSetup(concurrentCons, cparams, progname, echo, initcmd);
+	ParallelSlotsAdoptConn(sa, conn);
+
+	initPQExpBuffer(&sql);
+
+	cell = ret->head;
+	do
+	{
+		const char *tabname = cell->val;
+		ParallelSlot *free_slot;
+
+		if (CancelRequested)
+		{
+			failed = true;
+			goto finish;
+		}
+
+		free_slot = ParallelSlotsGetIdle(sa, NULL);
+		if (!free_slot)
+		{
+			failed = true;
+			goto finish;
+		}
+
+		prepare_vacuum_command(&sql, PQserverVersion(free_slot->connection),
+							   vacopts, tabname);
+
+		/*
+		 * Execute the vacuum.  All errors are handled in processQueryResult
+		 * through ParallelSlotsGetIdle.
+		 */
+		ParallelSlotSetHandler(free_slot, TableCommandResultHandler, NULL);
+		run_vacuum_command(free_slot->connection, sql.data,
+						   echo, tabname);
+
+		cell = cell->next;
+	} while (cell != NULL);
+
+	if (!ParallelSlotsWaitCompletion(sa))
+	{
+		failed = true;
+		goto finish;
+	}
+
+	/* If we used SKIP_DATABASE_STATS, mop up with ONLY_DATABASE_STATS */
+	if (vacopts->skip_database_stats && stage == ANALYZE_NO_STAGE)
+	{
+		const char *cmd = "VACUUM (ONLY_DATABASE_STATS);";
+		ParallelSlot *free_slot = ParallelSlotsGetIdle(sa, NULL);
+
+		if (!free_slot)
+		{
+			failed = true;
+			goto finish;
+		}
+
+		ParallelSlotSetHandler(free_slot, TableCommandResultHandler, NULL);
+		run_vacuum_command(free_slot->connection, cmd, echo, NULL);
+
+		if (!ParallelSlotsWaitCompletion(sa))
+			failed = true;
+	}
+
+finish:
+	ParallelSlotsTerminate(sa);
+	pg_free(sa);
+
+	termPQExpBuffer(&sql);
+
+	if (failed)
+		exit(1);
+}
+
+/*
+ * Prepare the list of tables to process by querying the catalogs.
+ *
+ * Since we execute the constructed query with the default search_path (which
+ * could be unsafe), everything in this query MUST be fully qualified.
+ *
+ * First, build a WITH clause for the catalog query if any tables were
+ * specified, with a set of values made of relation names and their optional
+ * set of columns.  This is used to match any provided column lists with the
+ * generated qualified identifiers and to filter for the tables provided via
+ * --table.  If a listed table does not exist, the catalog query will fail.
+ */
+static SimpleStringList *
+retrieve_objects(PGconn *conn, vacuumingOptions *vacopts,
+				 SimpleStringList *objects, bool echo)
+{
+	PQExpBufferData buf;
+	PQExpBufferData catalog_query;
+	PGresult   *res;
+	SimpleStringListCell *cell;
+	SimpleStringList *found_objs = palloc0(sizeof(SimpleStringList));
+	bool		objects_listed = false;
+
 	initPQExpBuffer(&catalog_query);
 	for (cell = objects ? objects->head : NULL; cell; cell = cell->next)
 	{
@@ -766,22 +932,11 @@ vacuum_one_database(ConnParams *cparams,
 	PQclear(executeQuery(conn, ALWAYS_SECURE_SEARCH_PATH_SQL, echo));
 
 	/*
-	 * If no rows are returned, there are no matching tables, so we are done.
-	 */
-	ntups = PQntuples(res);
-	if (ntups == 0)
-	{
-		PQclear(res);
-		PQfinish(conn);
-		return;
-	}
-
-	/*
 	 * Build qualified identifiers for each table, including the column list
 	 * if given.
 	 */
 	initPQExpBuffer(&buf);
-	for (i = 0; i < ntups; i++)
+	for (int i = 0; i < PQntuples(res); i++)
 	{
 		appendPQExpBufferStr(&buf,
 							 fmtQualifiedIdEnc(PQgetvalue(res, i, 1),
@@ -791,110 +946,13 @@ vacuum_one_database(ConnParams *cparams,
 		if (objects_listed && !PQgetisnull(res, i, 2))
 			appendPQExpBufferStr(&buf, PQgetvalue(res, i, 2));
 
-		simple_string_list_append(&dbtables, buf.data);
+		simple_string_list_append(found_objs, buf.data);
 		resetPQExpBuffer(&buf);
 	}
 	termPQExpBuffer(&buf);
 	PQclear(res);
 
-	/*
-	 * Ensure concurrentCons is sane.  If there are more connections than
-	 * vacuumable relations, we don't need to use them all.
-	 */
-	if (concurrentCons > ntups)
-		concurrentCons = ntups;
-	if (concurrentCons <= 0)
-		concurrentCons = 1;
-
-	/*
-	 * All slots need to be prepared to run the appropriate analyze stage, if
-	 * caller requested that mode.  We have to prepare the initial connection
-	 * ourselves before setting up the slots.
-	 */
-	if (stage == ANALYZE_NO_STAGE)
-		initcmd = NULL;
-	else
-	{
-		initcmd = stage_commands[stage];
-		executeCommand(conn, initcmd, echo);
-	}
-
-	/*
-	 * Setup the database connections. We reuse the connection we already have
-	 * for the first slot.  If not in parallel mode, the first slot in the
-	 * array contains the connection.
-	 */
-	sa = ParallelSlotsSetup(concurrentCons, cparams, progname, echo, initcmd);
-	ParallelSlotsAdoptConn(sa, conn);
-
-	initPQExpBuffer(&sql);
-
-	cell = dbtables.head;
-	do
-	{
-		const char *tabname = cell->val;
-		ParallelSlot *free_slot;
-
-		if (CancelRequested)
-		{
-			failed = true;
-			goto finish;
-		}
-
-		free_slot = ParallelSlotsGetIdle(sa, NULL);
-		if (!free_slot)
-		{
-			failed = true;
-			goto finish;
-		}
-
-		prepare_vacuum_command(&sql, PQserverVersion(free_slot->connection),
-							   vacopts, tabname);
-
-		/*
-		 * Execute the vacuum.  All errors are handled in processQueryResult
-		 * through ParallelSlotsGetIdle.
-		 */
-		ParallelSlotSetHandler(free_slot, TableCommandResultHandler, NULL);
-		run_vacuum_command(free_slot->connection, sql.data,
-						   echo, tabname);
-
-		cell = cell->next;
-	} while (cell != NULL);
-
-	if (!ParallelSlotsWaitCompletion(sa))
-	{
-		failed = true;
-		goto finish;
-	}
-
-	/* If we used SKIP_DATABASE_STATS, mop up with ONLY_DATABASE_STATS */
-	if (vacopts->skip_database_stats && stage == ANALYZE_NO_STAGE)
-	{
-		const char *cmd = "VACUUM (ONLY_DATABASE_STATS);";
-		ParallelSlot *free_slot = ParallelSlotsGetIdle(sa, NULL);
-
-		if (!free_slot)
-		{
-			failed = true;
-			goto finish;
-		}
-
-		ParallelSlotSetHandler(free_slot, TableCommandResultHandler, NULL);
-		run_vacuum_command(free_slot->connection, cmd, echo, NULL);
-
-		if (!ParallelSlotsWaitCompletion(sa))
-			failed = true;
-	}
-
-finish:
-	ParallelSlotsTerminate(sa);
-	pg_free(sa);
-
-	termPQExpBuffer(&sql);
-
-	if (failed)
-		exit(1);
+	return found_objs;
 }
 
 /*
@@ -941,7 +999,7 @@ vacuum_all_databases(ConnParams *cparams,
 
 				vacuum_one_database(cparams, vacopts,
 									stage,
-									objects,
+									objects, NULL,
 									concurrentCons,
 									progname, echo, quiet);
 			}
@@ -955,7 +1013,7 @@ vacuum_all_databases(ConnParams *cparams,
 
 			vacuum_one_database(cparams, vacopts,
 								ANALYZE_NO_STAGE,
-								objects,
+								objects, NULL,
 								concurrentCons,
 								progname, echo, quiet);
 		}
