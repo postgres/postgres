@@ -230,12 +230,12 @@ smgropen(RelFileLocator rlocator, ProcNumber backend)
 
 		reln->smgr_which = storage_manager_id;
 
-		/* implementation-specific initialization */
-		smgrsw[reln->smgr_which].smgr_open(reln);
-
 		/* it is not pinned yet */
 		reln->pincount = 0;
 		dlist_push_tail(&unpinned_relns, &reln->node);
+
+		/* implementation-specific initialization */
+		smgrsw[reln->smgr_which].smgr_open(reln);
 	}
 
 	return reln;
