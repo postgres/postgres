@@ -37,6 +37,7 @@
  * memory allocation.
  */
 static PgStat_BackendPending PendingBackendStats;
+static bool backend_has_iostats = false;
 
 /*
  * WAL usage counters saved from pgWalUsage at the previous call to
@@ -63,6 +64,8 @@ pgstat_count_backend_io_op_time(IOObject io_object, IOContext io_context,
 
 	INSTR_TIME_ADD(PendingBackendStats.pending_io.pending_times[io_object][io_context][io_op],
 				   io_time);
+
+	backend_has_iostats = true;
 }
 
 void
@@ -76,6 +79,8 @@ pgstat_count_backend_io_op(IOObject io_object, IOContext io_context,
 
 	PendingBackendStats.pending_io.counts[io_object][io_context][io_op] += cnt;
 	PendingBackendStats.pending_io.bytes[io_object][io_context][io_op] += bytes;
+
+	backend_has_iostats = true;
 }
 
 /*
@@ -158,8 +163,7 @@ pgstat_flush_backend_entry_io(PgStat_EntryRef *entry_ref)
 	 * statistics.  In this case, avoid unnecessarily modifying the stats
 	 * entry.
 	 */
-	if (pg_memory_is_all_zeros(&PendingBackendStats.pending_io,
-							   sizeof(struct PgStat_PendingIO)))
+	if (!backend_has_iostats)
 		return;
 
 	shbackendent = (PgStatShared_Backend *) entry_ref->shared_stats;
@@ -190,6 +194,8 @@ pgstat_flush_backend_entry_io(PgStat_EntryRef *entry_ref)
 	 * Clear out the statistics buffer, so it can be re-used.
 	 */
 	MemSet(&PendingBackendStats.pending_io, 0, sizeof(PgStat_PendingIO));
+
+	backend_has_iostats = false;
 }
 
 /*
@@ -259,9 +265,7 @@ pgstat_flush_backend(bool nowait, bits32 flags)
 		return false;
 
 	/* Some IO data pending? */
-	if ((flags & PGSTAT_BACKEND_FLUSH_IO) &&
-		!pg_memory_is_all_zeros(&PendingBackendStats.pending_io,
-								sizeof(struct PgStat_PendingIO)))
+	if ((flags & PGSTAT_BACKEND_FLUSH_IO) && backend_has_iostats)
 		has_pending_data = true;
 
 	/* Some WAL data pending? */
@@ -298,9 +302,7 @@ pgstat_backend_have_pending_cb(void)
 	if (!pgstat_tracks_backend_bktype(MyBackendType))
 		return false;
 
-	return (!pg_memory_is_all_zeros(&PendingBackendStats,
-									sizeof(struct PgStat_BackendPending)) ||
-			pgstat_backend_wal_have_pending());
+	return (backend_has_iostats || pgstat_backend_wal_have_pending());
 }
 
 /*
@@ -335,6 +337,7 @@ pgstat_create_backend(ProcNumber procnum)
 	pgstat_unlock_entry(entry_ref);
 
 	MemSet(&PendingBackendStats, 0, sizeof(PgStat_BackendPending));
+	backend_has_iostats = false;
 
 	/*
 	 * Initialize prevBackendWalUsage with pgWalUsage so that
