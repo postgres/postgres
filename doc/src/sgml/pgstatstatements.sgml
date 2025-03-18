@@ -630,9 +630,27 @@
 
   <para>
    In some cases, queries with visibly different texts might get merged into a
-   single <structname>pg_stat_statements</structname> entry.  Normally this will happen
-   only for semantically equivalent queries, but there is a small chance of
-   hash collisions causing unrelated queries to be merged into one entry.
+   single <structname>pg_stat_statements</structname> entry; as explained above,
+   this is expected to happen for semantically equivalent queries.
+   In addition, if <varname>query_id_squash_values</varname> is enabled
+   and the only difference between queries is the number of elements in a list
+   of constants, the list will get squashed down to a single element but shown
+   with a commented-out list indicator:
+
+<screen>
+=# SET query_id_squash_values = on;
+=# SELECT pg_stat_statements_reset();
+=# SELECT * FROM test WHERE a IN (1, 2, 3, 4, 5, 6, 7);
+=# SELECT * FROM test WHERE a IN (1, 2, 3, 4, 5, 6, 7, 8);
+=# SELECT query, calls FROM pg_stat_statements
+   WHERE query LIKE 'SELECT%';
+-[ RECORD 1 ]------------------------------
+query | SELECT * FROM test WHERE a IN ($1 /*, ... */)
+calls | 2
+</screen>
+
+   In addition to these cases, there is a small chance of hash collisions
+   causing unrelated queries to be merged into one entry.
    (This cannot happen for queries belonging to different users or databases,
    however.)
   </para>

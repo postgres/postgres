@@ -23,6 +23,12 @@ typedef struct LocationLen
 {
 	int			location;		/* start offset in query text */
 	int			length;			/* length in bytes, or -1 to ignore */
+
+	/*
+	 * Indicates that this location represents the beginning or end of a run
+	 * of squashed constants.
+	 */
+	bool		squashed;
 } LocationLen;
 
 /*
@@ -68,6 +74,7 @@ extern JumbleState *JumbleQuery(Query *query);
 extern void EnableQueryId(void);
 
 extern PGDLLIMPORT bool query_id_enabled;
+extern PGDLLIMPORT bool query_id_squash_values;
 
 /*
  * Returns whether query identifier computation has been enabled, either

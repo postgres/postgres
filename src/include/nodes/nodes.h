@@ -105,6 +105,8 @@ typedef enum NodeTag
  *   that typmod and collation information are usually irrelevant for the
  *   query jumbling.
  *
+ * - query_jumble_squash: Squash multiple values during query jumbling.
+ *
  * - query_jumble_location: Mark the field as a location to track.  This is
  *   only allowed for integer fields that include "location" in their name.
  *

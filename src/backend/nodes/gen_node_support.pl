@@ -476,6 +476,7 @@ foreach my $infile (@ARGV)
 								equal_ignore_if_zero
 								query_jumble_ignore
 								query_jumble_location
+								query_jumble_squash
 								read_write_ignore
 								write_only_relids
 								write_only_nondefault_pathtarget
@@ -1283,6 +1284,7 @@ _jumble${n}(JumbleState *jstate, Node *node)
 		my @a = @{ $node_type_info{$n}->{field_attrs}{$f} };
 		my $query_jumble_ignore = $struct_no_query_jumble;
 		my $query_jumble_location = 0;
+		my $query_jumble_squash = 0;
 
 		# extract per-field attributes
 		foreach my $a (@a)
@@ -1295,14 +1297,27 @@ _jumble${n}(JumbleState *jstate, Node *node)
 			{
 				$query_jumble_location = 1;
 			}
+			elsif ($a eq 'query_jumble_squash')
+			{
+				$query_jumble_squash = 1;
+			}
 		}
 
 		# node type
 		if (($t =~ /^(\w+)\*$/ or $t =~ /^struct\s+(\w+)\*$/)
 			and elem $1, @node_types)
 		{
-			print $jff "\tJUMBLE_NODE($f);\n"
-			  unless $query_jumble_ignore;
+			# Squash constants if requested.
+			if ($query_jumble_squash)
+			{
+				print $jff "\tJUMBLE_ELEMENTS($f);\n"
+				  unless $query_jumble_ignore;
+			}
+			else
+			{
+				print $jff "\tJUMBLE_NODE($f);\n"
+				  unless $query_jumble_ignore;
+			}
 		}
 		elsif ($t eq 'ParseLoc')
 		{

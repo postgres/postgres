@@ -2120,6 +2120,16 @@ struct config_bool ConfigureNamesBool[] =
 		NULL, NULL, NULL
 	},
 
+	{
+		{"query_id_squash_values", PGC_USERSET, STATS_MONITORING,
+			gettext_noop("Allows to merge constants in a list when computing "
+						 "query_id."),
+		},
+		&query_id_squash_values,
+		false,
+		NULL, NULL, NULL
+	},
+
 	/* End-of-list marker */
 	{
 		{NULL, 0, 0, NULL, NULL}, NULL, false, NULL, NULL, NULL

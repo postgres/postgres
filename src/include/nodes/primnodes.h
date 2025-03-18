@@ -1394,7 +1394,7 @@ typedef struct ArrayExpr
 	/* common type of array elements */
 	Oid			element_typeid pg_node_attr(query_jumble_ignore);
 	/* the array elements or sub-arrays */
-	List	   *elements;
+	List	   *elements pg_node_attr(query_jumble_squash);
 	/* true if elements are sub-arrays */
 	bool		multidims pg_node_attr(query_jumble_ignore);
 	/* token location, or -1 if unknown */

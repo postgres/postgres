@@ -296,7 +296,6 @@ static bool pgss_track_planning = false;	/* whether to track planning
 											 * duration */
 static bool pgss_save = true;	/* whether to save stats across shutdown */
 
-
 #define pgss_enabled(level) \
 	(!IsParallelWorker() && \
 	(pgss_track == PGSS_TRACK_ALL || \
@@ -2823,6 +2822,10 @@ generate_normalized_query(JumbleState *jstate, const char *query,
 				n_quer_loc = 0, /* Normalized query byte location */
 				last_off = 0,	/* Offset from start for previous tok */
 				last_tok_len = 0;	/* Length (in bytes) of that tok */
+	bool		in_squashed = false;	/* in a run of squashed consts? */
+	int			skipped_constants = 0;	/* Position adjustment of later
+										 * constants after squashed ones */
+
 
 	/*
 	 * Get constants' lengths (core system only gives us locations).  Note
@@ -2836,6 +2839,9 @@ generate_normalized_query(JumbleState *jstate, const char *query,
 	 * certainly isn't more than 11 bytes, even if n reaches INT_MAX.  We
 	 * could refine that limit based on the max value of n for the current
 	 * query, but it hardly seems worth any extra effort to do so.
+	 *
+	 * Note this also gives enough room for the commented-out ", ..." list
+	 * syntax used by constant squashing.
 	 */
 	norm_query_buflen = query_len + jstate->clocations_count * 10;
 
@@ -2848,6 +2854,7 @@ generate_normalized_query(JumbleState *jstate, const char *query,
 					tok_len;	/* Length (in bytes) of that tok */
 
 		off = jstate->clocations[i].location;
+
 		/* Adjust recorded location if we're dealing with partial string */
 		off -= query_loc;
 
@@ -2856,18 +2863,67 @@ generate_normalized_query(JumbleState *jstate, const char *query,
 		if (tok_len < 0)
 			continue;			/* ignore any duplicates */
 
-		/* Copy next chunk (what precedes the next constant) */
-		len_to_wrt = off - last_off;
-		len_to_wrt -= last_tok_len;
+		/*
+		 * What to do next depends on whether we're squashing constant lists,
+		 * and whether we're already in a run of such constants.
+		 */
+		if (!jstate->clocations[i].squashed)
+		{
+			/*
+			 * This location corresponds to a constant not to be squashed.
+			 * Print what comes before the constant ...
+			 */
+			len_to_wrt = off - last_off;
+			len_to_wrt -= last_tok_len;
 
-		Assert(len_to_wrt >= 0);
-		memcpy(norm_query + n_quer_loc, query + quer_loc, len_to_wrt);
-		n_quer_loc += len_to_wrt;
+			Assert(len_to_wrt >= 0);
 
-		/* And insert a param symbol in place of the constant token */
-		n_quer_loc += sprintf(norm_query + n_quer_loc, "$%d",
-							  i + 1 + jstate->highest_extern_param_id);
+			memcpy(norm_query + n_quer_loc, query + quer_loc, len_to_wrt);
+			n_quer_loc += len_to_wrt;
 
+			/* ... and then a param symbol replacing the constant itself */
+			n_quer_loc += sprintf(norm_query + n_quer_loc, "$%d",
+								  i + 1 + jstate->highest_extern_param_id - skipped_constants);
+
+			/* In case previous constants were merged away, stop doing that */
+			in_squashed = false;
+		}
+		else if (!in_squashed)
+		{
+			/*
+			 * This location is the start position of a run of constants to be
+			 * squashed, so we need to print the representation of starting a
+			 * group of stashed constants.
+			 *
+			 * Print what comes before the constant ...
+			 */
+			len_to_wrt = off - last_off;
+			len_to_wrt -= last_tok_len;
+			Assert(len_to_wrt >= 0);
+			Assert(i + 1 < jstate->clocations_count);
+			Assert(jstate->clocations[i + 1].squashed);
+			memcpy(norm_query + n_quer_loc, query + quer_loc, len_to_wrt);
+			n_quer_loc += len_to_wrt;
+
+			/* ... and then start a run of squashed constants */
+			n_quer_loc += sprintf(norm_query + n_quer_loc, "$%d /*, ... */",
+								  i + 1 + jstate->highest_extern_param_id - skipped_constants);
+
+			/* The next location will match the block below, to end the run */
+			in_squashed = true;
+
+			skipped_constants++;
+		}
+		else
+		{
+			/*
+			 * The second location of a run of squashable elements; this
+			 * indicates its end.
+			 */
+			in_squashed = false;
+		}
+
+		/* Otherwise the constant is squashed away -- move forward */
 		quer_loc = off + tok_len;
 		last_off = off;
 		last_tok_len = tok_len;
