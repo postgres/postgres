@@ -14478,7 +14478,7 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
         UUID.
        </para>
        <para>
-        <literal>uuid_extract_timestamp('019535d9-3df7-79fb-b466-fa907fa17f9e'::uuid)</literal>
+        <literal>uuid_extract_timestamp('019535d9-3df7-79fb-b466-&zwsp;fa907fa17f9e'::uuid)</literal>
          <returnvalue>2025-02-23 21:46:24.503-05</returnvalue>
        </para>
       </entry>
@@ -14498,11 +14498,11 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
         return 4.
        </para>
        <para>
-        <literal>uuid_extract_version('41db1265-8bc1-4ab3-992f-885799a4af1d'::uuid)</literal>
+        <literal>uuid_extract_version('41db1265-8bc1-4ab3-992f-&zwsp;885799a4af1d'::uuid)</literal>
         <returnvalue>4</returnvalue>
        </para>
        <para>
-        <literal>uuid_extract_version('019535d9-3df7-79fb-b466-fa907fa17f9e'::uuid)</literal>
+        <literal>uuid_extract_version('019535d9-3df7-79fb-b466-&zwsp;fa907fa17f9e'::uuid)</literal>
         <returnvalue>7</returnvalue>
        </para>
       </entry>
