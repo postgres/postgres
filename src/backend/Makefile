@@ -43,9 +43,10 @@ OBJS = \
 	$(top_builddir)/src/common/libpgcommon_srv.a \
 	$(top_builddir)/src/port/libpgport_srv.a
 
-# We put libpgport and libpgcommon into OBJS, so remove it from LIBS; also add
-# libldap and ICU
-LIBS := $(filter-out -lpgport -lpgcommon, $(LIBS)) $(LDAP_LIBS_BE) $(ICU_LIBS)
+# We put libpgport and libpgcommon into OBJS, so remove it from LIBS.
+LIBS := $(filter-out -lpgport -lpgcommon, $(LIBS))
+# The backend conditionally needs libraries that most executables don't need.
+LIBS += $(LDAP_LIBS_BE) $(ICU_LIBS) $(LIBURING_LIBS)
 
 # The backend doesn't need everything that's in LIBS, however
 LIBS := $(filter-out -lreadline -ledit -ltermcap -lncurses -lcurses, $(LIBS))

@@ -1156,6 +1156,24 @@ build-postgresql:
        </listitem>
       </varlistentry>
 
+      <varlistentry id="configure-option-with-liburing">
+       <term><option>--with-liburing</option></term>
+       <listitem>
+        <para>
+        Build with liburing, enabling io_uring support for asynchronous I/O.
+        </para>
+        <para>
+         To detect the required compiler and linker options, PostgreSQL will
+         query <command>pkg-config</command>.
+        </para>
+        <para>
+         To use a liburing installation that is in an unusual location, you
+         can set <command>pkg-config</command>-related environment
+         variables (see its documentation).
+        </para>
+       </listitem>
+      </varlistentry>
+
       <varlistentry id="configure-option-with-libxml">
        <term><option>--with-libxml</option></term>
        <listitem>
@@ -2607,6 +2625,22 @@ ninja install
         and libraries to make sure that your <productname>Curl</productname>
         installation is sufficient before proceeding. The default for this
         option is auto.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="configure-with-liburing-meson">
+      <term><option>-Dliburing={ auto | enabled | disabled }</option></term>
+      <listitem>
+       <para>
+        Build with liburing, enabling io_uring support for asynchronous I/O.
+        Defaults to auto.
+       </para>
+
+       <para>
+        To use a liburing installation that is in an unusual location, you
+        can set <command>pkg-config</command>-related environment
+        variables (see its documentation).
        </para>
       </listitem>
      </varlistentry>

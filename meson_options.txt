@@ -106,6 +106,9 @@ option('libcurl', type : 'feature', value: 'auto',
 option('libedit_preferred', type: 'boolean', value: false,
   description: 'Prefer BSD Libedit over GNU Readline')
 
+option('liburing', type : 'feature', value: 'auto',
+  description: 'io_uring support, for asynchronous I/O')
+
 option('libxml', type: 'feature', value: 'auto',
   description: 'XML support')
 

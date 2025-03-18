@@ -196,6 +196,7 @@ with_gssapi	= @with_gssapi@
 with_krb_srvnam	= @with_krb_srvnam@
 with_ldap	= @with_ldap@
 with_libcurl	= @with_libcurl@
+with_liburing	= @with_liburing@
 with_libxml	= @with_libxml@
 with_libxslt	= @with_libxslt@
 with_llvm	= @with_llvm@
@@ -222,6 +223,9 @@ krb_srvtab = @krb_srvtab@
 ICU_CFLAGS		= @ICU_CFLAGS@
 ICU_LIBS		= @ICU_LIBS@
 
+LIBURING_CFLAGS		= @LIBURING_CFLAGS@
+LIBURING_LIBS		= @LIBURING_LIBS@
+
 TCLSH			= @TCLSH@
 TCL_LIBS		= @TCL_LIBS@
 TCL_LIB_SPEC		= @TCL_LIB_SPEC@
@@ -246,7 +250,7 @@ CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
 PG_SYSROOT = @PG_SYSROOT@
 
-override CPPFLAGS := $(ICU_CFLAGS) $(CPPFLAGS)
+override CPPFLAGS := $(ICU_CFLAGS) $(LIBURING_CFLAGS) $(CPPFLAGS)
 
 ifdef PGXS
 override CPPFLAGS := -I$(includedir_server) -I$(includedir_internal) $(CPPFLAGS)

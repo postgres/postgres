@@ -672,6 +672,9 @@
 /* Define to 1 to build with libcurl support. (--with-libcurl) */
 #undef USE_LIBCURL
 
+/* Define to build with io_uring support. (--with-liburing) */
+#undef USE_LIBURING
+
 /* Define to 1 to build with XML support. (--with-libxml) */
 #undef USE_LIBXML
 

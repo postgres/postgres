@@ -945,6 +945,18 @@ endif
 
 
 ###############################################################
+# Library: liburing
+###############################################################
+
+liburingopt = get_option('liburing')
+liburing = dependency('liburing', required: liburingopt)
+if liburing.found()
+  cdata.set('USE_LIBURING', 1)
+endif
+
+
+
+###############################################################
 # Library: libxml
 ###############################################################
 
@@ -3164,6 +3176,7 @@ backend_both_deps += [
   icu_i18n,
   ldap,
   libintl,
+  liburing,
   libxml,
   lz4,
   pam,
@@ -3819,6 +3832,7 @@ if meson.version().version_compare('>=0.57')
       'icu': icu,
       'ldap': ldap,
       'libcurl': libcurl,
+      'liburing': liburing,
       'libxml': libxml,
       'libxslt': libxslt,
       'llvm': llvm,
