@@ -15,6 +15,7 @@
 
 #include "commands/explain.h"
 #include "commands/explain_dr.h"
+#include "commands/explain_state.h"
 #include "libpq/pqformat.h"
 #include "libpq/protocol.h"
 #include "utils/lsyscache.h"

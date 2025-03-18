@@ -17,6 +17,7 @@
 #include "access/parallel.h"
 #include "commands/explain.h"
 #include "commands/explain_format.h"
+#include "commands/explain_state.h"
 #include "common/pg_prng.h"
 #include "executor/instrument.h"
 #include "utils/guc.h"

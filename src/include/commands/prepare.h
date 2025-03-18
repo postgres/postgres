@@ -13,8 +13,9 @@
 #ifndef PREPARE_H
 #define PREPARE_H
 
-#include "commands/explain.h"
+#include "commands/explain_state.h"
 #include "datatype/timestamp.h"
+#include "tcop/dest.h"
 #include "utils/plancache.h"
 
 /*

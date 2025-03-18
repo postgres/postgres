@@ -15,6 +15,7 @@
 #include "access/amapi.h"
 #include "access/htup_details.h"
 #include "catalog/pg_class.h"
+#include "executor/executor.h"
 #include "executor/nodeAgg.h"
 #include "executor/nodeAppend.h"
 #include "executor/nodeBitmapAnd.h"

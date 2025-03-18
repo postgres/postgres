@@ -15,6 +15,7 @@
 
 #include "commands/explain.h"
 #include "commands/explain_format.h"
+#include "commands/explain_state.h"
 #include "utils/json.h"
 #include "utils/xml.h"
 

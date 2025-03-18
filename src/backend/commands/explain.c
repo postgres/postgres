@@ -17,8 +17,10 @@
 #include "catalog/pg_type.h"
 #include "commands/createas.h"
 #include "commands/defrem.h"
+#include "commands/explain.h"
 #include "commands/explain_dr.h"
 #include "commands/explain_format.h"
+#include "commands/explain_state.h"
 #include "commands/prepare.h"
 #include "foreign/fdwapi.h"
 #include "jit/jit.h"
@@ -176,130 +178,11 @@ ExplainQuery(ParseState *pstate, ExplainStmt *stmt,
 	JumbleState *jstate = NULL;
 	Query	   *query;
 	List	   *rewritten;
-	ListCell   *lc;
-	bool		timing_set = false;
-	bool		buffers_set = false;
-	bool		summary_set = false;
 
-	/* Parse options list. */
-	foreach(lc, stmt->options)
-	{
-		DefElem    *opt = (DefElem *) lfirst(lc);
+	/* Configure the ExplainState based on the provided options */
+	ParseExplainOptionList(es, stmt->options, pstate);
 
-		if (strcmp(opt->defname, "analyze") == 0)
-			es->analyze = defGetBoolean(opt);
-		else if (strcmp(opt->defname, "verbose") == 0)
-			es->verbose = defGetBoolean(opt);
-		else if (strcmp(opt->defname, "costs") == 0)
-			es->costs = defGetBoolean(opt);
-		else if (strcmp(opt->defname, "buffers") == 0)
-		{
-			buffers_set = true;
-			es->buffers = defGetBoolean(opt);
-		}
-		else if (strcmp(opt->defname, "wal") == 0)
-			es->wal = defGetBoolean(opt);
-		else if (strcmp(opt->defname, "settings") == 0)
-			es->settings = defGetBoolean(opt);
-		else if (strcmp(opt->defname, "generic_plan") == 0)
-			es->generic = defGetBoolean(opt);
-		else if (strcmp(opt->defname, "timing") == 0)
-		{
-			timing_set = true;
-			es->timing = defGetBoolean(opt);
-		}
-		else if (strcmp(opt->defname, "summary") == 0)
-		{
-			summary_set = true;
-			es->summary = defGetBoolean(opt);
-		}
-		else if (strcmp(opt->defname, "memory") == 0)
-			es->memory = defGetBoolean(opt);
-		else if (strcmp(opt->defname, "serialize") == 0)
-		{
-			if (opt->arg)
-			{
-				char	   *p = defGetString(opt);
-
-				if (strcmp(p, "off") == 0 || strcmp(p, "none") == 0)
-					es->serialize = EXPLAIN_SERIALIZE_NONE;
-				else if (strcmp(p, "text") == 0)
-					es->serialize = EXPLAIN_SERIALIZE_TEXT;
-				else if (strcmp(p, "binary") == 0)
-					es->serialize = EXPLAIN_SERIALIZE_BINARY;
-				else
-					ereport(ERROR,
-							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-							 errmsg("unrecognized value for EXPLAIN option \"%s\": \"%s\"",
-									opt->defname, p),
-							 parser_errposition(pstate, opt->location)));
-			}
-			else
-			{
-				/* SERIALIZE without an argument is taken as 'text' */
-				es->serialize = EXPLAIN_SERIALIZE_TEXT;
-			}
-		}
-		else if (strcmp(opt->defname, "format") == 0)
-		{
-			char	   *p = defGetString(opt);
-
-			if (strcmp(p, "text") == 0)
-				es->format = EXPLAIN_FORMAT_TEXT;
-			else if (strcmp(p, "xml") == 0)
-				es->format = EXPLAIN_FORMAT_XML;
-			else if (strcmp(p, "json") == 0)
-				es->format = EXPLAIN_FORMAT_JSON;
-			else if (strcmp(p, "yaml") == 0)
-				es->format = EXPLAIN_FORMAT_YAML;
-			else
-				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("unrecognized value for EXPLAIN option \"%s\": \"%s\"",
-								opt->defname, p),
-						 parser_errposition(pstate, opt->location)));
-		}
-		else
-			ereport(ERROR,
-					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("unrecognized EXPLAIN option \"%s\"",
-							opt->defname),
-					 parser_errposition(pstate, opt->location)));
-	}
-
-	/* check that WAL is used with EXPLAIN ANALYZE */
-	if (es->wal && !es->analyze)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("EXPLAIN option %s requires ANALYZE", "WAL")));
-
-	/* if the timing was not set explicitly, set default value */
-	es->timing = (timing_set) ? es->timing : es->analyze;
-
-	/* if the buffers was not set explicitly, set default value */
-	es->buffers = (buffers_set) ? es->buffers : es->analyze;
-
-	/* check that timing is used with EXPLAIN ANALYZE */
-	if (es->timing && !es->analyze)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("EXPLAIN option %s requires ANALYZE", "TIMING")));
-
-	/* check that serialize is used with EXPLAIN ANALYZE */
-	if (es->serialize != EXPLAIN_SERIALIZE_NONE && !es->analyze)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("EXPLAIN option %s requires ANALYZE", "SERIALIZE")));
-
-	/* check that GENERIC_PLAN is not used with EXPLAIN ANALYZE */
-	if (es->generic && es->analyze)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("EXPLAIN options ANALYZE and GENERIC_PLAN cannot be used together")));
-
-	/* if the summary was not set explicitly, set default value */
-	es->summary = (summary_set) ? es->summary : es->analyze;
-
+	/* Extract the query and, if enabled, jumble it */
 	query = castNode(Query, stmt->query);
 	if (IsQueryIdEnabled())
 		jstate = JumbleQuery(query);
@@ -358,22 +241,6 @@ ExplainQuery(ParseState *pstate, ExplainStmt *stmt,
 	end_tup_output(tstate);
 
 	pfree(es->str->data);
-}
-
-/*
- * Create a new ExplainState struct initialized with default options.
- */
-ExplainState *
-NewExplainState(void)
-{
-	ExplainState *es = (ExplainState *) palloc0(sizeof(ExplainState));
-
-	/* Set default options (most fields can be left as zeroes). */
-	es->costs = true;
-	/* Prepare output buffer. */
-	es->str = makeStringInfo();
-
-	return es;
 }
 
 /*

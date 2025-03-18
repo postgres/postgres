@@ -20,6 +20,7 @@
 #include "access/xact.h"
 #include "commands/prepare.h"
 #include "executor/execdesc.h"
+#include "executor/executor.h"
 #include "executor/tstoreReceiver.h"
 #include "miscadmin.h"
 #include "pg_trace.h"
