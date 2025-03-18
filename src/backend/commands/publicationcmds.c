@@ -2052,7 +2052,7 @@ AlterPublicationOwner_internal(Relation rel, HeapTuple tup, Oid newOwnerId)
 ObjectAddress
 AlterPublicationOwner(const char *name, Oid newOwnerId)
 {
-	Oid			subid;
+	Oid			pubid;
 	HeapTuple	tup;
 	Relation	rel;
 	ObjectAddress address;
@@ -2068,11 +2068,11 @@ AlterPublicationOwner(const char *name, Oid newOwnerId)
 				 errmsg("publication \"%s\" does not exist", name)));
 
 	pubform = (Form_pg_publication) GETSTRUCT(tup);
-	subid = pubform->oid;
+	pubid = pubform->oid;
 
 	AlterPublicationOwner_internal(rel, tup, newOwnerId);
 
-	ObjectAddressSet(address, PublicationRelationId, subid);
+	ObjectAddressSet(address, PublicationRelationId, pubid);
 
 	heap_freetuple(tup);
 
@@ -2085,19 +2085,19 @@ AlterPublicationOwner(const char *name, Oid newOwnerId)
  * Change publication owner -- by OID
  */
 void
-AlterPublicationOwner_oid(Oid subid, Oid newOwnerId)
+AlterPublicationOwner_oid(Oid pubid, Oid newOwnerId)
 {
 	HeapTuple	tup;
 	Relation	rel;
 
 	rel = table_open(PublicationRelationId, RowExclusiveLock);
 
-	tup = SearchSysCacheCopy1(PUBLICATIONOID, ObjectIdGetDatum(subid));
+	tup = SearchSysCacheCopy1(PUBLICATIONOID, ObjectIdGetDatum(pubid));
 
 	if (!HeapTupleIsValid(tup))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("publication with OID %u does not exist", subid)));
+				 errmsg("publication with OID %u does not exist", pubid)));
 
 	AlterPublicationOwner_internal(rel, tup, newOwnerId);
 
