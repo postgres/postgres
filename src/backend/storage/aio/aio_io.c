@@ -188,3 +188,25 @@ pgaio_io_get_op_name(PgAioHandle *ioh)
 
 	return NULL;				/* silence compiler */
 }
+
+/*
+ * Used to determine if an IO needs to be waited upon before the file
+ * descriptor can be closed.
+ */
+bool
+pgaio_io_uses_fd(PgAioHandle *ioh, int fd)
+{
+	Assert(ioh->state >= PGAIO_HS_DEFINED);
+
+	switch (ioh->op)
+	{
+		case PGAIO_OP_READV:
+			return ioh->op_data.read.fd == fd;
+		case PGAIO_OP_WRITEV:
+			return ioh->op_data.write.fd == fd;
+		case PGAIO_OP_INVALID:
+			return false;
+	}
+
+	return false;				/* silence compiler */
+}

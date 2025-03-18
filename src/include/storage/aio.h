@@ -22,12 +22,20 @@
 #include "storage/procnumber.h"
 
 
+/* io_uring is incompatible with EXEC_BACKEND */
+#if defined(USE_LIBURING) && !defined(EXEC_BACKEND)
+#define IOMETHOD_IO_URING_ENABLED
+#endif
+
 
 /* Enum for io_method GUC. */
 typedef enum IoMethod
 {
 	IOMETHOD_SYNC = 0,
 	IOMETHOD_WORKER,
+#ifdef IOMETHOD_IO_URING_ENABLED
+	IOMETHOD_IO_URING,
+#endif
 } IoMethod;
 
 /* We'll default to worker based execution. */

@@ -248,6 +248,15 @@ typedef struct PgAioCtl
  */
 typedef struct IoMethodOps
 {
+	/* properties */
+
+	/*
+	 * If an FD is about to be closed, do we need to wait for all in-flight
+	 * IOs referencing that FD?
+	 */
+	bool		wait_on_fd_before_close;
+
+
 	/* global initialization */
 
 	/*
@@ -314,6 +323,7 @@ extern PgAioResult pgaio_io_call_complete_local(PgAioHandle *ioh);
 /* aio_io.c */
 extern void pgaio_io_perform_synchronously(PgAioHandle *ioh);
 extern const char *pgaio_io_get_op_name(PgAioHandle *ioh);
+extern bool pgaio_io_uses_fd(PgAioHandle *ioh, int fd);
 
 /* aio_target.c */
 extern bool pgaio_io_can_reopen(PgAioHandle *ioh);
@@ -386,6 +396,9 @@ extern PgAioHandle *pgaio_inj_io_get(void);
 /* Declarations for the tables of function pointers exposed by each IO method. */
 extern PGDLLIMPORT const IoMethodOps pgaio_sync_ops;
 extern PGDLLIMPORT const IoMethodOps pgaio_worker_ops;
+#ifdef IOMETHOD_IO_URING_ENABLED
+extern PGDLLIMPORT const IoMethodOps pgaio_uring_ops;
+#endif
 
 extern PGDLLIMPORT const IoMethodOps *pgaio_method_ops;
 extern PGDLLIMPORT PgAioCtl *pgaio_ctl;

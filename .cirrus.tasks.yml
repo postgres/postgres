@@ -493,11 +493,14 @@ task:
     # - Uses undefined behaviour and alignment sanitizers, sanitizer failures
     #   are typically printed in the server log
     # - Test both 64bit and 32 bit builds
+    # - uses io_method=io_uring
     - name: Linux - Debian Bookworm - Meson
 
       env:
         CCACHE_MAXSIZE: "400M" # tests two different builds
         SANITIZER_FLAGS: -fsanitize=alignment,undefined
+        PG_TEST_INITDB_EXTRA_OPTS: >-
+          -c io_method=io_uring
 
       configure_script: |
         su postgres <<-EOF

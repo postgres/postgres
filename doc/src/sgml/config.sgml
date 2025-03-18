@@ -2712,6 +2712,14 @@ include_dir 'conf.d'
           </listitem>
           <listitem>
            <para>
+            <literal>io_uring</literal> (execute asynchronous I/O using
+            io_uring, requires a build with
+            <link linkend="configure-option-with-liburing"><option>--with-liburing</option></link> /
+            <link linkend="configure-with-liburing-meson"><option>-Dliburing</option></link>)
+           </para>
+          </listitem>
+          <listitem>
+           <para>
             <literal>sync</literal> (execute asynchronous-eligible I/O synchronously)
            </para>
           </listitem>

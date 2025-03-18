@@ -65,6 +65,9 @@ static void pgaio_io_wait(PgAioHandle *ioh, uint64 ref_generation);
 const struct config_enum_entry io_method_options[] = {
 	{"sync", IOMETHOD_SYNC, false},
 	{"worker", IOMETHOD_WORKER, false},
+#ifdef IOMETHOD_IO_URING_ENABLED
+	{"io_uring", IOMETHOD_IO_URING, false},
+#endif
 	{NULL, 0, false}
 };
 
@@ -82,6 +85,9 @@ PgAioBackend *pgaio_my_backend;
 static const IoMethodOps *const pgaio_method_ops_table[] = {
 	[IOMETHOD_SYNC] = &pgaio_sync_ops,
 	[IOMETHOD_WORKER] = &pgaio_worker_ops,
+#ifdef IOMETHOD_IO_URING_ENABLED
+	[IOMETHOD_IO_URING] = &pgaio_uring_ops,
+#endif
 };
 
 /* callbacks for the configured io_method, set by assign_io_method */
@@ -1118,6 +1124,41 @@ pgaio_closing_fd(int fd)
 	 * it's probably not worth it.
 	 */
 	pgaio_submit_staged();
+
+	/*
+	 * If requested by the IO method, wait for all IOs that use the
+	 * to-be-closed FD.
+	 */
+	if (pgaio_method_ops->wait_on_fd_before_close)
+	{
+		/*
+		 * As waiting for one IO to complete may complete multiple IOs, we
+		 * can't just use a mutable list iterator. The maximum number of
+		 * in-flight IOs is fairly small, so just restart the loop after
+		 * waiting for an IO.
+		 */
+		while (!dclist_is_empty(&pgaio_my_backend->in_flight_ios))
+		{
+			dlist_iter	iter;
+			PgAioHandle *ioh = NULL;
+
+			dclist_foreach(iter, &pgaio_my_backend->in_flight_ios)
+			{
+				ioh = dclist_container(PgAioHandle, node, iter.cur);
+
+				if (pgaio_io_uses_fd(ioh, fd))
+					break;
+				else
+					ioh = NULL;
+			}
+
+			if (!ioh)
+				break;
+
+			/* see comment in pgaio_io_wait_for_free() about raciness */
+			pgaio_io_wait(ioh, ioh->generation);
+		}
+	}
 }
 
 /*
