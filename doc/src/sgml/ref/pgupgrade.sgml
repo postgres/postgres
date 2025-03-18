@@ -807,10 +807,11 @@ psql --username=postgres --file=script.sql postgres
     </para>
 
     <para>
-     Using <command>vacuumdb --all --analyze-only</command> can efficiently
-     generate such statistics, and the use of <option>--jobs</option>
-     can speed it up.  Option <option>--analyze-in-stages</option>
-     can be used to generate minimal statistics quickly.
+     Using <command>vacuumdb --all --analyze-only --missing-stats-only</command>
+     can efficiently generate such statistics.  Alternatively,
+     <command>vacuumdb --all --analyze-in-stages --missing-stats-only</command>
+     can be used to generate minimal statistics quickly.  For either command,
+     the use of <option>--jobs</option> can speed it up.
      If <varname>vacuum_cost_delay</varname> is set to a non-zero
      value, this can be overridden to speed up statistics generation
      using <envar>PGOPTIONS</envar>, e.g., <literal>PGOPTIONS='-c

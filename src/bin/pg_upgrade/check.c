@@ -781,7 +781,7 @@ output_completion_banner(char *deletion_script_file_name)
 	pg_log(PG_REPORT,
 		   "Some optimizer statistics may not have been transferred by pg_upgrade.\n"
 		   "Once you start the new server, consider running:\n"
-		   "    %s/vacuumdb %s--all --analyze-in-stages", new_cluster.bindir, user_specification.data);
+		   "    %s/vacuumdb %s--all --analyze-in-stages --missing-stats-only", new_cluster.bindir, user_specification.data);
 
 	if (deletion_script_file_name)
 		pg_log(PG_REPORT,
