@@ -1010,20 +1010,6 @@ DefineIndex(Oid tableId,
 					 key->partopfamily[i]);
 
 			/*
-			 * We'll need to be able to identify the equality operators
-			 * associated with index columns, too.  We know what to do with
-			 * btree opclasses; if there are ever any other index types that
-			 * support unique indexes, this logic will need extension. But if
-			 * we have an exclusion constraint (or a temporal PK), it already
-			 * knows the operators, so we don't have to infer them.
-			 */
-			if (stmt->unique && !stmt->iswithoutoverlaps && accessMethodId != BTREE_AM_OID)
-				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("cannot match partition key to an index using access method \"%s\"",
-								accessMethodName)));
-
-			/*
 			 * It may be possible to support UNIQUE constraints when partition
 			 * keys are expressions, but is it worth it?  Give up for now.
 			 */
@@ -1057,13 +1043,19 @@ DefineIndex(Oid tableId,
 						Oid			idx_eqop = InvalidOid;
 
 						if (stmt->unique && !stmt->iswithoutoverlaps)
-							idx_eqop = get_opfamily_member(idx_opfamily,
-														   idx_opcintype,
-														   idx_opcintype,
-														   BTEqualStrategyNumber);
+							idx_eqop = get_opfamily_member_for_cmptype(idx_opfamily,
+																	   idx_opcintype,
+																	   idx_opcintype,
+																	   COMPARE_EQ);
 						else if (exclusion)
 							idx_eqop = indexInfo->ii_ExclusionOps[j];
-						Assert(idx_eqop);
+
+						if (!idx_eqop)
+							ereport(ERROR,
+									errcode(ERRCODE_UNDEFINED_OBJECT),
+									errmsg("could not identify an equality operator for type %s", format_type_be(idx_opcintype)),
+									errdetail("There is no suitable operator in operator family \"%s\" for access method \"%s\".",
+											  get_opfamily_name(idx_opfamily, false), get_am_name(get_opfamily_method(idx_opfamily))));
 
 						if (ptkey_eqop == idx_eqop)
 						{
