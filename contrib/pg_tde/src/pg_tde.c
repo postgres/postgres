@@ -171,6 +171,7 @@ pg_tde_extension_initialize(PG_FUNCTION_ARGS)
 void
 extension_install_redo(XLogExtensionInstall *xlrec)
 {
+	pg_tde_init_data_dir();
 	run_extension_install_callbacks(xlrec, true);
 }
 
