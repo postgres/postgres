@@ -52,6 +52,9 @@ ExplainOneQuery_hook_type ExplainOneQuery_hook = NULL;
 /* Hook for plugins to get control in explain_get_index_name() */
 explain_get_index_name_hook_type explain_get_index_name_hook = NULL;
 
+/* per-plan and per-node hooks for plugins to print additional info */
+explain_per_plan_hook_type explain_per_plan_hook = NULL;
+explain_per_node_hook_type explain_per_node_hook = NULL;
 
 /*
  * Various places within need to convert bytes to kilobytes.  Round these up
@@ -653,6 +656,11 @@ ExplainOnePlan(PlannedStmt *plannedstmt, CachedPlan *cplan,
 	/* Print info about serialization of output */
 	if (es->serialize != EXPLAIN_SERIALIZE_NONE)
 		ExplainPrintSerialize(es, &serializeMetrics);
+
+	/* Allow plugins to print additional information */
+	if (explain_per_plan_hook)
+		(*explain_per_plan_hook) (plannedstmt, into, es, queryString,
+								  params, queryEnv);
 
 	/*
 	 * Close down the query and free resources.  Include time for this in the
@@ -2317,6 +2325,11 @@ ExplainNode(PlanState *planstate, List *ancestors,
 	if (es->workers_state)
 		ExplainFlushWorkersState(es);
 	es->workers_state = save_workers_state;
+
+	/* Allow plugins to print additional information */
+	if (explain_per_node_hook)
+		(*explain_per_node_hook) (planstate, ancestors, relationship,
+								  plan_name, es);
 
 	/*
 	 * If partition pruning was done during executor initialization, the

@@ -28,6 +28,23 @@ typedef void (*ExplainOneQuery_hook_type) (Query *query,
 										   QueryEnvironment *queryEnv);
 extern PGDLLIMPORT ExplainOneQuery_hook_type ExplainOneQuery_hook;
 
+/* Hook for EXPLAIN plugins to print extra information for each plan */
+typedef void (*explain_per_plan_hook_type) (PlannedStmt *plannedstmt,
+											IntoClause *into,
+											struct ExplainState *es,
+											const char *queryString,
+											ParamListInfo params,
+											QueryEnvironment *queryEnv);
+extern PGDLLIMPORT explain_per_plan_hook_type explain_per_plan_hook;
+
+/* Hook for EXPLAIN plugins to print extra fields on individual plan nodes */
+typedef void (*explain_per_node_hook_type) (PlanState *planstate,
+											List *ancestors,
+											const char *relationship,
+											const char *plan_name,
+											struct ExplainState *es);
+extern PGDLLIMPORT explain_per_node_hook_type explain_per_node_hook;
+
 /* Hook for plugins to get control in explain_get_index_name() */
 typedef const char *(*explain_get_index_name_hook_type) (Oid indexId);
 extern PGDLLIMPORT explain_get_index_name_hook_type explain_get_index_name_hook;
