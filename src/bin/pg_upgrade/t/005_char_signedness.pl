@@ -45,6 +45,11 @@ command_like(
 	qr/Default char data signedness:\s+unsigned/,
 	'updated default char signedness is unsigned in control file');
 
+# In a VPATH build, we'll be started in the source directory, but we want
+# to run pg_upgrade in the build directory so that any files generated finish
+# in it, like delete_old_cluster.{sh,bat}.
+chdir ${PostgreSQL::Test::Utils::tmp_check};
+
 # Cannot use --set-char-signedness option for upgrading from v18+
 command_checks_all(
 	[
