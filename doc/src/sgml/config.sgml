@@ -2617,10 +2617,10 @@ include_dir 'conf.d'
          for maintenance work that is done on behalf of many client sessions.
         </para>
         <para>
-         The default is 10 on supported systems, otherwise 0.  This value can
-         be overridden for tables in a particular tablespace by setting the
-         tablespace parameter of the same name (see
-         <xref linkend="sql-altertablespace"/>).
+         The default is <literal>16</literal> on supported systems, otherwise
+         <literal>0</literal>.  This value can be overridden for tables in a
+         particular tablespace by setting the tablespace parameter of the same
+         name (see <xref linkend="sql-altertablespace"/>).
         </para>
        </listitem>
       </varlistentry>
