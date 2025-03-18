@@ -207,6 +207,7 @@
 					# can execute simultaneously
 					# -1 sets based on shared_buffers
 					# (change requires restart)
+#io_workers = 3				# 1-32;
 
 # - Worker Processes -
 

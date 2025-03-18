@@ -375,6 +375,7 @@ pgstat_tracks_backend_bktype(BackendType bktype)
 		case B_LOGGER:
 		case B_BG_WRITER:
 		case B_CHECKPOINTER:
+		case B_IO_WORKER:
 		case B_STARTUP:
 			return false;
 

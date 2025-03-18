@@ -293,6 +293,9 @@ GetBackendTypeDesc(BackendType backendType)
 		case B_CHECKPOINTER:
 			backendDesc = gettext_noop("checkpointer");
 			break;
+		case B_IO_WORKER:
+			backendDesc = gettext_noop("io worker");
+			break;
 		case B_LOGGER:
 			backendDesc = gettext_noop("logger");
 			break;

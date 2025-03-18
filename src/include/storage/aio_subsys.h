@@ -30,4 +30,8 @@ extern void pgaio_init_backend(void);
 extern void pgaio_error_cleanup(void);
 extern void AtEOXact_Aio(bool is_commit);
 
+
+/* aio_worker.c */
+extern bool pgaio_workers_enabled(void);
+
 #endif							/* AIO_SUBSYS_H */

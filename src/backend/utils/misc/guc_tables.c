@@ -75,6 +75,7 @@
 #include "storage/aio.h"
 #include "storage/bufmgr.h"
 #include "storage/bufpage.h"
+#include "storage/io_worker.h"
 #include "storage/large_object.h"
 #include "storage/pg_shmem.h"
 #include "storage/predicate.h"
@@ -3265,6 +3266,18 @@ struct config_int ConfigureNamesInt[] =
 		&io_max_concurrency,
 		-1, -1, 1024,
 		check_io_max_concurrency, NULL, NULL
+	},
+
+	{
+		{"io_workers",
+			PGC_SIGHUP,
+			RESOURCES_IO,
+			gettext_noop("Number of IO worker processes, for io_method=worker."),
+			NULL,
+		},
+		&io_workers,
+		3, 1, MAX_IO_WORKERS,
+		NULL, NULL, NULL
 	},
 
 	{

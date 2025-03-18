@@ -51,6 +51,14 @@ client backend|relation|vacuum
 client backend|temp relation|normal
 client backend|wal|init
 client backend|wal|normal
+io worker|relation|bulkread
+io worker|relation|bulkwrite
+io worker|relation|init
+io worker|relation|normal
+io worker|relation|vacuum
+io worker|temp relation|normal
+io worker|wal|init
+io worker|wal|normal
 slotsync worker|relation|bulkread
 slotsync worker|relation|bulkwrite
 slotsync worker|relation|init
@@ -87,7 +95,7 @@ walsummarizer|wal|init
 walsummarizer|wal|normal
 walwriter|wal|init
 walwriter|wal|normal
-(71 rows)
+(79 rows)
 \a
 -- ensure that both seqscan and indexscan plans are allowed
 SET enable_seqscan TO on;

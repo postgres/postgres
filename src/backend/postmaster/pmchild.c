@@ -101,6 +101,7 @@ InitPostmasterChildSlots(void)
 
 	pmchild_pools[B_AUTOVAC_WORKER].size = autovacuum_worker_slots;
 	pmchild_pools[B_BG_WORKER].size = max_worker_processes;
+	pmchild_pools[B_IO_WORKER].size = MAX_IO_WORKERS;
 
 	/*
 	 * There can be only one of each of these running at a time.  They each
