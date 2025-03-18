@@ -22,10 +22,7 @@ docker run \
   -e SDKROOT=$SDKROOT \
   -e PG_VERSION=${PG_VERSION} \
   -e PG_BRANCH=${PG_BRANCH} \
-  -v .:/src:ro \
-  -v ./dist:/tmp/dist:rw \
+  -v .:/workscape:rw \
+  -v ./dist:/tmp/sdk/dist:rw \
   $IMG_NAME:$IMG_TAG \
-  bash -c "cp -r /src/. /workspace && source /tmp/sdk/wasm32-bi-emscripten-shell.sh && /workspace/wasm-build.sh ${WHAT:-\"contrib extra\"}"
-
-
-
+  bash -c "source ${SDKROOT}/wasm32-bi-emscripten-shell.sh && ./wasm-build.sh ${WHAT:-\"contrib extra\"}"
