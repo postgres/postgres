@@ -466,20 +466,6 @@ foreach my $entry (@{ $map{special} })
 
 print $OT "\n};\n";
 
-print $OT <<"EOS";
-
-/*
- * Map for each case kind.
- */
-static const pg_wchar *casekind_map[NCaseKind] =
-{
-	[CaseLower] = case_map_lower,
-	[CaseTitle] = case_map_title,
-	[CaseUpper] = case_map_upper,
-	[CaseFold] = case_map_fold,
-};
-EOS
-
 my @codepoints = keys %simple;
 my $range = make_ranges(\@codepoints, 500);
 my @case_map_lines = range_tables($range);

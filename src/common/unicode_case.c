@@ -27,6 +27,17 @@ enum CaseMapResult
 	CASEMAP_SPECIAL,
 };
 
+/*
+ * Map for each case kind.
+ */
+static const pg_wchar *const casekind_map[NCaseKind] =
+{
+	[CaseLower] = case_map_lower,
+	[CaseTitle] = case_map_title,
+	[CaseUpper] = case_map_upper,
+	[CaseFold] = case_map_fold,
+};
+
 static pg_wchar find_case_map(pg_wchar ucs, const pg_wchar *map);
 static size_t convert_case(char *dst, size_t dstsize, const char *src, ssize_t srclen,
 						   CaseKind str_casekind, bool full, WordBoundaryNext wbnext,

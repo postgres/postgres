@@ -8593,17 +8593,6 @@ static const uint8 case_map_special[1677] =
 };
 
 /*
- * Map for each case kind.
- */
-static const pg_wchar *casekind_map[NCaseKind] =
-{
-	[CaseLower] = case_map_lower,
-	[CaseTitle] = case_map_title,
-	[CaseUpper] = case_map_upper,
-	[CaseFold] = case_map_fold,
-};
-
-/*
  * Used by case_index() to map a codepoint to an index that can be used in any
  * of the following arrays: case_map_lower, case_map_title, case_map_upper,
  * case_map_fold.
