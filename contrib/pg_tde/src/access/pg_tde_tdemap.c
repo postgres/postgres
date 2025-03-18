@@ -120,6 +120,9 @@ RelKeyCache tde_rel_key_cache = {
 };
 
 
+/*
+ * TODO: WAL should have its own RelKeyCache
+ */
 static WALKeyCacheRec *tde_wal_key_cache = NULL;
 static WALKeyCacheRec *tde_wal_key_last_rec = NULL;
 
@@ -147,6 +150,7 @@ static void pg_tde_write_keydata(char *db_keydata_path, TDEPrincipalKeyInfo *pri
 static void pg_tde_write_one_keydata(int keydata_fd, int32 key_index, InternalKey *enc_rel_key_data);
 static int	keyrotation_init_file(TDEPrincipalKeyInfo *new_principal_key_info, char *rotated_filename, char *filename, bool *is_new_file, off_t *curr_pos);
 static void finalize_key_rotation(char *m_path_old, char *k_path_old, char *m_path_new, char *k_path_new);
+static void update_wal_keys_cache(void);
 
 InternalKey *
 pg_tde_create_smgr_key(const RelFileLocatorBackend *newrlocator)
@@ -1552,6 +1556,25 @@ pg_tde_get_wal_cache_keys(void)
 	return tde_wal_key_cache;
 }
 
+/* Updates WAL keys cache pointers */
+static void
+update_wal_keys_cache(void)
+{
+	WALKeyCacheRec *wal_rec = tde_wal_key_cache;
+	RelFileLocator rlocator = GLOBAL_SPACE_RLOCATOR(XLOG_TDE_OID);
+
+	for (int i = 0; i < tde_rel_key_cache.len && wal_rec; i++)
+	{
+		RelKeyCacheRec *rec = tde_rel_key_cache.data + i;
+
+		if (RelFileLocatorEquals(rec->locator, rlocator))
+		{
+			wal_rec->key = &rec->key;
+			wal_rec = wal_rec->next;
+		}
+	}
+}
+
 InternalKey *
 pg_tde_read_last_wal_key(void)
 {
@@ -1789,6 +1812,9 @@ pg_tde_put_key_into_cache(const RelFileLocator *rlocator, InternalKey *key)
 			elog(WARNING, "could not mlock internal key cache pages: %m");
 
 		tde_rel_key_cache.cap = (size - 1) / sizeof(RelKeyCacheRec);
+
+		/* update wal key pointers after moving the cache */
+		update_wal_keys_cache();
 	}
 
 	rec = tde_rel_key_cache.data + tde_rel_key_cache.len;
