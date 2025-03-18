@@ -19,6 +19,8 @@ fi
 
 docker run \
   --rm \
+  -e DEBUG=true \
+  -e CI=true \  
   -e SDKROOT=$SDKROOT \
   -e PG_VERSION=${PG_VERSION} \
   -e PG_BRANCH=${PG_BRANCH} \
