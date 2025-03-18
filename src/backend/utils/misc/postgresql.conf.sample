@@ -114,7 +114,7 @@
 #ssl_ciphers = 'HIGH:MEDIUM:+3DES:!aNULL'	# allowed TLSv1.2 ciphers
 #ssl_tls13_ciphers = ''	# allowed TLSv1.3 cipher suites, blank for default
 #ssl_prefer_server_ciphers = on
-#ssl_groups = 'prime256v1'
+#ssl_groups = 'X25519:prime256v1'
 #ssl_min_protocol_version = 'TLSv1.2'
 #ssl_max_protocol_version = ''
 #ssl_dh_params_file = ''

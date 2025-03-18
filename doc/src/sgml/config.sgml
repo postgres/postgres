@@ -1520,7 +1520,7 @@ include_dir 'conf.d'
         It does not need to be the same curve used by the server's Elliptic
         Curve key.  This parameter can only be set in the
         <filename>postgresql.conf</filename> file or on the server command line.
-        The default is <literal>prime256v1</literal>.
+        The default is <literal>X25519:prime256v1</literal>.
        </para>
 
        <para>
