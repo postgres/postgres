@@ -286,7 +286,7 @@ reindex_one_database(ConnParams *cparams, ReindexType type,
 	SimpleStringListCell *cell;
 	SimpleOidListCell *indices_tables_cell = NULL;
 	bool		parallel = concurrentCons > 1;
-	SimpleStringList *process_list;
+	SimpleStringList *process_list = NULL;
 	SimpleOidList *tableoid_list = NULL;
 	ReindexType process_type = type;
 	ParallelSlotArray *sa;
