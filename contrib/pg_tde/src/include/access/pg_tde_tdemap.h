@@ -80,7 +80,6 @@ extern void pg_tde_wal_last_key_set_lsn(XLogRecPtr lsn, const char *keyfile_path
 extern InternalKey *pg_tde_create_smgr_key(const RelFileLocatorBackend *newrlocator);
 extern void pg_tde_create_wal_key(InternalKey *rel_key_data, const RelFileLocator *newrlocator, uint32 flags);
 extern void pg_tde_write_key_map_entry(const RelFileLocator *rlocator, InternalKey *enc_rel_key_data, TDEPrincipalKeyInfo *principal_key_info);
-extern void pg_tde_delete_key_map_entry(const RelFileLocator *rlocator, uint32 key_type);
 extern void pg_tde_free_key_map_entry(const RelFileLocator *rlocator, uint32 key_type, off_t offset);
 
 #define PG_TDE_MAP_FILENAME			"pg_tde_%d_map"

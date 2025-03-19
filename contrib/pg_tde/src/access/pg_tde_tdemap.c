@@ -553,46 +553,6 @@ pg_tde_write_key_map_entry(const RelFileLocator *rlocator, InternalKey *enc_rel_
 }
 
 /*
- * Deletes a map entry by setting marking it as unused. We don't have to delete
- * the actual key data as valid key data entries are identify by valid map entries.
- */
-void
-pg_tde_delete_key_map_entry(const RelFileLocator *rlocator, uint32 key_type)
-{
-	int32		key_index = 0;
-	off_t		offset = 0;
-	LWLock	   *lock_files = tde_lwlock_enc_keys();
-	char		db_map_path[MAXPGPATH] = {0};
-	char		db_keydata_path[MAXPGPATH] = {0};
-
-	Assert(rlocator);
-
-	/* Get the file paths */
-	pg_tde_set_db_file_paths(rlocator->dbOid, db_map_path, db_keydata_path);
-
-	errno = 0;
-	/* Remove the map entry if found */
-	LWLockAcquire(lock_files, LW_EXCLUSIVE);
-	key_index = pg_tde_process_map_entry(rlocator, key_type, db_map_path, &offset, false);
-	LWLockRelease(lock_files);
-
-	if (key_index == -1)
-	{
-		ereport(WARNING,
-				(errcode(ERRCODE_NO_DATA_FOUND),
-				 errmsg("could not find the required map entry for deletion of relation %d in tablespace %d in tde map file \"%s\": %m",
-						rlocator->relNumber,
-						rlocator->spcOid,
-						db_map_path)));
-
-		return;
-	}
-
-	/* Register the entry to be freed when transaction commits */
-	RegisterEntryForDeletion(rlocator, offset, true);
-}
-
-/*
  * Called when transaction is being completed; either committed or aborted.
  * By default, when a transaction creates an entry, we mark it as MAP_ENTRY_VALID.
  * Only during the abort phase of the transaction that we are proceed on with
