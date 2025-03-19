@@ -2486,11 +2486,10 @@ transformIndexConstraint(Constraint *constraint, CreateStmtContext *cxt)
 					 parser_errposition(cxt->pstate, constraint->location)));
 
 		/*
-		 * Insist on it being a btree.  That's the only kind that supports
-		 * uniqueness at the moment anyway; but we must have an index that
-		 * exactly matches what you'd get from plain ADD CONSTRAINT syntax,
-		 * else dump and reload will produce a different index (breaking
-		 * pg_upgrade in particular).
+		 * Insist on it being a btree.  We must have an index that exactly
+		 * matches what you'd get from plain ADD CONSTRAINT syntax, else dump
+		 * and reload will produce a different index (breaking pg_upgrade in
+		 * particular).
 		 */
 		if (index_rel->rd_rel->relam != get_index_am_oid(DEFAULT_INDEX_TYPE, false))
 			ereport(ERROR,
