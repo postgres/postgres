@@ -9,13 +9,15 @@ IMG_TAG="17.4_3.1.61.6bi"
 
 [ -f ./pglite/.buildconfig ] && cp ./pglite/.buildconfig .buildconfig
 
-# source .buildconfig
+source .buildconfig
 
 # if [[ -z "$SDKROOT" || -z "$PG_VERSION" ]]; then
 #   echo "Missing SDKROOT and PG_VERSION env vars."
 #   echo "Source them from .buildconfig"
 #   exit 1
 # fi
+
+cat .buildconfig
 
 docker run \
   --rm \
