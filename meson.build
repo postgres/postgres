@@ -909,9 +909,7 @@ if not libcurlopt.disabled()
       cdata.set('HAVE_THREADSAFE_CURL_GLOBAL_INIT', 1)
     endif
 
-    # Warn if a thread-friendly DNS resolver isn't built.
-    libcurl_async_dns = false
-
+    # Fail if a thread-friendly DNS resolver isn't built.
     if not meson.is_cross_build()
       r = cc.run('''
         #include <curl/curl.h>
@@ -931,16 +929,12 @@ if not libcurlopt.disabled()
       )
 
       assert(r.compiled())
-      if r.returncode() == 0
-        libcurl_async_dns = true
-      endif
-    endif
-
-    if not libcurl_async_dns
-      warning('''
+      if r.returncode() != 0
+        error('''
 *** The installed version of libcurl does not support asynchronous DNS
-*** lookups. Connection timeouts will not be honored during DNS resolution,
-*** which may lead to hangs in client programs.''')
+*** lookups. Rebuild libcurl with the AsynchDNS feature enabled in order
+*** to use it with libpq.''')
+      endif
     endif
   endif
 
