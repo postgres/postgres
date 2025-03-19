@@ -781,7 +781,7 @@ setup_token_request(PGconn *conn, fe_oauth_state *state)
 			goto fail;
 		}
 
-		memcpy(request_copy, &request, sizeof(request));
+		*request_copy = request;
 
 		conn->async_auth = run_user_oauth_flow;
 		conn->cleanup_async_auth = cleanup_user_oauth_flow;
