@@ -11,11 +11,21 @@ SELECT $1 \bind 'val1' \sendpipeline
  val1
 (1 row)
 
+\startpipeline
+SELECT 'val1';
+\endpipeline
+ ?column? 
+----------
+ val1
+(1 row)
+
 -- Multiple queries
 \startpipeline
 SELECT $1 \bind 'val1' \sendpipeline
 SELECT $1, $2 \bind 'val2' 'val3' \sendpipeline
 SELECT $1, $2 \bind 'val2' 'val3' \sendpipeline
+SELECT 'val4';
+SELECT 'val5', 'val6';
 \endpipeline
  ?column? 
 ----------
@@ -30,6 +40,38 @@ SELECT $1, $2 \bind 'val2' 'val3' \sendpipeline
  ?column? | ?column? 
 ----------+----------
  val2     | val3
+(1 row)
+
+ ?column? 
+----------
+ val4
+(1 row)
+
+ ?column? | ?column? 
+----------+----------
+ val5     | val6
+(1 row)
+
+-- Multiple queries in single line, separated by semicolons
+\startpipeline
+SELECT 1; SELECT 2; SELECT 3
+;
+\echo :PIPELINE_COMMAND_COUNT
+3
+\endpipeline
+ ?column? 
+----------
+        1
+(1 row)
+
+ ?column? 
+----------
+        2
+(1 row)
+
+ ?column? 
+----------
+        3
 (1 row)
 
 -- Test \flush
@@ -39,6 +81,9 @@ SELECT $1 \bind 'val1' \sendpipeline
 \flush
 SELECT $1, $2 \bind 'val2' 'val3' \sendpipeline
 SELECT $1, $2 \bind 'val2' 'val3' \sendpipeline
+\flush
+SELECT 'val4';
+SELECT 'val5', 'val6';
 \endpipeline
  ?column? 
 ----------
@@ -53,6 +98,16 @@ SELECT $1, $2 \bind 'val2' 'val3' \sendpipeline
  ?column? | ?column? 
 ----------+----------
  val2     | val3
+(1 row)
+
+ ?column? 
+----------
+ val4
+(1 row)
+
+ ?column? | ?column? 
+----------+----------
+ val5     | val6
 (1 row)
 
 -- Send multiple syncs
@@ -75,6 +130,18 @@ SELECT $1, $2 \bind 'val4' 'val5' \sendpipeline
 3
 \echo :PIPELINE_RESULT_COUNT
 2
+SELECT 'val7';
+\syncpipeline
+\syncpipeline
+SELECT 'val8';
+\syncpipeline
+SELECT 'val9';
+\echo :PIPELINE_COMMAND_COUNT
+1
+\echo :PIPELINE_SYNC_COUNT
+6
+\echo :PIPELINE_RESULT_COUNT
+5
 \endpipeline
  ?column? 
 ----------
@@ -89,6 +156,50 @@ SELECT $1, $2 \bind 'val4' 'val5' \sendpipeline
  ?column? | ?column? 
 ----------+----------
  val4     | val5
+(1 row)
+
+ ?column? 
+----------
+ val7
+(1 row)
+
+ ?column? 
+----------
+ val8
+(1 row)
+
+ ?column? 
+----------
+ val9
+(1 row)
+
+-- Query terminated with a semicolon replaces an unnamed prepared
+-- statement.
+\startpipeline
+SELECT $1 \parse ''
+SELECT 1;
+\bind_named ''
+\endpipeline
+ ?column? 
+----------
+        1
+(1 row)
+
+-- Extended query is appended to pipeline by a semicolon after a
+-- newline.
+\startpipeline
+SELECT $1 \bind 1
+;
+SELECT 2;
+\endpipeline
+ ?column? 
+----------
+ 1
+(1 row)
+
+ ?column? 
+----------
+        2
 (1 row)
 
 -- \startpipeline should not have any effect if already in a pipeline.
@@ -118,6 +229,7 @@ INSERT INTO psql_pipeline VALUES ($1) \bind 1 \sendpipeline
 COMMIT \bind \sendpipeline
 \endpipeline
 -- COPY FROM STDIN
+-- with \sendpipeline and \bind
 \startpipeline
 SELECT $1 \bind 'val1' \sendpipeline
 COPY psql_pipeline FROM STDIN \bind \sendpipeline
@@ -127,7 +239,18 @@ COPY psql_pipeline FROM STDIN \bind \sendpipeline
  val1
 (1 row)
 
+-- with semicolon
+\startpipeline
+SELECT 'val1';
+COPY psql_pipeline FROM STDIN;
+\endpipeline
+ ?column? 
+----------
+ val1
+(1 row)
+
 -- COPY FROM STDIN with \flushrequest + \getresults
+-- with \sendpipeline and \bind
 \startpipeline
 SELECT $1 \bind 'val1' \sendpipeline
 COPY psql_pipeline FROM STDIN \bind \sendpipeline
@@ -140,7 +263,21 @@ COPY psql_pipeline FROM STDIN \bind \sendpipeline
 
 message type 0x5a arrived from server while idle
 \endpipeline
+-- with semicolon
+\startpipeline
+SELECT 'val1';
+COPY psql_pipeline FROM STDIN;
+\flushrequest
+\getresults
+ ?column? 
+----------
+ val1
+(1 row)
+
+message type 0x5a arrived from server while idle
+\endpipeline
 -- COPY FROM STDIN with \syncpipeline + \getresults
+-- with \bind and \sendpipeline
 \startpipeline
 SELECT $1 \bind 'val1' \sendpipeline
 COPY psql_pipeline FROM STDIN \bind \sendpipeline
@@ -152,7 +289,20 @@ COPY psql_pipeline FROM STDIN \bind \sendpipeline
 (1 row)
 
 \endpipeline
+-- with semicolon
+\startpipeline
+SELECT 'val1';
+COPY psql_pipeline FROM STDIN;
+\syncpipeline
+\getresults
+ ?column? 
+----------
+ val1
+(1 row)
+
+\endpipeline
 -- COPY TO STDOUT
+-- with \bind and \sendpipeline
 \startpipeline
 SELECT $1 \bind 'val1' \sendpipeline
 copy psql_pipeline TO STDOUT \bind \sendpipeline
@@ -164,9 +314,30 @@ copy psql_pipeline TO STDOUT \bind \sendpipeline
 
 1	\N
 2	test2
+20	test2
 3	test3
+30	test3
 4	test4
+40	test4
+-- with semicolon
+\startpipeline
+SELECT 'val1';
+copy psql_pipeline TO STDOUT;
+\endpipeline
+ ?column? 
+----------
+ val1
+(1 row)
+
+1	\N
+2	test2
+20	test2
+3	test3
+30	test3
+4	test4
+40	test4
 -- COPY TO STDOUT with \flushrequest + \getresults
+-- with \bind and \sendpipeline
 \startpipeline
 SELECT $1 \bind 'val1' \sendpipeline
 copy psql_pipeline TO STDOUT \bind \sendpipeline
@@ -179,10 +350,33 @@ copy psql_pipeline TO STDOUT \bind \sendpipeline
 
 1	\N
 2	test2
+20	test2
 3	test3
+30	test3
 4	test4
+40	test4
+\endpipeline
+-- with semicolon
+\startpipeline
+SELECT 'val1';
+copy psql_pipeline TO STDOUT;
+\flushrequest
+\getresults
+ ?column? 
+----------
+ val1
+(1 row)
+
+1	\N
+2	test2
+20	test2
+3	test3
+30	test3
+4	test4
+40	test4
 \endpipeline
 -- COPY TO STDOUT with \syncpipeline + \getresults
+-- with \bind and \sendpipeline
 \startpipeline
 SELECT $1 \bind 'val1' \sendpipeline
 copy psql_pipeline TO STDOUT \bind \sendpipeline
@@ -195,8 +389,30 @@ copy psql_pipeline TO STDOUT \bind \sendpipeline
 
 1	\N
 2	test2
+20	test2
 3	test3
+30	test3
 4	test4
+40	test4
+\endpipeline
+-- with semicolon
+\startpipeline
+SELECT 'val1';
+copy psql_pipeline TO STDOUT;
+\syncpipeline
+\getresults
+ ?column? 
+----------
+ val1
+(1 row)
+
+1	\N
+2	test2
+20	test2
+3	test3
+30	test3
+4	test4
+40	test4
 \endpipeline
 -- Use \parse and \bind_named
 \startpipeline
@@ -393,18 +609,6 @@ SELECT $1 \bind 3 \sendpipeline
 -- \endpipeline outside of pipeline should fail
 \endpipeline
 cannot send pipeline when not in pipeline mode
--- Query using simple protocol should not be sent and should leave the
--- pipeline usable.
-\startpipeline
-SELECT 1;
-PQsendQuery not allowed in pipeline mode
-SELECT $1 \bind 'val1' \sendpipeline
-\endpipeline
- ?column? 
-----------
- val1
-(1 row)
-
 -- After an aborted pipeline, commands after a \syncpipeline should be
 -- displayed.
 \startpipeline
@@ -425,6 +629,13 @@ SELECT \bind 'val1' \sendpipeline
 SELECT $1 \bind 'val1' \sendpipeline
 \endpipeline
 ERROR:  bind message supplies 1 parameters, but prepared statement "" requires 0
+-- Using a semicolon with a parameter triggers an error and aborts
+-- the pipeline.
+\startpipeline
+SELECT $1;
+SELECT 1;
+\endpipeline
+ERROR:  bind message supplies 0 parameters, but prepared statement "" requires 1
 -- An explicit transaction with an error needs to be rollbacked after
 -- the pipeline.
 \startpipeline
@@ -435,12 +646,11 @@ ROLLBACK \bind \sendpipeline
 ERROR:  duplicate key value violates unique constraint "psql_pipeline_pkey"
 DETAIL:  Key (a)=(1) already exists.
 ROLLBACK;
--- \watch sends a simple query, something not allowed within a pipeline.
+-- \watch is not allowed in a pipeline.
 \startpipeline
 SELECT \bind \sendpipeline
 \watch 1
-PQsendQuery not allowed in pipeline mode
-
+\watch not allowed in pipeline mode
 \endpipeline
 --
 (1 row)
@@ -530,7 +740,7 @@ SELECT COUNT(*) FROM psql_pipeline \bind \sendpipeline
 
  count 
 -------
-     4
+     7
 (1 row)
 
 -- After an error, pipeline is aborted and requires \syncpipeline to be
@@ -617,11 +827,11 @@ select 1;
 -- Error messages accumulate and are repeated.
 \startpipeline
 SELECT 1 \bind \sendpipeline
-SELECT 1;
-PQsendQuery not allowed in pipeline mode
-SELECT 1;
-PQsendQuery not allowed in pipeline mode
-PQsendQuery not allowed in pipeline mode
+\gdesc
+synchronous command execution functions are not allowed in pipeline mode
+\gdesc
+synchronous command execution functions are not allowed in pipeline mode
+synchronous command execution functions are not allowed in pipeline mode
 \endpipeline
  ?column? 
 ----------

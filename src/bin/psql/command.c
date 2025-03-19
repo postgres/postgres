@@ -3282,6 +3282,13 @@ exec_command_watch(PsqlScanState scan_state, bool active_branch,
 		int			iter = 0;
 		int			min_rows = 0;
 
+		if (PQpipelineStatus(pset.db) != PQ_PIPELINE_OFF)
+		{
+			pg_log_error("\\watch not allowed in pipeline mode");
+			clean_extended_state();
+			success = false;
+		}
+
 		/*
 		 * Parse arguments.  We allow either an unlabeled interval or
 		 * "name=value", where name is from the set ('i', 'interval', 'c',

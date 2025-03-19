@@ -8,12 +8,24 @@ CREATE TABLE psql_pipeline(a INTEGER PRIMARY KEY, s TEXT);
 \startpipeline
 SELECT $1 \bind 'val1' \sendpipeline
 \endpipeline
+\startpipeline
+SELECT 'val1';
+\endpipeline
 
 -- Multiple queries
 \startpipeline
 SELECT $1 \bind 'val1' \sendpipeline
 SELECT $1, $2 \bind 'val2' 'val3' \sendpipeline
 SELECT $1, $2 \bind 'val2' 'val3' \sendpipeline
+SELECT 'val4';
+SELECT 'val5', 'val6';
+\endpipeline
+
+-- Multiple queries in single line, separated by semicolons
+\startpipeline
+SELECT 1; SELECT 2; SELECT 3
+;
+\echo :PIPELINE_COMMAND_COUNT
 \endpipeline
 
 -- Test \flush
@@ -23,6 +35,9 @@ SELECT $1 \bind 'val1' \sendpipeline
 \flush
 SELECT $1, $2 \bind 'val2' 'val3' \sendpipeline
 SELECT $1, $2 \bind 'val2' 'val3' \sendpipeline
+\flush
+SELECT 'val4';
+SELECT 'val5', 'val6';
 \endpipeline
 
 -- Send multiple syncs
@@ -39,6 +54,31 @@ SELECT $1, $2 \bind 'val4' 'val5' \sendpipeline
 \echo :PIPELINE_COMMAND_COUNT
 \echo :PIPELINE_SYNC_COUNT
 \echo :PIPELINE_RESULT_COUNT
+SELECT 'val7';
+\syncpipeline
+\syncpipeline
+SELECT 'val8';
+\syncpipeline
+SELECT 'val9';
+\echo :PIPELINE_COMMAND_COUNT
+\echo :PIPELINE_SYNC_COUNT
+\echo :PIPELINE_RESULT_COUNT
+\endpipeline
+
+-- Query terminated with a semicolon replaces an unnamed prepared
+-- statement.
+\startpipeline
+SELECT $1 \parse ''
+SELECT 1;
+\bind_named ''
+\endpipeline
+
+-- Extended query is appended to pipeline by a semicolon after a
+-- newline.
+\startpipeline
+SELECT $1 \bind 1
+;
+SELECT 2;
 \endpipeline
 
 -- \startpipeline should not have any effect if already in a pipeline.
@@ -66,14 +106,23 @@ COMMIT \bind \sendpipeline
 \endpipeline
 
 -- COPY FROM STDIN
+-- with \sendpipeline and \bind
 \startpipeline
 SELECT $1 \bind 'val1' \sendpipeline
 COPY psql_pipeline FROM STDIN \bind \sendpipeline
 \endpipeline
 2	test2
 \.
+-- with semicolon
+\startpipeline
+SELECT 'val1';
+COPY psql_pipeline FROM STDIN;
+\endpipeline
+20	test2
+\.
 
 -- COPY FROM STDIN with \flushrequest + \getresults
+-- with \sendpipeline and \bind
 \startpipeline
 SELECT $1 \bind 'val1' \sendpipeline
 COPY psql_pipeline FROM STDIN \bind \sendpipeline
@@ -82,8 +131,18 @@ COPY psql_pipeline FROM STDIN \bind \sendpipeline
 3	test3
 \.
 \endpipeline
+-- with semicolon
+\startpipeline
+SELECT 'val1';
+COPY psql_pipeline FROM STDIN;
+\flushrequest
+\getresults
+30	test3
+\.
+\endpipeline
 
 -- COPY FROM STDIN with \syncpipeline + \getresults
+-- with \bind and \sendpipeline
 \startpipeline
 SELECT $1 \bind 'val1' \sendpipeline
 COPY psql_pipeline FROM STDIN \bind \sendpipeline
@@ -92,25 +151,56 @@ COPY psql_pipeline FROM STDIN \bind \sendpipeline
 4	test4
 \.
 \endpipeline
+-- with semicolon
+\startpipeline
+SELECT 'val1';
+COPY psql_pipeline FROM STDIN;
+\syncpipeline
+\getresults
+40	test4
+\.
+\endpipeline
 
 -- COPY TO STDOUT
+-- with \bind and \sendpipeline
 \startpipeline
 SELECT $1 \bind 'val1' \sendpipeline
 copy psql_pipeline TO STDOUT \bind \sendpipeline
 \endpipeline
+-- with semicolon
+\startpipeline
+SELECT 'val1';
+copy psql_pipeline TO STDOUT;
+\endpipeline
 
 -- COPY TO STDOUT with \flushrequest + \getresults
+-- with \bind and \sendpipeline
 \startpipeline
 SELECT $1 \bind 'val1' \sendpipeline
 copy psql_pipeline TO STDOUT \bind \sendpipeline
 \flushrequest
 \getresults
 \endpipeline
+-- with semicolon
+\startpipeline
+SELECT 'val1';
+copy psql_pipeline TO STDOUT;
+\flushrequest
+\getresults
+\endpipeline
 
 -- COPY TO STDOUT with \syncpipeline + \getresults
+-- with \bind and \sendpipeline
 \startpipeline
 SELECT $1 \bind 'val1' \sendpipeline
 copy psql_pipeline TO STDOUT \bind \sendpipeline
+\syncpipeline
+\getresults
+\endpipeline
+-- with semicolon
+\startpipeline
+SELECT 'val1';
+copy psql_pipeline TO STDOUT;
 \syncpipeline
 \getresults
 \endpipeline
@@ -217,13 +307,6 @@ SELECT $1 \bind 3 \sendpipeline
 -- \endpipeline outside of pipeline should fail
 \endpipeline
 
--- Query using simple protocol should not be sent and should leave the
--- pipeline usable.
-\startpipeline
-SELECT 1;
-SELECT $1 \bind 'val1' \sendpipeline
-\endpipeline
-
 -- After an aborted pipeline, commands after a \syncpipeline should be
 -- displayed.
 \startpipeline
@@ -239,6 +322,13 @@ SELECT \bind 'val1' \sendpipeline
 SELECT $1 \bind 'val1' \sendpipeline
 \endpipeline
 
+-- Using a semicolon with a parameter triggers an error and aborts
+-- the pipeline.
+\startpipeline
+SELECT $1;
+SELECT 1;
+\endpipeline
+
 -- An explicit transaction with an error needs to be rollbacked after
 -- the pipeline.
 \startpipeline
@@ -248,7 +338,7 @@ ROLLBACK \bind \sendpipeline
 \endpipeline
 ROLLBACK;
 
--- \watch sends a simple query, something not allowed within a pipeline.
+-- \watch is not allowed in a pipeline.
 \startpipeline
 SELECT \bind \sendpipeline
 \watch 1
@@ -372,8 +462,8 @@ select 1;
 -- Error messages accumulate and are repeated.
 \startpipeline
 SELECT 1 \bind \sendpipeline
-SELECT 1;
-SELECT 1;
+\gdesc
+\gdesc
 \endpipeline
 
 --
