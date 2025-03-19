@@ -1389,7 +1389,7 @@ set_timer(struct async_ctx *actx, long timeout)
 	EV_SET(&ev, 1, EVFILT_TIMER, EV_DELETE, 0, 0, 0);
 	if (kevent(actx->timerfd, &ev, 1, NULL, 0, NULL) < 0 && errno != ENOENT)
 	{
-		actx_error(actx, "deleting kqueue timer: %m", timeout);
+		actx_error(actx, "deleting kqueue timer: %m");
 		return false;
 	}
 
