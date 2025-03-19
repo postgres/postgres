@@ -56,7 +56,7 @@ static ssize_t TDEXLogWriteEncryptedPages(int fd, const void *buf, size_t count,
 typedef struct EncryptionStateData
 {
 	char	   *segBuf;
-	char		db_keydata_path[MAXPGPATH];
+	char		db_map_path[MAXPGPATH];
 	pg_atomic_uint64 enc_key_lsn;	/* to sync with readers */
 } EncryptionStateData;
 
@@ -190,7 +190,7 @@ TDEXLogSmgrInit(void)
 		pg_atomic_write_u64(&EncryptionState->enc_key_lsn, EncryptionKey.start_lsn);
 	}
 
-	pg_tde_set_db_file_paths(GLOBAL_SPACE_RLOCATOR(XLOG_TDE_OID).dbOid, NULL, EncryptionState->db_keydata_path);
+	pg_tde_set_db_file_path(GLOBAL_SPACE_RLOCATOR(XLOG_TDE_OID).dbOid, EncryptionState->db_map_path);
 
 #endif
 	SetXLogSmgr(&tde_xlog_smgr);
@@ -214,7 +214,7 @@ tdeheap_xlog_seg_write(int fd, const void *buf, size_t count, off_t offset,
 
 		XLogSegNoOffsetToRecPtr(segno, offset, wal_segment_size, lsn);
 
-		pg_tde_wal_last_key_set_lsn(lsn, EncryptionState->db_keydata_path);
+		pg_tde_wal_last_key_set_lsn(lsn, EncryptionState->db_map_path);
 		EncryptionKey.start_lsn = lsn;
 		pg_atomic_write_u64(&EncryptionState->enc_key_lsn, lsn);
 	}

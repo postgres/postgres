@@ -377,7 +377,7 @@ xl_tde_perform_rotate_key(XLogPrincipalKeyRotate *xlrec)
 {
 	bool		ret;
 
-	ret = pg_tde_write_map_keydata_files(xlrec->map_size, xlrec->buff, xlrec->keydata_size, &xlrec->buff[xlrec->map_size]);
+	ret = pg_tde_write_map_keydata_file(xlrec->file_size, xlrec->buff);
 	clear_principal_key_cache(xlrec->databaseId);
 
 	return ret;
