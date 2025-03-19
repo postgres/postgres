@@ -28,6 +28,7 @@ DATA = test_ext1--1.0.sql test_ext2--1.0.sql test_ext3--1.0.sql \
        test_ext_req_schema3--1.0.sql
 
 REGRESS = test_extensions test_extdepend
+TAP_TESTS = 1
 
 # force C locale for output stability
 NO_LOCALE = 1

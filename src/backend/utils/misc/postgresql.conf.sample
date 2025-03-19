@@ -804,6 +804,7 @@ autovacuum_worker_slots = 16	# autovacuum worker slots to allocate
 # - Other Defaults -
 
 #dynamic_library_path = '$libdir'
+#extension_control_path = '$system'
 #gin_fuzzy_search_limit = 0
 
 

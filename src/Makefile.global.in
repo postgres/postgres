@@ -87,9 +87,19 @@ endif # not PGXS
 #
 # In a PGXS build, we cannot use the values inserted into Makefile.global
 # by configure, since the installation tree may have been relocated.
-# Instead get the path values from pg_config.
+# Instead get the path values from pg_config.  But users can specify
+# prefix explicitly, if they want to select their own installation
+# location.
 
-ifndef PGXS
+ifdef PGXS
+# Extension makefiles should set PG_CONFIG, but older ones might not
+ifndef PG_CONFIG
+PG_CONFIG = pg_config
+endif
+endif
+
+# This means: if ((not PGXS) or prefix)
+ifneq (,$(if $(PGXS),,1)$(prefix))
 
 # Note that prefix, exec_prefix, and datarootdir aren't defined in a PGXS build;
 # makefiles may only use the derived variables such as bindir.
@@ -146,11 +156,6 @@ htmldir := @htmldir@
 localedir := @localedir@
 
 else # PGXS case
-
-# Extension makefiles should set PG_CONFIG, but older ones might not
-ifndef PG_CONFIG
-PG_CONFIG = pg_config
-endif
 
 bindir := $(shell $(PG_CONFIG) --bindir)
 datadir := $(shell $(PG_CONFIG) --sharedir)

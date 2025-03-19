@@ -57,4 +57,9 @@ tests += {
     ],
     'regress_args': ['--no-locale'],
   },
+  'tap': {
+    'tests': [
+      't/001_extension_control_path.pl',
+    ],
+  },
 }

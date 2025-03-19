@@ -10954,6 +10954,74 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
       </listitem>
      </varlistentry>
 
+     <varlistentry id="guc-extension-control-path" xreflabel="extension_control_path">
+      <term><varname>extension_control_path</varname> (<type>string</type>)
+      <indexterm>
+       <primary><varname>extension_control_path</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        A path to search for extensions, specifically extension control files
+        (<filename><replaceable>name</replaceable>.control</filename>).  The
+        remaining extension script and secondary control files are then loaded
+        from the same directory where the primary control file was found.
+        See <xref linkend="extend-extensions-files"/> for details.
+       </para>
+
+       <para>
+        The value for <varname>extension_control_path</varname> must be a
+        list of absolute directory paths separated by colons (or semi-colons
+        on Windows).  If a list element starts
+        with the special string <literal>$system</literal>, the
+        compiled-in <productname>PostgreSQL</productname> extension
+        directory is substituted for <literal>$system</literal>; this
+        is where the extensions provided by the standard
+        <productname>PostgreSQL</productname> distribution are installed.
+        (Use <literal>pg_config --sharedir</literal> to find out the name of
+        this directory.) For example:
+<programlisting>
+extension_control_path = '/usr/local/share/postgresql/extension:/home/my_project/share/extension:$system'
+</programlisting>
+        or, in a Windows environment:
+<programlisting>
+extension_control_path = 'C:\tools\postgresql\extension;H:\my_project\share\extension;$system'
+</programlisting>
+        Note that the path elements should typically end in
+        <literal>extension</literal> if the normal installation layouts are
+        followed.  (The value for <literal>$system</literal> already includes
+        the <literal>extension</literal> suffix.)
+       </para>
+
+       <para>
+        The default value for this parameter is
+        <literal>'$system'</literal>. If the value is set to an empty
+        string, the default <literal>'$system'</literal> is also assumed.
+       </para>
+
+       <para>
+        This parameter can be changed at run time by superusers and users
+        with the appropriate <literal>SET</literal> privilege, but a
+        setting done that way will only persist until the end of the
+        client connection, so this method should be reserved for
+        development purposes. The recommended way to set this parameter
+        is in the <filename>postgresql.conf</filename> configuration
+        file.
+       </para>
+
+       <para>
+        Note that if you set this parameter to be able to load extensions from
+        nonstandard locations, you will most likely also need to set <xref
+        linkend="guc-dynamic-library-path"/> to a correspondent location, for
+        example,
+<programlisting>
+extension_control_path = '/usr/local/share/postgresql/extension:$system'
+dynamic_library_path = '/usr/local/lib/postgresql:$libdir'
+</programlisting>
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="guc-gin-fuzzy-search-limit" xreflabel="gin_fuzzy_search_limit">
       <term><varname>gin_fuzzy_search_limit</varname> (<type>integer</type>)
       <indexterm>

@@ -39,6 +39,7 @@
 #include "catalog/namespace.h"
 #include "catalog/storage.h"
 #include "commands/async.h"
+#include "commands/extension.h"
 #include "commands/event_trigger.h"
 #include "commands/tablespace.h"
 #include "commands/trigger.h"
@@ -4361,6 +4362,18 @@ struct config_string ConfigureNamesString[] =
 		},
 		&Dynamic_library_path,
 		"$libdir",
+		NULL, NULL, NULL
+	},
+
+	{
+		{"extension_control_path", PGC_SUSET, CLIENT_CONN_OTHER,
+			gettext_noop("Sets the path for extension control files."),
+			gettext_noop("The remaining extension script and secondary control files are then loaded "
+						 "from the same directory where the primary control file was found."),
+			GUC_SUPERUSER_ONLY
+		},
+		&Extension_control_path,
+		"$system",
 		NULL, NULL, NULL
 	},
 

@@ -90,8 +90,10 @@ CREATE EXTENSION [ IF NOT EXISTS ] <replaceable class="parameter">extension_name
        <para>
         The name of the extension to be
         installed. <productname>PostgreSQL</productname> will create the
-        extension using details from the file
-        <literal>SHAREDIR/extension/</literal><replaceable class="parameter">extension_name</replaceable><literal>.control</literal>.
+        extension using details from the file <filename><replaceable
+        class="parameter">extension_name</replaceable>.control</filename>,
+        found via the server's extension control path (set by <xref
+        linkend="guc-extension-control-path"/>.)
        </para>
       </listitem>
      </varlistentry>

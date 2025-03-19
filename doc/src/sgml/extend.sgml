@@ -650,6 +650,11 @@ RETURNS anycompatible AS ...
     </para>
 
     <para>
+     Additional locations for extension control files can be configured using
+     the parameter <xref linkend="guc-extension-control-path"/>.
+    </para>
+
+    <para>
      The file format for an extension control file is the same as for the
      <filename>postgresql.conf</filename> file, namely a list of
      <replaceable>parameter_name</replaceable> <literal>=</literal> <replaceable>value</replaceable>
@@ -669,9 +674,9 @@ RETURNS anycompatible AS ...
        <para>
         The directory containing the extension's <acronym>SQL</acronym> script
         file(s).  Unless an absolute path is given, the name is relative to
-        the installation's <literal>SHAREDIR</literal> directory.  The
-        default behavior is equivalent to specifying
-        <literal>directory = 'extension'</literal>.
+        the installation's <literal>SHAREDIR</literal> directory.  By default,
+        the script files are looked for in the same directory where the
+        control file was found.
        </para>
       </listitem>
      </varlistentry>
@@ -719,8 +724,8 @@ RETURNS anycompatible AS ...
        <para>
         The value of this parameter will be substituted for each occurrence
         of <literal>MODULE_PATHNAME</literal> in the script file(s).  If it is not
-        set, no substitution is made.  Typically, this is set to
-        <literal>$libdir/<replaceable>shared_library_name</replaceable></literal> and
+        set, no substitution is made.  Typically, this is set to just
+        <literal><replaceable>shared_library_name</replaceable></literal> and
         then <literal>MODULE_PATHNAME</literal> is used in <command>CREATE
         FUNCTION</command> commands for C-language functions, so that the script
         files do not need to hard-wire the name of the shared library.
@@ -1804,6 +1809,10 @@ include $(PGXS)
     setting <varname>PG_CONFIG</varname> to point to its
     <command>pg_config</command> program, either within the makefile
     or on the <literal>make</literal> command line.
+    You can also select a separate installation directory for your extension
+    by setting the <literal>make</literal> variable <varname>prefix</varname>
+    on the <literal>make</literal> command line.  (But this will then require
+    additional setup to get the server to find the extension there.)
    </para>
 
    <para>
