@@ -744,6 +744,10 @@ pg_tde_perform_rotate_key(TDEPrincipalKey *principal_key, TDEPrincipalKey *new_p
 
 		/* Increment the key index for the new principal key */
 		key_index[NEW_PRINCIPAL_KEY]++;
+
+		pfree(rel_key_data[OLD_PRINCIPAL_KEY]);
+		pfree(enc_rel_key_data[NEW_PRINCIPAL_KEY]);
+		pfree(enc_rel_key_data[OLD_PRINCIPAL_KEY]);
 	}
 
 	/* Close unrotated files */
