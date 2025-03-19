@@ -251,7 +251,7 @@ class OAuthHandler(http.server.BaseHTTPRequestHandler):
     def config(self) -> JsonObject:
         port = self.server.socket.getsockname()[1]
 
-        issuer = f"http://localhost:{port}"
+        issuer = f"http://127.0.0.1:{port}"
         if self._alt_issuer:
             issuer += "/alternate"
         elif self._parameterized:

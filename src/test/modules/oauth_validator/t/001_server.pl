@@ -68,7 +68,7 @@ END
 }
 
 my $port = $webserver->port();
-my $issuer = "http://localhost:$port";
+my $issuer = "http://127.0.0.1:$port";
 
 unlink($node->data_dir . '/pg_hba.conf');
 $node->append_conf(

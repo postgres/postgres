@@ -15,7 +15,7 @@ OAuth::Server - runs a mock OAuth authorization server for testing
   $server->run;
 
   my $port = $server->port;
-  my $issuer = "http://localhost:$port";
+  my $issuer = "http://127.0.0.1:$port";
 
   # test against $issuer...
 
@@ -28,7 +28,7 @@ daemon implemented in t/oauth_server.py. (Python has a fairly usable HTTP server
 in its standard library, so the implementation was ported from Perl.)
 
 This authorization server does not use TLS (it implements a nonstandard, unsafe
-issuer at "http://localhost:<port>"), so libpq in particular will need to set
+issuer at "http://127.0.0.1:<port>"), so libpq in particular will need to set
 PGOAUTHDEBUG=UNSAFE to be able to talk to it.
 
 =cut
