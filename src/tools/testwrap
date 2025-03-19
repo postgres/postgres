@@ -61,6 +61,7 @@ for line in sp.stdout:
     if line.startswith(b'ok '):
         line = line.replace(b' # TODO ', b' # testwrap-overridden-TODO ', 1)
     sys.stdout.buffer.write(line)
+    sys.stdout.flush()
 returncode = sp.wait()
 
 if returncode == 0:
