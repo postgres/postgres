@@ -117,7 +117,7 @@ static WALKeyCacheRec *tde_wal_key_cache = NULL;
 static WALKeyCacheRec *tde_wal_key_last_rec = NULL;
 
 static InternalKey *pg_tde_get_key_from_file(const RelFileLocator *rlocator, uint32 key_type);
-static int32 pg_tde_process_map_entry(const RelFileLocator *rlocator, uint32 key_type, char *db_map_path, off_t *offset, bool should_delete);
+static int32 pg_tde_find_map_entry(const RelFileLocator *rlocator, uint32 key_type, char *db_map_path);
 static InternalKey *pg_tde_read_keydata(char *db_keydata_path, int32 key_index, TDEPrincipalKey *principal_key);
 static InternalKey *tde_decrypt_rel_key(TDEPrincipalKey *principal_key, InternalKey *enc_rel_key_data, Oid dbOid);
 static int	pg_tde_open_file_basic(char *tde_filename, int fileFlags, bool ignore_missing);
@@ -140,6 +140,7 @@ static int32 pg_tde_write_map_entry(const RelFileLocator *rlocator, uint32 entry
 static off_t pg_tde_write_one_map_entry(int fd, const RelFileLocator *rlocator, uint32 flags, int32 key_index, off_t *offset, const char *db_map_path);
 static void pg_tde_write_keydata(char *db_keydata_path, TDEPrincipalKeyInfo *principal_key_info, int32 key_index, InternalKey *enc_rel_key_data);
 static void pg_tde_write_one_keydata(int keydata_fd, int32 key_index, InternalKey *enc_rel_key_data);
+static bool pg_tde_delete_map_entry(const RelFileLocator *rlocator, uint32 key_type, char *db_map_path, off_t offset);
 static int	keyrotation_init_file(TDEPrincipalKeyInfo *new_principal_key_info, char *rotated_filename, char *filename, off_t *curr_pos);
 static void finalize_key_rotation(char *m_path_old, char *k_path_old, char *m_path_new, char *k_path_new);
 
@@ -552,6 +553,68 @@ pg_tde_write_key_map_entry(const RelFileLocator *rlocator, InternalKey *enc_rel_
 	pg_tde_write_keydata(db_keydata_path, principal_key_info, key_index, enc_rel_key_data);
 }
 
+static bool
+pg_tde_delete_map_entry(const RelFileLocator *rlocator, uint32 key_type, char *db_map_path, off_t offset)
+{
+	File		map_fd;
+	bool		found = false;
+	off_t		curr_pos = 0;
+
+	/*
+	 * Open and validate file for basic correctness. DO NOT create it. The
+	 * file should pre-exist otherwise we should never be here.
+	 */
+	map_fd = pg_tde_open_file(db_map_path, NULL, O_RDWR, &curr_pos);
+
+	/*
+	 * If we need to delete an entry, we expect an offset value to the start
+	 * of the entry to speed up the operation. Otherwise, we'd be sequentially
+	 * scanning the entire map file.
+	 */
+	if (offset > 0)
+	{
+		curr_pos = lseek(map_fd, offset, SEEK_SET);
+
+		if (curr_pos == -1)
+		{
+			ereport(ERROR,
+					(errcode_for_file_access(),
+					 errmsg("could not seek in tde map file \"%s\": %m",
+							db_map_path)));
+		}
+	}
+
+	/*
+	 * Read until we find an empty slot. Otherwise, read until end. This seems
+	 * to be less frequent than vacuum. So let's keep this function here
+	 * rather than overloading the vacuum process.
+	 */
+	while (1)
+	{
+		TDEMapEntry map_entry;
+		off_t		prev_pos = curr_pos;
+
+		found = pg_tde_read_one_map_entry(map_fd, rlocator, key_type, &map_entry, &curr_pos);
+
+		/* We've reached EOF */
+		if (curr_pos == prev_pos)
+			break;
+
+		/* We found a valid entry for the relation */
+		if (found)
+		{
+			pg_tde_write_one_map_entry(map_fd, NULL, MAP_ENTRY_EMPTY, 0, &prev_pos, db_map_path);
+			break;
+		}
+	}
+
+	/* Let's close the file. */
+	close(map_fd);
+
+	/* Return -1 indicating that no entry was removed */
+	return found;
+}
+
 /*
  * Called when transaction is being completed; either committed or aborted.
  * By default, when a transaction creates an entry, we mark it as MAP_ENTRY_VALID.
@@ -568,7 +631,7 @@ pg_tde_write_key_map_entry(const RelFileLocator *rlocator, InternalKey *enc_rel_
 void
 pg_tde_free_key_map_entry(const RelFileLocator *rlocator, uint32 key_type, off_t offset)
 {
-	int32		key_index = 0;
+	bool		found;
 	char		db_map_path[MAXPGPATH] = {0};
 
 	Assert(rlocator);
@@ -577,9 +640,9 @@ pg_tde_free_key_map_entry(const RelFileLocator *rlocator, uint32 key_type, off_t
 	pg_tde_set_db_file_paths(rlocator->dbOid, db_map_path, NULL);
 
 	/* Remove the map entry if found */
-	key_index = pg_tde_process_map_entry(rlocator, key_type, db_map_path, &offset, true);
+	found = pg_tde_delete_map_entry(rlocator, key_type, db_map_path, offset);
 
-	if (key_index == -1)
+	if (!found)
 	{
 		ereport(WARNING,
 				(errcode(ERRCODE_NO_DATA_FOUND),
@@ -916,7 +979,6 @@ pg_tde_get_key_from_file(const RelFileLocator *rlocator, uint32 key_type)
 	int32		key_index = 0;
 	TDEPrincipalKey *principal_key;
 	InternalKey *enc_rel_key_data;
-	off_t		offset = 0;
 	LWLock	   *lock_pk = tde_lwlock_enc_keys();
 	char		db_map_path[MAXPGPATH] = {0};
 	char		db_keydata_path[MAXPGPATH] = {0};
@@ -930,7 +992,7 @@ pg_tde_get_key_from_file(const RelFileLocator *rlocator, uint32 key_type)
 		return NULL;
 
 	/* Read the map entry and get the index of the relation key */
-	key_index = pg_tde_process_map_entry(rlocator, key_type, db_map_path, &offset, false);
+	key_index = pg_tde_find_map_entry(rlocator, key_type, db_map_path);
 
 	if (key_index == -1)
 		return NULL;
@@ -961,52 +1023,22 @@ pg_tde_get_key_from_file(const RelFileLocator *rlocator, uint32 key_type)
 }
 
 /*
- * Returns the index of the read map if we find a valid match; i.e.
- *   - flags is set to MAP_ENTRY_VALID and the relNumber and spcOid matches the
- *     one provided in rlocator.
- *   - If should_delete is true, we delete the entry. An offset value may
- *     be passed to speed up the file reading operation.
- *
- * The function expects that the offset points to a valid map start location.
+ * Returns the index of the read map if we find a valid match; e.g. flags is set to
+ * MAP_ENTRY_VALID and the relNumber and spcOid matches the one provided in rlocator.
  */
 static int32
-pg_tde_process_map_entry(const RelFileLocator *rlocator, uint32 key_type, char *db_map_path, off_t *offset, bool should_delete)
+pg_tde_find_map_entry(const RelFileLocator *rlocator, uint32 key_type, char *db_map_path)
 {
-	File		map_fd = -1;
+	File		map_fd;
 	int32		key_index = 0;
 	bool		found = false;
 	off_t		curr_pos = 0;
-
-	Assert(offset);
 
 	/*
 	 * Open and validate file for basic correctness. DO NOT create it. The
 	 * file should pre-exist otherwise we should never be here.
 	 */
 	map_fd = pg_tde_open_file(db_map_path, NULL, O_RDWR, &curr_pos);
-
-	/*
-	 * If we need to delete an entry, we expect an offset value to the start
-	 * of the entry to speed up the operation. Otherwise, we'd be sequentially
-	 * scanning the entire map file.
-	 */
-	if (should_delete == true && *offset > 0)
-	{
-		curr_pos = lseek(map_fd, *offset, SEEK_SET);
-
-		if (curr_pos == -1)
-		{
-			ereport(ERROR,
-					(errcode_for_file_access(),
-					 errmsg("could not seek in tde map file \"%s\": %m",
-							db_map_path)));
-		}
-	}
-	else
-	{
-		/* Otherwise, let's just offset to zero */
-		*offset = 0;
-	}
 
 	/*
 	 * Read until we find an empty slot. Otherwise, read until end. This seems
@@ -1026,16 +1058,7 @@ pg_tde_process_map_entry(const RelFileLocator *rlocator, uint32 key_type, char *
 
 		/* We found a valid entry for the relation */
 		if (found)
-		{
-#ifndef FRONTEND
-			/* Mark the entry pointed by prev_pos as free */
-			if (should_delete)
-			{
-				pg_tde_write_one_map_entry(map_fd, NULL, MAP_ENTRY_EMPTY, 0, &prev_pos, db_map_path);
-			}
-#endif
 			break;
-		}
 
 		/* Increment the offset and the key index */
 		key_index++;
@@ -1047,7 +1070,6 @@ pg_tde_process_map_entry(const RelFileLocator *rlocator, uint32 key_type, char *
 	/* Return -1 indicating that no entry was removed */
 	return ((found) ? key_index : -1);
 }
-
 
 /*
  * Open the file and read the required key data from file and return encrypted key.
