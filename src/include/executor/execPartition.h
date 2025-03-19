@@ -43,8 +43,8 @@ extern void ExecCleanupTupleRouting(ModifyTableState *mtstate,
  * subpart_map contains indexes into PartitionPruningData.partrelprunedata[].
  *
  * partrel						Partitioned table Relation; obtained by
- * 								ExecGetRangeTableRelation(estate, rti), where
- *								rti is PartitionedRelPruneInfo.rtindex.
+ * 								ExecGetRangeTableRelation(estate, rti, false),
+ * 								where rti is PartitionedRelPruneInfo.rtindex.
  * nparts						Length of subplan_map[] and subpart_map[].
  * subplan_map					Subplan index by partition index, or -1.
  * subpart_map					Subpart index by partition index, or -1.

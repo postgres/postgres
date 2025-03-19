@@ -746,7 +746,7 @@ ExecOpenScanRelation(EState *estate, Index scanrelid, int eflags)
 	Relation	rel;
 
 	/* Open the relation. */
-	rel = ExecGetRangeTableRelation(estate, scanrelid);
+	rel = ExecGetRangeTableRelation(estate, scanrelid, false);
 
 	/*
 	 * Complain if we're attempting a scan of an unscannable relation, except
@@ -815,18 +815,22 @@ ExecInitRangeTable(EState *estate, List *rangeTable, List *permInfos,
  *
  * The Relations will be closed in ExecEndPlan().
  *
- * Note: The caller must ensure that 'rti' refers to an unpruned relation
- * (i.e., it is a member of estate->es_unpruned_relids) before calling this
- * function. Attempting to open a pruned relation will result in an error.
+ * If isResultRel is true, the relation is being used as a result relation.
+ * Such a relation might have been pruned, which is OK for result relations,
+ * but not for scan relations; see the details in ExecInitModifyTable(). If
+ * isResultRel is false, the caller must ensure that 'rti' refers to an
+ * unpruned relation (i.e., it is a member of estate->es_unpruned_relids)
+ * before calling this function. Attempting to open a pruned relation for
+ * scanning will result in an error.
  */
 Relation
-ExecGetRangeTableRelation(EState *estate, Index rti)
+ExecGetRangeTableRelation(EState *estate, Index rti, bool isResultRel)
 {
 	Relation	rel;
 
 	Assert(rti > 0 && rti <= estate->es_range_table_size);
 
-	if (!bms_is_member(rti, estate->es_unpruned_relids))
+	if (!isResultRel && !bms_is_member(rti, estate->es_unpruned_relids))
 		elog(ERROR, "trying to open a pruned relation");
 
 	rel = estate->es_relations[rti - 1];
@@ -880,7 +884,7 @@ ExecInitResultRelation(EState *estate, ResultRelInfo *resultRelInfo,
 {
 	Relation	resultRelationDesc;
 
-	resultRelationDesc = ExecGetRangeTableRelation(estate, rti);
+	resultRelationDesc = ExecGetRangeTableRelation(estate, rti, true);
 	InitResultRelInfo(resultRelInfo,
 					  resultRelationDesc,
 					  rti,

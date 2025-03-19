@@ -1006,7 +1006,7 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 				case ROW_MARK_SHARE:
 				case ROW_MARK_KEYSHARE:
 				case ROW_MARK_REFERENCE:
-					relation = ExecGetRangeTableRelation(estate, rc->rti);
+					relation = ExecGetRangeTableRelation(estate, rc->rti, false);
 					break;
 				case ROW_MARK_COPY:
 					/* no physical table access is required */

@@ -680,7 +680,8 @@ exec_rt_fetch(Index rti, EState *estate)
 	return (RangeTblEntry *) list_nth(estate->es_range_table, rti - 1);
 }
 
-extern Relation ExecGetRangeTableRelation(EState *estate, Index rti);
+extern Relation ExecGetRangeTableRelation(EState *estate, Index rti,
+										  bool isResultRel);
 extern void ExecInitResultRelation(EState *estate, ResultRelInfo *resultRelInfo,
 								   Index rti);
 

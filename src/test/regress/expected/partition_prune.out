@@ -4662,6 +4662,88 @@ table part_abc_view;
  2 | c | t
 (1 row)
 
+-- MERGE ... INSERT when all pruned from MERGE source.
+begin;
+explain (costs off)
+merge into part_abc_view pt
+using (select stable_one() + 1 as pid) as q join part_abc_2 pt2 on (q.pid = pt2.a) on pt.a = stable_one() + 2
+when not matched then insert values (1, 'd', false) returning pt.a;
+                   QUERY PLAN                   
+------------------------------------------------
+ Merge on part_abc
+   ->  Nested Loop Left Join
+         ->  Seq Scan on part_abc_2 pt2
+               Filter: ((stable_one() + 1) = a)
+         ->  Materialize
+               ->  Append
+                     Subplans Removed: 2
+(7 rows)
+
+merge into part_abc_view pt
+using (select stable_one() + 1 as pid) as q join part_abc_2 pt2 on (q.pid = pt2.a) on pt.a = stable_one() + 2
+when not matched then insert values (1, 'd', false) returning pt.a;
+ a 
+---
+ 1
+(1 row)
+
+table part_abc_view;
+ a | b | c 
+---+---+---
+ 1 | d | f
+ 2 | c | t
+(2 rows)
+
+rollback;
+-- A case with multiple ModifyTable nodes.
+begin;
+create table part_abc_log (action text, a int, b text, c bool);
+explain (costs off)
+with t as (
+  merge into part_abc_view pt
+  using (select stable_one() + 1 as pid) as q join part_abc_2 pt2 on (q.pid = pt2.a) on pt.a = stable_one() + 2
+  when not matched then insert values (1, 'd', false) returning merge_action(), pt.*
+)
+insert into part_abc_log select * from t returning *;
+                       QUERY PLAN                       
+--------------------------------------------------------
+ Insert on part_abc_log
+   CTE t
+     ->  Merge on part_abc
+           ->  Nested Loop Left Join
+                 ->  Seq Scan on part_abc_2 pt2
+                       Filter: ((stable_one() + 1) = a)
+                 ->  Materialize
+                       ->  Append
+                             Subplans Removed: 2
+   ->  CTE Scan on t
+(10 rows)
+
+with t as (
+  merge into part_abc_view pt
+  using (select stable_one() + 1 as pid) as q join part_abc_2 pt2 on (q.pid = pt2.a) on pt.a = stable_one() + 2
+  when not matched then insert values (1, 'd', false) returning merge_action(), pt.*
+)
+insert into part_abc_log select * from t returning *;
+ action | a | b | c 
+--------+---+---+---
+ INSERT | 1 | d | f
+(1 row)
+
+table part_abc_view;
+ a | b | c 
+---+---+---
+ 1 | d | f
+ 2 | c | t
+(2 rows)
+
+table part_abc_log;
+ action | a | b | c 
+--------+---+---+---
+ INSERT | 1 | d | f
+(1 row)
+
+rollback;
 -- A case with nested MergeAppend with its own PartitionPruneInfo.
 create index on part_abc (a);
 alter table part_abc add d int;

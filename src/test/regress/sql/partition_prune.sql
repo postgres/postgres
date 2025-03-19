@@ -1401,6 +1401,38 @@ using (select stable_one() + 2 as pid) as q join part_abc_1 pt1 on (q.pid = pt1.
 when matched then delete returning pt.a;
 table part_abc_view;
 
+-- MERGE ... INSERT when all pruned from MERGE source.
+begin;
+explain (costs off)
+merge into part_abc_view pt
+using (select stable_one() + 1 as pid) as q join part_abc_2 pt2 on (q.pid = pt2.a) on pt.a = stable_one() + 2
+when not matched then insert values (1, 'd', false) returning pt.a;
+merge into part_abc_view pt
+using (select stable_one() + 1 as pid) as q join part_abc_2 pt2 on (q.pid = pt2.a) on pt.a = stable_one() + 2
+when not matched then insert values (1, 'd', false) returning pt.a;
+table part_abc_view;
+rollback;
+
+-- A case with multiple ModifyTable nodes.
+begin;
+create table part_abc_log (action text, a int, b text, c bool);
+explain (costs off)
+with t as (
+  merge into part_abc_view pt
+  using (select stable_one() + 1 as pid) as q join part_abc_2 pt2 on (q.pid = pt2.a) on pt.a = stable_one() + 2
+  when not matched then insert values (1, 'd', false) returning merge_action(), pt.*
+)
+insert into part_abc_log select * from t returning *;
+with t as (
+  merge into part_abc_view pt
+  using (select stable_one() + 1 as pid) as q join part_abc_2 pt2 on (q.pid = pt2.a) on pt.a = stable_one() + 2
+  when not matched then insert values (1, 'd', false) returning merge_action(), pt.*
+)
+insert into part_abc_log select * from t returning *;
+table part_abc_view;
+table part_abc_log;
+rollback;
+
 -- A case with nested MergeAppend with its own PartitionPruneInfo.
 create index on part_abc (a);
 alter table part_abc add d int;

@@ -1819,6 +1819,7 @@ adjust_partition_colnos_using_map(List *colnos, AttrMap *attrMap)
 void
 ExecDoInitialPruning(EState *estate)
 {
+	PlannedStmt *stmt = estate->es_plannedstmt;
 	ListCell   *lc;
 	List	   *locked_relids = NIL;
 
@@ -1865,6 +1866,34 @@ ExecDoInitialPruning(EState *estate)
 													 validsubplan_rtis);
 		estate->es_part_prune_results = lappend(estate->es_part_prune_results,
 												validsubplans);
+	}
+
+	/*
+	 * Lock the first result relation of each ModifyTable node, even if it was
+	 * pruned.  This is required for ExecInitModifyTable(), which keeps its
+	 * first result relation if all other result relations have been pruned,
+	 * because some executor paths (e.g., in nodeModifyTable.c and
+	 * execPartition.c) rely on there being at least one result relation.
+	 *
+	 * There's room for improvement here --- we actually only need to do this
+	 * if all other result relations of the ModifyTable node were pruned, but
+	 * we don't have an easy way to tell that here.
+	 */
+	if (stmt->resultRelations && ExecShouldLockRelations(estate))
+	{
+		foreach(lc, stmt->firstResultRels)
+		{
+			Index		firstResultRel = lfirst_int(lc);
+
+			if (!bms_is_member(firstResultRel, estate->es_unpruned_relids))
+			{
+				RangeTblEntry *rte = exec_rt_fetch(firstResultRel, estate);
+
+				Assert(rte->rtekind == RTE_RELATION && rte->rellockmode != NoLock);
+				LockRelationOid(rte->relid, rte->rellockmode);
+				locked_relids = lappend_int(locked_relids, firstResultRel);
+			}
+		}
 	}
 
 	/*
@@ -2076,7 +2105,7 @@ CreatePartitionPruneState(EState *estate, PartitionPruneInfo *pruneinfo,
 			 * because that entry will be held open and locked for the
 			 * duration of this executor run.
 			 */
-			partrel = ExecGetRangeTableRelation(estate, pinfo->rtindex);
+			partrel = ExecGetRangeTableRelation(estate, pinfo->rtindex, false);
 
 			/* Remember for InitExecPartitionPruneContext(). */
 			pprune->partrel = partrel;
