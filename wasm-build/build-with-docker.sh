@@ -11,7 +11,7 @@ IMG_TAG="17.4_3.1.61.6bi"
 
 source .buildconfig
 
-if [[ -z "$SDKROOT" || -z "$PG_VERSION" ]]; then
+if [[ -z "$SDKROOT" || -z "$PG_VERSION" || -z "$DEBUG" || -z "$CI"]]; then
   echo "Missing SDKROOT and PG_VERSION env vars."
   echo "Source them from .buildconfig"
   exit 1
@@ -20,8 +20,8 @@ fi
 docker run \
   --rm \
   -e PG_DIST_EXT=/tmp/sdk/dist/extensions-emsdk \
-  -e DEBUG=true \
-  -e CI=true \
+  -e DEBUG \
+  -e CI \
   -e SDKROOT=$SDKROOT \
   -e PG_VERSION=${PG_VERSION} \
   -e PG_BRANCH=${PG_BRANCH} \
