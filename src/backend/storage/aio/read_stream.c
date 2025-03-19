@@ -515,9 +515,10 @@ read_stream_begin_impl(int flags,
 	 * finishes we don't want to have to wait for its buffers to be consumed
 	 * before starting a new one.
 	 *
-	 * Be careful not to allow int16 to overflow (even though that's not
-	 * possible with the current GUC range limits), allowing also for the
-	 * spare entry and the overflow space.
+	 * Be careful not to allow int16 to overflow.  That is possible with the
+	 * current GUC range limits, so this is an artificial limit of ~32k
+	 * buffers and we'd need to adjust the types to exceed that.  We also have
+	 * to allow for the spare entry and the overflow space.
 	 */
 	max_pinned_buffers = (max_ios + 1) * io_combine_limit;
 	max_pinned_buffers = Min(max_pinned_buffers,
