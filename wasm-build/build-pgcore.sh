@@ -152,7 +152,7 @@ else
 
     mkdir -p bin
 
-    GETZIC=true
+    GETZIC=${GETZIC:-true}
 
     EMCC_NODE="-sEXIT_RUNTIME=1 -DEXIT_RUNTIME -sNODERAWFS -sENVIRONMENT=node"
 
@@ -171,6 +171,11 @@ END
 #. ${SDKROOT}/wasm32-wasi-shell.sh
 TZ=UTC PGTZ=UTC $(command -v wasi-run) $(pwd)/src/timezone/zic.wasi \$@
 END
+	else
+ 		echo "
+   * Using system ZIC from ${ZIC:-/usr/sbin/zic}
+   "
+ 		cp ${ZIC:-/usr/sbin/zic} bin/
         fi
 
     else
@@ -186,11 +191,15 @@ END
 #. ${SDKROOT}/wasm32-bi-emscripten-shell.sh
 TZ=UTC PGTZ=UTC $(command -v node) $(pwd)/src/timezone/zic.cjs \$@
 END
+	else
+ 		echo "
+   * Using system ZIC from ${ZIC:-/usr/sbin/zic}
+   "
+ 		cp ${ZIC:-/usr/sbin/zic} bin/
         fi
     fi
 
     export ZIC=$(realpath bin/zic)
-
 
     if \
      EM_PKG_CONFIG_PATH="$PREFIX/lib/pkgconfig" \
