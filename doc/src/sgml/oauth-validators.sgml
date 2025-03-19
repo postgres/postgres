@@ -209,11 +209,13 @@
       <para>
        Modules must remain interruptible by signals so that the server can
        correctly handle authentication timeouts and shutdown signals from
-       <application>pg_ctl</application>. For example, a module receiving
-       <symbol>EINTR</symbol>/<symbol>EAGAIN</symbol> from a blocking call
-       should call <function>CHECK_FOR_INTERRUPTS()</function> before retrying.
-       The same should be done during any long-running loops. Failure to follow
-       this guidance may result in unresponsive backend sessions.
+       <application>pg_ctl</application>. For example, blocking calls on sockets
+       should generally be replaced with code that handles both socket events
+       and interrupts without races (see <function>WaitLatchOrSocket()</function>,
+       <function>WaitEventSetWait()</function>, et al), and long-running loops
+       should periodically call <function>CHECK_FOR_INTERRUPTS()</function>.
+       Failure to follow this guidance may result in unresponsive backend
+       sessions.
       </para>
      </listitem>
     </varlistentry>
