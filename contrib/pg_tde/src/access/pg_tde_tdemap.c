@@ -138,7 +138,6 @@ static InternalKey *pg_tde_create_local_key(const RelFileLocator *newrlocator, u
 static void pg_tde_generate_internal_key(InternalKey *int_key, uint32 entry_type);
 static InternalKey *tde_encrypt_rel_key(TDEPrincipalKey *principal_key, InternalKey *rel_key_data, Oid dbOid);
 static int	pg_tde_file_header_write(char *tde_filename, int fd, TDEPrincipalKeyInfo *principal_key_info, off_t *bytes_written);
-static void pg_tde_write_map_entry(const RelFileLocator *rlocator, InternalKey *enc_rel_key_data, char *db_map_path, TDEPrincipalKeyInfo *principal_key_info);
 static off_t pg_tde_write_one_map_entry(int fd, const RelFileLocator *rlocator, InternalKey *enc_rel_key_data, off_t *offset, const char *db_map_path);
 static bool pg_tde_delete_map_entry(const RelFileLocator *rlocator, uint32 key_type, char *db_map_path, off_t offset);
 static int	keyrotation_init_file(TDEPrincipalKeyInfo *new_principal_key_info, char *rotated_filename, char *filename, off_t *curr_pos);
@@ -364,61 +363,6 @@ pg_tde_file_header_write(char *tde_filename, int fd, TDEPrincipalKeyInfo *princi
 }
 
 /*
- * Key Map Table [pg_tde.map]:
- * 		header: {Format Version, Principal Key Name}
- * 		data: {OID, Flag, index of key in pg_tde.dat}...
- *
- * Returns the index of the key to be written in the key data file.
- * The caller must hold an exclusive lock on the map file to avoid
- * concurrent in place updates leading to data conflicts.
- */
-static void
-pg_tde_write_map_entry(const RelFileLocator *rlocator, InternalKey *enc_rel_key_data, char *db_map_path, TDEPrincipalKeyInfo *principal_key_info)
-{
-	int			map_fd = -1;
-	off_t		curr_pos = 0;
-	off_t		prev_pos = 0;
-
-	/* Open and validate file for basic correctness. */
-	map_fd = pg_tde_open_file(db_map_path, principal_key_info, O_RDWR | O_CREAT, &curr_pos);
-	prev_pos = curr_pos;
-
-	/*
-	 * Read until we find an empty slot. Otherwise, read until end. This seems
-	 * to be less frequent than vacuum. So let's keep this function here
-	 * rather than overloading the vacuum process.
-	 */
-	while (1)
-	{
-		TDEMapEntry map_entry;
-		bool		found;
-
-		prev_pos = curr_pos;
-		found = pg_tde_read_one_map_entry(map_fd, NULL, MAP_ENTRY_EMPTY, &map_entry, &curr_pos);
-
-		/*
-		 * We either reach EOF or found an empty slot in the middle of the
-		 * file
-		 */
-		if (prev_pos == curr_pos || found)
-			break;
-	}
-
-	/*
-	 * Write the given entry at the location pointed by prev_pos; i.e. the
-	 * free entry
-	 */
-	curr_pos = prev_pos;
-	pg_tde_write_one_map_entry(map_fd, rlocator, enc_rel_key_data, &prev_pos, db_map_path);
-
-	/* Let's close the file. */
-	close(map_fd);
-
-	/* Register the entry to be freed in case the transaction aborts */
-	RegisterEntryForDeletion(rlocator, curr_pos, false);
-}
-
-/*
  * Based on the given arguments, creates and write the entry into the key
  * map file.
  */
@@ -460,20 +404,63 @@ pg_tde_write_one_map_entry(int fd, const RelFileLocator *rlocator, InternalKey *
  * The keydata function will then write the encrypted key on the desired
  * location.
  *
- * The caller must hold an exclusive lock tde_lwlock_enc_keys.
+ * Key Map Table [pg_tde.map]:
+ * 		header: {Format Version, Principal Key Name}
+ * 		data: {OID, Flag, index of key in pg_tde.dat}...
+ *
+ * The caller must hold an exclusive lock on the map file to avoid
+ * concurrent in place updates leading to data conflicts.
  */
 void
 pg_tde_write_key_map_entry(const RelFileLocator *rlocator, InternalKey *enc_rel_key_data, TDEPrincipalKeyInfo *principal_key_info)
 {
 	char		db_map_path[MAXPGPATH] = {0};
+	int			map_fd = -1;
+	off_t		curr_pos = 0;
+	off_t		prev_pos = 0;
 
 	Assert(rlocator);
 
 	/* Set the file paths */
 	pg_tde_set_db_file_path(rlocator->dbOid, db_map_path);
 
-	/* Create the map entry and add the encrypted key to the data file */
-	pg_tde_write_map_entry(rlocator, enc_rel_key_data, db_map_path, principal_key_info);
+	/* Open and validate file for basic correctness. */
+	map_fd = pg_tde_open_file(db_map_path, principal_key_info, O_RDWR | O_CREAT, &curr_pos);
+	prev_pos = curr_pos;
+
+	/*
+	 * Read until we find an empty slot. Otherwise, read until end. This seems
+	 * to be less frequent than vacuum. So let's keep this function here
+	 * rather than overloading the vacuum process.
+	 */
+	while (1)
+	{
+		TDEMapEntry map_entry;
+		bool		found;
+
+		prev_pos = curr_pos;
+		found = pg_tde_read_one_map_entry(map_fd, NULL, MAP_ENTRY_EMPTY, &map_entry, &curr_pos);
+
+		/*
+		 * We either reach EOF or found an empty slot in the middle of the
+		 * file
+		 */
+		if (prev_pos == curr_pos || found)
+			break;
+	}
+
+	/*
+	 * Write the given entry at the location pointed by prev_pos; i.e. the
+	 * free entry
+	 */
+	curr_pos = prev_pos;
+	pg_tde_write_one_map_entry(map_fd, rlocator, enc_rel_key_data, &prev_pos, db_map_path);
+
+	/* Let's close the file. */
+	close(map_fd);
+
+	/* Register the entry to be freed in case the transaction aborts */
+	RegisterEntryForDeletion(rlocator, curr_pos, false);
 }
 
 static bool
