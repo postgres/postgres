@@ -553,16 +553,20 @@ fi])# PGAC_HAVE_GCC__ATOMIC_INT64_CAS
 # the other ones are, on x86-64 platforms)
 #
 # If the intrinsics are supported, sets pgac_sse42_crc32_intrinsics.
+#
+# To detect the case where the compiler knows the function but library support
+# is missing, we must link not just compile, and store the results in global
+# variables so the compiler doesn't optimize away the call.
 AC_DEFUN([PGAC_SSE42_CRC32_INTRINSICS],
 [define([Ac_cachevar], [AS_TR_SH([pgac_cv_sse42_crc32_intrinsics])])dnl
 AC_CACHE_CHECK([for _mm_crc32_u8 and _mm_crc32_u32], [Ac_cachevar],
 [AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <nmmintrin.h>
+    unsigned int crc;
     #if defined(__has_attribute) && __has_attribute (target)
     __attribute__((target("sse4.2")))
     #endif
     static int crc32_sse42_test(void)
     {
-      unsigned int crc = 0;
       crc = _mm_crc32_u8(crc, 0);
       crc = _mm_crc32_u32(crc, 0);
       /* return computed value, to prevent the above being optimized away */
@@ -593,9 +597,9 @@ AC_DEFUN([PGAC_ARMV8_CRC32C_INTRINSICS],
 AC_CACHE_CHECK([for __crc32cb, __crc32ch, __crc32cw, and __crc32cd with CFLAGS=$1], [Ac_cachevar],
 [pgac_save_CFLAGS=$CFLAGS
 CFLAGS="$pgac_save_CFLAGS $1"
-AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <arm_acle.h>],
-  [unsigned int crc = 0;
-   crc = __crc32cb(crc, 0);
+AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <arm_acle.h>
+unsigned int crc;],
+  [crc = __crc32cb(crc, 0);
    crc = __crc32ch(crc, 0);
    crc = __crc32cw(crc, 0);
    crc = __crc32cd(crc, 0);
@@ -628,9 +632,8 @@ AC_DEFUN([PGAC_LOONGARCH_CRC32C_INTRINSICS],
 AC_CACHE_CHECK(
   [for __builtin_loongarch_crcc_w_b_w, __builtin_loongarch_crcc_w_h_w, __builtin_loongarch_crcc_w_w_w and __builtin_loongarch_crcc_w_d_w],
   [Ac_cachevar],
-[AC_LINK_IFELSE([AC_LANG_PROGRAM([],
-  [unsigned int crc = 0;
-   crc = __builtin_loongarch_crcc_w_b_w(0, crc);
+[AC_LINK_IFELSE([AC_LANG_PROGRAM([unsigned int crc;],
+  [crc = __builtin_loongarch_crcc_w_b_w(0, crc);
    crc = __builtin_loongarch_crcc_w_h_w(0, crc);
    crc = __builtin_loongarch_crcc_w_w_w(0, crc);
    crc = __builtin_loongarch_crcc_w_d_w(0, crc);
@@ -680,22 +683,23 @@ undefine([Ac_cachevar])dnl
 AC_DEFUN([PGAC_AVX512_POPCNT_INTRINSICS],
 [define([Ac_cachevar], [AS_TR_SH([pgac_cv_avx512_popcnt_intrinsics])])dnl
 AC_CACHE_CHECK([for _mm512_popcnt_epi64], [Ac_cachevar],
-[AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <immintrin.h>
+[AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <immintrin.h>
     #include <stdint.h>
+    char buf[sizeof(__m512i)];
+
     #if defined(__has_attribute) && __has_attribute (target)
     __attribute__((target("avx512vpopcntdq,avx512bw")))
     #endif
     static int popcount_test(void)
     {
-      const char buf@<:@sizeof(__m512i)@:>@;
       int64_t popcnt = 0;
       __m512i accum = _mm512_setzero_si512();
-      const __m512i val = _mm512_maskz_loadu_epi8((__mmask64) 0xf0f0f0f0f0f0f0f0, (const __m512i *) buf);
-      const __m512i cnt = _mm512_popcnt_epi64(val);
+      __m512i val = _mm512_maskz_loadu_epi8((__mmask64) 0xf0f0f0f0f0f0f0f0, (const __m512i *) buf);
+      __m512i cnt = _mm512_popcnt_epi64(val);
       accum = _mm512_add_epi64(accum, cnt);
       popcnt = _mm512_reduce_add_epi64(accum);
       return (int) popcnt;
-    }],
+    }]],
   [return popcount_test();])],
   [Ac_cachevar=yes],
   [Ac_cachevar=no])])
