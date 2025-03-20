@@ -1436,19 +1436,6 @@ WaitReadBuffers(ReadBuffersOperation *operation)
 		io_object = IOOBJECT_RELATION;
 	}
 
-	/*
-	 * We count all these blocks as read by this backend.  This is traditional
-	 * behavior, but might turn out to be not true if we find that someone
-	 * else has beaten us and completed the read of some of these blocks.  In
-	 * that case the system globally double-counts, but we traditionally don't
-	 * count this as a "hit", and we don't have a separate counter for "miss,
-	 * but another backend completed the read".
-	 */
-	if (persistence == RELPERSISTENCE_TEMP)
-		pgBufferUsage.local_blks_read += nblocks;
-	else
-		pgBufferUsage.shared_blks_read += nblocks;
-
 	for (int i = 0; i < nblocks; ++i)
 	{
 		int			io_buffers_len;
@@ -1466,8 +1453,9 @@ WaitReadBuffers(ReadBuffersOperation *operation)
 		if (!WaitReadBuffersCanStartIO(buffers[i], false))
 		{
 			/*
-			 * Report this as a 'hit' for this backend, even though it must
-			 * have started out as a miss in PinBufferForBlock().
+			 * Report and track this as a 'hit' for this backend, even though
+			 * it must have started out as a miss in PinBufferForBlock(). The
+			 * other backend will track this as a 'read'.
 			 */
 			TRACE_POSTGRESQL_BUFFER_READ_DONE(forknum, blocknum + i,
 											  operation->smgr->smgr_rlocator.locator.spcOid,
@@ -1475,6 +1463,20 @@ WaitReadBuffers(ReadBuffersOperation *operation)
 											  operation->smgr->smgr_rlocator.locator.relNumber,
 											  operation->smgr->smgr_rlocator.backend,
 											  true);
+
+			if (persistence == RELPERSISTENCE_TEMP)
+				pgBufferUsage.local_blks_hit += 1;
+			else
+				pgBufferUsage.shared_blks_hit += 1;
+
+			if (operation->rel)
+				pgstat_count_buffer_hit(operation->rel);
+
+			pgstat_count_io_op(io_object, io_context, IOOP_HIT, 1, 0);
+
+			if (VacuumCostActive)
+				VacuumCostBalance += VacuumCostPageHit;
+
 			continue;
 		}
 
@@ -1559,6 +1561,11 @@ WaitReadBuffers(ReadBuffersOperation *operation)
 											  operation->smgr->smgr_rlocator.backend,
 											  false);
 		}
+
+		if (persistence == RELPERSISTENCE_TEMP)
+			pgBufferUsage.local_blks_read += io_buffers_len;
+		else
+			pgBufferUsage.shared_blks_read += io_buffers_len;
 
 		if (VacuumCostActive)
 			VacuumCostBalance += VacuumCostPageMiss * io_buffers_len;
