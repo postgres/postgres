@@ -40,6 +40,18 @@
  * themselves, as there could pointers to them in active use.  See
  * smgrrelease() and smgrreleaseall().
  *
+ * NB: We need to hold interrupts across most of the functions in this file,
+ * as otherwise interrupt processing, e.g. due to a < ERROR elog/ereport, can
+ * trigger procsignal processing, which in turn can trigger
+ * smgrreleaseall(). Most of the relevant code is not reentrant.  It seems
+ * better to put the HOLD_INTERRUPTS()/RESUME_INTERRUPTS() here, instead of
+ * trying to push them down to md.c where possible: For one, every smgr
+ * implementation would be vulnerable, for another, a good bit of smgr.c code
+ * itself is affected too.  Eventually we might want a more targeted solution,
+ * allowing e.g. a networked smgr implementation to be interrupted, but many
+ * other, more complicated, problems would need to be fixed for that to be
+ * viable (e.g. smgr.c is often called with interrupts already held).
+ *
  * Portions Copyright (c) 1996-2025, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
@@ -53,6 +65,7 @@
 
 #include "access/xlogutils.h"
 #include "lib/ilist.h"
+#include "miscadmin.h"
 #include "storage/bufmgr.h"
 #include "storage/ipc.h"
 #include "storage/md.h"
@@ -158,11 +171,15 @@ smgrinit(void)
 {
 	int			i;
 
+	HOLD_INTERRUPTS();
+
 	for (i = 0; i < NSmgr; i++)
 	{
 		if (smgrsw[i].smgr_init)
 			smgrsw[i].smgr_init();
 	}
+
+	RESUME_INTERRUPTS();
 
 	/* register the shutdown proc */
 	on_proc_exit(smgrshutdown, 0);
@@ -176,11 +193,15 @@ smgrshutdown(int code, Datum arg)
 {
 	int			i;
 
+	HOLD_INTERRUPTS();
+
 	for (i = 0; i < NSmgr; i++)
 	{
 		if (smgrsw[i].smgr_shutdown)
 			smgrsw[i].smgr_shutdown();
 	}
+
+	RESUME_INTERRUPTS();
 }
 
 /*
@@ -205,6 +226,8 @@ smgropen(RelFileLocator rlocator, ProcNumber backend)
 	bool		found;
 
 	Assert(RelFileNumberIsValid(rlocator.relNumber));
+
+	HOLD_INTERRUPTS();
 
 	if (SMgrRelationHash == NULL)
 	{
@@ -241,6 +264,8 @@ smgropen(RelFileLocator rlocator, ProcNumber backend)
 		/* implementation-specific initialization */
 		smgrsw[reln->smgr_which].smgr_open(reln);
 	}
+
+	RESUME_INTERRUPTS();
 
 	return reln;
 }
@@ -283,6 +308,8 @@ smgrdestroy(SMgrRelation reln)
 
 	Assert(reln->pincount == 0);
 
+	HOLD_INTERRUPTS();
+
 	for (forknum = 0; forknum <= MAX_FORKNUM; forknum++)
 		smgrsw[reln->smgr_which].smgr_close(reln, forknum);
 
@@ -292,6 +319,8 @@ smgrdestroy(SMgrRelation reln)
 					&(reln->smgr_rlocator),
 					HASH_REMOVE, NULL) == NULL)
 		elog(ERROR, "SMgrRelation hashtable corrupted");
+
+	RESUME_INTERRUPTS();
 }
 
 /*
@@ -302,12 +331,16 @@ smgrdestroy(SMgrRelation reln)
 void
 smgrrelease(SMgrRelation reln)
 {
+	HOLD_INTERRUPTS();
+
 	for (ForkNumber forknum = 0; forknum <= MAX_FORKNUM; forknum++)
 	{
 		smgrsw[reln->smgr_which].smgr_close(reln, forknum);
 		reln->smgr_cached_nblocks[forknum] = InvalidBlockNumber;
 	}
 	reln->smgr_targblock = InvalidBlockNumber;
+
+	RESUME_INTERRUPTS();
 }
 
 /*
@@ -336,6 +369,9 @@ smgrdestroyall(void)
 {
 	dlist_mutable_iter iter;
 
+	/* seems unsafe to accept interrupts while in a dlist_foreach_modify() */
+	HOLD_INTERRUPTS();
+
 	/*
 	 * Zap all unpinned SMgrRelations.  We rely on smgrdestroy() to remove
 	 * each one from the list.
@@ -347,6 +383,8 @@ smgrdestroyall(void)
 
 		smgrdestroy(rel);
 	}
+
+	RESUME_INTERRUPTS();
 }
 
 /*
@@ -362,12 +400,17 @@ smgrreleaseall(void)
 	if (SMgrRelationHash == NULL)
 		return;
 
+	/* seems unsafe to accept interrupts while iterating */
+	HOLD_INTERRUPTS();
+
 	hash_seq_init(&status, SMgrRelationHash);
 
 	while ((reln = (SMgrRelation) hash_seq_search(&status)) != NULL)
 	{
 		smgrrelease(reln);
 	}
+
+	RESUME_INTERRUPTS();
 }
 
 /*
@@ -400,7 +443,13 @@ smgrreleaserellocator(RelFileLocatorBackend rlocator)
 bool
 smgrexists(SMgrRelation reln, ForkNumber forknum)
 {
-	return smgrsw[reln->smgr_which].smgr_exists(reln, forknum);
+	bool		ret;
+
+	HOLD_INTERRUPTS();
+	ret = smgrsw[reln->smgr_which].smgr_exists(reln, forknum);
+	RESUME_INTERRUPTS();
+
+	return ret;
 }
 
 /*
@@ -413,7 +462,9 @@ smgrexists(SMgrRelation reln, ForkNumber forknum)
 void
 smgrcreate(SMgrRelation reln, ForkNumber forknum, bool isRedo)
 {
+	HOLD_INTERRUPTS();
 	smgrsw[reln->smgr_which].smgr_create(reln, forknum, isRedo);
+	RESUME_INTERRUPTS();
 }
 
 /*
@@ -436,6 +487,8 @@ smgrdosyncall(SMgrRelation *rels, int nrels)
 
 	FlushRelationsAllBuffers(rels, nrels);
 
+	HOLD_INTERRUPTS();
+
 	/*
 	 * Sync the physical file(s).
 	 */
@@ -449,6 +502,8 @@ smgrdosyncall(SMgrRelation *rels, int nrels)
 				smgrsw[which].smgr_immedsync(rels[i], forknum);
 		}
 	}
+
+	RESUME_INTERRUPTS();
 }
 
 /*
@@ -470,6 +525,13 @@ smgrdounlinkall(SMgrRelation *rels, int nrels, bool isRedo)
 
 	if (nrels == 0)
 		return;
+
+	/*
+	 * It would be unsafe to process interrupts between DropRelationBuffers()
+	 * and unlinking the underlying files. This probably should be a critical
+	 * section, but we're not there yet.
+	 */
+	HOLD_INTERRUPTS();
 
 	/*
 	 * Get rid of any remaining buffers for the relations.  bufmgr will just
@@ -522,6 +584,8 @@ smgrdounlinkall(SMgrRelation *rels, int nrels, bool isRedo)
 	}
 
 	pfree(rlocators);
+
+	RESUME_INTERRUPTS();
 }
 
 
@@ -538,6 +602,8 @@ void
 smgrextend(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 		   const void *buffer, bool skipFsync)
 {
+	HOLD_INTERRUPTS();
+
 	smgrsw[reln->smgr_which].smgr_extend(reln, forknum, blocknum,
 										 buffer, skipFsync);
 
@@ -550,6 +616,8 @@ smgrextend(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 		reln->smgr_cached_nblocks[forknum] = blocknum + 1;
 	else
 		reln->smgr_cached_nblocks[forknum] = InvalidBlockNumber;
+
+	RESUME_INTERRUPTS();
 }
 
 /*
@@ -563,6 +631,8 @@ void
 smgrzeroextend(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 			   int nblocks, bool skipFsync)
 {
+	HOLD_INTERRUPTS();
+
 	smgrsw[reln->smgr_which].smgr_zeroextend(reln, forknum, blocknum,
 											 nblocks, skipFsync);
 
@@ -575,6 +645,8 @@ smgrzeroextend(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 		reln->smgr_cached_nblocks[forknum] = blocknum + nblocks;
 	else
 		reln->smgr_cached_nblocks[forknum] = InvalidBlockNumber;
+
+	RESUME_INTERRUPTS();
 }
 
 /*
@@ -588,7 +660,13 @@ bool
 smgrprefetch(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 			 int nblocks)
 {
-	return smgrsw[reln->smgr_which].smgr_prefetch(reln, forknum, blocknum, nblocks);
+	bool		ret;
+
+	HOLD_INTERRUPTS();
+	ret = smgrsw[reln->smgr_which].smgr_prefetch(reln, forknum, blocknum, nblocks);
+	RESUME_INTERRUPTS();
+
+	return ret;
 }
 
 /*
@@ -601,7 +679,13 @@ uint32
 smgrmaxcombine(SMgrRelation reln, ForkNumber forknum,
 			   BlockNumber blocknum)
 {
-	return smgrsw[reln->smgr_which].smgr_maxcombine(reln, forknum, blocknum);
+	uint32		ret;
+
+	HOLD_INTERRUPTS();
+	ret = smgrsw[reln->smgr_which].smgr_maxcombine(reln, forknum, blocknum);
+	RESUME_INTERRUPTS();
+
+	return ret;
 }
 
 /*
@@ -619,8 +703,10 @@ void
 smgrreadv(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 		  void **buffers, BlockNumber nblocks)
 {
+	HOLD_INTERRUPTS();
 	smgrsw[reln->smgr_which].smgr_readv(reln, forknum, blocknum, buffers,
 										nblocks);
+	RESUME_INTERRUPTS();
 }
 
 /*
@@ -653,8 +739,10 @@ void
 smgrwritev(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 		   const void **buffers, BlockNumber nblocks, bool skipFsync)
 {
+	HOLD_INTERRUPTS();
 	smgrsw[reln->smgr_which].smgr_writev(reln, forknum, blocknum,
 										 buffers, nblocks, skipFsync);
+	RESUME_INTERRUPTS();
 }
 
 /*
@@ -665,8 +753,10 @@ void
 smgrwriteback(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 			  BlockNumber nblocks)
 {
+	HOLD_INTERRUPTS();
 	smgrsw[reln->smgr_which].smgr_writeback(reln, forknum, blocknum,
 											nblocks);
+	RESUME_INTERRUPTS();
 }
 
 /*
@@ -683,9 +773,13 @@ smgrnblocks(SMgrRelation reln, ForkNumber forknum)
 	if (result != InvalidBlockNumber)
 		return result;
 
+	HOLD_INTERRUPTS();
+
 	result = smgrsw[reln->smgr_which].smgr_nblocks(reln, forknum);
 
 	reln->smgr_cached_nblocks[forknum] = result;
+
+	RESUME_INTERRUPTS();
 
 	return result;
 }
@@ -784,7 +878,9 @@ smgrtruncate(SMgrRelation reln, ForkNumber *forknum, int nforks,
 void
 smgrregistersync(SMgrRelation reln, ForkNumber forknum)
 {
+	HOLD_INTERRUPTS();
 	smgrsw[reln->smgr_which].smgr_registersync(reln, forknum);
+	RESUME_INTERRUPTS();
 }
 
 /*
@@ -816,7 +912,9 @@ smgrregistersync(SMgrRelation reln, ForkNumber forknum)
 void
 smgrimmedsync(SMgrRelation reln, ForkNumber forknum)
 {
+	HOLD_INTERRUPTS();
 	smgrsw[reln->smgr_which].smgr_immedsync(reln, forknum);
+	RESUME_INTERRUPTS();
 }
 
 /*
