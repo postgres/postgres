@@ -78,6 +78,11 @@ typedef struct ExplainState
 
 typedef void (*ExplainOptionHandler) (ExplainState *, DefElem *, ParseState *);
 
+/* Hook to perform additional EXPLAIN options validation */
+typedef void (*explain_validate_options_hook_type) (struct ExplainState *es, List *options,
+													ParseState *pstate);
+extern PGDLLIMPORT explain_validate_options_hook_type explain_validate_options_hook;
+
 extern ExplainState *NewExplainState(void);
 extern void ParseExplainOptionList(ExplainState *es, List *options,
 								   ParseState *pstate);

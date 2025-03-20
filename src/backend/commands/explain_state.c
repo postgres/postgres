@@ -37,6 +37,9 @@
 #include "commands/explain.h"
 #include "commands/explain_state.h"
 
+/* Hook to perform additional EXPLAIN options validation */
+explain_validate_options_hook_type explain_validate_options_hook = NULL;
+
 typedef struct
 {
 	const char *option_name;
@@ -196,6 +199,10 @@ ParseExplainOptionList(ExplainState *es, List *options, ParseState *pstate)
 
 	/* if the summary was not set explicitly, set default value */
 	es->summary = (summary_set) ? es->summary : es->analyze;
+
+	/* plugin specific option validation */
+	if (explain_validate_options_hook)
+		(*explain_validate_options_hook) (es, options, pstate);
 }
 
 /*
