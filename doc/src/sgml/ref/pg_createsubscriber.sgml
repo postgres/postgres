@@ -147,6 +147,29 @@ PostgreSQL documentation
     </varlistentry>
 
     <varlistentry>
+     <term><option>-R</option></term>
+     <term><option>--remove</option></term>
+     <listitem>
+      <para>
+       Remove all objects of the specified type from specified databases on the
+       target server.
+      </para>
+      <para>
+       publications: The "all tables" publications established for this
+       subscriber are always removed; specifying this object type causes all
+       other publications replicated from the source server to be dropped as
+       well.
+      </para>
+      <para>
+       The objects selected to be dropped are individually logged and do show
+       up in a --dry-run.  There is no opportunity to affect or stop the
+       dropping of the selected objects so consider taking a backup of them
+       using pg_dump.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
      <term><option>-s <replaceable class="parameter">dir</replaceable></option></term>
      <term><option>--socketdir=<replaceable class="parameter">dir</replaceable></option></term>
      <listitem>

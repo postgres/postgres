@@ -329,6 +329,21 @@ $node_p->safe_psql($db1,
 	"CREATE SUBSCRIPTION $dummy_sub CONNECTION 'dbname=dummy' PUBLICATION pub_dummy WITH (connect=false)"
 );
 $node_p->wait_for_replay_catchup($node_s);
+
+# Create user-defined publications, wait for streaming replication to sync them
+# to the standby, then verify that '--remove'
+# removes them.
+$node_p->safe_psql(
+	$db1, qq(
+	CREATE PUBLICATION test_pub1 FOR ALL TABLES;
+	CREATE PUBLICATION test_pub2 FOR ALL TABLES;
+));
+
+$node_p->wait_for_replay_catchup($node_s);
+
+ok($node_s->safe_psql($db1, "SELECT COUNT(*) = 2 FROM pg_publication"),
+	'two pre-existing publications on subscriber');
+
 $node_s->stop;
 
 # dry run mode on node S
@@ -373,7 +388,8 @@ command_ok(
 
 # Run pg_createsubscriber on node S.  --verbose is used twice
 # to show more information.
-# In passing, also test the --enable-two-phase option
+# In passing, also test the --enable-two-phase option and
+# --remove option
 command_ok(
 	[
 		'pg_createsubscriber',
@@ -389,7 +405,8 @@ command_ok(
 		'--replication-slot' => 'replslot2',
 		'--database' => $db1,
 		'--database' => $db2,
-		'--enable-two-phase'
+		'--enable-two-phase',
+		'--remove' => 'publications',
 	],
 	'run pg_createsubscriber on node S');
 
@@ -407,6 +424,10 @@ $node_p->safe_psql($db2, "INSERT INTO tbl2 VALUES('row 1')");
 
 # Start subscriber
 $node_s->start;
+
+# Confirm publications are removed from the subscriber node
+is($node_s->safe_psql($db1, "SELECT COUNT(*) FROM pg_publication;"),
+	'0', 'all publications on subscriber have been removed');
 
 # Verify that all subtwophase states are pending or enabled,
 # e.g. there are no subscriptions where subtwophase is disabled ('d')
