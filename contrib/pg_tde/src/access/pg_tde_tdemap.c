@@ -59,7 +59,7 @@
 #define PG_TDE_FILEMAGIC			0x02454454	/* version ID value = TDE 02 */
 
 
-#define MAP_ENTRY_DAT_SIZE		(offsetof(TDEMapEntry, enc_key) + offsetof(InternalKey, ctx))
+#define MAP_ENTRY_SIZE			sizeof(TDEMapEntry)
 #define TDE_FILE_HEADER_SIZE	sizeof(TDEFileHeader)
 
 #define MaxXLogRecPtr (~(XLogRecPtr)0)
@@ -216,7 +216,6 @@ pg_tde_generate_internal_key(InternalKey *int_key, uint32 entry_type)
 {
 	int_key->rel_type = entry_type;
 	int_key->start_lsn = InvalidXLogRecPtr;
-	int_key->ctx = NULL;
 
 	if (!RAND_bytes(int_key->key, INTERNAL_KEY_LEN))
 		ereport(ERROR,
@@ -436,10 +435,10 @@ pg_tde_write_one_map_entry(int fd, const RelFileLocator *rlocator, InternalKey *
 	map_entry.enc_key = *enc_rel_key_data;
 
 	/* TODO: pgstat_report_wait_start / pgstat_report_wait_end */
-	bytes_written = pg_pwrite(fd, &map_entry, MAP_ENTRY_DAT_SIZE, *offset);
+	bytes_written = pg_pwrite(fd, &map_entry, MAP_ENTRY_SIZE, *offset);
 
 	/* Add the entry to the file */
-	if (bytes_written != MAP_ENTRY_DAT_SIZE)
+	if (bytes_written != MAP_ENTRY_SIZE)
 	{
 		ereport(ERROR,
 				(errcode_for_file_access(),
@@ -778,8 +777,8 @@ pg_tde_wal_last_key_set_lsn(XLogRecPtr lsn, const char *keyfile_path)
 						keyfile_path)));
 	}
 
-	last_key_idx = ((lseek(fd, 0, SEEK_END) - TDE_FILE_HEADER_SIZE) / MAP_ENTRY_DAT_SIZE) - 1;
-	write_pos = TDE_FILE_HEADER_SIZE + (last_key_idx * MAP_ENTRY_DAT_SIZE) + offsetof(TDEMapEntry, enc_key) + offsetof(InternalKey, start_lsn);
+	last_key_idx = ((lseek(fd, 0, SEEK_END) - TDE_FILE_HEADER_SIZE) / MAP_ENTRY_SIZE) - 1;
+	write_pos = TDE_FILE_HEADER_SIZE + (last_key_idx * MAP_ENTRY_SIZE) + offsetof(TDEMapEntry, enc_key) + offsetof(InternalKey, start_lsn);
 
 	/* TODO: pgstat_report_wait_start / pgstat_report_wait_end */
 	if (pg_pwrite(fd, &lsn, sizeof(XLogRecPtr), write_pos) != sizeof(XLogRecPtr))
@@ -797,10 +796,10 @@ pg_tde_wal_last_key_set_lsn(XLogRecPtr lsn, const char *keyfile_path)
 	 */
 	if (last_key_idx > 0)
 	{
-		off_t		prev_key_pos = TDE_FILE_HEADER_SIZE + ((last_key_idx - 1) * MAP_ENTRY_DAT_SIZE);
+		off_t		prev_key_pos = TDE_FILE_HEADER_SIZE + ((last_key_idx - 1) * MAP_ENTRY_SIZE);
 		TDEMapEntry prev_map_entry;
 
-		if (pg_pread(fd, &prev_map_entry, MAP_ENTRY_DAT_SIZE, prev_key_pos) != MAP_ENTRY_DAT_SIZE)
+		if (pg_pread(fd, &prev_map_entry, MAP_ENTRY_SIZE, prev_key_pos) != MAP_ENTRY_SIZE)
 		{
 			ereport(ERROR,
 					(errcode_for_file_access(),
@@ -811,7 +810,7 @@ pg_tde_wal_last_key_set_lsn(XLogRecPtr lsn, const char *keyfile_path)
 		{
 			WALKeySetInvalid(&prev_map_entry.enc_key);
 
-			if (pg_pwrite(fd, &prev_map_entry, MAP_ENTRY_DAT_SIZE, prev_key_pos) != MAP_ENTRY_DAT_SIZE)
+			if (pg_pwrite(fd, &prev_map_entry, MAP_ENTRY_SIZE, prev_key_pos) != MAP_ENTRY_SIZE)
 			{
 				ereport(ERROR,
 						(errcode_for_file_access(),
@@ -1066,10 +1065,10 @@ pg_tde_read_one_map_entry(File map_file, const RelFileLocator *rlocator, int fla
 
 	/* Read the entry at the given offset */
 	/* TODO: pgstat_report_wait_start / pgstat_report_wait_end */
-	bytes_read = pg_pread(map_file, map_entry, MAP_ENTRY_DAT_SIZE, *offset);
+	bytes_read = pg_pread(map_file, map_entry, MAP_ENTRY_SIZE, *offset);
 
 	/* We've reached the end of the file. */
-	if (bytes_read != MAP_ENTRY_DAT_SIZE)
+	if (bytes_read != MAP_ENTRY_SIZE)
 		return false;
 
 	*offset += bytes_read;
@@ -1094,10 +1093,10 @@ pg_tde_read_one_map_entry2(int fd, int32 key_index, TDEPrincipalKey *principal_k
 	off_t		read_pos = 0;
 
 	/* Calculate the reading position in the file. */
-	read_pos += (key_index * MAP_ENTRY_DAT_SIZE) + TDE_FILE_HEADER_SIZE;
+	read_pos += (key_index * MAP_ENTRY_SIZE) + TDE_FILE_HEADER_SIZE;
 
 	/* Check if the file has a valid key */
-	if ((read_pos + MAP_ENTRY_DAT_SIZE) > lseek(fd, 0, SEEK_END))
+	if ((read_pos + MAP_ENTRY_SIZE) > lseek(fd, 0, SEEK_END))
 	{
 		char		db_map_path[MAXPGPATH] = {0};
 
@@ -1113,7 +1112,7 @@ pg_tde_read_one_map_entry2(int fd, int32 key_index, TDEPrincipalKey *principal_k
 
 	/* Read the encrypted key */
 	/* TODO: pgstat_report_wait_start / pgstat_report_wait_end */
-	if (pg_pread(fd, map_entry, MAP_ENTRY_DAT_SIZE, read_pos) != MAP_ENTRY_DAT_SIZE)
+	if (pg_pread(fd, map_entry, MAP_ENTRY_SIZE, read_pos) != MAP_ENTRY_SIZE)
 	{
 		char		db_map_path[MAXPGPATH] = {0};
 
@@ -1288,7 +1287,7 @@ pg_tde_read_last_wal_key(void)
 		return NULL;
 	}
 
-	file_idx = ((fsize - TDE_FILE_HEADER_SIZE) / MAP_ENTRY_DAT_SIZE) - 1;
+	file_idx = ((fsize - TDE_FILE_HEADER_SIZE) / MAP_ENTRY_SIZE) - 1;
 	map_entry = pg_tde_read_one_map_entry2(fd, file_idx, principal_key);
 	if (!map_entry)
 	{
@@ -1330,7 +1329,7 @@ pg_tde_fetch_wal_keys(XLogRecPtr start_lsn)
 
 	fd = pg_tde_open_file(db_map_path, &principal_key->keyInfo, O_RDONLY, &read_pos);
 
-	keys_count = (lseek(fd, 0, SEEK_END) - TDE_FILE_HEADER_SIZE) / MAP_ENTRY_DAT_SIZE;
+	keys_count = (lseek(fd, 0, SEEK_END) - TDE_FILE_HEADER_SIZE) / MAP_ENTRY_SIZE;
 
 	/*
 	 * If there is no keys, return a fake one (with the range 0-infinity) so
@@ -1399,6 +1398,7 @@ pg_tde_add_wal_key_to_cache(InternalKey *cached_key, XLogRecPtr start_lsn)
 	wal_rec->start_lsn = start_lsn;
 	wal_rec->end_lsn = MaxXLogRecPtr;
 	wal_rec->key = cached_key;
+	wal_rec->crypt_ctx = NULL;
 	if (!tde_wal_key_last_rec)
 	{
 		tde_wal_key_last_rec = wal_rec;

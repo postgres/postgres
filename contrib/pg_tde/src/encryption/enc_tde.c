@@ -37,7 +37,7 @@ iv_prefix_debug(const char *iv_prefix, char *out_hex)
  * This function assumes that everything is in a single block, and has an assertion ensuring this
  */
 static void
-pg_tde_crypt_simple(const char *iv_prefix, uint32 start_offset, const char *data, uint32 data_len, char *out, InternalKey *key, const char *context)
+pg_tde_crypt_simple(const char *iv_prefix, uint32 start_offset, const char *data, uint32 data_len, char *out, InternalKey *key, void **ctxPtr, const char *context)
 {
 	const uint64 aes_start_block = start_offset / AES_BLOCK_SIZE;
 	const uint64 aes_end_block = (start_offset + data_len + (AES_BLOCK_SIZE - 1)) / AES_BLOCK_SIZE;
@@ -46,7 +46,7 @@ pg_tde_crypt_simple(const char *iv_prefix, uint32 start_offset, const char *data
 
 	Assert(aes_end_block - aes_start_block <= NUM_AES_BLOCKS_IN_BATCH + 1);
 
-	Aes128EncryptedZeroBlocks(&key->ctx, key->key, iv_prefix, aes_start_block, aes_end_block, enc_key);
+	Aes128EncryptedZeroBlocks(ctxPtr, key->key, iv_prefix, aes_start_block, aes_end_block, enc_key);
 
 #ifdef ENCRYPTION_DEBUG
 	{
@@ -73,7 +73,7 @@ pg_tde_crypt_simple(const char *iv_prefix, uint32 start_offset, const char *data
  * This is a generic function intended for large data, that do not fit into a single block
  */
 static void
-pg_tde_crypt_complex(const char *iv_prefix, uint32 start_offset, const char *data, uint32 data_len, char *out, InternalKey *key, const char *context)
+pg_tde_crypt_complex(const char *iv_prefix, uint32 start_offset, const char *data, uint32 data_len, char *out, InternalKey *key, void **ctxPtr, const char *context)
 {
 	const uint64 aes_start_block = start_offset / AES_BLOCK_SIZE;
 	const uint64 aes_end_block = (start_offset + data_len + (AES_BLOCK_SIZE - 1)) / AES_BLOCK_SIZE;
@@ -88,7 +88,7 @@ pg_tde_crypt_complex(const char *iv_prefix, uint32 start_offset, const char *dat
 		uint32		current_batch_bytes;
 		uint64		batch_end_block = Min(batch_start_block + NUM_AES_BLOCKS_IN_BATCH, aes_end_block);
 
-		Aes128EncryptedZeroBlocks(&key->ctx, key->key, iv_prefix, batch_start_block, batch_end_block, enc_key);
+		Aes128EncryptedZeroBlocks(ctxPtr, key->key, iv_prefix, batch_start_block, batch_end_block, enc_key);
 #ifdef ENCRYPTION_DEBUG
 		{
 			char		ivp_debug[33];
@@ -141,15 +141,15 @@ pg_tde_crypt_complex(const char *iv_prefix, uint32 start_offset, const char *dat
  * This function simply selects between the two above variations based on the data length
  */
 void
-pg_tde_crypt(const char *iv_prefix, uint32 start_offset, const char *data, uint32 data_len, char *out, InternalKey *key, const char *context)
+pg_tde_crypt(const char *iv_prefix, uint32 start_offset, const char *data, uint32 data_len, char *out, InternalKey *key, void **ctxPtr, const char *context)
 {
 	if (data_len >= DATA_BYTES_PER_AES_BATCH)
 	{
-		pg_tde_crypt_complex(iv_prefix, start_offset, data, data_len, out, key, context);
+		pg_tde_crypt_complex(iv_prefix, start_offset, data, data_len, out, key, ctxPtr, context);
 	}
 	else
 	{
-		pg_tde_crypt_simple(iv_prefix, start_offset, data, data_len, out, key, context);
+		pg_tde_crypt_simple(iv_prefix, start_offset, data, data_len, out, key, ctxPtr, context);
 	}
 }
 
@@ -200,7 +200,6 @@ AesDecryptKey(const TDEPrincipalKey *principal_key, Oid dbOid, InternalKey **p_r
 
 	/* Fill in the structure */
 	**p_rel_key_data = *enc_rel_key_data;
-	(*p_rel_key_data)->ctx = NULL;
 
 	AesDecrypt(principal_key->keyData, iv, (unsigned char *) enc_rel_key_data, INTERNAL_KEY_LEN, (unsigned char *) *p_rel_key_data, (int *) key_bytes);
 }

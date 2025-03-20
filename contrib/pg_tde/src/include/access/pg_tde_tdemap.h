@@ -31,8 +31,6 @@ typedef struct InternalKey
 	uint32		rel_type;
 
 	XLogRecPtr	start_lsn;
-
-	void	   *ctx;
 } InternalKey;
 
 #define WALKeySetInvalid(key) \
@@ -63,6 +61,7 @@ typedef struct WALKeyCacheRec
 	XLogRecPtr	end_lsn;
 
 	InternalKey *key;
+	void	   *crypt_ctx;
 
 	struct WALKeyCacheRec *next;
 } WALKeyCacheRec;

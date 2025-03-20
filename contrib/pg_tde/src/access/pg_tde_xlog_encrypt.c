@@ -75,8 +75,8 @@ static InternalKey EncryptionKey =
 {
 	.rel_type = MAP_ENTRY_EMPTY,
 	.start_lsn = InvalidXLogRecPtr,
-	.ctx = NULL,
 };
+static void *EncryptionCryptCtx = NULL;
 
 static int	XLOGChooseNumBuffers(void);
 
@@ -176,7 +176,7 @@ TDEXLogWriteEncryptedPages(int fd, const void *buf, size_t count, off_t offset,
 	SetXLogPageIVPrefix(tli, segno, iv_prefix);
 	PG_TDE_ENCRYPT_DATA(iv_prefix, offset,
 						(char *) buf, count,
-						enc_buff, key);
+						enc_buff, key, &EncryptionCryptCtx);
 
 	return pg_pwrite(fd, enc_buff, count, offset);
 }
@@ -195,8 +195,7 @@ TDEXLogSmgrInit(void)
 								  ((key->rel_type & TDE_KEY_TYPE_WAL_ENCRYPTED && !EncryptXLog) ||
 								   (key->rel_type & TDE_KEY_TYPE_WAL_UNENCRYPTED && EncryptXLog))))
 	{
-		pg_tde_create_wal_key(
-							  &EncryptionKey, &GLOBAL_SPACE_RLOCATOR(XLOG_TDE_OID),
+		pg_tde_create_wal_key(&EncryptionKey, &GLOBAL_SPACE_RLOCATOR(XLOG_TDE_OID),
 							  (EncryptXLog ? TDE_KEY_TYPE_WAL_ENCRYPTED : TDE_KEY_TYPE_WAL_UNENCRYPTED));
 	}
 	else if (key)
@@ -342,7 +341,7 @@ tdeheap_xlog_seg_read(int fd, void *buf, size_t count, off_t offset,
 				PG_TDE_DECRYPT_DATA(iv_prefix, dec_off,
 									(char *) buf + (offset - dec_off),
 									dec_sz, (char *) buf + (offset - dec_off),
-									curr_key->key);
+									curr_key->key, &curr_key->crypt_ctx);
 
 				if (dec_off + dec_sz == offset)
 				{
