@@ -89,6 +89,7 @@ our @EXPORT = qw(
   command_like
   command_like_safe
   command_fails_like
+  command_ok_or_fails_like
   command_checks_all
 
   $windows_os
@@ -1063,6 +1064,30 @@ sub command_fails_like
 	ok(!$result, "$test_name: exit code not 0");
 	like($stderr, $expected_stderr, "$test_name: matches");
 	return;
+}
+
+=pod
+
+=item command_ok_or_fails_like(cmd, expected_stdout, expected_stderr, test_name)
+
+Check that the command either succeeds or fails with an error that matches the
+given regular expressions.
+
+=cut
+
+sub command_ok_or_fails_like
+{
+	local $Test::Builder::Level = $Test::Builder::Level + 1;
+	my ($cmd, $expected_stdout, $expected_stderr, $test_name) = @_;
+	my ($stdout, $stderr);
+	print("# Running: " . join(" ", @{$cmd}) . "\n");
+	my $result = IPC::Run::run $cmd, '>' => \$stdout, '2>' => \$stderr;
+	if (!$result)
+	{
+		like($stdout, $expected_stdout, "$test_name: stdout matches");
+		like($stderr, $expected_stderr, "$test_name: stderr matches");
+	}
+	return $result;
 }
 
 =pod

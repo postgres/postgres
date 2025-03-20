@@ -2801,6 +2801,25 @@ sub command_fails_like
 
 =pod
 
+=item $node->command_ok_or_fails_like(...)
+
+PostgreSQL::Test::Utils::command_ok_or_fails_like with our connection parameters. See command_ok(...)
+
+=cut
+
+sub command_ok_or_fails_like
+{
+	local $Test::Builder::Level = $Test::Builder::Level + 1;
+
+	my $self = shift;
+
+	local %ENV = $self->_get_env();
+
+	return PostgreSQL::Test::Utils::command_ok_or_fails_like(@_);
+}
+
+=pod
+
 =item $node->command_checks_all(...)
 
 PostgreSQL::Test::Utils::command_checks_all with our connection parameters. See
