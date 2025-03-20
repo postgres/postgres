@@ -63,8 +63,10 @@ AesInit(void)
 
 /*  TODO: a few things could be optimized in this. It's good enough for a prototype. */
 static void
-AesRunCtr(EVP_CIPHER_CTX **ctxPtr, int enc, const unsigned char *key, const unsigned char *iv, const unsigned char *in, int in_len, unsigned char *out, int *out_len)
+AesRunCtr(EVP_CIPHER_CTX **ctxPtr, int enc, const unsigned char *key, const unsigned char *iv, const unsigned char *in, int in_len, unsigned char *out)
 {
+	int			out_len;
+
 	if (*ctxPtr == NULL)
 	{
 		*ctxPtr = EVP_CIPHER_CTX_new();
@@ -77,15 +79,18 @@ AesRunCtr(EVP_CIPHER_CTX **ctxPtr, int enc, const unsigned char *key, const unsi
 		EVP_CIPHER_CTX_set_padding(*ctxPtr, 0);
 	}
 
-	if (EVP_CipherUpdate(*ctxPtr, out, out_len, in, in_len) == 0)
+	if (EVP_CipherUpdate(*ctxPtr, out, &out_len, in, in_len) == 0)
 		ereport(ERROR,
 				(errmsg("EVP_CipherUpdate failed. OpenSSL error: %s", ERR_error_string(ERR_get_error(), NULL))));
+
+	Assert(out_len == in_len);
 }
 
 static void
-AesRunCbc(int enc, const unsigned char *key, const unsigned char *iv, const unsigned char *in, int in_len, unsigned char *out, int *out_len)
+AesRunCbc(int enc, const unsigned char *key, const unsigned char *iv, const unsigned char *in, int in_len, unsigned char *out)
 {
-	int			out_len_final = 0;
+	int			out_len;
+	int			out_len_final;
 	EVP_CIPHER_CTX *ctx = NULL;
 
 	Assert(in_len % EVP_CIPHER_block_size(cipher_cbc) == 0);
@@ -99,11 +104,11 @@ AesRunCbc(int enc, const unsigned char *key, const unsigned char *iv, const unsi
 
 	EVP_CIPHER_CTX_set_padding(ctx, 0);
 
-	if (EVP_CipherUpdate(ctx, out, out_len, in, in_len) == 0)
+	if (EVP_CipherUpdate(ctx, out, &out_len, in, in_len) == 0)
 		ereport(ERROR,
 				(errmsg("EVP_CipherUpdate failed. OpenSSL error: %s", ERR_error_string(ERR_get_error(), NULL))));
 
-	if (EVP_CipherFinal_ex(ctx, out + *out_len, &out_len_final) == 0)
+	if (EVP_CipherFinal_ex(ctx, out + out_len, &out_len_final) == 0)
 		ereport(ERROR,
 				(errmsg("EVP_CipherFinal_ex failed. OpenSSL error: %s", ERR_error_string(ERR_get_error(), NULL))));
 
@@ -111,23 +116,23 @@ AesRunCbc(int enc, const unsigned char *key, const unsigned char *iv, const unsi
 	 * We encrypt one block (16 bytes) Our expectation is that the result
 	 * should also be 16 bytes, without any additional padding
 	 */
-	*out_len += out_len_final;
-	Assert(in_len == *out_len);
+	out_len += out_len_final;
+	Assert(in_len == out_len);
 
 	EVP_CIPHER_CTX_cleanup(ctx);
 	EVP_CIPHER_CTX_free(ctx);
 }
 
 void
-AesEncrypt(const unsigned char *key, const unsigned char *iv, const unsigned char *in, int in_len, unsigned char *out, int *out_len)
+AesEncrypt(const unsigned char *key, const unsigned char *iv, const unsigned char *in, int in_len, unsigned char *out)
 {
-	AesRunCbc(1, key, iv, in, in_len, out, out_len);
+	AesRunCbc(1, key, iv, in, in_len, out);
 }
 
 void
-AesDecrypt(const unsigned char *key, const unsigned char *iv, const unsigned char *in, int in_len, unsigned char *out, int *out_len)
+AesDecrypt(const unsigned char *key, const unsigned char *iv, const unsigned char *in, int in_len, unsigned char *out)
 {
-	AesRunCbc(0, key, iv, in, in_len, out, out_len);
+	AesRunCbc(0, key, iv, in, in_len, out);
 }
 
 /* This function assumes that the out buffer is big enough: at least (blockNumber2 - blockNumber1) * 16 bytes
@@ -137,7 +142,6 @@ Aes128EncryptedZeroBlocks(void *ctxPtr, const unsigned char *key, const char *iv
 {
 	const unsigned char iv[16] = {0,};
 	unsigned char *p;
-	int			outLen;
 
 	Assert(blockNumber2 >= blockNumber1);
 
@@ -157,6 +161,5 @@ Aes128EncryptedZeroBlocks(void *ctxPtr, const unsigned char *key, const char *iv
 		p += sizeof(j);
 	}
 
-	AesRunCtr(ctxPtr, 1, key, iv, out, p - out, out, &outLen);
-	Assert(outLen == p - out);
+	AesRunCtr(ctxPtr, 1, key, iv, out, p - out, out);
 }

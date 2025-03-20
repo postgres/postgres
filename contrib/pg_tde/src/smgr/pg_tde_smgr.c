@@ -95,7 +95,6 @@ tde_mdwritev(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 
 		for (int i = 0; i < nblocks; ++i)
 		{
-			int			out_len = BLCKSZ;
 			BlockNumber bn = blocknum + i;
 			unsigned char iv[16] = {0,};
 
@@ -104,7 +103,7 @@ tde_mdwritev(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 
 			memcpy(iv + 4, &bn, sizeof(BlockNumber));
 
-			AesEncrypt(int_key->key, iv, ((unsigned char **) buffers)[i], BLCKSZ, local_buffers[i], &out_len);
+			AesEncrypt(int_key->key, iv, ((unsigned char **) buffers)[i], BLCKSZ, local_buffers[i]);
 		}
 
 		mdwritev(reln, forknum, blocknum,
@@ -130,7 +129,6 @@ tde_mdextend(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 	{
 		unsigned char *local_blocks = palloc(BLCKSZ * (1 + 1));
 		unsigned char *local_blocks_aligned = (unsigned char *) TYPEALIGN(PG_IO_ALIGN_SIZE, local_blocks);
-		int			out_len = BLCKSZ;
 		unsigned char iv[16] = {
 			0,
 		};
@@ -138,7 +136,7 @@ tde_mdextend(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 		AesInit();
 		memcpy(iv + 4, &blocknum, sizeof(BlockNumber));
 
-		AesEncrypt(int_key->key, iv, ((unsigned char *) buffer), BLCKSZ, local_blocks_aligned, &out_len);
+		AesEncrypt(int_key->key, iv, ((unsigned char *) buffer), BLCKSZ, local_blocks_aligned);
 
 		mdextend(reln, forknum, blocknum, local_blocks_aligned, skipFsync);
 
@@ -150,7 +148,6 @@ static void
 tde_mdreadv(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 			void **buffers, BlockNumber nblocks)
 {
-	int			out_len = BLCKSZ;
 	TDESMgrRelation tdereln = (TDESMgrRelation) reln;
 	InternalKey *int_key = &tdereln->relKey;
 
@@ -194,7 +191,7 @@ tde_mdreadv(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 
 		memcpy(iv + 4, &bn, sizeof(BlockNumber));
 
-		AesDecrypt(int_key->key, iv, ((unsigned char **) buffers)[i], BLCKSZ, ((unsigned char **) buffers)[i], &out_len);
+		AesDecrypt(int_key->key, iv, ((unsigned char **) buffers)[i], BLCKSZ, ((unsigned char **) buffers)[i]);
 	}
 }
 

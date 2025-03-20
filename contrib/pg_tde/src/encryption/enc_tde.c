@@ -162,7 +162,7 @@ pg_tde_crypt(const char *iv_prefix, uint32 start_offset, const char *data, uint3
  * short lifespan until it is written to disk.
  */
 void
-AesEncryptKey(const TDEPrincipalKey *principal_key, Oid dbOid, InternalKey *rel_key_data, InternalKey **p_enc_rel_key_data, size_t *enc_key_bytes)
+AesEncryptKey(const TDEPrincipalKey *principal_key, Oid dbOid, InternalKey *rel_key_data, InternalKey **p_enc_rel_key_data)
 {
 	unsigned char iv[16] = {0,};
 
@@ -174,7 +174,7 @@ AesEncryptKey(const TDEPrincipalKey *principal_key, Oid dbOid, InternalKey *rel_
 	*p_enc_rel_key_data = palloc_object(InternalKey);
 	**p_enc_rel_key_data = *rel_key_data;
 
-	AesEncrypt(principal_key->keyData, iv, (unsigned char *) rel_key_data, INTERNAL_KEY_LEN, (unsigned char *) *p_enc_rel_key_data, (int *) enc_key_bytes);
+	AesEncrypt(principal_key->keyData, iv, (unsigned char *) rel_key_data, INTERNAL_KEY_LEN, (unsigned char *) *p_enc_rel_key_data);
 }
 
 #endif							/* FRONTEND */
@@ -187,7 +187,7 @@ AesEncryptKey(const TDEPrincipalKey *principal_key, Oid dbOid, InternalKey *rel_
  * to our key cache.
  */
 void
-AesDecryptKey(const TDEPrincipalKey *principal_key, Oid dbOid, InternalKey **p_rel_key_data, InternalKey *enc_rel_key_data, size_t *key_bytes)
+AesDecryptKey(const TDEPrincipalKey *principal_key, Oid dbOid, InternalKey **p_rel_key_data, InternalKey *enc_rel_key_data)
 {
 	unsigned char iv[16] = {0,};
 
@@ -201,5 +201,5 @@ AesDecryptKey(const TDEPrincipalKey *principal_key, Oid dbOid, InternalKey **p_r
 	/* Fill in the structure */
 	**p_rel_key_data = *enc_rel_key_data;
 
-	AesDecrypt(principal_key->keyData, iv, (unsigned char *) enc_rel_key_data, INTERNAL_KEY_LEN, (unsigned char *) *p_rel_key_data, (int *) key_bytes);
+	AesDecrypt(principal_key->keyData, iv, (unsigned char *) enc_rel_key_data, INTERNAL_KEY_LEN, (unsigned char *) *p_rel_key_data);
 }

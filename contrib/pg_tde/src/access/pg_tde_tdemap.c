@@ -276,9 +276,8 @@ static InternalKey *
 tde_encrypt_rel_key(TDEPrincipalKey *principal_key, InternalKey *rel_key_data, Oid dbOid)
 {
 	InternalKey *enc_rel_key_data;
-	size_t		enc_key_bytes;
 
-	AesEncryptKey(principal_key, dbOid, rel_key_data, &enc_rel_key_data, &enc_key_bytes);
+	AesEncryptKey(principal_key, dbOid, rel_key_data, &enc_rel_key_data);
 
 	return enc_rel_key_data;
 }
@@ -925,9 +924,8 @@ static InternalKey *
 tde_decrypt_rel_key(TDEPrincipalKey *principal_key, InternalKey *enc_rel_key_data, Oid dbOid)
 {
 	InternalKey *rel_key_data = NULL;
-	size_t		key_bytes;
 
-	AesDecryptKey(principal_key, dbOid, &rel_key_data, enc_rel_key_data, &key_bytes);
+	AesDecryptKey(principal_key, dbOid, &rel_key_data, enc_rel_key_data);
 
 	return rel_key_data;
 }
