@@ -46,7 +46,7 @@
 
 #define MAX_PENDING_WRITES XLR_MAX_BLOCK_ID
 
-static const PGIOAlignedBlock zero_buffer = {{0}};	/* worth BLCKSZ */
+static const PGIOAlignedBlock zero_buffer = {0};	/* worth BLCKSZ */
 
 typedef struct PendingWrite
 {

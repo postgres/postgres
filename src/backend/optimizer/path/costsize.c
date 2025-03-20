@@ -2690,13 +2690,12 @@ cost_agg(Path *path, PlannerInfo *root,
 	double		output_tuples;
 	Cost		startup_cost;
 	Cost		total_cost;
-	AggClauseCosts dummy_aggcosts;
+	const AggClauseCosts dummy_aggcosts = {0};
 
 	/* Use all-zero per-aggregate costs if NULL is passed */
 	if (aggcosts == NULL)
 	{
 		Assert(aggstrategy == AGG_HASHED);
-		MemSet(&dummy_aggcosts, 0, sizeof(AggClauseCosts));
 		aggcosts = &dummy_aggcosts;
 	}
 

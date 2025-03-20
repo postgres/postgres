@@ -687,7 +687,7 @@ pg_pwritev_with_retry(int fd, const struct iovec *iov, int iovcnt, off_t offset)
 ssize_t
 pg_pwrite_zeros(int fd, size_t size, off_t offset)
 {
-	static const PGIOAlignedBlock zbuffer = {{0}};	/* worth BLCKSZ */
+	static const PGIOAlignedBlock zbuffer = {0};	/* worth BLCKSZ */
 	void	   *zerobuf_addr = unconstify(PGIOAlignedBlock *, &zbuffer)->data;
 	struct iovec iov[PG_IOV_MAX];
 	size_t		remaining_size = size;

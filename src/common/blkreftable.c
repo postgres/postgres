@@ -265,7 +265,7 @@ BlockRefTableSetLimitBlock(BlockRefTable *brtab,
 						   BlockNumber limit_block)
 {
 	BlockRefTableEntry *brtentry;
-	BlockRefTableKey key = {{0}};	/* make sure any padding is zero */
+	BlockRefTableKey key = {0}; /* make sure any padding is zero */
 	bool		found;
 
 	memcpy(&key.rlocator, rlocator, sizeof(RelFileLocator));
@@ -300,7 +300,7 @@ BlockRefTableMarkBlockModified(BlockRefTable *brtab,
 							   BlockNumber blknum)
 {
 	BlockRefTableEntry *brtentry;
-	BlockRefTableKey key = {{0}};	/* make sure any padding is zero */
+	BlockRefTableKey key = {0}; /* make sure any padding is zero */
 	bool		found;
 #ifndef FRONTEND
 	MemoryContext oldcontext = MemoryContextSwitchTo(brtab->mcxt);
@@ -340,7 +340,7 @@ BlockRefTableEntry *
 BlockRefTableGetEntry(BlockRefTable *brtab, const RelFileLocator *rlocator,
 					  ForkNumber forknum, BlockNumber *limit_block)
 {
-	BlockRefTableKey key = {{0}};	/* make sure any padding is zero */
+	BlockRefTableKey key = {0}; /* make sure any padding is zero */
 	BlockRefTableEntry *entry;
 
 	Assert(limit_block != NULL);
@@ -521,7 +521,7 @@ WriteBlockRefTable(BlockRefTable *brtab,
 		for (i = 0; i < brtab->hash->members; ++i)
 		{
 			BlockRefTableSerializedEntry *sentry = &sdata[i];
-			BlockRefTableKey key = {{0}};	/* make sure any padding is zero */
+			BlockRefTableKey key = {0}; /* make sure any padding is zero */
 			unsigned	j;
 
 			/* Write the serialized entry itself. */
@@ -616,7 +616,7 @@ BlockRefTableReaderNextRelation(BlockRefTableReader *reader,
 								BlockNumber *limit_block)
 {
 	BlockRefTableSerializedEntry sentry;
-	BlockRefTableSerializedEntry zentry = {{0}};
+	BlockRefTableSerializedEntry zentry = {0};
 
 	/*
 	 * Sanity check: caller must read all blocks from all chunks before moving
@@ -1291,7 +1291,7 @@ BlockRefTableWrite(BlockRefTableBuffer *buffer, void *data, int length)
 static void
 BlockRefTableFileTerminate(BlockRefTableBuffer *buffer)
 {
-	BlockRefTableSerializedEntry zentry = {{0}};
+	BlockRefTableSerializedEntry zentry = {0};
 	pg_crc32c	crc;
 
 	/* Write a sentinel indicating that there are no more entries. */

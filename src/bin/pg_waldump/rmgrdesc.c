@@ -41,8 +41,8 @@ static const RmgrDescData RmgrDescTable[RM_N_BUILTIN_IDS] = {
 
 #define CUSTOM_NUMERIC_NAME_LEN sizeof("custom###")
 
-static char CustomNumericNames[RM_N_CUSTOM_IDS][CUSTOM_NUMERIC_NAME_LEN] = {{0}};
-static RmgrDescData CustomRmgrDesc[RM_N_CUSTOM_IDS] = {{0}};
+static char CustomNumericNames[RM_N_CUSTOM_IDS][CUSTOM_NUMERIC_NAME_LEN] = {0};
+static RmgrDescData CustomRmgrDesc[RM_N_CUSTOM_IDS] = {0};
 static bool CustomRmgrDescInitialized = false;
 
 /*
