@@ -64,14 +64,14 @@ is( $ret2,
 # Ensure that extensions installed on $system is still visible when using with
 # custom extension control path.
 my $ret3 = $node->safe_psql('postgres',
-	"select count(*) > 0 as ok from pg_available_extensions where name = 'amcheck'"
+	"select count(*) > 0 as ok from pg_available_extensions where name = 'plpgsql'"
 );
 is($ret3, "t",
 	"\$system extension is installed correctly on pg_available_extensions");
 
 
 my $ret4 = $node->safe_psql('postgres',
-	"set extension_control_path = ''; select count(*) > 0 as ok from pg_available_extensions where name = 'amcheck'"
+	"set extension_control_path = ''; select count(*) > 0 as ok from pg_available_extensions where name = 'plpgsql'"
 );
 is($ret4, "t",
 	"\$system extension is installed correctly on pg_available_extensions with empty extension_control_path"
