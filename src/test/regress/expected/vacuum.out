@@ -236,6 +236,7 @@ SELECT pg_relation_size('vac_truncate_test') > 0;
  t
 (1 row)
 
+SET vacuum_truncate = false;
 VACUUM (DISABLE_PAGE_SKIPPING) vac_truncate_test;
 SELECT pg_relation_size('vac_truncate_test') = 0;
  ?column? 
@@ -244,6 +245,32 @@ SELECT pg_relation_size('vac_truncate_test') = 0;
 (1 row)
 
 VACUUM (TRUNCATE FALSE, FULL TRUE) vac_truncate_test;
+ALTER TABLE vac_truncate_test RESET (vacuum_truncate);
+INSERT INTO vac_truncate_test VALUES (1, NULL), (NULL, NULL);
+ERROR:  null value in column "i" of relation "vac_truncate_test" violates not-null constraint
+DETAIL:  Failing row contains (null, null).
+VACUUM (DISABLE_PAGE_SKIPPING) vac_truncate_test;
+SELECT pg_relation_size('vac_truncate_test') > 0;
+ ?column? 
+----------
+ t
+(1 row)
+
+RESET vacuum_truncate;
+VACUUM (TRUNCATE FALSE, DISABLE_PAGE_SKIPPING) vac_truncate_test;
+SELECT pg_relation_size('vac_truncate_test') > 0;
+ ?column? 
+----------
+ t
+(1 row)
+
+VACUUM (DISABLE_PAGE_SKIPPING) vac_truncate_test;
+SELECT pg_relation_size('vac_truncate_test') = 0;
+ ?column? 
+----------
+ t
+(1 row)
+
 DROP TABLE vac_truncate_test;
 -- partitioned table
 CREATE TABLE vacparted (a int, b char) PARTITION BY LIST (a);

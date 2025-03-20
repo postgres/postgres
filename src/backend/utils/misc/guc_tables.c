@@ -712,6 +712,7 @@ const char *const config_group_names[] =
 	[STATS_CUMULATIVE] = gettext_noop("Statistics / Cumulative Query and Index Statistics"),
 	[VACUUM_AUTOVACUUM] = gettext_noop("Vacuuming / Automatic Vacuuming"),
 	[VACUUM_COST_DELAY] = gettext_noop("Vacuuming / Cost-Based Vacuum Delay"),
+	[VACUUM_DEFAULT] = gettext_noop("Vacuuming / Default Behavior"),
 	[VACUUM_FREEZING] = gettext_noop("Vacuuming / Freezing"),
 	[CLIENT_CONN_STATEMENT] = gettext_noop("Client Connection Defaults / Statement Behavior"),
 	[CLIENT_CONN_LOCALE] = gettext_noop("Client Connection Defaults / Locale and Formatting"),
@@ -2128,6 +2129,15 @@ struct config_bool ConfigureNamesBool[] =
 		},
 		&query_id_squash_values,
 		false,
+		NULL, NULL, NULL
+	},
+
+	{
+		{"vacuum_truncate", PGC_USERSET, VACUUM_DEFAULT,
+			gettext_noop("Enables vacuum to truncate empty pages at the end of the table."),
+		},
+		&vacuum_truncate,
+		true,
 		NULL, NULL, NULL
 	},
 

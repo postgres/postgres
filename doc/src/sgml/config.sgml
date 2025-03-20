@@ -9311,6 +9311,35 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
      </note>
     </sect2>
 
+    <sect2 id="runtime-config-vacuum-default">
+     <title>Default Behavior</title>
+
+     <variablelist>
+      <varlistentry id="guc-vacuum-truncate" xreflabel="vacuum_truncate">
+       <term><varname>vacuum_truncate</varname> (<type>boolean</type>)
+       <indexterm>
+        <primary><varname>vacuum_truncate</varname> configuration parameter</primary>
+       </indexterm>
+       </term>
+       <listitem>
+        <para>
+         Enables or disables vacuum to try to truncate off any empty pages at
+         the end of the table.  The default value is <literal>true</literal>.
+         If <literal>true</literal>, <command>VACUUM</command> and autovacuum
+         do the truncation and the disk space for the truncated pages is
+         returned to the operating system.  Note that the truncation requires
+         an <literal>ACCESS EXCLUSIVE</literal> lock on the table.  The
+         <literal>TRUNCATE</literal> parameter of
+         <link linkend="sql-vacuum"><command>VACUUM</command></link>, if
+         specified, overrides the value of this parameter.  The setting can
+         also be overridden for individual tables by changing table storage
+         parameters.
+        </para>
+       </listitem>
+      </varlistentry>
+     </variablelist>
+    </sect2>
+
     <sect2 id="runtime-config-vacuum-freezing">
      <title>Freezing</title>
 

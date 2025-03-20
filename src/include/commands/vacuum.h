@@ -304,6 +304,7 @@ extern PGDLLIMPORT int vacuum_multixact_freeze_table_age;
 extern PGDLLIMPORT int vacuum_failsafe_age;
 extern PGDLLIMPORT int vacuum_multixact_failsafe_age;
 extern PGDLLIMPORT bool track_cost_delay_timing;
+extern PGDLLIMPORT bool vacuum_truncate;
 
 /*
  * Relevant for vacuums implementing eager scanning. Normal vacuums may

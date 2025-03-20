@@ -152,6 +152,7 @@ typedef struct
 	const char *optname;		/* option's name */
 	relopt_type opttype;		/* option's datatype */
 	int			offset;			/* offset of field in result struct */
+	int			isset_offset;	/* if > 0, offset of "is set" field */
 } relopt_parse_elt;
 
 /* Local reloption definition */

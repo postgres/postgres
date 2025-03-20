@@ -265,7 +265,8 @@ VACUUM [ ( <replaceable class="parameter">option</replaceable> [, ...] ) ] [ <re
       truncate off any empty pages at the end of the table and allow
       the disk space for the truncated pages to be returned to
       the operating system. This is normally the desired behavior
-      and is the default unless the <literal>vacuum_truncate</literal>
+      and is the default unless <xref linkend="guc-vacuum-truncate"/>
+      is set to false or the <literal>vacuum_truncate</literal>
       option has been set to false for the table to be vacuumed.
       Setting this option to false may be useful to avoid
       <literal>ACCESS EXCLUSIVE</literal> lock on the table that

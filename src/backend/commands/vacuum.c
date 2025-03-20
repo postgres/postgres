@@ -78,6 +78,7 @@ int			vacuum_failsafe_age;
 int			vacuum_multixact_failsafe_age;
 double		vacuum_max_eager_freeze_failure_rate;
 bool		track_cost_delay_timing;
+bool		vacuum_truncate;
 
 /*
  * Variables for cost-based vacuum delay. The defaults differ between
@@ -2198,13 +2199,21 @@ vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params,
 			((StdRdOptions *) rel->rd_options)->vacuum_max_eager_freeze_failure_rate;
 
 	/*
-	 * Set truncate option based on truncate reloption if it wasn't specified
-	 * in VACUUM command, or when running in an autovacuum worker
+	 * Set truncate option based on truncate reloption or GUC if it wasn't
+	 * specified in VACUUM command, or when running in an autovacuum worker
 	 */
 	if (params->truncate == VACOPTVALUE_UNSPECIFIED)
 	{
-		if (rel->rd_options == NULL ||
-			((StdRdOptions *) rel->rd_options)->vacuum_truncate)
+		StdRdOptions *opts = (StdRdOptions *) rel->rd_options;
+
+		if (opts && opts->vacuum_truncate_set)
+		{
+			if (opts->vacuum_truncate)
+				params->truncate = VACOPTVALUE_ENABLED;
+			else
+				params->truncate = VACOPTVALUE_DISABLED;
+		}
+		else if (vacuum_truncate)
 			params->truncate = VACOPTVALUE_ENABLED;
 		else
 			params->truncate = VACOPTVALUE_DISABLED;

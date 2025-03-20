@@ -1692,15 +1692,10 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     </term>
     <listitem>
      <para>
-      Enables or disables vacuum to try to truncate off any empty pages
-      at the end of this table. The default value is <literal>true</literal>.
-      If <literal>true</literal>, <command>VACUUM</command> and
-      autovacuum do the truncation and the disk space for
-      the truncated pages is returned to the operating system.
-      Note that the truncation requires <literal>ACCESS EXCLUSIVE</literal>
-      lock on the table. The <literal>TRUNCATE</literal> parameter
-      of <link linkend="sql-vacuum"><command>VACUUM</command></link>, if specified, overrides the value
-      of this option.
+      Per-table value for <xref linkend="guc-vacuum-truncate"/> parameter.  The
+      <literal>TRUNCATE</literal> parameter of
+      <link linkend="sql-vacuum"><command>VACUUM</command></link>, if
+      specified, overrides the value of this option.
      </para>
     </listitem>
    </varlistentry>
