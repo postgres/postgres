@@ -97,7 +97,7 @@ struct BufFile
 	int			nbytes;			/* total # of valid bytes in buffer */
 
 	/*
-	 * XXX Should ideally us PGIOAlignedBlock, but might need a way to avoid
+	 * XXX Should ideally use PGIOAlignedBlock, but might need a way to avoid
 	 * wasting per-file alignment padding when some users create many files.
 	 */
 	PGAlignedBlock buffer;
