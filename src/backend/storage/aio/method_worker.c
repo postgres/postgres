@@ -385,7 +385,7 @@ IoWorkerMain(const void *startup_data, size_t startup_data_len)
 	/* also registers a shutdown callback to unregister */
 	pgaio_worker_register();
 
-	sprintf(cmd, "io worker: %d", MyIoWorkerId);
+	sprintf(cmd, "%d", MyIoWorkerId);
 	set_ps_display(cmd);
 
 	/* see PostgresMain() */
