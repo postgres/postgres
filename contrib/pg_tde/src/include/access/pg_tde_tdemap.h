@@ -39,10 +39,22 @@ typedef struct InternalKey
 	(((key)->rel_type & TDE_KEY_TYPE_WAL_UNENCRYPTED) != 0 || \
 	((key)->rel_type & TDE_KEY_TYPE_WAL_ENCRYPTED) != 0)
 
+#define MAP_ENTRY_EMPTY_IV_SIZE 16
+
+/* We do not need the dbOid since the entries are stored in a file per db */
+typedef struct TDEMapEntry
+{
+	Oid			spcOid;
+	RelFileNumber relNumber;
+	uint32		flags;
+	InternalKey enc_key;
+	/* IV used when encrypting the key itself */
+	unsigned char entry_iv[MAP_ENTRY_EMPTY_IV_SIZE];
+} TDEMapEntry;
+
 typedef struct XLogRelKey
 {
-	RelFileLocator rlocator;
-	InternalKey relKey;
+	TDEMapEntry mapEntry;
 	TDEPrincipalKeyInfo pkInfo;
 } XLogRelKey;
 
@@ -76,8 +88,8 @@ extern void pg_tde_wal_last_key_set_lsn(XLogRecPtr lsn, const char *keyfile_path
 
 extern InternalKey *pg_tde_create_smgr_key(const RelFileLocatorBackend *newrlocator);
 extern void pg_tde_create_wal_key(InternalKey *rel_key_data, const RelFileLocator *newrlocator, uint32 flags);
-extern void pg_tde_write_key_map_entry(const RelFileLocator *rlocator, InternalKey *enc_rel_key_data, TDEPrincipalKeyInfo *principal_key_info);
 extern void pg_tde_free_key_map_entry(const RelFileLocator *rlocator, uint32 key_type, off_t offset);
+extern void pg_tde_write_key_map_entry_redo(const TDEMapEntry *write_map_entry, TDEPrincipalKeyInfo *principal_key_info);
 
 #define PG_TDE_MAP_FILENAME			"pg_tde_%d_map"
 

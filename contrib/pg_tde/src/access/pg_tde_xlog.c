@@ -58,7 +58,7 @@ tdeheap_rmgr_redo(XLogReaderState *record)
 		XLogRelKey *xlrec = (XLogRelKey *) XLogRecGetData(record);
 
 		LWLockAcquire(tde_lwlock_enc_keys(), LW_EXCLUSIVE);
-		pg_tde_write_key_map_entry(&xlrec->rlocator, &xlrec->relKey, &xlrec->pkInfo);
+		pg_tde_write_key_map_entry_redo(&xlrec->mapEntry, &xlrec->pkInfo);
 		LWLockRelease(tde_lwlock_enc_keys());
 	}
 	else if (info == XLOG_TDE_ADD_PRINCIPAL_KEY)
@@ -116,7 +116,7 @@ tdeheap_rmgr_desc(StringInfo buf, XLogReaderState *record)
 	{
 		XLogRelKey *xlrec = (XLogRelKey *) XLogRecGetData(record);
 
-		appendStringInfo(buf, "add tde internal key for relation %u/%u", xlrec->rlocator.dbOid, xlrec->rlocator.relNumber);
+		appendStringInfo(buf, "add tde internal key for relation %u/%u", xlrec->pkInfo.databaseId, xlrec->mapEntry.relNumber);
 	}
 	if (info == XLOG_TDE_ADD_PRINCIPAL_KEY)
 	{

@@ -6,7 +6,6 @@
 #include "encryption/enc_tde.h"
 #include "encryption/enc_aes.h"
 #include "storage/bufmgr.h"
-#include "keyring/keyring_api.h"
 
 #define AES_BLOCK_SIZE 		        16
 #define NUM_AES_BLOCKS_IN_BATCH     200
@@ -151,55 +150,4 @@ pg_tde_crypt(const char *iv_prefix, uint32 start_offset, const char *data, uint3
 	{
 		pg_tde_crypt_simple(iv_prefix, start_offset, data, data_len, out, key, ctxPtr, context);
 	}
-}
-
-#ifndef FRONTEND
-/*
- * Provide a simple interface to encrypt a given key.
- *
- * The function pallocs and updates the p_enc_rel_key_data along with key bytes. The memory
- * is allocated in the current memory context as this key should be ephemeral with a very
- * short lifespan until it is written to disk.
- */
-void
-AesEncryptKey(const TDEPrincipalKey *principal_key, Oid dbOid, InternalKey *rel_key_data, InternalKey **p_enc_rel_key_data)
-{
-	unsigned char iv[16] = {0,};
-
-	/* Ensure we are getting a valid pointer here */
-	Assert(principal_key);
-
-	memcpy(iv, &dbOid, sizeof(Oid));
-
-	*p_enc_rel_key_data = palloc_object(InternalKey);
-	**p_enc_rel_key_data = *rel_key_data;
-
-	AesEncrypt(principal_key->keyData, iv, (unsigned char *) rel_key_data, INTERNAL_KEY_LEN, (unsigned char *) *p_enc_rel_key_data);
-}
-
-#endif							/* FRONTEND */
-
-/*
- * Provide a simple interface to decrypt a given key.
- *
- * The function pallocs and updates the p_rel_key_data along with key bytes. It's important
- * to note that memory is allocated in the TopMemoryContext so we expect this to be added
- * to our key cache.
- */
-void
-AesDecryptKey(const TDEPrincipalKey *principal_key, Oid dbOid, InternalKey **p_rel_key_data, InternalKey *enc_rel_key_data)
-{
-	unsigned char iv[16] = {0,};
-
-	/* Ensure we are getting a valid pointer here */
-	Assert(principal_key);
-
-	memcpy(iv, &dbOid, sizeof(Oid));
-
-	*p_rel_key_data = palloc_object(InternalKey);
-
-	/* Fill in the structure */
-	**p_rel_key_data = *enc_rel_key_data;
-
-	AesDecrypt(principal_key->keyData, iv, (unsigned char *) enc_rel_key_data, INTERNAL_KEY_LEN, (unsigned char *) *p_rel_key_data);
 }

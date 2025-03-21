@@ -22,7 +22,4 @@ extern void pg_tde_crypt(const char *iv_prefix, uint32 start_offset, const char 
 #define PG_TDE_DECRYPT_DATA(_iv_prefix, _start_offset, _data, _data_len, _out, _key, _ctxptr) \
 	pg_tde_crypt(_iv_prefix, _start_offset, _data, _data_len, _out, _key, _ctxptr, "DECRYPT")
 
-extern void AesEncryptKey(const TDEPrincipalKey *principal_key, Oid dbOid, InternalKey *rel_key_data, InternalKey **p_enc_rel_key_data);
-extern void AesDecryptKey(const TDEPrincipalKey *principal_key, Oid dbOid, InternalKey **p_rel_key_data, InternalKey *enc_rel_key_data);
-
 #endif							/* ENC_TDE_H */
