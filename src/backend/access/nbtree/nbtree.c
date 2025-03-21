@@ -30,6 +30,7 @@
 #include "storage/indexfsm.h"
 #include "storage/ipc.h"
 #include "storage/lmgr.h"
+#include "storage/read_stream.h"
 #include "utils/fmgrprotos.h"
 #include "utils/index_selfuncs.h"
 #include "utils/memutils.h"
@@ -1072,8 +1073,6 @@ btvacuumscan(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 										0);
 	for (;;)
 	{
-		Buffer		buf;
-
 		/* Get the current relation length */
 		if (needLock)
 			LockRelationForExtension(rel, ExclusiveLock);
@@ -1089,13 +1088,13 @@ btvacuumscan(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 		if (p.current_blocknum >= num_pages)
 			break;
 
-
 		p.last_exclusive = num_pages;
 
 		/* Iterate over pages, then loop back to recheck relation length */
 		while (true)
 		{
 			BlockNumber current_block;
+			Buffer		buf;
 
 			/* call vacuum_delay_point while not holding any buffer lock */
 			vacuum_delay_point(false);
