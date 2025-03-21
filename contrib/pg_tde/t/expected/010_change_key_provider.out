@@ -63,3 +63,38 @@ SELECT * FROM test_enc ORDER BY id;
 2|6
 DROP EXTENSION pg_tde CASCADE;
 psql:<stdin>:1: NOTICE:  drop cascades to table test_enc
+CREATE EXTENSION IF NOT EXISTS pg_tde;
+SELECT pg_tde_add_key_provider_file('file-vault', '/tmp/change_key_provider_4.per');
+1
+0
+CREATE TABLE test_enc (id serial, k integer, PRIMARY KEY (id)) USING tde_heap;
+INSERT INTO test_enc (k) VALUES (5), (6);
+SELECT pg_tde_verify_principal_key();
+
+SELECT pg_tde_is_encrypted('test_enc');
+t
+SELECT * FROM test_enc ORDER BY id;
+1|5
+2|6
+SELECT pg_tde_change_key_provider_file('file-vault', '/tmp/change_key_provider_3.per');
+1
+-- server restart
+SELECT pg_tde_verify_principal_key();
+
+
+SELECT pg_tde_is_encrypted('test_enc');
+psql:<stdin>:1: ERROR:  Failed to decrypt key, incorrect principal key or corrupted key file
+SELECT * FROM test_enc ORDER BY id;
+psql:<stdin>:1: ERROR:  Failed to decrypt key, incorrect principal key or corrupted key file
+SELECT pg_tde_change_key_provider_file('file-vault', '/tmp/change_key_provider_4.per');
+1
+-- server restart
+SELECT pg_tde_verify_principal_key();
+
+SELECT pg_tde_is_encrypted('test_enc');
+t
+SELECT * FROM test_enc ORDER BY id;
+1|5
+2|6
+DROP EXTENSION pg_tde CASCADE;
+psql:<stdin>:1: NOTICE:  drop cascades to table test_enc

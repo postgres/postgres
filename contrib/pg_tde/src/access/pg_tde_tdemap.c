@@ -332,7 +332,7 @@ pg_tde_initialize_map_entry(TDEMapEntry *map_entry, const TDEPrincipalKey *princ
 				(errcode(ERRCODE_INTERNAL_ERROR),
 				 errmsg("could not generate iv for key map: %s", ERR_error_string(ERR_get_error(), NULL))));
 
-	AesEncrypt(principal_key->keyData, map_entry->entry_iv, rel_key_data->key, INTERNAL_KEY_LEN, map_entry->enc_key.key);
+	AesGcmEncrypt(principal_key->keyData, map_entry->entry_iv, (unsigned char *) map_entry, offsetof(TDEMapEntry, enc_key), rel_key_data->key, INTERNAL_KEY_LEN, map_entry->enc_key.key, map_entry->aead_tag);
 }
 
 /*
@@ -970,7 +970,10 @@ tde_decrypt_rel_key(TDEPrincipalKey *principal_key, TDEMapEntry *map_entry)
 	/* Fill in the structure */
 	*rel_key_data = map_entry->enc_key;
 
-	AesDecrypt(principal_key->keyData, map_entry->entry_iv, map_entry->enc_key.key, INTERNAL_KEY_LEN, rel_key_data->key);
+	if (!AesGcmDecrypt(principal_key->keyData, map_entry->entry_iv, (unsigned char *) map_entry, offsetof(TDEMapEntry, enc_key), map_entry->enc_key.key, INTERNAL_KEY_LEN, rel_key_data->key, map_entry->aead_tag))
+		ereport(ERROR,
+				(errmsg("Failed to decrypt key, incorrect principal key or corrupted key file")));
+
 
 	return rel_key_data;
 }

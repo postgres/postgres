@@ -24,6 +24,7 @@ close $conf;
 unlink('/tmp/change_key_provider_1.per');
 unlink('/tmp/change_key_provider_2.per');
 unlink('/tmp/change_key_provider_3.per');
+unlink('/tmp/change_key_provider_4.per');
 
 # Start server
 my $rt_value = $node->start;
@@ -131,6 +132,70 @@ PGTDE::append_to_file($stdout);
 (undef, $stdout, $stderr) = $node->psql('postgres', 'DROP EXTENSION pg_tde CASCADE;', extra_params => ['-a']);
 PGTDE::append_to_file($stdout);
 PGTDE::append_to_file($stderr);
+
+# CREATE EXTENSION
+($cmdret, $stdout, $stderr) = $node->psql('postgres', 'CREATE EXTENSION IF NOT EXISTS pg_tde;', extra_params => ['-a']);
+ok($cmdret == 0, "CREATE PGTDE EXTENSION");
+PGTDE::append_to_file($stdout);
+
+# Change provider and generate a new principal key
+$stdout = $node->safe_psql('postgres', "SELECT pg_tde_add_key_provider_file('file-vault', '/tmp/change_key_provider_4.per');", extra_params => ['-a']);
+PGTDE::append_to_file($stdout);
+$stdout = $node->psql('postgres', "SELECT pg_tde_set_principal_key('test-key', 'file-vault');", extra_params => ['-a']);
+PGTDE::append_to_file($stdout);
+
+$stdout = $node->safe_psql('postgres', 'CREATE TABLE test_enc (id serial, k integer, PRIMARY KEY (id)) USING tde_heap;', extra_params => ['-a']);
+PGTDE::append_to_file($stdout);
+$stdout = $node->safe_psql('postgres', 'INSERT INTO test_enc (k) VALUES (5), (6);', extra_params => ['-a']);
+PGTDE::append_to_file($stdout);
+
+$stdout = $node->safe_psql('postgres', "SELECT pg_tde_verify_principal_key();", extra_params => ['-a']);
+PGTDE::append_to_file($stdout);
+$stdout = $node->safe_psql('postgres', "SELECT pg_tde_is_encrypted('test_enc');", extra_params => ['-a']);
+PGTDE::append_to_file($stdout);
+$stdout = $node->safe_psql('postgres', 'SELECT * FROM test_enc ORDER BY id;', extra_params => ['-a']);
+PGTDE::append_to_file($stdout);
+
+$stdout = $node->safe_psql('postgres', "SELECT pg_tde_change_key_provider_file('file-vault', '/tmp/change_key_provider_3.per');", extra_params => ['-a']);
+PGTDE::append_to_file($stdout);
+
+# Restart the server
+PGTDE::append_to_file("-- server restart");
+$rt_value = $node->stop();
+$rt_value = $node->start();
+
+# Verify
+(undef, $stdout, $stderr) = $node->psql('postgres', "SELECT pg_tde_verify_principal_key();", extra_params => ['-a']);
+PGTDE::append_to_file($stdout);
+PGTDE::append_to_file($stderr);
+(undef, $stdout, $stderr) = $node->psql('postgres', "SELECT pg_tde_is_encrypted('test_enc');", extra_params => ['-a']);
+PGTDE::append_to_file($stdout);
+PGTDE::append_to_file($stderr);
+(undef, $stdout, $stderr) = $node->psql('postgres', 'SELECT * FROM test_enc ORDER BY id;', extra_params => ['-a']);
+PGTDE::append_to_file($stdout);
+PGTDE::append_to_file($stderr);
+
+$stdout = $node->safe_psql('postgres', "SELECT pg_tde_change_key_provider_file('file-vault', '/tmp/change_key_provider_4.per');", extra_params => ['-a']);
+PGTDE::append_to_file($stdout);
+
+# Restart the server
+PGTDE::append_to_file("-- server restart");
+$rt_value = $node->stop();
+$rt_value = $node->start();
+
+# Verify
+$stdout = $node->safe_psql('postgres', "SELECT pg_tde_verify_principal_key();", extra_params => ['-a']);
+PGTDE::append_to_file($stdout);
+$stdout = $node->safe_psql('postgres', "SELECT pg_tde_is_encrypted('test_enc');", extra_params => ['-a']);
+PGTDE::append_to_file($stdout);
+$stdout = $node->safe_psql('postgres', 'SELECT * FROM test_enc ORDER BY id;', extra_params => ['-a']);
+PGTDE::append_to_file($stdout);
+
+# DROP EXTENSION
+(undef, $stdout, $stderr) = $node->psql('postgres', 'DROP EXTENSION pg_tde CASCADE;', extra_params => ['-a']);
+PGTDE::append_to_file($stdout);
+PGTDE::append_to_file($stderr);
+
 # Stop the server
 $node->stop();
 

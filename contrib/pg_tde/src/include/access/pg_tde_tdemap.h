@@ -40,6 +40,7 @@ typedef struct InternalKey
 	((key)->rel_type & TDE_KEY_TYPE_WAL_ENCRYPTED) != 0)
 
 #define MAP_ENTRY_EMPTY_IV_SIZE 16
+#define MAP_ENTRY_EMPTY_AEAD_TAG_SIZE 16
 
 /* We do not need the dbOid since the entries are stored in a file per db */
 typedef struct TDEMapEntry
@@ -48,8 +49,9 @@ typedef struct TDEMapEntry
 	RelFileNumber relNumber;
 	uint32		flags;
 	InternalKey enc_key;
-	/* IV used when encrypting the key itself */
+	/* IV and tag used when encrypting the key itself */
 	unsigned char entry_iv[MAP_ENTRY_EMPTY_IV_SIZE];
+	unsigned char aead_tag[MAP_ENTRY_EMPTY_AEAD_TAG_SIZE];
 } TDEMapEntry;
 
 typedef struct XLogRelKey
