@@ -86,7 +86,7 @@ typedef struct BTParallelScanDescData *BTParallelScanDesc;
 static void btvacuumscan(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 						 IndexBulkDeleteCallback callback, void *callback_state,
 						 BTCycleId cycleid);
-static void btvacuumpage(BTVacState *vstate, BlockNumber scanblkno);
+static BlockNumber btvacuumpage(BTVacState *vstate, Buffer buf);
 static BTVacuumPosting btreevacuumposting(BTVacState *vstate,
 										  IndexTuple posting,
 										  OffsetNumber updatedoffset,
@@ -991,8 +991,9 @@ btvacuumscan(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 	Relation	rel = info->index;
 	BTVacState	vstate;
 	BlockNumber num_pages;
-	BlockNumber scanblkno;
 	bool		needLock;
+	BlockRangeReadStreamPrivate p;
+	ReadStream *stream = NULL;
 
 	/*
 	 * Reset fields that track information about the entire index now.  This
@@ -1061,9 +1062,18 @@ btvacuumscan(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 	 */
 	needLock = !RELATION_IS_LOCAL(rel);
 
-	scanblkno = BTREE_METAPAGE + 1;
+	p.current_blocknum = BTREE_METAPAGE + 1;
+	stream = read_stream_begin_relation(READ_STREAM_FULL,
+										info->strategy,
+										rel,
+										MAIN_FORKNUM,
+										block_range_read_stream_cb,
+										&p,
+										0);
 	for (;;)
 	{
+		Buffer		buf;
+
 		/* Get the current relation length */
 		if (needLock)
 			LockRelationForExtension(rel, ExclusiveLock);
@@ -1076,17 +1086,43 @@ btvacuumscan(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 										 num_pages);
 
 		/* Quit if we've scanned the whole relation */
-		if (scanblkno >= num_pages)
+		if (p.current_blocknum >= num_pages)
 			break;
-		/* Iterate over pages, then loop back to recheck length */
-		for (; scanblkno < num_pages; scanblkno++)
+
+
+		p.last_exclusive = num_pages;
+
+		/* Iterate over pages, then loop back to recheck relation length */
+		while (true)
 		{
-			btvacuumpage(&vstate, scanblkno);
+			BlockNumber current_block;
+
+			/* call vacuum_delay_point while not holding any buffer lock */
+			vacuum_delay_point(false);
+
+			buf = read_stream_next_buffer(stream, NULL);
+
+			if (!BufferIsValid(buf))
+				break;
+
+			current_block = btvacuumpage(&vstate, buf);
+
 			if (info->report_progress)
 				pgstat_progress_update_param(PROGRESS_SCAN_BLOCKS_DONE,
-											 scanblkno);
+											 current_block);
 		}
+
+		Assert(read_stream_next_buffer(stream, NULL) == InvalidBuffer);
+
+		/*
+		 * We have to reset the read stream to use it again. After returning
+		 * InvalidBuffer, the read stream API won't invoke our callback again
+		 * until the stream has been reset.
+		 */
+		read_stream_reset(stream);
 	}
+
+	read_stream_end(stream);
 
 	/* Set statistics num_pages field to final size of index */
 	stats->num_pages = num_pages;
@@ -1111,14 +1147,16 @@ btvacuumscan(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
  * btvacuumpage --- VACUUM one page
  *
  * This processes a single page for btvacuumscan().  In some cases we must
- * backtrack to re-examine and VACUUM pages that were the scanblkno during
+ * backtrack to re-examine and VACUUM pages that were on buf's page during
  * a previous call here.  This is how we handle page splits (that happened
  * after our cycleid was acquired) whose right half page happened to reuse
  * a block that we might have processed at some point before it was
  * recycled (i.e. before the page split).
+ *
+ * Returns BlockNumber of a scanned page (not backtracked).
  */
-static void
-btvacuumpage(BTVacState *vstate, BlockNumber scanblkno)
+static BlockNumber
+btvacuumpage(BTVacState *vstate, Buffer buf)
 {
 	IndexVacuumInfo *info = vstate->info;
 	IndexBulkDeleteResult *stats = vstate->stats;
@@ -1129,7 +1167,7 @@ btvacuumpage(BTVacState *vstate, BlockNumber scanblkno)
 	bool		attempt_pagedel;
 	BlockNumber blkno,
 				backtrack_to;
-	Buffer		buf;
+	BlockNumber scanblkno = BufferGetBlockNumber(buf);
 	Page		page;
 	BTPageOpaque opaque;
 
@@ -1140,17 +1178,6 @@ backtrack:
 	attempt_pagedel = false;
 	backtrack_to = P_NONE;
 
-	/* call vacuum_delay_point while not holding any buffer lock */
-	vacuum_delay_point(false);
-
-	/*
-	 * We can't use _bt_getbuf() here because it always applies
-	 * _bt_checkpage(), which will barf on an all-zero page. We want to
-	 * recycle all-zero pages, not fail.  Also, we want to use a nondefault
-	 * buffer access strategy.
-	 */
-	buf = ReadBufferExtended(rel, MAIN_FORKNUM, blkno, RBM_NORMAL,
-							 info->strategy);
 	_bt_lockbuf(rel, buf, BT_READ);
 	page = BufferGetPage(buf);
 	opaque = NULL;
@@ -1186,7 +1213,7 @@ backtrack:
 					 errmsg_internal("right sibling %u of scanblkno %u unexpectedly in an inconsistent state in index \"%s\"",
 									 blkno, scanblkno, RelationGetRelationName(rel))));
 			_bt_relbuf(rel, buf);
-			return;
+			return scanblkno;
 		}
 
 		/*
@@ -1206,7 +1233,7 @@ backtrack:
 		{
 			/* Done with current scanblkno (and all lower split pages) */
 			_bt_relbuf(rel, buf);
-			return;
+			return scanblkno;
 		}
 	}
 
@@ -1437,8 +1464,22 @@ backtrack:
 	if (backtrack_to != P_NONE)
 	{
 		blkno = backtrack_to;
+
+		/* check for vacuum delay while not holding any buffer lock */
+		vacuum_delay_point(false);
+
+		/*
+		 * We can't use _bt_getbuf() here because it always applies
+		 * _bt_checkpage(), which will barf on an all-zero page. We want to
+		 * recycle all-zero pages, not fail.  Also, we want to use a
+		 * nondefault buffer access strategy.
+		 */
+		buf = ReadBufferExtended(rel, MAIN_FORKNUM, blkno, RBM_NORMAL,
+								 info->strategy);
 		goto backtrack;
 	}
+
+	return scanblkno;
 }
 
 /*
