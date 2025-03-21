@@ -190,6 +190,7 @@ pg_tde_create_key_map_entry(const RelFileLocator *newrlocator, uint32 entry_type
 	 */
 	xlrec.rlocator = *newrlocator;
 	xlrec.relKey = *enc_rel_key_data;
+	xlrec.pkInfo = principal_key->keyInfo;
 
 	XLogBeginInsert();
 	XLogRegisterData((char *) &xlrec, sizeof(xlrec));

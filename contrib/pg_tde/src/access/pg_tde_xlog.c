@@ -55,14 +55,10 @@ tdeheap_rmgr_redo(XLogReaderState *record)
 
 	if (info == XLOG_TDE_ADD_RELATION_KEY)
 	{
-		TDEPrincipalKeyInfo *pk = NULL;
 		XLogRelKey *xlrec = (XLogRelKey *) XLogRecGetData(record);
 
-		if (xlrec->pkInfo.databaseId != 0)
-			pk = &xlrec->pkInfo;
-
 		LWLockAcquire(tde_lwlock_enc_keys(), LW_EXCLUSIVE);
-		pg_tde_write_key_map_entry(&xlrec->rlocator, &xlrec->relKey, pk);
+		pg_tde_write_key_map_entry(&xlrec->rlocator, &xlrec->relKey, &xlrec->pkInfo);
 		LWLockRelease(tde_lwlock_enc_keys());
 	}
 	else if (info == XLOG_TDE_ADD_PRINCIPAL_KEY || info == XLOG_TDE_UPDATE_PRINCIPAL_KEY)
