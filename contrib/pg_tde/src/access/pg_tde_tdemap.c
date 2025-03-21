@@ -1243,6 +1243,7 @@ pg_tde_file_header_read(char *tde_filename, int fd, TDEFileHeader *fheader, bool
 		|| fheader->file_version != PG_TDE_FILEMAGIC)
 	{
 		/* Corrupt file */
+		close(fd);
 		ereport(FATAL,
 				(errcode_for_file_access(),
 				 errmsg("TDE map file \"%s\" is corrupted: %m",
