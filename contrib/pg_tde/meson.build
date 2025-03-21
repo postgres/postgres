@@ -108,6 +108,7 @@ sql_tests = [
       'update_basic',
       'key_provider',
       'relocate',
+      'recreate_storage',
 ]
 
 tap_tests = [
