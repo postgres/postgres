@@ -6189,7 +6189,7 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap)
 			Form_pg_attribute attr = TupleDescAttr(newTupDesc, i);
 
 			if (attr->attnotnull && !attr->attisdropped)
-				notnull_attrs = lappend_int(notnull_attrs, i);
+				notnull_attrs = lappend_int(notnull_attrs, attr->attnum);
 		}
 		if (notnull_attrs)
 			needscan = true;
@@ -6370,20 +6370,18 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap)
 			/* Now check any constraints on the possibly-changed tuple */
 			econtext->ecxt_scantuple = insertslot;
 
-			foreach(l, notnull_attrs)
+			foreach_int(attn, notnull_attrs)
 			{
-				int			attn = lfirst_int(l);
-
-				if (slot_attisnull(insertslot, attn + 1))
+				if (slot_attisnull(insertslot, attn))
 				{
-					Form_pg_attribute attr = TupleDescAttr(newTupDesc, attn);
+					Form_pg_attribute attr = TupleDescAttr(newTupDesc, attn - 1);
 
 					ereport(ERROR,
 							(errcode(ERRCODE_NOT_NULL_VIOLATION),
 							 errmsg("column \"%s\" of relation \"%s\" contains null values",
 									NameStr(attr->attname),
 									RelationGetRelationName(oldrel)),
-							 errtablecol(oldrel, attn + 1)));
+							 errtablecol(oldrel, attn)));
 				}
 			}
 
