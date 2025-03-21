@@ -3625,18 +3625,8 @@ show_memoize_info(MemoizeState *mstate, List *ancestors, ExplainState *es)
 		separator = ", ";
 	}
 
-	if (es->format != EXPLAIN_FORMAT_TEXT)
-	{
-		ExplainPropertyText("Cache Key", keystr.data, es);
-		ExplainPropertyText("Cache Mode", mstate->binary_mode ? "binary" : "logical", es);
-	}
-	else
-	{
-		ExplainIndentText(es);
-		appendStringInfo(es->str, "Cache Key: %s\n", keystr.data);
-		ExplainIndentText(es);
-		appendStringInfo(es->str, "Cache Mode: %s\n", mstate->binary_mode ? "binary" : "logical");
-	}
+	ExplainPropertyText("Cache Key", keystr.data, es);
+	ExplainPropertyText("Cache Mode", mstate->binary_mode ? "binary" : "logical", es);
 
 	pfree(keystr.data);
 
