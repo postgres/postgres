@@ -66,7 +66,7 @@ tdeheap_rmgr_redo(XLogReaderState *record)
 		TDEPrincipalKeyInfo *mkey = (TDEPrincipalKeyInfo *) XLogRecGetData(record);
 
 		LWLockAcquire(tde_lwlock_enc_keys(), LW_EXCLUSIVE);
-		create_principal_key_info(mkey);
+		pg_tde_save_principal_key(mkey);
 		LWLockRelease(tde_lwlock_enc_keys());
 	}
 	else if (info == XLOG_TDE_EXTENSION_INSTALL_KEY)

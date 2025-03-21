@@ -253,14 +253,6 @@ shared_memory_shutdown(int code, Datum arg)
 }
 
 bool
-create_principal_key_info(TDEPrincipalKeyInfo *principal_key_info)
-{
-	Assert(principal_key_info != NULL);
-
-	return pg_tde_save_principal_key(principal_key_info);
-}
-
-bool
 set_principal_key_with_keyring(const char *key_name, const char *provider_name,
 							   Oid providerOid, Oid dbOid, bool ensure_new_key)
 {
@@ -347,7 +339,7 @@ set_principal_key_with_keyring(const char *key_name, const char *provider_name,
 	if (!already_has_key)
 	{
 		/* First key created for the database */
-		create_principal_key_info(&new_principal_key->keyInfo);
+		pg_tde_save_principal_key(&new_principal_key->keyInfo);
 
 		/* XLog the new key */
 		XLogBeginInsert();
@@ -847,7 +839,7 @@ GetPrincipalKey(Oid dbOid, LWLockMode lockMode)
 	*newPrincipalKey = *principalKey;
 	newPrincipalKey->keyInfo.databaseId = dbOid;
 
-	create_principal_key_info(&newPrincipalKey->keyInfo);
+	pg_tde_save_principal_key(&newPrincipalKey->keyInfo);
 
 	/* XLog the new use of the default key */
 	XLogBeginInsert();

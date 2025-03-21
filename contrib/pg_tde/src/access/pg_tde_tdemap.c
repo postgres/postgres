@@ -317,7 +317,7 @@ pg_tde_delete_tde_files(Oid dbOid)
  *
  * The caller must have an EXCLUSIVE LOCK on the files before calling this function.
  */
-bool
+void
 pg_tde_save_principal_key(TDEPrincipalKeyInfo *principal_key_info)
 {
 	int			map_fd = -1;
@@ -341,8 +341,6 @@ pg_tde_save_principal_key(TDEPrincipalKeyInfo *principal_key_info)
 	/* Closing files. */
 	close(map_fd);
 	close(keydata_fd);
-
-	return (is_new_map && is_new_key_data);
 }
 
 /*
