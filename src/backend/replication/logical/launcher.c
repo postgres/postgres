@@ -31,7 +31,7 @@
 #include "postmaster/bgworker.h"
 #include "postmaster/interrupt.h"
 #include "replication/logicallauncher.h"
-#include "replication/slot.h"
+#include "replication/origin.h"
 #include "replication/walreceiver.h"
 #include "replication/worker_internal.h"
 #include "storage/ipc.h"
@@ -325,10 +325,10 @@ logicalrep_worker_launch(LogicalRepWorkerType wtype,
 							 subname)));
 
 	/* Report this after the initial starting message for consistency. */
-	if (max_replication_slots == 0)
+	if (max_active_replication_origins == 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_CONFIGURATION_LIMIT_EXCEEDED),
-				 errmsg("cannot start logical replication workers when \"max_replication_slots\"=0")));
+				 errmsg("cannot start logical replication workers when \"max_active_replication_origins\"=0")));
 
 	/*
 	 * We need to do the modification of the shared memory under lock so that

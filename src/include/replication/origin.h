@@ -37,6 +37,9 @@ extern PGDLLIMPORT RepOriginId replorigin_session_origin;
 extern PGDLLIMPORT XLogRecPtr replorigin_session_origin_lsn;
 extern PGDLLIMPORT TimestampTz replorigin_session_origin_timestamp;
 
+/* GUCs */
+extern PGDLLIMPORT int max_active_replication_origins;
+
 /* API for querying & manipulating replication origins */
 extern RepOriginId replorigin_by_name(const char *roname, bool missing_ok);
 extern RepOriginId replorigin_create(const char *roname);

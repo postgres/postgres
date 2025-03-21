@@ -274,7 +274,7 @@ max_worker_processes = 8
 # Check some unmet conditions on node S
 $node_s->append_conf(
 	'postgresql.conf', q{
-max_replication_slots = 1
+max_active_replication_origins = 1
 max_logical_replication_workers = 1
 max_worker_processes = 2
 });
@@ -293,7 +293,7 @@ command_fails(
 	'standby contains unmet conditions on node S');
 $node_s->append_conf(
 	'postgresql.conf', q{
-max_replication_slots = 10
+max_active_replication_origins = 10
 max_logical_replication_workers = 4
 max_worker_processes = 8
 });

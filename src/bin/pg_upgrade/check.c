@@ -1802,16 +1802,16 @@ check_new_cluster_logical_replication_slots(void)
 /*
  * check_new_cluster_subscription_configuration()
  *
- * Verify that the max_replication_slots configuration specified is enough for
- * creating the subscriptions. This is required to create the replication
- * origin for each subscription.
+ * Verify that the max_active_replication_origins configuration specified is
+ * enough for creating the subscriptions. This is required to create the
+ * replication origin for each subscription.
  */
 static void
 check_new_cluster_subscription_configuration(void)
 {
 	PGresult   *res;
 	PGconn	   *conn;
-	int			max_replication_slots;
+	int			max_active_replication_origins;
 
 	/* Subscriptions and their dependencies can be migrated since PG17. */
 	if (GET_MAJOR_VERSION(old_cluster.major_version) < 1700)
@@ -1826,16 +1826,16 @@ check_new_cluster_subscription_configuration(void)
 	conn = connectToServer(&new_cluster, "template1");
 
 	res = executeQueryOrDie(conn, "SELECT setting FROM pg_settings "
-							"WHERE name = 'max_replication_slots';");
+							"WHERE name = 'max_active_replication_origins';");
 
 	if (PQntuples(res) != 1)
 		pg_fatal("could not determine parameter settings on new cluster");
 
-	max_replication_slots = atoi(PQgetvalue(res, 0, 0));
-	if (old_cluster.nsubs > max_replication_slots)
-		pg_fatal("\"max_replication_slots\" (%d) must be greater than or equal to the number of "
+	max_active_replication_origins = atoi(PQgetvalue(res, 0, 0));
+	if (old_cluster.nsubs > max_active_replication_origins)
+		pg_fatal("\"max_active_replication_origins\" (%d) must be greater than or equal to the number of "
 				 "subscriptions (%d) on the old cluster",
-				 max_replication_slots, old_cluster.nsubs);
+				 max_active_replication_origins, old_cluster.nsubs);
 
 	PQclear(res);
 	PQfinish(conn);

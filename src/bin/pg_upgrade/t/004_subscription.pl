@@ -41,8 +41,9 @@ chdir ${PostgreSQL::Test::Utils::tmp_check};
 my $connstr = $publisher->connstr . ' dbname=postgres';
 
 # ------------------------------------------------------
-# Check that pg_upgrade fails when max_replication_slots configured in the new
-# cluster is less than the number of subscriptions in the old cluster.
+# Check that pg_upgrade fails when max_active_replication_origins configured
+# in the new cluster is less than the number of subscriptions in the old
+# cluster.
 # ------------------------------------------------------
 # It is sufficient to use disabled subscription to test upgrade failure.
 $publisher->safe_psql('postgres', "CREATE PUBLICATION regress_pub1");
@@ -52,10 +53,10 @@ $old_sub->safe_psql('postgres',
 
 $old_sub->stop;
 
-$new_sub->append_conf('postgresql.conf', "max_replication_slots = 0");
+$new_sub->append_conf('postgresql.conf', "max_active_replication_origins = 0");
 
 # pg_upgrade will fail because the new cluster has insufficient
-# max_replication_slots.
+# max_active_replication_origins.
 command_checks_all(
 	[
 		'pg_upgrade',
@@ -72,14 +73,14 @@ command_checks_all(
 	],
 	1,
 	[
-		qr/"max_replication_slots" \(0\) must be greater than or equal to the number of subscriptions \(1\) on the old cluster/
+		qr/"max_active_replication_origins" \(0\) must be greater than or equal to the number of subscriptions \(1\) on the old cluster/
 	],
 	[qr//],
-	'run of pg_upgrade where the new cluster has insufficient max_replication_slots'
+	'run of pg_upgrade where the new cluster has insufficient max_active_replication_origins'
 );
 
-# Reset max_replication_slots
-$new_sub->append_conf('postgresql.conf', "max_replication_slots = 10");
+# Reset max_active_replication_origins
+$new_sub->append_conf('postgresql.conf', "max_active_replication_origins = 10");
 
 # Cleanup
 $publisher->safe_psql('postgres', "DROP PUBLICATION regress_pub1");

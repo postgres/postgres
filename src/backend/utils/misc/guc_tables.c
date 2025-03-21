@@ -3375,6 +3375,18 @@ struct config_int ConfigureNamesInt[] =
 	},
 
 	{
+		{"max_active_replication_origins",
+			PGC_POSTMASTER,
+			REPLICATION_SUBSCRIBERS,
+			gettext_noop("Sets the maximum number of active replication origins."),
+			NULL
+		},
+		&max_active_replication_origins,
+		10, 0, MAX_BACKENDS,
+		NULL, NULL, NULL
+	},
+
+	{
 		{"log_rotation_age", PGC_SIGHUP, LOGGING_WHERE,
 			gettext_noop("Sets the amount of time to wait before forcing "
 						 "log file rotation."),

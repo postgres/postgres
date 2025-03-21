@@ -334,7 +334,7 @@ PostgreSQL documentation
 
    <para>
     The target server must be used as a physical standby.  The target server
-    must have <xref linkend="guc-max-replication-slots"/> and <xref
+    must have <xref linkend="guc-max-active-replication-origins"/> and <xref
     linkend="guc-max-logical-replication-workers"/> configured to a value
     greater than or equal to the number of specified databases.  The target
     server must have <xref linkend="guc-max-worker-processes"/> configured to a

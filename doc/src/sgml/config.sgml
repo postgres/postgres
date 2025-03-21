@@ -4476,13 +4476,6 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
          to <literal>replica</literal> or higher to allow replication slots to
          be used.
         </para>
-
-        <para>
-         Note that this parameter also applies on the subscriber side, but with
-         a different meaning. See <xref linkend="guc-max-replication-slots-subscriber"/>
-         in <xref linkend="runtime-config-replication-subscriber"/> for more
-         details.
-        </para>
        </listitem>
       </varlistentry>
 
@@ -5228,10 +5221,10 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
 
      <variablelist>
 
-     <varlistentry id="guc-max-replication-slots-subscriber" xreflabel="max_replication_slots">
-      <term><varname>max_replication_slots</varname> (<type>integer</type>)
+     <varlistentry id="guc-max-active-replication-origins" xreflabel="max_active_replication_origins">
+      <term><varname>max_active_replication_origins</varname> (<type>integer</type>)
        <indexterm>
-        <primary><varname>max_replication_slots</varname> configuration parameter</primary>
+        <primary><varname>max_active_replication_origins</varname> configuration parameter</primary>
         <secondary>in a subscriber</secondary>
        </indexterm>
       </term>
@@ -5243,17 +5236,12 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
         be created on the server. Setting it to a lower value than the current
         number of tracked replication origins (reflected in
         <link linkend="view-pg-replication-origin-status">pg_replication_origin_status</link>)
-        will prevent the server from starting.
-        <literal>max_replication_slots</literal> must be set to at least the
+        will prevent the server from starting. It defaults to 10. This parameter
+        can only be set at server start.
+
+        <literal>max_active_replication_origins</literal> must be set to at least the
         number of subscriptions that will be added to the subscriber, plus some
         reserve for table synchronization.
-       </para>
-
-       <para>
-        Note that this parameter also applies on a sending server, but with
-        a different meaning. See <xref linkend="guc-max-replication-slots"/>
-        in <xref linkend="runtime-config-replication-sender"/> for more
-        details.
        </para>
       </listitem>
      </varlistentry>

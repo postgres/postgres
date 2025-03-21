@@ -2370,10 +2370,8 @@ CONTEXT:  processing remote data for replication origin "pg_16395" during "INSER
   <title>Configuration Settings</title>
 
   <para>
-   Logical replication requires several configuration options to be set. Most
-   options are relevant only on one side of the replication. However,
-   <varname>max_replication_slots</varname> is used on both the publisher and
-   the subscriber, but it has a different meaning for each.
+   Logical replication requires several configuration options to be set. These
+   options are relevant only on one side of the replication.
   </para>
 
   <sect2 id="logical-replication-config-publisher">
@@ -2413,7 +2411,7 @@ CONTEXT:  processing remote data for replication origin "pg_16395" during "INSER
    <title>Subscribers</title>
 
    <para>
-    <link linkend="guc-max-replication-slots-subscriber"><varname>max_replication_slots</varname></link>
+    <link linkend="guc-max-active-replication-origins"><varname>max_active_replication_origins</varname></link>
     must be set to at least the number of subscriptions that will be added to
     the subscriber, plus some reserve for table synchronization.
    </para>
@@ -2580,7 +2578,7 @@ CONTEXT:  processing remote data for replication origin "pg_16395" during "INSER
     <listitem>
      <para>
       The new cluster must have
-      <link linkend="guc-max-replication-slots"><varname>max_replication_slots</varname></link>
+      <link linkend="guc-max-active-replication-origins"><varname>max_active_replication_origins</varname></link>
       configured to a value greater than or equal to the number of
       subscriptions present in the old cluster.
      </para>
