@@ -22,6 +22,7 @@
 #include "miscadmin.h"
 #include "storage/indexfsm.h"
 #include "storage/lmgr.h"
+#include "storage/read_stream.h"
 #include "utils/memutils.h"
 
 /* Working state needed by gistbulkdelete */
@@ -44,8 +45,7 @@ typedef struct
 
 static void gistvacuumscan(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 						   IndexBulkDeleteCallback callback, void *callback_state);
-static void gistvacuumpage(GistVacState *vstate, BlockNumber blkno,
-						   BlockNumber orig_blkno);
+static void gistvacuumpage(GistVacState *vstate, Buffer buffer);
 static void gistvacuum_delete_empty_pages(IndexVacuumInfo *info,
 										  GistVacState *vstate);
 static bool gistdeletepage(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
@@ -129,8 +129,9 @@ gistvacuumscan(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 	GistVacState vstate;
 	BlockNumber num_pages;
 	bool		needLock;
-	BlockNumber blkno;
 	MemoryContext oldctx;
+	BlockRangeReadStreamPrivate p;
+	ReadStream *stream = NULL;
 
 	/*
 	 * Reset fields that track information about the entire index now.  This
@@ -208,7 +209,14 @@ gistvacuumscan(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 	 */
 	needLock = !RELATION_IS_LOCAL(rel);
 
-	blkno = GIST_ROOT_BLKNO;
+	p.current_blocknum = GIST_ROOT_BLKNO;
+	stream = read_stream_begin_relation(READ_STREAM_FULL,
+										info->strategy,
+										rel,
+										MAIN_FORKNUM,
+										block_range_read_stream_cb,
+										&p,
+										0);
 	for (;;)
 	{
 		/* Get the current relation length */
@@ -219,12 +227,38 @@ gistvacuumscan(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 			UnlockRelationForExtension(rel, ExclusiveLock);
 
 		/* Quit if we've scanned the whole relation */
-		if (blkno >= num_pages)
+		if (p.current_blocknum >= num_pages)
 			break;
-		/* Iterate over pages, then loop back to recheck length */
-		for (; blkno < num_pages; blkno++)
-			gistvacuumpage(&vstate, blkno, blkno);
+
+		p.last_exclusive = num_pages;
+
+		/* Iterate over pages, then loop back to recheck relation length */
+		while (true)
+		{
+			Buffer		buf;
+
+			/* call vacuum_delay_point while not holding any buffer lock */
+			vacuum_delay_point(false);
+
+			buf = read_stream_next_buffer(stream, NULL);
+
+			if (!BufferIsValid(buf))
+				break;
+
+			gistvacuumpage(&vstate, buf);
+		}
+
+		Assert(read_stream_next_buffer(stream, NULL) == InvalidBuffer);
+
+		/*
+		 * We have to reset the read stream to use it again. After returning
+		 * InvalidBuffer, the read stream API won't invoke our callback again
+		 * until the stream has been reset.
+		 */
+		read_stream_reset(stream);
 	}
+
+	read_stream_end(stream);
 
 	/*
 	 * If we found any recyclable pages (and recorded them in the FSM), then
@@ -260,33 +294,31 @@ gistvacuumscan(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 /*
  * gistvacuumpage --- VACUUM one page
  *
- * This processes a single page for gistbulkdelete().  In some cases we
- * must go back and re-examine previously-scanned pages; this routine
- * recurses when necessary to handle that case.
- *
- * blkno is the page to process.  orig_blkno is the highest block number
- * reached by the outer gistvacuumscan loop (the same as blkno, unless we
- * are recursing to re-examine a previous page).
+ * This processes a single page for gistbulkdelete(). `buffer` contains the
+ * page to process. In some cases we must go back and reexamine
+ * previously-scanned pages; this routine recurses when necessary to handle
+ * that case.
  */
 static void
-gistvacuumpage(GistVacState *vstate, BlockNumber blkno, BlockNumber orig_blkno)
+gistvacuumpage(GistVacState *vstate, Buffer buffer)
 {
 	IndexVacuumInfo *info = vstate->info;
 	IndexBulkDeleteCallback callback = vstate->callback;
 	void	   *callback_state = vstate->callback_state;
 	Relation	rel = info->index;
-	Buffer		buffer;
+	BlockNumber orig_blkno = BufferGetBlockNumber(buffer);
 	Page		page;
 	BlockNumber recurse_to;
 
+	/*
+	 * orig_blkno is the highest block number reached by the outer
+	 * gistvacuumscan() loop. This will be the same as blkno unless we are
+	 * recursing to reexamine a previous page.
+	 */
+	BlockNumber blkno = orig_blkno;
+
 restart:
 	recurse_to = InvalidBlockNumber;
-
-	/* call vacuum_delay_point while not holding any buffer lock */
-	vacuum_delay_point(false);
-
-	buffer = ReadBufferExtended(rel, MAIN_FORKNUM, blkno, RBM_NORMAL,
-								info->strategy);
 
 	/*
 	 * We are not going to stay here for a long time, aggressively grab an
@@ -450,6 +482,12 @@ restart:
 	if (recurse_to != InvalidBlockNumber)
 	{
 		blkno = recurse_to;
+
+		/* check for vacuum delay while not holding any buffer lock */
+		vacuum_delay_point(false);
+
+		buffer = ReadBufferExtended(rel, MAIN_FORKNUM, blkno, RBM_NORMAL,
+									info->strategy);
 		goto restart;
 	}
 }
