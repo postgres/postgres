@@ -2802,8 +2802,6 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
      <listitem>
       <para>
        Drops a replication slot, freeing any reserved server-side resources.
-       If the slot is a logical slot that was created in a database other than
-       the database the walsender is connected to, this command fails.
       </para>
 
       <variablelist>

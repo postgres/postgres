@@ -29452,8 +29452,7 @@ postgres=# SELECT '0/0'::pg_lsn + pd.segment_number * ps.setting::int + :offset 
        <para>
         Drops the physical or logical replication slot
         named <parameter>slot_name</parameter>. Same as replication protocol
-        command <literal>DROP_REPLICATION_SLOT</literal>. For logical slots, this must
-        be called while connected to the same database the slot was created on.
+        command <literal>DROP_REPLICATION_SLOT</literal>.
        </para></entry>
       </row>
 
