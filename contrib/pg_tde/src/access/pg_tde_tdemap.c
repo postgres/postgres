@@ -128,7 +128,7 @@ static int32 pg_tde_process_map_entry(const RelFileLocator *rlocator, uint32 key
 static InternalKey *pg_tde_read_keydata(char *db_keydata_path, int32 key_index, TDEPrincipalKey *principal_key);
 static InternalKey *tde_decrypt_rel_key(TDEPrincipalKey *principal_key, InternalKey *enc_rel_key_data, Oid dbOid);
 static int	pg_tde_open_file_basic(char *tde_filename, int fileFlags, bool ignore_missing);
-static int	pg_tde_file_header_read(char *tde_filename, int fd, TDEFileHeader *fheader, bool *is_new_file, off_t *bytes_read);
+static void pg_tde_file_header_read(char *tde_filename, int fd, TDEFileHeader *fheader, bool *is_new_file, off_t *bytes_read);
 static bool pg_tde_read_one_map_entry(int fd, const RelFileLocator *rlocator, int flags, TDEMapEntry *map_entry, off_t *offset);
 static InternalKey *pg_tde_read_one_keydata(int keydata_fd, int32 key_index, TDEPrincipalKey *principal_key);
 static int	pg_tde_open_file(char *tde_filename, TDEPrincipalKeyInfo *principal_key_info, bool update_header, int fileFlags, bool *is_new_file, off_t *curr_pos);
@@ -1226,7 +1226,7 @@ pg_tde_open_file_basic(char *tde_filename, int fileFlags, bool ignore_missing)
 /*
  * Read TDE file header from a TDE file and fill in the fheader data structure.
  */
-static int
+static void
 pg_tde_file_header_read(char *tde_filename, int fd, TDEFileHeader *fheader, bool *is_new_file, off_t *bytes_read)
 {
 	Assert(fheader);
@@ -1235,9 +1235,9 @@ pg_tde_file_header_read(char *tde_filename, int fd, TDEFileHeader *fheader, bool
 	*bytes_read = pg_pread(fd, fheader, TDE_FILE_HEADER_SIZE, 0);
 	*is_new_file = (*bytes_read == 0);
 
-	/* File doesn't exist */
+	/* File is empty */
 	if (*bytes_read == 0)
-		return fd;
+		return;
 
 	if (*bytes_read != TDE_FILE_HEADER_SIZE
 		|| fheader->file_version != PG_TDE_FILEMAGIC)
@@ -1249,8 +1249,6 @@ pg_tde_file_header_read(char *tde_filename, int fd, TDEFileHeader *fheader, bool
 				 errmsg("TDE map file \"%s\" is corrupted: %m",
 						tde_filename)));
 	}
-
-	return fd;
 }
 
 
