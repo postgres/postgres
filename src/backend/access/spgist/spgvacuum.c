@@ -25,6 +25,7 @@
 #include "storage/bufmgr.h"
 #include "storage/indexfsm.h"
 #include "storage/lmgr.h"
+#include "storage/read_stream.h"
 #include "utils/snapmgr.h"
 
 
@@ -618,17 +619,12 @@ vacuumRedirectAndPlaceholder(Relation index, Relation heaprel, Buffer buffer)
  * Process one page during a bulkdelete scan
  */
 static void
-spgvacuumpage(spgBulkDeleteState *bds, BlockNumber blkno)
+spgvacuumpage(spgBulkDeleteState *bds, Buffer buffer)
 {
 	Relation	index = bds->info->index;
-	Buffer		buffer;
+	BlockNumber blkno = BufferGetBlockNumber(buffer);
 	Page		page;
 
-	/* call vacuum_delay_point while not holding any buffer lock */
-	vacuum_delay_point(false);
-
-	buffer = ReadBufferExtended(index, MAIN_FORKNUM, blkno,
-								RBM_NORMAL, bds->info->strategy);
 	LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
 	page = (Page) BufferGetPage(buffer);
 
@@ -805,8 +801,9 @@ spgvacuumscan(spgBulkDeleteState *bds)
 {
 	Relation	index = bds->info->index;
 	bool		needLock;
-	BlockNumber num_pages,
-				blkno;
+	BlockNumber num_pages;
+	BlockRangeReadStreamPrivate p;
+	ReadStream *stream = NULL;
 
 	/* Finish setting up spgBulkDeleteState */
 	initSpGistState(&bds->spgstate, index);
@@ -824,6 +821,14 @@ spgvacuumscan(spgBulkDeleteState *bds)
 
 	/* We can skip locking for new or temp relations */
 	needLock = !RELATION_IS_LOCAL(index);
+	p.current_blocknum = SPGIST_METAPAGE_BLKNO + 1;
+	stream = read_stream_begin_relation(READ_STREAM_FULL,
+										bds->info->strategy,
+										index,
+										MAIN_FORKNUM,
+										block_range_read_stream_cb,
+										&p,
+										0);
 
 	/*
 	 * The outer loop iterates over all index pages except the metapage, in
@@ -833,7 +838,6 @@ spgvacuumscan(spgBulkDeleteState *bds)
 	 * delete some deletable tuples.  See more extensive comments about this
 	 * in btvacuumscan().
 	 */
-	blkno = SPGIST_METAPAGE_BLKNO + 1;
 	for (;;)
 	{
 		/* Get the current relation length */
@@ -844,17 +848,42 @@ spgvacuumscan(spgBulkDeleteState *bds)
 			UnlockRelationForExtension(index, ExclusiveLock);
 
 		/* Quit if we've scanned the whole relation */
-		if (blkno >= num_pages)
+		if (p.current_blocknum >= num_pages)
 			break;
+
+		p.last_exclusive = num_pages;
+
 		/* Iterate over pages, then loop back to recheck length */
-		for (; blkno < num_pages; blkno++)
+		while (true)
 		{
-			spgvacuumpage(bds, blkno);
+			Buffer		buf;
+
+			/* call vacuum_delay_point while not holding any buffer lock */
+			vacuum_delay_point(false);
+
+			buf = read_stream_next_buffer(stream, NULL);
+
+			if (!BufferIsValid(buf))
+				break;
+
+			spgvacuumpage(bds, buf);
+
 			/* empty the pending-list after each page */
 			if (bds->pendingList != NULL)
 				spgprocesspending(bds);
 		}
+
+		Assert(read_stream_next_buffer(stream, NULL) == InvalidBuffer);
+
+		/*
+		 * We have to reset the read stream to use it again. After returning
+		 * InvalidBuffer, the read stream API won't invoke our callback again
+		 * until the stream has been reset.
+		 */
+		read_stream_reset(stream);
 	}
+
+	read_stream_end(stream);
 
 	/* Propagate local lastUsedPages cache to metablock */
 	SpGistUpdateMetaPage(index);
