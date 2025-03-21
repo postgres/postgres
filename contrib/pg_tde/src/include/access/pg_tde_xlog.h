@@ -20,7 +20,6 @@
 #define XLOG_TDE_ROTATE_KEY				0x30
 #define XLOG_TDE_ADD_KEY_PROVIDER_KEY 	0x40
 #define XLOG_TDE_FREE_MAP_ENTRY		 	0x50
-#define XLOG_TDE_UPDATE_PRINCIPAL_KEY	0x60
 
 /* ID 140 is registered for Percona TDE extension: https://wiki.postgresql.org/wiki/CustomWALResourceManagers */
 #define RM_TDERMGR_ID	140

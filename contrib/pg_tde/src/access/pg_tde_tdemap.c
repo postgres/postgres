@@ -318,7 +318,7 @@ pg_tde_delete_tde_files(Oid dbOid)
  * The caller must have an EXCLUSIVE LOCK on the files before calling this function.
  */
 bool
-pg_tde_save_principal_key(TDEPrincipalKeyInfo *principal_key_info, bool truncate_existing, bool update_header)
+pg_tde_save_principal_key(TDEPrincipalKeyInfo *principal_key_info)
 {
 	int			map_fd = -1;
 	int			keydata_fd = -1;
@@ -327,24 +327,16 @@ pg_tde_save_principal_key(TDEPrincipalKeyInfo *principal_key_info, bool truncate
 	bool		is_new_key_data = false;
 	char		db_map_path[MAXPGPATH] = {0};
 	char		db_keydata_path[MAXPGPATH] = {0};
-	int			file_flags = O_RDWR | O_CREAT;
+	int			file_flags = O_RDWR | O_CREAT | O_TRUNC;
 
 	/* Set the file paths */
 	pg_tde_set_db_file_paths(principal_key_info->databaseId,
 							 db_map_path, db_keydata_path);
 
-	ereport(DEBUG2,
-			(errmsg("pg_tde_save_principal_key"),
-			 errdetail("truncate_existing:%s update_header:%s", truncate_existing ? "YES" : "NO", update_header ? "YES" : "NO")));
+	ereport(DEBUG2, (errmsg("pg_tde_save_principal_key")));
 
-	/*
-	 * Create or truncate these map and keydata files.
-	 */
-	if (truncate_existing)
-		file_flags |= O_TRUNC;
-
-	map_fd = pg_tde_open_file(db_map_path, principal_key_info, update_header, file_flags, &is_new_map, &curr_pos);
-	keydata_fd = pg_tde_open_file(db_keydata_path, principal_key_info, update_header, file_flags, &is_new_key_data, &curr_pos);
+	map_fd = pg_tde_open_file(db_map_path, principal_key_info, true, file_flags, &is_new_map, &curr_pos);
+	keydata_fd = pg_tde_open_file(db_keydata_path, principal_key_info, true, file_flags, &is_new_key_data, &curr_pos);
 
 	/* Closing files. */
 	close(map_fd);

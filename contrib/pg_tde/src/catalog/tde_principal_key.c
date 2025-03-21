@@ -257,14 +257,7 @@ create_principal_key_info(TDEPrincipalKeyInfo *principal_key_info)
 {
 	Assert(principal_key_info != NULL);
 
-	return pg_tde_save_principal_key(principal_key_info, true, true);
-}
-
-bool
-update_principal_key_info(TDEPrincipalKeyInfo *principal_key_info)
-{
-	Assert(principal_key_info != NULL);
-	return pg_tde_save_principal_key(principal_key_info, false, true);
+	return pg_tde_save_principal_key(principal_key_info);
 }
 
 bool
