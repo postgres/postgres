@@ -164,8 +164,8 @@ pgaio_result_report(PgAioResult result, const PgAioTargetData *target_data, int 
 	PgAioHandleCallbackID cb_id = result.id;
 	const PgAioHandleCallbacksEntry *ce = &aio_handle_cbs[cb_id];
 
-	Assert(result.status != ARS_UNKNOWN);
-	Assert(result.status != ARS_OK);
+	Assert(result.status != PGAIO_RS_UNKNOWN);
+	Assert(result.status != PGAIO_RS_OK);
 
 	if (ce->cb->report == NULL)
 		elog(ERROR, "callback %d/%s does not have report callback",
@@ -220,7 +220,7 @@ pgaio_io_call_complete_shared(PgAioHandle *ioh)
 	Assert(ioh->target > PGAIO_TID_INVALID && ioh->target < PGAIO_TID_COUNT);
 	Assert(ioh->op > PGAIO_OP_INVALID && ioh->op < PGAIO_OP_COUNT);
 
-	result.status = ARS_OK;		/* low level IO is always considered OK */
+	result.status = PGAIO_RS_OK;	/* low level IO is always considered OK */
 	result.result = ioh->result;
 	result.id = PGAIO_HCB_INVALID;
 	result.error_data = 0;

@@ -216,7 +216,7 @@ pgaio_io_acquire_nb(struct ResourceOwnerData *resowner, PgAioReturn *ret)
 		if (ret)
 		{
 			ioh->report_return = ret;
-			ret->result.status = ARS_UNKNOWN;
+			ret->result.status = PGAIO_RS_UNKNOWN;
 		}
 
 		return ioh;
@@ -669,7 +669,7 @@ pgaio_io_reclaim(PgAioHandle *ioh)
 	ioh->handle_data_len = 0;
 	ioh->report_return = NULL;
 	ioh->result = 0;
-	ioh->distilled_result.status = ARS_UNKNOWN;
+	ioh->distilled_result.status = PGAIO_RS_UNKNOWN;
 
 	/* XXX: the barrier is probably superfluous */
 	pg_write_barrier();
@@ -829,13 +829,13 @@ pgaio_result_status_string(PgAioResultStatus rs)
 {
 	switch (rs)
 	{
-		case ARS_UNKNOWN:
+		case PGAIO_RS_UNKNOWN:
 			return "UNKNOWN";
-		case ARS_OK:
+		case PGAIO_RS_OK:
 			return "OK";
-		case ARS_PARTIAL:
+		case PGAIO_RS_PARTIAL:
 			return "PARTIAL";
-		case ARS_ERROR:
+		case PGAIO_RS_ERROR:
 			return "ERROR";
 	}
 

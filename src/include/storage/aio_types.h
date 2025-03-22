@@ -73,10 +73,10 @@ typedef union PgAioTargetData
  */
 typedef enum PgAioResultStatus
 {
-	ARS_UNKNOWN,				/* not yet completed / uninitialized */
-	ARS_OK,
-	ARS_PARTIAL,				/* did not fully succeed, but no error */
-	ARS_ERROR,
+	PGAIO_RS_UNKNOWN,			/* not yet completed / uninitialized */
+	PGAIO_RS_OK,
+	PGAIO_RS_PARTIAL,			/* did not fully succeed, but no error */
+	PGAIO_RS_ERROR,
 } PgAioResultStatus;
 
 

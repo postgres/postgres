@@ -202,7 +202,7 @@ AioShmemInit(void)
 			ioh->report_return = NULL;
 			ioh->resowner = NULL;
 			ioh->num_callbacks = 0;
-			ioh->distilled_result.status = ARS_UNKNOWN;
+			ioh->distilled_result.status = PGAIO_RS_UNKNOWN;
 			ioh->flags = 0;
 
 			ConditionVariableInit(&ioh->cv);
