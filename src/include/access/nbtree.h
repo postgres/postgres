@@ -1043,8 +1043,8 @@ typedef struct BTScanOpaqueData
 	/* workspace for SK_SEARCHARRAY support */
 	int			numArrayKeys;	/* number of equality-type array keys */
 	bool		needPrimScan;	/* New prim scan to continue in current dir? */
-	bool		scanBehind;		/* Last array advancement matched -inf attr? */
-	bool		oppositeDirCheck;	/* explicit scanBehind recheck needed? */
+	bool		scanBehind;		/* Check scan not still behind on next page? */
+	bool		oppositeDirCheck;	/* scanBehind opposite-scan-dir check? */
 	BTArrayKeyInfo *arrayKeys;	/* info about each equality-type array key */
 	FmgrInfo   *orderProcs;		/* ORDER procs for required equality keys */
 	MemoryContext arrayContext; /* scan-lifespan context for array data */
@@ -1087,11 +1087,12 @@ typedef struct BTReadPageState
 	OffsetNumber maxoff;		/* Highest non-pivot tuple's offset */
 	IndexTuple	finaltup;		/* Needed by scans with array keys */
 	Page		page;			/* Page being read */
+	bool		firstpage;		/* page is first for primitive scan? */
 
 	/* Per-tuple input parameters, set by _bt_readpage for _bt_checkkeys */
 	OffsetNumber offnum;		/* current tuple's page offset number */
 
-	/* Output parameter, set by _bt_checkkeys for _bt_readpage */
+	/* Output parameters, set by _bt_checkkeys for _bt_readpage */
 	OffsetNumber skip;			/* Array keys "look ahead" skip offnum */
 	bool		continuescan;	/* Terminate ongoing (primitive) index scan? */
 
@@ -1298,8 +1299,8 @@ extern int	_bt_binsrch_array_skey(FmgrInfo *orderproc,
 extern void _bt_start_array_keys(IndexScanDesc scan, ScanDirection dir);
 extern bool _bt_checkkeys(IndexScanDesc scan, BTReadPageState *pstate, bool arrayKeys,
 						  IndexTuple tuple, int tupnatts);
-extern bool _bt_oppodir_checkkeys(IndexScanDesc scan, ScanDirection dir,
-								  IndexTuple finaltup);
+extern bool _bt_scanbehind_checkkeys(IndexScanDesc scan, ScanDirection dir,
+									 IndexTuple finaltup);
 extern void _bt_killitems(IndexScanDesc scan);
 extern BTCycleId _bt_vacuum_cycleid(Relation rel);
 extern BTCycleId _bt_start_vacuum(Relation rel);
