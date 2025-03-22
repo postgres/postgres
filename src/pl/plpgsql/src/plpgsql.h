@@ -490,10 +490,13 @@ typedef struct PLpgSQL_stmt
  */
 typedef struct PLpgSQL_condition
 {
-	int			sqlerrstate;	/* SQLSTATE code */
+	int			sqlerrstate;	/* SQLSTATE code, or PLPGSQL_OTHERS */
 	char	   *condname;		/* condition name (for debugging) */
 	struct PLpgSQL_condition *next;
 } PLpgSQL_condition;
+
+/* This value mustn't match any possible output of MAKE_SQLSTATE() */
+#define PLPGSQL_OTHERS (-1)
 
 /*
  * EXCEPTION block
