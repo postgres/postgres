@@ -4497,8 +4497,22 @@ ExpireTreeKnownAssignedTransactionIds(TransactionId xid, int nsubxids,
 void
 ExpireAllKnownAssignedTransactionIds(void)
 {
+	FullTransactionId latestXid;
+
 	LWLockAcquire(ProcArrayLock, LW_EXCLUSIVE);
 	KnownAssignedXidsRemovePreceding(InvalidTransactionId);
+
+	/* Reset latestCompletedXid to nextXid - 1 */
+	Assert(FullTransactionIdIsValid(TransamVariables->nextXid));
+	latestXid = TransamVariables->nextXid;
+	FullTransactionIdRetreat(&latestXid);
+	TransamVariables->latestCompletedXid = latestXid;
+
+	/*
+	 * Any transactions that were in-progress were effectively aborted, so
+	 * advance xactCompletionCount.
+	 */
+	TransamVariables->xactCompletionCount++;
 
 	/*
 	 * Reset lastOverflowedXid.  Currently, lastOverflowedXid has no use after
@@ -4517,7 +4531,17 @@ ExpireAllKnownAssignedTransactionIds(void)
 void
 ExpireOldKnownAssignedTransactionIds(TransactionId xid)
 {
+	TransactionId latestXid;
+
 	LWLockAcquire(ProcArrayLock, LW_EXCLUSIVE);
+
+	/* As in ProcArrayEndTransaction, advance latestCompletedXid */
+	latestXid = xid;
+	TransactionIdRetreat(latestXid);
+	MaintainLatestCompletedXidRecovery(latestXid);
+
+	/* ... and xactCompletionCount */
+	TransamVariables->xactCompletionCount++;
 
 	/*
 	 * Reset lastOverflowedXid if we know all transactions that have been
