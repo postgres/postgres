@@ -5160,6 +5160,7 @@ BootStrapXLOG(void)
 	BootStrapCommitTs();
 	BootStrapSUBTRANS();
 	BootStrapMultiXact();
+	BootStrapCSN();
 
 	pfree(buffer);
 

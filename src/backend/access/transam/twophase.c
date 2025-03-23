@@ -2744,7 +2744,7 @@ CSNSnapshotPrepareTwophase(const char *gid)
 
 	/* Unlock our GXACT */
 	LWLockAcquire(TwoPhaseStateLock, LW_EXCLUSIVE);
-	gxact->locking_backend = InvalidBackendId;
+	gxact->locking_backend = INVALID_PROC_NUMBER;
 	LWLockRelease(TwoPhaseStateLock);
 
 	pfree(buf);
@@ -2796,7 +2796,7 @@ CSNSnapshotAssignTwoPhase(const char *gid, SnapshotCSN csn)
 
 	/* Unlock our GXACT */
 	LWLockAcquire(TwoPhaseStateLock, LW_EXCLUSIVE);
-	gxact->locking_backend = InvalidBackendId;
+	gxact->locking_backend = INVALID_PROC_NUMBER;
 	LWLockRelease(TwoPhaseStateLock);
 }
 

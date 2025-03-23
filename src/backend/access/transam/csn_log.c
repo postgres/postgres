@@ -29,10 +29,12 @@
 #include "access/subtrans.h"
 #include "access/transam.h"
 #include "access/xlogutils.h"
+#include "access/xloginsert.h"
 #include "miscadmin.h"
 #include "pg_trace.h"
 #include "portability/instr_time.h"
 #include "storage/shmem.h"
+#include "storage/lwlock.h"
 #include "storage/spin.h"
 #include "utils/snapmgr.h"
 #include "access/xlog_internal.h"
@@ -87,7 +89,7 @@ static SlruCtlData CSNLogCtlData;
 
 static int	ZeroCSNLogPage(int pageno, bool write_xlog);
 static void ZeroTruncateCSNLogPage(int pageno, bool write_xlog);
-static bool CSNLogPagePrecedes(int page1, int page2);
+static bool CSNLogPagePrecedes(int64 page1, int64 page2);
 static void CSNLogSetPageStatus(TransactionId xid, int nsubxids,
 									  TransactionId *subxids,
 									  CSN csn, int pageno);
@@ -128,8 +130,8 @@ CSNLogShmemInit(void)
 
 	CsnlogCtl->PagePrecedes = CSNLogPagePrecedes;
 	SimpleLruInit(CsnlogCtl, "CSNLog Ctl", CSNLogShmemBuffers(), 0,
-				  CSNLogSLRULock, "pg_csn", LWTRANCHE_CSN_LOG_BUFFERS,
-				  SYNC_HANDLER_CSN);
+				 "pg_csn", LWTRANCHE_CSN_LOG_BUFFERS, LWTRANCHE_CSN_SLRU,
+				  SYNC_HANDLER_CSN,false);
 
 	csnShared = ShmemInitStruct("CSNlog shared",
 									 sizeof(CSNShared),
@@ -143,6 +145,31 @@ CSNLogShmemInit(void)
 		SpinLockInit(&csnShared->lock);
 	}
 }
+
+/*
+ * This func must be called ONCE on system install.  It creates
+ * the initial CLOG segment.  (The CLOG directory is assumed to
+ * have been created by initdb, and CLOGShmemInit must have been
+ * called already.)
+ */
+void
+BootStrapCSN(void)
+{
+	int			slotno;
+	LWLock	   *lock = SimpleLruGetBankLock(CsnlogCtl, 0);
+
+	LWLockAcquire(lock, LW_EXCLUSIVE);
+
+	/* Create and zero the first page of the commit log */
+	slotno = ZeroCSNLogPage(0, false);
+
+	/* Make sure it's written out */
+	SimpleLruWritePage(CsnlogCtl, slotno);
+	Assert(!CsnlogCtl->shared->page_dirty[slotno]);
+
+	LWLockRelease(lock);
+}
+
 
 /*
  * CSNLogSetCSN
@@ -209,8 +236,9 @@ CSNLogSetPageStatus(TransactionId xid, int nsubxids, TransactionId *subxids,
 {
 	int slotno;
 	int i;
+	LWLock	   *lock = SimpleLruGetBankLock(CsnlogCtl, pageno);
+	LWLockAcquire(lock, LW_EXCLUSIVE);
 
-	LWLockAcquire(CSNLogSLRULock, LW_EXCLUSIVE);
 
 	slotno = SimpleLruReadPage(CsnlogCtl, pageno, true, xid);
 
@@ -227,7 +255,7 @@ CSNLogSetPageStatus(TransactionId xid, int nsubxids, TransactionId *subxids,
 
 	CsnlogCtl->shared->page_dirty[slotno] = true;
 
-	LWLockRelease(CSNLogSLRULock);
+	LWLockRelease(lock);
 }
 
 /*
@@ -238,8 +266,6 @@ CSNLogSetCSNInSlot(TransactionId xid, CSN csn, int slotno)
 {
 	int entryno = TransactionIdToPgIndex(xid);
 	CSN *ptr;
-
-	Assert(LWLockHeldByMe(CSNLogSLRULock));
 
 	ptr = (CSN *) (CsnlogCtl->shared->page_buffer[slotno] +
 														entryno * sizeof(CSN));
@@ -260,12 +286,14 @@ CSNLogGetCSNByXid(TransactionId xid)
 	int entryno = TransactionIdToPgIndex(xid);
 	int slotno;
 	CSN csn;
+	LWLock	   *lock = SimpleLruGetBankLock(CsnlogCtl, pageno);
+	LWLockAcquire(lock, LW_EXCLUSIVE);
 
 	/* lock is acquired by SimpleLruReadPage_ReadOnly */
 	slotno = SimpleLruReadPage_ReadOnly(CsnlogCtl, pageno, xid);
 	csn = *(CSN *) (CsnlogCtl->shared->page_buffer[slotno] +
 														entryno * sizeof(CSN));
-	LWLockRelease(CSNLogSLRULock);
+	LWLockRelease(lock);
 
 	return csn;
 }
@@ -281,7 +309,6 @@ CSNLogGetCSNByXid(TransactionId xid)
 static int
 ZeroCSNLogPage(int pageno, bool write_xlog)
 {
-	Assert(LWLockHeldByMe(CSNLogSLRULock));
 	if(write_xlog)
 		WriteZeroCSNPageXlogRec(pageno);
 	return SimpleLruZeroPage(CsnlogCtl, pageno);
@@ -305,10 +332,11 @@ ActivateCSNlog(void)
 	if (csnShared->csnSnapshotActive)
 		return;
 
-	nextXid = XidFromFullTransactionId(ShmemVariableCache->nextXid);
+	nextXid = XidFromFullTransactionId(TransamVariables->nextXid);
 	pageno = TransactionIdToPage(nextXid);
 
-	LWLockAcquire(CSNLogSLRULock, LW_EXCLUSIVE);
+	LWLock	   *lock = SimpleLruGetBankLock(CsnlogCtl, pageno);
+	LWLockAcquire(lock, LW_EXCLUSIVE);
 
 	/*
 	 * Create the current segment file, if necessary.
@@ -347,7 +375,7 @@ ActivateCSNlog(void)
 			oldest_xid = nextXid;
 		}
 	}
-	LWLockRelease(CSNLogSLRULock);
+	LWLockRelease(lock);
 
 	if (!TransactionIdIsValid(oldest_xid))
 	{
@@ -381,9 +409,10 @@ DeactivateCSNlog(void)
 {
 	csnShared->csnSnapshotActive = false;
 	set_oldest_xmin(InvalidTransactionId);
-	LWLockAcquire(CSNLogSLRULock, LW_EXCLUSIVE);
+	LWLock	   *lock = SimpleLruGetBankLock(CsnlogCtl, 0);
+	LWLockAcquire(lock, LW_EXCLUSIVE);
 	(void) SlruScanDirectory(CsnlogCtl, SlruScanDirCbDeleteAll, NULL);
-	LWLockRelease(CSNLogSLRULock);
+	LWLockRelease(lock);
 	elog(LOG, "CSN log has deactivated");
 }
 
@@ -470,12 +499,13 @@ ExtendCSNLog(TransactionId newestXact)
 
 	pageno = TransactionIdToPage(newestXact);
 
-	LWLockAcquire(CSNLogSLRULock, LW_EXCLUSIVE);
+	LWLock	   *lock = SimpleLruGetBankLock(CsnlogCtl, pageno);
+	LWLockAcquire(lock, LW_EXCLUSIVE);
 
 	/* Zero the page and make an XLOG entry about it */
 	ZeroCSNLogPage(pageno, !InRecovery);
 
-	LWLockRelease(CSNLogSLRULock);
+	LWLockRelease(lock);
 }
 
 /*
@@ -538,7 +568,7 @@ TruncateCSNLog(TransactionId oldestXact)
  * offset both xids by FirstNormalTransactionId to avoid that.
  */
 static bool
-CSNLogPagePrecedes(int page1, int page2)
+CSNLogPagePrecedes(int64 page1, int64 page2)
 {
 	TransactionId xid1;
 	TransactionId xid2;
@@ -638,10 +668,11 @@ csnlog_redo(XLogReaderState *record)
 		int			slotno;
 
 		memcpy(&pageno, XLogRecGetData(record), sizeof(int));
-		LWLockAcquire(CSNLogSLRULock, LW_EXCLUSIVE);
+		LWLock	   *lock = SimpleLruGetBankLock(CsnlogCtl, pageno);
+		LWLockAcquire(lock, LW_EXCLUSIVE);
 		slotno = ZeroCSNLogPage(pageno, false);
 		SimpleLruWritePage(CsnlogCtl, slotno);
-		LWLockRelease(CSNLogSLRULock);
+		LWLockRelease(lock);
 		Assert(!CsnlogCtl->shared->page_dirty[slotno]);
 
 	}
@@ -650,7 +681,9 @@ csnlog_redo(XLogReaderState *record)
 		int			pageno;
 
 		memcpy(&pageno, XLogRecGetData(record), sizeof(int));
-		CsnlogCtl->shared->latest_page_number = pageno;
+		pg_atomic_write_u64(&CsnlogCtl->shared->latest_page_number,
+			pageno);
+
 		ZeroTruncateCSNLogPage(pageno, false);
 	}
 	else

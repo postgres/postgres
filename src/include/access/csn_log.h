@@ -14,6 +14,8 @@
 #include "access/xlog.h"
 #include "utils/snapshot.h"
 #include "storage/sync.h"
+#include "access/xlogrecord.h"
+#include "access/xlogreader.h"
 
 
 #define InProgressCSN	 	UINT64CONST(0x0)
@@ -84,6 +86,7 @@ extern void csnlog_desc(StringInfo buf, XLogReaderState *record);
 extern const char *csnlog_identify(uint8 info);
 extern void WriteAssignCSNXlogRec(CSN csn);
 extern void CatchCSNLog(void);
+extern void BootStrapCSN(void);
 extern void StartupCSN(void);
 extern void CompleteCSNInitialization(void);
 extern void CSNlogParameterChange(bool newvalue, bool oldvalue);
