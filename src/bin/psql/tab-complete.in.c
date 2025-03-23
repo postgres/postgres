@@ -3069,12 +3069,15 @@ match_previous_words(int pattern_id,
 		COMPLETE_WITH_QUERY(Query_for_list_of_roles);
 
 /*
- * ANALYZE [ ( option [, ...] ) ] [ table_and_columns [, ...] ]
- * ANALYZE [ VERBOSE ] [ table_and_columns [, ...] ]
+ * ANALYZE [ ( option [, ...] ) ] [ [ ONLY ] table_and_columns [, ...] ]
+ * ANALYZE [ VERBOSE ] [ [ ONLY ] table_and_columns [, ...] ]
  */
 	else if (Matches("ANALYZE"))
 		COMPLETE_WITH_SCHEMA_QUERY_PLUS(Query_for_list_of_analyzables,
-										"VERBOSE");
+										"(", "VERBOSE", "ONLY");
+	else if (Matches("ANALYZE", "VERBOSE"))
+		COMPLETE_WITH_SCHEMA_QUERY_PLUS(Query_for_list_of_analyzables,
+										"ONLY");
 	else if (HeadMatches("ANALYZE", "(*") &&
 			 !HeadMatches("ANALYZE", "(*)"))
 	{
@@ -5128,30 +5131,35 @@ match_previous_words(int pattern_id,
 		COMPLETE_WITH("OPTIONS");
 
 /*
- * VACUUM [ ( option [, ...] ) ] [ table_and_columns [, ...] ]
- * VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] [ ANALYZE ] [ table_and_columns [, ...] ]
+ * VACUUM [ ( option [, ...] ) ] [ [ ONLY ] table_and_columns [, ...] ]
+ * VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] [ ANALYZE ] [ [ ONLY ] table_and_columns [, ...] ]
  */
 	else if (Matches("VACUUM"))
 		COMPLETE_WITH_SCHEMA_QUERY_PLUS(Query_for_list_of_vacuumables,
+										"(",
 										"FULL",
 										"FREEZE",
+										"VERBOSE",
 										"ANALYZE",
-										"VERBOSE");
+										"ONLY");
 	else if (Matches("VACUUM", "FULL"))
 		COMPLETE_WITH_SCHEMA_QUERY_PLUS(Query_for_list_of_vacuumables,
 										"FREEZE",
+										"VERBOSE",
 										"ANALYZE",
-										"VERBOSE");
-	else if (Matches("VACUUM", "FREEZE") ||
-			 Matches("VACUUM", "FULL", "FREEZE"))
+										"ONLY");
+	else if (Matches("VACUUM", MatchAnyN, "FREEZE"))
 		COMPLETE_WITH_SCHEMA_QUERY_PLUS(Query_for_list_of_vacuumables,
 										"VERBOSE",
-										"ANALYZE");
-	else if (Matches("VACUUM", "VERBOSE") ||
-			 Matches("VACUUM", "FULL|FREEZE", "VERBOSE") ||
-			 Matches("VACUUM", "FULL", "FREEZE", "VERBOSE"))
+										"ANALYZE",
+										"ONLY");
+	else if (Matches("VACUUM", MatchAnyN, "VERBOSE"))
 		COMPLETE_WITH_SCHEMA_QUERY_PLUS(Query_for_list_of_vacuumables,
-										"ANALYZE");
+										"ANALYZE",
+										"ONLY");
+	else if (Matches("VACUUM", MatchAnyN, "ANALYZE"))
+		COMPLETE_WITH_SCHEMA_QUERY_PLUS(Query_for_list_of_vacuumables,
+										"ONLY");
 	else if (HeadMatches("VACUUM", "(*") &&
 			 !HeadMatches("VACUUM", "(*)"))
 	{
