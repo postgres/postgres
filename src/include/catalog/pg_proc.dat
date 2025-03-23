@@ -12184,5 +12184,22 @@
   proallargtypes => '{int8,pg_lsn,pg_lsn,int4}', proargmodes => '{o,o,o,o}',
   proargnames => '{summarized_tli,summarized_lsn,pending_lsn,summarizer_pid}',
   prosrc => 'pg_get_wal_summarizer_state' },
+  
+# csn shnapshot handling
+{ oid => '10001', descr => 'export csn snapshot',
+  proname => 'pg_csn_snapshot_export', provolatile => 'v', proparallel => 'u',
+  prorettype => 'int8', proargtypes => '', prosrc => 'pg_csn_snapshot_export' },
+{ oid => '10002', descr => 'import csn snapshot',
+  proname => 'pg_csn_snapshot_import', provolatile => 'v', proparallel => 'u',
+  prorettype => 'void', proargtypes => 'int8', prosrc => 'pg_csn_snapshot_import' },
+{ oid => '10003', descr => 'prepare distributed transaction for commit, get csn',
+  proname => 'pg_csn_snapshot_prepare', provolatile => 'v', proparallel => 'u',
+  prorettype => 'int8', proargtypes => 'text', prosrc => 'pg_csn_snapshot_prepare' },
+{ oid => '10004', descr => 'assign csn to distributed transaction',
+  proname => 'pg_csn_snapshot_assign', provolatile => 'v', proparallel => 'u',
+  prorettype => 'void', proargtypes => 'text int8', prosrc => 'pg_csn_snapshot_assign' },
+{ oid => '10005', descr => 'get current CSN',
+  proname => 'pg_current_csn', provolatile => 'v', proparallel => 'u',
+  prorettype => 'int8', proargtypes => '', prosrc => 'pg_current_csn' },
 
 ]

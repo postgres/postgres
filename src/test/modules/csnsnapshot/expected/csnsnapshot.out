@@ -1,0 +1,1 @@
+create table t1(i int, j int, k varchar);

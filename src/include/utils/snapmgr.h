@@ -20,6 +20,7 @@
 
 
 extern PGDLLIMPORT bool FirstSnapshotSet;
+extern PGDLLIMPORT bool enable_csn_snapshot;
 
 extern PGDLLIMPORT TransactionId TransactionXmin;
 extern PGDLLIMPORT TransactionId RecentXmin;
@@ -90,6 +91,8 @@ extern void AtSubCommit_Snapshot(int level);
 extern void AtSubAbort_Snapshot(int level);
 extern void AtEOXact_Snapshot(bool isCommit, bool resetXmin);
 
+extern SnapshotCSN ExportCSNSnapshot(void);
+extern void ImportCSNSnapshot(SnapshotCSN snapshot_csn);
 extern void ImportSnapshot(const char *idstr);
 extern bool XactHasExportedSnapshots(void);
 extern void DeleteAllExportedSnapshotFiles(void);

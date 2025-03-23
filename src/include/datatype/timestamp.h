@@ -133,6 +133,9 @@ struct pg_itm_in
 #define USECS_PER_MINUTE INT64CONST(60000000)
 #define USECS_PER_SEC	INT64CONST(1000000)
 
+#define NSECS_PER_SEC	INT64CONST(1000000000)
+#define NSECS_PER_USEC	INT64CONST(1000)
+
 /*
  * We allow numeric timezone offsets up to 15:59:59 either way from Greenwich.
  * Currently, the record holders for wackiest offsets in actual use are zones

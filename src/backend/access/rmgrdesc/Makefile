@@ -11,6 +11,7 @@ include $(top_builddir)/src/Makefile.global
 OBJS = \
 	brindesc.o \
 	clogdesc.o \
+	csnlogdesc.o \
 	committsdesc.o \
 	dbasedesc.o \
 	genericdesc.o \

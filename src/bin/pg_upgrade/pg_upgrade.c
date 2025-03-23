@@ -788,6 +788,11 @@ copy_xact_xlog_xid(void)
 		check_ok();
 	}
 
+	if(old_cluster.controldata.cat_ver > CSN_BASE_SNAPSHOT_ADD_VER)
+	{
+		copy_subdir_files("pg_csn", "pg_csn");
+	}
+
 	/* now reset the wal archives in the new cluster */
 	prep_status("Resetting WAL archives");
 	exec_prog(UTILITY_LOG_FILE, NULL, true, true,

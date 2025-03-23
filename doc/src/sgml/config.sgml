@@ -10574,8 +10574,56 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
      </varlistentry>
 
      </variablelist>
-   </sect1>
 
+    <sect2 id="runtime-config-CSN-based-snapshot">
+     <title>CSN Based Snapshot</title>
+      <para>
+       By default, snapshots in <productname>PostgreSQL</productname> contains a
+       XID (TransactionID) that allows to identify the status of a transaction
+       and make arbitrary visibility calculations.
+      </para>
+
+      <para>
+       <productname>PostgreSQL</productname> also provides a CSN (Commit
+        Sequence Number) based machinery as an additional tool for visibility
+        calculations. It may be used within distributed transactions when a xid of
+        a local transaction can't correctly identify order of the distributed one.
+      </para>
+
+     <variablelist>
+      <varlistentry id="guc-enable-csn-snapshot" xreflabel="enable_csn_snapshot">
+       <term><varname>enable_csn_snapshot</varname> (<type>boolean</type>)
+        <indexterm>
+         <primary><varname>enable_csn_snapshot</varname> configuration parameter</primary>
+        </indexterm>
+       </term>
+       <listitem>
+
+        <para>
+         Enable/disable the CSN tracking for the snapshot.
+        </para>
+
+        <para>
+        <productname>PostgreSQL</productname> uses a physical clock timestamp as
+        a CSN, so enabling the CSN based snapshots can be useful for implementing
+        cross-instance snapshots and visibility of distributed transaction.
+        </para>
+
+        <para>
+         when enabled <productname>PostgreSQL</productname> creates
+         <filename>pg_csn</filename> directory under <envar>PGDATA</envar> to keep
+         the track of CSN and XID mappings.
+        </para>
+
+        <para>
+         The default value is on.
+        </para>
+       </listitem>
+      </varlistentry>
+
+     </variablelist>
+    </sect2>
+   </sect1>
    <sect1 id="runtime-config-compatible">
     <title>Version and Platform Compatibility</title>
 

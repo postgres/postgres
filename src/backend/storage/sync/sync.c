@@ -21,6 +21,7 @@
 #include "access/clog.h"
 #include "access/commit_ts.h"
 #include "access/multixact.h"
+#include "access/csn_log.h"
 #include "access/xlog.h"
 #include "miscadmin.h"
 #include "pgstat.h"
@@ -114,6 +115,10 @@ static const SyncOps syncsw[] = {
 	/* pg_multixact/members */
 	[SYNC_HANDLER_MULTIXACT_MEMBER] = {
 		.sync_syncfiletag = multixactmemberssyncfiletag
+	},
+	/* pg_multixact/members */
+	[SYNC_HANDLER_CSN] = {
+		.sync_syncfiletag = csnsyncfiletag
 	}
 };
 

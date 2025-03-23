@@ -48,6 +48,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include "access/csn_log.h"
 #include "access/subtrans.h"
 #include "access/transam.h"
 #include "access/xact.h"
@@ -90,6 +91,7 @@ static Snapshot SecondarySnapshot = NULL;
 static Snapshot CatalogSnapshot = NULL;
 static Snapshot HistoricSnapshot = NULL;
 
+bool		enable_csn_snapshot;
 /*
  * These are updated by GetSnapshotData.  We initialize them this way
  * for the convenience of TransactionIdIsInProgress: even in bootstrap
@@ -159,6 +161,7 @@ static Snapshot CopySnapshot(Snapshot snapshot);
 static void UnregisterSnapshotNoOwner(Snapshot snapshot);
 static void FreeSnapshot(Snapshot snapshot);
 static void SnapshotResetXmin(void);
+static bool XidInLocalMVCCSnapshot(TransactionId xid, Snapshot snapshot);
 
 /* ResourceOwner callbacks to track snapshot references */
 static void ResOwnerReleaseSnapshot(Datum res);
@@ -201,6 +204,8 @@ typedef struct SerializedSnapshotData
 	CommandId	curcid;
 	TimestampTz whenTaken;
 	XLogRecPtr	lsn;
+	CSN			csn;
+	bool		imported_csn;
 } SerializedSnapshotData;
 
 /*
@@ -512,6 +517,8 @@ SetTransactionSnapshot(Snapshot sourcesnap, VirtualTransactionId *sourcevxid,
 			   sourcesnap->subxcnt * sizeof(TransactionId));
 	CurrentSnapshot->suboverflowed = sourcesnap->suboverflowed;
 	CurrentSnapshot->takenDuringRecovery = sourcesnap->takenDuringRecovery;
+	CurrentSnapshot->snapshot_csn = sourcesnap->snapshot_csn;
+	CurrentSnapshot->imported_csn = sourcesnap->imported_csn;
 	/* NB: curcid should NOT be copied, it's a local matter */
 
 	CurrentSnapshot->snapXactCompletionCount = 0;
@@ -1184,6 +1191,10 @@ ExportSnapshot(Snapshot snapshot)
 	appendStringInfo(&buf, "xmin:%u\n", snapshot->xmin);
 	appendStringInfo(&buf, "xmax:%u\n", snapshot->xmax);
 
+	appendStringInfo(&buf, "snapshot_csn:"UINT64_FORMAT"\n",
+					 snapshot->snapshot_csn);
+	appendStringInfo(&buf, "imported_csn:%u\n", snapshot->imported_csn);
+
 	/*
 	 * We must include our own top transaction ID in the top-xid data, since
 	 * by definition we will still be running when the importing transaction
@@ -1296,6 +1307,31 @@ parseIntFromText(const char *prefix, char **s, const char *filename)
 				 errmsg("invalid snapshot data in file \"%s\"", filename)));
 	ptr += prefixlen;
 	if (sscanf(ptr, "%d", &val) != 1)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+				 errmsg("invalid snapshot data in file \"%s\"", filename)));
+	ptr = strchr(ptr, '\n');
+	if (!ptr)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+				 errmsg("invalid snapshot data in file \"%s\"", filename)));
+	*s = ptr + 1;
+	return val;
+}
+
+static CSN
+parseCSNFromText(const char *prefix, char **s, const char *filename)
+{
+	char	   *ptr = *s;
+	int			prefixlen = strlen(prefix);
+	uint64		val;
+
+	if (strncmp(ptr, prefix, prefixlen) != 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+				 errmsg("invalid snapshot data in file \"%s\"", filename)));
+	ptr += prefixlen;
+	if (sscanf(ptr, UINT64_FORMAT, &val) != 1)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 				 errmsg("invalid snapshot data in file \"%s\"", filename)));
@@ -1460,6 +1496,9 @@ ImportSnapshot(const char *idstr)
 
 	snapshot.xmin = parseXidFromText("xmin:", &filebuf, path);
 	snapshot.xmax = parseXidFromText("xmax:", &filebuf, path);
+
+	snapshot.snapshot_csn = parseCSNFromText("snapshot_csn:", &filebuf, path);
+	snapshot.imported_csn = parseIntFromText("imported_csn:", &filebuf, path);
 
 	snapshot.xcnt = xcnt = parseIntFromText("xcnt:", &filebuf, path);
 
@@ -1729,6 +1768,8 @@ SerializeSnapshot(Snapshot snapshot, char *start_address)
 	serialized_snapshot.curcid = snapshot->curcid;
 	serialized_snapshot.whenTaken = snapshot->whenTaken;
 	serialized_snapshot.lsn = snapshot->lsn;
+	serialized_snapshot.csn = snapshot->snapshot_csn;
+	serialized_snapshot.imported_csn = snapshot->imported_csn;
 
 	/*
 	 * Ignore the SubXID array if it has overflowed, unless the snapshot was
@@ -1803,6 +1844,8 @@ RestoreSnapshot(char *start_address)
 	snapshot->curcid = serialized_snapshot.curcid;
 	snapshot->whenTaken = serialized_snapshot.whenTaken;
 	snapshot->lsn = serialized_snapshot.lsn;
+	snapshot->snapshot_csn = serialized_snapshot.csn;
+	snapshot->imported_csn = serialized_snapshot.imported_csn;
 	snapshot->snapXactCompletionCount = 0;
 
 	/* Copy XIDs, if present. */
@@ -1844,6 +1887,143 @@ RestoreTransactionSnapshot(Snapshot snapshot, void *source_pgproc)
 
 /*
  * XidInMVCCSnapshot
+ *
+ * Check whether this xid is in snapshot. When enable_csn_snapshot is
+ * switched off just call XidInLocalMVCCSnapshot().
+ */
+bool
+XidInLocalMVCCSnapshot(TransactionId xid, Snapshot snapshot)
+{
+	bool in_snapshot;
+
+	if (snapshot->imported_csn)
+	{
+		Assert(enable_csn_snapshot);
+		/* No point to using snapshot info except CSN */
+		return XidInCSNSnapshot(xid, snapshot);
+	}
+
+	in_snapshot = XidInLocalMVCCSnapshot(xid, snapshot);
+
+	if (!get_csnlog_status())
+	{
+		Assert(CSNIsFrozen(snapshot->snapshot_csn));
+		return in_snapshot;
+	}
+
+	if (in_snapshot)
+	{
+		/*
+		 * This xid may be already in unknown state and in that case
+		 * we must wait and recheck.
+		 */
+		return XidInCSNSnapshot(xid, snapshot);
+	}
+	else
+		return false;
+}
+
+
+
+/*
+ * ExportCSNSnapshot
+ *
+ * Export snapshot_csn so that caller can expand this transaction to other
+ * nodes.
+ *
+ * TODO: it's better to do this through EXPORT/IMPORT SNAPSHOT syntax and
+ * add some additional checks that transaction did not yet acquired xid, but
+ * for current iteration of this patch I don't want to hack on parser.
+ */
+SnapshotCSN
+ExportCSNSnapshot()
+{
+	if (!get_csnlog_status())
+		ereport(ERROR,
+			(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+			 errmsg("could not export csn snapshot"),
+			 errhint("Make sure the configuration parameter \"%s\" is enabled.",
+					 "enable_csn_snapshot")));
+
+	elog(DEBUG5, "Export CSN Snapshot: csn = %lu",
+		 CurrentSnapshot->snapshot_csn);
+	return CurrentSnapshot->snapshot_csn;
+}
+
+/* SQL accessor to ExportCSNSnapshot() */
+Datum
+pg_csn_snapshot_export(PG_FUNCTION_ARGS)
+{
+	SnapshotCSN csn = ExportCSNSnapshot();
+
+	PG_RETURN_UINT64(csn);
+}
+
+/*
+ * ImportCSNSnapshot
+ *
+ * Import csn and retract this backends xmin to the value that was
+ * actual when we had such csn.
+ *
+ * TODO: it's better to do this through EXPORT/IMPORT SNAPSHOT syntax and
+ * add some additional checks that transaction did not yet acquired xid, but
+ * for current iteration of this patch I don't want to hack on parser.
+ */
+void
+ImportCSNSnapshot(SnapshotCSN snapshot_csn)
+{
+	volatile TransactionId xmin;
+
+	if (!get_csnlog_status())
+		ereport(ERROR,
+			(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+			 errmsg("could not import csn snapshot"),
+			 errhint("Make sure the configuration parameter \"%s\" is enabled.",
+					 "enable_csn_snapshot")));
+
+	if (csn_snapshot_defer_time <= 0)
+		ereport(ERROR,
+			(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+			 errmsg("could not import csn snapshot"),
+			 errhint("Make sure the configuration parameter \"%s\" is positive.",
+					 "csn_snapshot_defer_time")));
+
+	/*
+	 * Call CSNSnapshotToXmin under ProcArrayLock to avoid situation that
+	 * resulting xmin will be evicted from map before we will set it into our
+	 * backend's xmin.
+	 */
+	LWLockAcquire(ProcArrayLock, LW_SHARED);
+	xmin = CSNSnapshotToXmin(snapshot_csn);
+	if (!TransactionIdIsValid(xmin))
+	{
+		LWLockRelease(ProcArrayLock);
+		elog(ERROR, "CSNSnapshotToXmin: csn snapshot too old");
+	}
+
+	MyProc->originalXmin = MyProc->xmin;
+	MyProc->xmin = TransactionXmin = xmin;
+	LWLockRelease(ProcArrayLock);
+
+	CurrentSnapshot->xmin = xmin; /* defuse SnapshotResetXmin() */
+	CurrentSnapshot->snapshot_csn = snapshot_csn;
+	CurrentSnapshot->imported_csn = true;
+	CSNSnapshotSync(snapshot_csn);
+}
+
+/* SQL accessor to ImportCSNSnapshot() */
+Datum
+pg_csn_snapshot_import(PG_FUNCTION_ARGS)
+{
+	SnapshotCSN csn = PG_GETARG_UINT64(0);
+
+	ImportCSNSnapshot(csn);
+	PG_RETURN_VOID();
+}
+
+
+/*
+ * XidInLocalMVCCSnapshot
  *		Is the given XID still-in-progress according to the snapshot?
  *
  * Note: GetSnapshotData never stores either top xid or subxids of our own

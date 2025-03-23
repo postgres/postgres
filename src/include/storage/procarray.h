@@ -20,6 +20,10 @@
 #include "utils/snapshot.h"
 
 
+#define		PROCARRAY_NON_IMPORTED_XMIN		0x80	/* use originalXmin instead
+													 * of xmin to properly
+													 * maintain csnXidMap */
+
 extern Size ProcArrayShmemSize(void);
 extern void CreateSharedProcArray(void);
 extern void ProcArrayAdd(PGPROC *proc);
@@ -100,4 +104,7 @@ extern void ProcArraySetReplicationSlotXmin(TransactionId xmin,
 extern void ProcArrayGetReplicationSlotXmin(TransactionId *xmin,
 											TransactionId *catalog_xmin);
 
+extern void ProcArraySetCSNSnapshotXmin(TransactionId xmin);
+
+extern TransactionId ProcArrayGetCSNSnapshotXmin(void);
 #endif							/* PROCARRAY_H */

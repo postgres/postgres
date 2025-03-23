@@ -126,6 +126,8 @@ extern char *output_files[];
  */
 #define JSONB_FORMAT_CHANGE_CAT_VER 201409291
 
+#define	CSN_BASE_SNAPSHOT_ADD_VER	202002010
+
 
 /*
  * Each relation is represented by a relinfo structure.

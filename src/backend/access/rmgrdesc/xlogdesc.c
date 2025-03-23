@@ -124,7 +124,8 @@ xlog_desc(StringInfo buf, XLogReaderState *record)
 		appendStringInfo(buf, "max_connections=%d max_worker_processes=%d "
 						 "max_wal_senders=%d max_prepared_xacts=%d "
 						 "max_locks_per_xact=%d wal_level=%s "
-						 "wal_log_hints=%s track_commit_timestamp=%s",
+						 "wal_log_hints=%s track_commit_timestamp=%s "
+						 "enable_csn_snapshot=%s",
 						 xlrec.MaxConnections,
 						 xlrec.max_worker_processes,
 						 xlrec.max_wal_senders,
@@ -132,7 +133,8 @@ xlog_desc(StringInfo buf, XLogReaderState *record)
 						 xlrec.max_locks_per_xact,
 						 wal_level_str,
 						 xlrec.wal_log_hints ? "on" : "off",
-						 xlrec.track_commit_timestamp ? "on" : "off");
+						 xlrec.track_commit_timestamp ? "on" : "off",
+						 xlrec.enable_csn_snapshot ? "on" : "off");
 	}
 	else if (info == XLOG_FPW_CHANGE)
 	{
