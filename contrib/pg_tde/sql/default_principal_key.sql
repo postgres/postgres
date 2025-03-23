@@ -1,4 +1,5 @@
 CREATE EXTENSION IF NOT EXISTS pg_tde;
+CREATE EXTENSION IF NOT EXISTS pg_buffercache;
 
 SELECT pg_tde_add_global_key_provider_file('file-provider','/tmp/pg_tde_regression_default_key.per');
 
@@ -33,6 +34,7 @@ CREATE DATABASE regress_pg_tde_other;
 \c regress_pg_tde_other
 
 CREATE EXTENSION pg_tde;
+CREATE EXTENSION pg_buffercache;
 
 -- Should fail: no principal key for the database yet
 SELECT  key_provider_id, key_provider_name, key_name
@@ -53,6 +55,8 @@ SELECT  key_provider_id, key_provider_name, key_name
 
 \c :regress_database
 
+CHECKPOINT;
+
 SELECT pg_tde_set_default_key_using_global_key_provider('new-default-key', 'file-provider', false);
 
 SELECT  key_provider_id, key_provider_name, key_name
@@ -63,14 +67,23 @@ SELECT  key_provider_id, key_provider_name, key_name
 SELECT  key_provider_id, key_provider_name, key_name
 		FROM pg_tde_key_info();
 
+SELECT pg_buffercache_evict(bufferid) FROM pg_buffercache WHERE relfilenode = (SELECT relfilenode FROM pg_class WHERE oid = 'test_enc'::regclass);
+
+SELECT * FROM test_enc;
+
 DROP TABLE test_enc;
 
 DROP EXTENSION pg_tde CASCADE;
 
 \c :regress_database
 
+SELECT pg_buffercache_evict(bufferid) FROM pg_buffercache WHERE relfilenode = (SELECT relfilenode FROM pg_class WHERE oid = 'test_enc'::regclass);
+
+SELECT * FROM test_enc;
+
 DROP TABLE test_enc;
 
 DROP EXTENSION pg_tde CASCADE;
+DROP EXTENSION pg_buffercache;
 
 DROP DATABASE regress_pg_tde_other;
