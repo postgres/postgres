@@ -8,7 +8,7 @@ SELECT pg_tde_add_key_provider_kmip('kmip-prov','127.0.0.1', 5696, '/tmp/server_
 SELECT pg_tde_set_principal_key('kmip-principal-key','kmip-prov');
  pg_tde_set_principal_key 
 --------------------------
- t
+ 
 (1 row)
 
 CREATE TABLE test_enc(

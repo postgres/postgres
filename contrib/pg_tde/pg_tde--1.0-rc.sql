@@ -102,7 +102,7 @@ BEGIN ATOMIC
 END;
 
 CREATE FUNCTION pg_tde_set_default_principal_key(principal_key_name TEXT, provider_name TEXT DEFAULT NULL, ensure_new_key BOOLEAN DEFAULT FALSE)
-RETURNS boolean
+RETURNS VOID
 AS 'MODULE_PATHNAME'
 LANGUAGE C;
 
@@ -462,17 +462,17 @@ LANGUAGE C
 AS 'MODULE_PATHNAME';
 
 CREATE FUNCTION pg_tde_set_principal_key(principal_key_name TEXT, provider_name TEXT DEFAULT NULL, ensure_new_key BOOLEAN DEFAULT FALSE)
-RETURNS boolean
+RETURNS VOID
 LANGUAGE C
 AS 'MODULE_PATHNAME';
 
 CREATE FUNCTION pg_tde_set_global_principal_key(principal_key_name TEXT, provider_name TEXT DEFAULT NULL, ensure_new_key BOOLEAN DEFAULT FALSE)
-RETURNS boolean
+RETURNS VOID
 LANGUAGE C
 AS 'MODULE_PATHNAME';
 
 CREATE FUNCTION pg_tde_set_server_principal_key(principal_key_name TEXT, provider_name TEXT DEFAULT NULL, ensure_new_key BOOLEAN DEFAULT FALSE)
-RETURNS boolean
+RETURNS VOID
 LANGUAGE C
 AS 'MODULE_PATHNAME';
 

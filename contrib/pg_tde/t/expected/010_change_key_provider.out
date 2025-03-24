@@ -4,7 +4,7 @@ SELECT pg_tde_add_key_provider_file('file-vault', '/tmp/change_key_provider_1.pe
 SELECT pg_tde_list_all_key_providers();
 (1,file-vault,file,"{""type"" : ""file"", ""path"" : ""/tmp/change_key_provider_1.per""}")
 SELECT pg_tde_set_principal_key('test-key', 'file-vault');
-t
+
 CREATE TABLE test_enc (id serial, k integer, PRIMARY KEY (id)) USING tde_heap;
 INSERT INTO test_enc (k) VALUES (5), (6);
 SELECT pg_tde_verify_principal_key();

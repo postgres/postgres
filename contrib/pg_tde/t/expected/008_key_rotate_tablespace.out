@@ -2,7 +2,7 @@ CREATE EXTENSION IF NOT EXISTS pg_tde;
 SELECT pg_tde_add_key_provider_file('file-vault','/tmp/pg_tde_test_keyring.per');
 1
 SELECT pg_tde_set_principal_key('test-db-principal-key','file-vault');
-t
+
 CREATE TABLE country_table (
      country_id        serial primary key,
      country_name    text unique not null,
@@ -20,7 +20,7 @@ CREATE EXTENSION IF NOT EXISTS pg_tde;
 SELECT pg_tde_add_key_provider_file('file-vault','/tmp/pg_tde_test_keyring.per');
 1
 SELECT pg_tde_set_principal_key('test-db-principal-key','file-vault');
-t
+
 CREATE TABLE country_table (
      country_id        serial primary key,
      country_name    text unique not null,

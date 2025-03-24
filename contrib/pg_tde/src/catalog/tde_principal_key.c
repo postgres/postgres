@@ -100,7 +100,7 @@ static bool pg_tde_is_same_principal_key(TDEPrincipalKey *a, TDEPrincipalKey *b)
 static void pg_tde_update_global_principal_key_everywhere(TDEPrincipalKey *oldKey, TDEPrincipalKey *newKey);
 static void push_principal_key_to_cache(TDEPrincipalKey *principalKey);
 static Datum pg_tde_get_key_info(PG_FUNCTION_ARGS, Oid dbOid);
-static bool set_principal_key_with_keyring(const char *key_name,
+static void set_principal_key_with_keyring(const char *key_name,
 										   const char *provider_name,
 										   Oid providerOid,
 										   Oid dbOid,
@@ -130,10 +130,7 @@ enum global_status
 	GS_DEFAULT
 };
 
-static Datum
-			pg_tde_set_principal_key_internal(char *principal_key_name, enum global_status global, char *provider_name, bool ensure_new_key);
-
-
+static void pg_tde_set_principal_key_internal(char *principal_key_name, enum global_status global, char *provider_name, bool ensure_new_key);
 
 static const TDEShmemSetupRoutine principal_key_info_shmem_routine = {
 	.init_shared_state = initialize_shared_state,
@@ -256,7 +253,7 @@ shared_memory_shutdown(int code, Datum arg)
 	principalKeyLocalState.sharedPrincipalKeyState = NULL;
 }
 
-bool
+void
 set_principal_key_with_keyring(const char *key_name, const char *provider_name,
 							   Oid providerOid, Oid dbOid, bool ensure_new_key)
 {
@@ -266,7 +263,6 @@ set_principal_key_with_keyring(const char *key_name, const char *provider_name,
 	bool		already_has_key = false;
 	GenericKeyring *new_keyring;
 	const KeyInfo *keyInfo = NULL;
-	bool		success = true;
 
 	if (AllowInheritGlobalProviders == false && providerOid != dbOid)
 	{
@@ -355,22 +351,18 @@ set_principal_key_with_keyring(const char *key_name, const char *provider_name,
 	else
 	{
 		/* key rotation */
-		bool		is_rotated = pg_tde_perform_rotate_key(curr_principal_key, new_principal_key);
+		pg_tde_perform_rotate_key(curr_principal_key, new_principal_key);
 
-		if (is_rotated && (!TDEisInGlobalSpace(curr_principal_key->keyInfo.databaseId)))
+		if (!TDEisInGlobalSpace(curr_principal_key->keyInfo.databaseId))
 		{
 			clear_principal_key_cache(curr_principal_key->keyInfo.databaseId);
 			push_principal_key_to_cache(new_principal_key);
 		}
-
-		success = is_rotated;
 	}
 
 	LWLockRelease(lock_files);
 
 	pfree(new_keyring);
-
-	return success;
 }
 
 /*
@@ -506,7 +498,9 @@ pg_tde_set_default_principal_key(PG_FUNCTION_ARGS)
 	char	   *provider_name = PG_ARGISNULL(1) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(1));
 	bool		ensure_new_key = PG_GETARG_BOOL(2);
 
-	return pg_tde_set_principal_key_internal(principal_key_name, GS_DEFAULT, provider_name, ensure_new_key);
+	pg_tde_set_principal_key_internal(principal_key_name, GS_DEFAULT, provider_name, ensure_new_key);
+
+	PG_RETURN_VOID();
 }
 
 Datum
@@ -516,7 +510,9 @@ pg_tde_set_principal_key(PG_FUNCTION_ARGS)
 	char	   *provider_name = PG_ARGISNULL(1) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(1));
 	bool		ensure_new_key = PG_GETARG_BOOL(2);
 
-	return pg_tde_set_principal_key_internal(principal_key_name, GS_LOCAL, provider_name, ensure_new_key);
+	pg_tde_set_principal_key_internal(principal_key_name, GS_LOCAL, provider_name, ensure_new_key);
+
+	PG_RETURN_VOID();
 }
 
 Datum
@@ -526,7 +522,9 @@ pg_tde_set_global_principal_key(PG_FUNCTION_ARGS)
 	char	   *provider_name = PG_ARGISNULL(1) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(1));
 	bool		ensure_new_key = PG_GETARG_BOOL(2);
 
-	return pg_tde_set_principal_key_internal(principal_key_name, GS_GLOBAL, provider_name, ensure_new_key);
+	pg_tde_set_principal_key_internal(principal_key_name, GS_GLOBAL, provider_name, ensure_new_key);
+
+	PG_RETURN_VOID();
 }
 
 Datum
@@ -536,13 +534,14 @@ pg_tde_set_server_principal_key(PG_FUNCTION_ARGS)
 	char	   *provider_name = PG_ARGISNULL(1) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(1));
 	bool		ensure_new_key = PG_GETARG_BOOL(2);
 
-	return pg_tde_set_principal_key_internal(principal_key_name, GS_SERVER, provider_name, ensure_new_key);
+	pg_tde_set_principal_key_internal(principal_key_name, GS_SERVER, provider_name, ensure_new_key);
+
+	PG_RETURN_VOID();
 }
 
-static Datum
+static void
 pg_tde_set_principal_key_internal(char *principal_key_name, enum global_status global, char *provider_name, bool ensure_new_key)
 {
-	bool		success;
 	Oid			providerOid = MyDatabaseId;
 	Oid			dbOid = MyDatabaseId;
 	TDEPrincipalKey *existingDefaultKey = NULL;
@@ -578,11 +577,11 @@ pg_tde_set_principal_key_internal(char *principal_key_name, enum global_status g
 		LWLockRelease(tde_lwlock_enc_keys());
 	}
 
-	success = set_principal_key_with_keyring(principal_key_name,
-											 provider_name,
-											 providerOid,
-											 dbOid,
-											 ensure_new_key);
+	set_principal_key_with_keyring(principal_key_name,
+								   provider_name,
+								   providerOid,
+								   dbOid,
+								   ensure_new_key);
 
 	if (global == GS_DEFAULT && existingDefaultKey != NULL)
 	{
@@ -606,8 +605,6 @@ pg_tde_set_principal_key_internal(char *principal_key_name, enum global_status g
 
 		LWLockRelease(tde_lwlock_enc_keys());
 	}
-
-	PG_RETURN_BOOL(success);
 }
 
 PG_FUNCTION_INFO_V1(pg_tde_principal_key_info);
@@ -953,17 +950,15 @@ pg_tde_is_same_principal_key(TDEPrincipalKey *a, TDEPrincipalKey *b)
 static void
 pg_tde_rotate_default_key_for_database(TDEPrincipalKey *oldKey, TDEPrincipalKey *newKeyTemplate)
 {
-	bool		is_rotated;
-
 	TDEPrincipalKey *newKey = palloc_object(TDEPrincipalKey);
 
 	*newKey = *newKeyTemplate;
 	newKey->keyInfo.databaseId = oldKey->keyInfo.databaseId;
 
 	/* key rotation */
-	is_rotated = pg_tde_perform_rotate_key(oldKey, newKey);
+	pg_tde_perform_rotate_key(oldKey, newKey);
 
-	if (is_rotated && (!TDEisInGlobalSpace(newKey->keyInfo.databaseId)))
+	if (!TDEisInGlobalSpace(newKey->keyInfo.databaseId))
 	{
 		clear_principal_key_cache(oldKey->keyInfo.databaseId);
 		push_principal_key_to_cache(newKey);

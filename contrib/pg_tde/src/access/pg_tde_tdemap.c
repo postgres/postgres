@@ -638,7 +638,7 @@ finalize_key_rotation(const char *path_old, const char *path_new)
 /*
  * Rotate keys and generates the WAL record for it.
  */
-bool
+void
 pg_tde_perform_rotate_key(TDEPrincipalKey *principal_key, TDEPrincipalKey *new_principal_key)
 {
 #define OLD_PRINCIPAL_KEY	0
@@ -651,7 +651,6 @@ pg_tde_perform_rotate_key(TDEPrincipalKey *principal_key, TDEPrincipalKey *new_p
 	off_t		map_size;
 	XLogPrincipalKeyRotate *xlrec;
 	off_t		xlrec_size;
-	bool		success = true;
 
 	pg_tde_set_db_file_path(principal_key->keyInfo.databaseId, path[OLD_PRINCIPAL_KEY]);
 
@@ -707,9 +706,10 @@ pg_tde_perform_rotate_key(TDEPrincipalKey *principal_key, TDEPrincipalKey *new_p
 	xlrec->file_size = map_size;
 
 	/* TODO: pgstat_report_wait_start / pgstat_report_wait_end */
-	/* TODO: error handling */
 	if (pg_pread(fd[NEW_PRINCIPAL_KEY], xlrec->buff, xlrec->file_size, 0) == -1)
-		success = false;
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not write WAL for key rotation: %m")));
 
 	close(fd[NEW_PRINCIPAL_KEY]);
 
@@ -723,8 +723,6 @@ pg_tde_perform_rotate_key(TDEPrincipalKey *principal_key, TDEPrincipalKey *new_p
 
 	/* Free up the palloc'ed data */
 	pfree(xlrec);
-
-	return success;
 
 #undef OLD_PRINCIPAL_KEY
 #undef NEW_PRINCIPAL_KEY

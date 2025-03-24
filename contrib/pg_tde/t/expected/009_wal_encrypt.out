@@ -2,7 +2,7 @@ CREATE EXTENSION IF NOT EXISTS pg_tde;
 SELECT pg_tde_add_global_key_provider_file('file-keyring-010','/tmp/pg_tde_test_keyring010.per');
 -1
 SELECT pg_tde_set_server_principal_key('global-db-principal-key', 'file-keyring-010');
-t
+
 -- server restart with wal encryption
 SHOW pg_tde.wal_encrypt;
 on

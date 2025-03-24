@@ -8,7 +8,7 @@ SELECT pg_tde_add_global_key_provider_file('file-provider','/tmp/pg_tde_regressi
 SELECT pg_tde_set_default_principal_key('default-principal-key', 'file-provider', false);
  pg_tde_set_default_principal_key 
 ----------------------------------
- t
+ 
 (1 row)
 
 -- fails
@@ -71,7 +71,7 @@ SELECT  key_provider_id, key_provider_name, principal_key_name
 SELECT pg_tde_set_default_principal_key('new-default-principal-key', 'file-provider', false);
  pg_tde_set_default_principal_key 
 ----------------------------------
- t
+ 
 (1 row)
 
 SELECT  key_provider_id, key_provider_name, principal_key_name

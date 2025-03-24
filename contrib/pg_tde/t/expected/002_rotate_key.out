@@ -12,7 +12,7 @@ SELECT pg_tde_list_all_key_providers();
 (1,file-vault,file,"{""type"" : ""file"", ""path"" : ""/tmp/pg_tde_test_keyring.per""}")
 (2,file-2,file,"{""type"" : ""file"", ""path"" : ""/tmp/pg_tde_test_keyring_2.per""}")
 SELECT pg_tde_set_principal_key('test-db-principal-key','file-vault');
-t
+
 CREATE TABLE test_enc(id SERIAL,k INTEGER,PRIMARY KEY (id)) USING tde_heap;
 INSERT INTO test_enc (k) VALUES (5),(6);
 SELECT * FROM test_enc ORDER BY id ASC;
@@ -32,7 +32,7 @@ SELECT * FROM test_enc ORDER BY id ASC;
 1|5
 2|6
 SELECT pg_tde_set_principal_key('rotated-principal-key2','file-2');
-t
+
 SELECT * FROM test_enc ORDER BY id ASC;
 1|5
 2|6
@@ -46,7 +46,7 @@ SELECT * FROM test_enc ORDER BY id ASC;
 1|5
 2|6
 SELECT pg_tde_set_global_principal_key('rotated-principal-key', 'file-3', false);
-t
+
 SELECT * FROM test_enc ORDER BY id ASC;
 1|5
 2|6
@@ -60,7 +60,7 @@ SELECT * FROM test_enc ORDER BY id ASC;
 1|5
 2|6
 SELECT pg_tde_set_global_principal_key('rotated-principal-keyX', 'file-2', false);
-t
+
 SELECT * FROM test_enc ORDER BY id ASC;
 1|5
 2|6
@@ -82,7 +82,7 @@ SELECT key_provider_id, key_provider_name, principal_key_name FROM pg_tde_global
 psql:<stdin>:1: ERROR:  Principal key does not exists for the database
 HINT:  Use set_principal_key interface to set the principal key
 SELECT pg_tde_set_principal_key('rotated-principal-key2','file-2');
-t
+
 SELECT key_provider_id, key_provider_name, principal_key_name FROM pg_tde_principal_key_info();
 2|file-2|rotated-principal-key2
 SELECT key_provider_id, key_provider_name, principal_key_name FROM pg_tde_global_principal_key_info();

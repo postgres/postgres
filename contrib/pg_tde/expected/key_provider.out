@@ -39,7 +39,7 @@ ERROR:  principal key not configured for current database
 SELECT pg_tde_set_principal_key('test-db-principal-key','file-provider');
  pg_tde_set_principal_key 
 --------------------------
- t
+ 
 (1 row)
 
 SELECT pg_tde_verify_principal_key();
@@ -135,7 +135,7 @@ SELECT id, provider_name FROM pg_tde_list_all_global_key_providers();
 SELECT pg_tde_set_global_principal_key('test-db-principal-key', 'file-keyring', false);
  pg_tde_set_global_principal_key 
 ---------------------------------
- t
+ 
 (1 row)
 
 -- fails
