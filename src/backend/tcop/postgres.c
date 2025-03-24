@@ -1107,6 +1107,7 @@ exec_simple_query(const char *query_string)
 		size_t		cmdtaglen;
 
 		pgstat_report_query_id(0, true);
+		pgstat_report_plan_id(0, true);
 
 		/*
 		 * Get the command name for use in status display (it also becomes the
@@ -2030,6 +2031,18 @@ exec_bind_message(StringInfo input_message)
 					  cplan,
 					  psrc);
 
+	/* Portal is defined, set the plan ID based on its contents. */
+	foreach(lc, portal->stmts)
+	{
+		PlannedStmt *plan = lfirst_node(PlannedStmt, lc);
+
+		if (plan->planId != UINT64CONST(0))
+		{
+			pgstat_report_plan_id(plan->planId, false);
+			break;
+		}
+	}
+
 	/* Done with the snapshot used for parameter I/O and parsing/planning */
 	if (snapshot_set)
 		PopActiveSnapshot();
@@ -2166,6 +2179,17 @@ exec_execute_message(const char *portal_name, long max_rows)
 		if (stmt->queryId != UINT64CONST(0))
 		{
 			pgstat_report_query_id(stmt->queryId, false);
+			break;
+		}
+	}
+
+	foreach(lc, portal->stmts)
+	{
+		PlannedStmt *stmt = lfirst_node(PlannedStmt, lc);
+
+		if (stmt->planId != UINT64CONST(0))
+		{
+			pgstat_report_plan_id(stmt->planId, false);
 			break;
 		}
 	}

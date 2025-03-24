@@ -58,6 +58,7 @@
 #include "parser/parsetree.h"
 #include "partitioning/partdesc.h"
 #include "rewrite/rewriteManip.h"
+#include "utils/backend_status.h"
 #include "utils/lsyscache.h"
 #include "utils/rel.h"
 #include "utils/selfuncs.h"
@@ -291,6 +292,9 @@ planner(Query *parse, const char *query_string, int cursorOptions,
 		result = (*planner_hook) (parse, query_string, cursorOptions, boundParams);
 	else
 		result = standard_planner(parse, query_string, cursorOptions, boundParams);
+
+	pgstat_report_plan_id(result->planId, false);
+
 	return result;
 }
 

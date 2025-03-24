@@ -321,6 +321,7 @@ pgstat_bestart_initial(void)
 	lbeentry.st_progress_command = PROGRESS_COMMAND_INVALID;
 	lbeentry.st_progress_command_target = InvalidOid;
 	lbeentry.st_query_id = UINT64CONST(0);
+	lbeentry.st_plan_id = UINT64CONST(0);
 
 	/*
 	 * we don't zero st_progress_param here to save cycles; nobody should
@@ -599,6 +600,7 @@ pgstat_report_activity(BackendState state, const char *cmd_str)
 			/* st_xact_start_timestamp and wait_event_info are also disabled */
 			beentry->st_xact_start_timestamp = 0;
 			beentry->st_query_id = UINT64CONST(0);
+			beentry->st_plan_id = UINT64CONST(0);
 			proc->wait_event_info = 0;
 			PGSTAT_END_WRITE_ACTIVITY(beentry);
 		}
@@ -659,7 +661,10 @@ pgstat_report_activity(BackendState state, const char *cmd_str)
 	 * identifier.
 	 */
 	if (state == STATE_RUNNING)
+	{
 		beentry->st_query_id = UINT64CONST(0);
+		beentry->st_plan_id = UINT64CONST(0);
+	}
 
 	if (cmd_str != NULL)
 	{
@@ -710,6 +715,44 @@ pgstat_report_query_id(uint64 query_id, bool force)
 	PGSTAT_END_WRITE_ACTIVITY(beentry);
 }
 
+/* --------
+ * pgstat_report_plan_id() -
+ *
+ * Called to update top-level plan identifier.
+ * --------
+ */
+void
+pgstat_report_plan_id(uint64 plan_id, bool force)
+{
+	volatile PgBackendStatus *beentry = MyBEEntry;
+
+	/*
+	 * if track_activities is disabled, st_plan_id should already have been
+	 * reset
+	 */
+	if (!beentry || !pgstat_track_activities)
+		return;
+
+	/*
+	 * We only report the top-level plan identifiers.  The stored plan_id is
+	 * reset when a backend calls pgstat_report_activity(STATE_RUNNING), or
+	 * with an explicit call to this function using the force flag.  If the
+	 * saved plan identifier is not zero it means that it's not a top-level
+	 * command, so ignore the one provided unless it's an explicit call to
+	 * reset the identifier.
+	 */
+	if (beentry->st_plan_id != 0 && !force)
+		return;
+
+	/*
+	 * Update my status entry, following the protocol of bumping
+	 * st_changecount before and after.  We use a volatile pointer here to
+	 * ensure the compiler doesn't try to get cute.
+	 */
+	PGSTAT_BEGIN_WRITE_ACTIVITY(beentry);
+	beentry->st_plan_id = plan_id;
+	PGSTAT_END_WRITE_ACTIVITY(beentry);
+}
 
 /* ----------
  * pgstat_report_appname() -
@@ -1104,6 +1147,21 @@ pgstat_get_my_query_id(void)
 	 * backend which means that there won't be concurrent writes.
 	 */
 	return MyBEEntry->st_query_id;
+}
+
+/* ----------
+ * pgstat_get_my_plan_id() -
+ *
+ * Return current backend's plan identifier.
+ */
+uint64
+pgstat_get_my_plan_id(void)
+{
+	if (!MyBEEntry)
+		return 0;
+
+	/* No need for a lock, for roughly the same reasons as above. */
+	return MyBEEntry->st_plan_id;
 }
 
 /* ----------
