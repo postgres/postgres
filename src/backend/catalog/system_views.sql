@@ -1384,6 +1384,7 @@ CREATE VIEW pg_stat_subscription_stats AS
         ss.confl_update_missing,
         ss.confl_delete_origin_differs,
         ss.confl_delete_missing,
+        ss.confl_multiple_unique_conflicts,
         ss.stats_reset
     FROM pg_subscription as s,
          pg_stat_get_subscription_stats(s.oid) as ss;

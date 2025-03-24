@@ -29,11 +29,12 @@ static const char *const ConflictTypeNames[] = {
 	[CT_UPDATE_EXISTS] = "update_exists",
 	[CT_UPDATE_MISSING] = "update_missing",
 	[CT_DELETE_ORIGIN_DIFFERS] = "delete_origin_differs",
-	[CT_DELETE_MISSING] = "delete_missing"
+	[CT_DELETE_MISSING] = "delete_missing",
+	[CT_MULTIPLE_UNIQUE_CONFLICTS] = "multiple_unique_conflicts"
 };
 
 static int	errcode_apply_conflict(ConflictType type);
-static int	errdetail_apply_conflict(EState *estate,
+static void errdetail_apply_conflict(EState *estate,
 									 ResultRelInfo *relinfo,
 									 ConflictType type,
 									 TupleTableSlot *searchslot,
@@ -41,7 +42,7 @@ static int	errdetail_apply_conflict(EState *estate,
 									 TupleTableSlot *remoteslot,
 									 Oid indexoid, TransactionId localxmin,
 									 RepOriginId localorigin,
-									 TimestampTz localts);
+									 TimestampTz localts, StringInfo err_msg);
 static char *build_tuple_value_details(EState *estate, ResultRelInfo *relinfo,
 									   ConflictType type,
 									   TupleTableSlot *searchslot,
@@ -90,30 +91,33 @@ GetTupleTransactionInfo(TupleTableSlot *localslot, TransactionId *xmin,
  * 'searchslot' should contain the tuple used to search the local tuple to be
  * updated or deleted.
  *
- * 'localslot' should contain the existing local tuple, if any, that conflicts
- * with the remote tuple. 'localxmin', 'localorigin', and 'localts' provide the
- * transaction information related to this existing local tuple.
- *
  * 'remoteslot' should contain the remote new tuple, if any.
  *
- * The 'indexoid' represents the OID of the unique index that triggered the
- * constraint violation error. We use this to report the key values for
- * conflicting tuple.
+ * conflicttuples is a list of local tuples that caused the conflict and the
+ * conflict related information. See ConflictTupleInfo.
  *
- * The caller must ensure that the index with the OID 'indexoid' is locked so
- * that we can fetch and display the conflicting key value.
+ * The caller must ensure that all the indexes passed in ConflictTupleInfo are
+ * locked so that we can fetch and display the conflicting key values.
  */
 void
 ReportApplyConflict(EState *estate, ResultRelInfo *relinfo, int elevel,
 					ConflictType type, TupleTableSlot *searchslot,
-					TupleTableSlot *localslot, TupleTableSlot *remoteslot,
-					Oid indexoid, TransactionId localxmin,
-					RepOriginId localorigin, TimestampTz localts)
+					TupleTableSlot *remoteslot, List *conflicttuples)
 {
 	Relation	localrel = relinfo->ri_RelationDesc;
+	StringInfoData err_detail;
 
-	Assert(!OidIsValid(indexoid) ||
-		   CheckRelationOidLockedByMe(indexoid, RowExclusiveLock, true));
+	initStringInfo(&err_detail);
+
+	/* Form errdetail message by combining conflicting tuples information. */
+	foreach_ptr(ConflictTupleInfo, conflicttuple, conflicttuples)
+		errdetail_apply_conflict(estate, relinfo, type, searchslot,
+								 conflicttuple->slot, remoteslot,
+								 conflicttuple->indexoid,
+								 conflicttuple->xmin,
+								 conflicttuple->origin,
+								 conflicttuple->ts,
+								 &err_detail);
 
 	pgstat_report_subscription_conflict(MySubscription->oid, type);
 
@@ -123,9 +127,7 @@ ReportApplyConflict(EState *estate, ResultRelInfo *relinfo, int elevel,
 				   get_namespace_name(RelationGetNamespace(localrel)),
 				   RelationGetRelationName(localrel),
 				   ConflictTypeNames[type]),
-			errdetail_apply_conflict(estate, relinfo, type, searchslot,
-									 localslot, remoteslot, indexoid,
-									 localxmin, localorigin, localts));
+			errdetail_internal("%s", err_detail.data));
 }
 
 /*
@@ -169,6 +171,7 @@ errcode_apply_conflict(ConflictType type)
 	{
 		case CT_INSERT_EXISTS:
 		case CT_UPDATE_EXISTS:
+		case CT_MULTIPLE_UNIQUE_CONFLICTS:
 			return errcode(ERRCODE_UNIQUE_VIOLATION);
 		case CT_UPDATE_ORIGIN_DIFFERS:
 		case CT_UPDATE_MISSING:
@@ -191,12 +194,13 @@ errcode_apply_conflict(ConflictType type)
  *    replica identity columns, if any. The remote old tuple is excluded as its
  *    information is covered in the replica identity columns.
  */
-static int
+static void
 errdetail_apply_conflict(EState *estate, ResultRelInfo *relinfo,
 						 ConflictType type, TupleTableSlot *searchslot,
 						 TupleTableSlot *localslot, TupleTableSlot *remoteslot,
 						 Oid indexoid, TransactionId localxmin,
-						 RepOriginId localorigin, TimestampTz localts)
+						 RepOriginId localorigin, TimestampTz localts,
+						 StringInfo err_msg)
 {
 	StringInfoData err_detail;
 	char	   *val_desc;
@@ -209,7 +213,9 @@ errdetail_apply_conflict(EState *estate, ResultRelInfo *relinfo,
 	{
 		case CT_INSERT_EXISTS:
 		case CT_UPDATE_EXISTS:
-			Assert(OidIsValid(indexoid));
+		case CT_MULTIPLE_UNIQUE_CONFLICTS:
+			Assert(OidIsValid(indexoid) &&
+				   CheckRelationOidLockedByMe(indexoid, RowExclusiveLock, true));
 
 			if (localts)
 			{
@@ -291,7 +297,14 @@ errdetail_apply_conflict(EState *estate, ResultRelInfo *relinfo,
 	if (val_desc)
 		appendStringInfo(&err_detail, "\n%s", val_desc);
 
-	return errdetail_internal("%s", err_detail.data);
+	/*
+	 * Insert a blank line to visually separate the new detail line from the
+	 * existing ones.
+	 */
+	if (err_msg->len > 0)
+		appendStringInfoChar(err_msg, '\n');
+
+	appendStringInfo(err_msg, "%s", err_detail.data);
 }
 
 /*
@@ -323,7 +336,8 @@ build_tuple_value_details(EState *estate, ResultRelInfo *relinfo,
 	 * Report the conflicting key values in the case of a unique constraint
 	 * violation.
 	 */
-	if (type == CT_INSERT_EXISTS || type == CT_UPDATE_EXISTS)
+	if (type == CT_INSERT_EXISTS || type == CT_UPDATE_EXISTS ||
+		type == CT_MULTIPLE_UNIQUE_CONFLICTS)
 	{
 		Assert(OidIsValid(indexoid) && localslot);
 

@@ -41,6 +41,9 @@ typedef enum
 	/* The row to be deleted is missing */
 	CT_DELETE_MISSING,
 
+	/* The row to be inserted/updated violates multiple unique constraint */
+	CT_MULTIPLE_UNIQUE_CONFLICTS,
+
 	/*
 	 * Other conflicts, such as exclusion constraint violations, involve more
 	 * complex rules than simple equality checks. These conflicts are left for
@@ -48,7 +51,23 @@ typedef enum
 	 */
 } ConflictType;
 
-#define CONFLICT_NUM_TYPES (CT_DELETE_MISSING + 1)
+#define CONFLICT_NUM_TYPES (CT_MULTIPLE_UNIQUE_CONFLICTS + 1)
+
+/*
+ * Information for the existing local tuple that caused the conflict.
+ */
+typedef struct ConflictTupleInfo
+{
+	TupleTableSlot *slot;		/* tuple slot holding the conflicting local
+								 * tuple */
+	Oid			indexoid;		/* OID of the index where the conflict
+								 * occurred */
+	TransactionId xmin;			/* transaction ID of the modification causing
+								 * the conflict */
+	RepOriginId origin;			/* origin identifier of the modification */
+	TimestampTz ts;				/* timestamp of when the modification on the
+								 * conflicting local tuple occurred */
+} ConflictTupleInfo;
 
 extern bool GetTupleTransactionInfo(TupleTableSlot *localslot,
 									TransactionId *xmin,
@@ -57,10 +76,7 @@ extern bool GetTupleTransactionInfo(TupleTableSlot *localslot,
 extern void ReportApplyConflict(EState *estate, ResultRelInfo *relinfo,
 								int elevel, ConflictType type,
 								TupleTableSlot *searchslot,
-								TupleTableSlot *localslot,
 								TupleTableSlot *remoteslot,
-								Oid indexoid, TransactionId localxmin,
-								RepOriginId localorigin, TimestampTz localts);
+								List *conflicttuples);
 extern void InitConflictIndexes(ResultRelInfo *relInfo);
-
 #endif

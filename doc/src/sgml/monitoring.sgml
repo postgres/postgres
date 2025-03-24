@@ -2252,6 +2252,18 @@ description | Waiting for a newly initialized WAL file to reach durable storage
 
      <row>
       <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>confl_multiple_unique_conflicts</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of times a row insertion or an updated row values violated multiple
+       <literal>NOT DEFERRABLE</literal> unique constraints during the
+       application of changes. See <xref linkend="conflict-multiple-unique-conflicts"/>
+       for details about this conflict.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
        <structfield>stats_reset</structfield> <type>timestamp with time zone</type>
       </para>
       <para>

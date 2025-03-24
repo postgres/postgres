@@ -1877,6 +1877,19 @@ test_sub=# SELECT * from tab_gen_to_gen;
       </para>
      </listitem>
     </varlistentry>
+    <varlistentry id="conflict-multiple-unique-conflicts" xreflabel="multiple_unique_conflicts">
+     <term><literal>multiple_unique_conflicts</literal></term>
+     <listitem>
+      <para>
+       Inserting or updating a row violates multiple
+       <literal>NOT DEFERRABLE</literal> unique constraints. Note that to log
+       the origin and commit timestamp details of conflicting keys, ensure
+       that <link linkend="guc-track-commit-timestamp"><varname>track_commit_timestamp</varname></link>
+       is enabled on the subscriber. In this case, an error will be raised until
+       the conflict is resolved manually.
+      </para>
+     </listitem>
+    </varlistentry>
    </variablelist>
     Note that there are other conflict scenarios, such as exclusion constraint
     violations. Currently, we do not provide additional details for them in the
@@ -1935,8 +1948,8 @@ DETAIL:  <replaceable class="parameter">detailed_explanation</replaceable>.
         <para>
          The <literal>Key</literal> section includes the key values of the local
          tuple that violated a unique constraint for
-         <literal>insert_exists</literal> or <literal>update_exists</literal>
-         conflicts.
+         <literal>insert_exists</literal>, <literal>update_exists</literal> or
+         <literal>multiple_unique_conflicts</literal> conflicts.
         </para>
        </listitem>
        <listitem>
@@ -1945,8 +1958,8 @@ DETAIL:  <replaceable class="parameter">detailed_explanation</replaceable>.
          tuple if its origin differs from the remote tuple for
          <literal>update_origin_differs</literal> or <literal>delete_origin_differs</literal>
          conflicts, or if the key value conflicts with the remote tuple for
-         <literal>insert_exists</literal> or <literal>update_exists</literal>
-         conflicts.
+         <literal>insert_exists</literal>, <literal>update_exists</literal> or
+         <literal>multiple_unique_conflicts</literal> conflicts.
         </para>
        </listitem>
        <listitem>
@@ -1980,6 +1993,16 @@ DETAIL:  <replaceable class="parameter">detailed_explanation</replaceable>.
         <para>
          <replaceable class="parameter">column_value</replaceable> is the column value.
          The large column values are truncated to 64 bytes.
+        </para>
+       </listitem>
+       <listitem>
+        <para>
+         Note that in case of <literal>multiple_unique_conflicts</literal> conflict,
+         multiple <replaceable class="parameter">detailed_explanation</replaceable>
+         and <replaceable class="parameter">detail_values</replaceable> lines
+         will be generated, each detailing the conflict information associated
+         with distinct unique
+         constraints.
         </para>
        </listitem>
       </itemizedlist>

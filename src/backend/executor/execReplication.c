@@ -493,25 +493,33 @@ CheckAndReportConflict(ResultRelInfo *resultRelInfo, EState *estate,
 					   ConflictType type, List *recheckIndexes,
 					   TupleTableSlot *searchslot, TupleTableSlot *remoteslot)
 {
-	/* Check all the unique indexes for a conflict */
+	List	   *conflicttuples = NIL;
+	TupleTableSlot *conflictslot;
+
+	/* Check all the unique indexes for conflicts */
 	foreach_oid(uniqueidx, resultRelInfo->ri_onConflictArbiterIndexes)
 	{
-		TupleTableSlot *conflictslot;
-
 		if (list_member_oid(recheckIndexes, uniqueidx) &&
 			FindConflictTuple(resultRelInfo, estate, uniqueidx, remoteslot,
 							  &conflictslot))
 		{
-			RepOriginId origin;
-			TimestampTz committs;
-			TransactionId xmin;
+			ConflictTupleInfo *conflicttuple = palloc0_object(ConflictTupleInfo);
 
-			GetTupleTransactionInfo(conflictslot, &xmin, &origin, &committs);
-			ReportApplyConflict(estate, resultRelInfo, ERROR, type,
-								searchslot, conflictslot, remoteslot,
-								uniqueidx, xmin, origin, committs);
+			conflicttuple->slot = conflictslot;
+			conflicttuple->indexoid = uniqueidx;
+
+			GetTupleTransactionInfo(conflictslot, &conflicttuple->xmin,
+									&conflicttuple->origin, &conflicttuple->ts);
+
+			conflicttuples = lappend(conflicttuples, conflicttuple);
 		}
 	}
+
+	/* Report the conflict, if found */
+	if (conflicttuples)
+		ReportApplyConflict(estate, resultRelInfo, ERROR,
+							list_length(conflicttuples) > 1 ? CT_MULTIPLE_UNIQUE_CONFLICTS : type,
+							searchslot, remoteslot, conflicttuples);
 }
 
 /*

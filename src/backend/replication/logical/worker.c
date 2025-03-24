@@ -2674,7 +2674,8 @@ apply_handle_update_internal(ApplyExecutionData *edata,
 	LogicalRepRelMapEntry *relmapentry = edata->targetRel;
 	Relation	localrel = relinfo->ri_RelationDesc;
 	EPQState	epqstate;
-	TupleTableSlot *localslot;
+	TupleTableSlot *localslot = NULL;
+	ConflictTupleInfo conflicttuple = {0};
 	bool		found;
 	MemoryContext oldctx;
 
@@ -2693,16 +2694,13 @@ apply_handle_update_internal(ApplyExecutionData *edata,
 	 */
 	if (found)
 	{
-		RepOriginId localorigin;
-		TransactionId localxmin;
-		TimestampTz localts;
-
 		/*
 		 * Report the conflict if the tuple was modified by a different
 		 * origin.
 		 */
-		if (GetTupleTransactionInfo(localslot, &localxmin, &localorigin, &localts) &&
-			localorigin != replorigin_session_origin)
+		if (GetTupleTransactionInfo(localslot, &conflicttuple.xmin,
+									&conflicttuple.origin, &conflicttuple.ts) &&
+			conflicttuple.origin != replorigin_session_origin)
 		{
 			TupleTableSlot *newslot;
 
@@ -2710,9 +2708,11 @@ apply_handle_update_internal(ApplyExecutionData *edata,
 			newslot = table_slot_create(localrel, &estate->es_tupleTable);
 			slot_store_data(newslot, relmapentry, newtup);
 
+			conflicttuple.slot = localslot;
+
 			ReportApplyConflict(estate, relinfo, LOG, CT_UPDATE_ORIGIN_DIFFERS,
-								remoteslot, localslot, newslot,
-								InvalidOid, localxmin, localorigin, localts);
+								remoteslot, newslot,
+								list_make1(&conflicttuple));
 		}
 
 		/* Process and store remote tuple in the slot */
@@ -2741,9 +2741,7 @@ apply_handle_update_internal(ApplyExecutionData *edata,
 		 * emitting a log message.
 		 */
 		ReportApplyConflict(estate, relinfo, LOG, CT_UPDATE_MISSING,
-							remoteslot, NULL, newslot,
-							InvalidOid, InvalidTransactionId,
-							InvalidRepOriginId, 0);
+							remoteslot, newslot, list_make1(&conflicttuple));
 	}
 
 	/* Cleanup. */
@@ -2861,6 +2859,7 @@ apply_handle_delete_internal(ApplyExecutionData *edata,
 	LogicalRepRelation *remoterel = &edata->targetRel->remoterel;
 	EPQState	epqstate;
 	TupleTableSlot *localslot;
+	ConflictTupleInfo conflicttuple = {0};
 	bool		found;
 
 	EvalPlanQualInit(&epqstate, estate, NULL, NIL, -1, NIL);
@@ -2876,19 +2875,19 @@ apply_handle_delete_internal(ApplyExecutionData *edata,
 	/* If found delete it. */
 	if (found)
 	{
-		RepOriginId localorigin;
-		TransactionId localxmin;
-		TimestampTz localts;
-
 		/*
 		 * Report the conflict if the tuple was modified by a different
 		 * origin.
 		 */
-		if (GetTupleTransactionInfo(localslot, &localxmin, &localorigin, &localts) &&
-			localorigin != replorigin_session_origin)
+		if (GetTupleTransactionInfo(localslot, &conflicttuple.xmin,
+									&conflicttuple.origin, &conflicttuple.ts) &&
+			conflicttuple.origin != replorigin_session_origin)
+		{
+			conflicttuple.slot = localslot;
 			ReportApplyConflict(estate, relinfo, LOG, CT_DELETE_ORIGIN_DIFFERS,
-								remoteslot, localslot, NULL,
-								InvalidOid, localxmin, localorigin, localts);
+								remoteslot, NULL,
+								list_make1(&conflicttuple));
+		}
 
 		EvalPlanQualSetSlot(&epqstate, localslot);
 
@@ -2903,9 +2902,7 @@ apply_handle_delete_internal(ApplyExecutionData *edata,
 		 * emitting a log message.
 		 */
 		ReportApplyConflict(estate, relinfo, LOG, CT_DELETE_MISSING,
-							remoteslot, NULL, NULL,
-							InvalidOid, InvalidTransactionId,
-							InvalidRepOriginId, 0);
+							remoteslot, NULL, list_make1(&conflicttuple));
 	}
 
 	/* Cleanup. */
@@ -3073,9 +3070,7 @@ apply_handle_tuple_routing(ApplyExecutionData *edata,
 				Relation	partrel_new;
 				bool		found;
 				EPQState	epqstate;
-				RepOriginId localorigin;
-				TransactionId localxmin;
-				TimestampTz localts;
+				ConflictTupleInfo conflicttuple = {0};
 
 				/* Get the matching local tuple from the partition. */
 				found = FindReplTupleInLocalRel(edata, partrel,
@@ -3093,11 +3088,9 @@ apply_handle_tuple_routing(ApplyExecutionData *edata,
 					 * The tuple to be updated could not be found.  Do nothing
 					 * except for emitting a log message.
 					 */
-					ReportApplyConflict(estate, partrelinfo,
-										LOG, CT_UPDATE_MISSING,
-										remoteslot_part, NULL, newslot,
-										InvalidOid, InvalidTransactionId,
-										InvalidRepOriginId, 0);
+					ReportApplyConflict(estate, partrelinfo, LOG,
+										CT_UPDATE_MISSING, remoteslot_part,
+										newslot, list_make1(&conflicttuple));
 
 					return;
 				}
@@ -3106,8 +3099,10 @@ apply_handle_tuple_routing(ApplyExecutionData *edata,
 				 * Report the conflict if the tuple was modified by a
 				 * different origin.
 				 */
-				if (GetTupleTransactionInfo(localslot, &localxmin, &localorigin, &localts) &&
-					localorigin != replorigin_session_origin)
+				if (GetTupleTransactionInfo(localslot, &conflicttuple.xmin,
+											&conflicttuple.origin,
+											&conflicttuple.ts) &&
+					conflicttuple.origin != replorigin_session_origin)
 				{
 					TupleTableSlot *newslot;
 
@@ -3115,10 +3110,11 @@ apply_handle_tuple_routing(ApplyExecutionData *edata,
 					newslot = table_slot_create(partrel, &estate->es_tupleTable);
 					slot_store_data(newslot, part_entry, newtup);
 
+					conflicttuple.slot = localslot;
+
 					ReportApplyConflict(estate, partrelinfo, LOG, CT_UPDATE_ORIGIN_DIFFERS,
-										remoteslot_part, localslot, newslot,
-										InvalidOid, localxmin, localorigin,
-										localts);
+										remoteslot_part, newslot,
+										list_make1(&conflicttuple));
 				}
 
 				/*
