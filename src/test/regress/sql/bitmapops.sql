@@ -12,7 +12,7 @@
 -- That allows us to test all the different combinations of
 -- lossy and non-lossy pages with the minimum amount of data
 
-CREATE TABLE bmscantest (a int, b int, t text);
+CREATE TABLE bmscantest (a int, b int, t text) WITH (autovacuum_enabled = false);
 
 INSERT INTO bmscantest
   SELECT (r%53), (r%59), 'foooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo'
@@ -29,8 +29,14 @@ set enable_seqscan=false;
 -- Lower work_mem to trigger use of lossy bitmaps
 set work_mem = 64;
 
+-- Test bitmap-and without the skip fetch optimization.
+SELECT count(*) FROM bmscantest WHERE a = 1 AND b = 1;
 
--- Test bitmap-and.
+-- Test that we return correct results when using the skip fetch optimization
+-- VACUUM FREEZE will set all the pages in the relation all-visible, enabling
+-- the optimization.
+VACUUM (FREEZE) bmscantest;
+
 SELECT count(*) FROM bmscantest WHERE a = 1 AND b = 1;
 
 -- Test bitmap-or.
