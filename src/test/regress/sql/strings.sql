@@ -367,6 +367,12 @@ SELECT POSITION('4' IN '1234567890') = '4' AS "4";
 
 SELECT POSITION('5' IN '1234567890') = '5' AS "5";
 
+SELECT POSITION('\x11'::bytea IN ''::bytea) = 0 AS "0";
+SELECT POSITION('\x33'::bytea IN '\x1122'::bytea) = 0 AS "0";
+SELECT POSITION(''::bytea IN '\x1122'::bytea) = 1 AS "1";
+SELECT POSITION('\x22'::bytea IN '\x1122'::bytea) = 2 AS "2";
+SELECT POSITION('\x5678'::bytea IN '\x1234567890'::bytea) = 3 AS "3";
+
 -- T312 character overlay function
 SELECT OVERLAY('abcdef' PLACING '45' FROM 4) AS "abc45f";
 
