@@ -118,6 +118,21 @@ is( $node_subscriber->safe_psql(
 	qq(1|1|1),
 	'check replicated inserts on subscriber');
 
+# Test if the expected error is reported when the subscriber table is missing
+# columns which were specified on the publisher table.
+$node_publisher->safe_psql('postgres',
+	"CREATE TABLE test_tab3 (a int, b int, c int)");
+$node_subscriber->safe_psql('postgres', "CREATE TABLE test_tab3 (a int)");
+
+my $offset = -s $node_subscriber->logfile;
+
+$node_subscriber->safe_psql('postgres',
+	"ALTER SUBSCRIPTION tap_sub REFRESH PUBLICATION");
+
+$node_subscriber->wait_for_log(
+	qr/ERROR: ( [A-Z0-9]+:)? logical replication target relation "public.test_tab3" is missing replicated columns: "b", "c"/,
+	$offset);
+
 
 $node_subscriber->stop;
 $node_publisher->stop;
