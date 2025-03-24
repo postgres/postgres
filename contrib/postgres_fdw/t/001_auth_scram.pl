@@ -68,6 +68,47 @@ test_fdw_auth($node1, $db0, "t2", $fdw_server2,
 test_auth($node2, $db2, "t2",
 	"SCRAM auth directly on foreign server should still succeed");
 
+# Ensure that trust connections fail without superuser opt-in.
+unlink($node1->data_dir . '/pg_hba.conf');
+unlink($node2->data_dir . '/pg_hba.conf');
+
+$node1->append_conf(
+	'pg_hba.conf', qq{
+local   db0             all                                     scram-sha-256
+local   db1             all                                     trust
+}
+);
+$node2->append_conf(
+	'pg_hba.conf', qq{
+local   all             all                                     password
+}
+);
+
+$node1->restart;
+$node2->restart;
+
+my ($ret, $stdout, $stderr) = $node1->psql(
+	$db0,
+	qq'select count(1) from t',
+	connstr => $node1->connstr($db0) . " user=$user");
+
+is($ret, 3, 'loopback trust fails on the same cluster');
+like(
+	$stderr,
+	qr/failed: authentication method requirement "scram-sha-256"/,
+	'expected error from loopback trust (same cluster)');
+
+($ret, $stdout, $stderr) = $node1->psql(
+	$db0,
+	qq'select count(1) from t2',
+	connstr => $node1->connstr($db0) . " user=$user");
+
+is($ret, 3, 'loopback password fails on a different cluster');
+like(
+	$stderr,
+	qr/failed: authentication method requirement "scram-sha-256"/,
+	'expected error from loopback password (different cluster)');
+
 # Helper functions
 
 sub test_auth

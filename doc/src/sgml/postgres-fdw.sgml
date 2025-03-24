@@ -788,10 +788,8 @@ OPTIONS (ADD password_required 'false');
         <itemizedlist>
          <listitem>
           <para>
-           The remote server must request SCRAM authentication.  (If desired,
-           enforce this on the client side (FDW side) with the option
-           <literal>require_auth</literal>.)  If another authentication method
-           is requested by the server, then that one will be used normally.
+           The remote server must request the <literal>scram-sha-256</literal>
+           authentication method; otherwise, the connection will fail.
           </para>
          </listitem>
 
@@ -805,10 +803,7 @@ OPTIONS (ADD password_required 'false');
 
          <listitem>
           <para>
-           The user mapping password is not used.  (It could be set to support
-           other authentication methods, but that would arguably violate the
-           point of this feature, which is to avoid storing plain-text
-           passwords.)
+           The user mapping password is not used.
           </para>
          </listitem>
 
