@@ -127,4 +127,12 @@ $node->command_ok(
 	],
 	'replayed a two-phase transaction');
 
+$node->command_ok(
+	[
+		'pg_recvlogical',
+		'--slot' => 'test',
+		'--drop-slot'
+	],
+	'drop could work without dbname');
+
 done_testing();

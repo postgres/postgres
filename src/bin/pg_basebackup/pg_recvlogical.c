@@ -944,13 +944,16 @@ main(int argc, char **argv)
 #endif
 
 	/*
-	 * Run IDENTIFY_SYSTEM to make sure we connected using a database specific
-	 * replication connection.
+	 * Run IDENTIFY_SYSTEM to check the connection type for each action.
+	 * --create-slot and --start actions require a database-specific
+	 * replication connection because they handle logical replication slots.
+	 * --drop-slot can remove replication slots from any replication
+	 * connection without this restriction.
 	 */
 	if (!RunIdentifySystem(conn, NULL, NULL, NULL, &db_name))
 		exit(1);
 
-	if (db_name == NULL)
+	if (!do_drop_slot && db_name == NULL)
 		pg_fatal("could not establish database-specific replication connection");
 
 	/*
