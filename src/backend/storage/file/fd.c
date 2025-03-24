@@ -1047,16 +1047,17 @@ set_max_safe_fds(void)
 
 	/*----------
 	 * We want to set max_safe_fds to
-	 *			MIN(usable_fds, max_files_per_process - already_open)
+	 *			MIN(usable_fds, max_files_per_process)
 	 * less the slop factor for files that are opened without consulting
-	 * fd.c.  This ensures that we won't exceed either max_files_per_process
-	 * or the experimentally-determined EMFILE limit.
+	 * fd.c.  This ensures that we won't allow to open more than
+	 * max_files_per_process, or the experimentally-determined EMFILE limit,
+	 * additional files.
 	 *----------
 	 */
 	count_usable_fds(max_files_per_process,
 					 &usable_fds, &already_open);
 
-	max_safe_fds = Min(usable_fds, max_files_per_process - already_open);
+	max_safe_fds = Min(usable_fds, max_files_per_process);
 
 	/*
 	 * Take off the FDs reserved for system() etc.
@@ -1070,9 +1071,10 @@ set_max_safe_fds(void)
 		ereport(FATAL,
 				(errcode(ERRCODE_INSUFFICIENT_RESOURCES),
 				 errmsg("insufficient file descriptors available to start server process"),
-				 errdetail("System allows %d, server needs at least %d.",
+				 errdetail("System allows %d, server needs at least %d, %d files are already open.",
 						   max_safe_fds + NUM_RESERVED_FDS,
-						   FD_MINFREE + NUM_RESERVED_FDS)));
+						   FD_MINFREE + NUM_RESERVED_FDS,
+						   already_open)));
 
 	elog(DEBUG2, "max_safe_fds = %d, usable_fds = %d, already_open = %d",
 		 max_safe_fds, usable_fds, already_open);
