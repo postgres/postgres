@@ -152,7 +152,19 @@ typedef struct
 	const char *optname;		/* option's name */
 	relopt_type opttype;		/* option's datatype */
 	int			offset;			/* offset of field in result struct */
-	int			isset_offset;	/* if > 0, offset of "is set" field */
+
+	/*
+	 * isset_offset is an optional offset of a field in the result struct that
+	 * stores whether the option is explicitly set for the relation or if it
+	 * just picked up the default value.  In most cases, this can be
+	 * accomplished by giving the reloption a special out-of-range default
+	 * value (e.g., some integer reloptions use -2), but this isn't always
+	 * possible.  For example, a Boolean reloption cannot be given an
+	 * out-of-range default, so we need another way to discover the source of
+	 * its value.  This offset is only used if given a value greater than
+	 * zero.
+	 */
+	int			isset_offset;
 } relopt_parse_elt;
 
 /* Local reloption definition */
