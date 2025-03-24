@@ -424,7 +424,7 @@ test_conn(
 test_conn($node, 'user=md5_role', 'scram-sha-256', 2,
 	log_unlike => [qr/connection authenticated:/]);
 
-# require_auth should succeeds with SCRAM when it is required.
+# require_auth should succeed with SCRAM when it is required.
 $node->connect_ok(
 	"user=scram_role require_auth=scram-sha-256",
 	"SCRAM authentication required, works with SCRAM auth");
