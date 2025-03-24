@@ -6188,13 +6188,16 @@ listExtensions(const char *pattern)
 	initPQExpBuffer(&buf);
 	printfPQExpBuffer(&buf,
 					  "SELECT e.extname AS \"%s\", "
-					  "e.extversion AS \"%s\", n.nspname AS \"%s\", c.description AS \"%s\"\n"
+					  "e.extversion AS \"%s\", ae.default_version AS \"%s\","
+					  "n.nspname AS \"%s\", c.description AS \"%s\"\n"
 					  "FROM pg_catalog.pg_extension e "
 					  "LEFT JOIN pg_catalog.pg_namespace n ON n.oid = e.extnamespace "
 					  "LEFT JOIN pg_catalog.pg_description c ON c.objoid = e.oid "
+					  "LEFT JOIN pg_catalog.pg_available_extensions() ae(name, default_version, comment) ON ae.name = e.extname "
 					  "AND c.classoid = 'pg_catalog.pg_extension'::pg_catalog.regclass\n",
 					  gettext_noop("Name"),
 					  gettext_noop("Version"),
+					  gettext_noop("Default version"),
 					  gettext_noop("Schema"),
 					  gettext_noop("Description"));
 

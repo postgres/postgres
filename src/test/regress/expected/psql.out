@@ -6460,9 +6460,9 @@ List of schemas
 (0 rows)
 
 \dx "no.such.installed.extension"
-     List of installed extensions
- Name | Version | Schema | Description 
-------+---------+--------+-------------
+              List of installed extensions
+ Name | Version | Default version | Schema | Description 
+------+---------+-----------------+--------+-------------
 (0 rows)
 
 \dX "no.such.extended.statistics"
