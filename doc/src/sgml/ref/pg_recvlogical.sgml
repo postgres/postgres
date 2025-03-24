@@ -74,6 +74,11 @@ PostgreSQL documentation
        </para>
 
        <para>
+        The <option>--slot</option> and <option>--dbname</option> are required
+        for this action.
+       </para>
+
+       <para>
         The <option>--two-phase</option> can be specified with
         <option>--create-slot</option> to enable decoding of prepared transactions.
        </para>
@@ -87,6 +92,10 @@ PostgreSQL documentation
         Drop the replication slot with the name specified
         by <option>--slot</option>, then exit.
        </para>
+
+       <para>
+        The <option>--slot</option> is required for this action.
+       </para>
       </listitem>
      </varlistentry>
 
@@ -99,6 +108,11 @@ PostgreSQL documentation
         signal. If the server side change stream ends with a server shutdown
         or disconnect, retry in a loop unless
         <option>--no-loop</option> is specified.
+       </para>
+
+       <para>
+        The <option>--slot</option> and <option>--dbname</option>,
+        <option>--file</option> are required for this action.
        </para>
 
        <para>
@@ -158,6 +172,9 @@ PostgreSQL documentation
        <para>
         Write received and decoded transaction data into this
         file. Use <literal>-</literal> for <systemitem>stdout</systemitem>.
+       </para>
+       <para>
+        This parameter is required for <option>--start</option>.
        </para>
       </listitem>
      </varlistentry>
@@ -265,6 +282,9 @@ PostgreSQL documentation
         mode, create the slot with this name. In <option>--drop-slot</option>
         mode, delete the slot with this name.
        </para>
+       <para>
+        This parameter is required for any of actions.
+       </para>
       </listitem>
      </varlistentry>
 
@@ -305,7 +325,11 @@ PostgreSQL documentation
          The <replaceable>dbname</replaceable> can be a <link
          linkend="libpq-connstring">connection string</link>.  If so,
          connection string parameters will override any conflicting
-         command line options.  Defaults to the user name.
+         command line options.
+        </para>
+        <para>
+         This parameter is required for <option>--create-slot</option>
+         and <option>--start</option>.
         </para>
        </listitem>
       </varlistentry>
