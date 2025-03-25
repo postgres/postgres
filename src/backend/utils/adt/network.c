@@ -1094,38 +1094,12 @@ match_network_subset(Node *leftop,
 	rightopval = ((Const *) rightop)->constvalue;
 
 	/*
-	 * Must check that index's opfamily supports the operators we will want to
-	 * apply.
-	 *
-	 * We insist on the opfamily being the specific one we expect, else we'd
-	 * do the wrong thing if someone were to make a reverse-sort opfamily with
-	 * the same operators.
-	 */
-	if (opfamily != NETWORK_BTREE_FAM_OID)
-		return NIL;
-
-	/*
 	 * create clause "key >= network_scan_first( rightopval )", or ">" if the
 	 * operator disallows equality.
-	 *
-	 * Note: seeing that this function supports only fixed values for opfamily
-	 * and datatype, we could just hard-wire the operator OIDs instead of
-	 * looking them up.  But for now it seems better to be general.
 	 */
-	if (is_eq)
-	{
-		opr1oid = get_opfamily_member(opfamily, datatype, datatype,
-									  BTGreaterEqualStrategyNumber);
-		if (opr1oid == InvalidOid)
-			elog(ERROR, "no >= operator for opfamily %u", opfamily);
-	}
-	else
-	{
-		opr1oid = get_opfamily_member(opfamily, datatype, datatype,
-									  BTGreaterStrategyNumber);
-		if (opr1oid == InvalidOid)
-			elog(ERROR, "no > operator for opfamily %u", opfamily);
-	}
+	opr1oid = get_opfamily_member_for_cmptype(opfamily, datatype, datatype, is_eq ? COMPARE_GE : COMPARE_GT);
+	if (opr1oid == InvalidOid)
+		return NIL;
 
 	opr1right = network_scan_first(rightopval);
 
@@ -1140,10 +1114,9 @@ match_network_subset(Node *leftop,
 
 	/* create clause "key <= network_scan_last( rightopval )" */
 
-	opr2oid = get_opfamily_member(opfamily, datatype, datatype,
-								  BTLessEqualStrategyNumber);
+	opr2oid = get_opfamily_member_for_cmptype(opfamily, datatype, datatype, COMPARE_LE);
 	if (opr2oid == InvalidOid)
-		elog(ERROR, "no <= operator for opfamily %u", opfamily);
+		return NIL;
 
 	opr2right = network_scan_last(rightopval);
 
