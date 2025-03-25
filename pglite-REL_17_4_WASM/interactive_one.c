@@ -183,20 +183,29 @@ interactive_write(int size) {
 __attribute__((export_name("ping")))
 void
 ping(void) {
+#if PGDEBUG
     puts("pong");
+#endif
 }
 
 __attribute__((export_name("use_wire")))
 void
 use_wire(int state) {
+#if PGDEBUG
+    force_echo=true;
+#else
+    force_echo=false;
+#endif
     if (state>0) {
-        force_echo=true;
+#if PGDEBUG
         printf("176: wire mode, repl off, echo %d\n", force_echo);
+#endif
         is_wire = true;
         is_repl = false;
     } else {
-        force_echo=true;
+#if PGDEBUG
         printf("181: repl mode, no wire, echo %d\n", force_echo);
+#endif
         is_wire = false;
         is_repl = true;
     }
