@@ -27,6 +27,12 @@
 #define DEFAULT_PROMPT2 "%/%R%x%# "
 #define DEFAULT_PROMPT3 ">> "
 
+#define DEFAULT_WATCH_INTERVAL "2"
+/*
+ * Limit the max default setting to a value which should be safe for the
+ * itimer call, yet large enough to cover all realistic usecases.
+ */
+#define DEFAULT_WATCH_INTERVAL_MAX (1000*1000)
 /*
  * Note: these enums should generally be chosen so that zero corresponds
  * to the default behavior.
@@ -166,6 +172,7 @@ typedef struct _psqlSettings
 	int			fetch_count;
 	int			histsize;
 	int			ignoreeof;
+	double		watch_interval;
 	PSQL_ECHO	echo;
 	PSQL_ECHO_HIDDEN echo_hidden;
 	PSQL_ERROR_ROLLBACK on_error_rollback;

@@ -945,6 +945,21 @@ histsize_hook(const char *newval)
 }
 
 static char *
+watch_interval_substitute_hook(char *newval)
+{
+	if (newval == NULL)
+		newval = pg_strdup(DEFAULT_WATCH_INTERVAL);
+	return newval;
+}
+
+static bool
+watch_interval_hook(const char *newval)
+{
+	return ParseVariableDouble(newval, "WATCH_INTERVAL", &pset.watch_interval,
+							   0, DEFAULT_WATCH_INTERVAL_MAX);
+}
+
+static char *
 ignoreeof_substitute_hook(char *newval)
 {
 	int			dummy;
@@ -1270,4 +1285,7 @@ EstablishVariableSpace(void)
 	SetVariableHooks(pset.vars, "HIDE_TABLEAM",
 					 bool_substitute_hook,
 					 hide_tableam_hook);
+	SetVariableHooks(pset.vars, "WATCH_INTERVAL",
+					 watch_interval_substitute_hook,
+					 watch_interval_hook);
 }

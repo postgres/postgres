@@ -3852,6 +3852,8 @@ SELECT 1 \bind \sendpipeline
         until interrupted, or the query fails, or the execution count limit
         (if given) is reached, or the query no longer returns the minimum number
         of rows. Wait the specified number of seconds (default 2) between executions.
+        The default wait can be changed with the variable
+        <xref linkend="app-psql-variables-watch-interval"/>).
         For backwards compatibility,
         <replaceable class="parameter">seconds</replaceable> can be specified
         with or without an <literal>interval=</literal> prefix.
@@ -4742,6 +4744,17 @@ bar
         a short string (e.g., <literal>9.6.2</literal>, <literal>10.1</literal>,
         or <literal>11beta1</literal>), and a number (e.g., <literal>90602</literal>
         or <literal>100001</literal>).  They can be changed or unset.
+        </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry id="app-psql-variables-watch-interval">
+        <term><varname>WATCH_INTERVAL</varname></term>
+        <listitem>
+        <para>
+        This variable sets the default interval which <command>\watch</command>
+        waits between executing the query.  Specifying an interval in the
+        command overrides this variable.
         </para>
         </listitem>
       </varlistentry>

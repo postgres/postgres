@@ -7,6 +7,8 @@
  */
 #include "postgres_fe.h"
 
+#include <math.h>
+
 #include "common.h"
 #include "common/logging.h"
 #include "variables.h"
@@ -175,6 +177,74 @@ ParseVariableNum(const char *value, const char *name, int *result)
 		if (name)
 			pg_log_error("invalid value \"%s\" for \"%s\": integer expected",
 						 value, name);
+		return false;
+	}
+}
+
+/*
+ * Try to interpret "value" as a double value, and if successful store it in
+ * *result. If unsuccessful, *result isn't clobbered. "name" is the variable
+ * which is being assigned, the value of which is only used to produce a good
+ * error message. Pass NULL as the name to suppress the error message.  The
+ * value must be within the range [min,max] in order to be considered valid.
+ *
+ * Returns true, with *result containing the interpreted value, if "value" is
+ * syntactically valid, else false (with *result unchanged).
+ */
+bool
+ParseVariableDouble(const char *value, const char *name, double *result, double min, double max)
+{
+	char	   *end;
+	double		dblval;
+
+	/*
+	 * Empty-string input has historically been treated differently by strtod
+	 * on various platforms, so handle that by specifically checking for it.
+	 */
+	if ((value == NULL) || (*value == '\0'))
+	{
+		if (name)
+			pg_log_error("invalid input syntax for \"%s\"", name);
+		return false;
+	}
+
+	errno = 0;
+	dblval = strtod(value, &end);
+	if (errno == 0 && *end == '\0' && end != value)
+	{
+		if (dblval < min)
+		{
+			if (name)
+				pg_log_error("invalid value \"%s\" for \"%s\": must be greater than %.2f",
+							 value, name, min);
+			return false;
+		}
+		else if (dblval > max)
+		{
+			if (name)
+				pg_log_error("invalid value \"%s\" for \"%s\": must be less than %.2f",
+							 value, name, max);
+		}
+		*result = dblval;
+		return true;
+	}
+
+	/*
+	 * Cater for platforms which treat values which aren't zero, but that are
+	 * too close to zero to have full precision, by checking for zero or real
+	 * out-of-range values.
+	 */
+	else if ((errno = ERANGE) &&
+			 (dblval == 0.0 || dblval >= HUGE_VAL || dblval <= -HUGE_VAL))
+	{
+		if (name)
+			pg_log_error("\"%s\" is out of range for \"%s\"", value, name);
+		return false;
+	}
+	else
+	{
+		if (name)
+			pg_log_error("invalid value \"%s\" for \"%s\"", value, name);
 		return false;
 	}
 }

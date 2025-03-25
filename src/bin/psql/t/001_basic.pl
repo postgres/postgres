@@ -375,6 +375,12 @@ psql_like(
 	$node, sprintf('SELECT 1 \watch c=3 i=%g', 0.0001),
 	qr/1\n1\n1/, '\watch with 3 iterations, interval of 0.0001');
 
+# Test zero interval
+psql_like(
+	$node, '\set WATCH_INTERVAL 0
+SELECT 1 \watch c=3',
+	qr/1\n1\n1/, '\watch with 3 iterations, interval of 0');
+
 # Check \watch minimum row count
 psql_fails_like(
 	$node,
@@ -425,6 +431,24 @@ psql_fails_like(
 	'SELECT 1 \watch c=1 c=1',
 	qr/iteration count is specified more than once/,
 	'\watch, iteration count is specified more than once');
+
+# Check WATCH_INTERVAL
+psql_like(
+	$node,
+	'\echo :WATCH_INTERVAL
+\set WATCH_INTERVAL 0.001
+\echo :WATCH_INTERVAL
+\unset WATCH_INTERVAL
+\echo :WATCH_INTERVAL',
+	qr/^2$
+^0.001$
+^2$/m,
+	'WATCH_INTERVAL variable is set and updated');
+psql_fails_like(
+	$node,
+	'\set WATCH_INTERVAL 1e500',
+	qr/is out of range/,
+	'WATCH_INTERVAL variable is out of range');
 
 # Test \g output piped into a program.
 # The program is perl -pe '' to simply copy the input to the output.
