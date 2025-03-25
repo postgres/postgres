@@ -527,6 +527,33 @@ PostgreSQL documentation
       </listitem>
      </varlistentry>
 
+     <varlistentry id="app-initdb-option-no-sync-data-files">
+      <term><option>--no-sync-data-files</option></term>
+      <listitem>
+       <para>
+        By default, <command>initdb</command> safely writes all database files
+        to disk.  This option instructs <command>initdb</command> to skip
+        synchronizing all files in the individual database directories, the
+        database directories themselves, and the tablespace directories, i.e.,
+        everything in the <filename>base</filename> subdirectory and any other
+        tablespace directories.  Other files, such as those in
+        <literal>pg_wal</literal> and <literal>pg_xact</literal>, will still be
+        synchronized unless the <option>--no-sync</option> option is also
+        specified.
+       </para>
+       <para>
+        Note that if <option>--no-sync-data-files</option> is used in
+        conjuction with <option>--sync-method=syncfs</option>, some or all of
+        the aforementioned files and directories will be synchronized because
+        <literal>syncfs</literal> processes entire file systems.
+       </para>
+       <para>
+        This option is primarily intended for internal use by tools that
+        separately ensure the skipped files are synchronized to disk.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="app-initdb-option-no-instructions">
       <term><option>--no-instructions</option></term>
       <listitem>

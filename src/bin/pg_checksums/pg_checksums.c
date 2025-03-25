@@ -633,7 +633,7 @@ main(int argc, char *argv[])
 		if (do_sync)
 		{
 			pg_log_info("syncing data directory");
-			sync_pgdata(DataDir, PG_VERSION_NUM, sync_method);
+			sync_pgdata(DataDir, PG_VERSION_NUM, sync_method, true);
 		}
 
 		pg_log_info("updating control file");

@@ -2310,7 +2310,7 @@ BaseBackup(char *compression_algorithm, char *compression_detail,
 		}
 		else
 		{
-			(void) sync_pgdata(basedir, serverVersion, sync_method);
+			(void) sync_pgdata(basedir, serverVersion, sync_method, true);
 		}
 	}
 

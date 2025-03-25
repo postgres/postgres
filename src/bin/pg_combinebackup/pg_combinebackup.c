@@ -424,7 +424,7 @@ main(int argc, char *argv[])
 		else
 		{
 			pg_log_debug("recursively fsyncing \"%s\"", opt.output);
-			sync_pgdata(opt.output, version * 10000, opt.sync_method);
+			sync_pgdata(opt.output, version * 10000, opt.sync_method, true);
 		}
 	}
 
