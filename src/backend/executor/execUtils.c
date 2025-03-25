@@ -322,19 +322,18 @@ CreateExprContext(EState *estate)
 ExprContext *
 CreateWorkExprContext(EState *estate)
 {
-	Size		minContextSize = ALLOCSET_DEFAULT_MINSIZE;
-	Size		initBlockSize = ALLOCSET_DEFAULT_INITSIZE;
 	Size		maxBlockSize = ALLOCSET_DEFAULT_MAXSIZE;
 
-	/* choose the maxBlockSize to be no larger than 1/16 of work_mem */
-	while (maxBlockSize > work_mem * (Size) 1024 / 16)
-		maxBlockSize >>= 1;
+	maxBlockSize = pg_prevpower2_size_t(work_mem * (Size) 1024 / 16);
 
-	if (maxBlockSize < ALLOCSET_DEFAULT_INITSIZE)
-		maxBlockSize = ALLOCSET_DEFAULT_INITSIZE;
+	/* But no bigger than ALLOCSET_DEFAULT_MAXSIZE */
+	maxBlockSize = Min(maxBlockSize, ALLOCSET_DEFAULT_MAXSIZE);
 
-	return CreateExprContextInternal(estate, minContextSize,
-									 initBlockSize, maxBlockSize);
+	/* and no smaller than ALLOCSET_DEFAULT_INITSIZE */
+	maxBlockSize = Max(maxBlockSize, ALLOCSET_DEFAULT_INITSIZE);
+
+	return CreateExprContextInternal(estate, ALLOCSET_DEFAULT_MINSIZE,
+									 ALLOCSET_DEFAULT_INITSIZE, maxBlockSize);
 }
 
 /* ----------------
