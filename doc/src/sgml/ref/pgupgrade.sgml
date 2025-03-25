@@ -244,7 +244,8 @@ PostgreSQL documentation
       <listitem>
        <para>
         Copy files to the new cluster.  This is the default.  (See also
-        <option>--link</option> and <option>--clone</option>.)
+        <option>--link</option>, <option>--clone</option>,
+        <option>--copy-file-range</option>, and <option>--swap</option>.)
        </para>
       </listitem>
      </varlistentry>
@@ -258,6 +259,32 @@ PostgreSQL documentation
         <option>--clone</option>, sharing physical disk blocks, while on others
         it may still copy blocks, but do so via an optimized path.  At present,
         it is supported on Linux and FreeBSD.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>--swap</option></term>
+      <listitem>
+       <para>
+        Move the data directories from the old cluster to the new cluster.
+        Then, replace the catalog files with those generated for the new
+        cluster.  This mode can outperform <option>--link</option>,
+        <option>--clone</option>, <option>--copy</option>, and
+        <option>--copy-file-range</option>, especially on clusters with many
+        relations.
+       </para>
+       <para>
+        However, this mode creates many garbage files in the old cluster, which
+        can prolong the file synchronization step if
+        <option>--sync-method=syncfs</option> is used.  Therefore, it is
+        recommended to use <option>--sync-method=fsync</option> with
+        <option>--swap</option>.
+       </para>
+       <para>
+        Additionally, once the file transfer step begins, the old cluster will
+        be destructively modified and therefore will no longer be safe to
+        start.  See <xref linkend="pgupgrade-step-revert"/> for details.
        </para>
       </listitem>
      </varlistentry>
@@ -530,6 +557,10 @@ NET STOP postgresql-&majorversion;
      is started.  Clone mode also requires that the old and new data
      directories be in the same file system.  This mode is only available
      on certain operating systems and file systems.
+     Swap mode may be the fastest if there are many relations, but you will not
+     be able to access your old cluster once the file transfer step begins.
+     Swap mode also requires that the old and new cluster data directories be
+     in the same file system.
     </para>
 
     <para>
@@ -888,6 +919,32 @@ psql --username=postgres --file=script.sql postgres
          </listitem>
 
         </itemizedlist></para>
+      </listitem>
+
+      <listitem>
+       <para>
+        If the <option>--swap</option> option was used, the old cluster might
+        be destructively modified:
+
+        <itemizedlist>
+         <listitem>
+          <para>
+           If <command>pg_upgrade</command> aborts before reporting that the
+           old cluster is no longer safe to start, the old cluster was
+           unmodified; it can be restarted.
+          </para>
+         </listitem>
+
+         <listitem>
+          <para>
+           If <command>pg_upgrade</command> has reported that the old cluster
+           is no longer safe to start, the old cluster was destructively
+           modified.  The old cluster will need to be restored from backup in
+           this case.
+          </para>
+         </listitem>
+        </itemizedlist>
+       </para>
       </listitem>
      </itemizedlist></para>
    </step>

@@ -709,7 +709,34 @@ check_new_cluster(void)
 			check_copy_file_range();
 			break;
 		case TRANSFER_MODE_LINK:
-			check_hard_link();
+			check_hard_link(TRANSFER_MODE_LINK);
+			break;
+		case TRANSFER_MODE_SWAP:
+
+			/*
+			 * We do the hard link check for --swap, too, since it's an easy
+			 * way to verify the clusters are in the same file system.  This
+			 * allows us to take some shortcuts in the file synchronization
+			 * step.  With some more effort, we could probably support the
+			 * separate-file-system use case, but this mode is unlikely to
+			 * offer much benefit if we have to copy the files across file
+			 * system boundaries.
+			 */
+			check_hard_link(TRANSFER_MODE_SWAP);
+
+			/*
+			 * There are a few known issues with using --swap to upgrade from
+			 * versions older than 10.  For example, the sequence tuple format
+			 * changed in v10, and the visibility map format changed in 9.6.
+			 * While such problems are not insurmountable (and we may have to
+			 * deal with similar problems in the future, anyway), it doesn't
+			 * seem worth the effort to support swap mode for upgrades from
+			 * long-unsupported versions.
+			 */
+			if (GET_MAJOR_VERSION(old_cluster.major_version) < 1000)
+				pg_fatal("Swap mode can only upgrade clusters from PostgreSQL version %s and later.",
+						 "10");
+
 			break;
 	}
 

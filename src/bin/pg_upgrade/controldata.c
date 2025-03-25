@@ -751,7 +751,7 @@ check_control_data(ControlData *oldctrl,
 
 
 void
-disable_old_cluster(void)
+disable_old_cluster(transferMode transfer_mode)
 {
 	char		old_path[MAXPGPATH],
 				new_path[MAXPGPATH];
@@ -766,10 +766,17 @@ disable_old_cluster(void)
 				 old_path, new_path);
 	check_ok();
 
-	pg_log(PG_REPORT, "\n"
-		   "If you want to start the old cluster, you will need to remove\n"
-		   "the \".old\" suffix from %s/global/pg_control.old.\n"
-		   "Because \"link\" mode was used, the old cluster cannot be safely\n"
-		   "started once the new cluster has been started.",
-		   old_cluster.pgdata);
+	if (transfer_mode == TRANSFER_MODE_LINK)
+		pg_log(PG_REPORT, "\n"
+			   "If you want to start the old cluster, you will need to remove\n"
+			   "the \".old\" suffix from %s/global/pg_control.old.\n"
+			   "Because \"link\" mode was used, the old cluster cannot be safely\n"
+			   "started once the new cluster has been started.",
+			   old_cluster.pgdata);
+	else if (transfer_mode == TRANSFER_MODE_SWAP)
+		pg_log(PG_REPORT, "\n"
+			   "Because \"swap\" mode was used, the old cluster can no longer be\n"
+			   "safely started.");
+	else
+		pg_fatal("unrecognized transfer mode");
 }

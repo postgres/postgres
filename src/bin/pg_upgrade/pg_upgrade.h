@@ -262,6 +262,7 @@ typedef enum
 	TRANSFER_MODE_COPY,
 	TRANSFER_MODE_COPY_FILE_RANGE,
 	TRANSFER_MODE_LINK,
+	TRANSFER_MODE_SWAP,
 } transferMode;
 
 /*
@@ -391,7 +392,7 @@ void		create_script_for_old_cluster_deletion(char **deletion_script_file_name);
 
 void		get_control_data(ClusterInfo *cluster);
 void		check_control_data(ControlData *oldctrl, ControlData *newctrl);
-void		disable_old_cluster(void);
+void		disable_old_cluster(transferMode transfer_mode);
 
 
 /* dump.c */
@@ -423,7 +424,7 @@ void		rewriteVisibilityMap(const char *fromfile, const char *tofile,
 								 const char *schemaName, const char *relName);
 void		check_file_clone(void);
 void		check_copy_file_range(void);
-void		check_hard_link(void);
+void		check_hard_link(transferMode transfer_mode);
 
 /* fopen_priv() is no longer different from fopen() */
 #define fopen_priv(path, mode)	fopen(path, mode)

@@ -33,6 +33,7 @@ typedef enum DataDirSyncMethod
 struct iovec;					/* avoid including port/pg_iovec.h here */
 
 #ifdef FRONTEND
+extern int	pre_sync_fname(const char *fname, bool isdir);
 extern int	fsync_fname(const char *fname, bool isdir);
 extern void sync_pgdata(const char *pg_data, int serverVersion,
 						DataDirSyncMethod sync_method, bool sync_data_files);

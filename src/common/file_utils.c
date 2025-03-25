@@ -45,9 +45,6 @@
  */
 #define MINIMUM_VERSION_FOR_PG_WAL	100000
 
-#ifdef PG_FLUSH_DATA_WORKS
-static int	pre_sync_fname(const char *fname, bool isdir);
-#endif
 static void walkdir(const char *path,
 					int (*action) (const char *fname, bool isdir),
 					bool process_symlinks,
@@ -352,16 +349,16 @@ walkdir(const char *path,
 }
 
 /*
- * Hint to the OS that it should get ready to fsync() this file.
+ * Hint to the OS that it should get ready to fsync() this file, if supported
+ * by the platform.
  *
  * Ignores errors trying to open unreadable files, and reports other errors
  * non-fatally.
  */
-#ifdef PG_FLUSH_DATA_WORKS
-
-static int
+int
 pre_sync_fname(const char *fname, bool isdir)
 {
+#ifdef PG_FLUSH_DATA_WORKS
 	int			fd;
 
 	fd = open(fname, O_RDONLY | PG_BINARY, 0);
@@ -388,10 +385,9 @@ pre_sync_fname(const char *fname, bool isdir)
 #endif
 
 	(void) close(fd);
+#endif							/* PG_FLUSH_DATA_WORKS */
 	return 0;
 }
-
-#endif							/* PG_FLUSH_DATA_WORKS */
 
 /*
  * fsync_fname -- Try to fsync a file or directory

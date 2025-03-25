@@ -16,6 +16,15 @@ sub test_mode
 	my $old = PostgreSQL::Test::Cluster->new('old', install_path => $ENV{oldinstall});
 	my $new = PostgreSQL::Test::Cluster->new('new');
 
+	# --swap can't be used to upgrade from versions older than 10, so just skip
+	# the test if the old cluster version is too old.
+	if ($old->pg_version < 10 && $mode eq "--swap")
+	{
+		$old->clean_node();
+		$new->clean_node();
+		return;
+	}
+
 	if (defined($ENV{oldinstall}))
 	{
 		# Checksums are now enabled by default, but weren't before 18, so pass
@@ -97,5 +106,6 @@ test_mode('--clone');
 test_mode('--copy');
 test_mode('--copy-file-range');
 test_mode('--link');
+test_mode('--swap');
 
 done_testing();

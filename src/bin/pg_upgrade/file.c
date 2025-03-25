@@ -434,7 +434,7 @@ check_copy_file_range(void)
 }
 
 void
-check_hard_link(void)
+check_hard_link(transferMode transfer_mode)
 {
 	char		existing_file[MAXPGPATH];
 	char		new_link_file[MAXPGPATH];
@@ -444,8 +444,16 @@ check_hard_link(void)
 	unlink(new_link_file);		/* might fail */
 
 	if (link(existing_file, new_link_file) < 0)
-		pg_fatal("could not create hard link between old and new data directories: %m\n"
-				 "In link mode the old and new data directories must be on the same file system.");
+	{
+		if (transfer_mode == TRANSFER_MODE_LINK)
+			pg_fatal("could not create hard link between old and new data directories: %m\n"
+					 "In link mode the old and new data directories must be on the same file system.");
+		else if (transfer_mode == TRANSFER_MODE_SWAP)
+			pg_fatal("could not create hard link between old and new data directories: %m\n"
+					 "In swap mode the old and new data directories must be on the same file system.");
+		else
+			pg_fatal("unrecognized transfer mode");
+	}
 
 	unlink(new_link_file);
 }
