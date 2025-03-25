@@ -471,6 +471,7 @@ foreach my $infile (@ARGV)
 								&& $attr !~ /^read_as\(\w+\)$/
 								&& !elem $attr,
 								qw(copy_as_scalar
+								custom_query_jumble
 								equal_as_scalar
 								equal_ignore
 								equal_ignore_if_zero
@@ -1283,12 +1284,17 @@ _jumble${n}(JumbleState *jstate, Node *node)
 		my $t = $node_type_info{$n}->{field_types}{$f};
 		my @a = @{ $node_type_info{$n}->{field_attrs}{$f} };
 		my $query_jumble_ignore = $struct_no_query_jumble;
+		my $query_jumble_custom = 0;
 		my $query_jumble_location = 0;
 		my $query_jumble_squash = 0;
 
 		# extract per-field attributes
 		foreach my $a (@a)
 		{
+			if ($a eq 'custom_query_jumble')
+			{
+				$query_jumble_custom = 1;
+			}
 			if ($a eq 'query_jumble_ignore')
 			{
 				$query_jumble_ignore = 1;
@@ -1304,7 +1310,12 @@ _jumble${n}(JumbleState *jstate, Node *node)
 		}
 
 		# node type
-		if (($t =~ /^(\w+)\*$/ or $t =~ /^struct\s+(\w+)\*$/)
+		if ($query_jumble_custom)
+		{
+			# Custom function that applies to one field of a node.
+			print $jff "\tJUMBLE_CUSTOM($n, $f);\n";
+		}
+		elsif (($t =~ /^(\w+)\*$/ or $t =~ /^struct\s+(\w+)\*$/)
 			and elem $1, @node_types)
 		{
 			# Squash constants if requested.
