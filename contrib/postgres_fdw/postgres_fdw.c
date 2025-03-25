@@ -5963,17 +5963,33 @@ foreign_join_ok(PlannerInfo *root, RelOptInfo *joinrel, JoinType jointype,
 			break;
 
 		case JOIN_LEFT:
-			fpinfo->joinclauses = list_concat(fpinfo->joinclauses,
-											  fpinfo_i->remote_conds);
-			fpinfo->remote_conds = list_concat(fpinfo->remote_conds,
-											   fpinfo_o->remote_conds);
+
+			/*
+			 * When semi-join is involved in the inner or outer part of the
+			 * left join, it's deparsed as a subquery, and we can't refer to
+			 * its vars on the upper level.
+			 */
+			if (bms_is_empty(fpinfo_i->hidden_subquery_rels))
+				fpinfo->joinclauses = list_concat(fpinfo->joinclauses,
+												  fpinfo_i->remote_conds);
+			if (bms_is_empty(fpinfo_o->hidden_subquery_rels))
+				fpinfo->remote_conds = list_concat(fpinfo->remote_conds,
+												   fpinfo_o->remote_conds);
 			break;
 
 		case JOIN_RIGHT:
-			fpinfo->joinclauses = list_concat(fpinfo->joinclauses,
-											  fpinfo_o->remote_conds);
-			fpinfo->remote_conds = list_concat(fpinfo->remote_conds,
-											   fpinfo_i->remote_conds);
+
+			/*
+			 * When semi-join is involved in the inner or outer part of the
+			 * right join, it's deparsed as a subquery, and we can't refer to
+			 * its vars on the upper level.
+			 */
+			if (bms_is_empty(fpinfo_o->hidden_subquery_rels))
+				fpinfo->joinclauses = list_concat(fpinfo->joinclauses,
+												  fpinfo_o->remote_conds);
+			if (bms_is_empty(fpinfo_i->hidden_subquery_rels))
+				fpinfo->remote_conds = list_concat(fpinfo->remote_conds,
+												   fpinfo_i->remote_conds);
 			break;
 
 		case JOIN_SEMI:
