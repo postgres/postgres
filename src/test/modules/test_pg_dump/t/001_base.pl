@@ -48,7 +48,7 @@ my %pgdump_runs = (
 		dump_cmd => [
 			'pg_dump', '--no-sync',
 			'--file' => "$tempdir/binary_upgrade.sql",
-			'--schema-only', '--binary-upgrade',
+			'--schema-only', '--sequence-data', '--binary-upgrade',
 			'--dbname' => 'postgres',
 		],
 	},

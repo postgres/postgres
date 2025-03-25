@@ -66,6 +66,7 @@ my %pgdump_runs = (
 			'--file' => "$tempdir/binary_upgrade.dump",
 			'--no-password',
 			'--no-data',
+			'--sequence-data',
 			'--binary-upgrade',
 			'--dbname' => 'postgres',    # alternative way to specify database
 		],
