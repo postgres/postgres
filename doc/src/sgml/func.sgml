@@ -30378,8 +30378,9 @@ postgres=# SELECT '0/0'::pg_lsn + pd.segment_number * ps.setting::int + :offset 
          The currently-supported relation statistics are
          <literal>relpages</literal> with a value of type
          <type>integer</type>, <literal>reltuples</literal> with a value of
-         type <type>real</type>, and <literal>relallvisible</literal> with a
-         value of type <type>integer</type>.
+         type <type>real</type>, <literal>relallvisible</literal> with a value
+         of type <type>integer</type>, and <literal>relallfrozen</literal>
+         with a value of type <type>integer</type>.
         </para>
         <para>
          Additionally, this function accepts argument name
