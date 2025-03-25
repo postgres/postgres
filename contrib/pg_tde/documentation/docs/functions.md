@@ -264,7 +264,9 @@ The `ensure_new_key` parameter instructs the function how to handle a principal 
 
 ### pg_tde_is_encrypted
 
-Tells if a relation is encrypted using the `pg_tde` extension or not.
+Tells if a relation is encrypted using the `pg_tde` extension or not. Returns
+`NULL` if a relation lacks storage like views, foreign tables, and partitioned
+tables and indexes.
 
 To verify that a table is encrypted, run the following statement:
 

@@ -1210,9 +1210,7 @@ pg_tde_get_key_from_cache(const RelFileLocator *rlocator, uint32 key_type)
 	{
 		RelKeyCacheRec *rec = tde_rel_key_cache.data + i;
 
-		if ((rlocator->relNumber == InvalidRelFileNumber ||
-			 RelFileLocatorEquals(rec->locator, *rlocator)) &&
-			rec->key.rel_type & key_type)
+		if (RelFileLocatorEquals(rec->locator, *rlocator) && rec->key.rel_type & key_type)
 		{
 			return &rec->key;
 		}

@@ -162,4 +162,6 @@ The extension provides the following helper functions:
 
 ### pg_tde_is_encrypted(tablename)
 
-Returns `t` if the relation is encrypted, or `f` otherwise.
+Returns `t` if the relation is encrypted, if unencrypted `f` or `NULL` if the
+relation lacks storage, i.e. views, foreign tables, and partitioning tables and
+indexes.
