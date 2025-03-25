@@ -522,7 +522,7 @@ switch(PQstatus(conn))
        sequence described in the documentation of
        <xref linkend="libpq-PQconnectStartParams"/>.
 <synopsis>
-typedef pg_int64 pg_usec_time_t;
+typedef int64_t pg_usec_time_t;
 
 int PQsocketPoll(int sock, int forRead, int forWrite,
                  pg_usec_time_t end_time);

@@ -20,6 +20,7 @@ extern "C"
 {
 #endif
 
+#include <stdint.h>
 #include <stdio.h>
 
 /*
@@ -233,8 +234,11 @@ typedef struct pgNotify
 	struct pgNotify *next;		/* list link */
 } PGnotify;
 
+/* deprecated name for int64_t */
+typedef int64_t pg_int64;
+
 /* pg_usec_time_t is like time_t, but with microsecond resolution */
-typedef pg_int64 pg_usec_time_t;
+typedef int64_t pg_usec_time_t;
 
 /* Function types for notice-handling callbacks */
 typedef void (*PQnoticeReceiver) (void *arg, const PGresult *res);
@@ -691,13 +695,13 @@ extern int	lo_close(PGconn *conn, int fd);
 extern int	lo_read(PGconn *conn, int fd, char *buf, size_t len);
 extern int	lo_write(PGconn *conn, int fd, const char *buf, size_t len);
 extern int	lo_lseek(PGconn *conn, int fd, int offset, int whence);
-extern pg_int64 lo_lseek64(PGconn *conn, int fd, pg_int64 offset, int whence);
+extern int64_t lo_lseek64(PGconn *conn, int fd, int64_t offset, int whence);
 extern Oid	lo_creat(PGconn *conn, int mode);
 extern Oid	lo_create(PGconn *conn, Oid lobjId);
 extern int	lo_tell(PGconn *conn, int fd);
-extern pg_int64 lo_tell64(PGconn *conn, int fd);
+extern int64_t lo_tell64(PGconn *conn, int fd);
 extern int	lo_truncate(PGconn *conn, int fd, size_t len);
-extern int	lo_truncate64(PGconn *conn, int fd, pg_int64 len);
+extern int	lo_truncate64(PGconn *conn, int fd, int64_t len);
 extern int	lo_unlink(PGconn *conn, Oid lobjId);
 extern Oid	lo_import(PGconn *conn, const char *filename);
 extern Oid	lo_import_with_oid(PGconn *conn, const char *filename, Oid lobjId);

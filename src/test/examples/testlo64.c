@@ -12,6 +12,7 @@
  *
  *-------------------------------------------------------------------------
  */
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -75,7 +76,7 @@ importFile(PGconn *conn, char *filename)
 }
 
 static void
-pickout(PGconn *conn, Oid lobjId, pg_int64 start, int len)
+pickout(PGconn *conn, Oid lobjId, int64_t start, int len)
 {
 	int			lobj_fd;
 	char	   *buf;
@@ -110,7 +111,7 @@ pickout(PGconn *conn, Oid lobjId, pg_int64 start, int len)
 }
 
 static void
-overwrite(PGconn *conn, Oid lobjId, pg_int64 start, int len)
+overwrite(PGconn *conn, Oid lobjId, int64_t start, int len)
 {
 	int			lobj_fd;
 	char	   *buf;
@@ -148,7 +149,7 @@ overwrite(PGconn *conn, Oid lobjId, pg_int64 start, int len)
 }
 
 static void
-my_truncate(PGconn *conn, Oid lobjId, pg_int64 len)
+my_truncate(PGconn *conn, Oid lobjId, int64_t len)
 {
 	int			lobj_fd;
 

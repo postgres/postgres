@@ -398,7 +398,7 @@ int lo_lseek(PGconn *conn, int fd, int offset, int whence);
      When dealing with large objects that might exceed 2GB in size,
      instead use
 <synopsis>
-pg_int64 lo_lseek64(PGconn *conn, int fd, pg_int64 offset, int whence);
+int64_t lo_lseek64(PGconn *conn, int fd, int64_t offset, int whence);
 </synopsis>
      This function has the same behavior
      as <function>lo_lseek</function>, but it can accept an
@@ -434,7 +434,7 @@ int lo_tell(PGconn *conn, int fd);
      When dealing with large objects that might exceed 2GB in size,
      instead use
 <synopsis>
-pg_int64 lo_tell64(PGconn *conn, int fd);
+int64_t lo_tell64(PGconn *conn, int fd);
 </synopsis>
      This function has the same behavior
      as <function>lo_tell</function>, but it can deliver a result larger
@@ -485,7 +485,7 @@ int lo_truncate(PGconn *conn, int fd, size_t len);
      When dealing with large objects that might exceed 2GB in size,
      instead use
 <synopsis>
-int lo_truncate64(PGconn *conn, int fd, pg_int64 len);
+int lo_truncate64(PGconn *conn, int fd, int64_t len);
 </synopsis>
      This function has the same
      behavior as <function>lo_truncate</function>, but it can accept a
