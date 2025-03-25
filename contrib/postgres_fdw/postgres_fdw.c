@@ -5768,8 +5768,7 @@ semijoin_target_ok(PlannerInfo *root, RelOptInfo *joinrel, RelOptInfo *outerrel,
 		if (!IsA(var, Var))
 			continue;
 
-		if (bms_is_member(var->varno, innerrel->relids) &&
-			!bms_is_member(var->varno, outerrel->relids))
+		if (bms_is_member(var->varno, innerrel->relids))
 		{
 			/*
 			 * The planner can create semi-join, which refers to inner rel
@@ -5777,6 +5776,7 @@ semijoin_target_ok(PlannerInfo *root, RelOptInfo *joinrel, RelOptInfo *outerrel,
 			 * exists() subquery, so can't handle references to inner rel in
 			 * the target list.
 			 */
+			Assert(!bms_is_member(var->varno, outerrel->relids));
 			ok = false;
 			break;
 		}
