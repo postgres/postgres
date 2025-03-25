@@ -12151,9 +12151,15 @@ ATExecAlterConstraintInternal(List **wqueue, ATAlterConstraint *cmdcon,
 		copy_con->connoinherit = cmdcon->noinherit;
 
 		CatalogTupleUpdate(conrel, &copyTuple->t_self, copyTuple);
+
+		InvokeObjectPostAlterHook(ConstraintRelationId, currcon->oid, 0);
+
 		CommandCounterIncrement();
 		heap_freetuple(copyTuple);
 		changed = true;
+
+		/* Make new constraint flags visible to others */
+		CacheInvalidateRelcache(rel);
 
 		/* Fetch the column number and name */
 		colNum = extractNotNullColumn(contuple);
