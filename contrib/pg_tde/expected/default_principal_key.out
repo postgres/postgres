@@ -17,9 +17,8 @@ ERROR:  Can't delete a provider which is currently in use
 SELECT id, provider_name FROM pg_tde_list_all_global_key_providers();
  id | provider_name 
 ----+---------------
- -2 | file-keyring2
  -3 | file-provider
-(2 rows)
+(1 row)
 
 -- Should fail: no principal key for the database yet
 SELECT  key_provider_id, key_provider_name, principal_key_name

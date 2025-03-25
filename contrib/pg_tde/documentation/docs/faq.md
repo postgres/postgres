@@ -98,9 +98,9 @@ Whenever the WAL is being read (by the recovery process or tools), the decision 
 
 It depends on your business requirements and the sensitivity of your data. Encrypting all data is a good practice but it can have a performance impact. 
 
-Consider encrypting only tables that store sensitive data. You can decide what tables to encrypt and with what key. The [Setup](setup.md) section in documentation focuses on this approach.
+Consider encrypting only tables that store sensitive data. You can decide what tables to encrypt and with what key. The [Set up multi-tenancy](multi-tenant-setup.md) section in the documentation focuses on this approach.
 
-We advise encrypting the whole database only if all your data is sensitive, like PII, or if there is no other way to comply with data safety requirements. See [How to configure global encryption](global-encryption.md).
+We advise encrypting the whole database only if all your data is sensitive, like PII, or if there is no other way to comply with data safety requirements.
 
 ## What cipher mechanisms are used by `pg_tde`?
 

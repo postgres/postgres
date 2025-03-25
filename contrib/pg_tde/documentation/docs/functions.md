@@ -36,8 +36,8 @@ These functions allow or revoke the use of the permissions management functions:
 
 Use these functions to grant or revoke the use of query functions, which do not modify the encryption settings:
 
-* `pg_tde_grant_key_viewer_management_to_role(role)`
-* `pg_tde_revoke_key_viewer_management_from_role(role)`
+* `pg_tde_grant_key_viewer_to_role(role)`
+* `pg_tde_revoke_key_viewer_from_role(role)`
 
 
 ## Key provider management
@@ -203,10 +203,24 @@ Princial keys are stored on key providers by the name specified in this function
 
 ### pg_tde_set_principal_key
 
-Creates or rotates the principal key for the current database using the specified key provider and name.
+Creates or rotates the principal key for the current database using the specified database key provider and key name.
 
 ```
 SELECT pg_tde_set_principal_key('name-of-the-principal-key','provider-name','ensure_new_key');
+```
+
+ The `ensure_new_key` parameter instructs the function how to handle a principal key during key rotation:
+
+* If set to `true` (default), a new key must be unique.
+  If the provider already stores a key by that name, the function returns an error.
+* If set to `false`, an existing principal key may be reused.
+
+### pg_tde_set_global_principal_key
+
+Creates or rotates the principal key for the current database using the specified global key provider and key name.
+
+```
+SELECT pg_tde_set_global_principal_key('name-of-the-principal-key','provider-name','ensure_new_key');
 ```
 
  The `ensure_new_key` parameter instructs the function how to handle a principal key during key rotation:
@@ -234,7 +248,7 @@ The `ensure_new_key` parameter instructs the function how to handle a principal 
 
 Creates or rotates the default principal key for the server using the specified key provider.
 
-The default key is automatically used as a principal key by any database that doesn't have a specific principal key created the first time an encrypted database object is created.
+The default key is automatically used as a principal key by any database that doesn't have a specific principal key already created when the first encrypted database object is created.
 
 ```
 SELECT pg_tde_set_default_principal_key('name-of-the-principal-key','provider-name','ensure_new_key');
@@ -264,7 +278,7 @@ You can also verify if the table in a custom schema is encrypted. Pass the schem
 SELECT pg_tde_is_encrypted('schema.table_name');
 ```
 
-This can additoonally be used the verify that indexes and sequences are encrypted.
+This can additionally be used to verify that indexes and sequences are encrypted.
 
 ### pg_tde_principal_key_info
 

@@ -841,11 +841,6 @@ GetPrincipalKey(Oid dbOid, LWLockMode lockMode)
 
 	pg_tde_save_principal_key(&newPrincipalKey->keyInfo);
 
-	/* XLog the new use of the default key */
-	XLogBeginInsert();
-	XLogRegisterData((char *) &newPrincipalKey->keyInfo, sizeof(TDEPrincipalKeyInfo));
-	XLogInsert(RM_TDERMGR_ID, XLOG_TDE_ADD_PRINCIPAL_KEY);
-
 	push_principal_key_to_cache(newPrincipalKey);
 
 	pfree(newPrincipalKey);
@@ -962,7 +957,7 @@ pg_tde_rotate_default_key_for_database(TDEPrincipalKey *oldKey, TDEPrincipalKey 
 	newKey->keyInfo.databaseId = oldKey->keyInfo.databaseId;
 
 	/* key rotation */
-	is_rotated = pg_tde_perform_rotate_key(newKey, oldKey);
+	is_rotated = pg_tde_perform_rotate_key(oldKey, newKey);
 
 	if (is_rotated && (!TDEisInGlobalSpace(newKey->keyInfo.databaseId)))
 	{

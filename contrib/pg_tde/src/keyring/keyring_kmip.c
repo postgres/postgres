@@ -259,6 +259,8 @@ get_key_by_name(GenericKeyring *keyring, const char *key_name, KeyringReturnCode
 			return NULL;
 		}
 
+		memset(key->name, 0, sizeof(key->name));
+		memcpy(key->name, key_name, strnlen(key_name, sizeof(key->name) - 1));
 		memcpy(key->data.data, keyp, key->data.len);
 		free(keyp);
 	}

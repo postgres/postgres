@@ -41,9 +41,21 @@ SELECT pg_tde_is_encrypted('country_table_country_id_seq');
  t
 (1 row)
 
+SELECT pg_tde_is_encrypted('country_table_pkey');
+ pg_tde_is_encrypted 
+---------------------
+ t
+(1 row)
+
 -- Try changing the encrypted table to an unencrypted table
 ALTER TABLE country_table SET access method  heap;
 SELECT pg_tde_is_encrypted('country_table_country_id_seq');
+ pg_tde_is_encrypted 
+---------------------
+ f
+(1 row)
+
+SELECT pg_tde_is_encrypted('country_table_pkey');
  pg_tde_is_encrypted 
 ---------------------
  f
@@ -77,6 +89,12 @@ SELECT pg_tde_is_encrypted('country_table_country_id_seq');
  f
 (1 row)
 
+SELECT pg_tde_is_encrypted('country_table_pkey');
+ pg_tde_is_encrypted 
+---------------------
+ f
+(1 row)
+
 -- Change it back to encrypted
 ALTER TABLE country_table SET access method  tde_heap;
 INSERT INTO country_table (country_name, continent)
@@ -104,6 +122,12 @@ SELECT pg_tde_is_encrypted('country_table');
 (1 row)
 
 SELECT pg_tde_is_encrypted('country_table_country_id_seq');
+ pg_tde_is_encrypted 
+---------------------
+ t
+(1 row)
+
+SELECT pg_tde_is_encrypted('country_table_pkey');
  pg_tde_is_encrypted 
 ---------------------
  t

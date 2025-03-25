@@ -16,6 +16,7 @@
 
 #include "catalog/objectaddress.h"
 #include "nodes/execnodes.h"
+#include "storage/relfilelocator.h"
 
 
 #define DEFAULT_INDEX_TYPE	"btree"
@@ -86,7 +87,8 @@ extern Oid	index_create(Relation heapRelation,
 						 bits16 constr_flags,
 						 bool allow_system_table_mods,
 						 bool is_internal,
-						 Oid *constraintId);
+						 Oid *constraintId,
+						 RelFileLocator *old_rlocator);
 
 #define	INDEX_CONSTR_CREATE_MARK_AS_PRIMARY	(1 << 0)
 #define	INDEX_CONSTR_CREATE_DEFERRABLE		(1 << 1)

@@ -7,7 +7,7 @@ Transparent Data Encryption is a technology to protect data at rest. The encrypt
 To encrypt the data, two types of keys are used:
 
 * Internal encryption keys to encrypt user data. They are stored internally, near the data that they encrypt.
-* The principal key to encrypt database keys. It is kept separately from the database keys and is managed externally in the key management store. 
+* The principal key to encrypt database keys. It is kept separately from the database keys and is managed externally in the key management store.
 
 You have the following options to store and manage principal keys externally:
 
@@ -18,11 +18,11 @@ The encryption process is the following:
 
 ![image](_images/tde-flow.png)
 
-When a user creates an encrypted table using `pg_tde`, a new random key is generated for that table using the AES128 (AES-ECB) cipher algorithm. This key is used to encrypt all data the user inserts in that table. Eventually the encrypted data gets stored in the underlying storage. 
+When a user creates an encrypted table using `pg_tde`, a new random key is generated for that table using the AES128 (AES-ECB) cipher algorithm. This key is used to encrypt all data the user inserts in that table. Eventually the encrypted data gets stored in the underlying storage.
 
-The table itself is encrypted using the principal key. The principal key is stored externally in the key management store. 
+The table key itself is encrypted using the principal key. The principal key is stored externally in the key management store.
 
-Similarly when the user queries the encrypted table, the principal key is retrieved from the key store to decrypt the table. Then the same unique internal key for that table is used to decrypt the data, and unencrypted data gets returned to the user. So, effectively, every TDE table has a unique key, and each table key is encrypted using the principal key.
+Similarly when the user queries the encrypted table, the principal key is retrieved from the key store to decrypt the table key. Then the same unique internal key for that table is used to decrypt the data, and unencrypted data gets returned to the user. So, effectively, every TDE table has a unique key, and each table key is encrypted using the principal key.
 
 ## Why do you need TDE?
 

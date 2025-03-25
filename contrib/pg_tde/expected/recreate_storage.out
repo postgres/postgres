@@ -1,0 +1,134 @@
+CREATE EXTENSION IF NOT EXISTS pg_tde;
+SELECT pg_tde_add_key_provider_file('file-vault','/tmp/pg_tde_test_keyring.per');
+ pg_tde_add_key_provider_file 
+------------------------------
+                            1
+(1 row)
+
+SELECT pg_tde_set_principal_key('test-db-principal-key','file-vault');
+ pg_tde_set_principal_key 
+--------------------------
+ t
+(1 row)
+
+SET default_table_access_method = "tde_heap";
+CREATE TABLE t1(n integer);
+SELECT pg_tde_is_encrypted('t1');
+ pg_tde_is_encrypted 
+---------------------
+ t
+(1 row)
+
+VACUUM FULL t1;
+SELECT pg_tde_is_encrypted('t1');
+ pg_tde_is_encrypted 
+---------------------
+ t
+(1 row)
+
+CREATE TABLE test_tab1 AS SELECT generate_series(1,10) a;
+CREATE INDEX test_idx1 ON test_tab1(a);
+SELECT pg_tde_is_encrypted('test_tab1');
+ pg_tde_is_encrypted 
+---------------------
+ t
+(1 row)
+
+SELECT pg_tde_is_encrypted('test_idx1');
+ pg_tde_is_encrypted 
+---------------------
+ t
+(1 row)
+
+REINDEX index CONCURRENTLY test_idx1;
+SELECT pg_tde_is_encrypted('test_tab1');
+ pg_tde_is_encrypted 
+---------------------
+ t
+(1 row)
+
+SELECT pg_tde_is_encrypted('test_idx1');
+ pg_tde_is_encrypted 
+---------------------
+ t
+(1 row)
+
+CREATE TABLE mvtest_t (id int NOT NULL PRIMARY KEY, type text NOT NULL, amt numeric NOT NULL);
+INSERT INTO mvtest_t VALUES
+  (1, 'x', 2),
+  (2, 'x', 3),
+  (3, 'y', 5),
+  (4, 'y', 7),
+  (5, 'z', 11);
+CREATE MATERIALIZED VIEW mvtest_tm AS SELECT type, sum(amt) AS totamt FROM mvtest_t GROUP BY type WITH NO DATA;
+SELECT pg_tde_is_encrypted('mvtest_tm');
+ pg_tde_is_encrypted 
+---------------------
+ t
+(1 row)
+
+REFRESH MATERIALIZED VIEW mvtest_tm;
+SELECT pg_tde_is_encrypted('mvtest_tm');
+ pg_tde_is_encrypted 
+---------------------
+ t
+(1 row)
+
+CREATE TYPE rewritetype AS (a int);
+CREATE TABLE rewritemetoo1 OF rewritetype;
+CREATE TABLE rewritemetoo2 OF rewritetype;
+SELECT pg_tde_is_encrypted('rewritemetoo1');
+ pg_tde_is_encrypted 
+---------------------
+ t
+(1 row)
+
+SELECT pg_tde_is_encrypted('rewritemetoo2');
+ pg_tde_is_encrypted 
+---------------------
+ t
+(1 row)
+
+ALTER TYPE rewritetype ALTER ATTRIBUTE a TYPE text cascade;
+SELECT pg_tde_is_encrypted('rewritemetoo1');
+ pg_tde_is_encrypted 
+---------------------
+ t
+(1 row)
+
+SELECT pg_tde_is_encrypted('rewritemetoo2');
+ pg_tde_is_encrypted 
+---------------------
+ t
+(1 row)
+
+CREATE TABLE encrypted_table (
+    id SERIAL,
+    data TEXT,
+    created_at DATE NOT NULL,
+    PRIMARY KEY (id, created_at)
+) USING tde_heap;
+CREATE INDEX idx_date ON encrypted_table (created_at);
+SELECT pg_tde_is_encrypted('encrypted_table');
+ pg_tde_is_encrypted 
+---------------------
+ t
+(1 row)
+
+CLUSTER encrypted_table USING idx_date;
+SELECT pg_tde_is_encrypted('encrypted_table');
+ pg_tde_is_encrypted 
+---------------------
+ t
+(1 row)
+
+DROP EXTENSION pg_tde CASCADE;
+NOTICE:  drop cascades to 7 other objects
+DETAIL:  drop cascades to table t1
+drop cascades to table test_tab1
+drop cascades to table mvtest_t
+drop cascades to materialized view mvtest_tm
+drop cascades to table rewritemetoo1
+drop cascades to table rewritemetoo2
+drop cascades to table encrypted_table
+RESET default_table_access_method;

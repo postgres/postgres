@@ -49,6 +49,14 @@ static const XLogSmgr tde_xlog_smgr = {
 
 #ifndef FRONTEND
 static Size TDEXLogEncryptBuffSize(void);
+
+/*
+ * Must be the same as in replication/walsender.c
+ *
+ * This is used to calculate the encryption buffer size.
+ */
+#define MAX_SEND_SIZE (XLOG_BLCKSZ * 16)
+
 static ssize_t TDEXLogWriteEncryptedPages(int fd, const void *buf, size_t count,
 										  off_t offset, TimeLineID tli,
 										  XLogSegNo segno);
@@ -94,7 +102,7 @@ TDEXLogEncryptBuffSize(void)
 	int			xbuffers;
 
 	xbuffers = (XLOGbuffers == -1) ? XLOGChooseNumBuffers() : XLOGbuffers;
-	return (Size) XLOG_BLCKSZ * xbuffers;
+	return Max(MAX_SEND_SIZE, mul_size(XLOG_BLCKSZ, xbuffers));
 }
 
 Size
@@ -102,10 +110,11 @@ TDEXLogEncryptStateSize(void)
 {
 	Size		sz;
 
-	sz = TYPEALIGN(PG_IO_ALIGN_SIZE, TDEXLogEncryptBuffSize());
-	sz = add_size(sz, sizeof(EncryptionStateData));
+	sz = sizeof(EncryptionStateData);
+	sz = add_size(sz, TDEXLogEncryptBuffSize());
+	sz = add_size(sz, PG_IO_ALIGN_SIZE);
 
-	return MAXALIGN(sz);
+	return sz;
 }
 
 /*
@@ -133,8 +142,13 @@ TDEXLogShmemInit(void)
 						TDEXLogEncryptStateSize(),
 						&foundBuf);
 
-	allocptr = ((char *) EncryptionState) + TYPEALIGN(PG_IO_ALIGN_SIZE, sizeof(EncryptionStateData));
+	memset(EncryptionState, 0, sizeof(EncryptionStateData));
+
+	allocptr = ((char *) EncryptionState) + sizeof(EncryptionStateData);
+	allocptr = (char *) TYPEALIGN(PG_IO_ALIGN_SIZE, allocptr);
 	EncryptionState->segBuf = allocptr;
+
+	Assert((char *) EncryptionState + TDEXLogEncryptStateSize() >= (char *) EncryptionState->segBuf + TDEXLogEncryptBuffSize());
 
 	pg_atomic_init_u64(&EncryptionState->enc_key_lsn, 0);
 
@@ -151,6 +165,8 @@ TDEXLogWriteEncryptedPages(int fd, const void *buf, size_t count, off_t offset,
 	char		iv_prefix[16] = {0,};
 	InternalKey *key = &EncryptionKey;
 	char	   *enc_buff = EncryptionState->segBuf;
+
+	Assert(count <= TDEXLogEncryptBuffSize());
 
 #ifdef TDE_XLOG_DEBUG
 	elog(DEBUG1, "write encrypted WAL, size: %lu, offset: %ld [%lX], seg: %X/%X, key_start_lsn: %X/%X",
