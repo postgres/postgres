@@ -394,14 +394,21 @@ static ObjectAddress ATExecAlterConstraint(List **wqueue, Relation rel,
 										   bool recurse, LOCKMODE lockmode);
 static bool ATExecAlterConstraintInternal(List **wqueue, ATAlterConstraint *cmdcon, Relation conrel,
 										  Relation tgrel, Relation rel, HeapTuple contuple,
-										  bool recurse, List **otherrelids, LOCKMODE lockmode);
+										  bool recurse, LOCKMODE lockmode);
+static bool ATExecAlterConstrDeferrability(List **wqueue, ATAlterConstraint *cmdcon,
+										   Relation conrel, Relation tgrel, Relation rel,
+										   HeapTuple contuple, bool recurse,
+										   List **otherrelids, LOCKMODE lockmode);
+static bool ATExecAlterConstrInheritability(List **wqueue, ATAlterConstraint *cmdcon,
+											Relation conrel, Relation rel,
+											HeapTuple contuple, LOCKMODE lockmode);
 static void AlterConstrTriggerDeferrability(Oid conoid, Relation tgrel, Relation rel,
 											bool deferrable, bool initdeferred,
 											List **otherrelids);
-static void ATExecAlterChildConstr(List **wqueue, ATAlterConstraint *cmdcon,
-								   Relation conrel, Relation tgrel, Relation rel,
-								   HeapTuple contuple, bool recurse, List **otherrelids,
-								   LOCKMODE lockmode);
+static void AlterConstrDeferrabilityRecurse(List **wqueue, ATAlterConstraint *cmdcon,
+											Relation conrel, Relation tgrel, Relation rel,
+											HeapTuple contuple, bool recurse,
+											List **otherrelids, LOCKMODE lockmode);
 static void AlterConstrUpdateConstraintEntry(ATAlterConstraint *cmdcon, Relation conrel,
 											 HeapTuple contuple);
 static ObjectAddress ATExecValidateConstraint(List **wqueue,
@@ -11925,7 +11932,6 @@ ATExecAlterConstraint(List **wqueue, Relation rel, ATAlterConstraint *cmdcon,
 	HeapTuple	contuple;
 	Form_pg_constraint currcon;
 	ObjectAddress address;
-	List	   *otherrelids = NIL;
 
 	/*
 	 * Disallow altering ONLY a partitioned table, as it would make no sense.
@@ -12038,16 +12044,8 @@ ATExecAlterConstraint(List **wqueue, Relation rel, ATAlterConstraint *cmdcon,
 	 * Do the actual catalog work, and recurse if necessary.
 	 */
 	if (ATExecAlterConstraintInternal(wqueue, cmdcon, conrel, tgrel, rel,
-									  contuple, recurse, &otherrelids, lockmode))
+									  contuple, recurse, lockmode))
 		ObjectAddressSet(address, ConstraintRelationId, currcon->oid);
-
-	/*
-	 * ATExecAlterConstraintInternal already invalidated relcache for the
-	 * relations having the constraint itself; here we also invalidate for
-	 * relations that have any triggers that are part of the constraint.
-	 */
-	foreach_oid(relid, otherrelids)
-		CacheInvalidateRelcacheByRelid(relid);
 
 	systable_endscan(scan);
 
@@ -12058,8 +12056,51 @@ ATExecAlterConstraint(List **wqueue, Relation rel, ATAlterConstraint *cmdcon,
 }
 
 /*
- * Recursive subroutine of ATExecAlterConstraint.  Returns true if the
- * constraint is altered.
+ * A subroutine of ATExecAlterConstraint that calls the respective routines for
+ * altering constraint attributes.
+ */
+static bool
+ATExecAlterConstraintInternal(List **wqueue, ATAlterConstraint *cmdcon,
+							  Relation conrel, Relation tgrel, Relation rel,
+							  HeapTuple contuple, bool recurse,
+							  LOCKMODE lockmode)
+{
+	bool		changed = false;
+	List	   *otherrelids = NIL;
+
+	/*
+	 * Do the catalog work for the deferrability change, recurse if necessary.
+	 */
+	if (cmdcon->alterDeferrability &&
+		ATExecAlterConstrDeferrability(wqueue, cmdcon, conrel, tgrel, rel,
+									   contuple, recurse, &otherrelids,
+									   lockmode))
+	{
+		/*
+		 * AlterConstrUpdateConstraintEntry already invalidated relcache for
+		 * the relations having the constraint itself; here we also invalidate
+		 * for relations that have any triggers that are part of the
+		 * constraint.
+		 */
+		foreach_oid(relid, otherrelids)
+			CacheInvalidateRelcacheByRelid(relid);
+
+		changed = true;
+	}
+
+	/*
+	 * Do the catalog work for the inheritability change.
+	 */
+	if (cmdcon->alterInheritability &&
+		ATExecAlterConstrInheritability(wqueue, cmdcon, conrel, rel, contuple,
+										lockmode))
+		changed = true;
+
+	return changed;
+}
+
+/*
+ * Returns true if the constraint's deferrability is altered.
  *
  * *otherrelids is appended OIDs of relations containing affected triggers.
  *
@@ -12069,31 +12110,32 @@ ATExecAlterConstraint(List **wqueue, Relation rel, ATAlterConstraint *cmdcon,
  * but existing releases don't do that.)
  */
 static bool
-ATExecAlterConstraintInternal(List **wqueue, ATAlterConstraint *cmdcon,
-							  Relation conrel, Relation tgrel, Relation rel,
-							  HeapTuple contuple, bool recurse,
-							  List **otherrelids, LOCKMODE lockmode)
+ATExecAlterConstrDeferrability(List **wqueue, ATAlterConstraint *cmdcon,
+							   Relation conrel, Relation tgrel, Relation rel,
+							   HeapTuple contuple, bool recurse,
+							   List **otherrelids, LOCKMODE lockmode)
 {
 	Form_pg_constraint currcon;
-	Oid			refrelid = InvalidOid;
+	Oid			refrelid;
 	bool		changed = false;
 
 	/* since this function recurses, it could be driven to stack overflow */
 	check_stack_depth();
 
+	Assert(cmdcon->alterDeferrability);
+
 	currcon = (Form_pg_constraint) GETSTRUCT(contuple);
-	if (currcon->contype == CONSTRAINT_FOREIGN)
-		refrelid = currcon->confrelid;
+	refrelid = currcon->confrelid;
+
+	/* Should be foreign key constraint */
+	Assert(currcon->contype == CONSTRAINT_FOREIGN);
 
 	/*
-	 * Update pg_constraint with the flags from cmdcon.
-	 *
 	 * If called to modify a constraint that's already in the desired state,
 	 * silently do nothing.
 	 */
-	if (cmdcon->alterDeferrability &&
-		(currcon->condeferrable != cmdcon->deferrable ||
-		 currcon->condeferred != cmdcon->initdeferred))
+	if (currcon->condeferrable != cmdcon->deferrable ||
+		currcon->condeferred != cmdcon->initdeferred)
 	{
 		AlterConstrUpdateConstraintEntry(cmdcon, conrel, contuple);
 		changed = true;
@@ -12113,73 +12155,87 @@ ATExecAlterConstraintInternal(List **wqueue, ATAlterConstraint *cmdcon,
 	 */
 	if (recurse && changed &&
 		(rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE ||
-		 (OidIsValid(refrelid) &&
-		  get_rel_relkind(refrelid) == RELKIND_PARTITIONED_TABLE)))
-		ATExecAlterChildConstr(wqueue, cmdcon, conrel, tgrel, rel, contuple,
-							   recurse, otherrelids, lockmode);
+		 get_rel_relkind(refrelid) == RELKIND_PARTITIONED_TABLE))
+		AlterConstrDeferrabilityRecurse(wqueue, cmdcon, conrel, tgrel, rel,
+										contuple, recurse, otherrelids,
+										lockmode);
+
+	return changed;
+}
+
+/*
+ * Returns true if the constraint's inheritability is altered.
+ */
+static bool
+ATExecAlterConstrInheritability(List **wqueue, ATAlterConstraint *cmdcon,
+								Relation conrel, Relation rel,
+								HeapTuple contuple, LOCKMODE lockmode)
+{
+	Form_pg_constraint currcon;
+	AttrNumber	colNum;
+	char	   *colName;
+	List	   *children;
+
+	Assert(cmdcon->alterInheritability);
+
+	currcon = (Form_pg_constraint) GETSTRUCT(contuple);
+
+	/* The current implementation only works for NOT NULL constraints */
+	Assert(currcon->contype == CONSTRAINT_NOTNULL);
 
 	/*
-	 * Update the catalog for inheritability.  No work if the constraint is
-	 * already in the requested state.
+	 * If called to modify a constraint that's already in the desired state,
+	 * silently do nothing.
 	 */
-	if (cmdcon->alterInheritability &&
-		(cmdcon->noinherit != currcon->connoinherit))
+	if (cmdcon->noinherit == currcon->connoinherit)
+		return false;
+
+	AlterConstrUpdateConstraintEntry(cmdcon, conrel, contuple);
+	CommandCounterIncrement();
+
+	/* Fetch the column number and name */
+	colNum = extractNotNullColumn(contuple);
+	colName = get_attname(currcon->conrelid, colNum, false);
+
+	/*
+	 * Propagate the change to children.  For SET NO INHERIT, we don't
+	 * recursively affect children, just the immediate level.
+	 */
+	children = find_inheritance_children(RelationGetRelid(rel),
+										 lockmode);
+	foreach_oid(childoid, children)
 	{
-		AttrNumber	colNum;
-		char	   *colName;
-		List	   *children;
+		ObjectAddress addr;
 
-		/* The current implementation only works for NOT NULL constraints */
-		Assert(currcon->contype == CONSTRAINT_NOTNULL);
-
-		AlterConstrUpdateConstraintEntry(cmdcon, conrel, contuple);
-		CommandCounterIncrement();
-		changed = true;
-
-		/* Fetch the column number and name */
-		colNum = extractNotNullColumn(contuple);
-		colName = get_attname(currcon->conrelid, colNum, false);
-
-		/*
-		 * Propagate the change to children.  For SET NO INHERIT, we don't
-		 * recursively affect children, just the immediate level.
-		 */
-		children = find_inheritance_children(RelationGetRelid(rel),
-											 lockmode);
-		foreach_oid(childoid, children)
+		if (cmdcon->noinherit)
 		{
-			ObjectAddress addr;
+			HeapTuple	childtup;
+			Form_pg_constraint childcon;
 
-			if (cmdcon->noinherit)
-			{
-				HeapTuple	childtup;
-				Form_pg_constraint childcon;
+			childtup = findNotNullConstraint(childoid, colName);
+			if (!childtup)
+				elog(ERROR, "cache lookup failed for not-null constraint on column \"%s\" of relation %u",
+					 colName, childoid);
+			childcon = (Form_pg_constraint) GETSTRUCT(childtup);
+			Assert(childcon->coninhcount > 0);
+			childcon->coninhcount--;
+			childcon->conislocal = true;
+			CatalogTupleUpdate(conrel, &childtup->t_self, childtup);
+			heap_freetuple(childtup);
+		}
+		else
+		{
+			Relation	childrel = table_open(childoid, NoLock);
 
-				childtup = findNotNullConstraint(childoid, colName);
-				if (!childtup)
-					elog(ERROR, "cache lookup failed for not-null constraint on column \"%s\" of relation %u",
-						 colName, childoid);
-				childcon = (Form_pg_constraint) GETSTRUCT(childtup);
-				Assert(childcon->coninhcount > 0);
-				childcon->coninhcount--;
-				childcon->conislocal = true;
-				CatalogTupleUpdate(conrel, &childtup->t_self, childtup);
-				heap_freetuple(childtup);
-			}
-			else
-			{
-				Relation	childrel = table_open(childoid, NoLock);
-
-				addr = ATExecSetNotNull(wqueue, childrel, NameStr(currcon->conname),
-										colName, true, true, lockmode);
-				if (OidIsValid(addr.objectId))
-					CommandCounterIncrement();
-				table_close(childrel, NoLock);
-			}
+			addr = ATExecSetNotNull(wqueue, childrel, NameStr(currcon->conname),
+									colName, true, true, lockmode);
+			if (OidIsValid(addr.objectId))
+				CommandCounterIncrement();
+			table_close(childrel, NoLock);
 		}
 	}
 
-	return changed;
+	return true;
 }
 
 /*
@@ -12248,7 +12304,7 @@ AlterConstrTriggerDeferrability(Oid conoid, Relation tgrel, Relation rel,
 }
 
 /*
- * Invokes ATExecAlterConstraintInternal for each constraint that is a child of
+ * Invokes ATExecAlterConstrDeferrability for each constraint that is a child of
  * the specified constraint.
  *
  * Note that this doesn't handle recursion the normal way, viz. by scanning the
@@ -12256,13 +12312,13 @@ AlterConstrTriggerDeferrability(Oid conoid, Relation tgrel, Relation rel,
  * relationships.  This may need to be reconsidered.
  *
  * The arguments to this function have the same meaning as the arguments to
- * ATExecAlterConstraintInternal.
+ * ATExecAlterConstrDeferrability.
  */
 static void
-ATExecAlterChildConstr(List **wqueue, ATAlterConstraint *cmdcon,
-					   Relation conrel, Relation tgrel, Relation rel,
-					   HeapTuple contuple, bool recurse, List **otherrelids,
-					   LOCKMODE lockmode)
+AlterConstrDeferrabilityRecurse(List **wqueue, ATAlterConstraint *cmdcon,
+								Relation conrel, Relation tgrel, Relation rel,
+								HeapTuple contuple, bool recurse,
+								List **otherrelids, LOCKMODE lockmode)
 {
 	Form_pg_constraint currcon;
 	Oid			conoid;
@@ -12287,8 +12343,9 @@ ATExecAlterChildConstr(List **wqueue, ATAlterConstraint *cmdcon,
 		Relation	childrel;
 
 		childrel = table_open(childcon->conrelid, lockmode);
-		ATExecAlterConstraintInternal(wqueue, cmdcon, conrel, tgrel, childrel,
-									  childtup, recurse, otherrelids, lockmode);
+
+		ATExecAlterConstrDeferrability(wqueue, cmdcon, conrel, tgrel, childrel,
+									   childtup, recurse, otherrelids, lockmode);
 		table_close(childrel, NoLock);
 	}
 
