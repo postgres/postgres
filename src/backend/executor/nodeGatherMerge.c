@@ -735,7 +735,7 @@ gm_readnext_tuple(GatherMergeState *gm_state, int nreader, bool nowait,
 	 * Since we'll be buffering these across multiple calls, we need to make a
 	 * copy.
 	 */
-	return tup ? heap_copy_minimal_tuple(tup) : NULL;
+	return tup ? heap_copy_minimal_tuple(tup, 0) : NULL;
 }
 
 /*

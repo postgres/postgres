@@ -1002,7 +1002,7 @@ tuplesort_gettupleslot(Tuplesortstate *state, bool forward, bool copy,
 			*abbrev = stup.datum1;
 
 		if (copy)
-			stup.tuple = heap_copy_minimal_tuple((MinimalTuple) stup.tuple);
+			stup.tuple = heap_copy_minimal_tuple((MinimalTuple) stup.tuple, 0);
 
 		ExecStoreMinimalTuple((MinimalTuple) stup.tuple, slot, copy);
 		return true;

@@ -787,7 +787,7 @@ tuplestore_putvalues(Tuplestorestate *state, TupleDesc tdesc,
 	MinimalTuple tuple;
 	MemoryContext oldcxt = MemoryContextSwitchTo(state->context);
 
-	tuple = heap_form_minimal_tuple(tdesc, values, isnull);
+	tuple = heap_form_minimal_tuple(tdesc, values, isnull, 0);
 	USEMEM(state, GetMemoryChunkSpace(tuple));
 
 	tuplestore_puttuple_common(state, tuple);
@@ -1139,7 +1139,7 @@ tuplestore_gettupleslot(Tuplestorestate *state, bool forward,
 	{
 		if (copy && !should_free)
 		{
-			tuple = heap_copy_minimal_tuple(tuple);
+			tuple = heap_copy_minimal_tuple(tuple, 0);
 			should_free = true;
 		}
 		ExecStoreMinimalTuple(tuple, slot, should_free);
@@ -1590,7 +1590,7 @@ copytup_heap(Tuplestorestate *state, void *tup)
 {
 	MinimalTuple tuple;
 
-	tuple = minimal_tuple_from_heap_tuple((HeapTuple) tup);
+	tuple = minimal_tuple_from_heap_tuple((HeapTuple) tup, 0);
 	USEMEM(state, GetMemoryChunkSpace(tuple));
 	return tuple;
 }
