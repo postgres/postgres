@@ -32,6 +32,8 @@ extern bool stats_check_arg_pair(FunctionCallInfo fcinfo,
 
 extern void stats_lock_check_privileges(Oid reloid);
 
+extern Oid	stats_lookup_relid(const char *nspname, const char *relname);
+
 extern bool stats_fill_fcinfo_from_arg_pairs(FunctionCallInfo pairs_fcinfo,
 											 FunctionCallInfo positional_fcinfo,
 											 struct StatsArgInfo *arginfo);

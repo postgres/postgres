@@ -10498,7 +10498,6 @@ dumpRelationStats(Archive *fout, const RelStatsInfo *rsinfo)
 	PQExpBuffer out;
 	DumpId	   *deps = NULL;
 	int			ndeps = 0;
-	char	   *qualified_name;
 	int			i_attname;
 	int			i_inherited;
 	int			i_null_frac;
@@ -10563,15 +10562,16 @@ dumpRelationStats(Archive *fout, const RelStatsInfo *rsinfo)
 
 	out = createPQExpBuffer();
 
-	qualified_name = pg_strdup(fmtQualifiedDumpable(rsinfo));
-
 	/* restore relation stats */
 	appendPQExpBufferStr(out, "SELECT * FROM pg_catalog.pg_restore_relation_stats(\n");
 	appendPQExpBuffer(out, "\t'version', '%u'::integer,\n",
 					  fout->remoteVersion);
-	appendPQExpBufferStr(out, "\t'relation', ");
-	appendStringLiteralAH(out, qualified_name, fout);
-	appendPQExpBufferStr(out, "::regclass,\n");
+	appendPQExpBufferStr(out, "\t'schemaname', ");
+	appendStringLiteralAH(out, rsinfo->dobj.namespace->dobj.name, fout);
+	appendPQExpBufferStr(out, ",\n");
+	appendPQExpBufferStr(out, "\t'relname', ");
+	appendStringLiteralAH(out, rsinfo->dobj.name, fout);
+	appendPQExpBufferStr(out, ",\n");
 	appendPQExpBuffer(out, "\t'relpages', '%d'::integer,\n", rsinfo->relpages);
 	appendPQExpBuffer(out, "\t'reltuples', '%s'::real,\n", rsinfo->reltuples);
 	appendPQExpBuffer(out, "\t'relallvisible', '%d'::integer\n);\n",
@@ -10610,9 +10610,10 @@ dumpRelationStats(Archive *fout, const RelStatsInfo *rsinfo)
 		appendPQExpBufferStr(out, "SELECT * FROM pg_catalog.pg_restore_attribute_stats(\n");
 		appendPQExpBuffer(out, "\t'version', '%u'::integer,\n",
 						  fout->remoteVersion);
-		appendPQExpBufferStr(out, "\t'relation', ");
-		appendStringLiteralAH(out, qualified_name, fout);
-		appendPQExpBufferStr(out, "::regclass");
+		appendPQExpBufferStr(out, "\t'schemaname', ");
+		appendStringLiteralAH(out, rsinfo->dobj.namespace->dobj.name, fout);
+		appendPQExpBufferStr(out, ",\n\t'relname', ");
+		appendStringLiteralAH(out, rsinfo->dobj.name, fout);
 
 		if (PQgetisnull(res, rownum, i_attname))
 			pg_fatal("attname cannot be NULL");
@@ -10624,7 +10625,10 @@ dumpRelationStats(Archive *fout, const RelStatsInfo *rsinfo)
 		 * their attnames are not necessarily stable across dump/reload.
 		 */
 		if (rsinfo->nindAttNames == 0)
-			appendNamedArgument(out, fout, "attname", "name", attname);
+		{
+			appendPQExpBuffer(out, ",\n\t'attname', ");
+			appendStringLiteralAH(out, attname, fout);
+		}
 		else
 		{
 			bool		found = false;
@@ -10704,7 +10708,6 @@ dumpRelationStats(Archive *fout, const RelStatsInfo *rsinfo)
 							  .deps = deps,
 							  .nDeps = ndeps));
 
-	free(qualified_name);
 	destroyPQExpBuffer(out);
 	destroyPQExpBuffer(query);
 }

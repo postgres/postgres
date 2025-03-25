@@ -36,7 +36,8 @@
 
 enum attribute_stats_argnum
 {
-	ATTRELATION_ARG = 0,
+	ATTRELSCHEMA_ARG = 0,
+	ATTRELNAME_ARG,
 	ATTNAME_ARG,
 	ATTNUM_ARG,
 	INHERITED_ARG,
@@ -58,8 +59,9 @@ enum attribute_stats_argnum
 
 static struct StatsArgInfo attarginfo[] =
 {
-	[ATTRELATION_ARG] = {"relation", REGCLASSOID},
-	[ATTNAME_ARG] = {"attname", NAMEOID},
+	[ATTRELSCHEMA_ARG] = {"schemaname", TEXTOID},
+	[ATTRELNAME_ARG] = {"relname", TEXTOID},
+	[ATTNAME_ARG] = {"attname", TEXTOID},
 	[ATTNUM_ARG] = {"attnum", INT2OID},
 	[INHERITED_ARG] = {"inherited", BOOLOID},
 	[NULL_FRAC_ARG] = {"null_frac", FLOAT4OID},
@@ -80,7 +82,8 @@ static struct StatsArgInfo attarginfo[] =
 
 enum clear_attribute_stats_argnum
 {
-	C_ATTRELATION_ARG = 0,
+	C_ATTRELSCHEMA_ARG = 0,
+	C_ATTRELNAME_ARG,
 	C_ATTNAME_ARG,
 	C_INHERITED_ARG,
 	C_NUM_ATTRIBUTE_STATS_ARGS
@@ -88,8 +91,9 @@ enum clear_attribute_stats_argnum
 
 static struct StatsArgInfo cleararginfo[] =
 {
-	[C_ATTRELATION_ARG] = {"relation", REGCLASSOID},
-	[C_ATTNAME_ARG] = {"attname", NAMEOID},
+	[C_ATTRELSCHEMA_ARG] = {"relation", TEXTOID},
+	[C_ATTRELNAME_ARG] = {"relation", TEXTOID},
+	[C_ATTNAME_ARG] = {"attname", TEXTOID},
 	[C_INHERITED_ARG] = {"inherited", BOOLOID},
 	[C_NUM_ATTRIBUTE_STATS_ARGS] = {0}
 };
@@ -133,6 +137,8 @@ static void init_empty_stats_tuple(Oid reloid, int16 attnum, bool inherited,
 static bool
 attribute_statistics_update(FunctionCallInfo fcinfo)
 {
+	char	   *nspname;
+	char	   *relname;
 	Oid			reloid;
 	char	   *attname;
 	AttrNumber	attnum;
@@ -170,8 +176,13 @@ attribute_statistics_update(FunctionCallInfo fcinfo)
 
 	bool		result = true;
 
-	stats_check_required_arg(fcinfo, attarginfo, ATTRELATION_ARG);
-	reloid = PG_GETARG_OID(ATTRELATION_ARG);
+	stats_check_required_arg(fcinfo, attarginfo, ATTRELSCHEMA_ARG);
+	stats_check_required_arg(fcinfo, attarginfo, ATTRELNAME_ARG);
+
+	nspname = TextDatumGetCString(PG_GETARG_DATUM(ATTRELSCHEMA_ARG));
+	relname = TextDatumGetCString(PG_GETARG_DATUM(ATTRELNAME_ARG));
+
+	reloid = stats_lookup_relid(nspname, relname);
 
 	if (RecoveryInProgress())
 		ereport(ERROR,
@@ -185,21 +196,18 @@ attribute_statistics_update(FunctionCallInfo fcinfo)
 	/* user can specify either attname or attnum, but not both */
 	if (!PG_ARGISNULL(ATTNAME_ARG))
 	{
-		Name		attnamename;
-
 		if (!PG_ARGISNULL(ATTNUM_ARG))
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 					 errmsg("cannot specify both attname and attnum")));
-		attnamename = PG_GETARG_NAME(ATTNAME_ARG);
-		attname = NameStr(*attnamename);
+		attname = TextDatumGetCString(PG_GETARG_DATUM(ATTNAME_ARG));
 		attnum = get_attnum(reloid, attname);
 		/* note that this test covers attisdropped cases too: */
 		if (attnum == InvalidAttrNumber)
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_COLUMN),
 					 errmsg("column \"%s\" of relation \"%s\" does not exist",
-							attname, get_rel_name(reloid))));
+							attname, relname)));
 	}
 	else if (!PG_ARGISNULL(ATTNUM_ARG))
 	{
@@ -211,7 +219,7 @@ attribute_statistics_update(FunctionCallInfo fcinfo)
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_COLUMN),
 					 errmsg("column %d of relation \"%s\" does not exist",
-							attnum, get_rel_name(reloid))));
+							attnum, relname)));
 	}
 	else
 	{
@@ -900,13 +908,22 @@ init_empty_stats_tuple(Oid reloid, int16 attnum, bool inherited,
 Datum
 pg_clear_attribute_stats(PG_FUNCTION_ARGS)
 {
+	char	   *nspname;
+	char	   *relname;
 	Oid			reloid;
-	Name		attname;
+	char	   *attname;
 	AttrNumber	attnum;
 	bool		inherited;
 
-	stats_check_required_arg(fcinfo, cleararginfo, C_ATTRELATION_ARG);
-	reloid = PG_GETARG_OID(C_ATTRELATION_ARG);
+	stats_check_required_arg(fcinfo, cleararginfo, C_ATTRELSCHEMA_ARG);
+	stats_check_required_arg(fcinfo, cleararginfo, C_ATTRELNAME_ARG);
+	stats_check_required_arg(fcinfo, cleararginfo, C_ATTNAME_ARG);
+	stats_check_required_arg(fcinfo, cleararginfo, C_INHERITED_ARG);
+
+	nspname = TextDatumGetCString(PG_GETARG_DATUM(C_ATTRELSCHEMA_ARG));
+	relname = TextDatumGetCString(PG_GETARG_DATUM(C_ATTRELNAME_ARG));
+
+	reloid = stats_lookup_relid(nspname, relname);
 
 	if (RecoveryInProgress())
 		ereport(ERROR,
@@ -916,23 +933,21 @@ pg_clear_attribute_stats(PG_FUNCTION_ARGS)
 
 	stats_lock_check_privileges(reloid);
 
-	stats_check_required_arg(fcinfo, cleararginfo, C_ATTNAME_ARG);
-	attname = PG_GETARG_NAME(C_ATTNAME_ARG);
-	attnum = get_attnum(reloid, NameStr(*attname));
+	attname = TextDatumGetCString(PG_GETARG_DATUM(C_ATTNAME_ARG));
+	attnum = get_attnum(reloid, attname);
 
 	if (attnum < 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("cannot clear statistics on system column \"%s\"",
-						NameStr(*attname))));
+						attname)));
 
 	if (attnum == InvalidAttrNumber)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_COLUMN),
 				 errmsg("column \"%s\" of relation \"%s\" does not exist",
-						NameStr(*attname), get_rel_name(reloid))));
+						attname, get_rel_name(reloid))));
 
-	stats_check_required_arg(fcinfo, cleararginfo, C_INHERITED_ARG);
 	inherited = PG_GETARG_BOOL(C_INHERITED_ARG);
 
 	delete_pg_statistic(reloid, attnum, inherited);

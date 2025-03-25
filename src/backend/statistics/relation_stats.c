@@ -19,9 +19,12 @@
 
 #include "access/heapam.h"
 #include "catalog/indexing.h"
+#include "catalog/namespace.h"
 #include "statistics/stat_utils.h"
+#include "utils/builtins.h"
 #include "utils/fmgroids.h"
 #include "utils/fmgrprotos.h"
+#include "utils/lsyscache.h"
 #include "utils/syscache.h"
 
 
@@ -32,7 +35,8 @@
 
 enum relation_stats_argnum
 {
-	RELATION_ARG = 0,
+	RELSCHEMA_ARG = 0,
+	RELNAME_ARG,
 	RELPAGES_ARG,
 	RELTUPLES_ARG,
 	RELALLVISIBLE_ARG,
@@ -42,7 +46,8 @@ enum relation_stats_argnum
 
 static struct StatsArgInfo relarginfo[] =
 {
-	[RELATION_ARG] = {"relation", REGCLASSOID},
+	[RELSCHEMA_ARG] = {"schemaname", TEXTOID},
+	[RELNAME_ARG] = {"relname", TEXTOID},
 	[RELPAGES_ARG] = {"relpages", INT4OID},
 	[RELTUPLES_ARG] = {"reltuples", FLOAT4OID},
 	[RELALLVISIBLE_ARG] = {"relallvisible", INT4OID},
@@ -59,6 +64,8 @@ static bool
 relation_statistics_update(FunctionCallInfo fcinfo)
 {
 	bool		result = true;
+	char	   *nspname;
+	char	   *relname;
 	Oid			reloid;
 	Relation	crel;
 	BlockNumber relpages = 0;
@@ -75,6 +82,22 @@ relation_statistics_update(FunctionCallInfo fcinfo)
 	Datum		values[4] = {0};
 	bool		nulls[4] = {0};
 	int			nreplaces = 0;
+
+	stats_check_required_arg(fcinfo, relarginfo, RELSCHEMA_ARG);
+	stats_check_required_arg(fcinfo, relarginfo, RELNAME_ARG);
+
+	nspname = TextDatumGetCString(PG_GETARG_DATUM(RELSCHEMA_ARG));
+	relname = TextDatumGetCString(PG_GETARG_DATUM(RELNAME_ARG));
+
+	reloid = stats_lookup_relid(nspname, relname);
+
+	if (RecoveryInProgress())
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("recovery is in progress"),
+				 errhint("Statistics cannot be modified during recovery.")));
+
+	stats_lock_check_privileges(reloid);
 
 	if (!PG_ARGISNULL(RELPAGES_ARG))
 	{
@@ -107,17 +130,6 @@ relation_statistics_update(FunctionCallInfo fcinfo)
 		relallfrozen = PG_GETARG_UINT32(RELALLFROZEN_ARG);
 		update_relallfrozen = true;
 	}
-
-	stats_check_required_arg(fcinfo, relarginfo, RELATION_ARG);
-	reloid = PG_GETARG_OID(RELATION_ARG);
-
-	if (RecoveryInProgress())
-		ereport(ERROR,
-				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("recovery is in progress"),
-				 errhint("Statistics cannot be modified during recovery.")));
-
-	stats_lock_check_privileges(reloid);
 
 	/*
 	 * Take RowExclusiveLock on pg_class, consistent with
@@ -187,20 +199,22 @@ relation_statistics_update(FunctionCallInfo fcinfo)
 Datum
 pg_clear_relation_stats(PG_FUNCTION_ARGS)
 {
-	LOCAL_FCINFO(newfcinfo, 5);
+	LOCAL_FCINFO(newfcinfo, 6);
 
-	InitFunctionCallInfoData(*newfcinfo, NULL, 5, InvalidOid, NULL, NULL);
+	InitFunctionCallInfoData(*newfcinfo, NULL, 6, InvalidOid, NULL, NULL);
 
-	newfcinfo->args[0].value = PG_GETARG_OID(0);
+	newfcinfo->args[0].value = PG_GETARG_DATUM(0);
 	newfcinfo->args[0].isnull = PG_ARGISNULL(0);
-	newfcinfo->args[1].value = UInt32GetDatum(0);
-	newfcinfo->args[1].isnull = false;
-	newfcinfo->args[2].value = Float4GetDatum(-1.0);
+	newfcinfo->args[1].value = PG_GETARG_DATUM(1);
+	newfcinfo->args[1].isnull = PG_ARGISNULL(1);
+	newfcinfo->args[2].value = UInt32GetDatum(0);
 	newfcinfo->args[2].isnull = false;
-	newfcinfo->args[3].value = UInt32GetDatum(0);
+	newfcinfo->args[3].value = Float4GetDatum(-1.0);
 	newfcinfo->args[3].isnull = false;
 	newfcinfo->args[4].value = UInt32GetDatum(0);
 	newfcinfo->args[4].isnull = false;
+	newfcinfo->args[5].value = UInt32GetDatum(0);
+	newfcinfo->args[5].isnull = false;
 
 	relation_statistics_update(newfcinfo);
 	PG_RETURN_VOID();

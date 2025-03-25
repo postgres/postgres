@@ -12453,8 +12453,8 @@
   descr => 'clear statistics on relation',
   proname => 'pg_clear_relation_stats', provolatile => 'v', proisstrict => 'f',
   proparallel => 'u', prorettype => 'void',
-  proargtypes => 'regclass',
-  proargnames => '{relation}',
+  proargtypes => 'text text',
+  proargnames => '{schemaname,relname}',
   prosrc => 'pg_clear_relation_stats' },
 { oid => '8461',
   descr => 'restore statistics on attribute',
@@ -12469,8 +12469,8 @@
   descr => 'clear statistics on attribute',
   proname => 'pg_clear_attribute_stats', provolatile => 'v', proisstrict => 'f',
   proparallel => 'u', prorettype => 'void',
-  proargtypes => 'regclass name bool',
-  proargnames => '{relation,attname,inherited}',
+  proargtypes => 'text text text bool',
+  proargnames => '{schemaname,relname,attname,inherited}',
   prosrc => 'pg_clear_attribute_stats' },
 
 # GiST stratnum implementations

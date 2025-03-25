@@ -18,6 +18,7 @@
 
 #include "access/relation.h"
 #include "catalog/index.h"
+#include "catalog/namespace.h"
 #include "catalog/pg_database.h"
 #include "funcapi.h"
 #include "miscadmin.h"
@@ -212,6 +213,27 @@ stats_lock_check_privileges(Oid reloid)
 	/* retain lock on table */
 	relation_close(table, NoLock);
 }
+
+/*
+ * Lookup relation oid from schema and relation name.
+ */
+Oid
+stats_lookup_relid(const char *nspname, const char *relname)
+{
+	Oid			nspoid;
+	Oid			reloid;
+
+	nspoid = LookupExplicitNamespace(nspname, false);
+	reloid = get_relname_relid(relname, nspoid);
+	if (!OidIsValid(reloid))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_TABLE),
+				 errmsg("relation \"%s.%s\" does not exist",
+						nspname, relname)));
+
+	return reloid;
+}
+
 
 /*
  * Find the argument number for the given argument name, returning -1 if not

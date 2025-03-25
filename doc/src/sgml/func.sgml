@@ -30364,14 +30364,15 @@ postgres=# SELECT '0/0'::pg_lsn + pd.segment_number * ps.setting::int + :offset 
          <structname>mytable</structname>:
 <programlisting>
  SELECT pg_restore_relation_stats(
-    'relation',  'mytable'::regclass,
-    'relpages',  173::integer,
-    'reltuples', 10000::real);
+    'schemaname', 'myschema',
+    'relname',    'mytable',
+    'relpages',   173::integer,
+    'reltuples',  10000::real);
 </programlisting>
         </para>
         <para>
-         The argument <literal>relation</literal> with a value of type
-         <type>regclass</type> is required, and specifies the table. Other
+         The arguments <literal>schemaname</literal> and
+         <literal>relname</literal> are required, and specify the table. Other
          arguments are the names and values of statistics corresponding to
          certain columns in <link
          linkend="catalog-pg-class"><structname>pg_class</structname></link>.
@@ -30408,7 +30409,7 @@ postgres=# SELECT '0/0'::pg_lsn + pd.segment_number * ps.setting::int + :offset 
          <indexterm>
           <primary>pg_clear_relation_stats</primary>
          </indexterm>
-         <function>pg_clear_relation_stats</function> ( <parameter>relation</parameter> <type>regclass</type> )
+         <function>pg_clear_relation_stats</function> ( <parameter>schemaname</parameter> <type>text</type>, <parameter>relname</parameter> <type>text</type> )
          <returnvalue>void</returnvalue>
         </para>
         <para>
@@ -30457,22 +30458,23 @@ postgres=# SELECT '0/0'::pg_lsn + pd.segment_number * ps.setting::int + :offset 
          <structname>mytable</structname>:
 <programlisting>
  SELECT pg_restore_attribute_stats(
-    'relation',    'mytable'::regclass,
-    'attname',     'col1'::name,
-    'inherited',   false,
-    'avg_width',   125::integer,
-    'null_frac',   0.5::real);
+    'schemaname', 'myschema',
+    'relname',    'mytable',
+    'attname',    'col1',
+    'inherited',  false,
+    'avg_width',  125::integer,
+    'null_frac',  0.5::real);
 </programlisting>
         </para>
         <para>
-         The required arguments are <literal>relation</literal> with a value
-         of type <type>regclass</type>, which specifies the table; either
-         <literal>attname</literal> with a value of type <type>name</type> or
-         <literal>attnum</literal> with a value of type <type>smallint</type>,
-         which specifies the column; and <literal>inherited</literal>, which
-         specifies whether the statistics include values from child tables.
-         Other arguments are the names and values of statistics corresponding
-         to columns in <link
+         The required arguments are <literal>schemaname</literal> and
+         <literal>relname</literal> with a value of type <type>text</type>
+         which specify the table; either <literal>attname</literal> with a
+         value of type <type>text</type> or <literal>attnum</literal> with a
+         value of type <type>smallint</type>, which specifies the column; and
+         <literal>inherited</literal>, which specifies whether the statistics
+         include values from child tables.  Other arguments are the names and
+         values of statistics corresponding to columns in <link
          linkend="view-pg-stats"><structname>pg_stats</structname></link>.
         </para>
         <para>
@@ -30502,8 +30504,9 @@ postgres=# SELECT '0/0'::pg_lsn + pd.segment_number * ps.setting::int + :offset 
           <primary>pg_clear_attribute_stats</primary>
          </indexterm>
          <function>pg_clear_attribute_stats</function> (
-         <parameter>relation</parameter> <type>regclass</type>,
-         <parameter>attname</parameter> <type>name</type>,
+         <parameter>schemaname</parameter> <type>text</type>,
+         <parameter>relname</parameter> <type>text</type>,
+         <parameter>attname</parameter> <type>text</type>,
          <parameter>inherited</parameter> <type>boolean</type> )
          <returnvalue>void</returnvalue>
         </para>

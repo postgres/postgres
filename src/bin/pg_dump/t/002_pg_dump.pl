@@ -4741,14 +4741,16 @@ my %tests = (
 		regexp => qr/^
 			\QSELECT * FROM pg_catalog.pg_restore_relation_stats(\E\s+
 			'version',\s'\d+'::integer,\s+
-			'relation',\s'dump_test.dup_test_post_data_ix'::regclass,\s+
+			'schemaname',\s'dump_test',\s+
+			'relname',\s'dup_test_post_data_ix',\s+
 			'relpages',\s'\d+'::integer,\s+
 			'reltuples',\s'\d+'::real,\s+
 			'relallvisible',\s'\d+'::integer\s+
 			\);\s+
 			\QSELECT * FROM pg_catalog.pg_restore_attribute_stats(\E\s+
 			'version',\s'\d+'::integer,\s+
-			'relation',\s'dump_test.dup_test_post_data_ix'::regclass,\s+
+			'schemaname',\s'dump_test',\s+
+			'relname',\s'dup_test_post_data_ix',\s+
 			'attnum',\s'2'::smallint,\s+
 			'inherited',\s'f'::boolean,\s+
 			'null_frac',\s'0'::real,\s+
