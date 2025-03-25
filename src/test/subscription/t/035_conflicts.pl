@@ -76,7 +76,7 @@ $node_subscriber->wait_for_log(
 .*Key \(c\)=\(4\); existing local tuple \(4, 4, 4\); remote tuple \(2, 3, 4\)./,
 	$log_offset);
 
-pass('multiple_unique_conflicts detected during update');
+pass('multiple_unique_conflicts detected during insert');
 
 # Truncate table to get rid of the error
 $node_subscriber->safe_psql('postgres', "TRUNCATE conf_tab;");
@@ -108,6 +108,6 @@ $node_subscriber->wait_for_log(
 .*Key \(c\)=\(8\); existing local tuple \(8, 8, 8\); remote tuple \(6, 7, 8\)./,
 	$log_offset);
 
-pass('multiple_unique_conflicts detected during insert');
+pass('multiple_unique_conflicts detected during update');
 
 done_testing();
