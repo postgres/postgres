@@ -1483,7 +1483,12 @@ pg_tde_put_key_into_cache(const RelFileLocator *rlocator, InternalKey *key)
 #endif
 
 		memcpy(cachePage, tde_rel_key_cache.data, old_size);
+
+		explicit_bzero(tde_rel_key_cache.data, old_size);
+		if (munlock(tde_rel_key_cache.data, old_size) == -1)
+			elog(WARNING, "could not munlock internal key cache pages: %m");
 		pfree(tde_rel_key_cache.data);
+
 		tde_rel_key_cache.data = cachePage;
 
 		if (mlock(tde_rel_key_cache.data, size) == -1)
