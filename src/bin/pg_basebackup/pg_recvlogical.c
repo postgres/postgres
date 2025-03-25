@@ -633,6 +633,7 @@ StreamLogicalLog(void)
 	{
 		pg_log_error("unexpected termination of replication stream: %s",
 					 PQresultErrorMessage(res));
+		PQclear(res);
 		goto error;
 	}
 	PQclear(res);
