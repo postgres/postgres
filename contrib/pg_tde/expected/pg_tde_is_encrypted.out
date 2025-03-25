@@ -24,53 +24,42 @@ CREATE TABLE test_norm(
 	  k INTEGER DEFAULT '0' NOT NULL,
 	  PRIMARY KEY (id)
 	) USING heap;
-SELECT amname FROM pg_class INNER JOIN pg_am ON pg_am.oid = pg_class.relam WHERE relname = 'test_enc';
-  amname  
-----------
- tde_heap
-(1 row)
+CREATE TABLE test_part(
+	  id SERIAL,
+	  k INTEGER DEFAULT '0' NOT NULL,
+	  PRIMARY KEY (id)
+	) PARTITION BY RANGE (id) USING tde_heap;
+SELECT relname, amname FROM pg_class JOIN pg_am ON pg_am.oid = pg_class.relam WHERE relname IN ('test_enc', 'test_norm', 'test_part') ORDER BY relname;
+  relname  |  amname  
+-----------+----------
+ test_enc  | tde_heap
+ test_norm | heap
+ test_part | tde_heap
+(3 rows)
 
-SELECT amname FROM pg_class INNER JOIN pg_am ON pg_am.oid = pg_class.relam WHERE relname = 'test_norm';
- amname 
---------
- heap
-(1 row)
+SELECT relname, pg_tde_is_encrypted(relname) FROM (VALUES ('test_enc'), ('test_norm'), ('test_part')) AS r (relname) ORDER BY relname;
+  relname  | pg_tde_is_encrypted 
+-----------+---------------------
+ test_enc  | t
+ test_norm | f
+ test_part | 
+(3 rows)
 
-SELECT pg_tde_is_encrypted('test_enc');
- pg_tde_is_encrypted 
----------------------
- t
-(1 row)
+SELECT relname, pg_tde_is_encrypted(relname) FROM (VALUES ('test_enc_id_seq'), ('test_norm_id_seq'), ('test_part_id_seq')) AS r (relname) ORDER BY relname;
+     relname      | pg_tde_is_encrypted 
+------------------+---------------------
+ test_enc_id_seq  | t
+ test_norm_id_seq | f
+ test_part_id_seq | t
+(3 rows)
 
-SELECT pg_tde_is_encrypted('test_norm');
- pg_tde_is_encrypted 
----------------------
- f
-(1 row)
-
-SELECT pg_tde_is_encrypted('test_enc_id_seq');
- pg_tde_is_encrypted 
----------------------
- t
-(1 row)
-
-SELECT pg_tde_is_encrypted('test_norm_id_seq');
- pg_tde_is_encrypted 
----------------------
- f
-(1 row)
-
-SELECT pg_tde_is_encrypted('test_enc_pkey');
- pg_tde_is_encrypted 
----------------------
- t
-(1 row)
-
-SELECT pg_tde_is_encrypted('test_norm_pkey');
- pg_tde_is_encrypted 
----------------------
- f
-(1 row)
+SELECT relname, pg_tde_is_encrypted(relname) FROM (VALUES ('test_enc_pkey'), ('test_norm_pkey'), ('test_part_pkey')) AS r (relname) ORDER BY relname;
+    relname     | pg_tde_is_encrypted 
+----------------+---------------------
+ test_enc_pkey  | t
+ test_norm_pkey | f
+ test_part_pkey | 
+(3 rows)
 
 SELECT pg_tde_is_encrypted(NULL);
  pg_tde_is_encrypted 
@@ -85,6 +74,7 @@ SELECT key_provider_id, key_provider_name, principal_key_name
                1 | file-vault        | test-db-principal-key
 (1 row)
 
-DROP TABLE test_enc;
+DROP TABLE test_part;
 DROP TABLE test_norm;
+DROP TABLE test_enc;
 DROP EXTENSION pg_tde;

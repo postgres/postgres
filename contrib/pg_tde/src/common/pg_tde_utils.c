@@ -33,11 +33,17 @@ PG_FUNCTION_INFO_V1(pg_tde_is_encrypted);
 Datum
 pg_tde_is_encrypted(PG_FUNCTION_ARGS)
 {
-	Oid			tableOid = PG_GETARG_OID(0);
+	Oid			relationOid = PG_GETARG_OID(0);
 	LOCKMODE	lockmode = AccessShareLock;
-	Relation	rel = relation_open(tableOid, lockmode);
+	Relation	rel = relation_open(relationOid, lockmode);
 	RelFileLocatorBackend rlocator = {.locator = rel->rd_locator,.backend = rel->rd_backend};
 	InternalKey *key;
+
+	if (!RELKIND_HAS_STORAGE(rel->rd_rel->relkind))
+	{
+		relation_close(rel, lockmode);
+		PG_RETURN_NULL();
+	}
 
 	if (RelFileLocatorBackendIsTemp(rlocator) && !rel->rd_islocaltemp)
 		ereport(ERROR,
