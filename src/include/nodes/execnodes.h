@@ -840,7 +840,6 @@ typedef struct TupleHashTableData *TupleHashTable;
 typedef struct TupleHashEntryData
 {
 	MinimalTuple firstTuple;	/* copy of first tuple in this group */
-	void	   *additional;		/* user data */
 	uint32		status;			/* hash status */
 	uint32		hash;			/* hash value (cached) */
 } TupleHashEntryData;

@@ -485,11 +485,18 @@ LookupTupleHashEntry_internal(TupleHashTable hashtable, TupleTableSlot *slot,
 
 			MemoryContextSwitchTo(hashtable->tablecxt);
 
-			entry->firstTuple = ExecCopySlotMinimalTuple(slot);
-			if (hashtable->additionalsize > 0)
-				entry->additional = palloc0(hashtable->additionalsize);
-			else
-				entry->additional = NULL;
+			/*
+			 * Copy the first tuple into the table context, and request
+			 * additionalsize extra bytes before the allocation.
+			 *
+			 * The caller can get a pointer to the additional data with
+			 * TupleHashEntryGetAdditional(), and store arbitrary data there.
+			 * Placing both the tuple and additional data in the same
+			 * allocation avoids the need to store an extra pointer in
+			 * TupleHashEntryData or allocate an additional chunk.
+			 */
+			entry->firstTuple = ExecCopySlotMinimalTupleExtra(slot,
+															  hashtable->additionalsize);
 		}
 	}
 	else
