@@ -174,13 +174,15 @@ BuildTupleHashTable(PlanState *parent,
 					bool use_variable_hash_iv)
 {
 	TupleHashTable hashtable;
-	Size		entrysize = sizeof(TupleHashEntryData) + additionalsize;
+	Size		entrysize;
 	Size		hash_mem_limit;
 	MemoryContext oldcontext;
 	bool		allow_jit;
 	uint32		hash_iv = 0;
 
 	Assert(nbuckets > 0);
+	additionalsize = MAXALIGN(additionalsize);
+	entrysize = sizeof(TupleHashEntryData) + additionalsize;
 
 	/* Limit initial table size request to not more than hash_mem */
 	hash_mem_limit = get_hash_memory_limit() / entrysize;
@@ -196,6 +198,7 @@ BuildTupleHashTable(PlanState *parent,
 	hashtable->tab_collations = collations;
 	hashtable->tablecxt = tablecxt;
 	hashtable->tempcxt = tempcxt;
+	hashtable->additionalsize = additionalsize;
 	hashtable->tableslot = NULL;	/* will be made on first lookup */
 	hashtable->inputslot = NULL;
 	hashtable->in_hash_expr = NULL;
@@ -479,11 +482,14 @@ LookupTupleHashEntry_internal(TupleHashTable hashtable, TupleTableSlot *slot,
 		{
 			/* created new entry */
 			*isnew = true;
-			/* zero caller data */
-			entry->additional = NULL;
+
 			MemoryContextSwitchTo(hashtable->tablecxt);
-			/* Copy the first tuple into the table context */
+
 			entry->firstTuple = ExecCopySlotMinimalTuple(slot);
+			if (hashtable->additionalsize > 0)
+				entry->additional = palloc0(hashtable->additionalsize);
+			else
+				entry->additional = NULL;
 		}
 	}
 	else
