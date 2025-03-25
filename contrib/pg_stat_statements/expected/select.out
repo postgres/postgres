@@ -413,3 +413,243 @@ SELECT pg_stat_statements_reset() IS NOT NULL AS t;
  t
 (1 row)
 
+-- Temporary table with same name, re-created.
+BEGIN;
+  CREATE TEMP TABLE temp_t (id int) ON COMMIT DROP;
+  SELECT * FROM temp_t;
+ id 
+----
+(0 rows)
+
+COMMIT;
+BEGIN;
+  CREATE TEMP TABLE temp_t (id int) ON COMMIT DROP;
+  SELECT * FROM temp_t;
+ id 
+----
+(0 rows)
+
+COMMIT;
+SELECT calls, query FROM pg_stat_statements ORDER BY query COLLATE "C";
+ calls |                                 query                                  
+-------+------------------------------------------------------------------------
+     1 | SELECT * FROM temp_t
+     1 | SELECT * FROM temp_t
+     0 | SELECT calls, query FROM pg_stat_statements ORDER BY query COLLATE "C"
+     1 | SELECT pg_stat_statements_reset() IS NOT NULL AS t
+(4 rows)
+
+SELECT pg_stat_statements_reset() IS NOT NULL AS t;
+ t 
+---
+ t
+(1 row)
+
+-- search_path with various schemas and temporary tables
+CREATE SCHEMA pgss_schema_1;
+CREATE SCHEMA pgss_schema_2;
+-- Same attributes.
+CREATE TABLE pgss_schema_1.tab_search_same (a int, b int);
+CREATE TABLE pgss_schema_2.tab_search_same (a int, b int);
+CREATE TEMP TABLE tab_search_same (a int, b int);
+-- Different number of attributes, mapping types
+CREATE TABLE pgss_schema_1.tab_search_diff_1 (a int);
+CREATE TABLE pgss_schema_2.tab_search_diff_1 (a int, b int);
+CREATE TEMP TABLE tab_search_diff_1 (a int, b int, c int);
+-- Same number of attributes, different types
+CREATE TABLE pgss_schema_1.tab_search_diff_2 (a int);
+CREATE TABLE pgss_schema_2.tab_search_diff_2 (a text);
+CREATE TEMP TABLE tab_search_diff_2 (a bigint);
+-- First permanent schema
+SET search_path = 'pgss_schema_1';
+SELECT count(*) FROM tab_search_same;
+ count 
+-------
+     0
+(1 row)
+
+SELECT a, b FROM tab_search_same;
+ a | b 
+---+---
+(0 rows)
+
+SELECT count(*) FROM tab_search_diff_1;
+ count 
+-------
+     0
+(1 row)
+
+SELECT count(*) FROM tab_search_diff_2;
+ count 
+-------
+     0
+(1 row)
+
+SELECT a FROM tab_search_diff_2 AS t1;
+ a 
+---
+(0 rows)
+
+SELECT a FROM tab_search_diff_2;
+ a 
+---
+(0 rows)
+
+SELECT a AS a1 FROM tab_search_diff_2;
+ a1 
+----
+(0 rows)
+
+-- Second permanent schema
+SET search_path = 'pgss_schema_2';
+SELECT count(*) FROM tab_search_same;
+ count 
+-------
+     0
+(1 row)
+
+SELECT a, b FROM tab_search_same;
+ a | b 
+---+---
+(0 rows)
+
+SELECT count(*) FROM tab_search_diff_1;
+ count 
+-------
+     0
+(1 row)
+
+SELECT count(*) FROM tab_search_diff_2;
+ count 
+-------
+     0
+(1 row)
+
+SELECT a FROM tab_search_diff_2 AS t1;
+ a 
+---
+(0 rows)
+
+SELECT a FROM tab_search_diff_2;
+ a 
+---
+(0 rows)
+
+SELECT a AS a1 FROM tab_search_diff_2;
+ a1 
+----
+(0 rows)
+
+-- Temporary schema
+SET search_path = 'pg_temp';
+SELECT count(*) FROM tab_search_same;
+ count 
+-------
+     0
+(1 row)
+
+SELECT a, b FROM tab_search_same;
+ a | b 
+---+---
+(0 rows)
+
+SELECT count(*) FROM tab_search_diff_1;
+ count 
+-------
+     0
+(1 row)
+
+SELECT count(*) FROM tab_search_diff_2;
+ count 
+-------
+     0
+(1 row)
+
+SELECT a FROM tab_search_diff_2 AS t1;
+ a 
+---
+(0 rows)
+
+SELECT a FROM tab_search_diff_2;
+ a 
+---
+(0 rows)
+
+SELECT a AS a1 FROM tab_search_diff_2;
+ a1 
+----
+(0 rows)
+
+RESET search_path;
+-- Schema qualifications
+SELECT count(*) FROM pgss_schema_1.tab_search_same;
+ count 
+-------
+     0
+(1 row)
+
+SELECT a, b FROM pgss_schema_1.tab_search_same;
+ a | b 
+---+---
+(0 rows)
+
+SELECT count(*) FROM pgss_schema_2.tab_search_diff_1;
+ count 
+-------
+     0
+(1 row)
+
+SELECT count(*) FROM pg_temp.tab_search_diff_2;
+ count 
+-------
+     0
+(1 row)
+
+SELECT a FROM pgss_schema_2.tab_search_diff_2 AS t1;
+ a 
+---
+(0 rows)
+
+SELECT a FROM pgss_schema_2.tab_search_diff_2;
+ a 
+---
+(0 rows)
+
+SELECT a AS a1 FROM pgss_schema_2.tab_search_diff_2;
+ a1 
+----
+(0 rows)
+
+SELECT calls, query FROM pg_stat_statements ORDER BY query COLLATE "C";
+ calls |                                 query                                  
+-------+------------------------------------------------------------------------
+     3 | SELECT a FROM pgss_schema_2.tab_search_diff_2 AS t1
+     9 | SELECT a FROM tab_search_diff_2 AS t1
+     1 | SELECT a, b FROM pgss_schema_1.tab_search_same
+     3 | SELECT a, b FROM tab_search_same
+     0 | SELECT calls, query FROM pg_stat_statements ORDER BY query COLLATE "C"
+     1 | SELECT count(*) FROM pgss_schema_1.tab_search_same
+     1 | SELECT count(*) FROM pgss_schema_2.tab_search_diff_1
+     3 | SELECT count(*) FROM tab_search_diff_1
+     4 | SELECT count(*) FROM tab_search_diff_2
+     3 | SELECT count(*) FROM tab_search_same
+     1 | SELECT pg_stat_statements_reset() IS NOT NULL AS t
+(11 rows)
+
+DROP SCHEMA pgss_schema_1 CASCADE;
+NOTICE:  drop cascades to 3 other objects
+DETAIL:  drop cascades to table pgss_schema_1.tab_search_same
+drop cascades to table pgss_schema_1.tab_search_diff_1
+drop cascades to table pgss_schema_1.tab_search_diff_2
+DROP SCHEMA pgss_schema_2 CASCADE;
+NOTICE:  drop cascades to 3 other objects
+DETAIL:  drop cascades to table pgss_schema_2.tab_search_same
+drop cascades to table pgss_schema_2.tab_search_diff_1
+drop cascades to table pgss_schema_2.tab_search_diff_2
+DROP TABLE tab_search_same, tab_search_diff_1, tab_search_diff_2;
+SELECT pg_stat_statements_reset() IS NOT NULL AS t;
+ t 
+---
+ t
+(1 row)
+
