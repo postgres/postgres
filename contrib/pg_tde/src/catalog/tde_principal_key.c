@@ -100,6 +100,7 @@ static bool pg_tde_is_same_principal_key(TDEPrincipalKey *a, TDEPrincipalKey *b)
 static void pg_tde_update_global_principal_key_everywhere(TDEPrincipalKey *oldKey, TDEPrincipalKey *newKey);
 static void push_principal_key_to_cache(TDEPrincipalKey *principalKey);
 static Datum pg_tde_get_key_info(PG_FUNCTION_ARGS, Oid dbOid);
+static TDEPrincipalKey *GetPrincipalKeyNoDefault(Oid dbOid, LWLockMode lockMode);
 static void set_principal_key_with_keyring(const char *key_name,
 										   const char *provider_name,
 										   Oid providerOid,
@@ -751,7 +752,6 @@ get_principal_key_from_keyring(Oid dbOid)
 }
 
 /*
- * A public interface to get the principal key for the database.
  * If the principal key is not present in the cache, it is loaded from
  * the keyring and stored in the cache.
  * When the principal key is not set for the database. The function returns
@@ -770,7 +770,7 @@ get_principal_key_from_keyring(Oid dbOid)
  * * if this returns an object from the cache, caller has to hold the lock until it uses the object
  * * mode of lock is unclear after returning from the function
  */
-TDEPrincipalKey *
+static TDEPrincipalKey *
 GetPrincipalKeyNoDefault(Oid dbOid, LWLockMode lockMode)
 {
 	TDEPrincipalKey *principalKey;
@@ -853,6 +853,24 @@ GetPrincipalKey(Oid dbOid, LWLockMode lockMode)
 }
 
 #ifndef FRONTEND
+
+bool
+pg_tde_principal_key_configured(Oid databaseId)
+{
+	TDEPrincipalKey *principalKey;
+
+	LWLockAcquire(tde_lwlock_enc_keys(), LW_SHARED);
+
+	principalKey = GetPrincipalKeyNoDefault(databaseId, LW_SHARED);
+	if (principalKey == NULL)
+	{
+		principalKey = GetPrincipalKeyNoDefault(DEFAULT_DATA_TDE_OID, LW_EXCLUSIVE);
+	}
+
+	LWLockRelease(tde_lwlock_enc_keys());
+
+	return principalKey != NULL;
+}
 
 static bool
 pg_tde_is_provider_used(Oid databaseOid, Oid providerId)

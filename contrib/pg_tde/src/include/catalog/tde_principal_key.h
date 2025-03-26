@@ -47,11 +47,10 @@ extern void InitializePrincipalKeyInfo(void);
 
 #ifndef FRONTEND
 extern LWLock *tde_lwlock_enc_keys(void);
+extern bool pg_tde_principal_key_configured(Oid databaseId);
 extern TDEPrincipalKey *GetPrincipalKey(Oid dbOid, LWLockMode lockMode);
-extern TDEPrincipalKey *GetPrincipalKeyNoDefault(Oid dbOid, LWLockMode lockMode);
 #else
 extern TDEPrincipalKey *GetPrincipalKey(Oid dbOid, void *lockMode);
-extern TDEPrincipalKey *GetPrincipalKeyNoDefault(Oid dbOid, void *lockMode);
 #endif
 
 extern void xl_tde_perform_rotate_key(XLogPrincipalKeyRotate *xlrec);

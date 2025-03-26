@@ -49,8 +49,6 @@ GetCurrentTdeCreateEvent(void)
 static void
 checkEncryptionClause(const char *accessMethod)
 {
-	TDEPrincipalKey *principal_key;
-
 	if (accessMethod && strcmp(accessMethod, "tde_heap") == 0)
 	{
 		tdeCurrentCreateEvent.encryptMode = true;
@@ -62,14 +60,7 @@ checkEncryptionClause(const char *accessMethod)
 
 	if (tdeCurrentCreateEvent.encryptMode)
 	{
-		LWLockAcquire(tde_lwlock_enc_keys(), LW_SHARED);
-		principal_key = GetPrincipalKeyNoDefault(MyDatabaseId, LW_SHARED);
-		if (principal_key == NULL)
-		{
-			principal_key = GetPrincipalKeyNoDefault(DEFAULT_DATA_TDE_OID, LW_EXCLUSIVE);
-		}
-		LWLockRelease(tde_lwlock_enc_keys());
-		if (principal_key == NULL)
+		if (!pg_tde_principal_key_configured(MyDatabaseId))
 		{
 			ereport(ERROR,
 					(errmsg("principal key not configured"),
