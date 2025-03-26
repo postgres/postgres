@@ -433,6 +433,9 @@ main(int argc, char **argv)
 	bool		data_only = false;
 	bool		schema_only = false;
 	bool		statistics_only = false;
+	bool		with_data = false;
+	bool		with_schema = false;
+	bool		with_statistics = false;
 	bool		no_data = false;
 	bool		no_schema = false;
 	bool		no_statistics = false;
@@ -509,6 +512,9 @@ main(int argc, char **argv)
 		{"no-toast-compression", no_argument, &dopt.no_toast_compression, 1},
 		{"no-unlogged-table-data", no_argument, &dopt.no_unlogged_table_data, 1},
 		{"no-sync", no_argument, NULL, 7},
+		{"with-data", no_argument, NULL, 22},
+		{"with-schema", no_argument, NULL, 23},
+		{"with-statistics", no_argument, NULL, 24},
 		{"on-conflict-do-nothing", no_argument, &dopt.do_nothing, 1},
 		{"rows-per-insert", required_argument, NULL, 10},
 		{"include-foreign-data", required_argument, NULL, 11},
@@ -775,6 +781,18 @@ main(int argc, char **argv)
 				no_statistics = true;
 				break;
 
+			case 22:
+				with_data = true;
+				break;
+
+			case 23:
+				with_schema = true;
+				break;
+
+			case 24:
+				with_statistics = true;
+				break;
+
 			default:
 				/* getopt_long already emitted a complaint */
 				pg_log_error_hint("Try \"%s --help\" for more information.", progname);
@@ -802,6 +820,7 @@ main(int argc, char **argv)
 	if (dopt.column_inserts && dopt.dump_inserts == 0)
 		dopt.dump_inserts = DUMP_DEFAULT_ROWS_PER_INSERT;
 
+	/* reject conflicting "-only" options */
 	if (data_only && schema_only)
 		pg_fatal("options -s/--schema-only and -a/--data-only cannot be used together");
 	if (schema_only && statistics_only)
@@ -809,12 +828,21 @@ main(int argc, char **argv)
 	if (data_only && statistics_only)
 		pg_fatal("options -a/--data-only and --statistics-only cannot be used together");
 
+	/* reject conflicting "-only" and "no-" options */
 	if (data_only && no_data)
 		pg_fatal("options -a/--data-only and --no-data cannot be used together");
 	if (schema_only && no_schema)
 		pg_fatal("options -s/--schema-only and --no-schema cannot be used together");
 	if (statistics_only && no_statistics)
 		pg_fatal("options --statistics-only and --no-statistics cannot be used together");
+
+	/* reject conflicting "with-" and "no-" options */
+	if (with_data && no_data)
+		pg_fatal("options --with-data and --no-data cannot be used together");
+	if (with_schema && no_schema)
+		pg_fatal("options --with-schema and --no-schema cannot be used together");
+	if (with_statistics && no_statistics)
+		pg_fatal("options --with-statistics and --no-statistics cannot be used together");
 
 	if (schema_only && foreign_servers_include_patterns.head != NULL)
 		pg_fatal("options -s/--schema-only and --include-foreign-data cannot be used together");
@@ -828,10 +856,20 @@ main(int argc, char **argv)
 	if (dopt.if_exists && !dopt.outputClean)
 		pg_fatal("option --if-exists requires option -c/--clean");
 
-	/* set derivative flags */
-	dopt.dumpData = data_only || (!schema_only && !statistics_only && !no_data);
-	dopt.dumpSchema = schema_only || (!data_only && !statistics_only && !no_schema);
-	dopt.dumpStatistics = statistics_only || (!data_only && !schema_only && !no_statistics);
+	/*
+	 * Set derivative flags. An "-only" option may be overridden by an
+	 * explicit "with-" option; e.g. "--schema-only --with-statistics" will
+	 * include schema and statistics. Other ambiguous or nonsensical
+	 * combinations, e.g. "--schema-only --no-schema", will have already
+	 * caused an error in one of the checks above.
+	 */
+	dopt.dumpData = ((dopt.dumpData && !schema_only && !statistics_only) ||
+					 (data_only || with_data)) && !no_data;
+	dopt.dumpSchema = ((dopt.dumpSchema && !data_only && !statistics_only) ||
+					   (schema_only || with_schema)) && !no_schema;
+	dopt.dumpStatistics = ((dopt.dumpStatistics && !schema_only && !data_only) ||
+						   (statistics_only || with_statistics)) && !no_statistics;
+
 
 	/*
 	 * --inserts are already implied above if --column-inserts or
@@ -1279,6 +1317,9 @@ help(const char *progname)
 	printf(_("  --use-set-session-authorization\n"
 			 "                               use SET SESSION AUTHORIZATION commands instead of\n"
 			 "                               ALTER OWNER commands to set ownership\n"));
+	printf(_("  --with-data                  dump the data\n"));
+	printf(_("  --with-schema                dump the schema\n"));
+	printf(_("  --with-statistics            dump the statistics\n"));
 
 	printf(_("\nConnection options:\n"));
 	printf(_("  -d, --dbname=DBNAME      database to dump\n"));

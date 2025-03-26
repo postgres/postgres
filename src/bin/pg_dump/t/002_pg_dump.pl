@@ -741,6 +741,13 @@ my %pgdump_runs = (
 			'postgres',
 		],
 	},
+	schema_only_with_statistics => {
+		dump_cmd => [
+			'pg_dump', '--no-sync',
+			"--file=$tempdir/schema_only_with_statistics.sql", '--schema-only',
+			'--with-statistics', 'postgres',
+		],
+	},
 	no_schema => {
 		dump_cmd => [
 			'pg_dump', '--no-sync',
@@ -818,7 +825,8 @@ my %full_runs = (
 	no_table_access_method => 1,
 	pg_dumpall_dbprivs => 1,
 	pg_dumpall_exclude => 1,
-	schema_only => 1,);
+	schema_only => 1,
+	schema_only_with_statistics => 1,);
 
 # This is where the actual tests are defined.
 my %tests = (
@@ -1024,6 +1032,7 @@ my %tests = (
 			no_large_objects => 1,
 			no_owner => 1,
 			schema_only => 1,
+			schema_only_with_statistics => 1,
 		},
 	},
 
@@ -1437,6 +1446,7 @@ my %tests = (
 		},
 		unlike => {
 			schema_only => 1,
+			schema_only_with_statistics => 1,
 			no_large_objects => 1,
 		},
 	},
@@ -1461,6 +1471,7 @@ my %tests = (
 			binary_upgrade => 1,
 			no_large_objects => 1,
 			schema_only => 1,
+			schema_only_with_statistics => 1,
 		},
 	},
 
@@ -1483,6 +1494,7 @@ my %tests = (
 			binary_upgrade => 1,
 			no_large_objects => 1,
 			schema_only => 1,
+			schema_only_with_statistics => 1,
 		},
 	},
 
@@ -1649,6 +1661,7 @@ my %tests = (
 		unlike => {
 			no_large_objects => 1,
 			schema_only => 1,
+			schema_only_with_statistics => 1,
 		},
 	},
 
@@ -1806,6 +1819,7 @@ my %tests = (
 			exclude_test_table => 1,
 			exclude_test_table_data => 1,
 			schema_only => 1,
+			schema_only_with_statistics => 1,
 			only_dump_measurement => 1,
 		},
 	},
@@ -1831,6 +1845,7 @@ my %tests = (
 			binary_upgrade => 1,
 			exclude_dump_test_schema => 1,
 			schema_only => 1,
+			schema_only_with_statistics => 1,
 			only_dump_measurement => 1,
 		},
 	},
@@ -1871,6 +1886,7 @@ my %tests = (
 			binary_upgrade => 1,
 			exclude_dump_test_schema => 1,
 			schema_only => 1,
+			schema_only_with_statistics => 1,
 			only_dump_measurement => 1,
 		},
 	},
@@ -1894,6 +1910,7 @@ my %tests = (
 			binary_upgrade => 1,
 			exclude_dump_test_schema => 1,
 			schema_only => 1,
+			schema_only_with_statistics => 1,
 			only_dump_measurement => 1,
 		},
 	},
@@ -1918,6 +1935,7 @@ my %tests = (
 			binary_upgrade => 1,
 			exclude_dump_test_schema => 1,
 			schema_only => 1,
+			schema_only_with_statistics => 1,
 			only_dump_measurement => 1,
 		},
 	},
@@ -1941,6 +1959,7 @@ my %tests = (
 			binary_upgrade => 1,
 			exclude_dump_test_schema => 1,
 			schema_only => 1,
+			schema_only_with_statistics => 1,
 			only_dump_measurement => 1,
 		},
 	},
@@ -1964,6 +1983,7 @@ my %tests = (
 			binary_upgrade => 1,
 			exclude_dump_test_schema => 1,
 			schema_only => 1,
+			schema_only_with_statistics => 1,
 			only_dump_measurement => 1,
 		},
 	},
@@ -3380,6 +3400,7 @@ my %tests = (
 			binary_upgrade => 1,
 			exclude_dump_test_schema => 1,
 			schema_only => 1,
+			schema_only_with_statistics => 1,
 		},
 	},
 
@@ -3552,6 +3573,7 @@ my %tests = (
 		unlike => {
 			binary_upgrade => 1,
 			schema_only => 1,
+			schema_only_with_statistics => 1,
 			exclude_measurement => 1,
 			only_dump_test_schema => 1,
 			test_schema_plus_large_objects => 1,
@@ -4436,6 +4458,7 @@ my %tests = (
 			no_large_objects => 1,
 			no_privs => 1,
 			schema_only => 1,
+			schema_only_with_statistics => 1,
 		},
 	},
 
@@ -4554,6 +4577,7 @@ my %tests = (
 			binary_upgrade => 1,
 			exclude_dump_test_schema => 1,
 			schema_only => 1,
+			schema_only_with_statistics => 1,
 			only_dump_measurement => 1,
 		},
 	},
@@ -4570,6 +4594,7 @@ my %tests = (
 			binary_upgrade => 1,
 			exclude_dump_test_schema => 1,
 			schema_only => 1,
+			schema_only_with_statistics => 1,
 			only_dump_measurement => 1,
 		},
 	},
@@ -4767,6 +4792,7 @@ my %tests = (
 			no_schema => 1,
 			section_post_data => 1,
 			statistics_only => 1,
+			schema_only_with_statistics => 1,
 		},
 		unlike => {
 			exclude_dump_test_schema => 1,
@@ -4795,6 +4821,7 @@ my %tests = (
 			section_data => 1,
 			section_post_data => 1,
 			statistics_only => 1,
+			schema_only_with_statistics => 1,
 		},
 		unlike => {
 			no_statistics => 1,

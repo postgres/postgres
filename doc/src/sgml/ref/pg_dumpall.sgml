@@ -561,6 +561,33 @@ exclude database <replaceable class="parameter">PATTERN</replaceable>
      </varlistentry>
 
      <varlistentry>
+      <term><option>--with-data</option></term>
+      <listitem>
+       <para>
+        Dump data. This is the default.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>--with-schema</option></term>
+      <listitem>
+       <para>
+        Dump schema (data definitions). This is the default.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>--with-statistics</option></term>
+      <listitem>
+       <para>
+        Dump statistics. This is the default.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>--no-unlogged-table-data</option></term>
       <listitem>
        <para>

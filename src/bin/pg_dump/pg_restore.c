@@ -82,6 +82,9 @@ main(int argc, char **argv)
 	static int	no_subscriptions = 0;
 	static int	strict_names = 0;
 	static int	statistics_only = 0;
+	static int	with_data = 0;
+	static int	with_schema = 0;
+	static int	with_statistics = 0;
 
 	struct option cmdopts[] = {
 		{"clean", 0, NULL, 'c'},
@@ -136,6 +139,9 @@ main(int argc, char **argv)
 		{"no-security-labels", no_argument, &no_security_labels, 1},
 		{"no-subscriptions", no_argument, &no_subscriptions, 1},
 		{"no-statistics", no_argument, &no_statistics, 1},
+		{"with-data", no_argument, &with_data, 1},
+		{"with-schema", no_argument, &with_schema, 1},
+		{"with-statistics", no_argument, &with_statistics, 1},
 		{"statistics-only", no_argument, &statistics_only, 1},
 		{"filter", required_argument, NULL, 4},
 
@@ -351,12 +357,29 @@ main(int argc, char **argv)
 		opts->useDB = 1;
 	}
 
+	/* reject conflicting "-only" options */
 	if (data_only && schema_only)
 		pg_fatal("options -s/--schema-only and -a/--data-only cannot be used together");
-	if (data_only && statistics_only)
-		pg_fatal("options -a/--data-only and --statistics-only cannot be used together");
 	if (schema_only && statistics_only)
 		pg_fatal("options -s/--schema-only and --statistics-only cannot be used together");
+	if (data_only && statistics_only)
+		pg_fatal("options -a/--data-only and --statistics-only cannot be used together");
+
+	/* reject conflicting "-only" and "no-" options */
+	if (data_only && no_data)
+		pg_fatal("options -a/--data-only and --no-data cannot be used together");
+	if (schema_only && no_schema)
+		pg_fatal("options -s/--schema-only and --no-schema cannot be used together");
+	if (statistics_only && no_statistics)
+		pg_fatal("options --statistics-only and --no-statistics cannot be used together");
+
+	/* reject conflicting "with-" and "no-" options */
+	if (with_data && no_data)
+		pg_fatal("options --with-data and --no-data cannot be used together");
+	if (with_schema && no_schema)
+		pg_fatal("options --with-schema and --no-schema cannot be used together");
+	if (with_statistics && no_statistics)
+		pg_fatal("options --with-statistics and --no-statistics cannot be used together");
 
 	if (data_only && opts->dropSchema)
 		pg_fatal("options -c/--clean and -a/--data-only cannot be used together");
@@ -375,10 +398,19 @@ main(int argc, char **argv)
 	if (opts->single_txn && numWorkers > 1)
 		pg_fatal("cannot specify both --single-transaction and multiple jobs");
 
-	/* set derivative flags */
-	opts->dumpData = data_only || (!no_data && !schema_only && !statistics_only);
-	opts->dumpSchema = schema_only || (!no_schema && !data_only && !statistics_only);
-	opts->dumpStatistics = statistics_only || (!no_statistics && !data_only && !schema_only);
+	/*
+	 * Set derivative flags. An "-only" option may be overridden by an
+	 * explicit "with-" option; e.g. "--schema-only --with-statistics" will
+	 * include schema and statistics. Other ambiguous or nonsensical
+	 * combinations, e.g. "--schema-only --no-schema", will have already
+	 * caused an error in one of the checks above.
+	 */
+	opts->dumpData = ((opts->dumpData && !schema_only && !statistics_only) ||
+					  (data_only || with_data)) && !no_data;
+	opts->dumpSchema = ((opts->dumpSchema && !data_only && !statistics_only) ||
+						(schema_only || with_schema)) && !no_schema;
+	opts->dumpStatistics = ((opts->dumpStatistics && !schema_only && !data_only) ||
+							(statistics_only || with_statistics)) && !no_statistics;
 
 	opts->disable_triggers = disable_triggers;
 	opts->enable_row_security = enable_row_security;
@@ -524,6 +556,9 @@ usage(const char *progname)
 	printf(_("  --use-set-session-authorization\n"
 			 "                               use SET SESSION AUTHORIZATION commands instead of\n"
 			 "                               ALTER OWNER commands to set ownership\n"));
+	printf(_("  --with-data                  dump the data\n"));
+	printf(_("  --with-schema                dump the schema\n"));
+	printf(_("  --with-statistics            dump the statistics\n"));
 
 	printf(_("\nConnection options:\n"));
 	printf(_("  -h, --host=HOSTNAME      database server host or socket directory\n"));
