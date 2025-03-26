@@ -897,6 +897,7 @@ pg_tde_get_key_from_file(const RelFileLocator *rlocator, uint32 key_type)
 	TDEPrincipalKey *principal_key;
 	LWLock	   *lock_pk = tde_lwlock_enc_keys();
 	char		db_map_path[MAXPGPATH] = {0};
+	InternalKey *rel_key;
 
 	Assert(rlocator);
 
@@ -934,9 +935,12 @@ pg_tde_get_key_from_file(const RelFileLocator *rlocator, uint32 key_type)
 		ereport(ERROR,
 				(errmsg("principal key not configured"),
 				 errhint("create one using pg_tde_set_principal_key before using encrypted tables")));
+
+	rel_key = tde_decrypt_rel_key(principal_key, map_entry);
+
 	LWLockRelease(lock_pk);
 
-	return tde_decrypt_rel_key(principal_key, map_entry);
+	return rel_key;
 }
 
 /*

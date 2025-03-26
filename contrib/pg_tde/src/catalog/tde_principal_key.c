@@ -654,7 +654,6 @@ pg_tde_get_key_info(PG_FUNCTION_ARGS, Oid dbOid)
 
 	LWLockAcquire(tde_lwlock_enc_keys(), LW_SHARED);
 	principal_key = GetPrincipalKeyNoDefault(dbOid, LW_SHARED);
-	LWLockRelease(tde_lwlock_enc_keys());
 	if (principal_key == NULL)
 	{
 		ereport(ERROR,
@@ -687,6 +686,8 @@ pg_tde_get_key_info(PG_FUNCTION_ARGS, Oid dbOid)
 	ts = (ts * USECS_PER_SEC) + principal_key->keyInfo.creationTime.tv_usec;
 	values[3] = TimestampTzGetDatum(ts);
 	isnull[3] = false;
+
+	LWLockRelease(tde_lwlock_enc_keys());
 
 	/* Form the tuple */
 	tuple = heap_form_tuple(tupdesc, values, isnull);
@@ -952,10 +953,11 @@ pg_tde_is_provider_used(Oid databaseOid, Oid providerId)
 		/* database local provider, just verify that it isn't currently active */
 
 		TDEPrincipalKey *principal_key = GetPrincipalKeyNoDefault(databaseOid, LW_EXCLUSIVE);
+		bool		used = principal_key != NULL && providerId == principal_key->keyInfo.keyringId;
 
 		LWLockRelease(tde_lwlock_enc_keys());
 
-		return principal_key != NULL && providerId == principal_key->keyInfo.keyringId;
+		return used;
 	}
 }
 
@@ -1083,8 +1085,6 @@ pg_tde_verify_principal_key_internal(Oid databaseOid)
 	fromKeyring = get_principal_key_from_keyring(databaseOid);
 	fromCache = get_principal_key_from_cache(databaseOid);
 
-	LWLockRelease(tde_lwlock_enc_keys());
-
 	if (fromKeyring == NULL)
 	{
 		ereport(ERROR,
@@ -1096,6 +1096,8 @@ pg_tde_verify_principal_key_internal(Oid databaseOid)
 		ereport(ERROR,
 				(errmsg("key returned from keyring and cached in pg_tde differ")));
 	}
+
+	LWLockRelease(tde_lwlock_enc_keys());
 
 	PG_RETURN_VOID();
 }
