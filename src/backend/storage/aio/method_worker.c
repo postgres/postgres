@@ -477,6 +477,13 @@ IoWorkerMain(const void *startup_data, size_t startup_data_len)
 						   MyIoWorkerId);
 
 			/*
+			 * Prevent interrupts between pgaio_io_reopen() and
+			 * pgaio_io_perform_synchronously() that otherwise could lead to
+			 * the FD getting closed in that window.
+			 */
+			HOLD_INTERRUPTS();
+
+			/*
 			 * It's very unlikely, but possible, that reopen fails. E.g. due
 			 * to memory allocations failing or file permissions changing or
 			 * such.  In that case we need to fail the IO.
@@ -502,6 +509,8 @@ IoWorkerMain(const void *startup_data, size_t startup_data_len)
 			 * ensure we don't accidentally fail.
 			 */
 			pgaio_io_perform_synchronously(ioh);
+
+			RESUME_INTERRUPTS();
 		}
 		else
 		{

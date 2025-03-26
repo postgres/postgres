@@ -159,6 +159,12 @@ pgaio_io_before_prep(PgAioHandle *ioh)
 	Assert(pgaio_my_backend->handed_out_io == ioh);
 	Assert(pgaio_io_has_target(ioh));
 	Assert(ioh->op == PGAIO_OP_INVALID);
+
+	/*
+	 * Otherwise the FDs referenced by the IO could be closed due to interrupt
+	 * processing.
+	 */
+	Assert(!INTERRUPTS_CAN_BE_PROCESSED());
 }
 
 /*
