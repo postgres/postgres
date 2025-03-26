@@ -4,7 +4,7 @@ The steps below describe how to set up multi-tenancy with `pg_tde`. Multi-tenanc
 
 If you don't need multi-tenancy, use the global key provider. See the configuration steps from the [Setup](setup.md) section.
 
-For how to enable WAL encryption, refer to the [WAL encryption](setup.md#wal-encryption) section.
+For how to enable WAL encryption, refer to the [WAL encryption](wal-encryption.md) section.
 
 --8<-- "kms-considerations.md"
 

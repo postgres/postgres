@@ -449,7 +449,7 @@ write_key_provider_info(KeyringProvideRecord *provider, Oid database_id,
 				seek_pos = before_pos;
 				break;
 			}
-			if (strcmp(existing_provider.provider_name, provider->provider_name) == 0)
+			if (strlen(existing_provider.provider_name) > 0 && strcmp(existing_provider.provider_name, provider->provider_name) == 0)
 			{
 				if (error_if_exists)
 				{
@@ -633,7 +633,6 @@ scan_key_provider_file(ProviderScanType scanType, void *scanKey, Oid dbOid)
 	fd = BasicOpenFile(kp_info_path, PG_BINARY);
 	if (fd < 0)
 	{
-		fprintf(stderr, "WTF\n");
 		LWLockRelease(tde_provider_info_lock());
 		ereport(DEBUG2,
 				(errcode_for_file_access(),

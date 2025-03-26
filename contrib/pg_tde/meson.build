@@ -85,6 +85,7 @@ sql_tests = [
       'kmip_test',
       'pg_tde_is_encrypted',
       'relocate',
+      'recreate_storage',
       'subtransaction',
       'tablespace',
       'vault_v2_test',
@@ -146,16 +147,16 @@ pg_tde_frontend = static_library('pg_tde_frontend',
   link_whole: [kmip]
 )
 
-pg_tde_alter_key_provider_sources = files(
-  'src/pg_tde_alter_key_provider.c',
+pg_tde_change_key_provider_sources = files(
+  'src/pg_tde_change_key_provider.c',
 )
 
-pg_tde_alter_key_provider = executable('pg_tde_alter_key_provider',
-  pg_tde_alter_key_provider_sources,
+pg_tde_change_key_provider = executable('pg_tde_change_key_provider',
+  pg_tde_change_key_provider_sources,
   dependencies: [frontend_code, lz4, zstd],
   c_args: ['-DFRONTEND'], # needed for xlogreader et al
   kwargs: default_bin_args,
   include_directories: [postgres_inc, pg_tde_inc],
   link_with: [pg_tde_frontend]
 )
-contrib_targets += pg_tde_alter_key_provider
+contrib_targets += pg_tde_change_key_provider

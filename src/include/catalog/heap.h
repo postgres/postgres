@@ -17,6 +17,7 @@
 #include "catalog/indexing.h"
 #include "catalog/objectaddress.h"
 #include "parser/parse_node.h"
+#include "storage/relfilelocator.h"
 
 
 /* flag bits for CheckAttributeType/CheckAttributeNamesTypes */
@@ -60,7 +61,8 @@ extern Relation heap_create(const char *relname,
 							bool allow_system_table_mods,
 							TransactionId *relfrozenxid,
 							MultiXactId *relminmxid,
-							bool create_storage);
+							bool create_storage,
+							RelFileLocator *old_rlocator);
 
 extern Oid	heap_create_with_catalog(const char *relname,
 									 Oid relnamespace,

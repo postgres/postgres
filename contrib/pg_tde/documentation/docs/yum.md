@@ -4,29 +4,27 @@ This tutorial shows how to install `pg_tde` with [Percona Distribution for Postg
 
 Check the [list of supported platforms](install.md#__tabbed_1_1).
 
-## Install `percona-release`
+## Install `percona-release` {.power-number}
 
 You need the `percona-release` repository management tool that enables the desired Percona repository for you.
 
 1. Install `percona-release`:
 
-    ```bash
-    sudo yum -y install https://repo.percona.com/yum/percona-release-latest.noarch.rpm 
+    ```{.bash data-prompt="$"}
+    $ sudo yum -y install https://repo.percona.com/yum/percona-release-latest.noarch.rpm 
     ```
 
 2. Enable the repository.
 
-    Percona provides [two repositories](repo-overview.md) for Percona Distribution for PostgreSQL. We recommend enabling the Major release repository to timely receive the latest updates.
-
-    ```bash
-    sudo percona-release enable-only ppg-{{pgversion17}} 
+    ```{.bash data-prompt="$"}
+    $ sudo percona-release enable-only ppg-{{pgversion17}} 
     ```
 
-## Install `pg_tde`
+## Install `pg_tde` {.power-number}
 
 !!! important
 
-    The `pg_tde` {{release}} extension is a part of the `percona-postgresql17` package. If you installed a previous version of `pg_tde` from the `percona-pg_tde_17` package, do the following:
+    The `pg_tde` extension is a part of the `percona-postgresql17` package. If you installed a previous version of `pg_tde` from the `percona-pg_tde_17` package, do the following:
 
     1. Drop the extension using the `DROP EXTENSION` with `CASCADE` command.
 
@@ -38,11 +36,12 @@ You need the `percona-release` repository management tool that enables the desir
 
     2. Uninstall the `percona-pg_tde_17` package.  
     
+Run the following command to install `pg_tde`:
 
-```bash
-sudo yum -y install percona-postgresql17 
+```{.bash data-prompt="$"}
+$ sudo yum -y install percona-postgresql17 
 ```
 
 ## Next steps
 
-[Setup](setup.md){.md-button}
+[Setup :material-arrow-right:](setup.md){.md-button}

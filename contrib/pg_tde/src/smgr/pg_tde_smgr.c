@@ -206,6 +206,14 @@ tde_mdcreate(RelFileLocator relold, SMgrRelation reln, ForkNumber forknum, bool 
 	TdeCreateEvent *event = GetCurrentTdeCreateEvent();
 
 	/*
+	 * Make sure that even if a statement failed, and an event trigger end
+	 * trigger didn't fire, we don't accidentaly create encrypted files when
+	 * we don't have to. event above is a pointer, so it will reflect the
+	 * correct state even if this changes it.
+	 */
+	validateCurrentEventTriggerState(false);
+
+	/*
 	 * This is the only function that gets called during actual CREATE
 	 * TABLE/INDEX (EVENT TRIGGER)
 	 */
@@ -213,20 +221,30 @@ tde_mdcreate(RelFileLocator relold, SMgrRelation reln, ForkNumber forknum, bool 
 
 	mdcreate(relold, reln, forknum, isRedo);
 
-	/*
-	 * Later calls then decide to encrypt or not based on the existence of the
-	 * key
-	 */
-	key = tde_smgr_get_key(reln, event->alterSequenceMode ? NULL : &relold, true);
+	if (forknum == MAIN_FORKNUM || forknum == INIT_FORKNUM)
+	{
+		/*
+		 * Only create keys when creating the main/init fork. Other forks can
+		 * be created later, even during tde creation events. We definitely do
+		 * not want to create keys then, even later, when we encrypt all
+		 * forks!
+		 */
 
-	if (key)
-	{
-		tdereln->encrypted_relation = true;
-		tdereln->relKey = *key;
-	}
-	else
-	{
-		tdereln->encrypted_relation = false;
+		/*
+		 * Later calls then decide to encrypt or not based on the existence of
+		 * the key
+		 */
+		key = tde_smgr_get_key(reln, event->alterAccessMethodMode ? NULL : &relold, true);
+
+		if (key)
+		{
+			tdereln->encrypted_relation = true;
+			tdereln->relKey = *key;
+		}
+		else
+		{
+			tdereln->encrypted_relation = false;
+		}
 	}
 }
 

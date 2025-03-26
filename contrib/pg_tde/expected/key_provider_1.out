@@ -165,7 +165,6 @@ SELECT id, provider_name FROM pg_tde_list_all_global_key_providers();
  id |  provider_name  
 ----+-----------------
  -1 | reg_file-global
- -3 | file-keyring2
-(2 rows)
+(1 row)
 
 DROP EXTENSION pg_tde;
