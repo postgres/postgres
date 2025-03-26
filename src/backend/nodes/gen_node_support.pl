@@ -1309,16 +1309,16 @@ _jumble${n}(JumbleState *jstate, Node *node)
 			}
 		}
 
-		# node type
 		if ($query_jumble_custom)
 		{
 			# Custom function that applies to one field of a node.
-			print $jff "\tJUMBLE_CUSTOM($n, $f);\n";
+			print $jff "\tJUMBLE_CUSTOM($n, $f);\n"
+			  unless $query_jumble_ignore;
 		}
 		elsif (($t =~ /^(\w+)\*$/ or $t =~ /^struct\s+(\w+)\*$/)
 			and elem $1, @node_types)
 		{
-			# Squash constants if requested.
+			# Node type.  Squash constants if requested.
 			if ($query_jumble_squash)
 			{
 				print $jff "\tJUMBLE_ELEMENTS($f);\n"
