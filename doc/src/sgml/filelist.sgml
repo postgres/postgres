@@ -145,6 +145,7 @@
 <!ENTITY pgcrypto        SYSTEM "pgcrypto.sgml">
 <!ENTITY pgfreespacemap  SYSTEM "pgfreespacemap.sgml">
 <!ENTITY pglogicalinspect  SYSTEM "pglogicalinspect.sgml">
+<!ENTITY pgoverexplain   SYSTEM "pgoverexplain.sgml">
 <!ENTITY pgprewarm       SYSTEM "pgprewarm.sgml">
 <!ENTITY pgrowlocks      SYSTEM "pgrowlocks.sgml">
 <!ENTITY pgstatstatements SYSTEM "pgstatstatements.sgml">

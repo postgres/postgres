@@ -1,0 +1,483 @@
+-- These tests display internal details that would not be stable under
+-- debug_parallel_query, so make sure that option is disabled.
+SET debug_parallel_query = off;
+-- These options do not exist, so these queries should all fail.
+EXPLAIN (DEBUFF) SELECT 1;
+ERROR:  unrecognized EXPLAIN option "debuff"
+LINE 1: EXPLAIN (DEBUFF) SELECT 1;
+                 ^
+EXPLAIN (DEBUG) SELECT 1;
+ERROR:  unrecognized EXPLAIN option "debug"
+LINE 1: EXPLAIN (DEBUG) SELECT 1;
+                 ^
+EXPLAIN (RANGE_TABLE) SELECT 1;
+ERROR:  unrecognized EXPLAIN option "range_table"
+LINE 1: EXPLAIN (RANGE_TABLE) SELECT 1;
+                 ^
+-- Load the module that creates the options.
+LOAD 'pg_overexplain';
+-- The first option still does not exist, but the others do.
+EXPLAIN (DEBUFF) SELECT 1;
+ERROR:  unrecognized EXPLAIN option "debuff"
+LINE 1: EXPLAIN (DEBUFF) SELECT 1;
+                 ^
+EXPLAIN (DEBUG) SELECT 1;
+                QUERY PLAN                
+------------------------------------------
+ Result  (cost=0.00..0.01 rows=1 width=4)
+   Disabled Nodes: 0
+   Parallel Safe: false
+   Plan Node ID: 0
+ PlannedStmt:
+   Command Type: select
+   Flags: canSetTag
+   Subplans Needing Rewind: none
+   Relation OIDs: none
+   Executor Parameter Types: none
+   Parse Location: 16 for 8 bytes
+(11 rows)
+
+EXPLAIN (RANGE_TABLE) SELECT 1;
+                QUERY PLAN                
+------------------------------------------
+ Result  (cost=0.00..0.01 rows=1 width=4)
+ RTI 1 (result):
+   Eref: "*RESULT*" ()
+(3 rows)
+
+-- Create a partitioned table.
+CREATE TABLE vegetables (id serial, name text, genus text)
+PARTITION BY LIST (genus);
+CREATE TABLE daucus PARTITION OF vegetables FOR VALUES IN ('daucus');
+CREATE TABLE brassica PARTITION OF vegetables FOR VALUES IN ('brassica');
+INSERT INTO vegetables (name, genus)
+	VALUES ('carrot', 'daucus'), ('bok choy', 'brassica'),
+		   ('brocooli', 'brassica'), ('cauliflower', 'brassica'),
+		   ('cabbage', 'brassica'), ('kohlrabi', 'brassica'),
+		   ('rutabaga', 'brassica'), ('turnip', 'brassica');
+VACUUM ANALYZE vegetables;
+-- We filter relation OIDs out of the test output in order to avoid
+-- test instability. This is currently only needed for EXPLAIN (DEBUG), not
+-- EXPLAIN (RANGE_TABLE).
+CREATE FUNCTION explain_filter(text) RETURNS SETOF text
+LANGUAGE plpgsql AS
+$$
+DECLARE
+    ln text;
+BEGIN
+    FOR ln IN EXECUTE $1
+	LOOP
+		ln := regexp_replace(ln, 'Relation OIDs:( \m\d+\M)+',
+								 'Relation OIDs: NNN...', 'g');
+		ln := regexp_replace(ln, '<Relation-OIDs>( ?\m\d+\M)+</Relation-OIDs>',
+								 '<Relation-OIDs>NNN...</Relation-OIDs>', 'g');
+		RETURN NEXT ln;
+	END LOOP;
+END;
+$$;
+-- Test with both options together and an aggregate.
+SELECT explain_filter($$
+EXPLAIN (DEBUG, RANGE_TABLE, COSTS OFF)
+SELECT genus, array_agg(name ORDER BY name) FROM vegetables GROUP BY genus
+$$);
+                   explain_filter                    
+-----------------------------------------------------
+ GroupAggregate
+   Group Key: vegetables.genus
+   Disabled Nodes: 0
+   Parallel Safe: true
+   Plan Node ID: 0
+   ->  Sort
+         Sort Key: vegetables.genus, vegetables.name
+         Disabled Nodes: 0
+         Parallel Safe: true
+         Plan Node ID: 1
+         ->  Append
+               Disabled Nodes: 0
+               Parallel Safe: true
+               Plan Node ID: 2
+               Append RTIs: 1
+               ->  Seq Scan on brassica vegetables_1
+                     Disabled Nodes: 0
+                     Parallel Safe: true
+                     Plan Node ID: 3
+                     Scan RTI: 3
+               ->  Seq Scan on daucus vegetables_2
+                     Disabled Nodes: 0
+                     Parallel Safe: true
+                     Plan Node ID: 4
+                     Scan RTI: 4
+ PlannedStmt:
+   Command Type: select
+   Flags: canSetTag
+   Subplans Needing Rewind: none
+   Relation OIDs: NNN...
+   Executor Parameter Types: none
+   Parse Location: 0 to end
+ RTI 1 (relation, inherited, in-from-clause):
+   Eref: vegetables (id, name, genus)
+   Relation: vegetables
+   Relation Kind: parititioned_table
+   Relation Lock Mode: AccessShareLock
+   Permission Info Index: 1
+ RTI 2 (group):
+   Eref: "*GROUP*" (genus)
+ RTI 3 (relation, in-from-clause):
+   Alias: vegetables (id, name, genus)
+   Eref: vegetables (id, name, genus)
+   Relation: brassica
+   Relation Kind: relation
+   Relation Lock Mode: AccessShareLock
+ RTI 4 (relation, in-from-clause):
+   Alias: vegetables (id, name, genus)
+   Eref: vegetables (id, name, genus)
+   Relation: daucus
+   Relation Kind: relation
+   Relation Lock Mode: AccessShareLock
+ Unprunable RTIs: 1 3 4
+(53 rows)
+
+-- Test a different output format.
+SELECT explain_filter($$
+EXPLAIN (DEBUG, RANGE_TABLE, FORMAT XML, COSTS OFF)
+SELECT genus, array_agg(name ORDER BY name) FROM vegetables GROUP BY genus
+$$);
+                           explain_filter                            
+---------------------------------------------------------------------
+ <explain xmlns="http://www.postgresql.org/2009/explain">           +
+   <Query>                                                          +
+     <Plan>                                                         +
+       <Node-Type>Aggregate</Node-Type>                             +
+       <Strategy>Sorted</Strategy>                                  +
+       <Partial-Mode>Simple</Partial-Mode>                          +
+       <Parallel-Aware>false</Parallel-Aware>                       +
+       <Async-Capable>false</Async-Capable>                         +
+       <Disabled>false</Disabled>                                   +
+       <Group-Key>                                                  +
+         <Item>vegetables.genus</Item>                              +
+       </Group-Key>                                                 +
+       <Disabled-Nodes>0</Disabled-Nodes>                           +
+       <Parallel-Safe>true</Parallel-Safe>                          +
+       <Plan-Node-ID>0</Plan-Node-ID>                               +
+       <extParam>none</extParam>                                    +
+       <allParam>none</allParam>                                    +
+       <Plans>                                                      +
+         <Plan>                                                     +
+           <Node-Type>Sort</Node-Type>                              +
+           <Parent-Relationship>Outer</Parent-Relationship>         +
+           <Parallel-Aware>false</Parallel-Aware>                   +
+           <Async-Capable>false</Async-Capable>                     +
+           <Disabled>false</Disabled>                               +
+           <Sort-Key>                                               +
+             <Item>vegetables.genus</Item>                          +
+             <Item>vegetables.name</Item>                           +
+           </Sort-Key>                                              +
+           <Disabled-Nodes>0</Disabled-Nodes>                       +
+           <Parallel-Safe>true</Parallel-Safe>                      +
+           <Plan-Node-ID>1</Plan-Node-ID>                           +
+           <extParam>none</extParam>                                +
+           <allParam>none</allParam>                                +
+           <Plans>                                                  +
+             <Plan>                                                 +
+               <Node-Type>Append</Node-Type>                        +
+               <Parent-Relationship>Outer</Parent-Relationship>     +
+               <Parallel-Aware>false</Parallel-Aware>               +
+               <Async-Capable>false</Async-Capable>                 +
+               <Disabled>false</Disabled>                           +
+               <Disabled-Nodes>0</Disabled-Nodes>                   +
+               <Parallel-Safe>true</Parallel-Safe>                  +
+               <Plan-Node-ID>2</Plan-Node-ID>                       +
+               <extParam>none</extParam>                            +
+               <allParam>none</allParam>                            +
+               <Append-RTIs>1</Append-RTIs>                         +
+               <Subplans-Removed>0</Subplans-Removed>               +
+               <Plans>                                              +
+                 <Plan>                                             +
+                   <Node-Type>Seq Scan</Node-Type>                  +
+                   <Parent-Relationship>Member</Parent-Relationship>+
+                   <Parallel-Aware>false</Parallel-Aware>           +
+                   <Async-Capable>false</Async-Capable>             +
+                   <Relation-Name>brassica</Relation-Name>          +
+                   <Alias>vegetables_1</Alias>                      +
+                   <Disabled>false</Disabled>                       +
+                   <Disabled-Nodes>0</Disabled-Nodes>               +
+                   <Parallel-Safe>true</Parallel-Safe>              +
+                   <Plan-Node-ID>3</Plan-Node-ID>                   +
+                   <extParam>none</extParam>                        +
+                   <allParam>none</allParam>                        +
+                   <Scan-RTI>3</Scan-RTI>                           +
+                 </Plan>                                            +
+                 <Plan>                                             +
+                   <Node-Type>Seq Scan</Node-Type>                  +
+                   <Parent-Relationship>Member</Parent-Relationship>+
+                   <Parallel-Aware>false</Parallel-Aware>           +
+                   <Async-Capable>false</Async-Capable>             +
+                   <Relation-Name>daucus</Relation-Name>            +
+                   <Alias>vegetables_2</Alias>                      +
+                   <Disabled>false</Disabled>                       +
+                   <Disabled-Nodes>0</Disabled-Nodes>               +
+                   <Parallel-Safe>true</Parallel-Safe>              +
+                   <Plan-Node-ID>4</Plan-Node-ID>                   +
+                   <extParam>none</extParam>                        +
+                   <allParam>none</allParam>                        +
+                   <Scan-RTI>4</Scan-RTI>                           +
+                 </Plan>                                            +
+               </Plans>                                             +
+             </Plan>                                                +
+           </Plans>                                                 +
+         </Plan>                                                    +
+       </Plans>                                                     +
+     </Plan>                                                        +
+     <PlannedStmt>                                                  +
+       <Command-Type>select</Command-Type>                          +
+       <Flags>canSetTag</Flags>                                     +
+       <Subplans-Needing-Rewind>none</Subplans-Needing-Rewind>      +
+       <Relation-OIDs>NNN...</Relation-OIDs>                        +
+       <Executor-Parameter-Types>none</Executor-Parameter-Types>    +
+       <Parse-Location>0 to end</Parse-Location>                    +
+     </PlannedStmt>                                                 +
+     <Range-Table>                                                  +
+       <Range-Table-Entry>                                          +
+         <RTI>1</RTI>                                               +
+         <Kind>relation</Kind>                                      +
+         <Inherited>true</Inherited>                                +
+         <In-From-Clause>true</In-From-Clause>                      +
+         <Eref>vegetables (id, name, genus)</Eref>                  +
+         <Relation>vegetables</Relation>                            +
+         <Relation-Kind>parititioned_table</Relation-Kind>          +
+         <Relation-Lock-Mode>AccessShareLock</Relation-Lock-Mode>   +
+         <Permission-Info-Index>1</Permission-Info-Index>           +
+         <Security-Barrier>false</Security-Barrier>                 +
+         <Lateral>false</Lateral>                                   +
+       </Range-Table-Entry>                                         +
+       <Range-Table-Entry>                                          +
+         <RTI>2</RTI>                                               +
+         <Kind>group</Kind>                                         +
+         <Inherited>false</Inherited>                               +
+         <In-From-Clause>false</In-From-Clause>                     +
+         <Eref>"*GROUP*" (genus)</Eref>                             +
+         <Security-Barrier>false</Security-Barrier>                 +
+         <Lateral>false</Lateral>                                   +
+       </Range-Table-Entry>                                         +
+       <Range-Table-Entry>                                          +
+         <RTI>3</RTI>                                               +
+         <Kind>relation</Kind>                                      +
+         <Inherited>false</Inherited>                               +
+         <In-From-Clause>true</In-From-Clause>                      +
+         <Alias>vegetables (id, name, genus)</Alias>                +
+         <Eref>vegetables (id, name, genus)</Eref>                  +
+         <Relation>brassica</Relation>                              +
+         <Relation-Kind>relation</Relation-Kind>                    +
+         <Relation-Lock-Mode>AccessShareLock</Relation-Lock-Mode>   +
+         <Security-Barrier>false</Security-Barrier>                 +
+         <Lateral>false</Lateral>                                   +
+       </Range-Table-Entry>                                         +
+       <Range-Table-Entry>                                          +
+         <RTI>4</RTI>                                               +
+         <Kind>relation</Kind>                                      +
+         <Inherited>false</Inherited>                               +
+         <In-From-Clause>true</In-From-Clause>                      +
+         <Alias>vegetables (id, name, genus)</Alias>                +
+         <Eref>vegetables (id, name, genus)</Eref>                  +
+         <Relation>daucus</Relation>                                +
+         <Relation-Kind>relation</Relation-Kind>                    +
+         <Relation-Lock-Mode>AccessShareLock</Relation-Lock-Mode>   +
+         <Security-Barrier>false</Security-Barrier>                 +
+         <Lateral>false</Lateral>                                   +
+       </Range-Table-Entry>                                         +
+       <Unprunable-RTIs>1 3 4</Unprunable-RTIs>                     +
+       <Result-RTIs>none</Result-RTIs>                              +
+     </Range-Table>                                                 +
+   </Query>                                                         +
+ </explain>
+(1 row)
+
+-- Test just the DEBUG option. Verify that it shows information about
+-- disabled nodes, parallel safety, and the parallelModeNeeded flag.
+SET enable_seqscan = false;
+SET debug_parallel_query = true;
+SELECT explain_filter($$
+EXPLAIN (DEBUG, COSTS OFF)
+SELECT genus, array_agg(name ORDER BY name) FROM vegetables GROUP BY genus
+$$);
+                      explain_filter                       
+-----------------------------------------------------------
+ Gather
+   Workers Planned: 1
+   Single Copy: true
+   Disabled Nodes: 0
+   Parallel Safe: false
+   Plan Node ID: 0
+   ->  GroupAggregate
+         Group Key: vegetables.genus
+         Disabled Nodes: 2
+         Parallel Safe: true
+         Plan Node ID: 1
+         ->  Sort
+               Sort Key: vegetables.genus, vegetables.name
+               Disabled Nodes: 2
+               Parallel Safe: true
+               Plan Node ID: 2
+               ->  Append
+                     Disabled Nodes: 2
+                     Parallel Safe: true
+                     Plan Node ID: 3
+                     ->  Seq Scan on brassica vegetables_1
+                           Disabled: true
+                           Disabled Nodes: 1
+                           Parallel Safe: true
+                           Plan Node ID: 4
+                     ->  Seq Scan on daucus vegetables_2
+                           Disabled: true
+                           Disabled Nodes: 1
+                           Parallel Safe: true
+                           Plan Node ID: 5
+ PlannedStmt:
+   Command Type: select
+   Flags: canSetTag, parallelModeNeeded
+   Subplans Needing Rewind: none
+   Relation OIDs: NNN...
+   Executor Parameter Types: none
+   Parse Location: 0 to end
+(37 rows)
+
+RESET debug_parallel_query;
+RESET enable_seqscan;
+-- Test the DEBUG option with a non-SELECT query, and also verify that the
+-- hasReturning flag is shown.
+SELECT explain_filter($$
+EXPLAIN (DEBUG, COSTS OFF)
+INSERT INTO vegetables (name, genus)
+	VALUES ('Brotero''s carrot', 'brassica') RETURNING id
+$$);
+          explain_filter          
+----------------------------------
+ Insert on vegetables
+   Disabled Nodes: 0
+   Parallel Safe: false
+   Plan Node ID: 0
+   ->  Result
+         Disabled Nodes: 0
+         Parallel Safe: false
+         Plan Node ID: 1
+ PlannedStmt:
+   Command Type: insert
+   Flags: hasReturning, canSetTag
+   Subplans Needing Rewind: none
+   Relation OIDs: NNN...
+   Executor Parameter Types: 0
+   Parse Location: 0 to end
+(15 rows)
+
+-- Create an index, and then attempt to force a nested loop with inner index
+-- scan so that we can see parameter-related information. Also, let's try
+-- actually running the query, but try to suppress potentially variable output.
+CREATE INDEX ON vegetables (id);
+ANALYZE vegetables;
+SET enable_hashjoin = false;
+SET enable_material = false;
+SET enable_mergejoin = false;
+SET enable_seqscan = false;
+SELECT explain_filter($$
+EXPLAIN (BUFFERS OFF, COSTS OFF, SUMMARY OFF, TIMING OFF, ANALYZE, DEBUG)
+SELECT * FROM vegetables v1, vegetables v2 WHERE v1.id = v2.id;
+$$);
+                                      explain_filter                                      
+------------------------------------------------------------------------------------------
+ Nested Loop (actual rows=8.00 loops=1)
+   Disabled Nodes: 0
+   Parallel Safe: true
+   Plan Node ID: 0
+   ->  Append (actual rows=8.00 loops=1)
+         Disabled Nodes: 0
+         Parallel Safe: true
+         Plan Node ID: 1
+         ->  Index Scan using brassica_id_idx on brassica v1_1 (actual rows=7.00 loops=1)
+               Index Searches: 1
+               Disabled Nodes: 0
+               Parallel Safe: true
+               Plan Node ID: 2
+         ->  Index Scan using daucus_id_idx on daucus v1_2 (actual rows=1.00 loops=1)
+               Index Searches: 1
+               Disabled Nodes: 0
+               Parallel Safe: true
+               Plan Node ID: 3
+   ->  Append (actual rows=1.00 loops=8)
+         Disabled Nodes: 0
+         Parallel Safe: true
+         Plan Node ID: 4
+         extParam: 0
+         allParam: 0
+         ->  Index Scan using brassica_id_idx on brassica v2_1 (actual rows=0.88 loops=8)
+               Index Cond: (id = v1.id)
+               Index Searches: 8
+               Disabled Nodes: 0
+               Parallel Safe: true
+               Plan Node ID: 5
+               extParam: 0
+               allParam: 0
+         ->  Index Scan using daucus_id_idx on daucus v2_2 (actual rows=0.12 loops=8)
+               Index Cond: (id = v1.id)
+               Index Searches: 8
+               Disabled Nodes: 0
+               Parallel Safe: true
+               Plan Node ID: 6
+               extParam: 0
+               allParam: 0
+ PlannedStmt:
+   Command Type: select
+   Flags: canSetTag
+   Subplans Needing Rewind: none
+   Relation OIDs: NNN...
+   Executor Parameter Types: 23
+   Parse Location: 75 for 62 bytes
+(47 rows)
+
+RESET enable_hashjoin;
+RESET enable_material;
+RESET enable_mergejoin;
+RESET enable_seqscan;
+-- Test the RANGE_TABLE option with a case that allows partition pruning.
+EXPLAIN (RANGE_TABLE, COSTS OFF)
+SELECT * FROM vegetables WHERE genus = 'daucus';
+                  QUERY PLAN                  
+----------------------------------------------
+ Seq Scan on daucus vegetables
+   Filter: (genus = 'daucus'::text)
+   Scan RTI: 2
+ RTI 1 (relation, inherited, in-from-clause):
+   Eref: vegetables (id, name, genus)
+   Relation: vegetables
+   Relation Kind: parititioned_table
+   Relation Lock Mode: AccessShareLock
+   Permission Info Index: 1
+ RTI 2 (relation, in-from-clause):
+   Alias: vegetables (id, name, genus)
+   Eref: vegetables (id, name, genus)
+   Relation: daucus
+   Relation Kind: relation
+   Relation Lock Mode: AccessShareLock
+ Unprunable RTIs: 1 2
+(16 rows)
+
+-- Also test a case that involves a write.
+EXPLAIN (RANGE_TABLE, COSTS OFF)
+INSERT INTO vegetables (name, genus) VALUES ('broccoflower', 'brassica');
+               QUERY PLAN               
+----------------------------------------
+ Insert on vegetables
+   Nominal RTI: 1
+   Exclude Relation RTI: 0
+   ->  Result
+ RTI 1 (relation):
+   Eref: vegetables (id, name, genus)
+   Relation: vegetables
+   Relation Kind: parititioned_table
+   Relation Lock Mode: RowExclusiveLock
+   Permission Info Index: 1
+ RTI 2 (result):
+   Eref: "*RESULT*" ()
+ Unprunable RTIs: 1
+ Result RTIs: 1
+(14 rows)
+

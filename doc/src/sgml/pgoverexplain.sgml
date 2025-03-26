@@ -1,0 +1,186 @@
+<!-- doc/src/sgml/pgoverexplain.sgml -->
+
+<sect1 id="pgoverexplain" xreflabel="pg_overexplain">
+ <title>pg_overexplain &mdash; allow EXPLAIN to dump even more details</title>
+
+ <indexterm zone="pgoverexplain">
+  <primary>pg_overexplain</primary>
+ </indexterm>
+
+ <para>
+  The <filename>pg_overexplain</filename> extends <command>EXPLAIN</command>
+  with new options that provide additional output. It is mostly intended to
+  assist with debugging of and development of the planner, rather than for
+  general use. Since this module displays internal details of planner data
+  structures, it may be necessary to refer to the source code to make sense
+  of the output. Furthermore, the output is likely to change whenever (and as
+  often as) those data structures change.
+ </para>
+
+ <sect2 id="pgoverexplain-debug">
+  <title>EXPLAIN (DEBUG)</title>
+
+  <para>
+   The <literal>DEBUG</literal> option displays miscellaneous information from
+   the plan tree that is not normally shown because it is not expected to be
+   of general interest. For each individual plan node, it will display the
+   following fields.  See <literal>Plan</literal> in
+   <literal>nodes/plannodes.h</literal> for additional documentation of these
+   fields.
+  </para>
+
+  <itemizedlist>
+   <listitem>
+    <para>
+     <literal>Disabled Nodes</literal>. Normal <command>EXPLAIN</command>
+     determines whether a node is disabled by checking whether the node's
+     count of disabled nodes is larger than the sum of the counts for the
+     underlying nodes. This option shows the raw counter value.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     <literal>Parallel Safe</literal>. Indicates whether it would be safe for
+     a plan tree node to appear beneath a <literal>Gather</literal> or
+     <literal>Gather Merge</literal> node, regardless of whether it is
+     actually below such a node.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     <literal>Plan Node ID</literal>. An internal ID number that should be
+     unique for every node in the plan tree. It is used to coordinate parallel
+     query activity.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     <literal>extParam</literal> and <literal>allParam</literal>. Information
+     about which numbered parameters affect this plan node or its children. In
+     text mode, these fields are only displayed if they are non-empty sets.
+    </para>
+   </listitem>
+  </itemizedlist>
+
+  <para>
+   Once per query, the <literal>DEBUG</literal> option will display the
+   following fields. See <literal>PlannedStmt</literal> in
+   <literal>nodes/plannodes.h</literal> for additional detail.
+  </para>
+
+  <itemizedlist>
+   <listitem>
+    <para>
+     <literal>Command Type</literal>. For example, <literal>select</literal>
+     or <literal>update</literal>.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     <literal>Flags</literal>. A comma-separated list of Boolean structure
+     member names from the <literal>PlannedStmt</literal> that are set to
+     <literal>true</literal>. It covers the following structure members:
+     <literal>hasReturning</literal>, <literal>hasModifyingCTE</literal>,
+     <literal>canSetTag</literal>, <literal>transientPlan</literal>,
+     <literal>dependsOnRole</literal>, <literal>parallelModeNeeded</literal>.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     <literal>Subplans Needing Rewind</literal>. Integer IDs of subplans that 
+     may need to be rewound by the executor.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     <literal>Relation OIDs</literal>. OIDs of relations upon which this plan
+     depends.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     <literal>Executor Parameter Types</literal>. Type OID for each executor parameter
+     (e.g. when a nested loop is chosen and a parameter is used to pass a value down
+     to an inner index scan). Does not include parameters supplied to a prepared
+     statement by the user.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     <literal>Parse Location</literal>. Location within the query string
+     supplied to the planner where this query's text can be found. May be
+     <literal>Unknown</literal> in some contexts. Otherwise, may be
+     <literal>NNN to end</literal> for some integer <literal>NNN</literal> or
+     <literal>NNN for MMM bytes</literal> for some integers
+     <literal>NNN</literal> and <literal>MMM</literal>.
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2 id="pgoverexplain-range-table">
+  <title>EXPLAIN (RANGE_TABLE)</title>
+
+  <para>
+   The <literal>RANGE_TABLE</literal> option displays information from the
+   plan tree specifically concerning the query's range table. Range table
+   entries correspond roughly to items appearing in the query's
+   <literal>FROM</literal> clause, but with numerous exceptions. For example,
+   subqueries that are proved unnecessary may be deleted from the range table
+   entirely, while inheritance expansion adds range table entries for child
+   tables that are not named directly in the query.
+  </para>
+
+  <para>
+   Range table entries are generally referenced within the query plan by a
+   range table index, or RTI. Plan nodes that reference one or more RTIs will
+   be labelled accordingly, using one of the following fields: <literal>Scan
+   RTI</literal>, <literal>Nominal RTI</literal>, <literal>Exclude Relation
+   RTI</literal>, <literal>Append RTIs</literal>.
+  </para>
+
+  <para>
+   In addition, the query as a whole may maintain lists of range table indexes
+   that are needed for various purposes. These lists will be displayed once
+   per query, labelled as appropriate as <literal>Unprunable RTIs</literal> or
+   <literal>Result RTIs</literal>. In text mode, these fields are only
+   displayed if they are non-empty sets.
+  </para>
+
+  <para>
+   Finally, but most importantly, the <literal>RANGE_TABLE</literal> option
+   will display a dump of the query's entire range table. Each range table
+   entry is labelled with the appropriate range table index, the kind of range
+   table entry (e.g.  <literal>relation</literal>,
+   <literal>subquery</literal>, or <literal>join</literal>), followed by the
+   contents of various range table entry fields that are not normally part of
+   <literal>EXPLAIN</literal> output. Some of these fields are only displayed
+   for certain kinds of range table entries. For example,
+   <literal>Eref</literal> is displayed for all types of range table entries,
+   but <literal>CTE Name</literal> is displayed only for range table entries
+   of type <literal>cte</literal>.
+  </para>
+
+  <para>
+   For more information about range table entries, see the definition of
+   <literal>RangeTblEntry</literal> in <literal>nodes/plannodes.h</literal>.
+  </para>
+ </sect2>
+
+ <sect2 id="pgoverexplain-author">
+  <title>Author</title>
+
+  <para>
+   Robert Haas <email>rhaas@postgresql.org</email>
+  </para>
+ </sect2>
+
+</sect1>

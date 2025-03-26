@@ -155,6 +155,7 @@ CREATE EXTENSION <replaceable>extension_name</replaceable>;
  &pgcrypto;
  &pgfreespacemap;
  &pglogicalinspect;
+ &pgoverexplain;
  &pgprewarm;
  &pgrowlocks;
  &pgstatstatements;
