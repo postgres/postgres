@@ -55,7 +55,7 @@ pgaio_io_get_target_name(PgAioHandle *ioh)
 /*
  * Assign a target to the IO.
  *
- * This has to be called exactly once before pgaio_io_prep_*() is called.
+ * This has to be called exactly once before pgaio_io_start_*() is called.
  */
 void
 pgaio_io_set_target(PgAioHandle *ioh, PgAioTargetID targetid)
@@ -101,7 +101,7 @@ pgaio_io_can_reopen(PgAioHandle *ioh)
 
 /*
  * Internal: Before executing an IO outside of the context of the process the
- * IO has been prepared in, the file descriptor has to be reopened - any FD
+ * IO has been staged in, the file descriptor has to be reopened - any FD
  * referenced in the IO itself, won't be valid in the separate process.
  */
 void

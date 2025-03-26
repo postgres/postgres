@@ -42,13 +42,13 @@ typedef enum PgAioHandleState
 
 	/*
 	 * Returned by pgaio_io_acquire(). The next state is either DEFINED (if
-	 * pgaio_io_prep_*() is called), or IDLE (if pgaio_io_release() is
+	 * pgaio_io_start_*() is called), or IDLE (if pgaio_io_release() is
 	 * called).
 	 */
 	PGAIO_HS_HANDED_OUT,
 
 	/*
-	 * pgaio_io_prep_*() has been called, but IO is not yet staged. At this
+	 * pgaio_io_start_*() has been called, but IO is not yet staged. At this
 	 * point the handle has all the information for the IO to be executed.
 	 */
 	PGAIO_HS_DEFINED,

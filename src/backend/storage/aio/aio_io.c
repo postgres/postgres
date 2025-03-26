@@ -25,7 +25,7 @@
 #include "utils/wait_event.h"
 
 
-static void pgaio_io_before_prep(PgAioHandle *ioh);
+static void pgaio_io_before_start(PgAioHandle *ioh);
 
 
 
@@ -63,22 +63,22 @@ pgaio_io_get_op_data(PgAioHandle *ioh)
 
 
 /* --------------------------------------------------------------------------------
- * "Preparation" routines for individual IO operations
+ * "Start" routines for individual IO operations
  *
  * These are called by the code actually initiating an IO, to associate the IO
  * specific data with an AIO handle.
  *
- * Each of the preparation routines first needs to call
- * pgaio_io_before_prep(), then fill IO specific fields in the handle and then
- * finally call pgaio_io_stage().
+ * Each of the "start" routines first needs to call pgaio_io_before_start(),
+ * then fill IO specific fields in the handle and then finally call
+ * pgaio_io_stage().
  * --------------------------------------------------------------------------------
  */
 
 void
-pgaio_io_prep_readv(PgAioHandle *ioh,
-					int fd, int iovcnt, uint64 offset)
+pgaio_io_start_readv(PgAioHandle *ioh,
+					 int fd, int iovcnt, uint64 offset)
 {
-	pgaio_io_before_prep(ioh);
+	pgaio_io_before_start(ioh);
 
 	ioh->op_data.read.fd = fd;
 	ioh->op_data.read.offset = offset;
@@ -88,10 +88,10 @@ pgaio_io_prep_readv(PgAioHandle *ioh,
 }
 
 void
-pgaio_io_prep_writev(PgAioHandle *ioh,
-					 int fd, int iovcnt, uint64 offset)
+pgaio_io_start_writev(PgAioHandle *ioh,
+					  int fd, int iovcnt, uint64 offset)
 {
-	pgaio_io_before_prep(ioh);
+	pgaio_io_before_start(ioh);
 
 	ioh->op_data.write.fd = fd;
 	ioh->op_data.write.offset = offset;
@@ -153,7 +153,7 @@ pgaio_io_perform_synchronously(PgAioHandle *ioh)
  * any data in the handle is set.  Mostly to centralize assertions.
  */
 static void
-pgaio_io_before_prep(PgAioHandle *ioh)
+pgaio_io_before_start(PgAioHandle *ioh)
 {
 	Assert(ioh->state == PGAIO_HS_HANDED_OUT);
 	Assert(pgaio_my_backend->handed_out_io == ioh);

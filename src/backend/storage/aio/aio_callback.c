@@ -54,7 +54,7 @@ static const PgAioHandleCallbacksEntry aio_handle_cbs[] = {
  * registered for each IO.
  *
  * Callbacks need to be registered before [indirectly] calling
- * pgaio_io_prep_*(), as the IO may be executed immediately.
+ * pgaio_io_start_*(), as the IO may be executed immediately.
  *
  * A callback can be passed a small bit of data, e.g. to indicate whether to
  * zero a buffer if it is invalid.

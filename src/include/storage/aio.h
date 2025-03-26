@@ -277,10 +277,10 @@ extern int	pgaio_io_get_iovec(PgAioHandle *ioh, struct iovec **iov);
 extern PgAioOp pgaio_io_get_op(PgAioHandle *ioh);
 extern PgAioOpData *pgaio_io_get_op_data(PgAioHandle *ioh);
 
-extern void pgaio_io_prep_readv(PgAioHandle *ioh,
-								int fd, int iovcnt, uint64 offset);
-extern void pgaio_io_prep_writev(PgAioHandle *ioh,
+extern void pgaio_io_start_readv(PgAioHandle *ioh,
 								 int fd, int iovcnt, uint64 offset);
+extern void pgaio_io_start_writev(PgAioHandle *ioh,
+								  int fd, int iovcnt, uint64 offset);
 
 /* functions in aio_target.c */
 extern void pgaio_io_set_target(PgAioHandle *ioh, PgAioTargetID targetid);

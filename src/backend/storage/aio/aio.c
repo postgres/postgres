@@ -127,25 +127,25 @@ static PgAioHandle *pgaio_inj_cur_handle;
  * To react to the completion of the IO as soon as it is known to have
  * completed, callbacks can be registered with pgaio_io_register_callbacks().
  *
- * To actually execute IO using the returned handle, the pgaio_io_prep_*()
- * family of functions is used. In many cases the pgaio_io_prep_*() call will
+ * To actually execute IO using the returned handle, the pgaio_io_start_*()
+ * family of functions is used. In many cases the pgaio_io_start_*() call will
  * not be done directly by code that acquired the handle, but by lower level
  * code that gets passed the handle. E.g. if code in bufmgr.c wants to perform
  * AIO, it typically will pass the handle to smgr.c, which will pass it on to
- * md.c, on to fd.c, which then finally calls pgaio_io_prep_*().  This
+ * md.c, on to fd.c, which then finally calls pgaio_io_start_*().  This
  * forwarding allows the various layers to react to the IO's completion by
  * registering callbacks. These callbacks in turn can translate a lower
  * layer's result into a result understandable by a higher layer.
  *
- * During pgaio_io_prep_*() the IO is staged (i.e. prepared for execution but
+ * During pgaio_io_start_*() the IO is staged (i.e. prepared for execution but
  * not submitted to the kernel). Unless in batchmode
  * (c.f. pgaio_enter_batchmode()), the IO will also get submitted for
  * execution. Note that, whether in batchmode or not, the IO might even
  * complete before the functions return.
  *
- * After pgaio_io_prep_*() the AioHandle is "consumed" and may not be
+ * After pgaio_io_start_*() the AioHandle is "consumed" and may not be
  * referenced by the IO issuing code. To e.g. wait for IO, references to the
- * IO can be established with pgaio_io_get_wref() *before* pgaio_io_prep_*()
+ * IO can be established with pgaio_io_get_wref() *before* pgaio_io_start_*()
  * is called.  pgaio_wref_wait() can be used to wait for the IO to complete.
  *
  *
@@ -391,7 +391,7 @@ pgaio_io_resowner_register(PgAioHandle *ioh)
 /*
  * Stage IO for execution and, if appropriate, submit it immediately.
  *
- * Should only be called from pgaio_io_prep_*().
+ * Should only be called from pgaio_io_start_*().
  */
 void
 pgaio_io_stage(PgAioHandle *ioh, PgAioOp op)
@@ -421,7 +421,7 @@ pgaio_io_stage(PgAioHandle *ioh, PgAioOp op)
 	needs_synchronous = pgaio_io_needs_synchronous_execution(ioh);
 
 	pgaio_debug_io(DEBUG3, ioh,
-				   "prepared (synchronous: %d, in_batch: %d)",
+				   "staged (synchronous: %d, in_batch: %d)",
 				   needs_synchronous, pgaio_my_backend->in_batchmode);
 
 	if (!needs_synchronous)
