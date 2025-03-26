@@ -371,8 +371,12 @@ set_principal_key_with_keyring(const char *key_name, const char *provider_name,
 void
 xl_tde_perform_rotate_key(XLogPrincipalKeyRotate *xlrec)
 {
+	LWLockAcquire(tde_lwlock_enc_keys(), LW_EXCLUSIVE);
+
 	pg_tde_write_map_keydata_file(xlrec->file_size, xlrec->buff);
 	clear_principal_key_cache(xlrec->databaseId);
+
+	LWLockRelease(tde_lwlock_enc_keys());
 }
 
 /*

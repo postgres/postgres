@@ -57,17 +57,13 @@ tdeheap_rmgr_redo(XLogReaderState *record)
 	{
 		XLogRelKey *xlrec = (XLogRelKey *) XLogRecGetData(record);
 
-		LWLockAcquire(tde_lwlock_enc_keys(), LW_EXCLUSIVE);
 		pg_tde_write_key_map_entry_redo(&xlrec->mapEntry, &xlrec->pkInfo);
-		LWLockRelease(tde_lwlock_enc_keys());
 	}
 	else if (info == XLOG_TDE_ADD_PRINCIPAL_KEY)
 	{
 		TDEPrincipalKeyInfo *mkey = (TDEPrincipalKeyInfo *) XLogRecGetData(record);
 
-		LWLockAcquire(tde_lwlock_enc_keys(), LW_EXCLUSIVE);
-		pg_tde_save_principal_key(mkey);
-		LWLockRelease(tde_lwlock_enc_keys());
+		pg_tde_save_principal_key_redo(mkey);
 	}
 	else if (info == XLOG_TDE_EXTENSION_INSTALL_KEY)
 	{
@@ -87,18 +83,14 @@ tdeheap_rmgr_redo(XLogReaderState *record)
 	{
 		XLogPrincipalKeyRotate *xlrec = (XLogPrincipalKeyRotate *) XLogRecGetData(record);
 
-		LWLockAcquire(tde_lwlock_enc_keys(), LW_EXCLUSIVE);
 		xl_tde_perform_rotate_key(xlrec);
-		LWLockRelease(tde_lwlock_enc_keys());
 	}
 
 	else if (info == XLOG_TDE_FREE_MAP_ENTRY)
 	{
 		RelFileLocator *xlrec = (RelFileLocator *) XLogRecGetData(record);
 
-		LWLockAcquire(tde_lwlock_enc_keys(), LW_EXCLUSIVE);
 		pg_tde_free_key_map_entry(xlrec, MAP_ENTRY_VALID, 0);
-		LWLockRelease(tde_lwlock_enc_keys());
 	}
 	else
 	{

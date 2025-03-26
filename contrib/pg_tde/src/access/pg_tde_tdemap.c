@@ -254,6 +254,16 @@ pg_tde_delete_tde_files(Oid dbOid)
 	PathNameDeleteTemporaryFile(db_map_path, false);
 }
 
+void
+pg_tde_save_principal_key_redo(TDEPrincipalKeyInfo *principal_key_info)
+{
+	LWLockAcquire(tde_lwlock_enc_keys(), LW_EXCLUSIVE);
+
+	pg_tde_save_principal_key(principal_key_info);
+
+	LWLockRelease(tde_lwlock_enc_keys());
+}
+
 /*
  * Creates the key map file and saves the principal key information.
  *
@@ -459,6 +469,8 @@ pg_tde_write_key_map_entry_redo(const TDEMapEntry *write_map_entry, TDEPrincipal
 	/* Set the file paths */
 	pg_tde_set_db_file_path(principal_key_info->databaseId, db_map_path);
 
+	LWLockAcquire(tde_lwlock_enc_keys(), LW_EXCLUSIVE);
+
 	/* Open and validate file for basic correctness. */
 	map_fd = pg_tde_open_file_write(db_map_path, principal_key_info, false, &curr_pos);
 	prev_pos = curr_pos;
@@ -493,6 +505,8 @@ pg_tde_write_key_map_entry_redo(const TDEMapEntry *write_map_entry, TDEPrincipal
 
 	/* Let's close the file. */
 	close(map_fd);
+
+	LWLockRelease(tde_lwlock_enc_keys());
 }
 
 static bool
@@ -571,8 +585,6 @@ pg_tde_delete_map_entry(const RelFileLocator *rlocator, uint32 key_type, char *d
  *
  * The offset allows us to simply seek to the desired location and mark the entry
  * as MAP_ENTRY_FREE without needing any further processing.
- *
- * A caller should hold an EXCLUSIVE tde_lwlock_enc_keys lock.
  */
 void
 pg_tde_free_key_map_entry(const RelFileLocator *rlocator, uint32 key_type, off_t offset)
@@ -585,8 +597,12 @@ pg_tde_free_key_map_entry(const RelFileLocator *rlocator, uint32 key_type, off_t
 	/* Get the file paths */
 	pg_tde_set_db_file_path(rlocator->dbOid, db_map_path);
 
+	LWLockAcquire(tde_lwlock_enc_keys(), LW_EXCLUSIVE);
+
 	/* Remove the map entry if found */
 	found = pg_tde_delete_map_entry(rlocator, key_type, db_map_path, offset);
+
+	LWLockRelease(tde_lwlock_enc_keys());
 
 	if (!found)
 	{
