@@ -368,15 +368,11 @@ set_principal_key_with_keyring(const char *key_name, const char *provider_name,
 /*
  * Rotate keys on a standby.
  */
-bool
+void
 xl_tde_perform_rotate_key(XLogPrincipalKeyRotate *xlrec)
 {
-	bool		ret;
-
-	ret = pg_tde_write_map_keydata_file(xlrec->file_size, xlrec->buff);
+	pg_tde_write_map_keydata_file(xlrec->file_size, xlrec->buff);
 	clear_principal_key_cache(xlrec->databaseId);
-
-	return ret;
 }
 
 /*

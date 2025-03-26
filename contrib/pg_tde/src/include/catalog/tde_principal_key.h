@@ -54,7 +54,7 @@ extern TDEPrincipalKey *GetPrincipalKey(Oid dbOid, void *lockMode);
 extern TDEPrincipalKey *GetPrincipalKeyNoDefault(Oid dbOid, void *lockMode);
 #endif
 
-extern bool xl_tde_perform_rotate_key(XLogPrincipalKeyRotate *xlrec);
+extern void xl_tde_perform_rotate_key(XLogPrincipalKeyRotate *xlrec);
 extern TDEPrincipalKey *get_principal_key_from_keyring(Oid dbOid);
 
 #endif							/* PG_TDE_PRINCIPAL_KEY_H */

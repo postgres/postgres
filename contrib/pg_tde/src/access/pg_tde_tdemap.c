@@ -732,7 +732,7 @@ pg_tde_perform_rotate_key(TDEPrincipalKey *principal_key, TDEPrincipalKey *new_p
 /*
  * Rotate keys on a standby.
  */
-bool
+void
 pg_tde_write_map_keydata_file(off_t file_size, char *file_data)
 {
 	TDEFileHeader *fheader;
@@ -774,8 +774,6 @@ FINALIZE:
 
 	if (!is_err)
 		finalize_key_rotation(db_map_path, path_new);
-
-	return !is_err;
 }
 
 /* It's called by seg_write inside crit section so no pallocs, hence

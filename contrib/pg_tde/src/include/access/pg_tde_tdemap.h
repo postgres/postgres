@@ -108,7 +108,7 @@ extern void pg_tde_delete_tde_files(Oid dbOid);
 extern TDEPrincipalKeyInfo *pg_tde_get_principal_key_info(Oid dbOid);
 extern void pg_tde_save_principal_key(TDEPrincipalKeyInfo *principal_key_info);
 extern void pg_tde_perform_rotate_key(TDEPrincipalKey *principal_key, TDEPrincipalKey *new_principal_key);
-extern bool pg_tde_write_map_keydata_file(off_t size, char *file_data);
+extern void pg_tde_write_map_keydata_file(off_t size, char *file_data);
 
 const char *tde_sprint_key(InternalKey *k);
 

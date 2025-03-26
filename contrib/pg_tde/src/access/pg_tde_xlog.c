@@ -94,11 +94,10 @@ tdeheap_rmgr_redo(XLogReaderState *record)
 
 	else if (info == XLOG_TDE_FREE_MAP_ENTRY)
 	{
-		off_t		offset = 0;
 		RelFileLocator *xlrec = (RelFileLocator *) XLogRecGetData(record);
 
 		LWLockAcquire(tde_lwlock_enc_keys(), LW_EXCLUSIVE);
-		pg_tde_free_key_map_entry(xlrec, MAP_ENTRY_VALID, offset);
+		pg_tde_free_key_map_entry(xlrec, MAP_ENTRY_VALID, 0);
 		LWLockRelease(tde_lwlock_enc_keys());
 	}
 	else
