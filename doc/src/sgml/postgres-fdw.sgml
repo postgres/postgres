@@ -756,7 +756,7 @@ OPTIONS (ADD password_required 'false');
 
     <variablelist>
 
-     <varlistentry>
+     <varlistentry id="postgres-fdw-option-keep-connections">
       <term><literal>keep_connections</literal> (<type>boolean</type>)</term>
       <listitem>
        <para>
@@ -770,7 +770,7 @@ OPTIONS (ADD password_required 'false');
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="postgres-fdw-option-use-scram-passthrough">
       <term><literal>use_scram_passthrough</literal> (<type>boolean</type>)</term>
       <listitem>
        <para>

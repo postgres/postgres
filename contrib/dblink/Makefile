@@ -13,6 +13,7 @@ PGFILEDESC = "dblink - connect to other PostgreSQL databases"
 
 REGRESS = dblink
 REGRESS_OPTS = --dlpath=$(top_builddir)/src/test/regress
+TAP_TESTS = 1
 
 ifdef USE_PGXS
 PG_CONFIG = pg_config
