@@ -52,7 +52,10 @@ EXTERN_C void boot_DynaLoader(pTHX_ CV *cv);
 EXTERN_C void boot_PostgreSQL__InServer__Util(pTHX_ CV *cv);
 EXTERN_C void boot_PostgreSQL__InServer__SPI(pTHX_ CV *cv);
 
-PG_MODULE_MAGIC;
+PG_MODULE_MAGIC_EXT(
+					.name = "plperl",
+					.version = PG_VERSION
+);
 
 /**********************************************************************
  * Information associated with a Perl interpreter.  We have one interpreter

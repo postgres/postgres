@@ -49,7 +49,10 @@
 #include "utils/sampling.h"
 #include "utils/selfuncs.h"
 
-PG_MODULE_MAGIC;
+PG_MODULE_MAGIC_EXT(
+					.name = "postgres_fdw",
+					.version = PG_VERSION
+);
 
 /* Default CPU cost to start up a foreign query. */
 #define DEFAULT_FDW_STARTUP_COST	100.0

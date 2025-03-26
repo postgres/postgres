@@ -42,7 +42,10 @@
 #include "utils/snapmgr.h"
 #include "utils/varlena.h"
 
-PG_MODULE_MAGIC;
+PG_MODULE_MAGIC_EXT(
+					.name = "pgrowlocks",
+					.version = PG_VERSION
+);
 
 PG_FUNCTION_INFO_V1(pgrowlocks);
 

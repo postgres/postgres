@@ -18,7 +18,10 @@
 #include "utils/acl.h"
 #include "utils/guc.h"
 
-PG_MODULE_MAGIC;
+PG_MODULE_MAGIC_EXT(
+					.name = "basebackup_to_shell",
+					.version = PG_VERSION
+);
 
 typedef struct bbsink_shell
 {

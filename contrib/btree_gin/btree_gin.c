@@ -14,7 +14,10 @@
 #include "utils/timestamp.h"
 #include "utils/uuid.h"
 
-PG_MODULE_MAGIC;
+PG_MODULE_MAGIC_EXT(
+					.name = "btree_gin",
+					.version = PG_VERSION
+);
 
 typedef struct QueryInfo
 {

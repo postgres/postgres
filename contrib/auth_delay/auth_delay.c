@@ -16,7 +16,10 @@
 #include "libpq/auth.h"
 #include "utils/guc.h"
 
-PG_MODULE_MAGIC;
+PG_MODULE_MAGIC_EXT(
+					.name = "auth_delay",
+					.version = PG_VERSION
+);
 
 /* GUC Variables */
 static int	auth_delay_milliseconds = 0;

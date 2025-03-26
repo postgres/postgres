@@ -15,7 +15,10 @@
 #include "commands/defrem.h"
 #include "tsearch/ts_public.h"
 
-PG_MODULE_MAGIC;
+PG_MODULE_MAGIC_EXT(
+					.name = "dict_int",
+					.version = PG_VERSION
+);
 
 typedef struct
 {

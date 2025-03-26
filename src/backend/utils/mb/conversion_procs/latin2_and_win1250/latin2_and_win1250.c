@@ -15,7 +15,10 @@
 #include "fmgr.h"
 #include "mb/pg_wchar.h"
 
-PG_MODULE_MAGIC;
+PG_MODULE_MAGIC_EXT(
+					.name = "latin2_and_win1250",
+					.version = PG_VERSION
+);
 
 PG_FUNCTION_INFO_V1(latin2_to_mic);
 PG_FUNCTION_INFO_V1(mic_to_latin2);

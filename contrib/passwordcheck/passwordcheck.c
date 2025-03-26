@@ -25,7 +25,10 @@
 #include "fmgr.h"
 #include "libpq/crypt.h"
 
-PG_MODULE_MAGIC;
+PG_MODULE_MAGIC_EXT(
+					.name = "passwordcheck",
+					.version = PG_VERSION
+);
 
 /* Saved hook value */
 static check_password_hook_type prev_check_password_hook = NULL;

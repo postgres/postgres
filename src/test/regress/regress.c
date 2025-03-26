@@ -79,7 +79,10 @@
 
 static void regress_lseg_construct(LSEG *lseg, Point *pt1, Point *pt2);
 
-PG_MODULE_MAGIC;
+PG_MODULE_MAGIC_EXT(
+					.name = "regress",
+					.version = PG_VERSION
+);
 
 
 /* return the point where two paths intersect, or NULL if no intersection. */

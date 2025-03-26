@@ -18,7 +18,10 @@
 #include "utils/builtins.h"
 #include "utils/pg_lsn.h"
 
-PG_MODULE_MAGIC;
+PG_MODULE_MAGIC_EXT(
+					.name = "pg_logicalinspect",
+					.version = PG_VERSION
+);
 
 PG_FUNCTION_INFO_V1(pg_get_logical_snapshot_meta);
 PG_FUNCTION_INFO_V1(pg_get_logical_snapshot_info);

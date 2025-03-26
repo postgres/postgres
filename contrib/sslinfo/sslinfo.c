@@ -19,7 +19,10 @@
 #include "miscadmin.h"
 #include "utils/builtins.h"
 
-PG_MODULE_MAGIC;
+PG_MODULE_MAGIC_EXT(
+					.name = "sslinfo",
+					.version = PG_VERSION
+);
 
 static Datum X509_NAME_field_to_text(X509_NAME *name, text *fieldName);
 static Datum ASN1_STRING_to_text(ASN1_STRING *str);

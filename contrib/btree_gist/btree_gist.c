@@ -7,7 +7,10 @@
 #include "access/stratnum.h"
 #include "utils/builtins.h"
 
-PG_MODULE_MAGIC;
+PG_MODULE_MAGIC_EXT(
+					.name = "btree_gist",
+					.version = PG_VERSION
+);
 
 PG_FUNCTION_INFO_V1(gbt_decompress);
 PG_FUNCTION_INFO_V1(gbtreekey_in);

@@ -5,7 +5,10 @@
 #include "plpy_typeio.h"
 #include "plpython.h"
 
-PG_MODULE_MAGIC;
+PG_MODULE_MAGIC_EXT(
+					.name = "hstore_plpython",
+					.version = PG_VERSION
+);
 
 /* Linkage to functions in plpython module */
 typedef char *(*PLyObject_AsString_t) (PyObject *plrv);

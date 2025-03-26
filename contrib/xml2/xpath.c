@@ -22,7 +22,10 @@
 #include <libxml/xmlerror.h>
 #include <libxml/parserInternals.h>
 
-PG_MODULE_MAGIC;
+PG_MODULE_MAGIC_EXT(
+					.name = "xml2",
+					.version = PG_VERSION
+);
 
 /* exported for use by xslt_proc.c */
 

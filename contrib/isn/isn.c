@@ -23,7 +23,10 @@
 #include "isn.h"
 #include "utils/guc.h"
 
-PG_MODULE_MAGIC;
+PG_MODULE_MAGIC_EXT(
+					.name = "isn",
+					.version = PG_VERSION
+);
 
 #ifdef USE_ASSERT_CHECKING
 #define ISN_DEBUG 1

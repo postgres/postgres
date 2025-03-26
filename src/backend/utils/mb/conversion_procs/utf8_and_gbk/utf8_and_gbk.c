@@ -17,7 +17,10 @@
 #include "../../Unicode/gbk_to_utf8.map"
 #include "../../Unicode/utf8_to_gbk.map"
 
-PG_MODULE_MAGIC;
+PG_MODULE_MAGIC_EXT(
+					.name = "utf8_and_gbk",
+					.version = PG_VERSION
+);
 
 PG_FUNCTION_INFO_V1(gbk_to_utf8);
 PG_FUNCTION_INFO_V1(utf8_to_gbk);

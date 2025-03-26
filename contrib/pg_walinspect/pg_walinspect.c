@@ -29,7 +29,10 @@
  * give a thought about doing the same in pg_waldump tool as well.
  */
 
-PG_MODULE_MAGIC;
+PG_MODULE_MAGIC_EXT(
+					.name = "pg_walinspect",
+					.version = PG_VERSION
+);
 
 PG_FUNCTION_INFO_V1(pg_get_wal_block_info);
 PG_FUNCTION_INFO_V1(pg_get_wal_record_info);

@@ -15,7 +15,10 @@
 #include "fmgr.h"
 #include "mb/pg_wchar.h"
 
-PG_MODULE_MAGIC;
+PG_MODULE_MAGIC_EXT(
+					.name = "euc_tw_and_big5",
+					.version = PG_VERSION
+);
 
 PG_FUNCTION_INFO_V1(euc_tw_to_big5);
 PG_FUNCTION_INFO_V1(big5_to_euc_tw);

@@ -26,7 +26,10 @@
 #include "utils/lsyscache.h"
 #include "utils/rel.h"
 
-PG_MODULE_MAGIC;
+PG_MODULE_MAGIC_EXT(
+					.name = "pg_prewarm",
+					.version = PG_VERSION
+);
 
 PG_FUNCTION_INFO_V1(pg_prewarm);
 

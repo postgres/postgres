@@ -36,7 +36,10 @@
 #include "utils/pg_lsn.h"
 #include "utils/tuplestore.h"
 
-PG_MODULE_MAGIC;
+PG_MODULE_MAGIC_EXT(
+					.name = "libpqwalreceiver",
+					.version = PG_VERSION
+);
 
 struct WalReceiverConn
 {

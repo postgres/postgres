@@ -18,7 +18,10 @@
 #include "utils/memutils.h"
 #include "utils/pg_crc.h"
 
-PG_MODULE_MAGIC;
+PG_MODULE_MAGIC_EXT(
+					.name = "pg_trgm",
+					.version = PG_VERSION
+);
 
 /* GUC variables */
 double		similarity_threshold = 0.3f;

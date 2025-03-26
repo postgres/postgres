@@ -7,7 +7,10 @@
 #include "utils/jsonb.h"
 #include "utils/numeric.h"
 
-PG_MODULE_MAGIC;
+PG_MODULE_MAGIC_EXT(
+					.name = "jsonb_plpython",
+					.version = PG_VERSION
+);
 
 /* for PLyObject_AsString in plpy_typeio.c */
 typedef char *(*PLyObject_AsString_t) (PyObject *plrv);

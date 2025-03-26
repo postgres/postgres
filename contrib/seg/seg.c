@@ -28,7 +28,10 @@
 #define GIST_QUERY_DEBUG
 */
 
-PG_MODULE_MAGIC;
+PG_MODULE_MAGIC_EXT(
+					.name = "seg",
+					.version = PG_VERSION
+);
 
 /*
  * Auxiliary data structure for picksplit method.

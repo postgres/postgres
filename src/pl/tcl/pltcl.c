@@ -39,7 +39,10 @@
 #include "utils/typcache.h"
 
 
-PG_MODULE_MAGIC;
+PG_MODULE_MAGIC_EXT(
+					.name = "pltcl",
+					.version = PG_VERSION
+);
 
 #define HAVE_TCL_VERSION(maj,min) \
 	((TCL_MAJOR_VERSION > maj) || \

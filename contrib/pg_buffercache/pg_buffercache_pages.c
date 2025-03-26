@@ -20,7 +20,10 @@
 #define NUM_BUFFERCACHE_SUMMARY_ELEM 5
 #define NUM_BUFFERCACHE_USAGE_COUNTS_ELEM 4
 
-PG_MODULE_MAGIC;
+PG_MODULE_MAGIC_EXT(
+					.name = "pg_buffercache",
+					.version = PG_VERSION
+);
 
 /*
  * Record structure holding the to be exposed cache data.

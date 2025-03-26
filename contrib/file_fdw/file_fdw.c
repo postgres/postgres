@@ -42,7 +42,10 @@
 #include "utils/sampling.h"
 #include "utils/varlena.h"
 
-PG_MODULE_MAGIC;
+PG_MODULE_MAGIC_EXT(
+					.name = "file_fdw",
+					.version = PG_VERSION
+);
 
 /*
  * Describes the valid options for objects that use this wrapper.

@@ -41,7 +41,10 @@
 #include "utils/guc.h"
 #include "varatt.h"
 
-PG_MODULE_MAGIC;
+PG_MODULE_MAGIC_EXT(
+					.name = "pgcrypto",
+					.version = PG_VERSION
+);
 
 /* private stuff */
 

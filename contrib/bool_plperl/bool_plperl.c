@@ -4,7 +4,10 @@
 #include "plperl.h"
 
 
-PG_MODULE_MAGIC;
+PG_MODULE_MAGIC_EXT(
+					.name = "bool_plperl",
+					.version = PG_VERSION
+);
 
 PG_FUNCTION_INFO_V1(bool_to_plperl);
 

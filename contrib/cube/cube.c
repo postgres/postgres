@@ -17,7 +17,10 @@
 #include "utils/array.h"
 #include "utils/float.h"
 
-PG_MODULE_MAGIC;
+PG_MODULE_MAGIC_EXT(
+					.name = "cube",
+					.version = PG_VERSION
+);
 
 /*
  * Taken from the intarray contrib header

@@ -41,7 +41,10 @@
 #include "../../Unicode/utf8_to_iso8859_9.map"
 #include "../../Unicode/iso8859_16_to_utf8.map"
 
-PG_MODULE_MAGIC;
+PG_MODULE_MAGIC_EXT(
+					.name = "utf8_and_iso8859",
+					.version = PG_VERSION
+);
 
 PG_FUNCTION_INFO_V1(iso8859_to_utf8);
 PG_FUNCTION_INFO_V1(utf8_to_iso8859);

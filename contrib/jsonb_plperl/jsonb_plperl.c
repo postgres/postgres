@@ -7,7 +7,10 @@
 #include "utils/fmgrprotos.h"
 #include "utils/jsonb.h"
 
-PG_MODULE_MAGIC;
+PG_MODULE_MAGIC_EXT(
+					.name = "jsonb_plperl",
+					.version = PG_VERSION
+);
 
 static SV  *Jsonb_to_SV(JsonbContainer *jsonb);
 static JsonbValue *SV_to_JsonbValue(SV *obj, JsonbParseState **ps, bool is_elem);

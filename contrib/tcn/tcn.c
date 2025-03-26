@@ -23,7 +23,10 @@
 #include "utils/rel.h"
 #include "utils/syscache.h"
 
-PG_MODULE_MAGIC;
+PG_MODULE_MAGIC_EXT(
+					.name = "tcn",
+					.version = PG_VERSION
+);
 
 /*
  * Copy from s (for source) to r (for result), wrapping with q (quote)

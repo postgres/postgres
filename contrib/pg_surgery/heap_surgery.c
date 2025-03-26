@@ -23,7 +23,10 @@
 #include "utils/array.h"
 #include "utils/rel.h"
 
-PG_MODULE_MAGIC;
+PG_MODULE_MAGIC_EXT(
+					.name = "pg_surgery",
+					.version = PG_VERSION
+);
 
 /* Options to forcefully change the state of a heap tuple. */
 typedef enum HeapTupleForceOption

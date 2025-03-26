@@ -22,7 +22,10 @@
 #include "utils/memutils.h"
 #include "utils/rel.h"
 
-PG_MODULE_MAGIC;
+PG_MODULE_MAGIC_EXT(
+					.name = "test_decoding",
+					.version = PG_VERSION
+);
 
 typedef struct
 {

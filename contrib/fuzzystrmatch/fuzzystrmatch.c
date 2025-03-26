@@ -44,7 +44,10 @@
 #include "utils/varlena.h"
 #include "varatt.h"
 
-PG_MODULE_MAGIC;
+PG_MODULE_MAGIC_EXT(
+					.name = "fuzzystrmatch",
+					.version = PG_VERSION
+);
 
 /*
  * Soundex

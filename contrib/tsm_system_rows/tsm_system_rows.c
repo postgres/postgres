@@ -34,7 +34,10 @@
 #include "optimizer/optimizer.h"
 #include "utils/sampling.h"
 
-PG_MODULE_MAGIC;
+PG_MODULE_MAGIC_EXT(
+					.name = "tsm_system_rows",
+					.version = PG_VERSION
+);
 
 PG_FUNCTION_INFO_V1(tsm_system_rows_handler);
 

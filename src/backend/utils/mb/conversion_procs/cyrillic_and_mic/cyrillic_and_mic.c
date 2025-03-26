@@ -15,7 +15,10 @@
 #include "fmgr.h"
 #include "mb/pg_wchar.h"
 
-PG_MODULE_MAGIC;
+PG_MODULE_MAGIC_EXT(
+					.name = "cyrillic_and_mic",
+					.version = PG_VERSION
+);
 
 PG_FUNCTION_INFO_V1(koi8r_to_mic);
 PG_FUNCTION_INFO_V1(mic_to_koi8r);

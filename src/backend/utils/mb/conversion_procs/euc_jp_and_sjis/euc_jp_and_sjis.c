@@ -27,7 +27,10 @@
  */
 #include "sjis.map"
 
-PG_MODULE_MAGIC;
+PG_MODULE_MAGIC_EXT(
+					.name = "euc_jp_and_sjis",
+					.version = PG_VERSION
+);
 
 PG_FUNCTION_INFO_V1(euc_jp_to_sjis);
 PG_FUNCTION_INFO_V1(sjis_to_euc_jp);

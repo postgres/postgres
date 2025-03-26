@@ -12,7 +12,10 @@
 #include "utils/fmgrprotos.h"
 #include "utils/rel.h"
 
-PG_MODULE_MAGIC;
+PG_MODULE_MAGIC_EXT(
+					.name = "lo",
+					.version = PG_VERSION
+);
 
 
 /*

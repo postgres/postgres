@@ -17,7 +17,10 @@
 #include "../../Unicode/euc_jis_2004_to_utf8.map"
 #include "../../Unicode/utf8_to_euc_jis_2004.map"
 
-PG_MODULE_MAGIC;
+PG_MODULE_MAGIC_EXT(
+					.name = "utf8_and_euc2004",
+					.version = PG_VERSION
+);
 
 PG_FUNCTION_INFO_V1(euc_jis_2004_to_utf8);
 PG_FUNCTION_INFO_V1(utf8_to_euc_jis_2004);

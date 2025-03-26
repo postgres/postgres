@@ -42,7 +42,10 @@
 #include "utils/snapmgr.h"
 
 
-PG_MODULE_MAGIC;
+PG_MODULE_MAGIC_EXT(
+					.name = "amcheck",
+					.version = PG_VERSION
+);
 
 /*
  * A B-Tree cannot possibly have this many levels, since there must be one

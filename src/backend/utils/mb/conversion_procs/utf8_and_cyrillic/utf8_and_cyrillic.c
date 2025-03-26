@@ -19,7 +19,10 @@
 #include "../../Unicode/utf8_to_koi8u.map"
 #include "../../Unicode/koi8u_to_utf8.map"
 
-PG_MODULE_MAGIC;
+PG_MODULE_MAGIC_EXT(
+					.name = "utf8_and_cyrillic",
+					.version = PG_VERSION
+);
 
 PG_FUNCTION_INFO_V1(utf8_to_koi8r);
 PG_FUNCTION_INFO_V1(koi8r_to_utf8);

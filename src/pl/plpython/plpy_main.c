@@ -28,7 +28,10 @@
  * exported functions
  */
 
-PG_MODULE_MAGIC;
+PG_MODULE_MAGIC_EXT(
+					.name = "plpython",
+					.version = PG_VERSION
+);
 
 PG_FUNCTION_INFO_V1(plpython3_validator);
 PG_FUNCTION_INFO_V1(plpython3_call_handler);

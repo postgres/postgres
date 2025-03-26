@@ -17,7 +17,10 @@
 #include "../../Unicode/shift_jis_2004_to_utf8.map"
 #include "../../Unicode/utf8_to_shift_jis_2004.map"
 
-PG_MODULE_MAGIC;
+PG_MODULE_MAGIC_EXT(
+					.name = "utf8_and_sjis2004",
+					.version = PG_VERSION
+);
 
 PG_FUNCTION_INFO_V1(shift_jis_2004_to_utf8);
 PG_FUNCTION_INFO_V1(utf8_to_shift_jis_2004);

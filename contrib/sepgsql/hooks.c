@@ -25,7 +25,10 @@
 #include "utils/guc.h"
 #include "utils/queryenvironment.h"
 
-PG_MODULE_MAGIC;
+PG_MODULE_MAGIC_EXT(
+					.name = "sepgsql",
+					.version = PG_VERSION
+);
 
 /*
  * Declarations

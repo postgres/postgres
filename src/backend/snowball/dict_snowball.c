@@ -77,7 +77,10 @@
 #include "snowball/libstemmer/stem_UTF_8_turkish.h"
 #include "snowball/libstemmer/stem_UTF_8_yiddish.h"
 
-PG_MODULE_MAGIC;
+PG_MODULE_MAGIC_EXT(
+					.name = "dict_snowball",
+					.version = PG_VERSION
+);
 
 PG_FUNCTION_INFO_V1(dsnowball_init);
 

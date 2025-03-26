@@ -13,7 +13,10 @@
 #include "utils/selfuncs.h"
 #include "varatt.h"
 
-PG_MODULE_MAGIC;
+PG_MODULE_MAGIC_EXT(
+					.name = "ltree",
+					.version = PG_VERSION
+);
 
 /* compare functions */
 PG_FUNCTION_INFO_V1(ltree_cmp);

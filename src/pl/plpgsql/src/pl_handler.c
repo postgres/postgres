@@ -31,7 +31,10 @@ static bool plpgsql_extra_checks_check_hook(char **newvalue, void **extra, GucSo
 static void plpgsql_extra_warnings_assign_hook(const char *newvalue, void *extra);
 static void plpgsql_extra_errors_assign_hook(const char *newvalue, void *extra);
 
-PG_MODULE_MAGIC;
+PG_MODULE_MAGIC_EXT(
+					.name = "plpgsql",
+					.version = PG_VERSION
+);
 
 /* Custom GUC variable */
 static const struct config_enum_entry variable_conflict_options[] = {

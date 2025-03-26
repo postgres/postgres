@@ -21,7 +21,10 @@
 #include "utils/memutils.h"
 #include "utils/typcache.h"
 
-PG_MODULE_MAGIC;
+PG_MODULE_MAGIC_EXT(
+					.name = "hstore",
+					.version = PG_VERSION
+);
 
 /* old names for C functions */
 HSTORE_POLLUTE(hstore_from_text, tconvert);

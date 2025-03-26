@@ -22,7 +22,10 @@
 #include "utils/memutils.h"
 #include "utils/rel.h"
 
-PG_MODULE_MAGIC;
+PG_MODULE_MAGIC_EXT(
+					.name = "bloom",
+					.version = PG_VERSION
+);
 
 /*
  * State of bloom index build.  We accumulate one page data here before

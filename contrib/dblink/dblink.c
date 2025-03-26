@@ -65,7 +65,10 @@
 #include "utils/varlena.h"
 #include "utils/wait_event.h"
 
-PG_MODULE_MAGIC;
+PG_MODULE_MAGIC_EXT(
+					.name = "dblink",
+					.version = PG_VERSION
+);
 
 typedef struct remoteConn
 {

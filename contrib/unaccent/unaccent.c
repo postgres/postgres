@@ -23,7 +23,10 @@
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 
-PG_MODULE_MAGIC;
+PG_MODULE_MAGIC_EXT(
+					.name = "unaccent",
+					.version = PG_VERSION
+);
 
 /*
  * An unaccent dictionary uses a trie to find a string to replace.  Each node

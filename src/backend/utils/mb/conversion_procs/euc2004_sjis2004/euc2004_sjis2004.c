@@ -14,7 +14,10 @@
 #include "fmgr.h"
 #include "mb/pg_wchar.h"
 
-PG_MODULE_MAGIC;
+PG_MODULE_MAGIC_EXT(
+					.name = "euc2004_sjis2004",
+					.version = PG_VERSION
+);
 
 PG_FUNCTION_INFO_V1(euc_jis_2004_to_shift_jis_2004);
 PG_FUNCTION_INFO_V1(shift_jis_2004_to_euc_jis_2004);

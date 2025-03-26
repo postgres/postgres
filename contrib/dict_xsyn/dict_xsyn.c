@@ -20,7 +20,10 @@
 #include "tsearch/ts_public.h"
 #include "utils/formatting.h"
 
-PG_MODULE_MAGIC;
+PG_MODULE_MAGIC_EXT(
+					.name = "dict_xsyn",
+					.version = PG_VERSION
+);
 
 typedef struct
 {

@@ -25,7 +25,10 @@
 #include "storage/smgr.h"
 #include "utils/rel.h"
 
-PG_MODULE_MAGIC;
+PG_MODULE_MAGIC_EXT(
+					.name = "pg_visibility",
+					.version = PG_VERSION
+);
 
 typedef struct vbits
 {

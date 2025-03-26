@@ -138,7 +138,10 @@ ResourceOwnerForgetJIT(ResourceOwner owner, LLVMJitContext *handle)
 	ResourceOwnerForget(owner, PointerGetDatum(handle), &jit_resowner_desc);
 }
 
-PG_MODULE_MAGIC;
+PG_MODULE_MAGIC_EXT(
+					.name = "llvmjit",
+					.version = PG_VERSION
+);
 
 
 /*
