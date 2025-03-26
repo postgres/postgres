@@ -2229,6 +2229,7 @@ PgStat_WalCounters
 PgStat_WalStats
 PgXmlErrorContext
 PgXmlStrictness
+Pg_abi_values
 Pg_finfo_record
 Pg_magic_struct
 PipeProtoChunk

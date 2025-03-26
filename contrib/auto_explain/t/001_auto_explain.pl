@@ -212,4 +212,17 @@ REVOKE SET ON PARAMETER auto_explain.log_format FROM regress_user1;
 DROP USER regress_user1;
 });
 
+# Test pg_get_loaded_modules() function.  This function is particularly
+# useful for modules with no SQL presence, such as auto_explain.
+
+my $res = $node->safe_psql(
+	"postgres", q{
+SELECT module_name,
+       version = current_setting('server_version') as version_ok,
+       regexp_replace(file_name, '\..*', '') as file_name_stripped
+FROM pg_get_loaded_modules()
+WHERE module_name = 'auto_explain';
+});
+like($res, qr/^auto_explain\|t\|auto_explain$/, "pg_get_loaded_modules() ok");
+
 done_testing();

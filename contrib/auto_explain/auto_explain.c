@@ -22,7 +22,10 @@
 #include "executor/instrument.h"
 #include "utils/guc.h"
 
-PG_MODULE_MAGIC;
+PG_MODULE_MAGIC_EXT(
+					.name = "auto_explain",
+					.version = PG_VERSION
+);
 
 /* GUC variables */
 static int	auto_explain_log_min_duration = -1; /* msec or -1 */

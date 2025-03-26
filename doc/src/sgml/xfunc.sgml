@@ -1954,6 +1954,9 @@ CREATE FUNCTION square_root(double precision) RETURNS double precision
    <indexterm zone="xfunc-c-dynload">
     <primary>magic block</primary>
    </indexterm>
+   <indexterm zone="xfunc-c-dynload">
+    <primary><literal>PG_MODULE_MAGIC</literal></primary>
+   </indexterm>
 
    <para>
     To ensure that a dynamically loaded object file is not loaded into an
@@ -1968,6 +1971,30 @@ CREATE FUNCTION square_root(double precision) RETURNS double precision
 <programlisting>
 PG_MODULE_MAGIC;
 </programlisting>
+or
+<programlisting>
+PG_MODULE_MAGIC_EXT(<replaceable>parameters</replaceable>);
+</programlisting>
+   </para>
+
+   <para>
+    The <literal>PG_MODULE_MAGIC_EXT</literal> variant allows the specification
+    of additional information about the module; currently, a name and/or a
+    version string can be added.  (More fields might be allowed in future.)
+    Write something like this:
+
+<programlisting>
+PG_MODULE_MAGIC_EXT(
+    .name = "my_module_name",
+    .version = "1.2.3"
+);
+</programlisting>
+
+    Subsequently the name and version can be examined via
+    the <function>pg_get_loaded_modules()</function> function.
+    The meaning of the version string is not restricted
+    by <productname>PostgreSQL</productname>, but use of semantic versioning
+    rules is recommended.
    </para>
 
    <para>

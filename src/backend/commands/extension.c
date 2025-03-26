@@ -2812,6 +2812,59 @@ pg_extension_config_dump(PG_FUNCTION_ARGS)
 }
 
 /*
+ * pg_get_loaded_modules
+ *
+ * SQL-callable function to get per-loaded-module information.  Modules
+ * (shared libraries) aren't necessarily one-to-one with extensions, but
+ * they're sufficiently closely related to make this file a good home.
+ */
+Datum
+pg_get_loaded_modules(PG_FUNCTION_ARGS)
+{
+	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
+	DynamicFileList *file_scanner;
+
+	/* Build tuplestore to hold the result rows */
+	InitMaterializedSRF(fcinfo, 0);
+
+	for (file_scanner = get_first_loaded_module(); file_scanner != NULL;
+		 file_scanner = get_next_loaded_module(file_scanner))
+	{
+		const char *library_path,
+				   *module_name,
+				   *module_version;
+		const char *sep;
+		Datum		values[3] = {0};
+		bool		nulls[3] = {0};
+
+		get_loaded_module_details(file_scanner,
+								  &library_path,
+								  &module_name,
+								  &module_version);
+
+		if (module_name == NULL)
+			nulls[0] = true;
+		else
+			values[0] = CStringGetTextDatum(module_name);
+		if (module_version == NULL)
+			nulls[1] = true;
+		else
+			values[1] = CStringGetTextDatum(module_version);
+
+		/* For security reasons, we don't show the directory path */
+		sep = last_dir_separator(library_path);
+		if (sep)
+			library_path = sep + 1;
+		values[2] = CStringGetTextDatum(library_path);
+
+		tuplestore_putvalues(rsinfo->setResult, rsinfo->setDesc,
+							 values, nulls);
+	}
+
+	return (Datum) 0;
+}
+
+/*
  * extension_config_remove
  *
  * Remove the specified table OID from extension's extconfig, if present.

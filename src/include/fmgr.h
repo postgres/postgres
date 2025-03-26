@@ -440,41 +440,52 @@ extern PGDLLEXPORT void _PG_init(void);
  * We require dynamically-loaded modules to include the macro call
  *		PG_MODULE_MAGIC;
  * so that we can check for obvious incompatibility, such as being compiled
- * for a different major PostgreSQL version.
+ * for a different major PostgreSQL version.  Alternatively, write
+ *		PG_MODULE_MAGIC_EXT(...);
+ * where the optional arguments can specify module name and version, and
+ * perhaps other values in future.  Note that in a multiple-source-file
+ * module, there should be exactly one such macro call.
  *
- * To compile with versions of PostgreSQL that do not support this,
- * you may put an #ifdef/#endif test around it.  Note that in a multiple-
- * source-file module, the macro call should only appear once.
+ * You may need an #ifdef test to verify that the version of PostgreSQL
+ * you are compiling against supports PG_MODULE_MAGIC_EXT().
  *
- * The specific items included in the magic block are intended to be ones that
+ * The specific items included in the ABI fields are intended to be ones that
  * are custom-configurable and especially likely to break dynamically loaded
  * modules if they were compiled with other values.  Also, the length field
  * can be used to detect definition changes.
  *
- * Note: we compare magic blocks with memcmp(), so there had better not be
- * any alignment pad bytes in them.
+ * Note: we compare Pg_abi_values structs with memcmp(), so there had better
+ * not be any alignment pad bytes in them.
  *
- * Note: when changing the contents of magic blocks, be sure to adjust the
+ * Note: when changing the contents of Pg_abi_values, be sure to adjust the
  * incompatible_module_error() function in dfmgr.c.
  *-------------------------------------------------------------------------
  */
 
-/* Definition of the magic block structure */
+/* Definition of the values we check to verify ABI compatibility */
 typedef struct
 {
-	int			len;			/* sizeof(this struct) */
 	int			version;		/* PostgreSQL major version */
 	int			funcmaxargs;	/* FUNC_MAX_ARGS */
 	int			indexmaxkeys;	/* INDEX_MAX_KEYS */
 	int			namedatalen;	/* NAMEDATALEN */
 	int			float8byval;	/* FLOAT8PASSBYVAL */
 	char		abi_extra[32];	/* see pg_config_manual.h */
+} Pg_abi_values;
+
+/* Definition of the magic block structure */
+typedef struct
+{
+	int			len;			/* sizeof(this struct) */
+	Pg_abi_values abi_fields;	/* see above */
+	/* Remaining fields are zero unless filled via PG_MODULE_MAGIC_EXT */
+	const char *name;			/* optional module name */
+	const char *version;		/* optional module version */
 } Pg_magic_struct;
 
-/* The actual data block contents */
-#define PG_MODULE_MAGIC_DATA \
+/* Macro to fill the ABI fields */
+#define PG_MODULE_ABI_DATA \
 { \
-	sizeof(Pg_magic_struct), \
 	PG_VERSION_NUM / 100, \
 	FUNC_MAX_ARGS, \
 	INDEX_MAX_KEYS, \
@@ -483,7 +494,18 @@ typedef struct
 	FMGR_ABI_EXTRA, \
 }
 
-StaticAssertDecl(sizeof(FMGR_ABI_EXTRA) <= sizeof(((Pg_magic_struct *) 0)->abi_extra),
+/*
+ * Macro to fill a magic block.  If any arguments are given, they should
+ * be field initializers.
+ */
+#define PG_MODULE_MAGIC_DATA(...) \
+{ \
+	.len = sizeof(Pg_magic_struct), \
+	.abi_fields = PG_MODULE_ABI_DATA, \
+	__VA_ARGS__ \
+}
+
+StaticAssertDecl(sizeof(FMGR_ABI_EXTRA) <= sizeof(((Pg_abi_values *) 0)->abi_extra),
 				 "FMGR_ABI_EXTRA too long");
 
 /*
@@ -500,7 +522,26 @@ extern PGDLLEXPORT const Pg_magic_struct *PG_MAGIC_FUNCTION_NAME(void); \
 const Pg_magic_struct * \
 PG_MAGIC_FUNCTION_NAME(void) \
 { \
-	static const Pg_magic_struct Pg_magic_data = PG_MODULE_MAGIC_DATA; \
+	static const Pg_magic_struct Pg_magic_data = PG_MODULE_MAGIC_DATA(0); \
+	return &Pg_magic_data; \
+} \
+extern int no_such_variable
+
+/*
+ * Alternate declaration that allows specification of additional fields.
+ * The additional values should be written as field initializers, for example
+ *	PG_MODULE_MAGIC_EXT(
+ *		.name = "some string",
+ *		.version = "some string"
+ *	);
+ */
+#define PG_MODULE_MAGIC_EXT(...) \
+extern PGDLLEXPORT const Pg_magic_struct *PG_MAGIC_FUNCTION_NAME(void); \
+const Pg_magic_struct * \
+PG_MAGIC_FUNCTION_NAME(void) \
+{ \
+	static const Pg_magic_struct Pg_magic_data = \
+		PG_MODULE_MAGIC_DATA(__VA_ARGS__); \
 	return &Pg_magic_data; \
 } \
 extern int no_such_variable
@@ -738,6 +779,8 @@ extern bool CheckFunctionValidatorAccess(Oid validatorOid, Oid functionOid);
 /*
  * Routines in dfmgr.c
  */
+typedef struct DynamicFileList DynamicFileList; /* opaque outside dfmgr.c */
+
 extern PGDLLIMPORT char *Dynamic_library_path;
 
 extern char *substitute_path_macro(const char *str, const char *macro, const char *value);
@@ -747,6 +790,12 @@ extern void *load_external_function(const char *filename, const char *funcname,
 									bool signalNotFound, void **filehandle);
 extern void *lookup_external_function(void *filehandle, const char *funcname);
 extern void load_file(const char *filename, bool restricted);
+extern DynamicFileList *get_first_loaded_module(void);
+extern DynamicFileList *get_next_loaded_module(DynamicFileList *dfptr);
+extern void get_loaded_module_details(DynamicFileList *dfptr,
+									  const char **library_path,
+									  const char **module_name,
+									  const char **module_version);
 extern void **find_rendezvous_variable(const char *varName);
 extern Size EstimateLibraryStateSpace(void);
 extern void SerializeLibraryState(Size maxsize, char *start_address);

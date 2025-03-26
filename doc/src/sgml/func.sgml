@@ -25043,6 +25043,28 @@ SELECT * FROM pg_ls_dir('.') WITH ORDINALITY AS t(ls,n);
       <row>
        <entry role="func_table_entry"><para role="func_signature">
         <indexterm>
+         <primary>pg_get_loaded_modules</primary>
+        </indexterm>
+        <function>pg_get_loaded_modules</function> ()
+        <returnvalue>setof record</returnvalue>
+        ( <parameter>module_name</parameter> <type>text</type>,
+        <parameter>version</parameter> <type>text</type>,
+        <parameter>file_name</parameter> <type>text</type> )
+       </para>
+       <para>
+        Returns a list of the loadable modules that are loaded into the
+        current server session.  The <parameter>module_name</parameter>
+        and <parameter>version</parameter> fields are NULL unless the
+        module author supplied values for them using
+        the <literal>PG_MODULE_MAGIC_EXT</literal> macro.
+        The <parameter>file_name</parameter> field gives the file
+        name of the module (shared library).
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
          <primary>pg_my_temp_schema</primary>
         </indexterm>
         <function>pg_my_temp_schema</function> ()

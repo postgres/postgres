@@ -6756,6 +6756,13 @@
   proargnames => '{rm_id, rm_name, rm_builtin}',
   prosrc => 'pg_get_wal_resource_managers' },
 
+{ oid => '8303', descr => 'get info about loaded modules',
+  proname => 'pg_get_loaded_modules', prorows => '10', proretset => 't',
+  provolatile => 'v', proparallel => 'r', prorettype => 'record',
+  proargtypes => '', proallargtypes => '{text,text,text}',
+  proargmodes => '{o,o,o}', proargnames => '{module_name,version,file_name}',
+  prosrc => 'pg_get_loaded_modules' },
+
 { oid => '2621', descr => 'reload configuration files',
   proname => 'pg_reload_conf', provolatile => 'v', prorettype => 'bool',
   proargtypes => '', prosrc => 'pg_reload_conf' },

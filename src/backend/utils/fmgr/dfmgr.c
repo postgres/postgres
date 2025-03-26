@@ -40,19 +40,21 @@ typedef struct
 
 /*
  * List of dynamically loaded files (kept in malloc'd memory).
+ *
+ * Note: "typedef struct DynamicFileList DynamicFileList" appears in fmgr.h.
  */
-
-typedef struct df_files
+struct DynamicFileList
 {
-	struct df_files *next;		/* List link */
+	DynamicFileList *next;		/* List link */
 	dev_t		device;			/* Device file is on */
 #ifndef WIN32					/* ensures we never again depend on this under
 								 * win32 */
 	ino_t		inode;			/* Inode number of file */
 #endif
 	void	   *handle;			/* a handle for pg_dl* functions */
+	const Pg_magic_struct *magic;	/* Location of module's magic block */
 	char		filename[FLEXIBLE_ARRAY_MEMBER];	/* Full pathname of file */
-} DynamicFileList;
+};
 
 static DynamicFileList *file_list = NULL;
 static DynamicFileList *file_tail = NULL;
@@ -68,12 +70,12 @@ char	   *Dynamic_library_path;
 
 static void *internal_load_library(const char *libname);
 pg_noreturn static void incompatible_module_error(const char *libname,
-												  const Pg_magic_struct *module_magic_data);
+												  const Pg_abi_values *module_magic_data);
 static char *expand_dynamic_library_name(const char *name);
 static void check_restricted_library_name(const char *name);
 
-/* Magic structure that module needs to match to be accepted */
-static const Pg_magic_struct magic_data = PG_MODULE_MAGIC_DATA;
+/* ABI values that module needs to match to be accepted */
+static const Pg_abi_values magic_data = PG_MODULE_ABI_DATA;
 
 
 /*
@@ -243,8 +245,10 @@ internal_load_library(const char *libname)
 		{
 			const Pg_magic_struct *magic_data_ptr = (*magic_func) ();
 
-			if (magic_data_ptr->len != magic_data.len ||
-				memcmp(magic_data_ptr, &magic_data, magic_data.len) != 0)
+			/* Check ABI compatibility fields */
+			if (magic_data_ptr->len != sizeof(Pg_magic_struct) ||
+				memcmp(&magic_data_ptr->abi_fields, &magic_data,
+					   sizeof(Pg_abi_values)) != 0)
 			{
 				/* copy data block before unlinking library */
 				Pg_magic_struct module_magic_data = *magic_data_ptr;
@@ -254,8 +258,11 @@ internal_load_library(const char *libname)
 				free(file_scanner);
 
 				/* issue suitable complaint */
-				incompatible_module_error(libname, &module_magic_data);
+				incompatible_module_error(libname, &module_magic_data.abi_fields);
 			}
+
+			/* Remember the magic block's location for future use */
+			file_scanner->magic = magic_data_ptr;
 		}
 		else
 		{
@@ -292,7 +299,7 @@ internal_load_library(const char *libname)
  */
 static void
 incompatible_module_error(const char *libname,
-						  const Pg_magic_struct *module_magic_data)
+						  const Pg_abi_values *module_magic_data)
 {
 	StringInfoData details;
 
@@ -390,6 +397,44 @@ incompatible_module_error(const char *libname,
 			(errmsg("incompatible library \"%s\": magic block mismatch",
 					libname),
 			 errdetail_internal("%s", details.data)));
+}
+
+
+/*
+ * Iterator functions to allow callers to scan the list of loaded modules.
+ *
+ * Note: currently, there is no special provision for dealing with changes
+ * in the list while a scan is happening.  Current callers don't need it.
+ */
+DynamicFileList *
+get_first_loaded_module(void)
+{
+	return file_list;
+}
+
+DynamicFileList *
+get_next_loaded_module(DynamicFileList *dfptr)
+{
+	return dfptr->next;
+}
+
+/*
+ * Return some details about the specified module.
+ *
+ * Note that module_name and module_version could be returned as NULL.
+ *
+ * We could dispense with this function by exposing struct DynamicFileList
+ * globally, but this way seems preferable.
+ */
+void
+get_loaded_module_details(DynamicFileList *dfptr,
+						  const char **library_path,
+						  const char **module_name,
+						  const char **module_version)
+{
+	*library_path = dfptr->filename;
+	*module_name = dfptr->magic->name;
+	*module_version = dfptr->magic->version;
 }
 
 
