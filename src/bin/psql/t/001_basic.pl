@@ -436,12 +436,12 @@ psql_fails_like(
 psql_like(
 	$node,
 	'\echo :WATCH_INTERVAL
-\set WATCH_INTERVAL 0.001
+\set WATCH_INTERVAL 10
 \echo :WATCH_INTERVAL
 \unset WATCH_INTERVAL
 \echo :WATCH_INTERVAL',
 	qr/^2$
-^0.001$
+^10$
 ^2$/m,
 	'WATCH_INTERVAL variable is set and updated');
 psql_fails_like(
