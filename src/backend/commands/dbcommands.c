@@ -138,6 +138,7 @@ static void CreateDirAndVersionFile(char *dbpath, Oid dbid, Oid tsid,
 static void CreateDatabaseUsingFileCopy(Oid src_dboid, Oid dst_dboid,
 										Oid src_tsid, Oid dst_tsid);
 static void recovery_create_dbdir(char *path, bool only_tblspc);
+static bool is_name_contain_lfcr(char *name);
 
 /*
  * Create a new database using the WAL_LOG strategy.
@@ -740,6 +741,13 @@ createdb(ParseState *pstate, const CreatedbStmt *stmt)
 	int			npreparedxacts;
 	CreateDBStrategy dbstrategy = CREATEDB_WAL_LOG;
 	createdb_failure_params fparms;
+
+	/* Report error if dbname have newline or carriage return in name. */
+	if (is_name_contain_lfcr(dbname))
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE)),
+				errmsg("database name contains a newline or carriage return character"),
+				errhint("newline or carriage return character is not allowed in database name"));
 
 	/* Extract options from the statement node tree */
 	foreach(option, stmt->options)
@@ -3442,4 +3450,23 @@ dbase_redo(XLogReaderState *record)
 	}
 	else
 		elog(PANIC, "dbase_redo: unknown op code %u", info);
+}
+
+/*
+ * is_name_contain_lfcr
+ *
+ * If dbame has \n or \r in the name, then will return true.
+ */
+static bool
+is_name_contain_lfcr(char *name)
+{
+	const char *p;
+
+	for (p = name; *p; p++)
+	{
+		if (*p == '\n' || *p == '\r')
+			return true;
+	}
+
+	return false;
 }
