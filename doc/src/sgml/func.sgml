@@ -1399,6 +1399,27 @@ SELECT NOT(ROW(table.*) IS NOT NULL) FROM TABLE; -- detect at least one null in 
       <row>
        <entry role="func_table_entry"><para role="func_signature">
         <indexterm>
+         <primary>gamma</primary>
+        </indexterm>
+        <function>gamma</function> ( <type>double precision</type> )
+        <returnvalue>double precision</returnvalue>
+       </para>
+       <para>
+        Gamma function
+       </para>
+       <para>
+        <literal>gamma(0.5)</literal>
+        <returnvalue>1.772453850905516</returnvalue>
+       </para>
+       <para>
+        <literal>gamma(6)</literal>
+        <returnvalue>120</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
          <primary>gcd</primary>
         </indexterm>
         <function>gcd</function> ( <replaceable>numeric_type</replaceable>, <replaceable>numeric_type</replaceable> )
@@ -1433,6 +1454,23 @@ SELECT NOT(ROW(table.*) IS NOT NULL) FROM TABLE; -- detect at least one null in 
        <para>
         <literal>lcm(1071, 462)</literal>
         <returnvalue>23562</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>lgamma</primary>
+        </indexterm>
+        <function>lgamma</function> ( <type>double precision</type> )
+        <returnvalue>double precision</returnvalue>
+       </para>
+       <para>
+        Natural logarithm of the absolute value of the gamma function
+       </para>
+       <para>
+        <literal>lgamma(1000)</literal>
+        <returnvalue>5905.220423209181</returnvalue>
        </para></entry>
       </row>
 

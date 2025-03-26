@@ -2786,6 +2786,94 @@ derfc(PG_FUNCTION_ARGS)
 }
 
 
+/* ========== GAMMA FUNCTIONS ========== */
+
+
+/*
+ *		dgamma			- returns the gamma function of arg1
+ */
+Datum
+dgamma(PG_FUNCTION_ARGS)
+{
+	float8		arg1 = PG_GETARG_FLOAT8(0);
+	float8		result;
+
+	/*
+	 * Handle NaN and Inf cases explicitly.  This simplifies the overflow
+	 * checks on platforms that do not set errno.
+	 */
+	if (isnan(arg1))
+		result = arg1;
+	else if (isinf(arg1))
+	{
+		/* Per POSIX, an input of -Inf causes a domain error */
+		if (arg1 < 0)
+		{
+			float_overflow_error();
+			result = get_float8_nan();	/* keep compiler quiet */
+		}
+		else
+			result = arg1;
+	}
+	else
+	{
+		/*
+		 * Note: the POSIX/C99 gamma function is called "tgamma", not "gamma".
+		 *
+		 * On some platforms, tgamma() will not set errno but just return Inf,
+		 * NaN, or zero to report overflow/underflow; therefore, test those
+		 * cases explicitly (note that, like the exponential function, the
+		 * gamma function has no zeros).
+		 */
+		errno = 0;
+		result = tgamma(arg1);
+
+		if (errno != 0 || isinf(result) || isnan(result))
+		{
+			if (result != 0.0)
+				float_overflow_error();
+			else
+				float_underflow_error();
+		}
+		else if (result == 0.0)
+			float_underflow_error();
+	}
+
+	PG_RETURN_FLOAT8(result);
+}
+
+
+/*
+ *		dlgamma			- natural logarithm of absolute value of gamma of arg1
+ */
+Datum
+dlgamma(PG_FUNCTION_ARGS)
+{
+	float8		arg1 = PG_GETARG_FLOAT8(0);
+	float8		result;
+
+	/*
+	 * Note: lgamma may not be thread-safe because it may write to a global
+	 * variable signgam, which may not be thread-local. However, this doesn't
+	 * matter to us, since we don't use signgam.
+	 */
+	errno = 0;
+	result = lgamma(arg1);
+
+	/*
+	 * If an ERANGE error occurs, it means there was an overflow or a pole
+	 * error (which happens for zero and negative integer inputs).
+	 *
+	 * On some platforms, lgamma() will not set errno but just return infinity
+	 * to report overflow, but it should never underflow.
+	 */
+	if (errno == ERANGE || (isinf(result) && !isinf(arg1)))
+		float_overflow_error();
+
+	PG_RETURN_FLOAT8(result);
+}
+
+
 
 /*
  *		=========================

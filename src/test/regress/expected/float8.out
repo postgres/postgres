@@ -830,6 +830,63 @@ FROM (VALUES (float8 '-infinity'),
 (22 rows)
 
 RESET extra_float_digits;
+-- gamma functions
+-- we run these with extra_float_digits = -1, to get consistently rounded
+-- results on all platforms.
+SET extra_float_digits = -1;
+SELECT x,
+       gamma(x),
+       lgamma(x)
+FROM (VALUES (0.5), (1), (2), (3), (4), (5),
+             (float8 'infinity'), (float8 'nan')) AS t(x);
+    x     |      gamma      |      lgamma      
+----------+-----------------+------------------
+      0.5 | 1.7724538509055 |  0.5723649429247
+        1 |               1 |                0
+        2 |               1 |                0
+        3 |               2 | 0.69314718055995
+        4 |               6 |  1.7917594692281
+        5 |              24 |  3.1780538303479
+ Infinity |        Infinity |         Infinity
+      NaN |             NaN |              NaN
+(8 rows)
+
+-- test overflow/underflow handling
+SELECT gamma(float8 '-infinity');
+ERROR:  value out of range: overflow
+SELECT lgamma(float8 '-infinity');
+  lgamma  
+----------
+ Infinity
+(1 row)
+
+SELECT gamma(float8 '-1000.5');
+ERROR:  value out of range: underflow
+SELECT lgamma(float8 '-1000.5');
+      lgamma      
+------------------
+ -5914.4377011169
+(1 row)
+
+SELECT gamma(float8 '-1');
+ERROR:  value out of range: overflow
+SELECT lgamma(float8 '-1');
+ERROR:  value out of range: overflow
+SELECT gamma(float8 '0');
+ERROR:  value out of range: overflow
+SELECT lgamma(float8 '0');
+ERROR:  value out of range: overflow
+SELECT gamma(float8 '1000');
+ERROR:  value out of range: overflow
+SELECT lgamma(float8 '1000');
+     lgamma      
+-----------------
+ 5905.2204232092
+(1 row)
+
+SELECT lgamma(float8 '1e308');
+ERROR:  value out of range: overflow
+RESET extra_float_digits;
 -- test for over- and underflow
 INSERT INTO FLOAT8_TBL(f1) VALUES ('10e400');
 ERROR:  "10e400" is out of range for type double precision

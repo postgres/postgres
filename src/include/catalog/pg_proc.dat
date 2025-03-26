@@ -3564,6 +3564,13 @@
   proname => 'erfc', prorettype => 'float8', proargtypes => 'float8',
   prosrc => 'derfc' },
 
+{ oid => '8702', descr => 'gamma function',
+  proname => 'gamma', prorettype => 'float8', proargtypes => 'float8',
+  prosrc => 'dgamma' },
+{ oid => '8703', descr => 'natural logarithm of absolute value of gamma function',
+  proname => 'lgamma', prorettype => 'float8', proargtypes => 'float8',
+  prosrc => 'dlgamma' },
+
 { oid => '1618',
   proname => 'interval_mul', prorettype => 'interval',
   proargtypes => 'interval float8', prosrc => 'interval_mul' },
