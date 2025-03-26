@@ -16,13 +16,7 @@
 
 #ifdef ENABLE_GSS
 
-#if defined(HAVE_GSSAPI_H)
-#include <gssapi.h>
-#include <gssapi_ext.h>
-#else
-#include <gssapi/gssapi.h>
-#include <gssapi/gssapi_ext.h>
-#endif
+#include "libpq/pg-gssapi.h"
 
 extern void pg_GSS_error(const char *errmsg,
 						 OM_uint32 maj_stat, OM_uint32 min_stat);
