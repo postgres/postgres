@@ -2,6 +2,10 @@
 -- debug_parallel_query, so make sure that option is disabled.
 SET debug_parallel_query = off;
 
+-- Make sure that we don't print any JIT-related information, as that
+-- would also make results unstable.
+SET jit = off;
+
 -- These options do not exist, so these queries should all fail.
 EXPLAIN (DEBUFF) SELECT 1;
 EXPLAIN (DEBUG) SELECT 1;
