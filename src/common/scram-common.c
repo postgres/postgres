@@ -74,7 +74,7 @@ scram_SaltedPassword(const char *password,
 	memcpy(result, Ui_prev, key_length);
 
 	/* Subsequent iterations */
-	for (i = 2; i <= iterations; i++)
+	for (i = 1; i < iterations; i++)
 	{
 #ifndef FRONTEND
 		/*
