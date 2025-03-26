@@ -92,7 +92,7 @@
 
    <listitem>
     <para>
-     <literal>Subplans Needing Rewind</literal>. Integer IDs of subplans that 
+     <literal>Subplans Needing Rewind</literal>. Integer IDs of subplans that
      may need to be rewound by the executor.
     </para>
    </listitem>

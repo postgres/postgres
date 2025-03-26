@@ -67,7 +67,7 @@ SELECT explain_filter($$
 EXPLAIN (DEBUG, COSTS OFF)
 SELECT genus, array_agg(name ORDER BY name) FROM vegetables GROUP BY genus
 $$);
-RESET debug_parallel_query;
+SET debug_parallel_query = false;
 RESET enable_seqscan;
 
 -- Test the DEBUG option with a non-SELECT query, and also verify that the

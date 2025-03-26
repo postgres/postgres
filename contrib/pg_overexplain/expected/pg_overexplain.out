@@ -341,7 +341,7 @@ $$);
    Parse Location: 0 to end
 (37 rows)
 
-RESET debug_parallel_query;
+SET debug_parallel_query = false;
 RESET enable_seqscan;
 -- Test the DEBUG option with a non-SELECT query, and also verify that the
 -- hasReturning flag is shown.
