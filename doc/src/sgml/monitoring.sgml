@@ -1022,7 +1022,9 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
     it may or may not be <literal>waiting</literal> on some event.  If the state
     is <literal>active</literal> and <structfield>wait_event</structfield> is non-null, it
     means that a query is being executed, but is being blocked somewhere
-    in the system.
+    in the system.  To keep the reporting overhead low, the system does not
+    attempt to synchronize different aspects of activity data for a backend.
+    As a result, ephemeral discrepancies may exist between the view's columns.
    </para>
   </note>
 
