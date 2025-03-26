@@ -262,9 +262,12 @@ pgaio_io_call_complete_shared(PgAioHandle *ioh)
  * Internal function which invokes ->complete_local for all the registered
  * callbacks.
  *
+ * Returns ioh->distilled_result after, possibly, being modified by local
+ * callbacks.
+ *
  * XXX: It'd be nice to deduplicate with pgaio_io_call_complete_shared().
  */
-void
+PgAioResult
 pgaio_io_call_complete_local(PgAioHandle *ioh)
 {
 	PgAioResult result;
@@ -296,13 +299,17 @@ pgaio_io_call_complete_local(PgAioHandle *ioh)
 
 	/*
 	 * Note that we don't save the result in ioh->distilled_result, the local
-	 * callback's result should not ever matter to other waiters.
+	 * callback's result should not ever matter to other waiters. However, the
+	 * local backend does care, so we return the result as modified by local
+	 * callbacks, which then can be passed to ioh->report_return->result.
 	 */
 	pgaio_debug_io(DEBUG3, ioh,
-				   "after local completion: distilled result: (status %s, id %u, error_data %d, result %d), raw_result: %d",
+				   "after local completion: result: (status %s, id %u, error_data %d, result %d), raw_result: %d",
 				   pgaio_result_status_string(result.status),
 				   result.id, result.error_data, result.result,
 				   ioh->result);
 
 	END_CRIT_SECTION();
+
+	return result;
 }

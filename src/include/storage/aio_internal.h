@@ -309,7 +309,7 @@ extern void pgaio_shutdown(int code, Datum arg);
 /* aio_callback.c */
 extern void pgaio_io_call_stage(PgAioHandle *ioh);
 extern void pgaio_io_call_complete_shared(PgAioHandle *ioh);
-extern void pgaio_io_call_complete_local(PgAioHandle *ioh);
+extern PgAioResult pgaio_io_call_complete_local(PgAioHandle *ioh);
 
 /* aio_io.c */
 extern void pgaio_io_perform_synchronously(PgAioHandle *ioh);

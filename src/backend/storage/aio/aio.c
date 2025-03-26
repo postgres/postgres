@@ -626,13 +626,21 @@ pgaio_io_reclaim(PgAioHandle *ioh)
 
 	/*
 	 * It's a bit ugly, but right now the easiest place to put the execution
-	 * of shared completion callbacks is this function, as we need to execute
+	 * of local completion callbacks is this function, as we need to execute
 	 * local callbacks just before reclaiming at multiple callsites.
 	 */
 	if (ioh->state == PGAIO_HS_COMPLETED_SHARED)
 	{
-		pgaio_io_call_complete_local(ioh);
+		PgAioResult local_result;
+
+		local_result = pgaio_io_call_complete_local(ioh);
 		pgaio_io_update_state(ioh, PGAIO_HS_COMPLETED_LOCAL);
+
+		if (ioh->report_return)
+		{
+			ioh->report_return->result = local_result;
+			ioh->report_return->target_data = ioh->target_data;
+		}
 	}
 
 	pgaio_debug_io(DEBUG4, ioh,
@@ -642,17 +650,9 @@ pgaio_io_reclaim(PgAioHandle *ioh)
 				   ioh->distilled_result.error_data,
 				   ioh->result);
 
-	/* if the IO has been defined, we might need to do more work */
+	/* if the IO has been defined, it's on the in-flight list, remove */
 	if (ioh->state != PGAIO_HS_HANDED_OUT)
-	{
 		dclist_delete_from(&pgaio_my_backend->in_flight_ios, &ioh->node);
-
-		if (ioh->report_return)
-		{
-			ioh->report_return->result = ioh->distilled_result;
-			ioh->report_return->target_data = ioh->target_data;
-		}
-	}
 
 	if (ioh->resowner)
 	{
