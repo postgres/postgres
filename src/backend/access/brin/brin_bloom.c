@@ -692,6 +692,17 @@ brin_bloom_union(PG_FUNCTION_ARGS)
 	/* update the number of bits set in the filter */
 	filter_a->nbits_set = pg_popcount((const char *) filter_a->data, nbytes);
 
+	/* if we decompressed filter_a, update the summary */
+	if (PointerGetDatum(filter_a) != col_a->bv_values[0])
+	{
+		pfree(DatumGetPointer(col_a->bv_values[0]));
+		col_a->bv_values[0] = PointerGetDatum(filter_a);
+	}
+
+	/* also free filter_b, if it was decompressed */
+	if (PointerGetDatum(filter_b) != col_b->bv_values[0])
+		pfree(filter_b);
+
 	PG_RETURN_VOID();
 }
 
