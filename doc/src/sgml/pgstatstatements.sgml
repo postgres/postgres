@@ -675,8 +675,13 @@ calls | 2
    things, the internal object identifiers appearing in this representation.
    This has some counterintuitive implications.  For example,
    <filename>pg_stat_statements</filename> will consider two apparently-identical
-   queries to be distinct, if they reference a table that was dropped
-   and recreated between the executions of the two queries.
+   queries to be distinct, if they reference for example a function that was
+   dropped and recreated between the executions of the two queries.
+   Conversely, if a table is dropped and recreated between the
+   executions of queries, two apparently-identical queries may be
+   considered the same. However, if the alias for a table is different
+   for otherwise-similar queries, these queries will be considered
+   distinct.
    The hashing process is also sensitive to differences in
    machine architecture and other facets of the platform.
    Furthermore, it is not safe to assume that <structfield>queryid</structfield>

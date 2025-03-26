@@ -1050,8 +1050,13 @@ typedef struct RangeTblEntry
 	 */
 	/* user-written alias clause, if any */
 	Alias	   *alias pg_node_attr(query_jumble_ignore);
-	/* expanded reference names */
-	Alias	   *eref pg_node_attr(query_jumble_ignore);
+
+	/*
+	 * Expanded reference names.  This uses a custom query jumble function so
+	 * that the table name is included in the computation, but not its list of
+	 * columns.
+	 */
+	Alias	   *eref pg_node_attr(custom_query_jumble);
 
 	RTEKind		rtekind;		/* see above */
 
@@ -1094,7 +1099,7 @@ typedef struct RangeTblEntry
 	 * tables to be invalidated if the underlying table is altered.
 	 */
 	/* OID of the relation */
-	Oid			relid;
+	Oid			relid pg_node_attr(query_jumble_ignore);
 	/* inheritance requested? */
 	bool		inh;
 	/* relation kind (see pg_class.relkind) */

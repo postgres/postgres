@@ -433,11 +433,10 @@ COMMIT;
 SELECT calls, query FROM pg_stat_statements ORDER BY query COLLATE "C";
  calls |                                 query                                  
 -------+------------------------------------------------------------------------
-     1 | SELECT * FROM temp_t
-     1 | SELECT * FROM temp_t
+     2 | SELECT * FROM temp_t
      0 | SELECT calls, query FROM pg_stat_statements ORDER BY query COLLATE "C"
      1 | SELECT pg_stat_statements_reset() IS NOT NULL AS t
-(4 rows)
+(3 rows)
 
 SELECT pg_stat_statements_reset() IS NOT NULL AS t;
  t 
@@ -623,18 +622,15 @@ SELECT a AS a1 FROM pgss_schema_2.tab_search_diff_2;
 SELECT calls, query FROM pg_stat_statements ORDER BY query COLLATE "C";
  calls |                                 query                                  
 -------+------------------------------------------------------------------------
-     3 | SELECT a FROM pgss_schema_2.tab_search_diff_2 AS t1
-     9 | SELECT a FROM tab_search_diff_2 AS t1
-     1 | SELECT a, b FROM pgss_schema_1.tab_search_same
-     3 | SELECT a, b FROM tab_search_same
+     8 | SELECT a FROM tab_search_diff_2
+     4 | SELECT a FROM tab_search_diff_2 AS t1
+     4 | SELECT a, b FROM tab_search_same
      0 | SELECT calls, query FROM pg_stat_statements ORDER BY query COLLATE "C"
-     1 | SELECT count(*) FROM pgss_schema_1.tab_search_same
-     1 | SELECT count(*) FROM pgss_schema_2.tab_search_diff_1
-     3 | SELECT count(*) FROM tab_search_diff_1
+     4 | SELECT count(*) FROM tab_search_diff_1
      4 | SELECT count(*) FROM tab_search_diff_2
-     3 | SELECT count(*) FROM tab_search_same
+     4 | SELECT count(*) FROM tab_search_same
      1 | SELECT pg_stat_statements_reset() IS NOT NULL AS t
-(11 rows)
+(8 rows)
 
 DROP SCHEMA pgss_schema_1 CASCADE;
 NOTICE:  drop cascades to 3 other objects

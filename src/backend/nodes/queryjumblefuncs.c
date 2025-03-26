@@ -67,6 +67,9 @@ static void _jumbleElements(JumbleState *jstate, List *elements);
 static void _jumbleA_Const(JumbleState *jstate, Node *node);
 static void _jumbleList(JumbleState *jstate, Node *node);
 static void _jumbleVariableSetStmt(JumbleState *jstate, Node *node);
+static void _jumbleRangeTblEntry_eref(JumbleState *jstate,
+									  RangeTblEntry *rte,
+									  Alias *expr);
 
 /*
  * Given a possibly multi-statement source string, confine our attention to the
@@ -515,4 +518,20 @@ _jumbleVariableSetStmt(JumbleState *jstate, Node *node)
 		JUMBLE_NODE(args);
 	JUMBLE_FIELD(is_local);
 	JUMBLE_LOCATION(location);
+}
+
+/*
+ * Custom query jumble function for RangeTblEntry.eref.
+ */
+static void
+_jumbleRangeTblEntry_eref(JumbleState *jstate,
+						  RangeTblEntry *rte,
+						  Alias *expr)
+{
+	JUMBLE_FIELD(type);
+
+	/*
+	 * This includes only the table name, the list of column names is ignored.
+	 */
+	JUMBLE_STRING(aliasname);
 }
