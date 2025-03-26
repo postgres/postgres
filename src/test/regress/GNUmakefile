@@ -40,7 +40,7 @@ pg_regress$(X): pg_regress.o pg_regress_main.o $(WIN32RES) | submake-libpgport
 
 # dependencies ensure that path changes propagate
 pg_regress.o: pg_regress.c $(top_builddir)/src/port/pg_config_paths.h
-pg_regress.o: override CPPFLAGS += -I$(top_builddir)/src/port -I$(libpq_srcdir) $(EXTRADEFS)
+pg_regress.o: override CPPFLAGS := -I$(top_builddir)/src/port -I$(libpq_srcdir) $(EXTRADEFS) $(CPPFLAGS)
 
 # note: because of the submake dependency, this rule's action is really a no-op
 $(top_builddir)/src/port/pg_config_paths.h: | submake-libpgport
