@@ -72,12 +72,13 @@ typedef struct TdePrincipalKeylocalState
 	dshash_table *sharedHash;
 } TdePrincipalKeylocalState;
 
-/* parameter for the principal key info shared hash */
+/* Parameters for the principal key info shared hash */
 static dshash_parameters principal_key_dsh_params = {
-	sizeof(Oid),
-	sizeof(TDEPrincipalKey),
-	dshash_memcmp,				/* TODO use int compare instead */
-dshash_memhash};
+	.key_size = sizeof(Oid),
+	.entry_size = sizeof(TDEPrincipalKey),
+	.compare_function = dshash_memcmp,	/* TODO use int compare instead */
+	.hash_function = dshash_memhash,
+};
 
 TdePrincipalKeylocalState principalKeyLocalState;
 
