@@ -547,12 +547,8 @@ PGLC_localeconv(void)
 	static struct lconv CurrentLocaleConv;
 	static bool CurrentLocaleConvAllocated = false;
 	struct lconv *extlconv;
-	struct lconv worklconv;
-	char	   *save_lc_monetary;
-	char	   *save_lc_numeric;
-#ifdef WIN32
-	char	   *save_lc_ctype;
-#endif
+	struct lconv tmp;
+	struct lconv worklconv = {0};
 
 	/* Did we do it already? */
 	if (CurrentLocaleConvValid)
@@ -566,77 +562,21 @@ PGLC_localeconv(void)
 	}
 
 	/*
-	 * This is tricky because we really don't want to risk throwing error
-	 * while the locale is set to other than our usual settings.  Therefore,
-	 * the process is: collect the usual settings, set locale to special
-	 * setting, copy relevant data into worklconv using strdup(), restore
-	 * normal settings, convert data to desired encoding, and finally stash
-	 * the collected data in CurrentLocaleConv.  This makes it safe if we
-	 * throw an error during encoding conversion or run out of memory anywhere
-	 * in the process.  All data pointed to by struct lconv members is
-	 * allocated with strdup, to avoid premature elog(ERROR) and to allow
-	 * using a single cleanup routine.
+	 * Use thread-safe method of obtaining a copy of lconv from the operating
+	 * system.
 	 */
-	memset(&worklconv, 0, sizeof(worklconv));
+	if (pg_localeconv_r(locale_monetary,
+						locale_numeric,
+						&tmp) != 0)
+		elog(ERROR,
+			 "could not get lconv for LC_MONETARY = \"%s\", LC_NUMERIC = \"%s\": %m",
+			 locale_monetary, locale_numeric);
 
-	/* Save prevailing values of monetary and numeric locales */
-	save_lc_monetary = setlocale(LC_MONETARY, NULL);
-	if (!save_lc_monetary)
-		elog(ERROR, "setlocale(NULL) failed");
-	save_lc_monetary = pstrdup(save_lc_monetary);
-
-	save_lc_numeric = setlocale(LC_NUMERIC, NULL);
-	if (!save_lc_numeric)
-		elog(ERROR, "setlocale(NULL) failed");
-	save_lc_numeric = pstrdup(save_lc_numeric);
-
-#ifdef WIN32
-
-	/*
-	 * The POSIX standard explicitly says that it is undefined what happens if
-	 * LC_MONETARY or LC_NUMERIC imply an encoding (codeset) different from
-	 * that implied by LC_CTYPE.  In practice, all Unix-ish platforms seem to
-	 * believe that localeconv() should return strings that are encoded in the
-	 * codeset implied by the LC_MONETARY or LC_NUMERIC locale name.  Hence,
-	 * once we have successfully collected the localeconv() results, we will
-	 * convert them from that codeset to the desired server encoding.
-	 *
-	 * Windows, of course, resolutely does things its own way; on that
-	 * platform LC_CTYPE has to match LC_MONETARY/LC_NUMERIC to get sane
-	 * results.  Hence, we must temporarily set that category as well.
-	 */
-
-	/* Save prevailing value of ctype locale */
-	save_lc_ctype = setlocale(LC_CTYPE, NULL);
-	if (!save_lc_ctype)
-		elog(ERROR, "setlocale(NULL) failed");
-	save_lc_ctype = pstrdup(save_lc_ctype);
-
-	/* Here begins the critical section where we must not throw error */
-
-	/* use numeric to set the ctype */
-	setlocale(LC_CTYPE, locale_numeric);
-#endif
-
-	/* Get formatting information for numeric */
-	setlocale(LC_NUMERIC, locale_numeric);
-	extlconv = localeconv();
-
-	/* Must copy data now in case setlocale() overwrites it */
+	/* Must copy data now now so we can re-encode it. */
+	extlconv = &tmp;
 	worklconv.decimal_point = strdup(extlconv->decimal_point);
 	worklconv.thousands_sep = strdup(extlconv->thousands_sep);
 	worklconv.grouping = strdup(extlconv->grouping);
-
-#ifdef WIN32
-	/* use monetary to set the ctype */
-	setlocale(LC_CTYPE, locale_monetary);
-#endif
-
-	/* Get formatting information for monetary */
-	setlocale(LC_MONETARY, locale_monetary);
-	extlconv = localeconv();
-
-	/* Must copy data now in case setlocale() overwrites it */
 	worklconv.int_curr_symbol = strdup(extlconv->int_curr_symbol);
 	worklconv.currency_symbol = strdup(extlconv->currency_symbol);
 	worklconv.mon_decimal_point = strdup(extlconv->mon_decimal_point);
@@ -654,44 +594,18 @@ PGLC_localeconv(void)
 	worklconv.p_sign_posn = extlconv->p_sign_posn;
 	worklconv.n_sign_posn = extlconv->n_sign_posn;
 
-	/*
-	 * Restore the prevailing locale settings; failure to do so is fatal.
-	 * Possibly we could limp along with nondefault LC_MONETARY or LC_NUMERIC,
-	 * but proceeding with the wrong value of LC_CTYPE would certainly be bad
-	 * news; and considering that the prevailing LC_MONETARY and LC_NUMERIC
-	 * are almost certainly "C", there's really no reason that restoring those
-	 * should fail.
-	 */
-#ifdef WIN32
-	if (!setlocale(LC_CTYPE, save_lc_ctype))
-		elog(FATAL, "failed to restore LC_CTYPE to \"%s\"", save_lc_ctype);
-#endif
-	if (!setlocale(LC_MONETARY, save_lc_monetary))
-		elog(FATAL, "failed to restore LC_MONETARY to \"%s\"", save_lc_monetary);
-	if (!setlocale(LC_NUMERIC, save_lc_numeric))
-		elog(FATAL, "failed to restore LC_NUMERIC to \"%s\"", save_lc_numeric);
+	/* Free the contents of the object populated by pg_localeconv_r(). */
+	pg_localeconv_free(&tmp);
 
-	/*
-	 * At this point we've done our best to clean up, and can call functions
-	 * that might possibly throw errors with a clean conscience.  But let's
-	 * make sure we don't leak any already-strdup'd fields in worklconv.
-	 */
+	/* If any of the preceding strdup calls failed, complain now. */
+	if (!struct_lconv_is_valid(&worklconv))
+		ereport(ERROR,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("out of memory")));
+
 	PG_TRY();
 	{
 		int			encoding;
-
-		/* Release the pstrdup'd locale names */
-		pfree(save_lc_monetary);
-		pfree(save_lc_numeric);
-#ifdef WIN32
-		pfree(save_lc_ctype);
-#endif
-
-		/* If any of the preceding strdup calls failed, complain now. */
-		if (!struct_lconv_is_valid(&worklconv))
-			ereport(ERROR,
-					(errcode(ERRCODE_OUT_OF_MEMORY),
-					 errmsg("out of memory")));
 
 		/*
 		 * Now we must perform encoding conversion from whatever's associated

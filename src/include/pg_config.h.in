@@ -268,6 +268,9 @@
 /* Define to 1 if you have the `zstd' library (-lzstd). */
 #undef HAVE_LIBZSTD
 
+/* Define to 1 if you have the `localeconv_l' function. */
+#undef HAVE_LOCALECONV_L
+
 /* Define to 1 if you have the <mbarrier.h> header file. */
 #undef HAVE_MBARRIER_H
 

@@ -2738,6 +2738,7 @@ func_checks = [
   ['inet_aton'],
   ['inet_pton'],
   ['kqueue'],
+  ['localeconv_l'],
   ['mbstowcs_l'],
   ['memset_s'],
   ['mkdtemp'],

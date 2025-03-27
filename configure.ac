@@ -1764,6 +1764,7 @@ AC_CHECK_FUNCS(m4_normalize([
 	getpeerucred
 	inet_pton
 	kqueue
+	localeconv_l
 	mbstowcs_l
 	memset_s
 	posix_fallocate

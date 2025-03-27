@@ -487,6 +487,12 @@ extern void *bsearch_arg(const void *key, const void *base0,
 						 int (*compar) (const void *, const void *, void *),
 						 void *arg);
 
+/* port/pg_localeconv_r.c */
+extern int	pg_localeconv_r(const char *lc_monetary,
+							const char *lc_numeric,
+							struct lconv *output);
+extern void pg_localeconv_free(struct lconv *lconv);
+
 /* port/chklocale.c */
 extern int	pg_get_encoding_from_locale(const char *ctype, bool write_message);
 
