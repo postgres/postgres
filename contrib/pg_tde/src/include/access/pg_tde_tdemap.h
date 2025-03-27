@@ -21,6 +21,9 @@
 #define TDE_KEY_TYPE_WAL_ENCRYPTED		0x10
 #define MAP_ENTRY_VALID (TDE_KEY_TYPE_SMGR | TDE_KEY_TYPE_GLOBAL)
 
+#define INTERNAL_KEY_LEN 16
+#define INTERNAL_KEY_IV_LEN 16
+
 typedef struct InternalKey
 {
 	/*
@@ -28,6 +31,7 @@ typedef struct InternalKey
 	 * pg_tde_read/write_one_keydata()
 	 */
 	uint8		key[INTERNAL_KEY_LEN];
+	uint8		base_iv[INTERNAL_KEY_IV_LEN];
 	uint32		rel_type;
 
 	XLogRecPtr	start_lsn;

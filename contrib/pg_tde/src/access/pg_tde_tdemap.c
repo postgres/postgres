@@ -194,6 +194,11 @@ pg_tde_generate_internal_key(InternalKey *int_key, uint32 entry_type)
 				(errcode(ERRCODE_INTERNAL_ERROR),
 				 errmsg("could not generate internal key: %s",
 						ERR_error_string(ERR_get_error(), NULL))));
+	if (!RAND_bytes(int_key->base_iv, INTERNAL_KEY_IV_LEN))
+		ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+				 errmsg("could not generate IV: %s",
+						ERR_error_string(ERR_get_error(), NULL))));
 }
 
 const char *
