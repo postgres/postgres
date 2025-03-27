@@ -26,6 +26,8 @@ typedef struct TDESMgrRelationData
 
 typedef TDESMgrRelationData *TDESMgrRelation;
 
+static void CalcBlockIv(BlockNumber bn, const unsigned char *base_iv, unsigned char *iv);
+
 static InternalKey *
 tde_smgr_get_key(SMgrRelation reln, RelFileLocator *old_locator, bool can_create)
 {
@@ -96,12 +98,11 @@ tde_mdwritev(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 		for (int i = 0; i < nblocks; ++i)
 		{
 			BlockNumber bn = blocknum + i;
-			unsigned char iv[16] = {0,};
+			unsigned char iv[16];
 
 			local_buffers[i] = &local_blocks_aligned[i * BLCKSZ];
 
-
-			memcpy(iv + 4, &bn, sizeof(BlockNumber));
+			CalcBlockIv(bn, int_key->base_iv, iv);
 
 			AesEncrypt(int_key->key, iv, ((unsigned char **) buffers)[i], BLCKSZ, local_buffers[i]);
 		}
@@ -129,12 +130,11 @@ tde_mdextend(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 	{
 		unsigned char *local_blocks = palloc(BLCKSZ * (1 + 1));
 		unsigned char *local_blocks_aligned = (unsigned char *) TYPEALIGN(PG_IO_ALIGN_SIZE, local_blocks);
-		unsigned char iv[16] = {
-			0,
-		};
+		unsigned char iv[16];
 
 		AesInit();
-		memcpy(iv + 4, &blocknum, sizeof(BlockNumber));
+
+		CalcBlockIv(blocknum, int_key->base_iv, iv);
 
 		AesEncrypt(int_key->key, iv, ((unsigned char *) buffer), BLCKSZ, local_blocks_aligned);
 
@@ -162,7 +162,7 @@ tde_mdreadv(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 	{
 		bool		allZero = true;
 		BlockNumber bn = blocknum + i;
-		unsigned char iv[16] = {0,};
+		unsigned char iv[16];
 
 		for (int j = 0; j < 32; ++j)
 		{
@@ -189,7 +189,7 @@ tde_mdreadv(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 		if (allZero)
 			continue;
 
-		memcpy(iv + 4, &bn, sizeof(BlockNumber));
+		CalcBlockIv(bn, int_key->base_iv, iv);
 
 		AesDecrypt(int_key->key, iv, ((unsigned char **) buffers)[i], BLCKSZ, ((unsigned char **) buffers)[i]);
 	}
@@ -293,4 +293,22 @@ RegisterStorageMgr(void)
 	if (storage_manager_id != MdSMgrId)
 		elog(FATAL, "Another storage manager was loaded before pg_tde. Multiple storage managers is unsupported.");
 	storage_manager_id = smgr_register(&tde_smgr, sizeof(TDESMgrRelationData));
+}
+
+/*
+ * The intialization vector of a block is its block number conmverted to a
+ * 128 bit big endian number XOR the base IV of the relation file.
+ */
+static void
+CalcBlockIv(BlockNumber bn, const unsigned char *base_iv, unsigned char *iv)
+{
+	memset(iv, 0, 16);
+
+	iv[12] = bn >> 24;
+	iv[13] = bn >> 16;
+	iv[14] = bn >> 8;
+	iv[15] = bn;
+
+	for (int i = 0; i < 16; i++)
+		iv[i] ^= base_iv[i];
 }
