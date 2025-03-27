@@ -498,7 +498,7 @@ create table p1_c3() inherits(p1, p1_c1);
 -- but not allowed if the child constraint is explicitly asked to be NOT ENFORCED
 create table p1_fail(f1 int constraint inh_check_constraint6 check (f1 < 10) not enforced) inherits(p1, p1_c1);
 
-select conrelid::regclass::text as relname, conname, conislocal, coninhcount, conenforced
+select conrelid::regclass::text as relname, conname, conislocal, coninhcount, conenforced, convalidated
 from pg_constraint where conname like 'inh\_check\_constraint%'
 order by 1, 2;
 
