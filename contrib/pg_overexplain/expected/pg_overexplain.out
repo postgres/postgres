@@ -61,7 +61,8 @@ INSERT INTO vegetables (name, genus)
 VACUUM ANALYZE vegetables;
 -- We filter relation OIDs out of the test output in order to avoid
 -- test instability. This is currently only needed for EXPLAIN (DEBUG), not
--- EXPLAIN (RANGE_TABLE).
+-- EXPLAIN (RANGE_TABLE). Also suppress actual row counts, which are not
+-- stable (e.g. 1/8 is 0.12 on some buildfarm machines and 0.13 on others).
 CREATE FUNCTION explain_filter(text) RETURNS SETOF text
 LANGUAGE plpgsql AS
 $$
@@ -74,6 +75,8 @@ BEGIN
 								 'Relation OIDs: NNN...', 'g');
 		ln := regexp_replace(ln, '<Relation-OIDs>( ?\m\d+\M)+</Relation-OIDs>',
 								 '<Relation-OIDs>NNN...</Relation-OIDs>', 'g');
+		ln := regexp_replace(ln, 'actual rows=\d+\.\d+',
+								 'actual rows=N.NN', 'g');
 		RETURN NEXT ln;
 	END LOOP;
 END;
@@ -387,31 +390,31 @@ SELECT * FROM vegetables v1, vegetables v2 WHERE v1.id = v2.id;
 $$);
                                       explain_filter                                      
 ------------------------------------------------------------------------------------------
- Nested Loop (actual rows=8.00 loops=1)
+ Nested Loop (actual rows=N.NN loops=1)
    Disabled Nodes: 0
    Parallel Safe: true
    Plan Node ID: 0
-   ->  Append (actual rows=8.00 loops=1)
+   ->  Append (actual rows=N.NN loops=1)
          Disabled Nodes: 0
          Parallel Safe: true
          Plan Node ID: 1
-         ->  Index Scan using brassica_id_idx on brassica v1_1 (actual rows=7.00 loops=1)
+         ->  Index Scan using brassica_id_idx on brassica v1_1 (actual rows=N.NN loops=1)
                Index Searches: 1
                Disabled Nodes: 0
                Parallel Safe: true
                Plan Node ID: 2
-         ->  Index Scan using daucus_id_idx on daucus v1_2 (actual rows=1.00 loops=1)
+         ->  Index Scan using daucus_id_idx on daucus v1_2 (actual rows=N.NN loops=1)
                Index Searches: 1
                Disabled Nodes: 0
                Parallel Safe: true
                Plan Node ID: 3
-   ->  Append (actual rows=1.00 loops=8)
+   ->  Append (actual rows=N.NN loops=8)
          Disabled Nodes: 0
          Parallel Safe: true
          Plan Node ID: 4
          extParam: 0
          allParam: 0
-         ->  Index Scan using brassica_id_idx on brassica v2_1 (actual rows=0.88 loops=8)
+         ->  Index Scan using brassica_id_idx on brassica v2_1 (actual rows=N.NN loops=8)
                Index Cond: (id = v1.id)
                Index Searches: 8
                Disabled Nodes: 0
@@ -419,7 +422,7 @@ $$);
                Plan Node ID: 5
                extParam: 0
                allParam: 0
-         ->  Index Scan using daucus_id_idx on daucus v2_2 (actual rows=0.12 loops=8)
+         ->  Index Scan using daucus_id_idx on daucus v2_2 (actual rows=N.NN loops=8)
                Index Cond: (id = v1.id)
                Index Searches: 8
                Disabled Nodes: 0

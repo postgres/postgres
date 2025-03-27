@@ -33,7 +33,8 @@ VACUUM ANALYZE vegetables;
 
 -- We filter relation OIDs out of the test output in order to avoid
 -- test instability. This is currently only needed for EXPLAIN (DEBUG), not
--- EXPLAIN (RANGE_TABLE).
+-- EXPLAIN (RANGE_TABLE). Also suppress actual row counts, which are not
+-- stable (e.g. 1/8 is 0.12 on some buildfarm machines and 0.13 on others).
 CREATE FUNCTION explain_filter(text) RETURNS SETOF text
 LANGUAGE plpgsql AS
 $$
@@ -46,6 +47,8 @@ BEGIN
 								 'Relation OIDs: NNN...', 'g');
 		ln := regexp_replace(ln, '<Relation-OIDs>( ?\m\d+\M)+</Relation-OIDs>',
 								 '<Relation-OIDs>NNN...</Relation-OIDs>', 'g');
+		ln := regexp_replace(ln, 'actual rows=\d+\.\d+',
+								 'actual rows=N.NN', 'g');
 		RETURN NEXT ln;
 	END LOOP;
 END;
