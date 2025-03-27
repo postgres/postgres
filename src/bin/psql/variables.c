@@ -234,7 +234,7 @@ ParseVariableDouble(const char *value, const char *name, double *result, double 
 	 * too close to zero to have full precision, by checking for zero or real
 	 * out-of-range values.
 	 */
-	else if ((errno = ERANGE) &&
+	else if ((errno == ERANGE) &&
 			 (dblval == 0.0 || dblval >= HUGE_VAL || dblval <= -HUGE_VAL))
 	{
 		if (name)
