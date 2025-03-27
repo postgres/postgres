@@ -522,7 +522,7 @@ extern PGDLLEXPORT const Pg_magic_struct *PG_MAGIC_FUNCTION_NAME(void); \
 const Pg_magic_struct * \
 PG_MAGIC_FUNCTION_NAME(void) \
 { \
-	static const Pg_magic_struct Pg_magic_data = PG_MODULE_MAGIC_DATA(0); \
+	static const Pg_magic_struct Pg_magic_data = PG_MODULE_MAGIC_DATA(.name = NULL); \
 	return &Pg_magic_data; \
 } \
 extern int no_such_variable
