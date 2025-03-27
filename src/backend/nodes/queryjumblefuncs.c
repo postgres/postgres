@@ -218,6 +218,8 @@ DoJumble(JumbleState *jstate, Node *node)
 
 /*
  * AppendJumbleInternal: Internal function for appending to the jumble buffer
+ *
+ * Note: Callers must ensure that size > 0.
  */
 static pg_attribute_always_inline void
 AppendJumbleInternal(JumbleState *jstate, const unsigned char *item,
@@ -226,16 +228,36 @@ AppendJumbleInternal(JumbleState *jstate, const unsigned char *item,
 	unsigned char *jumble = jstate->jumble;
 	Size		jumble_len = jstate->jumble_len;
 
+	/* Ensure the caller didn't mess up */
+	Assert(size > 0);
+
+	/*
+	 * Fast path for when there's enough space left in the buffer.  This is
+	 * worthwhile as means the memcpy can be inlined into very efficient code
+	 * when 'size' is a compile-time constant.
+	 */
+	if (likely(size <= JUMBLE_SIZE - jumble_len))
+	{
+		memcpy(jumble + jumble_len, item, size);
+		jstate->jumble_len += size;
+
+#ifdef USE_ASSERT_CHECKING
+		jstate->total_jumble_len += size;
+#endif
+
+		return;
+	}
+
 	/*
 	 * Whenever the jumble buffer is full, we hash the current contents and
 	 * reset the buffer to contain just that hash value, thus relying on the
 	 * hash to summarize everything so far.
 	 */
-	while (size > 0)
+	do
 	{
 		Size		part_size;
 
-		if (jumble_len >= JUMBLE_SIZE)
+		if (unlikely(jumble_len >= JUMBLE_SIZE))
 		{
 			uint64		start_hash;
 
@@ -253,7 +275,7 @@ AppendJumbleInternal(JumbleState *jstate, const unsigned char *item,
 #ifdef USE_ASSERT_CHECKING
 		jstate->total_jumble_len += part_size;
 #endif
-	}
+	} while (size > 0);
 
 	jstate->jumble_len = jumble_len;
 }
@@ -279,6 +301,61 @@ static pg_attribute_always_inline void
 AppendJumbleNull(JumbleState *jstate)
 {
 	jstate->pending_nulls++;
+}
+
+/*
+ * AppendJumble8
+ *		Add the first byte from the given 'value' pointer to the jumble state
+ */
+static pg_noinline void
+AppendJumble8(JumbleState *jstate, const unsigned char *value)
+{
+	if (jstate->pending_nulls > 0)
+		FlushPendingNulls(jstate);
+
+	AppendJumbleInternal(jstate, value, 1);
+}
+
+/*
+ * AppendJumble16
+ *		Add the first 2 bytes from the given 'value' pointer to the jumble
+ *		state.
+ */
+static pg_noinline void
+AppendJumble16(JumbleState *jstate, const unsigned char *value)
+{
+	if (jstate->pending_nulls > 0)
+		FlushPendingNulls(jstate);
+
+	AppendJumbleInternal(jstate, value, 2);
+}
+
+/*
+ * AppendJumble32
+ *		Add the first 4 bytes from the given 'value' pointer to the jumble
+ *		state.
+ */
+static pg_noinline void
+AppendJumble32(JumbleState *jstate, const unsigned char *value)
+{
+	if (jstate->pending_nulls > 0)
+		FlushPendingNulls(jstate);
+
+	AppendJumbleInternal(jstate, value, 4);
+}
+
+/*
+ * AppendJumble64
+ *		Add the first 8 bytes from the given 'value' pointer to the jumble
+ *		state.
+ */
+static pg_noinline void
+AppendJumble64(JumbleState *jstate, const unsigned char *value)
+{
+	if (jstate->pending_nulls > 0)
+		FlushPendingNulls(jstate);
+
+	AppendJumbleInternal(jstate, value, 8);
 }
 
 /*
@@ -417,9 +494,18 @@ IsSquashableConstList(List *elements, Node **firstExpr, Node **lastExpr)
 #define JUMBLE_LOCATION(location) \
 	RecordConstLocation(jstate, expr->location, false)
 #define JUMBLE_FIELD(item) \
-	AppendJumble(jstate, (const unsigned char *) &(expr->item), sizeof(expr->item))
-#define JUMBLE_FIELD_SINGLE(item) \
-	AppendJumble(jstate, (const unsigned char *) &(item), sizeof(item))
+do { \
+	if (sizeof(expr->item) == 8) \
+		AppendJumble64(jstate, (const unsigned char *) &(expr->item)); \
+	else if (sizeof(expr->item) == 4) \
+		AppendJumble32(jstate, (const unsigned char *) &(expr->item)); \
+	else if (sizeof(expr->item) == 2) \
+		AppendJumble16(jstate, (const unsigned char *) &(expr->item)); \
+	else if (sizeof(expr->item) == 1) \
+		AppendJumble8(jstate, (const unsigned char *) &(expr->item)); \
+	else \
+		AppendJumble(jstate, (const unsigned char *) &(expr->item), sizeof(expr->item)); \
+} while (0)
 #define JUMBLE_STRING(str) \
 do { \
 	if (expr->str) \
@@ -551,15 +637,15 @@ _jumbleList(JumbleState *jstate, Node *node)
 			break;
 		case T_IntList:
 			foreach(l, expr)
-				JUMBLE_FIELD_SINGLE(lfirst_int(l));
+				AppendJumble32(jstate, (const unsigned char *) &lfirst_int(l));
 			break;
 		case T_OidList:
 			foreach(l, expr)
-				JUMBLE_FIELD_SINGLE(lfirst_oid(l));
+				AppendJumble32(jstate, (const unsigned char *) &lfirst_oid(l));
 			break;
 		case T_XidList:
 			foreach(l, expr)
-				JUMBLE_FIELD_SINGLE(lfirst_xid(l));
+				AppendJumble32(jstate, (const unsigned char *) &lfirst_xid(l));
 			break;
 		default:
 			elog(ERROR, "unrecognized list node type: %d",
