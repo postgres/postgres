@@ -112,27 +112,26 @@ static WALKeyCacheRec *tde_wal_key_last_rec = NULL;
 static InternalKey *pg_tde_get_key_from_file(const RelFileLocator *rlocator, uint32 key_type);
 static TDEMapEntry *pg_tde_find_map_entry(const RelFileLocator *rlocator, uint32 key_type, char *db_map_path);
 static InternalKey *tde_decrypt_rel_key(TDEPrincipalKey *principal_key, TDEMapEntry *map_entry);
-static int	pg_tde_open_file_basic(char *tde_filename, int fileFlags, bool ignore_missing);
-static void pg_tde_file_header_read(char *tde_filename, int fd, TDEFileHeader *fheader, off_t *bytes_read);
+static int	pg_tde_open_file_basic(const char *tde_filename, int fileFlags, bool ignore_missing);
+static void pg_tde_file_header_read(const char *tde_filename, int fd, TDEFileHeader *fheader, off_t *bytes_read);
 static bool pg_tde_read_one_map_entry(int fd, const RelFileLocator *rlocator, int flags, TDEMapEntry *map_entry, off_t *offset);
 static TDEMapEntry *pg_tde_read_one_map_entry2(int keydata_fd, int32 key_index, TDEPrincipalKey *principal_key);
-static int	pg_tde_open_file(char *tde_filename, TDEPrincipalKeyInfo *principal_key_info, int fileFlags, off_t *curr_pos);
+static int	pg_tde_open_file_read(const char *tde_filename, off_t *curr_pos);
 static InternalKey *pg_tde_get_key_from_cache(const RelFileLocator *rlocator, uint32 key_type);
 static WALKeyCacheRec *pg_tde_add_wal_key_to_cache(InternalKey *cached_key, XLogRecPtr start_lsn);
 static InternalKey *pg_tde_put_key_into_cache(const RelFileLocator *locator, InternalKey *key);
 
 #ifndef FRONTEND
-
 static InternalKey *pg_tde_create_key_map_entry(const RelFileLocator *newrlocator, uint32 entry_type);
 static InternalKey *pg_tde_create_local_key(const RelFileLocator *newrlocator, uint32 entry_type);
 static void pg_tde_generate_internal_key(InternalKey *int_key, uint32 entry_type);
-static int	pg_tde_file_header_write(char *tde_filename, int fd, TDEPrincipalKeyInfo *principal_key_info, off_t *bytes_written);
-static void pg_tde_initialize_map_entry(TDEMapEntry *map_entry, const TDEPrincipalKey *principal_key, const RelFileLocator *rlocator, const InternalKey *enc_rel_key_data);
+static int	pg_tde_file_header_write(const char *tde_filename, int fd, TDEPrincipalKeyInfo *principal_key_info, off_t *bytes_written);
 static off_t pg_tde_write_one_map_entry(int fd, const TDEMapEntry *map_entry, off_t *offset, const char *db_map_path);
 static void pg_tde_write_key_map_entry(const RelFileLocator *rlocator, InternalKey *rel_key_data, TDEPrincipalKey *principal_key, bool write_xlog);
 static bool pg_tde_delete_map_entry(const RelFileLocator *rlocator, uint32 key_type, char *db_map_path, off_t offset);
 static int	keyrotation_init_file(TDEPrincipalKeyInfo *new_principal_key_info, char *rotated_filename, char *filename, off_t *curr_pos);
 static void finalize_key_rotation(const char *path_old, const char *path_new);
+static int	pg_tde_open_file_write(const char *tde_filename, TDEPrincipalKeyInfo *principal_key_info, bool truncate, off_t *curr_pos);
 static void update_wal_keys_cache(void);
 
 InternalKey *
@@ -269,14 +268,13 @@ pg_tde_save_principal_key(TDEPrincipalKeyInfo *principal_key_info)
 	int			map_fd = -1;
 	off_t		curr_pos = 0;
 	char		db_map_path[MAXPGPATH] = {0};
-	int			file_flags = O_RDWR | O_CREAT | O_TRUNC;
 
 	/* Set the file paths */
 	pg_tde_set_db_file_path(principal_key_info->databaseId, db_map_path);
 
 	ereport(DEBUG2, (errmsg("pg_tde_save_principal_key")));
 
-	map_fd = pg_tde_open_file(db_map_path, principal_key_info, file_flags, &curr_pos);
+	map_fd = pg_tde_open_file_write(db_map_path, principal_key_info, true, &curr_pos);
 	close(map_fd);
 }
 
@@ -284,7 +282,7 @@ pg_tde_save_principal_key(TDEPrincipalKeyInfo *principal_key_info)
  * Write TDE file header to a TDE file.
  */
 static int
-pg_tde_file_header_write(char *tde_filename, int fd, TDEPrincipalKeyInfo *principal_key_info, off_t *bytes_written)
+pg_tde_file_header_write(const char *tde_filename, int fd, TDEPrincipalKeyInfo *principal_key_info, off_t *bytes_written)
 {
 	TDEFileHeader fheader;
 
@@ -391,7 +389,7 @@ pg_tde_write_key_map_entry(const RelFileLocator *rlocator, InternalKey *rel_key_
 	pg_tde_set_db_file_path(rlocator->dbOid, db_map_path);
 
 	/* Open and validate file for basic correctness. */
-	map_fd = pg_tde_open_file(db_map_path, &principal_key->keyInfo, O_RDWR | O_CREAT, &curr_pos);
+	map_fd = pg_tde_open_file_write(db_map_path, &principal_key->keyInfo, false, &curr_pos);
 	prev_pos = curr_pos;
 
 	/*
@@ -462,7 +460,7 @@ pg_tde_write_key_map_entry_redo(const TDEMapEntry *write_map_entry, TDEPrincipal
 	pg_tde_set_db_file_path(principal_key_info->databaseId, db_map_path);
 
 	/* Open and validate file for basic correctness. */
-	map_fd = pg_tde_open_file(db_map_path, principal_key_info, O_RDWR | O_CREAT, &curr_pos);
+	map_fd = pg_tde_open_file_write(db_map_path, principal_key_info, false, &curr_pos);
 	prev_pos = curr_pos;
 
 	/*
@@ -504,11 +502,8 @@ pg_tde_delete_map_entry(const RelFileLocator *rlocator, uint32 key_type, char *d
 	bool		found = false;
 	off_t		curr_pos = 0;
 
-	/*
-	 * Open and validate file for basic correctness. DO NOT create it. The
-	 * file should pre-exist otherwise we should never be here.
-	 */
-	map_fd = pg_tde_open_file(db_map_path, NULL, O_RDWR, &curr_pos);
+	/* Open and validate file for basic correctness. */
+	map_fd = pg_tde_open_file_write(db_map_path, NULL, false, &curr_pos);
 
 	/*
 	 * If we need to delete an entry, we expect an offset value to the start
@@ -622,7 +617,7 @@ keyrotation_init_file(TDEPrincipalKeyInfo *new_principal_key_info, char *rotated
 	snprintf(rotated_filename, MAXPGPATH, "%s.r", filename);
 
 	/* Create file, truncate if the rotate file already exits */
-	return pg_tde_open_file(rotated_filename, new_principal_key_info, O_RDWR | O_CREAT | O_TRUNC, curr_pos);
+	return pg_tde_open_file_write(rotated_filename, new_principal_key_info, true, curr_pos);
 }
 
 /*
@@ -654,7 +649,7 @@ pg_tde_perform_rotate_key(TDEPrincipalKey *principal_key, TDEPrincipalKey *new_p
 
 	pg_tde_set_db_file_path(principal_key->keyInfo.databaseId, path[OLD_PRINCIPAL_KEY]);
 
-	fd[OLD_PRINCIPAL_KEY] = pg_tde_open_file(path[OLD_PRINCIPAL_KEY], &principal_key->keyInfo, O_RDONLY, &curr_pos[OLD_PRINCIPAL_KEY]);
+	fd[OLD_PRINCIPAL_KEY] = pg_tde_open_file_read(path[OLD_PRINCIPAL_KEY], &curr_pos[OLD_PRINCIPAL_KEY]);
 	fd[NEW_PRINCIPAL_KEY] = keyrotation_init_file(&new_principal_key->keyInfo, path[NEW_PRINCIPAL_KEY], path[OLD_PRINCIPAL_KEY], &curr_pos[NEW_PRINCIPAL_KEY]);
 
 	/* Read all entries until EOF */
@@ -784,19 +779,13 @@ pg_tde_wal_last_key_set_lsn(XLogRecPtr lsn, const char *keyfile_path)
 {
 	LWLock	   *lock_pk = tde_lwlock_enc_keys();
 	int			fd = -1;
-	off_t		write_pos,
+	off_t		read_pos,
+				write_pos,
 				last_key_idx;
 
 	LWLockAcquire(lock_pk, LW_EXCLUSIVE);
 
-	fd = BasicOpenFile(keyfile_path, O_RDWR | PG_BINARY);
-	if (fd < 0)
-	{
-		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not open tde file \"%s\": %m",
-						keyfile_path)));
-	}
+	fd = pg_tde_open_file_write(keyfile_path, NULL, false, &read_pos);
 
 	last_key_idx = ((lseek(fd, 0, SEEK_END) - TDE_FILE_HEADER_SIZE) / MAP_ENTRY_SIZE) - 1;
 	write_pos = TDE_FILE_HEADER_SIZE + (last_key_idx * MAP_ENTRY_SIZE) + offsetof(TDEMapEntry, enc_key) + offsetof(InternalKey, start_lsn);
@@ -849,6 +838,34 @@ pg_tde_wal_last_key_set_lsn(XLogRecPtr lsn, const char *keyfile_path)
 
 	LWLockRelease(lock_pk);
 	close(fd);
+}
+
+/*
+ * Open for write and Validate File Header [pg_tde.*]:
+ * 		header: {Format Version, Principal Key Name}
+ *
+ * Returns the file descriptor in case of a success. Otherwise, error
+ * is raised.
+ */
+static int
+pg_tde_open_file_write(const char *tde_filename, TDEPrincipalKeyInfo *principal_key_info, bool truncate, off_t *curr_pos)
+{
+	int			fd;
+	TDEFileHeader fheader;
+	off_t		bytes_read = 0;
+	off_t		bytes_written = 0;
+	int			file_flags = O_RDWR | O_CREAT | PG_BINARY | (truncate ? O_TRUNC : 0);
+
+	fd = pg_tde_open_file_basic(tde_filename, file_flags, false);
+
+	pg_tde_file_header_read(tde_filename, fd, &fheader, &bytes_read);
+
+	/* In case it's a new file, let's add the header now. */
+	if (bytes_read == 0 && principal_key_info)
+		pg_tde_file_header_write(tde_filename, fd, principal_key_info, &bytes_written);
+
+	*curr_pos = bytes_read + bytes_written;
+	return fd;
 }
 
 #endif							/* !FRONTEND */
@@ -917,11 +934,7 @@ pg_tde_find_map_entry(const RelFileLocator *rlocator, uint32 key_type, char *db_
 	TDEMapEntry *map_entry = palloc_object(TDEMapEntry);
 	off_t		curr_pos = 0;
 
-	/*
-	 * Open and validate file for basic correctness. DO NOT create it. The
-	 * file should pre-exist otherwise we should never be here.
-	 */
-	map_fd = pg_tde_open_file(db_map_path, NULL, O_RDWR, &curr_pos);
+	map_fd = pg_tde_open_file_read(db_map_path, &curr_pos);
 
 	/*
 	 * Read until we find an empty slot. Otherwise, read until end. This seems
@@ -974,47 +987,27 @@ tde_decrypt_rel_key(TDEPrincipalKey *principal_key, TDEMapEntry *map_entry)
 	return rel_key_data;
 }
 
-
 /*
- * Open and Validate File Header [pg_tde.*]:
+ * Open for read and Validate File Header [pg_tde.*]:
  * 		header: {Format Version, Principal Key Name}
  *
  * Returns the file descriptor in case of a success. Otherwise, error
  * is raised.
- *
- * Plus, there is nothing wrong with a create even if we are going to read
- * data. This will save the creation overhead the next time. Ideally, this
- * should never happen for a read operation as it indicates a missing file.
- *
- * The caller can pass the required flags to ensure that file is created
- * or an error is thrown if the file does not exist.
  */
 static int
-pg_tde_open_file(char *tde_filename, TDEPrincipalKeyInfo *principal_key_info, int fileFlags, off_t *curr_pos)
+pg_tde_open_file_read(const char *tde_filename, off_t *curr_pos)
 {
-	int			fd = -1;
+	int			fd;
 	TDEFileHeader fheader;
 	off_t		bytes_read = 0;
-	off_t		bytes_written = 0;
 
-	/*
-	 * Ensuring that we always open the file in binary mode. The caller must
-	 * specify other flags for reading, writing or creating the file.
-	 */
-	fd = pg_tde_open_file_basic(tde_filename, fileFlags, false);
+	fd = pg_tde_open_file_basic(tde_filename, O_RDONLY | PG_BINARY, false);
 
 	pg_tde_file_header_read(tde_filename, fd, &fheader, &bytes_read);
+	*curr_pos = bytes_read;
 
-#ifndef FRONTEND
-	/* In case it's a new file, let's add the header now. */
-	if (bytes_read == 0 && principal_key_info)
-		pg_tde_file_header_write(tde_filename, fd, principal_key_info, &bytes_written);
-#endif							/* FRONTEND */
-
-	*curr_pos = bytes_read + bytes_written;
 	return fd;
 }
-
 
 /*
  * Open a TDE file [pg_tde.*]:
@@ -1023,15 +1016,11 @@ pg_tde_open_file(char *tde_filename, TDEPrincipalKeyInfo *principal_key_info, in
  * is raised except when ignore_missing is true and the file does not exit.
  */
 static int
-pg_tde_open_file_basic(char *tde_filename, int fileFlags, bool ignore_missing)
+pg_tde_open_file_basic(const char *tde_filename, int fileFlags, bool ignore_missing)
 {
-	int			fd = -1;
+	int			fd;
 
-	/*
-	 * Ensuring that we always open the file in binary mode. The caller must
-	 * specify other flags for reading, writing or creating the file.
-	 */
-	fd = BasicOpenFile(tde_filename, fileFlags | PG_BINARY);
+	fd = BasicOpenFile(tde_filename, fileFlags);
 	if (fd < 0 && !(errno == ENOENT && ignore_missing == true))
 	{
 		ereport(ERROR,
@@ -1048,7 +1037,7 @@ pg_tde_open_file_basic(char *tde_filename, int fileFlags, bool ignore_missing)
  * Read TDE file header from a TDE file and fill in the fheader data structure.
  */
 static void
-pg_tde_file_header_read(char *tde_filename, int fd, TDEFileHeader *fheader, off_t *bytes_read)
+pg_tde_file_header_read(const char *tde_filename, int fd, TDEFileHeader *fheader, off_t *bytes_read)
 {
 	Assert(fheader);
 
@@ -1307,7 +1296,7 @@ pg_tde_read_last_wal_key(void)
 	}
 	pg_tde_set_db_file_path(rlocator.dbOid, db_map_path);
 
-	fd = pg_tde_open_file(db_map_path, &principal_key->keyInfo, O_RDONLY, &read_pos);
+	fd = pg_tde_open_file_read(db_map_path, &read_pos);
 	fsize = lseek(fd, 0, SEEK_END);
 	/* No keys */
 	if (fsize == TDE_FILE_HEADER_SIZE)
@@ -1356,7 +1345,7 @@ pg_tde_fetch_wal_keys(XLogRecPtr start_lsn)
 
 	pg_tde_set_db_file_path(rlocator.dbOid, db_map_path);
 
-	fd = pg_tde_open_file(db_map_path, &principal_key->keyInfo, O_RDONLY, &read_pos);
+	fd = pg_tde_open_file_read(db_map_path, &read_pos);
 
 	keys_count = (lseek(fd, 0, SEEK_END) - TDE_FILE_HEADER_SIZE) / MAP_ENTRY_SIZE;
 
