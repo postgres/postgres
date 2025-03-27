@@ -6,15 +6,21 @@ Check the [list of supported platforms](install.md#__tabbed_1_1).
 
 ## Memory limits for `pg_tde` keys
 
+The `pg_tde` uses memory locks (mlocks) to keep internal encryption keys in RAM, both for WAL and for user data.  
+
 A memory lock (`mlock`) is a system call to lock a specified memory range in RAM for a process. The maximum amount of memory that can be locked differs between systems. You can check the current setting with this command:
 
 ```
 ulimit -a 
 ```
 
-For example, Rocky Linux 8 has the default `mlock` limit 64 Kb. An internal `pg_tde` key size is 40 bytes. Thus, the `mlock` limit is sufficient for about 1600 internal keys. When this limit is reached, `pg_tde` cannot lock memory for more keys and can fail with the error. 
+Memory locking is done only in memory pages. This means that when a process uses `mlocks`, it locks the entire memory page. 
+ 
+A process can have child processes that share the `mlock` limits of their parent. In PostgreSQL, the parent process is the one that runs the server. And its child backend processes handle client connections to the server. 
 
-To prevent this, you can change the `mlock` limit:
+If the `mlock` limit is greater than the page size, a child process locks another page for its operation. However, when the `mlock` limit equals the page size, the child process cannot run because the max memory limit is already reached by the parent process that used it for reading WAL files. This results in `pg_tde` failing with the error.
+
+To prevent this, you can change the `mlock` limit to be at least twice bigger than the memory page size:
 
 * temporarily for the current session using the `ulimit -l <value>` command. 
 * set a new hard limit in the `/etc/security/limits.conf` file. To do so, you require the superuser privileges. 
