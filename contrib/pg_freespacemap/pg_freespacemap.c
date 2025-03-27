@@ -11,6 +11,7 @@
 #include "access/relation.h"
 #include "funcapi.h"
 #include "storage/freespace.h"
+#include "utils/rel.h"
 
 PG_MODULE_MAGIC;
 
@@ -29,6 +30,13 @@ pg_freespace(PG_FUNCTION_ARGS)
 	Relation	rel;
 
 	rel = relation_open(relid, AccessShareLock);
+
+	if (!RELKIND_HAS_STORAGE(rel->rd_rel->relkind))
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("relation \"%s\" does not have storage",
+						RelationGetRelationName(rel)),
+				 errdetail_relkind_not_supported(rel->rd_rel->relkind)));
 
 	if (blkno < 0 || blkno > MaxBlockNumber)
 		ereport(ERROR,
