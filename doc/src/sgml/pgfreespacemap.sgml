@@ -67,7 +67,7 @@
   <para>
    For indexes, what is tracked is entirely-unused pages, rather than free
    space within pages.  Therefore, the values are not meaningful, just
-   whether a page is full or empty.
+   whether a page is in-use or empty.
   </para>
  </sect2>
 
