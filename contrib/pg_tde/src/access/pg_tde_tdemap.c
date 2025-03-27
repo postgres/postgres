@@ -222,7 +222,9 @@ pg_tde_create_wal_key(InternalKey *rel_key_data, const RelFileLocator *newrlocat
 {
 	TDEPrincipalKey *principal_key;
 
-	principal_key = get_principal_key_from_keyring(newrlocator->dbOid);
+	LWLockAcquire(tde_lwlock_enc_keys(), LW_SHARED);
+
+	principal_key = GetPrincipalKey(newrlocator->dbOid, LW_SHARED);
 	if (principal_key == NULL)
 	{
 		ereport(ERROR,
@@ -237,6 +239,8 @@ pg_tde_create_wal_key(InternalKey *rel_key_data, const RelFileLocator *newrlocat
 	 * Add the encrypted key to the key map data file structure.
 	 */
 	pg_tde_write_key_map_entry(newrlocator, rel_key_data, principal_key, false);
+
+	LWLockRelease(tde_lwlock_enc_keys());
 }
 
 /*
@@ -872,6 +876,8 @@ pg_tde_open_file_write(const char *tde_filename, TDEPrincipalKeyInfo *principal_
 	off_t		bytes_written = 0;
 	int			file_flags = O_RDWR | O_CREAT | PG_BINARY | (truncate ? O_TRUNC : 0);
 
+	Assert(LWLockHeldByMeInMode(tde_lwlock_enc_keys(), LW_EXCLUSIVE));
+
 	fd = pg_tde_open_file_basic(tde_filename, file_flags, false);
 
 	pg_tde_file_header_read(tde_filename, fd, &fheader, &bytes_read);
@@ -1020,6 +1026,8 @@ pg_tde_open_file_read(const char *tde_filename, off_t *curr_pos)
 	int			fd;
 	TDEFileHeader fheader;
 	off_t		bytes_read = 0;
+
+	Assert(LWLockHeldByMeInMode(tde_lwlock_enc_keys(), LW_SHARED) || LWLockHeldByMeInMode(tde_lwlock_enc_keys(), LW_EXCLUSIVE));
 
 	fd = pg_tde_open_file_basic(tde_filename, O_RDONLY | PG_BINARY, false);
 

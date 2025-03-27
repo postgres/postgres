@@ -100,6 +100,7 @@ static bool pg_tde_is_same_principal_key(TDEPrincipalKey *a, TDEPrincipalKey *b)
 static void pg_tde_update_global_principal_key_everywhere(TDEPrincipalKey *oldKey, TDEPrincipalKey *newKey);
 static void push_principal_key_to_cache(TDEPrincipalKey *principalKey);
 static Datum pg_tde_get_key_info(PG_FUNCTION_ARGS, Oid dbOid);
+static TDEPrincipalKey *get_principal_key_from_keyring(Oid dbOid);
 static TDEPrincipalKey *GetPrincipalKeyNoDefault(Oid dbOid, LWLockMode lockMode);
 static void set_principal_key_with_keyring(const char *key_name,
 										   const char *provider_name,
@@ -708,7 +709,7 @@ pg_tde_get_key_info(PG_FUNCTION_ARGS, Oid dbOid)
  *
  * Caller should hold an exclusive tde_lwlock_enc_keys lock
  */
-TDEPrincipalKey *
+static TDEPrincipalKey *
 get_principal_key_from_keyring(Oid dbOid)
 {
 	TDEPrincipalKeyInfo *principalKeyInfo;
@@ -717,7 +718,7 @@ get_principal_key_from_keyring(Oid dbOid)
 	KeyringReturnCodes keyring_ret;
 	TDEPrincipalKey *principalKey;
 
-	/* Assert(LWLockHeldByMeInMode(tde_lwlock_enc_keys(), LW_EXCLUSIVE)); */
+	Assert(LWLockHeldByMeInMode(tde_lwlock_enc_keys(), LW_EXCLUSIVE));
 
 	principalKeyInfo = pg_tde_get_principal_key_info(dbOid);
 	if (principalKeyInfo == NULL)
