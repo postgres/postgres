@@ -58,8 +58,11 @@ bool		query_id_squash_values = false;
  */
 bool		query_id_enabled = false;
 
+static JumbleState *InitJumble(void);
+static uint64 DoJumble(JumbleState *jstate, Node *node);
 static void AppendJumble(JumbleState *jstate,
 						 const unsigned char *item, Size size);
+static void FlushPendingNulls(JumbleState *jstate);
 static void RecordConstLocation(JumbleState *jstate,
 								int location, bool merged);
 static void _jumbleNode(JumbleState *jstate, Node *node);
@@ -120,29 +123,22 @@ CleanQuerytext(const char *query, int *location, int *len)
 	return query;
 }
 
+/*
+ * JumbleQuery
+ *		Recursively process the given Query producing a 64-bit hash value by
+ *		hashing the relevant fields and record that value in the Query's queryId
+ *		field.  Return the JumbleState object used for jumbling the query.
+ */
 JumbleState *
 JumbleQuery(Query *query)
 {
-	JumbleState *jstate = NULL;
+	JumbleState *jstate;
 
 	Assert(IsQueryIdEnabled());
 
-	jstate = (JumbleState *) palloc(sizeof(JumbleState));
+	jstate = InitJumble();
 
-	/* Set up workspace for query jumbling */
-	jstate->jumble = (unsigned char *) palloc(JUMBLE_SIZE);
-	jstate->jumble_len = 0;
-	jstate->clocations_buf_size = 32;
-	jstate->clocations = (LocationLen *)
-		palloc(jstate->clocations_buf_size * sizeof(LocationLen));
-	jstate->clocations_count = 0;
-	jstate->highest_extern_param_id = 0;
-
-	/* Compute query ID and mark the Query node with it */
-	_jumbleNode(jstate, (Node *) query);
-	query->queryId = DatumGetUInt64(hash_any_extended(jstate->jumble,
-													  jstate->jumble_len,
-													  0));
+	query->queryId = DoJumble(jstate, (Node *) query);
 
 	/*
 	 * If we are unlucky enough to get a hash of zero, use 1 instead for
@@ -173,11 +169,59 @@ EnableQueryId(void)
 }
 
 /*
- * AppendJumble: Append a value that is substantive in a given query to
- * the current jumble.
+ * InitJumble
+ *		Allocate a JumbleState object and make it ready to jumble.
  */
-static void
-AppendJumble(JumbleState *jstate, const unsigned char *item, Size size)
+static JumbleState *
+InitJumble(void)
+{
+	JumbleState *jstate;
+
+	jstate = (JumbleState *) palloc(sizeof(JumbleState));
+
+	/* Set up workspace for query jumbling */
+	jstate->jumble = (unsigned char *) palloc(JUMBLE_SIZE);
+	jstate->jumble_len = 0;
+	jstate->clocations_buf_size = 32;
+	jstate->clocations = (LocationLen *) palloc(jstate->clocations_buf_size *
+												sizeof(LocationLen));
+	jstate->clocations_count = 0;
+	jstate->highest_extern_param_id = 0;
+	jstate->pending_nulls = 0;
+#ifdef USE_ASSERT_CHECKING
+	jstate->total_jumble_len = 0;
+#endif
+
+	return jstate;
+}
+
+/*
+ * DoJumble
+ *		Jumble the given Node using the given JumbleState and return the resulting
+ *		jumble hash.
+ */
+static uint64
+DoJumble(JumbleState *jstate, Node *node)
+{
+	/* Jumble the given node */
+	_jumbleNode(jstate, node);
+
+	/* Flush any pending NULLs before doing the final hash */
+	if (jstate->pending_nulls > 0)
+		FlushPendingNulls(jstate);
+
+	/* Process the jumble buffer and produce the hash value */
+	return DatumGetUInt64(hash_any_extended(jstate->jumble,
+											jstate->jumble_len,
+											0));
+}
+
+/*
+ * AppendJumbleInternal: Internal function for appending to the jumble buffer
+ */
+static pg_attribute_always_inline void
+AppendJumbleInternal(JumbleState *jstate, const unsigned char *item,
+					 Size size)
 {
 	unsigned char *jumble = jstate->jumble;
 	Size		jumble_len = jstate->jumble_len;
@@ -205,9 +249,54 @@ AppendJumble(JumbleState *jstate, const unsigned char *item, Size size)
 		jumble_len += part_size;
 		item += part_size;
 		size -= part_size;
+
+#ifdef USE_ASSERT_CHECKING
+		jstate->total_jumble_len += part_size;
+#endif
 	}
+
 	jstate->jumble_len = jumble_len;
 }
+
+/*
+ * AppendJumble
+ *		Add 'size' bytes of the given jumble 'value' to the jumble state
+ */
+static pg_noinline void
+AppendJumble(JumbleState *jstate, const unsigned char *value, Size size)
+{
+	if (jstate->pending_nulls > 0)
+		FlushPendingNulls(jstate);
+
+	AppendJumbleInternal(jstate, value, size);
+}
+
+/*
+ * AppendJumbleNull
+ *		For jumbling NULL pointers
+ */
+static pg_attribute_always_inline void
+AppendJumbleNull(JumbleState *jstate)
+{
+	jstate->pending_nulls++;
+}
+
+/*
+ * FlushPendingNulls
+ *		Incorporate the pending_null value into the jumble buffer.
+ *
+ * Note: Callers must ensure that there's at least 1 pending NULL.
+ */
+static pg_attribute_always_inline void
+FlushPendingNulls(JumbleState *jstate)
+{
+	Assert(jstate->pending_nulls > 0);
+
+	AppendJumbleInternal(jstate,
+						 (const unsigned char *) &jstate->pending_nulls, 4);
+	jstate->pending_nulls = 0;
+}
+
 
 /*
  * Record location of constant within query string of query tree that is
@@ -335,6 +424,8 @@ IsSquashableConstList(List *elements, Node **firstExpr, Node **lastExpr)
 do { \
 	if (expr->str) \
 		AppendJumble(jstate, (const unsigned char *) (expr->str), strlen(expr->str) + 1); \
+	else \
+		AppendJumbleNull(jstate); \
 } while(0)
 /* Function name used for the node field attribute custom_query_jumble. */
 #define JUMBLE_CUSTOM(nodetype, item) \
@@ -385,9 +476,15 @@ static void
 _jumbleNode(JumbleState *jstate, Node *node)
 {
 	Node	   *expr = node;
+#ifdef USE_ASSERT_CHECKING
+	Size		prev_jumble_len = jstate->total_jumble_len;
+#endif
 
 	if (expr == NULL)
+	{
+		AppendJumbleNull(jstate);
 		return;
+	}
 
 	/* Guard against stack overflow due to overly complex expressions */
 	check_stack_depth();
@@ -435,6 +532,9 @@ _jumbleNode(JumbleState *jstate, Node *node)
 		default:
 			break;
 	}
+
+	/* Ensure we added something to the jumble buffer */
+	Assert(jstate->total_jumble_len > prev_jumble_len);
 }
 
 static void

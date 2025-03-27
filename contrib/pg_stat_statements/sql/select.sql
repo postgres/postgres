@@ -12,6 +12,26 @@ SELECT pg_stat_statements_reset() IS NOT NULL AS t;
 --
 SELECT 1 AS "int";
 
+-- LIMIT and OFFSET patterns
+-- Try some query permutations which once produced identical query IDs
+SELECT 1 AS "int" LIMIT 1;
+SELECT 1 AS "int" LIMIT 2;
+SELECT 1 AS "int" OFFSET 1;
+SELECT 1 AS "int" OFFSET 2;
+SELECT 1 AS "int" OFFSET 1 LIMIT 1;
+SELECT 1 AS "int" OFFSET 2 LIMIT 2;
+SELECT 1 AS "int" LIMIT 1 OFFSET 1;
+SELECT 1 AS "int" LIMIT 3 OFFSET 3;
+SELECT 1 AS "int" OFFSET 1 FETCH FIRST 2 ROW ONLY;
+SELECT 1 AS "int" OFFSET 2 FETCH FIRST 3 ROW ONLY;
+
+-- DISTINCT and ORDER BY patterns
+-- Try some query permutations which once produced identical query IDs
+SELECT DISTINCT 1 AS "int";
+SELECT DISTINCT 2 AS "int";
+SELECT 1 AS "int" ORDER BY 1;
+SELECT 2 AS "int" ORDER BY 1;
+
 /* this comment should not appear in the output */
 SELECT 'hello'
   -- but this one will appear

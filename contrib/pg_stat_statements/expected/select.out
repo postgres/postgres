@@ -19,6 +19,86 @@ SELECT 1 AS "int";
    1
 (1 row)
 
+-- LIMIT and OFFSET patterns
+-- Try some query permutations which once produced identical query IDs
+SELECT 1 AS "int" LIMIT 1;
+ int 
+-----
+   1
+(1 row)
+
+SELECT 1 AS "int" LIMIT 2;
+ int 
+-----
+   1
+(1 row)
+
+SELECT 1 AS "int" OFFSET 1;
+ int 
+-----
+(0 rows)
+
+SELECT 1 AS "int" OFFSET 2;
+ int 
+-----
+(0 rows)
+
+SELECT 1 AS "int" OFFSET 1 LIMIT 1;
+ int 
+-----
+(0 rows)
+
+SELECT 1 AS "int" OFFSET 2 LIMIT 2;
+ int 
+-----
+(0 rows)
+
+SELECT 1 AS "int" LIMIT 1 OFFSET 1;
+ int 
+-----
+(0 rows)
+
+SELECT 1 AS "int" LIMIT 3 OFFSET 3;
+ int 
+-----
+(0 rows)
+
+SELECT 1 AS "int" OFFSET 1 FETCH FIRST 2 ROW ONLY;
+ int 
+-----
+(0 rows)
+
+SELECT 1 AS "int" OFFSET 2 FETCH FIRST 3 ROW ONLY;
+ int 
+-----
+(0 rows)
+
+-- DISTINCT and ORDER BY patterns
+-- Try some query permutations which once produced identical query IDs
+SELECT DISTINCT 1 AS "int";
+ int 
+-----
+   1
+(1 row)
+
+SELECT DISTINCT 2 AS "int";
+ int 
+-----
+   2
+(1 row)
+
+SELECT 1 AS "int" ORDER BY 1;
+ int 
+-----
+   1
+(1 row)
+
+SELECT 2 AS "int" ORDER BY 1;
+ int 
+-----
+   2
+(1 row)
+
 /* this comment should not appear in the output */
 SELECT 'hello'
   -- but this one will appear
@@ -135,9 +215,14 @@ SELECT calls, rows, query FROM pg_stat_statements ORDER BY query COLLATE "C";
      3 |    3 | SELECT $1 + $2 + $3 AS "add"
      1 |    1 | SELECT $1 AS "float"
      2 |    2 | SELECT $1 AS "int"
+     2 |    2 | SELECT $1 AS "int" LIMIT $2
+     2 |    0 | SELECT $1 AS "int" OFFSET $2
+     6 |    0 | SELECT $1 AS "int" OFFSET $2 LIMIT $3
+     2 |    2 | SELECT $1 AS "int" ORDER BY 1
      1 |    2 | SELECT $1 AS i UNION SELECT $2 ORDER BY i
      1 |    1 | SELECT $1 || $2
      1 |    1 | SELECT $1, $2 LIMIT $3
+     2 |    2 | SELECT DISTINCT $1 AS "int"
      0 |    0 | SELECT calls, rows, query FROM pg_stat_statements ORDER BY query COLLATE "C"
      1 |    1 | SELECT pg_stat_statements_reset() IS NOT NULL AS t
      1 |    2 | WITH t(f) AS (                                                              +
@@ -145,7 +230,7 @@ SELECT calls, rows, query FROM pg_stat_statements ORDER BY query COLLATE "C";
        |      | )                                                                           +
        |      |   SELECT f FROM t ORDER BY f
      1 |    1 | select $1::jsonb ? $2
-(12 rows)
+(17 rows)
 
 SELECT pg_stat_statements_reset() IS NOT NULL AS t;
  t 
