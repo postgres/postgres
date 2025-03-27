@@ -166,6 +166,8 @@ nav:
     - "3. Configure WAL encryption (tech preview)": wal-encryption.md
     - "4. Test TDE": "test.md"
   - functions.md
+  - command-line-tools.md
+  - variables.md
   - Concepts:
     - "What is TDE": tde.md
     - table-access-method.md
