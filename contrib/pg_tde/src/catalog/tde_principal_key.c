@@ -72,6 +72,9 @@ typedef struct TdePrincipalKeylocalState
 	dshash_table *sharedHash;
 } TdePrincipalKeylocalState;
 
+/* Length of newly generated principal keys */
+#define PRINCIPAL_KEY_LEN 16
+
 /* Parameters for the principal key info shared hash */
 static dshash_parameters principal_key_dsh_params = {
 	.key_size = sizeof(Oid),
@@ -320,7 +323,7 @@ set_principal_key_with_keyring(const char *key_name, const char *provider_name,
 				 errmsg("too long principal key name, maximum lenght is %ld bytes", sizeof(keyInfo->name) - 1)));
 
 	if (keyInfo == NULL)
-		keyInfo = KeyringGenerateNewKeyAndStore(new_keyring, key_name, INTERNAL_KEY_LEN);
+		keyInfo = KeyringGenerateNewKeyAndStore(new_keyring, key_name, PRINCIPAL_KEY_LEN);
 
 	if (keyInfo == NULL)
 	{
