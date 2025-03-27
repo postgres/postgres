@@ -1087,7 +1087,7 @@ check_application_name(char **newval, void **extra, GucSource source)
 	if (!clean)
 		return false;
 
-	ret = guc_strdup(WARNING, clean);
+	ret = guc_strdup(LOG, clean);
 	if (!ret)
 	{
 		pfree(clean);
@@ -1125,7 +1125,7 @@ check_cluster_name(char **newval, void **extra, GucSource source)
 	if (!clean)
 		return false;
 
-	ret = guc_strdup(WARNING, clean);
+	ret = guc_strdup(LOG, clean);
 	if (!ret)
 	{
 		pfree(clean);

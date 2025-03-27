@@ -3648,7 +3648,9 @@ check_restrict_nonsystem_relation_kind(char **newval, void **extra, GucSource so
 	list_free(elemlist);
 
 	/* Save the flags in *extra, for use by the assign function */
-	*extra = guc_malloc(ERROR, sizeof(int));
+	*extra = guc_malloc(LOG, sizeof(int));
+	if (!*extra)
+		return false;
 	*((int *) *extra) = flags;
 
 	return true;

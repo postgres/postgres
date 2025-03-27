@@ -2566,6 +2566,8 @@ check_createrole_self_grant(char **newval, void **extra, GucSource source)
 	list_free(elemlist);
 
 	result = (unsigned *) guc_malloc(LOG, sizeof(unsigned));
+	if (!result)
+		return false;
 	*result = options;
 	*extra = result;
 

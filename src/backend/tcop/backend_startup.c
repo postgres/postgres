@@ -1078,7 +1078,9 @@ check_log_connections(char **newval, void **extra, GucSource source)
 	 * We succeeded, so allocate `extra` and save the flags there for use by
 	 * assign_log_connections().
 	 */
-	*extra = guc_malloc(ERROR, sizeof(int));
+	*extra = guc_malloc(LOG, sizeof(int));
+	if (!*extra)
+		return false;
 	*((int *) *extra) = flags;
 
 	return true;

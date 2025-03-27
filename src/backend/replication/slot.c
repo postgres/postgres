@@ -2730,6 +2730,8 @@ check_synchronized_standby_slots(char **newval, void **extra, GucSource source)
 
 	/* GUC extra value must be guc_malloc'd, not palloc'd */
 	config = (SyncStandbySlotsConfigData *) guc_malloc(LOG, size);
+	if (!config)
+		return false;
 
 	/* Transform the data into SyncStandbySlotsConfigData */
 	config->nslotnames = list_length(elemlist);

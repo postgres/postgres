@@ -4909,10 +4909,11 @@ init_custom_variable(const char *name,
 		 strcmp(name, "pljava.vmoptions") == 0))
 		context = PGC_SUSET;
 
-	gen = (struct config_generic *) guc_malloc(ERROR, sz);
+	/* As above, an OOM here is FATAL */
+	gen = (struct config_generic *) guc_malloc(FATAL, sz);
 	memset(gen, 0, sz);
 
-	gen->name = guc_strdup(ERROR, name);
+	gen->name = guc_strdup(FATAL, name);
 	gen->context = context;
 	gen->group = CUSTOM_OPTIONS;
 	gen->short_desc = short_desc;

@@ -4791,7 +4791,9 @@ check_wal_consistency_checking(char **newval, void **extra, GucSource source)
 	list_free(elemlist);
 
 	/* assign new value */
-	*extra = guc_malloc(ERROR, (RM_MAX_ID + 1) * sizeof(bool));
+	*extra = guc_malloc(LOG, (RM_MAX_ID + 1) * sizeof(bool));
+	if (!*extra)
+		return false;
 	memcpy(*extra, newwalconsistency, (RM_MAX_ID + 1) * sizeof(bool));
 	return true;
 }

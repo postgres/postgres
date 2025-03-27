@@ -2198,7 +2198,9 @@ check_backtrace_functions(char **newval, void **extra, GucSource source)
 	 * whitespace chars to save some memory, but it doesn't seem worth the
 	 * trouble.
 	 */
-	someval = guc_malloc(ERROR, newvallen + 1 + 1);
+	someval = guc_malloc(LOG, newvallen + 1 + 1);
+	if (!someval)
+		return false;
 	for (i = 0, j = 0; i < newvallen; i++)
 	{
 		if ((*newval)[i] == ',')
@@ -2283,7 +2285,9 @@ check_log_destination(char **newval, void **extra, GucSource source)
 	pfree(rawstring);
 	list_free(elemlist);
 
-	myextra = (int *) guc_malloc(ERROR, sizeof(int));
+	myextra = (int *) guc_malloc(LOG, sizeof(int));
+	if (!myextra)
+		return false;
 	*myextra = newlogdest;
 	*extra = myextra;
 
