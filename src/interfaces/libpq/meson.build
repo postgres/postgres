@@ -122,6 +122,7 @@ tests += {
       't/003_load_balance_host_list.pl',
       't/004_load_balance_dns.pl',
       't/005_negotiate_encryption.pl',
+      't/006_service.pl',
     ],
     'env': {
       'with_ssl': ssl_library,
