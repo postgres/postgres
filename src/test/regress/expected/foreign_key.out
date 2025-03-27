@@ -1284,9 +1284,7 @@ ERROR:  constraint declared INITIALLY DEFERRED must be DEFERRABLE
 LINE 1: ...e ALTER CONSTRAINT fktable_fk_fkey NOT DEFERRABLE INITIALLY ...
                                                              ^
 ALTER TABLE fktable ALTER CONSTRAINT fktable_fk_fkey NO INHERIT;
-ERROR:  FOREIGN KEY constraints cannot be marked NO INHERIT
-LINE 1: ...ER TABLE fktable ALTER CONSTRAINT fktable_fk_fkey NO INHERIT...
-                                                             ^
+ERROR:  constraint "fktable_fk_fkey" of relation "fktable" is not a not-null constraint
 ALTER TABLE fktable ALTER CONSTRAINT fktable_fk_fkey NOT VALID;
 ERROR:  FOREIGN KEY constraints cannot be marked NOT VALID
 LINE 1: ...ER TABLE fktable ALTER CONSTRAINT fktable_fk_fkey NOT VALID;

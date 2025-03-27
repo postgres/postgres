@@ -2754,7 +2754,7 @@ alter table inh_nn2 inherit inh_nn1;
 create table inh_nn3 (f4 float) inherits (inh_nn2);
 create table inh_nn4 (f5 int, f4 float, f2 text, f3 int, f1 int);
 alter table inh_nn4 inherit inh_nn2, inherit inh_nn1, inherit inh_nn3;
-alter table inh_nn1 alter constraint inh_nn1_f1_not_null set inherit;
+alter table inh_nn1 alter constraint inh_nn1_f1_not_null inherit;
 select conrelid::regclass, conname, conkey, coninhcount, conislocal, connoinherit
  from pg_constraint where contype = 'n' and
  conrelid::regclass::text in ('inh_nn1', 'inh_nn2', 'inh_nn3', 'inh_nn4')
@@ -2767,8 +2767,8 @@ select conrelid::regclass, conname, conkey, coninhcount, conislocal, connoinheri
  inh_nn4  | inh_nn1_f1_not_null | {5}    |           3 | f          | f
 (4 rows)
 
--- ALTER CONSTRAINT SET NO INHERIT should work on top-level constraints
-alter table inh_nn1 alter constraint inh_nn1_f1_not_null set no inherit;
+-- ALTER CONSTRAINT NO INHERIT should work on top-level constraints
+alter table inh_nn1 alter constraint inh_nn1_f1_not_null no inherit;
 select conrelid::regclass, conname, conkey, coninhcount, conislocal, connoinherit
  from pg_constraint where contype = 'n' and
  conrelid::regclass::text in ('inh_nn1', 'inh_nn2', 'inh_nn3', 'inh_nn4')
@@ -2799,15 +2799,15 @@ drop table inh_nn1, inh_nn2, inh_nn3, inh_nn4;
 create table inh_nn1 (f1 int not null no inherit);
 create table inh_nn2 (f2 text, f3 int) inherits (inh_nn1);
 insert into inh_nn2 values(NULL, 'sample', 1);
-alter table inh_nn1 alter constraint inh_nn1_f1_not_null set inherit;
+alter table inh_nn1 alter constraint inh_nn1_f1_not_null inherit;
 ERROR:  column "f1" of relation "inh_nn2" contains null values
 delete from inh_nn2;
 create table inh_nn3 () inherits (inh_nn2);
 create table inh_nn4 () inherits (inh_nn1, inh_nn2);
 NOTICE:  merging multiple inherited definitions of column "f1"
 alter table inh_nn1	-- test multicommand alter table while at it
-   alter constraint inh_nn1_f1_not_null set inherit,
-   alter constraint inh_nn1_f1_not_null set no inherit;
+   alter constraint inh_nn1_f1_not_null inherit,
+   alter constraint inh_nn1_f1_not_null no inherit;
 select conrelid::regclass, conname, coninhcount, conislocal, connoinherit
  from pg_constraint where contype = 'n' and
  conrelid::regclass::text in ('inh_nn1', 'inh_nn2', 'inh_nn3', 'inh_nn4')
@@ -2837,10 +2837,10 @@ select conrelid::regclass, conname, conkey, coninhcount, conislocal, connoinheri
 (2 rows)
 
 -- error: inh_nn3 has an incompatible NO INHERIT constraint
-alter table inh_nn1 alter constraint inh_nn1_f1_not_null set inherit;
+alter table inh_nn1 alter constraint inh_nn1_f1_not_null inherit;
 ERROR:  cannot change NO INHERIT status of NOT NULL constraint "nn3_f1" on relation "inh_nn3"
-alter table inh_nn3 alter constraint nn3_f1 set inherit;
-alter table inh_nn1 alter constraint inh_nn1_f1_not_null set inherit; -- now it works
+alter table inh_nn3 alter constraint nn3_f1 inherit;
+alter table inh_nn1 alter constraint inh_nn1_f1_not_null inherit; -- now it works
 select conrelid::regclass, conname, conkey, coninhcount, conislocal, connoinherit
  from pg_constraint where contype = 'n' and
  conrelid::regclass::text in ('inh_nn1', 'inh_nn2', 'inh_nn3')
@@ -2853,21 +2853,21 @@ select conrelid::regclass, conname, conkey, coninhcount, conislocal, connoinheri
 (3 rows)
 
 drop table inh_nn1, inh_nn2, inh_nn3;
--- Negative scenarios for alter constraint .. set inherit.
+-- Negative scenarios for alter constraint .. inherit.
 create table inh_nn1 (f1 int check(f1 > 5) primary key references inh_nn1, f2 int not null);
 -- constraints other than not-null are not supported
-alter table inh_nn1 alter constraint inh_nn1_f1_check set inherit;
+alter table inh_nn1 alter constraint inh_nn1_f1_check inherit;
 ERROR:  constraint "inh_nn1_f1_check" of relation "inh_nn1" is not a not-null constraint
-alter table inh_nn1 alter constraint inh_nn1_pkey set inherit;
+alter table inh_nn1 alter constraint inh_nn1_pkey inherit;
 ERROR:  constraint "inh_nn1_pkey" of relation "inh_nn1" is not a not-null constraint
-alter table inh_nn1 alter constraint inh_nn1_f1_fkey set inherit;
+alter table inh_nn1 alter constraint inh_nn1_f1_fkey inherit;
 ERROR:  constraint "inh_nn1_f1_fkey" of relation "inh_nn1" is not a not-null constraint
 -- try to drop a nonexistant constraint
-alter table inh_nn1 alter constraint foo set inherit;
+alter table inh_nn1 alter constraint foo inherit;
 ERROR:  constraint "foo" of relation "inh_nn1" does not exist
 -- Can't modify inheritability of inherited constraints
 create table inh_nn2 () inherits (inh_nn1);
-alter table inh_nn2 alter constraint inh_nn1_f2_not_null set no inherit;
+alter table inh_nn2 alter constraint inh_nn1_f2_not_null no inherit;
 ERROR:  cannot alter inherited constraint "inh_nn1_f2_not_null" on relation "inh_nn2"
 drop table inh_nn1, inh_nn2;
 --

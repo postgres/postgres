@@ -2662,15 +2662,19 @@ alter_table_cmd:
 					n->subtype = AT_AlterConstraint;
 					n->def = (Node *) c;
 					c->conname = $3;
-					c->alterDeferrability = true;
+					if ($4 & (CAS_DEFERRABLE | CAS_NOT_DEFERRABLE |
+							  CAS_INITIALLY_DEFERRED | CAS_INITIALLY_IMMEDIATE))
+						c->alterDeferrability = true;
+					if ($4 & CAS_NO_INHERIT)
+						c->alterInheritability = true;
 					processCASbits($4, @4, "FOREIGN KEY",
 									&c->deferrable,
 									&c->initdeferred,
-									NULL, NULL, NULL, yyscanner);
+									NULL, NULL, &c->noinherit, yyscanner);
 					$$ = (Node *) n;
 				}
-			/* ALTER TABLE <name> ALTER CONSTRAINT SET INHERIT */
-			| ALTER CONSTRAINT name SET INHERIT
+			/* ALTER TABLE <name> ALTER CONSTRAINT INHERIT */
+			| ALTER CONSTRAINT name INHERIT
 				{
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					ATAlterConstraint *c = makeNode(ATAlterConstraint);
@@ -2680,20 +2684,6 @@ alter_table_cmd:
 					c->conname = $3;
 					c->alterInheritability = true;
 					c->noinherit = false;
-
-					$$ = (Node *) n;
-				}
-			/* ALTER TABLE <name> ALTER CONSTRAINT SET NO INHERIT */
-			| ALTER CONSTRAINT name SET NO INHERIT
-				{
-					AlterTableCmd *n = makeNode(AlterTableCmd);
-					ATAlterConstraint *c = makeNode(ATAlterConstraint);
-
-					n->subtype = AT_AlterConstraint;
-					n->def = (Node *) c;
-					c->conname = $3;
-					c->alterInheritability = true;
-					c->noinherit = true;
 
 					$$ = (Node *) n;
 				}

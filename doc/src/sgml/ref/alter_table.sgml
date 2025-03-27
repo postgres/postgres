@@ -59,7 +59,7 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceable>
     ADD <replaceable class="parameter">table_constraint</replaceable> [ NOT VALID ]
     ADD <replaceable class="parameter">table_constraint_using_index</replaceable>
     ALTER CONSTRAINT <replaceable class="parameter">constraint_name</replaceable> [ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY IMMEDIATE ]
-    ALTER CONSTRAINT <replaceable class="parameter">constraint_name</replaceable> SET [ INHERIT | NO INHERIT ]
+    ALTER CONSTRAINT <replaceable class="parameter">constraint_name</replaceable> [ INHERIT | NO INHERIT ]
     VALIDATE CONSTRAINT <replaceable class="parameter">constraint_name</replaceable>
     DROP CONSTRAINT [ IF EXISTS ]  <replaceable class="parameter">constraint_name</replaceable> [ RESTRICT | CASCADE ]
     DISABLE TRIGGER [ <replaceable class="parameter">trigger_name</replaceable> | ALL | USER ]
@@ -564,8 +564,8 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
    </varlistentry>
 
    <varlistentry id="sql-altertable-desc-alter-constraint-inherit">
-    <term><literal>ALTER CONSTRAINT ... SET INHERIT</literal></term>
-    <term><literal>ALTER CONSTRAINT ... SET NO INHERIT</literal></term>
+    <term><literal>ALTER CONSTRAINT ... INHERIT</literal></term>
+    <term><literal>ALTER CONSTRAINT ... NO INHERIT</literal></term>
     <listitem>
      <para>
       These forms modify a inheritable constraint so that it becomes not
