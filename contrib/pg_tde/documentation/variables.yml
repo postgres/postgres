@@ -1,6 +1,8 @@
 #Variables used throughout the docs
 
-release: 'Beta2'
-pgversion17: '17.2'
+release: 'RC'
+pgversion17: '17.4'
 tdebranch: TDE_REL_17_STABLE
 
+date:
+  RC: '2025-03-27'

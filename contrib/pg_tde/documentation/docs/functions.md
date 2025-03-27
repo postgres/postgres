@@ -217,7 +217,7 @@ SELECT pg_tde_set_principal_key('name-of-the-principal-key','provider-name','ens
 
 ### pg_tde_set_global_principal_key
 
-Creates or rotates the principal key for the current database using the specified global key provider and key name.
+Creates or rotates the global principal key using the specified global key provider and the key name. This key is used for global settings like WAL encryption.
 
 ```
 SELECT pg_tde_set_global_principal_key('name-of-the-principal-key','provider-name','ensure_new_key');
@@ -248,7 +248,7 @@ The `ensure_new_key` parameter instructs the function how to handle a principal 
 
 Creates or rotates the default principal key for the server using the specified key provider.
 
-The default key is automatically used as a principal key by any database that doesn't have a specific principal key already created when the first encrypted database object is created.
+The default key is automatically used as a principal key  by any database that doesn't have an individual key provider and key configuration.
 
 ```
 SELECT pg_tde_set_default_principal_key('name-of-the-principal-key','provider-name','ensure_new_key');

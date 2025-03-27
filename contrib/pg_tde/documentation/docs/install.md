@@ -21,13 +21,13 @@ Install `pg_tde` using one of the available installation methods:
 
     `pg_tde` is a part of the Percona Distribution for PostgreSQL Docker image. Use this image to enjoy full encryption capabilities. Check below to get access to a detailed step-by-step guide. 
 
-    [Run in Docker :material-arrow-right:](https://docs.percona.com/postgresql/latest/docker.html)
+    [Run in Docker :material-arrow-right:](https://docs.percona.com/postgresql/latest/docker.html){.md-button}
 
 === ":octicons-download-16: Manual download"
 
     `pg_tde` is included in the Percona Distribution for PostgreSQL tarball. Check below to get access to a detailed step-by-step guide. 
 
-    [Install from tarballs](https://docs.percona.com/postgresql/17/tarball.html) guide for instructions.
+    [Install from tarballs :material-arrow-right:](https://docs.percona.com/postgresql/17/tarball.html){.md-button}
 
 
 ## Next steps

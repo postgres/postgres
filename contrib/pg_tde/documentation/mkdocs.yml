@@ -124,7 +124,7 @@ plugins:
   - with-pdf: # https://github.com/orzih/mkdocs-with-pdf
           output_path: '_pdf/PerconaTDE.pdf'
           cover_title: 'Percona Transparent Data Encryption'
-          cover_subtitle: Alpha 1 (2024-03-28)
+          cover_subtitle: Release Candidate (2025-03-27)
           author: 'Percona Technical Documentation Team'
           cover_logo: docs/_images/Percona_Logo_Color.png
           debug_html: false
@@ -178,6 +178,11 @@ nav:
   - faq.md
   - Release notes:
     - "pg_tde release notes": release-notes/release-notes.md
+    - release-notes/rc.md
+    - release-notes/beta2.md
+    - release-notes/beta.md
+    - release-notes/alpha1.md
+    - release-notes/mvp.md
   - uninstall.md
   - contribute.md
 

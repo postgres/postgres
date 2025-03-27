@@ -18,11 +18,11 @@ The encryption process is the following:
 
 ![image](_images/tde-flow.png)
 
-When a user creates an encrypted table using `pg_tde`, a new random key is generated for that table using the AES128 (AES-ECB) cipher algorithm. This key is used to encrypt all data the user inserts in that table. Eventually the encrypted data gets stored in the underlying storage.
+When a user creates an encrypted table using `pg_tde`, a new random key is generated internally for that table and is encrypted using the AES-CBC cipher algorithm. This key is used to encrypt all data the user inserts in that table. Eventually the encrypted data gets stored in the underlying storage.
 
-The table key itself is encrypted using the principal key. The principal key is stored externally in the key management store.
+The internal key itself is encrypted using the principal key. The principal key is stored externally in the key management store.
 
-Similarly when the user queries the encrypted table, the principal key is retrieved from the key store to decrypt the table key. Then the same unique internal key for that table is used to decrypt the data, and unencrypted data gets returned to the user. So, effectively, every TDE table has a unique key, and each table key is encrypted using the principal key.
+Similarly when the user queries the encrypted table, the principal key is retrieved from the key store to decrypt the internal key. Then the same unique internal key for that table is used to decrypt the data, and unencrypted data gets returned to the user. So, effectively, every TDE table has a unique key, and each table key is encrypted using the principal key.
 
 ## Why do you need TDE?
 

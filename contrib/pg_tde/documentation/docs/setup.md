@@ -19,7 +19,7 @@ Load the `pg_tde` at startup time. The extension requires additional shared memo
     * On Debian and Ubuntu:    
 
        ```sh
-       sudo systemctl restart postgresql@17-main
+       sudo systemctl restart postgresql.service
        ```
     
     * On RHEL and derivatives

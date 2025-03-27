@@ -75,13 +75,17 @@ You can use the following KMSs:
 
 HashiCorp Vault can also act as the KMIP server, managing cryptographic keys for clients that use the KMIP protocol. 
 
-Here’s how encryption of data files works:
+Let's break the encryption into two parts:
+
+### Encryption of data files 
 
 First, data files are encrypted with internal keys. Each file that has a different OID, has an internal key. For example, a table with 4 indexes will have 5 internal keys - one for the table and one for each index.	
 
 The initial decision on what file to encrypt is based on the table access method in PostgreSQL. When you run a `CREATE` or `ALTER TABLE` statement with the `USING tde_heap` clause, the newly created data files are marked as encrypted, and then file operations encrypt/decrypt the data. Later, if an initial file is re-created as a result of a `TRUNCATE` or `VACUUM FULL` command, the newly created file inherits the encryption information and is either encrypted or not. 
 
 The principal key is used to encrypt the internal keys. The principal key is stored in the key management store. When you query the table, the principal key is retrieved from the key store to decrypt the table. Then the internal key for that table is used to decrypt the data.
+
+### WAL encryption
 
 WAL encryption is done globally for the entire database cluster. All modifications to any database within a PostgreSQL cluster are written to the same WAL to maintain data consistency and integrity and ensure that PostgreSQL cluster can be restored to a consistent state. Therefore, WAL is encrypted globally. 
 
