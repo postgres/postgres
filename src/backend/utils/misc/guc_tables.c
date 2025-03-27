@@ -2123,16 +2123,6 @@ struct config_bool ConfigureNamesBool[] =
 	},
 
 	{
-		{"query_id_squash_values", PGC_USERSET, STATS_MONITORING,
-			gettext_noop("Allows to merge constants in a list when computing "
-						 "query_id."),
-		},
-		&query_id_squash_values,
-		false,
-		NULL, NULL, NULL
-	},
-
-	{
 		{"vacuum_truncate", PGC_USERSET, VACUUM_DEFAULT,
 			gettext_noop("Enables vacuum to truncate empty pages at the end of the table."),
 		},

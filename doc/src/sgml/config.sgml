@@ -8726,36 +8726,6 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
       </listitem>
      </varlistentry>
 
-     <varlistentry id="guc-query-id-squash-values" xreflabel="query_id_squash_values">
-      <term><varname>query_id_squash_values</varname> (<type>bool</type>)
-      <indexterm>
-       <primary><varname>query_id_squash_values</varname> configuration parameter</primary>
-      </indexterm>
-      </term>
-      <listitem>
-       <para>
-        Specifies how a list of constants (e.g., for an <literal>IN</literal>
-        clause) contributes to the query identifier computation.
-        Normally, every element of such a list contributes to the query
-        identifier separately, which means that two queries that only differ
-        in the number of elements in such a list would get different query
-        identifiers.
-        If this parameter is on, a list of constants will not contribute
-        to the query identifier. This means that two queries whose only
-        difference is the number of constants in such a list are going to get the
-        same query identifier.
-       </para>
-       <para>
-        Only constants are affected; bind parameters do not benefit from this
-        functionality. The default value is <literal>off</literal>.
-       </para>
-       <para>
-        This parameter also affects how <xref linkend="pgstatstatements"/>
-        generates normalized query texts.
-       </para>
-      </listitem>
-     </varlistentry>
-
      <varlistentry id="guc-log-statement-stats">
       <term><varname>log_statement_stats</varname> (<type>boolean</type>)
       <indexterm>

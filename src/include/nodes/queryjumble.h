@@ -86,7 +86,6 @@ extern JumbleState *JumbleQuery(Query *query);
 extern void EnableQueryId(void);
 
 extern PGDLLIMPORT bool query_id_enabled;
-extern PGDLLIMPORT bool query_id_squash_values;
 
 /*
  * Returns whether query identifier computation has been enabled, either

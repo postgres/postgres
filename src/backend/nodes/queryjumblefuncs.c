@@ -46,9 +46,6 @@
 /* GUC parameters */
 int			compute_query_id = COMPUTE_QUERY_ID_AUTO;
 
-/* Whether to merge constants in a list when computing query_id */
-bool		query_id_squash_values = false;
-
 /*
  * True when compute_query_id is ON or AUTO, and a module requests them.
  *
@@ -472,7 +469,7 @@ IsSquashableConstList(List *elements, Node **firstExpr, Node **lastExpr)
 	 * If squashing is disabled, or the list is too short, we don't try to
 	 * squash it.
 	 */
-	if (!query_id_squash_values || list_length(elements) < 2)
+	if (list_length(elements) < 2)
 		return false;
 
 	foreach(temp, elements)
@@ -520,13 +517,10 @@ do { \
 #include "queryjumblefuncs.funcs.c"
 
 /*
- * When query_id_squash_values is enabled, we jumble lists of constant
- * elements as one individual item regardless of how many elements are
- * in the list.  This means different queries jumble to the same query_id,
- * if the only difference is the number of elements in the list.
- *
- * If query_id_squash_values is disabled or the list is not "simple
- * enough", we jumble each element normally.
+ * We jumble lists of constant elements as one individual item regardless
+ * of how many elements are in the list.  This means different queries
+ * jumble to the same query_id, if the only difference is the number of
+ * elements in the list.
  */
 static void
 _jumbleElements(JumbleState *jstate, List *elements)

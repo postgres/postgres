@@ -7,16 +7,7 @@ CREATE TABLE test_squash (id int, data int);
 
 -- IN queries
 
--- No squashing is performed, as a baseline result
-SELECT pg_stat_statements_reset() IS NOT NULL AS t;
-SELECT * FROM test_squash WHERE id IN (1, 2, 3, 4, 5, 6, 7, 8, 9);
-SELECT * FROM test_squash WHERE id IN (1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
-SELECT * FROM test_squash WHERE id IN (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11);
-SELECT query, calls FROM pg_stat_statements ORDER BY query COLLATE "C";
-
 -- Normal scenario, too many simple constants for an IN query
-SET query_id_squash_values = on;
-
 SELECT pg_stat_statements_reset() IS NOT NULL AS t;
 SELECT * FROM test_squash WHERE id IN (1);
 SELECT * FROM test_squash WHERE id IN (1, 2, 3);
@@ -177,4 +168,3 @@ SELECT pg_stat_statements_reset() IS NOT NULL AS t;
 SELECT ARRAY[1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 SELECT query, calls FROM pg_stat_statements ORDER BY query COLLATE "C";
 
-RESET query_id_squash_values;

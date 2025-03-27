@@ -664,7 +664,6 @@
 # - Monitoring -
 
 #compute_query_id = auto
-#query_id_squash_values = off
 #log_statement_stats = off
 #log_parser_stats = off
 #log_planner_stats = off
