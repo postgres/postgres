@@ -1189,6 +1189,8 @@ typedef struct
 	Oid			inputcollid;	/* OID of the OpClause input collation */
 	int			argindex;		/* index of the clause in the list of
 								 * arguments */
+	int			groupindex;		/* value of argindex for the fist clause in
+								 * the group of similar clauses */
 } OrArgIndexMatch;
 
 /*
@@ -1219,6 +1221,29 @@ or_arg_index_match_cmp(const void *a, const void *b)
 	if (match_a->inputcollid < match_b->inputcollid)
 		return -1;
 	else if (match_a->inputcollid > match_b->inputcollid)
+		return 1;
+
+	if (match_a->argindex < match_b->argindex)
+		return -1;
+	else if (match_a->argindex > match_b->argindex)
+		return 1;
+
+	return 0;
+}
+
+/*
+ * Another comparison function for OrArgIndexMatch.  It sorts groups together
+ * using groupindex.  The group items are then sorted by argindex.
+ */
+static int
+or_arg_index_match_cmp_group(const void *a, const void *b)
+{
+	const OrArgIndexMatch *match_a = (const OrArgIndexMatch *) a;
+	const OrArgIndexMatch *match_b = (const OrArgIndexMatch *) b;
+
+	if (match_a->groupindex < match_b->groupindex)
+		return -1;
+	else if (match_a->groupindex > match_b->groupindex)
 		return 1;
 
 	if (match_a->argindex < match_b->argindex)
@@ -1282,6 +1307,7 @@ group_similar_or_args(PlannerInfo *root, RelOptInfo *rel, RestrictInfo *rinfo)
 
 		i++;
 		matches[i].argindex = i;
+		matches[i].groupindex = i;
 		matches[i].indexnum = -1;
 		matches[i].colnum = -1;
 		matches[i].opno = InvalidOid;
@@ -1400,8 +1426,39 @@ group_similar_or_args(PlannerInfo *root, RelOptInfo *rel, RestrictInfo *rinfo)
 		return orargs;
 	}
 
-	/* Sort clauses to make similar clauses go together */
+	/*
+	 * Sort clauses to make similar clauses go together.  But at the same
+	 * time, we would like to change the order of clauses as little as
+	 * possible.  To do so, we reorder each group of similar clauses so that
+	 * the first item of the group stays in place, and all the other items are
+	 * moved after it.  So, if there are no similar clauses, the order of
+	 * clauses stays the same.  When there are some groups, required
+	 * reordering happens while the rest of the clauses remain in their
+	 * places.  That is achieved by assigning a 'groupindex' to each clause:
+	 * the number of the first item in the group in the original clause list.
+	 */
 	qsort(matches, n, sizeof(OrArgIndexMatch), or_arg_index_match_cmp);
+
+	/* Assign groupindex to the sorted clauses */
+	for (i = 1; i < n; i++)
+	{
+		/*
+		 * When two clauses are similar and should belong to the same group,
+		 * copy the 'groupindex' from the previous clause.  Given we are
+		 * considering clauses in direct order, all the clauses would have a
+		 * 'groupindex' equal to the 'groupindex' of the first clause in the
+		 * group.
+		 */
+		if (matches[i].indexnum == matches[i - 1].indexnum &&
+			matches[i].colnum == matches[i - 1].colnum &&
+			matches[i].opno == matches[i - 1].opno &&
+			matches[i].inputcollid == matches[i - 1].inputcollid &&
+			matches[i].indexnum != -1)
+			matches[i].groupindex = matches[i - 1].groupindex;
+	}
+
+	/* Re-sort clauses first by groupindex then by argindex */
+	qsort(matches, n, sizeof(OrArgIndexMatch), or_arg_index_match_cmp_group);
 
 	/*
 	 * Group similar clauses into single sub-restrictinfo. Side effect: the

@@ -1355,6 +1355,17 @@ SELECT  b.relname,
   ORDER BY 1;
 DROP TABLE concur_temp_tab_1, concur_temp_tab_2, reindex_temp_before;
 
+-- No OR-clause groupings should happen, and there should be no clause
+-- permutations in the filtering conditions we could see in the EXPLAIN.
+EXPLAIN (COSTS OFF)
+SELECT * FROM tenk1 WHERE unique1 < 1 OR hundred < 2;
+
+-- OR clauses in the 'unique1' column are grouped, so clause permutation
+-- occurs. W e can see it in the 'Recheck Cond': the second clause involving
+-- the 'unique1' column goes just after the first one.
+EXPLAIN (COSTS OFF)
+SELECT * FROM tenk1 WHERE unique1 < 1 OR unique1 < 3 OR hundred < 2;
+
 -- Check bitmap scan can consider similar OR arguments separately without
 -- grouping them into SAOP.
 CREATE TABLE bitmap_split_or (a int NOT NULL, b int NOT NULL, c int NOT NULL);

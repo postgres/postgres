@@ -1899,13 +1899,13 @@ SELECT * FROM tenk1
                                                                 QUERY PLAN                                                                 
 -------------------------------------------------------------------------------------------------------------------------------------------
  Bitmap Heap Scan on tenk1
-   Recheck Cond: (((thousand = 42) AND (tenthous IS NULL)) OR ((thousand = 42) AND ((tenthous = 1) OR (tenthous = 3) OR (tenthous = 42))))
+   Recheck Cond: (((thousand = 42) AND ((tenthous = 1) OR (tenthous = 3) OR (tenthous = 42))) OR ((thousand = 42) AND (tenthous IS NULL)))
    Filter: ((tenthous = 1) OR (tenthous = 3) OR (tenthous = 42) OR (tenthous IS NULL))
    ->  BitmapOr
          ->  Bitmap Index Scan on tenk1_thous_tenthous
-               Index Cond: ((thousand = 42) AND (tenthous IS NULL))
-         ->  Bitmap Index Scan on tenk1_thous_tenthous
                Index Cond: ((thousand = 42) AND (tenthous = ANY ('{1,3,42}'::integer[])))
+         ->  Bitmap Index Scan on tenk1_thous_tenthous
+               Index Cond: ((thousand = 42) AND (tenthous IS NULL))
 (8 rows)
 
 EXPLAIN (COSTS OFF)
@@ -1938,13 +1938,13 @@ SELECT * FROM tenk1
                                                                      QUERY PLAN                                                                      
 -----------------------------------------------------------------------------------------------------------------------------------------------------
  Bitmap Heap Scan on tenk1
-   Recheck Cond: (((thousand = 42) AND ((tenthous = '3'::bigint) OR (tenthous = '42'::bigint))) OR ((thousand = 42) AND (tenthous = '1'::smallint)))
+   Recheck Cond: (((thousand = 42) AND (tenthous = '1'::smallint)) OR ((thousand = 42) AND ((tenthous = '3'::bigint) OR (tenthous = '42'::bigint))))
    Filter: ((tenthous = '1'::smallint) OR (tenthous = '3'::bigint) OR (tenthous = '42'::bigint))
    ->  BitmapOr
          ->  Bitmap Index Scan on tenk1_thous_tenthous
-               Index Cond: ((thousand = 42) AND (tenthous = ANY ('{3,42}'::bigint[])))
-         ->  Bitmap Index Scan on tenk1_thous_tenthous
                Index Cond: ((thousand = 42) AND (tenthous = '1'::smallint))
+         ->  Bitmap Index Scan on tenk1_thous_tenthous
+               Index Cond: ((thousand = 42) AND (tenthous = ANY ('{3,42}'::bigint[])))
 (8 rows)
 
 EXPLAIN (COSTS OFF)
@@ -2129,16 +2129,16 @@ SELECT count(*) FROM tenk1
 ---------------------------------------------------------------------------------------------------------------------------
  Aggregate
    ->  Bitmap Heap Scan on tenk1
-         Recheck Cond: ((hundred = 42) AND (((thousand = 99) AND (tenthous = 2)) OR ((thousand = 42) OR (thousand = 41))))
+         Recheck Cond: ((hundred = 42) AND (((thousand = 42) OR (thousand = 41)) OR ((thousand = 99) AND (tenthous = 2))))
          Filter: ((thousand = 42) OR (thousand = 41) OR ((thousand = 99) AND (tenthous = 2)))
          ->  BitmapAnd
                ->  Bitmap Index Scan on tenk1_hundred
                      Index Cond: (hundred = 42)
                ->  BitmapOr
                      ->  Bitmap Index Scan on tenk1_thous_tenthous
-                           Index Cond: ((thousand = 99) AND (tenthous = 2))
-                     ->  Bitmap Index Scan on tenk1_thous_tenthous
                            Index Cond: (thousand = ANY ('{42,41}'::integer[]))
+                     ->  Bitmap Index Scan on tenk1_thous_tenthous
+                           Index Cond: ((thousand = 99) AND (tenthous = 2))
 (12 rows)
 
 SELECT count(*) FROM tenk1
@@ -3248,6 +3248,37 @@ SELECT  b.relname,
 (2 rows)
 
 DROP TABLE concur_temp_tab_1, concur_temp_tab_2, reindex_temp_before;
+-- No OR-clause groupings should happen, and there should be no clause
+-- permutations in the filtering conditions we could see in the EXPLAIN.
+EXPLAIN (COSTS OFF)
+SELECT * FROM tenk1 WHERE unique1 < 1 OR hundred < 2;
+                    QUERY PLAN                    
+--------------------------------------------------
+ Bitmap Heap Scan on tenk1
+   Recheck Cond: ((unique1 < 1) OR (hundred < 2))
+   ->  BitmapOr
+         ->  Bitmap Index Scan on tenk1_unique1
+               Index Cond: (unique1 < 1)
+         ->  Bitmap Index Scan on tenk1_hundred
+               Index Cond: (hundred < 2)
+(7 rows)
+
+-- OR clauses in the 'unique1' column are grouped, so clause permutation
+-- occurs. W e can see it in the 'Recheck Cond': the second clause involving
+-- the 'unique1' column goes just after the first one.
+EXPLAIN (COSTS OFF)
+SELECT * FROM tenk1 WHERE unique1 < 1 OR unique1 < 3 OR hundred < 2;
+                             QUERY PLAN                              
+---------------------------------------------------------------------
+ Bitmap Heap Scan on tenk1
+   Recheck Cond: (((unique1 < 1) OR (unique1 < 3)) OR (hundred < 2))
+   ->  BitmapOr
+         ->  Bitmap Index Scan on tenk1_unique1
+               Index Cond: (unique1 < ANY ('{1,3}'::integer[]))
+         ->  Bitmap Index Scan on tenk1_hundred
+               Index Cond: (hundred < 2)
+(7 rows)
+
 -- Check bitmap scan can consider similar OR arguments separately without
 -- grouping them into SAOP.
 CREATE TABLE bitmap_split_or (a int NOT NULL, b int NOT NULL, c int NOT NULL);

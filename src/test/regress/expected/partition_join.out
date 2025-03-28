@@ -2568,24 +2568,24 @@ where not exists (select 1 from prtx2
          ->  Seq Scan on prtx1_1
                Filter: ((a < 20) AND (c = 91))
          ->  Bitmap Heap Scan on prtx2_1
-               Recheck Cond: ((c = 99) OR (b = (prtx1_1.b + 1)))
+               Recheck Cond: ((b = (prtx1_1.b + 1)) OR (c = 99))
                Filter: (a = prtx1_1.a)
                ->  BitmapOr
-                     ->  Bitmap Index Scan on prtx2_1_c_idx
-                           Index Cond: (c = 99)
                      ->  Bitmap Index Scan on prtx2_1_b_idx
                            Index Cond: (b = (prtx1_1.b + 1))
+                     ->  Bitmap Index Scan on prtx2_1_c_idx
+                           Index Cond: (c = 99)
    ->  Nested Loop Anti Join
          ->  Seq Scan on prtx1_2
                Filter: ((a < 20) AND (c = 91))
          ->  Bitmap Heap Scan on prtx2_2
-               Recheck Cond: ((c = 99) OR (b = (prtx1_2.b + 1)))
+               Recheck Cond: ((b = (prtx1_2.b + 1)) OR (c = 99))
                Filter: (a = prtx1_2.a)
                ->  BitmapOr
-                     ->  Bitmap Index Scan on prtx2_2_c_idx
-                           Index Cond: (c = 99)
                      ->  Bitmap Index Scan on prtx2_2_b_idx
                            Index Cond: (b = (prtx1_2.b + 1))
+                     ->  Bitmap Index Scan on prtx2_2_c_idx
+                           Index Cond: (c = 99)
 (23 rows)
 
 select * from prtx1
