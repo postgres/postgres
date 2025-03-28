@@ -21,7 +21,10 @@
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
 
-PG_MODULE_MAGIC;
+PG_MODULE_MAGIC_EXT(
+					.name = "pg_overexplain",
+					.version = PG_VERSION
+);
 
 typedef struct
 {
