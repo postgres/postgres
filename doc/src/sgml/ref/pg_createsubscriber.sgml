@@ -88,16 +88,36 @@ PostgreSQL documentation
 
    <variablelist>
     <varlistentry>
+     <term><option>-a</option></term>
+     <term><option>--all</option></term>
+     <listitem>
+      <para>
+       Create one subscription per database on the target server. Exceptions
+       are template databases and databases that don't allow connections.
+       If the database name is not specified in publisher-server, the postgres
+       database will be used, or if that does not exist, template1 will be used.
+       Automatically generated names for subscriptions, publications, and
+       replication slots are used when this option is specified.
+       This option cannot be used along with <option>--database</option>,
+       <option>--publication</option>, <option>--replication-slot</option>, or
+       <option>--subscription</option>.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
      <term><option>-d <replaceable class="parameter">dbname</replaceable></option></term>
      <term><option>--database=<replaceable class="parameter">dbname</replaceable></option></term>
      <listitem>
       <para>
        The name of the database in which to create a subscription.  Multiple
        databases can be selected by writing multiple <option>-d</option>
-       switches. If <option>-d</option> option is not provided, the database
-       name will be obtained from <option>-P</option> option. If the database
-       name is not specified in either the <option>-d</option> option or
-       <option>-P</option> option, an error will be reported.
+       switches. This option cannot be used together with <option>-a</option>.
+       If <option>-d</option> option is not provided, the database name will be
+       obtained from <option>-P</option> option. If the database name is not
+       specified in either the <option>-d</option> option, or the
+       <option>-P</option> option, and <option>-a</option> option is not
+       specified, an error will be reported.
       </para>
      </listitem>
     </varlistentry>
@@ -253,7 +273,8 @@ PostgreSQL documentation
        names must match the number of specified databases, otherwise an error
        is reported.  The order of the multiple publication name switches must
        match the order of database switches.  If this option is not specified,
-       a generated name is assigned to the publication name.
+       a generated name is assigned to the publication name. This option cannot
+       be used together with <option>--all</option>.
       </para>
      </listitem>
     </varlistentry>
@@ -269,7 +290,8 @@ PostgreSQL documentation
        otherwise an error is reported.  The order of the multiple replication
        slot name switches must match the order of database switches.  If this
        option is not specified, the subscription name is assigned to the
-       replication slot name.
+       replication slot name. This option cannot be used together with
+       <option>--all</option>.
       </para>
      </listitem>
     </varlistentry>
@@ -284,7 +306,8 @@ PostgreSQL documentation
        names must match the number of specified databases, otherwise an error
        is reported.  The order of the multiple subscription name switches must
        match the order of database switches.  If this option is not specified,
-       a generated name is assigned to the subscription name.
+       a generated name is assigned to the subscription name. This option cannot
+       be used together with <option>--all</option>.
       </para>
      </listitem>
     </varlistentry>

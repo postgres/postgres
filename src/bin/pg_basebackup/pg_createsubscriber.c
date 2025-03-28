@@ -45,6 +45,7 @@ struct CreateSubscriberOptions
 	SimpleStringList sub_names; /* list of subscription names */
 	SimpleStringList replslot_names;	/* list of replication slot names */
 	int			recovery_timeout;	/* stop recovery after this time */
+	bool		all_dbs;		/* all option */
 	SimpleStringList objecttypes_to_remove; /* list of object types to remove */
 };
 
@@ -124,6 +125,8 @@ static void check_and_drop_existing_subscriptions(PGconn *conn,
 												  const struct LogicalRepInfo *dbinfo);
 static void drop_existing_subscriptions(PGconn *conn, const char *subname,
 										const char *dbname);
+static void get_publisher_databases(struct CreateSubscriberOptions *opt,
+									bool dbnamespecified);
 
 #define	USEC_PER_SEC	1000000
 #define	WAIT_INTERVAL	1		/* 1 second */
@@ -243,6 +246,8 @@ usage(void)
 	printf(_("Usage:\n"));
 	printf(_("  %s [OPTION]...\n"), progname);
 	printf(_("\nOptions:\n"));
+	printf(_("  -a, --all                       create subscriptions for all databases except template\n"
+			 "                                  databases or databases that don't allow connections\n"));
 	printf(_("  -d, --database=DBNAME           database in which to create a subscription\n"));
 	printf(_("  -D, --pgdata=DATADIR            location for the subscriber data directory\n"));
 	printf(_("  -n, --dry-run                   dry run, just show what would be done\n"));
@@ -1959,11 +1964,65 @@ enable_subscription(PGconn *conn, const struct LogicalRepInfo *dbinfo)
 	destroyPQExpBuffer(str);
 }
 
+/*
+ * Fetch a list of all not-template databases from the source server and form
+ * a list such that they appear as if the user has specified multiple
+ * --database options, one for each source database.
+ */
+static void
+get_publisher_databases(struct CreateSubscriberOptions *opt,
+						bool dbnamespecified)
+{
+	PGconn	   *conn;
+	PGresult   *res;
+
+	/* If a database name was specified, just connect to it. */
+	if (dbnamespecified)
+		conn = connect_database(opt->pub_conninfo_str, true);
+	else
+	{
+		/* Otherwise, try postgres first and then template1. */
+		char	   *conninfo;
+
+		conninfo = concat_conninfo_dbname(opt->pub_conninfo_str, "postgres");
+		conn = connect_database(conninfo, false);
+		pg_free(conninfo);
+		if (!conn)
+		{
+			conninfo = concat_conninfo_dbname(opt->pub_conninfo_str, "template1");
+			conn = connect_database(conninfo, true);
+			pg_free(conninfo);
+		}
+	}
+
+	res = PQexec(conn, "SELECT datname FROM pg_database WHERE datistemplate = false AND datallowconn AND datconnlimit <> -2 ORDER BY 1");
+	if (PQresultStatus(res) != PGRES_TUPLES_OK)
+	{
+		pg_log_error("could not obtain a list of databases: %s", PQresultErrorMessage(res));
+		PQclear(res);
+		disconnect_database(conn, true);
+	}
+
+	for (int i = 0; i < PQntuples(res); i++)
+	{
+		const char *dbname = PQgetvalue(res, i, 0);
+
+		simple_string_list_append(&opt->database_names, dbname);
+
+		/* Increment num_dbs to reflect multiple --database options */
+		num_dbs++;
+	}
+
+	PQclear(res);
+	disconnect_database(conn, false);
+}
+
 int
 main(int argc, char **argv)
 {
 	static struct option long_options[] =
 	{
+		{"all", no_argument, NULL, 'a'},
 		{"database", required_argument, NULL, 'd'},
 		{"pgdata", required_argument, NULL, 'D'},
 		{"dry-run", no_argument, NULL, 'n'},
@@ -2034,6 +2093,7 @@ main(int argc, char **argv)
 		0
 	};
 	opt.recovery_timeout = 0;
+	opt.all_dbs = false;
 
 	/*
 	 * Don't allow it to be run as root. It uses pg_ctl which does not allow
@@ -2051,11 +2111,14 @@ main(int argc, char **argv)
 
 	get_restricted_token();
 
-	while ((c = getopt_long(argc, argv, "d:D:np:P:R:s:t:TU:v",
+	while ((c = getopt_long(argc, argv, "ad:D:np:P:R:s:t:TU:v",
 							long_options, &option_index)) != -1)
 	{
 		switch (c)
 		{
+			case 'a':
+				opt.all_dbs = true;
+				break;
 			case 'd':
 				if (!simple_string_list_member(&opt.database_names, optarg))
 				{
@@ -2149,6 +2212,28 @@ main(int argc, char **argv)
 		}
 	}
 
+	/* Validate that --all is not used with incompatible options */
+	if (opt.all_dbs)
+	{
+		char	   *bad_switch = NULL;
+
+		if (num_dbs > 0)
+			bad_switch = "--database";
+		else if (num_pubs > 0)
+			bad_switch = "--publication";
+		else if (num_replslots > 0)
+			bad_switch = "--replication-slot";
+		else if (num_subs > 0)
+			bad_switch = "--subscription";
+
+		if (bad_switch)
+		{
+			pg_log_error("%s cannot be used with --all", bad_switch);
+			pg_log_error_hint("Try \"%s --help\" for more information.", progname);
+			exit(1);
+		}
+	}
+
 	/* Any non-option arguments? */
 	if (optind < argc)
 	{
@@ -2202,14 +2287,25 @@ main(int argc, char **argv)
 	pg_log_info("validating subscriber connection string");
 	sub_base_conninfo = get_sub_conninfo(&opt);
 
+	/*
+	 * Fetch all databases from the source (publisher) and treat them as if
+	 * the user specified has multiple --database options, one for each source
+	 * database.
+	 */
+	if (opt.all_dbs)
+	{
+		bool		dbnamespecified = (dbname_conninfo != NULL);
+
+		get_publisher_databases(&opt, dbnamespecified);
+	}
+
 	if (opt.database_names.head == NULL)
 	{
 		pg_log_info("no database was specified");
 
 		/*
-		 * If --database option is not provided, try to obtain the dbname from
-		 * the publisher conninfo. If dbname parameter is not available, error
-		 * out.
+		 * Try to obtain the dbname from the publisher conninfo. If dbname
+		 * parameter is not available, error out.
 		 */
 		if (dbname_conninfo)
 		{

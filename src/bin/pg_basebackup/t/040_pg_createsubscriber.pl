@@ -386,6 +386,63 @@ command_ok(
 	],
 	'run pg_createsubscriber without --databases');
 
+# run pg_createsubscriber with '--database' and '--all' without '--dry-run'
+# and verify the failure
+command_fails_like(
+	[
+		'pg_createsubscriber',
+		'--verbose',
+		'--pgdata' => $node_s->data_dir,
+		'--publisher-server' => $node_p->connstr($db1),
+		'--socketdir' => $node_s->host,
+		'--subscriber-port' => $node_s->port,
+		'--database' => $db1,
+		'--all',
+	],
+	qr/--database cannot be used with --all/,
+	'fail if --database is used with --all');
+
+# run pg_createsubscriber with '--publication' and '--all' and verify
+# the failure
+command_fails_like(
+	[
+		'pg_createsubscriber',
+		'--verbose',
+		'--dry-run',
+		'--pgdata' => $node_s->data_dir,
+		'--publisher-server' => $node_p->connstr($db1),
+		'--socketdir' => $node_s->host,
+		'--subscriber-port' => $node_s->port,
+		'--all',
+		'--publication' => 'pub1',
+	],
+	qr/--publication cannot be used with --all/,
+	'fail if --publication is used with --all');
+
+# run pg_createsubscriber with '--all' option
+my ($stdout, $stderr) = run_command(
+	[
+		'pg_createsubscriber',
+		'--verbose',
+		'--dry-run',
+		'--recovery-timeout' => $PostgreSQL::Test::Utils::timeout_default,
+		'--pgdata' => $node_s->data_dir,
+		'--publisher-server' => $node_p->connstr,
+		'--socketdir' => $node_s->host,
+		'--subscriber-port' => $node_s->port,
+		'--all',
+	],
+	'run pg_createsubscriber with --all');
+
+# Verify that the required logical replication objects are output.
+# The expected count 3 refers to postgres, $db1 and $db2 databases.
+is(scalar(() = $stderr =~ /creating publication/g),
+	3, "verify publications are created for all databases");
+is(scalar(() = $stderr =~ /creating the replication slot/g),
+	3, "verify replication slots are created for all databases");
+is(scalar(() = $stderr =~ /creating subscription/g),
+	3, "verify subscriptions are created for all databases");
+
 # Run pg_createsubscriber on node S.  --verbose is used twice
 # to show more information.
 # In passing, also test the --enable-two-phase option and
