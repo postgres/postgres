@@ -2070,6 +2070,15 @@ if test x"$host_cpu" = x"x86_64"; then
   fi
 fi
 
+# Check for SVE popcount intrinsics
+#
+if test x"$host_cpu" = x"aarch64"; then
+  PGAC_SVE_POPCNT_INTRINSICS()
+  if test x"$pgac_sve_popcnt_intrinsics" = x"yes"; then
+    AC_DEFINE(USE_SVE_POPCNT_WITH_RUNTIME_CHECK, 1, [Define to 1 to use SVE popcount instructions with a runtime check.])
+  fi
+fi
+
 # Check for Intel SSE 4.2 intrinsics to do CRC calculations.
 #
 PGAC_SSE42_CRC32_INTRINSICS()

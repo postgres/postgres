@@ -324,6 +324,23 @@ extern uint64 pg_popcount_avx512(const char *buf, int bytes);
 extern uint64 pg_popcount_masked_avx512(const char *buf, int bytes, bits8 mask);
 #endif
 
+#elif POPCNT_AARCH64
+/* Use the Neon version of pg_popcount{32,64} without function pointer. */
+extern int	pg_popcount32(uint32 word);
+extern int	pg_popcount64(uint64 word);
+
+/*
+ * We can try to use an SVE-optimized pg_popcount() on some systems  For that,
+ * we do use a function pointer.
+ */
+#ifdef USE_SVE_POPCNT_WITH_RUNTIME_CHECK
+extern PGDLLIMPORT uint64 (*pg_popcount_optimized) (const char *buf, int bytes);
+extern PGDLLIMPORT uint64 (*pg_popcount_masked_optimized) (const char *buf, int bytes, bits8 mask);
+#else
+extern uint64 pg_popcount_optimized(const char *buf, int bytes);
+extern uint64 pg_popcount_masked_optimized(const char *buf, int bytes, bits8 mask);
+#endif
+
 #else
 /* Use a portable implementation -- no need for a function pointer. */
 extern int	pg_popcount32(uint32 word);

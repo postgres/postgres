@@ -2298,6 +2298,54 @@ endif
 
 
 ###############################################################
+# Check for the availability of SVE popcount intrinsics.
+###############################################################
+
+if host_cpu == 'aarch64'
+
+  prog = '''
+#include <arm_sve.h>
+
+char buf[128];
+
+#if defined(__has_attribute) && __has_attribute (target)
+__attribute__((target("arch=armv8-a+sve")))
+#endif
+int main(void)
+{
+	svbool_t	pred = svptrue_b64();
+	svuint8_t	vec8;
+	svuint64_t	accum1 = svdup_u64(0),
+				accum2 = svdup_u64(0),
+				vec64;
+	char	   *p = buf;
+	uint64_t	popcnt,
+				mask = 0x5555555555555555;
+
+	vec64 = svand_n_u64_x(pred, svld1_u64(pred, (const uint64_t *) p), mask);
+	accum1 = svadd_u64_x(pred, accum1, svcnt_u64_x(pred, vec64));
+	p += svcntb();
+
+	vec64 = svand_n_u64_x(pred, svld1_u64(pred, (const uint64_t *) p), mask);
+	accum2 = svadd_u64_x(pred, accum2, svcnt_u64_x(pred, vec64));
+	p += svcntb();
+
+	popcnt = svaddv_u64(pred, svadd_u64_x(pred, accum1, accum2));
+
+	pred = svwhilelt_b8_s32(0, sizeof(buf));
+	vec8 = svand_n_u8_x(pred, svld1_u8(pred, (const uint8_t *) p), 0x55);
+	return (int) (popcnt + svaddv_u8(pred, svcnt_u8_x(pred, vec8)));
+}
+'''
+
+  if cc.links(prog, name: 'SVE popcount', args: test_c_args)
+    cdata.set('USE_SVE_POPCNT_WITH_RUNTIME_CHECK', 1)
+  endif
+
+endif
+
+
+###############################################################
 # Select CRC-32C implementation.
 #
 # If we are targeting a processor that has Intel SSE 4.2 instructions, we can
