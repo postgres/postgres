@@ -2747,6 +2747,8 @@ SimpleActionListCell
 SimpleEcontextStackEntry
 SimpleOidList
 SimpleOidListCell
+SimpleOidStringList
+SimpleOidListStringCell
 SimplePtrList
 SimplePtrListCell
 SimpleStats
