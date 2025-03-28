@@ -59,7 +59,6 @@ static size_t strnxfrm_libc(char *dest, size_t destsize,
 extern char *get_collation_actual_version_libc(const char *collcollate);
 static locale_t make_libc_collator(const char *collate,
 								   const char *ctype);
-static void report_newlocale_failure(const char *localename);
 
 #ifdef WIN32
 static int	strncoll_libc_win32_utf8(const char *arg1, ssize_t len1,
@@ -801,7 +800,7 @@ strncoll_libc_win32_utf8(const char *arg1, ssize_t len1, const char *arg2,
 #endif							/* WIN32 */
 
 /* simple subroutine for reporting errors from newlocale() */
-static void
+void
 report_newlocale_failure(const char *localename)
 {
 	int			save_errno;

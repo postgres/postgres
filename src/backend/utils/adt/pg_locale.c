@@ -18,34 +18,13 @@
  * LC_MESSAGES is settable at run time and will take effect
  * immediately.
  *
- * The other categories, LC_MONETARY, LC_NUMERIC, and LC_TIME are also
- * settable at run-time.  However, we don't actually set those locale
- * categories permanently.  This would have bizarre effects like no
- * longer accepting standard floating-point literals in some locales.
- * Instead, we only set these locale categories briefly when needed,
- * cache the required information obtained from localeconv() or
- * strftime(), and then set the locale categories back to "C".
+ * The other categories, LC_MONETARY, LC_NUMERIC, and LC_TIME are
+ * permanentaly set to "C", and then we use temporary locale_t
+ * objects when we need to look up locale data based on the GUCs
+ * of the same name.  Information is cached when the GUCs change.
  * The cached information is only used by the formatting functions
  * (to_char, etc.) and the money type.  For the user, this should all be
  * transparent.
- *
- * !!! NOW HEAR THIS !!!
- *
- * We've been bitten repeatedly by this bug, so let's try to keep it in
- * mind in future: on some platforms, the locale functions return pointers
- * to static data that will be overwritten by any later locale function.
- * Thus, for example, the obvious-looking sequence
- *			save = setlocale(category, NULL);
- *			if (!setlocale(category, value))
- *				fail = true;
- *			setlocale(category, save);
- * DOES NOT WORK RELIABLY: on some platforms the second setlocale() call
- * will change the memory save is pointing at.  To do this sort of thing
- * safely, you *must* pstrdup what setlocale returns the first time.
- *
- * The POSIX locale standard is available here:
- *
- *	http://www.opengroup.org/onlinepubs/009695399/basedefs/xbd_chap07.html
  *----------
  */
 
@@ -667,8 +646,8 @@ PGLC_localeconv(void)
  * pg_strftime(), which isn't locale-aware and does not need to be replaced.
  */
 static size_t
-strftime_win32(char *dst, size_t dstlen,
-			   const char *format, const struct tm *tm)
+strftime_l_win32(char *dst, size_t dstlen,
+				 const char *format, const struct tm *tm, locale_t locale)
 {
 	size_t		len;
 	wchar_t		wformat[8];		/* formats used below need 3 chars */
@@ -684,7 +663,7 @@ strftime_win32(char *dst, size_t dstlen,
 		elog(ERROR, "could not convert format string from UTF-8: error code %lu",
 			 GetLastError());
 
-	len = wcsftime(wbuf, MAX_L10N_DATA, wformat, tm);
+	len = _wcsftime_l(wbuf, MAX_L10N_DATA, wformat, tm, locale);
 	if (len == 0)
 	{
 		/*
@@ -705,8 +684,8 @@ strftime_win32(char *dst, size_t dstlen,
 	return len;
 }
 
-/* redefine strftime() */
-#define strftime(a,b,c,d) strftime_win32(a,b,c,d)
+/* redefine strftime_l() */
+#define strftime_l(a,b,c,d,e) strftime_l_win32(a,b,c,d,e)
 #endif							/* WIN32 */
 
 /*
@@ -748,10 +727,7 @@ cache_locale_time(void)
 	bool		strftimefail = false;
 	int			encoding;
 	int			i;
-	char	   *save_lc_time;
-#ifdef WIN32
-	char	   *save_lc_ctype;
-#endif
+	locale_t	locale;
 
 	/* did we do this already? */
 	if (CurrentLCTimeValid)
@@ -759,39 +735,16 @@ cache_locale_time(void)
 
 	elog(DEBUG3, "cache_locale_time() executed; locale: \"%s\"", locale_time);
 
-	/*
-	 * As in PGLC_localeconv(), it's critical that we not throw error while
-	 * libc's locale settings have nondefault values.  Hence, we just call
-	 * strftime() within the critical section, and then convert and save its
-	 * results afterwards.
-	 */
-
-	/* Save prevailing value of time locale */
-	save_lc_time = setlocale(LC_TIME, NULL);
-	if (!save_lc_time)
-		elog(ERROR, "setlocale(NULL) failed");
-	save_lc_time = pstrdup(save_lc_time);
-
+	errno = ENOENT;
 #ifdef WIN32
-
-	/*
-	 * On Windows, it appears that wcsftime() internally uses LC_CTYPE, so we
-	 * must set it here.  This code looks the same as what PGLC_localeconv()
-	 * does, but the underlying reason is different: this does NOT determine
-	 * the encoding we'll get back from strftime_win32().
-	 */
-
-	/* Save prevailing value of ctype locale */
-	save_lc_ctype = setlocale(LC_CTYPE, NULL);
-	if (!save_lc_ctype)
-		elog(ERROR, "setlocale(NULL) failed");
-	save_lc_ctype = pstrdup(save_lc_ctype);
-
-	/* use lc_time to set the ctype */
-	setlocale(LC_CTYPE, locale_time);
+	locale = _create_locale(LC_ALL, locale_time);
+	if (locale == (locale_t) 0)
+		_dosmaperr(GetLastError());
+#else
+	locale = newlocale(LC_ALL_MASK, locale_time, (locale_t) 0);
 #endif
-
-	setlocale(LC_TIME, locale_time);
+	if (!locale)
+		report_newlocale_failure(locale_time);
 
 	/* We use times close to current time as data for strftime(). */
 	timenow = time(NULL);
@@ -814,10 +767,10 @@ cache_locale_time(void)
 	for (i = 0; i < 7; i++)
 	{
 		timeinfo->tm_wday = i;
-		if (strftime(bufptr, MAX_L10N_DATA, "%a", timeinfo) <= 0)
+		if (strftime_l(bufptr, MAX_L10N_DATA, "%a", timeinfo, locale) <= 0)
 			strftimefail = true;
 		bufptr += MAX_L10N_DATA;
-		if (strftime(bufptr, MAX_L10N_DATA, "%A", timeinfo) <= 0)
+		if (strftime_l(bufptr, MAX_L10N_DATA, "%A", timeinfo, locale) <= 0)
 			strftimefail = true;
 		bufptr += MAX_L10N_DATA;
 	}
@@ -827,37 +780,26 @@ cache_locale_time(void)
 	{
 		timeinfo->tm_mon = i;
 		timeinfo->tm_mday = 1;	/* make sure we don't have invalid date */
-		if (strftime(bufptr, MAX_L10N_DATA, "%b", timeinfo) <= 0)
+		if (strftime_l(bufptr, MAX_L10N_DATA, "%b", timeinfo, locale) <= 0)
 			strftimefail = true;
 		bufptr += MAX_L10N_DATA;
-		if (strftime(bufptr, MAX_L10N_DATA, "%B", timeinfo) <= 0)
+		if (strftime_l(bufptr, MAX_L10N_DATA, "%B", timeinfo, locale) <= 0)
 			strftimefail = true;
 		bufptr += MAX_L10N_DATA;
 	}
 
-	/*
-	 * Restore the prevailing locale settings; as in PGLC_localeconv(),
-	 * failure to do so is fatal.
-	 */
 #ifdef WIN32
-	if (!setlocale(LC_CTYPE, save_lc_ctype))
-		elog(FATAL, "failed to restore LC_CTYPE to \"%s\"", save_lc_ctype);
+	_free_locale(locale);
+#else
+	freelocale(locale);
 #endif
-	if (!setlocale(LC_TIME, save_lc_time))
-		elog(FATAL, "failed to restore LC_TIME to \"%s\"", save_lc_time);
 
 	/*
 	 * At this point we've done our best to clean up, and can throw errors, or
 	 * call functions that might throw errors, with a clean conscience.
 	 */
 	if (strftimefail)
-		elog(ERROR, "strftime() failed: %m");
-
-	/* Release the pstrdup'd locale names */
-	pfree(save_lc_time);
-#ifdef WIN32
-	pfree(save_lc_ctype);
-#endif
+		elog(ERROR, "strftime_l() failed");
 
 #ifndef WIN32
 
