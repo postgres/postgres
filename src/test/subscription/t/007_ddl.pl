@@ -130,16 +130,18 @@ $node_publisher->safe_psql('postgres', qq[
 	CREATE PUBLICATION pub_for_all_tables FOR ALL TABLES;
 ]);
 $node_subscriber->safe_psql('postgres',
-	"CREATE SUBSCRIPTION tap_sub CONNECTION '$publisher_connstr' PUBLICATION pub_for_tab WITH (copy_data = off)"
+	"CREATE SUBSCRIPTION tap_sub CONNECTION '$publisher_connstr' PUBLICATION pub_for_tab"
 );
+$node_subscriber->wait_for_subscription_sync($node_publisher, 'tap_sub');
 
 # Confirms RENAME command works well for a publication
 test_swap('test1', 'pub_for_tab', 'tap_sub');
 
 # Switches a publication which includes all tables
 $node_subscriber->safe_psql('postgres',
-	"ALTER SUBSCRIPTION tap_sub SET PUBLICATION pub_for_all_tables WITH (refresh = true, copy_data = false);"
+	"ALTER SUBSCRIPTION tap_sub SET PUBLICATION pub_for_all_tables;"
 );
+$node_subscriber->wait_for_subscription_sync($node_publisher, 'tap_sub');
 
 # Confirms RENAME command works well for ALL TABLES publication
 test_swap('test2', 'pub_for_all_tables', 'tap_sub');
