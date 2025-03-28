@@ -29,6 +29,7 @@
 #define NS_PER_S	INT64CONST(1000000000)
 #define NS_PER_MS	INT64CONST(1000000)
 #define NS_PER_US	INT64CONST(1000)
+#define US_PER_MS	INT64CONST(1000)
 
 /*
  * UUID version 7 uses 12 bits in "rand_a" to store  1/4096 (or 2^12) fractions of
@@ -69,6 +70,7 @@ static bool uuid_abbrev_abort(int memtupcount, SortSupport ssup);
 static Datum uuid_abbrev_convert(Datum original, SortSupport ssup);
 static inline void uuid_set_version(pg_uuid_t *uuid, unsigned char version);
 static inline int64 get_real_time_ns_ascending();
+static pg_uuid_t *generate_uuidv7(uint64 unix_ts_ms, uint32 sub_ms);
 
 Datum
 uuid_in(PG_FUNCTION_ARGS)
@@ -523,17 +525,17 @@ get_real_time_ns_ascending()
  * described in the RFC. This method utilizes 12 bits from the "rand_a" bits
  * to store a 1/4096 (or 2^12) fraction of sub-millisecond precision.
  *
- * ns is a number of nanoseconds since start of the UNIX epoch. This value is
+ * unix_ts_ms is a number of milliseconds since start of the UNIX epoch,
+ * and sub_ms is a number of nanoseconds within millisecond. These values are
  * used for time-dependent bits of UUID.
+ *
+ * NB: all numbers here are unsigned, unix_ts_ms cannot be negative per RFC.
  */
 static pg_uuid_t *
-generate_uuidv7(int64 ns)
+generate_uuidv7(uint64 unix_ts_ms, uint32 sub_ms)
 {
 	pg_uuid_t  *uuid = palloc(UUID_LEN);
-	int64		unix_ts_ms;
-	int32		increased_clock_precision;
-
-	unix_ts_ms = ns / NS_PER_MS;
+	uint32		increased_clock_precision;
 
 	/* Fill in time part */
 	uuid->data[0] = (unsigned char) (unix_ts_ms >> 40);
@@ -547,7 +549,7 @@ generate_uuidv7(int64 ns)
 	 * sub-millisecond timestamp fraction (SUBMS_BITS bits, not
 	 * SUBMS_MINIMAL_STEP_BITS)
 	 */
-	increased_clock_precision = ((ns % NS_PER_MS) * (1 << SUBMS_BITS)) / NS_PER_MS;
+	increased_clock_precision = (sub_ms * (1 << SUBMS_BITS)) / NS_PER_MS;
 
 	/* Fill the increased clock precision to "rand_a" bits */
 	uuid->data[6] = (unsigned char) (increased_clock_precision >> 8);
@@ -586,7 +588,8 @@ generate_uuidv7(int64 ns)
 Datum
 uuidv7(PG_FUNCTION_ARGS)
 {
-	pg_uuid_t  *uuid = generate_uuidv7(get_real_time_ns_ascending());
+	int64		ns = get_real_time_ns_ascending();
+	pg_uuid_t  *uuid = generate_uuidv7(ns / NS_PER_MS, ns % NS_PER_MS);
 
 	PG_RETURN_UUID_P(uuid);
 }
@@ -601,13 +604,13 @@ uuidv7_interval(PG_FUNCTION_ARGS)
 	TimestampTz ts;
 	pg_uuid_t  *uuid;
 	int64		ns = get_real_time_ns_ascending();
+	int64		us;
 
 	/*
 	 * Shift the current timestamp by the given interval. To calculate time
 	 * shift correctly, we convert the UNIX epoch to TimestampTz and use
-	 * timestamptz_pl_interval(). Since this calculation is done with
-	 * microsecond precision, we carry nanoseconds from original ns value to
-	 * shifted ns value.
+	 * timestamptz_pl_interval(). This calculation is done with microsecond
+	 * precision.
 	 */
 
 	ts = (TimestampTz) (ns / NS_PER_US) -
@@ -618,14 +621,11 @@ uuidv7_interval(PG_FUNCTION_ARGS)
 												 TimestampTzGetDatum(ts),
 												 IntervalPGetDatum(shift)));
 
-	/*
-	 * Convert a TimestampTz value back to an UNIX epoch and back nanoseconds.
-	 */
-	ns = (ts + (POSTGRES_EPOCH_JDATE - UNIX_EPOCH_JDATE) * SECS_PER_DAY * USECS_PER_SEC)
-		* NS_PER_US + ns % NS_PER_US;
+	/* Convert a TimestampTz value back to an UNIX epoch timestamp */
+	us = ts + (POSTGRES_EPOCH_JDATE - UNIX_EPOCH_JDATE) * SECS_PER_DAY * USECS_PER_SEC;
 
 	/* Generate an UUIDv7 */
-	uuid = generate_uuidv7(ns);
+	uuid = generate_uuidv7(us / US_PER_MS, (us % US_PER_MS) * NS_PER_US + ns % NS_PER_US);
 
 	PG_RETURN_UUID_P(uuid);
 }

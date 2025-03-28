@@ -119,6 +119,18 @@ SELECT count(DISTINCT guid_field) FROM guid1;
 INSERT INTO guid3 (guid_field) SELECT uuidv7() FROM generate_series(1, 10);
 SELECT array_agg(id ORDER BY guid_field) FROM guid3;
 
+-- Check the timestamp offsets for v7.
+--
+-- generate UUIDv7 values with timestamps ranging from 1970 (the Unix epoch year)
+-- to 10888 (one year before the maximum possible year), and then verify that
+-- the extracted timestamps from these UUIDv7 values have not overflowed.
+WITH uuidts AS (
+    SELECT y, ts as ts, lag(ts) OVER (ORDER BY y) AS prev_ts
+    FROM (SELECT y, uuid_extract_timestamp(uuidv7((y || ' years')::interval)) AS ts
+        FROM generate_series(1970 - extract(year from now())::int, 10888 - extract(year from now())::int) y)
+)
+SELECT y, ts, prev_ts FROM uuidts WHERE ts < prev_ts;
+
 -- extract functions
 
 -- version
