@@ -218,6 +218,37 @@ extern int	pg_fprintf(FILE *stream, const char *fmt,...) pg_attribute_printf(2, 
 extern int	pg_vprintf(const char *fmt, va_list args) pg_attribute_printf(1, 0);
 extern int	pg_printf(const char *fmt,...) pg_attribute_printf(1, 2);
 
+/*
+ * A couple of systems offer a fast constant locale_t value representing the
+ * "C" locale.  We use that if possible, but fall back to creating a singleton
+ * object otherwise.  To check that it is available, call pg_ensure_c_locale()
+ * and assume out of memory if it returns false.
+ */
+#ifdef LC_C_LOCALE
+#define PG_C_LOCALE LC_C_LOCALE
+#define pg_ensure_c_locale() true
+#else
+extern locale_t pg_get_c_locale(void);
+#define PG_C_LOCALE pg_get_c_locale()
+#define pg_ensure_c_locale() (PG_C_LOCALE != 0)
+#endif
+
+#if !defined(HAVE_STRTOD_L) && !defined(WIN32)
+/*
+ * POSIX doesn't define this function, but we can implement it with thread-safe
+ * save-and-restore.
+ */
+static inline double
+strtod_l(const char *nptr, char **endptr, locale_t loc)
+{
+	locale_t	save = uselocale(loc);
+	double		result = strtod(nptr, endptr);
+
+	uselocale(save);
+	return result;
+}
+#endif
+
 #ifndef WIN32
 /*
  * We add a pg_ prefix as a warning that the Windows implementations have the

@@ -101,9 +101,6 @@ free_statement(struct statement *stmt)
 	free_variable(stmt->outlist);
 	ecpg_free(stmt->command);
 	ecpg_free(stmt->name);
-#ifndef HAVE_USELOCALE
-	ecpg_free(stmt->oldlocale);
-#endif
 	ecpg_free(stmt);
 }
 
@@ -1974,43 +1971,6 @@ ecpg_do_prologue(int lineno, const int compat, const int force_indicator,
 		return false;
 
 	/*
-	 * Make sure we do NOT honor the locale for numeric input/output since the
-	 * database wants the standard decimal point.  If available, use
-	 * uselocale() for this because it's thread-safe.  Windows doesn't have
-	 * that, but it does have _configthreadlocale().
-	 */
-#ifdef HAVE_USELOCALE
-
-	/*
-	 * Since ecpg_init() succeeded, we have a connection.  Any successful
-	 * connection initializes ecpg_clocale.
-	 */
-	Assert(ecpg_clocale);
-	stmt->oldlocale = uselocale(ecpg_clocale);
-	if (stmt->oldlocale == (locale_t) 0)
-	{
-		ecpg_do_epilogue(stmt);
-		return false;
-	}
-#else
-#ifdef WIN32
-	stmt->oldthreadlocale = _configthreadlocale(_ENABLE_PER_THREAD_LOCALE);
-	if (stmt->oldthreadlocale == -1)
-	{
-		ecpg_do_epilogue(stmt);
-		return false;
-	}
-#endif
-	stmt->oldlocale = ecpg_strdup(setlocale(LC_NUMERIC, NULL), lineno);
-	if (stmt->oldlocale == NULL)
-	{
-		ecpg_do_epilogue(stmt);
-		return false;
-	}
-	setlocale(LC_NUMERIC, "C");
-#endif
-
-	/*
 	 * If statement type is ECPGst_prepnormal we are supposed to prepare the
 	 * statement before executing them
 	 */
@@ -2215,19 +2175,6 @@ ecpg_do_epilogue(struct statement *stmt)
 {
 	if (stmt == NULL)
 		return;
-
-#ifdef HAVE_USELOCALE
-	if (stmt->oldlocale != (locale_t) 0)
-		uselocale(stmt->oldlocale);
-#else
-	if (stmt->oldlocale)
-	{
-		setlocale(LC_NUMERIC, stmt->oldlocale);
-#ifdef WIN32
-		_configthreadlocale(stmt->oldthreadlocale);
-#endif
-	}
-#endif
 
 	free_statement(stmt);
 }

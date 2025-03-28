@@ -109,6 +109,36 @@
 #undef	vprintf
 #undef	printf
 
+#if defined(FRONTEND)
+/*
+ * Frontend code might be multi-threaded.  When calling the system snprintf()
+ * for floats, we have to use either the non-standard snprintf_l() variant, or
+ * save-and-restore the calling thread's locale using uselocale(), depending on
+ * availability.
+ */
+#if defined(HAVE_SNPRINTF_L)
+/* At least macOS and the BSDs have the snprintf_l() extension. */
+#define USE_SNPRINTF_L
+#elif defined(WIN32)
+/* Windows has a version with a different name and argument order. */
+#define snprintf_l(str, size, loc, format, ...) _snprintf_l(str, size, format, loc, __VA_ARGS__)
+#define USE_SNPRINTF_L
+#else
+/* We have to do a thread-safe save-and-restore around snprintf(). */
+#define NEED_USE_LOCALE
+#endif
+#else
+/*
+ * Backend code doesn't need to worry about locales here, because LC_NUMERIC is
+ * set to "C" in main() and doesn't change.  Plain old snprintf() is always OK
+ * without uselocale().
+ *
+ * XXX If the backend were multithreaded, we would have to be 100% certain that
+ * no one is calling setlocale() concurrently, even transiently, to be able to
+ * keep this small optimization.
+ */
+#endif
+
 /*
  * Info about where the formatted output is going.
  *
@@ -1220,6 +1250,9 @@ fmtfloat(double value, char type, int forcesign, int leftjust,
 		 * according to == but not according to memcmp.
 		 */
 		static const double dzero = 0.0;
+#ifdef NEED_USE_LOCALE
+		locale_t	save_locale = uselocale(PG_C_LOCALE);
+#endif
 
 		if (adjust_sign((value < 0.0 ||
 						 (value == 0.0 &&
@@ -1241,7 +1274,11 @@ fmtfloat(double value, char type, int forcesign, int leftjust,
 			fmt[2] = '*';
 			fmt[3] = type;
 			fmt[4] = '\0';
+#ifdef USE_SNPRINTF_L
+			vallen = snprintf_l(convert, sizeof(convert), PG_C_LOCALE, fmt, prec, value);
+#else
 			vallen = snprintf(convert, sizeof(convert), fmt, prec, value);
+#endif
 		}
 		else
 		{
@@ -1250,6 +1287,11 @@ fmtfloat(double value, char type, int forcesign, int leftjust,
 			fmt[2] = '\0';
 			vallen = snprintf(convert, sizeof(convert), fmt, value);
 		}
+
+#ifdef NEED_USE_LOCALE
+		uselocale(save_locale);
+#endif
+
 		if (vallen < 0)
 			goto fail;
 
@@ -1372,12 +1414,25 @@ pg_strfromd(char *str, size_t count, int precision, double value)
 		}
 		else
 		{
+#ifdef NEED_USE_LOCALE
+			locale_t	save_locale = uselocale(PG_C_LOCALE);
+#endif
+
 			fmt[0] = '%';
 			fmt[1] = '.';
 			fmt[2] = '*';
 			fmt[3] = 'g';
 			fmt[4] = '\0';
+#ifdef USE_SNPRINTF_L
+			vallen = snprintf_l(convert, sizeof(convert), PG_C_LOCALE, fmt, precision, value);
+#else
 			vallen = snprintf(convert, sizeof(convert), fmt, precision, value);
+#endif
+
+#ifdef NEED_USE_LOCALE
+			uselocale(save_locale);
+#endif
+
 			if (vallen < 0)
 			{
 				target.failed = true;

@@ -15401,7 +15401,7 @@ fi
 LIBS_including_readline="$LIBS"
 LIBS=`echo "$LIBS" | sed -e 's/-ledit//g' -e 's/-lreadline//g'`
 
-for ac_func in backtrace_symbols copyfile copy_file_range elf_aux_info getauxval getifaddrs getpeerucred inet_pton kqueue localeconv_l mbstowcs_l memset_s posix_fallocate ppoll pthread_is_threaded_np setproctitle setproctitle_fast strchrnul strsignal syncfs sync_file_range uselocale wcstombs_l
+for ac_func in backtrace_symbols copyfile copy_file_range elf_aux_info getauxval getifaddrs getpeerucred inet_pton kqueue localeconv_l mbstowcs_l memset_s posix_fallocate ppoll pthread_is_threaded_np setproctitle setproctitle_fast snprintf_l strchrnul strsignal strtod_l syncfs sync_file_range uselocale wcstombs_l
 do :
   as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
 ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"

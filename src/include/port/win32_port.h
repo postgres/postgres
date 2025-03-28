@@ -453,6 +453,7 @@ extern int	_pglstat64(const char *name, struct stat *buf);
 #define isspace_l _isspace_l
 #define iswspace_l _iswspace_l
 #define strcoll_l _strcoll_l
+#define strtod_l _strtod_l
 #define strxfrm_l _strxfrm_l
 #define wcscoll_l _wcscoll_l
 

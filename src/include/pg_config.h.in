@@ -355,6 +355,9 @@
 /* Define to 1 if you have the `setproctitle_fast' function. */
 #undef HAVE_SETPROCTITLE_FAST
 
+/* Define to 1 if you have the `snprintf_l' function. */
+#undef HAVE_SNPRINTF_L
+
 /* Define to 1 if the system has the type `socklen_t'. */
 #undef HAVE_SOCKLEN_T
 
@@ -399,6 +402,9 @@
 
 /* Define to 1 if you have the `strsignal' function. */
 #undef HAVE_STRSIGNAL
+
+/* Define to 1 if you have the `strtod_l' function. */
+#undef HAVE_STRTOD_L
 
 /* Define to 1 if the system has the type `struct option'. */
 #undef HAVE_STRUCT_OPTION

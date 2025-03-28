@@ -1218,7 +1218,7 @@ DecodeNumber(int flen, char *str, int fmask,
 			return DecodeNumberField(flen, str, (fmask | DTK_DATE_M),
 									 tmask, tm, fsec, is2digits);
 
-		*fsec = strtod(cp, &cp);
+		*fsec = strtod_l(cp, &cp, PG_C_LOCALE);
 		if (*cp != '\0')
 			return -1;
 	}
@@ -2030,7 +2030,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 							{
 								double		frac;
 
-								frac = strtod(cp, &cp);
+								frac = strtod_l(cp, &cp, PG_C_LOCALE);
 								if (*cp != '\0')
 									return -1;
 								*fsec = frac * 1000000;
@@ -2054,7 +2054,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 							{
 								double		time;
 
-								time = strtod(cp, &cp);
+								time = strtod_l(cp, &cp, PG_C_LOCALE);
 								if (*cp != '\0')
 									return -1;
 

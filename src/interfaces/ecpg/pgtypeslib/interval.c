@@ -60,7 +60,7 @@ ParseISO8601Number(const char *str, char **endptr, int *ipart, double *fpart)
 	if (!(isdigit((unsigned char) *str) || *str == '-' || *str == '.'))
 		return DTERR_BAD_FORMAT;
 	errno = 0;
-	val = strtod(str, endptr);
+	val = strtod_l(str, endptr, PG_C_LOCALE);
 	/* did we not see anything that looks like a double? */
 	if (*endptr == str || errno != 0)
 		return DTERR_BAD_FORMAT;
@@ -455,7 +455,7 @@ DecodeInterval(char **field, int *ftype, int nf,	/* int range, */
 				else if (*cp == '.')
 				{
 					errno = 0;
-					fval = strtod(cp, &cp);
+					fval = strtod_l(cp, &cp, PG_C_LOCALE);
 					if (*cp != '\0' || errno != 0)
 						return DTERR_BAD_FORMAT;
 

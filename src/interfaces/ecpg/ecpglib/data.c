@@ -466,7 +466,7 @@ ecpg_get_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 						pval++;
 
 					if (!check_special_value(pval, &dres, &scan_length))
-						dres = strtod(pval, &scan_length);
+						dres = strtod_l(pval, &scan_length, PG_C_LOCALE);
 
 					if (isarray && *scan_length == '"')
 						scan_length++;

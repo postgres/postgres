@@ -41,6 +41,7 @@ OBJS = \
 	bsearch_arg.o \
 	chklocale.o \
 	inet_net_ntop.o \
+	locale.o \
 	noblock.o \
 	path.o \
 	pg_bitutils.o \

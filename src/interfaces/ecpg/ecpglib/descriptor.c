@@ -475,46 +475,9 @@ ECPGget_desc(int lineno, const char *desc_name, int index,...)
 		memset(&stmt, 0, sizeof stmt);
 		stmt.lineno = lineno;
 
-		/* Make sure we do NOT honor the locale for numeric input */
-		/* since the database gives the standard decimal point */
-		/* (see comments in execute.c) */
-#ifdef HAVE_USELOCALE
-
-		/*
-		 * To get here, the above PQnfields() test must have found nonzero
-		 * fields.  One needs a connection to create such a descriptor.  (EXEC
-		 * SQL SET DESCRIPTOR can populate the descriptor's "items", but it
-		 * can't change the descriptor's PQnfields().)  Any successful
-		 * connection initializes ecpg_clocale.
-		 */
-		Assert(ecpg_clocale);
-		stmt.oldlocale = uselocale(ecpg_clocale);
-#else
-#ifdef WIN32
-		stmt.oldthreadlocale = _configthreadlocale(_ENABLE_PER_THREAD_LOCALE);
-#endif
-		stmt.oldlocale = ecpg_strdup(setlocale(LC_NUMERIC, NULL), lineno);
-		setlocale(LC_NUMERIC, "C");
-#endif
-
 		/* desperate try to guess something sensible */
 		stmt.connection = ecpg_get_connection(NULL);
 		ecpg_store_result(ECPGresult, index, &stmt, &data_var);
-
-#ifdef HAVE_USELOCALE
-		if (stmt.oldlocale != (locale_t) 0)
-			uselocale(stmt.oldlocale);
-#else
-		if (stmt.oldlocale)
-		{
-			setlocale(LC_NUMERIC, stmt.oldlocale);
-			ecpg_free(stmt.oldlocale);
-		}
-#ifdef WIN32
-		if (stmt.oldthreadlocale != -1)
-			_configthreadlocale(stmt.oldthreadlocale);
-#endif
-#endif
 	}
 	else if (data_var.ind_type != ECPGt_NO_INDICATOR && data_var.ind_pointer != NULL)
 
