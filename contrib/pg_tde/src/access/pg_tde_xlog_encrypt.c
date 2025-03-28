@@ -35,7 +35,7 @@
 #include "port/atomics.h"
 #endif
 
-static void SetXLogPageIVPrefix(TimeLineID tli, XLogRecPtr lsn, char *iv_prefix);
+static void CalcXLogPageIVPrefix(TimeLineID tli, XLogRecPtr lsn, const unsigned char *base_iv, char *iv_prefix);
 static ssize_t tdeheap_xlog_seg_read(int fd, void *buf, size_t count, off_t offset,
 									 TimeLineID tli, XLogSegNo segno, int segSize);
 static ssize_t tdeheap_xlog_seg_write(int fd, const void *buf, size_t count,
@@ -164,7 +164,7 @@ static ssize_t
 TDEXLogWriteEncryptedPages(int fd, const void *buf, size_t count, off_t offset,
 						   TimeLineID tli, XLogSegNo segno)
 {
-	char		iv_prefix[16] = {0,};
+	char		iv_prefix[16];
 	InternalKey *key = &EncryptionKey;
 	char	   *enc_buff = EncryptionState->segBuf;
 
@@ -175,7 +175,7 @@ TDEXLogWriteEncryptedPages(int fd, const void *buf, size_t count, off_t offset,
 		 count, offset, offset, LSN_FORMAT_ARGS(segno), LSN_FORMAT_ARGS(key->start_lsn));
 #endif
 
-	SetXLogPageIVPrefix(tli, segno, iv_prefix);
+	CalcXLogPageIVPrefix(tli, segno, key->base_iv, iv_prefix);
 	PG_TDE_ENCRYPT_DATA(iv_prefix, offset,
 						(char *) buf, count,
 						enc_buff, key, &EncryptionCryptCtx);
@@ -251,7 +251,6 @@ tdeheap_xlog_seg_read(int fd, void *buf, size_t count, off_t offset,
 					  TimeLineID tli, XLogSegNo segno, int segSize)
 {
 	ssize_t		readsz;
-	char		iv_prefix[16] = {0,};
 	WALKeyCacheRec *keys = pg_tde_get_wal_cache_keys();
 	XLogRecPtr	write_key_lsn = 0;
 	WALKeyCacheRec *curr_key = NULL;
@@ -297,8 +296,6 @@ tdeheap_xlog_seg_read(int fd, void *buf, size_t count, off_t offset,
 		}
 	}
 
-	SetXLogPageIVPrefix(tli, segno, iv_prefix);
-
 	XLogSegNoOffsetToRecPtr(segno, offset, segSize, data_start);
 	XLogSegNoOffsetToRecPtr(segno, offset + count, segSize, data_end);
 
@@ -325,6 +322,10 @@ tdeheap_xlog_seg_read(int fd, void *buf, size_t count, off_t offset,
 			 */
 			if (data_start <= curr_key->end_lsn && curr_key->start_lsn <= data_end)
 			{
+				char		iv_prefix[16];
+
+				CalcXLogPageIVPrefix(tli, segno, curr_key->key->base_iv, iv_prefix);
+
 				dec_off = XLogSegmentOffset(Max(data_start, curr_key->start_lsn), segSize);
 				dec_end = XLogSegmentOffset(Min(data_end, curr_key->end_lsn), segSize);
 
@@ -358,21 +359,34 @@ tdeheap_xlog_seg_read(int fd, void *buf, size_t count, off_t offset,
 	return readsz;
 }
 
-/* IV: TLI(uint32) + XLogRecPtr(uint64)*/
-static inline void
-SetXLogPageIVPrefix(TimeLineID tli, XLogRecPtr lsn, char *iv_prefix)
+/* IV: (TLI(uint32) + XLogRecPtr(uint64)) XOR BaseIV(uint8[12]) */
+static void
+CalcXLogPageIVPrefix(TimeLineID tli, XLogRecPtr lsn, const unsigned char *base_iv, char *iv_prefix)
 {
-	iv_prefix[0] = (tli >> 24);
-	iv_prefix[1] = ((tli >> 16) & 0xFF);
-	iv_prefix[2] = ((tli >> 8) & 0xFF);
-	iv_prefix[3] = (tli & 0xFF);
+	/* Temporary variables to make GCC vectorize it */
+	char		a[16],
+				b[16];
 
-	iv_prefix[4] = (lsn >> 56);
-	iv_prefix[5] = ((lsn >> 48) & 0xFF);
-	iv_prefix[6] = ((lsn >> 40) & 0xFF);
-	iv_prefix[7] = ((lsn >> 32) & 0xFF);
-	iv_prefix[8] = ((lsn >> 24) & 0xFF);
-	iv_prefix[9] = ((lsn >> 16) & 0xFF);
-	iv_prefix[10] = ((lsn >> 8) & 0xFF);
-	iv_prefix[11] = (lsn & 0xFF);
+	memset(a, 0, 16);
+	a[0] = tli >> 24;
+	a[1] = tli >> 16;
+	a[2] = tli >> 8;
+	a[3] = tli;
+
+	memset(b, 0, 16);
+	b[4] = lsn >> 56;
+	b[5] = lsn >> 48;
+	b[6] = lsn >> 40;
+	b[7] = lsn >> 32;
+	b[8] = lsn >> 24;
+	b[9] = lsn >> 16;
+	b[10] = lsn >> 8;
+	b[11] = lsn;
+
+	for (int i = 0; i < 16; i++)
+		iv_prefix[i] = (a[i] | b[i]) ^ base_iv[i];
+
+	/* Zero lowest 4 bytes */
+	for (int i = 12; i < 16; i++)
+		iv_prefix[i] = 0;
 }
