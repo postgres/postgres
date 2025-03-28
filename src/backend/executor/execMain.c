@@ -1371,7 +1371,7 @@ InitResultRelInfo(ResultRelInfo *resultRelInfo,
 	resultRelInfo->ri_projectNewInfoValid = false;
 	resultRelInfo->ri_FdwState = NULL;
 	resultRelInfo->ri_usesFdwDirectModify = false;
-	resultRelInfo->ri_ConstraintExprs = NULL;
+	resultRelInfo->ri_CheckConstraintExprs = NULL;
 	resultRelInfo->ri_GeneratedExprsI = NULL;
 	resultRelInfo->ri_GeneratedExprsU = NULL;
 	resultRelInfo->ri_projectReturning = NULL;
@@ -1871,10 +1871,10 @@ ExecRelCheck(ResultRelInfo *resultRelInfo,
 	 * nodetrees for rel's constraint expressions.  Keep them in the per-query
 	 * memory context so they'll survive throughout the query.
 	 */
-	if (resultRelInfo->ri_ConstraintExprs == NULL)
+	if (resultRelInfo->ri_CheckConstraintExprs == NULL)
 	{
 		oldContext = MemoryContextSwitchTo(estate->es_query_cxt);
-		resultRelInfo->ri_ConstraintExprs =
+		resultRelInfo->ri_CheckConstraintExprs =
 			(ExprState **) palloc0(ncheck * sizeof(ExprState *));
 		for (i = 0; i < ncheck; i++)
 		{
@@ -1886,7 +1886,7 @@ ExecRelCheck(ResultRelInfo *resultRelInfo,
 
 			checkconstr = stringToNode(check[i].ccbin);
 			checkconstr = (Expr *) expand_generated_columns_in_expr((Node *) checkconstr, rel, 1);
-			resultRelInfo->ri_ConstraintExprs[i] =
+			resultRelInfo->ri_CheckConstraintExprs[i] =
 				ExecPrepareExpr(checkconstr, estate);
 		}
 		MemoryContextSwitchTo(oldContext);
@@ -1904,7 +1904,7 @@ ExecRelCheck(ResultRelInfo *resultRelInfo,
 	/* And evaluate the constraints */
 	for (i = 0; i < ncheck; i++)
 	{
-		ExprState  *checkconstr = resultRelInfo->ri_ConstraintExprs[i];
+		ExprState  *checkconstr = resultRelInfo->ri_CheckConstraintExprs[i];
 
 		/*
 		 * NOTE: SQL specifies that a NULL result from a constraint expression

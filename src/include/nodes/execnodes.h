@@ -546,8 +546,8 @@ typedef struct ResultRelInfo
 	/* list of WithCheckOption expr states */
 	List	   *ri_WithCheckOptionExprs;
 
-	/* array of constraint-checking expr states */
-	ExprState **ri_ConstraintExprs;
+	/* array of expr states for checking check constraints */
+	ExprState **ri_CheckConstraintExprs;
 
 	/*
 	 * Arrays of stored generated columns ExprStates for INSERT/UPDATE/MERGE.
