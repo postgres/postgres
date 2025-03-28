@@ -1278,9 +1278,9 @@ extern int	fdatasync(int fildes);
  * Similarly, wrappers around labs()/llabs() matching our int64.
  */
 #if SIZEOF_LONG == 8
-#define i64abs(i) labs(i)
+#define i64abs(i) ((int64) labs(i))
 #elif SIZEOF_LONG_LONG == 8
-#define i64abs(i) llabs(i)
+#define i64abs(i) ((int64) llabs(i))
 #else
 #error "cannot find integer type of the same size as int64_t"
 #endif
