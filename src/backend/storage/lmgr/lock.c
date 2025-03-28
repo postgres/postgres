@@ -1897,6 +1897,15 @@ GetAwaitedLock(void)
 }
 
 /*
+ * ResetAwaitedLock -- Forget that we are waiting on a lock.
+ */
+void
+ResetAwaitedLock(void)
+{
+	awaitedLock = NULL;
+}
+
+/*
  * MarkLockClear -- mark an acquired lock as "clear"
  *
  * This means that we know we have absorbed all sinval messages that other

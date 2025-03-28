@@ -588,6 +588,7 @@ extern bool LockCheckConflicts(LockMethod lockMethodTable,
 extern void GrantLock(LOCK *lock, PROCLOCK *proclock, LOCKMODE lockmode);
 extern void GrantAwaitedLock(void);
 extern LOCALLOCK *GetAwaitedLock(void);
+extern void ResetAwaitedLock(void);
 
 extern void RemoveFromWaitQueue(PGPROC *proc, uint32 hashcode);
 extern LockData *GetLockStatusData(void);
