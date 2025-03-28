@@ -103,10 +103,15 @@ const uint8 pg_number_of_ones[256] = {
 	4, 5, 5, 6, 5, 6, 6, 7, 5, 6, 6, 7, 6, 7, 7, 8
 };
 
+/*
+ * If we are building the Neon versions, we don't need the "slow" fallbacks.
+ */
+#ifndef POPCNT_AARCH64
 static inline int pg_popcount32_slow(uint32 word);
 static inline int pg_popcount64_slow(uint64 word);
 static uint64 pg_popcount_slow(const char *buf, int bytes);
 static uint64 pg_popcount_masked_slow(const char *buf, int bytes, bits8 mask);
+#endif
 
 #ifdef TRY_POPCNT_X86_64
 static bool pg_popcount_available(void);
@@ -339,6 +344,10 @@ pg_popcount_masked_fast(const char *buf, int bytes, bits8 mask)
 
 #endif							/* TRY_POPCNT_X86_64 */
 
+/*
+ * If we are building the Neon versions, we don't need the "slow" fallbacks.
+ */
+#ifndef POPCNT_AARCH64
 
 /*
  * pg_popcount32_slow
@@ -486,14 +495,15 @@ pg_popcount_masked_slow(const char *buf, int bytes, bits8 mask)
 	return popcnt;
 }
 
-#ifndef TRY_POPCNT_X86_64
+#endif							/* ! POPCNT_AARCH64 */
+
+#if !defined(TRY_POPCNT_X86_64) && !defined(POPCNT_AARCH64)
 
 /*
- * When the POPCNT instruction is not available, there's no point in using
+ * When special CPU instructions are not available, there's no point in using
  * function pointers to vary the implementation between the fast and slow
- * method.  We instead just make these actual external functions when
- * TRY_POPCNT_X86_64 is not defined.  The compiler should be able to inline
- * the slow versions here.
+ * method.  We instead just make these actual external functions.  The compiler
+ * should be able to inline the slow versions here.
  */
 int
 pg_popcount32(uint32 word)
@@ -527,4 +537,4 @@ pg_popcount_masked_optimized(const char *buf, int bytes, bits8 mask)
 	return pg_popcount_masked_slow(buf, bytes, mask);
 }
 
-#endif							/* !TRY_POPCNT_X86_64 */
+#endif							/* ! TRY_POPCNT_X86_64 && ! POPCNT_AARCH64 */

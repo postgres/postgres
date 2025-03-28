@@ -298,6 +298,15 @@ pg_ceil_log2_64(uint64 num)
 #endif
 #endif
 
+/*
+ * On AArch64, we can use Neon instructions if the compiler provides access to
+ * them (as indicated by __ARM_NEON).  As in simd.h, we assume that all
+ * available 64-bit hardware has Neon support.
+ */
+#if defined(__aarch64__) && defined(__ARM_NEON)
+#define POPCNT_AARCH64 1
+#endif
+
 #ifdef TRY_POPCNT_X86_64
 /* Attempt to use the POPCNT instruction, but perform a runtime check first */
 extern PGDLLIMPORT int (*pg_popcount32) (uint32 word);
