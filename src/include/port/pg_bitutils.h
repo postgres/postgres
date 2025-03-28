@@ -294,11 +294,11 @@ pg_ceil_log2_64(uint64 num)
  */
 #ifdef HAVE_X86_64_POPCNTQ
 #if defined(HAVE__GET_CPUID) || defined(HAVE__CPUID)
-#define TRY_POPCNT_FAST 1
+#define TRY_POPCNT_X86_64 1
 #endif
 #endif
 
-#ifdef TRY_POPCNT_FAST
+#ifdef TRY_POPCNT_X86_64
 /* Attempt to use the POPCNT instruction, but perform a runtime check first */
 extern PGDLLIMPORT int (*pg_popcount32) (uint32 word);
 extern PGDLLIMPORT int (*pg_popcount64) (uint64 word);
@@ -322,7 +322,7 @@ extern int	pg_popcount64(uint64 word);
 extern uint64 pg_popcount_optimized(const char *buf, int bytes);
 extern uint64 pg_popcount_masked_optimized(const char *buf, int bytes, bits8 mask);
 
-#endif							/* TRY_POPCNT_FAST */
+#endif							/* TRY_POPCNT_X86_64 */
 
 /*
  * Returns the number of 1-bits in buf.

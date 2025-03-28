@@ -108,7 +108,7 @@ static inline int pg_popcount64_slow(uint64 word);
 static uint64 pg_popcount_slow(const char *buf, int bytes);
 static uint64 pg_popcount_masked_slow(const char *buf, int bytes, bits8 mask);
 
-#ifdef TRY_POPCNT_FAST
+#ifdef TRY_POPCNT_X86_64
 static bool pg_popcount_available(void);
 static int	pg_popcount32_choose(uint32 word);
 static int	pg_popcount64_choose(uint64 word);
@@ -123,9 +123,9 @@ int			(*pg_popcount32) (uint32 word) = pg_popcount32_choose;
 int			(*pg_popcount64) (uint64 word) = pg_popcount64_choose;
 uint64		(*pg_popcount_optimized) (const char *buf, int bytes) = pg_popcount_choose;
 uint64		(*pg_popcount_masked_optimized) (const char *buf, int bytes, bits8 mask) = pg_popcount_masked_choose;
-#endif							/* TRY_POPCNT_FAST */
+#endif							/* TRY_POPCNT_X86_64 */
 
-#ifdef TRY_POPCNT_FAST
+#ifdef TRY_POPCNT_X86_64
 
 /*
  * Return true if CPUID indicates that the POPCNT instruction is available.
@@ -337,7 +337,7 @@ pg_popcount_masked_fast(const char *buf, int bytes, bits8 mask)
 	return popcnt;
 }
 
-#endif							/* TRY_POPCNT_FAST */
+#endif							/* TRY_POPCNT_X86_64 */
 
 
 /*
@@ -486,13 +486,13 @@ pg_popcount_masked_slow(const char *buf, int bytes, bits8 mask)
 	return popcnt;
 }
 
-#ifndef TRY_POPCNT_FAST
+#ifndef TRY_POPCNT_X86_64
 
 /*
  * When the POPCNT instruction is not available, there's no point in using
  * function pointers to vary the implementation between the fast and slow
  * method.  We instead just make these actual external functions when
- * TRY_POPCNT_FAST is not defined.  The compiler should be able to inline
+ * TRY_POPCNT_X86_64 is not defined.  The compiler should be able to inline
  * the slow versions here.
  */
 int
@@ -527,4 +527,4 @@ pg_popcount_masked_optimized(const char *buf, int bytes, bits8 mask)
 	return pg_popcount_masked_slow(buf, bytes, mask);
 }
 
-#endif							/* !TRY_POPCNT_FAST */
+#endif							/* !TRY_POPCNT_X86_64 */
