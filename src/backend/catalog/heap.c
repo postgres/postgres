@@ -2615,11 +2615,6 @@ AddRelationNewConstraints(Relation rel,
 						errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 						errmsg("cannot add not-null constraint on system column \"%s\"",
 							   strVal(linitial(cdef->keys))));
-			/* TODO: see transformColumnDefinition() */
-			if (get_attgenerated(RelationGetRelid(rel), colnum) == ATTRIBUTE_GENERATED_VIRTUAL)
-				ereport(ERROR,
-						errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						errmsg("not-null constraints are not supported on virtual generated columns"));
 
 			/*
 			 * If the column already has a not-null constraint, we don't want
@@ -2935,11 +2930,6 @@ AddRelationNotNullConstraints(Relation rel, List *constraints,
 					errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					errmsg("cannot add not-null constraint on system column \"%s\"",
 						   strVal(linitial(constr->keys))));
-		/* TODO: see transformColumnDefinition() */
-		if (get_attgenerated(RelationGetRelid(rel), attnum) == ATTRIBUTE_GENERATED_VIRTUAL)
-			ereport(ERROR,
-					errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					errmsg("not-null constraints are not supported on virtual generated columns"));
 
 		/*
 		 * A column can only have one not-null constraint, so discard any

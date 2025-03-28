@@ -1118,10 +1118,12 @@ DefineIndex(Oid tableId,
 
 		if (TupleDescAttr(RelationGetDescr(rel), attno - 1)->attgenerated == ATTRIBUTE_GENERATED_VIRTUAL)
 			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 stmt->isconstraint ?
-					 errmsg("unique constraints on virtual generated columns are not supported") :
-					 errmsg("indexes on virtual generated columns are not supported")));
+					errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					stmt->primary ?
+					errmsg("primary keys on virtual generated columns are not supported") :
+					stmt->isconstraint ?
+					errmsg("unique constraints on virtual generated columns are not supported") :
+					errmsg("indexes on virtual generated columns are not supported"));
 	}
 
 	/*

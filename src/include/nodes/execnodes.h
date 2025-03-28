@@ -550,6 +550,12 @@ typedef struct ResultRelInfo
 	ExprState **ri_CheckConstraintExprs;
 
 	/*
+	 * array of expr states for checking not-null constraints on virtual
+	 * generated columns
+	 */
+	ExprState **ri_GenVirtualNotNullConstraintExprs;
+
+	/*
 	 * Arrays of stored generated columns ExprStates for INSERT/UPDATE/MERGE.
 	 */
 	ExprState **ri_GeneratedExprsI;

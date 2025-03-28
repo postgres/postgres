@@ -988,20 +988,6 @@ transformColumnDefinition(CreateStmtContext *cxt, ColumnDef *column)
 							column->colname, cxt->relation->relname),
 					 parser_errposition(cxt->pstate,
 										constraint->location)));
-
-		/*
-		 * TODO: Straightforward not-null constraints won't work on virtual
-		 * generated columns, because there is no support for expanding the
-		 * column when the constraint is checked.  Maybe we could convert the
-		 * not-null constraint into a full check constraint, so that the
-		 * generation expression can be expanded at check time.
-		 */
-		if (column->is_not_null && column->generated == ATTRIBUTE_GENERATED_VIRTUAL)
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("not-null constraints are not supported on virtual generated columns"),
-					 parser_errposition(cxt->pstate,
-										constraint->location)));
 	}
 
 	/*
