@@ -369,6 +369,7 @@ typedef struct _tableInfo
 	bool	   *notnull_islocal;	/* true if NOT NULL has local definition */
 	struct _attrDefInfo **attrdefs; /* DEFAULT expressions */
 	struct _constraintInfo *checkexprs; /* CHECK constraints */
+	struct _relStatsInfo *stats;	/* only set for matviews */
 	bool		needs_override; /* has GENERATED ALWAYS AS IDENTITY */
 	char	   *amname;			/* relation access method */
 
@@ -449,7 +450,7 @@ typedef struct _relStatsInfo
 	 */
 	char	  **indAttNames;	/* attnames of the index, in order */
 	int32		nindAttNames;	/* number of attnames stored (can be 0) */
-	bool		postponed_def;	/* stats must be postponed into post-data */
+	teSection	section;		/* stats may appear in data or post-data */
 } RelStatsInfo;
 
 typedef struct _statsExtInfo

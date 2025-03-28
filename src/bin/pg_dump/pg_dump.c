@@ -3002,6 +3002,19 @@ makeTableDataInfo(DumpOptions *dopt, TableInfo *tbinfo)
 
 	tbinfo->dataObj = tdinfo;
 
+	/*
+	 * Materialized view statistics must be restored after the data, because
+	 * REFRESH MATERIALIZED VIEW replaces the storage and resets the stats.
+	 *
+	 * The dependency is added here because the statistics objects are created
+	 * first.
+	 */
+	if (tbinfo->relkind == RELKIND_MATVIEW && tbinfo->stats != NULL)
+	{
+		tbinfo->stats->section = SECTION_POST_DATA;
+		addObjectDependency(&tbinfo->stats->dobj, tdinfo->dobj.dumpId);
+	}
+
 	/* Make sure that we'll collect per-column info for this table. */
 	tbinfo->interesting = true;
 }
@@ -6893,7 +6906,32 @@ getRelationStatistics(Archive *fout, DumpableObject *rel, int32 relpages,
 		info->relkind = relkind;
 		info->indAttNames = indAttNames;
 		info->nindAttNames = nindAttNames;
-		info->postponed_def = false;
+
+		/*
+		 * Ordinarily, stats go in SECTION_DATA for tables and
+		 * SECTION_POST_DATA for indexes.
+		 *
+		 * However, the section may be updated later for materialized view
+		 * stats. REFRESH MATERIALIZED VIEW replaces the storage and resets
+		 * the stats, so the stats must be restored after the data. Also, the
+		 * materialized view definition may be postponed to SECTION_POST_DATA
+		 * (see repairMatViewBoundaryMultiLoop()).
+		 */
+		switch (info->relkind)
+		{
+			case RELKIND_RELATION:
+			case RELKIND_PARTITIONED_TABLE:
+			case RELKIND_MATVIEW:
+				info->section = SECTION_DATA;
+				break;
+			case RELKIND_INDEX:
+			case RELKIND_PARTITIONED_INDEX:
+				info->section = SECTION_POST_DATA;
+				break;
+			default:
+				pg_fatal("cannot dump statistics for relation kind '%c'",
+						 info->relkind);
+		}
 
 		return info;
 	}
@@ -7292,9 +7330,17 @@ getTables(Archive *fout, int *numTables)
 
 		/* Add statistics */
 		if (tblinfo[i].interesting)
-			getRelationStatistics(fout, &tblinfo[i].dobj, tblinfo[i].relpages,
-								  PQgetvalue(res, i, i_reltuples),
-								  relallvisible, tblinfo[i].relkind, NULL, 0);
+		{
+			RelStatsInfo *stats;
+
+			stats = getRelationStatistics(fout, &tblinfo[i].dobj,
+										  tblinfo[i].relpages,
+										  PQgetvalue(res, i, i_reltuples),
+										  relallvisible,
+										  tblinfo[i].relkind, NULL, 0);
+			if (tblinfo[i].relkind == RELKIND_MATVIEW)
+				tblinfo[i].stats = stats;
+		}
 
 		/*
 		 * Read-lock target tables to make sure they aren't DROPPED or altered
@@ -10492,34 +10538,6 @@ appendNamedArgument(PQExpBuffer out, Archive *fout, const char *argname,
 }
 
 /*
- * Decide which section to use based on the relkind of the parent object.
- *
- * NB: materialized views may be postponed from SECTION_PRE_DATA to
- * SECTION_POST_DATA to resolve some kinds of dependency problems. If so, the
- * matview stats will also be postponed to SECTION_POST_DATA. See
- * repairMatViewBoundaryMultiLoop().
- */
-static teSection
-statisticsDumpSection(const RelStatsInfo *rsinfo)
-{
-	switch (rsinfo->relkind)
-	{
-		case RELKIND_RELATION:
-		case RELKIND_PARTITIONED_TABLE:
-		case RELKIND_MATVIEW:
-			return SECTION_DATA;
-		case RELKIND_INDEX:
-		case RELKIND_PARTITIONED_INDEX:
-			return SECTION_POST_DATA;
-		default:
-			pg_fatal("cannot dump statistics for relation kind '%c'",
-					 rsinfo->relkind);
-	}
-
-	return 0;					/* keep compiler quiet */
-}
-
-/*
  * dumpRelationStats --
  *
  * Dump command to import stats into the relation on the new database.
@@ -10531,8 +10549,6 @@ dumpRelationStats(Archive *fout, const RelStatsInfo *rsinfo)
 	PGresult   *res;
 	PQExpBuffer query;
 	PQExpBuffer out;
-	DumpId	   *deps = NULL;
-	int			ndeps = 0;
 	int			i_attname;
 	int			i_inherited;
 	int			i_null_frac;
@@ -10552,13 +10568,6 @@ dumpRelationStats(Archive *fout, const RelStatsInfo *rsinfo)
 	/* nothing to do if we are not dumping statistics */
 	if (!fout->dopt->dumpStatistics)
 		return;
-
-	/* dependent on the relation definition, if doing schema */
-	if (fout->dopt->dumpSchema)
-	{
-		deps = dobj->dependencies;
-		ndeps = dobj->nDeps;
-	}
 
 	query = createPQExpBuffer();
 	if (!fout->is_prepared[PREPQUERY_GETATTRIBUTESTATS])
@@ -10737,11 +10746,10 @@ dumpRelationStats(Archive *fout, const RelStatsInfo *rsinfo)
 				 ARCHIVE_OPTS(.tag = dobj->name,
 							  .namespace = dobj->namespace->dobj.name,
 							  .description = "STATISTICS DATA",
-							  .section = rsinfo->postponed_def ?
-							  SECTION_POST_DATA : statisticsDumpSection(rsinfo),
+							  .section = rsinfo->section,
 							  .createStmt = out->data,
-							  .deps = deps,
-							  .nDeps = ndeps));
+							  .deps = dobj->dependencies,
+							  .nDeps = dobj->nDeps));
 
 	destroyPQExpBuffer(out);
 	destroyPQExpBuffer(query);
@@ -19429,7 +19437,7 @@ addBoundaryDependencies(DumpableObject **dobjs, int numObjs,
 				break;
 			case DO_REL_STATS:
 				/* stats section varies by parent object type, DATA or POST */
-				if (statisticsDumpSection((RelStatsInfo *) dobj) == SECTION_DATA)
+				if (((RelStatsInfo *) dobj)->section == SECTION_DATA)
 				{
 					addObjectDependency(dobj, preDataBound->dumpId);
 					addObjectDependency(postDataBound, dobj->dumpId);
