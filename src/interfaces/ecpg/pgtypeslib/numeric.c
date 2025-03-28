@@ -1455,7 +1455,7 @@ numericvar_to_double(numeric *var, double *dp)
 	 * strtod does not reset errno to 0 in case of success.
 	 */
 	errno = 0;
-	val = strtod_l(tmp, &endptr, PG_C_LOCALE);
+	val = strtod(tmp, &endptr);
 	if (errno == ERANGE)
 	{
 		free(tmp);
