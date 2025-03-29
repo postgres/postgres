@@ -21,8 +21,9 @@ $node->append_conf('postgresql.conf',
 	'lock_timeout = ' . (1000 * $PostgreSQL::Test::Utils::timeout_default));
 $node->start;
 $node->safe_psql('postgres', q(CREATE EXTENSION amcheck));
-$node->safe_psql('postgres', q(CREATE TABLE tbl(i int)));
+$node->safe_psql('postgres', q(CREATE TABLE tbl(i int, j jsonb)));
 $node->safe_psql('postgres', q(CREATE INDEX idx ON tbl(i)));
+$node->safe_psql('postgres', q(CREATE INDEX ginidx ON tbl USING gin(j)));
 
 #
 # Stress CIC with pgbench.
@@ -40,13 +41,13 @@ $node->pgbench(
 	{
 		'002_pgbench_concurrent_transaction' => q(
 			BEGIN;
-			INSERT INTO tbl VALUES(0);
+			INSERT INTO tbl VALUES(0, '{"a":[["b",{"x":1}],["b",{"x":2}]],"c":3}');
 			COMMIT;
 		  ),
 		'002_pgbench_concurrent_transaction_savepoints' => q(
 			BEGIN;
 			SAVEPOINT s1;
-			INSERT INTO tbl VALUES(0);
+			INSERT INTO tbl VALUES(0, '[[14,2,3]]');
 			COMMIT;
 		  ),
 		'002_pgbench_concurrent_cic' => q(
@@ -54,7 +55,10 @@ $node->pgbench(
 			\if :gotlock
 				DROP INDEX CONCURRENTLY idx;
 				CREATE INDEX CONCURRENTLY idx ON tbl(i);
+				DROP INDEX CONCURRENTLY ginidx;
+				CREATE INDEX CONCURRENTLY ginidx ON tbl USING gin(j);
 				SELECT bt_index_check('idx',true);
+				SELECT gin_index_check('ginidx');
 				SELECT pg_advisory_unlock(42);
 			\endif
 		  )
