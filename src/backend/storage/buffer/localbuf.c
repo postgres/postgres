@@ -249,6 +249,13 @@ GetLocalVictimBuffer(void)
 				pg_atomic_unlocked_write_u32(&bufHdr->state, buf_state);
 				trycounter = NLocBuffer;
 			}
+			else if (BUF_STATE_GET_REFCOUNT(buf_state) > 0)
+			{
+				/*
+				 * This can be reached if the backend initiated AIO for this
+				 * buffer and then errored out.
+				 */
+			}
 			else
 			{
 				/* Found a usable buffer */
@@ -570,7 +577,13 @@ InvalidateLocalBuffer(BufferDesc *bufHdr, bool check_unreferenced)
 
 	buf_state = pg_atomic_read_u32(&bufHdr->state);
 
-	if (check_unreferenced && LocalRefCount[bufid] != 0)
+	/*
+	 * We need to test not just LocalRefCount[bufid] but also the BufferDesc
+	 * itself, as the latter is used to represent a pin by the AIO subsystem.
+	 * This can happen if AIO is initiated and then the query errors out.
+	 */
+	if (check_unreferenced &&
+		(LocalRefCount[bufid] != 0 || BUF_STATE_GET_REFCOUNT(buf_state) != 0))
 		elog(ERROR, "block %u of %s is still referenced (local %u)",
 			 bufHdr->tag.blockNum,
 			 relpathbackend(BufTagGetRelFileLocator(&bufHdr->tag),
@@ -744,12 +757,13 @@ PinLocalBuffer(BufferDesc *buf_hdr, bool adjust_usagecount)
 	if (LocalRefCount[bufid] == 0)
 	{
 		NLocalPinnedBuffers++;
+		buf_state += BUF_REFCOUNT_ONE;
 		if (adjust_usagecount &&
 			BUF_STATE_GET_USAGECOUNT(buf_state) < BM_MAX_USAGE_COUNT)
 		{
 			buf_state += BUF_USAGECOUNT_ONE;
-			pg_atomic_unlocked_write_u32(&buf_hdr->state, buf_state);
 		}
+		pg_atomic_unlocked_write_u32(&buf_hdr->state, buf_state);
 	}
 	LocalRefCount[bufid]++;
 	ResourceOwnerRememberBuffer(CurrentResourceOwner,
@@ -775,7 +789,17 @@ UnpinLocalBufferNoOwner(Buffer buffer)
 	Assert(NLocalPinnedBuffers > 0);
 
 	if (--LocalRefCount[buffid] == 0)
+	{
+		BufferDesc *buf_hdr = GetLocalBufferDescriptor(buffid);
+		uint32		buf_state;
+
 		NLocalPinnedBuffers--;
+
+		buf_state = pg_atomic_read_u32(&buf_hdr->state);
+		Assert(BUF_STATE_GET_REFCOUNT(buf_state) > 0);
+		buf_state -= BUF_REFCOUNT_ONE;
+		pg_atomic_unlocked_write_u32(&buf_hdr->state, buf_state);
+	}
 }
 
 /*
