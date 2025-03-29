@@ -871,7 +871,7 @@ ExecInitPartitionInfo(ModifyTableState *mtstate, EState *estate,
 	 * reference and make copy for this relation, converting stuff that
 	 * references attribute numbers to match this relation's.
 	 *
-	 * This duplicates much of the logic in ExecInitMerge(), so something
+	 * This duplicates much of the logic in ExecInitMerge(), so if something
 	 * changes there, look here too.
 	 */
 	if (node && node->operation == CMD_MERGE)
@@ -941,6 +941,8 @@ ExecInitPartitionInfo(ModifyTableState *mtstate, EState *estate,
 												  NULL);
 					break;
 				case CMD_DELETE:
+				case CMD_NOTHING:
+					/* Nothing to do */
 					break;
 
 				default:
