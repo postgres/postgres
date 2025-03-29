@@ -237,10 +237,10 @@ GIN packs keys and downlinks into tuples in a different way.
 
 P_i is grouped with K_{i+1}.  -Inf key is not needed.
 
-There are couple of additional notes regarding K_{n+1} key.
-1) In entry tree rightmost page, a key coupled with P_n doesn't really matter.
+There are a couple of additional notes regarding K_{n+1} key.
+1) In the entry tree on the rightmost page, a key coupled with P_n doesn't really matter.
 Highkey is assumed to be infinity.
-2) In posting tree, a key coupled with P_n always doesn't matter.  Highkey for
+2) In the posting tree, a key coupled with P_n always doesn't matter.  Highkey for
 non-rightmost pages is stored separately and accessed via
 GinDataPageGetRightBound().
 
