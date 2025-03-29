@@ -194,6 +194,7 @@ BOOLEAN
 BOX
 BTArrayKeyInfo
 BTBuildState
+BTCallbackState
 BTCycleId
 BTDedupInterval
 BTDedupState

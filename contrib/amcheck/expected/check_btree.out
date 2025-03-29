@@ -57,8 +57,8 @@ ERROR:  could not open relation with OID 17
 BEGIN;
 CREATE INDEX bttest_a_brin_idx ON bttest_a USING brin(id);
 SELECT bt_index_parent_check('bttest_a_brin_idx');
-ERROR:  only B-Tree indexes are supported as targets for verification
-DETAIL:  Relation "bttest_a_brin_idx" is not a B-Tree index.
+ERROR:  expected "btree" index as targets for verification
+DETAIL:  Relation "bttest_a_brin_idx" is a brin index.
 ROLLBACK;
 -- normal check outside of xact
 SELECT bt_index_check('bttest_a_idx');

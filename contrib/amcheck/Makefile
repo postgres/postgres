@@ -3,6 +3,7 @@
 MODULE_big	= amcheck
 OBJS = \
 	$(WIN32RES) \
+	verify_common.o \
 	verify_heapam.o \
 	verify_nbtree.o
 
