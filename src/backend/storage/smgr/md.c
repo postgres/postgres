@@ -31,6 +31,7 @@
 #include "miscadmin.h"
 #include "pg_trace.h"
 #include "pgstat.h"
+#include "storage/aio.h"
 #include "storage/bufmgr.h"
 #include "storage/fd.h"
 #include "storage/md.h"
@@ -151,6 +152,15 @@ static MdfdVec *_mdfd_getseg(SMgrRelation reln, ForkNumber forknum,
 							 BlockNumber blkno, bool skipFsync, int behavior);
 static BlockNumber _mdnblocks(SMgrRelation reln, ForkNumber forknum,
 							  MdfdVec *seg);
+
+static PgAioResult md_readv_complete(PgAioHandle *ioh, PgAioResult prior_result, uint8 cb_data);
+static void md_readv_report(PgAioResult result, const PgAioTargetData *target_data, int elevel);
+
+const PgAioHandleCallbacks aio_md_readv_cb = {
+	.complete_shared = md_readv_complete,
+	.report = md_readv_report,
+};
+
 
 static inline int
 _mdfd_open_flags(void)
@@ -938,6 +948,69 @@ mdreadv(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 }
 
 /*
+ * mdstartreadv() -- Asynchronous version of mdreadv().
+ */
+void
+mdstartreadv(PgAioHandle *ioh,
+			 SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
+			 void **buffers, BlockNumber nblocks)
+{
+	off_t		seekpos;
+	MdfdVec    *v;
+	BlockNumber nblocks_this_segment;
+	struct iovec *iov;
+	int			iovcnt;
+	int			ret;
+
+	v = _mdfd_getseg(reln, forknum, blocknum, false,
+					 EXTENSION_FAIL | EXTENSION_CREATE_RECOVERY);
+
+	seekpos = (off_t) BLCKSZ * (blocknum % ((BlockNumber) RELSEG_SIZE));
+
+	Assert(seekpos < (off_t) BLCKSZ * RELSEG_SIZE);
+
+	nblocks_this_segment =
+		Min(nblocks,
+			RELSEG_SIZE - (blocknum % ((BlockNumber) RELSEG_SIZE)));
+
+	if (nblocks_this_segment != nblocks)
+		elog(ERROR, "read crossing segment boundary");
+
+	iovcnt = pgaio_io_get_iovec(ioh, &iov);
+
+	Assert(nblocks <= iovcnt);
+
+	iovcnt = buffers_to_iovec(iov, buffers, nblocks_this_segment);
+
+	Assert(iovcnt <= nblocks_this_segment);
+
+	if (!(io_direct_flags & IO_DIRECT_DATA))
+		pgaio_io_set_flag(ioh, PGAIO_HF_BUFFERED);
+
+	pgaio_io_set_target_smgr(ioh,
+							 reln,
+							 forknum,
+							 blocknum,
+							 nblocks,
+							 false);
+	pgaio_io_register_callbacks(ioh, PGAIO_HCB_MD_READV, 0);
+
+	ret = FileStartReadV(ioh, v->mdfd_vfd, iovcnt, seekpos, WAIT_EVENT_DATA_FILE_READ);
+	if (ret != 0)
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not start reading blocks %u..%u in file \"%s\": %m",
+						blocknum,
+						blocknum + nblocks_this_segment - 1,
+						FilePathName(v->mdfd_vfd))));
+
+	/*
+	 * The error checks corresponding to the post-read checks in mdreadv() are
+	 * in md_readv_complete().
+	 */
+}
+
+/*
  * mdwritev() -- Write the supplied blocks at the appropriate location.
  *
  * This is to be used only for updating already-existing blocks of a
@@ -1363,6 +1436,21 @@ mdimmedsync(SMgrRelation reln, ForkNumber forknum)
 
 		segno--;
 	}
+}
+
+int
+mdfd(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum, uint32 *off)
+{
+	MdfdVec    *v = mdopenfork(reln, forknum, EXTENSION_FAIL);
+
+	v = _mdfd_getseg(reln, forknum, blocknum, false,
+					 EXTENSION_FAIL);
+
+	*off = (off_t) BLCKSZ * (blocknum % ((BlockNumber) RELSEG_SIZE));
+
+	Assert(*off < (off_t) BLCKSZ * RELSEG_SIZE);
+
+	return FileGetRawDesc(v->mdfd_vfd);
 }
 
 /*
@@ -1840,4 +1928,112 @@ mdfiletagmatches(const FileTag *ftag, const FileTag *candidate)
 	 * the ftag from the SYNC_FILTER_REQUEST request, so they're forgotten.
 	 */
 	return ftag->rlocator.dbOid == candidate->rlocator.dbOid;
+}
+
+/*
+ * AIO completion callback for mdstartreadv().
+ */
+static PgAioResult
+md_readv_complete(PgAioHandle *ioh, PgAioResult prior_result, uint8 cb_data)
+{
+	PgAioTargetData *td = pgaio_io_get_target_data(ioh);
+	PgAioResult result = prior_result;
+
+	if (prior_result.result < 0)
+	{
+		result.status = PGAIO_RS_ERROR;
+		result.id = PGAIO_HCB_MD_READV;
+		/* For "hard" errors, track the error number in error_data */
+		result.error_data = -prior_result.result;
+		result.result = 0;
+
+		/*
+		 * Immediately log a message about the IO error, but only to the
+		 * server log. The reason to do so immediately is that the originator
+		 * might not process the query result immediately (because it is busy
+		 * doing another part of query processing) or at all (e.g. if it was
+		 * cancelled or errored out due to another IO also failing).  The
+		 * issuer of the IO will emit an ERROR when processing the IO's
+		 * results
+		 */
+		pgaio_result_report(result, td, LOG_SERVER_ONLY);
+
+		return result;
+	}
+
+	/*
+	 * As explained above smgrstartreadv(), the smgr API operates on the level
+	 * of blocks, rather than bytes. Convert.
+	 */
+	result.result /= BLCKSZ;
+
+	Assert(result.result <= td->smgr.nblocks);
+
+	if (result.result == 0)
+	{
+		/* consider 0 blocks read a failure */
+		result.status = PGAIO_RS_ERROR;
+		result.id = PGAIO_HCB_MD_READV;
+		result.error_data = 0;
+
+		/* see comment above the "hard error" case */
+		pgaio_result_report(result, td, LOG_SERVER_ONLY);
+
+		return result;
+	}
+
+	if (result.status != PGAIO_RS_ERROR &&
+		result.result < td->smgr.nblocks)
+	{
+		/* partial reads should be retried at upper level */
+		result.status = PGAIO_RS_PARTIAL;
+		result.id = PGAIO_HCB_MD_READV;
+	}
+
+	return result;
+}
+
+/*
+ * AIO error reporting callback for mdstartreadv().
+ *
+ * Errors are encoded as follows:
+ * - PgAioResult.error_data != 0 encodes IO that failed with that errno
+ * - PgAioResult.error_data == 0 encodes IO that didn't read all data
+ */
+static void
+md_readv_report(PgAioResult result, const PgAioTargetData *td, int elevel)
+{
+	RelPathStr	path;
+
+	path = relpathbackend(td->smgr.rlocator,
+						  td->smgr.is_temp ? MyProcNumber : INVALID_PROC_NUMBER,
+						  td->smgr.forkNum);
+
+	if (result.error_data != 0)
+	{
+		/* for errcode_for_file_access() and %m */
+		errno = result.error_data;
+
+		ereport(elevel,
+				errcode_for_file_access(),
+				errmsg("could not read blocks %u..%u in file \"%s\": %m",
+					   td->smgr.blockNum,
+					   td->smgr.blockNum + td->smgr.nblocks - 1,
+					   path.str));
+	}
+	else
+	{
+		/*
+		 * NB: This will typically only be output in debug messages, while
+		 * retrying a partial IO.
+		 */
+		ereport(elevel,
+				errcode(ERRCODE_DATA_CORRUPTED),
+				errmsg("could not read blocks %u..%u in file \"%s\": read only %zu of %zu bytes",
+					   td->smgr.blockNum,
+					   td->smgr.blockNum + td->smgr.nblocks - 1,
+					   path.str,
+					   result.result * (size_t) BLCKSZ,
+					   td->smgr.nblocks * (size_t) BLCKSZ));
+	}
 }

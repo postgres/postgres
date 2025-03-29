@@ -66,6 +66,7 @@
 #include "access/xlogutils.h"
 #include "lib/ilist.h"
 #include "miscadmin.h"
+#include "storage/aio.h"
 #include "storage/bufmgr.h"
 #include "storage/ipc.h"
 #include "storage/md.h"
@@ -106,6 +107,10 @@ typedef struct f_smgr
 	void		(*smgr_readv) (SMgrRelation reln, ForkNumber forknum,
 							   BlockNumber blocknum,
 							   void **buffers, BlockNumber nblocks);
+	void		(*smgr_startreadv) (PgAioHandle *ioh,
+									SMgrRelation reln, ForkNumber forknum,
+									BlockNumber blocknum,
+									void **buffers, BlockNumber nblocks);
 	void		(*smgr_writev) (SMgrRelation reln, ForkNumber forknum,
 								BlockNumber blocknum,
 								const void **buffers, BlockNumber nblocks,
@@ -117,6 +122,7 @@ typedef struct f_smgr
 								  BlockNumber old_blocks, BlockNumber nblocks);
 	void		(*smgr_immedsync) (SMgrRelation reln, ForkNumber forknum);
 	void		(*smgr_registersync) (SMgrRelation reln, ForkNumber forknum);
+	int			(*smgr_fd) (SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum, uint32 *off);
 } f_smgr;
 
 static const f_smgr smgrsw[] = {
@@ -134,12 +140,14 @@ static const f_smgr smgrsw[] = {
 		.smgr_prefetch = mdprefetch,
 		.smgr_maxcombine = mdmaxcombine,
 		.smgr_readv = mdreadv,
+		.smgr_startreadv = mdstartreadv,
 		.smgr_writev = mdwritev,
 		.smgr_writeback = mdwriteback,
 		.smgr_nblocks = mdnblocks,
 		.smgr_truncate = mdtruncate,
 		.smgr_immedsync = mdimmedsync,
 		.smgr_registersync = mdregistersync,
+		.smgr_fd = mdfd,
 	}
 };
 
@@ -156,6 +164,16 @@ static dlist_head unpinned_relns;
 /* local function prototypes */
 static void smgrshutdown(int code, Datum arg);
 static void smgrdestroy(SMgrRelation reln);
+
+static void smgr_aio_reopen(PgAioHandle *ioh);
+static char *smgr_aio_describe_identity(const PgAioTargetData *sd);
+
+
+const PgAioTargetInfo aio_smgr_target_info = {
+	.name = "smgr",
+	.reopen = smgr_aio_reopen,
+	.describe_identity = smgr_aio_describe_identity,
+};
 
 
 /*
@@ -710,6 +728,30 @@ smgrreadv(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 }
 
 /*
+ * smgrstartreadv() -- asynchronous version of smgrreadv()
+ *
+ * This starts an asynchronous readv IO using the IO handle `ioh`. Other than
+ * `ioh` all parameters are the same as smgrreadv().
+ *
+ * Completion callbacks above smgr will be passed the result as the number of
+ * successfully read blocks if the read [partially] succeeds (Buffers for
+ * blocks not successfully read might bear unspecified modifications, up to
+ * the full nblocks). This maintains the abstraction that smgr operates on the
+ * level of blocks, rather than bytes.
+ */
+void
+smgrstartreadv(PgAioHandle *ioh,
+			   SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
+			   void **buffers, BlockNumber nblocks)
+{
+	HOLD_INTERRUPTS();
+	smgrsw[reln->smgr_which].smgr_startreadv(ioh,
+											 reln, forknum, blocknum, buffers,
+											 nblocks);
+	RESUME_INTERRUPTS();
+}
+
+/*
  * smgrwritev() -- Write the supplied buffers out.
  *
  * This is to be used only for updating already-existing blocks of a
@@ -918,6 +960,29 @@ smgrimmedsync(SMgrRelation reln, ForkNumber forknum)
 }
 
 /*
+ * Return fd for the specified block number and update *off to the appropriate
+ * position.
+ *
+ * This is only to be used for when AIO needs to perform the IO in a different
+ * process than where it was issued (e.g. in an IO worker).
+ */
+static int
+smgrfd(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum, uint32 *off)
+{
+	int			fd;
+
+	/*
+	 * The caller needs to prevent interrupts from being processed, otherwise
+	 * the FD could be closed prematurely.
+	 */
+	Assert(!INTERRUPTS_CAN_BE_PROCESSED());
+
+	fd = smgrsw[reln->smgr_which].smgr_fd(reln, forknum, blocknum, off);
+
+	return fd;
+}
+
+/*
  * AtEOXact_SMgr
  *
  * This routine is called during transaction commit or abort (it doesn't
@@ -944,4 +1009,100 @@ ProcessBarrierSmgrRelease(void)
 {
 	smgrreleaseall();
 	return true;
+}
+
+/*
+ * Set target of the IO handle to be smgr and initialize all the relevant
+ * pieces of data.
+ */
+void
+pgaio_io_set_target_smgr(PgAioHandle *ioh,
+						 SMgrRelationData *smgr,
+						 ForkNumber forknum,
+						 BlockNumber blocknum,
+						 int nblocks,
+						 bool skip_fsync)
+{
+	PgAioTargetData *sd = pgaio_io_get_target_data(ioh);
+
+	pgaio_io_set_target(ioh, PGAIO_TID_SMGR);
+
+	/* backend is implied via IO owner */
+	sd->smgr.rlocator = smgr->smgr_rlocator.locator;
+	sd->smgr.forkNum = forknum;
+	sd->smgr.blockNum = blocknum;
+	sd->smgr.nblocks = nblocks;
+	sd->smgr.is_temp = SmgrIsTemp(smgr);
+	/* Temp relations should never be fsync'd */
+	sd->smgr.skip_fsync = skip_fsync && !SmgrIsTemp(smgr);
+}
+
+/*
+ * Callback for the smgr AIO target, to reopen the file (e.g. because the IO
+ * is executed in a worker).
+ */
+static void
+smgr_aio_reopen(PgAioHandle *ioh)
+{
+	PgAioTargetData *sd = pgaio_io_get_target_data(ioh);
+	PgAioOpData *od = pgaio_io_get_op_data(ioh);
+	SMgrRelation reln;
+	ProcNumber	procno;
+	uint32		off;
+
+	/*
+	 * The caller needs to prevent interrupts from being processed, otherwise
+	 * the FD could be closed again before we get to executing the IO.
+	 */
+	Assert(!INTERRUPTS_CAN_BE_PROCESSED());
+
+	if (sd->smgr.is_temp)
+		procno = pgaio_io_get_owner(ioh);
+	else
+		procno = INVALID_PROC_NUMBER;
+
+	reln = smgropen(sd->smgr.rlocator, procno);
+	switch (pgaio_io_get_op(ioh))
+	{
+		case PGAIO_OP_INVALID:
+			pg_unreachable();
+			break;
+		case PGAIO_OP_READV:
+			od->read.fd = smgrfd(reln, sd->smgr.forkNum, sd->smgr.blockNum, &off);
+			Assert(off == od->read.offset);
+			break;
+		case PGAIO_OP_WRITEV:
+			od->write.fd = smgrfd(reln, sd->smgr.forkNum, sd->smgr.blockNum, &off);
+			Assert(off == od->write.offset);
+			break;
+	}
+}
+
+/*
+ * Callback for the smgr AIO target, describing the target of the IO.
+ */
+static char *
+smgr_aio_describe_identity(const PgAioTargetData *sd)
+{
+	RelPathStr	path;
+	char	   *desc;
+
+	path = relpathbackend(sd->smgr.rlocator,
+						  sd->smgr.is_temp ?
+						  MyProcNumber : INVALID_PROC_NUMBER,
+						  sd->smgr.forkNum);
+
+	if (sd->smgr.nblocks == 0)
+		desc = psprintf(_("file \"%s\""), path.str);
+	else if (sd->smgr.nblocks == 1)
+		desc = psprintf(_("block %u in file \"%s\""),
+						sd->smgr.blockNum,
+						path.str);
+	else
+		desc = psprintf(_("blocks %u..%u in file \"%s\""),
+						sd->smgr.blockNum,
+						sd->smgr.blockNum + sd->smgr.nblocks - 1,
+						path.str);
+
+	return desc;
 }

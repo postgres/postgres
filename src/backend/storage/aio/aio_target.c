@@ -16,6 +16,7 @@
 
 #include "storage/aio.h"
 #include "storage/aio_internal.h"
+#include "storage/smgr.h"
 
 
 /*
@@ -25,6 +26,7 @@ static const PgAioTargetInfo *pgaio_target_info[] = {
 	[PGAIO_TID_INVALID] = &(PgAioTargetInfo) {
 		.name = "invalid",
 	},
+	[PGAIO_TID_SMGR] = &aio_smgr_target_info,
 };
 
 

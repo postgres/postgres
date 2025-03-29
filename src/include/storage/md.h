@@ -14,10 +14,13 @@
 #ifndef MD_H
 #define MD_H
 
+#include "storage/aio_types.h"
 #include "storage/block.h"
 #include "storage/relfilelocator.h"
 #include "storage/smgr.h"
 #include "storage/sync.h"
+
+extern const PgAioHandleCallbacks aio_md_readv_cb;
 
 /* md storage manager functionality */
 extern void mdinit(void);
@@ -36,6 +39,9 @@ extern uint32 mdmaxcombine(SMgrRelation reln, ForkNumber forknum,
 						   BlockNumber blocknum);
 extern void mdreadv(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 					void **buffers, BlockNumber nblocks);
+extern void mdstartreadv(PgAioHandle *ioh,
+						 SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
+						 void **buffers, BlockNumber nblocks);
 extern void mdwritev(SMgrRelation reln, ForkNumber forknum,
 					 BlockNumber blocknum,
 					 const void **buffers, BlockNumber nblocks, bool skipFsync);
@@ -46,6 +52,7 @@ extern void mdtruncate(SMgrRelation reln, ForkNumber forknum,
 					   BlockNumber old_blocks, BlockNumber nblocks);
 extern void mdimmedsync(SMgrRelation reln, ForkNumber forknum);
 extern void mdregistersync(SMgrRelation reln, ForkNumber forknum);
+extern int	mdfd(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum, uint32 *off);
 
 extern void ForgetDatabaseSyncRequests(Oid dbid);
 extern void DropRelationFiles(RelFileLocator *delrels, int ndelrels, bool isRedo);

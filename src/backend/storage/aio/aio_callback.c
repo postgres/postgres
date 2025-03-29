@@ -18,6 +18,7 @@
 #include "miscadmin.h"
 #include "storage/aio.h"
 #include "storage/aio_internal.h"
+#include "storage/md.h"
 
 
 /* just to have something to put into aio_handle_cbs */
@@ -37,6 +38,8 @@ typedef struct PgAioHandleCallbacksEntry
 static const PgAioHandleCallbacksEntry aio_handle_cbs[] = {
 #define CALLBACK_ENTRY(id, callback)  [id] = {.cb = &callback, .name = #callback}
 	CALLBACK_ENTRY(PGAIO_HCB_INVALID, aio_invalid_cb),
+
+	CALLBACK_ENTRY(PGAIO_HCB_MD_READV, aio_md_readv_cb),
 #undef CALLBACK_ENTRY
 };
 
