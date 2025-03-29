@@ -1271,6 +1271,19 @@ MERGE INTO pa_target t
 SELECT * FROM pa_target ORDER BY tid;
 ROLLBACK;
 
+-- bug #18871: ExecInitPartitionInfo()'s handling of DO NOTHING actions
+BEGIN;
+TRUNCATE pa_target;
+MERGE INTO pa_target t
+  USING (VALUES (10, 100)) AS s(sid, delta)
+  ON t.tid = s.sid
+  WHEN NOT MATCHED THEN
+    INSERT VALUES (1, 10, 'inserted by merge')
+  WHEN MATCHED THEN
+    DO NOTHING;
+SELECT * FROM pa_target ORDER BY tid, val;
+ROLLBACK;
+
 DROP TABLE pa_target CASCADE;
 
 -- The target table is partitioned in the same way, but this time by attaching
