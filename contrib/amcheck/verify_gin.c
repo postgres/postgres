@@ -281,9 +281,10 @@ gin_check_posting_tree_parent_keys_consistency(Relation rel, BlockNumber posting
 			bound = *GinDataPageGetRightBound(page);
 
 			/*
-			 * Gin page right bound has a sane value only when not a highkey on
-			 * the rightmost page (at a given level). For the rightmost page does
-			 * not store the highkey explicitly, and the value is infinity.
+			 * Gin page right bound has a sane value only when not a highkey
+			 * on the rightmost page (at a given level). For the rightmost
+			 * page does not store the highkey explicitly, and the value is
+			 * infinity.
 			 */
 			if (ItemPointerIsValid(&stack->parentkey) &&
 				rightlink != InvalidBlockNumber &&
@@ -531,8 +532,8 @@ gin_check_parent_keys_consistency(Relation rel,
 			 * for high key on rightmost page, as this key is not really
 			 * stored explicitly.
 			 *
-			 * Also make sure to not compare entries for different attnums, which
-			 * may be stored on the same page.
+			 * Also make sure to not compare entries for different attnums,
+			 * which may be stored on the same page.
 			 */
 			if (i != FirstOffsetNumber && attnum == prev_attnum && stack->blkno != GIN_ROOT_BLKNO &&
 				!(i == maxoff && rightlink == InvalidBlockNumber))
