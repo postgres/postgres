@@ -62,3 +62,17 @@ SELECT gin_index_check('gin_check_text_array_idx');
 
 -- cleanup
 DROP TABLE gin_check_text_array;
+-- Test GIN over jsonb
+CREATE TABLE "gin_check_jsonb"("j" jsonb);
+INSERT INTO gin_check_jsonb values ('{"a":[["b",{"x":1}],["b",{"x":2}]],"c":3}');
+INSERT INTO gin_check_jsonb values ('[[14,2,3]]');
+INSERT INTO gin_check_jsonb values ('[1,[14,2,3]]');
+CREATE INDEX "gin_check_jsonb_idx" on gin_check_jsonb USING GIN("j" jsonb_path_ops);
+SELECT gin_index_check('gin_check_jsonb_idx');
+ gin_index_check 
+-----------------
+ 
+(1 row)
+
+-- cleanup
+DROP TABLE gin_check_jsonb;
