@@ -465,31 +465,27 @@ do { \
 #define PAI_OVERWRITE			(1 << 0)
 #define PAI_IS_HEAP				(1 << 1)
 
-/* flags for PageIsVerifiedExtended() */
+/* flags for PageIsVerified() */
 #define PIV_LOG_WARNING			(1 << 0)
-#define PIV_REPORT_STAT			(1 << 1)
 
 #define PageAddItem(page, item, size, offsetNumber, overwrite, is_heap) \
 	PageAddItemExtended(page, item, size, offsetNumber, \
 						((overwrite) ? PAI_OVERWRITE : 0) | \
 						((is_heap) ? PAI_IS_HEAP : 0))
 
-#define PageIsVerified(page, blkno) \
-	PageIsVerifiedExtended(page, blkno, \
-						   PIV_LOG_WARNING | PIV_REPORT_STAT)
-
 /*
- * Check that BLCKSZ is a multiple of sizeof(size_t).  In
- * PageIsVerifiedExtended(), it is much faster to check if a page is
- * full of zeroes using the native word size.  Note that this assertion
- * is kept within a header to make sure that StaticAssertDecl() works
- * across various combinations of platforms and compilers.
+ * Check that BLCKSZ is a multiple of sizeof(size_t).  In PageIsVerified(), it
+ * is much faster to check if a page is full of zeroes using the native word
+ * size.  Note that this assertion is kept within a header to make sure that
+ * StaticAssertDecl() works across various combinations of platforms and
+ * compilers.
  */
 StaticAssertDecl(BLCKSZ == ((BLCKSZ / sizeof(size_t)) * sizeof(size_t)),
 				 "BLCKSZ has to be a multiple of sizeof(size_t)");
 
 extern void PageInit(Page page, Size pageSize, Size specialSize);
-extern bool PageIsVerifiedExtended(PageData *page, BlockNumber blkno, int flags);
+extern bool PageIsVerified(PageData *page, BlockNumber blkno, int flags,
+						   bool *checksum_failure_p);
 extern OffsetNumber PageAddItemExtended(Page page, Item item, Size size,
 										OffsetNumber offsetNumber, int flags);
 extern Page PageGetTempPage(const PageData *page);

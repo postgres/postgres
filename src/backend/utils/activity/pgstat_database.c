@@ -160,15 +160,6 @@ pgstat_report_checksum_failures_in_db(Oid dboid, int failurecount)
 }
 
 /*
- * Report one checksum failure in the current database.
- */
-void
-pgstat_report_checksum_failure(void)
-{
-	pgstat_report_checksum_failures_in_db(MyDatabaseId, 1);
-}
-
-/*
  * Report creation of temporary file.
  */
 void

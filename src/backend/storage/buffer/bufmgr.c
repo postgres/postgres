@@ -770,7 +770,7 @@ ReadBuffer(Relation reln, BlockNumber blockNum)
  * In RBM_NORMAL mode, the page is read from disk, and the page header is
  * validated.  An error is thrown if the page header is not valid.  (But
  * note that an all-zero page is considered "valid"; see
- * PageIsVerifiedExtended().)
+ * PageIsVerified().)
  *
  * RBM_ZERO_ON_ERROR is like the normal mode, but if the page header is not
  * valid, the page is zeroed instead of throwing an error. This is intended
@@ -1569,6 +1569,8 @@ WaitReadBuffers(ReadBuffersOperation *operation)
 		{
 			BufferDesc *bufHdr;
 			Block		bufBlock;
+			bool		verified;
+			bool		checksum_failure;
 
 			if (persistence == RELPERSISTENCE_TEMP)
 			{
@@ -1582,8 +1584,16 @@ WaitReadBuffers(ReadBuffersOperation *operation)
 			}
 
 			/* check for garbage data */
-			if (!PageIsVerifiedExtended((Page) bufBlock, io_first_block + j,
-										PIV_LOG_WARNING | PIV_REPORT_STAT))
+			verified = PageIsVerified((Page) bufBlock, io_first_block + j,
+									  PIV_LOG_WARNING, &checksum_failure);
+			if (checksum_failure)
+			{
+				RelFileLocatorBackend rloc = operation->smgr->smgr_rlocator;
+
+				pgstat_report_checksum_failures_in_db(rloc.locator.dbOid, 1);
+			}
+
+			if (!verified)
 			{
 				if ((operation->flags & READ_BUFFERS_ZERO_ON_ERROR) || zero_damaged_pages)
 				{
