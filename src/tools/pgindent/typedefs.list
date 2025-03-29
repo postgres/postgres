@@ -1053,8 +1053,10 @@ GinPageOpaque
 GinPageOpaqueData
 GinPlaceToPageRC
 GinPostingList
+GinPostingTreeScanItem
 GinQualCounts
 GinScanEntry
+GinScanItem
 GinScanKey
 GinScanOpaque
 GinScanOpaqueData

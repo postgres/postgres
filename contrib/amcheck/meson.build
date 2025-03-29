@@ -2,6 +2,7 @@
 
 amcheck_sources = files(
   'verify_common.c',
+  'verify_gin.c',
   'verify_heapam.c',
   'verify_nbtree.c',
 )
@@ -25,6 +26,7 @@ install_data(
   'amcheck--1.1--1.2.sql',
   'amcheck--1.2--1.3.sql',
   'amcheck--1.3--1.4.sql',
+  'amcheck--1.4--1.5.sql',
   kwargs: contrib_data_args,
 )
 
@@ -36,6 +38,7 @@ tests += {
     'sql': [
       'check',
       'check_btree',
+      'check_gin',
       'check_heap',
     ],
   },

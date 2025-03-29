@@ -1,5 +1,5 @@
 # amcheck extension
 comment = 'functions for verifying relation integrity'
-default_version = '1.4'
+default_version = '1.5'
 module_pathname = '$libdir/amcheck'
 relocatable = true

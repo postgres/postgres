@@ -188,6 +188,26 @@ ORDER BY c.relpages DESC LIMIT 10;
      </para>
     </listitem>
    </varlistentry>
+
+   <varlistentry>
+    <term>
+     <function>gin_index_check(index regclass) returns void</function>
+     <indexterm>
+      <primary>gin_index_check</primary>
+     </indexterm>
+    </term>
+
+    <listitem>
+     <para>
+      <function>gin_index_check</function> tests that its target GIN index
+      has consistent parent-child tuples relations (no parent tuples
+      require tuple adjustement) and page graph respects balanced-tree
+      invariants (internal pages reference only leaf page or only internal
+      pages).
+     </para>
+    </listitem>
+   </varlistentry>
+
   </variablelist>
   <tip>
    <para>
