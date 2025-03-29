@@ -3600,7 +3600,7 @@ ExecInitMerge(ModifyTableState *mtstate, EState *estate)
 				case CMD_NOTHING:
 					break;
 				default:
-					elog(ERROR, "unknown operation");
+					elog(ERROR, "unknown action in MERGE WHEN clause");
 					break;
 			}
 		}
