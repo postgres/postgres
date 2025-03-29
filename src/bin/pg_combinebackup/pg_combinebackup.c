@@ -302,10 +302,10 @@ main(int argc, char *argv[])
 
 			controlpath = psprintf("%s/%s", prior_backup_dirs[i], "global/pg_control");
 
-			pg_fatal("%s: manifest system identifier is %llu, but control file has %llu",
+			pg_fatal("%s: manifest system identifier is %" PRIu64 ", but control file has %" PRIu64,
 					 controlpath,
-					 (unsigned long long) manifests[i]->system_identifier,
-					 (unsigned long long) system_identifier);
+					 manifests[i]->system_identifier,
+					 system_identifier);
 		}
 	}
 
@@ -631,9 +631,9 @@ check_control_files(int n_backups, char **backup_dirs)
 		if (i == n_backups - 1)
 			system_identifier = control_file->system_identifier;
 		else if (system_identifier != control_file->system_identifier)
-			pg_fatal("%s: expected system identifier %llu, but found %llu",
-					 controlpath, (unsigned long long) system_identifier,
-					 (unsigned long long) control_file->system_identifier);
+			pg_fatal("%s: expected system identifier %" PRIu64 ", but found %" PRIu64,
+					 controlpath, system_identifier,
+					 control_file->system_identifier);
 
 		/*
 		 * Detect checksum mismatches, but only if the last backup in the
@@ -654,8 +654,7 @@ check_control_files(int n_backups, char **backup_dirs)
 	 * If debug output is enabled, make a note of the system identifier that
 	 * we found in all of the relevant control files.
 	 */
-	pg_log_debug("system identifier is %llu",
-				 (unsigned long long) system_identifier);
+	pg_log_debug("system identifier is %" PRIu64, system_identifier);
 
 	/*
 	 * Warn the user if not all backups are in the same state with regards to

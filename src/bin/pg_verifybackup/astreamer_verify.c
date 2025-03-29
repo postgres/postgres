@@ -207,11 +207,11 @@ member_verify_header(astreamer *streamer, astreamer_member *member)
 	if (m->size != member->size)
 	{
 		report_backup_error(mystreamer->context,
-							"\"%s\" has size %llu in \"%s\" but size %llu in the manifest",
+							"\"%s\" has size %llu in \"%s\" but size %" PRIu64 " in the manifest",
 							member->pathname,
 							(unsigned long long) member->size,
 							mystreamer->archive_name,
-							(unsigned long long) m->size);
+							m->size);
 		m->bad = true;
 		return;
 	}
@@ -296,10 +296,10 @@ member_verify_checksum(astreamer *streamer)
 	if (mystreamer->checksum_bytes != m->size)
 	{
 		report_backup_error(mystreamer->context,
-							"file \"%s\" in \"%s\" should contain %llu bytes, but read %llu bytes",
+							"file \"%s\" in \"%s\" should contain %" PRIu64 " bytes, but read %" PRIu64 " bytes",
 							m->pathname, mystreamer->archive_name,
-							(unsigned long long) m->size,
-							(unsigned long long) mystreamer->checksum_bytes);
+							m->size,
+							mystreamer->checksum_bytes);
 		return;
 	}
 
@@ -408,11 +408,11 @@ member_verify_control_data(astreamer *streamer)
 	/* System identifiers should match. */
 	if (manifest->system_identifier !=
 		mystreamer->control_file.system_identifier)
-		report_fatal_error("%s: %s: manifest system identifier is %llu, but control file has %llu",
+		report_fatal_error("%s: %s: manifest system identifier is %" PRIu64 ", but control file has %" PRIu64,
 						   mystreamer->archive_name,
 						   mystreamer->mfile->pathname,
-						   (unsigned long long) manifest->system_identifier,
-						   (unsigned long long) mystreamer->control_file.system_identifier);
+						   manifest->system_identifier,
+						   mystreamer->control_file.system_identifier);
 }
 
 /*

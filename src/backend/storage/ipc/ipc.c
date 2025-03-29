@@ -399,8 +399,8 @@ cancel_before_shmem_exit(pg_on_exit_callback function, Datum arg)
 		before_shmem_exit_list[before_shmem_exit_index - 1].arg == arg)
 		--before_shmem_exit_index;
 	else
-		elog(ERROR, "before_shmem_exit callback (%p,0x%llx) is not the latest entry",
-			 function, (long long) arg);
+		elog(ERROR, "before_shmem_exit callback (%p,0x%" PRIxPTR ") is not the latest entry",
+			 function, arg);
 }
 
 /* ----------------------------------------------------------------

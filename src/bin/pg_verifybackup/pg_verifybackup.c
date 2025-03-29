@@ -770,10 +770,10 @@ verify_control_file(const char *controlpath, uint64 manifest_system_identifier)
 
 	/* System identifiers should match. */
 	if (manifest_system_identifier != control_file->system_identifier)
-		report_fatal_error("%s: manifest system identifier is %llu, but control file has %llu",
+		report_fatal_error("%s: manifest system identifier is %" PRIu64 ", but control file has %" PRIu64,
 						   controlpath,
-						   (unsigned long long) manifest_system_identifier,
-						   (unsigned long long) control_file->system_identifier);
+						   manifest_system_identifier,
+						   control_file->system_identifier);
 
 	/* Release memory. */
 	pfree(control_file);
@@ -1165,9 +1165,8 @@ verify_file_checksum(verifier_context *context, manifest_file *m,
 	if (bytes_read != m->size)
 	{
 		report_backup_error(context,
-							"file \"%s\" should contain %llu bytes, but read %llu bytes",
-							relpath, (unsigned long long) m->size,
-							(unsigned long long) bytes_read);
+							"file \"%s\" should contain %" PRIu64 " bytes, but read %" PRIu64,
+							relpath, m->size, bytes_read);
 		return;
 	}
 

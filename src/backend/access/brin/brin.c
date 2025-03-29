@@ -1400,8 +1400,7 @@ brin_summarize_range(PG_FUNCTION_ARGS)
 	if (heapBlk64 > BRIN_ALL_BLOCKRANGES || heapBlk64 < 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("block number out of range: %lld",
-						(long long) heapBlk64)));
+				 errmsg("block number out of range: %" PRId64, heapBlk64)));
 	heapBlk = (BlockNumber) heapBlk64;
 
 	/*
@@ -1508,8 +1507,8 @@ brin_desummarize_range(PG_FUNCTION_ARGS)
 	if (heapBlk64 > MaxBlockNumber || heapBlk64 < 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("block number out of range: %lld",
-						(long long) heapBlk64)));
+				 errmsg("block number out of range: %" PRId64,
+						heapBlk64)));
 	heapBlk = (BlockNumber) heapBlk64;
 
 	/*

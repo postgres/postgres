@@ -1053,16 +1053,16 @@ CopyFromTextLikeOneRow(CopyFromState cstate, ExprContext *econtext,
 
 					attval = CopyLimitPrintoutLength(cstate->cur_attval);
 					ereport(NOTICE,
-							errmsg("skipping row due to data type incompatibility at line %llu for column \"%s\": \"%s\"",
-								   (unsigned long long) cstate->cur_lineno,
+							errmsg("skipping row due to data type incompatibility at line %" PRIu64 " for column \"%s\": \"%s\"",
+								   cstate->cur_lineno,
 								   cstate->cur_attname,
 								   attval));
 					pfree(attval);
 				}
 				else
 					ereport(NOTICE,
-							errmsg("skipping row due to data type incompatibility at line %llu for column \"%s\": null input",
-								   (unsigned long long) cstate->cur_lineno,
+							errmsg("skipping row due to data type incompatibility at line %" PRIu64 " for column \"%s\": null input",
+								   cstate->cur_lineno,
 								   cstate->cur_attname));
 
 				/* reset relname_only */

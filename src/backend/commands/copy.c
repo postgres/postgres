@@ -443,8 +443,8 @@ defGetCopyRejectLimitOption(DefElem *def)
 	if (reject_limit <= 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("REJECT_LIMIT (%lld) must be greater than zero",
-						(long long) reject_limit)));
+				 errmsg("REJECT_LIMIT (%" PRId64 ") must be greater than zero",
+						reject_limit)));
 
 	return reject_limit;
 }

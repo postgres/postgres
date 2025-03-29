@@ -2754,7 +2754,7 @@ RT_SCOPE void
 RT_STATS(RT_RADIX_TREE * tree)
 {
 	fprintf(stderr, "max_val = " UINT64_FORMAT "\n", tree->ctl->max_val);
-	fprintf(stderr, "num_keys = %lld\n", (long long) tree->ctl->num_keys);
+	fprintf(stderr, "num_keys = %" PRId64 "\n", tree->ctl->num_keys);
 
 #ifdef RT_SHMEM
 	fprintf(stderr, "handle = " DSA_POINTER_FORMAT "\n", tree->ctl->handle);
@@ -2766,10 +2766,10 @@ RT_STATS(RT_RADIX_TREE * tree)
 	{
 		RT_SIZE_CLASS_ELEM size_class = RT_SIZE_CLASS_INFO[i];
 
-		fprintf(stderr, ", n%d = %lld", size_class.fanout, (long long) tree->ctl->num_nodes[i]);
+		fprintf(stderr, ", n%d = %" PRId64, size_class.fanout, tree->ctl->num_nodes[i]);
 	}
 
-	fprintf(stderr, ", leaves = %lld", (long long) tree->ctl->num_leaves);
+	fprintf(stderr, ", leaves = %" PRId64, tree->ctl->num_leaves);
 
 	fprintf(stderr, "\n");
 }

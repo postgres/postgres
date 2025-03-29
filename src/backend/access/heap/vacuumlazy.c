@@ -1020,14 +1020,14 @@ heap_vacuum_rel(Relation rel, VacuumParams *params,
 							 orig_rel_pages,
 							 vacrel->eager_scanned_pages);
 			appendStringInfo(&buf,
-							 _("tuples: %lld removed, %lld remain, %lld are dead but not yet removable\n"),
-							 (long long) vacrel->tuples_deleted,
-							 (long long) vacrel->new_rel_tuples,
-							 (long long) vacrel->recently_dead_tuples);
+							 _("tuples: %" PRId64 " removed, %" PRId64 " remain, %" PRId64 " are dead but not yet removable\n"),
+							 vacrel->tuples_deleted,
+							 (int64) vacrel->new_rel_tuples,
+							 vacrel->recently_dead_tuples);
 			if (vacrel->missed_dead_tuples > 0)
 				appendStringInfo(&buf,
-								 _("tuples missed: %lld dead from %u pages not removed due to cleanup lock contention\n"),
-								 (long long) vacrel->missed_dead_tuples,
+								 _("tuples missed: %" PRId64 " dead from %u pages not removed due to cleanup lock contention\n"),
+								 vacrel->missed_dead_tuples,
 								 vacrel->missed_dead_pages);
 			diff = (int32) (ReadNextTransactionId() -
 							vacrel->cutoffs.OldestXmin);
@@ -1050,12 +1050,12 @@ heap_vacuum_rel(Relation rel, VacuumParams *params,
 								 _("new relminmxid: %u, which is %d MXIDs ahead of previous value\n"),
 								 vacrel->NewRelminMxid, diff);
 			}
-			appendStringInfo(&buf, _("frozen: %u pages from table (%.2f%% of total) had %lld tuples frozen\n"),
+			appendStringInfo(&buf, _("frozen: %u pages from table (%.2f%% of total) had %" PRId64 " tuples frozen\n"),
 							 vacrel->new_frozen_tuple_pages,
 							 orig_rel_pages == 0 ? 100.0 :
 							 100.0 * vacrel->new_frozen_tuple_pages /
 							 orig_rel_pages,
-							 (long long) vacrel->tuples_frozen);
+							 vacrel->tuples_frozen);
 
 			appendStringInfo(&buf,
 							 _("visibility map: %u pages set all-visible, %u pages set all-frozen (%u were all-visible)\n"),
@@ -1070,7 +1070,7 @@ heap_vacuum_rel(Relation rel, VacuumParams *params,
 				else
 					appendStringInfoString(&buf, _("index scan needed: "));
 
-				msgfmt = _("%u pages from table (%.2f%% of total) had %lld dead item identifiers removed\n");
+				msgfmt = _("%u pages from table (%.2f%% of total) had %" PRId64 " dead item identifiers removed\n");
 			}
 			else
 			{
@@ -1079,13 +1079,13 @@ heap_vacuum_rel(Relation rel, VacuumParams *params,
 				else
 					appendStringInfoString(&buf, _("index scan bypassed by failsafe: "));
 
-				msgfmt = _("%u pages from table (%.2f%% of total) have %lld dead item identifiers\n");
+				msgfmt = _("%u pages from table (%.2f%% of total) have %" PRId64 " dead item identifiers\n");
 			}
 			appendStringInfo(&buf, msgfmt,
 							 vacrel->lpdead_item_pages,
 							 orig_rel_pages == 0 ? 100.0 :
 							 100.0 * vacrel->lpdead_item_pages / orig_rel_pages,
-							 (long long) vacrel->lpdead_items);
+							 vacrel->lpdead_items);
 			for (int i = 0; i < vacrel->nindexes; i++)
 			{
 				IndexBulkDeleteResult *istat = vacrel->indstats[i];
@@ -1130,16 +1130,16 @@ heap_vacuum_rel(Relation rel, VacuumParams *params,
 			appendStringInfo(&buf, _("avg read rate: %.3f MB/s, avg write rate: %.3f MB/s\n"),
 							 read_rate, write_rate);
 			appendStringInfo(&buf,
-							 _("buffer usage: %lld hits, %lld reads, %lld dirtied\n"),
-							 (long long) total_blks_hit,
-							 (long long) total_blks_read,
-							 (long long) total_blks_dirtied);
+							 _("buffer usage: %" PRId64 " hits, %" PRId64 " reads, %" PRId64 " dirtied\n"),
+							 total_blks_hit,
+							 total_blks_read,
+							 total_blks_dirtied);
 			appendStringInfo(&buf,
-							 _("WAL usage: %lld records, %lld full page images, %llu bytes, %lld buffers full\n"),
-							 (long long) walusage.wal_records,
-							 (long long) walusage.wal_fpi,
-							 (unsigned long long) walusage.wal_bytes,
-							 (long long) walusage.wal_buffers_full);
+							 _("WAL usage: %" PRId64 " records, %" PRId64 " full page images, %" PRIu64 " bytes, %" PRId64 " buffers full\n"),
+							 walusage.wal_records,
+							 walusage.wal_fpi,
+							 walusage.wal_bytes,
+							 walusage.wal_buffers_full);
 			appendStringInfo(&buf, _("system usage: %s"), pg_rusage_show(&ru0));
 
 			ereport(verbose ? INFO : LOG,
@@ -2802,8 +2802,8 @@ lazy_vacuum_heap_rel(LVRelState *vacrel)
 			vacuumed_pages == vacrel->lpdead_item_pages));
 
 	ereport(DEBUG2,
-			(errmsg("table \"%s\": removed %lld dead item identifiers in %u pages",
-					vacrel->relname, (long long) vacrel->dead_items_info->num_items,
+			(errmsg("table \"%s\": removed %" PRId64 " dead item identifiers in %u pages",
+					vacrel->relname, vacrel->dead_items_info->num_items,
 					vacuumed_pages)));
 
 	/* Revert to the previous phase information for error traceback */

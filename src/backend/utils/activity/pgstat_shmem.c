@@ -864,10 +864,10 @@ pgstat_drop_entry_internal(PgStatShared_HashEntry *shent,
 	 */
 	if (shent->dropped)
 		elog(ERROR,
-			 "trying to drop stats entry already dropped: kind=%s dboid=%u objid=%llu refcount=%u",
+			 "trying to drop stats entry already dropped: kind=%s dboid=%u objid=%" PRIu64 " refcount=%u",
 			 pgstat_get_kind_info(shent->key.kind)->name,
 			 shent->key.dboid,
-			 (unsigned long long) shent->key.objid,
+			 shent->key.objid,
 			 pg_atomic_read_u32(&shent->refcount));
 	shent->dropped = true;
 

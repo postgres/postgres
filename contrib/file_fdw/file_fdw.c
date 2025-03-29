@@ -798,8 +798,8 @@ retry:
 				cstate->num_errors > cstate->opts.reject_limit)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-						 errmsg("skipped more than REJECT_LIMIT (%lld) rows due to data type incompatibility",
-								(long long) cstate->opts.reject_limit)));
+						 errmsg("skipped more than REJECT_LIMIT (%" PRId64 ") rows due to data type incompatibility",
+								cstate->opts.reject_limit)));
 
 			/* Repeat NextCopyFrom() until no soft error occurs */
 			goto retry;
@@ -855,10 +855,10 @@ fileEndForeignScan(ForeignScanState *node)
 		festate->cstate->num_errors > 0 &&
 		festate->cstate->opts.log_verbosity >= COPY_LOG_VERBOSITY_DEFAULT)
 		ereport(NOTICE,
-				errmsg_plural("%llu row was skipped due to data type incompatibility",
-							  "%llu rows were skipped due to data type incompatibility",
-							  (unsigned long long) festate->cstate->num_errors,
-							  (unsigned long long) festate->cstate->num_errors));
+				errmsg_plural("%" PRIu64 " row was skipped due to data type incompatibility",
+							  "%" PRIu64 " rows were skipped due to data type incompatibility",
+							  festate->cstate->num_errors,
+							  festate->cstate->num_errors));
 
 	EndCopyFrom(festate->cstate);
 }
@@ -1319,10 +1319,10 @@ file_acquire_sample_rows(Relation onerel, int elevel,
 		cstate->num_errors > 0 &&
 		cstate->opts.log_verbosity >= COPY_LOG_VERBOSITY_DEFAULT)
 		ereport(NOTICE,
-				errmsg_plural("%llu row was skipped due to data type incompatibility",
-							  "%llu rows were skipped due to data type incompatibility",
-							  (unsigned long long) cstate->num_errors,
-							  (unsigned long long) cstate->num_errors));
+				errmsg_plural("%" PRIu64 " row was skipped due to data type incompatibility",
+							  "%" PRIu64 " rows were skipped due to data type incompatibility",
+							  cstate->num_errors,
+							  cstate->num_errors));
 
 	EndCopyFrom(cstate);
 

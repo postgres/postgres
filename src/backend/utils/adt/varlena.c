@@ -3296,8 +3296,8 @@ byteaGetBit(PG_FUNCTION_ARGS)
 	if (n < 0 || n >= (int64) len * 8)
 		ereport(ERROR,
 				(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
-				 errmsg("index %lld out of valid range, 0..%lld",
-						(long long) n, (long long) len * 8 - 1)));
+				 errmsg("index %" PRId64 " out of valid range, 0..%" PRId64,
+						n, (int64) len * 8 - 1)));
 
 	/* n/8 is now known < len, so safe to cast to int */
 	byteNo = (int) (n / 8);
@@ -3368,8 +3368,8 @@ byteaSetBit(PG_FUNCTION_ARGS)
 	if (n < 0 || n >= (int64) len * 8)
 		ereport(ERROR,
 				(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
-				 errmsg("index %lld out of valid range, 0..%lld",
-						(long long) n, (long long) len * 8 - 1)));
+				 errmsg("index %" PRId64 " out of valid range, 0..%" PRId64,
+						n, (int64) len * 8 - 1)));
 
 	/* n/8 is now known < len, so safe to cast to int */
 	byteNo = (int) (n / 8);

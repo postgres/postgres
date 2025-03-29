@@ -35,7 +35,7 @@ consume_xids(PG_FUNCTION_ARGS)
 	FullTransactionId lastxid;
 
 	if (nxids < 0)
-		elog(ERROR, "invalid nxids argument: %lld", (long long) nxids);
+		elog(ERROR, "invalid nxids argument: %" PRId64, nxids);
 
 	if (nxids == 0)
 		lastxid = ReadNextFullTransactionId();
@@ -56,8 +56,8 @@ consume_xids_until(PG_FUNCTION_ARGS)
 	FullTransactionId lastxid;
 
 	if (!FullTransactionIdIsNormal(targetxid))
-		elog(ERROR, "targetxid %llu is not normal",
-			 (unsigned long long) U64FromFullTransactionId(targetxid));
+		elog(ERROR, "targetxid %" PRIu64 " is not normal",
+			 U64FromFullTransactionId(targetxid));
 
 	lastxid = consume_xids_common(targetxid, 0);
 
@@ -136,8 +136,8 @@ consume_xids_common(FullTransactionId untilxid, uint64 nxids)
 		if (consumed - last_reported_at >= REPORT_INTERVAL)
 		{
 			if (nxids > 0)
-				elog(NOTICE, "consumed %llu / %llu XIDs, latest %u:%u",
-					 (unsigned long long) consumed, (unsigned long long) nxids,
+				elog(NOTICE, "consumed %" PRIu64 " / %" PRIu64 " XIDs, latest %u:%u",
+					 consumed, nxids,
 					 EpochFromFullTransactionId(lastxid),
 					 XidFromFullTransactionId(lastxid));
 			else

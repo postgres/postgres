@@ -104,8 +104,7 @@ add_file_to_manifest(manifest_writer *mwriter, const char *manifest_path,
 		appendStringInfoString(&mwriter->buf, "\", ");
 	}
 
-	appendStringInfo(&mwriter->buf, "\"Size\": %llu, ",
-					 (unsigned long long) size);
+	appendStringInfo(&mwriter->buf, "\"Size\": %" PRIu64 ", ", size);
 
 	appendStringInfoString(&mwriter->buf, "\"Last-Modified\": \"");
 	enlargeStringInfo(&mwriter->buf, 128);

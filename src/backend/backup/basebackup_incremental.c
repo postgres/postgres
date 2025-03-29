@@ -949,9 +949,9 @@ manifest_process_system_identifier(JsonManifestParseContext *context,
 
 	if (manifest_system_identifier != system_identifier)
 		context->error_cb(context,
-						  "system identifier in backup manifest is %llu, but database system identifier is %llu",
-						  (unsigned long long) manifest_system_identifier,
-						  (unsigned long long) system_identifier);
+						  "system identifier in backup manifest is %" PRIu64 ", but database system identifier is %" PRIu64,
+						  manifest_system_identifier,
+						  system_identifier);
 }
 
 /*

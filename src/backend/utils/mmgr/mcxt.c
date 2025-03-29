@@ -285,31 +285,31 @@ MemoryContextTraverseNext(MemoryContext curr, MemoryContext top)
 static void
 BogusFree(void *pointer)
 {
-	elog(ERROR, "pfree called with invalid pointer %p (header 0x%016llx)",
-		 pointer, (unsigned long long) GetMemoryChunkHeader(pointer));
+	elog(ERROR, "pfree called with invalid pointer %p (header 0x%016" PRIx64 ")",
+		 pointer, GetMemoryChunkHeader(pointer));
 }
 
 static void *
 BogusRealloc(void *pointer, Size size, int flags)
 {
-	elog(ERROR, "repalloc called with invalid pointer %p (header 0x%016llx)",
-		 pointer, (unsigned long long) GetMemoryChunkHeader(pointer));
+	elog(ERROR, "repalloc called with invalid pointer %p (header 0x%016" PRIx64 ")",
+		 pointer, GetMemoryChunkHeader(pointer));
 	return NULL;				/* keep compiler quiet */
 }
 
 static MemoryContext
 BogusGetChunkContext(void *pointer)
 {
-	elog(ERROR, "GetMemoryChunkContext called with invalid pointer %p (header 0x%016llx)",
-		 pointer, (unsigned long long) GetMemoryChunkHeader(pointer));
+	elog(ERROR, "GetMemoryChunkContext called with invalid pointer %p (header 0x%016" PRIx64 ")",
+		 pointer, GetMemoryChunkHeader(pointer));
 	return NULL;				/* keep compiler quiet */
 }
 
 static Size
 BogusGetChunkSpace(void *pointer)
 {
-	elog(ERROR, "GetMemoryChunkSpace called with invalid pointer %p (header 0x%016llx)",
-		 pointer, (unsigned long long) GetMemoryChunkHeader(pointer));
+	elog(ERROR, "GetMemoryChunkSpace called with invalid pointer %p (header 0x%016" PRIx64 ")",
+		 pointer, GetMemoryChunkHeader(pointer));
 	return 0;					/* keep compiler quiet */
 }
 

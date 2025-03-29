@@ -194,8 +194,8 @@ pgstat_replslot_to_serialized_name_cb(const PgStat_HashKey *key, const PgStatSha
 	 * at the offset.
 	 */
 	if (!ReplicationSlotName(key->objid, name))
-		elog(ERROR, "could not find name for replication slot index %llu",
-			 (unsigned long long) key->objid);
+		elog(ERROR, "could not find name for replication slot index %" PRIu64,
+			 key->objid);
 }
 
 bool

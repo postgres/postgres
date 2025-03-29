@@ -320,10 +320,10 @@ xact_desc_stats(StringInfo buf, const char *label,
 			uint64		objid =
 				((uint64) dropped_stats[i].objid_hi) << 32 | dropped_stats[i].objid_lo;
 
-			appendStringInfo(buf, " %d/%u/%llu",
+			appendStringInfo(buf, " %d/%u/%" PRIu64,
 							 dropped_stats[i].kind,
 							 dropped_stats[i].dboid,
-							 (unsigned long long) objid);
+							 objid);
 		}
 	}
 }

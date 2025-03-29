@@ -42,8 +42,8 @@ test_copy_to_callback(PG_FUNCTION_ARGS)
 	processed = DoCopyTo(cstate);
 	EndCopyTo(cstate);
 
-	ereport(NOTICE, (errmsg("COPY TO callback has processed %lld rows",
-							(long long) processed)));
+	ereport(NOTICE, (errmsg("COPY TO callback has processed %" PRId64 " rows",
+							processed)));
 
 	table_close(rel, NoLock);
 

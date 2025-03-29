@@ -248,7 +248,7 @@ write_csvlog(ErrorData *edata)
 	appendStringInfoChar(&buf, ',');
 
 	/* query id */
-	appendStringInfo(&buf, "%lld", (long long) pgstat_get_my_query_id());
+	appendStringInfo(&buf, "%" PRId64, pgstat_get_my_query_id());
 
 	appendStringInfoChar(&buf, '\n');
 

@@ -129,8 +129,8 @@ pg_prewarm(PG_FUNCTION_ARGS)
 		if (first_block < 0 || first_block >= nblocks)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("starting block number must be between 0 and %lld",
-							(long long) (nblocks - 1))));
+					 errmsg("starting block number must be between 0 and %" PRId64,
+							(nblocks - 1))));
 	}
 	if (PG_ARGISNULL(4))
 		last_block = nblocks - 1;
@@ -140,8 +140,8 @@ pg_prewarm(PG_FUNCTION_ARGS)
 		if (last_block < 0 || last_block >= nblocks)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("ending block number must be between 0 and %lld",
-							(long long) (nblocks - 1))));
+					 errmsg("ending block number must be between 0 and %" PRId64,
+							(nblocks - 1))));
 	}
 
 	/* Now we're ready to do the real work. */

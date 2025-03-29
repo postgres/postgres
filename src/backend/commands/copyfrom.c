@@ -265,14 +265,14 @@ CopyFromErrorCallback(void *arg)
 	{
 		/* can't usefully display the data */
 		if (cstate->cur_attname)
-			errcontext("COPY %s, line %llu, column %s",
+			errcontext("COPY %s, line %" PRIu64 ", column %s",
 					   cstate->cur_relname,
-					   (unsigned long long) cstate->cur_lineno,
+					   cstate->cur_lineno,
 					   cstate->cur_attname);
 		else
-			errcontext("COPY %s, line %llu",
+			errcontext("COPY %s, line %" PRIu64,
 					   cstate->cur_relname,
-					   (unsigned long long) cstate->cur_lineno);
+					   cstate->cur_lineno);
 	}
 	else
 	{
@@ -282,9 +282,9 @@ CopyFromErrorCallback(void *arg)
 			char	   *attval;
 
 			attval = CopyLimitPrintoutLength(cstate->cur_attval);
-			errcontext("COPY %s, line %llu, column %s: \"%s\"",
+			errcontext("COPY %s, line %" PRIu64 ", column %s: \"%s\"",
 					   cstate->cur_relname,
-					   (unsigned long long) cstate->cur_lineno,
+					   cstate->cur_lineno,
 					   cstate->cur_attname,
 					   attval);
 			pfree(attval);
@@ -292,9 +292,9 @@ CopyFromErrorCallback(void *arg)
 		else if (cstate->cur_attname)
 		{
 			/* error is relevant to a particular column, value is NULL */
-			errcontext("COPY %s, line %llu, column %s: null input",
+			errcontext("COPY %s, line %" PRIu64 ", column %s: null input",
 					   cstate->cur_relname,
-					   (unsigned long long) cstate->cur_lineno,
+					   cstate->cur_lineno,
 					   cstate->cur_attname);
 		}
 		else
@@ -309,16 +309,16 @@ CopyFromErrorCallback(void *arg)
 				char	   *lineval;
 
 				lineval = CopyLimitPrintoutLength(cstate->line_buf.data);
-				errcontext("COPY %s, line %llu: \"%s\"",
+				errcontext("COPY %s, line %" PRIu64 ": \"%s\"",
 						   cstate->cur_relname,
-						   (unsigned long long) cstate->cur_lineno, lineval);
+						   cstate->cur_lineno, lineval);
 				pfree(lineval);
 			}
 			else
 			{
-				errcontext("COPY %s, line %llu",
+				errcontext("COPY %s, line %" PRIu64,
 						   cstate->cur_relname,
-						   (unsigned long long) cstate->cur_lineno);
+						   cstate->cur_lineno);
 			}
 		}
 	}
@@ -1168,8 +1168,8 @@ CopyFrom(CopyFromState cstate)
 				cstate->num_errors > cstate->opts.reject_limit)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-						 errmsg("skipped more than REJECT_LIMIT (%lld) rows due to data type incompatibility",
-								(long long) cstate->opts.reject_limit)));
+						 errmsg("skipped more than REJECT_LIMIT (%" PRId64 ") rows due to data type incompatibility",
+								cstate->opts.reject_limit)));
 
 			/* Repeat NextCopyFrom() until no soft error occurs */
 			continue;
@@ -1471,10 +1471,10 @@ CopyFrom(CopyFromState cstate)
 		cstate->num_errors > 0 &&
 		cstate->opts.log_verbosity >= COPY_LOG_VERBOSITY_DEFAULT)
 		ereport(NOTICE,
-				errmsg_plural("%llu row was skipped due to data type incompatibility",
-							  "%llu rows were skipped due to data type incompatibility",
-							  (unsigned long long) cstate->num_errors,
-							  (unsigned long long) cstate->num_errors));
+				errmsg_plural("%" PRIu64 " row was skipped due to data type incompatibility",
+							  "%" PRIu64 " rows were skipped due to data type incompatibility",
+							  cstate->num_errors,
+							  cstate->num_errors));
 
 	if (bistate != NULL)
 		FreeBulkInsertState(bistate);

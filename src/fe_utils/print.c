@@ -3185,9 +3185,9 @@ printTableInit(printTableContent *const content, const printTableOpt *opt,
 	/* Catch possible overflow.  Using >= here allows adding 1 below */
 	if (total_cells >= SIZE_MAX / sizeof(*content->cells))
 	{
-		fprintf(stderr, _("Cannot print table contents: number of cells %lld is equal to or exceeds maximum %lld.\n"),
-				(long long int) total_cells,
-				(long long int) (SIZE_MAX / sizeof(*content->cells)));
+		fprintf(stderr, _("Cannot print table contents: number of cells %" PRId64 " is equal to or exceeds maximum %zu.\n"),
+				total_cells,
+				SIZE_MAX / sizeof(*content->cells));
 		exit(EXIT_FAILURE);
 	}
 	content->cells = pg_malloc0((total_cells + 1) * sizeof(*content->cells));
@@ -3269,8 +3269,8 @@ printTableAddCell(printTableContent *const content, char *cell,
 	total_cells = (uint64) content->ncolumns * content->nrows;
 	if (content->cellsadded >= total_cells)
 	{
-		fprintf(stderr, _("Cannot add cell to table content: total cell count of %lld exceeded.\n"),
-				(long long int) total_cells);
+		fprintf(stderr, _("Cannot add cell to table content: total cell count of %" PRId64 " exceeded.\n"),
+				total_cells);
 		exit(EXIT_FAILURE);
 	}
 

@@ -284,8 +284,8 @@ write_jsonlog(ErrorData *edata)
 	}
 
 	/* query id */
-	appendJSONKeyValueFmt(&buf, "query_id", false, "%lld",
-						  (long long) pgstat_get_my_query_id());
+	appendJSONKeyValueFmt(&buf, "query_id", false, "%" PRId64,
+						  pgstat_get_my_query_id());
 
 	/* Finish string */
 	appendStringInfoChar(&buf, '}');

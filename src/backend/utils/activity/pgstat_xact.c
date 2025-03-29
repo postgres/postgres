@@ -363,9 +363,9 @@ pgstat_create_transactional(PgStat_Kind kind, Oid dboid, uint64 objid)
 	if (pgstat_get_entry_ref(kind, dboid, objid, false, NULL))
 	{
 		ereport(WARNING,
-				errmsg("resetting existing statistics for kind %s, db=%u, oid=%llu",
+				errmsg("resetting existing statistics for kind %s, db=%u, oid=%" PRIu64,
 					   (pgstat_get_kind_info(kind))->name, dboid,
-					   (unsigned long long) objid));
+					   objid));
 
 		pgstat_reset(kind, dboid, objid);
 	}

@@ -92,7 +92,7 @@ pg_wal_summary_contents(PG_FUNCTION_ARGS)
 	if (raw_tli < 1 || raw_tli > PG_INT32_MAX)
 		ereport(ERROR,
 				errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				errmsg("invalid timeline %lld", (long long) raw_tli));
+				errmsg("invalid timeline %" PRId64, raw_tli));
 
 	/* Prepare to read the specified WAL summary file. */
 	ws.tli = (TimeLineID) raw_tli;

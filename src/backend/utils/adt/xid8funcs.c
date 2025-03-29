@@ -117,8 +117,8 @@ TransactionIdInRecentPast(FullTransactionId fxid, TransactionId *extracted_xid)
 	if (!FullTransactionIdPrecedes(fxid, now_fullxid))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("transaction ID %llu is in the future",
-						(unsigned long long) U64FromFullTransactionId(fxid))));
+				 errmsg("transaction ID %" PRIu64 " is in the future",
+						U64FromFullTransactionId(fxid))));
 
 	/*
 	 * TransamVariables->oldestClogXid is protected by XactTruncationLock, but

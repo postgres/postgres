@@ -1921,16 +1921,16 @@ UpdateDecodingStats(LogicalDecodingContext *ctx)
 	if (rb->spillBytes <= 0 && rb->streamBytes <= 0 && rb->totalBytes <= 0)
 		return;
 
-	elog(DEBUG2, "UpdateDecodingStats: updating stats %p %lld %lld %lld %lld %lld %lld %lld %lld",
+	elog(DEBUG2, "UpdateDecodingStats: updating stats %p %" PRId64 " %" PRId64 " %" PRId64 " %" PRId64 " %" PRId64 " %" PRId64 " %" PRId64 " %" PRId64,
 		 rb,
-		 (long long) rb->spillTxns,
-		 (long long) rb->spillCount,
-		 (long long) rb->spillBytes,
-		 (long long) rb->streamTxns,
-		 (long long) rb->streamCount,
-		 (long long) rb->streamBytes,
-		 (long long) rb->totalTxns,
-		 (long long) rb->totalBytes);
+		 rb->spillTxns,
+		 rb->spillCount,
+		 rb->spillBytes,
+		 rb->streamTxns,
+		 rb->streamCount,
+		 rb->streamBytes,
+		 rb->totalTxns,
+		 rb->totalBytes);
 
 	repSlotStat.spill_txns = rb->spillTxns;
 	repSlotStat.spill_count = rb->spillCount;

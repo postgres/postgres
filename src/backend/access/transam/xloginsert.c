@@ -869,8 +869,8 @@ XLogRecordAssemble(RmgrId rmid, uint8 info,
 			if (mainrdata_len > PG_UINT32_MAX)
 				ereport(ERROR,
 						(errmsg_internal("too much WAL data"),
-						 errdetail_internal("Main data length is %llu bytes for a maximum of %u bytes.",
-											(unsigned long long) mainrdata_len,
+						 errdetail_internal("Main data length is %" PRIu64 " bytes for a maximum of %u bytes.",
+											mainrdata_len,
 											PG_UINT32_MAX)));
 
 			mainrdata_len_4b = (uint32) mainrdata_len;
@@ -915,8 +915,8 @@ XLogRecordAssemble(RmgrId rmid, uint8 info,
 	if (total_len > XLogRecordMaxSize)
 		ereport(ERROR,
 				(errmsg_internal("oversized WAL record"),
-				 errdetail_internal("WAL record would be %llu bytes (of maximum %u bytes); rmid %u flags %u.",
-									(unsigned long long) total_len, XLogRecordMaxSize, rmid, info)));
+				 errdetail_internal("WAL record would be %" PRIu64 " bytes (of maximum %u bytes); rmid %u flags %u.",
+									total_len, XLogRecordMaxSize, rmid, info)));
 
 	/*
 	 * Fill in the fields in the record header. Prev-link is filled in later,

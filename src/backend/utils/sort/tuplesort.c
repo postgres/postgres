@@ -918,13 +918,13 @@ tuplesort_free(Tuplesortstate *state)
 	if (trace_sort)
 	{
 		if (state->tapeset)
-			elog(LOG, "%s of worker %d ended, %lld disk blocks used: %s",
+			elog(LOG, "%s of worker %d ended, %" PRId64 " disk blocks used: %s",
 				 SERIAL(state) ? "external sort" : "parallel external sort",
-				 state->worker, (long long) spaceUsed, pg_rusage_show(&state->ru_start));
+				 state->worker, spaceUsed, pg_rusage_show(&state->ru_start));
 		else
-			elog(LOG, "%s of worker %d ended, %lld KB used: %s",
+			elog(LOG, "%s of worker %d ended, %" PRId64 " KB used: %s",
 				 SERIAL(state) ? "internal sort" : "unperformed parallel sort",
-				 state->worker, (long long) spaceUsed, pg_rusage_show(&state->ru_start));
+				 state->worker, spaceUsed, pg_rusage_show(&state->ru_start));
 	}
 
 	TRACE_POSTGRESQL_SORT_DONE(state->tapeset != NULL, spaceUsed);

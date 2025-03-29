@@ -3152,11 +3152,11 @@ log_status_format(StringInfo buf, const char *format, ErrorData *edata)
 				break;
 			case 'Q':
 				if (padding != 0)
-					appendStringInfo(buf, "%*lld", padding,
-									 (long long) pgstat_get_my_query_id());
+					appendStringInfo(buf, "%*" PRId64, padding,
+									 pgstat_get_my_query_id());
 				else
-					appendStringInfo(buf, "%lld",
-									 (long long) pgstat_get_my_query_id());
+					appendStringInfo(buf, "%" PRId64,
+									 pgstat_get_my_query_id());
 				break;
 			default:
 				/* format error - ignore it */

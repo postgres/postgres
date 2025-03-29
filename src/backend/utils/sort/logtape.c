@@ -263,8 +263,8 @@ ltsWriteBlock(LogicalTapeSet *lts, int64 blocknum, const void *buffer)
 	if (BufFileSeekBlock(lts->pfile, blocknum) != 0)
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("could not seek to block %lld of temporary file",
-						(long long) blocknum)));
+				 errmsg("could not seek to block %" PRId64 " of temporary file",
+						blocknum)));
 	BufFileWrite(lts->pfile, buffer, BLCKSZ);
 
 	/* Update nBlocksWritten, if we extended the file */
@@ -284,8 +284,8 @@ ltsReadBlock(LogicalTapeSet *lts, int64 blocknum, void *buffer)
 	if (BufFileSeekBlock(lts->pfile, blocknum) != 0)
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("could not seek to block %lld of temporary file",
-						(long long) blocknum)));
+				 errmsg("could not seek to block %" PRId64 " of temporary file",
+						blocknum)));
 	BufFileReadExact(lts->pfile, buffer, BLCKSZ);
 }
 
@@ -1100,10 +1100,10 @@ LogicalTapeBackspace(LogicalTape *lt, size_t size)
 		ltsReadBlock(lt->tapeSet, prev, lt->buffer);
 
 		if (TapeBlockGetTrailer(lt->buffer)->next != lt->curBlockNumber)
-			elog(ERROR, "broken tape, next of block %lld is %lld, expected %lld",
-				 (long long) prev,
-				 (long long) (TapeBlockGetTrailer(lt->buffer)->next),
-				 (long long) lt->curBlockNumber);
+			elog(ERROR, "broken tape, next of block %" PRId64 " is %" PRId64 ", expected %" PRId64,
+				 prev,
+				 TapeBlockGetTrailer(lt->buffer)->next,
+				 lt->curBlockNumber);
 
 		lt->nbytes = TapeBlockPayloadSize;
 		lt->curBlockNumber = prev;
