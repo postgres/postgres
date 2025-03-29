@@ -60,7 +60,7 @@ struct lconv_member_info
  * column is the name of the nl_item, if translating from nl_langinfo_l() (it's
  * always the member name, in upper case).
  */
-const static struct lconv_member_info table[] = {
+static const struct lconv_member_info table[] = {
 	/* String fields. */
 	LCONV_S(LC_NUMERIC, decimal_point, DECIMAL_POINT),
 	LCONV_S(LC_NUMERIC, thousands_sep, THOUSANDS_SEP),
