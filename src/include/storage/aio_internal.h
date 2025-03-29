@@ -34,6 +34,11 @@
  * linearly through all states.
  *
  * State changes should all go through pgaio_io_update_state().
+ *
+ * Note that the externally visible functions to start IO
+ * (e.g. FileStartReadV(), via pgaio_io_start_readv()) move an IO from
+ * PGAIO_HS_HANDED_OUT to at least PGAIO_HS_STAGED and at most
+ * PGAIO_HS_COMPLETED_LOCAL (at which point the handle will be reused).
  */
 typedef enum PgAioHandleState
 {
@@ -285,6 +290,9 @@ typedef struct IoMethodOps
 	/*
 	 * Start executing passed in IOs.
 	 *
+	 * Shall advance state to at least PGAIO_HS_SUBMITTED.  (By the time this
+	 * returns, other backends might have advanced the state further.)
+	 *
 	 * Will not be called if ->needs_synchronous_execution() returned true.
 	 *
 	 * num_staged_ios is <= PGAIO_SUBMIT_BATCH_SIZE.
@@ -293,12 +301,24 @@ typedef struct IoMethodOps
 	 */
 	int			(*submit) (uint16 num_staged_ios, PgAioHandle **staged_ios);
 
-	/*
+	/* ---
 	 * Wait for the IO to complete. Optional.
+	 *
+	 * On return, state shall be on of
+	 * - PGAIO_HS_COMPLETED_IO
+	 * - PGAIO_HS_COMPLETED_SHARED
+	 * - PGAIO_HS_COMPLETED_LOCAL
+	 *
+	 * The callback must not block if the handle is already in one of those
+	 * states, or has been reused (see pgaio_io_was_recycled()).  If, on
+	 * return, the state is PGAIO_HS_COMPLETED_IO, state will reach
+	 * PGAIO_HS_COMPLETED_SHARED without further intervention by the IO
+	 * method.
 	 *
 	 * If not provided, it needs to be guaranteed that the IO method calls
 	 * pgaio_io_process_completion() without further interaction by the
 	 * issuing backend.
+	 * ---
 	 */
 	void		(*wait_one) (PgAioHandle *ioh,
 							 uint64 ref_generation);

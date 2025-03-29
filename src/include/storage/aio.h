@@ -80,7 +80,7 @@ typedef enum PgAioHandleFlags
 /*
  * The IO operations supported by the AIO subsystem.
  *
- * This could be in aio_internal.h, as it is not pubicly referenced, but
+ * This could be in aio_internal.h, as it is not publicly referenced, but
  * PgAioOpData currently *does* need to be public, therefore keeping this
  * public seems to make sense.
  */

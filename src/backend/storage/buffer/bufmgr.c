@@ -3929,9 +3929,10 @@ FlushBuffer(BufferDesc *buf, SMgrRelation reln, IOObject io_object,
 		XLogFlush(recptr);
 
 	/*
-	 * Now it's safe to write buffer to disk. Note that no one else should
-	 * have been able to write it while we were busy with log flushing because
-	 * only one process at a time can set the BM_IO_IN_PROGRESS bit.
+	 * Now it's safe to write the buffer to disk. Note that no one else should
+	 * have been able to write it, while we were busy with log flushing,
+	 * because we got the exclusive right to perform I/O by setting the
+	 * BM_IO_IN_PROGRESS bit.
 	 */
 	bufBlock = BufHdrGetBlock(buf);
 
@@ -5498,9 +5499,6 @@ IsBufferCleanupOK(Buffer buffer)
 
 /*
  *	Functions for buffer I/O handling
- *
- *	Note: We assume that nested buffer I/O never occurs.
- *	i.e at most one BM_IO_IN_PROGRESS bit is set per proc.
  *
  *	Also note that these are used only for shared buffers, not local ones.
  */
