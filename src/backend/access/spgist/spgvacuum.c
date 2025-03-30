@@ -822,7 +822,13 @@ spgvacuumscan(spgBulkDeleteState *bds)
 	/* We can skip locking for new or temp relations */
 	needLock = !RELATION_IS_LOCAL(index);
 	p.current_blocknum = SPGIST_METAPAGE_BLKNO + 1;
-	stream = read_stream_begin_relation(READ_STREAM_FULL,
+
+	/*
+	 * It is safe to use batchmode as block_range_read_stream_cb takes no
+	 * locks.
+	 */
+	stream = read_stream_begin_relation(READ_STREAM_FULL |
+										READ_STREAM_USE_BATCHING,
 										bds->info->strategy,
 										index,
 										MAIN_FORKNUM,

@@ -1225,7 +1225,12 @@ lazy_scan_heap(LVRelState *vacrel)
 	vacrel->next_unskippable_eager_scanned = false;
 	vacrel->next_unskippable_vmbuffer = InvalidBuffer;
 
-	/* Set up the read stream for vacuum's first pass through the heap */
+	/*
+	 * Set up the read stream for vacuum's first pass through the heap.
+	 *
+	 * This could be made safe for READ_STREAM_USE_BATCHING, but only with
+	 * explicit work in heap_vac_scan_next_block.
+	 */
 	stream = read_stream_begin_relation(READ_STREAM_MAINTENANCE,
 										vacrel->bstrategy,
 										vacrel->rel,
@@ -2669,6 +2674,8 @@ lazy_vacuum_all_indexes(LVRelState *vacrel)
  * Read stream callback for vacuum's third phase (second pass over the heap).
  * Gets the next block from the TID store and returns it or InvalidBlockNumber
  * if there are no further blocks to vacuum.
+ *
+ * NB: Assumed to be safe to use with READ_STREAM_USE_BATCHING.
  */
 static BlockNumber
 vacuum_reap_lp_read_stream_next(ReadStream *stream,
@@ -2732,8 +2739,16 @@ lazy_vacuum_heap_rel(LVRelState *vacrel)
 
 	iter = TidStoreBeginIterate(vacrel->dead_items);
 
-	/* Set up the read stream for vacuum's second pass through the heap */
-	stream = read_stream_begin_relation(READ_STREAM_MAINTENANCE,
+	/*
+	 * Set up the read stream for vacuum's second pass through the heap.
+	 *
+	 * It is safe to use batchmode, as vacuum_reap_lp_read_stream_next() does
+	 * not need to wait for IO and does not perform locking. Once we support
+	 * parallelism it should still be fine, as presumably the holder of locks
+	 * would never be blocked by IO while holding the lock.
+	 */
+	stream = read_stream_begin_relation(READ_STREAM_MAINTENANCE |
+										READ_STREAM_USE_BATCHING,
 										vacrel->bstrategy,
 										vacrel->rel,
 										MAIN_FORKNUM,

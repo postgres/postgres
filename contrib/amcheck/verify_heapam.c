@@ -447,12 +447,23 @@ verify_heapam(PG_FUNCTION_ARGS)
 
 	if (skip_option == SKIP_PAGES_NONE)
 	{
+		/*
+		 * It is safe to use batchmode as block_range_read_stream_cb takes no
+		 * locks.
+		 */
 		stream_cb = block_range_read_stream_cb;
-		stream_flags = READ_STREAM_SEQUENTIAL | READ_STREAM_FULL;
+		stream_flags = READ_STREAM_SEQUENTIAL |
+			READ_STREAM_FULL |
+			READ_STREAM_USE_BATCHING;
 		stream_data = &stream_skip_data.range;
 	}
 	else
 	{
+		/*
+		 * It would not be safe to naively use use batchmode, as
+		 * heapcheck_read_stream_next_unskippable takes locks. It shouldn't be
+		 * too hard to convert though.
+		 */
 		stream_cb = heapcheck_read_stream_next_unskippable;
 		stream_flags = READ_STREAM_DEFAULT;
 		stream_data = &stream_skip_data;

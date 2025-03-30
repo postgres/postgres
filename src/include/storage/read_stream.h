@@ -42,6 +42,27 @@
  */
 #define READ_STREAM_FULL 0x04
 
+/* ---
+ * Opt-in to using AIO batchmode.
+ *
+ * Submitting IO in larger batches can be more efficient than doing so
+ * one-by-one, particularly for many small reads. It does, however, require
+ * the ReadStreamBlockNumberCB callback to abide by the restrictions of AIO
+ * batching (c.f. pgaio_enter_batchmode()). Basically, the callback may not:
+ *
+ * a) block without first calling pgaio_submit_staged(), unless a
+ *    to-be-waited-on lock cannot be part of a deadlock, e.g. because it is
+ *    never held while waiting for IO.
+ *
+ * b) start another batch (without first exiting batchmode and re-entering
+ *    before returning)
+ *
+ * As this requires care and is nontrivial in some cases, batching is only
+ * used with explicit opt-in.
+ * ---
+ */
+#define READ_STREAM_USE_BATCHING 0x08
+
 struct ReadStream;
 typedef struct ReadStream ReadStream;
 

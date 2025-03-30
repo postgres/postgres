@@ -526,7 +526,13 @@ collect_visibility_data(Oid relid, bool include_pd)
 	{
 		p.current_blocknum = 0;
 		p.last_exclusive = nblocks;
-		stream = read_stream_begin_relation(READ_STREAM_FULL,
+
+		/*
+		 * It is safe to use batchmode as block_range_read_stream_cb takes no
+		 * locks.
+		 */
+		stream = read_stream_begin_relation(READ_STREAM_FULL |
+											READ_STREAM_USE_BATCHING,
 											bstrategy,
 											rel,
 											MAIN_FORKNUM,

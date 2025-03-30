@@ -102,6 +102,7 @@ struct ReadStream
 	int16		initialized_buffers;
 	int			read_buffers_flags;
 	bool		sync_mode;		/* using io_method=sync */
+	bool		batch_mode;		/* READ_STREAM_USE_BATCHING */
 	bool		advice_enabled;
 	bool		temporary;
 
@@ -403,6 +404,15 @@ read_stream_start_pending_read(ReadStream *stream)
 static void
 read_stream_look_ahead(ReadStream *stream)
 {
+	/*
+	 * Allow amortizing the cost of submitting IO over multiple IOs. This
+	 * requires that we don't do any operations that could lead to a deadlock
+	 * with staged-but-unsubmitted IO. The callback needs to opt-in to being
+	 * careful.
+	 */
+	if (stream->batch_mode)
+		pgaio_enter_batchmode();
+
 	while (stream->ios_in_progress < stream->max_ios &&
 		   stream->pinned_buffers + stream->pending_read_nblocks < stream->distance)
 	{
@@ -450,6 +460,8 @@ read_stream_look_ahead(ReadStream *stream)
 			{
 				/* We've hit the buffer or I/O limit.  Rewind and stop here. */
 				read_stream_unget_block(stream, blocknum);
+				if (stream->batch_mode)
+					pgaio_exit_batchmode();
 				return;
 			}
 		}
@@ -484,6 +496,9 @@ read_stream_look_ahead(ReadStream *stream)
 	 * time.
 	 */
 	Assert(stream->pinned_buffers > 0 || stream->distance == 0);
+
+	if (stream->batch_mode)
+		pgaio_exit_batchmode();
 }
 
 /*
@@ -617,6 +632,7 @@ read_stream_begin_impl(int flags,
 			MAXALIGN(&stream->ios[Max(1, max_ios)]);
 
 	stream->sync_mode = io_method == IOMETHOD_SYNC;
+	stream->batch_mode = flags & READ_STREAM_USE_BATCHING;
 
 #ifdef USE_PREFETCH
 
