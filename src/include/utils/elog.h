@@ -195,6 +195,7 @@ extern int	errdetail_plural(const char *fmt_singular, const char *fmt_plural,
 							 unsigned long n,...) pg_attribute_printf(1, 4) pg_attribute_printf(2, 4);
 
 extern int	errhint(const char *fmt,...) pg_attribute_printf(1, 2);
+extern int	errhint_internal(const char *fmt,...) pg_attribute_printf(1, 2);
 
 extern int	errhint_plural(const char *fmt_singular, const char *fmt_plural,
 						   unsigned long n,...) pg_attribute_printf(1, 4) pg_attribute_printf(2, 4);

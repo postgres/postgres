@@ -1330,6 +1330,27 @@ errhint(const char *fmt,...)
 	return 0;					/* return value does not matter */
 }
 
+/*
+ * errhint_internal --- add a hint error message text to the current error
+ *
+ * Non-translated version of errhint(), see also errmsg_internal().
+ */
+int
+errhint_internal(const char *fmt,...)
+{
+	ErrorData  *edata = &errordata[errordata_stack_depth];
+	MemoryContext oldcontext;
+
+	recursion_depth++;
+	CHECK_STACK_DEPTH();
+	oldcontext = MemoryContextSwitchTo(edata->assoc_context);
+
+	EVALUATE_MESSAGE(edata->domain, hint, false, false);
+
+	MemoryContextSwitchTo(oldcontext);
+	recursion_depth--;
+	return 0;					/* return value does not matter */
+}
 
 /*
  * errhint_plural --- add a hint error message text to the current error,
