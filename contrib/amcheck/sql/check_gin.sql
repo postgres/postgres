@@ -30,9 +30,9 @@ DROP TABLE gin_check;
 SELECT setseed(1);
 CREATE TABLE "gin_check_text_array"("Column1" text[]);
 -- posting trees
-INSERT INTO gin_check_text_array select array_agg(md5(round(random()*300)::text)::text) from generate_series(1, 100000) as i group by i % 10000;
+INSERT INTO gin_check_text_array select array_agg(sha256(round(random()*300)::text::bytea)::text) from generate_series(1, 100000) as i group by i % 10000;
 -- posting leaves
-INSERT INTO gin_check_text_array select array_agg(md5(round(random()*300 + 300)::text)::text) from generate_series(1, 10000) as i group by i % 100;
+INSERT INTO gin_check_text_array select array_agg(sha256(round(random()*300 + 300)::text::bytea)::text) from generate_series(1, 10000) as i group by i % 100;
 CREATE INDEX gin_check_text_array_idx on "gin_check_text_array" USING GIN("Column1");
 SELECT gin_index_check('gin_check_text_array_idx');
 
