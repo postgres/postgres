@@ -2747,7 +2747,7 @@ description | Waiting for a newly initialized WAL file to reach durable storage
         <structfield>read_time</structfield> <type>double precision</type>
        </para>
        <para>
-        Time spent in read operations in milliseconds (if
+        Time spent waiting for read operations in milliseconds (if
         <xref linkend="guc-track-io-timing"/> is enabled and
         <varname>object</varname> is not <literal>wal</literal>,
         or if <xref linkend="guc-track-wal-io-timing"/> is enabled
@@ -2785,7 +2785,7 @@ description | Waiting for a newly initialized WAL file to reach durable storage
         <structfield>write_time</structfield> <type>double precision</type>
        </para>
        <para>
-        Time spent in write operations in milliseconds (if
+        Time spent waiting for write operations in milliseconds (if
         <xref linkend="guc-track-io-timing"/> is enabled and
         <varname>object</varname> is not <literal>wal</literal>,
         or if <xref linkend="guc-track-wal-io-timing"/> is enabled
@@ -2813,7 +2813,7 @@ description | Waiting for a newly initialized WAL file to reach durable storage
         <structfield>writeback_time</structfield> <type>double precision</type>
        </para>
        <para>
-        Time spent in writeback operations in milliseconds (if
+        Time spent waiting for writeback operations in milliseconds (if
         <xref linkend="guc-track-io-timing"/> is enabled, otherwise zero). This
         includes the time spent queueing write-out requests and, potentially,
         the time spent to write out the dirty data.
@@ -2849,7 +2849,7 @@ description | Waiting for a newly initialized WAL file to reach durable storage
         <structfield>extend_time</structfield> <type>double precision</type>
        </para>
        <para>
-        Time spent in extend operations in milliseconds. (if
+        Time spent waiting for extend operations in milliseconds. (if
         <xref linkend="guc-track-io-timing"/> is enabled and
         <varname>object</varname> is not <literal>wal</literal>,
         or if <xref linkend="guc-track-wal-io-timing"/> is enabled
@@ -2923,7 +2923,7 @@ description | Waiting for a newly initialized WAL file to reach durable storage
         <structfield>fsync_time</structfield> <type>double precision</type>
        </para>
        <para>
-        Time spent in fsync operations in milliseconds (if
+        Time spent waiting for fsync operations in milliseconds (if
         <xref linkend="guc-track-io-timing"/> is enabled and
         <varname>object</varname> is not <literal>wal</literal>,
         or if <xref linkend="guc-track-wal-io-timing"/> is enabled
@@ -3010,7 +3010,7 @@ description | Waiting for a newly initialized WAL file to reach durable storage
 
   <note>
    <para>
-    Columns tracking I/O time will only be non-zero when
+    Columns tracking I/O wait time will only be non-zero when
     <xref linkend="guc-track-io-timing"/> is enabled. The user should be
     careful when referencing these columns in combination with their
     corresponding I/O operations in case <varname>track_io_timing</varname>

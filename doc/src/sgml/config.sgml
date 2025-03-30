@@ -8568,7 +8568,7 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
       </term>
       <listitem>
        <para>
-        Enables timing of database I/O calls.  This parameter is off by
+        Enables timing of database I/O waits.  This parameter is off by
         default, as it will repeatedly query the operating system for
         the current time, which may cause significant overhead on some
         platforms.  You can use the <xref linkend="pgtesttiming"/> tool to
@@ -8602,7 +8602,7 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
       </term>
       <listitem>
        <para>
-        Enables timing of WAL I/O calls. This parameter is off by default,
+        Enables timing of WAL I/O waits. This parameter is off by default,
         as it will repeatedly query the operating system for the current time,
         which may cause significant overhead on some platforms.
         You can use the <application>pg_test_timing</application> tool to
