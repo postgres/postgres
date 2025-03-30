@@ -508,6 +508,7 @@ RelationCopyStorage(SMgrRelation src, SMgrRelation dst,
 	for (blkno = 0; blkno < nblocks; blkno++)
 	{
 		BulkWriteBuffer buf;
+		int			piv_flags;
 		bool		checksum_failure;
 		bool		verified;
 
@@ -517,9 +518,11 @@ RelationCopyStorage(SMgrRelation src, SMgrRelation dst,
 		buf = smgr_bulk_get_buf(bulkstate);
 		smgrread(src, forkNum, blkno, (Page) buf);
 
-		verified = PageIsVerified((Page) buf, blkno, PIV_LOG_WARNING,
+		piv_flags = PIV_LOG_WARNING;
+		if (ignore_checksum_failure)
+			piv_flags |= PIV_IGNORE_CHECKSUM_FAILURE;
+		verified = PageIsVerified((Page) buf, blkno, piv_flags,
 								  &checksum_failure);
-
 		if (checksum_failure)
 		{
 			RelFileLocatorBackend rloc = src->smgr_rlocator;

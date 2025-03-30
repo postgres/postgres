@@ -81,10 +81,14 @@ PageInit(Page page, Size pageSize, Size specialSize)
  * If flag PIV_LOG_WARNING is set, a WARNING is logged in the event of
  * a checksum failure.
  *
+ * If flag PIV_IGNORE_CHECKSUM_FAILURE is set, checksum failures will cause a
+ * message about the failure to be emitted, but will not cause
+ * PageIsVerified() to return false.
+ *
  * To allow the caller to report statistics about checksum failures,
  * *checksum_failure_p can be passed in. Note that there may be checksum
  * failures even if this function returns true, due to
- * ignore_checksum_failure.
+ * IGNORE_CHECKSUM_FAILURE.
  */
 bool
 PageIsVerified(PageData *page, BlockNumber blkno, int flags, bool *checksum_failure_p)
@@ -150,7 +154,7 @@ PageIsVerified(PageData *page, BlockNumber blkno, int flags, bool *checksum_fail
 					 errmsg("page verification failed, calculated checksum %u but expected %u",
 							checksum, p->pd_checksum)));
 
-		if (header_sane && ignore_checksum_failure)
+		if (header_sane && (flags & PIV_IGNORE_CHECKSUM_FAILURE))
 			return true;
 	}
 

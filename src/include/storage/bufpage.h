@@ -467,6 +467,7 @@ do { \
 
 /* flags for PageIsVerified() */
 #define PIV_LOG_WARNING			(1 << 0)
+#define PIV_IGNORE_CHECKSUM_FAILURE (1 << 2)
 
 #define PageAddItem(page, item, size, offsetNumber, overwrite, is_heap) \
 	PageAddItemExtended(page, item, size, offsetNumber, \
