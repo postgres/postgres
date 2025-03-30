@@ -839,6 +839,8 @@ pgaio_result_status_string(PgAioResultStatus rs)
 			return "UNKNOWN";
 		case PGAIO_RS_OK:
 			return "OK";
+		case PGAIO_RS_WARNING:
+			return "WARNING";
 		case PGAIO_RS_PARTIAL:
 			return "PARTIAL";
 		case PGAIO_RS_ERROR:

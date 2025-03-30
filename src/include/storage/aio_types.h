@@ -79,31 +79,47 @@ typedef enum PgAioResultStatus
 {
 	PGAIO_RS_UNKNOWN,			/* not yet completed / uninitialized */
 	PGAIO_RS_OK,
-	PGAIO_RS_PARTIAL,			/* did not fully succeed, but no error */
-	PGAIO_RS_ERROR,
+	PGAIO_RS_PARTIAL,			/* did not fully succeed, no warning/error */
+	PGAIO_RS_WARNING,			/* [partially] succeeded, with a warning */
+	PGAIO_RS_ERROR,				/* failed entirely */
 } PgAioResultStatus;
 
 
 /*
  * Result of IO operation, visible only to the initiator of IO.
+ *
+ * We need to be careful about the size of PgAioResult, as it is embedded in
+ * every PgAioHandle, as well as every PgAioReturn. Currently we assume we can
+ * fit it into one 8 byte value, restricting the space for per-callback error
+ * data to PGAIO_RESULT_ERROR_BITS.
  */
+#define PGAIO_RESULT_ID_BITS 6
+#define PGAIO_RESULT_STATUS_BITS 3
+#define PGAIO_RESULT_ERROR_BITS 23
 typedef struct PgAioResult
 {
 	/*
 	 * This is of type PgAioHandleCallbackID, but can't use a bitfield of an
 	 * enum, because some compilers treat enums as signed.
 	 */
-	uint32		id:8;
+	uint32		id:PGAIO_RESULT_ID_BITS;
 
 	/* of type PgAioResultStatus, see above */
-	uint32		status:2;
+	uint32		status:PGAIO_RESULT_STATUS_BITS;
 
 	/* meaning defined by callback->error */
-	uint32		error_data:22;
+	uint32		error_data:PGAIO_RESULT_ERROR_BITS;
 
 	int32		result;
 } PgAioResult;
 
+
+StaticAssertDecl(PGAIO_RESULT_ID_BITS +
+				 PGAIO_RESULT_STATUS_BITS +
+				 PGAIO_RESULT_ERROR_BITS == 32,
+				 "PgAioResult bits divided up incorrectly");
+StaticAssertDecl(sizeof(PgAioResult) == 8,
+				 "PgAioResult has unexpected size");
 
 /*
  * Combination of PgAioResult with minimal metadata about the IO.

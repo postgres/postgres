@@ -191,10 +191,14 @@ struct PgAioTargetInfo
  */
 typedef enum PgAioHandleCallbackID
 {
-	PGAIO_HCB_INVALID,
+	PGAIO_HCB_INVALID = 0,
 
 	PGAIO_HCB_MD_READV,
 } PgAioHandleCallbackID;
+
+#define PGAIO_HCB_MAX	PGAIO_HCB_MD_READV
+StaticAssertDecl(PGAIO_HCB_MAX <= (1 << PGAIO_RESULT_ID_BITS),
+				 "PGAIO_HCB_MAX is too big for PGAIO_RESULT_ID_BITS");
 
 
 typedef void (*PgAioHandleCallbackStage) (PgAioHandle *ioh, uint8 cb_flags);
