@@ -78,8 +78,8 @@ PageInit(Page page, Size pageSize, Size specialSize)
  * treat such a page as empty and without free space.  Eventually, VACUUM
  * will clean up such a page and make it usable.
  *
- * If flag PIV_LOG_WARNING is set, a WARNING is logged in the event of
- * a checksum failure.
+ * If flag PIV_LOG_WARNING/PIV_LOG_LOG is set, a WARNING/LOG message is logged
+ * in the event of a checksum failure.
  *
  * If flag PIV_IGNORE_CHECKSUM_FAILURE is set, checksum failures will cause a
  * message about the failure to be emitted, but will not cause
@@ -143,13 +143,13 @@ PageIsVerified(PageData *page, BlockNumber blkno, int flags, bool *checksum_fail
 		return true;
 
 	/*
-	 * Throw a WARNING if the checksum fails, but only after we've checked for
-	 * the all-zeroes case.
+	 * Throw a WARNING/LOG, as instructed by PIV_LOG_*, if the checksum fails,
+	 * but only after we've checked for the all-zeroes case.
 	 */
 	if (checksum_failure)
 	{
-		if ((flags & PIV_LOG_WARNING) != 0)
-			ereport(WARNING,
+		if ((flags & (PIV_LOG_WARNING | PIV_LOG_LOG)) != 0)
+			ereport(flags & PIV_LOG_WARNING ? WARNING : LOG,
 					(errcode(ERRCODE_DATA_CORRUPTED),
 					 errmsg("page verification failed, calculated checksum %u but expected %u",
 							checksum, p->pd_checksum)));

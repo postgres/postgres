@@ -17,6 +17,7 @@
 
 #include "pgstat.h"
 #include "port/atomics.h"
+#include "storage/aio_types.h"
 #include "storage/buf.h"
 #include "storage/bufmgr.h"
 #include "storage/condition_variable.h"
@@ -264,6 +265,8 @@ typedef struct BufferDesc
 
 	int			wait_backend_pgprocno;	/* backend of pin-count waiter */
 	int			freeNext;		/* link in freelist chain */
+
+	PgAioWaitRef io_wref;		/* set iff AIO is in progress */
 	LWLock		content_lock;	/* to lock access to buffer contents */
 } BufferDesc;
 
@@ -472,8 +475,8 @@ extern BlockNumber ExtendBufferedRelLocal(BufferManagerRelation bmr,
 										  uint32 *extended_by);
 extern void MarkLocalBufferDirty(Buffer buffer);
 extern void TerminateLocalBufferIO(BufferDesc *bufHdr, bool clear_dirty,
-								   uint32 set_flag_bits);
-extern bool StartLocalBufferIO(BufferDesc *bufHdr, bool forInput);
+								   uint32 set_flag_bits, bool release_aio);
+extern bool StartLocalBufferIO(BufferDesc *bufHdr, bool forInput, bool nowait);
 extern void FlushLocalBuffer(BufferDesc *bufHdr, SMgrRelation reln);
 extern void DropRelationLocalBuffers(RelFileLocator rlocator,
 									 ForkNumber forkNum,

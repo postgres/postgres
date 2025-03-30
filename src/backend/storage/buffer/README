@@ -147,9 +147,12 @@ in the buffer.  It is used per the rules above.
 
 * The BM_IO_IN_PROGRESS flag acts as a kind of lock, used to wait for I/O on a
 buffer to complete (and in releases before 14, it was accompanied by a
-per-buffer LWLock).  The process doing a read or write sets the flag for the
-duration, and processes that need to wait for it to be cleared sleep on a
-condition variable.
+per-buffer LWLock).  The process starting a read or write sets the flag. When
+the I/O is completed, be it by the process that initiated the I/O or by
+another process, the flag is removed and the Buffer's condition variable is
+signalled.  Processes that need to wait for the I/O to complete can wait for
+asynchronous I/O by using BufferDesc->io_wref and for BM_IO_IN_PROGRESS to be
+unset by sleeping on the buffer's condition variable.
 
 
 Normal Buffer Replacement Strategy
