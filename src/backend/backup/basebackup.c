@@ -1817,6 +1817,7 @@ sendFile(bbsink *sink, const char *readfilename, const char *tarfilename,
 							   checksum_failures,
 							   readfilename, checksum_failures)));
 
+		pgstat_prepare_report_checksum_failure(dboid);
 		pgstat_report_checksum_failures_in_db(dboid, checksum_failures);
 	}
 

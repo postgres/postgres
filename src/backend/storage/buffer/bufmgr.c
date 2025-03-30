@@ -1590,6 +1590,7 @@ WaitReadBuffers(ReadBuffersOperation *operation)
 			{
 				RelFileLocatorBackend rloc = operation->smgr->smgr_rlocator;
 
+				pgstat_prepare_report_checksum_failure(rloc.locator.dbOid);
 				pgstat_report_checksum_failures_in_db(rloc.locator.dbOid, 1);
 			}
 

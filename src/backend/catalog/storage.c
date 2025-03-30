@@ -524,6 +524,7 @@ RelationCopyStorage(SMgrRelation src, SMgrRelation dst,
 		{
 			RelFileLocatorBackend rloc = src->smgr_rlocator;
 
+			pgstat_prepare_report_checksum_failure(rloc.locator.dbOid);
 			pgstat_report_checksum_failures_in_db(rloc.locator.dbOid, 1);
 		}
 

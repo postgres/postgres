@@ -611,6 +611,7 @@ extern void pgstat_drop_database(Oid databaseid);
 extern void pgstat_report_autovac(Oid dboid);
 extern void pgstat_report_recovery_conflict(int reason);
 extern void pgstat_report_deadlock(void);
+extern void pgstat_prepare_report_checksum_failure(Oid dboid);
 extern void pgstat_report_checksum_failures_in_db(Oid dboid, int failurecount);
 extern void pgstat_report_connect(Oid dboid);
 extern void pgstat_update_parallel_workers_stats(PgStat_Counter workers_to_launch,
