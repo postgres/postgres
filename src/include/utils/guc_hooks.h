@@ -61,8 +61,6 @@ extern bool check_default_text_search_config(char **newval, void **extra, GucSou
 extern void assign_default_text_search_config(const char *newval, void *extra);
 extern bool check_default_with_oids(bool *newval, void **extra,
 									GucSource source);
-extern bool check_effective_io_concurrency(int *newval, void **extra,
-										   GucSource source);
 extern bool check_huge_page_size(int *newval, void **extra, GucSource source);
 extern void assign_io_method(int newval, void *extra);
 extern bool check_io_max_concurrency(int *newval, void **extra, GucSource source);
@@ -83,8 +81,6 @@ extern bool check_log_stats(bool *newval, void **extra, GucSource source);
 extern bool check_log_timezone(char **newval, void **extra, GucSource source);
 extern void assign_log_timezone(const char *newval, void *extra);
 extern const char *show_log_timezone(void);
-extern bool check_maintenance_io_concurrency(int *newval, void **extra,
-											 GucSource source);
 extern void assign_maintenance_io_concurrency(int newval, void *extra);
 extern void assign_io_max_combine_limit(int newval, void *extra);
 extern void assign_io_combine_limit(int newval, void *extra);

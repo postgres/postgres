@@ -110,7 +110,7 @@ CREATE TABLESPACE <replaceable class="parameter">tablespace_name</replaceable>
         and <varname>maintenance_io_concurrency</varname>.
         Setting these values for a particular tablespace will override the
         planner's usual estimate of the cost of reading pages from tables in
-        that tablespace, and the executor's prefetching behavior, as established
+        that tablespace, and how many concurrent I/Os are issued, as established
         by the configuration parameters of the
         same name (see <xref linkend="guc-seq-page-cost"/>,
         <xref linkend="guc-random-page-cost"/>,

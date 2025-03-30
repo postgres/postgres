@@ -1402,11 +1402,6 @@ setup_config(void)
 								  repltok, true);
 #endif
 
-#ifndef USE_PREFETCH
-	conflines = replace_guc_value(conflines, "effective_io_concurrency",
-								  "0", true);
-#endif
-
 #ifdef WIN32
 	conflines = replace_guc_value(conflines, "update_process_title",
 								  "off", true);

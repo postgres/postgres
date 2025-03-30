@@ -198,8 +198,8 @@
 # - I/O -
 
 #backend_flush_after = 0		# measured in pages, 0 disables
-#effective_io_concurrency = 16		# 1-1000; 0 disables prefetching
-#maintenance_io_concurrency = 16	# 1-1000; 0 disables prefetching
+#effective_io_concurrency = 16		# 1-1000; 0 disables issuing multiple simultaneous IO requests
+#maintenance_io_concurrency = 16	# 1-1000; same as effective_io_concurrency
 #io_max_combine_limit = 128kB		# usually 1-128 blocks (depends on OS)
 					# (change requires restart)
 #io_combine_limit = 128kB		# usually 1-128 blocks (depends on OS)

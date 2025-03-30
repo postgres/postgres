@@ -2585,8 +2585,7 @@ include_dir 'conf.d'
          session attempts to initiate in parallel.  The allowed range is
          <literal>1</literal> to <literal>1000</literal>, or
          <literal>0</literal> to disable issuance of asynchronous I/O requests.
-         The default is <literal>16</literal> on supported systems, otherwise
-         <literal>0</literal>.
+         The default is <literal>16</literal>.
         </para>
 
         <para>
@@ -2597,8 +2596,9 @@ include_dir 'conf.d'
         </para>
 
         <para>
-         On systems without prefetch advice support, attempting to configure
-         any value other than <literal>0</literal> will error out.
+         On systems with prefetch advice support,
+         <varname>effective_io_concurrency</varname> also controls the
+         prefetch distance.
         </para>
 
         <para>
@@ -2621,10 +2621,10 @@ include_dir 'conf.d'
          for maintenance work that is done on behalf of many client sessions.
         </para>
         <para>
-         The default is <literal>16</literal> on supported systems, otherwise
-         <literal>0</literal>.  This value can be overridden for tables in a
-         particular tablespace by setting the tablespace parameter of the same
-         name (see <xref linkend="sql-altertablespace"/>).
+         The default is <literal>16</literal>.  This value can be overridden
+         for tables in a particular tablespace by setting the tablespace
+         parameter of the same name (see <xref
+         linkend="sql-altertablespace"/>).
         </para>
        </listitem>
       </varlistentry>
