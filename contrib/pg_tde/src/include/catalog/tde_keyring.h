@@ -11,7 +11,7 @@
 #define TDE_KEYRING_H
 
 #include "postgres.h"
-#include "catalog/keyring_min.h"
+#include "keyring/keyring_api.h"
 
 /* This record goes into key provider info file */
 typedef struct KeyringProvideRecord
