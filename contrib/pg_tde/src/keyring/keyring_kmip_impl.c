@@ -18,12 +18,12 @@ pg_tde_kmip_set_by_name(BIO *bio, char *key_name, const unsigned char *key, unsi
 	int32		length = key_len * 8;
 	int32		mask = KMIP_CRYPTOMASK_ENCRYPT | KMIP_CRYPTOMASK_DECRYPT;
 	Name		ts;
-	TextString	ts2 = {0, 0};
-	TemplateAttribute ta = {0};
-	char	   *idp = NULL;
-	int			id_max_len = 64;
+	TextString	ts2;
+	TemplateAttribute ta = {};
+	char	   *idp;
+	int			id_size;
 
-	for (int i = 0; i < 4; i++)
+	for (int i = 0; i < ARRAY_LENGTH(a); i++)
 	{
 		kmip_init_attribute(&a[i]);
 	}
@@ -47,21 +47,20 @@ pg_tde_kmip_set_by_name(BIO *bio, char *key_name, const unsigned char *key, unsi
 	ta.attributes = a;
 	ta.attribute_count = ARRAY_LENGTH(a);
 
-	return kmip_bio_register_symmetric_key(bio, &ta, (char *) key, key_len, &idp, &id_max_len);
+	return kmip_bio_register_symmetric_key(bio, &ta, (char *) key, key_len, &idp, &id_size);
 }
 
 int
 pg_tde_kmip_locate_key(BIO *bio, const char *key_name, size_t *ids_found, char *id)
 {
-	int			upto = 0;
-	int			result;
-	LocateResponse locate_result;
-	Name		ts;
-	TextString	ts2 = {0, 0};
-	Attribute	a[3];
+	Attribute	a[2];
 	enum object_type loctype = KMIP_OBJTYPE_SYMMETRIC_KEY;
+	Name		ts;
+	TextString	ts2;
+	LocateResponse locate_result;
+	int			result;
 
-	for (int i = 0; i < 3; i++)
+	for (int i = 0; i < ARRAY_LENGTH(a); i++)
 	{
 		kmip_init_attribute(&a[i]);
 	}
@@ -77,7 +76,7 @@ pg_tde_kmip_locate_key(BIO *bio, const char *key_name, size_t *ids_found, char *
 	a[1].value = &ts;
 
 	/* 16 is hard coded: seems like the most vault supports? */
-	result = kmip_bio_locate(bio, a, 2, &locate_result, 16, upto);
+	result = kmip_bio_locate(bio, a, ARRAY_LENGTH(a), &locate_result, 16, 0);
 
 	if (result == 0)
 	{
