@@ -36,7 +36,7 @@ src/keyring/keyring_curl.o \
 src/keyring/keyring_file.o \
 src/keyring/keyring_vault.o \
 src/keyring/keyring_kmip.o \
-src/keyring/keyring_kmip_ereport.o \
+src/keyring/keyring_kmip_impl.o \
 src/keyring/keyring_api.o \
 src/catalog/tde_keyring.o \
 src/catalog/tde_keyring_parse_opts.o \

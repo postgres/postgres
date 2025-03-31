@@ -15,7 +15,7 @@ pg_tde_sources = files(
         'src/keyring/keyring_file.c',
         'src/keyring/keyring_vault.c',
         'src/keyring/keyring_kmip.c',
-        'src/keyring/keyring_kmip_ereport.c',
+        'src/keyring/keyring_kmip_impl.c',
         'src/keyring/keyring_api.c',
 
         'src/smgr/pg_tde_smgr.c',
@@ -133,7 +133,7 @@ tde_decrypt_sources = files(
    'src/keyring/keyring_file.c',
    'src/keyring/keyring_vault.c',
    'src/keyring/keyring_kmip.c',
-   'src/keyring/keyring_kmip_ereport.c',
+   'src/keyring/keyring_kmip_impl.c',
  )
 
 pg_tde_inc = incdir

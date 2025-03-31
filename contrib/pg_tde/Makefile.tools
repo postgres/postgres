@@ -18,7 +18,7 @@ TDE_OBJS = \
 	src/libkmip/libkmip/src/kmip_locate.frontend \
 	src/libkmip/libkmip/src/kmip_memset.frontend \
 	src/keyring/keyring_kmip.frontend \
-	src/keyring/keyring_kmip_ereport.frontend
+	src/keyring/keyring_kmip_impl.frontend
 
 
 TDE_OBJS2 = $(TDE_OBJS:%=$(top_srcdir)/contrib/pg_tde/%)
