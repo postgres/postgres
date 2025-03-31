@@ -648,6 +648,11 @@ sub adjust_new_dumpfile
 	$dump =~ s {\n(\s+'version',) '\d+'::integer,$}
 		{$1 '000000'::integer,}mg;
 
+	if ($old_version < 18)
+	{
+		$dump =~ s {,\n(\s+'relallfrozen',) '-?\d+'::integer$}{}mg;
+	}
+
 	# pre-v16 dumps do not know about XMLSERIALIZE(NO INDENT).
 	if ($old_version < 16)
 	{

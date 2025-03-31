@@ -4771,7 +4771,8 @@ my %tests = (
 			'relname',\s'dup_test_post_data_ix',\s+
 			'relpages',\s'\d+'::integer,\s+
 			'reltuples',\s'\d+'::real,\s+
-			'relallvisible',\s'\d+'::integer\s+
+			'relallvisible',\s'\d+'::integer,\s+
+			'relallfrozen',\s'\d+'::integer\s+
 			\);\s+
 			\QSELECT * FROM pg_catalog.pg_restore_attribute_stats(\E\s+
 			'version',\s'\d+'::integer,\s+

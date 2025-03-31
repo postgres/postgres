@@ -6874,7 +6874,8 @@ getFuncs(Archive *fout)
  */
 static RelStatsInfo *
 getRelationStatistics(Archive *fout, DumpableObject *rel, int32 relpages,
-					  char *reltuples, int32 relallvisible, char relkind,
+					  char *reltuples, int32 relallvisible,
+					  int32 relallfrozen, char relkind,
 					  char **indAttNames, int nindAttNames)
 {
 	if (!fout->dopt->dumpStatistics)
@@ -6903,6 +6904,7 @@ getRelationStatistics(Archive *fout, DumpableObject *rel, int32 relpages,
 		info->relpages = relpages;
 		info->reltuples = pstrdup(reltuples);
 		info->relallvisible = relallvisible;
+		info->relallfrozen = relallfrozen;
 		info->relkind = relkind;
 		info->indAttNames = indAttNames;
 		info->nindAttNames = nindAttNames;
@@ -6967,6 +6969,7 @@ getTables(Archive *fout, int *numTables)
 	int			i_relpages;
 	int			i_reltuples;
 	int			i_relallvisible;
+	int			i_relallfrozen;
 	int			i_toastpages;
 	int			i_owning_tab;
 	int			i_owning_col;
@@ -7017,8 +7020,15 @@ getTables(Archive *fout, int *numTables)
 						 "c.relowner, "
 						 "c.relchecks, "
 						 "c.relhasindex, c.relhasrules, c.relpages, "
-						 "c.reltuples, c.relallvisible, c.relhastriggers, "
-						 "c.relpersistence, "
+						 "c.reltuples, c.relallvisible, ");
+
+	if (fout->remoteVersion >= 180000)
+		appendPQExpBufferStr(query, "c.relallfrozen, ");
+	else
+		appendPQExpBufferStr(query, "0 AS relallfrozen, ");
+
+	appendPQExpBufferStr(query,
+						 "c.relhastriggers, c.relpersistence, "
 						 "c.reloftype, "
 						 "c.relacl, "
 						 "acldefault(CASE WHEN c.relkind = " CppAsString2(RELKIND_SEQUENCE)
@@ -7183,6 +7193,7 @@ getTables(Archive *fout, int *numTables)
 	i_relpages = PQfnumber(res, "relpages");
 	i_reltuples = PQfnumber(res, "reltuples");
 	i_relallvisible = PQfnumber(res, "relallvisible");
+	i_relallfrozen = PQfnumber(res, "relallfrozen");
 	i_toastpages = PQfnumber(res, "toastpages");
 	i_owning_tab = PQfnumber(res, "owning_tab");
 	i_owning_col = PQfnumber(res, "owning_col");
@@ -7230,6 +7241,7 @@ getTables(Archive *fout, int *numTables)
 	for (i = 0; i < ntups; i++)
 	{
 		int32		relallvisible = atoi(PQgetvalue(res, i, i_relallvisible));
+		int32		relallfrozen = atoi(PQgetvalue(res, i, i_relallfrozen));
 
 		tblinfo[i].dobj.objType = DO_TABLE;
 		tblinfo[i].dobj.catId.tableoid = atooid(PQgetvalue(res, i, i_reltableoid));
@@ -7336,7 +7348,7 @@ getTables(Archive *fout, int *numTables)
 			stats = getRelationStatistics(fout, &tblinfo[i].dobj,
 										  tblinfo[i].relpages,
 										  PQgetvalue(res, i, i_reltuples),
-										  relallvisible,
+										  relallvisible, relallfrozen,
 										  tblinfo[i].relkind, NULL, 0);
 			if (tblinfo[i].relkind == RELKIND_MATVIEW)
 				tblinfo[i].stats = stats;
@@ -7609,6 +7621,7 @@ getIndexes(Archive *fout, TableInfo tblinfo[], int numTables)
 				i_relpages,
 				i_reltuples,
 				i_relallvisible,
+				i_relallfrozen,
 				i_parentidx,
 				i_indexdef,
 				i_indnkeyatts,
@@ -7663,7 +7676,14 @@ getIndexes(Archive *fout, TableInfo tblinfo[], int numTables)
 	appendPQExpBufferStr(query,
 						 "SELECT t.tableoid, t.oid, i.indrelid, "
 						 "t.relname AS indexname, "
-						 "t.relpages, t.reltuples, t.relallvisible, "
+						 "t.relpages, t.reltuples, t.relallvisible, ");
+
+	if (fout->remoteVersion >= 180000)
+		appendPQExpBufferStr(query, "t.relallfrozen, ");
+	else
+		appendPQExpBufferStr(query, "0 AS relallfrozen, ");
+
+	appendPQExpBufferStr(query,
 						 "pg_catalog.pg_get_indexdef(i.indexrelid) AS indexdef, "
 						 "i.indkey, i.indisclustered, "
 						 "c.contype, c.conname, "
@@ -7779,6 +7799,7 @@ getIndexes(Archive *fout, TableInfo tblinfo[], int numTables)
 	i_relpages = PQfnumber(res, "relpages");
 	i_reltuples = PQfnumber(res, "reltuples");
 	i_relallvisible = PQfnumber(res, "relallvisible");
+	i_relallfrozen = PQfnumber(res, "relallfrozen");
 	i_parentidx = PQfnumber(res, "parentidx");
 	i_indexdef = PQfnumber(res, "indexdef");
 	i_indnkeyatts = PQfnumber(res, "indnkeyatts");
@@ -7850,6 +7871,7 @@ getIndexes(Archive *fout, TableInfo tblinfo[], int numTables)
 			RelStatsInfo *relstats;
 			int32		relpages = atoi(PQgetvalue(res, j, i_relpages));
 			int32		relallvisible = atoi(PQgetvalue(res, j, i_relallvisible));
+			int32		relallfrozen = atoi(PQgetvalue(res, j, i_relallfrozen));
 
 			indxinfo[j].dobj.objType = DO_INDEX;
 			indxinfo[j].dobj.catId.tableoid = atooid(PQgetvalue(res, j, i_tableoid));
@@ -7892,7 +7914,7 @@ getIndexes(Archive *fout, TableInfo tblinfo[], int numTables)
 
 			relstats = getRelationStatistics(fout, &indxinfo[j].dobj, relpages,
 											 PQgetvalue(res, j, i_reltuples),
-											 relallvisible, indexkind,
+											 relallvisible, relallfrozen, indexkind,
 											 indAttNames, nindAttNames);
 
 			contype = *(PQgetvalue(res, j, i_contype));
@@ -10618,8 +10640,14 @@ dumpRelationStats(Archive *fout, const RelStatsInfo *rsinfo)
 	appendPQExpBufferStr(out, ",\n");
 	appendPQExpBuffer(out, "\t'relpages', '%d'::integer,\n", rsinfo->relpages);
 	appendPQExpBuffer(out, "\t'reltuples', '%s'::real,\n", rsinfo->reltuples);
-	appendPQExpBuffer(out, "\t'relallvisible', '%d'::integer\n);\n",
+	appendPQExpBuffer(out, "\t'relallvisible', '%d'::integer",
 					  rsinfo->relallvisible);
+
+	if (fout->remoteVersion >= 180000)
+		appendPQExpBuffer(out, ",\n\t'relallfrozen', '%d'::integer", rsinfo->relallfrozen);
+
+	appendPQExpBufferStr(out, "\n);\n");
+
 
 	/* fetch attribute stats */
 	appendPQExpBufferStr(query, "EXECUTE getAttributeStats(");
