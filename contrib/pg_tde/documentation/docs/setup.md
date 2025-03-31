@@ -119,8 +119,7 @@ Load the `pg_tde` at startup time. The extension requires additional shared memo
 
     * `name-of-the-principal-key` is the name of the principal key. You will use this name to identify the key.
     * `provider-name` is the name of the key provider you added before. The principal key will be associated with this provider.
-    * `ensure_new_key` defines if a principal key must be unique. The default value `true` means that you must speficy a unique key during key rotation. The `false` value allows reusing an existing principal key.);
-    ```
+    * `ensure_new_key` defines if a principal key must be unique. The default value `true` means that you must speficy a unique key during key rotation. The `false` value allows reusing an existing principal key.):
 
     <i warning>:material-information: Warning:</i> This example is for testing purposes only. Replace the key name and provider name with your values:
 
