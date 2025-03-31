@@ -1626,11 +1626,11 @@ psqlscan_test_variable(PsqlScanState state, const char *txt, int len)
 
 	if (value != NULL)
 	{
-		psqlscan_emit(state, "TRUE", 4);
+		appendPQExpBufferStr(state->output_buf, "TRUE");
 		free(value);
 	}
 	else
 	{
-		psqlscan_emit(state, "FALSE", 5);
+		appendPQExpBufferStr(state->output_buf, "FALSE");
 	}
 }
