@@ -5068,6 +5068,13 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
         until it eventually reaches the primary.  Standbys make no other use
         of feedback they receive other than to pass upstream.
        </para>
+       <para>
+        Note that if the clock on standby is moved ahead or backward, the
+        feedback message might not be sent at the required interval.  In
+        extreme cases, this can lead to a prolonged risk of not removing dead
+        rows on the primary for extended periods, as the feedback mechanism is
+        based on timestamps.
+       </para>
       </listitem>
      </varlistentry>
 
