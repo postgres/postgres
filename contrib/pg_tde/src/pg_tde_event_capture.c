@@ -108,7 +108,6 @@ validateCurrentEventTriggerState(bool mightStartTransaction)
 Datum
 pg_tde_ddl_command_start_capture(PG_FUNCTION_ARGS)
 {
-	/* TODO: verify update_compare_indexes failure related to this */
 	EventTriggerData *trigdata;
 	Node	   *parsetree;
 

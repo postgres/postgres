@@ -79,7 +79,7 @@ typedef struct TdePrincipalKeylocalState
 static dshash_parameters principal_key_dsh_params = {
 	.key_size = sizeof(Oid),
 	.entry_size = sizeof(TDEPrincipalKey),
-	.compare_function = dshash_memcmp,	/* TODO use int compare instead */
+	.compare_function = dshash_memcmp,
 	.hash_function = dshash_memhash,
 };
 
@@ -411,7 +411,7 @@ get_principal_key_from_cache(Oid dbOid)
 
 /*
  * Push the principal key for current database to the shared memory cache.
- * TODO: Add eviction policy
+ *
  * For now we just keep pushing the principal keys to the cache and do not have
  * any eviction policy. We have one principal key for a database, so at max,
  * we could have as many entries in the cache as the number of databases.

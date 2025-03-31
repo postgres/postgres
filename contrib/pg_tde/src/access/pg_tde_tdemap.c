@@ -308,7 +308,6 @@ pg_tde_file_header_write(const char *tde_filename, int fd, TDEPrincipalKeyInfo *
 	/* Fill in the data */
 	fheader.principal_key_info = *principal_key_info;
 
-	/* TODO: pgstat_report_wait_start / pgstat_report_wait_end */
 	*bytes_written = pg_pwrite(fd, &fheader, TDE_FILE_HEADER_SIZE, 0);
 
 	if (*bytes_written != TDE_FILE_HEADER_SIZE)
@@ -355,7 +354,6 @@ pg_tde_write_one_map_entry(int fd, const TDEMapEntry *map_entry, off_t *offset, 
 {
 	int			bytes_written = 0;
 
-	/* TODO: pgstat_report_wait_start / pgstat_report_wait_end */
 	bytes_written = pg_pwrite(fd, map_entry, MAP_ENTRY_SIZE, *offset);
 
 	/* Add the entry to the file */
@@ -720,7 +718,6 @@ pg_tde_perform_rotate_key(TDEPrincipalKey *principal_key, TDEPrincipalKey *new_p
 	xlrec->databaseId = principal_key->keyInfo.databaseId;
 	xlrec->file_size = map_size;
 
-	/* TODO: pgstat_report_wait_start / pgstat_report_wait_end */
 	if (pg_pread(fd[NEW_PRINCIPAL_KEY], xlrec->buff, xlrec->file_size, 0) == -1)
 		ereport(ERROR,
 				(errcode_for_file_access(),
@@ -766,7 +763,6 @@ pg_tde_write_map_keydata_file(off_t file_size, char *file_data)
 	/* Initialize the new file and set the name */
 	fd_new = keyrotation_init_file(&fheader->principal_key_info, path_new, db_map_path, &curr_pos);
 
-	/* TODO: pgstat_report_wait_start / pgstat_report_wait_end */
 	if (pg_pwrite(fd_new, file_data, file_size, 0) != file_size)
 	{
 		ereport(WARNING,
@@ -810,10 +806,8 @@ pg_tde_wal_last_key_set_lsn(XLogRecPtr lsn, const char *keyfile_path)
 	last_key_idx = ((lseek(fd, 0, SEEK_END) - TDE_FILE_HEADER_SIZE) / MAP_ENTRY_SIZE) - 1;
 	write_pos = TDE_FILE_HEADER_SIZE + (last_key_idx * MAP_ENTRY_SIZE) + offsetof(TDEMapEntry, enc_key) + offsetof(InternalKey, start_lsn);
 
-	/* TODO: pgstat_report_wait_start / pgstat_report_wait_end */
 	if (pg_pwrite(fd, &lsn, sizeof(XLogRecPtr), write_pos) != sizeof(XLogRecPtr))
 	{
-		/* TODO: what now? File is corrupted */
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not write tde key data file: %m")));
@@ -1069,7 +1063,6 @@ pg_tde_file_header_read(const char *tde_filename, int fd, TDEFileHeader *fheader
 {
 	Assert(fheader);
 
-	/* TODO: pgstat_report_wait_start / pgstat_report_wait_end */
 	*bytes_read = pg_pread(fd, fheader, TDE_FILE_HEADER_SIZE, 0);
 
 	/* File is empty */
@@ -1110,7 +1103,6 @@ pg_tde_read_one_map_entry(File map_file, const RelFileLocator *rlocator, int fla
 	Assert(offset);
 
 	/* Read the entry at the given offset */
-	/* TODO: pgstat_report_wait_start / pgstat_report_wait_end */
 	bytes_read = pg_pread(map_file, map_entry, MAP_ENTRY_SIZE, *offset);
 
 	/* We've reached the end of the file. */
@@ -1157,7 +1149,6 @@ pg_tde_read_one_map_entry2(int fd, int32 key_index, TDEPrincipalKey *principal_k
 	map_entry = palloc_object(TDEMapEntry);
 
 	/* Read the encrypted key */
-	/* TODO: pgstat_report_wait_start / pgstat_report_wait_end */
 	if (pg_pread(fd, map_entry, MAP_ENTRY_SIZE, read_pos) != MAP_ENTRY_SIZE)
 	{
 		char		db_map_path[MAXPGPATH] = {0};
@@ -1460,9 +1451,8 @@ pg_tde_add_wal_key_to_cache(InternalKey *cached_key, XLogRecPtr start_lsn)
 	return wal_rec;
 }
 
-/* Add key to cache. See comments on `RelKeyCache`.
- *
- * TODO: add tests.
+/*
+ * Add key to cache. See comments on `RelKeyCache`.
  */
 static InternalKey *
 pg_tde_put_key_into_cache(const RelFileLocator *rlocator, InternalKey *key)

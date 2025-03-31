@@ -63,7 +63,6 @@ AesInit(void)
 	}
 }
 
-/*  TODO: a few things could be optimized in this. It's good enough for a prototype. */
 static void
 AesRunCtr(EVP_CIPHER_CTX **ctxPtr, int enc, const unsigned char *key, const unsigned char *iv, const unsigned char *in, int in_len, unsigned char *out)
 {

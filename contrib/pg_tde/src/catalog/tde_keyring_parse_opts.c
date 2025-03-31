@@ -472,7 +472,6 @@ get_remote_kring_value(const char *url, const char *field_name)
 	long		httpCode;
 	CurlString	outStr;
 
-	/* TODO: we never pfree it */
 	outStr.ptr = palloc0(1);
 	outStr.len = 0;
 
@@ -507,7 +506,6 @@ get_file_kring_value(const char *path, const char *field_name)
 		elog(ERROR, "failed to open file %s for %s", path, field_name);
 	}
 
-	/* TODO: we never pfree it */
 	val = palloc0(MAX_CONFIG_FILE_DATA_LENGTH);
 	if (pg_pread(fd, val, MAX_CONFIG_FILE_DATA_LENGTH, 0) == -1)
 	{
