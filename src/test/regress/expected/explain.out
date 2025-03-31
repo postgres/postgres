@@ -787,7 +787,7 @@ select explain_filter('explain (analyze,buffers off,costs off) select sum(n) ove
 
 -- Test tuplestore storage usage in Window aggregate (disk case)
 set work_mem to 64;
-select explain_filter('explain (analyze,buffers off,costs off) select sum(n) over() from generate_series(1,2000) a(n)');
+select explain_filter('explain (analyze,buffers off,costs off) select sum(n) over() from generate_series(1,2500) a(n)');
                                   explain_filter                                  
 ----------------------------------------------------------------------------------
  WindowAgg (actual time=N.N..N.N rows=N.N loops=N)
@@ -799,7 +799,7 @@ select explain_filter('explain (analyze,buffers off,costs off) select sum(n) ove
 (6 rows)
 
 -- Test tuplestore storage usage in Window aggregate (memory and disk case, final result is disk)
-select explain_filter('explain (analyze,buffers off,costs off) select sum(n) over(partition by m) from (SELECT n < 3 as m, n from generate_series(1,2000) a(n))');
+select explain_filter('explain (analyze,buffers off,costs off) select sum(n) over(partition by m) from (SELECT n < 3 as m, n from generate_series(1,2500) a(n))');
                                      explain_filter                                     
 ----------------------------------------------------------------------------------------
  WindowAgg (actual time=N.N..N.N rows=N.N loops=N)
