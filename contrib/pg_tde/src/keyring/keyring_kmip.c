@@ -156,7 +156,6 @@ get_key_by_name(GenericKeyring *keyring, const char *key_name, KeyringReturnCode
 
 		if (ids_found > 1)
 		{
-			fprintf(stderr, "KMIP ERR: %li\n", ids_found);
 			ereport(WARNING, (errmsg("KMIP server contains multiple results for key, ignoring")));
 			*return_code = KEYRING_CODE_RESOURCE_NOT_AVAILABLE;
 			BIO_free_all(ctx.bio);
