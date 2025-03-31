@@ -290,6 +290,7 @@ static const struct f_smgr tde_smgr = {
 void
 RegisterStorageMgr(void)
 {
-	/* TODO: figure out how this part should work in a real extension */
+	if (storage_manager_id != MdSMgrId)
+		elog(FATAL, "Another storage manager was loaded before pg_tde. Multiple storage managers is unsupported.");
 	storage_manager_id = smgr_register(&tde_smgr, sizeof(TDESMgrRelationData));
 }
