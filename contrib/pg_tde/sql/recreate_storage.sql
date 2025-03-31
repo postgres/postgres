@@ -50,5 +50,9 @@ SELECT pg_tde_is_encrypted('encrypted_table');
 CLUSTER encrypted_table USING idx_date;
 SELECT pg_tde_is_encrypted('encrypted_table');
 
+SELECT pg_tde_is_encrypted('encrypted_table_id_seq');
+ALTER SEQUENCE encrypted_table_id_seq RESTART;
+SELECT pg_tde_is_encrypted('encrypted_table_id_seq');
+
 DROP EXTENSION pg_tde CASCADE;
 RESET default_table_access_method;

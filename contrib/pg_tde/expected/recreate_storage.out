@@ -122,6 +122,19 @@ SELECT pg_tde_is_encrypted('encrypted_table');
  t
 (1 row)
 
+SELECT pg_tde_is_encrypted('encrypted_table_id_seq');
+ pg_tde_is_encrypted 
+---------------------
+ t
+(1 row)
+
+ALTER SEQUENCE encrypted_table_id_seq RESTART;
+SELECT pg_tde_is_encrypted('encrypted_table_id_seq');
+ pg_tde_is_encrypted 
+---------------------
+ t
+(1 row)
+
 DROP EXTENSION pg_tde CASCADE;
 NOTICE:  drop cascades to 7 other objects
 DETAIL:  drop cascades to table t1
