@@ -192,8 +192,8 @@ pg_tde_generate_internal_key(InternalKey *int_key, uint32 entry_type)
 	if (!RAND_bytes(int_key->key, INTERNAL_KEY_LEN))
 		ereport(ERROR,
 				(errcode(ERRCODE_INTERNAL_ERROR),
-				 errmsg("could not generate internal key for relation \"%s\": %s",
-						"TODO", ERR_error_string(ERR_get_error(), NULL))));
+				 errmsg("could not generate internal key: %s",
+						ERR_error_string(ERR_get_error(), NULL))));
 }
 
 const char *
