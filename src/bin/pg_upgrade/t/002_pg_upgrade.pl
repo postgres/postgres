@@ -11,11 +11,14 @@ use File::Path     qw(rmtree);
 
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
+use PostgreSQL::Test::AdjustDump;
 use PostgreSQL::Test::AdjustUpgrade;
 use Test::More;
 
 # Can be changed to test the other modes.
 my $mode = $ENV{PG_TEST_PG_UPGRADE_MODE} || '--copy';
+
+my $tempdir = PostgreSQL::Test::Utils::tempdir;
 
 # Generate a database with a name made of a range of ASCII characters.
 sub generate_db
@@ -35,8 +38,8 @@ sub generate_db
 		"created database with ASCII characters from $from_char to $to_char");
 }
 
-# Filter the contents of a dump before its use in a content comparison.
-# This returns the path to the filtered dump.
+# Filter the contents of a dump before its use in a content comparison for
+# upgrade testing. This returns the path to the filtered dump.
 sub filter_dump
 {
 	my ($is_old, $old_version, $dump_file) = @_;
@@ -60,6 +63,41 @@ sub filter_dump
 	return $dump_file_filtered;
 }
 
+# Dump database db from the given node in plain format and adjust it for
+# comparing dumps from the original and the restored database.
+#
+# file_prefix is used to create unique names for all dump files so that they
+# remain available for debugging in case the test fails.
+#
+# adjust_child_columns is passed to adjust_regress_dumpfile() which actually
+# adjusts the dump output.
+#
+# The name of the file containting adjusted dump is returned.
+sub get_dump_for_comparison
+{
+	my ($node, $db, $file_prefix, $adjust_child_columns) = @_;
+
+	my $dumpfile = $tempdir . '/' . $file_prefix . '.sql';
+	my $dump_adjusted = "${dumpfile}_adjusted";
+
+	open(my $dh, '>', $dump_adjusted)
+	  || die "could not open $dump_adjusted for writing $!";
+
+	# Don't dump statistics, because there are still some bugs.
+	$node->run_log(
+		[
+			'pg_dump', '--no-sync', '--no-statistics',
+			'-d' => $node->connstr($db),
+			'-f' => $dumpfile
+		]);
+
+	print $dh adjust_regress_dumpfile(slurp_file($dumpfile),
+		$adjust_child_columns);
+	close($dh);
+
+	return $dump_adjusted;
+}
+
 # The test of pg_upgrade requires two clusters, an old one and a new one
 # that gets upgraded.  Before running the upgrade, a logical dump of the
 # old cluster is taken, and a second logical dump of the new one is taken
@@ -80,7 +118,6 @@ if (   (defined($ENV{olddump}) && !defined($ENV{oldinstall}))
 }
 
 # Paths to the dumps taken during the tests.
-my $tempdir = PostgreSQL::Test::Utils::tempdir;
 my $dump1_file = "$tempdir/dump1.sql";
 my $dump2_file = "$tempdir/dump2.sql";
 
@@ -262,6 +299,60 @@ else
 		}
 	}
 	is($rc, 0, 'regression tests pass');
+}
+
+# Test that dump/restore of the regression database roundtrips cleanly.  This
+# doesn't work well when the nodes are different versions, so skip it in that
+# case.  Note that this isn't a pg_restore test, but it's convenient to do it
+# here because we've gone to the trouble of creating the regression database.
+#
+# Do this while the old cluster is running before it is shut down by the
+# upgrade test.
+SKIP:
+{
+	my $dstnode = PostgreSQL::Test::Cluster->new('dst_node');
+
+	skip "different Postgres versions"
+	  if ($oldnode->pg_version != $dstnode->pg_version);
+	skip "source node not using default install"
+	  if (defined $oldnode->install_path);
+
+	# Dump the original database for comparison later.
+	my $src_dump =
+	  get_dump_for_comparison($oldnode, 'regression', 'src_dump', 1);
+
+	# Setup destination database cluster
+	$dstnode->init(%node_params);
+	# Stabilize stats for comparison.
+	$dstnode->append_conf('postgresql.conf', 'autovacuum = off');
+	$dstnode->start;
+
+	my $dump_file = "$tempdir/regression.dump";
+
+	# Use --create in dump and restore commands so that the restored
+	# database has the same configurable variable settings as the original
+	# database so that the dumps taken from both databases taken do not
+	# differ because of locale changes. Additionally this provides test
+	# coverage for --create option.
+	#
+	# Use directory format so that we can use parallel dump/restore.
+	$oldnode->command_ok(
+		[
+			'pg_dump', '-Fd', '-j2', '--no-sync',
+			'-d' => $oldnode->connstr('regression'),
+			'--create', '-f' => $dump_file
+		],
+		'pg_dump on source instance');
+
+	$dstnode->command_ok(
+		[ 'pg_restore', '--create', '-j2', '-d' => 'postgres', $dump_file ],
+		'pg_restore to destination instance');
+
+	my $dst_dump =
+	  get_dump_for_comparison($dstnode, 'regression', 'dest_dump', 0);
+
+	compare_files($src_dump, $dst_dump,
+		'dump outputs from original and restored regression databases match');
 }
 
 # Initialize a new node for the upgrade.

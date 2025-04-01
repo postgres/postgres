@@ -13,5 +13,6 @@ install_data(
   'PostgreSQL/Test/Kerberos.pm',
   'PostgreSQL/Test/Cluster.pm',
   'PostgreSQL/Test/BackgroundPsql.pm',
+  'PostgreSQL/Test/AdjustDump.pm',
   'PostgreSQL/Test/AdjustUpgrade.pm',
   install_dir: dir_pgxs / 'src/test/perl/PostgreSQL/Test')
