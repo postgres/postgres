@@ -111,8 +111,11 @@ TDEXLogEncryptStateSize(void)
 	Size		sz;
 
 	sz = sizeof(EncryptionStateData);
-	sz = add_size(sz, TDEXLogEncryptBuffSize());
-	sz = add_size(sz, PG_IO_ALIGN_SIZE);
+	if (EncryptXLog)
+	{
+		sz = add_size(sz, TDEXLogEncryptBuffSize());
+		sz = add_size(sz, PG_IO_ALIGN_SIZE);
+	}
 
 	return sz;
 }
@@ -133,10 +136,6 @@ TDEXLogShmemInit(void)
 	bool		foundBuf;
 	char	   *allocptr;
 
-	/*
-	 * TODO: we need enc_key_lsn all the time but encrypt buffer only when
-	 * EncryptXLog is on
-	 */
 	EncryptionState = (EncryptionStateData *)
 		ShmemInitStruct("TDE XLog Encryption State",
 						TDEXLogEncryptStateSize(),
@@ -144,11 +143,14 @@ TDEXLogShmemInit(void)
 
 	memset(EncryptionState, 0, sizeof(EncryptionStateData));
 
-	allocptr = ((char *) EncryptionState) + sizeof(EncryptionStateData);
-	allocptr = (char *) TYPEALIGN(PG_IO_ALIGN_SIZE, allocptr);
-	EncryptionState->segBuf = allocptr;
+	if (EncryptXLog)
+	{
+		allocptr = ((char *) EncryptionState) + sizeof(EncryptionStateData);
+		allocptr = (char *) TYPEALIGN(PG_IO_ALIGN_SIZE, allocptr);
+		EncryptionState->segBuf = allocptr;
 
-	Assert((char *) EncryptionState + TDEXLogEncryptStateSize() >= (char *) EncryptionState->segBuf + TDEXLogEncryptBuffSize());
+		Assert((char *) EncryptionState + TDEXLogEncryptStateSize() >= (char *) EncryptionState->segBuf + TDEXLogEncryptBuffSize());
+	}
 
 	pg_atomic_init_u64(&EncryptionState->enc_key_lsn, 0);
 
