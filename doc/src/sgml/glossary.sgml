@@ -81,6 +81,31 @@
    </glossdef>
   </glossentry>
 
+  <glossentry id="glossary-aio">
+   <glossterm>Asynchronous <acronym>I/O</acronym></glossterm>
+   <acronym>AIO</acronym>
+   <indexterm>
+    <primary>Asynchronous <acronym>I/O</acronym></primary>
+   </indexterm>
+   <glossdef>
+    <para>
+     Asynchronous <acronym>I/O</acronym> (<acronym>AIO</acronym>) describes
+     performing <acronym>I/O</acronym> in a non-blocking way (asynchronously),
+     in contrast to synchronous <acronym>I/O</acronym>, which blocks for the
+     entire duration of the <acronym>I/O</acronym>.
+    </para>
+    <para>
+     With <acronym>AIO</acronym>, starting an <acronym>I/O</acronym> operation
+     is separated from waiting for the result of the operation, allowing
+     multiple <acronym>I/O</acronym> operations to be initiated concurrently,
+     as well as performing <acronym>CPU</acronym> heavy operations
+     concurrently with <acronym>I/O</acronym>. The price for that increased
+     concurrency is increased complexity.
+    </para>
+    <glossseealso otherterm="glossary-io" />
+   </glossdef>
+  </glossentry>
+
   <glossentry id="glossary-atomic">
    <glossterm>Atomic</glossterm>
    <glossdef>
@@ -935,6 +960,20 @@
     <para>
      For more information, see <xref linkend="backup-incremental-backup"/>.
     </para>
+   </glossdef>
+  </glossentry>
+
+  <glossentry id="glossary-io">
+   <glossterm>Input/Output</glossterm>
+   <acronym>I/O</acronym>
+   <glossdef>
+    <para>
+     Input/Output (<acronym>I/O</acronym>) describes the communication between
+     a program and peripheral devices. In the context of database systems,
+     <acronym>I/O</acronym> commonly, but not exclusively, refers to
+     interaction with storage devices or the network.
+    </para>
+    <glossseealso otherterm="glossary-aio" />
    </glossdef>
   </glossentry>
 

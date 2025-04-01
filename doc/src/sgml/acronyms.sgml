@@ -10,6 +10,15 @@
   <variablelist>
 
    <varlistentry>
+    <term><acronym>AIO</acronym></term>
+    <listitem>
+     <para>
+      <link linkend="glossary-aio">Asynchronous <acronym>I/O</acronym></link>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
     <term><acronym>ACL</acronym></term>
     <listitem>
      <para>
@@ -350,6 +359,15 @@
       <ulink
       url="https://en.wikipedia.org/wiki/Inter-process_communication">Inter-Process
       Communication</ulink>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><acronym>I/O</acronym></term>
+    <listitem>
+     <para>
+      <link linkend="glossary-io">Input/Output</link>
      </para>
     </listitem>
    </varlistentry>
