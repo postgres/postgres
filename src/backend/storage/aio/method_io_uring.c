@@ -303,12 +303,39 @@ pgaio_uring_submit(uint16 num_staged_ios, PgAioHandle **staged_ios)
 }
 
 static void
+pgaio_uring_completion_error_callback(void *arg)
+{
+	ProcNumber	owner;
+	PGPROC	   *owner_proc;
+	int32		owner_pid;
+	PgAioHandle *ioh = arg;
+
+	if (!ioh)
+		return;
+
+	/* No need for context if a backend is completing the IO for itself */
+	if (ioh->owner_procno == MyProcNumber)
+		return;
+
+	owner = ioh->owner_procno;
+	owner_proc = GetPGProcByNumber(owner);
+	owner_pid = owner_proc->pid;
+
+	errcontext("completing I/O on behalf of process %d", owner_pid);
+}
+
+static void
 pgaio_uring_drain_locked(PgAioUringContext *context)
 {
 	int			ready;
 	int			orig_ready;
+	ErrorContextCallback errcallback = {0};
 
 	Assert(LWLockHeldByMeInMode(&context->completion_lock, LW_EXCLUSIVE));
+
+	errcallback.callback = pgaio_uring_completion_error_callback;
+	errcallback.previous = error_context_stack;
+	error_context_stack = &errcallback;
 
 	/*
 	 * Don't drain more events than available right now. Otherwise it's
@@ -337,9 +364,11 @@ pgaio_uring_drain_locked(PgAioUringContext *context)
 			PgAioHandle *ioh;
 
 			ioh = io_uring_cqe_get_data(cqe);
+			errcallback.arg = ioh;
 			io_uring_cqe_seen(&context->io_uring_ring, cqe);
 
 			pgaio_io_process_completion(ioh, cqe->res);
+			errcallback.arg = NULL;
 		}
 
 		END_CRIT_SECTION();
@@ -348,6 +377,8 @@ pgaio_uring_drain_locked(PgAioUringContext *context)
 					"drained %d/%d, now expecting %d",
 					ncqes, orig_ready, io_uring_cq_ready(&context->io_uring_ring));
 	}
+
+	error_context_stack = errcallback.previous;
 }
 
 static void

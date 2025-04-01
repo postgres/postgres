@@ -357,11 +357,33 @@ pgaio_worker_register(void)
 	on_shmem_exit(pgaio_worker_die, 0);
 }
 
+static void
+pgaio_worker_error_callback(void *arg)
+{
+	ProcNumber	owner;
+	PGPROC	   *owner_proc;
+	int32		owner_pid;
+	PgAioHandle *ioh = arg;
+
+	if (!ioh)
+		return;
+
+	Assert(ioh->owner_procno != MyProcNumber);
+	Assert(MyBackendType == B_IO_WORKER);
+
+	owner = ioh->owner_procno;
+	owner_proc = GetPGProcByNumber(owner);
+	owner_pid = owner_proc->pid;
+
+	errcontext("I/O worker executing I/O on behalf of process %d", owner_pid);
+}
+
 void
 IoWorkerMain(const void *startup_data, size_t startup_data_len)
 {
 	sigjmp_buf	local_sigjmp_buf;
 	PgAioHandle *volatile error_ioh = NULL;
+	ErrorContextCallback errcallback = {0};
 	volatile int error_errno = 0;
 	char		cmd[128];
 
@@ -387,6 +409,10 @@ IoWorkerMain(const void *startup_data, size_t startup_data_len)
 
 	sprintf(cmd, "%d", MyIoWorkerId);
 	set_ps_display(cmd);
+
+	errcallback.callback = pgaio_worker_error_callback;
+	errcallback.previous = error_context_stack;
+	error_context_stack = &errcallback;
 
 	/* see PostgresMain() */
 	if (sigsetjmp(local_sigjmp_buf, 1) != 0)
@@ -471,6 +497,7 @@ IoWorkerMain(const void *startup_data, size_t startup_data_len)
 
 			ioh = &pgaio_ctl->io_handles[io_index];
 			error_ioh = ioh;
+			errcallback.arg = ioh;
 
 			pgaio_debug_io(DEBUG4, ioh,
 						   "worker %d processing IO",
@@ -511,6 +538,7 @@ IoWorkerMain(const void *startup_data, size_t startup_data_len)
 			pgaio_io_perform_synchronously(ioh);
 
 			RESUME_INTERRUPTS();
+			errcallback.arg = NULL;
 		}
 		else
 		{
@@ -522,6 +550,7 @@ IoWorkerMain(const void *startup_data, size_t startup_data_len)
 		CHECK_FOR_INTERRUPTS();
 	}
 
+	error_context_stack = errcallback.previous;
 	proc_exit(0);
 }
 
