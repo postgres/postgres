@@ -20743,6 +20743,42 @@ SELECT NULLIF(value, '(none)') ...
 
       <row>
        <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>array_sort</primary>
+        </indexterm>
+        <function>array_sort</function> (
+          <parameter>array</parameter> <type>anyarray</type>
+          <optional>, <parameter>descending</parameter> <type>boolean</type>
+          <optional>, <parameter>nulls_first</parameter> <type>boolean</type>
+          </optional></optional> )
+        <returnvalue>anyarray</returnvalue>
+       </para>
+       <para>
+        Sorts the first dimension of the array.
+        The sort order is determined by the default sort ordering of the
+        array's element type; however, if the element type is collatable,
+        the collation to use can be specified by adding
+        a <literal>COLLATE</literal> clause to
+        the <parameter>array</parameter> argument.
+       </para>
+       <para>
+        If <parameter>descending</parameter> is true then sort in
+        descending order, otherwise ascending order.  If omitted, the
+        default is ascending order.
+        If <parameter>nulls_first</parameter> is true then nulls appear
+        before non-null values, otherwise nulls appear after non-null
+        values.
+        If omitted, <parameter>nulls_first</parameter> is taken to have
+        the same value as <parameter>descending</parameter>.
+       </para>
+       <para>
+        <literal>array_sort(ARRAY[[2,4],[2,1],[6,5]])</literal>
+        <returnvalue>{{2,1},{2,4},{6,5}}</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
         <indexterm id="function-array-to-string">
          <primary>array_to_string</primary>
         </indexterm>

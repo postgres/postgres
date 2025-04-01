@@ -1471,6 +1471,19 @@ SELECT 'abc' <= 'ABC' COLLATE case_insensitive, 'abc' >= 'ABC' COLLATE case_inse
  t        | t
 (1 row)
 
+-- tests with array_sort
+SELECT array_sort('{a,B}'::text[] COLLATE case_insensitive);
+ array_sort 
+------------
+ {a,B}
+(1 row)
+
+SELECT array_sort('{a,B}'::text[] COLLATE "C");
+ array_sort 
+------------
+ {B,a}
+(1 row)
+
 -- test language tags
 CREATE COLLATION lt_insensitive (provider = icu, locale = 'en-u-ks-level1', deterministic = false);
 SELECT 'aBcD' COLLATE lt_insensitive = 'AbCd' COLLATE lt_insensitive;

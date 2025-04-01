@@ -2860,3 +2860,145 @@ SELECT array_reverse('{{1,2},{3,4},{5,6},{7,8}}'::int[]);
  {{7,8},{5,6},{3,4},{1,2}}
 (1 row)
 
+-- array_sort
+SELECT array_sort('{}'::int[]);
+ array_sort 
+------------
+ {}
+(1 row)
+
+SELECT array_sort('{1}'::int[]);
+ array_sort 
+------------
+ {1}
+(1 row)
+
+SELECT array_sort('{1,3,5,2,4,6}'::int[]);
+  array_sort   
+---------------
+ {1,2,3,4,5,6}
+(1 row)
+
+SELECT array_sort('{1.1,3.3,5.5,2.2,4.4,6.6}'::numeric[]);
+        array_sort         
+---------------------------
+ {1.1,2.2,3.3,4.4,5.5,6.6}
+(1 row)
+
+SELECT array_sort('{foo,bar,CCC,Abc,bbc}'::text[] COLLATE "C");
+      array_sort       
+-----------------------
+ {Abc,CCC,bar,bbc,foo}
+(1 row)
+
+SELECT array_sort('{foo,bar,null,CCC,Abc,bbc}'::text[] COLLATE "C");
+         array_sort         
+----------------------------
+ {Abc,CCC,bar,bbc,foo,NULL}
+(1 row)
+
+SELECT array_sort(ARRAY(SELECT '1 4'::int2vector UNION ALL SELECT '1 2'::int2vector));
+  array_sort   
+---------------
+ {"1 2","1 4"}
+(1 row)
+
+-- array_sort with order specified
+SELECT array_sort('{1.1,3.3,5.5,2.2,null,4.4,6.6}'::float8[], true);
+           array_sort           
+--------------------------------
+ {NULL,6.6,5.5,4.4,3.3,2.2,1.1}
+(1 row)
+
+SELECT array_sort('{1.1,3.3,5.5,2.2,null,4.4,6.6}'::float8[], false);
+           array_sort           
+--------------------------------
+ {1.1,2.2,3.3,4.4,5.5,6.6,NULL}
+(1 row)
+
+-- array_sort with order and nullsfirst flag specified
+SELECT array_sort('{1.1,3.3,5.5,2.2,null,4.4,6.6}'::float8[], true, true);
+           array_sort           
+--------------------------------
+ {NULL,6.6,5.5,4.4,3.3,2.2,1.1}
+(1 row)
+
+SELECT array_sort('{1.1,3.3,5.5,2.2,null,4.4,6.6}'::float8[], true, false);
+           array_sort           
+--------------------------------
+ {6.6,5.5,4.4,3.3,2.2,1.1,NULL}
+(1 row)
+
+SELECT array_sort('{1.1,3.3,5.5,2.2,null,4.4,6.6}'::float8[], false, true);
+           array_sort           
+--------------------------------
+ {NULL,1.1,2.2,3.3,4.4,5.5,6.6}
+(1 row)
+
+SELECT array_sort('{1.1,3.3,5.5,2.2,null,4.4,6.6}'::float8[], false, false);
+           array_sort           
+--------------------------------
+ {1.1,2.2,3.3,4.4,5.5,6.6,NULL}
+(1 row)
+
+-- multidimensional array tests
+SELECT array_sort('{{1}}'::int[]);
+ array_sort 
+------------
+ {{1}}
+(1 row)
+
+SELECT array_sort(ARRAY[[2,4],[2,1],[6,5]]);
+     array_sort      
+---------------------
+ {{2,1},{2,4},{6,5}}
+(1 row)
+
+SELECT array_sort('{{"1 2","3 4"}, {"1 -2","-1 4"}}'::int2vector[]);
+           array_sort            
+---------------------------------
+ {{"1 -2","-1 4"},{"1 2","3 4"}}
+(1 row)
+
+-- no ordering operator tests
+SELECT array_sort('{1}'::xid[]);  -- no error because no sort is required
+ array_sort 
+------------
+ {1}
+(1 row)
+
+SELECT array_sort('{1,2,3}'::xid[]);
+ERROR:  could not identify a comparison function for type xid
+SELECT array_sort('{{1,2,3},{2,3,4}}'::xid[]);
+ERROR:  could not identify a comparison function for type xid
+-- bounds preservation tests
+SELECT array_sort(a) FROM (VALUES ('[10:12][20:21]={{1,2},{10,20},{3,4}}'::int[])) v(a);
+              array_sort              
+--------------------------------------
+ [10:12][20:21]={{1,2},{3,4},{10,20}}
+(1 row)
+
+SELECT array_sort(a) FROM (VALUES ('[-1:0]={7,1}'::int[])) v(a);
+  array_sort  
+--------------
+ [-1:0]={1,7}
+(1 row)
+
+SELECT array_sort(a) FROM (VALUES ('[-2:0][20:21]={{1,2},{10,20},{1,-4}}'::int[])) v(a);
+              array_sort              
+--------------------------------------
+ [-2:0][20:21]={{1,-4},{1,2},{10,20}}
+(1 row)
+
+SELECT array_sort(a [-1:0]) FROM (VALUES ('[-2:0][20:21]={{1,2},{10,20},{1,-4}}'::int[])) v(a);
+    array_sort    
+------------------
+ {{1,-4},{10,20}}
+(1 row)
+
+SELECT array_sort(a [-1:0][20:20]) FROM (VALUES ('[-2:0][20:21]={{1,2},{10,20},{1,-4}}'::int[])) v(a);
+ array_sort 
+------------
+ {{1},{10}}
+(1 row)
+

@@ -564,6 +564,10 @@ CREATE COLLATION case_insensitive (provider = icu, locale = '@colStrength=second
 SELECT 'abc' <= 'ABC' COLLATE case_sensitive, 'abc' >= 'ABC' COLLATE case_sensitive;
 SELECT 'abc' <= 'ABC' COLLATE case_insensitive, 'abc' >= 'ABC' COLLATE case_insensitive;
 
+-- tests with array_sort
+SELECT array_sort('{a,B}'::text[] COLLATE case_insensitive);
+SELECT array_sort('{a,B}'::text[] COLLATE "C");
+
 -- test language tags
 CREATE COLLATION lt_insensitive (provider = icu, locale = 'en-u-ks-level1', deterministic = false);
 SELECT 'aBcD' COLLATE lt_insensitive = 'AbCd' COLLATE lt_insensitive;
