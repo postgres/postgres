@@ -5448,6 +5448,98 @@ if test x"$pgac_cv_prog_CC_cflags__Werror_vla" = x"yes"; then
 fi
 
 
+  # On macOS, complain about usage of symbols newer than the deployment target
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether ${CC} supports -Werror=unguarded-availability-new, for CFLAGS" >&5
+$as_echo_n "checking whether ${CC} supports -Werror=unguarded-availability-new, for CFLAGS... " >&6; }
+if ${pgac_cv_prog_CC_cflags__Werror_unguarded_availability_new+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  pgac_save_CFLAGS=$CFLAGS
+pgac_save_CC=$CC
+CC=${CC}
+CFLAGS="${CFLAGS} -Werror=unguarded-availability-new"
+ac_save_c_werror_flag=$ac_c_werror_flag
+ac_c_werror_flag=yes
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  pgac_cv_prog_CC_cflags__Werror_unguarded_availability_new=yes
+else
+  pgac_cv_prog_CC_cflags__Werror_unguarded_availability_new=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+ac_c_werror_flag=$ac_save_c_werror_flag
+CFLAGS="$pgac_save_CFLAGS"
+CC="$pgac_save_CC"
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $pgac_cv_prog_CC_cflags__Werror_unguarded_availability_new" >&5
+$as_echo "$pgac_cv_prog_CC_cflags__Werror_unguarded_availability_new" >&6; }
+if test x"$pgac_cv_prog_CC_cflags__Werror_unguarded_availability_new" = x"yes"; then
+  CFLAGS="${CFLAGS} -Werror=unguarded-availability-new"
+fi
+
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether ${CXX} supports -Werror=unguarded-availability-new, for CXXFLAGS" >&5
+$as_echo_n "checking whether ${CXX} supports -Werror=unguarded-availability-new, for CXXFLAGS... " >&6; }
+if ${pgac_cv_prog_CXX_cxxflags__Werror_unguarded_availability_new+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  pgac_save_CXXFLAGS=$CXXFLAGS
+pgac_save_CXX=$CXX
+CXX=${CXX}
+CXXFLAGS="${CXXFLAGS} -Werror=unguarded-availability-new"
+ac_save_cxx_werror_flag=$ac_cxx_werror_flag
+ac_cxx_werror_flag=yes
+ac_ext=cpp
+ac_cpp='$CXXCPP $CPPFLAGS'
+ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
+
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_compile "$LINENO"; then :
+  pgac_cv_prog_CXX_cxxflags__Werror_unguarded_availability_new=yes
+else
+  pgac_cv_prog_CXX_cxxflags__Werror_unguarded_availability_new=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+ac_cxx_werror_flag=$ac_save_cxx_werror_flag
+CXXFLAGS="$pgac_save_CXXFLAGS"
+CXX="$pgac_save_CXX"
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $pgac_cv_prog_CXX_cxxflags__Werror_unguarded_availability_new" >&5
+$as_echo "$pgac_cv_prog_CXX_cxxflags__Werror_unguarded_availability_new" >&6; }
+if test x"$pgac_cv_prog_CXX_cxxflags__Werror_unguarded_availability_new" = x"yes"; then
+  CXXFLAGS="${CXXFLAGS} -Werror=unguarded-availability-new"
+fi
+
+
   # -Wvla is not applicable for C++
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether ${CC} supports -Wendif-labels, for CFLAGS" >&5
@@ -15697,7 +15789,7 @@ fi
 LIBS_including_readline="$LIBS"
 LIBS=`echo "$LIBS" | sed -e 's/-ledit//g' -e 's/-lreadline//g'`
 
-for ac_func in backtrace_symbols clock_gettime copyfile fdatasync getifaddrs getpeerucred getrlimit kqueue mbstowcs_l memset_s poll posix_fallocate ppoll pstat pthread_is_threaded_np readlink setproctitle setproctitle_fast setsid shm_open strchrnul strsignal symlink sync_file_range uselocale wcstombs_l
+for ac_func in backtrace_symbols clock_gettime copyfile fdatasync getifaddrs getpeerucred getrlimit kqueue mbstowcs_l memset_s poll posix_fallocate ppoll pstat pthread_is_threaded_np readlink setproctitle setproctitle_fast setsid shm_open strsignal symlink sync_file_range uselocale wcstombs_l
 do :
   as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
 ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
@@ -16213,6 +16305,22 @@ fi
 cat >>confdefs.h <<_ACEOF
 #define HAVE_DECL_STRNLEN $ac_have_decl
 _ACEOF
+
+
+# We can't use AC_REPLACE_FUNCS to replace these functions, because it
+# won't handle deployment target restrictions on macOS
+ac_fn_c_check_decl "$LINENO" "strchrnul" "ac_cv_have_decl_strchrnul" "#include <string.h>
+"
+if test "x$ac_cv_have_decl_strchrnul" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_STRCHRNUL $ac_have_decl
+_ACEOF
+
 
 # This is probably only present on macOS, but may as well check always
 ac_fn_c_check_decl "$LINENO" "F_FULLFSYNC" "ac_cv_have_decl_F_FULLFSYNC" "#include <fcntl.h>
