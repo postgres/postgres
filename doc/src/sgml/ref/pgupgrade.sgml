@@ -540,7 +540,7 @@ NET STOP postgresql-&majorversion;
      Always run the <application>pg_upgrade</application> binary of the new server, not the old one.
      <application>pg_upgrade</application> requires the specification of the old and new cluster's
      data and executable (<filename>bin</filename>) directories. You can also specify
-     user and port values, and whether you want the data files linked or cloned
+     user and port values, and whether you want the data files linked, cloned, or swapped
      instead of the default copy behavior.
     </para>
 
@@ -589,8 +589,9 @@ pg_upgrade.exe
      to perform only the checks, even if the old server is still
      running. <command>pg_upgrade --check</command> will also outline any
      manual adjustments you will need to make after the upgrade.  If you
-     are going to be using link or clone mode, you should use the option
-     <option>--link</option> or <option>--clone</option> with
+     are going to be using link, clone, copy-file-range, or swap mode, you
+     should use the option <option>--link</option>, <option>--clone</option>,
+     <option>--copy-file-range</option>, or <option>--swap</option> with
      <option>--check</option> to enable mode-specific checks.
      <command>pg_upgrade</command> requires write permission in the current directory.
     </para>
@@ -880,7 +881,7 @@ psql --username=postgres --file=script.sql postgres
 
       <listitem>
        <para>
-        If the <option>--link</option> option was <emphasis>not</emphasis>
+        If neither <option>--link</option> nor <option>--swap</option> was
         used, the old cluster was unmodified;  it can be restarted.
        </para>
       </listitem>
