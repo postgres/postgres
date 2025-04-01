@@ -1099,7 +1099,7 @@ tuplesort_getgintuple(Tuplesortstate *state, Size *len, bool forward)
 	MemoryContextSwitchTo(oldcontext);
 
 	if (!stup.tuple)
-		return false;
+		return NULL;
 
 	tup = (GinTuple *) stup.tuple;
 
