@@ -178,5 +178,6 @@ extern bool check_synchronized_standby_slots(char **newval, void **extra,
 extern void assign_synchronized_standby_slots(const char *newval, void *extra);
 extern bool check_idle_replication_slot_timeout(int *newval, void **extra,
 												GucSource source);
+extern void assign_use_invisible_index(bool newval, void *extra);
 
 #endif							/* GUC_HOOKS_H */

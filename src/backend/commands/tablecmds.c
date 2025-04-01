@@ -719,7 +719,8 @@ static List *GetParentedForeignKeyRefs(Relation partition);
 static void ATDetachCheckNoForeignKeyRefs(Relation partition);
 static char GetAttributeCompression(Oid atttypid, const char *compression);
 static char GetAttributeStorage(Oid atttypid, const char *storagemode);
-
+static void ATExecSetIndexVisibility(Relation rel, bool visible);
+static bool GetIndexVisibility(Oid indexOid);
 
 /* ----------------------------------------------------------------
  *		DefineRelation
@@ -4814,6 +4815,11 @@ AlterTableGetLockLevel(List *cmds)
 				cmd_lockmode = ShareUpdateExclusiveLock;
 				break;
 
+			case AT_SetIndexVisible:
+			case AT_SetIndexInvisible:
+				cmd_lockmode = ShareUpdateExclusiveLock;
+				break;
+
 			default:			/* oops */
 				elog(ERROR, "unrecognized alter table type: %d",
 					 (int) cmd->subtype);
@@ -5249,6 +5255,13 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 			/* No command-specific prep needed */
 			pass = AT_PASS_MISC;
 			break;
+		case AT_SetIndexVisible:
+		case AT_SetIndexInvisible:
+			ATSimplePermissions(cmd->subtype, rel, ATT_INDEX | ATT_PARTITIONED_INDEX);
+			ATSimpleRecursion(wqueue, rel, cmd, true, lockmode, context);
+			/* No command-specific prep needed */
+			pass = AT_PASS_MISC;
+			break;
 		default:				/* oops */
 			elog(ERROR, "unrecognized alter table type: %d",
 				 (int) cmd->subtype);
@@ -5645,6 +5658,12 @@ ATExecCmd(List **wqueue, AlteredTableInfo *tab,
 		case AT_DetachPartitionFinalize:
 			address = ATExecDetachPartitionFinalize(rel, ((PartitionCmd *) cmd->def)->name);
 			break;
+		case AT_SetIndexVisible:
+				ATExecSetIndexVisibility(rel, true);
+				break;
+		case AT_SetIndexInvisible:
+				ATExecSetIndexVisibility(rel, false);
+				break;
 		default:				/* oops */
 			elog(ERROR, "unrecognized alter table type: %d",
 				 (int) cmd->subtype);
@@ -6591,6 +6610,8 @@ alter_table_type_to_string(AlterTableType cmdtype)
 			return "DROP COLUMN";
 		case AT_AddIndex:
 		case AT_ReAddIndex:
+		case AT_SetIndexVisible:
+		case AT_SetIndexInvisible:
 			return NULL;		/* not real grammar */
 		case AT_AddConstraint:
 		case AT_ReAddConstraint:
@@ -15088,6 +15109,8 @@ ATPostAlterTypeParse(Oid oldId, Oid oldRelId, Oid refRelId, char *cmd,
 			stmt->reset_default_tblspc = true;
 			/* keep the index's comment */
 			stmt->idxcomment = GetComment(oldId, RelationRelationId, 0);
+			/* preserve the index's visibility status */
+			stmt->isvisible = GetIndexVisibility(oldId);
 
 			newcmd = makeNode(AlterTableCmd);
 			newcmd->subtype = AT_ReAddIndex;
@@ -15118,6 +15141,8 @@ ATPostAlterTypeParse(Oid oldId, Oid oldRelId, Oid refRelId, char *cmd,
 					indstmt->idxcomment = GetComment(indoid,
 													 RelationRelationId, 0);
 					indstmt->reset_default_tblspc = true;
+					/* preserve the index's visibility status */
+					indstmt->isvisible = GetIndexVisibility(indoid);
 
 					cmd->subtype = AT_ReAddIndex;
 					tab->subcmds[AT_PASS_OLD_INDEX] =
@@ -21465,4 +21490,69 @@ GetAttributeStorage(Oid atttypid, const char *storagemode)
 						format_type_be(atttypid))));
 
 	return cstorage;
+}
+
+/*
+ * ATExecSetIndexVisibility
+ * Performs a catalog update to mark an index as visible or invisible in pg_index.
+ */
+static void
+ATExecSetIndexVisibility(Relation rel, bool visible)
+{
+	Oid			indexOid = RelationGetRelid(rel);
+	Oid			heapOid;
+	Relation	pg_index;
+	Relation	heapRel;
+	HeapTuple	indexTuple;
+	Form_pg_index	indexForm;
+
+	heapOid = IndexGetRelation(indexOid, false);
+	heapRel = table_open(heapOid, AccessShareLock);
+	pg_index = table_open(IndexRelationId, RowExclusiveLock);
+
+	indexTuple = SearchSysCacheCopy1(INDEXRELID, ObjectIdGetDatum(indexOid));
+	if (!HeapTupleIsValid(indexTuple))
+		elog(ERROR, "cache lookup failed for index %u", indexOid);
+
+	indexForm = (Form_pg_index) GETSTRUCT(indexTuple);
+	if (indexForm->indcheckxmin)
+		ereport(ERROR,
+				errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				errmsg("cannot update index visibility while indcheckxmin is true"),
+				errhint("Wait for all transactions that might see inconsistent HOT chains to complete"));
+
+	if (indexForm->indisvisible != visible)
+	{
+		indexForm->indisvisible = visible;
+		CatalogTupleUpdate(pg_index, &indexTuple->t_self, indexTuple);
+
+		CacheInvalidateRelcache(heapRel);
+		InvokeObjectPostAlterHook(IndexRelationId, indexOid, 0);
+		CommandCounterIncrement();
+	}
+
+	heap_freetuple(indexTuple);
+	table_close(pg_index, RowExclusiveLock);
+	table_close(heapRel, AccessShareLock);
+}
+
+/*
+* Get index visibility status from pg_index
+*/
+static bool
+GetIndexVisibility(Oid indexOid)
+{
+	HeapTuple   indexTuple;
+	Form_pg_index indexForm;
+	bool        isvisible;
+
+	indexTuple = SearchSysCache1(INDEXRELID, ObjectIdGetDatum(indexOid));
+	if (!HeapTupleIsValid(indexTuple))
+		elog(ERROR, "cache lookup failed for index %u", indexOid);
+
+	indexForm = (Form_pg_index) GETSTRUCT(indexTuple);
+	isvisible = indexForm->indisvisible;
+	ReleaseSysCache(indexTuple);
+
+	return isvisible;
 }

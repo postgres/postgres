@@ -2472,6 +2472,8 @@ typedef enum AlterTableType
 	AT_SetIdentity,				/* SET identity column options */
 	AT_DropIdentity,			/* DROP IDENTITY */
 	AT_ReAddStatistics,			/* internal to commands/tablecmds.c */
+	AT_SetIndexVisible,			/* Set INDEX visible */
+	AT_SetIndexInvisible,		/* Set INDEX invisible */
 } AlterTableType;
 
 typedef struct AlterTableCmd	/* one subcommand of an ALTER TABLE */
@@ -3468,6 +3470,7 @@ typedef struct IndexStmt
 	bool		if_not_exists;	/* just do nothing if index already exists? */
 	bool		reset_default_tblspc;	/* reset default_tablespace prior to
 										 * executing */
+  bool		isvisible;		/* true if VISIBLE (default), false if INVISIBLE */
 } IndexStmt;
 
 /* ----------------------

@@ -27,7 +27,8 @@ REGRESS = test_ddl_deparse \
 	alter_type_enum \
 	opfamily \
 	defprivs \
-	matviews
+	matviews \
+	alter_index
 
 EXTRA_INSTALL = contrib/pg_stat_statements
 

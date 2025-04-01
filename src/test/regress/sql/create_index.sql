@@ -1435,6 +1435,327 @@ END;
 -- concurrently
 REINDEX SCHEMA CONCURRENTLY schema_to_reindex;
 
+-- Test index visibility functionality
+
+CREATE TABLE index_test(
+    id INT PRIMARY KEY,
+    data TEXT,
+    num INT,
+    vector INT[],
+    range INT4RANGE
+);
+
+INSERT INTO index_test
+SELECT
+    g,
+    'data ' || g,
+    g % 100,
+    ARRAY[g, g+1, g+2],
+    int4range(g, g+10)
+FROM generate_series(1, 1000) g;
+
+-- Function for testing
+CREATE FUNCTION get_data_length(text) RETURNS INT AS $$
+    SELECT length($1);
+$$ LANGUAGE SQL IMMUTABLE;
+
+-- Helper function to show index status
+CREATE OR REPLACE FUNCTION show_index_status(index_name text)
+RETURNS TABLE (
+    indexrelid regclass,
+    indisvalid boolean,
+    indisready boolean,
+    indislive boolean,
+    indisvisible boolean
+) AS $$
+BEGIN
+    RETURN QUERY EXECUTE format('
+        SELECT indexrelid::regclass, indisvalid, indisready, indislive, indisvisible
+        FROM pg_index
+        WHERE indexrelid = %L::regclass', index_name);
+END;
+$$ LANGUAGE plpgsql;
+
+-- Create and test each index type
+-- 1. Basic single-column index
+CREATE INDEX idx_single ON index_test(data);
+SELECT show_index_status('idx_single');
+EXPLAIN (COSTS OFF) SELECT * FROM index_test WHERE data = 'data 500';
+ALTER INDEX idx_single INVISIBLE;
+SELECT show_index_status('idx_single');
+EXPLAIN (COSTS OFF) SELECT * FROM index_test WHERE data = 'data 500';
+ALTER INDEX idx_single VISIBLE;
+SELECT show_index_status('idx_single');
+
+-- 2. Multi-column index
+CREATE INDEX idx_multi ON index_test(num, data);
+SELECT show_index_status('idx_multi');
+EXPLAIN (COSTS OFF) SELECT * FROM index_test WHERE num = 50 AND data > 'data 500';
+ALTER INDEX idx_multi INVISIBLE;
+SELECT show_index_status('idx_multi');
+EXPLAIN (COSTS OFF) SELECT * FROM index_test WHERE num = 50 AND data > 'data 500';
+ALTER INDEX idx_multi VISIBLE;
+SELECT show_index_status('idx_multi');
+
+-- 3. Partial index
+CREATE INDEX idx_partial ON index_test(num) WHERE num < 50;
+SELECT show_index_status('idx_partial');
+EXPLAIN (COSTS OFF) SELECT * FROM index_test WHERE num = 25;
+ALTER INDEX idx_partial INVISIBLE;
+SELECT show_index_status('idx_partial');
+EXPLAIN (COSTS OFF) SELECT * FROM index_test WHERE num = 25;
+ALTER INDEX idx_partial VISIBLE;
+SELECT show_index_status('idx_partial');
+
+-- 4. Expression index
+CREATE INDEX idx_expression ON index_test((lower(data)));
+SELECT show_index_status('idx_expression');
+EXPLAIN (COSTS OFF) SELECT * FROM index_test WHERE lower(data) = 'data 500';
+ALTER INDEX idx_expression INVISIBLE;
+SELECT show_index_status('idx_expression');
+EXPLAIN (COSTS OFF) SELECT * FROM index_test WHERE lower(data) = 'data 500';
+ALTER INDEX idx_expression VISIBLE;
+SELECT show_index_status('idx_expression');
+
+-- 5. GIN index
+CREATE INDEX idx_gin ON index_test USING gin(vector);
+SELECT show_index_status('idx_gin');
+EXPLAIN (COSTS OFF) SELECT * FROM index_test WHERE vector @> ARRAY[500];
+ALTER INDEX idx_gin INVISIBLE;
+SELECT show_index_status('idx_gin');
+EXPLAIN (COSTS OFF) SELECT * FROM index_test WHERE vector @> ARRAY[500];
+ALTER INDEX idx_gin VISIBLE;
+SELECT show_index_status('idx_gin');
+
+-- 6. GiST index
+CREATE INDEX idx_gist ON index_test USING gist(range);
+SELECT show_index_status('idx_gist');
+EXPLAIN (COSTS OFF) SELECT * FROM index_test WHERE range && int4range(100, 110);
+ALTER INDEX idx_gist INVISIBLE;
+SELECT show_index_status('idx_gist');
+EXPLAIN (COSTS OFF) SELECT * FROM index_test WHERE range && int4range(100, 110);
+ALTER INDEX idx_gist VISIBLE;
+SELECT show_index_status('idx_gist');
+
+-- 7. Covering index
+CREATE INDEX idx_covering ON index_test(num) INCLUDE (data);
+SELECT show_index_status('idx_covering');
+EXPLAIN (COSTS OFF) SELECT num, data FROM index_test WHERE num = 50;
+ALTER INDEX idx_covering INVISIBLE;
+SELECT show_index_status('idx_covering');
+EXPLAIN (COSTS OFF) SELECT num, data FROM index_test WHERE num = 50;
+ALTER INDEX idx_covering VISIBLE;
+SELECT show_index_status('idx_covering');
+
+-- 8. Unique index
+CREATE UNIQUE INDEX idx_unique ON index_test(id, data);
+SELECT show_index_status('idx_unique');
+EXPLAIN (COSTS OFF) SELECT * FROM index_test WHERE id = 500 AND data = 'data 500';
+ALTER INDEX idx_unique INVISIBLE;
+SELECT show_index_status('idx_unique');
+EXPLAIN (COSTS OFF) SELECT * FROM index_test WHERE id = 500 AND data = 'data 500';
+ALTER INDEX idx_unique VISIBLE;
+SELECT show_index_status('idx_unique');
+
+-- 9. Function-based index
+CREATE INDEX idx_func ON index_test(get_data_length(data));
+SELECT show_index_status('idx_func');
+EXPLAIN (COSTS OFF) SELECT * FROM index_test WHERE get_data_length(data) = 10;
+ALTER INDEX idx_func INVISIBLE;
+SELECT show_index_status('idx_func');
+EXPLAIN (COSTS OFF) SELECT * FROM index_test WHERE get_data_length(data) = 10;
+ALTER INDEX idx_func VISIBLE;
+SELECT show_index_status('idx_func');
+
+-- 10. Join index
+CREATE TABLE join_test (id INT PRIMARY KEY, ref_id INT);
+INSERT INTO join_test SELECT g, g % 100 FROM generate_series(1, 1000) g;
+CREATE INDEX idx_join ON join_test(ref_id);
+SELECT show_index_status('idx_join');
+
+EXPLAIN (COSTS OFF)
+SELECT jt.id, it.data
+FROM join_test jt
+JOIN index_test it ON jt.ref_id = it.num
+WHERE jt.id BETWEEN 100 AND 200;
+
+-- Set all indexes to invisible to force seq scan
+ALTER INDEX idx_join INVISIBLE;
+ALTER INDEX join_test_pkey INVISIBLE;
+SELECT show_index_status('idx_join');
+SELECT show_index_status('join_test_pkey');
+
+EXPLAIN (COSTS OFF)
+SELECT jt.id, it.data
+FROM join_test jt
+JOIN index_test it ON jt.ref_id = it.num
+WHERE jt.id BETWEEN 100 AND 200;
+
+ALTER INDEX idx_join VISIBLE;
+ALTER INDEX join_test_pkey VISIBLE;
+SELECT show_index_status('idx_join');
+SELECT show_index_status('join_test_pkey');
+
+-- Test REINDEX CONCURRENTLY
+REINDEX INDEX CONCURRENTLY idx_join;
+SELECT show_index_status('idx_join');
+
+ALTER INDEX idx_join INVISIBLE;
+SELECT show_index_status('idx_join');
+REINDEX INDEX CONCURRENTLY idx_join;
+SELECT show_index_status('idx_join');
+
+SELECT pg_get_indexdef('idx_join'::regclass);
+ALTER INDEX idx_join VISIBLE;
+SELECT pg_get_indexdef('idx_join'::regclass);
+
+-- Test index visibility with indcheckxmin being true
+
+CREATE TABLE indcheckxmin_test(id int PRIMARY KEY);
+INSERT INTO indcheckxmin_test VALUES (1), (2), (3);
+CREATE INDEX CONCURRENTLY idx_checkxmin ON indcheckxmin_test(id);
+BEGIN;
+-- Simulate indcheckxmin being true
+UPDATE pg_index SET indcheckxmin = true WHERE indexrelid = 'idx_checkxmin'::regclass;
+ALTER INDEX idx_checkxmin INVISIBLE;  -- expect fail
+ROLLBACK;
+
+-- Test prepared statements with index visibility
+CREATE TABLE prep_idx_test (id int, data text);
+CREATE INDEX prep_idx1 ON prep_idx_test(data);
+INSERT INTO prep_idx_test SELECT g, 'data ' || g FROM generate_series(1,100) g;
+
+-- Test with visible index
+PREPARE idx_plan AS SELECT * FROM prep_idx_test WHERE data = $1;
+EXPLAIN (COSTS OFF) EXECUTE idx_plan('data 1');
+EXECUTE idx_plan('data 1');
+
+-- Test with invisible index
+ALTER INDEX prep_idx1 INVISIBLE;
+EXPLAIN (COSTS OFF) EXECUTE idx_plan('data 1');
+EXECUTE idx_plan('data 1');
+
+-- Test with use_invisible_index
+SET use_invisible_index TO on;
+EXPLAIN (COSTS OFF) EXECUTE idx_plan('data 1');
+EXECUTE idx_plan('data 1');
+SET use_invisible_index TO off;
+-- Assert plan cache is reset and index is not used
+EXPLAIN (COSTS OFF) EXECUTE idx_plan('data 1');
+
+-- Make index visible and test again
+ALTER INDEX prep_idx1 VISIBLE;
+EXPLAIN (COSTS OFF) EXECUTE idx_plan('data 1');
+EXECUTE idx_plan('data 1');
+
+-- Test index visibility with partitioned tables
+CREATE TABLE part_tbl(id int, data text) PARTITION BY RANGE(id);
+CREATE TABLE part1 PARTITION OF part_tbl FOR VALUES FROM (1) TO (100);
+CREATE TABLE part2 PARTITION OF part_tbl FOR VALUES FROM (100) TO (200);
+
+INSERT INTO part_tbl
+SELECT g, 'data ' || g
+FROM generate_series(1, 199) g;
+
+CREATE INDEX idx_part_tbl ON part_tbl(data);
+
+SELECT c.relname, i.indisvisible
+FROM pg_index i
+JOIN pg_class c ON i.indexrelid = c.oid
+WHERE c.relname LIKE 'idx_part_tbl%'
+ORDER BY c.relname;
+
+-- Force use of indexes to avoid flaky test results
+SET enable_seqscan = off;
+
+EXPLAIN (COSTS OFF)
+SELECT * FROM part_tbl WHERE data = 'data 50';
+
+ALTER INDEX idx_part_tbl INVISIBLE;
+
+SELECT c.relname, i.indisvisible
+FROM pg_index i
+JOIN pg_class c ON i.indexrelid = c.oid
+WHERE c.relname LIKE 'idx_part_tbl%'
+ORDER BY c.relname;
+
+-- Check query plan after setting invisible (should use seq scan)
+EXPLAIN (COSTS OFF)
+SELECT * FROM part_tbl WHERE data = 'data 50';
+
+SET use_invisible_index TO on;
+
+EXPLAIN (COSTS OFF)
+SELECT * FROM part_tbl WHERE data = 'data 50';
+
+SET use_invisible_index TO off;
+
+EXPLAIN (COSTS OFF)
+SELECT * FROM part_tbl WHERE data = 'data 50';
+
+ALTER INDEX idx_part_tbl VISIBLE;
+
+SELECT c.relname, i.indisvisible
+FROM pg_index i
+JOIN pg_class c ON i.indexrelid = c.oid
+WHERE c.relname LIKE 'idx_part_tbl%'
+ORDER BY c.relname;
+
+EXPLAIN (COSTS OFF)
+SELECT * FROM part_tbl WHERE data = 'data 50';
+
+SET enable_seqscan = on;
+
+-- Test REINDEX maintains visibility setting
+ALTER INDEX idx_part_tbl INVISIBLE;
+REINDEX INDEX idx_part_tbl;
+
+SELECT c.relname, i.indisvisible
+FROM pg_index i
+JOIN pg_class c ON i.indexrelid = c.oid
+WHERE c.relname LIKE 'idx_part_tbl%'
+ORDER BY c.relname;
+
+-- Test that index visibility is preserved after ALTER TABLE
+CREATE TABLE vis_test(id INT PRIMARY KEY, data text);
+\d vis_test
+
+ALTER INDEX vis_test_pkey INVISIBLE;
+\d vis_test
+
+ALTER TABLE vis_test ALTER COLUMN id SET DATA TYPE bigint;
+\d vis_test
+
+ALTER TABLE vis_test ALTER COLUMN id SET DATA TYPE int;
+\d vis_test
+
+ALTER INDEX vis_test_pkey VISIBLE;
+\d vis_test
+
+-- Test CREATE INDEX with INVISIBLE option
+CREATE TABLE invis_test(id int, data text);
+INSERT INTO invis_test SELECT g, 'data ' || g FROM generate_series(1,100) g;
+
+CREATE INDEX idx_invis1 ON invis_test(data) INVISIBLE;
+\d invis_test
+\d idx_invis1
+
+ALTER INDEX idx_invis1 VISIBLE;
+\d invis_test
+\d idx_invis1
+
+-- Clean up
+DROP TABLE index_test;
+DROP TABLE join_test;
+DROP FUNCTION get_data_length;
+DROP FUNCTION show_index_status;
+DROP TABLE indcheckxmin_test CASCADE;
+DEALLOCATE idx_plan;
+DROP TABLE prep_idx_test;
+DROP TABLE part_tbl CASCADE;
+DROP TABLE vis_test;
+DROP TABLE invis_test;
+
 -- Failure for unauthorized user
 CREATE ROLE regress_reindexuser NOLOGIN;
 SET SESSION ROLE regress_reindexuser;

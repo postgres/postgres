@@ -31,6 +31,7 @@ ALTER INDEX [ IF EXISTS ] <replaceable class="parameter">name</replaceable> ALTE
     SET STATISTICS <replaceable class="parameter">integer</replaceable>
 ALTER INDEX ALL IN TABLESPACE <replaceable class="parameter">name</replaceable> [ OWNED BY <replaceable class="parameter">role_name</replaceable> [, ... ] ]
     SET TABLESPACE <replaceable class="parameter">new_tablespace</replaceable> [ NOWAIT ]
+ALTER INDEX [ IF EXISTS ] <replaceable class="parameter">name</replaceable> { VISIBLE | INVISIBLE }
 </synopsis>
  </refsynopsisdiv>
 
@@ -155,6 +156,29 @@ ALTER INDEX ALL IN TABLESPACE <replaceable class="parameter">name</replaceable> 
       For more information on the use of statistics by the
       <productname>PostgreSQL</productname> query planner, refer to
       <xref linkend="planner-stats"/>.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>VISIBLE</literal></term>
+    <listitem>
+     <para>
+      Make the specified index visible. The index will be used for query planning.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>INVISIBLE</literal></term>
+    <listitem>
+     <para>
+      Make the specified index invisible. The index will not be used for queries.
+      This can be useful for testing query performance with and without specific
+      indexes. If performance degrades after making an index invisible, it can be easily
+      be made visible using <literal>VISIBLE</literal>. Before making an index invisible, it's recommended
+      to check <structname>pg_stat_user_indexes</structname>.<structfield>idx_scan</structfield>
+      to identify potentially unused indexes.
      </para>
     </listitem>
    </varlistentry>
@@ -300,6 +324,20 @@ REINDEX INDEX distributors;
 CREATE INDEX coord_idx ON measured (x, y, (z + t));
 ALTER INDEX coord_idx ALTER COLUMN 3 SET STATISTICS 1000;
 </programlisting></para>
+
+  <para>
+   To make an index visible:
+<programlisting>
+ALTER INDEX idx_name VISIBLE;
+</programlisting>
+  </para>
+
+  <para>
+   To make an index invisible:
+<programlisting>
+ALTER INDEX idx_name INVISIBLE;
+</programlisting>
+  </para>
 
  </refsect1>
 

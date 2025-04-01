@@ -119,7 +119,8 @@ static void UpdateIndexRelation(Oid indexoid, Oid heapoid,
 								bool isexclusion,
 								bool immediate,
 								bool isvalid,
-								bool isready);
+								bool isready,
+								bool isvisible);
 static void index_update_stats(Relation rel,
 							   bool hasindex,
 							   double reltuples);
@@ -571,7 +572,8 @@ UpdateIndexRelation(Oid indexoid,
 					bool isexclusion,
 					bool immediate,
 					bool isvalid,
-					bool isready)
+					bool isready,
+					bool isvisible)
 {
 	int2vector *indkey;
 	oidvector  *indcollation;
@@ -649,6 +651,7 @@ UpdateIndexRelation(Oid indexoid,
 	values[Anum_pg_index_indisready - 1] = BoolGetDatum(isready);
 	values[Anum_pg_index_indislive - 1] = BoolGetDatum(true);
 	values[Anum_pg_index_indisreplident - 1] = BoolGetDatum(false);
+	values[Anum_pg_index_indisvisible - 1] = BoolGetDatum(isvisible);
 	values[Anum_pg_index_indkey - 1] = PointerGetDatum(indkey);
 	values[Anum_pg_index_indcollation - 1] = PointerGetDatum(indcollation);
 	values[Anum_pg_index_indclass - 1] = PointerGetDatum(indclass);
@@ -714,6 +717,8 @@ UpdateIndexRelation(Oid indexoid,
  *			already exists.
  *		INDEX_CREATE_PARTITIONED:
  *			create a partitioned index (table must be partitioned)
+ *		INDEX_CREATE_VISIBLE:
+ *			create the index as visible to query planner
  * constr_flags: flags passed to index_constraint_create
  *		(only if INDEX_CREATE_ADD_CONSTRAINT is set)
  * allow_system_table_mods: allow table to be a system catalog
@@ -759,6 +764,7 @@ index_create(Relation heapRelation,
 	bool		invalid = (flags & INDEX_CREATE_INVALID) != 0;
 	bool		concurrent = (flags & INDEX_CREATE_CONCURRENT) != 0;
 	bool		partitioned = (flags & INDEX_CREATE_PARTITIONED) != 0;
+	bool 		isvisible  = (flags & INDEX_CREATE_VISIBLE) != 0;
 	char		relkind;
 	TransactionId relfrozenxid;
 	MultiXactId relminmxid;
@@ -1042,13 +1048,15 @@ index_create(Relation heapRelation,
 	 *	  (Or, could define a rule to maintain the predicate) --Nels, Feb '92
 	 * ----------------
 	 */
+
 	UpdateIndexRelation(indexRelationId, heapRelationId, parentIndexRelid,
 						indexInfo,
 						collationIds, opclassIds, coloptions,
 						isprimary, is_exclusion,
 						(constr_flags & INDEX_CONSTR_CREATE_DEFERRABLE) == 0,
 						!concurrent && !invalid,
-						!concurrent);
+						!concurrent,
+						isvisible);
 
 	/*
 	 * Register relcache invalidation on the indexes' heap relation, to
@@ -1317,6 +1325,8 @@ index_concurrently_create_copy(Relation heapRelation, Oid oldIndexId,
 	List	   *indexColNames = NIL;
 	List	   *indexExprs = NIL;
 	List	   *indexPreds = NIL;
+	Form_pg_index indexForm;
+	bits16 	 createFlags;
 
 	indexRelation = index_open(oldIndexId, RowExclusiveLock);
 
@@ -1343,6 +1353,9 @@ index_concurrently_create_copy(Relation heapRelation, Oid oldIndexId,
 	colOptionDatum = SysCacheGetAttrNotNull(INDEXRELID, indexTuple,
 											Anum_pg_index_indoption);
 	indcoloptions = (int2vector *) DatumGetPointer(colOptionDatum);
+
+	/* Get the visibility state of the original index */
+	indexForm = (Form_pg_index) GETSTRUCT(indexTuple);
 
 	/* Fetch reloptions of index if any */
 	classTuple = SearchSysCache1(RELOID, ObjectIdGetDatum(oldIndexId));
@@ -1436,6 +1449,16 @@ index_concurrently_create_copy(Relation heapRelation, Oid oldIndexId,
 	}
 
 	/*
+	* Determine the create flags for the new index.
+	* We always use SKIP_BUILD and CONCURRENT for concurrent reindexing.
+	* If the original index was visible, we also set the VISIBLE flag
+	* to maintain the same state in the new index.
+	*/
+	createFlags = INDEX_CREATE_SKIP_BUILD | INDEX_CREATE_CONCURRENT;
+	if (indexForm->indisvisible)
+		createFlags |= INDEX_CREATE_VISIBLE;
+
+	/*
 	 * Now create the new index.
 	 *
 	 * For a partition index, we adjust the partition dependency later, to
@@ -1458,7 +1481,7 @@ index_concurrently_create_copy(Relation heapRelation, Oid oldIndexId,
 							  indcoloptions->values,
 							  stattargets,
 							  reloptionsDatum,
-							  INDEX_CREATE_SKIP_BUILD | INDEX_CREATE_CONCURRENT,
+							  createFlags,
 							  0,
 							  true, /* allow table to be a system catalog? */
 							  false,	/* is_internal? */

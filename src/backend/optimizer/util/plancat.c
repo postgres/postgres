@@ -47,7 +47,9 @@
 #include "storage/bufmgr.h"
 #include "tcop/tcopprot.h"
 #include "utils/builtins.h"
+#include "utils/guc_hooks.h"
 #include "utils/lsyscache.h"
+#include "utils/plancache.h"
 #include "utils/partcache.h"
 #include "utils/rel.h"
 #include "utils/snapmgr.h"
@@ -55,6 +57,7 @@
 
 /* GUC parameter */
 int			constraint_exclusion = CONSTRAINT_EXCLUSION_PARTITION;
+bool		use_invisible_index = false;
 
 /* Hook for plugins to get control in get_relation_info() */
 get_relation_info_hook_type get_relation_info_hook = NULL;
@@ -254,13 +257,12 @@ get_relation_info(PlannerInfo *root, Oid relationObjectId, bool inhparent,
 			index = indexRelation->rd_index;
 
 			/*
-			 * Ignore invalid indexes, since they can't safely be used for
-			 * queries.  Note that this is OK because the data structure we
-			 * are constructing is only used by the planner --- the executor
-			 * still needs to insert into "invalid" indexes, if they're marked
-			 * indisready.
-			 */
-			if (!index->indisvalid)
+			 * Skip invalid indexes, and invisible indexes unless use_invisible_index
+			 * is set. This is OK because the data structure we are constructing is
+			 * only used by the planner - the executor still needs to insert into
+			 * these indexes if they're marked indisready.
+			*/
+			if (!index->indisvalid || (!index->indisvisible && !use_invisible_index))
 			{
 				index_close(indexRelation, NoLock);
 				continue;
@@ -2608,5 +2610,20 @@ set_baserel_partition_constraint(Relation relation, RelOptInfo *rel)
 		if (rel->relid != 1)
 			ChangeVarNodes((Node *) partconstr, 1, rel->relid, 0);
 		rel->partition_qual = partconstr;
+	}
+}
+
+/*
+ * assign_use_invisible_index
+ * GUC assign_hook for "use_invisible_index" GUC variable.
+ * Resets the plan cache when the value changes.
+ */
+void
+assign_use_invisible_index(bool newval, void *extra)
+{
+	if (use_invisible_index != newval)
+	{
+		use_invisible_index = newval;
+		ResetPlanCache();
 	}
 }

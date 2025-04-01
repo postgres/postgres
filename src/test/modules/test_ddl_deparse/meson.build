@@ -48,6 +48,7 @@ tests += {
       'opfamily',
       'defprivs',
       'matviews',
+      'alter_index',
     ],
   },
 }

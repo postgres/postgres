@@ -427,6 +427,7 @@
 #enable_tidscan = on
 #enable_group_by_reordering = on
 #enable_distinct_reordering = on
+#use_invisible_index = off		# forces planner to consider invisible indexes
 
 # - Planner Cost Constants -
 

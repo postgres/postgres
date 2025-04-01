@@ -427,6 +427,8 @@ typedef struct _indxInfo
 
 	/* if there is an associated constraint object, its dumpId: */
 	DumpId		indexconstraint;
+
+	bool			indisvisible;
 } IndxInfo;
 
 typedef struct _indexAttachInfo

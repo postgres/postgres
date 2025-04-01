@@ -1,0 +1,29 @@
+-- Test index visibility commands
+CREATE TABLE visibility_test (id int);
+NOTICE:  DDL test: type simple, tag CREATE TABLE
+CREATE INDEX idx_vis ON visibility_test(id);
+NOTICE:  DDL test: type simple, tag CREATE INDEX
+ALTER INDEX idx_vis INVISIBLE;
+NOTICE:  DDL test: type alter table, tag ALTER INDEX
+NOTICE:    subcommand: type SET INVISIBLE desc <NULL>
+ALTER INDEX idx_vis VISIBLE;
+NOTICE:  DDL test: type alter table, tag ALTER INDEX
+NOTICE:    subcommand: type SET VISIBLE desc <NULL>
+ALTER INDEX idx_vis INVISIBLE;
+NOTICE:  DDL test: type alter table, tag ALTER INDEX
+NOTICE:    subcommand: type SET INVISIBLE desc <NULL>
+REINDEX INDEX idx_vis;
+NOTICE:  DDL test: type simple, tag REINDEX
+CREATE SCHEMA visibility_schema;
+NOTICE:  DDL test: type simple, tag CREATE SCHEMA
+CREATE TABLE visibility_schema.test2 (id int);
+NOTICE:  DDL test: type simple, tag CREATE TABLE
+CREATE INDEX idx_vis2 ON visibility_schema.test2(id);
+NOTICE:  DDL test: type simple, tag CREATE INDEX
+ALTER INDEX visibility_schema.idx_vis2 INVISIBLE;
+NOTICE:  DDL test: type alter table, tag ALTER INDEX
+NOTICE:    subcommand: type SET INVISIBLE desc <NULL>
+-- Clean up
+DROP SCHEMA visibility_schema CASCADE;
+NOTICE:  drop cascades to table visibility_schema.test2
+DROP TABLE visibility_test CASCADE;

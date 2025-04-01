@@ -3394,6 +3394,801 @@ ERROR:  REINDEX SCHEMA cannot run inside a transaction block
 END;
 -- concurrently
 REINDEX SCHEMA CONCURRENTLY schema_to_reindex;
+-- Test index visibility functionality
+CREATE TABLE index_test(
+    id INT PRIMARY KEY,
+    data TEXT,
+    num INT,
+    vector INT[],
+    range INT4RANGE
+);
+INSERT INTO index_test
+SELECT
+    g,
+    'data ' || g,
+    g % 100,
+    ARRAY[g, g+1, g+2],
+    int4range(g, g+10)
+FROM generate_series(1, 1000) g;
+-- Function for testing
+CREATE FUNCTION get_data_length(text) RETURNS INT AS $$
+    SELECT length($1);
+$$ LANGUAGE SQL IMMUTABLE;
+-- Helper function to show index status
+CREATE OR REPLACE FUNCTION show_index_status(index_name text)
+RETURNS TABLE (
+    indexrelid regclass,
+    indisvalid boolean,
+    indisready boolean,
+    indislive boolean,
+    indisvisible boolean
+) AS $$
+BEGIN
+    RETURN QUERY EXECUTE format('
+        SELECT indexrelid::regclass, indisvalid, indisready, indislive, indisvisible
+        FROM pg_index
+        WHERE indexrelid = %L::regclass', index_name);
+END;
+$$ LANGUAGE plpgsql;
+-- Create and test each index type
+-- 1. Basic single-column index
+CREATE INDEX idx_single ON index_test(data);
+SELECT show_index_status('idx_single');
+  show_index_status   
+----------------------
+ (idx_single,t,t,t,t)
+(1 row)
+
+EXPLAIN (COSTS OFF) SELECT * FROM index_test WHERE data = 'data 500';
+                  QUERY PLAN                   
+-----------------------------------------------
+ Bitmap Heap Scan on index_test
+   Recheck Cond: (data = 'data 500'::text)
+   ->  Bitmap Index Scan on idx_single
+         Index Cond: (data = 'data 500'::text)
+(4 rows)
+
+ALTER INDEX idx_single INVISIBLE;
+SELECT show_index_status('idx_single');
+  show_index_status   
+----------------------
+ (idx_single,t,t,t,f)
+(1 row)
+
+EXPLAIN (COSTS OFF) SELECT * FROM index_test WHERE data = 'data 500';
+             QUERY PLAN              
+-------------------------------------
+ Seq Scan on index_test
+   Filter: (data = 'data 500'::text)
+(2 rows)
+
+ALTER INDEX idx_single VISIBLE;
+SELECT show_index_status('idx_single');
+  show_index_status   
+----------------------
+ (idx_single,t,t,t,t)
+(1 row)
+
+-- 2. Multi-column index
+CREATE INDEX idx_multi ON index_test(num, data);
+SELECT show_index_status('idx_multi');
+  show_index_status  
+---------------------
+ (idx_multi,t,t,t,t)
+(1 row)
+
+EXPLAIN (COSTS OFF) SELECT * FROM index_test WHERE num = 50 AND data > 'data 500';
+                           QUERY PLAN                           
+----------------------------------------------------------------
+ Bitmap Heap Scan on index_test
+   Recheck Cond: ((num = 50) AND (data > 'data 500'::text))
+   ->  Bitmap Index Scan on idx_multi
+         Index Cond: ((num = 50) AND (data > 'data 500'::text))
+(4 rows)
+
+ALTER INDEX idx_multi INVISIBLE;
+SELECT show_index_status('idx_multi');
+  show_index_status  
+---------------------
+ (idx_multi,t,t,t,f)
+(1 row)
+
+EXPLAIN (COSTS OFF) SELECT * FROM index_test WHERE num = 50 AND data > 'data 500';
+                      QUERY PLAN                      
+------------------------------------------------------
+ Seq Scan on index_test
+   Filter: ((data > 'data 500'::text) AND (num = 50))
+(2 rows)
+
+ALTER INDEX idx_multi VISIBLE;
+SELECT show_index_status('idx_multi');
+  show_index_status  
+---------------------
+ (idx_multi,t,t,t,t)
+(1 row)
+
+-- 3. Partial index
+CREATE INDEX idx_partial ON index_test(num) WHERE num < 50;
+SELECT show_index_status('idx_partial');
+   show_index_status   
+-----------------------
+ (idx_partial,t,t,t,t)
+(1 row)
+
+EXPLAIN (COSTS OFF) SELECT * FROM index_test WHERE num = 25;
+               QUERY PLAN               
+----------------------------------------
+ Bitmap Heap Scan on index_test
+   Recheck Cond: (num = 25)
+   ->  Bitmap Index Scan on idx_partial
+         Index Cond: (num = 25)
+(4 rows)
+
+ALTER INDEX idx_partial INVISIBLE;
+SELECT show_index_status('idx_partial');
+   show_index_status   
+-----------------------
+ (idx_partial,t,t,t,f)
+(1 row)
+
+EXPLAIN (COSTS OFF) SELECT * FROM index_test WHERE num = 25;
+              QUERY PLAN              
+--------------------------------------
+ Bitmap Heap Scan on index_test
+   Recheck Cond: (num = 25)
+   ->  Bitmap Index Scan on idx_multi
+         Index Cond: (num = 25)
+(4 rows)
+
+ALTER INDEX idx_partial VISIBLE;
+SELECT show_index_status('idx_partial');
+   show_index_status   
+-----------------------
+ (idx_partial,t,t,t,t)
+(1 row)
+
+-- 4. Expression index
+CREATE INDEX idx_expression ON index_test((lower(data)));
+SELECT show_index_status('idx_expression');
+    show_index_status     
+--------------------------
+ (idx_expression,t,t,t,t)
+(1 row)
+
+EXPLAIN (COSTS OFF) SELECT * FROM index_test WHERE lower(data) = 'data 500';
+                      QUERY PLAN                      
+------------------------------------------------------
+ Bitmap Heap Scan on index_test
+   Recheck Cond: (lower(data) = 'data 500'::text)
+   ->  Bitmap Index Scan on idx_expression
+         Index Cond: (lower(data) = 'data 500'::text)
+(4 rows)
+
+ALTER INDEX idx_expression INVISIBLE;
+SELECT show_index_status('idx_expression');
+    show_index_status     
+--------------------------
+ (idx_expression,t,t,t,f)
+(1 row)
+
+EXPLAIN (COSTS OFF) SELECT * FROM index_test WHERE lower(data) = 'data 500';
+                 QUERY PLAN                 
+--------------------------------------------
+ Seq Scan on index_test
+   Filter: (lower(data) = 'data 500'::text)
+(2 rows)
+
+ALTER INDEX idx_expression VISIBLE;
+SELECT show_index_status('idx_expression');
+    show_index_status     
+--------------------------
+ (idx_expression,t,t,t,t)
+(1 row)
+
+-- 5. GIN index
+CREATE INDEX idx_gin ON index_test USING gin(vector);
+SELECT show_index_status('idx_gin');
+ show_index_status 
+-------------------
+ (idx_gin,t,t,t,t)
+(1 row)
+
+EXPLAIN (COSTS OFF) SELECT * FROM index_test WHERE vector @> ARRAY[500];
+                     QUERY PLAN                     
+----------------------------------------------------
+ Bitmap Heap Scan on index_test
+   Recheck Cond: (vector @> '{500}'::integer[])
+   ->  Bitmap Index Scan on idx_gin
+         Index Cond: (vector @> '{500}'::integer[])
+(4 rows)
+
+ALTER INDEX idx_gin INVISIBLE;
+SELECT show_index_status('idx_gin');
+ show_index_status 
+-------------------
+ (idx_gin,t,t,t,f)
+(1 row)
+
+EXPLAIN (COSTS OFF) SELECT * FROM index_test WHERE vector @> ARRAY[500];
+                QUERY PLAN                
+------------------------------------------
+ Seq Scan on index_test
+   Filter: (vector @> '{500}'::integer[])
+(2 rows)
+
+ALTER INDEX idx_gin VISIBLE;
+SELECT show_index_status('idx_gin');
+ show_index_status 
+-------------------
+ (idx_gin,t,t,t,t)
+(1 row)
+
+-- 6. GiST index
+CREATE INDEX idx_gist ON index_test USING gist(range);
+SELECT show_index_status('idx_gist');
+ show_index_status  
+--------------------
+ (idx_gist,t,t,t,t)
+(1 row)
+
+EXPLAIN (COSTS OFF) SELECT * FROM index_test WHERE range && int4range(100, 110);
+                      QUERY PLAN                       
+-------------------------------------------------------
+ Bitmap Heap Scan on index_test
+   Recheck Cond: (range && '[100,110)'::int4range)
+   ->  Bitmap Index Scan on idx_gist
+         Index Cond: (range && '[100,110)'::int4range)
+(4 rows)
+
+ALTER INDEX idx_gist INVISIBLE;
+SELECT show_index_status('idx_gist');
+ show_index_status  
+--------------------
+ (idx_gist,t,t,t,f)
+(1 row)
+
+EXPLAIN (COSTS OFF) SELECT * FROM index_test WHERE range && int4range(100, 110);
+                 QUERY PLAN                  
+---------------------------------------------
+ Seq Scan on index_test
+   Filter: (range && '[100,110)'::int4range)
+(2 rows)
+
+ALTER INDEX idx_gist VISIBLE;
+SELECT show_index_status('idx_gist');
+ show_index_status  
+--------------------
+ (idx_gist,t,t,t,t)
+(1 row)
+
+-- 7. Covering index
+CREATE INDEX idx_covering ON index_test(num) INCLUDE (data);
+SELECT show_index_status('idx_covering');
+   show_index_status    
+------------------------
+ (idx_covering,t,t,t,t)
+(1 row)
+
+EXPLAIN (COSTS OFF) SELECT num, data FROM index_test WHERE num = 50;
+               QUERY PLAN                
+-----------------------------------------
+ Bitmap Heap Scan on index_test
+   Recheck Cond: (num = 50)
+   ->  Bitmap Index Scan on idx_covering
+         Index Cond: (num = 50)
+(4 rows)
+
+ALTER INDEX idx_covering INVISIBLE;
+SELECT show_index_status('idx_covering');
+   show_index_status    
+------------------------
+ (idx_covering,t,t,t,f)
+(1 row)
+
+EXPLAIN (COSTS OFF) SELECT num, data FROM index_test WHERE num = 50;
+              QUERY PLAN              
+--------------------------------------
+ Bitmap Heap Scan on index_test
+   Recheck Cond: (num = 50)
+   ->  Bitmap Index Scan on idx_multi
+         Index Cond: (num = 50)
+(4 rows)
+
+ALTER INDEX idx_covering VISIBLE;
+SELECT show_index_status('idx_covering');
+   show_index_status    
+------------------------
+ (idx_covering,t,t,t,t)
+(1 row)
+
+-- 8. Unique index
+CREATE UNIQUE INDEX idx_unique ON index_test(id, data);
+SELECT show_index_status('idx_unique');
+  show_index_status   
+----------------------
+ (idx_unique,t,t,t,t)
+(1 row)
+
+EXPLAIN (COSTS OFF) SELECT * FROM index_test WHERE id = 500 AND data = 'data 500';
+                        QUERY PLAN                        
+----------------------------------------------------------
+ Index Scan using idx_unique on index_test
+   Index Cond: ((id = 500) AND (data = 'data 500'::text))
+(2 rows)
+
+ALTER INDEX idx_unique INVISIBLE;
+SELECT show_index_status('idx_unique');
+  show_index_status   
+----------------------
+ (idx_unique,t,t,t,f)
+(1 row)
+
+EXPLAIN (COSTS OFF) SELECT * FROM index_test WHERE id = 500 AND data = 'data 500';
+                   QUERY PLAN                   
+------------------------------------------------
+ Index Scan using index_test_pkey on index_test
+   Index Cond: (id = 500)
+   Filter: (data = 'data 500'::text)
+(3 rows)
+
+ALTER INDEX idx_unique VISIBLE;
+SELECT show_index_status('idx_unique');
+  show_index_status   
+----------------------
+ (idx_unique,t,t,t,t)
+(1 row)
+
+-- 9. Function-based index
+CREATE INDEX idx_func ON index_test(get_data_length(data));
+SELECT show_index_status('idx_func');
+ show_index_status  
+--------------------
+ (idx_func,t,t,t,t)
+(1 row)
+
+EXPLAIN (COSTS OFF) SELECT * FROM index_test WHERE get_data_length(data) = 10;
+               QUERY PLAN                
+-----------------------------------------
+ Bitmap Heap Scan on index_test
+   Recheck Cond: (length(data) = 10)
+   ->  Bitmap Index Scan on idx_func
+         Index Cond: (length(data) = 10)
+(4 rows)
+
+ALTER INDEX idx_func INVISIBLE;
+SELECT show_index_status('idx_func');
+ show_index_status  
+--------------------
+ (idx_func,t,t,t,f)
+(1 row)
+
+EXPLAIN (COSTS OFF) SELECT * FROM index_test WHERE get_data_length(data) = 10;
+          QUERY PLAN           
+-------------------------------
+ Seq Scan on index_test
+   Filter: (length(data) = 10)
+(2 rows)
+
+ALTER INDEX idx_func VISIBLE;
+SELECT show_index_status('idx_func');
+ show_index_status  
+--------------------
+ (idx_func,t,t,t,t)
+(1 row)
+
+-- 10. Join index
+CREATE TABLE join_test (id INT PRIMARY KEY, ref_id INT);
+INSERT INTO join_test SELECT g, g % 100 FROM generate_series(1, 1000) g;
+CREATE INDEX idx_join ON join_test(ref_id);
+SELECT show_index_status('idx_join');
+ show_index_status  
+--------------------
+ (idx_join,t,t,t,t)
+(1 row)
+
+EXPLAIN (COSTS OFF)
+SELECT jt.id, it.data
+FROM join_test jt
+JOIN index_test it ON jt.ref_id = it.num
+WHERE jt.id BETWEEN 100 AND 200;
+                          QUERY PLAN                           
+---------------------------------------------------------------
+ Hash Join
+   Hash Cond: (it.num = jt.ref_id)
+   ->  Seq Scan on index_test it
+   ->  Hash
+         ->  Bitmap Heap Scan on join_test jt
+               Recheck Cond: ((id >= 100) AND (id <= 200))
+               ->  Bitmap Index Scan on join_test_pkey
+                     Index Cond: ((id >= 100) AND (id <= 200))
+(8 rows)
+
+-- Set all indexes to invisible to force seq scan
+ALTER INDEX idx_join INVISIBLE;
+ALTER INDEX join_test_pkey INVISIBLE;
+SELECT show_index_status('idx_join');
+ show_index_status  
+--------------------
+ (idx_join,t,t,t,f)
+(1 row)
+
+SELECT show_index_status('join_test_pkey');
+    show_index_status     
+--------------------------
+ (join_test_pkey,t,t,t,f)
+(1 row)
+
+EXPLAIN (COSTS OFF)
+SELECT jt.id, it.data
+FROM join_test jt
+JOIN index_test it ON jt.ref_id = it.num
+WHERE jt.id BETWEEN 100 AND 200;
+                     QUERY PLAN                      
+-----------------------------------------------------
+ Hash Join
+   Hash Cond: (it.num = jt.ref_id)
+   ->  Seq Scan on index_test it
+   ->  Hash
+         ->  Seq Scan on join_test jt
+               Filter: ((id >= 100) AND (id <= 200))
+(6 rows)
+
+ALTER INDEX idx_join VISIBLE;
+ALTER INDEX join_test_pkey VISIBLE;
+SELECT show_index_status('idx_join');
+ show_index_status  
+--------------------
+ (idx_join,t,t,t,t)
+(1 row)
+
+SELECT show_index_status('join_test_pkey');
+    show_index_status     
+--------------------------
+ (join_test_pkey,t,t,t,t)
+(1 row)
+
+-- Test REINDEX CONCURRENTLY
+REINDEX INDEX CONCURRENTLY idx_join;
+SELECT show_index_status('idx_join');
+ show_index_status  
+--------------------
+ (idx_join,t,t,t,t)
+(1 row)
+
+ALTER INDEX idx_join INVISIBLE;
+SELECT show_index_status('idx_join');
+ show_index_status  
+--------------------
+ (idx_join,t,t,t,f)
+(1 row)
+
+REINDEX INDEX CONCURRENTLY idx_join;
+SELECT show_index_status('idx_join');
+ show_index_status  
+--------------------
+ (idx_join,t,t,t,f)
+(1 row)
+
+SELECT pg_get_indexdef('idx_join'::regclass);
+                                   pg_get_indexdef                                   
+-------------------------------------------------------------------------------------
+ CREATE INDEX idx_join ON schema_to_reindex.join_test USING btree (ref_id) INVISIBLE
+(1 row)
+
+ALTER INDEX idx_join VISIBLE;
+SELECT pg_get_indexdef('idx_join'::regclass);
+                              pg_get_indexdef                              
+---------------------------------------------------------------------------
+ CREATE INDEX idx_join ON schema_to_reindex.join_test USING btree (ref_id)
+(1 row)
+
+-- Test index visibility with indcheckxmin being true
+CREATE TABLE indcheckxmin_test(id int PRIMARY KEY);
+INSERT INTO indcheckxmin_test VALUES (1), (2), (3);
+CREATE INDEX CONCURRENTLY idx_checkxmin ON indcheckxmin_test(id);
+BEGIN;
+-- Simulate indcheckxmin being true
+UPDATE pg_index SET indcheckxmin = true WHERE indexrelid = 'idx_checkxmin'::regclass;
+ALTER INDEX idx_checkxmin INVISIBLE;  -- expect fail
+ERROR:  cannot update index visibility while indcheckxmin is true
+HINT:  Wait for all transactions that might see inconsistent HOT chains to complete
+ROLLBACK;
+-- Test prepared statements with index visibility
+CREATE TABLE prep_idx_test (id int, data text);
+CREATE INDEX prep_idx1 ON prep_idx_test(data);
+INSERT INTO prep_idx_test SELECT g, 'data ' || g FROM generate_series(1,100) g;
+-- Test with visible index
+PREPARE idx_plan AS SELECT * FROM prep_idx_test WHERE data = $1;
+EXPLAIN (COSTS OFF) EXECUTE idx_plan('data 1');
+                 QUERY PLAN                  
+---------------------------------------------
+ Bitmap Heap Scan on prep_idx_test
+   Recheck Cond: (data = 'data 1'::text)
+   ->  Bitmap Index Scan on prep_idx1
+         Index Cond: (data = 'data 1'::text)
+(4 rows)
+
+EXECUTE idx_plan('data 1');
+ id |  data  
+----+--------
+  1 | data 1
+(1 row)
+
+-- Test with invisible index
+ALTER INDEX prep_idx1 INVISIBLE;
+EXPLAIN (COSTS OFF) EXECUTE idx_plan('data 1');
+            QUERY PLAN             
+-----------------------------------
+ Seq Scan on prep_idx_test
+   Filter: (data = 'data 1'::text)
+(2 rows)
+
+EXECUTE idx_plan('data 1');
+ id |  data  
+----+--------
+  1 | data 1
+(1 row)
+
+-- Test with use_invisible_index
+SET use_invisible_index TO on;
+EXPLAIN (COSTS OFF) EXECUTE idx_plan('data 1');
+                 QUERY PLAN                  
+---------------------------------------------
+ Bitmap Heap Scan on prep_idx_test
+   Recheck Cond: (data = 'data 1'::text)
+   ->  Bitmap Index Scan on prep_idx1
+         Index Cond: (data = 'data 1'::text)
+(4 rows)
+
+EXECUTE idx_plan('data 1');
+ id |  data  
+----+--------
+  1 | data 1
+(1 row)
+
+SET use_invisible_index TO off;
+-- Assert plan cache is reset and index is not used
+EXPLAIN (COSTS OFF) EXECUTE idx_plan('data 1');
+            QUERY PLAN             
+-----------------------------------
+ Seq Scan on prep_idx_test
+   Filter: (data = 'data 1'::text)
+(2 rows)
+
+-- Make index visible and test again
+ALTER INDEX prep_idx1 VISIBLE;
+EXPLAIN (COSTS OFF) EXECUTE idx_plan('data 1');
+                 QUERY PLAN                  
+---------------------------------------------
+ Bitmap Heap Scan on prep_idx_test
+   Recheck Cond: (data = 'data 1'::text)
+   ->  Bitmap Index Scan on prep_idx1
+         Index Cond: (data = 'data 1'::text)
+(4 rows)
+
+EXECUTE idx_plan('data 1');
+ id |  data  
+----+--------
+  1 | data 1
+(1 row)
+
+-- Test index visibility with partitioned tables
+CREATE TABLE part_tbl(id int, data text) PARTITION BY RANGE(id);
+CREATE TABLE part1 PARTITION OF part_tbl FOR VALUES FROM (1) TO (100);
+CREATE TABLE part2 PARTITION OF part_tbl FOR VALUES FROM (100) TO (200);
+INSERT INTO part_tbl
+SELECT g, 'data ' || g
+FROM generate_series(1, 199) g;
+CREATE INDEX idx_part_tbl ON part_tbl(data);
+SELECT c.relname, i.indisvisible
+FROM pg_index i
+JOIN pg_class c ON i.indexrelid = c.oid
+WHERE c.relname LIKE 'idx_part_tbl%'
+ORDER BY c.relname;
+   relname    | indisvisible 
+--------------+--------------
+ idx_part_tbl | t
+(1 row)
+
+-- Force use of indexes to avoid flaky test results
+SET enable_seqscan = off;
+EXPLAIN (COSTS OFF)
+SELECT * FROM part_tbl WHERE data = 'data 50';
+                        QUERY PLAN                         
+-----------------------------------------------------------
+ Append
+   ->  Index Scan using part1_data_idx on part1 part_tbl_1
+         Index Cond: (data = 'data 50'::text)
+   ->  Index Scan using part2_data_idx on part2 part_tbl_2
+         Index Cond: (data = 'data 50'::text)
+(5 rows)
+
+ALTER INDEX idx_part_tbl INVISIBLE;
+SELECT c.relname, i.indisvisible
+FROM pg_index i
+JOIN pg_class c ON i.indexrelid = c.oid
+WHERE c.relname LIKE 'idx_part_tbl%'
+ORDER BY c.relname;
+   relname    | indisvisible 
+--------------+--------------
+ idx_part_tbl | f
+(1 row)
+
+-- Check query plan after setting invisible (should use seq scan)
+EXPLAIN (COSTS OFF)
+SELECT * FROM part_tbl WHERE data = 'data 50';
+                QUERY PLAN                
+------------------------------------------
+ Append
+   ->  Seq Scan on part1 part_tbl_1
+         Disabled: true
+         Filter: (data = 'data 50'::text)
+   ->  Seq Scan on part2 part_tbl_2
+         Disabled: true
+         Filter: (data = 'data 50'::text)
+(7 rows)
+
+SET use_invisible_index TO on;
+EXPLAIN (COSTS OFF)
+SELECT * FROM part_tbl WHERE data = 'data 50';
+                        QUERY PLAN                         
+-----------------------------------------------------------
+ Append
+   ->  Index Scan using part1_data_idx on part1 part_tbl_1
+         Index Cond: (data = 'data 50'::text)
+   ->  Index Scan using part2_data_idx on part2 part_tbl_2
+         Index Cond: (data = 'data 50'::text)
+(5 rows)
+
+SET use_invisible_index TO off;
+EXPLAIN (COSTS OFF)
+SELECT * FROM part_tbl WHERE data = 'data 50';
+                QUERY PLAN                
+------------------------------------------
+ Append
+   ->  Seq Scan on part1 part_tbl_1
+         Disabled: true
+         Filter: (data = 'data 50'::text)
+   ->  Seq Scan on part2 part_tbl_2
+         Disabled: true
+         Filter: (data = 'data 50'::text)
+(7 rows)
+
+ALTER INDEX idx_part_tbl VISIBLE;
+SELECT c.relname, i.indisvisible
+FROM pg_index i
+JOIN pg_class c ON i.indexrelid = c.oid
+WHERE c.relname LIKE 'idx_part_tbl%'
+ORDER BY c.relname;
+   relname    | indisvisible 
+--------------+--------------
+ idx_part_tbl | t
+(1 row)
+
+EXPLAIN (COSTS OFF)
+SELECT * FROM part_tbl WHERE data = 'data 50';
+                        QUERY PLAN                         
+-----------------------------------------------------------
+ Append
+   ->  Index Scan using part1_data_idx on part1 part_tbl_1
+         Index Cond: (data = 'data 50'::text)
+   ->  Index Scan using part2_data_idx on part2 part_tbl_2
+         Index Cond: (data = 'data 50'::text)
+(5 rows)
+
+SET enable_seqscan = on;
+-- Test REINDEX maintains visibility setting
+ALTER INDEX idx_part_tbl INVISIBLE;
+REINDEX INDEX idx_part_tbl;
+SELECT c.relname, i.indisvisible
+FROM pg_index i
+JOIN pg_class c ON i.indexrelid = c.oid
+WHERE c.relname LIKE 'idx_part_tbl%'
+ORDER BY c.relname;
+   relname    | indisvisible 
+--------------+--------------
+ idx_part_tbl | f
+(1 row)
+
+-- Test that index visibility is preserved after ALTER TABLE
+CREATE TABLE vis_test(id INT PRIMARY KEY, data text);
+\d vis_test
+        Table "schema_to_reindex.vis_test"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ id     | integer |           | not null | 
+ data   | text    |           |          | 
+Indexes:
+    "vis_test_pkey" PRIMARY KEY, btree (id)
+
+ALTER INDEX vis_test_pkey INVISIBLE;
+\d vis_test
+        Table "schema_to_reindex.vis_test"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ id     | integer |           | not null | 
+ data   | text    |           |          | 
+Indexes:
+    "vis_test_pkey" PRIMARY KEY, btree (id) INVISIBLE
+
+ALTER TABLE vis_test ALTER COLUMN id SET DATA TYPE bigint;
+\d vis_test
+        Table "schema_to_reindex.vis_test"
+ Column |  Type  | Collation | Nullable | Default 
+--------+--------+-----------+----------+---------
+ id     | bigint |           | not null | 
+ data   | text   |           |          | 
+Indexes:
+    "vis_test_pkey" PRIMARY KEY, btree (id) INVISIBLE
+
+ALTER TABLE vis_test ALTER COLUMN id SET DATA TYPE int;
+\d vis_test
+        Table "schema_to_reindex.vis_test"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ id     | integer |           | not null | 
+ data   | text    |           |          | 
+Indexes:
+    "vis_test_pkey" PRIMARY KEY, btree (id) INVISIBLE
+
+ALTER INDEX vis_test_pkey VISIBLE;
+\d vis_test
+        Table "schema_to_reindex.vis_test"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ id     | integer |           | not null | 
+ data   | text    |           |          | 
+Indexes:
+    "vis_test_pkey" PRIMARY KEY, btree (id)
+
+-- Test CREATE INDEX with INVISIBLE option
+CREATE TABLE invis_test(id int, data text);
+INSERT INTO invis_test SELECT g, 'data ' || g FROM generate_series(1,100) g;
+CREATE INDEX idx_invis1 ON invis_test(data) INVISIBLE;
+\d invis_test
+       Table "schema_to_reindex.invis_test"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ id     | integer |           |          | 
+ data   | text    |           |          | 
+Indexes:
+    "idx_invis1" btree (data) INVISIBLE
+
+\d idx_invis1
+Index "schema_to_reindex.idx_invis1"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ data   | text | yes  | data
+btree, for table "schema_to_reindex.invis_test", invisible
+
+ALTER INDEX idx_invis1 VISIBLE;
+\d invis_test
+       Table "schema_to_reindex.invis_test"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ id     | integer |           |          | 
+ data   | text    |           |          | 
+Indexes:
+    "idx_invis1" btree (data)
+
+\d idx_invis1
+Index "schema_to_reindex.idx_invis1"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ data   | text | yes  | data
+btree, for table "schema_to_reindex.invis_test"
+
+-- Clean up
+DROP TABLE index_test;
+DROP TABLE join_test;
+DROP FUNCTION get_data_length;
+DROP FUNCTION show_index_status;
+DROP TABLE indcheckxmin_test CASCADE;
+DEALLOCATE idx_plan;
+DROP TABLE prep_idx_test;
+DROP TABLE part_tbl CASCADE;
+DROP TABLE vis_test;
+DROP TABLE invis_test;
 -- Failure for unauthorized user
 CREATE ROLE regress_reindexuser NOLOGIN;
 SET SESSION ROLE regress_reindexuser;

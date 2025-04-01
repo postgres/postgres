@@ -2419,7 +2419,8 @@ match_previous_words(int pattern_id,
 	else if (Matches("ALTER", "INDEX", MatchAny))
 		COMPLETE_WITH("ALTER COLUMN", "OWNER TO", "RENAME TO", "SET",
 					  "RESET", "ATTACH PARTITION",
-					  "DEPENDS ON EXTENSION", "NO DEPENDS ON EXTENSION");
+					  "DEPENDS ON EXTENSION", "NO DEPENDS ON EXTENSION",
+					  "INVISIBLE", "VISIBLE");
 	else if (Matches("ALTER", "INDEX", MatchAny, "ATTACH"))
 		COMPLETE_WITH("PARTITION");
 	else if (Matches("ALTER", "INDEX", MatchAny, "ATTACH", "PARTITION"))

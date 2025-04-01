@@ -28,6 +28,7 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ [ IF NOT EXISTS ] <replaceable class=
     [ WITH ( <replaceable class="parameter">storage_parameter</replaceable> [= <replaceable class="parameter">value</replaceable>] [, ... ] ) ]
     [ TABLESPACE <replaceable class="parameter">tablespace_name</replaceable> ]
     [ WHERE <replaceable class="parameter">predicate</replaceable> ]
+    [ INVISIBLE ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -380,6 +381,19 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ [ IF NOT EXISTS ] <replaceable class=
       </listitem>
      </varlistentry>
 
+    <varlistentry>
+      <term><literal>INVISIBLE</literal></term>
+      <listitem>
+       <para>
+        Creates the index in an invisible state (default visible). An invisible index is
+        not used by the query planner for queries, but it is still maintained
+        when the underlying table data changes. This can be useful when you want to create
+        an index without immediately impacting query planning, allowing you to make it
+        visible later at a more convenient time. The index can be made visible later
+        using <command>ALTER INDEX ... VISIBLE</command>.
+       </para>
+      </listitem>
+     </varlistentry>
     </variablelist>
 
   <refsect2 id="sql-createindex-storage-parameters" xreflabel="Index Storage Parameters">
@@ -701,6 +715,14 @@ Indexes:
     partitioned index is a metadata only operation.
    </para>
 
+  <para>
+   When creating an index with the <literal>INVISIBLE</literal> option, the index
+   will be created but not used for query planning. This can be useful for
+   preparing an index in advance of its use, or for testing purposes. The index
+   will still be maintained as the table is modified, so it can be made visible
+   later without needing to be rebuilt. By default all new indexes are visible.
+  </para>
+
   </refsect2>
  </refsect1>
 
@@ -980,6 +1002,13 @@ SELECT * FROM points
 CREATE INDEX CONCURRENTLY sales_quantity_index ON sales_table (quantity);
 </programlisting></para>
 
+  <para>
+   To create an index on the table <literal>test_table</literal> with the default
+   name, but have it initially invisible:
+<programlisting>
+CREATE INDEX ON test_table (col1) INVISIBLE;
+</programlisting>
+  </para>
  </refsect1>
 
  <refsect1>

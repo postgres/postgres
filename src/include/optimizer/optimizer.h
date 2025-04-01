@@ -207,4 +207,9 @@ extern List *pull_var_clause(Node *node, int flags);
 extern Node *flatten_join_alias_vars(PlannerInfo *root, Query *query, Node *node);
 extern Node *flatten_group_exprs(PlannerInfo *root, Query *query, Node *node);
 
+/*
+ * GUC to tell planner to consider invisible indexes.
+ */
+extern bool use_invisible_index;
+
 #endif							/* OPTIMIZER_H */

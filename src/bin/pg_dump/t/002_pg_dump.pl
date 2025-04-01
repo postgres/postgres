@@ -2168,6 +2168,35 @@ my %tests = (
 		like => {},
 	},
 
+	'ALTER TABLE ONLY test_table ADD CONSTRAINT ... PRIMARY KEY INVISIBLE' => {
+		create_order => 97,
+		create_sql => 'CREATE TABLE dump_test.test_table_invisible (
+					   id int PRIMARY KEY
+					  );
+					  ALTER INDEX dump_test.test_table_invisible_pkey INVISIBLE;',
+		regexp => qr/^
+			\QALTER TABLE ONLY dump_test.test_table_invisible\E\n\s+
+			\QADD CONSTRAINT test_table_invisible_pkey PRIMARY KEY (id);\E\n
+			\QALTER INDEX dump_test.test_table_invisible_pkey INVISIBLE;\E
+			/xm,
+		like => { %full_runs, %dump_test_schema_runs, section_post_data => 1 },
+		unlike => { exclude_dump_test_schema => 1, only_dump_measurement => 1 },
+	},
+
+	'CREATE INDEX ... INVISIBLE' => {
+		create_order => 98,
+		create_sql => 'CREATE TABLE dump_test.test_table_mixed_indexes (
+					   id int,
+					   value int
+					  );
+					  CREATE INDEX idx_visible ON dump_test.test_table_mixed_indexes(value);
+					  CREATE UNIQUE INDEX idx_invisible ON dump_test.test_table_mixed_indexes(value) INVISIBLE;
+					  ALTER INDEX dump_test.idx_invisible INVISIBLE;',
+		regexp => qr/CREATE UNIQUE INDEX idx_invisible ON dump_test\.test_table_mixed_indexes USING btree \(value\) INVISIBLE;/m,
+		like => { %full_runs, %dump_test_schema_runs, section_post_data => 1 },
+		unlike => { exclude_dump_test_schema => 1, only_dump_measurement => 1 },
+	},
+
 	'CREATE AGGREGATE dump_test.newavg' => {
 		create_order => 25,
 		create_sql => 'CREATE AGGREGATE dump_test.newavg (

@@ -2325,6 +2325,11 @@ describeOneTableDetails(const char *schemaname,
 		else
 			appendPQExpBufferStr(&buf, "false AS indnullsnotdistinct,\n");
 
+		if (pset.sversion >= 180000)
+			appendPQExpBufferStr(&buf, "i.indisvisible,\n");
+		else
+			appendPQExpBufferStr(&buf, "true AS indisvisible,\n");
+
 		appendPQExpBuffer(&buf, "  a.amname, c2.relname, "
 						  "pg_catalog.pg_get_expr(i.indpred, i.indrelid, true)\n"
 						  "FROM pg_catalog.pg_index i, pg_catalog.pg_class c, pg_catalog.pg_class c2, pg_catalog.pg_am a\n"
@@ -2350,9 +2355,10 @@ describeOneTableDetails(const char *schemaname,
 			char	   *deferred = PQgetvalue(result, 0, 5);
 			char	   *indisreplident = PQgetvalue(result, 0, 6);
 			char	   *indnullsnotdistinct = PQgetvalue(result, 0, 7);
-			char	   *indamname = PQgetvalue(result, 0, 8);
-			char	   *indtable = PQgetvalue(result, 0, 9);
-			char	   *indpred = PQgetvalue(result, 0, 10);
+			char	   *indisvisible = PQgetvalue(result, 0, 8);
+			char	   *indamname = PQgetvalue(result, 0, 9);
+			char	   *indtable = PQgetvalue(result, 0, 10);
+			char	   *indpred = PQgetvalue(result, 0, 11);
 
 			if (strcmp(indisprimary, "t") == 0)
 				printfPQExpBuffer(&tmpbuf, _("primary key, "));
@@ -2388,6 +2394,9 @@ describeOneTableDetails(const char *schemaname,
 
 			if (strcmp(indisreplident, "t") == 0)
 				appendPQExpBufferStr(&tmpbuf, _(", replica identity"));
+
+			if (strcmp(indisvisible, "t") != 0)
+				appendPQExpBufferStr(&tmpbuf, _(", invisible"));
 
 			printTableAddFooter(&cont, tmpbuf.data);
 

@@ -5778,6 +5778,22 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
       </listitem>
      </varlistentry>
 
+     <varlistentry id="guc-force-invisible-index" xreflabel="use_invisible_index">
+      <term><varname>use_invisible_index</varname> (<type>boolean</type>)
+      <indexterm>
+       <primary><varname>use_invisible_index</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Forces the query planner to consider indexes that have been marked as invisible using
+        <command>ALTER INDEX ... INVISIBLE</command>. This parameter is useful for selective
+        use of invisible indexes in specific application contexts. The default
+        is <literal>off</literal>.
+       </para>
+      </listitem>
+     </varlistentry>
+
      </variablelist>
      </sect2>
      <sect2 id="runtime-config-query-constants">

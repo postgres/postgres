@@ -308,6 +308,12 @@ get_altertable_subcmdinfo(PG_FUNCTION_ARGS)
 			case AT_ReAddStatistics:
 				strtype = "(re) ADD STATS";
 				break;
+			case AT_SetIndexVisible:
+				strtype = "SET VISIBLE";
+				break;
+			case AT_SetIndexInvisible:
+				strtype = "SET INVISIBLE";
+				break;
 		}
 
 		if (subcmd->recurse)
