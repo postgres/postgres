@@ -1052,6 +1052,9 @@ heapgettup_pagemode(HeapScanDesc scan,
 		linesleft = scan->rs_ntuples;
 		lineindex = ScanDirectionIsForward(dir) ? 0 : linesleft - 1;
 
+		/* block is the same for all tuples, set it once outside the loop */
+		ItemPointerSetBlockNumber(&tuple->t_self, scan->rs_cblock);
+
 		/* lineindex now references the next or previous visible tid */
 continue_page:
 
@@ -1067,7 +1070,7 @@ continue_page:
 
 			tuple->t_data = (HeapTupleHeader) PageGetItem(page, lpp);
 			tuple->t_len = ItemIdGetLength(lpp);
-			ItemPointerSet(&(tuple->t_self), scan->rs_cblock, lineoff);
+			ItemPointerSetOffsetNumber(&tuple->t_self, lineoff);
 
 			/* skip any tuples that don't match the scan key */
 			if (key != NULL &&
