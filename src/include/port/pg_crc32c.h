@@ -52,7 +52,13 @@ typedef uint32 pg_crc32c;
 
 extern pg_crc32c pg_comp_crc32c_sse42(pg_crc32c crc, const void *data, size_t len);
 
+/*
+ * We can only get here if the host compiler targets SSE 4.2, but on some
+ * systems gcc and clang don't have the same built-in targets, so we still
+ * must use a function attribute here to accommodate "--with-llvm" builds.
+ */
 pg_attribute_no_sanitize_alignment()
+pg_attribute_target("sse4.2")
 static inline
 pg_crc32c
 pg_comp_crc32c_dispatch(pg_crc32c crc, const void *data, size_t len)
