@@ -359,34 +359,47 @@ tdeheap_xlog_seg_read(int fd, void *buf, size_t count, off_t offset,
 	return readsz;
 }
 
-/* IV: (TLI(uint32) + XLogRecPtr(uint64)) XOR BaseIV(uint8[12]) */
+union u128cast
+{
+	char		a[16];
+	unsigned	__int128 i;
+};
+
+/*
+ * Calculate the start IV for an XLog segmenet.
+ *
+ * IV: (TLI(uint32) + XLogRecPtr(uint64)) + BaseIV(uint8[12])
+ *
+ * TODO: Make the calculation more like OpenSSL's CTR withot any gaps and
+ * preferrably without zeroing the lowest bytes for the base IV.
+ *
+ * TODO: This code vectorizes poorly in both gcc and clang.
+ */
 static void
 CalcXLogPageIVPrefix(TimeLineID tli, XLogRecPtr lsn, const unsigned char *base_iv, char *iv_prefix)
 {
-	/* Temporary variables to make GCC vectorize it */
-	char		a[16],
-				b[16];
-
-	memset(a, 0, 16);
-	a[0] = tli >> 24;
-	a[1] = tli >> 16;
-	a[2] = tli >> 8;
-	a[3] = tli;
-
-	memset(b, 0, 16);
-	b[4] = lsn >> 56;
-	b[5] = lsn >> 48;
-	b[6] = lsn >> 40;
-	b[7] = lsn >> 32;
-	b[8] = lsn >> 24;
-	b[9] = lsn >> 16;
-	b[10] = lsn >> 8;
-	b[11] = lsn;
+	union u128cast base;
+	union u128cast iv;
+	unsigned	__int128 offset;
 
 	for (int i = 0; i < 16; i++)
-		iv_prefix[i] = (a[i] | b[i]) ^ base_iv[i];
+#ifdef WORDS_BIGENDIAN
+		base.a[i] = base_iv[i];
+#else
+		base.a[i] = base_iv[15 - i];
+#endif
 
-	/* Zero lowest 4 bytes */
-	for (int i = 12; i < 16; i++)
-		iv_prefix[i] = 0;
+	/* We do not support wrapping addition in Aes128EncryptedZeroBlocks() */
+	base.i &= ~(((unsigned __int128) 1) << 32);
+
+	offset = (((unsigned __int128) tli) << 112) | (((unsigned __int128) lsn) << 32);
+
+	iv.i = base.i + offset;
+
+	for (int i = 0; i < 16; i++)
+#ifdef WORDS_BIGENDIAN
+		iv_prefix[i] = iv.a[i];
+#else
+		iv_prefix[i] = iv.a[15 - i];
+#endif
 }
