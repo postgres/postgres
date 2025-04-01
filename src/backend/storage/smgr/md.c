@@ -910,9 +910,30 @@ mdreadv(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 				 * is ON or we are InRecovery, we should instead return zeroes
 				 * without complaining.  This allows, for example, the case of
 				 * trying to update a block that was later truncated away.
+				 *
+				 * NB: We think that this codepath is unreachable in recovery
+				 * and incomplete with zero_damaged_pages, as missing segments
+				 * are not created. Putting blocks into the buffer-pool that
+				 * do not exist on disk is rather problematic, as it will not
+				 * be found by scans that rely on smgrnblocks(), as they are
+				 * beyond EOF. It also can cause weird problems with relation
+				 * extension, as relation extension does not expect blocks
+				 * beyond EOF to exist.
+				 *
+				 * Therefore we do not want to copy the logic into
+				 * mdstartreadv(), where it would have to be more complicated
+				 * due to potential differences in the zero_damaged_pages
+				 * setting between the definer and completor of IO.
+				 *
+				 * For PG 18, we are putting an Assert(false) in mdreadv()
+				 * (triggering failures in assertion-enabled builds, but
+				 * continuing to work in production builds). Afterwards we
+				 * plan to remove this code entirely.
 				 */
 				if (zero_damaged_pages || InRecovery)
 				{
+					Assert(false);	/* see comment above */
+
 					for (BlockNumber i = transferred_this_segment / BLCKSZ;
 						 i < nblocks_this_segment;
 						 ++i)
@@ -1007,6 +1028,13 @@ mdstartreadv(PgAioHandle *ioh,
 	/*
 	 * The error checks corresponding to the post-read checks in mdreadv() are
 	 * in md_readv_complete().
+	 *
+	 * However we chose, at least for now, to not implement the
+	 * zero_damaged_pages logic present in mdreadv(). As outlined in mdreadv()
+	 * that logic is rather problematic, and we want to get rid of it. Here
+	 * equivalent logic would have to be more complicated due to potential
+	 * differences in the zero_damaged_pages setting between the definer and
+	 * completor of IO.
 	 */
 }
 
