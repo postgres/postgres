@@ -434,6 +434,12 @@ extern void IssuePendingWritebacks(WritebackContext *wb_context, IOContext io_co
 extern void ScheduleBufferTagForWriteback(WritebackContext *wb_context,
 										  IOContext io_context, BufferTag *tag);
 
+/* solely to make it easier to write tests */
+extern bool StartBufferIO(BufferDesc *buf, bool forInput, bool nowait);
+extern void TerminateBufferIO(BufferDesc *buf, bool clear_dirty, uint32 set_flag_bits,
+							  bool forget_owner, bool release_aio);
+
+
 /* freelist.c */
 extern IOContext IOContextForStrategy(BufferAccessStrategy strategy);
 extern BufferDesc *StrategyGetBuffer(BufferAccessStrategy strategy,
@@ -478,6 +484,7 @@ extern void TerminateLocalBufferIO(BufferDesc *bufHdr, bool clear_dirty,
 								   uint32 set_flag_bits, bool release_aio);
 extern bool StartLocalBufferIO(BufferDesc *bufHdr, bool forInput, bool nowait);
 extern void FlushLocalBuffer(BufferDesc *bufHdr, SMgrRelation reln);
+extern void InvalidateLocalBuffer(BufferDesc *bufHdr, bool check_unreferenced);
 extern void DropRelationLocalBuffers(RelFileLocator rlocator,
 									 ForkNumber forkNum,
 									 BlockNumber firstDelBlock);

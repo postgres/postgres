@@ -14,6 +14,7 @@ SUBDIRS = \
 		  oauth_validator \
 		  plsample \
 		  spgist_name_ops \
+		  test_aio \
 		  test_bloomfilter \
 		  test_copy_callbacks \
 		  test_custom_rmgrs \

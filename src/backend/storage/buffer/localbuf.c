@@ -57,7 +57,6 @@ static int	NLocalPinnedBuffers = 0;
 static void InitLocalBuffers(void);
 static Block GetLocalBufferStorage(void);
 static Buffer GetLocalVictimBuffer(void);
-static void InvalidateLocalBuffer(BufferDesc *bufHdr, bool check_unreferenced);
 
 
 /*
@@ -597,7 +596,7 @@ TerminateLocalBufferIO(BufferDesc *bufHdr, bool clear_dirty, uint32 set_flag_bit
  *
  * See also InvalidateBuffer().
  */
-static void
+void
 InvalidateLocalBuffer(BufferDesc *bufHdr, bool check_unreferenced)
 {
 	Buffer		buffer = BufferDescriptorGetBuffer(bufHdr);

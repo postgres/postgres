@@ -1,0 +1,3 @@
+comment = 'Test code for AIO'
+default_version = '1.0'
+module_pathname = '$libdir/test_aio'

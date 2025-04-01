@@ -518,10 +518,6 @@ static uint32 WaitBufHdrUnlocked(BufferDesc *buf);
 static int	SyncOneBuffer(int buf_id, bool skip_recently_used,
 						  WritebackContext *wb_context);
 static void WaitIO(BufferDesc *buf);
-static bool StartBufferIO(BufferDesc *buf, bool forInput, bool nowait);
-static void TerminateBufferIO(BufferDesc *buf, bool clear_dirty,
-							  uint32 set_flag_bits, bool forget_owner,
-							  bool release_aio);
 static void AbortBufferIO(Buffer buffer);
 static void shared_buffer_write_error_callback(void *arg);
 static void local_buffer_write_error_callback(void *arg);
@@ -5962,7 +5958,7 @@ WaitIO(BufferDesc *buf)
  * find out if they can perform the I/O as part of a larger operation, without
  * waiting for the answer or distinguishing the reasons why not.
  */
-static bool
+bool
 StartBufferIO(BufferDesc *buf, bool forInput, bool nowait)
 {
 	uint32		buf_state;
@@ -6019,7 +6015,7 @@ StartBufferIO(BufferDesc *buf, bool forInput, bool nowait)
  * resource owner. (forget_owner=false is used when the resource owner itself
  * is being released)
  */
-static void
+void
 TerminateBufferIO(BufferDesc *buf, bool clear_dirty, uint32 set_flag_bits,
 				  bool forget_owner, bool release_aio)
 {
