@@ -738,6 +738,14 @@ smgrreadv(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
  * blocks not successfully read might bear unspecified modifications, up to
  * the full nblocks). This maintains the abstraction that smgr operates on the
  * level of blocks, rather than bytes.
+ *
+ * Compared to smgrreadv(), more responsibilities fall on the caller:
+ * - Partial reads need to be handled by the caller re-issuing IO for the
+ *   unread blocks
+ * - smgr will ereport(LOG_SERVER_ONLY) some problems, but higher layers are
+ *   responsible for pgaio_result_report() to mirror that news to the user (if
+ *   the IO results in PGAIO_RS_WARNING) or abort the (sub)transaction (if
+ *   PGAIO_RS_ERROR).
  */
 void
 smgrstartreadv(PgAioHandle *ioh,

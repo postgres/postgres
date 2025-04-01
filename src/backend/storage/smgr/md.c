@@ -1981,7 +1981,7 @@ md_readv_complete(PgAioHandle *ioh, PgAioResult prior_result, uint8 cb_data)
 		 * might not process the query result immediately (because it is busy
 		 * doing another part of query processing) or at all (e.g. if it was
 		 * cancelled or errored out due to another IO also failing).  The
-		 * issuer of the IO will emit an ERROR when processing the IO's
+		 * definer of the IO will emit an ERROR when processing the IO's
 		 * results
 		 */
 		pgaio_result_report(result, td, LOG_SERVER_ONLY);
