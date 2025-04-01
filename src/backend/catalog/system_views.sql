@@ -1391,3 +1391,10 @@ CREATE VIEW pg_stat_subscription_stats AS
 
 CREATE VIEW pg_wait_events AS
     SELECT * FROM pg_get_wait_events();
+
+CREATE VIEW pg_aios AS
+    SELECT * FROM pg_get_aios();
+REVOKE ALL ON pg_aios FROM PUBLIC;
+GRANT SELECT ON pg_aios TO pg_read_all_stats;
+REVOKE EXECUTE ON FUNCTION pg_get_aios() FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION pg_get_aios() TO pg_read_all_stats;

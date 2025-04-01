@@ -1919,16 +1919,19 @@ DROP USER regress_locktable_user;
 
 CREATE ROLE regress_readallstats;
 
+SELECT has_table_privilege('regress_readallstats','pg_aios','SELECT'); -- no
 SELECT has_table_privilege('regress_readallstats','pg_backend_memory_contexts','SELECT'); -- no
 SELECT has_table_privilege('regress_readallstats','pg_shmem_allocations','SELECT'); -- no
 
 GRANT pg_read_all_stats TO regress_readallstats;
 
+SELECT has_table_privilege('regress_readallstats','pg_aios','SELECT'); -- yes
 SELECT has_table_privilege('regress_readallstats','pg_backend_memory_contexts','SELECT'); -- yes
 SELECT has_table_privilege('regress_readallstats','pg_shmem_allocations','SELECT'); -- yes
 
 -- run query to ensure that functions within views can be executed
 SET ROLE regress_readallstats;
+SELECT COUNT(*) >= 0 AS ok FROM pg_aios;
 SELECT COUNT(*) >= 0 AS ok FROM pg_backend_memory_contexts;
 SELECT COUNT(*) >= 0 AS ok FROM pg_shmem_allocations;
 RESET ROLE;

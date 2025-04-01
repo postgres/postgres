@@ -3132,6 +3132,12 @@ DROP USER regress_locktable_user;
 -- switch to superuser
 \c -
 CREATE ROLE regress_readallstats;
+SELECT has_table_privilege('regress_readallstats','pg_aios','SELECT'); -- no
+ has_table_privilege 
+---------------------
+ f
+(1 row)
+
 SELECT has_table_privilege('regress_readallstats','pg_backend_memory_contexts','SELECT'); -- no
  has_table_privilege 
 ---------------------
@@ -3145,6 +3151,12 @@ SELECT has_table_privilege('regress_readallstats','pg_shmem_allocations','SELECT
 (1 row)
 
 GRANT pg_read_all_stats TO regress_readallstats;
+SELECT has_table_privilege('regress_readallstats','pg_aios','SELECT'); -- yes
+ has_table_privilege 
+---------------------
+ t
+(1 row)
+
 SELECT has_table_privilege('regress_readallstats','pg_backend_memory_contexts','SELECT'); -- yes
  has_table_privilege 
 ---------------------
@@ -3159,6 +3171,12 @@ SELECT has_table_privilege('regress_readallstats','pg_shmem_allocations','SELECT
 
 -- run query to ensure that functions within views can be executed
 SET ROLE regress_readallstats;
+SELECT COUNT(*) >= 0 AS ok FROM pg_aios;
+ ok 
+----
+ t
+(1 row)
+
 SELECT COUNT(*) >= 0 AS ok FROM pg_backend_memory_contexts;
  ok 
 ----

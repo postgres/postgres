@@ -52,6 +52,11 @@
 
     <tbody>
      <row>
+      <entry><link linkend="view-pg-aios"><structname>pg_aios</structname></link></entry>
+      <entry>In-use asynchronous IO handles</entry>
+     </row>
+
+     <row>
       <entry><link linkend="view-pg-available-extensions"><structname>pg_available_extensions</structname></link></entry>
       <entry>available extensions</entry>
      </row>
@@ -229,6 +234,295 @@
     </tbody>
    </tgroup>
   </table>
+ </sect1>
+
+ <sect1 id="view-pg-aios">
+  <title><structname>pg_aios</structname></title>
+
+  <indexterm zone="view-pg-aios">
+   <primary>pg_aios</primary>
+  </indexterm>
+
+  <para>
+   The <structname>pg_aios</structname> view lists all <xref
+   linkend="glossary-aio"/> handles that are currently in-use.  An I/O handle
+   is used to reference an I/O operation that is being prepared, executed or
+   is in the process of completing.  <structname>pg_aios</structname> contains
+   one row for each I/O handle.
+  </para>
+
+  <para>
+   This view is mainly useful for developers of
+   <productname>PostgreSQL</productname>, but may also be useful when tuning
+   <productname>PostgreSQL</productname>.
+  </para>
+
+  <table>
+   <title><structname>pg_aios</structname> Columns</title>
+   <tgroup cols="1">
+    <thead>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       Column Type
+      </para>
+      <para>
+       Description
+      </para></entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>pid</structfield> <type>int4</type>
+      </para>
+      <para>
+       Process ID of the server process that is issuing this I/O.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>io_id</structfield> <type>int4</type>
+      </para>
+      <para>
+       Identifier of the I/O handle. Handles are reused once the I/O
+       completed (or if the handle is released before I/O is started). On reuse
+       <link linkend="view-pg-aios-io-generation">
+        <structname>pg_aios</structname>.<structfield>io_generation</structfield>
+       </link>
+       is incremented.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry" id="view-pg-aios-io-generation"><para role="column_definition">
+       <structfield>io_generation</structfield> <type>int8</type>
+      </para>
+      <para>
+       Generation of the I/O handle.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>state</structfield> <type>text</type>
+      </para>
+      <para>
+       State of the I/O handle:
+       <itemizedlist>
+        <listitem>
+         <para>
+          <literal>HANDED_OUT</literal>, referenced by code but not yet used
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          <literal>DEFINED</literal>, information necessary for execution is known
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          <literal>STAGED</literal>, ready for execution
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          <literal>SUBMITTED</literal>, submitted for execution
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          <literal>COMPLETED_IO</literal>, finished, but result has not yet been processed
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          <literal>COMPLETED_SHARED</literal>, shared completion processing completed
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          <literal>COMPLETED_LOCAL</literal>, backend local completion processing completed
+         </para>
+        </listitem>
+       </itemizedlist>
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>operation</structfield> <type>text</type>
+      </para>
+      <para>
+       Operation performed using the I/O handle:
+       <itemizedlist>
+        <listitem>
+         <para>
+          <literal>invalid</literal>, not yet known
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          <literal>readv</literal>, a vectored read
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          <literal>writev</literal>, a vectored write
+         </para>
+        </listitem>
+       </itemizedlist>
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>off</structfield> <type>int8</type>
+      </para>
+      <para>
+       Offset of the I/O operation.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>length</structfield> <type>int8</type>
+      </para>
+      <para>
+       Length of the I/O operation.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>target</structfield> <type>text</type>
+      </para>
+      <para>
+       What kind of object is the I/O targeting:
+       <itemizedlist spacing="compact">
+        <listitem>
+         <para>
+          <literal>smgr</literal>, I/O on relations
+         </para>
+        </listitem>
+       </itemizedlist>
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>handle_data_len</structfield> <type>int2</type>
+      </para>
+      <para>
+       Length of the data associated with the I/O operation. For I/O to/from
+       <xref linkend="guc-shared-buffers"/> and <xref
+       linkend="guc-temp-buffers"/>, this indicates the number of buffers the
+       I/O is operating on.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>raw_result</structfield> <type>int4</type>
+      </para>
+      <para>
+       Low-level result of the I/O operation, or NULL if the operation has not
+       yet completed.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>result</structfield> <type>text</type>
+      </para>
+      <para>
+       High-level result of the I/O operation:
+       <itemizedlist>
+        <listitem>
+         <para>
+          <literal>UNKNOWN</literal> means that the result of the
+          operation is not yet known.
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          <literal>OK</literal> means the I/O completed successfully.
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          <literal>PARTIAL</literal> means that the I/O completed without
+          error, but did not process all data. Commonly callers will need to
+          retry and perform the remainder of the work in a separate I/O.
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          <literal>WARNING</literal> means that the I/O completed without
+          error, but that execution of the IO triggered a warning. E.g. when
+          encountering a corrupted buffer with <xref
+          linkend="guc-zero-damaged-pages"/> enabled.
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          <literal>ERROR</literal> means the I/O failed with an error.
+         </para>
+        </listitem>
+       </itemizedlist>
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>target_desc</structfield> <type>text</type>
+      </para>
+      <para>
+       Description of what the I/O operation is targeting.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>f_sync</structfield> <type>bool</type>
+      </para>
+      <para>
+       Flag indicating whether the I/O is executed synchronously.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>f_localmem</structfield> <type>bool</type>
+      </para>
+      <para>
+       Flag indicating whether the I/O references process local memory.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>f_buffered</structfield> <type>bool</type>
+      </para>
+      <para>
+       Flag indicating whether the I/O is buffered I/O.
+      </para></entry>
+     </row>
+
+    </tbody>
+   </tgroup>
+  </table>
+
+  <para>
+   The <structname>pg_aios</structname> view is read-only.
+  </para>
+
+  <para>
+   By default, the <structname>pg_aios</structname> view can be read only by
+   superusers or roles with privileges of the
+   <literal>pg_read_all_stats</literal> role.
+  </para>
  </sect1>
 
  <sect1 id="view-pg-available-extensions">

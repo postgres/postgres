@@ -12493,4 +12493,13 @@
   proargtypes => 'int4',
   prosrc => 'gist_stratnum_common' },
 
+# AIO related functions
+{ oid => '9200', descr => 'information about in-progress asynchronous IOs',
+  proname => 'pg_get_aios', prorows => '100', proretset => 't',
+  provolatile => 'v', proparallel => 'r', prorettype => 'record', proargtypes => '',
+  proallargtypes => '{int4,int4,int8,text,text,int8,int8,text,int2,int4,text,text,bool,bool,bool}',
+  proargmodes => '{o,o,o,o,o,o,o,o,o,o,o,o,o,o,o}',
+  proargnames => '{pid,io_id,io_generation,state,operation,off,length,target,handle_data_len,raw_result,result,target_desc,f_sync,f_localmem,f_buffered}',
+  prosrc => 'pg_get_aios' },
+
 ]

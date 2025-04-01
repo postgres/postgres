@@ -3,6 +3,7 @@
 backend_sources += files(
   'aio.c',
   'aio_callback.c',
+  'aio_funcs.c',
   'aio_init.c',
   'aio_io.c',
   'aio_target.c',
