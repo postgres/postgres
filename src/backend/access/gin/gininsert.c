@@ -28,7 +28,7 @@
 #include "pgstat.h"
 #include "storage/bufmgr.h"
 #include "storage/predicate.h"
-#include "tcop/tcopprot.h"		/* pgrminclude ignore */
+#include "tcop/tcopprot.h"
 #include "utils/datum.h"
 #include "utils/memutils.h"
 #include "utils/rel.h"
