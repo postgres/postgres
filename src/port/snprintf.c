@@ -338,13 +338,22 @@ static void leading_pad(int zpad, int signvalue, int *padlen,
 static void trailing_pad(int padlen, PrintfTarget *target);
 
 /*
- * If strchrnul exists (it's a glibc-ism), it's a good bit faster than the
- * equivalent manual loop.  If it doesn't exist, provide a replacement.
+ * If strchrnul exists (it's a glibc-ism, but since adopted by some other
+ * platforms), it's a good bit faster than the equivalent manual loop.
+ * Use it if possible, and if it doesn't exist, use this replacement.
  *
  * Note: glibc declares this as returning "char *", but that would require
  * casting away const internally, so we don't follow that detail.
+ *
+ * Note: macOS has this too as of Sequoia 15.4, but it's hidden behind
+ * a deployment-target check that causes compile errors if the deployment
+ * target isn't high enough.  So !HAVE_DECL_STRCHRNUL may mean "yes it's
+ * declared, but it doesn't compile".  To avoid failing in that scenario,
+ * use a macro to avoid matching <string.h>'s name.
  */
-#ifndef HAVE_STRCHRNUL
+#if !HAVE_DECL_STRCHRNUL
+
+#define strchrnul pg_strchrnul
 
 static inline const char *
 strchrnul(const char *s, int c)
@@ -354,19 +363,7 @@ strchrnul(const char *s, int c)
 	return s;
 }
 
-#else
-
-/*
- * glibc's <string.h> declares strchrnul only if _GNU_SOURCE is defined.
- * While we typically use that on glibc platforms, configure will set
- * HAVE_STRCHRNUL whether it's used or not.  Fill in the missing declaration
- * so that this file will compile cleanly with or without _GNU_SOURCE.
- */
-#ifndef _GNU_SOURCE
-extern char *strchrnul(const char *s, int c);
-#endif
-
-#endif							/* HAVE_STRCHRNUL */
+#endif							/* !HAVE_DECL_STRCHRNUL */
 
 
 /*
