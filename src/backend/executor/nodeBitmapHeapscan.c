@@ -185,8 +185,21 @@ BitmapHeapNext(BitmapHeapScanState *node)
 		 */
 		if (!scan)
 		{
-			bool		need_tuples = false;
+			bool		need_tuples = true;
 
+			/*
+			 * Unfortunately it turns out that the below optimization does not
+			 * take the removal of TIDs by a concurrent vacuum into
+			 * account. The concurrent vacuum can remove dead TIDs and make
+			 * pages ALL_VISIBLE while those dead TIDs are referenced in the
+			 * bitmap. This would lead to a !need_tuples scan returning too
+			 * many tuples.
+			 *
+			 * In the back-branches, we therefore simply disable the
+			 * optimization. Removing all the relevant code would be too
+			 * invasive (and a major backpatching pain).
+			 */
+#ifdef NOT_ANYMORE
 			/*
 			 * We can potentially skip fetching heap pages if we do not need
 			 * any columns of the table, either for checking non-indexable
@@ -197,6 +210,7 @@ BitmapHeapNext(BitmapHeapScanState *node)
 			 */
 			need_tuples = (node->ss.ps.plan->qual != NIL ||
 						   node->ss.ps.plan->targetlist != NIL);
+#endif
 
 			scan = table_beginscan_bm(node->ss.ss_currentRelation,
 									  node->ss.ps.state->es_snapshot,
