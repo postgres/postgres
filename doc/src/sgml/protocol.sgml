@@ -22,31 +22,6 @@
   <productname>PostgreSQL</productname> version 18. The server and the libpq
   client library are backwards compatible with protocol version 3.0,
   implemented in <productname>PostgreSQL</productname> 7.4 and later.
-  For descriptions of earlier protocol versions, see previous releases of the
-  <productname>PostgreSQL</productname> documentation.
- </para>
-
- <para>
-  A single server
-  can support multiple protocol versions.  The initial startup-request
-  message tells the server which protocol version the client is attempting to
-  use.  If the major version requested by the client is not supported by
-  the server, the connection will be rejected (for example, this would occur
-  if the client requested protocol version 4.0, which does not exist as of
-  this writing).  If the minor version requested by the client is not
-  supported by the server (e.g., the client requests version 3.2, but the
-  server supports only 3.0), the server may either reject the connection or
-  may respond with a NegotiateProtocolVersion message containing the highest
-  minor protocol version which it supports.  The client may then choose either
-  to continue with the connection using the specified protocol version or
-  to abort the connection.
- </para>
-
- <para>
-  The protocol negotiation was introduced in
-  <productname>PostgreSQL</productname> version 9.3.21. Earlier versions would
-  reject the connection if the client requested a minor version that was not
-  supported by the server.
  </para>
 
   <para>
@@ -211,6 +186,85 @@
     that binary representations for complex data types might change across
     server versions; the text format is usually the more portable choice.
    </para>
+  </sect2>
+
+  <sect2 id="protocol-versions">
+   <title>Protocol versions</title>
+
+   <para>
+    The current, latest version of the protocol is version 3.2. However, for
+    backwards compatibility with old server versions and middleware that don't
+    support the version negotiation yet, libpq still uses protocol version 3.0
+    by default.
+   </para>
+
+   <para>
+    A single server can support multiple protocol versions.  The initial
+    startup-request message tells the server which protocol version the client
+    is attempting to use.  If the major version requested by the client is not
+    supported by the server, the connection will be rejected (for example,
+    this would occur if the client requested protocol version 4.0, which does
+    not exist as of this writing).  If the minor version requested by the
+    client is not supported by the server (e.g., the client requests version
+    3.2, but the server supports only 3.0), the server may either reject the
+    connection or may respond with a NegotiateProtocolVersion message
+    containing the highest minor protocol version which it supports.  The
+    client may then choose either to continue with the connection using the
+    specified protocol version or to abort the connection.
+   </para>
+
+   <para>
+    The protocol negotiation was introduced in
+    <productname>PostgreSQL</productname> version 9.3.21. Earlier versions
+    would reject the connection if the client requested a minor version that
+    was not supported by the server.
+   </para>
+
+   <table>
+    <title>Protocol versions</title>
+
+    <tgroup cols="2">
+     <thead>
+      <row>
+       <entry>Version</entry>
+       <entry>Supported by</entry>
+       <entry>Description</entry>
+      </row>
+     </thead>
+
+     <tbody>
+      <row>
+      <entry>3.2</entry>
+      <entry>PostgreSQL 18 and later</entry>
+      <entry>Current latest version. The secret key used in query
+        cancellation was enlarged from 4 bytes to a variable length field. The
+        BackendKeyData message was changed to accomodate that, and the CancelRequest
+        message was redefined to have a variable length payload.
+      </entry>
+      </row>
+      <row>
+      <entry>3.1</entry>
+      <entry>-</entry>
+      <entry>Reserved. Version 3.1 has not been used by any PostgreSQL
+        version, but it was skipped because old versions of the popular
+        pgbouncer application had a bug in the protocol negotiation which made
+        it incorrectly claim that it supported version 3.1.
+      </entry>
+      </row>
+      <row>
+      <entry>3.0</entry>
+      <entry>PostgreSQL 7.4 and later</entry>
+      </row>
+      <row>
+      <entry>2.0</entry>
+      <entry>up to PostgreSQL 13</entry>
+      <entry>See previous releases of
+      the <productname>PostgreSQL</productname> documentation for
+      details</entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
   </sect2>
  </sect1>
 
