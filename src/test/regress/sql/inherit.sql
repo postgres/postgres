@@ -377,8 +377,9 @@ CREATE TABLE inhta ();
 CREATE TABLE inhtb () INHERITS (inhta);
 CREATE TABLE inhtc () INHERITS (inhtb);
 CREATE TABLE inhtd () INHERITS (inhta, inhtb, inhtc);
-ALTER TABLE inhta ADD COLUMN i int;
+ALTER TABLE inhta ADD COLUMN i int, ADD COLUMN j bigint DEFAULT 1;
 \d+ inhta
+\d+ inhtd
 DROP TABLE inhta, inhtb, inhtc, inhtd;
 
 -- Test for renaming in diamond inheritance
