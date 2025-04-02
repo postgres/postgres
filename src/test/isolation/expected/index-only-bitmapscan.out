@@ -1,0 +1,48 @@
+Parsed test spec with 2 sessions
+
+starting permutation: s2_vacuum s2_mod s1_explain s1_begin s1_prepare s1_fetch_1 s2_vacuum s1_fetch_all s1_commit
+step s2_vacuum: 
+    VACUUM (TRUNCATE false) ios_bitmap;
+
+step s2_mod: 
+  DELETE FROM ios_bitmap WHERE a > 1;
+
+step s1_explain: 
+    EXPlAIN (COSTS OFF) DECLARE foo NO SCROLL CURSOR FOR SELECT row_number() OVER () FROM ios_bitmap WHERE a > 0 or b > 0;
+
+QUERY PLAN                                         
+---------------------------------------------------
+WindowAgg                                          
+  Window: w1 AS (ROWS UNBOUNDED PRECEDING)         
+  ->  Bitmap Heap Scan on ios_bitmap               
+        Recheck Cond: ((a > 0) OR (b > 0))         
+        ->  BitmapOr                               
+              ->  Bitmap Index Scan on ios_bitmap_a
+                    Index Cond: (a > 0)            
+              ->  Bitmap Index Scan on ios_bitmap_b
+                    Index Cond: (b > 0)            
+(9 rows)
+
+step s1_begin: BEGIN;
+step s1_prepare: 
+    DECLARE foo NO SCROLL CURSOR FOR SELECT row_number() OVER () FROM ios_bitmap WHERE a > 0 or b > 0;
+
+step s1_fetch_1: 
+    FETCH FROM foo;
+
+row_number
+----------
+         1
+(1 row)
+
+step s2_vacuum: 
+    VACUUM (TRUNCATE false) ios_bitmap;
+
+step s1_fetch_all: 
+    FETCH ALL FROM foo;
+
+row_number
+----------
+(0 rows)
+
+step s1_commit: COMMIT;
