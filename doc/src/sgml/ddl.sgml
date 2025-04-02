@@ -4837,7 +4837,9 @@ EXPLAIN SELECT count(*) FROM measurement WHERE logdate &gt;= DATE '2008-01-01';
        It is possible to determine the number of partitions which were
        removed during this phase by observing the
        <quote>Subplans Removed</quote> property in the
-       <command>EXPLAIN</command> output.
+       <command>EXPLAIN</command> output.  It's important to note that any
+       partitions removed by the partition pruning done at this stage are
+       still locked at the beginning of execution.
       </para>
      </listitem>
 
