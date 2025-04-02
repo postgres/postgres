@@ -325,12 +325,18 @@ sub test_batchmode
 
 	my $psql = $node->background_psql('postgres', on_error_stop => 0);
 
+	# In a build with RELCACHE_FORCE_RELEASE and CATCACHE_FORCE_RELEASE, just
+	# using SELECT batch_start() causes spurious test failures, because the
+	# lookup of the type information when printing the result tuple also
+	# starts a batch. The easiest way around is to not print a result tuple.
+	my $batch_start_sql = qq(SELECT WHERE batch_start() IS NULL);
+
 	# leak warning & recovery: implicit xact
 	psql_like(
 		$io_method,
 		$psql,
 		"batch_start() leak & cleanup in implicit xact",
-		qq(SELECT batch_start()),
+		$batch_start_sql,
 		qr/^$/,
 		qr/open AIO batch at end/,
 		"$io_method: leaky batch_start() warns");
@@ -340,7 +346,7 @@ sub test_batchmode
 		$io_method,
 		$psql,
 		"batch_start() leak & cleanup in explicit xact",
-		qq(BEGIN; SELECT batch_start(); COMMIT;),
+		qq(BEGIN; $batch_start_sql; COMMIT;),
 		qr/^$/,
 		qr/open AIO batch at end/,
 		"$io_method: leaky batch_start() warns");
@@ -353,7 +359,7 @@ sub test_batchmode
 	# it just means it's a bit harder to find buggy code.
 	#psql_like($io_method, $psql,
 	#		  "batch_start() leak & cleanup after abort",
-	#		  qq(BEGIN; SELECT batch_start(); ROLLBACK;),
+	#		  qq(BEGIN; $batch_start_sql; ROLLBACK;),
 	#		  qr/^$/,
 	#		  qr/open AIO batch at end/, "$io_method: leaky batch_start() warns");
 
@@ -362,7 +368,7 @@ sub test_batchmode
 		$io_method,
 		$psql,
 		"batch_start(), batch_end() works",
-		qq(SELECT batch_start() UNION ALL SELECT batch_end()),
+		qq($batch_start_sql UNION ALL SELECT WHERE batch_end() IS NULL),
 		qr/^$/,
 		qr/^$/,
 		"$io_method: batch_start(), batch_end()");
