@@ -1409,7 +1409,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
      </para>
 
      <para>
-      This is currently only supported for <literal>CHECK</literal>
+      This is currently only supported for foreign key and <literal>CHECK</literal>
       constraints.
      </para>
     </listitem>

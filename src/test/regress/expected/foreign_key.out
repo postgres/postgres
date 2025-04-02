@@ -1,21 +1,49 @@
 --
 -- FOREIGN KEY
 --
--- MATCH FULL
+-- NOT ENFORCED
 --
 -- First test, check and cascade
 --
 CREATE TABLE PKTABLE ( ptest1 int PRIMARY KEY, ptest2 text );
-CREATE TABLE FKTABLE ( ftest1 int REFERENCES PKTABLE MATCH FULL ON DELETE CASCADE ON UPDATE CASCADE, ftest2 int );
--- Insert test data into PKTABLE
+CREATE TABLE FKTABLE ( ftest1 int CONSTRAINT fktable_ftest1_fkey REFERENCES PKTABLE MATCH FULL ON DELETE CASCADE ON UPDATE CASCADE NOT ENFORCED,
+					   ftest2 int );
+-- Inserting into the foreign key table will not result in an error, even if
+-- there is no matching key in the referenced table.
+INSERT INTO FKTABLE VALUES (1, 2);
+INSERT INTO FKTABLE VALUES (2, 3);
+-- Check FKTABLE
+SELECT * FROM FKTABLE;
+ ftest1 | ftest2 
+--------+--------
+      1 |      2
+      2 |      3
+(2 rows)
+
+-- Reverting it back to ENFORCED will result in failure because constraint validation will be triggered,
+-- as it was previously in a valid state.
+ALTER TABLE FKTABLE ALTER CONSTRAINT fktable_ftest1_fkey ENFORCED;
+ERROR:  insert or update on table "fktable" violates foreign key constraint "fktable_ftest1_fkey"
+DETAIL:  Key (ftest1)=(1) is not present in table "pktable".
+-- Insert referenced data that satisfies the constraint, then attempt to
+-- change it.
 INSERT INTO PKTABLE VALUES (1, 'Test1');
 INSERT INTO PKTABLE VALUES (2, 'Test2');
+ALTER TABLE FKTABLE ALTER CONSTRAINT fktable_ftest1_fkey ENFORCED;
+-- Any further inserts will fail due to the enforcement.
+INSERT INTO FKTABLE VALUES (3, 4);
+ERROR:  insert or update on table "fktable" violates foreign key constraint "fktable_ftest1_fkey"
+DETAIL:  Key (ftest1)=(3) is not present in table "pktable".
+--
+-- MATCH FULL
+--
+-- First test, check and cascade
+--
+-- Insert test data into PKTABLE
 INSERT INTO PKTABLE VALUES (3, 'Test3');
 INSERT INTO PKTABLE VALUES (4, 'Test4');
 INSERT INTO PKTABLE VALUES (5, 'Test5');
 -- Insert successful rows into FK TABLE
-INSERT INTO FKTABLE VALUES (1, 2);
-INSERT INTO FKTABLE VALUES (2, 3);
 INSERT INTO FKTABLE VALUES (3, 4);
 INSERT INTO FKTABLE VALUES (NULL, 1);
 -- Insert a failed row into FK TABLE
@@ -351,6 +379,43 @@ INSERT INTO FKTABLE VALUES (1, NULL);
 ALTER TABLE FKTABLE ADD FOREIGN KEY(ftest1, ftest2) REFERENCES PKTABLE MATCH FULL;
 ERROR:  insert or update on table "fktable" violates foreign key constraint "fktable_ftest1_ftest2_fkey"
 DETAIL:  MATCH FULL does not allow mixing of null and nonnull key values.
+-- Modifying other attributes of a constraint should not affect its enforceability, and vice versa
+ALTER TABLE FKTABLE ADD CONSTRAINT fk_con FOREIGN KEY(ftest1, ftest2) REFERENCES PKTABLE NOT VALID NOT ENFORCED;
+ALTER TABLE FKTABLE ALTER CONSTRAINT fk_con DEFERRABLE INITIALLY DEFERRED;
+SELECT condeferrable, condeferred, conenforced, convalidated
+FROM pg_constraint WHERE conname = 'fk_con';
+ condeferrable | condeferred | conenforced | convalidated 
+---------------+-------------+-------------+--------------
+ t             | t           | f           | f
+(1 row)
+
+ALTER TABLE FKTABLE ALTER CONSTRAINT fk_con NOT ENFORCED;
+SELECT condeferrable, condeferred, conenforced, convalidated
+FROM pg_constraint WHERE conname = 'fk_con';
+ condeferrable | condeferred | conenforced | convalidated 
+---------------+-------------+-------------+--------------
+ t             | t           | f           | f
+(1 row)
+
+-- Enforceability also changes the validate state, as data validation will be
+-- performed during this transformation.
+ALTER TABLE FKTABLE ALTER CONSTRAINT fk_con ENFORCED;
+SELECT condeferrable, condeferred, conenforced, convalidated
+FROM pg_constraint WHERE conname = 'fk_con';
+ condeferrable | condeferred | conenforced | convalidated 
+---------------+-------------+-------------+--------------
+ t             | t           | t           | t
+(1 row)
+
+-- Can change enforceability and deferrability together
+ALTER TABLE FKTABLE ALTER CONSTRAINT fk_con NOT ENFORCED NOT DEFERRABLE;
+SELECT condeferrable, condeferred, conenforced, convalidated
+FROM pg_constraint WHERE conname = 'fk_con';
+ condeferrable | condeferred | conenforced | convalidated 
+---------------+-------------+-------------+--------------
+ f             | f           | f           | f
+(1 row)
+
 DROP TABLE FKTABLE;
 DROP TABLE PKTABLE;
 -- MATCH SIMPLE
@@ -1276,6 +1341,13 @@ INSERT INTO fktable VALUES (0, 20);
 ERROR:  insert or update on table "fktable" violates foreign key constraint "fktable_fk_fkey"
 DETAIL:  Key (fk)=(20) is not present in table "pktable".
 COMMIT;
+ALTER TABLE fktable ALTER CONSTRAINT fktable_fk_fkey NOT ENFORCED;
+BEGIN;
+-- doesn't match FK, but no error.
+UPDATE pktable SET id = 10 WHERE id = 5;
+-- doesn't match PK, but no error.
+INSERT INTO fktable VALUES (0, 20);
+ROLLBACK;
 -- try additional syntax
 ALTER TABLE fktable ALTER CONSTRAINT fktable_fk_fkey NOT DEFERRABLE;
 -- illegal options
@@ -1288,6 +1360,14 @@ ERROR:  constraint "fktable_fk_fkey" of relation "fktable" is not a not-null con
 ALTER TABLE fktable ALTER CONSTRAINT fktable_fk_fkey NOT VALID;
 ERROR:  FOREIGN KEY constraints cannot be marked NOT VALID
 LINE 1: ...ER TABLE fktable ALTER CONSTRAINT fktable_fk_fkey NOT VALID;
+                                                             ^
+ALTER TABLE fktable ALTER CONSTRAINT fktable_fk_fkey ENFORCED NOT ENFORCED;
+ERROR:  conflicting constraint properties
+LINE 1: ...fktable ALTER CONSTRAINT fktable_fk_fkey ENFORCED NOT ENFORC...
+                                                             ^
+CREATE TEMP TABLE fktable2 (fk int references pktable ENFORCED NOT ENFORCED);
+ERROR:  multiple ENFORCED/NOT ENFORCED clauses not allowed
+LINE 1: ...ABLE fktable2 (fk int references pktable ENFORCED NOT ENFORC...
                                                              ^
 -- test order of firing of FK triggers when several RI-induced changes need to
 -- be made to the same row.  This was broken by subtransaction-related
@@ -1586,10 +1666,14 @@ ALTER TABLE fk_partitioned_fk DROP COLUMN fdrop1;
 CREATE TABLE fk_partitioned_fk_1 (fdrop1 int, fdrop2 int, a int, fdrop3 int, b int);
 ALTER TABLE fk_partitioned_fk_1 DROP COLUMN fdrop1, DROP COLUMN fdrop2, DROP COLUMN fdrop3;
 ALTER TABLE fk_partitioned_fk ATTACH PARTITION fk_partitioned_fk_1 FOR VALUES FROM (0,0) TO (1000,1000);
-ALTER TABLE fk_partitioned_fk ADD FOREIGN KEY (a, b) REFERENCES fk_notpartitioned_pk;
+ALTER TABLE fk_partitioned_fk ADD CONSTRAINT fk_partitioned_fk_a_b_fkey FOREIGN KEY (a, b)
+	REFERENCES fk_notpartitioned_pk NOT ENFORCED;
 CREATE TABLE fk_partitioned_fk_2 (b int, fdrop1 int, fdrop2 int, a int);
 ALTER TABLE fk_partitioned_fk_2 DROP COLUMN fdrop1, DROP COLUMN fdrop2;
+ALTER TABLE fk_partitioned_fk_2 ADD CONSTRAINT fk_partitioned_fk_a_b_fkey FOREIGN KEY (a, b)
+	REFERENCES fk_notpartitioned_pk NOT ENFORCED;
 ALTER TABLE fk_partitioned_fk ATTACH PARTITION fk_partitioned_fk_2 FOR VALUES FROM (1000,1000) TO (2000,2000);
+ALTER TABLE fk_partitioned_fk ALTER CONSTRAINT fk_partitioned_fk_a_b_fkey ENFORCED;
 CREATE TABLE fk_partitioned_fk_3 (fdrop1 int, fdrop2 int, fdrop3 int, fdrop4 int, b int, a int)
   PARTITION BY HASH (a);
 ALTER TABLE fk_partitioned_fk_3 DROP COLUMN fdrop1, DROP COLUMN fdrop2,
@@ -1664,6 +1748,67 @@ Indexes:
     "fk_notpartitioned_pk_pkey" PRIMARY KEY, btree (a, b)
 Referenced by:
     TABLE "fk_partitioned_fk" CONSTRAINT "fk_partitioned_fk_a_b_fkey" FOREIGN KEY (a, b) REFERENCES fk_notpartitioned_pk(a, b)
+
+-- Check the exsting FK trigger
+SELECT conname, tgrelid::regclass as tgrel, regexp_replace(tgname, '[0-9]+', 'N') as tgname, tgtype
+FROM pg_trigger t JOIN pg_constraint c ON (t.tgconstraint = c.oid)
+WHERE tgrelid IN (SELECT relid FROM pg_partition_tree('fk_partitioned_fk'::regclass)
+				  UNION ALL SELECT 'fk_notpartitioned_pk'::regclass)
+ORDER BY tgrelid, tgtype;
+          conname           |         tgrel         |          tgname          | tgtype 
+----------------------------+-----------------------+--------------------------+--------
+ fk_partitioned_fk_a_b_fkey | fk_notpartitioned_pk  | RI_ConstraintTrigger_a_N |      9
+ fk_partitioned_fk_a_b_fkey | fk_notpartitioned_pk  | RI_ConstraintTrigger_a_N |     17
+ fk_partitioned_fk_a_b_fkey | fk_partitioned_fk     | RI_ConstraintTrigger_c_N |      5
+ fk_partitioned_fk_a_b_fkey | fk_partitioned_fk     | RI_ConstraintTrigger_c_N |     17
+ fk_partitioned_fk_a_b_fkey | fk_partitioned_fk_1   | RI_ConstraintTrigger_c_N |      5
+ fk_partitioned_fk_a_b_fkey | fk_partitioned_fk_1   | RI_ConstraintTrigger_c_N |     17
+ fk_partitioned_fk_a_b_fkey | fk_partitioned_fk_2   | RI_ConstraintTrigger_c_N |      5
+ fk_partitioned_fk_a_b_fkey | fk_partitioned_fk_2   | RI_ConstraintTrigger_c_N |     17
+ fk_partitioned_fk_a_b_fkey | fk_partitioned_fk_3   | RI_ConstraintTrigger_c_N |      5
+ fk_partitioned_fk_a_b_fkey | fk_partitioned_fk_3   | RI_ConstraintTrigger_c_N |     17
+ fk_partitioned_fk_a_b_fkey | fk_partitioned_fk_3_0 | RI_ConstraintTrigger_c_N |      5
+ fk_partitioned_fk_a_b_fkey | fk_partitioned_fk_3_0 | RI_ConstraintTrigger_c_N |     17
+ fk_partitioned_fk_a_b_fkey | fk_partitioned_fk_3_1 | RI_ConstraintTrigger_c_N |      5
+ fk_partitioned_fk_a_b_fkey | fk_partitioned_fk_3_1 | RI_ConstraintTrigger_c_N |     17
+(14 rows)
+
+ALTER TABLE fk_partitioned_fk ALTER CONSTRAINT fk_partitioned_fk_a_b_fkey NOT ENFORCED;
+-- No triggers
+SELECT conname, tgrelid::regclass as tgrel, regexp_replace(tgname, '[0-9]+', 'N') as tgname, tgtype
+FROM pg_trigger t JOIN pg_constraint c ON (t.tgconstraint = c.oid)
+WHERE tgrelid IN (SELECT relid FROM pg_partition_tree('fk_partitioned_fk'::regclass)
+				  UNION ALL SELECT 'fk_notpartitioned_pk'::regclass)
+ORDER BY tgrelid, tgtype;
+ conname | tgrel | tgname | tgtype 
+---------+-------+--------+--------
+(0 rows)
+
+-- Changing it back to ENFORCED will recreate the necessary triggers.
+ALTER TABLE fk_partitioned_fk ALTER CONSTRAINT fk_partitioned_fk_a_b_fkey ENFORCED;
+-- Should be exactly the same number of triggers found as before
+SELECT conname, tgrelid::regclass as tgrel, regexp_replace(tgname, '[0-9]+', 'N') as tgname, tgtype
+FROM pg_trigger t JOIN pg_constraint c ON (t.tgconstraint = c.oid)
+WHERE tgrelid IN (SELECT relid FROM pg_partition_tree('fk_partitioned_fk'::regclass)
+				  UNION ALL SELECT 'fk_notpartitioned_pk'::regclass)
+ORDER BY tgrelid, tgtype;
+          conname           |         tgrel         |          tgname          | tgtype 
+----------------------------+-----------------------+--------------------------+--------
+ fk_partitioned_fk_a_b_fkey | fk_notpartitioned_pk  | RI_ConstraintTrigger_a_N |      9
+ fk_partitioned_fk_a_b_fkey | fk_notpartitioned_pk  | RI_ConstraintTrigger_a_N |     17
+ fk_partitioned_fk_a_b_fkey | fk_partitioned_fk     | RI_ConstraintTrigger_c_N |      5
+ fk_partitioned_fk_a_b_fkey | fk_partitioned_fk     | RI_ConstraintTrigger_c_N |     17
+ fk_partitioned_fk_a_b_fkey | fk_partitioned_fk_1   | RI_ConstraintTrigger_c_N |      5
+ fk_partitioned_fk_a_b_fkey | fk_partitioned_fk_1   | RI_ConstraintTrigger_c_N |     17
+ fk_partitioned_fk_a_b_fkey | fk_partitioned_fk_2   | RI_ConstraintTrigger_c_N |      5
+ fk_partitioned_fk_a_b_fkey | fk_partitioned_fk_2   | RI_ConstraintTrigger_c_N |     17
+ fk_partitioned_fk_a_b_fkey | fk_partitioned_fk_3   | RI_ConstraintTrigger_c_N |      5
+ fk_partitioned_fk_a_b_fkey | fk_partitioned_fk_3   | RI_ConstraintTrigger_c_N |     17
+ fk_partitioned_fk_a_b_fkey | fk_partitioned_fk_3_0 | RI_ConstraintTrigger_c_N |      5
+ fk_partitioned_fk_a_b_fkey | fk_partitioned_fk_3_0 | RI_ConstraintTrigger_c_N |     17
+ fk_partitioned_fk_a_b_fkey | fk_partitioned_fk_3_1 | RI_ConstraintTrigger_c_N |      5
+ fk_partitioned_fk_a_b_fkey | fk_partitioned_fk_3_1 | RI_ConstraintTrigger_c_N |     17
+(14 rows)
 
 ALTER TABLE fk_partitioned_fk DROP CONSTRAINT fk_partitioned_fk_a_b_fkey;
 -- done.
@@ -1962,6 +2107,43 @@ Partition of: fk_partitioned_fk FOR VALUES IN (1500, 1502)
 Foreign-key constraints:
     TABLE "fk_partitioned_fk" CONSTRAINT "fk_partitioned_fk_a_b_fkey" FOREIGN KEY (a, b) REFERENCES fk_notpartitioned_pk(a, b) ON UPDATE CASCADE ON DELETE CASCADE
 
+DROP TABLE fk_partitioned_fk_2;
+CREATE TABLE fk_partitioned_fk_2 (b int, a int,
+	CONSTRAINT fk_part_con FOREIGN KEY (a, b) REFERENCES fk_notpartitioned_pk ON UPDATE CASCADE ON DELETE CASCADE NOT ENFORCED);
+-- fail -- cannot merge constraints with different enforceability.
+ALTER TABLE fk_partitioned_fk ATTACH PARTITION fk_partitioned_fk_2 FOR VALUES IN (1500,1502);
+ERROR:  constraint "fk_partitioned_fk_a_b_fkey" enforceability conflicts with constraint "fk_part_con" on relation "fk_partitioned_fk_2"
+-- If the constraint is modified to match the enforceability of the parent, it will work.
+BEGIN;
+-- change child constraint
+ALTER TABLE fk_partitioned_fk_2 ALTER CONSTRAINT fk_part_con ENFORCED;
+ALTER TABLE fk_partitioned_fk ATTACH PARTITION fk_partitioned_fk_2 FOR VALUES IN (1500,1502);
+\d fk_partitioned_fk_2
+        Table "public.fk_partitioned_fk_2"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ b      | integer |           |          | 
+ a      | integer |           |          | 
+Partition of: fk_partitioned_fk FOR VALUES IN (1500, 1502)
+Foreign-key constraints:
+    TABLE "fk_partitioned_fk" CONSTRAINT "fk_partitioned_fk_a_b_fkey" FOREIGN KEY (a, b) REFERENCES fk_notpartitioned_pk(a, b) ON UPDATE CASCADE ON DELETE CASCADE
+
+ROLLBACK;
+BEGIN;
+-- or change parent constraint
+ALTER TABLE fk_partitioned_fk ALTER CONSTRAINT fk_partitioned_fk_a_b_fkey NOT ENFORCED;
+ALTER TABLE fk_partitioned_fk ATTACH PARTITION fk_partitioned_fk_2 FOR VALUES IN (1500,1502);
+\d fk_partitioned_fk_2
+        Table "public.fk_partitioned_fk_2"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ b      | integer |           |          | 
+ a      | integer |           |          | 
+Partition of: fk_partitioned_fk FOR VALUES IN (1500, 1502)
+Foreign-key constraints:
+    TABLE "fk_partitioned_fk" CONSTRAINT "fk_partitioned_fk_a_b_fkey" FOREIGN KEY (a, b) REFERENCES fk_notpartitioned_pk(a, b) ON UPDATE CASCADE ON DELETE CASCADE NOT ENFORCED
+
+ROLLBACK;
 DROP TABLE fk_partitioned_fk_2;
 CREATE TABLE fk_partitioned_fk_4 (a int, b int, FOREIGN KEY (a, b) REFERENCES fk_notpartitioned_pk(a, b) ON UPDATE CASCADE ON DELETE CASCADE) PARTITION BY RANGE (b, a);
 CREATE TABLE fk_partitioned_fk_4_1 PARTITION OF fk_partitioned_fk_4 FOR VALUES FROM (1,1) TO (100,100);

@@ -481,6 +481,13 @@ alter table p1 add constraint inh_check_constraint5 check (f1 < 10) not enforced
 alter table p1 add constraint inh_check_constraint6 check (f1 < 10) not enforced;
 alter table p1_c1 add constraint inh_check_constraint6 check (f1 < 10) enforced;
 
+alter table p1_c1 add constraint inh_check_constraint9 check (f1 < 10) not valid enforced;
+alter table p1 add constraint inh_check_constraint9 check (f1 < 10) not enforced;
+
+-- the not-valid state of the child constraint will be ignored here.
+alter table p1 add constraint inh_check_constraint10 check (f1 < 10) not enforced;
+alter table p1_c1 add constraint inh_check_constraint10 check (f1 < 10) not valid enforced;
+
 create table p1_c2(f1 int constraint inh_check_constraint4 check (f1 < 10)) inherits(p1);
 
 -- but reverse is not allowed

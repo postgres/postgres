@@ -4666,11 +4666,6 @@ RelationGetFKeyList(Relation relation)
 	if (relation->rd_fkeyvalid)
 		return relation->rd_fkeylist;
 
-	/* Fast path: non-partitioned tables without triggers can't have FKs */
-	if (!relation->rd_rel->relhastriggers &&
-		relation->rd_rel->relkind != RELKIND_PARTITIONED_TABLE)
-		return NIL;
-
 	/*
 	 * We build the list we intend to return (in the caller's context) while
 	 * doing the scan.  After successfully completing the scan, we copy that
@@ -4702,6 +4697,7 @@ RelationGetFKeyList(Relation relation)
 		info->conoid = constraint->oid;
 		info->conrelid = constraint->conrelid;
 		info->confrelid = constraint->confrelid;
+		info->conenforced = constraint->conenforced;
 
 		DeconstructFkConstraintRow(htup, &info->nkeys,
 								   info->conkey,

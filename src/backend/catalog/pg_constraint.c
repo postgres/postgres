@@ -100,8 +100,9 @@ CreateConstraintEntry(const char *constraintName,
 	ObjectAddresses *addrs_auto;
 	ObjectAddresses *addrs_normal;
 
-	/* Only CHECK constraint can be not enforced */
-	Assert(isEnforced || constraintType == CONSTRAINT_CHECK);
+	/* Only CHECK or FOREIGN KEY constraint can be not enforced */
+	Assert(isEnforced || constraintType == CONSTRAINT_CHECK ||
+		   constraintType == CONSTRAINT_FOREIGN);
 	/* NOT ENFORCED constraint must be NOT VALID */
 	Assert(isEnforced || !isValidated);
 

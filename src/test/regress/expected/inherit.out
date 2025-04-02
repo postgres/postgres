@@ -1332,6 +1332,13 @@ NOTICE:  merging constraint "inh_check_constraint5" with inherited definition
 alter table p1 add constraint inh_check_constraint6 check (f1 < 10) not enforced;
 alter table p1_c1 add constraint inh_check_constraint6 check (f1 < 10) enforced;
 NOTICE:  merging constraint "inh_check_constraint6" with inherited definition
+alter table p1_c1 add constraint inh_check_constraint9 check (f1 < 10) not valid enforced;
+alter table p1 add constraint inh_check_constraint9 check (f1 < 10) not enforced;
+NOTICE:  merging constraint "inh_check_constraint9" with inherited definition
+-- the not-valid state of the child constraint will be ignored here.
+alter table p1 add constraint inh_check_constraint10 check (f1 < 10) not enforced;
+alter table p1_c1 add constraint inh_check_constraint10 check (f1 < 10) not valid enforced;
+NOTICE:  merging constraint "inh_check_constraint10" with inherited definition
 create table p1_c2(f1 int constraint inh_check_constraint4 check (f1 < 10)) inherits(p1);
 NOTICE:  merging column "f1" with inherited definition
 NOTICE:  merging constraint "inh_check_constraint4" with inherited definition
@@ -1356,39 +1363,47 @@ ERROR:  constraint "inh_check_constraint6" conflicts with NOT ENFORCED constrain
 select conrelid::regclass::text as relname, conname, conislocal, coninhcount, conenforced, convalidated
 from pg_constraint where conname like 'inh\_check\_constraint%'
 order by 1, 2;
- relname |        conname        | conislocal | coninhcount | conenforced | convalidated 
----------+-----------------------+------------+-------------+-------------+--------------
- p1      | inh_check_constraint1 | t          |           0 | t           | t
- p1      | inh_check_constraint2 | t          |           0 | t           | t
- p1      | inh_check_constraint3 | t          |           0 | f           | f
- p1      | inh_check_constraint4 | t          |           0 | f           | f
- p1      | inh_check_constraint5 | t          |           0 | f           | f
- p1      | inh_check_constraint6 | t          |           0 | f           | f
- p1      | inh_check_constraint8 | t          |           0 | t           | t
- p1_c1   | inh_check_constraint1 | t          |           1 | t           | t
- p1_c1   | inh_check_constraint2 | t          |           1 | t           | t
- p1_c1   | inh_check_constraint3 | t          |           1 | f           | f
- p1_c1   | inh_check_constraint4 | t          |           1 | f           | f
- p1_c1   | inh_check_constraint5 | t          |           1 | t           | t
- p1_c1   | inh_check_constraint6 | t          |           1 | t           | t
- p1_c1   | inh_check_constraint7 | t          |           0 | f           | f
- p1_c1   | inh_check_constraint8 | f          |           1 | t           | t
- p1_c2   | inh_check_constraint1 | f          |           1 | t           | t
- p1_c2   | inh_check_constraint2 | f          |           1 | t           | t
- p1_c2   | inh_check_constraint3 | f          |           1 | f           | f
- p1_c2   | inh_check_constraint4 | t          |           1 | t           | t
- p1_c2   | inh_check_constraint5 | f          |           1 | f           | f
- p1_c2   | inh_check_constraint6 | f          |           1 | f           | f
- p1_c2   | inh_check_constraint8 | f          |           1 | t           | t
- p1_c3   | inh_check_constraint1 | f          |           2 | t           | t
- p1_c3   | inh_check_constraint2 | f          |           2 | t           | t
- p1_c3   | inh_check_constraint3 | f          |           2 | f           | f
- p1_c3   | inh_check_constraint4 | f          |           2 | f           | f
- p1_c3   | inh_check_constraint5 | f          |           2 | t           | t
- p1_c3   | inh_check_constraint6 | f          |           2 | t           | t
- p1_c3   | inh_check_constraint7 | f          |           1 | f           | f
- p1_c3   | inh_check_constraint8 | f          |           2 | t           | t
-(30 rows)
+ relname |        conname         | conislocal | coninhcount | conenforced | convalidated 
+---------+------------------------+------------+-------------+-------------+--------------
+ p1      | inh_check_constraint1  | t          |           0 | t           | t
+ p1      | inh_check_constraint10 | t          |           0 | f           | f
+ p1      | inh_check_constraint2  | t          |           0 | t           | t
+ p1      | inh_check_constraint3  | t          |           0 | f           | f
+ p1      | inh_check_constraint4  | t          |           0 | f           | f
+ p1      | inh_check_constraint5  | t          |           0 | f           | f
+ p1      | inh_check_constraint6  | t          |           0 | f           | f
+ p1      | inh_check_constraint8  | t          |           0 | t           | t
+ p1      | inh_check_constraint9  | t          |           0 | f           | f
+ p1_c1   | inh_check_constraint1  | t          |           1 | t           | t
+ p1_c1   | inh_check_constraint10 | t          |           1 | t           | t
+ p1_c1   | inh_check_constraint2  | t          |           1 | t           | t
+ p1_c1   | inh_check_constraint3  | t          |           1 | f           | f
+ p1_c1   | inh_check_constraint4  | t          |           1 | f           | f
+ p1_c1   | inh_check_constraint5  | t          |           1 | t           | t
+ p1_c1   | inh_check_constraint6  | t          |           1 | t           | t
+ p1_c1   | inh_check_constraint7  | t          |           0 | f           | f
+ p1_c1   | inh_check_constraint8  | f          |           1 | t           | t
+ p1_c1   | inh_check_constraint9  | t          |           1 | t           | f
+ p1_c2   | inh_check_constraint1  | f          |           1 | t           | t
+ p1_c2   | inh_check_constraint10 | f          |           1 | f           | f
+ p1_c2   | inh_check_constraint2  | f          |           1 | t           | t
+ p1_c2   | inh_check_constraint3  | f          |           1 | f           | f
+ p1_c2   | inh_check_constraint4  | t          |           1 | t           | t
+ p1_c2   | inh_check_constraint5  | f          |           1 | f           | f
+ p1_c2   | inh_check_constraint6  | f          |           1 | f           | f
+ p1_c2   | inh_check_constraint8  | f          |           1 | t           | t
+ p1_c2   | inh_check_constraint9  | f          |           1 | f           | f
+ p1_c3   | inh_check_constraint1  | f          |           2 | t           | t
+ p1_c3   | inh_check_constraint10 | f          |           2 | t           | t
+ p1_c3   | inh_check_constraint2  | f          |           2 | t           | t
+ p1_c3   | inh_check_constraint3  | f          |           2 | f           | f
+ p1_c3   | inh_check_constraint4  | f          |           2 | f           | f
+ p1_c3   | inh_check_constraint5  | f          |           2 | t           | t
+ p1_c3   | inh_check_constraint6  | f          |           2 | t           | t
+ p1_c3   | inh_check_constraint7  | f          |           1 | f           | f
+ p1_c3   | inh_check_constraint8  | f          |           2 | t           | t
+ p1_c3   | inh_check_constraint9  | f          |           2 | t           | t
+(38 rows)
 
 drop table p1 cascade;
 NOTICE:  drop cascades to 3 other objects

@@ -281,7 +281,7 @@ F461	Named character sets			NO
 F471	Scalar subquery values			YES	
 F481	Expanded NULL predicate			YES	
 F491	Constraint management			YES	
-F492	Optional table constraint enforcement			NO	check constraints only
+F492	Optional table constraint enforcement			YES	except not-null constraints
 F501	Features and conformance views			YES	
 F501	Features and conformance views	01	SQL_FEATURES view	YES	
 F501	Features and conformance views	02	SQL_SIZING view	YES	

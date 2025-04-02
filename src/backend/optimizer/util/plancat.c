@@ -640,6 +640,10 @@ get_relation_foreign_keys(PlannerInfo *root, RelOptInfo *rel,
 		/* conrelid should always be that of the table we're considering */
 		Assert(cachedfk->conrelid == RelationGetRelid(relation));
 
+		/* skip constraints currently not enforced */
+		if (!cachedfk->conenforced)
+			continue;
+
 		/* Scan to find other RTEs matching confrelid */
 		rti = 0;
 		foreach(lc2, rtable)
