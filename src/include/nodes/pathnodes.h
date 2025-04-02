@@ -1086,8 +1086,7 @@ typedef struct IndexOptInfo IndexOptInfo;
 #define HAVE_INDEXOPTINFO_TYPEDEF 1
 #endif
 
-struct IndexPath;				/* avoid including pathnodes.h here */
-struct PlannerInfo;				/* avoid including pathnodes.h here */
+struct IndexPath;				/* forward declaration */
 
 struct IndexOptInfo
 {
