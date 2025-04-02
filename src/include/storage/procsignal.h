@@ -57,15 +57,25 @@ typedef enum
 } ProcSignalBarrierType;
 
 /*
+ * Length of query cancel keys generated.
+ *
+ * Note that the protocol allows for longer keys, or shorter, but this is the
+ * length we actually generate.  Client code, and the server code that handles
+ * incoming cancellation packets from clients, mustn't use this hardcoded
+ * length.
+ */
+#define MAX_CANCEL_KEY_LENGTH  32
+
+/*
  * prototypes for functions in procsignal.c
  */
 extern Size ProcSignalShmemSize(void);
 extern void ProcSignalShmemInit(void);
 
-extern void ProcSignalInit(bool cancel_key_valid, int32 cancel_key);
+extern void ProcSignalInit(char *cancel_key, int cancel_key_len);
 extern int	SendProcSignal(pid_t pid, ProcSignalReason reason,
 						   ProcNumber procNumber);
-extern void SendCancelRequest(int backendPID, int32 cancelAuthCode);
+extern void SendCancelRequest(int backendPID, char *cancel_key, int cancel_key_len);
 
 extern uint64 EmitProcSignalBarrier(ProcSignalBarrierType type);
 extern void WaitForProcSignalBarrier(uint64 generation);

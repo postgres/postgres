@@ -128,7 +128,12 @@ typedef uint32 AuthRequest;
  *
  * The cancel request code must not match any protocol version number
  * we're ever likely to use.  This random choice should do.
+ *
+ * Before PostgreSQL v18 and the protocol version bump from 3.0 to 3.2, the
+ * cancel key was always 4 bytes.  With protocol version 3.2, it's variable
+ * length.
  */
+
 #define CANCEL_REQUEST_CODE PG_PROTOCOL(1234,5678)
 
 typedef struct CancelRequestPacket
@@ -136,7 +141,8 @@ typedef struct CancelRequestPacket
 	/* Note that each field is stored in network byte order! */
 	MsgType		cancelRequestCode;	/* code to identify a cancel request */
 	uint32		backendPID;		/* PID of client's backend */
-	uint32		cancelAuthCode; /* secret key to authorize cancel */
+	char		cancelAuthCode[FLEXIBLE_ARRAY_MEMBER];	/* secret key to
+														 * authorize cancel */
 } CancelRequestPacket;
 
 /* Application-Layer Protocol Negotiation is required for direct connections

@@ -60,6 +60,7 @@ ConnectionTiming conn_timing = {.ready_for_use = TIMESTAMP_MINUS_INFINITY};
 static void BackendInitialize(ClientSocket *client_sock, CAC_state cac);
 static int	ProcessSSLStartup(Port *port);
 static int	ProcessStartupPacket(Port *port, bool ssl_done, bool gss_done);
+static void ProcessCancelRequestPacket(Port *port, void *pkt, int pktlen);
 static void SendNegotiateProtocolVersion(List *unrecognized_protocol_options);
 static void process_startup_packet_die(SIGNAL_ARGS);
 static void StartupPacketTimeoutHandler(void);
@@ -565,28 +566,7 @@ ProcessStartupPacket(Port *port, bool ssl_done, bool gss_done)
 
 	if (proto == CANCEL_REQUEST_CODE)
 	{
-		/*
-		 * The client has sent a cancel request packet, not a normal
-		 * start-a-new-connection packet.  Perform the necessary processing.
-		 * Nothing is sent back to the client.
-		 */
-		CancelRequestPacket *canc;
-		int			backendPID;
-		int32		cancelAuthCode;
-
-		if (len != sizeof(CancelRequestPacket))
-		{
-			ereport(COMMERROR,
-					(errcode(ERRCODE_PROTOCOL_VIOLATION),
-					 errmsg("invalid length of startup packet")));
-			return STATUS_ERROR;
-		}
-		canc = (CancelRequestPacket *) buf;
-		backendPID = (int) pg_ntoh32(canc->backendPID);
-		cancelAuthCode = (int32) pg_ntoh32(canc->cancelAuthCode);
-
-		if (backendPID != 0)
-			SendCancelRequest(backendPID, cancelAuthCode);
+		ProcessCancelRequestPacket(port, buf, len);
 		/* Not really an error, but we don't want to proceed further */
 		return STATUS_ERROR;
 	}
@@ -884,6 +864,37 @@ ProcessStartupPacket(Port *port, bool ssl_done, bool gss_done)
 	MemoryContextSwitchTo(oldcontext);
 
 	return STATUS_OK;
+}
+
+/*
+ * The client has sent a cancel request packet, not a normal
+ * start-a-new-connection packet.  Perform the necessary processing.  Nothing
+ * is sent back to the client.
+ */
+static void
+ProcessCancelRequestPacket(Port *port, void *pkt, int pktlen)
+{
+	CancelRequestPacket *canc;
+	int			len;
+
+	if (pktlen < offsetof(CancelRequestPacket, cancelAuthCode))
+	{
+		ereport(COMMERROR,
+				(errcode(ERRCODE_PROTOCOL_VIOLATION),
+				 errmsg("invalid length of query cancel packet")));
+		return;
+	}
+	len = pktlen - offsetof(CancelRequestPacket, cancelAuthCode);
+	if (len == 0 || len > 256)
+	{
+		ereport(COMMERROR,
+				(errcode(ERRCODE_PROTOCOL_VIOLATION),
+				 errmsg("invalid length of query cancel key")));
+		return;
+	}
+
+	canc = (CancelRequestPacket *) pkt;
+	SendCancelRequest(pg_ntoh32(canc->backendPID), canc->cancelAuthCode, len);
 }
 
 /*

@@ -546,7 +546,8 @@ struct pg_conn
 
 	/* Miscellaneous stuff */
 	int			be_pid;			/* PID of backend --- needed for cancels */
-	int			be_key;			/* key of backend --- needed for cancels */
+	char	   *be_cancel_key;	/* query cancellation key and its length */
+	uint16		be_cancel_key_len;
 	pgParameterStatus *pstatus; /* ParameterStatus data */
 	int			client_encoding;	/* encoding id */
 	bool		std_strings;	/* standard_conforming_strings */
@@ -765,6 +766,10 @@ extern PGresult *pqFunctionCall3(PGconn *conn, Oid fnid,
 								 int *result_buf, int *actual_result_len,
 								 int result_is_int,
 								 const PQArgBlock *args, int nargs);
+
+/* === in fe-cancel.c === */
+
+extern int	PQsendCancelRequest(PGconn *cancelConn);
 
 /* === in fe-misc.c === */
 

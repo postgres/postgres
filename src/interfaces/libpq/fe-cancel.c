@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * fe-cancel.c
- *	  functions related to setting up a connection to the backend
+ *	  functions related to query cancellation
  *
  * Portions Copyright (c) 1996-2025, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
@@ -41,7 +41,6 @@ struct pg_cancel
 {
 	SockAddr	raddr;			/* Remote address */
 	int			be_pid;			/* PID of to-be-canceled backend */
-	int			be_key;			/* cancel key of to-be-canceled backend */
 	int			pgtcp_user_timeout; /* tcp user timeout */
 	int			keepalives;		/* use TCP keepalives? */
 	int			keepalives_idle;	/* time between TCP keepalives */
@@ -49,6 +48,10 @@ struct pg_cancel
 										 * retransmits */
 	int			keepalives_count;	/* maximum number of TCP keepalive
 									 * retransmits */
+
+	/* Pre-constructed cancel request packet starts here */
+	int32		cancel_pkt_len; /* in network-byte-order */
+	char		cancel_req[FLEXIBLE_ARRAY_MEMBER];	/* CancelRequestPacket */
 };
 
 
@@ -83,6 +86,13 @@ PQcancelCreate(PGconn *conn)
 		return (PGcancelConn *) cancelConn;
 	}
 
+	/* Check that we have received a cancellation key */
+	if (conn->be_cancel_key_len == 0)
+	{
+		libpq_append_conn_error(cancelConn, "no cancellation key received");
+		return (PGcancelConn *) cancelConn;
+	}
+
 	/*
 	 * Indicate that this connection is used to send a cancellation
 	 */
@@ -101,7 +111,15 @@ PQcancelCreate(PGconn *conn)
 	 * Copy cancellation token data from the original connection
 	 */
 	cancelConn->be_pid = conn->be_pid;
-	cancelConn->be_key = conn->be_key;
+	if (conn->be_cancel_key != NULL)
+	{
+		cancelConn->be_cancel_key = malloc(conn->be_cancel_key_len);
+		if (!conn->be_cancel_key)
+			goto oom_error;
+		memcpy(cancelConn->be_cancel_key, conn->be_cancel_key, conn->be_cancel_key_len);
+	}
+	cancelConn->be_cancel_key_len = conn->be_cancel_key_len;
+	cancelConn->pversion = conn->pversion;
 
 	/*
 	 * Cancel requests should not iterate over all possible hosts. The request
@@ -349,6 +367,8 @@ PGcancel *
 PQgetCancel(PGconn *conn)
 {
 	PGcancel   *cancel;
+	int			cancel_req_len;
+	CancelRequestPacket *req;
 
 	if (!conn)
 		return NULL;
@@ -356,13 +376,17 @@ PQgetCancel(PGconn *conn)
 	if (conn->sock == PGINVALID_SOCKET)
 		return NULL;
 
-	cancel = malloc(sizeof(PGcancel));
+	/* Check that we have received a cancellation key */
+	if (conn->be_cancel_key_len == 0)
+		return NULL;
+
+	cancel_req_len = offsetof(CancelRequestPacket, cancelAuthCode) + conn->be_cancel_key_len;
+	cancel = malloc(offsetof(PGcancel, cancel_req) + cancel_req_len);
 	if (cancel == NULL)
 		return NULL;
 
 	memcpy(&cancel->raddr, &conn->raddr, sizeof(SockAddr));
-	cancel->be_pid = conn->be_pid;
-	cancel->be_key = conn->be_key;
+
 	/* We use -1 to indicate an unset connection option */
 	cancel->pgtcp_user_timeout = -1;
 	cancel->keepalives = -1;
@@ -405,11 +429,54 @@ PQgetCancel(PGconn *conn)
 			goto fail;
 	}
 
+	req = (CancelRequestPacket *) &cancel->cancel_req;
+	req->cancelRequestCode = (MsgType) pg_hton32(CANCEL_REQUEST_CODE);
+	req->backendPID = pg_hton32(conn->be_pid);
+	memcpy(req->cancelAuthCode, conn->be_cancel_key, conn->be_cancel_key_len);
+	/* include the length field itself in the length */
+	cancel->cancel_pkt_len = pg_hton32(cancel_req_len + 4);
+
 	return cancel;
 
 fail:
 	free(cancel);
 	return NULL;
+}
+
+/*
+ * PQsendCancelRequest
+ *	 Submit a CancelRequest message, but don't wait for it to finish
+ *
+ * Returns: 1 if successfully submitted
+ *			0 if error (conn->errorMessage is set)
+ */
+int
+PQsendCancelRequest(PGconn *cancelConn)
+{
+	CancelRequestPacket req;
+
+	/* Start the message. */
+	if (pqPutMsgStart(0, cancelConn))
+		return STATUS_ERROR;
+
+	/* Send the message body. */
+	memset(&req, 0, offsetof(CancelRequestPacket, cancelAuthCode));
+	req.cancelRequestCode = (MsgType) pg_hton32(CANCEL_REQUEST_CODE);
+	req.backendPID = pg_hton32(cancelConn->be_pid);
+	if (pqPutnchar((char *) &req, offsetof(CancelRequestPacket, cancelAuthCode), cancelConn))
+		return STATUS_ERROR;
+	if (pqPutnchar(cancelConn->be_cancel_key, cancelConn->be_cancel_key_len, cancelConn))
+		return STATUS_ERROR;
+
+	/* Finish the message. */
+	if (pqPutMsgEnd(cancelConn))
+		return STATUS_ERROR;
+
+	/* Flush to ensure backend gets it. */
+	if (pqFlush(cancelConn))
+		return STATUS_ERROR;
+
+	return STATUS_OK;
 }
 
 /* PQfreeCancel: free a cancel structure */
@@ -465,11 +532,8 @@ PQcancel(PGcancel *cancel, char *errbuf, int errbufsize)
 	int			save_errno = SOCK_ERRNO;
 	pgsocket	tmpsock = PGINVALID_SOCKET;
 	int			maxlen;
-	struct
-	{
-		uint32		packetlen;
-		CancelRequestPacket cp;
-	}			crp;
+	char		recvbuf;
+	int			cancel_pkt_len;
 
 	if (!cancel)
 	{
@@ -571,15 +635,15 @@ retry3:
 		goto cancel_errReturn;
 	}
 
-	/* Create and send the cancel request packet. */
-
-	crp.packetlen = pg_hton32((uint32) sizeof(crp));
-	crp.cp.cancelRequestCode = (MsgType) pg_hton32(CANCEL_REQUEST_CODE);
-	crp.cp.backendPID = pg_hton32(cancel->be_pid);
-	crp.cp.cancelAuthCode = pg_hton32(cancel->be_key);
+	cancel_pkt_len = pg_ntoh32(cancel->cancel_pkt_len);
 
 retry4:
-	if (send(tmpsock, (char *) &crp, sizeof(crp), 0) != (int) sizeof(crp))
+
+	/*
+	 * Send the cancel request packet. It starts with the message length at
+	 * cancel_pkt_len, followed by the actual packet.
+	 */
+	if (send(tmpsock, (char *) &cancel->cancel_pkt_len, cancel_pkt_len, 0) != cancel_pkt_len)
 	{
 		if (SOCK_ERRNO == EINTR)
 			/* Interrupted system call - we'll just try again */
@@ -596,7 +660,7 @@ retry4:
 	 * read to obtain any data, we are just waiting for EOF to be signaled.
 	 */
 retry5:
-	if (recv(tmpsock, (char *) &crp, 1, 0) < 0)
+	if (recv(tmpsock, &recvbuf, 1, 0) < 0)
 	{
 		if (SOCK_ERRNO == EINTR)
 			/* Interrupted system call - we'll just try again */

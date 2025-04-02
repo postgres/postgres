@@ -24,6 +24,7 @@
 #include "miscadmin.h"
 #include "postmaster/postmaster.h"
 #include "storage/procnumber.h"
+#include "storage/procsignal.h"
 
 
 ProtocolVersion FrontendProtocol;
@@ -48,8 +49,8 @@ pg_time_t	MyStartTime;
 TimestampTz MyStartTimestamp;
 struct ClientSocket *MyClientSocket;
 struct Port *MyProcPort;
-bool		MyCancelKeyValid = false;
-int32		MyCancelKey = 0;
+char		MyCancelKey[MAX_CANCEL_KEY_LENGTH];
+uint8		MyCancelKeyLength = 0;
 int			MyPMChildSlot;
 
 /*
