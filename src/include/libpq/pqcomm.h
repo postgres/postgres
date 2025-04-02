@@ -91,11 +91,10 @@ is_unixsock_path(const char *path)
 
 /*
  * The earliest and latest frontend/backend protocol version supported.
- * (Only protocol version 3 is currently supported)
  */
 
 #define PG_PROTOCOL_EARLIEST	PG_PROTOCOL(3,0)
-#define PG_PROTOCOL_LATEST		PG_PROTOCOL(3,0)
+#define PG_PROTOCOL_LATEST		PG_PROTOCOL(3,2)
 
 typedef uint32 ProtocolVersion; /* FE/BE protocol version number */
 

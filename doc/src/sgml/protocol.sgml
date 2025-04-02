@@ -18,22 +18,35 @@
  </para>
 
  <para>
-  This document describes version 3.0 of the protocol, implemented in
-  <productname>PostgreSQL</productname> 7.4 and later.  For descriptions
-  of the earlier protocol versions, see previous releases of the
-  <productname>PostgreSQL</productname> documentation.  A single server
+  This document describes version 3.2 of the protocol, introduced in
+  <productname>PostgreSQL</productname> version 18. The server and the libpq
+  client library are backwards compatible with protocol version 3.0,
+  implemented in <productname>PostgreSQL</productname> 7.4 and later.
+  For descriptions of earlier protocol versions, see previous releases of the
+  <productname>PostgreSQL</productname> documentation.
+ </para>
+
+ <para>
+  A single server
   can support multiple protocol versions.  The initial startup-request
   message tells the server which protocol version the client is attempting to
   use.  If the major version requested by the client is not supported by
   the server, the connection will be rejected (for example, this would occur
   if the client requested protocol version 4.0, which does not exist as of
   this writing).  If the minor version requested by the client is not
-  supported by the server (e.g., the client requests version 3.1, but the
+  supported by the server (e.g., the client requests version 3.2, but the
   server supports only 3.0), the server may either reject the connection or
   may respond with a NegotiateProtocolVersion message containing the highest
   minor protocol version which it supports.  The client may then choose either
   to continue with the connection using the specified protocol version or
   to abort the connection.
+ </para>
+
+ <para>
+  The protocol negotiation was introduced in
+  <productname>PostgreSQL</productname> version 9.3.21. Earlier versions would
+  reject the connection if the client requested a minor version that was not
+  supported by the server.
  </para>
 
   <para>
@@ -413,8 +426,14 @@
         this message indicates the highest supported minor version.  This
         message will also be sent if the client requested unsupported protocol
         options (i.e., beginning with <literal>_pq_.</literal>) in the
-        startup packet.  This message will be followed by an ErrorResponse or
-        a message indicating the success or failure of authentication.
+        startup packet.
+       </para>
+       <para>
+        After this message, the authentication will continue using the version
+        indicated by the server.  If the client does not support the older
+        version, it should immediately close the connection.  If the server
+        does not send this message, it supports the client's requested
+        protocol version and all the protocol options.
        </para>
       </listitem>
      </varlistentry>

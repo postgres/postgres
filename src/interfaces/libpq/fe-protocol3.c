@@ -1432,6 +1432,13 @@ pqGetNegotiateProtocolVersion3(PGconn *conn)
 		goto failure;
 	}
 
+	/* 3.1 never existed, we went straight from 3.0 to 3.2 */
+	if (their_version == PG_PROTOCOL(3, 1))
+	{
+		libpq_append_conn_error(conn, "received invalid protocol negotiation message: server requests downgrade to non-existent 3.1 protocol version");
+		goto failure;
+	}
+
 	if (num < 0)
 	{
 		libpq_append_conn_error(conn, "received invalid protocol negotiation message: server reported negative number of unsupported parameters");
@@ -1441,6 +1448,17 @@ pqGetNegotiateProtocolVersion3(PGconn *conn)
 	if (their_version == conn->pversion && num == 0)
 	{
 		libpq_append_conn_error(conn, "received invalid protocol negotiation message: server negotiated but asks for no changes");
+		goto failure;
+	}
+
+	if (their_version < conn->min_pversion)
+	{
+		libpq_append_conn_error(conn, "server only supports protocol version %d.%d, but min_protocol_version was set to %d.%d",
+								PG_PROTOCOL_MAJOR(their_version),
+								PG_PROTOCOL_MINOR(their_version),
+								PG_PROTOCOL_MAJOR(conn->min_pversion),
+								PG_PROTOCOL_MINOR(conn->min_pversion));
+
 		goto failure;
 	}
 
