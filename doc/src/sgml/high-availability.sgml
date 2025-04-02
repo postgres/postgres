@@ -1535,7 +1535,8 @@ synchronous_standby_names = 'ANY 2 (s1, s2, s3)'
    <para>
     When the <xref linkend="guc-hot-standby"/> parameter is set to true on a
     standby server, it will begin accepting connections once the recovery has
-    brought the system to a consistent state.  All such connections are
+    brought the system to a consistent state and be ready for hot standby.
+    All such connections are
     strictly read-only; not even temporary tables may be written.
    </para>
 
@@ -1974,9 +1975,12 @@ LOG:  database system is ready to accept read-only connections
     Consistency information is recorded once per checkpoint on the primary.
     It is not possible to enable hot standby when reading WAL
     written during a period when <varname>wal_level</varname> was not set to
-    <literal>replica</literal> or <literal>logical</literal> on the primary.  Reaching
-    a consistent state can also be delayed in the presence of both of these
-    conditions:
+    <literal>replica</literal> or <literal>logical</literal> on the primary.
+    Even after reaching a consistent state, the recovery snapshot may not
+    be ready for hot standby if both of the following conditions are met,
+    delaying accepting read-only connections.  To enable hot standby,
+    long-lived write transactions with more than 64 subtransactions
+    need to be closed on the primary.
 
       <itemizedlist>
        <listitem>

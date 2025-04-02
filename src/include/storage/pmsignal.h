@@ -33,6 +33,7 @@
 typedef enum
 {
 	PMSIGNAL_RECOVERY_STARTED,	/* recovery has started */
+	PMSIGNAL_RECOVERY_CONSISTENT,	/* recovery has reached consistent state */
 	PMSIGNAL_BEGIN_HOT_STANDBY, /* begin Hot Standby */
 	PMSIGNAL_ROTATE_LOGFILE,	/* send SIGUSR1 to syslogger to rotate logfile */
 	PMSIGNAL_START_AUTOVAC_LAUNCHER,	/* start an autovacuum launcher */

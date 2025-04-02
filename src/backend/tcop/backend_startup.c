@@ -18,6 +18,7 @@
 #include <unistd.h>
 
 #include "access/xlog.h"
+#include "access/xlogrecovery.h"
 #include "common/ip.h"
 #include "common/string.h"
 #include "libpq/libpq.h"
@@ -306,17 +307,24 @@ BackendInitialize(ClientSocket *client_sock, CAC_state cac)
 						(errcode(ERRCODE_CANNOT_CONNECT_NOW),
 						 errmsg("the database system is starting up")));
 				break;
-			case CAC_NOTCONSISTENT:
-				if (EnableHotStandby)
-					ereport(FATAL,
-							(errcode(ERRCODE_CANNOT_CONNECT_NOW),
-							 errmsg("the database system is not yet accepting connections"),
-							 errdetail("Consistent recovery state has not been yet reached.")));
-				else
+			case CAC_NOTHOTSTANDBY:
+				if (!EnableHotStandby)
 					ereport(FATAL,
 							(errcode(ERRCODE_CANNOT_CONNECT_NOW),
 							 errmsg("the database system is not accepting connections"),
 							 errdetail("Hot standby mode is disabled.")));
+				else if (reachedConsistency)
+					ereport(FATAL,
+							(errcode(ERRCODE_CANNOT_CONNECT_NOW),
+							 errmsg("the database system is not yet accepting connections"),
+							 errdetail("Recovery snapshot is not yet ready for hot standby."),
+							 errhint("To enable hot standby, close write transactions with more than %d subtransactions on the primary server.",
+									 PGPROC_MAX_CACHED_SUBXIDS)));
+				else
+					ereport(FATAL,
+							(errcode(ERRCODE_CANNOT_CONNECT_NOW),
+							 errmsg("the database system is not yet accepting connections"),
+							 errdetail("Consistent recovery state has not been yet reached.")));
 				break;
 			case CAC_SHUTDOWN:
 				ereport(FATAL,

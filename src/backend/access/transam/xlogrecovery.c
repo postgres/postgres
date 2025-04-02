@@ -291,6 +291,11 @@ static bool backupEndRequired = false;
  * Consistent state means that the system is internally consistent, all
  * the WAL has been replayed up to a certain point, and importantly, there
  * is no trace of later actions on disk.
+ *
+ * This flag is used only by the startup process and postmaster. When
+ * minRecoveryPoint is reached, the startup process sets it to true and
+ * sends a PMSIGNAL_RECOVERY_CONSISTENT signal to the postmaster,
+ * which then sets it to true upon receiving the signal.
  */
 bool		reachedConsistency = false;
 
@@ -2248,6 +2253,7 @@ CheckRecoveryConsistency(void)
 		CheckTablespaceDirectory();
 
 		reachedConsistency = true;
+		SendPostmasterSignal(PMSIGNAL_RECOVERY_CONSISTENT);
 		ereport(LOG,
 				(errmsg("consistent recovery state reached at %X/%X",
 						LSN_FORMAT_ARGS(lastReplayedEndRecPtr))));

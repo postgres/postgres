@@ -1825,8 +1825,7 @@ canAcceptConnections(BackendType backend_type)
 		else if (!FatalError && pmState == PM_STARTUP)
 			return CAC_STARTUP; /* normal startup */
 		else if (!FatalError && pmState == PM_RECOVERY)
-			return CAC_NOTCONSISTENT;	/* not yet at consistent recovery
-										 * state */
+			return CAC_NOTHOTSTANDBY;	/* not yet ready for hot standby */
 		else
 			return CAC_RECOVERY;	/* else must be crash recovery */
 	}
@@ -3699,6 +3698,7 @@ process_pm_pmsignal(void)
 		/* WAL redo has started. We're out of reinitialization. */
 		FatalError = false;
 		AbortStartTime = 0;
+		reachedConsistency = false;
 
 		/*
 		 * Start the archiver if we're responsible for (re-)archiving received
@@ -3724,8 +3724,14 @@ process_pm_pmsignal(void)
 		UpdatePMState(PM_RECOVERY);
 	}
 
-	if (CheckPostmasterSignal(PMSIGNAL_BEGIN_HOT_STANDBY) &&
+	if (CheckPostmasterSignal(PMSIGNAL_RECOVERY_CONSISTENT) &&
 		pmState == PM_RECOVERY && Shutdown == NoShutdown)
+	{
+		reachedConsistency = true;
+	}
+
+	if (CheckPostmasterSignal(PMSIGNAL_BEGIN_HOT_STANDBY) &&
+		(pmState == PM_RECOVERY && Shutdown == NoShutdown))
 	{
 		ereport(LOG,
 				(errmsg("database system is ready to accept read-only connections")));
