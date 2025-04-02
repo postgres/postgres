@@ -2138,32 +2138,6 @@ heapam_scan_bitmap_next_tuple(TableScanDesc scan,
 	while (hscan->rs_cindex >= hscan->rs_ntuples)
 	{
 		/*
-		 * Emit empty tuples before advancing to the next block
-		 */
-		if (bscan->rs_empty_tuples_pending > 0)
-		{
-			/*
-			 * If we don't have to fetch the tuple, just return nulls.
-			 */
-			ExecStoreAllNullTuple(slot);
-			bscan->rs_empty_tuples_pending--;
-
-			/*
-			 * We do not recheck all NULL tuples. Because the streaming read
-			 * API only yields TBMIterateResults for blocks actually fetched
-			 * from the heap, we must unset `recheck` ourselves here to ensure
-			 * correct results.
-			 *
-			 * Our read stream callback accrues a count of empty tuples to
-			 * emit and then emits them after emitting tuples from the next
-			 * fetched block. If no blocks need fetching, we'll emit the
-			 * accrued count at the end of the scan.
-			 */
-			*recheck = false;
-			return true;
-		}
-
-		/*
 		 * Returns false if the bitmap is exhausted and there are no further
 		 * blocks we need to scan.
 		 */
@@ -2516,24 +2490,8 @@ BitmapHeapScanNextBlock(TableScanDesc scan,
 
 	if (BufferIsInvalid(hscan->rs_cbuf))
 	{
-		if (BufferIsValid(bscan->rs_vmbuffer))
-		{
-			ReleaseBuffer(bscan->rs_vmbuffer);
-			bscan->rs_vmbuffer = InvalidBuffer;
-		}
-
-		/*
-		 * The bitmap is exhausted. Now emit any remaining empty tuples. The
-		 * read stream API only returns TBMIterateResults for blocks actually
-		 * fetched from the heap. Our callback will accrue a count of empty
-		 * tuples to emit for all blocks we skipped fetching. So, if we skip
-		 * fetching heap blocks at the end of the relation (or no heap blocks
-		 * are fetched) we need to ensure we emit empty tuples before ending
-		 * the scan. We don't recheck empty tuples so ensure `recheck` is
-		 * unset.
-		 */
-		*recheck = false;
-		return bscan->rs_empty_tuples_pending > 0;
+		/* the bitmap is exhausted */
+		return false;
 	}
 
 	Assert(per_buffer_data);

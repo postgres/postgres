@@ -103,17 +103,7 @@ typedef struct BitmapHeapScanDescData
 {
 	HeapScanDescData rs_heap_base;
 
-	/*
-	 * These fields are only used for bitmap scans for the "skip fetch"
-	 * optimization. Bitmap scans needing no fields from the heap may skip
-	 * fetching an all visible block, instead using the number of tuples per
-	 * block reported by the bitmap to determine how many NULL-filled tuples
-	 * to return. They are common to parallel and serial BitmapHeapScans
-	 */
-
-	/* page of VM containing info for current block */
-	Buffer		rs_vmbuffer;
-	int			rs_empty_tuples_pending;
+	/* Holds no data */
 }			BitmapHeapScanDescData;
 typedef struct BitmapHeapScanDescData *BitmapHeapScanDesc;
 

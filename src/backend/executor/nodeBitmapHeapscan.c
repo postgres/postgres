@@ -105,24 +105,11 @@ BitmapTableScanSetup(BitmapHeapScanState *node)
 	 */
 	if (!node->ss.ss_currentScanDesc)
 	{
-		bool		need_tuples = false;
-
-		/*
-		 * We can potentially skip fetching heap pages if we do not need any
-		 * columns of the table, either for checking non-indexable quals or
-		 * for returning data.  This test is a bit simplistic, as it checks
-		 * the stronger condition that there's no qual or return tlist at all.
-		 * But in most cases it's probably not worth working harder than that.
-		 */
-		need_tuples = (node->ss.ps.plan->qual != NIL ||
-					   node->ss.ps.plan->targetlist != NIL);
-
 		node->ss.ss_currentScanDesc =
 			table_beginscan_bm(node->ss.ss_currentRelation,
 							   node->ss.ps.state->es_snapshot,
 							   0,
-							   NULL,
-							   need_tuples);
+							   NULL);
 	}
 
 	node->ss.ss_currentScanDesc->st.rs_tbmiterator = tbmiterator;

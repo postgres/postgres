@@ -314,31 +314,6 @@ bitmapheap_stream_read_next(ReadStream *pgsr, void *private_data,
 			tbmres->blockno >= hscan->rs_nblocks)
 			continue;
 
-		/*
-		 * We can skip fetching the heap page if we don't need any fields from
-		 * the heap, the bitmap entries don't need rechecking, and all tuples
-		 * on the page are visible to our transaction.
-		 */
-		if (!(sscan->rs_flags & SO_NEED_TUPLES) &&
-			!tbmres->recheck &&
-			VM_ALL_VISIBLE(sscan->rs_rd, tbmres->blockno, &bscan->rs_vmbuffer))
-		{
-			OffsetNumber offsets[TBM_MAX_TUPLES_PER_PAGE];
-			int			noffsets;
-
-			/* can't be lossy in the skip_fetch case */
-			Assert(!tbmres->lossy);
-			Assert(bscan->rs_empty_tuples_pending >= 0);
-
-			/*
-			 * We throw away the offsets, but this is the easiest way to get a
-			 * count of tuples.
-			 */
-			noffsets = tbm_extract_page_tuple(tbmres, offsets, TBM_MAX_TUPLES_PER_PAGE);
-			bscan->rs_empty_tuples_pending += noffsets;
-			continue;
-		}
-
 		return tbmres->blockno;
 	}
 
@@ -1124,8 +1099,10 @@ heap_beginscan(Relation relation, Snapshot snapshot,
 	{
 		BitmapHeapScanDesc bscan = palloc(sizeof(BitmapHeapScanDescData));
 
-		bscan->rs_vmbuffer = InvalidBuffer;
-		bscan->rs_empty_tuples_pending = 0;
+		/*
+		 * Bitmap Heap scans do not have any fields that a normal Heap Scan
+		 * does not have, so no special initializations required here.
+		 */
 		scan = (HeapScanDesc) bscan;
 	}
 	else
@@ -1280,23 +1257,10 @@ heap_rescan(TableScanDesc sscan, ScanKey key, bool set_params,
 		scan->rs_cbuf = InvalidBuffer;
 	}
 
-	if (scan->rs_base.rs_flags & SO_TYPE_BITMAPSCAN)
-	{
-		BitmapHeapScanDesc bscan = (BitmapHeapScanDesc) scan;
-
-		/*
-		 * Reset empty_tuples_pending, a field only used by bitmap heap scan,
-		 * to avoid incorrectly emitting NULL-filled tuples from a previous
-		 * scan on rescan.
-		 */
-		bscan->rs_empty_tuples_pending = 0;
-
-		if (BufferIsValid(bscan->rs_vmbuffer))
-		{
-			ReleaseBuffer(bscan->rs_vmbuffer);
-			bscan->rs_vmbuffer = InvalidBuffer;
-		}
-	}
+	/*
+	 * SO_TYPE_BITMAPSCAN would be cleaned up here, but it does not hold any
+	 * additional data vs a normal HeapScan
+	 */
 
 	/*
 	 * The read stream is reset on rescan. This must be done before
@@ -1324,15 +1288,6 @@ heap_endscan(TableScanDesc sscan)
 	 */
 	if (BufferIsValid(scan->rs_cbuf))
 		ReleaseBuffer(scan->rs_cbuf);
-
-	if (scan->rs_base.rs_flags & SO_TYPE_BITMAPSCAN)
-	{
-		BitmapHeapScanDesc bscan = (BitmapHeapScanDesc) sscan;
-
-		bscan->rs_empty_tuples_pending = 0;
-		if (BufferIsValid(bscan->rs_vmbuffer))
-			ReleaseBuffer(bscan->rs_vmbuffer);
-	}
 
 	/*
 	 * Must free the read stream before freeing the BufferAccessStrategy.
