@@ -1885,7 +1885,7 @@ select * from array_to_set(array['one', 'two']) as t(f1 numeric(4,2),f2 text);
 select * from array_to_set(array['one', 'two']) as t(f1 point,f2 text);
 ERROR:  return type mismatch in function declared to return record
 DETAIL:  Final statement returns integer instead of point at column 1.
-CONTEXT:  SQL function "array_to_set" during startup
+CONTEXT:  SQL function "array_to_set" statement 1
 -- with "strict", this function can't be inlined in FROM
 explain (verbose, costs off)
   select * from array_to_set(array['one', 'two']) as t(f1 numeric(4,2),f2 text);

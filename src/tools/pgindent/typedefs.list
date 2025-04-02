@@ -382,6 +382,11 @@ CURLM
 CURLoption
 CV
 CachedExpression
+CachedFunction
+CachedFunctionCompileCallback
+CachedFunctionDeleteCallback
+CachedFunctionHashEntry
+CachedFunctionHashKey
 CachedPlan
 CachedPlanSource
 CallContext
@@ -2267,6 +2272,7 @@ PortalHashEnt
 PortalStatus
 PortalStrategy
 PostParseColumnRefHook
+PostRewriteHook
 PostgresPollingStatusType
 PostingItem
 PreParseColumnRefHook
@@ -2608,6 +2614,8 @@ SPPageDesc
 SQLDropObject
 SQLFunctionCache
 SQLFunctionCachePtr
+SQLFunctionHashEntry
+SQLFunctionLink
 SQLFunctionParseInfo
 SQLFunctionParseInfoPtr
 SQLValueFunction

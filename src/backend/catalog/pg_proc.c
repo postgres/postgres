@@ -960,7 +960,7 @@ fmgr_sql_validator(PG_FUNCTION_ARGS)
 			(void) check_sql_fn_retval(querytree_list,
 									   rettype, rettupdesc,
 									   proc->prokind,
-									   false, NULL);
+									   false);
 		}
 
 		error_context_stack = sqlerrcontext.previous;

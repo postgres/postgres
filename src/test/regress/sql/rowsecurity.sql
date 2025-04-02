@@ -2307,6 +2307,50 @@ DROP FUNCTION rls_f();
 DROP VIEW rls_v;
 DROP TABLE rls_t;
 
+-- Check that RLS changes invalidate SQL function plans
+create table rls_t (c text);
+create table test_t (c text);
+insert into rls_t values ('a'), ('b'), ('c'), ('d');
+insert into test_t values ('a'), ('b');
+alter table rls_t enable row level security;
+grant select on rls_t to regress_rls_alice;
+grant select on test_t to regress_rls_alice;
+create policy p1 on rls_t for select to regress_rls_alice
+  using (c = current_setting('rls_test.blah'));
+
+-- Function changes row_security setting and so invalidates plan
+create function rls_f(text) returns text
+begin atomic
+ select set_config('rls_test.blah', $1, true) || set_config('row_security', 'false', true) || string_agg(c, ',' order by c) from rls_t;
+end;
+
+set plan_cache_mode to force_custom_plan;
+
+-- Table owner bypasses RLS
+select rls_f(c) from test_t order by rls_f;
+
+-- For other users, changes in row_security setting
+-- should lead to RLS error during query rewrite
+set role regress_rls_alice;
+select rls_f(c) from test_t order by rls_f;
+reset role;
+
+set plan_cache_mode to force_generic_plan;
+
+-- Table owner bypasses RLS, although cached plan will be invalidated
+select rls_f(c) from test_t order by rls_f;
+
+-- For other users, changes in row_security setting
+-- should lead to plan invalidation and RLS error during query rewrite
+set role regress_rls_alice;
+select rls_f(c) from test_t order by rls_f;
+reset role;
+
+reset plan_cache_mode;
+reset rls_test.blah;
+drop function rls_f(text);
+drop table rls_t, test_t;
+
 --
 -- Clean up objects
 --

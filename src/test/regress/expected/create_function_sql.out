@@ -563,6 +563,20 @@ CREATE OR REPLACE PROCEDURE functest1(a int) LANGUAGE SQL AS 'SELECT $1';
 ERROR:  cannot change routine kind
 DETAIL:  "functest1" is a function.
 DROP FUNCTION functest1(a int);
+-- early shutdown of set-returning functions
+CREATE FUNCTION functest_srf0() RETURNS SETOF int
+LANGUAGE SQL
+AS $$ SELECT i FROM generate_series(1, 100) i $$;
+SELECT functest_srf0() LIMIT 5;
+ functest_srf0 
+---------------
+             1
+             2
+             3
+             4
+             5
+(5 rows)
+
 -- inlining of set-returning functions
 CREATE TABLE functest3 (a int);
 INSERT INTO functest3 VALUES (1), (2), (3);
@@ -666,6 +680,43 @@ SELECT * FROM voidtest5(3);
 -----------
 (0 rows)
 
+-- DDL within a SQL function can now affect later statements in the function;
+-- though that doesn't work if check_function_bodies is on.
+SET check_function_bodies TO off;
+CREATE FUNCTION create_and_insert() RETURNS VOID LANGUAGE sql AS $$
+  create table ddl_test (f1 int);
+  insert into ddl_test values (1.2);
+$$;
+SELECT create_and_insert();
+ create_and_insert 
+-------------------
+ 
+(1 row)
+
+TABLE ddl_test;
+ f1 
+----
+  1
+(1 row)
+
+CREATE FUNCTION alter_and_insert() RETURNS VOID LANGUAGE sql AS $$
+  alter table ddl_test alter column f1 type numeric;
+  insert into ddl_test values (1.2);
+$$;
+SELECT alter_and_insert();
+ alter_and_insert 
+------------------
+ 
+(1 row)
+
+TABLE ddl_test;
+ f1  
+-----
+   1
+ 1.2
+(2 rows)
+
+RESET check_function_bodies;
 -- Regression tests for bugs:
 -- Check that arguments that are R/W expanded datums aren't corrupted by
 -- multiple uses.  This test knows that array_append() returns a R/W datum
@@ -708,7 +759,7 @@ CREATE FUNCTION test1 (int) RETURNS int LANGUAGE SQL
 ERROR:  only one AS item needed for language "sql"
 -- Cleanup
 DROP SCHEMA temp_func_test CASCADE;
-NOTICE:  drop cascades to 30 other objects
+NOTICE:  drop cascades to 34 other objects
 DETAIL:  drop cascades to function functest_a_1(text,date)
 drop cascades to function functest_a_2(text[])
 drop cascades to function functest_a_3()
@@ -732,12 +783,16 @@ drop cascades to function functest_s_10(text,date)
 drop cascades to function functest_s_13()
 drop cascades to function functest_s_15(integer)
 drop cascades to function functest_b_2(bigint)
+drop cascades to function functest_srf0()
 drop cascades to function functest_sri1()
 drop cascades to function voidtest1(integer)
 drop cascades to function voidtest2(integer,integer)
 drop cascades to function voidtest3(integer)
 drop cascades to function voidtest4(integer)
 drop cascades to function voidtest5(integer)
+drop cascades to function create_and_insert()
+drop cascades to table ddl_test
+drop cascades to function alter_and_insert()
 drop cascades to function double_append(anyarray,anyelement)
 DROP USER regress_unpriv_user;
 RESET search_path;

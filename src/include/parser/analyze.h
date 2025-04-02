@@ -52,6 +52,7 @@ extern Query *transformStmt(ParseState *pstate, Node *parseTree);
 
 extern bool stmt_requires_parse_analysis(RawStmt *parseTree);
 extern bool analyze_requires_snapshot(RawStmt *parseTree);
+extern bool query_requires_rewrite_plan(Query *query);
 
 extern const char *LCS_asString(LockClauseStrength strength);
 extern void CheckSelectLocking(Query *qry, LockClauseStrength strength);

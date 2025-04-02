@@ -718,7 +718,7 @@ plpgsql_free_function_memory(PLpgSQL_function *func)
 	int			i;
 
 	/* Better not call this on an in-use function */
-	Assert(func->use_count == 0);
+	Assert(func->cfunc.use_count == 0);
 
 	/* Release plans associated with variable declarations */
 	for (i = 0; i < func->ndatums; i++)
@@ -765,6 +765,13 @@ plpgsql_free_function_memory(PLpgSQL_function *func)
 	if (func->fn_cxt)
 		MemoryContextDelete(func->fn_cxt);
 	func->fn_cxt = NULL;
+}
+
+/* Deletion callback used by funccache.c */
+void
+plpgsql_delete_callback(CachedFunction *cfunc)
+{
+	plpgsql_free_function_memory((PLpgSQL_function *) cfunc);
 }
 
 

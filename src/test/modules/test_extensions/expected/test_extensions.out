@@ -651,7 +651,7 @@ LINE 1:  SELECT public.dep_req2() || ' req3b'
                 ^
 HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
 QUERY:   SELECT public.dep_req2() || ' req3b' 
-CONTEXT:  SQL function "dep_req3b" during startup
+CONTEXT:  SQL function "dep_req3b" statement 1
 DROP EXTENSION test_ext_req_schema3;
 ALTER EXTENSION test_ext_req_schema1 SET SCHEMA test_s_dep2;  -- now ok
 SELECT test_s_dep2.dep_req1();

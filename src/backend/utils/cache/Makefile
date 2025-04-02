@@ -16,6 +16,7 @@ OBJS = \
 	attoptcache.o \
 	catcache.o \
 	evtcache.o \
+	funccache.o \
 	inval.o \
 	lsyscache.o \
 	partcache.o \

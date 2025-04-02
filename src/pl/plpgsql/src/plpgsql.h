@@ -21,6 +21,7 @@
 #include "commands/trigger.h"
 #include "executor/spi.h"
 #include "utils/expandedrecord.h"
+#include "utils/funccache.h"
 #include "utils/typcache.h"
 
 
@@ -942,40 +943,6 @@ typedef struct PLpgSQL_stmt_dynexecute
 } PLpgSQL_stmt_dynexecute;
 
 /*
- * Hash lookup key for functions
- */
-typedef struct PLpgSQL_func_hashkey
-{
-	Oid			funcOid;
-
-	bool		isTrigger;		/* true if called as a DML trigger */
-	bool		isEventTrigger; /* true if called as an event trigger */
-
-	/* be careful that pad bytes in this struct get zeroed! */
-
-	/*
-	 * For a trigger function, the OID of the trigger is part of the hash key
-	 * --- we want to compile the trigger function separately for each trigger
-	 * it is used with, in case the rowtype or transition table names are
-	 * different.  Zero if not called as a DML trigger.
-	 */
-	Oid			trigOid;
-
-	/*
-	 * We must include the input collation as part of the hash key too,
-	 * because we have to generate different plans (with different Param
-	 * collations) for different collation settings.
-	 */
-	Oid			inputCollation;
-
-	/*
-	 * We include actual argument types in the hash key to support polymorphic
-	 * PLpgSQL functions.  Be careful that extra positions are zeroed!
-	 */
-	Oid			argtypes[FUNC_MAX_ARGS];
-} PLpgSQL_func_hashkey;
-
-/*
  * Trigger type
  */
 typedef enum PLpgSQL_trigtype
@@ -990,13 +957,12 @@ typedef enum PLpgSQL_trigtype
  */
 typedef struct PLpgSQL_function
 {
+	CachedFunction cfunc;		/* fields managed by funccache.c */
+
 	char	   *fn_signature;
 	Oid			fn_oid;
-	TransactionId fn_xmin;
-	ItemPointerData fn_tid;
 	PLpgSQL_trigtype fn_is_trigger;
 	Oid			fn_input_collation;
-	PLpgSQL_func_hashkey *fn_hashkey;	/* back-link to hashtable key */
 	MemoryContext fn_cxt;
 
 	Oid			fn_rettype;
@@ -1036,9 +1002,8 @@ typedef struct PLpgSQL_function
 	bool		requires_procedure_resowner;	/* contains CALL or DO? */
 	bool		has_exception_block;	/* contains BEGIN...EXCEPTION? */
 
-	/* these fields change when the function is used */
+	/* this field changes when the function is used */
 	struct PLpgSQL_execstate *cur_estate;
-	unsigned long use_count;
 } PLpgSQL_function;
 
 /*
@@ -1287,7 +1252,6 @@ extern PGDLLEXPORT int plpgsql_recognize_err_condition(const char *condname,
 extern PLpgSQL_condition *plpgsql_parse_err_condition(char *condname);
 extern void plpgsql_adddatum(PLpgSQL_datum *newdatum);
 extern int	plpgsql_add_initdatums(int **varnos);
-extern void plpgsql_HashTableInit(void);
 
 /*
  * Functions in pl_exec.c
@@ -1335,6 +1299,7 @@ extern PGDLLEXPORT const char *plpgsql_stmt_typename(PLpgSQL_stmt *stmt);
 extern const char *plpgsql_getdiag_kindname(PLpgSQL_getdiag_kind kind);
 extern void plpgsql_mark_local_assignment_targets(PLpgSQL_function *func);
 extern void plpgsql_free_function_memory(PLpgSQL_function *func);
+extern void plpgsql_delete_callback(CachedFunction *cfunc);
 extern void plpgsql_dumptree(PLpgSQL_function *func);
 
 /*

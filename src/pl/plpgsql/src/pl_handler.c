@@ -202,7 +202,6 @@ _PG_init(void)
 
 	MarkGUCPrefixReserved("plpgsql");
 
-	plpgsql_HashTableInit();
 	RegisterXactCallback(plpgsql_xact_cb, NULL);
 	RegisterSubXactCallback(plpgsql_subxact_cb, NULL);
 
@@ -247,7 +246,7 @@ plpgsql_call_handler(PG_FUNCTION_ARGS)
 	save_cur_estate = func->cur_estate;
 
 	/* Mark the function as busy, so it can't be deleted from under us */
-	func->use_count++;
+	func->cfunc.use_count++;
 
 	/*
 	 * If we'll need a procedure-lifespan resowner to execute any CALL or DO
@@ -284,7 +283,7 @@ plpgsql_call_handler(PG_FUNCTION_ARGS)
 	PG_FINALLY();
 	{
 		/* Decrement use-count, restore cur_estate */
-		func->use_count--;
+		func->cfunc.use_count--;
 		func->cur_estate = save_cur_estate;
 
 		/* Be sure to release the procedure resowner if any */
@@ -334,7 +333,7 @@ plpgsql_inline_handler(PG_FUNCTION_ARGS)
 	func = plpgsql_compile_inline(codeblock->source_text);
 
 	/* Mark the function as busy, just pro forma */
-	func->use_count++;
+	func->cfunc.use_count++;
 
 	/*
 	 * Set up a fake fcinfo with just enough info to satisfy
@@ -398,8 +397,8 @@ plpgsql_inline_handler(PG_FUNCTION_ARGS)
 		ResourceOwnerDelete(simple_eval_resowner);
 
 		/* Function should now have no remaining use-counts ... */
-		func->use_count--;
-		Assert(func->use_count == 0);
+		func->cfunc.use_count--;
+		Assert(func->cfunc.use_count == 0);
 
 		/* ... so we can free subsidiary storage */
 		plpgsql_free_function_memory(func);
@@ -415,8 +414,8 @@ plpgsql_inline_handler(PG_FUNCTION_ARGS)
 	ResourceOwnerDelete(simple_eval_resowner);
 
 	/* Function should now have no remaining use-counts ... */
-	func->use_count--;
-	Assert(func->use_count == 0);
+	func->cfunc.use_count--;
+	Assert(func->cfunc.use_count == 0);
 
 	/* ... so we can free subsidiary storage */
 	plpgsql_free_function_memory(func);

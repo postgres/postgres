@@ -592,6 +592,45 @@ analyze_requires_snapshot(RawStmt *parseTree)
 }
 
 /*
+ * query_requires_rewrite_plan()
+ *		Returns true if rewriting or planning is non-trivial for this Query.
+ *
+ * This is much like stmt_requires_parse_analysis(), but applies one step
+ * further down the pipeline.
+ *
+ * We do not provide an equivalent of analyze_requires_snapshot(): callers
+ * can assume that any rewriting or planning activity needs a snapshot.
+ */
+bool
+query_requires_rewrite_plan(Query *query)
+{
+	bool		result;
+
+	if (query->commandType != CMD_UTILITY)
+	{
+		/* All optimizable statements require rewriting/planning */
+		result = true;
+	}
+	else
+	{
+		/* This list should match stmt_requires_parse_analysis() */
+		switch (nodeTag(query->utilityStmt))
+		{
+			case T_DeclareCursorStmt:
+			case T_ExplainStmt:
+			case T_CreateTableAsStmt:
+			case T_CallStmt:
+				result = true;
+				break;
+			default:
+				result = false;
+				break;
+		}
+	}
+	return result;
+}
+
+/*
  * transformDeleteStmt -
  *	  transforms a Delete Statement
  */

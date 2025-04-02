@@ -53,20 +53,6 @@ PLpgSQL_function *plpgsql_curr_compile;
 MemoryContext plpgsql_compile_tmp_cxt;
 
 /* ----------
- * Hash table for compiled functions
- * ----------
- */
-static HTAB *plpgsql_HashTable = NULL;
-
-typedef struct plpgsql_hashent
-{
-	PLpgSQL_func_hashkey key;
-	PLpgSQL_function *function;
-} plpgsql_HashEnt;
-
-#define FUNCS_PER_USER		128 /* initial table size */
-
-/* ----------
  * Lookup table for EXCEPTION condition names
  * ----------
  */
@@ -86,11 +72,11 @@ static const ExceptionLabelMap exception_label_map[] = {
  * static prototypes
  * ----------
  */
-static PLpgSQL_function *do_compile(FunctionCallInfo fcinfo,
-									HeapTuple procTup,
-									PLpgSQL_function *function,
-									PLpgSQL_func_hashkey *hashkey,
-									bool forValidator);
+static void plpgsql_compile_callback(FunctionCallInfo fcinfo,
+									 HeapTuple procTup,
+									 const CachedFunctionHashKey *hashkey,
+									 CachedFunction *cfunc,
+									 bool forValidator);
 static void plpgsql_compile_error_callback(void *arg);
 static void add_parameter_name(PLpgSQL_nsitem_type itemtype, int itemno, const char *name);
 static void add_dummy_return(PLpgSQL_function *function);
@@ -105,19 +91,6 @@ static PLpgSQL_type *build_datatype(HeapTuple typeTup, int32 typmod,
 									Oid collation, TypeName *origtypname);
 static void plpgsql_start_datums(void);
 static void plpgsql_finish_datums(PLpgSQL_function *function);
-static void compute_function_hashkey(FunctionCallInfo fcinfo,
-									 Form_pg_proc procStruct,
-									 PLpgSQL_func_hashkey *hashkey,
-									 bool forValidator);
-static void plpgsql_resolve_polymorphic_argtypes(int numargs,
-												 Oid *argtypes, char *argmodes,
-												 Node *call_expr, bool forValidator,
-												 const char *proname);
-static PLpgSQL_function *plpgsql_HashTableLookup(PLpgSQL_func_hashkey *func_key);
-static void plpgsql_HashTableInsert(PLpgSQL_function *function,
-									PLpgSQL_func_hashkey *func_key);
-static void plpgsql_HashTableDelete(PLpgSQL_function *function);
-static void delete_function(PLpgSQL_function *func);
 
 /* ----------
  * plpgsql_compile		Make an execution tree for a PL/pgSQL function.
@@ -132,97 +105,24 @@ static void delete_function(PLpgSQL_function *func);
 PLpgSQL_function *
 plpgsql_compile(FunctionCallInfo fcinfo, bool forValidator)
 {
-	Oid			funcOid = fcinfo->flinfo->fn_oid;
-	HeapTuple	procTup;
-	Form_pg_proc procStruct;
 	PLpgSQL_function *function;
-	PLpgSQL_func_hashkey hashkey;
-	bool		function_valid = false;
-	bool		hashkey_valid = false;
 
 	/*
-	 * Lookup the pg_proc tuple by Oid; we'll need it in any case
+	 * funccache.c manages re-use of existing PLpgSQL_function caches.
+	 *
+	 * In PL/pgSQL we use fn_extra directly as the pointer to the long-lived
+	 * function cache entry; we have no need for any query-lifespan cache.
+	 * Also, we don't need to make the cache key depend on composite result
+	 * type (at least for now).
 	 */
-	procTup = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcOid));
-	if (!HeapTupleIsValid(procTup))
-		elog(ERROR, "cache lookup failed for function %u", funcOid);
-	procStruct = (Form_pg_proc) GETSTRUCT(procTup);
-
-	/*
-	 * See if there's already a cache entry for the current FmgrInfo. If not,
-	 * try to find one in the hash table.
-	 */
-	function = (PLpgSQL_function *) fcinfo->flinfo->fn_extra;
-
-recheck:
-	if (!function)
-	{
-		/* Compute hashkey using function signature and actual arg types */
-		compute_function_hashkey(fcinfo, procStruct, &hashkey, forValidator);
-		hashkey_valid = true;
-
-		/* And do the lookup */
-		function = plpgsql_HashTableLookup(&hashkey);
-	}
-
-	if (function)
-	{
-		/* We have a compiled function, but is it still valid? */
-		if (function->fn_xmin == HeapTupleHeaderGetRawXmin(procTup->t_data) &&
-			ItemPointerEquals(&function->fn_tid, &procTup->t_self))
-			function_valid = true;
-		else
-		{
-			/*
-			 * Nope, so remove it from hashtable and try to drop associated
-			 * storage (if not done already).
-			 */
-			delete_function(function);
-
-			/*
-			 * If the function isn't in active use then we can overwrite the
-			 * func struct with new data, allowing any other existing fn_extra
-			 * pointers to make use of the new definition on their next use.
-			 * If it is in use then just leave it alone and make a new one.
-			 * (The active invocations will run to completion using the
-			 * previous definition, and then the cache entry will just be
-			 * leaked; doesn't seem worth adding code to clean it up, given
-			 * what a corner case this is.)
-			 *
-			 * If we found the function struct via fn_extra then it's possible
-			 * a replacement has already been made, so go back and recheck the
-			 * hashtable.
-			 */
-			if (function->use_count != 0)
-			{
-				function = NULL;
-				if (!hashkey_valid)
-					goto recheck;
-			}
-		}
-	}
-
-	/*
-	 * If the function wasn't found or was out-of-date, we have to compile it
-	 */
-	if (!function_valid)
-	{
-		/*
-		 * Calculate hashkey if we didn't already; we'll need it to store the
-		 * completed function.
-		 */
-		if (!hashkey_valid)
-			compute_function_hashkey(fcinfo, procStruct, &hashkey,
-									 forValidator);
-
-		/*
-		 * Do the hard part.
-		 */
-		function = do_compile(fcinfo, procTup, function,
-							  &hashkey, forValidator);
-	}
-
-	ReleaseSysCache(procTup);
+	function = (PLpgSQL_function *)
+		cached_function_compile(fcinfo,
+								fcinfo->flinfo->fn_extra,
+								plpgsql_compile_callback,
+								plpgsql_delete_callback,
+								sizeof(PLpgSQL_function),
+								false,
+								forValidator);
 
 	/*
 	 * Save pointer in FmgrInfo to avoid search on subsequent calls
@@ -244,8 +144,8 @@ struct compile_error_callback_arg
 /*
  * This is the slow part of plpgsql_compile().
  *
- * The passed-in "function" pointer is either NULL or an already-allocated
- * function struct to overwrite.
+ * The passed-in "cfunc" struct is expected to be zeroes, except
+ * for the CachedFunction fields, which we don't touch here.
  *
  * While compiling a function, the CurrentMemoryContext is the
  * per-function memory context of the function we are compiling. That
@@ -263,13 +163,14 @@ struct compile_error_callback_arg
  * NB: this code is not re-entrant.  We assume that nothing we do here could
  * result in the invocation of another plpgsql function.
  */
-static PLpgSQL_function *
-do_compile(FunctionCallInfo fcinfo,
-		   HeapTuple procTup,
-		   PLpgSQL_function *function,
-		   PLpgSQL_func_hashkey *hashkey,
-		   bool forValidator)
+static void
+plpgsql_compile_callback(FunctionCallInfo fcinfo,
+						 HeapTuple procTup,
+						 const CachedFunctionHashKey *hashkey,
+						 CachedFunction *cfunc,
+						 bool forValidator)
 {
+	PLpgSQL_function *function = (PLpgSQL_function *) cfunc;
 	Form_pg_proc procStruct = (Form_pg_proc) GETSTRUCT(procTup);
 	bool		is_dml_trigger = CALLED_AS_TRIGGER(fcinfo);
 	bool		is_event_trigger = CALLED_AS_EVENT_TRIGGER(fcinfo);
@@ -320,21 +221,6 @@ do_compile(FunctionCallInfo fcinfo,
 	 * reasons.
 	 */
 	plpgsql_check_syntax = forValidator;
-
-	/*
-	 * Create the new function struct, if not done already.  The function
-	 * structs are never thrown away, so keep them in TopMemoryContext.
-	 */
-	if (function == NULL)
-	{
-		function = (PLpgSQL_function *)
-			MemoryContextAllocZero(TopMemoryContext, sizeof(PLpgSQL_function));
-	}
-	else
-	{
-		/* re-using a previously existing struct, so clear it out */
-		memset(function, 0, sizeof(PLpgSQL_function));
-	}
 	plpgsql_curr_compile = function;
 
 	/*
@@ -349,8 +235,6 @@ do_compile(FunctionCallInfo fcinfo,
 	function->fn_signature = format_procedure(fcinfo->flinfo->fn_oid);
 	MemoryContextSetIdentifier(func_cxt, function->fn_signature);
 	function->fn_oid = fcinfo->flinfo->fn_oid;
-	function->fn_xmin = HeapTupleHeaderGetRawXmin(procTup->t_data);
-	function->fn_tid = procTup->t_self;
 	function->fn_input_collation = fcinfo->fncollation;
 	function->fn_cxt = func_cxt;
 	function->out_param_varno = -1; /* set up for no OUT param */
@@ -400,10 +284,10 @@ do_compile(FunctionCallInfo fcinfo,
 			numargs = get_func_arg_info(procTup,
 										&argtypes, &argnames, &argmodes);
 
-			plpgsql_resolve_polymorphic_argtypes(numargs, argtypes, argmodes,
-												 fcinfo->flinfo->fn_expr,
-												 forValidator,
-												 plpgsql_error_funcname);
+			cfunc_resolve_polymorphic_argtypes(numargs, argtypes, argmodes,
+											   fcinfo->flinfo->fn_expr,
+											   forValidator,
+											   plpgsql_error_funcname);
 
 			in_arg_varnos = (int *) palloc(numargs * sizeof(int));
 			out_arg_variables = (PLpgSQL_variable **) palloc(numargs * sizeof(PLpgSQL_variable *));
@@ -820,11 +704,6 @@ do_compile(FunctionCallInfo fcinfo,
 		plpgsql_dumptree(function);
 
 	/*
-	 * add it to the hash table
-	 */
-	plpgsql_HashTableInsert(function, hashkey);
-
-	/*
 	 * Pop the error context stack
 	 */
 	error_context_stack = plerrcontext.previous;
@@ -834,14 +713,13 @@ do_compile(FunctionCallInfo fcinfo,
 
 	MemoryContextSwitchTo(plpgsql_compile_tmp_cxt);
 	plpgsql_compile_tmp_cxt = NULL;
-	return function;
 }
 
 /* ----------
  * plpgsql_compile_inline	Make an execution tree for an anonymous code block.
  *
- * Note: this is generally parallel to do_compile(); is it worth trying to
- * merge the two?
+ * Note: this is generally parallel to plpgsql_compile_callback(); is it worth
+ * trying to merge the two?
  *
  * Note: we assume the block will be thrown away so there is no need to build
  * persistent data structures.
@@ -2436,243 +2314,4 @@ plpgsql_add_initdatums(int **varnos)
 
 	datums_last = plpgsql_nDatums;
 	return n;
-}
-
-
-/*
- * Compute the hashkey for a given function invocation
- *
- * The hashkey is returned into the caller-provided storage at *hashkey.
- */
-static void
-compute_function_hashkey(FunctionCallInfo fcinfo,
-						 Form_pg_proc procStruct,
-						 PLpgSQL_func_hashkey *hashkey,
-						 bool forValidator)
-{
-	/* Make sure any unused bytes of the struct are zero */
-	MemSet(hashkey, 0, sizeof(PLpgSQL_func_hashkey));
-
-	/* get function OID */
-	hashkey->funcOid = fcinfo->flinfo->fn_oid;
-
-	/* get call context */
-	hashkey->isTrigger = CALLED_AS_TRIGGER(fcinfo);
-	hashkey->isEventTrigger = CALLED_AS_EVENT_TRIGGER(fcinfo);
-
-	/*
-	 * If DML trigger, include trigger's OID in the hash, so that each trigger
-	 * usage gets a different hash entry, allowing for e.g. different relation
-	 * rowtypes or transition table names.  In validation mode we do not know
-	 * what relation or transition table names are intended to be used, so we
-	 * leave trigOid zero; the hash entry built in this case will never be
-	 * used for any actual calls.
-	 *
-	 * We don't currently need to distinguish different event trigger usages
-	 * in the same way, since the special parameter variables don't vary in
-	 * type in that case.
-	 */
-	if (hashkey->isTrigger && !forValidator)
-	{
-		TriggerData *trigdata = (TriggerData *) fcinfo->context;
-
-		hashkey->trigOid = trigdata->tg_trigger->tgoid;
-	}
-
-	/* get input collation, if known */
-	hashkey->inputCollation = fcinfo->fncollation;
-
-	if (procStruct->pronargs > 0)
-	{
-		/* get the argument types */
-		memcpy(hashkey->argtypes, procStruct->proargtypes.values,
-			   procStruct->pronargs * sizeof(Oid));
-
-		/* resolve any polymorphic argument types */
-		plpgsql_resolve_polymorphic_argtypes(procStruct->pronargs,
-											 hashkey->argtypes,
-											 NULL,
-											 fcinfo->flinfo->fn_expr,
-											 forValidator,
-											 NameStr(procStruct->proname));
-	}
-}
-
-/*
- * This is the same as the standard resolve_polymorphic_argtypes() function,
- * except that:
- * 1. We go ahead and report the error if we can't resolve the types.
- * 2. We treat RECORD-type input arguments (not output arguments) as if
- *    they were polymorphic, replacing their types with the actual input
- *    types if we can determine those.  This allows us to create a separate
- *    function cache entry for each named composite type passed to such an
- *    argument.
- * 3. In validation mode, we have no inputs to look at, so assume that
- *    polymorphic arguments are integer, integer-array or integer-range.
- */
-static void
-plpgsql_resolve_polymorphic_argtypes(int numargs,
-									 Oid *argtypes, char *argmodes,
-									 Node *call_expr, bool forValidator,
-									 const char *proname)
-{
-	int			i;
-
-	if (!forValidator)
-	{
-		int			inargno;
-
-		/* normal case, pass to standard routine */
-		if (!resolve_polymorphic_argtypes(numargs, argtypes, argmodes,
-										  call_expr))
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("could not determine actual argument "
-							"type for polymorphic function \"%s\"",
-							proname)));
-		/* also, treat RECORD inputs (but not outputs) as polymorphic */
-		inargno = 0;
-		for (i = 0; i < numargs; i++)
-		{
-			char		argmode = argmodes ? argmodes[i] : PROARGMODE_IN;
-
-			if (argmode == PROARGMODE_OUT || argmode == PROARGMODE_TABLE)
-				continue;
-			if (argtypes[i] == RECORDOID || argtypes[i] == RECORDARRAYOID)
-			{
-				Oid			resolvedtype = get_call_expr_argtype(call_expr,
-																 inargno);
-
-				if (OidIsValid(resolvedtype))
-					argtypes[i] = resolvedtype;
-			}
-			inargno++;
-		}
-	}
-	else
-	{
-		/* special validation case (no need to do anything for RECORD) */
-		for (i = 0; i < numargs; i++)
-		{
-			switch (argtypes[i])
-			{
-				case ANYELEMENTOID:
-				case ANYNONARRAYOID:
-				case ANYENUMOID:	/* XXX dubious */
-				case ANYCOMPATIBLEOID:
-				case ANYCOMPATIBLENONARRAYOID:
-					argtypes[i] = INT4OID;
-					break;
-				case ANYARRAYOID:
-				case ANYCOMPATIBLEARRAYOID:
-					argtypes[i] = INT4ARRAYOID;
-					break;
-				case ANYRANGEOID:
-				case ANYCOMPATIBLERANGEOID:
-					argtypes[i] = INT4RANGEOID;
-					break;
-				case ANYMULTIRANGEOID:
-					argtypes[i] = INT4MULTIRANGEOID;
-					break;
-				default:
-					break;
-			}
-		}
-	}
-}
-
-/*
- * delete_function - clean up as much as possible of a stale function cache
- *
- * We can't release the PLpgSQL_function struct itself, because of the
- * possibility that there are fn_extra pointers to it.  We can release
- * the subsidiary storage, but only if there are no active evaluations
- * in progress.  Otherwise we'll just leak that storage.  Since the
- * case would only occur if a pg_proc update is detected during a nested
- * recursive call on the function, a leak seems acceptable.
- *
- * Note that this can be called more than once if there are multiple fn_extra
- * pointers to the same function cache.  Hence be careful not to do things
- * twice.
- */
-static void
-delete_function(PLpgSQL_function *func)
-{
-	/* remove function from hash table (might be done already) */
-	plpgsql_HashTableDelete(func);
-
-	/* release the function's storage if safe and not done already */
-	if (func->use_count == 0)
-		plpgsql_free_function_memory(func);
-}
-
-/* exported so we can call it from _PG_init() */
-void
-plpgsql_HashTableInit(void)
-{
-	HASHCTL		ctl;
-
-	/* don't allow double-initialization */
-	Assert(plpgsql_HashTable == NULL);
-
-	ctl.keysize = sizeof(PLpgSQL_func_hashkey);
-	ctl.entrysize = sizeof(plpgsql_HashEnt);
-	plpgsql_HashTable = hash_create("PLpgSQL function hash",
-									FUNCS_PER_USER,
-									&ctl,
-									HASH_ELEM | HASH_BLOBS);
-}
-
-static PLpgSQL_function *
-plpgsql_HashTableLookup(PLpgSQL_func_hashkey *func_key)
-{
-	plpgsql_HashEnt *hentry;
-
-	hentry = (plpgsql_HashEnt *) hash_search(plpgsql_HashTable,
-											 func_key,
-											 HASH_FIND,
-											 NULL);
-	if (hentry)
-		return hentry->function;
-	else
-		return NULL;
-}
-
-static void
-plpgsql_HashTableInsert(PLpgSQL_function *function,
-						PLpgSQL_func_hashkey *func_key)
-{
-	plpgsql_HashEnt *hentry;
-	bool		found;
-
-	hentry = (plpgsql_HashEnt *) hash_search(plpgsql_HashTable,
-											 func_key,
-											 HASH_ENTER,
-											 &found);
-	if (found)
-		elog(WARNING, "trying to insert a function that already exists");
-
-	hentry->function = function;
-	/* prepare back link from function to hashtable key */
-	function->fn_hashkey = &hentry->key;
-}
-
-static void
-plpgsql_HashTableDelete(PLpgSQL_function *function)
-{
-	plpgsql_HashEnt *hentry;
-
-	/* do nothing if not in table */
-	if (function->fn_hashkey == NULL)
-		return;
-
-	hentry = (plpgsql_HashEnt *) hash_search(plpgsql_HashTable,
-											 function->fn_hashkey,
-											 HASH_REMOVE,
-											 NULL);
-	if (hentry == NULL)
-		elog(WARNING, "trying to delete function that does not exist");
-
-	/* remove back link, which no longer points to allocated storage */
-	function->fn_hashkey = NULL;
 }

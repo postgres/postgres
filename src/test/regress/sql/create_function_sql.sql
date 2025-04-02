@@ -328,6 +328,15 @@ CREATE OR REPLACE PROCEDURE functest1(a int) LANGUAGE SQL AS 'SELECT $1';
 DROP FUNCTION functest1(a int);
 
 
+-- early shutdown of set-returning functions
+
+CREATE FUNCTION functest_srf0() RETURNS SETOF int
+LANGUAGE SQL
+AS $$ SELECT i FROM generate_series(1, 100) i $$;
+
+SELECT functest_srf0() LIMIT 5;
+
+
 -- inlining of set-returning functions
 
 CREATE TABLE functest3 (a int);
@@ -384,6 +393,31 @@ TABLE sometable;
 CREATE FUNCTION voidtest5(a int) RETURNS SETOF VOID LANGUAGE SQL AS
 $$ SELECT generate_series(1, a) $$ STABLE;
 SELECT * FROM voidtest5(3);
+
+-- DDL within a SQL function can now affect later statements in the function;
+-- though that doesn't work if check_function_bodies is on.
+
+SET check_function_bodies TO off;
+
+CREATE FUNCTION create_and_insert() RETURNS VOID LANGUAGE sql AS $$
+  create table ddl_test (f1 int);
+  insert into ddl_test values (1.2);
+$$;
+
+SELECT create_and_insert();
+
+TABLE ddl_test;
+
+CREATE FUNCTION alter_and_insert() RETURNS VOID LANGUAGE sql AS $$
+  alter table ddl_test alter column f1 type numeric;
+  insert into ddl_test values (1.2);
+$$;
+
+SELECT alter_and_insert();
+
+TABLE ddl_test;
+
+RESET check_function_bodies;
 
 -- Regression tests for bugs:
 
