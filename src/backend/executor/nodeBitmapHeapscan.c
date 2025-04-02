@@ -743,6 +743,20 @@ ExecInitBitmapHeapScan(BitmapHeapScan *node, EState *estate, int eflags)
 	scanstate->pstate = NULL;
 
 	/*
+	 * Unfortunately it turns out that the below optimization does not
+	 * take the removal of TIDs by a concurrent vacuum into
+	 * account. The concurrent vacuum can remove dead TIDs and make
+	 * pages ALL_VISIBLE while those dead TIDs are referenced in the
+	 * bitmap. This would lead to a !need_tuples scan returning too
+	 * many tuples.
+	 *
+	 * In the back-branches, we therefore simply disable the
+	 * optimization. Removing all the relevant code would be too
+	 * invasive (and a major backpatching pain).
+	 */
+	scanstate->can_skip_fetch = false;
+#ifdef NOT_ANYMORE
+	/*
 	 * We can potentially skip fetching heap pages if we do not need any
 	 * columns of the table, either for checking non-indexable quals or for
 	 * returning data.  This test is a bit simplistic, as it checks the
@@ -751,6 +765,7 @@ ExecInitBitmapHeapScan(BitmapHeapScan *node, EState *estate, int eflags)
 	 */
 	scanstate->can_skip_fetch = (node->scan.plan.qual == NIL &&
 								 node->scan.plan.targetlist == NIL);
+#endif
 
 	/*
 	 * Miscellaneous initialization
