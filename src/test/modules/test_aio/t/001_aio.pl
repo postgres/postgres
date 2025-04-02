@@ -96,6 +96,17 @@ restart_after_crash=false
 temp_buffers=100
 ));
 
+	# Even though we used -c io_method=... above, if TEMP_CONFIG sets
+	# io_method, it'd override the setting persisted at initdb time. While
+	# using (and later verifying) the setting from initdb provides some
+	# verification of having used the io_method during initdb, it's probably
+	# not worth the complication of only appending if the variable is set in
+	# in TEMP_CONFIG.
+	$node->append_conf(
+		'postgresql.conf', qq(
+io_method=$io_method
+));
+
 	ok(1, "$io_method: initdb");
 
 	return $node;
