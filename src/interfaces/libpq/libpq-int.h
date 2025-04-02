@@ -496,6 +496,8 @@ struct pg_conn
 	SockAddr	raddr;			/* Remote address */
 	ProtocolVersion pversion;	/* FE/BE protocol version in use */
 	int			sversion;		/* server version, e.g. 70401 for 7.4.1 */
+	bool		pversion_negotiated;	/* true if NegotiateProtocolVersion
+										 * was received */
 	bool		auth_req_received;	/* true if any type of auth req received */
 	bool		password_needed;	/* true if server demanded a password */
 	bool		gssapi_used;	/* true if authenticated via gssapi */

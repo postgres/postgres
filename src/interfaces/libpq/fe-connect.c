@@ -667,6 +667,7 @@ pqDropServerData(PGconn *conn)
 
 	/* Reset assorted other per-connection state */
 	conn->last_sqlstate[0] = '\0';
+	conn->pversion_negotiated = false;
 	conn->auth_req_received = false;
 	conn->client_finished_auth = false;
 	conn->password_needed = false;
@@ -4084,16 +4085,24 @@ keep_going:						/* We will come back to here until there is
 
 					CONNECTION_FAILED();
 				}
+				/* Handle NegotiateProtocolVersion */
 				else if (beresp == PqMsg_NegotiateProtocolVersion)
 				{
-					if (pqGetNegotiateProtocolVersion3(conn))
+					if (conn->pversion_negotiated)
 					{
-						libpq_append_conn_error(conn, "received invalid protocol negotiation message");
+						libpq_append_conn_error(conn, "received duplicate protocol negotiation message");
 						goto error_return;
 					}
+					if (pqGetNegotiateProtocolVersion3(conn))
+					{
+						/* pqGetNegotiateProtocolVersion3 set error already */
+						goto error_return;
+					}
+					conn->pversion_negotiated = true;
+
 					/* OK, we read the message; mark data consumed */
 					pqParseDone(conn, conn->inCursor);
-					goto error_return;
+					goto keep_going;
 				}
 
 				/* It is an authentication request. */
