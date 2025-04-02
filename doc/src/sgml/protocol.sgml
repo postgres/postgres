@@ -223,7 +223,7 @@
    <table>
     <title>Protocol versions</title>
 
-    <tgroup cols="2">
+    <tgroup cols="3">
      <thead>
       <row>
        <entry>Version</entry>
