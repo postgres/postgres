@@ -56,7 +56,6 @@ PG_FUNCTION_INFO_V1(pg_tde_verify_default_key);
 typedef struct TdePrincipalKeySharedState
 {
 	LWLockPadded *Locks;
-	int			hashTrancheId;
 	dshash_table_handle hashHandle;
 	void	   *rawDsaArea;		/* DSA area pointer */
 
@@ -65,8 +64,6 @@ typedef struct TdePrincipalKeySharedState
 typedef struct TdePrincipalKeylocalState
 {
 	TdePrincipalKeySharedState *sharedPrincipalKeyState;
-	dsa_area   *dsa;			/* local dsa area for backend attached to the
-								 * dsa area created by postmaster at startup. */
 	dshash_table *sharedHash;
 } TdePrincipalKeylocalState;
 
@@ -170,12 +167,12 @@ initialize_shared_state(void *start_address)
 	TdePrincipalKeySharedState *sharedState = (TdePrincipalKeySharedState *) start_address;
 
 	ereport(LOG, errmsg("initializing shared state for principal key"));
-	principalKeyLocalState.dsa = NULL;
-	principalKeyLocalState.sharedHash = NULL;
 
 	sharedState->Locks = GetNamedLWLockTranche(TDE_TRANCHE_NAME);
 
 	principalKeyLocalState.sharedPrincipalKeyState = sharedState;
+	principalKeyLocalState.sharedHash = NULL;
+
 	return sizeof(TdePrincipalKeySharedState);
 }
 
@@ -190,9 +187,8 @@ initialize_objects_in_dsa_area(dsa_area *dsa, void *raw_dsa_area)
 	Assert(sharedState != NULL);
 
 	sharedState->rawDsaArea = raw_dsa_area;
-	sharedState->hashTrancheId = LWLockNewTrancheId();
-	principal_key_dsh_params.tranche_id = sharedState->hashTrancheId;
-	dsh = dshash_create(dsa, &principal_key_dsh_params, 0);
+	principal_key_dsh_params.tranche_id = LWLockNewTrancheId();
+	dsh = dshash_create(dsa, &principal_key_dsh_params, NULL);
 	sharedState->hashHandle = dshash_get_hash_table_handle(dsh);
 	dshash_detach(dsh);
 }
@@ -204,8 +200,9 @@ static void
 principal_key_info_attach_shmem(void)
 {
 	MemoryContext oldcontext;
+	dsa_area   *dsa;
 
-	if (principalKeyLocalState.dsa)
+	if (principalKeyLocalState.sharedHash)
 		return;
 
 	/*
@@ -214,18 +211,12 @@ principal_key_info_attach_shmem(void)
 	 */
 	oldcontext = MemoryContextSwitchTo(TopMemoryContext);
 
-	principalKeyLocalState.dsa = dsa_attach_in_place(principalKeyLocalState.sharedPrincipalKeyState->rawDsaArea,
-													 NULL);
+	dsa = dsa_attach_in_place(principalKeyLocalState.sharedPrincipalKeyState->rawDsaArea, NULL);
+	dsa_pin_mapping(dsa);
 
-	/*
-	 * pin the attached area to keep the area attached until end of session or
-	 * explicit detach.
-	 */
-	dsa_pin_mapping(principalKeyLocalState.dsa);
-
-	principal_key_dsh_params.tranche_id = principalKeyLocalState.sharedPrincipalKeyState->hashTrancheId;
-	principalKeyLocalState.sharedHash = dshash_attach(principalKeyLocalState.dsa, &principal_key_dsh_params,
+	principalKeyLocalState.sharedHash = dshash_attach(dsa, &principal_key_dsh_params,
 													  principalKeyLocalState.sharedPrincipalKeyState->hashHandle, 0);
+
 	MemoryContextSwitchTo(oldcontext);
 }
 
