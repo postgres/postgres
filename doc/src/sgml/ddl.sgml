@@ -5075,7 +5075,13 @@ EXPLAIN SELECT count(*) FROM measurement WHERE logdate &gt;= DATE '2008-01-01';
        It is possible to determine the number of partitions which were
        removed during this phase by observing the
        <quote>Subplans Removed</quote> property in the
-       <command>EXPLAIN</command> output.
+       <command>EXPLAIN</command> output.  The query planner obtains locks for
+       all partitions which are part of the plan.  However, when the executor
+       uses a cached plan, locks are only obtained on the partitions which
+       remain after partition pruning done during the initialization phase of
+       execution, i.e., the ones shown in the <command>EXPLAIN</command>
+       output and not the ones referred to by the
+       <quote>Subplans Removed</quote> property.
       </para>
      </listitem>
 
