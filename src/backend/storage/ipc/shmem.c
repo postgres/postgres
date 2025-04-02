@@ -73,6 +73,7 @@
 #include "storage/shmem.h"
 #include "storage/spin.h"
 #include "utils/builtins.h"
+#include "utils/dynahash.h"
 
 static void *ShmemAllocRaw(Size size, Size *allocated_size);
 
@@ -346,7 +347,8 @@ ShmemInitHash(const char *name,		/* table string name for shmem index */
 
 	/* look it up in the shmem index */
 	location = ShmemInitStruct(name,
-							   hash_get_shared_size(infoP, hash_flags),
+							   hash_get_size(infoP, hash_flags,
+											 init_size, true),
 							   &found);
 
 	/*

@@ -151,7 +151,8 @@ extern void hash_seq_term(HASH_SEQ_STATUS *status);
 extern void hash_freeze(HTAB *hashp);
 extern Size hash_estimate_size(long num_entries, Size entrysize);
 extern long hash_select_dirsize(long num_entries);
-extern Size hash_get_shared_size(HASHCTL *info, int flags);
+extern Size hash_get_size(const HASHCTL *info, int flags,
+						  long nelem, bool prealloc);
 extern void AtEOXact_HashTables(bool isCommit);
 extern void AtEOSubXact_HashTables(bool isCommit, int nestDepth);
 

@@ -260,12 +260,39 @@ static long hash_accesses,
 			hash_expansions;
 #endif
 
+/* access to parts of the hash table, allocated as a single chunk */
+#define	HASH_DIRECTORY_PTR(hashp) \
+	(((char *) (hashp)->hctl) + sizeof(HASHHDR))
+
+#define HASH_SEGMENT_OFFSET(hctl, idx) \
+	(sizeof(HASHHDR) + \
+	 ((hctl)->dsize * sizeof(HASHSEGMENT)) + \
+	 ((hctl)->ssize * (idx) * sizeof(HASHBUCKET)))
+
+#define HASH_SEGMENT_PTR(hashp, idx) \
+	((char *) (hashp)->hctl + HASH_SEGMENT_OFFSET((hashp)->hctl, (idx)))
+
+#define HASH_SEGMENT_SIZE(hashp) \
+	((hashp)->ssize * sizeof(HASHBUCKET))
+
+#define HASH_ELEMENTS_PTR(hashp, nsegs) \
+	((char *) (hashp)->hctl + HASH_SEGMENT_OFFSET((hashp)->hctl, nsegs))
+
+/* Each element has a HASHELEMENT header plus user data. */
+#define HASH_ELEMENT_SIZE(hctl) \
+	(MAXALIGN(sizeof(HASHELEMENT)) + MAXALIGN((hctl)->entrysize))
+
+#define HASH_ELEMENT_NEXT(hctl, num, ptr) \
+	((char *) (ptr) + ((num) * HASH_ELEMENT_SIZE(hctl)))
+
 /*
  * Private function prototypes
  */
 static void *DynaHashAlloc(Size size);
 static HASHSEGMENT seg_alloc(HTAB *hashp);
-static bool element_alloc(HTAB *hashp, int nelem, int freelist_idx);
+static HASHELEMENT *element_alloc(HTAB *hashp, int nelem);
+static void element_add(HTAB *hashp, HASHELEMENT *firstElement,
+						int nelem, int freelist_idx);
 static bool dir_realloc(HTAB *hashp);
 static bool expand_table(HTAB *hashp);
 static HASHBUCKET get_hash_entry(HTAB *hashp, int freelist_idx);
@@ -280,6 +307,9 @@ static int	next_pow2_int(long num);
 static void register_seq_scan(HTAB *hashp);
 static void deregister_seq_scan(HTAB *hashp);
 static bool has_seq_scans(HTAB *hashp);
+static void compute_buckets_and_segs(long nelem, long num_partitions,
+									 long ssize,
+									 int *nbuckets, int *nsegments);
 
 
 /*
@@ -353,6 +383,8 @@ hash_create(const char *tabname, long nelem, const HASHCTL *info, int flags)
 {
 	HTAB	   *hashp;
 	HASHHDR    *hctl;
+	int			nelem_batch;
+	bool		prealloc;
 
 	/*
 	 * Hash tables now allocate space for key and data, but you have to say
@@ -507,9 +539,31 @@ hash_create(const char *tabname, long nelem, const HASHCTL *info, int flags)
 		hashp->isshared = false;
 	}
 
+	/* Choose the number of entries to allocate at a time. */
+	nelem_batch = choose_nelem_alloc(info->entrysize);
+
+	/*
+	 * Decide whether to pre-allocate elements.
+	 *
+	 * For a private hash table, preallocate the requested number of elements
+	 * if it's less than our chosen nelem_alloc.  This avoids wasting space if
+	 * the caller correctly estimates a small table size.
+	 *
+	 * For a shared hash table, preallocate the requested number of elements.
+	 * This reduces problems with run-time out-of-shared-memory conditions.
+	 */
+	prealloc = (flags & HASH_SHARED_MEM) || (nelem < nelem_batch);
+
+	/*
+	 * Allocate the memory needed for hash header, directory, segments and
+	 * elements together. Use pointer arithmetic to arrive at the start of
+	 * each of these structures later.
+	 */
 	if (!hashp->hctl)
 	{
-		hashp->hctl = (HASHHDR *) hashp->alloc(sizeof(HASHHDR));
+		Size		size = hash_get_size(info, flags, nelem, prealloc);
+
+		hashp->hctl = (HASHHDR *) hashp->alloc(size);
 		if (!hashp->hctl)
 			ereport(ERROR,
 					(errcode(ERRCODE_OUT_OF_MEMORY),
@@ -558,6 +612,9 @@ hash_create(const char *tabname, long nelem, const HASHCTL *info, int flags)
 	hctl->keysize = info->keysize;
 	hctl->entrysize = info->entrysize;
 
+	/* remember how many elements to allocate at once */
+	hctl->nelem_alloc = nelem_batch;
+
 	/* make local copies of heavily-used constant fields */
 	hashp->keysize = hctl->keysize;
 	hashp->ssize = hctl->ssize;
@@ -567,14 +624,6 @@ hash_create(const char *tabname, long nelem, const HASHCTL *info, int flags)
 	if (!init_htab(hashp, nelem))
 		elog(ERROR, "failed to initialize hash table \"%s\"", hashp->tabname);
 
-	/*
-	 * For a shared hash table, preallocate the requested number of elements.
-	 * This reduces problems with run-time out-of-shared-memory conditions.
-	 *
-	 * For a non-shared hash table, preallocate the requested number of
-	 * elements if it's less than our chosen nelem_alloc.  This avoids wasting
-	 * space if the caller correctly estimates a small table size.
-	 */
 	if ((flags & HASH_SHARED_MEM) ||
 		nelem < hctl->nelem_alloc)
 	{
@@ -582,6 +631,7 @@ hash_create(const char *tabname, long nelem, const HASHCTL *info, int flags)
 					freelist_partitions,
 					nelem_alloc,
 					nelem_alloc_first;
+		void	   *ptr = NULL;
 
 		/*
 		 * If hash table is partitioned, give each freelist an equal share of
@@ -606,14 +656,28 @@ hash_create(const char *tabname, long nelem, const HASHCTL *info, int flags)
 		else
 			nelem_alloc_first = nelem_alloc;
 
+		/*
+		 * Calculate the offset at which to find the first partition of
+		 * elements. We have to skip space for the header, segments and
+		 * buckets.
+		 */
+		ptr = HASH_ELEMENTS_PTR(hashp, hctl->nsegs);
+
+		/*
+		 * Assign the correct location of each parition within a pre-allocated
+		 * buffer.
+		 *
+		 * Actual memory allocation happens in ShmemInitHash for shared hash
+		 * tables or earlier in this function for non-shared hash tables.
+		 *
+		 * We just need to split that allocation into per-batch freelists.
+		 */
 		for (i = 0; i < freelist_partitions; i++)
 		{
 			int			temp = (i == 0) ? nelem_alloc_first : nelem_alloc;
 
-			if (!element_alloc(hashp, temp, i))
-				ereport(ERROR,
-						(errcode(ERRCODE_OUT_OF_MEMORY),
-						 errmsg("out of memory")));
+			element_add(hashp, (HASHELEMENT *) ptr, temp, i);
+			ptr = HASH_ELEMENT_NEXT(hctl, temp, ptr);
 		}
 	}
 
@@ -702,28 +766,15 @@ init_htab(HTAB *hashp, long nelem)
 			SpinLockInit(&(hctl->freeList[i].mutex));
 
 	/*
-	 * Allocate space for the next greater power of two number of buckets,
-	 * assuming a desired maximum load factor of 1.
+	 * We've already calculated these parameters when we calculated how much
+	 * space to allocate in hash_get_size(). Be careful to keep these two
+	 * places in sync, so that we get the same parameters.
 	 */
-	nbuckets = next_pow2_int(nelem);
-
-	/*
-	 * In a partitioned table, nbuckets must be at least equal to
-	 * num_partitions; were it less, keys with apparently different partition
-	 * numbers would map to the same bucket, breaking partition independence.
-	 * (Normally nbuckets will be much bigger; this is just a safety check.)
-	 */
-	while (nbuckets < hctl->num_partitions)
-		nbuckets <<= 1;
+	compute_buckets_and_segs(nelem, hctl->num_partitions, hctl->ssize,
+							 &nbuckets, &nsegs);
 
 	hctl->max_bucket = hctl->low_mask = nbuckets - 1;
 	hctl->high_mask = (nbuckets << 1) - 1;
-
-	/*
-	 * Figure number of directory segments needed, round up to a power of 2
-	 */
-	nsegs = (nbuckets - 1) / hctl->ssize + 1;
-	nsegs = next_pow2_int(nsegs);
 
 	/*
 	 * Make sure directory is big enough. If pre-allocated directory is too
@@ -737,26 +788,25 @@ init_htab(HTAB *hashp, long nelem)
 			return false;
 	}
 
-	/* Allocate a directory */
+	/*
+	 * Assign a directory by making it point to the correct location in the
+	 * pre-allocated buffer.
+	 */
 	if (!(hashp->dir))
 	{
 		CurrentDynaHashCxt = hashp->hcxt;
-		hashp->dir = (HASHSEGMENT *)
-			hashp->alloc(hctl->dsize * sizeof(HASHSEGMENT));
-		if (!hashp->dir)
-			return false;
+		hashp->dir = (HASHSEGMENT *) HASH_DIRECTORY_PTR(hashp);
 	}
 
-	/* Allocate initial segments */
+	/* Assign initial segments, which are also pre-allocated */
+	i = 0;
 	for (segp = hashp->dir; hctl->nsegs < nsegs; hctl->nsegs++, segp++)
 	{
-		*segp = seg_alloc(hashp);
-		if (*segp == NULL)
-			return false;
+		*segp = (HASHSEGMENT) HASH_SEGMENT_PTR(hashp, i++);
+		MemSet(*segp, 0, HASH_SEGMENT_SIZE(hashp));
 	}
 
-	/* Choose number of entries to allocate at a time */
-	hctl->nelem_alloc = choose_nelem_alloc(hctl->entrysize);
+	Assert(i == nsegs);
 
 #ifdef HASH_DEBUG
 	fprintf(stderr, "init_htab:\n%s%p\n%s%ld\n%s%ld\n%s%d\n%s%ld\n%s%u\n%s%x\n%s%x\n%s%ld\n",
@@ -846,16 +896,75 @@ hash_select_dirsize(long num_entries)
 }
 
 /*
- * Compute the required initial memory allocation for a shared-memory
- * hashtable with the given parameters.  We need space for the HASHHDR
- * and for the (non expansible) directory.
+ * hash_get_size -- determine memory needed for a new dynamic hash table
+ *
+ *	info: hash table parameters
+ *	flags: bitmask indicating which parameters to take from *info
+ *	nelem: maximum number of elements expected
+ *	prealloc: request preallocation of elements
+ *
+ * Compute the required initial memory allocation for a hashtable with the given
+ * parameters. We need space for the HASHHDR, for the directory, segments and
+ * preallocated elements.
+ *
+ * The hash table may be private or shared. For shared hash tables the directory
+ * size is non-expansive, and we preallocate all elements (nelem). For private
+ * hash tables, we preallocate elements only if the expected number of elements
+ * is small (less than nelem_alloc).
  */
 Size
-hash_get_shared_size(HASHCTL *info, int flags)
+hash_get_size(const HASHCTL *info, int flags, long nelem, bool prealloc)
 {
-	Assert(flags & HASH_DIRSIZE);
-	Assert(info->dsize == info->max_dsize);
-	return sizeof(HASHHDR) + info->dsize * sizeof(HASHSEGMENT);
+	int			nbuckets;
+	int			nsegs;
+	int			num_partitions;
+	long		ssize;
+	long		dsize;
+	Size		elementSize = HASH_ELEMENT_SIZE(info);
+	long		nelem_prealloc = 0;
+
+#ifdef USE_ASSERT_CHECKING
+	/* shared hash tables have non-expansive directory */
+	if (flags & HASH_SHARED_MEM)
+	{
+		Assert(flags & HASH_DIRSIZE);
+		Assert(info->dsize == info->max_dsize);
+		Assert(prealloc);
+	}
+#endif
+
+	/* Non-shared hash tables may not specify dir size */
+	if (flags & HASH_DIRSIZE)
+		dsize = info->dsize;
+	else
+		dsize = DEF_DIRSIZE;
+
+	if (flags & HASH_SEGMENT)
+		ssize = info->ssize;
+	else
+		ssize = DEF_SEGSIZE;
+
+	if (flags & HASH_PARTITION)
+	{
+		num_partitions = info->num_partitions;
+
+		/* Number of entries should be atleast equal to the freelists */
+		if (nelem < NUM_FREELISTS)
+			nelem = NUM_FREELISTS;
+	}
+	else
+		num_partitions = 0;
+
+	compute_buckets_and_segs(nelem, num_partitions, ssize,
+							 &nbuckets, &nsegs);
+
+	/* initial_elems as false indicates no elements are to be pre-allocated */
+	if (prealloc)
+		nelem_prealloc = nelem;
+
+	return sizeof(HASHHDR) + dsize * sizeof(HASHSEGMENT)
+		+ sizeof(HASHBUCKET) * ssize * nsegs
+		+ nelem_prealloc * elementSize;
 }
 
 
@@ -1285,7 +1394,7 @@ get_hash_entry(HTAB *hashp, int freelist_idx)
 		 * Failing because the needed element is in a different freelist is
 		 * not acceptable.
 		 */
-		if (!element_alloc(hashp, hctl->nelem_alloc, freelist_idx))
+		if ((newElement = element_alloc(hashp, hctl->nelem_alloc)) == NULL)
 		{
 			int			borrow_from_idx;
 
@@ -1322,6 +1431,7 @@ get_hash_entry(HTAB *hashp, int freelist_idx)
 			/* no elements available to borrow either, so out of memory */
 			return NULL;
 		}
+		element_add(hashp, newElement, hctl->nelem_alloc, freelist_idx);
 	}
 
 	/* remove entry from freelist, bump nentries */
@@ -1700,29 +1810,43 @@ seg_alloc(HTAB *hashp)
 }
 
 /*
- * allocate some new elements and link them into the indicated free list
+ * allocate some new elements
  */
-static bool
-element_alloc(HTAB *hashp, int nelem, int freelist_idx)
+static HASHELEMENT *
+element_alloc(HTAB *hashp, int nelem)
 {
 	HASHHDR    *hctl = hashp->hctl;
 	Size		elementSize;
-	HASHELEMENT *firstElement;
-	HASHELEMENT *tmpElement;
-	HASHELEMENT *prevElement;
-	int			i;
+	HASHELEMENT *firstElement = NULL;
 
 	if (hashp->isfixed)
-		return false;
+		return NULL;
 
 	/* Each element has a HASHELEMENT header plus user data. */
-	elementSize = MAXALIGN(sizeof(HASHELEMENT)) + MAXALIGN(hctl->entrysize);
-
+	elementSize = HASH_ELEMENT_SIZE(hctl);
 	CurrentDynaHashCxt = hashp->hcxt;
 	firstElement = (HASHELEMENT *) hashp->alloc(nelem * elementSize);
 
 	if (!firstElement)
-		return false;
+		return NULL;
+
+	return firstElement;
+}
+
+/*
+ * link the elements allocated by element_alloc into the indicated free list
+ */
+static void
+element_add(HTAB *hashp, HASHELEMENT *firstElement, int nelem, int freelist_idx)
+{
+	HASHHDR    *hctl = hashp->hctl;
+	Size		elementSize;
+	HASHELEMENT *tmpElement;
+	HASHELEMENT *prevElement;
+	int			i;
+
+	/* Each element has a HASHELEMENT header plus user data. */
+	elementSize = HASH_ELEMENT_SIZE(hctl);
 
 	/* prepare to link all the new entries into the freelist */
 	prevElement = NULL;
@@ -1744,8 +1868,6 @@ element_alloc(HTAB *hashp, int nelem, int freelist_idx)
 
 	if (IS_PARTITIONED(hctl))
 		SpinLockRelease(&hctl->freeList[freelist_idx].mutex);
-
-	return true;
 }
 
 /*
@@ -1956,4 +2078,35 @@ AtEOSubXact_HashTables(bool isCommit, int nestDepth)
 			num_seq_scans--;
 		}
 	}
+}
+
+/*
+ * Calculate the number of buckets and segments to store the given
+ * number of elements in a hash table. Segments contain buckets which
+ * in turn contain elements.
+ */
+static void
+compute_buckets_and_segs(long nelem, long num_partitions, long ssize,
+						 int *nbuckets, int *nsegments)
+{
+	/*
+	 * Allocate space for the next greater power of two number of buckets,
+	 * assuming a desired maximum load factor of 1.
+	 */
+	*nbuckets = next_pow2_int(nelem);
+
+	/*
+	 * In a partitioned table, nbuckets must be at least equal to
+	 * num_partitions; were it less, keys with apparently different partition
+	 * numbers would map to the same bucket, breaking partition independence.
+	 * (Normally nbuckets will be much bigger; this is just a safety check.)
+	 */
+	while ((*nbuckets) < num_partitions)
+		(*nbuckets) <<= 1;
+
+	/*
+	 * Figure number of directory segments needed, round up to a power of 2
+	 */
+	*nsegments = ((*nbuckets) - 1) / ssize + 1;
+	*nsegments = next_pow2_int(*nsegments);
 }
