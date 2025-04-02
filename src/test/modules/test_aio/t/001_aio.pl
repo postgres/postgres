@@ -1279,6 +1279,11 @@ STRATEGY wal_log;
 
 	# Verify that CREATE DATABASE of an invalid database fails and is
 	# accounted for accurately.
+	#
+	# Note: On windows additional WARNING messages might be printed, due to
+	# "some useless files may be left behind" warnings. While we probably
+	# should prevent those from occurring, they're independent of AIO, so we
+	# shouldn't fail because of them here.
 	my ($cs_count_before, $cs_ts_before) =
 	  checksum_failures($psql, 'regression_createdb_source');
 	psql_like(
@@ -1287,7 +1292,7 @@ STRATEGY wal_log;
 		"create database w/ wal strategy, invalid source",
 		$createdb_sql,
 		qr/^$/,
-		qr/^psql:<stdin>:\d+: ERROR:  invalid page in block 1 of relation base\/\d+\/\d+$/
+		qr/psql:<stdin>:\d+: ERROR:  invalid page in block 1 of relation base\/\d+\/\d+$/
 	);
 	my ($cs_count_after, $cs_ts_after) =
 	  checksum_failures($psql, 'regression_createdb_source');
