@@ -88,7 +88,6 @@ TdePrincipalKeylocalState principalKeyLocalState;
 static void principal_key_info_attach_shmem(void);
 static Size initialize_shared_state(void *start_address);
 static void initialize_objects_in_dsa_area(dsa_area *dsa, void *raw_dsa_area);
-static Size cache_area_size(void);
 static Size required_shared_mem_size(void);
 static void shared_memory_shutdown(int code, Datum arg);
 static void principal_key_startup_cleanup(int tde_tbl_count, XLogExtensionInstall *ext_info, bool redo, void *arg);
@@ -160,16 +159,20 @@ tde_lwlock_enc_keys(void)
 	return &principalKeyLocalState.sharedPrincipalKeyState->Locks[TDE_LWLOCK_ENC_KEY].lock;
 }
 
-static Size
-cache_area_size(void)
-{
-	return MAXALIGN(8192 * 100);	/* TODO: Probably get it from guc */
-}
+/*
+ * Request some pages so we can fit the DSA header, empty hash table plus some
+ * extra. Additional memory to grow the hash map will be allocated as needed
+ * from the dynamic shared memory.
+ *
+ * The only reason we need this at all is because we create the DSA in the
+ * postmaster before any DSM allocations can be done.
+ */
+#define CACHE_DSA_INITIAL_SIZE (4096 * 64)
 
 static Size
 required_shared_mem_size(void)
 {
-	Size		sz = cache_area_size();
+	Size		sz = CACHE_DSA_INITIAL_SIZE;
 
 	sz = add_size(sz, sizeof(TdePrincipalKeySharedState));
 	return MAXALIGN(sz);
