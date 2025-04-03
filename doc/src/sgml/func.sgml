@@ -27258,7 +27258,8 @@ postgres=# SELECT '0/0'::pg_lsn + pd.segment_number * ps.setting::int + :offset 
         The copied physical slot starts to reserve WAL from the same <acronym>LSN</acronym> as the
         source slot.
         <parameter>temporary</parameter> is optional. If <parameter>temporary</parameter>
-        is omitted, the same value as the source slot is used.
+        is omitted, the same value as the source slot is used. Copy of an
+        invalidated slot is not allowed.
        </para></entry>
       </row>
 
@@ -27280,6 +27281,7 @@ postgres=# SELECT '0/0'::pg_lsn + pd.segment_number * ps.setting::int + :offset 
         from the same <acronym>LSN</acronym> as the source logical slot.  Both
         <parameter>temporary</parameter> and <parameter>plugin</parameter> are
         optional; if they are omitted, the values of the source slot are used.
+        Copy of an invalidated slot is not allowed.
        </para></entry>
       </row>
 

@@ -563,6 +563,15 @@ check_pg_recvlogical_stderr($handle,
 	"can no longer get changes from replication slot \"vacuum_full_activeslot\""
 );
 
+# Attempt to copy an invalidated logical replication slot
+($result, $stdout, $stderr) = $node_standby->psql(
+	'postgres',
+	qq[select pg_copy_logical_replication_slot('vacuum_full_inactiveslot', 'vacuum_full_inactiveslot_copy');],
+	replication => 'database');
+ok( $stderr =~
+	  /ERROR:  cannot copy invalidated replication slot "vacuum_full_inactiveslot"/,
+	"invalidated slot cannot be copied");
+
 # Turn hot_standby_feedback back on
 change_hot_standby_feedback_and_wait_for_xmins(1, 1);
 
