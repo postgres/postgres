@@ -1172,8 +1172,9 @@ static int
 register_socket(CURL *curl, curl_socket_t socket, int what, void *ctx,
 				void *socketp)
 {
-#ifdef HAVE_SYS_EPOLL_H
 	struct async_ctx *actx = ctx;
+
+#ifdef HAVE_SYS_EPOLL_H
 	struct epoll_event ev = {0};
 	int			res;
 	int			op = EPOLL_CTL_ADD;
@@ -1231,7 +1232,6 @@ register_socket(CURL *curl, curl_socket_t socket, int what, void *ctx,
 	return 0;
 #endif
 #ifdef HAVE_SYS_EVENT_H
-	struct async_ctx *actx = ctx;
 	struct kevent ev[2] = {0};
 	struct kevent ev_out[2];
 	struct timespec timeout = {0};
