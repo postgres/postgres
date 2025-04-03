@@ -11,6 +11,7 @@
 #include "utils/builtins.h"
 #include "utils/numeric.h"
 #include "utils/rel.h"
+#include "utils/sortsupport.h"
 
 /* GiST support functions */
 PG_FUNCTION_INFO_V1(gbt_numeric_compress);
@@ -19,6 +20,7 @@ PG_FUNCTION_INFO_V1(gbt_numeric_picksplit);
 PG_FUNCTION_INFO_V1(gbt_numeric_consistent);
 PG_FUNCTION_INFO_V1(gbt_numeric_penalty);
 PG_FUNCTION_INFO_V1(gbt_numeric_same);
+PG_FUNCTION_INFO_V1(gbt_numeric_sortsupport);
 
 
 /* define for comparison */
@@ -215,4 +217,36 @@ gbt_numeric_picksplit(PG_FUNCTION_ARGS)
 	gbt_var_picksplit(entryvec, v, PG_GET_COLLATION(),
 					  &tinfo, fcinfo->flinfo);
 	PG_RETURN_POINTER(v);
+}
+
+static int
+gbt_numeric_ssup_cmp(Datum x, Datum y, SortSupport ssup)
+{
+	GBT_VARKEY *key1 = PG_DETOAST_DATUM(x);
+	GBT_VARKEY *key2 = PG_DETOAST_DATUM(y);
+
+	GBT_VARKEY_R arg1 = gbt_var_key_readable(key1);
+	GBT_VARKEY_R arg2 = gbt_var_key_readable(key2);
+	Datum		result;
+
+	/* for leaf items we expect lower == upper, so only compare lower */
+	result = DirectFunctionCall2(numeric_cmp,
+								 PointerGetDatum(arg1.lower),
+								 PointerGetDatum(arg2.lower));
+
+	GBT_FREE_IF_COPY(key1, x);
+	GBT_FREE_IF_COPY(key2, y);
+
+	return DatumGetInt32(result);
+}
+
+Datum
+gbt_numeric_sortsupport(PG_FUNCTION_ARGS)
+{
+	SortSupport ssup = (SortSupport) PG_GETARG_POINTER(0);
+
+	ssup->comparator = gbt_numeric_ssup_cmp;
+	ssup->ssup_extra = NULL;
+
+	PG_RETURN_VOID();
 }

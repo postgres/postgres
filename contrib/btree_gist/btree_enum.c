@@ -7,6 +7,8 @@
 #include "btree_utils_num.h"
 #include "fmgr.h"
 #include "utils/fmgrprotos.h"
+#include "utils/fmgroids.h"
+#include "utils/sortsupport.h"
 
 /* enums are really Oids, so we just use the same structure */
 
@@ -24,6 +26,7 @@ PG_FUNCTION_INFO_V1(gbt_enum_picksplit);
 PG_FUNCTION_INFO_V1(gbt_enum_consistent);
 PG_FUNCTION_INFO_V1(gbt_enum_penalty);
 PG_FUNCTION_INFO_V1(gbt_enum_same);
+PG_FUNCTION_INFO_V1(gbt_enum_sortsupport);
 
 
 static bool
@@ -178,4 +181,40 @@ gbt_enum_same(PG_FUNCTION_ARGS)
 
 	*result = gbt_num_same((void *) b1, (void *) b2, &tinfo, fcinfo->flinfo);
 	PG_RETURN_POINTER(result);
+}
+
+static int
+gbt_enum_ssup_cmp(Datum x, Datum y, SortSupport ssup)
+{
+	oidKEY	   *arg1 = (oidKEY *) DatumGetPointer(x);
+	oidKEY	   *arg2 = (oidKEY *) DatumGetPointer(y);
+
+	/* for leaf items we expect lower == upper, so only compare lower */
+	return DatumGetInt32(CallerFInfoFunctionCall2(enum_cmp,
+												  ssup->ssup_extra,
+												  InvalidOid,
+												  arg1->lower,
+												  arg2->lower));
+}
+
+Datum
+gbt_enum_sortsupport(PG_FUNCTION_ARGS)
+{
+	SortSupport ssup = (SortSupport) PG_GETARG_POINTER(0);
+	FmgrInfo   *flinfo;
+
+	ssup->comparator = gbt_enum_ssup_cmp;
+
+	/*
+	 * Since gbt_enum_ssup_cmp() uses enum_cmp() like the rest of the
+	 * comparison functions, it also needs to pass flinfo when calling it. The
+	 * caller to a SortSupport comparison function doesn't provide an FmgrInfo
+	 * struct, so look it up now, save it in ssup_extra and use it in
+	 * gbt_enum_ssup_cmp() later.
+	 */
+	flinfo = MemoryContextAlloc(ssup->ssup_cxt, sizeof(FmgrInfo));
+	fmgr_info_cxt(F_ENUM_CMP, flinfo, ssup->ssup_cxt);
+	ssup->ssup_extra = flinfo;
+
+	PG_RETURN_VOID();
 }

@@ -6,6 +6,7 @@
 #include "btree_gist.h"
 #include "btree_utils_num.h"
 #include "common/int.h"
+#include "utils/sortsupport.h"
 
 typedef struct int64key
 {
@@ -22,6 +23,7 @@ PG_FUNCTION_INFO_V1(gbt_int8_consistent);
 PG_FUNCTION_INFO_V1(gbt_int8_distance);
 PG_FUNCTION_INFO_V1(gbt_int8_penalty);
 PG_FUNCTION_INFO_V1(gbt_int8_same);
+PG_FUNCTION_INFO_V1(gbt_int8_sortsupport);
 
 
 static bool
@@ -208,4 +210,29 @@ gbt_int8_same(PG_FUNCTION_ARGS)
 
 	*result = gbt_num_same((void *) b1, (void *) b2, &tinfo, fcinfo->flinfo);
 	PG_RETURN_POINTER(result);
+}
+
+static int
+gbt_int8_ssup_cmp(Datum x, Datum y, SortSupport ssup)
+{
+	int64KEY   *arg1 = (int64KEY *) DatumGetPointer(x);
+	int64KEY   *arg2 = (int64KEY *) DatumGetPointer(y);
+
+	/* for leaf items we expect lower == upper, so only compare lower */
+	if (arg1->lower < arg2->lower)
+		return -1;
+	else if (arg1->lower > arg2->lower)
+		return 1;
+	else
+		return 0;
+
+}
+
+Datum
+gbt_int8_sortsupport(PG_FUNCTION_ARGS)
+{
+	SortSupport ssup = (SortSupport) PG_GETARG_POINTER(0);
+
+	ssup->comparator = gbt_int8_ssup_cmp;
+	PG_RETURN_VOID();
 }

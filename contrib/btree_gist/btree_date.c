@@ -7,6 +7,7 @@
 #include "btree_utils_num.h"
 #include "utils/fmgrprotos.h"
 #include "utils/date.h"
+#include "utils/sortsupport.h"
 
 typedef struct
 {
@@ -23,6 +24,7 @@ PG_FUNCTION_INFO_V1(gbt_date_consistent);
 PG_FUNCTION_INFO_V1(gbt_date_distance);
 PG_FUNCTION_INFO_V1(gbt_date_penalty);
 PG_FUNCTION_INFO_V1(gbt_date_same);
+PG_FUNCTION_INFO_V1(gbt_date_sortsupport);
 
 static bool
 gbt_dategt(const void *a, const void *b, FmgrInfo *flinfo)
@@ -248,4 +250,27 @@ gbt_date_same(PG_FUNCTION_ARGS)
 
 	*result = gbt_num_same((void *) b1, (void *) b2, &tinfo, fcinfo->flinfo);
 	PG_RETURN_POINTER(result);
+}
+
+static int
+gbt_date_ssup_cmp(Datum x, Datum y, SortSupport ssup)
+{
+	dateKEY    *akey = (dateKEY *) DatumGetPointer(x);
+	dateKEY    *bkey = (dateKEY *) DatumGetPointer(y);
+
+	/* for leaf items we expect lower == upper, so only compare lower */
+	return DatumGetInt32(DirectFunctionCall2(date_cmp,
+											 DateADTGetDatum(akey->lower),
+											 DateADTGetDatum(bkey->lower)));
+}
+
+Datum
+gbt_date_sortsupport(PG_FUNCTION_ARGS)
+{
+	SortSupport ssup = (SortSupport) PG_GETARG_POINTER(0);
+
+	ssup->comparator = gbt_date_ssup_cmp;
+	ssup->ssup_extra = NULL;
+
+	PG_RETURN_VOID();
 }

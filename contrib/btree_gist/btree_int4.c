@@ -2,10 +2,10 @@
  * contrib/btree_gist/btree_int4.c
  */
 #include "postgres.h"
-
 #include "btree_gist.h"
 #include "btree_utils_num.h"
 #include "common/int.h"
+#include "utils/sortsupport.h"
 
 typedef struct int32key
 {
@@ -22,6 +22,7 @@ PG_FUNCTION_INFO_V1(gbt_int4_consistent);
 PG_FUNCTION_INFO_V1(gbt_int4_distance);
 PG_FUNCTION_INFO_V1(gbt_int4_penalty);
 PG_FUNCTION_INFO_V1(gbt_int4_same);
+PG_FUNCTION_INFO_V1(gbt_int4_sortsupport);
 
 static bool
 gbt_int4gt(const void *a, const void *b, FmgrInfo *flinfo)
@@ -207,4 +208,28 @@ gbt_int4_same(PG_FUNCTION_ARGS)
 
 	*result = gbt_num_same((void *) b1, (void *) b2, &tinfo, fcinfo->flinfo);
 	PG_RETURN_POINTER(result);
+}
+
+static int
+gbt_int4_ssup_cmp(Datum a, Datum b, SortSupport ssup)
+{
+	int32KEY   *ia = (int32KEY *) DatumGetPointer(a);
+	int32KEY   *ib = (int32KEY *) DatumGetPointer(b);
+
+	/* for leaf items we expect lower == upper, so only compare lower */
+	if (ia->lower < ib->lower)
+		return -1;
+	else if (ia->lower > ib->lower)
+		return 1;
+	else
+		return 0;
+}
+
+Datum
+gbt_int4_sortsupport(PG_FUNCTION_ARGS)
+{
+	SortSupport ssup = (SortSupport) PG_GETARG_POINTER(0);
+
+	ssup->comparator = gbt_int4_ssup_cmp;
+	PG_RETURN_VOID();
 }

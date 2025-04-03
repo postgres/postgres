@@ -10,6 +10,7 @@
 #include "utils/fmgrprotos.h"
 #include "utils/timestamp.h"
 #include "utils/float.h"
+#include "utils/sortsupport.h"
 
 typedef struct
 {
@@ -29,6 +30,7 @@ PG_FUNCTION_INFO_V1(gbt_tstz_consistent);
 PG_FUNCTION_INFO_V1(gbt_tstz_distance);
 PG_FUNCTION_INFO_V1(gbt_ts_penalty);
 PG_FUNCTION_INFO_V1(gbt_ts_same);
+PG_FUNCTION_INFO_V1(gbt_ts_sortsupport);
 
 
 #ifdef USE_FLOAT8_BYVAL
@@ -392,4 +394,27 @@ gbt_ts_same(PG_FUNCTION_ARGS)
 
 	*result = gbt_num_same((void *) b1, (void *) b2, &tinfo, fcinfo->flinfo);
 	PG_RETURN_POINTER(result);
+}
+
+static int
+gbt_ts_ssup_cmp(Datum x, Datum y, SortSupport ssup)
+{
+	tsKEY	   *arg1 = (tsKEY *) DatumGetPointer(x);
+	tsKEY	   *arg2 = (tsKEY *) DatumGetPointer(y);
+
+	/* for leaf items we expect lower == upper, so only compare lower */
+	return DatumGetInt32(DirectFunctionCall2(timestamp_cmp,
+											 TimestampGetDatumFast(arg1->lower),
+											 TimestampGetDatumFast(arg2->lower)));
+}
+
+Datum
+gbt_ts_sortsupport(PG_FUNCTION_ARGS)
+{
+	SortSupport ssup = (SortSupport) PG_GETARG_POINTER(0);
+
+	ssup->comparator = gbt_ts_ssup_cmp;
+	ssup->ssup_extra = NULL;
+
+	PG_RETURN_VOID();
 }

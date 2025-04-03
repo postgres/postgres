@@ -6,6 +6,7 @@
 #include "btree_gist.h"
 #include "btree_utils_num.h"
 #include "utils/float.h"
+#include "utils/sortsupport.h"
 
 typedef struct float4key
 {
@@ -22,6 +23,7 @@ PG_FUNCTION_INFO_V1(gbt_float4_consistent);
 PG_FUNCTION_INFO_V1(gbt_float4_distance);
 PG_FUNCTION_INFO_V1(gbt_float4_penalty);
 PG_FUNCTION_INFO_V1(gbt_float4_same);
+PG_FUNCTION_INFO_V1(gbt_float4_sortsupport);
 
 static bool
 gbt_float4gt(const void *a, const void *b, FmgrInfo *flinfo)
@@ -203,4 +205,25 @@ gbt_float4_same(PG_FUNCTION_ARGS)
 
 	*result = gbt_num_same((void *) b1, (void *) b2, &tinfo, fcinfo->flinfo);
 	PG_RETURN_POINTER(result);
+}
+
+static int
+gbt_float4_ssup_cmp(Datum x, Datum y, SortSupport ssup)
+{
+	float4KEY  *arg1 = (float4KEY *) DatumGetPointer(x);
+	float4KEY  *arg2 = (float4KEY *) DatumGetPointer(y);
+
+	/* for leaf items we expect lower == upper, so only compare lower */
+	return float4_cmp_internal(arg1->lower, arg2->lower);
+}
+
+Datum
+gbt_float4_sortsupport(PG_FUNCTION_ARGS)
+{
+	SortSupport ssup = (SortSupport) PG_GETARG_POINTER(0);
+
+	ssup->comparator = gbt_float4_ssup_cmp;
+	ssup->ssup_extra = NULL;
+
+	PG_RETURN_VOID();
 }

@@ -41,7 +41,17 @@ typedef struct
 	GBT_VARKEY *(*f_l2n) (GBT_VARKEY *, FmgrInfo *flinfo);	/* convert leaf to node */
 } gbtree_vinfo;
 
-
+/*
+ * Free ptr1 in case its a copy of ptr2.
+ *
+ * This is adapted from varlena's PG_FREE_IF_COPY, though doesn't require
+ * fcinfo access.
+ */
+#define GBT_FREE_IF_COPY(ptr1, ptr2) \
+	do { \
+		if ((Pointer) (ptr1) != DatumGetPointer(ptr2)) \
+			pfree(ptr1); \
+	} while (0)
 
 extern GBT_VARKEY_R gbt_var_key_readable(const GBT_VARKEY *k);
 

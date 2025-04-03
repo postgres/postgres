@@ -5,6 +5,7 @@
 
 #include "btree_gist.h"
 #include "btree_utils_num.h"
+#include "utils/sortsupport.h"
 
 typedef struct boolkey
 {
@@ -20,6 +21,7 @@ PG_FUNCTION_INFO_V1(gbt_bool_picksplit);
 PG_FUNCTION_INFO_V1(gbt_bool_consistent);
 PG_FUNCTION_INFO_V1(gbt_bool_penalty);
 PG_FUNCTION_INFO_V1(gbt_bool_same);
+PG_FUNCTION_INFO_V1(gbt_bool_sortsupport);
 
 static bool
 gbt_boolgt(const void *a, const void *b, FmgrInfo *flinfo)
@@ -160,4 +162,25 @@ gbt_bool_same(PG_FUNCTION_ARGS)
 
 	*result = gbt_num_same((void *) b1, (void *) b2, &tinfo, fcinfo->flinfo);
 	PG_RETURN_POINTER(result);
+}
+
+static int
+gbt_bool_ssup_cmp(Datum x, Datum y, SortSupport ssup)
+{
+	boolKEY    *arg1 = (boolKEY *) DatumGetPointer(x);
+	boolKEY    *arg2 = (boolKEY *) DatumGetPointer(y);
+
+	/* for leaf items we expect lower == upper, so only compare lower */
+	return (int32) arg1->lower - (int32) arg2->lower;
+}
+
+Datum
+gbt_bool_sortsupport(PG_FUNCTION_ARGS)
+{
+	SortSupport ssup = (SortSupport) PG_GETARG_POINTER(0);
+
+	ssup->comparator = gbt_bool_ssup_cmp;
+	ssup->ssup_extra = NULL;
+
+	PG_RETURN_VOID();
 }

@@ -53,6 +53,13 @@
  </para>
 
  <para>
+  By default <filename>btree_gist</filename> builds <acronym>GiST</acronym> index with
+  <function>sortsupport</function> in <firstterm>sorted</firstterm> mode. This usually results in
+  much faster index built speed. It is still possible to revert to buffered built strategy
+  by using the <literal>buffering</literal> parameter when creating the index.
+ </para>
+
+ <para>
   This module is considered <quote>trusted</quote>, that is, it can be
   installed by non-superusers who have <literal>CREATE</literal> privilege
   on the current database.

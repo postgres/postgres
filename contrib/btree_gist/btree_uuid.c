@@ -6,6 +6,7 @@
 #include "btree_gist.h"
 #include "btree_utils_num.h"
 #include "port/pg_bswap.h"
+#include "utils/sortsupport.h"
 #include "utils/uuid.h"
 
 typedef struct
@@ -23,6 +24,7 @@ PG_FUNCTION_INFO_V1(gbt_uuid_picksplit);
 PG_FUNCTION_INFO_V1(gbt_uuid_consistent);
 PG_FUNCTION_INFO_V1(gbt_uuid_penalty);
 PG_FUNCTION_INFO_V1(gbt_uuid_same);
+PG_FUNCTION_INFO_V1(gbt_uuid_sortsupport);
 
 
 static int
@@ -229,4 +231,25 @@ gbt_uuid_same(PG_FUNCTION_ARGS)
 
 	*result = gbt_num_same((void *) b1, (void *) b2, &tinfo, fcinfo->flinfo);
 	PG_RETURN_POINTER(result);
+}
+
+static int
+gbt_uuid_ssup_cmp(Datum x, Datum y, SortSupport ssup)
+{
+	uuidKEY    *arg1 = (uuidKEY *) DatumGetPointer(x);
+	uuidKEY    *arg2 = (uuidKEY *) DatumGetPointer(y);
+
+	/* for leaf items we expect lower == upper, so only compare lower */
+	return uuid_internal_cmp(&arg1->lower, &arg2->lower);
+}
+
+Datum
+gbt_uuid_sortsupport(PG_FUNCTION_ARGS)
+{
+	SortSupport ssup = (SortSupport) PG_GETARG_POINTER(0);
+
+	ssup->comparator = gbt_uuid_ssup_cmp;
+	ssup->ssup_extra = NULL;
+
+	PG_RETURN_VOID();
 }

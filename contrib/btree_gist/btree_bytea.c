@@ -6,6 +6,7 @@
 #include "btree_gist.h"
 #include "btree_utils_var.h"
 #include "utils/fmgrprotos.h"
+#include "utils/sortsupport.h"
 
 /* GiST support functions */
 PG_FUNCTION_INFO_V1(gbt_bytea_compress);
@@ -14,6 +15,7 @@ PG_FUNCTION_INFO_V1(gbt_bytea_picksplit);
 PG_FUNCTION_INFO_V1(gbt_bytea_consistent);
 PG_FUNCTION_INFO_V1(gbt_bytea_penalty);
 PG_FUNCTION_INFO_V1(gbt_bytea_same);
+PG_FUNCTION_INFO_V1(gbt_bytea_sortsupport);
 
 
 /* define for comparison */
@@ -155,4 +157,36 @@ gbt_bytea_penalty(PG_FUNCTION_ARGS)
 
 	PG_RETURN_POINTER(gbt_var_penalty(result, o, n, PG_GET_COLLATION(),
 									  &tinfo, fcinfo->flinfo));
+}
+
+static int
+gbt_bytea_ssup_cmp(Datum x, Datum y, SortSupport ssup)
+{
+	GBT_VARKEY *key1 = PG_DETOAST_DATUM(x);
+	GBT_VARKEY *key2 = PG_DETOAST_DATUM(y);
+
+	GBT_VARKEY_R xkey = gbt_var_key_readable(key1);
+	GBT_VARKEY_R ykey = gbt_var_key_readable(key2);
+	Datum		result;
+
+	/* for leaf items we expect lower == upper, so only compare lower */
+	result = DirectFunctionCall2(byteacmp,
+								 PointerGetDatum(xkey.lower),
+								 PointerGetDatum(ykey.lower));
+
+	GBT_FREE_IF_COPY(key1, x);
+	GBT_FREE_IF_COPY(key2, y);
+
+	return DatumGetInt32(result);
+}
+
+Datum
+gbt_bytea_sortsupport(PG_FUNCTION_ARGS)
+{
+	SortSupport ssup = (SortSupport) PG_GETARG_POINTER(0);
+
+	ssup->comparator = gbt_bytea_ssup_cmp;
+	ssup->ssup_extra = NULL;
+
+	PG_RETURN_VOID();
 }

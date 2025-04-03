@@ -7,6 +7,7 @@
 #include "btree_utils_num.h"
 #include "utils/fmgrprotos.h"
 #include "utils/inet.h"
+#include "utils/sortsupport.h"
 
 typedef struct
 {
@@ -23,6 +24,7 @@ PG_FUNCTION_INFO_V1(gbt_macad8_picksplit);
 PG_FUNCTION_INFO_V1(gbt_macad8_consistent);
 PG_FUNCTION_INFO_V1(gbt_macad8_penalty);
 PG_FUNCTION_INFO_V1(gbt_macad8_same);
+PG_FUNCTION_INFO_V1(gbt_macad8_sortsupport);
 
 static bool
 gbt_macad8gt(const void *a, const void *b, FmgrInfo *flinfo)
@@ -184,4 +186,27 @@ gbt_macad8_same(PG_FUNCTION_ARGS)
 
 	*result = gbt_num_same((void *) b1, (void *) b2, &tinfo, fcinfo->flinfo);
 	PG_RETURN_POINTER(result);
+}
+
+static int
+gbt_macaddr8_ssup_cmp(Datum x, Datum y, SortSupport ssup)
+{
+	mac8KEY    *arg1 = (mac8KEY *) DatumGetPointer(x);
+	mac8KEY    *arg2 = (mac8KEY *) DatumGetPointer(y);
+
+	/* for leaf items we expect lower == upper, so only compare lower */
+	return DatumGetInt32(DirectFunctionCall2(macaddr8_cmp,
+											 Macaddr8PGetDatum(&arg1->lower),
+											 Macaddr8PGetDatum(&arg2->lower)));
+}
+
+Datum
+gbt_macad8_sortsupport(PG_FUNCTION_ARGS)
+{
+	SortSupport ssup = (SortSupport) PG_GETARG_POINTER(0);
+
+	ssup->comparator = gbt_macaddr8_ssup_cmp;
+	ssup->ssup_extra = NULL;
+
+	PG_RETURN_VOID();
 }
