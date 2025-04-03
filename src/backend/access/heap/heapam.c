@@ -1204,13 +1204,8 @@ heap_beginscan(Relation relation, Snapshot snapshot,
 	}
 	else if (scan->rs_base.rs_flags & SO_TYPE_BITMAPSCAN)
 	{
-		/*
-		 * Currently we can't trivially use batching, due to the
-		 * VM_ALL_VISIBLE check in bitmapheap_stream_read_next. While that
-		 * could be made safe, we are about to remove the all-visible logic
-		 * from bitmap scans due to its unsoundness.
-		 */
-		scan->rs_read_stream = read_stream_begin_relation(READ_STREAM_DEFAULT,
+		scan->rs_read_stream = read_stream_begin_relation(READ_STREAM_DEFAULT |
+														  READ_STREAM_USE_BATCHING,
 														  scan->rs_strategy,
 														  scan->rs_base.rs_rd,
 														  MAIN_FORKNUM,
