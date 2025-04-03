@@ -139,6 +139,7 @@ typedef struct RemoteSlot
 	bool		failover;
 	XLogRecPtr	restart_lsn;
 	XLogRecPtr	confirmed_lsn;
+	XLogRecPtr	two_phase_at;
 	TransactionId catalog_xmin;
 
 	/* RS_INVAL_NONE if valid, or the reason of invalidation */
@@ -276,7 +277,8 @@ update_local_synced_slot(RemoteSlot *remote_slot, Oid remote_dbid,
 	if (remote_dbid != slot->data.database ||
 		remote_slot->two_phase != slot->data.two_phase ||
 		remote_slot->failover != slot->data.failover ||
-		strcmp(remote_slot->plugin, NameStr(slot->data.plugin)) != 0)
+		strcmp(remote_slot->plugin, NameStr(slot->data.plugin)) != 0 ||
+		remote_slot->two_phase_at != slot->data.two_phase_at)
 	{
 		NameData	plugin_name;
 
@@ -287,6 +289,7 @@ update_local_synced_slot(RemoteSlot *remote_slot, Oid remote_dbid,
 		slot->data.plugin = plugin_name;
 		slot->data.database = remote_dbid;
 		slot->data.two_phase = remote_slot->two_phase;
+		slot->data.two_phase_at = remote_slot->two_phase_at;
 		slot->data.failover = remote_slot->failover;
 		SpinLockRelease(&slot->mutex);
 
@@ -788,9 +791,9 @@ synchronize_one_slot(RemoteSlot *remote_slot, Oid remote_dbid)
 static bool
 synchronize_slots(WalReceiverConn *wrconn)
 {
-#define SLOTSYNC_COLUMN_COUNT 9
+#define SLOTSYNC_COLUMN_COUNT 10
 	Oid			slotRow[SLOTSYNC_COLUMN_COUNT] = {TEXTOID, TEXTOID, LSNOID,
-	LSNOID, XIDOID, BOOLOID, BOOLOID, TEXTOID, TEXTOID};
+	LSNOID, XIDOID, BOOLOID, LSNOID, BOOLOID, TEXTOID, TEXTOID};
 
 	WalRcvExecResult *res;
 	TupleTableSlot *tupslot;
@@ -798,7 +801,7 @@ synchronize_slots(WalReceiverConn *wrconn)
 	bool		some_slot_updated = false;
 	bool		started_tx = false;
 	const char *query = "SELECT slot_name, plugin, confirmed_flush_lsn,"
-		" restart_lsn, catalog_xmin, two_phase, failover,"
+		" restart_lsn, catalog_xmin, two_phase, two_phase_at, failover,"
 		" database, invalidation_reason"
 		" FROM pg_catalog.pg_replication_slots"
 		" WHERE failover and NOT temporary";
@@ -852,6 +855,9 @@ synchronize_slots(WalReceiverConn *wrconn)
 		remote_slot->two_phase = DatumGetBool(slot_getattr(tupslot, ++col,
 														   &isnull));
 		Assert(!isnull);
+
+		d = slot_getattr(tupslot, ++col, &isnull);
+		remote_slot->two_phase_at = isnull ? InvalidXLogRecPtr : DatumGetLSN(d);
 
 		remote_slot->failover = DatumGetBool(slot_getattr(tupslot, ++col,
 														  &isnull));

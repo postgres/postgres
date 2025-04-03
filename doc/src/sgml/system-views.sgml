@@ -2856,6 +2856,17 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
 
      <row>
       <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>two_phase_at</structfield> <type>pg_lsn</type>
+      </para>
+      <para>
+       The address (<literal>LSN</literal>) from which the decoding of prepared
+       transactions is enabled. <literal>NULL</literal> for logical slots
+       where <structfield>two_phase</structfield> is false and for physical slots.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
        <structfield>inactive_since</structfield> <type>timestamptz</type>
       </para>
       <para>
