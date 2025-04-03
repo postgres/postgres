@@ -3,7 +3,7 @@
 # Generate Unicode character case mappings. Does not include tailoring
 # or locale-specific mappings.
 #
-# Input: SpecialCasing.txt UnicodeData.txt
+# Input: CaseFolding.txt SpecialCasing.txt UnicodeData.txt
 # Output: unicode_case_table.h
 #
 # Copyright (c) 2000-2025, PostgreSQL Global Development Group
