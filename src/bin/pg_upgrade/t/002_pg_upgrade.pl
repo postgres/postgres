@@ -128,7 +128,7 @@ my $oldnode =
   PostgreSQL::Test::Cluster->new('old_node',
 	install_path => $ENV{oldinstall});
 
-my %node_params = ();
+my %old_node_params = ();
 
 # To increase coverage of non-standard segment size and group access without
 # increasing test runtime, run these tests with a custom setting.
@@ -194,34 +194,34 @@ else
 my %encodings = ('UTF-8' => 6, 'SQL_ASCII' => 0);
 my $original_encoding = $encodings{$original_enc_name};
 
-my @initdb_params = @custom_opts;
+my @old_initdb_params = @custom_opts;
 
-push @initdb_params, ('--encoding', $original_enc_name);
-push @initdb_params, ('--lc-collate', $original_datcollate);
-push @initdb_params, ('--lc-ctype', $original_datctype);
+push @old_initdb_params, ('--encoding', $original_enc_name);
+push @old_initdb_params, ('--lc-collate', $original_datcollate);
+push @old_initdb_params, ('--lc-ctype', $original_datctype);
 
 # add --locale-provider, if supported
 my %provider_name = ('b' => 'builtin', 'i' => 'icu', 'c' => 'libc');
 if ($oldnode->pg_version >= 15)
 {
-	push @initdb_params,
+	push @old_initdb_params,
 	  ('--locale-provider', $provider_name{$original_provider});
 	if ($original_provider eq 'b')
 	{
-		push @initdb_params, ('--builtin-locale', $original_datlocale);
+		push @old_initdb_params, ('--builtin-locale', $original_datlocale);
 	}
 	elsif ($original_provider eq 'i')
 	{
-		push @initdb_params, ('--icu-locale', $original_datlocale);
+		push @old_initdb_params, ('--icu-locale', $original_datlocale);
 	}
 }
 
 # Since checksums are now enabled by default, and weren't before 18,
 # pass '-k' to initdb on old versions so that upgrades work.
-push @initdb_params, '-k' if $oldnode->pg_version < 18;
+push @old_initdb_params, '-k' if $oldnode->pg_version < 18;
 
-$node_params{extra} = \@initdb_params;
-$oldnode->init(%node_params);
+$old_node_params{extra} = \@old_initdb_params;
+$oldnode->init(%old_node_params);
 $oldnode->start;
 
 my $result;
@@ -322,7 +322,7 @@ SKIP:
 	  get_dump_for_comparison($oldnode, 'regression', 'src_dump', 1);
 
 	# Setup destination database cluster
-	$dstnode->init(%node_params);
+	$dstnode->init(%old_node_params);
 	# Stabilize stats for comparison.
 	$dstnode->append_conf('postgresql.conf', 'autovacuum = off');
 	$dstnode->start;
@@ -358,17 +358,16 @@ SKIP:
 # Initialize a new node for the upgrade.
 my $newnode = PostgreSQL::Test::Cluster->new('new_node');
 
-# Reset to original parameters.
-@initdb_params = @custom_opts;
 
 # The new cluster will be initialized with different locale settings,
 # but these settings will be overwritten with those of the original
 # cluster.
-push @initdb_params, ('--encoding', 'SQL_ASCII');
-push @initdb_params, ('--locale-provider', 'libc');
-
-$node_params{extra} = \@initdb_params;
-$newnode->init(%node_params);
+my %new_node_params = %old_node_params;
+my @new_initdb_params = @custom_opts;
+push @new_initdb_params, ('--encoding', 'SQL_ASCII');
+push @new_initdb_params, ('--locale-provider', 'libc');
+$new_node_params{extra} = \@new_initdb_params;
+$newnode->init(%new_node_params);
 
 # Stabilize stats for comparison.
 $newnode->append_conf('postgresql.conf', 'autovacuum = off');
