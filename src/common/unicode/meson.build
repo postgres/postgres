@@ -1,6 +1,6 @@
 # Copyright (c) 2022-2025, PostgreSQL Global Development Group
 
-UNICODE_VERSION = '15.1.0'
+UNICODE_VERSION = '16.0.0'
 
 unicode_data = {}
 unicode_baseurl = 'https://www.unicode.org/Public/@0@/ucd/@1@'
