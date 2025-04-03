@@ -167,24 +167,31 @@ PostgreSQL documentation
     </varlistentry>
 
     <varlistentry>
-     <term><option>-R</option></term>
-     <term><option>--remove</option></term>
+     <term><option>-R <replaceable class="parameter">objtype</replaceable></option></term>
+     <term><option>--remove=<replaceable class="parameter">objtype</replaceable></option></term>
      <listitem>
       <para>
        Remove all objects of the specified type from specified databases on the
        target server.
       </para>
       <para>
-       publications: The "all tables" publications established for this
-       subscriber are always removed; specifying this object type causes all
-       other publications replicated from the source server to be dropped as
-       well.
+       <itemizedlist>
+        <listitem>
+         <para>
+          <literal>publications</literal>:
+          The <literal>FOR ALL TABLES</literal> publications established for this
+          subscriber are always removed; specifying this object type causes all
+          other publications replicated from the source server to be dropped as
+          well.
+         </para>
+        </listitem>
+       </itemizedlist>
       </para>
       <para>
-       The objects selected to be dropped are individually logged and do show
-       up in a --dry-run.  There is no opportunity to affect or stop the
-       dropping of the selected objects so consider taking a backup of them
-       using pg_dump.
+       The objects selected to be dropped are individually logged, including during
+       a <option>--dry-run</option>.  There is no opportunity to affect or stop the
+       dropping of the selected objects, so consider taking a backup of them
+       using <application>pg_dump</application>.
       </para>
      </listitem>
     </varlistentry>
