@@ -853,8 +853,6 @@ verify_heapam(PG_FUNCTION_ARGS)
 			break;
 	}
 
-	/* Ensure that the stream is completely read */
-	Assert(read_stream_next_buffer(stream, NULL) == InvalidBuffer);
 	read_stream_end(stream);
 
 	if (vmbuffer != InvalidBuffer)

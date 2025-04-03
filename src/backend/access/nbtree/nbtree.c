@@ -1117,8 +1117,6 @@ btvacuumscan(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 											 current_block);
 		}
 
-		Assert(read_stream_next_buffer(stream, NULL) == InvalidBuffer);
-
 		/*
 		 * We have to reset the read stream to use it again. After returning
 		 * InvalidBuffer, the read stream API won't invoke our callback again
