@@ -122,7 +122,7 @@ pg_tde_ddl_command_start_capture(PG_FUNCTION_ARGS)
 	if (IsA(parsetree, IndexStmt))
 	{
 		IndexStmt  *stmt = (IndexStmt *) parsetree;
-		Oid			relationId = RangeVarGetRelid(stmt->relation, NoLock, true);
+		Oid			relationId = RangeVarGetRelid(stmt->relation, AccessShareLock, true);
 
 		validateCurrentEventTriggerState(true);
 		tdeCurrentCreateEvent.tid = GetCurrentFullTransactionId();
@@ -132,8 +132,7 @@ pg_tde_ddl_command_start_capture(PG_FUNCTION_ARGS)
 
 		if (relationId != InvalidOid)
 		{
-			LOCKMODE	lockmode = AccessShareLock; /* TODO. Verify lock mode? */
-			Relation	rel = table_open(relationId, lockmode);
+			Relation	rel = table_open(relationId, NoLock);
 
 			if (rel->rd_rel->relam == get_tde_table_am_oid())
 			{
@@ -141,7 +140,8 @@ pg_tde_ddl_command_start_capture(PG_FUNCTION_ARGS)
 				/* set the global state */
 				tdeCurrentCreateEvent.encryptMode = true;
 			}
-			table_close(rel, lockmode);
+
+			table_close(rel, NoLock);
 
 			if (tdeCurrentCreateEvent.encryptMode)
 			{
@@ -181,7 +181,7 @@ pg_tde_ddl_command_start_capture(PG_FUNCTION_ARGS)
 	{
 		AlterTableStmt *stmt = (AlterTableStmt *) parsetree;
 		ListCell   *lcmd;
-		Oid			relationId = RangeVarGetRelid(stmt->relation, NoLock, true);
+		Oid			relationId = RangeVarGetRelid(stmt->relation, AccessShareLock, true);
 
 		validateCurrentEventTriggerState(true);
 		tdeCurrentCreateEvent.tid = GetCurrentFullTransactionId();
@@ -216,8 +216,7 @@ pg_tde_ddl_command_start_capture(PG_FUNCTION_ARGS)
 
 			if (relationId != InvalidOid)
 			{
-				LOCKMODE	lockmode = AccessShareLock;
-				Relation	rel = relation_open(relationId, lockmode);
+				Relation	rel = relation_open(relationId, NoLock);
 
 				if (rel->rd_rel->relam == get_tde_table_am_oid())
 				{
@@ -227,7 +226,8 @@ pg_tde_ddl_command_start_capture(PG_FUNCTION_ARGS)
 					 */
 					tdeCurrentCreateEvent.encryptMode = true;
 				}
-				relation_close(rel, lockmode);
+
+				relation_close(rel, NoLock);
 
 				if (tdeCurrentCreateEvent.encryptMode)
 				{
