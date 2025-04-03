@@ -20,6 +20,13 @@ for i in range(count):
 return t
 $$ LANGUAGE plpython3u;
 
+CREATE FUNCTION test_setof_as_set(count integer, content text) RETURNS SETOF text AS $$
+s = set()
+for i in range(count):
+	s.add(content * (i + 1) if content is not None else None)
+return s
+$$ LANGUAGE plpython3u;
+
 CREATE FUNCTION test_setof_as_iterator(count integer, content text) RETURNS SETOF text AS $$
 class producer:
 	def __init__ (self, icount, icontent):
@@ -55,6 +62,11 @@ SELECT test_setof_as_tuple(0, 'tuple');
 SELECT test_setof_as_tuple(1, 'tuple');
 SELECT test_setof_as_tuple(2, 'tuple');
 SELECT test_setof_as_tuple(2, null);
+
+SELECT * FROM test_setof_as_set(0, 'set') ORDER BY 1;
+SELECT * FROM test_setof_as_set(1, 'set') ORDER BY 1;
+SELECT * FROM test_setof_as_set(2, 'set') ORDER BY 1;
+SELECT * FROM test_setof_as_set(2, null) ORDER BY 1;
 
 SELECT test_setof_as_iterator(0, 'list');
 SELECT test_setof_as_iterator(1, 'list');
