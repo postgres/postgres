@@ -29598,7 +29598,8 @@ postgres=# SELECT '0/0'::pg_lsn + pd.segment_number * ps.setting::int + :offset 
         The copied physical slot starts to reserve WAL from the same <acronym>LSN</acronym> as the
         source slot.
         <parameter>temporary</parameter> is optional. If <parameter>temporary</parameter>
-        is omitted, the same value as the source slot is used.
+        is omitted, the same value as the source slot is used. Copy of an
+        invalidated slot is not allowed.
        </para></entry>
       </row>
 
@@ -29623,7 +29624,8 @@ postgres=# SELECT '0/0'::pg_lsn + pd.segment_number * ps.setting::int + :offset 
         The <literal>failover</literal> option of the source logical slot
         is not copied and is set to <literal>false</literal> by default. This
         is to avoid the risk of being unable to continue logical replication
-        after failover to standby where the slot is being synchronized.
+        after failover to standby where the slot is being synchronized. Copy of
+        an invalidated slot is not allowed.
        </para></entry>
       </row>
 
