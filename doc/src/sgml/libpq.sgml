@@ -1918,6 +1918,30 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
       </listitem>
      </varlistentry>
 
+     <varlistentry id="libpq-connect-sslkeylogfile" xreflabel="sslkeylogfile">
+      <term><literal>sslkeylogfile</literal></term>
+      <listitem>
+       <para>
+        This parameter specifies the location where <literal>libpq</literal>
+        will log keys used in this SSL context.  This is useful for debugging
+        <productname>PostgreSQL</productname> protocol interactions or client
+        connections using network inspection tools like
+        <productname>Wireshark</productname>.  This parameter is ignored if an
+        SSL connection is not made, or if <productname>LibreSSL</productname>
+        is used (<productname>LibreSSL</productname> does not support key
+        logging).  Keys are logged using the <productname>NSS</productname>
+        format.
+        <warning>
+         <para>
+          Key logging will expose potentially sensitive information in the
+          keylog file.  Keylog files should be handled with the same care as
+          <xref linkend="libpq-connect-sslkey" /> files.
+         </para>
+        </warning>
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="libpq-connect-sslpassword" xreflabel="sslpassword">
       <term><literal>sslpassword</literal></term>
       <listitem>

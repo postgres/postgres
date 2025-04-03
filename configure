@@ -12931,7 +12931,7 @@ fi
 done
 
   # Function introduced in OpenSSL 1.1.1, not in LibreSSL.
-  for ac_func in X509_get_signature_info SSL_CTX_set_num_tickets
+  for ac_func in X509_get_signature_info SSL_CTX_set_num_tickets SSL_CTX_set_keylog_callback
 do :
   as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
 ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"

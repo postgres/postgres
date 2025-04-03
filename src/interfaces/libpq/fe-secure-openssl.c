@@ -57,6 +57,7 @@
  * include <wincrypt.h>, but some other Windows headers do.)
  */
 #include "common/openssl.h"
+#include <openssl/ssl.h>
 #include <openssl/conf.h>
 #ifdef USE_SSL_ENGINE
 #include <openssl/engine.h>
@@ -684,6 +685,49 @@ pgtls_verify_peer_name_matches_certificate_guts(PGconn *conn,
 /* See pqcomm.h comments on OpenSSL implementation of ALPN (RFC 7301) */
 static unsigned char alpn_protos[] = PG_ALPN_PROTOCOL_VECTOR;
 
+#ifdef HAVE_SSL_CTX_SET_KEYLOG_CALLBACK
+/*
+ * SSL Key Logging callback
+ *
+ * This callback lets the user store all key material to a file for debugging
+ * purposes.  The file will be written using the NSS keylog format.  LibreSSL
+ * 3.5 introduced stub function to set the callback for OpenSSL compatibility
+ * but the callback is never invoked.
+ */
+static void
+SSL_CTX_keylog_cb(const SSL *ssl, const char *line)
+{
+	int			fd;
+	mode_t		old_umask;
+	ssize_t		rc;
+	PGconn	   *conn = SSL_get_app_data(ssl);
+
+	if (conn == NULL)
+		return;
+
+	old_umask = umask(077);
+	fd = open(conn->sslkeylogfile, O_WRONLY | O_APPEND | O_CREAT, 0600);
+	umask(old_umask);
+
+	if (fd == -1)
+	{
+		libpq_append_conn_error(conn, "could not open ssl keylog file %s: %s",
+								conn->sslkeylogfile, pg_strerror(errno));
+		return;
+	}
+
+	/* line is guaranteed by OpenSSL to be NUL terminated */
+	rc = write(fd, line, strlen(line));
+	if (rc < 0)
+		libpq_append_conn_error(conn, "could not write to ssl keylog file %s: %s",
+								conn->sslkeylogfile, pg_strerror(errno));
+	else
+		rc = write(fd, "\n", 1);
+	(void) rc;					/* silence compiler warnings */
+	close(fd);
+}
+#endif
+
 /*
  *	Create per-connection SSL object, and load the client certificate,
  *	private key, and trusted CA certs.
@@ -999,6 +1043,20 @@ initialize_SSL(PGconn *conn)
 		return -1;
 	}
 	conn->ssl_in_use = true;
+
+	if (conn->sslkeylogfile && strlen(conn->sslkeylogfile) > 0)
+	{
+#ifdef HAVE_SSL_CTX_SET_KEYLOG_CALLBACK
+		SSL_CTX_set_keylog_callback(SSL_context, SSL_CTX_keylog_cb);
+#else
+#ifdef LIBRESSL_VERSION_NUMBER
+		fprintf(stderr, libpq_gettext("WARNING: sslkeylogfile support requires OpenSSL\n"));
+#else
+		fprintf(stderr, libpq_gettext("WARNING: libpq was not built with sslkeylogfile support\n"));
+#endif
+#endif
+	}
+
 
 	/*
 	 * SSL contexts are reference counted by OpenSSL. We can free it as soon
