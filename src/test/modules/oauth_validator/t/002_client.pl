@@ -122,6 +122,9 @@ test(
 	flags => ["--hang-forever"],
 	expected_stderr => qr/failed: timeout expired/);
 
+# Remove the timeout for later tests.
+$common_connstr = "$base_connstr oauth_issuer=$issuer oauth_client_id=myID";
+
 # Test various misbehaviors of the client hook.
 my @cases = (
 	{
