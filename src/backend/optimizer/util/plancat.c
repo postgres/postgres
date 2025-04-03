@@ -1303,8 +1303,7 @@ get_relation_constraints(PlannerInfo *root,
 
 			/*
 			 * If this constraint hasn't been fully validated yet, we must
-			 * ignore it here.  Also ignore if NO INHERIT and we weren't told
-			 * that that's safe.
+			 * ignore it here.
 			 */
 			if (!constr->check[i].ccvalid)
 				continue;
@@ -1320,7 +1319,6 @@ get_relation_constraints(PlannerInfo *root,
 			 */
 			if (constr->check[i].ccnoinherit && !include_noinherit)
 				continue;
-
 
 			cexpr = stringToNode(constr->check[i].ccbin);
 
