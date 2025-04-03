@@ -36,7 +36,7 @@ CompositionExclusions.txt CaseFolding.txt DerivedCoreProperties.txt DerivedNorma
 unicode_version.h: generate-unicode_version.pl
 	$(PERL) $< --version $(UNICODE_VERSION)
 
-unicode_case_table.h: generate-unicode_case_table.pl CaseFolding.txt UnicodeData.txt
+unicode_case_table.h: generate-unicode_case_table.pl CaseFolding.txt SpecialCasing.txt UnicodeData.txt
 	$(PERL) $<
 
 unicode_category_table.h: generate-unicode_category_table.pl DerivedCoreProperties.txt PropList.txt UnicodeData.txt
