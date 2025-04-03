@@ -15,9 +15,7 @@ typedef struct
 	char		pad[4];			/* make struct size = sizeof(gbtreekey16) */
 } macKEY;
 
-/*
-** OID ops
-*/
+/* GiST support functions */
 PG_FUNCTION_INFO_V1(gbt_macad_compress);
 PG_FUNCTION_INFO_V1(gbt_macad_fetch);
 PG_FUNCTION_INFO_V1(gbt_macad_union);
@@ -88,10 +86,8 @@ static const gbtree_ninfo tinfo =
 
 
 /**************************************************
- * macaddr ops
+ * GiST support functions
  **************************************************/
-
-
 
 static uint64
 mac_2_uint64(macaddr *m)
@@ -104,8 +100,6 @@ mac_2_uint64(macaddr *m)
 		res += (((uint64) mi[i]) << ((uint64) ((5 - i) * 8)));
 	return res;
 }
-
-
 
 Datum
 gbt_macad_compress(PG_FUNCTION_ARGS)

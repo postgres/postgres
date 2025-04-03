@@ -13,9 +13,7 @@ typedef struct float8key
 	float8		upper;
 } float8KEY;
 
-/*
-** float8 ops
-*/
+/* GiST support functions */
 PG_FUNCTION_INFO_V1(gbt_float8_compress);
 PG_FUNCTION_INFO_V1(gbt_float8_fetch);
 PG_FUNCTION_INFO_V1(gbt_float8_union);
@@ -113,10 +111,10 @@ float8_dist(PG_FUNCTION_ARGS)
 	PG_RETURN_FLOAT8(fabs(r));
 }
 
-/**************************************************
- * float8 ops
- **************************************************/
 
+/**************************************************
+ * GiST support functions
+ **************************************************/
 
 Datum
 gbt_float8_compress(PG_FUNCTION_ARGS)
@@ -157,7 +155,6 @@ gbt_float8_consistent(PG_FUNCTION_ARGS)
 									  fcinfo->flinfo));
 }
 
-
 Datum
 gbt_float8_distance(PG_FUNCTION_ARGS)
 {
@@ -175,7 +172,6 @@ gbt_float8_distance(PG_FUNCTION_ARGS)
 									  &tinfo, fcinfo->flinfo));
 }
 
-
 Datum
 gbt_float8_union(PG_FUNCTION_ARGS)
 {
@@ -185,7 +181,6 @@ gbt_float8_union(PG_FUNCTION_ARGS)
 	*(int *) PG_GETARG_POINTER(1) = sizeof(float8KEY);
 	PG_RETURN_POINTER(gbt_num_union(out, entryvec, &tinfo, fcinfo->flinfo));
 }
-
 
 Datum
 gbt_float8_penalty(PG_FUNCTION_ARGS)

@@ -16,9 +16,7 @@ typedef struct
 	Oid			upper;
 } oidKEY;
 
-/*
-** enum ops
-*/
+/* GiST support functions */
 PG_FUNCTION_INFO_V1(gbt_enum_compress);
 PG_FUNCTION_INFO_V1(gbt_enum_fetch);
 PG_FUNCTION_INFO_V1(gbt_enum_union);
@@ -99,9 +97,8 @@ static const gbtree_ninfo tinfo =
 
 
 /**************************************************
- * Enum ops
+ * GiST support functions
  **************************************************/
-
 
 Datum
 gbt_enum_compress(PG_FUNCTION_ARGS)
@@ -151,7 +148,6 @@ gbt_enum_union(PG_FUNCTION_ARGS)
 	*(int *) PG_GETARG_POINTER(1) = sizeof(oidKEY);
 	PG_RETURN_POINTER(gbt_num_union(out, entryvec, &tinfo, fcinfo->flinfo));
 }
-
 
 Datum
 gbt_enum_penalty(PG_FUNCTION_ARGS)

@@ -13,9 +13,7 @@ typedef struct int16key
 	int16		upper;
 } int16KEY;
 
-/*
-** int16 ops
-*/
+/* GiST support functions */
 PG_FUNCTION_INFO_V1(gbt_int2_compress);
 PG_FUNCTION_INFO_V1(gbt_int2_fetch);
 PG_FUNCTION_INFO_V1(gbt_int2_union);
@@ -24,6 +22,7 @@ PG_FUNCTION_INFO_V1(gbt_int2_consistent);
 PG_FUNCTION_INFO_V1(gbt_int2_distance);
 PG_FUNCTION_INFO_V1(gbt_int2_penalty);
 PG_FUNCTION_INFO_V1(gbt_int2_same);
+
 
 static bool
 gbt_int2gt(const void *a, const void *b, FmgrInfo *flinfo)
@@ -112,9 +111,8 @@ int2_dist(PG_FUNCTION_ARGS)
 
 
 /**************************************************
- * int16 ops
+ * GiST support functions
  **************************************************/
-
 
 Datum
 gbt_int2_compress(PG_FUNCTION_ARGS)
@@ -154,7 +152,6 @@ gbt_int2_consistent(PG_FUNCTION_ARGS)
 									  GIST_LEAF(entry), &tinfo, fcinfo->flinfo));
 }
 
-
 Datum
 gbt_int2_distance(PG_FUNCTION_ARGS)
 {
@@ -172,7 +169,6 @@ gbt_int2_distance(PG_FUNCTION_ARGS)
 									  &tinfo, fcinfo->flinfo));
 }
 
-
 Datum
 gbt_int2_union(PG_FUNCTION_ARGS)
 {
@@ -182,7 +178,6 @@ gbt_int2_union(PG_FUNCTION_ARGS)
 	*(int *) PG_GETARG_POINTER(1) = sizeof(int16KEY);
 	PG_RETURN_POINTER(gbt_num_union(out, entryvec, &tinfo, fcinfo->flinfo));
 }
-
 
 Datum
 gbt_int2_penalty(PG_FUNCTION_ARGS)

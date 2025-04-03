@@ -8,9 +8,7 @@
 #include "mb/pg_wchar.h"
 #include "utils/fmgrprotos.h"
 
-/*
-** Text ops
-*/
+/* GiST support functions */
 PG_FUNCTION_INFO_V1(gbt_text_compress);
 PG_FUNCTION_INFO_V1(gbt_bpchar_compress);
 PG_FUNCTION_INFO_V1(gbt_text_union);
@@ -163,9 +161,8 @@ static gbtree_vinfo bptinfo =
 
 
 /**************************************************
- * Text ops
+ * GiST support functions
  **************************************************/
-
 
 Datum
 gbt_text_compress(PG_FUNCTION_ARGS)
@@ -186,8 +183,6 @@ gbt_bpchar_compress(PG_FUNCTION_ARGS)
 	/* This should never have been distinct from gbt_text_compress */
 	return gbt_text_compress(fcinfo);
 }
-
-
 
 Datum
 gbt_text_consistent(PG_FUNCTION_ARGS)
@@ -216,7 +211,6 @@ gbt_text_consistent(PG_FUNCTION_ARGS)
 	PG_RETURN_BOOL(retval);
 }
 
-
 Datum
 gbt_bpchar_consistent(PG_FUNCTION_ARGS)
 {
@@ -243,7 +237,6 @@ gbt_bpchar_consistent(PG_FUNCTION_ARGS)
 	PG_RETURN_BOOL(retval);
 }
 
-
 Datum
 gbt_text_union(PG_FUNCTION_ARGS)
 {
@@ -253,7 +246,6 @@ gbt_text_union(PG_FUNCTION_ARGS)
 	PG_RETURN_POINTER(gbt_var_union(entryvec, size, PG_GET_COLLATION(),
 									&tinfo, fcinfo->flinfo));
 }
-
 
 Datum
 gbt_text_picksplit(PG_FUNCTION_ARGS)
@@ -276,7 +268,6 @@ gbt_text_same(PG_FUNCTION_ARGS)
 	*result = gbt_var_same(d1, d2, PG_GET_COLLATION(), &tinfo, fcinfo->flinfo);
 	PG_RETURN_POINTER(result);
 }
-
 
 Datum
 gbt_text_penalty(PG_FUNCTION_ARGS)

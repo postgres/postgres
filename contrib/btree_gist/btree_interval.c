@@ -14,10 +14,7 @@ typedef struct
 				upper;
 } intvKEY;
 
-
-/*
-** Interval ops
-*/
+/* GiST support functions */
 PG_FUNCTION_INFO_V1(gbt_intv_compress);
 PG_FUNCTION_INFO_V1(gbt_intv_fetch);
 PG_FUNCTION_INFO_V1(gbt_intv_decompress);
@@ -137,9 +134,8 @@ interval_dist(PG_FUNCTION_ARGS)
 
 
 /**************************************************
- * interval ops
+ * GiST support functions
  **************************************************/
-
 
 Datum
 gbt_intv_compress(PG_FUNCTION_ARGS)

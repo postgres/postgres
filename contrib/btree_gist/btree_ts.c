@@ -17,9 +17,7 @@ typedef struct
 	Timestamp	upper;
 } tsKEY;
 
-/*
-** timestamp ops
-*/
+/* GiST support functions */
 PG_FUNCTION_INFO_V1(gbt_ts_compress);
 PG_FUNCTION_INFO_V1(gbt_tstz_compress);
 PG_FUNCTION_INFO_V1(gbt_ts_fetch);
@@ -39,6 +37,8 @@ PG_FUNCTION_INFO_V1(gbt_ts_same);
 #define TimestampGetDatumFast(X) PointerGetDatum(&(X))
 #endif
 
+
+/* define for comparison */
 
 static bool
 gbt_tsgt(const void *a, const void *b, FmgrInfo *flinfo)
@@ -95,7 +95,6 @@ gbt_tslt(const void *a, const void *b, FmgrInfo *flinfo)
 											TimestampGetDatumFast(*bb)));
 }
 
-
 static int
 gbt_tskey_cmp(const void *a, const void *b, FmgrInfo *flinfo)
 {
@@ -125,7 +124,6 @@ gbt_ts_dist(const void *a, const void *b, FmgrInfo *flinfo)
 											  TimestampGetDatumFast(*bb)));
 	return fabs(INTERVAL_TO_SEC(i));
 }
-
 
 static const gbtree_ninfo tinfo =
 {
@@ -190,11 +188,9 @@ tstz_dist(PG_FUNCTION_ARGS)
 	PG_RETURN_INTERVAL_P(abs_interval(r));
 }
 
-
 /**************************************************
- * timestamp ops
+ * GiST support functions
  **************************************************/
-
 
 static inline Timestamp
 tstz_to_ts_gmt(TimestampTz ts)
@@ -211,7 +207,6 @@ gbt_ts_compress(PG_FUNCTION_ARGS)
 
 	PG_RETURN_POINTER(gbt_num_compress(entry, &tinfo));
 }
-
 
 Datum
 gbt_tstz_compress(PG_FUNCTION_ARGS)

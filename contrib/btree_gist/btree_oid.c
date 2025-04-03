@@ -12,9 +12,7 @@ typedef struct
 	Oid			upper;
 } oidKEY;
 
-/*
-** OID ops
-*/
+/* GiST support functions */
 PG_FUNCTION_INFO_V1(gbt_oid_compress);
 PG_FUNCTION_INFO_V1(gbt_oid_fetch);
 PG_FUNCTION_INFO_V1(gbt_oid_union);
@@ -113,9 +111,8 @@ oid_dist(PG_FUNCTION_ARGS)
 
 
 /**************************************************
- * Oid ops
+ * GiST support functions
  **************************************************/
-
 
 Datum
 gbt_oid_compress(PG_FUNCTION_ARGS)
@@ -155,7 +152,6 @@ gbt_oid_consistent(PG_FUNCTION_ARGS)
 									  GIST_LEAF(entry), &tinfo, fcinfo->flinfo));
 }
 
-
 Datum
 gbt_oid_distance(PG_FUNCTION_ARGS)
 {
@@ -173,7 +169,6 @@ gbt_oid_distance(PG_FUNCTION_ARGS)
 									  &tinfo, fcinfo->flinfo));
 }
 
-
 Datum
 gbt_oid_union(PG_FUNCTION_ARGS)
 {
@@ -183,7 +178,6 @@ gbt_oid_union(PG_FUNCTION_ARGS)
 	*(int *) PG_GETARG_POINTER(1) = sizeof(oidKEY);
 	PG_RETURN_POINTER(gbt_num_union(out, entryvec, &tinfo, fcinfo->flinfo));
 }
-
 
 Datum
 gbt_oid_penalty(PG_FUNCTION_ARGS)

@@ -7,10 +7,7 @@
 #include "btree_utils_var.h"
 #include "utils/fmgrprotos.h"
 
-
-/*
-** Bytea ops
-*/
+/* GiST support functions */
 PG_FUNCTION_INFO_V1(gbt_bytea_compress);
 PG_FUNCTION_INFO_V1(gbt_bytea_union);
 PG_FUNCTION_INFO_V1(gbt_bytea_picksplit);
@@ -69,7 +66,6 @@ gbt_byteacmp(const void *a, const void *b, Oid collation, FmgrInfo *flinfo)
 											 PointerGetDatum(b)));
 }
 
-
 static const gbtree_vinfo tinfo =
 {
 	gbt_t_bytea,
@@ -86,9 +82,8 @@ static const gbtree_vinfo tinfo =
 
 
 /**************************************************
- * Text ops
+ * GiST support functions
  **************************************************/
-
 
 Datum
 gbt_bytea_compress(PG_FUNCTION_ARGS)
@@ -97,8 +92,6 @@ gbt_bytea_compress(PG_FUNCTION_ARGS)
 
 	PG_RETURN_POINTER(gbt_var_compress(entry, &tinfo));
 }
-
-
 
 Datum
 gbt_bytea_consistent(PG_FUNCTION_ARGS)
@@ -121,8 +114,6 @@ gbt_bytea_consistent(PG_FUNCTION_ARGS)
 	PG_RETURN_BOOL(retval);
 }
 
-
-
 Datum
 gbt_bytea_union(PG_FUNCTION_ARGS)
 {
@@ -132,7 +123,6 @@ gbt_bytea_union(PG_FUNCTION_ARGS)
 	PG_RETURN_POINTER(gbt_var_union(entryvec, size, PG_GET_COLLATION(),
 									&tinfo, fcinfo->flinfo));
 }
-
 
 Datum
 gbt_bytea_picksplit(PG_FUNCTION_ARGS)
@@ -155,7 +145,6 @@ gbt_bytea_same(PG_FUNCTION_ARGS)
 	*result = gbt_var_same(d1, d2, PG_GET_COLLATION(), &tinfo, fcinfo->flinfo);
 	PG_RETURN_POINTER(result);
 }
-
 
 Datum
 gbt_bytea_penalty(PG_FUNCTION_ARGS)

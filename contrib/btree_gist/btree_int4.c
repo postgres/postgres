@@ -13,9 +13,7 @@ typedef struct int32key
 	int32		upper;
 } int32KEY;
 
-/*
-** int32 ops
-*/
+/* GiST support functions */
 PG_FUNCTION_INFO_V1(gbt_int4_compress);
 PG_FUNCTION_INFO_V1(gbt_int4_fetch);
 PG_FUNCTION_INFO_V1(gbt_int4_union);
@@ -24,7 +22,6 @@ PG_FUNCTION_INFO_V1(gbt_int4_consistent);
 PG_FUNCTION_INFO_V1(gbt_int4_distance);
 PG_FUNCTION_INFO_V1(gbt_int4_penalty);
 PG_FUNCTION_INFO_V1(gbt_int4_same);
-
 
 static bool
 gbt_int4gt(const void *a, const void *b, FmgrInfo *flinfo)
@@ -113,9 +110,8 @@ int4_dist(PG_FUNCTION_ARGS)
 
 
 /**************************************************
- * int32 ops
+ * GiST support functions
  **************************************************/
-
 
 Datum
 gbt_int4_compress(PG_FUNCTION_ARGS)
@@ -155,7 +151,6 @@ gbt_int4_consistent(PG_FUNCTION_ARGS)
 									  GIST_LEAF(entry), &tinfo, fcinfo->flinfo));
 }
 
-
 Datum
 gbt_int4_distance(PG_FUNCTION_ARGS)
 {
@@ -173,7 +168,6 @@ gbt_int4_distance(PG_FUNCTION_ARGS)
 									  &tinfo, fcinfo->flinfo));
 }
 
-
 Datum
 gbt_int4_union(PG_FUNCTION_ARGS)
 {
@@ -183,7 +177,6 @@ gbt_int4_union(PG_FUNCTION_ARGS)
 	*(int *) PG_GETARG_POINTER(1) = sizeof(int32KEY);
 	PG_RETURN_POINTER(gbt_num_union(out, entryvec, &tinfo, fcinfo->flinfo));
 }
-
 
 Datum
 gbt_int4_penalty(PG_FUNCTION_ARGS)

@@ -12,9 +12,7 @@ typedef struct boolkey
 	bool		upper;
 } boolKEY;
 
-/*
-** bool ops
-*/
+/* GiST support functions */
 PG_FUNCTION_INFO_V1(gbt_bool_compress);
 PG_FUNCTION_INFO_V1(gbt_bool_fetch);
 PG_FUNCTION_INFO_V1(gbt_bool_union);
@@ -82,9 +80,8 @@ static const gbtree_ninfo tinfo =
 
 
 /**************************************************
- * bool ops
+ * GiST support functions
  **************************************************/
-
 
 Datum
 gbt_bool_compress(PG_FUNCTION_ARGS)
@@ -124,7 +121,6 @@ gbt_bool_consistent(PG_FUNCTION_ARGS)
 									  GIST_LEAF(entry), &tinfo, fcinfo->flinfo));
 }
 
-
 Datum
 gbt_bool_union(PG_FUNCTION_ARGS)
 {
@@ -134,7 +130,6 @@ gbt_bool_union(PG_FUNCTION_ARGS)
 	*(int *) PG_GETARG_POINTER(1) = sizeof(boolKEY);
 	PG_RETURN_POINTER(gbt_num_union(out, entryvec, &tinfo, fcinfo->flinfo));
 }
-
 
 Datum
 gbt_bool_penalty(PG_FUNCTION_ARGS)

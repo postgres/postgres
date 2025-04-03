@@ -14,9 +14,7 @@ typedef struct
 	DateADT		upper;
 } dateKEY;
 
-/*
-** date ops
-*/
+/* GiST support functions */
 PG_FUNCTION_INFO_V1(gbt_date_compress);
 PG_FUNCTION_INFO_V1(gbt_date_fetch);
 PG_FUNCTION_INFO_V1(gbt_date_union);
@@ -128,10 +126,8 @@ date_dist(PG_FUNCTION_ARGS)
 
 
 /**************************************************
- * date ops
+ * GiST support functions
  **************************************************/
-
-
 
 Datum
 gbt_date_compress(PG_FUNCTION_ARGS)
@@ -172,7 +168,6 @@ gbt_date_consistent(PG_FUNCTION_ARGS)
 									  fcinfo->flinfo));
 }
 
-
 Datum
 gbt_date_distance(PG_FUNCTION_ARGS)
 {
@@ -190,7 +185,6 @@ gbt_date_distance(PG_FUNCTION_ARGS)
 									  &tinfo, fcinfo->flinfo));
 }
 
-
 Datum
 gbt_date_union(PG_FUNCTION_ARGS)
 {
@@ -200,7 +194,6 @@ gbt_date_union(PG_FUNCTION_ARGS)
 	*(int *) PG_GETARG_POINTER(1) = sizeof(dateKEY);
 	PG_RETURN_POINTER(gbt_num_union(out, entryvec, &tinfo, fcinfo->flinfo));
 }
-
 
 Datum
 gbt_date_penalty(PG_FUNCTION_ARGS)
@@ -237,7 +230,6 @@ gbt_date_penalty(PG_FUNCTION_ARGS)
 
 	PG_RETURN_POINTER(result);
 }
-
 
 Datum
 gbt_date_picksplit(PG_FUNCTION_ARGS)

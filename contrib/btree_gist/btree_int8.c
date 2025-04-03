@@ -13,9 +13,7 @@ typedef struct int64key
 	int64		upper;
 } int64KEY;
 
-/*
-** int64 ops
-*/
+/* GiST support functions */
 PG_FUNCTION_INFO_V1(gbt_int8_compress);
 PG_FUNCTION_INFO_V1(gbt_int8_fetch);
 PG_FUNCTION_INFO_V1(gbt_int8_union);
@@ -113,9 +111,8 @@ int8_dist(PG_FUNCTION_ARGS)
 
 
 /**************************************************
- * int64 ops
+ * GiST support functions
  **************************************************/
-
 
 Datum
 gbt_int8_compress(PG_FUNCTION_ARGS)
@@ -155,7 +152,6 @@ gbt_int8_consistent(PG_FUNCTION_ARGS)
 									  GIST_LEAF(entry), &tinfo, fcinfo->flinfo));
 }
 
-
 Datum
 gbt_int8_distance(PG_FUNCTION_ARGS)
 {
@@ -173,7 +169,6 @@ gbt_int8_distance(PG_FUNCTION_ARGS)
 									  &tinfo, fcinfo->flinfo));
 }
 
-
 Datum
 gbt_int8_union(PG_FUNCTION_ARGS)
 {
@@ -183,7 +178,6 @@ gbt_int8_union(PG_FUNCTION_ARGS)
 	*(int *) PG_GETARG_POINTER(1) = sizeof(int64KEY);
 	PG_RETURN_POINTER(gbt_num_union(out, entryvec, &tinfo, fcinfo->flinfo));
 }
-
 
 Datum
 gbt_int8_penalty(PG_FUNCTION_ARGS)

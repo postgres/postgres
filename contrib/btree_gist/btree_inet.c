@@ -14,9 +14,7 @@ typedef struct inetkey
 	double		upper;
 } inetKEY;
 
-/*
-** inet ops
-*/
+/* GiST support functions */
 PG_FUNCTION_INFO_V1(gbt_inet_compress);
 PG_FUNCTION_INFO_V1(gbt_inet_union);
 PG_FUNCTION_INFO_V1(gbt_inet_picksplit);
@@ -85,9 +83,8 @@ static const gbtree_ninfo tinfo =
 
 
 /**************************************************
- * inet ops
+ * GiST support functions
  **************************************************/
-
 
 Datum
 gbt_inet_compress(PG_FUNCTION_ARGS)
@@ -113,7 +110,6 @@ gbt_inet_compress(PG_FUNCTION_ARGS)
 
 	PG_RETURN_POINTER(retval);
 }
-
 
 Datum
 gbt_inet_consistent(PG_FUNCTION_ARGS)
@@ -142,7 +138,6 @@ gbt_inet_consistent(PG_FUNCTION_ARGS)
 									  &strategy, GIST_LEAF(entry), &tinfo, fcinfo->flinfo));
 }
 
-
 Datum
 gbt_inet_union(PG_FUNCTION_ARGS)
 {
@@ -152,7 +147,6 @@ gbt_inet_union(PG_FUNCTION_ARGS)
 	*(int *) PG_GETARG_POINTER(1) = sizeof(inetKEY);
 	PG_RETURN_POINTER(gbt_num_union(out, entryvec, &tinfo, fcinfo->flinfo));
 }
-
 
 Datum
 gbt_inet_penalty(PG_FUNCTION_ARGS)

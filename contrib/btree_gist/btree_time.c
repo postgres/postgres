@@ -15,9 +15,7 @@ typedef struct
 	TimeADT		upper;
 } timeKEY;
 
-/*
-** time ops
-*/
+/* GiST support functions */
 PG_FUNCTION_INFO_V1(gbt_time_compress);
 PG_FUNCTION_INFO_V1(gbt_timetz_compress);
 PG_FUNCTION_INFO_V1(gbt_time_fetch);
@@ -92,8 +90,6 @@ gbt_timelt(const void *a, const void *b, FmgrInfo *flinfo)
 											TimeADTGetDatumFast(*bb)));
 }
 
-
-
 static int
 gbt_timekey_cmp(const void *a, const void *b, FmgrInfo *flinfo)
 {
@@ -150,10 +146,8 @@ time_dist(PG_FUNCTION_ARGS)
 
 
 /**************************************************
- * time ops
+ * GiST support functions
  **************************************************/
-
-
 
 Datum
 gbt_time_compress(PG_FUNCTION_ARGS)
@@ -162,7 +156,6 @@ gbt_time_compress(PG_FUNCTION_ARGS)
 
 	PG_RETURN_POINTER(gbt_num_compress(entry, &tinfo));
 }
-
 
 Datum
 gbt_timetz_compress(PG_FUNCTION_ARGS)
@@ -262,7 +255,6 @@ gbt_timetz_consistent(PG_FUNCTION_ARGS)
 									  GIST_LEAF(entry), &tinfo, fcinfo->flinfo));
 }
 
-
 Datum
 gbt_time_union(PG_FUNCTION_ARGS)
 {
@@ -272,7 +264,6 @@ gbt_time_union(PG_FUNCTION_ARGS)
 	*(int *) PG_GETARG_POINTER(1) = sizeof(timeKEY);
 	PG_RETURN_POINTER(gbt_num_union(out, entryvec, &tinfo, fcinfo->flinfo));
 }
-
 
 Datum
 gbt_time_penalty(PG_FUNCTION_ARGS)
@@ -312,7 +303,6 @@ gbt_time_penalty(PG_FUNCTION_ARGS)
 
 	PG_RETURN_POINTER(result);
 }
-
 
 Datum
 gbt_time_picksplit(PG_FUNCTION_ARGS)

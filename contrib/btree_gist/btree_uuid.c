@@ -15,9 +15,7 @@ typedef struct
 } uuidKEY;
 
 
-/*
- * UUID ops
- */
+/* GiST support functions */
 PG_FUNCTION_INFO_V1(gbt_uuid_compress);
 PG_FUNCTION_INFO_V1(gbt_uuid_fetch);
 PG_FUNCTION_INFO_V1(gbt_uuid_union);
@@ -93,9 +91,8 @@ static const gbtree_ninfo tinfo =
 
 
 /**************************************************
- * uuid ops
+ * GiST support functions
  **************************************************/
-
 
 Datum
 gbt_uuid_compress(PG_FUNCTION_ARGS)

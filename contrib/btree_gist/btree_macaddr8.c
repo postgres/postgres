@@ -15,9 +15,7 @@ typedef struct
 	/* make struct size = sizeof(gbtreekey16) */
 } mac8KEY;
 
-/*
-** OID ops
-*/
+/* GiST support functions */
 PG_FUNCTION_INFO_V1(gbt_macad8_compress);
 PG_FUNCTION_INFO_V1(gbt_macad8_fetch);
 PG_FUNCTION_INFO_V1(gbt_macad8_union);
@@ -25,7 +23,6 @@ PG_FUNCTION_INFO_V1(gbt_macad8_picksplit);
 PG_FUNCTION_INFO_V1(gbt_macad8_consistent);
 PG_FUNCTION_INFO_V1(gbt_macad8_penalty);
 PG_FUNCTION_INFO_V1(gbt_macad8_same);
-
 
 static bool
 gbt_macad8gt(const void *a, const void *b, FmgrInfo *flinfo)
@@ -88,10 +85,8 @@ static const gbtree_ninfo tinfo =
 
 
 /**************************************************
- * macaddr ops
+ * GiST support functions
  **************************************************/
-
-
 
 static uint64
 mac8_2_uint64(macaddr8 *m)
@@ -104,8 +99,6 @@ mac8_2_uint64(macaddr8 *m)
 		res += (((uint64) mi[i]) << ((uint64) ((7 - i) * 8)));
 	return res;
 }
-
-
 
 Datum
 gbt_macad8_compress(PG_FUNCTION_ARGS)
@@ -145,7 +138,6 @@ gbt_macad8_consistent(PG_FUNCTION_ARGS)
 									  GIST_LEAF(entry), &tinfo, fcinfo->flinfo));
 }
 
-
 Datum
 gbt_macad8_union(PG_FUNCTION_ARGS)
 {
@@ -155,7 +147,6 @@ gbt_macad8_union(PG_FUNCTION_ARGS)
 	*(int *) PG_GETARG_POINTER(1) = sizeof(mac8KEY);
 	PG_RETURN_POINTER(gbt_num_union(out, entryvec, &tinfo, fcinfo->flinfo));
 }
-
 
 Datum
 gbt_macad8_penalty(PG_FUNCTION_ARGS)

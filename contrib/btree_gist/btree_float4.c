@@ -13,9 +13,7 @@ typedef struct float4key
 	float4		upper;
 } float4KEY;
 
-/*
-** float4 ops
-*/
+/* GiST support functions */
 PG_FUNCTION_INFO_V1(gbt_float4_compress);
 PG_FUNCTION_INFO_V1(gbt_float4_fetch);
 PG_FUNCTION_INFO_V1(gbt_float4_union);
@@ -107,9 +105,8 @@ float4_dist(PG_FUNCTION_ARGS)
 
 
 /**************************************************
- * float4 ops
+ * GiST support functions
  **************************************************/
-
 
 Datum
 gbt_float4_compress(PG_FUNCTION_ARGS)
@@ -150,7 +147,6 @@ gbt_float4_consistent(PG_FUNCTION_ARGS)
 									  fcinfo->flinfo));
 }
 
-
 Datum
 gbt_float4_distance(PG_FUNCTION_ARGS)
 {
@@ -168,7 +164,6 @@ gbt_float4_distance(PG_FUNCTION_ARGS)
 									  &tinfo, fcinfo->flinfo));
 }
 
-
 Datum
 gbt_float4_union(PG_FUNCTION_ARGS)
 {
@@ -178,7 +173,6 @@ gbt_float4_union(PG_FUNCTION_ARGS)
 	*(int *) PG_GETARG_POINTER(1) = sizeof(float4KEY);
 	PG_RETURN_POINTER(gbt_num_union(out, entryvec, &tinfo, fcinfo->flinfo));
 }
-
 
 Datum
 gbt_float4_penalty(PG_FUNCTION_ARGS)
