@@ -449,6 +449,16 @@ CREATE FUNCTION test1 (int) RETURNS int LANGUAGE SQL
 CREATE FUNCTION test1 (int) RETURNS int LANGUAGE SQL
     AS 'a', 'b';
 
+CREATE FUNCTION test1 (int) RETURNS int LANGUAGE SQL
+    AS '';
+
+-- make sure empty-body case is handled at execution time, too
+SET check_function_bodies = off;
+CREATE FUNCTION test1 (anyelement) RETURNS anyarray LANGUAGE SQL
+    AS '';
+SELECT test1(0);
+RESET check_function_bodies;
+
 -- Cleanup
 DROP SCHEMA temp_func_test CASCADE;
 DROP USER regress_unpriv_user;

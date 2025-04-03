@@ -757,9 +757,23 @@ LINE 2:     AS 'SELECT $2;';
 CREATE FUNCTION test1 (int) RETURNS int LANGUAGE SQL
     AS 'a', 'b';
 ERROR:  only one AS item needed for language "sql"
+CREATE FUNCTION test1 (int) RETURNS int LANGUAGE SQL
+    AS '';
+ERROR:  return type mismatch in function declared to return integer
+DETAIL:  Function's final statement must be SELECT or INSERT/UPDATE/DELETE/MERGE RETURNING.
+CONTEXT:  SQL function "test1"
+-- make sure empty-body case is handled at execution time, too
+SET check_function_bodies = off;
+CREATE FUNCTION test1 (anyelement) RETURNS anyarray LANGUAGE SQL
+    AS '';
+SELECT test1(0);
+ERROR:  return type mismatch in function declared to return integer[]
+DETAIL:  Function's final statement must be SELECT or INSERT/UPDATE/DELETE/MERGE RETURNING.
+CONTEXT:  SQL function "test1" during startup
+RESET check_function_bodies;
 -- Cleanup
 DROP SCHEMA temp_func_test CASCADE;
-NOTICE:  drop cascades to 34 other objects
+NOTICE:  drop cascades to 35 other objects
 DETAIL:  drop cascades to function functest_a_1(text,date)
 drop cascades to function functest_a_2(text[])
 drop cascades to function functest_a_3()
@@ -794,5 +808,6 @@ drop cascades to function create_and_insert()
 drop cascades to table ddl_test
 drop cascades to function alter_and_insert()
 drop cascades to function double_append(anyarray,anyelement)
+drop cascades to function test1(anyelement)
 DROP USER regress_unpriv_user;
 RESET search_path;

@@ -1116,6 +1116,19 @@ sql_compile_callback(FunctionCallInfo fcinfo,
 	 */
 	func->num_queries = list_length(source_list);
 
+	/*
+	 * Edge case: empty function body is OK only if it returns VOID.  Normally
+	 * we validate that the last statement returns the right thing in
+	 * check_sql_stmt_retval, but we'll never reach that if there's no last
+	 * statement.
+	 */
+	if (func->num_queries == 0 && rettype != VOIDOID)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+				 errmsg("return type mismatch in function declared to return %s",
+						format_type_be(rettype)),
+				 errdetail("Function's final statement must be SELECT or INSERT/UPDATE/DELETE/MERGE RETURNING.")));
+
 	/* Save the source trees in pcontext for now. */
 	MemoryContextSwitchTo(pcontext);
 	func->source_list = copyObject(source_list);
@@ -2103,7 +2116,7 @@ check_sql_stmt_retval(List *queryTreeList,
 	}
 	else
 	{
-		/* Empty function body, or last statement is a utility command */
+		/* Last statement is a utility command, or it rewrote to nothing */
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
 				 errmsg("return type mismatch in function declared to return %s",
