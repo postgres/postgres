@@ -506,7 +506,8 @@ do { \
 		CONVERT_PRIV('s', "SET");
 		CONVERT_PRIV('A', "ALTER SYSTEM");
 	}
-	else if (strcmp(type, "LARGE OBJECT") == 0)
+	else if (strcmp(type, "LARGE OBJECT") == 0 ||
+			 strcmp(type, "LARGE OBJECTS") == 0)
 	{
 		CONVERT_PRIV('r', "SELECT");
 		CONVERT_PRIV('w', "UPDATE");

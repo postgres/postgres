@@ -2005,16 +2005,20 @@ get_object_address_defacl(List *object, bool missing_ok)
 		case DEFACLOBJ_NAMESPACE:
 			objtype_str = "schemas";
 			break;
+		case DEFACLOBJ_LARGEOBJECT:
+			objtype_str = "large objects";
+			break;
 		default:
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 					 errmsg("unrecognized default ACL object type \"%c\"", objtype),
-					 errhint("Valid object types are \"%c\", \"%c\", \"%c\", \"%c\", \"%c\".",
+					 errhint("Valid object types are \"%c\", \"%c\", \"%c\", \"%c\", \"%c\", \"%c\".",
 							 DEFACLOBJ_RELATION,
 							 DEFACLOBJ_SEQUENCE,
 							 DEFACLOBJ_FUNCTION,
 							 DEFACLOBJ_TYPE,
-							 DEFACLOBJ_NAMESPACE)));
+							 DEFACLOBJ_NAMESPACE,
+							 DEFACLOBJ_LARGEOBJECT)));
 	}
 
 	/*
@@ -3842,6 +3846,12 @@ getObjectDescription(const ObjectAddress *object, bool missing_ok)
 						Assert(!nspname);
 						appendStringInfo(&buffer,
 										 _("default privileges on new schemas belonging to role %s"),
+										 rolename);
+						break;
+					case DEFACLOBJ_LARGEOBJECT:
+						Assert(!nspname);
+						appendStringInfo(&buffer,
+										 _("default privileges on new large objects belonging to role %s"),
 										 rolename);
 						break;
 					default:
@@ -5765,6 +5775,10 @@ getObjectIdentityParts(const ObjectAddress *object,
 					case DEFACLOBJ_NAMESPACE:
 						appendStringInfoString(&buffer,
 											   " on schemas");
+						break;
+					case DEFACLOBJ_LARGEOBJECT:
+						appendStringInfoString(&buffer,
+											   " on large objects");
 						break;
 				}
 

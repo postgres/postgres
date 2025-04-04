@@ -4457,7 +4457,7 @@ match_previous_words(int pattern_id,
 		 * objects supported.
 		 */
 		if (HeadMatches("ALTER", "DEFAULT", "PRIVILEGES"))
-			COMPLETE_WITH("TABLES", "SEQUENCES", "FUNCTIONS", "PROCEDURES", "ROUTINES", "TYPES", "SCHEMAS");
+			COMPLETE_WITH("TABLES", "SEQUENCES", "FUNCTIONS", "PROCEDURES", "ROUTINES", "TYPES", "SCHEMAS", "LARGE OBJECTS");
 		else
 			COMPLETE_WITH_SCHEMA_QUERY_PLUS(Query_for_list_of_grantables,
 											"ALL FUNCTIONS IN SCHEMA",

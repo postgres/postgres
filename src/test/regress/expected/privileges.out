@@ -2667,11 +2667,103 @@ SELECT has_schema_privilege('regress_priv_user2', 'testns4', 'CREATE'); -- yes
 
 ALTER DEFAULT PRIVILEGES REVOKE ALL ON SCHEMAS FROM regress_priv_user2;
 COMMIT;
+--
+-- Test for default privileges on large objects. This is done in a
+-- separate, rollbacked, transaction to avoid any trouble with other
+-- regression sessions.
+--
+BEGIN;
+SELECT lo_create(1007);
+ lo_create 
+-----------
+      1007
+(1 row)
+
+SELECT has_largeobject_privilege('regress_priv_user2', 1007, 'SELECT'); -- no
+ has_largeobject_privilege 
+---------------------------
+ f
+(1 row)
+
+SELECT has_largeobject_privilege('regress_priv_user2', 1007, 'UPDATE'); -- no
+ has_largeobject_privilege 
+---------------------------
+ f
+(1 row)
+
+ALTER DEFAULT PRIVILEGES GRANT SELECT ON LARGE OBJECTS TO regress_priv_user2;
+SELECT lo_create(1008);
+ lo_create 
+-----------
+      1008
+(1 row)
+
+SELECT has_largeobject_privilege('regress_priv_user2', 1008, 'SELECT'); -- yes
+ has_largeobject_privilege 
+---------------------------
+ t
+(1 row)
+
+SELECT has_largeobject_privilege('regress_priv_user6', 1008, 'SELECT'); -- no
+ has_largeobject_privilege 
+---------------------------
+ f
+(1 row)
+
+SELECT has_largeobject_privilege('regress_priv_user2', 1008, 'UPDATE'); -- no
+ has_largeobject_privilege 
+---------------------------
+ f
+(1 row)
+
+ALTER DEFAULT PRIVILEGES GRANT ALL ON LARGE OBJECTS TO regress_priv_user2;
+SELECT lo_create(1009);
+ lo_create 
+-----------
+      1009
+(1 row)
+
+SELECT has_largeobject_privilege('regress_priv_user2', 1009, 'SELECT'); -- true
+ has_largeobject_privilege 
+---------------------------
+ t
+(1 row)
+
+SELECT has_largeobject_privilege('regress_priv_user2', 1009, 'UPDATE'); -- true
+ has_largeobject_privilege 
+---------------------------
+ t
+(1 row)
+
+ALTER DEFAULT PRIVILEGES REVOKE UPDATE ON LARGE OBJECTS FROM regress_priv_user2;
+SELECT lo_create(1010);
+ lo_create 
+-----------
+      1010
+(1 row)
+
+SELECT has_largeobject_privilege('regress_priv_user2', 1010, 'SELECT'); -- true
+ has_largeobject_privilege 
+---------------------------
+ t
+(1 row)
+
+SELECT has_largeobject_privilege('regress_priv_user2', 1010, 'UPDATE'); -- false
+ has_largeobject_privilege 
+---------------------------
+ f
+(1 row)
+
+ROLLBACK;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON LARGE OBJECTS TO public; -- error
+ERROR:  cannot use IN SCHEMA clause when using GRANT/REVOKE ON LARGE OBJECTS
+\c -
 -- Test for DROP OWNED BY with shared dependencies.  This is done in a
 -- separate, rollbacked, transaction to avoid any trouble with other
 -- regression sessions.
 BEGIN;
 ALTER DEFAULT PRIVILEGES GRANT ALL ON FUNCTIONS TO regress_priv_user2;
+ALTER DEFAULT PRIVILEGES GRANT ALL ON LARGE OBJECTS TO regress_priv_user2;
 ALTER DEFAULT PRIVILEGES GRANT ALL ON SCHEMAS TO regress_priv_user2;
 ALTER DEFAULT PRIVILEGES GRANT ALL ON SEQUENCES TO regress_priv_user2;
 ALTER DEFAULT PRIVILEGES GRANT ALL ON TABLES TO regress_priv_user2;
@@ -2682,7 +2774,7 @@ SELECT count(*) FROM pg_shdepend
 	classid = 'pg_default_acl'::regclass;
  count 
 -------
-     5
+     6
 (1 row)
 
 DROP OWNED BY regress_priv_user2, regress_priv_user2;

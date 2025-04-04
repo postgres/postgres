@@ -1005,6 +1005,10 @@ ExecAlterDefaultPrivilegesStmt(ParseState *pstate, AlterDefaultPrivilegesStmt *s
 			all_privileges = ACL_ALL_RIGHTS_SCHEMA;
 			errormsg = gettext_noop("invalid privilege type %s for schema");
 			break;
+		case OBJECT_LARGEOBJECT:
+			all_privileges = ACL_ALL_RIGHTS_LARGEOBJECT;
+			errormsg = gettext_noop("invalid privilege type %s for large object");
+			break;
 		default:
 			elog(ERROR, "unrecognized GrantStmt.objtype: %d",
 				 (int) action->objtype);
@@ -1194,6 +1198,16 @@ SetDefaultACL(InternalDefaultACL *iacls)
 			objtype = DEFACLOBJ_NAMESPACE;
 			if (iacls->all_privs && this_privileges == ACL_NO_RIGHTS)
 				this_privileges = ACL_ALL_RIGHTS_SCHEMA;
+			break;
+
+		case OBJECT_LARGEOBJECT:
+			if (OidIsValid(iacls->nspid))
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_GRANT_OPERATION),
+						 errmsg("cannot use IN SCHEMA clause when using GRANT/REVOKE ON LARGE OBJECTS")));
+			objtype = DEFACLOBJ_LARGEOBJECT;
+			if (iacls->all_privs && this_privileges == ACL_NO_RIGHTS)
+				this_privileges = ACL_ALL_RIGHTS_LARGEOBJECT;
 			break;
 
 		default:
@@ -1438,6 +1452,9 @@ RemoveRoleFromObjectACL(Oid roleid, Oid classid, Oid objid)
 				break;
 			case DEFACLOBJ_NAMESPACE:
 				iacls.objtype = OBJECT_SCHEMA;
+				break;
+			case DEFACLOBJ_LARGEOBJECT:
+				iacls.objtype = OBJECT_LARGEOBJECT;
 				break;
 			default:
 				/* Shouldn't get here */
@@ -4248,6 +4265,10 @@ get_user_default_acl(ObjectType objtype, Oid ownerId, Oid nsp_oid)
 
 		case OBJECT_SCHEMA:
 			defaclobjtype = DEFACLOBJ_NAMESPACE;
+			break;
+
+		case OBJECT_LARGEOBJECT:
+			defaclobjtype = DEFACLOBJ_LARGEOBJECT;
 			break;
 
 		default:

@@ -3360,7 +3360,8 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        <literal>S</literal> = sequence,
        <literal>f</literal> = function,
        <literal>T</literal> = type,
-       <literal>n</literal> = schema
+       <literal>n</literal> = schema,
+       <literal>L</literal> = large object
       </para></entry>
      </row>
 

@@ -51,6 +51,11 @@ GRANT { { USAGE | CREATE }
     ON SCHEMAS
     TO { [ GROUP ] <replaceable class="parameter">role_name</replaceable> | PUBLIC } [, ...] [ WITH GRANT OPTION ]
 
+GRANT { { SELECT | UPDATE }
+    [, ...] | ALL [ PRIVILEGES ] }
+    ON LARGE OBJECTS
+    TO { [ GROUP ] <replaceable class="parameter">role_name</replaceable> | PUBLIC } [, ...] [ WITH GRANT OPTION ]
+
 REVOKE [ GRANT OPTION FOR ]
     { { SELECT | INSERT | UPDATE | DELETE | TRUNCATE | REFERENCES | TRIGGER | MAINTAIN }
     [, ...] | ALL [ PRIVILEGES ] }
@@ -81,6 +86,13 @@ REVOKE [ GRANT OPTION FOR ]
     { { USAGE | CREATE }
     [, ...] | ALL [ PRIVILEGES ] }
     ON SCHEMAS
+    FROM { [ GROUP ] <replaceable class="parameter">role_name</replaceable> | PUBLIC } [, ...]
+    [ CASCADE | RESTRICT ]
+
+REVOKE [ GRANT OPTION FOR ]
+    { { SELECT | UPDATE }
+    [, ...] | ALL [ PRIVILEGES ] }
+    ON LARGE OBJECTS
     FROM { [ GROUP ] <replaceable class="parameter">role_name</replaceable> | PUBLIC } [, ...]
     [ CASCADE | RESTRICT ]
 </synopsis>
@@ -117,8 +129,8 @@ REVOKE [ GRANT OPTION FOR ]
   <para>
    Currently,
    only the privileges for schemas, tables (including views and foreign
-   tables), sequences, functions, and types (including domains) can be
-   altered.  For this command, functions include aggregates and procedures.
+   tables), sequences, functions, types (including domains), and large objects
+   can be altered.  For this command, functions include aggregates and procedures.
    The words <literal>FUNCTIONS</literal> and <literal>ROUTINES</literal> are
    equivalent in this command.  (<literal>ROUTINES</literal> is preferred
    going forward as the standard term for functions and procedures taken
@@ -161,7 +173,8 @@ REVOKE [ GRANT OPTION FOR ]
       If <literal>IN SCHEMA</literal> is omitted, the global default privileges
       are altered.
       <literal>IN SCHEMA</literal> is not allowed when setting privileges
-      for schemas, since schemas can't be nested.
+      for schemas and large objects, since schemas can't be nested and
+      large objects don't belong to a schema.
      </para>
     </listitem>
    </varlistentry>
