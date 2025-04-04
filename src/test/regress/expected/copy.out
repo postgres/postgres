@@ -338,3 +338,15 @@ create foreign table copytest_foreign_table (a int) server copytest_server;
 copy copytest_foreign_table from stdin (freeze);
 ERROR:  cannot perform COPY FREEZE on a foreign table
 rollback;
+-- Tests for COPY TO with materialized views.
+-- COPY TO should fail for an unpopulated materialized view
+-- but succeed for a populated one.
+CREATE MATERIALIZED VIEW copytest_mv AS SELECT 1 AS id WITH NO DATA;
+COPY copytest_mv(id) TO stdout WITH (header);
+ERROR:  cannot copy from unpopulated materialized view "copytest_mv"
+HINT:  Use the REFRESH MATERIALIZED VIEW command.
+REFRESH MATERIALIZED VIEW copytest_mv;
+COPY copytest_mv(id) TO stdout WITH (header);
+id
+1
+DROP MATERIALIZED VIEW copytest_mv;

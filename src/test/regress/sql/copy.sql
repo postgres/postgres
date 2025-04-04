@@ -366,3 +366,12 @@ copy copytest_foreign_table from stdin (freeze);
 1
 \.
 rollback;
+
+-- Tests for COPY TO with materialized views.
+-- COPY TO should fail for an unpopulated materialized view
+-- but succeed for a populated one.
+CREATE MATERIALIZED VIEW copytest_mv AS SELECT 1 AS id WITH NO DATA;
+COPY copytest_mv(id) TO stdout WITH (header);
+REFRESH MATERIALIZED VIEW copytest_mv;
+COPY copytest_mv(id) TO stdout WITH (header);
+DROP MATERIALIZED VIEW copytest_mv;
