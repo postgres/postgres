@@ -1202,3 +1202,103 @@ WHERE a.thousand < 750;
 explain (costs off)
 SELECT * FROM tenk1 A LEFT JOIN tenk2 B
 ON B.hundred in (SELECT min(c.hundred) FROM tenk2 C WHERE c.odd = b.odd);
+
+--
+-- Test VALUES to ARRAY (VtA) transformation
+--
+
+-- VtA transformation for joined VALUES is not supported
+EXPLAIN (COSTS OFF)
+SELECT * FROM onek, (VALUES('RFAAAA'), ('VJAAAA')) AS v (i)
+  WHERE onek.stringu1 = v.i;
+
+-- VtA transformation for a composite argument is not supported
+EXPLAIN (COSTS OFF)
+SELECT * FROM onek
+  WHERE (unique1,ten) IN (VALUES (1,1), (20,0), (99,9), (17,99))
+  ORDER BY unique1;
+
+EXPLAIN (COSTS OFF)
+SELECT * FROM onek
+    WHERE unique1 IN (VALUES(10000), (2), (389), (1000), (2000), (10029))
+    ORDER BY unique1;
+
+EXPLAIN (COSTS OFF)
+SELECT * FROM onek
+    WHERE unique1 IN (VALUES(1200), (1));
+
+-- Recursive evaluation of constant queries is not yet supported
+EXPLAIN (COSTS OFF)
+SELECT * FROM onek
+  WHERE unique1 IN (SELECT x * x FROM (VALUES(1200), (1)) AS x(x));
+
+EXPLAIN (COSTS OFF)
+SELECT unique1, stringu1 FROM onek WHERE stringu1::name IN (VALUES('RFAAAA'), ('VJAAAA'));
+
+EXPLAIN (COSTS OFF)
+SELECT unique1, stringu1 FROM onek WHERE stringu1::text IN (VALUES('RFAAAA'), ('VJAAAA'));
+
+EXPLAIN (COSTS OFF)
+SELECT * from onek WHERE unique1 in (VALUES(1200::bigint), (1));
+
+-- VtA shouldn't depend on the side of the join probing with the VALUES expression.
+EXPLAIN (COSTS OFF)
+SELECT c.oid,c.relname FROM pg_class c JOIN pg_am a USING (oid)
+WHERE a.oid IN (VALUES (1), (2));
+EXPLAIN (COSTS OFF)
+SELECT c.oid,c.relname FROM pg_class c JOIN pg_am a USING (oid)
+WHERE c.oid IN (VALUES (1), (2));
+
+-- Constant expressions are simplified
+EXPLAIN (COSTS OFF)
+SELECT ten FROM onek WHERE sin(two ) +four IN (VALUES (sin(0.5)), (2));
+EXPLAIN (COSTS OFF)
+
+-- VtA allows NULLs in the list
+SELECT ten FROM onek WHERE sin(two)+four IN (VALUES (sin(0.5)), (NULL), (2));
+
+-- VtA is supported for custom plans where params are substituted with
+-- constants.  VtA is not supported with generic plans where params prevent
+-- us from building a constant array.
+PREPARE test (int, numeric, text) AS
+  SELECT ten FROM onek WHERE sin(two) * four / ($3::real) IN (VALUES (sin($2)), (2), ($1));
+EXPLAIN (COSTS OFF) EXECUTE test(42, 3.14, '-1.5');
+EXPLAIN (COSTS OFF) EXECUTE test(NULL, 3.14, NULL);
+EXPLAIN (COSTS OFF) EXECUTE test(NULL, 3.14, '-1.5');
+SET plan_cache_mode = 'force_generic_plan';
+EXPLAIN (COSTS OFF) EXECUTE test(NULL, 3.14, '-1.5');
+RESET plan_cache_mode;
+
+--  VtA doesn't support LIMIT, OFFSET, and ORDER BY clauses
+EXPLAIN (COSTS OFF)
+SELECT ten FROM onek WHERE unique1 IN (VALUES (1), (2) OFFSET 1);
+EXPLAIN (COSTS OFF)
+SELECT ten FROM onek WHERE unique1 IN (VALUES (1), (2) ORDER BY 1);
+EXPLAIN (COSTS OFF)
+SELECT ten FROM onek WHERE unique1 IN (VALUES (1), (2) LIMIT 1);
+
+EXPLAIN (COSTS OFF)
+SELECT ten FROM onek t
+WHERE unique1 IN (VALUES (0), ((2 IN (SELECT unique2 FROM onek c
+  WHERE c.unique2 = t.unique1))::integer));
+
+EXPLAIN (COSTS OFF)
+SELECT ten FROM onek t
+WHERE unique1 IN (VALUES (0), ((2 IN (SELECT unique2 FROM onek c
+  WHERE c.unique2 IN (VALUES (sin(0.5)), (2))))::integer));
+
+-- VtA is not allowed with subqueries
+EXPLAIN (COSTS OFF)
+SELECT ten FROM onek t WHERE unique1 IN (VALUES (0), ((2 IN
+  (SELECT (3)))::integer)
+);
+
+-- VtA is not allowed with non-constant expressions
+EXPLAIN (COSTS OFF)
+SELECT ten FROM onek t WHERE unique1 IN (VALUES (0), (unique2));
+EXPLAIN (COSTS OFF)
+SELECT * FROM onek t1, lateral (SELECT * FROM onek t2 WHERE t2.ten IN (values (t1.ten), (1)));
+
+-- VtA causes the whole expression to be evaluated as a constant
+EXPLAIN (COSTS OFF)
+SELECT ten FROM onek t WHERE 1.0::integer IN ((VALUES (1), (3)));

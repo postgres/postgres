@@ -2652,3 +2652,311 @@ ON B.hundred in (SELECT min(c.hundred) FROM tenk2 C WHERE c.odd = b.odd);
                                                Filter: (odd = b.odd)
 (16 rows)
 
+--
+-- Test VALUES to ARRAY (VtA) transformation
+--
+-- VtA transformation for joined VALUES is not supported
+EXPLAIN (COSTS OFF)
+SELECT * FROM onek, (VALUES('RFAAAA'), ('VJAAAA')) AS v (i)
+  WHERE onek.stringu1 = v.i;
+                         QUERY PLAN                          
+-------------------------------------------------------------
+ Nested Loop
+   ->  Values Scan on "*VALUES*"
+   ->  Index Scan using onek_stringu1 on onek
+         Index Cond: (stringu1 = ("*VALUES*".column1)::text)
+(4 rows)
+
+-- VtA transformation for a composite argument is not supported
+EXPLAIN (COSTS OFF)
+SELECT * FROM onek
+  WHERE (unique1,ten) IN (VALUES (1,1), (20,0), (99,9), (17,99))
+  ORDER BY unique1;
+                           QUERY PLAN                            
+-----------------------------------------------------------------
+ Sort
+   Sort Key: onek.unique1
+   ->  Nested Loop
+         ->  HashAggregate
+               Group Key: "*VALUES*".column1, "*VALUES*".column2
+               ->  Values Scan on "*VALUES*"
+         ->  Index Scan using onek_unique1 on onek
+               Index Cond: (unique1 = "*VALUES*".column1)
+               Filter: ("*VALUES*".column2 = ten)
+(9 rows)
+
+EXPLAIN (COSTS OFF)
+SELECT * FROM onek
+    WHERE unique1 IN (VALUES(10000), (2), (389), (1000), (2000), (10029))
+    ORDER BY unique1;
+                                       QUERY PLAN                                       
+----------------------------------------------------------------------------------------
+ Sort
+   Sort Key: unique1
+   ->  Bitmap Heap Scan on onek
+         Recheck Cond: (unique1 = ANY ('{10000,2,389,1000,2000,10029}'::integer[]))
+         ->  Bitmap Index Scan on onek_unique1
+               Index Cond: (unique1 = ANY ('{10000,2,389,1000,2000,10029}'::integer[]))
+(6 rows)
+
+EXPLAIN (COSTS OFF)
+SELECT * FROM onek
+    WHERE unique1 IN (VALUES(1200), (1));
+                         QUERY PLAN                          
+-------------------------------------------------------------
+ Bitmap Heap Scan on onek
+   Recheck Cond: (unique1 = ANY ('{1200,1}'::integer[]))
+   ->  Bitmap Index Scan on onek_unique1
+         Index Cond: (unique1 = ANY ('{1200,1}'::integer[]))
+(4 rows)
+
+-- Recursive evaluation of constant queries is not yet supported
+EXPLAIN (COSTS OFF)
+SELECT * FROM onek
+  WHERE unique1 IN (SELECT x * x FROM (VALUES(1200), (1)) AS x(x));
+                                QUERY PLAN                                 
+---------------------------------------------------------------------------
+ Nested Loop
+   ->  Unique
+         ->  Sort
+               Sort Key: (("*VALUES*".column1 * "*VALUES*".column1))
+               ->  Values Scan on "*VALUES*"
+   ->  Index Scan using onek_unique1 on onek
+         Index Cond: (unique1 = ("*VALUES*".column1 * "*VALUES*".column1))
+(7 rows)
+
+EXPLAIN (COSTS OFF)
+SELECT unique1, stringu1 FROM onek WHERE stringu1::name IN (VALUES('RFAAAA'), ('VJAAAA'));
+                            QUERY PLAN                            
+------------------------------------------------------------------
+ Bitmap Heap Scan on onek
+   Recheck Cond: (stringu1 = ANY ('{RFAAAA,VJAAAA}'::text[]))
+   ->  Bitmap Index Scan on onek_stringu1
+         Index Cond: (stringu1 = ANY ('{RFAAAA,VJAAAA}'::text[]))
+(4 rows)
+
+EXPLAIN (COSTS OFF)
+SELECT unique1, stringu1 FROM onek WHERE stringu1::text IN (VALUES('RFAAAA'), ('VJAAAA'));
+                           QUERY PLAN                           
+----------------------------------------------------------------
+ Seq Scan on onek
+   Filter: ((stringu1)::text = ANY ('{RFAAAA,VJAAAA}'::text[]))
+(2 rows)
+
+EXPLAIN (COSTS OFF)
+SELECT * from onek WHERE unique1 in (VALUES(1200::bigint), (1));
+                         QUERY PLAN                         
+------------------------------------------------------------
+ Bitmap Heap Scan on onek
+   Recheck Cond: (unique1 = ANY ('{1200,1}'::bigint[]))
+   ->  Bitmap Index Scan on onek_unique1
+         Index Cond: (unique1 = ANY ('{1200,1}'::bigint[]))
+(4 rows)
+
+-- VtA shouldn't depend on the side of the join probing with the VALUES expression.
+EXPLAIN (COSTS OFF)
+SELECT c.oid,c.relname FROM pg_class c JOIN pg_am a USING (oid)
+WHERE a.oid IN (VALUES (1), (2));
+                       QUERY PLAN                        
+---------------------------------------------------------
+ Nested Loop
+   ->  Seq Scan on pg_am a
+         Filter: (oid = ANY ('{1,2}'::oid[]))
+   ->  Index Scan using pg_class_oid_index on pg_class c
+         Index Cond: (oid = a.oid)
+(5 rows)
+
+EXPLAIN (COSTS OFF)
+SELECT c.oid,c.relname FROM pg_class c JOIN pg_am a USING (oid)
+WHERE c.oid IN (VALUES (1), (2));
+                          QUERY PLAN                           
+---------------------------------------------------------------
+ Hash Join
+   Hash Cond: (a.oid = c.oid)
+   ->  Seq Scan on pg_am a
+   ->  Hash
+         ->  Index Scan using pg_class_oid_index on pg_class c
+               Index Cond: (oid = ANY ('{1,2}'::oid[]))
+(6 rows)
+
+-- Constant expressions are simplified
+EXPLAIN (COSTS OFF)
+SELECT ten FROM onek WHERE sin(two ) +four IN (VALUES (sin(0.5)), (2));
+                                                        QUERY PLAN                                                         
+---------------------------------------------------------------------------------------------------------------------------
+ Seq Scan on onek
+   Filter: ((sin((two)::double precision) + (four)::double precision) = ANY ('{0.479425538604203,2}'::double precision[]))
+(2 rows)
+
+EXPLAIN (COSTS OFF)
+-- VtA allows NULLs in the list
+SELECT ten FROM onek WHERE sin(two)+four IN (VALUES (sin(0.5)), (NULL), (2));
+                                                           QUERY PLAN                                                           
+--------------------------------------------------------------------------------------------------------------------------------
+ Seq Scan on onek
+   Filter: ((sin((two)::double precision) + (four)::double precision) = ANY ('{0.479425538604203,NULL,2}'::double precision[]))
+(2 rows)
+
+-- VtA is supported for custom plans where params are substituted with
+-- constants.  VtA is not supported with generic plans where params prevent
+-- us from building a constant array.
+PREPARE test (int, numeric, text) AS
+  SELECT ten FROM onek WHERE sin(two) * four / ($3::real) IN (VALUES (sin($2)), (2), ($1));
+EXPLAIN (COSTS OFF) EXECUTE test(42, 3.14, '-1.5');
+                                                                    QUERY PLAN                                                                     
+---------------------------------------------------------------------------------------------------------------------------------------------------
+ Seq Scan on onek
+   Filter: (((sin((two)::double precision) * (four)::double precision) / '-1.5'::real) = ANY ('{0.0015926529164868282,2,42}'::double precision[]))
+(2 rows)
+
+EXPLAIN (COSTS OFF) EXECUTE test(NULL, 3.14, NULL);
+        QUERY PLAN        
+--------------------------
+ Result
+   One-Time Filter: false
+(2 rows)
+
+EXPLAIN (COSTS OFF) EXECUTE test(NULL, 3.14, '-1.5');
+                                                                     QUERY PLAN                                                                      
+-----------------------------------------------------------------------------------------------------------------------------------------------------
+ Seq Scan on onek
+   Filter: (((sin((two)::double precision) * (four)::double precision) / '-1.5'::real) = ANY ('{0.0015926529164868282,2,NULL}'::double precision[]))
+(2 rows)
+
+SET plan_cache_mode = 'force_generic_plan';
+EXPLAIN (COSTS OFF) EXECUTE test(NULL, 3.14, '-1.5');
+                                                       QUERY PLAN                                                       
+------------------------------------------------------------------------------------------------------------------------
+ Hash Semi Join
+   Hash Cond: (((sin((onek.two)::double precision) * (onek.four)::double precision) / ($3)::real) = "*VALUES*".column1)
+   ->  Seq Scan on onek
+   ->  Hash
+         ->  Values Scan on "*VALUES*"
+(5 rows)
+
+RESET plan_cache_mode;
+--  VtA doesn't support LIMIT, OFFSET, and ORDER BY clauses
+EXPLAIN (COSTS OFF)
+SELECT ten FROM onek WHERE unique1 IN (VALUES (1), (2) OFFSET 1);
+                     QUERY PLAN                     
+----------------------------------------------------
+ Nested Loop
+   ->  HashAggregate
+         Group Key: "*VALUES*".column1
+         ->  Limit
+               ->  Values Scan on "*VALUES*"
+   ->  Index Scan using onek_unique1 on onek
+         Index Cond: (unique1 = "*VALUES*".column1)
+(7 rows)
+
+EXPLAIN (COSTS OFF)
+SELECT ten FROM onek WHERE unique1 IN (VALUES (1), (2) ORDER BY 1);
+                     QUERY PLAN                     
+----------------------------------------------------
+ Nested Loop
+   ->  Unique
+         ->  Sort
+               Sort Key: "*VALUES*".column1
+               ->  Sort
+                     Sort Key: "*VALUES*".column1
+                     ->  Values Scan on "*VALUES*"
+   ->  Index Scan using onek_unique1 on onek
+         Index Cond: (unique1 = "*VALUES*".column1)
+(9 rows)
+
+EXPLAIN (COSTS OFF)
+SELECT ten FROM onek WHERE unique1 IN (VALUES (1), (2) LIMIT 1);
+                     QUERY PLAN                     
+----------------------------------------------------
+ Nested Loop
+   ->  HashAggregate
+         Group Key: "*VALUES*".column1
+         ->  Limit
+               ->  Values Scan on "*VALUES*"
+   ->  Index Scan using onek_unique1 on onek
+         Index Cond: (unique1 = "*VALUES*".column1)
+(7 rows)
+
+EXPLAIN (COSTS OFF)
+SELECT ten FROM onek t
+WHERE unique1 IN (VALUES (0), ((2 IN (SELECT unique2 FROM onek c
+  WHERE c.unique2 = t.unique1))::integer));
+                         QUERY PLAN                         
+------------------------------------------------------------
+ Nested Loop Semi Join
+   ->  Seq Scan on onek t
+   ->  Values Scan on "*VALUES*"
+         Filter: (t.unique1 = column1)
+         SubPlan 1
+           ->  Index Only Scan using onek_unique2 on onek c
+                 Index Cond: (unique2 = t.unique1)
+(7 rows)
+
+EXPLAIN (COSTS OFF)
+SELECT ten FROM onek t
+WHERE unique1 IN (VALUES (0), ((2 IN (SELECT unique2 FROM onek c
+  WHERE c.unique2 IN (VALUES (sin(0.5)), (2))))::integer));
+                                                      QUERY PLAN                                                       
+-----------------------------------------------------------------------------------------------------------------------
+ Nested Loop
+   ->  Unique
+         ->  Sort
+               Sort Key: "*VALUES*".column1
+               ->  Values Scan on "*VALUES*"
+                     SubPlan 1
+                       ->  Index Only Scan using onek_unique2 on onek c
+                             Filter: ((unique2)::double precision = ANY ('{0.479425538604203,2}'::double precision[]))
+   ->  Index Scan using onek_unique1 on onek t
+         Index Cond: (unique1 = "*VALUES*".column1)
+(10 rows)
+
+-- VtA is not allowed with subqueries
+EXPLAIN (COSTS OFF)
+SELECT ten FROM onek t WHERE unique1 IN (VALUES (0), ((2 IN
+  (SELECT (3)))::integer)
+);
+                     QUERY PLAN                     
+----------------------------------------------------
+ Nested Loop
+   ->  Unique
+         ->  Sort
+               Sort Key: "*VALUES*".column1
+               ->  Values Scan on "*VALUES*"
+                     SubPlan 1
+                       ->  Result
+   ->  Index Scan using onek_unique1 on onek t
+         Index Cond: (unique1 = "*VALUES*".column1)
+(9 rows)
+
+-- VtA is not allowed with non-constant expressions
+EXPLAIN (COSTS OFF)
+SELECT ten FROM onek t WHERE unique1 IN (VALUES (0), (unique2));
+              QUERY PLAN               
+---------------------------------------
+ Nested Loop Semi Join
+   ->  Seq Scan on onek t
+   ->  Values Scan on "*VALUES*"
+         Filter: (t.unique1 = column1)
+(4 rows)
+
+EXPLAIN (COSTS OFF)
+SELECT * FROM onek t1, lateral (SELECT * FROM onek t2 WHERE t2.ten IN (values (t1.ten), (1)));
+                    QUERY PLAN                    
+--------------------------------------------------
+ Nested Loop
+   ->  Seq Scan on onek t1
+   ->  Hash Semi Join
+         Hash Cond: (t2.ten = "*VALUES*".column1)
+         ->  Seq Scan on onek t2
+         ->  Hash
+               ->  Values Scan on "*VALUES*"
+(7 rows)
+
+-- VtA causes the whole expression to be evaluated as a constant
+EXPLAIN (COSTS OFF)
+SELECT ten FROM onek t WHERE 1.0::integer IN ((VALUES (1), (3)));
+     QUERY PLAN     
+--------------------
+ Seq Scan on onek t
+(1 row)
+

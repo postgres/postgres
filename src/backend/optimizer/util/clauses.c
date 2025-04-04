@@ -5484,26 +5484,30 @@ make_SAOP_expr(Oid oper, Node *leftexpr, Oid coltype, Oid arraycollid,
 		bool		typbyval;
 		char		typalign;
 		Datum	   *elems;
+		bool	   *nulls;
 		int			i = 0;
 		ArrayType  *arrayConst;
+		int			dims[1] = {list_length(exprs)};
+		int			lbs[1] = {1};
 
 		get_typlenbyvalalign(coltype, &typlen, &typbyval, &typalign);
 
 		elems = (Datum *) palloc(sizeof(Datum) * list_length(exprs));
+		nulls = (bool *) palloc(sizeof(bool) * list_length(exprs));
 		foreach_node(Const, value, exprs)
 		{
-			Assert(!value->constisnull);
-
-			elems[i++] = value->constvalue;
+			elems[i] = value->constvalue;
+			nulls[i++] = value->constisnull;
 		}
 
-		arrayConst = construct_array(elems, i, coltype,
-									 typlen, typbyval, typalign);
+		arrayConst = construct_md_array(elems, nulls, 1, dims, lbs,
+										coltype, typlen, typbyval, typalign);
 		arrayNode = (Node *) makeConst(arraytype, -1, arraycollid,
 									   -1, PointerGetDatum(arrayConst),
 									   false, false);
 
 		pfree(elems);
+		pfree(nulls);
 		list_free(exprs);
 	}
 
