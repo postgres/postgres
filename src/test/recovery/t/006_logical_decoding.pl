@@ -144,8 +144,8 @@ SKIP:
 	is($node_master->psql('postgres', 'DROP DATABASE otherdb'),
 		3, 'dropping a DB with active logical slots fails');
 	$pg_recvlogical->kill_kill;
-	is($node_master->slot('otherdb_slot')->{'slot_name'},
-		undef, 'logical slot still exists');
+	is($node_master->slot('otherdb_slot')->{'plugin'},
+		'test_decoding', 'logical slot still exists');
 }
 
 $node_master->poll_query_until('otherdb',
@@ -154,8 +154,8 @@ $node_master->poll_query_until('otherdb',
 
 is($node_master->psql('postgres', 'DROP DATABASE otherdb'),
 	0, 'dropping a DB with inactive logical slots succeeds');
-is($node_master->slot('otherdb_slot')->{'slot_name'},
-	undef, 'logical slot was actually dropped with DB');
+is($node_master->slot('otherdb_slot')->{'plugin'},
+	'', 'logical slot was actually dropped with DB');
 
 # Test logical slot advancing and its durability.
 my $logical_slot = 'logical_slot';

@@ -90,8 +90,8 @@ is( $node_replica->safe_psql(
 		'postgres', q[SELECT 1 FROM pg_database WHERE datname = 'dropme']),
 	'',
 	'dropped DB dropme on standby');
-is($node_master->slot('dropme_slot')->{'slot_name'},
-	undef, 'logical slot was actually dropped on standby');
+is($node_master->slot('dropme_slot')->{'plugin'},
+	'', 'logical slot was actually dropped on standby');
 
 # Back to testing failover...
 $node_master->safe_psql('postgres',
