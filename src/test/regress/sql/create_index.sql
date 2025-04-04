@@ -993,6 +993,16 @@ SELECT thousand, tenthous FROM tenk1
 WHERE thousand < 3 and thousand <= 2 AND tenthous = 1001
 ORDER BY thousand;
 
+-- Skip array preprocessing increments "thousand > -1" to  "thousand >= 0"
+explain (costs off)
+SELECT thousand, tenthous FROM tenk1
+WHERE thousand > -1 AND tenthous IN (1001,3000)
+ORDER BY thousand limit 2;
+
+SELECT thousand, tenthous FROM tenk1
+WHERE thousand > -1 AND tenthous IN (1001,3000)
+ORDER BY thousand limit 2;
+
 --
 -- Check elimination of constant-NULL subexpressions
 --

@@ -2589,6 +2589,27 @@ ORDER BY thousand;
         1 |     1001
 (1 row)
 
+-- Skip array preprocessing increments "thousand > -1" to  "thousand >= 0"
+explain (costs off)
+SELECT thousand, tenthous FROM tenk1
+WHERE thousand > -1 AND tenthous IN (1001,3000)
+ORDER BY thousand limit 2;
+                                            QUERY PLAN                                            
+--------------------------------------------------------------------------------------------------
+ Limit
+   ->  Index Only Scan using tenk1_thous_tenthous on tenk1
+         Index Cond: ((thousand > '-1'::integer) AND (tenthous = ANY ('{1001,3000}'::integer[])))
+(3 rows)
+
+SELECT thousand, tenthous FROM tenk1
+WHERE thousand > -1 AND tenthous IN (1001,3000)
+ORDER BY thousand limit 2;
+ thousand | tenthous 
+----------+----------
+        0 |     3000
+        1 |     1001
+(2 rows)
+
 --
 -- Check elimination of constant-NULL subexpressions
 --
