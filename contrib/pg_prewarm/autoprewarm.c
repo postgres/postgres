@@ -429,11 +429,9 @@ apw_load_buffers(void)
 void
 autoprewarm_database_main(Datum main_arg)
 {
-	int			pos;
 	BlockInfoRecord *block_info;
-	Relation	rel = NULL;
-	BlockNumber nblocks = 0;
-	BlockInfoRecord *old_blk = NULL;
+	int			i;
+	BlockInfoRecord blk;
 	dsm_segment *seg;
 
 	/* Establish signal handlers; once that's done, unblock signals. */
@@ -449,16 +447,20 @@ autoprewarm_database_main(Datum main_arg)
 				 errmsg("could not map dynamic shared memory segment")));
 	BackgroundWorkerInitializeConnectionByOid(apw_state->database, InvalidOid, 0);
 	block_info = (BlockInfoRecord *) dsm_segment_address(seg);
-	pos = apw_state->prewarm_start_idx;
+
+	i = apw_state->prewarm_start_idx;
+	blk = block_info[i];
 
 	/*
 	 * Loop until we run out of blocks to prewarm or until we run out of free
 	 * buffers.
 	 */
-	while (pos < apw_state->prewarm_stop_idx && have_free_buffer())
+	while (i < apw_state->prewarm_stop_idx && have_free_buffer())
 	{
-		BlockInfoRecord *blk = &block_info[pos++];
-		Buffer		buf;
+		Oid			tablespace = blk.tablespace;
+		RelFileNumber filenumber = blk.filenumber;
+		Oid			reloid;
+		Relation	rel;
 
 		CHECK_FOR_INTERRUPTS();
 
@@ -466,97 +468,111 @@ autoprewarm_database_main(Datum main_arg)
 		 * All blocks between prewarm_start_idx and prewarm_stop_idx should
 		 * belong either to global objects or the same database.
 		 */
-		Assert(blk->database == apw_state->database || blk->database == 0);
+		Assert(blk.database == apw_state->database || blk.database == 0);
 
-		/*
-		 * As soon as we encounter a block of a new relation, close the old
-		 * relation. RelFileNumbers are only guaranteed to be unique within a
-		 * tablespace, so check that too.
-		 *
-		 * Note that rel will be NULL if try_relation_open failed previously;
-		 * in that case, there is nothing to close.
-		 */
-		if (old_blk != NULL &&
-			(old_blk->tablespace != blk->tablespace ||
-			 old_blk->filenumber != blk->filenumber) &&
-			rel != NULL)
+		StartTransactionCommand();
+
+		reloid = RelidByRelfilenumber(blk.tablespace, blk.filenumber);
+		if (!OidIsValid(reloid) ||
+			(rel = try_relation_open(reloid, AccessShareLock)) == NULL)
 		{
-			relation_close(rel, AccessShareLock);
-			rel = NULL;
+			/* We failed to open the relation, so there is nothing to close. */
 			CommitTransactionCommand();
-		}
 
-		/*
-		 * Try to open each new relation, but only once, when we first
-		 * encounter it. If it's been dropped, skip the associated blocks.
-		 */
-		if (old_blk == NULL ||
-			old_blk->tablespace != blk->tablespace ||
-			old_blk->filenumber != blk->filenumber)
-		{
-			Oid			reloid;
+			/*
+			 * Fast-forward to the next relation. We want to skip all of the
+			 * other records referencing this relation since we know we can't
+			 * open it. That way, we avoid repeatedly trying and failing to
+			 * open the same relation.
+			 */
+			for (; i < apw_state->prewarm_stop_idx; i++)
+			{
+				blk = block_info[i];
+				if (blk.tablespace != tablespace ||
+					blk.filenumber != filenumber)
+					break;
+			}
 
-			Assert(rel == NULL);
-			StartTransactionCommand();
-			reloid = RelidByRelfilenumber(blk->tablespace, blk->filenumber);
-			if (OidIsValid(reloid))
-				rel = try_relation_open(reloid, AccessShareLock);
-
-			if (!rel)
-				CommitTransactionCommand();
-		}
-		if (!rel)
-		{
-			old_blk = blk;
+			/* Time to try and open our newfound relation */
 			continue;
 		}
 
-		/* Once per fork, check for fork existence and size. */
-		if (old_blk == NULL ||
-			old_blk->tablespace != blk->tablespace ||
-			old_blk->filenumber != blk->filenumber ||
-			old_blk->forknum != blk->forknum)
+		/*
+		 * We have a relation; now let's loop until we find a valid fork of
+		 * the relation or we run out of free buffers. Once we've read from
+		 * all valid forks or run out of options, we'll close the relation and
+		 * move on.
+		 */
+		while (i < apw_state->prewarm_stop_idx &&
+			   blk.tablespace == tablespace &&
+			   blk.filenumber == filenumber &&
+			   have_free_buffer())
 		{
+			ForkNumber	forknum = blk.forknum;
+			BlockNumber nblocks;
+			Buffer		buf;
+
 			/*
 			 * smgrexists is not safe for illegal forknum, hence check whether
 			 * the passed forknum is valid before using it in smgrexists.
 			 */
-			if (blk->forknum > InvalidForkNumber &&
-				blk->forknum <= MAX_FORKNUM &&
-				smgrexists(RelationGetSmgr(rel), blk->forknum))
-				nblocks = RelationGetNumberOfBlocksInFork(rel, blk->forknum);
-			else
-				nblocks = 0;
+			if (blk.forknum <= InvalidForkNumber ||
+				blk.forknum > MAX_FORKNUM ||
+				!smgrexists(RelationGetSmgr(rel), blk.forknum))
+			{
+				/*
+				 * Fast-forward to the next fork. We want to skip all of the
+				 * other records referencing this fork since we already know
+				 * it's not valid.
+				 */
+				for (; i < apw_state->prewarm_stop_idx; i++)
+				{
+					blk = block_info[i];
+					if (blk.tablespace != tablespace ||
+						blk.filenumber != filenumber ||
+						blk.forknum != forknum)
+						break;
+				}
+
+				/* Time to check if this newfound fork is valid */
+				continue;
+			}
+
+			nblocks = RelationGetNumberOfBlocksInFork(rel, blk.forknum);
+
+			/* Prewarm buffers. */
+			while (i < apw_state->prewarm_stop_idx &&
+				   blk.tablespace == tablespace &&
+				   blk.filenumber == filenumber &&
+				   blk.forknum == forknum &&
+				   have_free_buffer())
+			{
+				CHECK_FOR_INTERRUPTS();
+
+				/* Check whether blocknum is valid and within fork file size. */
+				if (blk.blocknum >= nblocks)
+				{
+					blk = block_info[++i];
+					continue;
+				}
+
+				buf = ReadBufferExtended(rel, blk.forknum, blk.blocknum, RBM_NORMAL,
+										 NULL);
+
+				blk = block_info[++i];
+				if (!BufferIsValid(buf))
+					break;
+
+				apw_state->prewarmed_blocks++;
+				ReleaseBuffer(buf);
+			}
 		}
 
-		/* Check whether blocknum is valid and within fork file size. */
-		if (blk->blocknum >= nblocks)
-		{
-			/* Move to next forknum. */
-			old_blk = blk;
-			continue;
-		}
-
-		/* Prewarm buffer. */
-		buf = ReadBufferExtended(rel, blk->forknum, blk->blocknum, RBM_NORMAL,
-								 NULL);
-		if (BufferIsValid(buf))
-		{
-			apw_state->prewarmed_blocks++;
-			ReleaseBuffer(buf);
-		}
-
-		old_blk = blk;
-	}
-
-	dsm_detach(seg);
-
-	/* Release lock on previous relation. */
-	if (rel)
-	{
 		relation_close(rel, AccessShareLock);
 		CommitTransactionCommand();
 	}
+
+	dsm_detach(seg);
 }
 
 /*
