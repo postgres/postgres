@@ -102,7 +102,6 @@ SELECT id, provider_name FROM pg_tde_list_all_global_key_providers();
  -3 | file-keyring2
 (3 rows)
 
--- TODO: verify that we can also can change the type of it
 -- fails
 SELECT pg_tde_delete_database_key_provider('file-provider');
 ERROR:  Can't delete a provider which is currently in use

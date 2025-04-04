@@ -32,8 +32,6 @@ SELECT pg_tde_add_global_key_provider_file('file-keyring2','/tmp/pg_tde_test_key
 
 SELECT id, provider_name FROM pg_tde_list_all_global_key_providers();
 
--- TODO: verify that we can also can change the type of it
-
 -- fails
 SELECT pg_tde_delete_database_key_provider('file-provider');
 SELECT id, provider_name FROM pg_tde_list_all_database_key_providers();
@@ -55,4 +53,3 @@ SELECT pg_tde_delete_global_key_provider('file-keyring2');
 SELECT id, provider_name FROM pg_tde_list_all_global_key_providers();
 
 DROP EXTENSION pg_tde;
-
