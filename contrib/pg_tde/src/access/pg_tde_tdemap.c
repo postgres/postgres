@@ -686,40 +686,40 @@ finalize_key_rotation(const char *path_old, const char *path_new)
 void
 pg_tde_perform_rotate_key(TDEPrincipalKey *principal_key, TDEPrincipalKey *new_principal_key)
 {
-#define OLD_PRINCIPAL_KEY	0
-#define NEW_PRINCIPAL_KEY	1
-#define PRINCIPAL_KEY_COUNT	2
-
-	off_t		curr_pos[PRINCIPAL_KEY_COUNT] = {0};
-	int			fd[PRINCIPAL_KEY_COUNT];
-	char		path[PRINCIPAL_KEY_COUNT][MAXPGPATH];
 	TDESignedPrincipalKeyInfo new_signed_key_info;
+	off_t		old_curr_pos,
+				new_curr_pos;
+	int			old_fd,
+				new_fd;
+	char		old_path[MAXPGPATH],
+				new_path[MAXPGPATH];
 	off_t		map_size;
 	XLogPrincipalKeyRotate *xlrec;
 	off_t		xlrec_size;
 
-	pg_tde_set_db_file_path(principal_key->keyInfo.databaseId, path[OLD_PRINCIPAL_KEY]);
-
 	pg_tde_sign_principal_key_info(&new_signed_key_info, new_principal_key);
 
-	fd[OLD_PRINCIPAL_KEY] = pg_tde_open_file_read(path[OLD_PRINCIPAL_KEY], &curr_pos[OLD_PRINCIPAL_KEY]);
-	fd[NEW_PRINCIPAL_KEY] = keyrotation_init_file(&new_signed_key_info, path[NEW_PRINCIPAL_KEY], path[OLD_PRINCIPAL_KEY], &curr_pos[NEW_PRINCIPAL_KEY]);
+	pg_tde_set_db_file_path(principal_key->keyInfo.databaseId, old_path);
+
+	old_fd = pg_tde_open_file_read(old_path, &old_curr_pos);
+	new_fd = keyrotation_init_file(&new_signed_key_info, new_path, old_path, &new_curr_pos);
 
 	/* Read all entries until EOF */
 	while (1)
 	{
 		InternalKey *rel_key_data;
-		off_t		prev_pos[PRINCIPAL_KEY_COUNT];
+		off_t		old_prev_pos,
+					new_prev_pos;
 		TDEMapEntry read_map_entry,
 					write_map_entry;
 		RelFileLocator rloc;
 		bool		found;
 
-		prev_pos[OLD_PRINCIPAL_KEY] = curr_pos[OLD_PRINCIPAL_KEY];
-		found = pg_tde_read_one_map_entry(fd[OLD_PRINCIPAL_KEY], NULL, MAP_ENTRY_VALID, &read_map_entry, &curr_pos[OLD_PRINCIPAL_KEY]);
+		old_prev_pos = old_curr_pos;
+		found = pg_tde_read_one_map_entry(old_fd, NULL, MAP_ENTRY_VALID, &read_map_entry, &old_curr_pos);
 
 		/* We either reach EOF */
-		if (prev_pos[OLD_PRINCIPAL_KEY] == curr_pos[OLD_PRINCIPAL_KEY])
+		if (old_prev_pos == old_curr_pos)
 			break;
 
 		/* We didn't find a valid entry */
@@ -735,16 +735,16 @@ pg_tde_perform_rotate_key(TDEPrincipalKey *principal_key, TDEPrincipalKey *new_p
 		pg_tde_initialize_map_entry(&write_map_entry, new_principal_key, &rloc, rel_key_data);
 
 		/* Write the given entry at the location pointed by prev_pos */
-		prev_pos[NEW_PRINCIPAL_KEY] = curr_pos[NEW_PRINCIPAL_KEY];
-		curr_pos[NEW_PRINCIPAL_KEY] = pg_tde_write_one_map_entry(fd[NEW_PRINCIPAL_KEY], &write_map_entry, &prev_pos[NEW_PRINCIPAL_KEY], path[NEW_PRINCIPAL_KEY]);
+		new_prev_pos = new_curr_pos;
+		new_curr_pos = pg_tde_write_one_map_entry(new_fd, &write_map_entry, &new_prev_pos, new_path);
 
 		pfree(rel_key_data);
 	}
 
-	close(fd[OLD_PRINCIPAL_KEY]);
+	close(old_fd);
 
 	/* Let's calculate sizes */
-	map_size = lseek(fd[NEW_PRINCIPAL_KEY], 0, SEEK_END);
+	map_size = lseek(new_fd, 0, SEEK_END);
 	xlrec_size = map_size + SizeoOfXLogPrincipalKeyRotate;
 
 	/* palloc and fill in the structure */
@@ -753,12 +753,12 @@ pg_tde_perform_rotate_key(TDEPrincipalKey *principal_key, TDEPrincipalKey *new_p
 	xlrec->databaseId = principal_key->keyInfo.databaseId;
 	xlrec->file_size = map_size;
 
-	if (pg_pread(fd[NEW_PRINCIPAL_KEY], xlrec->buff, xlrec->file_size, 0) == -1)
+	if (pg_pread(new_fd, xlrec->buff, xlrec->file_size, 0) == -1)
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not write WAL for key rotation: %m")));
 
-	close(fd[NEW_PRINCIPAL_KEY]);
+	close(new_fd);
 
 	/* Insert the XLog record */
 	XLogBeginInsert();
@@ -766,14 +766,10 @@ pg_tde_perform_rotate_key(TDEPrincipalKey *principal_key, TDEPrincipalKey *new_p
 	XLogInsert(RM_TDERMGR_ID, XLOG_TDE_ROTATE_KEY);
 
 	/* Do the final steps */
-	finalize_key_rotation(path[OLD_PRINCIPAL_KEY], path[NEW_PRINCIPAL_KEY]);
+	finalize_key_rotation(old_path, new_path);
 
 	/* Free up the palloc'ed data */
 	pfree(xlrec);
-
-#undef OLD_PRINCIPAL_KEY
-#undef NEW_PRINCIPAL_KEY
-#undef PRINCIPAL_KEY_COUNT
 }
 
 /*
