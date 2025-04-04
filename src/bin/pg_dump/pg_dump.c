@@ -10554,17 +10554,21 @@ appendNamedArgument(PQExpBuffer out, Archive *fout, const char *argname,
 }
 
 /*
- * dumpRelationStats --
+ * dumpRelationStats_dumper --
  *
- * Dump command to import stats into the relation on the new database.
+ * Generate command to import stats into the relation on the new database.
+ * This routine is called by the Archiver when it wants the statistics to be
+ * dumped.
  */
-static void
-dumpRelationStats(Archive *fout, const RelStatsInfo *rsinfo)
+static char *
+dumpRelationStats_dumper(Archive *fout, const void *userArg)
 {
+	const RelStatsInfo *rsinfo = (RelStatsInfo *) userArg;
 	const DumpableObject *dobj = &rsinfo->dobj;
 	PGresult   *res;
 	PQExpBuffer query;
-	PQExpBuffer out;
+	PQExpBufferData out_data;
+	PQExpBuffer out = &out_data;
 	int			i_attname;
 	int			i_inherited;
 	int			i_null_frac;
@@ -10580,10 +10584,6 @@ dumpRelationStats(Archive *fout, const RelStatsInfo *rsinfo)
 	int			i_range_length_histogram;
 	int			i_range_empty_frac;
 	int			i_range_bounds_histogram;
-
-	/* nothing to do if we are not dumping statistics */
-	if (!fout->dopt->dumpStatistics)
-		return;
 
 	query = createPQExpBuffer();
 	if (!fout->is_prepared[PREPQUERY_GETATTRIBUTESTATS])
@@ -10620,7 +10620,7 @@ dumpRelationStats(Archive *fout, const RelStatsInfo *rsinfo)
 		resetPQExpBuffer(query);
 	}
 
-	out = createPQExpBuffer();
+	initPQExpBuffer(out);
 
 	/* restore relation stats */
 	appendPQExpBufferStr(out, "SELECT * FROM pg_catalog.pg_restore_relation_stats(\n");
@@ -10764,17 +10764,35 @@ dumpRelationStats(Archive *fout, const RelStatsInfo *rsinfo)
 
 	PQclear(res);
 
+	destroyPQExpBuffer(query);
+	return out->data;
+}
+
+/*
+ * dumpRelationStats --
+ *
+ * Make an ArchiveEntry for the relation statistics.  The Archiver will take
+ * care of gathering the statistics and generating the restore commands when
+ * they are needed.
+ */
+static void
+dumpRelationStats(Archive *fout, const RelStatsInfo *rsinfo)
+{
+	const DumpableObject *dobj = &rsinfo->dobj;
+
+	/* nothing to do if we are not dumping statistics */
+	if (!fout->dopt->dumpStatistics)
+		return;
+
 	ArchiveEntry(fout, nilCatalogId, createDumpId(),
 				 ARCHIVE_OPTS(.tag = dobj->name,
 							  .namespace = dobj->namespace->dobj.name,
 							  .description = "STATISTICS DATA",
 							  .section = rsinfo->section,
-							  .createStmt = out->data,
+							  .defnFn = dumpRelationStats_dumper,
+							  .defnArg = rsinfo,
 							  .deps = dobj->dependencies,
 							  .nDeps = dobj->nDeps));
-
-	destroyPQExpBuffer(out);
-	destroyPQExpBuffer(query);
 }
 
 /*
