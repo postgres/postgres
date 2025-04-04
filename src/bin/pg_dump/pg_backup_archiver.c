@@ -72,7 +72,7 @@ static void processEncodingEntry(ArchiveHandle *AH, TocEntry *te);
 static void processStdStringsEntry(ArchiveHandle *AH, TocEntry *te);
 static void processSearchPathEntry(ArchiveHandle *AH, TocEntry *te);
 static int	_tocEntryRequired(TocEntry *te, teSection curSection, ArchiveHandle *AH);
-static RestorePass _tocEntryRestorePass(ArchiveHandle *AH, TocEntry *te);
+static RestorePass _tocEntryRestorePass(TocEntry *te);
 static bool _tocEntryIsACL(TocEntry *te);
 static void _disableTriggersIfNecessary(ArchiveHandle *AH, TocEntry *te);
 static void _enableTriggersIfNecessary(ArchiveHandle *AH, TocEntry *te);
@@ -102,8 +102,7 @@ static void pending_list_append(TocEntry *l, TocEntry *te);
 static void pending_list_remove(TocEntry *te);
 static int	TocEntrySizeCompareQsort(const void *p1, const void *p2);
 static int	TocEntrySizeCompareBinaryheap(void *p1, void *p2, void *arg);
-static void move_to_ready_heap(ArchiveHandle *AH,
-							   TocEntry *pending_list,
+static void move_to_ready_heap(TocEntry *pending_list,
 							   binaryheap *ready_heap,
 							   RestorePass pass);
 static TocEntry *pop_next_work_item(binaryheap *ready_heap,
@@ -749,7 +748,7 @@ RestoreArchive(Archive *AHX)
 			if ((te->reqs & (REQ_SCHEMA | REQ_DATA | REQ_STATS)) == 0)
 				continue;		/* ignore if not to be dumped at all */
 
-			switch (_tocEntryRestorePass(AH, te))
+			switch (_tocEntryRestorePass(te))
 			{
 				case RESTORE_PASS_MAIN:
 					(void) restore_toc_entry(AH, te, false);
@@ -768,7 +767,7 @@ RestoreArchive(Archive *AHX)
 			for (te = AH->toc->next; te != AH->toc; te = te->next)
 			{
 				if ((te->reqs & (REQ_SCHEMA | REQ_DATA | REQ_STATS)) != 0 &&
-					_tocEntryRestorePass(AH, te) == RESTORE_PASS_ACL)
+					_tocEntryRestorePass(te) == RESTORE_PASS_ACL)
 					(void) restore_toc_entry(AH, te, false);
 			}
 		}
@@ -778,7 +777,7 @@ RestoreArchive(Archive *AHX)
 			for (te = AH->toc->next; te != AH->toc; te = te->next)
 			{
 				if ((te->reqs & (REQ_SCHEMA | REQ_DATA | REQ_STATS)) != 0 &&
-					_tocEntryRestorePass(AH, te) == RESTORE_PASS_POST_ACL)
+					_tocEntryRestorePass(te) == RESTORE_PASS_POST_ACL)
 					(void) restore_toc_entry(AH, te, false);
 			}
 		}
@@ -3261,7 +3260,7 @@ _tocEntryRequired(TocEntry *te, teSection curSection, ArchiveHandle *AH)
  * See notes with the RestorePass typedef in pg_backup_archiver.h.
  */
 static RestorePass
-_tocEntryRestorePass(ArchiveHandle *AH, TocEntry *te)
+_tocEntryRestorePass(TocEntry *te)
 {
 	/* "ACL LANGUAGE" was a crock emitted only in PG 7.4 */
 	if (strcmp(te->desc, "ACL") == 0 ||
@@ -4342,7 +4341,7 @@ restore_toc_entries_prefork(ArchiveHandle *AH, TocEntry *pending_list)
 		 * not set skipped_some in this case, since by assumption no main-pass
 		 * items could depend on these.
 		 */
-		if (_tocEntryRestorePass(AH, next_work_item) != RESTORE_PASS_MAIN)
+		if (_tocEntryRestorePass(next_work_item) != RESTORE_PASS_MAIN)
 			do_now = false;
 
 		if (do_now)
@@ -4424,7 +4423,7 @@ restore_toc_entries_parallel(ArchiveHandle *AH, ParallelState *pstate,
 	 * process in the current restore pass.
 	 */
 	AH->restorePass = RESTORE_PASS_MAIN;
-	move_to_ready_heap(AH, pending_list, ready_heap, AH->restorePass);
+	move_to_ready_heap(pending_list, ready_heap, AH->restorePass);
 
 	/*
 	 * main parent loop
@@ -4473,7 +4472,7 @@ restore_toc_entries_parallel(ArchiveHandle *AH, ParallelState *pstate,
 			/* Advance to next restore pass */
 			AH->restorePass++;
 			/* That probably allows some stuff to be made ready */
-			move_to_ready_heap(AH, pending_list, ready_heap, AH->restorePass);
+			move_to_ready_heap(pending_list, ready_heap, AH->restorePass);
 			/* Loop around to see if anything's now ready */
 			continue;
 		}
@@ -4644,8 +4643,7 @@ TocEntrySizeCompareBinaryheap(void *p1, void *p2, void *arg)
  * which applies the same logic one-at-a-time.)
  */
 static void
-move_to_ready_heap(ArchiveHandle *AH,
-				   TocEntry *pending_list,
+move_to_ready_heap(TocEntry *pending_list,
 				   binaryheap *ready_heap,
 				   RestorePass pass)
 {
@@ -4658,7 +4656,7 @@ move_to_ready_heap(ArchiveHandle *AH,
 		next_te = te->pending_next;
 
 		if (te->depCount == 0 &&
-			_tocEntryRestorePass(AH, te) == pass)
+			_tocEntryRestorePass(te) == pass)
 		{
 			/* Remove it from pending_list ... */
 			pending_list_remove(te);
@@ -5052,7 +5050,7 @@ reduce_dependencies(ArchiveHandle *AH, TocEntry *te,
 		 * memberships changed.
 		 */
 		if (otherte->depCount == 0 &&
-			_tocEntryRestorePass(AH, otherte) == AH->restorePass &&
+			_tocEntryRestorePass(otherte) == AH->restorePass &&
 			otherte->pending_prev != NULL &&
 			ready_heap != NULL)
 		{
