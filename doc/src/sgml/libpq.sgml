@@ -2042,7 +2042,7 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
        </para>
        <para>
         The special value <literal>system</literal> may be specified instead, in
-        which case the system's trusted CA roots will be loaded. The exact
+        which case the trusted CA roots from the SSL implementation will be loaded. The exact
         locations of these root certificates differ by SSL implementation and
         platform. For <productname>OpenSSL</productname> in particular, the
         locations may be further modified by the <envar>SSL_CERT_DIR</envar>
