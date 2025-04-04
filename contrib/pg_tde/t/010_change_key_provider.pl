@@ -174,14 +174,12 @@ PGTDE::append_to_file($stderr);
 (undef, $stdout, $stderr) = $node->psql('postgres', 'SELECT * FROM test_enc ORDER BY id;', extra_params => ['-a']);
 PGTDE::append_to_file($stdout);
 PGTDE::append_to_file($stderr);
+(undef, $stdout, $stderr) = $node->psql('postgres', 'CREATE TABLE test_enc2 (id serial, k integer, PRIMARY KEY (id)) USING tde_heap;', extra_params => ['-a']);
+PGTDE::append_to_file($stdout);
+PGTDE::append_to_file($stderr);
 
 $stdout = $node->safe_psql('postgres', "SELECT pg_tde_change_key_provider_file('file-vault', '/tmp/change_key_provider_4.per');", extra_params => ['-a']);
 PGTDE::append_to_file($stdout);
-
-# Restart the server
-PGTDE::append_to_file("-- server restart");
-$rt_value = $node->stop();
-$rt_value = $node->start();
 
 # Verify
 $stdout = $node->safe_psql('postgres', "SELECT pg_tde_verify_principal_key();", extra_params => ['-a']);

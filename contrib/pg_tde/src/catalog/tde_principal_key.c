@@ -343,7 +343,7 @@ set_principal_key_with_keyring(const char *key_name, const char *provider_name,
 	if (!already_has_key)
 	{
 		/* First key created for the database */
-		pg_tde_save_principal_key(&new_principal_key->keyInfo);
+		pg_tde_save_principal_key(new_principal_key);
 
 		/* XLog the new key */
 		XLogBeginInsert();
@@ -703,7 +703,7 @@ pg_tde_get_key_info(PG_FUNCTION_ARGS, Oid dbOid)
 static TDEPrincipalKey *
 get_principal_key_from_keyring(Oid dbOid)
 {
-	TDEPrincipalKeyInfo *principalKeyInfo;
+	TDESignedPrincipalKeyInfo *principalKeyInfo;
 	GenericKeyring *keyring;
 	KeyInfo    *keyInfo;
 	KeyringReturnCodes keyring_ret;
@@ -715,27 +715,33 @@ get_principal_key_from_keyring(Oid dbOid)
 	if (principalKeyInfo == NULL)
 		return NULL;
 
-	keyring = GetKeyProviderByID(principalKeyInfo->keyringId, dbOid);
+	keyring = GetKeyProviderByID(principalKeyInfo->data.keyringId, dbOid);
 	if (keyring == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATA_CORRUPTED),
 				 errmsg("keyring lookup failed for principal key %s, unknown keyring with ID %d",
-						principalKeyInfo->name, principalKeyInfo->keyringId)));
+						principalKeyInfo->data.name, principalKeyInfo->data.keyringId)));
 
-	keyInfo = KeyringGetKey(keyring, principalKeyInfo->name, &keyring_ret);
+	keyInfo = KeyringGetKey(keyring, principalKeyInfo->data.name, &keyring_ret);
 	if (keyInfo == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_NO_DATA_FOUND),
 				 errmsg("failed to retrieve principal key %s from keyring with ID %d",
-						principalKeyInfo->name, principalKeyInfo->keyringId)));
+						principalKeyInfo->data.name, principalKeyInfo->data.keyringId)));
 
 	principalKey = palloc_object(TDEPrincipalKey);
 
-	principalKey->keyInfo = *principalKeyInfo;
+	principalKey->keyInfo = principalKeyInfo->data;
 	memcpy(principalKey->keyData, keyInfo->data.data, keyInfo->data.len);
 	principalKey->keyLength = keyInfo->data.len;
 
 	Assert(dbOid == principalKey->keyInfo.databaseId);
+
+	if (!pg_tde_verify_principal_key_info(principalKeyInfo, principalKey))
+		ereport(ERROR,
+				(errcode(ERRCODE_DATA_CORRUPTED),
+				 errmsg("Failed to verify principal key header for key %s, incorrect principal key or corrupted key file",
+						principalKeyInfo->data.name)));
 
 	pfree(keyInfo);
 	pfree(keyring);
@@ -833,7 +839,7 @@ GetPrincipalKey(Oid dbOid, LWLockMode lockMode)
 	*newPrincipalKey = *principalKey;
 	newPrincipalKey->keyInfo.databaseId = dbOid;
 
-	pg_tde_save_principal_key(&newPrincipalKey->keyInfo);
+	pg_tde_save_principal_key(newPrincipalKey);
 
 	push_principal_key_to_cache(newPrincipalKey);
 

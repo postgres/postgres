@@ -61,7 +61,7 @@ tdeheap_rmgr_redo(XLogReaderState *record)
 	}
 	else if (info == XLOG_TDE_ADD_PRINCIPAL_KEY)
 	{
-		TDEPrincipalKeyInfo *mkey = (TDEPrincipalKeyInfo *) XLogRecGetData(record);
+		TDESignedPrincipalKeyInfo *mkey = (TDESignedPrincipalKeyInfo *) XLogRecGetData(record);
 
 		pg_tde_save_principal_key_redo(mkey);
 	}
@@ -107,7 +107,7 @@ tdeheap_rmgr_desc(StringInfo buf, XLogReaderState *record)
 	{
 		XLogRelKey *xlrec = (XLogRelKey *) XLogRecGetData(record);
 
-		appendStringInfo(buf, "add tde internal key for relation %u/%u", xlrec->pkInfo.databaseId, xlrec->mapEntry.relNumber);
+		appendStringInfo(buf, "add tde internal key for relation %u/%u", xlrec->pkInfo.data.databaseId, xlrec->mapEntry.relNumber);
 	}
 	if (info == XLOG_TDE_ADD_PRINCIPAL_KEY)
 	{

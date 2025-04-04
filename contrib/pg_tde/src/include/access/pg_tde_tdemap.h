@@ -46,6 +46,13 @@ typedef struct InternalKey
 #define MAP_ENTRY_EMPTY_IV_SIZE 16
 #define MAP_ENTRY_EMPTY_AEAD_TAG_SIZE 16
 
+typedef struct
+{
+	TDEPrincipalKeyInfo data;
+	unsigned char sign_iv[16];
+	unsigned char aead_tag[16];
+} TDESignedPrincipalKeyInfo;
+
 /* We do not need the dbOid since the entries are stored in a file per db */
 typedef struct TDEMapEntry
 {
@@ -61,7 +68,7 @@ typedef struct TDEMapEntry
 typedef struct XLogRelKey
 {
 	TDEMapEntry mapEntry;
-	TDEPrincipalKeyInfo pkInfo;
+	TDESignedPrincipalKeyInfo pkInfo;
 } XLogRelKey;
 
 /*
@@ -95,7 +102,7 @@ extern void pg_tde_wal_last_key_set_lsn(XLogRecPtr lsn, const char *keyfile_path
 extern InternalKey *pg_tde_create_smgr_key(const RelFileLocatorBackend *newrlocator);
 extern void pg_tde_create_wal_key(InternalKey *rel_key_data, const RelFileLocator *newrlocator, uint32 flags);
 extern void pg_tde_free_key_map_entry(const RelFileLocator *rlocator, off_t offset);
-extern void pg_tde_write_key_map_entry_redo(const TDEMapEntry *write_map_entry, TDEPrincipalKeyInfo *principal_key_info);
+extern void pg_tde_write_key_map_entry_redo(const TDEMapEntry *write_map_entry, TDESignedPrincipalKeyInfo *signed_key_info);
 
 #define PG_TDE_MAP_FILENAME			"pg_tde_%d_map"
 
@@ -109,9 +116,10 @@ extern InternalKey *GetSMGRRelationKey(RelFileLocatorBackend rel);
 
 extern void pg_tde_delete_tde_files(Oid dbOid);
 
-extern TDEPrincipalKeyInfo *pg_tde_get_principal_key_info(Oid dbOid);
-extern void pg_tde_save_principal_key(TDEPrincipalKeyInfo *principal_key_info);
-extern void pg_tde_save_principal_key_redo(TDEPrincipalKeyInfo *principal_key_info);
+extern TDESignedPrincipalKeyInfo *pg_tde_get_principal_key_info(Oid dbOid);
+extern bool pg_tde_verify_principal_key_info(TDESignedPrincipalKeyInfo *signed_key_info, const TDEPrincipalKey *principal_key);
+extern void pg_tde_save_principal_key(const TDEPrincipalKey *principal_key);
+extern void pg_tde_save_principal_key_redo(const TDESignedPrincipalKeyInfo *signed_key_info);
 extern void pg_tde_perform_rotate_key(TDEPrincipalKey *principal_key, TDEPrincipalKey *new_principal_key);
 extern void pg_tde_write_map_keydata_file(off_t size, char *file_data);
 

@@ -66,7 +66,7 @@
 typedef struct TDEFileHeader
 {
 	int32		file_version;
-	TDEPrincipalKeyInfo principal_key_info;
+	TDESignedPrincipalKeyInfo signed_key_info;
 } TDEFileHeader;
 
 typedef struct RelKeyCacheRec
@@ -125,13 +125,14 @@ static InternalKey *pg_tde_put_key_into_cache(const RelFileLocator *locator, Int
 static InternalKey *pg_tde_create_key_map_entry(const RelFileLocator *newrlocator, uint32 entry_type);
 static InternalKey *pg_tde_create_local_key(const RelFileLocator *newrlocator, uint32 entry_type);
 static void pg_tde_generate_internal_key(InternalKey *int_key, uint32 entry_type);
-static int	pg_tde_file_header_write(const char *tde_filename, int fd, TDEPrincipalKeyInfo *principal_key_info, off_t *bytes_written);
+static int	pg_tde_file_header_write(const char *tde_filename, int fd, const TDESignedPrincipalKeyInfo *signed_key_info, off_t *bytes_written);
+static void pg_tde_sign_principal_key_info(TDESignedPrincipalKeyInfo *signed_key_info, const TDEPrincipalKey *principal_key);
 static off_t pg_tde_write_one_map_entry(int fd, const TDEMapEntry *map_entry, off_t *offset, const char *db_map_path);
 static void pg_tde_write_key_map_entry(const RelFileLocator *rlocator, InternalKey *rel_key_data, TDEPrincipalKey *principal_key, bool write_xlog);
 static bool pg_tde_delete_map_entry(const RelFileLocator *rlocator, char *db_map_path, off_t offset);
-static int	keyrotation_init_file(TDEPrincipalKeyInfo *new_principal_key_info, char *rotated_filename, char *filename, off_t *curr_pos);
+static int	keyrotation_init_file(const TDESignedPrincipalKeyInfo *signed_key_info, char *rotated_filename, const char *filename, off_t *curr_pos);
 static void finalize_key_rotation(const char *path_old, const char *path_new);
-static int	pg_tde_open_file_write(const char *tde_filename, TDEPrincipalKeyInfo *principal_key_info, bool truncate, off_t *curr_pos);
+static int	pg_tde_open_file_write(const char *tde_filename, const TDESignedPrincipalKeyInfo *signed_key_info, bool truncate, off_t *curr_pos);
 static void update_wal_keys_cache(void);
 
 InternalKey *
@@ -264,11 +265,18 @@ pg_tde_delete_tde_files(Oid dbOid)
 }
 
 void
-pg_tde_save_principal_key_redo(TDEPrincipalKeyInfo *principal_key_info)
+pg_tde_save_principal_key_redo(const TDESignedPrincipalKeyInfo *signed_key_info)
 {
+	int			map_fd;
+	off_t		curr_pos;
+	char		db_map_path[MAXPGPATH] = {0};
+
+	pg_tde_set_db_file_path(signed_key_info->data.databaseId, db_map_path);
+
 	LWLockAcquire(tde_lwlock_enc_keys(), LW_EXCLUSIVE);
 
-	pg_tde_save_principal_key(principal_key_info);
+	map_fd = pg_tde_open_file_write(db_map_path, signed_key_info, true, &curr_pos);
+	close(map_fd);
 
 	LWLockRelease(tde_lwlock_enc_keys());
 }
@@ -282,18 +290,21 @@ pg_tde_save_principal_key_redo(TDEPrincipalKeyInfo *principal_key_info)
  * The caller must have an EXCLUSIVE LOCK on the files before calling this function.
  */
 void
-pg_tde_save_principal_key(TDEPrincipalKeyInfo *principal_key_info)
+pg_tde_save_principal_key(const TDEPrincipalKey *principal_key)
 {
 	int			map_fd = -1;
 	off_t		curr_pos = 0;
 	char		db_map_path[MAXPGPATH] = {0};
+	TDESignedPrincipalKeyInfo signed_key_Info;
 
 	/* Set the file paths */
-	pg_tde_set_db_file_path(principal_key_info->databaseId, db_map_path);
+	pg_tde_set_db_file_path(principal_key->keyInfo.databaseId, db_map_path);
 
 	ereport(DEBUG2, (errmsg("pg_tde_save_principal_key")));
 
-	map_fd = pg_tde_open_file_write(db_map_path, principal_key_info, true, &curr_pos);
+	pg_tde_sign_principal_key_info(&signed_key_Info, principal_key);
+
+	map_fd = pg_tde_open_file_write(db_map_path, &signed_key_Info, true, &curr_pos);
 	close(map_fd);
 }
 
@@ -301,17 +312,17 @@ pg_tde_save_principal_key(TDEPrincipalKeyInfo *principal_key_info)
  * Write TDE file header to a TDE file.
  */
 static int
-pg_tde_file_header_write(const char *tde_filename, int fd, TDEPrincipalKeyInfo *principal_key_info, off_t *bytes_written)
+pg_tde_file_header_write(const char *tde_filename, int fd, const TDESignedPrincipalKeyInfo *signed_key_info, off_t *bytes_written)
 {
 	TDEFileHeader fheader;
 
-	Assert(principal_key_info);
+	Assert(signed_key_info);
 
 	/* Create the header for this file. */
 	fheader.file_version = PG_TDE_FILEMAGIC;
 
 	/* Fill in the data */
-	fheader.principal_key_info = *principal_key_info;
+	fheader.signed_key_info = *signed_key_info;
 
 	*bytes_written = pg_pwrite(fd, &fheader, TDE_FILE_HEADER_SIZE, 0);
 
@@ -333,6 +344,19 @@ pg_tde_file_header_write(const char *tde_filename, int fd, TDEPrincipalKeyInfo *
 			(errmsg("Wrote the header to %s", tde_filename)));
 
 	return fd;
+}
+
+static void
+pg_tde_sign_principal_key_info(TDESignedPrincipalKeyInfo *signed_key_info, const TDEPrincipalKey *principal_key)
+{
+	signed_key_info->data = principal_key->keyInfo;
+
+	if (!RAND_bytes(signed_key_info->sign_iv, MAP_ENTRY_EMPTY_IV_SIZE))
+		ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+				 errmsg("could not generate iv for key map: %s", ERR_error_string(ERR_get_error(), NULL))));
+
+	AesGcmEncrypt(principal_key->keyData, signed_key_info->sign_iv, (unsigned char *) &signed_key_info->data, sizeof(signed_key_info->data), NULL, 0, NULL, signed_key_info->aead_tag);
 }
 
 static void
@@ -399,14 +423,17 @@ pg_tde_write_key_map_entry(const RelFileLocator *rlocator, InternalKey *rel_key_
 	off_t		curr_pos = 0;
 	off_t		prev_pos = 0;
 	TDEMapEntry write_map_entry;
+	TDESignedPrincipalKeyInfo signed_key_Info;
 
 	Assert(rlocator);
 
 	/* Set the file paths */
 	pg_tde_set_db_file_path(rlocator->dbOid, db_map_path);
 
+	pg_tde_sign_principal_key_info(&signed_key_Info, principal_key);
+
 	/* Open and validate file for basic correctness. */
-	map_fd = pg_tde_open_file_write(db_map_path, &principal_key->keyInfo, false, &curr_pos);
+	map_fd = pg_tde_open_file_write(db_map_path, &signed_key_Info, false, &curr_pos);
 	prev_pos = curr_pos;
 
 	/*
@@ -438,7 +465,7 @@ pg_tde_write_key_map_entry(const RelFileLocator *rlocator, InternalKey *rel_key_
 		XLogRelKey	xlrec;
 
 		xlrec.mapEntry = write_map_entry;
-		xlrec.pkInfo = principal_key->keyInfo;
+		xlrec.pkInfo = signed_key_Info;
 
 		XLogBeginInsert();
 		XLogRegisterData((char *) &xlrec, sizeof(xlrec));
@@ -466,7 +493,7 @@ pg_tde_write_key_map_entry(const RelFileLocator *rlocator, InternalKey *rel_key_
  * concurrent in place updates leading to data conflicts.
  */
 void
-pg_tde_write_key_map_entry_redo(const TDEMapEntry *write_map_entry, TDEPrincipalKeyInfo *principal_key_info)
+pg_tde_write_key_map_entry_redo(const TDEMapEntry *write_map_entry, TDESignedPrincipalKeyInfo *signed_key_info)
 {
 	char		db_map_path[MAXPGPATH] = {0};
 	int			map_fd = -1;
@@ -474,12 +501,12 @@ pg_tde_write_key_map_entry_redo(const TDEMapEntry *write_map_entry, TDEPrincipal
 	off_t		prev_pos = 0;
 
 	/* Set the file paths */
-	pg_tde_set_db_file_path(principal_key_info->databaseId, db_map_path);
+	pg_tde_set_db_file_path(signed_key_info->data.databaseId, db_map_path);
 
 	LWLockAcquire(tde_lwlock_enc_keys(), LW_EXCLUSIVE);
 
 	/* Open and validate file for basic correctness. */
-	map_fd = pg_tde_open_file_write(db_map_path, principal_key_info, false, &curr_pos);
+	map_fd = pg_tde_open_file_write(db_map_path, signed_key_info, false, &curr_pos);
 	prev_pos = curr_pos;
 
 	/*
@@ -631,7 +658,7 @@ pg_tde_free_key_map_entry(const RelFileLocator *rlocator, off_t offset)
  * No error checking by this function.
  */
 static File
-keyrotation_init_file(TDEPrincipalKeyInfo *new_principal_key_info, char *rotated_filename, char *filename, off_t *curr_pos)
+keyrotation_init_file(const TDESignedPrincipalKeyInfo *signed_key_info, char *rotated_filename, const char *filename, off_t *curr_pos)
 {
 	/*
 	 * Set the new filenames for the key rotation process - temporary at the
@@ -640,7 +667,7 @@ keyrotation_init_file(TDEPrincipalKeyInfo *new_principal_key_info, char *rotated
 	snprintf(rotated_filename, MAXPGPATH, "%s.r", filename);
 
 	/* Create file, truncate if the rotate file already exits */
-	return pg_tde_open_file_write(rotated_filename, new_principal_key_info, true, curr_pos);
+	return pg_tde_open_file_write(rotated_filename, signed_key_info, true, curr_pos);
 }
 
 /*
@@ -666,14 +693,17 @@ pg_tde_perform_rotate_key(TDEPrincipalKey *principal_key, TDEPrincipalKey *new_p
 	off_t		curr_pos[PRINCIPAL_KEY_COUNT] = {0};
 	int			fd[PRINCIPAL_KEY_COUNT];
 	char		path[PRINCIPAL_KEY_COUNT][MAXPGPATH];
+	TDESignedPrincipalKeyInfo new_signed_key_info;
 	off_t		map_size;
 	XLogPrincipalKeyRotate *xlrec;
 	off_t		xlrec_size;
 
 	pg_tde_set_db_file_path(principal_key->keyInfo.databaseId, path[OLD_PRINCIPAL_KEY]);
 
+	pg_tde_sign_principal_key_info(&new_signed_key_info, new_principal_key);
+
 	fd[OLD_PRINCIPAL_KEY] = pg_tde_open_file_read(path[OLD_PRINCIPAL_KEY], &curr_pos[OLD_PRINCIPAL_KEY]);
-	fd[NEW_PRINCIPAL_KEY] = keyrotation_init_file(&new_principal_key->keyInfo, path[NEW_PRINCIPAL_KEY], path[OLD_PRINCIPAL_KEY], &curr_pos[NEW_PRINCIPAL_KEY]);
+	fd[NEW_PRINCIPAL_KEY] = keyrotation_init_file(&new_signed_key_info, path[NEW_PRINCIPAL_KEY], path[OLD_PRINCIPAL_KEY], &curr_pos[NEW_PRINCIPAL_KEY]);
 
 	/* Read all entries until EOF */
 	while (1)
@@ -763,10 +793,10 @@ pg_tde_write_map_keydata_file(off_t file_size, char *file_data)
 	fheader = (TDEFileHeader *) file_data;
 
 	/* Set the file paths */
-	pg_tde_set_db_file_path(fheader->principal_key_info.databaseId, db_map_path);
+	pg_tde_set_db_file_path(fheader->signed_key_info.data.databaseId, db_map_path);
 
 	/* Initialize the new file and set the name */
-	fd_new = keyrotation_init_file(&fheader->principal_key_info, path_new, db_map_path, &curr_pos);
+	fd_new = keyrotation_init_file(&fheader->signed_key_info, path_new, db_map_path, &curr_pos);
 
 	if (pg_pwrite(fd_new, file_data, file_size, 0) != file_size)
 	{
@@ -867,7 +897,7 @@ pg_tde_wal_last_key_set_lsn(XLogRecPtr lsn, const char *keyfile_path)
  * is raised.
  */
 static int
-pg_tde_open_file_write(const char *tde_filename, TDEPrincipalKeyInfo *principal_key_info, bool truncate, off_t *curr_pos)
+pg_tde_open_file_write(const char *tde_filename, const TDESignedPrincipalKeyInfo *signed_key_info, bool truncate, off_t *curr_pos)
 {
 	int			fd;
 	TDEFileHeader fheader;
@@ -882,8 +912,8 @@ pg_tde_open_file_write(const char *tde_filename, TDEPrincipalKeyInfo *principal_
 	pg_tde_file_header_read(tde_filename, fd, &fheader, &bytes_read);
 
 	/* In case it's a new file, let's add the header now. */
-	if (bytes_read == 0 && principal_key_info)
-		pg_tde_file_header_write(tde_filename, fd, principal_key_info, &bytes_written);
+	if (bytes_read == 0 && signed_key_info)
+		pg_tde_file_header_write(tde_filename, fd, signed_key_info, &bytes_written);
 
 	*curr_pos = bytes_read + bytes_written;
 	return fd;
@@ -988,6 +1018,12 @@ pg_tde_find_map_entry(const RelFileLocator *rlocator, uint32 key_type, char *db_
 			return map_entry;
 		}
 	}
+}
+
+bool
+pg_tde_verify_principal_key_info(TDESignedPrincipalKeyInfo *signed_key_info, const TDEPrincipalKey *principal_key)
+{
+	return AesGcmDecrypt(principal_key->keyData, signed_key_info->sign_iv, (unsigned char *) &signed_key_info->data, sizeof(signed_key_info->data), NULL, 0, NULL, signed_key_info->aead_tag);
 }
 
 /*
@@ -1154,12 +1190,12 @@ pg_tde_read_one_map_entry2(int fd, int32 key_index, TDEMapEntry *map_entry, Oid 
  * Get the principal key from the map file. The caller must hold
  * a LW_SHARED or higher lock on files before calling this function.
  */
-TDEPrincipalKeyInfo *
+TDESignedPrincipalKeyInfo *
 pg_tde_get_principal_key_info(Oid dbOid)
 {
 	int			fd = -1;
 	TDEFileHeader fheader;
-	TDEPrincipalKeyInfo *principal_key_info = NULL;
+	TDESignedPrincipalKeyInfo *signed_key_info = NULL;
 	off_t		bytes_read = 0;
 	char		db_map_path[MAXPGPATH] = {0};
 
@@ -1186,11 +1222,11 @@ pg_tde_get_principal_key_info(Oid dbOid)
 	 */
 	if (bytes_read > 0)
 	{
-		principal_key_info = palloc_object(TDEPrincipalKeyInfo);
-		*principal_key_info = fheader.principal_key_info;
+		signed_key_info = palloc_object(TDESignedPrincipalKeyInfo);
+		*signed_key_info = fheader.signed_key_info;
 	}
 
-	return principal_key_info;
+	return signed_key_info;
 }
 
 /*
