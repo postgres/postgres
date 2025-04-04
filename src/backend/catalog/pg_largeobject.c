@@ -41,7 +41,7 @@ LargeObjectCreate(Oid loid)
 	Datum		values[Natts_pg_largeobject_metadata];
 	bool		nulls[Natts_pg_largeobject_metadata];
 	Oid			ownerId;
-	Acl			*lomacl;
+	Acl		   *lomacl;
 
 	pg_lo_meta = table_open(LargeObjectMetadataRelationId,
 							RowExclusiveLock);
