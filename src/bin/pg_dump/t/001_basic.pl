@@ -244,12 +244,12 @@ command_fails_like(
 
 command_fails_like(
 	[ 'pg_restore', '--exclude-database=foo', '-d', 'xxx', 'dumpdir' ],
-	qr/\Qpg_restore: error: option --exclude-database can be used only when restoring multiple databases by archive of pg_dumpall\E/,
+	qr/\Qpg_restore: error: option --exclude-database can be used only when restoring an archive created by pg_dumpall\E/,
 	'When option --exclude-database is used in pg_restore with dump of pg_dump');
 
 command_fails_like(
 	[ 'pg_restore', '--globals-only', '-d', 'xxx', 'dumpdir' ],
-	qr/\Qpg_restore: error: option -g\/--globals-only can be used only when restoring multiple databases by archive of pg_dumpall\E/,
+	qr/\Qpg_restore: error: option -g\/--globals-only can be used only when restoring an archive created by pg_dumpall\E/,
 	'When option --globals-only is not used in pg_restore with dump of pg_dump');
 
 # also fails for -r and -t, but it seems pointless to add more tests for those.

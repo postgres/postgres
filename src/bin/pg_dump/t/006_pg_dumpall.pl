@@ -365,7 +365,7 @@ $node->command_fails_like(
     "$tempdir/format_custom",
     '--format' => 'custom',
     '--file' => "$tempdir/error_test.sql", ],
-    qr/\Qpg_restore: error: -C\/--create option should be specified when restoring multiple databases by archive of pg_dumpall\E/,
+    qr/\Qpg_restore: error: -C\/--create option should be specified when restoring an archive created by pg_dumpall\E/,
     'When -C is not used in pg_restore with dump of pg_dumpall');
 
 # test case 2: When --list option is used with dump of pg_dumpall
@@ -374,7 +374,7 @@ $node->command_fails_like(
 		"$tempdir/format_custom", '-C',
 		'--format' => 'custom', '--list',
 		'--file' => "$tempdir/error_test.sql", ],
-	qr/\Qpg_restore: error: option -l\/--list cannot be used when restoring multiple databases by archive of pg_dumpall\E/,
+	qr/\Qpg_restore: error: option -l\/--list cannot be used when restoring an archive created by pg_dumpall\E/,
 	'When --list is used in pg_restore with dump of pg_dumpall');
 
 # test case 3: When non-exist database is given with -d option

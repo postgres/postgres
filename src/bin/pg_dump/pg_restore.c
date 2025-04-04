@@ -505,9 +505,9 @@ main(int argc, char **argv)
 		 * dump.
 		 */
 		if (opts->tocSummary)
-			pg_fatal("option -l/--list cannot be used when restoring an archive created with pg_dumpall");
+			pg_fatal("option -l/--list cannot be used when restoring an archive created by pg_dumpall");
 		else if (opts->tocFile)
-			pg_fatal("option -L/--use-list cannot be used when restoring an archive created with pg_dumpall");
+			pg_fatal("option -L/--use-list cannot be used when restoring an archive created by pg_dumpall");
 
 		/*
 		 * To restore from a pg_dumpall archive, -C (create database) option
@@ -515,7 +515,7 @@ main(int argc, char **argv)
 		 */
 		if (!globals_only && opts->createDB != 1)
 		{
-			pg_log_error("-C/--create option should be specified when restoring from an archive of created by pg_dumpall");
+			pg_log_error("-C/--create option should be specified when restoring an archive created by pg_dumpall");
 			pg_log_error_hint("Try \"%s --help\" for more information.", progname);
 			pg_log_error_hint("Individual databases can be restored using their specific archives.");
 			exit_nicely(1);
