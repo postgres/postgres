@@ -115,7 +115,7 @@ static InternalKey *tde_decrypt_rel_key(TDEPrincipalKey *principal_key, TDEMapEn
 static int	pg_tde_open_file_basic(const char *tde_filename, int fileFlags, bool ignore_missing);
 static void pg_tde_file_header_read(const char *tde_filename, int fd, TDEFileHeader *fheader, off_t *bytes_read);
 static bool pg_tde_read_one_map_entry(int fd, const RelFileLocator *rlocator, int flags, TDEMapEntry *map_entry, off_t *offset);
-static TDEMapEntry *pg_tde_read_one_map_entry2(int keydata_fd, int32 key_index, TDEPrincipalKey *principal_key);
+static void pg_tde_read_one_map_entry2(int keydata_fd, int32 key_index, TDEMapEntry *map_entry, Oid databaseId);
 static int	pg_tde_open_file_read(const char *tde_filename, off_t *curr_pos);
 static InternalKey *pg_tde_get_key_from_cache(const RelFileLocator *rlocator, uint32 key_type);
 static WALKeyCacheRec *pg_tde_add_wal_key_to_cache(InternalKey *cached_key, XLogRecPtr start_lsn);
@@ -1129,45 +1129,26 @@ pg_tde_read_one_map_entry(File map_file, const RelFileLocator *rlocator, int fla
 /*
  * TODO: Unify with pg_tde_read_one_map_entry()
  */
-static TDEMapEntry *
-pg_tde_read_one_map_entry2(int fd, int32 key_index, TDEPrincipalKey *principal_key)
+static void
+pg_tde_read_one_map_entry2(int fd, int32 key_index, TDEMapEntry *map_entry, Oid databaseId)
 {
-	TDEMapEntry *map_entry;
-	off_t		read_pos = 0;
+	off_t		read_pos;
 
 	/* Calculate the reading position in the file. */
-	read_pos += (key_index * MAP_ENTRY_SIZE) + TDE_FILE_HEADER_SIZE;
-
-	/* Check if the file has a valid key */
-	if ((read_pos + MAP_ENTRY_SIZE) > lseek(fd, 0, SEEK_END))
-	{
-		char		db_map_path[MAXPGPATH] = {0};
-
-		pg_tde_set_db_file_path(principal_key->keyInfo.databaseId, db_map_path);
-		ereport(FATAL,
-				(errcode(ERRCODE_NO_DATA_FOUND),
-				 errmsg("could not find the required key at index %d in tde data file \"%s\": %m",
-						key_index, db_map_path)));
-	}
-
-	/* Allocate and fill in the structure */
-	map_entry = palloc_object(TDEMapEntry);
+	read_pos = TDE_FILE_HEADER_SIZE + key_index * MAP_ENTRY_SIZE;
 
 	/* Read the encrypted key */
 	if (pg_pread(fd, map_entry, MAP_ENTRY_SIZE, read_pos) != MAP_ENTRY_SIZE)
 	{
 		char		db_map_path[MAXPGPATH] = {0};
 
-		pg_tde_set_db_file_path(principal_key->keyInfo.databaseId, db_map_path);
+		pg_tde_set_db_file_path(databaseId, db_map_path);
 		ereport(FATAL,
 				(errcode_for_file_access(),
-				 errmsg("could not read key at index %d in tde key data file \"%s\": %m",
+				 errmsg("could not find the required key at index %d in tde data file \"%s\": %m",
 						key_index, db_map_path)));
 	}
-
-	return map_entry;
 }
-
 
 /*
  * Get the principal key from the map file. The caller must hold
@@ -1305,10 +1286,9 @@ pg_tde_read_last_wal_key(void)
 	TDEPrincipalKey *principal_key;
 	int			fd = -1;
 	int			file_idx = 0;
-	TDEMapEntry *map_entry;
+	TDEMapEntry map_entry;
 	InternalKey *rel_key_data;
 	off_t		fsize;
-
 
 	LWLockAcquire(lock_pk, LW_EXCLUSIVE);
 	principal_key = GetPrincipalKey(rlocator.dbOid, LW_EXCLUSIVE);
@@ -1330,17 +1310,11 @@ pg_tde_read_last_wal_key(void)
 	}
 
 	file_idx = ((fsize - TDE_FILE_HEADER_SIZE) / MAP_ENTRY_SIZE) - 1;
-	map_entry = pg_tde_read_one_map_entry2(fd, file_idx, principal_key);
-	if (!map_entry)
-	{
-		LWLockRelease(lock_pk);
-		return NULL;
-	}
+	pg_tde_read_one_map_entry2(fd, file_idx, &map_entry, rlocator.dbOid);
 
-	rel_key_data = tde_decrypt_rel_key(principal_key, map_entry);
+	rel_key_data = tde_decrypt_rel_key(principal_key, &map_entry);
 	LWLockRelease(lock_pk);
 	close(fd);
-	pfree(map_entry);
 
 	return rel_key_data;
 }
@@ -1396,26 +1370,27 @@ pg_tde_fetch_wal_keys(XLogRecPtr start_lsn)
 
 	for (int file_idx = 0; file_idx < keys_count; file_idx++)
 	{
-		TDEMapEntry *map_entry = pg_tde_read_one_map_entry2(fd, file_idx, principal_key);
+		TDEMapEntry map_entry;
+
+		pg_tde_read_one_map_entry2(fd, file_idx, &map_entry, rlocator.dbOid);
 
 		/*
 		 * Skip new (just created but not updated by write) and invalid keys
 		 */
-		if (map_entry->enc_key.start_lsn != InvalidXLogRecPtr &&
-			WALKeyIsValid(&map_entry->enc_key) &&
-			map_entry->enc_key.start_lsn >= start_lsn)
+		if (map_entry.enc_key.start_lsn != InvalidXLogRecPtr &&
+			WALKeyIsValid(&map_entry.enc_key) &&
+			map_entry.enc_key.start_lsn >= start_lsn)
 		{
-			InternalKey *rel_key_data = tde_decrypt_rel_key(principal_key, map_entry);
+			InternalKey *rel_key_data = tde_decrypt_rel_key(principal_key, &map_entry);
 			InternalKey *cached_key = pg_tde_put_key_into_cache(&rlocator, rel_key_data);
 			WALKeyCacheRec *wal_rec;
 
 			pfree(rel_key_data);
 
-			wal_rec = pg_tde_add_wal_key_to_cache(cached_key, map_entry->enc_key.start_lsn);
+			wal_rec = pg_tde_add_wal_key_to_cache(cached_key, map_entry.enc_key.start_lsn);
 			if (!return_wal_rec)
 				return_wal_rec = wal_rec;
 		}
-		pfree(map_entry);
 	}
 	LWLockRelease(lock_pk);
 	close(fd);
