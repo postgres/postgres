@@ -18,8 +18,9 @@ PostgreSQL documentation
   <refname>pg_restore</refname>
 
   <refpurpose>
-   restore a <productname>PostgreSQL</productname> database from an
-   archive file created by <application>pg_dump</application>
+   restore a <productname>PostgreSQL</productname> database or cluster
+   from an archive created by <application>pg_dump</application> or
+   <application>pg_dumpall</application>
   </refpurpose>
  </refnamediv>
 
@@ -38,13 +39,14 @@ PostgreSQL documentation
 
   <para>
    <application>pg_restore</application> is a utility for restoring a
-   <productname>PostgreSQL</productname> database from an archive
-   created by <xref linkend="app-pgdump"/> in one of the non-plain-text
+   <productname>PostgreSQL</productname> database or cluster from an archive
+   created by <xref linkend="app-pgdump"/> or
+   <xref linkend="app-pg-dumpall"/> in one of the non-plain-text
    formats.  It will issue the commands necessary to reconstruct the
-   database to the state it was in at the time it was saved.  The
-   archive files also allow <application>pg_restore</application> to
+   database or cluster to the state it was in at the time it was saved. The
+   archives also allow <application>pg_restore</application> to
    be selective about what is restored, or even to reorder the items
-   prior to being restored. The archive files are designed to be
+   prior to being restored. The archive formats are designed to be
    portable across architectures.
   </para>
 
@@ -52,10 +54,17 @@ PostgreSQL documentation
    <application>pg_restore</application> can operate in two modes.
    If a database name is specified, <application>pg_restore</application>
    connects to that database and restores archive contents directly into
-   the database.  Otherwise, a script containing the SQL
-   commands necessary to rebuild the database is created and written
+   the database.
+   When restoring from a dump made by<application>pg_dumpall</application>,
+   each database will be created and then the restoration will be run in that
+   database.
+
+   Otherwise, when a database name is not specified, a script containing the SQL
+   commands necessary to rebuild the database or cluster is created and written
    to a file or standard output.  This script output is equivalent to
-   the plain text output format of <application>pg_dump</application>.
+   the plain text output format of <application>pg_dump</application> or
+   <application>pg_dumpall</application>.
+
    Some of the options controlling the output are therefore analogous to
    <application>pg_dump</application> options.
   </para>
@@ -140,6 +149,8 @@ PostgreSQL documentation
         commands that mention this database.
         Access privileges for the database itself are also restored,
         unless <option>--no-acl</option> is specified.
+        <option>--create</option> is required when restoring multiple databases
+        from an archive created by <application>pg_dumpall</application>.
        </para>
 
        <para>
@@ -162,6 +173,28 @@ PostgreSQL documentation
         be a <link linkend="libpq-connstring">connection string</link>.
         If so, connection string parameters will override any conflicting
         command line options.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>--exclude-database=<replaceable class="parameter">pattern</replaceable></option></term>
+      <listitem>
+       <para>
+        Do not restore databases whose name matches
+        <replaceable class="parameter">pattern</replaceable>.
+        Multiple patterns can be excluded by writing multiple
+        <option>--exclude-database</option> switches.  The
+        <replaceable class="parameter">pattern</replaceable> parameter is
+        interpreted as a pattern according to the same rules used by
+        <application>psql</application>'s <literal>\d</literal>
+        commands (see <xref linkend="app-psql-patterns"/>),
+        so multiple databases can also be excluded by writing wildcard
+        characters in the pattern.  When using wildcards, be careful to
+        quote the pattern if needed to prevent shell wildcard expansion.
+       </para>
+       <para>
+        This option is only relevant when restoring from an archive made using <application>pg_dumpall</application>.
        </para>
       </listitem>
      </varlistentry>
@@ -312,6 +345,19 @@ PostgreSQL documentation
          </listitem>
         </varlistentry>
        </variablelist></para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-g</option></term>
+      <term><option>--globals-only</option></term>
+      <listitem>
+       <para>
+        Restore only global objects (roles and tablespaces), no databases.
+       </para>
+       <para>
+        This option is only relevant when restoring from an archive made using <application>pg_dumpall</application>.
+       </para>
       </listitem>
      </varlistentry>
 

@@ -315,7 +315,7 @@ extern void SetArchiveOptions(Archive *AH, DumpOptions *dopt, RestoreOptions *ro
 
 extern void ProcessArchiveRestoreOptions(Archive *AHX);
 
-extern void RestoreArchive(Archive *AHX);
+extern void RestoreArchive(Archive *AHX, bool append_data);
 
 /* Open an existing archive */
 extern Archive *OpenArchive(const char *FileSpec, const ArchiveFormat fmt);

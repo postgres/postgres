@@ -334,6 +334,16 @@ on_exit_close_archive(Archive *AHX)
 }
 
 /*
+ * When pg_restore restores multiple databases, then update already added entry
+ * into array for cleanup.
+ */
+void
+replace_on_exit_close_archive(Archive *AHX)
+{
+	shutdown_info.AHX = AHX;
+}
+
+/*
  * on_exit_nicely handler for shutting down database connections and
  * worker processes cleanly.
  */

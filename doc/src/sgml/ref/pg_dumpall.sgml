@@ -16,7 +16,7 @@ PostgreSQL documentation
 
  <refnamediv>
   <refname>pg_dumpall</refname>
-  <refpurpose>extract a <productname>PostgreSQL</productname> database cluster into a script file</refpurpose>
+  <refpurpose>extract a <productname>PostgreSQL</productname> database cluster using a specified dump format</refpurpose>
  </refnamediv>
 
  <refsynopsisdiv>
@@ -33,7 +33,7 @@ PostgreSQL documentation
   <para>
    <application>pg_dumpall</application> is a utility for writing out
    (<quote>dumping</quote>) all <productname>PostgreSQL</productname> databases
-   of a cluster into one script file.  The script file contains
+   of a cluster into an archive.  The archive contains
    <acronym>SQL</acronym> commands that can be used as input to <xref
    linkend="app-psql"/> to restore the databases.  It does this by
    calling <xref linkend="app-pgdump"/> for each database in the cluster.
@@ -52,9 +52,14 @@ PostgreSQL documentation
   </para>
 
   <para>
-   The SQL script will be written to the standard output.  Use the
+   Plain text SQL scripts will be written to the standard output.  Use the
    <option>-f</option>/<option>--file</option> option or shell operators to
    redirect it into a file.
+  </para>
+
+  <para>
+   Archives in other formats will be placed in a directory named using the
+   <option>-f</option>/<option>--file</option>, which is required in this case.
   </para>
 
   <para>
@@ -121,7 +126,82 @@ PostgreSQL documentation
        <para>
         Send output to the specified file.  If this is omitted, the
         standard output is used.
+        Note: This option can only be omitted when <option>--format</option> is plain
        </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-F <replaceable class="parameter">format</replaceable></option></term>
+      <term><option>--format=<replaceable class="parameter">format</replaceable></option></term>
+      <listitem>
+       <para>
+        Specify the format of dump files.  In plain format, all the dump data is
+        sent in a single text stream. This is the default.
+
+        In all other modes, <application>pg_dumpall</application> first creates two files:
+        <filename>global.dat</filename> and <filename>map.dat</filename>, in the directory
+        specified by <option>--file</option>.
+        The first file contains global data, such as roles and tablespaces. The second
+        contains a mapping between database oids and names. These files are used by
+        <application>pg_restore</application>. Data for individual databases is placed in
+        <filename>databases</filename> subdirectory, named using the database's <type>oid</type>.
+
+       <variablelist>
+        <varlistentry>
+         <term><literal>d</literal></term>
+         <term><literal>directory</literal></term>
+         <listitem>
+          <para>
+           Output directory-format archives for each database,
+           suitable for input into pg_restore. The directory
+           will have database <type>oid</type> as its name.
+          </para>
+         </listitem>
+        </varlistentry>
+
+        <varlistentry>
+         <term><literal>p</literal></term>
+         <term><literal>plain</literal></term>
+         <listitem>
+          <para>
+           Output a plain-text SQL script file (the default).
+          </para>
+         </listitem>
+        </varlistentry>
+
+        <varlistentry>
+         <term><literal>c</literal></term>
+         <term><literal>custom</literal></term>
+         <listitem>
+          <para>
+           Output a custom-format archive for each database,
+           suitable for input into pg_restore. The archive
+           will be named <filename>dboid.dmp</filename> where <type>dboid</type> is the
+           <type>oid</type> of the database.
+          </para>
+         </listitem>
+        </varlistentry>
+
+         <varlistentry>
+         <term><literal>t</literal></term>
+         <term><literal>tar</literal></term>
+         <listitem>
+          <para>
+           Output a tar-format archive for each database,
+           suitable for input into pg_restore. The archive
+           will be named <filename>dboid.tar</filename> where <type>dboid</type> is the
+           <type>oid</type> of the database.
+          </para>
+         </listitem>
+        </varlistentry>
+
+        </variablelist>
+
+       Note: see <xref linkend="app-pgdump"/> for details
+       of how the various non plain text archives work.
+
+        </para>
       </listitem>
      </varlistentry>
 

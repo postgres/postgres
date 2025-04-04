@@ -237,6 +237,11 @@ command_fails_like(
 	'pg_restore: options -C\/--create and -1\/--single-transaction cannot be used together'
 );
 
+command_fails_like(
+	[ 'pg_restore', '--exclude-database=foo', '--globals-only', '-d', 'xxx' ],
+	qr/\Qpg_restore: error: option --exclude-database cannot be used together with -g\/--globals-only\E/,
+	'pg_restore: option --exclude-database cannot be used together with -g/--globals-only');
+
 # also fails for -r and -t, but it seems pointless to add more tests for those.
 command_fails_like(
 	[ 'pg_dumpall', '--exclude-database=foo', '--globals-only' ],
@@ -244,4 +249,8 @@ command_fails_like(
 	'pg_dumpall: option --exclude-database cannot be used together with -g/--globals-only'
 );
 
+command_fails_like(
+	[ 'pg_dumpall', '--format', 'x' ],
+	qr/\Qpg_dumpall: error: unrecognized archive format "x";\E/,
+	'pg_dumpall: unrecognized archive format');
 done_testing();
