@@ -463,12 +463,10 @@ autoprewarm_database_main(Datum main_arg)
 		CHECK_FOR_INTERRUPTS();
 
 		/*
-		 * Quit if we've reached records for another database. If previous
-		 * blocks are of some global objects, then continue pre-warming.
+		 * All blocks between prewarm_start_idx and prewarm_stop_idx should
+		 * belong either to global objects or the same database.
 		 */
-		if (old_blk != NULL && old_blk->database != blk->database &&
-			old_blk->database != 0)
-			break;
+		Assert(blk->database == apw_state->database || blk->database == 0);
 
 		/*
 		 * As soon as we encounter a block of a new relation, close the old
