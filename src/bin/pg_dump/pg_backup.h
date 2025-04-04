@@ -297,9 +297,9 @@ typedef void (*SetupWorkerPtrType) (Archive *AH);
  * Main archiver interface.
  */
 
-extern void ConnectDatabase(Archive *AHX,
-							const ConnParams *cparams,
-							bool isReconnect);
+extern void ConnectDatabaseAhx(Archive *AHX,
+							   const ConnParams *cparams,
+							   bool isReconnect);
 extern void DisconnectDatabase(Archive *AHX);
 extern PGconn *GetConnection(Archive *AHX);
 
