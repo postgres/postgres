@@ -2755,28 +2755,29 @@ SELECT * from onek WHERE unique1 in (VALUES(1200::bigint), (1));
 
 -- VtA shouldn't depend on the side of the join probing with the VALUES expression.
 EXPLAIN (COSTS OFF)
-SELECT c.oid,c.relname FROM pg_class c JOIN pg_am a USING (oid)
-WHERE a.oid IN (VALUES (1), (2));
-                       QUERY PLAN                        
----------------------------------------------------------
- Nested Loop
-   ->  Seq Scan on pg_am a
-         Filter: (oid = ANY ('{1,2}'::oid[]))
-   ->  Index Scan using pg_class_oid_index on pg_class c
-         Index Cond: (oid = a.oid)
-(5 rows)
+SELECT c.unique1,c.ten FROM tenk1 c JOIN onek a USING (ten)
+WHERE a.ten IN (VALUES (1), (2));
+                    QUERY PLAN                    
+--------------------------------------------------
+ Hash Join
+   Hash Cond: (a.ten = c.ten)
+   ->  Seq Scan on onek a
+         Filter: (ten = ANY ('{1,2}'::integer[]))
+   ->  Hash
+         ->  Seq Scan on tenk1 c
+(6 rows)
 
 EXPLAIN (COSTS OFF)
-SELECT c.oid,c.relname FROM pg_class c JOIN pg_am a USING (oid)
-WHERE c.oid IN (VALUES (1), (2));
-                          QUERY PLAN                           
----------------------------------------------------------------
+SELECT c.unique1,c.ten FROM tenk1 c JOIN onek a USING (ten)
+WHERE c.ten IN (VALUES (1), (2));
+                    QUERY PLAN                    
+--------------------------------------------------
  Hash Join
-   Hash Cond: (a.oid = c.oid)
-   ->  Seq Scan on pg_am a
+   Hash Cond: (c.ten = a.ten)
+   ->  Seq Scan on tenk1 c
+         Filter: (ten = ANY ('{1,2}'::integer[]))
    ->  Hash
-         ->  Index Scan using pg_class_oid_index on pg_class c
-               Index Cond: (oid = ANY ('{1,2}'::oid[]))
+         ->  Seq Scan on onek a
 (6 rows)
 
 -- Constant expressions are simplified
