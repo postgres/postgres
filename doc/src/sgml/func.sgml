@@ -28577,6 +28577,11 @@ acl      | {postgres=arwdDxtm/postgres,foo=r/postgres}
         the SQL command <xref linkend="sql-set"/>.
        </para>
        <para>
+        <function>set_config</function> accepts the NULL value for
+        <parameter>new_value</parameter>, but as settings cannot be null, it
+        is interpreted as a request to reset the setting to its default value.
+       </para>
+       <para>
         <literal>set_config('log_statement_stats', 'off', false)</literal>
         <returnvalue>off</returnvalue>
        </para></entry>
