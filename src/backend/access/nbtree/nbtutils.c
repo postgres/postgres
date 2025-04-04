@@ -26,6 +26,7 @@
 
 #define LOOK_AHEAD_REQUIRED_RECHECKS 	3
 #define LOOK_AHEAD_DEFAULT_DISTANCE 	5
+#define NSKIPADVANCES_THRESHOLD			3
 
 static inline int32 _bt_compare_array_skey(FmgrInfo *orderproc,
 										   Datum tupdatum, bool tupnull,
@@ -41,7 +42,8 @@ static void _bt_array_set_low_or_high(Relation rel, ScanKey skey,
 									  BTArrayKeyInfo *array, bool low_not_high);
 static bool _bt_array_decrement(Relation rel, ScanKey skey, BTArrayKeyInfo *array);
 static bool _bt_array_increment(Relation rel, ScanKey skey, BTArrayKeyInfo *array);
-static bool _bt_advance_array_keys_increment(IndexScanDesc scan, ScanDirection dir);
+static bool _bt_advance_array_keys_increment(IndexScanDesc scan, ScanDirection dir,
+											 bool *skip_array_set);
 static void _bt_rewind_nonrequired_arrays(IndexScanDesc scan, ScanDirection dir);
 static bool _bt_tuple_before_array_skeys(IndexScanDesc scan, ScanDirection dir,
 										 IndexTuple tuple, TupleDesc tupdesc, int tupnatts,
@@ -970,7 +972,8 @@ _bt_array_increment(Relation rel, ScanKey skey, BTArrayKeyInfo *array)
  * advanced (every array remains at its final element for scan direction).
  */
 static bool
-_bt_advance_array_keys_increment(IndexScanDesc scan, ScanDirection dir)
+_bt_advance_array_keys_increment(IndexScanDesc scan, ScanDirection dir,
+								 bool *skip_array_set)
 {
 	Relation	rel = scan->indexRelation;
 	BTScanOpaque so = (BTScanOpaque) scan->opaque;
@@ -984,6 +987,9 @@ _bt_advance_array_keys_increment(IndexScanDesc scan, ScanDirection dir)
 	{
 		BTArrayKeyInfo *array = &so->arrayKeys[i];
 		ScanKey		skey = &so->keyData[array->scan_key];
+
+		if (array->num_elems == -1)
+			*skip_array_set = true;
 
 		if (ScanDirectionIsForward(dir))
 		{
@@ -1460,6 +1466,7 @@ _bt_advance_array_keys(IndexScanDesc scan, BTReadPageState *pstate,
 	ScanDirection dir = so->currPos.dir;
 	int			arrayidx = 0;
 	bool		beyond_end_advance = false,
+				skip_array_advanced = false,
 				has_required_opposite_direction_only = false,
 				all_required_satisfied = true,
 				all_satisfied = true;
@@ -1756,6 +1763,7 @@ _bt_advance_array_keys(IndexScanDesc scan, BTReadPageState *pstate,
 				/* Skip array's new element is tupdatum (or MINVAL/MAXVAL) */
 				_bt_skiparray_set_element(rel, cur, array, result,
 										  tupdatum, tupnull);
+				skip_array_advanced = true;
 			}
 			else if (array->cur_elem != set_elem)
 			{
@@ -1772,10 +1780,18 @@ _bt_advance_array_keys(IndexScanDesc scan, BTReadPageState *pstate,
 	 * higher-order arrays (might exhaust all the scan's arrays instead, which
 	 * ends the top-level scan).
 	 */
-	if (beyond_end_advance && !_bt_advance_array_keys_increment(scan, dir))
+	if (beyond_end_advance &&
+		!_bt_advance_array_keys_increment(scan, dir, &skip_array_advanced))
 		goto end_toplevel_scan;
 
 	Assert(_bt_verify_keys_with_arraykeys(scan));
+
+	/*
+	 * Maintain a page-level count of the number of times the scan's array
+	 * keys advanced in a way that affected at least one skip array
+	 */
+	if (sktrig_required && skip_array_advanced)
+		pstate->nskipadvances++;
 
 	/*
 	 * Does tuple now satisfy our new qual?  Recheck with _bt_check_compare.
@@ -1946,26 +1962,12 @@ _bt_advance_array_keys(IndexScanDesc scan, BTReadPageState *pstate,
 	 * Being pessimistic would also give some scans with non-required arrays a
 	 * perverse advantage over similar scans that use required arrays instead.
 	 *
-	 * You can think of this as a speculative bet on what the scan is likely
-	 * to find on the next page.  It's not much of a gamble, though, since the
-	 * untruncated prefix of attributes must strictly satisfy the new qual.
+	 * This is similar to our scan-level heuristics, below.  They also set
+	 * scanBehind to speculatively continue the primscan onto the next page.
 	 */
 	if (so->scanBehind)
 	{
-		/*
-		 * Truncated high key -- _bt_scanbehind_checkkeys recheck scheduled.
-		 *
-		 * Remember if recheck needs to call _bt_oppodir_checkkeys for next
-		 * page's finaltup (see below comments about "Handle inequalities
-		 * marked required in the opposite scan direction" for why).
-		 */
-		so->oppositeDirCheck = has_required_opposite_direction_only;
-
-		/*
-		 * Make sure that any SAOP arrays that were not marked required by
-		 * preprocessing are reset to their first element for this direction
-		 */
-		_bt_rewind_nonrequired_arrays(scan, dir);
+		/* Truncated high key -- _bt_scanbehind_checkkeys recheck scheduled */
 	}
 
 	/*
@@ -2006,6 +2008,10 @@ _bt_advance_array_keys(IndexScanDesc scan, BTReadPageState *pstate,
 	else if (has_required_opposite_direction_only && pstate->finaltup &&
 			 unlikely(!_bt_oppodir_checkkeys(scan, dir, pstate->finaltup)))
 	{
+		/*
+		 * Make sure that any SAOP arrays that were not marked required by
+		 * preprocessing are reset to their first element for this direction
+		 */
 		_bt_rewind_nonrequired_arrays(scan, dir);
 		goto new_prim_scan;
 	}
@@ -2032,11 +2038,21 @@ continue_scan:
 
 	if (so->scanBehind)
 	{
-		/* Optimization: skip by setting "look ahead" mechanism's offnum */
+		/*
+		 * Remember if recheck needs to call _bt_oppodir_checkkeys for next
+		 * page's finaltup (see above comments about "Handle inequalities
+		 * marked required in the opposite scan direction" for why).
+		 */
+		so->oppositeDirCheck = has_required_opposite_direction_only;
+
+		_bt_rewind_nonrequired_arrays(scan, dir);
+
+		/*
+		 * skip by setting "look ahead" mechanism's offnum for forwards scans
+		 * (backwards scans check scanBehind flag directly instead)
+		 */
 		if (ScanDirectionIsForward(dir))
 			pstate->skip = pstate->maxoff + 1;
-		else
-			pstate->skip = pstate->minoff - 1;
 	}
 
 	/* Caller's tuple doesn't match the new qual */
@@ -2059,19 +2075,31 @@ new_prim_scan:
 	 * This will in turn encourage _bt_readpage to apply the pstate.startikey
 	 * optimization more often.
 	 *
-	 * Note: This heuristic isn't as aggressive as you might think.  We're
+	 * Also continue the ongoing primitive index scan when it is still on the
+	 * first page if there have been more than NSKIPADVANCES_THRESHOLD calls
+	 * here that each advanced at least one of the scan's skip arrays
+	 * (deliberately ignore advancements that only affected SAOP arrays here).
+	 * A page that cycles through this many skip array elements is quite
+	 * likely to neighbor similar pages, that we'll also need to read.
+	 *
+	 * Note: These heuristics aren't as aggressive as you might think.  We're
 	 * conservative about allowing a primitive scan to step from the first
 	 * leaf page it reads to the page's sibling page (we only allow it on
-	 * first pages whose finaltup strongly suggests that it'll work out).
+	 * first pages whose finaltup strongly suggests that it'll work out, as
+	 * well as first pages that have a large number of skip array advances).
 	 * Clearing this first page finaltup hurdle is a strong signal in itself.
+	 *
+	 * Note: The NSKIPADVANCES_THRESHOLD heuristic exists only to avoid
+	 * pathological cases.  Specifically, cases where a skip scan should just
+	 * behave like a traditional full index scan, but ends up "skipping" again
+	 * and again, descending to the prior leaf page's direct sibling leaf page
+	 * each time.  This misbehavior would otherwise be possible during scans
+	 * that never quite manage to "clear the first page finaltup hurdle".
 	 */
-	if (!pstate->firstpage)
+	if (!pstate->firstpage || pstate->nskipadvances > NSKIPADVANCES_THRESHOLD)
 	{
 		/* Schedule a recheck once on the next (or previous) page */
 		so->scanBehind = true;
-		so->oppositeDirCheck = has_required_opposite_direction_only;
-
-		_bt_rewind_nonrequired_arrays(scan, dir);
 
 		/* Continue the current primitive scan after all */
 		goto continue_scan;
@@ -2441,7 +2469,9 @@ _bt_oppodir_checkkeys(IndexScanDesc scan, ScanDirection dir,
  * the first page (first for the current primitive scan) avoids wasting cycles
  * during selective point queries.  They typically don't stand to gain as much
  * when we can set pstate.startikey, and are likely to notice the overhead of
- * calling here.
+ * calling here.  (Also, allowing pstate.forcenonrequired to be set on a
+ * primscan's first page would mislead _bt_advance_array_keys, which expects
+ * pstate.nskipadvances to be representative of every first page's key space.)
  *
  * Caller must reset startikey and forcenonrequired ahead of the _bt_checkkeys
  * call for pstate.finaltup iff we set forcenonrequired=true.  This will give

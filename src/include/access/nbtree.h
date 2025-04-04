@@ -1118,10 +1118,11 @@ typedef struct BTReadPageState
 
 	/*
 	 * Private _bt_checkkeys state used to manage "look ahead" optimization
-	 * (only used during scans with array keys)
+	 * and primscan scheduling (only used during scans with array keys)
 	 */
 	int16		rechecks;
 	int16		targetdistance;
+	int16		nskipadvances;
 
 } BTReadPageState;
 

@@ -1655,6 +1655,7 @@ _bt_readpage(IndexScanDesc scan, ScanDirection dir, OffsetNumber offnum,
 	pstate.continuescan = true; /* default assumption */
 	pstate.rechecks = 0;
 	pstate.targetdistance = 0;
+	pstate.nskipadvances = 0;
 
 	if (ScanDirectionIsForward(dir))
 	{
@@ -1883,6 +1884,21 @@ _bt_readpage(IndexScanDesc scan, ScanDirection dir, OffsetNumber offnum,
 			}
 			passes_quals = _bt_checkkeys(scan, &pstate, arrayKeys,
 										 itup, indnatts);
+
+			if (arrayKeys && so->scanBehind)
+			{
+				/*
+				 * Done scanning this page, but not done with the current
+				 * primscan.
+				 *
+				 * Note: Forward scans don't check this explicitly, since they
+				 * prefer to reuse pstate.skip for this instead.
+				 */
+				Assert(!passes_quals && pstate.continuescan);
+				Assert(!pstate.forcenonrequired);
+
+				break;
+			}
 
 			/*
 			 * Check if we need to skip ahead to a later tuple (only possible
