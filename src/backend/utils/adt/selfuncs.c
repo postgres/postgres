@@ -6329,6 +6329,10 @@ get_actual_variable_range(PlannerInfo *root, VariableStatData *vardata,
 		ScanDirection indexscandir;
 		StrategyNumber strategy;
 
+		/* Ignore non-ordering indexes */
+		if (index->sortopfamily == NULL)
+			continue;
+
 		/*
 		 * Ignore partial indexes --- we only want stats that cover the entire
 		 * relation.
