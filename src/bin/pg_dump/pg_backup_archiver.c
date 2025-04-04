@@ -2655,7 +2655,7 @@ WriteToc(ArchiveHandle *AH)
 		}
 		else if (te->defnDumper)
 		{
-			char	   *defn = te->defnDumper((Archive *) AH, te->defnDumperArg);
+			char	   *defn = te->defnDumper((Archive *) AH, te->defnDumperArg, te);
 
 			te->defnLen = WriteStr(AH, defn);
 			pg_free(defn);
@@ -3284,23 +3284,16 @@ _tocEntryRestorePass(ArchiveHandle *AH, TocEntry *te)
 
 	/*
 	 * If statistics data is dependent on materialized view data, it must be
-	 * deferred to RESTORE_PASS_POST_ACL.
+	 * deferred to RESTORE_PASS_POST_ACL.  Those entries are already marked as
+	 * SECTION_POST_DATA, and some other stats entries (e.g., index stats)
+	 * will also be marked as SECTION_POST_DATA.  Additionally, our lookahead
+	 * code in fetchAttributeStats() assumes that we dump all statistics data
+	 * entries in TOC order.  To ensure this assumption holds, we move all
+	 * statistics data entries in SECTION_POST_DATA to RESTORE_PASS_POST_ACL.
 	 */
-	if (strcmp(te->desc, "STATISTICS DATA") == 0)
-	{
-		for (int i = 0; i < te->nDeps; i++)
-		{
-			DumpId		depid = te->dependencies[i];
-
-			if (depid <= AH->maxDumpId && AH->tocsByDumpId[depid] != NULL)
-			{
-				TocEntry   *otherte = AH->tocsByDumpId[depid];
-
-				if (strcmp(otherte->desc, "MATERIALIZED VIEW DATA") == 0)
-					return RESTORE_PASS_POST_ACL;
-			}
-		}
-	}
+	if (strcmp(te->desc, "STATISTICS DATA") == 0 &&
+		te->section == SECTION_POST_DATA)
+		return RESTORE_PASS_POST_ACL;
 
 	/* All else can be handled in the main pass. */
 	return RESTORE_PASS_MAIN;
@@ -3951,7 +3944,7 @@ _printTocEntry(ArchiveHandle *AH, TocEntry *te, const char *pfx)
 	}
 	else if (te->defnDumper)
 	{
-		char	   *defn = te->defnDumper((Archive *) AH, te->defnDumperArg);
+		char	   *defn = te->defnDumper((Archive *) AH, te->defnDumperArg, te);
 
 		te->defnLen = ahprintf(AH, "%s\n\n", defn);
 		pg_free(defn);

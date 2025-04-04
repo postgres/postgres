@@ -209,6 +209,9 @@ static int	nbinaryUpgradeClassOids = 0;
 static SequenceItem *sequences = NULL;
 static int	nsequences = 0;
 
+/* Maximum number of relations to fetch in a fetchAttributeStats() call. */
+#define MAX_ATTR_STATS_RELS 64
+
 /*
  * The default number of rows per INSERT when
  * --inserts is specified without --rows-per-insert
@@ -10554,6 +10557,77 @@ appendNamedArgument(PQExpBuffer out, Archive *fout, const char *argname,
 }
 
 /*
+ * fetchAttributeStats --
+ *
+ * Fetch next batch of attribute statistics for dumpRelationStats_dumper().
+ */
+static PGresult *
+fetchAttributeStats(Archive *fout)
+{
+	ArchiveHandle *AH = (ArchiveHandle *) fout;
+	PQExpBuffer nspnames = createPQExpBuffer();
+	PQExpBuffer relnames = createPQExpBuffer();
+	int			count = 0;
+	PGresult   *res = NULL;
+	static TocEntry *te;
+	static bool restarted;
+
+	/* If we're just starting, set our TOC pointer. */
+	if (!te)
+		te = AH->toc->next;
+
+	/*
+	 * We can't easily avoid a second TOC scan for the tar format because it
+	 * writes restore.sql separately, which means we must execute the queries
+	 * twice.  This feels risky, but there is no known reason it should
+	 * generate different output than the first pass.  Even if it does, the
+	 * worst-case scenario is that restore.sql might have different statistics
+	 * data than the archive.
+	 */
+	if (!restarted && te == AH->toc && AH->format == archTar)
+	{
+		te = AH->toc->next;
+		restarted = true;
+	}
+
+	/*
+	 * Scan the TOC for the next set of relevant stats entries.  We assume
+	 * that statistics are dumped in the order they are listed in the TOC.
+	 * This is perhaps not the sturdiest assumption, so we verify it matches
+	 * reality in dumpRelationStats_dumper().
+	 */
+	for (; te != AH->toc && count < MAX_ATTR_STATS_RELS; te = te->next)
+	{
+		if ((te->reqs & REQ_STATS) != 0 &&
+			strcmp(te->desc, "STATISTICS DATA") == 0)
+		{
+			appendPQExpBuffer(nspnames, "%s%s", count ? "," : "",
+							  fmtId(te->namespace));
+			appendPQExpBuffer(relnames, "%s%s", count ? "," : "",
+							  fmtId(te->tag));
+			count++;
+		}
+	}
+
+	/* Execute the query for the next batch of relations. */
+	if (count > 0)
+	{
+		PQExpBuffer query = createPQExpBuffer();
+
+		appendPQExpBuffer(query, "EXECUTE getAttributeStats("
+						  "'{%s}'::pg_catalog.name[],"
+						  "'{%s}'::pg_catalog.name[])",
+						  nspnames->data, relnames->data);
+		res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
+		destroyPQExpBuffer(query);
+	}
+
+	destroyPQExpBuffer(nspnames);
+	destroyPQExpBuffer(relnames);
+	return res;
+}
+
+/*
  * dumpRelationStats_dumper --
  *
  * Generate command to import stats into the relation on the new database.
@@ -10561,14 +10635,16 @@ appendNamedArgument(PQExpBuffer out, Archive *fout, const char *argname,
  * dumped.
  */
 static char *
-dumpRelationStats_dumper(Archive *fout, const void *userArg)
+dumpRelationStats_dumper(Archive *fout, const void *userArg, const TocEntry *te)
 {
 	const RelStatsInfo *rsinfo = (RelStatsInfo *) userArg;
-	const DumpableObject *dobj = &rsinfo->dobj;
-	PGresult   *res;
+	static PGresult *res;
+	static int	rownum;
 	PQExpBuffer query;
 	PQExpBufferData out_data;
 	PQExpBuffer out = &out_data;
+	int			i_schemaname;
+	int			i_tablename;
 	int			i_attname;
 	int			i_inherited;
 	int			i_null_frac;
@@ -10584,13 +10660,31 @@ dumpRelationStats_dumper(Archive *fout, const void *userArg)
 	int			i_range_length_histogram;
 	int			i_range_empty_frac;
 	int			i_range_bounds_histogram;
+	static TocEntry *expected_te;
+
+	/*
+	 * fetchAttributeStats() assumes that the statistics are dumped in the
+	 * order they are listed in the TOC.  We verify that here for safety.
+	 */
+	if (!expected_te)
+		expected_te = ((ArchiveHandle *) fout)->toc;
+
+	expected_te = expected_te->next;
+	while ((expected_te->reqs & REQ_STATS) == 0 ||
+		   strcmp(expected_te->desc, "STATISTICS DATA") != 0)
+		expected_te = expected_te->next;
+
+	if (te != expected_te)
+		pg_fatal("stats dumped out of order (current: %d %s %s) (expected: %d %s %s)",
+				 te->dumpId, te->desc, te->tag,
+				 expected_te->dumpId, expected_te->desc, expected_te->tag);
 
 	query = createPQExpBuffer();
 	if (!fout->is_prepared[PREPQUERY_GETATTRIBUTESTATS])
 	{
 		appendPQExpBufferStr(query,
-							 "PREPARE getAttributeStats(pg_catalog.name, pg_catalog.name) AS\n"
-							 "SELECT s.attname, s.inherited, "
+							 "PREPARE getAttributeStats(pg_catalog.name[], pg_catalog.name[]) AS\n"
+							 "SELECT s.schemaname, s.tablename, s.attname, s.inherited, "
 							 "s.null_frac, s.avg_width, s.n_distinct, "
 							 "s.most_common_vals, s.most_common_freqs, "
 							 "s.histogram_bounds, s.correlation, "
@@ -10608,11 +10702,21 @@ dumpRelationStats_dumper(Archive *fout, const void *userArg)
 								 "NULL AS range_empty_frac,"
 								 "NULL AS range_bounds_histogram ");
 
+		/*
+		 * The results must be in the order of the relations supplied in the
+		 * parameters to ensure we remain in sync as we walk through the TOC.
+		 * The redundant filter clause on s.tablename = ANY(...) seems
+		 * sufficient to convince the planner to use
+		 * pg_class_relname_nsp_index, which avoids a full scan of pg_stats.
+		 * This may not work for all versions.
+		 */
 		appendPQExpBufferStr(query,
 							 "FROM pg_catalog.pg_stats s "
-							 "WHERE s.schemaname = $1 "
-							 "AND s.tablename = $2 "
-							 "ORDER BY s.attname, s.inherited");
+							 "JOIN unnest($1, $2) WITH ORDINALITY AS u (schemaname, tablename, ord) "
+							 "ON s.schemaname = u.schemaname "
+							 "AND s.tablename = u.tablename "
+							 "WHERE s.tablename = ANY($2) "
+							 "ORDER BY u.ord, s.attname, s.inherited");
 
 		ExecuteSqlStatement(fout, query->data);
 
@@ -10642,16 +10746,16 @@ dumpRelationStats_dumper(Archive *fout, const void *userArg)
 
 	appendPQExpBufferStr(out, "\n);\n");
 
+	/* Fetch the next batch of attribute statistics if needed. */
+	if (rownum >= PQntuples(res))
+	{
+		PQclear(res);
+		res = fetchAttributeStats(fout);
+		rownum = 0;
+	}
 
-	/* fetch attribute stats */
-	appendPQExpBufferStr(query, "EXECUTE getAttributeStats(");
-	appendStringLiteralAH(query, dobj->namespace->dobj.name, fout);
-	appendPQExpBufferStr(query, ", ");
-	appendStringLiteralAH(query, dobj->name, fout);
-	appendPQExpBufferStr(query, ");");
-
-	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
-
+	i_schemaname = PQfnumber(res, "schemaname");
+	i_tablename = PQfnumber(res, "tablename");
 	i_attname = PQfnumber(res, "attname");
 	i_inherited = PQfnumber(res, "inherited");
 	i_null_frac = PQfnumber(res, "null_frac");
@@ -10669,9 +10773,14 @@ dumpRelationStats_dumper(Archive *fout, const void *userArg)
 	i_range_bounds_histogram = PQfnumber(res, "range_bounds_histogram");
 
 	/* restore attribute stats */
-	for (int rownum = 0; rownum < PQntuples(res); rownum++)
+	for (; rownum < PQntuples(res); rownum++)
 	{
 		const char *attname;
+
+		/* Stop if the next stat row in our cache isn't for this relation. */
+		if (strcmp(te->tag, PQgetvalue(res, rownum, i_tablename)) != 0 ||
+			strcmp(te->namespace, PQgetvalue(res, rownum, i_schemaname)) != 0)
+			break;
 
 		appendPQExpBufferStr(out, "SELECT * FROM pg_catalog.pg_restore_attribute_stats(\n");
 		appendPQExpBuffer(out, "\t'version', '%u'::integer,\n",
@@ -10761,8 +10870,6 @@ dumpRelationStats_dumper(Archive *fout, const void *userArg)
 		}
 		appendPQExpBufferStr(out, "\n);\n");
 	}
-
-	PQclear(res);
 
 	destroyPQExpBuffer(query);
 	return out->data;
