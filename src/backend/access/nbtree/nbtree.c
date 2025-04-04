@@ -349,6 +349,7 @@ btbeginscan(Relation rel, int nkeys, int norderbys)
 	else
 		so->keyData = NULL;
 
+	so->skipScan = false;
 	so->needPrimScan = false;
 	so->scanBehind = false;
 	so->oppositeDirCheck = false;

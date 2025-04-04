@@ -1648,46 +1648,13 @@ _bt_readpage(IndexScanDesc scan, ScanDirection dir, OffsetNumber offnum,
 	pstate.finaltup = NULL;
 	pstate.page = page;
 	pstate.firstpage = firstpage;
+	pstate.forcenonrequired = false;
+	pstate.startikey = 0;
 	pstate.offnum = InvalidOffsetNumber;
 	pstate.skip = InvalidOffsetNumber;
 	pstate.continuescan = true; /* default assumption */
-	pstate.prechecked = false;
-	pstate.firstmatch = false;
 	pstate.rechecks = 0;
 	pstate.targetdistance = 0;
-
-	/*
-	 * Prechecking the value of the continuescan flag for the last item on the
-	 * page (for backwards scan it will be the first item on a page).  If we
-	 * observe it to be true, then it should be true for all other items. This
-	 * allows us to do significant optimizations in the _bt_checkkeys()
-	 * function for all the items on the page.
-	 *
-	 * With the forward scan, we do this check for the last item on the page
-	 * instead of the high key.  It's relatively likely that the most
-	 * significant column in the high key will be different from the
-	 * corresponding value from the last item on the page.  So checking with
-	 * the last item on the page would give a more precise answer.
-	 *
-	 * We skip this for the first page read by each (primitive) scan, to avoid
-	 * slowing down point queries.  They typically don't stand to gain much
-	 * when the optimization can be applied, and are more likely to notice the
-	 * overhead of the precheck.  Also avoid it during scans with array keys,
-	 * which might be using skip scan (XXX fixed in next commit).
-	 */
-	if (!pstate.firstpage && !arrayKeys && minoff < maxoff)
-	{
-		ItemId		iid;
-		IndexTuple	itup;
-
-		iid = PageGetItemId(page, ScanDirectionIsForward(dir) ? maxoff : minoff);
-		itup = (IndexTuple) PageGetItem(page, iid);
-
-		/* Call with arrayKeys=false to avoid undesirable side-effects */
-		_bt_checkkeys(scan, &pstate, false, itup, indnatts);
-		pstate.prechecked = pstate.continuescan;
-		pstate.continuescan = true; /* reset */
-	}
 
 	if (ScanDirectionIsForward(dir))
 	{
@@ -1715,6 +1682,13 @@ _bt_readpage(IndexScanDesc scan, ScanDirection dir, OffsetNumber offnum,
 
 			so->scanBehind = so->oppositeDirCheck = false;	/* reset */
 		}
+
+		/*
+		 * Consider pstate.startikey optimization once the ongoing primitive
+		 * index scan has already read at least one page
+		 */
+		if (!pstate.firstpage && minoff < maxoff)
+			_bt_set_startikey(scan, &pstate);
 
 		/* load items[] in ascending order */
 		itemIndex = 0;
@@ -1752,6 +1726,7 @@ _bt_readpage(IndexScanDesc scan, ScanDirection dir, OffsetNumber offnum,
 			{
 				Assert(!passes_quals && pstate.continuescan);
 				Assert(offnum < pstate.skip);
+				Assert(!pstate.forcenonrequired);
 
 				offnum = pstate.skip;
 				pstate.skip = InvalidOffsetNumber;
@@ -1761,7 +1736,6 @@ _bt_readpage(IndexScanDesc scan, ScanDirection dir, OffsetNumber offnum,
 			if (passes_quals)
 			{
 				/* tuple passes all scan key conditions */
-				pstate.firstmatch = true;
 				if (!BTreeTupleIsPosting(itup))
 				{
 					/* Remember it */
@@ -1816,7 +1790,8 @@ _bt_readpage(IndexScanDesc scan, ScanDirection dir, OffsetNumber offnum,
 			int			truncatt;
 
 			truncatt = BTreeTupleGetNAtts(itup, rel);
-			pstate.prechecked = false;	/* precheck didn't cover HIKEY */
+			pstate.forcenonrequired = false;
+			pstate.startikey = 0;	/* _bt_set_startikey ignores HIKEY */
 			_bt_checkkeys(scan, &pstate, arrayKeys, itup, truncatt);
 		}
 
@@ -1854,6 +1829,13 @@ _bt_readpage(IndexScanDesc scan, ScanDirection dir, OffsetNumber offnum,
 
 			so->scanBehind = so->oppositeDirCheck = false;	/* reset */
 		}
+
+		/*
+		 * Consider pstate.startikey optimization once the ongoing primitive
+		 * index scan has already read at least one page
+		 */
+		if (!pstate.firstpage && minoff < maxoff)
+			_bt_set_startikey(scan, &pstate);
 
 		/* load items[] in descending order */
 		itemIndex = MaxTIDsPerBTreePage;
@@ -1894,6 +1876,11 @@ _bt_readpage(IndexScanDesc scan, ScanDirection dir, OffsetNumber offnum,
 			Assert(!BTreeTupleIsPivot(itup));
 
 			pstate.offnum = offnum;
+			if (arrayKeys && offnum == minoff && pstate.forcenonrequired)
+			{
+				pstate.forcenonrequired = false;
+				pstate.startikey = 0;
+			}
 			passes_quals = _bt_checkkeys(scan, &pstate, arrayKeys,
 										 itup, indnatts);
 
@@ -1905,6 +1892,7 @@ _bt_readpage(IndexScanDesc scan, ScanDirection dir, OffsetNumber offnum,
 			{
 				Assert(!passes_quals && pstate.continuescan);
 				Assert(offnum > pstate.skip);
+				Assert(!pstate.forcenonrequired);
 
 				offnum = pstate.skip;
 				pstate.skip = InvalidOffsetNumber;
@@ -1914,7 +1902,6 @@ _bt_readpage(IndexScanDesc scan, ScanDirection dir, OffsetNumber offnum,
 			if (passes_quals && tuple_alive)
 			{
 				/* tuple passes all scan key conditions */
-				pstate.firstmatch = true;
 				if (!BTreeTupleIsPosting(itup))
 				{
 					/* Remember it */
@@ -1969,6 +1956,20 @@ _bt_readpage(IndexScanDesc scan, ScanDirection dir, OffsetNumber offnum,
 		so->currPos.lastItem = MaxTIDsPerBTreePage - 1;
 		so->currPos.itemIndex = MaxTIDsPerBTreePage - 1;
 	}
+
+	/*
+	 * If _bt_set_startikey told us to temporarily treat the scan's keys as
+	 * nonrequired (possible only during scans with array keys), there must be
+	 * no lasting consequences for the scan's array keys.  The scan's arrays
+	 * should now have exactly the same elements as they would have had if the
+	 * nonrequired behavior had never been used.  (In general, a scan's arrays
+	 * are expected to track its progress through the index's key space.)
+	 *
+	 * We are required (by _bt_set_startikey) to call _bt_checkkeys against
+	 * pstate.finaltup with pstate.forcenonrequired=false to allow the scan's
+	 * arrays to recover.  Assert that that step hasn't been missed.
+	 */
+	Assert(!pstate.forcenonrequired);
 
 	return (so->currPos.firstItem <= so->currPos.lastItem);
 }

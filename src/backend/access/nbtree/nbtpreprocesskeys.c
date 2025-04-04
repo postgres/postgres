@@ -1390,6 +1390,7 @@ _bt_preprocess_array_keys(IndexScanDesc scan, int *new_numberOfKeys)
 	arrayKeyData = (ScanKey) palloc(numArrayKeyData * sizeof(ScanKeyData));
 
 	/* Allocate space for per-array data in the workspace context */
+	so->skipScan = (numSkipArrayKeys > 0);
 	so->arrayKeys = (BTArrayKeyInfo *) palloc(numArrayKeys * sizeof(BTArrayKeyInfo));
 
 	/* Allocate space for ORDER procs used to help _bt_checkkeys */

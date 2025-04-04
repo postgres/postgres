@@ -1059,6 +1059,7 @@ typedef struct BTScanOpaqueData
 
 	/* workspace for SK_SEARCHARRAY support */
 	int			numArrayKeys;	/* number of equality-type array keys */
+	bool		skipScan;		/* At least one skip array in arrayKeys[]? */
 	bool		needPrimScan;	/* New prim scan to continue in current dir? */
 	bool		scanBehind;		/* Check scan not still behind on next page? */
 	bool		oppositeDirCheck;	/* scanBehind opposite-scan-dir check? */
@@ -1105,6 +1106,8 @@ typedef struct BTReadPageState
 	IndexTuple	finaltup;		/* Needed by scans with array keys */
 	Page		page;			/* Page being read */
 	bool		firstpage;		/* page is first for primitive scan? */
+	bool		forcenonrequired;	/* treat all keys as nonrequired? */
+	int			startikey;		/* start comparisons from this scan key */
 
 	/* Per-tuple input parameters, set by _bt_readpage for _bt_checkkeys */
 	OffsetNumber offnum;		/* current tuple's page offset number */
@@ -1112,13 +1115,6 @@ typedef struct BTReadPageState
 	/* Output parameters, set by _bt_checkkeys for _bt_readpage */
 	OffsetNumber skip;			/* Array keys "look ahead" skip offnum */
 	bool		continuescan;	/* Terminate ongoing (primitive) index scan? */
-
-	/*
-	 * Input and output parameters, set and unset by both _bt_readpage and
-	 * _bt_checkkeys to manage precheck optimizations
-	 */
-	bool		prechecked;		/* precheck set continuescan to 'true'? */
-	bool		firstmatch;		/* at least one match so far?  */
 
 	/*
 	 * Private _bt_checkkeys state used to manage "look ahead" optimization
@@ -1327,6 +1323,7 @@ extern bool _bt_checkkeys(IndexScanDesc scan, BTReadPageState *pstate, bool arra
 						  IndexTuple tuple, int tupnatts);
 extern bool _bt_scanbehind_checkkeys(IndexScanDesc scan, ScanDirection dir,
 									 IndexTuple finaltup);
+extern void _bt_set_startikey(IndexScanDesc scan, BTReadPageState *pstate);
 extern void _bt_killitems(IndexScanDesc scan);
 extern BTCycleId _bt_vacuum_cycleid(Relation rel);
 extern BTCycleId _bt_start_vacuum(Relation rel);
