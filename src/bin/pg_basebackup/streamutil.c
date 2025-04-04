@@ -583,7 +583,7 @@ GetSlotInformation(PGconn *conn, const char *slot_name,
 bool
 CreateReplicationSlot(PGconn *conn, const char *slot_name, const char *plugin,
 					  bool is_temporary, bool is_physical, bool reserve_wal,
-					  bool slot_exists_ok, bool two_phase)
+					  bool slot_exists_ok, bool two_phase, bool failover)
 {
 	PQExpBuffer query;
 	PGresult   *res;
@@ -594,6 +594,7 @@ CreateReplicationSlot(PGconn *conn, const char *slot_name, const char *plugin,
 	Assert((is_physical && plugin == NULL) ||
 		   (!is_physical && plugin != NULL));
 	Assert(!(two_phase && is_physical));
+	Assert(!(failover && is_physical));
 	Assert(slot_name != NULL);
 
 	/* Build base portion of query */
@@ -616,6 +617,10 @@ CreateReplicationSlot(PGconn *conn, const char *slot_name, const char *plugin,
 	}
 	else
 	{
+		if (failover && PQserverVersion(conn) >= 170000)
+			AppendPlainCommandOption(query, use_new_option_syntax,
+									 "FAILOVER");
+
 		if (two_phase && PQserverVersion(conn) >= 150000)
 			AppendPlainCommandOption(query, use_new_option_syntax,
 									 "TWO_PHASE");

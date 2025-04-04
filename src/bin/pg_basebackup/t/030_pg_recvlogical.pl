@@ -135,4 +135,19 @@ $node->command_ok(
 	],
 	'drop could work without dbname');
 
+# test with failover option enabled
+$node->command_ok(
+	[
+		'pg_recvlogical',
+		'--slot' => 'test',
+		'--dbname' => $node->connstr('postgres'),
+		'--create-slot',
+		'--failover',
+	],
+	'slot with failover created');
+
+my $result = $node->safe_psql('postgres',
+	"SELECT failover FROM pg_catalog.pg_replication_slots WHERE slot_name = 'test'");
+is($result, 't', "failover is enabled for the new slot");
+
 done_testing();

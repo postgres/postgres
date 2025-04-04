@@ -42,6 +42,7 @@ typedef enum
 static char *outfile = NULL;
 static int	verbose = 0;
 static bool two_phase = false;
+static bool failover = false;
 static int	noloop = 0;
 static int	standby_message_timeout = 10 * 1000;	/* 10 sec = default */
 static int	fsync_interval = 10 * 1000; /* 10 sec = default */
@@ -89,6 +90,8 @@ usage(void)
 	printf(_("      --start            start streaming in a replication slot (for the slot's name see --slot)\n"));
 	printf(_("\nOptions:\n"));
 	printf(_("  -E, --endpos=LSN       exit after receiving the specified LSN\n"));
+	printf(_("      --failover         enable replication slot synchronization to standby servers when\n"
+			 "                         creating a slot\n"));
 	printf(_("  -f, --file=FILE        receive log into this file, - for stdout\n"));
 	printf(_("  -F  --fsync-interval=SECS\n"
 			 "                         time between fsyncs to the output file (default: %d)\n"), (fsync_interval / 1000));
@@ -695,6 +698,7 @@ main(int argc, char **argv)
 		{"file", required_argument, NULL, 'f'},
 		{"fsync-interval", required_argument, NULL, 'F'},
 		{"no-loop", no_argument, NULL, 'n'},
+		{"failover", no_argument, NULL, 5},
 		{"verbose", no_argument, NULL, 'v'},
 		{"two-phase", no_argument, NULL, 't'},
 		{"version", no_argument, NULL, 'V'},
@@ -769,6 +773,9 @@ main(int argc, char **argv)
 				break;
 			case 'v':
 				verbose++;
+				break;
+			case 5:
+				failover = true;
 				break;
 /* connection options */
 			case 'd':
@@ -917,11 +924,21 @@ main(int argc, char **argv)
 		exit(1);
 	}
 
-	if (two_phase && !do_create_slot)
+	if (!do_create_slot)
 	{
-		pg_log_error("--two-phase may only be specified with --create-slot");
-		pg_log_error_hint("Try \"%s --help\" for more information.", progname);
-		exit(1);
+		if (two_phase)
+		{
+			pg_log_error("--two-phase may only be specified with --create-slot");
+			pg_log_error_hint("Try \"%s --help\" for more information.", progname);
+			exit(1);
+		}
+
+		if (failover)
+		{
+			pg_log_error("--failover may only be specified with --create-slot");
+			pg_log_error_hint("Try \"%s --help\" for more information.", progname);
+			exit(1);
+		}
 	}
 
 	/*
@@ -984,7 +1001,8 @@ main(int argc, char **argv)
 			pg_log_info("creating replication slot \"%s\"", replication_slot);
 
 		if (!CreateReplicationSlot(conn, replication_slot, plugin, false,
-								   false, false, slot_exists_ok, two_phase))
+								   false, false, slot_exists_ok, two_phase,
+								   failover))
 			exit(1);
 		startpos = InvalidXLogRecPtr;
 	}

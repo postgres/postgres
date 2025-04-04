@@ -79,8 +79,8 @@ PostgreSQL documentation
        </para>
 
        <para>
-        The <option>--two-phase</option> can be specified with
-        <option>--create-slot</option> to enable decoding of prepared transactions.
+        The <option>--two-phase</option> and <option>--falover</option> options
+        can be specified with <option>--create-slot</option>.
        </para>
       </listitem>
      </varlistentry>
@@ -161,6 +161,16 @@ PostgreSQL documentation
         Any partially output transaction will not be consumed and will be
         replayed again when the slot is next read from. Individual messages
         are never truncated.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>--failover</option></term>
+      <listitem>
+       <para>
+        Enables the slot to be synchronized to the standbys. This option may
+        only be specified with <option>--create-slot</option>.
        </para>
       </listitem>
      </varlistentry>

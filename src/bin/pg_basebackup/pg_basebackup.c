@@ -667,7 +667,8 @@ StartLogStreamer(char *startpos, uint32 timeline, char *sysidentifier,
 	if (temp_replication_slot || create_slot)
 	{
 		if (!CreateReplicationSlot(param->bgconn, replication_slot, NULL,
-								   temp_replication_slot, true, true, false, false))
+								   temp_replication_slot, true, true, false,
+								   false, false))
 			exit(1);
 
 		if (verbose)
