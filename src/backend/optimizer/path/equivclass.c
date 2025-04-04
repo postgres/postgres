@@ -2664,7 +2664,10 @@ find_derived_clause_for_ec_member(EquivalenceClass *ec,
 		 * members on the left side of derived clauses.
 		 */
 		if (rinfo->left_em == em)
+		{
+			Assert(rinfo->right_em->em_is_const);
 			return rinfo;
+		}
 	}
 	return NULL;
 }
