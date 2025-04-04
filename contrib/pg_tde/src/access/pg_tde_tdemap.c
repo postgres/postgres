@@ -1099,7 +1099,7 @@ pg_tde_file_header_read(const char *tde_filename, int fd, TDEFileHeader *fheader
  * comparing old and new value of the offset.
  */
 static bool
-pg_tde_read_one_map_entry(File map_file, const RelFileLocator *rlocator, int flags, TDEMapEntry *map_entry, off_t *offset)
+pg_tde_read_one_map_entry(int map_file, const RelFileLocator *rlocator, int flags, TDEMapEntry *map_entry, off_t *offset)
 {
 	bool		found;
 	off_t		bytes_read = 0;
