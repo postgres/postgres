@@ -175,6 +175,7 @@ AttributeOpts
 AuthRequest
 AuthToken
 AutoPrewarmSharedState
+AutoPrewarmReadStreamData
 AutoVacOpts
 AutoVacuumShmemStruct
 AutoVacuumWorkItem
