@@ -158,6 +158,11 @@ extern List *expand_function_arguments(List *args, bool include_out_arguments,
 									   Oid result_type,
 									   struct HeapTupleData *func_tuple);
 
+extern ScalarArrayOpExpr *make_SAOP_expr(Oid oper, Node *leftexpr,
+										 Oid coltype, Oid arraycollid,
+										 Oid inputcollid, List *exprs,
+										 bool haveNonConst);
+
 /* in util/predtest.c: */
 
 extern bool predicate_implied_by(List *predicate_list, List *clause_list,
