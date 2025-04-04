@@ -749,7 +749,7 @@ remove_rel_from_eclass(EquivalenceClass *ec, SpecialJoinInfo *sjinfo,
 	 * drop them.  (At this point, any such clauses would be base restriction
 	 * clauses, which we'd not need anymore anyway.)
 	 */
-	ec->ec_derives = NIL;
+	ec_clear_derived_clauses(ec);
 }
 
 /*
@@ -1544,8 +1544,7 @@ update_eclasses(EquivalenceClass *ec, int from, int to)
 	list_free(ec->ec_members);
 	ec->ec_members = new_members;
 
-	list_free(ec->ec_derives);
-	ec->ec_derives = NULL;
+	ec_clear_derived_clauses(ec);
 
 	/* Update EC source expressions */
 	foreach_node(RestrictInfo, rinfo, ec->ec_sources)

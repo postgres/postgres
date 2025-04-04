@@ -5848,7 +5848,8 @@ get_foreign_key_join_selectivity(PlannerInfo *root,
 				if (ec && ec->ec_has_const)
 				{
 					EquivalenceMember *em = fkinfo->fk_eclass_member[i];
-					RestrictInfo *rinfo = find_derived_clause_for_ec_member(ec,
+					RestrictInfo *rinfo = find_derived_clause_for_ec_member(root,
+																			ec,
 																			em);
 
 					if (rinfo)
