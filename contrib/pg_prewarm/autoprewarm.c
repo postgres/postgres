@@ -472,10 +472,15 @@ autoprewarm_database_main(Datum main_arg)
 
 		/*
 		 * As soon as we encounter a block of a new relation, close the old
-		 * relation. Note that rel will be NULL if try_relation_open failed
-		 * previously; in that case, there is nothing to close.
+		 * relation. RelFileNumbers are only guaranteed to be unique within a
+		 * tablespace, so check that too.
+		 *
+		 * Note that rel will be NULL if try_relation_open failed previously;
+		 * in that case, there is nothing to close.
 		 */
-		if (old_blk != NULL && old_blk->filenumber != blk->filenumber &&
+		if (old_blk != NULL &&
+			(old_blk->tablespace != blk->tablespace ||
+			 old_blk->filenumber != blk->filenumber) &&
 			rel != NULL)
 		{
 			relation_close(rel, AccessShareLock);
@@ -487,7 +492,9 @@ autoprewarm_database_main(Datum main_arg)
 		 * Try to open each new relation, but only once, when we first
 		 * encounter it. If it's been dropped, skip the associated blocks.
 		 */
-		if (old_blk == NULL || old_blk->filenumber != blk->filenumber)
+		if (old_blk == NULL ||
+			old_blk->tablespace != blk->tablespace ||
+			old_blk->filenumber != blk->filenumber)
 		{
 			Oid			reloid;
 
@@ -508,6 +515,7 @@ autoprewarm_database_main(Datum main_arg)
 
 		/* Once per fork, check for fork existence and size. */
 		if (old_blk == NULL ||
+			old_blk->tablespace != blk->tablespace ||
 			old_blk->filenumber != blk->filenumber ||
 			old_blk->forknum != blk->forknum)
 		{
